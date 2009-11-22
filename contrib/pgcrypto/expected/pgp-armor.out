@@ -6,21 +6,21 @@ SET bytea_output TO escape;
 select armor('');
             armor            
 -----------------------------
- -----BEGIN PGP MESSAGE-----
- 
- =twTO
- -----END PGP MESSAGE-----
+ -----BEGIN PGP MESSAGE-----+
+                            +
+ =twTO                      +
+ -----END PGP MESSAGE-----  +
  
 (1 row)
 
 select armor('test');
             armor            
 -----------------------------
- -----BEGIN PGP MESSAGE-----
- 
- dGVzdA==
- =+G7Q
- -----END PGP MESSAGE-----
+ -----BEGIN PGP MESSAGE-----+
+                            +
+ dGVzdA==                   +
+ =+G7Q                      +
+ -----END PGP MESSAGE-----  +
  
 (1 row)
 
@@ -40,12 +40,12 @@ select armor('0123456789abcdef0123456789abcdef0123456789abcdef
 0123456789abcdef0123456789abcdef0123456789abcdef');
                                     armor                                     
 ------------------------------------------------------------------------------
- -----BEGIN PGP MESSAGE-----
- 
- MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWYwMTIzNDU2Nzg5YWJjZGVmCjAxMjM0NTY3
- ODlhYmNkZWYwMTIzNDU2Nzg5YWJjZGVmMDEyMzQ1Njc4OWFiY2RlZg==
- =JFw5
- -----END PGP MESSAGE-----
+ -----BEGIN PGP MESSAGE-----                                                 +
+                                                                             +
+ MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWYwMTIzNDU2Nzg5YWJjZGVmCjAxMjM0NTY3+
+ ODlhYmNkZWYwMTIzNDU2Nzg5YWJjZGVmMDEyMzQ1Njc4OWFiY2RlZg==                    +
+ =JFw5                                                                       +
+ -----END PGP MESSAGE-----                                                   +
  
 (1 row)
 

@@ -85,10 +85,10 @@ INSERT INTO FKTABLE VALUES (NULL, NULL, 0);
 -- Insert failed rows into FK TABLE
 INSERT INTO FKTABLE VALUES (100, 2, 4);
 ERROR:  insert or update on table "fktable" violates foreign key constraint "constrname"
-DETAIL:  Key (ftest1,ftest2)=(100,2) is not present in table "pktable".
+DETAIL:  Key (ftest1, ftest2)=(100, 2) is not present in table "pktable".
 INSERT INTO FKTABLE VALUES (2, 2, 4);
 ERROR:  insert or update on table "fktable" violates foreign key constraint "constrname"
-DETAIL:  Key (ftest1,ftest2)=(2,2) is not present in table "pktable".
+DETAIL:  Key (ftest1, ftest2)=(2, 2) is not present in table "pktable".
 INSERT INTO FKTABLE VALUES (NULL, 2, 4);
 ERROR:  insert or update on table "fktable" violates foreign key constraint "constrname"
 DETAIL:  MATCH FULL does not allow mixing of null and nonnull key values.
@@ -195,10 +195,10 @@ INSERT INTO FKTABLE VALUES (NULL, NULL, 0);
 -- Insert failed rows into FK TABLE
 INSERT INTO FKTABLE VALUES (100, 2, 4);
 ERROR:  insert or update on table "fktable" violates foreign key constraint "constrname2"
-DETAIL:  Key (ftest1,ftest2)=(100,2) is not present in table "pktable".
+DETAIL:  Key (ftest1, ftest2)=(100, 2) is not present in table "pktable".
 INSERT INTO FKTABLE VALUES (2, 2, 4);
 ERROR:  insert or update on table "fktable" violates foreign key constraint "constrname2"
-DETAIL:  Key (ftest1,ftest2)=(2,2) is not present in table "pktable".
+DETAIL:  Key (ftest1, ftest2)=(2, 2) is not present in table "pktable".
 INSERT INTO FKTABLE VALUES (NULL, 2, 4);
 ERROR:  insert or update on table "fktable" violates foreign key constraint "constrname2"
 DETAIL:  MATCH FULL does not allow mixing of null and nonnull key values.
@@ -359,7 +359,7 @@ INSERT INTO FKTABLE VALUES (NULL, 3, 4, 5);
 -- Insert a failed values
 INSERT INTO FKTABLE VALUES (1, 2, 7, 6);
 ERROR:  insert or update on table "fktable" violates foreign key constraint "constrname3"
-DETAIL:  Key (ftest1,ftest2,ftest3)=(1,2,7) is not present in table "pktable".
+DETAIL:  Key (ftest1, ftest2, ftest3)=(1, 2, 7) is not present in table "pktable".
 -- Show FKTABLE
 SELECT * from FKTABLE;
  ftest1 | ftest2 | ftest3 | ftest4 
@@ -374,13 +374,13 @@ SELECT * from FKTABLE;
 -- Try to update something that should fail
 UPDATE PKTABLE set ptest2=5 where ptest2=2;
 ERROR:  update or delete on table "pktable" violates foreign key constraint "constrname3" on table "fktable"
-DETAIL:  Key (ptest1,ptest2,ptest3)=(1,2,3) is still referenced from table "fktable".
+DETAIL:  Key (ptest1, ptest2, ptest3)=(1, 2, 3) is still referenced from table "fktable".
 -- Try to update something that should succeed
 UPDATE PKTABLE set ptest1=1 WHERE ptest2=3;
 -- Try to delete something that should fail
 DELETE FROM PKTABLE where ptest1=1 and ptest2=2 and ptest3=3;
 ERROR:  update or delete on table "pktable" violates foreign key constraint "constrname3" on table "fktable"
-DETAIL:  Key (ptest1,ptest2,ptest3)=(1,2,3) is still referenced from table "fktable".
+DETAIL:  Key (ptest1, ptest2, ptest3)=(1, 2, 3) is still referenced from table "fktable".
 -- Try to delete something that should work
 DELETE FROM PKTABLE where ptest1=2;
 -- Show PKTABLE and FKTABLE
@@ -424,7 +424,7 @@ INSERT INTO FKTABLE VALUES (NULL, 3, 4, 5);
 -- Insert a failed values
 INSERT INTO FKTABLE VALUES (1, 2, 7, 6);
 ERROR:  insert or update on table "fktable" violates foreign key constraint "constrname3"
-DETAIL:  Key (ftest1,ftest2,ftest3)=(1,2,7) is not present in table "pktable".
+DETAIL:  Key (ftest1, ftest2, ftest3)=(1, 2, 7) is not present in table "pktable".
 -- Show FKTABLE
 SELECT * from FKTABLE;
  ftest1 | ftest2 | ftest3 | ftest4 
@@ -522,7 +522,7 @@ INSERT INTO FKTABLE VALUES (NULL, 3, 4, 5);
 -- Insert a failed values
 INSERT INTO FKTABLE VALUES (1, 2, 7, 6);
 ERROR:  insert or update on table "fktable" violates foreign key constraint "constrname3"
-DETAIL:  Key (ftest1,ftest2,ftest3)=(1,2,7) is not present in table "pktable".
+DETAIL:  Key (ftest1, ftest2, ftest3)=(1, 2, 7) is not present in table "pktable".
 -- Show FKTABLE
 SELECT * from FKTABLE;
  ftest1 | ftest2 | ftest3 | ftest4 
@@ -628,7 +628,7 @@ INSERT INTO FKTABLE VALUES (NULL, 3, 4, 5);
 -- Insert a failed values
 INSERT INTO FKTABLE VALUES (1, 2, 7, 6);
 ERROR:  insert or update on table "fktable" violates foreign key constraint "constrname3"
-DETAIL:  Key (ftest1,ftest2,ftest3)=(1,2,7) is not present in table "pktable".
+DETAIL:  Key (ftest1, ftest2, ftest3)=(1, 2, 7) is not present in table "pktable".
 -- Show FKTABLE
 SELECT * from FKTABLE;
  ftest1 | ftest2 | ftest3 | ftest4 
@@ -645,7 +645,7 @@ SELECT * from FKTABLE;
 -- Try to update something that will fail
 UPDATE PKTABLE set ptest2=5 where ptest2=2;
 ERROR:  insert or update on table "fktable" violates foreign key constraint "constrname3"
-DETAIL:  Key (ftest1,ftest2,ftest3)=(1,-1,3) is not present in table "pktable".
+DETAIL:  Key (ftest1, ftest2, ftest3)=(1, -1, 3) is not present in table "pktable".
 -- Try to update something that will set default
 UPDATE PKTABLE set ptest1=0, ptest2=5, ptest3=10 where ptest2=2;
 UPDATE PKTABLE set ptest2=10 where ptest2=4;
@@ -896,19 +896,19 @@ insert into pktable(base1, ptest1) values (2, 2);
 --  let's insert a non-existant fktable value
 insert into fktable(ftest1, ftest2) values (3, 1);
 ERROR:  insert or update on table "fktable" violates foreign key constraint "fktable_ftest1_fkey"
-DETAIL:  Key (ftest1,ftest2)=(3,1) is not present in table "pktable".
+DETAIL:  Key (ftest1, ftest2)=(3, 1) is not present in table "pktable".
 --  let's make a valid row for that
 insert into pktable(base1,ptest1) values (3, 1);
 insert into fktable(ftest1, ftest2) values (3, 1);
 -- let's try removing a row that should fail from pktable
 delete from pktable where base1>2;
 ERROR:  update or delete on table "pktable" violates foreign key constraint "fktable_ftest1_fkey" on table "fktable"
-DETAIL:  Key (base1,ptest1)=(3,1) is still referenced from table "fktable".
+DETAIL:  Key (base1, ptest1)=(3, 1) is still referenced from table "fktable".
 -- okay, let's try updating all of the base1 values to *4
 -- which should fail.
 update pktable set base1=base1*4;
 ERROR:  update or delete on table "pktable" violates foreign key constraint "fktable_ftest1_fkey" on table "fktable"
-DETAIL:  Key (base1,ptest1)=(3,1) is still referenced from table "fktable".
+DETAIL:  Key (base1, ptest1)=(3, 1) is still referenced from table "fktable".
 -- okay, let's try an update that should work.
 update pktable set base1=base1*4 where base1<3;
 -- and a delete that should work
@@ -929,15 +929,15 @@ insert into pktable (base1, ptest1, base2, ptest2) values (1, 3, 2, 2);
 -- fails (3,2) isn't in base1, ptest1
 insert into pktable (base1, ptest1, base2, ptest2) values (2, 3, 3, 2);
 ERROR:  insert or update on table "pktable" violates foreign key constraint "pktable_base2_fkey"
-DETAIL:  Key (base2,ptest2)=(3,2) is not present in table "pktable".
+DETAIL:  Key (base2, ptest2)=(3, 2) is not present in table "pktable".
 -- fails (2,2) is being referenced
 delete from pktable where base1=2;
 ERROR:  update or delete on table "pktable" violates foreign key constraint "pktable_base2_fkey" on table "pktable"
-DETAIL:  Key (base1,ptest1)=(2,2) is still referenced from table "pktable".
+DETAIL:  Key (base1, ptest1)=(2, 2) is still referenced from table "pktable".
 -- fails (1,1) is being referenced (twice)
 update pktable set base1=3 where base1=1;
 ERROR:  update or delete on table "pktable" violates foreign key constraint "pktable_base2_fkey" on table "pktable"
-DETAIL:  Key (base1,ptest1)=(1,1) is still referenced from table "pktable".
+DETAIL:  Key (base1, ptest1)=(1, 1) is still referenced from table "pktable".
 -- this sequence of two deletes will work, since after the first there will be no (2,*) references
 delete from pktable where base2=2;
 delete from pktable where base1=2;

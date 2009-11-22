@@ -53,7 +53,7 @@ SELECT casttestfunc('foo'::text); -- Should work now
 SELECT 1234::int4::casttesttype; -- No cast yet, should fail
 ERROR:  cannot cast type integer to casttesttype
 LINE 1: SELECT 1234::int4::casttesttype;
-               ^
+                         ^
 CREATE CAST (int4 AS casttesttype) WITH INOUT;
 SELECT 1234::int4::casttesttype; -- Should work now
  casttesttype 

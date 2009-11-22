@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.232 2009/10/13 21:04:01 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.233 2009/11/22 05:20:41 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -1765,30 +1765,54 @@ lo_import 152801
           <listitem>
           <para>
           Sets the border line drawing style to one
-          of <literal>ascii</literal> or <literal>unicode</literal>.
+          of <literal>ascii</literal>, <literal>old-ascii</literal>
+          or <literal>unicode</literal>.
           Unique abbreviations are allowed.  (That would mean one
           letter is enough.)
           </para>
 
           <para>
-          <quote>ASCII</quote> uses plain <acronym>ASCII</acronym> characters.
+          <literal>ascii</literal> style uses plain <acronym>ASCII</acronym>
+          characters.  Newlines in data are shown using
+          a <literal>+</literal> symbol in the right-hand margin.
+          When the data wraps from one line
+          to the next without a newline character, a dot (<literal>.</>)
+          is shown in the right-hand margin of the first line, and
+          again in the left-hand margin of the following line.
           </para>
 
           <para>
-          <quote>Unicode</quote> uses Unicode box-drawing characters.
+          <literal>old-ascii</literal> style uses plain <acronym>ASCII</>
+          characters, using the formatting style used
+          in <productname>PostgreSQL</productname> 8.4 and earlier.
+          Newlines in data are shown using a <literal>:</literal>
+          symbol in place of the left-hand column separator.
+          When the data wraps from one line
+          to the next without a newline character, a <literal>;</>
+          symbol is used in place of the left-hand column separator.
+          </para>
+
+          <para>
+          <literal>unicode</literal> style uses Unicode box-drawing characters.
+          Newlines in data are shown using a carriage return symbol
+          in the right-hand margin.  When the data wraps from one line
+          to the next without a newline character, an ellipsis symbol
+          is shown in the right-hand margin of the first line, and
+          again in the left-hand margin of the following line.
           </para>
 
           <para>
           When the selected output format is one that draws lines or boxes
-          around the data, this setting controls how the lines are drawn.
+          around the data, this setting also determines the characters
+          with which the lines are drawn.
           Plain <acronym>ASCII</acronym> characters work everywhere, but
           Unicode characters look nicer on displays that recognize them.
           </para>
 
           <para>
-          If this option has not been set, the default behavior is to
-          use Unicode characters if the client character set encoding
-          is UTF-8, otherwise <acronym>ASCII</acronym> characters.
+          If this option has not been set, the default behavior is to use
+          <literal>unicode</literal> style if the client character set encoding
+          is UTF-8, otherwise <literal>ascii</literal> style.
           </para>
           </listitem>
           </varlistentry>

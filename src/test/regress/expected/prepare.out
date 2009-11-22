@@ -154,20 +154,20 @@ SELECT name, statement, parameter_types FROM pg_prepared_statements
     ORDER BY name;
  name |                              statement                              |                    parameter_types                     
 ------+---------------------------------------------------------------------+--------------------------------------------------------
- q2   | PREPARE q2(text) AS                                                 | {text}
-      :         SELECT datname, datistemplate, datallowconn                   
-      :         FROM pg_database WHERE datname = $1;                          
- q3   | PREPARE q3(text, int, float, boolean, oid, smallint) AS             | {text,integer,"double precision",boolean,oid,smallint}
-      :         SELECT * FROM tenk1 WHERE string4 = $1 AND (four = $2 OR      
-      :         ten = $3::bigint OR true = $4 OR oid = $5 OR odd = $6::int)   
-      :         ORDER BY unique1;                                             
- q5   | PREPARE q5(int, text) AS                                            | {integer,text}
-      :         SELECT * FROM tenk1 WHERE unique1 = $1 OR stringu1 = $2       
-      :         ORDER BY unique1;                                             
- q6   | PREPARE q6 AS                                                       | {integer,name}
-      :     SELECT * FROM tenk1 WHERE unique1 = $1 AND stringu1 = $2;         
- q7   | PREPARE q7(unknown) AS                                              | {path}
-      :     SELECT * FROM road WHERE thepath = $1;                            
+ q2   | PREPARE q2(text) AS                                                +| {text}
+      |         SELECT datname, datistemplate, datallowconn                +| 
+      |         FROM pg_database WHERE datname = $1;                        | 
+ q3   | PREPARE q3(text, int, float, boolean, oid, smallint) AS            +| {text,integer,"double precision",boolean,oid,smallint}
+      |         SELECT * FROM tenk1 WHERE string4 = $1 AND (four = $2 OR   +| 
+      |         ten = $3::bigint OR true = $4 OR oid = $5 OR odd = $6::int)+| 
+      |         ORDER BY unique1;                                           | 
+ q5   | PREPARE q5(int, text) AS                                           +| {integer,text}
+      |         SELECT * FROM tenk1 WHERE unique1 = $1 OR stringu1 = $2    +| 
+      |         ORDER BY unique1;                                           | 
+ q6   | PREPARE q6 AS                                                      +| {integer,name}
+      |     SELECT * FROM tenk1 WHERE unique1 = $1 AND stringu1 = $2;       | 
+ q7   | PREPARE q7(unknown) AS                                             +| {path}
+      |     SELECT * FROM road WHERE thepath = $1;                          | 
 (5 rows)
 
 -- test DEALLOCATE ALL;

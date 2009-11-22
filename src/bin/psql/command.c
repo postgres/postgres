@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2009, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.210 2009/10/13 21:04:01 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.211 2009/11/22 05:20:41 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "command.h"
@@ -1795,11 +1795,13 @@ do_pset(const char *param, const char *value, printQueryOpt *popt, bool quiet)
 			;
 		else if (pg_strncasecmp("ascii", value, vallen) == 0)
 			popt->topt.line_style = &pg_asciiformat;
+		else if (pg_strncasecmp("old-ascii", value, vallen) == 0)
+			popt->topt.line_style = &pg_asciiformat_old;
 		else if (pg_strncasecmp("unicode", value, vallen) == 0)
 			popt->topt.line_style = &pg_utf8format;
 		else
 		{
-			psql_error("\\pset: allowed line styles are ascii, unicode\n");
+			psql_error("\\pset: allowed line styles are ascii, old-ascii, unicode\n");
 			return false;
 		}
 

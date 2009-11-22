@@ -742,8 +742,8 @@ select * from parse('default', '345 qwe@efd.r '' http://www.com/ http://aew.werc
      3 | ewri2
     12 |  
     13 | <a href="qwe<qwe>">
-    12 | 
-       : 
+    12 |                                     +
+       | 
     19 | /usr/local/fff
     12 |  
     19 | /awdf/dwqe/4325
@@ -775,8 +775,8 @@ select * from parse('default', '345 qwe@efd.r '' http://www.com/ http://aew.werc
     20 | -4.2
     12 | . 
     22 | 234
-    12 |  
-       : 
+    12 |                                     +
+       | 
     12 | <
      1 | i
     12 |  
@@ -2330,8 +2330,8 @@ Upon a woman s face. E.  J.  Pratt  (1882 1964)
 ', to_tsquery('sea&thousand&years'));
                   headline                  
 --------------------------------------------
- <b>sea</b> a <b>thousand</b> <b>years</b>,
- A <b>thousand</b> <b>years</b> to trace
+ <b>sea</b> a <b>thousand</b> <b>years</b>,+
+ A <b>thousand</b> <b>years</b> to trace   +
  The granite features of this cliff
 (1 row)
 
@@ -2347,8 +2347,8 @@ Upon a woman s face. E.  J.  Pratt  (1882 1964)
 ', to_tsquery('granite&sea'));
                  headline                  
 -------------------------------------------
- <b>sea</b> a thousand years,
- A thousand years to trace
+ <b>sea</b> a thousand years,             +
+ A thousand years to trace                +
  The <b>granite</b> features of this cliff
 (1 row)
 
@@ -2364,8 +2364,8 @@ Upon a woman s face. E.  J.  Pratt  (1882 1964)
 ', to_tsquery('sea'));
               headline              
 ------------------------------------
- <b>sea</b> a thousand years,
- A thousand years to trace
+ <b>sea</b> a thousand years,      +
+ A thousand years to trace         +
  The granite features of this cliff
 (1 row)
 
@@ -2384,17 +2384,17 @@ ff-bg
 to_tsquery('sea&foo'), 'HighlightAll=true');
                                   headline                                   
 -----------------------------------------------------------------------------
- 
- <html>
- <!-- some comment -->
- <body>
- <b>Sea</b> view wow <u><b>foo</b> bar</u> <i>qq</i>
- <a href="http://www.google.com/foo.bar.html" target="_blank">YES &nbsp;</a>
-  ff-bg
- <script>
-        document.write(15);
- </script>
- </body>
+                                                                            +
+ <html>                                                                     +
+ <!-- some comment -->                                                      +
+ <body>                                                                     +
+ <b>Sea</b> view wow <u><b>foo</b> bar</u> <i>qq</i>                        +
+ <a href="http://www.google.com/foo.bar.html" target="_blank">YES &nbsp;</a>+
+ ff-bg                                                                      +
+ <script>                                                                   +
+        document.write(15);                                                 +
+ </script>                                                                  +
+ </body>                                                                    +
  </html>
 (1 row)
 

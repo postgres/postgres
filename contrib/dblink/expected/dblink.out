@@ -829,51 +829,51 @@ DROP SERVER fdtest;
 DROP FOREIGN DATA WRAPPER postgresql;
 -- test asynchronous notifications
 SELECT dblink_connect('dbname=contrib_regression');
- dblink_connect
+ dblink_connect 
 ----------------
  OK
 (1 row)
 
 --should return listen
 SELECT dblink_exec('LISTEN regression');
- dblink_exec
+ dblink_exec 
 -------------
  LISTEN
 (1 row)
 
 --should return listen
 SELECT dblink_exec('LISTEN foobar');
- dblink_exec
+ dblink_exec 
 -------------
  LISTEN
 (1 row)
 
 SELECT dblink_exec('NOTIFY regression');
- dblink_exec
+ dblink_exec 
 -------------
  NOTIFY
 (1 row)
 
 SELECT dblink_exec('NOTIFY foobar');
- dblink_exec
+ dblink_exec 
 -------------
  NOTIFY
 (1 row)
 
 SELECT notify_name, be_pid = (select t.be_pid from dblink('select pg_backend_pid()') as t(be_pid int)) AS is_self_notify, extra from dblink_get_notify();
- notify_name | is_self_notify | extra
+ notify_name | is_self_notify | extra 
 -------------+----------------+-------
- regression  | t              |
- foobar      | t              |
+ regression  | t              | 
+ foobar      | t              | 
 (2 rows)
 
 SELECT * from dblink_get_notify();
- notify_name | be_pid | extra
+ notify_name | be_pid | extra 
 -------------+--------+-------
 (0 rows)
 
 SELECT dblink_disconnect();
- dblink_disconnect
+ dblink_disconnect 
 -------------------
  OK
 (1 row)

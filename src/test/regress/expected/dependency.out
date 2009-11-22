@@ -71,9 +71,9 @@ RESET SESSION AUTHORIZATION;
                                             Access privileges
  Schema |   Name   | Type  |                Access privileges                 | Column access privileges 
 --------+----------+-------+--------------------------------------------------+--------------------------
- public | deptest1 | table | regression_user0=arwdDxt/regression_user0        | 
-                           : regression_user1=a*r*w*d*D*x*t*/regression_user0   
-                           : regression_user2=arwdDxt/regression_user1          
+ public | deptest1 | table | regression_user0=arwdDxt/regression_user0       +| 
+        |          |       | regression_user1=a*r*w*d*D*x*t*/regression_user0+| 
+        |          |       | regression_user2=arwdDxt/regression_user1        | 
 (1 row)
 
 DROP OWNED BY regression_user1;

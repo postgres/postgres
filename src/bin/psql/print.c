@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2009, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/print.c,v 1.117 2009/10/13 21:04:01 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/print.c,v 1.118 2009/11/22 05:20:41 tgl Exp $
  */
 #include "postgres_fe.h"
 
@@ -54,9 +54,37 @@ const printTextFormat pg_asciiformat =
 		{ "-", "+", "+", "+" },
 		{ "",  "|", "|", "|" }
 	},
+	"|",
+	"|",
+	"|",
+	" ",
+	"+",
+	" ",
+	"+",
+	".",
+	".",
+	true
+};
+
+const printTextFormat pg_asciiformat_old =
+{
+	"old-ascii",
+	{
+		{ "-", "+", "+", "+" },
+		{ "-", "+", "+", "+" },
+		{ "-", "+", "+", "+" },
+		{ "",  "|", "|", "|" }
+	},
 	":",
 	";",
-	" "
+	" ",
+	"+",
+	" ",
+	" ",
+	" ",
+	" ",
+	" ",
+	false
 };
 
 const printTextFormat pg_utf8format =
@@ -72,12 +100,23 @@ const printTextFormat pg_utf8format =
 		/* N/A, │, │, │ */
 		{ "", "\342\224\202", "\342\224\202", "\342\224\202" }
 	},
-	/* ╎ */
-	"\342\225\216",
-	/* ┊ */
-	"\342\224\212",
-	/* ╷ */
-	"\342\225\267"
+	/* │ */
+	"\342\224\202",
+	/* │ */
+	"\342\224\202",
+	/* │ */
+	"\342\224\202",
+	" ",
+	/* ↵ */
+	"\342\206\265",
+	" ",
+	/* ↵ */
+	"\342\206\265",
+	/* … */
+	"\342\200\246",
+	/* … */
+	"\342\200\246",
+	true
 };
 
 
@@ -476,6 +515,7 @@ print_aligned_text(const printTableContent *cont, FILE *fout)
 
 	bool	   *header_done;	/* Have all header lines been output? */
 	int		   *bytes_output;	/* Bytes output for column value */
+	printTextLineWrap *wrap;	/* Wrap status for each column */
 	int			output_columns = 0;		/* Width of interactive console */
 	bool		is_pager = false;
 
@@ -499,6 +539,7 @@ print_aligned_text(const printTableContent *cont, FILE *fout)
 		format_buf = pg_local_calloc(col_count, sizeof(*format_buf));
 		header_done = pg_local_calloc(col_count, sizeof(*header_done));
 		bytes_output = pg_local_calloc(col_count, sizeof(*bytes_output));
+		wrap = pg_local_calloc(col_count, sizeof(*wrap));
 	}
 	else
 	{
@@ -513,6 +554,7 @@ print_aligned_text(const printTableContent *cont, FILE *fout)
 		format_buf = NULL;
 		header_done = NULL;
 		bytes_output = NULL;
+		wrap = NULL;
 	}
 
 	/* scan all column headers, find maximum width and max max_nl_lines */
@@ -575,7 +617,7 @@ print_aligned_text(const printTableContent *cont, FILE *fout)
 
 	/* adjust the total display width based on border style */
 	if (opt_border == 0)
-		width_total = col_count - 1;
+		width_total = col_count;
 	else if (opt_border == 1)
 		width_total = col_count * 3 - 1;
 	else
@@ -770,15 +812,17 @@ print_aligned_text(const printTableContent *cont, FILE *fout)
 			while (more_col_wrapping)
 			{
 				if (opt_border == 2)
-					fprintf(fout, "%s%c", dformat->leftvrule,
-							curr_nl_line ? '+' : ' ');
-				else if (opt_border == 1)
-					fputc(curr_nl_line ? '+' : ' ', fout);
+					fputs(dformat->leftvrule, fout);
 
 				for (i = 0; i < cont->ncolumns; i++)
 				{
 					struct lineptr *this_line = col_lineptrs[i] + curr_nl_line;
 					unsigned int nbspace;
+
+					if (opt_border != 0 ||
+						(format->wrap_right_border == false && i > 0))
+						fputs(curr_nl_line ? format->header_nl_left : " ",
+							  fout);
 
 					if (!header_done[i])
 					{
@@ -796,21 +840,18 @@ print_aligned_text(const printTableContent *cont, FILE *fout)
 					}
 					else
 						fprintf(fout, "%*s", width_wrap[i], "");
-					if (i < col_count - 1)
-					{
-						if (opt_border == 0)
-							fputc(curr_nl_line ? '+' : ' ', fout);
-						else
-							fprintf(fout, " %s%c", dformat->midvrule,
-									curr_nl_line ? '+' : ' ');
-					}
+
+					if (opt_border != 0 || format->wrap_right_border == true)
+						fputs(!header_done[i] ? format->header_nl_right : " ",
+							  fout);
+
+					if (opt_border != 0 && i < col_count - 1)
+						fputs(dformat->midvrule, fout);
 				}
 				curr_nl_line++;
 
 				if (opt_border == 2)
-					fprintf(fout, " %s", dformat->rightvrule);
-				else if (opt_border == 1)
-					fputc(' ', fout);
+					fputs(dformat->rightvrule, fout);
 				fputc('\n', fout);
 			}
 
@@ -861,9 +902,7 @@ print_aligned_text(const printTableContent *cont, FILE *fout)
 
 			/* left border */
 			if (opt_border == 2)
-				fprintf(fout, "%s ", dformat->leftvrule);
-			else if (opt_border == 1)
-				fputc(' ', fout);
+				fputs(dformat->leftvrule, fout);
 
 			/* for each column */
 			for (j = 0; j < col_count; j++)
@@ -873,6 +912,17 @@ print_aligned_text(const printTableContent *cont, FILE *fout)
 				int			bytes_to_output;
 				int			chars_to_output = width_wrap[j];
 				bool		finalspaces = (opt_border == 2 || j < col_count - 1);
+
+				/* Print left-hand wrap or newline mark */
+				if (opt_border != 0)
+				{
+					if (wrap[j] == PRINT_LINE_WRAP_WRAP)
+						fputs(format->wrap_left, fout);
+					else if (wrap[j] == PRINT_LINE_WRAP_NEWLINE)
+						fputs(format->nl_left, fout);
+					else
+						fputc(' ', fout);
+				}
 
 				if (!this_line->ptr)
 				{
@@ -908,8 +958,6 @@ print_aligned_text(const printTableContent *cont, FILE *fout)
 						/* spaces second */
 						fprintf(fout, "%.*s", bytes_to_output,
 								this_line->ptr + bytes_output[j]);
-						if (finalspaces)
-							fprintf(fout, "%*s", width_wrap[j] - chars_to_output, "");
 					}
 
 					bytes_output[j] += bytes_to_output;
@@ -927,29 +975,54 @@ print_aligned_text(const printTableContent *cont, FILE *fout)
 					}
 				}
 
-				/* print a divider, if not the last column */
-				if (j < col_count - 1)
+				/* Determine next line's wrap status for this column */
+				wrap[j] = PRINT_LINE_WRAP_NONE;
+				if (col_lineptrs[j][curr_nl_line[j]].ptr != NULL)
 				{
-					if (opt_border == 0)
-						fputc(' ', fout);
-					/* Next value is beyond past newlines? */
+					if (bytes_output[j] != 0)
+						wrap[j] = PRINT_LINE_WRAP_WRAP;
+					else if (curr_nl_line[j] != 0)
+						wrap[j] = PRINT_LINE_WRAP_NEWLINE;
+				}
+
+				/*
+				 * If left-aligned, pad out remaining space if needed (not
+				 * last column, and/or wrap marks required).
+				 */
+				if (cont->aligns[j] != 'r') /* Left aligned cell */
+				{
+					if (finalspaces ||
+						wrap[j] == PRINT_LINE_WRAP_WRAP ||
+					    wrap[j] == PRINT_LINE_WRAP_NEWLINE)
+						fprintf(fout, "%*s",
+								width_wrap[j] - chars_to_output, "");
+				}
+
+				/* Print right-hand wrap or newline mark */
+				if (wrap[j] == PRINT_LINE_WRAP_WRAP)
+					fputs(format->wrap_right, fout);
+				else if (wrap[j] == PRINT_LINE_WRAP_NEWLINE)
+					fputs(format->nl_right, fout);
+				else if (opt_border == 2 || j < col_count - 1)
+					fputc(' ', fout);
+
+				/* Print column divider, if not the last column */
+				if (opt_border != 0 && j < col_count - 1)
+				{
+					if (wrap[j+1] == PRINT_LINE_WRAP_WRAP)
+						fputs(format->midvrule_wrap, fout);
+					else if (wrap[j+1] == PRINT_LINE_WRAP_NEWLINE)
+						fputs(format->midvrule_nl, fout);
 					else if (col_lineptrs[j + 1][curr_nl_line[j + 1]].ptr == NULL)
-						fprintf(fout, " %s ", format->midvrule_blank);
-					/* In wrapping of value? */
-					else if (bytes_output[j + 1] != 0)
-						fprintf(fout, " %s ", format->midvrule_wrap);
-					/* After first newline value */
-					else if (curr_nl_line[j + 1] != 0)
-						fprintf(fout, " %s ", format->midvrule_cont);
-					/* Ordinary line */
+						fputs(format->midvrule_blank, fout);
 					else
-						fprintf(fout, " %s ", dformat->midvrule);
+						fputs(dformat->midvrule, fout);
 				}
 			}
 
 			/* end-of-row border */
 			if (opt_border == 2)
-				fprintf(fout, " %s", dformat->rightvrule);
+				fputs(dformat->rightvrule, fout);
 			fputc('\n', fout);
 
 		} while (more_lines);
@@ -1196,9 +1269,7 @@ print_aligned_vertical(const printTableContent *cont, FILE *fout)
 				fprintf(fout, "%*s", hwidth, "");
 
 			if (opt_border > 0)
-				fprintf(fout, " %s ",
-						(line_count == 0) ?
-						format->midvrule_cont : dformat->midvrule);
+				fprintf(fout, " %s ", dformat->midvrule);
 			else
 				fputc(' ', fout);
 

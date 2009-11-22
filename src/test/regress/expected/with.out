@@ -279,16 +279,16 @@ SELECT pg_get_viewdef('vsubdepartment'::regclass);
 SELECT pg_get_viewdef('vsubdepartment'::regclass, true);
                                     pg_get_viewdef                                    
 --------------------------------------------------------------------------------------
-  WITH RECURSIVE subdepartment AS (
-                  SELECT department.id, department.parent_department, department.name
-                    FROM department
-                   WHERE department.name = 'A'::text
-         UNION ALL 
-                  SELECT d.id, d.parent_department, d.name
-                    FROM department d, subdepartment sd
-                   WHERE d.parent_department = sd.id
-         )
-  SELECT subdepartment.id, subdepartment.parent_department, subdepartment.name
+  WITH RECURSIVE subdepartment AS (                                                  +
+                  SELECT department.id, department.parent_department, department.name+
+                    FROM department                                                  +
+                   WHERE department.name = 'A'::text                                 +
+         UNION ALL                                                                   +
+                  SELECT d.id, d.parent_department, d.name                           +
+                    FROM department d, subdepartment sd                              +
+                   WHERE d.parent_department = sd.id                                 +
+         )                                                                           +
+  SELECT subdepartment.id, subdepartment.parent_department, subdepartment.name       +
     FROM subdepartment;
 (1 row)
 

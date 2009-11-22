@@ -344,8 +344,8 @@ SELECT * FROM ts_parse('default', '345 qwe@efd.r '' http://www.com/ http://aew.w
      3 | ewri2
     12 |  
     13 | <a href="qwe<qwe>">
-    12 | 
-       : 
+    12 |                                     +
+       | 
     19 | /usr/local/fff
     12 |  
     19 | /awdf/dwqe/4325
@@ -377,8 +377,8 @@ SELECT * FROM ts_parse('default', '345 qwe@efd.r '' http://www.com/ http://aew.w
     20 | -4.2
     12 | . 
     22 | 234
-    12 | 
-       : 
+    12 |                                     +
+       | 
     12 | <
      1 | i
     12 |  
@@ -559,9 +559,9 @@ S. T. Coleridge (1772-1834)
 ', to_tsquery('english', 'paint&water'));
                ts_headline               
 -----------------------------------------
- <b>painted</b> Ocean.
- <b>Water</b>, <b>water</b>, every where
-   And all the boards did shrink;
+ <b>painted</b> Ocean.                  +
+ <b>Water</b>, <b>water</b>, every where+
+   And all the boards did shrink;       +
  <b>Water</b>, <b>water</b>, every
 (1 row)
 
@@ -578,9 +578,9 @@ S. T. Coleridge (1772-1834)
 ', to_tsquery('english', 'breath&motion&water'));
            ts_headline            
 ----------------------------------
- <b>breath</b> nor <b>motion</b>,
- As idle as a painted Ship
-   Upon a painted Ocean.
+ <b>breath</b> nor <b>motion</b>,+
+ As idle as a painted Ship       +
+   Upon a painted Ocean.         +
  <b>Water</b>, <b>water</b>
 (1 row)
 
@@ -597,9 +597,9 @@ S. T. Coleridge (1772-1834)
 ', to_tsquery('english', 'ocean'));
            ts_headline            
 ----------------------------------
- <b>Ocean</b>.
- Water, water, every where
-   And all the boards did shrink;
+ <b>Ocean</b>.                   +
+ Water, water, every where       +
+   And all the boards did shrink;+
  Water, water, every where
 (1 row)
 
@@ -618,17 +618,17 @@ ff-bg
 to_tsquery('english', 'sea&foo'), 'HighlightAll=true');
                                  ts_headline                                 
 -----------------------------------------------------------------------------
- 
- <html>
- <!-- some comment -->
- <body>
- <b>Sea</b> view wow <u><b>foo</b> bar</u> <i>qq</i>
- <a href="http://www.google.com/foo.bar.html" target="_blank">YES &nbsp;</a>
- ff-bg
- <script>
-        document.write(15);
- </script>
- </body>
+                                                                            +
+ <html>                                                                     +
+ <!-- some comment -->                                                      +
+ <body>                                                                     +
+ <b>Sea</b> view wow <u><b>foo</b> bar</u> <i>qq</i>                        +
+ <a href="http://www.google.com/foo.bar.html" target="_blank">YES &nbsp;</a>+
+ ff-bg                                                                      +
+ <script>                                                                   +
+        document.write(15);                                                 +
+ </script>                                                                  +
+ </body>                                                                    +
  </html>
 (1 row)
 
@@ -646,13 +646,13 @@ S. T. Coleridge (1772-1834)
 ', to_tsquery('english', 'ocean'), 'MaxFragments=1');
             ts_headline             
 ------------------------------------
- after day,
-   We stuck, nor breath nor motion,
- As idle as a painted Ship
-   Upon a painted <b>Ocean</b>.
- Water, water, every where
-   And all the boards did shrink;
- Water, water, every where,
+ after day,                        +
+   We stuck, nor breath nor motion,+
+ As idle as a painted Ship         +
+   Upon a painted <b>Ocean</b>.    +
+ Water, water, every where         +
+   And all the boards did shrink;  +
+ Water, water, every where,        +
    Nor any drop
 (1 row)
 
@@ -670,13 +670,13 @@ S. T. Coleridge (1772-1834)
 ', to_tsquery('english', 'Coleridge & stuck'), 'MaxFragments=2');
                  ts_headline                  
 ----------------------------------------------
- after day, day after day,
-   We <b>stuck</b>, nor breath nor motion,
- As idle as a painted Ship
-   Upon a painted Ocean.
- Water, water, every where
-   And all the boards did shrink;
- Water, water, every where ... drop to drink.
+ after day, day after day,                   +
+   We <b>stuck</b>, nor breath nor motion,   +
+ As idle as a painted Ship                   +
+   Upon a painted Ocean.                     +
+ Water, water, every where                   +
+   And all the boards did shrink;            +
+ Water, water, every where ... drop to drink.+
  S. T. <b>Coleridge</b>
 (1 row)
 
@@ -694,9 +694,9 @@ S. T. Coleridge (1772-1834)
 ', to_tsquery('english', 'ocean & seahorse'), 'MaxFragments=1');
             ts_headline             
 ------------------------------------
- 
- Day after day, day after day,
-   We stuck, nor breath nor motion,
+                                   +
+ Day after day, day after day,     +
+   We stuck, nor breath nor motion,+
  As idle as
 (1 row)
 
@@ -714,13 +714,13 @@ S. T. Coleridge (1772-1834)
 ', to_tsquery('english', 'Coleridge & stuck'), 'MaxFragments=2,FragmentDelimiter=***');
                 ts_headline                 
 --------------------------------------------
- after day, day after day,
-   We <b>stuck</b>, nor breath nor motion,
- As idle as a painted Ship
-   Upon a painted Ocean.
- Water, water, every where
-   And all the boards did shrink;
- Water, water, every where***drop to drink.
+ after day, day after day,                 +
+   We <b>stuck</b>, nor breath nor motion, +
+ As idle as a painted Ship                 +
+   Upon a painted Ocean.                   +
+ Water, water, every where                 +
+   And all the boards did shrink;          +
+ Water, water, every where***drop to drink.+
  S. T. <b>Coleridge</b>
 (1 row)
 

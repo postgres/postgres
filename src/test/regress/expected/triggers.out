@@ -377,10 +377,10 @@ SELECT * FROM main_table ORDER BY a, b;
 SELECT pg_get_triggerdef(oid, true) FROM pg_trigger WHERE tgrelid = 'main_table'::regclass AND tgname = 'modified_a';
                 pg_get_triggerdef                 
 --------------------------------------------------
- CREATE TRIGGER modified_a
-     BEFORE UPDATE OF a ON main_table
-     FOR EACH ROW
-     WHEN (old.a <> new.a)
+ CREATE TRIGGER modified_a                       +
+     BEFORE UPDATE OF a ON main_table            +
+     FOR EACH ROW                                +
+     WHEN (old.a <> new.a)                       +
      EXECUTE PROCEDURE trigger_func('modified_a')
 (1 row)
 
@@ -393,10 +393,10 @@ SELECT pg_get_triggerdef(oid, false) FROM pg_trigger WHERE tgrelid = 'main_table
 SELECT pg_get_triggerdef(oid, true) FROM pg_trigger WHERE tgrelid = 'main_table'::regclass AND tgname = 'modified_any';
                  pg_get_triggerdef                  
 ----------------------------------------------------
- CREATE TRIGGER modified_any
-     BEFORE UPDATE OF a ON main_table
-     FOR EACH ROW
-     WHEN (old.* IS DISTINCT FROM new.*)
+ CREATE TRIGGER modified_any                       +
+     BEFORE UPDATE OF a ON main_table              +
+     FOR EACH ROW                                  +
+     WHEN (old.* IS DISTINCT FROM new.*)           +
      EXECUTE PROCEDURE trigger_func('modified_any')
 (1 row)
 
@@ -427,9 +427,9 @@ SELECT pg_get_triggerdef(oid) FROM pg_trigger WHERE tgrelid = 'main_table'::regc
 SELECT pg_get_triggerdef(oid, true) FROM pg_trigger WHERE tgrelid = 'main_table'::regclass AND tgname = 'after_upd_a_b_row_trig';
                     pg_get_triggerdef                    
 ---------------------------------------------------------
- CREATE TRIGGER after_upd_a_b_row_trig
-     AFTER UPDATE OF a, b ON main_table
-     FOR EACH ROW
+ CREATE TRIGGER after_upd_a_b_row_trig                  +
+     AFTER UPDATE OF a, b ON main_table                 +
+     FOR EACH ROW                                       +
      EXECUTE PROCEDURE trigger_func('after_upd_a_b_row')
 (1 row)
 
