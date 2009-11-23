@@ -42,7 +42,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/multixact.c,v 1.22 2006/11/17 18:00:15 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/multixact.c,v 1.22.2.1 2009/11/23 09:59:11 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,6 +51,8 @@
 #include "access/multixact.h"
 #include "access/slru.h"
 #include "access/transam.h"
+#include "access/twophase.h"
+#include "access/twophase_rmgr.h"
 #include "access/xact.h"
 #include "miscadmin.h"
 #include "storage/backendid.h"
@@ -117,8 +119,11 @@ typedef struct MultiXactStateData
 	/*
 	 * Per-backend data starts here.  We have two arrays stored in the area
 	 * immediately following the MultiXactStateData struct. Each is indexed by
-	 * BackendId.  (Note: valid BackendIds run from 1 to MaxBackends; element
-	 * zero of each array is never used.)
+	 * BackendId.
+	 *
+	 * In both arrays, there's a slot for all normal backends (1..MaxBackends)
+	 * followed by a slot for max_prepared_xacts prepared transactions. Valid
+	 * BackendIds start from 1; element zero of each array is never used.
 	 *
 	 * OldestMemberMXactId[k] is the oldest MultiXactId each backend's current
 	 * transaction(s) could possibly be a member of, or InvalidMultiXactId
@@ -150,6 +155,12 @@ typedef struct MultiXactStateData
 	 */
 	MultiXactId perBackendXactIds[1];	/* VARIABLE LENGTH ARRAY */
 } MultiXactStateData;
+
+/*
+ * Last element of OldestMemberMXactID and OldestVisibleMXactId arrays.
+ * Valid elements are (1..MaxOldestSlot); element 0 is never used.
+ */
+#define MaxOldestSlot	(MaxBackends + max_prepared_xacts)
 
 /* Pointers to the state data in shared memory */
 static MultiXactStateData *MultiXactState;
@@ -538,7 +549,7 @@ MultiXactIdSetOldestVisible(void)
 		if (oldestMXact < FirstMultiXactId)
 			oldestMXact = FirstMultiXactId;
 
-		for (i = 1; i <= MaxBackends; i++)
+		for (i = 1; i <= MaxOldestSlot; i++)
 		{
 			MultiXactId thisoldest = OldestMemberMXactId[i];
 
@@ -1275,6 +1286,119 @@ AtEOXact_MultiXact(void)
 }
 
 /*
+ * AtPrepare_MultiXact
+ *		Save multixact state at 2PC tranasction prepare
+ *
+ * In this phase, we only store our OldestMemberMXactId value in the two-phase
+ * state file.
+ */
+void
+AtPrepare_MultiXact(void)
+{
+	MultiXactId myOldestMember = OldestMemberMXactId[MyBackendId];
+
+	if (MultiXactIdIsValid(myOldestMember))
+		RegisterTwoPhaseRecord(TWOPHASE_RM_MULTIXACT_ID, 0,
+							   &myOldestMember, sizeof(MultiXactId));
+}
+
+/*
+ * PostPrepare_MultiXact
+ *		Clean up after successful PREPARE TRANSACTION
+ */
+void
+PostPrepare_MultiXact(TransactionId xid)
+{
+	MultiXactId myOldestMember;
+
+	/*
+	 * Transfer our OldestMemberMXactId value to the slot reserved for the
+	 * prepared transaction.
+	 */
+	myOldestMember = OldestMemberMXactId[MyBackendId];
+	if (MultiXactIdIsValid(myOldestMember))
+	{
+		BackendId dummyBackendId = TwoPhaseGetDummyBackendId(xid);
+
+		/*
+		 * Even though storing MultiXactId is atomic, acquire lock to make sure
+		 * others see both changes, not just the reset of the slot of the
+		 * current backend. Using a volatile pointer might suffice, but this
+		 * isn't a hot spot.
+		 */
+		LWLockAcquire(MultiXactGenLock, LW_EXCLUSIVE);
+
+		OldestMemberMXactId[dummyBackendId] = myOldestMember;
+		OldestMemberMXactId[MyBackendId] = InvalidMultiXactId;
+
+		LWLockRelease(MultiXactGenLock);
+	}
+
+	/*
+	 * We don't need to transfer OldestVisibleMXactId value, because the
+	 * transaction is not going to be looking at any more multixacts once
+	 * it's prepared.
+	 *
+	 * We assume that storing a MultiXactId is atomic and so we need not take
+	 * MultiXactGenLock to do this.
+	 */
+	OldestVisibleMXactId[MyBackendId] = InvalidMultiXactId;
+
+	/*
+	 * Discard the local MultiXactId cache like in AtEOX_MultiXact
+	 */
+	MXactContext = NULL;
+	MXactCache = NULL;
+}
+
+/*
+ * multixact_twophase_recover
+ *		Recover the state of a prepared transaction at startup
+ */
+void
+multixact_twophase_recover(TransactionId xid, uint16 info,
+						   void *recdata, uint32 len)
+{
+	BackendId	dummyBackendId = TwoPhaseGetDummyBackendId(xid);
+	MultiXactId	oldestMember;
+
+	/*
+	 * Get the oldest member XID from the state file record, and set it in
+	 * the OldestMemberMXactId slot reserved for this prepared transaction.
+	 */
+	Assert(len == sizeof(MultiXactId));
+	oldestMember = *((MultiXactId *)recdata);
+
+	OldestMemberMXactId[dummyBackendId] = oldestMember;
+}
+
+/*
+ * multixact_twophase_postcommit
+ *		Similar to AtEOX_MultiXact but for COMMIT PREPARED
+ */
+void
+multixact_twophase_postcommit(TransactionId xid, uint16 info,
+							  void *recdata, uint32 len)
+{
+	BackendId	dummyBackendId = TwoPhaseGetDummyBackendId(xid);
+
+	Assert(len == sizeof(MultiXactId));
+
+	OldestMemberMXactId[dummyBackendId] = InvalidMultiXactId;
+}
+
+/*
+ * multixact_twophase_postabort
+ *		This is actually just the same as the COMMIT case.
+ */
+void
+multixact_twophase_postabort(TransactionId xid, uint16 info,
+						void *recdata, uint32 len)
+{
+	multixact_twophase_postcommit(xid, info, recdata, len);
+}
+
+/*
  * Initialization of shared memory for MultiXact.  We use two SLRU areas,
  * thus double memory.	Also, reserve space for the shared MultiXactState
  * struct and the per-backend MultiXactId arrays (two of those, too).
@@ -1286,7 +1410,7 @@ MultiXactShmemSize(void)
 
 #define SHARED_MULTIXACT_STATE_SIZE \
 	add_size(sizeof(MultiXactStateData), \
-			 mul_size(sizeof(MultiXactId) * 2, MaxBackends))
+			 mul_size(sizeof(MultiXactId) * 2, MaxOldestSlot))
 
 	size = SHARED_MULTIXACT_STATE_SIZE;
 	size = add_size(size, SimpleLruShmemSize(NUM_MXACTOFFSET_BUFFERS));
@@ -1328,10 +1452,10 @@ MultiXactShmemInit(void)
 
 	/*
 	 * Set up array pointers.  Note that perBackendXactIds[0] is wasted space
-	 * since we only use indexes 1..MaxBackends in each array.
+	 * since we only use indexes 1..MaxOldestSlot in each array.
 	 */
 	OldestMemberMXactId = MultiXactState->perBackendXactIds;
-	OldestVisibleMXactId = OldestMemberMXactId + MaxBackends;
+	OldestVisibleMXactId = OldestMemberMXactId + MaxOldestSlot;
 }
 
 /*
@@ -1695,7 +1819,7 @@ TruncateMultiXact(void)
 		nextMXact = FirstMultiXactId;
 
 	oldestMXact = nextMXact;
-	for (i = 1; i <= MaxBackends; i++)
+	for (i = 1; i <= MaxOldestSlot; i++)
 	{
 		MultiXactId thisoldest;
 

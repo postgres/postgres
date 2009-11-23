@@ -8,12 +8,13 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/twophase_rmgr.c,v 1.3 2006/03/05 15:58:22 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/twophase_rmgr.c,v 1.3.2.1 2009/11/23 09:59:11 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
+#include "access/multixact.h"
 #include "access/twophase_rmgr.h"
 #include "commands/async.h"
 #include "storage/lock.h"
@@ -27,7 +28,8 @@ const TwoPhaseCallback twophase_recover_callbacks[TWOPHASE_RM_MAX_ID + 1] =
 	lock_twophase_recover,		/* Lock */
 	NULL,						/* Inval */
 	NULL,						/* flat file update */
-	NULL						/* notify/listen */
+	NULL,						/* notify/listen */
+	multixact_twophase_recover	/* MultiXact */
 };
 
 const TwoPhaseCallback twophase_postcommit_callbacks[TWOPHASE_RM_MAX_ID + 1] =
@@ -36,8 +38,9 @@ const TwoPhaseCallback twophase_postcommit_callbacks[TWOPHASE_RM_MAX_ID + 1] =
 	lock_twophase_postcommit,	/* Lock */
 	inval_twophase_postcommit,	/* Inval */
 	flatfile_twophase_postcommit,		/* flat file update */
-	notify_twophase_postcommit	/* notify/listen */
-};
+	notify_twophase_postcommit,	/* notify/listen */
+	multixact_twophase_postcommit /* MultiXact */
+ };
 
 const TwoPhaseCallback twophase_postabort_callbacks[TWOPHASE_RM_MAX_ID + 1] =
 {
@@ -45,5 +48,6 @@ const TwoPhaseCallback twophase_postabort_callbacks[TWOPHASE_RM_MAX_ID + 1] =
 	lock_twophase_postabort,	/* Lock */
 	NULL,						/* Inval */
 	NULL,						/* flat file update */
-	NULL						/* notify/listen */
+	NULL,						/* notify/listen */
+ 	multixact_twophase_postabort /* MultiXact */
 };

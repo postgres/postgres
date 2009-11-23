@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/backend/access/transam/twophase.c,v 1.25.2.2 2008/05/19 18:17:03 heikki Exp $
+ *		$PostgreSQL: pgsql/src/backend/access/transam/twophase.c,v 1.25.2.3 2009/11/23 09:59:11 heikki Exp $
  *
  * NOTES
  *		Each global transaction is associated with a global transaction
@@ -106,6 +106,7 @@ int			max_prepared_xacts = 5;
 typedef struct GlobalTransactionData
 {
 	PGPROC		proc;			/* dummy proc */
+	BackendId	dummyBackendId;	/* similar to backend id for backends */
 	TimestampTz prepared_at;	/* time of preparation */
 	XLogRecPtr	prepare_lsn;	/* XLOG offset of prepare record */
 	Oid			owner;			/* ID of user that executed the xact */
@@ -197,6 +198,20 @@ TwoPhaseShmemInit(void)
 		{
 			gxacts[i].proc.links.next = TwoPhaseState->freeGXacts;
 			TwoPhaseState->freeGXacts = MAKE_OFFSET(&gxacts[i]);
+
+			/*
+			 * Assign a unique ID for each dummy proc, so that the range of
+			 * dummy backend IDs immediately follows the range of normal
+			 * backend IDs. We don't dare to assign a real backend ID to
+			 * dummy procs, because prepared transactions don't take part in
+			 * cache invalidation like a real backend ID would imply, but
+			 * having a unique ID for them is nevertheless handy. This
+			 * arrangement allows you to allocate an array of size
+			 * (MaxBackends + max_prepared_xacts + 1), and have a slot for
+			 * every backend and prepared transaction. Currently multixact.c
+			 * uses that technique.
+			 */
+			gxacts[i].dummyBackendId = MaxBackends + 1 + i;
 		}
 	}
 	else
@@ -631,6 +646,22 @@ pg_prepared_xact(PG_FUNCTION_ARGS)
 	}
 
 	SRF_RETURN_DONE(funcctx);
+}
+
+/*
+ * TwoPhaseGetDummyProc
+ *		Get the dummy backend ID for prepared transaction specified by XID
+ *
+ * Dummy backend IDs are similar to real backend IDs of real backends.
+ * They start at MaxBackends + 1, and are unique across all currently active
+ * real backends and prepared transactions.
+ */
+BackendId
+TwoPhaseGetDummyBackendId(TransactionId xid)
+{
+	PGPROC *proc = TwoPhaseGetDummyProc(xid);
+
+	return ((GlobalTransaction) proc)->dummyBackendId;
 }
 
 /*
