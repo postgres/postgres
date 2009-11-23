@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.215.2.4 2008/01/03 21:24:26 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.215.2.5 2009/11/23 09:59:21 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1710,6 +1710,7 @@ PrepareTransaction(void)
 	AtPrepare_UpdateFlatFiles();
 	AtPrepare_Inval();
 	AtPrepare_Locks();
+	AtPrepare_MultiXact();
 
 	/*
 	 * Here is where we really truly prepare.
@@ -1770,7 +1771,7 @@ PrepareTransaction(void)
 
 	PostPrepare_smgr();
 
-	AtEOXact_MultiXact();
+	PostPrepare_MultiXact(xid);
 
 	PostPrepare_Locks(xid);
 
