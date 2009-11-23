@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/trigger.sgml,v 1.60 2009/11/20 20:38:09 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/trigger.sgml,v 1.61 2009/11/23 21:41:20 petere Exp $ -->
 
  <chapter id="triggers">
   <title>Triggers</title>
@@ -595,6 +595,10 @@ CREATE TABLE ttest (
 #include "postgres.h"
 #include "executor/spi.h"       /* this is what you need to work with SPI */
 #include "commands/trigger.h"   /* ... and triggers */
+
+#ifdef PG_MODULE_MAGIC
+PG_MODULE_MAGIC;
+#endif
 
 extern Datum trigf(PG_FUNCTION_ARGS);
 

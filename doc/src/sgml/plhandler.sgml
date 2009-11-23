@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/plhandler.sgml,v 1.8 2009/10/08 04:41:07 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/plhandler.sgml,v 1.9 2009/11/23 21:41:20 petere Exp $ -->
 
  <chapter id="plhandler">
    <title>Writing A Procedural Language Handler</title>
@@ -105,6 +105,10 @@
 #include "utils/syscache.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
+
+#ifdef PG_MODULE_MAGIC
+PG_MODULE_MAGIC;
+#endif
 
 PG_FUNCTION_INFO_V1(plsample_call_handler);
 

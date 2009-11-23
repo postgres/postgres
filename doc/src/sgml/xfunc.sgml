@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.140 2009/10/08 02:39:16 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.141 2009/11/23 21:41:20 petere Exp $ -->
 
  <sect1 id="xfunc">
   <title>User-Defined Functions</title>
@@ -1925,6 +1925,11 @@ memcpy(destination->data, buffer, 40);
 <programlisting><![CDATA[
 #include "postgres.h"
 #include <string.h>
+#include "utils/geo_decls.h"
+
+#ifdef PG_MODULE_MAGIC
+PG_MODULE_MAGIC;
+#endif
 
 /* by value */
 
@@ -2099,6 +2104,11 @@ PG_FUNCTION_INFO_V1(funcname);
 #include "postgres.h"
 #include <string.h>
 #include "fmgr.h"
+#include "utils/geo_decls.h"
+
+#ifdef PG_MODULE_MAGIC
+PG_MODULE_MAGIC;
+#endif
 
 /* by value */
 
@@ -2638,6 +2648,10 @@ SELECT name, c_overpaid(emp, 1500) AS overpaid
 #include "postgres.h"
 #include "executor/executor.h"  /* for GetAttributeByName() */
 
+#ifdef PG_MODULE_MAGIC
+PG_MODULE_MAGIC;
+#endif
+
 bool
 c_overpaid(HeapTupleHeader t, /* the current row of emp */
            int32 limit)
@@ -2658,6 +2672,10 @@ c_overpaid(HeapTupleHeader t, /* the current row of emp */
 <programlisting><![CDATA[
 #include "postgres.h"
 #include "executor/executor.h"  /* for GetAttributeByName() */
+
+#ifdef PG_MODULE_MAGIC
+PG_MODULE_MAGIC;
+#endif
 
 PG_FUNCTION_INFO_V1(c_overpaid);
 
