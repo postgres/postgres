@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/twophase.h,v 1.11 2009/01/01 17:23:56 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/access/twophase.h,v 1.12 2009/11/23 09:58:36 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,6 +15,7 @@
 #define TWOPHASE_H
 
 #include "access/xlogdefs.h"
+#include "storage/backendid.h"
 #include "storage/proc.h"
 #include "utils/timestamp.h"
 
@@ -31,6 +32,7 @@ extern Size TwoPhaseShmemSize(void);
 extern void TwoPhaseShmemInit(void);
 
 extern PGPROC *TwoPhaseGetDummyProc(TransactionId xid);
+extern BackendId TwoPhaseGetDummyBackendId(TransactionId xid);
 
 extern GlobalTransaction MarkAsPreparing(TransactionId xid, const char *gid,
 				TimestampTz prepared_at,

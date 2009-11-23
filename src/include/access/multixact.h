@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/multixact.h,v 1.14 2009/01/01 17:23:56 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/access/multixact.h,v 1.15 2009/11/23 09:58:36 heikki Exp $
  */
 #ifndef MULTIXACT_H
 #define MULTIXACT_H
@@ -52,6 +52,8 @@ extern void MultiXactIdSetOldestMember(void);
 extern int	GetMultiXactIdMembers(MultiXactId multi, TransactionId **xids);
 
 extern void AtEOXact_MultiXact(void);
+extern void AtPrepare_MultiXact(void);
+extern void PostPrepare_MultiXact(TransactionId xid);
 
 extern Size MultiXactShmemSize(void);
 extern void MultiXactShmemInit(void);
@@ -66,6 +68,13 @@ extern void MultiXactSetNextMXact(MultiXactId nextMulti,
 					  MultiXactOffset nextMultiOffset);
 extern void MultiXactAdvanceNextMXact(MultiXactId minMulti,
 						  MultiXactOffset minMultiOffset);
+
+extern void multixact_twophase_recover(TransactionId xid, uint16 info,
+						   void *recdata, uint32 len);
+extern void multixact_twophase_postcommit(TransactionId xid, uint16 info,
+							  void *recdata, uint32 len);
+extern void multixact_twophase_postabort(TransactionId xid, uint16 info,
+							 void *recdata, uint32 len);
 
 extern void multixact_redo(XLogRecPtr lsn, XLogRecord *record);
 extern void multixact_desc(StringInfo buf, uint8 xl_info, char *rec);
