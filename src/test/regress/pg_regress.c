@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/test/regress/pg_regress.c,v 1.66 2009/11/22 17:54:23 tgl Exp $
+ * $PostgreSQL: pgsql/src/test/regress/pg_regress.c,v 1.67 2009/11/23 16:02:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -65,9 +65,18 @@ static char *makeprog = MAKEPROG;
 static char *shellprog = SHELLPROG;
 #endif
 
-/* currently we can use the same diff switches on all platforms */
+/*
+ * On Windows we use -w in diff switches to avoid problems with inconsistent
+ * newline representation.  The actual result files will generally have
+ * Windows-style newlines, but the comparison files might or might not.
+ */
+#ifndef WIN32
 const char *basic_diff_opts = "";
 const char *pretty_diff_opts = "-C3";
+#else
+const char *basic_diff_opts = "-w";
+const char *pretty_diff_opts = "-w -C3";
+#endif
 
 /* options settable from command line */
 _stringlist *dblist = NULL;

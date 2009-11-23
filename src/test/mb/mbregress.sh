@@ -1,5 +1,5 @@
 #! /bin/sh
-# $PostgreSQL: pgsql/src/test/mb/mbregress.sh,v 1.10 2009/05/06 16:15:21 tgl Exp $
+# $PostgreSQL: pgsql/src/test/mb/mbregress.sh,v 1.11 2009/11/23 16:02:24 tgl Exp $
 
 if echo '\c' | grep -s c >/dev/null 2>&1
 then
@@ -49,7 +49,7 @@ do
   
 	if [ `diff ${EXPECTED} results/${i}.out | wc -l` -ne 0 ]
 	then
-		( diff -wC3 ${EXPECTED} results/${i}.out; \
+		( diff -C3 ${EXPECTED} results/${i}.out; \
 		echo "";  \
 		echo "----------------------"; \
 		echo "" ) >> regression.diffs
