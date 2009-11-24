@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.491 2009/10/21 20:38:58 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.492 2009/11/24 19:21:15 petere Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -5274,9 +5274,9 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
      <listitem>
       <para>
         <function>to_char(..., 'ID')</function>'s day of the week numbering
-        matches the <function>extract('isodow', ...)</function> function, but
+        matches the <function>extract(isodow from ...)</function> function, but
         <function>to_char(..., 'D')</function>'s does not match
-        <function>extract('dow', ...)</function>'s day numbering.
+        <function>extract(dow from ...)</function>'s day numbering.
       </para>
      </listitem>
 
