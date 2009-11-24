@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/misc.c,v 1.52 2009/09/18 13:13:32 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/misc.c,v 1.53 2009/11/24 16:30:31 meskes Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -364,10 +364,11 @@ ECPGset_noind_null(enum ECPGttype type, void *ptr)
 static bool
 _check(unsigned char *ptr, int length)
 {
-	for (; length > 0 && ptr[--length] == 0xff;);
-	if (length <= 0)
-		return true;
-	return false;
+	for (length--; length >= 0; length--)
+		if (ptr[length] != 0xff)
+			return false;
+
+	return true;
 }
 
 bool
