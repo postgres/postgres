@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release-8.5.sgml,v 1.6 2009/10/21 19:43:06 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release-8.5.sgml,v 1.7 2009/11/25 20:26:31 tgl Exp $ -->
 
 <sect1 id="release-8-5">
   <title>Release 8.5alpha2</title>
@@ -410,8 +410,7 @@
          <emphasis>Add &quot;pset linestyle ascii/unicode&quot; option to psql,
          allowing our traditional ASCII-art style of table output to
          be upgraded to use Unicode box drawing characters if
-         desired. By default, psql will use the Unicode characters
-         whenever client_encoding is UTF8.</>
+         desired.
         </para>
        </listitem>
         <listitem>

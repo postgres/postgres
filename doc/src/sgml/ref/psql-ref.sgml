@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.234 2009/11/22 22:06:30 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.235 2009/11/25 20:26:30 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -1785,6 +1785,7 @@ lo_import 152801
           or <literal>unicode</literal>.
           Unique abbreviations are allowed.  (That would mean one
           letter is enough.)
+          The default setting is <literal>ascii</>.
           This option only affects the <literal>aligned</> and
           <literal>wrapped</> output formats.
           </para>
@@ -1825,12 +1826,6 @@ lo_import 152801
           with which the border lines are drawn.
           Plain <acronym>ASCII</acronym> characters work everywhere, but
           Unicode characters look nicer on displays that recognize them.
-          </para>
-
-          <para>
-          If this option has not been set, the default behavior is to use
-          <literal>unicode</literal> style if the client character set encoding
-          is UTF-8, otherwise <literal>ascii</literal> style.
           </para>
           </listitem>
           </varlistentry>

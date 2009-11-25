@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2009, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/mbprint.c,v 1.36 2009/10/13 21:04:01 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/mbprint.c,v 1.37 2009/11/25 20:26:31 tgl Exp $
  *
  * XXX this file does not really belong in psql/.  Perhaps move to libpq?
  * It also seems that the mbvalidate function is redundant with existing
@@ -30,7 +30,7 @@
 
 typedef unsigned int pg_wchar;
 
-int
+static int
 pg_get_utf8_id(void)
 {
 	static int	utf8_id = -1;
