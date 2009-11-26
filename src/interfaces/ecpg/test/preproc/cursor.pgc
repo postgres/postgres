@@ -1,0 +1,245 @@
+#include <stdlib.h>
+#include <string.h>
+
+exec sql include ../regression;
+
+exec sql whenever sqlerror stop;
+
+exec sql type c is char reference;
+typedef char* c;
+
+exec sql type ind is union { int integer; short smallint; };
+typedef union { int integer; short smallint; } ind;
+
+#define BUFFERSIZ 8
+exec sql type str is varchar[BUFFERSIZ];
+
+#define CURNAME "mycur"
+
+int
+main (void)
+{
+exec sql begin declare section;
+	char	*stmt1 = "SELECT id, t FROM t1";
+	char	*curname1 = CURNAME;
+	char	*curname2 = CURNAME;
+	char	*curname3 = CURNAME;
+	varchar	curname4[50];
+	int	count;
+	int	id;
+	char	t[64];
+exec sql end declare section;
+
+	char msg[128];
+
+	ECPGdebug(1, stderr);
+
+	strcpy(msg, "connect");
+	exec sql connect to REGRESSDB1;
+
+	strcpy(msg, "set");
+	exec sql set datestyle to iso;
+
+	strcpy(msg, "create");
+	exec sql create table t1(id serial primary key, t text);
+
+	strcpy(msg, "insert");
+	exec sql insert into t1(id, t) values (default, 'a');
+	exec sql insert into t1(id, t) values (default, 'b');
+	exec sql insert into t1(id, t) values (default, 'c');
+	exec sql insert into t1(id, t) values (default, 'd');
+
+	strcpy(msg, "commit");
+	exec sql commit;
+
+	/* Dynamic cursorname test with INTO list in FETCH stmts */
+
+	strcpy(msg, "declare");
+	exec sql declare :curname1 cursor for
+		select id, t from t1;
+
+	strcpy(msg, "open");
+	exec sql open :curname1;
+
+	strcpy(msg, "fetch from");
+	exec sql fetch forward from :curname1 into :id, :t;
+	printf("%d %s\n", id, t);
+
+	strcpy(msg, "fetch");
+	exec sql fetch forward :curname1 into :id, :t;
+	printf("%d %s\n", id, t);
+
+	strcpy(msg, "fetch 1 from");
+	exec sql fetch 1 from :curname1 into :id, :t;
+	printf("%d %s\n", id, t);
+
+	strcpy(msg, "fetch :count from");
+	count = 1;
+	exec sql fetch :count from :curname1 into :id, :t;
+	printf("%d %s\n", id, t);
+
+	strcpy(msg, "move in");
+	exec sql move absolute 0 in :curname1;
+
+	strcpy(msg, "fetch 1");
+	exec sql fetch 1 :curname1 into :id, :t;
+	printf("%d %s\n", id, t);
+
+	strcpy(msg, "fetch :count");
+	count = 1;
+	exec sql fetch :count :curname1 into :id, :t;
+	printf("%d %s\n", id, t);
+
+	strcpy(msg, "close");
+	exec sql close :curname1;
+
+	/* Dynamic cursorname test with INTO list in DECLARE stmt */
+
+	strcpy(msg, "declare");
+	exec sql declare :curname2 cursor for
+		select id, t into :id, :t from t1;
+
+	strcpy(msg, "open");
+	exec sql open :curname2;
+
+	strcpy(msg, "fetch from");
+	exec sql fetch from :curname2;
+	printf("%d %s\n", id, t);
+
+	strcpy(msg, "fetch");
+	exec sql fetch :curname2;
+	printf("%d %s\n", id, t);
+
+	strcpy(msg, "fetch 1 from");
+	exec sql fetch 1 from :curname2;
+	printf("%d %s\n", id, t);
+
+	strcpy(msg, "fetch :count from");
+	count = 1;
+	exec sql fetch :count from :curname2;
+	printf("%d %s\n", id, t);
+
+	strcpy(msg, "move");
+	exec sql move absolute 0 :curname2;
+
+	strcpy(msg, "fetch 1");
+	exec sql fetch 1 :curname2;
+	printf("%d %s\n", id, t);
+
+	strcpy(msg, "fetch :count");
+	count = 1;
+	exec sql fetch :count :curname2;
+	printf("%d %s\n", id, t);
+
+	strcpy(msg, "close");
+	exec sql close :curname2;
+
+	/* Dynamic cursorname test with PREPARED stmt */
+
+	strcpy(msg, "prepare");
+	exec sql prepare st_id1 from :stmt1;
+
+	strcpy(msg, "declare");
+	exec sql declare :curname3 cursor for st_id1;
+
+	strcpy(msg, "open");
+	exec sql open :curname3;
+
+	strcpy(msg, "fetch from");
+	exec sql fetch from :curname3 into :id, :t;
+	printf("%d %s\n", id, t);
+
+	strcpy(msg, "fetch");
+	exec sql fetch :curname3 into :id, :t;
+	printf("%d %s\n", id, t);
+
+	strcpy(msg, "fetch 1 from");
+	exec sql fetch 1 from :curname3 into :id, :t;
+	printf("%d %s\n", id, t);
+
+	strcpy(msg, "fetch :count from");
+	count = 1;
+	exec sql fetch :count from :curname3 into :id, :t;
+	printf("%d %s\n", id, t);
+
+	strcpy(msg, "move");
+	exec sql move absolute 0 :curname3;
+
+	strcpy(msg, "fetch 1");
+	exec sql fetch 1 :curname3 into :id, :t;
+	printf("%d %s\n", id, t);
+
+	strcpy(msg, "fetch :count");
+	count = 1;
+	exec sql fetch :count :curname3 into :id, :t;
+	printf("%d %s\n", id, t);
+
+	strcpy(msg, "close");
+	exec sql close :curname3;
+
+	strcpy(msg, "deallocate prepare");
+	exec sql deallocate prepare st_id1;
+
+	/* Dynamic cursorname test with PREPARED stmt,
+	   cursor name in varchar */
+
+	curname4.len = strlen(CURNAME);
+	strcpy(curname4.arr, CURNAME);
+
+	strcpy(msg, "prepare");
+	exec sql prepare st_id2 from :stmt1;
+
+	strcpy(msg, "declare");
+	exec sql declare :curname4 cursor for st_id2;
+
+	strcpy(msg, "open");
+	exec sql open :curname4;
+
+	strcpy(msg, "fetch from");
+	exec sql fetch from :curname4 into :id, :t;
+	printf("%d %s\n", id, t);
+
+	strcpy(msg, "fetch");
+	exec sql fetch :curname4 into :id, :t;
+	printf("%d %s\n", id, t);
+
+	strcpy(msg, "fetch 1 from");
+	exec sql fetch 1 from :curname4 into :id, :t;
+	printf("%d %s\n", id, t);
+
+	strcpy(msg, "fetch :count from");
+	count = 1;
+	exec sql fetch :count from :curname4 into :id, :t;
+	printf("%d %s\n", id, t);
+
+	strcpy(msg, "move");
+	exec sql move absolute 0 :curname4;
+
+	strcpy(msg, "fetch 1");
+	exec sql fetch 1 :curname4 into :id, :t;
+	printf("%d %s\n", id, t);
+
+	strcpy(msg, "fetch :count");
+	count = 1;
+	exec sql fetch :count :curname4 into :id, :t;
+	printf("%d %s\n", id, t);
+
+	strcpy(msg, "close");
+	exec sql close :curname4;
+
+	strcpy(msg, "deallocate prepare");
+	exec sql deallocate prepare st_id2;
+
+	/* End test */
+
+	strcpy(msg, "drop");
+	exec sql drop table t1;
+
+	strcpy(msg, "commit");
+	exec sql commit;
+
+	strcpy(msg, "disconnect"); 
+	exec sql disconnect;
+
+	return (0);
+}
