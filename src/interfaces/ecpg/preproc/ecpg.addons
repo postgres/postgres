@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.addons,v 1.9 2009/11/26 15:06:47 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.addons,v 1.10 2009/11/26 15:39:26 meskes Exp $ */
 ECPG: stmtClosePortalStmt block
 	{
 		if (INFORMIX_MODE)
@@ -188,14 +188,14 @@ ECPG: stmtViewStmt rule
 
 		output_simple_statement($1);
 	}
-ECPG: CopyStmtCOPYopt_binaryqualified_nameopt_column_listopt_oidscopy_fromcopy_file_namecopy_delimiteropt_withcopy_opt_list addon
+ECPG: CopyStmtCOPYopt_binaryqualified_nameopt_column_listopt_oidscopy_fromcopy_file_namecopy_delimiteropt_withcopy_options addon
 			if (strcmp($6, "to") == 0 && strcmp($7, "stdin") == 0)
 				mmerror(PARSE_ERROR, ET_ERROR, "COPY TO STDIN is not possible");
 			else if (strcmp($6, "from") == 0 && strcmp($7, "stdout") == 0)
 				mmerror(PARSE_ERROR, ET_ERROR, "COPY FROM STDOUT is not possible");
 			else if (strcmp($6, "from") == 0 && strcmp($7, "stdin") == 0)
 				mmerror(PARSE_ERROR, ET_WARNING, "COPY FROM STDIN is not implemented");
-ECPG: CopyStmtCOPYselect_with_parensTOcopy_file_nameopt_withcopy_opt_list addon
+ECPG: CopyStmtCOPYselect_with_parensTOcopy_file_nameopt_withcopy_options addon
 			if (strcmp($4, "stdin") == 0)
 				mmerror(PARSE_ERROR, ET_ERROR, "COPY TO STDIN is not possible");
 ECPG: ConstraintAttributeSpecConstraintDeferrabilitySpecConstraintTimeSpec addon
@@ -453,7 +453,7 @@ ECPG: FetchStmtMOVEfetch_args rule
 		add_additional_variables($4, false);
 		$$ = cat_str(2, make_str("move backward from"), cursor_marker);
 	}
-ECPG: select_limitLIMITselect_limit_value','select_offset_value block
+ECPG: limit_clauseLIMITselect_limit_value','select_offset_value block
         {
                 mmerror(PARSE_ERROR, ET_WARNING, "no longer supported LIMIT #,# syntax passed to server");
                 $$ = cat_str(4, make_str("limit"), $2, make_str(","), $4);
