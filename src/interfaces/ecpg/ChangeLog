@@ -2443,6 +2443,11 @@ Thu, 15 Oct 2009 12:15:31 +0200
 
 	- Made ECPG more robust against applications freeing strings, based on
 	  patch send in by Boszormenyi Zoltan <zb@cybertec.at>.
+
+Thu, 26 Nov 2009 16:39:36 +0100
+
+	- Added dynamic cursor names to ecpg. Almost the whole patch was done by
+	  Boszormenyi Zoltan.
 	- Set ecpg library version to 6.2.
 	- Set compat library version to 3.2.
 	- Set ecpg version to 4.6.
