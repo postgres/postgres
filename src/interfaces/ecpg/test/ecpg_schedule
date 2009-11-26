@@ -16,6 +16,7 @@ test: pgtypeslib/num_test2
 test: preproc/array_of_struct
 test: preproc/autoprep
 test: preproc/comment
+test: preproc/cursor
 test: preproc/define
 test: preproc/init
 test: preproc/strings

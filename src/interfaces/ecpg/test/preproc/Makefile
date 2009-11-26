@@ -7,6 +7,7 @@ include $(top_srcdir)/$(subdir)/../Makefile.regress
 TESTS = array_of_struct array_of_struct.c \
 	autoprep autoprep.c \
 	comment comment.c \
+	cursor cursor.c \
 	define define.c \
 	init init.c \
 	strings strings.c \

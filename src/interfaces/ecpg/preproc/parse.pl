@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/parse.pl,v 1.5 2009/11/21 05:44:05 tgl Exp $
+# $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/parse.pl,v 1.6 2009/11/26 15:06:47 meskes Exp $
 # parser generater for ecpg
 # call with backend parser as stdin
 #
@@ -74,7 +74,8 @@ $replace_line{'reserved_keywordTO'} = 'ignore';
 $replace_line{'reserved_keywordUNION'} = 'ignore';
 
 # some other production rules have to be ignored or replaced
-$replace_line{'fetch_direction'} = 'ignore';
+$replace_line{'fetch_argsFORWARDopt_from_incursor_name'} = 'ignore';
+$replace_line{'fetch_argsBACKWARDopt_from_incursor_name'} = 'ignore';
 $replace_line{"opt_array_boundsopt_array_bounds'['Iconst']'"} = 'ignore';
 $replace_line{'VariableShowStmtSHOWvar_name'} = 'SHOW var_name ecpg_into';
 $replace_line{'VariableShowStmtSHOWTIMEZONE'} = 'SHOW TIME ZONE ecpg_into';

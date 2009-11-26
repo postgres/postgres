@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/variable.c,v 1.50 2009/08/07 10:51:20 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/variable.c,v 1.51 2009/11/26 15:06:47 meskes Exp $ */
 
 #include "postgres_fe.h"
 
@@ -399,6 +399,30 @@ add_variable_to_tail(struct arguments ** list, struct variable * var, struct var
 		p->next = new;
 	else
 		*list = new;
+}
+
+void
+remove_variable_from_list(struct arguments ** list, struct variable * var)
+{
+	struct arguments *p, *prev = NULL;
+	bool found = false;
+
+	for (p = *list; p; p = p->next)
+	{
+		if (p->variable == var)
+		{
+			found = true;
+			break;
+		}
+		prev = p;
+	}
+	if (found)
+	{
+		if (prev)
+			prev->next = p->next;
+		else
+			*list = p->next;
+	}
 }
 
 /* Dump out a list of all the variable on this list.

@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.trailer,v 1.15 2009/11/21 05:44:05 tgl Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.trailer,v 1.16 2009/11/26 15:06:47 meskes Exp $ */
 
 statements: /*EMPTY*/
                 | statements statement
@@ -278,6 +278,7 @@ prepared_name: name             {
 ECPGCursorStmt:  DECLARE cursor_name cursor_options CURSOR opt_hold FOR prepared_name
 		{
 			struct cursor *ptr, *this;
+			char *cursor_marker = $2[0] == ':' ? make_str("$0") : mm_strdup($2);
 			struct variable *thisquery = (struct variable *)mm_alloc(sizeof(struct variable));
 			const char *con = connection ? connection : "NULL";
 
@@ -294,7 +295,7 @@ ECPGCursorStmt:  DECLARE cursor_name cursor_options CURSOR opt_hold FOR prepared
 			this->next = cur;
 			this->name = $2;
 			this->connection = connection;
-			this->command =  cat_str(6, make_str("declare"), mm_strdup($2), $3, make_str("cursor"), $5, make_str("for $1"));
+			this->command =  cat_str(6, make_str("declare"), cursor_marker, $3, make_str("cursor"), $5, make_str("for $1"));
 			this->argsresult = NULL;
 
 			thisquery->type = &ecpg_query;
@@ -304,6 +305,12 @@ ECPGCursorStmt:  DECLARE cursor_name cursor_options CURSOR opt_hold FOR prepared
 			sprintf(thisquery->name, "ECPGprepared_statement(%s, %s, __LINE__)", con, $7);
 
 			this->argsinsert = NULL;
+			if ($2[0] == ':')
+			{
+				struct variable *var = find_variable($2 + 1);
+				remove_variable_from_list(&argsinsert, var);
+				add_variable_to_head(&(this->argsinsert), var, &no_indicator);
+			}
 			add_variable_to_head(&(this->argsinsert), thisquery, &no_indicator);
 
 			cur = this;
@@ -947,7 +954,13 @@ ECPGFree:	SQL_FREE name	{ $$ = $2; }
 /*
  * open is an open cursor, at the moment this has to be removed
  */
-ECPGOpen: SQL_OPEN cursor_name opt_ecpg_using { $$ = $2; };
+ECPGOpen: SQL_OPEN cursor_name opt_ecpg_using
+		{
+			if ($2[0] == ':')
+				remove_variable_from_list(&argsinsert, find_variable($2 + 1));
+			$$ = $2;
+		}
+		;
 
 opt_ecpg_using: /*EMPTY*/	{ $$ = EMPTY; }
 		| ecpg_using		{ $$ = $1; }
@@ -1567,6 +1580,17 @@ civarind: cvariable indicator
 		}
 		;
 
+char_civar: char_variable
+		{
+			char *ptr = strstr($1, ".arr");
+
+			if (ptr) /* varchar, we need the struct name here, not the struct element */
+				*ptr = '\0';
+			add_variable_to_head(&argsinsert, find_variable($1), &no_indicator);
+			$$ = $1;
+		}
+		;
+
 civar: cvariable
 		{
 			add_variable_to_head(&argsinsert, find_variable($1), &no_indicator);
@@ -1780,6 +1804,10 @@ execute_rest: /* EMPTY */	{ $$ = EMPTY; }
 
 ecpg_into: INTO into_list	{ $$ = EMPTY; }
         | into_descriptor	{ $$ = $1; }
+	;
+
+opt_ecpg_into:	/* EMPTY */	{ $$ = EMPTY; }
+	| ecpg_into		{ $$ = $1; }
 	;
 
 %%
