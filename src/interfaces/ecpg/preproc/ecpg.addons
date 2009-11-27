@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.addons,v 1.10 2009/11/26 15:39:26 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.addons,v 1.11 2009/11/27 16:07:22 meskes Exp $ */
 ECPG: stmtClosePortalStmt block
 	{
 		if (INFORMIX_MODE)
@@ -297,7 +297,7 @@ ECPG: DeclareCursorStmtDECLAREcursor_namecursor_optionsCURSORopt_holdFORSelectSt
 	{
 		struct cursor *ptr, *this;
 		char *cursor_marker = $2[0] == ':' ? make_str("$0") : mm_strdup($2);
-		char *comment;
+		char *comment, *c1, *c2;
 
 		for (ptr = cur; ptr != NULL; ptr = ptr->next)
 		{
@@ -317,7 +317,14 @@ ECPG: DeclareCursorStmtDECLAREcursor_namecursor_optionsCURSORopt_holdFORSelectSt
 		argsinsert = argsresult = NULL;
 		cur = this;
 
-		comment = cat_str(3, make_str("/*"), mm_strdup(this->command), make_str("*/"));
+		c1 = mm_strdup(this->command);
+		if ((c2 = strstr(c1, "*/")) != NULL)
+		{
+			/* We put this text into a comment, so we better remove [*][/]. */
+			c2[0] = '.';
+			c2[1] = '.';
+		}
+		comment = cat_str(3, make_str("/*"), c1, make_str("*/"));
 
 		if (INFORMIX_MODE)
 		{
