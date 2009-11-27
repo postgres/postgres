@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1998-2009, PostgreSQL Global Development Group
 #
-# $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/Makefile,v 1.146 2009/09/02 19:14:14 mha Exp $
+# $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/Makefile,v 1.147 2009/11/27 10:00:40 meskes Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -54,6 +54,7 @@ endif
 
 preproc.y: ../../../backend/parser/gram.y parse.pl ecpg.addons ecpg.header ecpg.tokens ecpg.trailer ecpg.type
 	$(PERL) $(srcdir)/parse.pl $(srcdir) < $< > $@ 
+	$(PERL) $(srcdir)/check_rules.pl $(srcdir) $<
 
 ecpg_keywords.o c_keywords.o keywords.o preproc.o parser.o: preproc.h
 
