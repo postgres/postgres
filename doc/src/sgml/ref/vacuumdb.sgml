@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/vacuumdb.sgml,v 1.44 2009/02/26 16:02:37 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/vacuumdb.sgml,v 1.45 2009/11/27 17:41:26 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -159,7 +159,7 @@ PostgreSQL documentation
       <term><option>--analyze</option></term>
       <listitem>
        <para>
-        Calculate statistics for use by the optimizer.
+        Also calculate statistics for use by the optimizer.
        </para>
       </listitem>
      </varlistentry>
