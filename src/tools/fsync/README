@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/tools/fsync/README,v 1.4 2008/03/21 13:23:29 momjian Exp $
+$PostgreSQL: pgsql/src/tools/fsync/README,v 1.5 2009/11/28 15:04:54 momjian Exp $
 
 fsync
 =====
@@ -7,5 +7,5 @@ This program tests fsync.  The tests are described as part of the program output
 
 	Usage:	test_fsync [-f filename] [loops]
 
-Loops defaults to 1000.  The default output file is /var/tmp/test_fsync.out.
+Loops defaults to 5000.  The default output file is /var/tmp/test_fsync.out.
 Consider that /tmp or /var/tmp might be memory-based file systems.
