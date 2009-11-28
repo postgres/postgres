@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/optimizer/paths.h,v 1.108 2009/09/17 20:49:29 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/optimizer/paths.h,v 1.109 2009/11/28 00:46:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -99,8 +99,7 @@ extern void add_paths_to_joinrel(PlannerInfo *root, RelOptInfo *joinrel,
  * joinrels.c
  *	  routines to determine which relations to join
  */
-extern List *join_search_one_level(PlannerInfo *root, int level,
-					  List **joinrels);
+extern void join_search_one_level(PlannerInfo *root, int level);
 extern RelOptInfo *make_join_rel(PlannerInfo *root,
 			  RelOptInfo *rel1, RelOptInfo *rel2);
 extern bool have_join_order_restriction(PlannerInfo *root,

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/relnode.c,v 1.95 2009/10/12 18:10:48 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/relnode.c,v 1.96 2009/11/28 00:46:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -400,6 +400,20 @@ build_join_rel(PlannerInfo *root,
 											   &found);
 		Assert(!found);
 		hentry->join_rel = joinrel;
+	}
+
+	/*
+	 * Also, if dynamic-programming join search is active, add the new joinrel
+	 * to the appropriate sublist.  Note: you might think the Assert on
+	 * number of members should be for equality, but some of the level 1
+	 * rels might have been joinrels already, so we can only assert <=.
+	 */
+	if (root->join_rel_level)
+	{
+		Assert(root->join_cur_level > 0);
+		Assert(root->join_cur_level <= bms_num_members(joinrel->relids));
+		root->join_rel_level[root->join_cur_level] =
+			lappend(root->join_rel_level[root->join_cur_level], joinrel);
 	}
 
 	return joinrel;

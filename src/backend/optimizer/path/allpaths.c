@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/allpaths.c,v 1.190 2009/11/22 14:54:31 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/allpaths.c,v 1.191 2009/11/28 00:46:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -898,9 +898,14 @@ make_rel_from_joinlist(PlannerInfo *root, List *joinlist)
 RelOptInfo *
 standard_join_search(PlannerInfo *root, int levels_needed, List *initial_rels)
 {
-	List	  **joinitems;
 	int			lev;
 	RelOptInfo *rel;
+
+	/*
+	 * This function cannot be invoked recursively within any one planning
+	 * problem, so join_rel_level[] can't be in use already.
+	 */
+	Assert(root->join_rel_level == NULL);
 
 	/*
 	 * We employ a simple "dynamic programming" algorithm: we first find all
@@ -909,30 +914,31 @@ standard_join_search(PlannerInfo *root, int levels_needed, List *initial_rels)
 	 * joins, and so on until we have considered all ways to join all the
 	 * items into one rel.
 	 *
-	 * joinitems[j] is a list of all the j-item rels.  Initially we set
-	 * joinitems[1] to represent all the single-jointree-item relations.
+	 * root->join_rel_level[j] is a list of all the j-item rels.  Initially we
+	 * set root->join_rel_level[1] to represent all the single-jointree-item
+	 * relations.
 	 */
-	joinitems = (List **) palloc0((levels_needed + 1) * sizeof(List *));
+	root->join_rel_level = (List **) palloc0((levels_needed + 1) * sizeof(List *));
 
-	joinitems[1] = initial_rels;
+	root->join_rel_level[1] = initial_rels;
 
 	for (lev = 2; lev <= levels_needed; lev++)
 	{
-		ListCell   *x;
+		ListCell   *lc;
 
 		/*
 		 * Determine all possible pairs of relations to be joined at this
 		 * level, and build paths for making each one from every available
 		 * pair of lower-level relations.
 		 */
-		joinitems[lev] = join_search_one_level(root, lev, joinitems);
+		join_search_one_level(root, lev);
 
 		/*
 		 * Do cleanup work on each just-processed rel.
 		 */
-		foreach(x, joinitems[lev])
+		foreach(lc, root->join_rel_level[lev])
 		{
-			rel = (RelOptInfo *) lfirst(x);
+			rel = (RelOptInfo *) lfirst(lc);
 
 			/* Find and save the cheapest paths for this rel */
 			set_cheapest(rel);
@@ -946,11 +952,13 @@ standard_join_search(PlannerInfo *root, int levels_needed, List *initial_rels)
 	/*
 	 * We should have a single rel at the final level.
 	 */
-	if (joinitems[levels_needed] == NIL)
+	if (root->join_rel_level[levels_needed] == NIL)
 		elog(ERROR, "failed to build any %d-way joins", levels_needed);
-	Assert(list_length(joinitems[levels_needed]) == 1);
+	Assert(list_length(root->join_rel_level[levels_needed]) == 1);
 
-	rel = (RelOptInfo *) linitial(joinitems[levels_needed]);
+	rel = (RelOptInfo *) linitial(root->join_rel_level[levels_needed]);
+
+	root->join_rel_level = NULL;
 
 	return rel;
 }

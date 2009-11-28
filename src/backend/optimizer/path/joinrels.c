@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/joinrels.c,v 1.102 2009/07/23 17:42:06 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/joinrels.c,v 1.103 2009/11/28 00:46:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,10 +19,10 @@
 #include "optimizer/paths.h"
 
 
-static List *make_rels_by_clause_joins(PlannerInfo *root,
+static void make_rels_by_clause_joins(PlannerInfo *root,
 						  RelOptInfo *old_rel,
 						  ListCell *other_rels);
-static List *make_rels_by_clauseless_joins(PlannerInfo *root,
+static void make_rels_by_clauseless_joins(PlannerInfo *root,
 							  RelOptInfo *old_rel,
 							  ListCell *other_rels);
 static bool has_join_restriction(PlannerInfo *root, RelOptInfo *rel);
@@ -40,16 +40,22 @@ static bool restriction_is_constant_false(List *restrictlist);
  *	  combination of lower-level rels are created and returned in a list.
  *	  Implementation paths are created for each such joinrel, too.
  *
- * level: level of rels we want to make this time.
- * joinrels[j], 1 <= j < level, is a list of rels containing j items.
+ * level: level of rels we want to make this time
+ * root->join_rel_level[j], 1 <= j < level, is a list of rels containing j items
+ *
+ * The result is returned in root->join_rel_level[level].
  */
-List *
-join_search_one_level(PlannerInfo *root, int level, List **joinrels)
+void
+join_search_one_level(PlannerInfo *root, int level)
 {
-	List	   *result_rels = NIL;
-	List	   *new_rels;
+	List	  **joinrels = root->join_rel_level;
 	ListCell   *r;
 	int			k;
+
+	Assert(joinrels[level] == NIL);
+
+	/* Set join_cur_level so that new joinrels are added to proper list */
+	root->join_cur_level = level;
 
 	/*
 	 * First, consider left-sided and right-sided plans, in which rels of
@@ -88,9 +94,9 @@ join_search_one_level(PlannerInfo *root, int level, List **joinrels)
 			 *
 			 * See also the last-ditch case below.
 			 */
-			new_rels = make_rels_by_clause_joins(root,
-												 old_rel,
-												 other_rels);
+			make_rels_by_clause_joins(root,
+									  old_rel,
+									  other_rels);
 		}
 		else
 		{
@@ -99,20 +105,10 @@ join_search_one_level(PlannerInfo *root, int level, List **joinrels)
 			 * relation, either directly or by join-order restrictions.
 			 * Cartesian product time.
 			 */
-			new_rels = make_rels_by_clauseless_joins(root,
-													 old_rel,
-													 other_rels);
+			make_rels_by_clauseless_joins(root,
+										  old_rel,
+										  other_rels);
 		}
-
-		/*
-		 * At levels above 2 we will generate the same joined relation in
-		 * multiple ways --- for example (a join b) join c is the same
-		 * RelOptInfo as (b join c) join a, though the second case will add a
-		 * different set of Paths to it.  To avoid making extra work for
-		 * subsequent passes, do not enter the same RelOptInfo into our output
-		 * list multiple times.
-		 */
-		result_rels = list_concat_unique_ptr(result_rels, new_rels);
 	}
 
 	/*
@@ -168,13 +164,7 @@ join_search_one_level(PlannerInfo *root, int level, List **joinrels)
 					if (have_relevant_joinclause(root, old_rel, new_rel) ||
 						have_join_order_restriction(root, old_rel, new_rel))
 					{
-						RelOptInfo *jrel;
-
-						jrel = make_join_rel(root, old_rel, new_rel);
-						/* Avoid making duplicate entries ... */
-						if (jrel)
-							result_rels = list_append_unique_ptr(result_rels,
-																 jrel);
+						(void) make_join_rel(root, old_rel, new_rel);
 					}
 				}
 			}
@@ -193,7 +183,7 @@ join_search_one_level(PlannerInfo *root, int level, List **joinrels)
 	 * choice but to make cartesian joins.	We consider only left-sided and
 	 * right-sided cartesian joins in this case (no bushy).
 	 */
-	if (result_rels == NIL)
+	if (joinrels[level] == NIL)
 	{
 		/*
 		 * This loop is just like the first one, except we always call
@@ -211,11 +201,9 @@ join_search_one_level(PlannerInfo *root, int level, List **joinrels)
 				other_rels = list_head(joinrels[1]);	/* consider all initial
 														 * rels */
 
-			new_rels = make_rels_by_clauseless_joins(root,
-													 old_rel,
-													 other_rels);
-
-			result_rels = list_concat_unique_ptr(result_rels, new_rels);
+			make_rels_by_clauseless_joins(root,
+										  old_rel,
+										  other_rels);
 		}
 
 		/*----------
@@ -235,11 +223,9 @@ join_search_one_level(PlannerInfo *root, int level, List **joinrels)
 		 * never fail, and so the following sanity check is useful.
 		 *----------
 		 */
-		if (result_rels == NIL && root->join_info_list == NIL)
+		if (joinrels[level] == NIL && root->join_info_list == NIL)
 			elog(ERROR, "failed to build any %d-way joins", level);
 	}
-
-	return result_rels;
 }
 
 /*
@@ -247,7 +233,13 @@ join_search_one_level(PlannerInfo *root, int level, List **joinrels)
  *	  Build joins between the given relation 'old_rel' and other relations
  *	  that participate in join clauses that 'old_rel' also participates in
  *	  (or participate in join-order restrictions with it).
- *	  The join rel nodes are returned in a list.
+ *	  The join rels are returned in root->join_rel_level[join_cur_level].
+ *
+ * Note: at levels above 2 we will generate the same joined relation in
+ * multiple ways --- for example (a join b) join c is the same RelOptInfo as
+ * (b join c) join a, though the second case will add a different set of Paths
+ * to it.  This is the reason for using the join_rel_level mechanism, which
+ * automatically ensures that each new joinrel is only added to the list once.
  *
  * 'old_rel' is the relation entry for the relation to be joined
  * 'other_rels': the first cell in a linked list containing the other
@@ -256,12 +248,11 @@ join_search_one_level(PlannerInfo *root, int level, List **joinrels)
  * Currently, this is only used with initial rels in other_rels, but it
  * will work for joining to joinrels too.
  */
-static List *
+static void
 make_rels_by_clause_joins(PlannerInfo *root,
 						  RelOptInfo *old_rel,
 						  ListCell *other_rels)
 {
-	List	   *result = NIL;
 	ListCell   *l;
 
 	for_each_cell(l, other_rels)
@@ -272,15 +263,9 @@ make_rels_by_clause_joins(PlannerInfo *root,
 			(have_relevant_joinclause(root, old_rel, other_rel) ||
 			 have_join_order_restriction(root, old_rel, other_rel)))
 		{
-			RelOptInfo *jrel;
-
-			jrel = make_join_rel(root, old_rel, other_rel);
-			if (jrel)
-				result = lcons(jrel, result);
+			(void) make_join_rel(root, old_rel, other_rel);
 		}
 	}
-
-	return result;
 }
 
 /*
@@ -288,7 +273,7 @@ make_rels_by_clause_joins(PlannerInfo *root,
  *	  Given a relation 'old_rel' and a list of other relations
  *	  'other_rels', create a join relation between 'old_rel' and each
  *	  member of 'other_rels' that isn't already included in 'old_rel'.
- *	  The join rel nodes are returned in a list.
+ *	  The join rels are returned in root->join_rel_level[join_cur_level].
  *
  * 'old_rel' is the relation entry for the relation to be joined
  * 'other_rels': the first cell of a linked list containing the
@@ -297,34 +282,22 @@ make_rels_by_clause_joins(PlannerInfo *root,
  * Currently, this is only used with initial rels in other_rels, but it would
  * work for joining to joinrels too.
  */
-static List *
+static void
 make_rels_by_clauseless_joins(PlannerInfo *root,
 							  RelOptInfo *old_rel,
 							  ListCell *other_rels)
 {
-	List	   *result = NIL;
-	ListCell   *i;
+	ListCell   *l;
 
-	for_each_cell(i, other_rels)
+	for_each_cell(l, other_rels)
 	{
-		RelOptInfo *other_rel = (RelOptInfo *) lfirst(i);
+		RelOptInfo *other_rel = (RelOptInfo *) lfirst(l);
 
 		if (!bms_overlap(other_rel->relids, old_rel->relids))
 		{
-			RelOptInfo *jrel;
-
-			jrel = make_join_rel(root, old_rel, other_rel);
-
-			/*
-			 * As long as given other_rels are distinct, don't need to test to
-			 * see if jrel is already part of output list.
-			 */
-			if (jrel)
-				result = lcons(jrel, result);
+			(void) make_join_rel(root, old_rel, other_rel);
 		}
 	}
-
-	return result;
 }
 
 

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.179 2009/11/15 02:45:35 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.180 2009/11/28 00:46:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -141,6 +141,16 @@ typedef struct PlannerInfo
 	 */
 	List	   *join_rel_list;	/* list of join-relation RelOptInfos */
 	struct HTAB *join_rel_hash; /* optional hashtable for join relations */
+
+	/*
+	 * When doing a dynamic-programming-style join search, join_rel_level[k]
+	 * is a list of all join-relation RelOptInfos of level k, and
+	 * join_cur_level is the current level.  New join-relation RelOptInfos
+	 * are automatically added to the join_rel_level[join_cur_level] list.
+	 * join_rel_level is NULL if not in use.
+	 */
+	List	  **join_rel_level;	/* lists of join-relation RelOptInfos */
+	int			join_cur_level;	/* index of list being extended */
 
 	List	   *resultRelations;	/* integer list of RT indexes, or NIL */
 
