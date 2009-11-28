@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1996-2009, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/catalog/system_views.sql,v 1.61 2009/10/07 22:14:18 alvherre Exp $
+ * $PostgreSQL: pgsql/src/backend/catalog/system_views.sql,v 1.62 2009/11/28 23:38:07 tgl Exp $
  */
 
 CREATE VIEW pg_roles AS 
@@ -339,7 +339,8 @@ CREATE VIEW pg_stat_activity AS
             S.query_start,
             S.backend_start,
             S.client_addr,
-            S.client_port
+            S.client_port,
+            S.application_name
     FROM pg_database D, pg_stat_get_activity(NULL) AS S, pg_authid U
     WHERE S.datid = D.oid AND 
             S.usesysid = U.oid;

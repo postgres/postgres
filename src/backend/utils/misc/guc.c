@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.523 2009/10/21 20:38:58 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.524 2009/11/28 23:38:07 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -168,6 +168,7 @@ static bool assign_maxconnections(int newval, bool doit, GucSource source);
 static bool assign_autovacuum_max_workers(int newval, bool doit, GucSource source);
 static bool assign_effective_io_concurrency(int newval, bool doit, GucSource source);
 static const char *assign_pgstat_temp_directory(const char *newval, bool doit, GucSource source);
+static const char *assign_application_name(const char *newval, bool doit, GucSource source);
 
 static char *config_enum_get_options(struct config_enum * record,
 						const char *prefix, const char *suffix,
@@ -377,6 +378,8 @@ char	   *external_pid_file;
 char	   *pgstat_temp_directory;
 
 char	   *default_do_language;
+
+char	   *application_name;
 
 int			tcp_keepalives_idle;
 int			tcp_keepalives_interval;
@@ -2532,6 +2535,16 @@ static struct config_string ConfigureNamesString[] =
 		},
 		&default_do_language,
 		"plpgsql", NULL, NULL
+	},
+
+	{
+		{"application_name", PGC_USERSET, LOGGING,
+		 gettext_noop("Sets the application name to be reported in statistics and logs."),
+		 NULL,
+		 GUC_IS_NAME | GUC_NOT_IN_SAMPLE
+		},
+		&application_name,
+		"", assign_application_name, NULL
 	},
 
 	/* End-of-list marker */
@@ -7712,6 +7725,30 @@ assign_pgstat_temp_directory(const char *newval, bool doit, GucSource source)
 		pgstat_stat_filename = fname;
 
 		return canon_val;
+	}
+	else
+		return newval;
+}
+
+static const char *
+assign_application_name(const char *newval, bool doit, GucSource source)
+{
+	if (doit)
+	{
+		/* Only allow clean ASCII chars in the application name */
+		char	   *repval = guc_strdup(ERROR, newval);
+		char	   *p;
+
+		for (p = repval; *p; p++)
+		{
+			if (*p < 32 || *p > 126)
+				*p = '?';
+		}
+
+		/* Update the pg_stat_activity view */
+		pgstat_report_appname(repval);
+
+		return repval;
 	}
 	else
 		return newval;

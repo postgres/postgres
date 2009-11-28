@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/pgstatfuncs.c,v 1.54 2009/06/11 14:49:04 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/pgstatfuncs.c,v 1.55 2009/11/28 23:38:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -416,7 +416,7 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 
 		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
-		tupdesc = CreateTemplateTupleDesc(10, false);
+		tupdesc = CreateTemplateTupleDesc(11, false);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 1, "datid", OIDOID, -1, 0);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 2, "procpid", INT4OID, -1, 0);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 3, "usesysid", OIDOID, -1, 0);
@@ -427,6 +427,7 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 		TupleDescInitEntry(tupdesc, (AttrNumber) 8, "backend_start", TIMESTAMPTZOID, -1, 0);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 9, "client_addr", INETOID, -1, 0);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 10, "client_port", INT4OID, -1, 0);
+		TupleDescInitEntry(tupdesc, (AttrNumber) 11, "application_name", TEXTOID, -1, 0);
 
 		funcctx->tuple_desc = BlessTupleDesc(tupdesc);
 
@@ -478,8 +479,8 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 	if (funcctx->call_cntr < funcctx->max_calls)
 	{
 		/* for each row */
-		Datum		values[10];
-		bool		nulls[10];
+		Datum		values[11];
+		bool		nulls[11];
 		HeapTuple	tuple;
 		PgBackendStatus *beentry;
 		SockAddr	zero_clientaddr;
@@ -599,6 +600,12 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 					nulls[9] = true;
 				}
 			}
+
+			/* application name */
+			if (beentry->st_appname)
+			    values[10] = CStringGetTextDatum(beentry->st_appname);
+			else
+				nulls[10] = true;
 		}
 		else
 		{
@@ -610,6 +617,7 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 			nulls[7] = true;
 			nulls[8] = true;
 			nulls[9] = true;
+			nulls[10] = true;
 		}
 
 		tuple = heap_form_tuple(funcctx->tuple_desc, values, nulls);

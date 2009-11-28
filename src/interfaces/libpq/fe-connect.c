@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.377 2009/09/27 03:43:10 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.378 2009/11/28 23:38:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -164,6 +164,12 @@ static const PQconninfoOption PQconninfoOptions[] = {
 	{"options", "PGOPTIONS", DefaultOption, NULL,
 	"Backend-Debug-Options", "D", 40},
 
+	{"application_name", "PGAPPNAME", NULL, NULL,
+	"Application-Name", "", 64},
+
+	{"fallback_application_name", NULL, NULL, NULL,
+	"Fallback-Application-Name", "", 64},
+
 #ifdef USE_SSL
 
 	/*
@@ -256,6 +262,7 @@ static int parseServiceInfo(PQconninfoOption *options,
 static char *pwdfMatchesString(char *buf, char *token);
 static char *PasswordFromFile(char *hostname, char *port, char *dbname,
 				 char *username);
+static PostgresPollingStatusType pqAppnamePoll(PGconn *conn);
 static void default_threadlock(int acquire);
 
 
@@ -416,6 +423,10 @@ connectOptions1(PGconn *conn, const char *conninfo)
 	conn->pgtty = tmp ? strdup(tmp) : NULL;
 	tmp = conninfo_getval(connOptions, "options");
 	conn->pgoptions = tmp ? strdup(tmp) : NULL;
+	tmp = conninfo_getval(connOptions, "application_name");
+	conn->appname = tmp ? strdup(tmp) : NULL;
+	tmp = conninfo_getval(connOptions, "fallback_application_name");
+	conn->fbappname = tmp ? strdup(tmp) : NULL;
 	tmp = conninfo_getval(connOptions, "dbname");
 	conn->dbName = tmp ? strdup(tmp) : NULL;
 	tmp = conninfo_getval(connOptions, "user");
@@ -1064,7 +1075,7 @@ PQconnectPoll(PGconn *conn)
 		case CONNECTION_MADE:
 			break;
 
-			/* We allow pqSetenvPoll to decide whether to proceed. */
+			/* pqSetenvPoll/pqAppnamePoll will decide whether to proceed. */
 		case CONNECTION_SETENV:
 			break;
 
@@ -1888,12 +1899,25 @@ keep_going:						/* We will come back to here until there is
 				conn->addrlist = NULL;
 				conn->addr_cur = NULL;
 
+				/*
+				 * Note: To avoid changing the set of application-visible
+				 * connection states, v2 environment setup and v3 application
+				 * name setup both happen in the CONNECTION_SETENV state.
+				 */
+
 				/* Fire up post-connection housekeeping if needed */
 				if (PG_PROTOCOL_MAJOR(conn->pversion) < 3)
 				{
 					conn->status = CONNECTION_SETENV;
 					conn->setenv_state = SETENV_STATE_OPTION_SEND;
 					conn->next_eo = EnvironmentOptions;
+					return PGRES_POLLING_WRITING;
+				}
+				else if (conn->sversion >= 80500 &&
+						 (conn->appname || conn->fbappname))
+				{
+					conn->status = CONNECTION_SETENV;
+					conn->appname_state = APPNAME_STATE_CMD_SEND;
 					return PGRES_POLLING_WRITING;
 				}
 
@@ -1903,42 +1927,49 @@ keep_going:						/* We will come back to here until there is
 			}
 
 		case CONNECTION_SETENV:
-
-			/*
-			 * Do post-connection housekeeping (only needed in protocol 2.0).
-			 *
-			 * We pretend that the connection is OK for the duration of these
-			 * queries.
-			 */
-			conn->status = CONNECTION_OK;
-
-			switch (pqSetenvPoll(conn))
 			{
-				case PGRES_POLLING_OK:	/* Success */
-					break;
+				PostgresPollingStatusType ret;
 
-				case PGRES_POLLING_READING:		/* Still going */
-					conn->status = CONNECTION_SETENV;
-					return PGRES_POLLING_READING;
+				/*
+				 * Do post-connection housekeeping (only needed in protocol
+				 * 2.0), or send the application name in PG8.5+.
+				 *
+				 * We pretend that the connection is OK for the duration of
+				 * these queries.
+				 */
+				conn->status = CONNECTION_OK;
 
-				case PGRES_POLLING_WRITING:		/* Still going */
-					conn->status = CONNECTION_SETENV;
-					return PGRES_POLLING_WRITING;
+				if (PG_PROTOCOL_MAJOR(conn->pversion) < 3)
+					ret = pqSetenvPoll(conn);
+				else				/* must be here to send app name */
+					ret = pqAppnamePoll(conn);
 
-				default:
-					goto error_return;
+				switch (ret)
+				{
+					case PGRES_POLLING_OK:	/* Success */
+						break;
+
+					case PGRES_POLLING_READING:		/* Still going */
+						conn->status = CONNECTION_SETENV;
+						return PGRES_POLLING_READING;
+
+					case PGRES_POLLING_WRITING:		/* Still going */
+						conn->status = CONNECTION_SETENV;
+						return PGRES_POLLING_WRITING;
+
+					default:
+						goto error_return;
+				}
+
+				/* We are open for business! */
+				conn->status = CONNECTION_OK;
+				return PGRES_POLLING_OK;
 			}
-
-			/* We are open for business! */
-			conn->status = CONNECTION_OK;
-			return PGRES_POLLING_OK;
 
 		default:
 			appendPQExpBuffer(&conn->errorMessage,
-							  libpq_gettext(
-											"invalid connection state %c, "
-								 "probably indicative of memory corruption\n"
-											),
+							  libpq_gettext("invalid connection state %d, "
+								 "probably indicative of memory corruption\n"),
 							  conn->status);
 			goto error_return;
 	}
@@ -2000,6 +2031,7 @@ makeEmptyPGconn(void)
 	conn->options_valid = false;
 	conn->nonblocking = false;
 	conn->setenv_state = SETENV_STATE_IDLE;
+	conn->appname_state = APPNAME_STATE_IDLE;
 	conn->client_encoding = PG_SQL_ASCII;
 	conn->std_strings = false;	/* unless server says differently */
 	conn->verbosity = PQERRORS_DEFAULT;
@@ -2082,6 +2114,10 @@ freePGconn(PGconn *conn)
 		free(conn->connect_timeout);
 	if (conn->pgoptions)
 		free(conn->pgoptions);
+	if (conn->appname)
+		free(conn->appname);
+	if (conn->fbappname)
+		free(conn->fbappname);
 	if (conn->dbName)
 		free(conn->dbName);
 	if (conn->pguser)
@@ -4003,6 +4039,129 @@ pqGetHomeDirectory(char *buf, int bufsize)
 	snprintf(buf, bufsize, "%s/postgresql", tmppath);
 	return true;
 #endif
+}
+
+/*
+ *		pqAppnamePoll
+ *
+ * Polls the process of passing the application name to the backend.
+ *
+ * Ideally, we'd include the appname in the startup packet, but that would
+ * cause old backends to reject the unknown parameter.  So we send it in a
+ * separate query after we have determined the backend version.  Once there
+ * is no interest in pre-8.5 backends, this should be folded into the startup
+ * packet logic.
+ */
+static PostgresPollingStatusType
+pqAppnamePoll(PGconn *conn)
+{
+	PGresult   *res;
+
+	if (conn == NULL || conn->status == CONNECTION_BAD)
+		return PGRES_POLLING_FAILED;
+
+	/* Check whether there is any data for us */
+	switch (conn->appname_state)
+	{
+			/* This is a reading state. */
+		case APPNAME_STATE_CMD_WAIT:
+		{
+			/* Load waiting data */
+			int			n = pqReadData(conn);
+
+			if (n < 0)
+				goto error_return;
+			if (n == 0)
+				return PGRES_POLLING_READING;
+
+			break;
+		}
+
+			/* This is a writing state, so we just proceed. */
+		case APPNAME_STATE_CMD_SEND:
+			break;
+
+			/* Should we raise an error if called when not active? */
+		case APPNAME_STATE_IDLE:
+			return PGRES_POLLING_OK;
+
+		default:
+			printfPQExpBuffer(&conn->errorMessage,
+							  libpq_gettext("invalid appname state %d, "
+											"probably indicative of memory corruption\n"),
+							  conn->appname_state);
+			goto error_return;
+	}
+
+	/* We will loop here until there is nothing left to do in this call. */
+	for (;;)
+	{
+		switch (conn->appname_state)
+		{
+			case APPNAME_STATE_CMD_SEND:
+			{
+				const char *val;
+				char	escVal[NAMEDATALEN*2 + 1];
+				char	setQuery[NAMEDATALEN*2 + 26 + 1];
+
+				/* Use appname if present, otherwise use fallback */
+				val = conn->appname ? conn->appname : conn->fbappname;
+
+				/*
+				 * Escape the data as needed.  We can truncate to NAMEDATALEN,
+				 * so there's no need to cope with malloc.
+				 */
+				PQescapeStringConn(conn, escVal, val, NAMEDATALEN, NULL);
+
+				sprintf(setQuery, "SET application_name = '%s'", escVal);
+
+				if (!PQsendQuery(conn, setQuery))
+					goto error_return;
+
+				conn->appname_state = APPNAME_STATE_CMD_WAIT;
+				break;
+			}
+
+			case APPNAME_STATE_CMD_WAIT:
+			{
+				if (PQisBusy(conn))
+					return PGRES_POLLING_READING;
+
+				res = PQgetResult(conn);
+
+				if (res)
+				{
+					if (PQresultStatus(res) != PGRES_COMMAND_OK)
+					{
+						PQclear(res);
+						goto error_return;
+					}
+					PQclear(res);
+					/* Keep reading until PQgetResult returns NULL */
+				}
+				else
+				{
+					/* Query finished, so we're done */
+					conn->appname_state = APPNAME_STATE_IDLE;
+					return PGRES_POLLING_OK;
+				}
+				break;
+			}
+
+			default:
+				printfPQExpBuffer(&conn->errorMessage,
+								  libpq_gettext("invalid appname state %d, "
+												"probably indicative of memory corruption\n"),
+								  conn->appname_state);
+				goto error_return;
+		}
+	}
+
+	/* Unreachable */
+
+error_return:
+	conn->appname_state = APPNAME_STATE_IDLE;
+	return PGRES_POLLING_FAILED;
 }
 
 /*

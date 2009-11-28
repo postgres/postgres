@@ -334,6 +334,7 @@
 #log_duration = off
 #log_hostname = off
 #log_line_prefix = ''			# special values:
+					#   %a = application name
 					#   %u = user name
 					#   %d = database name
 					#   %r = remote host and port

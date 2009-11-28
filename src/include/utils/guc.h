@@ -7,7 +7,7 @@
  * Copyright (c) 2000-2009, PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
- * $PostgreSQL: pgsql/src/include/utils/guc.h,v 1.108 2009/10/13 14:18:40 alvherre Exp $
+ * $PostgreSQL: pgsql/src/include/utils/guc.h,v 1.109 2009/11/28 23:38:08 tgl Exp $
  *--------------------------------------------------------------------
  */
 #ifndef GUC_H
@@ -182,6 +182,8 @@ extern char *IdentFileName;
 extern char *external_pid_file;
 
 extern char *default_do_language;
+
+extern char *application_name;
 
 extern int	tcp_keepalives_idle;
 extern int	tcp_keepalives_interval;

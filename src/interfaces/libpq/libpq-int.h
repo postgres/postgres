@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/interfaces/libpq/libpq-int.h,v 1.144 2009/07/24 17:58:31 tgl Exp $
+ * $PostgreSQL: pgsql/src/interfaces/libpq/libpq-int.h,v 1.145 2009/11/28 23:38:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -244,6 +244,14 @@ typedef enum
 	SETENV_STATE_IDLE
 } PGSetenvStatusType;
 
+/* PGAppnameStatusType defines the state of the PQAppname state machine */
+typedef enum
+{
+	APPNAME_STATE_CMD_SEND,		/* About to send the appname */
+	APPNAME_STATE_CMD_WAIT,		/* Waiting for above send to complete */
+	APPNAME_STATE_IDLE
+} PGAppnameStatusType;
+
 /* Typedef for the EnvironmentOptions[] array */
 typedef struct PQEnvironmentOption
 {
@@ -295,6 +303,8 @@ struct pg_conn
 								 * displayed (OBSOLETE, NOT USED) */
 	char	   *connect_timeout;	/* connection timeout (numeric string) */
 	char	   *pgoptions;		/* options to start the backend with */
+	char	   *appname;		/* application name */
+	char	   *fbappname;		/* fallback application name */
 	char	   *dbName;			/* database name */
 	char	   *pguser;			/* Postgres username and password, if any */
 	char	   *pgpass;
@@ -349,6 +359,7 @@ struct pg_conn
 	struct addrinfo *addr_cur;	/* the one currently being tried */
 	int			addrlist_family;	/* needed to know how to free addrlist */
 	PGSetenvStatusType setenv_state;	/* for 2.0 protocol only */
+	PGAppnameStatusType appname_state;
 	const PQEnvironmentOption *next_eo;
 
 	/* Miscellaneous stuff */

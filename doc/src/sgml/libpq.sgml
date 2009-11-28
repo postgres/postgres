@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.289 2009/05/28 20:02:10 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.290 2009/11/28 23:38:06 tgl Exp $ -->
 
 <chapter id="libpq">
  <title><application>libpq</application> - C Library</title>
@@ -245,6 +245,32 @@
            session's value of the <varname>geqo</> parameter to
            <literal>off</>.  For a detailed discussion of the available
            options, consult <xref linkend="runtime-config">.
+          </para>
+         </listitem>
+        </varlistentry>
+
+        <varlistentry id="libpq-connect-application-name" xreflabel="application_name">
+         <term><literal>application_name</literal></term>
+         <listitem>
+          <para>
+           Specifies a value for the <xref linkend="guc-application-name">
+           configuration parameter.
+          </para>
+         </listitem>
+        </varlistentry>
+
+        <varlistentry id="libpq-connect-fallback-application-name" xreflabel="fallback_application_name">
+         <term><literal>fallback_application_name</literal></term>
+         <listitem>
+          <para>
+           Specifies a fallback value for the <xref
+           linkend="guc-application-name"> configuration parameter.
+           This value will be used if no value has been given for
+           <literal>application_name</> via a connection parameter or the
+           <envar>PGAPPNAME</envar> environment variable.  Specifying
+           a fallback name is useful in generic utility programs that
+           wish to set a default application name but allow it to be
+           overridden by the user.
           </para>
          </listitem>
         </varlistentry>
@@ -5672,7 +5698,7 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
       <indexterm>
        <primary><envar>PGHOST</envar></primary>
       </indexterm>
-      <envar>PGHOST</envar> behaves the same as <xref
+      <envar>PGHOST</envar> behaves the same as the <xref
       linkend="libpq-connect-host"> connection parameter.
      </para>
     </listitem>
@@ -5682,7 +5708,7 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
       <indexterm>
        <primary><envar>PGHOSTADDR</envar></primary>
       </indexterm>
-      <envar>PGHOSTADDR</envar> behaves the same as <xref
+      <envar>PGHOSTADDR</envar> behaves the same as the <xref
       linkend="libpq-connect-hostaddr"> connection parameter.
       This can be set instead of or in addition to <envar>PGHOST</envar>
       to avoid DNS lookup overhead.
@@ -5694,7 +5720,7 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
       <indexterm>
        <primary><envar>PGPORT</envar></primary>
       </indexterm>
-      <envar>PGPORT</envar> behaves the same as <xref
+      <envar>PGPORT</envar> behaves the same as the <xref
       linkend="libpq-connect-port"> connection parameter.
      </para>
     </listitem>
@@ -5704,7 +5730,7 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
       <indexterm>
        <primary><envar>PGDATABASE</envar></primary>
       </indexterm>
-      <envar>PGDATABASE</envar> behaves the same as <xref
+      <envar>PGDATABASE</envar> behaves the same as the <xref
       linkend="libpq-connect-dbname"> connection parameter.
       </para>
     </listitem>
@@ -5714,9 +5740,8 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
       <indexterm>
        <primary><envar>PGUSER</envar></primary>
       </indexterm>
-      <envar>PGUSER</envar> behaves the same as <xref
+      <envar>PGUSER</envar> behaves the same as the <xref
       linkend="libpq-connect-user"> connection parameter.
-      database.
      </para>
     </listitem>
 
@@ -5725,12 +5750,12 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
       <indexterm>
        <primary><envar>PGPASSWORD</envar></primary>
       </indexterm>
-      <envar>PGPASSWORD</envar> behaves the same as <xref
+      <envar>PGPASSWORD</envar> behaves the same as the <xref
       linkend="libpq-connect-password"> connection parameter.
       Use of this environment variable
-      is not recommended for security reasons (some operating systems
+      is not recommended for security reasons, as some operating systems
       allow non-root users to see process environment variables via
-      <application>ps</>); instead consider using the
+      <application>ps</>; instead consider using the
       <filename>~/.pgpass</> file (see <xref linkend="libpq-pgpass">).
      </para>
     </listitem>
@@ -5751,7 +5776,7 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
       <indexterm>
        <primary><envar>PGSERVICE</envar></primary>
       </indexterm>
-      <envar>PGSERVICE</envar> behaves the same as <xref
+      <envar>PGSERVICE</envar> behaves the same as the <xref
       linkend="libpq-connect-service"> connection parameter.
      </para>
     </listitem>
@@ -5777,8 +5802,18 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
       <indexterm>
        <primary><envar>PGOPTIONS</envar></primary>
       </indexterm>
-      <envar>PGOPTIONS</envar> behaves the same as <xref
+      <envar>PGOPTIONS</envar> behaves the same as the <xref
       linkend="libpq-connect-options"> connection parameter.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      <indexterm>
+       <primary><envar>PGAPPNAME</envar></primary>
+      </indexterm>
+      <envar>PGAPPNAME</envar> behaves the same as the <xref
+      linkend="libpq-connect-application-name"> connection parameter.
      </para>
     </listitem>
 
@@ -5787,7 +5822,7 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
       <indexterm>
        <primary><envar>PGSSLMODE</envar></primary>
       </indexterm>
-      <envar>PGSSLMODE</envar> behaves the same as <xref
+      <envar>PGSSLMODE</envar> behaves the same as the <xref
       linkend="libpq-connect-sslmode"> connection parameter.
      </para>
     </listitem>
@@ -5797,7 +5832,7 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
       <indexterm>
        <primary><envar>PGREQUIRESSL</envar></primary>
       </indexterm>
-      <envar>PGREQUIRESSL</envar> behaves the same as <xref
+      <envar>PGREQUIRESSL</envar> behaves the same as the <xref
       linkend="libpq-connect-requiressl"> connection parameter.
      </para>
     </listitem>
@@ -5807,7 +5842,7 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
       <indexterm>
        <primary><envar>PGSSLCERT</envar></primary>
       </indexterm>
-      <envar>PGSSLCERT</envar> behaves the same as <xref
+      <envar>PGSSLCERT</envar> behaves the same as the <xref
       linkend="libpq-connect-sslcert"> connection parameter.
      </para>
     </listitem>
@@ -5817,7 +5852,7 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
       <indexterm>
        <primary><envar>PGSSLKEY</envar></primary>
       </indexterm>
-      <envar>PGSSLKEY</envar> behaves the same as <xref
+      <envar>PGSSLKEY</envar> behaves the same as the <xref
       linkend="libpq-connect-sslkey"> connection parameter.
      </para>
     </listitem>
@@ -5827,7 +5862,7 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
       <indexterm>
        <primary><envar>PGSSLROOTCERT</envar></primary>
       </indexterm>
-      <envar>PGSSLROOTCERT</envar>  behaves the same as <xref
+      <envar>PGSSLROOTCERT</envar>  behaves the same as the <xref
       linkend="libpq-connect-sslrootcert"> connection parameter.
      </para>
     </listitem>
@@ -5837,7 +5872,7 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
       <indexterm>
        <primary><envar>PGSSLCRL</envar></primary>
       </indexterm>
-      <envar>PGSSLCRL</envar>  behaves the same as <xref
+      <envar>PGSSLCRL</envar>  behaves the same as the <xref
       linkend="libpq-connect-sslcrl"> connection parameter.
      </para>
     </listitem>
@@ -5847,7 +5882,7 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
       <indexterm>
        <primary><envar>PGKRBSRVNAME</envar></primary>
       </indexterm>
-      <envar>PGKRBSRVNAME</envar>  behaves the same as <xref
+      <envar>PGKRBSRVNAME</envar>  behaves the same as the <xref
       linkend="libpq-connect-krbsrvname"> connection parameter.
      </para>
     </listitem>
@@ -5857,7 +5892,7 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
       <indexterm>
        <primary><envar>PGGSSLIB</envar></primary>
       </indexterm>
-      <envar>PGGSSLIB</envar> behaves the same as <xref
+      <envar>PGGSSLIB</envar> behaves the same as the <xref
       linkend="libpq-connect-gsslib"> connection parameter.
      </para>
     </listitem>
@@ -5867,7 +5902,7 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
       <indexterm>
        <primary><envar>PGCONNECT_TIMEOUT</envar></primary>
       </indexterm>
-      <envar>PGCONNECT_TIMEOUT</envar>  behaves the same as <xref
+      <envar>PGCONNECT_TIMEOUT</envar>  behaves the same as the <xref
       linkend="libpq-connect-connect-timeout"> connection parameter.
      </para>
     </listitem>
