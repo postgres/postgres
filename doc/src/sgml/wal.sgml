@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/wal.sgml,v 1.59 2009/04/09 16:20:50 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/wal.sgml,v 1.60 2009/11/28 16:21:31 momjian Exp $ -->
 
 <chapter id="wal">
  <title>Reliability and the Write-Ahead Log</title>
@@ -86,6 +86,8 @@
    ensure data integrity.  Avoid disk controllers that have non-battery-backed
    write caches.  At the drive level, disable write-back caching if the
    drive cannot guarantee the data will be written before shutdown.
+   You can test for reliable I/O subsystem behavior using <ulink
+   url="http://brad.livejournal.com/2116715.html">diskchecker.pl</ulink>.
   </para>
 
   <para>
