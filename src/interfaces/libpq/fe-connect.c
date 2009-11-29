@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.379 2009/11/29 18:53:44 petere Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.380 2009/11/29 20:14:53 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3223,6 +3223,13 @@ parseServiceInfo(PQconninfoOption *options, PQExpBuffer errorMessage)
 		}
 
 		fclose(f);
+
+		if (!group_found)
+		{
+			printfPQExpBuffer(errorMessage,
+							  libpq_gettext("definition of service \"%s\" not found\n"), service);
+			return 3;
+		}
 	}
 
 	return 0;
