@@ -555,3 +555,14 @@ $$ LANGUAGE plperl;
 SELECT perl_spi_prepared_bad(4.35) as "double precision";
 ERROR:  type "does_not_exist" does not exist at line 2.
 CONTEXT:  PL/Perl function "perl_spi_prepared_bad"
+-- simple test of a DO block
+DO $$
+  $a = 'This is a test';
+  elog(NOTICE, $a);
+$$ LANGUAGE plperl;
+NOTICE:  This is a test
+CONTEXT:  PL/Perl anonymous code block
+-- check that restricted operations are rejected in a plperl DO block
+DO $$ use Config; $$ LANGUAGE plperl;
+ERROR:  'require' trapped by operation mask at line 1.
+CONTEXT:  PL/Perl anonymous code block

@@ -1,7 +1,7 @@
 /**********************************************************************
  * plperl.c - perl as a procedural language for PostgreSQL
  *
- *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.153 2009/10/31 18:11:59 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.154 2009/11/29 03:02:27 tgl Exp $
  *
  **********************************************************************/
 
@@ -144,6 +144,7 @@ static plperl_call_data *current_call_data = NULL;
  * Forward declarations
  **********************************************************************/
 Datum		plperl_call_handler(PG_FUNCTION_ARGS);
+Datum		plperl_inline_handler(PG_FUNCTION_ARGS);
 Datum		plperl_validator(PG_FUNCTION_ARGS);
 void		_PG_init(void);
 
@@ -160,10 +161,11 @@ static HV  *plperl_spi_execute_fetch_result(SPITupleTable *, int, int);
 static SV  *newSVstring(const char *str);
 static SV **hv_store_string(HV *hv, const char *key, SV *val);
 static SV **hv_fetch_string(HV *hv, const char *key);
-static SV  *plperl_create_sub(char *proname, char *s, bool trusted);
+static SV  *plperl_create_sub(const char *proname, const char *s, bool trusted);
 static SV  *plperl_call_perl_func(plperl_proc_desc *desc, FunctionCallInfo fcinfo);
 static void plperl_compile_callback(void *arg);
 static void plperl_exec_callback(void *arg);
+static void plperl_inline_callback(void *arg);
 
 /*
  * This routine is a crock, and so is everyplace that calls it.  The problem
@@ -862,9 +864,13 @@ plperl_modify_tuple(HV *hvTD, TriggerData *tdata, HeapTuple otup)
 
 
 /*
- * This is the only externally-visible part of the plperl call interface.
- * The Postgres function and trigger managers call it to execute a
- * perl function.
+ * There are three externally visible pieces to plperl: plperl_call_handler,
+ * plperl_inline_handler, and plperl_validator.
+ */
+
+/*
+ * The call handler is called to run normal functions (including trigger
+ * functions) that are defined in pg_proc.
  */
 PG_FUNCTION_INFO_V1(plperl_call_handler);
 
@@ -896,8 +902,102 @@ plperl_call_handler(PG_FUNCTION_ARGS)
 }
 
 /*
- * This is the other externally visible function - it is called when CREATE
- * FUNCTION is issued to validate the function being created/replaced.
+ * The inline handler runs anonymous code blocks (DO blocks).
+ */
+PG_FUNCTION_INFO_V1(plperl_inline_handler);
+
+Datum
+plperl_inline_handler(PG_FUNCTION_ARGS)
+{
+	InlineCodeBlock *codeblock = (InlineCodeBlock *) PG_GETARG_POINTER(0);
+	FunctionCallInfoData fake_fcinfo;
+	FmgrInfo flinfo;
+	plperl_proc_desc desc;
+	plperl_call_data *save_call_data = current_call_data;
+	bool		oldcontext = trusted_context;
+	ErrorContextCallback pl_error_context;
+
+	/* Set up a callback for error reporting */
+	pl_error_context.callback = plperl_inline_callback;
+	pl_error_context.previous = error_context_stack;
+	pl_error_context.arg = (Datum) 0;
+	error_context_stack = &pl_error_context;
+
+	/*
+	 * Set up a fake fcinfo and descriptor with just enough info to satisfy
+	 * plperl_call_perl_func().  In particular note that this sets things up
+	 * with no arguments passed, and a result type of VOID.
+	 */
+	MemSet(&fake_fcinfo, 0, sizeof(fake_fcinfo));
+	MemSet(&flinfo, 0, sizeof(flinfo));
+	MemSet(&desc, 0, sizeof(desc));
+	fake_fcinfo.flinfo = &flinfo;
+	flinfo.fn_oid = InvalidOid;
+	flinfo.fn_mcxt = CurrentMemoryContext;
+
+	desc.proname = "inline_code_block";
+	desc.fn_readonly = false;
+
+	desc.lanpltrusted = codeblock->langIsTrusted;
+
+	desc.fn_retistuple = false;
+	desc.fn_retisset = false;
+	desc.fn_retisarray = false;
+	desc.result_oid = VOIDOID;
+	desc.nargs = 0;
+	desc.reference = NULL;
+
+	current_call_data = (plperl_call_data *) palloc0(sizeof(plperl_call_data));
+	current_call_data->fcinfo = &fake_fcinfo;
+	current_call_data->prodesc = &desc;
+
+	PG_TRY();
+	{
+		SV		   *perlret;
+
+		if (SPI_connect() != SPI_OK_CONNECT)
+			elog(ERROR, "could not connect to SPI manager");
+
+		check_interp(desc.lanpltrusted);
+
+		desc.reference = plperl_create_sub(desc.proname,
+										   codeblock->source_text,
+										   desc.lanpltrusted);
+
+		if (!desc.reference)	/* can this happen? */
+			elog(ERROR, "could not create internal procedure for anonymous code block");
+
+		perlret = plperl_call_perl_func(&desc, &fake_fcinfo);
+
+		SvREFCNT_dec(perlret);
+
+		if (SPI_finish() != SPI_OK_FINISH)
+			elog(ERROR, "SPI_finish() failed");
+	}
+	PG_CATCH();
+	{
+		current_call_data = save_call_data;
+		restore_context(oldcontext);
+		if (desc.reference)
+			SvREFCNT_dec(desc.reference);
+		PG_RE_THROW();
+	}
+	PG_END_TRY();
+
+	current_call_data = save_call_data;
+	restore_context(oldcontext);
+	if (desc.reference)
+		SvREFCNT_dec(desc.reference);
+
+	error_context_stack = pl_error_context.previous;
+
+	PG_RETURN_VOID();
+}
+
+/*
+ * The validator is called during CREATE FUNCTION to validate the function
+ * being created/replaced. The precise behavior of the validator may be
+ * modified by the check_function_bodies GUC.
  */
 PG_FUNCTION_INFO_V1(plperl_validator);
 
@@ -971,7 +1071,7 @@ plperl_validator(PG_FUNCTION_ARGS)
  * supplied in s, and returns a reference to the closure.
  */
 static SV  *
-plperl_create_sub(char *proname, char *s, bool trusted)
+plperl_create_sub(const char *proname, const char *s, bool trusted)
 {
 	dSP;
 	SV		   *subref;
@@ -1375,7 +1475,7 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 
 	/* Restore the previous error callback */
 	error_context_stack = pl_error_context.previous;
-	
+
 	if (array_ret == NULL)
 		SvREFCNT_dec(perlret);
 
@@ -2716,9 +2816,9 @@ hv_fetch_string(HV *hv, const char *key)
 }
 
 /*
- * Provide function name for PL/Perl execution errors 
+ * Provide function name for PL/Perl execution errors
  */
-static void 
+static void
 plperl_exec_callback(void *arg)
 {
 	char *procname = (char *) arg;
@@ -2727,7 +2827,7 @@ plperl_exec_callback(void *arg)
 }
 
 /*
- * Provide function name for PL/Perl compilation errors 
+ * Provide function name for PL/Perl compilation errors
  */
 static void
 plperl_compile_callback(void *arg)
@@ -2735,4 +2835,13 @@ plperl_compile_callback(void *arg)
 	char *procname = (char *) arg;
 	if (procname)
 		errcontext("compilation of PL/Perl function \"%s\"", procname);
+}
+
+/*
+ * Provide error context for the inline handler
+ */
+static void
+plperl_inline_callback(void *arg)
+{
+	errcontext("PL/Perl anonymous code block");
 }

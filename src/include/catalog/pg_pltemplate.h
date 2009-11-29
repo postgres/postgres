@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_pltemplate.h,v 1.8 2009/09/22 23:43:41 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_pltemplate.h,v 1.9 2009/11/29 03:02:27 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -70,8 +70,8 @@ typedef FormData_pg_pltemplate *Form_pg_pltemplate;
 DATA(insert ( "plpgsql"		t t "plpgsql_call_handler" "plpgsql_inline_handler" "plpgsql_validator" "$libdir/plpgsql" _null_ ));
 DATA(insert ( "pltcl"		t t "pltcl_call_handler" _null_ _null_ "$libdir/pltcl" _null_ ));
 DATA(insert ( "pltclu"		f f "pltclu_call_handler" _null_ _null_ "$libdir/pltcl" _null_ ));
-DATA(insert ( "plperl"		t t "plperl_call_handler" _null_ "plperl_validator" "$libdir/plperl" _null_ ));
-DATA(insert ( "plperlu"		f f "plperl_call_handler" _null_ "plperl_validator" "$libdir/plperl" _null_ ));
+DATA(insert ( "plperl"		t t "plperl_call_handler" "plperl_inline_handler" "plperl_validator" "$libdir/plperl" _null_ ));
+DATA(insert ( "plperlu"		f f "plperl_call_handler" "plperl_inline_handler" "plperl_validator" "$libdir/plperl" _null_ ));
 DATA(insert ( "plpythonu"	f f "plpython_call_handler" _null_ _null_ "$libdir/plpython" _null_ ));
 
 #endif   /* PG_PLTEMPLATE_H */

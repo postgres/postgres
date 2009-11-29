@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/plperl.sgml,v 2.70 2009/08/15 00:33:12 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/plperl.sgml,v 2.71 2009/11/29 03:02:27 tgl Exp $ -->
 
  <chapter id="plperl">
   <title>PL/Perl - Perl Procedural Language</title>
@@ -59,11 +59,26 @@ CREATE FUNCTION <replaceable>funcname</replaceable> (<replaceable>argument-types
     # PL/Perl function body
 $$ LANGUAGE plperl;
 </programlisting>
+
    The body of the function is ordinary Perl code. In fact, the PL/Perl
-   glue code wraps it inside a Perl subroutine. A PL/Perl function must
-   always return a scalar value.  You can return more complex structures
-   (arrays, records, and sets) by returning a reference, as discussed below.
-   Never return a list.
+   glue code wraps it inside a Perl subroutine.  A PL/Perl function is
+   called in a scalar context, so it can't return a list.  You can return
+   non-scalar values (arrays, records, and sets) by returning a reference,
+   as discussed below.
+  </para>
+
+  <para>
+   PL/Perl also supports anonymous code blocks called with the
+   <xref linkend="sql-do" endterm="sql-do-title"> statement:
+
+<programlisting>
+DO $$
+    # PL/Perl code
+$$ LANGUAGE plperl;
+</programlisting>
+
+   An anonymous code block receives no arguments, and whatever value it
+   might return is discarded.  Otherwise it behaves just like a function.
   </para>
 
   <note>
@@ -667,6 +682,13 @@ $$ LANGUAGE plperl;
   <para>
    If the above function was created by a superuser using the language
    <literal>plperlu</>, execution would succeed.
+  </para>
+
+  <para>
+   In the same way, anonymous code blocks written in Perl can use
+   restricted operations if the language is specified as
+   <literal>plperlu</> rather than <literal>plperl</>, but the caller
+   must be a superuser.
   </para>
 
   <note>
