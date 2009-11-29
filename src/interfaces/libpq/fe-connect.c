@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.378 2009/11/28 23:38:08 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.379 2009/11/29 18:53:44 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3100,7 +3100,7 @@ parseServiceInfo(PQconninfoOption *options, PQExpBuffer errorMessage)
 		f = fopen(serviceFile, "r");
 		if (f == NULL)
 		{
-			printfPQExpBuffer(errorMessage, libpq_gettext("ERROR: service file \"%s\" not found\n"),
+			printfPQExpBuffer(errorMessage, libpq_gettext("service file \"%s\" not found\n"),
 							  serviceFile);
 			return 1;
 		}
@@ -3113,7 +3113,7 @@ parseServiceInfo(PQconninfoOption *options, PQExpBuffer errorMessage)
 			{
 				fclose(f);
 				printfPQExpBuffer(errorMessage,
-								  libpq_gettext("ERROR: line %d too long in service file \"%s\"\n"),
+								  libpq_gettext("line %d too long in service file \"%s\"\n"),
 								  linenr,
 								  serviceFile);
 				return 2;
@@ -3185,7 +3185,7 @@ parseServiceInfo(PQconninfoOption *options, PQExpBuffer errorMessage)
 					if (val == NULL)
 					{
 						printfPQExpBuffer(errorMessage,
-										  libpq_gettext("ERROR: syntax error in service file \"%s\", line %d\n"),
+										  libpq_gettext("syntax error in service file \"%s\", line %d\n"),
 										  serviceFile,
 										  linenr);
 						fclose(f);
@@ -3212,7 +3212,7 @@ parseServiceInfo(PQconninfoOption *options, PQExpBuffer errorMessage)
 					if (!found_keyword)
 					{
 						printfPQExpBuffer(errorMessage,
-										  libpq_gettext("ERROR: syntax error in service file \"%s\", line %d\n"),
+										  libpq_gettext("syntax error in service file \"%s\", line %d\n"),
 										  serviceFile,
 										  linenr);
 						fclose(f);
