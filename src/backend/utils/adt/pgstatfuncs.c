@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/pgstatfuncs.c,v 1.55 2009/11/28 23:38:07 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/pgstatfuncs.c,v 1.56 2009/11/29 18:14:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -420,14 +420,14 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 		TupleDescInitEntry(tupdesc, (AttrNumber) 1, "datid", OIDOID, -1, 0);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 2, "procpid", INT4OID, -1, 0);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 3, "usesysid", OIDOID, -1, 0);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 4, "current_query", TEXTOID, -1, 0);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 5, "waiting", BOOLOID, -1, 0);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 6, "act_start", TIMESTAMPTZOID, -1, 0);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 7, "query_start", TIMESTAMPTZOID, -1, 0);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 8, "backend_start", TIMESTAMPTZOID, -1, 0);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 9, "client_addr", INETOID, -1, 0);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 10, "client_port", INT4OID, -1, 0);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 11, "application_name", TEXTOID, -1, 0);
+		TupleDescInitEntry(tupdesc, (AttrNumber) 4, "application_name", TEXTOID, -1, 0);
+		TupleDescInitEntry(tupdesc, (AttrNumber) 5, "current_query", TEXTOID, -1, 0);
+		TupleDescInitEntry(tupdesc, (AttrNumber) 6, "waiting", BOOLOID, -1, 0);
+		TupleDescInitEntry(tupdesc, (AttrNumber) 7, "act_start", TIMESTAMPTZOID, -1, 0);
+		TupleDescInitEntry(tupdesc, (AttrNumber) 8, "query_start", TIMESTAMPTZOID, -1, 0);
+		TupleDescInitEntry(tupdesc, (AttrNumber) 9, "backend_start", TIMESTAMPTZOID, -1, 0);
+		TupleDescInitEntry(tupdesc, (AttrNumber) 10, "client_addr", INETOID, -1, 0);
+		TupleDescInitEntry(tupdesc, (AttrNumber) 11, "client_port", INT4OID, -1, 0);
 
 		funcctx->tuple_desc = BlessTupleDesc(tupdesc);
 
@@ -489,11 +489,15 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 		MemSet(nulls, 0, sizeof(nulls));
 
 		if (*(int *) (funcctx->user_fctx) > 0)
+		{
 			/* Get specific pid slot */
 			beentry = pgstat_fetch_stat_beentry(*(int *) (funcctx->user_fctx));
+		}
 		else
+		{
 			/* Get the next one in the list */
 			beentry = pgstat_fetch_stat_beentry(funcctx->call_cntr + 1);		/* 1-based index */
+		}
 		if (!beentry)
 		{
 			int			i;
@@ -501,8 +505,8 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 			for (i = 0; i < sizeof(nulls) / sizeof(nulls[0]); i++)
 				nulls[i] = true;
 
-			nulls[3] = false;
-			values[3] = CStringGetTextDatum("<backend information not available>");
+			nulls[4] = false;
+			values[4] = CStringGetTextDatum("<backend information not available>");
 
 			tuple = heap_form_tuple(funcctx->tuple_desc, values, nulls);
 			SRF_RETURN_NEXT(funcctx, HeapTupleGetDatum(tuple));
@@ -512,43 +516,47 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 		values[0] = ObjectIdGetDatum(beentry->st_databaseid);
 		values[1] = Int32GetDatum(beentry->st_procpid);
 		values[2] = ObjectIdGetDatum(beentry->st_userid);
+		if (beentry->st_appname)
+			values[3] = CStringGetTextDatum(beentry->st_appname);
+		else
+			nulls[3] = true;
 
 		/* Values only available to same user or superuser */
 		if (superuser() || beentry->st_userid == GetUserId())
 		{
 			if (*(beentry->st_activity) == '\0')
 			{
-				values[3] = CStringGetTextDatum("<command string not enabled>");
+				values[4] = CStringGetTextDatum("<command string not enabled>");
 			}
 			else
 			{
-				values[3] = CStringGetTextDatum(beentry->st_activity);
+				values[4] = CStringGetTextDatum(beentry->st_activity);
 			}
 
-			values[4] = BoolGetDatum(beentry->st_waiting);
+			values[5] = BoolGetDatum(beentry->st_waiting);
 
 			if (beentry->st_xact_start_timestamp != 0)
-				values[5] = TimestampTzGetDatum(beentry->st_xact_start_timestamp);
-			else
-				nulls[5] = true;
-
-			if (beentry->st_activity_start_timestamp != 0)
-				values[6] = TimestampTzGetDatum(beentry->st_activity_start_timestamp);
+				values[6] = TimestampTzGetDatum(beentry->st_xact_start_timestamp);
 			else
 				nulls[6] = true;
 
-			if (beentry->st_proc_start_timestamp != 0)
-				values[7] = TimestampTzGetDatum(beentry->st_proc_start_timestamp);
+			if (beentry->st_activity_start_timestamp != 0)
+				values[7] = TimestampTzGetDatum(beentry->st_activity_start_timestamp);
 			else
 				nulls[7] = true;
+
+			if (beentry->st_proc_start_timestamp != 0)
+				values[8] = TimestampTzGetDatum(beentry->st_proc_start_timestamp);
+			else
+				nulls[8] = true;
 
 			/* A zeroed client addr means we don't know */
 			memset(&zero_clientaddr, 0, sizeof(zero_clientaddr));
 			if (memcmp(&(beentry->st_clientaddr), &zero_clientaddr,
 					   sizeof(zero_clientaddr) == 0))
 			{
-				nulls[8] = true;
 				nulls[9] = true;
+				nulls[10] = true;
 			}
 			else
 			{
@@ -571,15 +579,15 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 											 NI_NUMERICHOST | NI_NUMERICSERV);
 					if (ret)
 					{
-						nulls[8] = true;
 						nulls[9] = true;
+						nulls[10] = true;
 					}
 					else
 					{
 						clean_ipv6_addr(beentry->st_clientaddr.addr.ss_family, remote_host);
-						values[8] = DirectFunctionCall1(inet_in,
+						values[9] = DirectFunctionCall1(inet_in,
 											   CStringGetDatum(remote_host));
-						values[9] = Int32GetDatum(atoi(remote_port));
+						values[10] = Int32GetDatum(atoi(remote_port));
 					}
 				}
 				else if (beentry->st_clientaddr.addr.ss_family == AF_UNIX)
@@ -590,28 +598,21 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 					 * connections we have no permissions to view, or with
 					 * errors.
 					 */
-					nulls[8] = true;
-					values[9] = DatumGetInt32(-1);
+					nulls[9] = true;
+					values[10] = DatumGetInt32(-1);
 				}
 				else
 				{
 					/* Unknown address type, should never happen */
-					nulls[8] = true;
 					nulls[9] = true;
+					nulls[10] = true;
 				}
 			}
-
-			/* application name */
-			if (beentry->st_appname)
-			    values[10] = CStringGetTextDatum(beentry->st_appname);
-			else
-				nulls[10] = true;
 		}
 		else
 		{
 			/* No permissions to view data about this session */
-			values[3] = CStringGetTextDatum("<insufficient privilege>");
-			nulls[4] = true;
+			values[4] = CStringGetTextDatum("<insufficient privilege>");
 			nulls[5] = true;
 			nulls[6] = true;
 			nulls[7] = true;

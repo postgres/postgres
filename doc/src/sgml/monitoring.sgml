@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/monitoring.sgml,v 1.72 2009/11/28 23:38:07 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/monitoring.sgml,v 1.73 2009/11/29 18:14:30 tgl Exp $ -->
 
 <chapter id="monitoring">
  <title>Monitoring Database Activity</title>
@@ -235,15 +235,15 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
      <row>
       <entry><structname>pg_stat_activity</></entry>
       <entry>One row per server process, showing database OID, database
-      name, process <acronym>ID</>, user OID, user name, current query,
-      query's waiting status, time at which the current transaction and
-      current query began execution, time at which the process was
-      started, client's address and port number, and application name.
+      name, process <acronym>ID</>, user OID, user name, application name,
+      current query, query's waiting status, time at which the current
+      transaction and current query began execution, time at which the
+      process was started, and client's address and port number.
       The columns that report data on the current query are available unless
       the parameter <varname>track_activities</varname> has been turned off.
-      Furthermore, these columns and the application name are only visible if
-      the user examining the view is a superuser or the same as the user
-      owning the process being reported on.
+      Furthermore, these columns are only visible if the user examining
+      the view is a superuser or the same as the user owning the process
+      being reported on.
      </entry>
      </row>
 
