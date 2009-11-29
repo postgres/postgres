@@ -218,6 +218,38 @@ FROM pg_proc as p1
 WHERE p1.prorettype = 'internal'::regtype AND NOT
     'internal'::regtype = ANY (p1.proargtypes);
 
+-- Check for length inconsistencies between the various argument-info arrays.
+
+SELECT p1.oid, p1.proname
+FROM pg_proc as p1
+WHERE proallargtypes IS NOT NULL AND
+    array_length(proallargtypes,1) < array_length(proargtypes,1);
+
+SELECT p1.oid, p1.proname
+FROM pg_proc as p1
+WHERE proargmodes IS NOT NULL AND
+    array_length(proargmodes,1) < array_length(proargtypes,1);
+
+SELECT p1.oid, p1.proname
+FROM pg_proc as p1
+WHERE proargnames IS NOT NULL AND
+    array_length(proargnames,1) < array_length(proargtypes,1);
+
+SELECT p1.oid, p1.proname
+FROM pg_proc as p1
+WHERE proallargtypes IS NOT NULL AND proargmodes IS NOT NULL AND
+    array_length(proallargtypes,1) <> array_length(proargmodes,1);
+
+SELECT p1.oid, p1.proname
+FROM pg_proc as p1
+WHERE proallargtypes IS NOT NULL AND proargnames IS NOT NULL AND
+    array_length(proallargtypes,1) <> array_length(proargnames,1);
+
+SELECT p1.oid, p1.proname
+FROM pg_proc as p1
+WHERE proargmodes IS NOT NULL AND proargnames IS NOT NULL AND
+    array_length(proargmodes,1) <> array_length(proargnames,1);
+
 
 -- **************** pg_cast ****************
 
