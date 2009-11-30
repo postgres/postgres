@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/hstore.sgml,v 1.4 2009/09/30 19:50:22 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/hstore.sgml,v 1.5 2009/11/30 17:56:09 momjian Exp $ -->
 
 <sect1 id="hstore">
  <title>hstore</title>
@@ -8,62 +8,76 @@
  </indexterm>
 
  <para>
-  This module implements a data type <type>hstore</> for storing sets of
-  (key,value) pairs within a single <productname>PostgreSQL</> data field.
+  This module implements the <type>hstore</> data type for storing sets of
+  key/value pairs within a single <productname>PostgreSQL</> value.
   This can be useful in various scenarios, such as rows with many attributes
   that are rarely examined, or semi-structured data.  Keys and values are
-  arbitrary text strings.
+  simply text strings.
  </para>
 
  <sect2>
   <title><type>hstore</> External Representation</title>
 
   <para>
-   The text representation of an <type>hstore</> value includes zero
-   or more <replaceable>key</> <literal>=&gt;</> <replaceable>value</>
-   items, separated by commas.  For example:
+
+   The text representation of an <type>hstore</>, used for input and output,
+   includes zero or more <replaceable>key</> <literal>=&gt;</>
+   <replaceable>value</> pairs separated by commas. Some examples:
 
    <programlisting>
-    k => v
-    foo => bar, baz => whatever
-    "1-a" => "anything at all"
+    k =&gt; v
+    foo =&gt; bar, baz =&gt; whatever
+    "1-a" =&gt; "anything at all"
    </programlisting>
 
-   The order of the items is not considered significant (and may not be
-   reproduced on output).  Whitespace between items or around the
-   <literal>=&gt;</> sign is ignored.  Use double quotes if a key or
-   value includes whitespace, comma, <literal>=</> or <literal>&gt;</>.
-   To include a double quote or a backslash in a key or value, precede
-   it with another backslash.
+   The order of the pairs is not significant (and may not be reproduced on
+   output). Whitespace between pairs or around the <literal>=&gt;</> sign is
+   ignored. Double-quote keys and values that include whitespace, commas,
+   <literal>=</>s or <literal>&gt;</>s. To include a double quote or a
+   backslash in a key or value, escape it with a backslash.
   </para>
 
   <para>
-   A value (but not a key) can be a SQL NULL.  This is represented as
+   Each key in an <type>hstore</> is unique. If you declare an <type>hstore</>
+   with duplicate keys, only one will be stored in the <type>hstore</> and
+   there is no guarantee as to which will be kept:
 
    <programlisting>
-    key => NULL
+% select 'a=&gt;1,a=&gt;2'::hstore;
+  hstore
+----------
+ "a"=&gt;"1"
+   </programlisting>
+  </para>
+
+  <para>
+   A value (but not a key) can be an SQL <literal>NULL</>. For example:
+
+   <programlisting>
+    key =&gt; NULL
    </programlisting>
 
-   The <literal>NULL</> keyword is not case-sensitive.  Again, use
-   double quotes if you want the string <literal>null</> to be treated
-   as an ordinary data value.
+   The <literal>NULL</> keyword is case-insensitive. Double-quote the
+   <literal>NULL</> to treat it as the ordinary string "NULL".
   </para>
 
   <note>
   <para>
-   Keep in mind that the above format, when used to input hstore values,
-   applies <emphasis>before</> any required quoting or escaping. If you
-   are passing an hstore literal via a parameter, then no additional
-   processing is needed. If you are passing it as a quoted literal
-   constant, then any single-quote characters and (depending on the
-   setting of <varname>standard_conforming_strings</>) backslash characters
-   need to be escaped correctly. See <xref linkend="sql-syntax-strings">.
+   Keep in mind that the <type>hstore</> text format, when used for input,
+   applies <emphasis>before</> any required quoting or escaping. If you are
+   passing an <type>hstore</> literal via a parameter, then no additional
+   processing is needed. But if you're passing it as a quoted literal
+   constant, then any single-quote characters and (depending on the setting of
+   the <varname>standard_conforming_strings</> configuration parameter)
+   backslash characters need to be escaped correctly. See
+   <xref linkend="sql-syntax-strings"> for more on the handling of string
+   constants.
   </para>
   </note>
 
   <para>
-   Double quotes are always used to surround key and value
-   strings on output, even when this is not strictly necessary.
+   On output, double quotes always surround keys and values, even when it's
+   not strictly necessary.
   </para>
 
  </sect2>
@@ -87,42 +101,42 @@
     <tbody>
      <row>
       <entry><type>hstore</> <literal>-&gt;</> <type>text</></entry>
-      <entry>get value for key (null if not present)</entry>
+      <entry>get value for key (<literal>NULL</> if not present)</entry>
       <entry><literal>'a=&gt;x, b=&gt;y'::hstore -&gt; 'a'</literal></entry>
       <entry><literal>x</literal></entry>
      </row>
 
      <row>
       <entry><type>hstore</> <literal>-&gt;</> <type>text[]</></entry>
-      <entry>get values for keys (null if not present)</entry>
+      <entry>get values for keys (<literal>NULL</> if not present)</entry>
       <entry><literal>'a=&gt;x, b=&gt;y, c=&gt;z'::hstore -&gt; ARRAY['c','a']</literal></entry>
       <entry><literal>{"z","x"}</literal></entry>
      </row>
 
      <row>
       <entry><type>text</> <literal>=&gt;</> <type>text</></entry>
-      <entry>make single-item <type>hstore</></entry>
+      <entry>make single-pair <type>hstore</></entry>
       <entry><literal>'a' =&gt; 'b'</literal></entry>
       <entry><literal>"a"=&gt;"b"</literal></entry>
      </row>
 
      <row>
       <entry><type>text[]</> <literal>=&gt;</> <type>text[]</></entry>
-      <entry>construct an <type>hstore</> value from separate key and value arrays</entry>
+      <entry>construct an <type>hstore</> from separate key and value arrays</entry>
       <entry><literal>ARRAY['a','b'] =&gt; ARRAY['1','2']</literal></entry>
       <entry><literal>"a"=&gt;"1","b"=&gt;"2"</literal></entry>
      </row>
 
      <row>
       <entry><type>hstore</> <literal>=&gt;</> <type>text[]</></entry>
-      <entry>extract a subset of an <type>hstore</> value</entry>
+      <entry>extract a subset of an <type>hstore</></entry>
       <entry><literal>'a=&gt;1,b=&gt;2,c=&gt;3'::hstore =&gt; ARRAY['b','c','x']</literal></entry>
       <entry><literal>"b"=&gt;"2", "c"=&gt;"3"</literal></entry>
      </row>
 
      <row>
       <entry><type>hstore</> <literal>||</> <type>hstore</></entry>
-      <entry>concatenation</entry>
+      <entry>concatenate <type>hstore</>s</entry>
       <entry><literal>'a=&gt;b, c=&gt;d'::hstore || 'c=&gt;x, d=&gt;q'::hstore</literal></entry>
       <entry><literal>"a"=&gt;"b", "c"=&gt;"x", "d"=&gt;"q"</literal></entry>
      </row>
@@ -178,28 +192,28 @@
 
      <row>
       <entry><type>hstore</> <literal>-</> <type>hstore</></entry>
-      <entry>delete matching key/value pairs from left operand</entry>
+      <entry>delete matching pairs from left operand</entry>
       <entry><literal>'a=&gt;1, b=&gt;2, c=&gt;3'::hstore - 'a=&gt;4, b=&gt;2'::hstore</literal></entry>
       <entry><literal>"a"=&gt;"1", "c"=&gt;"3"</literal></entry>
      </row>
 
      <row>
       <entry><type>record</> <literal>#=</> <type>hstore</></entry>
-      <entry>replace fields in record with matching values from hstore</entry>
+      <entry>replace fields in <type>record</> with matching values from <type>hstore</></entry>
       <entry>see Examples section</entry>
       <entry></entry>
      </row>
 
      <row>
       <entry><literal>%%</> <type>hstore</></entry>
-      <entry>convert hstore to array of alternating keys and values</entry>
+      <entry>convert <type>hstore</> to array of alternating keys and values</entry>
       <entry><literal>%% 'a=&gt;foo, b=&gt;bar'::hstore</literal></entry>
       <entry><literal>{a,foo,b,bar}</literal></entry>
      </row>
 
      <row>
       <entry><literal>%#</> <type>hstore</></entry>
-      <entry>convert hstore to two-dimensional key/value array</entry>
+      <entry>convert <type>hstore</> to two-dimensional key/value array</entry>
       <entry><literal>%# 'a=&gt;foo, b=&gt;bar'::hstore</literal></entry>
       <entry><literal>{{a,foo},{b,bar}}</literal></entry>
      </row>
@@ -208,13 +222,15 @@
    </tgroup>
   </table>
 
+  <note>
   <para>
-   (Before PostgreSQL 8.2, the containment operators @&gt; and &lt;@ were
-   respectively called @ and ~.  These names are still available, but are
-   deprecated and will eventually be retired.  Notice that the old names
-   are reversed from the convention formerly followed by the core geometric
-   datatypes!)
-  </para>
+   Prior to PostgreSQL 8.2, the containment operators <literal>@&gt;</>
+   and <literal>&lt;@</> were called <literal>@</> and <literal>~</>,
+   respectively. These names are still available, but are deprecated and will
+   eventually be removed. Notice that the old names are reversed from the
+   convention formerly followed by the core geometric datatypes!
+   </para>
+  </note>
 
   <table id="hstore-func-table">
    <title><type>hstore</> Functions</title>
@@ -251,7 +267,7 @@
      <row>
       <entry><function>akeys(hstore)</function></entry>
       <entry><type>text[]</type></entry>
-      <entry>get <type>hstore</>'s keys as array</entry>
+      <entry>get <type>hstore</>'s keys as an array</entry>
       <entry><literal>akeys('a=&gt;1,b=&gt;2')</literal></entry>
       <entry><literal>{a,b}</literal></entry>
      </row>
@@ -259,10 +275,10 @@
      <row>
       <entry><function>skeys(hstore)</function></entry>
       <entry><type>setof text</type></entry>
-      <entry>get <type>hstore</>'s keys as set</entry>
+      <entry>get <type>hstore</>'s keys as a set</entry>
       <entry><literal>skeys('a=&gt;1,b=&gt;2')</literal></entry>
       <entry>
-<programlisting>
+22<programlisting>
 a
 b
 </programlisting></entry>
@@ -271,7 +287,7 @@ b
      <row>
       <entry><function>avals(hstore)</function></entry>
       <entry><type>text[]</type></entry>
-      <entry>get <type>hstore</>'s values as array</entry>
+      <entry>get <type>hstore</>'s values as an array</entry>
       <entry><literal>avals('a=&gt;1,b=&gt;2')</literal></entry>
       <entry><literal>{1,2}</literal></entry>
      </row>
@@ -279,7 +295,7 @@ b
      <row>
       <entry><function>svals(hstore)</function></entry>
       <entry><type>setof text</type></entry>
-      <entry>get <type>hstore</>'s values as set</entry>
+      <entry>get <type>hstore</>'s values as a set</entry>
       <entry><literal>svals('a=&gt;1,b=&gt;2')</literal></entry>
       <entry>
 <programlisting>
@@ -307,8 +323,8 @@ b
 
      <row>
       <entry><function>each(hstore)</function></entry>
-      <entry><type>setof (key text, value text)</type></entry>
-      <entry>get <type>hstore</>'s keys and values as set</entry>
+      <entry><type>setof(key text, value text)</type></entry>
+      <entry>get <type>hstore</>'s keys and values as a set</entry>
       <entry><literal>select * from each('a=&gt;1,b=&gt;2')</literal></entry>
       <entry>
 <programlisting>
@@ -330,7 +346,7 @@ b
      <row>
       <entry><function>defined(hstore,text)</function></entry>
       <entry><type>boolean</type></entry>
-      <entry>does <type>hstore</> contain non-null value for key?</entry>
+      <entry>does <type>hstore</> contain non-<literal>NULL</> value for key?</entry>
       <entry><literal>defined('a=&gt;NULL','a')</literal></entry>
       <entry><literal>f</literal></entry>
      </row>
@@ -338,7 +354,7 @@ b
      <row>
       <entry><function>delete(hstore,text)</function></entry>
       <entry><type>hstore</type></entry>
-      <entry>delete any item matching key</entry>
+      <entry>delete pair with matching key</entry>
       <entry><literal>delete('a=&gt;1,b=&gt;2','b')</literal></entry>
       <entry><literal>"a"=>"1"</literal></entry>
      </row>
@@ -346,7 +362,7 @@ b
      <row>
       <entry><function>delete(hstore,text[])</function></entry>
       <entry><type>hstore</type></entry>
-      <entry>delete any item matching any of the keys</entry>
+      <entry>delete pairs with matching keys</entry>
       <entry><literal>delete('a=&gt;1,b=&gt;2,c=&gt;3',ARRAY['a','b'])</literal></entry>
       <entry><literal>"c"=>"3"</literal></entry>
      </row>
@@ -354,7 +370,7 @@ b
      <row>
       <entry><function>delete(hstore,hstore)</function></entry>
       <entry><type>hstore</type></entry>
-      <entry>delete any key/value pair with an exact match in the second argument</entry>
+      <entry>delete pairs matching those in the second argument</entry>
       <entry><literal>delete('a=&gt;1,b=&gt;2','a=&gt;4,b=&gt;2'::hstore)</literal></entry>
       <entry><literal>"a"=>"1"</literal></entry>
      </row>
@@ -362,7 +378,7 @@ b
      <row>
       <entry><function>populate_record(record,hstore)</function></entry>
       <entry><type>record</type></entry>
-      <entry>replace fields in record with matching values from hstore</entry>
+      <entry>replace fields in <type>record</> with matching values from <type>hstore</></entry>
       <entry>see Examples section</entry>
       <entry></entry>
      </row>
@@ -374,7 +390,7 @@ b
   <note>
    <para>
     The function <function>populate_record</function> is actually declared
-    with <type>anyelement</>, not <type>record</>, as its first argument;
+    with <type>anyelement</>, not <type>record</>, as its first argument,
     but it will reject non-record types with a runtime error.
    </para>
   </note>
@@ -384,9 +400,8 @@ b
   <title>Indexes</title>
 
   <para>
-   <type>hstore</> has index support for <literal>@&gt;</>, <literal>?</>,
-   <literal>?&</> and <literal>?|</> operators.  You can use either
-   GiST or GIN index types.  For example:
+   <type>hstore</> has GiST and GIN index support for the <literal>@&gt;</>,
+   <literal>?</>, <literal>?&</> and <literal>?|</> operators. For example:
   </para>
   <programlisting>
 CREATE INDEX hidx ON testhstore USING GIST (h);
@@ -395,14 +410,13 @@ CREATE INDEX hidx ON testhstore USING GIN (h);
   </programlisting>
 
   <para>
-   Additionally, <type>hstore</> has index support for the <literal>=</>
-   operator using the <type>btree</> or <type>hash</> index types. This
-   allows <type>hstore</> columns to be declared UNIQUE, or used with
-   GROUP BY, ORDER BY or DISTINCT. The sort ordering for <type>hstore</>
-   values is not intended to be particularly useful; it merely brings
-   exactly equal values together.
-   If an index is needed to support <literal>=</> comparisons it can be
-   created as follows:
+   <type>hstore</> also supports <type>btree</> or <type>hash</> indexes for
+   the <literal>=</> operator. This allows <type>hstore</> columns to be
+   declared <literal>UNIQUE</>, or to be used in <literal>GROUP BY</>,
+   <literal>ORDER BY</> or <literal>DISTINCT</> expressions. The sort ordering
+   for <type>hstore</> values is not particularly useful, but these indexes
+   may be useful for equivalence lookups. Create indexes for <literal>=</>
+   comparisons as follows:
   </para>
   <programlisting>
 CREATE INDEX hidx ON testhstore USING BTREE (h);
@@ -418,7 +432,7 @@ CREATE INDEX hidx ON testhstore USING HASH (h);
    Add a key, or update an existing key with a new value:
   </para>
   <programlisting>
-UPDATE tab SET h = h || ('c' => '3');
+UPDATE tab SET h = h || ('c' =&gt; '3');
   </programlisting>
 
   <para>
@@ -429,7 +443,7 @@ UPDATE tab SET h = delete(h, 'k1');
   </programlisting>
 
   <para>
-   Convert a record to an hstore:
+   Convert a <type>record</> to an <type>hstore</>:
   </para>
   <programlisting>
 CREATE TABLE test (col1 integer, col2 text, col3 text);
@@ -438,18 +452,18 @@ INSERT INTO test VALUES (123, 'foo', 'bar');
 SELECT hstore(t) FROM test AS t;
                    hstore                    
 ---------------------------------------------
- "col1"=>"123", "col2"=>"foo", "col3"=>"bar"
+ "col1"=&gt;"123", "col2"=&gt;"foo", "col3"=&gt;"bar"
 (1 row)
   </programlisting>
 
   <para>
-   Convert an hstore to a predefined record type:
+   Convert an <type>hstore</> to a predefined <type>record</> type:
   </para>
   <programlisting>
 CREATE TABLE test (col1 integer, col2 text, col3 text);
 
 SELECT * FROM populate_record(null::test,
-                              '"col1"=>"456", "col2"=>"zzz"');
+                              '"col1"=&gt;"456", "col2"=&gt;"zzz"');
  col1 | col2 | col3 
 ------+------+------
   456 | zzz  | 
@@ -457,13 +471,13 @@ SELECT * FROM populate_record(null::test,
   </programlisting>
 
   <para>
-   Modify an existing record using the values from an hstore:
+   Modify an existing record using the values from an <type>hstore</>:
   </para>
   <programlisting>
 CREATE TABLE test (col1 integer, col2 text, col3 text);
 INSERT INTO test VALUES (123, 'foo', 'bar');
 
-SELECT (r).* FROM (SELECT t #= '"col3"=>"baz"' AS r FROM test t) s;
+SELECT (r).* FROM (SELECT t #= '"col3"=&gt;"baz"' AS r FROM test t) s;
  col1 | col2 | col3 
 ------+------+------
   123 | foo  | baz
@@ -477,15 +491,15 @@ SELECT (r).* FROM (SELECT t #= '"col3"=>"baz"' AS r FROM test t) s;
   <para>
    The <type>hstore</> type, because of its intrinsic liberality, could
    contain a lot of different keys. Checking for valid keys is the task of the
-   application.  Examples below demonstrate several techniques for checking
-   keys and obtaining statistics.
+   application. The following examples demonstrate several techniques for
+   checking keys and obtaining statistics.
   </para>
 
   <para>
    Simple example:
   </para>
   <programlisting>
-SELECT * FROM each('aaa=>bq, b=>NULL, ""=>1');
+SELECT * FROM each('aaa=&gt;bq, b=&gt;NULL, ""=&gt;1');
   </programlisting>
 
   <para>
@@ -523,8 +537,8 @@ SELECT key, count(*) FROM
 
   <para>
    <emphasis>When upgrading from older versions, always load the new
-   version of this module into the database before restoring an old
-   dump. Otherwise, many new features will be unavailable.</emphasis>
+   version of this module into the database before restoring a dump.
+   Otherwise, many new features will be unavailable.</emphasis>
   </para>
 
   <para>
@@ -535,12 +549,11 @@ SELECT key, count(*) FROM
   </para>
 
   <para>
-   In the event of doing a binary upgrade, upward
-   compatibility is maintained by having the new code recognize
-   old-format data. This will entail a slight performance penalty when
-   processing data that has not yet been modified by the new code. It is
-   possible to force an upgrade of all values in a table column
-   by doing an UPDATE statement as follows:
+   In the event of a binary upgrade, upward compatibility is maintained by
+   having the new code recognize old-format data. This will entail a slight
+   performance penalty when processing data that has not yet been modified by
+   the new code. It is possible to force an upgrade of all values in a table
+   column by doing an <literal>UPDATE</> statement as follows:
   </para>
   <programlisting>
 UPDATE tablename SET hstorecol = hstorecol || '';
@@ -569,7 +582,8 @@ ALTER TABLE tablename ALTER hstorecol TYPE hstore USING hstorecol || '';
   </para>
 
   <para>
-   Additional enhancements by Andrew Gierth <email>andrew@tao11.riddles.org.uk</email>, United Kingdom
+   Additional enhancements by Andrew Gierth <email>andrew@tao11.riddles.org.uk</email>,
+   United Kingdom
   </para>
  </sect2>
 
