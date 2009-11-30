@@ -21323,16 +21323,6 @@ for thread safety." >&2;}
    { (exit 1); exit 1; }; }
 fi
 
-if test "$THREAD_SUPPORT" = no; then
-{ { $as_echo "$as_me:$LINENO: error: cannot enable threads on this platform
-This platform is known to not support thread-safe programs.  For details,
-compile and run src/bin/pg_thread_test." >&5
-$as_echo "$as_me: error: cannot enable threads on this platform
-This platform is known to not support thread-safe programs.  For details,
-compile and run src/bin/pg_thread_test." >&2;}
-   { (exit 1); exit 1; }; }
-fi
-
 # Check for *_r functions
 _CFLAGS="$CFLAGS"
 _LIBS="$LIBS"
