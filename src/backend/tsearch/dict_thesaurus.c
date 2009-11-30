@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tsearch/dict_thesaurus.c,v 1.14 2009/07/16 06:33:44 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tsearch/dict_thesaurus.c,v 1.15 2009/11/30 16:38:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,8 +57,8 @@ typedef struct
 
 	/* Array to search lexeme by exact match */
 	TheLexeme  *wrds;
-	int			nwrds;
-	int			ntwrds;
+	int			nwrds;			/* current number of words */
+	int			ntwrds;			/* allocated array length */
 
 	/*
 	 * Storage of substituted result, n-th element is for n-th expression
@@ -298,7 +298,6 @@ thesaurusRead(char *filename, DictThesaurus *d)
 static TheLexeme *
 addCompiledLexeme(TheLexeme *newwrds, int *nnw, int *tnm, TSLexeme *lexeme, LexemeInfo *src, uint16 tnvariant)
 {
-
 	if (*nnw >= *tnm)
 	{
 		*tnm *= 2;
@@ -453,7 +452,8 @@ compileTheLexeme(DictThesaurus *d)
 		pfree(d->wrds[i].entries);
 	}
 
-	pfree(d->wrds);
+	if (d->wrds)
+		pfree(d->wrds);
 	d->wrds = newwrds;
 	d->nwrds = nnw;
 	d->ntwrds = tnm;
