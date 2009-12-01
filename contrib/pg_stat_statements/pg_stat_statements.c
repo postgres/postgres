@@ -14,7 +14,7 @@
  * Copyright (c) 2008-2009, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/contrib/pg_stat_statements/pg_stat_statements.c,v 1.6 2009/12/01 01:08:45 momjian Exp $
+ *	  $PostgreSQL: pgsql/contrib/pg_stat_statements/pg_stat_statements.c,v 1.7 2009/12/01 02:31:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,7 +24,6 @@
 
 #include "access/hash.h"
 #include "catalog/pg_type.h"
-#include "commands/copy.h"
 #include "executor/executor.h"
 #include "executor/instrument.h"
 #include "mb/pg_wchar.h"
@@ -33,7 +32,6 @@
 #include "storage/fd.h"
 #include "storage/ipc.h"
 #include "storage/spin.h"
-#include "tcop/utility.h"
 #include "utils/builtins.h"
 #include "utils/hsearch.h"
 #include "utils/guc.h"
@@ -115,7 +113,6 @@ static shmem_startup_hook_type prev_shmem_startup_hook = NULL;
 static ExecutorStart_hook_type prev_ExecutorStart = NULL;
 static ExecutorRun_hook_type prev_ExecutorRun = NULL;
 static ExecutorEnd_hook_type prev_ExecutorEnd = NULL;
-static ProcessUtility_hook_type prev_ProcessUtility = NULL;
 
 /* Links to shared memory state */
 static pgssSharedState *pgss = NULL;
@@ -127,11 +124,10 @@ typedef enum
 {
 	PGSS_TRACK_NONE,			/* track no statements */
 	PGSS_TRACK_TOP,				/* only top level statements */
-	PGSS_TRACK_ALL				/* all statements, including nested ones */
+	PGSS_TRACK_ALL,				/* all statements, including nested ones */
 } PGSSTrackLevel;
 
-static const struct config_enum_entry track_options[] =
-{
+static const struct config_enum_entry track_options[] = {
 	{"none", PGSS_TRACK_NONE, false},
 	{"top", PGSS_TRACK_TOP, false},
 	{"all", PGSS_TRACK_ALL, false},
@@ -140,7 +136,6 @@ static const struct config_enum_entry track_options[] =
 
 static int	pgss_max;			/* max # statements to track */
 static int	pgss_track;			/* tracking level */
-static bool pgss_track_ddl;		/* whether to track ddl commands */
 static bool pgss_save;			/* whether to save stats across shutdown */
 
 
@@ -151,9 +146,7 @@ static bool pgss_save;			/* whether to save stats across shutdown */
 /*---- Function declarations ----*/
 
 void		_PG_init(void);
-#ifdef NOT_USED
 void		_PG_fini(void);
-#endif
 
 Datum		pg_stat_statements_reset(PG_FUNCTION_ARGS);
 Datum		pg_stat_statements(PG_FUNCTION_ARGS);
@@ -168,12 +161,10 @@ static void pgss_ExecutorRun(QueryDesc *queryDesc,
 				 ScanDirection direction,
 				 long count);
 static void pgss_ExecutorEnd(QueryDesc *queryDesc);
-static void pgss_ProcessUtility(Node *parsetree,
-			   const char *queryString, ParamListInfo params, bool isTopLevel,
-			   DestReceiver *dest, char *completionTag);
 static uint32 pgss_hash_fn(const void *key, Size keysize);
 static int	pgss_match_fn(const void *key1, const void *key2, Size keysize);
-static void pgss_store(const char *query, double total_time, uint64 rows);
+static void pgss_store(const char *query,
+		   const Instrumentation *instr, uint32 rows);
 static Size pgss_memsize(void);
 static pgssEntry *entry_alloc(pgssHashKey *key);
 static void entry_dealloc(void);
@@ -223,16 +214,6 @@ _PG_init(void)
 							 NULL,
 							 NULL);
 
-	DefineCustomBoolVariable("pg_stat_statements.track_ddl",
-			   "Selects whether DDL commands are tracked by pg_stat_statements.",
-							 NULL,
-							 &pgss_track_ddl,
-							 true,
-							 PGC_SUSET,
-							 0,
-							 NULL,
-							 NULL);
-
 	DefineCustomBoolVariable("pg_stat_statements.save",
 			   "Save pg_stat_statements statistics across server shutdowns.",
 							 NULL,
@@ -264,11 +245,8 @@ _PG_init(void)
 	ExecutorRun_hook = pgss_ExecutorRun;
 	prev_ExecutorEnd = ExecutorEnd_hook;
 	ExecutorEnd_hook = pgss_ExecutorEnd;
-	prev_ProcessUtility = ProcessUtility_hook;
-	ProcessUtility_hook = pgss_ProcessUtility;
 }
 
-#ifdef NOT_USED
 /*
  * Module unload callback
  */
@@ -279,10 +257,8 @@ _PG_fini(void)
 	ExecutorStart_hook = prev_ExecutorStart;
 	ExecutorRun_hook = prev_ExecutorRun;
 	ExecutorEnd_hook = prev_ExecutorEnd;
-	ProcessUtility_hook = prev_ProcessUtility;
 	shmem_startup_hook = prev_shmem_startup_hook;
 }
-#endif
 
 /*
  * shmem_startup hook: allocate or attach to shared memory,
@@ -563,7 +539,7 @@ pgss_ExecutorEnd(QueryDesc *queryDesc)
 		InstrEndLoop(queryDesc->totaltime);
 
 		pgss_store(queryDesc->sourceText,
-				   queryDesc->totaltime->total,
+				   queryDesc->totaltime,
 				   queryDesc->estate->es_processed);
 	}
 
@@ -571,59 +547,6 @@ pgss_ExecutorEnd(QueryDesc *queryDesc)
 		prev_ExecutorEnd(queryDesc);
 	else
 		standard_ExecutorEnd(queryDesc);
-}
-
-/*
- * ProcessUtility hook
- */
-static void
-pgss_ProcessUtility(Node *parsetree, const char *queryString,
-					ParamListInfo params, bool isTopLevel,
-					DestReceiver *dest, char *completionTag)
-{
-	if (pgss_track_ddl && isTopLevel && pgss_enabled())
-	{
-		instr_time	start;
-		instr_time	duration;
-		uint64		rows = 0;
-
-		INSTR_TIME_SET_CURRENT(start);
-
-		nested_level++;
-		PG_TRY();
-		{
-			if (prev_ProcessUtility)
-				prev_ProcessUtility(parsetree, queryString, params, isTopLevel, dest, completionTag);
-			else if ((nodeTag(parsetree)) == T_CopyStmt)
-			{
-				rows = DoCopy((CopyStmt *) parsetree, queryString);
-				if (completionTag)
-					snprintf(completionTag, COMPLETION_TAG_BUFSIZE,
-							 "COPY " UINT64_FORMAT, rows);
-			}
-			else
-				standard_ProcessUtility(parsetree, queryString, params, isTopLevel, dest, completionTag);
-			nested_level--;
-		}
-		PG_CATCH();
-		{
-			nested_level--;
-			PG_RE_THROW();
-		}
-		PG_END_TRY();
-
-		INSTR_TIME_SET_CURRENT(duration);
-		INSTR_TIME_SUBTRACT(duration, start);
-
-		pgss_store(queryString, INSTR_TIME_GET_DOUBLE(duration), rows);
-	}
-	else
-	{
-		if (prev_ProcessUtility)
-			prev_ProcessUtility(parsetree, queryString, params, isTopLevel, dest, completionTag);
-		else
-			standard_ProcessUtility(parsetree, queryString, params, isTopLevel, dest, completionTag);
-	}
 }
 
 /*
@@ -664,7 +587,7 @@ pgss_match_fn(const void *key1, const void *key2, Size keysize)
  * Store some statistics for a statement.
  */
 static void
-pgss_store(const char *query, double total_time, uint64 rows)
+pgss_store(const char *query, const Instrumentation *instr, uint32 rows)
 {
 	pgssHashKey key;
 	double		usage;
@@ -708,7 +631,7 @@ pgss_store(const char *query, double total_time, uint64 rows)
 
 		SpinLockAcquire(&e->mutex);
 		e->counters.calls += 1;
-		e->counters.total_time += total_time;
+		e->counters.total_time += instr->total;
 		e->counters.rows += rows;
 		e->counters.usage += usage;
 		SpinLockRelease(&e->mutex);

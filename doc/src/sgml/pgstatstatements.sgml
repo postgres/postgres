@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/pgstatstatements.sgml,v 1.3 2009/12/01 01:08:46 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/pgstatstatements.sgml,v 1.4 2009/12/01 02:31:11 momjian Exp $ -->
 
 <sect1 id="pgstatstatements">
  <title>pg_stat_statements</title>
@@ -169,23 +169,6 @@
       (such as statements invoked within functions), or <literal>none</> to
       disable.
       The default value is <literal>top</>.
-      Only superusers can change this setting.
-     </para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry>
-    <term>
-     <varname>pg_stat_statements.track_ddl</varname> (<type>boolean</type>)
-    </term>
-
-    <listitem>
-     <para>
-      <varname>pg_stat_statements.track_ddl</varname> controls whether DDL
-      commands are counted by the module.
-      Specify <literal>on</> to track DDL commands, which excludes <command>SELECT</>,
-      <command>INSERT</>, <command>UPDATE</> and <command>DELETE</> statements.
-      The default value is <literal>on</>.
       Only superusers can change this setting.
      </para>
     </listitem>

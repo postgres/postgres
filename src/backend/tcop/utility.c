@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.319 2009/12/01 01:08:46 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.320 2009/12/01 02:31:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,9 +57,6 @@
 #include "utils/guc.h"
 #include "utils/syscache.h"
 
-
-/* Hooks for plugins to get control in ProcessUtility() */
-ProcessUtility_hook_type ProcessUtility_hook = NULL;
 
 /*
  * Verify user has ownership of specified relation, else ereport.
@@ -247,10 +244,6 @@ check_xact_readonly(Node *parsetree)
  * completionTag is only set nonempty if we want to return a nondefault status.
  *
  * completionTag may be NULL if caller doesn't want a status string.
- *
- * We provide a function hook variable that lets loadable plugins
- * get control when ProcessUtility is called.  Such a plugin would
- * normally call standard_ProcessUtility().
  */
 void
 ProcessUtility(Node *parsetree,
@@ -267,20 +260,6 @@ ProcessUtility(Node *parsetree,
 	if (completionTag)
 		completionTag[0] = '\0';
 
-	if (ProcessUtility_hook)
-		(*ProcessUtility_hook) (parsetree, queryString, params, isTopLevel, dest, completionTag);
-	else
-		standard_ProcessUtility(parsetree, queryString, params, isTopLevel, dest, completionTag);
-}
-
-void
-standard_ProcessUtility(Node *parsetree,
-			   const char *queryString,
-			   ParamListInfo params,
-			   bool isTopLevel,
-			   DestReceiver *dest,
-			   char *completionTag)
-{
 	switch (nodeTag(parsetree))
 	{
 			/*
