@@ -47,7 +47,7 @@
  * permission to use and distribute the software in accordance with the
  * terms specified in this license.
  *
- * $PostgreSQL: pgsql/src/backend/regex/regc_locale.c,v 1.9 2008/02/14 17:33:37 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/regex/regc_locale.c,v 1.10 2009/12/01 21:00:24 tgl Exp $
  */
 
 /* ASCII character-name table */
@@ -349,67 +349,152 @@ static const struct cname
 	}
 };
 
+
 /*
- * some ctype functions with non-ascii-char guard
+ * ctype functions adapted to work on pg_wchar (a/k/a chr)
+ *
+ * When working in UTF8 encoding, we use the <wctype.h> functions if
+ * available.  This assumes that every platform uses Unicode codepoints
+ * directly as the wchar_t representation of Unicode.  On some platforms
+ * wchar_t is only 16 bits wide, so we have to punt for codepoints > 0xFFFF.
+ *
+ * In all other encodings, we use the <ctype.h> functions for pg_wchar
+ * values up to 255, and punt for values above that.  This is only 100%
+ * correct in single-byte encodings such as LATINn.  However, non-Unicode
+ * multibyte encodings are mostly Far Eastern character sets for which the
+ * properties being tested here aren't relevant for higher code values anyway.
+ *
+ * NB: the coding here assumes pg_wchar is an unsigned type.
  */
+
 static int
 pg_wc_isdigit(pg_wchar c)
 {
-	return (c >= 0 && c <= UCHAR_MAX && isdigit((unsigned char) c));
+#ifdef USE_WIDE_UPPER_LOWER
+	if (GetDatabaseEncoding() == PG_UTF8)
+	{
+		if (sizeof(wchar_t) >= 4 || c <= (pg_wchar) 0xFFFF)
+			return iswdigit((wint_t) c);
+	}
+#endif
+	return (c <= (pg_wchar) UCHAR_MAX && isdigit((unsigned char) c));
 }
 
 static int
 pg_wc_isalpha(pg_wchar c)
 {
-	return (c >= 0 && c <= UCHAR_MAX && isalpha((unsigned char) c));
+#ifdef USE_WIDE_UPPER_LOWER
+	if (GetDatabaseEncoding() == PG_UTF8)
+	{
+		if (sizeof(wchar_t) >= 4 || c <= (pg_wchar) 0xFFFF)
+			return iswalpha((wint_t) c);
+	}
+#endif
+	return (c <= (pg_wchar) UCHAR_MAX && isalpha((unsigned char) c));
 }
 
 static int
 pg_wc_isalnum(pg_wchar c)
 {
-	return (c >= 0 && c <= UCHAR_MAX && isalnum((unsigned char) c));
+#ifdef USE_WIDE_UPPER_LOWER
+	if (GetDatabaseEncoding() == PG_UTF8)
+	{
+		if (sizeof(wchar_t) >= 4 || c <= (pg_wchar) 0xFFFF)
+			return iswalnum((wint_t) c);
+	}
+#endif
+	return (c <= (pg_wchar) UCHAR_MAX && isalnum((unsigned char) c));
 }
 
 static int
 pg_wc_isupper(pg_wchar c)
 {
-	return (c >= 0 && c <= UCHAR_MAX && isupper((unsigned char) c));
+#ifdef USE_WIDE_UPPER_LOWER
+	if (GetDatabaseEncoding() == PG_UTF8)
+	{
+		if (sizeof(wchar_t) >= 4 || c <= (pg_wchar) 0xFFFF)
+			return iswupper((wint_t) c);
+	}
+#endif
+	return (c <= (pg_wchar) UCHAR_MAX && isupper((unsigned char) c));
 }
 
 static int
 pg_wc_islower(pg_wchar c)
 {
-	return (c >= 0 && c <= UCHAR_MAX && islower((unsigned char) c));
+#ifdef USE_WIDE_UPPER_LOWER
+	if (GetDatabaseEncoding() == PG_UTF8)
+	{
+		if (sizeof(wchar_t) >= 4 || c <= (pg_wchar) 0xFFFF)
+			return iswlower((wint_t) c);
+	}
+#endif
+	return (c <= (pg_wchar) UCHAR_MAX && islower((unsigned char) c));
 }
 
 static int
 pg_wc_isgraph(pg_wchar c)
 {
-	return (c >= 0 && c <= UCHAR_MAX && isgraph((unsigned char) c));
+#ifdef USE_WIDE_UPPER_LOWER
+	if (GetDatabaseEncoding() == PG_UTF8)
+	{
+		if (sizeof(wchar_t) >= 4 || c <= (pg_wchar) 0xFFFF)
+			return iswgraph((wint_t) c);
+	}
+#endif
+	return (c <= (pg_wchar) UCHAR_MAX && isgraph((unsigned char) c));
 }
 
 static int
 pg_wc_isprint(pg_wchar c)
 {
-	return (c >= 0 && c <= UCHAR_MAX && isprint((unsigned char) c));
+#ifdef USE_WIDE_UPPER_LOWER
+	if (GetDatabaseEncoding() == PG_UTF8)
+	{
+		if (sizeof(wchar_t) >= 4 || c <= (pg_wchar) 0xFFFF)
+			return iswprint((wint_t) c);
+	}
+#endif
+	return (c <= (pg_wchar) UCHAR_MAX && isprint((unsigned char) c));
 }
 
 static int
 pg_wc_ispunct(pg_wchar c)
 {
-	return (c >= 0 && c <= UCHAR_MAX && ispunct((unsigned char) c));
+#ifdef USE_WIDE_UPPER_LOWER
+	if (GetDatabaseEncoding() == PG_UTF8)
+	{
+		if (sizeof(wchar_t) >= 4 || c <= (pg_wchar) 0xFFFF)
+			return iswpunct((wint_t) c);
+	}
+#endif
+	return (c <= (pg_wchar) UCHAR_MAX && ispunct((unsigned char) c));
 }
 
 static int
 pg_wc_isspace(pg_wchar c)
 {
-	return (c >= 0 && c <= UCHAR_MAX && isspace((unsigned char) c));
+#ifdef USE_WIDE_UPPER_LOWER
+	if (GetDatabaseEncoding() == PG_UTF8)
+	{
+		if (sizeof(wchar_t) >= 4 || c <= (pg_wchar) 0xFFFF)
+			return iswspace((wint_t) c);
+	}
+#endif
+	return (c <= (pg_wchar) UCHAR_MAX && isspace((unsigned char) c));
 }
 
 static pg_wchar
 pg_wc_toupper(pg_wchar c)
 {
-	if (c >= 0 && c <= UCHAR_MAX)
+#ifdef USE_WIDE_UPPER_LOWER
+	if (GetDatabaseEncoding() == PG_UTF8)
+	{
+		if (sizeof(wchar_t) >= 4 || c <= (pg_wchar) 0xFFFF)
+			return towupper((wint_t) c);
+	}
+#endif
+	if (c <= (pg_wchar) UCHAR_MAX)
 		return toupper((unsigned char) c);
 	return c;
 }
@@ -417,7 +502,14 @@ pg_wc_toupper(pg_wchar c)
 static pg_wchar
 pg_wc_tolower(pg_wchar c)
 {
-	if (c >= 0 && c <= UCHAR_MAX)
+#ifdef USE_WIDE_UPPER_LOWER
+	if (GetDatabaseEncoding() == PG_UTF8)
+	{
+		if (sizeof(wchar_t) >= 4 || c <= (pg_wchar) 0xFFFF)
+			return towlower((wint_t) c);
+	}
+#endif
+	if (c <= (pg_wchar) UCHAR_MAX)
 		return tolower((unsigned char) c);
 	return c;
 }

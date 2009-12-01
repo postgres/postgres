@@ -25,7 +25,7 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/src/include/regex/regcustom.h,v 1.7 2008/02/14 17:33:37 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/regex/regcustom.h,v 1.8 2009/12/01 21:00:24 tgl Exp $
  */
 
 /* headers if any */
@@ -33,6 +33,17 @@
 
 #include <ctype.h>
 #include <limits.h>
+
+/*
+ * towlower() and friends should be in <wctype.h>, but some pre-C99 systems
+ * declare them in <wchar.h>.
+ */
+#ifdef HAVE_WCHAR_H
+#include <wchar.h>
+#endif
+#ifdef HAVE_WCTYPE_H
+#include <wctype.h>
+#endif
 
 #include "mb/pg_wchar.h"
 
