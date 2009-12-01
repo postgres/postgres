@@ -1497,7 +1497,7 @@ Optional Features:
   --enable-dtrace         build with DTrace support
   --enable-depend         turn on automatic dependency tracking
   --enable-cassert        enable assertion checks (for debugging)
-  --enable-thread-safety  make client libraries thread-safe
+  --disable-thread-safety make client libraries thread-safe
   --enable-thread-safety-force
                           force thread-safety despite thread test failure
   --disable-float4-byval  disable float4 passed by value
@@ -4859,34 +4859,6 @@ IFS=$ac_save_IFS
 #
 { $as_echo "$as_me:$LINENO: checking allow thread-safe client libraries" >&5
 $as_echo_n "checking allow thread-safe client libraries... " >&6; }
-if test "$PORTNAME" != "win32"; then
-
-
-# Check whether --enable-thread-safety was given.
-if test "${enable_thread_safety+set}" = set; then
-  enableval=$enable_thread_safety;
-  case $enableval in
-    yes)
-      :
-      ;;
-    no)
-      :
-      ;;
-    *)
-      { { $as_echo "$as_me:$LINENO: error: no argument expected for --enable-thread-safety option" >&5
-$as_echo "$as_me: error: no argument expected for --enable-thread-safety option" >&2;}
-   { (exit 1); exit 1; }; }
-      ;;
-  esac
-
-else
-  enable_thread_safety=no
-
-fi
-
-
-else
-# Win32 should always use threads
 
 
 # Check whether --enable-thread-safety was given.
@@ -4912,7 +4884,6 @@ else
 fi
 
 
-fi
 
 
 

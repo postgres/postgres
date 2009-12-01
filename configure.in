@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $PostgreSQL: pgsql/configure.in,v 1.613 2009/11/30 16:50:38 momjian Exp $
+dnl $PostgreSQL: pgsql/configure.in,v 1.614 2009/12/01 23:02:44 momjian Exp $
 dnl
 dnl Developers, please strive to achieve this order:
 dnl
@@ -558,12 +558,7 @@ IFS=$ac_save_IFS
 # Enable thread-safe client libraries
 #
 AC_MSG_CHECKING([allow thread-safe client libraries])
-if test "$PORTNAME" != "win32"; then
-PGAC_ARG_BOOL(enable, thread-safety, no, [make client libraries thread-safe])
-else
-# Win32 should always use threads
 PGAC_ARG_BOOL(enable, thread-safety, yes, [make client libraries thread-safe])
-fi
 
 PGAC_ARG_BOOL(enable, thread-safety-force, no, [force thread-safety despite thread test failure])
 if test "$enable_thread_safety" = yes -o \
