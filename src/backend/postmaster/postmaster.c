@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.475.2.10 2008/06/27 01:53:08 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.475.2.11 2009/12/02 17:41:46 tgl Exp $
  *
  * NOTES
  *
@@ -1493,6 +1493,8 @@ retry1:
 				port->user_name = pstrdup(valptr);
 			else if (strcmp(nameptr, "options") == 0)
 				port->cmdline_options = pstrdup(valptr);
+			else if (strcmp(nameptr, "application_name") == 0)
+				/* ignore for compatibility with libpq >= 8.5 */ ;
 			else
 			{
 				/* Assume it's a generic GUC option */
