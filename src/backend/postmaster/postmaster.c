@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.347.2.3 2006/03/18 22:10:44 neilc Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.347.2.4 2009/12/02 17:42:02 tgl Exp $
  *
  * NOTES
  *
@@ -1332,6 +1332,8 @@ ProcessStartupPacket(Port *port, bool SSLdone)
 				port->user_name = pstrdup(valptr);
 			else if (strcmp(nameptr, "options") == 0)
 				port->cmdline_options = pstrdup(valptr);
+			else if (strcmp(nameptr, "application_name") == 0)
+				/* ignore for compatibility with libpq >= 8.5 */ ;
 			else
 			{
 				/* Assume it's a generic GUC option */
