@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.327 2009/08/12 16:32:35 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.328 2009/12/02 14:07:25 momjian Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -1164,14 +1164,13 @@ su - postgres
       </varlistentry>
 
       <varlistentry>
-       <term><option>--enable-thread-safety</option></term>
+       <term><option>--disable-thread-safety</option></term>
        <listitem>
         <para>
-         Make the client libraries thread-safe.  This allows
+         Disable the thread-safety of client libraries.  This prevents
          concurrent threads in <application>libpq</application> and
-         <application>ECPG</application> programs to safely control
-         their private connection handles.  This option requires adequate
-         threading support in your operating system.
+         <application>ECPG</application> programs from safely controlling
+         their private connection handles.
         </para>
        </listitem>
       </varlistentry>
@@ -2835,12 +2834,10 @@ MANPATH=/usr/lib/scohelp/%L/man:/usr/dt/man:/usr/man:/usr/share/man:scohelp:/usr
    </sect3>
 
    <sect3>
-    <title><option>--enable-thread-safety</option> and UnixWare</title>
+    <title>Threading on UnixWare</title>
 
     <para>
-     If you use the <command>configure</command>
-     option <option>--enable-thread-safety</option>,
-     you <emphasis>must</emphasis> use <option>-Kpthread</option>
+     For threading, you<emphasis>must</emphasis> use <option>-Kpthread</option>
      on <emphasis>all</emphasis> libpq-using programs.  libpq
      uses <function>pthread_*</function> calls, which are only
      available with the

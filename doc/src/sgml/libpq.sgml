@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.291 2009/12/02 04:54:10 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.292 2009/12/02 14:07:25 momjian Exp $ -->
 
 <chapter id="libpq">
  <title><application>libpq</application> - C Library</title>
@@ -6579,11 +6579,8 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
   </indexterm>
 
   <para>
-   <application>libpq</application> is reentrant and thread-safe if the
-   <filename>configure</filename> command-line option
-   <literal>--enable-thread-safety</> was used when the
-   <productname>PostgreSQL</productname> distribution was built.  In
-   addition, you might need to use additional compiler command-line
+   <application>libpq</application> is reentrant and thread-safe by default.
+   You might need to use special compiler command-line
    options when you compile your application code.  Refer to your
    system's documentation for information about how to build
    thread-enabled applications, or look in

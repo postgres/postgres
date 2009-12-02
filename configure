@@ -823,7 +823,6 @@ with_CC
 enable_depend
 enable_cassert
 enable_thread_safety
-enable_thread_safety_force
 with_tcl
 with_tclconfig
 with_perl
@@ -1497,9 +1496,7 @@ Optional Features:
   --enable-dtrace         build with DTrace support
   --enable-depend         turn on automatic dependency tracking
   --enable-cassert        enable assertion checks (for debugging)
-  --disable-thread-safety make client libraries thread-safe
-  --enable-thread-safety-force
-                          force thread-safety despite thread test failure
+  --disable-thread-safety disable thread-safety in client libraries
   --disable-float4-byval  disable float4 passed by value
   --disable-float8-byval  disable float8 passed by value
   --disable-largefile     omit support for large files
@@ -4884,41 +4881,6 @@ else
 fi
 
 
-
-
-
-# Check whether --enable-thread-safety-force was given.
-if test "${enable_thread_safety_force+set}" = set; then
-  enableval=$enable_thread_safety_force;
-  case $enableval in
-    yes)
-      :
-      ;;
-    no)
-      :
-      ;;
-    *)
-      { { $as_echo "$as_me:$LINENO: error: no argument expected for --enable-thread-safety-force option" >&5
-$as_echo "$as_me: error: no argument expected for --enable-thread-safety-force option" >&2;}
-   { (exit 1); exit 1; }; }
-      ;;
-  esac
-
-else
-  enable_thread_safety_force=no
-
-fi
-
-
-if test "$enable_thread_safety" = yes -o \
-        "$enable_thread_safety_force" = yes; then
-  enable_thread_safety="yes"	# for 'force'
-
-cat >>confdefs.h <<\_ACEOF
-#define ENABLE_THREAD_SAFETY 1
-_ACEOF
-
-fi
 { $as_echo "$as_me:$LINENO: result: $enable_thread_safety" >&5
 $as_echo "$enable_thread_safety" >&6; }
 
@@ -21287,10 +21249,10 @@ PTHREAD_CFLAGS="$PTHREAD_CFLAGS -D_REENTRANT -D_THREAD_SAFE -D_POSIX_PTHREAD_SEM
 if test "$PTHREAD_CC" != "$CC"; then
 { { $as_echo "$as_me:$LINENO: error:
 PostgreSQL does not support platforms that require a special compiler
-for thread safety." >&5
+for thread safety;  use --disable-thread-safety to disable thread safety." >&5
 $as_echo "$as_me: error:
 PostgreSQL does not support platforms that require a special compiler
-for thread safety." >&2;}
+for thread safety;  use --disable-thread-safety to disable thread safety." >&2;}
    { (exit 1); exit 1; }; }
 fi
 
@@ -21436,8 +21398,10 @@ fi
 if test "x$ac_cv_header_pthread_h" = x""yes; then
   :
 else
-  { { $as_echo "$as_me:$LINENO: error: pthread.h not found, required for --enable-thread-safety" >&5
-$as_echo "$as_me: error: pthread.h not found, required for --enable-thread-safety" >&2;}
+  { { $as_echo "$as_me:$LINENO: error:
+pthread.h not found;  use --disable-thread-safety to disable thread safety" >&5
+$as_echo "$as_me: error:
+pthread.h not found;  use --disable-thread-safety to disable thread safety" >&2;}
    { (exit 1); exit 1; }; }
 fi
 
@@ -26349,10 +26313,10 @@ HAVE_POSIX_SIGNALS=$pgac_cv_func_posix_signals
 if test "$pgac_cv_func_posix_signals" != yes -a "$enable_thread_safety" = yes; then
   { { $as_echo "$as_me:$LINENO: error:
 Thread-safety requires POSIX signals, which are not supported by this
-operating system." >&5
+operating system;  use --disable-thread-safety to disable thread safety." >&5
 $as_echo "$as_me: error:
 Thread-safety requires POSIX signals, which are not supported by this
-operating system." >&2;}
+operating system;  use --disable-thread-safety to disable thread safety." >&2;}
    { (exit 1); exit 1; }; }
 fi
 fi
@@ -28202,24 +28166,7 @@ done
 # We have to run the thread test near the end so we have all our symbols
 # defined.  Cross compiling throws a warning.
 #
-if test "$enable_thread_safety_force" = yes; then
-if test "$PORTNAME" != "win32"
-then
-  { $as_echo "$as_me:$LINENO: WARNING:
-*** Skipping thread test program.  --enable-thread-safety-force was used.
-*** Run the program in src/test/thread on the your machine and add proper
-*** locking function calls to your applications to guarantee thread safety.
-" >&5
-$as_echo "$as_me: WARNING:
-*** Skipping thread test program.  --enable-thread-safety-force was used.
-*** Run the program in src/test/thread on the your machine and add proper
-*** locking function calls to your applications to guarantee thread safety.
-" >&2;}
-else
-{ $as_echo "$as_me:$LINENO: WARNING: *** skipping thread test on Win32" >&5
-$as_echo "$as_me: WARNING: *** skipping thread test on Win32" >&2;}
-fi
-elif test "$enable_thread_safety" = yes; then
+if test "$enable_thread_safety" = yes; then
 if test "$PORTNAME" != "win32"
 then
 { $as_echo "$as_me:$LINENO: checking thread safety of required library functions" >&5
@@ -28282,21 +28229,13 @@ sed 's/^/| /' conftest.$ac_ext >&5
 { $as_echo "$as_me:$LINENO: result: no" >&5
 $as_echo "no" >&6; }
   { { $as_echo "$as_me:$LINENO: error: thread test program failed
-This platform is not thread-safe.  Check the file 'config.log' for the
-exact reason.
-
-You can use the configure option --enable-thread-safety-force to force
-threads to be enabled.  But you must then run the program in
-src/test/thread and add locking function calls to your applications to
-guarantee thread safety." >&5
+This platform is not thread-safe.  Check the file 'config.log' or compile
+and run src/test/thread/thread_test for the exact reason.
+Use --disable-thread-safety to disable thread safety." >&5
 $as_echo "$as_me: error: thread test program failed
-This platform is not thread-safe.  Check the file 'config.log' for the
-exact reason.
-
-You can use the configure option --enable-thread-safety-force to force
-threads to be enabled.  But you must then run the program in
-src/test/thread and add locking function calls to your applications to
-guarantee thread safety." >&2;}
+This platform is not thread-safe.  Check the file 'config.log' or compile
+and run src/test/thread/thread_test for the exact reason.
+Use --disable-thread-safety to disable thread safety." >&2;}
    { (exit 1); exit 1; }; }
 fi
 rm -rf conftest.dSYM

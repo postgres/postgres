@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ecpg.sgml,v 1.92 2009/11/30 14:47:37 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ecpg.sgml,v 1.93 2009/12/02 14:07:25 momjian Exp $ -->
 
 <chapter id="ecpg">
  <title><application>ECPG</application> - Embedded <acronym>SQL</acronym> in C</title>
@@ -4709,10 +4709,9 @@ ECPG = ecpg
   </para>
 
   <para>
-   The <application>ecpg</application> library is thread-safe if it is built
-   using the <option>--enable-thread-safety</> command-line option to
-   <filename>configure</filename>.  (You might need to use other threading
-   command-line options to compile your client code.)
+   The <application>ecpg</application> library is thread-safe by
+   default.  However, you might need to use some threading
+   command-line options to compile your client code.
   </para>
  </sect1>
 
