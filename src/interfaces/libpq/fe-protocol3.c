@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-protocol3.c,v 1.39 2009/06/11 14:49:14 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-protocol3.c,v 1.40 2009/12/02 04:38:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1882,6 +1882,7 @@ build_startup_packet(const PGconn *conn, char *packet,
 {
 	int			packet_len = 0;
 	const PQEnvironmentOption *next_eo;
+	const char *val;
 
 	/* Protocol version comes first. */
 	if (packet)
@@ -1893,50 +1894,38 @@ build_startup_packet(const PGconn *conn, char *packet,
 	packet_len += sizeof(ProtocolVersion);
 
 	/* Add user name, database name, options */
+
+#define ADD_STARTUP_OPTION(optname, optval) \
+	do { \
+		if (packet) \
+			strcpy(packet + packet_len, optname); \
+		packet_len += strlen(optname) + 1; \
+		if (packet) \
+			strcpy(packet + packet_len, optval); \
+		packet_len += strlen(optval) + 1; \
+	} while(0)
+
 	if (conn->pguser && conn->pguser[0])
-	{
-		if (packet)
-			strcpy(packet + packet_len, "user");
-		packet_len += strlen("user") + 1;
-		if (packet)
-			strcpy(packet + packet_len, conn->pguser);
-		packet_len += strlen(conn->pguser) + 1;
-	}
+		ADD_STARTUP_OPTION("user", conn->pguser);
 	if (conn->dbName && conn->dbName[0])
-	{
-		if (packet)
-			strcpy(packet + packet_len, "database");
-		packet_len += strlen("database") + 1;
-		if (packet)
-			strcpy(packet + packet_len, conn->dbName);
-		packet_len += strlen(conn->dbName) + 1;
-	}
+		ADD_STARTUP_OPTION("database", conn->dbName);
 	if (conn->pgoptions && conn->pgoptions[0])
+		ADD_STARTUP_OPTION("options", conn->pgoptions);
+	if (conn->send_appname)
 	{
-		if (packet)
-			strcpy(packet + packet_len, "options");
-		packet_len += strlen("options") + 1;
-		if (packet)
-			strcpy(packet + packet_len, conn->pgoptions);
-		packet_len += strlen(conn->pgoptions) + 1;
+		/* Use appname if present, otherwise use fallback */
+		val = conn->appname ? conn->appname : conn->fbappname;
+		if (val && val[0])
+			ADD_STARTUP_OPTION("application_name", val);
 	}
 
 	/* Add any environment-driven GUC settings needed */
 	for (next_eo = options; next_eo->envName; next_eo++)
 	{
-		const char *val;
-
 		if ((val = getenv(next_eo->envName)) != NULL)
 		{
 			if (pg_strcasecmp(val, "default") != 0)
-			{
-				if (packet)
-					strcpy(packet + packet_len, next_eo->pgName);
-				packet_len += strlen(next_eo->pgName) + 1;
-				if (packet)
-					strcpy(packet + packet_len, val);
-				packet_len += strlen(val) + 1;
-			}
+				ADD_STARTUP_OPTION(next_eo->pgName, val);
 		}
 	}
 
