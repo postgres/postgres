@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/btree_gist/btree_utils_var.c,v 1.21 2009/06/11 14:48:50 momjian Exp $
+ * $PostgreSQL: pgsql/contrib/btree_gist/btree_utils_var.c,v 1.22 2009/12/02 13:13:24 teodor Exp $
  */
 #include "btree_gist.h"
 
@@ -444,8 +444,13 @@ gbt_vsrt_cmp(const void *a, const void *b, void *arg)
 	GBT_VARKEY_R ar = gbt_var_key_readable(((const Vsrt *) a)->t);
 	GBT_VARKEY_R br = gbt_var_key_readable(((const Vsrt *) b)->t);
 	const gbtree_vinfo *tinfo = (const gbtree_vinfo *) arg;
+	int res;
 
-	return (*tinfo->f_cmp) (ar.lower, br.lower);
+	res = (*tinfo->f_cmp) (ar.lower, br.lower);
+	if (res == 0)
+		return (*tinfo->f_cmp) (ar.upper, br.upper);
+
+	return res;
 }
 
 GIST_SPLITVEC *

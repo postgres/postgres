@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/btree_gist/btree_macaddr.c,v 1.8 2009/06/11 14:48:50 momjian Exp $
+ * $PostgreSQL: pgsql/contrib/btree_gist/btree_macaddr.c,v 1.9 2009/12/02 13:13:24 teodor Exp $
  */
 #include "btree_gist.h"
 #include "btree_utils_num.h"
@@ -63,13 +63,15 @@ gbt_macadlt(const void *a, const void *b)
 static int
 gbt_macadkey_cmp(const void *a, const void *b)
 {
-	return DatumGetInt32(
-						 DirectFunctionCall2(
-											 macaddr_cmp,
-										PointerGetDatum(&((Nsrt *) a)->t[0]),
-										 PointerGetDatum(&((Nsrt *) b)->t[0])
-											 )
-		);
+	macKEY *ia = (macKEY*)(((Nsrt *) a)->t);
+	macKEY *ib = (macKEY*)(((Nsrt *) b)->t);
+	int res;
+
+	res = DatumGetInt32(DirectFunctionCall2(macaddr_cmp, MacaddrPGetDatum(&ia->lower), MacaddrPGetDatum(&ib->lower)));
+	if (res == 0)
+		return DatumGetInt32(DirectFunctionCall2(macaddr_cmp, MacaddrPGetDatum(&ia->upper), MacaddrPGetDatum(&ib->upper)));
+
+	return res;
 }
 
 
