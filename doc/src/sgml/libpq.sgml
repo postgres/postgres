@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.290 2009/11/28 23:38:06 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.291 2009/12/02 04:54:10 tgl Exp $ -->
 
 <chapter id="libpq">
  <title><application>libpq</application> - C Library</title>
@@ -1167,6 +1167,7 @@ PQconninfoOption *PQconninfoParse(const char *conninfo, char **errmsg);
        <literal>server_version</>,
        <literal>server_encoding</>,
        <literal>client_encoding</>,
+       <literal>application_name</>,
        <literal>is_superuser</>,
        <literal>session_authorization</>,
        <literal>DateStyle</>,
@@ -1177,8 +1178,9 @@ PQconninfoOption *PQconninfoParse(const char *conninfo, char **errmsg);
        (<literal>server_encoding</>, <literal>TimeZone</>, and
        <literal>integer_datetimes</> were not reported by releases before 8.0;
        <literal>standard_conforming_strings</> was not reported by releases
-       before 8.1; <literal>IntervalStyle</> was not reported by releases
-       before 8.4.)
+       before 8.1;
+       <literal>IntervalStyle</> was not reported by releases before 8.4;
+       <literal>application_name</> was not reported by releases before 8.5.)
        Note that
        <literal>server_version</>,
        <literal>server_encoding</> and

@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.524 2009/11/28 23:38:07 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.525 2009/12/02 04:54:10 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -2541,7 +2541,7 @@ static struct config_string ConfigureNamesString[] =
 		{"application_name", PGC_USERSET, LOGGING,
 		 gettext_noop("Sets the application name to be reported in statistics and logs."),
 		 NULL,
-		 GUC_IS_NAME | GUC_NOT_IN_SAMPLE
+		 GUC_IS_NAME | GUC_REPORT | GUC_NOT_IN_SAMPLE
 		},
 		&application_name,
 		"", assign_application_name, NULL
