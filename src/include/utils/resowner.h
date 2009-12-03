@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/resowner.h,v 1.17 2009/01/01 17:24:02 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/resowner.h,v 1.18 2009/12/03 11:03:29 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,6 +20,7 @@
 #define RESOWNER_H
 
 #include "storage/buf.h"
+#include "storage/fd.h"
 #include "utils/catcache.h"
 #include "utils/plancache.h"
 #include "utils/snapshot.h"
@@ -128,5 +129,12 @@ extern void ResourceOwnerRememberSnapshot(ResourceOwner owner,
 							  Snapshot snapshot);
 extern void ResourceOwnerForgetSnapshot(ResourceOwner owner,
 							Snapshot snapshot);
+
+/* support for temporary file management */
+extern void ResourceOwnerEnlargeFiles(ResourceOwner owner);
+extern void ResourceOwnerRememberFile(ResourceOwner owner,
+						  File file);
+extern void ResourceOwnerForgetFile(ResourceOwner owner,
+						File file);
 
 #endif   /* RESOWNER_H */
