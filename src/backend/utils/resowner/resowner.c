@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/resowner/resowner.c,v 1.22 2006/07/14 14:52:25 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/resowner/resowner.c,v 1.22.2.1 2009/12/03 11:03:55 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -60,6 +60,11 @@ typedef struct ResourceOwnerData
 	int			ntupdescs;		/* number of owned tupdesc references */
 	TupleDesc  *tupdescs;		/* dynamically allocated array */
 	int			maxtupdescs;	/* currently allocated array size */
+
+	/* We have built-in support for remembering open temporary files */
+	int			nfiles;			/* number of owned temporary files */
+	File	   *files;			/* dynamically allocated array */
+	int			maxfiles;		/* currently allocated array size */
 } ResourceOwnerData;
 
 
@@ -91,6 +96,7 @@ static void ResourceOwnerReleaseInternal(ResourceOwner owner,
 							 bool isTopLevel);
 static void PrintRelCacheLeakWarning(Relation rel);
 static void PrintTupleDescLeakWarning(TupleDesc tupdesc);
+static void PrintFileLeakWarning(File file);
 
 
 /*****************************************************************************
@@ -288,6 +294,14 @@ ResourceOwnerReleaseInternal(ResourceOwner owner,
 			DecrTupleDescRefCount(owner->tupdescs[owner->ntupdescs - 1]);
 		}
 
+		/* Ditto for temporary files */
+		while (owner->nfiles > 0)
+		{
+			if (isCommit)
+				PrintFileLeakWarning(owner->files[owner->nfiles - 1]);
+			FileClose(owner->files[owner->nfiles - 1]);
+		}
+
 		/* Clean up index scans too */
 		ReleaseResources_hash();
 	}
@@ -317,6 +331,7 @@ ResourceOwnerDelete(ResourceOwner owner)
 	Assert(owner->ncatlistrefs == 0);
 	Assert(owner->nrelrefs == 0);
 	Assert(owner->ntupdescs == 0);
+	Assert(owner->nfiles == 0);
 
 	/*
 	 * Delete children.  The recursive call will delink the child from me, so
@@ -343,6 +358,8 @@ ResourceOwnerDelete(ResourceOwner owner)
 		pfree(owner->relrefs);
 	if (owner->tupdescs)
 		pfree(owner->tupdescs);
+	if (owner->files)
+		pfree(owner->files);
 
 	pfree(owner);
 }
@@ -838,4 +855,88 @@ PrintTupleDescLeakWarning(TupleDesc tupdesc)
 	elog(WARNING,
 		 "TupleDesc reference leak: TupleDesc %p (%u,%d) still referenced",
 		 tupdesc, tupdesc->tdtypeid, tupdesc->tdtypmod);
+}
+
+
+/*
+ * Make sure there is room for at least one more entry in a ResourceOwner's
+ * files reference array.
+ *
+ * This is separate from actually inserting an entry because if we run out
+ * of memory, it's critical to do so *before* acquiring the resource.
+ */
+void
+ResourceOwnerEnlargeFiles(ResourceOwner owner)
+{
+	int			newmax;
+
+	if (owner->nfiles < owner->maxfiles)
+		return;					/* nothing to do */
+
+	if (owner->files == NULL)
+	{
+		newmax = 16;
+		owner->files = (File *)
+			MemoryContextAlloc(TopMemoryContext, newmax * sizeof(File));
+		owner->maxfiles = newmax;
+	}
+	else
+	{
+		newmax = owner->maxfiles * 2;
+		owner->files = (File *)
+			repalloc(owner->files, newmax * sizeof(File));
+		owner->maxfiles = newmax;
+	}
+}
+
+/*
+ * Remember that a temporary file is owned by a ResourceOwner
+ *
+ * Caller must have previously done ResourceOwnerEnlargeFiles()
+ */
+void
+ResourceOwnerRememberFile(ResourceOwner owner, File file)
+{
+	Assert(owner->nfiles < owner->maxfiles);
+	owner->files[owner->nfiles] = file;
+	owner->nfiles++;
+}
+
+/*
+ * Forget that a temporary file is owned by a ResourceOwner
+ */
+void
+ResourceOwnerForgetFile(ResourceOwner owner, File file)
+{
+	File	   *files = owner->files;
+	int			ns1 = owner->nfiles - 1;
+	int			i;
+
+	for (i = ns1; i >= 0; i--)
+	{
+		if (files[i] == file)
+		{
+			while (i < ns1)
+			{
+				files[i] = files[i + 1];
+				i++;
+			}
+			owner->nfiles = ns1;
+			return;
+		}
+	}
+	elog(ERROR, "temporery file %d is not owned by resource owner %s",
+		 file, owner->name);
+}
+
+
+/*
+ * Debugging subroutine
+ */
+static void
+PrintFileLeakWarning(File file)
+{
+	elog(WARNING,
+		 "temporary file leak: File %d still referenced",
+		 file);
 }
