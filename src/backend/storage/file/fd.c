@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/file/fd.c,v 1.115.4.2 2005/12/01 20:24:49 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/file/fd.c,v 1.115.4.3 2009/12/03 11:04:12 heikki Exp $
  *
  * NOTES:
  *
@@ -50,6 +50,7 @@
 #include "access/xact.h"
 #include "storage/fd.h"
 #include "storage/ipc.h"
+#include "utils/resowner.h"
 
 
 /*
@@ -123,7 +124,7 @@ typedef struct vfd
 {
 	signed short fd;			/* current FD, or VFD_CLOSED if none */
 	unsigned short fdstate;		/* bitflags for VFD's state */
-	SubTransactionId create_subid;	/* for TEMPORARY fds, creating subxact */
+	ResourceOwner resowner;		/* owner, for automatic cleanup */
 	File		nextFree;		/* link to next free VFD, if in freelist */
 	File		lruMoreRecently;	/* doubly linked recency-of-use list */
 	File		lruLessRecently;
@@ -805,6 +806,7 @@ fileNameOpenFile(FileName fileName,
 	vfdP->fileMode = fileMode;
 	vfdP->seekPos = 0;
 	vfdP->fdstate = 0x0;
+	vfdP->resowner = NULL;
 
 	return file;
 }
@@ -840,11 +842,12 @@ PathNameOpenFile(FileName fileName, int fileFlags, int fileMode)
  * There's no need to pass in fileFlags or fileMode either, since only
  * one setting makes any sense for a temp file.
  *
- * interXact: if true, don't close the file at end-of-transaction. In
- * most cases, you don't want temporary files to outlive the transaction
- * that created them, so this should be false -- but if you need
- * "somewhat" temporary storage, this might be useful. In either case,
- * the file is removed when the File is explicitly closed.
+ * Unless interXact is true, the file is remembered by CurrentResourceOwner
+ * to ensure it's closed and deleted when it's no longer needed, typically at
+ * the end-of-transaction. In most cases, you don't want temporary files to
+ * outlive the transaction that created them, so this should be false -- but
+ * if you need "somewhat" temporary storage, this might be useful. In either
+ * case, the file is removed when the File is explicitly closed.
  */
 File
 OpenTemporaryFile(bool interXact)
@@ -894,11 +897,14 @@ OpenTemporaryFile(bool interXact)
 	/* Mark it for deletion at close */
 	VfdCache[file].fdstate |= FD_TEMPORARY;
 
-	/* Mark it for deletion at EOXact */
+	/* Register it with the current resource owner */
 	if (!interXact)
 	{
 		VfdCache[file].fdstate |= FD_XACT_TEMPORARY;
-		VfdCache[file].create_subid = GetCurrentSubTransactionId();
+
+		ResourceOwnerEnlargeFiles(CurrentResourceOwner);
+		ResourceOwnerRememberFile(CurrentResourceOwner, file);
+		VfdCache[file].resowner = CurrentResourceOwner;
 	}
 
 	return file;
@@ -944,6 +950,10 @@ FileClose(File file)
 			elog(LOG, "failed to unlink \"%s\": %m",
 				 vfdP->fileName);
 	}
+
+	/* Unregister it from the resource owner */
+	if (vfdP->resowner)
+		ResourceOwnerForgetFile(vfdP->resowner, file);
 
 	/*
 	 * Return the Vfd slot to the free list
@@ -1433,24 +1443,6 @@ AtEOSubXact_Files(bool isCommit, SubTransactionId mySubid,
 {
 	Index		i;
 
-	if (SizeVfdCache > 0)
-	{
-		Assert(FileIsNotOpen(0));		/* Make sure ring not corrupted */
-		for (i = 1; i < SizeVfdCache; i++)
-		{
-			unsigned short fdstate = VfdCache[i].fdstate;
-
-			if ((fdstate & FD_XACT_TEMPORARY) &&
-				VfdCache[i].create_subid == mySubid)
-			{
-				if (isCommit)
-					VfdCache[i].create_subid = parentSubid;
-				else if (VfdCache[i].fileName != NULL)
-					FileClose(i);
-			}
-		}
-	}
-
 	for (i = 0; i < numAllocatedDescs; i++)
 	{
 		if (allocatedDescs[i].create_subid == mySubid)
@@ -1471,8 +1463,9 @@ AtEOSubXact_Files(bool isCommit, SubTransactionId mySubid,
  *
  * This routine is called during transaction commit or abort (it doesn't
  * particularly care which).  All still-open per-transaction temporary file
- * VFDs are closed, which also causes the underlying files to be
- * deleted. Furthermore, all "allocated" stdio files are closed.
+ * VFDs are closed, which also causes the underlying files to be deleted
+ * (although they should've been closed already by the ResourceOwner
+ * cleanup). Furthermore, all "allocated" stdio files are closed.
  */
 void
 AtEOXact_Files(void)
@@ -1516,16 +1509,26 @@ CleanupTempFiles(bool isProcExit)
 			if ((fdstate & FD_TEMPORARY) && VfdCache[i].fileName != NULL)
 			{
 				/*
-				 * If we're in the process of exiting a backend process,
-				 * close all temporary files. Otherwise, only close
-				 * temporary files local to the current transaction.
+				 * If we're in the process of exiting a backend process, close
+				 * all temporary files. Otherwise, only close temporary files
+				 * local to the current transaction. They should be closed
+				 * by the ResourceOwner mechanism already, so this is just
+				 * a debugging cross-check.
 				 */
-				if (isProcExit || (fdstate & FD_XACT_TEMPORARY))
+				if (isProcExit)
 					FileClose(i);
+				else if (fdstate & FD_XACT_TEMPORARY)
+				{
+					elog(WARNING,
+						 "temporary file %s not closed at end-of-transaction",
+						 VfdCache[i].fileName);
+					FileClose(i);
+				}
 			}
 		}
 	}
 
+	/* Clean up "allocated" stdio files and dirs. */
 	while (numAllocatedDescs > 0)
 		FreeDesc(&allocatedDescs[0]);
 }
