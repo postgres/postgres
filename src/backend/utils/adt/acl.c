@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/acl.c,v 1.150 2009/10/05 19:24:41 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/acl.c,v 1.151 2009/12/05 21:43:35 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,6 +24,7 @@
 #include "commands/dbcommands.h"
 #include "commands/tablespace.h"
 #include "foreign/foreign.h"
+#include "funcapi.h"
 #include "miscadmin.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
@@ -1619,6 +1620,143 @@ convert_any_priv_string(text *priv_type_text,
 
 	pfree(priv_type);
 	return result;
+}
+
+
+static const char *
+convert_aclright_to_string(int aclright)
+{
+	switch (aclright)
+	{
+		case ACL_INSERT:
+			return "INSERT";
+		case ACL_SELECT:
+			return "SELECT";
+		case ACL_UPDATE:
+			return "UPDATE";
+		case ACL_DELETE:
+			return "DELETE";
+		case ACL_TRUNCATE:
+			return "TRUNCATE";
+		case ACL_REFERENCES:
+			return "REFERENCES";
+		case ACL_TRIGGER:
+			return "TRIGGER";
+		case ACL_EXECUTE:
+			return "EXECUTE";
+		case ACL_USAGE:
+			return "USAGE";
+		case ACL_CREATE:
+			return "CREATE";
+		case ACL_CREATE_TEMP:
+			return "TEMPORARY";
+		case ACL_CONNECT:
+			return "CONNECT";
+		default:
+			elog(ERROR, "unrecognized aclright: %d", aclright);
+			return NULL;
+	}
+}
+
+
+/*----------
+ * Convert an aclitem[] to a table.
+ *
+ * Example:
+ *
+ * aclexplode('{=r/joe,foo=a*w/joe}'::aclitem[])
+ *
+ * returns the table
+ *
+ * {{ OID(joe), 0::OID,   'SELECT', false },
+ *  { OID(joe), OID(foo), 'INSERT', true },
+ *  { OID(joe), OID(foo), 'UPDATE', false }}
+ *----------
+ */
+Datum
+aclexplode(PG_FUNCTION_ARGS)
+{
+	FuncCallContext	*funcctx;
+	int		   *idx;
+	Acl		   *acl = PG_GETARG_ACL_P(0);
+	AclItem	   *aidat;
+
+	if (SRF_IS_FIRSTCALL())
+	{
+		TupleDesc	tupdesc;
+		MemoryContext oldcontext;
+
+		check_acl(acl);
+
+		funcctx = SRF_FIRSTCALL_INIT();
+		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
+
+		/*
+		 * build tupdesc for result tuples (matches out parameters in
+		 * pg_proc entry)
+		 */
+		tupdesc = CreateTemplateTupleDesc(4, false);
+		TupleDescInitEntry(tupdesc, (AttrNumber) 1, "grantor",
+						   OIDOID, -1, 0);
+		TupleDescInitEntry(tupdesc, (AttrNumber) 2, "grantee",
+						   OIDOID, -1, 0);
+		TupleDescInitEntry(tupdesc, (AttrNumber) 3, "privilege_type",
+						   TEXTOID, -1, 0);
+		TupleDescInitEntry(tupdesc, (AttrNumber) 4, "is_grantable",
+						   BOOLOID, -1, 0);
+
+		funcctx->tuple_desc = BlessTupleDesc(tupdesc);
+
+		/* allocate memory for user context */
+		idx = (int *) palloc(sizeof(int[2]));
+		idx[0] = 0;				/* ACL array item index */
+		idx[1] = -1;			/* privilege type counter */
+		funcctx->user_fctx = (void *) idx;
+
+		MemoryContextSwitchTo(oldcontext);
+	}
+
+	funcctx = SRF_PERCALL_SETUP();
+	idx = (int *) funcctx->user_fctx;
+
+	aidat = ACL_DAT(acl);
+	while (1)
+	{
+		idx[1]++;
+		if (idx[1] == N_ACL_RIGHTS)
+		{
+			idx[1] = 0;
+			idx[0]++;
+			if (idx[0] == ACL_NUM(acl))
+				/* done */
+				break;
+		}
+
+		Assert(idx[0] < ACL_NUM(acl));
+		Assert(idx[1] < N_ACL_RIGHTS);
+
+		if (ACLITEM_GET_PRIVS(aidat[idx[0]]) & (1 << idx[1]))
+		{
+			Datum		result;
+			Datum		values[4];
+			bool		nulls[4];
+			HeapTuple	tuple;
+
+			values[0] = ObjectIdGetDatum(aidat[idx[0]].ai_grantor);
+			values[1] = ObjectIdGetDatum(aidat[idx[0]].ai_grantee);
+			values[2] = CStringGetTextDatum(convert_aclright_to_string(1 << idx[1]));
+			values[3] = BoolGetDatum(ACLITEM_GET_GOPTIONS(aidat[idx[0]]) & (1 << idx[1]));
+
+			MemSet(nulls, 0, sizeof(nulls));
+
+			tuple = heap_form_tuple(funcctx->tuple_desc, values, nulls);
+			result = HeapTupleGetDatum(tuple);
+
+			SRF_RETURN_NEXT(funcctx, result);
+		}
+	}
+
+	SRF_RETURN_DONE(funcctx);
 }
 
 

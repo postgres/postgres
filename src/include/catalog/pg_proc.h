@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.554 2009/11/29 18:14:30 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.555 2009/12/05 21:43:35 petere Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -1314,6 +1314,8 @@ DATA(insert OID = 1062 (  aclitemeq		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 
 DESCR("equality operator for ACL items");
 DATA(insert OID = 1365 (  makeaclitem	   PGNSP PGUID 12 1 0 0 f f f t f i 4 0 1033 "26 26 25 16" _null_ _null_ _null_ _null_ makeaclitem _null_ _null_ _null_ ));
 DESCR("make ACL item");
+DATA(insert OID = 1248 (  aclexplode	PGNSP PGUID 12 1 10 0 f f f t t s 1 0 2249 "1034" "{1034,26,26,25,16}" "{i,o,o,o,o}" "{acl,grantor,grantee,privilege_type,is_grantable}" _null_ aclexplode _null_ _null_ _null_ ));
+DESCR("convert ACL item array to table, for use by information schema");
 DATA(insert OID = 1044 (  bpcharin		   PGNSP PGUID 12 1 0 0 f f f t f i 3 0 1042 "2275 26 23" _null_ _null_ _null_ _null_ bpcharin _null_ _null_ _null_ ));
 DESCR("I/O");
 DATA(insert OID = 1045 (  bpcharout		   PGNSP PGUID 12 1 0 0 f f f t f i 1 0 2275 "1042" _null_ _null_ _null_ _null_ bpcharout _null_ _null_ _null_ ));

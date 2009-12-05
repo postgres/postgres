@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2003-2009, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/catalog/information_schema.sql,v 1.58 2009/07/28 02:56:29 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/catalog/information_schema.sql,v 1.59 2009/12/05 21:43:35 petere Exp $
  */
 
 /*
@@ -483,42 +483,63 @@ CREATE VIEW column_privileges AS
            CAST(grantee.rolname AS sql_identifier) AS grantee,
            CAST(current_database() AS sql_identifier) AS table_catalog,
            CAST(nc.nspname AS sql_identifier) AS table_schema,
-           CAST(c.relname AS sql_identifier) AS table_name,
-           CAST(a.attname AS sql_identifier) AS column_name,
-           CAST(pr.type AS character_data) AS privilege_type,
+           CAST(x.relname AS sql_identifier) AS table_name,
+           CAST(x.attname AS sql_identifier) AS column_name,
+           CAST(x.prtype AS character_data) AS privilege_type,
            CAST(
              CASE WHEN
                   -- object owner always has grant options
-                  pg_has_role(grantee.oid, c.relowner, 'USAGE')
-                  OR aclcontains(c.relacl,
-                                 makeaclitem(grantee.oid, u_grantor.oid, pr.type, true))
-                  OR aclcontains(a.attacl,
-                                 makeaclitem(grantee.oid, u_grantor.oid, pr.type, true))
+                  pg_has_role(x.grantee, x.relowner, 'USAGE')
+                  OR x.grantable
                   THEN 'YES' ELSE 'NO' END AS yes_or_no) AS is_grantable
 
-    FROM pg_attribute a,
-         pg_class c,
+    FROM (
+           SELECT pr_c.grantor,
+                  pr_c.grantee,
+                  attname,
+                  relname,
+                  relnamespace,
+                  pr_c.prtype,
+                  pr_c.grantable,
+                  pr_c.relowner
+           FROM (SELECT oid, relname, relnamespace, relowner, (aclexplode(relacl)).*
+                 FROM pg_class
+                 WHERE relkind IN ('r', 'v')
+                ) pr_c (oid, relname, relnamespace, relowner, grantor, grantee, prtype, grantable),
+                pg_attribute a
+           WHERE a.attrelid = pr_c.oid
+                 AND a.attnum > 0
+                 AND NOT a.attisdropped
+           UNION
+           SELECT pr_a.grantor,
+                  pr_a.grantee,
+                  attname,
+                  relname,
+                  relnamespace,
+                  pr_a.prtype,
+                  pr_a.grantable,
+                  c.relowner
+           FROM (SELECT attrelid, attname, (aclexplode(attacl)).*
+                 FROM pg_attribute
+                 WHERE attnum > 0
+                       AND NOT attisdropped
+                ) pr_a (attrelid, attname, grantor, grantee, prtype, grantable),
+                pg_class c
+           WHERE pr_a.attrelid = c.oid
+                 AND relkind IN ('r','v')
+         ) x,
          pg_namespace nc,
          pg_authid u_grantor,
          (
            SELECT oid, rolname FROM pg_authid
            UNION ALL
            SELECT 0::oid, 'PUBLIC'
-         ) AS grantee (oid, rolname),
-         (VALUES ('SELECT'),
-                 ('INSERT'),
-                 ('UPDATE'),
-                 ('REFERENCES')) AS pr (type)
+         ) AS grantee (oid, rolname)
 
-    WHERE a.attrelid = c.oid
-          AND c.relnamespace = nc.oid
-          AND a.attnum > 0
-          AND NOT a.attisdropped
-          AND c.relkind IN ('r', 'v')
-          AND (aclcontains(c.relacl,
-                           makeaclitem(grantee.oid, u_grantor.oid, pr.type, false))
-               OR aclcontains(a.attacl,
-                              makeaclitem(grantee.oid, u_grantor.oid, pr.type, false)))
+    WHERE x.relnamespace = nc.oid
+          AND x.grantee = grantee.oid
+          AND x.grantor = u_grantor.oid
+          AND x.prtype IN ('INSERT', 'SELECT', 'UPDATE', 'REFERENCES')
           AND (pg_has_role(u_grantor.oid, 'USAGE')
                OR pg_has_role(grantee.oid, 'USAGE')
                OR grantee.rolname = 'PUBLIC');
@@ -1124,126 +1145,25 @@ GRANT SELECT ON referential_constraints TO PUBLIC;
  */
 
 CREATE VIEW role_column_grants AS
-    SELECT CAST(u_grantor.rolname AS sql_identifier) AS grantor,
-           CAST(g_grantee.rolname AS sql_identifier) AS grantee,
-           CAST(current_database() AS sql_identifier) AS table_catalog,
-           CAST(nc.nspname AS sql_identifier) AS table_schema,
-           CAST(c.relname AS sql_identifier) AS table_name,
-           CAST(a.attname AS sql_identifier) AS column_name,
-           CAST(pr.type AS character_data) AS privilege_type,
-           CAST(
-             CASE WHEN
-                  -- object owner always has grant options
-                  pg_has_role(g_grantee.oid, c.relowner, 'USAGE')
-                  OR aclcontains(c.relacl,
-                                 makeaclitem(g_grantee.oid, u_grantor.oid, pr.type, true))
-                  OR aclcontains(a.attacl,
-                                 makeaclitem(g_grantee.oid, u_grantor.oid, pr.type, true))
-                  THEN 'YES' ELSE 'NO' END AS yes_or_no) AS is_grantable
-
-    FROM pg_attribute a,
-         pg_class c,
-         pg_namespace nc,
-         pg_authid u_grantor,
-         pg_authid g_grantee,
-         (VALUES ('SELECT'),
-                 ('INSERT'),
-                 ('UPDATE'),
-                 ('REFERENCES')) AS pr (type)
-
-    WHERE a.attrelid = c.oid
-          AND c.relnamespace = nc.oid
-          AND a.attnum > 0
-          AND NOT a.attisdropped
-          AND c.relkind IN ('r', 'v')
-          AND (aclcontains(c.relacl,
-                           makeaclitem(g_grantee.oid, u_grantor.oid, pr.type, false))
-               OR aclcontains(a.attacl,
-                              makeaclitem(g_grantee.oid, u_grantor.oid, pr.type, false)))
-          AND (u_grantor.rolname IN (SELECT role_name FROM enabled_roles)
-               OR g_grantee.rolname IN (SELECT role_name FROM enabled_roles));
+    SELECT grantor,
+           grantee,
+           table_catalog,
+           table_schema,
+           table_name,
+           column_name,
+           privilege_type,
+           is_grantable
+    FROM column_privileges
+    WHERE grantor IN (SELECT role_name FROM enabled_roles)
+          OR grantee IN (SELECT role_name FROM enabled_roles);
 
 GRANT SELECT ON role_column_grants TO PUBLIC;
 
 
-/*
- * 5.39
- * ROLE_ROUTINE_GRANTS view
- */
-
-CREATE VIEW role_routine_grants AS
-    SELECT CAST(u_grantor.rolname AS sql_identifier) AS grantor,
-           CAST(g_grantee.rolname AS sql_identifier) AS grantee,
-           CAST(current_database() AS sql_identifier) AS specific_catalog,
-           CAST(n.nspname AS sql_identifier) AS specific_schema,
-           CAST(p.proname || '_' || CAST(p.oid AS text) AS sql_identifier) AS specific_name,
-           CAST(current_database() AS sql_identifier) AS routine_catalog,
-           CAST(n.nspname AS sql_identifier) AS routine_schema,
-           CAST(p.proname AS sql_identifier) AS routine_name,
-           CAST('EXECUTE' AS character_data) AS privilege_type,
-           CAST(
-             CASE WHEN
-                  -- object owner always has grant options
-                  pg_has_role(g_grantee.oid, p.proowner, 'USAGE')
-                  OR aclcontains(p.proacl,
-                                 makeaclitem(g_grantee.oid, u_grantor.oid, 'EXECUTE', true))
-                  THEN 'YES' ELSE 'NO' END AS yes_or_no) AS is_grantable
-
-    FROM pg_proc p,
-         pg_namespace n,
-         pg_authid u_grantor,
-         pg_authid g_grantee
-
-    WHERE p.pronamespace = n.oid
-          AND aclcontains(p.proacl,
-                          makeaclitem(g_grantee.oid, u_grantor.oid, 'EXECUTE', false))
-          AND (u_grantor.rolname IN (SELECT role_name FROM enabled_roles)
-               OR g_grantee.rolname IN (SELECT role_name FROM enabled_roles));
-
-GRANT SELECT ON role_routine_grants TO PUBLIC;
+-- 5.39 ROLE_ROUTINE_GRANTS view is based on 5.45 ROUTINE_PRIVILEGES and is defined there instead.
 
 
-/*
- * 5.40
- * ROLE_TABLE_GRANTS view
- */
-
-CREATE VIEW role_table_grants AS
-    SELECT CAST(u_grantor.rolname AS sql_identifier) AS grantor,
-           CAST(g_grantee.rolname AS sql_identifier) AS grantee,
-           CAST(current_database() AS sql_identifier) AS table_catalog,
-           CAST(nc.nspname AS sql_identifier) AS table_schema,
-           CAST(c.relname AS sql_identifier) AS table_name,
-           CAST(pr.type AS character_data) AS privilege_type,
-           CAST(
-             CASE WHEN
-                  -- object owner always has grant options
-                  pg_has_role(g_grantee.oid, c.relowner, 'USAGE')
-                  OR aclcontains(c.relacl,
-                                 makeaclitem(g_grantee.oid, u_grantor.oid, pr.type, true))
-                  THEN 'YES' ELSE 'NO' END AS yes_or_no) AS is_grantable,
-           CAST('NO' AS yes_or_no) AS with_hierarchy
-
-    FROM pg_class c,
-         pg_namespace nc,
-         pg_authid u_grantor,
-         pg_authid g_grantee,
-         (VALUES ('SELECT'),
-                 ('INSERT'),
-                 ('UPDATE'),
-                 ('DELETE'),
-                 ('TRUNCATE'),
-                 ('REFERENCES'),
-                 ('TRIGGER')) AS pr (type)
-
-    WHERE c.relnamespace = nc.oid
-          AND c.relkind IN ('r', 'v')
-          AND aclcontains(c.relacl,
-                          makeaclitem(g_grantee.oid, u_grantor.oid, pr.type, false))
-          AND (u_grantor.rolname IN (SELECT role_name FROM enabled_roles)
-               OR g_grantee.rolname IN (SELECT role_name FROM enabled_roles));
-
-GRANT SELECT ON role_table_grants TO PUBLIC;
+-- 5.40 ROLE_TABLE_GRANTS view is based on 5.60 TABLE_PRIVILEGES and is defined there instead.
 
 
 /*
@@ -1254,66 +1174,8 @@ GRANT SELECT ON role_table_grants TO PUBLIC;
 -- feature not supported
 
 
-/*
- * 5.42
- * ROLE_USAGE_GRANTS view
- */
 
-CREATE VIEW role_usage_grants AS
-
-    /* foreign-data wrappers */
-    SELECT CAST(u_grantor.rolname AS sql_identifier) AS grantor,
-           CAST(g_grantee.rolname AS sql_identifier) AS grantee,
-           CAST(current_database() AS sql_identifier) AS object_catalog,
-           CAST('' AS sql_identifier) AS object_schema,
-           CAST(fdw.fdwname AS sql_identifier) AS object_name,
-           CAST('FOREIGN DATA WRAPPER' AS character_data) AS object_type,
-           CAST('USAGE' AS character_data) AS privilege_type,
-           CAST(
-             CASE WHEN
-                  -- object owner always has grant options
-                  pg_has_role(g_grantee.oid, fdw.fdwowner, 'USAGE')
-                  OR aclcontains(fdw.fdwacl,
-                                 makeaclitem(g_grantee.oid, u_grantor.oid, 'USAGE', true))
-                  THEN 'YES' ELSE 'NO' END AS yes_or_no) AS is_grantable
-
-    FROM pg_foreign_data_wrapper fdw,
-         pg_authid u_grantor,
-         pg_authid g_grantee
-
-    WHERE aclcontains(fdw.fdwacl,
-                          makeaclitem(g_grantee.oid, u_grantor.oid, 'USAGE', false))
-          AND (u_grantor.rolname IN (SELECT role_name FROM enabled_roles)
-               OR g_grantee.rolname IN (SELECT role_name FROM enabled_roles))
-
-    UNION ALL
-
-    /* foreign server */
-    SELECT CAST(u_grantor.rolname AS sql_identifier) AS grantor,
-           CAST(g_grantee.rolname AS sql_identifier) AS grantee,
-           CAST(current_database() AS sql_identifier) AS object_catalog,
-           CAST('' AS sql_identifier) AS object_schema,
-           CAST(srv.srvname AS sql_identifier) AS object_name,
-           CAST('FOREIGN SERVER' AS character_data) AS object_type,
-           CAST('USAGE' AS character_data) AS privilege_type,
-           CAST(
-             CASE WHEN
-                  -- object owner always has grant options
-                  pg_has_role(g_grantee.oid, srv.srvowner, 'USAGE')
-                  OR aclcontains(srv.srvacl,
-                                 makeaclitem(g_grantee.oid, u_grantor.oid, 'USAGE', true))
-                  THEN 'YES' ELSE 'NO' END AS yes_or_no) AS is_grantable
-
-    FROM pg_foreign_server srv,
-         pg_authid u_grantor,
-         pg_authid g_grantee
-
-    WHERE aclcontains(srv.srvacl,
-                          makeaclitem(g_grantee.oid, u_grantor.oid, 'USAGE', false))
-          AND (u_grantor.rolname IN (SELECT role_name FROM enabled_roles)
-               OR g_grantee.rolname IN (SELECT role_name FROM enabled_roles));
-
-GRANT SELECT ON role_usage_grants TO PUBLIC;
+-- 5.42 ROLE_USAGE_GRANTS view is based on 5.71 USAGE_PRIVILEGES and is defined there instead.
 
 
 /*
@@ -1351,11 +1213,12 @@ CREATE VIEW routine_privileges AS
              CASE WHEN
                   -- object owner always has grant options
                   pg_has_role(grantee.oid, p.proowner, 'USAGE')
-                  OR aclcontains(p.proacl,
-                                 makeaclitem(grantee.oid, u_grantor.oid, 'EXECUTE', true))
+                  OR p.grantable
                   THEN 'YES' ELSE 'NO' END AS yes_or_no) AS is_grantable
 
-    FROM pg_proc p,
+    FROM (
+            SELECT oid, proname, proowner, pronamespace, (aclexplode(proacl)).* FROM pg_proc
+         ) p (oid, proname, proowner, pronamespace, grantor, grantee, prtype, grantable),
          pg_namespace n,
          pg_authid u_grantor,
          (
@@ -1365,13 +1228,37 @@ CREATE VIEW routine_privileges AS
          ) AS grantee (oid, rolname)
 
     WHERE p.pronamespace = n.oid
-          AND aclcontains(p.proacl,
-                          makeaclitem(grantee.oid, u_grantor.oid, 'EXECUTE', false))
+          AND grantee.oid = p.grantee
+          AND u_grantor.oid = p.grantor
+          AND p.prtype IN ('EXECUTE')
           AND (pg_has_role(u_grantor.oid, 'USAGE')
                OR pg_has_role(grantee.oid, 'USAGE')
                OR grantee.rolname = 'PUBLIC');
 
 GRANT SELECT ON routine_privileges TO PUBLIC;
+
+
+/*
+ * 5.39
+ * ROLE_ROUTINE_GRANTS view
+ */
+
+CREATE VIEW role_routine_grants AS
+    SELECT grantor,
+           grantee,
+           specific_catalog,
+           specific_schema,
+           specific_name,
+           routine_catalog,
+           routine_schema,
+           routine_name,
+           privilege_type,
+           is_grantable
+    FROM routine_privileges
+    WHERE grantor IN (SELECT role_name FROM enabled_roles)
+          OR grantee IN (SELECT role_name FROM enabled_roles);
+
+GRANT SELECT ON role_routine_grants TO PUBLIC;
 
 
 /*
@@ -1838,41 +1725,57 @@ CREATE VIEW table_privileges AS
            CAST(current_database() AS sql_identifier) AS table_catalog,
            CAST(nc.nspname AS sql_identifier) AS table_schema,
            CAST(c.relname AS sql_identifier) AS table_name,
-           CAST(pr.type AS character_data) AS privilege_type,
+           CAST(c.prtype AS character_data) AS privilege_type,
            CAST(
              CASE WHEN
                   -- object owner always has grant options
                   pg_has_role(grantee.oid, c.relowner, 'USAGE')
-                  OR aclcontains(c.relacl,
-                                 makeaclitem(grantee.oid, u_grantor.oid, pr.type, true))
+                  OR c.grantable
                   THEN 'YES' ELSE 'NO' END AS yes_or_no) AS is_grantable,
            CAST('NO' AS yes_or_no) AS with_hierarchy
 
-    FROM pg_class c,
+    FROM (
+            SELECT oid, relname, relnamespace, relkind, relowner, (aclexplode(relacl)).* FROM pg_class
+         ) AS c (oid, relname, relnamespace, relkind, relowner, grantor, grantee, prtype, grantable),
          pg_namespace nc,
          pg_authid u_grantor,
          (
            SELECT oid, rolname FROM pg_authid
            UNION ALL
            SELECT 0::oid, 'PUBLIC'
-         ) AS grantee (oid, rolname),
-         (VALUES ('SELECT'),
-                 ('INSERT'),
-                 ('UPDATE'),
-                 ('DELETE'),
-                 ('TRUNCATE'),
-                 ('REFERENCES'),
-                 ('TRIGGER')) AS pr (type)
+         ) AS grantee (oid, rolname)
 
     WHERE c.relnamespace = nc.oid
           AND c.relkind IN ('r', 'v')
-          AND aclcontains(c.relacl,
-                          makeaclitem(grantee.oid, u_grantor.oid, pr.type, false))
+          AND c.grantee = grantee.oid
+          AND c.grantor = u_grantor.oid
+          AND c.prtype IN ('INSERT', 'SELECT', 'UPDATE', 'DELETE', 'TRUNCATE', 'REFERENCES', 'TRIGGER')
           AND (pg_has_role(u_grantor.oid, 'USAGE')
                OR pg_has_role(grantee.oid, 'USAGE')
                OR grantee.rolname = 'PUBLIC');
 
 GRANT SELECT ON table_privileges TO PUBLIC;
+
+
+/*
+ * 5.40
+ * ROLE_TABLE_GRANTS view
+ */
+
+CREATE VIEW role_table_grants AS
+    SELECT grantor,
+           grantee,
+           table_catalog,
+           table_schema,
+           table_name,
+           privilege_type,
+           is_grantable,
+           with_hierarchy
+    FROM table_privileges
+    WHERE grantor IN (SELECT role_name FROM enabled_roles)
+          OR grantee IN (SELECT role_name FROM enabled_roles);
+
+GRANT SELECT ON role_table_grants TO PUBLIC;
 
 
 /*
@@ -2088,11 +1991,12 @@ CREATE VIEW usage_privileges AS
              CASE WHEN
                   -- object owner always has grant options
                   pg_has_role(grantee.oid, fdw.fdwowner, 'USAGE')
-                  OR aclcontains(fdw.fdwacl,
-                                 makeaclitem(grantee.oid, u_grantor.oid, 'USAGE', true))
+                  OR fdw.grantable
                   THEN 'YES' ELSE 'NO' END AS yes_or_no) AS is_grantable
 
-    FROM pg_foreign_data_wrapper fdw,
+    FROM (
+            SELECT fdwname, fdwowner, (aclexplode(fdwacl)).* FROM pg_foreign_data_wrapper
+         ) AS fdw (fdwname, fdwowner, grantor, grantee, prtype, grantable),
          pg_authid u_grantor,
          (
            SELECT oid, rolname FROM pg_authid
@@ -2100,8 +2004,9 @@ CREATE VIEW usage_privileges AS
            SELECT 0::oid, 'PUBLIC'
          ) AS grantee (oid, rolname)
 
-    WHERE aclcontains(fdw.fdwacl,
-                      makeaclitem(grantee.oid, u_grantor.oid, 'USAGE', false))
+    WHERE u_grantor.oid = fdw.grantor
+          AND grantee.oid = fdw.grantee
+          AND fdw.prtype IN ('USAGE')
           AND (pg_has_role(u_grantor.oid, 'USAGE')
                OR pg_has_role(grantee.oid, 'USAGE')
                OR grantee.rolname = 'PUBLIC')
@@ -2120,11 +2025,12 @@ CREATE VIEW usage_privileges AS
              CASE WHEN
                   -- object owner always has grant options
                   pg_has_role(grantee.oid, srv.srvowner, 'USAGE')
-                  OR aclcontains(srv.srvacl,
-                                 makeaclitem(grantee.oid, u_grantor.oid, 'USAGE', true))
+                  OR srv.grantable
                   THEN 'YES' ELSE 'NO' END AS yes_or_no) AS is_grantable
 
-    FROM pg_foreign_server srv,
+    FROM (
+            SELECT srvname, srvowner, (aclexplode(srvacl)).* FROM pg_foreign_server
+         ) AS srv (srvname, srvowner, grantor, grantee, prtype, grantable),
          pg_authid u_grantor,
          (
            SELECT oid, rolname FROM pg_authid
@@ -2132,13 +2038,35 @@ CREATE VIEW usage_privileges AS
            SELECT 0::oid, 'PUBLIC'
          ) AS grantee (oid, rolname)
 
-    WHERE aclcontains(srv.srvacl,
-                      makeaclitem(grantee.oid, u_grantor.oid, 'USAGE', false))
+    WHERE u_grantor.oid = srv.grantor
+          AND grantee.oid = srv.grantee
+          AND srv.prtype IN ('USAGE')
           AND (pg_has_role(u_grantor.oid, 'USAGE')
                OR pg_has_role(grantee.oid, 'USAGE')
                OR grantee.rolname = 'PUBLIC');
 
 GRANT SELECT ON usage_privileges TO PUBLIC;
+
+
+/*
+ * 5.42
+ * ROLE_USAGE_GRANTS view
+ */
+
+CREATE VIEW role_usage_grants AS
+    SELECT grantor,
+           grantee,
+           object_catalog,
+           object_schema,
+           object_name,
+           object_type,
+           privilege_type,
+           is_grantable
+    FROM usage_privileges
+    WHERE grantor IN (SELECT role_name FROM enabled_roles)
+          OR grantee IN (SELECT role_name FROM enabled_roles);
+
+GRANT SELECT ON role_usage_grants TO PUBLIC;
 
 
 /*
