@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/information_schema.sgml,v 1.41 2009/07/13 20:25:57 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/information_schema.sgml,v 1.42 2009/12/05 21:31:05 petere Exp $ -->
 
 <chapter id="information-schema">
  <title>The Information Schema</title>
@@ -2843,7 +2843,11 @@ ORDER BY c.ordinal_position;
    The view <literal>role_column_grants</literal> identifies all
    privileges granted on columns where the grantor or grantee is a
    currently enabled role.  Further information can be found under
-   <literal>column_privileges</literal>.
+   <literal>column_privileges</literal>.  The only effective
+   difference between this view
+   and <literal>column_privileges</literal> is that this view omits
+   columns that have been made accessible to the current user by way
+   of a grant to public.
   </para>
 
   <table>
@@ -2922,7 +2926,11 @@ ORDER BY c.ordinal_position;
    The view <literal>role_routine_grants</literal> identifies all
    privileges granted on functions where the grantor or grantee is a
    currently enabled role.  Further information can be found under
-   <literal>routine_privileges</literal>.
+   <literal>routine_privileges</literal>.  The only effective
+   difference between this view
+   and <literal>routine_privileges</literal> is that this view omits
+   functions that have been made accessible to the current user by way
+   of a grant to public.
   </para>
 
   <table>
@@ -3012,7 +3020,11 @@ ORDER BY c.ordinal_position;
    The view <literal>role_table_grants</literal> identifies all
    privileges granted on tables or views where the grantor or grantee
    is a currently enabled role.  Further information can be found
-   under <literal>table_privileges</literal>.
+   under <literal>table_privileges</literal>.  The only effective
+   difference between this view
+   and <literal>table_privileges</literal> is that this view omits
+   tables that have been made accessible to the current user by way of
+   a grant to public.
   </para>
 
   <table>
@@ -3093,7 +3105,10 @@ ORDER BY c.ordinal_position;
    <literal>USAGE</literal> privileges granted on various kinds of
    objects where the grantor or grantee is a currently enabled role.
    Further information can be found under
-   <literal>usage_privileges</literal>.
+   <literal>usage_privileges</literal>.  The only effective difference
+   between this view and <literal>usage_privileges</literal> is that
+   this view omits objects that have been made accessible to the
+   current user by way of a grant to public.
   </para>
 
   <table>
