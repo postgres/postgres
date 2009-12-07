@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.325 2009/06/23 03:46:00 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.325.2.1 2009/12/07 19:20:01 mha Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -356,6 +356,11 @@ su - postgres
    with the <productname>PostgreSQL</> sources.
    Change into that directory for the rest
    of the installation procedure.
+  </para>
+
+  <para>
+   You can also get the source directly from the version control repository, see
+   <xref linkend="cvs">.
   </para>
  </sect1>
 ]]>
