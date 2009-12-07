@@ -11,7 +11,7 @@
  *
  * Copyright (c) 2003-2009, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/utils/errcodes.h,v 1.29 2009/03/04 10:55:00 petere Exp $
+ * $PostgreSQL: pgsql/src/include/utils/errcodes.h,v 1.30 2009/12/07 05:22:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -167,6 +167,7 @@
 #define ERRCODE_FOREIGN_KEY_VIOLATION		MAKE_SQLSTATE('2','3', '5','0','3')
 #define ERRCODE_UNIQUE_VIOLATION			MAKE_SQLSTATE('2','3', '5','0','5')
 #define ERRCODE_CHECK_VIOLATION				MAKE_SQLSTATE('2','3', '5','1','4')
+#define ERRCODE_EXCLUSION_VIOLATION			MAKE_SQLSTATE('2','3', 'P','0','1')
 
 /* Class 24 - Invalid Cursor State */
 #define ERRCODE_INVALID_CURSOR_STATE		MAKE_SQLSTATE('2','4', '0','0','0')

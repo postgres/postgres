@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/relcache.h,v 1.64 2009/08/12 20:53:31 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/relcache.h,v 1.65 2009/12/07 05:22:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,6 +43,10 @@ extern Oid	RelationGetOidIndex(Relation relation);
 extern List *RelationGetIndexExpressions(Relation relation);
 extern List *RelationGetIndexPredicate(Relation relation);
 extern Bitmapset *RelationGetIndexAttrBitmap(Relation relation);
+extern void RelationGetExclusionInfo(Relation indexRelation,
+									 Oid **operators,
+									 Oid **procs,
+									 uint16 **strategies);
 
 extern void RelationSetIndexList(Relation relation,
 					 List *indexIds, Oid oidIndex);

@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.416 2009/11/20 20:38:11 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.417 2009/12/07 05:22:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1395,6 +1395,7 @@ typedef enum ConstrType			/* types of constraints */
 	CONSTR_CHECK,
 	CONSTR_PRIMARY,
 	CONSTR_UNIQUE,
+	CONSTR_EXCLUSION,
 	CONSTR_FOREIGN,
 	CONSTR_ATTR_DEFERRABLE,		/* attributes for previous constraint node */
 	CONSTR_ATTR_NOT_DEFERRABLE,
@@ -1429,10 +1430,18 @@ typedef struct Constraint
 	Node	   *raw_expr;		/* expr, as untransformed parse tree */
 	char	   *cooked_expr;	/* expr, as nodeToString representation */
 
-	/* Fields used for index constraints (UNIQUE and PRIMARY KEY): */
+	/* Fields used for unique constraints (UNIQUE and PRIMARY KEY): */
 	List	   *keys;			/* String nodes naming referenced column(s) */
+
+	/* Fields used for EXCLUSION constraints: */
+	List	   *exclusions;		/* list of (IndexElem, operator name) pairs */
+
+	/* Fields used for index constraints (UNIQUE, PRIMARY KEY, EXCLUSION): */
 	List	   *options;		/* options from WITH clause */
 	char	   *indexspace;		/* index tablespace; NULL for default */
+	/* These could be, but currently are not, used for UNIQUE/PKEY: */
+	char	   *access_method;	/* index access method; NULL for default */
+	Node	   *where_clause;	/* partial index predicate */
 
 	/* Fields used for FOREIGN KEY constraints: */
 	RangeVar   *pktable;		/* Primary key table */
@@ -1880,6 +1889,7 @@ typedef struct IndexStmt
 	List	   *indexParams;	/* a list of IndexElem */
 	List	   *options;		/* options from WITH clause */
 	Node	   *whereClause;	/* qualification (partial-index predicate) */
+	List	   *excludeOpNames;	/* exclusion operator names, or NIL if none */
 	bool		unique;			/* is index unique? */
 	bool		primary;		/* is index on primary key? */
 	bool		isconstraint;	/* is it from a CONSTRAINT clause? */

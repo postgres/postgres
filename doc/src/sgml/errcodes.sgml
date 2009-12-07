@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/errcodes.sgml,v 1.27 2009/03/04 10:55:00 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/errcodes.sgml,v 1.28 2009/12/07 05:22:21 tgl Exp $ -->
 
 <appendix id="errcodes-appendix">
  <title><productname>PostgreSQL</productname> Error Codes</title>
@@ -638,6 +638,12 @@
 <entry><literal>23514</literal></entry>
 <entry>CHECK VIOLATION</entry>
 <entry>check_violation</entry>
+</row>
+
+<row>
+<entry><literal>23P01</literal></entry>
+<entry>EXCLUSION VIOLATION</entry>
+<entry>exclusion_violation</entry>
 </row>
 
 

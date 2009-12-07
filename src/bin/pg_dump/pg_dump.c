@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.553 2009/11/20 20:38:11 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.554 2009/12/07 05:22:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3680,6 +3680,7 @@ getIndexes(TableInfo tblinfo[], int numTables)
 				i_condeferred,
 				i_contableoid,
 				i_conoid,
+				i_condef,
 				i_tablespace,
 				i_options;
 	int			ntups;
@@ -3710,7 +3711,7 @@ getIndexes(TableInfo tblinfo[], int numTables)
 		 * assume an index won't have more than one internal dependency.
 		 */
 		resetPQExpBuffer(query);
-		if (g_fout->remoteVersion >= 80200)
+		if (g_fout->remoteVersion >= 80500)
 		{
 			appendPQExpBuffer(query,
 							  "SELECT t.tableoid, t.oid, "
@@ -3722,6 +3723,35 @@ getIndexes(TableInfo tblinfo[], int numTables)
 							  "c.condeferrable, c.condeferred, "
 							  "c.tableoid AS contableoid, "
 							  "c.oid AS conoid, "
+							  "pg_catalog.pg_get_constraintdef(c.oid, false) AS condef, "
+							  "(SELECT spcname FROM pg_catalog.pg_tablespace s WHERE s.oid = t.reltablespace) AS tablespace, "
+							"array_to_string(t.reloptions, ', ') AS options "
+							  "FROM pg_catalog.pg_index i "
+					  "JOIN pg_catalog.pg_class t ON (t.oid = i.indexrelid) "
+							  "LEFT JOIN pg_catalog.pg_depend d "
+							  "ON (d.classid = t.tableoid "
+							  "AND d.objid = t.oid "
+							  "AND d.deptype = 'i') "
+							  "LEFT JOIN pg_catalog.pg_constraint c "
+							  "ON (d.refclassid = c.tableoid "
+							  "AND d.refobjid = c.oid) "
+							  "WHERE i.indrelid = '%u'::pg_catalog.oid "
+							  "ORDER BY indexname",
+							  tbinfo->dobj.catId.oid);
+		}
+		else if (g_fout->remoteVersion >= 80200)
+		{
+			appendPQExpBuffer(query,
+							  "SELECT t.tableoid, t.oid, "
+							  "t.relname AS indexname, "
+					 "pg_catalog.pg_get_indexdef(i.indexrelid) AS indexdef, "
+							  "t.relnatts AS indnkeys, "
+							  "i.indkey, i.indisclustered, "
+							  "c.contype, c.conname, "
+							  "c.condeferrable, c.condeferred, "
+							  "c.tableoid AS contableoid, "
+							  "c.oid AS conoid, "
+							  "null AS condef, "
 							  "(SELECT spcname FROM pg_catalog.pg_tablespace s WHERE s.oid = t.reltablespace) AS tablespace, "
 							"array_to_string(t.reloptions, ', ') AS options "
 							  "FROM pg_catalog.pg_index i "
@@ -3749,6 +3779,7 @@ getIndexes(TableInfo tblinfo[], int numTables)
 							  "c.condeferrable, c.condeferred, "
 							  "c.tableoid AS contableoid, "
 							  "c.oid AS conoid, "
+							  "null AS condef, "
 							  "(SELECT spcname FROM pg_catalog.pg_tablespace s WHERE s.oid = t.reltablespace) AS tablespace, "
 							  "null AS options "
 							  "FROM pg_catalog.pg_index i "
@@ -3776,6 +3807,7 @@ getIndexes(TableInfo tblinfo[], int numTables)
 							  "c.condeferrable, c.condeferred, "
 							  "c.tableoid AS contableoid, "
 							  "c.oid AS conoid, "
+							  "null AS condef, "
 							  "NULL AS tablespace, "
 							  "null AS options "
 							  "FROM pg_catalog.pg_index i "
@@ -3806,6 +3838,7 @@ getIndexes(TableInfo tblinfo[], int numTables)
 							  "false AS condeferred, "
 							  "0::oid AS contableoid, "
 							  "t.oid AS conoid, "
+							  "null AS condef, "
 							  "NULL AS tablespace, "
 							  "null AS options "
 							  "FROM pg_index i, pg_class t "
@@ -3831,6 +3864,7 @@ getIndexes(TableInfo tblinfo[], int numTables)
 							  "false AS condeferred, "
 							  "0::oid AS contableoid, "
 							  "t.oid AS conoid, "
+							  "null AS condef, "
 							  "NULL AS tablespace, "
 							  "null AS options "
 							  "FROM pg_index i, pg_class t "
@@ -3858,6 +3892,7 @@ getIndexes(TableInfo tblinfo[], int numTables)
 		i_condeferred = PQfnumber(res, "condeferred");
 		i_contableoid = PQfnumber(res, "contableoid");
 		i_conoid = PQfnumber(res, "conoid");
+		i_condef = PQfnumber(res, "condef");
 		i_tablespace = PQfnumber(res, "tablespace");
 		i_options = PQfnumber(res, "options");
 
@@ -3895,7 +3930,7 @@ getIndexes(TableInfo tblinfo[], int numTables)
 			indxinfo[j].indisclustered = (PQgetvalue(res, j, i_indisclustered)[0] == 't');
 			contype = *(PQgetvalue(res, j, i_contype));
 
-			if (contype == 'p' || contype == 'u')
+			if (contype == 'p' || contype == 'u' || contype == 'x')
 			{
 				/*
 				 * If we found a constraint matching the index, create an
@@ -3913,7 +3948,10 @@ getIndexes(TableInfo tblinfo[], int numTables)
 				constrinfo[j].contable = tbinfo;
 				constrinfo[j].condomain = NULL;
 				constrinfo[j].contype = contype;
-				constrinfo[j].condef = NULL;
+				if (contype == 'x')
+					constrinfo[j].condef = strdup(PQgetvalue(res, j, i_condef));
+				else
+					constrinfo[j].condef = NULL;
 				constrinfo[j].confrelid = InvalidOid;
 				constrinfo[j].conindex = indxinfo[j].dobj.dumpId;
 				constrinfo[j].condeferrable = *(PQgetvalue(res, j, i_condeferrable)) == 't';
@@ -10728,7 +10766,9 @@ dumpConstraint(Archive *fout, ConstraintInfo *coninfo)
 	q = createPQExpBuffer();
 	delq = createPQExpBuffer();
 
-	if (coninfo->contype == 'p' || coninfo->contype == 'u')
+	if (coninfo->contype == 'p' ||
+		coninfo->contype == 'u' ||
+		coninfo->contype == 'x')
 	{
 		/* Index-related constraint */
 		IndxInfo   *indxinfo;
@@ -10745,37 +10785,46 @@ dumpConstraint(Archive *fout, ConstraintInfo *coninfo)
 
 		appendPQExpBuffer(q, "ALTER TABLE ONLY %s\n",
 						  fmtId(tbinfo->dobj.name));
-		appendPQExpBuffer(q, "    ADD CONSTRAINT %s %s (",
-						  fmtId(coninfo->dobj.name),
-						  coninfo->contype == 'p' ? "PRIMARY KEY" : "UNIQUE");
+		appendPQExpBuffer(q, "    ADD CONSTRAINT %s ",
+						  fmtId(coninfo->dobj.name));
 
-		for (k = 0; k < indxinfo->indnkeys; k++)
+		if (coninfo->condef)
 		{
-			int			indkey = (int) indxinfo->indkeys[k];
-			const char *attname;
-
-			if (indkey == InvalidAttrNumber)
-				break;
-			attname = getAttrName(indkey, tbinfo);
-
-			appendPQExpBuffer(q, "%s%s",
-							  (k == 0) ? "" : ", ",
-							  fmtId(attname));
+			/* pg_get_constraintdef should have provided everything */
+			appendPQExpBuffer(q, "%s;\n", coninfo->condef);
 		}
-
-		appendPQExpBuffer(q, ")");
-
-		if (indxinfo->options && strlen(indxinfo->options) > 0)
-			appendPQExpBuffer(q, " WITH (%s)", indxinfo->options);
-
-		if (coninfo->condeferrable)
+		else
 		{
-			appendPQExpBuffer(q, " DEFERRABLE");
-			if (coninfo->condeferred)
-				appendPQExpBuffer(q, " INITIALLY DEFERRED");
-		}
+			appendPQExpBuffer(q, "%s (",
+							  coninfo->contype == 'p' ? "PRIMARY KEY" : "UNIQUE");
+			for (k = 0; k < indxinfo->indnkeys; k++)
+			{
+				int			indkey = (int) indxinfo->indkeys[k];
+				const char *attname;
 
-		appendPQExpBuffer(q, ";\n");
+				if (indkey == InvalidAttrNumber)
+					break;
+				attname = getAttrName(indkey, tbinfo);
+
+				appendPQExpBuffer(q, "%s%s",
+								  (k == 0) ? "" : ", ",
+								  fmtId(attname));
+			}
+
+			appendPQExpBuffer(q, ")");
+
+			if (indxinfo->options && strlen(indxinfo->options) > 0)
+				appendPQExpBuffer(q, " WITH (%s)", indxinfo->options);
+
+			if (coninfo->condeferrable)
+			{
+				appendPQExpBuffer(q, " DEFERRABLE");
+				if (coninfo->condeferred)
+					appendPQExpBuffer(q, " INITIALLY DEFERRED");
+			}
+
+			appendPQExpBuffer(q, ";\n");
+		}
 
 		/* If the index is clustered, we need to record that. */
 		if (indxinfo->indisclustered)

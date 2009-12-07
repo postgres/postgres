@@ -8,7 +8,7 @@
  *
  * Copyright (c) 2000-2009, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.231 2009/11/11 21:07:41 petere Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.232 2009/12/07 05:22:23 tgl Exp $
  */
 #include "postgres_fe.h"
 
@@ -1105,6 +1105,7 @@ describeOneTableDetails(const char *schemaname,
 		bool		hasrules;
 		bool		hastriggers;
 		bool		hasoids;
+		bool		hasexclusion;
 		Oid			tablespace;
 		char	   *reloptions;
 	}			tableinfo;
@@ -1121,7 +1122,22 @@ describeOneTableDetails(const char *schemaname,
 	initPQExpBuffer(&tmpbuf);
 
 	/* Get general table info */
-	if (pset.sversion >= 80400)
+	if (pset.sversion >= 80500)
+	{
+		printfPQExpBuffer(&buf,
+			  "SELECT c.relchecks, c.relkind, c.relhasindex, c.relhasrules, "
+						  "c.relhastriggers, c.relhasoids, "
+						  "%s, c.reltablespace, c.relhasexclusion\n"
+						  "FROM pg_catalog.pg_class c\n "
+		   "LEFT JOIN pg_catalog.pg_class tc ON (c.reltoastrelid = tc.oid)\n"
+						  "WHERE c.oid = '%s'\n",
+						  (verbose ?
+						   "pg_catalog.array_to_string(c.reloptions || "
+						   "array(select 'toast.' || x from pg_catalog.unnest(tc.reloptions) x), ', ')\n"
+						   : "''"),
+						  oid);
+	}
+	else if (pset.sversion >= 80400)
 	{
 		printfPQExpBuffer(&buf,
 			  "SELECT c.relchecks, c.relkind, c.relhasindex, c.relhasrules, "
@@ -1185,10 +1201,12 @@ describeOneTableDetails(const char *schemaname,
 	tableinfo.hasrules = strcmp(PQgetvalue(res, 0, 3), "t") == 0;
 	tableinfo.hastriggers = strcmp(PQgetvalue(res, 0, 4), "t") == 0;
 	tableinfo.hasoids = strcmp(PQgetvalue(res, 0, 5), "t") == 0;
-	tableinfo.reloptions = pset.sversion >= 80200 ?
+	tableinfo.reloptions = (pset.sversion >= 80200) ?
 		strdup(PQgetvalue(res, 0, 6)) : 0;
 	tableinfo.tablespace = (pset.sversion >= 80000) ?
 		atooid(PQgetvalue(res, 0, 7)) : 0;
+	tableinfo.hasexclusion = (pset.sversion >= 80500) ?
+		strcmp(PQgetvalue(res, 0, 8), "t") == 0 : false;
 	PQclear(res);
 	res = NULL;
 
@@ -1629,6 +1647,38 @@ describeOneTableDetails(const char *schemaname,
 			if (tuples > 0)
 			{
 				printTableAddFooter(&cont, _("Check constraints:"));
+				for (i = 0; i < tuples; i++)
+				{
+					/* untranslated contraint name and def */
+					printfPQExpBuffer(&buf, "    \"%s\" %s",
+									  PQgetvalue(result, i, 0),
+									  PQgetvalue(result, i, 1));
+
+					printTableAddFooter(&cont, buf.data);
+				}
+			}
+			PQclear(result);
+		}
+
+		/* print exclusion constraints */
+		if (tableinfo.hasexclusion)
+		{
+			printfPQExpBuffer(&buf,
+							  "SELECT r.conname, "
+							  "pg_catalog.pg_get_constraintdef(r.oid, true)\n"
+							  "FROM pg_catalog.pg_constraint r\n"
+							  "WHERE r.conrelid = '%s' AND r.contype = 'x'\n"
+							  "ORDER BY 1",
+							  oid);
+			result = PSQLexec(buf.data, false);
+			if (!result)
+				goto error_return;
+			else
+				tuples = PQntuples(result);
+
+			if (tuples > 0)
+			{
+				printTableAddFooter(&cont, _("Exclusion constraints:"));
 				for (i = 0; i < tuples; i++)
 				{
 					/* untranslated contraint name and def */

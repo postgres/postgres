@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.315 2009/11/20 20:38:11 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.316 2009/12/07 05:22:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -144,6 +144,7 @@ static void decompile_column_index_array(Datum column_index_array, Oid relId,
 							 StringInfo buf);
 static char *pg_get_ruledef_worker(Oid ruleoid, int prettyFlags);
 static char *pg_get_indexdef_worker(Oid indexrelid, int colno,
+					   const Oid *excludeOps,
 					   bool attrsOnly, bool showTblSpc,
 					   int prettyFlags);
 static char *pg_get_constraintdef_worker(Oid constraintId, bool fullCommand,
@@ -705,6 +706,7 @@ pg_get_indexdef(PG_FUNCTION_ARGS)
 	Oid			indexrelid = PG_GETARG_OID(0);
 
 	PG_RETURN_TEXT_P(string_to_text(pg_get_indexdef_worker(indexrelid, 0,
+														   NULL,
 														   false, false, 0)));
 }
 
@@ -718,6 +720,7 @@ pg_get_indexdef_ext(PG_FUNCTION_ARGS)
 
 	prettyFlags = pretty ? PRETTYFLAG_PAREN | PRETTYFLAG_INDENT : 0;
 	PG_RETURN_TEXT_P(string_to_text(pg_get_indexdef_worker(indexrelid, colno,
+														   NULL,
 														   colno != 0,
 														   false,
 														   prettyFlags)));
@@ -727,7 +730,7 @@ pg_get_indexdef_ext(PG_FUNCTION_ARGS)
 char *
 pg_get_indexdef_string(Oid indexrelid)
 {
-	return pg_get_indexdef_worker(indexrelid, 0, false, true, 0);
+	return pg_get_indexdef_worker(indexrelid, 0, NULL, false, true, 0);
 }
 
 /* Internal version that just reports the column definitions */
@@ -737,14 +740,23 @@ pg_get_indexdef_columns(Oid indexrelid, bool pretty)
 	int			prettyFlags;
 
 	prettyFlags = pretty ? PRETTYFLAG_PAREN | PRETTYFLAG_INDENT : 0;
-	return pg_get_indexdef_worker(indexrelid, 0, true, false, prettyFlags);
+	return pg_get_indexdef_worker(indexrelid, 0, NULL, true, false, prettyFlags);
 }
 
+/*
+ * Internal workhorse to decompile an index definition.
+ *
+ * This is now used for exclusion constraints as well: if excludeOps is not
+ * NULL then it points to an array of exclusion operator OIDs.
+ */
 static char *
 pg_get_indexdef_worker(Oid indexrelid, int colno,
+					   const Oid *excludeOps,
 					   bool attrsOnly, bool showTblSpc,
 					   int prettyFlags)
 {
+	/* might want a separate isConstraint parameter later */
+	bool		isConstraint = (excludeOps != NULL);
 	HeapTuple	ht_idx;
 	HeapTuple	ht_idxrel;
 	HeapTuple	ht_am;
@@ -842,11 +854,17 @@ pg_get_indexdef_worker(Oid indexrelid, int colno,
 	initStringInfo(&buf);
 
 	if (!attrsOnly)
-		appendStringInfo(&buf, "CREATE %sINDEX %s ON %s USING %s (",
-						 idxrec->indisunique ? "UNIQUE " : "",
-						 quote_identifier(NameStr(idxrelrec->relname)),
-						 generate_relation_name(indrelid, NIL),
-						 quote_identifier(NameStr(amrec->amname)));
+	{
+		if (!isConstraint)
+			appendStringInfo(&buf, "CREATE %sINDEX %s ON %s USING %s (",
+							 idxrec->indisunique ? "UNIQUE " : "",
+							 quote_identifier(NameStr(idxrelrec->relname)),
+							 generate_relation_name(indrelid, NIL),
+							 quote_identifier(NameStr(amrec->amname)));
+		else					/* currently, must be EXCLUDE constraint */
+			appendStringInfo(&buf, "EXCLUDE USING %s (",
+							 quote_identifier(NameStr(amrec->amname)));
+	}
 
 	/*
 	 * Report the indexed attributes
@@ -917,6 +935,13 @@ pg_get_indexdef_worker(Oid indexrelid, int colno,
 						appendStringInfo(&buf, " NULLS FIRST");
 				}
 			}
+
+			/* Add the exclusion operator if relevant */
+			if (excludeOps != NULL)
+				appendStringInfo(&buf, " WITH %s",
+								 generate_operator_name(excludeOps[keyno],
+														keycoltype,
+														keycoltype));
 		}
 	}
 
@@ -943,8 +968,12 @@ pg_get_indexdef_worker(Oid indexrelid, int colno,
 
 			tblspc = get_rel_tablespace(indexrelid);
 			if (OidIsValid(tblspc))
+			{
+				if (isConstraint)
+					appendStringInfoString(&buf, " USING INDEX");
 				appendStringInfo(&buf, " TABLESPACE %s",
 							  quote_identifier(get_tablespace_name(tblspc)));
+			}
 		}
 
 		/*
@@ -968,7 +997,10 @@ pg_get_indexdef_worker(Oid indexrelid, int colno,
 			/* Deparse */
 			str = deparse_expression_pretty(node, context, false, false,
 											prettyFlags, 0);
-			appendStringInfo(&buf, " WHERE %s", str);
+			if (isConstraint)
+				appendStringInfo(&buf, " WHERE (%s)", str);
+			else
+				appendStringInfo(&buf, " WHERE %s", str);
 		}
 	}
 
@@ -1242,6 +1274,43 @@ pg_get_constraintdef_worker(Oid constraintId, bool fullCommand,
 				 */
 				appendStringInfo(&buf, "CHECK (%s)", consrc);
 
+				break;
+			}
+		case CONSTRAINT_EXCLUSION:
+			{
+				Oid		 indexOid = conForm->conindid;
+				Datum	 val;
+				bool	 isnull;
+				Datum	*elems;
+				int		 nElems;
+				int		 i;
+				Oid		*operators;
+
+				/* Extract operator OIDs from the pg_constraint tuple */
+				val = SysCacheGetAttr(CONSTROID, tup,
+									  Anum_pg_constraint_conexclop,
+									  &isnull);
+				if (isnull)
+					elog(ERROR, "null conexclop for constraint %u",
+						 constraintId);
+
+				deconstruct_array(DatumGetArrayTypeP(val),
+								  OIDOID, sizeof(Oid), true, 'i',
+								  &elems, NULL, &nElems);
+
+				operators = (Oid *) palloc(nElems * sizeof(Oid));
+				for (i = 0; i < nElems; i++)
+					operators[i] = DatumGetObjectId(elems[i]);
+
+				/* pg_get_indexdef_worker does the rest */
+				/* suppress tablespace because pg_dump wants it that way */
+				appendStringInfoString(&buf,
+									   pg_get_indexdef_worker(indexOid,
+															  0,
+															  operators,
+															  false,
+															  false,
+															  prettyFlags));
 				break;
 			}
 		default:

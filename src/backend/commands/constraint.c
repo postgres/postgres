@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/constraint.c,v 1.1 2009/07/29 20:56:18 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/constraint.c,v 1.2 2009/12/07 05:22:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,9 +23,12 @@
 /*
  * unique_key_recheck - trigger function to do a deferred uniqueness check.
  *
+ * This now also does deferred exclusion-constraint checks, so the name is
+ * somewhat historical.
+ *
  * This is invoked as an AFTER ROW trigger for both INSERT and UPDATE,
  * for any rows recorded as potentially violating a deferrable unique
- * constraint.
+ * or exclusion constraint.
  *
  * This may be an end-of-statement check, a commit-time check, or a
  * check triggered by a SET CONSTRAINTS command.
@@ -85,7 +88,7 @@ unique_key_recheck(PG_FUNCTION_ARGS)
 	 * because this trigger gets queued only in response to index insertions;
 	 * which means it does not get queued for HOT updates.  The row we are
 	 * called for might now be dead, but have a live HOT child, in which case
-	 * we still need to make the uniqueness check.  Therefore we have to use
+	 * we still need to make the check.  Therefore we have to use
 	 * heap_hot_search, not just HeapTupleSatisfiesVisibility as is done in
 	 * the comparable test in RI_FKey_check.
 	 *
@@ -123,9 +126,11 @@ unique_key_recheck(PG_FUNCTION_ARGS)
 
 	/*
 	 * Typically the index won't have expressions, but if it does we need
-	 * an EState to evaluate them.
+	 * an EState to evaluate them.  We need it for exclusion constraints
+	 * too, even if they are just on simple columns.
 	 */
-	if (indexInfo->ii_Expressions != NIL)
+	if (indexInfo->ii_Expressions != NIL ||
+		indexInfo->ii_ExclusionOps != NULL)
 	{
 		estate = CreateExecutorState();
 		econtext = GetPerTupleExprContext(estate);
@@ -141,19 +146,37 @@ unique_key_recheck(PG_FUNCTION_ARGS)
 	 * Note: if the index uses functions that are not as immutable as they
 	 * are supposed to be, this could produce an index tuple different from
 	 * the original.  The index AM can catch such errors by verifying that
-	 * it finds a matching index entry with the tuple's TID.
+	 * it finds a matching index entry with the tuple's TID.  For exclusion
+	 * constraints we check this in check_exclusion_constraint().
 	 */
 	FormIndexDatum(indexInfo, slot, estate, values, isnull);
 
 	/*
-	 * Now do the uniqueness check. This is not a real insert; it is a
-	 * check that the index entry that has already been inserted is unique.
+	 * Now do the appropriate check.
 	 */
-	index_insert(indexRel, values, isnull, &(new_row->t_self),
-				 trigdata->tg_relation, UNIQUE_CHECK_EXISTING);
+	if (indexInfo->ii_ExclusionOps == NULL)
+	{
+		/*
+		 * Note: this is not a real insert; it is a check that the index entry
+		 * that has already been inserted is unique.
+		 */
+		index_insert(indexRel, values, isnull, &(new_row->t_self),
+					 trigdata->tg_relation, UNIQUE_CHECK_EXISTING);
+	}
+	else
+	{
+		/*
+		 * For exclusion constraints we just do the normal check, but now
+		 * it's okay to throw error.
+		 */
+		check_exclusion_constraint(trigdata->tg_relation, indexRel, indexInfo,
+								   &(new_row->t_self), values, isnull,
+								   estate, false, false);
+	}
 
 	/*
-	 * If that worked, then this index entry is unique, and we are done.
+	 * If that worked, then this index entry is unique or non-excluded,
+	 * and we are done.
 	 */
 	if (estate != NULL)
 		FreeExecutorState(estate);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/index/genam.c,v 1.76 2009/08/01 20:59:17 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/index/genam.c,v 1.77 2009/12/07 05:22:21 tgl Exp $
  *
  * NOTES
  *	  many of the old access method routines have been turned into
@@ -137,21 +137,18 @@ IndexScanEnd(IndexScanDesc scan)
  *
  * Construct a string describing the contents of an index entry, in the
  * form "(key_name, ...)=(key_value, ...)".  This is currently used
- * only for building unique-constraint error messages, but we don't want
- * to hardwire the spelling of the messages here.
+ * for building unique-constraint and exclusion-constraint error messages.
+ *
+ * The passed-in values/nulls arrays are the "raw" input to the index AM,
+ * e.g. results of FormIndexDatum --- this is not necessarily what is stored
+ * in the index, but it's what the user perceives to be stored.
  */
 char *
 BuildIndexValueDescription(Relation indexRelation,
 						   Datum *values, bool *isnull)
 {
-	/*
-	 * XXX for the moment we use the index's tupdesc as a guide to the
-	 * datatypes of the values.  This is okay for btree indexes but is in
-	 * fact the wrong thing in general.  This will have to be fixed if we
-	 * are ever to support non-btree unique indexes.
-	 */
-	TupleDesc	tupdesc = RelationGetDescr(indexRelation);
 	StringInfoData buf;
+	int			natts = indexRelation->rd_rel->relnatts;
 	int			i;
 
 	initStringInfo(&buf);
@@ -159,7 +156,7 @@ BuildIndexValueDescription(Relation indexRelation,
 					 pg_get_indexdef_columns(RelationGetRelid(indexRelation),
 											 true));
 
-	for (i = 0; i < tupdesc->natts; i++)
+	for (i = 0; i < natts; i++)
 	{
 		char   *val;
 
@@ -170,7 +167,17 @@ BuildIndexValueDescription(Relation indexRelation,
 			Oid		foutoid;
 			bool	typisvarlena;
 
-			getTypeOutputInfo(tupdesc->attrs[i]->atttypid,
+			/*
+			 * The provided data is not necessarily of the type stored in
+			 * the index; rather it is of the index opclass's input type.
+			 * So look at rd_opcintype not the index tupdesc.
+			 *
+			 * Note: this is a bit shaky for opclasses that have pseudotype
+			 * input types such as ANYARRAY or RECORD.  Currently, the
+			 * typoutput functions associated with the pseudotypes will
+			 * work okay, but we might have to try harder in future.
+			 */
+			getTypeOutputInfo(indexRelation->rd_opcintype[i],
 							  &foutoid, &typisvarlena);
 			val = OidOutputFunctionCall(foutoid, values[i]);
 		}

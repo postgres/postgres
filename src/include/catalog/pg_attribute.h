@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_attribute.h,v 1.154 2009/10/07 22:14:25 alvherre Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_attribute.h,v 1.155 2009/12/07 05:22:23 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -426,12 +426,13 @@ DATA(insert ( 1249 tableoid			26 0 0  4  -7 0 -1 -1 t p i t f f t 0 _null_));
 { 1259, {"relchecks"},	   21, -1, 0,	2, 17, 0, -1, -1, true, 'p', 's', true, false, false, true, 0, { 0 } }, \
 { 1259, {"relhasoids"},    16, -1, 0,	1, 18, 0, -1, -1, true, 'p', 'c', true, false, false, true, 0, { 0 } }, \
 { 1259, {"relhaspkey"},    16, -1, 0,	1, 19, 0, -1, -1, true, 'p', 'c', true, false, false, true, 0, { 0 } }, \
-{ 1259, {"relhasrules"},   16, -1, 0,	1, 20, 0, -1, -1, true, 'p', 'c', true, false, false, true, 0, { 0 } }, \
-{ 1259, {"relhastriggers"},16, -1, 0,	1, 21, 0, -1, -1, true, 'p', 'c', true, false, false, true, 0, { 0 } }, \
-{ 1259, {"relhassubclass"},16, -1, 0,	1, 22, 0, -1, -1, true, 'p', 'c', true, false, false, true, 0, { 0 } }, \
-{ 1259, {"relfrozenxid"},  28, -1, 0,	4, 23, 0, -1, -1, true, 'p', 'i', true, false, false, true, 0, { 0 } }, \
-{ 1259, {"relacl"},		 1034, -1, 0, -1, 24, 1, -1, -1, false, 'x', 'i', false, false, false, true, 0, { 0 } }, \
-{ 1259, {"reloptions"},  1009, -1, 0, -1, 25, 1, -1, -1, false, 'x', 'i', false, false, false, true, 0, { 0 } }
+{ 1259, {"relhasexclusion"},16, -1, 0,	1, 20, 0, -1, -1, true, 'p', 'c', true, false, false, true, 0, { 0 } }, \
+{ 1259, {"relhasrules"},   16, -1, 0,	1, 21, 0, -1, -1, true, 'p', 'c', true, false, false, true, 0, { 0 } }, \
+{ 1259, {"relhastriggers"},16, -1, 0,	1, 22, 0, -1, -1, true, 'p', 'c', true, false, false, true, 0, { 0 } }, \
+{ 1259, {"relhassubclass"},16, -1, 0,	1, 23, 0, -1, -1, true, 'p', 'c', true, false, false, true, 0, { 0 } }, \
+{ 1259, {"relfrozenxid"},  28, -1, 0,	4, 24, 0, -1, -1, true, 'p', 'i', true, false, false, true, 0, { 0 } }, \
+{ 1259, {"relacl"},		 1034, -1, 0, -1, 25, 1, -1, -1, false, 'x', 'i', false, false, false, true, 0, { 0 } }, \
+{ 1259, {"reloptions"},  1009, -1, 0, -1, 26, 1, -1, -1, false, 'x', 'i', false, false, false, true, 0, { 0 } }
 
 DATA(insert ( 1259 relname			19 -1 0 NAMEDATALEN	1 0 -1 -1 f p c t f f t 0 _null_));
 DATA(insert ( 1259 relnamespace		26 -1 0 4   2 0 -1 -1 t p i t f f t 0 _null_));
@@ -452,12 +453,13 @@ DATA(insert ( 1259 relnatts			21 -1 0 2  16 0 -1 -1 t p s t f f t 0 _null_));
 DATA(insert ( 1259 relchecks		21 -1 0 2  17 0 -1 -1 t p s t f f t 0 _null_));
 DATA(insert ( 1259 relhasoids		16 -1 0 1  18 0 -1 -1 t p c t f f t 0 _null_));
 DATA(insert ( 1259 relhaspkey		16 -1 0 1  19 0 -1 -1 t p c t f f t 0 _null_));
-DATA(insert ( 1259 relhasrules		16 -1 0 1  20 0 -1 -1 t p c t f f t 0 _null_));
-DATA(insert ( 1259 relhastriggers	16 -1 0 1  21 0 -1 -1 t p c t f f t 0 _null_));
-DATA(insert ( 1259 relhassubclass	16 -1 0 1  22 0 -1 -1 t p c t f f t 0 _null_));
-DATA(insert ( 1259 relfrozenxid		28 -1 0 4  23 0 -1 -1 t p i t f f t 0 _null_));
-DATA(insert ( 1259 relacl		  1034 -1 0 -1 24 1 -1 -1 f x i f f f t 0 _null_));
-DATA(insert ( 1259 reloptions	  1009 -1 0 -1 25 1 -1 -1 f x i f f f t 0 _null_));
+DATA(insert ( 1259 relhasexclusion	16 -1 0 1  20 0 -1 -1 t p c t f f t 0 _null_));
+DATA(insert ( 1259 relhasrules		16 -1 0 1  21 0 -1 -1 t p c t f f t 0 _null_));
+DATA(insert ( 1259 relhastriggers	16 -1 0 1  22 0 -1 -1 t p c t f f t 0 _null_));
+DATA(insert ( 1259 relhassubclass	16 -1 0 1  23 0 -1 -1 t p c t f f t 0 _null_));
+DATA(insert ( 1259 relfrozenxid		28 -1 0 4  24 0 -1 -1 t p i t f f t 0 _null_));
+DATA(insert ( 1259 relacl		  1034 -1 0 -1 25 1 -1 -1 f x i f f f t 0 _null_));
+DATA(insert ( 1259 reloptions	  1009 -1 0 -1 26 1 -1 -1 f x i f f f t 0 _null_));
 DATA(insert ( 1259 ctid				27 0 0  6  -1 0 -1 -1 f p s t f f t 0 _null_));
 DATA(insert ( 1259 oid				26 0 0  4  -2 0 -1 -1 t p i t f f t 0 _null_));
 DATA(insert ( 1259 xmin				28 0 0  4  -3 0 -1 -1 t p i t f f t 0 _null_));

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/typecmds.c,v 1.138 2009/10/08 02:39:19 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/typecmds.c,v 1.139 2009/12/07 05:22:21 tgl Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -984,6 +984,12 @@ DefineDomain(CreateDomainStmt *stmt)
 				errmsg("primary key constraints not possible for domains")));
 				break;
 
+			case CONSTR_EXCLUSION:
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("exclusion constraints not possible for domains")));
+				break;
+
 			case CONSTR_FOREIGN:
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
@@ -1868,6 +1874,12 @@ AlterDomainAddConstraint(List *names, Node *newConstraint)
 				errmsg("primary key constraints not possible for domains")));
 			break;
 
+		case CONSTR_EXCLUSION:
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("exclusion constraints not possible for domains")));
+			break;
+
 		case CONSTR_FOREIGN:
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
@@ -2297,9 +2309,10 @@ domainAddConstraint(Oid domainOid, Oid domainNamespace, Oid baseTypeOid,
 						  ' ',
 						  ' ',
 						  ' ',
-						  expr, /* Tree form check constraint */
-						  ccbin,	/* Binary form check constraint */
-						  ccsrc,	/* Source form check constraint */
+						  NULL,	/* not an exclusion constraint */
+						  expr, /* Tree form of check constraint */
+						  ccbin,	/* Binary form of check constraint */
+						  ccsrc,	/* Source form of check constraint */
 						  true, /* is local */
 						  0);	/* inhcount */
 

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/rel.h,v 1.116 2009/11/20 20:38:11 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/rel.h,v 1.117 2009/12/07 05:22:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -196,6 +196,9 @@ typedef struct RelationData
 	int16	   *rd_indoption;	/* per-column AM-specific flags */
 	List	   *rd_indexprs;	/* index expression trees, if any */
 	List	   *rd_indpred;		/* index predicate tree, if any */
+	Oid		   *rd_exclops;		/* OIDs of exclusion operators, if any */
+	Oid		   *rd_exclprocs;	/* OIDs of exclusion ops' procs, if any */
+	uint16	   *rd_exclstrats;	/* exclusion ops' strategy numbers, if any */
 	void	   *rd_amcache;		/* available for use by index AM */
 
 	/*

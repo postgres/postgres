@@ -5,6 +5,7 @@
 --  - CHECK clauses
 --  - PRIMARY KEY clauses
 --  - UNIQUE clauses
+--  - EXCLUDE clauses
 --
 
 --
@@ -366,3 +367,61 @@ COMMIT;
 SELECT * FROM unique_tbl;
 
 DROP TABLE unique_tbl;
+
+--
+-- EXCLUDE constraints
+--
+
+CREATE TABLE circles (
+  c1 CIRCLE,
+  c2 TEXT,
+  EXCLUDE USING gist
+    (c1 WITH &&, (c2::circle) WITH ~=)
+    WHERE (circle_center(c1) <> '(0,0)')
+);
+
+-- these should succeed because they don't match the index predicate
+INSERT INTO circles VALUES('<(0,0), 5>', '<(0,0), 5>');
+INSERT INTO circles VALUES('<(0,0), 5>', '<(0,0), 5>');
+
+-- succeed
+INSERT INTO circles VALUES('<(10,10), 10>', '<(0,0), 5>');
+-- fail, overlaps
+INSERT INTO circles VALUES('<(20,20), 10>', '<(0,0), 5>');
+-- succeed because c1 doesn't overlap
+INSERT INTO circles VALUES('<(20,20), 1>', '<(0,0), 5>');
+-- succeed because c2 is not the same
+INSERT INTO circles VALUES('<(20,20), 10>', '<(1,1), 5>');
+
+-- should fail on existing data without the WHERE clause
+ALTER TABLE circles ADD EXCLUDE USING gist
+  (c1 WITH &&, (c2::circle) WITH ~=);
+
+DROP TABLE circles;
+
+-- Check deferred exclusion constraint
+
+CREATE TABLE deferred_excl (
+  f1 int,
+  CONSTRAINT deferred_excl_con EXCLUDE (f1 WITH =) INITIALLY DEFERRED
+);
+
+INSERT INTO deferred_excl VALUES(1);
+INSERT INTO deferred_excl VALUES(2);
+INSERT INTO deferred_excl VALUES(1); -- fail
+BEGIN;
+INSERT INTO deferred_excl VALUES(2); -- no fail here
+COMMIT; -- should fail here
+BEGIN;
+INSERT INTO deferred_excl VALUES(3);
+INSERT INTO deferred_excl VALUES(3); -- no fail here
+COMMIT; -- should fail here
+
+ALTER TABLE deferred_excl DROP CONSTRAINT deferred_excl_con;
+
+-- This should fail, but worth testing because of HOT updates
+UPDATE deferred_excl SET f1 = 3;
+
+ALTER TABLE deferred_excl ADD EXCLUDE (f1 WITH =);
+
+DROP TABLE deferred_excl;

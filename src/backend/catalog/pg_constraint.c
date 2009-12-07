@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_constraint.c,v 1.49 2009/10/13 00:53:07 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_constraint.c,v 1.50 2009/12/07 05:22:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -59,6 +59,7 @@ CreateConstraintEntry(const char *constraintName,
 					  char foreignUpdateType,
 					  char foreignDeleteType,
 					  char foreignMatchType,
+					  const Oid *exclOp,
 					  Node *conExpr,
 					  const char *conBin,
 					  const char *conSrc,
@@ -75,6 +76,7 @@ CreateConstraintEntry(const char *constraintName,
 	ArrayType  *conpfeqopArray;
 	ArrayType  *conppeqopArray;
 	ArrayType  *conffeqopArray;
+	ArrayType  *conexclopArray;
 	NameData	cname;
 	int			i;
 	ObjectAddress conobject;
@@ -130,6 +132,19 @@ CreateConstraintEntry(const char *constraintName,
 		conffeqopArray = NULL;
 	}
 
+	if (exclOp != NULL)
+	{
+		Datum	   *opdatums;
+
+		opdatums = (Datum *) palloc(constraintNKeys * sizeof(Datum));
+		for (i = 0; i < constraintNKeys; i++)
+			opdatums[i] = ObjectIdGetDatum(exclOp[i]);
+		conexclopArray = construct_array(opdatums, constraintNKeys,
+										 OIDOID, sizeof(Oid), true, 'i');
+	}
+	else
+		conexclopArray = NULL;
+
 	/* initialize nulls and values */
 	for (i = 0; i < Natts_pg_constraint; i++)
 	{
@@ -176,6 +191,11 @@ CreateConstraintEntry(const char *constraintName,
 		values[Anum_pg_constraint_conffeqop - 1] = PointerGetDatum(conffeqopArray);
 	else
 		nulls[Anum_pg_constraint_conffeqop - 1] = true;
+
+	if (conexclopArray)
+		values[Anum_pg_constraint_conexclop - 1] = PointerGetDatum(conexclopArray);
+	else
+		nulls[Anum_pg_constraint_conexclop - 1] = true;
 
 	/*
 	 * initialize the binary form of the check constraint.
@@ -320,6 +340,14 @@ CreateConstraintEntry(const char *constraintName,
 			}
 		}
 	}
+
+	/*
+	 * We don't bother to register dependencies on the exclusion operators
+	 * of an exclusion constraint.  We assume they are members of the opclass
+	 * supporting the index, so there's an indirect dependency via that.
+	 * (This would be pretty dicey for cross-type operators, but exclusion
+	 * operators can never be cross-type.)
+	 */
 
 	if (conExpr != NULL)
 	{

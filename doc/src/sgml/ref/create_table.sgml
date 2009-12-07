@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_table.sgml,v 1.119 2009/10/27 13:58:28 alvherre Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_table.sgml,v 1.120 2009/12/07 05:22:21 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -24,7 +24,7 @@ PostgreSQL documentation
 CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE <replaceable class="PARAMETER">table_name</replaceable> ( [
   { <replaceable class="PARAMETER">column_name</replaceable> <replaceable class="PARAMETER">data_type</replaceable> [ DEFAULT <replaceable>default_expr</replaceable> ] [ <replaceable class="PARAMETER">column_constraint</replaceable> [ ... ] ]
     | <replaceable>table_constraint</replaceable>
-    | LIKE <replaceable>parent_table</replaceable> [ { INCLUDING | EXCLUDING } { DEFAULTS | CONSTRAINTS | INDEXES | STORAGE | COMMENTS | ALL } ] ... }
+    | LIKE <replaceable>parent_table</replaceable> [ <replaceable>like_option</replaceable> ... ] }
     [, ... ]
 ] )
 [ INHERITS ( <replaceable>parent_table</replaceable> [, ... ] ) ]
@@ -37,9 +37,9 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE <replaceable class="PAR
 [ CONSTRAINT <replaceable class="PARAMETER">constraint_name</replaceable> ]
 { NOT NULL |
   NULL |
+  CHECK ( <replaceable class="PARAMETER">expression</replaceable> ) |
   UNIQUE <replaceable class="PARAMETER">index_parameters</replaceable> |
   PRIMARY KEY <replaceable class="PARAMETER">index_parameters</replaceable> |
-  CHECK ( <replaceable class="PARAMETER">expression</replaceable> ) |
   REFERENCES <replaceable class="PARAMETER">reftable</replaceable> [ ( <replaceable class="PARAMETER">refcolumn</replaceable> ) ] [ MATCH FULL | MATCH PARTIAL | MATCH SIMPLE ]
     [ ON DELETE <replaceable class="parameter">action</replaceable> ] [ ON UPDATE <replaceable class="parameter">action</replaceable> ] }
 [ DEFERRABLE | NOT DEFERRABLE ] [ INITIALLY DEFERRED | INITIALLY IMMEDIATE ]
@@ -47,17 +47,26 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE <replaceable class="PAR
 <phrase>and <replaceable class="PARAMETER">table_constraint</replaceable> is:</phrase>
 
 [ CONSTRAINT <replaceable class="PARAMETER">constraint_name</replaceable> ]
-{ UNIQUE ( <replaceable class="PARAMETER">column_name</replaceable> [, ... ] ) <replaceable class="PARAMETER">index_parameters</replaceable> |
+{ CHECK ( <replaceable class="PARAMETER">expression</replaceable> ) |
+  UNIQUE ( <replaceable class="PARAMETER">column_name</replaceable> [, ... ] ) <replaceable class="PARAMETER">index_parameters</replaceable> |
   PRIMARY KEY ( <replaceable class="PARAMETER">column_name</replaceable> [, ... ] ) <replaceable class="PARAMETER">index_parameters</replaceable> |
-  CHECK ( <replaceable class="PARAMETER">expression</replaceable> ) |
+  EXCLUDE [ USING <replaceable class="parameter">index_method</replaceable> ] ( <replaceable class="parameter">exclude_element</replaceable> WITH <replaceable class="parameter">operator</replaceable> [, ... ] ) <replaceable class="parameter">index_parameters</replaceable> [ WHERE ( <replaceable class="parameter">predicate</replaceable> ) ] |
   FOREIGN KEY ( <replaceable class="PARAMETER">column_name</replaceable> [, ... ] ) REFERENCES <replaceable class="PARAMETER">reftable</replaceable> [ ( <replaceable class="PARAMETER">refcolumn</replaceable> [, ... ] ) ]
     [ MATCH FULL | MATCH PARTIAL | MATCH SIMPLE ] [ ON DELETE <replaceable class="parameter">action</replaceable> ] [ ON UPDATE <replaceable class="parameter">action</replaceable> ] }
 [ DEFERRABLE | NOT DEFERRABLE ] [ INITIALLY DEFERRED | INITIALLY IMMEDIATE ]
 
-<phrase><replaceable class="PARAMETER">index_parameters</replaceable> in <literal>UNIQUE</literal> and <literal>PRIMARY KEY</literal> constraints are:</phrase>
+<phrase>and <replaceable class="PARAMETER">like_option</replaceable> is:</phrase>
+
+{ INCLUDING | EXCLUDING } { DEFAULTS | CONSTRAINTS | INDEXES | STORAGE | COMMENTS | ALL }
+
+<phrase><replaceable class="PARAMETER">index_parameters</replaceable> in <literal>UNIQUE</literal>, <literal>PRIMARY KEY</literal>, and <literal>EXCLUDE</literal> constraints are:</phrase>
 
 [ WITH ( <replaceable class="PARAMETER">storage_parameter</replaceable> [= <replaceable class="PARAMETER">value</replaceable>] [, ... ] ) ]
 [ USING INDEX TABLESPACE <replaceable class="PARAMETER">tablespace</replaceable> ]
+
+<phrase><replaceable class="PARAMETER">exclude_element</replaceable> in an <literal>EXCLUDE</literal> constraint is:</phrase>
+
+{ <replaceable class="parameter">column</replaceable> | ( <replaceable class="parameter">expression</replaceable> ) } [ <replaceable class="parameter">opclass</replaceable> ] [ ASC | DESC ] [ NULLS { FIRST | LAST } ]
 </synopsis>
 
  </refsynopsisdiv>
@@ -251,7 +260,7 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE <replaceable class="PAR
    </varlistentry>
 
    <varlistentry>
-    <term><literal>LIKE <replaceable>parent_table</replaceable> [ { INCLUDING | EXCLUDING } { DEFAULTS | CONSTRAINTS | INDEXES | STORAGE | COMMENTS | ALL } ]</literal></term>
+    <term><literal>LIKE <replaceable>parent_table</replaceable> [ <replaceable>like_option</replaceable> ... ]</literal></term>
     <listitem>
      <para>
       The <literal>LIKE</literal> clause specifies a table from which
@@ -351,6 +360,29 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE <replaceable class="PAR
    </varlistentry>
 
    <varlistentry>
+    <term><literal>CHECK ( <replaceable class="PARAMETER">expression</replaceable> )</literal></term>
+    <listitem>
+     <para>
+      The <literal>CHECK</> clause specifies an expression producing a
+      Boolean result which new or updated rows must satisfy for an
+      insert or update operation to succeed.  Expressions evaluating
+      to TRUE or UNKNOWN succeed.  Should any row of an insert or
+      update operation produce a FALSE result an error exception is
+      raised and the insert or update does not alter the database.  A
+      check constraint specified as a column constraint should
+      reference that column's value only, while an expression
+      appearing in a table constraint can reference multiple columns.
+     </para>
+
+     <para>
+      Currently, <literal>CHECK</literal> expressions cannot contain
+      subqueries nor refer to variables other than columns of the
+      current row.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
     <term><literal>UNIQUE</> (column constraint)</term>
     <term><literal>UNIQUE ( <replaceable class="PARAMETER">column_name</replaceable> [, ... ] )</> (table constraint)</term>
 
@@ -406,28 +438,53 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE <replaceable class="PAR
    </varlistentry>
 
    <varlistentry>
-    <term><literal>CHECK ( <replaceable class="PARAMETER">expression</replaceable> )</literal></term>
+    <term><literal>EXCLUDE [ USING <replaceable class="parameter">index_method</replaceable> ] ( <replaceable class="parameter">exclude_element</replaceable> WITH <replaceable class="parameter">operator</replaceable> [, ... ] ) <replaceable class="parameter">index_parameters</replaceable> [ WHERE ( <replaceable class="parameter">predicate</replaceable> ) ]</literal></term>
     <listitem>
      <para>
-      The <literal>CHECK</> clause specifies an expression producing a
-      Boolean result which new or updated rows must satisfy for an
-      insert or update operation to succeed.  Expressions evaluating
-      to TRUE or UNKNOWN succeed.  Should any row of an insert or
-      update operation produce a FALSE result an error exception is
-      raised and the insert or update does not alter the database.  A
-      check constraint specified as a column constraint should
-      reference that column's value only, while an expression
-      appearing in a table constraint can reference multiple columns.
+      The <literal>EXCLUDE</> clause defines an exclusion
+      constraint, which guarantees that if
+      any two rows are compared on the specified column(s) or
+      expression(s) using the specified operator(s), not all of these
+      comparisons will return <literal>TRUE</>.  If all of the
+      specified operators test for equality, this is equivalent to a
+      <literal>UNIQUE</> constraint, although an ordinary unique constraint
+      will be faster.  However, exclusion constraints can specify
+      constraints that are more general than simple equality.
+      For example, you can specify a constraint that
+      no two rows in the table contain overlapping circles
+      (see <xref linkend="datatype-geometric">) by using the
+      <literal>&&</> operator.
      </para>
 
      <para>
-      Currently, <literal>CHECK</literal> expressions cannot contain
-      subqueries nor refer to variables other than columns of the
-      current row.
+      Exclusion constraints are implemented using
+      an index, so each specified operator must be associated with an
+      appropriate operator class
+      (see <xref linkend="indexes-opclass">) for the index access
+      method <replaceable>index_method</>.
+      The operators are required to be commutative.
+      Each <replaceable class="parameter">exclude_element</replaceable>
+      can optionally specify an operator class and/or ordering options;
+      these are described fully under
+      <xref linkend="sql-createindex" endterm="sql-createindex-title">.
+     </para>
+
+     <para>
+      The access method must support <literal>amgettuple</> (see <xref
+      linkend="indexam">); at present this means <acronym>GIN</>
+      cannot be used.  Although it's allowed, there is little point in using
+      btree or hash indexes with an exclusion constraint, because this
+      does nothing that an ordinary unique constraint doesn't do better.
+      So in practice the access method will always be <acronym>GiST</>.
+     </para>
+
+     <para>
+      The <replaceable class="parameter">predicate</> allows you to specify an
+      exclusion constraint on a subset of the table; internally this creates a
+      partial index. Note that parentheses are required around the predicate.
      </para>
     </listitem>
    </varlistentry>
-
 
    <varlistentry>
     <term><literal>REFERENCES <replaceable class="parameter">reftable</replaceable> [ ( <replaceable class="parameter">refcolumn</replaceable> ) ] [ MATCH <replaceable class="parameter">matchtype</replaceable> ] [ ON DELETE <replaceable class="parameter">action</replaceable> ] [ ON UPDATE <replaceable class="parameter">action</replaceable> ]</literal> (column constraint)</term>
@@ -557,7 +614,8 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE <replaceable class="PAR
       deferrable can be postponed until the end of the transaction
       (using the <xref linkend="sql-set-constraints" endterm="sql-set-constraints-title"> command).
       <literal>NOT DEFERRABLE</literal> is the default.
-      Currently, only <literal>UNIQUE</>, <literal>PRIMARY KEY</>, and
+      Currently, only <literal>UNIQUE</>, <literal>PRIMARY KEY</>,
+      <literal>EXCLUDE</>, and
       <literal>REFERENCES</> (foreign key) constraints accept this
       clause.  <literal>NOT NULL</> and <literal>CHECK</> constraints are not
       deferrable.
@@ -695,8 +753,8 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE <replaceable class="PAR
     <listitem>
      <para>
       This clause allows selection of the tablespace in which the index
-      associated with a <literal>UNIQUE</literal> or <literal>PRIMARY
-      KEY</literal> constraint will be created.
+      associated with a <literal>UNIQUE</literal>, <literal>PRIMARY
+      KEY</literal>, or <literal>EXCLUDE</> constraint will be created.
       If not specified,
       <xref linkend="guc-default-tablespace"> is consulted, or
       <xref linkend="guc-temp-tablespaces"> if the table is temporary.
@@ -715,8 +773,9 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE <replaceable class="PAR
 
    <para>
     The <literal>WITH</> clause can specify <firstterm>storage parameters</>
-    for tables, and for indexes associated with a <literal>UNIQUE</literal> or
-    <literal>PRIMARY KEY</literal> constraint.  Storage parameters for
+    for tables, and for indexes associated with a <literal>UNIQUE</literal>,
+    <literal>PRIMARY KEY</literal>, or <literal>EXCLUDE</> constraint.
+    Storage parameters for
     indexes are documented in <xref linkend="SQL-CREATEINDEX"
     endterm="sql-createindex-title">.  The storage parameters currently
     available for tables are listed below.  For each parameter, unless noted,
@@ -1100,6 +1159,18 @@ WITH (fillfactor=70);
   </para>
 
   <para>
+   Create table <structname>circles</> with an exclusion
+   constraint that prevents any two circles from overlapping:
+
+<programlisting>
+CREATE TABLE circles (
+    c circle,
+    EXCLUDE USING gist (c WITH &&)
+);
+</programlisting>
+  </para>
+
+  <para>
    Create table <structname>cinemas</> in tablespace <structname>diskvol1</>:
 
 <programlisting>
@@ -1191,6 +1262,15 @@ CREATE TABLE cinemas (
     table constraints can refer to multiple columns.
     <productname>PostgreSQL</productname> does not enforce this
     restriction; it treats column and table check constraints alike.
+   </para>
+  </refsect2>
+
+  <refsect2>
+   <title><literal>EXCLUDE</literal> Constraint</title>
+
+   <para>
+    The <literal>EXCLUDE</> constraint type is a
+    <productname>PostgreSQL</productname> extension.
    </para>
   </refsect2>
 

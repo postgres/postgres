@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.211 2009/11/20 20:38:09 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.212 2009/12/07 05:22:21 tgl Exp $ -->
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
  -->
@@ -1536,11 +1536,7 @@
       <entry><type>bool</type></entry>
       <entry></entry>
       <entry>
-       True if this is a table and it has (or recently had) any
-       indexes. This is set by <command>CREATE INDEX</command>, but
-       not cleared immediately by <command>DROP INDEX</command>.
-       <command>VACUUM</command> clears <structfield>relhasindex</> if it finds the
-       table has no indexes
+       True if this is a table and it has (or recently had) any indexes
       </entry>
      </row>
 
@@ -1618,6 +1614,17 @@
      </row>
 
      <row>
+      <entry><structfield>relhasexclusion</structfield></entry>
+      <entry><type>bool</type></entry>
+      <entry></entry>
+      <entry>
+       For a table, true if the table has (or once had) any exclusion
+       constraints; for an index, true if the index supports an exclusion
+       constraint
+      </entry>
+     </row>
+
+     <row>
       <entry><structfield>relhasrules</structfield></entry>
       <entry><type>bool</type></entry>
       <entry></entry>
@@ -1680,6 +1687,17 @@
     </tbody>
    </tgroup>
   </table>
+
+  <para>
+   Several of the boolean flags in <structname>pg_class</> are maintained
+   lazily: they are guaranteed to be true if that's the correct state, but
+   may not be reset to false immediately when the condition is no longer
+   true.  For example, <structfield>relhasindex</> is set by
+   <command>CREATE INDEX</command>, but it is never cleared by
+   <command>DROP INDEX</command>.  Instead, <command>VACUUM</command> clears
+   <structfield>relhasindex</> if it finds the table has no indexes.  This
+   arrangement avoids race conditions and improves concurrency.
+  </para>
  </sect1>
 
  <sect1 id="catalog-pg-constraint">
@@ -1690,11 +1708,12 @@
   </indexterm>
 
   <para>
-   The catalog <structname>pg_constraint</structname> stores check, primary key, unique, and foreign
-   key constraints on tables.  (Column constraints are not treated
-   specially.  Every column constraint is equivalent to some table
-   constraint.)  Not-null constraints are represented in the
-   <structname>pg_attribute</> catalog.
+   The catalog <structname>pg_constraint</structname> stores check, primary
+   key, unique, foreign key, and exclusion constraints on tables.
+   (Column constraints are not treated specially.  Every column constraint is
+   equivalent to some table constraint.)
+   Not-null constraints are represented in the <structname>pg_attribute</>
+   catalog, not here.
   </para>
 
   <para>
@@ -1739,7 +1758,8 @@
         <literal>c</> = check constraint,
         <literal>f</> = foreign key constraint,
         <literal>p</> = primary key constraint,
-        <literal>u</> = unique constraint
+        <literal>u</> = unique constraint,
+        <literal>x</> = exclusion constraint
       </entry>
      </row>
 
@@ -1776,7 +1796,7 @@
       <entry><type>oid</type></entry>
       <entry><literal><link linkend="catalog-pg-class"><structname>pg_class</structname></link>.oid</literal></entry>
       <entry>The index supporting this constraint, if it's a unique, primary
-       key, or foreign key constraint; else 0</entry>
+       key, foreign key, or exclusion constraint; else 0</entry>
      </row>
 
      <row>
@@ -1828,7 +1848,7 @@
       <entry><type>bool</type></entry>
       <entry></entry>
       <entry>
-       This constraint is defined locally in the relation.  Note that a
+       This constraint is defined locally for the relation.  Note that a
        constraint can be locally defined and inherited simultaneously
       </entry>
      </row>
@@ -1838,7 +1858,8 @@
       <entry><type>int4</type></entry>
       <entry></entry>
       <entry>
-       The number of direct ancestors this constraint has.  A constraint with
+       The number of direct inheritance ancestors this constraint has.
+       A constraint with
        a nonzero number of ancestors cannot be dropped nor renamed
       </entry>
      </row>
@@ -1879,6 +1900,13 @@
      </row>
 
      <row>
+      <entry><structfield>conexclop</structfield></entry>
+      <entry><type>oid[]</type></entry>
+      <entry><literal><link linkend="catalog-pg-operator"><structname>pg_operator</structname></link>.oid</></entry>
+      <entry>If an exclusion constraint, list of the per-column exclusion operators</entry>
+     </row>
+
+     <row>
       <entry><structfield>conbin</structfield></entry>
       <entry><type>text</type></entry>
       <entry></entry>
@@ -1895,6 +1923,16 @@
    </tgroup>
   </table>
 
+  <para>
+   In the case of an exclusion constraint, <structfield>conkey</structfield>
+   is only useful for constraint elements that are simple column references.
+   For other cases, a zero appears in <structfield>conkey</structfield>
+   and the associated index must be consulted to discover the expression
+   that is constrained.  (<structfield>conkey</structfield> thus has the
+   same contents as <structname>pg_index</>.<structfield>indkey</> for the
+   index.)
+  </para>
+
   <note>
    <para>
     <structfield>consrc</structfield> is not updated when referenced objects
@@ -1908,7 +1946,8 @@
    <para>
     <literal>pg_class.relchecks</literal> needs to agree with the
     number of check-constraint entries found in this table for each
-    relation.
+    relation.  Also, <literal>pg_class.relhasexclusion</literal> must
+    be true if there are any exclusion-constraint entries for the relation.
    </para>
   </note>
 

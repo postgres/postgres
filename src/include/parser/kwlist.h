@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/include/parser/kwlist.h,v 1.6 2009/11/05 23:24:27 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/include/parser/kwlist.h,v 1.7 2009/12/07 05:22:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -143,6 +143,7 @@ PG_KEYWORD("end", END_P, RESERVED_KEYWORD)
 PG_KEYWORD("enum", ENUM_P, UNRESERVED_KEYWORD)
 PG_KEYWORD("escape", ESCAPE, UNRESERVED_KEYWORD)
 PG_KEYWORD("except", EXCEPT, RESERVED_KEYWORD)
+PG_KEYWORD("exclude", EXCLUDE, UNRESERVED_KEYWORD)
 PG_KEYWORD("excluding", EXCLUDING, UNRESERVED_KEYWORD)
 PG_KEYWORD("exclusive", EXCLUSIVE, UNRESERVED_KEYWORD)
 PG_KEYWORD("execute", EXECUTE, UNRESERVED_KEYWORD)

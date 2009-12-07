@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.396 2009/11/16 21:32:06 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.397 2009/12/07 05:22:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -763,13 +763,19 @@ vac_update_relstats(Relation relation,
 
 	/*
 	 * If we have discovered that there are no indexes, then there's no
-	 * primary key either.	This could be done more thoroughly...
+	 * primary key either, nor any exclusion constraints.  This could be done
+	 * more thoroughly...
 	 */
 	if (!hasindex)
 	{
 		if (pgcform->relhaspkey)
 		{
 			pgcform->relhaspkey = false;
+			dirty = true;
+		}
+		if (pgcform->relhasexclusion && pgcform->relkind != RELKIND_INDEX)
+		{
+			pgcform->relhasexclusion = false;
 			dirty = true;
 		}
 	}

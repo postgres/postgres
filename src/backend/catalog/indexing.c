@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/indexing.c,v 1.118 2009/07/29 20:56:18 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/indexing.c,v 1.119 2009/12/07 05:22:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,7 +30,8 @@
  * In the current implementation, we share code for opening/closing the
  * indexes with execUtils.c.  But we do not use ExecInsertIndexTuples,
  * because we don't want to create an EState.  This implies that we
- * do not support partial or expressional indexes on system catalogs.
+ * do not support partial or expressional indexes on system catalogs,
+ * nor can we support generalized exclusion constraints.
  * This could be fixed with localized changes here if we wanted to pay
  * the extra overhead of building an EState.
  */
@@ -111,10 +112,12 @@ CatalogIndexInsert(CatalogIndexState indstate, HeapTuple heapTuple)
 
 		/*
 		 * Expressional and partial indexes on system catalogs are not
-		 * supported
+		 * supported, nor exclusion constraints, nor deferred uniqueness
 		 */
 		Assert(indexInfo->ii_Expressions == NIL);
 		Assert(indexInfo->ii_Predicate == NIL);
+		Assert(indexInfo->ii_ExclusionOps == NULL);
+		Assert(relationDescs[i]->rd_index->indimmediate);
 
 		/*
 		 * FormIndexDatum fills in its values and isnull parameters with the
