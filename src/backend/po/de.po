@@ -1,7 +1,7 @@
 # German message translation file for PostgreSQL server
 # Peter Eisentraut <peter_e@gmx.net>, 2001, 2003.
 #
-# $Header: /cvsroot/pgsql/src/backend/po/de.po,v 1.11.2.11 2009/09/03 18:48:43 petere Exp $
+# $Header: /cvsroot/pgsql/src/backend/po/de.po,v 1.11.2.12 2009/12/08 21:54:18 petere Exp $
 #
 # Use these quotes: »%s«
 #
@@ -9,8 +9,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 7.4\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2009-09-02 15:14+0000\n"
-"PO-Revision-Date: 2009-09-02 21:20+0300\n"
+"POT-Creation-Date: 2009-09-26 20:31+0000\n"
+"PO-Revision-Date: 2009-12-04 01:12+0200\n"
 "Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language-Team: German <peter_e@gmx.net>\n"
 "MIME-Version: 1.0\n"
@@ -164,7 +164,7 @@ msgstr "konnte Datei »%s« nicht öffnen (Logdatei %u, Segment %u): %m"
 msgid "could not create file \"%s\": %m"
 msgstr "kann Datei »%s« nicht erstellen: %m"
 
-#: access/transam/xlog.c:1415 utils/init/miscinit.c:814 utils/misc/guc.c:3797
+#: access/transam/xlog.c:1415 utils/init/miscinit.c:814 utils/misc/guc.c:3823
 #, c-format
 msgid "could not write to file \"%s\": %m"
 msgstr "konnte nicht in Datei »%s« schreiben: %m"
@@ -694,7 +694,10 @@ msgstr "Picksplit-Methode für erste Spalte von Index »%s« fehlgeschlagen"
 msgid ""
 "The index is not optimal. To optimize it, contact a developer, or try to use "
 "the column as the second one in the CREATE INDEX command."
-msgstr "Der Index ist nicht optimal. Um ihn zu optimieren, kontaktieren Sie einen Entwickler oder versuchen Sie, die Spalte als die zweite im CREATE-INDEX-Befehl zu verwenden."
+msgstr ""
+"Der Index ist nicht optimal. Um ihn zu optimieren, kontaktieren Sie einen "
+"Entwickler oder versuchen Sie, die Spalte als die zweite im CREATE-INDEX-"
+"Befehl zu verwenden."
 
 #: access/index/indexam.c:134 access/index/indexam.c:159
 #: access/index/indexam.c:184 tcop/utility.c:91 commands/comment.c:309
@@ -759,10 +762,10 @@ msgstr "Zeile ist zu groß: Größe ist %lu, Maximalgröße ist %lu"
 #: utils/init/miscinit.c:177 utils/init/miscinit.c:198
 #: utils/init/miscinit.c:208 utils/adt/cash.c:291 utils/adt/cash.c:306
 #: utils/adt/regexp.c:167 utils/adt/ri_triggers.c:3436 utils/misc/guc.c:1674
-#: utils/misc/guc.c:1871 utils/misc/guc.c:2844 utils/misc/guc.c:2898
-#: utils/misc/guc.c:3784 utils/misc/guc.c:3919 utils/misc/guc.c:3984
-#: utils/misc/guc.c:3992 utils/misc/guc.c:4001 guc-file.l:151 guc-file.l:277
-#: guc-file.l:314 utils/mmgr/aset.c:335 utils/mmgr/aset.c:501
+#: utils/misc/guc.c:1871 utils/misc/guc.c:2870 utils/misc/guc.c:2924
+#: utils/misc/guc.c:3810 utils/misc/guc.c:3945 utils/misc/guc.c:4010
+#: utils/misc/guc.c:4018 utils/misc/guc.c:4027 guc-file.l:152 guc-file.l:278
+#: guc-file.l:315 utils/mmgr/aset.c:335 utils/mmgr/aset.c:501
 #: utils/mmgr/aset.c:698 utils/mmgr/aset.c:891 utils/mmgr/portalmem.c:75
 #: utils/fmgr/dfmgr.c:119 utils/cache/relcache.c:172
 #: utils/cache/relcache.c:182 utils/cache/relcache.c:196
@@ -781,7 +784,7 @@ msgstr "Speicher aufgebraucht"
 
 #: utils/init/miscinit.c:350 utils/cache/lsyscache.c:1981 commands/user.c:848
 #: commands/user.c:961 commands/user.c:1053 commands/user.c:1172
-#: commands/variable.c:810
+#: commands/variable.c:794
 #, c-format
 msgid "user \"%s\" does not exist"
 msgstr "Benutzer »%s« existiert nicht"
@@ -862,7 +865,7 @@ msgstr ""
 msgid "could not write lock file \"%s\": %m"
 msgstr "konnte Sperrdatei »%s« nicht schreiben: %m"
 
-#: utils/init/miscinit.c:774 utils/misc/guc.c:3932
+#: utils/init/miscinit.c:774 utils/misc/guc.c:3958
 #, c-format
 msgid "could not read from file \"%s\": %m"
 msgstr "konnte nicht aus Datei »%s« lesen: %m"
@@ -3301,8 +3304,8 @@ msgid "Selects the method used for forcing WAL updates out to disk."
 msgstr ""
 "Wählt die Methode um WAL-Änderungen auf die Festplatte zurückzuschreiben."
 
-#: utils/misc/guc.c:2423 utils/misc/guc.c:3035 utils/misc/guc.c:3071
-#: utils/misc/guc.c:3127 utils/misc/guc.c:3421
+#: utils/misc/guc.c:2423 utils/misc/guc.c:3061 utils/misc/guc.c:3097
+#: utils/misc/guc.c:3153 utils/misc/guc.c:3447
 #, c-format
 msgid "unrecognized configuration parameter \"%s\""
 msgstr "unbekannter Konfigurationsparameter »%s«"
@@ -3327,88 +3330,93 @@ msgstr "Parameter »%s« kann jetzt nicht geändert werden"
 msgid "parameter \"%s\" cannot be set after connection start"
 msgstr "Parameter »%s« kann nach Start der Verbindung nicht geändert werden"
 
-#: utils/misc/guc.c:2504 utils/misc/guc.c:2574 utils/misc/guc.c:2671
-#: utils/misc/guc.c:2767 utils/misc/guc.c:2873
+#: utils/misc/guc.c:2504 utils/misc/guc.c:2600 utils/misc/guc.c:2697
+#: utils/misc/guc.c:2793 utils/misc/guc.c:2899
 #, c-format
 msgid "permission denied to set parameter \"%s\""
 msgstr "keine Berechtigung um Parameter »%s« zu setzen"
 
-#: utils/misc/guc.c:2562
+#: utils/misc/guc.c:2538
+#, c-format
+msgid "cannot set parameter \"%s\" within security-definer function"
+msgstr "kann Parameter »%s« nicht in einer Security-Definer-Funktion setzen"
+
+#: utils/misc/guc.c:2588
 #, c-format
 msgid "parameter \"%s\" requires a Boolean value"
 msgstr "Parameter »%s« erfordert einen Boole'schen Wert"
 
-#: utils/misc/guc.c:2576
+#: utils/misc/guc.c:2602
 msgid "Must be superuser to change this value to false."
 msgstr "Nur Superuser können diesen Wert ändern."
 
-#: utils/misc/guc.c:2598 utils/misc/guc.c:2695
+#: utils/misc/guc.c:2624 utils/misc/guc.c:2721
 #, c-format
 msgid "invalid value for parameter \"%s\": %d"
 msgstr "ungültiger Wert für Parameter »%s«: %d"
 
-#: utils/misc/guc.c:2650
+#: utils/misc/guc.c:2676
 #, c-format
 msgid "parameter \"%s\" requires an integer value"
 msgstr "Parameter »%s« erfordert einen ganzzahligen Wert"
 
-#: utils/misc/guc.c:2658
+#: utils/misc/guc.c:2684
 #, c-format
 msgid "%d is outside the valid range for parameter \"%s\" (%d .. %d)"
 msgstr "%d ist außerhalb des gültigen Bereiches für Parameter »%s« (%d ... %d)"
 
-#: utils/misc/guc.c:2673
+#: utils/misc/guc.c:2699
 msgid "Must be superuser to increase this value or set it to zero."
 msgstr "Nur Superuser können diesen Wert erhöhen oder auf null setzen."
 
-#: utils/misc/guc.c:2747
+#: utils/misc/guc.c:2773
 #, c-format
 msgid "parameter \"%s\" requires a numeric value"
 msgstr "Parameter »%s« erfordert einen numerischen Wert"
 
-#: utils/misc/guc.c:2755
+#: utils/misc/guc.c:2781
 #, c-format
 msgid "%g is outside the valid range for parameter \"%s\" (%g .. %g)"
 msgstr "%g ist außerhalb des gültigen Bereiches für Parameter »%s« (%g ... %g)"
 
-#: utils/misc/guc.c:2769 utils/misc/guc.c:2875
+#: utils/misc/guc.c:2795 utils/misc/guc.c:2901
 msgid "Must be superuser to increase this value."
 msgstr "Nur Superuser können diesen Wert erhöhen."
 
-#: utils/misc/guc.c:2791
+#: utils/misc/guc.c:2817
 #, c-format
 msgid "invalid value for parameter \"%s\": %g"
 msgstr "ungültiger Wert für Parameter »%s«: %g"
 
-#: utils/misc/guc.c:2929
+#: utils/misc/guc.c:2955
 #, c-format
 msgid "invalid value for parameter \"%s\": \"%s\""
 msgstr "ungültiger Wert für Parameter »%s«: »%s«"
 
-#: utils/misc/guc.c:3136
+#: utils/misc/guc.c:3162
 #, c-format
 msgid "SET %s takes only one argument"
 msgstr "SET %s darf nur ein Argument haben"
 
-#: utils/misc/guc.c:3240
+#: utils/misc/guc.c:3266
 msgid "SET requires parameter name"
 msgstr "SET benötigt Parameternamen"
 
-#: utils/misc/guc.c:4051
+#: utils/misc/guc.c:4077
 #, c-format
 msgid "could not parse setting for parameter \"%s\""
 msgstr "konnte Wert von Parameter »%s« nicht lesen"
 
-#: utils/misc/guc.c:4424
+#: utils/misc/guc.c:4450
 msgid "SET AUTOCOMMIT TO OFF is no longer supported"
 msgstr "SET AUTOCOMMIT TO OFF wird nicht mehr unterstützt"
 
-#: guc-file.l:164 libpq/hba.c:975
+#: guc-file.l:165 libpq/hba.c:975
 #, c-format
 msgid "could not open configuration file \"%s\": %m"
 msgstr "konnte Konfigurationsdatei »%s« nicht öffnen: %m"
 
-#: guc-file.l:267
+#: guc-file.l:268
 #, c-format
 msgid "syntax error in file \"%s\" line %u, near token \"%s\""
 msgstr "Syntaxfehler in Datei »%s«, Zeile %u, bei »%s«"
@@ -3578,16 +3586,16 @@ msgstr "keine Eingabefunktion verfügbar für Typ %s"
 msgid "no output function available for type %s"
 msgstr "keine Ausgabefunktion verfügbar für Typ %s"
 
-#: utils/cache/relcache.c:3309
+#: utils/cache/relcache.c:3356
 #, c-format
 msgid "could not create relation-cache initialization file \"%s\": %m"
 msgstr "konnte Initialisierungsdatei für Relationscache »%s« nicht erzeugen: %m"
 
-#: utils/cache/relcache.c:3311 utils/cache/relcache.c:3452
+#: utils/cache/relcache.c:3358 utils/cache/relcache.c:3499
 msgid "Continuing anyway, but there's something wrong."
 msgstr "Setze trotzdem fort, aber irgendwas stimmt nicht."
 
-#: utils/cache/relcache.c:3450
+#: utils/cache/relcache.c:3497
 #, c-format
 msgid ""
 "could not rename relation-cache initialization file \"%s\" to \"%s\": %m"
@@ -6638,11 +6646,6 @@ msgid "SET TRANSACTION ISOLATION LEVEL must be called before any query"
 msgstr ""
 "SET TRANSACTION ISOLATION LEVEL muss vor allen Anfragen aufgerufen werden"
 
-#: commands/variable.c:788
-msgid "cannot set session authorization within security-definer function"
-msgstr ""
-"kann Sitzungsauthorisierung nicht in einer Security-Definer-Funktion ändern"
-
 #: commands/view.c:89
 msgid "view must have at least one column"
 msgstr "Sicht muss mindestens eine Spalte haben"
@@ -7176,7 +7179,7 @@ msgstr "Fehler von der unteren PAM-Ebene: %s"
 #: libpq/auth.c:586
 #, c-format
 msgid "unsupported PAM conversation %d/%s"
-msgstr "nicht unterstütze PAM-Konversation %d/%s"
+msgstr "nicht unterstützte PAM-Konversation %d/%s"
 
 #: libpq/auth.c:618
 msgid "empty password returned by client"
@@ -8438,13 +8441,13 @@ msgid "operator too long"
 msgstr "Operator zu lang"
 
 #. translator: %s is typically "syntax error"
-#: scan.l:600
+#: scan.l:601
 #, c-format
 msgid "%s at end of input"
 msgstr "Fehler »%s« am Ende der Eingabe"
 
 #. translator: first %s is typically "syntax error"
-#: scan.l:608
+#: scan.l:609
 #, c-format
 msgid "%s at or near \"%s\""
 msgstr "Fehler »%s« bei »%s«"
