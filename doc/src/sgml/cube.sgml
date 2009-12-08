@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/cube.sgml,v 1.6 2009/05/18 11:08:24 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/cube.sgml,v 1.7 2009/12/08 20:08:30 mha Exp $ -->
 
 <sect1 id="cube">
  <title>cube</title>
@@ -372,12 +372,12 @@ t
 
   <para>
    My thanks are primarily to Prof. Joe Hellerstein
-   (<ulink url="http://db.cs.berkeley.edu/~jmh/"></ulink>) for elucidating the
+   (<ulink url="http://db.cs.berkeley.edu/jmh/"></ulink>) for elucidating the
    gist of the GiST (<ulink url="http://gist.cs.berkeley.edu/"></ulink>), and
    to his former student, Andy Dong (<ulink
    url="http://best.me.berkeley.edu/~adong/"></ulink>), for his example
    written for Illustra,
-   <ulink url="http://garcia.me.berkeley.edu/~adong/rtree"></ulink>.
+   <ulink url="http://best.berkeley.edu/~adong/rtree/index.html"></ulink>.
    I am also grateful to all Postgres developers, present and past, for
    enabling myself to create my own world and live undisturbed in it. And I
    would like to acknowledge my gratitude to Argonne Lab and to the
