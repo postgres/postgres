@@ -1,7 +1,7 @@
 # translation of pg_dump.po to fr_fr
 # french message translation file for pg_dump
 #
-# $PostgreSQL: pgsql/src/bin/pg_dump/po/fr.po,v 1.18.2.1 2009/09/03 21:01:10 petere Exp $
+# $PostgreSQL: pgsql/src/bin/pg_dump/po/fr.po,v 1.18.2.2 2009/12/08 22:22:17 petere Exp $
 #
 # Use these quotes: « %s »
 #
@@ -11,8 +11,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.4\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2009-08-30 21:14+0000\n"
-"PO-Revision-Date: 2009-09-01 13:44+0100\n"
+"POT-Creation-Date: 2009-11-23 11:52+0000\n"
+"PO-Revision-Date: 2009-11-24 22:55+0100\n"
 "Last-Translator: Guillaume Lelarge <guillaume@lelarge.info>\n"
 "Language-Team: PostgreSQLfr <pgsql-fr-generale@postgresql.org>\n"
 "MIME-Version: 1.0\n"
@@ -448,13 +448,13 @@ msgstr ""
 "PQgetCopyData().\n"
 
 #: pg_dump.c:1193
-#: pg_dump.c:11560
+#: pg_dump.c:11562
 #, c-format
 msgid "Error message from server: %s"
 msgstr "Message d'erreur du serveur : %s"
 
 #: pg_dump.c:1194
-#: pg_dump.c:11561
+#: pg_dump.c:11563
 #, c-format
 msgid "The command was: %s\n"
 msgstr "La commande était : %s\n"
@@ -644,7 +644,7 @@ msgstr "aucune définition de label trouvée pour l'ID enum %u\n"
 #: pg_dump.c:9112
 #: pg_dump.c:9267
 #: pg_dump.c:9453
-#: pg_dump.c:11366
+#: pg_dump.c:11368
 #, c-format
 msgid "query returned %d row instead of one: %s\n"
 msgid_plural "query returned %d rows instead of one: %s\n"
@@ -770,23 +770,23 @@ msgstr ""
 "la requête permettant d'obtenir les données de la séquence « %s » a renvoyé\n"
 "le nom « %s »\n"
 
-#: pg_dump.c:10944
+#: pg_dump.c:10946
 #, c-format
 msgid "invalid argument string (%s) for trigger \"%s\" on table \"%s\"\n"
 msgstr "chaîne argument invalide (%s) pour le trigger « %s » sur la table « %s »\n"
 
-#: pg_dump.c:11082
+#: pg_dump.c:11084
 #, c-format
 msgid "query to get rule \"%s\" for table \"%s\" failed: wrong number of rows returned\n"
 msgstr ""
 "la requête permettant d'obtenir la règle « %s » associée à la table « %s »\n"
 "a échoué : mauvais nombre de lignes renvoyées\n"
 
-#: pg_dump.c:11177
+#: pg_dump.c:11179
 msgid "reading dependency data\n"
 msgstr "lecture des données de dépendance\n"
 
-#: pg_dump.c:11555
+#: pg_dump.c:11557
 msgid "SQL command failed\n"
 msgstr "la commande SQL a échoué\n"
 
@@ -1992,9 +1992,9 @@ msgstr ""
 
 #: pg_restore.c:433
 #, c-format
-msgid "  --no-tablespaces         do not dump tablespace assignments\n"
+msgid "  --no-tablespaces         do not restore tablespace assignments\n"
 msgstr ""
-"  --no-tablespaces             ne sauvegarde pas les définitions de\n"
+"  --no-tablespaces             ne restaure pas les définitions de\n"
 "                               tablespaces\n"
 
 #: pg_restore.c:434

@@ -1,7 +1,7 @@
 # German message translation file for pg_dump and friends
 # Peter Eisentraut <peter_e@gmx.net>, 2001 - 2009.
 #
-# pgtranslation Id: pg_dump.po,v 1.19 2009/07/25 13:28:08 petere Exp $
+# pgtranslation Id$
 #
 # Use these quotes: »%s«
 #
@@ -9,8 +9,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.4\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2009-07-25 03:14+0000\n"
-"PO-Revision-Date: 2009-07-25 16:26+0300\n"
+"POT-Creation-Date: 2009-12-04 01:13+0000\n"
+"PO-Revision-Date: 2009-12-04 09:09+0200\n"
 "Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language-Team: German <peter_e@gmx.net>\n"
 "MIME-Version: 1.0\n"
@@ -406,12 +406,12 @@ msgstr ""
 "Ausgabe des Inhalts der Tabelle »%s« fehlgeschlagen: PQendcopy() "
 "fehlgeschlagen.\n"
 
-#: pg_dump.c:1193 pg_dump.c:11560
+#: pg_dump.c:1193 pg_dump.c:11562
 #, c-format
 msgid "Error message from server: %s"
 msgstr "Fehlermeldung vom Server: %s"
 
-#: pg_dump.c:1194 pg_dump.c:11561
+#: pg_dump.c:1194 pg_dump.c:11563
 #, c-format
 msgid "The command was: %s\n"
 msgstr "Die Anweisung war: %s\n"
@@ -586,7 +586,7 @@ msgstr "keine Label-Definitionen für Enum ID %u gefunden\n"
 
 #: pg_dump.c:6382 pg_dump.c:6581 pg_dump.c:7233 pg_dump.c:7771 pg_dump.c:8021
 #: pg_dump.c:8127 pg_dump.c:8512 pg_dump.c:8688 pg_dump.c:8885 pg_dump.c:9112
-#: pg_dump.c:9267 pg_dump.c:9453 pg_dump.c:11366
+#: pg_dump.c:9267 pg_dump.c:9453 pg_dump.c:11368
 #, c-format
 msgid "query returned %d row instead of one: %s\n"
 msgid_plural "query returned %d rows instead of one: %s\n"
@@ -710,13 +710,13 @@ msgstr[1] "Anfrage nach Daten der Sequenz %s ergab %d Zeilen (erwartete 1)\n"
 msgid "query to get data of sequence \"%s\" returned name \"%s\"\n"
 msgstr "Anfrage nach Daten der Sequenz %s ergab Name »%s«\n"
 
-#: pg_dump.c:10944
+#: pg_dump.c:10946
 #, c-format
 msgid "invalid argument string (%s) for trigger \"%s\" on table \"%s\"\n"
 msgstr ""
 "fehlerhafte Argumentzeichenkette (%s) für Trigger »%s« von Tabelle »%s«\n"
 
-#: pg_dump.c:11082
+#: pg_dump.c:11084
 #, c-format
 msgid ""
 "query to get rule \"%s\" for table \"%s\" failed: wrong number of rows "
@@ -725,11 +725,11 @@ msgstr ""
 "Anfrage nach Regel »%s« der Tabelle »%s« fehlgeschlagen: falsche Anzahl Zeilen "
 "zurückgegeben\n"
 
-#: pg_dump.c:11177
+#: pg_dump.c:11179
 msgid "reading dependency data\n"
 msgstr "lese Abhängigkeitsdaten\n"
 
-#: pg_dump.c:11555
+#: pg_dump.c:11557
 msgid "SQL command failed\n"
 msgstr "SQL-Anweisung schlug fehl\n"
 
@@ -1916,8 +1916,9 @@ msgstr ""
 
 #: pg_restore.c:433
 #, c-format
-msgid "  --no-tablespaces         do not dump tablespace assignments\n"
-msgstr "  --no-tablespaces         Tablespace-Zuordnungen nicht ausgeben\n"
+msgid "  --no-tablespaces         do not restore tablespace assignments\n"
+msgstr ""
+"  --no-tablespaces         Tablespace-Zuordnungen nicht wiederherstellen\n"
 
 #: pg_restore.c:434
 #, c-format

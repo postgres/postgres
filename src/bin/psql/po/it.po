@@ -21,8 +21,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.4\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2009-07-25 17:08+0000\n"
-"PO-Revision-Date: 2009-07-25 23:51:03+0200\n"
+"POT-Creation-Date: 2009-09-14 01:09+0000\n"
+"PO-Revision-Date: 2009-09-14 19:12:57+0200\n"
 "Last-Translator: Gabriele Bartolini <gabriele.bartolini@2ndquadrant.it>\n"
 "Language-Team: Gruppo traduzioni ITPUG <traduzioni@itpug.org>\n"
 "MIME-Version: 1.0\n"
@@ -161,7 +161,7 @@ msgstr "Controllo tempo disattivato."
 #: command.c:1683
 #: common.c:137
 #: copy.c:517
-#: copy.c:581
+#: copy.c:584
 #, c-format
 msgid "%s: %s\n"
 msgstr "%s: %s\n"
@@ -186,9 +186,9 @@ msgstr "Inserisci la password per l'utente %s:"
 #: common.c:811
 #: common.c:836
 #: common.c:920
-#: copy.c:652
-#: copy.c:697
-#: copy.c:826
+#: copy.c:655
+#: copy.c:700
+#: copy.c:829
 #, c-format
 msgid "%s"
 msgstr "%s"
@@ -485,22 +485,26 @@ msgstr "\\copy: %s"
 msgid "\\copy: unexpected response (%d)\n"
 msgstr "\\copy: risultato inaspettato(%d)\n"
 
-#: copy.c:627
-#: copy.c:637
+#: copy.c:576
+msgid "trying to exit copy mode"
+msgstr "tentativo di uscita dalla modalità copy"
+
+#: copy.c:630
+#: copy.c:640
 #, c-format
 msgid "could not write COPY data: %s\n"
 msgstr "impossibile scrivere i dati della COPY: %s\n"
 
-#: copy.c:644
+#: copy.c:647
 #, c-format
 msgid "COPY data transfer failed: %s"
 msgstr "il trasferimento dei dati della COPY è fallito: %s"
 
-#: copy.c:692
+#: copy.c:695
 msgid "canceled by user"
-msgstr "Cancellata dall'utente"
+msgstr "annullata dall'utente"
 
-#: copy.c:707
+#: copy.c:710
 msgid ""
 "Enter data to be copied followed by a newline.\n"
 "End with a backslash and a period on a line by itself."
@@ -508,7 +512,7 @@ msgstr ""
 "Inserire i dati da essere copiati seguiti da una riga a capo.\n"
 "Terminare con un backslash ed un punto su una singola riga."
 
-#: copy.c:819
+#: copy.c:822
 msgid "aborted because of read failure"
 msgstr "abortito a causa lettura non riuscita"
 
@@ -4148,8 +4152,8 @@ msgid "LISTEN name"
 msgstr "LISTEN nome"
 
 #: sql_help.h:461
-msgid "load or reload a shared library file"
-msgstr "carica o ricarica un file di librerie condivise"
+msgid "load a shared library file"
+msgstr "caricamento di un file di libreria condivisa (shared)"
 
 #: sql_help.h:462
 msgid "LOAD 'filename'"

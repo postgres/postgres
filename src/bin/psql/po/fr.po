@@ -1,7 +1,7 @@
 # translation of psql.po to fr_fr
 # french message translation file for psql
 #
-# $PostgreSQL: pgsql/src/bin/psql/po/fr.po,v 1.26.2.1 2009/09/03 21:01:11 petere Exp $
+# $PostgreSQL: pgsql/src/bin/psql/po/fr.po,v 1.26.2.2 2009/12/08 22:22:17 petere Exp $
 #
 # Use these quotes: « %s »
 # Peter Eisentraut <peter_e@gmx.net>, 2001.
@@ -11,8 +11,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.4\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2009-08-30 21:09+0000\n"
-"PO-Revision-Date: 2009-09-01 13:44+0100\n"
+"POT-Creation-Date: 2009-11-23 11:47+0000\n"
+"PO-Revision-Date: 2009-11-24 22:53+0100\n"
 "Last-Translator: Guillaume Lelarge <guillaume@lelarge.info>\n"
 "Language-Team: French <guillaume@lelarge.info>\n"
 "MIME-Version: 1.0\n"
@@ -4300,8 +4300,8 @@ msgid "LISTEN name"
 msgstr "LISTEN nom"
 
 #: sql_help.h:461
-msgid "load or reload a shared library file"
-msgstr "charger ou recharger un fichier de bibliothèque partagée"
+msgid "load a shared library file"
+msgstr "charge un fichier de bibliothèque partagée"
 
 #: sql_help.h:462
 msgid "LOAD 'filename'"
