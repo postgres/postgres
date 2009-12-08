@@ -5,8 +5,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: psql-tr\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2009-08-15 21:27+0000\n"
-"PO-Revision-Date: 2009-08-17 01:32+0200\n"
+"POT-Creation-Date: 2009-12-04 01:26+0000\n"
+"PO-Revision-Date: 2009-12-07 02:27+0200\n"
 "Last-Translator: Devrim GÜNDÜZ <devrim@gunduz.org>\n"
 "Language-Team: Turkish <ceviri@postgresql.org.tr>\n"
 "MIME-Version: 1.0\n"
@@ -3710,8 +3710,8 @@ msgid "LISTEN name"
 msgstr "LISTEN ad"
 
 #: sql_help.h:425
-msgid "load or reload a shared library file"
-msgstr "shared library yükle"
+msgid "load a shared library file"
+msgstr "shared library dosyası yükle"
 
 #: sql_help.h:426
 msgid "LOAD 'filename'"

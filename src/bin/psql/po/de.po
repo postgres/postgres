@@ -1,7 +1,7 @@
 # German message translation file for psql
 # Peter Eisentraut <peter_e@gmx.net>, 2001 - 2009.
 #
-# pgtranslation Id: psql.po,v 1.21.2.3 2009/09/02 13:32:13 petere Exp $
+# pgtranslation Id: psql.po,v 1.21.2.5 2009/10/04 20:46:30 petere Exp $
 #
 # Use these quotes: »%s«
 #
@@ -9,8 +9,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2009-09-02 07:28+0000\n"
-"PO-Revision-Date: 2009-09-02 16:31+0300\n"
+"POT-Creation-Date: 2009-10-03 00:04+0000\n"
+"PO-Revision-Date: 2009-10-04 23:44+0300\n"
 "Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language-Team: German <peter_e@gmx.net>\n"
 "MIME-Version: 1.0\n"
@@ -3738,7 +3738,7 @@ msgid "LISTEN name"
 msgstr "LISTEN name"
 
 #: sql_help.h:425
-msgid "load or reload a shared library file"
+msgid "load a shared library file"
 msgstr "lädt eine dynamische Bibliotheksdatei"
 
 #: sql_help.h:426
@@ -4191,7 +4191,7 @@ msgstr ""
 "UPDATE [ ONLY ] tabelle [ [ AS ] alias ]\n"
 "    SET { spalte = { ausdruck | DEFAULT } |\n"
 "          ( spalte [, ...] ) = ( { ausdruck | DEFAULT } [, ...] ) } [, ...]\n"
-"    [ FROM from-list ]\n"
+"    [ FROM from-liste ]\n"
 "    [ WHERE bedingung | WHERE CURRENT OF cursorname ]\n"
 "    [ RETURNING * | ausgabeausdruck [ AS ausgabename ] [, ...] ]"
 
