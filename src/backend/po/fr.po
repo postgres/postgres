@@ -1,7 +1,7 @@
 # translation of postgres-fr.po to FR_fr
 # French message translation file for postgres
 #
-# $PostgreSQL: pgsql/src/backend/po/fr.po,v 1.13.2.7 2009/09/03 19:17:34 petere Exp $
+# $PostgreSQL: pgsql/src/backend/po/fr.po,v 1.13.2.8 2009/12/08 22:12:57 petere Exp $
 #
 # Use these quotes: « %s »
 # Guillaume Lelarge <guillaume@lelarge.info>, 2003-2008.
@@ -10,8 +10,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: postgres-82-fr\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2009-08-27 05:33+0000\n"
-"PO-Revision-Date: 2009-09-01 13:40+0100\n"
+"POT-Creation-Date: 2009-11-23 12:09+0000\n"
+"PO-Revision-Date: 2009-11-24 22:48+0100\n"
 "Last-Translator: Guillaume Lelarge <guillaume@lelarge.info>\n"
 "Language-Team:  <pgsql-fr-generale@postgresql.org>\n"
 "MIME-Version: 1.0\n"
@@ -124,172 +124,172 @@ msgstr "n'a pas pu tronquer le répertoire « %s » : contournement apparent"
 msgid "removing file \"%s\""
 msgstr "suppression du fichier « %s »"
 
-#: access/transam/twophase.c:225
+#: access/transam/twophase.c:240
 #, c-format
 msgid "transaction identifier \"%s\" is too long"
 msgstr "l'identifiant de la transaction « %s » est trop long"
 
-#: access/transam/twophase.c:259
+#: access/transam/twophase.c:274
 #, c-format
 msgid "transaction identifier \"%s\" is already in use"
 msgstr "l'identifiant de la transaction « %s » est déjà utilisé"
 
-#: access/transam/twophase.c:268
+#: access/transam/twophase.c:283
 msgid "maximum number of prepared transactions reached"
 msgstr "nombre maximum de transactions préparées obtenu"
 
-#: access/transam/twophase.c:269
+#: access/transam/twophase.c:284
 #, c-format
 msgid "Increase max_prepared_transactions (currently %d)."
 msgstr "Augmentez max_prepared_transactions (actuellement %d)."
 
-#: access/transam/twophase.c:385
+#: access/transam/twophase.c:400
 #, c-format
 msgid "prepared transaction with identifier \"%s\" is busy"
 msgstr "la transaction préparée d'identifiant « %s » est occupée"
 
-#: access/transam/twophase.c:393
+#: access/transam/twophase.c:408
 msgid "permission denied to finish prepared transaction"
 msgstr "droit refusé pour terminer la transaction préparée"
 
-#: access/transam/twophase.c:394
+#: access/transam/twophase.c:409
 msgid "Must be superuser or the user that prepared the transaction."
 msgstr "Doit être super-utilisateur ou l'utilisateur qui a préparé la transaction."
 
-#: access/transam/twophase.c:405
+#: access/transam/twophase.c:420
 msgid "prepared transaction belongs to another database"
 msgstr "la transaction préparée appartient à une autre base de données"
 
-#: access/transam/twophase.c:406
+#: access/transam/twophase.c:421
 msgid "Connect to the database where the transaction was prepared to finish it."
 msgstr ""
 "Connectez-vous à la base de données où la transaction a été préparée pour\n"
 "la terminer."
 
-#: access/transam/twophase.c:420
+#: access/transam/twophase.c:435
 #, c-format
 msgid "prepared transaction with identifier \"%s\" does not exist"
 msgstr "la transaction préparée d'identifiant « %s » n'existe pas"
 
-#: access/transam/twophase.c:873
+#: access/transam/twophase.c:904
 msgid "two-phase state file maximum length exceeded"
 msgstr ""
 "longueur maximum dépassé pour le fichier de statut de la validation en\n"
 "deux phases"
 
-#: access/transam/twophase.c:891
+#: access/transam/twophase.c:922
 #, c-format
 msgid "could not create two-phase state file \"%s\": %m"
 msgstr ""
 "n'a pas pu créer le fichier de statut de la validation en deux phases nommé\n"
 "« %s » : %m"
 
-#: access/transam/twophase.c:905
-#: access/transam/twophase.c:922
-#: access/transam/twophase.c:971
-#: access/transam/twophase.c:1315
-#: access/transam/twophase.c:1322
+#: access/transam/twophase.c:936
+#: access/transam/twophase.c:953
+#: access/transam/twophase.c:1002
+#: access/transam/twophase.c:1346
+#: access/transam/twophase.c:1353
 #, c-format
 msgid "could not write two-phase state file: %m"
 msgstr "n'a pas pu écrire dans le fichier d'état de la validation en deux phases : %m"
 
-#: access/transam/twophase.c:931
+#: access/transam/twophase.c:962
 #, c-format
 msgid "could not seek in two-phase state file: %m"
 msgstr ""
 "n'a pas pu se déplacer dans le fichier de statut de la validation en deux\n"
 "phases : %m"
 
-#: access/transam/twophase.c:977
-#: access/transam/twophase.c:1340
+#: access/transam/twophase.c:1008
+#: access/transam/twophase.c:1371
 #, c-format
 msgid "could not close two-phase state file: %m"
 msgstr "n'a pas pu fermer le fichier d'état de la validation en deux phases : %m"
 
-#: access/transam/twophase.c:1047
-#: access/transam/twophase.c:1417
+#: access/transam/twophase.c:1078
+#: access/transam/twophase.c:1448
 #, c-format
 msgid "could not open two-phase state file \"%s\": %m"
 msgstr ""
 "n'a pas pu ouvrir le fichier d'état de la validation en deux phases nommé\n"
 "« %s » : %m"
 
-#: access/transam/twophase.c:1063
+#: access/transam/twophase.c:1094
 #, c-format
 msgid "could not stat two-phase state file \"%s\": %m"
 msgstr ""
 "n'a pas pu récupérer des informations sur le fichier d'état de la validation\n"
 "en deux phases nommé « %s » : %m"
 
-#: access/transam/twophase.c:1094
+#: access/transam/twophase.c:1125
 #, c-format
 msgid "could not read two-phase state file \"%s\": %m"
 msgstr ""
 "n'a pas pu lire le fichier d'état de la validation en deux phases nommé\n"
 "« %s » : %m"
 
-#: access/transam/twophase.c:1155
+#: access/transam/twophase.c:1186
 #, c-format
 msgid "two-phase state file for transaction %u is corrupt"
 msgstr ""
 "le fichier d'état de la validation en deux phases est corrompu pour la\n"
 "transaction %u"
 
-#: access/transam/twophase.c:1277
+#: access/transam/twophase.c:1308
 #, c-format
 msgid "could not remove two-phase state file \"%s\": %m"
 msgstr ""
 "n'a pas pu supprimer le fichier d'état de la validation en deux phases\n"
 "« %s » : %m"
 
-#: access/transam/twophase.c:1306
+#: access/transam/twophase.c:1337
 #, c-format
 msgid "could not recreate two-phase state file \"%s\": %m"
 msgstr ""
 "n'a pas pu re-créer le fichier d'état de la validation en deux phases nommé\n"
 "« %s » : %m"
 
-#: access/transam/twophase.c:1334
+#: access/transam/twophase.c:1365
 #, c-format
 msgid "could not fsync two-phase state file: %m"
 msgstr ""
 "n'a pas pu synchroniser sur disque (fsync) le fichier d'état de la\n"
 "validation en deux phases : %m"
 
-#: access/transam/twophase.c:1426
+#: access/transam/twophase.c:1457
 #, c-format
 msgid "could not fsync two-phase state file \"%s\": %m"
 msgstr ""
 "n'a pas pu synchroniser sur disque (fsync) le fichier d'état de la\n"
 "validation en deux phases nommé « %s » : %m"
 
-#: access/transam/twophase.c:1433
+#: access/transam/twophase.c:1464
 #, c-format
 msgid "could not close two-phase state file \"%s\": %m"
 msgstr ""
 "n'a pas pu fermer le fichier d'état de la validation en deux phases nommé\n"
 "« %s » : %m"
 
-#: access/transam/twophase.c:1489
+#: access/transam/twophase.c:1520
 #, c-format
 msgid "removing future two-phase state file \"%s\""
 msgstr "suppression du futur fichier d'état de la validation en deux phases nommé « %s »"
 
-#: access/transam/twophase.c:1505
-#: access/transam/twophase.c:1516
-#: access/transam/twophase.c:1604
+#: access/transam/twophase.c:1536
+#: access/transam/twophase.c:1547
+#: access/transam/twophase.c:1635
 #, c-format
 msgid "removing corrupt two-phase state file \"%s\""
 msgstr ""
 "suppression du fichier d'état corrompu de la validation en deux phases nommé\n"
 "« %s »"
 
-#: access/transam/twophase.c:1593
+#: access/transam/twophase.c:1624
 #, c-format
 msgid "removing stale two-phase state file \"%s\""
 msgstr "suppression du vieux fichier d'état de la validation en deux phases nommé « %s »"
 
-#: access/transam/twophase.c:1611
+#: access/transam/twophase.c:1642
 #, c-format
 msgid "recovering prepared transaction %u"
 msgstr "récupération de la transaction préparée %u"
@@ -343,48 +343,48 @@ msgstr ""
 "tables temporaires"
 
 #. translator: %s represents an SQL statement name
-#: access/transam/xact.c:2537
+#: access/transam/xact.c:2538
 #, c-format
 msgid "%s cannot run inside a transaction block"
 msgstr "%s ne peut pas être exécuté dans un bloc de transaction"
 
 #. translator: %s represents an SQL statement name
-#: access/transam/xact.c:2547
+#: access/transam/xact.c:2548
 #, c-format
 msgid "%s cannot run inside a subtransaction"
 msgstr "%s ne peut pas être exécuté dans un sous-bloc de transaction"
 
 #. translator: %s represents an SQL statement name
-#: access/transam/xact.c:2559
+#: access/transam/xact.c:2560
 #, c-format
 msgid "%s cannot be executed from a function"
 msgstr "%s ne peut pas être exécuté à partir d'une fonction"
 
 #. translator: %s represents an SQL statement name
-#: access/transam/xact.c:2610
+#: access/transam/xact.c:2611
 #, c-format
 msgid "%s may only be used in transaction blocks"
 msgstr "%s pourrait seulement être utilisé dans des blocs de transaction"
 
-#: access/transam/xact.c:2792
+#: access/transam/xact.c:2793
 msgid "there is already a transaction in progress"
 msgstr "une transaction est déjà en cours"
 
-#: access/transam/xact.c:2959
-#: access/transam/xact.c:3051
+#: access/transam/xact.c:2960
+#: access/transam/xact.c:3052
 msgid "there is no transaction in progress"
 msgstr "aucune transaction en cours"
 
-#: access/transam/xact.c:3145
-#: access/transam/xact.c:3195
-#: access/transam/xact.c:3201
-#: access/transam/xact.c:3245
-#: access/transam/xact.c:3293
-#: access/transam/xact.c:3299
+#: access/transam/xact.c:3146
+#: access/transam/xact.c:3196
+#: access/transam/xact.c:3202
+#: access/transam/xact.c:3246
+#: access/transam/xact.c:3294
+#: access/transam/xact.c:3300
 msgid "no such savepoint"
 msgstr "aucun point de sauvegarde"
 
-#: access/transam/xact.c:3929
+#: access/transam/xact.c:3930
 msgid "cannot have more than 2^32-1 subtransactions in a transaction"
 msgstr "ne peut pas avoir plus de 2^32-1 sous-transactions dans une transaction"
 
@@ -399,7 +399,7 @@ msgid "could not write archive status file \"%s\": %m"
 msgstr "n'a pas pu écrire le fichier de statut d'archivage « %s » : %m"
 
 #: access/transam/xlog.c:1633
-#: access/transam/xlog.c:2968
+#: access/transam/xlog.c:3005
 #, c-format
 msgid "could not seek in log file %u, segment %u to offset %u: %m"
 msgstr ""
@@ -414,19 +414,19 @@ msgstr ""
 "longueur %lu : %m"
 
 #: access/transam/xlog.c:1919
-#: access/transam/xlog.c:2012
-#: access/transam/xlog.c:2245
-#: access/transam/xlog.c:2299
-#: access/transam/xlog.c:2308
+#: access/transam/xlog.c:2016
+#: access/transam/xlog.c:2243
+#: access/transam/xlog.c:2297
+#: access/transam/xlog.c:2306
 #, c-format
 msgid "could not open file \"%s\" (log file %u, segment %u): %m"
 msgstr "n'a pas pu ouvrir le fichier « %s » (journal de transactions %u, segment %u) : %m"
 
 #: access/transam/xlog.c:1942
-#: access/transam/xlog.c:2064
-#: access/transam/xlog.c:3551
-#: access/transam/xlog.c:6267
-#: access/transam/xlog.c:6399
+#: access/transam/xlog.c:2068
+#: access/transam/xlog.c:3588
+#: access/transam/xlog.c:6304
+#: access/transam/xlog.c:6436
 #: postmaster/postmaster.c:3020
 #: ../port/copydir.c:126
 #, c-format
@@ -434,13 +434,13 @@ msgid "could not create file \"%s\": %m"
 msgstr "n'a pas pu créer le fichier « %s » : %m"
 
 #: access/transam/xlog.c:1970
-#: access/transam/xlog.c:2096
-#: access/transam/xlog.c:3603
-#: access/transam/xlog.c:3641
+#: access/transam/xlog.c:2100
+#: access/transam/xlog.c:3640
+#: access/transam/xlog.c:3678
 #: utils/init/miscinit.c:1037
 #: utils/init/miscinit.c:1046
-#: utils/misc/guc.c:5611
-#: utils/misc/guc.c:5674
+#: utils/misc/guc.c:5637
+#: utils/misc/guc.c:5700
 #: commands/copy.c:1273
 #: commands/tablespace.c:663
 #: commands/tablespace.c:669
@@ -452,25 +452,25 @@ msgid "could not write to file \"%s\": %m"
 msgstr "n'a pas pu écrire dans le fichier « %s » : %m"
 
 #: access/transam/xlog.c:1977
-#: access/transam/xlog.c:2103
-#: access/transam/xlog.c:3647
+#: access/transam/xlog.c:2107
+#: access/transam/xlog.c:3684
 #: ../port/copydir.c:158
 #, c-format
 msgid "could not fsync file \"%s\": %m"
 msgstr "n'a pas pu synchroniser sur disque (fsync) le fichier « %s » : %m"
 
 #: access/transam/xlog.c:1982
-#: access/transam/xlog.c:2108
-#: access/transam/xlog.c:3652
+#: access/transam/xlog.c:2112
+#: access/transam/xlog.c:3689
 #: ../port/copydir.c:163
 #, c-format
 msgid "could not close file \"%s\": %m"
 msgstr "n'a pas pu fermer le fichier « %s » : %m"
 
-#: access/transam/xlog.c:2049
-#: access/transam/xlog.c:3382
-#: access/transam/xlog.c:3472
-#: access/transam/xlog.c:3570
+#: access/transam/xlog.c:2053
+#: access/transam/xlog.c:3419
+#: access/transam/xlog.c:3509
+#: access/transam/xlog.c:3607
 #: utils/init/miscinit.c:988
 #: utils/init/miscinit.c:1094
 #: utils/init/postinit.c:88
@@ -482,46 +482,46 @@ msgstr "n'a pas pu fermer le fichier « %s » : %m"
 msgid "could not open file \"%s\": %m"
 msgstr "n'a pas pu ouvrir le fichier « %s » : %m"
 
-#: access/transam/xlog.c:2077
-#: access/transam/xlog.c:3582
-#: access/transam/xlog.c:6371
-#: access/transam/xlog.c:6421
-#: access/transam/xlog.c:6696
-#: access/transam/xlog.c:6721
-#: access/transam/xlog.c:6759
+#: access/transam/xlog.c:2081
+#: access/transam/xlog.c:3619
+#: access/transam/xlog.c:6408
+#: access/transam/xlog.c:6458
+#: access/transam/xlog.c:6733
+#: access/transam/xlog.c:6758
+#: access/transam/xlog.c:6796
 #: utils/adt/genfile.c:136
 #: ../port/copydir.c:137
 #, c-format
 msgid "could not read file \"%s\": %m"
 msgstr "n'a pas pu lire le fichier « %s » : %m"
 
-#: access/transam/xlog.c:2080
+#: access/transam/xlog.c:2084
 #, c-format
 msgid "not enough data in file \"%s\""
 msgstr "données insuffisantes dans le fichier « %s »"
 
-#: access/transam/xlog.c:2197
+#: access/transam/xlog.c:2203
 #, c-format
 msgid "could not link file \"%s\" to \"%s\" (initialization of log file %u, segment %u): %m"
 msgstr ""
 "n'a pas pu lier le fichier « %s » à « %s » (initialisation du journal de\n"
 "transactions %u, segment %u) : %m"
 
-#: access/transam/xlog.c:2218
+#: access/transam/xlog.c:2215
 #, c-format
 msgid "could not rename file \"%s\" to \"%s\" (initialization of log file %u, segment %u): %m"
 msgstr ""
 "n'a pas pu renommer le fichier « %s » en « %s » (initialisation du journal\n"
 "de transactions %u, segment %u) : %m"
 
-#: access/transam/xlog.c:2349
+#: access/transam/xlog.c:2347
 #, c-format
 msgid "could not close log file %u, segment %u: %m"
 msgstr "n'a pas pu fermer le journal de transactions %u, segment %u : %m"
 
-#: access/transam/xlog.c:2414
-#: access/transam/xlog.c:2516
-#: access/transam/xlog.c:6250
+#: access/transam/xlog.c:2412
+#: access/transam/xlog.c:2514
+#: access/transam/xlog.c:6287
 #: utils/adt/dbsize.c:61
 #: utils/adt/dbsize.c:187
 #: utils/adt/dbsize.c:256
@@ -531,226 +531,236 @@ msgstr "n'a pas pu fermer le journal de transactions %u, segment %u : %m"
 msgid "could not stat file \"%s\": %m"
 msgstr "n'a pas pu tester le fichier « %s » : %m"
 
-#: access/transam/xlog.c:2422
-#: access/transam/xlog.c:6426
+#: access/transam/xlog.c:2420
+#: access/transam/xlog.c:6463
 #: commands/tablespace.c:588
 #, c-format
 msgid "could not remove file \"%s\": %m"
 msgstr "n'a pas pu supprimer le fichier « %s » : %m"
 
-#: access/transam/xlog.c:2497
+#: access/transam/xlog.c:2495
 #, c-format
 msgid "archive file \"%s\" has wrong size: %lu instead of %lu"
 msgstr "le fichier d'archive « %s » a la mauvaise taille : %lu au lieu de %lu"
 
-#: access/transam/xlog.c:2504
+#: access/transam/xlog.c:2502
 #, c-format
 msgid "restored log file \"%s\" from archive"
 msgstr "restauration du journal de transactions « %s » à partir de l'archive"
 
-#: access/transam/xlog.c:2544
+#: access/transam/xlog.c:2542
 #, c-format
 msgid "could not restore file \"%s\" from archive: return code %d"
 msgstr "n'a pas pu restaurer le fichier « %s » à partir de l'archive : code de retour %d"
 
-#: access/transam/xlog.c:2617
-#: access/transam/xlog.c:2696
+#: access/transam/xlog.c:2618
+#: access/transam/xlog.c:2733
 #, c-format
 msgid "could not open transaction log directory \"%s\": %m"
 msgstr "n'a pas pu ouvrir le répertoire des journaux de transactions « %s » : %m"
 
-#: access/transam/xlog.c:2652
+#: access/transam/xlog.c:2653
 #, c-format
 msgid "recycled transaction log file \"%s\""
 msgstr "recyclage du journal de transactions « %s »"
 
-#: access/transam/xlog.c:2666
+#: access/transam/xlog.c:2669
 #, c-format
 msgid "removing transaction log file \"%s\""
 msgstr "suppression du journal de transactions « %s »"
 
-#: access/transam/xlog.c:2709
+#: access/transam/xlog.c:2690
+#, c-format
+msgid "could not rename old transaction log file \"%s\""
+msgstr "n'a pas pu renommer le vieux journal de transaction « %s »"
+
+#: access/transam/xlog.c:2702
+#, c-format
+msgid "could not remove old transaction log file \"%s\": %m"
+msgstr "n'a pas pu supprimer le vieux journal de transaction « %s » : %m"
+
+#: access/transam/xlog.c:2746
 #, c-format
 msgid "removing transaction log backup history file \"%s\""
 msgstr "suppression du fichier historique des journaux de transaction « %s »"
 
-#: access/transam/xlog.c:2815
+#: access/transam/xlog.c:2852
 #, c-format
 msgid "incorrect hole size in record at %X/%X"
 msgstr "taille du trou incorrect à l'enregistrement %X/%X"
 
-#: access/transam/xlog.c:2828
+#: access/transam/xlog.c:2865
 #, c-format
 msgid "incorrect total length in record at %X/%X"
 msgstr "longueur totale incorrecte à l'enregistrement %X/%X"
 
-#: access/transam/xlog.c:2841
+#: access/transam/xlog.c:2878
 #, c-format
 msgid "incorrect resource manager data checksum in record at %X/%X"
 msgstr ""
 "somme de contrôle des données du gestionnaire de ressources incorrecte à\n"
 "l'enregistrement %X/%X"
 
-#: access/transam/xlog.c:2910
-#: access/transam/xlog.c:2998
+#: access/transam/xlog.c:2947
+#: access/transam/xlog.c:3035
 #, c-format
 msgid "invalid record offset at %X/%X"
 msgstr "décalage invalide de l'enregistrement %X/%X"
 
-#: access/transam/xlog.c:2952
-#: access/transam/xlog.c:3141
+#: access/transam/xlog.c:2989
+#: access/transam/xlog.c:3178
 #, c-format
 msgid "could not read from log file %u, segment %u, offset %u: %m"
 msgstr "n'a pas pu lire le journal de transactions %u, segment %u, décalage %u : %m"
 
-#: access/transam/xlog.c:2976
+#: access/transam/xlog.c:3013
 #, c-format
 msgid "could not read from log file %u, segment %u at offset %u: %m"
 msgstr "n'a pas pu lire le journal de traces %u, segment %u au décalage %u : %m"
 
-#: access/transam/xlog.c:3006
+#: access/transam/xlog.c:3043
 #, c-format
 msgid "contrecord is requested by %X/%X"
 msgstr "« contrecord » est requis par %X/%X"
 
-#: access/transam/xlog.c:3023
+#: access/transam/xlog.c:3060
 #, c-format
 msgid "invalid xlog switch record at %X/%X"
 msgstr "enregistrement de basculement du journal de transaction invalide à %X/%X"
 
-#: access/transam/xlog.c:3031
+#: access/transam/xlog.c:3068
 #, c-format
 msgid "record with zero length at %X/%X"
 msgstr "enregistrement de longueur nulle à %X/%X"
 
-#: access/transam/xlog.c:3040
+#: access/transam/xlog.c:3077
 #, c-format
 msgid "invalid record length at %X/%X"
 msgstr "longueur invalide de l'enregistrement à %X/%X"
 
-#: access/transam/xlog.c:3047
+#: access/transam/xlog.c:3084
 #, c-format
 msgid "invalid resource manager ID %u at %X/%X"
 msgstr "identifiant du gestionnaire de ressources invalide %u à %X/%X"
 
-#: access/transam/xlog.c:3060
-#: access/transam/xlog.c:3076
+#: access/transam/xlog.c:3097
+#: access/transam/xlog.c:3113
 #, c-format
 msgid "record with incorrect prev-link %X/%X at %X/%X"
 msgstr "enregistrement avec prev-link %X/%X incorrect à %X/%X"
 
-#: access/transam/xlog.c:3105
+#: access/transam/xlog.c:3142
 #, c-format
 msgid "record length %u at %X/%X too long"
 msgstr "longueur trop importante de l'enregistrement %u à %X/%X"
 
-#: access/transam/xlog.c:3150
+#: access/transam/xlog.c:3187
 #, c-format
 msgid "there is no contrecord flag in log file %u, segment %u, offset %u"
 msgstr ""
 "il n'y a pas de drapeaux « contrecord » dans le journal de transactions %u,\n"
 "segment %u, décalage %u"
 
-#: access/transam/xlog.c:3160
+#: access/transam/xlog.c:3197
 #, c-format
 msgid "invalid contrecord length %u in log file %u, segment %u, offset %u"
 msgstr ""
 "longueur invalide du « contrecord » %u dans le journal de tranasctions %u,\n"
 "segment %u, décalage %u"
 
-#: access/transam/xlog.c:3249
+#: access/transam/xlog.c:3286
 #, c-format
 msgid "invalid magic number %04X in log file %u, segment %u, offset %u"
 msgstr ""
 "numéro magique invalide %04X dans le journal de transactions %u, segment %u,\n"
 "décalage %u"
 
-#: access/transam/xlog.c:3256
-#: access/transam/xlog.c:3302
+#: access/transam/xlog.c:3293
+#: access/transam/xlog.c:3339
 #, c-format
 msgid "invalid info bits %04X in log file %u, segment %u, offset %u"
 msgstr ""
 "bits info %04X invalides dans le journal de transactions %u, segment %u,\n"
 "décalage %u"
 
-#: access/transam/xlog.c:3278
-#: access/transam/xlog.c:3286
-#: access/transam/xlog.c:3293
+#: access/transam/xlog.c:3315
+#: access/transam/xlog.c:3323
+#: access/transam/xlog.c:3330
 msgid "WAL file is from different system"
 msgstr "le journal de transactions provient d'un système différent"
 
-#: access/transam/xlog.c:3279
+#: access/transam/xlog.c:3316
 #, c-format
 msgid "WAL file SYSID is %s, pg_control SYSID is %s"
 msgstr "le SYSID du journal de transactions WAL est %s, celui de pg_control est %s"
 
-#: access/transam/xlog.c:3287
+#: access/transam/xlog.c:3324
 msgid "Incorrect XLOG_SEG_SIZE in page header."
 msgstr "XLOG_SEG_SIZE incorrecte dans l'en-tête de page."
 
-#: access/transam/xlog.c:3294
+#: access/transam/xlog.c:3331
 msgid "Incorrect XLOG_BLCKSZ in page header."
 msgstr "XLOG_BLCKSZ incorrect dans l'en-tête de page."
 
-#: access/transam/xlog.c:3312
+#: access/transam/xlog.c:3349
 #, c-format
 msgid "unexpected pageaddr %X/%X in log file %u, segment %u, offset %u"
 msgstr ""
 "pageaddr %X/%X inattendue dans le journal de transactions %u, segment %u,\n"
 "décalage %u"
 
-#: access/transam/xlog.c:3324
+#: access/transam/xlog.c:3361
 #, c-format
 msgid "unexpected timeline ID %u in log file %u, segment %u, offset %u"
 msgstr ""
 "identifiant timeline %u inattendu dans le journal de transactions %u,\n"
 "segment %u, décalage %u"
 
-#: access/transam/xlog.c:3342
+#: access/transam/xlog.c:3379
 #, c-format
 msgid "out-of-sequence timeline ID %u (after %u) in log file %u, segment %u, offset %u"
 msgstr ""
 "identifiant timeline %u hors de la séquence (après %u) dans le journal de\n"
 "transactions %u, segment %u, décalage %u"
 
-#: access/transam/xlog.c:3411
+#: access/transam/xlog.c:3448
 #, c-format
 msgid "syntax error in history file: %s"
 msgstr "erreur de syntaxe dans le fichier historique : %s"
 
-#: access/transam/xlog.c:3412
+#: access/transam/xlog.c:3449
 msgid "Expected a numeric timeline ID."
 msgstr "Identifiant timeline numérique attendue"
 
-#: access/transam/xlog.c:3417
+#: access/transam/xlog.c:3454
 #, c-format
 msgid "invalid data in history file: %s"
 msgstr "données invalides dans le fichier historique : « %s »"
 
-#: access/transam/xlog.c:3418
+#: access/transam/xlog.c:3455
 msgid "Timeline IDs must be in increasing sequence."
 msgstr "Les identifiants timeline doivent être en ordre croissant."
 
-#: access/transam/xlog.c:3431
+#: access/transam/xlog.c:3468
 #, c-format
 msgid "invalid data in history file \"%s\""
 msgstr "données invalides dans le fichier historique « %s »"
 
-#: access/transam/xlog.c:3432
+#: access/transam/xlog.c:3469
 msgid "Timeline IDs must be less than child timeline's ID."
 msgstr ""
 "Les identifiants timeline doivent être plus petits que les enfants des\n"
 "identifiants timeline."
 
-#: access/transam/xlog.c:3669
+#: access/transam/xlog.c:3706
 #, c-format
 msgid "could not link file \"%s\" to \"%s\": %m"
 msgstr "n'a pas pu lier le fichier « %s » à « %s » : %m"
 
-#: access/transam/xlog.c:3676
-#: access/transam/xlog.c:4490
-#: access/transam/xlog.c:4531
-#: access/transam/xlog.c:4898
+#: access/transam/xlog.c:3713
+#: access/transam/xlog.c:4527
+#: access/transam/xlog.c:4568
+#: access/transam/xlog.c:4935
 #: utils/init/flatfiles.c:285
 #: utils/init/flatfiles.c:672
 #: postmaster/pgarch.c:588
@@ -758,646 +768,646 @@ msgstr "n'a pas pu lier le fichier « %s » à « %s » : %m"
 msgid "could not rename file \"%s\" to \"%s\": %m"
 msgstr "n'a pas pu renommer le fichier « %s » en « %s » : %m"
 
-#: access/transam/xlog.c:3733
+#: access/transam/xlog.c:3770
 msgid "invalid LC_COLLATE setting"
 msgstr "paramètre LC_COLLATE invalide"
 
-#: access/transam/xlog.c:3738
+#: access/transam/xlog.c:3775
 msgid "invalid LC_CTYPE setting"
 msgstr "paramètre LC_CTYPE invalide"
 
-#: access/transam/xlog.c:3767
+#: access/transam/xlog.c:3804
 #, c-format
 msgid "could not create control file \"%s\": %m"
 msgstr "n'a pas pu créer le fichier de contrôle « %s » : %m"
 
-#: access/transam/xlog.c:3778
-#: access/transam/xlog.c:3987
+#: access/transam/xlog.c:3815
+#: access/transam/xlog.c:4024
 #, c-format
 msgid "could not write to control file: %m"
 msgstr "n'a pas pu écrire le fichier de contrôle : %m"
 
-#: access/transam/xlog.c:3784
-#: access/transam/xlog.c:3993
+#: access/transam/xlog.c:3821
+#: access/transam/xlog.c:4030
 #, c-format
 msgid "could not fsync control file: %m"
 msgstr "n'a pas pu synchroniser sur disque (fsync) le fichier de contrôle : %m"
 
-#: access/transam/xlog.c:3789
-#: access/transam/xlog.c:3998
+#: access/transam/xlog.c:3826
+#: access/transam/xlog.c:4035
 #, c-format
 msgid "could not close control file: %m"
 msgstr "n'a pas pu fermer le fichier de contrôle : %m"
 
-#: access/transam/xlog.c:3807
-#: access/transam/xlog.c:3976
+#: access/transam/xlog.c:3844
+#: access/transam/xlog.c:4013
 #, c-format
 msgid "could not open control file \"%s\": %m"
 msgstr "n'a pas pu ouvrir le fichier de contrôle « %s » : %m"
 
-#: access/transam/xlog.c:3813
+#: access/transam/xlog.c:3850
 #, c-format
 msgid "could not read from control file: %m"
 msgstr "n'a pas pu lire le fichier de contrôle : %m"
 
-#: access/transam/xlog.c:3825
-#: access/transam/xlog.c:3854
-#: access/transam/xlog.c:3861
-#: access/transam/xlog.c:3868
-#: access/transam/xlog.c:3873
-#: access/transam/xlog.c:3880
-#: access/transam/xlog.c:3887
-#: access/transam/xlog.c:3894
-#: access/transam/xlog.c:3901
-#: access/transam/xlog.c:3908
+#: access/transam/xlog.c:3862
+#: access/transam/xlog.c:3891
+#: access/transam/xlog.c:3898
+#: access/transam/xlog.c:3905
+#: access/transam/xlog.c:3910
 #: access/transam/xlog.c:3917
 #: access/transam/xlog.c:3924
-#: access/transam/xlog.c:3932
+#: access/transam/xlog.c:3931
+#: access/transam/xlog.c:3938
+#: access/transam/xlog.c:3945
+#: access/transam/xlog.c:3954
+#: access/transam/xlog.c:3961
+#: access/transam/xlog.c:3969
 #: utils/init/miscinit.c:1112
 msgid "database files are incompatible with server"
 msgstr "les fichiers de la base de données sont incompatibles avec le serveur"
 
-#: access/transam/xlog.c:3826
+#: access/transam/xlog.c:3863
 #, c-format
 msgid "The database cluster was initialized with PG_CONTROL_VERSION %d, but the server was compiled with PG_CONTROL_VERSION %d."
 msgstr ""
 "Le cluster de base de données a été initialisé avec un PG_CONTROL_VERSION à\n"
 "%d alors que le serveur a été compilé avec un PG_CONTROL_VERSION à %d."
 
-#: access/transam/xlog.c:3829
-#: access/transam/xlog.c:3858
-#: access/transam/xlog.c:3865
-#: access/transam/xlog.c:3870
+#: access/transam/xlog.c:3866
+#: access/transam/xlog.c:3895
+#: access/transam/xlog.c:3902
+#: access/transam/xlog.c:3907
 msgid "It looks like you need to initdb."
 msgstr "Il semble que vous avez besoin d'initdb."
 
-#: access/transam/xlog.c:3839
+#: access/transam/xlog.c:3876
 msgid "incorrect checksum in control file"
 msgstr "somme de contrôle incorrecte dans le fichier de contrôle"
 
-#: access/transam/xlog.c:3855
+#: access/transam/xlog.c:3892
 #, c-format
 msgid "The database cluster was initialized with CATALOG_VERSION_NO %d, but the server was compiled with CATALOG_VERSION_NO %d."
 msgstr ""
 "Le cluster de base de données a été initialisé avec un CATALOG_VERSION_NO à\n"
 "%d alors que le serveur a été compilé avec un CATALOG_VERSION_NO à %d."
 
-#: access/transam/xlog.c:3862
+#: access/transam/xlog.c:3899
 #, c-format
 msgid "The database cluster was initialized with MAXALIGN %d, but the server was compiled with MAXALIGN %d."
 msgstr ""
 "Le cluster de bases de données a été initialisé avec un MAXALIGN à %d alors\n"
 "que le serveur a été compilé avec un MAXALIGN à %d."
 
-#: access/transam/xlog.c:3869
+#: access/transam/xlog.c:3906
 msgid "The database cluster appears to use a different floating-point number format than the server executable."
 msgstr ""
 "Le cluster de bases de données semble utiliser un format différent pour les\n"
 "nombres à virgule flottante de celui de l'exécutable serveur."
 
-#: access/transam/xlog.c:3874
+#: access/transam/xlog.c:3911
 #, c-format
 msgid "The database cluster was initialized with BLCKSZ %d, but the server was compiled with BLCKSZ %d."
 msgstr ""
 "Le cluster de base de données a été initialisé avec un BLCKSZ à %d alors que\n"
 "le serveur a été compilé avec un BLCKSZ à %d."
 
-#: access/transam/xlog.c:3877
-#: access/transam/xlog.c:3884
-#: access/transam/xlog.c:3891
-#: access/transam/xlog.c:3898
-#: access/transam/xlog.c:3905
-#: access/transam/xlog.c:3912
-#: access/transam/xlog.c:3920
-#: access/transam/xlog.c:3927
-#: access/transam/xlog.c:3936
+#: access/transam/xlog.c:3914
+#: access/transam/xlog.c:3921
+#: access/transam/xlog.c:3928
+#: access/transam/xlog.c:3935
+#: access/transam/xlog.c:3942
+#: access/transam/xlog.c:3949
+#: access/transam/xlog.c:3957
+#: access/transam/xlog.c:3964
+#: access/transam/xlog.c:3973
 msgid "It looks like you need to recompile or initdb."
 msgstr "Il semble que vous avez besoin de recompiler ou de relancer initdb."
 
-#: access/transam/xlog.c:3881
+#: access/transam/xlog.c:3918
 #, c-format
 msgid "The database cluster was initialized with RELSEG_SIZE %d, but the server was compiled with RELSEG_SIZE %d."
 msgstr ""
 "Le cluster de bases de données a été initialisé avec un RELSEG_SIZE à %d\n"
 "alors que le serveur a été compilé avec un RELSEG_SIZE à %d."
 
-#: access/transam/xlog.c:3888
+#: access/transam/xlog.c:3925
 #, c-format
 msgid "The database cluster was initialized with XLOG_BLCKSZ %d, but the server was compiled with XLOG_BLCKSZ %d."
 msgstr ""
 "Le cluster de base de données a été initialisé avec un XLOG_BLCKSZ à %d\n"
 "alors que le serveur a été compilé avec un XLOG_BLCKSZ à %d."
 
-#: access/transam/xlog.c:3895
+#: access/transam/xlog.c:3932
 #, c-format
 msgid "The database cluster was initialized with XLOG_SEG_SIZE %d, but the server was compiled with XLOG_SEG_SIZE %d."
 msgstr ""
 "Le cluster de bases de données a été initialisé avec un XLOG_SEG_SIZE à %d\n"
 "alors que le serveur a été compilé avec un XLOG_SEG_SIZE à %d."
 
-#: access/transam/xlog.c:3902
+#: access/transam/xlog.c:3939
 #, c-format
 msgid "The database cluster was initialized with NAMEDATALEN %d, but the server was compiled with NAMEDATALEN %d."
 msgstr ""
 "Le cluster de bases de données a été initialisé avec un NAMEDATALEN à %d\n"
 "alors que le serveur a été compilé avec un NAMEDATALEN à %d."
 
-#: access/transam/xlog.c:3909
+#: access/transam/xlog.c:3946
 #, c-format
 msgid "The database cluster was initialized with INDEX_MAX_KEYS %d, but the server was compiled with INDEX_MAX_KEYS %d."
 msgstr ""
 "Le groupe de bases de données a été initialisé avec un INDEX_MAX_KEYS à %d\n"
 "alors que le serveur a été compilé avec un INDEX_MAX_KEYS à %d."
 
-#: access/transam/xlog.c:3918
+#: access/transam/xlog.c:3955
 msgid "The database cluster was initialized without HAVE_INT64_TIMESTAMP but the server was compiled with HAVE_INT64_TIMESTAMP."
 msgstr "Le cluster de bases de données a été initialisé sans HAVE_INT64_TIMESTAMPalors que le serveur a été compilé avec."
 
-#: access/transam/xlog.c:3925
+#: access/transam/xlog.c:3962
 msgid "The database cluster was initialized with HAVE_INT64_TIMESTAMP but the server was compiled without HAVE_INT64_TIMESTAMP."
 msgstr ""
 "Le cluster de bases de données a été initialisé avec HAVE_INT64_TIMESTAMP\n"
 "alors que le serveur a été compilé sans."
 
-#: access/transam/xlog.c:3933
+#: access/transam/xlog.c:3970
 #, c-format
 msgid "The database cluster was initialized with LOCALE_NAME_BUFLEN %d, but the server was compiled with LOCALE_NAME_BUFLEN %d."
 msgstr ""
 "Le cluster de bases de données a été initialisé avec un LOCALE_NAME_BUFLEN\n"
 "à %d alors que le serveur a été compilé avec un LOCALE_NAME_BUFLEN à %d."
 
-#: access/transam/xlog.c:3939
-#: access/transam/xlog.c:3946
+#: access/transam/xlog.c:3976
+#: access/transam/xlog.c:3983
 msgid "database files are incompatible with operating system"
 msgstr ""
 "les fichiers de la base de données sont incompatibles avec le système\n"
 "d'exploitation"
 
-#: access/transam/xlog.c:3940
+#: access/transam/xlog.c:3977
 #, c-format
 msgid "The database cluster was initialized with LC_COLLATE \"%s\", which is not recognized by setlocale()."
 msgstr ""
 "Le cluster de bases de données a été initialisé avec un LC_COLLATE à « %s »,\n"
 "ce qui n'est pas reconnu par setlocale()."
 
-#: access/transam/xlog.c:3943
-#: access/transam/xlog.c:3950
+#: access/transam/xlog.c:3980
+#: access/transam/xlog.c:3987
 msgid "It looks like you need to initdb or install locale support."
 msgstr ""
 "Il semble que vous avez besoin d'exécuter initdb ou d'installer le support\n"
 "des locales."
 
-#: access/transam/xlog.c:3947
+#: access/transam/xlog.c:3984
 #, c-format
 msgid "The database cluster was initialized with LC_CTYPE \"%s\", which is not recognized by setlocale()."
 msgstr ""
 "Le cluster de bases de données a été initialisé avec un LC_CTYPE à « %s »,\n"
 "qui n'est pas reconnu par setlocale()."
 
-#: access/transam/xlog.c:4184
+#: access/transam/xlog.c:4221
 #, c-format
 msgid "could not write bootstrap transaction log file: %m"
 msgstr "n'a pas pu écrire le « bootstrap » du journal des transactions : %m"
 
-#: access/transam/xlog.c:4190
+#: access/transam/xlog.c:4227
 #, c-format
 msgid "could not fsync bootstrap transaction log file: %m"
 msgstr ""
 "n'a pas pu synchroniser sur disque (fsync) le « bootstrap » du journal des\n"
 "transactions : %m"
 
-#: access/transam/xlog.c:4195
+#: access/transam/xlog.c:4232
 #, c-format
 msgid "could not close bootstrap transaction log file: %m"
 msgstr "n'a pas pu fermer le « bootstrap » du journal des transactions : %m"
 
-#: access/transam/xlog.c:4263
+#: access/transam/xlog.c:4300
 #, c-format
 msgid "could not open recovery command file \"%s\": %m"
 msgstr "n'a pas pu ouvrir le fichier de restauration « %s » : %m"
 
-#: access/transam/xlog.c:4268
+#: access/transam/xlog.c:4305
 msgid "starting archive recovery"
 msgstr "début de la restauration de l'archive"
 
-#: access/transam/xlog.c:4313
+#: access/transam/xlog.c:4350
 #, c-format
 msgid "restore_command = \"%s\""
 msgstr "restore_command = « %s »"
 
-#: access/transam/xlog.c:4327
+#: access/transam/xlog.c:4364
 #, c-format
 msgid "recovery_target_timeline is not a valid number: \"%s\""
 msgstr "recovery_target_timeline n'est pas un nombre valide : « %s »"
 
-#: access/transam/xlog.c:4332
+#: access/transam/xlog.c:4369
 #, c-format
 msgid "recovery_target_timeline = %u"
 msgstr "recovery_target_timeline = %u"
 
-#: access/transam/xlog.c:4335
+#: access/transam/xlog.c:4372
 msgid "recovery_target_timeline = latest"
 msgstr "recovery_target_timeline = latest"
 
-#: access/transam/xlog.c:4343
+#: access/transam/xlog.c:4380
 #, c-format
 msgid "recovery_target_xid is not a valid number: \"%s\""
 msgstr "recovery_target_xid n'est pas un nombre valide : « %s »"
 
-#: access/transam/xlog.c:4346
+#: access/transam/xlog.c:4383
 #, c-format
 msgid "recovery_target_xid = %u"
 msgstr "recovery_target_xid = %u"
 
-#: access/transam/xlog.c:4371
+#: access/transam/xlog.c:4408
 #, c-format
 msgid "recovery_target_time = %s"
 msgstr "recovery_target_time = %s"
 
-#: access/transam/xlog.c:4388
+#: access/transam/xlog.c:4425
 #, c-format
 msgid "recovery_target_inclusive = %s"
 msgstr "recovery_target_inclusive = %s"
 
-#: access/transam/xlog.c:4392
+#: access/transam/xlog.c:4429
 #, c-format
 msgid "unrecognized recovery parameter \"%s\""
 msgstr "paramètre de restauration « %s » non reconnu"
 
-#: access/transam/xlog.c:4400
+#: access/transam/xlog.c:4437
 #, c-format
 msgid "syntax error in recovery command file: %s"
 msgstr "erreur de syntaxe dans le fichier de restauration : %s"
 
-#: access/transam/xlog.c:4402
+#: access/transam/xlog.c:4439
 msgid "Lines should have the format parameter = 'value'."
 msgstr "Les lignes devraient avoir le format paramètre = 'valeur'"
 
-#: access/transam/xlog.c:4407
+#: access/transam/xlog.c:4444
 #, c-format
 msgid "recovery command file \"%s\" did not specify restore_command"
 msgstr "le fichier de restauration « %s » n'a pas spécifié restore_command"
 
-#: access/transam/xlog.c:4426
+#: access/transam/xlog.c:4463
 #, c-format
 msgid "recovery_target_timeline %u does not exist"
 msgstr "recovery_target_timeline %u n'existe pas"
 
-#: access/transam/xlog.c:4535
+#: access/transam/xlog.c:4572
 msgid "archive recovery complete"
 msgstr "restauration terminée de l'archive"
 
-#: access/transam/xlog.c:4619
+#: access/transam/xlog.c:4656
 #, c-format
 msgid "recovery stopping after commit of transaction %u, time %s"
 msgstr "arrêt de la restauration après validation de la transaction %u, %s"
 
-#: access/transam/xlog.c:4623
+#: access/transam/xlog.c:4660
 #, c-format
 msgid "recovery stopping before commit of transaction %u, time %s"
 msgstr "arrêt de la restauration avant validation de la transaction %u, %s"
 
-#: access/transam/xlog.c:4630
+#: access/transam/xlog.c:4667
 #, c-format
 msgid "recovery stopping after abort of transaction %u, time %s"
 msgstr "arrêt de la restauration après annulation de la transaction %u, %s"
 
-#: access/transam/xlog.c:4634
+#: access/transam/xlog.c:4671
 #, c-format
 msgid "recovery stopping before abort of transaction %u, time %s"
 msgstr "arrêt de la restauration avant annulation de la transaction %u, %s"
 
-#: access/transam/xlog.c:4677
+#: access/transam/xlog.c:4714
 msgid "control file contains invalid data"
 msgstr "le fichier de contrôle contient des données invalides"
 
-#: access/transam/xlog.c:4681
+#: access/transam/xlog.c:4718
 #, c-format
 msgid "database system was shut down at %s"
 msgstr "le système de bases de données a été arrêté à %s"
 
-#: access/transam/xlog.c:4685
+#: access/transam/xlog.c:4722
 #, c-format
 msgid "database system shutdown was interrupted at %s"
 msgstr "le système de bases de données a été interrompu à %s"
 
-#: access/transam/xlog.c:4689
+#: access/transam/xlog.c:4726
 #, c-format
 msgid "database system was interrupted while in recovery at %s"
 msgstr "le système de bases de données a été interrompu lors d'une restauration à %s"
 
-#: access/transam/xlog.c:4691
+#: access/transam/xlog.c:4728
 msgid "This probably means that some data is corrupted and you will have to use the last backup for recovery."
 msgstr ""
 "Ceci signifie probablement que des données ont été corrompues et que vous\n"
 "devrez utiliser la dernière sauvegarde pour la restauration."
 
-#: access/transam/xlog.c:4695
+#: access/transam/xlog.c:4732
 #, c-format
 msgid "database system was interrupted while in recovery at log time %s"
 msgstr ""
 "le système de bases de données a été interrompu lors d'une récupération à %s\n"
 "(moment de la journalisation)"
 
-#: access/transam/xlog.c:4697
+#: access/transam/xlog.c:4734
 msgid "If this has occurred more than once some data may be corrupted and you may need to choose an earlier recovery target."
 msgstr "Si c'est arrivé plus d'une fois, des données ont pu être corrompue et vous pouvez avoir besoin de choisir une cible de récupération antérieure."
 
-#: access/transam/xlog.c:4701
+#: access/transam/xlog.c:4738
 #, c-format
 msgid "database system was interrupted at %s"
 msgstr "le système de bases de données a été interrompu à %s"
 
-#: access/transam/xlog.c:4733
+#: access/transam/xlog.c:4770
 #, c-format
 msgid "requested timeline %u is not a child of database system timeline %u"
 msgstr ""
 "le timeline requis %u n'est pas un fils du timeline %u du système de bases\n"
 "de données"
 
-#: access/transam/xlog.c:4747
-#: access/transam/xlog.c:4771
+#: access/transam/xlog.c:4784
+#: access/transam/xlog.c:4808
 #, c-format
 msgid "checkpoint record is at %X/%X"
 msgstr "l'enregistrement du point de vérification est à %X/%X"
 
-#: access/transam/xlog.c:4754
+#: access/transam/xlog.c:4791
 msgid "could not locate required checkpoint record"
 msgstr "n'a pas pu localiser l'enregistrement d'un point de vérification requis"
 
-#: access/transam/xlog.c:4755
+#: access/transam/xlog.c:4792
 #, c-format
 msgid "If you are not restoring from a backup, try removing the file \"%s/backup_label\"."
 msgstr ""
 "Si vous n'avez pas pu restaurer une sauvegarde, essayez de supprimer le\n"
 "fichier « %s/backup_label »."
 
-#: access/transam/xlog.c:4781
+#: access/transam/xlog.c:4818
 #, c-format
 msgid "using previous checkpoint record at %X/%X"
 msgstr "utilisation du précédent enregistrement d'un point de vérification à %X/%X"
 
-#: access/transam/xlog.c:4787
+#: access/transam/xlog.c:4824
 msgid "could not locate a valid checkpoint record"
 msgstr "n'a pas pu localiser un enregistrement d'un point de vérification valide"
 
-#: access/transam/xlog.c:4796
+#: access/transam/xlog.c:4833
 #, c-format
 msgid "redo record is at %X/%X; undo record is at %X/%X; shutdown %s"
 msgstr "ré-exécution de l'enregistrement à %X/%X ; l'annulation de l'enregistrement est à %X/%X ; arrêt %s"
 
-#: access/transam/xlog.c:4801
+#: access/transam/xlog.c:4838
 #, c-format
 msgid "next transaction ID: %u/%u; next OID: %u"
 msgstr "prochain identifiant de transaction : %u/%u ; prochain OID : %u"
 
-#: access/transam/xlog.c:4805
+#: access/transam/xlog.c:4842
 #, c-format
 msgid "next MultiXactId: %u; next MultiXactOffset: %u"
 msgstr "prochain MultiXactId : %u ; prochain MultiXactOffset : %u"
 
-#: access/transam/xlog.c:4809
+#: access/transam/xlog.c:4846
 msgid "invalid next transaction ID"
 msgstr "prochain ID de transaction invalide"
 
-#: access/transam/xlog.c:4827
+#: access/transam/xlog.c:4864
 msgid "invalid redo in checkpoint record"
 msgstr "ré-exécution invalide dans l'enregistrement du point de vérification"
 
-#: access/transam/xlog.c:4841
+#: access/transam/xlog.c:4878
 msgid "invalid redo/undo record in shutdown checkpoint"
 msgstr "enregistrement de ré-exécution/annulation invalide dans le point de vérification d'arrêt"
 
-#: access/transam/xlog.c:4866
+#: access/transam/xlog.c:4903
 msgid "automatic recovery in progress"
 msgstr "restauration automatique en cours"
 
-#: access/transam/xlog.c:4872
+#: access/transam/xlog.c:4909
 msgid "database system was not properly shut down; automatic recovery in progress"
 msgstr ""
 "le système de bases de données n'a pas été arrêté proprement ; restauration\n"
 "automatique en cours"
 
-#: access/transam/xlog.c:4934
+#: access/transam/xlog.c:4971
 #, c-format
 msgid "redo starts at %X/%X"
 msgstr "la ré-exécution commence à %X/%X"
 
-#: access/transam/xlog.c:5004
+#: access/transam/xlog.c:5041
 #, c-format
 msgid "redo done at %X/%X"
 msgstr "ré-exécution faite à %X/%X"
 
-#: access/transam/xlog.c:5012
+#: access/transam/xlog.c:5049
 msgid "redo is not required"
 msgstr "la ré-exécution n'est pas nécessaire"
 
-#: access/transam/xlog.c:5032
+#: access/transam/xlog.c:5069
 msgid "requested recovery stop point is before end time of backup dump"
 msgstr ""
 "le point d'arrêt de la restauration demandée se trouve avant l'heure de fin\n"
 "de la sauvegarde"
 
-#: access/transam/xlog.c:5035
+#: access/transam/xlog.c:5072
 msgid "WAL ends before end time of backup dump"
 msgstr "le journal de transactions se termine avant l'heure de fin de la sauvegarde"
 
-#: access/transam/xlog.c:5056
+#: access/transam/xlog.c:5093
 #, c-format
 msgid "selected new timeline ID: %u"
 msgstr "identifiant d'un timeline nouvellement sélectionné : %u"
 
-#: access/transam/xlog.c:5203
+#: access/transam/xlog.c:5240
 msgid "database system is ready"
 msgstr "le système de bases de données est prêt"
 
-#: access/transam/xlog.c:5241
+#: access/transam/xlog.c:5278
 msgid "invalid primary checkpoint link in control file"
 msgstr "lien du point de vérification primaire invalide dans le fichier de contrôle"
 
-#: access/transam/xlog.c:5245
+#: access/transam/xlog.c:5282
 msgid "invalid secondary checkpoint link in control file"
 msgstr "lien du point de vérification secondaire invalide dans le fichier de contrôle"
 
-#: access/transam/xlog.c:5249
+#: access/transam/xlog.c:5286
 msgid "invalid checkpoint link in backup_label file"
 msgstr "lien du point de vérification invalide dans le fichier backup_label"
 
-#: access/transam/xlog.c:5263
+#: access/transam/xlog.c:5300
 msgid "invalid primary checkpoint record"
 msgstr "enregistrement du point de vérification primaire invalide"
 
-#: access/transam/xlog.c:5267
+#: access/transam/xlog.c:5304
 msgid "invalid secondary checkpoint record"
 msgstr "enregistrement du point de vérification secondaire invalide"
 
-#: access/transam/xlog.c:5271
+#: access/transam/xlog.c:5308
 msgid "invalid checkpoint record"
 msgstr "enregistrement du point de vérification invalide"
 
-#: access/transam/xlog.c:5282
+#: access/transam/xlog.c:5319
 msgid "invalid resource manager ID in primary checkpoint record"
 msgstr "identifiant du gestionnaire de ressource invalide dans l'enregistrement primaire du point de vérification"
 
-#: access/transam/xlog.c:5286
+#: access/transam/xlog.c:5323
 msgid "invalid resource manager ID in secondary checkpoint record"
 msgstr "identifiant du gestionnaire de ressource invalide dans l'enregistrement secondaire du point de vérification"
 
-#: access/transam/xlog.c:5290
+#: access/transam/xlog.c:5327
 msgid "invalid resource manager ID in checkpoint record"
 msgstr "identifiant du gestionnaire de ressource invalide dans l'enregistrement du point de vérification"
 
-#: access/transam/xlog.c:5302
+#: access/transam/xlog.c:5339
 msgid "invalid xl_info in primary checkpoint record"
 msgstr "xl_info invalide dans l'enregistrement du point de vérification primaire"
 
-#: access/transam/xlog.c:5306
+#: access/transam/xlog.c:5343
 msgid "invalid xl_info in secondary checkpoint record"
 msgstr "xl_info invalide  dans l'enregistrement du point de vérification secondaire"
 
-#: access/transam/xlog.c:5310
+#: access/transam/xlog.c:5347
 msgid "invalid xl_info in checkpoint record"
 msgstr "xl_info invalide dans l'enregistrement du point de vérification"
 
-#: access/transam/xlog.c:5322
+#: access/transam/xlog.c:5359
 msgid "invalid length of primary checkpoint record"
 msgstr "longueur invalide de l'enregistrement primaire du point de vérification"
 
-#: access/transam/xlog.c:5326
+#: access/transam/xlog.c:5363
 msgid "invalid length of secondary checkpoint record"
 msgstr "longueur invalide de l'enregistrement secondaire du point de vérification"
 
-#: access/transam/xlog.c:5330
+#: access/transam/xlog.c:5367
 msgid "invalid length of checkpoint record"
 msgstr "longueur invalide de l'enregistrement du point de vérification"
 
-#: access/transam/xlog.c:5439
+#: access/transam/xlog.c:5476
 msgid "shutting down"
 msgstr "arrêt en cours"
 
-#: access/transam/xlog.c:5447
+#: access/transam/xlog.c:5484
 msgid "database system is shut down"
 msgstr "le système de base de données est arrêté"
 
-#: access/transam/xlog.c:5588
+#: access/transam/xlog.c:5625
 msgid "checkpoint starting"
 msgstr "début du point de vérification"
 
-#: access/transam/xlog.c:5647
+#: access/transam/xlog.c:5684
 msgid "concurrent transaction log activity while database system is shutting down"
 msgstr ""
 "activité en cours du journal de transactions alors que le système de bases\n"
 "de données est en cours d'arrêt"
 
-#: access/transam/xlog.c:5715
+#: access/transam/xlog.c:5752
 #, c-format
 msgid "checkpoint complete; %d transaction log file(s) added, %d removed, %d recycled"
 msgstr "point de vérification terminée ; %d journaux de transactions ajoutés, %d supprimés, %d recyclés"
 
-#: access/transam/xlog.c:5796
+#: access/transam/xlog.c:5833
 #, c-format
 msgid "recovery restart point at %X/%X"
 msgstr "la nouvelle exécution de la restauration commence à %X/%X"
 
-#: access/transam/xlog.c:5905
+#: access/transam/xlog.c:5942
 #, c-format
 msgid "unexpected timeline ID %u (after %u) in checkpoint record"
 msgstr ""
 "identifiant timeline %u inattendu (après %u) dans l'enregistrement du point\n"
 "de vérification"
 
-#: access/transam/xlog.c:5937
+#: access/transam/xlog.c:5974
 #, c-format
 msgid "unexpected timeline ID %u (should be %u) in checkpoint record"
 msgstr ""
 "identifiant timeline %u inattendu (devrait être %u) dans l'enregistrement du\n"
 "point de vérification"
 
-#: access/transam/xlog.c:6067
-#: access/transam/xlog.c:6092
+#: access/transam/xlog.c:6104
+#: access/transam/xlog.c:6129
 #, c-format
 msgid "could not fsync log file %u, segment %u: %m"
 msgstr ""
 "n'a pas pu synchroniser sur disque (fsync) le journal des transactions %u,\n"
 "segment %u : %m"
 
-#: access/transam/xlog.c:6100
+#: access/transam/xlog.c:6137
 #, c-format
 msgid "could not fsync write-through log file %u, segment %u: %m"
 msgstr ""
 "n'a pas pu synchroniser sur disque (fsync) le journal des transactions %u,\n"
 "segment %u : %m"
 
-#: access/transam/xlog.c:6109
+#: access/transam/xlog.c:6146
 #, c-format
 msgid "could not fdatasync log file %u, segment %u: %m"
 msgstr ""
 "n'a pas pu synchroniser sur disque (fdatasync) le journal de transactions\n"
 "%u, segment %u : %m"
 
-#: access/transam/xlog.c:6151
-#: access/transam/xlog.c:6332
+#: access/transam/xlog.c:6188
+#: access/transam/xlog.c:6369
 msgid "must be superuser to run a backup"
 msgstr "doit être super-utilisateur pour exécuter une sauvegarde"
 
-#: access/transam/xlog.c:6156
+#: access/transam/xlog.c:6193
 msgid "WAL archiving is not active"
 msgstr "l'archivage des journaux de transactions n'est pas actif"
 
-#: access/transam/xlog.c:6157
+#: access/transam/xlog.c:6194
 msgid "archive_command must be defined before online backups can be made safely."
 msgstr ""
 "archive_command doit être défini avant que les sauvegardes à chaud puissent\n"
 "s'effectuer correctement."
 
-#: access/transam/xlog.c:6186
-#: access/transam/xlog.c:6256
+#: access/transam/xlog.c:6223
+#: access/transam/xlog.c:6293
 msgid "a backup is already in progress"
 msgstr "une sauvegarde est déjà en cours"
 
-#: access/transam/xlog.c:6187
+#: access/transam/xlog.c:6224
 msgid "Run pg_stop_backup() and try again."
 msgstr "Exécutez pg_stop_backup() et tentez de nouveau."
 
-#: access/transam/xlog.c:6257
+#: access/transam/xlog.c:6294
 #, c-format
 msgid "If you're sure there is no backup in progress, remove file \"%s\" and try again."
 msgstr ""
 "Si vous êtes certain qu'aucune sauvegarde n'est en cours, supprimez le\n"
 "fichier « %s » et recommencez de nouveau."
 
-#: access/transam/xlog.c:6278
-#: access/transam/xlog.c:6412
+#: access/transam/xlog.c:6315
+#: access/transam/xlog.c:6449
 #, c-format
 msgid "could not write file \"%s\": %m"
 msgstr "impossible d'écrire le fichier « %s » : %m"
 
-#: access/transam/xlog.c:6375
+#: access/transam/xlog.c:6412
 msgid "a backup is not in progress"
 msgstr "une sauvegarde n'est pas en cours"
 
-#: access/transam/xlog.c:6387
-#: access/transam/xlog.c:6711
-#: access/transam/xlog.c:6717
+#: access/transam/xlog.c:6424
 #: access/transam/xlog.c:6748
 #: access/transam/xlog.c:6754
+#: access/transam/xlog.c:6785
+#: access/transam/xlog.c:6791
 #, c-format
 msgid "invalid data in file \"%s\""
 msgstr "données invalides dans le fichier « %s »"
 
-#: access/transam/xlog.c:6459
+#: access/transam/xlog.c:6496
 msgid "must be superuser to switch transaction log files"
 msgstr "doit être super-utilisateur pour changer de journal de transactions"
 
-#: access/transam/xlog.c:6567
-#: access/transam/xlog.c:6636
+#: access/transam/xlog.c:6604
+#: access/transam/xlog.c:6673
 #, c-format
 msgid "could not parse transaction log location \"%s\""
 msgstr ""
 "n'a pas pu analyser l'emplacement du journal des transactions nommé « %s » :\n"
 "%m"
 
-#: access/transam/xlog.c:6782
+#: access/transam/xlog.c:6819
 #, c-format
 msgid "xlog redo %s"
 msgstr "xlog redo %s"
@@ -1644,7 +1654,7 @@ msgstr "n'a pas pu modifier le répertoire par « %s » : %m"
 #: storage/file/fd.c:811
 #: storage/ipc/procarray.c:538
 #: storage/ipc/procarray.c:545
-#: libpq/auth.c:597
+#: libpq/auth.c:566
 #: postmaster/postmaster.c:856
 #: postmaster/postmaster.c:1710
 #: postmaster/postmaster.c:2527
@@ -1657,8 +1667,8 @@ msgstr "mémoire épuisée"
 #: commands/user.c:735
 #: commands/user.c:843
 #: commands/user.c:995
-#: commands/variable.c:657
-#: commands/variable.c:789
+#: commands/variable.c:641
+#: commands/variable.c:754
 #, c-format
 msgid "role \"%s\" does not exist"
 msgstr "le rôle « %s » n'existe pas"
@@ -1759,7 +1769,7 @@ msgid "could not write lock file \"%s\": %m"
 msgstr "n'a pas pu écrire le fichier verrou « %s » : %m"
 
 #: utils/init/miscinit.c:997
-#: utils/misc/guc.c:5742
+#: utils/misc/guc.c:5768
 #: commands/copy.c:2127
 #, c-format
 msgid "could not read from file \"%s\": %m"
@@ -5344,11 +5354,11 @@ msgstr ""
 "« h » et « d »."
 
 #: utils/misc/guc.c:3930
-#: utils/misc/guc.c:4469
-#: utils/misc/guc.c:4509
-#: utils/misc/guc.c:4584
-#: utils/misc/guc.c:4921
-#: utils/misc/guc.c:5079
+#: utils/misc/guc.c:4495
+#: utils/misc/guc.c:4535
+#: utils/misc/guc.c:4610
+#: utils/misc/guc.c:4947
+#: utils/misc/guc.c:5105
 #, c-format
 msgid "unrecognized configuration parameter \"%s\""
 msgstr "paramètre de configuration « %s » non reconnu"
@@ -5385,106 +5395,113 @@ msgstr "le paramètre « %s » ne peut pas être initialisé après le lancement du se
 msgid "permission denied to set parameter \"%s\""
 msgstr "droit refusé pour initialiser le paramètre « %s »"
 
-#: utils/misc/guc.c:4068
+#: utils/misc/guc.c:4049
+#, c-format
+msgid "cannot set parameter \"%s\" within security-definer function"
+msgstr ""
+"ne peut pas initialiser le paramètre « %s » dans la fonction de type SECURITY\n"
+"DEFINER"
+
+#: utils/misc/guc.c:4094
 #, c-format
 msgid "parameter \"%s\" requires a Boolean value"
 msgstr "le paramètre « %s » requiert une valeur booléenne"
 
-#: utils/misc/guc.c:4088
-#: utils/misc/guc.c:4176
+#: utils/misc/guc.c:4114
+#: utils/misc/guc.c:4202
 #, c-format
 msgid "invalid value for parameter \"%s\": %d"
 msgstr "valeur invalide pour le paramètre « %s » : %d"
 
-#: utils/misc/guc.c:4147
-#: utils/misc/guc.c:4363
+#: utils/misc/guc.c:4173
+#: utils/misc/guc.c:4389
 #, c-format
 msgid "invalid value for parameter \"%s\": \"%s\""
 msgstr "valeur invalide pour le paramètre « %s » : « %s »"
 
-#: utils/misc/guc.c:4156
+#: utils/misc/guc.c:4182
 #, c-format
 msgid "%d is outside the valid range for parameter \"%s\" (%d .. %d)"
 msgstr "%d est en dehors des limites valides pour le paramètre « %s » (%d .. %d)"
 
-#: utils/misc/guc.c:4233
+#: utils/misc/guc.c:4259
 #, c-format
 msgid "parameter \"%s\" requires a numeric value"
 msgstr "le paramètre « %s » requiert une valeur numérique"
 
-#: utils/misc/guc.c:4241
+#: utils/misc/guc.c:4267
 #, c-format
 msgid "%g is outside the valid range for parameter \"%s\" (%g .. %g)"
 msgstr "%g est en dehors des limites valides pour le paramètre « %s » (%g .. %g)"
 
-#: utils/misc/guc.c:4261
+#: utils/misc/guc.c:4287
 #, c-format
 msgid "invalid value for parameter \"%s\": %g"
 msgstr "valeur invalide pour le paramètre « %s » : %g"
 
-#: utils/misc/guc.c:4473
-#: utils/misc/guc.c:4513
-#: utils/misc/guc.c:5083
+#: utils/misc/guc.c:4499
+#: utils/misc/guc.c:4539
+#: utils/misc/guc.c:5109
 #, c-format
 msgid "must be superuser to examine \"%s\""
 msgstr "doit être super-utilisateur pour examiner « %s »"
 
-#: utils/misc/guc.c:4593
+#: utils/misc/guc.c:4619
 #, c-format
 msgid "SET %s takes only one argument"
 msgstr "SET %s prend un seul argument"
 
-#: utils/misc/guc.c:4695
+#: utils/misc/guc.c:4721
 msgid "SET requires parameter name"
 msgstr "SET requiert le nom du paramètre"
 
-#: utils/misc/guc.c:4759
+#: utils/misc/guc.c:4785
 #, c-format
 msgid "attempt to redefine parameter \"%s\""
 msgstr "tentative de redéfinition du paramètre « %s »"
 
-#: utils/misc/guc.c:5852
+#: utils/misc/guc.c:5878
 #, c-format
 msgid "could not parse setting for parameter \"%s\""
 msgstr "n'a pas pu analyser la configuration du paramètre « %s »"
 
-#: utils/misc/guc.c:6048
+#: utils/misc/guc.c:6074
 msgid "invalid list syntax for parameter \"log_destination\""
 msgstr "syntaxe de liste invalide pour le paramètre « log_destination »"
 
-#: utils/misc/guc.c:6071
+#: utils/misc/guc.c:6097
 #, c-format
 msgid "unrecognized \"log_destination\" key word: \"%s\""
 msgstr "mot clé « log_destination » non reconnu : « %s »"
 
-#: utils/misc/guc.c:6333
+#: utils/misc/guc.c:6359
 msgid "SET AUTOCOMMIT TO OFF is no longer supported"
 msgstr "SET AUTOCOMMIT TO OFF n'est plus supporté"
 
-#: utils/misc/guc.c:6381
+#: utils/misc/guc.c:6407
 #, c-format
 msgid "invalid syntax for \"custom_variable_classes\": \"%s\""
 msgstr "syntaxe invalide pour « custom_variable_classes » : « %s »"
 
-#: utils/misc/guc.c:6409
+#: utils/misc/guc.c:6435
 msgid "assertion checking is not supported by this build"
 msgstr "la vérification de l'assertion n'a pas été intégrée lors de la compilation"
 
-#: utils/misc/guc.c:6421
+#: utils/misc/guc.c:6447
 msgid "SSL is not supported by this build"
 msgstr "SSL n'est pas supporté dans cette installation"
 
-#: utils/misc/guc.c:6434
+#: utils/misc/guc.c:6460
 msgid "cannot enable parameter when \"log_statement_stats\" is true"
 msgstr "ne peut pas activer le paramètre avec « log_statement_stats » à true"
 
-#: utils/misc/guc.c:6451
+#: utils/misc/guc.c:6477
 msgid "cannot enable \"log_statement_stats\" when \"log_parser_stats\", \"log_planner_stats\", or \"log_executor_stats\" is true"
 msgstr ""
 "ne peut pas activer « log_statement_stats » lorsque « log_parser_stats »,\n"
 "« log_planner_stats » ou « log_executor_stats » est true"
 
-#: utils/misc/guc.c:6470
+#: utils/misc/guc.c:6496
 msgid "cannot set transaction read-write mode inside a read-only transaction"
 msgstr ""
 "ne peut pas initialiser le mode lecture-écriture de la transaction à\n"
@@ -5579,25 +5596,25 @@ msgstr ""
 msgid "@INCLUDE without filename in time zone file \"%s\", line %d"
 msgstr "@INCLUDE sans nom de fichier dans le fichier des fuseaux horaires « %s », ligne %d"
 
-#: guc-file.l:209
+#: guc-file.l:210
 #, c-format
 msgid "could not open configuration file \"%s\": maximum nesting depth exceeded"
 msgstr ""
 "n'a pas pu ouvrir le fichier de configuration « %s » : profondeur\n"
 "d'imbrication dépassé"
 
-#: guc-file.l:233
+#: guc-file.l:234
 #: libpq/hba.c:991
 #, c-format
 msgid "could not open configuration file \"%s\": %m"
 msgstr "n'a pas pu ouvrir le fichier de configuration « %s » : %m"
 
-#: guc-file.l:350
+#: guc-file.l:351
 #, c-format
 msgid "syntax error in file \"%s\" line %u, near end of line"
 msgstr "erreur de syntaxe dans le fichier « %s », ligne %u, près de la fin de ligne"
 
-#: guc-file.l:355
+#: guc-file.l:356
 #, c-format
 msgid "syntax error in file \"%s\" line %u, near token \"%s\""
 msgstr "erreur de syntaxe dans le fichier « %s », ligne %u, près du mot clé « %s »"
@@ -5760,8 +5777,8 @@ msgid "could not find function \"%s\" in file \"%s\""
 msgstr "n'a pas pu trouver la fonction « %s » dans le fichier « %s »"
 
 #: utils/fmgr/dfmgr.c:201
-#: utils/fmgr/dfmgr.c:331
-#: utils/fmgr/dfmgr.c:378
+#: utils/fmgr/dfmgr.c:338
+#: utils/fmgr/dfmgr.c:386
 #, c-format
 msgid "could not access file \"%s\": %m"
 msgstr "n'a pas pu accéder au fichier « %s » : %m"
@@ -5797,21 +5814,21 @@ msgstr ""
 "Les bibliothèques étendues nécessitent l'utilisation de la macro\n"
 "PG_MODULE_MAGIC."
 
-#: utils/fmgr/dfmgr.c:462
+#: utils/fmgr/dfmgr.c:470
 #, c-format
 msgid "access to library \"%s\" is not allowed"
 msgstr "l'accès à la bibliothèque « %s » n'est pas autorisé"
 
-#: utils/fmgr/dfmgr.c:489
+#: utils/fmgr/dfmgr.c:497
 #, c-format
 msgid "invalid macro name in dynamic library path: %s"
 msgstr "nom de macro invalide dans le chemin des bibliothèques partagées : %s"
 
-#: utils/fmgr/dfmgr.c:534
+#: utils/fmgr/dfmgr.c:542
 msgid "zero-length component in parameter \"dynamic_library_path\""
 msgstr "composant de longueur zéro dans le paramètre « dynamic_library_path »"
 
-#: utils/fmgr/dfmgr.c:554
+#: utils/fmgr/dfmgr.c:562
 msgid "component in parameter \"dynamic_library_path\" is not an absolute path"
 msgstr "Un composant du paramètre « dynamic_library_path » n'est pas un chemin absolu"
 
@@ -5871,12 +5888,12 @@ msgstr "aucune fonction en entrée disponible pour le type %s"
 msgid "no output function available for type %s"
 msgstr "aucune fonction en sortie disponible pour le type %s"
 
-#: utils/cache/relcache.c:3411
+#: utils/cache/relcache.c:3461
 #, c-format
 msgid "could not create relation-cache initialization file \"%s\": %m"
 msgstr "n'a pas pu créer le fichier d'initialisation relation-cache « %s » : %m"
 
-#: utils/cache/relcache.c:3413
+#: utils/cache/relcache.c:3463
 msgid "Continuing anyway, but there's something wrong."
 msgstr "Continue malgré tout, mais quelque chose s'est mal passé."
 
@@ -6999,7 +7016,7 @@ msgstr ""
 "entrée"
 
 #: catalog/pg_aggregate.c:177
-#: catalog/pg_proc.c:183
+#: catalog/pg_proc.c:184
 #: executor/functions.c:1054
 msgid "cannot determine result data type"
 msgstr "n'a pas pu déterminer le type de données en résultat"
@@ -7107,78 +7124,78 @@ msgstr "l'opérateur %s existe déjà"
 msgid "operator cannot be its own negator or sort operator"
 msgstr "l'opérateur ne peut pas être son propre opérateur de négation ou de tri"
 
-#: catalog/pg_proc.c:108
+#: catalog/pg_proc.c:109
 #: parser/parse_func.c:1180
 #: parser/parse_func.c:1225
 #, c-format
 msgid "functions cannot have more than %d arguments"
 msgstr "les fonctions ne peuvent avoir plus de %d arguments"
 
-#: catalog/pg_proc.c:184
+#: catalog/pg_proc.c:185
 #: executor/functions.c:1055
 msgid "A function returning \"anyarray\" or \"anyelement\" must have at least one argument of either type."
 msgstr "Une fonction renvoyant \"anyarray\" ou \"anyelement\" doit avoir au moins un argument du même type."
 
-#: catalog/pg_proc.c:189
+#: catalog/pg_proc.c:190
 msgid "unsafe use of pseudo-type \"internal\""
 msgstr "utilisation non sûre des pseudo-types « INTERNAL »"
 
-#: catalog/pg_proc.c:190
+#: catalog/pg_proc.c:191
 msgid "A function returning \"internal\" must have at least one \"internal\" argument."
 msgstr ""
 "Une fonction renvoyant « internal » doit avoir au moins un argument du type\n"
 "« internal »."
 
-#: catalog/pg_proc.c:202
+#: catalog/pg_proc.c:203
 #, c-format
 msgid "\"%s\" is already an attribute of type %s"
 msgstr "« %s » est déjà un attribut du type %s"
 
-#: catalog/pg_proc.c:267
+#: catalog/pg_proc.c:268
 #, c-format
 msgid "function \"%s\" already exists with same argument types"
 msgstr "la fonction « %s » existe déjà avec des types d'arguments identiques"
 
-#: catalog/pg_proc.c:281
-#: catalog/pg_proc.c:303
+#: catalog/pg_proc.c:282
+#: catalog/pg_proc.c:304
 msgid "cannot change return type of existing function"
 msgstr "ne peut pas modifier le type de retour d'une fonction existante"
 
-#: catalog/pg_proc.c:282
-#: catalog/pg_proc.c:305
+#: catalog/pg_proc.c:283
+#: catalog/pg_proc.c:306
 msgid "Use DROP FUNCTION first."
 msgstr "Utilisez tout d'abord DROP FUNCTION."
 
-#: catalog/pg_proc.c:304
+#: catalog/pg_proc.c:305
 msgid "Row type defined by OUT parameters is different."
 msgstr "Le type de ligne défini par les paramètres OUT est différent."
 
-#: catalog/pg_proc.c:314
+#: catalog/pg_proc.c:315
 #, c-format
 msgid "function \"%s\" is an aggregate"
 msgstr "la fonction « %s » est un agrégat"
 
-#: catalog/pg_proc.c:319
+#: catalog/pg_proc.c:320
 #, c-format
 msgid "function \"%s\" is not an aggregate"
 msgstr "la fonction « %s » n'est pas un agrégat"
 
-#: catalog/pg_proc.c:444
+#: catalog/pg_proc.c:448
 #, c-format
 msgid "there is no built-in function named \"%s\""
 msgstr "il n'existe pas de fonction intégrée nommée « %s »"
 
-#: catalog/pg_proc.c:540
+#: catalog/pg_proc.c:544
 #, c-format
 msgid "SQL functions cannot return type %s"
 msgstr "les fonctions SQL ne peuvent pas renvoyer un type %s"
 
-#: catalog/pg_proc.c:556
+#: catalog/pg_proc.c:560
 #, c-format
 msgid "SQL functions cannot have arguments of type %s"
 msgstr "les fonctions SQL ne peuvent avoir d'arguments du type %s"
 
-#: catalog/pg_proc.c:627
+#: catalog/pg_proc.c:631
 #: executor/functions.c:797
 #, c-format
 msgid "SQL function \"%s\""
@@ -9573,51 +9590,51 @@ msgstr ""
 msgid "You may have already suffered transaction-wraparound data loss."
 msgstr "Vous pouvez avoir déjà souffert de pertes de données suite à une réinitialisation du numéro des transactions."
 
-#: commands/vacuum.c:1034
+#: commands/vacuum.c:1035
 #, c-format
 msgid "skipping \"%s\" --- only table or database owner can vacuum it"
 msgstr ""
 "ignore « %s » --- seul le propriétaire de la table ou de la base de données\n"
 "peut exécuter un VACUUM"
 
-#: commands/vacuum.c:1048
+#: commands/vacuum.c:1049
 #, c-format
 msgid "skipping \"%s\" --- cannot vacuum indexes, views, or special system tables"
 msgstr ""
 "ignore « %s » --- n'a pas pu exécuter un VACUUM sur les index, vues ou\n"
 "tables système"
 
-#: commands/vacuum.c:1273
-#: commands/vacuumlazy.c:238
+#: commands/vacuum.c:1284
+#: commands/vacuumlazy.c:255
 #, c-format
 msgid "vacuuming \"%s.%s\""
 msgstr "exécution du VACUUM sur « %s.%s »"
 
-#: commands/vacuum.c:1326
-#: commands/vacuumlazy.c:323
+#: commands/vacuum.c:1337
+#: commands/vacuumlazy.c:340
 #, c-format
 msgid "relation \"%s\" page %u is uninitialized --- fixing"
 msgstr "relation « %s » : la page %u n'est pas initialisée --- correction en cours"
 
-#: commands/vacuum.c:1432
+#: commands/vacuum.c:1443
 #, c-format
 msgid "relation \"%s\" TID %u/%u: InsertTransactionInProgress %u --- can't shrink relation"
 msgstr "Pour la relation « %s », TID %u/%u : InsertTransactionInProgress %u --- n'a pas pu diminuer la relation"
 
-#: commands/vacuum.c:1445
+#: commands/vacuum.c:1456
 #, c-format
 msgid "relation \"%s\" TID %u/%u: DeleteTransactionInProgress %u --- can't shrink relation"
 msgstr "Pour la relation « %s », TID %u/%u : DeleteTransactionInProgress %u --- n'a pas pu diminuer la relation"
 
-#: commands/vacuum.c:1629
-#: commands/vacuumlazy.c:506
+#: commands/vacuum.c:1640
+#: commands/vacuumlazy.c:523
 #, c-format
 msgid "\"%s\": found %.0f removable, %.0f nonremovable row versions in %u pages"
 msgstr ""
 "« %s » : %.0f versions de ligne supprimables, %.0f non supprimables\n"
 "parmi %u pages"
 
-#: commands/vacuum.c:1632
+#: commands/vacuum.c:1643
 #, c-format
 msgid ""
 "%.0f dead row versions cannot be removed yet.\n"
@@ -9639,33 +9656,33 @@ msgstr ""
 "disponibles.\n"
 "%s."
 
-#: commands/vacuum.c:2431
+#: commands/vacuum.c:2452
 #, c-format
 msgid "\"%s\": moved %u row versions, truncated %u to %u pages"
 msgstr "« %s » : %u versions de ligne déplacées, %u pages tronquées sur %u"
 
-#: commands/vacuum.c:2434
-#: commands/vacuumlazy.c:575
-#: commands/vacuumlazy.c:667
-#: commands/vacuumlazy.c:813
+#: commands/vacuum.c:2455
+#: commands/vacuumlazy.c:592
+#: commands/vacuumlazy.c:684
+#: commands/vacuumlazy.c:830
 #, c-format
 msgid "%s."
 msgstr "%s."
 
-#: commands/vacuum.c:2959
-#: commands/vacuumlazy.c:810
+#: commands/vacuum.c:2982
+#: commands/vacuumlazy.c:827
 #, c-format
 msgid "\"%s\": truncated %u to %u pages"
 msgstr "« %s » : %u pages tronqués en %u"
 
-#: commands/vacuum.c:3045
-#: commands/vacuum.c:3114
-#: commands/vacuumlazy.c:700
+#: commands/vacuum.c:3068
+#: commands/vacuum.c:3137
+#: commands/vacuumlazy.c:717
 #, c-format
 msgid "index \"%s\" now contains %.0f row versions in %u pages"
 msgstr "l'index « %s » contient maintenant %.0f versions de ligne dans %u pages"
 
-#: commands/vacuum.c:3049
+#: commands/vacuum.c:3072
 #, c-format
 msgid ""
 "%u index pages have been deleted, %u are currently reusable.\n"
@@ -9674,21 +9691,21 @@ msgstr ""
 "%u pages d'index ont été supprimées, %u sont actuellement réutilisables.\n"
 "%s."
 
-#: commands/vacuum.c:3063
-#: commands/vacuum.c:3134
+#: commands/vacuum.c:3086
+#: commands/vacuum.c:3157
 #, c-format
 msgid "index \"%s\" contains %.0f row versions, but table contains %.0f row versions"
 msgstr ""
 "l'index « %s » contient %.0f versions de ligne, mais la table contient %.0f\n"
 "versions de ligne"
 
-#: commands/vacuum.c:3066
-#: commands/vacuum.c:3137
+#: commands/vacuum.c:3089
+#: commands/vacuum.c:3160
 msgid "Rebuild the index with REINDEX."
 msgstr "Reconstruisez l'index avec REINDEX."
 
-#: commands/vacuum.c:3118
-#: commands/vacuumlazy.c:704
+#: commands/vacuum.c:3141
+#: commands/vacuumlazy.c:721
 #, c-format
 msgid ""
 "%.0f index row versions were removed.\n"
@@ -9699,12 +9716,12 @@ msgstr ""
 "%u pages d'index ont été supprimées, %u sont actuellement réutilisables.\n"
 "%s."
 
-#: commands/vacuumlazy.c:501
+#: commands/vacuumlazy.c:518
 #, c-format
 msgid "\"%s\": removed %.0f row versions in %u pages"
 msgstr "« %s » : %.0f versions de ligne supprimées parmi %u pages"
 
-#: commands/vacuumlazy.c:509
+#: commands/vacuumlazy.c:526
 #, c-format
 msgid ""
 "%.0f dead row versions cannot be removed yet.\n"
@@ -9719,23 +9736,23 @@ msgstr ""
 "%u pages sont entièrement vides.\n"
 "%s."
 
-#: commands/vacuumlazy.c:522
+#: commands/vacuumlazy.c:539
 #, c-format
 msgid "relation \"%s.%s\" contains more than \"max_fsm_pages\" pages with useful free space"
 msgstr ""
 "la relation « %s.%s » contient plus de « max_fsm_pages » pages d'espace\n"
 "libre utile"
 
-#: commands/vacuumlazy.c:525
+#: commands/vacuumlazy.c:542
 msgid "Consider compacting this relation or increasing the configuration parameter \"max_fsm_pages\"."
 msgstr "Pensez à compacter cette relation ou à augmenter le paramètre de configuration « max_fsm_pages »."
 
-#: commands/vacuumlazy.c:572
+#: commands/vacuumlazy.c:589
 #, c-format
 msgid "\"%s\": removed %d row versions in %d pages"
 msgstr "« %s »: %d versions de ligne supprimée parmi %d pages"
 
-#: commands/vacuumlazy.c:664
+#: commands/vacuumlazy.c:681
 #, c-format
 msgid "scanned index \"%s\" to remove %d row versions"
 msgstr "a parcouru l'index « %s » pour supprimer %d versions de lignes"
@@ -9785,15 +9802,7 @@ msgstr ""
 "SET TRANSACTION ISOLATION LEVEL ne doit pas être appelé dans une\n"
 "sous-transaction"
 
-#: commands/variable.c:635
-msgid "cannot set session authorization within security-definer function"
-msgstr "ne peut pas exécuter SESSION AUTHORIZATION sur la fonction SECURITY DEFINER"
-
-#: commands/variable.c:761
-msgid "cannot set role within security-definer function"
-msgstr "ne peut pas modifier le rôle avec une fonction SECURITY DEFINER"
-
-#: commands/variable.c:806
+#: commands/variable.c:771
 #, c-format
 msgid "permission denied to set role \"%s\""
 msgstr "droit refusé pour configurer le rôle « %s »"
@@ -10879,105 +10888,100 @@ msgstr ""
 msgid "could not enable credential reception: %m"
 msgstr "n'a pas pu activer la réception de lettres de créance : %m"
 
-#: libpq/auth.c:545
+#: libpq/auth.c:595
+#: libpq/auth.c:826
+msgid "empty password returned by client"
+msgstr "mot de passe vide renvoyé par le client"
+
+#: libpq/auth.c:605
 #, c-format
 msgid "error from underlying PAM layer: %s"
 msgstr "erreur provenant de la couche PAM : %s"
 
-#: libpq/auth.c:550
-#, c-format
-msgid "unsupported PAM conversation %d/%s"
-msgstr "conversation PAM %d/%s non supportée"
-
-#: libpq/auth.c:582
-#: libpq/auth.c:794
-msgid "empty password returned by client"
-msgstr "mot de passe vide renvoyé par le client"
-
-#: libpq/auth.c:642
+#: libpq/auth.c:674
 #, c-format
 msgid "could not create PAM authenticator: %s"
 msgstr "n'a pas pu créer l'authenticateur PAM : %s"
 
-#: libpq/auth.c:653
+#: libpq/auth.c:685
 #, c-format
 msgid "pam_set_item(PAM_USER) failed: %s"
 msgstr "pam_set_item(PAM_USER) a échoué : %s"
 
-#: libpq/auth.c:664
+#: libpq/auth.c:696
 #, c-format
 msgid "pam_set_item(PAM_CONV) failed: %s"
 msgstr "pam_set_item(PAM_CONV) a échoué : %s"
 
-#: libpq/auth.c:675
+#: libpq/auth.c:707
 #, c-format
 msgid "pam_authenticate failed: %s"
 msgstr "pam_authenticate a échoué : %s"
 
-#: libpq/auth.c:686
+#: libpq/auth.c:718
 #, c-format
 msgid "pam_acct_mgmt failed: %s"
 msgstr "pam_acct_mgmt a échoué : %s"
 
-#: libpq/auth.c:697
+#: libpq/auth.c:729
 #, c-format
 msgid "could not release PAM authenticator: %s"
 msgstr "n'a pas pu fermer l'authenticateur PAM : %s"
 
-#: libpq/auth.c:728
+#: libpq/auth.c:760
 msgid "LDAP configuration URL not specified"
 msgstr "URL de configuration de LDAP non précisée"
 
-#: libpq/auth.c:780
+#: libpq/auth.c:812
 #, c-format
 msgid "invalid LDAP URL: \"%s\""
 msgstr "URL LDAP invalide : « %s »"
 
-#: libpq/auth.c:803
-#: libpq/auth.c:807
+#: libpq/auth.c:835
+#: libpq/auth.c:839
 #, c-format
 msgid "could not initialize LDAP: error code %d"
 msgstr "n'a pas pu initialiser LDAP : code d'erreur %d"
 
-#: libpq/auth.c:817
+#: libpq/auth.c:849
 #, c-format
 msgid "could not set LDAP protocol version: error code %d"
 msgstr "n'a pas pu initialiser la version du protocole LDAP : code d'erreur %d"
 
-#: libpq/auth.c:846
+#: libpq/auth.c:878
 msgid "could not load wldap32.dll"
 msgstr "n'a pas pu charger wldap32.dll"
 
-#: libpq/auth.c:854
+#: libpq/auth.c:886
 msgid "could not load function _ldap_start_tls_sA in wldap32.dll"
 msgstr "n'a pas pu charger la fonction _ldap_start_tls_sA de wldap32.dll"
 
-#: libpq/auth.c:855
+#: libpq/auth.c:887
 msgid "LDAP over SSL is not supported on this platform."
 msgstr "LDAP via SSL n'est pas supporté sur cette plateforme."
 
-#: libpq/auth.c:870
+#: libpq/auth.c:902
 #, c-format
 msgid "could not start LDAP TLS session: error code %d"
 msgstr "n'a pas pu démarrer la session TLS LDAP : code d'erreur %d"
 
-#: libpq/auth.c:885
+#: libpq/auth.c:917
 #, c-format
 msgid "LDAP login failed for user \"%s\" on server \"%s\": error code %d"
 msgstr ""
 "échec de connexion LDAP pour l'utilisateur « %s » sur le serveur « %s » :\n"
 "code d'erreur %d"
 
-#: libpq/auth.c:921
+#: libpq/auth.c:953
 #, c-format
 msgid "expected password response, got message type %d"
 msgstr "en attente du mot de passe, a reçu un type de message %d"
 
-#: libpq/auth.c:949
+#: libpq/auth.c:981
 msgid "invalid password packet size"
 msgstr "taille du paquet du mot de passe invalide"
 
-#: libpq/auth.c:953
+#: libpq/auth.c:985
 msgid "received password packet"
 msgstr "paquet du mot de passe reçu"
 
@@ -12354,40 +12358,40 @@ msgid "operator too long"
 msgstr "opérateur trop long"
 
 #. translator: %s is typically "syntax error"
-#: scan.l:786
+#: scan.l:787
 #, c-format
 msgid "%s at end of input"
 msgstr "%s à la fin de l'entrée"
 
 #. translator: first %s is typically "syntax error"
-#: scan.l:794
+#: scan.l:795
 #, c-format
 msgid "%s at or near \"%s\""
 msgstr "%s sur ou près de « %s »"
 
-#: scan.l:920
+#: scan.l:921
 msgid "nonstandard use of \\' in a string literal"
 msgstr "utilisation non standard de \\' dans une chaîne litérale"
 
-#: scan.l:921
+#: scan.l:922
 msgid "Use '' to write quotes in strings, or use the escape string syntax (E'...')."
 msgstr ""
 "Utilisez '' pour écrire des guillemets dans une chaîne ou utilisez la syntaxe de\n"
 "chaîne d'échappement (E'...')."
 
-#: scan.l:930
+#: scan.l:931
 msgid "nonstandard use of \\\\ in a string literal"
 msgstr "utilisation non standard de \\\\ dans une chaîne littérale"
 
-#: scan.l:931
+#: scan.l:932
 msgid "Use the escape string syntax for backslashes, e.g., E'\\\\'."
 msgstr "Utilisez la syntaxe de chaîne d'échappement pour les antislashs, c'est-à-dire E'\\\\'."
 
-#: scan.l:945
+#: scan.l:946
 msgid "nonstandard use of escape in a string literal"
 msgstr "utilisation non standard d'un échappement dans une chaîne litérale"
 
-#: scan.l:946
+#: scan.l:947
 msgid ""
 "Use the escape string syntax for escapes, e.g., E'\\r\\n"
 "'."
@@ -13599,27 +13603,27 @@ msgstr "les instructions conditionnelles ne sont pas implémentées"
 msgid "out of memory\n"
 msgstr "mémoire épuisée\n"
 
-#: ../port/dirmod.c:262
+#: ../port/dirmod.c:278
 #, c-format
 msgid "could not set junction for \"%s\": %s"
 msgstr "n'a pas pu configurer la jonction pour « %s » : %s"
 
-#: ../port/dirmod.c:265
+#: ../port/dirmod.c:281
 #, c-format
 msgid "could not set junction for \"%s\": %s\n"
 msgstr "n'a pas pu configurer la jonction pour « %s » : %s\n"
 
-#: ../port/dirmod.c:309
+#: ../port/dirmod.c:325
 #, c-format
 msgid "could not open directory \"%s\": %s\n"
 msgstr "n'a pas pu ouvrir le répertoire « %s » : %s\n"
 
-#: ../port/dirmod.c:346
+#: ../port/dirmod.c:362
 #, c-format
 msgid "could not read directory \"%s\": %s\n"
 msgstr "n'a pas pu lire le répertoire « %s » : %s\n"
 
-#: ../port/dirmod.c:444
+#: ../port/dirmod.c:460
 #, c-format
 msgid "could not remove file or directory \"%s\": %s\n"
 msgstr "n'a pas pu supprimer le fichier ou répertoire « %s » : %s\n"
@@ -13687,6 +13691,12 @@ msgstr "correspondance du code d'erreur win32 %lu en %d"
 msgid "unrecognized win32 error code: %lu"
 msgstr "code d'erreur win32 non reconnu : %lu"
 
+#~ msgid "cannot set session authorization within security-definer function"
+#~ msgstr ""
+#~ "ne peut pas exécuter SESSION AUTHORIZATION sur la fonction SECURITY "
+#~ "DEFINER"
+#~ msgid "unsupported PAM conversation %d/%s"
+#~ msgstr "conversation PAM %d/%s non supportée"
 #~ msgid "syntax error: cannot back up"
 #~ msgstr "erreur de syntaxe : n'a pas pu revenir"
 #~ msgid "syntax error; also virtual memory exhausted"
