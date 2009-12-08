@@ -1,7 +1,7 @@
 # translation of postgres-fr.po to FR_fr
 # French message translation file for postgres
 #
-# $PostgreSQL: pgsql/src/backend/po/fr.po,v 1.10.2.8 2009/09/03 19:08:52 petere Exp $
+# $PostgreSQL: pgsql/src/backend/po/fr.po,v 1.10.2.9 2009/12/08 21:58:26 petere Exp $
 #
 # Use these quotes: « %s »
 # Guillaume Lelarge <guillaume@lelarge.info>, 2003-2008.
@@ -10,8 +10,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: postgres-81-fr\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2009-06-23 23:00+0000\n"
-"PO-Revision-Date: 2009-06-24 08:02+0100\n"
+"POT-Creation-Date: 2009-11-23 12:19+0000\n"
+"PO-Revision-Date: 2009-11-24 22:45+0100\n"
 "Last-Translator: Guillaume Lelarge <guillaume@lelarge.info>\n"
 "Language-Team:  <pgsql-fr-generale@postgresql.org>\n"
 "MIME-Version: 1.0\n"
@@ -122,150 +122,150 @@ msgstr "n'a pas pu tronquer le répertoire « %s » : contournement apparent"
 msgid "removing file \"%s\""
 msgstr "suppression du fichier « %s »"
 
-#: access/transam/twophase.c:225
+#: access/transam/twophase.c:240
 #, c-format
 msgid "transaction identifier \"%s\" is too long"
 msgstr "l'identifiant de la transaction « %s » est trop long"
 
-#: access/transam/twophase.c:259
+#: access/transam/twophase.c:274
 #, c-format
 msgid "transaction identifier \"%s\" is already in use"
 msgstr "l'identifiant de la transaction « %s » est déjà utilisé"
 
-#: access/transam/twophase.c:268
+#: access/transam/twophase.c:283
 msgid "maximum number of prepared transactions reached"
 msgstr "nombre maximum de transactions préparées obtenu"
 
-#: access/transam/twophase.c:269
+#: access/transam/twophase.c:284
 #, c-format
 msgid "Increase max_prepared_transactions (currently %d)."
 msgstr "Augmentez max_prepared_transactions (actuellement %d)."
 
-#: access/transam/twophase.c:383
+#: access/transam/twophase.c:398
 #, c-format
 msgid "prepared transaction with identifier \"%s\" is busy"
 msgstr "la transaction préparée d'identifiant « %s » est occupée"
 
-#: access/transam/twophase.c:391
+#: access/transam/twophase.c:406
 msgid "permission denied to finish prepared transaction"
 msgstr "droit refusé pour terminer la transaction préparée"
 
-#: access/transam/twophase.c:392
+#: access/transam/twophase.c:407
 msgid "Must be superuser or the user that prepared the transaction."
 msgstr "Doit être super-utilisateur ou l'utilisateur qui a préparé la transaction."
 
-#: access/transam/twophase.c:403
+#: access/transam/twophase.c:418
 msgid "prepared transaction belongs to another database"
 msgstr "la transaction préparée appartient à une autre base de données"
 
-#: access/transam/twophase.c:404
+#: access/transam/twophase.c:419
 msgid "Connect to the database where the transaction was prepared to finish it."
 msgstr ""
 "Connectez-vous à la base de données où la transaction a été préparée pour\n"
 "la terminer."
 
-#: access/transam/twophase.c:418
+#: access/transam/twophase.c:433
 #, c-format
 msgid "prepared transaction with identifier \"%s\" does not exist"
 msgstr "la transaction préparée d'identifiant « %s » n'existe pas"
 
-#: access/transam/twophase.c:871
+#: access/transam/twophase.c:902
 msgid "two-phase state file maximum length exceeded"
 msgstr ""
 "longueur maximum du fichier de statut de la validation en deux phases\n"
 "dépassé"
 
-#: access/transam/twophase.c:889
+#: access/transam/twophase.c:920
 #, c-format
 msgid "could not create twophase state file \"%s\": %m"
 msgstr "n'a pas pu créer le fichier de statut de la validation en deux phases « %s » : %m"
 
-#: access/transam/twophase.c:903
-#: access/transam/twophase.c:920
-#: access/transam/twophase.c:969
-#: access/transam/twophase.c:1313
-#: access/transam/twophase.c:1320
+#: access/transam/twophase.c:934
+#: access/transam/twophase.c:951
+#: access/transam/twophase.c:1000
+#: access/transam/twophase.c:1344
+#: access/transam/twophase.c:1351
 #, c-format
 msgid "could not write twophase state file: %m"
 msgstr "n'a pas pu écrire dans le fichier d'état de la validation en deux phases : %m"
 
-#: access/transam/twophase.c:929
+#: access/transam/twophase.c:960
 #, c-format
 msgid "could not seek in twophase state file: %m"
 msgstr "n'a pas pu trouver le fichier de statut de la validation en deux phases : %m"
 
-#: access/transam/twophase.c:975
-#: access/transam/twophase.c:1338
+#: access/transam/twophase.c:1006
+#: access/transam/twophase.c:1369
 #, c-format
 msgid "could not close twophase state file: %m"
 msgstr "n'a pas pu fermer le fichier d'état de la validation en deux phases : %m"
 
-#: access/transam/twophase.c:1045
-#: access/transam/twophase.c:1415
+#: access/transam/twophase.c:1076
+#: access/transam/twophase.c:1446
 #, c-format
 msgid "could not open twophase state file \"%s\": %m"
 msgstr "n'a pas pu ouvrir le fichier d'état de la validation en deux phases « %s » : %m"
 
-#: access/transam/twophase.c:1061
+#: access/transam/twophase.c:1092
 #, c-format
 msgid "could not stat twophase state file \"%s\": %m"
 msgstr "n'a pas pu tester le fichier d'état de la validation en deux phases « %s » : %m"
 
-#: access/transam/twophase.c:1092
+#: access/transam/twophase.c:1123
 #, c-format
 msgid "could not read twophase state file \"%s\": %m"
 msgstr "n'a pas pu lire le fichier d'état de la validation en deux phases « %s »: %m"
 
-#: access/transam/twophase.c:1153
+#: access/transam/twophase.c:1184
 #, c-format
 msgid "twophase state file for transaction %u is corrupt"
 msgstr "le fichier d'état de la validation en deux phases est corrompu pour la transaction %u"
 
-#: access/transam/twophase.c:1275
+#: access/transam/twophase.c:1306
 #, c-format
 msgid "could not remove two-phase state file \"%s\": %m"
 msgstr ""
 "n'a pas pu supprimer le fichier d'état de la validation en deux phases\n"
 "« %s » : %m"
 
-#: access/transam/twophase.c:1304
+#: access/transam/twophase.c:1335
 #, c-format
 msgid "could not recreate twophase state file \"%s\": %m"
 msgstr "n'a pas pu re-créer le fichier d'état de la validation en deux phases « %s » : %m"
 
-#: access/transam/twophase.c:1332
+#: access/transam/twophase.c:1363
 #, c-format
 msgid "could not fsync twophase state file: %m"
 msgstr "n'a pas pu synchroniser (fsync) le fichier d'état de la validation en deux phases : %m"
 
-#: access/transam/twophase.c:1424
+#: access/transam/twophase.c:1455
 #, c-format
 msgid "could not fsync twophase state file \"%s\": %m"
 msgstr "n'a pas pu synchroniser (fsync) le fichier d'état de la validation en deux phases « %s » : %m"
 
-#: access/transam/twophase.c:1431
+#: access/transam/twophase.c:1462
 #, c-format
 msgid "could not close twophase state file \"%s\": %m"
 msgstr "n'a pas pu fermer le fichier d'état de la validation en deux phases « %s »: %m"
 
-#: access/transam/twophase.c:1487
+#: access/transam/twophase.c:1518
 #, c-format
 msgid "removing future twophase state file \"%s\""
 msgstr "suppression le futu fichier d'état de la validation en deux phases « %s »"
 
-#: access/transam/twophase.c:1503
-#: access/transam/twophase.c:1514
-#: access/transam/twophase.c:1602
+#: access/transam/twophase.c:1534
+#: access/transam/twophase.c:1545
+#: access/transam/twophase.c:1633
 #, c-format
 msgid "removing corrupt twophase state file \"%s\""
 msgstr "suppression du fichier d'état corrompu de la validation en deux phases « %s »"
 
-#: access/transam/twophase.c:1591
+#: access/transam/twophase.c:1622
 #, c-format
 msgid "removing stale twophase state file \"%s\""
 msgstr "suppression du vieux fichier d'état de la validation en deux phases « %s »"
 
-#: access/transam/twophase.c:1609
+#: access/transam/twophase.c:1640
 #, c-format
 msgid "recovering prepared transaction %u"
 msgstr "récupération de la transaction préparée %u"
@@ -315,48 +315,48 @@ msgid "cannot have more than 2^32-1 commands in a transaction"
 msgstr "ne peux pas avoir plus de 2^32-1 commandes dans une transaction"
 
 #. translator: %s represents an SQL statement name
-#: access/transam/xact.c:2456
+#: access/transam/xact.c:2457
 #, c-format
 msgid "%s cannot run inside a transaction block"
 msgstr "%s ne peut pas être exécuté dans un bloc de transaction"
 
 #. translator: %s represents an SQL statement name
-#: access/transam/xact.c:2466
+#: access/transam/xact.c:2467
 #, c-format
 msgid "%s cannot run inside a subtransaction"
 msgstr "%s ne peut pas être exécuté dans un sous-bloc de transaction"
 
 #. translator: %s represents an SQL statement name
-#: access/transam/xact.c:2478
+#: access/transam/xact.c:2479
 #, c-format
 msgid "%s cannot be executed from a function"
 msgstr "%s ne peut pas être exécuté à partir d'une fonction"
 
 #. translator: %s represents an SQL statement name
-#: access/transam/xact.c:2529
+#: access/transam/xact.c:2530
 #, c-format
 msgid "%s may only be used in transaction blocks"
 msgstr "%s pourrait seulement être utilisé dans des blocs de transaction"
 
-#: access/transam/xact.c:2711
+#: access/transam/xact.c:2712
 msgid "there is already a transaction in progress"
 msgstr "une transaction est déjà en cours"
 
-#: access/transam/xact.c:2878
-#: access/transam/xact.c:2970
+#: access/transam/xact.c:2879
+#: access/transam/xact.c:2971
 msgid "there is no transaction in progress"
 msgstr "aucune transaction en cours"
 
-#: access/transam/xact.c:3064
-#: access/transam/xact.c:3114
-#: access/transam/xact.c:3120
-#: access/transam/xact.c:3164
-#: access/transam/xact.c:3212
-#: access/transam/xact.c:3218
+#: access/transam/xact.c:3065
+#: access/transam/xact.c:3115
+#: access/transam/xact.c:3121
+#: access/transam/xact.c:3165
+#: access/transam/xact.c:3213
+#: access/transam/xact.c:3219
 msgid "no such savepoint"
 msgstr "aucun point de sauvegarde"
 
-#: access/transam/xact.c:3846
+#: access/transam/xact.c:3847
 msgid "cannot have more than 2^32-1 subtransactions in a transaction"
 msgstr "ne peut pas avoir plus de 2^32-1 sous-transactions dans une transaction"
 
@@ -418,8 +418,8 @@ msgstr "n'a pas pu créer le fichier « %s » : %m"
 #: access/transam/xlog.c:3336
 #: utils/init/miscinit.c:1063
 #: utils/init/miscinit.c:1072
-#: utils/misc/guc.c:5090
-#: utils/misc/guc.c:5153
+#: utils/misc/guc.c:5116
+#: utils/misc/guc.c:5179
 #: commands/copy.c:1074
 #: commands/tablespace.c:638
 #: commands/tablespace.c:644
@@ -1513,7 +1513,7 @@ msgstr "n'a pas pu modifier le répertoire par « %s » : %m"
 #: storage/file/fd.c:676
 #: storage/file/fd.c:811
 #: storage/ipc/procarray.c:515
-#: libpq/auth.c:566
+#: libpq/auth.c:535
 #: postmaster/postmaster.c:828
 #: postmaster/postmaster.c:1724
 #: postmaster/postmaster.c:2492
@@ -1526,8 +1526,8 @@ msgstr "mémoire épuisée"
 #: commands/user.c:732
 #: commands/user.c:838
 #: commands/user.c:976
-#: commands/variable.c:660
-#: commands/variable.c:792
+#: commands/variable.c:644
+#: commands/variable.c:757
 #, c-format
 msgid "role \"%s\" does not exist"
 msgstr "le rôle « %s » n'existe pas"
@@ -1628,7 +1628,7 @@ msgid "could not write lock file \"%s\": %m"
 msgstr "n'a pas pu écrire le fichier verrou « %s » : %m"
 
 #: utils/init/miscinit.c:1023
-#: utils/misc/guc.c:5221
+#: utils/misc/guc.c:5247
 #, c-format
 msgid "could not read from file \"%s\": %m"
 msgstr "n'a pas pu lire à partir du fichier « %s » : %m"
@@ -2241,28 +2241,28 @@ msgstr "le fuseau horaire « %s » n'est pas valide pour le type « interval »"
 msgid "inconsistent use of year %04d and \"BC\""
 msgstr "utilisation non cohérente de l'année %04d et de « BC »"
 
-#: utils/adt/datetime.c:3407
-#: utils/adt/datetime.c:3414
+#: utils/adt/datetime.c:3410
+#: utils/adt/datetime.c:3417
 #, c-format
 msgid "date/time field value out of range: \"%s\""
 msgstr "valeur du champ date/time en dehors des limites : « %s »"
 
-#: utils/adt/datetime.c:3416
+#: utils/adt/datetime.c:3419
 msgid "Perhaps you need a different \"datestyle\" setting."
 msgstr "Peut-être avez-vous besoin d'un paramètrage « datestyle » différent."
 
-#: utils/adt/datetime.c:3421
+#: utils/adt/datetime.c:3424
 #, c-format
 msgid "interval field value out of range: \"%s\""
 msgstr "valeur du champ interval en dehors des limites : « %s »"
 
-#: utils/adt/datetime.c:3427
+#: utils/adt/datetime.c:3430
 #, c-format
 msgid "time zone displacement out of range: \"%s\""
 msgstr "déplacement du fuseau horaire en dehors des limites : « %s »"
 
 #. translator: first %s is inet or cidr
-#: utils/adt/datetime.c:3434
+#: utils/adt/datetime.c:3437
 #: utils/adt/network.c:93
 #, c-format
 msgid "invalid input syntax for type %s: \"%s\""
@@ -4859,11 +4859,11 @@ msgstr ""
 "encore avec la variable d'environnement PGDATA.\n"
 
 #: utils/misc/guc.c:3578
-#: utils/misc/guc.c:4105
-#: utils/misc/guc.c:4145
-#: utils/misc/guc.c:4220
-#: utils/misc/guc.c:4557
-#: utils/misc/guc.c:4715
+#: utils/misc/guc.c:4131
+#: utils/misc/guc.c:4171
+#: utils/misc/guc.c:4246
+#: utils/misc/guc.c:4583
+#: utils/misc/guc.c:4741
 #, c-format
 msgid "unrecognized configuration parameter \"%s\""
 msgstr "paramètre de configuration « %s » non reconnu"
@@ -4893,102 +4893,109 @@ msgstr "le paramètre « %s » ne peut pas être initialisé après le lancement du se
 msgid "permission denied to set parameter \"%s\""
 msgstr "droit refusé pour initialiser le paramètre « %s »"
 
-#: utils/misc/guc.c:3708
+#: utils/misc/guc.c:3689
+#, c-format
+msgid "cannot set parameter \"%s\" within security-definer function"
+msgstr ""
+"ne peut pas initialiser le paramètre « %s » dans la fonction de type SECURITY\n"
+"DEFINER"
+
+#: utils/misc/guc.c:3734
 #, c-format
 msgid "parameter \"%s\" requires a Boolean value"
 msgstr "le paramètre « %s » requiert une valeur booléenne"
 
-#: utils/misc/guc.c:3728
-#: utils/misc/guc.c:3813
+#: utils/misc/guc.c:3754
+#: utils/misc/guc.c:3839
 #, c-format
 msgid "invalid value for parameter \"%s\": %d"
 msgstr "valeur invalide pour le paramètre « %s » : %d"
 
-#: utils/misc/guc.c:3785
+#: utils/misc/guc.c:3811
 #, c-format
 msgid "parameter \"%s\" requires an integer value"
 msgstr "Le paramètre « %s » requiert une valeur entière"
 
-#: utils/misc/guc.c:3793
+#: utils/misc/guc.c:3819
 #, c-format
 msgid "%d is outside the valid range for parameter \"%s\" (%d .. %d)"
 msgstr "%d est en dehors des limites valides pour le paramètre « %s » (%d .. %d)"
 
-#: utils/misc/guc.c:3870
+#: utils/misc/guc.c:3896
 #, c-format
 msgid "parameter \"%s\" requires a numeric value"
 msgstr "le paramètre « %s » requiert une valeur numérique"
 
-#: utils/misc/guc.c:3878
+#: utils/misc/guc.c:3904
 #, c-format
 msgid "%g is outside the valid range for parameter \"%s\" (%g .. %g)"
 msgstr "%g est en dehors des limites valides pour le paramètre « %s » (%g .. %g)"
 
-#: utils/misc/guc.c:3898
+#: utils/misc/guc.c:3924
 #, c-format
 msgid "invalid value for parameter \"%s\": %g"
 msgstr "valeur invalide pour le paramètre « %s » : %g"
 
-#: utils/misc/guc.c:3999
+#: utils/misc/guc.c:4025
 #, c-format
 msgid "invalid value for parameter \"%s\": \"%s\""
 msgstr "valeur invalide pour le paramètre « %s » : « %s »"
 
-#: utils/misc/guc.c:4109
-#: utils/misc/guc.c:4149
-#: utils/misc/guc.c:4719
+#: utils/misc/guc.c:4135
+#: utils/misc/guc.c:4175
+#: utils/misc/guc.c:4745
 #, c-format
 msgid "must be superuser to examine \"%s\""
 msgstr "doit être super-utilisateur pour examiner « %s »"
 
-#: utils/misc/guc.c:4229
+#: utils/misc/guc.c:4255
 #, c-format
 msgid "SET %s takes only one argument"
 msgstr "SET %s prend un seul argument"
 
-#: utils/misc/guc.c:4331
+#: utils/misc/guc.c:4357
 msgid "SET requires parameter name"
 msgstr "SET requiert le nom du paramètre"
 
-#: utils/misc/guc.c:4395
+#: utils/misc/guc.c:4421
 #, c-format
 msgid "attempt to redefine parameter \"%s\""
 msgstr "tentative de redéfinition du paramètre « %s »"
 
-#: utils/misc/guc.c:5331
+#: utils/misc/guc.c:5357
 #, c-format
 msgid "could not parse setting for parameter \"%s\""
 msgstr "n'a pas pu analyser la configuration du paramètre « %s »"
 
-#: utils/misc/guc.c:5529
+#: utils/misc/guc.c:5555
 msgid "invalid list syntax for parameter \"log_destination\""
 msgstr "syntaxe de liste invalide pour le paramètre « log_destination »"
 
-#: utils/misc/guc.c:5552
+#: utils/misc/guc.c:5578
 #, c-format
 msgid "unrecognized \"log_destination\" key word: \"%s\""
 msgstr "mot clé « log_destination » non reconnu : « %s »"
 
-#: utils/misc/guc.c:5814
+#: utils/misc/guc.c:5840
 msgid "SET AUTOCOMMIT TO OFF is no longer supported"
 msgstr "SET AUTOCOMMIT TO OFF n'est plus supporté"
 
-#: utils/misc/guc.c:5862
+#: utils/misc/guc.c:5888
 #, c-format
 msgid "invalid syntax for \"custom_variable_classes\": \"%s\""
 msgstr "syntaxe invalide pour « custom_variable_classes » : « %s »"
 
-#: utils/misc/guc.c:5891
+#: utils/misc/guc.c:5917
 msgid "cannot enable parameter when \"log_statement_stats\" is true"
 msgstr "ne peut pas activer le paramètre avec « log_statement_stats » à true"
 
-#: utils/misc/guc.c:5908
+#: utils/misc/guc.c:5934
 msgid "cannot enable \"log_statement_stats\" when \"log_parser_stats\", \"log_planner_stats\", or \"log_executor_stats\" is true"
 msgstr ""
 "ne peut pas activer « log_statement_stats » lorsque « log_parser_stats »,\n"
 "« log_planner_stats » ou « log_executor_stats » est true"
 
-#: utils/misc/guc.c:5927
+#: utils/misc/guc.c:5953
 msgid "cannot set transaction read-write mode inside a read-only transaction"
 msgstr ""
 "ne peut pas initialiser le mode lecture-écriture de la transaction à\n"
@@ -4998,18 +5005,18 @@ msgstr ""
 msgid "internal error: unrecognized run-time parameter type\n"
 msgstr "erreur interne : type de paramètre d'exécution non reconnu\n"
 
-#: guc-file.l:152
+#: guc-file.l:153
 #: libpq/hba.c:988
 #, c-format
 msgid "could not open configuration file \"%s\": %m"
 msgstr "n'a pas pu ouvrir le fichier de configuration « %s » : %m"
 
-#: guc-file.l:264
+#: guc-file.l:265
 #, c-format
 msgid "syntax error in file \"%s\" line %u, near end of line"
 msgstr "erreur de syntaxe dans le fichier « %s », ligne %u, près de la fin de ligne"
 
-#: guc-file.l:269
+#: guc-file.l:270
 #, c-format
 msgid "syntax error in file \"%s\" line %u, near token \"%s\""
 msgstr "erreur de syntaxe dans le fichier « %s », ligne %u, près du mot clé « %s »"
@@ -5243,12 +5250,12 @@ msgstr "aucune fonction en entrée disponible pour le type %s"
 msgid "no output function available for type %s"
 msgstr "aucune fonction en sortie disponible pour le type %s"
 
-#: utils/cache/relcache.c:3219
+#: utils/cache/relcache.c:3269
 #, c-format
 msgid "could not create relation-cache initialization file \"%s\": %m"
 msgstr "n'a pas pu créer le fichier d'initialisation relation-cache « %s » : %m"
 
-#: utils/cache/relcache.c:3221
+#: utils/cache/relcache.c:3271
 msgid "Continuing anyway, but there's something wrong."
 msgstr "Continue malgré tout, mais quelque chose s'est mal passé."
 
@@ -6450,7 +6457,7 @@ msgstr ""
 "entrée"
 
 #: catalog/pg_aggregate.c:168
-#: catalog/pg_proc.c:183
+#: catalog/pg_proc.c:184
 #: executor/functions.c:1048
 msgid "cannot determine result data type"
 msgstr "n'a pas pu déterminer le type de données en résultat"
@@ -6555,77 +6562,77 @@ msgstr "l'opérateur %s existe déjà"
 msgid "operator cannot be its own negator or sort operator"
 msgstr "l'opérateur ne peut pas être son propre opérateur de négation ou de tri"
 
-#: catalog/pg_proc.c:111
+#: catalog/pg_proc.c:112
 #: parser/parse_func.c:1214
 #, c-format
 msgid "functions cannot have more than %d arguments"
 msgstr "les fonctions ne peuvent avoir plus de %d arguments"
 
-#: catalog/pg_proc.c:184
+#: catalog/pg_proc.c:185
 #: executor/functions.c:1049
 msgid "A function returning \"anyarray\" or \"anyelement\" must have at least one argument of either type."
 msgstr "Une fonction renvoyant \"anyarray\" ou \"anyelement\" doit avoir au moins un argument du même type."
 
-#: catalog/pg_proc.c:189
+#: catalog/pg_proc.c:190
 msgid "unsafe use of pseudo-type \"internal\""
 msgstr "utilisation non sûre des pseudo-types « INTERNAL »"
 
-#: catalog/pg_proc.c:190
+#: catalog/pg_proc.c:191
 msgid "A function returning \"internal\" must have at least one \"internal\" argument."
 msgstr ""
 "Une fonction renvoyant « internal » doit avoir au moins un argument du type\n"
 "« internal »."
 
-#: catalog/pg_proc.c:202
+#: catalog/pg_proc.c:203
 #, c-format
 msgid "\"%s\" is already an attribute of type %s"
 msgstr "« %s » est déjà un attribut du type %s"
 
-#: catalog/pg_proc.c:267
+#: catalog/pg_proc.c:268
 #, c-format
 msgid "function \"%s\" already exists with same argument types"
 msgstr "la fonction « %s » existe déjà avec des types d'arguments identiques"
 
-#: catalog/pg_proc.c:281
-#: catalog/pg_proc.c:303
+#: catalog/pg_proc.c:282
+#: catalog/pg_proc.c:304
 msgid "cannot change return type of existing function"
 msgstr "ne peut pas modifier le type de retour d'une fonction existante"
 
-#: catalog/pg_proc.c:282
-#: catalog/pg_proc.c:305
+#: catalog/pg_proc.c:283
+#: catalog/pg_proc.c:306
 msgid "Use DROP FUNCTION first."
 msgstr "Utilisez tout d'abord DROP FUNCTION."
 
-#: catalog/pg_proc.c:304
+#: catalog/pg_proc.c:305
 msgid "Row type defined by OUT parameters is different."
 msgstr "Le type de ligne défini par les paramètres OUT est différent."
 
-#: catalog/pg_proc.c:314
+#: catalog/pg_proc.c:315
 #, c-format
 msgid "function \"%s\" is an aggregate"
 msgstr "la fonction « %s » est un agrégat"
 
-#: catalog/pg_proc.c:319
+#: catalog/pg_proc.c:320
 #, c-format
 msgid "function \"%s\" is not an aggregate"
 msgstr "la fonction « %s » n'est pas un agrégat"
 
-#: catalog/pg_proc.c:444
+#: catalog/pg_proc.c:448
 #, c-format
 msgid "there is no built-in function named \"%s\""
 msgstr "il n'existe pas de fonction intégrée nommée « %s »"
 
-#: catalog/pg_proc.c:540
+#: catalog/pg_proc.c:544
 #, c-format
 msgid "SQL functions cannot return type %s"
 msgstr "les fonctions SQL ne peuvent pas renvoyer un type %s"
 
-#: catalog/pg_proc.c:556
+#: catalog/pg_proc.c:560
 #, c-format
 msgid "SQL functions cannot have arguments of type %s"
 msgstr "les fonctions SQL ne peuvent avoir d'arguments du type %s"
 
-#: catalog/pg_proc.c:627
+#: catalog/pg_proc.c:631
 #: executor/functions.c:794
 #, c-format
 msgid "SQL function \"%s\""
@@ -8880,51 +8887,51 @@ msgstr "Quelques bases de données n'ont pas eu l'opération de maintenance VACUUM
 msgid "Better vacuum them soon, or you may have a wraparound failure."
 msgstr "Il vaudrait mieux lancer VACUUM rapidement, sinon vous risquez une réinitilisation du numéro de transaction."
 
-#: commands/vacuum.c:1020
+#: commands/vacuum.c:1021
 #, c-format
 msgid "skipping \"%s\" --- only table or database owner can vacuum it"
 msgstr ""
 "ignore « %s » --- seul le propriétaire de la table ou de la base de données\n"
 "peut exécuter un VACUUM"
 
-#: commands/vacuum.c:1035
+#: commands/vacuum.c:1036
 #, c-format
 msgid "skipping \"%s\" --- cannot vacuum indexes, views, or special system tables"
 msgstr ""
 "ignore « %s » --- n'a pas pu exécuter un VACUUM sur les index, vues ou\n"
 "tables système"
 
-#: commands/vacuum.c:1262
-#: commands/vacuumlazy.c:229
+#: commands/vacuum.c:1273
+#: commands/vacuumlazy.c:245
 #, c-format
 msgid "vacuuming \"%s.%s\""
 msgstr "exécution du VACUUM sur « %s.%s »"
 
-#: commands/vacuum.c:1314
-#: commands/vacuumlazy.c:322
+#: commands/vacuum.c:1325
+#: commands/vacuumlazy.c:338
 #, c-format
 msgid "relation \"%s\" page %u is uninitialized --- fixing"
 msgstr "relation « %s » : la page %u n'est pas initialisée --- correction en cours"
 
-#: commands/vacuum.c:1438
+#: commands/vacuum.c:1449
 #, c-format
 msgid "relation \"%s\" TID %u/%u: InsertTransactionInProgress %u --- can't shrink relation"
 msgstr "Pour la relation « %s », TID %u/%u : InsertTransactionInProgress %u --- n'a pas pu diminuer la relation"
 
-#: commands/vacuum.c:1451
+#: commands/vacuum.c:1462
 #, c-format
 msgid "relation \"%s\" TID %u/%u: DeleteTransactionInProgress %u --- can't shrink relation"
 msgstr "Pour la relation « %s », TID %u/%u : DeleteTransactionInProgress %u --- n'a pas pu diminuer la relation"
 
-#: commands/vacuum.c:1611
-#: commands/vacuumlazy.c:485
+#: commands/vacuum.c:1622
+#: commands/vacuumlazy.c:501
 #, c-format
 msgid "\"%s\": found %.0f removable, %.0f nonremovable row versions in %u pages"
 msgstr ""
 "« %s » : %.0f versions de ligne supprimables, %.0f non supprimables\n"
 "parmi %u pages"
 
-#: commands/vacuum.c:1614
+#: commands/vacuum.c:1625
 #, c-format
 msgid ""
 "%.0f dead row versions cannot be removed yet.\n"
@@ -8946,34 +8953,34 @@ msgstr ""
 "disponibles.\n"
 "%s."
 
-#: commands/vacuum.c:2425
+#: commands/vacuum.c:2446
 #, c-format
 msgid "\"%s\": moved %u row versions, truncated %u to %u pages"
 msgstr "« %s » : %u versions de ligne déplacées, %u pages tronquées sur %u"
 
-#: commands/vacuum.c:2428
-#: commands/vacuumlazy.c:546
-#: commands/vacuumlazy.c:840
+#: commands/vacuum.c:2449
+#: commands/vacuumlazy.c:562
+#: commands/vacuumlazy.c:856
 #, c-format
 msgid "%s."
 msgstr "%s."
 
-#: commands/vacuum.c:2953
-#: commands/vacuumlazy.c:837
+#: commands/vacuum.c:2976
+#: commands/vacuumlazy.c:853
 #, c-format
 msgid "\"%s\": truncated %u to %u pages"
 msgstr "« %s » : %u pages tronqués en %u"
 
-#: commands/vacuum.c:3042
-#: commands/vacuum.c:3109
-#: commands/vacuumlazy.c:660
-#: commands/vacuumlazy.c:736
+#: commands/vacuum.c:3065
+#: commands/vacuum.c:3132
+#: commands/vacuumlazy.c:676
+#: commands/vacuumlazy.c:752
 #, c-format
 msgid "index \"%s\" now contains %.0f row versions in %u pages"
 msgstr "l'index « %s » contient maintenant %.0f versions de ligne dans %u pages"
 
-#: commands/vacuum.c:3046
-#: commands/vacuumlazy.c:664
+#: commands/vacuum.c:3069
+#: commands/vacuumlazy.c:680
 #, c-format
 msgid ""
 "%u index pages have been deleted, %u are currently reusable.\n"
@@ -8982,21 +8989,21 @@ msgstr ""
 "%u pages d'index ont été supprimées, %u sont actuellement réutilisables.\n"
 "%s."
 
-#: commands/vacuum.c:3060
-#: commands/vacuum.c:3129
+#: commands/vacuum.c:3083
+#: commands/vacuum.c:3152
 #, c-format
 msgid "index \"%s\" contains %.0f row versions, but table contains %.0f row versions"
 msgstr ""
 "l'index « %s » contient %.0f versions de ligne, mais la table contient %.0f\n"
 "versions de ligne"
 
-#: commands/vacuum.c:3063
-#: commands/vacuum.c:3132
+#: commands/vacuum.c:3086
+#: commands/vacuum.c:3155
 msgid "Rebuild the index with REINDEX."
 msgstr "Reconstruisez l'index avec REINDEX."
 
-#: commands/vacuum.c:3113
-#: commands/vacuumlazy.c:740
+#: commands/vacuum.c:3136
+#: commands/vacuumlazy.c:756
 #, c-format
 msgid ""
 "%.0f index row versions were removed.\n"
@@ -9007,7 +9014,7 @@ msgstr ""
 "%u pages d'index ont été supprimées, %u sont actuellement réutilisables.\n"
 "%s."
 
-#: commands/vacuumlazy.c:488
+#: commands/vacuumlazy.c:504
 #, c-format
 msgid ""
 "%.0f dead row versions cannot be removed yet.\n"
@@ -9020,7 +9027,7 @@ msgstr ""
 "%u pages sont entièrement vides.\n"
 "%s."
 
-#: commands/vacuumlazy.c:543
+#: commands/vacuumlazy.c:559
 #, c-format
 msgid "\"%s\": removed %d row versions in %d pages"
 msgstr "« %s »: %d versions de ligne supprimée parmi %d pages"
@@ -9070,17 +9077,7 @@ msgstr ""
 "SET TRANSACTION ISOLATION LEVEL ne doit pas être appelé dans une\n"
 "sous-transaction"
 
-#: commands/variable.c:638
-msgid "cannot set session authorization within security-definer function"
-msgstr ""
-"ne peut pas initialiser l'autorisation de session dans une fonction\n"
-"SECURITY DEFINER"
-
-#: commands/variable.c:764
-msgid "cannot set role within security-definer function"
-msgstr "ne peut pas modifier le rôle dans une fonction SECURITY DEFINER"
-
-#: commands/variable.c:809
+#: commands/variable.c:774
 #, c-format
 msgid "permission denied to set role \"%s\""
 msgstr "droit refusé pour configurer le rôle « %s »"
@@ -9889,60 +9886,55 @@ msgstr ""
 msgid "could not enable credential reception: %m"
 msgstr "n'a pas pu activer la réception de lettres de créance : %m"
 
-#: libpq/auth.c:514
+#: libpq/auth.c:564
+msgid "empty password returned by client"
+msgstr "mot de passe vide renvoyé par le client"
+
+#: libpq/auth.c:574
 #, c-format
 msgid "error from underlying PAM layer: %s"
 msgstr "erreur provenant de la couche PAM : %s"
 
-#: libpq/auth.c:519
-#, c-format
-msgid "unsupported PAM conversation %d/%s"
-msgstr "conversation PAM %d/%s non supportée"
-
-#: libpq/auth.c:551
-msgid "empty password returned by client"
-msgstr "mot de passe vide renvoyé par le client"
-
-#: libpq/auth.c:611
+#: libpq/auth.c:643
 #, c-format
 msgid "could not create PAM authenticator: %s"
 msgstr "n'a pas pu créer l'authenticateur PAM : %s"
 
-#: libpq/auth.c:622
+#: libpq/auth.c:654
 #, c-format
 msgid "pam_set_item(PAM_USER) failed: %s"
 msgstr "pam_set_item(PAM_USER) a échoué : %s"
 
-#: libpq/auth.c:633
+#: libpq/auth.c:665
 #, c-format
 msgid "pam_set_item(PAM_CONV) failed: %s"
 msgstr "pam_set_item(PAM_CONV) a échoué : %s"
 
-#: libpq/auth.c:644
+#: libpq/auth.c:676
 #, c-format
 msgid "pam_authenticate failed: %s"
 msgstr "pam_authenticate a échoué : %s"
 
-#: libpq/auth.c:655
+#: libpq/auth.c:687
 #, c-format
 msgid "pam_acct_mgmt failed: %s"
 msgstr "pam_acct_mgmt a échoué : %s"
 
-#: libpq/auth.c:666
+#: libpq/auth.c:698
 #, c-format
 msgid "could not release PAM authenticator: %s"
 msgstr "n'a pas pu fermer l'authenticateur PAM : %s"
 
-#: libpq/auth.c:704
+#: libpq/auth.c:736
 #, c-format
 msgid "expected password response, got message type %d"
 msgstr "en attente du mot de passe, a reçu un type de message %d"
 
-#: libpq/auth.c:732
+#: libpq/auth.c:764
 msgid "invalid password packet size"
 msgstr "taille du paquet du mot de passe invalide"
 
-#: libpq/auth.c:736
+#: libpq/auth.c:768
 msgid "received password packet"
 msgstr "paquet du mot de passe reçu"
 
@@ -11263,22 +11255,22 @@ msgid "operator too long"
 msgstr "opérateur trop long"
 
 #. translator: %s is typically "syntax error"
-#: scan.l:761
+#: scan.l:762
 #, c-format
 msgid "%s at end of input"
 msgstr "%s à la fin de l'entrée"
 
 #. translator: first %s is typically "syntax error"
-#: scan.l:769
+#: scan.l:770
 #, c-format
 msgid "%s at or near \"%s\""
 msgstr "%s sur ou près de « %s »"
 
-#: scan.l:893
+#: scan.l:894
 msgid "nonstandard use of escape in a string literal"
 msgstr "utilisation non standard d'un échappement dans une chaîne litérale"
 
-#: scan.l:894
+#: scan.l:895
 msgid ""
 "Use the escape string syntax for escapes, e.g., E'\\r\\n"
 "'."
@@ -12612,6 +12604,12 @@ msgstr "le processus fils a quitté avec un statut %d non reconnu"
 msgid "unrecognized error %d"
 msgstr "erreur %d non reconnue"
 
+#~ msgid "cannot set session authorization within security-definer function"
+#~ msgstr ""
+#~ "ne peut pas initialiser l'autorisation de session dans une fonction\n"
+#~ "SECURITY DEFINER"
+#~ msgid "unsupported PAM conversation %d/%s"
+#~ msgstr "conversation PAM %d/%s non supportée"
 #~ msgid "syntax error: cannot back up"
 #~ msgstr "erreur de syntaxe : n'a pas pu revenir"
 #~ msgid "syntax error; also virtual memory exhausted"
