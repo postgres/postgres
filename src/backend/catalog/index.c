@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.261.2.5 2008/05/27 21:13:39 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.261.2.6 2009/12/09 21:58:42 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -45,6 +45,7 @@
 #include "storage/smgr.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
+#include "utils/guc.h"
 #include "utils/inval.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
@@ -1364,7 +1365,8 @@ index_build(Relation heapRelation,
 {
 	RegProcedure procedure;
 	Oid			save_userid;
-	bool		save_secdefcxt;
+	int			save_sec_context;
+	int			save_nestlevel;
 
 	/*
 	 * sanity checks
@@ -1376,11 +1378,14 @@ index_build(Relation heapRelation,
 	Assert(RegProcedureIsValid(procedure));
 
 	/*
-	 * Switch to the table owner's userid, so that any index functions are
-	 * run as that user.
+	 * Switch to the table owner's userid, so that any index functions are run
+	 * as that user.  Also lock down security-restricted operations and
+	 * arrange to make GUC variable changes local to this command.
 	 */
-	GetUserIdAndContext(&save_userid, &save_secdefcxt);
-	SetUserIdAndContext(heapRelation->rd_rel->relowner, true);
+	GetUserIdAndSecContext(&save_userid, &save_sec_context);
+	SetUserIdAndSecContext(heapRelation->rd_rel->relowner,
+						   save_sec_context | SECURITY_RESTRICTED_OPERATION);
+	save_nestlevel = NewGUCNestLevel();
 
 	/*
 	 * Call the access method's build procedure
@@ -1390,8 +1395,11 @@ index_build(Relation heapRelation,
 					 PointerGetDatum(indexRelation),
 					 PointerGetDatum(indexInfo));
 
-	/* Restore userid */
-	SetUserIdAndContext(save_userid, save_secdefcxt);
+	/* Roll back any GUC changes executed by index functions */
+	AtEOXact_GUC(false, save_nestlevel);
+
+	/* Restore userid and security context */
+	SetUserIdAndSecContext(save_userid, save_sec_context);
 }
 
 
