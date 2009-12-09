@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.252.4.6 2009/09/03 22:08:54 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.252.4.7 2009/12/09 21:58:55 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -1682,7 +1682,7 @@ static struct config_string ConfigureNamesString[] =
 		{"session_authorization", PGC_USERSET, UNGROUPED,
 			gettext_noop("Sets the session user name."),
 			NULL,
-			GUC_IS_NAME | GUC_REPORT | GUC_NO_SHOW_ALL | GUC_NO_RESET_ALL | GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_NOT_WHILE_SEC_DEF
+			GUC_IS_NAME | GUC_REPORT | GUC_NO_SHOW_ALL | GUC_NO_RESET_ALL | GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_NOT_WHILE_SEC_REST
 		},
 		&session_authorization_string,
 		NULL, assign_session_authorization, show_session_authorization
@@ -1898,6 +1898,8 @@ static bool guc_dirty;			/* TRUE if need to do commit/abort work */
 static bool reporting_enabled;	/* TRUE to enable GUC_REPORT */
 
 static char *guc_string_workspace;		/* for avoiding memory leaks */
+
+static int	GUCNestLevel = 0;	/* 1 when in main transaction */
 
 
 static int	guc_var_compare(const void *a, const void *b);
@@ -2739,17 +2741,16 @@ ResetAllOptions(void)
 static void
 push_old_value(struct config_generic * gconf)
 {
-	int			my_level = GetCurrentTransactionNestLevel();
 	GucStack   *stack;
 
 	/* If we're not inside a transaction, do nothing */
-	if (my_level == 0)
+	if (GUCNestLevel == 0)
 		return;
 
 	for (;;)
 	{
 		/* Done if we already pushed it at this nesting depth */
-		if (gconf->stack && gconf->stack->nest_level >= my_level)
+		if (gconf->stack && gconf->stack->nest_level >= GUCNestLevel)
 			return;
 
 		/*
@@ -2808,17 +2809,53 @@ push_old_value(struct config_generic * gconf)
 }
 
 /*
- * Do GUC processing at transaction or subtransaction commit or abort.
+ * Do GUC processing at main transaction start.
  */
 void
-AtEOXact_GUC(bool isCommit, bool isSubXact)
+AtStart_GUC(void)
 {
-	int			my_level;
+	/*
+	 * The nest level should be 0 between transactions; if it isn't,
+	 * somebody didn't call AtEOXact_GUC, or called it with the wrong
+	 * nestLevel.  We throw a warning but make no other effort to clean up.
+	 */
+	if (GUCNestLevel != 0)
+		elog(WARNING, "GUC nest level = %d at transaction start",
+			 GUCNestLevel);
+	GUCNestLevel = 1;
+}
+
+/*
+ * Enter a new nesting level for GUC values.  This is called at subtransaction
+ * start and when entering a function that has proconfig settings.  NOTE that
+ * we must not risk error here, else subtransaction start will be unhappy.
+ */
+int
+NewGUCNestLevel(void)
+{
+	return ++GUCNestLevel;
+}
+
+/*
+ * Do GUC processing at transaction or subtransaction commit or abort, or
+ * when exiting a function that has proconfig settings.  (The name is thus
+ * a bit of a misnomer; perhaps it should be ExitGUCNestLevel or some such.)
+ * During abort, we discard all GUC settings that were applied at nesting
+ * levels >= nestLevel.  nestLevel == 1 corresponds to the main transaction.
+ */
+void
+AtEOXact_GUC(bool isCommit, int nestLevel)
+{
 	int			i;
+
+	Assert(nestLevel > 0 && nestLevel <= GUCNestLevel);
 
 	/* Quick exit if nothing's changed in this transaction */
 	if (!guc_dirty)
+	{
+		GUCNestLevel = nestLevel - 1;
 		return;
+	}
 
 	/* Prevent memory leak if ereport during an assign_hook */
 	if (guc_string_workspace)
@@ -2826,9 +2863,6 @@ AtEOXact_GUC(bool isCommit, bool isSubXact)
 		free(guc_string_workspace);
 		guc_string_workspace = NULL;
 	}
-
-	my_level = GetCurrentTransactionNestLevel();
-	Assert(isSubXact ? (my_level > 1) : (my_level == 1));
 
 	for (i = 0; i < num_guc_variables; i++)
 	{
@@ -2849,9 +2883,9 @@ AtEOXact_GUC(bool isCommit, bool isSubXact)
 		/* Assert that we stacked old value before changing it */
 		Assert(stack != NULL && (my_status & GUC_HAVE_STACK));
 		/* However, the last change may have been at an outer xact level */
-		if (stack->nest_level < my_level)
+		if (stack->nest_level < nestLevel)
 			continue;
-		Assert(stack->nest_level == my_level);
+		Assert(stack->nest_level == nestLevel);
 
 		/*
 		 * We will pop the stack entry.  Start by restoring outer xact
@@ -3036,7 +3070,7 @@ AtEOXact_GUC(bool isCommit, bool isSubXact)
 					set_string_field(conf, &stack->tentative_val.stringval,
 									 NULL);
 					/* Don't store tentative value separately after commit */
-					if (!isSubXact)
+					if (nestLevel == 1)
 						set_string_field(conf, &conf->tentative_val, NULL);
 					break;
 				}
@@ -3050,7 +3084,7 @@ AtEOXact_GUC(bool isCommit, bool isSubXact)
 		 * If we're now out of all xact levels, forget TENTATIVE status
 		 * bit; there's nothing tentative about the value anymore.
 		 */
-		if (!isSubXact)
+		if (nestLevel == 1)
 		{
 			Assert(gconf->stack == NULL);
 			gconf->status = 0;
@@ -3067,8 +3101,11 @@ AtEOXact_GUC(bool isCommit, bool isSubXact)
 	 * know that all outer transaction levels will have stacked values to
 	 * deal with.)
 	 */
-	if (!isSubXact)
+	if (nestLevel == 1)
 		guc_dirty = false;
+
+	/* Update nesting level */
+	GUCNestLevel = nestLevel - 1;
 }
 
 
@@ -3375,29 +3412,45 @@ set_config_option(const char *name, const char *value,
 	}
 
 	/*
-	 * Disallow changing GUC_NOT_WHILE_SEC_DEF values if we are inside a
-	 * security-definer function.  We can reject this regardless of
-	 * the context or source, mainly because sources that it might be
+	 * Disallow changing GUC_NOT_WHILE_SEC_REST values if we are inside a
+	 * security restriction context.  We can reject this regardless of
+	 * the GUC context or source, mainly because sources that it might be
 	 * reasonable to override for won't be seen while inside a function.
 	 *
-	 * Note: variables marked GUC_NOT_WHILE_SEC_DEF should probably be marked
+	 * Note: variables marked GUC_NOT_WHILE_SEC_REST should usually be marked
 	 * GUC_NO_RESET_ALL as well, because ResetAllOptions() doesn't check this.
+	 * An exception might be made if the reset value is assumed to be "safe".
 	 *
-	 * Note: this flag is currently used for "session_authorization".
-	 * We need to prohibit this because when we exit the sec-def
-	 * context, GUC won't be notified, leaving things out of sync.
-	 *
-	 * XXX it would be nice to allow these cases in future, with the behavior
-	 * being that the SET's effects end when the security definer context is
-	 * exited.
+	 * Note: this flag is currently used for "session_authorization" and
+	 * "role".  We need to prohibit changing these inside a local userid
+	 * context because when we exit it, GUC won't be notified, leaving things
+	 * out of sync.  (This could be fixed by forcing a new GUC nesting level,
+	 * but that would change behavior in possibly-undesirable ways.)  Also,
+	 * we prohibit changing these in a security-restricted operation because
+	 * otherwise RESET could be used to regain the session user's privileges.
 	 */
-	if ((record->flags & GUC_NOT_WHILE_SEC_DEF) && InSecurityDefinerContext())
+	if (record->flags & GUC_NOT_WHILE_SEC_REST)
 	{
-		ereport(elevel,
-				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("cannot set parameter \"%s\" within security-definer function",
-						name)));
-		return false;
+		if (InLocalUserIdChange())
+		{
+			/*
+			 * Phrasing of this error message is historical, but it's the
+			 * most common case.
+			 */
+			ereport(elevel,
+					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+					 errmsg("cannot set parameter \"%s\" within security-definer function",
+							name)));
+			return false;
+		}
+		if (InSecurityRestrictedOperation())
+		{
+			ereport(elevel,
+					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+					 errmsg("cannot set parameter \"%s\" within security-restricted operation",
+							name)));
+			return false;
+		}
 	}
 
 	/*

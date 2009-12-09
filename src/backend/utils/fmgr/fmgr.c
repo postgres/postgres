@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/fmgr.c,v 1.88.4.3 2008/01/03 21:25:00 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/fmgr.c,v 1.88.4.4 2009/12/09 21:58:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -791,7 +791,7 @@ fmgr_security_definer(PG_FUNCTION_ARGS)
 	FmgrInfo   *save_flinfo;
 	struct fmgr_security_definer_cache * volatile fcache;
 	AclId		save_userid;
-	bool		save_secdefcxt;
+	int			save_sec_context;
 	HeapTuple	tuple;
 
 	if (!fcinfo->flinfo->fn_extra)
@@ -817,8 +817,9 @@ fmgr_security_definer(PG_FUNCTION_ARGS)
 	else
 		fcache = fcinfo->flinfo->fn_extra;
 
-	GetUserIdAndContext(&save_userid, &save_secdefcxt);
-	SetUserIdAndContext(fcache->userid, true);
+	GetUserIdAndSecContext(&save_userid, &save_sec_context);
+	SetUserIdAndSecContext(fcache->userid,
+						   save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
 
 	/*
 	 * We don't need to restore the userid settings on error, because the
@@ -842,7 +843,7 @@ fmgr_security_definer(PG_FUNCTION_ARGS)
 
 	fcinfo->flinfo = save_flinfo;
 
-	SetUserIdAndContext(save_userid, save_secdefcxt);
+	SetUserIdAndSecContext(save_userid, save_sec_context);
 
 	return result;
 }

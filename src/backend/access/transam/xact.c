@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.195.4.4 2008/01/03 21:25:00 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.195.4.5 2009/12/09 21:58:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -112,13 +112,14 @@ typedef struct TransactionStateData
 	int			savepointLevel; /* savepoint level */
 	TransState	state;			/* low-level state */
 	TBlockState blockState;		/* high-level state */
-	int			nestingLevel;	/* nest depth */
+	int			nestingLevel;	/* transaction nesting depth */
+	int			gucNestLevel;	/* GUC context nesting depth */
 	MemoryContext curTransactionContext;		/* my xact-lifetime
 												 * context */
 	ResourceOwner curTransactionOwner;	/* my query resources */
 	List	   *childXids;		/* subcommitted child XIDs */
 	AclId		prevUser;		/* previous CurrentUserId setting */
-	bool		prevSecDefCxt;	/* previous SecurityDefinerContext setting */
+	int			prevSecContext;	/* previous SecurityRestrictionContext */
 	bool		prevXactReadOnly;		/* entry-time xact r/o state */
 	struct TransactionStateData *parent;		/* back link to parent */
 } TransactionStateData;
@@ -146,12 +147,13 @@ static TransactionStateData TopTransactionStateData = {
 	TRANS_DEFAULT,				/* transaction state */
 	TBLOCK_DEFAULT,				/* transaction block state from the client
 								 * perspective */
-	0,							/* nesting level */
+	0,							/* transaction nesting depth */
+	0,							/* GUC context nesting depth */
 	NULL,						/* cur transaction context */
 	NULL,						/* cur transaction resource owner */
 	NIL,						/* subcommitted child Xids */
 	0,							/* previous CurrentUserId setting */
-	false,						/* previous SecurityDefinerContext setting */
+	0,							/* previous SecurityRestrictionContext */
 	false,						/* entry-time xact r/o state */
 	NULL						/* link to parent state block */
 };
@@ -1396,14 +1398,16 @@ StartTransaction(void)
 	 * note: prevXactReadOnly is not used at the outermost level
 	 */
 	s->nestingLevel = 1;
+	s->gucNestLevel = 1;
 	s->childXids = NIL;
-	GetUserIdAndContext(&s->prevUser, &s->prevSecDefCxt);
-	/* SecurityDefinerContext should never be set outside a transaction */
-	Assert(!s->prevSecDefCxt);
+	GetUserIdAndSecContext(&s->prevUser, &s->prevSecContext);
+	/* SecurityRestrictionContext should never be set outside a transaction */
+	Assert(s->prevSecContext == 0);
 
 	/*
 	 * initialize other subsystems for new transaction
 	 */
+	AtStart_GUC();
 	AtStart_Inval();
 	AtStart_Cache();
 	AfterTriggerBeginXact();
@@ -1571,7 +1575,7 @@ CommitTransaction(void)
 						 RESOURCE_RELEASE_AFTER_LOCKS,
 						 true, true);
 
-	AtEOXact_GUC(true, false);
+	AtEOXact_GUC(true, 1);
 	AtEOXact_SPI(true);
 	AtEOXact_on_commit_actions(true);
 	AtEOXact_Namespace(true);
@@ -1591,6 +1595,7 @@ CommitTransaction(void)
 	s->transactionId = InvalidTransactionId;
 	s->subTransactionId = InvalidSubTransactionId;
 	s->nestingLevel = 0;
+	s->gucNestLevel = 0;
 	s->childXids = NIL;
 
 	/*
@@ -1653,13 +1658,13 @@ AbortTransaction(void)
 	 * Reset user ID which might have been changed transiently.  We need this
 	 * to clean up in case control escaped out of a SECURITY DEFINER function
 	 * or other local change of CurrentUserId; therefore, the prior value
-	 * of SecurityDefinerContext also needs to be restored.
+	 * of SecurityRestrictionContext also needs to be restored.
 	 *
 	 * (Note: it is not necessary to restore session authorization
 	 * setting here because that can only be changed via GUC, and GUC will
 	 * take care of rolling it back if need be.)
 	 */
-	SetUserIdAndContext(s->prevUser, s->prevSecDefCxt);
+	SetUserIdAndSecContext(s->prevUser, s->prevSecContext);
 
 	/*
 	 * do abort processing
@@ -1712,7 +1717,7 @@ AbortTransaction(void)
 						 RESOURCE_RELEASE_AFTER_LOCKS,
 						 false, true);
 
-	AtEOXact_GUC(false, false);
+	AtEOXact_GUC(false, 1);
 	AtEOXact_SPI(false);
 	AtEOXact_on_commit_actions(false);
 	AtEOXact_Namespace(false);
@@ -1759,6 +1764,7 @@ CleanupTransaction(void)
 	s->transactionId = InvalidTransactionId;
 	s->subTransactionId = InvalidSubTransactionId;
 	s->nestingLevel = 0;
+	s->gucNestLevel = 0;
 	s->childXids = NIL;
 
 	/*
@@ -3322,7 +3328,7 @@ CommitSubTransaction(void)
 						 RESOURCE_RELEASE_AFTER_LOCKS,
 						 true, false);
 
-	AtEOXact_GUC(true, true);
+	AtEOXact_GUC(true, s->gucNestLevel);
 	AtEOSubXact_SPI(true, s->subTransactionId);
 	AtEOSubXact_on_commit_actions(true, s->subTransactionId,
 								  s->parent->subTransactionId);
@@ -3395,7 +3401,7 @@ AbortSubTransaction(void)
 	 * Reset user ID which might have been changed transiently.  (See notes
 	 * in AbortTransaction.)
 	 */
-	SetUserIdAndContext(s->prevUser, s->prevSecDefCxt);
+	SetUserIdAndSecContext(s->prevUser, s->prevSecContext);
 
 	/*
 	 * We can skip all this stuff if the subxact failed before creating
@@ -3438,7 +3444,7 @@ AbortSubTransaction(void)
 							 RESOURCE_RELEASE_AFTER_LOCKS,
 							 false, false);
 
-		AtEOXact_GUC(false, true);
+		AtEOXact_GUC(false, s->gucNestLevel);
 		AtEOSubXact_SPI(false, s->subTransactionId);
 		AtEOSubXact_on_commit_actions(false, s->subTransactionId,
 									  s->parent->subTransactionId);
@@ -3530,10 +3536,11 @@ PushTransaction(void)
 	s->subTransactionId = currentSubTransactionId;
 	s->parent = p;
 	s->nestingLevel = p->nestingLevel + 1;
+	s->gucNestLevel = NewGUCNestLevel();
 	s->savepointLevel = p->savepointLevel;
 	s->state = TRANS_DEFAULT;
 	s->blockState = TBLOCK_SUBBEGIN;
-	GetUserIdAndContext(&s->prevUser, &s->prevSecDefCxt);
+	GetUserIdAndSecContext(&s->prevUser, &s->prevSecContext);
 	s->prevXactReadOnly = XactReadOnly;
 
 	CurrentTransactionState = s;

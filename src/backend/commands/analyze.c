@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/analyze.c,v 1.80.4.1 2008/01/03 21:25:00 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/analyze.c,v 1.80.4.2 2009/12/09 21:58:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,6 +34,7 @@
 #include "utils/builtins.h"
 #include "utils/datum.h"
 #include "utils/fmgroids.h"
+#include "utils/guc.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
 #include "utils/tuplesort.h"
@@ -111,7 +112,8 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt)
 	double		totalrows;
 	HeapTuple  *rows;
 	AclId		save_userid;
-	bool		save_secdefcxt;
+	int			save_sec_context;
+	int			save_nestlevel;
 
 	if (vacstmt->verbose)
 		elevel = INFO;
@@ -202,11 +204,14 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt)
 					RelationGetRelationName(onerel))));
 
 	/*
-	 * Switch to the table owner's userid, so that any index functions are
-	 * run as that user.
+	 * Switch to the table owner's userid, so that any index functions are run
+	 * as that user.  Also lock down security-restricted operations and
+	 * arrange to make GUC variable changes local to this command.
 	 */
-	GetUserIdAndContext(&save_userid, &save_secdefcxt);
-	SetUserIdAndContext(onerel->rd_rel->relowner, true);
+	GetUserIdAndSecContext(&save_userid, &save_sec_context);
+	SetUserIdAndSecContext(onerel->rd_rel->relowner,
+						   save_sec_context | SECURITY_RESTRICTED_OPERATION);
+	save_nestlevel = NewGUCNestLevel();
 
 	/*
 	 * Determine which columns to analyze
@@ -444,8 +449,11 @@ cleanup:
 	 */
 	relation_close(onerel, NoLock);
 
-	/* Restore userid */
-	SetUserIdAndContext(save_userid, save_secdefcxt);
+	/* Roll back any GUC changes executed by index functions */
+	AtEOXact_GUC(false, save_nestlevel);
+
+	/* Restore userid and security context */
+	SetUserIdAndSecContext(save_userid, save_sec_context);
 }
 
 /*

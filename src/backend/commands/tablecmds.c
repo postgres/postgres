@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.142.4.10 2008/05/27 21:13:50 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.142.4.11 2009/12/09 21:58:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -294,6 +294,16 @@ DefineRelation(CreateStmt *stmt, char relkind)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
 			  errmsg("ON COMMIT can only be used on temporary tables")));
+
+	/*
+	 * Security check: disallow creating temp tables from security-restricted
+	 * code.  This is needed because calling code might not expect untrusted
+	 * tables to appear in pg_temp at the front of its search path.
+	 */
+	if (stmt->relation->istemp && InSecurityRestrictedOperation())
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("cannot create temporary table within security-restricted operation")));
 
 	/*
 	 * Look up the namespace in which we are supposed to create the
