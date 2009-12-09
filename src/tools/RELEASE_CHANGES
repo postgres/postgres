@@ -47,6 +47,10 @@ For Major Releases
 	o update help output from inside the programs
 	o doc/src/sgml/ref manual pages
 	o convert any literal "<" and ">" characters, use tools/find_gt_lt
+	o update the sizes specified for installation requirements
+	  (doc/src/sgml/installation.sgml, section "install-requirements")
+	o update the shared memory size requirement table
+	  (doc/src/sgml/runtime.sgml, section "shared-memory-parameters")
 
 * Ports
 	o update config.guess and config.sub at the start of beta
