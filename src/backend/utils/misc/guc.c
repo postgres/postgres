@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.525 2009/12/02 04:54:10 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.526 2009/12/09 21:57:51 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -2319,7 +2319,7 @@ static struct config_string ConfigureNamesString[] =
 		{"role", PGC_USERSET, UNGROUPED,
 			gettext_noop("Sets the current role."),
 			NULL,
-			GUC_IS_NAME | GUC_NO_SHOW_ALL | GUC_NO_RESET_ALL | GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_NOT_WHILE_SEC_DEF
+			GUC_IS_NAME | GUC_NO_SHOW_ALL | GUC_NO_RESET_ALL | GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_NOT_WHILE_SEC_REST
 		},
 		&role_string,
 		"none", assign_role, show_role
@@ -2330,7 +2330,7 @@ static struct config_string ConfigureNamesString[] =
 		{"session_authorization", PGC_USERSET, UNGROUPED,
 			gettext_noop("Sets the session user name."),
 			NULL,
-			GUC_IS_NAME | GUC_REPORT | GUC_NO_SHOW_ALL | GUC_NO_RESET_ALL | GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_NOT_WHILE_SEC_DEF
+			GUC_IS_NAME | GUC_REPORT | GUC_NO_SHOW_ALL | GUC_NO_RESET_ALL | GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_NOT_WHILE_SEC_REST
 		},
 		&session_authorization_string,
 		NULL, assign_session_authorization, show_session_authorization
@@ -4669,29 +4669,45 @@ set_config_option(const char *name, const char *value,
 	}
 
 	/*
-	 * Disallow changing GUC_NOT_WHILE_SEC_DEF values if we are inside a
-	 * security-definer function.  We can reject this regardless of
-	 * the context or source, mainly because sources that it might be
+	 * Disallow changing GUC_NOT_WHILE_SEC_REST values if we are inside a
+	 * security restriction context.  We can reject this regardless of
+	 * the GUC context or source, mainly because sources that it might be
 	 * reasonable to override for won't be seen while inside a function.
 	 *
-	 * Note: variables marked GUC_NOT_WHILE_SEC_DEF should probably be marked
+	 * Note: variables marked GUC_NOT_WHILE_SEC_REST should usually be marked
 	 * GUC_NO_RESET_ALL as well, because ResetAllOptions() doesn't check this.
+	 * An exception might be made if the reset value is assumed to be "safe".
 	 *
 	 * Note: this flag is currently used for "session_authorization" and
-	 * "role".  We need to prohibit this because when we exit the sec-def
-	 * context, GUC won't be notified, leaving things out of sync.
-	 *
-	 * XXX it would be nice to allow these cases in future, with the behavior
-	 * being that the SET's effects end when the security definer context is
-	 * exited.
+	 * "role".  We need to prohibit changing these inside a local userid
+	 * context because when we exit it, GUC won't be notified, leaving things
+	 * out of sync.  (This could be fixed by forcing a new GUC nesting level,
+	 * but that would change behavior in possibly-undesirable ways.)  Also,
+	 * we prohibit changing these in a security-restricted operation because
+	 * otherwise RESET could be used to regain the session user's privileges.
 	 */
-	if ((record->flags & GUC_NOT_WHILE_SEC_DEF) && InSecurityDefinerContext())
+	if (record->flags & GUC_NOT_WHILE_SEC_REST)
 	{
-		ereport(elevel,
-				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("cannot set parameter \"%s\" within security-definer function",
-						name)));
-		return false;
+		if (InLocalUserIdChange())
+		{
+			/*
+			 * Phrasing of this error message is historical, but it's the
+			 * most common case.
+			 */
+			ereport(elevel,
+					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+					 errmsg("cannot set parameter \"%s\" within security-definer function",
+							name)));
+			return false;
+		}
+		if (InSecurityRestrictedOperation())
+		{
+			ereport(elevel,
+					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+					 errmsg("cannot set parameter \"%s\" within security-restricted operation",
+							name)));
+			return false;
+		}
 	}
 
 	/*

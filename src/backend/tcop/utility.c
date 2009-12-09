@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.321 2009/12/07 05:22:22 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.322 2009/12/09 21:57:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -226,6 +226,25 @@ check_xact_readonly(Node *parsetree)
 
 
 /*
+ * CheckRestrictedOperation: throw error for hazardous command if we're
+ * inside a security restriction context.
+ *
+ * This is needed to protect session-local state for which there is not any
+ * better-defined protection mechanism, such as ownership.
+ */
+static void
+CheckRestrictedOperation(const char *cmdname)
+{
+	if (InSecurityRestrictedOperation())
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 /* translator: %s is name of a SQL command, eg PREPARE */
+				 errmsg("cannot execute %s within security-restricted operation",
+						cmdname)));
+}
+
+
+/*
  * ProcessUtility
  *		general utility function invoker
  *
@@ -390,6 +409,7 @@ ProcessUtility(Node *parsetree,
 			{
 				ClosePortalStmt *stmt = (ClosePortalStmt *) parsetree;
 
+				CheckRestrictedOperation("CLOSE");
 				PerformPortalClose(stmt->portalname);
 			}
 			break;
@@ -586,6 +606,7 @@ ProcessUtility(Node *parsetree,
 			break;
 
 		case T_PrepareStmt:
+			CheckRestrictedOperation("PREPARE");
 			PrepareQuery((PrepareStmt *) parsetree, queryString);
 			break;
 
@@ -595,6 +616,7 @@ ProcessUtility(Node *parsetree,
 			break;
 
 		case T_DeallocateStmt:
+			CheckRestrictedOperation("DEALLOCATE");
 			DeallocateQuery((DeallocateStmt *) parsetree);
 			break;
 
@@ -885,6 +907,7 @@ ProcessUtility(Node *parsetree,
 			{
 				ListenStmt *stmt = (ListenStmt *) parsetree;
 
+				CheckRestrictedOperation("LISTEN");
 				Async_Listen(stmt->conditionname);
 			}
 			break;
@@ -893,6 +916,7 @@ ProcessUtility(Node *parsetree,
 			{
 				UnlistenStmt *stmt = (UnlistenStmt *) parsetree;
 
+				CheckRestrictedOperation("UNLISTEN");
 				if (stmt->conditionname)
 					Async_Unlisten(stmt->conditionname);
 				else
@@ -936,6 +960,8 @@ ProcessUtility(Node *parsetree,
 			break;
 
 		case T_DiscardStmt:
+			/* should we allow DISCARD PLANS? */
+			CheckRestrictedOperation("DISCARD");
 			DiscardCommand((DiscardStmt *) parsetree, isTopLevel);
 			break;
 
