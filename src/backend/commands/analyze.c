@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/analyze.c,v 1.139.2.1 2009/08/12 18:23:55 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/analyze.c,v 1.139.2.2 2009/12/09 21:58:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,6 +38,7 @@
 #include "storage/procarray.h"
 #include "utils/acl.h"
 #include "utils/datum.h"
+#include "utils/guc.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
 #include "utils/pg_rusage.h"
@@ -133,7 +134,8 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt,
 	PGRUsage	ru0;
 	TimestampTz starttime = 0;
 	Oid			save_userid;
-	bool		save_secdefcxt;
+	int			save_sec_context;
+	int			save_nestlevel;
 
 	if (vacstmt->verbose)
 		elevel = INFO;
@@ -235,10 +237,13 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt,
 
 	/*
 	 * Switch to the table owner's userid, so that any index functions are run
-	 * as that user.
+	 * as that user.  Also lock down security-restricted operations and
+	 * arrange to make GUC variable changes local to this command.
 	 */
-	GetUserIdAndContext(&save_userid, &save_secdefcxt);
-	SetUserIdAndContext(onerel->rd_rel->relowner, true);
+	GetUserIdAndSecContext(&save_userid, &save_sec_context);
+	SetUserIdAndSecContext(onerel->rd_rel->relowner,
+						   save_sec_context | SECURITY_RESTRICTED_OPERATION);
+	save_nestlevel = NewGUCNestLevel();
 
 	/* let others know what I'm doing */
 	LWLockAcquire(ProcArrayLock, LW_EXCLUSIVE);
@@ -543,8 +548,11 @@ cleanup:
 	MyProc->vacuumFlags &= ~PROC_IN_ANALYZE;
 	LWLockRelease(ProcArrayLock);
 
-	/* Restore userid */
-	SetUserIdAndContext(save_userid, save_secdefcxt);
+	/* Roll back any GUC changes executed by index functions */
+	AtEOXact_GUC(false, save_nestlevel);
+
+	/* Restore userid and security context */
+	SetUserIdAndSecContext(save_userid, save_sec_context);
 }
 
 /*
