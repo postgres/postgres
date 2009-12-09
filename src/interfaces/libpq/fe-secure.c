@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-secure.c,v 1.128 2009/07/24 17:58:31 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-secure.c,v 1.129 2009/12/09 06:37:06 mha Exp $
  *
  * NOTES
  *
@@ -1265,9 +1265,28 @@ open_client_SSL(PGconn *conn)
 					  conn->peer_dn, sizeof(conn->peer_dn));
 	conn->peer_dn[sizeof(conn->peer_dn) - 1] = '\0';
 
-	X509_NAME_get_text_by_NID(X509_get_subject_name(conn->peer),
+	r = X509_NAME_get_text_by_NID(X509_get_subject_name(conn->peer),
 							  NID_commonName, conn->peer_cn, SM_USER);
-	conn->peer_cn[SM_USER] = '\0';
+	conn->peer_cn[SM_USER] = '\0'; /* buffer is SM_USER+1 chars! */
+	if (r == -1)
+	{
+		/* Unable to get the CN, set it to blank so it can't be used */
+		conn->peer_cn[0] = '\0';
+	}
+	else
+	{
+		/*
+		 * Reject embedded NULLs in certificate common name to prevent attacks like
+		 * CVE-2009-4034.
+		 */
+		if (r != strlen(conn->peer_cn))
+		{
+			printfPQExpBuffer(&conn->errorMessage,
+							  libpq_gettext("SSL certificate's common name contains embedded null\n"));
+			close_SSL(conn);
+			return PGRES_POLLING_FAILED;
+		}
+	}
 
 	if (!verify_peer_name_matches_certificate(conn))
 	{
