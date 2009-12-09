@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/analyze.c,v 1.64 2003/10/18 15:38:06 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/analyze.c,v 1.64.2.1 2009/12/09 21:59:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -157,6 +157,8 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt)
 				numrows;
 	double		totalrows;
 	HeapTuple  *rows;
+	AclId		save_userid;
+	int			save_sec_context;
 
 	if (vacstmt->verbose)
 		elevel = INFO;
@@ -295,6 +297,14 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt)
 	}
 
 	/*
+	 * Switch to the table owner's userid, so that any index functions are run
+	 * as that user.  Also lock down security-restricted operations.
+	 */
+	GetUserIdAndSecContext(&save_userid, &save_sec_context);
+	SetUserIdAndSecContext(onerel->rd_rel->relowner,
+						   save_sec_context | SECURITY_RESTRICTED_OPERATION);
+
+	/*
 	 * Determine how many rows we need to sample, using the worst case
 	 * from all analyzable columns.  We use a lower bound of 100 rows to
 	 * avoid possible overflow in Vitter's algorithm.
@@ -377,6 +387,9 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt)
 	 * entries we made in pg_statistic.)
 	 */
 	relation_close(onerel, NoLock);
+
+	/* Restore userid and security context */
+	SetUserIdAndSecContext(save_userid, save_sec_context);
 }
 
 /*

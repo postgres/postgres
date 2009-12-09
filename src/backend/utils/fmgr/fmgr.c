@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/fmgr.c,v 1.76.2.2 2008/01/03 21:25:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/fmgr.c,v 1.76.2.3 2009/12/09 21:59:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -654,7 +654,7 @@ fmgr_security_definer(PG_FUNCTION_ARGS)
 	FmgrInfo   *save_flinfo;
 	struct fmgr_security_definer_cache *fcache;
 	AclId		save_userid;
-	bool		save_secdefcxt;
+	int			save_sec_context;
 	HeapTuple	tuple;
 
 	if (!fcinfo->flinfo->fn_extra)
@@ -680,8 +680,9 @@ fmgr_security_definer(PG_FUNCTION_ARGS)
 	else
 		fcache = fcinfo->flinfo->fn_extra;
 
-	GetUserIdAndContext(&save_userid, &save_secdefcxt);
-	SetUserIdAndContext(fcache->userid, true);
+	GetUserIdAndSecContext(&save_userid, &save_sec_context);
+	SetUserIdAndSecContext(fcache->userid,
+						   save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
 
 	save_flinfo = fcinfo->flinfo;
 	fcinfo->flinfo = &fcache->flinfo;
@@ -690,7 +691,7 @@ fmgr_security_definer(PG_FUNCTION_ARGS)
 
 	fcinfo->flinfo = save_flinfo;
 
-	SetUserIdAndContext(save_userid, save_secdefcxt);
+	SetUserIdAndSecContext(save_userid, save_sec_context);
 
 	return result;
 }

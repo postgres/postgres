@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.219.2.4 2008/05/27 21:14:00 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.219.2.5 2009/12/09 21:59:06 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1335,7 +1335,7 @@ index_build(Relation heapRelation,
 {
 	RegProcedure procedure;
 	AclId		save_userid;
-	bool		save_secdefcxt;
+	int			save_sec_context;
 
 	/*
 	 * sanity checks
@@ -1347,11 +1347,12 @@ index_build(Relation heapRelation,
 	Assert(RegProcedureIsValid(procedure));
 
 	/*
-	 * Switch to the table owner's userid, so that any index functions are
-	 * run as that user.
+	 * Switch to the table owner's userid, so that any index functions are run
+	 * as that user.  Also lock down security-restricted operations.
 	 */
-	GetUserIdAndContext(&save_userid, &save_secdefcxt);
-	SetUserIdAndContext(heapRelation->rd_rel->relowner, true);
+	GetUserIdAndSecContext(&save_userid, &save_sec_context);
+	SetUserIdAndSecContext(heapRelation->rd_rel->relowner,
+						   save_sec_context | SECURITY_RESTRICTED_OPERATION);
 
 	/*
 	 * Call the access method's build procedure
@@ -1361,8 +1362,8 @@ index_build(Relation heapRelation,
 					 PointerGetDatum(indexRelation),
 					 PointerGetDatum(indexInfo));
 
-	/* Restore userid */
-	SetUserIdAndContext(save_userid, save_secdefcxt);
+	/* Restore userid and security context */
+	SetUserIdAndSecContext(save_userid, save_sec_context);
 }
 
 

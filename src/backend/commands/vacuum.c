@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.263.2.6 2009/11/10 18:01:46 alvherre Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.263.2.7 2009/12/09 21:59:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -743,7 +743,7 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt, char expected_relkind)
 	Oid			toast_relid;
 	bool		result;
 	AclId		save_userid;
-	bool		save_secdefcxt;
+	int			save_sec_context;
 	bool		heldoff;
 
 	/* Begin a transaction for vacuuming this relation */
@@ -850,12 +850,13 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt, char expected_relkind)
 	toast_relid = onerel->rd_rel->reltoastrelid;
 
 	/*
-	 * Switch to the table owner's userid, so that any index functions are
-	 * run as that user.  (This is unnecessary, but harmless, for lazy
-	 * VACUUM.)
+	 * Switch to the table owner's userid, so that any index functions are run
+	 * as that user.  Also lock down security-restricted operations.
+	 * (This is unnecessary, but harmless, for lazy VACUUM.)
 	 */
-	GetUserIdAndContext(&save_userid, &save_secdefcxt);
-	SetUserIdAndContext(onerel->rd_rel->relowner, true);
+	GetUserIdAndSecContext(&save_userid, &save_sec_context);
+	SetUserIdAndSecContext(onerel->rd_rel->relowner,
+						   save_sec_context | SECURITY_RESTRICTED_OPERATION);
 
 	/*
 	 * Do the actual work --- either FULL or "lazy" vacuum
@@ -867,8 +868,8 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt, char expected_relkind)
 
 	result = true;				/* did the vacuum */
 
-	/* Restore userid */
-	SetUserIdAndContext(save_userid, save_secdefcxt);
+	/* Restore userid and security context */
+	SetUserIdAndSecContext(save_userid, save_sec_context);
 
 	/* all done with this class, but hold lock until commit */
 	relation_close(onerel, NoLock);

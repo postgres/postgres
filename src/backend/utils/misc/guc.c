@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.164.2.6 2009/09/03 22:09:05 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.164.2.7 2009/12/09 21:59:07 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -1478,7 +1478,7 @@ static struct config_string ConfigureNamesString[] =
 		{"search_path", PGC_USERSET, CLIENT_CONN_STATEMENT,
 			gettext_noop("Sets the schema search order for names that are not schema-qualified."),
 			NULL,
-			GUC_LIST_INPUT | GUC_LIST_QUOTE
+			GUC_LIST_INPUT | GUC_LIST_QUOTE | GUC_NOT_WHILE_SEC_REST
 		},
 		&namespace_search_path,
 		"$user,public", assign_search_path, NULL
@@ -1511,7 +1511,7 @@ static struct config_string ConfigureNamesString[] =
 		{"session_authorization", PGC_USERSET, UNGROUPED,
 			gettext_noop("Shows the session user name."),
 			NULL,
-			GUC_IS_NAME | GUC_REPORT | GUC_NO_SHOW_ALL | GUC_NO_RESET_ALL | GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_NOT_WHILE_SEC_DEF
+			GUC_IS_NAME | GUC_REPORT | GUC_NO_SHOW_ALL | GUC_NO_RESET_ALL | GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_NOT_WHILE_SEC_DEF | GUC_NOT_WHILE_SEC_REST
 		},
 		&session_authorization_string,
 		NULL, assign_session_authorization, show_session_authorization
@@ -2515,30 +2515,33 @@ set_config_option(const char *name, const char *value,
 	}
 
 	/*
-	 * Disallow changing GUC_NOT_WHILE_SEC_DEF values if we are inside a
-	 * security-definer function.  We can reject this regardless of
-	 * the context or source, mainly because sources that it might be
+	 * Disallow changing GUC_NOT_WHILE_SEC_DEF/REST values if we are inside a
+	 * security restriction context.  We can reject this regardless of
+	 * the GUC context or source, mainly because sources that it might be
 	 * reasonable to override for won't be seen while inside a function.
-	 *
-	 * Note: variables marked GUC_NOT_WHILE_SEC_DEF should probably be marked
-	 * GUC_NO_RESET_ALL as well, because ResetAllOptions() doesn't check this.
-	 *
-	 * Note: this flag is currently used for "session_authorization".
-	 * We need to prohibit this because when we exit the sec-def
-	 * context, GUC won't be notified, leaving things out of sync.
-	 *
-	 * XXX it would be nice to allow these cases in future, with the behavior
-	 * being that the SET's effects end when the security definer context is
-	 * exited.
 	 */
-	if ((record->flags & GUC_NOT_WHILE_SEC_DEF) && InSecurityDefinerContext())
-	{
-		ereport(elevel,
-				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("cannot set parameter \"%s\" within security-definer function",
-						name)));
-		return false;
-	}
+	if (record->flags & GUC_NOT_WHILE_SEC_DEF &&
+		InLocalUserIdChange())
+		{
+			/*
+			 * Phrasing of this error message is historical, but it's the
+			 * most common case.
+			 */
+			ereport(elevel,
+					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+					 errmsg("cannot set parameter \"%s\" within security-definer function",
+							name)));
+			return false;
+		}
+	if (record->flags & GUC_NOT_WHILE_SEC_REST &&
+		InSecurityRestrictedOperation())
+		{
+			ereport(elevel,
+					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+					 errmsg("cannot set parameter \"%s\" within security-restricted operation",
+							name)));
+			return false;
+		}
 
 	/* Should we report errors interactively? */
 	interactive = (source >= PGC_S_SESSION);

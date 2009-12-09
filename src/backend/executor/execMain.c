@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.220.2.4 2006/01/12 21:49:32 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.220.2.5 2009/12/09 21:59:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -780,6 +780,17 @@ InitPlan(QueryDesc *queryDesc, bool explainOnly)
 		AclResult	aclresult;
 		Oid			intoRelationId;
 		TupleDesc	tupdesc;
+
+		/*
+		 * Security check: disallow creating temp tables from
+		 * security-restricted code.  This is needed because calling code
+		 * might not expect untrusted tables to appear in pg_temp at the front
+		 * of its search path.
+		 */
+		if (parseTree->into->istemp && InSecurityRestrictedOperation())
+			ereport(ERROR,
+					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+					 errmsg("cannot create temporary table within security-restricted operation")));
 
 		/*
 		 * find namespace to create in, check permissions

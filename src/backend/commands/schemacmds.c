@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/schemacmds.c,v 1.16.4.1 2008/01/03 21:25:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/schemacmds.c,v 1.16.4.2 2009/12/09 21:59:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,10 +46,10 @@ CreateSchemaCommand(CreateSchemaStmt *stmt)
 	const char *owner_name;
 	AclId		owner_userid;
 	AclId		saved_userid;
-	bool		saved_secdefcxt;
+	int			save_sec_context;
 	AclResult	aclresult;
 
-	GetUserIdAndContext(&saved_userid, &saved_secdefcxt);
+	GetUserIdAndSecContext(&saved_userid, &save_sec_context);
 
 	/*
 	 * Figure out user identities.
@@ -72,7 +72,8 @@ CreateSchemaCommand(CreateSchemaStmt *stmt)
 		 * (This will revert to session user on error or at the end of
 		 * this routine.)
 		 */
-		SetUserIdAndContext(owner_userid, true);
+		SetUserIdAndSecContext(owner_userid,
+							   save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
 	}
 	else
 	{
@@ -151,8 +152,8 @@ CreateSchemaCommand(CreateSchemaStmt *stmt)
 	/* Reset search path to normal state */
 	PopSpecialNamespace(namespaceId);
 
-	/* Reset current user */
-	SetUserIdAndContext(saved_userid, saved_secdefcxt);
+	/* Reset current user and security context */
+	SetUserIdAndSecContext(saved_userid, save_sec_context);
 }
 
 
