@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.331 2009/12/08 20:08:30 mha Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.332 2009/12/09 16:16:34 mha Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -323,12 +323,12 @@ su - postgres
 
   <para>
    Also check that you have sufficient disk space. You will need about
-   65 MB for the source tree during compilation and about 15 MB for
+   100 MB for the source tree during compilation and about 20 MB for
    the installation directory. An empty database cluster takes about
-   25 MB; databases take about five times the amount of space that a
+   35 MB; databases take about five times the amount of space that a
    flat text file with the same data would take. If you are going to
    run the regression tests you will temporarily need up to an extra
-   90 MB. Use the <command>df</command> command to check free disk
+   150 MB. Use the <command>df</command> command to check free disk
    space.
   </para>
  </sect1>
