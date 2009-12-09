@@ -17,7 +17,7 @@
  *
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/ri_triggers.c,v 1.89.2.2 2008/01/03 21:23:45 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/ri_triggers.c,v 1.89.2.3 2009/12/09 21:58:29 tgl Exp $
  *
  * ----------
  */
@@ -3009,7 +3009,7 @@ ri_PlanCheck(const char *querystr, int nargs, Oid *argtypes,
 	void	   *qplan;
 	Relation	query_rel;
 	Oid			save_userid;
-	bool		save_secdefcxt;
+	int			save_sec_context;
 
 	/*
 	 * The query is always run against the FK table except when this is an
@@ -3023,8 +3023,9 @@ ri_PlanCheck(const char *querystr, int nargs, Oid *argtypes,
 		query_rel = fk_rel;
 
 	/* Switch to proper UID to perform check as */
-	GetUserIdAndContext(&save_userid, &save_secdefcxt);
-	SetUserIdAndContext(RelationGetForm(query_rel)->relowner, true);
+	GetUserIdAndSecContext(&save_userid, &save_sec_context);
+	SetUserIdAndSecContext(RelationGetForm(query_rel)->relowner,
+						   save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
 
 	/* Create the plan */
 	qplan = SPI_prepare(querystr, nargs, argtypes);
@@ -3032,8 +3033,8 @@ ri_PlanCheck(const char *querystr, int nargs, Oid *argtypes,
 	if (qplan == NULL)
 		elog(ERROR, "SPI_prepare returned %d for %s", SPI_result, querystr);
 
-	/* Restore UID */
-	SetUserIdAndContext(save_userid, save_secdefcxt);
+	/* Restore UID and security context */
+	SetUserIdAndSecContext(save_userid, save_sec_context);
 
 	/* Save the plan if requested */
 	if (cache_plan)
@@ -3063,7 +3064,7 @@ ri_PerformCheck(RI_QueryKey *qkey, void *qplan,
 	int			limit;
 	int			spi_result;
 	Oid			save_userid;
-	bool		save_secdefcxt;
+	int			save_sec_context;
 	Datum		vals[RI_MAX_NUMKEYS * 2];
 	char		nulls[RI_MAX_NUMKEYS * 2];
 
@@ -3141,8 +3142,9 @@ ri_PerformCheck(RI_QueryKey *qkey, void *qplan,
 	limit = (expect_OK == SPI_OK_SELECT) ? 1 : 0;
 
 	/* Switch to proper UID to perform check as */
-	GetUserIdAndContext(&save_userid, &save_secdefcxt);
-	SetUserIdAndContext(RelationGetForm(query_rel)->relowner, true);
+	GetUserIdAndSecContext(&save_userid, &save_sec_context);
+	SetUserIdAndSecContext(RelationGetForm(query_rel)->relowner,
+						   save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
 
 	/* Finally we can run the query. */
 	spi_result = SPI_execute_snapshot(qplan,
@@ -3150,8 +3152,8 @@ ri_PerformCheck(RI_QueryKey *qkey, void *qplan,
 									  test_snapshot, crosscheck_snapshot,
 									  false, false, limit);
 
-	/* Restore UID */
-	SetUserIdAndContext(save_userid, save_secdefcxt);
+	/* Restore UID and security context */
+	SetUserIdAndSecContext(save_userid, save_sec_context);
 
 	/* Check result */
 	if (spi_result < 0)
