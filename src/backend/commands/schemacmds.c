@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/schemacmds.c,v 1.49 2008/01/03 21:23:15 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/schemacmds.c,v 1.49.2.1 2009/12/09 21:58:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,10 +48,10 @@ CreateSchemaCommand(CreateSchemaStmt *stmt, const char *queryString)
 	ListCell   *parsetree_item;
 	Oid			owner_uid;
 	Oid			saved_uid;
-	bool		saved_secdefcxt;
+	int			save_sec_context;
 	AclResult	aclresult;
 
-	GetUserIdAndContext(&saved_uid, &saved_secdefcxt);
+	GetUserIdAndSecContext(&saved_uid, &save_sec_context);
 
 	/*
 	 * Who is supposed to own the new schema?
@@ -91,7 +91,8 @@ CreateSchemaCommand(CreateSchemaStmt *stmt, const char *queryString)
 	 * of error, transaction abort will clean things up.)
 	 */
 	if (saved_uid != owner_uid)
-		SetUserIdAndContext(owner_uid, true);
+		SetUserIdAndSecContext(owner_uid,
+							   save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
 
 	/* Create the schema's namespace */
 	namespaceId = NamespaceCreate(schemaName, owner_uid);
@@ -142,8 +143,8 @@ CreateSchemaCommand(CreateSchemaStmt *stmt, const char *queryString)
 	/* Reset search path to normal state */
 	PopOverrideSearchPath();
 
-	/* Reset current user */
-	SetUserIdAndContext(saved_uid, saved_secdefcxt);
+	/* Reset current user and security context */
+	SetUserIdAndSecContext(saved_uid, save_sec_context);
 }
 
 

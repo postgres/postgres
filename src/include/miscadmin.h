@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/miscadmin.h,v 1.199 2008/01/03 21:23:15 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/miscadmin.h,v 1.199.2.1 2009/12/09 21:58:17 tgl Exp $
  *
  * NOTES
  *	  some of the information in this file should be moved to other files.
@@ -227,6 +227,10 @@ extern void check_stack_depth(void);
  *			POSTGRES directory path definitions.							 *
  *****************************************************************************/
 
+/* flags to be OR'd to form sec_context */
+#define SECURITY_LOCAL_USERID_CHANGE	0x0001
+#define SECURITY_RESTRICTED_OPERATION	0x0002
+
 extern char *DatabasePath;
 
 /* now in utils/init/miscinit.c */
@@ -236,9 +240,12 @@ extern char *GetUserNameFromId(Oid roleid);
 extern Oid	GetUserId(void);
 extern Oid	GetOuterUserId(void);
 extern Oid	GetSessionUserId(void);
+extern void GetUserIdAndSecContext(Oid *userid, int *sec_context);
+extern void SetUserIdAndSecContext(Oid userid, int sec_context);
+extern bool InLocalUserIdChange(void);
+extern bool InSecurityRestrictedOperation(void);
 extern void GetUserIdAndContext(Oid *userid, bool *sec_def_context);
 extern void SetUserIdAndContext(Oid userid, bool sec_def_context);
-extern bool InSecurityDefinerContext(void);
 extern void InitializeSessionUserId(const char *rolename);
 extern void InitializeSessionUserIdStandalone(void);
 extern void SetSessionAuthorization(Oid userid, bool is_superuser);

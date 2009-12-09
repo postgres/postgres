@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.257.2.4 2009/11/23 09:59:00 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.257.2.5 2009/12/09 21:58:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -135,7 +135,7 @@ typedef struct TransactionStateData
 	int			nChildXids;		/* # of subcommitted child XIDs */
 	int			maxChildXids;	/* allocated size of childXids[] */
 	Oid			prevUser;		/* previous CurrentUserId setting */
-	bool		prevSecDefCxt;	/* previous SecurityDefinerContext setting */
+	int			prevSecContext;	/* previous SecurityRestrictionContext */
 	bool		prevXactReadOnly;		/* entry-time xact r/o state */
 	struct TransactionStateData *parent;		/* back link to parent */
 } TransactionStateData;
@@ -163,7 +163,7 @@ static TransactionStateData TopTransactionStateData = {
 	0,							/* # of subcommitted child Xids */
 	0,							/* allocated size of childXids[] */
 	InvalidOid,					/* previous CurrentUserId setting */
-	false,						/* previous SecurityDefinerContext setting */
+	0,							/* previous SecurityRestrictionContext */
 	false,						/* entry-time xact r/o state */
 	NULL						/* link to parent state block */
 };
@@ -1570,9 +1570,9 @@ StartTransaction(void)
 	s->childXids = NULL;
 	s->nChildXids = 0;
 	s->maxChildXids = 0;
-	GetUserIdAndContext(&s->prevUser, &s->prevSecDefCxt);
-	/* SecurityDefinerContext should never be set outside a transaction */
-	Assert(!s->prevSecDefCxt);
+	GetUserIdAndSecContext(&s->prevUser, &s->prevSecContext);
+	/* SecurityRestrictionContext should never be set outside a transaction */
+	Assert(s->prevSecContext == 0);
 
 	/*
 	 * initialize other subsystems for new transaction
@@ -2063,13 +2063,13 @@ AbortTransaction(void)
 	 * Reset user ID which might have been changed transiently.  We need this
 	 * to clean up in case control escaped out of a SECURITY DEFINER function
 	 * or other local change of CurrentUserId; therefore, the prior value
-	 * of SecurityDefinerContext also needs to be restored.
+	 * of SecurityRestrictionContext also needs to be restored.
 	 *
 	 * (Note: it is not necessary to restore session authorization or role
 	 * settings here because those can only be changed via GUC, and GUC will
 	 * take care of rolling them back if need be.)
 	 */
-	SetUserIdAndContext(s->prevUser, s->prevSecDefCxt);
+	SetUserIdAndSecContext(s->prevUser, s->prevSecContext);
 
 	/*
 	 * do abort processing
@@ -3909,7 +3909,7 @@ AbortSubTransaction(void)
 	 * Reset user ID which might have been changed transiently.  (See notes
 	 * in AbortTransaction.)
 	 */
-	SetUserIdAndContext(s->prevUser, s->prevSecDefCxt);
+	SetUserIdAndSecContext(s->prevUser, s->prevSecContext);
 
 	/*
 	 * We can skip all this stuff if the subxact failed before creating a
@@ -4051,7 +4051,7 @@ PushTransaction(void)
 	s->savepointLevel = p->savepointLevel;
 	s->state = TRANS_DEFAULT;
 	s->blockState = TBLOCK_SUBBEGIN;
-	GetUserIdAndContext(&s->prevUser, &s->prevSecDefCxt);
+	GetUserIdAndSecContext(&s->prevUser, &s->prevSecContext);
 	s->prevXactReadOnly = XactReadOnly;
 
 	CurrentTransactionState = s;
