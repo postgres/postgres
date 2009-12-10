@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/manage-ag.sgml,v 2.58 2009/05/06 16:15:20 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/manage-ag.sgml,v 2.59 2009/12/10 06:32:27 petere Exp $ -->
 
 <chapter id="managing-databases">
  <title>Managing Databases</title>
@@ -119,8 +119,8 @@ CREATE DATABASE <replaceable>name</>;
   <para>
    A second database,
    <literal>template1</literal>,<indexterm><primary>template1</></>
-   is also created by
-   <command>initdb</>.  Whenever a new database is created within the
+   is also created during database cluster initialization.  Whenever a
+   new database is created within the
    cluster, <literal>template1</literal> is essentially cloned.
    This means that any changes you make in <literal>template1</> are
    propagated to all subsequently created databases. Therefore it is
@@ -196,7 +196,8 @@ createdb -O <replaceable>rolename</> <replaceable>dbname</>
    <literal>template1</>, that is, only the standard objects
    predefined by your version of
    <productname>PostgreSQL</productname>.  <literal>template0</>
-   should never be changed after <command>initdb</>.  By instructing
+   should never be changed after the database cluster has been
+   initialized.  By instructing
    <command>CREATE DATABASE</> to copy <literal>template0</> instead
    of <literal>template1</>, you can create a <quote>virgin</> user
    database that contains none of the site-local additions in
@@ -453,7 +454,8 @@ CREATE TABLE foo(i int);
   </para>
 
   <para>
-   Two tablespaces are automatically created by <literal>initdb</>. The
+   Two tablespaces are automatically created when the database cluster
+   is initialized.  The
    <literal>pg_global</> tablespace is used for shared system catalogs. The
    <literal>pg_default</> tablespace is the default tablespace of the
    <literal>template1</> and <literal>template0</> databases (and, therefore,

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/initdb.sgml,v 1.44 2008/09/23 09:20:34 heikki Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/initdb.sgml,v 1.45 2009/12/10 06:32:28 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -310,9 +310,19 @@ PostgreSQL documentation
  </refsect1>
 
  <refsect1>
+  <title>Notes</title>
+
+  <para>
+   <command>initdb</command> can also be invoked via
+   <command>pg_ctl initdb</command>.
+  </para>
+ </refsect1>
+
+ <refsect1>
   <title>See Also</title>
 
   <simplelist type="inline">
+   <member><xref linkend="app-pg-ctl"></member>
    <member><xref linkend="app-postgres"></member>
   </simplelist>
  </refsect1>

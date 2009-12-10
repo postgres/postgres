@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.235 2009/11/28 23:38:06 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.236 2009/12/10 06:32:27 petere Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -54,9 +54,9 @@
    <para>
     One way to set these parameters is to edit the file
     <filename>postgresql.conf</><indexterm><primary>postgresql.conf</></>,
-    which is normally kept in the data directory. (<application>initdb</>
-    installs a default copy there.) An example of what this file might look
-    like is:
+    which is normally kept in the data directory.  (A default copy is
+    installed there when the database cluster directory is
+    initialized.)  An example of what this file might look like is:
 <programlisting>
 # This is a comment
 log_connections = yes

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/pg_ctl-ref.sgml,v 1.46 2008/06/26 01:12:19 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/pg_ctl-ref.sgml,v 1.47 2009/12/10 06:32:28 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -12,7 +12,7 @@ PostgreSQL documentation
 
  <refnamediv>
   <refname>pg_ctl</refname>
-  <refpurpose>start, stop, or restart a <productname>PostgreSQL</productname> server</refpurpose>
+  <refpurpose>initialize, start, stop, or restart a <productname>PostgreSQL</productname> server</refpurpose>
  </refnamediv>
 
  <indexterm zone="app-pg-ctl">
@@ -21,6 +21,13 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
   <cmdsynopsis>
+
+   <command>pg_ctl</command>
+   <arg choice="plain">init[db]</arg>
+   <arg>-s</arg>
+   <arg>-D <replaceable>datadir</replaceable></arg>
+   <arg>-o <replaceable>options</replaceable></arg>
+   <sbr>
 
    <command>pg_ctl</command>
    <arg choice="plain">start</arg>
@@ -105,7 +112,8 @@ PostgreSQL documentation
  <refsect1 id="app-pg-ctl-description">
   <title>Description</title>
   <para>
-   <application>pg_ctl</application> is a utility for starting,
+   <application>pg_ctl</application> is a utility for initializing a
+   <productname>PostgreSQL</productname> database cluster, starting,
    stopping, or restarting the <productname>PostgreSQL</productname>
    backend server (<xref linkend="app-postgres">), or displaying the
    status of a running server.  Although the server can be started
@@ -113,6 +121,15 @@ PostgreSQL documentation
    as redirecting log output and properly detaching from the terminal
    and process group. It also provides convenient options for
    controlled shutdown.
+  </para>
+
+  <para>
+   The <option>init</option> or <option>initdb</option> mode creates a
+   new
+   <productname>PostgreSQL</productname> database cluster.  A database
+   cluster is a collection of databases that are managed by a single
+   server instance.  This mode invokes the <command>initdb</command>
+   command.  See <xref linkend="app-initdb"> for details.
   </para>
 
   <para>
@@ -262,6 +279,12 @@ PostgreSQL documentation
         installation directory.  It is not necessary to use this
         option unless you are doing something unusual and get errors
         that the <filename>postgres</filename> executable was not found.
+       </para>
+
+       <para>
+        In <literal>init</literal> mode, this option analogously
+        specifies the location of the <filename>initdb</filename>
+        executable.
        </para>
       </listitem>
      </varlistentry>
@@ -542,9 +565,10 @@ Command line was:
  <refsect1>
   <title>See Also</title>
 
-  <para>
-   <xref linkend="app-postgres">
-  </para>
+  <simplelist type="inline">
+   <member><xref linkend="app-initdb"></member>
+   <member><xref linkend="app-postgres"></member>
+  </simplelist>
  </refsect1>
 
 </refentry>

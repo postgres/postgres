@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.428 2009/04/27 16:27:36 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.429 2009/12/10 06:32:28 petere Exp $ -->
 
 <chapter Id="runtime">
  <title>Server Setup and Operation</title>
@@ -92,6 +92,20 @@
     <indexterm><primary><envar>PGDATA</envar></primary></indexterm>
    </para>
   </tip>
+
+  <para>
+   Alternatively, you can run <command>initdb</command> via
+   the <xref linkend="app-pg-ctl">
+   program<indexterm><primary>pg_ctl</></> like so:
+<screen>
+<prompt>$</> <userinput>pg_ctl -D /usr/local/pgsql/data initdb</userinput>
+</screen>
+   This may be more intuitive if you are
+   using <command>pg_ctl</command> for starting and stopping the
+   server (see <xref linkend="server-start">), so
+   that <command>pg_ctl</command> would be the sole command you use
+   for managing the database server instance.
+  </para>
 
   <para>
    <command>initdb</command> will attempt to create the directory you
