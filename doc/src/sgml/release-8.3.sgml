@@ -1,5 +1,338 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release-8.3.sgml,v 1.3 2009/09/03 22:13:47 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release-8.3.sgml,v 1.4 2009/12/10 00:31:14 tgl Exp $ -->
 <!-- See header comment in release.sgml about typical markup -->
+
+ <sect1 id="release-8-3-9">
+  <title>Release 8.3.9</title>
+
+  <note>
+  <title>Release date</title>
+  <simpara>2009-12-14</simpara>
+  </note>
+
+  <para>
+   This release contains a variety of fixes from 8.3.8.
+   For information about new features in the 8.3 major release, see
+   <xref linkend="release-8-3">.
+  </para>
+
+  <sect2>
+   <title>Migration to Version 8.3.9</title>
+
+   <para>
+    A dump/restore is not required for those running 8.3.X.
+    However, if you are upgrading from a version earlier than 8.3.8,
+    see the release notes for 8.3.8.
+   </para>
+
+  </sect2>
+
+  <sect2>
+   <title>Changes</title>
+
+   <itemizedlist>
+
+    <listitem>
+     <para>
+      Protect against indirect security threats caused by index functions
+      changing session-local state (Gurjeet Singh, Tom)
+     </para>
+
+     <para>
+      This change prevents allegedly-immutable index functions from possibly
+      subverting a superuser's session (CVE-2009-4136).
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Reject SSL certificates containing an embedded null byte in the common
+      name (CN) field (Magnus)
+     </para>
+
+     <para>
+      This prevents unintended matching of a certificate to a server or client
+      name during SSL validation (CVE-2009-4034).
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix possible crash during backend-startup-time cache initialization (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Avoid crash on empty thesaurus dictionary (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Prevent signals from interrupting <literal>VACUUM</> at unsafe times
+      (Alvaro)
+     </para>
+
+     <para>
+      This fix prevents a PANIC if a <literal>VACUUM FULL</> is cancelled
+      after it's already committed its tuple movements, as well as transient
+      errors if a plain <literal>VACUUM</> is interrupted after having
+      truncated the table.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix possible crash due to integer overflow in hash table size
+      calculation (Tom)
+     </para>
+
+     <para>
+      This could occur with extremely large planner estimates for the size of
+      a hashjoin's result.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix very rare crash in <type>inet</>/<type>cidr</> comparisons (Chris
+      Mikkelson)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Ensure that shared tuple-level locks held by prepared transactions are
+      not ignored (Heikki)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix premature drop of temporary files used for a cursor that is accessed
+      within a subtransaction (Heikki)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix memory leak in syslogger process when rotating to a new CSV logfile
+      (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix Windows permission-downgrade logic (Jesse Morris)
+     </para>
+
+     <para>
+      This fixes some cases where the database failed to start on Windows,
+      often with misleading error messages such as <quote>could not locate
+      matching postgres executable</quote>.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix incorrect logic for GiST index page splits, when the split depends
+      on a non-first column of the index (Paul Ramsey)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Don't error out if recycling or removing an old WAL file fails at the
+      end of checkpoint (Heikki)
+     </para>
+
+     <para>
+      It's better to treat the problem as non-fatal and allow the checkpoint
+      to complete.  Future checkpoints will retry the removal.  Such problems
+      are not expected in normal operation, but have been seen to be
+      caused by misdesigned Windows anti-virus and backup software.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Ensure WAL files aren't repeatedly archived on Windows (Heikki)
+     </para>
+
+     <para>
+      This is another symptom that could happen if some other process
+      interfered with deletion of a no-longer-needed file.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix PAM password processing to be more robust (Tom)
+     </para>
+
+     <para>
+      The previous code is known to fail with the combination of the Linux
+      <literal>pam_krb5</> PAM module with Microsoft Active Directory as the
+      domain controller.  It might have problems elsewhere too, since it was
+      making unjustified assumptions about what arguments the PAM stack would
+      pass to it.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Raise the maximum authentication token (Kerberos ticket) size in GSSAPI
+      and SSPI authentication methods (Ian Turner)
+     </para>
+
+     <para>
+      While the old 2000-byte limit was more than enough for Unix Kerberos
+      implementations, tickets issued by Windows Domain Controllers can be
+      much larger.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Re-enable collection of access statistics for sequences (Akira Kurosawa)
+     </para>
+
+     <para>
+      This used to work but was broken in 8.3.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix processing of ownership dependencies during <literal>CREATE OR
+      REPLACE FUNCTION</> (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix incorrect handling of <literal>WHERE</>
+      <replaceable>x</>=<replaceable>x</> conditions (Tom)
+     </para>
+
+     <para>
+      In some cases these could get ignored as redundant, but they aren't
+      &mdash; they're equivalent to <replaceable>x</> <literal>IS NOT NULL</>.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Make text search parser accept underscores in XML attributes (Peter)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix encoding handling in <type>xml</> binary input (Heikki)
+     </para>
+
+     <para>
+      If the XML header doesn't specify an encoding, we now assume UTF-8 by
+      default; the previous handling was inconsistent.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix bug with calling <literal>plperl</> from <literal>plperlu</> or vice
+      versa (Tom)
+     </para>
+
+     <para>
+      An error exit from the inner function could result in crashes due to
+      failure to re-select the correct Perl interpreter for the outer function.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix session-lifespan memory leak when a PL/Perl function is redefined
+      (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Ensure that Perl arrays are properly converted to
+      <productname>PostgreSQL</> arrays when returned by a set-returning
+      PL/Perl function (Andrew Dunstan, Abhijit Menon-Sen)
+     </para>
+
+     <para>
+      This worked correctly already for non-set-returning functions.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix rare crash in exception processing in PL/Python (Peter)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      In <filename>contrib/pg_standby</>, disable triggering failover with a
+      signal on Windows (Fujii Masao)
+     </para>
+
+     <para>
+      This never did anything useful, because Windows doesn't have Unix-style
+      signals, but recent changes made it actually crash.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Ensure <application>psql</>'s flex module is compiled with the correct
+      system header definitions (Tom)
+     </para>
+
+     <para>
+      This fixes build failures on platforms where
+      <literal>--enable-largefile</> causes incompatible changes in the
+      generated code.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Make the postmaster ignore any <literal>application_name</> parameter in
+      connection request packets, to improve compatibility with future libpq
+      versions (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Update the timezone abbreviation files to match current reality (Joachim
+      Wieland)
+     </para>
+
+     <para>
+      This includes adding <literal>IDT</> and <literal>SGT</> to the default
+      timezone abbreviation set.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Update time zone data files to <application>tzdata</> release 2009s
+      for DST law changes in Antarctica, Argentina, Bangladesh, Fiji,
+      Novokuznetsk, Pakistan, Palestine, Samoa, Syria; also historical
+      corrections for Hong Kong.
+     </para>
+    </listitem>
+
+   </itemizedlist>
+
+  </sect2>
+ </sect1>
 
  <sect1 id="release-8-3-8">
   <title>Release 8.3.8</title>

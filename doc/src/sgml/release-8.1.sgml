@@ -1,5 +1,186 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release-8.1.sgml,v 1.3 2009/09/03 22:13:47 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release-8.1.sgml,v 1.4 2009/12/10 00:31:14 tgl Exp $ -->
 <!-- See header comment in release.sgml about typical markup -->
+
+ <sect1 id="release-8-1-19">
+  <title>Release 8.1.19</title>
+
+  <note>
+  <title>Release date</title>
+  <simpara>2009-12-14</simpara>
+  </note>
+
+  <para>
+   This release contains a variety of fixes from 8.1.18.
+   For information about new features in the 8.1 major release, see
+   <xref linkend="release-8-1">.
+  </para>
+
+  <sect2>
+   <title>Migration to Version 8.1.19</title>
+
+   <para>
+    A dump/restore is not required for those running 8.1.X.
+    However, if you are upgrading from a version earlier than 8.1.18,
+    see the release notes for 8.1.18.
+   </para>
+
+  </sect2>
+
+  <sect2>
+   <title>Changes</title>
+
+   <itemizedlist>
+
+    <listitem>
+     <para>
+      Protect against indirect security threats caused by index functions
+      changing session-local state (Gurjeet Singh, Tom)
+     </para>
+
+     <para>
+      This change prevents allegedly-immutable index functions from possibly
+      subverting a superuser's session (CVE-2009-4136).
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Reject SSL certificates containing an embedded null byte in the common
+      name (CN) field (Magnus)
+     </para>
+
+     <para>
+      This prevents unintended matching of a certificate to a server or client
+      name during SSL validation (CVE-2009-4034).
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix possible crash during backend-startup-time cache initialization (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Prevent signals from interrupting <literal>VACUUM</> at unsafe times
+      (Alvaro)
+     </para>
+
+     <para>
+      This fix prevents a PANIC if a <literal>VACUUM FULL</> is cancelled
+      after it's already committed its tuple movements, as well as transient
+      errors if a plain <literal>VACUUM</> is interrupted after having
+      truncated the table.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix possible crash due to integer overflow in hash table size
+      calculation (Tom)
+     </para>
+
+     <para>
+      This could occur with extremely large planner estimates for the size of
+      a hashjoin's result.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix very rare crash in <type>inet</>/<type>cidr</> comparisons (Chris
+      Mikkelson)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Ensure that shared tuple-level locks held by prepared transactions are
+      not ignored (Heikki)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix premature drop of temporary files used for a cursor that is accessed
+      within a subtransaction (Heikki)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix PAM password processing to be more robust (Tom)
+     </para>
+
+     <para>
+      The previous code is known to fail with the combination of the Linux
+      <literal>pam_krb5</> PAM module with Microsoft Active Directory as the
+      domain controller.  It might have problems elsewhere too, since it was
+      making unjustified assumptions about what arguments the PAM stack would
+      pass to it.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix processing of ownership dependencies during <literal>CREATE OR
+      REPLACE FUNCTION</> (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Ensure that Perl arrays are properly converted to
+      <productname>PostgreSQL</> arrays when returned by a set-returning
+      PL/Perl function (Andrew Dunstan, Abhijit Menon-Sen)
+     </para>
+
+     <para>
+      This worked correctly already for non-set-returning functions.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix rare crash in exception processing in PL/Python (Peter)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Ensure <application>psql</>'s flex module is compiled with the correct
+      system header definitions (Tom)
+     </para>
+
+     <para>
+      This fixes build failures on platforms where
+      <literal>--enable-largefile</> causes incompatible changes in the
+      generated code.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Make the postmaster ignore any <literal>application_name</> parameter in
+      connection request packets, to improve compatibility with future libpq
+      versions (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Update time zone data files to <application>tzdata</> release 2009s
+      for DST law changes in Antarctica, Argentina, Bangladesh, Fiji,
+      Novokuznetsk, Pakistan, Palestine, Samoa, Syria; also historical
+      corrections for Hong Kong.
+     </para>
+    </listitem>
+
+   </itemizedlist>
+
+  </sect2>
+ </sect1>
 
  <sect1 id="release-8-1-18">
   <title>Release 8.1.18</title>
