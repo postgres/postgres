@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/plpython.sgml,v 1.40 2009/03/30 16:15:43 alvherre Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/plpython.sgml,v 1.41 2009/12/10 20:43:40 petere Exp $ -->
 
 <chapter id="plpython">
  <title>PL/Python - Python Procedural Language</title>
@@ -132,6 +132,43 @@ $$ LANGUAGE plpythonu;
    As shown above, to return an SQL null value from a PL/Python
    function, return the value <symbol>None</symbol>. This can be done whether the
    function is strict or not.
+  </para>
+
+  <para>
+   SQL array values are passed into PL/Python as a Python list.  To
+   return an SQL array value out of a PL/Python function, return a
+   Python sequence, for example a list or tuple:
+
+<programlisting>
+CREATE FUNCTION return_arr()
+  RETURNS int[]
+AS $$
+return (1, 2, 3, 4, 5)
+$$ LANGUAGE plpythonu;
+
+SELECT return_arr();
+ return_arr  
+-------------
+ {1,2,3,4,5}
+(1 row)
+</programlisting>
+
+   Note that in Python, strings are sequences, which can have
+   undesirable effects that might be familiar to Python programmers:
+
+<programlisting>
+CREATE FUNCTION return_str_arr()
+  RETURNS varchar[]
+AS $$
+return "hello"
+$$ LANGUAGE plpythonu;
+
+SELECT return_str_arr();
+ return_str_arr
+----------------
+ {h,e,l,l,o}
+(1 row)
+</programlisting>
   </para>
 
   <para>

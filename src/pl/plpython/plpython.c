@@ -1,7 +1,7 @@
 /**********************************************************************
  * plpython.c - python as a procedural language for PostgreSQL
  *
- *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.132 2009/11/03 11:05:02 petere Exp $
+ *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.133 2009/12/10 20:43:40 petere Exp $
  *
  *********************************************************************
  */
@@ -89,6 +89,9 @@ typedef struct PLyDatumToOb
 	Oid			typoid;			/* The OID of the type */
 	Oid			typioparam;
 	bool		typbyval;
+	int16		typlen;
+	char		typalign;
+	struct PLyDatumToOb *elm;
 } PLyDatumToOb;
 
 typedef struct PLyTupleToOb
@@ -120,6 +123,9 @@ typedef struct PLyObToDatum
 	Oid			typoid;			/* The OID of the type */
 	Oid			typioparam;
 	bool		typbyval;
+	int16		typlen;
+	char		typalign;
+	struct PLyObToDatum *elm;
 } PLyObToDatum;
 
 typedef struct PLyObToTuple
@@ -284,6 +290,7 @@ static PyObject *PLyInt_FromInt32(PLyDatumToOb *arg, Datum d);
 static PyObject *PLyLong_FromInt64(PLyDatumToOb *arg, Datum d);
 static PyObject *PLyString_FromBytea(PLyDatumToOb *arg, Datum d);
 static PyObject *PLyString_FromDatum(PLyDatumToOb *arg, Datum d);
+static PyObject *PLyList_FromArray(PLyDatumToOb *arg, Datum d);
 
 static PyObject *PLyDict_FromTuple(PLyTypeInfo *, HeapTuple, TupleDesc);
 
@@ -293,6 +300,8 @@ static Datum PLyObject_ToBytea(PLyTypeInfo *, PLyObToDatum *,
 							   PyObject *);
 static Datum PLyObject_ToDatum(PLyTypeInfo *, PLyObToDatum *,
 							   PyObject *);
+static Datum PLySequence_ToArray(PLyTypeInfo *, PLyObToDatum *,
+								 PyObject *);
 
 static HeapTuple PLyMapping_ToTuple(PLyTypeInfo *, PyObject *);
 static HeapTuple PLySequence_ToTuple(PLyTypeInfo *, PyObject *);
@@ -1653,18 +1662,21 @@ static void
 PLy_output_datum_func2(PLyObToDatum *arg, HeapTuple typeTup)
 {
 	Form_pg_type typeStruct = (Form_pg_type) GETSTRUCT(typeTup);
+	Oid element_type;
 
 	perm_fmgr_info(typeStruct->typinput, &arg->typfunc);
 	arg->typoid = HeapTupleGetOid(typeTup);
 	arg->typioparam = getTypeIOParam(typeTup);
 	arg->typbyval = typeStruct->typbyval;
 
+	element_type = get_element_type(arg->typoid);
+
 	/*
 	 * Select a conversion function to convert Python objects to
 	 * PostgreSQL datums.  Most data types can go through the generic
 	 * function.
 	 */
-	switch (getBaseType(arg->typoid))
+	switch (getBaseType(element_type ? element_type : arg->typoid))
 	{
 		case BOOLOID:
 			arg->func = PLyObject_ToBool;
@@ -1675,6 +1687,29 @@ PLy_output_datum_func2(PLyObToDatum *arg, HeapTuple typeTup)
 		default:
 			arg->func = PLyObject_ToDatum;
 			break;
+	}
+
+	if (element_type)
+	{
+		char dummy_delim;
+		Oid funcid;
+
+		if (type_is_rowtype(element_type))
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("PL/Python functions cannot return type %s",
+							format_type_be(arg->typoid)),
+					 errdetail("PL/Python does not support conversion to arrays of row types.")));
+
+		arg->elm = PLy_malloc0(sizeof(*arg->elm));
+		arg->elm->func = arg->func;
+		arg->func = PLySequence_ToArray;
+
+		arg->elm->typoid = element_type;
+		get_type_io_data(element_type, IOFunc_input,
+						 &arg->elm->typlen, &arg->elm->typbyval, &arg->elm->typalign, &dummy_delim,
+						 &arg->elm->typioparam, &funcid);
+		perm_fmgr_info(funcid, &arg->elm->typfunc);
 	}
 }
 
@@ -1691,15 +1726,17 @@ static void
 PLy_input_datum_func2(PLyDatumToOb *arg, Oid typeOid, HeapTuple typeTup)
 {
 	Form_pg_type typeStruct = (Form_pg_type) GETSTRUCT(typeTup);
+	Oid element_type = get_element_type(typeOid);
 
 	/* Get the type's conversion information */
 	perm_fmgr_info(typeStruct->typoutput, &arg->typfunc);
 	arg->typoid = HeapTupleGetOid(typeTup);
 	arg->typioparam = getTypeIOParam(typeTup);
 	arg->typbyval = typeStruct->typbyval;
+	arg->typlen = typeStruct->typlen;
 
 	/* Determine which kind of Python object we will convert to */
-	switch (getBaseType(typeOid))
+	switch (getBaseType(element_type ? element_type : typeOid))
 	{
 		case BOOLOID:
 			arg->func = PLyBool_FromBool;
@@ -1728,6 +1765,14 @@ PLy_input_datum_func2(PLyDatumToOb *arg, Oid typeOid, HeapTuple typeTup)
 		default:
 			arg->func = PLyString_FromDatum;
 			break;
+	}
+
+	if (element_type)
+	{
+		arg->elm = PLy_malloc0(sizeof(*arg->elm));
+		arg->elm->func = arg->func;
+		arg->func = PLyList_FromArray;
+		get_typlenbyvalalign(element_type, &arg->elm->typlen, &arg->elm->typbyval, &arg->elm->typalign);
 	}
 }
 
@@ -1830,6 +1875,45 @@ PLyString_FromDatum(PLyDatumToOb *arg, Datum d)
 	PyObject *r = PyString_FromString(x);
 	pfree(x);
 	return r;
+}
+
+static PyObject *
+PLyList_FromArray(PLyDatumToOb *arg, Datum d)
+{
+	ArrayType  *array = DatumGetArrayTypeP(d);
+	PyObject   *list;
+	int			length;
+	int			lbound;
+	int			i;
+
+	if (ARR_NDIM(array) == 0)
+		return PyList_New(0);
+
+	if (ARR_NDIM(array) != 1)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("cannot convert multidimensional array to Python list"),
+				 errdetail("PL/Python only supports one-dimensional arrays.")));
+
+	length = ARR_DIMS(array)[0];
+	lbound = ARR_LBOUND(array)[0];
+	list = PyList_New(length);
+
+	for (i = 0; i < length; i++)
+	{
+		Datum elem;
+		bool isnull;
+		int offset;
+
+		offset = lbound + i;
+		elem = array_ref(array, 1, &offset, arg->typlen, arg->elm->typlen, arg->elm->typbyval, arg->elm->typalign, &isnull);
+		if (isnull)
+			PyList_SET_ITEM(list, i, Py_None);
+		else
+			PyList_SET_ITEM(list, i, arg->elm->func(arg, elem));
+	}
+
+	return list;
 }
 
 static PyObject *
@@ -1992,6 +2076,49 @@ PLyObject_ToDatum(PLyTypeInfo *info,
 	Py_XDECREF(plrv_so);
 
 	return rv;
+}
+
+static Datum
+PLySequence_ToArray(PLyTypeInfo *info,
+					PLyObToDatum *arg,
+					PyObject *plrv)
+{
+	ArrayType *array;
+	int			i;
+	Datum		*elems;
+	bool		*nulls;
+	int			len;
+	int			lbs;
+
+	Assert(plrv != Py_None);
+
+	if (!PySequence_Check(plrv))
+		PLy_elog(ERROR, "return value of function with array return type is not a Python sequence");
+
+	len = PySequence_Length(plrv);
+	elems = palloc(sizeof(*elems) * len);
+	nulls = palloc(sizeof(*nulls) * len);
+
+	for (i = 0; i < len; i++)
+	{
+		PyObject *obj = PySequence_GetItem(plrv, i);
+
+		if (obj == Py_None)
+			nulls[i] = true;
+		else
+		{
+			nulls[i] = false;
+			/* We don't support arrays of row types yet, so the first
+			 * argument can be NULL. */
+			elems[i] = arg->elm->func(NULL, arg->elm, obj);
+		}
+		Py_XDECREF(obj);
+	}
+
+	lbs = 1;
+	array = construct_md_array(elems, nulls, 1, &len, &lbs,
+							   get_element_type(arg->typoid), arg->elm->typlen, arg->elm->typbyval, arg->elm->typalign);
+	return PointerGetDatum(array);
 }
 
 static HeapTuple

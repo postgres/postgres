@@ -477,3 +477,113 @@ CONTEXT:  PL/Python function "test_type_conversion_bytea10"
 ERROR:  value for domain bytea10 violates check constraint "bytea10_check"
 CONTEXT:  while creating return value
 PL/Python function "test_type_conversion_bytea10"
+--
+-- Arrays
+--
+CREATE FUNCTION test_type_conversion_array_int4(x int4[]) RETURNS int4[] AS $$
+plpy.info(x, type(x))
+return x
+$$ LANGUAGE plpythonu;
+SELECT * FROM test_type_conversion_array_int4(ARRAY[0, 100]);
+INFO:  ([0, 100], <type 'list'>)
+CONTEXT:  PL/Python function "test_type_conversion_array_int4"
+ test_type_conversion_array_int4 
+---------------------------------
+ {0,100}
+(1 row)
+
+SELECT * FROM test_type_conversion_array_int4(ARRAY[0,-100,55]);
+INFO:  ([0, -100, 55], <type 'list'>)
+CONTEXT:  PL/Python function "test_type_conversion_array_int4"
+ test_type_conversion_array_int4 
+---------------------------------
+ {0,-100,55}
+(1 row)
+
+SELECT * FROM test_type_conversion_array_int4(ARRAY[NULL,1]);
+INFO:  ([None, 1], <type 'list'>)
+CONTEXT:  PL/Python function "test_type_conversion_array_int4"
+ test_type_conversion_array_int4 
+---------------------------------
+ {NULL,1}
+(1 row)
+
+SELECT * FROM test_type_conversion_array_int4(ARRAY[]::integer[]);
+INFO:  ([], <type 'list'>)
+CONTEXT:  PL/Python function "test_type_conversion_array_int4"
+ test_type_conversion_array_int4 
+---------------------------------
+ {}
+(1 row)
+
+SELECT * FROM test_type_conversion_array_int4(NULL);
+INFO:  (None, <type 'NoneType'>)
+CONTEXT:  PL/Python function "test_type_conversion_array_int4"
+ test_type_conversion_array_int4 
+---------------------------------
+ 
+(1 row)
+
+SELECT * FROM test_type_conversion_array_int4(ARRAY[[1,2,3],[4,5,6]]);
+ERROR:  cannot convert multidimensional array to Python list
+DETAIL:  PL/Python only supports one-dimensional arrays.
+CONTEXT:  PL/Python function "test_type_conversion_array_int4"
+CREATE FUNCTION test_type_conversion_array_bytea(x bytea[]) RETURNS bytea[] AS $$
+plpy.info(x, type(x))
+return x
+$$ LANGUAGE plpythonu;
+SELECT * FROM test_type_conversion_array_bytea(ARRAY[E'\\xdeadbeef'::bytea, NULL]);
+INFO:  (['\xde\xad\xbe\xef', None], <type 'list'>)
+CONTEXT:  PL/Python function "test_type_conversion_array_bytea"
+ test_type_conversion_array_bytea 
+----------------------------------
+ {"\\xdeadbeef",NULL}
+(1 row)
+
+CREATE FUNCTION test_type_conversion_array_mixed1() RETURNS text[] AS $$
+return [123, 'abc']
+$$ LANGUAGE plpythonu;
+SELECT * FROM test_type_conversion_array_mixed1();
+ test_type_conversion_array_mixed1 
+-----------------------------------
+ {123,abc}
+(1 row)
+
+CREATE FUNCTION test_type_conversion_array_mixed2() RETURNS int[] AS $$
+return [123, 'abc']
+$$ LANGUAGE plpythonu;
+SELECT * FROM test_type_conversion_array_mixed2();
+ERROR:  invalid input syntax for integer: "abc"
+CONTEXT:  while creating return value
+PL/Python function "test_type_conversion_array_mixed2"
+CREATE FUNCTION test_type_conversion_array_record() RETURNS type_record[] AS $$
+return [None]
+$$ LANGUAGE plpythonu;
+SELECT * FROM test_type_conversion_array_record();
+ERROR:  PL/Python functions cannot return type type_record[]
+DETAIL:  PL/Python does not support conversion to arrays of row types.
+CREATE FUNCTION test_type_conversion_array_string() RETURNS text[] AS $$
+return 'abc'
+$$ LANGUAGE plpythonu;
+SELECT * FROM test_type_conversion_array_string();
+ test_type_conversion_array_string 
+-----------------------------------
+ {a,b,c}
+(1 row)
+
+CREATE FUNCTION test_type_conversion_array_tuple() RETURNS text[] AS $$
+return ('abc', 'def')
+$$ LANGUAGE plpythonu;
+SELECT * FROM test_type_conversion_array_tuple();
+ test_type_conversion_array_tuple 
+----------------------------------
+ {abc,def}
+(1 row)
+
+CREATE FUNCTION test_type_conversion_array_error() RETURNS int[] AS $$
+return 5
+$$ LANGUAGE plpythonu;
+SELECT * FROM test_type_conversion_array_error();
+ERROR:  PL/Python: return value of function with array return type is not a Python sequence
+CONTEXT:  while creating return value
+PL/Python function "test_type_conversion_array_error"

@@ -204,3 +204,68 @@ SELECT * FROM test_type_conversion_bytea10('hello world', 'hello wold');
 SELECT * FROM test_type_conversion_bytea10('hello word', 'hello world');
 SELECT * FROM test_type_conversion_bytea10(null, 'hello word');
 SELECT * FROM test_type_conversion_bytea10('hello word', null);
+
+
+--
+-- Arrays
+--
+
+CREATE FUNCTION test_type_conversion_array_int4(x int4[]) RETURNS int4[] AS $$
+plpy.info(x, type(x))
+return x
+$$ LANGUAGE plpythonu;
+
+SELECT * FROM test_type_conversion_array_int4(ARRAY[0, 100]);
+SELECT * FROM test_type_conversion_array_int4(ARRAY[0,-100,55]);
+SELECT * FROM test_type_conversion_array_int4(ARRAY[NULL,1]);
+SELECT * FROM test_type_conversion_array_int4(ARRAY[]::integer[]);
+SELECT * FROM test_type_conversion_array_int4(NULL);
+SELECT * FROM test_type_conversion_array_int4(ARRAY[[1,2,3],[4,5,6]]);
+
+
+CREATE FUNCTION test_type_conversion_array_bytea(x bytea[]) RETURNS bytea[] AS $$
+plpy.info(x, type(x))
+return x
+$$ LANGUAGE plpythonu;
+
+SELECT * FROM test_type_conversion_array_bytea(ARRAY[E'\\xdeadbeef'::bytea, NULL]);
+
+
+CREATE FUNCTION test_type_conversion_array_mixed1() RETURNS text[] AS $$
+return [123, 'abc']
+$$ LANGUAGE plpythonu;
+
+SELECT * FROM test_type_conversion_array_mixed1();
+
+
+CREATE FUNCTION test_type_conversion_array_mixed2() RETURNS int[] AS $$
+return [123, 'abc']
+$$ LANGUAGE plpythonu;
+
+SELECT * FROM test_type_conversion_array_mixed2();
+
+
+CREATE FUNCTION test_type_conversion_array_record() RETURNS type_record[] AS $$
+return [None]
+$$ LANGUAGE plpythonu;
+
+SELECT * FROM test_type_conversion_array_record();
+
+
+CREATE FUNCTION test_type_conversion_array_string() RETURNS text[] AS $$
+return 'abc'
+$$ LANGUAGE plpythonu;
+
+SELECT * FROM test_type_conversion_array_string();
+
+CREATE FUNCTION test_type_conversion_array_tuple() RETURNS text[] AS $$
+return ('abc', 'def')
+$$ LANGUAGE plpythonu;
+
+SELECT * FROM test_type_conversion_array_tuple();
+
+CREATE FUNCTION test_type_conversion_array_error() RETURNS int[] AS $$
+return 5
+$$ LANGUAGE plpythonu;
+
+SELECT * FROM test_type_conversion_array_error();
