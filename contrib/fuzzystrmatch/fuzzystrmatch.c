@@ -5,7 +5,7 @@
  *
  * Joe Conway <mail@joeconway.com>
  *
- * $PostgreSQL: pgsql/contrib/fuzzystrmatch/fuzzystrmatch.c,v 1.30 2009/06/11 14:48:51 momjian Exp $
+ * $PostgreSQL: pgsql/contrib/fuzzystrmatch/fuzzystrmatch.c,v 1.31 2009/12/10 01:54:17 rhaas Exp $
  * Copyright (c) 2001-2009, PostgreSQL Global Development Group
  * ALL RIGHTS RESERVED;
  *
@@ -207,13 +207,13 @@ levenshtein_internal(const char *s, const char *t,
 	n = strlen(t);
 
 	/*
-	 * If either m or n is 0, the answer is the other value. This makes sense
-	 * since it would take that many insertions to build a matching string
+	 * We can transform an empty s into t with n insertions, or a non-empty t
+	 * into an empty s with m deletions.
 	 */
 	if (!m)
-		return n;
+		return n * ins_c;
 	if (!n)
-		return m;
+		return m * del_c;
 
 	/*
 	 * For security concerns, restrict excessive CPU+RAM usage. (This
@@ -241,7 +241,7 @@ levenshtein_internal(const char *s, const char *t,
 
 	/* Initialize the "previous" row to 0..cols */
 	for (i = 0; i < m; i++)
-		prev[i] = i;
+		prev[i] = i * del_c;
 
 	/* Loop through rows of the notional array */
 	for (y = t, j = 1; j < n; y++, j++)
@@ -252,7 +252,7 @@ levenshtein_internal(const char *s, const char *t,
 		 * First cell must increment sequentially, as we're on the j'th row of
 		 * the (m+1)x(n+1) array.
 		 */
-		curr[0] = j;
+		curr[0] = j * ins_c;
 
 		for (x = s, i = 1; i < m; x++, i++)
 		{
