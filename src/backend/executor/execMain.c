@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.336 2009/12/09 21:57:51 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.337 2009/12/11 18:14:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1406,6 +1406,16 @@ EvalPlanQual(EState *estate, EPQState *epqstate,
 	 * Run the EPQ query.  We assume it will return at most one tuple.
 	 */
 	slot = EvalPlanQualNext(epqstate);
+
+	/*
+	 * If we got a tuple, force the slot to materialize the tuple so that
+	 * it is not dependent on any local state in the EPQ query (in particular,
+	 * it's highly likely that the slot contains references to any pass-by-ref
+	 * datums that may be present in copyTuple).  As with the next step,
+	 * this is to guard against early re-use of the EPQ query.
+	 */
+	if (!TupIsNull(slot))
+		(void) ExecMaterializeSlot(slot);
 
 	/*
 	 * Clear out the test tuple.  This is needed in case the EPQ query
