@@ -4881,6 +4881,13 @@ else
 fi
 
 
+if test "$enable_thread_safety" = yes; then
+
+cat >>confdefs.h <<\_ACEOF
+#define ENABLE_THREAD_SAFETY 1
+_ACEOF
+
+fi
 { $as_echo "$as_me:$LINENO: result: $enable_thread_safety" >&5
 $as_echo "$enable_thread_safety" >&6; }
 
