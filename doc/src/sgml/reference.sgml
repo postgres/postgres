@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/reference.sgml,v 1.69 2009/10/05 19:24:33 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/reference.sgml,v 1.70 2009/12/11 03:34:55 itagaki Exp $ -->
 
 <part id="reference">
  <title>Reference</title>
@@ -44,6 +44,7 @@
    &alterGroup;
    &alterIndex;
    &alterLanguage;
+   &alterLargeObject;
    &alterOperator;
    &alterOperatorClass;
    &alterOperatorFamily;

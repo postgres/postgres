@@ -7,7 +7,7 @@
  * Copyright (c) 1996-2009, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/comment.c,v 1.108 2009/10/12 19:49:24 adunstan Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/comment.c,v 1.109 2009/12/11 03:34:55 itagaki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,6 +25,7 @@
 #include "catalog/pg_description.h"
 #include "catalog/pg_language.h"
 #include "catalog/pg_largeobject.h"
+#include "catalog/pg_largeobject_metadata.h"
 #include "catalog/pg_namespace.h"
 #include "catalog/pg_opclass.h"
 #include "catalog/pg_operator.h"
@@ -42,6 +43,7 @@
 #include "commands/comment.h"
 #include "commands/dbcommands.h"
 #include "commands/tablespace.h"
+#include "libpq/be-fsstubs.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "parser/parse_func.h"
@@ -1435,7 +1437,20 @@ CommentLargeObject(List *qualname, char *comment)
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
 				 errmsg("large object %u does not exist", loid)));
 
-	/* Call CreateComments() to create/drop the comments */
+	/* Permission checks */
+	if (!lo_compat_privileges &&
+		!pg_largeobject_ownercheck(loid, GetUserId()))
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("must be owner of large object %u", loid)));
+
+	/*
+	 * Call CreateComments() to create/drop the comments
+	 *
+	 * See the comment in the inv_create() which describes
+	 * the reason why LargeObjectRelationId is used instead
+	 * of the LargeObjectMetadataRelationId.
+	 */
 	CreateComments(loid, LargeObjectRelationId, 0, comment);
 }
 

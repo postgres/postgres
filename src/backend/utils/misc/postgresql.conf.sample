@@ -489,6 +489,7 @@
 #backslash_quote = safe_encoding	# on, off, or safe_encoding
 #default_with_oids = off
 #escape_string_warning = on
+#lo_compat_privileges = off
 #sql_inheritance = on
 #standard_conforming_strings = off
 #synchronize_seqscans = on

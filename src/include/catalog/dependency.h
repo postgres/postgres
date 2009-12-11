@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/dependency.h,v 1.42 2009/10/07 22:14:24 alvherre Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/dependency.h,v 1.43 2009/12/11 03:34:56 itagaki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -128,6 +128,7 @@ typedef enum ObjectClass
 	OCLASS_CONVERSION,			/* pg_conversion */
 	OCLASS_DEFAULT,				/* pg_attrdef */
 	OCLASS_LANGUAGE,			/* pg_language */
+	OCLASS_LARGEOBJECT,			/* pg_largeobject */
 	OCLASS_OPERATOR,			/* pg_operator */
 	OCLASS_OPCLASS,				/* pg_opclass */
 	OCLASS_OPFAMILY,			/* pg_opfamily */

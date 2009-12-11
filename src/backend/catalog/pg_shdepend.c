@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_shdepend.c,v 1.36 2009/10/07 22:14:18 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_shdepend.c,v 1.37 2009/12/11 03:34:55 itagaki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,6 +25,7 @@
 #include "catalog/pg_database.h"
 #include "catalog/pg_default_acl.h"
 #include "catalog/pg_language.h"
+#include "catalog/pg_largeobject.h"
 #include "catalog/pg_namespace.h"
 #include "catalog/pg_operator.h"
 #include "catalog/pg_proc.h"
@@ -1345,6 +1346,10 @@ shdepReassignOwned(List *roleids, Oid newrole)
 
 				case LanguageRelationId:
 					AlterLanguageOwner_oid(sdepForm->objid, newrole);
+					break;
+
+				case LargeObjectRelationId:
+					LargeObjectAlterOwner(sdepForm->objid, newrole);
 					break;
 
 				case DefaultAclRelationId:

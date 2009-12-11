@@ -2,7 +2,7 @@
 #
 # Makefile for backend/catalog
 #
-# $PostgreSQL: pgsql/src/backend/catalog/Makefile,v 1.73 2009/10/07 22:14:16 alvherre Exp $
+# $PostgreSQL: pgsql/src/backend/catalog/Makefile,v 1.74 2009/12/11 03:34:55 itagaki Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -29,9 +29,9 @@ POSTGRES_BKI_SRCS = $(addprefix $(top_srcdir)/src/include/catalog/,\
 	pg_proc.h pg_type.h pg_attribute.h pg_class.h \
 	pg_attrdef.h pg_constraint.h pg_inherits.h pg_index.h pg_operator.h \
 	pg_opfamily.h pg_opclass.h pg_am.h pg_amop.h pg_amproc.h \
-	pg_language.h pg_largeobject.h pg_aggregate.h pg_statistic.h \
-	pg_rewrite.h pg_trigger.h pg_listener.h pg_description.h pg_cast.h \
-	pg_enum.h pg_namespace.h pg_conversion.h pg_depend.h \
+	pg_language.h pg_largeobject_metadata.h pg_largeobject.h pg_aggregate.h \
+	pg_statistic.h pg_rewrite.h pg_trigger.h pg_listener.h pg_description.h \
+	pg_cast.h pg_enum.h pg_namespace.h pg_conversion.h pg_depend.h \
 	pg_database.h pg_db_role_setting.h pg_tablespace.h pg_pltemplate.h \
 	pg_authid.h pg_auth_members.h pg_shdepend.h pg_shdescription.h \
 	pg_ts_config.h pg_ts_config_map.h pg_ts_dict.h \

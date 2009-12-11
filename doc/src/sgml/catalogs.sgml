@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.212 2009/12/07 05:22:21 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.213 2009/12/11 03:34:54 itagaki Exp $ -->
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
  -->
@@ -160,7 +160,12 @@
 
      <row>
       <entry><link linkend="catalog-pg-largeobject"><structname>pg_largeobject</structname></link></entry>
-      <entry>large objects</entry>
+      <entry>data pages for large objects</entry>
+     </row>
+
+     <row>
+      <entry><link linkend="catalog-pg-largeobject-metadata"><structname>pg_largeobject_metadata</structname></link></entry>
+      <entry>metadata for large objects</entry>
      </row>
 
      <row>
@@ -3120,22 +3125,31 @@
 
   <para>
    The catalog <structname>pg_largeobject</structname> holds the data making up
-   <quote>large objects</quote>.  A large object is identified by an
-   OID assigned when it is created.  Each large object is broken into
+   <quote>large objects</quote>.  A large object is identified by an OID of
+   <link linkend="catalog-pg-largeobject-metadata"><structname>pg_largeobject_metadata</></link>
+   catalog, assigned when it is created.  Each large object is broken into
    segments or <quote>pages</> small enough to be conveniently stored as rows
    in <structname>pg_largeobject</structname>.
    The amount of data per page is defined to be <symbol>LOBLKSIZE</> (which is currently
    <literal>BLCKSZ/4</>, or typically 2 kB).
   </para>
 
+  <para>
+   <structname>pg_largeobject</structname> should not be readable by the
+   public, since the catalog contains data in large objects of all users.
+   <structname>pg_largeobject_metadata</> is a publicly readable catalog
+   that only contains identifiers of large objects.
+  </para>
+
   <table>
    <title><structname>pg_largeobject</> Columns</title>
 
-   <tgroup cols="3">
+   <tgroup cols="4">
     <thead>
      <row>
       <entry>Name</entry>
       <entry>Type</entry>
+      <entry>References</entry>
       <entry>Description</entry>
      </row>
     </thead>
@@ -3144,12 +3158,14 @@
      <row>
       <entry><structfield>loid</structfield></entry>
       <entry><type>oid</type></entry>
+      <entry><literal><link linkend="catalog-pg-largeobject-metadata"><structname>pg_largeobject_metadata</structname></link>.oid</literal></entry>
       <entry>Identifier of the large object that includes this page</entry>
      </row>
 
      <row>
       <entry><structfield>pageno</structfield></entry>
       <entry><type>int4</type></entry>
+      <entry></entry>
       <entry>Page number of this page within its large object
       (counting from zero)</entry>
      </row>
@@ -3157,6 +3173,7 @@
      <row>
       <entry><structfield>data</structfield></entry>
       <entry><type>bytea</type></entry>
+      <entry></entry>
       <entry>
        Actual data stored in the large object.
        This will never be more than <symbol>LOBLKSIZE</> bytes and might be less
@@ -3177,6 +3194,55 @@
 
  </sect1>
 
+ <sect1 id="catalog-pg-largeobject-metadata">
+  <title><structname>pg_largeobject_metadata</structname></title>
+
+  <indexterm zone="catalog-pg-largeobject-metadata">
+   <primary>pg_largeobject_metadata</primary>
+  </indexterm>
+
+  <para>
+   The purpose of <structname>pg_largeobject_metadata</structname> is to
+   hold metadata of <quote>large objects</quote>, such as OID of its owner,
+   access permissions and OID of the large object itself.
+  </para>
+
+  <table>
+   <title><structname>pg_largeobject_metadata</> Columns</title>
+
+   <tgroup cols="4">
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Type</entry>
+      <entry>References</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry><structfield>lomowner</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry><literal><link linkend="catalog-pg-authid"><structname>pg_authid</structname></link>.oid</literal></entry>
+      <entry>Owner of the largeobejct</entry>
+     </row>
+
+     <row>
+      <entry><structfield>lomacl</structfield></entry>
+      <entry><type>aclitem[]</type></entry>
+      <entry>
+       Access privileges; see
+       <xref linkend="sql-grant" endterm="sql-grant-title"> and
+       <xref linkend="sql-revoke" endterm="sql-revoke-title">
+       for details
+      </entry>
+     </row>
+
+    </tbody>
+   </tgroup>
+  </table>
+ </sect1>
 
  <sect1 id="catalog-pg-listener">
   <title><structname>pg_listener</structname></title>

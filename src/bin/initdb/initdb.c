@@ -42,7 +42,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.177 2009/11/14 15:39:36 mha Exp $
+ * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.178 2009/12/11 03:34:56 itagaki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1783,6 +1783,7 @@ setup_privileges(void)
 		"  WHERE relkind IN ('r', 'v', 'S') AND relacl IS NULL;\n",
 		"GRANT USAGE ON SCHEMA pg_catalog TO PUBLIC;\n",
 		"GRANT CREATE, USAGE ON SCHEMA public TO PUBLIC;\n",
+		"REVOKE ALL ON pg_largeobject FROM PUBLIC;\n",
 		NULL
 	};
 

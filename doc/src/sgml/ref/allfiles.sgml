@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/allfiles.sgml,v 1.76 2009/10/05 19:24:33 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/allfiles.sgml,v 1.77 2009/12/11 03:34:55 itagaki Exp $
 PostgreSQL documentation
 Complete list of usable sgml source files in this directory.
 -->
@@ -16,6 +16,7 @@ Complete list of usable sgml source files in this directory.
 <!entity alterGroup         system "alter_group.sgml">
 <!entity alterIndex         system "alter_index.sgml">
 <!entity alterLanguage      system "alter_language.sgml">
+<!entity alterLargeObject   system "alter_large_object.sgml">
 <!entity alterOperator      system "alter_operator.sgml">
 <!entity alterOperatorClass system "alter_opclass.sgml">
 <!entity alterOperatorFamily system "alter_opfamily.sgml">

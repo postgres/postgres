@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/dumputils.c,v 1.51 2009/10/12 23:41:43 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/dumputils.c,v 1.52 2009/12/11 03:34:56 itagaki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -862,6 +862,11 @@ do { \
 		CONVERT_PRIV('U', "USAGE");
 	else if (strcmp(type, "SERVER") == 0)
 		CONVERT_PRIV('U', "USAGE");
+	else if (strcmp(type, "LARGE OBJECT") == 0)
+	{
+		CONVERT_PRIV('r', "SELECT");
+		CONVERT_PRIV('w', "UPDATE");
+	}
 	else
 		abort();
 

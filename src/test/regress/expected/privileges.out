@@ -11,6 +11,12 @@ DROP ROLE IF EXISTS regressuser2;
 DROP ROLE IF EXISTS regressuser3;
 DROP ROLE IF EXISTS regressuser4;
 DROP ROLE IF EXISTS regressuser5;
+DROP ROLE IF EXISTS regressuser6;
+SELECT lo_unlink(oid) FROM pg_largeobject_metadata;
+ lo_unlink 
+-----------
+(0 rows)
+
 RESET client_min_messages;
 -- test proper begins here
 CREATE USER regressuser1;
@@ -847,6 +853,194 @@ SELECT has_sequence_privilege('x_seq', 'USAGE');
  t
 (1 row)
 
+-- largeobject privilege tests
+\c -
+SET SESSION AUTHORIZATION regressuser1;
+SELECT lo_create(1001);
+ lo_create 
+-----------
+      1001
+(1 row)
+
+SELECT lo_create(1002);
+ lo_create 
+-----------
+      1002
+(1 row)
+
+SELECT lo_create(1003);
+ lo_create 
+-----------
+      1003
+(1 row)
+
+SELECT lo_create(1004);
+ lo_create 
+-----------
+      1004
+(1 row)
+
+SELECT lo_create(1005);
+ lo_create 
+-----------
+      1005
+(1 row)
+
+GRANT ALL ON LARGE OBJECT 1001 TO PUBLIC;
+GRANT SELECT ON LARGE OBJECT 1003 TO regressuser2;
+GRANT SELECT,UPDATE ON LARGE OBJECT 1004 TO regressuser2;
+GRANT ALL ON LARGE OBJECT 1005 TO regressuser2;
+GRANT SELECT ON LARGE OBJECT 1005 TO regressuser2 WITH GRANT OPTION;
+GRANT SELECT, INSERT ON LARGE OBJECT 1001 TO PUBLIC;	-- to be failed
+ERROR:  invalid privilege type INSERT for large object
+GRANT SELECT, UPDATE ON LARGE OBJECT 1001 TO nosuchuser;	-- to be failed
+ERROR:  role "nosuchuser" does not exist
+GRANT SELECT, UPDATE ON LARGE OBJECT  999 TO PUBLIC;	-- to be failed
+ERROR:  large object 999 does not exist
+\c -
+SET SESSION AUTHORIZATION regressuser2;
+SELECT lo_create(2001);
+ lo_create 
+-----------
+      2001
+(1 row)
+
+SELECT lo_create(2002);
+ lo_create 
+-----------
+      2002
+(1 row)
+
+SELECT loread(lo_open(1001, x'40000'::int), 32);
+ loread 
+--------
+ \x
+(1 row)
+
+SELECT loread(lo_open(1002, x'40000'::int), 32);	-- to be denied
+ERROR:  permission denied for large object 1002
+SELECT loread(lo_open(1003, x'40000'::int), 32);
+ loread 
+--------
+ \x
+(1 row)
+
+SELECT loread(lo_open(1004, x'40000'::int), 32);
+ loread 
+--------
+ \x
+(1 row)
+
+SELECT lowrite(lo_open(1001, x'20000'::int), 'abcd');
+ lowrite 
+---------
+       4
+(1 row)
+
+SELECT lowrite(lo_open(1002, x'20000'::int), 'abcd');	-- to be denied
+ERROR:  permission denied for large object 1002
+SELECT lowrite(lo_open(1003, x'20000'::int), 'abcd');	-- to be denied
+ERROR:  permission denied for large object 1003
+SELECT lowrite(lo_open(1004, x'20000'::int), 'abcd');
+ lowrite 
+---------
+       4
+(1 row)
+
+GRANT SELECT ON LARGE OBJECT 1005 TO regressuser3;
+GRANT UPDATE ON LARGE OBJECT 1006 TO regressuser3;	-- to be denied
+ERROR:  large object 1006 does not exist
+REVOKE ALL ON LARGE OBJECT 2001, 2002 FROM PUBLIC;
+GRANT ALL ON LARGE OBJECT 2001 TO regressuser3;
+SELECT lo_unlink(1001);		-- to be denied
+ERROR:  must be owner of large object 1001
+SELECT lo_unlink(2002);
+ lo_unlink 
+-----------
+         1
+(1 row)
+
+\c -
+-- confirm ACL setting
+SELECT oid, pg_get_userbyid(lomowner) ownername, lomacl FROM pg_largeobject_metadata;
+ oid  |  ownername   |                                          lomacl                                          
+------+--------------+------------------------------------------------------------------------------------------
+ 1002 | regressuser1 | 
+ 1001 | regressuser1 | {regressuser1=rw/regressuser1,=rw/regressuser1}
+ 1003 | regressuser1 | {regressuser1=rw/regressuser1,regressuser2=r/regressuser1}
+ 1004 | regressuser1 | {regressuser1=rw/regressuser1,regressuser2=rw/regressuser1}
+ 1005 | regressuser1 | {regressuser1=rw/regressuser1,regressuser2=r*w/regressuser1,regressuser3=r/regressuser2}
+ 2001 | regressuser2 | {regressuser2=rw/regressuser2,regressuser3=rw/regressuser2}
+(6 rows)
+
+SET SESSION AUTHORIZATION regressuser3;
+SELECT loread(lo_open(1001, x'40000'::int), 32);
+   loread   
+------------
+ \x61626364
+(1 row)
+
+SELECT loread(lo_open(1003, x'40000'::int), 32);	-- to be denied
+ERROR:  permission denied for large object 1003
+SELECT loread(lo_open(1005, x'40000'::int), 32);
+ loread 
+--------
+ \x
+(1 row)
+
+SELECT lo_truncate(lo_open(1005, x'20000'::int), 10);	-- to be denied
+ERROR:  permission denied for large object 1005
+SELECT lo_truncate(lo_open(2001, x'20000'::int), 10);
+ lo_truncate 
+-------------
+           0
+(1 row)
+
+-- compatibility mode in largeobject permission
+\c -
+SET lo_compat_privileges = false;	-- default setting
+SET SESSION AUTHORIZATION regressuser4;
+SELECT loread(lo_open(1002, x'40000'::int), 32);	-- to be denied
+ERROR:  permission denied for large object 1002
+SELECT lowrite(lo_open(1002, x'20000'::int), 'abcd');	-- to be denied
+ERROR:  permission denied for large object 1002
+SELECT lo_truncate(lo_open(1002, x'20000'::int), 10);	-- to be denied
+ERROR:  permission denied for large object 1002
+SELECT lo_unlink(1002);					-- to be denied
+ERROR:  must be owner of large object 1002
+SELECT lo_export(1001, '/dev/null');			-- to be denied
+ERROR:  must be superuser to use server-side lo_export()
+HINT:  Anyone can use the client-side lo_export() provided by libpq.
+\c -
+SET lo_compat_privileges = true;	-- compatibility mode
+SET SESSION AUTHORIZATION regressuser4;
+SELECT loread(lo_open(1002, x'40000'::int), 32);
+ loread 
+--------
+ \x
+(1 row)
+
+SELECT lowrite(lo_open(1002, x'20000'::int), 'abcd');
+ lowrite 
+---------
+       4
+(1 row)
+
+SELECT lo_truncate(lo_open(1002, x'20000'::int), 10);
+ lo_truncate 
+-------------
+           0
+(1 row)
+
+SELECT lo_unlink(1002);
+ lo_unlink 
+-----------
+         1
+(1 row)
+
+SELECT lo_export(1001, '/dev/null');			-- to be denied
+ERROR:  must be superuser to use server-side lo_export()
+HINT:  Anyone can use the client-side lo_export() provided by libpq.
 -- test default ACLs
 \c -
 CREATE SCHEMA testns;
@@ -1034,6 +1228,16 @@ DROP TABLE atest6;
 DROP TABLE atestc;
 DROP TABLE atestp1;
 DROP TABLE atestp2;
+SELECT lo_unlink(oid) FROM pg_largeobject_metadata;
+ lo_unlink 
+-----------
+         1
+         1
+         1
+         1
+         1
+(5 rows)
+
 DROP GROUP regressgroup1;
 DROP GROUP regressgroup2;
 -- these are needed to clean up permissions
@@ -1044,3 +1248,5 @@ DROP USER regressuser2;
 DROP USER regressuser3;
 DROP USER regressuser4;
 DROP USER regressuser5;
+DROP USER regressuser6;
+ERROR:  role "regressuser6" does not exist

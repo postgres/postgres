@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.695 2009/12/07 05:22:22 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.696 2009/12/11 03:34:55 itagaki Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -397,6 +397,7 @@ static TypeName *TableFuncTypeName(List *columns);
 %type <boolean> opt_varying opt_timezone
 
 %type <ival>	Iconst SignedIconst
+%type <list>	Iconst_list
 %type <str>		Sconst comment_text
 %type <str>		RoleId opt_granted_by opt_boolean ColId_or_Sconst
 %type <list>	var_list
@@ -4576,6 +4577,14 @@ privilege_target:
 					n->objs = $2;
 					$$ = n;
 				}
+			| LARGE_P OBJECT_P Iconst_list
+				{
+					PrivTarget *n = (PrivTarget *) palloc(sizeof(PrivTarget));
+					n->targtype = ACL_TARGET_OBJECT;
+					n->objtype = ACL_OBJECT_LARGEOBJECT;
+					n->objs = $3;
+					$$ = n;
+				}
 			| SCHEMA name_list
 				{
 					PrivTarget *n = (PrivTarget *) palloc(sizeof(PrivTarget));
@@ -5848,6 +5857,14 @@ AlterOwnerStmt: ALTER AGGREGATE func_name aggr_args OWNER TO RoleId
 					AlterOwnerStmt *n = makeNode(AlterOwnerStmt);
 					n->objectType = OBJECT_LANGUAGE;
 					n->object = list_make1(makeString($4));
+					n->newowner = $7;
+					$$ = (Node *)n;
+				}
+			| ALTER LARGE_P OBJECT_P Iconst OWNER TO RoleId
+				{
+					AlterOwnerStmt *n = makeNode(AlterOwnerStmt);
+					n->objectType = OBJECT_LARGEOBJECT;
+					n->object = list_make1(makeInteger($4));
 					n->newowner = $7;
 					$$ = (Node *)n;
 				}
@@ -10540,6 +10557,10 @@ RoleId:		ColId									{ $$ = $1; };
 SignedIconst: Iconst								{ $$ = $1; }
 			| '+' Iconst							{ $$ = + $2; }
 			| '-' Iconst							{ $$ = - $2; }
+		;
+
+Iconst_list:	Iconst						{ $$ = list_make1(makeInteger($1)); }
+				| Iconst_list ',' Iconst	{ $$ = lappend($1, makeInteger($3)); }
 		;
 
 /*

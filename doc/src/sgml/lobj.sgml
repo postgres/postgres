@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/lobj.sgml,v 1.49 2008/12/07 23:46:39 alvherre Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/lobj.sgml,v 1.50 2009/12/11 03:34:55 itagaki Exp $ -->
 
  <chapter id="largeObjects">
   <title id="largeObjects-title">Large Objects</title>
@@ -441,6 +441,57 @@ SELECT lo_export(image.raster, '/tmp/motd') FROM image
     The client-side functions can be used by any
     <productname>PostgreSQL</productname> user.
   </para>
+
+  <sect2 id="lo-func-privilege">
+   <title>Large object and privileges</title>
+   <para>
+    Note that access control feature was not supported in the 8.4.x series
+    and earlier release.
+    Also see the <xref linkend="guc-lo-compat-privileges"> compatibility
+    option.
+   </para>
+   <para>
+    Now it supports access controls on large objects, and allows the owner
+    of large objects to set up access rights using
+    <xref linkend="sql-grant" endterm="sql-grant-title"> and
+    <xref linkend="sql-revoke" endterm="sql-revoke-title"> statement.
+   </para>
+   <para>
+    Two permissions are defined on the large object class.
+    These are checked only when <xref linkend="guc-lo-compat-privileges">
+    option is disabled.
+   </para>
+   <para>
+    The first is <literal>SELECT</literal>.
+    It is required on <function>loread()</function> function.
+    Note that when we open large object with read-only mode, we can see
+    a static image even if other concurrent transaction modified the
+    same large object.
+    This principle is also applied on the access rights of large objects.
+    Even if a transaction modified access rights and commit it, it is
+    not invisible from other transaction which already opened the large
+    object.
+   </para>
+   <para>
+    The second is <literal>UPDATE</literal>.
+    It is required on <function>lowrite()</function> function and
+    <function>lo_truncate()</function> function.
+   </para>
+   <para>
+    In addition, <function>lo_unlink()</function> function,
+    <command>COMMENT ON</command> and <command>ALTER LARGE OBJECT</command>
+    statements needs ownership of the large object to be accessed.
+   </para>
+   <para>
+    You may wonder why <literal>SELECT</literal> is not checked on the
+    <function>lo_export()</function> function or <literal>UPDATE</literal>
+    is not checked on the <function>lo_import</function> function.
+
+    These functions originally require database superuser privilege,
+    and it allows to bypass the default database privilege checks,
+    so we don't need to check an obvious test twice.
+   </para>
+  </sect2>
 </sect1>
 
 <sect1 id="lo-examplesect">

@@ -1,0 +1,75 @@
+<refentry id="SQL-ALTERLARGEOBJECT">
+ <refmeta>
+  <refentrytitle id="SQL-ALTERLARGEOBJECT-title">ALTER LARGE OBJECT</refentrytitle>
+  <manvolnum>7</manvolnum>
+  <refmiscinfo>SQL - Language Statements</refmiscinfo>
+ </refmeta>
+
+ <refnamediv>
+  <refname>ALTER LARGE OBJECT</refname>
+  <refpurpose>change the definition of a large object</refpurpose>
+ </refnamediv>
+
+ <indexterm zone="sql-alterlargeobject">
+  <primary>ALTER LARGE OBJECT</primary>
+ </indexterm>
+
+ <refsynopsisdiv>
+<synopsis>
+ALTER LARGE OBJECT <replaceable class="PARAMETER">large_object_oid</replaceable> OWNER TO <replaceable>new_owner</replaceable>
+</synopsis>
+ </refsynopsisdiv>
+
+ <refsect1>
+  <title>Description</title>
+
+  <para>
+   <command>ALTER LARGE OBJECT</command> changes the definition of a
+   large object. The only functionality is to assign a new owner.
+   You must be superuser or owner of the large object to use
+   <command>ALTER LARGE OBJECT</command>.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Parameters</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><replaceable>large_object_oid</replaceable></term>
+    <listitem>
+     <para>
+      OID of the large object to be altered
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable>new_owner</replaceable></term>
+    <listitem>
+     <para>
+      The new owner of the large object
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Compatibility</title>
+    
+  <para>
+   There is no <command>ALTER LARGE OBJECT</command> statement in the SQL
+   standard.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member><xref linkend="largeObjects" endterm="largeObjects-title"></member>
+  </simplelist>
+ </refsect1>
+
+</refentry>

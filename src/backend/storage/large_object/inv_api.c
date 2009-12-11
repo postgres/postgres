@@ -24,7 +24,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/large_object/inv_api.c,v 1.138 2009/06/11 14:49:02 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/large_object/inv_api.c,v 1.139 2009/12/11 03:34:55 itagaki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,18 +32,23 @@
 
 #include "access/genam.h"
 #include "access/heapam.h"
+#include "access/sysattr.h"
 #include "access/tuptoaster.h"
 #include "access/xact.h"
 #include "catalog/catalog.h"
+#include "catalog/dependency.h"
 #include "catalog/indexing.h"
 #include "catalog/pg_largeobject.h"
+#include "catalog/pg_largeobject_metadata.h"
 #include "commands/comment.h"
 #include "libpq/libpq-fs.h"
+#include "miscadmin.h"
 #include "storage/large_object.h"
 #include "utils/fmgroids.h"
 #include "utils/rel.h"
 #include "utils/resowner.h"
 #include "utils/snapmgr.h"
+#include "utils/syscache.h"
 #include "utils/tqual.h"
 
 
@@ -139,30 +144,31 @@ close_lo_relation(bool isCommit)
 static bool
 myLargeObjectExists(Oid loid, Snapshot snapshot)
 {
+	Relation	pg_lo_meta;
+	ScanKeyData	skey[1];
+	SysScanDesc	sd;
+	HeapTuple	tuple;
 	bool		retval = false;
-	Relation	pg_largeobject;
-	ScanKeyData skey[1];
-	SysScanDesc sd;
 
-	/*
-	 * See if we can find any tuples belonging to the specified LO
-	 */
 	ScanKeyInit(&skey[0],
-				Anum_pg_largeobject_loid,
+				ObjectIdAttributeNumber,
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(loid));
 
-	pg_largeobject = heap_open(LargeObjectRelationId, AccessShareLock);
+	pg_lo_meta = heap_open(LargeObjectMetadataRelationId,
+						   AccessShareLock);
 
-	sd = systable_beginscan(pg_largeobject, LargeObjectLOidPNIndexId, true,
+	sd = systable_beginscan(pg_lo_meta,
+							LargeObjectMetadataOidIndexId, true,
 							snapshot, 1, skey);
 
-	if (systable_getnext(sd) != NULL)
+	tuple = systable_getnext(sd);
+	if (HeapTupleIsValid(tuple))
 		retval = true;
 
 	systable_endscan(sd);
 
-	heap_close(pg_largeobject, AccessShareLock);
+	heap_close(pg_lo_meta, AccessShareLock);
 
 	return retval;
 }
@@ -193,31 +199,31 @@ getbytealen(bytea *data)
 Oid
 inv_create(Oid lobjId)
 {
-	/*
-	 * Allocate an OID to be the LO's identifier, unless we were told what to
-	 * use.  We can use the index on pg_largeobject for checking OID
-	 * uniqueness, even though it has additional columns besides OID.
-	 */
-	if (!OidIsValid(lobjId))
-	{
-		open_lo_relation();
-
-		lobjId = GetNewOidWithIndex(lo_heap_r, LargeObjectLOidPNIndexId,
-									Anum_pg_largeobject_loid);
-	}
+	Oid			lobjId_new;
 
 	/*
-	 * Create the LO by writing an empty first page for it in pg_largeobject
-	 * (will fail if duplicate)
+	 * Create a new largeobject with empty data pages
 	 */
-	LargeObjectCreate(lobjId);
+	lobjId_new = LargeObjectCreate(lobjId);
 
+	/*
+	 * dependency on the owner of largeobject
+	 *
+	 * The reason why we use LargeObjectRelationId instead of
+	 * LargeObjectMetadataRelationId here is to provide backward
+	 * compatibility to the applications which utilize a knowledge
+	 * about internal layout of system catalogs.
+	 * OID of pg_largeobject_metadata and loid of pg_largeobject
+	 * are same value, so there are no actual differences here.
+	 */
+	recordDependencyOnOwner(LargeObjectRelationId,
+							lobjId_new, GetUserId());
 	/*
 	 * Advance command counter to make new tuple visible to later operations.
 	 */
 	CommandCounterIncrement();
 
-	return lobjId;
+	return lobjId_new;
 }
 
 /*
@@ -292,10 +298,15 @@ inv_close(LargeObjectDesc *obj_desc)
 int
 inv_drop(Oid lobjId)
 {
-	LargeObjectDrop(lobjId);
+	ObjectAddress	object;
 
-	/* Delete any comments on the large object */
-	DeleteComments(lobjId, LargeObjectRelationId, 0);
+	/*
+	 * Delete any comments and dependencies on the large object
+	 */
+	object.classId = LargeObjectRelationId;
+	object.objectId = lobjId;
+	object.objectSubId = 0;
+	performDeletion(&object, DROP_CASCADE);
 
 	/*
 	 * Advance command counter so that tuple removal will be seen by later
@@ -315,7 +326,6 @@ inv_drop(Oid lobjId)
 static uint32
 inv_getsize(LargeObjectDesc *obj_desc)
 {
-	bool		found = false;
 	uint32		lastbyte = 0;
 	ScanKeyData skey[1];
 	SysScanDesc sd;
@@ -339,13 +349,13 @@ inv_getsize(LargeObjectDesc *obj_desc)
 	 * large object in reverse pageno order.  So, it's sufficient to examine
 	 * the first valid tuple (== last valid page).
 	 */
-	while ((tuple = systable_getnext_ordered(sd, BackwardScanDirection)) != NULL)
+	tuple = systable_getnext_ordered(sd, BackwardScanDirection);
+	if (HeapTupleIsValid(tuple))
 	{
 		Form_pg_largeobject data;
 		bytea	   *datafield;
 		bool		pfreeit;
 
-		found = true;
 		if (HeapTupleHasNulls(tuple))	/* paranoia */
 			elog(ERROR, "null field found in pg_largeobject");
 		data = (Form_pg_largeobject) GETSTRUCT(tuple);
@@ -360,15 +370,10 @@ inv_getsize(LargeObjectDesc *obj_desc)
 		lastbyte = data->pageno * LOBLKSIZE + getbytealen(datafield);
 		if (pfreeit)
 			pfree(datafield);
-		break;
 	}
 
 	systable_endscan_ordered(sd);
 
-	if (!found)
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("large object %u does not exist", obj_desc->id)));
 	return lastbyte;
 }
 
@@ -544,6 +549,12 @@ inv_write(LargeObjectDesc *obj_desc, const char *buf, int nbytes)
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 				 errmsg("large object %u was not opened for writing",
 						obj_desc->id)));
+
+	/* check existence of the target largeobject */
+	if (!LargeObjectExists(obj_desc->id))
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("large object %u was already dropped", obj_desc->id)));
 
 	if (nbytes <= 0)
 		return 0;
@@ -735,6 +746,12 @@ inv_truncate(LargeObjectDesc *obj_desc, int len)
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 				 errmsg("large object %u was not opened for writing",
 						obj_desc->id)));
+
+	/* check existence of the target largeobject */
+	if (!LargeObjectExists(obj_desc->id))
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("large object %u was already dropped", obj_desc->id)));
 
 	open_lo_relation();
 
