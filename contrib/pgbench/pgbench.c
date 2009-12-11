@@ -4,7 +4,7 @@
  * A simple benchmark program for PostgreSQL
  * Originally written by Tatsuo Ishii and enhanced by many contributors.
  *
- * $PostgreSQL: pgsql/contrib/pgbench/pgbench.c,v 1.91 2009/09/10 13:59:57 ishii Exp $
+ * $PostgreSQL: pgsql/contrib/pgbench/pgbench.c,v 1.92 2009/12/11 21:50:06 tgl Exp $
  * Copyright (c) 2000-2009, PostgreSQL Global Development Group
  * ALL RIGHTS RESERVED;
  *
@@ -1916,7 +1916,7 @@ main(int argc, char **argv)
 	INSTR_TIME_SET_CURRENT(start_time);
 	srandom((unsigned int) INSTR_TIME_GET_MICROSEC(start_time));
 
-	/* process bultin SQL scripts */
+	/* process builtin SQL scripts */
 	switch (ttype)
 	{
 		case 0:
@@ -2201,6 +2201,7 @@ pthread_create(pthread_t *thread,
 {
 	fork_pthread   *th;
 	void		   *ret;
+	instr_time		start_time;
 
 	th = (fork_pthread *) malloc(sizeof(fork_pthread));
 	pipe(th->pipes);
@@ -2211,19 +2212,30 @@ pthread_create(pthread_t *thread,
 		free(th);
 		return errno;
 	}
-	if (th->pid != 0)	/* parent process */
+	if (th->pid != 0)	/* in parent process */
 	{
 		close(th->pipes[1]);
 		*thread = th;
 		return 0;
 	}
 
-	/* child process */
+	/* in child process */
 	close(th->pipes[0]);
 
 	/* set alarm again because the child does not inherit timers */
 	if (duration > 0)
 		setalarm(duration);
+
+	/*
+	 * Set a different random seed in each child process.  Otherwise they
+	 * all inherit the parent's state and generate the same "random"
+	 * sequence.  (In the threaded case, the different threads will obtain
+	 * subsets of the output of a single random() sequence, which should be
+	 * okay for our purposes.)
+	 */
+	INSTR_TIME_SET_CURRENT(start_time);
+	srandom(((unsigned int) INSTR_TIME_GET_MICROSEC(start_time)) +
+			((unsigned int) getpid()));
 
 	ret = start_routine(arg);
 	write(th->pipes[1], ret, sizeof(TResult));
