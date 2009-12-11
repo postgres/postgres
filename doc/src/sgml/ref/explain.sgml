@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/explain.sgml,v 1.46 2009/08/10 05:46:50 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/explain.sgml,v 1.47 2009/12/11 01:33:35 adunstan Exp $
 PostgreSQL documentation
 -->
 
@@ -31,7 +31,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-EXPLAIN [ ( { ANALYZE <replaceable class="parameter">boolean</replaceable> | VERBOSE <replaceable class="parameter">boolean</replaceable> | COSTS <replaceable class="parameter">boolean</replaceable> | FORMAT { TEXT | XML | JSON } } [, ...] ) ] <replaceable class="parameter">statement</replaceable>
+EXPLAIN [ ( { ANALYZE <replaceable class="parameter">boolean</replaceable> | VERBOSE <replaceable class="parameter">boolean</replaceable> | COSTS <replaceable class="parameter">boolean</replaceable> | FORMAT { TEXT | XML | JSON | YAML } } [, ...] ) ] <replaceable class="parameter">statement</replaceable>
 EXPLAIN [ ANALYZE ] [ VERBOSE ] <replaceable class="parameter">statement</replaceable>
 </synopsis>
  </refsynopsisdiv>
@@ -143,8 +143,8 @@ ROLLBACK;
     <term><literal>FORMAT</literal></term>
     <listitem>
      <para>
-      Specify the output format, which can be TEXT, XML, or JSON.
-      XML or JSON output contains the same information as the text output
+      Specify the output format, which can be TEXT, XML, JSON, or YAML.
+      Non-text output contains the same information as the text output
       format, but is easier for programs to parse.  This parameter defaults to
       <literal>TEXT</literal>.
      </para>

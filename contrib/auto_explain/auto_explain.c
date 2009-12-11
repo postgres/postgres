@@ -6,7 +6,7 @@
  * Copyright (c) 2008-2009, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/contrib/auto_explain/auto_explain.c,v 1.7 2009/08/10 05:46:49 tgl Exp $
+ *	  $PostgreSQL: pgsql/contrib/auto_explain/auto_explain.c,v 1.8 2009/12/11 01:33:35 adunstan Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,6 +29,7 @@ static const struct config_enum_entry format_options[] = {
         {"text", EXPLAIN_FORMAT_TEXT, false},
         {"xml", EXPLAIN_FORMAT_XML, false},
         {"json", EXPLAIN_FORMAT_JSON, false},
+        {"yaml", EXPLAIN_FORMAT_YAML, false},
         {NULL, 0, false}
 };
 

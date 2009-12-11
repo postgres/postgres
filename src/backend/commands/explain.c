@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/explain.c,v 1.193 2009/11/04 22:26:04 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/explain.c,v 1.194 2009/12/11 01:33:35 adunstan Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -95,7 +95,9 @@ static void ExplainBeginOutput(ExplainState *es);
 static void ExplainEndOutput(ExplainState *es);
 static void ExplainXMLTag(const char *tagname, int flags, ExplainState *es);
 static void ExplainJSONLineEnding(ExplainState *es);
+static void ExplainYAMLLineStarting(ExplainState *es);
 static void escape_json(StringInfo buf, const char *str);
+static void escape_yaml(StringInfo buf, const char *str);
 
 
 /*
@@ -135,6 +137,8 @@ ExplainQuery(ExplainStmt *stmt, const char *queryString,
 				es.format = EXPLAIN_FORMAT_XML;
 			else if (strcmp(p, "json") == 0)
 				es.format = EXPLAIN_FORMAT_JSON;
+			else if (strcmp(p, "yaml") == 0)
+				es.format = EXPLAIN_FORMAT_YAML;
 			else
 				ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
@@ -1537,6 +1541,19 @@ ExplainPropertyList(const char *qlabel, List *data, ExplainState *es)
 			}
 			appendStringInfoChar(es->str, ']');
 			break;
+
+		case EXPLAIN_FORMAT_YAML:
+			ExplainYAMLLineStarting(es);
+			escape_yaml(es->str, qlabel);
+			appendStringInfoChar(es->str, ':');
+			foreach(lc, data)
+			{
+				appendStringInfoChar(es->str, '\n');
+				appendStringInfoSpaces(es->str, es->indent * 2 + 2);
+				appendStringInfoString(es->str, "- ");
+				escape_yaml(es->str, (const char *) lfirst(lc));
+			}
+			break;
 	}
 }
 
@@ -1583,6 +1600,15 @@ ExplainProperty(const char *qlabel, const char *value, bool numeric,
 				appendStringInfoString(es->str, value);
 			else
 				escape_json(es->str, value);
+			break;
+
+		case EXPLAIN_FORMAT_YAML:
+			ExplainYAMLLineStarting(es);
+			appendStringInfo(es->str, "%s: ", qlabel);
+			if (numeric)
+				appendStringInfoString(es->str, value);
+			else
+				escape_yaml(es->str, value);
 			break;
 	}
 }
@@ -1668,6 +1694,21 @@ ExplainOpenGroup(const char *objtype, const char *labelname,
 			es->grouping_stack = lcons_int(0, es->grouping_stack);
 			es->indent++;
 			break;
+
+		case EXPLAIN_FORMAT_YAML:
+			ExplainYAMLLineStarting(es);
+			if (labelname)
+			{
+				appendStringInfo(es->str, "%s:", labelname);
+				es->grouping_stack = lcons_int(1, es->grouping_stack);
+			}
+			else
+			{
+				appendStringInfoChar(es->str, '-');
+				es->grouping_stack = lcons_int(0, es->grouping_stack);
+			}
+			es->indent++;
+			break;
 	}
 }
 
@@ -1695,6 +1736,11 @@ ExplainCloseGroup(const char *objtype, const char *labelname,
 			appendStringInfoChar(es->str, '\n');
 			appendStringInfoSpaces(es->str, 2 * es->indent);
 			appendStringInfoChar(es->str, labeled ? '}' : ']');
+			es->grouping_stack = list_delete_first(es->grouping_stack);
+			break;
+
+		case EXPLAIN_FORMAT_YAML:
+			es->indent--;
 			es->grouping_stack = list_delete_first(es->grouping_stack);
 			break;
 	}
@@ -1729,6 +1775,13 @@ ExplainDummyGroup(const char *objtype, const char *labelname, ExplainState *es)
 			}
 			escape_json(es->str, objtype);
 			break;
+
+		case EXPLAIN_FORMAT_YAML:
+			ExplainYAMLLineStarting(es);
+			if (labelname)
+				appendStringInfo(es->str, "%s:", labelname);
+			appendStringInfoString(es->str, objtype);
+			break;
 	}
 }
 
@@ -1759,6 +1812,10 @@ ExplainBeginOutput(ExplainState *es)
 			es->grouping_stack = lcons_int(0, es->grouping_stack);
 			es->indent++;
 			break;
+
+		case EXPLAIN_FORMAT_YAML:
+			es->grouping_stack = lcons_int(0, es->grouping_stack);
+			break;
 	}
 }
 
@@ -1784,6 +1841,10 @@ ExplainEndOutput(ExplainState *es)
 			appendStringInfoString(es->str, "\n]");
 			es->grouping_stack = list_delete_first(es->grouping_stack);
 			break;
+
+		case EXPLAIN_FORMAT_YAML:
+			es->grouping_stack = list_delete_first(es->grouping_stack);
+			break;
 	}
 }
 
@@ -1796,6 +1857,7 @@ ExplainSeparatePlans(ExplainState *es)
 	switch (es->format)
 	{
 		case EXPLAIN_FORMAT_TEXT:
+		case EXPLAIN_FORMAT_YAML:
 			/* add a blank line */
 			appendStringInfoChar(es->str, '\n');
 			break;
@@ -1859,6 +1921,25 @@ ExplainJSONLineEnding(ExplainState *es)
 }
 
 /*
+ * Indent a YAML line.
+ */
+static void
+ExplainYAMLLineStarting(ExplainState *es)
+{
+	Assert(es->format == EXPLAIN_FORMAT_YAML);
+	if (linitial_int(es->grouping_stack) == 0)
+	{
+		appendStringInfoChar(es->str, ' ');
+		linitial_int(es->grouping_stack) = 1;
+	}
+	else
+	{
+		appendStringInfoChar(es->str, '\n');
+		appendStringInfoSpaces(es->str, es->indent * 2);
+	}
+}
+
+/*
  * Produce a JSON string literal, properly escaping characters in the text.
  */
 static void
@@ -1901,4 +1982,24 @@ escape_json(StringInfo buf, const char *str)
 		}
 	}
 	appendStringInfoCharMacro(buf, '\"');
+}
+
+/*
+ * YAML is a superset of JSON: if we find quotable characters, we call escape_json
+ */
+static void
+escape_yaml(StringInfo buf, const char *str)
+{
+	const char *p;
+
+	for (p = str; *p; p++)
+	{
+		if ((unsigned char) *p < ' ' || strchr("\"\\\b\f\n\r\t", *p))
+		{
+			escape_json(buf, str);
+			return;
+		}
+	}
+
+	appendStringInfo(buf, "%s", str);
 }

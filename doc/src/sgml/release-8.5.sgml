@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release-8.5.sgml,v 1.8 2009/11/26 21:20:12 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release-8.5.sgml,v 1.9 2009/12/11 01:33:35 adunstan Exp $ -->
 
 <sect1 id="release-8-5">
   <title>Release 8.5alpha2</title>
@@ -176,7 +176,7 @@
        </listitem>
         <listitem>
           <para>
-            EXPLAIN allows output of plans in XML or JSON format for automated
+            EXPLAIN allows output of plans in XML, JSON, or YAML format for automated
             processing of explain plans by analysis or visualization tools.
           </para>
         </listitem>

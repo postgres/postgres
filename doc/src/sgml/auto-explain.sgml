@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/auto-explain.sgml,v 1.4 2009/08/10 05:46:50 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/auto-explain.sgml,v 1.5 2009/12/11 01:33:35 adunstan Exp $ -->
 
 <sect1 id="auto-explain">
  <title>auto_explain</title>
@@ -114,7 +114,7 @@ LOAD 'auto_explain';
       <varname>auto_explain.log_format</varname> selects the
       <command>EXPLAIN</> output format to be used.
       The allowed values are <literal>text</literal>, <literal>xml</literal>,
-      and <literal>json</literal>.  The default is text.
+      <literal>json</literal>, and <literal>yaml</literal>.  The default is text.
       Only superusers can change this setting.
      </para>
     </listitem>
