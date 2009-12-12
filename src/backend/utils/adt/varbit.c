@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/varbit.c,v 1.44.4.1 2007/08/21 02:40:26 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/varbit.c,v 1.44.4.2 2009/12/12 19:25:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1208,7 +1208,12 @@ bitfromint4(PG_FUNCTION_ARGS)
 	/* store first fractional byte */
 	if (destbitsleft > srcbitsleft)
 	{
-		*r++ = (bits8) ((a >> (srcbitsleft - 8)) & BITMASK);
+		int		val = (int) (a >> (destbitsleft - 8));
+
+		/* Force sign-fill in case the compiler implements >> as zero-fill */
+		if (a < 0)
+			val |= (-1) << (srcbitsleft + 8 - destbitsleft);
+		*r++ = (bits8) (val & BITMASK);
 		destbitsleft -= 8;
 	}
 	/* Now srcbitsleft and destbitsleft are the same, need not track both */
@@ -1287,7 +1292,12 @@ bitfromint8(PG_FUNCTION_ARGS)
 	/* store first fractional byte */
 	if (destbitsleft > srcbitsleft)
 	{
-		*r++ = (bits8) ((a >> (srcbitsleft - 8)) & BITMASK);
+		int		val = (int) (a >> (destbitsleft - 8));
+
+		/* Force sign-fill in case the compiler implements >> as zero-fill */
+		if (a < 0)
+			val |= (-1) << (srcbitsleft + 8 - destbitsleft);
+		*r++ = (bits8) (val & BITMASK);
 		destbitsleft -= 8;
 	}
 	/* Now srcbitsleft and destbitsleft are the same, need not track both */
