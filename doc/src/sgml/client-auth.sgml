@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.124 2009/10/01 01:58:57 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.125 2009/12/12 21:35:21 mha Exp $ -->
 
 <chapter id="client-authentication">
  <title>Client Authentication</title>
@@ -1202,12 +1202,30 @@ omicron       bryanh            guest1
    </para>
 
    <para>
-    The server will bind to the distinguished name constructed as
+    LDAP authentication can operate in two modes. In the first mode,
+    the server will bind to the distinguished name constructed as
     <replaceable>prefix</> <replaceable>username</> <replaceable>suffix</>.
     Typically, the <replaceable>prefix</> parameter is used to specify
     <literal>cn=</>, or <replaceable>DOMAIN</><literal>\</> in an Active
     Directory environment.  <replaceable>suffix</> is used to specify the
     remaining part of the DN in a non-Active Directory environment.
+   </para>
+
+   <para>
+    In the second mode, the server first binds to the LDAP directory with
+    a fixed username and password, specified with <replaceable>ldapbinduser</>
+    and <replaceable>ldapbinddn</>, and performs a search for the user trying
+    to log in to the database. If no user and password is configured, an
+    anonymous bind will be attempted to the directory. The search will be
+    performed over the subtree at <replaceable>ldapbasedn</>, and will try to
+    do an exact match of the attribute specified in
+    <replaceable>ldapsearchattribute</>. If no attribute is specified, the
+    <literal>uid</> attribute will be used. Once the user has been found in
+    this search, the server disconnects and re-binds to the directory as
+    this user, using the password specified by the client, to verify that the
+    login is correct. This method allows for significantly more flexibility
+    in where the user objects are located in the directory, but will cause
+    two separate connections to the LDAP server to be made.
    </para>
 
    <para>
@@ -1218,22 +1236,6 @@ omicron       bryanh            guest1
       <listitem>
        <para>
         Name or IP of LDAP server to connect to.
-       </para>
-      </listitem>
-     </varlistentry>
-     <varlistentry>
-      <term><literal>ldapprefix</literal></term>
-      <listitem>
-       <para>
-        String to prepend to the username when forming the DN to bind as.
-       </para>
-      </listitem>
-     </varlistentry>
-     <varlistentry>
-      <term><literal>ldapsuffix</literal></term>
-      <listitem>
-       <para>
-        String to append to the username when forming the DN to bind as.
        </para>
       </listitem>
      </varlistentry>
@@ -1257,6 +1259,60 @@ omicron       bryanh            guest1
        </para>
       </listitem>
      </varlistentry>
+     <varlistentry>
+      <term><literal>ldapprefix</literal></term>
+      <listitem>
+       <para>
+        String to prepend to the username when forming the DN to bind as,
+        when doing simple bind authentication.
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term><literal>ldapsuffix</literal></term>
+      <listitem>
+       <para>
+        String to append to the username when forming the DN to bind as,
+        when doing simple bind authentication.
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term><literal>ldapbasedn</literal></term>
+      <listitem>
+       <para>
+        DN to root the search for the user in, when doing search+bind
+        authentication.
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term><literal>ldapbinddn</literal></term>
+      <listitem>
+       <para>
+        DN of user to bind to the directory with to perform the search when
+        doing search+bind authentication.
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term><literal>ldapbindpasswd</literal></term>
+      <listitem>
+       <para>
+        Password for user to bind to the directory with to perform the search
+        when doing search+bind authentication.
+       </para>
+      </listitem>
+      </varlistentry>
+      <varlistentry>
+       <term><literal>ldapsearchattribute</literal></term>
+       <listitem>
+        <para>
+         Attribute to match against the username in the search when doing
+         search+bind authentication.
+        </para>
+       </listitem>
+      </varlistentry>
     </variablelist>
    </para>
 

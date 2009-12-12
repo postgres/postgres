@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.192 2009/10/03 20:04:39 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.193 2009/12/12 21:35:21 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1103,6 +1103,26 @@ parse_hba_line(List *line, int line_num, HbaLine *parsedline)
 					return false;
 				}
 			}
+			else if (strcmp(token, "ldapbinddn") == 0)
+			{
+				REQUIRE_AUTH_OPTION(uaLDAP, "ldapbinddn", "ldap");
+				parsedline->ldapbinddn = pstrdup(c);
+			}
+			else if (strcmp(token, "ldapbindpasswd") == 0)
+			{
+				REQUIRE_AUTH_OPTION(uaLDAP, "ldapbindpasswd", "ldap");
+				parsedline->ldapbindpasswd = pstrdup(c);
+			}
+			else if (strcmp(token, "ldapsearchattribute") == 0)
+			{
+				REQUIRE_AUTH_OPTION(uaLDAP, "ldapsearchattribute", "ldap");
+				parsedline->ldapsearchattribute = pstrdup(c);
+			}
+			else if (strcmp(token, "ldapbasedn") == 0)
+			{
+				REQUIRE_AUTH_OPTION(uaLDAP, "ldapbasedn", "ldap");
+				parsedline->ldapbasedn = pstrdup(c);
+			}
 			else if (strcmp(token, "ldapprefix") == 0)
 			{
 				REQUIRE_AUTH_OPTION(uaLDAP, "ldapprefix", "ldap");
@@ -1156,6 +1176,37 @@ parse_hba_line(List *line, int line_num, HbaLine *parsedline)
 	if (parsedline->auth_method == uaLDAP)
 	{
 		MANDATORY_AUTH_ARG(parsedline->ldapserver, "ldapserver", "ldap");
+
+		/*
+		 * LDAP can operate in two modes: either with a direct bind, using
+		 * ldapprefix and ldapsuffix, or using a search+bind,
+		 * using ldapbasedn, ldapbinddn, ldapbindpasswd and ldapsearchattribute.
+		 * Disallow mixing these parameters.
+		 */
+		if (parsedline->ldapprefix || parsedline->ldapsuffix)
+		{
+			if (parsedline->ldapbasedn ||
+				parsedline->ldapbinddn ||
+				parsedline->ldapbindpasswd ||
+				parsedline->ldapsearchattribute)
+			{
+				ereport(LOG,
+						(errcode(ERRCODE_CONFIG_FILE_ERROR),
+						 errmsg("cannot use ldapbasedn, ldapbinddn, ldapbindpasswd or ldapsearchattribute together with ldapprefix"),
+						 errcontext("line %d of configuration file \"%s\"",
+									line_num, HbaFileName)));
+				return false;
+			}
+		}
+		else if (!parsedline->ldapbasedn)
+		{
+			ereport(LOG,
+					(errcode(ERRCODE_CONFIG_FILE_ERROR),
+					 errmsg("authentication method \"ldap\" requires argument \"ldapbasedn\", \"ldapprefix\" or \"ldapsuffix\" to be set"),
+					 errcontext("line %d of configuration file \"%s\"",
+								line_num, HbaFileName)));
+			return false;
+		}
 	}
 
 	/*

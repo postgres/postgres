@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/auth.c,v 1.187 2009/10/16 22:08:36 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/auth.c,v 1.188 2009/12/12 21:35:21 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2096,14 +2096,106 @@ CheckPAMAuth(Port *port, char *user, char *password)
  */
 #ifdef USE_LDAP
 
+/*
+ * Initialize a connection to the LDAP server, including setting up
+ * TLS if requested.
+ */
+static int
+InitializeLDAPConnection(Port *port, LDAP **ldap)
+{
+	int			ldapversion = LDAP_VERSION3;
+	int			r;
+
+	*ldap = ldap_init(port->hba->ldapserver, port->hba->ldapport);
+	if (!*ldap)
+	{
+#ifndef WIN32
+		ereport(LOG,
+				(errmsg("could not initialize LDAP: error code %d",
+						errno)));
+#else
+		ereport(LOG,
+				(errmsg("could not initialize LDAP: error code %d",
+						(int) LdapGetLastError())));
+#endif
+		return STATUS_ERROR;
+	}
+
+	if ((r = ldap_set_option(*ldap, LDAP_OPT_PROTOCOL_VERSION, &ldapversion)) != LDAP_SUCCESS)
+	{
+		ldap_unbind(*ldap);
+		ereport(LOG,
+		  (errmsg("could not set LDAP protocol version: error code %d", r)));
+		return STATUS_ERROR;
+	}
+
+	if (port->hba->ldaptls)
+	{
+#ifndef WIN32
+		if ((r = ldap_start_tls_s(*ldap, NULL, NULL)) != LDAP_SUCCESS)
+#else
+		static __ldap_start_tls_sA _ldap_start_tls_sA = NULL;
+
+		if (_ldap_start_tls_sA == NULL)
+		{
+			/*
+			 * Need to load this function dynamically because it does not
+			 * exist on Windows 2000, and causes a load error for the whole
+			 * exe if referenced.
+			 */
+			HANDLE		ldaphandle;
+
+			ldaphandle = LoadLibrary("WLDAP32.DLL");
+			if (ldaphandle == NULL)
+			{
+				/*
+				 * should never happen since we import other files from
+				 * wldap32, but check anyway
+				 */
+				ldap_unbind(*ldap);
+				ereport(LOG,
+						(errmsg("could not load wldap32.dll")));
+				return STATUS_ERROR;
+			}
+			_ldap_start_tls_sA = (__ldap_start_tls_sA) GetProcAddress(ldaphandle, "ldap_start_tls_sA");
+			if (_ldap_start_tls_sA == NULL)
+			{
+				ldap_unbind(*ldap);
+				ereport(LOG,
+						(errmsg("could not load function _ldap_start_tls_sA in wldap32.dll"),
+						 errdetail("LDAP over SSL is not supported on this platform.")));
+				return STATUS_ERROR;
+			}
+
+			/*
+			 * Leak LDAP handle on purpose, because we need the library to
+			 * stay open. This is ok because it will only ever be leaked once
+			 * per process and is automatically cleaned up on process exit.
+			 */
+		}
+		if ((r = _ldap_start_tls_sA(*ldap, NULL, NULL, NULL, NULL)) != LDAP_SUCCESS)
+#endif
+		{
+			ldap_unbind(*ldap);
+			ereport(LOG,
+			 (errmsg("could not start LDAP TLS session: error code %d", r)));
+			return STATUS_ERROR;
+		}
+	}
+
+	return STATUS_OK;
+}
+
+/*
+ * Perform LDAP authentication
+ */
 static int
 CheckLDAPAuth(Port *port)
 {
 	char	   *passwd;
 	LDAP	   *ldap;
 	int			r;
-	int			ldapversion = LDAP_VERSION3;
-	char		fulluser[NAMEDATALEN + 256 + 1];
+	char	   *fulluser;
 
 	if (!port->hba->ldapserver || port->hba->ldapserver[0] == '\0')
 	{
@@ -2128,88 +2220,155 @@ CheckLDAPAuth(Port *port)
 		return STATUS_ERROR;
 	}
 
-	ldap = ldap_init(port->hba->ldapserver, port->hba->ldapport);
-	if (!ldap)
-	{
-#ifndef WIN32
-		ereport(LOG,
-				(errmsg("could not initialize LDAP: error code %d",
-						errno)));
-#else
-		ereport(LOG,
-				(errmsg("could not initialize LDAP: error code %d",
-						(int) LdapGetLastError())));
-#endif
+	if (InitializeLDAPConnection(port, &ldap) == STATUS_ERROR)
+		/* Error message already sent */
 		return STATUS_ERROR;
-	}
 
-	if ((r = ldap_set_option(ldap, LDAP_OPT_PROTOCOL_VERSION, &ldapversion)) != LDAP_SUCCESS)
+	if (port->hba->ldapbasedn)
 	{
-		ldap_unbind(ldap);
-		ereport(LOG,
-		  (errmsg("could not set LDAP protocol version: error code %d", r)));
-		return STATUS_ERROR;
-	}
+		/*
+		 * First perform an LDAP search to find the DN for the user we are trying to log
+		 * in as.
+		 */
+		char		   *filter;
+		LDAPMessage	   *search_message;
+		LDAPMessage	   *entry;
+		char		   *attributes[2];
+		char		   *dn;
+		char		   *c;
 
-	if (port->hba->ldaptls)
-	{
-#ifndef WIN32
-		if ((r = ldap_start_tls_s(ldap, NULL, NULL)) != LDAP_SUCCESS)
-#else
-		static __ldap_start_tls_sA _ldap_start_tls_sA = NULL;
-
-		if (_ldap_start_tls_sA == NULL)
+		/*
+		 * Disallow any characters that we would otherwise need to escape, since they
+		 * aren't really reasonable in a username anyway. Allowing them would make it
+		 * possible to inject any kind of custom filters in the LDAP filter.
+		 */
+		for (c = port->user_name; *c; c++)
 		{
-			/*
-			 * Need to load this function dynamically because it does not
-			 * exist on Windows 2000, and causes a load error for the whole
-			 * exe if referenced.
-			 */
-			HANDLE		ldaphandle;
-
-			ldaphandle = LoadLibrary("WLDAP32.DLL");
-			if (ldaphandle == NULL)
+			if (*c == '*' ||
+				*c == '(' ||
+				*c == ')' ||
+				*c == '\\' ||
+				*c == '/')
 			{
-				/*
-				 * should never happen since we import other files from
-				 * wldap32, but check anyway
-				 */
-				ldap_unbind(ldap);
 				ereport(LOG,
-						(errmsg("could not load wldap32.dll")));
+						(errmsg("invalid character in username for LDAP authentication")));
 				return STATUS_ERROR;
 			}
-			_ldap_start_tls_sA = (__ldap_start_tls_sA) GetProcAddress(ldaphandle, "ldap_start_tls_sA");
-			if (_ldap_start_tls_sA == NULL)
-			{
-				ldap_unbind(ldap);
-				ereport(LOG,
-						(errmsg("could not load function _ldap_start_tls_sA in wldap32.dll"),
-						 errdetail("LDAP over SSL is not supported on this platform.")));
-				return STATUS_ERROR;
-			}
-
-			/*
-			 * Leak LDAP handle on purpose, because we need the library to
-			 * stay open. This is ok because it will only ever be leaked once
-			 * per process and is automatically cleaned up on process exit.
-			 */
 		}
-		if ((r = _ldap_start_tls_sA(ldap, NULL, NULL, NULL, NULL)) != LDAP_SUCCESS)
-#endif
+
+		/*
+		 * Bind with a pre-defined username/password (if available) for searching. If
+		 * none is specified, this turns into an anonymous bind.
+		 */
+		r = ldap_simple_bind_s(ldap,
+							   port->hba->ldapbinddn ? port->hba->ldapbinddn : "",
+							   port->hba->ldapbindpasswd ? port->hba->ldapbindpasswd : "");
+		if (r != LDAP_SUCCESS)
 		{
-			ldap_unbind(ldap);
 			ereport(LOG,
-			 (errmsg("could not start LDAP TLS session: error code %d", r)));
+					(errmsg("could not perform initial LDAP bind for ldapbinddn \"%s\" on server \"%s\": error code %d",
+							port->hba->ldapbinddn, port->hba->ldapserver, r)));
+			return STATUS_ERROR;
+		}
+
+		/* Fetch just one attribute, else *all* attributes are returned */
+		attributes[0] = port->hba->ldapsearchattribute ? port->hba->ldapsearchattribute : "uid";
+		attributes[1] = NULL;
+
+		filter = palloc(strlen(attributes[0])+strlen(port->user_name)+4);
+		sprintf(filter, "(%s=%s)",
+				 attributes[0],
+				 port->user_name);
+
+		r = ldap_search_s(ldap,
+						  port->hba->ldapbasedn,
+						  LDAP_SCOPE_SUBTREE,
+						  filter,
+						  attributes,
+						  0,
+						  &search_message);
+
+		if (r != LDAP_SUCCESS)
+		{
+			ereport(LOG,
+					(errmsg("could not search LDAP for filter \"%s\" on server \"%s\": error code %d",
+							filter, port->hba->ldapserver, r)));
+			pfree(filter);
+			return STATUS_ERROR;
+		}
+
+		if (ldap_count_entries(ldap, search_message) != 1)
+		{
+			if (ldap_count_entries(ldap, search_message) == 0)
+				ereport(LOG,
+						(errmsg("LDAP search failed for filter \"%s\" on server \"%s\": no such user",
+								filter, port->hba->ldapserver)));
+			else
+				ereport(LOG,
+						(errmsg("LDAP search failed for filter \"%s\" on server \"%s\": user is not unique (%d matches)",
+								filter, port->hba->ldapserver, ldap_count_entries(ldap, search_message))));
+
+			pfree(filter);
+			ldap_msgfree(search_message);
+			return STATUS_ERROR;
+		}
+
+		entry = ldap_first_entry(ldap, search_message);
+		dn = ldap_get_dn(ldap, entry);
+		if (dn == NULL)
+		{
+			int error;
+			(void)ldap_get_option(ldap, LDAP_OPT_ERROR_NUMBER, &error);
+			ereport(LOG,
+					(errmsg("could not get dn for the first entry matching \"%s\" on server \"%s\": %s",
+							filter, port->hba->ldapserver, ldap_err2string(error))));
+			pfree(filter);
+			ldap_msgfree(search_message);
+			return STATUS_ERROR;
+		}
+		fulluser = pstrdup(dn);
+
+		pfree(filter);
+		ldap_memfree(dn);
+		ldap_msgfree(search_message);
+
+		/* Unbind and disconnect from the LDAP server */
+		r = ldap_unbind_s(ldap);
+		if (r != LDAP_SUCCESS)
+		{
+			int error;
+			(void)ldap_get_option(ldap, LDAP_OPT_ERROR_NUMBER, &error);
+			ereport(LOG,
+					(errmsg("could not unbind after searching for user \"%s\" on server \"%s\": %s",
+							fulluser, port->hba->ldapserver, ldap_err2string(error))));
+			pfree(fulluser);
+			return STATUS_ERROR;
+		}
+
+		/*
+		 * Need to re-initialize the LDAP connection, so that we can bind
+		 * to it with a different username.
+		 */
+		if (InitializeLDAPConnection(port, &ldap) == STATUS_ERROR)
+		{
+			pfree(fulluser);
+
+			/* Error message already sent */
 			return STATUS_ERROR;
 		}
 	}
+	else
+	{
+		fulluser = palloc((port->hba->ldapprefix ? strlen(port->hba->ldapprefix) : 0) +
+						  strlen(port->user_name) +
+						  (port->hba->ldapsuffix ? strlen(port->hba->ldapsuffix) : 0) +
+						  1);
 
-	snprintf(fulluser, sizeof(fulluser), "%s%s%s",
-			 port->hba->ldapprefix ? port->hba->ldapprefix : "",
-			 port->user_name,
-			 port->hba->ldapsuffix ? port->hba->ldapsuffix : "");
-	fulluser[sizeof(fulluser) - 1] = '\0';
+		sprintf(fulluser, "%s%s%s",
+				 port->hba->ldapprefix ? port->hba->ldapprefix : "",
+				 port->user_name,
+				 port->hba->ldapsuffix ? port->hba->ldapsuffix : "");
+	}
 
 	r = ldap_simple_bind_s(ldap, fulluser, passwd);
 	ldap_unbind(ldap);
@@ -2219,8 +2378,11 @@ CheckLDAPAuth(Port *port)
 		ereport(LOG,
 				(errmsg("LDAP login failed for user \"%s\" on server \"%s\": error code %d",
 						fulluser, port->hba->ldapserver, r)));
+		pfree(fulluser);
 		return STATUS_ERROR;
 	}
+
+	pfree(fulluser);
 
 	return STATUS_OK;
 }

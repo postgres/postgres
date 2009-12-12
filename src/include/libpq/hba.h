@@ -4,7 +4,7 @@
  *	  Interface to hba.c
  *
  *
- * $PostgreSQL: pgsql/src/include/libpq/hba.h,v 1.59 2009/10/01 01:58:58 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/libpq/hba.h,v 1.60 2009/12/12 21:35:21 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,6 +61,10 @@ typedef struct
 	bool		ldaptls;
 	char	   *ldapserver;
 	int			ldapport;
+	char	   *ldapbinddn;
+	char	   *ldapbindpasswd;
+	char	   *ldapsearchattribute;
+	char	   *ldapbasedn;
 	char	   *ldapprefix;
 	char	   *ldapsuffix;
 	bool		clientcert;
