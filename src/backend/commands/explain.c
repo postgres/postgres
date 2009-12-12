@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/explain.c,v 1.194 2009/12/11 01:33:35 adunstan Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/explain.c,v 1.195 2009/12/12 00:35:33 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -91,8 +91,6 @@ static void ExplainCloseGroup(const char *objtype, const char *labelname,
 				 bool labeled, ExplainState *es);
 static void ExplainDummyGroup(const char *objtype, const char *labelname,
 							  ExplainState *es);
-static void ExplainBeginOutput(ExplainState *es);
-static void ExplainEndOutput(ExplainState *es);
 static void ExplainXMLTag(const char *tagname, int flags, ExplainState *es);
 static void ExplainJSONLineEnding(ExplainState *es);
 static void ExplainYAMLLineStarting(ExplainState *es);
@@ -1791,7 +1789,7 @@ ExplainDummyGroup(const char *objtype, const char *labelname, ExplainState *es)
  * This is just enough different from processing a subgroup that we need
  * a separate pair of subroutines.
  */
-static void
+void
 ExplainBeginOutput(ExplainState *es)
 {
 	switch (es->format)
@@ -1822,7 +1820,7 @@ ExplainBeginOutput(ExplainState *es)
 /*
  * Emit the end-of-output boilerplate.
  */
-static void
+void
 ExplainEndOutput(ExplainState *es)
 {
 	switch (es->format)
