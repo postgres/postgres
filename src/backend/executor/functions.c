@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/functions.c,v 1.136 2009/11/04 22:26:05 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/functions.c,v 1.137 2009/12/14 02:15:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -338,7 +338,7 @@ init_sql_fcache(FmgrInfo *finfo, bool lazyEvalOK)
 	fcache->returnsTuple = check_sql_fn_retval(foid,
 											   rettype,
 											   queryTree_list,
-											   false,
+											   NULL,
 											   &fcache->junkFilter);
 
 	if (fcache->returnsTuple)
@@ -1003,14 +1003,27 @@ ShutdownSQLFunction(Datum arg)
  * function definition of a polymorphic function.)
  *
  * This function returns true if the sql function returns the entire tuple
- * result of its final statement, and false otherwise.	Note that because we
- * allow "SELECT rowtype_expression", this may be false even when the declared
- * function return type is a rowtype.
+ * result of its final statement, or false if it returns just the first column
+ * result of that statement.  It throws an error if the final statement doesn't
+ * return the right type at all.
  *
- * If insertRelabels is true, then binary-compatible cases are dealt with
- * by actually inserting RelabelType nodes into the output targetlist;
- * obviously the caller must pass a parsetree that it's okay to modify in this
- * case.
+ * Note that because we allow "SELECT rowtype_expression", the result can be
+ * false even when the declared function return type is a rowtype.
+ *
+ * If modifyTargetList isn't NULL, the function will modify the final
+ * statement's targetlist in two cases:
+ * (1) if the tlist returns values that are binary-coercible to the expected
+ * type rather than being exactly the expected type.  RelabelType nodes will
+ * be inserted to make the result types match exactly.
+ * (2) if there are dropped columns in the declared result rowtype.  NULL
+ * output columns will be inserted in the tlist to match them.
+ * (Obviously the caller must pass a parsetree that is okay to modify when
+ * using this flag.)  Note that this flag does not affect whether the tlist is
+ * considered to be a legal match to the result type, only how we react to
+ * allowed not-exact-match cases.  *modifyTargetList will be set true iff
+ * we had to make any "dangerous" changes that could modify the semantics of
+ * the statement.  If it is set true, the caller should not use the modified
+ * statement, but for simplicity we apply the changes anyway.
  *
  * If junkFilter isn't NULL, then *junkFilter is set to a JunkFilter defined
  * to convert the function's tuple result to the correct output tuple type.
@@ -1019,10 +1032,11 @@ ShutdownSQLFunction(Datum arg)
  */
 bool
 check_sql_fn_retval(Oid func_id, Oid rettype, List *queryTreeList,
-					bool insertRelabels,
+					bool *modifyTargetList,
 					JunkFilter **junkFilter)
 {
 	Query	   *parse;
+	List	  **tlist_ptr;
 	List	   *tlist;
 	int			tlistlen;
 	char		fn_typtype;
@@ -1031,6 +1045,8 @@ check_sql_fn_retval(Oid func_id, Oid rettype, List *queryTreeList,
 
 	AssertArg(!IsPolymorphicType(rettype));
 
+	if (modifyTargetList)
+		*modifyTargetList = false;	/* initialize for no change */
 	if (junkFilter)
 		*junkFilter = NULL;		/* initialize in case of VOID result */
 
@@ -1064,6 +1080,7 @@ check_sql_fn_retval(Oid func_id, Oid rettype, List *queryTreeList,
 		parse->utilityStmt == NULL &&
 		parse->intoClause == NULL)
 	{
+		tlist_ptr = &parse->targetList;
 		tlist = parse->targetList;
 	}
 	else if (parse &&
@@ -1072,6 +1089,7 @@ check_sql_fn_retval(Oid func_id, Oid rettype, List *queryTreeList,
 			  parse->commandType == CMD_DELETE) &&
 			 parse->returningList)
 	{
+		tlist_ptr = &parse->returningList;
 		tlist = parse->returningList;
 	}
 	else
@@ -1132,11 +1150,16 @@ check_sql_fn_retval(Oid func_id, Oid rettype, List *queryTreeList,
 					format_type_be(rettype)),
 					 errdetail("Actual return type is %s.",
 							   format_type_be(restype))));
-		if (insertRelabels && restype != rettype)
+		if (modifyTargetList && restype != rettype)
+		{
 			tle->expr = (Expr *) makeRelabelType(tle->expr,
 												 rettype,
 												 -1,
 												 COERCE_DONTCARE);
+			/* Relabel is dangerous if TLE is a sort/group or setop column */
+			if (tle->ressortgroupref != 0 || parse->setOperations)
+				*modifyTargetList = true;
+		}
 
 		/* Set up junk filter if needed */
 		if (junkFilter)
@@ -1149,6 +1172,8 @@ check_sql_fn_retval(Oid func_id, Oid rettype, List *queryTreeList,
 		int			tupnatts;	/* physical number of columns in tuple */
 		int			tuplogcols; /* # of nondeleted columns in tuple */
 		int			colindex;	/* physical column index */
+		List	   *newtlist;	/* new non-junk tlist entries */
+		List	   *junkattrs;	/* new junk tlist entries */
 
 		/*
 		 * If the target list is of length 1, and the type of the varnode in
@@ -1165,11 +1190,16 @@ check_sql_fn_retval(Oid func_id, Oid rettype, List *queryTreeList,
 			restype = exprType((Node *) tle->expr);
 			if (IsBinaryCoercible(restype, rettype))
 			{
-				if (insertRelabels && restype != rettype)
+				if (modifyTargetList && restype != rettype)
+				{
 					tle->expr = (Expr *) makeRelabelType(tle->expr,
 														 rettype,
 														 -1,
 														 COERCE_DONTCARE);
+					/* Relabel is dangerous if sort/group or setop column */
+					if (tle->ressortgroupref != 0 || parse->setOperations)
+						*modifyTargetList = true;
+				}
 				/* Set up junk filter if needed */
 				if (junkFilter)
 					*junkFilter = ExecInitJunkFilter(tlist, false, NULL);
@@ -1193,11 +1223,14 @@ check_sql_fn_retval(Oid func_id, Oid rettype, List *queryTreeList,
 		/*
 		 * Verify that the targetlist matches the return tuple type. We scan
 		 * the non-deleted attributes to ensure that they match the datatypes
-		 * of the non-resjunk columns.
+		 * of the non-resjunk columns.  For deleted attributes, insert NULL
+		 * result columns if the caller asked for that.
 		 */
 		tupnatts = tupdesc->natts;
 		tuplogcols = 0;			/* we'll count nondeleted cols as we go */
 		colindex = 0;
+		newtlist = NIL;			/* these are only used if modifyTargetList */
+		junkattrs = NIL;
 
 		foreach(lc, tlist)
 		{
@@ -1207,7 +1240,11 @@ check_sql_fn_retval(Oid func_id, Oid rettype, List *queryTreeList,
 			Oid			atttype;
 
 			if (tle->resjunk)
+			{
+				if (modifyTargetList)
+					junkattrs = lappend(junkattrs, tle);
 				continue;
+			}
 
 			do
 			{
@@ -1219,6 +1256,26 @@ check_sql_fn_retval(Oid func_id, Oid rettype, List *queryTreeList,
 									format_type_be(rettype)),
 					errdetail("Final statement returns too many columns.")));
 				attr = tupdesc->attrs[colindex - 1];
+				if (attr->attisdropped && modifyTargetList)
+				{
+					Expr   *null_expr;
+
+					/* The type of the null we insert isn't important */
+					null_expr = (Expr *) makeConst(INT4OID,
+												   -1,
+												   sizeof(int32),
+												   (Datum) 0,
+												   true,		/* isnull */
+												   true /* byval */ );
+					newtlist = lappend(newtlist,
+									   makeTargetEntry(null_expr,
+													   colindex,
+													   NULL,
+													   false));
+					/* NULL insertion is dangerous in a setop */
+					if (parse->setOperations)
+						*modifyTargetList = true;
+				}
 			} while (attr->attisdropped);
 			tuplogcols++;
 
@@ -1233,28 +1290,66 @@ check_sql_fn_retval(Oid func_id, Oid rettype, List *queryTreeList,
 								   format_type_be(tletype),
 								   format_type_be(atttype),
 								   tuplogcols)));
-			if (insertRelabels && tletype != atttype)
-				tle->expr = (Expr *) makeRelabelType(tle->expr,
-													 atttype,
-													 -1,
-													 COERCE_DONTCARE);
+			if (modifyTargetList)
+			{
+				if (tletype != atttype)
+				{
+					tle->expr = (Expr *) makeRelabelType(tle->expr,
+														 atttype,
+														 -1,
+														 COERCE_DONTCARE);
+					/* Relabel is dangerous if sort/group or setop column */
+					if (tle->ressortgroupref != 0 || parse->setOperations)
+						*modifyTargetList = true;
+				}
+				tle->resno = colindex;
+				newtlist = lappend(newtlist, tle);
+			}
 		}
 
-		for (;;)
+		/* remaining columns in tupdesc had better all be dropped */
+		for (colindex++; colindex <= tupnatts; colindex++)
 		{
-			colindex++;
-			if (colindex > tupnatts)
-				break;
 			if (!tupdesc->attrs[colindex - 1]->attisdropped)
-				tuplogcols++;
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+						 errmsg("return type mismatch in function declared to return %s",
+								format_type_be(rettype)),
+						 errdetail("Final statement returns too few columns.")));
+			if (modifyTargetList)
+			{
+				Expr   *null_expr;
+
+				/* The type of the null we insert isn't important */
+				null_expr = (Expr *) makeConst(INT4OID,
+											   -1,
+											   sizeof(int32),
+											   (Datum) 0,
+											   true,		/* isnull */
+											   true /* byval */ );
+				newtlist = lappend(newtlist,
+								   makeTargetEntry(null_expr,
+												   colindex,
+												   NULL,
+												   false));
+				/* NULL insertion is dangerous in a setop */
+				if (parse->setOperations)
+					*modifyTargetList = true;
+			}
 		}
 
-		if (tlistlen != tuplogcols)
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-			 errmsg("return type mismatch in function declared to return %s",
-					format_type_be(rettype)),
-					 errdetail("Final statement returns too few columns.")));
+		if (modifyTargetList)
+		{
+			/* ensure resjunk columns are numbered correctly */
+			foreach(lc, junkattrs)
+			{
+				TargetEntry *tle = (TargetEntry *) lfirst(lc);
+
+				tle->resno = colindex++;
+			}
+			/* replace the tlist with the modified one */
+			*tlist_ptr = list_concat(newtlist, junkattrs);
+		}
 
 		/* Set up junk filter if needed */
 		if (junkFilter)

@@ -391,3 +391,41 @@ select * from testfoo() as t(f1 int8,f2 int8);
 select * from testfoo(); -- fail
 
 drop function testfoo();
+
+--
+-- Check some cases involving dropped columns in a rowtype result
+--
+
+create temp table users (userid text, email text, todrop bool, enabled bool);
+insert into users values ('id','email',true,true);
+insert into users values ('id2','email2',true,true);
+alter table users drop column todrop;
+
+create or replace function get_first_user() returns users as
+$$ SELECT * FROM users ORDER BY userid LIMIT 1; $$
+language sql stable;
+
+SELECT get_first_user();
+SELECT * FROM get_first_user();
+
+create or replace function get_users() returns setof users as
+$$ SELECT * FROM users ORDER BY userid; $$
+language sql stable;
+
+SELECT get_users();
+SELECT * FROM get_users();
+
+drop function get_first_user();
+drop function get_users();
+drop table users;
+
+-- this won't get inlined because of type coercion, but it shouldn't fail
+
+create or replace function foobar() returns setof text as
+$$ select 'foo'::varchar union all select 'bar'::varchar ; $$
+language sql stable;
+
+select foobar();
+select * from foobar();
+
+drop function foobar();
