@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.555 2009/12/11 03:34:56 itagaki Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.556 2009/12/14 00:39:11 itagaki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1945,7 +1945,9 @@ hasBlobs(Archive *AH)
 	selectSourceSchema("pg_catalog");
 
 	/* Check for BLOB OIDs */
-	if (AH->remoteVersion >= 70100)
+	if (AH->remoteVersion >= 80500)
+		blobQry = "SELECT oid FROM pg_largeobject_metadata LIMIT 1";
+	else if (AH->remoteVersion >= 70100)
 		blobQry = "SELECT loid FROM pg_largeobject LIMIT 1";
 	else
 		blobQry = "SELECT oid FROM pg_class WHERE relkind = 'l' LIMIT 1";
@@ -1981,7 +1983,9 @@ dumpBlobs(Archive *AH, void *arg)
 	selectSourceSchema("pg_catalog");
 
 	/* Cursor to get all BLOB OIDs */
-	if (AH->remoteVersion >= 70100)
+	if (AH->remoteVersion >= 80500)
+		blobQry = "DECLARE bloboid CURSOR FOR SELECT oid FROM pg_largeobject_metadata";
+	else if (AH->remoteVersion >= 70100)
 		blobQry = "DECLARE bloboid CURSOR FOR SELECT DISTINCT loid FROM pg_largeobject";
 	else
 		blobQry = "DECLARE bloboid CURSOR FOR SELECT oid FROM pg_class WHERE relkind = 'l'";

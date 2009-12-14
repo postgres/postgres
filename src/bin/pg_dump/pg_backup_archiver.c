@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.176 2009/10/05 19:24:45 tgl Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.177 2009/12/14 00:39:10 itagaki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -914,8 +914,7 @@ StartRestoreBlob(ArchiveHandle *AH, Oid oid, bool drop)
 	ahlog(AH, 2, "restoring large object with OID %u\n", oid);
 
 	if (drop)
-		ahprintf(AH, "SELECT CASE WHEN EXISTS(SELECT 1 FROM pg_catalog.pg_largeobject WHERE loid = '%u') THEN pg_catalog.lo_unlink('%u') END;\n",
-				 oid, oid);
+		DropBlobIfExists(AH, oid);
 
 	if (AH->connection)
 	{

@@ -565,6 +565,13 @@ SELECT lo_truncate(lo_open(1002, x'20000'::int), 10);
 SELECT lo_unlink(1002);
 SELECT lo_export(1001, '/dev/null');			-- to be denied
 
+-- don't allow unpriv users to access pg_largeobject contents
+\c -
+SELECT * FROM pg_largeobject LIMIT 0;
+
+SET SESSION AUTHORIZATION regressuser1;
+SELECT * FROM pg_largeobject LIMIT 0;			-- to be denied
+
 -- test default ACLs
 \c -
 

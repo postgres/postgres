@@ -5,7 +5,7 @@
  *	Implements the basic DB functions used by the archiver.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.84 2009/06/11 14:49:07 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.85 2009/12/14 00:39:11 itagaki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -650,6 +650,23 @@ void
 CommitTransaction(ArchiveHandle *AH)
 {
 	ExecuteSqlCommand(AH, "COMMIT", "could not commit database transaction");
+}
+
+void
+DropBlobIfExists(ArchiveHandle *AH, Oid oid)
+{
+	/* Call lo_unlink only if exists to avoid not-found error. */
+	if (PQserverVersion(AH->connection) >= 80500)
+	{
+		ahprintf(AH, "SELECT pg_catalog.lo_unlink(oid) "
+					 "FROM pg_catalog.pg_largeobject_metadata "
+					 "WHERE oid = %u;\n", oid);
+	}
+	else
+	{
+		ahprintf(AH, "SELECT CASE WHEN EXISTS(SELECT 1 FROM pg_catalog.pg_largeobject WHERE loid = '%u') THEN pg_catalog.lo_unlink('%u') END;\n",
+				 oid, oid);
+	}
 }
 
 static bool

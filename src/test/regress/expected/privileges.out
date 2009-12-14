@@ -1041,6 +1041,16 @@ SELECT lo_unlink(1002);
 SELECT lo_export(1001, '/dev/null');			-- to be denied
 ERROR:  must be superuser to use server-side lo_export()
 HINT:  Anyone can use the client-side lo_export() provided by libpq.
+-- don't allow unpriv users to access pg_largeobject contents
+\c -
+SELECT * FROM pg_largeobject LIMIT 0;
+ loid | pageno | data 
+------+--------+------
+(0 rows)
+
+SET SESSION AUTHORIZATION regressuser1;
+SELECT * FROM pg_largeobject LIMIT 0;			-- to be denied
+ERROR:  permission denied for relation pg_largeobject
 -- test default ACLs
 \c -
 CREATE SCHEMA testns;
