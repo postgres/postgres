@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.250 2009/06/11 17:25:38 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.250.2.1 2009/12/14 02:16:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,6 +46,7 @@
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
 #include "optimizer/planner.h"
+#include "parser/parse_coerce.h"
 #include "pgstat.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
@@ -1344,7 +1345,7 @@ tupledesc_match(TupleDesc dst_tupdesc, TupleDesc src_tupdesc)
 		Form_pg_attribute dattr = dst_tupdesc->attrs[i];
 		Form_pg_attribute sattr = src_tupdesc->attrs[i];
 
-		if (dattr->atttypid == sattr->atttypid)
+		if (IsBinaryCoercible(sattr->atttypid, dattr->atttypid))
 			continue;			/* no worries */
 		if (!dattr->attisdropped)
 			ereport(ERROR,

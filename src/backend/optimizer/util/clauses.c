@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.277 2009/06/11 14:48:59 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.277.2.1 2009/12/14 02:16:03 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -3484,6 +3484,7 @@ inline_function(Oid funcid, Oid result_type, List *args,
 	char	   *src;
 	Datum		tmp;
 	bool		isNull;
+	bool		modifyTargetList;
 	MemoryContext oldcxt;
 	MemoryContext mycxt;
 	ErrorContextCallback sqlerrcontext;
@@ -3603,7 +3604,7 @@ inline_function(Oid funcid, Oid result_type, List *args,
 	 * needed; that's probably not important, but let's be careful.
 	 */
 	if (check_sql_fn_retval(funcid, result_type, list_make1(querytree),
-							true, NULL))
+							&modifyTargetList, NULL))
 		goto fail;				/* reject whole-tuple-result cases */
 
 	/* Now we can grab the tlist expression */
@@ -3611,6 +3612,8 @@ inline_function(Oid funcid, Oid result_type, List *args,
 
 	/* Assert that check_sql_fn_retval did the right thing */
 	Assert(exprType(newexpr) == result_type);
+	/* It couldn't have made any dangerous tlist changes, either */
+	Assert(!modifyTargetList);
 
 	/*
 	 * Additional validity checks on the expression.  It mustn't return a set,
@@ -3898,6 +3901,7 @@ inline_set_returning_function(PlannerInfo *root, RangeTblEntry *rte)
 	char	   *src;
 	Datum		tmp;
 	bool		isNull;
+	bool		modifyTargetList;
 	MemoryContext oldcxt;
 	MemoryContext mycxt;
 	ErrorContextCallback sqlerrcontext;
@@ -4045,8 +4049,8 @@ inline_set_returning_function(PlannerInfo *root, RangeTblEntry *rte)
 	 * Make sure the function (still) returns what it's declared to.  This
 	 * will raise an error if wrong, but that's okay since the function would
 	 * fail at runtime anyway.	Note that check_sql_fn_retval will also insert
-	 * RelabelType(s) if needed to make the tlist expression(s) match the
-	 * declared type of the function.
+	 * RelabelType(s) and/or NULL columns if needed to make the tlist
+	 * expression(s) match the declared type of the function.
 	 *
 	 * If the function returns a composite type, don't inline unless the check
 	 * shows it's returning a whole tuple result; otherwise what it's
@@ -4054,10 +4058,18 @@ inline_set_returning_function(PlannerInfo *root, RangeTblEntry *rte)
 	 */
 	if (!check_sql_fn_retval(fexpr->funcid, fexpr->funcresulttype,
 							 querytree_list,
-							 true, NULL) &&
+							 &modifyTargetList, NULL) &&
 		(get_typtype(fexpr->funcresulttype) == TYPTYPE_COMPOSITE ||
 		 fexpr->funcresulttype == RECORDOID))
 		goto fail;				/* reject not-whole-tuple-result cases */
+
+	/*
+	 * If we had to modify the tlist to make it match, and the statement is
+	 * one in which changing the tlist contents could change semantics, we
+	 * have to punt and not inline.
+	 */
+	if (modifyTargetList)
+		goto fail;
 
 	/*
 	 * If it returns RECORD, we have to check against the column type list
