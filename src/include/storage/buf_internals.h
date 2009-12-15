@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/buf_internals.h,v 1.102 2009/06/11 14:49:12 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/storage/buf_internals.h,v 1.103 2009/12/15 04:57:48 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -172,16 +172,6 @@ extern PGDLLIMPORT BufferDesc *BufferDescriptors;
 
 /* in localbuf.c */
 extern BufferDesc *LocalBufferDescriptors;
-
-/* event counters in buf_init.c */
-extern long int ReadBufferCount;
-extern long int ReadLocalBufferCount;
-extern long int BufferHitCount;
-extern long int LocalBufferHitCount;
-extern long int BufferFlushCount;
-extern long int LocalBufferFlushCount;
-extern long int BufFileReadCount;
-extern long int BufFileWriteCount;
 
 
 /*

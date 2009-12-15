@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/explain.c,v 1.195 2009/12/12 00:35:33 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/explain.c,v 1.196 2009/12/15 04:57:47 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -125,6 +125,8 @@ ExplainQuery(ExplainStmt *stmt, const char *queryString,
 			es.verbose = defGetBoolean(opt);
 		else if (strcmp(opt->defname, "costs") == 0)
 			es.costs = defGetBoolean(opt);
+		else if (strcmp(opt->defname, "buffers") == 0)
+			es.buffers = defGetBoolean(opt);
 		else if (strcmp(opt->defname, "format") == 0)
 		{
 			char   *p = defGetString(opt);
@@ -149,6 +151,11 @@ ExplainQuery(ExplainStmt *stmt, const char *queryString,
 					 errmsg("unrecognized EXPLAIN option \"%s\"",
 							opt->defname)));
 	}
+
+	if (es.buffers && !es.analyze)
+		ereport(ERROR,
+			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+			 errmsg("EXPLAIN option BUFFERS requires ANALYZE")));
 
 	/*
 	 * Run parse analysis and rewrite.	Note this also acquires sufficient
@@ -339,6 +346,12 @@ ExplainOnePlan(PlannedStmt *plannedstmt, ExplainState *es,
 	instr_time	starttime;
 	double		totaltime = 0;
 	int			eflags;
+	int			instrument_option = 0;
+
+	if (es->analyze)
+		instrument_option |= INSTRUMENT_TIMER;
+	if (es->buffers)
+		instrument_option |= INSTRUMENT_BUFFERS;
 
 	/*
 	 * Use a snapshot with an updated command ID to ensure this query sees
@@ -349,7 +362,7 @@ ExplainOnePlan(PlannedStmt *plannedstmt, ExplainState *es,
 	/* Create a QueryDesc requesting no output */
 	queryDesc = CreateQueryDesc(plannedstmt, queryString,
 								GetActiveSnapshot(), InvalidSnapshot,
-								None_Receiver, params, es->analyze);
+								None_Receiver, params, instrument_option);
 
 	INSTR_TIME_SET_CURRENT(starttime);
 
@@ -1040,6 +1053,84 @@ ExplainNode(Plan *plan, PlanState *planstate,
 			break;
 		default:
 			break;
+	}
+
+	/* Show buffer usage */
+	if (es->buffers)
+	{
+		const BufferUsage *usage = &planstate->instrument->bufusage;
+
+		if (es->format == EXPLAIN_FORMAT_TEXT)
+		{
+			bool	has_shared = (usage->shared_blks_hit > 0 ||
+								  usage->shared_blks_read > 0 ||
+								  usage->shared_blks_written);
+			bool	has_local = (usage->local_blks_hit > 0 ||
+								 usage->local_blks_read > 0 ||
+								 usage->local_blks_written);
+			bool	has_temp = (usage->temp_blks_read > 0 ||
+								usage->temp_blks_written);
+
+			/* Show only positive counter values. */
+			if (has_shared || has_local || has_temp)
+			{
+				appendStringInfoSpaces(es->str, es->indent * 2);
+				appendStringInfoString(es->str, "Buffers:");
+
+				if (has_shared)
+				{
+					appendStringInfoString(es->str, " shared");
+					if (usage->shared_blks_hit > 0)
+						appendStringInfo(es->str, " hit=%ld",
+							usage->shared_blks_hit);
+					if (usage->shared_blks_read > 0)
+						appendStringInfo(es->str, " read=%ld",
+							usage->shared_blks_read);
+					if (usage->shared_blks_written > 0)
+						appendStringInfo(es->str, " written=%ld",
+							usage->shared_blks_written);
+					if (has_local || has_temp)
+						appendStringInfoChar(es->str, ',');
+				}
+				if (has_local)
+				{
+					appendStringInfoString(es->str, " local");
+					if (usage->local_blks_hit > 0)
+						appendStringInfo(es->str, " hit=%ld",
+							usage->local_blks_hit);
+					if (usage->local_blks_read > 0)
+						appendStringInfo(es->str, " read=%ld",
+							usage->local_blks_read);
+					if (usage->local_blks_written > 0)
+						appendStringInfo(es->str, " written=%ld",
+							usage->local_blks_written);
+					if (has_temp)
+						appendStringInfoChar(es->str, ',');
+				}
+				if (has_temp)
+				{
+					appendStringInfoString(es->str, " temp");
+					if (usage->temp_blks_read > 0)
+						appendStringInfo(es->str, " read=%ld",
+							usage->temp_blks_read);
+					if (usage->temp_blks_written > 0)
+						appendStringInfo(es->str, " written=%ld",
+							usage->temp_blks_written);
+				}
+				appendStringInfoChar(es->str, '\n');
+			}
+		}
+		else
+		{
+			ExplainPropertyLong("Shared Hit Blocks", usage->shared_blks_hit, es);
+			ExplainPropertyLong("Shared Read Blocks", usage->shared_blks_read, es);
+			ExplainPropertyLong("Shared Written Blocks", usage->shared_blks_written, es);
+			ExplainPropertyLong("Local Hit Blocks", usage->local_blks_hit, es);
+			ExplainPropertyLong("Local Read Blocks", usage->local_blks_read, es);
+			ExplainPropertyLong("Local Written Blocks", usage->local_blks_written, es);
+			ExplainPropertyLong("Temp Read Blocks", usage->temp_blks_read, es);
+			ExplainPropertyLong("Temp Written Blocks", usage->temp_blks_written, es);
+		}
 	}
 
 	/* Get ready to display the child plans */

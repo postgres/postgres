@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/functions.c,v 1.137 2009/12/14 02:15:51 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/functions.c,v 1.138 2009/12/15 04:57:47 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -414,7 +414,7 @@ postquel_start(execution_state *es, SQLFunctionCachePtr fcache)
 								 fcache->src,
 								 snapshot, InvalidSnapshot,
 								 dest,
-								 fcache->paramLI, false);
+								 fcache->paramLI, 0);
 	else
 		es->qd = CreateUtilityQueryDesc(es->stmt,
 										fcache->src,

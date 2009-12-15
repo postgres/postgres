@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.252 2009/06/11 14:49:01 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.253 2009/12/15 04:57:47 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,6 +34,7 @@
 #include <unistd.h>
 
 #include "catalog/catalog.h"
+#include "executor/instrument.h"
 #include "miscadmin.h"
 #include "pg_trace.h"
 #include "pgstat.h"
@@ -300,22 +301,23 @@ ReadBuffer_common(SMgrRelation smgr, bool isLocalBuf, ForkNumber forkNum,
 
 	if (isLocalBuf)
 	{
-		ReadLocalBufferCount++;
 		bufHdr = LocalBufferAlloc(smgr, forkNum, blockNum, &found);
 		if (found)
-			LocalBufferHitCount++;
+			pgBufferUsage.local_blks_hit++;
+		else
+			pgBufferUsage.local_blks_read++;
 	}
 	else
 	{
-		ReadBufferCount++;
-
 		/*
 		 * lookup the buffer.  IO_IN_PROGRESS is set if the requested block is
 		 * not currently in memory.
 		 */
 		bufHdr = BufferAlloc(smgr, forkNum, blockNum, strategy, &found);
 		if (found)
-			BufferHitCount++;
+			pgBufferUsage.shared_blks_hit++;
+		else
+			pgBufferUsage.shared_blks_read++;
 	}
 
 	/* At this point we do NOT hold any locks. */
@@ -1611,54 +1613,6 @@ SyncOneBuffer(int buf_id, bool skip_recently_used)
 
 
 /*
- * Return a palloc'd string containing buffer usage statistics.
- */
-char *
-ShowBufferUsage(void)
-{
-	StringInfoData str;
-	float		hitrate;
-	float		localhitrate;
-
-	initStringInfo(&str);
-
-	if (ReadBufferCount == 0)
-		hitrate = 0.0;
-	else
-		hitrate = (float) BufferHitCount *100.0 / ReadBufferCount;
-
-	if (ReadLocalBufferCount == 0)
-		localhitrate = 0.0;
-	else
-		localhitrate = (float) LocalBufferHitCount *100.0 / ReadLocalBufferCount;
-
-	appendStringInfo(&str,
-	"!\tShared blocks: %10ld read, %10ld written, buffer hit rate = %.2f%%\n",
-				ReadBufferCount - BufferHitCount, BufferFlushCount, hitrate);
-	appendStringInfo(&str,
-	"!\tLocal  blocks: %10ld read, %10ld written, buffer hit rate = %.2f%%\n",
-					 ReadLocalBufferCount - LocalBufferHitCount, LocalBufferFlushCount, localhitrate);
-	appendStringInfo(&str,
-					 "!\tDirect blocks: %10ld read, %10ld written\n",
-					 BufFileReadCount, BufFileWriteCount);
-
-	return str.data;
-}
-
-void
-ResetBufferUsage(void)
-{
-	BufferHitCount = 0;
-	ReadBufferCount = 0;
-	BufferFlushCount = 0;
-	LocalBufferHitCount = 0;
-	ReadLocalBufferCount = 0;
-	LocalBufferFlushCount = 0;
-	BufFileReadCount = 0;
-	BufFileWriteCount = 0;
-}
-
-/*
  *		AtEOXact_Buffers - clean up at end of transaction.
  *
  *		As of PostgreSQL 8.0, buffer pins should get released by the
@@ -1916,7 +1870,7 @@ FlushBuffer(volatile BufferDesc *buf, SMgrRelation reln)
 			  (char *) BufHdrGetBlock(buf),
 			  false);
 
-	BufferFlushCount++;
+	pgBufferUsage.shared_blks_written++;
 
 	/*
 	 * Mark the buffer as clean (unless BM_JUST_DIRTIED has become set) and

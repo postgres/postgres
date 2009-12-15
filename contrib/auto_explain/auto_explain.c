@@ -6,7 +6,7 @@
  * Copyright (c) 2008-2009, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/contrib/auto_explain/auto_explain.c,v 1.9 2009/12/12 00:35:33 rhaas Exp $
+ *	  $PostgreSQL: pgsql/contrib/auto_explain/auto_explain.c,v 1.10 2009/12/15 04:57:46 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,6 +22,7 @@ PG_MODULE_MAGIC;
 static int	auto_explain_log_min_duration = -1; /* msec or -1 */
 static bool auto_explain_log_analyze = false;
 static bool auto_explain_log_verbose = false;
+static bool auto_explain_log_buffers = false;
 static int	auto_explain_log_format = EXPLAIN_FORMAT_TEXT;
 static bool auto_explain_log_nested_statements = false;
 
@@ -93,6 +94,16 @@ _PG_init(void)
 							 NULL,
 							 NULL);
 
+	DefineCustomBoolVariable("auto_explain.log_buffers",
+							 "Log buffers usage.",
+							 NULL,
+							 &auto_explain_log_buffers,
+							 false,
+							 PGC_SUSET,
+							 0,
+							 NULL,
+							 NULL);
+
 	DefineCustomEnumVariable("auto_explain.log_format",
 							 "EXPLAIN format to be used for plan logging.",
 							 NULL,
@@ -147,7 +158,11 @@ explain_ExecutorStart(QueryDesc *queryDesc, int eflags)
 	{
 		/* Enable per-node instrumentation iff log_analyze is required. */
 		if (auto_explain_log_analyze && (eflags & EXEC_FLAG_EXPLAIN_ONLY) == 0)
-			queryDesc->doInstrument = true;
+		{
+			queryDesc->instrument_options |= INSTRUMENT_TIMER;
+			if (auto_explain_log_buffers)
+				queryDesc->instrument_options |= INSTRUMENT_BUFFERS;
+		}
 	}
 
 	if (prev_ExecutorStart)
@@ -167,7 +182,7 @@ explain_ExecutorStart(QueryDesc *queryDesc, int eflags)
 			MemoryContext oldcxt;
 
 			oldcxt = MemoryContextSwitchTo(queryDesc->estate->es_query_cxt);
-			queryDesc->totaltime = InstrAlloc(1);
+			queryDesc->totaltime = InstrAlloc(1, INSTRUMENT_ALL);
 			MemoryContextSwitchTo(oldcxt);
 		}
 	}
@@ -219,8 +234,9 @@ explain_ExecutorEnd(QueryDesc *queryDesc)
 			ExplainState	es;
 
 			ExplainInitState(&es);
-			es.analyze = (queryDesc->doInstrument && auto_explain_log_analyze);
+			es.analyze = (queryDesc->instrument_options && auto_explain_log_analyze);
 			es.verbose = auto_explain_log_verbose;
+			es.buffers = (es.analyze && auto_explain_log_buffers);
 			es.format = auto_explain_log_format;
 
 			ExplainBeginOutput(&es);

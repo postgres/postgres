@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/executor/executor.h,v 1.164 2009/12/07 05:22:23 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/executor/executor.h,v 1.165 2009/12/15 04:57:48 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -161,7 +161,7 @@ extern void InitResultRelInfo(ResultRelInfo *resultRelInfo,
 				  Relation resultRelationDesc,
 				  Index resultRelationIndex,
 				  CmdType operation,
-				  bool doInstrument);
+				  int instrument_options);
 extern ResultRelInfo *ExecGetTriggerResultRel(EState *estate, Oid relid);
 extern bool ExecContextForcesOids(PlanState *planstate, bool *hasoids);
 extern void ExecConstraints(ResultRelInfo *resultRelInfo,

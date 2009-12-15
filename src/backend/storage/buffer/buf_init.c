@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/buf_init.c,v 1.82 2009/01/01 17:23:47 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/buf_init.c,v 1.83 2009/12/15 04:57:47 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,16 +21,6 @@
 BufferDesc *BufferDescriptors;
 char	   *BufferBlocks;
 int32	   *PrivateRefCount;
-
-/* statistics counters */
-long int	ReadBufferCount;
-long int	ReadLocalBufferCount;
-long int	BufferHitCount;
-long int	LocalBufferHitCount;
-long int	BufferFlushCount;
-long int	LocalBufferFlushCount;
-long int	BufFileReadCount;
-long int	BufFileWriteCount;
 
 
 /*

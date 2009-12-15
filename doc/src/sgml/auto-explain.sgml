@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/auto-explain.sgml,v 1.5 2009/12/11 01:33:35 adunstan Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/auto-explain.sgml,v 1.6 2009/12/15 04:57:47 rhaas Exp $ -->
 
 <sect1 id="auto-explain">
  <title>auto_explain</title>
@@ -98,6 +98,25 @@ LOAD 'auto_explain';
       output, rather than just <command>EXPLAIN</> output, to be printed
       when an execution plan is logged. This parameter is off by default.
       Only superusers can change this setting.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term>
+     <varname>auto_explain.log_buffers</varname> (<type>boolean</type>)
+    </term>
+    <indexterm>
+     <primary><varname>auto_explain.log_buffers</> configuration parameter</primary>
+    </indexterm>
+    <listitem>
+     <para>
+      <varname>auto_explain.log_buffers</varname> causes <command>EXPLAIN
+      (ANALYZE, BUFFERS)</> output, rather than just <command>EXPLAIN</> 
+      output, to be printed when an execution plan is logged. This parameter is 
+      off by default. Only superusers can change this setting. This
+      parameter has no effect unless <varname>auto_explain.log_analyze</>
+      parameter is set.
      </para>
     </listitem>
    </varlistentry>

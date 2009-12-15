@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/commands/explain.h,v 1.43 2009/12/12 00:35:34 rhaas Exp $
+ * $PostgreSQL: pgsql/src/include/commands/explain.h,v 1.44 2009/12/15 04:57:47 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,6 +30,7 @@ typedef struct ExplainState
 	bool		verbose;		/* be verbose */
 	bool		analyze;		/* print actual times */
 	bool		costs;			/* print costs */
+	bool		buffers;		/* print buffer usage */
 	ExplainFormat format;		/* output format */
 	/* other states */
 	PlannedStmt *pstmt;			/* top of plan */

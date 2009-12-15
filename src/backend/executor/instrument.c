@@ -7,7 +7,7 @@
  * Copyright (c) 2001-2009, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/instrument.c,v 1.22 2009/01/01 17:23:41 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/instrument.c,v 1.23 2009/12/15 04:57:47 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,14 +17,28 @@
 
 #include "executor/instrument.h"
 
+BufferUsage			pgBufferUsage;
+
+static void BufferUsageAccumDiff(BufferUsage *dst,
+		const BufferUsage *add, const BufferUsage *sub);
 
 /* Allocate new instrumentation structure(s) */
 Instrumentation *
-InstrAlloc(int n)
+InstrAlloc(int n, int instrument_options)
 {
-	Instrumentation *instr = palloc0(n * sizeof(Instrumentation));
+	Instrumentation *instr;
 
-	/* we don't need to do any initialization except zero 'em */
+	/* timer is always required for now */
+	Assert(instrument_options & INSTRUMENT_TIMER);
+
+	instr = palloc0(n * sizeof(Instrumentation));
+	if (instrument_options & INSTRUMENT_BUFFERS)
+	{
+		int		i;
+
+		for (i = 0; i < n; i++)
+			instr[i].needs_bufusage = true;
+	}
 
 	return instr;
 }
@@ -37,6 +51,10 @@ InstrStartNode(Instrumentation *instr)
 		INSTR_TIME_SET_CURRENT(instr->starttime);
 	else
 		elog(DEBUG2, "InstrStartNode called twice in a row");
+
+	/* initialize buffer usage per plan node */
+	if (instr->needs_bufusage)
+		instr->bufusage_start = pgBufferUsage;
 }
 
 /* Exit from a plan node */
@@ -58,6 +76,11 @@ InstrStopNode(Instrumentation *instr, double nTuples)
 	INSTR_TIME_ACCUM_DIFF(instr->counter, endtime, instr->starttime);
 
 	INSTR_TIME_SET_ZERO(instr->starttime);
+
+	/* Adds delta of buffer usage to node's count. */
+	if (instr->needs_bufusage)
+		BufferUsageAccumDiff(&instr->bufusage,
+			&pgBufferUsage, &instr->bufusage_start);
 
 	/* Is this the first tuple of this cycle? */
 	if (!instr->running)
@@ -94,4 +117,20 @@ InstrEndLoop(Instrumentation *instr)
 	INSTR_TIME_SET_ZERO(instr->counter);
 	instr->firsttuple = 0;
 	instr->tuplecount = 0;
+}
+
+static void
+BufferUsageAccumDiff(BufferUsage *dst,
+					 const BufferUsage *add,
+					 const BufferUsage *sub)
+{
+	/* dst += add - sub */
+	dst->shared_blks_hit += add->shared_blks_hit - sub->shared_blks_hit;
+	dst->shared_blks_read += add->shared_blks_read - sub->shared_blks_read;
+	dst->shared_blks_written += add->shared_blks_written - sub->shared_blks_written;
+	dst->local_blks_hit += add->local_blks_hit - sub->local_blks_hit;
+	dst->local_blks_read += add->local_blks_read - sub->local_blks_read;
+	dst->local_blks_written += add->local_blks_written - sub->local_blks_written;
+	dst->temp_blks_read += add->temp_blks_read - sub->temp_blks_read;
+	dst->temp_blks_written += add->temp_blks_written - sub->temp_blks_written;
 }

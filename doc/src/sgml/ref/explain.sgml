@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/explain.sgml,v 1.47 2009/12/11 01:33:35 adunstan Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/explain.sgml,v 1.48 2009/12/15 04:57:47 rhaas Exp $
 PostgreSQL documentation
 -->
 
@@ -31,7 +31,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-EXPLAIN [ ( { ANALYZE <replaceable class="parameter">boolean</replaceable> | VERBOSE <replaceable class="parameter">boolean</replaceable> | COSTS <replaceable class="parameter">boolean</replaceable> | FORMAT { TEXT | XML | JSON | YAML } } [, ...] ) ] <replaceable class="parameter">statement</replaceable>
+EXPLAIN [ ( { ANALYZE <replaceable class="parameter">boolean</replaceable> | VERBOSE <replaceable class="parameter">boolean</replaceable> | COSTS <replaceable class="parameter">boolean</replaceable> | BUFFERS <replaceable class="parameter">boolean</replaceable> | FORMAT { TEXT | XML | JSON | YAML } } [, ...] ) ] <replaceable class="parameter">statement</replaceable>
 EXPLAIN [ ANALYZE ] [ VERBOSE ] <replaceable class="parameter">statement</replaceable>
 </synopsis>
  </refsynopsisdiv>
@@ -135,6 +135,24 @@ ROLLBACK;
       Include information on the estimated startup and total cost of each
       plan node, as well as the estimated number of rows and the estimated
       width of each row.  This parameter defaults to <literal>TRUE</literal>.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>BUFFERS</literal></term>
+    <listitem>
+     <para>
+      Include information on buffer usage. Specifically, include the number of
+      shared blocks hits, reads, and writes, the number of local blocks hits,
+      reads, and writes, and the number of temp blocks reads and writes.
+      Shared blocks, local blocks, and temp blocks contain tables and indexes,
+      temporary tables and temporary indexes, and disk blocks used in sort and
+      materialized plans, respectively. The number of blocks shown for an
+      upper-level node includes those used by all its child nodes.  In text
+      format, only non-zero values are printed.  This parameter may only be
+      used with <literal>ANALYZE</literal> parameter.  It defaults to
+      <literal>FALSE</literal>.
      </para>
     </listitem>
    </varlistentry>
