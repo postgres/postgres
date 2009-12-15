@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tsearch/wparser_def.c,v 1.25 2009/11/15 13:57:01 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tsearch/wparser_def.c,v 1.26 2009/12/15 20:37:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -328,6 +328,46 @@ TParserInit(char *str, int len)
 	return prs;
 }
 
+/*
+ * As an alternative to a full TParserInit one can create a
+ * TParserCopy which basically is a regular TParser without a private
+ * copy of the string - instead it uses the one from another TParser.
+ * This is useful because at some places TParsers are created
+ * recursively and the repeated copying around of the strings can
+ * cause major inefficiency if the source string is long.
+ * The new parser starts parsing at the original's current position.
+ *
+ * Obviously one must not close the original TParser before the copy.
+ */
+static TParser *
+TParserCopyInit(const TParser *orig)
+{
+	TParser    *prs = (TParser *) palloc0(sizeof(TParser));
+
+	prs->charmaxlen = orig->charmaxlen;
+	prs->str = orig->str + orig->state->posbyte;
+	prs->lenstr = orig->lenstr - orig->state->posbyte;
+
+#ifdef USE_WIDE_UPPER_LOWER
+	prs->usewide = orig->usewide;
+
+	if (orig->pgwstr)
+		prs->pgwstr = orig->pgwstr + orig->state->poschar;
+	if (orig->wstr)
+		prs->wstr = orig->wstr + orig->state->poschar;
+#endif
+
+	prs->state = newTParserPosition(NULL);
+	prs->state->state = TPS_Base;
+
+#ifdef WPARSER_TRACE
+	fprintf(stderr, "parsing copy of \"%.*s\"\n", prs->lenstr, prs->str);
+#endif
+
+	return prs;
+}
+
+
 static void
 TParserClose(TParser *prs)
 {
@@ -346,8 +386,32 @@ TParserClose(TParser *prs)
 		pfree(prs->pgwstr);
 #endif
 
+#ifdef WPARSER_TRACE
+	fprintf(stderr, "closing parser");
+#endif
 	pfree(prs);
 }
+
+/*
+ * Close a parser created with TParserCopyInit
+ */
+static void
+TParserCopyClose(TParser *prs)
+{
+	while (prs->state)
+	{
+		TParserPosition *ptr = prs->state->prev;
+
+		pfree(prs->state);
+		prs->state = ptr;
+	}
+
+#ifdef WPARSER_TRACE
+	fprintf(stderr, "closing parser copy");
+#endif
+	pfree(prs);
+}
+
 
 /*
  * Character-type support functions, equivalent to is* macros, but
@@ -617,7 +681,7 @@ p_isignore(TParser *prs)
 static int
 p_ishost(TParser *prs)
 {
-	TParser    *tmpprs = TParserInit(prs->str + prs->state->posbyte, prs->lenstr - prs->state->posbyte);
+	TParser	   *tmpprs = TParserCopyInit(prs);
 	int			res = 0;
 
 	tmpprs->wanthost = true;
@@ -631,7 +695,7 @@ p_ishost(TParser *prs)
 		prs->state->charlen = tmpprs->state->charlen;
 		res = 1;
 	}
-	TParserClose(tmpprs);
+	TParserCopyClose(tmpprs);
 
 	return res;
 }
@@ -639,7 +703,7 @@ p_ishost(TParser *prs)
 static int
 p_isURLPath(TParser *prs)
 {
-	TParser    *tmpprs = TParserInit(prs->str + prs->state->posbyte, prs->lenstr - prs->state->posbyte);
+	TParser	   *tmpprs = TParserCopyInit(prs);
 	int			res = 0;
 
 	tmpprs->state = newTParserPosition(tmpprs->state);
@@ -654,7 +718,7 @@ p_isURLPath(TParser *prs)
 		prs->state->charlen = tmpprs->state->charlen;
 		res = 1;
 	}
-	TParserClose(tmpprs);
+	TParserCopyClose(tmpprs);
 
 	return res;
 }
