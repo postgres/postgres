@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.323 2009/12/11 03:34:55 itagaki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.324 2009/12/15 20:04:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -56,6 +56,10 @@
 #include "utils/acl.h"
 #include "utils/guc.h"
 #include "utils/syscache.h"
+
+
+/* Hook for plugins to get control in ProcessUtility() */
+ProcessUtility_hook_type ProcessUtility_hook = NULL;
 
 
 /*
@@ -274,6 +278,27 @@ ProcessUtility(Node *parsetree,
 {
 	Assert(queryString != NULL);	/* required as of 8.4 */
 
+	/*
+	 * We provide a function hook variable that lets loadable plugins
+	 * get control when ProcessUtility is called.  Such a plugin would
+	 * normally call standard_ProcessUtility().
+	 */
+	if (ProcessUtility_hook)
+		(*ProcessUtility_hook) (parsetree, queryString, params,
+								isTopLevel, dest, completionTag);
+	else
+		standard_ProcessUtility(parsetree, queryString, params,
+								isTopLevel, dest, completionTag);
+}
+
+void
+standard_ProcessUtility(Node *parsetree,
+						const char *queryString,
+						ParamListInfo params,
+						bool isTopLevel,
+						DestReceiver *dest,
+						char *completionTag)
+{
 	check_xact_readonly(parsetree);
 
 	if (completionTag)

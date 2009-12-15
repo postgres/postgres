@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/pgstatstatements.sgml,v 1.4 2009/12/01 02:31:11 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/pgstatstatements.sgml,v 1.5 2009/12/15 20:04:49 tgl Exp $ -->
 
 <sect1 id="pgstatstatements">
  <title>pg_stat_statements</title>
@@ -169,6 +169,23 @@
       (such as statements invoked within functions), or <literal>none</> to
       disable.
       The default value is <literal>top</>.
+      Only superusers can change this setting.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term>
+     <varname>pg_stat_statements.track_utility</varname> (<type>boolean</type>)
+    </term>
+
+    <listitem>
+     <para>
+      <varname>pg_stat_statements.track_utility</varname> controls whether
+      utility commands are tracked by the module.  Utility commands are
+      all those other than <command>SELECT</>, <command>INSERT</>,
+      <command>UPDATE</> and <command>DELETE</>.
+      The default value is <literal>on</>.
       Only superusers can change this setting.
      </para>
     </listitem>
