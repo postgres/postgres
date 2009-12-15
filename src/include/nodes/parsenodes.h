@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.418 2009/12/11 03:34:56 itagaki Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.419 2009/12/15 17:57:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -264,9 +264,10 @@ typedef struct TypeCast
 /*
  * FuncCall - a function or aggregate invocation
  *
+ * agg_order (if not NIL) indicates we saw 'foo(... ORDER BY ...)'.
  * agg_star indicates we saw a 'foo(*)' construct, while agg_distinct
- * indicates we saw 'foo(DISTINCT ...)'.  In either case, the construct
- * *must* be an aggregate call.  Otherwise, it might be either an
+ * indicates we saw 'foo(DISTINCT ...)'.  In any of these cases, the
+ * construct *must* be an aggregate call.  Otherwise, it might be either an
  * aggregate or some other kind of function.  However, if OVER is present
  * it had better be an aggregate or window function.
  */
@@ -275,6 +276,7 @@ typedef struct FuncCall
 	NodeTag		type;
 	List	   *funcname;		/* qualified name of function */
 	List	   *args;			/* the arguments (list of exprs) */
+	List       *agg_order;      /* ORDER BY (list of SortBy) */
 	bool		agg_star;		/* argument was really '*' */
 	bool		agg_distinct;	/* arguments were labeled DISTINCT */
 	bool		func_variadic;	/* last argument was labeled VARIADIC */

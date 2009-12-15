@@ -22,7 +22,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.375 2009/12/07 05:22:22 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.376 2009/12/15 17:57:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -183,9 +183,10 @@ _equalAggref(Aggref *a, Aggref *b)
 	COMPARE_SCALAR_FIELD(aggfnoid);
 	COMPARE_SCALAR_FIELD(aggtype);
 	COMPARE_NODE_FIELD(args);
-	COMPARE_SCALAR_FIELD(agglevelsup);
+	COMPARE_NODE_FIELD(aggorder);
+	COMPARE_NODE_FIELD(aggdistinct);
 	COMPARE_SCALAR_FIELD(aggstar);
-	COMPARE_SCALAR_FIELD(aggdistinct);
+	COMPARE_SCALAR_FIELD(agglevelsup);
 	COMPARE_LOCATION_FIELD(location);
 
 	return true;
@@ -1943,6 +1944,7 @@ _equalFuncCall(FuncCall *a, FuncCall *b)
 {
 	COMPARE_NODE_FIELD(funcname);
 	COMPARE_NODE_FIELD(args);
+	COMPARE_NODE_FIELD(agg_order);
 	COMPARE_SCALAR_FIELD(agg_star);
 	COMPARE_SCALAR_FIELD(agg_distinct);
 	COMPARE_SCALAR_FIELD(func_variadic);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planagg.c,v 1.46 2009/06/11 14:48:59 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planagg.c,v 1.47 2009/12/15 17:57:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -239,12 +239,12 @@ find_minmax_aggs_walker(Node *node, List **context)
 	{
 		Aggref	   *aggref = (Aggref *) node;
 		Oid			aggsortop;
-		Expr	   *curTarget;
+		TargetEntry *curTarget;
 		MinMaxAggInfo *info;
 		ListCell   *l;
 
 		Assert(aggref->agglevelsup == 0);
-		if (list_length(aggref->args) != 1)
+		if (list_length(aggref->args) != 1 || aggref->aggorder != NIL)
 			return true;		/* it couldn't be MIN/MAX */
 		/* note: we do not care if DISTINCT is mentioned ... */
 
@@ -255,19 +255,19 @@ find_minmax_aggs_walker(Node *node, List **context)
 		/*
 		 * Check whether it's already in the list, and add it if not.
 		 */
-		curTarget = linitial(aggref->args);
+		curTarget = (TargetEntry *) linitial(aggref->args);
 		foreach(l, *context)
 		{
 			info = (MinMaxAggInfo *) lfirst(l);
 			if (info->aggfnoid == aggref->aggfnoid &&
-				equal(info->target, curTarget))
+				equal(info->target, curTarget->expr))
 				return false;
 		}
 
 		info = (MinMaxAggInfo *) palloc0(sizeof(MinMaxAggInfo));
 		info->aggfnoid = aggref->aggfnoid;
 		info->aggsortop = aggsortop;
-		info->target = curTarget;
+		info->target = curTarget->expr;
 
 		*context = lappend(*context, info);
 
@@ -584,15 +584,15 @@ replace_aggs_with_params_mutator(Node *node, List **context)
 	if (IsA(node, Aggref))
 	{
 		Aggref	   *aggref = (Aggref *) node;
+		TargetEntry *curTarget = (TargetEntry *) linitial(aggref->args);
 		ListCell   *l;
-		Expr	   *curTarget = linitial(aggref->args);
 
 		foreach(l, *context)
 		{
 			MinMaxAggInfo *info = (MinMaxAggInfo *) lfirst(l);
 
 			if (info->aggfnoid == aggref->aggfnoid &&
-				equal(info->target, curTarget))
+				equal(info->target, curTarget->expr))
 				return (Node *) info->param;
 		}
 		elog(ERROR, "failed to re-find aggregate info record");

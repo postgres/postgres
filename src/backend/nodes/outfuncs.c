@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.374 2009/12/07 05:22:22 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.375 2009/12/15 17:57:46 tgl Exp $
  *
  * NOTES
  *	  Every node type that can appear in stored rules' parsetrees *must*
@@ -869,9 +869,10 @@ _outAggref(StringInfo str, Aggref *node)
 	WRITE_OID_FIELD(aggfnoid);
 	WRITE_OID_FIELD(aggtype);
 	WRITE_NODE_FIELD(args);
-	WRITE_UINT_FIELD(agglevelsup);
+	WRITE_NODE_FIELD(aggorder);
+	WRITE_NODE_FIELD(aggdistinct);
 	WRITE_BOOL_FIELD(aggstar);
-	WRITE_BOOL_FIELD(aggdistinct);
+	WRITE_UINT_FIELD(agglevelsup);
 	WRITE_LOCATION_FIELD(location);
 }
 
@@ -1857,6 +1858,7 @@ _outFuncCall(StringInfo str, FuncCall *node)
 
 	WRITE_NODE_FIELD(funcname);
 	WRITE_NODE_FIELD(args);
+	WRITE_NODE_FIELD(agg_order);
 	WRITE_BOOL_FIELD(agg_star);
 	WRITE_BOOL_FIELD(agg_distinct);
 	WRITE_BOOL_FIELD(func_variadic);

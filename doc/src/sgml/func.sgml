@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.492 2009/11/24 19:21:15 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.493 2009/12/15 17:57:46 tgl Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -8440,7 +8440,8 @@ SELECT xmlroot(xmlparse(document '<?xml version="1.1"?><content>abc</content>'),
      The function <function>xmlagg</function> is, unlike the other
      functions described here, an aggregate function.  It concatenates the
      input values to the aggregate function call,
-     like <function>xmlconcat</function> does.
+     much like <function>xmlconcat</function> does, except that concatenation
+     occurs across rows rather than across expressions in a single row.
      See <xref linkend="functions-aggregate"> for additional information
      about aggregate functions.
     </para>
@@ -8459,8 +8460,22 @@ SELECT xmlagg(x) FROM test;
     </para>
 
     <para>
-     To determine the order of the concatenation, something like the
-     following approach can be used:
+     To determine the order of the concatenation, an <literal>ORDER BY</>
+     clause may be added to the aggregate call as described in
+     <xref linkend="syntax-aggregates">. For example:
+
+<screen><![CDATA[
+SELECT xmlagg(x ORDER BY y DESC) FROM test;
+        xmlagg
+----------------------
+ <bar/><foo>abc</foo>
+]]></screen>
+    </para>
+
+    <para>
+     The following non-standard approach used to be recommended
+     in previous versions, and may still be useful in specific
+     cases:
 
 <screen><![CDATA[
 SELECT xmlagg(x) FROM (SELECT * FROM test ORDER BY y DESC) AS tab;
@@ -8468,9 +8483,6 @@ SELECT xmlagg(x) FROM (SELECT * FROM test ORDER BY y DESC) AS tab;
 ----------------------
  <bar/><foo>abc</foo>
 ]]></screen>
-
-     Again, see <xref linkend="functions-aggregate"> for additional
-     information.
     </para>
    </sect3>
 
@@ -9887,20 +9899,19 @@ SELECT count(*) FROM sometable;
    The aggregate functions <function>array_agg</function>
    and <function>xmlagg</function>, as well as similar user-defined
    aggregate functions, produce meaningfully different result values
-   depending on the order of the input values.  In the current
-   implementation, the order of the input is in principle unspecified.
-   Supplying the input values from a sorted subquery
-   will usually work, however.  For example:
+   depending on the order of the input values.  This ordering is
+   unspecified by default, but can be controlled by writing an
+   <literal>ORDER BY</> clause within the aggregate call, as shown in
+   <xref linkend="syntax-aggregates">.
+   Alternatively, supplying the input values from a sorted subquery
+   will usually work.  For example:
 
 <screen><![CDATA[
 SELECT xmlagg(x) FROM (SELECT x FROM test ORDER BY y DESC) AS tab;
 ]]></screen>
 
    But this syntax is not allowed in the SQL standard, and is
-   not portable to other database systems.  A future version of
-   <productname>PostgreSQL</> might provide an additional feature to control
-   the order in a better-defined way (<literal>xmlagg(expr ORDER BY expr, expr,
-   ...)</literal>).
+   not portable to other database systems.
   </para>
 
   <para>

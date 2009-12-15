@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/nodeFuncs.c,v 1.43 2009/10/08 02:39:21 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/nodeFuncs.c,v 1.44 2009/12/15 17:57:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -882,6 +882,7 @@ exprLocation(Node *expr)
 				FuncCall   *fc = (FuncCall *) expr;
 
 				/* consider both function name and leftmost arg */
+				/* (we assume any ORDER BY nodes must be to right of name) */
 				loc = leftmostLoc(fc->location,
 								  exprLocation((Node *) fc->args));
 			}
@@ -1082,6 +1083,7 @@ expression_tree_walker(Node *node,
 		case T_SetToDefault:
 		case T_CurrentOfExpr:
 		case T_RangeTblRef:
+		case T_SortGroupClause:
 			/* primitive node types with no expression subnodes */
 			break;
 		case T_Aggref:
@@ -1090,6 +1092,12 @@ expression_tree_walker(Node *node,
 
 				/* recurse directly on List */
 				if (expression_tree_walker((Node *) expr->args,
+										   walker, context))
+					return true;
+				if (expression_tree_walker((Node *) expr->aggorder,
+										   walker, context))
+					return true;
+				if (expression_tree_walker((Node *) expr->aggdistinct,
 										   walker, context))
 					return true;
 			}
@@ -1591,6 +1599,7 @@ expression_tree_mutator(Node *node,
 		case T_SetToDefault:
 		case T_CurrentOfExpr:
 		case T_RangeTblRef:
+		case T_SortGroupClause:
 			return (Node *) copyObject(node);
 		case T_Aggref:
 			{
@@ -1599,6 +1608,8 @@ expression_tree_mutator(Node *node,
 
 				FLATCOPY(newnode, aggref, Aggref);
 				MUTATE(newnode->args, aggref->args, List *);
+				MUTATE(newnode->aggorder, aggref->aggorder, List *);
+				MUTATE(newnode->aggdistinct, aggref->aggdistinct, List *);
 				return (Node *) newnode;
 			}
 			break;
@@ -2402,6 +2413,8 @@ bool
 				FuncCall   *fcall = (FuncCall *) node;
 
 				if (walker(fcall->args, context))
+					return true;
+				if (walker(fcall->agg_order, context))
 					return true;
 				if (walker(fcall->over, context))
 					return true;

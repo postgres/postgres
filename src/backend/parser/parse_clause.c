@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_clause.c,v 1.193 2009/10/27 17:11:18 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_clause.c,v 1.194 2009/12/15 17:57:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1440,7 +1440,7 @@ findTargetlistEntrySQL99(ParseState *pstate, Node *node, List **tlist)
 List *
 transformGroupClause(ParseState *pstate, List *grouplist,
 					 List **targetlist, List *sortClause,
-					 bool isWindowFunc)
+					 bool useSQL99)
 {
 	List	   *result = NIL;
 	ListCell   *gl;
@@ -1451,7 +1451,7 @@ transformGroupClause(ParseState *pstate, List *grouplist,
 		TargetEntry *tle;
 		bool		found = false;
 
-		if (isWindowFunc)
+		if (useSQL99)
 			tle = findTargetlistEntrySQL99(pstate, gexpr, targetlist);
 		else
 			tle = findTargetlistEntrySQL92(pstate, gexpr, targetlist,
@@ -1510,15 +1510,15 @@ transformGroupClause(ParseState *pstate, List *grouplist,
  * ORDER BY items will be added to the targetlist (as resjunk columns)
  * if not already present, so the targetlist must be passed by reference.
  *
- * This is also used for window ORDER BY clauses (which act almost the
- * same, but are always interpreted per SQL99 rules).
+ * This is also used for window and aggregate ORDER BY clauses (which act
+ * almost the same, but are always interpreted per SQL99 rules).
  */
 List *
 transformSortClause(ParseState *pstate,
 					List *orderlist,
 					List **targetlist,
 					bool resolveUnknown,
-					bool isWindowFunc)
+					bool useSQL99)
 {
 	List	   *sortlist = NIL;
 	ListCell   *olitem;
@@ -1528,7 +1528,7 @@ transformSortClause(ParseState *pstate,
 		SortBy	   *sortby = (SortBy *) lfirst(olitem);
 		TargetEntry *tle;
 
-		if (isWindowFunc)
+		if (useSQL99)
 			tle = findTargetlistEntrySQL99(pstate, sortby->node, targetlist);
 		else
 			tle = findTargetlistEntrySQL92(pstate, sortby->node, targetlist,
@@ -1598,12 +1598,12 @@ transformWindowDefinitions(ParseState *pstate,
 										  windef->orderClause,
 										  targetlist,
 										  true /* fix unknowns */,
-										  true /* window function */);
+										  true /* force SQL99 rules */);
 		partitionClause = transformGroupClause(pstate,
 											   windef->partitionClause,
 											   targetlist,
 											   orderClause,
-											   true /* window function */);
+											   true /* force SQL99 rules */);
 
 		/*
 		 * And prepare the new WindowClause.
@@ -1684,10 +1684,14 @@ transformWindowDefinitions(ParseState *pstate,
  * and allows the user to choose the equality semantics used by DISTINCT,
  * should she be working with a datatype that has more than one equality
  * operator.
+ *
+ * is_agg is true if we are transforming an aggregate(DISTINCT ...)
+ * function call.  This does not affect any behavior, only the phrasing
+ * of error messages.
  */
 List *
 transformDistinctClause(ParseState *pstate,
-						List **targetlist, List *sortClause)
+						List **targetlist, List *sortClause, bool is_agg)
 {
 	List	   *result = NIL;
 	ListCell   *slitem;
@@ -1716,6 +1720,8 @@ transformDistinctClause(ParseState *pstate,
 		if (tle->resjunk)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
+					 is_agg ?
+					 errmsg("in an aggregate with DISTINCT, ORDER BY expressions must appear in argument list") :
 					 errmsg("for SELECT DISTINCT, ORDER BY expressions must appear in select list"),
 					 parser_errposition(pstate,
 										exprLocation((Node *) tle->expr))));

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/parser/parse_clause.h,v 1.56 2009/08/27 20:08:02 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/parser/parse_clause.h,v 1.57 2009/12/15 17:57:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,16 +28,16 @@ extern Node *transformLimitClause(ParseState *pstate, Node *clause,
 					 const char *constructName);
 extern List *transformGroupClause(ParseState *pstate, List *grouplist,
 					 List **targetlist, List *sortClause,
-					 bool isWindowFunc);
+					 bool useSQL99);
 extern List *transformSortClause(ParseState *pstate, List *orderlist,
-					List **targetlist, bool resolveUnknown, bool isWindowFunc);
+					List **targetlist, bool resolveUnknown, bool useSQL99);
 
 extern List *transformWindowDefinitions(ParseState *pstate,
 						   List *windowdefs,
 						   List **targetlist);
 
 extern List *transformDistinctClause(ParseState *pstate,
-						List **targetlist, List *sortClause);
+						List **targetlist, List *sortClause, bool is_agg);
 extern List *transformDistinctOnClause(ParseState *pstate, List *distinctlist,
 						  List **targetlist, List *sortClause);
 

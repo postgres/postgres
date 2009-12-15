@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_func.c,v 1.218 2009/10/31 01:41:31 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_func.c,v 1.219 2009/12/15 17:57:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -55,10 +55,12 @@ static Node *ParseComplexProjection(ParseState *pstate, char *funcname,
  *	reporting a no-such-function error.
  *
  *	The argument expressions (in fargs) must have been transformed already.
+ *	But the agg_order expressions, if any, have not been.
  */
 Node *
 ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
-				  bool agg_star, bool agg_distinct, bool func_variadic,
+				  List *agg_order, bool agg_star, bool agg_distinct,
+				  bool func_variadic,
 				  WindowDef *over, bool is_column, int location)
 {
 	Oid			rettype;
@@ -170,8 +172,9 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 	 * the "function call" could be a projection.  We also check that there
 	 * wasn't any aggregate or variadic decoration, nor an argument name.
 	 */
-	if (nargs == 1 && !agg_star && !agg_distinct && over == NULL &&
-		!func_variadic && argnames == NIL && list_length(funcname) == 1)
+	if (nargs == 1 && agg_order == NIL && !agg_star && !agg_distinct &&
+		over == NULL && !func_variadic && argnames == NIL &&
+		list_length(funcname) == 1)
 	{
 		Oid			argtype = actual_arg_types[0];
 
@@ -239,6 +242,12 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 			errmsg("DISTINCT specified, but %s is not an aggregate function",
 				   NameListToString(funcname)),
+					 parser_errposition(pstate, location)));
+		if (agg_order != NIL)
+			ereport(ERROR,
+					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+			   errmsg("ORDER BY specified, but %s is not an aggregate function",
+					  NameListToString(funcname)),
 					 parser_errposition(pstate, location)));
 		if (over)
 			ereport(ERROR,
@@ -372,9 +381,12 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 
 		aggref->aggfnoid = funcid;
 		aggref->aggtype = rettype;
+		/* args and aggorder will be modified by transformAggregateCall */
 		aggref->args = fargs;
+		aggref->aggorder = agg_order;
+		/* aggdistinct will be set by transformAggregateCall */
 		aggref->aggstar = agg_star;
-		aggref->aggdistinct = agg_distinct;
+		/* agglevelsup will be set by transformAggregateCall */
 		aggref->location = location;
 
 		/*
@@ -407,7 +419,7 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 					 parser_errposition(pstate, location)));
 
 		/* parse_agg.c does additional aggregate-specific processing */
-		transformAggregateCall(pstate, aggref);
+		transformAggregateCall(pstate, aggref, agg_distinct);
 
 		retval = (Node *) aggref;
 	}
@@ -451,6 +463,15 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 					 errmsg("%s(*) must be used to call a parameterless aggregate function",
 							NameListToString(funcname)),
+					 parser_errposition(pstate, location)));
+
+		/*
+		 * ordered aggs not allowed in windows yet
+		 */
+		if (agg_order != NIL)
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("aggregate ORDER BY is not implemented for window functions"),
 					 parser_errposition(pstate, location)));
 
 		if (retset)

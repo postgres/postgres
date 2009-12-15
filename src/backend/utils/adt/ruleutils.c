@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.316 2009/12/07 05:22:22 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.317 2009/12/15 17:57:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -5442,32 +5442,44 @@ get_agg_expr(Aggref *aggref, deparse_context *context)
 {
 	StringInfo	buf = context->buf;
 	Oid			argtypes[FUNC_MAX_ARGS];
+	List       *arglist;
 	int			nargs;
 	ListCell   *l;
 
-	if (list_length(aggref->args) > FUNC_MAX_ARGS)
-		ereport(ERROR,
-				(errcode(ERRCODE_TOO_MANY_ARGUMENTS),
-				 errmsg("too many arguments")));
+	/* Extract the regular arguments, ignoring resjunk stuff for the moment */
+	arglist = NIL;
 	nargs = 0;
 	foreach(l, aggref->args)
 	{
-		Node   *arg = (Node *) lfirst(l);
+		TargetEntry *tle = (TargetEntry *) lfirst(l);
+		Node   *arg = (Node *) tle->expr;
 
 		Assert(!IsA(arg, NamedArgExpr));
+		if (tle->resjunk)
+			continue;
+		if (nargs >= FUNC_MAX_ARGS)				/* paranoia */
+			ereport(ERROR,
+					(errcode(ERRCODE_TOO_MANY_ARGUMENTS),
+					 errmsg("too many arguments")));
 		argtypes[nargs] = exprType(arg);
+		arglist = lappend(arglist, arg);
 		nargs++;
 	}
 
 	appendStringInfo(buf, "%s(%s",
 					 generate_function_name(aggref->aggfnoid, nargs,
 											NIL, argtypes, NULL),
-					 aggref->aggdistinct ? "DISTINCT " : "");
+					 (aggref->aggdistinct != NIL) ? "DISTINCT " : "");
 	/* aggstar can be set only in zero-argument aggregates */
 	if (aggref->aggstar)
 		appendStringInfoChar(buf, '*');
 	else
-		get_rule_expr((Node *) aggref->args, context, true);
+		get_rule_expr((Node *) arglist, context, true);
+	if (aggref->aggorder != NIL)
+	{
+		appendStringInfoString(buf, " ORDER BY ");
+		get_rule_orderby(aggref->aggorder, aggref->args, false, context);
+	}
 	appendStringInfoChar(buf, ')');
 }
 

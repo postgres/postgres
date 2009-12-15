@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.250 2009/11/13 19:48:20 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.251 2009/12/15 17:57:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -431,7 +431,7 @@ transformIndirection(ParseState *pstate, Node *basenode, List *indirection)
 			newresult = ParseFuncOrColumn(pstate,
 										  list_make1(n),
 										  list_make1(result),
-										  false, false, false,
+										  NIL, false, false, false,
 										  NULL, true, location);
 			if (newresult == NULL)
 				unknown_attribute(pstate, result, strVal(n), location);
@@ -598,7 +598,7 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 					node = ParseFuncOrColumn(pstate,
 											 list_make1(makeString(colname)),
 											 list_make1(node),
-											 false, false, false,
+											 NIL, false, false, false,
 											 NULL, true, cref->location);
 				}
 				break;
@@ -643,7 +643,7 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 					node = ParseFuncOrColumn(pstate,
 											 list_make1(makeString(colname)),
 											 list_make1(node),
-											 false, false, false,
+											 NIL, false, false, false,
 											 NULL, true, cref->location);
 				}
 				break;
@@ -701,7 +701,7 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 					node = ParseFuncOrColumn(pstate,
 											 list_make1(makeString(colname)),
 											 list_make1(node),
-											 false, false, false,
+											 NIL, false, false, false,
 											 NULL, true, cref->location);
 				}
 				break;
@@ -1221,6 +1221,7 @@ transformFuncCall(ParseState *pstate, FuncCall *fn)
 	return ParseFuncOrColumn(pstate,
 							 fn->funcname,
 							 targs,
+							 fn->agg_order,
 							 fn->agg_star,
 							 fn->agg_distinct,
 							 fn->func_variadic,

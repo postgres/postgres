@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.696 2009/12/11 03:34:55 itagaki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.697 2009/12/15 17:57:47 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -8651,6 +8651,7 @@ a_expr:		c_expr									{ $$ = $1; }
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = SystemFuncName("timezone");
 					n->args = list_make2($5, $1);
+					n->agg_order = NIL;
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
 					n->func_variadic = FALSE;
@@ -8711,6 +8712,7 @@ a_expr:		c_expr									{ $$ = $1; }
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = SystemFuncName("like_escape");
 					n->args = list_make2($3, $5);
+					n->agg_order = NIL;
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
 					n->func_variadic = FALSE;
@@ -8725,6 +8727,7 @@ a_expr:		c_expr									{ $$ = $1; }
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = SystemFuncName("like_escape");
 					n->args = list_make2($4, $6);
+					n->agg_order = NIL;
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
 					n->func_variadic = FALSE;
@@ -8739,6 +8742,7 @@ a_expr:		c_expr									{ $$ = $1; }
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = SystemFuncName("like_escape");
 					n->args = list_make2($3, $5);
+					n->agg_order = NIL;
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
 					n->func_variadic = FALSE;
@@ -8753,6 +8757,7 @@ a_expr:		c_expr									{ $$ = $1; }
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = SystemFuncName("like_escape");
 					n->args = list_make2($4, $6);
+					n->agg_order = NIL;
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
 					n->func_variadic = FALSE;
@@ -8766,6 +8771,7 @@ a_expr:		c_expr									{ $$ = $1; }
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = SystemFuncName("similar_escape");
 					n->args = list_make2($4, makeNullAConst(-1));
+					n->agg_order = NIL;
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
 					n->func_variadic = FALSE;
@@ -8778,6 +8784,7 @@ a_expr:		c_expr									{ $$ = $1; }
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = SystemFuncName("similar_escape");
 					n->args = list_make2($4, $6);
+					n->agg_order = NIL;
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
 					n->func_variadic = FALSE;
@@ -8790,6 +8797,7 @@ a_expr:		c_expr									{ $$ = $1; }
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = SystemFuncName("similar_escape");
 					n->args = list_make2($5, makeNullAConst(-1));
+					n->agg_order = NIL;
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
 					n->func_variadic = FALSE;
@@ -8802,6 +8810,7 @@ a_expr:		c_expr									{ $$ = $1; }
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = SystemFuncName("similar_escape");
 					n->args = list_make2($5, $7);
+					n->agg_order = NIL;
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
 					n->func_variadic = FALSE;
@@ -9220,6 +9229,7 @@ func_expr:	func_name '(' ')' over_clause
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = $1;
 					n->args = NIL;
+					n->agg_order = NIL;
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
 					n->func_variadic = FALSE;
@@ -9232,6 +9242,7 @@ func_expr:	func_name '(' ')' over_clause
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = $1;
 					n->args = $3;
+					n->agg_order = NIL;
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
 					n->func_variadic = FALSE;
@@ -9244,6 +9255,7 @@ func_expr:	func_name '(' ')' over_clause
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = $1;
 					n->args = list_make1($4);
+					n->agg_order = NIL;
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
 					n->func_variadic = TRUE;
@@ -9256,6 +9268,7 @@ func_expr:	func_name '(' ')' over_clause
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = $1;
 					n->args = lappend($3, $6);
+					n->agg_order = NIL;
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
 					n->func_variadic = TRUE;
@@ -9263,11 +9276,25 @@ func_expr:	func_name '(' ')' over_clause
 					n->location = @1;
 					$$ = (Node *)n;
 				}
-			| func_name '(' ALL func_arg_list ')' over_clause
+			| func_name '(' func_arg_list sort_clause ')' over_clause
+				{
+					FuncCall *n = makeNode(FuncCall);
+					n->funcname = $1;
+					n->args = $3;
+					n->agg_order = $4;
+					n->agg_star = FALSE;
+					n->agg_distinct = FALSE;
+					n->func_variadic = FALSE;
+					n->over = $6;
+					n->location = @1;
+					$$ = (Node *)n;
+				}
+			| func_name '(' ALL func_arg_list opt_sort_clause ')' over_clause
 				{
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = $1;
 					n->args = $4;
+					n->agg_order = $5;
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
 					/* Ideally we'd mark the FuncCall node to indicate
@@ -9275,19 +9302,20 @@ func_expr:	func_name '(' ')' over_clause
 					 * for that in FuncCall at the moment.
 					 */
 					n->func_variadic = FALSE;
-					n->over = $6;
+					n->over = $7;
 					n->location = @1;
 					$$ = (Node *)n;
 				}
-			| func_name '(' DISTINCT func_arg_list ')' over_clause
+			| func_name '(' DISTINCT func_arg_list opt_sort_clause ')' over_clause
 				{
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = $1;
 					n->args = $4;
+					n->agg_order = $5;
 					n->agg_star = FALSE;
 					n->agg_distinct = TRUE;
 					n->func_variadic = FALSE;
-					n->over = $6;
+					n->over = $7;
 					n->location = @1;
 					$$ = (Node *)n;
 				}
@@ -9306,6 +9334,7 @@ func_expr:	func_name '(' ')' over_clause
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = $1;
 					n->args = NIL;
+					n->agg_order = NIL;
 					n->agg_star = TRUE;
 					n->agg_distinct = FALSE;
 					n->func_variadic = FALSE;
@@ -9366,6 +9395,7 @@ func_expr:	func_name '(' ')' over_clause
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = SystemFuncName("now");
 					n->args = NIL;
+					n->agg_order = NIL;
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
 					n->func_variadic = FALSE;
@@ -9437,6 +9467,7 @@ func_expr:	func_name '(' ')' over_clause
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = SystemFuncName("current_user");
 					n->args = NIL;
+					n->agg_order = NIL;
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
 					n->func_variadic = FALSE;
@@ -9449,6 +9480,7 @@ func_expr:	func_name '(' ')' over_clause
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = SystemFuncName("current_user");
 					n->args = NIL;
+					n->agg_order = NIL;
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
 					n->func_variadic = FALSE;
@@ -9461,6 +9493,7 @@ func_expr:	func_name '(' ')' over_clause
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = SystemFuncName("session_user");
 					n->args = NIL;
+					n->agg_order = NIL;
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
 					n->func_variadic = FALSE;
@@ -9473,6 +9506,7 @@ func_expr:	func_name '(' ')' over_clause
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = SystemFuncName("current_user");
 					n->args = NIL;
+					n->agg_order = NIL;
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
 					n->func_variadic = FALSE;
@@ -9485,6 +9519,7 @@ func_expr:	func_name '(' ')' over_clause
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = SystemFuncName("current_database");
 					n->args = NIL;
+					n->agg_order = NIL;
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
 					n->func_variadic = FALSE;
@@ -9497,6 +9532,7 @@ func_expr:	func_name '(' ')' over_clause
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = SystemFuncName("current_schema");
 					n->args = NIL;
+					n->agg_order = NIL;
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
 					n->func_variadic = FALSE;
@@ -9511,6 +9547,7 @@ func_expr:	func_name '(' ')' over_clause
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = SystemFuncName("date_part");
 					n->args = $3;
+					n->agg_order = NIL;
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
 					n->func_variadic = FALSE;
@@ -9528,6 +9565,7 @@ func_expr:	func_name '(' ')' over_clause
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = SystemFuncName("overlay");
 					n->args = $3;
+					n->agg_order = NIL;
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
 					n->func_variadic = FALSE;
@@ -9541,6 +9579,7 @@ func_expr:	func_name '(' ')' over_clause
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = SystemFuncName("position");
 					n->args = $3;
+					n->agg_order = NIL;
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
 					n->func_variadic = FALSE;
@@ -9556,6 +9595,7 @@ func_expr:	func_name '(' ')' over_clause
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = SystemFuncName("substring");
 					n->args = $3;
+					n->agg_order = NIL;
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
 					n->func_variadic = FALSE;
@@ -9577,6 +9617,7 @@ func_expr:	func_name '(' ')' over_clause
 					 */
 					n->funcname = SystemFuncName(((Value *)llast($5->names))->val.str);
 					n->args = list_make1($3);
+					n->agg_order = NIL;
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
 					n->func_variadic = FALSE;
@@ -9592,6 +9633,7 @@ func_expr:	func_name '(' ')' over_clause
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = SystemFuncName("btrim");
 					n->args = $4;
+					n->agg_order = NIL;
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
 					n->func_variadic = FALSE;
@@ -9604,6 +9646,7 @@ func_expr:	func_name '(' ')' over_clause
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = SystemFuncName("ltrim");
 					n->args = $4;
+					n->agg_order = NIL;
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
 					n->func_variadic = FALSE;
@@ -9616,6 +9659,7 @@ func_expr:	func_name '(' ')' over_clause
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = SystemFuncName("rtrim");
 					n->args = $4;
+					n->agg_order = NIL;
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
 					n->func_variadic = FALSE;
@@ -9628,6 +9672,7 @@ func_expr:	func_name '(' ')' over_clause
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = SystemFuncName("btrim");
 					n->args = $3;
+					n->agg_order = NIL;
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
 					n->func_variadic = FALSE;
@@ -11252,6 +11297,7 @@ makeOverlaps(List *largs, List *rargs, int location, core_yyscan_t yyscanner)
 				 errmsg("wrong number of parameters on right side of OVERLAPS expression"),
 				 parser_errposition(location)));
 	n->args = list_concat(largs, rargs);
+	n->agg_order = NIL;
 	n->agg_star = FALSE;
 	n->agg_distinct = FALSE;
 	n->func_variadic = FALSE;

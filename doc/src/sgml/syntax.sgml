@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/syntax.sgml,v 1.138 2009/11/05 23:24:22 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/syntax.sgml,v 1.139 2009/12/15 17:57:46 tgl Exp $ -->
 
 <chapter id="sql-syntax">
  <title>SQL Syntax</title>
@@ -1525,17 +1525,19 @@ sqrt(2)
     syntax of an aggregate expression is one of the following:
 
 <synopsis>
-<replaceable>aggregate_name</replaceable> (<replaceable>expression</replaceable> [ , ... ] )
-<replaceable>aggregate_name</replaceable> (ALL <replaceable>expression</replaceable> [ , ... ] )
-<replaceable>aggregate_name</replaceable> (DISTINCT <replaceable>expression</replaceable>)
+<replaceable>aggregate_name</replaceable> (<replaceable>expression</replaceable> [ , ... ] [ <replaceable>order_by_clause</replaceable> ] )
+<replaceable>aggregate_name</replaceable> (ALL <replaceable>expression</replaceable> [ , ... ] [ <replaceable>order_by_clause</replaceable> ] )
+<replaceable>aggregate_name</replaceable> (DISTINCT <replaceable>expression</replaceable> [ , ... ] [ <replaceable>order_by_clause</replaceable> ] )
 <replaceable>aggregate_name</replaceable> ( * )
 </synopsis>
 
     where <replaceable>aggregate_name</replaceable> is a previously
-    defined aggregate (possibly qualified with a schema name), and
+    defined aggregate (possibly qualified with a schema name),
     <replaceable>expression</replaceable> is
     any value expression that does not itself contain an aggregate
-    expression or a window function call.
+    expression or a window function call, and
+    <replaceable>order_by_clause</replaceable> is a optional
+    <literal>ORDER BY</> clause as described below.
    </para>
 
    <para>
@@ -1545,8 +1547,9 @@ sqrt(2)
     whether to ignore null values or not &mdash; but all the standard ones do.)
     The second form is the same as the first, since
     <literal>ALL</literal> is the default.  The third form invokes the
-    aggregate for all distinct non-null values of the expressions found
-    in the input rows.  The last form invokes the aggregate once for
+    aggregate for all distinct values of the expressions found
+    in the input rows (ignoring nulls if the function chooses to do so).
+    The last form invokes the aggregate once for
     each input row regardless of null or non-null values; since no
     particular input value is specified, it is generally only useful
     for the <function>count(*)</function> aggregate function.
@@ -1559,6 +1562,40 @@ sqrt(2)
     <literal>count(distinct f1)</literal> yields the number of
     distinct non-null values of <literal>f1</literal>.
    </para>
+
+   <para>
+    Ordinarily, the input rows are fed to the aggregate function in an
+    unspecified order.  In many cases this does not matter; for example,
+    <function>min</> produces the same result no matter what order it
+    receives the inputs in.  However, some aggregate functions
+    (such as <function>array_agg</> and <function>xmlagg</>) produce
+    results that depend on the ordering of the input rows.  When using
+    such an aggregate, the optional <replaceable>order_by_clause</> can be
+    used to specify the desired ordering.  The <replaceable>order_by_clause</>
+    has the same syntax as for a query-level <literal>ORDER BY</> clause, as
+    described in <xref linkend="queries-order">, except that its expressions
+    are always just expressions and cannot be output-column names or numbers.
+    For example:
+
+<programlisting>
+SELECT array_agg(a ORDER BY b DESC) FROM table;
+</programlisting>
+   </para>
+
+   <para>
+    If <literal>DISTINCT</> is specified in addition to an
+    <replaceable>order_by_clause</>, then all the <literal>ORDER BY</>
+    expressions must match regular arguments of the aggregate; that is,
+    you cannot sort on an expression that is not included in the
+    <literal>DISTINCT</> list.
+   </para>
+
+   <note>
+    <para>
+     The ability to specify both <literal>DISTINCT</> and <literal>ORDER BY</>
+     in an aggregate function is a <productname>PostgreSQL</> extension.
+    </para>
+   </note>
 
    <para>
     The predefined aggregate functions are described in <xref
@@ -1588,13 +1625,6 @@ sqrt(2)
     appearing only in the result list or <literal>HAVING</> clause
     applies with respect to the query level that the aggregate belongs to.
    </para>
-
-   <note>
-    <para>
-     <productname>PostgreSQL</productname> currently does not support
-     <literal>DISTINCT</> with more than one input expression.
-    </para>
-   </note>
   </sect2>
 
   <sect2 id="syntax-window-functions">
@@ -1697,7 +1727,8 @@ ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
     <literal>count(*) OVER (PARTITION BY x ORDER BY y)</>.
     <literal>*</> is customarily not used for non-aggregate window functions.
     Aggregate window functions, unlike normal aggregate functions, do not
-    allow <literal>DISTINCT</> to be used within the function argument list.
+    allow <literal>DISTINCT</> or <literal>ORDER BY</> to be used within the
+    function argument list.
    </para>
 
    <para>
