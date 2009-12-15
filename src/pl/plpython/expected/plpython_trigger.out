@@ -67,7 +67,7 @@ SELECT * FROM users;
 -- dump trigger data
 CREATE TABLE trigger_test
 	(i int, v text );
-CREATE FUNCTION trigger_data() returns trigger language plpythonu as $$
+CREATE FUNCTION trigger_data() RETURNS trigger LANGUAGE plpythonu AS $$
 
 if 'relid' in TD:
 	TD['relid'] = "bogus:12345"

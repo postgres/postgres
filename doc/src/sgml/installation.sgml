@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.332 2009/12/09 16:16:34 mha Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.333 2009/12/15 22:59:53 petere Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -195,8 +195,12 @@ su - postgres
      <para>
       To build the <application>PL/Python</> server programming
       language, you need a <productname>Python</productname>
-      installation with the header files and the <application>distutils</application> module.
-      The minimum required version is <productname>Python</productname> 2.2.
+      installation with the header files and
+      the <application>distutils</application> module.  The minimum
+      required version is <productname>Python</productname>
+      2.2.  <productname>Python 3</productname> is supported with
+      version 3.1 or later; but see <xref linkend="plpython-python23">
+      when using Python 3.
      </para>
 
      <para>

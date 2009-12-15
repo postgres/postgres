@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/src/pl/plpython/Makefile,v 1.34 2009/08/14 13:42:16 petere Exp $
+# $PostgreSQL: pgsql/src/pl/plpython/Makefile,v 1.35 2009/12/15 22:59:54 petere Exp $
 
 subdir = src/pl/plpython
 top_builddir = ../../..
@@ -36,7 +36,7 @@ override CPPFLAGS := -I$(srcdir) $(python_includespec) $(CPPFLAGS)
 
 rpathdir = $(python_libdir)
 
-NAME = plpython
+NAME = plpython$(python_majorversion)
 OBJS = plpython.o
 
 
@@ -56,7 +56,12 @@ endif
 
 SHLIB_LINK = $(python_libspec) $(python_additional_libs) $(filter -lintl,$(LIBS))
 
-REGRESS_OPTS = --dbname=$(PL_TESTDB) --load-language=plpythonu
+REGRESS_OPTS = --dbname=$(PL_TESTDB)
+# Only load plpythonu with Python 2.  The test files themselves load
+# the versioned language plpython(2|3)u.
+ifeq ($(python_majorversion),2)
+REGRESS_OPTS += --load-language=plpythonu
+endif
 REGRESS = \
 	plpython_schema \
 	plpython_populate \
@@ -83,13 +88,45 @@ include $(top_srcdir)/src/Makefile.shlib
 all: all-lib
 
 install: all installdirs install-lib
+ifeq ($(python_majorversion),2)
+	cd '$(DESTDIR)$(pkglibdir)' && rm -f plpython$(DLSUFFIX) && $(LN_S) $(shlib) plpython$(DLSUFFIX)
+endif
 
 installdirs: installdirs-lib
 
 uninstall: uninstall-lib
+ifeq ($(python_majorversion),2)
+	rm -f '$(DESTDIR)$(pkglibdir)/plpython$(DLSUFFIX)'
+endif
 
+ifeq ($(python_majorversion),3)
+# Adjust regression tests for Python 3 compatibility
+prep3:
+	$(MKDIR_P) python3 python3/sql python3/expected
+	for file in $(srcdir)/sql/*.sql $(srcdir)/expected/*.out; do \
+	  sed -e 's/except \([[:alpha:]][[:alpha:].]*\), *\([[:alpha:]][[:alpha:]]*\):/except \1 as \2:/g' \
+	      -e "s/<type 'exceptions\.\([[:alpha:]]*\)'>/<class '\1'>/g" \
+	      -e "s/<type 'long'>/<class 'int'>/g" \
+	      -e "s/\([0-9][0-9]*\)L/\1/g" \
+	      -e 's/\([ [{]\)u"/\1"/g' \
+	      -e "s/\([ [{]\)u'/\1'/g" \
+	      -e "s/def next/def __next__/g" \
+	      -e "s/LANGUAGE plpythonu/LANGUAGE plpython3u/g" \
+	      -e "s/LANGUAGE plpython2u/LANGUAGE plpython3u/g" \
+	    $$file >`echo $$file | sed 's,$(srcdir),python3,'`; \
+	done
+
+clean3:
+	rm -rf python3/
+
+installcheck: submake prep3
+	$(top_builddir)/src/test/regress/pg_regress --inputdir=./python3 --outputdir=./python3 --psqldir=$(PSQLDIR) $(REGRESS_OPTS) $(REGRESS)
+
+clean: clean3
+else
 installcheck: submake
 	$(top_builddir)/src/test/regress/pg_regress --inputdir=$(srcdir) --psqldir=$(PSQLDIR) $(REGRESS_OPTS) $(REGRESS)
+endif
 
 .PHONY: submake
 submake:

@@ -1,7 +1,7 @@
 /**********************************************************************
  * plpython.c - python as a procedural language for PostgreSQL
  *
- *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.133 2009/12/10 20:43:40 petere Exp $
+ *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.134 2009/12/15 22:59:54 petere Exp $
  *
  *********************************************************************
  */
@@ -40,6 +40,48 @@ typedef int Py_ssize_t;
 #define PyBool_FromLong(x) PyInt_FromLong(x)
 #endif
 
+/*
+ * Python 2/3 strings/unicode/bytes handling.  Python 2 has strings
+ * and unicode, Python 3 has strings, which are unicode on the C
+ * level, and bytes.  The porting convention, which is similarly used
+ * in Python 2.6, is that "Unicode" is always unicode, and "Bytes" are
+ * bytes in Python 3 and strings in Python 2.  Since we keep
+ * supporting Python 2 and its usual strings, we provide a
+ * compatibility layer for Python 3 that when asked to convert a C
+ * string to a Python string it converts the C string from the
+ * PostgreSQL server encoding to a Python Unicode object.
+ */
+
+#if PY_VERSION_HEX < 0x02060000
+/* This is exactly the compatibility layer that Python 2.6 uses. */
+#define PyBytes_AsString PyString_AsString
+#define PyBytes_FromStringAndSize PyString_FromStringAndSize
+#define PyBytes_Size PyString_Size
+#define PyObject_Bytes PyObject_Str
+#endif
+
+#if PY_MAJOR_VERSION >= 3
+#define PyString_Check(x) 0
+#define PyString_AsString(x) PLyUnicode_AsString(x)
+#define PyString_FromString(x) PLyUnicode_FromString(x)
+#endif
+
+/*
+ * Python 3 only has long.
+ */
+#if PY_MAJOR_VERSION >= 3
+#define PyInt_FromLong(x) PyLong_FromLong(x)
+#endif
+
+/*
+ * PyVarObject_HEAD_INIT was added in Python 2.6.  Its use is
+ * necessary to handle both Python 2 and 3.  This replacement
+ * definition is for Python <=2.5
+ */
+#ifndef PyVarObject_HEAD_INIT
+#define PyVarObject_HEAD_INIT(type, size) 		\
+		PyObject_HEAD_INIT(type) size,
+#endif
 
 #include "postgres.h"
 
@@ -246,7 +288,11 @@ static char *PLy_strdup(const char *);
 static void PLy_free(void *);
 
 static PyObject*PLyUnicode_Str(PyObject *unicode);
+static PyObject*PLyUnicode_Bytes(PyObject *unicode);
 static char *PLyUnicode_AsString(PyObject *unicode);
+#if PY_MAJOR_VERSION >= 3
+static PyObject *PLyUnicode_FromString(const char *s);
+#endif
 
 /* sub handlers for functions and triggers */
 static Datum PLy_function_handler(FunctionCallInfo fcinfo, PLyProcedure *);
@@ -288,7 +334,7 @@ static PyObject *PLyFloat_FromNumeric(PLyDatumToOb *arg, Datum d);
 static PyObject *PLyInt_FromInt16(PLyDatumToOb *arg, Datum d);
 static PyObject *PLyInt_FromInt32(PLyDatumToOb *arg, Datum d);
 static PyObject *PLyLong_FromInt64(PLyDatumToOb *arg, Datum d);
-static PyObject *PLyString_FromBytea(PLyDatumToOb *arg, Datum d);
+static PyObject *PLyBytes_FromBytea(PLyDatumToOb *arg, Datum d);
 static PyObject *PLyString_FromDatum(PLyDatumToOb *arg, Datum d);
 static PyObject *PLyList_FromArray(PLyDatumToOb *arg, Datum d);
 
@@ -1760,7 +1806,7 @@ PLy_input_datum_func2(PLyDatumToOb *arg, Oid typeOid, HeapTuple typeTup)
 			arg->func = PLyLong_FromInt64;
 			break;
 		case BYTEAOID:
-			arg->func = PLyString_FromBytea;
+			arg->func = PLyBytes_FromBytea;
 			break;
 		default:
 			arg->func = PLyString_FromDatum;
@@ -1859,13 +1905,13 @@ PLyLong_FromInt64(PLyDatumToOb *arg, Datum d)
 }
 
 static PyObject *
-PLyString_FromBytea(PLyDatumToOb *arg, Datum d)
+PLyBytes_FromBytea(PLyDatumToOb *arg, Datum d)
 {
 	text     *txt = DatumGetByteaP(d);
 	char     *str = VARDATA(txt);
 	size_t    size = VARSIZE(txt) - VARHDRSZ;
 
-	return PyString_FromStringAndSize(str, size);
+	return PyBytes_FromStringAndSize(str, size);
 }
 
 static PyObject *
@@ -2001,14 +2047,14 @@ PLyObject_ToBytea(PLyTypeInfo *info,
 
 	Assert(plrv != Py_None);
 
-	plrv_so = PyObject_Str(plrv);
+	plrv_so = PyObject_Bytes(plrv);
 	if (!plrv_so)
-		PLy_elog(ERROR, "could not create string representation of Python object");
+		PLy_elog(ERROR, "could not create bytes representation of Python object");
 
 	PG_TRY();
 	{
-		char *plrv_sc = PyString_AsString(plrv_so);
-		size_t len = PyString_Size(plrv_so);
+		char *plrv_sc = PyBytes_AsString(plrv_so);
+		size_t len = PyBytes_Size(plrv_so);
 		size_t size = len + VARHDRSZ;
 		bytea *result = palloc(size);
 
@@ -2040,22 +2086,30 @@ PLyObject_ToDatum(PLyTypeInfo *info,
 				  PLyObToDatum *arg,
 				  PyObject *plrv)
 {
-	PyObject *volatile plrv_so = NULL;
+	PyObject *volatile plrv_bo = NULL;
 	Datum     rv;
 
 	Assert(plrv != Py_None);
 
 	if (PyUnicode_Check(plrv))
-		plrv_so = PLyUnicode_Str(plrv);
+		plrv_bo = PLyUnicode_Bytes(plrv);
 	else
-		plrv_so = PyObject_Str(plrv);
-	if (!plrv_so)
+	{
+#if PY_MAJOR_VERSION >= 3
+		PyObject *s = PyObject_Str(plrv);
+		plrv_bo = PLyUnicode_Bytes(s);
+		Py_XDECREF(s);
+#else
+		plrv_bo = PyObject_Str(plrv);
+#endif
+	}
+	if (!plrv_bo)
 		PLy_elog(ERROR, "could not create string representation of Python object");
 
 	PG_TRY();
 	{
-		char *plrv_sc = PyString_AsString(plrv_so);
-		size_t plen = PyString_Size(plrv_so);
+		char *plrv_sc = PyBytes_AsString(plrv_bo);
+		size_t plen = PyBytes_Size(plrv_bo);
 		size_t slen = strlen(plrv_sc);
 
 		if (slen < plen)
@@ -2068,12 +2122,12 @@ PLyObject_ToDatum(PLyTypeInfo *info,
 	}
 	PG_CATCH();
 	{
-		Py_XDECREF(plrv_so);
+		Py_XDECREF(plrv_bo);
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
 
-	Py_XDECREF(plrv_so);
+	Py_XDECREF(plrv_bo);
 
 	return rv;
 }
@@ -2368,8 +2422,7 @@ static PyMethodDef PLy_plan_methods[] = {
 };
 
 static PyTypeObject PLy_PlanType = {
-	PyObject_HEAD_INIT(NULL)
-	0,							/* ob_size */
+	PyVarObject_HEAD_INIT(NULL, 0)
 	"PLyPlan",					/* tp_name */
 	sizeof(PLyPlanObject),		/* tp_size */
 	0,							/* tp_itemsize */
@@ -2420,8 +2473,7 @@ static PyMethodDef PLy_result_methods[] = {
 };
 
 static PyTypeObject PLy_ResultType = {
-	PyObject_HEAD_INIT(NULL)
-	0,							/* ob_size */
+	PyVarObject_HEAD_INIT(NULL, 0)
 	"PLyResult",				/* tp_name */
 	sizeof(PLyResultObject),	/* tp_size */
 	0,							/* tp_itemsize */
@@ -2480,6 +2532,15 @@ static PyMethodDef PLy_methods[] = {
 	{NULL, NULL, 0, NULL}
 };
 
+#if PY_MAJOR_VERSION >= 3
+static PyModuleDef PLy_module = {
+	PyModuleDef_HEAD_INIT,		/* m_base */
+	"plpy",						/* m_name */
+	NULL,						/* m_doc */
+	-1,							/* m_size */
+	PLy_methods,				/* m_methods */
+};
+#endif
 
 /* plan object methods */
 static PyObject *
@@ -3067,6 +3128,15 @@ PLy_spi_execute_fetch_result(SPITupleTable *tuptable, int rows, int status)
  * language handler and interpreter initialization
  */
 
+#if PY_MAJOR_VERSION >= 3
+static PyMODINIT_FUNC
+PyInit_plpy(void)
+{
+	return PyModule_Create(&PLy_module);
+}
+#endif
+
+
 /*
  * _PG_init()			- library load-time initialization
  *
@@ -3083,7 +3153,13 @@ _PG_init(void)
 
 	pg_bindtextdomain(TEXTDOMAIN);
 
+#if PY_MAJOR_VERSION >= 3
+	PyImport_AppendInittab("plpy", PyInit_plpy);
+#endif
 	Py_Initialize();
+#if PY_MAJOR_VERSION >= 3
+	PyImport_ImportModule("plpy");
+#endif
 	PLy_init_interp();
 	PLy_init_plpy();
 	if (PyErr_Occurred())
@@ -3129,7 +3205,11 @@ PLy_init_plpy(void)
 	if (PyType_Ready(&PLy_ResultType) < 0)
 		elog(ERROR, "could not initialize PLy_ResultType");
 
+#if PY_MAJOR_VERSION >= 3
+	plpy = PyModule_Create(&PLy_module);
+#else
 	plpy = Py_InitModule("plpy", PLy_methods);
+#endif
 	plpy_dict = PyModule_GetDict(plpy);
 
 	/* PyDict_SetItemString(plpy, "PlanType", (PyObject *) &PLy_PlanType); */
@@ -3475,12 +3555,29 @@ PLy_free(void *ptr)
 }
 
 /*
- * Convert a Python unicode object to a Python string object in
+ * Convert a Unicode object to a Python string.
+ */
+static PyObject*
+PLyUnicode_Str(PyObject *unicode)
+{
+#if PY_MAJOR_VERSION >= 3
+	/* In Python 3, this is a noop. */
+	Py_INCREF(unicode);
+	return unicode;
+#else
+	/* In Python 2, this means converting the Unicode to bytes in the
+	 * server encoding. */
+	return PLyUnicode_Bytes(unicode);
+#endif
+}
+
+/*
+ * Convert a Python unicode object to a Python string/bytes object in
  * PostgreSQL server encoding.  Reference ownership is passed to the
  * caller.
  */
 static PyObject*
-PLyUnicode_Str(PyObject *unicode)
+PLyUnicode_Bytes(PyObject *unicode)
 {
 	PyObject *rv;
 	const char *serverenc;
@@ -3502,13 +3599,44 @@ PLyUnicode_Str(PyObject *unicode)
 /*
  * Convert a Python unicode object to a C string in PostgreSQL server
  * encoding.  No Python object reference is passed out of this
- * function.
+ * function.  The result is palloc'ed.
+ *
+ * Note that this function is disguised as PyString_AsString() when
+ * using Python 3.  That function retuns a pointer into the internal
+ * memory of the argument, which isn't exactly the interface of this
+ * function.  But in either case you get a rather short-lived
+ * reference that you ought to better leave alone.
  */
 static char *
 PLyUnicode_AsString(PyObject *unicode)
 {
-	PyObject *o = PLyUnicode_Str(unicode);
-	char *rv = PyString_AsString(o);
+	PyObject *o = PLyUnicode_Bytes(unicode);
+	char *rv = pstrdup(PyBytes_AsString(o));
 	Py_XDECREF(o);
 	return rv;
 }
+
+#if PY_MAJOR_VERSION >= 3
+/*
+ * Convert a C string in the PostgreSQL server encoding to a Python
+ * unicode object.  Reference ownership is passed to the caller.
+ */
+static PyObject *
+PLyUnicode_FromString(const char *s)
+{
+    char       *utf8string;
+	PyObject   *o;
+
+    utf8string = (char *) pg_do_encoding_conversion((unsigned char *) s,
+													strlen(s),
+													GetDatabaseEncoding(),
+													PG_UTF8);
+
+	o = PyUnicode_FromString(utf8string);
+
+    if (utf8string != s)
+        pfree(utf8string);
+
+	return o;
+}
+#endif /* PY_MAJOR_VERSION >= 3 */

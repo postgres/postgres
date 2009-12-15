@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/plpython.sgml,v 1.41 2009/12/10 20:43:40 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/plpython.sgml,v 1.42 2009/12/15 22:59:53 petere Exp $ -->
 
 <chapter id="plpython">
  <title>PL/Python - Python Procedural Language</title>
@@ -14,7 +14,8 @@
 
  <para>
   To install PL/Python in a particular database, use
-  <literal>createlang plpythonu <replaceable>dbname</></literal>.
+  <literal>createlang plpythonu <replaceable>dbname</></literal> (but
+  see also <xref linkend="plpython-python23">).
  </para>
 
   <tip>
@@ -41,6 +42,112 @@
    packages might find PL/Python in a separate subpackage.
   </para>
  </note>
+
+ <sect1 id="plpython-python23">
+  <title>Python 2 vs. Python 3</title>
+
+  <para>
+   PL/Python supports both the Python 2 and Python 3 language
+   variants.  (The PostgreSQL installation instructions might contain
+   more precise information about the exact supported minor versions
+   of Python.)  Because the Python 2 and Python 3 language variants
+   are incompatible in some important aspects, the following naming
+   and transitioning scheme is used by PL/Python to avoid mixing them:
+
+   <itemizedlist>
+    <listitem>
+     <para>
+      The PostgreSQL language named <literal>plpython2u</literal>
+      implements PL/Python based on the Python 2 language variant.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      The PostgreSQL language named <literal>plpython3u</literal>
+      implements PL/Python based on the Python 3 language variant.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      The language named <literal>plpythonu</literal> implements
+      PL/Python based on the default Python language variant, which is
+      currently Python 2.  (This default is independent of what any
+      local Python installations might consider to be
+      their <quote>default</quote>, for example,
+      what <filename>/usr/bin/python</filename> might be.)  The
+      default will probably be changed to Python 3 in a distant future
+      release of PostgreSQL, depending on the progress of the
+      migration to Python 3 in the Python community.
+     </para>
+    </listitem>
+   </itemizedlist>
+
+   It depends on the build configuration or the installed packages
+   whether PL/Python for Python 2 or Python 3 or both are available.
+  </para>
+
+  <para>
+   This results in the following usage and migration strategy:
+
+   <itemizedlist>
+    <listitem>
+     <para>
+      Existing users and users who are currently not interested in
+      Python 3 use the language name <literal>plpythonu</literal> and
+      don't have to change anything for the foreseeable future.  It is
+      recommended to gradually <quote>future-proof</quote> the code
+      via migration to Python 2.6/2.7 to simplify the eventual
+      migration to Python 3.
+     </para>
+
+     <para>
+      In practice, many PL/Python functions will migrate to Python 3
+      with few or no changes.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Users who know that they have heavily Python 2 dependent code
+      and don't plan to ever change it can make use of
+      the <literal>plpython2u</literal> language name.  This will
+      continue to work into the very distant future, until Python 2
+      support might be completely dropped by PostgreSQL.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Users who want to dive into Python 3 can use
+      the <literal>plpython3u</literal> language name, which will keep
+      working forever by today's standards.  In the distant future,
+      when Python 3 might become the default, they might like to
+      remove the <quote>3</quote> for aesthetic reasons.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Daredevils, who want to build a Python-3-only operating system
+      environment, can change the build scripts to
+      make <literal>plpythonu</literal> be equivalent
+      to <literal>plpython3u</literal>, keeping in mind that this
+      would make their installation incompatible with most of the rest
+      of the world.
+     </para>
+    </listitem>
+   </itemizedlist>
+  </para>
+
+  <para>
+   See also the
+   document <ulink url="http://docs.python.org/dev/3.0/whatsnew/3.0.html">What's
+   New In Python 3.0</ulink> for more information about porting to
+   Python 3.
+  </para>
+ </sect1>
 
  <sect1 id="plpython-funcs">
   <title>PL/Python Functions</title>

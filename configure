@@ -677,6 +677,7 @@ python_libdir
 python_includespec
 python_configdir
 python_version
+python_majorversion
 PYTHON
 perl_embed_ldflags
 perl_useshrplib
@@ -6964,6 +6965,7 @@ $as_echo "$as_me: error: distutils module not found" >&2;}
 fi
 { $as_echo "$as_me:$LINENO: checking Python configuration directory" >&5
 $as_echo_n "checking Python configuration directory... " >&6; }
+python_majorversion=`${PYTHON} -c "import sys; print(sys.version[0])"`
 python_version=`${PYTHON} -c "import sys; print(sys.version[:3])"`
 python_configdir=`${PYTHON} -c "from distutils.sysconfig import get_python_lib as f; import os; print(os.path.join(f(plat_specific=1,standard_lib=1),'config'))"`
 python_includespec=`${PYTHON} -c "import distutils.sysconfig; print('-I'+distutils.sysconfig.get_python_inc())"`

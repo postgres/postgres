@@ -1,10 +1,15 @@
 -- first some tests of basic functionality
+CREATE LANGUAGE plpython2u;
 
 -- really stupid function just to get the module loaded
 CREATE FUNCTION stupid() RETURNS text AS 'return "zarkon"' LANGUAGE plpythonu;
 
 select stupid();
 
+-- check 2/3 versioning
+CREATE FUNCTION stupidn() RETURNS text AS 'return "zarkon"' LANGUAGE plpython2u;
+
+select stupidn();
 
 -- test multiple arguments
 CREATE FUNCTION argument_test_one(u users, a1 text, a2 text) RETURNS text

@@ -8,3 +8,5 @@ plpython_unicode_0.out		any version, when server encoding != SQL_ASCII and clien
 plpython_unicode_2.out		Python 2.2
 plpython_unicode_3.out		Python 2.3, 2.4
 plpython_unicode_5.out		Python 2.5, 2.6
+
+plpython_types_3.out		Python 3.1
