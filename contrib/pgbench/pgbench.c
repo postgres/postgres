@@ -4,7 +4,7 @@
  * A simple benchmark program for PostgreSQL
  * Originally written by Tatsuo Ishii and enhanced by many contributors.
  *
- * $PostgreSQL: pgsql/contrib/pgbench/pgbench.c,v 1.92 2009/12/11 21:50:06 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/pgbench/pgbench.c,v 1.93 2009/12/15 07:17:57 itagaki Exp $
  * Copyright (c) 2000-2009, PostgreSQL Global Development Group
  * ALL RIGHTS RESERVED;
  *
@@ -159,6 +159,7 @@ typedef struct
 } Variable;
 
 #define MAX_FILES		128		/* max number of SQL script files allowed */
+#define SHELL_COMMAND_SIZE	256	/* maximum size allowed for shell command */
 
 /*
  * structures used in custom query mode
@@ -467,8 +468,8 @@ putVariable(CState *st, char *name, char *value)
 		var->name = NULL;
 		var->value = NULL;
 
-		if ((var->name = strdup(name)) == NULL
-			|| (var->value = strdup(value)) == NULL)
+		if ((var->name = strdup(name)) == NULL ||
+			(var->value = strdup(value)) == NULL)
 		{
 			free(var->name);
 			free(var->value);
@@ -588,6 +589,114 @@ getQueryParams(CState *st, const Command *command, const char **params)
 
 	for (i = 0; i < command->argc - 1; i++)
 		params[i] = getVariable(st, command->argv[i + 1]);
+}
+
+/*
+ * Run a shell command. The result is assigned to the variable if not NULL.
+ * Return true if succeeded, or false on error.
+ */
+static bool
+runShellCommand(CState *st, char *variable, char **argv, int argc)
+{
+	char	command[SHELL_COMMAND_SIZE];
+	int		i,
+			len = 0;
+	FILE   *fp;
+	char	res[64];
+	char   *endptr;
+	int		retval;
+
+	/*
+	 * Join arguments with whilespace separaters. Arguments starting with
+	 * exactly one colon are treated as variables:
+	 *	name - append a string "name"
+	 *	:var - append a variable named 'var'.
+	 *	::name - append a string ":name"
+	 */
+	for (i = 0; i < argc; i++)
+	{
+		char   *arg;
+		int		arglen;
+
+		if (argv[i][0] != ':')
+		{
+			arg = argv[i];	/* a string literal */
+		}
+		else if (argv[i][1] == ':')
+		{
+			arg = argv[i] + 1;	/* a string literal starting with colons */
+		}
+		else if ((arg = getVariable(st, argv[i] + 1)) == NULL)
+		{
+			fprintf(stderr, "%s: undefined variable %s\n", argv[0], argv[i]);
+			return false;
+		}
+
+		arglen = strlen(arg);
+		if (len + arglen + (i > 0 ? 1 : 0) >= SHELL_COMMAND_SIZE - 1)
+		{
+			fprintf(stderr, "%s: too long shell command\n", argv[0]);
+			return false;
+		}
+
+		if (i > 0)
+			command[len++] = ' ';
+		memcpy(command + len, arg, arglen);
+		len += arglen;
+	}
+
+	command[len] = '\0';
+
+	/* Fast path for non-assignment case */
+	if (variable == NULL)
+	{
+		if (system(command))
+		{
+			if (!timer_exceeded)
+				fprintf(stderr, "%s: cannot launch shell command\n", argv[0]);
+			return false;
+		}
+		return true;
+	}
+
+	/* Execute the command with pipe and read the standard output. */
+	if ((fp = popen(command, "r")) == NULL)
+	{
+		fprintf(stderr, "%s: cannot launch shell command\n", argv[0]);
+		return false;
+	}
+	if (fgets(res, sizeof(res), fp) == NULL)
+	{
+		if (!timer_exceeded)
+			fprintf(stderr, "%s: cannot read the result\n", argv[0]);
+		return false;
+	}
+	if (pclose(fp) < 0)
+	{
+		fprintf(stderr, "%s: cannot close shell command\n", argv[0]);
+		return false;
+	}
+
+	/* Check whether the result is an integer and assign it to the variable */
+	retval = (int) strtol(res, &endptr, 10);
+	while (*endptr != '\0' && isspace((unsigned char) *endptr))
+		endptr++;
+	if (*res == '\0' || *endptr != '\0')
+	{
+		fprintf(stderr, "%s: must return an integer ('%s' returned)\n", argv[0], res);
+		return false;
+	}
+	snprintf(res, sizeof(res), "%d", retval);
+	if (!putVariable(st, variable, res))
+	{
+		fprintf(stderr, "%s: out of memory\n", argv[0]);
+		return false;
+	}
+
+#ifdef DEBUG
+	printf("shell parameter name: %s, value: %s\n", argv[1], res);
+#endif
+	return true;
 }
 
 #define MAX_PREPARE_NAME		32
@@ -992,7 +1101,34 @@ top:
 
 			st->listen = 1;
 		}
+		else if (pg_strcasecmp(argv[0], "setshell") == 0)
+		{
+			bool	ret = runShellCommand(st, argv[1], argv + 2, argc - 2);
 
+			if (timer_exceeded)	/* timeout */
+				return clientDone(st, true);
+			else if (!ret)		/* on error */
+			{
+				st->ecnt++;
+				return true;
+			}
+			else	/* succeeded */
+				st->listen = 1;
+		}
+		else if (pg_strcasecmp(argv[0], "shell") == 0)
+		{
+			bool	ret = runShellCommand(st, NULL, argv + 1, argc - 1);
+
+			if (timer_exceeded)	/* timeout */
+				return clientDone(st, true);
+			else if (!ret)		/* on error */
+			{
+				st->ecnt++;
+				return true;
+			}
+			else	/* succeeded */
+				st->listen = 1;
+		}
 		goto top;
 	}
 
@@ -1081,8 +1217,8 @@ init(void)
 
 	for (i = 0; i < ntellers * scale; i++)
 	{
-		snprintf(sql, 256, "insert into pgbench_tellers(tid,bid,tbalance) values (%d,%d,0)"
-				 ,i + 1, i / ntellers + 1);
+		snprintf(sql, 256, "insert into pgbench_tellers(tid,bid,tbalance) values (%d,%d,0)",
+				 i + 1, i / ntellers + 1);
 		executeStatement(con, sql);
 	}
 
@@ -1312,6 +1448,22 @@ process_commands(char *buf)
 			for (j = 3; j < my_commands->argc; j++)
 				fprintf(stderr, "%s: extra argument \"%s\" ignored\n",
 						my_commands->argv[0], my_commands->argv[j]);
+		}
+		else if (pg_strcasecmp(my_commands->argv[0], "setshell") == 0)
+		{
+			if (my_commands->argc < 3)
+			{
+				fprintf(stderr, "%s: missing argument\n", my_commands->argv[0]);
+				return NULL;
+			}
+		}
+		else if (pg_strcasecmp(my_commands->argv[0], "shell") == 0)
+		{
+			if (my_commands->argc < 1)
+			{
+				fprintf(stderr, "%s: missing command\n", my_commands->argv[0]);
+				return NULL;
+			}
 		}
 		else
 		{
