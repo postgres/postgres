@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.577 2009/12/16 22:55:33 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.578 2009/12/16 23:05:00 petere Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -2538,6 +2538,7 @@ drop_unnamed_stmt(void)
 void
 quickdie(SIGNAL_ARGS)
 {
+	sigaddset(&BlockSig, SIGQUIT); /* prevent nested calls */
 	PG_SETMASK(&BlockSig);
 
 	/*
