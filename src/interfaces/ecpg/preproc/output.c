@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/output.c,v 1.25 2009/06/11 14:49:13 momjian Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/output.c,v 1.26 2009/12/16 10:15:06 meskes Exp $ */
 
 #include "postgres_fe.h"
 
@@ -105,14 +105,24 @@ hashline_number(void)
 	return EMPTY;
 }
 
+static char *ecpg_statement_type_name[] = {
+	"ECPGst_normal",
+	"ECPGst_execute",
+	"ECPGst_exec_immediate",
+	"ECPGst_prepnormal"
+};
+
 void
 output_statement(char *stmt, int whenever_mode, enum ECPG_statement_type st)
 {
-
 	fprintf(yyout, "{ ECPGdo(__LINE__, %d, %d, %s, %d, ", compat, force_indicator, connection ? connection : "NULL", questionmarks);
-	if (st == ECPGst_normal)
+	if (st == ECPGst_execute || st == ECPGst_exec_immediate)
 	{
-		if (auto_prepare)
+		fprintf(yyout, "%s, %s, ", ecpg_statement_type_name[st], stmt);
+	}
+	else
+	{
+		if (st == ECPGst_prepnormal && auto_prepare)
 			fputs("ECPGst_prepnormal, \"", yyout);
 		else
 			fputs("ECPGst_normal, \"", yyout);
@@ -120,8 +130,6 @@ output_statement(char *stmt, int whenever_mode, enum ECPG_statement_type st)
 		output_escaped_str(stmt, false);
 		fputs("\", ", yyout);
 	}
-	else
-		fprintf(yyout, "%d, %s, ", st, stmt);
 
 	/* dump variables to C file */
 	dump_variables(argsinsert, 1);

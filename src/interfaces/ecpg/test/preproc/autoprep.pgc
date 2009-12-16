@@ -8,6 +8,8 @@ EXEC SQL INCLUDE ../regression;
 int main() {
   EXEC SQL BEGIN DECLARE SECTION;
   	int item[4], ind[4], i = 1;
+	int item1, ind1;
+	char sqlstr[64] = "SELECT item2 FROM T ORDER BY item2 NULLS LAST";
   EXEC SQL END DECLARE SECTION;
 
   ECPGdebug(1, stderr);
@@ -38,6 +40,24 @@ int main() {
   printf("i = %d\n", i);
 
   EXEC SQL CLOSE C;
+
+  EXEC SQL PREPARE stmt1 FROM :sqlstr;
+
+  EXEC SQL DECLARE cur1 CURSOR FOR stmt1;
+
+  EXEC SQL OPEN cur1;
+
+  EXEC SQL WHENEVER NOT FOUND DO BREAK;
+
+  i = 0;
+  while (1)
+  {
+	EXEC SQL FETCH cur1 INTO :item1:ind1;
+	printf("item[%d] = %d\n", i, ind1 ? -1 : item1);
+	i++;
+  }
+
+  EXEC SQL CLOSE cur1;
 
   EXEC SQL DROP TABLE T;
 

@@ -133,7 +133,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 #line 33 "desc.pgc"
 
 
-	{ ECPGdo(__LINE__, 0, 1, NULL, 0, 1, "foo1", 
+	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_execute, "foo1", 
 	ECPGt_descriptor, "indesc", 0L, 0L, 0L, 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EOIT, ECPGt_EORT);
 #line 35 "desc.pgc"
@@ -160,7 +160,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 #line 38 "desc.pgc"
 
 
-	{ ECPGdo(__LINE__, 0, 1, NULL, 0, 1, "foo1", 
+	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_execute, "foo1", 
 	ECPGt_descriptor, "indesc", 0L, 0L, 0L, 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EOIT, ECPGt_EORT);
 #line 40 "desc.pgc"
@@ -187,7 +187,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 #line 43 "desc.pgc"
 
 
-	{ ECPGdo(__LINE__, 0, 1, NULL, 0, 1, "Foo-1", 
+	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_execute, "Foo-1", 
 	ECPGt_descriptor, "indesc", 0L, 0L, 0L, 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EOIT, ECPGt_EORT);
 #line 45 "desc.pgc"
@@ -221,7 +221,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 #line 50 "desc.pgc"
 
 
-	{ ECPGdo(__LINE__, 0, 1, NULL, 0, 1, "foo2", 
+	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_execute, "foo2", 
 	ECPGt_descriptor, "indesc", 0L, 0L, 0L, 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EOIT, 
 	ECPGt_descriptor, "outdesc", 0L, 0L, 0L, 

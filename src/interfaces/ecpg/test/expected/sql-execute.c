@@ -78,7 +78,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 
 
 	sprintf(command, "insert into test (name, amount, letter) values ('db: ''r1''', 1, 'f')");
-	{ ECPGdo(__LINE__, 0, 1, NULL, 0, 2, command, ECPGt_EOIT, ECPGt_EORT);
+	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_exec_immediate, command, ECPGt_EOIT, ECPGt_EORT);
 #line 29 "execute.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}
@@ -86,7 +86,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 
 
 	sprintf(command, "insert into test (name, amount, letter) values ('db: ''r1''', 2, 't')");
-	{ ECPGdo(__LINE__, 0, 1, NULL, 0, 2, command, ECPGt_EOIT, ECPGt_EORT);
+	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_exec_immediate, command, ECPGt_EOIT, ECPGt_EORT);
 #line 32 "execute.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}
@@ -94,7 +94,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 
 
 	sprintf(command, "insert into test (name, amount, letter) select name, amount+10, letter from test");
-	{ ECPGdo(__LINE__, 0, 1, NULL, 0, 2, command, ECPGt_EOIT, ECPGt_EORT);
+	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_exec_immediate, command, ECPGt_EOIT, ECPGt_EORT);
 #line 35 "execute.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}
@@ -110,7 +110,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 if (sqlca.sqlcode < 0) sqlprint();}
 #line 40 "execute.pgc"
 
-	{ ECPGdo(__LINE__, 0, 1, NULL, 0, 1, "i", 
+	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_execute, "i", 
 	ECPGt_int,&(increment),(long)1,(long)1,sizeof(int), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EOIT, ECPGt_EORT);
 #line 41 "execute.pgc"
@@ -268,7 +268,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 if (sqlca.sqlcode < 0) sqlprint();}
 #line 93 "execute.pgc"
 
-	{ ECPGdo(__LINE__, 0, 1, NULL, 0, 1, "f", 
+	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_execute, "f", 
 	ECPGt_const,"2",(long)1,(long)1,strlen("2"), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EOIT, 
 	ECPGt_char,(name),(long)8,(long)8,(8)*sizeof(char), 

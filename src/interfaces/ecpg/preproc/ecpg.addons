@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.addons,v 1.11 2009/11/27 16:07:22 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.addons,v 1.12 2009/12/16 10:15:06 meskes Exp $ */
 ECPG: stmtClosePortalStmt block
 	{
 		if (INFORMIX_MODE)
@@ -26,13 +26,14 @@ ECPG: stmtDeallocateStmt block
 	}
 ECPG: stmtDeclareCursorStmt block
 	{ output_simple_statement($1); }
-ECPG: stmtDeleteStmt block
 ECPG: stmtDiscardStmt block
 ECPG: stmtFetchStmt block
+	{ output_statement($1, 1, ECPGst_normal); }
+ECPG: stmtDeleteStmt block
 ECPG: stmtInsertStmt block
 ECPG: stmtSelectStmt block
 ECPG: stmtUpdateStmt block
-	{ output_statement($1, 1, ECPGst_normal); }
+	{ output_statement($1, 1, ECPGst_prepnormal); }
 ECPG: stmtExecuteStmt block
 	{ output_statement($1, 1, ECPGst_execute); }
 ECPG: stmtPrepareStmt block
@@ -133,7 +134,7 @@ ECPG: stmtViewStmt rule
 		if ((ptr = add_additional_variables($1, true)) != NULL)
 		{
 			connection = ptr->connection ? mm_strdup(ptr->connection) : NULL;
-			output_statement(mm_strdup(ptr->command), 0, 0);
+			output_statement(mm_strdup(ptr->command), 0, ECPGst_normal);
 			ptr->opened = true;
 		}
 	}

@@ -167,7 +167,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 if (sqlca.sqlcode < 0) sqlprint();}
 #line 51 "prep.pgc"
 
-		{ ECPGdo(__LINE__, 0, 1, NULL, 0, 1, "i", 
+		{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_execute, "i", 
 	ECPGt_int,&(value),(long)1,(long)1,sizeof(int), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EOIT, ECPGt_EORT);
 #line 52 "prep.pgc"
