@@ -34,7 +34,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/walwriter.c,v 1.8 2009/07/31 20:26:23 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/walwriter.c,v 1.9 2009/12/16 22:55:33 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -126,11 +126,7 @@ WalWriterMain(void)
 	pqsignal(SIGWINCH, SIG_DFL);
 
 	/* We allow SIGQUIT (quickdie) at all times */
-#ifdef HAVE_SIGPROCMASK
 	sigdelset(&BlockSig, SIGQUIT);
-#else
-	BlockSig &= ~(sigmask(SIGQUIT));
-#endif
 
 	/*
 	 * Create a resource owner to keep track of our resources (not clear that

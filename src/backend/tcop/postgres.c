@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.576 2009/12/15 04:57:47 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.577 2009/12/16 22:55:33 petere Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -3292,11 +3292,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	if (IsUnderPostmaster)
 	{
 		/* We allow SIGQUIT (quickdie) at all times */
-#ifdef HAVE_SIGPROCMASK
 		sigdelset(&BlockSig, SIGQUIT);
-#else
-		BlockSig &= ~(sigmask(SIGQUIT));
-#endif
 	}
 
 	PG_SETMASK(&BlockSig);		/* block everything except SIGQUIT */
