@@ -17,7 +17,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.397 2009/12/15 17:57:47 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.398 2009/12/16 22:24:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1533,20 +1533,20 @@ transformSetOperationTree(ParseState *pstate, SelectStmt *stmt,
 		op->groupClauses = NIL;
 		forboth(lci, lcolinfo, rci, rcolinfo)
 		{
-			Node	   *lcolinfo = (Node *) lfirst(lci);
-			Node	   *rcolinfo = (Node *) lfirst(rci);
-			Oid			lcoltype = exprType(lcolinfo);
-			Oid			rcoltype = exprType(rcolinfo);
-			int32		lcoltypmod = exprTypmod(lcolinfo);
-			int32		rcoltypmod = exprTypmod(rcolinfo);
+			Node	   *lcolnode = (Node *) lfirst(lci);
+			Node	   *rcolnode = (Node *) lfirst(rci);
+			Oid			lcoltype = exprType(lcolnode);
+			Oid			rcoltype = exprType(rcolnode);
+			int32		lcoltypmod = exprTypmod(lcolnode);
+			int32		rcoltypmod = exprTypmod(rcolnode);
 			Node	   *bestexpr;
-			SetToDefault *rescolinfo;
+			SetToDefault *rescolnode;
 			Oid			rescoltype;
 			int32		rescoltypmod;
 
 			/* select common type, same as CASE et al */
 			rescoltype = select_common_type(pstate,
-											list_make2(lcolinfo, rcolinfo),
+											list_make2(lcolnode, rcolnode),
 											context,
 											&bestexpr);
 			/* if same type and same typmod, use typmod; else default */
@@ -1555,18 +1555,35 @@ transformSetOperationTree(ParseState *pstate, SelectStmt *stmt,
 			else
 				rescoltypmod = -1;
 
-			/* verify the coercions are actually possible */
-			(void) coerce_to_common_type(pstate, lcolinfo,
-										 rescoltype, context);
-			(void) coerce_to_common_type(pstate, rcolinfo,
-										 rescoltype, context);
+			/*
+			 * Verify the coercions are actually possible.  If not, we'd
+			 * fail later anyway, but we want to fail now while we have
+			 * sufficient context to produce an error cursor position.
+			 *
+			 * The if-tests might look wrong, but they are correct: we should
+			 * verify if the input is non-UNKNOWN *or* if it is an UNKNOWN
+			 * Const (to verify the literal is valid for the target data type)
+			 * or Param (to possibly resolve the Param's type).  We should do
+			 * nothing if the input is say an UNKNOWN Var, which can happen in
+			 * some cases.  The planner is sometimes able to fold the Var to a
+			 * constant before it has to coerce the type, so failing now would
+			 * just break cases that might work.
+			 */
+			if (lcoltype != UNKNOWNOID ||
+				IsA(lcolnode, Const) || IsA(lcolnode, Param))
+				(void) coerce_to_common_type(pstate, lcolnode,
+											 rescoltype, context);
+			if (rcoltype != UNKNOWNOID ||
+				IsA(rcolnode, Const) || IsA(rcolnode, Param))
+				(void) coerce_to_common_type(pstate, rcolnode,
+											 rescoltype, context);
 
 			/* emit results */
-			rescolinfo = makeNode(SetToDefault);
-			rescolinfo->typeId = rescoltype;
-			rescolinfo->typeMod = rescoltypmod;
-			rescolinfo->location = exprLocation(bestexpr);
-			*colInfo = lappend(*colInfo, rescolinfo);
+			rescolnode = makeNode(SetToDefault);
+			rescolnode->typeId = rescoltype;
+			rescolnode->typeMod = rescoltypmod;
+			rescolnode->location = exprLocation(bestexpr);
+			*colInfo = lappend(*colInfo, rescolnode);
 
 			op->colTypes = lappend_oid(op->colTypes, rescoltype);
 			op->colTypmods = lappend_int(op->colTypmods, rescoltypmod);
@@ -1584,7 +1601,7 @@ transformSetOperationTree(ParseState *pstate, SelectStmt *stmt,
 				ParseCallbackState pcbstate;
 
 				setup_parser_errposition_callback(&pcbstate, pstate,
-												  rescolinfo->location);
+												  rescolnode->location);
 
 				/* determine the eqop and optional sortop */
 				get_sort_group_operators(rescoltype,
