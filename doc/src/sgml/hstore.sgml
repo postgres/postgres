@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/hstore.sgml,v 1.5 2009/11/30 17:56:09 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/hstore.sgml,v 1.6 2009/12/16 19:38:54 mha Exp $ -->
 
 <sect1 id="hstore">
  <title>hstore</title>
@@ -278,7 +278,7 @@
       <entry>get <type>hstore</>'s keys as a set</entry>
       <entry><literal>skeys('a=&gt;1,b=&gt;2')</literal></entry>
       <entry>
-22<programlisting>
+<programlisting>
 a
 b
 </programlisting></entry>
