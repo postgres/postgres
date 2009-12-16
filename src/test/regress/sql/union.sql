@@ -153,4 +153,16 @@ SELECT q1 FROM int8_tbl EXCEPT (((SELECT q2 FROM int8_tbl ORDER BY q2 LIMIT 1)))
 
 (((((select * from int8_tbl)))));
 
+--
+-- Check handling of a case with unknown constants.  We don't guarantee
+-- an undecorated constant will work in all cases, but historically this
+-- usage has worked, so test we don't break it.
+--
 
+SELECT a.f1 FROM (SELECT 'test' AS f1 FROM varchar_tbl) a
+UNION
+SELECT b.f1 FROM (SELECT f1 FROM varchar_tbl) b
+ORDER BY 1;
+
+-- This should fail, but it should produce an error cursor
+SELECT '3.4'::numeric UNION SELECT 'foo';
