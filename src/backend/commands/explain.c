@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/explain.c,v 1.196 2009/12/15 04:57:47 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/explain.c,v 1.197 2009/12/16 22:16:16 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1694,10 +1694,7 @@ ExplainProperty(const char *qlabel, const char *value, bool numeric,
 		case EXPLAIN_FORMAT_YAML:
 			ExplainYAMLLineStarting(es);
 			appendStringInfo(es->str, "%s: ", qlabel);
-			if (numeric)
-				appendStringInfoString(es->str, value);
-			else
-				escape_yaml(es->str, value);
+			escape_yaml(es->str, value);
 			break;
 	}
 }
@@ -1785,15 +1782,23 @@ ExplainOpenGroup(const char *objtype, const char *labelname,
 			break;
 
 		case EXPLAIN_FORMAT_YAML:
+
+			/*
+			 * In YAML format, the grouping stack is an integer list.  0 means
+			 * we've emitted nothing at this grouping level AND this grouping
+			 * level is unlabelled and must be marked with "- ".  See
+			 * ExplainYAMLLineStarting().
+			 */
 			ExplainYAMLLineStarting(es);
 			if (labelname)
 			{
-				appendStringInfo(es->str, "%s:", labelname);
+				escape_yaml(es->str, labelname);
+				appendStringInfoChar(es->str, ':');
 				es->grouping_stack = lcons_int(1, es->grouping_stack);
 			}
 			else
 			{
-				appendStringInfoChar(es->str, '-');
+				appendStringInfoString(es->str, "- ");
 				es->grouping_stack = lcons_int(0, es->grouping_stack);
 			}
 			es->indent++;
@@ -1868,8 +1873,15 @@ ExplainDummyGroup(const char *objtype, const char *labelname, ExplainState *es)
 		case EXPLAIN_FORMAT_YAML:
 			ExplainYAMLLineStarting(es);
 			if (labelname)
-				appendStringInfo(es->str, "%s:", labelname);
-			appendStringInfoString(es->str, objtype);
+			{
+				escape_yaml(es->str, labelname);
+				appendStringInfoString(es->str, ": ");
+			}
+			else
+			{
+				appendStringInfoString(es->str, "- ");
+			}
+			escape_yaml(es->str, objtype);
 			break;
 	}
 }
@@ -1946,18 +1958,14 @@ ExplainSeparatePlans(ExplainState *es)
 	switch (es->format)
 	{
 		case EXPLAIN_FORMAT_TEXT:
-		case EXPLAIN_FORMAT_YAML:
 			/* add a blank line */
 			appendStringInfoChar(es->str, '\n');
 			break;
 
 		case EXPLAIN_FORMAT_XML:
-			/* nothing to do */
-			break;
-
 		case EXPLAIN_FORMAT_JSON:
-			/* must have a comma between array elements */
-			appendStringInfoChar(es->str, ',');
+		case EXPLAIN_FORMAT_YAML:
+			/* nothing to do */
 			break;
 	}
 }
@@ -2011,6 +2019,12 @@ ExplainJSONLineEnding(ExplainState *es)
 
 /*
  * Indent a YAML line.
+ *
+ * YAML lines are ordinarily indented by two spaces per indentation level.
+ * The text emitted for each property begins just prior to the preceding
+ * line-break, except for the first property in an unlabelled group, for which
+ * it begins immediately after the "- " that introduces the group.  The first
+ * property of the group appears on the same line as the opening "- ".
  */
 static void
 ExplainYAMLLineStarting(ExplainState *es)
@@ -2018,7 +2032,6 @@ ExplainYAMLLineStarting(ExplainState *es)
 	Assert(es->format == EXPLAIN_FORMAT_YAML);
 	if (linitial_int(es->grouping_stack) == 0)
 	{
-		appendStringInfoChar(es->str, ' ');
 		linitial_int(es->grouping_stack) = 1;
 	}
 	else
@@ -2074,7 +2087,8 @@ escape_json(StringInfo buf, const char *str)
 }
 
 /*
- * YAML is a superset of JSON: if we find quotable characters, we call escape_json
+ * YAML is a superset of JSON: if we find quotable characters, we call
+ * escape_json.  If not, we emit the property unquoted for better readability.
  */
 static void
 escape_yaml(StringInfo buf, const char *str)
