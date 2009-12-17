@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/grant.sgml,v 1.80 2009/12/11 03:34:55 itagaki Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/grant.sgml,v 1.81 2009/12/17 14:36:16 rhaas Exp $
 PostgreSQL documentation
 -->
 
@@ -174,8 +174,7 @@ GRANT <replaceable class="PARAMETER">role_name</replaceable> [, ...] TO <replace
        <xref linkend="sql-delete" endterm="sql-delete-title">.
        For sequences, this privilege also allows the use of the
        <function>currval</function> function.
-       For large objects, this privilege also allows to read from
-       the target large object.
+       For large objects, this privilege allows the object to be read.
       </para>
      </listitem>
     </varlistentry>
@@ -209,8 +208,8 @@ GRANT <replaceable class="PARAMETER">role_name</replaceable> [, ...] TO <replace
        <literal>SELECT</literal> privilege.  For sequences, this
        privilege allows the use of the <function>nextval</function> and
        <function>setval</function> functions.
-       For large objects, this privilege also allows to write or truncate
-       on the target large object.
+       For large objects, this privilege allows writing or truncating the
+       object.
       </para>
      </listitem>
     </varlistentry>

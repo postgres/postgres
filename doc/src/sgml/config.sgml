@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.237 2009/12/11 03:34:55 itagaki Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.238 2009/12/17 14:36:16 rhaas Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -4825,22 +4825,19 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
       </indexterm>
       <listitem>
        <para>
-        This allows us to tuen on/off database privilege checks on large
-        objects. In the 8.4.x series and earlier release do not have
-        privilege checks on large object in most cases.
-
-        So, turning the <varname>lo_compat_privileges</varname> off means
-        the large object feature performs in compatible mode.
+        In <productname>PostgreSQL</> releases prior to 8.5, large objects
+        did not have access privileges and were, in effect, readable and
+        writable by all users.  Setting this variable to <literal>on</>
+        disables the new privilege checks, for compatibility with prior
+        releases.  The default is <literal>off</>.
        </para>
        <para>
-        Please note that it is not equivalent to disable all the security
-        checks corresponding to large objects.
-        For example, the <literal>lo_import()</literal> and
+        Setting this variable does not disable all security checks for
+        large objects - only those for which the default behavior has changed
+        in <productname>PostgreSQL</> 8.5.
+        For example, <literal>lo_import()</literal> and
         <literal>lo_export()</literal> need superuser privileges independent
-        from this setting as prior versions were doing.
-       </para>
-       <para>
-        It is <literal>off</literal> by default.
+        of this setting.
        </para>
       </listitem>
      </varlistentry>
