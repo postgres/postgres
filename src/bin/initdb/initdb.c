@@ -42,7 +42,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.179 2009/12/18 18:45:50 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.180 2009/12/18 21:28:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -176,6 +176,7 @@ static void setup_dictionary(void);
 static void setup_privileges(void);
 static void set_info_version(void);
 static void setup_schema(void);
+static void load_plpgsql(void);
 static void vacuum_db(void);
 static void make_template0(void);
 static void make_postgres(void);
@@ -1894,6 +1895,31 @@ setup_schema(void)
 }
 
 /*
+ * load PL/pgsql server-side language
+ */
+static void
+load_plpgsql(void)
+{
+	PG_CMD_DECL;
+
+	fputs(_("loading PL/pgSQL server-side language ... "), stdout);
+	fflush(stdout);
+
+	snprintf(cmd, sizeof(cmd),
+			 "\"%s\" %s template1 >%s",
+			 backend_exec, backend_options,
+			 DEVNULL);
+
+	PG_CMD_OPEN;
+
+	PG_CMD_PUTS("CREATE LANGUAGE plpgsql;\n");
+
+	PG_CMD_CLOSE;
+
+	check_ok();
+}
+
+/*
  * clean everything up in template1
  */
 static void
@@ -3133,6 +3159,8 @@ main(int argc, char *argv[])
 	setup_privileges();
 
 	setup_schema();
+
+	load_plpgsql();
 
 	vacuum_db();
 

@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.556 2009/12/14 00:39:11 itagaki Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.557 2009/12/18 21:28:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,6 +32,7 @@
 
 #include "access/attnum.h"
 #include "access/sysattr.h"
+#include "access/transam.h"
 #include "catalog/pg_cast.h"
 #include "catalog/pg_class.h"
 #include "catalog/pg_default_acl.h"
@@ -4599,8 +4600,10 @@ getProcLangs(int *numProcLangs)
 						  "(%s lanowner) AS lanowner "
 						  "FROM pg_language "
 						  "WHERE lanispl "
+						  /* do not dump initdb-installed languages */
+						  "AND oid >= %u "
 						  "ORDER BY oid",
-						  username_subquery);
+						  username_subquery, FirstNormalObjectId);
 	}
 	else if (g_fout->remoteVersion >= 80300)
 	{
@@ -4610,9 +4613,10 @@ getProcLangs(int *numProcLangs)
 						  "lanvalidator,  lanacl, "
 						  "(%s lanowner) AS lanowner "
 						  "FROM pg_language "
-						  "WHERE lanispl "
+						  "WHERE lanispl%s"
 						  "ORDER BY oid",
-						  username_subquery);
+						  username_subquery,
+						  binary_upgrade ? "\nAND lanname != 'plpgsql'" : "");
 	}
 	else if (g_fout->remoteVersion >= 80100)
 	{

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.333 2009/12/15 22:59:53 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.334 2009/12/18 21:28:42 momjian Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -2266,14 +2266,14 @@ hosts=local4,bind4
      is <command>createlang</command> failing with unusual errors.
      For example, running as the owner of the PostgreSQL installation:
 <screen>
--bash-3.00$ createlang plpgsql template1
-createlang: language installation failed: ERROR:  could not load library "/opt/dbs/pgsql748/lib/plpgsql.so": A memory address is not in the address space for the process.
+-bash-3.00$ createlang plperl template1
+createlang: language installation failed: ERROR:  could not load library "/opt/dbs/pgsql748/lib/plperl.so": A memory address is not in the address space for the process.
 </screen>
     Running as a non-owner in the group posessing the PostgreSQL
     installation:
 <screen>
--bash-3.00$ createlang plpgsql template1
-createlang: language installation failed: ERROR:  could not load library "/opt/dbs/pgsql748/lib/plpgsql.so": Bad address
+-bash-3.00$ createlang plperl template1
+createlang: language installation failed: ERROR:  could not load library "/opt/dbs/pgsql748/lib/plperl.so": Bad address
 </screen>
      Another example is out of memory errors in the PostgreSQL server
      logs, with every memory allocation near or greater than 256 MB
