@@ -42,7 +42,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.178 2009/12/11 03:34:56 itagaki Exp $
+ * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.179 2009/12/18 18:45:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2711,6 +2711,14 @@ main(int argc, char *argv[])
 	pgdenv = pg_malloc(8 + strlen(pg_data));
 	sprintf(pgdenv, "PGDATA=%s", pg_data);
 	putenv(pgdenv);
+
+	/*
+	 * Also ensure that TZ is set, so that we don't waste time identifying the
+	 * system timezone each of the many times we start a standalone backend.
+	 * It's okay to use a hard-wired value here because nothing done during
+	 * initdb cares about the timezone setting.
+	 */
+	putenv("TZ=GMT");
 
 	if ((ret = find_other_exec(argv[0], "postgres", PG_BACKEND_VERSIONSTR,
 							   backend_exec)) < 0)
