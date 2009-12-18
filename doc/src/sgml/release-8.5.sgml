@@ -1,7 +1,7 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release-8.5.sgml,v 1.9 2009/12/11 01:33:35 adunstan Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release-8.5.sgml,v 1.10 2009/12/18 22:11:09 petere Exp $ -->
 
 <sect1 id="release-8-5">
-  <title>Release 8.5alpha2</title>
+  <title>Release 8.5alpha3</title>
   <sect2>
     <title>Overview</title>
     <para>
@@ -69,45 +69,105 @@
       <itemizedlist>
        <listitem>
         <para>
-         <emphasis>Add SQL-compliant triggers on columns, which fire only if
-         certain columns are named in the UPDATE's SET list.</>
+         <emphasis>Remove previously deprecated configuration
+         parameter add_missing_from. The system now always behaves as
+         though add_missing_from were off.</emphasis>
         </para>
        </listitem>
        <listitem>
         <para>
-         <emphasis>Add CREATE LIKE INCLUDING COMMENTS and STORAGE, and INCLUDING
+         <emphasis>Performance and behavioral improvements in UPDATE,
+         DELETE, and SELECT FOR UPDATE/SHARE queries with
+         joins. Various corner-cases could result in duplicated output
+         rows. Set-returning functions are now prohibited in the
+         target list of SELECT FOR UPDATE/SHARE. FOR UPDATE does not
+         propagate into a WITH query anymore.</emphasis>
+        </para>
+       </listitem>
+       <listitem>
+        <para>
+         <emphasis>Fixed for SELECT FOR UPDATE/SHARE in conjuction with LIMIT.
+          Previously, it could return fewer rows than the limit specified.</emphasis>
+        </para>
+       </listitem>
+       <listitem>
+        <para>
+         <emphasis>Add a WHEN clause to CREATE TRIGGER, allowing a boolean expression
+          to be checked to determine whether the trigger should be fired.</emphasis>
+        </para>
+        <para>
+         <emphasis>For BEFORE triggers this is mostly a matter of spec compliance; but
+          for AFTER triggers it can provide a noticeable performance
+          improvement, since queuing of a deferred trigger event and
+          re-fetching of the row(s) at end of statement can be
+          short-circuited if the trigger does not need to be fired.</emphasis>
+        </para>
+       </listitem>
+       <listitem>
+        <para>
+         <emphasis>Add exclusion constraints, which generalize the concept of
+          uniqueness to support any indexable commutative operator, not just
+          equality. Two rows violate the exclusion constraint if
+          &quot;row1.col OP row2.col&quot; is TRUE for each of the columns in
+          the constraint.</emphasis>
+        </para>
+       </listitem>
+       <listitem>
+        <para>
+         <emphasis>Support ORDER BY within aggregate function calls, at long last
+          providing a non-kluge method for controlling the order in which
+          values are fed to an aggregate function. At the same time eliminate
+          the old implementation restriction that DISTINCT was only supported
+          for single-argument aggregates.</emphasis>
+        </para>
+        <para>
+         <emphasis>Behavioral change: formerly, agg(DISTINCT x) dropped null values of
+          x unconditionally. Now, it does so only if the agg transition
+          function is strict; otherwise nulls are treated as DISTINCT
+          normally would, i.e., you get one copy.</emphasis>
+        </para>
+       </listitem>
+       <listitem>
+        <para>
+         Add SQL-compliant triggers on columns, which fire only if
+         certain columns are named in the UPDATE's SET list.
+        </para>
+       </listitem>
+       <listitem>
+        <para>
+         Add CREATE LIKE INCLUDING COMMENTS and STORAGE, and INCLUDING
          ALL shortcut to allow users to make an exact copy of a table including
-         all options and features.</>
+         all options and features.
         </para>
        </listitem>
        <listitem>
         <para>
-         <emphasis>Define a new, more extensible syntax for COPY options
-         in order to support additional COPY options in the future.</>
+         Define a new, more extensible syntax for COPY options
+         in order to support additional COPY options in the future.
         </para>
        </listitem>
        <listitem>
         <para>
-         <emphasis>Modify the definition of window-function PARTITION
+         Modify the definition of window-function PARTITION
          BY and ORDER BY clauses so that their elements are always
          taken as simple expressions over the query's input
-         columns. This fixes a bug.</>
+         columns. This fixes a bug.
         </para>
        </listitem>
        <listitem>
         <para>
-         <emphasis>Fix bug with nested WITH RECURSIVE statements.</>
+         Fix bug with nested WITH RECURSIVE statements.
         </para>
        </listitem>
        <listitem>
         <para>
-         <emphasis>Add surrogate pair support for U&amp; string and identifier
-         syntax.</>
+         Add surrogate pair support for U&amp; string and identifier
+         syntax.
         </para>
        </listitem>
        <listitem>
         <para>
-         <emphasis>Add Unicode escapes in E'...' strings.</>
+         Add Unicode escapes in E'...' strings.
         </para>
        </listitem>
         <listitem>
@@ -154,24 +214,34 @@
       <itemizedlist>
        <listitem>
         <para>
-         <emphasis>Make TRUNCATE do truncate-in-place when processing
+         <emphasis>Allow rewriting ALTER TABLE to skip WAL logging.</emphasis>
+        </para>
+       </listitem>
+       <listitem>
+        <para>
+         <emphasis>Speed up information schema privilege views.</emphasis>
+        </para>
+       </listitem>
+       <listitem>
+        <para>
+         Make TRUNCATE do truncate-in-place when processing
          a relation that was created or previously truncated in the
-         current (sub)transaction.</>
+         current (sub)transaction.
         </para>
        </listitem>
        <listitem>
         <para>
-         <emphasis>Implement &quot;join removal&quot; for cases where the inner side
+         Implement &quot;join removal&quot; for cases where the inner side
           of a left join is unique and is not referenced above the join.  This should
-          speed up many ORM-generated and reporting tool queries.</emphasis>
+          speed up many ORM-generated and reporting tool queries.
         </para>
        </listitem>
        <listitem>
         <para>
-         <emphasis>Remove the use of the flat files pg_auth and
+         Remove the use of the flat files pg_auth and
          pg_database in order to improve performance. (Warning: pgbouncer
          and possibly other tools currently suggest referring to the pg_auth
-         file for its user database. Such schemes will no longer work.)</emphasis>
+         file for its user database. Such schemes will no longer work.)
         </para>
        </listitem>
         <listitem>
@@ -235,35 +305,79 @@
       <itemizedlist>
        <listitem>
         <para>
-         <emphasis>Add a Boolean server configuration parameter
+         <emphasis>Provide a parenthesized-options syntax for VACUUM, analogous to
+          that recently adopted for EXPLAIN. This will allow additional
+          options to be implemented in future without having to make them
+          fully-reserved keywords. The old syntax remains available for
+          existing options, however.</emphasis>
+        </para>
+       </listitem>
+       <listitem>
+        <para>
+         <emphasis>Add support for an application_name parameter, which is displayed
+          in pg_stat_activity and recorded in log entries.</emphasis>
+        </para>
+       </listitem>
+       <listitem>
+        <para>
+         <emphasis>Fix longstanding problems in VACUUM caused by untimely
+          interruptions.</emphasis>
+        </para>
+       </listitem>
+       <listitem>
+        <para>
+         <emphasis>Error when a specified connection service is not found in
+          pg_service.conf, instead of ignoring it.</emphasis>
+        </para>
+       </listitem>
+       <listitem>
+        <para>
+         <emphasis>Add YAML to list of EXPLAIN formats.</emphasis>
+        </para>
+       </listitem>
+       <listitem>
+        <para>
+         <emphasis>Add an EXPLAIN (BUFFERS) option to show buffer-usage statistics.</emphasis>
+        </para>
+       </listitem>
+       <listitem>
+        <para>
+         <emphasis>Add a hook to let loadable modules get control at ProcessUtility
+          execution, and use it to extend contrib/pg_stat_statements to track
+          utility commands.</emphasis>
+        </para>
+       </listitem>
+       <listitem>
+        <para>
+         Add a Boolean server configuration parameter
          &quot;bonjour&quot; to control whether a Bonjour-enabled
-         build actually attempts to advertise itself via Bonjour.</>
+         build actually attempts to advertise itself via Bonjour.
         </para>
        </listitem>
        <listitem>
         <para>
-         <emphasis>When reloading postgresql.conf, log what parameters actually
-         changed.</>
+         When reloading postgresql.conf, log what parameters actually
+         changed.
         </para>
        </listitem>
        <listitem>
         <para>
-         <emphasis>Make it possibly to specify server configuration parameters
+         Make it possibly to specify server configuration parameters
          per user-database combination. Add a \drds command to psql to
-         display the settings.</>
+         display the settings.
         </para>
        </listitem>
        <listitem>
         <para>
-         <emphasis>Allow the collection of statistics on sequences.</>
+         Allow the collection of statistics on sequences.
         </para>
        </listitem>
       <listitem>
        <para>
-        <emphasis>Increase the maximum value of extra_float_digits to
+        Increase the maximum value of extra_float_digits to
         3, and have pg_dump use that value when the backend is new
         enough to allow it, because it is possible to need 3 extra
-        digits for float4 values (but not for float8 values).</>
+        digits for float4 values (but not for float8 values).
        </para>
       </listitem>
         <listitem>
@@ -287,22 +401,55 @@
       <itemizedlist>
        <listitem>
         <para>
-         <emphasis>Add ALTER DEFAULT PRIVILEGES command, which allows
+         <emphasis>When querying a table with child tables, do not check permissions
+          on the child tables, only on the parent table. The old behavior was
+          found to be useless and confusing in virtually all cases, and also
+          contrary to the SQL standard.</emphasis>
+        </para>
+       </listitem>
+       <listitem>
+        <para>
+         <emphasis>Add a hook to CREATE/ALTER ROLE to allow an external module to
+          check the strength of database passwords, and create a sample
+          implementation of such a hook as a new contrib module
+          &quot;passwordcheck&quot;.</emphasis>
+        </para>
+       </listitem>
+       <listitem>
+        <para>
+         <emphasis>Add large object access control.</emphasis>
+        </para>
+       </listitem>
+       <listitem>
+        <para>
+         <emphasis>Allow LDAP authentication to operate in search+bind
+         mode, meaning it does a search for the user in the directory
+         first, and then binds with the DN found for this user.  This
+         allows for LDAP logins in scenarios where the DN of the user
+         cannot be determined simply by prefix and suffix, such as the
+         case where different users are located in different
+         containers.  The old way of authentication can be
+         significantly faster, so it's kept as an option.</emphasis>
+        </para>
+       </listitem>
+       <listitem>
+        <para>
+         Add ALTER DEFAULT PRIVILEGES command, which allows
          users to adjust the privileges that will be applied to
-         subsequently-created objects.</>
+         subsequently-created objects.
         </para>
        </listitem>
        <listitem>
         <para>
-         <emphasis>Add GRANT/REVOKE ON ALL TABLES/SEQUENCES/FUNCTIONS IN SCHEMA.
-         This makes it easier to manage permissions on database objects.</emphasis>
+         Add GRANT/REVOKE ON ALL TABLES/SEQUENCES/FUNCTIONS IN SCHEMA.
+         This makes it easier to manage permissions on database objects.
         </para>
        </listitem>
        <listitem>
         <para>
-         <emphasis>Support &quot;samehost&quot; and &quot;samenet&quot; specifications
+         Support &quot;samehost&quot; and &quot;samenet&quot; specifications
          in pg_hba.conf.  This allows users with dynamic server addresses to run
-         PostgreSQL without frequently modifying pg_hba.conf</emphasis>
+         PostgreSQL without frequently modifying pg_hba.conf.
         </para>
        </listitem>
         <listitem>
@@ -318,8 +465,23 @@
       <itemizedlist>
        <listitem>
         <para>
-         <emphasis>Support POSIX-compatible interpretation of ? as well as {m,n}
-         and related constructs in SIMILAR TO, per SQL:2008.</>
+         <emphasis>Remove configuration parameter regex_flavor. It is now always
+          &quot;advanced&quot;.</emphasis>
+        </para>
+       </listitem>
+       <listitem>
+        <para>
+         <emphasis>Teach the regular expression functions to do case-insensitive
+          matching and locale-dependent character classification properly
+          when the database encoding is UTF8. This previously only worked
+          correct for single-byte encodings and is still broken for other
+          multibyte encodings.</emphasis>
+        </para>
+       </listitem>
+       <listitem>
+        <para>
+         Support POSIX-compatible interpretation of ? as well as {m,n}
+         and related constructs in SIMILAR TO, per SQL:2008.
         </para>
        </listitem>
         <listitem>
@@ -349,13 +511,27 @@
       <itemizedlist>
        <listitem>
         <para>
-         <emphasis>Fix encoding handling in binary input function of xml type.</>
+         <emphasis>When doing &quot;ARRAY[...]::domain&quot;, where domain is a domain
+          over an array type, we need to check domain constraints. Regression
+          introduced in 8.4.</emphasis>
         </para>
        </listitem>
        <listitem>
         <para>
-         <emphasis>Tighten binary receive functions so that they reject values
-         that the text input functions don't accept either.</>
+         <emphasis>Fix integer-to-bit-string conversions to handle the first
+          fractional byte correctly when the output bit width is wider than
+          the given integer by something other than a multiple of 8 bits.</emphasis>
+        </para>
+       </listitem>
+       <listitem>
+        <para>
+         Fix encoding handling in binary input function of xml type.
+        </para>
+       </listitem>
+       <listitem>
+        <para>
+         Tighten binary receive functions so that they reject values
+         that the text input functions don't accept either.
         </para>
        </listitem>
         <listitem>
@@ -379,8 +555,19 @@
       <itemizedlist>
        <listitem>
         <para>
-         <emphasis>It is now reasonably safe to use pg_ctl to start
-         the postmaster from a boot-time script.</emphasis>
+         <emphasis>initdb now selects the encoding SQL_ASCII when the locale specifies
+          US-ASCII. This case previously failed.</emphasis>
+        </para>
+       </listitem>
+       <listitem>
+        <para>
+         <emphasis>Add init[db] option to pg_ctl.</emphasis>
+        </para>
+       </listitem>
+       <listitem>
+        <para>
+         It is now reasonably safe to use pg_ctl to start
+         the postmaster from a boot-time script.
         </para>
        </listitem>
        <listitem>
@@ -401,16 +588,42 @@
       <itemizedlist>
        <listitem>
         <para>
-         <emphasis>Implement significantly saner behavior when two or
-         more psql sessions overlap in their use of the history file.</>
+         <emphasis>In psql, show view definition only with \d+, not with \d.</emphasis>
         </para>
        </listitem>
        <listitem>
         <para>
-         <emphasis>Add &quot;pset linestyle ascii/unicode&quot; option to psql,
+         <emphasis>In psql, ignore UTF-8-encoded Unicode byte-order mark at the
+          beginning of a file if the client encoding is UTF-8.</emphasis>
+        </para>
+       </listitem>
+       <listitem>
+        <para>
+         <emphasis>Improve psql's tabular display of wrapped-around data by inserting
+          markers in the formerly-always-blank columns just to left and right
+          of the data. &quot;pset linestyle old-ascii&quot; is added to make
+          the previous behavior available if anyone really wants it.</emphasis>
+        </para>
+       </listitem>
+       <listitem>
+        <para>
+         <emphasis>Simplify psql's new linestyle behavior to default to
+          linestyle=ascii all the time, rather than hoping we can tell
+          whether the terminal supports UTF-8 characters.</emphasis>
+        </para>
+       </listitem>
+       <listitem>
+        <para>
+         Implement significantly saner behavior when two or
+         more psql sessions overlap in their use of the history file.
+        </para>
+       </listitem>
+       <listitem>
+        <para>
+         Add &quot;pset linestyle ascii/unicode&quot; option to psql,
          allowing our traditional ASCII-art style of table output to
          be upgraded to use Unicode box drawing characters if
-         desired.</>
+         desired.
         </para>
        </listitem>
         <listitem>
@@ -430,56 +643,114 @@
       <itemizedlist>
        <listitem>
         <para>
-         <emphasis>Add DO statement to support execution of procedural language
-         code without having to create a function for it.</>
+         <emphasis>PL/pgSQL is installed by default.</emphasis>
         </para>
        </listitem>
        <listitem>
         <para>
-         <emphasis>Support use of function argument names to identify which
+         <emphasis>Remove PL/pgSQL's RENAME declaration, which has
+          bizarre and mostly nonfunctional behavior, and is so little
+          used that no one has been interested in fixing it. To ensure
+          that possible uses are covered, remove the ALIAS declaration's
+          arbitrary restriction that only $n identifiers can be
+          aliased.</emphasis>
+        </para>
+       </listitem>
+       <listitem>
+        <para>
+         <emphasis>The PL/pgSQL parser and scanner were reworked to behave much more
+          sanely:</emphasis>
+        </para>
+        <para>
+         <emphasis>A variable reference will only be recognized where it can validly
+          go, ie, a place where a column value or parameter would be legal,
+          instead of the former behavior that would replace any textual match
+          including table names and column aliases (leading to syntax errors
+          later on). PL/pgSQL variable names that match fully-reserved words
+          will now need to be quoted. An the other hand, a number of
+          PL/pgSQL-specific words were de-reserved.</emphasis>
+        </para>
+        <para>
+         <emphasis>The variable resolution behavior is by default not backward
+          compatible, but can be configured; see documentation.</emphasis>
+        </para>
+        <para>
+         <emphasis>Error reporting is much nicer and accurate.</emphasis>
+        </para>
+        <para>
+         <emphasis>The argument of WHERE CURRENT OF can be a PL/pgSQL cursor variable.</emphasis>
+        </para>
+       </listitem>
+       <listitem>
+        <para>
+         <emphasis>Add support for anonymous code blocks (DO blocks) to PL/Perl.</emphasis>
+        </para>
+       </listitem>
+       <listitem>
+        <para>
+         <emphasis>Support arrays as parameters and return values of PL/Python
+          functions.</emphasis>
+        </para>
+       </listitem>
+       <listitem>
+        <para>
+         <emphasis>Python 3 support in PL/Python; behaves more or less unchanged
+          compared to Python 2, but the new language variant is called
+          plpython3u.</emphasis>
+        </para>
+       </listitem>
+       <listitem>
+        <para>
+         Add DO statement to support execution of procedural language
+         code without having to create a function for it.
+        </para>
+       </listitem>
+       <listitem>
+        <para>
+         Support use of function argument names to identify which
          actual arguments match which function parameters. The syntax
          uses AS, for example funcname(value AS arg1, anothervalue AS
-         arg2).</>
+         arg2).
         </para>
        </listitem>
        <listitem>
         <para>
-         <emphasis>Fix/improve bytea and boolean support in PL/Python. Data type
+         Fix/improve bytea and boolean support in PL/Python. Data type
          conversion into and out of PL/Python previously went through
          an intermediate string representation, which caused various
          discrepancies especially with bytea and boolean data. This is
-         now fixed by converting the values directly.</>
+         now fixed by converting the values directly.
         </para>
        </listitem>
        <listitem>
         <para>
-         <emphasis>PL/Python now accepts Unicode objects where it previously
+         PL/Python now accepts Unicode objects where it previously
          only accepted string objects (for example, as return
          value). Unicode objects are converted to the PostgreSQL
-         server encoding as necessary.</>
+         server encoding as necessary.
         </para>
        </listitem>
        <listitem>
         <para>
-         <emphasis>Improve error context reporting in PL/Perl, for
-         easier debugging.</>
+         Improve error context reporting in PL/Perl, for
+         easier debugging.
         </para>
        </listitem>
        <listitem>
         <para>
-         <emphasis>PL/pgSQL IN parameters now accept value assignments.</>
+         PL/pgSQL IN parameters now accept value assignments.
         </para>
        </listitem>
        <listitem>
         <para>
-         <emphasis>Convert a Perl array to a PostgreSQL array when returned by
-         set-returning functions as well as non-SRFs.</>
+         Convert a Perl array to a PostgreSQL array when returned by
+         set-returning functions as well as non-SRFs.
         </para>
        </listitem>
        <listitem>
         <para>
-         <emphasis>Allow cursor commands MOVE FORWARD n, MOVE BACKWARD n, 
-         MOVE FORWARD ALL, MOVE BACKWARD ALL in PL/pgSQL.</>
+         Allow cursor commands MOVE FORWARD n, MOVE BACKWARD n, 
+         MOVE FORWARD ALL, MOVE BACKWARD ALL in PL/pgSQL.
         </para>
        </listitem>
         <listitem>
@@ -506,9 +777,18 @@
       <itemizedlist>
        <listitem>
         <para>
-         <emphasis>Multiple improvements in contrib/hstore, including
+         <emphasis>Add \shell and \setshell meta commands to pgbench.</emphasis>
+        </para>
+        <para>
+         <emphasis>\shell command runs an external shell command. \setshell also does
+          the same and sets the result to a variable.</emphasis>
+        </para>
+       </listitem>
+       <listitem>
+        <para>
+         Multiple improvements in contrib/hstore, including
          raising limits on keys and values, conversions to and from
-         records and arrays, and support for GROUP BY and DISTINCT.</emphasis>
+         records and arrays, and support for GROUP BY and DISTINCT.
         </para>
        </listitem>
         <listitem>
@@ -540,20 +820,32 @@
     <sect3>
       <title>Development</title>
       <itemizedlist>
+       <listitem>
+        <para>
+         <emphasis>Refactor ECPG grammar so that it uses the core grammar's
+          unreserved_keyword list, minus a few specific words that have to be
+          treated specially. This de-reserves a number of works in ECPG.</emphasis>
+        </para>
+       </listitem>
+       <listitem>
+        <para>
+         <emphasis>Added dynamic cursor names to ECPG.</emphasis>
+        </para>
+       </listitem>
       <listitem>
        <para>
-        <emphasis>Add ECPG function that returns the current transaction status.</>
+        Add ECPG function that returns the current transaction status.
        </para>
       </listitem>
       <listitem>
        <para>
-        <emphasis>Make ECPG more robust against applications freeing strings.</>
+        Make ECPG more robust against applications freeing strings.
        </para>
       </listitem>
       <listitem>
        <para>
-        <emphasis>Make libpq reject non-numeric and out-of-range port numbers with a
-        suitable error message.</emphasis>
+        Make libpq reject non-numeric and out-of-range port numbers with a
+        suitable error message.
        </para>
       </listitem>
         <listitem>
@@ -580,28 +872,28 @@
       <itemizedlist>
        <listitem>
         <para>
-         <emphasis>Change the WIN32 API version to be 5.01 (Windows XP), to
-         bring in the proper IPv6 headers in newer SDKs.</>
+         <emphasis>Disable triggering failover with a signal in pg_standby on Windows.
+          It never really worked before anyway.</emphasis>
         </para>
        </listitem>
        <listitem>
         <para>
-         <emphasis>Write to the Windows eventlog in UTF-16, converting the
-         message encoding as necessary.</>
+         Change the WIN32 API version to be 5.01 (Windows XP), to
+         bring in the proper IPv6 headers in newer SDKs.
         </para>
        </listitem>
        <listitem>
         <para>
-         <emphasis>Replace use of the long-deprecated Bonjour API
+         Write to the Windows eventlog in UTF-16, converting the
+         message encoding as necessary.
+        </para>
+       </listitem>
+       <listitem>
+        <para>
+         Replace use of the long-deprecated Bonjour API
          DNSServiceRegistrationCreate with the not-so-deprecated
          DNSServiceRegister. The new code will fail on Mac OS X
-         releases before 10.3.</>
-        </para>
-       </listitem>
-       <listitem>
-        <para>
-         <emphasis>Install a hopefully-temporary workaround for Mac OS X Snow Leopard
-         readdir() bug.</>
+         releases before 10.3.
         </para>
        </listitem>
        <listitem>
@@ -621,28 +913,34 @@
       </itemizedlist>
     </sect3>
     <sect3>
-      <title>Source code, build options</title>
+      <title>Source Code, Build Options</title>
       <itemizedlist>
        <listitem>
         <para>
-         <emphasis>Fix inclusions of readline/editline header files so that we
+         <emphasis>configure --enable-thread-safety is now the default (but can still
+          be turned off).</emphasis>
+        </para>
+       </listitem>
+       <listitem>
+        <para>
+         Fix inclusions of readline/editline header files so that we
          only attempt to #include the version of history.h that is in
          the same directory as the readline.h we are using. This
          avoids problems in some scenarios where both readline and
-         editline are installed.</>
+         editline are installed.
         </para>
        </listitem>
        <listitem>
         <para>
-         <emphasis>Derived files that are shipped in the distribution used to be
+         Derived files that are shipped in the distribution used to be
          built in the source directory even for out-of-tree
          builds. They are now also built in the build tree. This
-         should be more convenient for certain developers' workflows.</>
+         should be more convenient for certain developers' workflows.
         </para>
        </listitem>
        <listitem>
         <para>
-         <emphasis>Translations were updated.</>
+         Translations were updated.
         </para>
        </listitem>
         <listitem>
