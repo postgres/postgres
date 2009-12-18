@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.334 2009/12/18 21:28:42 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.335 2009/12/18 21:37:38 tgl Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -198,8 +198,10 @@ su - postgres
       installation with the header files and
       the <application>distutils</application> module.  The minimum
       required version is <productname>Python</productname>
-      2.2.  <productname>Python 3</productname> is supported with
-      version 3.1 or later; but see <xref linkend="plpython-python23">
+      2.2.  <productname>Python 3</productname> is supported if it's
+      version 3.1 or later; but see
+      <![%standalone-include[the <application>PL/Python</> documentation]]>
+      <![%standalone-ignore[<xref linkend="plpython-python23">]]>
       when using Python 3.
      </para>
 
