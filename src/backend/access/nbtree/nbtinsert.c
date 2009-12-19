@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.174 2009/10/02 21:14:04 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.175 2009/12/19 01:32:32 sriggs Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2025,7 +2025,7 @@ _bt_vacuum_one_page(Relation rel, Buffer buffer)
 	}
 
 	if (ndeletable > 0)
-		_bt_delitems(rel, buffer, deletable, ndeletable);
+		_bt_delitems(rel, buffer, deletable, ndeletable, false, 0);
 
 	/*
 	 * Note: if we didn't find any LP_DEAD items, then the page's

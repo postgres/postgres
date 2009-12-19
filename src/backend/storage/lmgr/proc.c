@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/proc.c,v 1.209 2009/08/31 19:41:00 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/proc.c,v 1.210 2009/12/19 01:32:36 sriggs Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -318,6 +318,7 @@ InitProcess(void)
 	MyProc->waitProcLock = NULL;
 	for (i = 0; i < NUM_LOCK_PARTITIONS; i++)
 		SHMQueueInit(&(MyProc->myProcLocks[i]));
+	MyProc->recoveryConflictMode = 0;
 
 	/*
 	 * We might be reusing a semaphore that belonged to a failed process. So
@@ -374,6 +375,11 @@ InitProcessPhase2(void)
  * to the ProcArray or the sinval messaging mechanism, either.	They also
  * don't get a VXID assigned, since this is only useful when we actually
  * hold lockmgr locks.
+ *
+ * Startup process however uses locks but never waits for them in the
+ * normal backend sense. Startup process also takes part in sinval messaging
+ * as a sendOnly process, so never reads messages from sinval queue. So
+ * Startup process does have a VXID and does show up in pg_locks.
  */
 void
 InitAuxiliaryProcess(void)
@@ -459,6 +465,24 @@ InitAuxiliaryProcess(void)
 	 * Arrange to clean up at process exit.
 	 */
 	on_shmem_exit(AuxiliaryProcKill, Int32GetDatum(proctype));
+}
+
+/*
+ * Record the PID and PGPROC structures for the Startup process, for use in
+ * ProcSendSignal().  See comments there for further explanation.
+ */
+void
+PublishStartupProcessInformation(void)
+{
+	/* use volatile pointer to prevent code rearrangement */
+	volatile PROC_HDR *procglobal = ProcGlobal;
+
+	SpinLockAcquire(ProcStructLock);
+
+	procglobal->startupProc = MyProc;
+	procglobal->startupProcPid = MyProcPid;
+
+	SpinLockRelease(ProcStructLock);
 }
 
 /*
@@ -1289,7 +1313,31 @@ ProcWaitForSignal(void)
 void
 ProcSendSignal(int pid)
 {
-	PGPROC	   *proc = BackendPidGetProc(pid);
+	PGPROC	   *proc = NULL;
+
+	if (RecoveryInProgress())
+	{
+		/* use volatile pointer to prevent code rearrangement */
+		volatile PROC_HDR *procglobal = ProcGlobal;
+
+		SpinLockAcquire(ProcStructLock);
+
+		/*
+		 * Check to see whether it is the Startup process we wish to signal.
+		 * This call is made by the buffer manager when it wishes to wake
+		 * up a process that has been waiting for a pin in so it can obtain a
+		 * cleanup lock using LockBufferForCleanup(). Startup is not a normal
+		 * backend, so BackendPidGetProc() will not return any pid at all.
+		 * So we remember the information for this special case.
+		 */
+		if (pid == procglobal->startupProcPid)
+			proc = procglobal->startupProc;
+
+		SpinLockRelease(ProcStructLock);
+	}
+
+	if (proc == NULL)
+		proc = BackendPidGetProc(pid);
 
 	if (proc != NULL)
 		PGSemaphoreUnlock(&proc->sem);

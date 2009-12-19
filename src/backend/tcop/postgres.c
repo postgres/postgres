@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.578 2009/12/16 23:05:00 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.579 2009/12/19 01:32:36 sriggs Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -62,6 +62,7 @@
 #include "storage/proc.h"
 #include "storage/procsignal.h"
 #include "storage/sinval.h"
+#include "storage/standby.h"
 #include "tcop/fastpath.h"
 #include "tcop/pquery.h"
 #include "tcop/tcopprot.h"
@@ -2643,8 +2644,8 @@ StatementCancelHandler(SIGNAL_ARGS)
 		 * the interrupt immediately.  No point in interrupting if we're
 		 * waiting for input, however.
 		 */
-		if (ImmediateInterruptOK && InterruptHoldoffCount == 0 &&
-			CritSectionCount == 0 && !DoingCommandRead)
+		if (InterruptHoldoffCount == 0 && CritSectionCount == 0 &&
+			(DoingCommandRead || ImmediateInterruptOK))
 		{
 			/* bump holdoff count to make ProcessInterrupts() a no-op */
 			/* until we are done getting ready for it */
@@ -2735,9 +2736,58 @@ ProcessInterrupts(void)
 					(errcode(ERRCODE_QUERY_CANCELED),
 					 errmsg("canceling autovacuum task")));
 		else
+		{
+			int cancelMode = MyProc->recoveryConflictMode;
+
+			/*
+			 * XXXHS: We don't yet have a clean way to cancel an
+			 * idle-in-transaction session, so make it FATAL instead.
+			 * This isn't as bad as it looks because we don't issue a
+			 * CONFLICT_MODE_ERROR for a session with proc->xmin == 0
+			 * on cleanup conflicts. There's a possibility that we
+			 * marked somebody as a conflict and then they go idle.
+			 */
+			if (DoingCommandRead && IsTransactionBlock() &&
+				cancelMode == CONFLICT_MODE_ERROR)
+			{
+				cancelMode = CONFLICT_MODE_FATAL;
+			}
+
+			switch (cancelMode)
+			{
+				case CONFLICT_MODE_FATAL:
+						Assert(RecoveryInProgress());
+						ereport(FATAL,
+							(errcode(ERRCODE_QUERY_CANCELED),
+							 errmsg("canceling session due to conflict with recovery")));
+
+				case CONFLICT_MODE_ERROR:
+						/*
+						 * We are aborting because we need to release
+						 * locks. So we need to abort out of all
+						 * subtransactions to make sure we release
+						 * all locks at whatever their level.
+						 *
+						 * XXX Should we try to examine the
+						 * transaction tree and cancel just enough
+						 * subxacts to remove locks? Doubt it.
+						 */
+						Assert(RecoveryInProgress());
+						AbortOutOfAnyTransaction();
+						ereport(ERROR,
+							(errcode(ERRCODE_QUERY_CANCELED),
+							 errmsg("canceling statement due to conflict with recovery")));
+						return;
+
+				default:
+						/* No conflict pending, so fall through */
+						break;
+			}
+
 			ereport(ERROR,
 					(errcode(ERRCODE_QUERY_CANCELED),
 					 errmsg("canceling statement due to user request")));
+		}
 	}
 	/* If we get here, do nothing (probably, QueryCancelPending was reset) */
 }

@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablespace.c,v 1.63 2009/11/10 18:53:38 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablespace.c,v 1.64 2009/12/19 01:32:34 sriggs Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,6 +50,7 @@
 
 #include "access/heapam.h"
 #include "access/sysattr.h"
+#include "access/transam.h"
 #include "access/xact.h"
 #include "catalog/catalog.h"
 #include "catalog/dependency.h"
@@ -60,6 +61,8 @@
 #include "miscadmin.h"
 #include "postmaster/bgwriter.h"
 #include "storage/fd.h"
+#include "storage/procarray.h"
+#include "storage/standby.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
@@ -1317,11 +1320,58 @@ tblspc_redo(XLogRecPtr lsn, XLogRecord *record)
 	{
 		xl_tblspc_drop_rec *xlrec = (xl_tblspc_drop_rec *) XLogRecGetData(record);
 
+		/*
+		 * If we issued a WAL record for a drop tablespace it is
+		 * because there were no files in it at all. That means that
+		 * no permanent objects can exist in it at this point.
+		 *
+		 * It is possible for standby users to be using this tablespace
+		 * as a location for their temporary files, so if we fail to
+		 * remove all files then do conflict processing and try again,
+		 * if currently enabled.
+		 */
 		if (!remove_tablespace_directories(xlrec->ts_id, true))
-			ereport(ERROR,
+		{
+			VirtualTransactionId *temp_file_users;
+
+			/*
+			 * Standby users may be currently using this tablespace for
+			 * for their temporary files. We only care about current
+			 * users because temp_tablespace parameter will just ignore
+			 * tablespaces that no longer exist.
+			 *
+			 * Ask everybody to cancel their queries immediately so
+			 * we can ensure no temp files remain and we can remove the
+			 * tablespace. Nuke the entire site from orbit, it's the only
+			 * way to be sure.
+			 *
+			 * XXX: We could work out the pids of active backends
+			 * using this tablespace by examining the temp filenames in the
+			 * directory. We would then convert the pids into VirtualXIDs
+			 * before attempting to cancel them.
+			 *
+			 * We don't wait for commit because drop tablespace is
+			 * non-transactional.
+			 */
+			temp_file_users = GetConflictingVirtualXIDs(InvalidTransactionId,
+														InvalidOid,
+														false);
+			ResolveRecoveryConflictWithVirtualXIDs(temp_file_users,
+												   "drop tablespace",
+												   CONFLICT_MODE_ERROR);
+
+			/*
+			 * If we did recovery processing then hopefully the
+			 * backends who wrote temp files should have cleaned up and
+			 * exited by now. So lets recheck before we throw an error.
+			 * If !process_conflicts then this will just fail again.
+			 */
+			if (!remove_tablespace_directories(xlrec->ts_id, true))
+				ereport(ERROR,
 					(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 					 errmsg("tablespace %u is not empty",
 							xlrec->ts_id)));
+		}
 	}
 	else
 		elog(PANIC, "tblspc_redo: unknown op code %u", info);

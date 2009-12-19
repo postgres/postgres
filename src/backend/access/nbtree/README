@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/backend/access/nbtree/README,v 1.20 2008/03/21 13:23:27 momjian Exp $
+$PostgreSQL: pgsql/src/backend/access/nbtree/README,v 1.21 2009/12/19 01:32:32 sriggs Exp $
 
 Btree Indexing
 ==============
@@ -400,6 +400,33 @@ as an atomic event.  (Any required fast-root link update is also part
 of the WAL entry.)  If the parent page becomes half-dead but is not
 immediately deleted due to a subsequent crash, there is no loss of
 consistency, and the empty page will be picked up by the next VACUUM.
+
+Scans during Recovery
+---------------------
+
+The btree index type can be safely used during recovery. During recovery
+we have at most one writer and potentially many readers. In that
+situation the locking requirements can be relaxed and we do not need
+double locking during block splits. Each WAL record makes changes to a
+single level of the btree using the correct locking sequence and so
+is safe for concurrent readers. Some readers may observe a block split
+in progress as they descend the tree, but they will simply move right
+onto the correct page.
+
+During recovery all index scans start with ignore_killed_tuples = false
+and we never set kill_prior_tuple. We do this because the oldest xmin
+on the standby server can be older than the oldest xmin on the master
+server, which means tuples can be marked as killed even when they are
+still visible on the standby. We don't WAL log tuple killed bits, but
+they can still appear in the standby because of full page writes. So
+we must always ignore them in standby, and that means it's not worth
+setting them either.
+
+Note that we talk about scans that are started during recovery. We go to
+a little trouble to allow a scan to start during recovery and end during
+normal running after recovery has completed. This is a key capability
+because it allows running applications to continue while the standby
+changes state into a normally running server.
 
 Other Things That Are Handy to Know
 -----------------------------------

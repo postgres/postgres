@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.353 2009/09/13 18:32:07 heikki Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.354 2009/12/19 01:32:33 sriggs Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -67,6 +67,8 @@ int			XLOGbuffers = 8;
 int			XLogArchiveTimeout = 0;
 bool		XLogArchiveMode = false;
 char	   *XLogArchiveCommand = NULL;
+bool 		XLogRequestRecoveryConnections = true;
+int			MaxStandbyDelay = 30;
 bool		fullPageWrites = true;
 bool		log_checkpoints = false;
 int			sync_method = DEFAULT_SYNC_METHOD;
@@ -129,9 +131,15 @@ TimeLineID	ThisTimeLineID = 0;
  * recovery mode".  It should be examined primarily by functions that need
  * to act differently when called from a WAL redo function (e.g., to skip WAL
  * logging).  To check whether the system is in recovery regardless of which
- * process you're running in, use RecoveryInProgress().
+ * process you're running in, use RecoveryInProgress() but only after shared
+ * memory startup and lock initialization.
  */
 bool		InRecovery = false;
+
+/* Are we in Hot Standby mode? Only valid in startup process, see xlog.h */
+HotStandbyState		standbyState = STANDBY_DISABLED;
+
+static 	XLogRecPtr	LastRec;
 
 /*
  * Local copy of SharedRecoveryInProgress variable. True actually means "not
@@ -359,6 +367,8 @@ typedef struct XLogCtlData
 
 	/* end+1 of the last record replayed (or being replayed) */
 	XLogRecPtr	replayEndRecPtr;
+	/* timestamp of last record replayed (or being replayed) */
+	TimestampTz	recoveryLastXTime;
 
 	slock_t		info_lck;		/* locks shared variables shown above */
 } XLogCtlData;
@@ -463,6 +473,7 @@ static void readRecoveryCommandFile(void);
 static void exitArchiveRecovery(TimeLineID endTLI,
 					uint32 endLogId, uint32 endLogSeg);
 static bool recoveryStopsHere(XLogRecord *record, bool *includeThis);
+static void CheckRequiredParameterValues(CheckPoint checkPoint);
 static void LocalSetXLogInsertAllowed(void);
 static void CheckPointGuts(XLogRecPtr checkPointRedo, int flags);
 
@@ -2103,9 +2114,40 @@ XLogAsyncCommitFlush(void)
 bool
 XLogNeedsFlush(XLogRecPtr record)
 {
-	/* XLOG doesn't need flushing during recovery */
+	/*
+	 * During recovery, we don't flush WAL but update minRecoveryPoint
+	 * instead. So "needs flush" is taken to mean whether minRecoveryPoint
+	 * would need to be updated.
+	 */
 	if (RecoveryInProgress())
-		return false;
+	{
+		/* Quick exit if already known updated */
+		if (XLByteLE(record, minRecoveryPoint) || !updateMinRecoveryPoint)
+			return false;
+
+		/*
+		 * Update local copy of minRecoveryPoint. But if the lock is busy,
+		 * just return a conservative guess.
+		 */
+		if (!LWLockConditionalAcquire(ControlFileLock, LW_SHARED))
+			return true;
+		minRecoveryPoint = ControlFile->minRecoveryPoint;
+		LWLockRelease(ControlFileLock);
+
+		/*
+		 * An invalid minRecoveryPoint means that we need to recover all the WAL,
+		 * i.e., we're doing crash recovery.  We never modify the control file's
+		 * value in that case, so we can short-circuit future checks here too.
+		 */
+		if (minRecoveryPoint.xlogid == 0 && minRecoveryPoint.xrecoff == 0)
+			updateMinRecoveryPoint = false;
+
+		/* check again */
+		if (XLByteLE(record, minRecoveryPoint) || !updateMinRecoveryPoint)
+			return false;
+		else
+			return true;
+	}
 
 	/* Quick exit if already known flushed */
 	if (XLByteLE(record, LogwrtResult.Flush))
@@ -3259,10 +3301,11 @@ CleanupBackupHistory(void)
  * ignoring them as already applied, but that's not a huge drawback.
  *
  * If 'cleanup' is true, a cleanup lock is used when restoring blocks.
- * Otherwise, a normal exclusive lock is used.	At the moment, that's just
- * pro forma, because there can't be any regular backends in the system
- * during recovery.  The 'cleanup' argument applies to all backup blocks
- * in the WAL record, that suffices for now.
+ * Otherwise, a normal exclusive lock is used.	During crash recovery, that's
+ * just pro forma because there can't be any regular backends in the system,
+ * but in hot standby mode the distinction is important. The 'cleanup'
+ * argument applies to all backup blocks in the WAL record, that suffices for
+ * now.
  */
 void
 RestoreBkpBlocks(XLogRecPtr lsn, XLogRecord *record, bool cleanup)
@@ -4679,6 +4722,7 @@ BootStrapXLOG(void)
 	checkPoint.oldestXid = FirstNormalTransactionId;
 	checkPoint.oldestXidDB = TemplateDbOid;
 	checkPoint.time = (pg_time_t) time(NULL);
+	checkPoint.oldestActiveXid = InvalidTransactionId;
 
 	ShmemVariableCache->nextXid = checkPoint.nextXid;
 	ShmemVariableCache->nextOid = checkPoint.nextOid;
@@ -5117,22 +5161,43 @@ recoveryStopsHere(XLogRecord *record, bool *includeThis)
 	TimestampTz recordXtime;
 
 	/* We only consider stopping at COMMIT or ABORT records */
-	if (record->xl_rmid != RM_XACT_ID)
-		return false;
-	record_info = record->xl_info & ~XLR_INFO_MASK;
-	if (record_info == XLOG_XACT_COMMIT)
+	if (record->xl_rmid == RM_XACT_ID)
 	{
-		xl_xact_commit *recordXactCommitData;
+		record_info = record->xl_info & ~XLR_INFO_MASK;
+		if (record_info == XLOG_XACT_COMMIT)
+		{
+			xl_xact_commit *recordXactCommitData;
 
-		recordXactCommitData = (xl_xact_commit *) XLogRecGetData(record);
-		recordXtime = recordXactCommitData->xact_time;
+			recordXactCommitData = (xl_xact_commit *) XLogRecGetData(record);
+			recordXtime = recordXactCommitData->xact_time;
+		}
+		else if (record_info == XLOG_XACT_ABORT)
+		{
+			xl_xact_abort *recordXactAbortData;
+
+			recordXactAbortData = (xl_xact_abort *) XLogRecGetData(record);
+			recordXtime = recordXactAbortData->xact_time;
+		}
+		else
+			return false;
 	}
-	else if (record_info == XLOG_XACT_ABORT)
+	else if (record->xl_rmid == RM_XLOG_ID)
 	{
-		xl_xact_abort *recordXactAbortData;
+		record_info = record->xl_info & ~XLR_INFO_MASK;
+		if (record_info == XLOG_CHECKPOINT_SHUTDOWN ||
+			record_info == XLOG_CHECKPOINT_ONLINE)
+		{
+			CheckPoint	checkPoint;
 
-		recordXactAbortData = (xl_xact_abort *) XLogRecGetData(record);
-		recordXtime = recordXactAbortData->xact_time;
+			memcpy(&checkPoint, XLogRecGetData(record), sizeof(CheckPoint));
+			recoveryLastXTime = checkPoint.time;
+		}
+
+		/*
+		 * We don't want to stop recovery on a checkpoint record, but we do
+		 * want to update recoveryLastXTime. So return is unconditional.
+		 */
+		return false;
 	}
 	else
 		return false;
@@ -5217,6 +5282,67 @@ recoveryStopsHere(XLogRecord *record, bool *includeThis)
 }
 
 /*
+ * Returns bool with current recovery mode, a global state.
+ */
+Datum
+pg_is_in_recovery(PG_FUNCTION_ARGS)
+{
+	PG_RETURN_BOOL(RecoveryInProgress());
+}
+
+/*
+ * Returns timestamp of last recovered commit/abort record.
+ */
+TimestampTz
+GetLatestXLogTime(void)
+{
+	/* use volatile pointer to prevent code rearrangement */
+	volatile XLogCtlData *xlogctl = XLogCtl;
+
+	SpinLockAcquire(&xlogctl->info_lck);
+	recoveryLastXTime = xlogctl->recoveryLastXTime;
+	SpinLockRelease(&xlogctl->info_lck);
+
+	return recoveryLastXTime;
+}
+
+/*
+ * Note that text field supplied is a parameter name and does not require translation
+ */
+#define RecoveryRequiresIntParameter(param_name, currValue, checkpointValue) \
+{ \
+	if (currValue < checkpointValue) \
+		ereport(ERROR, \
+			(errmsg("recovery connections cannot continue because " \
+					"%s = %u is a lower setting than on WAL source server (value was %u)", \
+					param_name, \
+					currValue, \
+					checkpointValue))); \
+}
+
+/*
+ * Check to see if required parameters are set high enough on this server
+ * for various aspects of recovery operation.
+ */
+static void
+CheckRequiredParameterValues(CheckPoint checkPoint)
+{
+	/* We ignore autovacuum_max_workers when we make this test. */
+	RecoveryRequiresIntParameter("max_connections",
+									MaxConnections, checkPoint.MaxConnections);
+
+	RecoveryRequiresIntParameter("max_prepared_xacts",
+									max_prepared_xacts, checkPoint.max_prepared_xacts);
+	RecoveryRequiresIntParameter("max_locks_per_xact",
+									max_locks_per_xact, checkPoint.max_locks_per_xact);
+
+	if (!checkPoint.XLogStandbyInfoMode)
+		ereport(ERROR,
+			(errmsg("recovery connections cannot start because the recovery_connections "
+					"parameter is disabled on the WAL source server")));
+}
+
+/*
  * This must be called ONCE during postmaster or standalone-backend startup
  */
 void
@@ -5228,7 +5354,6 @@ StartupXLOG(void)
 	bool		reachedStopPoint = false;
 	bool		haveBackupLabel = false;
 	XLogRecPtr	RecPtr,
-				LastRec,
 				checkPointLoc,
 				backupStopLoc,
 				EndOfLog;
@@ -5238,6 +5363,7 @@ StartupXLOG(void)
 	uint32		freespace;
 	TransactionId oldestActiveXID;
 	bool		bgwriterLaunched = false;
+	bool		backendsAllowed = false;
 
 	/*
 	 * Read control file and check XLOG status looks valid.
@@ -5506,6 +5632,38 @@ StartupXLOG(void)
 								BACKUP_LABEL_FILE, BACKUP_LABEL_OLD)));
 		}
 
+		/*
+		 * Initialize recovery connections, if enabled. We won't let backends
+		 * in yet, not until we've reached the min recovery point specified
+		 * in control file and we've established a recovery snapshot from a
+		 * running-xacts WAL record.
+		 */
+		if (InArchiveRecovery && XLogRequestRecoveryConnections)
+		{
+			TransactionId *xids;
+			int nxids;
+
+			CheckRequiredParameterValues(checkPoint);
+
+			ereport(LOG,
+				(errmsg("initializing recovery connections")));
+
+			InitRecoveryTransactionEnvironment();
+
+			if (wasShutdown)
+				oldestActiveXID = PrescanPreparedTransactions(&xids, &nxids);
+			else
+				oldestActiveXID = checkPoint.oldestActiveXid;
+			Assert(TransactionIdIsValid(oldestActiveXID));
+
+			/* Startup commit log and related stuff */
+			StartupCLOG();
+			StartupSUBTRANS(oldestActiveXID);
+			StartupMultiXact();
+
+			ProcArrayInitRecoveryInfo(oldestActiveXID);
+		}
+
 		/* Initialize resource managers */
 		for (rmid = 0; rmid <= RM_MAX_ID; rmid++)
 		{
@@ -5580,7 +5738,9 @@ StartupXLOG(void)
 			do
 			{
 #ifdef WAL_DEBUG
-				if (XLOG_DEBUG)
+				if (XLOG_DEBUG ||
+					(rmid == RM_XACT_ID && trace_recovery_messages <= DEBUG2) ||
+					(rmid != RM_XACT_ID && trace_recovery_messages <= DEBUG3))
 				{
 					StringInfoData buf;
 
@@ -5608,27 +5768,29 @@ StartupXLOG(void)
 				}
 
 				/*
-				 * Check if we were requested to exit without finishing
-				 * recovery.
-				 */
-				if (shutdown_requested)
-					proc_exit(1);
-
-				/*
-				 * Have we passed our safe starting point? If so, we can tell
-				 * postmaster that the database is consistent now.
+				 * Have we passed our safe starting point?
 				 */
 				if (!reachedMinRecoveryPoint &&
-					XLByteLT(minRecoveryPoint, EndRecPtr))
+					XLByteLE(minRecoveryPoint, EndRecPtr))
 				{
 					reachedMinRecoveryPoint = true;
-					if (InArchiveRecovery)
-					{
-						ereport(LOG,
-							  (errmsg("consistent recovery state reached")));
-						if (IsUnderPostmaster)
-							SendPostmasterSignal(PMSIGNAL_RECOVERY_CONSISTENT);
-					}
+					ereport(LOG,
+							(errmsg("consistent recovery state reached at %X/%X",
+									EndRecPtr.xlogid, EndRecPtr.xrecoff)));
+				}
+
+				/*
+				 * Have we got a valid starting snapshot that will allow
+				 * queries to be run? If so, we can tell postmaster that
+				 * the database is consistent now, enabling connections.
+				 */
+				if (standbyState == STANDBY_SNAPSHOT_READY &&
+					!backendsAllowed &&
+					reachedMinRecoveryPoint &&
+					IsUnderPostmaster)
+				{
+					backendsAllowed = true;
+					SendPostmasterSignal(PMSIGNAL_RECOVERY_CONSISTENT);
 				}
 
 				/*
@@ -5662,7 +5824,12 @@ StartupXLOG(void)
 				 */
 				SpinLockAcquire(&xlogctl->info_lck);
 				xlogctl->replayEndRecPtr = EndRecPtr;
+				xlogctl->recoveryLastXTime = recoveryLastXTime;
 				SpinLockRelease(&xlogctl->info_lck);
+
+				/* In Hot Standby mode, keep track of XIDs we've seen */
+				if (InHotStandby && TransactionIdIsValid(record->xl_xid))
+					RecordKnownAssignedTransactionIds(record->xl_xid);
 
 				RmgrTable[record->xl_rmid].rm_redo(EndRecPtr, record);
 
@@ -5810,7 +5977,7 @@ StartupXLOG(void)
 	}
 
 	/* Pre-scan prepared transactions to find out the range of XIDs present */
-	oldestActiveXID = PrescanPreparedTransactions();
+	oldestActiveXID = PrescanPreparedTransactions(NULL, NULL);
 
 	if (InRecovery)
 	{
@@ -5891,13 +6058,26 @@ StartupXLOG(void)
 	ShmemVariableCache->latestCompletedXid = ShmemVariableCache->nextXid;
 	TransactionIdRetreat(ShmemVariableCache->latestCompletedXid);
 
-	/* Start up the commit log and related stuff, too */
-	StartupCLOG();
-	StartupSUBTRANS(oldestActiveXID);
-	StartupMultiXact();
+	/*
+	 * Start up the commit log and related stuff, too. In hot standby mode
+	 * we did this already before WAL replay.
+	 */
+	if (standbyState == STANDBY_DISABLED)
+	{
+		StartupCLOG();
+		StartupSUBTRANS(oldestActiveXID);
+		StartupMultiXact();
+	}
 
 	/* Reload shared-memory state for prepared transactions */
 	RecoverPreparedTransactions();
+
+	/*
+	 * Shutdown the recovery environment. This must occur after
+	 * RecoverPreparedTransactions(), see notes for lock_twophase_recover()
+	 */
+	if (standbyState != STANDBY_DISABLED)
+		ShutdownRecoveryTransactionEnvironment();
 
 	/* Shut down readFile facility, free space */
 	if (readFile >= 0)
@@ -5964,8 +6144,9 @@ RecoveryInProgress(void)
 
 		/*
 		 * Initialize TimeLineID and RedoRecPtr when we discover that recovery
-		 * is finished.  (If you change this, see also
-		 * LocalSetXLogInsertAllowed.)
+		 * is finished. InitPostgres() relies upon this behaviour to ensure
+		 * that InitXLOGAccess() is called at backend startup.  (If you change
+		 * this, see also LocalSetXLogInsertAllowed.)
 		 */
 		if (!LocalRecoveryInProgress)
 			InitXLOGAccess();
@@ -6151,7 +6332,7 @@ InitXLOGAccess(void)
 {
 	/* ThisTimeLineID doesn't change so we need no lock to copy it */
 	ThisTimeLineID = XLogCtl->ThisTimeLineID;
-	Assert(ThisTimeLineID != 0);
+	Assert(ThisTimeLineID != 0 || IsBootstrapProcessingMode());
 
 	/* Use GetRedoRecPtr to copy the RedoRecPtr safely */
 	(void) GetRedoRecPtr();
@@ -6449,6 +6630,12 @@ CreateCheckPoint(int flags)
 	MemSet(&checkPoint, 0, sizeof(checkPoint));
 	checkPoint.time = (pg_time_t) time(NULL);
 
+	/* Set important parameter values for use when replaying WAL */
+	checkPoint.MaxConnections = MaxConnections;
+	checkPoint.max_prepared_xacts = max_prepared_xacts;
+	checkPoint.max_locks_per_xact = max_locks_per_xact;
+	checkPoint.XLogStandbyInfoMode = XLogStandbyInfoActive();
+
 	/*
 	 * We must hold WALInsertLock while examining insert state to determine
 	 * the checkpoint REDO pointer.
@@ -6624,6 +6811,21 @@ CreateCheckPoint(int flags)
 
 	CheckPointGuts(checkPoint.redo, flags);
 
+	/*
+	 * Take a snapshot of running transactions and write this to WAL.
+	 * This allows us to reconstruct the state of running transactions
+	 * during archive recovery, if required. Skip, if this info disabled.
+	 *
+	 * If we are shutting down, or Startup process is completing crash
+	 * recovery we don't need to write running xact data.
+	 *
+	 * Update checkPoint.nextXid since we have a later value
+	 */
+	if (!shutdown && XLogStandbyInfoActive())
+		 LogStandbySnapshot(&checkPoint.oldestActiveXid, &checkPoint.nextXid);
+	else
+		checkPoint.oldestActiveXid = InvalidTransactionId;
+
 	START_CRIT_SECTION();
 
 	/*
@@ -6791,7 +6993,7 @@ RecoveryRestartPoint(const CheckPoint *checkPoint)
 		if (RmgrTable[rmid].rm_safe_restartpoint != NULL)
 			if (!(RmgrTable[rmid].rm_safe_restartpoint()))
 			{
-				elog(DEBUG2, "RM %d not safe to record restart point at %X/%X",
+				elog(trace_recovery(DEBUG2), "RM %d not safe to record restart point at %X/%X",
 					 rmid,
 					 checkPoint->redo.xlogid,
 					 checkPoint->redo.xrecoff);
@@ -6923,14 +7125,9 @@ CreateRestartPoint(int flags)
 		LogCheckpointEnd(true);
 
 	ereport((log_checkpoints ? LOG : DEBUG2),
-			(errmsg("recovery restart point at %X/%X",
-				  lastCheckPoint.redo.xlogid, lastCheckPoint.redo.xrecoff)));
-
-	/* XXX this is currently BROKEN because we are in the wrong process */
-	if (recoveryLastXTime)
-		ereport((log_checkpoints ? LOG : DEBUG2),
-				(errmsg("last completed transaction was at log time %s",
-						timestamptz_to_str(recoveryLastXTime))));
+			(errmsg("recovery restart point at %X/%X with latest known log time %s",
+					lastCheckPoint.redo.xlogid, lastCheckPoint.redo.xrecoff,
+					timestamptz_to_str(GetLatestXLogTime()))));
 
 	LWLockRelease(CheckpointLock);
 	return true;
@@ -7036,6 +7233,19 @@ xlog_redo(XLogRecPtr lsn, XLogRecord *record)
 		ShmemVariableCache->oldestXid = checkPoint.oldestXid;
 		ShmemVariableCache->oldestXidDB = checkPoint.oldestXidDB;
 
+		/* Check to see if any changes to max_connections give problems */
+		if (standbyState != STANDBY_DISABLED)
+			CheckRequiredParameterValues(checkPoint);
+
+		if (standbyState >= STANDBY_INITIALIZED)
+		{
+			/*
+			 * Remove stale transactions, if any.
+			 */
+			ExpireOldKnownAssignedTransactionIds(checkPoint.nextXid);
+			StandbyReleaseOldLocks(checkPoint.nextXid);
+		}
+
 		/* ControlFile->checkPointCopy always tracks the latest ckpt XID */
 		ControlFile->checkPointCopy.nextXidEpoch = checkPoint.nextXidEpoch;
 		ControlFile->checkPointCopy.nextXid = checkPoint.nextXid;
@@ -7114,7 +7324,7 @@ xlog_desc(StringInfo buf, uint8 xl_info, char *rec)
 
 		appendStringInfo(buf, "checkpoint: redo %X/%X; "
 						 "tli %u; xid %u/%u; oid %u; multi %u; offset %u; "
-						 "oldest xid %u in DB %u; %s",
+						 "oldest xid %u in DB %u; oldest running xid %u; %s",
 						 checkpoint->redo.xlogid, checkpoint->redo.xrecoff,
 						 checkpoint->ThisTimeLineID,
 						 checkpoint->nextXidEpoch, checkpoint->nextXid,
@@ -7123,6 +7333,7 @@ xlog_desc(StringInfo buf, uint8 xl_info, char *rec)
 						 checkpoint->nextMultiOffset,
 						 checkpoint->oldestXid,
 						 checkpoint->oldestXidDB,
+						 checkpoint->oldestActiveXid,
 				 (info == XLOG_CHECKPOINT_SHUTDOWN) ? "shutdown" : "online");
 	}
 	else if (info == XLOG_NOOP)
@@ -7154,6 +7365,9 @@ xlog_outrec(StringInfo buf, XLogRecord *record)
 	appendStringInfo(buf, "prev %X/%X; xid %u",
 					 record->xl_prev.xlogid, record->xl_prev.xrecoff,
 					 record->xl_xid);
+
+	appendStringInfo(buf, "; len %u",
+					 record->xl_len);
 
 	for (i = 0; i < XLR_MAX_BKP_BLOCKS; i++)
 	{
@@ -7310,6 +7524,12 @@ pg_start_backup(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 errmsg("must be superuser to run a backup")));
+
+	if (RecoveryInProgress())
+		ereport(ERROR,
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("recovery is in progress"),
+				 errhint("WAL control functions cannot be executed during recovery.")));
 
 	if (!XLogArchivingActive())
 		ereport(ERROR,
@@ -7498,6 +7718,12 @@ pg_stop_backup(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 (errmsg("must be superuser to run a backup"))));
 
+	if (RecoveryInProgress())
+		ereport(ERROR,
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("recovery is in progress"),
+				 errhint("WAL control functions cannot be executed during recovery.")));
+
 	if (!XLogArchivingActive())
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
@@ -7659,6 +7885,12 @@ pg_switch_xlog(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 			 (errmsg("must be superuser to switch transaction log files"))));
 
+	if (RecoveryInProgress())
+		ereport(ERROR,
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("recovery is in progress"),
+				 errhint("WAL control functions cannot be executed during recovery.")));
+
 	switchpoint = RequestXLogSwitch();
 
 	/*
@@ -7680,6 +7912,12 @@ Datum
 pg_current_xlog_location(PG_FUNCTION_ARGS)
 {
 	char		location[MAXFNAMELEN];
+
+	if (RecoveryInProgress())
+		ereport(ERROR,
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("recovery is in progress"),
+				 errhint("WAL control functions cannot be executed during recovery.")));
 
 	/* Make sure we have an up-to-date local LogwrtResult */
 	{
@@ -7707,6 +7945,12 @@ pg_current_xlog_insert_location(PG_FUNCTION_ARGS)
 	XLogCtlInsert *Insert = &XLogCtl->Insert;
 	XLogRecPtr	current_recptr;
 	char		location[MAXFNAMELEN];
+
+	if (RecoveryInProgress())
+		ereport(ERROR,
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("recovery is in progress"),
+				 errhint("WAL control functions cannot be executed during recovery.")));
 
 	/*
 	 * Get the current end-of-WAL position ... shared lock is sufficient

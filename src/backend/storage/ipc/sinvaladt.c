@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/sinvaladt.c,v 1.79 2009/07/31 20:26:23 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/sinvaladt.c,v 1.80 2009/12/19 01:32:35 sriggs Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -145,6 +145,13 @@ typedef struct ProcState
 	bool		signaled;		/* backend has been sent catchup signal */
 
 	/*
+	 * Backend only sends invalidations, never receives them. This only makes sense
+	 * for Startup process during recovery because it doesn't maintain a relcache,
+	 * yet it fires inval messages to allow query backends to see schema changes.
+	 */
+	bool		sendOnly;		/* backend only sends, never receives */
+
+	/*
 	 * Next LocalTransactionId to use for each idle backend slot.  We keep
 	 * this here because it is indexed by BackendId and it is convenient to
 	 * copy the value to and from local memory when MyBackendId is set. It's
@@ -249,7 +256,7 @@ CreateSharedInvalidationState(void)
  *		Initialize a new backend to operate on the sinval buffer
  */
 void
-SharedInvalBackendInit(void)
+SharedInvalBackendInit(bool sendOnly)
 {
 	int			index;
 	ProcState  *stateP = NULL;
@@ -308,6 +315,7 @@ SharedInvalBackendInit(void)
 	stateP->nextMsgNum = segP->maxMsgNum;
 	stateP->resetState = false;
 	stateP->signaled = false;
+	stateP->sendOnly = sendOnly;
 
 	LWLockRelease(SInvalWriteLock);
 
@@ -579,7 +587,9 @@ SICleanupQueue(bool callerHasWriteLock, int minFree)
 	/*
 	 * Recompute minMsgNum = minimum of all backends' nextMsgNum, identify the
 	 * furthest-back backend that needs signaling (if any), and reset any
-	 * backends that are too far back.
+	 * backends that are too far back.  Note that because we ignore sendOnly
+	 * backends here it is possible for them to keep sending messages without
+	 * a problem even when they are the only active backend.
 	 */
 	min = segP->maxMsgNum;
 	minsig = min - SIG_THRESHOLD;
@@ -591,7 +601,7 @@ SICleanupQueue(bool callerHasWriteLock, int minFree)
 		int			n = stateP->nextMsgNum;
 
 		/* Ignore if inactive or already in reset state */
-		if (stateP->procPid == 0 || stateP->resetState)
+		if (stateP->procPid == 0 || stateP->resetState || stateP->sendOnly)
 			continue;
 
 		/*

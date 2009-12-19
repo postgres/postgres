@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.398 2009/12/09 21:57:51 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.399 2009/12/19 01:32:34 sriggs Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -141,6 +141,7 @@ typedef struct VRelStats
 	/* vtlinks array for tuple chain following - sorted by new_tid */
 	int			num_vtlinks;
 	VTupleLink	vtlinks;
+	TransactionId	latestRemovedXid;
 } VRelStats;
 
 /*----------------------------------------------------------------------
@@ -224,7 +225,7 @@ static void scan_heap(VRelStats *vacrelstats, Relation onerel,
 static bool repair_frag(VRelStats *vacrelstats, Relation onerel,
 			VacPageList vacuum_pages, VacPageList fraged_pages,
 			int nindexes, Relation *Irel);
-static void move_chain_tuple(Relation rel,
+static void move_chain_tuple(VRelStats *vacrelstats, Relation rel,
 				 Buffer old_buf, Page old_page, HeapTuple old_tup,
 				 Buffer dst_buf, Page dst_page, VacPage dst_vacpage,
 				 ExecContext ec, ItemPointer ctid, bool cleanVpd);
@@ -237,7 +238,7 @@ static void update_hint_bits(Relation rel, VacPageList fraged_pages,
 				 int num_moved);
 static void vacuum_heap(VRelStats *vacrelstats, Relation onerel,
 			VacPageList vacpagelist);
-static void vacuum_page(Relation onerel, Buffer buffer, VacPage vacpage);
+static void vacuum_page(VRelStats *vacrelstats, Relation onerel, Buffer buffer, VacPage vacpage);
 static void vacuum_index(VacPageList vacpagelist, Relation indrel,
 			 double num_tuples, int keep_tuples);
 static void scan_index(Relation indrel, double num_tuples);
@@ -1300,6 +1301,7 @@ full_vacuum_rel(Relation onerel, VacuumStmt *vacstmt)
 	vacrelstats->rel_tuples = 0;
 	vacrelstats->rel_indexed_tuples = 0;
 	vacrelstats->hasindex = false;
+	vacrelstats->latestRemovedXid = InvalidTransactionId;
 
 	/* scan the heap */
 	vacuum_pages.num_pages = fraged_pages.num_pages = 0;
@@ -1708,6 +1710,9 @@ scan_heap(VRelStats *vacrelstats, Relation onerel,
 			{
 				ItemId		lpp;
 
+				HeapTupleHeaderAdvanceLatestRemovedXid(tuple.t_data,
+											&vacrelstats->latestRemovedXid);
+
 				/*
 				 * Here we are building a temporary copy of the page with dead
 				 * tuples removed.	Below we will apply
@@ -2025,7 +2030,7 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 				/* there are dead tuples on this page - clean them */
 				Assert(!isempty);
 				LockBuffer(buf, BUFFER_LOCK_EXCLUSIVE);
-				vacuum_page(onerel, buf, last_vacuum_page);
+				vacuum_page(vacrelstats, onerel, buf, last_vacuum_page);
 				LockBuffer(buf, BUFFER_LOCK_UNLOCK);
 			}
 			else
@@ -2514,7 +2519,7 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 					tuple.t_data = (HeapTupleHeader) PageGetItem(Cpage, Citemid);
 					tuple_len = tuple.t_len = ItemIdGetLength(Citemid);
 
-					move_chain_tuple(onerel, Cbuf, Cpage, &tuple,
+					move_chain_tuple(vacrelstats, onerel, Cbuf, Cpage, &tuple,
 									 dst_buffer, dst_page, destvacpage,
 									 &ec, &Ctid, vtmove[ti].cleanVpd);
 
@@ -2600,7 +2605,7 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 				dst_page = BufferGetPage(dst_buffer);
 				/* if this page was not used before - clean it */
 				if (!PageIsEmpty(dst_page) && dst_vacpage->offsets_used == 0)
-					vacuum_page(onerel, dst_buffer, dst_vacpage);
+					vacuum_page(vacrelstats, onerel, dst_buffer, dst_vacpage);
 			}
 			else
 				LockBuffer(dst_buffer, BUFFER_LOCK_EXCLUSIVE);
@@ -2753,7 +2758,7 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 		HOLD_INTERRUPTS();
 		heldoff = true;
 		ForceSyncCommit();
-		(void) RecordTransactionCommit();
+		(void) RecordTransactionCommit(true);
 	}
 
 	/*
@@ -2781,7 +2786,7 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 			LockBuffer(buf, BUFFER_LOCK_EXCLUSIVE);
 			page = BufferGetPage(buf);
 			if (!PageIsEmpty(page))
-				vacuum_page(onerel, buf, *curpage);
+				vacuum_page(vacrelstats, onerel, buf, *curpage);
 			UnlockReleaseBuffer(buf);
 		}
 	}
@@ -2917,7 +2922,7 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 				recptr = log_heap_clean(onerel, buf,
 										NULL, 0, NULL, 0,
 										unused, uncnt,
-										false);
+										vacrelstats->latestRemovedXid, false);
 				PageSetLSN(page, recptr);
 				PageSetTLI(page, ThisTimeLineID);
 			}
@@ -2969,7 +2974,7 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
  *		already too long and almost unreadable.
  */
 static void
-move_chain_tuple(Relation rel,
+move_chain_tuple(VRelStats *vacrelstats, Relation rel,
 				 Buffer old_buf, Page old_page, HeapTuple old_tup,
 				 Buffer dst_buf, Page dst_page, VacPage dst_vacpage,
 				 ExecContext ec, ItemPointer ctid, bool cleanVpd)
@@ -3027,7 +3032,7 @@ move_chain_tuple(Relation rel,
 		int			sv_offsets_used = dst_vacpage->offsets_used;
 
 		dst_vacpage->offsets_used = 0;
-		vacuum_page(rel, dst_buf, dst_vacpage);
+		vacuum_page(vacrelstats, rel, dst_buf, dst_vacpage);
 		dst_vacpage->offsets_used = sv_offsets_used;
 	}
 
@@ -3367,7 +3372,7 @@ vacuum_heap(VRelStats *vacrelstats, Relation onerel, VacPageList vacuum_pages)
 			buf = ReadBufferExtended(onerel, MAIN_FORKNUM, (*vacpage)->blkno,
 									 RBM_NORMAL, vac_strategy);
 			LockBuffer(buf, BUFFER_LOCK_EXCLUSIVE);
-			vacuum_page(onerel, buf, *vacpage);
+			vacuum_page(vacrelstats, onerel, buf, *vacpage);
 			UnlockReleaseBuffer(buf);
 		}
 	}
@@ -3397,7 +3402,7 @@ vacuum_heap(VRelStats *vacrelstats, Relation onerel, VacPageList vacuum_pages)
  * Caller must hold pin and lock on buffer.
  */
 static void
-vacuum_page(Relation onerel, Buffer buffer, VacPage vacpage)
+vacuum_page(VRelStats *vacrelstats, Relation onerel, Buffer buffer, VacPage vacpage)
 {
 	Page		page = BufferGetPage(buffer);
 	int			i;
@@ -3426,7 +3431,7 @@ vacuum_page(Relation onerel, Buffer buffer, VacPage vacpage)
 		recptr = log_heap_clean(onerel, buffer,
 								NULL, 0, NULL, 0,
 								vacpage->offsets, vacpage->offsets_free,
-								false);
+								vacrelstats->latestRemovedXid, false);
 		PageSetLSN(page, recptr);
 		PageSetTLI(page, ThisTimeLineID);
 	}

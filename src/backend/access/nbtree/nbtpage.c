@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtpage.c,v 1.113 2009/05/05 19:02:22 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtpage.c,v 1.114 2009/12/19 01:32:33 sriggs Exp $
  *
  *	NOTES
  *	   Postgres btree pages look like ordinary relation pages.	The opaque
@@ -653,19 +653,33 @@ _bt_page_recyclable(Page page)
  *
  * This routine assumes that the caller has pinned and locked the buffer.
  * Also, the given itemnos *must* appear in increasing order in the array.
+ *
+ * We record VACUUMs and b-tree deletes differently in WAL. InHotStandby
+ * we need to be able to pin all of the blocks in the btree in physical
+ * order when replaying the effects of a VACUUM, just as we do for the
+ * original VACUUM itself. lastBlockVacuumed allows us to tell whether an
+ * intermediate range of blocks has had no changes at all by VACUUM,
+ * and so must be scanned anyway during replay. We always write a WAL record
+ * for the last block in the index, whether or not it contained any items
+ * to be removed. This allows us to scan right up to end of index to
+ * ensure correct locking.
  */
 void
 _bt_delitems(Relation rel, Buffer buf,
-			 OffsetNumber *itemnos, int nitems)
+			 OffsetNumber *itemnos, int nitems, bool isVacuum,
+			 BlockNumber lastBlockVacuumed)
 {
 	Page		page = BufferGetPage(buf);
 	BTPageOpaque opaque;
+
+	Assert(isVacuum || lastBlockVacuumed == 0);
 
 	/* No ereport(ERROR) until changes are logged */
 	START_CRIT_SECTION();
 
 	/* Fix the page */
-	PageIndexMultiDelete(page, itemnos, nitems);
+	if (nitems > 0)
+		PageIndexMultiDelete(page, itemnos, nitems);
 
 	/*
 	 * We can clear the vacuum cycle ID since this page has certainly been
@@ -688,15 +702,36 @@ _bt_delitems(Relation rel, Buffer buf,
 	/* XLOG stuff */
 	if (!rel->rd_istemp)
 	{
-		xl_btree_delete xlrec;
 		XLogRecPtr	recptr;
 		XLogRecData rdata[2];
 
-		xlrec.node = rel->rd_node;
-		xlrec.block = BufferGetBlockNumber(buf);
+		if (isVacuum)
+		{
+			xl_btree_vacuum xlrec_vacuum;
+			xlrec_vacuum.node = rel->rd_node;
+			xlrec_vacuum.block = BufferGetBlockNumber(buf);
 
-		rdata[0].data = (char *) &xlrec;
-		rdata[0].len = SizeOfBtreeDelete;
+			xlrec_vacuum.lastBlockVacuumed = lastBlockVacuumed;
+			rdata[0].data = (char *) &xlrec_vacuum;
+			rdata[0].len = SizeOfBtreeVacuum;
+		}
+		else
+		{
+			xl_btree_delete xlrec_delete;
+			xlrec_delete.node = rel->rd_node;
+			xlrec_delete.block = BufferGetBlockNumber(buf);
+
+			/*
+			 * XXX: We would like to set an accurate latestRemovedXid, but
+			 * there is no easy way of obtaining a useful value. So we punt
+			 * and store InvalidTransactionId, which forces the standby to
+			 * wait for/cancel all currently running transactions.
+			 */
+			xlrec_delete.latestRemovedXid = InvalidTransactionId;
+			rdata[0].data = (char *) &xlrec_delete;
+			rdata[0].len = SizeOfBtreeDelete;
+		}
+
 		rdata[0].buffer = InvalidBuffer;
 		rdata[0].next = &(rdata[1]);
 
@@ -719,7 +754,10 @@ _bt_delitems(Relation rel, Buffer buf,
 		rdata[1].buffer_std = true;
 		rdata[1].next = NULL;
 
-		recptr = XLogInsert(RM_BTREE_ID, XLOG_BTREE_DELETE, rdata);
+		if (isVacuum)
+			recptr = XLogInsert(RM_BTREE_ID, XLOG_BTREE_VACUUM, rdata);
+		else
+			recptr = XLogInsert(RM_BTREE_ID, XLOG_BTREE_DELETE, rdata);
 
 		PageSetLSN(page, recptr);
 		PageSetTLI(page, ThisTimeLineID);

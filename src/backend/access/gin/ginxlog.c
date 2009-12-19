@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			 $PostgreSQL: pgsql/src/backend/access/gin/ginxlog.c,v 1.19 2009/06/11 14:48:53 momjian Exp $
+ *			 $PostgreSQL: pgsql/src/backend/access/gin/ginxlog.c,v 1.20 2009/12/19 01:32:31 sriggs Exp $
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
@@ -620,6 +620,10 @@ void
 gin_redo(XLogRecPtr lsn, XLogRecord *record)
 {
 	uint8		info = record->xl_info & ~XLR_INFO_MASK;
+
+	/*
+	 * GIN indexes do not require any conflict processing.
+	 */
 
 	RestoreBkpBlocks(lsn, record, false);
 

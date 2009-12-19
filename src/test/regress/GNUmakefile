@@ -6,7 +6,7 @@
 # Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/test/regress/GNUmakefile,v 1.80 2009/12/18 21:28:42 momjian Exp $
+# $PostgreSQL: pgsql/src/test/regress/GNUmakefile,v 1.81 2009/12/19 01:32:45 sriggs Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -149,6 +149,8 @@ installcheck: all
 installcheck-parallel: all
 	$(pg_regress_call) --psqldir=$(PSQLDIR) --schedule=$(srcdir)/parallel_schedule $(MAXCONNOPT)
 
+standbycheck: all
+	$(pg_regress_call) --psqldir=$(PSQLDIR) --schedule=$(srcdir)/standby_schedule --use-existing
 
 # old interfaces follow...
 

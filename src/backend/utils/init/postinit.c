@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/init/postinit.c,v 1.198 2009/10/07 22:14:23 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/init/postinit.c,v 1.199 2009/12/19 01:32:37 sriggs Exp $
  *
  *
  *-------------------------------------------------------------------------
@@ -481,7 +481,7 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 	 */
 	MyBackendId = InvalidBackendId;
 
-	SharedInvalBackendInit();
+	SharedInvalBackendInit(false);
 
 	if (MyBackendId > MaxBackends || MyBackendId <= 0)
 		elog(FATAL, "bad backend id: %d", MyBackendId);
@@ -495,11 +495,11 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 	InitBufferPoolBackend();
 
 	/*
-	 * Initialize local process's access to XLOG.  In bootstrap case we may
-	 * skip this since StartupXLOG() was run instead.
+	 * Initialize local process's access to XLOG, if appropriate.  In bootstrap
+	 * case we skip this since StartupXLOG() was run instead.
 	 */
 	if (!bootstrap)
-		InitXLOGAccess();
+		(void) RecoveryInProgress();
 
 	/*
 	 * Initialize the relation cache and the system catalog caches.  Note that

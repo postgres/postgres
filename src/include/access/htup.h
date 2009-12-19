@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/htup.h,v 1.107 2009/06/11 14:49:08 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/access/htup.h,v 1.108 2009/12/19 01:32:42 sriggs Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -580,6 +580,7 @@ typedef HeapTupleData *HeapTuple;
 #define XLOG_HEAP2_FREEZE		0x00
 #define XLOG_HEAP2_CLEAN		0x10
 #define XLOG_HEAP2_CLEAN_MOVE	0x20
+#define XLOG_HEAP2_CLEANUP_INFO 0x30
 
 /*
  * All what we need to find changed tuple
@@ -668,12 +669,26 @@ typedef struct xl_heap_clean
 {
 	RelFileNode node;
 	BlockNumber block;
+	TransactionId	latestRemovedXid;
 	uint16		nredirected;
 	uint16		ndead;
 	/* OFFSET NUMBERS FOLLOW */
 } xl_heap_clean;
 
 #define SizeOfHeapClean (offsetof(xl_heap_clean, ndead) + sizeof(uint16))
+
+/*
+ * Cleanup_info is required in some cases during a lazy VACUUM.
+ * Used for reporting the results of HeapTupleHeaderAdvanceLatestRemovedXid()
+ * see vacuumlazy.c for full explanation
+ */
+typedef struct xl_heap_cleanup_info
+{
+	RelFileNode 	node;
+	TransactionId	latestRemovedXid;
+} xl_heap_cleanup_info;
+
+#define SizeOfHeapCleanupInfo (sizeof(xl_heap_cleanup_info))
 
 /* This is for replacing a page's contents in toto */
 /* NB: this is used for indexes as well as heaps */
@@ -717,6 +732,9 @@ typedef struct xl_heap_freeze
 } xl_heap_freeze;
 
 #define SizeOfHeapFreeze (offsetof(xl_heap_freeze, cutoff_xid) + sizeof(TransactionId))
+
+extern void HeapTupleHeaderAdvanceLatestRemovedXid(HeapTupleHeader tuple,
+										TransactionId *latestRemovedXid);
 
 /* HeapTupleHeader functions implemented in utils/time/combocid.c */
 extern CommandId HeapTupleHeaderGetCmin(HeapTupleHeader tup);

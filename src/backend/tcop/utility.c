@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.324 2009/12/15 20:04:49 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.325 2009/12/19 01:32:36 sriggs Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -351,6 +351,7 @@ standard_ProcessUtility(Node *parsetree,
 						break;
 
 					case TRANS_STMT_PREPARE:
+						PreventCommandDuringRecovery();
 						if (!PrepareTransactionBlock(stmt->gid))
 						{
 							/* report unsuccessful commit in completionTag */
@@ -360,11 +361,13 @@ standard_ProcessUtility(Node *parsetree,
 						break;
 
 					case TRANS_STMT_COMMIT_PREPARED:
+						PreventCommandDuringRecovery();
 						PreventTransactionChain(isTopLevel, "COMMIT PREPARED");
 						FinishPreparedTransaction(stmt->gid, true);
 						break;
 
 					case TRANS_STMT_ROLLBACK_PREPARED:
+						PreventCommandDuringRecovery();
 						PreventTransactionChain(isTopLevel, "ROLLBACK PREPARED");
 						FinishPreparedTransaction(stmt->gid, false);
 						break;
@@ -742,6 +745,7 @@ standard_ProcessUtility(Node *parsetree,
 			break;
 
 		case T_GrantStmt:
+			PreventCommandDuringRecovery();
 			ExecuteGrantStmt((GrantStmt *) parsetree);
 			break;
 
@@ -923,6 +927,7 @@ standard_ProcessUtility(Node *parsetree,
 		case T_NotifyStmt:
 			{
 				NotifyStmt *stmt = (NotifyStmt *) parsetree;
+				PreventCommandDuringRecovery();
 
 				Async_Notify(stmt->conditionname);
 			}
@@ -931,6 +936,7 @@ standard_ProcessUtility(Node *parsetree,
 		case T_ListenStmt:
 			{
 				ListenStmt *stmt = (ListenStmt *) parsetree;
+				PreventCommandDuringRecovery();
 
 				CheckRestrictedOperation("LISTEN");
 				Async_Listen(stmt->conditionname);
@@ -940,6 +946,7 @@ standard_ProcessUtility(Node *parsetree,
 		case T_UnlistenStmt:
 			{
 				UnlistenStmt *stmt = (UnlistenStmt *) parsetree;
+				PreventCommandDuringRecovery();
 
 				CheckRestrictedOperation("UNLISTEN");
 				if (stmt->conditionname)
@@ -960,10 +967,12 @@ standard_ProcessUtility(Node *parsetree,
 			break;
 
 		case T_ClusterStmt:
+			PreventCommandDuringRecovery();
 			cluster((ClusterStmt *) parsetree, isTopLevel);
 			break;
 
 		case T_VacuumStmt:
+			PreventCommandDuringRecovery();
 			vacuum((VacuumStmt *) parsetree, InvalidOid, true, NULL, false,
 				   isTopLevel);
 			break;
@@ -1083,12 +1092,21 @@ standard_ProcessUtility(Node *parsetree,
 				ereport(ERROR,
 						(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 						 errmsg("must be superuser to do CHECKPOINT")));
-			RequestCheckpoint(CHECKPOINT_IMMEDIATE | CHECKPOINT_FORCE | CHECKPOINT_WAIT);
+			/*
+			 * You might think we should have a PreventCommandDuringRecovery()
+			 * here, but we interpret a CHECKPOINT command during recovery
+			 * as a request for a restartpoint instead. We allow this since
+			 * it can be a useful way of reducing switchover time when
+			 * using various forms of replication.
+			 */
+			RequestCheckpoint(CHECKPOINT_IMMEDIATE | CHECKPOINT_WAIT |
+								(RecoveryInProgress() ? 0 : CHECKPOINT_FORCE));
 			break;
 
 		case T_ReindexStmt:
 			{
 				ReindexStmt *stmt = (ReindexStmt *) parsetree;
+				PreventCommandDuringRecovery();
 
 				switch (stmt->kind)
 				{
@@ -2603,4 +2621,13 @@ GetCommandLogLevel(Node *parsetree)
 	}
 
 	return lev;
+}
+
+void
+PreventCommandDuringRecovery(void)
+{
+	if (RecoveryInProgress())
+		ereport(ERROR,
+			(errcode(ERRCODE_READ_ONLY_SQL_TRANSACTION),
+			 errmsg("cannot be executed during recovery")));
 }

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.493 2009/12/15 17:57:46 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.494 2009/12/19 01:32:31 sriggs Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -13131,6 +13131,38 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
     For details about proper usage of these functions, see
     <xref linkend="continuous-archiving">.
    </para>
+
+   <indexterm>
+    <primary>pg_is_in_recovery</primary>
+   </indexterm>
+
+   <para>
+    The functions shown in <xref
+    linkend="functions-recovery-info-table"> provide information
+	about the current status of Hot Standby.
+    These functions may be executed during both recovery and in normal running.
+   </para>
+
+   <table id="functions-recovery-info-table">
+    <title>Recovery Information Functions</title>
+    <tgroup cols="3">
+     <thead>
+      <row><entry>Name</entry> <entry>Return Type</entry> <entry>Description</entry>
+      </row>
+     </thead>
+
+     <tbody>
+      <row>
+       <entry>
+        <literal><function>pg_is_in_recovery</function>()</literal>
+        </entry>
+       <entry><type>bool</type></entry>
+       <entry>True if recovery is still in progress.
+	   </entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
 
    <para>
     The functions shown in <xref linkend="functions-admin-dbsize"> calculate

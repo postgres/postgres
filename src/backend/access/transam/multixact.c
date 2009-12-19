@@ -42,7 +42,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/multixact.c,v 1.32 2009/11/23 09:58:36 heikki Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/multixact.c,v 1.33 2009/12/19 01:32:33 sriggs Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -59,6 +59,7 @@
 #include "storage/backendid.h"
 #include "storage/lmgr.h"
 #include "storage/procarray.h"
+#include "utils/builtins.h"
 #include "utils/memutils.h"
 
 
@@ -220,7 +221,6 @@ static MultiXactId GetNewMultiXactId(int nxids, MultiXactOffset *offset);
 static MultiXactId mXactCacheGetBySet(int nxids, TransactionId *xids);
 static int	mXactCacheGetById(MultiXactId multi, TransactionId **xids);
 static void mXactCachePut(MultiXactId multi, int nxids, TransactionId *xids);
-static int	xidComparator(const void *arg1, const void *arg2);
 
 #ifdef MULTIXACT_DEBUG
 static char *mxid_to_string(MultiXactId multi, int nxids, TransactionId *xids);
@@ -1221,27 +1221,6 @@ mXactCachePut(MultiXactId multi, int nxids, TransactionId *xids)
 	MXactCache = entry;
 }
 
-/*
- * xidComparator
- *		qsort comparison function for XIDs
- *
- * We don't need to use wraparound comparison for XIDs, and indeed must
- * not do so since that does not respect the triangle inequality!  Any
- * old sort order will do.
- */
-static int
-xidComparator(const void *arg1, const void *arg2)
-{
-	TransactionId xid1 = *(const TransactionId *) arg1;
-	TransactionId xid2 = *(const TransactionId *) arg2;
-
-	if (xid1 > xid2)
-		return 1;
-	if (xid1 < xid2)
-		return -1;
-	return 0;
-}
-
 #ifdef MULTIXACT_DEBUG
 static char *
 mxid_to_string(MultiXactId multi, int nxids, TransactionId *xids)
@@ -2051,11 +2030,18 @@ multixact_redo(XLogRecPtr lsn, XLogRecord *record)
 			if (TransactionIdPrecedes(max_xid, xids[i]))
 				max_xid = xids[i];
 		}
+
+		/* We don't expect anyone else to modify nextXid, hence startup process
+		 * doesn't need to hold a lock while checking this. We still acquire
+		 * the lock to modify it, though.
+		 */
 		if (TransactionIdFollowsOrEquals(max_xid,
 										 ShmemVariableCache->nextXid))
 		{
+			LWLockAcquire(XidGenLock, LW_EXCLUSIVE);
 			ShmemVariableCache->nextXid = max_xid;
 			TransactionIdAdvance(ShmemVariableCache->nextXid);
+			LWLockRelease(XidGenLock);
 		}
 	}
 	else

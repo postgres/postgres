@@ -3,7 +3,7 @@
  *
  * Resource managers definition
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/rmgr.c,v 1.27 2008/11/19 10:34:50 heikki Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/rmgr.c,v 1.28 2009/12/19 01:32:33 sriggs Exp $
  */
 #include "postgres.h"
 
@@ -21,6 +21,7 @@
 #include "commands/sequence.h"
 #include "commands/tablespace.h"
 #include "storage/freespace.h"
+#include "storage/standby.h"
 
 
 const RmgrData RmgrTable[RM_MAX_ID + 1] = {
@@ -32,7 +33,7 @@ const RmgrData RmgrTable[RM_MAX_ID + 1] = {
 	{"Tablespace", tblspc_redo, tblspc_desc, NULL, NULL, NULL},
 	{"MultiXact", multixact_redo, multixact_desc, NULL, NULL, NULL},
 	{"Reserved 7", NULL, NULL, NULL, NULL, NULL},
-	{"Reserved 8", NULL, NULL, NULL, NULL, NULL},
+	{"Standby", standby_redo, standby_desc, NULL, NULL, NULL},
 	{"Heap2", heap2_redo, heap2_desc, NULL, NULL, NULL},
 	{"Heap", heap_redo, heap_desc, NULL, NULL, NULL},
 	{"Btree", btree_redo, btree_desc, btree_xlog_startup, btree_xlog_cleanup, btree_safe_restartpoint},

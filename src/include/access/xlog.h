@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/xlog.h,v 1.93 2009/06/26 20:29:04 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/xlog.h,v 1.94 2009/12/19 01:32:42 sriggs Exp $
  */
 #ifndef XLOG_H
 #define XLOG_H
@@ -133,7 +133,45 @@ typedef struct XLogRecData
 } XLogRecData;
 
 extern TimeLineID ThisTimeLineID;		/* current TLI */
+
+/*
+ * Prior to 8.4, all activity during recovery was carried out by Startup
+ * process. This local variable continues to be used in many parts of the
+ * code to indicate actions taken by RecoveryManagers. Other processes who
+ * potentially perform work during recovery should check RecoveryInProgress()
+ * see XLogCtl notes in xlog.c
+ */
 extern bool InRecovery;
+
+/*
+ * Like InRecovery, standbyState is only valid in the startup process.
+ *
+ * In DISABLED state, we're performing crash recovery or hot standby was
+ * disabled in recovery.conf.
+ *
+ * In INITIALIZED state, we haven't yet received a RUNNING_XACTS or shutdown
+ * checkpoint record to initialize our master transaction tracking system.
+ *
+ * When the transaction tracking is initialized, we enter the SNAPSHOT_PENDING
+ * state. The tracked information might still be incomplete, so we can't allow
+ * connections yet, but redo functions must update the in-memory state when
+ * appropriate.
+ *
+ * In SNAPSHOT_READY mode, we have full knowledge of transactions that are
+ * (or were) running in the master at the current WAL location. Snapshots
+ * can be taken, and read-only queries can be run.
+ */
+typedef enum
+{
+	STANDBY_DISABLED,
+	STANDBY_INITIALIZED,
+	STANDBY_SNAPSHOT_PENDING,
+	STANDBY_SNAPSHOT_READY
+} HotStandbyState;
+extern HotStandbyState standbyState;
+
+#define InHotStandby (standbyState >= STANDBY_SNAPSHOT_PENDING)
+
 extern XLogRecPtr XactLastRecEnd;
 
 /* these variables are GUC parameters related to XLOG */
@@ -143,9 +181,12 @@ extern bool XLogArchiveMode;
 extern char *XLogArchiveCommand;
 extern int	XLogArchiveTimeout;
 extern bool log_checkpoints;
+extern bool XLogRequestRecoveryConnections;
+extern int MaxStandbyDelay;
 
 #define XLogArchivingActive()	(XLogArchiveMode)
 #define XLogArchiveCommandSet() (XLogArchiveCommand[0] != '\0')
+#define XLogStandbyInfoActive()	(XLogRequestRecoveryConnections && XLogArchiveMode)
 
 #ifdef WAL_DEBUG
 extern bool XLOG_DEBUG;
@@ -203,6 +244,7 @@ extern void xlog_desc(StringInfo buf, uint8 xl_info, char *rec);
 
 extern bool RecoveryInProgress(void);
 extern bool XLogInsertAllowed(void);
+extern TimestampTz GetLatestXLogTime(void);
 
 extern void UpdateControlFile(void);
 extern Size XLOGShmemSize(void);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/index/genam.c,v 1.77 2009/12/07 05:22:21 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/index/genam.c,v 1.78 2009/12/19 01:32:32 sriggs Exp $
  *
  * NOTES
  *	  many of the old access method routines have been turned into
@@ -91,8 +91,19 @@ RelationGetIndexScan(Relation indexRelation,
 	else
 		scan->keyData = NULL;
 
+	/*
+	 * During recovery we ignore killed tuples and don't bother to kill them
+	 * either. We do this because the xmin on the primary node could easily
+	 * be later than the xmin on the standby node, so that what the primary
+	 * thinks is killed is supposed to be visible on standby. So for correct
+	 * MVCC for queries during recovery we must ignore these hints and check
+	 * all tuples. Do *not* set ignore_killed_tuples to true when running
+	 * in a transaction that was started during recovery.
+	 * xactStartedInRecovery should not be altered by index AMs.
+	 */
 	scan->kill_prior_tuple = false;
-	scan->ignore_killed_tuples = true;	/* default setting */
+	scan->xactStartedInRecovery = TransactionStartedDuringRecovery();
+	scan->ignore_killed_tuples = !scan->xactStartedInRecovery;
 
 	scan->opaque = NULL;
 

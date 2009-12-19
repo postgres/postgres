@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/nbtree.h,v 1.125 2009/07/29 20:56:19 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/nbtree.h,v 1.126 2009/12/19 01:32:42 sriggs Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -214,12 +214,13 @@ typedef struct BTMetaPageData
 #define XLOG_BTREE_SPLIT_R		0x40	/* as above, new item on right */
 #define XLOG_BTREE_SPLIT_L_ROOT 0x50	/* add tuple with split of root */
 #define XLOG_BTREE_SPLIT_R_ROOT 0x60	/* as above, new item on right */
-#define XLOG_BTREE_DELETE		0x70	/* delete leaf index tuple */
+#define XLOG_BTREE_DELETE		0x70	/* delete leaf index tuples for a page */
 #define XLOG_BTREE_DELETE_PAGE	0x80	/* delete an entire page */
 #define XLOG_BTREE_DELETE_PAGE_META 0x90		/* same, and update metapage */
 #define XLOG_BTREE_NEWROOT		0xA0	/* new root page */
 #define XLOG_BTREE_DELETE_PAGE_HALF 0xB0		/* page deletion that makes
 												 * parent half-dead */
+#define XLOG_BTREE_VACUUM		0xC0	/* delete entries on a page during vacuum */
 
 /*
  * All that we need to find changed index tuple
@@ -306,16 +307,53 @@ typedef struct xl_btree_split
 /*
  * This is what we need to know about delete of individual leaf index tuples.
  * The WAL record can represent deletion of any number of index tuples on a
- * single index page.
+ * single index page when *not* executed by VACUUM.
  */
 typedef struct xl_btree_delete
 {
 	RelFileNode node;
 	BlockNumber block;
+	TransactionId	latestRemovedXid;
+	int			numItems;		 /* number of items in the offset array */
+
 	/* TARGET OFFSET NUMBERS FOLLOW AT THE END */
 } xl_btree_delete;
 
-#define SizeOfBtreeDelete	(offsetof(xl_btree_delete, block) + sizeof(BlockNumber))
+#define SizeOfBtreeDelete	(offsetof(xl_btree_delete, latestRemovedXid) + sizeof(TransactionId))
+
+/*
+ * This is what we need to know about vacuum of individual leaf index tuples.
+ * The WAL record can represent deletion of any number of index tuples on a
+ * single index page when executed by VACUUM.
+ *
+ * The correctness requirement for applying these changes during recovery is
+ * that we must do one of these two things for every block in the index:
+ * 		* lock the block for cleanup and apply any required changes
+ *		* EnsureBlockUnpinned()
+ * The purpose of this is to ensure that no index scans started before we
+ * finish scanning the index are still running by the time we begin to remove
+ * heap tuples.
+ *
+ * Any changes to any one block are registered on just one WAL record. All
+ * blocks that we need to run EnsureBlockUnpinned() before we touch the changed
+ * block are also given on this record as a variable length array. The array
+ * is compressed by way of storing an array of block ranges, rather than an
+ * actual array of blockids.
+ *
+ * Note that the *last* WAL record in any vacuum of an index is allowed to
+ * have numItems == 0. All other WAL records must have numItems > 0.
+ */
+typedef struct xl_btree_vacuum
+{
+	RelFileNode node;
+	BlockNumber block;
+	BlockNumber lastBlockVacuumed;
+	int			numItems;		 /* number of items in the offset array */
+
+	/* TARGET OFFSET NUMBERS FOLLOW */
+} xl_btree_vacuum;
+
+#define SizeOfBtreeVacuum	(offsetof(xl_btree_vacuum, lastBlockVacuumed) + sizeof(BlockNumber))
 
 /*
  * This is what we need to know about deletion of a btree page.  The target
@@ -537,7 +575,8 @@ extern void _bt_relbuf(Relation rel, Buffer buf);
 extern void _bt_pageinit(Page page, Size size);
 extern bool _bt_page_recyclable(Page page);
 extern void _bt_delitems(Relation rel, Buffer buf,
-			 OffsetNumber *itemnos, int nitems);
+			 OffsetNumber *itemnos, int nitems, bool isVacuum,
+			 BlockNumber lastBlockVacuumed);
 extern int _bt_pagedel(Relation rel, Buffer buf,
 			BTStack stack, bool vacuum_full);
 

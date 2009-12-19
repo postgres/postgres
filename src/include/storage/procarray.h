@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/procarray.h,v 1.26 2009/06/11 14:49:12 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/storage/procarray.h,v 1.27 2009/12/19 01:32:44 sriggs Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,6 +15,7 @@
 #define PROCARRAY_H
 
 #include "storage/lock.h"
+#include "storage/standby.h"
 #include "utils/snapshot.h"
 
 
@@ -25,6 +26,19 @@ extern void ProcArrayRemove(PGPROC *proc, TransactionId latestXid);
 
 extern void ProcArrayEndTransaction(PGPROC *proc, TransactionId latestXid);
 extern void ProcArrayClearTransaction(PGPROC *proc);
+
+extern void ProcArrayInitRecoveryInfo(TransactionId oldestActiveXid);
+extern void ProcArrayApplyRecoveryInfo(RunningTransactions running);
+extern void ProcArrayApplyXidAssignment(TransactionId topxid,
+							int nsubxids, TransactionId *subxids);
+
+extern void RecordKnownAssignedTransactionIds(TransactionId xid);
+extern void ExpireTreeKnownAssignedTransactionIds(TransactionId xid,
+									  int nsubxids, TransactionId *subxids);
+extern void ExpireAllKnownAssignedTransactionIds(void);
+extern void ExpireOldKnownAssignedTransactionIds(TransactionId xid);
+
+extern RunningTransactions GetRunningTransactionData(void);
 
 extern Snapshot GetSnapshotData(Snapshot snapshot);
 
@@ -42,6 +56,11 @@ extern bool IsBackendPid(int pid);
 extern VirtualTransactionId *GetCurrentVirtualXIDs(TransactionId limitXmin,
 					  bool excludeXmin0, bool allDbs, int excludeVacuum,
 					  int *nvxids);
+extern VirtualTransactionId *GetConflictingVirtualXIDs(TransactionId limitXmin,
+					Oid dbOid, bool skipExistingConflicts);
+extern pid_t CancelVirtualTransaction(VirtualTransactionId vxid,
+						 int cancel_mode);
+
 extern int	CountActiveBackends(void);
 extern int	CountDBBackends(Oid databaseid);
 extern int	CountUserBackends(Oid roleid);

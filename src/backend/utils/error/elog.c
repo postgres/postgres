@@ -42,7 +42,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.219 2009/11/28 23:38:07 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.220 2009/12/19 01:32:37 sriggs Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2793,4 +2793,22 @@ is_log_level_output(int elevel, int log_min_level)
 		return true;
 
 	return false;
+}
+
+/*
+ * If trace_recovery_messages is set to make this visible, then show as LOG,
+ * else display as whatever level is set. It may still be shown, but only
+ * if log_min_messages is set lower than trace_recovery_messages.
+ *
+ * Intention is to keep this for at least the whole of the 8.5 production
+ * release, so we can more easily diagnose production problems in the field.
+ */
+int
+trace_recovery(int trace_level)
+{
+	if (trace_level < LOG &&
+		trace_level >= trace_recovery_messages)
+			return LOG;
+
+	return trace_level;
 }

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.278 2009/08/24 02:18:31 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.279 2009/12/19 01:32:32 sriggs Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -59,6 +59,7 @@
 #include "storage/lmgr.h"
 #include "storage/procarray.h"
 #include "storage/smgr.h"
+#include "storage/standby.h"
 #include "utils/datum.h"
 #include "utils/inval.h"
 #include "utils/lsyscache.h"
@@ -248,8 +249,11 @@ heapgetpage(HeapScanDesc scan, BlockNumber page)
 	/*
 	 * If the all-visible flag indicates that all tuples on the page are
 	 * visible to everyone, we can skip the per-tuple visibility tests.
+	 * But not in hot standby mode. A tuple that's already visible to all
+	 * transactions in the master might still be invisible to a read-only
+	 * transaction in the standby.
 	 */
-	all_visible = PageIsAllVisible(dp);
+	all_visible = PageIsAllVisible(dp) && !snapshot->takenDuringRecovery;
 
 	for (lineoff = FirstOffsetNumber, lpp = PageGetItemId(dp, lineoff);
 		 lineoff <= lines;
@@ -3770,19 +3774,77 @@ heap_restrpos(HeapScanDesc scan)
 }
 
 /*
+ * If 'tuple' contains any XID greater than latestRemovedXid, update
+ * latestRemovedXid to the greatest one found.
+ */
+void
+HeapTupleHeaderAdvanceLatestRemovedXid(HeapTupleHeader tuple,
+									   TransactionId *latestRemovedXid)
+{
+	TransactionId xmin = HeapTupleHeaderGetXmin(tuple);
+	TransactionId xmax = HeapTupleHeaderGetXmax(tuple);
+	TransactionId xvac = HeapTupleHeaderGetXvac(tuple);
+
+	if (tuple->t_infomask & HEAP_MOVED_OFF ||
+		tuple->t_infomask & HEAP_MOVED_IN)
+	{
+		if (TransactionIdPrecedes(*latestRemovedXid, xvac))
+			*latestRemovedXid = xvac;
+	}
+
+	if (TransactionIdPrecedes(*latestRemovedXid, xmax))
+		*latestRemovedXid = xmax;
+
+	if (TransactionIdPrecedes(*latestRemovedXid, xmin))
+		*latestRemovedXid = xmin;
+
+	Assert(TransactionIdIsValid(*latestRemovedXid));
+}
+
+/*
+ * Perform XLogInsert to register a heap cleanup info message. These
+ * messages are sent once per VACUUM and are required because
+ * of the phasing of removal operations during a lazy VACUUM.
+ * see comments for vacuum_log_cleanup_info().
+ */
+XLogRecPtr
+log_heap_cleanup_info(RelFileNode rnode, TransactionId latestRemovedXid)
+{
+	xl_heap_cleanup_info xlrec;
+	XLogRecPtr	recptr;
+	XLogRecData rdata;
+
+	xlrec.node = rnode;
+	xlrec.latestRemovedXid = latestRemovedXid;
+
+	rdata.data = (char *) &xlrec;
+	rdata.len = SizeOfHeapCleanupInfo;
+	rdata.buffer = InvalidBuffer;
+	rdata.next = NULL;
+
+	recptr = XLogInsert(RM_HEAP2_ID, XLOG_HEAP2_CLEANUP_INFO, &rdata);
+
+	return recptr;
+}
+
+/*
  * Perform XLogInsert for a heap-clean operation.  Caller must already
  * have modified the buffer and marked it dirty.
  *
  * Note: prior to Postgres 8.3, the entries in the nowunused[] array were
  * zero-based tuple indexes.  Now they are one-based like other uses
  * of OffsetNumber.
+ *
+ * We also include latestRemovedXid, which is the greatest XID present in
+ * the removed tuples. That allows recovery processing to cancel or wait
+ * for long standby queries that can still see these tuples.
  */
 XLogRecPtr
 log_heap_clean(Relation reln, Buffer buffer,
 			   OffsetNumber *redirected, int nredirected,
 			   OffsetNumber *nowdead, int ndead,
 			   OffsetNumber *nowunused, int nunused,
-			   bool redirect_move)
+			   TransactionId latestRemovedXid, bool redirect_move)
 {
 	xl_heap_clean xlrec;
 	uint8		info;
@@ -3794,6 +3856,7 @@ log_heap_clean(Relation reln, Buffer buffer,
 
 	xlrec.node = reln->rd_node;
 	xlrec.block = BufferGetBlockNumber(buffer);
+	xlrec.latestRemovedXid = latestRemovedXid;
 	xlrec.nredirected = nredirected;
 	xlrec.ndead = ndead;
 
@@ -4068,6 +4131,33 @@ log_newpage(RelFileNode *rnode, ForkNumber forkNum, BlockNumber blkno,
 }
 
 /*
+ * Handles CLEANUP_INFO
+ */
+static void
+heap_xlog_cleanup_info(XLogRecPtr lsn, XLogRecord *record)
+{
+	xl_heap_cleanup_info *xlrec = (xl_heap_cleanup_info *) XLogRecGetData(record);
+
+	if (InHotStandby)
+	{
+		VirtualTransactionId *backends;
+
+		backends = GetConflictingVirtualXIDs(xlrec->latestRemovedXid,
+											 InvalidOid,
+											 true);
+		ResolveRecoveryConflictWithVirtualXIDs(backends,
+											   "VACUUM index cleanup",
+											   CONFLICT_MODE_ERROR);
+	}
+
+	/*
+	 * Actual operation is a no-op. Record type exists to provide a means
+	 * for conflict processing to occur before we begin index vacuum actions.
+	 * see vacuumlazy.c and also comments in btvacuumpage()
+	 */
+}
+
+/*
  * Handles CLEAN and CLEAN_MOVE record types
  */
 static void
@@ -4085,12 +4175,31 @@ heap_xlog_clean(XLogRecPtr lsn, XLogRecord *record, bool clean_move)
 	int			nunused;
 	Size		freespace;
 
+	/*
+	 * We're about to remove tuples. In Hot Standby mode, ensure that there's
+	 * no queries running for which the removed tuples are still visible.
+	 */
+	if (InHotStandby)
+	{
+		VirtualTransactionId *backends;
+
+		backends = GetConflictingVirtualXIDs(xlrec->latestRemovedXid,
+											 InvalidOid,
+											 true);
+		ResolveRecoveryConflictWithVirtualXIDs(backends,
+											   "VACUUM heap cleanup",
+											   CONFLICT_MODE_ERROR);
+	}
+
+	RestoreBkpBlocks(lsn, record, true);
+
 	if (record->xl_info & XLR_BKP_BLOCK_1)
 		return;
 
-	buffer = XLogReadBuffer(xlrec->node, xlrec->block, false);
+	buffer = XLogReadBufferExtended(xlrec->node, MAIN_FORKNUM, xlrec->block, RBM_NORMAL);
 	if (!BufferIsValid(buffer))
 		return;
+	LockBufferForCleanup(buffer);
 	page = (Page) BufferGetPage(buffer);
 
 	if (XLByteLE(lsn, PageGetLSN(page)))
@@ -4145,12 +4254,40 @@ heap_xlog_freeze(XLogRecPtr lsn, XLogRecord *record)
 	Buffer		buffer;
 	Page		page;
 
+	/*
+	 * In Hot Standby mode, ensure that there's no queries running which still
+	 * consider the frozen xids as running.
+	 */
+	if (InHotStandby)
+	{
+		VirtualTransactionId *backends;
+
+		/*
+		 * XXX: Using cutoff_xid is overly conservative. Even if cutoff_xid
+		 * is recent enough to conflict with a backend, the actual values
+		 * being frozen might not be. With a typical vacuum_freeze_min_age
+		 * setting in the ballpark of millions of transactions, it won't make
+		 * a difference, but it might if you run a manual VACUUM FREEZE.
+		 * Typically the cutoff is much earlier than any recently deceased
+		 * tuple versions removed by this vacuum, so don't worry too much.
+		 */
+		backends = GetConflictingVirtualXIDs(cutoff_xid,
+											 InvalidOid,
+											 true);
+		ResolveRecoveryConflictWithVirtualXIDs(backends,
+											   "VACUUM heap freeze",
+											   CONFLICT_MODE_ERROR);
+	}
+
+	RestoreBkpBlocks(lsn, record, false);
+
 	if (record->xl_info & XLR_BKP_BLOCK_1)
 		return;
 
-	buffer = XLogReadBuffer(xlrec->node, xlrec->block, false);
+	buffer = XLogReadBufferExtended(xlrec->node, MAIN_FORKNUM, xlrec->block, RBM_NORMAL);
 	if (!BufferIsValid(buffer))
 		return;
+	LockBufferForCleanup(buffer);
 	page = (Page) BufferGetPage(buffer);
 
 	if (XLByteLE(lsn, PageGetLSN(page)))
@@ -4740,6 +4877,11 @@ heap_redo(XLogRecPtr lsn, XLogRecord *record)
 {
 	uint8		info = record->xl_info & ~XLR_INFO_MASK;
 
+	/*
+	 * These operations don't overwrite MVCC data so no conflict
+	 * processing is required. The ones in heap2 rmgr do.
+	 */
+
 	RestoreBkpBlocks(lsn, record, false);
 
 	switch (info & XLOG_HEAP_OPMASK)
@@ -4778,19 +4920,24 @@ heap2_redo(XLogRecPtr lsn, XLogRecord *record)
 {
 	uint8		info = record->xl_info & ~XLR_INFO_MASK;
 
+	/*
+	 * Note that RestoreBkpBlocks() is called after conflict processing
+	 * within each record type handling function.
+	 */
+
 	switch (info & XLOG_HEAP_OPMASK)
 	{
 		case XLOG_HEAP2_FREEZE:
-			RestoreBkpBlocks(lsn, record, false);
 			heap_xlog_freeze(lsn, record);
 			break;
 		case XLOG_HEAP2_CLEAN:
-			RestoreBkpBlocks(lsn, record, true);
 			heap_xlog_clean(lsn, record, false);
 			break;
 		case XLOG_HEAP2_CLEAN_MOVE:
-			RestoreBkpBlocks(lsn, record, true);
 			heap_xlog_clean(lsn, record, true);
+			break;
+		case XLOG_HEAP2_CLEANUP_INFO:
+			heap_xlog_cleanup_info(lsn, record);
 			break;
 		default:
 			elog(PANIC, "heap2_redo: unknown op code %u", info);
@@ -4921,17 +5068,26 @@ heap2_desc(StringInfo buf, uint8 xl_info, char *rec)
 	{
 		xl_heap_clean *xlrec = (xl_heap_clean *) rec;
 
-		appendStringInfo(buf, "clean: rel %u/%u/%u; blk %u",
+		appendStringInfo(buf, "clean: rel %u/%u/%u; blk %u remxid %u",
 						 xlrec->node.spcNode, xlrec->node.dbNode,
-						 xlrec->node.relNode, xlrec->block);
+						 xlrec->node.relNode, xlrec->block,
+						 xlrec->latestRemovedXid);
 	}
 	else if (info == XLOG_HEAP2_CLEAN_MOVE)
 	{
 		xl_heap_clean *xlrec = (xl_heap_clean *) rec;
 
-		appendStringInfo(buf, "clean_move: rel %u/%u/%u; blk %u",
+		appendStringInfo(buf, "clean_move: rel %u/%u/%u; blk %u remxid %u",
 						 xlrec->node.spcNode, xlrec->node.dbNode,
-						 xlrec->node.relNode, xlrec->block);
+						 xlrec->node.relNode, xlrec->block,
+						 xlrec->latestRemovedXid);
+	}
+	else if (info == XLOG_HEAP2_CLEANUP_INFO)
+	{
+		xl_heap_cleanup_info *xlrec = (xl_heap_cleanup_info *) rec;
+
+		appendStringInfo(buf, "cleanup info: remxid %u",
+						 xlrec->latestRemovedXid);
 	}
 	else
 		appendStringInfo(buf, "UNKNOWN");

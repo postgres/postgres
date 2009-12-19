@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.228 2009/11/12 02:46:16 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.229 2009/12/19 01:32:34 sriggs Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,6 +26,7 @@
 
 #include "access/genam.h"
 #include "access/heapam.h"
+#include "access/transam.h"
 #include "access/xact.h"
 #include "access/xlogutils.h"
 #include "catalog/catalog.h"
@@ -48,6 +49,7 @@
 #include "storage/ipc.h"
 #include "storage/procarray.h"
 #include "storage/smgr.h"
+#include "storage/standby.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
@@ -1940,6 +1942,26 @@ dbase_redo(XLogRecPtr lsn, XLogRecord *record)
 		char	   *dst_path;
 
 		dst_path = GetDatabasePath(xlrec->db_id, xlrec->tablespace_id);
+
+		if (InHotStandby)
+		{
+			VirtualTransactionId *database_users;
+
+			/*
+			 * Find all users connected to this database and ask them
+			 * politely to immediately kill their sessions before processing
+			 * the drop database record, after the usual grace period.
+			 * We don't wait for commit because drop database is
+			 * non-transactional.
+			 */
+		    database_users = GetConflictingVirtualXIDs(InvalidTransactionId,
+													   xlrec->db_id,
+													   false);
+
+			ResolveRecoveryConflictWithVirtualXIDs(database_users,
+												   "drop database",
+												   CONFLICT_MODE_FATAL);
+		}
 
 		/* Drop pages for this database that are in the shared buffer cache */
 		DropDatabaseBuffers(xlrec->db_id);

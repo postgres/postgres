@@ -29,7 +29,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuumlazy.c,v 1.124 2009/11/16 21:32:06 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuumlazy.c,v 1.125 2009/12/19 01:32:34 sriggs Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -98,6 +98,7 @@ typedef struct LVRelStats
 	int			max_dead_tuples;	/* # slots allocated in array */
 	ItemPointer dead_tuples;	/* array of ItemPointerData */
 	int			num_index_scans;
+	TransactionId latestRemovedXid;
 } LVRelStats;
 
 
@@ -265,6 +266,34 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt,
 	return heldoff;
 }
 
+/*
+ * For Hot Standby we need to know the highest transaction id that will
+ * be removed by any change. VACUUM proceeds in a number of passes so
+ * we need to consider how each pass operates. The first phase runs
+ * heap_page_prune(), which can issue XLOG_HEAP2_CLEAN records as it
+ * progresses - these will have a latestRemovedXid on each record.
+ * In some cases this removes all of the tuples to be removed, though
+ * often we have dead tuples with index pointers so we must remember them
+ * for removal in phase 3. Index records for those rows are removed
+ * in phase 2 and index blocks do not have MVCC information attached.
+ * So before we can allow removal of any index tuples we need to issue
+ * a WAL record containing the latestRemovedXid of rows that will be
+ * removed in phase three. This allows recovery queries to block at the
+ * correct place, i.e. before phase two, rather than during phase three
+ * which would be after the rows have become inaccessible.
+ */
+static void
+vacuum_log_cleanup_info(Relation rel, LVRelStats *vacrelstats)
+{
+	/*
+	 * No need to log changes for temp tables, they do not contain
+	 * data visible on the standby server.
+	 */
+	if (rel->rd_istemp || !XLogArchivingActive())
+		return;
+
+	(void) log_heap_cleanup_info(rel->rd_node, vacrelstats->latestRemovedXid);
+}
 
 /*
  *	lazy_scan_heap() -- scan an open heap relation
@@ -315,6 +344,7 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 	nblocks = RelationGetNumberOfBlocks(onerel);
 	vacrelstats->rel_pages = nblocks;
 	vacrelstats->nonempty_pages = 0;
+	vacrelstats->latestRemovedXid = InvalidTransactionId;
 
 	lazy_space_alloc(vacrelstats, nblocks);
 
@@ -373,6 +403,9 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 		if ((vacrelstats->max_dead_tuples - vacrelstats->num_dead_tuples) < MaxHeapTuplesPerPage &&
 			vacrelstats->num_dead_tuples > 0)
 		{
+			/* Log cleanup info before we touch indexes */
+			vacuum_log_cleanup_info(onerel, vacrelstats);
+
 			/* Remove index entries */
 			for (i = 0; i < nindexes; i++)
 				lazy_vacuum_index(Irel[i],
@@ -382,6 +415,7 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 			lazy_vacuum_heap(onerel, vacrelstats);
 			/* Forget the now-vacuumed tuples, and press on */
 			vacrelstats->num_dead_tuples = 0;
+			vacrelstats->latestRemovedXid = InvalidTransactionId;
 			vacrelstats->num_index_scans++;
 		}
 
@@ -613,6 +647,8 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 			if (tupgone)
 			{
 				lazy_record_dead_tuple(vacrelstats, &(tuple.t_self));
+				HeapTupleHeaderAdvanceLatestRemovedXid(tuple.t_data,
+												&vacrelstats->latestRemovedXid);
 				tups_vacuumed += 1;
 			}
 			else
@@ -661,6 +697,7 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 			lazy_vacuum_page(onerel, blkno, buf, 0, vacrelstats);
 			/* Forget the now-vacuumed tuples, and press on */
 			vacrelstats->num_dead_tuples = 0;
+			vacrelstats->latestRemovedXid = InvalidTransactionId;
 			vacuumed_pages++;
 		}
 
@@ -724,6 +761,9 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 	/* XXX put a threshold on min number of tuples here? */
 	if (vacrelstats->num_dead_tuples > 0)
 	{
+		/* Log cleanup info before we touch indexes */
+		vacuum_log_cleanup_info(onerel, vacrelstats);
+
 		/* Remove index entries */
 		for (i = 0; i < nindexes; i++)
 			lazy_vacuum_index(Irel[i],
@@ -868,7 +908,7 @@ lazy_vacuum_page(Relation onerel, BlockNumber blkno, Buffer buffer,
 		recptr = log_heap_clean(onerel, buffer,
 								NULL, 0, NULL, 0,
 								unused, uncnt,
-								false);
+								vacrelstats->latestRemovedXid, false);
 		PageSetLSN(page, recptr);
 		PageSetTLI(page, ThisTimeLineID);
 	}

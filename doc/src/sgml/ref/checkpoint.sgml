@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/checkpoint.sgml,v 1.16 2008/11/14 10:22:45 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/checkpoint.sgml,v 1.17 2009/12/19 01:32:31 sriggs Exp $ -->
 
 <refentry id="sql-checkpoint">
  <refmeta>
@@ -40,6 +40,11 @@ CHECKPOINT
    all data files have been updated to reflect the information in the
    log.  All data files will be flushed to disk.  Refer to
    <xref linkend="wal"> for more information about the WAL system.
+  </para>
+
+  <para>
+   If executed during recovery, the <command>CHECKPOINT</command> command
+   will force a restartpoint rather than writing a new checkpoint.
   </para>
 
   <para>

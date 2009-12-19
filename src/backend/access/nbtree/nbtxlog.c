@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtxlog.c,v 1.55 2009/06/11 14:48:54 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtxlog.c,v 1.56 2009/12/19 01:32:33 sriggs Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,7 +16,11 @@
 
 #include "access/nbtree.h"
 #include "access/transam.h"
+#include "access/xact.h"
 #include "storage/bufmgr.h"
+#include "storage/procarray.h"
+#include "storage/standby.h"
+#include "miscadmin.h"
 
 /*
  * We must keep track of expected insertions due to page splits, and apply
@@ -459,6 +463,97 @@ btree_xlog_split(bool onleft, bool isroot,
 }
 
 static void
+btree_xlog_vacuum(XLogRecPtr lsn, XLogRecord *record)
+{
+	xl_btree_vacuum *xlrec;
+	Buffer		buffer;
+	Page		page;
+	BTPageOpaque opaque;
+
+	xlrec = (xl_btree_vacuum *) XLogRecGetData(record);
+
+	/*
+	 * If queries might be active then we need to ensure every block is unpinned
+	 * between the lastBlockVacuumed and the current block, if there are any.
+	 * This ensures that every block in the index is touched during VACUUM as
+	 * required to ensure scans work correctly.
+	 */
+	if (standbyState == STANDBY_SNAPSHOT_READY &&
+		(xlrec->lastBlockVacuumed + 1) != xlrec->block)
+	{
+		BlockNumber blkno = xlrec->lastBlockVacuumed + 1;
+
+		for (; blkno < xlrec->block; blkno++)
+		{
+			/*
+			 * XXX we don't actually need to read the block, we
+			 * just need to confirm it is unpinned. If we had a special call
+			 * into the buffer manager we could optimise this so that
+			 * if the block is not in shared_buffers we confirm it as unpinned.
+			 *
+			 * Another simple optimization would be to check if there's any
+			 * backends running; if not, we could just skip this.
+			 */
+			buffer = XLogReadBufferExtended(xlrec->node, MAIN_FORKNUM, blkno, RBM_NORMAL);
+			if (BufferIsValid(buffer))
+			{
+				LockBufferForCleanup(buffer);
+				UnlockReleaseBuffer(buffer);
+			}
+		}
+	}
+
+	/*
+	 * If the block was restored from a full page image, nothing more to do.
+	 * The RestoreBkpBlocks() call already pinned and took cleanup lock on
+	 * it. XXX: Perhaps we should call RestoreBkpBlocks() *after* the loop
+	 * above, to make the disk access more sequential.
+	 */
+	if (record->xl_info & XLR_BKP_BLOCK_1)
+		return;
+
+	/*
+	 * Like in btvacuumpage(), we need to take a cleanup lock on every leaf
+	 * page. See nbtree/README for details.
+	 */
+	buffer = XLogReadBufferExtended(xlrec->node, MAIN_FORKNUM, xlrec->block, RBM_NORMAL);
+	if (!BufferIsValid(buffer))
+		return;
+	LockBufferForCleanup(buffer);
+	page = (Page) BufferGetPage(buffer);
+
+	if (XLByteLE(lsn, PageGetLSN(page)))
+	{
+		UnlockReleaseBuffer(buffer);
+		return;
+	}
+
+	if (record->xl_len > SizeOfBtreeVacuum)
+	{
+		OffsetNumber *unused;
+		OffsetNumber *unend;
+
+		unused = (OffsetNumber *) ((char *) xlrec + SizeOfBtreeVacuum);
+		unend = (OffsetNumber *) ((char *) xlrec + record->xl_len);
+
+		if ((unend - unused) > 0)
+			PageIndexMultiDelete(page, unused, unend - unused);
+	}
+
+	/*
+	 * Mark the page as not containing any LP_DEAD items --- see comments in
+	 * _bt_delitems().
+	 */
+	opaque = (BTPageOpaque) PageGetSpecialPointer(page);
+	opaque->btpo_flags &= ~BTP_HAS_GARBAGE;
+
+	PageSetLSN(page, lsn);
+	PageSetTLI(page, ThisTimeLineID);
+	MarkBufferDirty(buffer);
+	UnlockReleaseBuffer(buffer);
+}
+
+static void
 btree_xlog_delete(XLogRecPtr lsn, XLogRecord *record)
 {
 	xl_btree_delete *xlrec;
@@ -470,6 +565,11 @@ btree_xlog_delete(XLogRecPtr lsn, XLogRecord *record)
 		return;
 
 	xlrec = (xl_btree_delete *) XLogRecGetData(record);
+
+	/*
+	 * We don't need to take a cleanup lock to apply these changes.
+	 * See nbtree/README for details.
+	 */
 	buffer = XLogReadBuffer(xlrec->node, xlrec->block, false);
 	if (!BufferIsValid(buffer))
 		return;
@@ -714,7 +814,43 @@ btree_redo(XLogRecPtr lsn, XLogRecord *record)
 {
 	uint8		info = record->xl_info & ~XLR_INFO_MASK;
 
-	RestoreBkpBlocks(lsn, record, false);
+	/*
+	 * Btree delete records can conflict with standby queries. You might
+	 * think that vacuum records would conflict as well, but we've handled
+	 * that already. XLOG_HEAP2_CLEANUP_INFO records provide the highest xid
+	 * cleaned by the vacuum of the heap and so we can resolve any conflicts
+	 * just once when that arrives. After that any we know that no conflicts
+	 * exist from individual btree vacuum records on that index.
+	 */
+	if (InHotStandby)
+	{
+		if (info == XLOG_BTREE_DELETE)
+		{
+			xl_btree_delete *xlrec = (xl_btree_delete *) XLogRecGetData(record);
+			VirtualTransactionId *backends;
+
+			/*
+			 * XXX Currently we put everybody on death row, because
+			 * currently _bt_delitems() supplies InvalidTransactionId.
+			 * This can be fairly painful, so providing a better value
+			 * here is worth some thought and possibly some effort to
+			 * improve.
+			 */
+			backends = GetConflictingVirtualXIDs(xlrec->latestRemovedXid,
+												 InvalidOid,
+												 true);
+
+			ResolveRecoveryConflictWithVirtualXIDs(backends,
+												   "b-tree delete",
+												   CONFLICT_MODE_ERROR);
+		}
+	}
+
+	/*
+	 * Vacuum needs to pin and take cleanup lock on every leaf page,
+	 * a regular exclusive lock is enough for all other purposes.
+	 */
+	RestoreBkpBlocks(lsn, record, (info == XLOG_BTREE_VACUUM));
 
 	switch (info)
 	{
@@ -738,6 +874,9 @@ btree_redo(XLogRecPtr lsn, XLogRecord *record)
 			break;
 		case XLOG_BTREE_SPLIT_R_ROOT:
 			btree_xlog_split(false, true, lsn, record);
+			break;
+		case XLOG_BTREE_VACUUM:
+			btree_xlog_vacuum(lsn, record);
 			break;
 		case XLOG_BTREE_DELETE:
 			btree_xlog_delete(lsn, record);
@@ -843,13 +982,24 @@ btree_desc(StringInfo buf, uint8 xl_info, char *rec)
 								 xlrec->level, xlrec->firstright);
 				break;
 			}
+		case XLOG_BTREE_VACUUM:
+			{
+				xl_btree_vacuum *xlrec = (xl_btree_vacuum *) rec;
+
+				appendStringInfo(buf, "vacuum: rel %u/%u/%u; blk %u, lastBlockVacuumed %u",
+								 xlrec->node.spcNode, xlrec->node.dbNode,
+								 xlrec->node.relNode, xlrec->block,
+								 xlrec->lastBlockVacuumed);
+				break;
+			}
 		case XLOG_BTREE_DELETE:
 			{
 				xl_btree_delete *xlrec = (xl_btree_delete *) rec;
 
-				appendStringInfo(buf, "delete: rel %u/%u/%u; blk %u",
+				appendStringInfo(buf, "delete: rel %u/%u/%u; blk %u, latestRemovedXid %u",
 								 xlrec->node.spcNode, xlrec->node.dbNode,
-								 xlrec->node.relNode, xlrec->block);
+								 xlrec->node.relNode, xlrec->block,
+								 xlrec->latestRemovedXid);
 				break;
 			}
 		case XLOG_BTREE_DELETE_PAGE:

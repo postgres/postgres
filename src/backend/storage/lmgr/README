@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/backend/storage/lmgr/README,v 1.24 2008/03/21 13:23:28 momjian Exp $
+$PostgreSQL: pgsql/src/backend/storage/lmgr/README,v 1.25 2009/12/19 01:32:35 sriggs Exp $
 
 Locking Overview
 ================
@@ -517,3 +517,27 @@ interfere with each other.
 User locks are always held as session locks, so that they are not released at
 transaction end.  They must be released explicitly by the application --- but
 they are released automatically when a backend terminates.
+
+Locking during Hot Standby
+--------------------------
+
+The Startup process is the only backend that can make changes during
+recovery, all other backends are read only.  As a result the Startup
+process does not acquire locks on relations or objects except when the lock
+level is AccessExclusiveLock.
+
+Regular backends are only allowed to take locks on relations or objects
+at RowExclusiveLock or lower. This ensures that they do not conflict with
+each other or with the Startup process, unless AccessExclusiveLocks are
+requested by one of the backends.
+
+Deadlocks involving AccessExclusiveLocks are not possible, so we need
+not be concerned that a user initiated deadlock can prevent recovery from
+progressing.
+
+AccessExclusiveLocks on the primary or master node generate WAL records
+that are then applied by the Startup process. Locks are released at end
+of transaction just as they are in normal processing. These locks are
+held by the Startup process, acting as a proxy for the backends that
+originally acquired these locks. Again, these locks cannot conflict with
+one another, so the Startup process cannot deadlock itself either.

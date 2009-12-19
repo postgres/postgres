@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/test/regress/pg_regress.c,v 1.67 2009/11/23 16:02:24 tgl Exp $
+ * $PostgreSQL: pgsql/src/test/regress/pg_regress.c,v 1.68 2009/12/19 01:32:45 sriggs Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -93,6 +93,7 @@ static char *temp_install = NULL;
 static char *temp_config = NULL;
 static char *top_builddir = NULL;
 static bool nolocale = false;
+static bool use_existing = false;
 static char *hostname = NULL;
 static int	port = -1;
 static bool port_specified_by_user = false;
@@ -1545,7 +1546,7 @@ run_schedule(const char *schedule, test_function tfunc)
 
 		if (num_tests == 1)
 		{
-			status(_("test %-20s ... "), tests[0]);
+			status(_("test %-24s ... "), tests[0]);
 			pids[0] = (tfunc) (tests[0], &resultfiles[0], &expectfiles[0], &tags[0]);
 			wait_for_tests(pids, statuses, NULL, 1);
 			/* status line is finished below */
@@ -1590,7 +1591,7 @@ run_schedule(const char *schedule, test_function tfunc)
 			bool		differ = false;
 
 			if (num_tests > 1)
-				status(_("     %-20s ... "), tests[i]);
+				status(_("     %-24s ... "), tests[i]);
 
 			/*
 			 * Advance over all three lists simultaneously.
@@ -1918,6 +1919,7 @@ regression_main(int argc, char *argv[], init_function ifunc, test_function tfunc
 		{"dlpath", required_argument, NULL, 17},
 		{"create-role", required_argument, NULL, 18},
 		{"temp-config", required_argument, NULL, 19},
+		{"use-existing", no_argument, NULL, 20},
 		{NULL, 0, NULL, 0}
 	};
 
@@ -2007,6 +2009,9 @@ regression_main(int argc, char *argv[], init_function ifunc, test_function tfunc
 				break;
 			case 19:
 				temp_config = strdup(optarg);
+				break;
+			case 20:
+				use_existing = true;
 				break;
 			default:
 				/* getopt_long already emitted a complaint */
@@ -2254,19 +2259,25 @@ regression_main(int argc, char *argv[], init_function ifunc, test_function tfunc
 		 * Using an existing installation, so may need to get rid of
 		 * pre-existing database(s) and role(s)
 		 */
-		for (sl = dblist; sl; sl = sl->next)
-			drop_database_if_exists(sl->str);
-		for (sl = extraroles; sl; sl = sl->next)
-			drop_role_if_exists(sl->str);
+		if (!use_existing)
+		{
+			for (sl = dblist; sl; sl = sl->next)
+				drop_database_if_exists(sl->str);
+			for (sl = extraroles; sl; sl = sl->next)
+				drop_role_if_exists(sl->str);
+		}
 	}
 
 	/*
 	 * Create the test database(s) and role(s)
 	 */
-	for (sl = dblist; sl; sl = sl->next)
-		create_database(sl->str);
-	for (sl = extraroles; sl; sl = sl->next)
-		create_role(sl->str, dblist);
+	if (!use_existing)
+	{
+		for (sl = dblist; sl; sl = sl->next)
+			create_database(sl->str);
+		for (sl = extraroles; sl; sl = sl->next)
+			create_role(sl->str, dblist);
+	}
 
 	/*
 	 * Ready to run the tests

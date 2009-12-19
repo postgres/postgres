@@ -50,7 +50,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/time/tqual.c,v 1.113 2009/06/11 14:49:06 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/time/tqual.c,v 1.114 2009/12/19 01:32:37 sriggs Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1257,42 +1257,84 @@ XidInMVCCSnapshot(TransactionId xid, Snapshot snapshot)
 		return true;
 
 	/*
-	 * If the snapshot contains full subxact data, the fastest way to check
-	 * things is just to compare the given XID against both subxact XIDs and
-	 * top-level XIDs.	If the snapshot overflowed, we have to use pg_subtrans
-	 * to convert a subxact XID to its parent XID, but then we need only look
-	 * at top-level XIDs not subxacts.
+	 * Snapshot information is stored slightly differently in snapshots
+	 * taken during recovery.
 	 */
-	if (snapshot->subxcnt >= 0)
+	if (!snapshot->takenDuringRecovery)
 	{
-		/* full data, so search subxip */
+		/*
+		 * If the snapshot contains full subxact data, the fastest way to check
+		 * things is just to compare the given XID against both subxact XIDs and
+		 * top-level XIDs.	If the snapshot overflowed, we have to use pg_subtrans
+		 * to convert a subxact XID to its parent XID, but then we need only look
+		 * at top-level XIDs not subxacts.
+		 */
+		if (!snapshot->suboverflowed)
+		{
+			/* full data, so search subxip */
+			int32		j;
+
+			for (j = 0; j < snapshot->subxcnt; j++)
+			{
+				if (TransactionIdEquals(xid, snapshot->subxip[j]))
+					return true;
+			}
+
+			/* not there, fall through to search xip[] */
+		}
+		else
+		{
+			/* overflowed, so convert xid to top-level */
+			xid = SubTransGetTopmostTransaction(xid);
+
+			/*
+			 * If xid was indeed a subxact, we might now have an xid < xmin, so
+			 * recheck to avoid an array scan.	No point in rechecking xmax.
+			 */
+			if (TransactionIdPrecedes(xid, snapshot->xmin))
+				return false;
+		}
+
+		for (i = 0; i < snapshot->xcnt; i++)
+		{
+			if (TransactionIdEquals(xid, snapshot->xip[i]))
+				return true;
+		}
+	}
+	else
+	{
 		int32		j;
 
+		/*
+		 * In recovery we store all xids in the subxact array because it
+		 * is by far the bigger array, and we mostly don't know which xids
+		 * are top-level and which are subxacts. The xip array is empty.
+		 *
+		 * We start by searching subtrans, if we overflowed.
+		 */
+		if (snapshot->suboverflowed)
+		{
+			/* overflowed, so convert xid to top-level */
+			xid = SubTransGetTopmostTransaction(xid);
+
+			/*
+			 * If xid was indeed a subxact, we might now have an xid < xmin, so
+			 * recheck to avoid an array scan.	No point in rechecking xmax.
+			 */
+			if (TransactionIdPrecedes(xid, snapshot->xmin))
+				return false;
+		}
+
+		/*
+		 * We now have either a top-level xid higher than xmin or an
+		 * indeterminate xid. We don't know whether it's top level or subxact
+		 * but it doesn't matter. If it's present, the xid is visible.
+		 */
 		for (j = 0; j < snapshot->subxcnt; j++)
 		{
 			if (TransactionIdEquals(xid, snapshot->subxip[j]))
 				return true;
 		}
-
-		/* not there, fall through to search xip[] */
-	}
-	else
-	{
-		/* overflowed, so convert xid to top-level */
-		xid = SubTransGetTopmostTransaction(xid);
-
-		/*
-		 * If xid was indeed a subxact, we might now have an xid < xmin, so
-		 * recheck to avoid an array scan.	No point in rechecking xmax.
-		 */
-		if (TransactionIdPrecedes(xid, snapshot->xmin))
-			return false;
-	}
-
-	for (i = 0; i < snapshot->xcnt; i++)
-	{
-		if (TransactionIdEquals(xid, snapshot->xip[i]))
-			return true;
 	}
 
 	return false;

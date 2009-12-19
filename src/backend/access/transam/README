@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/backend/access/transam/README,v 1.12 2008/10/20 19:18:18 alvherre Exp $
+$PostgreSQL: pgsql/src/backend/access/transam/README,v 1.13 2009/12/19 01:32:33 sriggs Exp $
 
 The Transaction System
 ======================
@@ -649,3 +649,34 @@ fsync it down to disk without any sort of interlock, as soon as it finishes
 the bulk update.  However, all these paths are designed to write data that
 no other transaction can see until after T1 commits.  The situation is thus
 not different from ordinary WAL-logged updates.
+
+Transaction Emulation during Recovery
+-------------------------------------
+
+During Recovery we replay transaction changes in the order they occurred.
+As part of this replay we emulate some transactional behaviour, so that
+read only backends can take MVCC snapshots. We do this by maintaining a
+list of XIDs belonging to transactions that are being replayed, so that
+each transaction that has recorded WAL records for database writes exist
+in the array until it commits. Further details are given in comments in
+procarray.c.
+
+Many actions write no WAL records at all, for example read only transactions.
+These have no effect on MVCC in recovery and we can pretend they never
+occurred at all. Subtransaction commit does not write a WAL record either
+and has very little effect, since lock waiters need to wait for the
+parent transaction to complete.
+
+Not all transactional behaviour is emulated, for example we do not insert
+a transaction entry into the lock table, nor do we maintain the transaction
+stack in memory. Clog entries are made normally. Multitrans is not maintained
+because its purpose is to record tuple level locks that an application has
+requested to prevent write locks. Since write locks cannot be obtained at all,
+there is never any conflict and so there is no reason to update multitrans.
+Subtrans is maintained during recovery but the details of the transaction
+tree are ignored and all subtransactions reference the top-level TransactionId
+directly. Since commit is atomic this provides correct lock wait behaviour
+yet simplifies emulation of subtransactions considerably.
+
+Further details on locking mechanics in recovery are given in comments
+with the Lock rmgr code.

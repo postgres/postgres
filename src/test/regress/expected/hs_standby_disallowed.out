@@ -1,0 +1,137 @@
+--
+-- Hot Standby tests
+--
+-- hs_standby_disallowed.sql
+--
+SET transaction_read_only = off;
+ERROR:  cannot set transaction read-write mode during recovery
+begin transaction read write;
+ERROR:  cannot set transaction read-write mode during recovery
+commit;
+WARNING:  there is no transaction in progress
+-- SELECT
+select * from hs1 FOR SHARE;
+ERROR:  transaction is read-only
+select * from hs1 FOR UPDATE;
+ERROR:  transaction is read-only
+-- DML
+BEGIN;
+insert into hs1 values (37);
+ERROR:  transaction is read-only
+ROLLBACK;
+BEGIN;
+delete from hs1 where col1 = 1;
+ERROR:  transaction is read-only
+ROLLBACK;
+BEGIN;
+update hs1 set col1 = NULL where col1 > 0;
+ERROR:  transaction is read-only
+ROLLBACK;
+BEGIN;
+truncate hs3;
+ERROR:  transaction is read-only
+ROLLBACK;
+-- DDL
+create temporary table hstemp1 (col1 integer);
+ERROR:  transaction is read-only
+BEGIN;
+drop table hs2;
+ERROR:  transaction is read-only
+ROLLBACK;
+BEGIN;
+create table hs4 (col1 integer);
+ERROR:  transaction is read-only
+ROLLBACK;
+-- Sequences
+SELECT nextval('hsseq');
+ERROR:  cannot be executed during recovery
+-- Two-phase commit transaction stuff
+BEGIN;
+SELECT count(*) FROM hs1;
+ count 
+-------
+     1
+(1 row)
+
+PREPARE TRANSACTION 'foobar';
+ERROR:  cannot be executed during recovery
+ROLLBACK;
+BEGIN;
+SELECT count(*) FROM hs1;
+ count 
+-------
+     1
+(1 row)
+
+COMMIT PREPARED 'foobar';
+ERROR:  cannot be executed during recovery
+ROLLBACK;
+BEGIN;
+SELECT count(*) FROM hs1;
+ count 
+-------
+     1
+(1 row)
+
+PREPARE TRANSACTION 'foobar';
+ERROR:  cannot be executed during recovery
+ROLLBACK PREPARED 'foobar';
+ERROR:  current transaction is aborted, commands ignored until end of transaction block
+ROLLBACK;
+BEGIN;
+SELECT count(*) FROM hs1;
+ count 
+-------
+     1
+(1 row)
+
+ROLLBACK PREPARED 'foobar';
+ERROR:  cannot be executed during recovery
+ROLLBACK;
+-- Locks
+BEGIN;
+LOCK hs1;
+ERROR:  cannot be executed during recovery
+COMMIT;
+BEGIN;
+LOCK hs1 IN SHARE UPDATE EXCLUSIVE MODE;
+ERROR:  cannot be executed during recovery
+COMMIT;
+BEGIN;
+LOCK hs1 IN SHARE MODE;
+ERROR:  cannot be executed during recovery
+COMMIT;
+BEGIN;
+LOCK hs1 IN SHARE ROW EXCLUSIVE MODE;
+ERROR:  cannot be executed during recovery
+COMMIT;
+BEGIN;
+LOCK hs1 IN EXCLUSIVE MODE;
+ERROR:  cannot be executed during recovery
+COMMIT;
+BEGIN;
+LOCK hs1 IN ACCESS EXCLUSIVE MODE;
+ERROR:  cannot be executed during recovery
+COMMIT;
+-- Listen
+listen a;
+ERROR:  cannot be executed during recovery
+notify a;
+ERROR:  cannot be executed during recovery
+unlisten a;
+ERROR:  cannot be executed during recovery
+unlisten *;
+ERROR:  cannot be executed during recovery
+-- disallowed commands
+ANALYZE hs1;
+ERROR:  cannot be executed during recovery
+VACUUM hs2;
+ERROR:  cannot be executed during recovery
+CLUSTER hs2 using hs1_pkey;
+ERROR:  cannot be executed during recovery
+REINDEX TABLE hs2;
+ERROR:  cannot be executed during recovery
+REVOKE SELECT ON hs1 FROM PUBLIC;
+ERROR:  transaction is read-only
+GRANT SELECT ON hs1 TO PUBLIC;
+ERROR:  transaction is read-only

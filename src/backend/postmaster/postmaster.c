@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.596 2009/09/08 17:08:36 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.597 2009/12/19 01:32:34 sriggs Exp $
  *
  * NOTES
  *
@@ -245,8 +245,9 @@ static bool RecoveryError = false;		/* T if WAL recovery failed */
  * When archive recovery is finished, the startup process exits with exit
  * code 0 and we switch to PM_RUN state.
  *
- * Normal child backends can only be launched when we are in PM_RUN state.
- * (We also allow it in PM_WAIT_BACKUP state, but only for superusers.)
+ * Normal child backends can only be launched when we are in PM_RUN or
+ * PM_RECOVERY_CONSISTENT state.  (We also allow launch of normal
+ * child backends in PM_WAIT_BACKUP state, but only for superusers.)
  * In other states we handle connection requests by launching "dead_end"
  * child processes, which will simply send the client an error message and
  * quit.  (We track these in the BackendList so that we can know when they
@@ -1868,7 +1869,7 @@ static enum CAC_state
 canAcceptConnections(void)
 {
 	/*
-	 * Can't start backends when in startup/shutdown/recovery state.
+	 * Can't start backends when in startup/shutdown/inconsistent recovery state.
 	 *
 	 * In state PM_WAIT_BACKUP only superusers can connect (this must be
 	 * allowed so that a superuser can end online backup mode); we return
@@ -1882,9 +1883,11 @@ canAcceptConnections(void)
 			return CAC_SHUTDOWN;	/* shutdown is pending */
 		if (!FatalError &&
 			(pmState == PM_STARTUP ||
-			 pmState == PM_RECOVERY ||
-			 pmState == PM_RECOVERY_CONSISTENT))
+			 pmState == PM_RECOVERY))
 			return CAC_STARTUP; /* normal startup */
+		if (!FatalError &&
+			 pmState == PM_RECOVERY_CONSISTENT)
+			return CAC_OK; /* connection OK during recovery */
 		return CAC_RECOVERY;	/* else must be crash recovery */
 	}
 
@@ -4003,9 +4006,8 @@ sigusr1_handler(SIGNAL_ARGS)
 		Assert(PgStatPID == 0);
 		PgStatPID = pgstat_start();
 
-		/* XXX at this point we could accept read-only connections */
-		ereport(DEBUG1,
-				(errmsg("database system is in consistent recovery mode")));
+		ereport(LOG,
+				 (errmsg("database system is ready to accept read only connections")));
 
 		pmState = PM_RECOVERY_CONSISTENT;
 	}

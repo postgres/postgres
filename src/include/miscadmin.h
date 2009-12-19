@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/miscadmin.h,v 1.215 2009/12/09 21:57:51 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/miscadmin.h,v 1.216 2009/12/19 01:32:41 sriggs Exp $
  *
  * NOTES
  *	  some of the information in this file should be moved to other files.
@@ -236,6 +236,12 @@ extern bool VacuumCostActive;
 /* in tcop/postgres.c */
 extern void check_stack_depth(void);
 
+/* in tcop/utility.c */
+extern void PreventCommandDuringRecovery(void);
+
+/* in utils/misc/guc.c */
+extern int trace_recovery_messages;
+int trace_recovery(int trace_level);
 
 /*****************************************************************************
  *	  pdir.h --																 *

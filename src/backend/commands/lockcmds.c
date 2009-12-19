@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/lockcmds.c,v 1.25 2009/06/11 14:48:56 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/lockcmds.c,v 1.26 2009/12/19 01:32:34 sriggs Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,6 +46,16 @@ LockTableCommand(LockStmt *lockstmt)
 		Oid			reloid;
 
 		reloid = RangeVarGetRelid(relation, false);
+
+		/*
+		 * During recovery we only accept these variations:
+		 *   LOCK TABLE foo IN ACCESS SHARE MODE
+		 *   LOCK TABLE foo IN ROW SHARE MODE
+		 *   LOCK TABLE foo IN ROW EXCLUSIVE MODE
+		 * This test must match the restrictions defined in LockAcquire()
+		 */
+		if (lockstmt->mode > RowExclusiveLock)
+			PreventCommandDuringRecovery();
 
 		LockTableRecurse(reloid, relation,
 						 lockstmt->mode, lockstmt->nowait, recurse);

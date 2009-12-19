@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/transam.h,v 1.70 2009/09/01 04:46:49 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/transam.h,v 1.71 2009/12/19 01:32:42 sriggs Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -128,6 +128,9 @@ typedef VariableCacheData *VariableCache;
  *		extern declarations
  * ----------------
  */
+
+/* in transam/xact.c */
+extern bool TransactionStartedDuringRecovery(void);
 
 /* in transam/varsup.c */
 extern PGDLLIMPORT VariableCache ShmemVariableCache;

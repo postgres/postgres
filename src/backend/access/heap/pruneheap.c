@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/pruneheap.c,v 1.18 2009/06/11 14:48:53 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/pruneheap.c,v 1.19 2009/12/19 01:32:32 sriggs Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,7 +30,8 @@
 typedef struct
 {
 	TransactionId new_prune_xid;	/* new prune hint value for page */
-	int			nredirected;	/* numbers of entries in arrays below */
+	TransactionId latestRemovedXid; /* latest xid to be removed by this prune */
+	int			nredirected;		/* numbers of entries in arrays below */
 	int			ndead;
 	int			nunused;
 	/* arrays that accumulate indexes of items to be changed */
@@ -82,6 +83,14 @@ heap_page_prune_opt(Relation relation, Buffer buffer, TransactionId OldestXmin)
 	 * older than OldestXmin.
 	 */
 	if (!PageIsPrunable(page, OldestXmin))
+		return;
+
+	/*
+	 * We can't write WAL in recovery mode, so there's no point trying to
+	 * clean the page. The master will likely issue a cleaning WAL record
+	 * soon anyway, so this is no particular loss.
+	 */
+	if (RecoveryInProgress())
 		return;
 
 	/*
@@ -176,6 +185,7 @@ heap_page_prune(Relation relation, Buffer buffer, TransactionId OldestXmin,
 	 * of our working state.
 	 */
 	prstate.new_prune_xid = InvalidTransactionId;
+	prstate.latestRemovedXid = InvalidTransactionId;
 	prstate.nredirected = prstate.ndead = prstate.nunused = 0;
 	memset(prstate.marked, 0, sizeof(prstate.marked));
 
@@ -257,7 +267,7 @@ heap_page_prune(Relation relation, Buffer buffer, TransactionId OldestXmin,
 									prstate.redirected, prstate.nredirected,
 									prstate.nowdead, prstate.ndead,
 									prstate.nowunused, prstate.nunused,
-									redirect_move);
+									prstate.latestRemovedXid, redirect_move);
 
 			PageSetLSN(BufferGetPage(buffer), recptr);
 			PageSetTLI(BufferGetPage(buffer), ThisTimeLineID);
@@ -395,6 +405,8 @@ heap_prune_chain(Relation relation, Buffer buffer, OffsetNumber rootoffnum,
 				== HEAPTUPLE_DEAD && !HeapTupleHeaderIsHotUpdated(htup))
 			{
 				heap_prune_record_unused(prstate, rootoffnum);
+				HeapTupleHeaderAdvanceLatestRemovedXid(htup,
+													   &prstate->latestRemovedXid);
 				ndeleted++;
 			}
 
@@ -520,7 +532,11 @@ heap_prune_chain(Relation relation, Buffer buffer, OffsetNumber rootoffnum,
 		 * find another DEAD tuple is a fairly unusual corner case.)
 		 */
 		if (tupdead)
+		{
 			latestdead = offnum;
+			HeapTupleHeaderAdvanceLatestRemovedXid(htup,
+												   &prstate->latestRemovedXid);
+		}
 		else if (!recent_dead)
 			break;
 
