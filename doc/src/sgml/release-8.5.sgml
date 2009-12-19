@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release-8.5.sgml,v 1.13 2009/12/19 05:37:01 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release-8.5.sgml,v 1.14 2009/12/19 20:33:12 petere Exp $ -->
 
 <sect1 id="release-8-5">
   <title>Release 8.5alpha3</title>
@@ -304,6 +304,13 @@
     <sect3>
       <title>Administration and Monitoring</title>
       <itemizedlist>
+       <listitem>
+        <para>
+         <emphasis>Allow read-only connections during recovery, also
+         known as Hot Standby.  This provides a built-in master-slave
+         replication solution.</emphasis>
+        </para>
+       </listitem>
        <listitem>
         <para>
          <emphasis>Provide a parenthesized-options syntax for VACUUM, analogous to
