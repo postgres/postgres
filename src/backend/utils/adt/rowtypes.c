@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/rowtypes.c,v 1.25 2009/06/11 14:49:04 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/rowtypes.c,v 1.26 2009/12/19 00:47:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -97,6 +97,11 @@ record_in(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 		   errmsg("input of anonymous composite types is not implemented")));
 	tupTypmod = -1;				/* for all non-anonymous types */
+	/*
+	 *	This comes from the composite type's pg_type.oid and
+	 *	stores system oids in user tables, specifically DatumTupleFields.
+	 *	This oid must be preserved by binary upgrades.
+	 */
 	tupdesc = lookup_rowtype_tupdesc(tupType, tupTypmod);
 	ncolumns = tupdesc->natts;
 

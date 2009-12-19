@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/typecmds.c,v 1.139 2009/12/07 05:22:21 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/typecmds.c,v 1.140 2009/12/19 00:47:57 momjian Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -531,6 +531,12 @@ DefineType(List *names, List *parameters)
 	 * now have TypeCreate do all the real work.
 	 */
 	typoid =
+		/*
+		 *	The pg_type.oid is stored in user tables as array elements
+		 *	(base types) in ArrayType and in composite types in
+		 *	DatumTupleFields.  This oid must be preserved by binary
+		 *	upgrades.
+		 */
 		TypeCreate(InvalidOid,	/* no predetermined type OID */
 				   typeName,	/* type name */
 				   typeNamespace,		/* namespace */

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/enum.c,v 1.7 2009/01/01 17:23:49 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/enum.c,v 1.8 2009/12/19 00:47:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -56,6 +56,10 @@ enum_in(PG_FUNCTION_ARGS)
 						format_type_be(enumtypoid),
 						name)));
 
+	/*
+	 *	This comes from pg_enum.oid and stores system oids in user tables.
+	 *	This oid must be preserved by binary upgrades.
+	 */
 	enumoid = HeapTupleGetOid(tup);
 
 	ReleaseSysCache(tup);

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_enum.c,v 1.9 2009/01/01 17:23:37 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_enum.c,v 1.10 2009/12/19 00:47:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -67,6 +67,10 @@ EnumValuesCreate(Oid enumTypeOid, List *vals)
 	oids = (Oid *) palloc(n * sizeof(Oid));
 	for (i = 0; i < n; i++)
 	{
+		/*
+		 *	The pg_enum.oid is stored in user tables.  This oid must be
+		 *	preserved by binary upgrades.
+		 */
 		oids[i] = GetNewOid(pg_enum);
 	}
 

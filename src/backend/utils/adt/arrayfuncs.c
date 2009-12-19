@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.161 2009/09/04 11:20:22 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.162 2009/12/19 00:47:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -328,6 +328,11 @@ array_in(PG_FUNCTION_ARGS)
 	SET_VARSIZE(retval, nbytes);
 	retval->ndim = ndim;
 	retval->dataoffset = dataoffset;
+	/*
+	 *	This comes from the array's pg_type.typelem (which points to the
+	 *	base data type's pg_type.oid) and stores system oids in user tables.
+	 *	This oid must be preserved by binary upgrades.
+	 */
 	retval->elemtype = element_type;
 	memcpy(ARR_DIMS(retval), dim, ndim * sizeof(int));
 	memcpy(ARR_LBOUND(retval), lBound, ndim * sizeof(int));
