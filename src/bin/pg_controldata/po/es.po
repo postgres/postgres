@@ -2,15 +2,14 @@
 #  Karim Mribti <karim@mribti.com>, 2002.
 #  Alvaro Herrera <alvherre@alvh.no-ip.org>, 2003-2008
 #
-# pgtranslation Id: pg_controldata.po,v 1.6 2009/04/13 21:42:14 alvherre Exp $
-# $PostgreSQL: pgsql/src/bin/pg_controldata/po/es.po,v 1.11 2009/05/14 21:41:51 alvherre Exp $
+# pgtranslation Id: pg_controldata.po,v 1.8 2009/11/03 20:00:02 alvherre Exp $
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_controldata (PostgreSQL 8.3)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2009-04-13 15:11+0000\n"
-"PO-Revision-Date: 2009-04-13 17:41-0400\n"
+"POT-Creation-Date: 2009-11-03 17:09+0000\n"
+"PO-Revision-Date: 2009-11-03 16:59-0300\n"
 "Last-Translator: Alvaro Herrera <alvherre@alvh.no-ip.org>\n"
 "Language-Team: Castellano <pgsql-es-ayuda@postgresql.org>\n"
 "MIME-Version: 1.0\n"
@@ -206,81 +205,91 @@ msgstr "NextMultiOffset de último checkpoint:       %u\n"
 
 #: pg_controldata.c:195
 #, c-format
+msgid "Latest checkpoint's oldestXID:        %u\n"
+msgstr "oldestXID del último checkpoint:            %u\n"
+
+#: pg_controldata.c:197
+#, c-format
+msgid "Latest checkpoint's oldestXID's DB:   %u\n"
+msgstr "DB del oldestXID del último checkpoint:     %u\n"
+
+#: pg_controldata.c:199
+#, c-format
 msgid "Time of latest checkpoint:            %s\n"
 msgstr "Instante de último checkpoint:              %s\n"
 
-#: pg_controldata.c:197
+#: pg_controldata.c:201
 #, c-format
 msgid "Minimum recovery ending location:     %X/%X\n"
 msgstr "Punto final mínimo de recuperación:         %X/%X\n"
 
-#: pg_controldata.c:200
+#: pg_controldata.c:204
 #, c-format
 msgid "Maximum data alignment:               %u\n"
 msgstr "Alineamiento máximo de datos:               %u\n"
 
-#: pg_controldata.c:203
+#: pg_controldata.c:207
 #, c-format
 msgid "Database block size:                  %u\n"
 msgstr "Tamaño de bloque de la base de datos:       %u\n"
 
-#: pg_controldata.c:205
+#: pg_controldata.c:209
 #, c-format
 msgid "Blocks per segment of large relation: %u\n"
 msgstr "Bloques por segmento en relación grande:    %u\n"
 
-#: pg_controldata.c:207
+#: pg_controldata.c:211
 #, c-format
 msgid "WAL block size:                       %u\n"
 msgstr "Tamaño del bloque de WAL:                   %u\n"
 
-#: pg_controldata.c:209
+#: pg_controldata.c:213
 #, c-format
 msgid "Bytes per WAL segment:                %u\n"
 msgstr "Bytes por segmento WAL:                     %u\n"
 
-#: pg_controldata.c:211
+#: pg_controldata.c:215
 #, c-format
 msgid "Maximum length of identifiers:        %u\n"
 msgstr "Máxima longitud de identificadores:         %u\n"
 
-#: pg_controldata.c:213
+#: pg_controldata.c:217
 #, c-format
 msgid "Maximum columns in an index:          %u\n"
 msgstr "Máximo número de columnas de un índice:     %u\n"
 
-#: pg_controldata.c:215
+#: pg_controldata.c:219
 #, c-format
 msgid "Maximum size of a TOAST chunk:        %u\n"
 msgstr "Longitud máxima de un trozo TOAST:          %u\n"
 
-#: pg_controldata.c:217
+#: pg_controldata.c:221
 #, c-format
 msgid "Date/time type storage:               %s\n"
 msgstr "Tipo de almacenamiento de horas y fechas:   %s\n"
 
-#: pg_controldata.c:218
+#: pg_controldata.c:222
 msgid "64-bit integers"
 msgstr "enteros de 64 bits"
 
-#: pg_controldata.c:218
+#: pg_controldata.c:222
 msgid "floating-point numbers"
 msgstr "números de punto flotante"
 
-#: pg_controldata.c:219
+#: pg_controldata.c:223
 #, c-format
 msgid "Float4 argument passing:              %s\n"
 msgstr "Paso de parámetros float4:                  %s\n"
 
-#: pg_controldata.c:220 pg_controldata.c:222
+#: pg_controldata.c:224 pg_controldata.c:226
 msgid "by value"
 msgstr "por valor"
 
-#: pg_controldata.c:220 pg_controldata.c:222
+#: pg_controldata.c:224 pg_controldata.c:226
 msgid "by reference"
 msgstr "por referencia"
 
-#: pg_controldata.c:221
+#: pg_controldata.c:225
 #, c-format
 msgid "Float8 argument passing:              %s\n"
 msgstr "Paso de parámetros float8:                  %s\n"

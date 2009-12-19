@@ -1,7 +1,7 @@
 # translation of pg_controldata.po to fr_fr
 # french message translation file for pg_controldata
 #
-# $PostgreSQL: pgsql/src/bin/pg_controldata/po/fr.po,v 1.17 2009/05/14 21:41:51 alvherre Exp $
+# $PostgreSQL: pgsql/src/bin/pg_controldata/po/fr.po,v 1.18 2009/12/19 20:23:25 petere Exp $
 #
 # Use these quotes: « %s »
 #
@@ -12,9 +12,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.4\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2009-04-16 03:08+0000\n"
-"PO-Revision-Date: 2009-04-16 09:06+0200\n"
-"Last-Translator: Stéphane Schildknecht <stephane.schildknecht@dalibo.com>\n"
+"POT-Creation-Date: 2009-11-24 21:09+0000\n"
+"PO-Revision-Date: 2009-11-24 23:01+0100\n"
+"Last-Translator: Guillaume Lelarge <guillaume@lelarge.info>\n"
 "Language-Team: PostgreSQLfr <pgsql-fr-generale@postgresql.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=ISO-8859-15\n"
@@ -209,83 +209,93 @@ msgstr "Dernier NextMultiOffset du point de contrôle :          %u\n"
 
 #: pg_controldata.c:195
 #, c-format
+msgid "Latest checkpoint's oldestXID:        %u\n"
+msgstr "Dernier oldestXID du point de contrôle :                %u\n"
+
+#: pg_controldata.c:197
+#, c-format
+msgid "Latest checkpoint's oldestXID's DB:   %u\n"
+msgstr "Dernier oldestXID du point de contrôle de la base :     %u\n"
+
+#: pg_controldata.c:199
+#, c-format
 msgid "Time of latest checkpoint:            %s\n"
 msgstr "Heure du dernier point de contrôle :                    %s\n"
 
-#: pg_controldata.c:197
+#: pg_controldata.c:201
 #, c-format
 msgid "Minimum recovery ending location:     %X/%X\n"
 msgstr "Emplacement de fin de la récupération minimale :        %X/%X\n"
 
-#: pg_controldata.c:200
+#: pg_controldata.c:204
 #, c-format
 msgid "Maximum data alignment:               %u\n"
 msgstr "Alignement maximal des données :                        %u\n"
 
-#: pg_controldata.c:203
+#: pg_controldata.c:207
 #, c-format
 msgid "Database block size:                  %u\n"
 msgstr "Taille du bloc de la base de données :                  %u\n"
 
-#: pg_controldata.c:205
+#: pg_controldata.c:209
 #, c-format
 msgid "Blocks per segment of large relation: %u\n"
 msgstr "Blocs par segment des relations volumineuses :          %u\n"
 
-#: pg_controldata.c:207
+#: pg_controldata.c:211
 #, c-format
 msgid "WAL block size:                       %u\n"
 msgstr "Taille de bloc du journal de transaction :              %u\n"
 
-#: pg_controldata.c:209
+#: pg_controldata.c:213
 #, c-format
 msgid "Bytes per WAL segment:                %u\n"
 msgstr "Octets par segment du journal de transaction :          %u\n"
 
-#: pg_controldata.c:211
+#: pg_controldata.c:215
 #, c-format
 msgid "Maximum length of identifiers:        %u\n"
 msgstr "Longueur maximale des identifiants :                    %u\n"
 
-#: pg_controldata.c:213
+#: pg_controldata.c:217
 #, c-format
 msgid "Maximum columns in an index:          %u\n"
 msgstr "Nombre maximum de colonnes d'un index:                  %u\n"
 
-#: pg_controldata.c:215
+#: pg_controldata.c:219
 #, c-format
 msgid "Maximum size of a TOAST chunk:        %u\n"
 msgstr "Longueur maximale d'un morceau TOAST :                  %u\n"
 
-#: pg_controldata.c:217
+#: pg_controldata.c:221
 #, c-format
 msgid "Date/time type storage:               %s\n"
 msgstr "Stockage du type date/heure :                           %s\n"
 
-#: pg_controldata.c:218
+#: pg_controldata.c:222
 msgid "64-bit integers"
 msgstr "entiers 64-bits"
 
-#: pg_controldata.c:218
+#: pg_controldata.c:222
 msgid "floating-point numbers"
 msgstr "nombres à virgule flottante"
 
-#: pg_controldata.c:219
+#: pg_controldata.c:223
 #, c-format
 msgid "Float4 argument passing:              %s\n"
 msgstr "Passage d'argument float4 :                             %s\n"
 
-#: pg_controldata.c:220
-#: pg_controldata.c:222
+#: pg_controldata.c:224
+#: pg_controldata.c:226
 msgid "by value"
 msgstr "par valeur"
 
-#: pg_controldata.c:220
-#: pg_controldata.c:222
+#: pg_controldata.c:224
+#: pg_controldata.c:226
 msgid "by reference"
 msgstr "par référence"
 
-#: pg_controldata.c:221
+#: pg_controldata.c:225
 #, c-format
 msgid "Float8 argument passing:              %s\n"
 msgstr "Passage d'argument float8 :                             %s\n"
