@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release-8.5.sgml,v 1.10 2009/12/18 22:11:09 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release-8.5.sgml,v 1.11 2009/12/19 00:05:27 rhaas Exp $ -->
 
 <sect1 id="release-8-5">
   <title>Release 8.5alpha3</title>
@@ -667,7 +667,7 @@
           instead of the former behavior that would replace any textual match
           including table names and column aliases (leading to syntax errors
           later on). PL/pgSQL variable names that match fully-reserved words
-          will now need to be quoted. An the other hand, a number of
+          will now need to be quoted. On the other hand, a number of
           PL/pgSQL-specific words were de-reserved.</emphasis>
         </para>
         <para>
@@ -824,7 +824,7 @@
         <para>
          <emphasis>Refactor ECPG grammar so that it uses the core grammar's
           unreserved_keyword list, minus a few specific words that have to be
-          treated specially. This de-reserves a number of works in ECPG.</emphasis>
+          treated specially. This de-reserves a number of words in ECPG.</emphasis>
         </para>
        </listitem>
        <listitem>
