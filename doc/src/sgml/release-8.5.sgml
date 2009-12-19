@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release-8.5.sgml,v 1.11 2009/12/19 00:05:27 rhaas Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release-8.5.sgml,v 1.12 2009/12/19 02:38:54 tgl Exp $ -->
 
 <sect1 id="release-8-5">
   <title>Release 8.5alpha3</title>
@@ -55,10 +55,10 @@
   <sect2>
     <title>Testing</title>
     <para>
-      The primary reason we release alphas is to get users to test new 
+      The primary reason we release alphas is to get users to test new
       features as early as possible.  If you are interested in helping
-      with organized testing, please see 
-      <ulink url="http://wiki.postgresql.org/wiki/HowToBetaTest">the 
+      with organized testing, please see
+      <ulink url="http://wiki.postgresql.org/wiki/HowToBetaTest">the
       testing information page</ulink>.
       </para>
   </sect2>
@@ -77,8 +77,8 @@
        <listitem>
         <para>
          <emphasis>Performance and behavioral improvements in UPDATE,
-         DELETE, and SELECT FOR UPDATE/SHARE queries with
-         joins. Various corner-cases could result in duplicated output
+         DELETE, and SELECT FOR UPDATE/SHARE queries with joins.
+         Fix various corner cases that could have resulted in duplicated output
          rows. Set-returning functions are now prohibited in the
          target list of SELECT FOR UPDATE/SHARE. FOR UPDATE does not
          propagate into a WITH query anymore.</emphasis>
@@ -86,7 +86,7 @@
        </listitem>
        <listitem>
         <para>
-         <emphasis>Fixed for SELECT FOR UPDATE/SHARE in conjuction with LIMIT.
+         <emphasis>Fix SELECT FOR UPDATE/SHARE in conjunction with LIMIT.
           Previously, it could return fewer rows than the limit specified.</emphasis>
         </para>
        </listitem>
@@ -122,7 +122,7 @@
         </para>
         <para>
          <emphasis>Behavioral change: formerly, agg(DISTINCT x) dropped null values of
-          x unconditionally. Now, it does so only if the agg transition
+          x unconditionally. Now, it does so only if the aggregate's transition
           function is strict; otherwise nulls are treated as DISTINCT
           normally would, i.e., you get one copy.</emphasis>
         </para>
@@ -214,12 +214,13 @@
       <itemizedlist>
        <listitem>
         <para>
-         <emphasis>Allow rewriting ALTER TABLE to skip WAL logging.</emphasis>
+         <emphasis>Allow rewriting forms of ALTER TABLE to skip WAL
+          logging.</emphasis>
         </para>
        </listitem>
        <listitem>
         <para>
-         <emphasis>Speed up information schema privilege views.</emphasis>
+         <emphasis>Speed up INFORMATION_SCHEMA's privilege views.</emphasis>
         </para>
        </listitem>
        <listitem>
@@ -322,12 +323,6 @@
         <para>
          <emphasis>Fix longstanding problems in VACUUM caused by untimely
           interruptions.</emphasis>
-        </para>
-       </listitem>
-       <listitem>
-        <para>
-         <emphasis>Error when a specified connection service is not found in
-          pg_service.conf, instead of ignoring it.</emphasis>
         </para>
        </listitem>
        <listitem>
@@ -474,7 +469,7 @@
          <emphasis>Teach the regular expression functions to do case-insensitive
           matching and locale-dependent character classification properly
           when the database encoding is UTF8. This previously only worked
-          correct for single-byte encodings and is still broken for other
+          correctly for single-byte encodings.  It is still broken for other
           multibyte encodings.</emphasis>
         </para>
        </listitem>
@@ -584,6 +579,23 @@
       </itemizedlist>
     </sect3>
     <sect3>
+      <title>libpq</title>
+      <itemizedlist>
+       <listitem>
+        <para>
+         <emphasis>Throw error when a specified connection service name is not
+          found in pg_service.conf, instead of ignoring it.</emphasis>
+        </para>
+       </listitem>
+       <listitem>
+        <para>
+         Make libpq reject non-numeric and out-of-range port numbers with a
+         suitable error message.
+        </para>
+       </listitem>
+      </itemizedlist>
+    </sect3>
+    <sect3>
       <title>psql</title>
       <itemizedlist>
        <listitem>
@@ -666,19 +678,31 @@
           go, ie, a place where a column value or parameter would be legal,
           instead of the former behavior that would replace any textual match
           including table names and column aliases (leading to syntax errors
-          later on). PL/pgSQL variable names that match fully-reserved words
-          will now need to be quoted. On the other hand, a number of
-          PL/pgSQL-specific words were de-reserved.</emphasis>
+          later on).</emphasis>
         </para>
         <para>
-         <emphasis>The variable resolution behavior is by default not backward
-          compatible, but can be configured; see documentation.</emphasis>
+         <emphasis>When a name could refer either to a PL/pgSQL variable or a
+          table column, PL/pgSQL formerly always assumed the variable was
+          meant, sometimes resulting in surprising behavior.  Now, PL/pgSQL
+          can assume the variable is meant, or assume the table column is
+          meant, or throw an error in ambiguous cases.  For safety the default
+          is to throw error.  To configure this see <xref
+          linkend="plpgsql-var-subst">.</emphasis>
         </para>
         <para>
-         <emphasis>Error reporting is much nicer and accurate.</emphasis>
+         <emphasis>Error reporting is much nicer: it no longer shows edited
+          versions of statements that look significantly different from what
+          you wrote.</emphasis>
         </para>
         <para>
-         <emphasis>The argument of WHERE CURRENT OF can be a PL/pgSQL cursor variable.</emphasis>
+         <emphasis>Note that this change affects the set of keywords that are
+          reserved in PL/pgSQL (i.e., cannot be the name of a PL/pgSQL
+          variable).  Now, all keywords shown as reserved in <xref
+          linkend="sql-keywords-appendix"> are reserved for PL/pgSQL purposes
+          as well.  However, many PL/pgSQL-only keywords that were formerly
+          treated as reserved no longer are.  As in regular SQL, you can
+          double-quote a variable's name if you want to use a name that
+          conflicts with a reserved keyword.</emphasis>
         </para>
        </listitem>
        <listitem>
@@ -694,9 +718,9 @@
        </listitem>
        <listitem>
         <para>
-         <emphasis>Python 3 support in PL/Python; behaves more or less unchanged
-          compared to Python 2, but the new language variant is called
-          plpython3u.</emphasis>
+         <emphasis>Add Python 3 support to PL/Python.  It behaves more or less
+          unchanged compared to Python 2, but the new language variant is
+          called plpython3u.</emphasis>
         </para>
        </listitem>
        <listitem>
@@ -749,7 +773,7 @@
        </listitem>
        <listitem>
         <para>
-         Allow cursor commands MOVE FORWARD n, MOVE BACKWARD n, 
+         Allow cursor commands MOVE FORWARD n, MOVE BACKWARD n,
          MOVE FORWARD ALL, MOVE BACKWARD ALL in PL/pgSQL.
         </para>
        </listitem>
@@ -780,8 +804,8 @@
          <emphasis>Add \shell and \setshell meta commands to pgbench.</emphasis>
         </para>
         <para>
-         <emphasis>\shell command runs an external shell command. \setshell also does
-          the same and sets the result to a variable.</emphasis>
+         <emphasis>\shell runs an external shell command. \setshell
+          does the same and assigns the result to a variable.</emphasis>
         </para>
        </listitem>
        <listitem>
@@ -818,7 +842,7 @@
       </itemizedlist>
     </sect3>
     <sect3>
-      <title>Development</title>
+      <title>ecpg</title>
       <itemizedlist>
        <listitem>
         <para>
@@ -842,23 +866,6 @@
         Make ECPG more robust against applications freeing strings.
        </para>
       </listitem>
-      <listitem>
-       <para>
-        Make libpq reject non-numeric and out-of-range port numbers with a
-        suitable error message.
-       </para>
-      </listitem>
-        <listitem>
-          <para>
-            Functions which conflict with C++ reserved words have been renamed,
-            making backend header files now safe to use with C++ libraries.
-          </para>
-        </listitem>
-        <listitem>
-          <para>
-            Add man pages for SPI functions.
-          </para>
-        </listitem>
         <listitem>
           <para>
             ECPG now includes a STRING datatype for Informix compatibility
@@ -934,15 +941,21 @@
         <para>
          Derived files that are shipped in the distribution used to be
          built in the source directory even for out-of-tree
-         builds. They are now also built in the build tree. This
+         builds. They are now built in the build tree. This
          should be more convenient for certain developers' workflows.
         </para>
        </listitem>
-       <listitem>
-        <para>
-         Translations were updated.
-        </para>
-       </listitem>
+        <listitem>
+          <para>
+            Functions which conflict with C++ reserved words have been renamed,
+            making backend header files now safe to use with C++ libraries.
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            Add man pages for SPI functions.
+          </para>
+        </listitem>
         <listitem>
           <para>
             Upgrade to Autoconf 2.63 (not relevant to users of distribution
