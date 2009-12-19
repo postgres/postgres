@@ -1,7 +1,7 @@
 
 # -*-perl-*- hey - emacs - this is a perl file
 
-# $PostgreSQL: pgsql/src/tools/msvc/vcregress.pl,v 1.11 2009/08/18 22:36:56 adunstan Exp $
+# $PostgreSQL: pgsql/src/tools/msvc/vcregress.pl,v 1.12 2009/12/19 02:44:06 tgl Exp $
 
 use strict;
 
@@ -89,7 +89,6 @@ sub installcheck
         "--psqldir=../../../$Config/psql",
         "--schedule=${schedule}_schedule",
         "--multibyte=SQL_ASCII",
-        "--load-language=plpgsql",
         "--no-locale"
     );
     push(@args,$maxconn) if $maxconn;
@@ -106,7 +105,6 @@ sub check
         "--psqldir=../../../$Config/psql",
         "--schedule=${schedule}_schedule",
         "--multibyte=SQL_ASCII",
-        "--load-language=plpgsql",
         "--no-locale",
         "--temp-install=./tmp_check",
         "--top-builddir=\"$topdir\""
@@ -133,7 +131,6 @@ sub ecpgcheck
         "--create-role=connectuser,connectdb",
         "--schedule=${schedule}_schedule",
         "--multibyte=SQL_ASCII",
-        "--load-language=plpgsql",
         "--no-locale",
         "--temp-install=./tmp_chk",
         "--top-builddir=\"$topdir\""
