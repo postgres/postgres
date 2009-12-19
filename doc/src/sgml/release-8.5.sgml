@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release-8.5.sgml,v 1.12 2009/12/19 02:38:54 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release-8.5.sgml,v 1.13 2009/12/19 05:37:01 tgl Exp $ -->
 
 <sect1 id="release-8-5">
   <title>Release 8.5alpha3</title>
@@ -686,8 +686,8 @@
           meant, sometimes resulting in surprising behavior.  Now, PL/pgSQL
           can assume the variable is meant, or assume the table column is
           meant, or throw an error in ambiguous cases.  For safety the default
-          is to throw error.  To configure this see <xref
-          linkend="plpgsql-var-subst">.</emphasis>
+          is to throw error.  To configure this see <link
+          linkend="plpgsql-var-subst">the PL/pgSQL documentation</link>.</emphasis>
         </para>
         <para>
          <emphasis>Error reporting is much nicer: it no longer shows edited
@@ -697,12 +697,12 @@
         <para>
          <emphasis>Note that this change affects the set of keywords that are
           reserved in PL/pgSQL (i.e., cannot be the name of a PL/pgSQL
-          variable).  Now, all keywords shown as reserved in <xref
-          linkend="sql-keywords-appendix"> are reserved for PL/pgSQL purposes
-          as well.  However, many PL/pgSQL-only keywords that were formerly
-          treated as reserved no longer are.  As in regular SQL, you can
-          double-quote a variable's name if you want to use a name that
-          conflicts with a reserved keyword.</emphasis>
+          variable).  Now, all keywords shown as reserved in <link
+          linkend="sql-keywords-appendix">Appendix C</link> are reserved for
+          PL/pgSQL purposes as well.  However, many PL/pgSQL-only keywords
+          that were formerly treated as reserved no longer are.  As in regular
+          SQL, you can double-quote a variable's name if you want to use a
+          name that conflicts with a reserved keyword.</emphasis>
         </para>
        </listitem>
        <listitem>
