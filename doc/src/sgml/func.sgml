@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.494 2009/12/19 01:32:31 sriggs Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.495 2009/12/19 17:49:50 momjian Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -13139,7 +13139,7 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
    <para>
     The functions shown in <xref
     linkend="functions-recovery-info-table"> provide information
-	about the current status of Hot Standby.
+    about the current status of Hot Standby.
     These functions may be executed during both recovery and in normal running.
    </para>
 
@@ -13158,7 +13158,7 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
         </entry>
        <entry><type>bool</type></entry>
        <entry>True if recovery is still in progress.
-	   </entry>
+       </entry>
       </row>
      </tbody>
     </tgroup>
