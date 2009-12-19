@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_language.sgml,v 1.47 2009/10/08 04:41:07 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_language.sgml,v 1.48 2009/12/19 01:49:02 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -266,7 +266,7 @@ CREATE [ TRUSTED ] [ PROCEDURAL ] LANGUAGE <replaceable class="parameter">name</
    The preferred way of creating any of the standard procedural languages
    is just:
 <programlisting>
-CREATE LANGUAGE plpgsql;
+CREATE LANGUAGE plperl;
 </programlisting>
   </para>
 

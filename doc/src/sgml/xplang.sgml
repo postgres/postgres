@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/xplang.sgml,v 1.35 2009/09/22 23:43:37 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/xplang.sgml,v 1.36 2009/12/19 01:49:02 tgl Exp $ -->
 
  <chapter id="xplang">
   <title id="xplang-title">Procedural Languages</title>
@@ -33,8 +33,8 @@
    <application>PL/Python</application> (<xref linkend="plpython">).
    There are additional procedural languages available that are not
    included in the core distribution. <xref linkend="external-projects">
-   has information about finding them. In addition other languages can 
-   be defined by users; the basics of developing a new procedural 
+   has information about finding them. In addition other languages can
+   be defined by users; the basics of developing a new procedural
    language are covered in <xref linkend="plhandler">.
   </para>
 
@@ -59,10 +59,10 @@
     current database.  Alternatively, the program <xref
     linkend="app-createlang"> can be used to do this from the shell
     command line.  For example, to install the language
-    <application>PL/pgSQL</application> into the database
+    <application>PL/Perl</application> into the database
     <literal>template1</>, use:
 <programlisting>
-createlang plpgsql template1
+createlang plperl template1
 </programlisting>
     The manual procedure described below is only recommended for
     installing custom languages that <command>CREATE LANGUAGE</command>
@@ -173,46 +173,47 @@ CREATE <optional>TRUSTED</optional> <optional>PROCEDURAL</optional> LANGUAGE <re
    <para>
     <xref linkend="xplang-install-example"> shows how the manual
     installation procedure would work with the language
-    <application>PL/pgSQL</application>.
+    <application>PL/Perl</application>.
    </para>
 
    <example id="xplang-install-example">
-    <title>Manual Installation of <application>PL/pgSQL</application></title>
+    <title>Manual Installation of <application>PL/Perl</application></title>
 
      <para>
-      The following command tells the database server where to find the 
-      shared object for the <application>PL/pgSQL</application> language's call handler function.
+      The following command tells the database server where to find the
+      shared object for the <application>PL/Perl</application> language's call
+      handler function:
 
 <programlisting>
-CREATE FUNCTION plpgsql_call_handler() RETURNS language_handler AS
-    '$libdir/plpgsql' LANGUAGE C;
+CREATE FUNCTION plperl_call_handler() RETURNS language_handler AS
+    '$libdir/plperl' LANGUAGE C;
 </programlisting>
      </para>
 
      <para>
-      <application>PL/pgSQL</application> has an inline handler function
+      <application>PL/Perl</application> has an inline handler function
       and a validator function, so we declare those too:
 
 <programlisting>
-CREATE FUNCTION plpgsql_inline_handler(internal) RETURNS void AS
-    '$libdir/plpgsql' LANGUAGE C;
+CREATE FUNCTION plperl_inline_handler(internal) RETURNS void AS
+    '$libdir/plperl' LANGUAGE C;
 
-CREATE FUNCTION plpgsql_validator(oid) RETURNS void AS
-    '$libdir/plpgsql' LANGUAGE C;
+CREATE FUNCTION plperl_validator(oid) RETURNS void AS
+    '$libdir/plperl' LANGUAGE C;
 </programlisting>
      </para>
 
      <para>
       The command:
 <programlisting>
-CREATE TRUSTED PROCEDURAL LANGUAGE plpgsql
-    HANDLER plpgsql_call_handler
-    INLINE plpgsql_inline_handler
-    VALIDATOR plpgsql_validator;
+CREATE TRUSTED PROCEDURAL LANGUAGE plperl
+    HANDLER plperl_call_handler
+    INLINE plperl_inline_handler
+    VALIDATOR plperl_validator;
 </programlisting>
       then defines that the previously declared functions
       should be invoked for functions and trigger procedures where the
-      language attribute is <literal>plpgsql</literal>.
+      language attribute is <literal>plperl</literal>.
      </para>
   </example>
 
@@ -220,12 +221,16 @@ CREATE TRUSTED PROCEDURAL LANGUAGE plpgsql
     In a default <productname>PostgreSQL</productname> installation,
     the handler for the <application>PL/pgSQL</application> language
     is built and installed into the <quote>library</quote>
-    directory. If <application>Tcl</> support is configured in, the handlers
-    for <application>PL/Tcl</> and <application>PL/TclU</> are also built and
-    installed in the same location.  Likewise, the <application>PL/Perl</> and
-    <application>PL/PerlU</> handlers are built and installed if Perl support
-    is configured, and the <application>PL/PythonU</> handler is
-    installed if Python support is configured.
+    directory; furthermore, the <application>PL/pgSQL</application> language
+    itself is installed in all databases.
+    If <application>Tcl</> support is configured in, the handlers for
+    <application>PL/Tcl</> and <application>PL/TclU</> are built and installed
+    in the library directory, but the language itself is not installed in any
+    database by default.
+    Likewise, the <application>PL/Perl</> and <application>PL/PerlU</>
+    handlers are built and installed if Perl support is configured, and the
+    <application>PL/PythonU</> handler is installed if Python support is
+    configured, but these languages are not installed by default.
    </para>
 
   </sect1>
