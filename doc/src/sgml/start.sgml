@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/start.sgml,v 1.50 2009/06/17 21:58:49 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/start.sgml,v 1.51 2009/12/19 02:34:17 alvherre Exp $ -->
 
  <chapter id="tutorial-start">
   <title>Getting Started</title>
@@ -384,8 +384,8 @@ mydb=#
    <para>
     The <command>psql</command> program has a number of internal
     commands that are not SQL commands.  They begin with the backslash
-    character, <quote><literal>\</literal></quote>.  Some of these
-    commands were listed in the welcome message.  For example,
+    character, <quote><literal>\</literal></quote>.
+    For example,
     you can get help on the syntax of various
     <productname>PostgreSQL</productname> <acronym>SQL</acronym>
     commands by typing:
