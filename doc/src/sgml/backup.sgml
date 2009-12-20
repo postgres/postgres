@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.132 2009/12/19 17:49:50 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.133 2009/12/20 03:49:58 rhaas Exp $ -->
 
 <chapter id="backup">
  <title>Backup and Restore</title>
@@ -2018,7 +2018,7 @@ if (!triggered)
     <itemizedlist>
      <listitem>
       <para>
-       Data Definition Language (DML) - INSERT, UPDATE, DELETE, COPY FROM, TRUNCATE.
+       Data Manipulation Language (DML) - INSERT, UPDATE, DELETE, COPY FROM, TRUNCATE.
        Note that there are no allowed actions that result in a trigger
        being executed during recovery.
       </para>
@@ -2164,7 +2164,7 @@ if (!triggered)
        <listitem>
         <para>
          Dropping tablespaces on the primary while standby queries are using
-         those tablespace for temporary work files (work_mem overflow)
+         those tablespaces for temporary work files (work_mem overflow)
         </para>
        </listitem>
        <listitem>
