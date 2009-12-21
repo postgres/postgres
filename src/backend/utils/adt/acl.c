@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/acl.c,v 1.152 2009/12/11 03:34:55 itagaki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/acl.c,v 1.153 2009/12/21 01:34:11 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -765,7 +765,6 @@ acldefault(GrantObjectType objtype, Oid ownerId)
 			owner_default = ACL_ALL_RIGHTS_LANGUAGE;
 			break;
 		case ACL_OBJECT_LARGEOBJECT:
-			/* Grant SELECT,UPDATE by default, for now */
 			world_default = ACL_NO_RIGHTS;
 			owner_default = ACL_ALL_RIGHTS_LARGEOBJECT;
 			break;

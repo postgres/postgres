@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.528 2009/12/19 01:32:37 sriggs Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.529 2009/12/21 01:34:11 rhaas Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -1243,9 +1243,9 @@ static struct config_bool ConfigureNamesBool[] =
 
 	{
 		{"lo_compat_privileges", PGC_SUSET, COMPAT_OPTIONS_PREVIOUS,
-			gettext_noop("Enables backward compatibility in privilege checks on large objects"),
-			gettext_noop("When turned on, privilege checks on large objects perform "
-						 "with backward compatibility as 8.4.x or earlier releases.")
+			gettext_noop("Enables backward compatibility mode for privilege checks on large objects"),
+			gettext_noop("Skips privilege checks when reading or modifying large objects, "
+						 "for compatibility with PostgreSQL releases prior to 8.5.")
 		},
 		&lo_compat_privileges,
 		false, NULL, NULL

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_largeobject.c,v 1.34 2009/12/11 03:34:55 itagaki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_largeobject.c,v 1.35 2009/12/21 01:34:10 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -79,10 +79,8 @@ LargeObjectCreate(Oid loid)
 }
 
 /*
- * Drop a large object having the given LO identifier.
- *
- * When we drop a large object, it is necessary to drop both of metadata
- * and data pages in same time.
+ * Drop a large object having the given LO identifier.  Both the data pages
+ * and metadata must be dropped.
  */
 void
 LargeObjectDrop(Oid loid)
@@ -191,13 +189,12 @@ LargeObjectAlterOwner(Oid loid, Oid newOwnerId)
 		if (!superuser())
 		{
 			/*
-			 * The 'lo_compat_privileges' is not checked here, because we
-			 * don't have any access control features in the 8.4.x series
-			 * or earlier release.
-			 * So, it is not a place we can define a compatible behavior.
+			 * lo_compat_privileges is not checked here, because ALTER
+			 * LARGE OBJECT ... OWNER did not exist at all prior to
+			 * PostgreSQL 8.5.
+			 *
+			 * We must be the owner of the existing object.
 			 */
-
-			/* Otherwise, must be owner of the existing object */
 			if (!pg_largeobject_ownercheck(loid, GetUserId()))
 				ereport(ERROR,
 						(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
@@ -251,9 +248,8 @@ LargeObjectAlterOwner(Oid loid, Oid newOwnerId)
 /*
  * LargeObjectExists
  *
- * Currently, we don't use system cache to contain metadata of
- * large objects, because massive number of large objects can
- * consume not a small amount of process local memory.
+ * We don't use the system cache to for large object metadata, for fear of
+ * using too much local memory.
  *
  * Note that LargeObjectExists always scans the system catalog
  * with SnapshotNow, so it is unavailable to use to check
