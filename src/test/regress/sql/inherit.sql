@@ -297,8 +297,6 @@ COMMENT ON COLUMN t1.b IS 'B';
 COMMENT ON CONSTRAINT t1_a_check ON t1 IS 't1_a_check';
 COMMENT ON INDEX t1_pkey IS 'index pkey';
 COMMENT ON INDEX t1_b_key IS 'index b_key';
-COMMENT ON COLUMN t1_pkey.a IS 'index column pkey.a';
-COMMENT ON COLUMN t1_fnidx.pg_expression_1 IS 'index column fnidx';
 ALTER TABLE t1 ALTER COLUMN a SET STORAGE MAIN;
 
 CREATE TABLE t2 (c text);

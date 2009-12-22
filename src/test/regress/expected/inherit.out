@@ -931,8 +931,6 @@ COMMENT ON COLUMN t1.b IS 'B';
 COMMENT ON CONSTRAINT t1_a_check ON t1 IS 't1_a_check';
 COMMENT ON INDEX t1_pkey IS 'index pkey';
 COMMENT ON INDEX t1_b_key IS 'index b_key';
-COMMENT ON COLUMN t1_pkey.a IS 'index column pkey.a';
-COMMENT ON COLUMN t1_fnidx.pg_expression_1 IS 'index column fnidx';
 ALTER TABLE t1 ALTER COLUMN a SET STORAGE MAIN;
 CREATE TABLE t2 (c text);
 ALTER TABLE t2 ALTER COLUMN c SET STORAGE EXTERNAL;
@@ -1040,13 +1038,11 @@ Check constraints:
 Has OIDs: no
 
 SELECT c.relname, objsubid, description FROM pg_description, pg_index i, pg_class c WHERE classoid = 'pg_class'::regclass AND objoid = i.indexrelid AND c.oid = i.indexrelid AND i.indrelid = 't_all'::regclass ORDER BY c.relname, objsubid;
-   relname   | objsubid |     description     
--------------+----------+---------------------
+   relname   | objsubid | description 
+-------------+----------+-------------
  t_all_b_key |        0 | index b_key
- t_all_key   |        1 | index column fnidx
  t_all_pkey  |        0 | index pkey
- t_all_pkey  |        1 | index column pkey.a
-(4 rows)
+(2 rows)
 
 CREATE TABLE inh_error1 () INHERITS (t1, t4);
 NOTICE:  merging multiple inherited definitions of column "a"
