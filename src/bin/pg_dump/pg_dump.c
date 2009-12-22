@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.558 2009/12/19 04:13:30 itagaki Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.559 2009/12/22 23:27:41 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -11254,15 +11254,15 @@ dumpSequence(Archive *fout, TableInfo *tbinfo)
 
 		appendPQExpBuffer(query, "    INCREMENT BY %s\n", incby);
 
-		if (maxv)
-			appendPQExpBuffer(query, "    MAXVALUE %s\n", maxv);
-		else
-			appendPQExpBuffer(query, "    NO MAXVALUE\n");
-
 		if (minv)
 			appendPQExpBuffer(query, "    MINVALUE %s\n", minv);
 		else
 			appendPQExpBuffer(query, "    NO MINVALUE\n");
+
+		if (maxv)
+			appendPQExpBuffer(query, "    MAXVALUE %s\n", maxv);
+		else
+			appendPQExpBuffer(query, "    NO MAXVALUE\n");
 
 		appendPQExpBuffer(query,
 						  "    CACHE %s%s",
