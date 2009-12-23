@@ -736,7 +736,7 @@ ERROR:  table "fktable_fail2" does not exist
 DROP TABLE PKTABLE;
 -- Test for referencing column number smaller than referenced constraint
 CREATE TABLE PKTABLE (ptest1 int, ptest2 int, UNIQUE(ptest1, ptest2));
-NOTICE:  CREATE TABLE / UNIQUE will create implicit index "pktable_ptest1_key" for table "pktable"
+NOTICE:  CREATE TABLE / UNIQUE will create implicit index "pktable_ptest1_ptest2_key" for table "pktable"
 CREATE TABLE FKTABLE_FAIL1 (ftest1 int REFERENCES pktable(ptest1));
 ERROR:  there is no unique constraint matching given keys for referenced table "pktable"
 DROP TABLE FKTABLE_FAIL1;
@@ -860,7 +860,7 @@ DETAIL:  Key columns "ptest4" and "ptest1" are of incompatible types: inet and i
 create table pktable_base (base1 int not null);
 create table pktable (ptest1 int, primary key(base1), unique(base1, ptest1)) inherits (pktable_base);
 NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "pktable_pkey" for table "pktable"
-NOTICE:  CREATE TABLE / UNIQUE will create implicit index "pktable_base1_key" for table "pktable"
+NOTICE:  CREATE TABLE / UNIQUE will create implicit index "pktable_base1_ptest1_key" for table "pktable"
 create table fktable (ftest1 int references pktable(base1));
 -- now some ins, upd, del
 insert into pktable(base1) values (1);
@@ -1098,7 +1098,7 @@ CREATE TEMP TABLE pktable (
 NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "pktable_pkey" for table "pktable"
 NOTICE:  CREATE TABLE / UNIQUE will create implicit index "pktable_id2_key" for table "pktable"
 NOTICE:  CREATE TABLE / UNIQUE will create implicit index "pktable_id3_key" for table "pktable"
-NOTICE:  CREATE TABLE / UNIQUE will create implicit index "pktable_id1_key" for table "pktable"
+NOTICE:  CREATE TABLE / UNIQUE will create implicit index "pktable_id1_id2_id3_key" for table "pktable"
 CREATE TEMP TABLE fktable (
         x1      INT4 REFERENCES pktable(id1),
         x2      VARCHAR(4) REFERENCES pktable(id2),

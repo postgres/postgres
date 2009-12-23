@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/toasting.c,v 1.21 2009/12/07 05:22:21 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/toasting.c,v 1.22 2009/12/23 02:35:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -255,6 +255,7 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid,
 
 	toast_idxid = index_create(toast_relid, toast_idxname, toastIndexOid,
 							   indexInfo,
+							   list_make2("chunk_id", "chunk_seq"),
 							   BTREE_AM_OID,
 							   rel->rd_rel->reltablespace,
 							   classObjectId, coloptions, (Datum) 0,

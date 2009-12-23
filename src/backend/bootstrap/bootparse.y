@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootparse.y,v 1.101 2009/12/07 05:22:21 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootparse.y,v 1.102 2009/12/23 02:35:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -323,6 +323,7 @@ boot_index_param:
 					IndexElem *n = makeNode(IndexElem);
 					n->name = $1;
 					n->expr = NULL;
+					n->indexcolname = NULL;
 					n->opclass = list_make1(makeString($2));
 					n->ordering = SORTBY_DEFAULT;
 					n->nulls_ordering = SORTBY_NULLS_DEFAULT;

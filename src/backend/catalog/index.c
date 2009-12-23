@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.326 2009/12/09 21:57:50 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.327 2009/12/23 02:35:18 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -82,6 +82,7 @@ typedef struct
 /* non-export function prototypes */
 static TupleDesc ConstructTupleDescriptor(Relation heapRelation,
 						 IndexInfo *indexInfo,
+						 List *indexColNames,
 						 Oid accessMethodObjectId,
 						 Oid *classObjectId);
 static void InitializeAttributeOids(Relation indexRelation,
@@ -117,10 +118,12 @@ static Oid	IndexGetRelation(Oid indexId);
 static TupleDesc
 ConstructTupleDescriptor(Relation heapRelation,
 						 IndexInfo *indexInfo,
+						 List *indexColNames,
 						 Oid accessMethodObjectId,
 						 Oid *classObjectId)
 {
 	int			numatts = indexInfo->ii_NumIndexAttrs;
+	ListCell   *colnames_item = list_head(indexColNames);
 	ListCell   *indexpr_item = list_head(indexInfo->ii_Expressions);
 	HeapTuple	amtuple;
 	Form_pg_am	amform;
@@ -217,12 +220,6 @@ ConstructTupleDescriptor(Relation heapRelation,
 			indexpr_item = lnext(indexpr_item);
 
 			/*
-			 * Make the attribute's name "pg_expresssion_nnn" (maybe think of
-			 * something better later)
-			 */
-			sprintf(NameStr(to->attname), "pg_expression_%d", i + 1);
-
-			/*
 			 * Lookup the expression type in pg_type for the type length etc.
 			 */
 			keyType = exprType(indexkey);
@@ -267,6 +264,14 @@ ConstructTupleDescriptor(Relation heapRelation,
 		 * later.
 		 */
 		to->attrelid = InvalidOid;
+
+		/*
+		 * Set the attribute name as specified by caller.
+		 */
+		if (colnames_item == NULL)	/* shouldn't happen */
+			elog(ERROR, "too few entries in colnames list");
+		namestrcpy(&to->attname, (const char *) lfirst(colnames_item));
+		colnames_item = lnext(colnames_item);
 
 		/*
 		 * Check the opclass and index AM to see if either provides a keytype
@@ -494,6 +499,7 @@ UpdateIndexRelation(Oid indexoid,
  *		generate an OID for the index.	During bootstrap this may be
  *		nonzero to specify a preselected OID.
  * indexInfo: same info executor uses to insert into the index
+ * indexColNames: column names to use for index (List of char *)
  * accessMethodObjectId: OID of index AM to use
  * tableSpaceId: OID of tablespace to use
  * classObjectId: array of index opclass OIDs, one per index column
@@ -517,6 +523,7 @@ index_create(Oid heapRelationId,
 			 const char *indexRelationName,
 			 Oid indexRelationId,
 			 IndexInfo *indexInfo,
+			 List *indexColNames,
 			 Oid accessMethodObjectId,
 			 Oid tableSpaceId,
 			 Oid *classObjectId,
@@ -629,6 +636,7 @@ index_create(Oid heapRelationId,
 	 */
 	indexTupDesc = ConstructTupleDescriptor(heapRelation,
 											indexInfo,
+											indexColNames,
 											accessMethodObjectId,
 											classObjectId);
 

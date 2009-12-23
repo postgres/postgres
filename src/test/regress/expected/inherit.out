@@ -1031,8 +1031,8 @@ NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "t_all_pkey" for 
  b      | text |           | extended | B
 Indexes:
     "t_all_pkey" PRIMARY KEY, btree (a)
-    "t_all_b_key" btree (b)
-    "t_all_key" btree ((a || b))
+    "t_all_b_idx" btree (b)
+    "t_all_expr_idx" btree ((a || b))
 Check constraints:
     "t1_a_check" CHECK (length(a) > 2)
 Has OIDs: no
@@ -1040,7 +1040,7 @@ Has OIDs: no
 SELECT c.relname, objsubid, description FROM pg_description, pg_index i, pg_class c WHERE classoid = 'pg_class'::regclass AND objoid = i.indexrelid AND c.oid = i.indexrelid AND i.indrelid = 't_all'::regclass ORDER BY c.relname, objsubid;
    relname   | objsubid | description 
 -------------+----------+-------------
- t_all_b_key |        0 | index b_key
+ t_all_b_idx |        0 | index b_key
  t_all_pkey  |        0 | index pkey
 (2 rows)
 

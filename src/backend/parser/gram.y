@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.697 2009/12/15 17:57:47 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.698 2009/12/23 02:35:22 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -4887,6 +4887,7 @@ index_elem:	ColId opt_class opt_asc_desc opt_nulls_order
 					$$ = makeNode(IndexElem);
 					$$->name = $1;
 					$$->expr = NULL;
+					$$->indexcolname = NULL;
 					$$->opclass = $2;
 					$$->ordering = $3;
 					$$->nulls_ordering = $4;
@@ -4896,6 +4897,7 @@ index_elem:	ColId opt_class opt_asc_desc opt_nulls_order
 					$$ = makeNode(IndexElem);
 					$$->name = NULL;
 					$$->expr = $1;
+					$$->indexcolname = NULL;
 					$$->opclass = $2;
 					$$->ordering = $3;
 					$$->nulls_ordering = $4;
@@ -4905,6 +4907,7 @@ index_elem:	ColId opt_class opt_asc_desc opt_nulls_order
 					$$ = makeNode(IndexElem);
 					$$->name = NULL;
 					$$->expr = $2;
+					$$->indexcolname = NULL;
 					$$->opclass = $4;
 					$$->ordering = $5;
 					$$->nulls_ordering = $6;

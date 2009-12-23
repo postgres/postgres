@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/indexcmds.c,v 1.188 2009/12/07 05:22:21 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/indexcmds.c,v 1.189 2009/12/23 02:35:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -67,6 +67,7 @@ static void ComputeIndexAttrs(IndexInfo *indexInfo,
 				  bool isconstraint);
 static Oid GetIndexOpClass(List *opclass, Oid attrType,
 				char *accessMethodName, Oid accessMethodId);
+static char *ChooseIndexNameAddition(List *colnames);
 static bool relationHasPrimaryKey(Relation rel);
 
 
@@ -128,6 +129,7 @@ DefineIndex(RangeVar *heapRelation,
 	Oid			relationId;
 	Oid			namespaceId;
 	Oid			tablespaceId;
+	List	   *indexColNames;
 	Relation	rel;
 	Relation	indexRelation;
 	HeapTuple	tuple;
@@ -248,36 +250,20 @@ DefineIndex(RangeVar *heapRelation,
 		tablespaceId = GLOBALTABLESPACE_OID;
 
 	/*
+	 * Choose the index column names.
+	 */
+	indexColNames = ChooseIndexColumnNames(attributeList);
+
+	/*
 	 * Select name for index if caller didn't specify
 	 */
 	if (indexRelationName == NULL)
-	{
-		if (primary)
-		{
-			indexRelationName = ChooseRelationName(RelationGetRelationName(rel),
-												   NULL,
-												   "pkey",
-												   namespaceId);
-		}
-		else if (exclusionOpNames != NIL)
-		{
-			IndexElem  *iparam = (IndexElem *) linitial(attributeList);
-
-			indexRelationName = ChooseRelationName(RelationGetRelationName(rel),
-												   iparam->name,
-												   "exclusion",
-												   namespaceId);
-		}
-		else
-		{
-			IndexElem  *iparam = (IndexElem *) linitial(attributeList);
-
-			indexRelationName = ChooseRelationName(RelationGetRelationName(rel),
-												   iparam->name,
-												   "key",
-												   namespaceId);
-		}
-	}
+		indexRelationName = ChooseIndexName(RelationGetRelationName(rel),
+											namespaceId,
+											indexColNames,
+											exclusionOpNames,
+											primary,
+											isconstraint);
 
 	/*
 	 * look up the access method, verify it can handle the requested features
@@ -488,35 +474,30 @@ DefineIndex(RangeVar *heapRelation,
 	SET_LOCKTAG_RELATION(heaplocktag, heaprelid.dbId, heaprelid.relId);
 	heap_close(rel, NoLock);
 
-	if (!concurrent)
-	{
-		indexRelationId =
-			index_create(relationId, indexRelationName, indexRelationId,
-					  indexInfo, accessMethodId, tablespaceId, classObjectId,
-						 coloptions, reloptions, primary,
-						 isconstraint, deferrable, initdeferred,
-						 allowSystemTableMods, skip_build, concurrent);
-
-		return;					/* We're done, in the standard case */
-	}
-
 	/*
-	 * For a concurrent build, we next insert the catalog entry and add
-	 * constraints.  We don't build the index just yet; we must first make the
-	 * catalog entry so that the new index is visible to updating
-	 * transactions.  That will prevent them from making incompatible HOT
-	 * updates.  The new index will be marked not indisready and not
-	 * indisvalid, so that no one else tries to either insert into it or use
-	 * it for queries.	We pass skip_build = true to prevent the build.
+	 * Make the catalog entries for the index, including constraints.
+	 * Then, if not skip_build || concurrent, actually build the index.
 	 */
 	indexRelationId =
 		index_create(relationId, indexRelationName, indexRelationId,
-					 indexInfo, accessMethodId, tablespaceId, classObjectId,
+					 indexInfo, indexColNames,
+					 accessMethodId, tablespaceId, classObjectId,
 					 coloptions, reloptions, primary,
 					 isconstraint, deferrable, initdeferred,
-					 allowSystemTableMods, true, concurrent);
+					 allowSystemTableMods,
+					 skip_build || concurrent,
+					 concurrent);
+
+	if (!concurrent)
+		return;					/* We're done, in the standard case */
 
 	/*
+	 * For a concurrent build, it's important to make the catalog entries
+	 * visible to other transactions before we start to build the index.
+	 * That will prevent them from making incompatible HOT updates.  The new
+	 * index will be marked not indisready and not indisvalid, so that no one
+	 * else tries to either insert into it or use it for queries.
+	 *
 	 * We must commit our current transaction so that the index becomes
 	 * visible; then start another.  Note that all the data structures we just
 	 * built are lost in the commit.  The only data we keep past here are the
@@ -1389,6 +1370,147 @@ ChooseRelationName(const char *name1, const char *name2,
 	}
 
 	return relname;
+}
+
+/*
+ * Select the name to be used for an index.
+ *
+ * The argument list is pretty ad-hoc :-(
+ */
+char *
+ChooseIndexName(const char *tabname, Oid namespaceId,
+				List *colnames, List *exclusionOpNames,
+				bool primary, bool isconstraint)
+{
+	char	   *indexname;
+
+	if (primary)
+	{
+		/* the primary key's name does not depend on the specific column(s) */
+		indexname = ChooseRelationName(tabname,
+									   NULL,
+									   "pkey",
+									   namespaceId);
+	}
+	else if (exclusionOpNames != NIL)
+	{
+		indexname = ChooseRelationName(tabname,
+									   ChooseIndexNameAddition(colnames),
+									   "exclusion",
+									   namespaceId);
+	}
+	else if (isconstraint)
+	{
+		indexname = ChooseRelationName(tabname,
+									   ChooseIndexNameAddition(colnames),
+									   "key",
+									   namespaceId);
+	}
+	else
+	{
+		indexname = ChooseRelationName(tabname,
+									   ChooseIndexNameAddition(colnames),
+									   "idx",
+									   namespaceId);
+	}
+
+	return indexname;
+}
+
+/*
+ * Generate "name2" for a new index given the list of column names for it
+ * (as produced by ChooseIndexColumnNames).  This will be passed to
+ * ChooseRelationName along with the parent table name and a suitable label.
+ *
+ * We know that less than NAMEDATALEN characters will actually be used,
+ * so we can truncate the result once we've generated that many.
+ */
+static char *
+ChooseIndexNameAddition(List *colnames)
+{
+	char		buf[NAMEDATALEN * 2];
+	int			buflen = 0;
+	ListCell   *lc;
+
+	buf[0] = '\0';
+	foreach(lc, colnames)
+	{
+		const char *name = (const char *) lfirst(lc);
+
+		if (buflen > 0)
+			buf[buflen++] = '_';			/* insert _ between names */
+
+		/*
+		 * At this point we have buflen <= NAMEDATALEN.  name should be less
+		 * than NAMEDATALEN already, but use strlcpy for paranoia.
+		 */
+		strlcpy(buf + buflen, name, NAMEDATALEN);
+		buflen += strlen(buf + buflen);
+		if (buflen >= NAMEDATALEN)
+			break;
+	}
+	return pstrdup(buf);
+}
+
+/*
+ * Select the actual names to be used for the columns of an index, given the
+ * list of IndexElems for the columns.  This is mostly about ensuring the
+ * names are unique so we don't get a conflicting-attribute-names error.
+ *
+ * Returns a List of plain strings (char *, not String nodes).
+ */
+List *
+ChooseIndexColumnNames(List *indexElems)
+{
+	List	   *result = NIL;
+	ListCell   *lc;
+
+	foreach(lc, indexElems)
+	{
+		IndexElem  *ielem = (IndexElem *) lfirst(lc);
+		const char *origname;
+		const char *curname;
+		int			i;
+		char		buf[NAMEDATALEN];
+
+		/* Get the preliminary name from the IndexElem */
+		if (ielem->indexcolname)
+			origname = ielem->indexcolname;	/* caller-specified name */
+		else if (ielem->name)
+			origname = ielem->name;			/* simple column reference */
+		else
+			origname = "expr";				/* default name for expression */
+
+		/* If it conflicts with any previous column, tweak it */
+		curname = origname;
+		for (i = 1;; i++)
+		{
+			ListCell   *lc2;
+			char		nbuf[32];
+			int			nlen;
+
+			foreach(lc2, result)
+			{
+				if (strcmp(curname, (char *) lfirst(lc2)) == 0)
+					break;
+			}
+			if (lc2 == NULL)
+				break;			/* found nonconflicting name */
+
+			sprintf(nbuf, "%d", i);
+
+			/* Ensure generated names are shorter than NAMEDATALEN */
+			nlen = pg_mbcliplen(origname, strlen(origname),
+								NAMEDATALEN - 1 - strlen(nbuf));
+			memcpy(buf, origname, nlen);
+			strcpy(buf + nlen, nbuf);
+			curname = buf;
+		}
+
+		/* And attach to the result list */
+		result = lappend(result, pstrdup(curname));
+	}
+	return result;
 }
 
 /*
