@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.310 2009/12/15 04:57:47 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.311 2009/12/23 16:43:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1905,17 +1905,6 @@ setRelhassubclassInRelation(Oid relationId, bool relhassubclass)
 
 /*
  *		renameatt		- changes the name of a attribute in a relation
- *
- *		Attname attribute is changed in attribute catalog.
- *		No record of the previous attname is kept (correct?).
- *
- *		get proper relrelation from relation catalog (if not arg)
- *		scan attribute catalog
- *				for name conflict (within rel)
- *				for original attribute (if not arg)
- *		modify attname in attribute tuple
- *		insert modified attribute in attribute catalog
- *		delete original attribute from attribute catalog
  */
 void
 renameatt(Oid myrelid,
@@ -1929,8 +1918,6 @@ renameatt(Oid myrelid,
 	HeapTuple	atttup;
 	Form_pg_attribute attform;
 	int			attnum;
-	List	   *indexoidlist;
-	ListCell   *indexoidscan;
 
 	/*
 	 * Grab an exclusive lock on the target table, which we will NOT release
@@ -2024,7 +2011,8 @@ renameatt(Oid myrelid,
 				 errmsg("cannot rename inherited column \"%s\"",
 						oldattname)));
 
-	/* should not already exist */
+	/* new name should not already exist */
+
 	/* this test is deliberately not attisdropped-aware */
 	if (SearchSysCacheExists(ATTNAME,
 							 ObjectIdGetDatum(myrelid),
@@ -2035,6 +2023,7 @@ renameatt(Oid myrelid,
 				 errmsg("column \"%s\" of relation \"%s\" already exists",
 					  newattname, RelationGetRelationName(targetrelation))));
 
+	/* apply the update */
 	namestrcpy(&(attform->attname), newattname);
 
 	simple_heap_update(attrelation, &atttup->t_self, atttup);
@@ -2043,63 +2032,6 @@ renameatt(Oid myrelid,
 	CatalogUpdateIndexes(attrelation, atttup);
 
 	heap_freetuple(atttup);
-
-	/*
-	 * Update column names of indexes that refer to the column being renamed.
-	 */
-	indexoidlist = RelationGetIndexList(targetrelation);
-
-	foreach(indexoidscan, indexoidlist)
-	{
-		Oid			indexoid = lfirst_oid(indexoidscan);
-		HeapTuple	indextup;
-		Form_pg_index indexform;
-		int			i;
-
-		/*
-		 * Scan through index columns to see if there's any simple index
-		 * entries for this attribute.	We ignore expressional entries.
-		 */
-		indextup = SearchSysCache(INDEXRELID,
-								  ObjectIdGetDatum(indexoid),
-								  0, 0, 0);
-		if (!HeapTupleIsValid(indextup))
-			elog(ERROR, "cache lookup failed for index %u", indexoid);
-		indexform = (Form_pg_index) GETSTRUCT(indextup);
-
-		for (i = 0; i < indexform->indnatts; i++)
-		{
-			if (attnum != indexform->indkey.values[i])
-				continue;
-
-			/*
-			 * Found one, rename it.
-			 */
-			atttup = SearchSysCacheCopy(ATTNUM,
-										ObjectIdGetDatum(indexoid),
-										Int16GetDatum(i + 1),
-										0, 0);
-			if (!HeapTupleIsValid(atttup))
-				continue;		/* should we raise an error? */
-
-			/*
-			 * Update the (copied) attribute tuple.
-			 */
-			namestrcpy(&(((Form_pg_attribute) GETSTRUCT(atttup))->attname),
-					   newattname);
-
-			simple_heap_update(attrelation, &atttup->t_self, atttup);
-
-			/* keep system catalog indexes current */
-			CatalogUpdateIndexes(attrelation, atttup);
-
-			heap_freetuple(atttup);
-		}
-
-		ReleaseSysCache(indextup);
-	}
-
-	list_free(indexoidlist);
 
 	heap_close(attrelation, RowExclusiveLock);
 
