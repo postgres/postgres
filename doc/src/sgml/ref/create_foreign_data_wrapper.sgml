@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_foreign_data_wrapper.sgml,v 1.5 2009/06/19 15:28:25 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_foreign_data_wrapper.sgml,v 1.6 2009/12/23 12:23:58 heikki Exp $
 PostgreSQL documentation
 -->
 
@@ -74,10 +74,9 @@ CREATE FOREIGN DATA WRAPPER <replaceable class="parameter">name</replaceable>
       take two arguments: one of type <type>text[]</type>, which will
       contain the array of options as stored in the system catalogs,
       and one of type <type>oid</type>, which will be the OID of the
-      system catalog containing the options, or zero if the context is
-      not known.  The return type is ignored; the function should
-      indicate invalid options using
-      the <function>ereport()</function> function.
+      system catalog containing the options. The return type is ignored;
+      the function should indicate invalid options using the
+      <function>ereport()</function> function.
      </para>
     </listitem>
    </varlistentry>

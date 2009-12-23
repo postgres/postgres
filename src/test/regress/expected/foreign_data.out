@@ -284,7 +284,7 @@ CREATE SERVER s6 VERSION '16.0' FOREIGN DATA WRAPPER foo OPTIONS (host 'a', dbna
 CREATE SERVER s7 TYPE 'oracle' VERSION '17.0' FOREIGN DATA WRAPPER foo OPTIONS (host 'a', dbname 'b');
 CREATE SERVER s8 FOREIGN DATA WRAPPER postgresql OPTIONS (foo '1'); -- ERROR
 ERROR:  invalid option "foo"
-HINT:  Valid options in this context are: authtype, service, user, password, connect_timeout, dbname, host, hostaddr, port, tty, options, requiressl, sslmode, gsslib
+HINT:  Valid options in this context are: authtype, service, connect_timeout, dbname, host, hostaddr, port, tty, options, requiressl, sslmode, gsslib
 CREATE SERVER s8 FOREIGN DATA WRAPPER postgresql OPTIONS (host 'localhost', dbname 's8db');
 \des+
                                                 List of foreign servers
@@ -395,7 +395,7 @@ ERROR:  permission denied for foreign-data wrapper foo
 RESET ROLE;
 ALTER SERVER s8 OPTIONS (foo '1');                          -- ERROR option validation
 ERROR:  invalid option "foo"
-HINT:  Valid options in this context are: authtype, service, user, password, connect_timeout, dbname, host, hostaddr, port, tty, options, requiressl, sslmode, gsslib
+HINT:  Valid options in this context are: authtype, service, connect_timeout, dbname, host, hostaddr, port, tty, options, requiressl, sslmode, gsslib
 ALTER SERVER s8 OPTIONS (connect_timeout '30', SET dbname 'db1', DROP host);
 SET ROLE regress_test_role;
 ALTER SERVER s1 OWNER TO regress_test_indirect;             -- ERROR
@@ -534,7 +534,7 @@ ERROR:  user mapping "foreign_data_user" already exists for server s4
 CREATE USER MAPPING FOR public SERVER s4 OPTIONS (mapping 'is public');
 CREATE USER MAPPING FOR user SERVER s8 OPTIONS (username 'test', password 'secret');    -- ERROR
 ERROR:  invalid option "username"
-HINT:  Valid options in this context are: authtype, service, user, password, connect_timeout, dbname, host, hostaddr, port, tty, options, requiressl, sslmode, gsslib
+HINT:  Valid options in this context are: user, password
 CREATE USER MAPPING FOR user SERVER s8 OPTIONS (user 'test', password 'secret');
 ALTER SERVER s5 OWNER TO regress_test_role;
 ALTER SERVER s6 OWNER TO regress_test_indirect;
@@ -573,7 +573,7 @@ ALTER USER MAPPING FOR public SERVER s5 OPTIONS (gotcha 'true');            -- E
 ERROR:  user mapping "public" does not exist for the server
 ALTER USER MAPPING FOR current_user SERVER s8 OPTIONS (username 'test');    -- ERROR
 ERROR:  invalid option "username"
-HINT:  Valid options in this context are: authtype, service, user, password, connect_timeout, dbname, host, hostaddr, port, tty, options, requiressl, sslmode, gsslib
+HINT:  Valid options in this context are: user, password
 ALTER USER MAPPING FOR current_user SERVER s8 OPTIONS (DROP user, SET password 'public');
 SET ROLE regress_test_role;
 ALTER USER MAPPING FOR current_user SERVER s5 OPTIONS (ADD modified '1');
