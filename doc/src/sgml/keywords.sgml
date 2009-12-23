@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/keywords.sgml,v 2.27 2009/11/05 23:24:22 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/keywords.sgml,v 2.28 2009/12/23 17:41:43 tgl Exp $ -->
 
 <appendix id="sql-keywords-appendix">
  <title><acronym>SQL</acronym> Key Words</title>
@@ -921,7 +921,7 @@
    </row>
    <row>
     <entry><token>CONCURRENTLY</token></entry>
-    <entry>non-reserved</entry>
+    <entry>reserved (can be function or type)</entry>
     <entry></entry>
     <entry></entry>
     <entry></entry>

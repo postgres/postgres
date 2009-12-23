@@ -689,7 +689,8 @@ DETAIL:  Key (f2)=(b) is duplicated.
 -- test that expression indexes and partial indexes work concurrently
 CREATE INDEX CONCURRENTLY concur_index4 on concur_heap(f2) WHERE f1='a';
 CREATE INDEX CONCURRENTLY concur_index5 on concur_heap(f2) WHERE f1='x';
-CREATE INDEX CONCURRENTLY concur_index6 on concur_heap((f2||f1));
+-- here we also check that you can default the index name
+CREATE INDEX CONCURRENTLY on concur_heap((f2||f1));
 -- You can't do a concurrent index build in a transaction
 BEGIN;
 CREATE INDEX CONCURRENTLY concur_index7 ON concur_heap(f1);
@@ -711,10 +712,10 @@ Table "public.concur_heap"
 Indexes:
     "concur_index2" UNIQUE, btree (f1)
     "concur_index3" UNIQUE, btree (f2) INVALID
+    "concur_heap_expr_idx" btree ((f2 || f1))
     "concur_index1" btree (f2, f1)
     "concur_index4" btree (f2) WHERE f1 = 'a'::text
     "concur_index5" btree (f2) WHERE f1 = 'x'::text
-    "concur_index6" btree ((f2 || f1))
     "std_index" btree (f2)
 
 DROP TABLE concur_heap;

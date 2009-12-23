@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_index.sgml,v 1.71 2009/03/24 20:17:08 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_index.sgml,v 1.72 2009/12/23 17:41:43 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -21,7 +21,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] <replaceable class="parameter">name</replaceable> ON <replaceable class="parameter">table</replaceable> [ USING <replaceable class="parameter">method</replaceable> ]
+CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] [ <replaceable class="parameter">name</replaceable> ] ON <replaceable class="parameter">table</replaceable> [ USING <replaceable class="parameter">method</replaceable> ]
     ( { <replaceable class="parameter">column</replaceable> | ( <replaceable class="parameter">expression</replaceable> ) } [ <replaceable class="parameter">opclass</replaceable> ] [ ASC | DESC ] [ NULLS { FIRST | LAST } ] [, ...] )
     [ WITH ( <replaceable class="PARAMETER">storage_parameter</replaceable> = <replaceable class="PARAMETER">value</replaceable> [, ... ] ) ]
     [ TABLESPACE <replaceable class="parameter">tablespace</replaceable> ]
@@ -33,8 +33,8 @@ CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] <replaceable class="parameter">name</re
   <title>Description</title>
 
   <para>
-   <command>CREATE INDEX</command> constructs an index named <replaceable
-   class="parameter">name</replaceable> on the specified table.
+   <command>CREATE INDEX</command> constructs an index
+   on the specified column(s) of the specified table.
    Indexes are primarily used to enhance database performance (though
    inappropriate use can result in slower performance).
   </para>
@@ -132,7 +132,9 @@ CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] <replaceable class="parameter">name</re
        <para>
         The name of the index to be created.  No schema name can be included
         here; the index is always created in the same schema as its parent
-        table.
+        table.  If the name is omitted, <productname>PostgreSQL</> chooses a
+        suitable name based on the parent table's name and the indexed column
+        name(s).
        </para>
       </listitem>
      </varlistentry>
@@ -514,8 +516,10 @@ CREATE UNIQUE INDEX title_idx ON films (title);
    To create an index on the expression <literal>lower(title)</>,
    allowing efficient case-insensitive searches:
 <programlisting>
-CREATE INDEX lower_title_idx ON films ((lower(title)));
+CREATE INDEX ON films ((lower(title)));
 </programlisting>
+   (In this example we have chosen to omit the index name, so the system
+   will choose a name, typically <literal>films_lower_idx</>.)
   </para>
 
   <para>
@@ -544,7 +548,7 @@ CREATE INDEX gin_idx ON documents_table (locations) WITH (fastupdate = off);
    <literal>films</> and have the index reside in the tablespace
    <literal>indexspace</>:
 <programlisting>
-CREATE INDEX code_idx ON films(code) TABLESPACE indexspace;
+CREATE INDEX code_idx ON films (code) TABLESPACE indexspace;
 </programlisting>
   </para>
 

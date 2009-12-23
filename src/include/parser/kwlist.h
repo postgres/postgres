@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/include/parser/kwlist.h,v 1.7 2009/12/07 05:22:23 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/include/parser/kwlist.h,v 1.8 2009/12/23 17:41:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -83,7 +83,7 @@ PG_KEYWORD("comment", COMMENT, UNRESERVED_KEYWORD)
 PG_KEYWORD("comments", COMMENTS, UNRESERVED_KEYWORD)
 PG_KEYWORD("commit", COMMIT, UNRESERVED_KEYWORD)
 PG_KEYWORD("committed", COMMITTED, UNRESERVED_KEYWORD)
-PG_KEYWORD("concurrently", CONCURRENTLY, UNRESERVED_KEYWORD)
+PG_KEYWORD("concurrently", CONCURRENTLY, TYPE_FUNC_NAME_KEYWORD)
 PG_KEYWORD("configuration", CONFIGURATION, UNRESERVED_KEYWORD)
 PG_KEYWORD("connection", CONNECTION, UNRESERVED_KEYWORD)
 PG_KEYWORD("constraint", CONSTRAINT, RESERVED_KEYWORD)
