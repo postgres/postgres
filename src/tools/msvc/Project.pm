@@ -3,7 +3,7 @@ package Project;
 #
 # Package that encapsulates a Visual C++ project file generation
 #
-# $PostgreSQL: pgsql/src/tools/msvc/Project.pm,v 1.21 2009/11/12 00:13:00 tgl Exp $
+# $PostgreSQL: pgsql/src/tools/msvc/Project.pm,v 1.22 2009/12/23 13:27:04 mha Exp $
 #
 use Carp;
 use strict;
@@ -32,7 +32,8 @@ sub new
         defines         => ';',
         solution        => $solution,
         disablewarnings => '4018;4244;4273;4102;4090',
-        disablelinkerwarnings => ''
+        disablelinkerwarnings => '',
+        vcver           => $solution->{vcver}
     };
 
     bless $self;
@@ -458,7 +459,7 @@ sub WriteHeader
 
     print $f <<EOF;
 <?xml version="1.0" encoding="Windows-1252"?>
-<VisualStudioProject ProjectType="Visual C++" Version="8.00" Name="$self->{name}" ProjectGUID="$self->{guid}">
+<VisualStudioProject ProjectType="Visual C++" Version="$self->{vcver}" Name="$self->{name}" ProjectGUID="$self->{guid}">
  <Platforms><Platform Name="Win32"/></Platforms>
  <Configurations>
 EOF

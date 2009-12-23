@@ -3,7 +3,7 @@ package Solution;
 #
 # Package that encapsulates a Visual C++ solution file generation
 #
-# $PostgreSQL: pgsql/src/tools/msvc/Solution.pm,v 1.48 2009/09/19 05:56:50 adunstan Exp $
+# $PostgreSQL: pgsql/src/tools/msvc/Solution.pm,v 1.49 2009/12/23 13:27:04 mha Exp $
 #
 use Carp;
 use strict;
@@ -20,6 +20,7 @@ sub new
         options  => $options,
         numver   => '',
         strver   => '',
+        vcver    => undef,
     };
     bless $self;
 	# integer_datetimes is now the default
@@ -51,8 +52,29 @@ sub new
 		unless $options->{wal_segsize}; # undef or 0 means default
 	die "Bad wal_segsize $options->{wal_segsize}"
 		unless grep {$_ == $options->{wal_segsize}} (1,2,4,8,16,32,64);
+
+    $self->DetermineToolVersions();
+
     return $self;
 }
+
+sub DetermineToolVersions
+{
+    my $self = shift;
+
+# Determine version of vcbuild command, to set proper verison of visual studio
+    open(P,"vcbuild /? |") || die "vcbuild command not found";
+    my $line = <P>;
+    close(P);
+    if ($line !~ /^Microsoft \(R\) Visual C\+\+ Project Builder - Command Line Version (\d+)\.00\.\d+/) {
+       die "Unable to determine vcbuild version from first line of output!";
+    }
+    if ($1 == 8) { $self->{vcver} = '8.00' }
+    elsif ($1 == 9) { $self->{vcver} = '9.00' }
+    else { die "Unsupported version of Visual Studio: $1" }
+    print "Detected Visual Studio version $self->{vcver}\n";
+}
+
 
 # Return 1 if $oldfile is newer than $newfile, or if $newfile doesn't exist.
 # Special case - if config.pl has changed, always return 1
