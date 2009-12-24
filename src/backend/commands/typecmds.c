@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/typecmds.c,v 1.140 2009/12/19 00:47:57 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/typecmds.c,v 1.141 2009/12/24 22:09:23 momjian Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -74,6 +74,7 @@ typedef struct
 	/* atts[] is of allocated length RelationGetNumberOfAttributes(rel) */
 } RelToCheck;
 
+Oid binary_upgrade_next_pg_type_array_oid = InvalidOid;
 
 static Oid	findTypeInputFunction(List *procname, Oid typeOid);
 static Oid	findTypeOutputFunction(List *procname, Oid typeOid);
@@ -143,7 +144,6 @@ DefineType(List *names, List *parameters)
 	Oid			array_oid;
 	Oid			typoid;
 	Oid			resulttype;
-	Relation	pg_type;
 	ListCell   *pl;
 
 	/*
@@ -522,10 +522,7 @@ DefineType(List *names, List *parameters)
 					   NameListToString(analyzeName));
 #endif
 
-	/* Preassign array type OID so we can insert it in pg_type.typarray */
-	pg_type = heap_open(TypeRelationId, AccessShareLock);
-	array_oid = GetNewOid(pg_type);
-	heap_close(pg_type, AccessShareLock);
+	array_oid = AssignTypeArrayOid();
 
 	/*
 	 * now have TypeCreate do all the real work.
@@ -1101,7 +1098,6 @@ DefineEnum(CreateEnumStmt *stmt)
 	AclResult	aclresult;
 	Oid			old_type_oid;
 	Oid			enumArrayOid;
-	Relation	pg_type;
 
 	/* Convert list of names to a name and namespace */
 	enumNamespace = QualifiedNameGetCreationNamespace(stmt->typeName,
@@ -1129,10 +1125,7 @@ DefineEnum(CreateEnumStmt *stmt)
 					 errmsg("type \"%s\" already exists", enumName)));
 	}
 
-	/* Preassign array type OID so we can insert it in pg_type.typarray */
-	pg_type = heap_open(TypeRelationId, AccessShareLock);
-	enumArrayOid = GetNewOid(pg_type);
-	heap_close(pg_type, AccessShareLock);
+	enumArrayOid = AssignTypeArrayOid();
 
 	/* Create the pg_type entry */
 	enumTypeOid =
@@ -1468,6 +1461,33 @@ findTypeAnalyzeFunction(List *procname, Oid typeOid)
 					 NameListToString(procname))));
 
 	return procOid;
+}
+
+/*
+ *	AssignTypeArrayOid
+ *
+ *	Pre-assign the type's array OID for use in pg_type.typarray
+ */
+Oid
+AssignTypeArrayOid(void)
+{
+	Oid		type_array_oid;
+
+	/* Pre-assign the type's array OID for use in pg_type.typarray */
+	if (OidIsValid(binary_upgrade_next_pg_type_array_oid))
+	{
+		type_array_oid = binary_upgrade_next_pg_type_array_oid;
+		binary_upgrade_next_pg_type_array_oid = InvalidOid;
+	}
+	else
+	{
+		Relation	pg_type = heap_open(TypeRelationId, AccessShareLock);
+
+		type_array_oid = GetNewOid(pg_type);
+		heap_close(pg_type, AccessShareLock);
+	}
+
+	return type_array_oid;
 }
 
 

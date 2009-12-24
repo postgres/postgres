@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/toasting.c,v 1.22 2009/12/23 02:35:18 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/toasting.c,v 1.23 2009/12/24 22:09:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,6 +31,7 @@
 #include "utils/builtins.h"
 #include "utils/syscache.h"
 
+Oid binary_upgrade_next_pg_type_toast_oid = InvalidOid;
 
 static bool create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid,
 				   Datum reloptions, bool force);
@@ -121,6 +122,7 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid,
 	Relation	class_rel;
 	Oid			toast_relid;
 	Oid			toast_idxid;
+	Oid			toast_typid = InvalidOid;
 	Oid			namespaceid;
 	char		toast_relname[NAMEDATALEN];
 	char		toast_idxname[NAMEDATALEN];
@@ -199,11 +201,17 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid,
 	else
 		namespaceid = PG_TOAST_NAMESPACE;
 
+	if (OidIsValid(binary_upgrade_next_pg_type_toast_oid))
+	{
+		toast_typid = binary_upgrade_next_pg_type_toast_oid;
+		binary_upgrade_next_pg_type_toast_oid = InvalidOid;
+	}
+
 	toast_relid = heap_create_with_catalog(toast_relname,
 										   namespaceid,
 										   rel->rd_rel->reltablespace,
 										   toastOid,
-										   InvalidOid,
+										   toast_typid,
 										   rel->rd_rel->relowner,
 										   tupdesc,
 										   NIL,

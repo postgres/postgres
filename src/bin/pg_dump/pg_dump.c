@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.560 2009/12/23 04:10:50 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.561 2009/12/24 22:09:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -196,6 +196,11 @@ static int	dumpBlobComments(Archive *AH, void *arg);
 static void dumpDatabase(Archive *AH);
 static void dumpEncoding(Archive *AH);
 static void dumpStdStrings(Archive *AH);
+static void binary_upgrade_set_type_oids_by_type_oid(
+					PQExpBuffer upgrade_buffer, Oid pg_type_oid);
+static bool binary_upgrade_set_type_oids_by_rel_oid(
+					PQExpBuffer upgrade_buffer, Oid pg_rel_oid);
+static void binary_upgrade_clear_pg_type_toast_oid(PQExpBuffer upgrade_buffer);
 static const char *getAttrName(int attrnum, TableInfo *tblInfo);
 static const char *fmtCopyColumnList(const TableInfo *ti);
 static void do_sql_command(PGconn *conn, const char *query);
@@ -2174,6 +2179,131 @@ dumpBlobComments(Archive *AH, void *arg)
 	destroyPQExpBuffer(cmdQry);
 
 	return 1;
+}
+
+static void
+binary_upgrade_set_type_oids_by_type_oid(PQExpBuffer upgrade_buffer,
+											   Oid pg_type_oid)
+{
+	PQExpBuffer upgrade_query = createPQExpBuffer();
+	int			ntups;
+	PGresult   *upgrade_res;
+	Oid			pg_type_array_oid;
+			
+	appendPQExpBuffer(upgrade_buffer, "\n-- For binary upgrade, must preserve pg_type oid\n");
+	appendPQExpBuffer(upgrade_buffer,
+		"SELECT binary_upgrade.set_next_pg_type_oid('%u'::pg_catalog.oid);\n\n",
+		pg_type_oid);
+
+	/* we only support old >= 8.3 for binary upgrades */
+	appendPQExpBuffer(upgrade_query,
+					  "SELECT typarray "
+					  "FROM pg_catalog.pg_type "
+					  "WHERE pg_type.oid = '%u'::pg_catalog.oid;",
+					  pg_type_oid);
+
+	upgrade_res = PQexec(g_conn, upgrade_query->data);
+	check_sql_result(upgrade_res, g_conn, upgrade_query->data, PGRES_TUPLES_OK);
+
+	/* Expecting a single result only */
+	ntups = PQntuples(upgrade_res);
+	if (ntups != 1)
+	{
+		write_msg(NULL, ngettext("query returned %d row instead of one: %s\n",
+							   "query returned %d rows instead of one: %s\n",
+								 ntups),
+				  ntups, upgrade_query->data);
+		exit_nicely();
+	}
+
+	pg_type_array_oid = atooid(PQgetvalue(upgrade_res, 0, PQfnumber(upgrade_res, "typarray")));
+
+	if (OidIsValid(pg_type_array_oid))
+	{
+		appendPQExpBuffer(upgrade_buffer,
+							"\n-- For binary upgrade, must preserve pg_type array oid\n");
+		appendPQExpBuffer(upgrade_buffer,
+			"SELECT binary_upgrade.set_next_pg_type_array_oid('%u'::pg_catalog.oid);\n\n",
+			pg_type_array_oid);
+	}
+
+	PQclear(upgrade_res);
+	destroyPQExpBuffer(upgrade_query);
+}
+
+static bool
+binary_upgrade_set_type_oids_by_rel_oid(PQExpBuffer upgrade_buffer,
+											   Oid pg_rel_oid)
+{
+	PQExpBuffer upgrade_query = createPQExpBuffer();
+	int			ntups;
+	PGresult   *upgrade_res;
+	Oid			pg_type_oid;
+	bool		toast_set = false;
+	
+	/* we only support old >= 8.3 for binary upgrades */
+	appendPQExpBuffer(upgrade_query,
+					  "SELECT c.reltype AS crel, t.reltype AS trel "
+					  "FROM pg_catalog.pg_class c "
+					  "LEFT JOIN pg_catalog.pg_class t ON "
+					  "  (c.reltoastrelid = t.oid) "
+					  "WHERE c.oid = '%u'::pg_catalog.oid;",
+					  pg_rel_oid);
+
+	upgrade_res = PQexec(g_conn, upgrade_query->data);
+	check_sql_result(upgrade_res, g_conn, upgrade_query->data, PGRES_TUPLES_OK);
+
+	/* Expecting a single result only */
+	ntups = PQntuples(upgrade_res);
+	if (ntups != 1)
+	{
+		write_msg(NULL, ngettext("query returned %d row instead of one: %s\n",
+							   "query returned %d rows instead of one: %s\n",
+								 ntups),
+				  ntups, upgrade_query->data);
+		exit_nicely();
+	}
+
+	pg_type_oid = atooid(PQgetvalue(upgrade_res, 0, PQfnumber(upgrade_res, "crel")));
+
+	binary_upgrade_set_type_oids_by_type_oid(upgrade_buffer, pg_type_oid);
+
+	if (!PQgetisnull(upgrade_res, 0, PQfnumber(upgrade_res, "trel")))
+	{
+		/* Toast tables do not have pg_type array rows */
+		Oid pg_type_toast_oid = atooid(PQgetvalue(upgrade_res, 0,
+										PQfnumber(upgrade_res, "trel")));
+
+		appendPQExpBuffer(upgrade_buffer, "\n-- For binary upgrade, must preserve pg_type toast oid\n");
+		appendPQExpBuffer(upgrade_buffer,
+			"SELECT binary_upgrade.set_next_pg_type_toast_oid('%u'::pg_catalog.oid);\n\n",
+			pg_type_toast_oid);
+
+		toast_set = true;
+	}
+
+	PQclear(upgrade_res);
+	destroyPQExpBuffer(upgrade_query);
+
+	return toast_set;
+}
+
+static void
+binary_upgrade_clear_pg_type_toast_oid(PQExpBuffer upgrade_buffer)
+{
+	/*
+	 *	One complexity is that while the heap might now have a TOAST table,
+	 *	the TOAST table might have been created long after creation when
+	 *	the table was loaded with wide data.  For that reason, we clear
+	 *	binary_upgrade_set_next_pg_type_toast_oid so it is not reused
+	 *	by a later table.  Logically any later creation that needs a TOAST
+	 *	table should have its own TOAST pg_type oid, but we are cautious.
+	 */
+	appendPQExpBuffer(upgrade_buffer,
+		"\n-- For binary upgrade, clear toast oid because it might not have been needed\n");
+	appendPQExpBuffer(upgrade_buffer,
+		"SELECT binary_upgrade.set_next_pg_type_oid('%u'::pg_catalog.oid);\n\n",
+		InvalidOid);
 }
 
 /*
@@ -6428,6 +6558,10 @@ dumpEnumType(Archive *fout, TypeInfo *tyinfo)
 					  fmtId(tyinfo->dobj.namespace->dobj.name));
 	appendPQExpBuffer(delq, "%s;\n",
 					  fmtId(tyinfo->dobj.name));
+
+	if (binary_upgrade)
+		binary_upgrade_set_type_oids_by_type_oid(q, tyinfo->dobj.catId.oid);
+
 	appendPQExpBuffer(q, "CREATE TYPE %s AS ENUM (\n",
 					  fmtId(tyinfo->dobj.name));
 	for (i = 0; i < num; i++)
@@ -6723,6 +6857,10 @@ dumpBaseType(Archive *fout, TypeInfo *tyinfo)
 	appendPQExpBuffer(delq, "%s CASCADE;\n",
 					  fmtId(tyinfo->dobj.name));
 
+	/* We might already have a shell type, but setting pg_type_oid is harmless */
+	if (binary_upgrade)
+		binary_upgrade_set_type_oids_by_type_oid(q, tyinfo->dobj.catId.oid);
+
 	appendPQExpBuffer(q,
 					  "CREATE TYPE %s (\n"
 					  "    INTERNALLENGTH = %s",
@@ -6892,6 +7030,9 @@ dumpDomain(Archive *fout, TypeInfo *tyinfo)
 	else
 		typdefault = NULL;
 
+	if (binary_upgrade)
+		binary_upgrade_set_type_oids_by_type_oid(q, tyinfo->dobj.catId.oid);
+
 	appendPQExpBuffer(q,
 					  "CREATE DOMAIN %s AS %s",
 					  fmtId(tyinfo->dobj.name),
@@ -7001,6 +7142,9 @@ dumpCompositeType(Archive *fout, TypeInfo *tyinfo)
 
 	i_attname = PQfnumber(res, "attname");
 	i_atttypdefn = PQfnumber(res, "atttypdefn");
+
+	if (binary_upgrade)
+		binary_upgrade_set_type_oids_by_type_oid(q, tyinfo->dobj.catId.oid);
 
 	appendPQExpBuffer(q, "CREATE TYPE %s AS (",
 					  fmtId(tyinfo->dobj.name));
@@ -7190,6 +7334,10 @@ dumpShellType(Archive *fout, ShellTypeInfo *stinfo)
 	 * the shell type's owner immediately on creation; that should happen only
 	 * after it's filled in, otherwise the backend complains.
 	 */
+
+	if (binary_upgrade)
+		binary_upgrade_set_type_oids_by_type_oid(q,
+								stinfo->baseType->dobj.catId.oid);
 
 	appendPQExpBuffer(q, "CREATE TYPE %s;\n",
 					  fmtId(stinfo->dobj.name));
@@ -10226,9 +10374,14 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 	char	   *storage;
 	int			j,
 				k;
-
+	bool		toast_set = false;
+	
 	/* Make sure we are in proper schema */
 	selectSourceSchema(tbinfo->dobj.namespace->dobj.name);
+
+	if (binary_upgrade)
+		toast_set = binary_upgrade_set_type_oids_by_rel_oid(q,
+												tbinfo->dobj.catId.oid);
 
 	/* Is it a table or a view? */
 	if (tbinfo->relkind == RELKIND_VIEW)
@@ -10606,6 +10759,9 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 		}
 	}
 
+	if (binary_upgrade && toast_set)
+		binary_upgrade_clear_pg_type_toast_oid(q);
+
 	ArchiveEntry(fout, tbinfo->dobj.catId, tbinfo->dobj.dumpId,
 				 tbinfo->dobj.name,
 				 tbinfo->dobj.namespace->dobj.name,
@@ -10616,6 +10772,7 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 				 q->data, delq->data, NULL,
 				 tbinfo->dobj.dependencies, tbinfo->dobj.nDeps,
 				 NULL, NULL);
+
 
 	/* Dump Table Comments */
 	dumpTableComment(fout, tbinfo, reltypename);
@@ -11235,6 +11392,10 @@ dumpSequence(Archive *fout, TableInfo *tbinfo)
 						  fmtId(tbinfo->dobj.name));
 
 		resetPQExpBuffer(query);
+
+		if (binary_upgrade)
+			binary_upgrade_set_type_oids_by_rel_oid(query, tbinfo->dobj.catId.oid);
+
 		appendPQExpBuffer(query,
 						  "CREATE SEQUENCE %s\n",
 						  fmtId(tbinfo->dobj.name));
@@ -11270,6 +11431,8 @@ dumpSequence(Archive *fout, TableInfo *tbinfo)
 
 		appendPQExpBuffer(query, ";\n");
 
+		/* binary_upgrade:  no need to clear TOAST table oid */
+		
 		ArchiveEntry(fout, tbinfo->dobj.catId, tbinfo->dobj.dumpId,
 					 tbinfo->dobj.name,
 					 tbinfo->dobj.namespace->dobj.name,

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_type.c,v 1.127 2009/08/16 18:14:34 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_type.c,v 1.128 2009/12/24 22:09:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,6 +32,7 @@
 #include "utils/rel.h"
 #include "utils/syscache.h"
 
+Oid binary_upgrade_next_pg_type_oid = InvalidOid;
 
 /* ----------------------------------------------------------------
  *		TypeShellMake
@@ -118,6 +119,12 @@ TypeShellMake(const char *typeName, Oid typeNamespace, Oid ownerId)
 	 * create a new type tuple
 	 */
 	tup = heap_form_tuple(tupDesc, values, nulls);
+
+	if (OidIsValid(binary_upgrade_next_pg_type_oid))
+	{
+		HeapTupleSetOid(tup, binary_upgrade_next_pg_type_oid);
+		binary_upgrade_next_pg_type_oid = InvalidOid;
+	}
 
 	/*
 	 * insert the tuple in the relation and get the tuple's oid.
@@ -409,10 +416,16 @@ TypeCreate(Oid newTypeOid,
 							  values,
 							  nulls);
 
-		/* Force the OID if requested by caller, else heap_insert does it */
+		/* Force the OID if requested by caller */
 		if (OidIsValid(newTypeOid))
 			HeapTupleSetOid(tup, newTypeOid);
-
+		else if (OidIsValid(binary_upgrade_next_pg_type_oid))
+		{
+			HeapTupleSetOid(tup, binary_upgrade_next_pg_type_oid);
+			binary_upgrade_next_pg_type_oid = InvalidOid;
+		}
+		/* else allow system to assign oid */
+		
 		typeObjectId = simple_heap_insert(pg_type_desc, tup);
 	}
 

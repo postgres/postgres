@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.361 2009/12/07 05:22:21 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.362 2009/12/24 22:09:23 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1001,13 +1001,7 @@ heap_create_with_catalog(const char *relname,
 	if (IsUnderPostmaster && (relkind == RELKIND_RELATION ||
 							  relkind == RELKIND_VIEW ||
 							  relkind == RELKIND_COMPOSITE_TYPE))
-	{
-		/* OK, so pre-assign a type OID for the array type */
-		Relation	pg_type = heap_open(TypeRelationId, AccessShareLock);
-
-		new_array_oid = GetNewOid(pg_type);
-		heap_close(pg_type, AccessShareLock);
-	}
+		new_array_oid = AssignTypeArrayOid();
 
 	/*
 	 * Since defining a relation also defines a complex type, we add a new
