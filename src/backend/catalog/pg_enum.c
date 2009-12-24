@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_enum.c,v 1.10 2009/12/19 00:47:57 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_enum.c,v 1.11 2009/12/24 22:17:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,14 +39,14 @@ EnumValuesCreate(Oid enumTypeOid, List *vals)
 	TupleDesc	tupDesc;
 	NameData	enumlabel;
 	Oid		   *oids;
-	int			i,
-				n;
+	int			elemno,
+				num_elems;
 	Datum		values[Natts_pg_enum];
 	bool		nulls[Natts_pg_enum];
 	ListCell   *lc;
 	HeapTuple	tup;
 
-	n = list_length(vals);
+	num_elems = list_length(vals);
 
 	/*
 	 * XXX we do not bother to check the list of values for duplicates --- if
@@ -64,23 +64,23 @@ EnumValuesCreate(Oid enumTypeOid, List *vals)
 	 * counter wraps all the way around before we finish. Which seems
 	 * unlikely.
 	 */
-	oids = (Oid *) palloc(n * sizeof(Oid));
-	for (i = 0; i < n; i++)
+	oids = (Oid *) palloc(num_elems * sizeof(Oid));
+	for (elemno = 0; elemno < num_elems; elemno++)
 	{
 		/*
 		 *	The pg_enum.oid is stored in user tables.  This oid must be
 		 *	preserved by binary upgrades.
 		 */
-		oids[i] = GetNewOid(pg_enum);
+		oids[elemno] = GetNewOid(pg_enum);
 	}
 
 	/* sort them, just in case counter wrapped from high to low */
-	qsort(oids, n, sizeof(Oid), oid_cmp);
+	qsort(oids, num_elems, sizeof(Oid), oid_cmp);
 
 	/* and make the entries */
 	memset(nulls, false, sizeof(nulls));
 
-	i = 0;
+	elemno = 0;
 	foreach(lc, vals)
 	{
 		char	   *lab = strVal(lfirst(lc));
@@ -101,13 +101,13 @@ EnumValuesCreate(Oid enumTypeOid, List *vals)
 		values[Anum_pg_enum_enumlabel - 1] = NameGetDatum(&enumlabel);
 
 		tup = heap_form_tuple(tupDesc, values, nulls);
-		HeapTupleSetOid(tup, oids[i]);
+		HeapTupleSetOid(tup, oids[elemno]);
 
 		simple_heap_insert(pg_enum, tup);
 		CatalogUpdateIndexes(pg_enum, tup);
 		heap_freetuple(tup);
 
-		i++;
+		elemno++;
 	}
 
 	/* clean up */
