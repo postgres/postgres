@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.240 2009/12/19 17:49:50 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.241 2009/12/25 01:09:31 rhaas Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -1753,6 +1753,9 @@ archive_command = 'copy "%p" "C:\\server\\archivedir\\%f"'  # Windows
 
      <varlistentry id="recovery-connections" xreflabel="recovery_connections">
       <term><varname>recovery_connections</varname> (<type>boolean</type>)</term>
+      <indexterm>
+       <primary><varname>recovery_connections</> configuration parameter</primary>
+      </indexterm>
       <listitem>
        <para>
         Parameter has two roles. During recovery, specifies whether or not
@@ -1771,6 +1774,9 @@ archive_command = 'copy "%p" "C:\\server\\archivedir\\%f"'  # Windows
 
      <varlistentry id="max-standby-delay" xreflabel="max_standby_delay">
       <term><varname>max_standby_delay</varname> (<type>string</type>)</term>
+      <indexterm>
+       <primary><varname>max_standby_delay</> configuration parameter</primary>
+      </indexterm>
       <listitem>
        <para>
         When server acts as a standby, this parameter specifies a wait policy
