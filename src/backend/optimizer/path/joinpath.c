@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/joinpath.c,v 1.126 2009/09/19 17:48:09 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/joinpath.c,v 1.127 2009/12/25 17:11:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -228,6 +228,11 @@ join_is_removable(PlannerInfo *root,
 	 * We can't remove the join if any inner-rel attributes are used above
 	 * the join.
 	 *
+	 * Note that this test only detects use of inner-rel attributes in
+	 * higher join conditions and the target list.  There might be such
+	 * attributes in pushed-down conditions at this join, too.  We check
+	 * that case below.
+	 *
 	 * As a micro-optimization, it seems better to start with max_attr and
 	 * count down rather than starting with min_attr and counting up, on the
 	 * theory that the system attributes are somewhat less likely to be wanted
@@ -253,13 +258,16 @@ join_is_removable(PlannerInfo *root,
 		RestrictInfo *restrictinfo = (RestrictInfo *) lfirst(l);
 
 		/*
-		 * We are always considering an outer join here, so ignore pushed-down
-		 * clauses.  Also ignore anything that doesn't have a mergejoinable
-		 * operator.
+		 * If we find a pushed-down clause, it must have come from above the
+		 * outer join and it must contain references to the inner rel.  (If
+		 * it had only outer-rel variables, it'd have been pushed down into
+		 * the outer rel.)  Therefore, we can conclude that join removal
+		 * is unsafe without any examination of the clause contents.
 		 */
 		if (restrictinfo->is_pushed_down)
-			continue;
+			return false;
 
+		/* Ignore if it's not a mergejoinable clause */
 		if (!restrictinfo->can_join ||
 			restrictinfo->mergeopfamilies == NIL)
 			continue;			/* not mergejoinable */
