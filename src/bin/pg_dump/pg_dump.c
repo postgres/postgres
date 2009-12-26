@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.561 2009/12/24 22:09:23 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.562 2009/12/26 16:55:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -6542,12 +6542,6 @@ dumpEnumType(Archive *fout, TypeInfo *tyinfo)
 	check_sql_result(res, g_conn, query->data, PGRES_TUPLES_OK);
 
 	num = PQntuples(res);
-	/* should be at least 1 value */
-	if (num == 0)
-	{
-		write_msg(NULL, "no label definitions found for enum ID %u\n", tyinfo->dobj.catId.oid);
-		exit_nicely();
-	}
 
 	/*
 	 * DROP must be fully qualified in case same name appears in pg_catalog.

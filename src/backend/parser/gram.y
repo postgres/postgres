@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.699 2009/12/23 17:41:43 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.700 2009/12/26 16:55:21 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -297,7 +297,7 @@ static TypeName *TableFuncTypeName(List *columns);
 				TableFuncElementList opt_type_modifiers
 				prep_type_clause
 				execute_param_clause using_clause returning_clause
-				enum_val_list table_func_column_list
+				opt_enum_val_list enum_val_list table_func_column_list
 				create_generic_options alter_generic_options
 				relation_expr_list dostmt_opt_list
 
@@ -3623,7 +3623,7 @@ DefineStmt:
 					n->coldeflist = $6;
 					$$ = (Node *)n;
 				}
-			| CREATE TYPE_P any_name AS ENUM_P '(' enum_val_list ')'
+			| CREATE TYPE_P any_name AS ENUM_P '(' opt_enum_val_list ')'
 				{
 					CreateEnumStmt *n = makeNode(CreateEnumStmt);
 					n->typeName = $3;
@@ -3713,6 +3713,11 @@ old_aggr_elem:  IDENT '=' def_arg
 				{
 					$$ = makeDefElem($1, (Node *)$3);
 				}
+		;
+
+opt_enum_val_list:
+		enum_val_list							{ $$ = $1; }
+		| /*EMPTY*/								{ $$ = NIL; }
 		;
 
 enum_val_list:	Sconst
