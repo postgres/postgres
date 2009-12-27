@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/win32env.c,v 1.4 2009/12/27 16:01:39 mha Exp $
+ *	  $PostgreSQL: pgsql/src/port/win32env.c,v 1.5 2009/12/27 16:11:28 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,7 +35,6 @@ pgwin32_putenv(const char *envval)
 	typedef int (_cdecl * PUTENVPROC) (const char *);
 	HMODULE		hmodule;
 	static PUTENVPROC putenvFunc = NULL;
-	int			ret;
 
 	if (putenvFunc == NULL)
 	{
