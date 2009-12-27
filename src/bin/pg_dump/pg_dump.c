@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.562 2009/12/26 16:55:21 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.563 2009/12/27 14:50:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -6528,12 +6528,14 @@ dumpEnumType(Archive *fout, TypeInfo *tyinfo)
 	PGresult   *res;
 	int			num,
 				i;
+	Oid			enum_oid;
 	char	   *label;
 
 	/* Set proper schema search path so regproc references list correctly */
 	selectSourceSchema(tyinfo->dobj.namespace->dobj.name);
 
-	appendPQExpBuffer(query, "SELECT enumlabel FROM pg_catalog.pg_enum "
+	appendPQExpBuffer(query, "SELECT oid, enumlabel "
+					  "FROM pg_catalog.pg_enum "
 					  "WHERE enumtypid = '%u'"
 					  "ORDER BY oid",
 					  tyinfo->dobj.catId.oid);
@@ -6556,17 +6558,43 @@ dumpEnumType(Archive *fout, TypeInfo *tyinfo)
 	if (binary_upgrade)
 		binary_upgrade_set_type_oids_by_type_oid(q, tyinfo->dobj.catId.oid);
 
-	appendPQExpBuffer(q, "CREATE TYPE %s AS ENUM (\n",
+	appendPQExpBuffer(q, "CREATE TYPE %s AS ENUM (",
 					  fmtId(tyinfo->dobj.name));
-	for (i = 0; i < num; i++)
+
+	if (!binary_upgrade)
 	{
-		label = PQgetvalue(res, i, 0);
-		if (i > 0)
-			appendPQExpBuffer(q, ",\n");
-		appendPQExpBuffer(q, "    ");
-		appendStringLiteralAH(q, label, fout);
+		/* Labels with server-assigned oids */
+		for (i = 0; i < num; i++)
+		{
+			label = PQgetvalue(res, i, PQfnumber(res, "enumlabel"));
+			if (i > 0)
+				appendPQExpBuffer(q, ",");
+			appendPQExpBuffer(q, "\n    ");
+			appendStringLiteralAH(q, label, fout);
+		}
 	}
+
 	appendPQExpBuffer(q, "\n);\n");
+
+	if (binary_upgrade)
+	{
+		/* Labels with dump-assigned (preserved) oids */
+		for (i = 0; i < num; i++)
+		{
+			enum_oid = atooid(PQgetvalue(res, i, PQfnumber(res, "oid")));
+			label = PQgetvalue(res, i, PQfnumber(res, "enumlabel"));
+
+			if (i == 0)
+				appendPQExpBuffer(q, "\n-- For binary upgrade, must preserve pg_enum oids\n");
+			appendPQExpBuffer(q,
+				"SELECT binary_upgrade.add_pg_enum_label('%u'::pg_catalog.oid, "
+				"'%u'::pg_catalog.oid, ",
+				enum_oid, tyinfo->dobj.catId.oid);
+			appendStringLiteralAH(q, label, fout);
+			appendPQExpBuffer(q, ");\n");
+		}
+		appendPQExpBuffer(q, "\n");
+	}
 
 	ArchiveEntry(fout, tyinfo->dobj.catId, tyinfo->dobj.dumpId,
 				 tyinfo->dobj.name,

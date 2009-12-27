@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_enum.c,v 1.11 2009/12/24 22:17:58 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_enum.c,v 1.12 2009/12/27 14:50:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,7 +33,8 @@ static int	oid_cmp(const void *p1, const void *p2);
  * vals is a list of Value strings.
  */
 void
-EnumValuesCreate(Oid enumTypeOid, List *vals)
+EnumValuesCreate(Oid enumTypeOid, List *vals,
+				 Oid binary_upgrade_next_pg_enum_oid)
 {
 	Relation	pg_enum;
 	TupleDesc	tupDesc;
@@ -58,24 +59,38 @@ EnumValuesCreate(Oid enumTypeOid, List *vals)
 	tupDesc = pg_enum->rd_att;
 
 	/*
-	 * Allocate oids.  While this method does not absolutely guarantee that we
-	 * generate no duplicate oids (since we haven't entered each oid into the
-	 * table before allocating the next), trouble could only occur if the oid
-	 * counter wraps all the way around before we finish. Which seems
-	 * unlikely.
+	 *	Allocate oids
 	 */
 	oids = (Oid *) palloc(num_elems * sizeof(Oid));
-	for (elemno = 0; elemno < num_elems; elemno++)
+	if (OidIsValid(binary_upgrade_next_pg_enum_oid))
+	{
+			if (num_elems != 1)
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+						 errmsg("EnumValuesCreate() can only set a single OID")));
+			oids[0] = binary_upgrade_next_pg_enum_oid;
+			binary_upgrade_next_pg_enum_oid = InvalidOid;
+	}	
+	else
 	{
 		/*
-		 *	The pg_enum.oid is stored in user tables.  This oid must be
-		 *	preserved by binary upgrades.
+		 * While this method does not absolutely guarantee that we generate
+		 * no duplicate oids (since we haven't entered each oid into the
+		 * table before allocating the next), trouble could only occur if
+		 * the oid counter wraps all the way around before we finish. Which
+		 * seems unlikely.
 		 */
-		oids[elemno] = GetNewOid(pg_enum);
+		for (elemno = 0; elemno < num_elems; elemno++)
+		{
+			/*
+			 *	The pg_enum.oid is stored in user tables.  This oid must be
+			 *	preserved by binary upgrades.
+			 */
+			oids[elemno] = GetNewOid(pg_enum);
+		}
+		/* sort them, just in case counter wrapped from high to low */
+		qsort(oids, num_elems, sizeof(Oid), oid_cmp);
 	}
-
-	/* sort them, just in case counter wrapped from high to low */
-	qsort(oids, num_elems, sizeof(Oid), oid_cmp);
 
 	/* and make the entries */
 	memset(nulls, false, sizeof(nulls));
