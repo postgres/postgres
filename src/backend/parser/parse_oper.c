@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_oper.c,v 1.109 2009/06/13 15:42:09 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_oper.c,v 1.110 2009/12/27 18:55:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1097,9 +1097,6 @@ find_oper_cache_entry(OprCacheKey *key)
 	{
 		/* First time through: initialize the hash table */
 		HASHCTL		ctl;
-
-		if (!CacheMemoryContext)
-			CreateCacheMemoryContext();
 
 		MemSet(&ctl, 0, sizeof(ctl));
 		ctl.keysize = sizeof(OprCacheKey);

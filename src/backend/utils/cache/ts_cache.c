@@ -20,7 +20,7 @@
  * Copyright (c) 2006-2009, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/ts_cache.c,v 1.9 2009/01/01 17:23:50 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/ts_cache.c,v 1.10 2009/12/27 18:55:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,7 +42,6 @@
 #include "tsearch/ts_cache.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
-#include "utils/catcache.h"
 #include "utils/fmgroids.h"
 #include "utils/inval.h"
 #include "utils/lsyscache.h"
@@ -119,9 +118,6 @@ lookup_ts_parser_cache(Oid prsId)
 		/* First time through: initialize the hash table */
 		HASHCTL		ctl;
 
-		if (!CacheMemoryContext)
-			CreateCacheMemoryContext();
-
 		MemSet(&ctl, 0, sizeof(ctl));
 		ctl.keysize = sizeof(Oid);
 		ctl.entrysize = sizeof(TSParserCacheEntry);
@@ -131,6 +127,10 @@ lookup_ts_parser_cache(Oid prsId)
 		/* Flush cache on pg_ts_parser changes */
 		CacheRegisterSyscacheCallback(TSPARSEROID, InvalidateTSCacheCallBack,
 									  PointerGetDatum(TSParserCacheHash));
+
+		/* Also make sure CacheMemoryContext exists */
+		if (!CacheMemoryContext)
+			CreateCacheMemoryContext();
 	}
 
 	/* Check single-entry cache */
@@ -219,9 +219,6 @@ lookup_ts_dictionary_cache(Oid dictId)
 		/* First time through: initialize the hash table */
 		HASHCTL		ctl;
 
-		if (!CacheMemoryContext)
-			CreateCacheMemoryContext();
-
 		MemSet(&ctl, 0, sizeof(ctl));
 		ctl.keysize = sizeof(Oid);
 		ctl.entrysize = sizeof(TSDictionaryCacheEntry);
@@ -233,6 +230,10 @@ lookup_ts_dictionary_cache(Oid dictId)
 									  PointerGetDatum(TSDictionaryCacheHash));
 		CacheRegisterSyscacheCallback(TSTEMPLATEOID, InvalidateTSCacheCallBack,
 									  PointerGetDatum(TSDictionaryCacheHash));
+
+		/* Also make sure CacheMemoryContext exists */
+		if (!CacheMemoryContext)
+			CreateCacheMemoryContext();
 	}
 
 	/* Check single-entry cache */
@@ -370,9 +371,6 @@ init_ts_config_cache(void)
 {
 	HASHCTL		ctl;
 
-	if (!CacheMemoryContext)
-		CreateCacheMemoryContext();
-
 	MemSet(&ctl, 0, sizeof(ctl));
 	ctl.keysize = sizeof(Oid);
 	ctl.entrysize = sizeof(TSConfigCacheEntry);
@@ -384,6 +382,10 @@ init_ts_config_cache(void)
 								  PointerGetDatum(TSConfigCacheHash));
 	CacheRegisterSyscacheCallback(TSCONFIGMAP, InvalidateTSCacheCallBack,
 								  PointerGetDatum(TSConfigCacheHash));
+
+	/* Also make sure CacheMemoryContext exists */
+	if (!CacheMemoryContext)
+		CreateCacheMemoryContext();
 }
 
 /*

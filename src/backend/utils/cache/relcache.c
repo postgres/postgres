@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.293 2009/12/07 05:22:22 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.294 2009/12/27 18:55:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1181,15 +1181,16 @@ LookupOpclassInfo(Oid operatorClassOid,
 		/* First time through: initialize the opclass cache */
 		HASHCTL		ctl;
 
-		if (!CacheMemoryContext)
-			CreateCacheMemoryContext();
-
 		MemSet(&ctl, 0, sizeof(ctl));
 		ctl.keysize = sizeof(Oid);
 		ctl.entrysize = sizeof(OpClassCacheEnt);
 		ctl.hash = oid_hash;
 		OpClassCache = hash_create("Operator class cache", 64,
 								   &ctl, HASH_ELEM | HASH_FUNCTION);
+
+		/* Also make sure CacheMemoryContext exists */
+		if (!CacheMemoryContext)
+			CreateCacheMemoryContext();
 	}
 
 	opcentry = (OpClassCacheEnt *) hash_search(OpClassCache,
@@ -2513,16 +2514,13 @@ RelationBuildLocalRelation(const char *relname,
 void
 RelationCacheInitialize(void)
 {
-	MemoryContext oldcxt;
 	HASHCTL		ctl;
 
 	/*
-	 * switch to cache memory context
+	 * make sure cache memory context exists
 	 */
 	if (!CacheMemoryContext)
 		CreateCacheMemoryContext();
-
-	oldcxt = MemoryContextSwitchTo(CacheMemoryContext);
 
 	/*
 	 * create hashtable that indexes the relcache
@@ -2533,8 +2531,6 @@ RelationCacheInitialize(void)
 	ctl.hash = oid_hash;
 	RelationIdCache = hash_create("Relcache by OID", INITRELCACHESIZE,
 								  &ctl, HASH_ELEM | HASH_FUNCTION);
-
-	MemoryContextSwitchTo(oldcxt);
 }
 
 /*
