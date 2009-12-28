@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/typecmds.c,v 1.143 2009/12/28 18:39:03 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/typecmds.c,v 1.144 2009/12/28 18:49:05 momjian Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -74,7 +74,7 @@ typedef struct
 	/* atts[] is of allocated length RelationGetNumberOfAttributes(rel) */
 } RelToCheck;
 
-PGDLLIMPORT Oid binary_upgrade_next_pg_type_array_oid = InvalidOid;
+Oid binary_upgrade_next_pg_type_array_oid = InvalidOid;
 
 static Oid	findTypeInputFunction(List *procname, Oid typeOid);
 static Oid	findTypeOutputFunction(List *procname, Oid typeOid);

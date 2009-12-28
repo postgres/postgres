@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_type.c,v 1.129 2009/12/28 18:39:03 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_type.c,v 1.130 2009/12/28 18:49:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,7 +32,7 @@
 #include "utils/rel.h"
 #include "utils/syscache.h"
 
-PGDLLIMPORT Oid binary_upgrade_next_pg_type_oid = InvalidOid;
+Oid binary_upgrade_next_pg_type_oid = InvalidOid;
 
 /* ----------------------------------------------------------------
  *		TypeShellMake

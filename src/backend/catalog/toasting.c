@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/toasting.c,v 1.24 2009/12/28 18:39:03 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/toasting.c,v 1.25 2009/12/28 18:49:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,7 +31,7 @@
 #include "utils/builtins.h"
 #include "utils/syscache.h"
 
-PGDLLIMPORT Oid binary_upgrade_next_pg_type_toast_oid = InvalidOid;
+Oid binary_upgrade_next_pg_type_toast_oid = InvalidOid;
 
 static bool create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid,
 				   Datum reloptions, bool force);
