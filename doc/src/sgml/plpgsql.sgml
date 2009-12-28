@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.148 2009/12/19 01:49:02 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.149 2009/12/28 19:11:51 petere Exp $ -->
 
 <chapter id="plpgsql">
   <title><application>PL/pgSQL</application> - <acronym>SQL</acronym> Procedural Language</title>
@@ -3197,16 +3197,26 @@ RAISE unique_violation USING MESSAGE = 'Duplicate user ID: ' || user_id;
     for this row).  If a nonnull
     value is returned then the operation proceeds with that row value.
     Returning a row value different from the original value
-    of <varname>NEW</> alters the row that will be inserted or updated
-    (but has no direct effect in the <command>DELETE</> case).
-    To alter the row to be stored, it is possible to replace single values
-    directly in <varname>NEW</> and return the modified <varname>NEW</>,
-    or to build a complete new record/row to return.
+    of <varname>NEW</> alters the row that will be inserted or
+    updated.  Thus, if the trigger function wants the triggering
+    action to succeed normally without altering the row
+    value, <varname>NEW</varname> (or a value equal thereto) has to be
+    returned.  To alter the row to be stored, it is possible to
+    replace single values directly in <varname>NEW</> and return the
+    modified <varname>NEW</>, or to build a complete new record/row to
+    return.  In the case of a before-trigger
+    on <command>DELETE</command>, the returned value has no direct
+    effect, but it has to be nonnull to allow the trigger action to
+    proceed.  Note that <varname>NEW</varname> is null
+    in <command>DELETE</command> triggers, so returning that is
+    usually not sensible.  A useful idiom in <command>DELETE</command>
+    triggers might be to return <varname>OLD</varname>.
    </para>
 
    <para>
-    The return value of a <literal>BEFORE</> or <literal>AFTER</>
-    statement-level trigger or an <literal>AFTER</> row-level trigger is
+    The return value of a row-level trigger
+    fired <literal>AFTER</literal> or a statement-level trigger
+    fired <literal>BEFORE</> or <literal>AFTER</> is
     always ignored; it might as well be null. However, any of these types of
     triggers might still abort the entire operation by raising an error.
    </para>
