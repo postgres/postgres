@@ -13,13 +13,15 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_inherits.c,v 1.3 2009/06/11 14:48:55 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_inherits.c,v 1.4 2009/12/29 22:00:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
+#include "access/genam.h"
 #include "access/heapam.h"
+#include "catalog/indexing.h"
 #include "catalog/pg_class.h"
 #include "catalog/pg_inherits.h"
 #include "catalog/pg_inherits_fn.h"
@@ -28,6 +30,8 @@
 #include "utils/fmgroids.h"
 #include "utils/syscache.h"
 #include "utils/tqual.h"
+
+static int	oid_cmp(const void *p1, const void *p2);
 
 
 /*
@@ -46,10 +50,14 @@ find_inheritance_children(Oid parentrelId, LOCKMODE lockmode)
 {
 	List	   *list = NIL;
 	Relation	relation;
-	HeapScanDesc scan;
+	SysScanDesc scan;
 	ScanKeyData key[1];
 	HeapTuple	inheritsTuple;
 	Oid			inhrelid;
+	Oid		   *oidarr;
+	int			maxoids,
+				numoids,
+				i;
 
 	/*
 	 * Can skip the scan if pg_class shows the relation has never had a
@@ -59,21 +67,52 @@ find_inheritance_children(Oid parentrelId, LOCKMODE lockmode)
 		return NIL;
 
 	/*
-	 * XXX might be a good idea to create an index on pg_inherits' inhparent
-	 * field, so that we can use an indexscan instead of sequential scan here.
-	 * However, in typical databases pg_inherits won't have enough entries to
-	 * justify an indexscan...
+	 * Scan pg_inherits and build a working array of subclass OIDs.
 	 */
+	maxoids = 32;
+	oidarr = (Oid *) palloc(maxoids * sizeof(Oid));
+	numoids = 0;
+
 	relation = heap_open(InheritsRelationId, AccessShareLock);
+
 	ScanKeyInit(&key[0],
 				Anum_pg_inherits_inhparent,
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(parentrelId));
-	scan = heap_beginscan(relation, SnapshotNow, 1, key);
 
-	while ((inheritsTuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
+	scan = systable_beginscan(relation, InheritsParentIndexId, true,
+							  SnapshotNow, 1, key);
+
+	while ((inheritsTuple = systable_getnext(scan)) != NULL)
 	{
 		inhrelid = ((Form_pg_inherits) GETSTRUCT(inheritsTuple))->inhrelid;
+		if (numoids >= maxoids)
+		{
+			maxoids *= 2;
+			oidarr = (Oid *) repalloc(oidarr, maxoids * sizeof(Oid));
+		}
+		oidarr[numoids++] = inhrelid;
+	}
+
+	systable_endscan(scan);
+
+	heap_close(relation, AccessShareLock);
+
+	/*
+	 * If we found more than one child, sort them by OID.  This ensures
+	 * reasonably consistent behavior regardless of the vagaries of an
+	 * indexscan.  This is important since we need to be sure all backends
+	 * lock children in the same order to avoid needless deadlocks.
+	 */
+	if (numoids > 1)
+		qsort(oidarr, numoids, sizeof(Oid), oid_cmp);
+
+	/*
+	 * Acquire locks and build the result list.
+	 */
+	for (i = 0; i < numoids; i++)
+	{
+		inhrelid = oidarr[i];
 
 		if (lockmode != NoLock)
 		{
@@ -99,8 +138,7 @@ find_inheritance_children(Oid parentrelId, LOCKMODE lockmode)
 		list = lappend_oid(list, inhrelid);
 	}
 
-	heap_endscan(scan);
-	heap_close(relation, AccessShareLock);
+	pfree(oidarr);
 
 	return list;
 }
@@ -231,7 +269,7 @@ typeInheritsFrom(Oid subclassTypeId, Oid superclassTypeId)
 	{
 		Oid			this_relid = lfirst_oid(queue_item);
 		ScanKeyData skey;
-		HeapScanDesc inhscan;
+		SysScanDesc inhscan;
 		HeapTuple	inhtup;
 
 		/*
@@ -255,9 +293,10 @@ typeInheritsFrom(Oid subclassTypeId, Oid superclassTypeId)
 					BTEqualStrategyNumber, F_OIDEQ,
 					ObjectIdGetDatum(this_relid));
 
-		inhscan = heap_beginscan(inhrel, SnapshotNow, 1, &skey);
+		inhscan = systable_beginscan(inhrel, InheritsRelidSeqnoIndexId, true,
+									 SnapshotNow, 1, &skey);
 
-		while ((inhtup = heap_getnext(inhscan, ForwardScanDirection)) != NULL)
+		while ((inhtup = systable_getnext(inhscan)) != NULL)
 		{
 			Form_pg_inherits inh = (Form_pg_inherits) GETSTRUCT(inhtup);
 			Oid			inhparent = inh->inhparent;
@@ -273,7 +312,7 @@ typeInheritsFrom(Oid subclassTypeId, Oid superclassTypeId)
 			queue = lappend_oid(queue, inhparent);
 		}
 
-		heap_endscan(inhscan);
+		systable_endscan(inhscan);
 
 		if (result)
 			break;
@@ -286,4 +325,19 @@ typeInheritsFrom(Oid subclassTypeId, Oid superclassTypeId)
 	list_free(queue);
 
 	return result;
+}
+
+
+/* qsort comparison function */
+static int
+oid_cmp(const void *p1, const void *p2)
+{
+	Oid			v1 = *((const Oid *) p1);
+	Oid			v2 = *((const Oid *) p2);
+
+	if (v1 < v2)
+		return -1;
+	if (v1 > v2)
+		return 1;
+	return 0;
 }

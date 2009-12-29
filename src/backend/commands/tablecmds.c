@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.311 2009/12/23 16:43:43 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.312 2009/12/29 22:00:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1793,8 +1793,8 @@ StoreCatalogInheritance1(Oid relationId, Oid parentOid,
 						 int16 seqNumber, Relation inhRelation)
 {
 	TupleDesc	desc = RelationGetDescr(inhRelation);
-	Datum		datum[Natts_pg_inherits];
-	bool		nullarr[Natts_pg_inherits];
+	Datum		values[Natts_pg_inherits];
+	bool		nulls[Natts_pg_inherits];
 	ObjectAddress childobject,
 				parentobject;
 	HeapTuple	tuple;
@@ -1802,15 +1802,13 @@ StoreCatalogInheritance1(Oid relationId, Oid parentOid,
 	/*
 	 * Make the pg_inherits entry
 	 */
-	datum[0] = ObjectIdGetDatum(relationId);	/* inhrelid */
-	datum[1] = ObjectIdGetDatum(parentOid);		/* inhparent */
-	datum[2] = Int16GetDatum(seqNumber);		/* inhseqno */
+	values[Anum_pg_inherits_inhrelid - 1] = ObjectIdGetDatum(relationId);
+	values[Anum_pg_inherits_inhparent - 1] = ObjectIdGetDatum(parentOid);
+	values[Anum_pg_inherits_inhseqno - 1] = Int16GetDatum(seqNumber);
 
-	nullarr[0] = false;
-	nullarr[1] = false;
-	nullarr[2] = false;
+	memset(nulls, 0, sizeof(nulls));
 
-	tuple = heap_form_tuple(desc, datum, nullarr);
+	tuple = heap_form_tuple(desc, values, nulls);
 
 	simple_heap_insert(inhRelation, tuple);
 
