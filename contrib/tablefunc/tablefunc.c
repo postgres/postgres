@@ -765,6 +765,7 @@ load_categories_hash(char *cats_sql, MemoryContext per_query_ctx)
 	HASHCTL		ctl;
 	int			ret;
 	int			proc;
+	MemoryContext SPIcontext;
 
 	/* initialize the category hash table */
 	MemSet(&ctl, 0, sizeof(ctl));
@@ -855,7 +856,6 @@ get_crosstab_tuplestore(char *sql,
 	HeapTuple	tuple;
 	int			ret;
 	int			proc;
-	MemoryContext SPIcontext;
 
 	/* initialize our tuplestore */
 	tupstore = tuplestore_begin_heap(true, false, work_mem);
