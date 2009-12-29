@@ -27,7 +27,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeWindowAgg.c,v 1.7 2009/09/27 21:10:53 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeWindowAgg.c,v 1.8 2009/12/29 17:40:59 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -723,7 +723,7 @@ spool_tuples(WindowAggState *winstate, int64 pos)
 
 	outerPlan = outerPlanState(winstate);
 
-	/* Must be in query context to call outerplan or touch tuplestore */
+	/* Must be in query context to call outerplan */
 	oldcontext = MemoryContextSwitchTo(winstate->ss.ps.ps_ExprContext->ecxt_per_query_memory);
 
 	while (winstate->spooled_rows <= pos || pos == -1)

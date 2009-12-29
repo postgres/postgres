@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/xml2/xpath.c,v 1.23 2009/06/11 14:48:53 momjian Exp $
+ * $PostgreSQL: pgsql/contrib/xml2/xpath.c,v 1.24 2009/12/29 17:40:59 heikki Exp $
  *
  * Parser interface for DOM-based parser (libxml) rather than
  * stream-based SAX-type parser
@@ -821,9 +821,7 @@ xpath_table(PG_FUNCTION_ARGS)
 		{
 			/* not well-formed, so output all-NULL tuple */
 			ret_tuple = BuildTupleFromCStrings(attinmeta, values);
-			oldcontext = MemoryContextSwitchTo(per_query_ctx);
 			tuplestore_puttuple(tupstore, ret_tuple);
-			MemoryContextSwitchTo(oldcontext);
 			heap_freetuple(ret_tuple);
 		}
 		else
@@ -897,9 +895,7 @@ xpath_table(PG_FUNCTION_ARGS)
 				if (had_values)
 				{
 					ret_tuple = BuildTupleFromCStrings(attinmeta, values);
-					oldcontext = MemoryContextSwitchTo(per_query_ctx);
 					tuplestore_puttuple(tupstore, ret_tuple);
-					MemoryContextSwitchTo(oldcontext);
 					heap_freetuple(ret_tuple);
 				}
 

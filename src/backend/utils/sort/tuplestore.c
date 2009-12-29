@@ -47,7 +47,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/sort/tuplestore.c,v 1.48 2009/06/11 14:49:06 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/sort/tuplestore.c,v 1.49 2009/12/29 17:40:59 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -58,6 +58,7 @@
 #include "executor/executor.h"
 #include "storage/buffile.h"
 #include "utils/memutils.h"
+#include "utils/resowner.h"
 #include "utils/tuplestore.h"
 
 
@@ -105,6 +106,8 @@ struct Tuplestorestate
 	bool		truncated;		/* tuplestore_trim has removed tuples? */
 	long		availMem;		/* remaining memory available, in bytes */
 	BufFile    *myfile;			/* underlying file, or NULL if none */
+	MemoryContext context;		/* memory context for holding tuples */
+	ResourceOwner resowner;		/* resowner for holding temp files */
 
 	/*
 	 * These function pointers decouple the routines that must know what kind
@@ -246,6 +249,8 @@ tuplestore_begin_common(int eflags, bool interXact, int maxKBytes)
 	state->truncated = false;
 	state->availMem = maxKBytes * 1024L;
 	state->myfile = NULL;
+	state->context = CurrentMemoryContext;
+	state->resowner = CurrentResourceOwner;
 
 	state->memtupcount = 0;
 	state->memtupsize = 1024;	/* initial guess */
@@ -278,9 +283,9 @@ tuplestore_begin_common(int eflags, bool interXact, int maxKBytes)
  *
  * interXact: if true, the files used for on-disk storage persist beyond the
  * end of the current transaction.	NOTE: It's the caller's responsibility to
- * create such a tuplestore in a memory context that will also survive
- * transaction boundaries, and to ensure the tuplestore is closed when it's
- * no longer wanted.
+ * create such a tuplestore in a memory context and resource owner that will
+ * also survive transaction boundaries, and to ensure the tuplestore is closed
+ * when it's no longer wanted.
  *
  * maxKBytes: how much data to store in memory (any data beyond this
  * amount is paged to disk).  When in doubt, use work_mem.
@@ -533,6 +538,7 @@ tuplestore_puttupleslot(Tuplestorestate *state,
 						TupleTableSlot *slot)
 {
 	MinimalTuple tuple;
+	MemoryContext oldcxt = MemoryContextSwitchTo(state->context);
 
 	/*
 	 * Form a MinimalTuple in working memory
@@ -541,6 +547,8 @@ tuplestore_puttupleslot(Tuplestorestate *state,
 	USEMEM(state, GetMemoryChunkSpace(tuple));
 
 	tuplestore_puttuple_common(state, (void *) tuple);
+
+	MemoryContextSwitchTo(oldcxt);
 }
 
 /*
@@ -550,12 +558,16 @@ tuplestore_puttupleslot(Tuplestorestate *state,
 void
 tuplestore_puttuple(Tuplestorestate *state, HeapTuple tuple)
 {
+	MemoryContext oldcxt = MemoryContextSwitchTo(state->context);
+
 	/*
 	 * Copy the tuple.	(Must do this even in WRITEFILE case.)
 	 */
 	tuple = COPYTUP(state, tuple);
 
 	tuplestore_puttuple_common(state, (void *) tuple);
+
+	MemoryContextSwitchTo(oldcxt);
 }
 
 /*
@@ -568,10 +580,13 @@ tuplestore_putvalues(Tuplestorestate *state, TupleDesc tdesc,
 					 Datum *values, bool *isnull)
 {
 	MinimalTuple tuple;
+	MemoryContext oldcxt = MemoryContextSwitchTo(state->context);
 
 	tuple = heap_form_minimal_tuple(tdesc, values, isnull);
 
 	tuplestore_puttuple_common(state, (void *) tuple);
+
+	MemoryContextSwitchTo(oldcxt);	
 }
 
 static void
@@ -579,6 +594,7 @@ tuplestore_puttuple_common(Tuplestorestate *state, void *tuple)
 {
 	TSReadPointer *readptr;
 	int			i;
+	ResourceOwner oldowner;
 
 	switch (state->status)
 	{
@@ -635,7 +651,14 @@ tuplestore_puttuple_common(Tuplestorestate *state, void *tuple)
 			 * the temp file(s) are created in suitable temp tablespaces.
 			 */
 			PrepareTempTablespaces();
+
+			/* associate the file with the store's resource owner */
+			oldowner = CurrentResourceOwner;
+			CurrentResourceOwner = state->resowner;
+
 			state->myfile = BufFileCreateTemp(state->interXact);
+
+			CurrentResourceOwner = oldowner;
 
 			/*
 			 * Freeze the decision about whether trailing length words will be

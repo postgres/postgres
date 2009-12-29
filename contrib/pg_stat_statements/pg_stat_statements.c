@@ -14,7 +14,7 @@
  * Copyright (c) 2008-2009, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/contrib/pg_stat_statements/pg_stat_statements.c,v 1.9 2009/12/15 20:04:49 tgl Exp $
+ *	  $PostgreSQL: pgsql/contrib/pg_stat_statements/pg_stat_statements.c,v 1.10 2009/12/29 17:40:59 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -783,6 +783,8 @@ pg_stat_statements(PG_FUNCTION_ARGS)
 	rsinfo->setResult = tupstore;
 	rsinfo->setDesc = tupdesc;
 
+	MemoryContextSwitchTo(oldcontext);
+
 	LWLockAcquire(pgss->lock, LW_SHARED);
 
 	hash_seq_init(&hash_seq, pgss_hash);
@@ -792,9 +794,6 @@ pg_stat_statements(PG_FUNCTION_ARGS)
 		bool		nulls[PG_STAT_STATEMENTS_COLS];
 		int			i = 0;
 		Counters	tmp;
-
-		/* generate junk in short-term context */
-		MemoryContextSwitchTo(oldcontext);
 
 		memset(values, 0, sizeof(values));
 		memset(nulls, 0, sizeof(nulls));
@@ -833,8 +832,6 @@ pg_stat_statements(PG_FUNCTION_ARGS)
 
 		Assert(i == PG_STAT_STATEMENTS_COLS);
 
-		/* switch to appropriate context while storing the tuple */
-		MemoryContextSwitchTo(per_query_ctx);
 		tuplestore_putvalues(tupstore, tupdesc, values, nulls);
 	}
 
@@ -842,8 +839,6 @@ pg_stat_statements(PG_FUNCTION_ARGS)
 
 	/* clean up and return the tuplestore */
 	tuplestore_donestoring(tupstore);
-
-	MemoryContextSwitchTo(oldcontext);
 
 	return (Datum) 0;
 }

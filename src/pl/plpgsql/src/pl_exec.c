@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.251 2009/11/09 00:26:55 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.252 2009/12/29 17:40:59 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2172,7 +2172,6 @@ exec_stmt_return_next(PLpgSQL_execstate *estate,
 {
 	TupleDesc	tupdesc;
 	int			natts;
-	MemoryContext oldcxt;
 	HeapTuple	tuple = NULL;
 	bool		free_tuple = false;
 
@@ -2212,10 +2211,8 @@ exec_stmt_return_next(PLpgSQL_execstate *estate,
 												tupdesc->attrs[0]->atttypmod,
 													isNull);
 
-					oldcxt = MemoryContextSwitchTo(estate->tuple_store_cxt);
 					tuplestore_putvalues(estate->tuple_store, tupdesc,
 										 &retval, &isNull);
-					MemoryContextSwitchTo(oldcxt);
 				}
 				break;
 
@@ -2285,10 +2282,8 @@ exec_stmt_return_next(PLpgSQL_execstate *estate,
 										tupdesc->attrs[0]->atttypmod,
 										isNull);
 
-		oldcxt = MemoryContextSwitchTo(estate->tuple_store_cxt);
 		tuplestore_putvalues(estate->tuple_store, tupdesc,
 							 &retval, &isNull);
-		MemoryContextSwitchTo(oldcxt);
 
 		exec_eval_cleanup(estate);
 	}
@@ -2301,9 +2296,7 @@ exec_stmt_return_next(PLpgSQL_execstate *estate,
 
 	if (HeapTupleIsValid(tuple))
 	{
-		oldcxt = MemoryContextSwitchTo(estate->tuple_store_cxt);
 		tuplestore_puttuple(estate->tuple_store, tuple);
-		MemoryContextSwitchTo(oldcxt);
 
 		if (free_tuple)
 			heap_freetuple(tuple);
@@ -2353,14 +2346,12 @@ exec_stmt_return_query(PLpgSQL_execstate *estate,
 
 	while (true)
 	{
-		MemoryContext old_cxt;
 		int			i;
 
 		SPI_cursor_fetch(portal, true, 50);
 		if (SPI_processed == 0)
 			break;
 
-		old_cxt = MemoryContextSwitchTo(estate->tuple_store_cxt);
 		for (i = 0; i < SPI_processed; i++)
 		{
 			HeapTuple	tuple = SPI_tuptable->vals[i];
@@ -2372,7 +2363,6 @@ exec_stmt_return_query(PLpgSQL_execstate *estate,
 				heap_freetuple(tuple);
 			processed++;
 		}
-		MemoryContextSwitchTo(old_cxt);
 
 		SPI_freetuptable(SPI_tuptable);
 	}
@@ -2394,6 +2384,7 @@ exec_init_tuple_store(PLpgSQL_execstate *estate)
 {
 	ReturnSetInfo *rsi = estate->rsi;
 	MemoryContext oldcxt;
+	ResourceOwner oldowner;
 
 	/*
 	 * Check caller can handle a set result in the way we want
@@ -2405,12 +2396,22 @@ exec_init_tuple_store(PLpgSQL_execstate *estate)
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("set-valued function called in context that cannot accept a set")));
 
-	estate->tuple_store_cxt = rsi->econtext->ecxt_per_query_memory;
-
+	/*
+	 * Switch to the right memory context and resource owner for storing
+	 * the tuplestore for return set. If we're within a subtransaction opened
+	 * for an exception-block, for example, we must still create the
+	 * tuplestore in the resource owner that was active when this function was
+	 * entered, and not in the subtransaction resource owner.
+	 */
 	oldcxt = MemoryContextSwitchTo(estate->tuple_store_cxt);
+	oldowner = CurrentResourceOwner;
+	CurrentResourceOwner = estate->tuple_store_owner;
+
 	estate->tuple_store =
 		tuplestore_begin_heap(rsi->allowedModes & SFRM_Materialize_Random,
 							  false, work_mem);
+
+	CurrentResourceOwner = oldowner;
 	MemoryContextSwitchTo(oldcxt);
 
 	estate->rettupdesc = rsi->expectedDesc;
@@ -2635,7 +2636,16 @@ plpgsql_estate_setup(PLpgSQL_execstate *estate,
 	estate->exitlabel = NULL;
 
 	estate->tuple_store = NULL;
-	estate->tuple_store_cxt = NULL;
+	if (rsi)
+	{
+		estate->tuple_store_cxt = rsi->econtext->ecxt_per_query_memory;
+		estate->tuple_store_owner = CurrentResourceOwner;
+	}
+	else
+	{
+		estate->tuple_store_cxt = NULL;
+		estate->tuple_store_owner = NULL;
+	}
 	estate->rsi = rsi;
 
 	estate->found_varno = func->found_varno;
