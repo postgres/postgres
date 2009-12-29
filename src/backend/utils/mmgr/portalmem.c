@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/portalmem.c,v 1.97.2.1 2007/04/26 23:24:57 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/portalmem.c,v 1.97.2.2 2009/12/29 17:41:25 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -854,6 +854,9 @@ pg_cursor(PG_FUNCTION_ARGS)
 	 */
 	tupstore = tuplestore_begin_heap(true, false, work_mem);
 
+	/* generate junk in short-term context */
+	MemoryContextSwitchTo(oldcontext);
+
 	hash_seq_init(&hash_seq, PortalHashTable);
 	while ((hentry = hash_seq_search(&hash_seq)) != NULL)
 	{
@@ -865,9 +868,6 @@ pg_cursor(PG_FUNCTION_ARGS)
 		/* report only "visible" entries */
 		if (!portal->visible)
 			continue;
-
-		/* generate junk in short-term context */
-		MemoryContextSwitchTo(oldcontext);
 
 		MemSet(nulls, 0, sizeof(nulls));
 
@@ -884,15 +884,11 @@ pg_cursor(PG_FUNCTION_ARGS)
 
 		tuple = heap_form_tuple(tupdesc, values, nulls);
 
-		/* switch to appropriate context while storing the tuple */
-		MemoryContextSwitchTo(per_query_ctx);
 		tuplestore_puttuple(tupstore, tuple);
 	}
 
 	/* clean up and return the tuplestore */
 	tuplestore_donestoring(tupstore);
-
-	MemoryContextSwitchTo(oldcontext);
 
 	rsinfo->returnMode = SFRM_Materialize;
 	rsinfo->setResult = tupstore;

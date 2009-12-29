@@ -1,7 +1,7 @@
 /**********************************************************************
  * plperl.c - perl as a procedural language for PostgreSQL
  *
- *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.123.2.9 2009/11/29 21:02:34 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.123.2.10 2009/12/29 17:41:25 heikki Exp $
  *
  **********************************************************************/
 
@@ -1984,11 +1984,9 @@ plperl_return_next(SV *sv)
 		tuple = heap_form_tuple(current_call_data->ret_tdesc, &ret, &isNull);
 	}
 
-	/* Make sure to store the tuple in a long-lived memory context */
-	MemoryContextSwitchTo(rsi->econtext->ecxt_per_query_memory);
 	tuplestore_puttuple(current_call_data->tuple_store, tuple);
-	MemoryContextSwitchTo(old_cxt);
 
+	MemoryContextSwitchTo(old_cxt);
 	MemoryContextReset(current_call_data->tmp_cxt);
 }
 

@@ -853,7 +853,6 @@ get_crosstab_tuplestore(char *sql,
 	HeapTuple	tuple;
 	int			ret;
 	int			proc;
-	MemoryContext SPIcontext;
 
 	/* initialize our tuplestore */
 	tupstore = tuplestore_begin_heap(true, false, work_mem);
@@ -953,10 +952,7 @@ get_crosstab_tuplestore(char *sql,
 					/* rowid changed, flush the previous output row */
 					tuple = BuildTupleFromCStrings(attinmeta, values);
 
-					/* switch to appropriate context while storing the tuple */
-					SPIcontext = MemoryContextSwitchTo(per_query_ctx);
 					tuplestore_puttuple(tupstore, tuple);
-					MemoryContextSwitchTo(SPIcontext);
 
 					for (j = 0; j < result_ncols; j++)
 						xpfree(values[j]);
@@ -989,10 +985,7 @@ get_crosstab_tuplestore(char *sql,
 		/* flush the last output row */
 		tuple = BuildTupleFromCStrings(attinmeta, values);
 
-		/* switch to appropriate context while storing the tuple */
-		SPIcontext = MemoryContextSwitchTo(per_query_ctx);
 		tuplestore_puttuple(tupstore, tuple);
-		MemoryContextSwitchTo(SPIcontext);
 	}
 
 	if (SPI_finish() != SPI_OK_FINISH)
@@ -1274,7 +1267,6 @@ build_tuplestore_recursively(char *key_fld,
 							 Tuplestorestate *tupstore)
 {
 	TupleDesc	tupdesc = attinmeta->tupdesc;
-	MemoryContext oldcontext;
 	int			ret;
 	int			proc;
 	int			serial_column;
@@ -1352,14 +1344,8 @@ build_tuplestore_recursively(char *key_fld,
 		/* construct the tuple */
 		tuple = BuildTupleFromCStrings(attinmeta, values);
 
-		/* switch to long lived context while storing the tuple */
-		oldcontext = MemoryContextSwitchTo(per_query_ctx);
-
 		/* now store it */
 		tuplestore_puttuple(tupstore, tuple);
-
-		/* now reset the context */
-		MemoryContextSwitchTo(oldcontext);
 
 		/* increment level */
 		level++;
@@ -1449,14 +1435,8 @@ build_tuplestore_recursively(char *key_fld,
 			xpfree(current_key);
 			xpfree(current_key_parent);
 
-			/* switch to long lived context while storing the tuple */
-			oldcontext = MemoryContextSwitchTo(per_query_ctx);
-
 			/* store the tuple for later use */
 			tuplestore_puttuple(tupstore, tuple);
-
-			/* now reset the context */
-			MemoryContextSwitchTo(oldcontext);
 
 			heap_freetuple(tuple);
 

@@ -10,7 +10,7 @@
  * Copyright (c) 2002-2006, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/prepare.c,v 1.66.2.1 2007/04/26 23:24:56 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/prepare.c,v 1.66.2.2 2009/12/29 17:41:25 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -717,6 +717,9 @@ pg_prepared_statement(PG_FUNCTION_ARGS)
 	 */
 	tupstore = tuplestore_begin_heap(true, false, work_mem);
 
+	/* generate junk in short-term context */
+	MemoryContextSwitchTo(oldcontext);
+
 	/* hash table might be uninitialized */
 	if (prepared_queries)
 	{
@@ -729,9 +732,6 @@ pg_prepared_statement(PG_FUNCTION_ARGS)
 			HeapTuple	tuple;
 			Datum		values[5];
 			bool		nulls[5];
-
-			/* generate junk in short-term context */
-			MemoryContextSwitchTo(oldcontext);
 
 			MemSet(nulls, 0, sizeof(nulls));
 
@@ -749,17 +749,12 @@ pg_prepared_statement(PG_FUNCTION_ARGS)
 			values[4] = BoolGetDatum(prep_stmt->from_sql);
 
 			tuple = heap_form_tuple(tupdesc, values, nulls);
-
-			/* switch to appropriate context while storing the tuple */
-			MemoryContextSwitchTo(per_query_ctx);
 			tuplestore_puttuple(tupstore, tuple);
 		}
 	}
 
 	/* clean up and return the tuplestore */
 	tuplestore_donestoring(tupstore);
-
-	MemoryContextSwitchTo(oldcontext);
 
 	rsinfo->returnMode = SFRM_Materialize;
 	rsinfo->setResult = tupstore;
