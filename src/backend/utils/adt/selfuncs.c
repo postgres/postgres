@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.263 2009/10/21 20:38:58 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.264 2009/12/29 20:11:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -4046,20 +4046,13 @@ examine_variable(PlannerInfo *root, Node *node, int varRelid,
 				!vardata->freefunc)
 				elog(ERROR, "no function provided to release variable stats with");
 		}
-		else if (rte->inh)
-		{
-			/*
-			 * XXX This means the Var represents a column of an append
-			 * relation. Later add code to look at the member relations and
-			 * try to derive some kind of combined statistics?
-			 */
-		}
 		else if (rte->rtekind == RTE_RELATION)
 		{
-			vardata->statsTuple = SearchSysCache(STATRELATT,
+			vardata->statsTuple = SearchSysCache(STATRELATTINH,
 												 ObjectIdGetDatum(rte->relid),
 												 Int16GetDatum(var->varattno),
-												 0, 0);
+												 BoolGetDatum(rte->inh),
+												 0);
 			vardata->freefunc = ReleaseSysCache;
 		}
 		else
@@ -4196,10 +4189,11 @@ examine_variable(PlannerInfo *root, Node *node, int varRelid,
 						else if (index->indpred == NIL)
 						{
 							vardata->statsTuple =
-								SearchSysCache(STATRELATT,
+								SearchSysCache(STATRELATTINH,
 										   ObjectIdGetDatum(index->indexoid),
 											   Int16GetDatum(pos + 1),
-											   0, 0);
+											   BoolGetDatum(false),
+											   0);
 							vardata->freefunc = ReleaseSysCache;
 						}
 						if (vardata->statsTuple)
@@ -5830,10 +5824,11 @@ btcostestimate(PG_FUNCTION_ARGS)
 		}
 		else
 		{
-			vardata.statsTuple = SearchSysCache(STATRELATT,
+			vardata.statsTuple = SearchSysCache(STATRELATTINH,
 												ObjectIdGetDatum(relid),
 												Int16GetDatum(colnum),
-												0, 0);
+												BoolGetDatum(rte->inh),
+												0);
 			vardata.freefunc = ReleaseSysCache;
 		}
 	}
@@ -5856,10 +5851,11 @@ btcostestimate(PG_FUNCTION_ARGS)
 		}
 		else
 		{
-			vardata.statsTuple = SearchSysCache(STATRELATT,
+			vardata.statsTuple = SearchSysCache(STATRELATTINH,
 												ObjectIdGetDatum(relid),
 												Int16GetDatum(colnum),
-												0, 0);
+												BoolGetDatum(false),
+												0);
 			vardata.freefunc = ReleaseSysCache;
 		}
 	}

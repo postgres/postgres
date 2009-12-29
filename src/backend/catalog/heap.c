@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.362 2009/12/24 22:09:23 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.363 2009/12/29 20:11:43 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -2314,7 +2314,7 @@ cookConstraint(ParseState *pstate,
 /*
  * RemoveStatistics --- remove entries in pg_statistic for a rel or column
  *
- * If attnum is zero, remove all entries for rel; else remove only the one
+ * If attnum is zero, remove all entries for rel; else remove only the one(s)
  * for that column.
  */
 void
@@ -2344,9 +2344,10 @@ RemoveStatistics(Oid relid, AttrNumber attnum)
 		nkeys = 2;
 	}
 
-	scan = systable_beginscan(pgstatistic, StatisticRelidAttnumIndexId, true,
+	scan = systable_beginscan(pgstatistic, StatisticRelidAttnumInhIndexId, true,
 							  SnapshotNow, nkeys, key);
 
+	/* we must loop even when attnum != 0, in case of inherited stats */
 	while (HeapTupleIsValid(tuple = systable_getnext(scan)))
 		simple_heap_delete(pgstatistic, &tuple->t_self);
 

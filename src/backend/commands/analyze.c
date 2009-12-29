@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/analyze.c,v 1.143 2009/12/09 21:57:50 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/analyze.c,v 1.144 2009/12/29 20:11:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,11 +18,13 @@
 
 #include "access/heapam.h"
 #include "access/transam.h"
+#include "access/tupconvert.h"
 #include "access/tuptoaster.h"
 #include "access/xact.h"
 #include "catalog/index.h"
 #include "catalog/indexing.h"
 #include "catalog/namespace.h"
+#include "catalog/pg_inherits_fn.h"
 #include "catalog/pg_namespace.h"
 #include "commands/dbcommands.h"
 #include "commands/vacuum.h"
@@ -55,6 +57,7 @@ typedef struct
 	BlockNumber t;				/* current block number */
 	int			m;				/* blocks selected so far */
 } BlockSamplerData;
+
 typedef BlockSamplerData *BlockSampler;
 
 /* Per-index data for ANALYZE */
@@ -78,6 +81,8 @@ static MemoryContext anl_context = NULL;
 static BufferAccessStrategy vac_strategy;
 
 
+static void do_analyze_rel(Relation onerel, VacuumStmt *vacstmt,
+			   bool update_reltuples, bool inh);
 static void BlockSampler_Init(BlockSampler bs, BlockNumber nblocks,
 				  int samplesize);
 static bool BlockSampler_HasMore(BlockSampler bs);
@@ -93,7 +98,11 @@ static double random_fract(void);
 static double init_selection_state(int n);
 static double get_next_S(double t, int n, double *stateptr);
 static int	compare_rows(const void *a, const void *b);
-static void update_attstats(Oid relid, int natts, VacAttrStats **vacattrstats);
+static int	acquire_inherited_sample_rows(Relation onerel,
+							  HeapTuple *rows, int targrows,
+							  double *totalrows, double *totaldeadrows);
+static void update_attstats(Oid relid, bool inh,
+							int natts, VacAttrStats **vacattrstats);
 static Datum std_fetch_func(VacAttrStatsP stats, int rownum, bool *isNull);
 static Datum ind_fetch_func(VacAttrStatsP stats, int rownum, bool *isNull);
 
@@ -116,27 +125,8 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt,
 			BufferAccessStrategy bstrategy, bool update_reltuples)
 {
 	Relation	onerel;
-	int			attr_cnt,
-				tcnt,
-				i,
-				ind;
-	Relation   *Irel;
-	int			nindexes;
-	bool		hasindex;
-	bool		analyzableindex;
-	VacAttrStats **vacattrstats;
-	AnlIndexData *indexdata;
-	int			targrows,
-				numrows;
-	double		totalrows,
-				totaldeadrows;
-	HeapTuple  *rows;
-	PGRUsage	ru0;
-	TimestampTz starttime = 0;
-	Oid			save_userid;
-	int			save_sec_context;
-	int			save_nestlevel;
 
+	/* Set up static variables */
 	if (vacstmt->options & VACOPT_VERBOSE)
 		elevel = INFO;
 	else
@@ -145,15 +135,7 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt,
 	vac_strategy = bstrategy;
 
 	/*
-	 * Use the current context for storing analysis info.  vacuum.c ensures
-	 * that this context will be cleared when I return, thus releasing the
-	 * memory allocated here.
-	 */
-	anl_context = CurrentMemoryContext;
-
-	/*
-	 * Check for user-requested abort.	Note we want this to be inside a
-	 * transaction, so xact.c doesn't issue useless WARNING.
+	 * Check for user-requested abort.
 	 */
 	CHECK_FOR_INTERRUPTS();
 
@@ -230,10 +212,91 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt,
 		return;
 	}
 
-	ereport(elevel,
-			(errmsg("analyzing \"%s.%s\"",
-					get_namespace_name(RelationGetNamespace(onerel)),
-					RelationGetRelationName(onerel))));
+	/*
+	 * OK, let's do it.  First let other backends know I'm in ANALYZE.
+	 */
+	LWLockAcquire(ProcArrayLock, LW_EXCLUSIVE);
+	MyProc->vacuumFlags |= PROC_IN_ANALYZE;
+	LWLockRelease(ProcArrayLock);
+
+	/*
+	 * Do the normal non-recursive ANALYZE.
+	 */
+	do_analyze_rel(onerel, vacstmt, update_reltuples, false);
+
+	/*
+	 * If there are child tables, do recursive ANALYZE.
+	 */
+	if (onerel->rd_rel->relhassubclass)
+		do_analyze_rel(onerel, vacstmt, false, true);
+
+	/*
+	 * Close source relation now, but keep lock so that no one deletes it
+	 * before we commit.  (If someone did, they'd fail to clean up the entries
+	 * we made in pg_statistic.  Also, releasing the lock before commit would
+	 * expose us to concurrent-update failures in update_attstats.)
+	 */
+	relation_close(onerel, NoLock);
+
+	/*
+	 * Reset my PGPROC flag.  Note: we need this here, and not in vacuum_rel,
+	 * because the vacuum flag is cleared by the end-of-xact code.
+	 */
+	LWLockAcquire(ProcArrayLock, LW_EXCLUSIVE);
+	MyProc->vacuumFlags &= ~PROC_IN_ANALYZE;
+	LWLockRelease(ProcArrayLock);
+}
+
+/*
+ *	do_analyze_rel() -- analyze one relation, recursively or not
+ */
+static void
+do_analyze_rel(Relation onerel, VacuumStmt *vacstmt,
+			   bool update_reltuples, bool inh)
+{
+	int			attr_cnt,
+				tcnt,
+				i,
+				ind;
+	Relation   *Irel;
+	int			nindexes;
+	bool		hasindex;
+	bool		analyzableindex;
+	VacAttrStats **vacattrstats;
+	AnlIndexData *indexdata;
+	int			targrows,
+				numrows;
+	double		totalrows,
+				totaldeadrows;
+	HeapTuple  *rows;
+	PGRUsage	ru0;
+	TimestampTz starttime = 0;
+	MemoryContext caller_context;
+	Oid			save_userid;
+	int			save_sec_context;
+	int			save_nestlevel;
+
+	if (inh)
+		ereport(elevel,
+				(errmsg("analyzing \"%s.%s\" inheritance tree",
+						get_namespace_name(RelationGetNamespace(onerel)),
+						RelationGetRelationName(onerel))));
+	else
+		ereport(elevel,
+				(errmsg("analyzing \"%s.%s\"",
+						get_namespace_name(RelationGetNamespace(onerel)),
+						RelationGetRelationName(onerel))));
+
+	/*
+	 * Set up a working context so that we can easily free whatever junk
+	 * gets created.
+	 */
+	anl_context = AllocSetContextCreate(CurrentMemoryContext,
+										"Analyze",
+										ALLOCSET_DEFAULT_MINSIZE,
+										ALLOCSET_DEFAULT_INITSIZE,
+										ALLOCSET_DEFAULT_MAXSIZE);
+	caller_context = MemoryContextSwitchTo(anl_context);
 
 	/*
 	 * Switch to the table owner's userid, so that any index functions are run
@@ -244,11 +307,6 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt,
 	SetUserIdAndSecContext(onerel->rd_rel->relowner,
 						   save_sec_context | SECURITY_RESTRICTED_OPERATION);
 	save_nestlevel = NewGUCNestLevel();
-
-	/* let others know what I'm doing */
-	LWLockAcquire(ProcArrayLock, LW_EXCLUSIVE);
-	MyProc->vacuumFlags |= PROC_IN_ANALYZE;
-	LWLockRelease(ProcArrayLock);
 
 	/* measure elapsed time iff autovacuum logging requires it */
 	if (IsAutoVacuumWorkerProcess() && Log_autovacuum_min_duration >= 0)
@@ -304,9 +362,17 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt,
 	/*
 	 * Open all indexes of the relation, and see if there are any analyzable
 	 * columns in the indexes.	We do not analyze index columns if there was
-	 * an explicit column list in the ANALYZE command, however.
+	 * an explicit column list in the ANALYZE command, however.  If we are
+	 * doing a recursive scan, we don't want to touch the parent's indexes
+	 * at all.
 	 */
-	vac_open_indexes(onerel, AccessShareLock, &nindexes, &Irel);
+	if (!inh)
+		vac_open_indexes(onerel, AccessShareLock, &nindexes, &Irel);
+	else
+	{
+		Irel = NULL;
+		nindexes = 0;
+	}
 	hasindex = (nindexes > 0);
 	indexdata = NULL;
 	analyzableindex = false;
@@ -399,8 +465,12 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt,
 	 * Acquire the sample rows
 	 */
 	rows = (HeapTuple *) palloc(targrows * sizeof(HeapTuple));
-	numrows = acquire_sample_rows(onerel, rows, targrows,
-								  &totalrows, &totaldeadrows);
+	if (inh)
+		numrows = acquire_inherited_sample_rows(onerel, rows, targrows,
+												&totalrows, &totaldeadrows);
+	else
+		numrows = acquire_sample_rows(onerel, rows, targrows,
+									  &totalrows, &totaldeadrows);
 
 	/*
 	 * Compute the statistics.	Temporary results during the calculations for
@@ -452,13 +522,14 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt,
 		 * previous statistics for the target columns.	(If there are stats in
 		 * pg_statistic for columns we didn't process, we leave them alone.)
 		 */
-		update_attstats(relid, attr_cnt, vacattrstats);
+		update_attstats(RelationGetRelid(onerel), inh,
+						attr_cnt, vacattrstats);
 
 		for (ind = 0; ind < nindexes; ind++)
 		{
 			AnlIndexData *thisdata = &indexdata[ind];
 
-			update_attstats(RelationGetRelid(Irel[ind]),
+			update_attstats(RelationGetRelid(Irel[ind]), false,
 							thisdata->attr_cnt, thisdata->vacattrstats);
 		}
 	}
@@ -537,27 +608,16 @@ cleanup:
 							pg_rusage_show(&ru0))));
 	}
 
-	/*
-	 * Close source relation now, but keep lock so that no one deletes it
-	 * before we commit.  (If someone did, they'd fail to clean up the entries
-	 * we made in pg_statistic.  Also, releasing the lock before commit would
-	 * expose us to concurrent-update failures in update_attstats.)
-	 */
-	relation_close(onerel, NoLock);
-
-	/*
-	 * Reset my PGPROC flag.  Note: we need this here, and not in vacuum_rel,
-	 * because the vacuum flag is cleared by the end-of-xact code.
-	 */
-	LWLockAcquire(ProcArrayLock, LW_EXCLUSIVE);
-	MyProc->vacuumFlags &= ~PROC_IN_ANALYZE;
-	LWLockRelease(ProcArrayLock);
-
 	/* Roll back any GUC changes executed by index functions */
 	AtEOXact_GUC(false, save_nestlevel);
 
 	/* Restore userid and security context */
 	SetUserIdAndSecContext(save_userid, save_sec_context);
+
+	/* Restore current context and release memory */
+	MemoryContextSwitchTo(caller_context);
+	MemoryContextDelete(anl_context);
+	anl_context = NULL;
 }
 
 /*
@@ -877,6 +937,15 @@ BlockSampler_Next(BlockSampler bs)
 /*
  * acquire_sample_rows -- acquire a random sample of rows from the table
  *
+ * Selected rows are returned in the caller-allocated array rows[], which
+ * must have at least targrows entries.
+ * The actual number of rows selected is returned as the function result.
+ * We also estimate the total numbers of live and dead rows in the table,
+ * and return them into *totalrows and *totaldeadrows, respectively.
+ *
+ * The returned list of tuples is in order by physical position in the table.
+ * (We will rely on this later to derive correlation estimates.)
+ *
  * As of May 2004 we use a new two-stage method:  Stage one selects up
  * to targrows random blocks (or all blocks, if there aren't so many).
  * Stage two scans these blocks and uses the Vitter algorithm to create
@@ -892,17 +961,11 @@ BlockSampler_Next(BlockSampler bs)
  * the number of different blocks represented by the sample tends to be
  * too small.  We can live with that for now.  Improvements are welcome.
  *
- * We also estimate the total numbers of live and dead rows in the table,
- * and return them into *totalrows and *totaldeadrows, respectively.
- *
  * An important property of this sampling method is that because we do
  * look at a statistically unbiased set of blocks, we should get
  * unbiased estimates of the average numbers of live and dead rows per
  * block.  The previous sampling method put too much credence in the row
  * density near the start of the table.
- *
- * The returned list of tuples is in order by physical position in the table.
- * (We will rely on this later to derive correlation estimates.)
  */
 static int
 acquire_sample_rows(Relation onerel, HeapTuple *rows, int targrows,
@@ -918,7 +981,7 @@ acquire_sample_rows(Relation onerel, HeapTuple *rows, int targrows,
 	BlockSamplerData bs;
 	double		rstate;
 
-	Assert(targrows > 1);
+	Assert(targrows > 0);
 
 	totalblocks = RelationGetNumberOfBlocks(onerel);
 
@@ -1277,6 +1340,155 @@ compare_rows(const void *a, const void *b)
 
 
 /*
+ * acquire_inherited_sample_rows -- acquire sample rows from inheritance tree
+ *
+ * This has the same API as acquire_sample_rows, except that rows are
+ * collected from all inheritance children as well as the specified table.
+ * We fail and return zero if there are no inheritance children.
+ */
+static int
+acquire_inherited_sample_rows(Relation onerel, HeapTuple *rows, int targrows,
+							  double *totalrows, double *totaldeadrows)
+{
+	List	   *tableOIDs;
+	Relation   *rels;
+	double	   *relblocks;
+	double		totalblocks;
+	int			numrows,
+				nrels,
+				i;
+	ListCell   *lc;
+
+	/*
+	 * Find all members of inheritance set.  We only need AccessShareLock on
+	 * the children.
+	 */
+	tableOIDs = find_all_inheritors(RelationGetRelid(onerel), AccessShareLock);
+
+	/*
+	 * Check that there's at least one descendant, else fail.  This could
+	 * happen despite analyze_rel's relhassubclass check, if table once had a
+	 * child but no longer does.
+	 */
+	if (list_length(tableOIDs) < 2)
+	{
+		/*
+		 * XXX It would be desirable to clear relhassubclass here, but we
+		 * don't have adequate lock to do that safely.
+		 */
+		return 0;
+	}
+
+	/*
+	 * Count the blocks in all the relations.  The result could overflow
+	 * BlockNumber, so we use double arithmetic.
+	 */
+	rels = (Relation *) palloc(list_length(tableOIDs) * sizeof(Relation));
+	relblocks = (double *) palloc(list_length(tableOIDs) * sizeof(double));
+	totalblocks = 0;
+	nrels = 0;
+	foreach(lc, tableOIDs)
+	{
+		Oid			childOID = lfirst_oid(lc);
+		Relation	childrel;
+
+		/* We already got the needed lock */
+		childrel = heap_open(childOID, NoLock);
+
+		/* Ignore if temp table of another backend */
+		if (RELATION_IS_OTHER_TEMP(childrel))
+		{
+			/* ... but release the lock on it */
+			Assert(childrel != onerel);
+			heap_close(childrel, AccessShareLock);
+			continue;
+		}
+
+		rels[nrels] = childrel;
+		relblocks[nrels] = (double) RelationGetNumberOfBlocks(childrel);
+		totalblocks += relblocks[nrels];
+		nrels++;
+	}
+
+	/*
+	 * Now sample rows from each relation, proportionally to its fraction
+	 * of the total block count.  (This might be less than desirable if the
+	 * child rels have radically different free-space percentages, but it's
+	 * not clear that it's worth working harder.)
+	 */
+	numrows = 0;
+	*totalrows = 0;
+	*totaldeadrows = 0;
+	for (i = 0; i < nrels; i++)
+	{
+		Relation	childrel = rels[i];
+		double		childblocks = relblocks[i];
+
+		if (childblocks > 0)
+		{
+			int		childtargrows;
+
+			childtargrows = (int) rint(targrows * childblocks / totalblocks);
+			/* Make sure we don't overrun due to roundoff error */
+			childtargrows = Min(childtargrows, targrows - numrows);
+			if (childtargrows > 0)
+			{
+				int			childrows;
+				double		trows,
+							tdrows;
+
+				/* Fetch a random sample of the child's rows */
+				childrows = acquire_sample_rows(childrel,
+												rows + numrows,
+												childtargrows,
+												&trows,
+												&tdrows);
+
+				/* We may need to convert from child's rowtype to parent's */
+				if (childrows > 0 &&
+					!equalTupleDescs(RelationGetDescr(childrel),
+									 RelationGetDescr(onerel)))
+				{
+					TupleConversionMap *map;
+
+					map = convert_tuples_by_name(RelationGetDescr(childrel),
+												 RelationGetDescr(onerel),
+												 gettext_noop("could not convert row type"));
+					if (map != NULL)
+					{
+						int		j;
+
+						for (j = 0; j < childrows; j++)
+						{
+							HeapTuple	newtup;
+
+							newtup = do_convert_tuple(rows[numrows + j], map);
+							heap_freetuple(rows[numrows + j]);
+							rows[numrows + j] = newtup;
+						}
+						free_conversion_map(map);
+					}
+				}
+
+				/* And add to counts */
+				numrows += childrows;
+				*totalrows += trows;
+				*totaldeadrows += tdrows;
+			}
+		}
+
+		/*
+		 * Note: we cannot release the child-table locks, since we may have
+		 * pointers to their TOAST tables in the sampled rows.
+		 */
+		heap_close(childrel, NoLock);
+	}
+
+	return numrows;
+}
+
+
+/*
  *	update_attstats() -- update attribute statistics for one relation
  *
  *		Statistics are stored in several places: the pg_class row for the
@@ -1299,7 +1511,7 @@ compare_rows(const void *a, const void *b)
  *		by taking a self-exclusive lock on the relation in analyze_rel().
  */
 static void
-update_attstats(Oid relid, int natts, VacAttrStats **vacattrstats)
+update_attstats(Oid relid, bool inh, int natts, VacAttrStats **vacattrstats)
 {
 	Relation	sd;
 	int			attno;
@@ -1337,6 +1549,7 @@ update_attstats(Oid relid, int natts, VacAttrStats **vacattrstats)
 		i = 0;
 		values[i++] = ObjectIdGetDatum(relid);	/* starelid */
 		values[i++] = Int16GetDatum(stats->attr->attnum);		/* staattnum */
+		values[i++] = BoolGetDatum(inh);		/* stainherit */
 		values[i++] = Float4GetDatum(stats->stanullfrac);		/* stanullfrac */
 		values[i++] = Int32GetDatum(stats->stawidth);	/* stawidth */
 		values[i++] = Float4GetDatum(stats->stadistinct);		/* stadistinct */
@@ -1393,10 +1606,11 @@ update_attstats(Oid relid, int natts, VacAttrStats **vacattrstats)
 		}
 
 		/* Is there already a pg_statistic tuple for this attribute? */
-		oldtup = SearchSysCache(STATRELATT,
+		oldtup = SearchSysCache(STATRELATTINH,
 								ObjectIdGetDatum(relid),
 								Int16GetDatum(stats->attr->attnum),
-								0, 0);
+								BoolGetDatum(inh),
+								0);
 
 		if (HeapTupleIsValid(oldtup))
 		{

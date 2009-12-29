@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.399 2009/12/19 01:32:34 sriggs Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.400 2009/12/29 20:11:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -292,7 +292,6 @@ vacuum(VacuumStmt *vacstmt, Oid relid, bool do_toast,
 	   BufferAccessStrategy bstrategy, bool for_wraparound, bool isTopLevel)
 {
 	const char *stmttype;
-	volatile MemoryContext anl_context = NULL;
 	volatile bool all_rels,
 				in_outer_xact,
 				use_own_xacts;
@@ -404,17 +403,6 @@ vacuum(VacuumStmt *vacstmt, Oid relid, bool do_toast,
 	}
 
 	/*
-	 * If we are running ANALYZE without per-table transactions, we'll need a
-	 * memory context with table lifetime.
-	 */
-	if (!use_own_xacts)
-		anl_context = AllocSetContextCreate(PortalContext,
-											"Analyze",
-											ALLOCSET_DEFAULT_MINSIZE,
-											ALLOCSET_DEFAULT_INITSIZE,
-											ALLOCSET_DEFAULT_MAXSIZE);
-
-	/*
 	 * vacuum_rel expects to be entered with no transaction active; it will
 	 * start and commit its own transaction.  But we are called by an SQL
 	 * command, and so we are executing inside a transaction already. We
@@ -454,14 +442,9 @@ vacuum(VacuumStmt *vacstmt, Oid relid, bool do_toast,
 
 			if (vacstmt->options & VACOPT_ANALYZE)
 			{
-				MemoryContext old_context = NULL;
-
 				/*
 				 * If using separate xacts, start one for analyze. Otherwise,
-				 * we can use the outer transaction, but we still need to call
-				 * analyze_rel in a memory context that will be cleaned up on
-				 * return (else we leak memory while processing multiple
-				 * tables).
+				 * we can use the outer transaction.
 				 */
 				if (use_own_xacts)
 				{
@@ -469,8 +452,6 @@ vacuum(VacuumStmt *vacstmt, Oid relid, bool do_toast,
 					/* functions in indexes may want a snapshot set */
 					PushActiveSnapshot(GetTransactionSnapshot());
 				}
-				else
-					old_context = MemoryContextSwitchTo(anl_context);
 
 				analyze_rel(relid, vacstmt, vac_strategy, !scanned_all);
 
@@ -478,11 +459,6 @@ vacuum(VacuumStmt *vacstmt, Oid relid, bool do_toast,
 				{
 					PopActiveSnapshot();
 					CommitTransactionCommand();
-				}
-				else
-				{
-					MemoryContextSwitchTo(old_context);
-					MemoryContextResetAndDeleteChildren(anl_context);
 				}
 			}
 		}
@@ -528,9 +504,6 @@ vacuum(VacuumStmt *vacstmt, Oid relid, bool do_toast,
 	 */
 	MemoryContextDelete(vac_context);
 	vac_context = NULL;
-
-	if (anl_context)
-		MemoryContextDelete(anl_context);
 }
 
 /*

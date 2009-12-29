@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/plannodes.h,v 1.113 2009/10/26 02:26:42 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/plannodes.h,v 1.114 2009/12/29 20:11:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -570,9 +570,9 @@ typedef struct Unique
  *		hash build node
  *
  * If the executor is supposed to try to apply skew join optimization, then
- * skewTable/skewColumn identify the outer relation's join key column, from
- * which the relevant MCV statistics can be fetched.  Also, its type
- * information is provided to save a lookup.
+ * skewTable/skewColumn/skewInherit identify the outer relation's join key
+ * column, from which the relevant MCV statistics can be fetched.  Also, its
+ * type information is provided to save a lookup.
  * ----------------
  */
 typedef struct Hash
@@ -580,6 +580,7 @@ typedef struct Hash
 	Plan		plan;
 	Oid			skewTable;		/* outer join key's table OID, or InvalidOid */
 	AttrNumber	skewColumn;		/* outer join key's column #, or zero */
+	bool		skewInherit;	/* is outer join rel an inheritance tree? */
 	Oid			skewColType;	/* datatype of the outer key column */
 	int32		skewColTypmod;	/* typmod of the outer key column */
 	/* all other info is in the parent HashJoin node */

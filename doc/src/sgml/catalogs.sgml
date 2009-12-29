@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.214 2009/12/17 14:36:15 rhaas Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.215 2009/12/29 20:11:42 tgl Exp $ -->
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
  -->
@@ -4506,10 +4506,22 @@
    The catalog <structname>pg_statistic</structname> stores
    statistical data about the contents of the database.  Entries are
    created by <xref linkend="sql-analyze" endterm="sql-analyze-title">
-   and subsequently used by the query planner.  There is one entry for
-   each table column that has been analyzed.  Note that all the
+   and subsequently used by the query planner.  Note that all the
    statistical data is inherently approximate, even assuming that it
    is up-to-date.
+  </para>
+
+  <para>
+   Normally there is one entry, with <structfield>stainherit</> =
+   <literal>false</>, for each table column that has been analyzed.
+   If the table has inheritance children, a second entry with
+   <structfield>stainherit</> = <literal>true</> is also created.  This row
+   represents the column's statistics over the inheritance tree, i.e.,
+   statistics for the data you'd see with
+   <literal>SELECT <replaceable>column</> FROM <replaceable>table</>*</literal>,
+   whereas the <structfield>stainherit</> = <literal>false</> row represents
+   the results of
+   <literal>SELECT <replaceable>column</> FROM ONLY <replaceable>table</></literal>.
   </para>
 
   <para>
@@ -4518,7 +4530,8 @@
    actual data columns; in particular, <structfield>starelid</structfield>
    references the index.  No entry is made for an ordinary non-expression
    index column, however, since it would be redundant with the entry
-   for the underlying table column.
+   for the underlying table column.  Currently, entries for index expressions
+   always have <structfield>stainherit</> = <literal>false</>.
   </para>
 
   <para>
@@ -4570,6 +4583,14 @@
       <entry><type>int2</type></entry>
       <entry><literal><link linkend="catalog-pg-attribute"><structname>pg_attribute</structname></link>.attnum</literal></entry>
       <entry>The number of the described column</entry>
+     </row>
+
+     <row>
+      <entry><structfield>stainherit</structfield></entry>
+      <entry><type>bool</type></entry>
+      <entry></entry>
+      <entry>If true, the stats include inheritance child columns, not just the
+       values in the specified relation</entry>
      </row>
 
      <row>
@@ -7112,6 +7133,14 @@
       <entry><type>name</type></entry>
       <entry><literal><link linkend="catalog-pg-attribute"><structname>pg_attribute</structname></link>.attname</literal></entry>
       <entry>Name of the column described by this row</entry>
+     </row>
+
+     <row>
+      <entry><structfield>inherited</structfield></entry>
+      <entry><type>bool</type></entry>
+      <entry></entry>
+      <entry>If true, this row includes inheritance child columns, not just the
+       values in the specified table</entry>
      </row>
 
      <row>

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/syscache.c,v 1.121 2009/10/05 19:24:45 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/syscache.c,v 1.122 2009/12/29 20:11:45 tgl Exp $
  *
  * NOTES
  *	  These routines allow the parser/planner/executor to perform
@@ -597,14 +597,14 @@ static const struct cachedesc cacheinfo[] = {
 		},
 		1024
 	},
-	{StatisticRelationId,		/* STATRELATT */
-		StatisticRelidAttnumIndexId,
+	{StatisticRelationId,		/* STATRELATTINH */
+		StatisticRelidAttnumInhIndexId,
 		Anum_pg_statistic_starelid,
-		2,
+		3,
 		{
 			Anum_pg_statistic_starelid,
 			Anum_pg_statistic_staattnum,
-			0,
+			Anum_pg_statistic_stainherit,
 			0
 		},
 		1024

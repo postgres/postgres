@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/syscache.h,v 1.75 2009/10/05 19:24:49 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/syscache.h,v 1.76 2009/12/29 20:11:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -70,7 +70,7 @@ enum SysCacheIdentifier
 	RELNAMENSP,
 	RELOID,
 	RULERELNAME,
-	STATRELATT,
+	STATRELATTINH,
 	TSCONFIGMAP,
 	TSCONFIGNAMENSP,
 	TSCONFIGOID,

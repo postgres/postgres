@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_statistic.h,v 1.39 2009/06/11 14:49:10 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_statistic.h,v 1.40 2009/12/29 20:11:45 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -43,6 +43,7 @@ CATALOG(pg_statistic,2619) BKI_WITHOUT_OIDS
 	/* These fields form the unique key for the entry: */
 	Oid			starelid;		/* relation containing attribute */
 	int2		staattnum;		/* attribute (column) stats are for */
+	bool		stainherit;		/* true if inheritance children are included */
 
 	/* the fraction of the column's entries that are NULL: */
 	float4		stanullfrac;
@@ -142,28 +143,29 @@ typedef FormData_pg_statistic *Form_pg_statistic;
  *		compiler constants for pg_statistic
  * ----------------
  */
-#define Natts_pg_statistic				21
+#define Natts_pg_statistic				22
 #define Anum_pg_statistic_starelid		1
 #define Anum_pg_statistic_staattnum		2
-#define Anum_pg_statistic_stanullfrac	3
-#define Anum_pg_statistic_stawidth		4
-#define Anum_pg_statistic_stadistinct	5
-#define Anum_pg_statistic_stakind1		6
-#define Anum_pg_statistic_stakind2		7
-#define Anum_pg_statistic_stakind3		8
-#define Anum_pg_statistic_stakind4		9
-#define Anum_pg_statistic_staop1		10
-#define Anum_pg_statistic_staop2		11
-#define Anum_pg_statistic_staop3		12
-#define Anum_pg_statistic_staop4		13
-#define Anum_pg_statistic_stanumbers1	14
-#define Anum_pg_statistic_stanumbers2	15
-#define Anum_pg_statistic_stanumbers3	16
-#define Anum_pg_statistic_stanumbers4	17
-#define Anum_pg_statistic_stavalues1	18
-#define Anum_pg_statistic_stavalues2	19
-#define Anum_pg_statistic_stavalues3	20
-#define Anum_pg_statistic_stavalues4	21
+#define Anum_pg_statistic_stainherit	3
+#define Anum_pg_statistic_stanullfrac	4
+#define Anum_pg_statistic_stawidth		5
+#define Anum_pg_statistic_stadistinct	6
+#define Anum_pg_statistic_stakind1		7
+#define Anum_pg_statistic_stakind2		8
+#define Anum_pg_statistic_stakind3		9
+#define Anum_pg_statistic_stakind4		10
+#define Anum_pg_statistic_staop1		11
+#define Anum_pg_statistic_staop2		12
+#define Anum_pg_statistic_staop3		13
+#define Anum_pg_statistic_staop4		14
+#define Anum_pg_statistic_stanumbers1	15
+#define Anum_pg_statistic_stanumbers2	16
+#define Anum_pg_statistic_stanumbers3	17
+#define Anum_pg_statistic_stanumbers4	18
+#define Anum_pg_statistic_stavalues1	19
+#define Anum_pg_statistic_stavalues2	20
+#define Anum_pg_statistic_stavalues3	21
+#define Anum_pg_statistic_stavalues4	22
 
 /*
  * Currently, three statistical slot "kinds" are defined: most common values,

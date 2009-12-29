@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.267 2009/11/15 02:45:35 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.268 2009/12/29 20:11:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -115,6 +115,7 @@ static HashJoin *make_hashjoin(List *tlist,
 static Hash *make_hash(Plan *lefttree,
 		  Oid skewTable,
 		  AttrNumber skewColumn,
+		  bool skewInherit,
 		  Oid skewColType,
 		  int32 skewColTypmod);
 static MergeJoin *make_mergejoin(List *tlist,
@@ -1898,6 +1899,7 @@ create_hashjoin_plan(PlannerInfo *root,
 	List	   *hashclauses;
 	Oid			skewTable = InvalidOid;
 	AttrNumber	skewColumn = InvalidAttrNumber;
+	bool		skewInherit = false;
 	Oid			skewColType = InvalidOid;
 	int32		skewColTypmod = -1;
 	HashJoin   *join_plan;
@@ -1969,6 +1971,7 @@ create_hashjoin_plan(PlannerInfo *root,
 			{
 				skewTable = rte->relid;
 				skewColumn = var->varattno;
+				skewInherit = rte->inh;
 				skewColType = var->vartype;
 				skewColTypmod = var->vartypmod;
 			}
@@ -1981,6 +1984,7 @@ create_hashjoin_plan(PlannerInfo *root,
 	hash_plan = make_hash(inner_plan,
 						  skewTable,
 						  skewColumn,
+						  skewInherit,
 						  skewColType,
 						  skewColTypmod);
 	join_plan = make_hashjoin(tlist,
@@ -2794,6 +2798,7 @@ static Hash *
 make_hash(Plan *lefttree,
 		  Oid skewTable,
 		  AttrNumber skewColumn,
+		  bool skewInherit,
 		  Oid skewColType,
 		  int32 skewColTypmod)
 {
@@ -2814,6 +2819,7 @@ make_hash(Plan *lefttree,
 
 	node->skewTable = skewTable;
 	node->skewColumn = skewColumn;
+	node->skewInherit = skewInherit;
 	node->skewColType = skewColType;
 	node->skewColTypmod = skewColTypmod;
 
