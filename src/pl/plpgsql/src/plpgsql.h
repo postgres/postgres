@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.113 2009/06/11 14:49:14 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.113.2.1 2009/12/29 17:41:09 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -705,6 +705,7 @@ typedef struct
 
 	Tuplestorestate *tuple_store;		/* SRFs accumulate results here */
 	MemoryContext tuple_store_cxt;
+	ResourceOwner tuple_store_owner;
 	ReturnSetInfo *rsi;
 
 	int			trig_nargs;
