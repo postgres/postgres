@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.65.2.4 2008/10/09 16:35:25 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.65.2.5 2009/12/29 17:41:35 heikki Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -625,6 +625,7 @@ typedef struct
 
 	Tuplestorestate *tuple_store;		/* SRFs accumulate results here */
 	MemoryContext tuple_store_cxt;
+	ResourceOwner tuple_store_owner;
 	ReturnSetInfo *rsi;
 
 	int			trig_nargs;

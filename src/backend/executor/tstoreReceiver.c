@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/tstoreReceiver.c,v 1.15.2.1 2008/12/01 17:06:41 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/tstoreReceiver.c,v 1.15.2.2 2009/12/29 17:41:35 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -95,11 +95,8 @@ static void
 tstoreReceiveSlot_notoast(TupleTableSlot *slot, DestReceiver *self)
 {
 	TStoreState *myState = (TStoreState *) self;
-	MemoryContext oldcxt = MemoryContextSwitchTo(myState->cxt);
 
 	tuplestore_puttuple(myState->tstore, ExecFetchSlotTuple(slot));
-
-	MemoryContextSwitchTo(oldcxt);
 }
 
 /*
@@ -116,7 +113,6 @@ tstoreReceiveSlot_detoast(TupleTableSlot *slot, DestReceiver *self)
 	int			nfree;
 	int			i;
 	HeapTuple	tuple;
-	MemoryContext oldcxt;
 
 	/* Make sure the tuple is fully deconstructed */
 	slot_getallattrs(slot);
@@ -126,6 +122,7 @@ tstoreReceiveSlot_detoast(TupleTableSlot *slot, DestReceiver *self)
 	 * myState->outvalues[] (but we can re-use the slot's isnull array).
 	 * Also, remember the fetched values to free afterwards.
 	 */
+
 	nfree = 0;
 	for (i = 0; i < natts; i++)
 	{
@@ -151,9 +148,7 @@ tstoreReceiveSlot_detoast(TupleTableSlot *slot, DestReceiver *self)
 	 */
 	tuple = heap_form_tuple(typeinfo,
 							myState->outvalues, slot->tts_isnull);
-	oldcxt = MemoryContextSwitchTo(myState->cxt);
 	tuplestore_puttuple(myState->tstore, tuple);
-	MemoryContextSwitchTo(oldcxt);
 	heap_freetuple(tuple);
 
 	/* And release any temporary detoasted values */
