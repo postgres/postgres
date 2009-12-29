@@ -1265,7 +1265,6 @@ build_tuplestore_recursively(char *key_fld,
 							 Tuplestorestate *tupstore)
 {
 	TupleDesc	tupdesc = attinmeta->tupdesc;
-	MemoryContext oldcontext;
 	StringInfo	sql = makeStringInfo();
 	int			ret;
 	int			proc;
