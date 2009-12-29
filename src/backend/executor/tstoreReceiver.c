@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/tstoreReceiver.c,v 1.19.2.1 2008/12/01 17:06:27 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/tstoreReceiver.c,v 1.19.2.2 2009/12/29 17:41:18 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -95,11 +95,8 @@ static void
 tstoreReceiveSlot_notoast(TupleTableSlot *slot, DestReceiver *self)
 {
 	TStoreState *myState = (TStoreState *) self;
-	MemoryContext oldcxt = MemoryContextSwitchTo(myState->cxt);
 
 	tuplestore_puttupleslot(myState->tstore, slot);
-
-	MemoryContextSwitchTo(oldcxt);
 }
 
 /*
