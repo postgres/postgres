@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/analyze.c,v 1.145 2009/12/30 20:32:14 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/analyze.c,v 1.146 2009/12/30 21:21:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -565,9 +565,12 @@ do_analyze_rel(Relation onerel, VacuumStmt *vacstmt,
 	/*
 	 * Report ANALYZE to the stats collector, too; likewise, tell it to
 	 * adopt these numbers only if we're not inside a VACUUM that got a
-	 * better number.
+	 * better number.  However, a call with inh = true shouldn't reset
+	 * the stats.
 	 */
-	pgstat_report_analyze(onerel, update_reltuples, totalrows, totaldeadrows);
+	if (!inh)
+		pgstat_report_analyze(onerel, update_reltuples,
+							  totalrows, totaldeadrows);
 
 	/* We skip to here if there were no analyzable columns */
 cleanup:
