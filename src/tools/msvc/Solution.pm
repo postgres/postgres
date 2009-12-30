@@ -3,7 +3,7 @@ package Solution;
 #
 # Package that encapsulates a Visual C++ solution file generation
 #
-# $PostgreSQL: pgsql/src/tools/msvc/Solution.pm,v 1.49 2009/12/23 13:27:04 mha Exp $
+# $PostgreSQL: pgsql/src/tools/msvc/Solution.pm,v 1.50 2009/12/30 12:26:41 mha Exp $
 #
 use Carp;
 use strict;
@@ -66,7 +66,7 @@ sub DetermineToolVersions
     open(P,"vcbuild /? |") || die "vcbuild command not found";
     my $line = <P>;
     close(P);
-    if ($line !~ /^Microsoft \(R\) Visual C\+\+ Project Builder - Command Line Version (\d+)\.00\.\d+/) {
+    if ($line !~ /^Microsoft\s*\(R\) Visual C\+\+ Project Builder - \D+(\d+)\.00\.\d+/) {
        die "Unable to determine vcbuild version from first line of output!";
     }
     if ($1 == 8) { $self->{vcver} = '8.00' }
