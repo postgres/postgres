@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-secure.c,v 1.89.2.2 2009/12/09 06:37:21 mha Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-secure.c,v 1.89.2.3 2009/12/30 03:46:08 tgl Exp $
  *
  * NOTES
  *	  [ Most of these notes are wrong/obsolete, but perhaps not all ]
@@ -256,6 +256,7 @@ pqsecure_read(PGconn *conn, void *ptr, size_t len)
 		int			err;
 
 rloop:
+		SOCK_ERRNO_SET(0);
 		n = SSL_read(conn->ssl, ptr, len);
 		err = SSL_get_error(conn->ssl, n);
 		switch (err)
@@ -347,6 +348,7 @@ pqsecure_write(PGconn *conn, const void *ptr, size_t len)
 	{
 		int			err;
 
+		SOCK_ERRNO_SET(0);
 		n = SSL_write(conn->ssl, ptr, len);
 		err = SSL_get_error(conn->ssl, n);
 		switch (err)
