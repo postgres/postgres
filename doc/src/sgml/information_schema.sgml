@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/information_schema.sgml,v 1.42 2009/12/05 21:31:05 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/information_schema.sgml,v 1.43 2009/12/30 22:48:10 petere Exp $ -->
 
 <chapter id="information-schema">
  <title>The Information Schema</title>
@@ -4875,7 +4875,11 @@ ORDER BY c.ordinal_position;
      <row>
       <entry><literal>action_condition</literal></entry>
       <entry><type>character_data</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>
+       <literal>WHEN</literal> condition of the trigger, null if none
+       (also null if the table is not owned by a currently enabled
+       role)
+      </entry>
      </row>
 
      <row>

@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2003-2009, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/catalog/information_schema.sql,v 1.60 2009/12/07 05:22:21 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/catalog/information_schema.sql,v 1.61 2009/12/30 22:48:10 petere Exp $
  */
 
 /*
@@ -1909,7 +1909,12 @@ CREATE VIEW triggers AS
            CAST(n.nspname AS sql_identifier) AS event_object_schema,
            CAST(c.relname AS sql_identifier) AS event_object_table,
            CAST(null AS cardinal_number) AS action_order,
-           CAST(null AS character_data) AS action_condition,
+           -- XXX strange hacks follow
+           CAST(
+             CASE WHEN pg_has_role(c.relowner, 'USAGE')
+               THEN (SELECT m[1] FROM regexp_matches(pg_get_triggerdef(t.oid), E'.{35,} WHEN \\((.+)\\) EXECUTE PROCEDURE') AS rm(m) LIMIT 1)
+               ELSE null END
+             AS character_data) AS action_condition,
            CAST(
              substring(pg_get_triggerdef(t.oid) from
                        position('EXECUTE PROCEDURE' in substring(pg_get_triggerdef(t.oid) from 48)) + 47)
