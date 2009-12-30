@@ -2,7 +2,7 @@
 #
 # PostgreSQL documentation makefile
 #
-# $PostgreSQL: pgsql/doc/src/sgml/Makefile,v 1.133 2009/10/06 20:00:44 petere Exp $
+# $PostgreSQL: pgsql/doc/src/sgml/Makefile,v 1.134 2009/12/30 13:48:52 petere Exp $
 #
 #----------------------------------------------------------------------------
 
@@ -143,13 +143,17 @@ features-unsupported.sgml: $(top_srcdir)/src/backend/catalog/sql_feature_package
 
 JADE.tex.call = $(JADE) $(JADEFLAGS) $(SGMLINCLUDE) $(CATALOG) -d $(srcdir)/stylesheet.dsl -t tex -V tex-backend -i output-print -i include-index
 
-%-A4.tex-ps %-US.tex-ps : JADE_OUTPUT=texdvi-output
-%-A4.tex-pdf %-US.tex-pdf : JADE_OUTPUT=texpdf-output
-%-A4.tex-ps %-A4.tex-pdf : JADE_PAPER=A4
-%-US.tex-ps %-US.tex-pdf : JADE_PAPER=USletter
+%-A4.tex-ps: %.sgml $(ALLSGML)
+	$(JADE.tex.call) -V texdvi-output -V '%paper-type%'=A4 -o $@ $<
 
-%-A4.tex-ps %-US.tex-ps %-A4.tex-pdf %-US.tex-pdf: %.sgml $(ALLSGML)
-	$(JADE.tex.call) -V $(JADE_OUTPUT) -V '%paper-type%'=$(JADE_PAPER) -o $@ $<
+%-US.tex-ps: %.sgml $(ALLSGML)
+	$(JADE.tex.call) -V texdvi-output -V '%paper-type%'=USletter -o $@ $<
+
+%-A4.tex-pdf: %.sgml $(ALLSGML)
+	$(JADE.tex.call) -V texpdf-output -V '%paper-type%'=A4 -o $@ $<
+
+%-US.tex-pdf: %.sgml $(ALLSGML)
+	$(JADE.tex.call) -V texpdf-output -V '%paper-type%'=USletter -o $@ $<
 
 %.dvi: %.tex-ps
 	@rm -f $*.aux $*.log
