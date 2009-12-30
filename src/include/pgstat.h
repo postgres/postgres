@@ -5,7 +5,7 @@
  *
  *	Copyright (c) 2001-2009, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/include/pgstat.h,v 1.84 2009/11/28 23:38:08 tgl Exp $
+ *	$PostgreSQL: pgsql/src/include/pgstat.h,v 1.85 2009/12/30 20:32:14 tgl Exp $
  * ----------
  */
 #ifndef PGSTAT_H
@@ -68,9 +68,9 @@ typedef int64 PgStat_Counter;
  * fetched by heap_fetch under the control of simple indexscans for this index.
  *
  * tuples_inserted/updated/deleted/hot_updated count attempted actions,
- * regardless of whether the transaction committed.  new_live_tuples and
- * new_dead_tuples are properly adjusted depending on commit or abort.
- * Note that new_live_tuples and new_dead_tuples can be negative!
+ * regardless of whether the transaction committed.  delta_live_tuples,
+ * delta_dead_tuples, and changed_tuples are set depending on commit or abort.
+ * Note that delta_live_tuples and delta_dead_tuples can be negative!
  * ----------
  */
 typedef struct PgStat_TableCounts
@@ -85,8 +85,9 @@ typedef struct PgStat_TableCounts
 	PgStat_Counter t_tuples_deleted;
 	PgStat_Counter t_tuples_hot_updated;
 
-	PgStat_Counter t_new_live_tuples;
-	PgStat_Counter t_new_dead_tuples;
+	PgStat_Counter t_delta_live_tuples;
+	PgStat_Counter t_delta_dead_tuples;
+	PgStat_Counter t_changed_tuples;
 
 	PgStat_Counter t_blocks_fetched;
 	PgStat_Counter t_blocks_hit;
@@ -102,14 +103,14 @@ typedef struct PgStat_TableCounts
 /* ----------
  * PgStat_TableStatus			Per-table status within a backend
  *
- * Most of the event counters are nontransactional, ie, we count events
+ * Many of the event counters are nontransactional, ie, we count events
  * in committed and aborted transactions alike.  For these, we just count
- * directly in the PgStat_TableStatus.	However, new_live_tuples and
- * new_dead_tuples must be derived from tuple insertion and deletion counts
+ * directly in the PgStat_TableStatus.	However, delta_live_tuples,
+ * delta_dead_tuples, and changed_tuples must be derived from event counts
  * with awareness of whether the transaction or subtransaction committed or
  * aborted.  Hence, we also keep a stack of per-(sub)transaction status
  * records for every table modified in the current transaction.  At commit
- * or abort, we propagate tuples_inserted and tuples_deleted up to the
+ * or abort, we propagate tuples_inserted/updated/deleted up to the
  * parent subtransaction level, or out to the parent PgStat_TableStatus,
  * as appropriate.
  * ----------
@@ -129,6 +130,7 @@ typedef struct PgStat_TableStatus
 typedef struct PgStat_TableXactStatus
 {
 	PgStat_Counter tuples_inserted;		/* tuples inserted in (sub)xact */
+	PgStat_Counter tuples_updated;		/* tuples updated in (sub)xact */
 	PgStat_Counter tuples_deleted;		/* tuples deleted in (sub)xact */
 	int			nest_level;		/* subtransaction nest level */
 	/* links to other structs for same relation: */
@@ -274,7 +276,7 @@ typedef struct PgStat_MsgAutovacStart
 
 /* ----------
  * PgStat_MsgVacuum				Sent by the backend or autovacuum daemon
- *								after VACUUM or VACUUM ANALYZE
+ *								after VACUUM
  * ----------
  */
 typedef struct PgStat_MsgVacuum
@@ -282,9 +284,8 @@ typedef struct PgStat_MsgVacuum
 	PgStat_MsgHdr m_hdr;
 	Oid			m_databaseid;
 	Oid			m_tableoid;
-	bool		m_analyze;
+	bool		m_adopt_counts;
 	bool		m_autovacuum;
-	bool		m_scanned_all;
 	TimestampTz m_vacuumtime;
 	PgStat_Counter m_tuples;
 } PgStat_MsgVacuum;
@@ -300,6 +301,7 @@ typedef struct PgStat_MsgAnalyze
 	PgStat_MsgHdr m_hdr;
 	Oid			m_databaseid;
 	Oid			m_tableoid;
+	bool		m_adopt_counts;
 	bool		m_autovacuum;
 	TimestampTz m_analyzetime;
 	PgStat_Counter m_live_tuples;
@@ -478,7 +480,7 @@ typedef struct PgStat_StatTabEntry
 
 	PgStat_Counter n_live_tuples;
 	PgStat_Counter n_dead_tuples;
-	PgStat_Counter last_anl_tuples;
+	PgStat_Counter changes_since_analyze;
 
 	PgStat_Counter blocks_fetched;
 	PgStat_Counter blocks_hit;
@@ -635,11 +637,10 @@ extern void pgstat_clear_snapshot(void);
 extern void pgstat_reset_counters(void);
 
 extern void pgstat_report_autovac(Oid dboid);
-extern void pgstat_report_vacuum(Oid tableoid, bool shared, bool scanned_all,
-					 bool analyze, PgStat_Counter tuples);
-extern void pgstat_report_analyze(Relation rel,
-					  PgStat_Counter livetuples,
-					  PgStat_Counter deadtuples);
+extern void pgstat_report_vacuum(Oid tableoid, bool shared, bool adopt_counts,
+					 PgStat_Counter tuples);
+extern void pgstat_report_analyze(Relation rel, bool adopt_counts,
+					  PgStat_Counter livetuples, PgStat_Counter deadtuples);
 
 extern void pgstat_initialize(void);
 extern void pgstat_bestart(void);

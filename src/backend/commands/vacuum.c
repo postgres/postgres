@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.400 2009/12/29 20:11:44 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.401 2009/12/30 20:32:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1332,7 +1332,6 @@ full_vacuum_rel(Relation onerel, VacuumStmt *vacstmt)
 	pgstat_report_vacuum(RelationGetRelid(onerel),
 						 onerel->rd_rel->relisshared,
 						 true,
-						 (vacstmt->options & VACOPT_ANALYZE) != 0,
 						 vacrelstats->rel_tuples);
 
 	return heldoff;
