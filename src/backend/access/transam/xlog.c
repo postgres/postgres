@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.345.2.5 2009/09/13 18:32:17 heikki Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.345.2.6 2009/12/30 08:37:23 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -6659,6 +6659,8 @@ CreateCheckPoint(int flags)
 	ControlFile->checkPoint = ProcLastRecPtr;
 	ControlFile->checkPointCopy = checkPoint;
 	ControlFile->time = (pg_time_t) time(NULL);
+	/* crash recovery should always recover to the end of WAL */
+	MemSet(&ControlFile->minRecoveryPoint, 0, sizeof(XLogRecPtr));
 	UpdateControlFile();
 	LWLockRelease(ControlFileLock);
 
