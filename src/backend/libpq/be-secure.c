@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/be-secure.c,v 1.93 2009/12/09 06:37:06 mha Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/be-secure.c,v 1.94 2009/12/30 03:45:46 tgl Exp $
  *
  *	  Since the server static private key ($DataDir/server.key)
  *	  will normally be stored unencrypted so that the database
@@ -245,6 +245,7 @@ secure_read(Port *port, void *ptr, size_t len)
 		int			err;
 
 rloop:
+		errno = 0;
 		n = SSL_read(port->ssl, ptr, len);
 		err = SSL_get_error(port->ssl, n);
 		switch (err)
@@ -339,6 +340,7 @@ secure_write(Port *port, void *ptr, size_t len)
 		}
 
 wloop:
+		errno = 0;
 		n = SSL_write(port->ssl, ptr, len);
 		err = SSL_get_error(port->ssl, n);
 		switch (err)
