@@ -421,7 +421,7 @@ T211	Basic trigger capability	01	Triggers activated on UPDATE, INSERT, or DELETE
 T211	Basic trigger capability	02	BEFORE triggers	YES	
 T211	Basic trigger capability	03	AFTER triggers	YES	
 T211	Basic trigger capability	04	FOR EACH ROW triggers	YES	
-T211	Basic trigger capability	05	Ability to specify a search condition that must be true before the trigger is invoked	NO	
+T211	Basic trigger capability	05	Ability to specify a search condition that must be true before the trigger is invoked	YES	
 T211	Basic trigger capability	06	Support for run-time rules for the interaction of triggers and constraints	NO	
 T211	Basic trigger capability	07	TRIGGER privilege	YES	
 T211	Basic trigger capability	08	Multiple triggers for the same event are executed in the order in which they were created in the catalog	NO	intentionally omitted
