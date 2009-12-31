@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/auth.c,v 1.188 2009/12/12 21:35:21 mha Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/auth.c,v 1.189 2009/12/31 22:11:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2305,8 +2305,9 @@ CheckLDAPAuth(Port *port)
 								filter, port->hba->ldapserver)));
 			else
 				ereport(LOG,
-						(errmsg("LDAP search failed for filter \"%s\" on server \"%s\": user is not unique (%d matches)",
-								filter, port->hba->ldapserver, ldap_count_entries(ldap, search_message))));
+						(errmsg("LDAP search failed for filter \"%s\" on server \"%s\": user is not unique (%ld matches)",
+								filter, port->hba->ldapserver,
+								(long) ldap_count_entries(ldap, search_message))));
 
 			pfree(filter);
 			ldap_msgfree(search_message);
