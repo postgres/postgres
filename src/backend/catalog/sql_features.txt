@@ -349,7 +349,7 @@ S094	Arrays of reference types			NO
 S095	Array constructors by query			YES	
 S096	Optional array bounds			YES	
 S097	Array element assignment			NO	
-S098	ARRAY_AGG			NO	ORDER BY clause not supported
+S098	ARRAY_AGG			YES	
 S111	ONLY in query expressions			YES	
 S151	Type predicate			NO	
 S161	Subtype treatment			NO	
@@ -525,7 +525,7 @@ X030	XMLDocument			NO
 X031	XMLElement			YES	
 X032	XMLForest			YES	
 X034	XMLAgg			YES	
-X035	XMLAgg: ORDER BY option			NO	
+X035	XMLAgg: ORDER BY option			YES	
 X036	XMLComment			YES	
 X037	XMLPI			YES	
 X038	XMLText			NO	
