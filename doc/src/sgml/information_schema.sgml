@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/information_schema.sgml,v 1.43 2009/12/30 22:48:10 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/information_schema.sgml,v 1.44 2009/12/31 14:41:23 petere Exp $ -->
 
 <chapter id="information-schema">
  <title>The Information Schema</title>
@@ -4790,6 +4790,80 @@ ORDER BY c.ordinal_position;
        defines other commit actions for temporary tables, which are
        not supported by <productname>PostgreSQL</>.)
       </entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+ </sect1>
+
+ <sect1 id="infoschema-triggered-update-columns">
+  <title><literal>triggered_update_columns</literal></title>
+
+  <para>
+   For triggers in the current database that specify a column list
+   (like <literal>UPDATE OF column1, column2</literal>), the
+   view <literal>triggered_update_columns</literal> identifies these
+   columns.  Triggers that do not specify a column list are not
+   included in this view.  Only those columns are shown that the
+   current user owns or has some non-SELECT privilege on.
+  </para>
+
+  <table>
+   <title><literal>triggered_update_columns</literal> Columns</title>
+
+   <tgroup cols="3">
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Data Type</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry><literal>trigger_catalog</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the database that contains the trigger (always the current database)</entry>
+     </row>
+
+     <row>
+      <entry><literal>trigger_schema</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the schema that contains the trigger</entry>
+     </row>
+
+     <row>
+      <entry><literal>trigger_name</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the trigger</entry>
+     </row>
+
+     <row>
+      <entry><literal>event_object_catalog</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>
+       Name of the database that contains the table that the trigger
+       is defined on (always the current database)
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal>event_object_schema</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the schema that contains the table that the trigger is defined on</entry>
+     </row>
+
+     <row>
+      <entry><literal>event_object_table</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the table that the trigger is defined on</entry>
+     </row>
+
+     <row>
+      <entry><literal>event_object_column</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the column that the trigger is defined on</entry>
      </row>
     </tbody>
    </tgroup>
