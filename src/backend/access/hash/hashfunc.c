@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/hash/hashfunc.c,v 1.59 2009/06/11 14:48:53 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/hash/hashfunc.c,v 1.60 2009/12/31 19:41:33 tgl Exp $
  *
  * NOTES
  *	  These functions are stored in pg_amproc.	For each operator class
@@ -319,7 +319,7 @@ hash_any(register const unsigned char *k, register int keylen)
 	a = b = c = 0x9e3779b9 + len + 3923095;
 
 	/* If the source pointer is word-aligned, we use word-wide fetches */
-	if (((long) k & UINT32_ALIGN_MASK) == 0)
+	if (((intptr_t) k & UINT32_ALIGN_MASK) == 0)
 	{
 		/* Code path for aligned source data */
 		register const uint32 *ka = (const uint32 *) k;

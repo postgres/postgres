@@ -20,7 +20,7 @@ tas(lock)
      * LDCWX requires that we align the "semaphore" to a 16-byte
      * boundary.  The actual datum is a single word (4 bytes).
      */
-    lock = ((long) lock + 15) & ~15;
+    lock = ((uintptr_t) lock + 15) & ~15;
 
     /*
      * The LDCWX instruction atomically clears the target word and

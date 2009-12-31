@@ -66,7 +66,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	  $PostgreSQL: pgsql/src/include/storage/s_lock.h,v 1.167 2009/07/27 05:31:05 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/include/storage/s_lock.h,v 1.168 2009/12/31 19:41:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -683,7 +683,7 @@ typedef struct
 	int			sema[4];
 } slock_t;
 
-#define TAS_ACTIVE_WORD(lock)	((volatile int *) (((long) (lock) + 15) & ~15))
+#define TAS_ACTIVE_WORD(lock)	((volatile int *) (((uintptr_t) (lock) + 15) & ~15))
 
 #if defined(__GNUC__)
 

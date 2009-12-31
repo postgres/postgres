@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/data.c,v 1.46 2009/11/27 13:32:17 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/data.c,v 1.47 2009/12/31 19:41:36 tgl Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -162,12 +162,10 @@ ecpg_get_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 		if (binary)
 		{
 			if (varcharsize == 0 || varcharsize * offset >= size)
-				memcpy((char *) ((long) var + offset * act_tuple),
-					   pval, size);
+				memcpy(var + offset * act_tuple, pval, size);
 			else
 			{
-				memcpy((char *) ((long) var + offset * act_tuple),
-					   pval, varcharsize * offset);
+				memcpy(var + offset * act_tuple, pval, varcharsize * offset);
 
 				if (varcharsize * offset < size)
 				{
@@ -371,7 +369,7 @@ ecpg_get_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 				case ECPGt_unsigned_char:
 				case ECPGt_string:
 					{
-						char	*str = (char *) ((long) var + offset * act_tuple);
+						char	*str = (char *) (var + offset * act_tuple);
 						if (varcharsize == 0 || varcharsize > size)
 						{
 							strncpy(str, pval, size + 1);
@@ -426,7 +424,7 @@ ecpg_get_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 				case ECPGt_varchar:
 					{
 						struct ECPGgeneric_varchar *variable =
-						(struct ECPGgeneric_varchar *) ((long) var + offset * act_tuple);
+						(struct ECPGgeneric_varchar *) (var + offset * act_tuple);
 
 						variable->len = size;
 						if (varcharsize == 0)

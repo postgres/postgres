@@ -2,7 +2,7 @@
  * pltcl.c		- PostgreSQL support for Tcl as
  *				  procedural language (PL)
  *
- *	  $PostgreSQL: pgsql/src/pl/tcl/pltcl.c,v 1.128 2009/06/11 14:49:14 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/pl/tcl/pltcl.c,v 1.129 2009/12/31 19:41:37 tgl Exp $
  *
  **********************************************************************/
 
@@ -1946,7 +1946,7 @@ pltcl_SPI_prepare(ClientData cdata, Tcl_Interp *interp,
 	 * Allocate the new querydesc structure
 	 ************************************************************/
 	qdesc = (pltcl_query_desc *) malloc(sizeof(pltcl_query_desc));
-	snprintf(qdesc->qname, sizeof(qdesc->qname), "%lx", (long) qdesc);
+	snprintf(qdesc->qname, sizeof(qdesc->qname), "%p", qdesc);
 	qdesc->nargs = nargs;
 	qdesc->argtypes = (Oid *) malloc(nargs * sizeof(Oid));
 	qdesc->arginfuncs = (FmgrInfo *) malloc(nargs * sizeof(FmgrInfo));

@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/c.h,v 1.236 2009/06/11 14:49:08 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/c.h,v 1.237 2009/12/31 19:41:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -71,6 +71,9 @@
 #include <stdarg.h>
 #ifdef HAVE_STRINGS_H
 #include <strings.h>
+#endif
+#ifdef HAVE_STDINT_H
+#include <stdint.h>
 #endif
 #include <sys/types.h>
 
@@ -492,7 +495,7 @@ typedef NameData *Name;
  *		True iff pointer is properly aligned to point to the given type.
  */
 #define PointerIsAligned(pointer, type) \
-		(((long)(pointer) % (sizeof (type))) == 0)
+		(((intptr_t)(pointer) % (sizeof (type))) == 0)
 
 #define OidIsValid(objectId)  ((bool) ((objectId) != InvalidOid))
 
@@ -538,7 +541,7 @@ typedef NameData *Name;
  */
 
 #define TYPEALIGN(ALIGNVAL,LEN)  \
-	(((long) (LEN) + ((ALIGNVAL) - 1)) & ~((long) ((ALIGNVAL) - 1)))
+	(((intptr_t) (LEN) + ((ALIGNVAL) - 1)) & ~((intptr_t) ((ALIGNVAL) - 1)))
 
 #define SHORTALIGN(LEN)			TYPEALIGN(ALIGNOF_SHORT, (LEN))
 #define INTALIGN(LEN)			TYPEALIGN(ALIGNOF_INT, (LEN))
@@ -549,7 +552,7 @@ typedef NameData *Name;
 #define BUFFERALIGN(LEN)		TYPEALIGN(ALIGNOF_BUFFER, (LEN))
 
 #define TYPEALIGN_DOWN(ALIGNVAL,LEN)  \
-	(((long) (LEN)) & ~((long) ((ALIGNVAL) - 1)))
+	(((intptr_t) (LEN)) & ~((intptr_t) ((ALIGNVAL) - 1)))
 
 #define SHORTALIGN_DOWN(LEN)	TYPEALIGN_DOWN(ALIGNOF_SHORT, (LEN))
 #define INTALIGN_DOWN(LEN)		TYPEALIGN_DOWN(ALIGNOF_INT, (LEN))
@@ -630,7 +633,7 @@ typedef NameData *Name;
 		int		_val = (val); \
 		Size	_len = (len); \
 \
-		if ((((long) _vstart) & LONG_ALIGN_MASK) == 0 && \
+		if ((((intptr_t) _vstart) & LONG_ALIGN_MASK) == 0 && \
 			(_len & LONG_ALIGN_MASK) == 0 && \
 			_val == 0 && \
 			_len <= MEMSET_LOOP_LIMIT && \

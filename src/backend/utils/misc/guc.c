@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.529 2009/12/21 01:34:11 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.530 2009/12/31 19:41:34 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -87,7 +87,8 @@
 #endif
 
 /* upper limit for GUC variables measured in kilobytes of memory */
-#if SIZEOF_SIZE_T > 4
+/* note that various places assume the byte size fits in a "long" variable */
+#if SIZEOF_SIZE_T > 4 && SIZEOF_LONG > 4
 #define MAX_KILOBYTES	INT_MAX
 #else
 #define MAX_KILOBYTES	(INT_MAX / 1024)

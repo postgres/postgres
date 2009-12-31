@@ -236,6 +236,9 @@
 /* Define to 1 if the system has the type `int8'. */
 #undef HAVE_INT8
 
+/* Define to 1 if the system has the type `intptr_t'. */
+#undef HAVE_INTPTR_T
+
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
 
@@ -599,6 +602,9 @@
 /* Define to 1 if the system has the type `uint8'. */
 #undef HAVE_UINT8
 
+/* Define to 1 if the system has the type `uintptr_t'. */
+#undef HAVE_UINTPTR_T
+
 /* Define to 1 if the system has the type `union semun'. */
 #undef HAVE_UNION_SEMUN
 
@@ -705,14 +711,14 @@
    RELSEG_SIZE requires an initdb. */
 #undef RELSEG_SIZE
 
+/* The size of `long', as computed by sizeof. */
+#undef SIZEOF_LONG
+
 /* The size of `off_t', as computed by sizeof. */
 #undef SIZEOF_OFF_T
 
 /* The size of `size_t', as computed by sizeof. */
 #undef SIZEOF_SIZE_T
-
-/* The size of `unsigned long', as computed by sizeof. */
-#undef SIZEOF_UNSIGNED_LONG
 
 /* The size of `void *', as computed by sizeof. */
 #undef SIZEOF_VOID_P
@@ -827,8 +833,16 @@
 #undef inline
 #endif
 
+/* Define to the type of a signed integer type wide enough to hold a pointer,
+   if such a type exists, and if the system does not define it. */
+#undef intptr_t
+
 /* Define to empty if the C compiler does not understand signed types. */
 #undef signed
+
+/* Define to the type of an unsigned integer type wide enough to hold a
+   pointer, if such a type exists, and if the system does not define it. */
+#undef uintptr_t
 
 /* Define to empty if the keyword `volatile' does not work. Warning: valid
    code using `volatile' can become incorrect without. Disable with care. */

@@ -1,7 +1,7 @@
 /**********************************************************************
  * plperl.c - perl as a procedural language for PostgreSQL
  *
- *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.156 2009/12/29 17:40:59 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.157 2009/12/31 19:41:37 tgl Exp $
  *
  **********************************************************************/
 
@@ -95,7 +95,7 @@ typedef struct plperl_call_data
  **********************************************************************/
 typedef struct plperl_query_desc
 {
-	char		qname[sizeof(long) * 2 + 1];
+	char		qname[20];
 	void	   *plan;
 	int			nargs;
 	Oid		   *argtypes;
@@ -2337,7 +2337,7 @@ plperl_spi_prepare(char *query, int argc, SV **argv)
 	 ************************************************************/
 	qdesc = (plperl_query_desc *) malloc(sizeof(plperl_query_desc));
 	MemSet(qdesc, 0, sizeof(plperl_query_desc));
-	snprintf(qdesc->qname, sizeof(qdesc->qname), "%lx", (long) qdesc);
+	snprintf(qdesc->qname, sizeof(qdesc->qname), "%p", qdesc);
 	qdesc->nargs = argc;
 	qdesc->argtypes = (Oid *) malloc(argc * sizeof(Oid));
 	qdesc->arginfuncs = (FmgrInfo *) malloc(argc * sizeof(FmgrInfo));
