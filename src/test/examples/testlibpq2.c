@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/src/test/examples/testlibpq2.c,v 1.15 2009/06/11 14:49:15 momjian Exp $
+ * $PostgreSQL: pgsql/src/test/examples/testlibpq2.c,v 1.16 2009/12/31 00:16:47 adunstan Exp $
  *
  *
  * testlibpq2.c
@@ -24,11 +24,16 @@
  *
  *	 INSERT INTO TBL1 VALUES (10);
  */
+
+#ifdef WIN32
+#include <windows.h>
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
 #include <sys/time.h>
+#include <sys/types.h>
 #include "libpq-fe.h"
 
 static void
