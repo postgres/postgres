@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/procarray.c,v 1.52 2009/12/19 01:32:35 sriggs Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/procarray.c,v 1.53 2009/12/31 21:47:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2471,7 +2471,7 @@ KnownAssignedXidsRemoveMany(TransactionId xid, bool keepPreparedXacts)
  *
  * Must be called while holding ProcArrayLock (in shared mode)
  */
-void
+static void
 KnownAssignedXidsDisplay(int trace_level)
 {
 	HASH_SEQ_STATUS status;
