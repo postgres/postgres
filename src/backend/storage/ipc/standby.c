@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/standby.c,v 1.1 2009/12/19 01:32:35 sriggs Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/standby.c,v 1.2 2009/12/31 22:07:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -234,17 +234,17 @@ ResolveRecoveryConflictWithVirtualXIDs(VirtualTransactionId *waitlist,
 					{
 						case CONFLICT_MODE_FATAL:
 							elog(trace_recovery(DEBUG1),
-									"recovery disconnects session with pid %d because of conflict with %s",
-											pid,
-											reason);
+								 "recovery disconnects session with pid %ld because of conflict with %s",
+								 (long) pid,
+								 reason);
 							break;
 						case CONFLICT_MODE_ERROR:
 							elog(trace_recovery(DEBUG1),
-									"recovery cancels virtual transaction %u/%u pid %d because of conflict with %s",
-											waitlist->backendId,
-											waitlist->localTransactionId,
-											pid,
-											reason);
+								 "recovery cancels virtual transaction %u/%u pid %ld because of conflict with %s",
+								 waitlist->backendId,
+								 waitlist->localTransactionId,
+								 (long) pid,
+								 reason);
 							break;
 						default:
 							/* No conflict pending, so fall through */
