@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/predtest.c,v 1.28 2009/12/27 18:55:52 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/predtest.c,v 1.29 2010/01/01 23:03:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1043,7 +1043,7 @@ predicate_implied_by_simple_clause(Expr *predicate, Node *clause)
 		Expr	   *nonnullarg = ((NullTest *) predicate)->arg;
 
 		/* row IS NOT NULL does not act in the simple way we have in mind */
-		if (!type_is_rowtype(exprType((Node *) nonnullarg)))
+		if (!((NullTest *) predicate)->argisrow)
 		{
 			if (is_opclause(clause) &&
 				list_member_strip(((OpExpr *) clause)->args, nonnullarg) &&
@@ -1102,7 +1102,7 @@ predicate_refuted_by_simple_clause(Expr *predicate, Node *clause)
 		Expr	   *isnullarg = ((NullTest *) predicate)->arg;
 
 		/* row IS NULL does not act in the simple way we have in mind */
-		if (type_is_rowtype(exprType((Node *) isnullarg)))
+		if (((NullTest *) predicate)->argisrow)
 			return false;
 
 		/* Any strict op/func on foo refutes foo IS NULL */
@@ -1118,6 +1118,7 @@ predicate_refuted_by_simple_clause(Expr *predicate, Node *clause)
 		/* foo IS NOT NULL refutes foo IS NULL */
 		if (clause && IsA(clause, NullTest) &&
 			((NullTest *) clause)->nulltesttype == IS_NOT_NULL &&
+			!((NullTest *) clause)->argisrow &&
 			equal(((NullTest *) clause)->arg, isnullarg))
 			return true;
 
@@ -1131,12 +1132,13 @@ predicate_refuted_by_simple_clause(Expr *predicate, Node *clause)
 		Expr	   *isnullarg = ((NullTest *) clause)->arg;
 
 		/* row IS NULL does not act in the simple way we have in mind */
-		if (type_is_rowtype(exprType((Node *) isnullarg)))
+		if (((NullTest *) clause)->argisrow)
 			return false;
 
 		/* foo IS NULL refutes foo IS NOT NULL */
 		if (predicate && IsA(predicate, NullTest) &&
 			((NullTest *) predicate)->nulltesttype == IS_NOT_NULL &&
+			!((NullTest *) predicate)->argisrow &&
 			equal(((NullTest *) predicate)->arg, isnullarg))
 			return true;
 

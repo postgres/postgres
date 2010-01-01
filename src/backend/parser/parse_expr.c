@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.251 2009/12/15 17:57:47 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.252 2010/01/01 23:03:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -276,6 +276,7 @@ transformExpr(ParseState *pstate, Node *expr)
 
 				n->arg = (Expr *) transformExpr(pstate, (Node *) n->arg);
 				/* the argument can be any type, so don't coerce it */
+				n->argisrow = type_is_rowtype(exprType((Node *) n->arg));
 				result = expr;
 				break;
 			}

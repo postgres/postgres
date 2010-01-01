@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.243 2010/01/01 21:53:49 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.244 2010/01/01 23:03:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1256,7 +1256,8 @@ match_clause_to_indexcol(IndexOptInfo *index,
 	{
 		NullTest   *nt = (NullTest *) clause;
 
-		if (match_index_to_operand((Node *) nt->arg, indexcol, index))
+		if (!nt->argisrow &&
+			match_index_to_operand((Node *) nt->arg, indexcol, index))
 			return true;
 		return false;
 	}

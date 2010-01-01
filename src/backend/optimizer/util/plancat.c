@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/plancat.c,v 1.159 2009/07/16 06:33:43 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/plancat.c,v 1.160 2010/01/01 23:03:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -541,6 +541,7 @@ get_relation_constraints(PlannerInfo *root,
 												  att->atttypmod,
 												  0);
 					ntest->nulltesttype = IS_NOT_NULL;
+					ntest->argisrow = type_is_rowtype(att->atttypid);
 					result = lappend(result, ntest);
 				}
 			}

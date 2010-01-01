@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/primnodes.h,v 1.152 2009/12/15 17:57:47 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/primnodes.h,v 1.153 2010/01/01 23:03:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -936,9 +936,7 @@ typedef OpExpr NullIfExpr;
  * The appropriate test is performed and returned as a boolean Datum.
  *
  * NOTE: the semantics of this for rowtype inputs are noticeably different
- * from the scalar case.  It would probably be a good idea to include an
- * "argisrow" flag in the struct to reflect that, but for the moment,
- * we do not do so to avoid forcing an initdb during 8.2beta.
+ * from the scalar case.  We provide an "argisrow" flag to reflect that.
  * ----------------
  */
 
@@ -952,6 +950,7 @@ typedef struct NullTest
 	Expr		xpr;
 	Expr	   *arg;			/* input expression */
 	NullTestType nulltesttype;	/* IS NULL, IS NOT NULL */
+	bool		argisrow;		/* T if input is of a composite type */
 } NullTest;
 
 /*

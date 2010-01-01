@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.281 2009/12/15 17:57:47 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.282 2010/01/01 23:03:10 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -1295,7 +1295,7 @@ find_nonnullable_rels_walker(Node *node, bool top_level)
 		/* IS NOT NULL can be considered strict, but only at top level */
 		NullTest   *expr = (NullTest *) node;
 
-		if (top_level && expr->nulltesttype == IS_NOT_NULL)
+		if (top_level && expr->nulltesttype == IS_NOT_NULL && !expr->argisrow)
 			result = find_nonnullable_rels_walker((Node *) expr->arg, false);
 	}
 	else if (IsA(node, BooleanTest))
@@ -1497,7 +1497,7 @@ find_nonnullable_vars_walker(Node *node, bool top_level)
 		/* IS NOT NULL can be considered strict, but only at top level */
 		NullTest   *expr = (NullTest *) node;
 
-		if (top_level && expr->nulltesttype == IS_NOT_NULL)
+		if (top_level && expr->nulltesttype == IS_NOT_NULL && !expr->argisrow)
 			result = find_nonnullable_vars_walker((Node *) expr->arg, false);
 	}
 	else if (IsA(node, BooleanTest))
@@ -1601,7 +1601,7 @@ find_forced_null_var(Node *node)
 		/* check for var IS NULL */
 		NullTest   *expr = (NullTest *) node;
 
-		if (expr->nulltesttype == IS_NULL)
+		if (expr->nulltesttype == IS_NULL && !expr->argisrow)
 		{
 			Var		   *var = (Var *) expr->arg;
 
@@ -2856,6 +2856,7 @@ eval_const_expressions_mutator(Node *node,
 				newntest = makeNode(NullTest);
 				newntest->arg = (Expr *) relem;
 				newntest->nulltesttype = ntest->nulltesttype;
+				newntest->argisrow = ntest->argisrow;
 				newargs = lappend(newargs, newntest);
 			}
 			/* If all the inputs were constants, result is TRUE */
@@ -2867,7 +2868,7 @@ eval_const_expressions_mutator(Node *node,
 			/* Else we need an AND node */
 			return (Node *) make_andclause(newargs);
 		}
-		if (arg && IsA(arg, Const))
+		if (!ntest->argisrow && arg && IsA(arg, Const))
 		{
 			Const	   *carg = (Const *) arg;
 			bool		result;
@@ -2893,6 +2894,7 @@ eval_const_expressions_mutator(Node *node,
 		newntest = makeNode(NullTest);
 		newntest->arg = (Expr *) arg;
 		newntest->nulltesttype = ntest->nulltesttype;
+		newntest->argisrow = ntest->argisrow;
 		return (Node *) newntest;
 	}
 	if (IsA(node, BooleanTest))
