@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planagg.c,v 1.47 2009/12/15 17:57:46 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planagg.c,v 1.48 2010/01/01 21:53:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,7 +37,7 @@ typedef struct
 	Oid			aggfnoid;		/* pg_proc Oid of the aggregate */
 	Oid			aggsortop;		/* Oid of its sort operator */
 	Expr	   *target;			/* expression we are aggregating on */
-	Expr	   *notnulltest;	/* expression for "target IS NOT NULL" */
+	NullTest   *notnulltest;	/* expression for "target IS NOT NULL" */
 	IndexPath  *path;			/* access path for index scan */
 	Cost		pathcost;		/* estimated cost to fetch first row */
 	bool		nulls_first;	/* null ordering direction matching index */
@@ -308,7 +308,7 @@ build_minmax_path(PlannerInfo *root, RelOptInfo *rel, MinMaxAggInfo *info)
 	ntest = makeNode(NullTest);
 	ntest->nulltesttype = IS_NOT_NULL;
 	ntest->arg = copyObject(info->target);
-	info->notnulltest = (Expr *) ntest;
+	info->notnulltest = ntest;
 
 	/*
 	 * Build list of existing restriction clauses plus the notnull test. We
@@ -475,7 +475,7 @@ make_agg_subplan(PlannerInfo *root, MinMaxAggInfo *info)
 	PlannerInfo subroot;
 	Query	   *subparse;
 	Plan	   *plan;
-	Plan	   *iplan;
+	IndexScan  *iplan;
 	TargetEntry *tle;
 	SortGroupClause *sortcl;
 
@@ -529,16 +529,13 @@ make_agg_subplan(PlannerInfo *root, MinMaxAggInfo *info)
 	 *
 	 * Also we must add a "WHERE target IS NOT NULL" restriction to the
 	 * indexscan, to be sure we don't return a NULL, which'd be contrary to
-	 * the standard behavior of MIN/MAX.  XXX ideally this should be done
-	 * earlier, so that the selectivity of the restriction could be included
-	 * in our cost estimates.  But that looks painful, and in most cases the
-	 * fraction of NULLs isn't high enough to change the decision.
+	 * the standard behavior of MIN/MAX.
 	 *
 	 * The NOT NULL qual has to go on the actual indexscan; create_plan might
 	 * have stuck a gating Result atop that, if there were any pseudoconstant
 	 * quals.
 	 *
-	 * We can skip adding the NOT NULL qual if it's redundant with either an
+	 * We can skip adding the NOT NULL qual if it duplicates either an
 	 * already-given WHERE condition, or a clause of the index predicate.
 	 */
 	plan = create_plan(&subroot, (Path *) info->path);
@@ -546,14 +543,27 @@ make_agg_subplan(PlannerInfo *root, MinMaxAggInfo *info)
 	plan->targetlist = copyObject(subparse->targetList);
 
 	if (IsA(plan, Result))
-		iplan = plan->lefttree;
+		iplan = (IndexScan *) plan->lefttree;
 	else
-		iplan = plan;
-	Assert(IsA(iplan, IndexScan));
+		iplan = (IndexScan *) plan;
+	if (!IsA(iplan, IndexScan))
+		elog(ERROR, "result of create_plan(IndexPath) isn't an IndexScan");
 
-	if (!list_member(iplan->qual, info->notnulltest) &&
+	if (!list_member(iplan->indexqualorig, info->notnulltest) &&
 		!list_member(info->path->indexinfo->indpred, info->notnulltest))
-		iplan->qual = lcons(info->notnulltest, iplan->qual);
+	{
+		NullTest   *ntest;
+
+		/* Need a "fixed" copy as well as the original */
+		ntest = copyObject(info->notnulltest);
+		ntest->arg = (Expr *) fix_indexqual_operand((Node *) ntest->arg,
+													info->path->indexinfo);
+
+		iplan->indexqual = lappend(iplan->indexqual,
+								   ntest);
+		iplan->indexqualorig = lappend(iplan->indexqualorig,
+									   info->notnulltest);
+	}
 
 	plan = (Plan *) make_limit(plan,
 							   subparse->limitOffset,

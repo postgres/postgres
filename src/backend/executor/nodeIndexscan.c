@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeIndexscan.c,v 1.136 2009/10/26 02:26:31 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeIndexscan.c,v 1.137 2010/01/01 21:53:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -640,7 +640,8 @@ ExecInitIndexScan(IndexScan *node, EState *estate, int eflags)
  * (Note that we treat all array-expressions as requiring runtime evaluation,
  * even if they happen to be constants.)
  *
- * 5. NullTest ("indexkey IS NULL").  We just fill in the ScanKey properly.
+ * 5. NullTest ("indexkey IS NULL/IS NOT NULL").  We just fill in the
+ * ScanKey properly.
  *
  * Input params are:
  *
@@ -987,13 +988,14 @@ ExecIndexBuildScanKeys(PlanState *planstate, Relation index, Index scanrelid,
 		}
 		else if (IsA(clause, NullTest))
 		{
-			/* indexkey IS NULL */
-			Assert(((NullTest *) clause)->nulltesttype == IS_NULL);
+			/* indexkey IS NULL or indexkey IS NOT NULL */
+			NullTest   *ntest = (NullTest *) clause;
+			int			flags;
 
 			/*
 			 * argument should be the index key Var, possibly relabeled
 			 */
-			leftop = ((NullTest *) clause)->arg;
+			leftop = ntest->arg;
 
 			if (leftop && IsA(leftop, RelabelType))
 				leftop = ((RelabelType *) leftop)->arg;
@@ -1009,8 +1011,23 @@ ExecIndexBuildScanKeys(PlanState *planstate, Relation index, Index scanrelid,
 			/*
 			 * initialize the scan key's fields appropriately
 			 */
+			switch (ntest->nulltesttype)
+			{
+				case IS_NULL:
+					flags = SK_ISNULL | SK_SEARCHNULL;
+					break;
+				case IS_NOT_NULL:
+					flags = SK_ISNULL | SK_SEARCHNOTNULL;
+					break;
+				default:
+					elog(ERROR, "unrecognized nulltesttype: %d",
+						 (int) ntest->nulltesttype);
+					flags = 0;	/* keep compiler quiet */
+					break;
+			}
+
 			ScanKeyEntryInitialize(this_scan_key,
-								   SK_ISNULL | SK_SEARCHNULL,
+								   flags,
 								   varattno,	/* attribute number to scan */
 								   InvalidStrategy,		/* no strategy */
 								   InvalidOid,	/* no strategy subtype */

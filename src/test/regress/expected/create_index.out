@@ -720,7 +720,7 @@ Indexes:
 
 DROP TABLE concur_heap;
 --
--- Tests for IS NULL with b-tree indexes
+-- Tests for IS NULL/IS NOT NULL with b-tree indexes
 --
 SELECT unique1, unique2 INTO onek_with_null FROM onek;
 INSERT INTO onek_with_null (unique1,unique2) VALUES (NULL, -1), (NULL, NULL);
@@ -740,6 +740,18 @@ SELECT count(*) FROM onek_with_null WHERE unique1 IS NULL AND unique2 IS NULL;
      1
 (1 row)
 
+SELECT count(*) FROM onek_with_null WHERE unique1 IS NOT NULL;
+ count 
+-------
+  1000
+(1 row)
+
+SELECT count(*) FROM onek_with_null WHERE unique1 IS NULL AND unique2 IS NOT NULL;
+ count 
+-------
+     1
+(1 row)
+
 DROP INDEX onek_nulltest;
 CREATE UNIQUE INDEX onek_nulltest ON onek_with_null (unique2 desc,unique1);
 SELECT count(*) FROM onek_with_null WHERE unique1 IS NULL;
@@ -749,6 +761,18 @@ SELECT count(*) FROM onek_with_null WHERE unique1 IS NULL;
 (1 row)
 
 SELECT count(*) FROM onek_with_null WHERE unique1 IS NULL AND unique2 IS NULL;
+ count 
+-------
+     1
+(1 row)
+
+SELECT count(*) FROM onek_with_null WHERE unique1 IS NOT NULL;
+ count 
+-------
+  1000
+(1 row)
+
+SELECT count(*) FROM onek_with_null WHERE unique1 IS NULL AND unique2 IS NOT NULL;
  count 
 -------
      1
@@ -768,6 +792,18 @@ SELECT count(*) FROM onek_with_null WHERE unique1 IS NULL AND unique2 IS NULL;
      1
 (1 row)
 
+SELECT count(*) FROM onek_with_null WHERE unique1 IS NOT NULL;
+ count 
+-------
+  1000
+(1 row)
+
+SELECT count(*) FROM onek_with_null WHERE unique1 IS NULL AND unique2 IS NOT NULL;
+ count 
+-------
+     1
+(1 row)
+
 DROP INDEX onek_nulltest;
 CREATE UNIQUE INDEX onek_nulltest ON onek_with_null (unique2  nulls first,unique1);
 SELECT count(*) FROM onek_with_null WHERE unique1 IS NULL;
@@ -777,6 +813,18 @@ SELECT count(*) FROM onek_with_null WHERE unique1 IS NULL;
 (1 row)
 
 SELECT count(*) FROM onek_with_null WHERE unique1 IS NULL AND unique2 IS NULL;
+ count 
+-------
+     1
+(1 row)
+
+SELECT count(*) FROM onek_with_null WHERE unique1 IS NOT NULL;
+ count 
+-------
+  1000
+(1 row)
+
+SELECT count(*) FROM onek_with_null WHERE unique1 IS NULL AND unique2 IS NOT NULL;
  count 
 -------
      1

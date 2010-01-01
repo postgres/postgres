@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/indexam.sgml,v 2.31 2009/07/29 20:56:17 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/indexam.sgml,v 2.32 2010/01/01 21:53:49 tgl Exp $ -->
 
 <chapter id="indexam">
  <title>Index Access Method Interface Definition</title>
@@ -134,7 +134,8 @@
    null values.  An index access method that sets
    <structfield>amindexnulls</structfield> may also set
    <structfield>amsearchnulls</structfield>, indicating that it supports
-   <literal>IS NULL</> clauses as search conditions.
+   <literal>IS NULL</> and <literal>IS NOT NULL</> clauses as search
+   conditions.
   </para>
 
  </sect1>

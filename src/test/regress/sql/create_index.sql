@@ -322,7 +322,7 @@ COMMIT;
 DROP TABLE concur_heap;
 
 --
--- Tests for IS NULL with b-tree indexes
+-- Tests for IS NULL/IS NOT NULL with b-tree indexes
 --
 
 SELECT unique1, unique2 INTO onek_with_null FROM onek;
@@ -335,6 +335,8 @@ SET enable_bitmapscan = ON;
 
 SELECT count(*) FROM onek_with_null WHERE unique1 IS NULL;
 SELECT count(*) FROM onek_with_null WHERE unique1 IS NULL AND unique2 IS NULL;
+SELECT count(*) FROM onek_with_null WHERE unique1 IS NOT NULL;
+SELECT count(*) FROM onek_with_null WHERE unique1 IS NULL AND unique2 IS NOT NULL;
 
 DROP INDEX onek_nulltest;
 
@@ -342,6 +344,8 @@ CREATE UNIQUE INDEX onek_nulltest ON onek_with_null (unique2 desc,unique1);
 
 SELECT count(*) FROM onek_with_null WHERE unique1 IS NULL;
 SELECT count(*) FROM onek_with_null WHERE unique1 IS NULL AND unique2 IS NULL;
+SELECT count(*) FROM onek_with_null WHERE unique1 IS NOT NULL;
+SELECT count(*) FROM onek_with_null WHERE unique1 IS NULL AND unique2 IS NOT NULL;
 
 DROP INDEX onek_nulltest;
 
@@ -349,6 +353,8 @@ CREATE UNIQUE INDEX onek_nulltest ON onek_with_null (unique2 desc nulls last,uni
 
 SELECT count(*) FROM onek_with_null WHERE unique1 IS NULL;
 SELECT count(*) FROM onek_with_null WHERE unique1 IS NULL AND unique2 IS NULL;
+SELECT count(*) FROM onek_with_null WHERE unique1 IS NOT NULL;
+SELECT count(*) FROM onek_with_null WHERE unique1 IS NULL AND unique2 IS NOT NULL;
 
 DROP INDEX onek_nulltest;
 
@@ -356,6 +362,8 @@ CREATE UNIQUE INDEX onek_nulltest ON onek_with_null (unique2  nulls first,unique
 
 SELECT count(*) FROM onek_with_null WHERE unique1 IS NULL;
 SELECT count(*) FROM onek_with_null WHERE unique1 IS NULL AND unique2 IS NULL;
+SELECT count(*) FROM onek_with_null WHERE unique1 IS NOT NULL;
+SELECT count(*) FROM onek_with_null WHERE unique1 IS NULL AND unique2 IS NOT NULL;
 
 RESET enable_seqscan;
 RESET enable_indexscan;

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/indices.sgml,v 1.79 2009/08/07 20:54:31 alvherre Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/indices.sgml,v 1.80 2010/01/01 21:53:49 tgl Exp $ -->
 
 <chapter id="indexes">
  <title id="indexes-title">Indexes</title>
@@ -147,8 +147,8 @@ CREATE INDEX test1_id_index ON test1 (id);
 
    Constructs equivalent to combinations of these operators, such as
    <literal>BETWEEN</> and <literal>IN</>, can also be implemented with
-   a B-tree index search.  Also, an <literal>IS NULL</> condition on
-   an index column can be used with a B-tree index.
+   a B-tree index search.  Also, an <literal>IS NULL</> or <literal>IS NOT
+   NULL</> condition on an index column can be used with a B-tree index.
   </para>
 
   <para>
@@ -180,8 +180,7 @@ CREATE INDEX test1_id_index ON test1 (id);
    Hash indexes can only handle simple equality comparisons.
    The query planner will consider using a hash index whenever an
    indexed column is involved in a comparison using the
-   <literal>=</literal> operator.  (Hash indexes do not support
-   <literal>IS NULL</> searches.)
+   <literal>=</literal> operator.
    The following command is used to create a hash index:
 <synopsis>
 CREATE INDEX <replaceable>name</replaceable> ON <replaceable>table</replaceable> USING hash (<replaceable>column</replaceable>);
@@ -1025,7 +1024,7 @@ SELECT am.amname AS index_method,
      real statistics, some default values are assumed, which are
      almost certain to be inaccurate.  Examining an application's
      index usage without having run <command>ANALYZE</command> is
-     therefore a lost cause. 
+     therefore a lost cause.
      See <xref linkend="vacuum-for-statistics" endterm="vacuum-for-statistics-title">
      and <xref linkend="autovacuum" endterm="autovacuum-title"> for more information.
     </para>

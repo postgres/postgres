@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtutils.c,v 1.94 2009/10/08 22:34:57 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtutils.c,v 1.95 2010/01/01 21:53:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -276,12 +276,32 @@ _bt_preprocess_keys(IndexScanDesc scan)
 		 * in any particular strategy in this case, so set it to
 		 * BTEqualStrategyNumber --- we can treat IS NULL as an equality
 		 * operator for purposes of search strategy.
+		 *
+		 * Likewise, "x IS NOT NULL" is supported.  We treat that as either
+		 * "less than NULL" in a NULLS LAST index, or "greater than NULL"
+		 * in a NULLS FIRST index.  However, we have to flip those around in
+		 * a DESC index, to allow for the re-flipping that occurs elsewhere.
 		 */
 		if (cur->sk_flags & SK_ISNULL)
 		{
 			if (cur->sk_flags & SK_SEARCHNULL)
 			{
 				cur->sk_strategy = BTEqualStrategyNumber;
+				cur->sk_subtype = InvalidOid;
+			}
+			else if (cur->sk_flags & SK_SEARCHNOTNULL)
+			{
+				switch (indoption[cur->sk_attno - 1] &
+						(INDOPTION_DESC | INDOPTION_NULLS_FIRST))
+				{
+					case 0:		/* ASC / NULLS LAST */
+					case INDOPTION_DESC | INDOPTION_NULLS_FIRST:
+						cur->sk_strategy = BTLessStrategyNumber;
+						break;
+					default:
+						cur->sk_strategy = BTGreaterStrategyNumber;
+						break;
+				}
 				cur->sk_subtype = InvalidOid;
 			}
 			else
@@ -320,13 +340,28 @@ _bt_preprocess_keys(IndexScanDesc scan)
 	{
 		if (i < numberOfKeys)
 		{
-			/* See comments above about NULLs and IS NULL handling. */
+			/* See comments above about NULLs and IS NULL/NOT NULL handling */
 			/* Note: we assume SK_ISNULL is never set in a row header key */
 			if (cur->sk_flags & SK_ISNULL)
 			{
 				if (cur->sk_flags & SK_SEARCHNULL)
 				{
 					cur->sk_strategy = BTEqualStrategyNumber;
+					cur->sk_subtype = InvalidOid;
+				}
+				else if (cur->sk_flags & SK_SEARCHNOTNULL)
+				{
+					switch (indoption[cur->sk_attno - 1] &
+							(INDOPTION_DESC | INDOPTION_NULLS_FIRST))
+					{
+						case 0:		/* ASC / NULLS LAST */
+						case INDOPTION_DESC | INDOPTION_NULLS_FIRST:
+							cur->sk_strategy = BTLessStrategyNumber;
+							break;
+						default:
+							cur->sk_strategy = BTGreaterStrategyNumber;
+							break;
+					}
 					cur->sk_subtype = InvalidOid;
 				}
 				else
@@ -364,13 +399,6 @@ _bt_preprocess_keys(IndexScanDesc scan)
 
 					if (!chk || j == (BTEqualStrategyNumber - 1))
 						continue;
-
-					/* IS NULL together with any other predicate must fail */
-					if (eq->sk_flags & SK_SEARCHNULL)
-					{
-						so->qual_ok = false;
-						return;
-					}
 
 					if (_bt_compare_scankey_args(scan, chk, eq, chk,
 												 &test_result))
@@ -484,23 +512,6 @@ _bt_preprocess_keys(IndexScanDesc scan)
 		else
 		{
 			/* yup, keep only the more restrictive key */
-
-			/* if either arg is NULL, don't try to compare */
-			if ((cur->sk_flags | xform[j]->sk_flags) & SK_ISNULL)
-			{
-				/* at least one of them must be an IS NULL clause */
-				Assert(j == (BTEqualStrategyNumber - 1));
-				Assert((cur->sk_flags | xform[j]->sk_flags) & SK_SEARCHNULL);
-				/* if one is and one isn't, the search must fail */
-				if ((cur->sk_flags ^ xform[j]->sk_flags) & SK_SEARCHNULL)
-				{
-					so->qual_ok = false;
-					return;
-				}
-				/* we have duplicate IS NULL clauses, ignore the newer one */
-				continue;
-			}
-
 			if (_bt_compare_scankey_args(scan, cur, cur, xform[j],
 										 &test_result))
 			{
@@ -534,8 +545,7 @@ _bt_preprocess_keys(IndexScanDesc scan)
 }
 
 /*
- * Compare two scankey values using a specified operator.  Both values
- * must be already known non-NULL.
+ * Compare two scankey values using a specified operator.
  *
  * The test we want to perform is logically "leftarg op rightarg", where
  * leftarg and rightarg are the sk_argument values in those ScanKeys, and
@@ -555,8 +565,7 @@ _bt_preprocess_keys(IndexScanDesc scan)
  *
  * Note: this routine needs to be insensitive to any DESC option applied
  * to the index column.  For example, "x < 4" is a tighter constraint than
- * "x < 5" regardless of which way the index is sorted.  We don't worry about
- * NULLS FIRST/LAST either, since the given values are never nulls.
+ * "x < 5" regardless of which way the index is sorted.
  */
 static bool
 _bt_compare_scankey_args(IndexScanDesc scan, ScanKey op,
@@ -570,6 +579,64 @@ _bt_compare_scankey_args(IndexScanDesc scan, ScanKey op,
 				opcintype,
 				cmp_op;
 	StrategyNumber strat;
+
+	/*
+	 * First, deal with cases where one or both args are NULL.  This should
+	 * only happen when the scankeys represent IS NULL/NOT NULL conditions.
+	 */
+	if ((leftarg->sk_flags | rightarg->sk_flags) & SK_ISNULL)
+	{
+		bool		leftnull,
+					rightnull;
+
+		if (leftarg->sk_flags & SK_ISNULL)
+		{
+			Assert(leftarg->sk_flags & (SK_SEARCHNULL | SK_SEARCHNOTNULL));
+			leftnull = true;
+		}
+		else
+			leftnull = false;
+		if (rightarg->sk_flags & SK_ISNULL)
+		{
+			Assert(rightarg->sk_flags & (SK_SEARCHNULL | SK_SEARCHNOTNULL));
+			rightnull = true;
+		}
+		else
+			rightnull = false;
+
+		/*
+		 * We treat NULL as either greater than or less than all other values.
+		 * Since true > false, the tests below work correctly for NULLS LAST
+		 * logic.  If the index is NULLS FIRST, we need to flip the strategy.
+		 */
+		strat = op->sk_strategy;
+		if (op->sk_flags & SK_BT_NULLS_FIRST)
+			strat = BTCommuteStrategyNumber(strat);
+
+		switch (strat)
+		{
+			case BTLessStrategyNumber:
+				*result = (leftnull < rightnull);
+				break;
+			case BTLessEqualStrategyNumber:
+				*result = (leftnull <= rightnull);
+				break;
+			case BTEqualStrategyNumber:
+				*result = (leftnull == rightnull);
+				break;
+			case BTGreaterEqualStrategyNumber:
+				*result = (leftnull >= rightnull);
+				break;
+			case BTGreaterStrategyNumber:
+				*result = (leftnull > rightnull);
+				break;
+			default:
+				elog(ERROR, "unrecognized StrategyNumber: %d", (int) strat);
+				*result = false;		/* keep compiler quiet */
+				break;
+		}
+		return true;
+	}
 
 	/*
 	 * The opfamily we need to worry about is identified by the index column.
@@ -844,11 +911,18 @@ _bt_checkkeys(IndexScanDesc scan,
 
 		if (key->sk_flags & SK_ISNULL)
 		{
-			/* Handle IS NULL tests */
-			Assert(key->sk_flags & SK_SEARCHNULL);
-
-			if (isNull)
-				continue;		/* tuple satisfies this qual */
+			/* Handle IS NULL/NOT NULL tests */
+			if (key->sk_flags & SK_SEARCHNULL)
+			{
+				if (isNull)
+					continue;		/* tuple satisfies this qual */
+			}
+			else
+			{
+				Assert(key->sk_flags & SK_SEARCHNOTNULL);
+				if (!isNull)
+					continue;		/* tuple satisfies this qual */
+			}
 
 			/*
 			 * Tuple fails this qual.  If it's a required qual for the current

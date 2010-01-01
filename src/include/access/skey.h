@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/skey.h,v 1.37 2009/01/01 17:23:56 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/access/skey.h,v 1.38 2010/01/01 21:53:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -52,11 +52,13 @@ typedef uint16 StrategyNumber;
  * the operator.  When using a ScanKey in a heap scan, these fields are not
  * used and may be set to InvalidStrategy/InvalidOid.
  *
- * A ScanKey can also represent a condition "column IS NULL"; this is signaled
- * by the SK_SEARCHNULL flag bit.  In this case the argument is always NULL,
+ * A ScanKey can also represent a condition "column IS NULL" or "column
+ * IS NOT NULL"; these cases are signaled by the SK_SEARCHNULL and
+ * SK_SEARCHNOTNULL flag bits respectively.  The argument is always NULL,
  * and the sk_strategy, sk_subtype, and sk_func fields are not used (unless
- * set by the index AM).  Currently, SK_SEARCHNULL is supported only for
- * index scans, not heap scans; and not all index AMs support it.
+ * set by the index AM).  Currently, SK_SEARCHNULL and SK_SEARCHNOTNULL are
+ * supported only for index scans, not heap scans; and not all index AMs
+ * support them.
  *
  * Note: in some places, ScanKeys are used as a convenient representation
  * for the invocation of an access method support procedure.  In this case
@@ -112,12 +114,13 @@ typedef ScanKeyData *ScanKey;
  * bits should be defined here).  Bits 16-31 are reserved for use within
  * individual index access methods.
  */
-#define SK_ISNULL		0x0001	/* sk_argument is NULL */
-#define SK_UNARY		0x0002	/* unary operator (currently unsupported) */
-#define SK_ROW_HEADER	0x0004	/* row comparison header (see above) */
-#define SK_ROW_MEMBER	0x0008	/* row comparison member (see above) */
-#define SK_ROW_END		0x0010	/* last row comparison member (see above) */
-#define SK_SEARCHNULL	0x0020	/* scankey represents a "col IS NULL" qual */
+#define SK_ISNULL			0x0001	/* sk_argument is NULL */
+#define SK_UNARY			0x0002	/* unary operator (not supported!) */
+#define SK_ROW_HEADER		0x0004	/* row comparison header (see above) */
+#define SK_ROW_MEMBER		0x0008	/* row comparison member (see above) */
+#define SK_ROW_END			0x0010	/* last row comparison member */
+#define SK_SEARCHNULL		0x0020	/* scankey represents "col IS NULL" */
+#define SK_SEARCHNOTNULL	0x0040	/* scankey represents "col IS NOT NULL" */
 
 
 /*
