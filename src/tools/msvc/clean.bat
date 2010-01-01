@@ -1,5 +1,5 @@
 @echo off
-REM $PostgreSQL: pgsql/src/tools/msvc/clean.bat,v 1.16 2009/11/12 00:13:00 tgl Exp $
+REM $PostgreSQL: pgsql/src/tools/msvc/clean.bat,v 1.17 2010/01/01 16:58:53 mha Exp $
 
 set DIST=0
 if "%1"=="dist" set DIST=1
@@ -11,6 +11,7 @@ if exist debug rd /s /q debug
 if exist release rd /s /q release
 for %%f in (*.vcproj) do del %%f
 if exist pgsql.sln del /q pgsql.sln
+if exist pgsql.sln.cache del /q pgsql.sln.cache
 del /s /q src\bin\win32ver.rc 2> NUL
 del /s /q src\interfaces\win32ver.rc 2> NUL
 if exist src\backend\win32ver.rc del /q src\backend\win32ver.rc
