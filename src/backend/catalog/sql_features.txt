@@ -354,9 +354,9 @@ S111	ONLY in query expressions			YES
 S151	Type predicate			NO	
 S161	Subtype treatment			NO	
 S162	Subtype treatment for references			NO	
-S201	SQL-invoked routines on arrays			NO	
-S201	SQL-invoked routines on arrays	01	Array parameters	NO	
-S201	SQL-invoked routines on arrays	02	Array as result type of functions	NO	
+S201	SQL-invoked routines on arrays			YES	
+S201	SQL-invoked routines on arrays	01	Array parameters	YES	
+S201	SQL-invoked routines on arrays	02	Array as result type of functions	YES	
 S202	SQL-invoked routines on multisets			NO	
 S211	User-defined cast functions			YES	
 S231	Structured type locators			NO	
@@ -480,13 +480,13 @@ T616	Null treatment option for LEAD and LAG functions			NO
 T617	FIRST_VALUE and LAST_VALUE function			YES	
 T618	NTH_VALUE function			NO	function exists, but some options missing
 T621	Enhanced numeric functions			YES	
-T631	IN predicate with one list element			NO	
+T631	IN predicate with one list element			YES	
 T641	Multiple column assignment			NO	only some syntax variants supported
-T651	SQL-schema statements in SQL routines			NO	
+T651	SQL-schema statements in SQL routines			YES	
 T652	SQL-dynamic statements in SQL routines			NO	
 T653	SQL-schema statements in external routines			NO	
 T654	SQL-dynamic statements in external routines			NO	
-T655	Cyclically dependent routines			NO	
+T655	Cyclically dependent routines			YES	
 M001	Datalinks			NO	
 M002	Datalinks via SQL/CLI			NO	
 M003	Datalinks via Embedded SQL			NO	
