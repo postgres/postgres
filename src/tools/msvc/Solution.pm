@@ -3,7 +3,7 @@ package Solution;
 #
 # Package that encapsulates a Visual C++ solution file generation
 #
-# $PostgreSQL: pgsql/src/tools/msvc/Solution.pm,v 1.50 2009/12/30 12:26:41 mha Exp $
+# $PostgreSQL: pgsql/src/tools/msvc/Solution.pm,v 1.51 2010/01/01 17:34:25 mha Exp $
 #
 use Carp;
 use strict;
@@ -21,6 +21,7 @@ sub new
         numver   => '',
         strver   => '',
         vcver    => undef,
+        platform => undef,
     };
     bless $self;
 	# integer_datetimes is now the default
@@ -73,6 +74,19 @@ sub DetermineToolVersions
     elsif ($1 == 9) { $self->{vcver} = '9.00' }
     else { die "Unsupported version of Visual Studio: $1" }
     print "Detected Visual Studio version $self->{vcver}\n";
+
+# Determine if we are in 32 or 64-bit mode. Do this by seeing if CL has
+# 64-bit only parameters.
+	$self->{platform} = 'Win32';
+	open(P,"cl /? 2>NUL|") || die "cl command not found";
+	while (<P>) {
+		if (/^\/favor:</) {
+			$self->{platform} = 'x64';
+			last;
+		}
+	}
+	close(P);
+	print "Detected hardware platform: $self->{platform}\n";
 }
 
 
@@ -109,6 +123,7 @@ sub copyFile
 sub GenerateFiles
 {
     my $self = shift;
+    my $bits = $self->{platform} eq 'Win32' ? 32 : 64;
 
     # Parse configure.in to get version numbers
     open(C,"configure.in") || confess("Could not open configure.in for reading\n");
@@ -144,8 +159,7 @@ sub GenerateFiles
         {
             s{PG_VERSION "[^"]+"}{PG_VERSION "$self->{strver}"};
             s{PG_VERSION_NUM \d+}{PG_VERSION_NUM $self->{numver}};
-            # XXX: When we support 64-bit, need to remove this hardcoding
-s{PG_VERSION_STR "[^"]+"}{__STRINGIFY(x) #x\n#define __STRINGIFY2(z) __STRINGIFY(z)\n#define PG_VERSION_STR "PostgreSQL $self->{strver}, compiled by Visual C++ build " __STRINGIFY2(_MSC_VER) ", 32-bit"};
+s{PG_VERSION_STR "[^"]+"}{__STRINGIFY(x) #x\n#define __STRINGIFY2(z) __STRINGIFY(z)\n#define PG_VERSION_STR "PostgreSQL $self->{strver}, compiled by Visual C++ build " __STRINGIFY2(_MSC_VER) ", $bits-bit"};
             print O;
         }
 		print O "#define PG_MAJORVERSION \"$self->{majorver}\"\n";
@@ -446,8 +460,8 @@ EOF
     print SLN <<EOF;
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
-		Debug|Win32 = Debug|Win32
-		Release|Win32 = Release|Win32
+		Debug|$self->{platform}= Debug|$self->{platform}
+		Release|$self->{platform} = Release|$self->{platform}
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 EOF
@@ -457,10 +471,10 @@ EOF
         foreach my $proj (@{$self->{projects}->{$fld}})
         {
             print SLN <<EOF;
-		$proj->{guid}.Debug|Win32.ActiveCfg = Debug|Win32
-		$proj->{guid}.Debug|Win32.Build.0  = Debug|Win32	
-		$proj->{guid}.Release|Win32.ActiveCfg = Release|Win32
-		$proj->{guid}.Release|Win32.Build.0 = Release|Win32
+		$proj->{guid}.Debug|$self->{platform}.ActiveCfg = Debug|$self->{platform}
+		$proj->{guid}.Debug|$self->{platform}.Build.0  = Debug|$self->{platform}
+		$proj->{guid}.Release|$self->{platform}.ActiveCfg = Release|$self->{platform}
+		$proj->{guid}.Release|$self->{platform}.Build.0 = Release|$self->{platform}
 EOF
         }
     }
