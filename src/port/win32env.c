@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/win32env.c,v 1.5 2009/12/27 16:11:28 mha Exp $
+ *	  $PostgreSQL: pgsql/src/port/win32env.c,v 1.6 2010/01/01 14:57:16 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,34 +27,72 @@ pgwin32_putenv(const char *envval)
 	 * Each version of MSVCRT has its own _putenv() call in the runtime
 	 * library.
 	 *
-	 * If we're in VC 7.0 or later (means != mingw), update in the 6.0
-	 * MSVCRT.DLL environment as well, to work with third party libraries
-	 * linked against it (such as gnuwin32 libraries).
+	 * mingw always uses MSVCRT.DLL, but if we are in a Visual C++ environment,
+	 * attempt to update the environment in all MSVCRT modules that are
+	 * currently loaded, to work properly with any third party libraries
+	 * linked against a different MSVCRT but still relying on environment
+	 * variables.
+	 *
+	 * Also separately update the system environment that gets inherited by
+	 * subprocesses.
 	 */
-#if defined(_MSC_VER) && (_MSC_VER >= 1300)
+#ifdef _MSC_VER
 	typedef int (_cdecl * PUTENVPROC) (const char *);
-	HMODULE		hmodule;
-	static PUTENVPROC putenvFunc = NULL;
+	static struct {
+		char	   *modulename;
+		HMODULE		hmodule;
+		PUTENVPROC putenvFunc;
+	} rtmodules[] = {
+		{ "msvcrt", 0, NULL},  /* Visual Studio 6.0 / mingw */
+		{ "msvcr70", 0, NULL}, /* Visual Studio 2002 */
+		{ "msvcr71", 0, NULL}, /* Visual Studio 2003 */
+		{ "msvcr80", 0, NULL}, /* Visual Studio 2005 */
+		{ "msvcr90", 0, NULL}, /* Visual Studio 2008 */
+		{ NULL, 0, NULL}
+	};
+	int i;
 
-	if (putenvFunc == NULL)
+	for (i = 0; rtmodules[i].modulename; i++)
 	{
-		hmodule = GetModuleHandle("msvcrt");
-		if (hmodule != NULL)
+		if (rtmodules[i].putenvFunc == NULL)
 		{
-			/*
-			 * If the module is found, attempt to find the function. If not, that just
-			 * means we're not linked with msvcrt, so fall through and make our other
-			 * modifications anyway.
-			 * Ignore any errors and update whatever we can, since callers don't
-			 * check the return value anyway.
-			 */
-			putenvFunc = (PUTENVPROC) GetProcAddress(hmodule, "_putenv");
-			if (putenvFunc != NULL)
-				putenvFunc(envval);
+			if (rtmodules[i].hmodule == 0)
+			{
+				/* Not attempted before, so try to find this DLL */
+				rtmodules[i].hmodule = GetModuleHandle(rtmodules[i].modulename);
+				if (rtmodules[i].hmodule == NULL)
+				{
+					/*
+					 * Set to INVALID_HANDLE_VALUE so we know we have tried this one
+					 * before, and won't try again.
+					 */
+					rtmodules[i].hmodule = INVALID_HANDLE_VALUE;
+					continue;
+				}
+				else
+				{
+					rtmodules[i].putenvFunc = (PUTENVPROC) GetProcAddress(rtmodules[i].hmodule, "_putenv");
+					if (rtmodules[i].putenvFunc == NULL)
+					{
+						CloseHandle(rtmodules[i].hmodule);
+						rtmodules[i].hmodule = INVALID_HANDLE_VALUE;
+						continue;
+					}
+				}
+			}
+			else
+			{
+				/*
+				 * Module loaded, but we did not find the function last time. We're
+				 * not going to find it this time either...
+				 */
+				continue;
+			}
 		}
+		/* At this point, putenvFunc is set or we have exited the loop */
+		rtmodules[i].putenvFunc(envval);
 	}
-#endif   /* _MSC_VER >= 1300 */
-
+#endif		/* _MSC_VER */
 
 	/*
 	 * Update the process environment - to make modifications visible to child
