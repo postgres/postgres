@@ -3,10 +3,10 @@
  * unaccent.c
  *    Text search unaccent dictionary
  *
- * Copyright (c) 2009, PostgreSQL Global Development Group
+ * Copyright (c) 2009-2010, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *    $PostgreSQL: pgsql/contrib/unaccent/unaccent.c,v 1.3 2009/08/18 15:57:26 tgl Exp $
+ *    $PostgreSQL: pgsql/contrib/unaccent/unaccent.c,v 1.4 2010/01/02 16:57:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

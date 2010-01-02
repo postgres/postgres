@@ -3,9 +3,9 @@
  * ts_locale.h
  *		locale compatibility layer for tsearch
  *
- * Copyright (c) 1998-2009, PostgreSQL Global Development Group
+ * Copyright (c) 1998-2010, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/tsearch/ts_locale.h,v 1.10 2009/06/11 14:49:12 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/tsearch/ts_locale.h,v 1.11 2010/01/02 16:58:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

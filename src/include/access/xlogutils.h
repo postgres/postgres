@@ -3,10 +3,10 @@
  *
  * PostgreSQL transaction log manager utility routines
  *
- * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/xlogutils.h,v 1.29 2009/06/11 14:49:09 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/access/xlogutils.h,v 1.30 2010/01/02 16:58:01 momjian Exp $
  */
 #ifndef XLOG_UTILS_H
 #define XLOG_UTILS_H

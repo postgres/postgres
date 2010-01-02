@@ -5,12 +5,12 @@
  *
  *		integer:				pg_atoi, pg_itoa, pg_ltoa
  *
- * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/numutils.c,v 1.77 2009/01/01 17:23:49 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/numutils.c,v 1.78 2010/01/02 16:57:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -4,10 +4,10 @@
  *	  Tuple conversion support.
  *
  *
- * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/tupconvert.h,v 1.1 2009/08/06 20:44:31 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/tupconvert.h,v 1.2 2010/01/02 16:58:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

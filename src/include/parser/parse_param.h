@@ -3,10 +3,10 @@
  * parse_param.h
  *	  handle parameters in parser
  *
- * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/parser/parse_param.h,v 1.1 2009/10/31 01:41:31 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/parser/parse_param.h,v 1.2 2010/01/02 16:58:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

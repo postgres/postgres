@@ -9,12 +9,12 @@
  * executor's "junkfilter" routines, but these functions work on bare
  * HeapTuples rather than TupleTableSlots.
  *
- * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/common/tupconvert.c,v 1.2 2009/08/17 20:34:31 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/common/tupconvert.c,v 1.3 2010/01/02 16:57:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

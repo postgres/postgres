@@ -10,10 +10,10 @@
  * amounts are sorted using temporary files and a standard external sort
  * algorithm.
  *
- * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/tuplesort.h,v 1.34 2009/08/10 05:46:50 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/tuplesort.h,v 1.35 2010/01/02 16:58:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

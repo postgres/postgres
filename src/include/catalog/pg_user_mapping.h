@@ -3,10 +3,10 @@
  * pg_user_mapping.h
  *	  definition of the system "user mapping" relation (pg_user_mapping)
  *
- * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_user_mapping.h,v 1.3 2009/06/11 14:49:10 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_user_mapping.h,v 1.4 2010/01/02 16:58:02 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki

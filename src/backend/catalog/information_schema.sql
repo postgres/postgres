@@ -2,9 +2,9 @@
  * SQL Information Schema
  * as defined in ISO/IEC 9075-11:2008
  *
- * Copyright (c) 2003-2009, PostgreSQL Global Development Group
+ * Copyright (c) 2003-2010, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/catalog/information_schema.sql,v 1.62 2009/12/31 14:41:23 petere Exp $
+ * $PostgreSQL: pgsql/src/backend/catalog/information_schema.sql,v 1.63 2010/01/02 16:57:36 momjian Exp $
  */
 
 /*

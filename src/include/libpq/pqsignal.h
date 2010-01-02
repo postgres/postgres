@@ -4,10 +4,10 @@
  *	  prototypes for the reliable BSD-style signal(2) routine.
  *
  *
- * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/libpq/pqsignal.h,v 1.36 2009/12/16 23:05:00 petere Exp $
+ * $PostgreSQL: pgsql/src/include/libpq/pqsignal.h,v 1.37 2010/01/02 16:58:04 momjian Exp $
  *
  * NOTES
  *	  This shouldn't be in libpq, but the monitor and some other

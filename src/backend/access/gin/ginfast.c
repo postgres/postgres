@@ -7,11 +7,11 @@
  *	  transfer pending entries into the regular index structure.  This
  *	  wins because bulk insertion is much more efficient than retail.
  *
- * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			$PostgreSQL: pgsql/src/backend/access/gin/ginfast.c,v 1.5 2009/10/02 21:14:04 tgl Exp $
+ *			$PostgreSQL: pgsql/src/backend/access/gin/ginfast.c,v 1.6 2010/01/02 16:57:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

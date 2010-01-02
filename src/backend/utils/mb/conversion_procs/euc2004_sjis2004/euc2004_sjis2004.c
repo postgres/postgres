@@ -2,10 +2,10 @@
  *
  *	  EUC_JIS_2004, SHIFT_JIS_2004
  *
- * Copyright (c) 2007-2009, PostgreSQL Global Development Group
+ * Copyright (c) 2007-2010, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/euc2004_sjis2004/euc2004_sjis2004.c,v 1.1 2009/11/04 23:47:04 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/euc2004_sjis2004/euc2004_sjis2004.c,v 1.2 2010/01/02 16:57:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

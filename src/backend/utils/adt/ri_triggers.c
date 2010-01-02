@@ -13,9 +13,9 @@
  *	plan --- consider improving this someday.
  *
  *
- * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/ri_triggers.c,v 1.116 2009/12/09 21:57:51 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/ri_triggers.c,v 1.117 2010/01/02 16:57:55 momjian Exp $
  *
  * ----------
  */

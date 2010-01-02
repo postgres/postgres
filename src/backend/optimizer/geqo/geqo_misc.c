@@ -3,10 +3,10 @@
  * geqo_misc.c
  *	   misc. printout and debug stuff
  *
- * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/optimizer/geqo/geqo_misc.c,v 1.49 2009/01/01 17:23:43 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/optimizer/geqo/geqo_misc.c,v 1.50 2010/01/02 16:57:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

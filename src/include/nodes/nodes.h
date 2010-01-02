@@ -4,10 +4,10 @@
  *	  Definitions for tagged nodes.
  *
  *
- * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/nodes.h,v 1.231 2009/10/26 02:26:41 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/nodes.h,v 1.232 2010/01/02 16:58:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

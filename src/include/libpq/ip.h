@@ -6,9 +6,9 @@
  * These definitions are used by both frontend and backend code.  Be careful
  * what you include here!
  *
- * Copyright (c) 2003-2009, PostgreSQL Global Development Group
+ * Copyright (c) 2003-2010, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/libpq/ip.h,v 1.22 2009/10/01 01:58:58 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/libpq/ip.h,v 1.23 2010/01/02 16:58:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

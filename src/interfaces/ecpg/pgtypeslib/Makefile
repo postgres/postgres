@@ -2,10 +2,10 @@
 #
 # Makefile for ecpg pgtypes library
 #
-# Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+# Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/Makefile,v 1.45 2009/08/07 10:51:20 meskes Exp $
+# $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/Makefile,v 1.46 2010/01/02 16:58:11 momjian Exp $
 #
 #-------------------------------------------------------------------------
 

@@ -1,8 +1,8 @@
 /*
- * $PostgreSQL: pgsql/src/port/strtol.c,v 1.17 2009/06/11 14:49:15 momjian Exp $
+ * $PostgreSQL: pgsql/src/port/strtol.c,v 1.18 2010/01/02 16:58:13 momjian Exp $
  *
  *
- * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
  *

@@ -8,10 +8,10 @@
  * outside the core parser should be in parser.h.
  *
  *
- * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/parser/gramparse.h,v 1.50 2009/11/09 18:38:48 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/parser/gramparse.h,v 1.51 2010/01/02 16:58:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

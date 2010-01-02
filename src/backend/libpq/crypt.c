@@ -6,10 +6,10 @@
  *
  * Original coding by Todd A. Brandys
  *
- * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/libpq/crypt.c,v 1.78 2009/08/29 19:26:51 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/libpq/crypt.c,v 1.79 2010/01/02 16:57:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

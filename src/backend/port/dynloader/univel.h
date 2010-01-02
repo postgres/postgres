@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/src/backend/port/dynloader/univel.h,v 1.24 2009/06/11 14:49:00 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/port/dynloader/univel.h,v 1.25 2010/01/02 16:57:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  *
@@ -7,7 +7,7 @@
  *	  port-specific prototypes for Intel x86/UNIXWARE
  *
  *
- * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * univel.h,v 1.2 1995/03/17 06:40:18 andrew Exp

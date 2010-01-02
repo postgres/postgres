@@ -23,10 +23,10 @@
  * for aborts (whether sync or async), since the post-crash assumption would
  * be that such transactions failed anyway.
  *
- * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/clog.c,v 1.54 2009/12/19 01:32:33 sriggs Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/clog.c,v 1.55 2010/01/02 16:57:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

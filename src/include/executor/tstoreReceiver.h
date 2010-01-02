@@ -4,10 +4,10 @@
  *	  prototypes for tstoreReceiver.c
  *
  *
- * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/executor/tstoreReceiver.h,v 1.14 2009/06/11 14:49:11 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/executor/tstoreReceiver.h,v 1.15 2010/01/02 16:58:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

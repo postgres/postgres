@@ -8,11 +8,11 @@
  * doesn't actually run the executor for them.
  *
  *
- * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/portalmem.c,v 1.114 2009/12/29 17:40:59 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/portalmem.c,v 1.115 2010/01/02 16:57:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -8,10 +8,10 @@
  * into a lot of low-level code.
  *
  *
- * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/reloptions.h,v 1.16 2009/06/11 14:49:09 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/access/reloptions.h,v 1.17 2010/01/02 16:58:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

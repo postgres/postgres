@@ -21,10 +21,10 @@
  * are different.
  *
  *
- * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/libpq/pqformat.c,v 1.50 2009/06/11 14:48:58 momjian Exp $
+ *	$PostgreSQL: pgsql/src/backend/libpq/pqformat.c,v 1.51 2010/01/02 16:57:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

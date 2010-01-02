@@ -4,10 +4,10 @@
  *	  Support for finding the values associated with Param nodes.
  *
  *
- * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/params.h,v 1.39 2009/11/04 22:26:06 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/params.h,v 1.40 2010/01/02 16:58:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

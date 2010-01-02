@@ -3,10 +3,10 @@
  * foreign.c
  *		  support for foreign-data wrappers, servers and user mappings.
  *
- * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *		  $PostgreSQL: pgsql/src/backend/foreign/foreign.c,v 1.6 2009/12/23 12:23:59 heikki Exp $
+ *		  $PostgreSQL: pgsql/src/backend/foreign/foreign.c,v 1.7 2010/01/02 16:57:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

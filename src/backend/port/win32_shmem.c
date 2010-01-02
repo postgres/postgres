@@ -3,10 +3,10 @@
  * win32_shmem.c
  *	  Implement shared memory using win32 facilities
  *
- * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/port/win32_shmem.c,v 1.13 2010/01/02 12:18:45 mha Exp $
+ *	  $PostgreSQL: pgsql/src/backend/port/win32_shmem.c,v 1.14 2010/01/02 16:57:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

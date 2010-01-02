@@ -4,11 +4,11 @@
  *	  Split page algorithm
  *
  *
- * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/gist/gistsplit.c,v 1.11 2009/06/24 15:16:22 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/gist/gistsplit.c,v 1.12 2010/01/02 16:57:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

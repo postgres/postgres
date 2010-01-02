@@ -11,11 +11,11 @@
  *  All functions for handling RM_STANDBY_ID, which relate to
  *  AccessExclusiveLocks and starting snapshots for Hot Standby mode.
  *
- * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/standby.c,v 1.2 2009/12/31 22:07:36 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/standby.c,v 1.3 2010/01/02 16:57:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

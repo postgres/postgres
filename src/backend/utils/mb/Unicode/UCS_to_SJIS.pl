@@ -1,8 +1,8 @@
 #! /usr/bin/perl
 #
-# Copyright (c) 2001-2009, PostgreSQL Global Development Group
+# Copyright (c) 2001-2010, PostgreSQL Global Development Group
 #
-# $PostgreSQL: pgsql/src/backend/utils/mb/Unicode/UCS_to_SJIS.pl,v 1.12 2009/01/01 17:23:51 momjian Exp $
+# $PostgreSQL: pgsql/src/backend/utils/mb/Unicode/UCS_to_SJIS.pl,v 1.13 2010/01/02 16:57:56 momjian Exp $
 #
 # Generate UTF-8 <--> SJIS code conversion tables from
 # map files provided by Unicode organization.

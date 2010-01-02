@@ -3,12 +3,12 @@
  * shmqueue.c
  *	  shared memory linked lists
  *
- * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/shmqueue.c,v 1.33 2009/01/01 17:23:47 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/shmqueue.c,v 1.34 2010/01/02 16:57:51 momjian Exp $
  *
  * NOTES
  *

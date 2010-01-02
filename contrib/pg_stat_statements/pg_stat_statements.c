@@ -11,10 +11,10 @@
  * disappear!) and also take the entry's mutex spinlock.
  *
  *
- * Copyright (c) 2008-2009, PostgreSQL Global Development Group
+ * Copyright (c) 2008-2010, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/contrib/pg_stat_statements/pg_stat_statements.c,v 1.10 2009/12/29 17:40:59 heikki Exp $
+ *	  $PostgreSQL: pgsql/contrib/pg_stat_statements/pg_stat_statements.c,v 1.11 2010/01/02 16:57:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

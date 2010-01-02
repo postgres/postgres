@@ -3,11 +3,11 @@
  * buffile.c
  *	  Management of large buffered files, primarily temporary files.
  *
- * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/file/buffile.c,v 1.35 2009/12/15 04:57:47 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/file/buffile.c,v 1.36 2010/01/02 16:57:51 momjian Exp $
  *
  * NOTES:
  *

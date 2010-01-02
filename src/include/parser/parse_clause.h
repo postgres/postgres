@@ -4,10 +4,10 @@
  *	  handle clauses in parser
  *
  *
- * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/parser/parse_clause.h,v 1.57 2009/12/15 17:57:47 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/parser/parse_clause.h,v 1.58 2010/01/02 16:58:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

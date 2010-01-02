@@ -3,11 +3,11 @@
  * pg_enum.c
  *	  routines to support manipulation of the pg_enum relation
  *
- * Copyright (c) 2006-2009, PostgreSQL Global Development Group
+ * Copyright (c) 2006-2010, PostgreSQL Global Development Group
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_enum.c,v 1.12 2009/12/27 14:50:41 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_enum.c,v 1.13 2010/01/02 16:57:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

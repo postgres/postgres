@@ -7,10 +7,10 @@
  *	  pg_shadow and pg_group are now publicly accessible views on pg_authid.
  *
  *
- * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_authid.h,v 1.10 2009/10/07 22:14:25 alvherre Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_authid.h,v 1.11 2010/01/02 16:58:01 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki

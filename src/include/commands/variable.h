@@ -2,10 +2,10 @@
  * variable.h
  *		Routines for handling specialized SET variables.
  *
- * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/commands/variable.h,v 1.33 2009/01/01 17:23:58 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/commands/variable.h,v 1.34 2010/01/02 16:58:03 momjian Exp $
  */
 #ifndef VARIABLE_H
 #define VARIABLE_H

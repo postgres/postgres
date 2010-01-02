@@ -11,11 +11,11 @@
  * LWLocks to protect its shared state.
  *
  *
- * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lwlock.c,v 1.54 2009/12/31 19:41:34 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lwlock.c,v 1.55 2010/01/02 16:57:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -2,9 +2,9 @@
 #
 # Makefile for backend/tsearch
 #
-# Copyright (c) 2006-2009, PostgreSQL Global Development Group
+# Copyright (c) 2006-2010, PostgreSQL Global Development Group
 #
-# $PostgreSQL: pgsql/src/backend/tsearch/Makefile,v 1.11 2009/10/26 21:33:01 petere Exp $
+# $PostgreSQL: pgsql/src/backend/tsearch/Makefile,v 1.12 2010/01/02 16:57:53 momjian Exp $
 #
 #-------------------------------------------------------------------------
 subdir = src/backend/tsearch

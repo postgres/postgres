@@ -1,7 +1,7 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.c,v 1.111 2009/08/05 11:42:20 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.c,v 1.112 2010/01/02 16:58:11 momjian Exp $ */
 
 /* Main for ecpg, the PostgreSQL embedded SQL precompiler. */
-/* Copyright (c) 1996-2009, PostgreSQL Global Development Group */
+/* Copyright (c) 1996-2010, PostgreSQL Global Development Group */
 
 #include "postgres_fe.h"
 

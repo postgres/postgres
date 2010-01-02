@@ -3,11 +3,11 @@
  * async.c
  *	  Asynchronous notification: NOTIFY, LISTEN, UNLISTEN
  *
- * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/async.c,v 1.149 2009/07/31 20:26:22 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/async.c,v 1.150 2010/01/02 16:57:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

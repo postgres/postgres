@@ -3,12 +3,12 @@
  * functions.c
  *	  Execution of SQL-language functions
  *
- * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/functions.c,v 1.139 2009/12/29 17:40:59 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/functions.c,v 1.140 2010/01/02 16:57:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -2,10 +2,10 @@
  *
  * dropuser
  *
- * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/scripts/dropuser.c,v 1.28 2009/02/26 16:20:55 petere Exp $
+ * $PostgreSQL: pgsql/src/bin/scripts/dropuser.c,v 1.29 2010/01/02 16:58:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
