@@ -589,10 +589,18 @@
 #define SIZEOF_LONG 4
 
 /* The size of `size_t', as computed by sizeof. */
+#ifndef _WIN64
 #define SIZEOF_SIZE_T 4
+#else
+#define SIZEOF_SIZE_T 8
+#endif
 
 /* The size of `void *', as computed by sizeof. */
+#ifndef _WIN64
 #define SIZEOF_VOID_P 4
+#else
+#define SIZEOF_VOID_P 8
+#endif
 
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1
