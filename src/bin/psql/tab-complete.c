@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.189 2010/01/02 16:58:00 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.190 2010/01/02 21:28:46 tgl Exp $
  */
 
 /*----------------------------------------------------------------------
@@ -387,7 +387,7 @@ static const SchemaQuery Query_for_list_of_views = {
 
 #define Query_for_list_of_template_databases \
 "SELECT pg_catalog.quote_ident(datname) FROM pg_catalog.pg_database "\
-" WHERE substring(pg_catalog.quote_ident(datname),1,%d)='%s' and datistemplate IS TRUE"
+" WHERE substring(pg_catalog.quote_ident(datname),1,%d)='%s' AND datistemplate"
 
 #define Query_for_list_of_databases \
 "SELECT pg_catalog.quote_ident(datname) FROM pg_catalog.pg_database "\
@@ -404,9 +404,9 @@ static const SchemaQuery Query_for_list_of_views = {
 
 #define Query_for_list_of_languages \
 "SELECT pg_catalog.quote_ident(lanname) "\
-"  FROM pg_language "\
+"  FROM pg_catalog.pg_language "\
 " WHERE lanname != 'internal' "\
-"   AND substring(pg_catalog.quote_ident(lanname),1,%d)='%s' "
+"   AND substring(pg_catalog.quote_ident(lanname),1,%d)='%s'"
 
 #define Query_for_list_of_schemas \
 "SELECT pg_catalog.quote_ident(nspname) FROM pg_catalog.pg_namespace "\
