@@ -520,29 +520,29 @@ CREATE TABLE circles (
   c1 CIRCLE,
   c2 TEXT,
   EXCLUDE USING gist
-    (c1 WITH &&, (c2::circle) WITH ~=)
+    (c1 WITH &&, (c2::circle) WITH &&)
     WHERE (circle_center(c1) <> '(0,0)')
 );
 NOTICE:  CREATE TABLE / EXCLUDE will create implicit index "circles_c1_c2_exclusion" for table "circles"
 -- these should succeed because they don't match the index predicate
 INSERT INTO circles VALUES('<(0,0), 5>', '<(0,0), 5>');
-INSERT INTO circles VALUES('<(0,0), 5>', '<(0,0), 5>');
+INSERT INTO circles VALUES('<(0,0), 5>', '<(0,0), 4>');
 -- succeed
 INSERT INTO circles VALUES('<(10,10), 10>', '<(0,0), 5>');
 -- fail, overlaps
-INSERT INTO circles VALUES('<(20,20), 10>', '<(0,0), 5>');
+INSERT INTO circles VALUES('<(20,20), 10>', '<(0,0), 4>');
 ERROR:  conflicting key value violates exclusion constraint "circles_c1_c2_exclusion"
-DETAIL:  Key (c1, (c2::circle))=(<(20,20),10>, <(0,0),5>) conflicts with existing key (c1, (c2::circle))=(<(10,10),10>, <(0,0),5>).
+DETAIL:  Key (c1, (c2::circle))=(<(20,20),10>, <(0,0),4>) conflicts with existing key (c1, (c2::circle))=(<(10,10),10>, <(0,0),5>).
 -- succeed because c1 doesn't overlap
 INSERT INTO circles VALUES('<(20,20), 1>', '<(0,0), 5>');
--- succeed because c2 is not the same
-INSERT INTO circles VALUES('<(20,20), 10>', '<(1,1), 5>');
+-- succeed because c2 doesn't overlap
+INSERT INTO circles VALUES('<(20,20), 10>', '<(10,10), 5>');
 -- should fail on existing data without the WHERE clause
 ALTER TABLE circles ADD EXCLUDE USING gist
-  (c1 WITH &&, (c2::circle) WITH ~=);
+  (c1 WITH &&, (c2::circle) WITH &&);
 NOTICE:  ALTER TABLE / ADD EXCLUDE will create implicit index "circles_c1_c2_exclusion1" for table "circles"
 ERROR:  could not create exclusion constraint "circles_c1_c2_exclusion1"
-DETAIL:  Key (c1, (c2::circle))=(<(0,0),5>, <(0,0),5>) conflicts with key (c1, (c2::circle))=(<(0,0),5>, <(0,0),5>).
+DETAIL:  Key (c1, (c2::circle))=(<(0,0),5>, <(0,0),5>) conflicts with key (c1, (c2::circle))=(<(0,0),5>, <(0,0),4>).
 DROP TABLE circles;
 -- Check deferred exclusion constraint
 CREATE TABLE deferred_excl (

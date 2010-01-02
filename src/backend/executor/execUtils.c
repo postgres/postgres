@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execUtils.c,v 1.168 2010/01/02 16:57:41 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execUtils.c,v 1.169 2010/01/02 17:53:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1167,7 +1167,9 @@ check_exclusion_constraint(Relation heap, Relation index, IndexInfo *indexInfo,
 	int				i;
 	bool			conflict;
 	bool			found_self;
+	ExprContext	   *econtext;
 	TupleTableSlot *existing_slot;
+	TupleTableSlot *save_scantuple;
 
 	/*
 	 * If any of the input values are NULL, the constraint check is assumed
@@ -1194,8 +1196,18 @@ check_exclusion_constraint(Relation heap, Relation index, IndexInfo *indexInfo,
 					values[i]);
 	}
 
-	/* Need a TupleTableSlot to put existing tuples in */
+	/*
+	 * Need a TupleTableSlot to put existing tuples in.
+	 *
+	 * To use FormIndexDatum, we have to make the econtext's scantuple point
+	 * to this slot.  Be sure to save and restore caller's value for
+	 * scantuple.
+	 */
 	existing_slot = MakeSingleTupleTableSlot(RelationGetDescr(heap));
+
+	econtext = GetPerTupleExprContext(estate);
+	save_scantuple = econtext->ecxt_scantuple;
+	econtext->ecxt_scantuple = existing_slot;
 
 	/*
 	 * May have to restart scan from this point if a potential
@@ -1310,6 +1322,8 @@ retry:
 				 errmsg("failed to re-find tuple within index \"%s\"",
 						RelationGetRelationName(index)),
 				 errhint("This may be because of a non-immutable index expression.")));
+
+	econtext->ecxt_scantuple = save_scantuple;
 
 	ExecDropSingleTupleTableSlot(existing_slot);
 
