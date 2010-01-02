@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/port/win32_shmem.c,v 1.12 2009/07/24 20:12:42 mha Exp $
+ *	  $PostgreSQL: pgsql/src/backend/port/win32_shmem.c,v 1.13 2010/01/02 12:18:45 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,7 +16,7 @@
 #include "storage/ipc.h"
 #include "storage/pg_shmem.h"
 
-unsigned long UsedShmemSegID = 0;
+HANDLE		UsedShmemSegID = 0;
 void	   *UsedShmemSegAddr = NULL;
 static Size UsedShmemSegSize = 0;
 
@@ -125,6 +125,8 @@ PGSharedMemoryCreate(Size size, bool makePrivate, int port)
 				hmap2;
 	char	   *szShareMem;
 	int			i;
+	DWORD		size_high;
+	DWORD		size_low;
 
 	/* Room for a header? */
 	Assert(size > MAXALIGN(sizeof(PGShmemHeader)));
@@ -132,6 +134,13 @@ PGSharedMemoryCreate(Size size, bool makePrivate, int port)
 	szShareMem = GetSharedMemName();
 
 	UsedShmemSegAddr = NULL;
+
+#ifdef _WIN64
+	size_high = size >> 32;
+#else
+	size_high = 0;
+#endif
+	size_low = (DWORD) size;
 
 	/*
 	 * When recycling a shared memory segment, it may take a short while
@@ -147,11 +156,11 @@ PGSharedMemoryCreate(Size size, bool makePrivate, int port)
 		 */
 		SetLastError(0);
 
-		hmap = CreateFileMapping((HANDLE) 0xFFFFFFFF,	/* Use the pagefile */
+		hmap = CreateFileMapping(INVALID_HANDLE_VALUE,	/* Use the pagefile */
 								 NULL,	/* Default security attrs */
 								 PAGE_READWRITE,		/* Memory is Read/Write */
-								 0L,	/* Size Upper 32 Bits	*/
-								 (DWORD) size,	/* Size Lower 32 bits */
+								 size_high,	/* Size Upper 32 Bits	*/
+								 size_low,	/* Size Lower 32 bits */
 								 szShareMem);
 
 		if (!hmap)
@@ -203,7 +212,7 @@ PGSharedMemoryCreate(Size size, bool makePrivate, int port)
 
 
 	/* Register on-exit routine to delete the new segment */
-	on_shmem_exit(pgwin32_SharedMemoryDelete, Int32GetDatum((unsigned long) hmap2));
+	on_shmem_exit(pgwin32_SharedMemoryDelete, PointerGetDatum(hmap2));
 
 	/*
 	 * Get a pointer to the new shared memory segment. Map the whole segment
@@ -235,7 +244,7 @@ PGSharedMemoryCreate(Size size, bool makePrivate, int port)
 	/* Save info for possible future use */
 	UsedShmemSegAddr = memAddress;
 	UsedShmemSegSize = size;
-	UsedShmemSegID = (unsigned long) hmap2;
+	UsedShmemSegID = hmap2;
 
 	return hdr;
 }
@@ -266,10 +275,10 @@ PGSharedMemoryReAttach(void)
 		elog(FATAL, "failed to release reserved memory region (addr=%p): %lu",
 			 UsedShmemSegAddr, GetLastError());
 
-	hdr = (PGShmemHeader *) MapViewOfFileEx((HANDLE) UsedShmemSegID, FILE_MAP_READ | FILE_MAP_WRITE, 0, 0, 0, UsedShmemSegAddr);
+	hdr = (PGShmemHeader *) MapViewOfFileEx(UsedShmemSegID, FILE_MAP_READ | FILE_MAP_WRITE, 0, 0, 0, UsedShmemSegAddr);
 	if (!hdr)
-		elog(FATAL, "could not reattach to shared memory (key=%d, addr=%p): %lu",
-			 (int) UsedShmemSegID, UsedShmemSegAddr, GetLastError());
+		elog(FATAL, "could not reattach to shared memory (key=%p, addr=%p): %lu",
+			 UsedShmemSegID, UsedShmemSegAddr, GetLastError());
 	if (hdr != origUsedShmemSegAddr)
 		elog(FATAL, "reattaching to shared memory returned unexpected address (got %p, expected %p)",
 			 hdr, origUsedShmemSegAddr);
@@ -308,7 +317,7 @@ static void
 pgwin32_SharedMemoryDelete(int status, Datum shmId)
 {
 	PGSharedMemoryDetach();
-	if (!CloseHandle((HANDLE) DatumGetInt32(shmId)))
+	if (!CloseHandle(DatumGetPointer(shmId)))
 		elog(LOG, "could not close handle to shared memory: %lu", GetLastError());
 }
 
