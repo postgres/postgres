@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtutils.c,v 1.96 2010/01/02 16:57:35 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtutils.c,v 1.97 2010/01/03 05:39:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,7 +32,7 @@
 static bool _bt_compare_scankey_args(IndexScanDesc scan, ScanKey op,
 						 ScanKey leftarg, ScanKey rightarg,
 						 bool *result);
-static void _bt_mark_scankey_with_indoption(ScanKey skey, int16 *indoption);
+static bool _bt_fix_scankey_strategy(ScanKey skey, int16 *indoption);
 static void _bt_mark_scankey_required(ScanKey skey);
 static bool _bt_check_rowcompare(ScanKey skey,
 					 IndexTuple tuple, TupleDesc tupdesc,
@@ -265,49 +265,9 @@ _bt_preprocess_keys(IndexScanDesc scan)
 	/* We can short-circuit most of the work if there's just one key */
 	if (numberOfKeys == 1)
 	{
-		/*
-		 * We treat all btree operators as strict (even if they're not so
-		 * marked in pg_proc).	This means that it is impossible for an
-		 * operator condition with a NULL comparison constant to succeed, and
-		 * we can reject it right away.
-		 *
-		 * However, we now also support "x IS NULL" clauses as search
-		 * conditions, so in that case keep going.	The planner has not filled
-		 * in any particular strategy in this case, so set it to
-		 * BTEqualStrategyNumber --- we can treat IS NULL as an equality
-		 * operator for purposes of search strategy.
-		 *
-		 * Likewise, "x IS NOT NULL" is supported.  We treat that as either
-		 * "less than NULL" in a NULLS LAST index, or "greater than NULL"
-		 * in a NULLS FIRST index.  However, we have to flip those around in
-		 * a DESC index, to allow for the re-flipping that occurs elsewhere.
-		 */
-		if (cur->sk_flags & SK_ISNULL)
-		{
-			if (cur->sk_flags & SK_SEARCHNULL)
-			{
-				cur->sk_strategy = BTEqualStrategyNumber;
-				cur->sk_subtype = InvalidOid;
-			}
-			else if (cur->sk_flags & SK_SEARCHNOTNULL)
-			{
-				switch (indoption[cur->sk_attno - 1] &
-						(INDOPTION_DESC | INDOPTION_NULLS_FIRST))
-				{
-					case 0:		/* ASC / NULLS LAST */
-					case INDOPTION_DESC | INDOPTION_NULLS_FIRST:
-						cur->sk_strategy = BTLessStrategyNumber;
-						break;
-					default:
-						cur->sk_strategy = BTGreaterStrategyNumber;
-						break;
-				}
-				cur->sk_subtype = InvalidOid;
-			}
-			else
-				so->qual_ok = false;
-		}
-		_bt_mark_scankey_with_indoption(cur, indoption);
+		/* Apply indoption to scankey (might change sk_strategy!) */
+		if (!_bt_fix_scankey_strategy(cur, indoption))
+			so->qual_ok = false;
 		memcpy(outkeys, cur, sizeof(ScanKeyData));
 		so->numberOfKeys = 1;
 		/* We can mark the qual as required if it's for first index col */
@@ -340,35 +300,12 @@ _bt_preprocess_keys(IndexScanDesc scan)
 	{
 		if (i < numberOfKeys)
 		{
-			/* See comments above about NULLs and IS NULL/NOT NULL handling */
-			/* Note: we assume SK_ISNULL is never set in a row header key */
-			if (cur->sk_flags & SK_ISNULL)
+			/* Apply indoption to scankey (might change sk_strategy!) */
+			if (!_bt_fix_scankey_strategy(cur, indoption))
 			{
-				if (cur->sk_flags & SK_SEARCHNULL)
-				{
-					cur->sk_strategy = BTEqualStrategyNumber;
-					cur->sk_subtype = InvalidOid;
-				}
-				else if (cur->sk_flags & SK_SEARCHNOTNULL)
-				{
-					switch (indoption[cur->sk_attno - 1] &
-							(INDOPTION_DESC | INDOPTION_NULLS_FIRST))
-					{
-						case 0:		/* ASC / NULLS LAST */
-						case INDOPTION_DESC | INDOPTION_NULLS_FIRST:
-							cur->sk_strategy = BTLessStrategyNumber;
-							break;
-						default:
-							cur->sk_strategy = BTGreaterStrategyNumber;
-							break;
-					}
-					cur->sk_subtype = InvalidOid;
-				}
-				else
-				{
-					so->qual_ok = false;
-					return;
-				}
+				/* NULL can't be matched, so give up */
+				so->qual_ok = false;
+				return;
 			}
 		}
 
@@ -479,9 +416,6 @@ _bt_preprocess_keys(IndexScanDesc scan)
 			attno = cur->sk_attno;
 			memset(xform, 0, sizeof(xform));
 		}
-
-		/* apply indoption to scankey (might change sk_strategy!) */
-		_bt_mark_scankey_with_indoption(cur, indoption);
 
 		/* check strategy this key's operator corresponds to */
 		j = cur->sk_strategy - 1;
@@ -678,7 +612,7 @@ _bt_compare_scankey_args(IndexScanDesc scan, ScanKey op,
 	 * indexscan initiated by syscache lookup will use cross-data-type
 	 * operators.)
 	 *
-	 * If the sk_strategy was flipped by _bt_mark_scankey_with_indoption, we
+	 * If the sk_strategy was flipped by _bt_fix_scankey_strategy, we
 	 * have to un-flip it to get the correct opfamily member.
 	 */
 	strat = op->sk_strategy;
@@ -708,11 +642,19 @@ _bt_compare_scankey_args(IndexScanDesc scan, ScanKey op,
 }
 
 /*
- * Mark a scankey with info from the index's indoption array.
+ * Adjust a scankey's strategy and flags setting as needed for indoptions.
  *
  * We copy the appropriate indoption value into the scankey sk_flags
  * (shifting to avoid clobbering system-defined flag bits).  Also, if
  * the DESC option is set, commute (flip) the operator strategy number.
+ *
+ * A secondary purpose is to check for IS NULL/NOT NULL scankeys and set up
+ * the strategy field correctly for them.
+ *
+ * Lastly, for ordinary scankeys (not IS NULL/NOT NULL), we check for a
+ * NULL comparison value.  Since all btree operators are assumed strict,
+ * a NULL means that the qual cannot be satisfied.  We return TRUE if the
+ * comparison value isn't NULL, or FALSE if the scan should be abandoned.
  *
  * This function is applied to the *input* scankey structure; therefore
  * on a rescan we will be looking at already-processed scankeys.  Hence
@@ -721,16 +663,67 @@ _bt_compare_scankey_args(IndexScanDesc scan, ScanKey op,
  * there shouldn't be any problem, since the index's indoptions are certainly
  * not going to change while the scankey survives.
  */
-static void
-_bt_mark_scankey_with_indoption(ScanKey skey, int16 *indoption)
+static bool
+_bt_fix_scankey_strategy(ScanKey skey, int16 *indoption)
 {
 	int			addflags;
 
 	addflags = indoption[skey->sk_attno - 1] << SK_BT_INDOPTION_SHIFT;
+
+	/*
+	 * We treat all btree operators as strict (even if they're not so marked
+	 * in pg_proc). This means that it is impossible for an operator condition
+	 * with a NULL comparison constant to succeed, and we can reject it right
+	 * away.
+	 *
+	 * However, we now also support "x IS NULL" clauses as search conditions,
+	 * so in that case keep going. The planner has not filled in any
+	 * particular strategy in this case, so set it to BTEqualStrategyNumber
+	 * --- we can treat IS NULL as an equality operator for purposes of search
+	 * strategy.
+	 *
+	 * Likewise, "x IS NOT NULL" is supported.  We treat that as either "less
+	 * than NULL" in a NULLS LAST index, or "greater than NULL" in a NULLS
+	 * FIRST index.
+	 */
+	if (skey->sk_flags & SK_ISNULL)
+	{
+		/* SK_ISNULL shouldn't be set in a row header scankey */
+		Assert(!(skey->sk_flags & SK_ROW_HEADER));
+
+		/* Set indoption flags in scankey (might be done already) */
+		skey->sk_flags |= addflags;
+
+		/* Set correct strategy for IS NULL or NOT NULL search */
+		if (skey->sk_flags & SK_SEARCHNULL)
+		{
+			skey->sk_strategy = BTEqualStrategyNumber;
+			skey->sk_subtype = InvalidOid;
+		}
+		else if (skey->sk_flags & SK_SEARCHNOTNULL)
+		{
+			if (skey->sk_flags & SK_BT_NULLS_FIRST)
+				skey->sk_strategy = BTGreaterStrategyNumber;
+			else
+				skey->sk_strategy = BTLessStrategyNumber;
+			skey->sk_subtype = InvalidOid;
+		}
+		else
+		{
+			/* regular qual, so it cannot be satisfied */
+			return false;
+		}
+
+		/* Needn't do the rest */
+		return true;
+	}
+
+	/* Adjust strategy for DESC, if we didn't already */
 	if ((addflags & SK_BT_DESC) && !(skey->sk_flags & SK_BT_DESC))
 		skey->sk_strategy = BTCommuteStrategyNumber(skey->sk_strategy);
 	skey->sk_flags |= addflags;
 
+	/* If it's a row header, fix row member flags and strategies similarly */
 	if (skey->sk_flags & SK_ROW_HEADER)
 	{
 		ScanKey		subkey = (ScanKey) DatumGetPointer(skey->sk_argument);
@@ -747,6 +740,8 @@ _bt_mark_scankey_with_indoption(ScanKey skey, int16 *indoption)
 			subkey++;
 		}
 	}
+
+	return true;
 }
 
 /*
