@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/port/win32_shmem.c,v 1.14 2010/01/02 16:57:50 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/port/win32_shmem.c,v 1.15 2010/01/04 01:06:21 itagaki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -350,7 +350,7 @@ pgwin32_ReserveSharedMemoryRegion(HANDLE hChild)
 								MEM_RESERVE, PAGE_READWRITE);
 	if (address == NULL) {
 		/* Don't use FATAL since we're running in the postmaster */
-		elog(LOG, "could not reserve shared memory region (addr=%p) for child %lu: %lu",
+		elog(LOG, "could not reserve shared memory region (addr=%p) for child %p: %lu",
 			 UsedShmemSegAddr, hChild, GetLastError());
 		return false;
 	}
