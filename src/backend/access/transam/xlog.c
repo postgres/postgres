@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.356 2010/01/02 16:57:35 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.357 2010/01/04 12:50:49 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -515,8 +515,7 @@ static void xlog_outrec(StringInfo buf, XLogRecord *record);
 #endif
 static void issue_xlog_fsync(void);
 static void pg_start_backup_callback(int code, Datum arg);
-static bool read_backup_label(XLogRecPtr *checkPointLoc,
-				  XLogRecPtr *minRecoveryLoc);
+static bool read_backup_label(XLogRecPtr *checkPointLoc);
 static void rm_redo_error_callback(void *arg);
 static int	get_sync_bit(int method);
 
@@ -5355,7 +5354,6 @@ StartupXLOG(void)
 	bool		haveBackupLabel = false;
 	XLogRecPtr	RecPtr,
 				checkPointLoc,
-				backupStopLoc,
 				EndOfLog;
 	uint32		endLogId;
 	uint32		endLogSeg;
@@ -5454,7 +5452,7 @@ StartupXLOG(void)
 						recoveryTargetTLI,
 						ControlFile->checkPointCopy.ThisTimeLineID)));
 
-	if (read_backup_label(&checkPointLoc, &backupStopLoc))
+	if (read_backup_label(&checkPointLoc))
 	{
 		/*
 		 * When a backup_label file is present, we want to roll forward from
@@ -5597,11 +5595,23 @@ StartupXLOG(void)
 		ControlFile->prevCheckPoint = ControlFile->checkPoint;
 		ControlFile->checkPoint = checkPointLoc;
 		ControlFile->checkPointCopy = checkPoint;
-		if (backupStopLoc.xlogid != 0 || backupStopLoc.xrecoff != 0)
+		if (InArchiveRecovery)
 		{
-			if (XLByteLT(ControlFile->minRecoveryPoint, backupStopLoc))
-				ControlFile->minRecoveryPoint = backupStopLoc;
+			/* initialize minRecoveryPoint if not set yet */
+			if (XLByteLT(ControlFile->minRecoveryPoint, checkPoint.redo))
+				ControlFile->minRecoveryPoint = checkPoint.redo;
 		}
+		else
+		{
+			XLogRecPtr	InvalidXLogRecPtr = {0, 0};
+			ControlFile->minRecoveryPoint = InvalidXLogRecPtr;
+		}
+		/*
+		 * set backupStartupPoint if we're starting archive recovery from a
+		 * base backup
+		 */
+		if (haveBackupLabel)
+			ControlFile->backupStartPoint = checkPoint.redo;
 		ControlFile->time = (pg_time_t) time(NULL);
 		/* No need to hold ControlFileLock yet, we aren't up far enough */
 		UpdateControlFile();
@@ -5703,15 +5713,9 @@ StartupXLOG(void)
 
 			InRedo = true;
 
-			if (minRecoveryPoint.xlogid == 0 && minRecoveryPoint.xrecoff == 0)
-				ereport(LOG,
-						(errmsg("redo starts at %X/%X",
-								ReadRecPtr.xlogid, ReadRecPtr.xrecoff)));
-			else
-				ereport(LOG,
-						(errmsg("redo starts at %X/%X, consistency will be reached at %X/%X",
-								ReadRecPtr.xlogid, ReadRecPtr.xrecoff,
-						minRecoveryPoint.xlogid, minRecoveryPoint.xrecoff)));
+			ereport(LOG,
+					(errmsg("redo starts at %X/%X",
+							ReadRecPtr.xlogid, ReadRecPtr.xrecoff)));
 
 			/*
 			 * Let postmaster know we've started redo now, so that it can
@@ -5771,7 +5775,8 @@ StartupXLOG(void)
 				 * Have we passed our safe starting point?
 				 */
 				if (!reachedMinRecoveryPoint &&
-					XLByteLE(minRecoveryPoint, EndRecPtr))
+					XLByteLE(minRecoveryPoint, EndRecPtr) &&
+					XLogRecPtrIsInvalid(ControlFile->backupStartPoint))
 				{
 					reachedMinRecoveryPoint = true;
 					ereport(LOG,
@@ -5877,7 +5882,9 @@ StartupXLOG(void)
 	 * be further ahead --- ControlFile->minRecoveryPoint cannot have been
 	 * advanced beyond the WAL we processed.
 	 */
-	if (InRecovery && XLByteLT(EndOfLog, minRecoveryPoint))
+	if (InArchiveRecovery &&
+		(XLByteLT(EndOfLog, minRecoveryPoint) ||
+		 !XLogRecPtrIsInvalid(ControlFile->backupStartPoint)))
 	{
 		if (reachedStopPoint)	/* stopped because of stop request */
 			ereport(FATAL,
@@ -7312,6 +7319,32 @@ xlog_redo(XLogRecPtr lsn, XLogRecord *record)
 	{
 		/* nothing to do here */
 	}
+	else if (info == XLOG_BACKUP_END)
+	{
+		XLogRecPtr	startpoint;
+		memcpy(&startpoint, XLogRecGetData(record), sizeof(startpoint));
+
+		if (XLByteEQ(ControlFile->backupStartPoint, startpoint))
+		{
+			/*
+			 * We have reached the end of base backup, the point where
+			 * pg_stop_backup() was done. The data on disk is now consistent.
+			 * Reset backupStartPoint, and update minRecoveryPoint to make
+			 * sure we don't allow starting up at an earlier point even if
+			 * recovery is stopped and restarted soon after this.
+			 */
+			elog(DEBUG1, "end of backup reached");
+
+			LWLockAcquire(ControlFileLock, LW_EXCLUSIVE);
+
+			if (XLByteLT(ControlFile->minRecoveryPoint, lsn))
+				ControlFile->minRecoveryPoint = lsn;
+			MemSet(&ControlFile->backupStartPoint, 0, sizeof(XLogRecPtr));
+			UpdateControlFile();
+
+			LWLockRelease(ControlFileLock);
+		}
+	}
 }
 
 void
@@ -7352,6 +7385,14 @@ xlog_desc(StringInfo buf, uint8 xl_info, char *rec)
 	else if (info == XLOG_SWITCH)
 	{
 		appendStringInfo(buf, "xlog switch");
+	}
+	else if (info == XLOG_BACKUP_END)
+	{
+		XLogRecPtr startpoint;
+
+		memcpy(&startpoint, rec, sizeof(XLogRecPtr));
+		appendStringInfo(buf, "backup end: %X/%X",
+						 startpoint.xlogid, startpoint.xrecoff);
 	}
 	else
 		appendStringInfo(buf, "UNKNOWN");
@@ -7688,10 +7729,14 @@ pg_start_backup_callback(int code, Datum arg)
 /*
  * pg_stop_backup: finish taking an on-line backup dump
  *
- * We remove the backup label file created by pg_start_backup, and instead
- * create a backup history file in pg_xlog (whence it will immediately be
- * archived).  The backup history file contains the same info found in
- * the label file, plus the backup-end time and WAL location.
+ * We write an end-of-backup WAL record, and remove the backup label file
+ * created by pg_start_backup, creating a backup history file in pg_xlog
+ * instead (whence it will immediately be archived). The backup history file
+ * contains the same info found in the label file, plus the backup-end time
+ * and WAL location. Before 8.5, the backup-end time was read from the backup
+ * history file at the beginning of archive recovery, but we now use the WAL
+ * record for that and the file is for informational and debug purposes only.
+ *
  * Note: different from CancelBackup which just cancels online backup mode.
  */
 Datum
@@ -7699,6 +7744,7 @@ pg_stop_backup(PG_FUNCTION_ARGS)
 {
 	XLogRecPtr	startpoint;
 	XLogRecPtr	stoppoint;
+	XLogRecData	rdata;
 	pg_time_t	stamp_time;
 	char		strfbuf[128];
 	char		histfilepath[MAXPGPATH];
@@ -7740,22 +7786,6 @@ pg_stop_backup(PG_FUNCTION_ARGS)
 	LWLockRelease(WALInsertLock);
 
 	/*
-	 * Force a switch to a new xlog segment file, so that the backup is valid
-	 * as soon as archiver moves out the current segment file. We'll report
-	 * the end address of the XLOG SWITCH record as the backup stopping point.
-	 */
-	stoppoint = RequestXLogSwitch();
-
-	XLByteToSeg(stoppoint, _logId, _logSeg);
-	XLogFileName(stopxlogfilename, ThisTimeLineID, _logId, _logSeg);
-
-	/* Use the log timezone here, not the session timezone */
-	stamp_time = (pg_time_t) time(NULL);
-	pg_strftime(strfbuf, sizeof(strfbuf),
-				"%Y-%m-%d %H:%M:%S %Z",
-				pg_localtime(&stamp_time, log_timezone));
-
-	/*
 	 * Open the existing label file
 	 */
 	lfp = AllocateFile(BACKUP_LABEL_FILE, "r");
@@ -7781,6 +7811,30 @@ pg_stop_backup(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 				 errmsg("invalid data in file \"%s\"", BACKUP_LABEL_FILE)));
+
+	/*
+	 * Write the backup-end xlog record
+	 */
+	rdata.data = (char *) (&startpoint);
+	rdata.len = sizeof(startpoint);
+	rdata.buffer = InvalidBuffer;
+	rdata.next = NULL;
+	stoppoint = XLogInsert(RM_XLOG_ID, XLOG_BACKUP_END, &rdata);
+
+	/*
+	 * Force a switch to a new xlog segment file, so that the backup is valid
+	 * as soon as archiver moves out the current segment file.
+	 */
+	RequestXLogSwitch();
+
+	XLByteToSeg(stoppoint, _logId, _logSeg);
+	XLogFileName(stopxlogfilename, ThisTimeLineID, _logId, _logSeg);
+
+	/* Use the log timezone here, not the session timezone */
+	stamp_time = (pg_time_t) time(NULL);
+	pg_strftime(strfbuf, sizeof(strfbuf),
+				"%Y-%m-%d %H:%M:%S %Z",
+				pg_localtime(&stamp_time, log_timezone));
 
 	/*
 	 * Write the backup history file
@@ -8088,32 +8142,17 @@ pg_xlogfile_name(PG_FUNCTION_ARGS)
  * later than the start of the dump, and so if we rely on it as the start
  * point, we will fail to restore a consistent database state.
  *
- * We also attempt to retrieve the corresponding backup history file.
- * If successful, set *minRecoveryLoc to constrain valid PITR stopping
- * points.
- *
  * Returns TRUE if a backup_label was found (and fills the checkpoint
  * location into *checkPointLoc); returns FALSE if not.
  */
 static bool
-read_backup_label(XLogRecPtr *checkPointLoc, XLogRecPtr *minRecoveryLoc)
+read_backup_label(XLogRecPtr *checkPointLoc)
 {
 	XLogRecPtr	startpoint;
-	XLogRecPtr	stoppoint;
-	char		histfilename[MAXFNAMELEN];
-	char		histfilepath[MAXPGPATH];
 	char		startxlogfilename[MAXFNAMELEN];
-	char		stopxlogfilename[MAXFNAMELEN];
 	TimeLineID	tli;
-	uint32		_logId;
-	uint32		_logSeg;
 	FILE	   *lfp;
-	FILE	   *fp;
 	char		ch;
-
-	/* Default is to not constrain recovery stop point */
-	minRecoveryLoc->xlogid = 0;
-	minRecoveryLoc->xrecoff = 0;
 
 	/*
 	 * See if label file is present
@@ -8151,45 +8190,6 @@ read_backup_label(XLogRecPtr *checkPointLoc, XLogRecPtr *minRecoveryLoc)
 				(errcode_for_file_access(),
 				 errmsg("could not read file \"%s\": %m",
 						BACKUP_LABEL_FILE)));
-
-	/*
-	 * Try to retrieve the backup history file (no error if we can't)
-	 */
-	XLByteToSeg(startpoint, _logId, _logSeg);
-	BackupHistoryFileName(histfilename, tli, _logId, _logSeg,
-						  startpoint.xrecoff % XLogSegSize);
-
-	if (InArchiveRecovery)
-		RestoreArchivedFile(histfilepath, histfilename, "RECOVERYHISTORY", 0);
-	else
-		BackupHistoryFilePath(histfilepath, tli, _logId, _logSeg,
-							  startpoint.xrecoff % XLogSegSize);
-
-	fp = AllocateFile(histfilepath, "r");
-	if (fp)
-	{
-		/*
-		 * Parse history file to identify stop point.
-		 */
-		if (fscanf(fp, "START WAL LOCATION: %X/%X (file %24s)%c",
-				   &startpoint.xlogid, &startpoint.xrecoff, startxlogfilename,
-				   &ch) != 4 || ch != '\n')
-			ereport(FATAL,
-					(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-					 errmsg("invalid data in file \"%s\"", histfilename)));
-		if (fscanf(fp, "STOP WAL LOCATION: %X/%X (file %24s)%c",
-				   &stoppoint.xlogid, &stoppoint.xrecoff, stopxlogfilename,
-				   &ch) != 4 || ch != '\n')
-			ereport(FATAL,
-					(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-					 errmsg("invalid data in file \"%s\"", histfilename)));
-		*minRecoveryLoc = stoppoint;
-		if (ferror(fp) || FreeFile(fp))
-			ereport(FATAL,
-					(errcode_for_file_access(),
-					 errmsg("could not read file \"%s\": %m",
-							histfilepath)));
-	}
 
 	return true;
 }
