@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tsearch/ts_selfuncs.c,v 1.6 2010/01/02 16:57:53 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tsearch/ts_selfuncs.c,v 1.7 2010/01/04 02:44:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -170,6 +170,7 @@ tsquerysel(VariableStatData *vardata, Datum constval)
 		if (get_attstatsslot(vardata->statsTuple,
 							 TEXTOID, -1,
 							 STATISTIC_KIND_MCELEM, InvalidOid,
+							 NULL,
 							 &values, &nvalues,
 							 &numbers, &nnumbers))
 		{

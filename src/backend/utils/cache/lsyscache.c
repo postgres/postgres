@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/lsyscache.c,v 1.165 2010/01/02 16:57:55 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/lsyscache.c,v 1.166 2010/01/04 02:44:40 tgl Exp $
  *
  * NOTES
  *	  Eventually, the index information should go through here, too.
@@ -2577,6 +2577,7 @@ get_attavgwidth(Oid relid, AttrNumber attnum)
  * atttypmod: typmod of attribute (can be 0 if values == NULL).
  * reqkind: STAKIND code for desired statistics slot kind.
  * reqop: STAOP value wanted, or InvalidOid if don't care.
+ * actualop: if not NULL, *actualop receives the actual STAOP value.
  * values, nvalues: if not NULL, the slot's stavalues are extracted.
  * numbers, nnumbers: if not NULL, the slot's stanumbers are extracted.
  *
@@ -2589,6 +2590,7 @@ bool
 get_attstatsslot(HeapTuple statstuple,
 				 Oid atttype, int32 atttypmod,
 				 int reqkind, Oid reqop,
+				 Oid *actualop,
 				 Datum **values, int *nvalues,
 				 float4 **numbers, int *nnumbers)
 {
@@ -2610,6 +2612,9 @@ get_attstatsslot(HeapTuple statstuple,
 	}
 	if (i >= STATISTIC_NUM_SLOTS)
 		return false;			/* not there */
+
+	if (actualop)
+		*actualop = (&stats->staop1)[i];
 
 	if (values)
 	{
