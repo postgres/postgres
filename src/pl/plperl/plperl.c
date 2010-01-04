@@ -1,7 +1,7 @@
 /**********************************************************************
  * plperl.c - perl as a procedural language for PostgreSQL
  *
- *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.157 2009/12/31 19:41:37 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.158 2010/01/04 20:29:59 adunstan Exp $
  *
  **********************************************************************/
 
@@ -630,7 +630,13 @@ plperl_build_tuple_result(HV *perlhash, AttInMetadata *attinmeta)
 					 errmsg("Perl hash contains nonexistent column \"%s\"",
 							key)));
 		if (SvOK(val))
-			values[attn - 1] = SvPV(val, PL_na);
+		{
+			char * aval;
+
+			aval = SvPV_nolen(val);
+			pg_verifymbstr(aval, strlen(aval), false);
+			values[attn - 1] = aval;
+		}
 	}
 	hv_iterinit(perlhash);
 
@@ -829,8 +835,12 @@ plperl_modify_tuple(HV *hvTD, TriggerData *tdata, HeapTuple otup)
 		atttypmod = tupdesc->attrs[attn - 1]->atttypmod;
 		if (SvOK(val))
 		{
+			char * aval;
+
+			aval = SvPV_nolen(val);
+			pg_verifymbstr(aval,strlen(aval), false);
 			modvalues[slotsused] = InputFunctionCall(&finfo,
-													 SvPV(val, PL_na),
+													 aval,
 													 typioparam,
 													 atttypmod);
 			modnulls[slotsused] = ' ';
@@ -1125,7 +1135,7 @@ plperl_create_sub(const char *proname, const char *s, bool trusted)
 		LEAVE;
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("%s", strip_trailing_ws(SvPV(ERRSV, PL_na)))));
+				 errmsg("%s", strip_trailing_ws(SvPV_nolen(ERRSV)))));
 	}
 
 	/*
@@ -1253,7 +1263,7 @@ plperl_call_perl_func(plperl_proc_desc *desc, FunctionCallInfo fcinfo)
 		LEAVE;
 		/* XXX need to find a way to assign an errcode here */
 		ereport(ERROR,
-				(errmsg("%s", strip_trailing_ws(SvPV(ERRSV, PL_na)))));
+				(errmsg("%s", strip_trailing_ws(SvPV_nolen(ERRSV)))));
 	}
 
 	retval = newSVsv(POPs);
@@ -1309,7 +1319,7 @@ plperl_call_perl_trigger_func(plperl_proc_desc *desc, FunctionCallInfo fcinfo,
 		LEAVE;
 		/* XXX need to find a way to assign an errcode here */
 		ereport(ERROR,
-				(errmsg("%s", strip_trailing_ws(SvPV(ERRSV, PL_na)))));
+				(errmsg("%s", strip_trailing_ws(SvPV_nolen(ERRSV)))));
 	}
 
 	retval = newSVsv(POPs);
@@ -1467,8 +1477,8 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 			perlret = array_ret;
 		}
 
-		val = SvPV(perlret, PL_na);
-
+		val = SvPV_nolen(perlret);
+		pg_verifymbstr(val, strlen(val), false);
 		retval = InputFunctionCall(&prodesc->result_in_func, val,
 								   prodesc->result_typioparam, -1);
 	}
@@ -1550,7 +1560,7 @@ plperl_trigger_handler(PG_FUNCTION_ARGS)
 		HeapTuple	trv;
 		char	   *tmp;
 
-		tmp = SvPV(perlret, PL_na);
+		tmp = SvPV_nolen(perlret);
 
 		if (pg_strcasecmp(tmp, "SKIP") == 0)
 			trv = NULL;
@@ -2124,8 +2134,8 @@ plperl_return_next(SV *sv)
 				sv = plperl_convert_to_pg_array(sv);
 			}
 
-			val = SvPV(sv, PL_na);
-
+			val = SvPV_nolen(sv);
+			pg_verifymbstr(val, strlen(val), false);
 			ret = InputFunctionCall(&prodesc->result_in_func, val,
 									prodesc->result_typioparam, -1);
 			isNull = false;
@@ -2357,7 +2367,7 @@ plperl_spi_prepare(char *query, int argc, SV **argv)
 						typIOParam;
 			int32		typmod;
 
-			parseTypeString(SvPV(argv[i], PL_na), &typId, &typmod);
+			parseTypeString(SvPV_nolen(argv[i]), &typId, &typmod);
 
 			getTypeInputInfo(typId, &typInput, &typIOParam);
 
@@ -2516,8 +2526,12 @@ plperl_spi_exec_prepared(char *query, HV *attr, int argc, SV **argv)
 		{
 			if (SvOK(argv[i]))
 			{
+				char *val;
+
+				val = SvPV_nolen(argv[i]);
+				pg_verifymbstr(val, strlen(val), false);
 				argvalues[i] = InputFunctionCall(&qdesc->arginfuncs[i],
-												 SvPV(argv[i], PL_na),
+												 val,
 												 qdesc->argtypioparams[i],
 												 -1);
 				nulls[i] = ' ';
@@ -2647,8 +2661,12 @@ plperl_spi_query_prepared(char *query, int argc, SV **argv)
 		{
 			if (SvOK(argv[i]))
 			{
+				char *val;
+				
+				val = SvPV_nolen(argv[i]);
+				pg_verifymbstr(val, strlen(val), false);
 				argvalues[i] = InputFunctionCall(&qdesc->arginfuncs[i],
-												 SvPV(argv[i], PL_na),
+												 val,
 												 qdesc->argtypioparams[i],
 												 -1);
 				nulls[i] = ' ';
