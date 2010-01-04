@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.143 2009/12/10 06:32:28 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.144 2010/01/04 16:34:11 tgl Exp $ -->
 
  <sect1 id="xfunc">
   <title>User-Defined Functions</title>
@@ -2414,15 +2414,49 @@ include $(PGXS)
    </para>
 
    <para>
-    The following variables can be set:
+    Set one of these three variables to specify what is built:
 
     <variablelist>
      <varlistentry>
       <term><varname>MODULES</varname></term>
       <listitem>
        <para>
-        list of shared objects to be built from source file with same
+        list of shared objects to be built from source files with same
         stem (do not include suffix in this list)
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><varname>MODULE_big</varname></term>
+      <listitem>
+       <para>
+        a shared object to build from multiple source files
+        (list object files in <varname>OBJS</varname>)
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><varname>PROGRAM</varname></term>
+      <listitem>
+       <para>
+        a binary program to build
+        (list object files in <varname>OBJS</varname>)
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+
+    The following variables can also be set:
+
+    <variablelist>
+     <varlistentry>
+      <term><varname>MODULEDIR</varname></term>
+      <listitem>
+       <para>
+        subdirectory into which DATA and DOCS files should be
+        installed (if not set, default is <literal>contrib</literal>)
        </para>
       </listitem>
      </varlistentry>
@@ -2431,7 +2465,7 @@ include $(PGXS)
       <term><varname>DATA</varname></term>
       <listitem>
        <para>
-        random files to install into <literal><replaceable>prefix</replaceable>/share/contrib</literal>
+        random files to install into <literal><replaceable>prefix</replaceable>/share/$MODULEDIR</literal>
        </para>
       </listitem>
      </varlistentry>
@@ -2441,8 +2475,18 @@ include $(PGXS)
       <listitem>
        <para>
         random files to install into
-        <literal><replaceable>prefix</replaceable>/share/contrib</literal>,
+        <literal><replaceable>prefix</replaceable>/share/$MODULEDIR</literal>,
         which need to be built first
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><varname>DATA_TSEARCH</varname></term>
+      <listitem>
+       <para>
+        random files to install under
+        <literal><replaceable>prefix</replaceable>/share/tsearch_data</literal>
        </para>
       </listitem>
      </varlistentry>
@@ -2452,7 +2496,7 @@ include $(PGXS)
       <listitem>
        <para>
         random files to install under
-        <literal><replaceable>prefix</replaceable>/doc/contrib</literal>
+        <literal><replaceable>prefix</replaceable>/doc/$MODULEDIR</literal>
        </para>
       </listitem>
      </varlistentry>
@@ -2486,33 +2530,6 @@ include $(PGXS)
        </para>
       </listitem>
      </varlistentry>
-    </variablelist>
-
-    or at most one of these two:
-
-    <variablelist>
-     <varlistentry>
-      <term><varname>PROGRAM</varname></term>
-      <listitem>
-       <para>
-        a binary program to build (list objects files in <varname>OBJS</varname>)
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><varname>MODULE_big</varname></term>
-      <listitem>
-       <para>
-        a shared object to build (list object files in <varname>OBJS</varname>)
-       </para>
-      </listitem>
-     </varlistentry>
-    </variablelist>
-
-    The following can also be set:
-
-    <variablelist>
 
      <varlistentry>
       <term><varname>EXTRA_CLEAN</varname></term>

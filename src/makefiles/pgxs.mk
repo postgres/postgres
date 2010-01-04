@@ -1,6 +1,6 @@
 # PGXS: PostgreSQL extensions makefile
 
-# $PostgreSQL: pgsql/src/makefiles/pgxs.mk,v 1.17 2009/08/26 22:24:43 petere Exp $ 
+# $PostgreSQL: pgsql/src/makefiles/pgxs.mk,v 1.18 2010/01/04 16:34:11 tgl Exp $ 
 
 # This file contains generic rules to build many kinds of simple
 # extension modules.  You only need to set a few variables and include
@@ -15,27 +15,27 @@
 #   PGXS := $(shell $(PG_CONFIG) --pgxs)
 #   include $(PGXS)
 #
-# The following variables can be set:
+# Set one of these three variables to specify what is built:
 #
-#   MODULES -- list of shared objects to be build from source file with
+#   MODULES -- list of shared objects to be built from source files with
 #     same stem (do not include suffix in this list)
-#   DATA -- random files to install into $PREFIX/share/contrib
-#   DATA_built -- random files to install into $PREFIX/share/contrib,
+#   MODULE_big -- a shared object to build from multiple source files
+#     (list object files in OBJS)
+#   PROGRAM -- a binary program to build (list object files in OBJS)
+#
+# The following variables can also be set:
+#
+#   MODULEDIR -- subdirectory into which DATA and DOCS files should be
+#     installed (if not set, default is "contrib")
+#   DATA -- random files to install into $PREFIX/share/$MODULEDIR
+#   DATA_built -- random files to install into $PREFIX/share/$MODULEDIR,
 #     which need to be built first
 #   DATA_TSEARCH -- random files to install into $PREFIX/share/tsearch_data
-#   DOCS -- random files to install under $PREFIX/doc/contrib
+#   DOCS -- random files to install under $PREFIX/doc/$MODULEDIR
 #   SCRIPTS -- script files (not binaries) to install into $PREFIX/bin
 #   SCRIPTS_built -- script files (not binaries) to install into $PREFIX/bin,
 #     which need to be built first
 #   REGRESS -- list of regression test cases (without suffix)
-#
-# or at most one of these two:
-#
-#   PROGRAM -- a binary program to build (list objects files in OBJS)
-#   MODULE_big -- a shared object to build (list object files in OBJS)
-#
-# The following can also be set:
-#
 #   EXTRA_CLEAN -- extra files to remove in 'make clean'
 #   PG_CPPFLAGS -- will be added to CPPFLAGS
 #   PG_LIBS -- will be added to PROGRAM link line
@@ -71,6 +71,14 @@ override CFLAGS += $(CFLAGS_SL)
 SHLIB_LINK += $(BE_DLLLIBS)
 endif
 
+ifdef MODULEDIR
+datamoduledir = $(MODULEDIR)
+docmoduledir = $(MODULEDIR)
+else
+datamoduledir = contrib
+docmoduledir = contrib
+endif
+
 ifdef PG_CPPFLAGS
 override CPPFLAGS := $(PG_CPPFLAGS) $(CPPFLAGS)
 endif
@@ -90,8 +98,8 @@ endif # MODULE_big
 install: all installdirs
 ifneq (,$(DATA)$(DATA_built))
 	@for file in $(addprefix $(srcdir)/, $(DATA)) $(DATA_built); do \
-	  echo "$(INSTALL_DATA) $$file '$(DESTDIR)$(datadir)/contrib'"; \
-	  $(INSTALL_DATA) $$file '$(DESTDIR)$(datadir)/contrib'; \
+	  echo "$(INSTALL_DATA) $$file '$(DESTDIR)$(datadir)/$(datamoduledir)'"; \
+	  $(INSTALL_DATA) $$file '$(DESTDIR)$(datadir)/$(datamoduledir)'; \
 	done
 endif # DATA
 ifneq (,$(DATA_TSEARCH))
@@ -109,8 +117,8 @@ endif # MODULES
 ifdef DOCS
 ifdef docdir
 	@for file in $(addprefix $(srcdir)/, $(DOCS)); do \
-	  echo "$(INSTALL_DATA) $$file '$(DESTDIR)$(docdir)/contrib'"; \
-	  $(INSTALL_DATA) $$file '$(DESTDIR)$(docdir)/contrib'; \
+	  echo "$(INSTALL_DATA) $$file '$(DESTDIR)$(docdir)/$(docmoduledir)'"; \
+	  $(INSTALL_DATA) $$file '$(DESTDIR)$(docdir)/$(docmoduledir)'; \
 	done
 endif # docdir
 endif # DOCS
@@ -137,7 +145,7 @@ endif # MODULE_big
 
 installdirs:
 ifneq (,$(DATA)$(DATA_built))
-	$(MKDIR_P) '$(DESTDIR)$(datadir)/contrib'
+	$(MKDIR_P) '$(DESTDIR)$(datadir)/$(datamoduledir)'
 endif
 ifneq (,$(DATA_TSEARCH))
 	$(MKDIR_P) '$(DESTDIR)$(datadir)/tsearch_data'
@@ -147,7 +155,7 @@ ifneq (,$(MODULES))
 endif
 ifdef DOCS
 ifdef docdir
-	$(MKDIR_P) '$(DESTDIR)$(docdir)/contrib'
+	$(MKDIR_P) '$(DESTDIR)$(docdir)/$(docmoduledir)'
 endif # docdir
 endif # DOCS
 ifneq (,$(PROGRAM)$(SCRIPTS)$(SCRIPTS_built))
@@ -161,16 +169,16 @@ endif # MODULE_big
 
 uninstall:
 ifneq (,$(DATA)$(DATA_built))
-	rm -f $(addprefix '$(DESTDIR)$(datadir)'/contrib/, $(notdir $(DATA) $(DATA_built)))
+	rm -f $(addprefix '$(DESTDIR)$(datadir)/$(datamoduledir)'/, $(notdir $(DATA) $(DATA_built)))
 endif
 ifneq (,$(DATA_TSEARCH))
-	rm -f $(addprefix '$(DESTDIR)$(datadir)'/tsearch_data/, $(notdir $(DATA_TSEARCH)))
+	rm -f $(addprefix '$(DESTDIR)$(datadir)/tsearch_data'/, $(notdir $(DATA_TSEARCH)))
 endif
 ifdef MODULES
 	rm -f $(addprefix '$(DESTDIR)$(pkglibdir)'/, $(addsuffix $(DLSUFFIX), $(MODULES)))
 endif
 ifdef DOCS
-	rm -f $(addprefix '$(DESTDIR)$(docdir)'/contrib/, $(DOCS))
+	rm -f $(addprefix '$(DESTDIR)$(docdir)/$(docmoduledir)'/, $(DOCS))
 endif
 ifdef PROGRAM
 	rm -f '$(DESTDIR)$(bindir)/$(PROGRAM)$(X)'
