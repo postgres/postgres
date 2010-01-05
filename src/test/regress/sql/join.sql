@@ -561,3 +561,9 @@ from int8_tbl t1 left join
   (select q1, case when q2=1 then 1 else q2 end as q2 from int8_tbl) t2
   on (t1.q2 = t2.q1)
 group by t1.q2 order by 1;
+
+--
+-- test the corner cases FULL JOIN ON TRUE and FULL JOIN ON FALSE
+--
+select * from int4_tbl a full join int4_tbl b on true;
+select * from int4_tbl a full join int4_tbl b on false;

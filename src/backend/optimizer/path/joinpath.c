@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/joinpath.c,v 1.128 2010/01/02 16:57:46 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/joinpath.c,v 1.129 2010/01/05 23:25:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1184,10 +1184,18 @@ select_mergejoin_clauses(PlannerInfo *root,
 		if (isouterjoin && restrictinfo->is_pushed_down)
 			continue;
 
+		/* Check that clause is a mergeable operator clause */
 		if (!restrictinfo->can_join ||
 			restrictinfo->mergeopfamilies == NIL)
 		{
-			have_nonmergeable_joinclause = true;
+			/*
+			 * The executor can handle extra joinquals that are constants,
+			 * but not anything else, when doing right/full merge join.  (The
+			 * reason to support constants is so we can do FULL JOIN ON
+			 * FALSE.)
+			 */
+			if (!restrictinfo->clause || !IsA(restrictinfo->clause, Const))
+				have_nonmergeable_joinclause = true;
 			continue;			/* not mergejoinable */
 		}
 

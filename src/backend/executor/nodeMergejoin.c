@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeMergejoin.c,v 1.99 2010/01/02 16:57:44 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeMergejoin.c,v 1.100 2010/01/05 23:25:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -398,8 +398,13 @@ MJCompare(MergeJoinState *mergestate)
 	 * want to report that the tuples are equal.  Instead, if result is still
 	 * 0, change it to +1.	This will result in advancing the inner side of
 	 * the join.
+	 *
+	 * Likewise, if there was a constant-false joinqual, do not report
+	 * equality.  We have to check this as part of the mergequals, else the
+	 * rescan logic will do the wrong thing.
 	 */
-	if (nulleqnull && result == 0)
+	if (result == 0 &&
+		(nulleqnull || mergestate->mj_ConstFalseJoin))
 		result = 1;
 
 	MemoryContextSwitchTo(oldContext);
@@ -484,6 +489,32 @@ MJFillInner(MergeJoinState *node)
 	}
 
 	return NULL;
+}
+
+
+/*
+ * Check that a qual condition is constant true or constant false.
+ * If it is constant false (or null), set *is_const_false to TRUE.
+ *
+ * Constant true would normally be represented by a NIL list, but we allow an
+ * actual bool Const as well.  We do expect that the planner will have thrown
+ * away any non-constant terms that have been ANDed with a constant false.
+ */
+static bool
+check_constant_qual(List *qual, bool *is_const_false)
+{
+	ListCell   *lc;
+
+	foreach(lc, qual)
+	{
+		Const  *con = (Const *) lfirst(lc);
+
+		if (!con || !IsA(con, Const))
+			return false;
+		if (con->constisnull || !DatumGetBool(con->constvalue))
+			*is_const_false = true;
+	}
+	return true;
 }
 
 
@@ -1025,9 +1056,13 @@ ExecMergeJoin(MergeJoinState *node)
 					 * state for the rescanned inner tuples.  We know all of
 					 * them will match this new outer tuple and therefore
 					 * won't be emitted as fill tuples.  This works *only*
-					 * because we require the extra joinquals to be nil when
-					 * doing a right or full join --- otherwise some of the
-					 * rescanned tuples might fail the extra joinquals.
+					 * because we require the extra joinquals to be constant
+					 * when doing a right or full join --- otherwise some of
+					 * the rescanned tuples might fail the extra joinquals.
+					 * This obviously won't happen for a constant-true extra
+					 * joinqual, while the constant-false case is handled by
+					 * forcing the merge clause to never match, so we never
+					 * get here.
 					 */
 					ExecRestrPos(innerPlan);
 
@@ -1439,6 +1474,7 @@ ExecInitMergeJoin(MergeJoin *node, EState *estate, int eflags)
 	mergestate->js.joinqual = (List *)
 		ExecInitExpr((Expr *) node->join.joinqual,
 					 (PlanState *) mergestate);
+	mergestate->mj_ConstFalseJoin = false;
 	/* mergeclauses are handled below */
 
 	/*
@@ -1498,10 +1534,11 @@ ExecInitMergeJoin(MergeJoin *node, EState *estate, int eflags)
 							  ExecGetResultType(outerPlanState(mergestate)));
 
 			/*
-			 * Can't handle right or full join with non-nil extra joinclauses.
-			 * This should have been caught by planner.
+			 * Can't handle right or full join with non-constant extra
+			 * joinclauses.  This should have been caught by planner.
 			 */
-			if (node->join.joinqual != NIL)
+			if (!check_constant_qual(node->join.joinqual,
+									 &mergestate->mj_ConstFalseJoin))
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 						 errmsg("RIGHT JOIN is only supported with merge-joinable join conditions")));
@@ -1517,9 +1554,11 @@ ExecInitMergeJoin(MergeJoin *node, EState *estate, int eflags)
 							  ExecGetResultType(innerPlanState(mergestate)));
 
 			/*
-			 * Can't handle right or full join with non-nil extra joinclauses.
+			 * Can't handle right or full join with non-constant extra
+			 * joinclauses.  This should have been caught by planner.
 			 */
-			if (node->join.joinqual != NIL)
+			if (!check_constant_qual(node->join.joinqual,
+									 &mergestate->mj_ConstFalseJoin))
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 						 errmsg("FULL JOIN is only supported with merge-joinable join conditions")));
