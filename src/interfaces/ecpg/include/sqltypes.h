@@ -1,6 +1,3 @@
-/*
- * $PostgreSQL: pgsql/src/interfaces/ecpg/include/sqltypes.h,v 1.10 2010/01/05 16:38:23 meskes Exp $
- */
 #ifndef ECPG_SQLTYPES_H
 #define ECPG_SQLTYPES_H
 

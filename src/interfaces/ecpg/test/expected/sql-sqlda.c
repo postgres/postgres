@@ -48,7 +48,7 @@ typedef struct sqlda_struct	sqlda_t;
 
 
 #line 1 "pgtypes_numeric.h"
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/test/expected/sql-sqlda.c,v 1.6 2010/01/05 17:05:49 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/test/expected/sql-sqlda.c,v 1.7 2010/01/05 17:07:51 meskes Exp $ */
 
 #ifndef PGTYPES_NUMERIC
 #define PGTYPES_NUMERIC
