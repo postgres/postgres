@@ -2,7 +2,7 @@
 #
 # Makefile for backend/catalog
 #
-# $PostgreSQL: pgsql/src/backend/catalog/Makefile,v 1.74 2009/12/11 03:34:55 itagaki Exp $
+# $PostgreSQL: pgsql/src/backend/catalog/Makefile,v 1.75 2010/01/05 01:06:56 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -19,7 +19,7 @@ BKIFILES = postgres.bki postgres.description postgres.shdescription
 
 include $(top_srcdir)/src/backend/common.mk
 
-all: $(BKIFILES)
+all: $(BKIFILES) schemapg.h
 
 # Note: there are some undocumented dependencies on the ordering in which
 # the catalog header files are assembled into postgres.bki.  In particular,
@@ -41,15 +41,21 @@ POSTGRES_BKI_SRCS = $(addprefix $(top_srcdir)/src/include/catalog/,\
 	toasting.h indexing.h \
     )
 
-pg_includes = $(sort -I$(top_srcdir)/src/include -I$(top_builddir)/src/include)
+# location of Catalog.pm
+catalogdir = $(top_srcdir)/src/backend/catalog
+
+# locations of headers that genbki.pl needs to read
+pg_includes = -I$(top_srcdir)/src/include/catalog -I$(top_builddir)/src/include/catalog
 
 # see explanation in ../parser/Makefile
 postgres.description: postgres.bki ;
 
 postgres.shdescription: postgres.bki ;
 
-postgres.bki: genbki.sh $(POSTGRES_BKI_SRCS) $(top_builddir)/src/include/pg_config_manual.h
-	AWK='$(AWK)' $(SHELL) $< $(pg_includes) --set-version=$(VERSION) -o postgres $(POSTGRES_BKI_SRCS)
+schemapg.h: postgres.bki ;
+
+postgres.bki: genbki.pl Catalog.pm $(POSTGRES_BKI_SRCS)
+	$(PERL) -I $(catalogdir) $< $(pg_includes) --set-version=$(VERSION) $(POSTGRES_BKI_SRCS)
 
 .PHONY: install-data
 install-data: $(BKIFILES) installdirs
@@ -67,5 +73,9 @@ installdirs:
 uninstall-data:
 	rm -f $(addprefix '$(DESTDIR)$(datadir)'/, $(BKIFILES) system_views.sql information_schema.sql sql_features.txt)
 
+# postgres.bki, postgres.description, postgres.shdescription, and schemapg.h
+# are in the distribution tarball, so they are not cleaned here.
 clean:
+
+maintainer-clean: clean
 	rm -f $(BKIFILES)

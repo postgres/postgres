@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.335 2009/12/18 21:37:38 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.336 2010/01/05 01:06:55 tgl Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -125,10 +125,10 @@ su - postgres
       <filename>libedit</filename> library is
       GNU <productname>Readline</productname>-compatible and is used if
       <filename>libreadline</filename> is not found, or if
-      <option>--with-libedit-preferred</option> is used as an 
+      <option>--with-libedit-preferred</option> is used as an
       option to <filename>configure</>. If you are using a package-based
-      Linux distribution, be aware that you need both the 
-      <literal>readline</> and <literal>readline-devel</> packages, if 
+      Linux distribution, be aware that you need both the
+      <literal>readline</> and <literal>readline-devel</> packages, if
       those are separate in your distribution.
      </para>
     </listitem>
@@ -266,7 +266,7 @@ su - postgres
 
     <listitem>
      <para>
-      <application>Kerberos</>, <productname>OpenSSL</>, 
+      <application>Kerberos</>, <productname>OpenSSL</>,
       <productname>OpenLDAP</>, and/or
       <application>PAM</>, if you want to support authentication or
       encryption using these services.
@@ -310,7 +310,7 @@ su - postgres
        <primary>perl</primary>
       </indexterm>
 
-      <application>Perl</> is also needed to build from a CVS checkout,
+      <application>Perl</> 5.8 or later is needed to build from a CVS checkout,
       or if you changed the input files for any of the build steps that
       use Perl scripts.  If building on Windows you will need
       <application>Perl</> in any case.
@@ -456,7 +456,7 @@ su - postgres
      delete it, in case you have trouble and need to revert to it.  Keep
      in mind the directory might consume significant disk space.  To rename
      the directory, use a command like this:
-<screen> 
+<screen>
 <userinput>mv /usr/local/pgsql /usr/local/pgsql.old</>
 </screen>
     </para>
@@ -581,7 +581,7 @@ su - postgres
         </para>
 
         <para>
-         For relocatable installs, you might want to use 
+         For relocatable installs, you might want to use
          <filename>configure</filename>'s <literal>--disable-rpath</>
          option.  Also, you will need to tell the operating system how
          to find the shared libraries.
@@ -943,7 +943,7 @@ su - postgres
        <listitem>
         <para>
          Build with <acronym>LDAP</><indexterm><primary>LDAP</></>
-         support for authentication and connection parameter lookup (see 
+         support for authentication and connection parameter lookup (see
          <![%standalone-include[the documentation about client authentication
          and libpq]]><![%standalone-ignore[<xref linkend="libpq-ldap"> and
          <xref linkend="auth-ldap">]]> for more information). On Unix,
@@ -952,7 +952,7 @@ su - postgres
          library is used.  <filename>configure</> will check for the required
          header files and libraries to make sure that your
          <productname>OpenLDAP</> installation is sufficient before
-         proceeding. 
+         proceeding.
         </para>
        </listitem>
       </varlistentry>
@@ -1381,7 +1381,7 @@ su - postgres
     <para>
      Here is a list of the significant variables that can be set in
      this manner:
- 
+
      <variablelist>
       <varlistentry>
        <term><envar>BISON</envar></term>
@@ -1635,7 +1635,7 @@ All of PostgreSQL is successfully made. Ready to install.
   </procedure>
 
   <formalpara>
-   <title>Registering <application>eventlog</> on <systemitem 
+   <title>Registering <application>eventlog</> on <systemitem
    class="osname">Windows</>:</title>
    <para>
     To register a <systemitem class="osname">Windows</> <application>eventlog</>
@@ -1887,7 +1887,7 @@ postgres$ <userinput>/usr/local/pgsql/bin/initdb -D /usr/local/pgsql/data</>
     <para>
      At this point, if you did not use the <command>initdb</> <literal>-A</>
      option, you might want to modify <filename>pg_hba.conf</> to control
-     local access to the server before you start it.  The default is to 
+     local access to the server before you start it.  The default is to
      trust all local users.
     </para>
    </step>
@@ -2678,7 +2678,7 @@ cc-1020 cc: ERROR File = pqcomm.c, Line = 427
     MinGW.  The ready-made installer files are available on the main
     PostgreSQL FTP servers in the <filename>binary/win32</filename>
     directory.
-   </para>   
+   </para>
 
    <para>
     The native Win32 port requires a 32-bit NT-based Microsoft

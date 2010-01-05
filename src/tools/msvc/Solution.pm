@@ -3,13 +3,11 @@ package Solution;
 #
 # Package that encapsulates a Visual C++ solution file generation
 #
-# $PostgreSQL: pgsql/src/tools/msvc/Solution.pm,v 1.51 2010/01/01 17:34:25 mha Exp $
+# $PostgreSQL: pgsql/src/tools/msvc/Solution.pm,v 1.52 2010/01/05 01:06:57 tgl Exp $
 #
 use Carp;
 use strict;
 use warnings;
-
-use Genbki;
 
 sub new
 {
@@ -240,7 +238,7 @@ s{PG_VERSION_STR "[^"]+"}{__STRINGIFY(x) #x\n#define __STRINGIFY2(z) __STRINGIFY
     {
         print "Generating fmgrtab.c and fmgroids.h...\n";
         chdir('src\backend\utils');
-        system("perl Gen_fmgrtab.pl ../../../src/include/catalog/pg_proc.h");
+        system("perl -I ../catalog Gen_fmgrtab.pl ../../../src/include/catalog/pg_proc.h");
         chdir('..\..\..');
         copyFile('src\backend\utils\fmgroids.h','src\include\utils\fmgroids.h');
     }
@@ -339,12 +337,12 @@ EOF
         next if $bki eq "";
         if (IsNewer('src/backend/catalog/postgres.bki', "src/include/catalog/$bki"))
         {
-            print "Generating postgres.bki...\n";
-            Genbki::genbki(
-                $self->{majorver},
-                "src/backend/catalog/postgres",
-                split(/ /,join(' src/include/catalog/',@allbki))
-            );
+            print "Generating postgres.bki and schemapg.h...\n";
+            chdir('src\backend\catalog');
+            my $bki_srcs = join(' ../../../src/include/catalog/', @allbki);
+            system("perl genbki.pl -I../../../src/include/catalog --set-version=$self->{majorver} $bki_srcs");
+            chdir('..\..\..');
+            copyFile('src\backend\catalog\schemapg.h', 'src\include\catalog\schemapg.h');
             last;
         }
     }

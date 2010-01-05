@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/backend/catalog/README,v 1.13 2008/03/21 13:23:28 momjian Exp $
+$PostgreSQL: pgsql/src/backend/catalog/README,v 1.14 2010/01/05 01:06:56 tgl Exp $
 
 System Catalog
 ==============
@@ -7,7 +7,7 @@ This directory contains .c files that manipulate the system catalogs;
 src/include/catalog contains the .h files that define the structure
 of the system catalogs.
 
-When the compile-time scripts (such as Gen_fmgrtab.sh and genbki.sh)
+When the compile-time scripts (Gen_fmgrtab.pl and genbki.pl)
 execute, they grep the DATA statements out of the .h files and munge
 these in order to generate the postgres.bki file.  The .bki file is then
 used as input to initdb (which is just a wrapper around postgres
@@ -44,7 +44,7 @@ catalog's .h file, and use the #define symbol in the C code.  Writing
 the actual numeric value of any OID in C code is considered very bad form.
 Direct references to pg_proc OIDs are common enough that there's a special
 mechanism to create the necessary #define's automatically: see
-backend/utils/Gen_fmgrtab.sh.  We also have standard conventions for setting
+backend/utils/Gen_fmgrtab.pl.  We also have standard conventions for setting
 up #define's for the pg_class OIDs of system catalogs and indexes.  For all
 the other system catalogs, you have to manually create any #define's you
 need.
@@ -75,6 +75,7 @@ POSTGRES_BKI_SRCS variable, as these cannot be created through the standard
 heap_create_with_catalog process, because it needs these tables to exist
 already.  The list of files this currently includes is:
 	pg_proc.h pg_type.h pg_attribute.h pg_class.h
+Within this list, pg_type.h must come before pg_attribute.h.
 Also, indexing.h must be last, since the indexes can't be created until all
 the tables are in place, and toasting.h should probably be next-to-last
 (or at least after all the tables that need toast tables).  There are

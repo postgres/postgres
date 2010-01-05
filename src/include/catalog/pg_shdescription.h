@@ -15,10 +15,10 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_shdescription.h,v 1.8 2010/01/02 16:58:02 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_shdescription.h,v 1.9 2010/01/05 01:06:57 tgl Exp $
  *
  * NOTES
- *		the genbki.sh script reads this file and generates .bki
+ *		the genbki.pl script reads this file and generates .bki
  *		information from the DATA() statements.
  *
  *		XXX do NOT break up DATA() statements into multiple lines!
@@ -69,7 +69,7 @@ typedef FormData_pg_shdescription *Form_pg_shdescription;
 /*
  *	Because the contents of this table are taken from the other *.h files,
  *	there is no initialization here.  The initial contents are extracted
- *	by genbki.sh and loaded during initdb.
+ *	by genbki.pl and loaded during initdb.
  */
 
 #endif   /* PG_SHDESCRIPTION_H */

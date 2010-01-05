@@ -7,11 +7,11 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.558 2010/01/02 16:58:02 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.559 2010/01/05 01:06:56 tgl Exp $
  *
  * NOTES
- *	  The script catalog/genbki.sh reads this file and generates .bki
- *	  information from the DATA() statements.  utils/Gen_fmgrtab.sh
+ *	  The script catalog/genbki.pl reads this file and generates .bki
+ *	  information from the DATA() statements.  utils/Gen_fmgrtab.pl
  *	  generates fmgroids.h and fmgrtab.c the same way.
  *
  *	  XXX do NOT break up DATA() statements into multiple lines!
@@ -33,7 +33,7 @@
 #define ProcedureRelationId  1255
 #define ProcedureRelation_Rowtype_Id  81
 
-CATALOG(pg_proc,1255) BKI_BOOTSTRAP BKI_ROWTYPE_OID(81)
+CATALOG(pg_proc,1255) BKI_BOOTSTRAP BKI_ROWTYPE_OID(81) BKI_SCHEMA_MACRO
 {
 	NameData	proname;		/* procedure name */
 	Oid			pronamespace;	/* OID of namespace containing this proc */

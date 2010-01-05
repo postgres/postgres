@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/bki.sgml,v 1.22 2009/09/26 22:42:00 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/bki.sgml,v 1.23 2010/01/05 01:06:55 tgl Exp $ -->
 
 <chapter id="bki">
  <title><acronym>BKI</acronym> Backend Interface</title>
@@ -20,10 +20,10 @@
   to do part of its job when creating a new database cluster.  The
   input file used by <application>initdb</application> is created as
   part of building and installing <productname>PostgreSQL</productname>
-  by a program named <filename>genbki.sh</filename>, which reads some
+  by a program named <filename>genbki.pl</filename>, which reads some
   specially formatted C header files in the <filename>src/include/catalog/</>
-  directory of the source tree.  The created
-  <acronym>BKI</acronym> file is called <filename>postgres.bki</filename> and is
+  directory of the source tree.  The created <acronym>BKI</acronym> file
+  is called <filename>postgres.bki</filename> and is
   normally installed in the
   <filename>share</filename> subdirectory of the installation tree.
  </para>

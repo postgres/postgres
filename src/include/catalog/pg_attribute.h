@@ -8,16 +8,11 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_attribute.h,v 1.156 2010/01/02 16:58:01 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_attribute.h,v 1.157 2010/01/05 01:06:56 tgl Exp $
  *
  * NOTES
- *	  the genbki.sh script reads this file and generates .bki
+ *	  the genbki.pl script reads this file and generates .bki
  *	  information from the DATA() statements.
- *
- *	  utils/cache/relcache.c requires hard-coded tuple descriptors
- *	  for some of the system catalogs.	So if the schema for any of
- *	  these changes, be sure and change the appropriate Schema_xxx
- *	  macros!  -cim 2/5/91
  *
  *-------------------------------------------------------------------------
  */
@@ -32,12 +27,13 @@
  *
  *		If you change the following, make sure you change the structs for
  *		system attributes in catalog/heap.c also.
+ *		You may need to change catalog/genbki.pl as well.
  * ----------------
  */
 #define AttributeRelationId  1249
 #define AttributeRelation_Rowtype_Id  75
 
-CATALOG(pg_attribute,1249) BKI_BOOTSTRAP BKI_WITHOUT_OIDS BKI_ROWTYPE_OID(75)
+CATALOG(pg_attribute,1249) BKI_BOOTSTRAP BKI_WITHOUT_OIDS BKI_ROWTYPE_OID(75) BKI_SCHEMA_MACRO
 {
 	Oid			attrelid;		/* OID of relation containing this attribute */
 	NameData	attname;		/* name of attribute */
@@ -209,310 +205,9 @@ typedef FormData_pg_attribute *Form_pg_attribute;
 /* ----------------
  *		initial contents of pg_attribute
  *
- * NOTE: only "bootstrapped" relations need to be declared here.
- *
- * NOTE: if changing pg_attribute column set, also see the hard-coded
- * entries for system attributes in catalog/heap.c.
+ * The initial contents of pg_attribute are generated at compile time by
+ * genbki.pl.  Only "bootstrapped" relations need be included.
  * ----------------
  */
-
-/* ----------------
- *		pg_type
- * ----------------
- */
-#define Schema_pg_type \
-{ 1247, {"typname"},	   19, -1, 0, NAMEDATALEN, 1, 0, -1, -1, false, 'p', 'c', true, false, false, true, 0, { 0 } }, \
-{ 1247, {"typnamespace"},  26, -1, 0,	4,	2, 0, -1, -1, true, 'p', 'i', true, false, false, true, 0, { 0 } }, \
-{ 1247, {"typowner"},	   26, -1, 0,	4,	3, 0, -1, -1, true, 'p', 'i', true, false, false, true, 0, { 0 } }, \
-{ 1247, {"typlen"},		   21, -1, 0,	2,	4, 0, -1, -1, true, 'p', 's', true, false, false, true, 0, { 0 } }, \
-{ 1247, {"typbyval"},	   16, -1, 0,	1,	5, 0, -1, -1, true, 'p', 'c', true, false, false, true, 0, { 0 } }, \
-{ 1247, {"typtype"},	   18, -1, 0,	1,	6, 0, -1, -1, true, 'p', 'c', true, false, false, true, 0, { 0 } }, \
-{ 1247, {"typcategory"},   18, -1, 0,	1,	7, 0, -1, -1, true, 'p', 'c', true, false, false, true, 0, { 0 } }, \
-{ 1247, {"typispreferred"},16, -1, 0,	1,	8, 0, -1, -1, true, 'p', 'c', true, false, false, true, 0, { 0 } }, \
-{ 1247, {"typisdefined"},  16, -1, 0,	1,	9, 0, -1, -1, true, 'p', 'c', true, false, false, true, 0, { 0 } }, \
-{ 1247, {"typdelim"},	   18, -1, 0,	1, 10, 0, -1, -1, true, 'p', 'c', true, false, false, true, 0, { 0 } }, \
-{ 1247, {"typrelid"},	   26, -1, 0,	4, 11, 0, -1, -1, true, 'p', 'i', true, false, false, true, 0, { 0 } }, \
-{ 1247, {"typelem"},	   26, -1, 0,	4, 12, 0, -1, -1, true, 'p', 'i', true, false, false, true, 0, { 0 } }, \
-{ 1247, {"typarray"},	   26, -1, 0,	4, 13, 0, -1, -1, true, 'p', 'i', true, false, false, true, 0, { 0 } }, \
-{ 1247, {"typinput"},	   24, -1, 0,	4, 14, 0, -1, -1, true, 'p', 'i', true, false, false, true, 0, { 0 } }, \
-{ 1247, {"typoutput"},	   24, -1, 0,	4, 15, 0, -1, -1, true, 'p', 'i', true, false, false, true, 0, { 0 } }, \
-{ 1247, {"typreceive"},    24, -1, 0,	4, 16, 0, -1, -1, true, 'p', 'i', true, false, false, true, 0, { 0 } }, \
-{ 1247, {"typsend"},	   24, -1, 0,	4, 17, 0, -1, -1, true, 'p', 'i', true, false, false, true, 0, { 0 } }, \
-{ 1247, {"typmodin"},	   24, -1, 0,	4, 18, 0, -1, -1, true, 'p', 'i', true, false, false, true, 0, { 0 } }, \
-{ 1247, {"typmodout"},	   24, -1, 0,	4, 19, 0, -1, -1, true, 'p', 'i', true, false, false, true, 0, { 0 } }, \
-{ 1247, {"typanalyze"},    24, -1, 0,	4, 20, 0, -1, -1, true, 'p', 'i', true, false, false, true, 0, { 0 } }, \
-{ 1247, {"typalign"},	   18, -1, 0,	1, 21, 0, -1, -1, true, 'p', 'c', true, false, false, true, 0, { 0 } }, \
-{ 1247, {"typstorage"},    18, -1, 0,	1, 22, 0, -1, -1, true, 'p', 'c', true, false, false, true, 0, { 0 } }, \
-{ 1247, {"typnotnull"},    16, -1, 0,	1, 23, 0, -1, -1, true, 'p', 'c', true, false, false, true, 0, { 0 } }, \
-{ 1247, {"typbasetype"},   26, -1, 0,	4, 24, 0, -1, -1, true, 'p', 'i', true, false, false, true, 0, { 0 } }, \
-{ 1247, {"typtypmod"},	   23, -1, 0,	4, 25, 0, -1, -1, true, 'p', 'i', true, false, false, true, 0, { 0 } }, \
-{ 1247, {"typndims"},	   23, -1, 0,	4, 26, 0, -1, -1, true, 'p', 'i', true, false, false, true, 0, { 0 } }, \
-{ 1247, {"typdefaultbin"}, 25, -1, 0, -1, 27, 0, -1, -1, false, 'x', 'i', false, false, false, true, 0, { 0 } }, \
-{ 1247, {"typdefault"},    25, -1, 0, -1, 28, 0, -1, -1, false, 'x', 'i', false, false, false, true, 0, { 0 } }
-
-DATA(insert ( 1247 typname			19 -1 0 NAMEDATALEN	1 0 -1 -1 f p c t f f t 0 _null_));
-DATA(insert ( 1247 typnamespace		26 -1 0 4   2 0 -1 -1 t p i t f f t 0 _null_));
-DATA(insert ( 1247 typowner			26 -1 0 4   3 0 -1 -1 t p i t f f t 0 _null_));
-DATA(insert ( 1247 typlen			21 -1 0 2   4 0 -1 -1 t p s t f f t 0 _null_));
-DATA(insert ( 1247 typbyval			16 -1 0 1   5 0 -1 -1 t p c t f f t 0 _null_));
-DATA(insert ( 1247 typtype			18 -1 0 1   6 0 -1 -1 t p c t f f t 0 _null_));
-DATA(insert ( 1247 typcategory		18 -1 0 1   7 0 -1 -1 t p c t f f t 0 _null_));
-DATA(insert ( 1247 typispreferred	16 -1 0 1   8 0 -1 -1 t p c t f f t 0 _null_));
-DATA(insert ( 1247 typisdefined		16 -1 0 1   9 0 -1 -1 t p c t f f t 0 _null_));
-DATA(insert ( 1247 typdelim			18 -1 0 1  10 0 -1 -1 t p c t f f t 0 _null_));
-DATA(insert ( 1247 typrelid			26 -1 0 4  11 0 -1 -1 t p i t f f t 0 _null_));
-DATA(insert ( 1247 typelem			26 -1 0 4  12 0 -1 -1 t p i t f f t 0 _null_));
-DATA(insert ( 1247 typarray			26 -1 0 4  13 0 -1 -1 t p i t f f t 0 _null_));
-DATA(insert ( 1247 typinput			24 -1 0 4  14 0 -1 -1 t p i t f f t 0 _null_));
-DATA(insert ( 1247 typoutput		24 -1 0 4  15 0 -1 -1 t p i t f f t 0 _null_));
-DATA(insert ( 1247 typreceive		24 -1 0 4  16 0 -1 -1 t p i t f f t 0 _null_));
-DATA(insert ( 1247 typsend			24 -1 0 4  17 0 -1 -1 t p i t f f t 0 _null_));
-DATA(insert ( 1247 typmodin			24 -1 0 4  18 0 -1 -1 t p i t f f t 0 _null_));
-DATA(insert ( 1247 typmodout		24 -1 0 4  19 0 -1 -1 t p i t f f t 0 _null_));
-DATA(insert ( 1247 typanalyze		24 -1 0 4  20 0 -1 -1 t p i t f f t 0 _null_));
-DATA(insert ( 1247 typalign			18 -1 0 1  21 0 -1 -1 t p c t f f t 0 _null_));
-DATA(insert ( 1247 typstorage		18 -1 0 1  22 0 -1 -1 t p c t f f t 0 _null_));
-DATA(insert ( 1247 typnotnull		16 -1 0 1  23 0 -1 -1 t p c t f f t 0 _null_));
-DATA(insert ( 1247 typbasetype		26 -1 0 4  24 0 -1 -1 t p i t f f t 0 _null_));
-DATA(insert ( 1247 typtypmod		23 -1 0 4  25 0 -1 -1 t p i t f f t 0 _null_));
-DATA(insert ( 1247 typndims			23 -1 0 4  26 0 -1 -1 t p i t f f t 0 _null_));
-DATA(insert ( 1247 typdefaultbin	25 -1 0 -1 27 0 -1 -1 f x i f f f t 0 _null_));
-DATA(insert ( 1247 typdefault		25 -1 0 -1 28 0 -1 -1 f x i f f f t 0 _null_));
-DATA(insert ( 1247 ctid				27 0 0  6  -1 0 -1 -1 f p s t f f t 0 _null_));
-DATA(insert ( 1247 oid				26 0 0  4  -2 0 -1 -1 t p i t f f t 0 _null_));
-DATA(insert ( 1247 xmin				28 0 0  4  -3 0 -1 -1 t p i t f f t 0 _null_));
-DATA(insert ( 1247 cmin				29 0 0  4  -4 0 -1 -1 t p i t f f t 0 _null_));
-DATA(insert ( 1247 xmax				28 0 0  4  -5 0 -1 -1 t p i t f f t 0 _null_));
-DATA(insert ( 1247 cmax				29 0 0  4  -6 0 -1 -1 t p i t f f t 0 _null_));
-DATA(insert ( 1247 tableoid			26 0 0  4  -7 0 -1 -1 t p i t f f t 0 _null_));
-
-/* ----------------
- *		pg_proc
- * ----------------
- */
-#define Schema_pg_proc \
-{ 1255, {"proname"},			19, -1, 0, NAMEDATALEN,  1, 0, -1, -1, false, 'p', 'c', true, false, false, true, 0, { 0 } }, \
-{ 1255, {"pronamespace"},		26, -1, 0, 4,	2, 0, -1, -1, true, 'p', 'i', true, false, false, true, 0, { 0 } }, \
-{ 1255, {"proowner"},			26, -1, 0, 4,	3, 0, -1, -1, true, 'p', 'i', true, false, false, true, 0, { 0 } }, \
-{ 1255, {"prolang"},			26, -1, 0, 4,	4, 0, -1, -1, true, 'p', 'i', true, false, false, true, 0, { 0 } }, \
-{ 1255, {"procost"},		   700, -1, 0, 4,	5, 0, -1, -1, FLOAT4PASSBYVAL, 'p', 'i', true, false, false, true, 0, { 0 } }, \
-{ 1255, {"prorows"},		   700, -1, 0, 4,	6, 0, -1, -1, FLOAT4PASSBYVAL, 'p', 'i', true, false, false, true, 0, { 0 } }, \
-{ 1255, {"provariadic"},		26, -1, 0, 4,	7, 0, -1, -1, true, 'p', 'i', true, false, false, true, 0, { 0 } }, \
-{ 1255, {"proisagg"},			16, -1, 0, 1,	8, 0, -1, -1, true, 'p', 'c', true, false, false, true, 0, { 0 } }, \
-{ 1255, {"proiswindow"},		16, -1, 0, 1,	9, 0, -1, -1, true, 'p', 'c', true, false, false, true, 0, { 0 } }, \
-{ 1255, {"prosecdef"},			16, -1, 0, 1, 10, 0, -1, -1, true, 'p', 'c', true, false, false, true, 0, { 0 } }, \
-{ 1255, {"proisstrict"},		16, -1, 0, 1, 11, 0, -1, -1, true, 'p', 'c', true, false, false, true, 0, { 0 } }, \
-{ 1255, {"proretset"},			16, -1, 0, 1, 12, 0, -1, -1, true, 'p', 'c', true, false, false, true, 0, { 0 } }, \
-{ 1255, {"provolatile"},		18, -1, 0, 1, 13, 0, -1, -1, true, 'p', 'c', true, false, false, true, 0, { 0 } }, \
-{ 1255, {"pronargs"},			21, -1, 0, 2, 14, 0, -1, -1, true, 'p', 's', true, false, false, true, 0, { 0 } }, \
-{ 1255, {"pronargdefaults"},	21, -1, 0, 2, 15, 0, -1, -1, true, 'p', 's', true, false, false, true, 0, { 0 } }, \
-{ 1255, {"prorettype"},			26, -1, 0, 4, 16, 0, -1, -1, true, 'p', 'i', true, false, false, true, 0, { 0 } }, \
-{ 1255, {"proargtypes"},		30, -1, 0, -1, 17, 1, -1, -1, false, 'p', 'i', true, false, false, true, 0, { 0 } }, \
-{ 1255, {"proallargtypes"},   1028, -1, 0, -1, 18, 1, -1, -1, false, 'x', 'i', false, false, false, true, 0, { 0 } }, \
-{ 1255, {"proargmodes"},	  1002, -1, 0, -1, 19, 1, -1, -1, false, 'x', 'i', false, false, false, true, 0, { 0 } }, \
-{ 1255, {"proargnames"},	  1009, -1, 0, -1, 20, 1, -1, -1, false, 'x', 'i', false, false, false, true, 0, { 0 } }, \
-{ 1255, {"proargdefaults"},		25, -1, 0, -1, 21, 0, -1, -1, false, 'x', 'i', false, false, false, true, 0, { 0 } }, \
-{ 1255, {"prosrc"},				25, -1, 0, -1, 22, 0, -1, -1, false, 'x', 'i', false, false, false, true, 0, { 0 } }, \
-{ 1255, {"probin"},				25, -1, 0, -1, 23, 0, -1, -1, false, 'x', 'i', false, false, false, true, 0, { 0 } }, \
-{ 1255, {"proconfig"},		  1009, -1, 0, -1, 24, 1, -1, -1, false, 'x', 'i', false, false, false, true, 0, { 0 } }, \
-{ 1255, {"proacl"},			  1034, -1, 0, -1, 25, 1, -1, -1, false, 'x', 'i', false, false, false, true, 0, { 0 } }
-
-DATA(insert ( 1255 proname			19 -1 0 NAMEDATALEN	1 0 -1 -1 f p c t f f t 0 _null_));
-DATA(insert ( 1255 pronamespace		26 -1 0 4   2 0 -1 -1 t p i t f f t 0 _null_));
-DATA(insert ( 1255 proowner			26 -1 0 4   3 0 -1 -1 t p i t f f t 0 _null_));
-DATA(insert ( 1255 prolang			26 -1 0 4   4 0 -1 -1 t p i t f f t 0 _null_));
-DATA(insert ( 1255 procost		   700 -1 0 4   5 0 -1 -1 FLOAT4PASSBYVAL p i t f f t 0 _null_));
-DATA(insert ( 1255 prorows		   700 -1 0 4   6 0 -1 -1 FLOAT4PASSBYVAL p i t f f t 0 _null_));
-DATA(insert ( 1255 provariadic		26 -1 0 4   7 0 -1 -1 t p i t f f t 0 _null_));
-DATA(insert ( 1255 proisagg			16 -1 0 1   8 0 -1 -1 t p c t f f t 0 _null_));
-DATA(insert ( 1255 proiswindow		16 -1 0 1   9 0 -1 -1 t p c t f f t 0 _null_));
-DATA(insert ( 1255 prosecdef		16 -1 0 1  10 0 -1 -1 t p c t f f t 0 _null_));
-DATA(insert ( 1255 proisstrict		16 -1 0 1  11 0 -1 -1 t p c t f f t 0 _null_));
-DATA(insert ( 1255 proretset		16 -1 0 1  12 0 -1 -1 t p c t f f t 0 _null_));
-DATA(insert ( 1255 provolatile		18 -1 0 1  13 0 -1 -1 t p c t f f t 0 _null_));
-DATA(insert ( 1255 pronargs			21 -1 0 2  14 0 -1 -1 t p s t f f t 0 _null_));
-DATA(insert ( 1255 pronargdefaults	21 -1 0 2  15 0 -1 -1 t p s t f f t 0 _null_));
-DATA(insert ( 1255 prorettype		26 -1 0 4  16 0 -1 -1 t p i t f f t 0 _null_));
-DATA(insert ( 1255 proargtypes		30 -1 0 -1 17 1 -1 -1 f p i t f f t 0 _null_));
-DATA(insert ( 1255 proallargtypes 1028 -1 0 -1 18 1 -1 -1 f x i f f f t 0 _null_));
-DATA(insert ( 1255 proargmodes	  1002 -1 0 -1 19 1 -1 -1 f x i f f f t 0 _null_));
-DATA(insert ( 1255 proargnames	  1009 -1 0 -1 20 1 -1 -1 f x i f f f t 0 _null_));
-DATA(insert ( 1255 proargdefaults	25 -1 0 -1 21 0 -1 -1 f x i f f f t 0 _null_));
-DATA(insert ( 1255 prosrc			25 -1 0 -1 22 0 -1 -1 f x i f f f t 0 _null_));
-DATA(insert ( 1255 probin			25 -1 0 -1 23 0 -1 -1 f x i f f f t 0 _null_));
-DATA(insert ( 1255 proconfig	  1009 -1 0 -1 24 1 -1 -1 f x i f f f t 0 _null_));
-DATA(insert ( 1255 proacl		  1034 -1 0 -1 25 1 -1 -1 f x i f f f t 0 _null_));
-DATA(insert ( 1255 ctid				27 0 0  6  -1 0 -1 -1 f p s t f f t 0 _null_));
-DATA(insert ( 1255 oid				26 0 0  4  -2 0 -1 -1 t p i t f f t 0 _null_));
-DATA(insert ( 1255 xmin				28 0 0  4  -3 0 -1 -1 t p i t f f t 0 _null_));
-DATA(insert ( 1255 cmin				29 0 0  4  -4 0 -1 -1 t p i t f f t 0 _null_));
-DATA(insert ( 1255 xmax				28 0 0  4  -5 0 -1 -1 t p i t f f t 0 _null_));
-DATA(insert ( 1255 cmax				29 0 0  4  -6 0 -1 -1 t p i t f f t 0 _null_));
-DATA(insert ( 1255 tableoid			26 0 0  4  -7 0 -1 -1 t p i t f f t 0 _null_));
-
-/* ----------------
- *		pg_attribute
- * ----------------
- */
-#define Schema_pg_attribute \
-{ 1249, {"attrelid"},	  26, -1, 0,	4,	1, 0, -1, -1, true, 'p', 'i', true, false, false, true, 0, { 0 } }, \
-{ 1249, {"attname"},	  19, -1, 0, NAMEDATALEN,	2, 0, -1, -1, false, 'p', 'c', true, false, false, true, 0, { 0 } }, \
-{ 1249, {"atttypid"},	  26, -1, 0,	4,	3, 0, -1, -1, true, 'p', 'i', true, false, false, true, 0, { 0 } }, \
-{ 1249, {"attstattarget"}, 23, -1, 0,	4,	4, 0, -1, -1, true, 'p', 'i', true, false, false, true, 0, { 0 } }, \
-{ 1249, {"attdistinct"}, 700, -1, 0,	4,	5, 0, -1, -1, FLOAT4PASSBYVAL, 'p', 'i', true, false, false, true, 0, { 0 } }, \
-{ 1249, {"attlen"},		  21, -1, 0,	2,	6, 0, -1, -1, true, 'p', 's', true, false, false, true, 0, { 0 } }, \
-{ 1249, {"attnum"},		  21, -1, 0,	2,	7, 0, -1, -1, true, 'p', 's', true, false, false, true, 0, { 0 } }, \
-{ 1249, {"attndims"},	  23, -1, 0,	4,	8, 0, -1, -1, true, 'p', 'i', true, false, false, true, 0, { 0 } }, \
-{ 1249, {"attcacheoff"},  23, -1, 0,	4,	9, 0, -1, -1, true, 'p', 'i', true, false, false, true, 0, { 0 } }, \
-{ 1249, {"atttypmod"},	  23, -1, 0,	4, 10, 0, -1, -1, true, 'p', 'i', true, false, false, true, 0, { 0 } }, \
-{ 1249, {"attbyval"},	  16, -1, 0,	1, 11, 0, -1, -1, true, 'p', 'c', true, false, false, true, 0, { 0 } }, \
-{ 1249, {"attstorage"},   18, -1, 0,	1, 12, 0, -1, -1, true, 'p', 'c', true, false, false, true, 0, { 0 } }, \
-{ 1249, {"attalign"},	  18, -1, 0,	1, 13, 0, -1, -1, true, 'p', 'c', true, false, false, true, 0, { 0 } }, \
-{ 1249, {"attnotnull"},   16, -1, 0,	1, 14, 0, -1, -1, true, 'p', 'c', true, false, false, true, 0, { 0 } }, \
-{ 1249, {"atthasdef"},	  16, -1, 0,	1, 15, 0, -1, -1, true, 'p', 'c', true, false, false, true, 0, { 0 } }, \
-{ 1249, {"attisdropped"}, 16, -1, 0,	1, 16, 0, -1, -1, true, 'p', 'c', true, false, false, true, 0, { 0 } }, \
-{ 1249, {"attislocal"},   16, -1, 0,	1, 17, 0, -1, -1, true, 'p', 'c', true, false, false, true, 0, { 0 } }, \
-{ 1249, {"attinhcount"},  23, -1, 0,	4, 18, 0, -1, -1, true, 'p', 'i', true, false, false, true, 0, { 0 } }, \
-{ 1249, {"attacl"},		1034, -1, 0,  -1, 19, 1, -1, -1, false, 'x', 'i', false, false, false, true, 0, { 0 } }
-
-DATA(insert ( 1249 attrelid			26 -1 0  4   1 0 -1 -1 t p i t f f t 0 _null_));
-DATA(insert ( 1249 attname			19 -1 0 NAMEDATALEN  2 0 -1 -1 f p c t f f t 0 _null_));
-DATA(insert ( 1249 atttypid			26 -1 0  4   3 0 -1 -1 t p i t f f t 0 _null_));
-DATA(insert ( 1249 attstattarget	23 -1 0  4   4 0 -1 -1 t p i t f f t 0 _null_));
-DATA(insert ( 1249 attdistinct	   700 -1 0  4   5 0 -1 -1 FLOAT4PASSBYVAL p i t f f t 0 _null_));
-DATA(insert ( 1249 attlen			21 -1 0  2   6 0 -1 -1 t p s t f f t 0 _null_));
-DATA(insert ( 1249 attnum			21 -1 0  2   7 0 -1 -1 t p s t f f t 0 _null_));
-DATA(insert ( 1249 attndims			23 -1 0  4   8 0 -1 -1 t p i t f f t 0 _null_));
-DATA(insert ( 1249 attcacheoff		23 -1 0  4   9 0 -1 -1 t p i t f f t 0 _null_));
-DATA(insert ( 1249 atttypmod		23 -1 0  4  10 0 -1 -1 t p i t f f t 0 _null_));
-DATA(insert ( 1249 attbyval			16 -1 0  1  11 0 -1 -1 t p c t f f t 0 _null_));
-DATA(insert ( 1249 attstorage		18 -1 0  1  12 0 -1 -1 t p c t f f t 0 _null_));
-DATA(insert ( 1249 attalign			18 -1 0  1  13 0 -1 -1 t p c t f f t 0 _null_));
-DATA(insert ( 1249 attnotnull		16 -1 0  1  14 0 -1 -1 t p c t f f t 0 _null_));
-DATA(insert ( 1249 atthasdef		16 -1 0  1  15 0 -1 -1 t p c t f f t 0 _null_));
-DATA(insert ( 1249 attisdropped		16 -1 0  1  16 0 -1 -1 t p c t f f t 0 _null_));
-DATA(insert ( 1249 attislocal		16 -1 0  1  17 0 -1 -1 t p c t f f t 0 _null_));
-DATA(insert ( 1249 attinhcount		23 -1 0  4  18 0 -1 -1 t p i t f f t 0 _null_));
-DATA(insert ( 1249 attacl		  1034 -1 0 -1  19 1 -1 -1 f x i f f f t 0 _null_));
-DATA(insert ( 1249 ctid				27 0 0  6  -1 0 -1 -1 f p s t f f t 0 _null_));
-/* no OIDs in pg_attribute */
-DATA(insert ( 1249 xmin				28 0 0  4  -3 0 -1 -1 t p i t f f t 0 _null_));
-DATA(insert ( 1249 cmin				29 0 0  4  -4 0 -1 -1 t p i t f f t 0 _null_));
-DATA(insert ( 1249 xmax				28 0 0  4  -5 0 -1 -1 t p i t f f t 0 _null_));
-DATA(insert ( 1249 cmax				29 0 0  4  -6 0 -1 -1 t p i t f f t 0 _null_));
-DATA(insert ( 1249 tableoid			26 0 0  4  -7 0 -1 -1 t p i t f f t 0 _null_));
-
-/* ----------------
- *		pg_class
- * ----------------
- */
-#define Schema_pg_class \
-{ 1259, {"relname"},	   19, -1, 0, NAMEDATALEN, 1, 0, -1, -1, false, 'p', 'c', true, false, false, true, 0, { 0 } }, \
-{ 1259, {"relnamespace"},  26, -1, 0,	4,	2, 0, -1, -1, true, 'p', 'i', true, false, false, true, 0, { 0 } }, \
-{ 1259, {"reltype"},	   26, -1, 0,	4,	3, 0, -1, -1, true, 'p', 'i', true, false, false, true, 0, { 0 } }, \
-{ 1259, {"relowner"},	   26, -1, 0,	4,	4, 0, -1, -1, true, 'p', 'i', true, false, false, true, 0, { 0 } }, \
-{ 1259, {"relam"},		   26, -1, 0,	4,	5, 0, -1, -1, true, 'p', 'i', true, false, false, true, 0, { 0 } }, \
-{ 1259, {"relfilenode"},   26, -1, 0,	4,	6, 0, -1, -1, true, 'p', 'i', true, false, false, true, 0, { 0 } }, \
-{ 1259, {"reltablespace"}, 26, -1, 0,	4,	7, 0, -1, -1, true, 'p', 'i', true, false, false, true, 0, { 0 } }, \
-{ 1259, {"relpages"},	   23, -1, 0,	4,	8, 0, -1, -1, true, 'p', 'i', true, false, false, true, 0, { 0 } }, \
-{ 1259, {"reltuples"},	   700, -1, 0, 4,	9, 0, -1, -1, FLOAT4PASSBYVAL, 'p', 'i', true, false, false, true, 0, { 0 } }, \
-{ 1259, {"reltoastrelid"}, 26, -1, 0,	4, 10, 0, -1, -1, true, 'p', 'i', true, false, false, true, 0, { 0 } }, \
-{ 1259, {"reltoastidxid"}, 26, -1, 0,	4, 11, 0, -1, -1, true, 'p', 'i', true, false, false, true, 0, { 0 } }, \
-{ 1259, {"relhasindex"},   16, -1, 0,	1, 12, 0, -1, -1, true, 'p', 'c', true, false, false, true, 0, { 0 } }, \
-{ 1259, {"relisshared"},   16, -1, 0,	1, 13, 0, -1, -1, true, 'p', 'c', true, false, false, true, 0, { 0 } }, \
-{ 1259, {"relistemp"},	   16, -1, 0,	1, 14, 0, -1, -1, true, 'p', 'c', true, false, false, true, 0, { 0 } }, \
-{ 1259, {"relkind"},	   18, -1, 0,	1, 15, 0, -1, -1, true, 'p', 'c', true, false, false, true, 0, { 0 } }, \
-{ 1259, {"relnatts"},	   21, -1, 0,	2, 16, 0, -1, -1, true, 'p', 's', true, false, false, true, 0, { 0 } }, \
-{ 1259, {"relchecks"},	   21, -1, 0,	2, 17, 0, -1, -1, true, 'p', 's', true, false, false, true, 0, { 0 } }, \
-{ 1259, {"relhasoids"},    16, -1, 0,	1, 18, 0, -1, -1, true, 'p', 'c', true, false, false, true, 0, { 0 } }, \
-{ 1259, {"relhaspkey"},    16, -1, 0,	1, 19, 0, -1, -1, true, 'p', 'c', true, false, false, true, 0, { 0 } }, \
-{ 1259, {"relhasexclusion"},16, -1, 0,	1, 20, 0, -1, -1, true, 'p', 'c', true, false, false, true, 0, { 0 } }, \
-{ 1259, {"relhasrules"},   16, -1, 0,	1, 21, 0, -1, -1, true, 'p', 'c', true, false, false, true, 0, { 0 } }, \
-{ 1259, {"relhastriggers"},16, -1, 0,	1, 22, 0, -1, -1, true, 'p', 'c', true, false, false, true, 0, { 0 } }, \
-{ 1259, {"relhassubclass"},16, -1, 0,	1, 23, 0, -1, -1, true, 'p', 'c', true, false, false, true, 0, { 0 } }, \
-{ 1259, {"relfrozenxid"},  28, -1, 0,	4, 24, 0, -1, -1, true, 'p', 'i', true, false, false, true, 0, { 0 } }, \
-{ 1259, {"relacl"},		 1034, -1, 0, -1, 25, 1, -1, -1, false, 'x', 'i', false, false, false, true, 0, { 0 } }, \
-{ 1259, {"reloptions"},  1009, -1, 0, -1, 26, 1, -1, -1, false, 'x', 'i', false, false, false, true, 0, { 0 } }
-
-DATA(insert ( 1259 relname			19 -1 0 NAMEDATALEN	1 0 -1 -1 f p c t f f t 0 _null_));
-DATA(insert ( 1259 relnamespace		26 -1 0 4   2 0 -1 -1 t p i t f f t 0 _null_));
-DATA(insert ( 1259 reltype			26 -1 0 4   3 0 -1 -1 t p i t f f t 0 _null_));
-DATA(insert ( 1259 relowner			26 -1 0 4   4 0 -1 -1 t p i t f f t 0 _null_));
-DATA(insert ( 1259 relam			26 -1 0 4   5 0 -1 -1 t p i t f f t 0 _null_));
-DATA(insert ( 1259 relfilenode		26 -1 0 4   6 0 -1 -1 t p i t f f t 0 _null_));
-DATA(insert ( 1259 reltablespace	26 -1 0 4   7 0 -1 -1 t p i t f f t 0 _null_));
-DATA(insert ( 1259 relpages			23 -1 0 4   8 0 -1 -1 t p i t f f t 0 _null_));
-DATA(insert ( 1259 reltuples	   700 -1 0 4   9 0 -1 -1 FLOAT4PASSBYVAL p i t f f t 0 _null_));
-DATA(insert ( 1259 reltoastrelid	26 -1 0 4  10 0 -1 -1 t p i t f f t 0 _null_));
-DATA(insert ( 1259 reltoastidxid	26 -1 0 4  11 0 -1 -1 t p i t f f t 0 _null_));
-DATA(insert ( 1259 relhasindex		16 -1 0 1  12 0 -1 -1 t p c t f f t 0 _null_));
-DATA(insert ( 1259 relisshared		16 -1 0 1  13 0 -1 -1 t p c t f f t 0 _null_));
-DATA(insert ( 1259 relistemp		16 -1 0 1  14 0 -1 -1 t p c t f f t 0 _null_));
-DATA(insert ( 1259 relkind			18 -1 0 1  15 0 -1 -1 t p c t f f t 0 _null_));
-DATA(insert ( 1259 relnatts			21 -1 0 2  16 0 -1 -1 t p s t f f t 0 _null_));
-DATA(insert ( 1259 relchecks		21 -1 0 2  17 0 -1 -1 t p s t f f t 0 _null_));
-DATA(insert ( 1259 relhasoids		16 -1 0 1  18 0 -1 -1 t p c t f f t 0 _null_));
-DATA(insert ( 1259 relhaspkey		16 -1 0 1  19 0 -1 -1 t p c t f f t 0 _null_));
-DATA(insert ( 1259 relhasexclusion	16 -1 0 1  20 0 -1 -1 t p c t f f t 0 _null_));
-DATA(insert ( 1259 relhasrules		16 -1 0 1  21 0 -1 -1 t p c t f f t 0 _null_));
-DATA(insert ( 1259 relhastriggers	16 -1 0 1  22 0 -1 -1 t p c t f f t 0 _null_));
-DATA(insert ( 1259 relhassubclass	16 -1 0 1  23 0 -1 -1 t p c t f f t 0 _null_));
-DATA(insert ( 1259 relfrozenxid		28 -1 0 4  24 0 -1 -1 t p i t f f t 0 _null_));
-DATA(insert ( 1259 relacl		  1034 -1 0 -1 25 1 -1 -1 f x i f f f t 0 _null_));
-DATA(insert ( 1259 reloptions	  1009 -1 0 -1 26 1 -1 -1 f x i f f f t 0 _null_));
-DATA(insert ( 1259 ctid				27 0 0  6  -1 0 -1 -1 f p s t f f t 0 _null_));
-DATA(insert ( 1259 oid				26 0 0  4  -2 0 -1 -1 t p i t f f t 0 _null_));
-DATA(insert ( 1259 xmin				28 0 0  4  -3 0 -1 -1 t p i t f f t 0 _null_));
-DATA(insert ( 1259 cmin				29 0 0  4  -4 0 -1 -1 t p i t f f t 0 _null_));
-DATA(insert ( 1259 xmax				28 0 0  4  -5 0 -1 -1 t p i t f f t 0 _null_));
-DATA(insert ( 1259 cmax				29 0 0  4  -6 0 -1 -1 t p i t f f t 0 _null_));
-DATA(insert ( 1259 tableoid			26 0 0  4  -7 0 -1 -1 t p i t f f t 0 _null_));
-
-/* ----------------
- *		pg_database
- *
- * pg_database is not bootstrapped in the same way as the other relations that
- * have hardwired pg_attribute entries in this file.  However, we do need
- * a "Schema_xxx" macro for it --- see relcache.c.
- * ----------------
- */
-#define Schema_pg_database \
-{ 1262, {"datname"},		  19, -1, 0, NAMEDATALEN, 1, 0, -1, -1, false, 'p', 'c', true, false, false, true, 0, { 0 } }, \
-{ 1262, {"datdba"},			  26, -1, 0,	4,	2, 0, -1, -1, true, 'p', 'i', true, false, false, true, 0, { 0 } }, \
-{ 1262, {"encoding"},		  23, -1, 0,	4,	3, 0, -1, -1, true, 'p', 'i', true, false, false, true, 0, { 0 } }, \
-{ 1262, {"datcollate"},		  19, -1, 0, NAMEDATALEN, 4, 0, -1, -1, false, 'p', 'c', true, false, false, true, 0, { 0 } }, \
-{ 1262, {"datctype"},		  19, -1, 0, NAMEDATALEN, 5, 0, -1, -1, false, 'p', 'c', true, false, false, true, 0, { 0 } }, \
-{ 1262, {"datistemplate"},	  16, -1, 0,	1, 6, 0, -1, -1, true, 'p', 'c', true, false, false, true, 0, { 0 } }, \
-{ 1262, {"datallowconn"},	  16, -1, 0,	1, 7, 0, -1, -1, true, 'p', 'c', true, false, false, true, 0, { 0 } }, \
-{ 1262, {"datconnlimit"},	  23, -1, 0,	4, 8, 0, -1, -1, true, 'p', 'i', true, false, false, true, 0, { 0 } }, \
-{ 1262, {"datlastsysoid"},	  26, -1, 0,	4, 9, 0, -1, -1, true, 'p', 'i', true, false, false, true, 0, { 0 } }, \
-{ 1262, {"datfrozenxid"},	  28, -1, 0,	4, 10, 0, -1, -1, true, 'p', 'i', true, false, false, true, 0, { 0 } }, \
-{ 1262, {"dattablespace"},	  26, -1, 0,	4, 11, 0, -1, -1, true, 'p', 'i', true, false, false, true, 0, { 0 } }, \
-{ 1262, {"datacl"},			1034, -1, 0,   -1, 12, 1, -1, -1, false, 'x', 'i', false, false, false, true, 0, { 0 } }
-
-/* ----------------
- *		pg_index
- *
- * pg_index is not bootstrapped in the same way as the other relations that
- * have hardwired pg_attribute entries in this file.  However, we do need
- * a "Schema_xxx" macro for it --- see relcache.c.
- * ----------------
- */
-#define Schema_pg_index \
-{ 0, {"indexrelid"},		26, -1, 0, 4, 1, 0, -1, -1, true, 'p', 'i', true, false, false, true, 0, { 0 } }, \
-{ 0, {"indrelid"},			26, -1, 0, 4, 2, 0, -1, -1, true, 'p', 'i', true, false, false, true, 0, { 0 } }, \
-{ 0, {"indnatts"},			21, -1, 0, 2, 3, 0, -1, -1, true, 'p', 's', true, false, false, true, 0, { 0 } }, \
-{ 0, {"indisunique"},		16, -1, 0, 1, 4, 0, -1, -1, true, 'p', 'c', true, false, false, true, 0, { 0 } }, \
-{ 0, {"indisprimary"},		16, -1, 0, 1, 5, 0, -1, -1, true, 'p', 'c', true, false, false, true, 0, { 0 } }, \
-{ 0, {"indimmediate"},		16, -1, 0, 1, 6, 0, -1, -1, true, 'p', 'c', true, false, false, true, 0, { 0 } }, \
-{ 0, {"indisclustered"},	16, -1, 0, 1, 7, 0, -1, -1, true, 'p', 'c', true, false, false, true, 0, { 0 } }, \
-{ 0, {"indisvalid"},		16, -1, 0, 1, 8, 0, -1, -1, true, 'p', 'c', true, false, false, true, 0, { 0 } }, \
-{ 0, {"indcheckxmin"},		16, -1, 0, 1, 9, 0, -1, -1, true, 'p', 'c', true, false, false, true, 0, { 0 } }, \
-{ 0, {"indisready"},		16, -1, 0, 1, 10, 0, -1, -1, true, 'p', 'c', true, false, false, true, 0, { 0 } }, \
-{ 0, {"indkey"},			22, -1, 0, -1, 11, 1, -1, -1, false, 'p', 'i', true, false, false, true, 0, { 0 } }, \
-{ 0, {"indclass"},			30, -1, 0, -1, 12, 1, -1, -1, false, 'p', 'i', true, false, false, true, 0, { 0 } }, \
-{ 0, {"indoption"},			22, -1, 0, -1, 13, 1, -1, -1, false, 'p', 'i', true, false, false, true, 0, { 0 } }, \
-{ 0, {"indexprs"},			25, -1, 0, -1, 14, 0, -1, -1, false, 'x', 'i', false, false, false, true, 0, { 0 } }, \
-{ 0, {"indpred"},			25, -1, 0, -1, 15, 0, -1, -1, false, 'x', 'i', false, false, false, true, 0, { 0 } }
 
 #endif   /* PG_ATTRIBUTE_H */

@@ -1,5 +1,5 @@
 @echo off
-REM $PostgreSQL: pgsql/src/tools/msvc/clean.bat,v 1.17 2010/01/01 16:58:53 mha Exp $
+REM $PostgreSQL: pgsql/src/tools/msvc/clean.bat,v 1.18 2010/01/05 01:06:57 tgl Exp $
 
 set DIST=0
 if "%1"=="dist" set DIST=1
@@ -23,11 +23,12 @@ if %DIST%==1 if exist src\backend\parser\gram.h del /q src\backend\parser\gram.h
 if exist src\include\utils\fmgroids.h del /q src\include\utils\fmgroids.h
 if exist src\include\utils\probes.h del /q src\include\utils\probes.h
 
-if exist src\backend\utils\fmgroids.h del /q src\backend\utils\fmgroids.h
-if exist src\backend\utils\fmgrtab.c del /q src\backend\utils\fmgrtab.c
-if exist src\backend\catalog\postgres.bki del /q src\backend\catalog\postgres.bki
-if exist src\backend\catalog\postgres.description del /q src\backend\catalog\postgres.description
-if exist src\backend\catalog\postgres.shdescription del /q src\backend\catalog\postgres.shdescription
+if %DIST%==1 if exist src\backend\utils\fmgroids.h del /q src\backend\utils\fmgroids.h
+if %DIST%==1 if exist src\backend\utils\fmgrtab.c del /q src\backend\utils\fmgrtab.c
+if %DIST%==1 if exist src\backend\catalog\postgres.bki del /q src\backend\catalog\postgres.bki
+if %DIST%==1 if exist src\backend\catalog\postgres.description del /q src\backend\catalog\postgres.description
+if %DIST%==1 if exist src\backend\catalog\postgres.shdescription del /q src\backend\catalog\postgres.shdescription
+if %DIST%==1 if exist src\backend\catalog\schemapg.h del /q src\backend\catalog\schemapg.h
 if %DIST%==1 if exist src\backend\parser\scan.c del /q src\backend\parser\scan.c
 if %DIST%==1 if exist src\backend\parser\gram.c del /q src\backend\parser\gram.c
 if %DIST%==1 if exist src\backend\bootstrap\bootscanner.c del /q src\backend\bootstrap\bootscanner.c

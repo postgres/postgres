@@ -7,10 +7,10 @@
  *
  * Copyright (c) 2006-2010, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_enum.h,v 1.7 2010/01/02 16:58:01 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_enum.h,v 1.8 2010/01/05 01:06:56 tgl Exp $
  *
  * NOTES
- *	  the genbki.sh script reads this file and generates .bki
+ *	  the genbki.pl script reads this file and generates .bki
  *	  information from the DATA() statements.
  *
  *	  XXX do NOT break up DATA() statements into multiple lines!

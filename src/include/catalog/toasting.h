@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/toasting.h,v 1.11 2010/01/02 16:58:02 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/toasting.h,v 1.12 2010/01/05 01:06:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,13 +25,13 @@ extern void BootstrapToastTable(char *relName,
 
 /*
  * This macro is just to keep the C compiler from spitting up on the
- * upcoming commands for genbki.sh.
+ * upcoming commands for genbki.pl.
  */
 #define DECLARE_TOAST(name,toastoid,indexoid) extern int no_such_variable
 
 
 /*
- * What follows are lines processed by genbki.sh to create the statements
+ * What follows are lines processed by genbki.pl to create the statements
  * the bootstrap parser will turn into BootstrapToastTable commands.
  * Each line specifies the system catalog that needs a toast table,
  * the OID to assign to the toast table, and the OID to assign to the

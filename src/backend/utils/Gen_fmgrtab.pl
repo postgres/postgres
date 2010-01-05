@@ -2,85 +2,89 @@
 #-------------------------------------------------------------------------
 #
 # Gen_fmgrtab.pl
-#    Perl equivalent of Gen_fmgrtab.sh
-#
-# Usage: perl Gen_fmgrtab.pl path-to-pg_proc.h
-#
-# The reason for implementing this functionality twice is that we don't
-# require people to have perl to build from a tarball, but on the other
-# hand Windows can't deal with shell scripts.
+#    Perl script that generates fmgroids.h and fmgrtab.c from pg_proc.h
 #
 # Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/backend/utils/Gen_fmgrtab.pl,v 1.3 2010/01/02 16:57:53 momjian Exp $
+#    $PostgreSQL: pgsql/src/backend/utils/Gen_fmgrtab.pl,v 1.4 2010/01/05 01:06:56 tgl Exp $
 #
 #-------------------------------------------------------------------------
+
+use Catalog;
 
 use strict;
 use warnings;
 
 # Collect arguments
-my $infile = shift;
-defined($infile) || die "$0: missing required argument: pg_proc.h\n";
-
-# Note: see Gen_fmgrtab.sh for detailed commentary on what this is doing
-
-# Collect column numbers for pg_proc columns we need
-my ($proname, $prolang, $proisstrict, $proretset, $pronargs, $prosrc);
-
-open(I, $infile) || die "Could not open $infile: $!";
-while (<I>)
+my $infile;        # pg_proc.h
+my $output_path = '';
+while (@ARGV)
 {
-    if (m/#define Anum_pg_proc_proname\s+(\d+)/) {
-	$proname = $1;
+    my $arg = shift @ARGV;
+    if ($arg !~ /^-/)
+    {
+        $infile = $arg;
     }
-    if (m/#define Anum_pg_proc_prolang\s+(\d+)/) {
-	$prolang = $1;
+    elsif ($arg =~ /^-o/)
+    {
+        $output_path = length($arg) > 2 ? substr($arg, 2) : shift @ARGV;
     }
-    if (m/#define Anum_pg_proc_proisstrict\s+(\d+)/) {
-	$proisstrict = $1;
-    }
-    if (m/#define Anum_pg_proc_proretset\s+(\d+)/) {
-	$proretset = $1;
-    }
-    if (m/#define Anum_pg_proc_pronargs\s+(\d+)/) {
-	$pronargs = $1;
-    }
-    if (m/#define Anum_pg_proc_prosrc\s+(\d+)/) {
-	$prosrc = $1;
+    else
+    {
+        usage();
     }
 }
-close(I);
 
-# Collect the raw data
-my @fmgr = ();
-
-open(I, $infile) || die "Could not open $infile: $!";
-while (<I>)
+# Make sure output_path ends in a slash.
+if ($output_path ne '' && substr($output_path, -1) ne '/')
 {
-    next unless (/^DATA/);
-    s/^[^O]*OID[^=]*=[ \t]*//;
-    s/\(//;
-    s/"[^"]*"/"xxx"/g;
-    my @p = split;
-    next if ($p[$prolang] ne "12");
+    $output_path .= '/';
+}
+
+# Read all the data from the include/catalog files.
+my $catalogs = Catalog::Catalogs($infile);
+
+# Collect the raw data from pg_proc.h.
+my @fmgr = ();
+my @attnames;
+foreach my $column ( @{ $catalogs->{pg_proc}->{columns} } )
+{
+    push @attnames, keys %$column;
+}
+
+my $data = $catalogs->{pg_proc}->{data};
+foreach my $row (@$data)
+{
+
+    # To construct fmgroids.h and fmgrtab.c, we need to inspect some
+    # of the individual data fields.  Just splitting on whitespace
+    # won't work, because some quoted fields might contain internal
+    # whitespace.  We handle this by folding them all to a simple
+    # "xxx". Fortunately, this script doesn't need to look at any
+    # fields that might need quoting, so this simple hack is
+    # sufficient.
+    $row->{bki_values} =~ s/"[^"]*"/"xxx"/g;
+    @{$row}{@attnames} = split /\s+/, $row->{bki_values};
+
+    # Select out just the rows for internal-language procedures.
+    # Note assumption here that INTERNALlanguageId is 12.
+    next if $row->{prolang} ne '12';
+
     push @fmgr,
       {
-        oid     => $p[0],
-        proname => $p[$proname],
-        strict  => $p[$proisstrict],
-        retset  => $p[$proretset],
-        nargs   => $p[$pronargs],
-        prosrc  => $p[$prosrc],
+        oid    => $row->{oid},
+        strict => $row->{proisstrict},
+        retset => $row->{proretset},
+        nargs  => $row->{pronargs},
+        prosrc => $row->{prosrc},
       };
 }
-close(I);
 
 # Emit headers for both files
-open(H, '>', "$$-fmgroids.h") || die "Could not open $$-fmgroids.h: $!";
+open H, '>', $output_path . 'fmgroids.h.tmp' || die "Could not open fmgroids.h.tmp: $!";
 print H 
 qq|/*-------------------------------------------------------------------------
  *
@@ -119,7 +123,7 @@ qq|/*-------------------------------------------------------------------------
  */
 |;
 
-open(T, '>', "$$-fmgrtab.c") || die "Could not open $$-fmgrtab.c: $!";
+open T, '>', $output_path . 'fmgrtab.c.tmp' || die "Could not open fmgrtab.c.tmp: $!";
 print T
 qq|/*-------------------------------------------------------------------------
  *
@@ -186,9 +190,18 @@ const int fmgr_nbuiltins = (sizeof(fmgr_builtins) / sizeof(FmgrBuiltin)) - 1;
 close(T);
 
 # Finally, rename the completed files into place.
-rename "$$-fmgroids.h", "fmgroids.h"
-    || die "Could not rename $$-fmgroids.h to fmgroids.h: $!";
-rename "$$-fmgrtab.c", "fmgrtab.c"
-    || die "Could not rename $$-fmgrtab.c to fmgrtab.c: $!";
+Catalog::RenameTempFile($output_path . 'fmgroids.h');
+Catalog::RenameTempFile($output_path . 'fmgrtab.c');
+
+sub usage
+{
+    die <<EOM;
+Usage: perl -I [directory of Catalog.pm] Gen_fmgrtab.pl [path to pg_proc.h]
+
+Gen_fmgrtab.pl generates fmgroids.h and fmgrtab.c from pg_proc.h
+
+Report bugs to <pgsql-bugs\@postgresql.org>.
+EOM
+}
 
 exit 0;
