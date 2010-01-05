@@ -10,7 +10,7 @@
 # Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/backend/catalog/genbki.pl,v 1.2 2010/01/05 02:34:03 tgl Exp $
+# $PostgreSQL: pgsql/src/backend/catalog/genbki.pl,v 1.3 2010/01/05 06:41:44 tgl Exp $
 #
 #----------------------------------------------------------------------
 
@@ -146,7 +146,7 @@ foreach my $catname ( @{ $catalogs->{names} } )
             my $oid = $row->{oid} ? "OID = $row->{oid} " : '';
             printf BKI "insert %s( %s)\n", $oid, $row->{bki_values};
 
-            # Write values to postgres.description and postgres.shdescription
+            # Write comments to postgres.description and postgres.shdescription
             if (defined $row->{descr})
             {
                 printf DESCR "%s\t%s\t0\t%s\n", $row->{oid}, $catname, $row->{descr};
@@ -166,15 +166,15 @@ foreach my $catname ( @{ $catalogs->{names} } )
         {
             my $table = $catalogs->{$table_name};
 
-            # Build Schema_pg_xxx macros needed by relcache.c.
+            # Currently, all bootstrapped relations also need schemapg.h
+            # entries, so skip if the relation isn't to be in schemapg.h.
             next if $table->{schema_macro} ne 'True';
 
             $schemapg_entries{$table_name} = [];
             push @tables_needing_macros, $table_name;
             my $is_bootstrap = $table->{bootstrap};
 
-            # Both postgres.bki and schemapg.h have entries corresponding
-            # to user attributes
+            # Generate entries for user attributes.
             my $attnum = 0;
             my @user_attrs = @{ $table->{columns} };
             foreach my $attr (@user_attrs)
@@ -184,21 +184,20 @@ foreach my $catname ( @{ $catalogs->{names} } )
                 $row->{attnum} = $attnum;
                 $row->{attstattarget} = '-1';
 
-                # Of these tables, only bootstrapped ones
-                # have data declarations in postgres.bki
+                # If it's bootstrapped, put an entry in postgres.bki.
                 if ($is_bootstrap eq ' bootstrap')
                 {
                     bki_insert($row, @attnames);
                 }
 
-                # Store schemapg entries for later
+                # Store schemapg entries for later.
                 $row = emit_schemapg_row($row, grep { $bki_attr{$_} eq 'bool' } @attnames);
                 push @{ $schemapg_entries{$table_name} },
                   '{ ' . join(', ', map $row->{$_}, @attnames) . ' }';
             }
 
-            # Only postgres.bki has entries corresponding to system
-            # attributes, so only bootstrapped relations here
+            # Generate entries for system attributes.
+            # We only need postgres.bki entries, not schemapg.h entries.
             if ($is_bootstrap eq ' bootstrap')
             {
                 $attnum = 0;
@@ -215,12 +214,13 @@ foreach my $catname ( @{ $catalogs->{names} } )
                 {
                     $attnum--;
                     my $row = emit_pgattr_row($table_name, $attr);
-
-                    # pg_attribute has no oids -- skip
-                    next if $table_name eq 'pg_attribute' && $row->{attname} eq 'oid';
-
                     $row->{attnum} = $attnum;
                     $row->{attstattarget} = '0';
+
+                    # some catalogs don't have oids
+                    next if $table->{without_oids} eq ' without_oids' &&
+                      $row->{attname} eq 'oid';
+
                     bki_insert($row, @attnames);
                 }
             }
@@ -299,8 +299,8 @@ exit 0;
 
 
 # Given a system catalog name and a reference to a key-value pair corresponding
-# to the name and type of a column, generate a reference to a pg_attribute
-# entry
+# to the name and type of a column, generate a reference to a hash that
+# represents a pg_attribute entry
 sub emit_pgattr_row
 {
     my ($table_name, $attr) = @_;
@@ -317,7 +317,7 @@ sub emit_pgattr_row
         $atttype = '_' . $1;
     }
 
-    # Copy the type data from pg_type, with minor modifications:
+    # Copy the type data from pg_type, and add some type-dependent items
     foreach my $type (@types)
     {
         if ( defined $type->{typname} && $type->{typname} eq $atttype )
@@ -327,8 +327,17 @@ sub emit_pgattr_row
             $row{attbyval}    = $type->{typbyval};
             $row{attstorage}  = $type->{typstorage};
             $row{attalign}    = $type->{typalign};
+            # set attndims if it's an array type
             $row{attndims}    = $type->{typcategory} eq 'A' ? '1' : '0';
-            $row{attnotnull}  = $type->{typstorage}  eq 'x' ? 'f' : 't';
+            # This approach to attnotnull is not really good enough;
+            # we need to know about prior column types too.  Look at
+            # DefineAttr in bootstrap.c.  For the moment it's okay for
+            # the column orders appearing in bootstrapped catalogs.
+            $row{attnotnull}  =
+                $type->{typname} eq 'oidvector' ? 't'
+              : $type->{typname} eq 'int2vector' ? 't'
+              : $type->{typlen} eq 'NAMEDATALEN' ? 't'
+              : $type->{typlen} > 0 ? 't' : 'f';
             last;
         }
     }
@@ -357,25 +366,21 @@ sub bki_insert
     printf BKI "insert %s( %s)\n", $oid, $bki_values;
 }
 
-# The values of a Schema_pg_xxx declaration are similar, but not
-# quite identical, to the corresponding values in pg_attribute.
+# The field values of a Schema_pg_xxx declaration are similar, but not
+# quite identical, to the corresponding values in postgres.bki.
 sub emit_schemapg_row
 {
     my $row = shift;
     my @bool_attrs = @_;
 
-    # pg_index has attrelid = 0 in schemapg.h
-    if ($row->{attrelid} eq '2610')
-    {
-        $row->{attrelid} = '0';
-    }
-
+    # Supply appropriate quoting for these fields.
     $row->{attname}     = q|{"| . $row->{attname}    . q|"}|;
     $row->{attstorage}  = q|'|  . $row->{attstorage} . q|'|;
     $row->{attalign}    = q|'|  . $row->{attalign}   . q|'|;
     $row->{attacl}      = q|{ 0 }|;
 
-    # Expand booleans, accounting for FLOAT4PASSBYVAL etc.
+    # Expand booleans from 'f'/'t' to 'false'/'true'.
+    # Some values might be other macros (eg FLOAT4PASSBYVAL), don't change.
     foreach my $attr (@bool_attrs)
     {
         $row->{$attr} =
