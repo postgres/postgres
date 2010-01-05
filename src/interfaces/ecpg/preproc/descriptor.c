@@ -1,7 +1,7 @@
 /*
  * functions needed for descriptor handling
  *
- * $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/descriptor.c,v 1.28 2009/01/23 12:43:32 petere Exp $
+ * $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/descriptor.c,v 1.29 2010/01/05 16:38:23 meskes Exp $
  *
  * since descriptor might be either a string constant or a string var
  * we need to check for a constant if we expect a constant
@@ -326,3 +326,22 @@ descriptor_variable(const char *name, int input)
 	strlcpy(descriptor_names[input], name, sizeof(descriptor_names[input]));
 	return (struct variable *) & varspace[input];
 }
+
+struct variable *
+sqlda_variable(const char *name)
+{
+	struct variable *p = (struct variable *) mm_alloc(sizeof(struct variable));
+
+	p->name = mm_strdup(name);
+	p->type = (struct ECPGtype *) mm_alloc(sizeof(struct ECPGtype));
+	p->type->type = ECPGt_sqlda;
+	p->type->size = NULL;
+	p->type->struct_sizeof = NULL;
+	p->type->u.element = NULL;
+	p->type->lineno = 0;
+	p->brace_level = 0;
+	p->next = NULL;
+
+	return p;
+}
+

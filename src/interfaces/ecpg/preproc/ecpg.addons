@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.addons,v 1.12 2009/12/16 10:15:06 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.addons,v 1.13 2010/01/05 16:38:23 meskes Exp $ */
 ECPG: stmtClosePortalStmt block
 	{
 		if (INFORMIX_MODE)
@@ -409,29 +409,29 @@ ECPG: VariableShowStmtSHOWALL block
 		$$ = EMPTY;
 	}
 ECPG: FetchStmtMOVEfetch_args rule
-	| FETCH fetch_args ecpg_into
+	| FETCH fetch_args ecpg_fetch_into
 	{
 		$$ = cat2_str(make_str("fetch"), $2);
 	}
-	| FETCH FORWARD cursor_name opt_ecpg_into
+	| FETCH FORWARD cursor_name opt_ecpg_fetch_into
 	{
 		char *cursor_marker = $3[0] == ':' ? make_str("$0") : $3;
 		add_additional_variables($3, false);
 		$$ = cat_str(2, make_str("fetch forward"), cursor_marker);
 	}
-	| FETCH FORWARD from_in cursor_name opt_ecpg_into
+	| FETCH FORWARD from_in cursor_name opt_ecpg_fetch_into
 	{
 		char *cursor_marker = $4[0] == ':' ? make_str("$0") : $4;
 		add_additional_variables($4, false);
 		$$ = cat_str(2, make_str("fetch forward from"), cursor_marker);
 	}
-	| FETCH BACKWARD cursor_name opt_ecpg_into
+	| FETCH BACKWARD cursor_name opt_ecpg_fetch_into
 	{
 		char *cursor_marker = $3[0] == ':' ? make_str("$0") : $3;
 		add_additional_variables($3, false);
 		$$ = cat_str(2, make_str("fetch backward"), cursor_marker);
 	}
-	| FETCH BACKWARD from_in cursor_name opt_ecpg_into
+	| FETCH BACKWARD from_in cursor_name opt_ecpg_fetch_into
 	{
 		char *cursor_marker = $4[0] == ':' ? make_str("$0") : $4;
 		add_additional_variables($4, false);

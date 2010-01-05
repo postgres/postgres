@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.87 2009/09/03 10:24:48 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.88 2010/01/05 16:38:23 meskes Exp $ */
 
 /*
  * The aim is to get a simpler inteface to the database routines.
@@ -25,6 +25,8 @@
 #include "ecpgerrno.h"
 #include "extern.h"
 #include "sqlca.h"
+#include "sqlda-native.h"
+#include "sqlda-compat.h"
 #include "sql3types.h"
 #include "pgtypes_numeric.h"
 #include "pgtypes_date.h"
@@ -1033,6 +1035,7 @@ ecpg_store_input(const int lineno, const bool force_indicator, const struct vari
 				break;
 
 			case ECPGt_descriptor:
+			case ECPGt_sqlda:
 				break;
 
 			default:
@@ -1171,6 +1174,120 @@ ecpg_execute(struct statement * stmt)
 			}
 			if (desc->count == desc_counter)
 				desc_counter = 0;
+		}
+		else if (var->type == ECPGt_sqlda)
+		{
+			if (INFORMIX_MODE(stmt->compat))
+			{
+				struct sqlda_compat	   *sqlda = *(struct sqlda_compat **)var->pointer;
+				struct variable	desc_inlist;
+				int		i;
+
+				if (sqlda == NULL)
+					return false;
+
+				desc_counter++;
+				for (i = 0; i < sqlda->sqld; i++)
+				{
+					if (i + 1 == desc_counter)
+					{
+						desc_inlist.type = sqlda->sqlvar[i].sqltype;
+						desc_inlist.value = sqlda->sqlvar[i].sqldata;
+						desc_inlist.pointer = &(sqlda->sqlvar[i].sqldata);
+						switch (desc_inlist.type)
+						{
+							case ECPGt_char:
+							case ECPGt_varchar:
+								desc_inlist.varcharsize = strlen(sqlda->sqlvar[i].sqldata);
+								break;
+							default:
+								desc_inlist.varcharsize = 0;
+								break;
+						}
+						desc_inlist.arrsize = 1;
+						desc_inlist.offset = 0;
+						if (sqlda->sqlvar[i].sqlind)
+						{
+							desc_inlist.ind_type = ECPGt_short;
+							/* ECPG expects indicator value < 0 */
+							if (*(sqlda->sqlvar[i].sqlind))
+								*(sqlda->sqlvar[i].sqlind) = -1;
+							desc_inlist.ind_value = sqlda->sqlvar[i].sqlind;
+							desc_inlist.ind_pointer = &(sqlda->sqlvar[i].sqlind);
+							desc_inlist.ind_varcharsize = desc_inlist.ind_arrsize = 1;
+							desc_inlist.ind_offset = 0;
+						}
+						else
+						{
+							desc_inlist.ind_type = ECPGt_NO_INDICATOR;
+							desc_inlist.ind_value = desc_inlist.ind_pointer = NULL;
+							desc_inlist.ind_varcharsize = desc_inlist.ind_arrsize = desc_inlist.ind_offset = 0;
+						}
+						if (!ecpg_store_input(stmt->lineno, stmt->force_indicator, &desc_inlist, &tobeinserted, false))
+							return false;
+
+						break;
+					}
+				}
+				if (sqlda->sqld == desc_counter)
+					desc_counter = 0;
+			}
+			else
+			{
+				struct sqlda_struct	   *sqlda = *(struct sqlda_struct **)var->pointer;
+				struct variable	desc_inlist;
+				int		i;
+
+				if (sqlda == NULL)
+					return false;
+
+				desc_counter++;
+				for (i = 0; i < sqlda->sqln; i++)
+				{
+					if (i + 1 == desc_counter)
+					{
+						desc_inlist.type = sqlda->sqlvar[i].sqltype;
+						desc_inlist.value = sqlda->sqlvar[i].sqldata;
+						desc_inlist.pointer = &(sqlda->sqlvar[i].sqldata);
+						switch (desc_inlist.type)
+						{
+							case ECPGt_char:
+							case ECPGt_varchar:
+								desc_inlist.varcharsize = strlen(sqlda->sqlvar[i].sqldata);
+								break;
+							default:
+								desc_inlist.varcharsize = 0;
+								break;
+						}
+						desc_inlist.arrsize = 1;
+						desc_inlist.offset = 0;
+						if (sqlda->sqlvar[i].sqlind)
+						{
+							desc_inlist.ind_type = ECPGt_short;
+							/* ECPG expects indicator value < 0 */
+							if (*(sqlda->sqlvar[i].sqlind))
+								*(sqlda->sqlvar[i].sqlind) = -1;
+							desc_inlist.ind_value = sqlda->sqlvar[i].sqlind;
+							desc_inlist.ind_pointer = &(sqlda->sqlvar[i].sqlind);
+							desc_inlist.ind_varcharsize = desc_inlist.ind_arrsize = 1;
+							desc_inlist.ind_offset = 0;
+						}
+						else
+						{
+							desc_inlist.ind_type = ECPGt_NO_INDICATOR;
+							desc_inlist.ind_value = desc_inlist.ind_pointer = NULL;
+							desc_inlist.ind_varcharsize = desc_inlist.ind_arrsize = desc_inlist.ind_offset = 0;
+						}
+						if (!ecpg_store_input(stmt->lineno, stmt->force_indicator, &desc_inlist, &tobeinserted, false))
+							return false;
+
+						break;
+					}
+				}
+				if (sqlda->sqln == desc_counter)
+					desc_counter = 0;
+			}
+
 		}
 		else
 		{
@@ -1351,6 +1468,111 @@ ecpg_execute(struct statement * stmt)
 					ecpg_log("ecpg_execute on line %d: putting result (%d tuples) into descriptor %s\n",
 							 stmt->lineno, PQntuples(results), (const char *) var->pointer);
 				}
+				var = var->next;
+			}
+			else if (var != NULL && var->type == ECPGt_sqlda)
+			{
+				if (INFORMIX_MODE(stmt->compat))
+				{
+					struct sqlda_compat  **_sqlda = (struct sqlda_compat **)var->pointer;
+					struct sqlda_compat   *sqlda = *_sqlda;
+					struct sqlda_compat   *sqlda_new;
+					int		i;
+
+					/* If we are passed in a previously existing sqlda (chain) then free it. */
+					while (sqlda)
+					{
+						sqlda_new = sqlda->desc_next;
+						free(sqlda);
+						sqlda = sqlda_new;
+					}
+					*_sqlda = sqlda = sqlda_new = NULL;
+					for (i = ntuples - 1; i >= 0; i--)
+					{
+						/* Build a new sqlda structure. Note that only fetching 1 record is supported */
+						sqlda_new = ecpg_build_compat_sqlda(stmt->lineno, results, i, stmt->compat);
+
+						if (!sqlda_new)
+						{
+							/* cleanup all SQLDAs we created up */
+							while (sqlda)
+							{
+								sqlda_new = sqlda->desc_next;
+								free(sqlda);
+								sqlda = sqlda_new;
+							}
+							*_sqlda = NULL;
+
+							ecpg_log("ecpg_execute on line %d: out of memory allocating a new sqlda\n", stmt->lineno);
+							status = false;
+							break;
+						}
+						else
+						{
+							ecpg_log("ecpg_execute on line %d: new sqlda was built\n", stmt->lineno);
+
+							*_sqlda = sqlda_new;
+
+							ecpg_set_compat_sqlda(stmt->lineno, _sqlda, results, i, stmt->compat);
+							ecpg_log("ecpg_execute on line %d: putting result (1 tuple %d fields) into sqlda descriptor\n",
+									stmt->lineno, PQnfields(results));
+
+							sqlda_new->desc_next = sqlda;
+							sqlda = sqlda_new;
+						}
+					}
+				}
+				else
+				{
+					struct sqlda_struct  **_sqlda = (struct sqlda_struct **)var->pointer;
+					struct sqlda_struct   *sqlda = *_sqlda;
+					struct sqlda_struct   *sqlda_new;
+					int		i;
+
+					/* If we are passed in a previously existing sqlda (chain) then free it. */
+					while (sqlda)
+					{
+						sqlda_new = sqlda->desc_next;
+						free(sqlda);
+						sqlda = sqlda_new;
+					}
+					*_sqlda = sqlda = sqlda_new = NULL;
+					for (i = ntuples - 1; i >= 0; i--)
+					{
+						/* Build a new sqlda structure. Note that only fetching 1 record is supported */
+						sqlda_new = ecpg_build_native_sqlda(stmt->lineno, results, i, stmt->compat);
+
+						if (!sqlda_new)
+						{
+							/* cleanup all SQLDAs we created up */
+							while (sqlda)
+							{
+								sqlda_new = sqlda->desc_next;
+								free(sqlda);
+								sqlda = sqlda_new;
+							}
+							*_sqlda = NULL;
+
+							ecpg_log("ecpg_execute on line %d: out of memory allocating a new sqlda\n", stmt->lineno);
+							status = false;
+							break;
+						}
+						else
+						{
+							ecpg_log("ecpg_execute on line %d: new sqlda was built\n", stmt->lineno);
+
+							*_sqlda = sqlda_new;
+
+							ecpg_set_native_sqlda(stmt->lineno, _sqlda, results, i, stmt->compat);
+							ecpg_log("ecpg_execute on line %d: putting result (1 tuple %d fields) into sqlda descriptor\n",
+									stmt->lineno, PQnfields(results));
+
+							sqlda_new->desc_next = sqlda;
+							sqlda = sqlda_new;
+						}
+					}
+				}
+
 				var = var->next;
 			}
 			else

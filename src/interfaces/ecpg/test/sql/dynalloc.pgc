@@ -39,7 +39,7 @@ int main(void)
    exec sql insert into test (b, c, d, e, f, g, h, i) values (2.446456, NULL, 'v', 'c', '2003-03-03 12:33:07 PDT', false, NULL, NULL);
 
    exec sql allocate descriptor mydesc;
-   exec sql select a,b,c,d,e,f,g,h,i into descriptor mydesc from test order by a;
+   exec sql select a,b,c,d,e,f,g,h,i into sql descriptor mydesc from test order by a;
    exec sql get descriptor mydesc value 1 :d1=DATA, :i1=INDICATOR;
    exec sql get descriptor mydesc value 2 :d2=DATA, :i2=INDICATOR;
    exec sql get descriptor mydesc value 3 :d3=DATA, :i3=INDICATOR;

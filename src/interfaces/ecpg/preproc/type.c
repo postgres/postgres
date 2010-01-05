@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/type.c,v 1.85 2009/09/03 09:59:20 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/type.c,v 1.86 2010/01/05 16:38:23 meskes Exp $ */
 
 #include "postgres_fe.h"
 
@@ -194,6 +194,9 @@ get_type(enum ECPGttype type)
 		case ECPGt_descriptor:
 			return ("ECPGt_descriptor");
 			break;
+		case ECPGt_sqlda:
+			return ("ECPGt_sqlda");
+			break;
 		case ECPGt_date:
 			return ("ECPGt_date");
 			break;
@@ -328,6 +331,8 @@ ECPGdump_a_simple(FILE *o, const char *name, enum ECPGttype type,
 	else if (type == ECPGt_descriptor)
 		/* remember that name here already contains quotes (if needed) */
 		fprintf(o, "\n\tECPGt_descriptor, %s, 0L, 0L, 0L, ", name);
+	else if (type == ECPGt_sqlda)
+		fprintf(o, "\n\tECPGt_sqlda, &%s, 0L, 0L, 0L, ", name);
 	else
 	{
 		char	   *variable = (char *) mm_alloc(strlen(name) + ((prefix == NULL) ? 0 : strlen(prefix)) + 4);

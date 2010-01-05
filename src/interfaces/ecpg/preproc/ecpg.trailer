@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.trailer,v 1.16 2009/11/26 15:06:47 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.trailer,v 1.17 2010/01/05 16:38:23 meskes Exp $ */
 
 statements: /*EMPTY*/
                 | statements statement
@@ -970,21 +970,29 @@ ecpg_using:	USING using_list 	{ $$ = EMPTY; }
 		| using_descriptor      { $$ = $1; }
 		;
 
-using_descriptor: USING opt_sql SQL_DESCRIPTOR quoted_ident_stringvar
+using_descriptor: USING SQL_SQL SQL_DESCRIPTOR quoted_ident_stringvar
 		{
 			add_variable_to_head(&argsinsert, descriptor_variable($4,0), &no_indicator);
 			$$ = EMPTY;
 		}
-		;
-
-into_descriptor: INTO opt_sql SQL_DESCRIPTOR quoted_ident_stringvar
+		| USING SQL_DESCRIPTOR name
 		{
-			add_variable_to_head(&argsresult, descriptor_variable($4,1), &no_indicator);
+			add_variable_to_head(&argsinsert, sqlda_variable($3), &no_indicator);
 			$$ = EMPTY;
 		}
 		;
 
-opt_sql: /*EMPTY*/ | SQL_SQL;
+into_descriptor: INTO SQL_SQL SQL_DESCRIPTOR quoted_ident_stringvar
+		{
+			add_variable_to_head(&argsresult, descriptor_variable($4,1), &no_indicator);
+			$$ = EMPTY;
+		}
+		| INTO SQL_DESCRIPTOR name
+		{
+			add_variable_to_head(&argsresult, sqlda_variable($3), &no_indicator);
+			$$ = EMPTY;
+		}
+		;
 
 using_list: UsingValue | UsingValue ',' using_list;
 
@@ -1806,8 +1814,20 @@ ecpg_into: INTO into_list	{ $$ = EMPTY; }
         | into_descriptor	{ $$ = $1; }
 	;
 
-opt_ecpg_into:	/* EMPTY */	{ $$ = EMPTY; }
-	| ecpg_into		{ $$ = $1; }
+ecpg_fetch_into: ecpg_into	{ $$ = $1; }
+	| using_descriptor
+	{
+		struct variable *var;
+
+		var = argsinsert->variable;
+		remove_variable_from_list(&argsinsert, var);
+		add_variable_to_head(&argsresult, var, &no_indicator);
+		$$ = $1;
+	}
+	;
+
+opt_ecpg_fetch_into:	/* EMPTY */	{ $$ = EMPTY; }
+	| ecpg_fetch_into		{ $$ = $1; }
 	;
 
 %%

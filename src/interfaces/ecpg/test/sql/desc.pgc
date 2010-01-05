@@ -32,30 +32,30 @@ main(void)
 	EXEC SQL PREPARE foo2 FROM :stmt2;
 	EXEC SQL PREPARE foo3 FROM :stmt3;
 
-	EXEC SQL EXECUTE foo1 USING DESCRIPTOR indesc;
+	EXEC SQL EXECUTE foo1 USING SQL DESCRIPTOR indesc;
 
 	EXEC SQL SET DESCRIPTOR indesc VALUE 1 DATA = 2;
 	EXEC SQL SET DESCRIPTOR indesc VALUE 2 INDICATOR = :val2null, DATA = :val2;
 
-	EXEC SQL EXECUTE foo1 USING DESCRIPTOR indesc;
+	EXEC SQL EXECUTE foo1 USING SQL DESCRIPTOR indesc;
 
 	EXEC SQL SET DESCRIPTOR indesc VALUE 1 DATA = 3;
 	EXEC SQL SET DESCRIPTOR indesc VALUE 2 INDICATOR = :val1, DATA = 'this is a long test';
 
-	EXEC SQL EXECUTE "Foo-1" USING DESCRIPTOR indesc;
+	EXEC SQL EXECUTE "Foo-1" USING SQL DESCRIPTOR indesc;
 
 	EXEC SQL DEALLOCATE "Foo-1";
 
 	EXEC SQL SET DESCRIPTOR indesc VALUE 1 DATA = :val1;
 	EXEC SQL SET DESCRIPTOR indesc VALUE 2 INDICATOR = :val2i, DATA = :val2;
 
-	EXEC SQL EXECUTE foo2 USING DESCRIPTOR indesc INTO DESCRIPTOR outdesc;
+	EXEC SQL EXECUTE foo2 USING SQL DESCRIPTOR indesc INTO SQL DESCRIPTOR outdesc;
 
 	EXEC SQL GET DESCRIPTOR outdesc VALUE 1 :val2output = DATA;
 	printf("output = %s\n", val2output);
 
 	EXEC SQL DECLARE c1 CURSOR FOR foo2;
-	EXEC SQL OPEN c1 USING DESCRIPTOR indesc;
+	EXEC SQL OPEN c1 USING SQL DESCRIPTOR indesc;
 
 	EXEC SQL FETCH next FROM c1 INTO :val1output:ind1, :val2output:ind2;
 	printf("val1=%d (ind1: %d) val2=%s (ind2: %d)\n",
@@ -67,7 +67,7 @@ main(void)
 	EXEC SQL SET DESCRIPTOR indesc VALUE 1 DATA = 2;
 
 	EXEC SQL DECLARE c2 CURSOR FOR foo3;
-	EXEC SQL OPEN c2 USING DESCRIPTOR indesc;
+	EXEC SQL OPEN c2 USING SQL DESCRIPTOR indesc;
 
 	EXEC SQL FETCH next FROM c2 INTO :val1output, :val2output :val2i;
 	printf("val1=%d val2=%s\n", val1output, val2i ? "null" : val2output);

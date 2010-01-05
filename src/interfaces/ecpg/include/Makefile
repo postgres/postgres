@@ -14,8 +14,9 @@ install: all installdirs install-headers
 
 .PHONY: install-headers
 ecpg_headers = ecpgerrno.h ecpglib.h ecpgtype.h sqlca.h sql3types.h ecpg_informix.h \
-	pgtypes_error.h pgtypes_numeric.h pgtypes_timestamp.h pgtypes_date.h pgtypes_interval.h
-informix_headers = datetime.h decimal.h sqltypes.h sqlda.h
+	pgtypes_error.h pgtypes_numeric.h pgtypes_timestamp.h pgtypes_date.h pgtypes_interval.h \
+	sqlda.h sqlda-compat.h sqlda-native.h
+informix_headers = datetime.h decimal.h sqltypes.h
 
 install-headers: $(ecpg_headers) $(informix_headers)
 	$(INSTALL_DATA) $(addprefix $(srcdir)/,$(ecpg_headers)) '$(DESTDIR)$(includedir)/'

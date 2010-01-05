@@ -1,0 +1,259 @@
+#include <stdlib.h>
+#include <string.h>
+#include <inttypes.h>
+#include <limits.h>
+
+exec sql include ../regression;
+
+exec sql include sqlda.h;
+exec sql include pgtypes_numeric.h;
+
+exec sql whenever sqlerror stop;
+
+/* These shouldn't be under DECLARE SECTION */
+sqlda_t	*inp_sqlda, *outp_sqlda, *outp_sqlda1;
+
+static void
+dump_sqlda(sqlda_t *sqlda)
+{
+	int	i;
+
+	if (sqlda == NULL)
+	{
+		printf("dump_sqlda called with NULL sqlda\n");
+		return;
+	}
+
+	for (i = 0; i < sqlda->sqld; i++)
+	{
+		if (sqlda->sqlvar[i].sqlind && *(sqlda->sqlvar[i].sqlind) == -1)
+			printf("name sqlda descriptor: '%s' value NULL'\n", sqlda->sqlvar[i].sqlname.data);
+		else
+		switch (sqlda->sqlvar[i].sqltype)
+		{
+		case ECPGt_char:
+			printf("name sqlda descriptor: '%s' value '%s'\n", sqlda->sqlvar[i].sqlname.data, sqlda->sqlvar[i].sqldata);
+			break;
+		case ECPGt_int:
+			printf("name sqlda descriptor: '%s' value %d\n", sqlda->sqlvar[i].sqlname.data, *(int *)sqlda->sqlvar[i].sqldata);
+			break;
+#ifdef HAVE_LONG_LONG_INT_64
+		case ECPGt_long_long:
+#else
+		case ECPGt_long:
+#endif
+			printf("name sqlda descriptor: '%s' value " INT64_FORMAT "\n", sqlda->sqlvar[i].sqlname.data, *(int64_t *)sqlda->sqlvar[i].sqldata);
+			break;
+		case ECPGt_double:
+			printf("name sqlda descriptor: '%s' value %lf\n", sqlda->sqlvar[i].sqlname.data, *(double *)sqlda->sqlvar[i].sqldata);
+			break;
+		case ECPGt_numeric:
+			{
+				char    *val;
+
+				val = PGTYPESnumeric_to_asc((numeric*)sqlda->sqlvar[i].sqldata, -1);
+				printf("name sqlda descriptor: '%s' value NUMERIC '%s'\n", sqlda->sqlvar[i].sqlname.data, val);
+				free(val);
+				break;
+			}
+		}
+	}
+}
+
+int
+main (void)
+{
+exec sql begin declare section;
+	char	*stmt1 = "SELECT * FROM t1";
+	char	*stmt2 = "SELECT * FROM t1 WHERE id = ?";
+	int	rec;
+	int	id;
+exec sql end declare section;
+
+	char msg[128];
+
+	ECPGdebug(1, stderr);
+
+	strcpy(msg, "connect");
+	exec sql connect to REGRESSDB1 as regress1;
+
+	strcpy(msg, "set");
+	exec sql set datestyle to iso;
+
+	strcpy(msg, "create");
+	exec sql create table t1(
+		id integer,
+		t text,
+		d1 numeric,
+		d2 float8,
+		c char(10));
+
+	strcpy(msg, "insert");
+	exec sql insert into t1 values
+		(1, 'a', 1.0, 1, 'a'),
+		(2, null, null, null, null),
+		(3, '"c"', -3, 'nan'::float8, 'c'),
+		(4, 'd', 4.0, 4, 'd');
+
+	strcpy(msg, "commit");
+	exec sql commit;
+
+	/* SQLDA test for getting all records from a table */
+
+	outp_sqlda = NULL;
+
+	strcpy(msg, "prepare");
+	exec sql prepare st_id1 from :stmt1;
+
+	strcpy(msg, "declare");
+	exec sql declare mycur1 cursor for st_id1;
+
+	strcpy(msg, "open");
+	exec sql open mycur1;
+
+	exec sql whenever not found do break;
+
+	rec = 0;
+	while (1)
+	{
+		strcpy(msg, "fetch");
+		exec sql fetch 1 from mycur1 into descriptor outp_sqlda; 
+
+		printf("FETCH RECORD %d\n", ++rec);
+		dump_sqlda(outp_sqlda);
+	}
+
+	exec sql whenever not found continue;
+
+	strcpy(msg, "close");
+	exec sql close mycur1;
+
+	strcpy(msg, "deallocate");
+	exec sql deallocate prepare st_id1;
+
+	free(outp_sqlda);
+
+	/* SQLDA test for getting ALL records into the sqlda list */
+
+	outp_sqlda = NULL;
+
+	strcpy(msg, "prepare");
+	exec sql prepare st_id2 from :stmt1;
+
+	strcpy(msg, "declare");
+	exec sql declare mycur2 cursor for st_id2;
+
+	strcpy(msg, "open");
+	exec sql open mycur2;
+
+	strcpy(msg, "fetch");
+	exec sql fetch all from mycur2 into descriptor outp_sqlda;
+
+	outp_sqlda1 = outp_sqlda;
+	rec = 0;
+	while (outp_sqlda1)
+	{
+		sqlda_t	*ptr;
+		printf("FETCH RECORD %d\n", ++rec);
+		dump_sqlda(outp_sqlda1);
+
+		ptr = outp_sqlda1;
+		outp_sqlda1 = outp_sqlda1->desc_next;
+		free(ptr);
+	}
+
+	strcpy(msg, "close");
+	exec sql close mycur2;
+
+	strcpy(msg, "deallocate");
+	exec sql deallocate prepare st_id2;
+
+	/* SQLDA test for getting one record using an input descriptor */
+
+	/*
+	 * Input sqlda has to be built manually
+	 * sqlda_t contains 1 sqlvar_t structure already.
+	 */
+	inp_sqlda = (sqlda_t *)malloc(sizeof(sqlda_t));
+	memset(inp_sqlda, 0, sizeof(sqlda_t));
+	inp_sqlda->sqln = 1;
+
+	inp_sqlda->sqlvar[0].sqltype = ECPGt_int;
+	inp_sqlda->sqlvar[0].sqldata = (char *)&id;
+
+	printf("EXECUTE RECORD 4\n");
+
+	id = 4;
+
+	outp_sqlda = NULL;
+
+	strcpy(msg, "prepare");
+	exec sql prepare st_id3 FROM :stmt2;
+
+	strcpy(msg, "execute");
+	exec sql execute st_id3 using descriptor inp_sqlda into descriptor outp_sqlda;
+
+	dump_sqlda(outp_sqlda);
+
+	strcpy(msg, "deallocate");
+	exec sql deallocate prepare st_id3;
+
+	free(inp_sqlda);
+	free(outp_sqlda);
+
+	/* SQLDA test for getting one record using an input descriptor
+	 * on a named connection
+	 */
+
+	exec sql connect to REGRESSDB1 as con2;
+
+	/*
+	 * Input sqlda has to be built manually
+	 * sqlda_t contains 1 sqlvar_t structure already.
+	 */
+	inp_sqlda = (sqlda_t *)malloc(sizeof(sqlda_t));
+	memset(inp_sqlda, 0, sizeof(sqlda_t));
+	inp_sqlda->sqln = 1;
+
+	inp_sqlda->sqlvar[0].sqltype = ECPGt_int;
+	inp_sqlda->sqlvar[0].sqldata = (char *)&id;
+
+	printf("EXECUTE RECORD 4\n");
+
+	id = 4;
+
+	outp_sqlda = NULL;
+
+	strcpy(msg, "prepare");
+	exec sql at con2 prepare st_id4 FROM :stmt2;
+
+	strcpy(msg, "execute");
+	exec sql at con2 execute st_id4 using descriptor inp_sqlda into descriptor outp_sqlda;
+
+	dump_sqlda(outp_sqlda);
+
+	strcpy(msg, "commit");
+	exec sql at con2 commit;
+
+	strcpy(msg, "deallocate");
+	exec sql deallocate prepare st_id4;
+
+	free(inp_sqlda);
+	free(outp_sqlda);
+
+	strcpy(msg, "disconnect");
+	exec sql disconnect con2;
+
+	/* End test */
+
+	strcpy(msg, "drop");
+	exec sql drop table t1;
+
+	strcpy(msg, "commit");
+	exec sql commit;
+
+	strcpy(msg, "disconnect");
+	exec sql disconnect;
+
+	return (0);
+}

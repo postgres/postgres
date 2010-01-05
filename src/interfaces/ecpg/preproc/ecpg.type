@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.type,v 1.4 2009/11/26 15:06:47 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.type,v 1.5 2010/01/05 16:38:23 meskes Exp $ */
 %type <str> ECPGAllocateDescr
 %type <str> ECPGCKeywords
 %type <str> ECPGColId
@@ -61,6 +61,7 @@
 %type <str> ecpg_ident
 %type <str> ecpg_interval
 %type <str> ecpg_into
+%type <str> ecpg_fetch_into
 %type <str> ecpg_param
 %type <str> ecpg_sconst
 %type <str> ecpg_using
@@ -76,7 +77,7 @@
 %type <str> opt_bit_field
 %type <str> opt_connection_name
 %type <str> opt_database_name
-%type <str> opt_ecpg_into
+%type <str> opt_ecpg_fetch_into
 %type <str> opt_ecpg_using
 %type <str> opt_initializer
 %type <str> opt_options

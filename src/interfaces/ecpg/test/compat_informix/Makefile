@@ -16,6 +16,7 @@ TESTS = test_informix test_informix.c \
         rfmtdate rfmtdate.c \
         rfmtlong rfmtlong.c \
         rnull rnull.c \
+        sqlda sqlda.c \
         charfuncs charfuncs.c
 
 all: $(TESTS)
@@ -24,6 +25,9 @@ test_informix.c: test_informix.pgc ../regression.h
 	$(ECPG) -o $@ -I$(srcdir) $<
 
 test_informix2.c: test_informix2.pgc ../regression.h
+	$(ECPG) -o $@ -I$(srcdir) $<
+
+sqlda.c: sqlda.pgc ../regression.h
 	$(ECPG) -o $@ -I$(srcdir) $<
 
 dec_test.c: dec_test.pgc ../regression.h

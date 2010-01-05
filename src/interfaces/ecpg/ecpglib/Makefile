@@ -5,7 +5,7 @@
 # Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/Makefile,v 1.65 2010/01/02 16:58:11 momjian Exp $
+# $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/Makefile,v 1.66 2010/01/05 16:38:23 meskes Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -24,7 +24,7 @@ override CFLAGS += $(PTHREAD_CFLAGS)
 # Need to recompile any libpgport object files
 LIBS := $(filter-out -lpgport, $(LIBS))
 
-OBJS= execute.o typename.o descriptor.o data.o error.o prepare.o memory.o \
+OBJS= execute.o typename.o descriptor.o sqlda.o data.o error.o prepare.o memory.o \
 	connect.o misc.o path.o pgstrcasecmp.o \
 	$(filter snprintf.o strlcpy.o, $(LIBOBJS))
 

@@ -1,8 +1,10 @@
 /*
- * $PostgreSQL: pgsql/src/interfaces/ecpg/include/sqltypes.h,v 1.9 2009/06/11 14:49:13 momjian Exp $
+ * $PostgreSQL: pgsql/src/interfaces/ecpg/include/sqltypes.h,v 1.10 2010/01/05 16:38:23 meskes Exp $
  */
 #ifndef ECPG_SQLTYPES_H
 #define ECPG_SQLTYPES_H
+
+#include <limits.h>
 
 #define CCHARTYPE	ECPGt_char
 #define CSHORTTYPE	ECPGt_short
@@ -29,5 +31,30 @@
 #define CROWTYPE		123
 #define CLVCHARPTRTYPE	124
 #define CTYPEMAX	25
+
+/*
+ * Values used in sqlda->sqlvar[i]->sqltype
+ */
+#define	SQLCHAR		ECPGt_char
+#define	SQLSMINT	ECPGt_short
+#define	SQLINT		ECPGt_int
+#define	SQLFLOAT	ECPGt_double
+#define	SQLSMFLOAT	ECPGt_float
+#define	SQLDECIMAL	ECPGt_decimal
+#define	SQLSERIAL	ECPGt_int
+#define	SQLDATE		ECPGt_date
+#define	SQLDTIME	ECPGt_timestamp
+#define	SQLTEXT		ECPGt_char
+#define	SQLVCHAR	ECPGt_char
+#define SQLINTERVAL     ECPGt_interval
+#define	SQLNCHAR	ECPGt_char
+#define	SQLNVCHAR	ECPGt_char
+#ifdef HAVE_LONG_LONG_INT_64
+#define	SQLINT8		ECPGt_long_long
+#define	SQLSERIAL8	ECPGt_long_long
+#else
+#define	SQLINT8		ECPGt_long
+#define	SQLSERIAL8	ECPGt_long
+#endif
 
 #endif   /* ndef ECPG_SQLTYPES_H */

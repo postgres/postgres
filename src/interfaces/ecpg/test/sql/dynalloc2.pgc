@@ -30,7 +30,7 @@ int main(void)
    exec sql insert into test values (NULL, NULL);
 
    exec sql allocate descriptor mydesc;
-   exec sql select * into descriptor mydesc from test;
+   exec sql select * into sql descriptor mydesc from test;
    exec sql get descriptor mydesc :colnum=COUNT;
    exec sql get descriptor mydesc value 1 :ip1=DATA, :ipointer1=INDICATOR;
    exec sql get descriptor mydesc value 2 :cp2=DATA, :ipointer2=INDICATOR;

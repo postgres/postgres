@@ -20,6 +20,7 @@ TESTS = array array.c \
         parser parser.c \
         quote quote.c \
         show show.c \
+        sqlda sqlda.c \
         insupd insupd.c 
 
 all: $(TESTS)
