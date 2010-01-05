@@ -3,7 +3,7 @@ package Project;
 #
 # Package that encapsulates a Visual C++ project file generation
 #
-# $PostgreSQL: pgsql/src/tools/msvc/Project.pm,v 1.24 2010/01/02 15:18:42 mha Exp $
+# $PostgreSQL: pgsql/src/tools/msvc/Project.pm,v 1.25 2010/01/05 11:12:50 mha Exp $
 #
 use Carp;
 use strict;
@@ -333,7 +333,7 @@ sub DisableLinkerWarnings
 {
     my ($self, $warnings) = @_;
 
-    $self->{disablelinkerwarnings} .= ';' unless ($self->{disablelinkerwarnings} eq '');
+    $self->{disablelinkerwarnings} .= ',' unless ($self->{disablelinkerwarnings} eq '');
     $self->{disablelinkerwarnings} .= $warnings;
 }
 
@@ -347,6 +347,10 @@ sub Save
     {
         $self->FullExportDLL($self->{name} . ".lib");
     }
+
+	# Warning 4197 is about double exporting, disable this per
+	# http://connect.microsoft.com/VisualStudio/feedback/ViewFeedback.aspx?FeedbackID=99193
+	$self->DisableLinkerWarnings('4197') if ($self->{platform} eq 'x64');
 
     # Dump the project
     open(F, ">$self->{name}.vcproj") || croak("Could not write to $self->{name}.vcproj\n");
@@ -494,7 +498,9 @@ sub WriteConfiguration
     }
     $libs =~ s/ $//;
     $libs =~ s/__CFGNAME__/$cfgname/g;
+
     my $targetmachine = $self->{platform} eq 'Win32' ? 1 : 17;
+
     print $f <<EOF;
   <Configuration Name="$cfgname|$self->{platform}" OutputDirectory=".\\$cfgname\\$self->{name}" IntermediateDirectory=".\\$cfgname\\$self->{name}"
 	ConfigurationType="$cfgtype" UseOfMFC="0" ATLMinimizesCRunTimeLibraryUsage="FALSE" CharacterSet="2" WholeProgramOptimization="$p->{wholeopt}">
