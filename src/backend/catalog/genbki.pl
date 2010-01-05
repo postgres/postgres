@@ -10,7 +10,7 @@
 # Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/backend/catalog/genbki.pl,v 1.1 2010/01/05 01:06:56 tgl Exp $
+# $PostgreSQL: pgsql/src/backend/catalog/genbki.pl,v 1.2 2010/01/05 02:34:03 tgl Exp $
 #
 #----------------------------------------------------------------------
 
@@ -287,7 +287,7 @@ close DESCR;
 close SHDESCR;
 close SCHEMAPG;
 
-# Rename temp files on top of final files, if they have changed
+# Finally, rename the completed files into place.
 Catalog::RenameTempFile($output_path . 'postgres.bki');
 Catalog::RenameTempFile($output_path . 'postgres.description');
 Catalog::RenameTempFile($output_path . 'postgres.shdescription');
