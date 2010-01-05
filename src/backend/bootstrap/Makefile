@@ -2,7 +2,7 @@
 #
 # Makefile for the bootstrap module
 #
-# $PostgreSQL: pgsql/src/backend/bootstrap/Makefile,v 1.38 2009/08/28 20:26:18 petere Exp $
+# $PostgreSQL: pgsql/src/backend/bootstrap/Makefile,v 1.39 2010/01/05 03:56:52 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -10,7 +10,7 @@ subdir = src/backend/bootstrap
 top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
 
-override CPPFLAGS := -I$(srcdir) $(CPPFLAGS)
+override CPPFLAGS := -I. -I$(srcdir) $(CPPFLAGS)
 
 OBJS= bootparse.o bootstrap.o 
 
