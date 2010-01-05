@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.701 2010/01/02 16:57:48 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.702 2010/01/05 21:53:58 rhaas Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -5685,6 +5685,24 @@ RenameStmt: ALTER AGGREGATE func_name aggr_args RENAME TO name
 					n->renameType = OBJECT_TABLESPACE;
 					n->subname = $3;
 					n->newname = $6;
+					$$ = (Node *)n;
+				}
+			| ALTER TABLESPACE name SET reloptions
+				{
+					AlterTableSpaceOptionsStmt *n =
+						makeNode(AlterTableSpaceOptionsStmt);
+					n->tablespacename = $3;
+					n->options = $5;
+					n->isReset = FALSE;
+					$$ = (Node *)n;
+				}
+			| ALTER TABLESPACE name RESET reloptions
+				{
+					AlterTableSpaceOptionsStmt *n =
+						makeNode(AlterTableSpaceOptionsStmt);
+					n->tablespacename = $3;
+					n->options = $5;
+					n->isReset = TRUE;
 					$$ = (Node *)n;
 				}
 			| ALTER TEXT_P SEARCH PARSER any_name RENAME TO name

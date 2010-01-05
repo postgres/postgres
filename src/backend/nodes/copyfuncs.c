@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.458 2010/01/02 16:57:45 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.459 2010/01/05 21:53:58 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3064,6 +3064,18 @@ _copyDropTableSpaceStmt(DropTableSpaceStmt *from)
 	return newnode;
 }
 
+static AlterTableSpaceOptionsStmt *
+_copyAlterTableSpaceOptionsStmt(AlterTableSpaceOptionsStmt *from)
+{
+	AlterTableSpaceOptionsStmt *newnode = makeNode(AlterTableSpaceOptionsStmt);
+
+	COPY_STRING_FIELD(tablespacename);
+	COPY_NODE_FIELD(options);
+	COPY_SCALAR_FIELD(isReset);
+
+	return newnode;
+}
+
 static CreateFdwStmt *
 _copyCreateFdwStmt(CreateFdwStmt *from)
 {
@@ -4027,6 +4039,9 @@ copyObject(void *from)
 			break;
 		case T_DropTableSpaceStmt:
 			retval = _copyDropTableSpaceStmt(from);
+			break;
+		case T_AlterTableSpaceOptionsStmt:
+			retval = _copyAlterTableSpaceOptionsStmt(from);
 			break;
 		case T_CreateFdwStmt:
 			retval = _copyCreateFdwStmt(from);

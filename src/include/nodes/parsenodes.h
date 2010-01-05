@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.421 2010/01/02 16:58:04 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.422 2010/01/05 21:53:59 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1476,6 +1476,14 @@ typedef struct DropTableSpaceStmt
 	char	   *tablespacename;
 	bool		missing_ok;		/* skip error if missing? */
 } DropTableSpaceStmt;
+
+typedef struct AlterTableSpaceOptionsStmt
+{
+	NodeTag		type;
+	char	   *tablespacename;
+	List	   *options;
+	bool		isReset;
+} AlterTableSpaceOptionsStmt;
 
 /* ----------------------
  *		Create/Drop FOREIGN DATA WRAPPER Statements

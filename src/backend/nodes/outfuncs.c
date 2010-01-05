@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.379 2010/01/02 16:57:46 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.380 2010/01/05 21:53:58 rhaas Exp $
  *
  * NOTES
  *	  Every node type that can appear in stored rules' parsetrees *must*
@@ -1590,6 +1590,7 @@ _outRelOptInfo(StringInfo str, RelOptInfo *node)
 	WRITE_NODE_FIELD(cheapest_total_path);
 	WRITE_NODE_FIELD(cheapest_unique_path);
 	WRITE_UINT_FIELD(relid);
+	WRITE_UINT_FIELD(reltablespace);
 	WRITE_ENUM_FIELD(rtekind, RTEKind);
 	WRITE_INT_FIELD(min_attr);
 	WRITE_INT_FIELD(max_attr);

@@ -22,7 +22,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.379 2010/01/02 16:57:46 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.380 2010/01/05 21:53:58 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1569,6 +1569,17 @@ _equalDropTableSpaceStmt(DropTableSpaceStmt *a, DropTableSpaceStmt *b)
 }
 
 static bool
+_equalAlterTableSpaceOptionsStmt(AlterTableSpaceOptionsStmt *a,
+											 AlterTableSpaceOptionsStmt *b)
+{
+	COMPARE_STRING_FIELD(tablespacename);
+	COMPARE_NODE_FIELD(options);
+	COMPARE_SCALAR_FIELD(isReset);
+
+	return true;
+}
+
+static bool
 _equalCreateFdwStmt(CreateFdwStmt *a, CreateFdwStmt *b)
 {
 	COMPARE_STRING_FIELD(fdwname);
@@ -2719,6 +2730,9 @@ equal(void *a, void *b)
 			break;
 		case T_DropTableSpaceStmt:
 			retval = _equalDropTableSpaceStmt(a, b);
+			break;
+		case T_AlterTableSpaceOptionsStmt:
+			retval = _equalAlterTableSpaceOptionsStmt(a, b);
 			break;
 		case T_CreateFdwStmt:
 			retval = _equalCreateFdwStmt(a, b);

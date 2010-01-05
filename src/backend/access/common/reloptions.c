@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/common/reloptions.c,v 1.30 2010/01/02 16:57:33 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/common/reloptions.c,v 1.31 2010/01/05 21:53:58 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,6 +21,7 @@
 #include "access/reloptions.h"
 #include "catalog/pg_type.h"
 #include "commands/defrem.h"
+#include "commands/tablespace.h"
 #include "nodes/makefuncs.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
@@ -178,6 +179,22 @@ static relopt_real realRelOpts[] =
 			RELOPT_KIND_HEAP | RELOPT_KIND_TOAST
 		},
 		-1, 0.0, 100.0
+	},
+	{
+		{
+			"seq_page_cost",
+			"Sets the planner's estimate of the cost of a sequentially fetched disk page.",
+			RELOPT_KIND_TABLESPACE
+		},
+		-1, 0.0, DBL_MAX
+	},
+	{
+		{
+			"random_page_cost",
+			"Sets the planner's estimate of the cost of a nonsequentially fetched disk page.",
+			RELOPT_KIND_TABLESPACE
+		},
+		-1, 0.0, DBL_MAX
 	},
 	/* list terminator */
 	{{NULL}}
@@ -1167,4 +1184,35 @@ index_reloptions(RegProcedure amoptions, Datum reloptions, bool validate)
 		return NULL;
 
 	return DatumGetByteaP(result);
+}
+
+/*
+ * Option parser for tablespace reloptions
+ */
+bytea *
+tablespace_reloptions(Datum reloptions, bool validate)
+{
+	relopt_value *options;
+	TableSpaceOpts	*tsopts;
+	int			numoptions;
+	static const relopt_parse_elt tab[] = {
+		{"random_page_cost", RELOPT_TYPE_REAL, offsetof(TableSpaceOpts, random_page_cost)},
+		{"seq_page_cost", RELOPT_TYPE_REAL, offsetof(TableSpaceOpts, seq_page_cost)}
+	};
+
+	options = parseRelOptions(reloptions, validate, RELOPT_KIND_TABLESPACE,
+							  &numoptions);
+
+	/* if none set, we're done */
+	if (numoptions == 0)
+		return NULL;
+
+	tsopts = allocateReloptStruct(sizeof(TableSpaceOpts), options, numoptions);
+
+	fillRelOptions((void *) tsopts, sizeof(TableSpaceOpts), options, numoptions,
+				   validate, tab, lengthof(tab));
+
+	pfree(options);
+
+	return (bytea *) tsopts;
 }

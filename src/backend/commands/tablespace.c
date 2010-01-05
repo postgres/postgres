@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablespace.c,v 1.65 2010/01/02 16:57:37 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablespace.c,v 1.66 2010/01/05 21:53:58 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,6 +49,7 @@
 #include <sys/stat.h>
 
 #include "access/heapam.h"
+#include "access/reloptions.h"
 #include "access/sysattr.h"
 #include "access/transam.h"
 #include "access/xact.h"
@@ -57,6 +58,7 @@
 #include "catalog/indexing.h"
 #include "catalog/pg_tablespace.h"
 #include "commands/comment.h"
+#include "commands/defrem.h"
 #include "commands/tablespace.h"
 #include "miscadmin.h"
 #include "postmaster/bgwriter.h"
@@ -70,6 +72,7 @@
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
 #include "utils/rel.h"
+#include "utils/syscache.h"
 #include "utils/tqual.h"
 
 
@@ -290,6 +293,7 @@ CreateTableSpace(CreateTableSpaceStmt *stmt)
 	values[Anum_pg_tablespace_spclocation - 1] =
 		CStringGetTextDatum(location);
 	nulls[Anum_pg_tablespace_spcacl - 1] = true;
+	nulls[Anum_pg_tablespace_spcoptions - 1] = true;
 
 	tuple = heap_form_tuple(rel->rd_att, values, nulls);
 
@@ -911,6 +915,73 @@ AlterTableSpaceOwner(const char *name, Oid newOwnerId)
 	heap_close(rel, NoLock);
 }
 
+
+/*
+ * Alter table space options
+ */
+void
+AlterTableSpaceOptions(AlterTableSpaceOptionsStmt *stmt)
+{
+	Relation	rel;
+	ScanKeyData entry[1];
+	HeapScanDesc scandesc;
+	HeapTuple	tup;
+	Datum		datum;
+	Datum		newOptions;
+	Datum		repl_val[Natts_pg_tablespace];
+	bool		isnull;
+	bool		repl_null[Natts_pg_tablespace];
+	bool		repl_repl[Natts_pg_tablespace];
+	HeapTuple	newtuple;
+
+	/* Search pg_tablespace */
+	rel = heap_open(TableSpaceRelationId, RowExclusiveLock);
+
+	ScanKeyInit(&entry[0],
+				Anum_pg_tablespace_spcname,
+				BTEqualStrategyNumber, F_NAMEEQ,
+				CStringGetDatum(stmt->tablespacename));
+	scandesc = heap_beginscan(rel, SnapshotNow, 1, entry);
+	tup = heap_getnext(scandesc, ForwardScanDirection);
+	if (!HeapTupleIsValid(tup))
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("tablespace \"%s\" does not exist",
+					stmt->tablespacename)));
+
+	/* Must be owner of the existing object */
+	if (!pg_tablespace_ownercheck(HeapTupleGetOid(tup), GetUserId()))
+		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_TABLESPACE,
+					   stmt->tablespacename);
+
+	/* Generate new proposed spcoptions (text array) */
+	datum = heap_getattr(tup, Anum_pg_tablespace_spcoptions,
+						 RelationGetDescr(rel), &isnull);
+	newOptions = transformRelOptions(isnull ? (Datum) 0 : datum,
+									 stmt->options, NULL, NULL, false,
+									 stmt->isReset);
+	(void) tablespace_reloptions(newOptions, true);
+
+	/* Build new tuple. */
+	memset(repl_null, false, sizeof(repl_null));
+	memset(repl_repl, false, sizeof(repl_repl));
+	if (newOptions != (Datum) 0)
+		repl_val[Anum_pg_tablespace_spcoptions - 1] = newOptions;
+	else
+		repl_null[Anum_pg_tablespace_spcoptions - 1] = true;
+	repl_repl[Anum_pg_tablespace_spcoptions - 1] = true;
+	newtuple = heap_modify_tuple(tup, RelationGetDescr(rel), repl_val,
+								 repl_null, repl_repl);
+
+	/* Update system catalog. */
+	simple_heap_update(rel, &newtuple->t_self, newtuple);
+	CatalogUpdateIndexes(rel, newtuple);
+	heap_freetuple(newtuple);
+
+	/* Conclude heap scan. */
+	heap_endscan(scandesc);
+	heap_close(rel, NoLock);
+}
 
 /*
  * Routines for handling the GUC variable 'default_tablespace'.

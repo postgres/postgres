@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.182 2010/01/02 16:58:07 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.183 2010/01/05 21:54:00 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -371,6 +371,7 @@ typedef struct RelOptInfo
 
 	/* information about a base rel (not set for join rels!) */
 	Index		relid;
+	Oid			reltablespace;	/* containing tablespace */
 	RTEKind		rtekind;		/* RELATION, SUBQUERY, or FUNCTION */
 	AttrNumber	min_attr;		/* smallest attrno of rel (often <0) */
 	AttrNumber	max_attr;		/* largest attrno of rel */
@@ -435,6 +436,7 @@ typedef struct IndexOptInfo
 	NodeTag		type;
 
 	Oid			indexoid;		/* OID of the index relation */
+	Oid			reltablespace;	/* tablespace of index (not table) */
 	RelOptInfo *rel;			/* back-link to index's table */
 
 	/* statistics from pg_class */

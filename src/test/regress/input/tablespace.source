@@ -1,6 +1,12 @@
 -- create a tablespace we can use
 CREATE TABLESPACE testspace LOCATION '@testtablespace@';
 
+-- try setting and resetting some properties for the new tablespace
+ALTER TABLESPACE testspace SET (random_page_cost = 1.0);
+ALTER TABLESPACE testspace SET (some_nonexistent_parameter = true);  -- fail
+ALTER TABLESPACE testspace RESET (random_page_cost = 2.0); -- fail
+ALTER TABLESPACE testspace RESET (random_page_cost, seq_page_cost); -- ok
+
 -- create a schema we can use
 CREATE SCHEMA testschema;
 

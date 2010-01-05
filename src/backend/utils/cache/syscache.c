@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/syscache.c,v 1.123 2010/01/02 16:57:56 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/syscache.c,v 1.124 2010/01/05 21:53:59 rhaas Exp $
  *
  * NOTES
  *	  These routines allow the parser/planner/executor to perform
@@ -43,6 +43,7 @@
 #include "catalog/pg_proc.h"
 #include "catalog/pg_rewrite.h"
 #include "catalog/pg_statistic.h"
+#include "catalog/pg_tablespace.h"
 #include "catalog/pg_ts_config.h"
 #include "catalog/pg_ts_config_map.h"
 #include "catalog/pg_ts_dict.h"
@@ -608,6 +609,18 @@ static const struct cachedesc cacheinfo[] = {
 			0
 		},
 		1024
+	},
+	{TableSpaceRelationId,		/* TABLESPACEOID */
+		TablespaceOidIndexId,
+		0,
+		1,
+		{
+			ObjectIdAttributeNumber,
+			0,
+			0,
+			0,
+		},
+		16
 	},
 	{TSConfigMapRelationId,		/* TSCONFIGMAP */
 		TSConfigMapIndexId,

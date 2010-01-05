@@ -1,7 +1,8 @@
 /*-------------------------------------------------------------------------
  *
  * reloptions.h
- *	  Core support for relation options (pg_class.reloptions)
+ *	  Core support for relation and tablespace options (pg_class.reloptions
+ *	  and pg_tablespace.spcoptions)
  *
  * Note: the functions dealing with text-array reloptions values declare
  * them as Datum, not ArrayType *, to avoid needing to include array.h
@@ -11,7 +12,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/reloptions.h,v 1.17 2010/01/02 16:58:00 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/access/reloptions.h,v 1.18 2010/01/05 21:53:59 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,8 +40,9 @@ typedef enum relopt_kind
 	RELOPT_KIND_HASH = (1 << 3),
 	RELOPT_KIND_GIN = (1 << 4),
 	RELOPT_KIND_GIST = (1 << 5),
+	RELOPT_KIND_TABLESPACE = (1 << 6),
 	/* if you add a new kind, make sure you update "last_default" too */
-	RELOPT_KIND_LAST_DEFAULT = RELOPT_KIND_GIST,
+	RELOPT_KIND_LAST_DEFAULT = RELOPT_KIND_TABLESPACE,
 	/* some compilers treat enums as signed ints, so we can't use 1 << 31 */
 	RELOPT_KIND_MAX = (1 << 30)
 } relopt_kind;
@@ -264,5 +266,6 @@ extern bytea *default_reloptions(Datum reloptions, bool validate,
 extern bytea *heap_reloptions(char relkind, Datum reloptions, bool validate);
 extern bytea *index_reloptions(RegProcedure amoptions, Datum reloptions,
 				 bool validate);
+extern bytea *tablespace_reloptions(Datum reloptions, bool validate);
 
 #endif   /* RELOPTIONS_H */

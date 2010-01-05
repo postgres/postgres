@@ -27,6 +27,11 @@
  * detail.	Note that all of these parameters are user-settable, in case
  * the default values are drastically off for a particular platform.
  *
+ * seq_page_cost and random_page_cost can also be overridden for an individual
+ * tablespace, in case some data is on a fast disk and other data is on a slow
+ * disk.  Per-tablespace overrides never apply to temporary work files such as
+ * an external sort or a materialize node that overflows work_mem.
+ *
  * We compute two separate costs for each path:
  *		total_cost: total estimated cost to fetch all tuples
  *		startup_cost: cost that is expended before first tuple is fetched
@@ -54,7 +59,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.213 2010/01/02 16:57:46 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.214 2010/01/05 21:53:58 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -76,6 +81,7 @@
 #include "parser/parsetree.h"
 #include "utils/lsyscache.h"
 #include "utils/selfuncs.h"
+#include "utils/spccache.h"
 #include "utils/tuplesort.h"
 
 
@@ -164,6 +170,7 @@ void
 cost_seqscan(Path *path, PlannerInfo *root,
 			 RelOptInfo *baserel)
 {
+	double		spc_seq_page_cost;
 	Cost		startup_cost = 0;
 	Cost		run_cost = 0;
 	Cost		cpu_per_tuple;
@@ -175,10 +182,15 @@ cost_seqscan(Path *path, PlannerInfo *root,
 	if (!enable_seqscan)
 		startup_cost += disable_cost;
 
+	/* fetch estimated page cost for tablespace containing table */
+	get_tablespace_page_costs(baserel->reltablespace,
+							  NULL,
+							  &spc_seq_page_cost);
+
 	/*
 	 * disk costs
 	 */
-	run_cost += seq_page_cost * baserel->pages;
+	run_cost += spc_seq_page_cost * baserel->pages;
 
 	/* CPU costs */
 	startup_cost += baserel->baserestrictcost.startup;
@@ -226,6 +238,8 @@ cost_index(IndexPath *path, PlannerInfo *root,
 	Selectivity indexSelectivity;
 	double		indexCorrelation,
 				csquared;
+	double		spc_seq_page_cost,
+				spc_random_page_cost;
 	Cost		min_IO_cost,
 				max_IO_cost;
 	Cost		cpu_per_tuple;
@@ -272,13 +286,18 @@ cost_index(IndexPath *path, PlannerInfo *root,
 	/* estimate number of main-table tuples fetched */
 	tuples_fetched = clamp_row_est(indexSelectivity * baserel->tuples);
 
+	/* fetch estimated page costs for tablespace containing table */
+	get_tablespace_page_costs(baserel->reltablespace,
+							  &spc_random_page_cost,
+							  &spc_seq_page_cost);
+
 	/*----------
 	 * Estimate number of main-table pages fetched, and compute I/O cost.
 	 *
 	 * When the index ordering is uncorrelated with the table ordering,
 	 * we use an approximation proposed by Mackert and Lohman (see
 	 * index_pages_fetched() for details) to compute the number of pages
-	 * fetched, and then charge random_page_cost per page fetched.
+	 * fetched, and then charge spc_random_page_cost per page fetched.
 	 *
 	 * When the index ordering is exactly correlated with the table ordering
 	 * (just after a CLUSTER, for example), the number of pages fetched should
@@ -286,7 +305,7 @@ cost_index(IndexPath *path, PlannerInfo *root,
 	 * will be sequential fetches, not the random fetches that occur in the
 	 * uncorrelated case.  So if the number of pages is more than 1, we
 	 * ought to charge
-	 *		random_page_cost + (pages_fetched - 1) * seq_page_cost
+	 *		spc_random_page_cost + (pages_fetched - 1) * spc_seq_page_cost
 	 * For partially-correlated indexes, we ought to charge somewhere between
 	 * these two estimates.  We currently interpolate linearly between the
 	 * estimates based on the correlation squared (XXX is that appropriate?).
@@ -309,7 +328,7 @@ cost_index(IndexPath *path, PlannerInfo *root,
 											(double) index->pages,
 											root);
 
-		max_IO_cost = (pages_fetched * random_page_cost) / num_scans;
+		max_IO_cost = (pages_fetched * spc_random_page_cost) / num_scans;
 
 		/*
 		 * In the perfectly correlated case, the number of pages touched by
@@ -328,7 +347,7 @@ cost_index(IndexPath *path, PlannerInfo *root,
 											(double) index->pages,
 											root);
 
-		min_IO_cost = (pages_fetched * random_page_cost) / num_scans;
+		min_IO_cost = (pages_fetched * spc_random_page_cost) / num_scans;
 	}
 	else
 	{
@@ -342,13 +361,13 @@ cost_index(IndexPath *path, PlannerInfo *root,
 											root);
 
 		/* max_IO_cost is for the perfectly uncorrelated case (csquared=0) */
-		max_IO_cost = pages_fetched * random_page_cost;
+		max_IO_cost = pages_fetched * spc_random_page_cost;
 
 		/* min_IO_cost is for the perfectly correlated case (csquared=1) */
 		pages_fetched = ceil(indexSelectivity * (double) baserel->pages);
-		min_IO_cost = random_page_cost;
+		min_IO_cost = spc_random_page_cost;
 		if (pages_fetched > 1)
-			min_IO_cost += (pages_fetched - 1) * seq_page_cost;
+			min_IO_cost += (pages_fetched - 1) * spc_seq_page_cost;
 	}
 
 	/*
@@ -553,6 +572,8 @@ cost_bitmap_heap_scan(Path *path, PlannerInfo *root, RelOptInfo *baserel,
 	Cost		cost_per_page;
 	double		tuples_fetched;
 	double		pages_fetched;
+	double		spc_seq_page_cost,
+				spc_random_page_cost;
 	double		T;
 
 	/* Should only be applied to base relations */
@@ -570,6 +591,11 @@ cost_bitmap_heap_scan(Path *path, PlannerInfo *root, RelOptInfo *baserel,
 	cost_bitmap_tree_node(bitmapqual, &indexTotalCost, &indexSelectivity);
 
 	startup_cost += indexTotalCost;
+
+	/* Fetch estimated page costs for tablespace containing table. */
+	get_tablespace_page_costs(baserel->reltablespace,
+							  &spc_random_page_cost,
+							  &spc_seq_page_cost);
 
 	/*
 	 * Estimate number of main-table pages fetched.
@@ -609,17 +635,18 @@ cost_bitmap_heap_scan(Path *path, PlannerInfo *root, RelOptInfo *baserel,
 		pages_fetched = ceil(pages_fetched);
 
 	/*
-	 * For small numbers of pages we should charge random_page_cost apiece,
+	 * For small numbers of pages we should charge spc_random_page_cost apiece,
 	 * while if nearly all the table's pages are being read, it's more
-	 * appropriate to charge seq_page_cost apiece.	The effect is nonlinear,
+	 * appropriate to charge spc_seq_page_cost apiece.	The effect is nonlinear,
 	 * too. For lack of a better idea, interpolate like this to determine the
 	 * cost per page.
 	 */
 	if (pages_fetched >= 2.0)
-		cost_per_page = random_page_cost -
-			(random_page_cost - seq_page_cost) * sqrt(pages_fetched / T);
+		cost_per_page = spc_random_page_cost -
+			(spc_random_page_cost - spc_seq_page_cost)
+			* sqrt(pages_fetched / T);
 	else
-		cost_per_page = random_page_cost;
+		cost_per_page = spc_random_page_cost;
 
 	run_cost += pages_fetched * cost_per_page;
 
@@ -783,6 +810,7 @@ cost_tidscan(Path *path, PlannerInfo *root,
 	QualCost	tid_qual_cost;
 	int			ntuples;
 	ListCell   *l;
+	double		spc_random_page_cost;
 
 	/* Should only be applied to base relations */
 	Assert(baserel->relid > 0);
@@ -835,8 +863,13 @@ cost_tidscan(Path *path, PlannerInfo *root,
 	 */
 	cost_qual_eval(&tid_qual_cost, tidquals, root);
 
+	/* fetch estimated page cost for tablespace containing table */
+	get_tablespace_page_costs(baserel->reltablespace,
+							  &spc_random_page_cost,
+							  NULL);
+
 	/* disk costs --- assume each tuple on a different page */
-	run_cost += random_page_cost * ntuples;
+	run_cost += spc_random_page_cost * ntuples;
 
 	/* CPU costs */
 	startup_cost += baserel->baserestrictcost.startup +

@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.267 2010/01/04 02:44:39 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.268 2010/01/05 21:53:59 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -119,6 +119,7 @@
 #include "utils/nabstime.h"
 #include "utils/pg_locale.h"
 #include "utils/selfuncs.h"
+#include "utils/spccache.h"
 #include "utils/syscache.h"
 #include "utils/tqual.h"
 
@@ -5648,6 +5649,7 @@ genericcostestimate(PlannerInfo *root,
 	QualCost	index_qual_cost;
 	double		qual_op_cost;
 	double		qual_arg_cost;
+	double		spc_random_page_cost;
 	List	   *selectivityQuals;
 	ListCell   *l;
 
@@ -5756,6 +5758,11 @@ genericcostestimate(PlannerInfo *root,
 	else
 		numIndexPages = 1.0;
 
+	/* fetch estimated page cost for schema containing index */
+	get_tablespace_page_costs(index->reltablespace,
+							  &spc_random_page_cost,
+							  NULL);
+
 	/*
 	 * Now compute the disk access costs.
 	 *
@@ -5802,15 +5809,16 @@ genericcostestimate(PlannerInfo *root,
 		 * share for each outer scan.  (Don't pro-rate for ScalarArrayOpExpr,
 		 * since that's internal to the indexscan.)
 		 */
-		*indexTotalCost = (pages_fetched * random_page_cost) / num_outer_scans;
+		*indexTotalCost = (pages_fetched * spc_random_page_cost)
+							/ num_outer_scans;
 	}
 	else
 	{
 		/*
-		 * For a single index scan, we just charge random_page_cost per page
-		 * touched.
+		 * For a single index scan, we just charge spc_random_page_cost per
+		 * page touched.
 		 */
-		*indexTotalCost = numIndexPages * random_page_cost;
+		*indexTotalCost = numIndexPages * spc_random_page_cost;
 	}
 
 	/*
@@ -5825,11 +5833,11 @@ genericcostestimate(PlannerInfo *root,
 	 *
 	 * We can deal with this by adding a very small "fudge factor" that
 	 * depends on the index size.  The fudge factor used here is one
-	 * random_page_cost per 100000 index pages, which should be small enough
-	 * to not alter index-vs-seqscan decisions, but will prevent indexes of
-	 * different sizes from looking exactly equally attractive.
+	 * spc_random_page_cost per 100000 index pages, which should be small
+	 * enough to not alter index-vs-seqscan decisions, but will prevent
+	 * indexes of different sizes from looking exactly equally attractive.
 	 */
-	*indexTotalCost += index->pages * random_page_cost / 100000.0;
+	*indexTotalCost += index->pages * spc_random_page_cost / 100000.0;
 
 	/*
 	 * CPU cost: any complex expressions in the indexquals will need to be

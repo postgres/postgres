@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.129 2010/01/02 16:57:59 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.130 2010/01/05 21:53:59 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -956,11 +956,20 @@ dumpTablespaces(PGconn *conn)
 	 * Get all tablespaces except built-in ones (which we assume are named
 	 * pg_xxx)
 	 */
-	if (server_version >= 80200)
+	if (server_version >= 80500)
 		res = executeQuery(conn, "SELECT spcname, "
 						 "pg_catalog.pg_get_userbyid(spcowner) AS spcowner, "
 						   "spclocation, spcacl, "
+						   "array_to_string(spcoptions, ', '),"
 						"pg_catalog.shobj_description(oid, 'pg_tablespace') "
+						   "FROM pg_catalog.pg_tablespace "
+						   "WHERE spcname !~ '^pg_' "
+						   "ORDER BY 1");
+	else if (server_version >= 80200)
+		res = executeQuery(conn, "SELECT spcname, "
+						 "pg_catalog.pg_get_userbyid(spcowner) AS spcowner, "
+						   "spclocation, spcacl, null, "
+						"pg_catalog.shobj_description(oid, 'pg_tablespace'), "
 						   "FROM pg_catalog.pg_tablespace "
 						   "WHERE spcname !~ '^pg_' "
 						   "ORDER BY 1");
@@ -968,7 +977,7 @@ dumpTablespaces(PGconn *conn)
 		res = executeQuery(conn, "SELECT spcname, "
 						 "pg_catalog.pg_get_userbyid(spcowner) AS spcowner, "
 						   "spclocation, spcacl, "
-						   "null "
+						   "null, null "
 						   "FROM pg_catalog.pg_tablespace "
 						   "WHERE spcname !~ '^pg_' "
 						   "ORDER BY 1");
@@ -983,7 +992,8 @@ dumpTablespaces(PGconn *conn)
 		char	   *spcowner = PQgetvalue(res, i, 1);
 		char	   *spclocation = PQgetvalue(res, i, 2);
 		char	   *spcacl = PQgetvalue(res, i, 3);
-		char	   *spccomment = PQgetvalue(res, i, 4);
+		char	   *spcoptions = PQgetvalue(res, i, 4);
+		char	   *spccomment = PQgetvalue(res, i, 5);
 		char	   *fspcname;
 
 		/* needed for buildACLCommands() */
@@ -995,6 +1005,10 @@ dumpTablespaces(PGconn *conn)
 		appendPQExpBuffer(buf, " LOCATION ");
 		appendStringLiteralConn(buf, spclocation, conn);
 		appendPQExpBuffer(buf, ";\n");
+
+		if (spcoptions && spcoptions[0] != '\0')
+			appendPQExpBuffer(buf, "ALTER TABLESPACE %s SET (%s);\n",
+							  fspcname, spcoptions);
 
 		if (!skip_acls &&
 			!buildACLCommands(fspcname, NULL, "TABLESPACE", spcacl, spcowner,

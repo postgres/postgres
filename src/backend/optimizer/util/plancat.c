@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/plancat.c,v 1.161 2010/01/02 16:57:48 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/plancat.c,v 1.162 2010/01/05 21:53:58 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -91,6 +91,7 @@ get_relation_info(PlannerInfo *root, Oid relationObjectId, bool inhparent,
 
 	rel->min_attr = FirstLowInvalidHeapAttributeNumber + 1;
 	rel->max_attr = RelationGetNumberOfAttributes(relation);
+	rel->reltablespace = RelationGetForm(relation)->reltablespace;
 
 	Assert(rel->max_attr >= rel->min_attr);
 	rel->attr_needed = (Relids *)
@@ -183,6 +184,8 @@ get_relation_info(PlannerInfo *root, Oid relationObjectId, bool inhparent,
 			info = makeNode(IndexOptInfo);
 
 			info->indexoid = index->indexrelid;
+			info->reltablespace =
+				RelationGetForm(indexRelation)->reltablespace;
 			info->rel = rel;
 			info->ncolumns = ncolumns = index->indnatts;
 
