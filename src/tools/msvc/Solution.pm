@@ -3,7 +3,7 @@ package Solution;
 #
 # Package that encapsulates a Visual C++ solution file generation
 #
-# $PostgreSQL: pgsql/src/tools/msvc/Solution.pm,v 1.52 2010/01/05 01:06:57 tgl Exp $
+# $PostgreSQL: pgsql/src/tools/msvc/Solution.pm,v 1.53 2010/01/05 13:31:58 mha Exp $
 #
 use Carp;
 use strict;
@@ -93,9 +93,10 @@ sub DetermineToolVersions
 sub IsNewer
 {
     my ($newfile, $oldfile) = @_;
-    if ($oldfile ne 'src\tools\msvc\config.pl')
+    if ($oldfile ne 'src\tools\msvc\config.pl' && $oldfile ne 'src\tools\msvc\config_default.pl')
     {
-        return 1 if IsNewer($newfile, 'src\tools\msvc\config.pl');
+        return 1 if (-f 'src\tools\msvc\config.pl') && IsNewer($newfile, 'src\tools\msvc\config.pl');
+        return 1 if (-f 'src\tools\msvc\config_default.pl') && IsNewer($newfile, 'src\tools\msvc\config_default.pl');
     }
     return 1 if (!(-e $newfile));
     my @nstat = stat($newfile);

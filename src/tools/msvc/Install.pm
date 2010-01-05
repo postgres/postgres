@@ -3,7 +3,7 @@ package Install;
 #
 # Package that provides 'make install' functionality for msvc builds
 #
-# $PostgreSQL: pgsql/src/tools/msvc/Install.pm,v 1.33 2009/04/20 08:38:00 mha Exp $
+# $PostgreSQL: pgsql/src/tools/msvc/Install.pm,v 1.34 2010/01/05 13:31:58 mha Exp $
 #
 use strict;
 use warnings;
@@ -38,7 +38,8 @@ sub Install
 
     my $target = shift;
     our $config;
-    require 'config.pl';
+    require "config_default.pl";
+    require "config.pl" if (-f "config.pl");
 
     chdir("../../..") if (-f "../../../configure");
     chdir("../../../..") if (-f "../../../../configure");

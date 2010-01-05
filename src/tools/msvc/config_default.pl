@@ -10,18 +10,18 @@ our $config = {
     # blocksize => 8,         # --with-blocksize, 8kB by default
     # wal_blocksize => 8,     # --with-wal-blocksize, 8kb by default
     # wal_segsize => 16,      # --with-wal-segsize, 16MB by default
+    ldap=>1,				# --with-ldap
     nls=>undef,				# --enable-nls=<path>
-    tcl=>'c:\tcl',		# --with-tls=<path>
-    perl=>'c:\perl', 			# --with-perl
-    python=>'c:\python24', # --with-python=<path>
-    krb5=>'c:\prog\pgsql\depend\krb5', # --with-krb5=<path>
-    ldap=>1,			# --with-ldap
-    openssl=>'c:\openssl', # --with-ssl=<path>
-    uuid=>'c:\prog\pgsql\depend\ossp-uuid', #--with-ossp-uuid
-    xml=>'c:\prog\pgsql\depend\libxml2',
-    xslt=>'c:\prog\pgsql\depend\libxslt',
-    iconv=>'c:\prog\pgsql\depend\iconv',
-    zlib=>'c:\prog\pgsql\depend\zlib'# --with-zlib=<path>
+    tcl=>undef,				# --with-tls=<path>
+    perl=>undef, 			# --with-perl
+    python=>undef,			# --with-python=<path>
+    krb5=>undef,			# --with-krb5=<path>
+    openssl=>undef,			# --with-ssl=<path>
+    uuid=>undef,			# --with-ossp-uuid
+    xml=>undef,				# --with-libxml=<path>
+    xslt=>undef,			# --with-libxslt=<path>
+    iconv=>undef,			# (not in configure, path to iconv)
+    zlib=>undef				# --with-zlib=<path>
 };
 
 1;
