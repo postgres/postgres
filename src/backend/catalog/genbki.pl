@@ -10,7 +10,7 @@
 # Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/backend/catalog/genbki.pl,v 1.3 2010/01/05 06:41:44 tgl Exp $
+# $PostgreSQL: pgsql/src/backend/catalog/genbki.pl,v 1.4 2010/01/05 20:23:32 tgl Exp $
 #
 #----------------------------------------------------------------------
 
@@ -62,14 +62,19 @@ if ($output_path ne '' && substr($output_path, -1) ne '/')
 }
 
 # Open temp files
-open BKI,      '>', $output_path . 'postgres.bki.tmp'
-  || die "can't open postgres.bki.tmp: $!";
-open SCHEMAPG, '>', $output_path . 'schemapg.h.tmp'
-  || die "can't open 'schemapg.h.tmp: $!";
-open DESCR,    '>', $output_path . 'postgres.description.tmp'
-  || die "can't open postgres.description.tmp: $!";
-open SHDESCR,  '>', $output_path . 'postgres.shdescription.tmp'
-  || die "can't open postgres.shdescription.tmp: $!";
+my $tmpext = ".tmp$$";
+my $bkifile = $output_path . 'postgres.bki';
+open BKI, '>', $bkifile . $tmpext
+  or die "can't open $bkifile$tmpext: $!";
+my $schemafile = $output_path . 'schemapg.h';
+open SCHEMAPG, '>', $schemafile . $tmpext
+  or die "can't open $schemafile$tmpext: $!";
+my $descrfile = $output_path . 'postgres.description';
+open DESCR, '>', $descrfile . $tmpext
+  or die "can't open $descrfile$tmpext: $!";
+my $shdescrfile = $output_path . 'postgres.shdescription';
+open SHDESCR, '>', $shdescrfile . $tmpext
+  or die "can't open $shdescrfile$tmpext: $!";
 
 # Fetch some special data that we will substitute into the output file.
 # CAUTION: be wary about what symbols you substitute into the .bki file here!
@@ -283,15 +288,15 @@ print SCHEMAPG "\n#endif /* SCHEMAPG_H */\n";
 
 # We're done emitting data
 close BKI;
+close SCHEMAPG;
 close DESCR;
 close SHDESCR;
-close SCHEMAPG;
 
 # Finally, rename the completed files into place.
-Catalog::RenameTempFile($output_path . 'postgres.bki');
-Catalog::RenameTempFile($output_path . 'postgres.description');
-Catalog::RenameTempFile($output_path . 'postgres.shdescription');
-Catalog::RenameTempFile($output_path . 'schemapg.h');
+Catalog::RenameTempFile($bkifile, $tmpext);
+Catalog::RenameTempFile($schemafile, $tmpext);
+Catalog::RenameTempFile($descrfile, $tmpext);
+Catalog::RenameTempFile($shdescrfile, $tmpext);
 
 exit 0;
 

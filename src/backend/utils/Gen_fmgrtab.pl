@@ -9,7 +9,7 @@
 #
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/backend/utils/Gen_fmgrtab.pl,v 1.4 2010/01/05 01:06:56 tgl Exp $
+#    $PostgreSQL: pgsql/src/backend/utils/Gen_fmgrtab.pl,v 1.5 2010/01/05 20:23:32 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -58,7 +58,6 @@ foreach my $column ( @{ $catalogs->{pg_proc}->{columns} } )
 my $data = $catalogs->{pg_proc}->{data};
 foreach my $row (@$data)
 {
-
     # To construct fmgroids.h and fmgrtab.c, we need to inspect some
     # of the individual data fields.  Just splitting on whitespace
     # won't work, because some quoted fields might contain internal
@@ -81,10 +80,19 @@ foreach my $row (@$data)
         nargs  => $row->{pronargs},
         prosrc => $row->{prosrc},
       };
+
+    # Hack to work around memory leak in some versions of Perl
+    $row = undef;
 }
 
 # Emit headers for both files
-open H, '>', $output_path . 'fmgroids.h.tmp' || die "Could not open fmgroids.h.tmp: $!";
+my $tmpext = ".tmp$$";
+my $oidsfile = $output_path . 'fmgroids.h';
+my $tabfile = $output_path . 'fmgrtab.c';
+
+open H, '>', $oidsfile . $tmpext or die "Could not open $oidsfile$tmpext: $!";
+open T, '>', $tabfile . $tmpext or die "Could not open $tabfile$tmpext: $!";
+
 print H 
 qq|/*-------------------------------------------------------------------------
  *
@@ -123,7 +131,6 @@ qq|/*-------------------------------------------------------------------------
  */
 |;
 
-open T, '>', $output_path . 'fmgrtab.c.tmp' || die "Could not open fmgrtab.c.tmp: $!";
 print T
 qq|/*-------------------------------------------------------------------------
  *
@@ -174,7 +181,6 @@ foreach my $s (sort {$a->{oid} <=> $b->{oid}} @fmgr)
 
 # And add the file footers.
 print H "\n#endif /* FMGROIDS_H */\n";
-close(H);
 
 print T
 qq|  /* dummy entry is easier than getting rid of comma after last real one */
@@ -187,11 +193,12 @@ qq|  /* dummy entry is easier than getting rid of comma after last real one */
 const int fmgr_nbuiltins = (sizeof(fmgr_builtins) / sizeof(FmgrBuiltin)) - 1;
 |;
 
+close(H);
 close(T);
 
 # Finally, rename the completed files into place.
-Catalog::RenameTempFile($output_path . 'fmgroids.h');
-Catalog::RenameTempFile($output_path . 'fmgrtab.c');
+Catalog::RenameTempFile($oidsfile, $tmpext);
+Catalog::RenameTempFile($tabfile, $tmpext);
 
 sub usage
 {
