@@ -5,7 +5,7 @@
 # Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/backend/Makefile,v 1.138 2010/01/05 01:06:56 tgl Exp $
+# $PostgreSQL: pgsql/src/backend/Makefile,v 1.139 2010/01/05 01:20:35 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -118,6 +118,8 @@ submake-schemapg:
 	$(MAKE) -C catalog schemapg.h
 
 .PHONY: submake-schemapg
+
+catalog/schemapg.h: submake-schemapg
 
 
 # The postgres.o target is needed by the rule in Makefile.global that
