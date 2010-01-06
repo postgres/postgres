@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablespace.c,v 1.67 2010/01/06 01:48:09 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablespace.c,v 1.68 2010/01/06 23:23:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -82,7 +82,7 @@ char	   *temp_tablespaces = NULL;
 
 
 static bool remove_tablespace_directories(Oid tablespaceoid, bool redo);
-static void set_short_version(const char *path);
+static void write_version_file(const char *path);
 
 
 /*
@@ -332,7 +332,7 @@ CreateTableSpace(CreateTableSpaceStmt *stmt)
 	 * (the emptiness check above will fail), and to label tablespace
 	 * directories by PG version.
 	 */
-	set_short_version(location);
+	write_version_file(location);
 
 	/*
 	 * All seems well, create the symlink
@@ -673,46 +673,21 @@ remove_tablespace_directories(Oid tablespaceoid, bool redo)
  * write out the PG_VERSION file in the specified directory
  */
 static void
-set_short_version(const char *path)
+write_version_file(const char *path)
 {
-	char	   *short_version;
-	bool		gotdot = false;
-	int			end;
 	char	   *fullname;
 	FILE	   *version_file;
-
-	/* Construct short version string (should match initdb.c) */
-	short_version = pstrdup(PG_VERSION);
-
-	for (end = 0; short_version[end] != '\0'; end++)
-	{
-		if (short_version[end] == '.')
-		{
-			Assert(end != 0);
-			if (gotdot)
-				break;
-			else
-				gotdot = true;
-		}
-		else if (short_version[end] < '0' || short_version[end] > '9')
-		{
-			/* gone past digits and dots */
-			break;
-		}
-	}
-	Assert(end > 0 && short_version[end - 1] != '.' && gotdot);
-	short_version[end] = '\0';
 
 	/* Now write the file */
 	fullname = palloc(strlen(path) + 11 + 1);
 	sprintf(fullname, "%s/PG_VERSION", path);
-	version_file = AllocateFile(fullname, PG_BINARY_W);
-	if (version_file == NULL)
+
+	if ((version_file = AllocateFile(fullname, PG_BINARY_W)) == NULL)
 		ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("could not write to file \"%s\": %m",
 						fullname)));
-	fprintf(version_file, "%s\n", short_version);
+	fprintf(version_file, "%s\n", PG_MAJORVERSION);
 	if (FreeFile(version_file))
 		ereport(ERROR,
 				(errcode_for_file_access(),
@@ -720,7 +695,6 @@ set_short_version(const char *path)
 						fullname)));
 
 	pfree(fullname);
-	pfree(short_version);
 }
 
 /*
@@ -1370,7 +1344,7 @@ tblspc_redo(XLogRecPtr lsn, XLogRecord *record)
 						 location)));
 
 		/* Create or re-create the PG_VERSION file in the target directory */
-		set_short_version(location);
+		write_version_file(location);
 
 		/* Create the symlink if not already present */
 		linkloc = (char *) palloc(OIDCHARS + OIDCHARS + 1);
