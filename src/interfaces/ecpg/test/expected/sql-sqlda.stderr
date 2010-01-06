@@ -36,47 +36,23 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 120: correctly got 1 tuples with 5 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: sqlda_common_total_size type int offset 512
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: sqlda_common_total_size type char offset 516
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: sqlda_common_total_size type numeric offset1 520
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: sqlda_common_total_size type numeric offset2 560
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: sqlda_common_total_size type double offset 568
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: sqlda_common_total_size type char offset 576
-[NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_build_native_sqlda sqld = 5
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 120: new sqlda was built
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_set_native_sqlda type int offset 512
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_set_native_sqlda row 0 col 0 IS NOT NULL
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_get_data on line 120: RESULT: 1 offset: -1; array: yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_set_native_sqlda type char offset 516
-[NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_set_native_sqlda row 0 col 1 IS NOT NULL
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_get_data on line 120: RESULT: a offset: -1; array: yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_set_native_sqlda type numeric offset1 520
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_set_native_sqlda type numeric offset2 560
-[NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_set_native_sqlda row 0 col 2 IS NOT NULL
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_set_native_sqlda type double offset 568
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_set_native_sqlda row 0 col 3 IS NOT NULL
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_get_data on line 120: RESULT: 1 offset: -1; array: yes
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_set_native_sqlda type char offset 576
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_set_native_sqlda row 0 col 4 IS NOT NULL
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -90,39 +66,19 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 120: correctly got 1 tuples with 5 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: sqlda_common_total_size type int offset 512
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: sqlda_common_total_size type char offset 516
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: sqlda_common_total_size type numeric offset1 520
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: sqlda_common_total_size type double offset 560
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: sqlda_common_total_size type char offset 568
-[NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_build_native_sqlda sqld = 5
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 120: new sqlda was built
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_set_native_sqlda type int offset 512
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_set_native_sqlda row 0 col 0 IS NOT NULL
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_get_data on line 120: RESULT: 2 offset: -1; array: yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_set_native_sqlda type char offset 516
-[NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_set_native_sqlda row 0 col 1 IS NULL
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_set_native_sqlda type numeric offset1 520
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_set_native_sqlda row 0 col 2 IS NULL
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_set_native_sqlda type double offset 560
-[NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_set_native_sqlda row 0 col 3 IS NULL
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_set_native_sqlda type char offset 568
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_set_native_sqlda row 0 col 4 IS NULL
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -134,47 +90,23 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 120: correctly got 1 tuples with 5 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: sqlda_common_total_size type int offset 512
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: sqlda_common_total_size type char offset 516
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: sqlda_common_total_size type numeric offset1 520
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: sqlda_common_total_size type numeric offset2 560
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: sqlda_common_total_size type double offset 568
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: sqlda_common_total_size type char offset 576
-[NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_build_native_sqlda sqld = 5
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 120: new sqlda was built
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_set_native_sqlda type int offset 512
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_set_native_sqlda row 0 col 0 IS NOT NULL
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_get_data on line 120: RESULT: 3 offset: -1; array: yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_set_native_sqlda type char offset 516
-[NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_set_native_sqlda row 0 col 1 IS NOT NULL
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_get_data on line 120: RESULT: "c" offset: -1; array: yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_set_native_sqlda type numeric offset1 520
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_set_native_sqlda type numeric offset2 560
-[NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_set_native_sqlda row 0 col 2 IS NOT NULL
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_set_native_sqlda type double offset 568
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_set_native_sqlda row 0 col 3 IS NOT NULL
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_get_data on line 120: RESULT: NaN offset: -1; array: yes
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_set_native_sqlda type char offset 576
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_set_native_sqlda row 0 col 4 IS NOT NULL
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -188,47 +120,23 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 120: correctly got 1 tuples with 5 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: sqlda_common_total_size type int offset 512
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: sqlda_common_total_size type char offset 516
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: sqlda_common_total_size type numeric offset1 520
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: sqlda_common_total_size type numeric offset2 560
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: sqlda_common_total_size type double offset 568
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: sqlda_common_total_size type char offset 576
-[NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_build_native_sqlda sqld = 5
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 120: new sqlda was built
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_set_native_sqlda type int offset 512
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_set_native_sqlda row 0 col 0 IS NOT NULL
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_get_data on line 120: RESULT: 4 offset: -1; array: yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_set_native_sqlda type char offset 516
-[NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_set_native_sqlda row 0 col 1 IS NOT NULL
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_get_data on line 120: RESULT: d offset: -1; array: yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_set_native_sqlda type numeric offset1 520
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_set_native_sqlda type numeric offset2 560
-[NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_set_native_sqlda row 0 col 2 IS NOT NULL
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_set_native_sqlda type double offset 568
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_set_native_sqlda row 0 col 3 IS NOT NULL
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_get_data on line 120: RESULT: 4 offset: -1; array: yes
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_set_native_sqlda type char offset 576
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_set_native_sqlda row 0 col 4 IS NOT NULL
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -266,47 +174,23 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 150: correctly got 4 tuples with 5 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: sqlda_common_total_size type int offset 512
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: sqlda_common_total_size type char offset 516
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: sqlda_common_total_size type numeric offset1 520
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: sqlda_common_total_size type numeric offset2 560
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: sqlda_common_total_size type double offset 568
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: sqlda_common_total_size type char offset 576
-[NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_build_native_sqlda sqld = 5
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 150: new sqlda was built
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_set_native_sqlda type int offset 512
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_set_native_sqlda row 3 col 0 IS NOT NULL
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_get_data on line 150: RESULT: 4 offset: -1; array: yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_set_native_sqlda type char offset 516
-[NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_set_native_sqlda row 3 col 1 IS NOT NULL
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_get_data on line 150: RESULT: d offset: -1; array: yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_set_native_sqlda type numeric offset1 520
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_set_native_sqlda type numeric offset2 560
-[NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_set_native_sqlda row 3 col 2 IS NOT NULL
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_set_native_sqlda type double offset 568
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_set_native_sqlda row 3 col 3 IS NOT NULL
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_get_data on line 150: RESULT: 4 offset: -1; array: yes
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_set_native_sqlda type char offset 576
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_set_native_sqlda row 3 col 4 IS NOT NULL
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -314,47 +198,23 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 150: putting result (1 tuple 5 fields) into sqlda descriptor
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: sqlda_common_total_size type int offset 512
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: sqlda_common_total_size type char offset 516
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: sqlda_common_total_size type numeric offset1 520
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: sqlda_common_total_size type numeric offset2 560
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: sqlda_common_total_size type double offset 568
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: sqlda_common_total_size type char offset 576
-[NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_build_native_sqlda sqld = 5
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 150: new sqlda was built
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_set_native_sqlda type int offset 512
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_set_native_sqlda row 2 col 0 IS NOT NULL
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_get_data on line 150: RESULT: 3 offset: -1; array: yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_set_native_sqlda type char offset 516
-[NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_set_native_sqlda row 2 col 1 IS NOT NULL
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_get_data on line 150: RESULT: "c" offset: -1; array: yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_set_native_sqlda type numeric offset1 520
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_set_native_sqlda type numeric offset2 560
-[NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_set_native_sqlda row 2 col 2 IS NOT NULL
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_set_native_sqlda type double offset 568
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_set_native_sqlda row 2 col 3 IS NOT NULL
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_get_data on line 150: RESULT: NaN offset: -1; array: yes
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_set_native_sqlda type char offset 576
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_set_native_sqlda row 2 col 4 IS NOT NULL
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -362,85 +222,41 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 150: putting result (1 tuple 5 fields) into sqlda descriptor
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: sqlda_common_total_size type int offset 512
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: sqlda_common_total_size type char offset 516
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: sqlda_common_total_size type numeric offset1 520
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: sqlda_common_total_size type double offset 560
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: sqlda_common_total_size type char offset 568
-[NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_build_native_sqlda sqld = 5
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 150: new sqlda was built
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_set_native_sqlda type int offset 512
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_set_native_sqlda row 1 col 0 IS NOT NULL
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_get_data on line 150: RESULT: 2 offset: -1; array: yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_set_native_sqlda type char offset 516
-[NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_set_native_sqlda row 1 col 1 IS NULL
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_set_native_sqlda type numeric offset1 520
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_set_native_sqlda row 1 col 2 IS NULL
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_set_native_sqlda type double offset 560
-[NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_set_native_sqlda row 1 col 3 IS NULL
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_set_native_sqlda type char offset 568
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_set_native_sqlda row 1 col 4 IS NULL
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 150: putting result (1 tuple 5 fields) into sqlda descriptor
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: sqlda_common_total_size type int offset 512
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: sqlda_common_total_size type char offset 516
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: sqlda_common_total_size type numeric offset1 520
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: sqlda_common_total_size type numeric offset2 560
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: sqlda_common_total_size type double offset 568
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: sqlda_common_total_size type char offset 576
-[NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_build_native_sqlda sqld = 5
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 150: new sqlda was built
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_set_native_sqlda type int offset 512
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_set_native_sqlda row 0 col 0 IS NOT NULL
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_get_data on line 150: RESULT: 1 offset: -1; array: yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_set_native_sqlda type char offset 516
-[NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_set_native_sqlda row 0 col 1 IS NOT NULL
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_get_data on line 150: RESULT: a offset: -1; array: yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_set_native_sqlda type numeric offset1 520
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_set_native_sqlda type numeric offset2 560
-[NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_set_native_sqlda row 0 col 2 IS NOT NULL
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_set_native_sqlda type double offset 568
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_set_native_sqlda row 0 col 3 IS NOT NULL
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_get_data on line 150: RESULT: 1 offset: -1; array: yes
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_set_native_sqlda type char offset 576
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_set_native_sqlda row 0 col 4 IS NOT NULL
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -466,47 +282,23 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 194: correctly got 1 tuples with 5 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: sqlda_common_total_size type int offset 512
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: sqlda_common_total_size type char offset 516
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: sqlda_common_total_size type numeric offset1 520
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: sqlda_common_total_size type numeric offset2 560
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: sqlda_common_total_size type double offset 568
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: sqlda_common_total_size type char offset 576
-[NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_build_native_sqlda sqld = 5
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 194: new sqlda was built
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_set_native_sqlda type int offset 512
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_set_native_sqlda row 0 col 0 IS NOT NULL
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_get_data on line 194: RESULT: 4 offset: -1; array: yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_set_native_sqlda type char offset 516
-[NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_set_native_sqlda row 0 col 1 IS NOT NULL
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_get_data on line 194: RESULT: d offset: -1; array: yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_set_native_sqlda type numeric offset1 520
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_set_native_sqlda type numeric offset2 560
-[NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_set_native_sqlda row 0 col 2 IS NOT NULL
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_set_native_sqlda type double offset 568
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_set_native_sqlda row 0 col 3 IS NOT NULL
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_get_data on line 194: RESULT: 4 offset: -1; array: yes
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_set_native_sqlda type char offset 576
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_set_native_sqlda row 0 col 4 IS NOT NULL
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -528,47 +320,23 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 231: correctly got 1 tuples with 5 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: sqlda_common_total_size type int offset 512
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: sqlda_common_total_size type char offset 516
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: sqlda_common_total_size type numeric offset1 520
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: sqlda_common_total_size type numeric offset2 560
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: sqlda_common_total_size type double offset 568
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: sqlda_common_total_size type char offset 576
-[NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_build_native_sqlda sqld = 5
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 231: new sqlda was built
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_set_native_sqlda type int offset 512
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_set_native_sqlda row 0 col 0 IS NOT NULL
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_get_data on line 231: RESULT: 4 offset: -1; array: yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_set_native_sqlda type char offset 516
-[NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_set_native_sqlda row 0 col 1 IS NOT NULL
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_get_data on line 231: RESULT: d offset: -1; array: yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_set_native_sqlda type numeric offset1 520
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_set_native_sqlda type numeric offset2 560
-[NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_set_native_sqlda row 0 col 2 IS NOT NULL
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_set_native_sqlda type double offset 568
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_set_native_sqlda row 0 col 3 IS NOT NULL
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_get_data on line 231: RESULT: 4 offset: -1; array: yes
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_set_native_sqlda type char offset 576
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_set_native_sqlda row 0 col 4 IS NOT NULL
 [NO_PID]: sqlca: code: 0, state: 00000

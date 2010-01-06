@@ -10,9 +10,6 @@
 #include "postgres_fe.h"
 #include "pg_type.h"
 
-#include <inttypes.h>
-#include <dlfcn.h>
-
 #include "ecpg-pthread-win32.h"
 #include "decimal.h"
 #include "ecpgtype.h"
@@ -80,38 +77,30 @@ sqlda_common_total_size(const PGresult *res, int row, enum COMPAT_MODE compat, l
 			case ECPGt_short:
 			case ECPGt_unsigned_short:
 				ecpg_sqlda_align_add_size(offset, sizeof(short), sizeof(short), &offset, &next_offset);
-				ecpg_log("%s type %s offset %d\n", __FUNCTION__, ecpg_type_name(type), offset);
 				break;
 			case ECPGt_int:
 			case ECPGt_unsigned_int:
 				ecpg_sqlda_align_add_size(offset, sizeof(int), sizeof(int), &offset, &next_offset);
-				ecpg_log("%s type %s offset %d\n", __FUNCTION__, ecpg_type_name(type), offset);
 				break;
 			case ECPGt_long:
 			case ECPGt_unsigned_long:
 				ecpg_sqlda_align_add_size(offset, sizeof(long), sizeof(long), &offset, &next_offset);
-				ecpg_log("%s type %s offset %d\n", __FUNCTION__, ecpg_type_name(type), offset);
 				break;
 			case ECPGt_long_long:
 			case ECPGt_unsigned_long_long:
 				ecpg_sqlda_align_add_size(offset, sizeof(long long), sizeof(long long), &offset, &next_offset);
-				ecpg_log("%s type %s offset %d\n", __FUNCTION__, ecpg_type_name(type), offset);
 				break;
 			case ECPGt_bool:
 				ecpg_sqlda_align_add_size(offset, sizeof(bool), sizeof(bool), &offset, &next_offset);
-				ecpg_log("%s type %s offset %d\n", __FUNCTION__, ecpg_type_name(type), offset);
 				break;
 			case ECPGt_float:
 				ecpg_sqlda_align_add_size(offset, sizeof(float), sizeof(float), &offset, &next_offset);
-				ecpg_log("%s type %s offset %d\n", __FUNCTION__, ecpg_type_name(type), offset);
 				break;
 			case ECPGt_double:
 				ecpg_sqlda_align_add_size(offset, sizeof(double), sizeof(double), &offset, &next_offset);
-				ecpg_log("%s type %s offset %d\n", __FUNCTION__, ecpg_type_name(type), offset);
 				break;
 			case ECPGt_decimal:
 				ecpg_sqlda_align_add_size(offset, sizeof(int), sizeof(decimal), &offset, &next_offset);
-				ecpg_log("%s type %s offset %d\n", __FUNCTION__, ecpg_type_name(type), offset);
 				break;
 			case ECPGt_numeric:
 				/*
@@ -120,7 +109,6 @@ sqlda_common_total_size(const PGresult *res, int row, enum COMPAT_MODE compat, l
 				 * of the space needed for the numeric structure.
 				 */
 				ecpg_sqlda_align_add_size(offset, sizeof(int), sizeof(numeric), &offset, &next_offset);
-				ecpg_log("%s type %s offset1 %d\n", __FUNCTION__, ecpg_type_name(type), offset);
 				if (!PQgetisnull(res, row, i))
 				{
 					char	   *val = PQgetvalue(res, row, i);
@@ -130,21 +118,17 @@ sqlda_common_total_size(const PGresult *res, int row, enum COMPAT_MODE compat, l
 					if (!num)
 						break;
 					ecpg_sqlda_align_add_size(next_offset, sizeof(int), num->ndigits + 1, &offset, &next_offset);
-					ecpg_log("%s type %s offset2 %d\n", __FUNCTION__, ecpg_type_name(type), offset);
 					PGTYPESnumeric_free(num);
 				}
 				break;
 			case ECPGt_date:
 				ecpg_sqlda_align_add_size(offset, sizeof(int), sizeof(date), &offset, &next_offset);
-				ecpg_log("%s type %s offset %d\n", __FUNCTION__, ecpg_type_name(type), offset);
 				break;
 			case ECPGt_timestamp:
 				ecpg_sqlda_align_add_size(offset, sizeof(int), sizeof(timestamp), &offset, &next_offset);
-				ecpg_log("%s type %s offset %d\n", __FUNCTION__, ecpg_type_name(type), offset);
 				break;
 			case ECPGt_interval:
 				ecpg_sqlda_align_add_size(offset, sizeof(int), sizeof(interval), &offset, &next_offset);
-				ecpg_log("%s type %s offset %d\n", __FUNCTION__, ecpg_type_name(type), offset);
 				break;
 			case ECPGt_char:
 			case ECPGt_unsigned_char:
@@ -153,7 +137,6 @@ sqlda_common_total_size(const PGresult *res, int row, enum COMPAT_MODE compat, l
 			{
 				long	datalen = strlen(PQgetvalue(res, row, i)) + 1;
 				ecpg_sqlda_align_add_size(offset, sizeof(int), datalen, &offset, &next_offset);
-				ecpg_log("%s type %s offset %d\n", __FUNCTION__, ecpg_type_name(type), offset);
 				break;
 			}
 		}
@@ -285,52 +268,44 @@ ecpg_set_compat_sqlda(int lineno, struct sqlda_compat **_sqlda, const PGresult *
 				ecpg_sqlda_align_add_size(offset, sizeof(short), sizeof(short), &offset, &next_offset);
 				sqlda->sqlvar[i].sqldata = (char *)sqlda + offset;
 				sqlda->sqlvar[i].sqllen = sizeof(short);
-				ecpg_log("%s type %s offset %d\n", __FUNCTION__, ecpg_type_name(sqlda->sqlvar[i].sqltype), offset);
 				break;
 			case ECPGt_int:
 			case ECPGt_unsigned_int:
 				ecpg_sqlda_align_add_size(offset, sizeof(int), sizeof(int), &offset, &next_offset);
 				sqlda->sqlvar[i].sqldata = (char *)sqlda + offset;
 				sqlda->sqlvar[i].sqllen = sizeof(int);
-				ecpg_log("%s type %s offset %d\n", __FUNCTION__, ecpg_type_name(sqlda->sqlvar[i].sqltype), offset);
 				break;
 			case ECPGt_long:
 			case ECPGt_unsigned_long:
 				ecpg_sqlda_align_add_size(offset, sizeof(long), sizeof(long), &offset, &next_offset);
 				sqlda->sqlvar[i].sqldata = (char *)sqlda + offset;
 				sqlda->sqlvar[i].sqllen = sizeof(long);
-				ecpg_log("%s type %s offset %d\n", __FUNCTION__, ecpg_type_name(sqlda->sqlvar[i].sqltype), offset);
 				break;
 			case ECPGt_long_long:
 			case ECPGt_unsigned_long_long:
 				ecpg_sqlda_align_add_size(offset, sizeof(long long), sizeof(long long), &offset, &next_offset);
 				sqlda->sqlvar[i].sqldata = (char *)sqlda + offset;
 				sqlda->sqlvar[i].sqllen = sizeof(long long);
-				ecpg_log("%s type %s offset %d\n", __FUNCTION__, ecpg_type_name(sqlda->sqlvar[i].sqltype), offset);
 				break;
 			case ECPGt_bool:
 				ecpg_sqlda_align_add_size(offset, sizeof(bool), sizeof(bool), &offset, &next_offset);
 				sqlda->sqlvar[i].sqldata = (char *)sqlda + offset;
 				sqlda->sqlvar[i].sqllen = sizeof(bool);
-				ecpg_log("%s type %s offset %d\n", __FUNCTION__, ecpg_type_name(sqlda->sqlvar[i].sqltype), offset);
 				break;
 			case ECPGt_float:
 				ecpg_sqlda_align_add_size(offset, sizeof(float), sizeof(float), &offset, &next_offset);
 				sqlda->sqlvar[i].sqldata = (char *)sqlda + offset;
 				sqlda->sqlvar[i].sqllen = sizeof(float);
-				ecpg_log("%s type %s offset %d\n", __FUNCTION__, ecpg_type_name(sqlda->sqlvar[i].sqltype), offset);
 				break;
 			case ECPGt_double:
 				ecpg_sqlda_align_add_size(offset, sizeof(double), sizeof(double), &offset, &next_offset);
 				sqlda->sqlvar[i].sqldata = (char *)sqlda + offset;
 				sqlda->sqlvar[i].sqllen = sizeof(double);
-				ecpg_log("%s type %s offset %d\n", __FUNCTION__, ecpg_type_name(sqlda->sqlvar[i].sqltype), offset);
 				break;
 			case ECPGt_decimal:
 				ecpg_sqlda_align_add_size(offset, sizeof(int), sizeof(decimal), &offset, &next_offset);
 				sqlda->sqlvar[i].sqldata = (char *)sqlda + offset;
 				sqlda->sqlvar[i].sqllen = sizeof(decimal);
-				ecpg_log("%s type %s offset %d\n", __FUNCTION__, ecpg_type_name(sqlda->sqlvar[i].sqltype), offset);
 				break;
 			case ECPGt_numeric:
 			{
@@ -342,7 +317,6 @@ ecpg_set_compat_sqlda(int lineno, struct sqlda_compat **_sqlda, const PGresult *
 				ecpg_sqlda_align_add_size(offset, sizeof(int), sizeof(numeric), &offset, &next_offset);
 				sqlda->sqlvar[i].sqldata = (char *)sqlda + offset;
 				sqlda->sqlvar[i].sqllen = sizeof(numeric);
-				ecpg_log("%s type %s offset1 %d\n", __FUNCTION__, ecpg_type_name(sqlda->sqlvar[i].sqltype), offset);
 
 				if (PQgetisnull(res, row, i))
 				{
@@ -362,7 +336,6 @@ ecpg_set_compat_sqlda(int lineno, struct sqlda_compat **_sqlda, const PGresult *
 
 				ecpg_sqlda_align_add_size(next_offset, sizeof(int), num->ndigits + 1, &offset, &next_offset);
 				memcpy((char *)sqlda + offset, num->buf, num->ndigits + 1);
-				ecpg_log("%s type %s offset2 %d\n", __FUNCTION__, ecpg_type_name(sqlda->sqlvar[i].sqltype), offset);
 
 				((numeric *)sqlda->sqlvar[i].sqldata)->buf = (NumericDigit *)sqlda + offset;
 				((numeric *)sqlda->sqlvar[i].sqldata)->digits = (NumericDigit *)sqlda + offset + (num->digits - num->buf);
@@ -375,19 +348,16 @@ ecpg_set_compat_sqlda(int lineno, struct sqlda_compat **_sqlda, const PGresult *
 				ecpg_sqlda_align_add_size(offset, sizeof(date), sizeof(date), &offset, &next_offset);
 				sqlda->sqlvar[i].sqldata = (char *)sqlda + offset;
 				sqlda->sqlvar[i].sqllen = sizeof(date);
-				ecpg_log("%s type %s offset %d\n", __FUNCTION__, ecpg_type_name(sqlda->sqlvar[i].sqltype), offset);
 				break;
 			case ECPGt_timestamp:
 				ecpg_sqlda_align_add_size(offset, sizeof(timestamp), sizeof(timestamp), &offset, &next_offset);
 				sqlda->sqlvar[i].sqldata = (char *)sqlda + offset;
 				sqlda->sqlvar[i].sqllen = sizeof(timestamp);
-				ecpg_log("%s type %s offset %d\n", __FUNCTION__, ecpg_type_name(sqlda->sqlvar[i].sqltype), offset);
 				break;
 			case ECPGt_interval:
 				ecpg_sqlda_align_add_size(offset, sizeof(int64_t), sizeof(interval), &offset, &next_offset);
 				sqlda->sqlvar[i].sqldata = (char *)sqlda + offset;
 				sqlda->sqlvar[i].sqllen = sizeof(interval);
-				ecpg_log("%s type %s offset %d\n", __FUNCTION__, ecpg_type_name(sqlda->sqlvar[i].sqltype), offset);
 				break;
 			case ECPGt_char:
 			case ECPGt_unsigned_char:
@@ -399,7 +369,6 @@ ecpg_set_compat_sqlda(int lineno, struct sqlda_compat **_sqlda, const PGresult *
 				sqlda->sqlvar[i].sqllen = datalen;
 				if (datalen > 32768)
 					sqlda->sqlvar[i].sqlilongdata = sqlda->sqlvar[i].sqldata;
-				ecpg_log("%s type %s offset %d\n", __FUNCTION__, ecpg_type_name(sqlda->sqlvar[i].sqltype), offset);
 				break;
 		}
 
@@ -484,52 +453,44 @@ ecpg_set_native_sqlda(int lineno, struct sqlda_struct **_sqlda, const PGresult *
 				ecpg_sqlda_align_add_size(offset, sizeof(short), sizeof(short), &offset, &next_offset);
 				sqlda->sqlvar[i].sqldata = (char *)sqlda + offset;
 				sqlda->sqlvar[i].sqllen = sizeof(short);
-				ecpg_log("%s type %s offset %d\n", __FUNCTION__, ecpg_type_name(sqlda->sqlvar[i].sqltype), offset);
 				break;
 			case ECPGt_int:
 			case ECPGt_unsigned_int:
 				ecpg_sqlda_align_add_size(offset, sizeof(int), sizeof(int), &offset, &next_offset);
 				sqlda->sqlvar[i].sqldata = (char *)sqlda + offset;
 				sqlda->sqlvar[i].sqllen = sizeof(int);
-				ecpg_log("%s type %s offset %d\n", __FUNCTION__, ecpg_type_name(sqlda->sqlvar[i].sqltype), offset);
 				break;
 			case ECPGt_long:
 			case ECPGt_unsigned_long:
 				ecpg_sqlda_align_add_size(offset, sizeof(long), sizeof(long), &offset, &next_offset);
 				sqlda->sqlvar[i].sqldata = (char *)sqlda + offset;
 				sqlda->sqlvar[i].sqllen = sizeof(long);
-				ecpg_log("%s type %s offset %d\n", __FUNCTION__, ecpg_type_name(sqlda->sqlvar[i].sqltype), offset);
 				break;
 			case ECPGt_long_long:
 			case ECPGt_unsigned_long_long:
 				ecpg_sqlda_align_add_size(offset, sizeof(long long), sizeof(long long), &offset, &next_offset);
 				sqlda->sqlvar[i].sqldata = (char *)sqlda + offset;
 				sqlda->sqlvar[i].sqllen = sizeof(long long);
-				ecpg_log("%s type %s offset %d\n", __FUNCTION__, ecpg_type_name(sqlda->sqlvar[i].sqltype), offset);
 				break;
 			case ECPGt_bool:
 				ecpg_sqlda_align_add_size(offset, sizeof(bool), sizeof(bool), &offset, &next_offset);
 				sqlda->sqlvar[i].sqldata = (char *)sqlda + offset;
 				sqlda->sqlvar[i].sqllen = sizeof(bool);
-				ecpg_log("%s type %s offset %d\n", __FUNCTION__, ecpg_type_name(sqlda->sqlvar[i].sqltype), offset);
 				break;
 			case ECPGt_float:
 				ecpg_sqlda_align_add_size(offset, sizeof(float), sizeof(float), &offset, &next_offset);
 				sqlda->sqlvar[i].sqldata = (char *)sqlda + offset;
 				sqlda->sqlvar[i].sqllen = sizeof(float);
-				ecpg_log("%s type %s offset %d\n", __FUNCTION__, ecpg_type_name(sqlda->sqlvar[i].sqltype), offset);
 				break;
 			case ECPGt_double:
 				ecpg_sqlda_align_add_size(offset, sizeof(double), sizeof(double), &offset, &next_offset);
 				sqlda->sqlvar[i].sqldata = (char *)sqlda + offset;
 				sqlda->sqlvar[i].sqllen = sizeof(double);
-				ecpg_log("%s type %s offset %d\n", __FUNCTION__, ecpg_type_name(sqlda->sqlvar[i].sqltype), offset);
 				break;
 			case ECPGt_decimal:
 				ecpg_sqlda_align_add_size(offset, sizeof(int), sizeof(decimal), &offset, &next_offset);
 				sqlda->sqlvar[i].sqldata = (char *)sqlda + offset;
 				sqlda->sqlvar[i].sqllen = sizeof(decimal);
-				ecpg_log("%s type %s offset %d\n", __FUNCTION__, ecpg_type_name(sqlda->sqlvar[i].sqltype), offset);
 				break;
 			case ECPGt_numeric:
 			{
@@ -541,7 +502,6 @@ ecpg_set_native_sqlda(int lineno, struct sqlda_struct **_sqlda, const PGresult *
 				ecpg_sqlda_align_add_size(offset, sizeof(int), sizeof(numeric), &offset, &next_offset);
 				sqlda->sqlvar[i].sqldata = (char *)sqlda + offset;
 				sqlda->sqlvar[i].sqllen = sizeof(numeric);
-				ecpg_log("%s type %s offset1 %d\n", __FUNCTION__, ecpg_type_name(sqlda->sqlvar[i].sqltype), offset);
 
 				if (PQgetisnull(res, row, i))
 				{
@@ -561,7 +521,6 @@ ecpg_set_native_sqlda(int lineno, struct sqlda_struct **_sqlda, const PGresult *
 
 				ecpg_sqlda_align_add_size(next_offset, sizeof(int), num->ndigits + 1, &offset, &next_offset);
 				memcpy((char *)sqlda + offset, num->buf, num->ndigits + 1);
-				ecpg_log("%s type %s offset2 %d\n", __FUNCTION__, ecpg_type_name(sqlda->sqlvar[i].sqltype), offset);
 
 				((numeric *)sqlda->sqlvar[i].sqldata)->buf = (NumericDigit *)sqlda + offset;
 				((numeric *)sqlda->sqlvar[i].sqldata)->digits = (NumericDigit *)sqlda + offset + (num->digits - num->buf);
@@ -574,19 +533,16 @@ ecpg_set_native_sqlda(int lineno, struct sqlda_struct **_sqlda, const PGresult *
 				ecpg_sqlda_align_add_size(offset, sizeof(date), sizeof(date), &offset, &next_offset);
 				sqlda->sqlvar[i].sqldata = (char *)sqlda + offset;
 				sqlda->sqlvar[i].sqllen = sizeof(date);
-				ecpg_log("%s type %s offset %d\n", __FUNCTION__, ecpg_type_name(sqlda->sqlvar[i].sqltype), offset);
 				break;
 			case ECPGt_timestamp:
 				ecpg_sqlda_align_add_size(offset, sizeof(timestamp), sizeof(timestamp), &offset, &next_offset);
 				sqlda->sqlvar[i].sqldata = (char *)sqlda + offset;
 				sqlda->sqlvar[i].sqllen = sizeof(timestamp);
-				ecpg_log("%s type %s offset %d\n", __FUNCTION__, ecpg_type_name(sqlda->sqlvar[i].sqltype), offset);
 				break;
 			case ECPGt_interval:
 				ecpg_sqlda_align_add_size(offset, sizeof(int64_t), sizeof(interval), &offset, &next_offset);
 				sqlda->sqlvar[i].sqldata = (char *)sqlda + offset;
 				sqlda->sqlvar[i].sqllen = sizeof(interval);
-				ecpg_log("%s type %s offset %d\n", __FUNCTION__, ecpg_type_name(sqlda->sqlvar[i].sqltype), offset);
 				break;
 			case ECPGt_char:
 			case ECPGt_unsigned_char:
@@ -596,7 +552,6 @@ ecpg_set_native_sqlda(int lineno, struct sqlda_struct **_sqlda, const PGresult *
 				ecpg_sqlda_align_add_size(offset, sizeof(int), datalen, &offset, &next_offset);
 				sqlda->sqlvar[i].sqldata = (char *)sqlda + offset;
 				sqlda->sqlvar[i].sqllen = datalen;
-				ecpg_log("%s type %s offset %d\n", __FUNCTION__, ecpg_type_name(sqlda->sqlvar[i].sqltype), offset);
 				break;
 		}
 
