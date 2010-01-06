@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.422 2010/01/05 21:53:59 rhaas Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.423 2010/01/06 05:31:14 itagaki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2244,7 +2244,8 @@ typedef enum VacuumOption
 	VACOPT_ANALYZE		= 1 << 1,	/* do ANALYZE */
 	VACOPT_VERBOSE		= 1 << 2,	/* print progress info */
 	VACOPT_FREEZE		= 1 << 3,	/* FREEZE option */
-	VACOPT_FULL			= 1 << 4	/* FULL (non-concurrent) vacuum */
+	VACOPT_FULL			= 1 << 4,	/* FULL (non-concurrent) vacuum */
+	VACOPT_INPLACE		= 1 << 5	/* traditional FULL INPLACE vacuum */
 } VacuumOption;
 
 typedef struct VacuumStmt

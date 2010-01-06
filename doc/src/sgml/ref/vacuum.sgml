@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/vacuum.sgml,v 1.56 2009/11/16 21:32:06 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/vacuum.sgml,v 1.57 2010/01/06 05:31:13 itagaki Exp $
 PostgreSQL documentation
 -->
 
@@ -21,7 +21,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-VACUUM [ ( { FULL | FREEZE | VERBOSE | ANALYZE } [, ...] ) ] [ <replaceable class="PARAMETER">table</replaceable> [ (<replaceable class="PARAMETER">column</replaceable> [, ...] ) ] ]
+VACUUM [ ( { FULL [ INPLACE ] | FREEZE | VERBOSE | ANALYZE } [, ...] ) ] [ <replaceable class="PARAMETER">table</replaceable> [ (<replaceable class="PARAMETER">column</replaceable> [, ...] ) ] ]
 VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] [ <replaceable class="PARAMETER">table</replaceable> ]
 VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] ANALYZE [ <replaceable class="PARAMETER">table</replaceable> [ (<replaceable class="PARAMETER">column</replaceable> [, ...] ) ] ]
 </synopsis>
@@ -85,6 +85,27 @@ VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] ANALYZE [ <replaceable class="PARAMETER">
      <para>
       Selects <quote>full</quote> vacuum, which can reclaim more
       space, but takes much longer and exclusively locks the table.
+     </para>
+     <para>
+      For user tables, all table data and indexes are rewritten. This
+      method requires extra disk space in which to write the new data,
+      and is generally useful when a significant amount of space needs
+      to be reclaimed from within the table.
+     </para>
+     <para>
+      For system tables, all table data and indexes are modified in
+      place to reclaim space. This method may require less disk space
+      for the table data than <command>VACUUM FULL</command> on a
+      comparable user table, but the indexes will grow which may
+      counteract that benefit. Additionally, the operation is often
+      slower than <command>VACUUM FULL</command> on a comparable user
+      table.
+     </para>
+     <para>
+      If <literal>FULL INPLACE</literal> is specified, the space is
+      reclaimed in the same manner as a system table, even if it is a
+      user table. Specifying <literal>INPLACE</literal> explicitly is
+      rarely useful.
      </para>
     </listitem>
    </varlistentry>

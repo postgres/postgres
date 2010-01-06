@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/cluster.c,v 1.190 2010/01/06 03:04:00 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/cluster.c,v 1.191 2010/01/06 05:31:13 itagaki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,9 +61,10 @@ typedef struct
 } RelToCluster;
 
 
-static void cluster_rel(RelToCluster *rv, bool recheck, bool verbose);
-static void rebuild_relation(Relation OldHeap, Oid indexOid);
-static TransactionId copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex);
+static void rebuild_relation(Relation OldHeap, Oid indexOid,
+							 int freeze_min_age, int freeze_table_age);
+static TransactionId copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap,
+					Oid OIDOldIndex, int freeze_min_age, int freeze_table_age);
 static List *get_tables_to_cluster(MemoryContext cluster_context);
 
 
@@ -101,7 +102,6 @@ cluster(ClusterStmt *stmt, bool isTopLevel)
 		Oid			tableOid,
 					indexOid = InvalidOid;
 		Relation	rel;
-		RelToCluster rvtc;
 
 		/* Find and lock the table */
 		rel = heap_openrv(stmt->relation, AccessExclusiveLock);
@@ -169,15 +169,11 @@ cluster(ClusterStmt *stmt, bool isTopLevel)
 							  stmt->indexname, stmt->relation->relname)));
 		}
 
-		/* All other checks are done in cluster_rel() */
-		rvtc.tableOid = tableOid;
-		rvtc.indexOid = indexOid;
-
 		/* close relation, keep lock till commit */
 		heap_close(rel, NoLock);
 
 		/* Do the job */
-		cluster_rel(&rvtc, false, stmt->verbose);
+		cluster_rel(tableOid, indexOid, false, stmt->verbose, -1, -1);
 	}
 	else
 	{
@@ -226,7 +222,7 @@ cluster(ClusterStmt *stmt, bool isTopLevel)
 			StartTransactionCommand();
 			/* functions in indexes may want a snapshot set */
 			PushActiveSnapshot(GetTransactionSnapshot());
-			cluster_rel(rvtc, true, stmt->verbose);
+			cluster_rel(rvtc->tableOid, rvtc->indexOid, true, stmt->verbose, -1, -1);
 			PopActiveSnapshot();
 			CommitTransactionCommand();
 		}
@@ -252,9 +248,13 @@ cluster(ClusterStmt *stmt, bool isTopLevel)
  * same way we do for the relation.  Since we are effectively bulk-loading
  * the new table, it's better to create the indexes afterwards than to fill
  * them incrementally while we load the table.
+ *
+ * If indexOid is InvalidOid, the table will be rewritten in physical order
+ * instead of index order.
  */
-static void
-cluster_rel(RelToCluster *rvtc, bool recheck, bool verbose)
+void
+cluster_rel(Oid tableOid, Oid indexOid, bool recheck, bool verbose,
+			int freeze_min_age, int freeze_table_age)
 {
 	Relation	OldHeap;
 
@@ -267,7 +267,7 @@ cluster_rel(RelToCluster *rvtc, bool recheck, bool verbose)
 	 * case, since cluster() already did it.)  The index lock is taken inside
 	 * check_index_is_clusterable.
 	 */
-	OldHeap = try_relation_open(rvtc->tableOid, AccessExclusiveLock);
+	OldHeap = try_relation_open(tableOid, AccessExclusiveLock);
 
 	/* If the table has gone away, we can skip processing it */
 	if (!OldHeap)
@@ -287,7 +287,7 @@ cluster_rel(RelToCluster *rvtc, bool recheck, bool verbose)
 		Form_pg_index indexForm;
 
 		/* Check that the user still owns the relation */
-		if (!pg_class_ownercheck(rvtc->tableOid, GetUserId()))
+		if (!pg_class_ownercheck(tableOid, GetUserId()))
 		{
 			relation_close(OldHeap, AccessExclusiveLock);
 			return;
@@ -308,53 +308,62 @@ cluster_rel(RelToCluster *rvtc, bool recheck, bool verbose)
 			return;
 		}
 
-		/*
-		 * Check that the index still exists
-		 */
-		if (!SearchSysCacheExists(RELOID,
-								  ObjectIdGetDatum(rvtc->indexOid),
-								  0, 0, 0))
+		if (OidIsValid(indexOid))
 		{
-			relation_close(OldHeap, AccessExclusiveLock);
-			return;
-		}
+			/*
+			 * Check that the index still exists
+			 */
+			if (!SearchSysCacheExists(RELOID,
+									  ObjectIdGetDatum(indexOid),
+									  0, 0, 0))
+			{
+				relation_close(OldHeap, AccessExclusiveLock);
+				return;
+			}
 
-		/*
-		 * Check that the index is still the one with indisclustered set.
-		 */
-		tuple = SearchSysCache(INDEXRELID,
-							   ObjectIdGetDatum(rvtc->indexOid),
-							   0, 0, 0);
-		if (!HeapTupleIsValid(tuple))	/* probably can't happen */
-		{
-			relation_close(OldHeap, AccessExclusiveLock);
-			return;
-		}
-		indexForm = (Form_pg_index) GETSTRUCT(tuple);
-		if (!indexForm->indisclustered)
-		{
+			/*
+			 * Check that the index is still the one with indisclustered set.
+			 */
+			tuple = SearchSysCache(INDEXRELID,
+								   ObjectIdGetDatum(indexOid),
+								   0, 0, 0);
+			if (!HeapTupleIsValid(tuple))	/* probably can't happen */
+			{
+				relation_close(OldHeap, AccessExclusiveLock);
+				return;
+			}
+			indexForm = (Form_pg_index) GETSTRUCT(tuple);
+			if (!indexForm->indisclustered)
+			{
+				ReleaseSysCache(tuple);
+				relation_close(OldHeap, AccessExclusiveLock);
+				return;
+			}
 			ReleaseSysCache(tuple);
-			relation_close(OldHeap, AccessExclusiveLock);
-			return;
 		}
-		ReleaseSysCache(tuple);
 	}
 
-	/* Check index is valid to cluster on */
-	check_index_is_clusterable(OldHeap, rvtc->indexOid, recheck);
+	/* Check heap and index are valid to cluster on */
+	check_index_is_clusterable(OldHeap, indexOid, recheck);
 
 	/* rebuild_relation does all the dirty work */
-	ereport(verbose ? INFO : DEBUG2,
-			(errmsg("clustering \"%s.%s\"",
-					get_namespace_name(RelationGetNamespace(OldHeap)),
-					RelationGetRelationName(OldHeap))));
-	rebuild_relation(OldHeap, rvtc->indexOid);
+	if (OidIsValid(indexOid))
+		ereport(verbose ? INFO : DEBUG2,
+				(errmsg("clustering \"%s.%s\"",
+						get_namespace_name(RelationGetNamespace(OldHeap)),
+						RelationGetRelationName(OldHeap))));
+	else
+		ereport(verbose ? INFO : DEBUG2,
+				(errmsg("vacuuming \"%s.%s\"",
+						get_namespace_name(RelationGetNamespace(OldHeap)),
+						RelationGetRelationName(OldHeap))));
+	rebuild_relation(OldHeap, indexOid, freeze_min_age, freeze_table_age);
 
 	/* NB: rebuild_relation does heap_close() on OldHeap */
 }
 
 /*
- * Verify that the specified index is a legitimate index to cluster on
+ * Verify that the specified heap and index are valid to cluster on
  *
  * Side effect: obtains exclusive lock on the index.  The caller should
  * already have exclusive lock on the table, so the index lock is likely
@@ -365,6 +374,38 @@ void
 check_index_is_clusterable(Relation OldHeap, Oid indexOid, bool recheck)
 {
 	Relation	OldIndex;
+
+	/*
+	 * Disallow clustering system relations.  This will definitely NOT work
+	 * for shared relations (we have no way to update pg_class rows in other
+	 * databases), nor for nailed-in-cache relations (the relfilenode values
+	 * for those are hardwired, see relcache.c).  It might work for other
+	 * system relations, but I ain't gonna risk it.
+	 */
+	if (IsSystemRelation(OldHeap))
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("\"%s\" is a system catalog",
+						RelationGetRelationName(OldHeap))));
+
+	/*
+	 * Don't allow cluster on temp tables of other backends ... their local
+	 * buffer manager is not going to cope.
+	 */
+	if (RELATION_IS_OTHER_TEMP(OldHeap))
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+			   errmsg("cannot cluster temporary tables of other sessions")));
+
+	/*
+	 * Also check for active uses of the relation in the current transaction,
+	 * including open scans and pending AFTER trigger events.
+	 */
+	CheckTableNotInUse(OldHeap, "CLUSTER");
+
+	/* Skip checks for index if not specified. */
+	if (!OidIsValid(indexOid))
+		return;
 
 	OldIndex = index_open(indexOid, AccessExclusiveLock);
 
@@ -448,34 +489,6 @@ check_index_is_clusterable(Relation OldHeap, Oid indexOid, bool recheck)
 				 errmsg("cannot cluster on invalid index \"%s\"",
 						RelationGetRelationName(OldIndex))));
 
-	/*
-	 * Disallow clustering system relations.  This will definitely NOT work
-	 * for shared relations (we have no way to update pg_class rows in other
-	 * databases), nor for nailed-in-cache relations (the relfilenode values
-	 * for those are hardwired, see relcache.c).  It might work for other
-	 * system relations, but I ain't gonna risk it.
-	 */
-	if (IsSystemRelation(OldHeap))
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("\"%s\" is a system catalog",
-						RelationGetRelationName(OldHeap))));
-
-	/*
-	 * Don't allow cluster on temp tables of other backends ... their local
-	 * buffer manager is not going to cope.
-	 */
-	if (RELATION_IS_OTHER_TEMP(OldHeap))
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			   errmsg("cannot cluster temporary tables of other sessions")));
-
-	/*
-	 * Also check for active uses of the relation in the current transaction,
-	 * including open scans and pending AFTER trigger events.
-	 */
-	CheckTableNotInUse(OldHeap, "CLUSTER");
-
 	/* Drop relcache refcnt on OldIndex, but keep lock */
 	index_close(OldIndex, NoLock);
 }
@@ -557,15 +570,16 @@ mark_index_clustered(Relation rel, Oid indexOid)
 }
 
 /*
- * rebuild_relation: rebuild an existing relation in index order
+ * rebuild_relation: rebuild an existing relation in index or physical order
  *
  * OldHeap: table to rebuild --- must be opened and exclusive-locked!
- * indexOid: index to cluster by
+ * indexOid: index to cluster by, or InvalidOid to rewrite in physical order.
  *
  * NB: this routine closes OldHeap at the right time; caller should not.
  */
 static void
-rebuild_relation(Relation OldHeap, Oid indexOid)
+rebuild_relation(Relation OldHeap, Oid indexOid,
+				 int freeze_min_age, int freeze_table_age)
 {
 	Oid			tableOid = RelationGetRelid(OldHeap);
 	Oid			tableSpace = OldHeap->rd_rel->reltablespace;
@@ -576,7 +590,8 @@ rebuild_relation(Relation OldHeap, Oid indexOid)
 	Relation	newrel;
 
 	/* Mark the correct index as clustered */
-	mark_index_clustered(OldHeap, indexOid);
+	if (OidIsValid(indexOid))
+		mark_index_clustered(OldHeap, indexOid);
 
 	/* Close relcache entry, but keep lock until transaction commit */
 	heap_close(OldHeap, NoLock);
@@ -599,7 +614,8 @@ rebuild_relation(Relation OldHeap, Oid indexOid)
 	/*
 	 * Copy the heap data into the new table in the desired order.
 	 */
-	frozenXid = copy_heap_data(OIDNewHeap, tableOid, indexOid);
+	frozenXid = copy_heap_data(OIDNewHeap, tableOid, indexOid,
+							   freeze_min_age, freeze_table_age);
 
 	/* To make the new heap's data visible (probably not needed?). */
 	CommandCounterIncrement();
@@ -758,7 +774,8 @@ make_new_heap(Oid OIDOldHeap, const char *NewName, Oid NewTableSpace)
  * freeze cutoff point for the tuples.
  */
 static TransactionId
-copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex)
+copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex,
+			   int freeze_min_age, int freeze_table_age)
 {
 	Relation	NewHeap,
 				OldHeap,
@@ -768,8 +785,8 @@ copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex)
 	int			natts;
 	Datum	   *values;
 	bool	   *isnull;
-	IndexScanDesc scan;
-	HeapTuple	tuple;
+	IndexScanDesc indexScan;
+	HeapScanDesc heapScan;
 	bool		use_wal;
 	TransactionId OldestXmin;
 	TransactionId FreezeXid;
@@ -780,7 +797,10 @@ copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex)
 	 */
 	NewHeap = heap_open(OIDNewHeap, AccessExclusiveLock);
 	OldHeap = heap_open(OIDOldHeap, AccessExclusiveLock);
-	OldIndex = index_open(OIDOldIndex, AccessExclusiveLock);
+	if (OidIsValid(OIDOldIndex))
+		OldIndex = index_open(OIDOldIndex, AccessExclusiveLock);
+	else
+		OldIndex = NULL;
 
 	/*
 	 * Their tuple descriptors should be exactly alike, but here we only need
@@ -809,8 +829,8 @@ copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex)
 	 * freeze_min_age to avoid having CLUSTER freeze tuples earlier than a
 	 * plain VACUUM would.
 	 */
-	vacuum_set_xid_limits(-1, -1, OldHeap->rd_rel->relisshared,
-						  &OldestXmin, &FreezeXid, NULL);
+	vacuum_set_xid_limits(freeze_min_age, freeze_table_age,
+				OldHeap->rd_rel->relisshared, &OldestXmin, &FreezeXid, NULL);
 
 	/*
 	 * FreezeXid will become the table's new relfrozenxid, and that mustn't go
@@ -828,25 +848,46 @@ copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex)
 	 * copied, we scan with SnapshotAny and use HeapTupleSatisfiesVacuum for
 	 * the visibility test.
 	 */
-	scan = index_beginscan(OldHeap, OldIndex,
+	if (OldIndex != NULL)
+		indexScan = index_beginscan(OldHeap, OldIndex,
 						   SnapshotAny, 0, (ScanKey) NULL);
+	else
+		heapScan = heap_beginscan(OldHeap, SnapshotAny, 0, (ScanKey) NULL);
 
-	while ((tuple = index_getnext(scan, ForwardScanDirection)) != NULL)
+	for (;;)
 	{
+		HeapTuple	tuple;
 		HeapTuple	copiedTuple;
+		Buffer		buf;
 		bool		isdead;
 		int			i;
 
 		CHECK_FOR_INTERRUPTS();
 
-		/* Since we used no scan keys, should never need to recheck */
-		if (scan->xs_recheck)
-			elog(ERROR, "CLUSTER does not support lossy index conditions");
+		if (OldIndex != NULL)
+		{
+			tuple = index_getnext(indexScan, ForwardScanDirection);
+			if (tuple == NULL)
+				break;
 
-		LockBuffer(scan->xs_cbuf, BUFFER_LOCK_SHARE);
+			/* Since we used no scan keys, should never need to recheck */
+			if (indexScan->xs_recheck)
+				elog(ERROR, "CLUSTER does not support lossy index conditions");
 
-		switch (HeapTupleSatisfiesVacuum(tuple->t_data, OldestXmin,
-										 scan->xs_cbuf))
+			buf = indexScan->xs_cbuf;
+		}
+		else
+		{
+			tuple = heap_getnext(heapScan, ForwardScanDirection);
+			if (tuple == NULL)
+				break;
+
+			buf = heapScan->rs_cbuf;
+		}
+
+		LockBuffer(buf, BUFFER_LOCK_SHARE);
+
+		switch (HeapTupleSatisfiesVacuum(tuple->t_data, OldestXmin, buf))
 		{
 			case HEAPTUPLE_DEAD:
 				/* Definitely dead */
@@ -888,7 +929,7 @@ copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex)
 				break;
 		}
 
-		LockBuffer(scan->xs_cbuf, BUFFER_LOCK_UNLOCK);
+		LockBuffer(buf, BUFFER_LOCK_UNLOCK);
 
 		if (isdead)
 		{
@@ -932,7 +973,10 @@ copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex)
 		heap_freetuple(copiedTuple);
 	}
 
-	index_endscan(scan);
+	if (OldIndex != NULL)
+		index_endscan(indexScan);
+	else
+		heap_endscan(heapScan);
 
 	/* Write out any remaining tuples, and fsync if needed */
 	end_heap_rewrite(rwstate);
@@ -940,7 +984,8 @@ copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex)
 	pfree(values);
 	pfree(isnull);
 
-	index_close(OldIndex, NoLock);
+	if (OldIndex != NULL)
+		index_close(OldIndex, NoLock);
 	heap_close(OldHeap, NoLock);
 	heap_close(NewHeap, NoLock);
 

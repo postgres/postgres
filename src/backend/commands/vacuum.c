@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.402 2010/01/02 16:57:40 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.403 2010/01/06 05:31:13 itagaki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,10 +29,12 @@
 #include "access/visibilitymap.h"
 #include "access/xact.h"
 #include "access/xlog.h"
+#include "catalog/catalog.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_database.h"
 #include "catalog/pg_namespace.h"
 #include "catalog/storage.h"
+#include "commands/cluster.h"
 #include "commands/dbcommands.h"
 #include "commands/vacuum.h"
 #include "executor/executor.h"
@@ -302,6 +304,8 @@ vacuum(VacuumStmt *vacstmt, Oid relid, bool do_toast,
 	Assert((vacstmt->options & VACOPT_VACUUM) ||
 		   !(vacstmt->options & (VACOPT_FULL | VACOPT_FREEZE)));
 	Assert((vacstmt->options & VACOPT_ANALYZE) || vacstmt->va_cols == NIL);
+	Assert((vacstmt->options & VACOPT_FULL) ||
+		   !(vacstmt->options & VACOPT_INPLACE));
 
 	stmttype = (vacstmt->options & VACOPT_VACUUM) ? "VACUUM" : "ANALYZE";
 
@@ -1178,12 +1182,24 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt, bool do_toast, bool for_wraparound,
 	save_nestlevel = NewGUCNestLevel();
 
 	/*
-	 * Do the actual work --- either FULL or "lazy" vacuum
+	 * Do the actual work --- either FULL, FULL INPLACE, or "lazy" vacuum.
+	 * We can use only FULL INPLACE vacuum for system relations.
 	 */
-	if (vacstmt->options & VACOPT_FULL)
+	if (!(vacstmt->options & VACOPT_FULL))
+		heldoff = lazy_vacuum_rel(onerel, vacstmt, vac_strategy, scanned_all);
+	else if ((vacstmt->options & VACOPT_INPLACE) || IsSystemRelation(onerel))
 		heldoff = full_vacuum_rel(onerel, vacstmt);
 	else
-		heldoff = lazy_vacuum_rel(onerel, vacstmt, vac_strategy, scanned_all);
+	{
+		/* close relation before clustering, but hold lock until commit */
+		relation_close(onerel, NoLock);
+		onerel = NULL;
+
+		cluster_rel(relid, InvalidOid, false,
+			(vacstmt->options & VACOPT_VERBOSE) != 0,
+			vacstmt->freeze_min_age, vacstmt->freeze_table_age);
+		heldoff = false;
+	}
 
 	/* Roll back any GUC changes executed by index functions */
 	AtEOXact_GUC(false, save_nestlevel);
@@ -1192,7 +1208,8 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt, bool do_toast, bool for_wraparound,
 	SetUserIdAndSecContext(save_userid, save_sec_context);
 
 	/* all done with this class, but hold lock until commit */
-	relation_close(onerel, NoLock);
+	if (onerel)
+		relation_close(onerel, NoLock);
 
 	/*
 	 * Complete the transaction and free all temporary memory used.

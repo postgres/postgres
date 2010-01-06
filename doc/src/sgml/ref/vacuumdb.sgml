@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/vacuumdb.sgml,v 1.46 2010/01/06 02:59:44 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/vacuumdb.sgml,v 1.47 2010/01/06 05:31:13 itagaki Exp $
 PostgreSQL documentation
 -->
 
@@ -24,6 +24,7 @@ PostgreSQL documentation
    <command>vacuumdb</command>
    <arg rep="repeat"><replaceable>connection-option</replaceable></arg>
    <group><arg>--full</arg><arg>-f</arg></group>
+   <group><arg>--inplace</arg><arg>-i</arg></group>
    <group><arg>--freeze</arg><arg>-F</arg></group>
    <group><arg>--verbose</arg><arg>-v</arg></group>
    <group><arg>--analyze</arg><arg>-z</arg></group>
@@ -37,6 +38,7 @@ PostgreSQL documentation
    <arg rep="repeat"><replaceable>connection-options</replaceable></arg>
    <group><arg>--all</arg><arg>-a</arg></group>
    <group><arg>--full</arg><arg>-f</arg></group>
+   <group><arg>--inplace</arg><arg>-i</arg></group>
    <group><arg>--freeze</arg><arg>-F</arg></group>
    <group><arg>--verbose</arg><arg>-v</arg></group>
    <group><arg>--analyze</arg><arg>-z</arg></group>
@@ -125,6 +127,16 @@ PostgreSQL documentation
       <listitem>
        <para>
         Aggressively <quote>freeze</quote> tuples.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-i</option></term>
+      <term><option>--inplace</option></term>
+      <listitem>
+       <para>
+        Perform <quote>full inplace</quote> vacuuming.
        </para>
       </listitem>
      </varlistentry>
