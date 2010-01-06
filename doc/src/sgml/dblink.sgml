@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/dblink.sgml,v 1.9 2009/08/05 16:11:07 joe Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/dblink.sgml,v 1.10 2010/01/06 19:07:05 tgl Exp $ -->
 
 <sect1 id="dblink">
  <title>dblink</title>
@@ -16,6 +16,7 @@
  <refentry id="CONTRIB-DBLINK-CONNECT">
   <refmeta>
    <refentrytitle>dblink_connect</refentrytitle>
+   <manvolnum>3</manvolnum>
   </refmeta>
 
   <refnamediv>
@@ -181,6 +182,7 @@
  <refentry id="CONTRIB-DBLINK-CONNECT-U">
   <refmeta>
    <refentrytitle>dblink_connect_u</refentrytitle>
+   <manvolnum>3</manvolnum>
   </refmeta>
 
   <refnamediv>
@@ -233,6 +235,7 @@
  <refentry id="CONTRIB-DBLINK-DISCONNECT">
   <refmeta>
    <refentrytitle>dblink_disconnect</refentrytitle>
+   <manvolnum>3</manvolnum>
   </refmeta>
 
   <refnamediv>
@@ -303,6 +306,7 @@
  <refentry id="CONTRIB-DBLINK">
   <refmeta>
    <refentrytitle>dblink</refentrytitle>
+   <manvolnum>3</manvolnum>
   </refmeta>
 
   <refnamediv>
@@ -525,6 +529,7 @@ SELECT *
  <refentry id="CONTRIB-DBLINK-EXEC">
   <refmeta>
    <refentrytitle>dblink_exec</refentrytitle>
+   <manvolnum>3</manvolnum>
   </refmeta>
 
   <refnamediv>
@@ -657,6 +662,7 @@ SELECT *
  <refentry id="CONTRIB-DBLINK-OPEN">
   <refmeta>
    <refentrytitle>dblink_open</refentrytitle>
+   <manvolnum>3</manvolnum>
   </refmeta>
 
   <refnamediv>
@@ -776,6 +782,7 @@ SELECT *
  <refentry id="CONTRIB-DBLINK-FETCH">
   <refmeta>
    <refentrytitle>dblink_fetch</refentrytitle>
+   <manvolnum>3</manvolnum>
   </refmeta>
 
   <refnamediv>
@@ -924,6 +931,7 @@ SELECT *
  <refentry id="CONTRIB-DBLINK-CLOSE">
   <refmeta>
    <refentrytitle>dblink_close</refentrytitle>
+   <manvolnum>3</manvolnum>
   </refmeta>
 
   <refnamediv>
@@ -1030,6 +1038,7 @@ SELECT *
  <refentry id="CONTRIB-DBLINK-GET-CONNECTIONS">
   <refmeta>
    <refentrytitle>dblink_get_connections</refentrytitle>
+   <manvolnum>3</manvolnum>
   </refmeta>
 
   <refnamediv>
@@ -1070,6 +1079,7 @@ SELECT *
  <refentry id="CONTRIB-DBLINK-ERROR-MESSAGE">
   <refmeta>
    <refentrytitle>dblink_error_message</refentrytitle>
+   <manvolnum>3</manvolnum>
   </refmeta>
 
   <refnamediv>
@@ -1128,6 +1138,7 @@ SELECT *
  <refentry id="CONTRIB-DBLINK-SEND-QUERY">
   <refmeta>
    <refentrytitle>dblink_send_query</refentrytitle>
+   <manvolnum>3</manvolnum>
   </refmeta>
 
   <refnamediv>
@@ -1205,6 +1216,7 @@ SELECT *
  <refentry id="CONTRIB-DBLINK-IS-BUSY">
   <refmeta>
    <refentrytitle>dblink_is_busy</refentrytitle>
+   <manvolnum>3</manvolnum>
   </refmeta>
 
   <refnamediv>
@@ -1261,6 +1273,11 @@ SELECT *
  </refentry>
 
  <refentry id="CONTRIB-DBLINK-GET-NOTIFY">
+  <refmeta>
+   <refentrytitle>dblink_get_notify</refentrytitle>
+   <manvolnum>3</manvolnum>
+  </refmeta>
+
   <refnamediv>
    <refname>dblink_get_notify</refname>
    <refpurpose>retrieve async notifications on a connection</refpurpose>
@@ -1336,6 +1353,7 @@ SELECT * FROM dblink_get_notify();
  <refentry id="CONTRIB-DBLINK-GET-RESULT">
   <refmeta>
    <refentrytitle>dblink_get_result</refentrytitle>
+   <manvolnum>3</manvolnum>
   </refmeta>
 
   <refnamediv>
@@ -1483,6 +1501,7 @@ SELECT * FROM dblink_get_notify();
  <refentry id="CONTRIB-DBLINK-CANCEL-QUERY">
   <refmeta>
    <refentrytitle>dblink_cancel_query</refentrytitle>
+   <manvolnum>3</manvolnum>
   </refmeta>
 
   <refnamediv>
@@ -1546,6 +1565,7 @@ SELECT * FROM dblink_get_notify();
  <refentry id="CONTRIB-DBLINK-GET-PKEY">
   <refmeta>
    <refentrytitle>dblink_get_pkey</refentrytitle>
+   <manvolnum>3</manvolnum>
   </refmeta>
 
   <refnamediv>
@@ -1624,6 +1644,7 @@ test=# select * from dblink_get_pkey('foobar');
  <refentry id="CONTRIB-DBLINK-BUILD-SQL-INSERT">
   <refmeta>
    <refentrytitle>dblink_build_sql_insert</refentrytitle>
+   <manvolnum>3</manvolnum>
   </refmeta>
 
   <refnamediv>
@@ -1740,6 +1761,7 @@ test=# select * from dblink_get_pkey('foobar');
  <refentry id="CONTRIB-DBLINK-BUILD-SQL-DELETE">
   <refmeta>
    <refentrytitle>dblink_build_sql_delete</refentrytitle>
+   <manvolnum>3</manvolnum>
   </refmeta>
 
   <refnamediv>
@@ -1839,6 +1861,7 @@ test=# select * from dblink_get_pkey('foobar');
  <refentry id="CONTRIB-DBLINK-BUILD-SQL-UPDATE">
   <refmeta>
    <refentrytitle>dblink_build_sql_update</refentrytitle>
+   <manvolnum>3</manvolnum>
   </refmeta>
 
   <refnamediv>
