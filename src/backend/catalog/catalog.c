@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/catalog.c,v 1.85 2010/01/02 16:57:36 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/catalog.c,v 1.86 2010/01/06 02:41:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,7 +43,6 @@
 #include "utils/tqual.h"
 
 
-#define OIDCHARS		10		/* max chars printed by %u */
 #define FORKNAMECHARS	4		/* max chars for a fork name */
 
 /*
