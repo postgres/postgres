@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/cluster.c,v 1.191 2010/01/06 05:31:13 itagaki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/cluster.c,v 1.192 2010/01/06 11:25:39 itagaki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -849,10 +849,16 @@ copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex,
 	 * the visibility test.
 	 */
 	if (OldIndex != NULL)
+	{
+		heapScan = NULL;
 		indexScan = index_beginscan(OldHeap, OldIndex,
 						   SnapshotAny, 0, (ScanKey) NULL);
+	}
 	else
+	{
 		heapScan = heap_beginscan(OldHeap, SnapshotAny, 0, (ScanKey) NULL);
+		indexScan = NULL;
+	}
 
 	for (;;)
 	{
