@@ -1,6 +1,6 @@
 #include <stdlib.h>
 #include <string.h>
-#include <inttypes.h>
+#include <limits.h>
 
 exec sql include ../regression;
 
@@ -35,9 +35,6 @@ dump_sqlda(sqlda_t *sqlda)
 			break;
 		case SQLINT:
 			printf("name sqlda descriptor: '%s' value %d\n", sqlda->sqlvar[i].sqlname, *(int *)sqlda->sqlvar[i].sqldata);
-			break;
-		case SQLINT8:
-			printf("name sqlda descriptor: '%s' value %" PRId64 "\n", sqlda->sqlvar[i].sqlname, *(int64_t *)sqlda->sqlvar[i].sqldata);
 			break;
 		case SQLFLOAT:
 			printf("name sqlda descriptor: '%s' value %lf\n", sqlda->sqlvar[i].sqlname, *(double *)sqlda->sqlvar[i].sqldata);

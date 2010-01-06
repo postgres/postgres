@@ -1,6 +1,5 @@
 #include <stdlib.h>
 #include <string.h>
-#include <inttypes.h>
 #include <limits.h>
 
 exec sql include ../regression;
@@ -36,13 +35,6 @@ dump_sqlda(sqlda_t *sqlda)
 			break;
 		case ECPGt_int:
 			printf("name sqlda descriptor: '%s' value %d\n", sqlda->sqlvar[i].sqlname.data, *(int *)sqlda->sqlvar[i].sqldata);
-			break;
-#ifdef HAVE_LONG_LONG_INT_64
-		case ECPGt_long_long:
-#else
-		case ECPGt_long:
-#endif
-			printf("name sqlda descriptor: '%s' value " INT64_FORMAT "\n", sqlda->sqlvar[i].sqlname.data, *(int64_t *)sqlda->sqlvar[i].sqldata);
 			break;
 		case ECPGt_double:
 			printf("name sqlda descriptor: '%s' value %lf\n", sqlda->sqlvar[i].sqlname.data, *(double *)sqlda->sqlvar[i].sqldata);
