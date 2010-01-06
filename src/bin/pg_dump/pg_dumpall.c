@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.130 2010/01/05 21:53:59 rhaas Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.131 2010/01/06 03:34:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -969,7 +969,7 @@ dumpTablespaces(PGconn *conn)
 		res = executeQuery(conn, "SELECT spcname, "
 						 "pg_catalog.pg_get_userbyid(spcowner) AS spcowner, "
 						   "spclocation, spcacl, null, "
-						"pg_catalog.shobj_description(oid, 'pg_tablespace'), "
+						"pg_catalog.shobj_description(oid, 'pg_tablespace') "
 						   "FROM pg_catalog.pg_tablespace "
 						   "WHERE spcname !~ '^pg_' "
 						   "ORDER BY 1");
