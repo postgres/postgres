@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.364 2010/01/02 16:57:36 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.365 2010/01/06 03:03:58 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -95,6 +95,9 @@ static Node *cookConstraint(ParseState *pstate,
 			   Node *raw_constraint,
 			   char *relname);
 static List *insert_ordered_unique_oid(List *list, Oid datum);
+
+Oid binary_upgrade_next_heap_relfilenode = InvalidOid;
+Oid binary_upgrade_next_toast_relfilenode = InvalidOid;
 
 
 /* ----------------------------------------------------------------
@@ -942,15 +945,29 @@ heap_create_with_catalog(const char *relname,
 					 errmsg("only shared relations can be placed in pg_global tablespace")));
 	}
 
-	/*
-	 * Allocate an OID for the relation, unless we were told what to use.
-	 *
-	 * The OID will be the relfilenode as well, so make sure it doesn't
-	 * collide with either pg_class OIDs or existing physical files.
-	 */
-	if (!OidIsValid(relid))
+	if ((relkind == RELKIND_RELATION || relkind == RELKIND_SEQUENCE) &&
+		OidIsValid(binary_upgrade_next_heap_relfilenode))
+	{
+		relid = binary_upgrade_next_heap_relfilenode;
+		binary_upgrade_next_heap_relfilenode = InvalidOid;
+	}
+	else if (relkind == RELKIND_TOASTVALUE &&
+		OidIsValid(binary_upgrade_next_toast_relfilenode))
+	{
+		relid = binary_upgrade_next_toast_relfilenode;
+		binary_upgrade_next_toast_relfilenode = InvalidOid;
+	}
+	else if (!OidIsValid(relid))
+	{
+		/*
+		 * Allocate an OID for the relation, unless we were told what to use.
+		 *
+		 * The OID will be the relfilenode as well, so make sure it doesn't
+		 * collide with either pg_class OIDs or existing physical files.
+		 */
 		relid = GetNewRelFileNode(reltablespace, shared_relation,
 								  pg_class_desc);
+	}
 
 	/*
 	 * Determine the relation's initial permissions.

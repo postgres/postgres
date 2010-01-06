@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.564 2010/01/02 16:57:59 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.565 2010/01/06 03:04:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -200,7 +200,8 @@ static void binary_upgrade_set_type_oids_by_type_oid(
 					PQExpBuffer upgrade_buffer, Oid pg_type_oid);
 static bool binary_upgrade_set_type_oids_by_rel_oid(
 					PQExpBuffer upgrade_buffer, Oid pg_rel_oid);
-static void binary_upgrade_clear_pg_type_toast_oid(PQExpBuffer upgrade_buffer);
+static void binary_upgrade_set_relfilenodes(PQExpBuffer upgrade_buffer,
+					Oid pg_class_oid, bool is_index);
 static const char *getAttrName(int attrnum, TableInfo *tblInfo);
 static const char *fmtCopyColumnList(const TableInfo *ti);
 static void do_sql_command(PGconn *conn, const char *query);
@@ -2289,21 +2290,78 @@ binary_upgrade_set_type_oids_by_rel_oid(PQExpBuffer upgrade_buffer,
 }
 
 static void
-binary_upgrade_clear_pg_type_toast_oid(PQExpBuffer upgrade_buffer)
+binary_upgrade_set_relfilenodes(PQExpBuffer upgrade_buffer, Oid pg_class_oid,
+								bool is_index)
 {
-	/*
-	 *	One complexity is that while the heap might now have a TOAST table,
-	 *	the TOAST table might have been created long after creation when
-	 *	the table was loaded with wide data.  For that reason, we clear
-	 *	binary_upgrade_set_next_pg_type_toast_oid so it is not reused
-	 *	by a later table.  Logically any later creation that needs a TOAST
-	 *	table should have its own TOAST pg_type oid, but we are cautious.
-	 */
+	PQExpBuffer upgrade_query = createPQExpBuffer();
+	int			ntups;
+	PGresult   *upgrade_res;
+	Oid			pg_class_relfilenode;
+	Oid			pg_class_reltoastrelid;
+	Oid			pg_class_reltoastidxid;
+
+	appendPQExpBuffer(upgrade_query,
+					  "SELECT c.relfilenode, c.reltoastrelid, t.reltoastidxid "
+					  "FROM pg_catalog.pg_class c LEFT JOIN "
+					  "pg_catalog.pg_class t ON (c.reltoastrelid = t.oid) "
+					  "WHERE c.oid = '%u'::pg_catalog.oid;",
+					  pg_class_oid);
+
+	upgrade_res = PQexec(g_conn, upgrade_query->data);
+	check_sql_result(upgrade_res, g_conn, upgrade_query->data, PGRES_TUPLES_OK);
+
+	/* Expecting a single result only */
+	ntups = PQntuples(upgrade_res);
+	if (ntups != 1)
+	{
+		write_msg(NULL, ngettext("query returned %d row instead of one: %s\n",
+							   "query returned %d rows instead of one: %s\n",
+								 ntups),
+				  ntups, upgrade_query->data);
+		exit_nicely();
+	}
+
+	pg_class_relfilenode = atooid(PQgetvalue(upgrade_res, 0, PQfnumber(upgrade_res, "relfilenode")));
+	pg_class_reltoastrelid = atooid(PQgetvalue(upgrade_res, 0, PQfnumber(upgrade_res, "reltoastrelid")));
+	pg_class_reltoastidxid = atooid(PQgetvalue(upgrade_res, 0, PQfnumber(upgrade_res, "reltoastidxid")));
+
 	appendPQExpBuffer(upgrade_buffer,
-		"\n-- For binary upgrade, clear toast oid because it might not have been needed\n");
-	appendPQExpBuffer(upgrade_buffer,
-		"SELECT binary_upgrade.set_next_pg_type_oid('%u'::pg_catalog.oid);\n\n",
-		InvalidOid);
+						"\n-- For binary upgrade, must preserve relfilenodes\n");
+
+	if (!is_index)
+		appendPQExpBuffer(upgrade_buffer,
+			"SELECT binary_upgrade.set_next_heap_relfilenode('%u'::pg_catalog.oid);\n",
+			pg_class_relfilenode);
+	else
+		appendPQExpBuffer(upgrade_buffer,
+			"SELECT binary_upgrade.set_next_index_relfilenode('%u'::pg_catalog.oid);\n",
+			pg_class_relfilenode);
+	
+	if (OidIsValid(pg_class_reltoastrelid))
+	{
+		/*
+		 *  One complexity is that the table definition might not require
+		 *	the creation of a TOAST table, and the TOAST table might have
+		 *	been created long after table creation, when the table was
+		 *	loaded with wide data.  By setting the TOAST relfilenode we
+		 *	force creation of the TOAST heap and TOAST index by the
+		 *	backend so we can cleanly migrate the files during binary
+		 *	migration.
+		 */
+
+		appendPQExpBuffer(upgrade_buffer,
+			"SELECT binary_upgrade.set_next_toast_relfilenode('%u'::pg_catalog.oid);\n",
+			pg_class_reltoastrelid);
+
+		/* every toast table has an index */
+		appendPQExpBuffer(upgrade_buffer,
+			"SELECT binary_upgrade.set_next_index_relfilenode('%u'::pg_catalog.oid);\n",
+			pg_class_reltoastidxid);
+	}
+	appendPQExpBuffer(upgrade_buffer, "\n");
+
+	PQclear(upgrade_res);
+	destroyPQExpBuffer(upgrade_query);
 }
 
 /*
@@ -10480,6 +10538,9 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 		appendPQExpBuffer(delq, "%s;\n",
 						  fmtId(tbinfo->dobj.name));
 
+		if (binary_upgrade)
+			binary_upgrade_set_relfilenodes(q, tbinfo->dobj.catId.oid, false);
+
 		appendPQExpBuffer(q, "CREATE TABLE %s (",
 						  fmtId(tbinfo->dobj.name));
 		actual_atts = 0;
@@ -10781,9 +10842,6 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 		}
 	}
 
-	if (binary_upgrade && toast_set)
-		binary_upgrade_clear_pg_type_toast_oid(q);
-
 	ArchiveEntry(fout, tbinfo->dobj.catId, tbinfo->dobj.dumpId,
 				 tbinfo->dobj.name,
 				 tbinfo->dobj.namespace->dobj.name,
@@ -10926,6 +10984,9 @@ dumpIndex(Archive *fout, IndxInfo *indxinfo)
 	 */
 	if (indxinfo->indexconstraint == 0)
 	{
+		if (binary_upgrade)
+			binary_upgrade_set_relfilenodes(q, indxinfo->dobj.catId.oid, true);
+
 		/* Plain secondary index */
 		appendPQExpBuffer(q, "%s;\n", indxinfo->indexdef);
 
@@ -11005,6 +11066,9 @@ dumpConstraint(Archive *fout, ConstraintInfo *coninfo)
 					  coninfo->dobj.name);
 			exit_nicely();
 		}
+
+		if (binary_upgrade && !coninfo->condef)
+			binary_upgrade_set_relfilenodes(q, indxinfo->dobj.catId.oid, true);
 
 		appendPQExpBuffer(q, "ALTER TABLE ONLY %s\n",
 						  fmtId(tbinfo->dobj.name));
@@ -11416,7 +11480,10 @@ dumpSequence(Archive *fout, TableInfo *tbinfo)
 		resetPQExpBuffer(query);
 
 		if (binary_upgrade)
+		{
+			binary_upgrade_set_relfilenodes(query, tbinfo->dobj.catId.oid, false);
 			binary_upgrade_set_type_oids_by_rel_oid(query, tbinfo->dobj.catId.oid);
+		}
 
 		appendPQExpBuffer(query,
 						  "CREATE SEQUENCE %s\n",

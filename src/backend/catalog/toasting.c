@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/toasting.c,v 1.26 2010/01/02 16:57:36 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/toasting.c,v 1.27 2010/01/06 03:03:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,22 +32,17 @@
 #include "utils/syscache.h"
 
 Oid binary_upgrade_next_pg_type_toast_oid = InvalidOid;
+extern Oid binary_upgrade_next_toast_relfilenode;
 
 static bool create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid,
-				   Datum reloptions, bool force);
+				   Datum reloptions);
 static bool needs_toast_table(Relation rel);
 
 
 /*
  * AlterTableCreateToastTable
  *		If the table needs a toast table, and doesn't already have one,
- *		then create a toast table for it.  (With the force option, make
- *		a toast table even if it appears unnecessary.)
- *
- * The caller can also specify the OID to be used for the toast table.
- * Usually, toastOid should be InvalidOid to allow a free OID to be assigned.
- * (This option, as well as the force option, is not used by core Postgres,
- * but is provided to support pg_migrator.)
+ *		then create a toast table for it.
  *
  * reloptions for the toast table can be passed, too.  Pass (Datum) 0
  * for default reloptions.
@@ -57,8 +52,7 @@ static bool needs_toast_table(Relation rel);
  * to end with CommandCounterIncrement if it makes any changes.
  */
 void
-AlterTableCreateToastTable(Oid relOid, Oid toastOid,
-						   Datum reloptions, bool force)
+AlterTableCreateToastTable(Oid relOid, Datum reloptions)
 {
 	Relation	rel;
 
@@ -70,7 +64,7 @@ AlterTableCreateToastTable(Oid relOid, Oid toastOid,
 	rel = heap_open(relOid, AccessExclusiveLock);
 
 	/* create_toast_table does all the work */
-	(void) create_toast_table(rel, toastOid, InvalidOid, reloptions, force);
+	(void) create_toast_table(rel, InvalidOid, InvalidOid, reloptions);
 
 	heap_close(rel, NoLock);
 }
@@ -96,7 +90,7 @@ BootstrapToastTable(char *relName, Oid toastOid, Oid toastIndexOid)
 						relName)));
 
 	/* create_toast_table does all the work */
-	if (!create_toast_table(rel, toastOid, toastIndexOid, (Datum) 0, false))
+	if (!create_toast_table(rel, toastOid, toastIndexOid, (Datum) 0))
 		elog(ERROR, "\"%s\" does not require a toast table",
 			 relName);
 
@@ -108,12 +102,11 @@ BootstrapToastTable(char *relName, Oid toastOid, Oid toastIndexOid)
  * create_toast_table --- internal workhorse
  *
  * rel is already opened and exclusive-locked
- * toastOid and toastIndexOid are normally InvalidOid, but
- * either or both can be nonzero to specify caller-assigned OIDs
+ * toastOid and toastIndexOid are normally InvalidOid, but during
+ * bootstrap they can be nonzero to specify hand-assigned OIDs
  */
 static bool
-create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid,
-				   Datum reloptions, bool force)
+create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid, Datum reloptions)
 {
 	Oid			relOid = RelationGetRelid(rel);
 	HeapTuple	reltup;
@@ -152,12 +145,10 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid,
 
 	/*
 	 * Check to see whether the table actually needs a TOAST table.
-	 *
-	 * Caller can optionally override this check.  (Note: at present no
-	 * callers in core Postgres do so, but this option is needed by
-	 * pg_migrator.)
+	 * If the relfilenode is specified, force toast file creation.
 	 */
-	if (!force && !needs_toast_table(rel))
+	if (!needs_toast_table(rel) &&
+		!OidIsValid(binary_upgrade_next_toast_relfilenode))
 		return false;
 
 	/*

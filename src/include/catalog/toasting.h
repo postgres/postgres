@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/toasting.h,v 1.12 2010/01/05 01:06:57 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/toasting.h,v 1.13 2010/01/06 03:04:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,8 +17,7 @@
 /*
  * toasting.c prototypes
  */
-extern void AlterTableCreateToastTable(Oid relOid, Oid toastOid,
-						   Datum reloptions, bool force);
+extern void AlterTableCreateToastTable(Oid relOid, Datum reloptions);
 extern void BootstrapToastTable(char *relName,
 					Oid toastOid, Oid toastIndexOid);
 

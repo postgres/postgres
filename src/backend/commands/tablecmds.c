@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.313 2010/01/02 16:57:37 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.314 2010/01/06 03:04:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2614,8 +2614,7 @@ ATRewriteCatalogs(List **wqueue)
 			(tab->subcmds[AT_PASS_ADD_COL] ||
 			 tab->subcmds[AT_PASS_ALTER_TYPE] ||
 			 tab->subcmds[AT_PASS_COL_ATTRS]))
-			AlterTableCreateToastTable(tab->relid, InvalidOid,
-									   (Datum) 0, false);
+			AlterTableCreateToastTable(tab->relid, (Datum) 0);
 	}
 }
 
