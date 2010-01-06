@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/spccache.c,v 1.1 2010/01/05 21:53:59 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/spccache.c,v 1.2 2010/01/06 22:27:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,11 +54,13 @@ InvalidateTableSpaceCacheCallback(Datum arg, int cacheid, ItemPointer tuplePtr)
 	hash_seq_init(&status, TableSpaceCacheHash);
 	while ((spc = (TableSpace *) hash_seq_search(&status)) != NULL)
 	{
-		if (hash_search(TableSpaceCacheHash, (void *) &spc->oid, HASH_REMOVE,
-						NULL) == NULL)
-			elog(ERROR, "hash table corrupted");
 		if (spc->opts)
 			pfree(spc->opts);
+		if (hash_search(TableSpaceCacheHash,
+						(void *) &spc->oid,
+						HASH_REMOVE,
+						NULL) == NULL)
+			elog(ERROR, "hash table corrupted");
 	}
 }
 
