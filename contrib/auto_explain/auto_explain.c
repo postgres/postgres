@@ -6,7 +6,7 @@
  * Copyright (c) 2008-2010, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/contrib/auto_explain/auto_explain.c,v 1.11 2010/01/02 16:57:32 momjian Exp $
+ *	  $PostgreSQL: pgsql/contrib/auto_explain/auto_explain.c,v 1.12 2010/01/06 18:07:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -151,7 +151,7 @@ _PG_fini(void)
 /*
  * ExecutorStart hook: start up logging if needed
  */
-void
+static void
 explain_ExecutorStart(QueryDesc *queryDesc, int eflags)
 {
 	if (auto_explain_enabled())
@@ -191,7 +191,7 @@ explain_ExecutorStart(QueryDesc *queryDesc, int eflags)
 /*
  * ExecutorRun hook: all we need do is track nesting depth
  */
-void
+static void
 explain_ExecutorRun(QueryDesc *queryDesc, ScanDirection direction, long count)
 {
 	nesting_level++;
@@ -214,7 +214,7 @@ explain_ExecutorRun(QueryDesc *queryDesc, ScanDirection direction, long count)
 /*
  * ExecutorEnd hook: log results if needed
  */
-void
+static void
 explain_ExecutorEnd(QueryDesc *queryDesc)
 {
 	if (queryDesc->totaltime && auto_explain_enabled())
