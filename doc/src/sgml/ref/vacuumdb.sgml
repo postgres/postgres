@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/vacuumdb.sgml,v 1.45 2009/11/27 17:41:26 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/vacuumdb.sgml,v 1.46 2010/01/06 02:59:44 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -24,9 +24,10 @@ PostgreSQL documentation
    <command>vacuumdb</command>
    <arg rep="repeat"><replaceable>connection-option</replaceable></arg>
    <group><arg>--full</arg><arg>-f</arg></group>
+   <group><arg>--freeze</arg><arg>-F</arg></group>
    <group><arg>--verbose</arg><arg>-v</arg></group>
    <group><arg>--analyze</arg><arg>-z</arg></group>
-   <group><arg>--freeze</arg><arg>-F</arg></group>
+   <group><arg>--only-analyze</arg><arg>-o</arg></group>
    <arg>--table | -t <replaceable>table</replaceable>
     <arg>( <replaceable class="parameter">column</replaceable> [,...] )</arg>
    </arg>
@@ -36,9 +37,10 @@ PostgreSQL documentation
    <arg rep="repeat"><replaceable>connection-options</replaceable></arg>
    <group><arg>--all</arg><arg>-a</arg></group>
    <group><arg>--full</arg><arg>-f</arg></group>
+   <group><arg>--freeze</arg><arg>-F</arg></group>
    <group><arg>--verbose</arg><arg>-v</arg></group>
    <group><arg>--analyze</arg><arg>-z</arg></group>
-   <group><arg>--freeze</arg><arg>-F</arg></group>
+   <group><arg>--only-analyze</arg><arg>-o</arg></group>
   </cmdsynopsis>
  </refsynopsisdiv>
  
@@ -56,8 +58,9 @@ PostgreSQL documentation
   <para>
    <application>vacuumdb</application> is a wrapper around the SQL
    command <xref linkend="SQL-VACUUM" endterm="SQL-VACUUM-title">.
-   There is no effective difference between vacuuming databases via
-   this utility and via other methods for accessing the server.
+   There is no effective difference between vacuuming and analyzing 
+   databases via this utility and via other methods for accessing the 
+   server.
   </para>
 
  </refsect1>
@@ -117,6 +120,26 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
+      <term><option>-F</option></term>
+      <term><option>--freeze</option></term>
+      <listitem>
+       <para>
+        Aggressively <quote>freeze</quote> tuples.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-o</option></term>
+      <term><option>--only-analyze</option></term>
+      <listitem>
+       <para>
+        Only calculate statistics for use by the optimizer (no vacuum).
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>-q</></term>
       <term><option>--quiet</></term>
       <listitem>
@@ -133,7 +156,7 @@ PostgreSQL documentation
        <para>
         Clean or analyze <replaceable class="parameter">table</replaceable> only.
         Column names can be specified only in conjunction with
-        the <option>--analyze</option> option.
+        the <option>--analyze</option> or <option>--only-analyze</option> options.
        </para>
        <tip>
         <para>
@@ -164,15 +187,6 @@ PostgreSQL documentation
       </listitem>
      </varlistentry>
 
-     <varlistentry>
-      <term><option>-F</option></term>
-      <term><option>--freeze</option></term>
-      <listitem>
-       <para>
-        Aggressively <quote>freeze</quote> tuples.
-       </para>
-      </listitem>
-     </varlistentry>
     </variablelist>
    </para>
 
