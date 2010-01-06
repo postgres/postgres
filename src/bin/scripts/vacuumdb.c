@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/scripts/vacuumdb.c,v 1.30 2010/01/06 05:31:14 itagaki Exp $
+ * $PostgreSQL: pgsql/src/bin/scripts/vacuumdb.c,v 1.31 2010/01/06 16:04:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -169,7 +169,7 @@ main(int argc, char *argv[])
 					progname);
 			exit(1);
 		}
-		/* ignore 'and_analyze' */
+		/* allow 'and_analyze' with 'only_analyze' */
 	}
 
 	setup_cancel_handler();
