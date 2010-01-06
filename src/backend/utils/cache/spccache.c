@@ -12,12 +12,12 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/spccache.c,v 1.2 2010/01/06 22:27:09 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/spccache.c,v 1.3 2010/01/06 23:00:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
-
 #include "postgres.h"
+
 #include "access/reloptions.h"
 #include "catalog/pg_tablespace.h"
 #include "commands/tablespace.h"
@@ -29,12 +29,16 @@
 #include "utils/spccache.h"
 #include "utils/syscache.h"
 
+
+/* Hash table for information about each tablespace */
 static HTAB *TableSpaceCacheHash = NULL;
 
-typedef struct {
-	Oid			oid;
-	TableSpaceOpts *opts;
-} TableSpace;
+typedef struct
+{
+	Oid			oid;			/* lookup key - must be first */
+	TableSpaceOpts *opts;		/* options, or NULL if none */
+} TableSpaceCacheEntry;
+
 
 /*
  * InvalidateTableSpaceCacheCallback
@@ -49,10 +53,10 @@ static void
 InvalidateTableSpaceCacheCallback(Datum arg, int cacheid, ItemPointer tuplePtr)
 {
 	HASH_SEQ_STATUS status;
-	TableSpace *spc;
+	TableSpaceCacheEntry *spc;
 
 	hash_seq_init(&status, TableSpaceCacheHash);
-	while ((spc = (TableSpace *) hash_seq_search(&status)) != NULL)
+	while ((spc = (TableSpaceCacheEntry *) hash_seq_search(&status)) != NULL)
 	{
 		if (spc->opts)
 			pfree(spc->opts);
@@ -66,7 +70,7 @@ InvalidateTableSpaceCacheCallback(Datum arg, int cacheid, ItemPointer tuplePtr)
 
 /*
  * InitializeTableSpaceCache
- *		Initiate the tablespace cache.
+ *		Initialize the tablespace cache.
  */
 static void
 InitializeTableSpaceCache(void)
@@ -76,8 +80,8 @@ InitializeTableSpaceCache(void)
 	/* Initialize the hash table. */
 	MemSet(&ctl, 0, sizeof(ctl));
 	ctl.keysize = sizeof(Oid);
-	ctl.entrysize = sizeof(TableSpace);
-	ctl.hash = tag_hash;
+	ctl.entrysize = sizeof(TableSpaceCacheEntry);
+	ctl.hash = oid_hash;
 	TableSpaceCacheHash =
 		hash_create("TableSpace cache", 16, &ctl,
 				    HASH_ELEM | HASH_FUNCTION);
@@ -94,17 +98,17 @@ InitializeTableSpaceCache(void)
 
 /*
  * get_tablespace
- *		Fetch TableSpace structure for a specified table OID.
+ *		Fetch TableSpaceCacheEntry structure for a specified table OID.
  *
  * Pointers returned by this function should not be stored, since a cache
  * flush will invalidate them.
  */
-static TableSpace *
+static TableSpaceCacheEntry *
 get_tablespace(Oid spcid)
 {
+	TableSpaceCacheEntry *spc;
 	HeapTuple	tp;
-	TableSpace *spc;
-	bool		found;
+	TableSpaceOpts *opts;
 
 	/*
 	 * Since spcid is always from a pg_class tuple, InvalidOid implies the
@@ -113,12 +117,14 @@ get_tablespace(Oid spcid)
 	if (spcid == InvalidOid)
 		spcid = MyDatabaseTableSpace;
 
-	/* Find existing cache entry, or create a new one. */
+	/* Find existing cache entry, if any. */
 	if (!TableSpaceCacheHash)
 		InitializeTableSpaceCache();
-	spc = (TableSpace *) hash_search(TableSpaceCacheHash, (void *) &spcid,
-									 HASH_ENTER, &found);
-	if (found)
+	spc = (TableSpaceCacheEntry *) hash_search(TableSpaceCacheHash,
+											   (void *) &spcid,
+											   HASH_FIND,
+											   NULL);
+	if (spc)
 		return spc;
 
 	/*
@@ -127,9 +133,11 @@ get_tablespace(Oid spcid)
 	 * details for a non-existent tablespace.  We'll just treat that case as if
 	 * no options were specified.
 	 */
-	tp = SearchSysCache(TABLESPACEOID, ObjectIdGetDatum(spcid), 0, 0, 0);
+	tp = SearchSysCache(TABLESPACEOID,
+						ObjectIdGetDatum(spcid),
+						0, 0, 0);
 	if (!HeapTupleIsValid(tp))
-		spc->opts = NULL;
+		opts = NULL;
 	else
 	{
 		Datum	datum;
@@ -141,29 +149,40 @@ get_tablespace(Oid spcid)
 								Anum_pg_tablespace_spcoptions,
 								&isNull);
 		if (isNull)
-			spc->opts = NULL;
+			opts = NULL;
 		else
 		{
+			/* XXX should NOT do the parsing work in CacheMemoryContext */
 			octx = MemoryContextSwitchTo(CacheMemoryContext);
-			spc->opts = (TableSpaceOpts *) tablespace_reloptions(datum, false);
+			opts = (TableSpaceOpts *) tablespace_reloptions(datum, false);
 			MemoryContextSwitchTo(octx);
 		}
 		ReleaseSysCache(tp);
 	}
 
-	/* Update new TableSpace cache entry with results of option parsing. */
+	/*
+	 * Now create the cache entry.  It's important to do this only after
+	 * reading the pg_tablespace entry, since doing so could cause a cache
+	 * flush.
+	 */
+	spc = (TableSpaceCacheEntry *) hash_search(TableSpaceCacheHash,
+											   (void *) &spcid,
+											   HASH_ENTER,
+											   NULL);
+	spc->opts = opts;
 	return spc;
 }
 
 /*
  * get_tablespace_page_costs
- *		Return random and sequential page costs for a given tablespace.
+ *		Return random and/or sequential page costs for a given tablespace.
  */
 void
-get_tablespace_page_costs(Oid spcid, double *spc_random_page_cost,
-							   double *spc_seq_page_cost)
+get_tablespace_page_costs(Oid spcid,
+						  double *spc_random_page_cost,
+						  double *spc_seq_page_cost)
 {
-	TableSpace *spc = get_tablespace(spcid);
+	TableSpaceCacheEntry *spc = get_tablespace(spcid);
 
 	Assert(spc != NULL);
 
