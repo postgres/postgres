@@ -10,7 +10,7 @@
 # Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/backend/catalog/genbki.pl,v 1.5 2010/01/06 19:56:29 tgl Exp $
+# $PostgreSQL: pgsql/src/backend/catalog/genbki.pl,v 1.6 2010/01/06 22:02:45 tgl Exp $
 #
 #----------------------------------------------------------------------
 
@@ -40,9 +40,11 @@ while (@ARGV)
     {
         push @include_path, length($arg) > 2 ? substr($arg, 2) : shift @ARGV;
     }
-    elsif ($arg =~ /^--set-version=(\d+\.\d+)$/)
+    elsif ($arg =~ /^--set-version=(.*)$/)
     {
         $major_version = $1;
+	die "Version must be in format nn.nn.\n"
+	    if !($major_version =~ /^\d+\.\d+$/);
     }
     else
     {
@@ -53,7 +55,7 @@ while (@ARGV)
 # Sanity check arguments.
 die "No input files.\n" if !@input_files;
 die "No include path; you must specify -I at least once.\n" if !@include_path;
-die "Version not specified or wrong format.\n" if !defined $major_version;
+die "--set-version must be specified.\n" if !defined $major_version;
 
 # Make sure output_path ends in a slash.
 if ($output_path ne '' && substr($output_path, -1) ne '/')
