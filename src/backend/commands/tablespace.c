@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablespace.c,v 1.66 2010/01/05 21:53:58 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablespace.c,v 1.67 2010/01/06 01:48:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -249,7 +249,7 @@ CreateTableSpace(CreateTableSpaceStmt *stmt)
 	 * '/<dboid>/<relid>.<nnn>'  (XXX but do we ever form the whole path
 	 * explicitly?	This may be overly conservative.)
 	 */
-	if (strlen(location) >= (MAXPGPATH - 1 - 10 - 1 - 10 - 1 - 10))
+	if (strlen(location) >= (MAXPGPATH - 1 - OIDCHARS - 1 - OIDCHARS - 1 - OIDCHARS))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
 				 errmsg("tablespace location \"%s\" is too long",
@@ -337,7 +337,7 @@ CreateTableSpace(CreateTableSpaceStmt *stmt)
 	/*
 	 * All seems well, create the symlink
 	 */
-	linkloc = (char *) palloc(10 + 10 + 1);
+	linkloc = (char *) palloc(OIDCHARS + OIDCHARS + 1);
 	sprintf(linkloc, "pg_tblspc/%u", tablespaceoid);
 
 	if (symlink(location, linkloc) < 0)
@@ -553,7 +553,7 @@ remove_tablespace_directories(Oid tablespaceoid, bool redo)
 	char	   *subfile;
 	struct stat st;
 
-	location = (char *) palloc(10 + 10 + 1);
+	location = (char *) palloc(OIDCHARS + OIDCHARS + 1);
 	sprintf(location, "pg_tblspc/%u", tablespaceoid);
 
 	/*
@@ -1373,7 +1373,7 @@ tblspc_redo(XLogRecPtr lsn, XLogRecord *record)
 		set_short_version(location);
 
 		/* Create the symlink if not already present */
-		linkloc = (char *) palloc(10 + 10 + 1);
+		linkloc = (char *) palloc(OIDCHARS + OIDCHARS + 1);
 		sprintf(linkloc, "pg_tblspc/%u", xlrec->ts_id);
 
 		if (symlink(location, linkloc) < 0)
