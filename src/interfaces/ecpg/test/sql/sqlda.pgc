@@ -84,7 +84,6 @@ exec sql end declare section;
 	exec sql insert into t1 values
 		(1, 'a', 1.0, 1, 'a'),
 		(2, null, null, null, null),
-		(3, '"c"', -3, 'nan'::float8, 'c'),
 		(4, 'd', 4.0, 4, 'd');
 
 	strcpy(msg, "commit");

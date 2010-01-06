@@ -11,12 +11,6 @@ name sqlda descriptor: 'd1' value NULL'
 name sqlda descriptor: 'd2' value NULL'
 name sqlda descriptor: 'c' value NULL'
 FETCH RECORD 3
-name sqlda descriptor: 'id' value 3
-name sqlda descriptor: 't' value '"c"'
-name sqlda descriptor: 'd1' value DECIMAL '-3'
-name sqlda descriptor: 'd2' value nan
-name sqlda descriptor: 'c' value 'c         '
-FETCH RECORD 4
 name sqlda descriptor: 'id' value 4
 name sqlda descriptor: 't' value 'd'
 name sqlda descriptor: 'd1' value DECIMAL '4.0'
@@ -35,12 +29,6 @@ name sqlda descriptor: 'd1' value NULL'
 name sqlda descriptor: 'd2' value NULL'
 name sqlda descriptor: 'c' value NULL'
 FETCH RECORD 3
-name sqlda descriptor: 'id' value 3
-name sqlda descriptor: 't' value '"c"'
-name sqlda descriptor: 'd1' value DECIMAL '-3'
-name sqlda descriptor: 'd2' value nan
-name sqlda descriptor: 'c' value 'c         '
-FETCH RECORD 4
 name sqlda descriptor: 'id' value 4
 name sqlda descriptor: 't' value 'd'
 name sqlda descriptor: 'd1' value DECIMAL '4.0'
