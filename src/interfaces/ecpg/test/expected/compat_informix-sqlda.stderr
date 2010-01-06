@@ -36,27 +36,27 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 109: correctly got 1 tuples with 5 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_build_compat_sqlda sqld = 5
+[NO_PID]: ecpg_build_compat_sqlda on line 109 sqld = 5
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 109: new sqlda was built
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_set_compat_sqlda row 0 col 0 IS NOT NULL
+[NO_PID]: ecpg_set_compat_sqlda on line 109 row 0 col 0 IS NOT NULL
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_get_data on line 109: RESULT: 1 offset: -1; array: yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_set_compat_sqlda row 0 col 1 IS NOT NULL
+[NO_PID]: ecpg_set_compat_sqlda on line 109 row 0 col 1 IS NOT NULL
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_get_data on line 109: RESULT: a offset: -1; array: yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_set_compat_sqlda row 0 col 2 IS NOT NULL
+[NO_PID]: ecpg_set_compat_sqlda on line 109 row 0 col 2 IS NOT NULL
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_get_data on line 109: RESULT: 1.0 offset: -1; array: yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_set_compat_sqlda row 0 col 3 IS NOT NULL
+[NO_PID]: ecpg_set_compat_sqlda on line 109 row 0 col 3 IS NOT NULL
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_get_data on line 109: RESULT: 1 offset: -1; array: yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_set_compat_sqlda row 0 col 4 IS NOT NULL
+[NO_PID]: ecpg_set_compat_sqlda on line 109 row 0 col 4 IS NOT NULL
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_get_data on line 109: RESULT: a          offset: -1; array: yes
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -68,21 +68,21 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 109: correctly got 1 tuples with 5 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_build_compat_sqlda sqld = 5
+[NO_PID]: ecpg_build_compat_sqlda on line 109 sqld = 5
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 109: new sqlda was built
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_set_compat_sqlda row 0 col 0 IS NOT NULL
+[NO_PID]: ecpg_set_compat_sqlda on line 109 row 0 col 0 IS NOT NULL
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_get_data on line 109: RESULT: 2 offset: -1; array: yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_set_compat_sqlda row 0 col 1 IS NULL
+[NO_PID]: ecpg_set_compat_sqlda on line 109 row 0 col 1 IS NULL
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_set_compat_sqlda row 0 col 2 IS NULL
+[NO_PID]: ecpg_set_compat_sqlda on line 109 row 0 col 2 IS NULL
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_set_compat_sqlda row 0 col 3 IS NULL
+[NO_PID]: ecpg_set_compat_sqlda on line 109 row 0 col 3 IS NULL
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_set_compat_sqlda row 0 col 4 IS NULL
+[NO_PID]: ecpg_set_compat_sqlda on line 109 row 0 col 4 IS NULL
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 109: putting result (1 tuple 5 fields) into sqlda descriptor
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -92,27 +92,27 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 109: correctly got 1 tuples with 5 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_build_compat_sqlda sqld = 5
+[NO_PID]: ecpg_build_compat_sqlda on line 109 sqld = 5
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 109: new sqlda was built
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_set_compat_sqlda row 0 col 0 IS NOT NULL
+[NO_PID]: ecpg_set_compat_sqlda on line 109 row 0 col 0 IS NOT NULL
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_get_data on line 109: RESULT: 4 offset: -1; array: yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_set_compat_sqlda row 0 col 1 IS NOT NULL
+[NO_PID]: ecpg_set_compat_sqlda on line 109 row 0 col 1 IS NOT NULL
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_get_data on line 109: RESULT: d offset: -1; array: yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_set_compat_sqlda row 0 col 2 IS NOT NULL
+[NO_PID]: ecpg_set_compat_sqlda on line 109 row 0 col 2 IS NOT NULL
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_get_data on line 109: RESULT: 4.0 offset: -1; array: yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_set_compat_sqlda row 0 col 3 IS NOT NULL
+[NO_PID]: ecpg_set_compat_sqlda on line 109 row 0 col 3 IS NOT NULL
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_get_data on line 109: RESULT: 4 offset: -1; array: yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_set_compat_sqlda row 0 col 4 IS NOT NULL
+[NO_PID]: ecpg_set_compat_sqlda on line 109 row 0 col 4 IS NOT NULL
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_get_data on line 109: RESULT: d          offset: -1; array: yes
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -148,27 +148,27 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 146: correctly got 1 tuples with 5 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_build_compat_sqlda sqld = 5
+[NO_PID]: ecpg_build_compat_sqlda on line 146 sqld = 5
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 146: new sqlda was built
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_set_compat_sqlda row 0 col 0 IS NOT NULL
+[NO_PID]: ecpg_set_compat_sqlda on line 146 row 0 col 0 IS NOT NULL
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_get_data on line 146: RESULT: 1 offset: -1; array: yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_set_compat_sqlda row 0 col 1 IS NOT NULL
+[NO_PID]: ecpg_set_compat_sqlda on line 146 row 0 col 1 IS NOT NULL
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_get_data on line 146: RESULT: a offset: -1; array: yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_set_compat_sqlda row 0 col 2 IS NOT NULL
+[NO_PID]: ecpg_set_compat_sqlda on line 146 row 0 col 2 IS NOT NULL
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_get_data on line 146: RESULT: 1.0 offset: -1; array: yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_set_compat_sqlda row 0 col 3 IS NOT NULL
+[NO_PID]: ecpg_set_compat_sqlda on line 146 row 0 col 3 IS NOT NULL
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_get_data on line 146: RESULT: 1 offset: -1; array: yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_set_compat_sqlda row 0 col 4 IS NOT NULL
+[NO_PID]: ecpg_set_compat_sqlda on line 146 row 0 col 4 IS NOT NULL
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_get_data on line 146: RESULT: a          offset: -1; array: yes
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -180,21 +180,21 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 146: correctly got 1 tuples with 5 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_build_compat_sqlda sqld = 5
+[NO_PID]: ecpg_build_compat_sqlda on line 146 sqld = 5
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 146: new sqlda was built
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_set_compat_sqlda row 0 col 0 IS NOT NULL
+[NO_PID]: ecpg_set_compat_sqlda on line 146 row 0 col 0 IS NOT NULL
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_get_data on line 146: RESULT: 2 offset: -1; array: yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_set_compat_sqlda row 0 col 1 IS NULL
+[NO_PID]: ecpg_set_compat_sqlda on line 146 row 0 col 1 IS NULL
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_set_compat_sqlda row 0 col 2 IS NULL
+[NO_PID]: ecpg_set_compat_sqlda on line 146 row 0 col 2 IS NULL
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_set_compat_sqlda row 0 col 3 IS NULL
+[NO_PID]: ecpg_set_compat_sqlda on line 146 row 0 col 3 IS NULL
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_set_compat_sqlda row 0 col 4 IS NULL
+[NO_PID]: ecpg_set_compat_sqlda on line 146 row 0 col 4 IS NULL
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 146: putting result (1 tuple 5 fields) into sqlda descriptor
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -204,27 +204,27 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 146: correctly got 1 tuples with 5 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_build_compat_sqlda sqld = 5
+[NO_PID]: ecpg_build_compat_sqlda on line 146 sqld = 5
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 146: new sqlda was built
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_set_compat_sqlda row 0 col 0 IS NOT NULL
+[NO_PID]: ecpg_set_compat_sqlda on line 146 row 0 col 0 IS NOT NULL
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_get_data on line 146: RESULT: 4 offset: -1; array: yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_set_compat_sqlda row 0 col 1 IS NOT NULL
+[NO_PID]: ecpg_set_compat_sqlda on line 146 row 0 col 1 IS NOT NULL
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_get_data on line 146: RESULT: d offset: -1; array: yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_set_compat_sqlda row 0 col 2 IS NOT NULL
+[NO_PID]: ecpg_set_compat_sqlda on line 146 row 0 col 2 IS NOT NULL
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_get_data on line 146: RESULT: 4.0 offset: -1; array: yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_set_compat_sqlda row 0 col 3 IS NOT NULL
+[NO_PID]: ecpg_set_compat_sqlda on line 146 row 0 col 3 IS NOT NULL
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_get_data on line 146: RESULT: 4 offset: -1; array: yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_set_compat_sqlda row 0 col 4 IS NOT NULL
+[NO_PID]: ecpg_set_compat_sqlda on line 146 row 0 col 4 IS NOT NULL
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_get_data on line 146: RESULT: d          offset: -1; array: yes
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -256,27 +256,27 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 184: correctly got 1 tuples with 5 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_build_compat_sqlda sqld = 5
+[NO_PID]: ecpg_build_compat_sqlda on line 184 sqld = 5
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 184: new sqlda was built
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_set_compat_sqlda row 0 col 0 IS NOT NULL
+[NO_PID]: ecpg_set_compat_sqlda on line 184 row 0 col 0 IS NOT NULL
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_get_data on line 184: RESULT: 4 offset: -1; array: yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_set_compat_sqlda row 0 col 1 IS NOT NULL
+[NO_PID]: ecpg_set_compat_sqlda on line 184 row 0 col 1 IS NOT NULL
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_get_data on line 184: RESULT: d offset: -1; array: yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_set_compat_sqlda row 0 col 2 IS NOT NULL
+[NO_PID]: ecpg_set_compat_sqlda on line 184 row 0 col 2 IS NOT NULL
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_get_data on line 184: RESULT: 4.0 offset: -1; array: yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_set_compat_sqlda row 0 col 3 IS NOT NULL
+[NO_PID]: ecpg_set_compat_sqlda on line 184 row 0 col 3 IS NOT NULL
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_get_data on line 184: RESULT: 4 offset: -1; array: yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_set_compat_sqlda row 0 col 4 IS NOT NULL
+[NO_PID]: ecpg_set_compat_sqlda on line 184 row 0 col 4 IS NOT NULL
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_get_data on line 184: RESULT: d          offset: -1; array: yes
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -296,27 +296,27 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 221: correctly got 1 tuples with 5 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_build_compat_sqlda sqld = 5
+[NO_PID]: ecpg_build_compat_sqlda on line 221 sqld = 5
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 221: new sqlda was built
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_set_compat_sqlda row 0 col 0 IS NOT NULL
+[NO_PID]: ecpg_set_compat_sqlda on line 221 row 0 col 0 IS NOT NULL
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_get_data on line 221: RESULT: 4 offset: -1; array: yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_set_compat_sqlda row 0 col 1 IS NOT NULL
+[NO_PID]: ecpg_set_compat_sqlda on line 221 row 0 col 1 IS NOT NULL
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_get_data on line 221: RESULT: d offset: -1; array: yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_set_compat_sqlda row 0 col 2 IS NOT NULL
+[NO_PID]: ecpg_set_compat_sqlda on line 221 row 0 col 2 IS NOT NULL
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_get_data on line 221: RESULT: 4.0 offset: -1; array: yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_set_compat_sqlda row 0 col 3 IS NOT NULL
+[NO_PID]: ecpg_set_compat_sqlda on line 221 row 0 col 3 IS NOT NULL
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_get_data on line 221: RESULT: 4 offset: -1; array: yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_set_compat_sqlda row 0 col 4 IS NOT NULL
+[NO_PID]: ecpg_set_compat_sqlda on line 221 row 0 col 4 IS NOT NULL
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_get_data on line 221: RESULT: d          offset: -1; array: yes
 [NO_PID]: sqlca: code: 0, state: 00000
