@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.365 2010/01/06 03:03:58 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.366 2010/01/06 05:18:18 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -945,7 +945,8 @@ heap_create_with_catalog(const char *relname,
 					 errmsg("only shared relations can be placed in pg_global tablespace")));
 	}
 
-	if ((relkind == RELKIND_RELATION || relkind == RELKIND_SEQUENCE) &&
+	if ((relkind == RELKIND_RELATION || relkind == RELKIND_SEQUENCE ||
+		 relkind == RELKIND_VIEW || relkind == RELKIND_COMPOSITE_TYPE) &&
 		OidIsValid(binary_upgrade_next_heap_relfilenode))
 	{
 		relid = binary_upgrade_next_heap_relfilenode;

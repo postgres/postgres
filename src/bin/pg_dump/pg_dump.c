@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.565 2010/01/06 03:04:02 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.566 2010/01/06 05:18:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -7192,6 +7192,7 @@ dumpCompositeType(Archive *fout, TypeInfo *tyinfo)
 	int			ntups;
 	int			i_attname;
 	int			i_atttypdefn;
+	int			i_typrelid;
 	int			i;
 
 	/* Set proper schema search path so type references list correctly */
@@ -7201,7 +7202,8 @@ dumpCompositeType(Archive *fout, TypeInfo *tyinfo)
 	/* We assume here that remoteVersion must be at least 70300 */
 
 	appendPQExpBuffer(query, "SELECT a.attname, "
-			 "pg_catalog.format_type(a.atttypid, a.atttypmod) AS atttypdefn "
+			 "pg_catalog.format_type(a.atttypid, a.atttypmod) AS atttypdefn, "
+			 		  "typrelid "
 					  "FROM pg_catalog.pg_type t, pg_catalog.pg_attribute a "
 					  "WHERE t.oid = '%u'::pg_catalog.oid "
 					  "AND a.attrelid = t.typrelid "
@@ -7222,9 +7224,15 @@ dumpCompositeType(Archive *fout, TypeInfo *tyinfo)
 
 	i_attname = PQfnumber(res, "attname");
 	i_atttypdefn = PQfnumber(res, "atttypdefn");
+	i_typrelid = PQfnumber(res, "typrelid");
 
 	if (binary_upgrade)
+	{
+		Oid typrelid = atooid(PQgetvalue(res, 0, i_typrelid));
+		
 		binary_upgrade_set_type_oids_by_type_oid(q, tyinfo->dobj.catId.oid);
+		binary_upgrade_set_relfilenodes(q, typrelid, false);
+	}
 
 	appendPQExpBuffer(q, "CREATE TYPE %s AS (",
 					  fmtId(tyinfo->dobj.name));
@@ -10517,6 +10525,9 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 						  fmtId(tbinfo->dobj.namespace->dobj.name));
 		appendPQExpBuffer(delq, "%s;\n",
 						  fmtId(tbinfo->dobj.name));
+
+		if (binary_upgrade)
+			binary_upgrade_set_relfilenodes(q, tbinfo->dobj.catId.oid, false);
 
 		appendPQExpBuffer(q, "CREATE VIEW %s AS\n    %s\n",
 						  fmtId(tbinfo->dobj.name), viewdef);
