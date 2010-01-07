@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_largeobject.c,v 1.36 2010/01/02 16:57:36 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_largeobject.c,v 1.37 2010/01/07 02:41:16 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -251,9 +251,11 @@ LargeObjectAlterOwner(Oid loid, Oid newOwnerId)
  * We don't use the system cache to for large object metadata, for fear of
  * using too much local memory.
  *
- * Note that LargeObjectExists always scans the system catalog
- * with SnapshotNow, so it is unavailable to use to check
- * existence in read-only accesses.
+ * This function always scans the system catalog using SnapshotNow, so it
+ * should not be used when a large object is opened in read-only mode (because
+ * large objects opened in read only mode are supposed to be viewed relative
+ * to the caller's snapshot, whereas in read-write mode they are relative to
+ * SnapshotNow).
  */
 bool
 LargeObjectExists(Oid loid)

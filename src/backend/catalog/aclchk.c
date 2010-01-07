@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/aclchk.c,v 1.160 2010/01/05 21:53:58 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/aclchk.c,v 1.161 2010/01/07 02:41:15 rhaas Exp $
  *
  * NOTES
  *	  See acl.h.
@@ -3515,16 +3515,11 @@ pg_language_aclmask(Oid lang_oid, Oid roleid,
 /*
  * Exported routine for examining a user's privileges for a largeobject
  *
- * The reason why this interface has an argument of snapshot is that
- * we apply a snapshot available on lo_open(), not SnapshotNow, when
- * it is opened as read-only mode.
- * If we could see the metadata and data from inconsistent viewpoint,
- * it will give us much confusion. So, we need to provide an interface
- * which takes an argument of snapshot.
- *
- * If the caller refers a large object with a certain snapshot except
- * for SnapshotNow, its permission checks should be also applied in
- * the same snapshot.
+ * When a large object is opened for reading, it is opened relative to the
+ * caller's snapshot, but when it is opened for writing, it is always relative
+ * to SnapshotNow, as documented in doc/src/sgml/lobj.sgml.  This function
+ * takes a snapshot argument so that the permissions check can be made relative
+ * to the same snapshot that will be used to read the underlying data.
  */
 AclMode
 pg_largeobject_aclmask_snapshot(Oid lobj_oid, Oid roleid,
