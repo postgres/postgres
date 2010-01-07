@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablespace.c,v 1.68 2010/01/06 23:23:51 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablespace.c,v 1.69 2010/01/07 04:05:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -89,7 +89,7 @@ static void write_version_file(const char *path);
  * Each database using a table space is isolated into its own name space
  * by a subdirectory named for the database OID.  On first creation of an
  * object in the tablespace, create the subdirectory.  If the subdirectory
- * already exists, just fall through quietly.
+ * already exists, fall through quietly.
  *
  * isRedo indicates that we are creating an object during WAL replay.
  * In this case we will cope with the possibility of the tablespace
@@ -137,29 +137,32 @@ TablespaceCreateDbspace(Oid spcNode, Oid dbNode, bool isRedo)
 			 */
 			if (stat(dir, &st) == 0 && S_ISDIR(st.st_mode))
 			{
-				/* need not do anything */
+				/* Directory was created. */
 			}
 			else
 			{
-				/* OK, go for it */
+				/* Directory creation failed? */
 				if (mkdir(dir, S_IRWXU) < 0)
 				{
 					char	   *parentdir;
 
+					/* Failure other than not exists? */
 					if (errno != ENOENT || !isRedo)
 						ereport(ERROR,
 								(errcode_for_file_access(),
 							  errmsg("could not create directory \"%s\": %m",
 									 dir)));
-					/* Try to make parent directory too */
+					/* Parent directory must be missing */
 					parentdir = pstrdup(dir);
 					get_parent_directory(parentdir);
+					/* Can't create parent either? */
 					if (mkdir(parentdir, S_IRWXU) < 0)
 						ereport(ERROR,
 								(errcode_for_file_access(),
 							  errmsg("could not create directory \"%s\": %m",
 									 parentdir)));
 					pfree(parentdir);
+					/* Create database directory */
 					if (mkdir(dir, S_IRWXU) < 0)
 						ereport(ERROR,
 								(errcode_for_file_access(),
@@ -179,7 +182,7 @@ TablespaceCreateDbspace(Oid spcNode, Oid dbNode, bool isRedo)
 	}
 	else
 	{
-		/* be paranoid */
+		/* Is it not a directory? */
 		if (!S_ISDIR(st.st_mode))
 			ereport(ERROR,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
