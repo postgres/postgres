@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/varbit.c,v 1.61 2010/01/07 04:53:34 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/varbit.c,v 1.62 2010/01/07 19:53:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -945,13 +945,23 @@ bitsubstr(PG_FUNCTION_ARGS)
 			   *ps;
 
 	bitlen = VARBITLEN(arg);
-	/* If we do not have an upper bound, set bitlen */
-	if (l == -1)
-		l = bitlen;
-	e = s + l;
 	s1 = Max(s, 1);
-	e1 = Min(e, bitlen + 1);
-	if (s1 > bitlen || e1 < 1)
+	/* If we do not have an upper bound, use end of string */
+	if (l < 0)
+	{
+		e1 = bitlen + 1;
+	}
+	else
+	{
+		e = s + l;
+		/* guard against overflow, even though we don't allow L<0 here */
+		if (e < s)
+			ereport(ERROR,
+					(errcode(ERRCODE_SUBSTRING_ERROR),
+					 errmsg("negative substring length not allowed")));
+		e1 = Min(e, bitlen + 1);
+	}
+	if (s1 > bitlen || e1 <= s1)
 	{
 		/* Need to return a zero-length bitstring */
 		len = VARBITTOTALLEN(0);
