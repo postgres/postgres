@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/spccache.c,v 1.3 2010/01/06 23:00:02 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/spccache.c,v 1.4 2010/01/07 03:53:08 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -142,7 +142,6 @@ get_tablespace(Oid spcid)
 	{
 		Datum	datum;
 		bool	isNull;
-		MemoryContext octx;
 
 		datum = SysCacheGetAttr(TABLESPACEOID,
 								tp,
@@ -152,10 +151,9 @@ get_tablespace(Oid spcid)
 			opts = NULL;
 		else
 		{
-			/* XXX should NOT do the parsing work in CacheMemoryContext */
-			octx = MemoryContextSwitchTo(CacheMemoryContext);
-			opts = (TableSpaceOpts *) tablespace_reloptions(datum, false);
-			MemoryContextSwitchTo(octx);
+			bytea *bytea_opts = tablespace_reloptions(datum, false);
+			opts = MemoryContextAlloc(CacheMemoryContext, VARSIZE(bytea_opts));
+			memcpy(opts, bytea_opts, VARSIZE(bytea_opts));
 		}
 		ReleaseSysCache(tp);
 	}
