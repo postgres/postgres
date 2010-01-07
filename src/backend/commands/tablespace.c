@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablespace.c,v 1.69 2010/01/07 04:05:39 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablespace.c,v 1.70 2010/01/07 04:10:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -99,9 +99,8 @@ static void write_version_file(const char *path);
  * symlink would normally be.  This isn't an exact replay of course, but
  * it's the best we can do given the available information.
  *
- * If tablespaces are not supported, you might think this could be a no-op,
- * but you'd be wrong: we still need it in case we have to re-create a
- * database subdirectory (of $PGDATA/base) during WAL replay.
+ * If tablespaces are not supported, we still need it in case we have to
+ * re-create a database subdirectory (of $PGDATA/base) during WAL replay.
  */
 void
 TablespaceCreateDbspace(Oid spcNode, Oid dbNode, bool isRedo)
@@ -123,6 +122,7 @@ TablespaceCreateDbspace(Oid spcNode, Oid dbNode, bool isRedo)
 
 	if (stat(dir, &st) < 0)
 	{
+		/* Directory does not exist? */
 		if (errno == ENOENT)
 		{
 			/*
@@ -137,7 +137,7 @@ TablespaceCreateDbspace(Oid spcNode, Oid dbNode, bool isRedo)
 			 */
 			if (stat(dir, &st) == 0 && S_ISDIR(st.st_mode))
 			{
-				/* Directory was created. */
+				/* Directory was created */
 			}
 			else
 			{
@@ -152,6 +152,7 @@ TablespaceCreateDbspace(Oid spcNode, Oid dbNode, bool isRedo)
 								(errcode_for_file_access(),
 							  errmsg("could not create directory \"%s\": %m",
 									 dir)));
+
 					/* Parent directory must be missing */
 					parentdir = pstrdup(dir);
 					get_parent_directory(parentdir);
@@ -162,6 +163,7 @@ TablespaceCreateDbspace(Oid spcNode, Oid dbNode, bool isRedo)
 							  errmsg("could not create directory \"%s\": %m",
 									 parentdir)));
 					pfree(parentdir);
+
 					/* Create database directory */
 					if (mkdir(dir, S_IRWXU) < 0)
 						ereport(ERROR,
@@ -252,7 +254,7 @@ CreateTableSpace(CreateTableSpaceStmt *stmt)
 	 * '/<dboid>/<relid>.<nnn>'  (XXX but do we ever form the whole path
 	 * explicitly?	This may be overly conservative.)
 	 */
-	if (strlen(location) >= (MAXPGPATH - 1 - OIDCHARS - 1 - OIDCHARS - 1 - OIDCHARS))
+	if (strlen(location) >= MAXPGPATH - 1 - OIDCHARS - 1 - OIDCHARS - 1 - OIDCHARS)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
 				 errmsg("tablespace location \"%s\" is too long",
