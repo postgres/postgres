@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.580 2010/01/02 16:57:52 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.581 2010/01/07 16:29:58 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -476,11 +476,10 @@ prepare_for_client_read(void)
 		EnableNotifyInterrupt();
 		EnableCatchupInterrupt();
 
-		/* Allow "die" interrupt to be processed while waiting */
+		/* Allow cancel/die interrupts to be processed while waiting */
 		ImmediateInterruptOK = true;
 
 		/* And don't forget to detect one that already arrived */
-		QueryCancelPending = false;
 		CHECK_FOR_INTERRUPTS();
 	}
 }
@@ -494,7 +493,6 @@ client_read_ended(void)
 	if (DoingCommandRead)
 	{
 		ImmediateInterruptOK = false;
-		QueryCancelPending = false;		/* forget any CANCEL signal */
 
 		DisableNotifyInterrupt();
 		DisableCatchupInterrupt();
@@ -2640,12 +2638,11 @@ StatementCancelHandler(SIGNAL_ARGS)
 		QueryCancelPending = true;
 
 		/*
-		 * If it's safe to interrupt, and we're waiting for a lock, service
-		 * the interrupt immediately.  No point in interrupting if we're
-		 * waiting for input, however.
+		 * If it's safe to interrupt, and we're waiting for input or a lock,
+		 * service the interrupt immediately
 		 */
-		if (InterruptHoldoffCount == 0 && CritSectionCount == 0 &&
-			(DoingCommandRead || ImmediateInterruptOK))
+		if (ImmediateInterruptOK && InterruptHoldoffCount == 0 &&
+			CritSectionCount == 0)
 		{
 			/* bump holdoff count to make ProcessInterrupts() a no-op */
 			/* until we are done getting ready for it */
@@ -2717,25 +2714,36 @@ ProcessInterrupts(void)
 	if (QueryCancelPending)
 	{
 		QueryCancelPending = false;
-		ImmediateInterruptOK = false;	/* not idle anymore */
-		DisableNotifyInterrupt();
-		DisableCatchupInterrupt();
-		/* As in quickdie, don't risk sending to client during auth */
-		if (ClientAuthInProgress && whereToSendOutput == DestRemote)
-			whereToSendOutput = DestNone;
 		if (ClientAuthInProgress)
+		{
+			ImmediateInterruptOK = false;	/* not idle anymore */
+			DisableNotifyInterrupt();
+			DisableCatchupInterrupt();
+			/* As in quickdie, don't risk sending to client during auth */
+			if (whereToSendOutput == DestRemote)
+				whereToSendOutput = DestNone;
 			ereport(ERROR,
 					(errcode(ERRCODE_QUERY_CANCELED),
 					 errmsg("canceling authentication due to timeout")));
-		else if (cancel_from_timeout)
+		}
+		if (cancel_from_timeout)
+		{
+			ImmediateInterruptOK = false;	/* not idle anymore */
+			DisableNotifyInterrupt();
+			DisableCatchupInterrupt();
 			ereport(ERROR,
 					(errcode(ERRCODE_QUERY_CANCELED),
 					 errmsg("canceling statement due to statement timeout")));
-		else if (IsAutoVacuumWorkerProcess())
+		}
+		if (IsAutoVacuumWorkerProcess())
+		{
+			ImmediateInterruptOK = false;	/* not idle anymore */
+			DisableNotifyInterrupt();
+			DisableCatchupInterrupt();
 			ereport(ERROR,
 					(errcode(ERRCODE_QUERY_CANCELED),
 					 errmsg("canceling autovacuum task")));
-		else
+		}
 		{
 			int cancelMode = MyProc->recoveryConflictMode;
 
@@ -2756,34 +2764,50 @@ ProcessInterrupts(void)
 			switch (cancelMode)
 			{
 				case CONFLICT_MODE_FATAL:
-						Assert(RecoveryInProgress());
-						ereport(FATAL,
+					ImmediateInterruptOK = false;	/* not idle anymore */
+					DisableNotifyInterrupt();
+					DisableCatchupInterrupt();
+					Assert(RecoveryInProgress());
+					ereport(FATAL,
 							(errcode(ERRCODE_QUERY_CANCELED),
 							 errmsg("canceling session due to conflict with recovery")));
 
 				case CONFLICT_MODE_ERROR:
-						/*
-						 * We are aborting because we need to release
-						 * locks. So we need to abort out of all
-						 * subtransactions to make sure we release
-						 * all locks at whatever their level.
-						 *
-						 * XXX Should we try to examine the
-						 * transaction tree and cancel just enough
-						 * subxacts to remove locks? Doubt it.
-						 */
-						Assert(RecoveryInProgress());
-						AbortOutOfAnyTransaction();
-						ereport(ERROR,
+					/*
+					 * We are aborting because we need to release
+					 * locks. So we need to abort out of all
+					 * subtransactions to make sure we release
+					 * all locks at whatever their level.
+					 *
+					 * XXX Should we try to examine the
+					 * transaction tree and cancel just enough
+					 * subxacts to remove locks? Doubt it.
+					 */
+					ImmediateInterruptOK = false;	/* not idle anymore */
+					DisableNotifyInterrupt();
+					DisableCatchupInterrupt();
+					Assert(RecoveryInProgress());
+					AbortOutOfAnyTransaction();
+					ereport(ERROR,
 							(errcode(ERRCODE_QUERY_CANCELED),
 							 errmsg("canceling statement due to conflict with recovery")));
-						return;
 
 				default:
-						/* No conflict pending, so fall through */
-						break;
+					/* No conflict pending, so fall through */
+					break;
 			}
+		}
 
+		/*
+		 * If we are reading a command from the client, just ignore the
+		 * cancel request --- sending an extra error message won't
+		 * accomplish anything.  Otherwise, go ahead and throw the error.
+		 */
+		if (!DoingCommandRead)
+		{
+			ImmediateInterruptOK = false;	/* not idle anymore */
+			DisableNotifyInterrupt();
+			DisableCatchupInterrupt();
 			ereport(ERROR,
 					(errcode(ERRCODE_QUERY_CANCELED),
 					 errmsg("canceling statement due to user request")));
@@ -3626,7 +3650,6 @@ PostgresMain(int argc, char *argv[], const char *username)
 		 * conditional since we don't want, say, reads on behalf of COPY FROM
 		 * STDIN doing the same thing.)
 		 */
-		QueryCancelPending = false;		/* forget any earlier CANCEL signal */
 		DoingCommandRead = true;
 
 		/*
