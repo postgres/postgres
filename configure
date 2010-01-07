@@ -22385,6 +22385,7 @@ fi
 
 
 
+
 { $as_echo "$as_me:$LINENO: checking whether long int is 64 bits" >&5
 $as_echo_n "checking whether long int is 64 bits... " >&6; }
 if test "${pgac_cv_type_long_int_64+set}" = set; then
@@ -22657,6 +22658,11 @@ _ACEOF
 
 fi
 
+  if test x"$HAVE_LONG_LONG_INT_64" = x"no" ; then
+    { { $as_echo "$as_me:$LINENO: error: Cannot find a working 64-bit integer type." >&5
+$as_echo "$as_me: error: Cannot find a working 64-bit integer type." >&2;}
+   { (exit 1); exit 1; }; }
+  fi
 fi
 
 
@@ -26540,26 +26546,6 @@ _ACEOF
 
 fi
 
-
-
-# If the user did not disable integer datetimes, check that
-# there is a working 64-bit integral type to use.
-if test x"$USE_INTEGER_DATETIMES" = x"yes" &&
-   test x"$HAVE_LONG_INT_64" = x"no" &&
-   test x"$HAVE_LONG_LONG_INT_64" = x"no" &&
-   test x"$HAVE_INT64" = x"no" ; then
-  { { $as_echo "$as_me:$LINENO: error:
-Integer-based datetime support requires a 64-bit integer type,
-but no such type could be found. The --disable-integer-datetimes
-configure option can be used to disable integer-based storage
-of datetime values." >&5
-$as_echo "$as_me: error:
-Integer-based datetime support requires a 64-bit integer type,
-but no such type could be found. The --disable-integer-datetimes
-configure option can be used to disable integer-based storage
-of datetime values." >&2;}
-   { (exit 1); exit 1; }; }
-fi
 
 
 if test "$PORTNAME" != "win32"

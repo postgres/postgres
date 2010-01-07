@@ -647,7 +647,7 @@
 /* Define to 1 if you have the <winldap.h> header file. */
 #undef HAVE_WINLDAP_H
 
-/* Define to the appropriate snprintf format for 64-bit ints, if any. */
+/* Define to the appropriate snprintf format for 64-bit ints. */
 #undef INT64_FORMAT
 
 /* Define to build with Kerberos 5 support. (--with-krb5) */
@@ -732,8 +732,7 @@
 /* Define to 1 if your <sys/time.h> declares `struct tm'. */
 #undef TM_IN_SYS_TIME
 
-/* Define to the appropriate snprintf format for unsigned 64-bit ints, if any.
-   */
+/* Define to the appropriate snprintf format for unsigned 64-bit ints. */
 #undef UINT64_FORMAT
 
 /* Define to 1 to build with assertion checks. (--enable-cassert) */
