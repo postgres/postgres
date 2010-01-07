@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.559 2010/01/05 01:06:56 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.560 2010/01/07 20:17:44 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.pl reads this file and generates .bki
@@ -2400,7 +2400,7 @@ DESCR("adjust varbit() to typmod length");
 
 DATA(insert OID = 1698 (  position		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 23 "1560 1560" _null_ _null_ _null_ _null_ bitposition _null_ _null_ _null_ ));
 DESCR("return position of sub-bitstring");
-DATA(insert OID = 1699 (  substring			PGNSP PGUID 14 1 0 0 f f f t f i 2 0 1560 "1560 23" _null_ _null_ _null_ _null_ "select pg_catalog.substring($1, $2, -1)" _null_ _null_ _null_ ));
+DATA(insert OID = 1699 (  substring			PGNSP PGUID 12 1 0 0 f f f t f i 2 0 1560 "1560 23" _null_ _null_ _null_ _null_ bitsubstr_no_len _null_ _null_ _null_ ));
 DESCR("return portion of bitstring");
 
 
