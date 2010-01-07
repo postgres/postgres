@@ -6822,7 +6822,9 @@ fi
 
 
 
-# Extract the first word of "perl", so it can be a program name with args.
+# Let the user override the search
+if test -z "$PERL"; then
+  # Extract the first word of "perl", so it can be a program name with args.
 set dummy perl; ac_word=$2
 { $as_echo "$as_me:$LINENO: checking for $ac_word" >&5
 $as_echo_n "checking for $ac_word... " >&6; }
@@ -6861,6 +6863,38 @@ else
 $as_echo "no" >&6; }
 fi
 
+
+fi
+
+if test "$PERL"; then
+  pgac_perl_version=`$PERL -v 2>/dev/null | sed -n 's/This is perl, v[a-z ]*//p' | sed 's/ .*//'`
+  { $as_echo "$as_me:$LINENO: using perl $pgac_perl_version" >&5
+$as_echo "$as_me: using perl $pgac_perl_version" >&6;}
+  if echo "$pgac_perl_version" | sed 's/[.a-z_]/ /g' | \
+    $AWK '{ if ($1 = 5 && $2 >= 8) exit 1; else exit 0;}'
+  then
+    { $as_echo "$as_me:$LINENO: WARNING:
+*** The installed version of Perl, $PERL, is too old to use with PostgreSQL.
+*** Perl version 5.8 or later is required, but this is $pgac_perl_version." >&5
+$as_echo "$as_me: WARNING:
+*** The installed version of Perl, $PERL, is too old to use with PostgreSQL.
+*** Perl version 5.8 or later is required, but this is $pgac_perl_version." >&2;}
+    PERL=""
+  fi
+fi
+
+if test -z "$PERL"; then
+  { $as_echo "$as_me:$LINENO: WARNING:
+*** Without Perl you will not be able to build PostgreSQL from CVS.
+*** You can obtain Perl from any CPAN mirror site.
+*** (If you are using the official distribution of PostgreSQL then you do not
+*** need to worry about this, because the Perl output is pre-generated.)" >&5
+$as_echo "$as_me: WARNING:
+*** Without Perl you will not be able to build PostgreSQL from CVS.
+*** You can obtain Perl from any CPAN mirror site.
+*** (If you are using the official distribution of PostgreSQL then you do not
+*** need to worry about this, because the Perl output is pre-generated.)" >&2;}
+fi
 
 if test "$with_perl" = yes; then
 
