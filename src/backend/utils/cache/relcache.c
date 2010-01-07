@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.296 2010/01/05 01:06:56 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.297 2010/01/07 20:39:45 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -404,7 +404,12 @@ RelationParseRelOptions(Relation relation, HeapTuple tuple)
 								relation->rd_rel->relkind == RELKIND_INDEX ?
 								relation->rd_am->amoptions : InvalidOid);
 
-	/* Copy parsed data into CacheMemoryContext */
+	/*
+	 * Copy parsed data into CacheMemoryContext.  To guard against the
+	 * possibility of leaks in the reloptions code, we want to do the actual
+	 * parsing in the caller's memory context and copy the results into
+	 * CacheMemoryContext after the fact.
+	 */
 	if (options)
 	{
 		relation->rd_options = MemoryContextAlloc(CacheMemoryContext,
