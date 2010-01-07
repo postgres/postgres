@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/vacuumdb.sgml,v 1.47 2010/01/06 05:31:13 itagaki Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/vacuumdb.sgml,v 1.48 2010/01/07 12:38:55 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -28,7 +28,7 @@ PostgreSQL documentation
    <group><arg>--freeze</arg><arg>-F</arg></group>
    <group><arg>--verbose</arg><arg>-v</arg></group>
    <group><arg>--analyze</arg><arg>-z</arg></group>
-   <group><arg>--only-analyze</arg><arg>-o</arg></group>
+   <group><arg>--analyze-only</arg><arg>-o</arg></group>
    <arg>--table | -t <replaceable>table</replaceable>
     <arg>( <replaceable class="parameter">column</replaceable> [,...] )</arg>
    </arg>
@@ -42,7 +42,7 @@ PostgreSQL documentation
    <group><arg>--freeze</arg><arg>-F</arg></group>
    <group><arg>--verbose</arg><arg>-v</arg></group>
    <group><arg>--analyze</arg><arg>-z</arg></group>
-   <group><arg>--only-analyze</arg><arg>-o</arg></group>
+   <group><arg>--analyze-only</arg><arg>-o</arg></group>
   </cmdsynopsis>
  </refsynopsisdiv>
  
@@ -143,7 +143,7 @@ PostgreSQL documentation
 
      <varlistentry>
       <term><option>-o</option></term>
-      <term><option>--only-analyze</option></term>
+      <term><option>--analyze-only</option></term>
       <listitem>
        <para>
         Only calculate statistics for use by the optimizer (no vacuum).
@@ -168,7 +168,7 @@ PostgreSQL documentation
        <para>
         Clean or analyze <replaceable class="parameter">table</replaceable> only.
         Column names can be specified only in conjunction with
-        the <option>--analyze</option> or <option>--only-analyze</option> options.
+        the <option>--analyze</option> or <option>--analyze-only</option> options.
        </para>
        <tip>
         <para>
