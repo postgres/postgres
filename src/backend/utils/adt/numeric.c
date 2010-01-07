@@ -14,7 +14,7 @@
  * Copyright (c) 1998-2010, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/numeric.c,v 1.120 2010/01/02 16:57:54 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/numeric.c,v 1.121 2010/01/07 04:53:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2808,16 +2808,8 @@ int8_sum(PG_FUNCTION_ARGS)
 
 typedef struct Int8TransTypeData
 {
-#ifndef INT64_IS_BUSTED
 	int64		count;
 	int64		sum;
-#else
-	/* "int64" isn't really 64 bits, so fake up properly-aligned fields */
-	int32		count;
-	int32		pad1;
-	int32		sum;
-	int32		pad2;
-#endif
 } Int8TransTypeData;
 
 Datum

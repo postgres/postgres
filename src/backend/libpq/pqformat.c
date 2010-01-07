@@ -24,7 +24,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/libpq/pqformat.c,v 1.51 2010/01/02 16:57:45 momjian Exp $
+ *	$PostgreSQL: pgsql/src/backend/libpq/pqformat.c,v 1.52 2010/01/07 04:53:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -272,12 +272,7 @@ pq_sendint64(StringInfo buf, int64 i)
 	uint32		n32;
 
 	/* High order half first, since we're doing MSB-first */
-#ifdef INT64_IS_BUSTED
-	/* don't try a right shift of 32 on a 32-bit word */
-	n32 = (i < 0) ? -1 : 0;
-#else
 	n32 = (uint32) (i >> 32);
-#endif
 	n32 = htonl(n32);
 	appendBinaryStringInfo(buf, (char *) &n32, 4);
 
@@ -327,27 +322,6 @@ pq_sendfloat4(StringInfo buf, float4 f)
 void
 pq_sendfloat8(StringInfo buf, float8 f)
 {
-#ifdef INT64_IS_BUSTED
-	union
-	{
-		float8		f;
-		uint32		h[2];
-	}			swap;
-
-	swap.f = f;
-	swap.h[0] = htonl(swap.h[0]);
-	swap.h[1] = htonl(swap.h[1]);
-
-#ifdef WORDS_BIGENDIAN
-	/* machine seems to be big-endian, send h[0] first */
-	appendBinaryStringInfo(buf, (char *) &swap.h[0], 4);
-	appendBinaryStringInfo(buf, (char *) &swap.h[1], 4);
-#else
-	/* machine seems to be little-endian, send h[1] first */
-	appendBinaryStringInfo(buf, (char *) &swap.h[1], 4);
-	appendBinaryStringInfo(buf, (char *) &swap.h[0], 4);
-#endif
-#else							/* INT64 works */
 	union
 	{
 		float8		f;
@@ -356,7 +330,6 @@ pq_sendfloat8(StringInfo buf, float8 f)
 
 	swap.f = f;
 	pq_sendint64(buf, swap.i);
-#endif
 }
 
 /* --------------------------------
@@ -520,18 +493,9 @@ pq_getmsgint64(StringInfo msg)
 	h32 = ntohl(h32);
 	l32 = ntohl(l32);
 
-#ifdef INT64_IS_BUSTED
-	/* error out if incoming value is wider than 32 bits */
-	result = l32;
-	if ((result < 0) ? (h32 != -1) : (h32 != 0))
-		ereport(ERROR,
-				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				 errmsg("binary value is out of range for type bigint")));
-#else
 	result = h32;
 	result <<= 32;
 	result |= l32;
-#endif
 
 	return result;
 }
@@ -564,24 +528,6 @@ pq_getmsgfloat4(StringInfo msg)
 float8
 pq_getmsgfloat8(StringInfo msg)
 {
-#ifdef INT64_IS_BUSTED
-	union
-	{
-		float8		f;
-		uint32		h[2];
-	}			swap;
-
-#ifdef WORDS_BIGENDIAN
-	/* machine seems to be big-endian, receive h[0] first */
-	swap.h[0] = pq_getmsgint(msg, 4);
-	swap.h[1] = pq_getmsgint(msg, 4);
-#else
-	/* machine seems to be little-endian, receive h[1] first */
-	swap.h[1] = pq_getmsgint(msg, 4);
-	swap.h[0] = pq_getmsgint(msg, 4);
-#endif
-	return swap.f;
-#else							/* INT64 works */
 	union
 	{
 		float8		f;
@@ -590,7 +536,6 @@ pq_getmsgfloat8(StringInfo msg)
 
 	swap.i = pq_getmsgint64(msg);
 	return swap.f;
-#endif
 }
 
 /* --------------------------------

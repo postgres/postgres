@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/btree_gin/btree_gin.c,v 1.3 2009/08/04 18:49:50 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/btree_gin/btree_gin.c,v 1.4 2010/01/07 04:53:34 tgl Exp $
  */
 #include "postgres.h"
 
@@ -214,8 +214,7 @@ static Datum
 leftmostvalue_int8(void)
 {
 	/*
-	 * Use sequence's definition to keep compatibility. Another way may make a
-	 * problem with INT64_IS_BUSTED
+	 * Use sequence's definition to keep compatibility.
 	 */
 	return Int64GetDatum(SEQ_MINVALUE);
 }
@@ -245,8 +244,7 @@ static Datum
 leftmostvalue_money(void)
 {
 	/*
-	 * Use sequence's definition to keep compatibility. Another way may make a
-	 * problem with INT64_IS_BUSTED
+	 * Use sequence's definition to keep compatibility.
 	 */
 	return Int64GetDatum(SEQ_MINVALUE);
 }

@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/c.h,v 1.238 2010/01/02 16:58:00 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/c.h,v 1.239 2010/01/07 04:53:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -270,6 +270,7 @@ typedef long int int64;
 #ifndef HAVE_UINT64
 typedef unsigned long int uint64;
 #endif
+
 #elif defined(HAVE_LONG_LONG_INT_64)
 /* We have working support for "long long int", use that */
 
@@ -279,20 +280,11 @@ typedef long long int int64;
 #ifndef HAVE_UINT64
 typedef unsigned long long int uint64;
 #endif
-#else							/* not HAVE_LONG_INT_64 and not
-								 * HAVE_LONG_LONG_INT_64 */
 
-/* Won't actually work, but fall back to long int so that code compiles */
-#ifndef HAVE_INT64
-typedef long int int64;
+#else
+/* neither HAVE_LONG_INT_64 nor HAVE_LONG_LONG_INT_64 */
+#error must have a working 64-bit integer datatype
 #endif
-#ifndef HAVE_UINT64
-typedef unsigned long int uint64;
-#endif
-
-#define INT64_IS_BUSTED
-#endif   /* not HAVE_LONG_INT_64 and not
-								 * HAVE_LONG_LONG_INT_64 */
 
 /* Decide if we need to decorate 64-bit constants */
 #ifdef HAVE_LL_CONSTANTS
@@ -305,7 +297,7 @@ typedef unsigned long int uint64;
 
 
 /* Select timestamp representation (float8 or int64) */
-#if defined(USE_INTEGER_DATETIMES) && !defined(INT64_IS_BUSTED)
+#ifdef USE_INTEGER_DATETIMES
 #define HAVE_INT64_TIMESTAMP
 #endif
 

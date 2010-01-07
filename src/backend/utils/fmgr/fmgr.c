@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/fmgr.c,v 1.128 2010/01/02 16:57:56 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/fmgr.c,v 1.129 2010/01/07 04:53:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2112,24 +2112,10 @@ fmgr(Oid procedureId,...)
 Datum
 Int64GetDatum(int64 X)
 {
-#ifndef INT64_IS_BUSTED
 	int64	   *retval = (int64 *) palloc(sizeof(int64));
 
 	*retval = X;
 	return PointerGetDatum(retval);
-#else							/* INT64_IS_BUSTED */
-
-	/*
-	 * On a machine with no 64-bit-int C datatype, sizeof(int64) will not be
-	 * 8, but we want Int64GetDatum to return an 8-byte object anyway, with
-	 * zeroes in the unused bits.  This is needed so that, for example, hash
-	 * join of int8 will behave properly.
-	 */
-	int64	   *retval = (int64 *) palloc0(Max(sizeof(int64), 8));
-
-	*retval = X;
-	return PointerGetDatum(retval);
-#endif   /* INT64_IS_BUSTED */
 }
 #endif   /* USE_FLOAT8_BYVAL */
 

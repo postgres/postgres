@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/hash/hashfunc.c,v 1.61 2010/01/02 16:57:34 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/hash/hashfunc.c,v 1.62 2010/01/07 04:53:34 tgl Exp $
  *
  * NOTES
  *	  These functions are stored in pg_amproc.	For each operator class
@@ -59,7 +59,6 @@ hashint8(PG_FUNCTION_ARGS)
 	 * value if the sign is positive, or the complement of the high half when
 	 * the sign is negative.
 	 */
-#ifndef INT64_IS_BUSTED
 	int64		val = PG_GETARG_INT64(0);
 	uint32		lohalf = (uint32) val;
 	uint32		hihalf = (uint32) (val >> 32);
@@ -67,10 +66,6 @@ hashint8(PG_FUNCTION_ARGS)
 	lohalf ^= (val >= 0) ? hihalf : ~hihalf;
 
 	return hash_uint32(lohalf);
-#else
-	/* here if we can't count on "x >> 32" to work sanely */
-	return hash_uint32((int32) PG_GETARG_INT64(0));
-#endif
 }
 
 Datum

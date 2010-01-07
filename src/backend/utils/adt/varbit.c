@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/varbit.c,v 1.60 2010/01/02 16:57:55 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/varbit.c,v 1.61 2010/01/07 04:53:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1414,11 +1414,7 @@ bitfromint8(PG_FUNCTION_ARGS)
 
 	r = VARBITS(result);
 	destbitsleft = typmod;
-#ifndef INT64_IS_BUSTED
 	srcbitsleft = 64;
-#else
-	srcbitsleft = 32;			/* don't try to shift more than 32 */
-#endif
 	/* drop any input bits that don't fit */
 	srcbitsleft = Min(srcbitsleft, destbitsleft);
 	/* sign-fill any excess bytes in output */

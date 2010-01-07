@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/include/pgtypes_interval.h,v 1.14 2007/05/28 09:46:47 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/include/pgtypes_interval.h,v 1.15 2010/01/07 04:53:35 tgl Exp $ */
 
 #ifndef PGTYPES_INTERVAL
 #define PGTYPES_INTERVAL
@@ -12,27 +12,19 @@
 typedef long int int64;
 #endif
 #elif defined(HAVE_LONG_LONG_INT_64)
-/* We have working support for "long long int", use that */
-
 #ifndef HAVE_INT64
 typedef long long int int64;
 #endif
-#else							/* not HAVE_LONG_INT_64 and not
-								 * HAVE_LONG_LONG_INT_64 */
-
-/* Won't actually work, but fall back to long int so that code compiles */
-#ifndef HAVE_INT64
-typedef long int int64;
+#else
+/* neither HAVE_LONG_INT_64 nor HAVE_LONG_LONG_INT_64 */
+#error must have a working 64-bit integer datatype
 #endif
 
-#define INT64_IS_BUSTED
-#endif   /* not HAVE_LONG_INT_64 and not
-								 * HAVE_LONG_LONG_INT_64 */
-#endif   /* C_H */
-
-#if defined(USE_INTEGER_DATETIMES) && !defined(INT64_IS_BUSTED)
+#ifdef USE_INTEGER_DATETIMES
 #define HAVE_INT64_TIMESTAMP
 #endif
+
+#endif   /* C_H */
 
 typedef struct
 {
