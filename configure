@@ -6897,6 +6897,11 @@ $as_echo "$as_me: WARNING:
 fi
 
 if test "$with_perl" = yes; then
+  if test -z "$PERL"; then
+    { { $as_echo "$as_me:$LINENO: error: Perl not found" >&5
+$as_echo "$as_me: error: Perl not found" >&2;}
+   { (exit 1); exit 1; }; }
+  fi
 
 { $as_echo "$as_me:$LINENO: checking for Perl archlibexp" >&5
 $as_echo_n "checking for Perl archlibexp... " >&6; }

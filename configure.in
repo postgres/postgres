@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $PostgreSQL: pgsql/configure.in,v 1.619 2010/01/07 00:25:04 tgl Exp $
+dnl $PostgreSQL: pgsql/configure.in,v 1.620 2010/01/07 03:24:57 tgl Exp $
 dnl
 dnl Developers, please strive to achieve this order:
 dnl
@@ -825,6 +825,9 @@ PGAC_PATH_FLEX
 
 PGAC_PATH_PERL
 if test "$with_perl" = yes; then
+  if test -z "$PERL"; then
+    AC_MSG_ERROR([Perl not found])
+  fi
   PGAC_CHECK_PERL_CONFIGS([archlibexp,privlibexp,useshrplib])
   PGAC_CHECK_PERL_EMBED_LDFLAGS
 fi
