@@ -2448,6 +2448,10 @@ Thu, 26 Nov 2009 16:39:36 +0100
 
 	- Added dynamic cursor names to ecpg. Almost the whole patch was done by
 	  Boszormenyi Zoltan.
+
+Wed, 06 Jan 2010 10:04:20 +0100
+
+	- Added sqlda to ecpg by applying patch by Zoltan Boszormenyi.
 	- Set ecpg library version to 6.2.
 	- Set compat library version to 3.2.
 	- Set ecpg version to 4.6.
