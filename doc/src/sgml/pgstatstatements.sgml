@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/pgstatstatements.sgml,v 1.5 2009/12/15 20:04:49 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/pgstatstatements.sgml,v 1.6 2010/01/08 00:38:20 itagaki Exp $ -->
 
 <sect1 id="pgstatstatements">
  <title>pg_stat_statements</title>
@@ -83,6 +83,62 @@
       <entry><type>bigint</type></entry>
       <entry></entry>
       <entry>Total number of rows retrieved or affected by the statement</entry>
+     </row>
+
+     <row>
+      <entry><structfield>shared_blks_hit</structfield></entry>
+      <entry><type>bigint</type></entry>
+      <entry></entry>
+      <entry>Total number of shared blocks hits by the statement</entry>
+     </row>
+
+     <row>
+      <entry><structfield>shared_blks_read</structfield></entry>
+      <entry><type>bigint</type></entry>
+      <entry></entry>
+      <entry>Total number of shared blocks reads by the statement</entry>
+     </row>
+
+     <row>
+      <entry><structfield>shared_blks_written</structfield></entry>
+      <entry><type>bigint</type></entry>
+      <entry></entry>
+      <entry>Total number of shared blocks writes by the statement</entry>
+     </row>
+
+     <row>
+      <entry><structfield>local_blks_hit</structfield></entry>
+      <entry><type>bigint</type></entry>
+      <entry></entry>
+      <entry>Total number of local blocks hits by the statement</entry>
+     </row>
+
+     <row>
+      <entry><structfield>local_blks_read</structfield></entry>
+      <entry><type>bigint</type></entry>
+      <entry></entry>
+      <entry>Total number of local blocks reads by the statement</entry>
+     </row>
+
+     <row>
+      <entry><structfield>local_blks_written</structfield></entry>
+      <entry><type>bigint</type></entry>
+      <entry></entry>
+      <entry>Total number of local blocks writes by the statement</entry>
+     </row>
+
+     <row>
+      <entry><structfield>temp_blks_read</structfield></entry>
+      <entry><type>bigint</type></entry>
+      <entry></entry>
+      <entry>Total number of temp blocks reads by the statement</entry>
+     </row>
+
+     <row>
+      <entry><structfield>temp_blks_written</structfield></entry>
+      <entry><type>bigint</type></entry>
+      <entry></entry>
+      <entry>Total number of temp blocks writes by the statement</entry>
      </row>
 
     </tbody>
@@ -239,35 +295,45 @@ pg_stat_statements.track = all
   <title>Sample output</title>
 
   <programlisting>
+bench=# SELECT pg_stat_statements_reset();
+
 $ pgbench -i bench
-
-postgres=# SELECT pg_stat_statements_reset();
-
 $ pgbench -c10 -t300 -M prepared bench
 
-postgres=# \x
-postgres=# SELECT * FROM pg_stat_statements ORDER BY total_time DESC LIMIT 3;
--[ RECORD 1 ]------------------------------------------------------------
-userid     | 10
-dbid       | 63781
-query      | UPDATE branches SET bbalance = bbalance + $1 WHERE bid = $2;
-calls      | 3000
-total_time | 20.716706
-rows       | 3000
--[ RECORD 2 ]------------------------------------------------------------
-userid     | 10
-dbid       | 63781
-query      | UPDATE tellers SET tbalance = tbalance + $1 WHERE tid = $2;
-calls      | 3000
-total_time | 17.1107649999999
-rows       | 3000
--[ RECORD 3 ]------------------------------------------------------------
-userid     | 10
-dbid       | 63781
-query      | UPDATE accounts SET abalance = abalance + $1 WHERE aid = $2;
-calls      | 3000
-total_time | 0.645601
-rows       | 3000
+bench=# \x
+bench=# SELECT query, calls, total_time, rows, 100.0 * shared_blks_hit /
+               nullif(shared_blks_hit + shared_blks_read, 0) AS hit_percent
+          FROM pg_stat_statements ORDER BY total_time DESC LIMIT 5;
+-[ RECORD 1 ]---------------------------------------------------------------------
+query       | UPDATE pgbench_branches SET bbalance = bbalance + $1 WHERE bid = $2;
+calls       | 3000
+total_time  | 9.60900100000002
+rows        | 2836
+hit_percent | 99.9778970000200936
+-[ RECORD 2 ]---------------------------------------------------------------------
+query       | UPDATE pgbench_tellers SET tbalance = tbalance + $1 WHERE tid = $2;
+calls       | 3000
+total_time  | 8.015156
+rows        | 2990
+hit_percent | 99.9731126579631345
+-[ RECORD 3 ]---------------------------------------------------------------------
+query       | copy pgbench_accounts from stdin
+calls       | 1
+total_time  | 0.310624
+rows        | 100000
+hit_percent | 0.30395136778115501520
+-[ RECORD 4 ]---------------------------------------------------------------------
+query       | UPDATE pgbench_accounts SET abalance = abalance + $1 WHERE aid = $2;
+calls       | 3000
+total_time  | 0.271741999999997
+rows        | 3000
+hit_percent | 93.7968855088209426
+-[ RECORD 5 ]---------------------------------------------------------------------
+query       | alter table pgbench_accounts add primary key (aid)
+calls       | 1
+total_time  | 0.08142
+rows        | 0
+hit_percent | 34.4947735191637631
   </programlisting>
  </sect2>
 
