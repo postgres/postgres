@@ -6,7 +6,7 @@
  *
  * Copyright (c) 2001-2010, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/executor/instrument.h,v 1.22 2010/01/02 16:58:03 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/executor/instrument.h,v 1.23 2010/01/08 00:48:56 itagaki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,7 +53,7 @@ typedef struct Instrumentation
 	BufferUsage	bufusage;		/* Total buffer usage */
 } Instrumentation;
 
-extern BufferUsage		pgBufferUsage;
+extern PGDLLIMPORT BufferUsage		pgBufferUsage;
 
 extern Instrumentation *InstrAlloc(int n, int instrument_options);
 extern void InstrStartNode(Instrumentation *instr);
