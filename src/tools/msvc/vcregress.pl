@@ -1,7 +1,7 @@
 
 # -*-perl-*- hey - emacs - this is a perl file
 
-# $PostgreSQL: pgsql/src/tools/msvc/vcregress.pl,v 1.12 2009/12/19 02:44:06 tgl Exp $
+# $PostgreSQL: pgsql/src/tools/msvc/vcregress.pl,v 1.13 2010/01/09 15:25:41 adunstan Exp $
 
 use strict;
 
@@ -151,14 +151,29 @@ sub plcheck
         my $lang = $pl eq 'tcl' ? 'pltcl' : $pl;
         next unless -d "../../$Config/$lang";
         $lang = 'plpythonu' if $lang eq 'plpython';
+		my @lang_args = ( "--load-language=$lang" );
         chdir $pl;
+        my @tests = fetchTests();
+		if ($lang eq 'plperl')
+		{
+			# run both trusted and untrusted perl tests
+			push (@lang_args, "--load-language=plperlu");
+
+			# assume we're using this perl to built postgres
+			# test if we can run two interpreters in one backend, and if so
+			# run the trusted/untrusted interaction tests
+			use Config;
+			if ($Config{usemultiplicity} eq 'define')
+			{
+				push(@tests,'plperl_plperlu');
+			}
+		}
 		print "============================================================\n";
         print "Checking $lang\n";
-        my @tests = fetchTests();
         my @args = (
             "../../../$Config/pg_regress/pg_regress",
             "--psqldir=../../../$Config/psql",
-            "--dbname=pl_regression","--load-language=$lang",@tests
+            "--dbname=pl_regression",@lang_args,@tests
         );
         system(@args);
         my $status = $? >> 8;

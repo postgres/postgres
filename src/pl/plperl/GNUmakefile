@@ -1,5 +1,5 @@
 # Makefile for PL/Perl
-# $PostgreSQL: pgsql/src/pl/plperl/GNUmakefile,v 1.39 2010/01/09 03:53:40 tgl Exp $
+# $PostgreSQL: pgsql/src/pl/plperl/GNUmakefile,v 1.40 2010/01/09 15:25:41 adunstan Exp $
 
 subdir = src/pl/plperl
 top_builddir = ../../..
@@ -40,8 +40,15 @@ PERLCHUNKS = plc_perlboot.pl plc_safe_bad.pl plc_safe_ok.pl
 
 SHLIB_LINK = $(perl_embed_ldflags)
 
-REGRESS_OPTS = --dbname=$(PL_TESTDB) --load-language=plperl
-REGRESS = plperl plperl_trigger plperl_shared plperl_elog
+REGRESS_OPTS = --dbname=$(PL_TESTDB) --load-language=plperl  --load-language=plperlu
+REGRESS = plperl plperl_trigger plperl_shared plperl_elog plperlu
+# if Perl can support two interpreters in one backend, 
+# test plperl-and-plperlu cases
+ifneq ($(PERL),)
+ifeq ($(shell $(PERL) -V:usemultiplicity), usemultiplicity='define';)
+	REGRESS += plperl_plperlu
+endif
+endif
 # where to find psql for running the tests
 PSQLDIR = $(bindir)
 
