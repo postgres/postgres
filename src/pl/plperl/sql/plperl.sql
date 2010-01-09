@@ -369,3 +369,4 @@ $$ LANGUAGE plperl;
 
 -- check that restricted operations are rejected in a plperl DO block
 DO $$ use Config; $$ LANGUAGE plperl;
+

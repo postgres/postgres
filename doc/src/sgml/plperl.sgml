@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/plperl.sgml,v 2.71 2009/11/29 03:02:27 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/plperl.sgml,v 2.72 2010/01/09 02:40:50 adunstan Exp $ -->
 
  <chapter id="plperl">
   <title>PL/Perl - Perl Procedural Language</title>
@@ -14,7 +14,7 @@
   <para>
    PL/Perl is a loadable procedural language that enables you to write
    <productname>PostgreSQL</productname> functions in the 
-   <ulink url="http://www.perl.com">Perl programming language</ulink>.
+   <ulink url="http://www.perl.org">Perl programming language</ulink>.
   </para>
 
   <para>
@@ -313,7 +313,8 @@ SELECT * FROM perl_set();
 use strict;
 </programlisting>
    in the function body.  But this only works in <application>PL/PerlU</>
-   functions, since <literal>use</> is not a trusted operation.  In
+   functions, since the <literal>use</> triggers a <literal>require</>
+   which is not a trusted operation.  In
    <application>PL/Perl</> functions you can instead do:
 <programlisting>
 BEGIN { strict->import(); }

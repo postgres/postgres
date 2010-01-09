@@ -1,7 +1,7 @@
 /**********************************************************************
  * plperl.c - perl as a procedural language for PostgreSQL
  *
- *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.158 2010/01/04 20:29:59 adunstan Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.159 2010/01/09 02:40:50 adunstan Exp $
  *
  **********************************************************************/
 
@@ -42,6 +42,9 @@
 
 /* perl stuff */
 #include "plperl.h"
+
+/* string literal macros defining chunks of perl code */
+#include "perlchunks.h"
 
 PG_MODULE_MAGIC;
 
@@ -125,9 +128,7 @@ typedef enum
 } InterpState;
 
 static InterpState interp_state = INTERP_NONE;
-static bool can_run_two = false;
 
-static bool plperl_safe_init_done = false;
 static PerlInterpreter *plperl_trusted_interp = NULL;
 static PerlInterpreter *plperl_untrusted_interp = NULL;
 static PerlInterpreter *plperl_held_interp = NULL;
@@ -148,7 +149,7 @@ Datum		plperl_inline_handler(PG_FUNCTION_ARGS);
 Datum		plperl_validator(PG_FUNCTION_ARGS);
 void		_PG_init(void);
 
-static void plperl_init_interp(void);
+static PerlInterpreter *plperl_init_interp(void);
 
 static Datum plperl_func_handler(PG_FUNCTION_ARGS);
 static Datum plperl_trigger_handler(PG_FUNCTION_ARGS);
@@ -157,15 +158,37 @@ static plperl_proc_desc *compile_plperl_function(Oid fn_oid, bool is_trigger);
 
 static SV  *plperl_hash_from_tuple(HeapTuple tuple, TupleDesc tupdesc);
 static void plperl_init_shared_libs(pTHX);
+static void plperl_safe_init(void);
 static HV  *plperl_spi_execute_fetch_result(SPITupleTable *, int, int);
 static SV  *newSVstring(const char *str);
 static SV **hv_store_string(HV *hv, const char *key, SV *val);
 static SV **hv_fetch_string(HV *hv, const char *key);
-static SV  *plperl_create_sub(const char *proname, const char *s, bool trusted);
+static void plperl_create_sub(plperl_proc_desc *desc, char *s);
 static SV  *plperl_call_perl_func(plperl_proc_desc *desc, FunctionCallInfo fcinfo);
 static void plperl_compile_callback(void *arg);
 static void plperl_exec_callback(void *arg);
 static void plperl_inline_callback(void *arg);
+
+/*
+ * Convert an SV to char * and verify the encoding via pg_verifymbstr()
+ */
+static inline char *
+sv2text_mbverified(SV *sv)
+{
+	char * val;
+	STRLEN len;
+
+	/* The value returned here might include an
+	 * embedded nul byte, because perl allows such things.
+	 * That's OK, because pg_verifymbstr will choke on it,  If
+	 * we just used strlen() instead of getting perl's idea of
+	 * the length, whatever uses the "verified" value might
+	 * get something quite weird.
+	 */
+	val = SvPV(sv, len);
+	pg_verifymbstr(val, len, false);
+    return val;
+}
 
 /*
  * This routine is a crock, and so is everyplace that calls it.  The problem
@@ -228,97 +251,14 @@ _PG_init(void)
 									&hash_ctl,
 									HASH_ELEM);
 
-	plperl_init_interp();
+	plperl_held_interp = plperl_init_interp();
+	interp_state = INTERP_HELD;
 
 	inited = true;
 }
 
-/* Each of these macros must represent a single string literal */
-
-#define PERLBOOT \
-	"SPI::bootstrap(); use vars qw(%_SHARED);" \
-	"sub ::plperl_warn { my $msg = shift; " \
-	"       $msg =~ s/\\(eval \\d+\\) //g; &elog(&NOTICE, $msg); } " \
-	"$SIG{__WARN__} = \\&::plperl_warn; " \
-	"sub ::plperl_die { my $msg = shift; " \
-	"       $msg =~ s/\\(eval \\d+\\) //g; die $msg; } " \
-	"$SIG{__DIE__} = \\&::plperl_die; " \
-	"sub ::mkunsafefunc {" \
-	"      my $ret = eval(qq[ sub { $_[0] $_[1] } ]); " \
-	"      $@ =~ s/\\(eval \\d+\\) //g if $@; return $ret; }" \
-	"use strict; " \
-	"sub ::mk_strict_unsafefunc {" \
-	"      my $ret = eval(qq[ sub { use strict; $_[0] $_[1] } ]); " \
-	"      $@ =~ s/\\(eval \\d+\\) //g if $@; return $ret; } " \
-	"sub ::_plperl_to_pg_array {" \
-	"  my $arg = shift; ref $arg eq 'ARRAY' || return $arg; " \
-	"  my $res = ''; my $first = 1; " \
-	"  foreach my $elem (@$arg) " \
-	"  { " \
-	"    $res .= ', ' unless $first; $first = undef; " \
-	"    if (ref $elem) " \
-	"    { " \
-	"      $res .= _plperl_to_pg_array($elem); " \
-	"    } " \
-	"    elsif (defined($elem)) " \
-	"    { " \
-	"      my $str = qq($elem); " \
-	"      $str =~ s/([\"\\\\])/\\\\$1/g; " \
-	"      $res .= qq(\"$str\"); " \
-	"    } " \
-	"    else " \
-	"    { "\
-	"      $res .= 'NULL' ; " \
-	"    } "\
-	"  } " \
-	"  return qq({$res}); " \
-	"} "
-
 #define SAFE_MODULE \
 	"require Safe; $Safe::VERSION"
-
-/*
- * The temporary enabling of the caller opcode here is to work around a
- * bug in perl 5.10, which unkindly changed the way its Safe.pm works, without
- * notice. It is quite safe, as caller is informational only, and in any case
- * we only enable it while we load the 'strict' module.
- */
-
-#define SAFE_OK \
-	"use vars qw($PLContainer); $PLContainer = new Safe('PLPerl');" \
-	"$PLContainer->permit_only(':default');" \
-	"$PLContainer->permit(qw[:base_math !:base_io sort time]);" \
-	"$PLContainer->share(qw[&elog &spi_exec_query &return_next " \
-	"&spi_query &spi_fetchrow &spi_cursor_close " \
-	"&spi_prepare &spi_exec_prepared &spi_query_prepared &spi_freeplan " \
-	"&_plperl_to_pg_array " \
-	"&DEBUG &LOG &INFO &NOTICE &WARNING &ERROR %_SHARED ]);" \
-	"sub ::mksafefunc {" \
-	"      my $ret = $PLContainer->reval(qq[sub { $_[0] $_[1] }]); " \
-	"      $@ =~ s/\\(eval \\d+\\) //g if $@; return $ret; }" \
-	"$PLContainer->permit(qw[require caller]); $PLContainer->reval('use strict;');" \
-	"$PLContainer->deny(qw[require caller]); " \
-	"sub ::mk_strict_safefunc {" \
-	"      my $ret = $PLContainer->reval(qq[sub { BEGIN { strict->import(); } $_[0] $_[1] }]); " \
-	"      $@ =~ s/\\(eval \\d+\\) //g if $@; return $ret; }"
-
-#define SAFE_BAD \
-	"use vars qw($PLContainer); $PLContainer = new Safe('PLPerl');" \
-	"$PLContainer->permit_only(':default');" \
-	"$PLContainer->share(qw[&elog &ERROR ]);" \
-	"sub ::mksafefunc { return $PLContainer->reval(qq[sub { " \
-	"      elog(ERROR,'trusted Perl functions disabled - " \
-	"      please upgrade Perl Safe module to version 2.09 or later');}]); }" \
-	"sub ::mk_strict_safefunc { return $PLContainer->reval(qq[sub { " \
-	"      elog(ERROR,'trusted Perl functions disabled - " \
-	"      please upgrade Perl Safe module to version 2.09 or later');}]); }"
-
-#define TEST_FOR_MULTI \
-	"use Config; " \
-	"$Config{usemultiplicity} eq 'define' or "	\
-	"($Config{usethreads} eq 'define' " \
-	" and $Config{useithreads} eq 'define')"
-
 
 /********************************************************************
  *
@@ -349,6 +289,8 @@ check_interp(bool trusted)
 		}
 		plperl_held_interp = NULL;
 		trusted_context = trusted;
+		if (trusted) /* done last to avoid recursion */
+			plperl_safe_init();
 	}
 	else if (interp_state == INTERP_BOTH ||
 			 (trusted && interp_state == INTERP_TRUSTED) ||
@@ -363,22 +305,23 @@ check_interp(bool trusted)
 			trusted_context = trusted;
 		}
 	}
-	else if (can_run_two)
-	{
-		PERL_SET_CONTEXT(plperl_held_interp);
-		plperl_init_interp();
-		if (trusted)
-			plperl_trusted_interp = plperl_held_interp;
-		else
-			plperl_untrusted_interp = plperl_held_interp;
-		interp_state = INTERP_BOTH;
-		plperl_held_interp = NULL;
-		trusted_context = trusted;
-	}
 	else
 	{
+#ifdef MULTIPLICITY
+		PerlInterpreter *plperl = plperl_init_interp();
+		if (trusted)
+			plperl_trusted_interp = plperl;
+		else
+			plperl_untrusted_interp = plperl;
+		plperl_held_interp = NULL;
+		trusted_context = trusted;
+		interp_state = INTERP_BOTH;
+		if (trusted) /* done last to avoid recursion */
+			plperl_safe_init();
+#else
 		elog(ERROR,
 			 "cannot allocate second Perl interpreter on this platform");
+#endif
 	}
 }
 
@@ -398,11 +341,14 @@ restore_context(bool old_context)
 	}
 }
 
-static void
+static PerlInterpreter *
 plperl_init_interp(void)
 {
+	PerlInterpreter *plperl;
+	static int perl_sys_init_done;
+
 	static char *embedding[3] = {
-		"", "-e", PERLBOOT
+		"", "-e", PLC_PERLBOOT
 	};
 	int			nargs = 3;
 
@@ -459,31 +405,26 @@ plperl_init_interp(void)
 	 */
 #if defined(PERL_SYS_INIT3) && !defined(MYMALLOC)
 	/* only call this the first time through, as per perlembed man page */
-	if (interp_state == INTERP_NONE)
+	if (!perl_sys_init_done)
 	{
 		char	   *dummy_env[1] = {NULL};
 
 		PERL_SYS_INIT3(&nargs, (char ***) &embedding, (char ***) &dummy_env);
+		perl_sys_init_done = 1;
+		/* quiet warning if PERL_SYS_INIT3 doesn't use the third argument */
+		dummy_env[0] = NULL; 
 	}
 #endif
 
-	plperl_held_interp = perl_alloc();
-	if (!plperl_held_interp)
+	plperl = perl_alloc();
+	if (!plperl)
 		elog(ERROR, "could not allocate Perl interpreter");
 
-	perl_construct(plperl_held_interp);
-	perl_parse(plperl_held_interp, plperl_init_shared_libs,
+	PERL_SET_CONTEXT(plperl);
+	perl_construct(plperl);
+	perl_parse(plperl, plperl_init_shared_libs,
 			   nargs, embedding, NULL);
-	perl_run(plperl_held_interp);
-
-	if (interp_state == INTERP_NONE)
-	{
-		SV		   *res;
-
-		res = eval_pv(TEST_FOR_MULTI, TRUE);
-		can_run_two = SvIV(res);
-		interp_state = INTERP_HELD;
-	}
+	perl_run(plperl);
 
 #ifdef WIN32
 
@@ -526,32 +467,30 @@ plperl_init_interp(void)
 	}
 #endif
 
+	return plperl;
 }
 
 
 static void
 plperl_safe_init(void)
 {
-	SV		   *res;
-	double		safe_version;
+	SV		   *safe_version_sv;
 
-	res = eval_pv(SAFE_MODULE, FALSE);	/* TRUE = croak if failure */
-
-	safe_version = SvNV(res);
+	safe_version_sv = eval_pv(SAFE_MODULE, FALSE);	/* TRUE = croak if failure */
 
 	/*
-	 * We actually want to reject safe_version < 2.09, but it's risky to
+	 * We actually want to reject Safe version < 2.09, but it's risky to
 	 * assume that floating-point comparisons are exact, so use a slightly
 	 * smaller comparison value.
 	 */
-	if (safe_version < 2.0899)
+	if (SvNV(safe_version_sv) < 2.0899)
 	{
 		/* not safe, so disallow all trusted funcs */
-		eval_pv(SAFE_BAD, FALSE);
+		eval_pv(PLC_SAFE_BAD, FALSE);
 	}
 	else
 	{
-		eval_pv(SAFE_OK, FALSE);
+		eval_pv(PLC_SAFE_OK, FALSE);
 		if (GetDatabaseEncoding() == PG_UTF8)
 		{
 			/*
@@ -559,35 +498,29 @@ plperl_safe_init(void)
 			 * the safe container and call it. For some reason not entirely
 			 * clear, it prevents errors that can arise from the regex code
 			 * later trying to load utf8 modules.
+			 * See http://rt.perl.org/rt3/Ticket/Display.html?id=47576
 			 */
 			plperl_proc_desc desc;
 			FunctionCallInfoData fcinfo;
-			SV		   *ret;
-			SV		   *func;
 
-			/* make sure we don't call ourselves recursively */
-			plperl_safe_init_done = true;
-
-			/* compile the function */
-			func = plperl_create_sub("utf8fix",
-							 "return shift =~ /\\xa9/i ? 'true' : 'false' ;",
-									 true);
-
-			/* set up to call the function with a single text argument 'a' */
-			desc.reference = func;
+			desc.proname = "utf8fix";
+			desc.lanpltrusted = true;
 			desc.nargs = 1;
 			desc.arg_is_rowtype[0] = false;
 			fmgr_info(F_TEXTOUT, &(desc.arg_out_func[0]));
 
+			/* compile the function */
+			plperl_create_sub(&desc,
+					"return shift =~ /\\xa9/i ? 'true' : 'false' ;");
+
+			/* set up to call the function with a single text argument 'a' */
 			fcinfo.arg[0] = CStringGetTextDatum("a");
 			fcinfo.argnull[0] = false;
 
 			/* and make the call */
-			ret = plperl_call_perl_func(&desc, &fcinfo);
+			(void) plperl_call_perl_func(&desc, &fcinfo);
 		}
 	}
-
-	plperl_safe_init_done = true;
 }
 
 /*
@@ -631,11 +564,7 @@ plperl_build_tuple_result(HV *perlhash, AttInMetadata *attinmeta)
 							key)));
 		if (SvOK(val))
 		{
-			char * aval;
-
-			aval = SvPV_nolen(val);
-			pg_verifymbstr(aval, strlen(aval), false);
-			values[attn - 1] = aval;
+			values[attn - 1] = sv2text_mbverified(val);
 		}
 	}
 	hv_iterinit(perlhash);
@@ -835,12 +764,8 @@ plperl_modify_tuple(HV *hvTD, TriggerData *tdata, HeapTuple otup)
 		atttypmod = tupdesc->attrs[attn - 1]->atttypmod;
 		if (SvOK(val))
 		{
-			char * aval;
-
-			aval = SvPV_nolen(val);
-			pg_verifymbstr(aval,strlen(aval), false);
 			modvalues[slotsused] = InputFunctionCall(&finfo,
-													 aval,
+													 sv2text_mbverified(val),
 													 typioparam,
 													 atttypmod);
 			modnulls[slotsused] = ' ';
@@ -970,9 +895,7 @@ plperl_inline_handler(PG_FUNCTION_ARGS)
 
 		check_interp(desc.lanpltrusted);
 
-		desc.reference = plperl_create_sub(desc.proname,
-										   codeblock->source_text,
-										   desc.lanpltrusted);
+		plperl_create_sub(&desc, codeblock->source_text);
 
 		if (!desc.reference)	/* can this happen? */
 			elog(ERROR, "could not create internal procedure for anonymous code block");
@@ -1080,19 +1003,14 @@ plperl_validator(PG_FUNCTION_ARGS)
  * Uses mksafefunc/mkunsafefunc to create an anonymous sub whose text is
  * supplied in s, and returns a reference to the closure.
  */
-static SV  *
-plperl_create_sub(const char *proname, const char *s, bool trusted)
+static void
+plperl_create_sub(plperl_proc_desc *prodesc, char *s)
 {
 	dSP;
+	bool        trusted = prodesc->lanpltrusted;
 	SV		   *subref;
 	int			count;
 	char	   *compile_sub;
-
-	if (trusted && !plperl_safe_init_done)
-	{
-		plperl_safe_init();
-		SPAGAIN;
-	}
 
 	ENTER;
 	SAVETMPS;
@@ -1127,9 +1045,10 @@ plperl_create_sub(const char *proname, const char *s, bool trusted)
 		elog(ERROR, "didn't get a return item from mksafefunc");
 	}
 
+	subref = POPs;
+
 	if (SvTRUE(ERRSV))
 	{
-		(void) POPs;
 		PUTBACK;
 		FREETMPS;
 		LEAVE;
@@ -1138,30 +1057,25 @@ plperl_create_sub(const char *proname, const char *s, bool trusted)
 				 errmsg("%s", strip_trailing_ws(SvPV_nolen(ERRSV)))));
 	}
 
-	/*
-	 * need to make a deep copy of the return. it comes off the stack as a
-	 * temporary.
-	 */
-	subref = newSVsv(POPs);
-
 	if (!SvROK(subref) || SvTYPE(SvRV(subref)) != SVt_PVCV)
 	{
 		PUTBACK;
 		FREETMPS;
 		LEAVE;
-
-		/*
-		 * subref is our responsibility because it is not mortal
-		 */
-		SvREFCNT_dec(subref);
 		elog(ERROR, "didn't get a code ref");
 	}
+
+	/*
+	 * need to make a copy of the return, it comes off the stack as a
+	 * temporary.
+	 */
+	prodesc->reference = newSVsv(subref);
 
 	PUTBACK;
 	FREETMPS;
 	LEAVE;
 
-	return subref;
+	return;
 }
 
 
@@ -1467,7 +1381,6 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 	else
 	{
 		/* Return a perl string converted to a Datum */
-		char	   *val;
 
 		if (prodesc->fn_retisarray && SvROK(perlret) &&
 			SvTYPE(SvRV(perlret)) == SVt_PVAV)
@@ -1477,9 +1390,8 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 			perlret = array_ret;
 		}
 
-		val = SvPV_nolen(perlret);
-		pg_verifymbstr(val, strlen(val), false);
-		retval = InputFunctionCall(&prodesc->result_in_func, val,
+		retval = InputFunctionCall(&prodesc->result_in_func,
+								   sv2text_mbverified(perlret),
 								   prodesc->result_typioparam, -1);
 	}
 
@@ -1843,9 +1755,7 @@ compile_plperl_function(Oid fn_oid, bool is_trigger)
 
 		check_interp(prodesc->lanpltrusted);
 
-		prodesc->reference = plperl_create_sub(prodesc->proname,
-											   proc_source,
-											   prodesc->lanpltrusted);
+		plperl_create_sub(prodesc, proc_source);
 
 		restore_context(oldcontext);
 
@@ -2126,17 +2036,14 @@ plperl_return_next(SV *sv)
 
 		if (SvOK(sv))
 		{
-			char	   *val;
-
 			if (prodesc->fn_retisarray && SvROK(sv) &&
 				SvTYPE(SvRV(sv)) == SVt_PVAV)
 			{
 				sv = plperl_convert_to_pg_array(sv);
 			}
 
-			val = SvPV_nolen(sv);
-			pg_verifymbstr(val, strlen(val), false);
-			ret = InputFunctionCall(&prodesc->result_in_func, val,
+			ret = InputFunctionCall(&prodesc->result_in_func,
+									sv2text_mbverified(sv),
 									prodesc->result_typioparam, -1);
 			isNull = false;
 		}
@@ -2526,12 +2433,8 @@ plperl_spi_exec_prepared(char *query, HV *attr, int argc, SV **argv)
 		{
 			if (SvOK(argv[i]))
 			{
-				char *val;
-
-				val = SvPV_nolen(argv[i]);
-				pg_verifymbstr(val, strlen(val), false);
 				argvalues[i] = InputFunctionCall(&qdesc->arginfuncs[i],
-												 val,
+												 sv2text_mbverified(argv[i]),
 												 qdesc->argtypioparams[i],
 												 -1);
 				nulls[i] = ' ';
@@ -2661,12 +2564,8 @@ plperl_spi_query_prepared(char *query, int argc, SV **argv)
 		{
 			if (SvOK(argv[i]))
 			{
-				char *val;
-				
-				val = SvPV_nolen(argv[i]);
-				pg_verifymbstr(val, strlen(val), false);
 				argvalues[i] = InputFunctionCall(&qdesc->arginfuncs[i],
-												 val,
+												 sv2text_mbverified(argv[i]),
 												 qdesc->argtypioparams[i],
 												 -1);
 				nulls[i] = ' ';
