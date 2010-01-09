@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.259 2010/01/02 16:57:41 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.260 2010/01/09 20:46:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3766,12 +3766,20 @@ ExecEvalFieldSelect(FieldSelectState *fstate,
 	tupDesc = get_cached_rowtype(tupType, tupTypmod,
 								 &fstate->argdesc, econtext);
 
-	/* Check for dropped column, and force a NULL result if so */
-	if (fieldnum <= 0 ||
-		fieldnum > tupDesc->natts)		/* should never happen */
+	/*
+	 * Find field's attr record.  Note we don't support system columns here:
+	 * a datum tuple doesn't have valid values for most of the interesting
+	 * system columns anyway.
+	 */
+	if (fieldnum <= 0)					/* should never happen */
+		elog(ERROR, "unsupported reference to system column %d in FieldSelect",
+			 fieldnum);
+	if (fieldnum > tupDesc->natts)		/* should never happen */
 		elog(ERROR, "attribute number %d exceeds number of columns %d",
 			 fieldnum, tupDesc->natts);
 	attr = tupDesc->attrs[fieldnum - 1];
+
+	/* Check for dropped column, and force a NULL result if so */
 	if (attr->attisdropped)
 	{
 		*isNull = true;
@@ -3787,14 +3795,8 @@ ExecEvalFieldSelect(FieldSelectState *fstate,
 						   format_type_be(attr->atttypid),
 						   format_type_be(fselect->resulttype))));
 
-	/*
-	 * heap_getattr needs a HeapTuple not a bare HeapTupleHeader.  We set all
-	 * the fields in the struct just in case user tries to inspect system
-	 * columns.
-	 */
+	/* heap_getattr needs a HeapTuple not a bare HeapTupleHeader */
 	tmptup.t_len = HeapTupleHeaderGetDatumLength(tuple);
-	ItemPointerSetInvalid(&(tmptup.t_self));
-	tmptup.t_tableOid = InvalidOid;
 	tmptup.t_data = tuple;
 
 	result = heap_getattr(&tmptup,
