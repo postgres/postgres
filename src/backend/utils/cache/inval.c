@@ -80,7 +80,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/inval.c,v 1.91 2010/01/02 16:57:55 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/inval.c,v 1.92 2010/01/09 16:49:27 sriggs Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -89,6 +89,7 @@
 #include "access/twophase_rmgr.h"
 #include "access/xact.h"
 #include "catalog/catalog.h"
+#include "catalog/pg_tablespace.h"
 #include "miscadmin.h"
 #include "storage/sinval.h"
 #include "storage/smgr.h"
@@ -869,6 +870,111 @@ xactGetCommittedInvalidationMessages(SharedInvalidationMessage **msgs,
 	*msgs = SharedInvalidMessagesArray;
 
 	return numSharedInvalidMessagesArray;
+}
+
+#define RecoveryRelationCacheInitFileInvalidate(dbo, tbo, tf) \
+{ \
+	DatabasePath = GetDatabasePath(dbo, tbo); \
+	elog(trace_recovery(DEBUG4), "removing relcache init file in %s", DatabasePath); \
+	RelationCacheInitFileInvalidate(tf); \
+	pfree(DatabasePath); \
+}
+
+/*
+ * ProcessCommittedInvalidationMessages is executed by xact_redo_commit()
+ * to process invalidation messages added to commit records.
+ *
+ * If we have to invalidate the relcache init file we need to extract
+ * the database id from each message so we can correctly locate the database
+ * path and so remove that database's init file. We note that the relcache
+ * only contains entries for catalog tables from a single database, or
+ * shared relations. There are smgr invalidations that reference other
+ * databases but they never cause relcache file invalidations.
+ * So we only need to access either global or default tablespaces and
+ * never have need to scan pg_database to discover tablespace oids.
+ *
+ * Relcache init file invalidation requires processing both
+ * before and after we send the SI messages. See AtEOXact_Inval()
+ *
+ * We deliberately avoid SetDatabasePath() since it is intended to be used
+ * only once by normal backends, so we set DatabasePath directly then
+ * pfree after use. See RecoveryRelationCacheInitFileInvalidate() macro.
+ */
+void
+ProcessCommittedInvalidationMessages(SharedInvalidationMessage *msgs,
+										int nmsgs, bool RelcacheInitFileInval)
+{
+	Oid 		dboid = 0;
+	bool		invalidate_global = false;
+
+	if (nmsgs > 0)
+		elog(trace_recovery(DEBUG4), "replaying commit with %d messages%s", nmsgs,
+					(RelcacheInitFileInval ? " and relcache file invalidation" : ""));
+	else
+		return;
+
+	if (RelcacheInitFileInval)
+	{
+		int			i;
+
+		/*
+		 * Check messages to record dboid
+		 */
+		for (i = 0; i < nmsgs; i++)
+		{
+			SharedInvalidationMessage *inval_msg = &(msgs[i]);
+			Oid 		loop_dboid = 0;
+
+			/*
+			 * Extract the database Oid from the message
+			 */
+			if (inval_msg->id >= 0)
+				loop_dboid = inval_msg->cc.dbId;
+			else if (inval_msg->id == SHAREDINVALRELCACHE_ID)
+				loop_dboid = inval_msg->rc.dbId;
+			else
+			{
+				/*
+				 * Invalidation message is a SHAREDINVALSMGR_ID
+				 * which never cause relcache file invalidation,
+				 * so we ignore them, no matter which db they're for.
+				 */
+				continue;
+			}
+
+			if (loop_dboid == 0)
+				invalidate_global = true;
+			else
+			{
+				Assert(dboid == 0 || dboid == loop_dboid);
+				dboid = loop_dboid;
+			}
+		}
+
+		/*
+		 * If shared, dboid will be the global tablespace, otherwise it will
+		 * be a local catalog relation in the default tablespace.
+		 */
+		if (invalidate_global)
+			RecoveryRelationCacheInitFileInvalidate(0, GLOBALTABLESPACE_OID, true);
+
+		if (dboid != 0)
+			RecoveryRelationCacheInitFileInvalidate(dboid, DEFAULTTABLESPACE_OID, true);
+	}
+
+	SendSharedInvalidMessages(msgs, nmsgs);
+
+	if (RelcacheInitFileInval)
+	{
+		/*
+		 * Second invalidation, very similar to above. See RelationCacheInitFileInvalidate()
+		 */
+		if (invalidate_global)
+			RecoveryRelationCacheInitFileInvalidate(0, GLOBALTABLESPACE_OID, false);
+
+		if (dboid != 0)
+			RecoveryRelationCacheInitFileInvalidate(dboid, DEFAULTTABLESPACE_OID, false);
+	}
 }
 
 /*
