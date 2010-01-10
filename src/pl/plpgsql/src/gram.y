@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.138 2010/01/10 17:15:18 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.139 2010/01/10 17:56:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -56,7 +56,9 @@ union YYSTYPE;					/* need forward reference for tok_is_keyword */
 
 static	bool			tok_is_keyword(int token, union YYSTYPE *lval,
 									   int kw_token, const char *kw_str);
-static	void			token_is_not_variable(int tok);
+static	void			word_is_not_variable(PLword *word, int location);
+static	void			cword_is_not_variable(PLcword *cword, int location);
+static	void			current_token_is_not_variable(int tok);
 static	PLpgSQL_expr	*read_sql_construct(int until,
 											int until2,
 											int until3,
@@ -851,12 +853,12 @@ getdiag_target	: T_DATUM
 				| T_WORD
 					{
 						/* just to give a better message than "syntax error" */
-						token_is_not_variable(T_WORD);
+						word_is_not_variable(&($1), @1);
 					}
 				| T_CWORD
 					{
 						/* just to give a better message than "syntax error" */
-						token_is_not_variable(T_CWORD);
+						cword_is_not_variable(&($1), @1);
 					}
 				;
 
@@ -1371,19 +1373,12 @@ for_variable	: T_DATUM
 						tok = yylex();
 						plpgsql_push_back_token(tok);
 						if (tok == ',')
-						{
-							/* can't use token_is_not_variable here */
-							ereport(ERROR,
-									(errcode(ERRCODE_SYNTAX_ERROR),
-									 errmsg("\"%s\" is not a known variable",
-											$1.ident),
-									 parser_errposition(@1)));
-						}
+							word_is_not_variable(&($1), @1);
 					}
 				| T_CWORD
 					{
 						/* just to give a better message than "syntax error" */
-						token_is_not_variable(T_CWORD);
+						cword_is_not_variable(&($1), @1);
 					}
 				;
 
@@ -1587,15 +1582,38 @@ loop_body		: proc_sect K_END K_LOOP opt_label ';'
 
 /*
  * T_WORD+T_CWORD match any initial identifier that is not a known plpgsql
- * variable.  The composite case is probably a syntax error, but we'll let
- * the core parser decide that.
+ * variable.  (The composite case is probably a syntax error, but we'll let
+ * the core parser decide that.)  Normally, we should assume that such a
+ * word is a SQL statement keyword that isn't also a plpgsql keyword.
+ * However, if the next token is assignment or '[', it can't be a valid
+ * SQL statement, and what we're probably looking at is an intended variable
+ * assignment.  Give an appropriate complaint for that, instead of letting
+ * the core parser throw an unhelpful "syntax error".
  */
 stmt_execsql	: K_INSERT
-					{ $$ = make_execsql_stmt(K_INSERT, @1); }
+					{
+						$$ = make_execsql_stmt(K_INSERT, @1);
+					}
 				| T_WORD
-					{ $$ = make_execsql_stmt(T_WORD, @1); }
+					{
+						int			tok;
+
+						tok = yylex();
+						plpgsql_push_back_token(tok);
+						if (tok == '=' || tok == COLON_EQUALS || tok == '[')
+							word_is_not_variable(&($1), @1);
+						$$ = make_execsql_stmt(T_WORD, @1);
+					}
 				| T_CWORD
-					{ $$ = make_execsql_stmt(T_CWORD, @1); }
+					{
+						int			tok;
+
+						tok = yylex();
+						plpgsql_push_back_token(tok);
+						if (tok == '=' || tok == COLON_EQUALS || tok == '[')
+							cword_is_not_variable(&($1), @1);
+						$$ = make_execsql_stmt(T_CWORD, @1);
+					}
 				;
 
 stmt_dynexecute : K_EXECUTE
@@ -1793,12 +1811,12 @@ cursor_variable	: T_DATUM
 				| T_WORD
 					{
 						/* just to give a better message than "syntax error" */
-						token_is_not_variable(T_WORD);
+						word_is_not_variable(&($1), @1);
 					}
 				| T_CWORD
 					{
 						/* just to give a better message than "syntax error" */
-						token_is_not_variable(T_CWORD);
+						cword_is_not_variable(&($1), @1);
 					}
 				;
 
@@ -2046,25 +2064,42 @@ tok_is_keyword(int token, union YYSTYPE *lval,
 }
 
 /*
+ * Convenience routine to complain when we expected T_DATUM and got T_WORD,
+ * ie, unrecognized variable.
+ */
+static void
+word_is_not_variable(PLword *word, int location)
+{
+	ereport(ERROR,
+			(errcode(ERRCODE_SYNTAX_ERROR),
+			 errmsg("\"%s\" is not a known variable",
+					word->ident),
+			 parser_errposition(location)));
+}
+
+/* Same, for a CWORD */
+static void
+cword_is_not_variable(PLcword *cword, int location)
+{
+	ereport(ERROR,
+			(errcode(ERRCODE_SYNTAX_ERROR),
+			 errmsg("\"%s\" is not a known variable",
+					NameListToString(cword->idents)),
+			 parser_errposition(location)));
+}
+
+/*
  * Convenience routine to complain when we expected T_DATUM and got
  * something else.  "tok" must be the current token, since we also
  * look at yylval and yylloc.
  */
 static void
-token_is_not_variable(int tok)
+current_token_is_not_variable(int tok)
 {
 	if (tok == T_WORD)
-		ereport(ERROR,
-				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("\"%s\" is not a known variable",
-						yylval.word.ident),
-				 parser_errposition(yylloc)));
+		word_is_not_variable(&(yylval.word), yylloc);
 	else if (tok == T_CWORD)
-		ereport(ERROR,
-				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("\"%s\" is not a known variable",
-						NameListToString(yylval.cword.idents)),
-				 parser_errposition(yylloc)));
+		cword_is_not_variable(&(yylval.cword), yylloc);
 	else
 		yyerror("syntax error");
 }
@@ -2848,7 +2883,7 @@ read_into_target(PLpgSQL_rec **rec, PLpgSQL_row **row, bool *strict)
 
 		default:
 			/* just to give a better message than "syntax error" */
-			token_is_not_variable(tok);
+			current_token_is_not_variable(tok);
 	}
 }
 
@@ -2901,7 +2936,7 @@ read_into_scalar_list(char *initial_name,
 
 			default:
 				/* just to give a better message than "syntax error" */
-				token_is_not_variable(tok);
+				current_token_is_not_variable(tok);
 		}
 	}
 
