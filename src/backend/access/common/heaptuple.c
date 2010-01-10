@@ -50,7 +50,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/common/heaptuple.c,v 1.129 2010/01/02 16:57:33 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/common/heaptuple.c,v 1.130 2010/01/10 04:26:36 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -323,8 +323,7 @@ heap_attisnull(HeapTuple tup, int attnum)
 Datum
 nocachegetattr(HeapTuple tuple,
 			   int attnum,
-			   TupleDesc tupleDesc,
-			   bool *isnull)
+			   TupleDesc tupleDesc)
 {
 	HeapTupleHeader tup = tuple->t_data;
 	Form_pg_attribute *att = tupleDesc->attrs;
@@ -332,8 +331,6 @@ nocachegetattr(HeapTuple tuple,
 	bits8	   *bp = tup->t_bits;		/* ptr to null bitmap in tuple */
 	bool		slow = false;	/* do we have to walk attrs? */
 	int			off;			/* current offset within data */
-
-	(void) isnull;				/* not used */
 
 	/* ----------------
 	 *	 Three cases:
@@ -344,68 +341,32 @@ nocachegetattr(HeapTuple tuple,
 	 * ----------------
 	 */
 
-#ifdef IN_MACRO
-/* This is handled in the macro */
-	Assert(attnum > 0);
-
-	if (isnull)
-		*isnull = false;
-#endif
-
 	attnum--;
 
-	if (HeapTupleNoNulls(tuple))
-	{
-#ifdef IN_MACRO
-/* This is handled in the macro */
-		if (att[attnum]->attcacheoff >= 0)
-		{
-			return fetchatt(att[attnum],
-							(char *) tup + tup->t_hoff +
-							att[attnum]->attcacheoff);
-		}
-#endif
-	}
-	else
+	if (!HeapTupleNoNulls(tuple))
 	{
 		/*
 		 * there's a null somewhere in the tuple
 		 *
-		 * check to see if desired att is null
+		 * check to see if any preceding bits are null...
 		 */
+		int byte = attnum >> 3;
+		int			finalbit = attnum & 0x07;
 
-#ifdef IN_MACRO
-/* This is handled in the macro */
-		if (att_isnull(attnum, bp))
+		/* check for nulls "before" final bit of last byte */
+		if ((~bp[byte]) & ((1 << finalbit) - 1))
+			slow = true;
+		else
 		{
-			if (isnull)
-				*isnull = true;
-			return (Datum) NULL;
-		}
-#endif
+			/* check for nulls in any "earlier" bytes */
+			int			i;
 
-		/*
-		 * Now check to see if any preceding bits are null...
-		 */
-		{
-			int byte = attnum >> 3;
-			int			finalbit = attnum & 0x07;
-
-			/* check for nulls "before" final bit of last byte */
-			if ((~bp[byte]) & ((1 << finalbit) - 1))
-				slow = true;
-			else
+			for (i = 0; i < byte; i++)
 			{
-				/* check for nulls in any "earlier" bytes */
-				int			i;
-
-				for (i = 0; i < byte; i++)
+				if (bp[i] != 0xFF)
 				{
-					if (bp[i] != 0xFF)
-					{
-						slow = true;
-						break;
-					}
+					slow = true;
+					break;
 				}
 			}
 		}
@@ -567,8 +528,7 @@ heap_getsysattr(HeapTuple tup, int attnum, TupleDesc tupleDesc, bool *isnull)
 	Assert(tup);
 
 	/* Currently, no sys attribute ever reads as NULL. */
-	if (isnull)
-		*isnull = false;
+	*isnull = false;
 
 	switch (attnum)
 	{

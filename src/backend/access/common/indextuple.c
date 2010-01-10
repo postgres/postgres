@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/common/indextuple.c,v 1.90 2010/01/02 16:57:33 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/common/indextuple.c,v 1.91 2010/01/10 04:26:36 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -200,8 +200,7 @@ index_form_tuple(TupleDesc tupleDescriptor,
 Datum
 nocache_index_getattr(IndexTuple tup,
 					  int attnum,
-					  TupleDesc tupleDesc,
-					  bool *isnull)
+					  TupleDesc tupleDesc)
 {
 	Form_pg_attribute *att = tupleDesc->attrs;
 	char	   *tp;				/* ptr to data part of tuple */
@@ -209,8 +208,6 @@ nocache_index_getattr(IndexTuple tup,
 	bool		slow = false;	/* do we have to walk attrs? */
 	int			data_off;		/* tuple data offset */
 	int			off;			/* current offset within data */
-
-	(void) isnull;				/* not used */
 
 	/* ----------------
 	 *	 Three cases:
@@ -221,31 +218,11 @@ nocache_index_getattr(IndexTuple tup,
 	 * ----------------
 	 */
 
-#ifdef IN_MACRO
-/* This is handled in the macro */
-	Assert(PointerIsValid(isnull));
-	Assert(attnum > 0);
-
-	*isnull = false;
-#endif
-
 	data_off = IndexInfoFindDataOffset(tup->t_info);
 
 	attnum--;
 
-	if (!IndexTupleHasNulls(tup))
-	{
-#ifdef IN_MACRO
-/* This is handled in the macro */
-		if (att[attnum]->attcacheoff >= 0)
-		{
-			return fetchatt(att[attnum],
-							(char *) tup + data_off +
-							att[attnum]->attcacheoff);
-		}
-#endif
-	}
-	else
+	if (IndexTupleHasNulls(tup))
 	{
 		/*
 		 * there's a null somewhere in the tuple
@@ -255,16 +232,6 @@ nocache_index_getattr(IndexTuple tup,
 
 		/* XXX "knows" t_bits are just after fixed tuple header! */
 		bp = (bits8 *) ((char *) tup + sizeof(IndexTupleData));
-
-#ifdef IN_MACRO
-/* This is handled in the macro */
-
-		if (att_isnull(attnum, bp))
-		{
-			*isnull = true;
-			return (Datum) NULL;
-		}
-#endif
 
 		/*
 		 * Now check to see if any preceding bits are null...
