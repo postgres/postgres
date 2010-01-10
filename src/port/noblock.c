@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/noblock.c,v 1.14 2010/01/02 16:58:13 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/port/noblock.c,v 1.15 2010/01/10 14:16:08 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,7 +18,7 @@
 
 
 bool
-pg_set_noblock(int sock)
+pg_set_noblock(pgsocket sock)
 {
 #if !defined(WIN32)
 	return (fcntl(sock, F_SETFL, O_NONBLOCK) != -1);
@@ -32,7 +32,7 @@ pg_set_noblock(int sock)
 
 
 bool
-pg_set_block(int sock)
+pg_set_block(pgsocket sock)
 {
 #if !defined(WIN32)
 	int			flags;

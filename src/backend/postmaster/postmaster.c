@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.599 2010/01/02 16:57:50 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.600 2010/01/10 14:16:08 mha Exp $
  *
  * NOTES
  *
@@ -172,7 +172,7 @@ int			ReservedBackends;
 
 /* The socket(s) we're listening to. */
 #define MAXLISTEN	64
-static int	ListenSocket[MAXLISTEN];
+static pgsocket ListenSocket[MAXLISTEN];
 
 /*
  * Set by the -o option
@@ -382,7 +382,7 @@ static pid_t internal_forkexec(int argc, char *argv[], Port *port);
 #ifdef WIN32
 typedef struct
 {
-	SOCKET		origsocket;		/* Original socket value, or -1 if not a
+	SOCKET		origsocket;		/* Original socket value, or PGINVALID_SOCKET if not a
 								 * socket */
 	WSAPROTOCOL_INFO wsainfo;
 } InheritableSocket;
@@ -400,7 +400,7 @@ typedef struct
 	Port		port;
 	InheritableSocket portsocket;
 	char		DataDir[MAXPGPATH];
-	int			ListenSocket[MAXLISTEN];
+	pgsocket	ListenSocket[MAXLISTEN];
 	long		MyCancelKey;
 	int			MyPMChildSlot;
 #ifndef WIN32
@@ -807,7 +807,7 @@ PostmasterMain(int argc, char *argv[])
 	 * Establish input sockets.
 	 */
 	for (i = 0; i < MAXLISTEN; i++)
-		ListenSocket[i] = -1;
+		ListenSocket[i] = PGINVALID_SOCKET;
 
 	if (ListenAddresses)
 	{
@@ -860,7 +860,7 @@ PostmasterMain(int argc, char *argv[])
 
 #ifdef USE_BONJOUR
 	/* Register for Bonjour only if we opened TCP socket(s) */
-	if (enable_bonjour && ListenSocket[0] != -1)
+	if (enable_bonjour && ListenSocket[0] != PGINVALID_SOCKET)
 	{
 		DNSServiceErrorType err;
 
@@ -908,7 +908,7 @@ PostmasterMain(int argc, char *argv[])
 	/*
 	 * check that we have some socket to listen on
 	 */
-	if (ListenSocket[0] == -1)
+	if (ListenSocket[0] == PGINVALID_SOCKET)
 		ereport(FATAL,
 				(errmsg("no socket created for listening")));
 
@@ -1392,7 +1392,7 @@ ServerLoop(void)
 
 			for (i = 0; i < MAXLISTEN; i++)
 			{
-				if (ListenSocket[i] == -1)
+				if (ListenSocket[i] == PGINVALID_SOCKET)
 					break;
 				if (FD_ISSET(ListenSocket[i], &rmask))
 				{
@@ -1493,7 +1493,7 @@ initMasks(fd_set *rmask)
 	{
 		int			fd = ListenSocket[i];
 
-		if (fd == -1)
+		if (fd == PGINVALID_SOCKET)
 			break;
 		FD_SET		(fd, rmask);
 
@@ -2002,10 +2002,10 @@ ClosePostmasterPorts(bool am_syslogger)
 	/* Close the listen sockets */
 	for (i = 0; i < MAXLISTEN; i++)
 	{
-		if (ListenSocket[i] != -1)
+		if (ListenSocket[i] != PGINVALID_SOCKET)
 		{
 			StreamClose(ListenSocket[i]);
-			ListenSocket[i] = -1;
+			ListenSocket[i] = PGINVALID_SOCKET;
 		}
 	}
 
@@ -4408,7 +4408,7 @@ extern slock_t *ProcStructLock;
 extern PROC_HDR *ProcGlobal;
 extern PGPROC *AuxiliaryProcs;
 extern PMSignalData *PMSignalState;
-extern int	pgStatSock;
+extern pgsocket pgStatSock;
 
 #ifndef WIN32
 #define write_inheritable_socket(dest, src, childpid) ((*(dest) = (src)), true)
@@ -4522,7 +4522,7 @@ static bool
 write_inheritable_socket(InheritableSocket *dest, SOCKET src, pid_t childpid)
 {
 	dest->origsocket = src;
-	if (src != 0 && src != -1)
+	if (src != 0 && src != PGINVALID_SOCKET)
 	{
 		/* Actual socket */
 		if (WSADuplicateSocket(src, childpid, &dest->wsainfo) != 0)
@@ -4544,7 +4544,7 @@ read_inheritable_socket(SOCKET *dest, InheritableSocket *src)
 {
 	SOCKET		s;
 
-	if (src->origsocket == -1 || src->origsocket == 0)
+	if (src->origsocket == PGINVALID_SOCKET || src->origsocket == 0)
 	{
 		/* Not a real socket! */
 		*dest = src->origsocket;

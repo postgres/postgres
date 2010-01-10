@@ -13,7 +13,7 @@
  *
  *	Copyright (c) 2001-2010, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.196 2010/01/02 16:57:50 momjian Exp $
+ *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.197 2010/01/10 14:16:07 mha Exp $
  * ----------
  */
 #include "postgres.h"
@@ -130,7 +130,7 @@ PgStat_MsgBgWriter BgWriterStats;
  * Local data
  * ----------
  */
-NON_EXEC_STATIC int pgStatSock = -1;
+NON_EXEC_STATIC pgsocket pgStatSock = PGINVALID_SOCKET;
 
 static struct sockaddr_storage pgStatAddr;
 
@@ -369,7 +369,7 @@ pgstat_init(void)
 					(errcode_for_socket_access(),
 			  errmsg("could not bind socket for statistics collector: %m")));
 			closesocket(pgStatSock);
-			pgStatSock = -1;
+			pgStatSock = PGINVALID_SOCKET;
 			continue;
 		}
 
@@ -380,7 +380,7 @@ pgstat_init(void)
 					(errcode_for_socket_access(),
 					 errmsg("could not get address of socket for statistics collector: %m")));
 			closesocket(pgStatSock);
-			pgStatSock = -1;
+			pgStatSock = PGINVALID_SOCKET;
 			continue;
 		}
 
@@ -396,7 +396,7 @@ pgstat_init(void)
 					(errcode_for_socket_access(),
 			errmsg("could not connect socket for statistics collector: %m")));
 			closesocket(pgStatSock);
-			pgStatSock = -1;
+			pgStatSock = PGINVALID_SOCKET;
 			continue;
 		}
 
@@ -417,7 +417,7 @@ retry1:
 					(errcode_for_socket_access(),
 					 errmsg("could not send test message on socket for statistics collector: %m")));
 			closesocket(pgStatSock);
-			pgStatSock = -1;
+			pgStatSock = PGINVALID_SOCKET;
 			continue;
 		}
 
@@ -443,7 +443,7 @@ retry1:
 					(errcode_for_socket_access(),
 					 errmsg("select() failed in statistics collector: %m")));
 			closesocket(pgStatSock);
-			pgStatSock = -1;
+			pgStatSock = PGINVALID_SOCKET;
 			continue;
 		}
 		if (sel_res == 0 || !FD_ISSET(pgStatSock, &rset))
@@ -458,7 +458,7 @@ retry1:
 					(errcode(ERRCODE_CONNECTION_FAILURE),
 					 errmsg("test message did not get through on socket for statistics collector")));
 			closesocket(pgStatSock);
-			pgStatSock = -1;
+			pgStatSock = PGINVALID_SOCKET;
 			continue;
 		}
 
@@ -473,7 +473,7 @@ retry2:
 					(errcode_for_socket_access(),
 					 errmsg("could not receive test message on socket for statistics collector: %m")));
 			closesocket(pgStatSock);
-			pgStatSock = -1;
+			pgStatSock = PGINVALID_SOCKET;
 			continue;
 		}
 
@@ -483,7 +483,7 @@ retry2:
 					(errcode(ERRCODE_INTERNAL_ERROR),
 					 errmsg("incorrect test message transmission on socket for statistics collector")));
 			closesocket(pgStatSock);
-			pgStatSock = -1;
+			pgStatSock = PGINVALID_SOCKET;
 			continue;
 		}
 
@@ -521,7 +521,7 @@ startup_failed:
 
 	if (pgStatSock >= 0)
 		closesocket(pgStatSock);
-	pgStatSock = -1;
+	pgStatSock = PGINVALID_SOCKET;
 
 	/*
 	 * Adjust GUC variables to suppress useless activity, and for debugging

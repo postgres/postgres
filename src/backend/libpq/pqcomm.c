@@ -30,7 +30,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/libpq/pqcomm.c,v 1.200 2010/01/02 16:57:45 momjian Exp $
+ *	$PostgreSQL: pgsql/src/backend/libpq/pqcomm.c,v 1.201 2010/01/10 14:16:07 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -199,9 +199,9 @@ pq_close(int code, Datum arg)
 		 * transport layer reports connection closure, and you can be sure the
 		 * backend has exited.
 		 *
-		 * We do set sock to -1 to prevent any further I/O, though.
+		 * We do set sock to PGINVALID_SOCKET to prevent any further I/O, though.
 		 */
-		MyProcPort->sock = -1;
+		MyProcPort->sock = PGINVALID_SOCKET;
 	}
 }
 
@@ -232,7 +232,7 @@ StreamDoUnlink(int code, Datum arg)
  * StreamServerPort -- open a "listening" port to accept connections.
  *
  * Successfully opened sockets are added to the ListenSocket[] array,
- * at the first position that isn't -1.
+ * at the first position that isn't PGINVALID_SOCKET.
  *
  * RETURNS: STATUS_OK or STATUS_ERROR
  */
@@ -240,10 +240,10 @@ StreamDoUnlink(int code, Datum arg)
 int
 StreamServerPort(int family, char *hostName, unsigned short portNumber,
 				 char *unixSocketName,
-				 int ListenSocket[], int MaxListen)
+				 pgsocket ListenSocket[], int MaxListen)
 {
-	int			fd,
-				err;
+	pgsocket	fd;
+	int			err;
 	int			maxconn;
 	int			ret;
 	char		portNumberStr[32];
@@ -311,7 +311,7 @@ StreamServerPort(int family, char *hostName, unsigned short portNumber,
 		/* See if there is still room to add 1 more socket. */
 		for (; listen_index < MaxListen; listen_index++)
 		{
-			if (ListenSocket[listen_index] == -1)
+			if (ListenSocket[listen_index] == PGINVALID_SOCKET)
 				break;
 		}
 		if (listen_index >= MaxListen)
@@ -570,7 +570,7 @@ Setup_AF_UNIX(void)
  * RETURNS: STATUS_OK or STATUS_ERROR
  */
 int
-StreamConnection(int server_fd, Port *port)
+StreamConnection(pgsocket server_fd, Port *port)
 {
 	/* accept connection and fill in the client (remote) address */
 	port->raddr.salen = sizeof(port->raddr.addr);
@@ -676,7 +676,7 @@ StreamConnection(int server_fd, Port *port)
  * we do NOT want to send anything to the far end.
  */
 void
-StreamClose(int sock)
+StreamClose(pgsocket sock)
 {
 	closesocket(sock);
 }

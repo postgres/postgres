@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/port.h,v 1.128 2010/01/02 16:58:00 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/port.h,v 1.129 2010/01/10 14:16:08 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,9 +17,18 @@
 #include <netdb.h>
 #include <pwd.h>
 
+/* socket has a different definition on WIN32 */
+#ifndef WIN32
+typedef int pgsocket;
+#define PGINVALID_SOCKET -1
+#else
+typedef SOCKET pgsocket;
+#define PGINVALID_SOCKET INVALID_SOCKET
+#endif
+
 /* non-blocking */
-extern bool pg_set_noblock(int sock);
-extern bool pg_set_block(int sock);
+extern bool pg_set_noblock(pgsocket sock);
+extern bool pg_set_block(pgsocket sock);
 
 /* Portable path handling for Unix/Win32 (in path.c) */
 

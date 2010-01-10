@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/libpq/libpq.h,v 1.72 2010/01/02 16:58:04 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/libpq/libpq.h,v 1.73 2010/01/10 14:16:08 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,10 +45,10 @@ typedef struct
  * prototypes for functions in pqcomm.c
  */
 extern int StreamServerPort(int family, char *hostName,
-		 unsigned short portNumber, char *unixSocketName, int ListenSocket[],
+		 unsigned short portNumber, char *unixSocketName, pgsocket ListenSocket[],
 				 int MaxListen);
-extern int	StreamConnection(int server_fd, Port *port);
-extern void StreamClose(int sock);
+extern int	StreamConnection(pgsocket server_fd, Port *port);
+extern void StreamClose(pgsocket sock);
 extern void TouchSocketFile(void);
 extern void pq_init(void);
 extern void pq_comm_reset(void);
