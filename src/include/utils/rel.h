@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/rel.h,v 1.118 2010/01/02 16:58:10 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/rel.h,v 1.119 2010/01/10 22:19:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -134,9 +134,6 @@ typedef struct RelationData
 	bool		rd_isvalid;		/* relcache entry is valid */
 	char		rd_indexvalid;	/* state of rd_indexlist: 0 = not valid, 1 =
 								 * valid, 2 = temporarily forced */
-	SubTransactionId rd_createSubid;	/* rel was created in current xact */
-	SubTransactionId rd_newRelfilenodeSubid;	/* new relfilenode assigned in
-												 * current xact */
 
 	/*
 	 * rd_createSubid is the ID of the highest subtransaction the rel has
@@ -147,6 +144,10 @@ typedef struct RelationData
 	 * subtransaction the relfilenode change has survived into, or zero if not
 	 * changed in the current transaction (or we have forgotten changing it).
 	 */
+	SubTransactionId rd_createSubid;	/* rel was created in current xact */
+	SubTransactionId rd_newRelfilenodeSubid;	/* new relfilenode assigned in
+												 * current xact */
+
 	Form_pg_class rd_rel;		/* RELATION tuple */
 	TupleDesc	rd_att;			/* tuple descriptor */
 	Oid			rd_id;			/* relation's object id */
@@ -167,8 +168,8 @@ typedef struct RelationData
 
 	/* These are non-NULL only for an index relation: */
 	Form_pg_index rd_index;		/* pg_index tuple describing this index */
+	/* use "struct" here to avoid needing to include htup.h: */
 	struct HeapTupleData *rd_indextuple;		/* all of pg_index tuple */
-	/* "struct HeapTupleData *" avoids need to include htup.h here	*/
 	Form_pg_am	rd_am;			/* pg_am tuple for index's AM */
 
 	/*
