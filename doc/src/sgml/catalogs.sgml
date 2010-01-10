@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.216 2010/01/01 21:53:48 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.217 2010/01/10 01:23:08 rhaas Exp $ -->
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
  -->
@@ -4739,6 +4739,15 @@
        <xref linkend="sql-grant" endterm="sql-grant-title"> and
        <xref linkend="sql-revoke" endterm="sql-revoke-title">
        for details
+      </entry>
+     </row>
+
+     <row>
+      <entry><structfield>spcoptions</structfield></entry>
+      <entry><type>text[]</type></entry>
+      <entry></entry>
+      <entry>
+       Tablespace-level options, as <quote>keyword=value</> strings
       </entry>
      </row>
     </tbody>
