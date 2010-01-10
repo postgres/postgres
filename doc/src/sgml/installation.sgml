@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.336 2010/01/05 01:06:55 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.337 2010/01/10 15:54:11 mha Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -2672,18 +2672,14 @@ cc-1020 cc: ERROR File = pqcomm.c, Line = 427
     this chapter; the Visual C++ build works completely differently
     and is described in <![%standalone-include[the
     documentation]]><![%standalone-ignore[<xref linkend="install-win32">]]>.
-    There is also a precompiled binary installer which you can find at
-    from <ulink url="http://pgfoundry.org/projects/pginstaller"></ulink>.
     It is a fully native build and uses no additional software like
-    MinGW.  The ready-made installer files are available on the main
-    PostgreSQL FTP servers in the <filename>binary/win32</filename>
-    directory.
+    MinGW.  A ready-made installer is available on the main
+    PostgreSQL web site.
    </para>
 
    <para>
-    The native Win32 port requires a 32-bit NT-based Microsoft
-    operating system, like Windows NT 4, Windows 2000/2003, or Windows
-    XP.  (NT 4 is no longer supported.)  Earlier operating systems do
+    The native Windows port requires a 32 or 64-bit version of Windows
+    2000 or later. Earlier operating systems do
     not have sufficient infrastructure (but Cygwin may be used on
     those).  MinGW, the Unix-like build tools, and MSYS, a collection
     of Unix tools required to run shell scripts
