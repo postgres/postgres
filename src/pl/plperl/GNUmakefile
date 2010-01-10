@@ -1,5 +1,5 @@
 # Makefile for PL/Perl
-# $PostgreSQL: pgsql/src/pl/plperl/GNUmakefile,v 1.40 2010/01/09 15:25:41 adunstan Exp $
+# $PostgreSQL: pgsql/src/pl/plperl/GNUmakefile,v 1.41 2010/01/10 18:10:03 tgl Exp $
 
 subdir = src/pl/plperl
 top_builddir = ../../..
@@ -57,8 +57,7 @@ include $(top_srcdir)/src/Makefile.shlib
 plperl.o: perlchunks.h
 
 perlchunks.h: $(PERLCHUNKS)
-	$(PERL) $(srcdir)/text2macro.pl --strip='^(\#.*|\s*)$$' $^ > perlchunks.htmp
-	mv perlchunks.htmp perlchunks.h
+	$(PERL) $(srcdir)/text2macro.pl --strip='^(\#.*|\s*)$$' $^ > $@
 
 all: all-lib
 
@@ -79,7 +78,7 @@ submake:
 	$(MAKE) -C $(top_builddir)/src/test/regress pg_regress$(X)
 
 clean distclean maintainer-clean: clean-lib
-	rm -f SPI.c $(OBJS) perlchunks.htmp perlchunks.h
+	rm -f SPI.c $(OBJS) perlchunks.h
 	rm -rf results
 	rm -f regression.diffs regression.out
 
