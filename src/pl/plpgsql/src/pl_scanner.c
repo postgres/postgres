@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_scanner.c,v 1.3 2010/01/02 16:58:13 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_scanner.c,v 1.4 2010/01/10 17:15:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,8 +23,8 @@
 #define PG_KEYWORD(a,b,c) {a,b,c},
 
 
-/* Klugy flag to tell scanner whether to lookup identifiers */
-bool	plpgsql_LookupIdentifiers = true;
+/* Klugy flag to tell scanner how to look up identifiers */
+IdentifierLookup	plpgsql_IdentifierLookup = IDENTIFIER_LOOKUP_NORMAL;
 
 /*
  * A word about keywords:
@@ -33,11 +33,10 @@ bool	plpgsql_LookupIdentifiers = true;
  * reserved keywords are passed to the core scanner, so they will be
  * recognized before (and instead of) any variable name.  Unreserved
  * words are checked for separately, after determining that the identifier
- * isn't a known variable name.  If plpgsql_LookupIdentifiers is off then
+ * isn't a known variable name.  If plpgsql_IdentifierLookup is DECLARE then
  * no variable names will be recognized, so the unreserved words always work.
  * (Note in particular that this helps us avoid reserving keywords that are
- * only needed in DECLARE sections, since we scan those sections with
- * plpgsql_LookupIdentifiers off.)
+ * only needed in DECLARE sections.)
  *
  * In certain contexts it is desirable to prefer recognizing an unreserved
  * keyword over recognizing a variable name.  Those cases are handled in
@@ -193,7 +192,7 @@ static void location_lineno_init(void);
  * It is a wrapper around the core lexer, with the ability to recognize
  * PL/pgSQL variables and return them as special T_DATUM tokens.  If a
  * word or compound word does not match any variable name, or if matching
- * is turned off by plpgsql_LookupIdentifiers, it is returned as
+ * is turned off by plpgsql_IdentifierLookup, it is returned as
  * T_WORD or T_CWORD respectively, or as an unreserved keyword if it
  * matches one of those.
  */
@@ -567,7 +566,7 @@ plpgsql_scanner_init(const char *str)
 	scanorig = str;
 
 	/* Other setup */
-	plpgsql_LookupIdentifiers = true;
+	plpgsql_IdentifierLookup = IDENTIFIER_LOOKUP_NORMAL;
 
 	num_pushbacks = 0;
 

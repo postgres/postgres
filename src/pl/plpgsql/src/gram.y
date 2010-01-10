@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.137 2010/01/02 16:58:12 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.138 2010/01/10 17:15:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -369,21 +369,21 @@ pl_block		: decl_sect K_BEGIN proc_sect exception_sect K_END opt_label
 decl_sect		: opt_block_label
 					{
 						/* done with decls, so resume identifier lookup */
-						plpgsql_LookupIdentifiers = true;
+						plpgsql_IdentifierLookup = IDENTIFIER_LOOKUP_NORMAL;
 						$$.label	  = $1;
 						$$.n_initvars = 0;
 						$$.initvarnos = NULL;
 					}
 				| opt_block_label decl_start
 					{
-						plpgsql_LookupIdentifiers = true;
+						plpgsql_IdentifierLookup = IDENTIFIER_LOOKUP_NORMAL;
 						$$.label	  = $1;
 						$$.n_initvars = 0;
 						$$.initvarnos = NULL;
 					}
 				| opt_block_label decl_start decl_stmts
 					{
-						plpgsql_LookupIdentifiers = true;
+						plpgsql_IdentifierLookup = IDENTIFIER_LOOKUP_NORMAL;
 						if ($3 != NULL)
 							$$.label = $3;
 						else
@@ -401,7 +401,7 @@ decl_start		: K_DECLARE
 						 * Disable scanner lookup of identifiers while
 						 * we process the decl_stmts
 						 */
-						plpgsql_LookupIdentifiers = false;
+						plpgsql_IdentifierLookup = IDENTIFIER_LOOKUP_DECLARE;
 					}
 				;
 
@@ -2121,7 +2121,7 @@ read_sql_construct(int until,
 {
 	int					tok;
 	StringInfoData		ds;
-	bool				save_LookupIdentifiers;
+	IdentifierLookup	save_IdentifierLookup;
 	int					startlocation = -1;
 	int					parenlevel = 0;
 	PLpgSQL_expr		*expr;
@@ -2129,9 +2129,9 @@ read_sql_construct(int until,
 	initStringInfo(&ds);
 	appendStringInfoString(&ds, sqlstart);
 
-	/* no need to lookup identifiers within the SQL text */
-	save_LookupIdentifiers = plpgsql_LookupIdentifiers;
-	plpgsql_LookupIdentifiers = false;
+	/* special lookup mode for identifiers within the SQL text */
+	save_IdentifierLookup = plpgsql_IdentifierLookup;
+	plpgsql_IdentifierLookup = IDENTIFIER_LOOKUP_EXPR;
 
 	for (;;)
 	{
@@ -2176,7 +2176,7 @@ read_sql_construct(int until,
 		}
 	}
 
-	plpgsql_LookupIdentifiers = save_LookupIdentifiers;
+	plpgsql_IdentifierLookup = save_IdentifierLookup;
 
 	if (startloc)
 		*startloc = startlocation;
@@ -2221,8 +2221,8 @@ read_datatype(int tok)
 	PLpgSQL_type		*result;
 	int					parenlevel = 0;
 
-	/* Should always be called with LookupIdentifiers off */
-	Assert(!plpgsql_LookupIdentifiers);
+	/* Should only be called while parsing DECLARE sections */
+	Assert(plpgsql_IdentifierLookup == IDENTIFIER_LOOKUP_DECLARE);
 
 	/* Often there will be a lookahead token, but if not, get one */
 	if (tok == YYEMPTY)
@@ -2327,7 +2327,7 @@ static PLpgSQL_stmt *
 make_execsql_stmt(int firsttoken, int location)
 {
 	StringInfoData		ds;
-	bool				save_LookupIdentifiers;
+	IdentifierLookup	save_IdentifierLookup;
 	PLpgSQL_stmt_execsql *execsql;
 	PLpgSQL_expr		*expr;
 	PLpgSQL_row			*row = NULL;
@@ -2341,9 +2341,9 @@ make_execsql_stmt(int firsttoken, int location)
 
 	initStringInfo(&ds);
 
-	/* no need to lookup identifiers within the SQL text */
-	save_LookupIdentifiers = plpgsql_LookupIdentifiers;
-	plpgsql_LookupIdentifiers = false;
+	/* special lookup mode for identifiers within the SQL text */
+	save_IdentifierLookup = plpgsql_IdentifierLookup;
+	plpgsql_IdentifierLookup = IDENTIFIER_LOOKUP_EXPR;
 
 	/*
 	 * We have to special-case the sequence INSERT INTO, because we don't want
@@ -2371,13 +2371,13 @@ make_execsql_stmt(int firsttoken, int location)
 				yyerror("INTO specified more than once");
 			have_into = true;
 			into_start_loc = yylloc;
-			plpgsql_LookupIdentifiers = true;
+			plpgsql_IdentifierLookup = IDENTIFIER_LOOKUP_NORMAL;
 			read_into_target(&rec, &row, &have_strict);
-			plpgsql_LookupIdentifiers = false;
+			plpgsql_IdentifierLookup = IDENTIFIER_LOOKUP_EXPR;
 		}
 	}
 
-	plpgsql_LookupIdentifiers = save_LookupIdentifiers;
+	plpgsql_IdentifierLookup = save_IdentifierLookup;
 
 	if (have_into)
 	{

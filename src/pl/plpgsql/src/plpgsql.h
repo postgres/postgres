@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.127 2010/01/02 16:58:13 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.128 2010/01/10 17:15:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -795,11 +795,19 @@ typedef struct
  * Global variable declarations
  **********************************************************************/
 
+typedef enum
+{
+	IDENTIFIER_LOOKUP_NORMAL,		/* normal processing of var names */
+	IDENTIFIER_LOOKUP_DECLARE,		/* In DECLARE --- don't look up names */
+	IDENTIFIER_LOOKUP_EXPR			/* In SQL expression --- special case */
+} IdentifierLookup;
+
+extern IdentifierLookup plpgsql_IdentifierLookup;
+
 extern int	plpgsql_variable_conflict;
 
 extern bool plpgsql_check_syntax;
 extern bool plpgsql_DumpExecTree;
-extern bool plpgsql_LookupIdentifiers;
 
 extern PLpgSQL_stmt_block *plpgsql_parse_result;
 

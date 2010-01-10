@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.147 2010/01/02 16:58:12 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.148 2010/01/10 17:15:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1132,11 +1132,7 @@ resolve_column_ref(PLpgSQL_expr *expr, ColumnRef *cref)
 				return make_datum_param(expr, nse->itemno, cref->location);
 			if (nnames == nnames_field)
 			{
-				/* colname must be a field in this record */
-				PLpgSQL_rec *rec = (PLpgSQL_rec *) estate->datums[nse->itemno];
-				FieldSelect *fselect;
-				Oid			fldtype;
-				int			fldno;
+				/* colname could be a field in this record */
 				int			i;
 
 				/* search for a datum referencing this field */
@@ -1153,20 +1149,11 @@ resolve_column_ref(PLpgSQL_expr *expr, ColumnRef *cref)
 				}
 
 				/*
-				 * We can't readily add a recfield datum at runtime, so
-				 * instead build a whole-row Param and a FieldSelect node.
-				 * This is a bit less efficient, so we prefer the recfield
-				 * way when possible.
+				 * We should not get here, because a RECFIELD datum should
+				 * have been built at parse time for every possible qualified
+				 * reference to fields of this record.  But if we do, fall
+				 * out and return NULL.
 				 */
-				fldtype = exec_get_rec_fieldtype(rec, colname,
-												 &fldno);
-				fselect = makeNode(FieldSelect);
-				fselect->arg = (Expr *) make_datum_param(expr, nse->itemno,
-														 cref->location);
-				fselect->fieldnum = fldno;
-				fselect->resulttype = fldtype;
-				fselect->resulttypmod = -1;
-				return (Node *) fselect;
 			}
 			break;
 		case PLPGSQL_NSTYPE_ROW:
@@ -1174,7 +1161,7 @@ resolve_column_ref(PLpgSQL_expr *expr, ColumnRef *cref)
 				return make_datum_param(expr, nse->itemno, cref->location);
 			if (nnames == nnames_field)
 			{
-				/* colname must be a field in this row */
+				/* colname could be a field in this row */
 				PLpgSQL_row *row = (PLpgSQL_row *) estate->datums[nse->itemno];
 				int			i;
 
@@ -1187,10 +1174,7 @@ resolve_column_ref(PLpgSQL_expr *expr, ColumnRef *cref)
 												cref->location);
 					}
 				}
-				ereport(ERROR,
-						(errcode(ERRCODE_UNDEFINED_COLUMN),
-						 errmsg("row \"%s\" has no field \"%s\"",
-								row->refname, colname)));
+				/* Not found, so return NULL */
 			}
 			break;
 		default:
@@ -1257,8 +1241,12 @@ plpgsql_parse_word(char *word1, const char *yytxt,
 {
 	PLpgSQL_nsitem *ns;
 
-	/* No lookup if disabled */
-	if (plpgsql_LookupIdentifiers)
+	/*
+	 * We should do nothing in DECLARE sections.  In SQL expressions, there's
+	 * no need to do anything either --- lookup will happen when the expression
+	 * is compiled.
+	 */
+	if (plpgsql_IdentifierLookup == IDENTIFIER_LOOKUP_NORMAL)
 	{
 		/*
 		 * Do a lookup in the current namespace stack
@@ -1281,6 +1269,7 @@ plpgsql_parse_word(char *word1, const char *yytxt,
 					return true;
 
 				default:
+					/* plpgsql_ns_lookup should never return anything else */
 					elog(ERROR, "unrecognized plpgsql itemtype: %d",
 						 ns->itemtype);
 			}
@@ -1313,8 +1302,12 @@ plpgsql_parse_dblword(char *word1, char *word2,
 	idents = list_make2(makeString(word1),
 						makeString(word2));
 
-	/* No lookup if disabled */
-	if (plpgsql_LookupIdentifiers)
+	/*
+	 * We should do nothing in DECLARE sections.  In SQL expressions,
+	 * we really only need to make sure that RECFIELD datums are created
+	 * when needed.
+	 */
+	if (plpgsql_IdentifierLookup != IDENTIFIER_LOOKUP_DECLARE)
 	{
 		/*
 		 * Do a lookup in the current namespace stack
@@ -1338,8 +1331,10 @@ plpgsql_parse_dblword(char *word1, char *word2,
 					if (nnames == 1)
 					{
 						/*
-						 * First word is a record name, so second word must be
-						 * a field in this record.
+						 * First word is a record name, so second word could
+						 * be a field in this record.  We build a RECFIELD
+						 * datum whether it is or not --- any error will be
+						 * detected later.
 						 */
 						PLpgSQL_recfield *new;
 
@@ -1366,8 +1361,9 @@ plpgsql_parse_dblword(char *word1, char *word2,
 					if (nnames == 1)
 					{
 						/*
-						 * First word is a row name, so second word must be a
-						 * field in this row.
+						 * First word is a row name, so second word could be
+						 * a field in this row.  Again, no error now if it
+						 * isn't.
 						 */
 						PLpgSQL_row *row;
 						int			i;
@@ -1385,10 +1381,7 @@ plpgsql_parse_dblword(char *word1, char *word2,
 								return true;
 							}
 						}
-						ereport(ERROR,
-								(errcode(ERRCODE_UNDEFINED_COLUMN),
-								 errmsg("row \"%s\" has no field \"%s\"",
-										word1, word2)));
+						/* fall through to return CWORD */
 					}
 					else
 					{
@@ -1399,6 +1392,7 @@ plpgsql_parse_dblword(char *word1, char *word2,
 						wdatum->idents = idents;
 						return true;
 					}
+					break;
 
 				default:
 					break;
@@ -1429,8 +1423,12 @@ plpgsql_parse_tripword(char *word1, char *word2, char *word3,
 						makeString(word2),
 						makeString(word3));
 
-	/* No lookup if disabled */
-	if (plpgsql_LookupIdentifiers)
+	/*
+	 * We should do nothing in DECLARE sections.  In SQL expressions,
+	 * we really only need to make sure that RECFIELD datums are created
+	 * when needed.
+	 */
+	if (plpgsql_IdentifierLookup != IDENTIFIER_LOOKUP_DECLARE)
 	{
 		/*
 		 * Do a lookup in the current namespace stack. Must find a qualified
@@ -1446,7 +1444,7 @@ plpgsql_parse_tripword(char *word1, char *word2, char *word3,
 				case PLPGSQL_NSTYPE_REC:
 				{
 					/*
-					 * words 1/2 are a record name, so third word must be a
+					 * words 1/2 are a record name, so third word could be a
 					 * field in this record.
 					 */
 					PLpgSQL_recfield *new;
@@ -1468,8 +1466,8 @@ plpgsql_parse_tripword(char *word1, char *word2, char *word3,
 				case PLPGSQL_NSTYPE_ROW:
 				{
 					/*
-					 * words 1/2 are a row name, so third word must be a field
-					 * in this row.
+					 * words 1/2 are a row name, so third word could be a
+					 * field in this row.
 					 */
 					PLpgSQL_row *row;
 					int			i;
@@ -1487,10 +1485,8 @@ plpgsql_parse_tripword(char *word1, char *word2, char *word3,
 							return true;
 						}
 					}
-					ereport(ERROR,
-							(errcode(ERRCODE_UNDEFINED_COLUMN),
-							 errmsg("row \"%s.%s\" has no field \"%s\"",
-									word1, word2, word3)));
+					/* fall through to return CWORD */
+					break;
 				}
 
 				default:
