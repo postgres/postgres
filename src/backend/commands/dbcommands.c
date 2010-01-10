@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.230 2010/01/02 16:57:37 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.231 2010/01/10 15:44:28 sriggs Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1945,22 +1945,27 @@ dbase_redo(XLogRecPtr lsn, XLogRecord *record)
 
 		if (InHotStandby)
 		{
-			VirtualTransactionId *database_users;
-
 			/*
-			 * Find all users connected to this database and ask them
-			 * politely to immediately kill their sessions before processing
-			 * the drop database record, after the usual grace period.
-			 * We don't wait for commit because drop database is
-			 * non-transactional.
+			 * We don't do ResolveRecoveryConflictWithVirutalXIDs() here since
+			 * that only waits for transactions and completely idle sessions
+			 * would block us. This is rare enough that we do this as simply
+			 * as possible: no wait, just force them off immediately. 
+			 *
+			 * No locking is required here because we already acquired
+			 * AccessExclusiveLock. Anybody trying to connect while we do this
+			 * will block during InitPostgres() and then disconnect when they
+			 * see the database has been removed.
 			 */
-		    database_users = GetConflictingVirtualXIDs(InvalidTransactionId,
-													   xlrec->db_id,
-													   false);
+			while (CountDBBackends(xlrec->db_id) > 0)
+			{
+				CancelDBBackends(xlrec->db_id);
 
-			ResolveRecoveryConflictWithVirtualXIDs(database_users,
-												   "drop database",
-												   CONFLICT_MODE_FATAL);
+				/*
+				 * Wait awhile for them to die so that we avoid flooding an
+				 * unresponsive backend when system is heavily loaded.
+				 */
+				pg_usleep(10000);
+			}
 		}
 
 		/* Drop pages for this database that are in the shared buffer cache */

@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/procarray.c,v 1.54 2010/01/02 16:57:51 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/procarray.c,v 1.55 2010/01/10 15:44:28 sriggs Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1824,6 +1824,32 @@ CountDBBackends(Oid databaseid)
 	LWLockRelease(ProcArrayLock);
 
 	return count;
+}
+
+/*
+ * CancelDBBackends --- cancel backends that are using specified database
+ */
+void
+CancelDBBackends(Oid databaseid)
+{
+	ProcArrayStruct *arrayP = procArray;
+	int			index;
+
+	/* tell all backends to die */
+	LWLockAcquire(ProcArrayLock, LW_EXCLUSIVE);
+
+	for (index = 0; index < arrayP->numProcs; index++)
+	{
+		volatile PGPROC *proc = arrayP->procs[index];
+
+		if (proc->databaseId == databaseid)
+		{
+			proc->recoveryConflictMode = CONFLICT_MODE_FATAL;
+			kill(proc->pid, SIGINT);
+		}
+	}
+
+	LWLockRelease(ProcArrayLock);
 }
 
 /*

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/procarray.h,v 1.28 2010/01/02 16:58:08 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/storage/procarray.h,v 1.29 2010/01/10 15:44:28 sriggs Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -63,6 +63,7 @@ extern pid_t CancelVirtualTransaction(VirtualTransactionId vxid,
 
 extern int	CountActiveBackends(void);
 extern int	CountDBBackends(Oid databaseid);
+extern void	CancelDBBackends(Oid databaseid);
 extern int	CountUserBackends(Oid roleid);
 extern bool CountOtherDBBackends(Oid databaseId,
 					 int *nbackends, int *nprepared);
