@@ -3,7 +3,7 @@ package Mkvcbuild;
 #
 # Package that generates build files for msvc build
 #
-# $PostgreSQL: pgsql/src/tools/msvc/Mkvcbuild.pm,v 1.45 2010/01/09 14:45:47 adunstan Exp $
+# $PostgreSQL: pgsql/src/tools/msvc/Mkvcbuild.pm,v 1.46 2010/01/11 14:16:18 adunstan Exp $
 #
 use Carp;
 use Win32;
@@ -117,18 +117,13 @@ sub mkvcbuild
                   . 'text2macro.pl '
                   . '--strip="^(\#.*|\s*)$$" '
                   . 'plc_perlboot.pl plc_safe_bad.pl plc_safe_ok.pl '
-                  .	'>perlchunks.htmp');
+                  .	'>perlchunks.h');
             chdir $basedir;
-            if ((!(-f 'src\pl\plperl\perlchunks.htmp')) || -z 'src\pl\plperl\perlchunks.htmp')
+            if ((!(-f 'src\pl\plperl\perlchunks.h')) || -z 'src\pl\plperl\perlchunks.h')
             {
-                unlink('src\pl\plperl\perlchunks.htmp'); # if zero size
+                unlink('src\pl\plperl\perlchunks.h'); # if zero size
                 die 'Failed to create perlchunks.h' . "\n";
             }
-            else
-            {
-                move('src\pl\plperl\perlchunks.htmp','src\pl\plperl\perlchunks.h');
-            }
-
         }
         $plperl->AddReference($postgres);
 		my @perl_libs = grep {/perl\d+.lib$/ }
