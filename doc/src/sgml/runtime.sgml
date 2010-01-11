@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.429 2009/12/10 06:32:28 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.430 2010/01/11 18:39:32 tgl Exp $ -->
 
 <chapter Id="runtime">
  <title>Server Setup and Operation</title>
@@ -1244,7 +1244,7 @@ default:\
     this (consult your system documentation and configuration on where
     to look for such a message):
 <programlisting>
-Out of Memory: Killed process 12345 (postgres). 
+Out of Memory: Killed process 12345 (postgres).
 </programlisting>
     This indicates that the <filename>postgres</filename> process
     has been terminated due to memory pressure.
@@ -1258,13 +1258,13 @@ Out of Memory: Killed process 12345 (postgres).
     <productname>PostgreSQL</productname> on a machine where you can
     be sure that other processes will not run the machine out of
     memory.  If memory is tight, increasing the swap space of the
-    operating system can help avoiding the problem, because the
-    out-of-memory (OOM) killer is invoked whenever physical memory and
+    operating system can help avoid the problem, because the
+    out-of-memory (OOM) killer is invoked only when physical memory and
     swap space are exhausted.
    </para>
 
    <para>
-    On Linux 2.6 and later, an additional measure is to modify the
+    On Linux 2.6 and later, it is possible to modify the
     kernel's behavior so that it will not <quote>overcommit</> memory.
     Although this setting will not prevent the <ulink
     url="http://lwn.net/Articles/104179/">OOM killer</> from being invoked
@@ -1275,11 +1275,31 @@ Out of Memory: Killed process 12345 (postgres).
 sysctl -w vm.overcommit_memory=2
 </programlisting>
     or placing an equivalent entry in <filename>/etc/sysctl.conf</>.
-    You might also wish to modify the related setting 
-    <literal>vm.overcommit_ratio</>.  For details see the kernel documentation
+    You might also wish to modify the related setting
+    <varname>vm.overcommit_ratio</>.  For details see the kernel documentation
     file <filename>Documentation/vm/overcommit-accounting</>.
    </para>
 
+   <para>
+    Another approach, which can be used with or without altering
+    <varname>vm.overcommit_memory</>, is to set the process-specific
+    <varname>oom_adj</> value for the postmaster process to <literal>-17</>,
+    thereby guaranteeing it will not be targeted by the OOM killer.  The
+    simplest way to do this is to execute
+<programlisting>
+echo -17 > /proc/self/oom_adj
+</programlisting>
+    in the postmaster's startup script just before invoking the postmaster.
+    Note that this action must be done as root, or it will have no effect;
+    so a root-owned startup script is the easiest place to do it.  If you
+    do this, you may also wish to build <productname>PostgreSQL</>
+    with <literal>-DLINUX_OOM_ADJ=0</> added to <varname>CFLAGS</>.
+    That will cause postmaster child processes to run with the normal
+    <varname>oom_adj</> value of zero, so that the OOM killer can still
+    target them at need.
+   </para>
+
+   <note>
    <para>
     Some vendors' Linux 2.4 kernels are reported to have early versions
     of the 2.6 overcommit <command>sysctl</command> parameter.  However, setting
@@ -1294,6 +1314,7 @@ sysctl -w vm.overcommit_memory=2
     feature is there.  If in any doubt, consult a kernel expert or your
     kernel vendor.
    </para>
+   </note>
   </sect2>
  </sect1>
 

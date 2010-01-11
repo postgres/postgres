@@ -24,7 +24,7 @@
 
 # Original author:  Ryan Kirkpatrick <pgsql@rkirkpat.net>
 
-# $PostgreSQL: pgsql/contrib/start-scripts/linux,v 1.9 2009/08/27 16:59:38 tgl Exp $
+# $PostgreSQL: pgsql/contrib/start-scripts/linux,v 1.10 2010/01/11 18:39:32 tgl Exp $
 
 ## EDIT FROM HERE
 
@@ -39,6 +39,14 @@ PGUSER=postgres
 
 # Where to keep a log file
 PGLOG="$PGDATA/serverlog"
+
+# It's often a good idea to protect the postmaster from being killed by the
+# OOM killer (which will tend to preferentially kill the postmaster because
+# of the way it accounts for shared memory).  Setting the OOM_ADJ value to
+# -17 will disable OOM kill altogether.  If you enable this, you probably want
+# to compile PostgreSQL with "-DLINUX_OOM_ADJ=0", so that individual backends
+# can still be killed by the OOM killer.
+#OOM_ADJ=-17
 
 ## STOP EDITING HERE
 
@@ -62,6 +70,7 @@ test -x $DAEMON || exit 0
 case $1 in
   start)
 	echo -n "Starting PostgreSQL: "
+	test x"$OOM_ADJ" != x && echo "$OOM_ADJ" > /proc/self/oom_adj
 	su - $PGUSER -c "$DAEMON -D '$PGDATA' &" >>$PGLOG 2>&1
 	echo "ok"
 	;;
@@ -73,6 +82,7 @@ case $1 in
   restart)
 	echo -n "Restarting PostgreSQL: "
 	su - $PGUSER -c "$PGCTL stop -D '$PGDATA' -s -m fast -w"
+	test x"$OOM_ADJ" != x && echo "$OOM_ADJ" > /proc/self/oom_adj
 	su - $PGUSER -c "$DAEMON -D '$PGDATA' &" >>$PGLOG 2>&1
 	echo "ok"
 	;;
