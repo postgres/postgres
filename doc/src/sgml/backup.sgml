@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.134 2010/01/10 16:27:27 sriggs Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.135 2010/01/12 02:33:45 momjian Exp $ -->
 
 <chapter id="backup">
  <title>Backup and Restore</title>
@@ -2544,7 +2544,7 @@ LOG:  database system is ready to accept read only connections
     or <command>ALTER DATABASE ... RENAME</> on primary will generate a log message
     that will cause all users connected to that database on the standby to be
     forcibly disconnected. This action occurs immediately, whatever the setting of
-	<varname>max_standby_delay</>.
+    <varname>max_standby_delay</>.
    </para>
 
    <para>
