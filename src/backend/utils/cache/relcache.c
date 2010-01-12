@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.298 2010/01/12 02:42:52 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.299 2010/01/12 18:12:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -198,6 +198,7 @@ static HTAB *OpClassCache = NULL;
 
 /* non-export function prototypes */
 
+static void RelationDestroyRelation(Relation relation);
 static void RelationClearRelation(Relation relation, bool rebuild);
 
 static void RelationReloadIndexInfo(Relation relation);
@@ -211,10 +212,10 @@ static void formrdesc(const char *relationName, Oid relationReltype,
 		  int natts, const FormData_pg_attribute *attrs);
 
 static HeapTuple ScanPgRelation(Oid targetRelId, bool indexOK);
-static Relation AllocateRelationDesc(Relation relation, Form_pg_class relp);
+static Relation AllocateRelationDesc(Form_pg_class relp);
 static void RelationParseRelOptions(Relation relation, HeapTuple tuple);
 static void RelationBuildTupleDesc(Relation relation);
-static Relation RelationBuildDesc(Oid targetRelId, Relation oldrelation);
+static Relation RelationBuildDesc(Oid targetRelId, bool insertIt);
 static void RelationInitPhysicalAddr(Relation relation);
 static void load_critical_index(Oid indexoid);
 static TupleDesc GetPgClassDescriptor(void);
@@ -305,15 +306,12 @@ ScanPgRelation(Oid targetRelId, bool indexOK)
  *		AllocateRelationDesc
  *
  *		This is used to allocate memory for a new relation descriptor
- *		and initialize the rd_rel field.
- *
- *		If 'relation' is NULL, allocate a new RelationData object.
- *		If not, reuse the given object (that path is taken only when
- *		we have to rebuild a relcache entry during RelationClearRelation).
+ *		and initialize the rd_rel field from the given pg_class tuple.
  */
 static Relation
-AllocateRelationDesc(Relation relation, Form_pg_class relp)
+AllocateRelationDesc(Form_pg_class relp)
 {
+	Relation	relation;
 	MemoryContext oldcxt;
 	Form_pg_class relationForm;
 
@@ -321,15 +319,13 @@ AllocateRelationDesc(Relation relation, Form_pg_class relp)
 	oldcxt = MemoryContextSwitchTo(CacheMemoryContext);
 
 	/*
-	 * allocate space for new relation descriptor, if needed
+	 * allocate and zero space for new relation descriptor
 	 */
-	if (relation == NULL)
-		relation = (Relation) palloc(sizeof(RelationData));
+	relation = (Relation) palloc0(sizeof(RelationData));
 
 	/*
-	 * clear all fields of reldesc
+	 * clear fields of reldesc that should initialize to something non-zero
 	 */
-	MemSet(relation, 0, sizeof(RelationData));
 	relation->rd_targblock = InvalidBlockNumber;
 	relation->rd_fsm_nblocks = InvalidBlockNumber;
 	relation->rd_vm_nblocks = InvalidBlockNumber;
@@ -387,7 +383,6 @@ RelationParseRelOptions(Relation relation, HeapTuple tuple)
 	{
 		case RELKIND_RELATION:
 		case RELKIND_TOASTVALUE:
-		case RELKIND_UNCATALOGED:
 		case RELKIND_INDEX:
 			break;
 		default:
@@ -415,6 +410,7 @@ RelationParseRelOptions(Relation relation, HeapTuple tuple)
 		relation->rd_options = MemoryContextAlloc(CacheMemoryContext,
 												  VARSIZE(options));
 		memcpy(relation->rd_options, options, VARSIZE(options));
+		pfree(options);
 	}
 }
 
@@ -805,24 +801,22 @@ equalRuleLocks(RuleLock *rlock1, RuleLock *rlock2)
 /*
  *		RelationBuildDesc
  *
- *		Build a relation descriptor --- either a new one, or by
- *		recycling the given old relation object.  The latter case
- *		supports rebuilding a relcache entry without invalidating
- *		pointers to it.  The caller must hold at least
+ *		Build a relation descriptor.  The caller must hold at least
  *		AccessShareLock on the target relid.
+ *
+ *		The new descriptor is inserted into the hash table if insertIt is true.
  *
  *		Returns NULL if no pg_class row could be found for the given relid
  *		(suggesting we are trying to access a just-deleted relation).
  *		Any other error is reported via elog.
  */
 static Relation
-RelationBuildDesc(Oid targetRelId, Relation oldrelation)
+RelationBuildDesc(Oid targetRelId, bool insertIt)
 {
 	Relation	relation;
 	Oid			relid;
 	HeapTuple	pg_class_tuple;
 	Form_pg_class relp;
-	MemoryContext oldcxt;
 
 	/*
 	 * find the tuple in pg_class corresponding to the given relation id
@@ -845,7 +839,7 @@ RelationBuildDesc(Oid targetRelId, Relation oldrelation)
 	 * allocate storage for the relation descriptor, and copy pg_class_tuple
 	 * to relation->rd_rel.
 	 */
-	relation = AllocateRelationDesc(oldrelation, relp);
+	relation = AllocateRelationDesc(relp);
 
 	/*
 	 * initialize the relation's relation id (relation->rd_id)
@@ -916,11 +910,10 @@ RelationBuildDesc(Oid targetRelId, Relation oldrelation)
 	heap_freetuple(pg_class_tuple);
 
 	/*
-	 * Insert newly created relation into relcache hash tables.
+	 * Insert newly created relation into relcache hash table, if requested.
 	 */
-	oldcxt = MemoryContextSwitchTo(CacheMemoryContext);
-	RelationCacheInsert(relation);
-	MemoryContextSwitchTo(oldcxt);
+	if (insertIt)
+		RelationCacheInsert(relation);
 
 	/* It's fully valid */
 	relation->rd_isvalid = true;
@@ -1569,9 +1562,19 @@ RelationIdGetRelation(Oid relationId)
 	if (RelationIsValid(rd))
 	{
 		RelationIncrementReferenceCount(rd);
-		/* revalidate nailed index if necessary */
+		/* revalidate cache entry if necessary */
 		if (!rd->rd_isvalid)
-			RelationReloadIndexInfo(rd);
+		{
+			/*
+			 * Indexes only have a limited number of possible schema changes,
+			 * and we don't want to use the full-blown procedure because it's
+			 * a headache for indexes that reload itself depends on.
+			 */
+			if (rd->rd_rel->relkind == RELKIND_INDEX)
+				RelationReloadIndexInfo(rd);
+			else
+				RelationClearRelation(rd, true);
+		}
 		return rd;
 	}
 
@@ -1579,7 +1582,7 @@ RelationIdGetRelation(Oid relationId)
 	 * no reldesc in the cache, so have RelationBuildDesc() build one and add
 	 * it.
 	 */
-	rd = RelationBuildDesc(relationId, NULL);
+	rd = RelationBuildDesc(relationId, true);
 	if (RelationIsValid(rd))
 		RelationIncrementReferenceCount(rd);
 	return rd;
@@ -1761,6 +1764,50 @@ RelationReloadIndexInfo(Relation relation)
 }
 
 /*
+ * RelationDestroyRelation
+ *
+ *	Physically delete a relation cache entry and all subsidiary data.
+ *	Caller must already have unhooked the entry from the hash table.
+ */
+static void
+RelationDestroyRelation(Relation relation)
+{
+	Assert(RelationHasReferenceCountZero(relation));
+
+	/*
+	 * Make sure smgr and lower levels close the relation's files, if they
+	 * weren't closed already.  (This was probably done by caller, but let's
+	 * just be real sure.)
+	 */
+	RelationCloseSmgr(relation);
+
+	/*
+	 * Free all the subsidiary data structures of the relcache entry,
+	 * then the entry itself.
+	 */
+	if (relation->rd_rel)
+		pfree(relation->rd_rel);
+	/* can't use DecrTupleDescRefCount here */
+	Assert(relation->rd_att->tdrefcount > 0);
+	if (--relation->rd_att->tdrefcount == 0)
+		FreeTupleDesc(relation->rd_att);
+	list_free(relation->rd_indexlist);
+	bms_free(relation->rd_indexattr);
+	FreeTriggerDesc(relation->trigdesc);
+	if (relation->rd_options)
+		pfree(relation->rd_options);
+	if (relation->rd_indextuple)
+		pfree(relation->rd_indextuple);
+	if (relation->rd_am)
+		pfree(relation->rd_am);
+	if (relation->rd_indexcxt)
+		MemoryContextDelete(relation->rd_indexcxt);
+	if (relation->rd_rulescxt)
+		MemoryContextDelete(relation->rd_rulescxt);
+	pfree(relation);
+}
+
+/*
  * RelationClearRelation
  *
  *	 Physically blow away a relation cache entry, or reset it and rebuild
@@ -1776,7 +1823,6 @@ static void
 RelationClearRelation(Relation relation, bool rebuild)
 {
 	Oid			old_reltype = relation->rd_rel->reltype;
-	MemoryContext oldcxt;
 
 	/*
 	 * Make sure smgr and lower levels close the relation's files, if they
@@ -1791,7 +1837,7 @@ RelationClearRelation(Relation relation, bool rebuild)
 	 * Never, never ever blow away a nailed-in system relation, because we'd
 	 * be unable to recover.  However, we must reset rd_targblock, in case we
 	 * got called because of a relation cache flush that was triggered by
-	 * VACUUM.
+	 * VACUUM.  Likewise reset the fsm and vm size info.
 	 *
 	 * If it's a nailed index, then we need to re-read the pg_class row to see
 	 * if its relfilenode changed.	We can't necessarily do that here, because
@@ -1830,40 +1876,14 @@ RelationClearRelation(Relation relation, bool rebuild)
 		return;
 	}
 
-	/*
-	 * Remove relation from hash tables
-	 *
-	 * Note: we might be reinserting it momentarily, but we must not have it
-	 * visible in the hash tables until it's valid again, so don't try to
-	 * optimize this away...
-	 */
-	oldcxt = MemoryContextSwitchTo(CacheMemoryContext);
-	RelationCacheDelete(relation);
-	MemoryContextSwitchTo(oldcxt);
+	/* Mark it invalid until we've finished rebuild */
+	relation->rd_isvalid = false;
 
-	/* Clear out catcache's entries for this relation */
+	/*
+	 * Clear out catcache's entries for this relation.  This is a bit of
+	 * a hack, but it's a convenient place to do it.
+	 */
 	CatalogCacheFlushRelation(RelationGetRelid(relation));
-
-	/*
-	 * Free all the subsidiary data structures of the relcache entry. We
-	 * cannot free rd_att if we are trying to rebuild the entry, however,
-	 * because pointers to it may be cached in various places. The rule
-	 * manager might also have pointers into the rewrite rules. So to begin
-	 * with, we can only get rid of these fields:
-	 */
-	FreeTriggerDesc(relation->trigdesc);
-	if (relation->rd_indextuple)
-		pfree(relation->rd_indextuple);
-	if (relation->rd_am)
-		pfree(relation->rd_am);
-	if (relation->rd_rel)
-		pfree(relation->rd_rel);
-	if (relation->rd_options)
-		pfree(relation->rd_options);
-	list_free(relation->rd_indexlist);
-	bms_free(relation->rd_indexattr);
-	if (relation->rd_indexcxt)
-		MemoryContextDelete(relation->rd_indexcxt);
 
 	/*
 	 * If we're really done with the relcache entry, blow it away. But if
@@ -1873,84 +1893,121 @@ RelationClearRelation(Relation relation, bool rebuild)
 	 */
 	if (!rebuild)
 	{
-		/* ok to zap remaining substructure */
+		/* Flush any rowtype cache entry */
 		flush_rowtype_cache(old_reltype);
-		/* can't use DecrTupleDescRefCount here */
-		Assert(relation->rd_att->tdrefcount > 0);
-		if (--relation->rd_att->tdrefcount == 0)
-			FreeTupleDesc(relation->rd_att);
-		if (relation->rd_rulescxt)
-			MemoryContextDelete(relation->rd_rulescxt);
-		pfree(relation);
+
+		/* Remove it from the hash table */
+		RelationCacheDelete(relation);
+
+		/* And release storage */
+		RelationDestroyRelation(relation);
 	}
 	else
 	{
 		/*
-		 * When rebuilding an open relcache entry, must preserve ref count and
-		 * rd_createSubid/rd_newRelfilenodeSubid state.  Also attempt to
-		 * preserve the tupledesc and rewrite-rule substructures in place.
-		 * (Note: the refcount mechanism for tupledescs may eventually ensure
-		 * that we don't really need to preserve the tupledesc in-place, but
-		 * for now there are still a lot of places that assume an open rel's
-		 * tupledesc won't move.)
+		 * Our strategy for rebuilding an open relcache entry is to build
+		 * a new entry from scratch, swap its contents with the old entry,
+		 * and finally delete the new entry (along with any infrastructure
+		 * swapped over from the old entry).  This is to avoid trouble in case
+		 * an error causes us to lose control partway through.  The old entry
+		 * will still be marked !rd_isvalid, so we'll try to rebuild it again
+		 * on next access.  Meanwhile it's not any less valid than it was
+		 * before, so any code that might expect to continue accessing it
+		 * isn't hurt by the rebuild failure.  (Consider for example a
+		 * subtransaction that ALTERs a table and then gets cancelled partway
+		 * through the cache entry rebuild.  The outer transaction should
+		 * still see the not-modified cache entry as valid.)  The worst
+		 * consequence of an error is leaking the necessarily-unreferenced
+		 * new entry, and this shouldn't happen often enough for that to be
+		 * a big problem.
+		 *
+		 * When rebuilding an open relcache entry, we must preserve ref count
+		 * and rd_createSubid/rd_newRelfilenodeSubid state.  Also attempt to
+		 * preserve the pg_class entry (rd_rel), tupledesc, and rewrite-rule
+		 * substructures in place, because various places assume that these
+		 * structures won't move while they are working with an open relcache
+		 * entry.  (Note: the refcount mechanism for tupledescs might someday
+		 * allow us to remove this hack for the tupledesc.)
 		 *
 		 * Note that this process does not touch CurrentResourceOwner; which
 		 * is good because whatever ref counts the entry may have do not
 		 * necessarily belong to that resource owner.
 		 */
+		Relation	newrel;
 		Oid			save_relid = RelationGetRelid(relation);
-		int			old_refcnt = relation->rd_refcnt;
-		SubTransactionId old_createSubid = relation->rd_createSubid;
-		SubTransactionId old_newRelfilenodeSubid = relation->rd_newRelfilenodeSubid;
-		struct PgStat_TableStatus *old_pgstat_info = relation->pgstat_info;
-		TupleDesc	old_att = relation->rd_att;
-		RuleLock   *old_rules = relation->rd_rules;
-		MemoryContext old_rulescxt = relation->rd_rulescxt;
+		bool		keep_tupdesc;
+		bool		keep_rules;
 
-		if (RelationBuildDesc(save_relid, relation) != relation)
+		/* Build temporary entry, but don't link it into hashtable */
+		newrel = RelationBuildDesc(save_relid, false);
+		if (newrel == NULL)
 		{
 			/* Should only get here if relation was deleted */
 			flush_rowtype_cache(old_reltype);
-			Assert(old_att->tdrefcount > 0);
-			if (--old_att->tdrefcount == 0)
-				FreeTupleDesc(old_att);
-			if (old_rulescxt)
-				MemoryContextDelete(old_rulescxt);
-			pfree(relation);
+			RelationCacheDelete(relation);
+			RelationDestroyRelation(relation);
 			elog(ERROR, "relation %u deleted while still in use", save_relid);
 		}
-		relation->rd_refcnt = old_refcnt;
-		relation->rd_createSubid = old_createSubid;
-		relation->rd_newRelfilenodeSubid = old_newRelfilenodeSubid;
-		relation->pgstat_info = old_pgstat_info;
 
-		if (equalTupleDescs(old_att, relation->rd_att))
-		{
-			/* needn't flush typcache here */
-			Assert(relation->rd_att->tdrefcount == 1);
-			if (--relation->rd_att->tdrefcount == 0)
-				FreeTupleDesc(relation->rd_att);
-			relation->rd_att = old_att;
-		}
-		else
-		{
+		keep_tupdesc = equalTupleDescs(relation->rd_att, newrel->rd_att);
+		keep_rules = equalRuleLocks(relation->rd_rules, newrel->rd_rules);
+		if (!keep_tupdesc)
 			flush_rowtype_cache(old_reltype);
-			Assert(old_att->tdrefcount > 0);
-			if (--old_att->tdrefcount == 0)
-				FreeTupleDesc(old_att);
-		}
-		if (equalRuleLocks(old_rules, relation->rd_rules))
+
+		/*
+		 * Perform swapping of the relcache entry contents.  Within this
+		 * process the old entry is momentarily invalid, so there *must*
+		 * be no possibility of CHECK_FOR_INTERRUPTS within this sequence.
+		 * Do it in all-in-line code for safety.
+		 *
+		 * Since the vast majority of fields should be swapped, our method
+		 * is to swap the whole structures and then re-swap those few fields
+		 * we didn't want swapped.
+		 */
+#define SWAPFIELD(fldtype, fldname) \
+		do { \
+			fldtype _tmp = newrel->fldname; \
+			newrel->fldname = relation->fldname; \
+			relation->fldname = _tmp; \
+		} while (0)
+
+		/* swap all Relation struct fields */
 		{
-			if (relation->rd_rulescxt)
-				MemoryContextDelete(relation->rd_rulescxt);
-			relation->rd_rules = old_rules;
-			relation->rd_rulescxt = old_rulescxt;
+			RelationData tmpstruct;
+
+			memcpy(&tmpstruct, newrel, sizeof(RelationData));
+			memcpy(newrel, relation, sizeof(RelationData));
+			memcpy(relation, &tmpstruct, sizeof(RelationData));
 		}
-		else
+
+		/* rd_smgr must not be swapped, due to back-links from smgr level */
+		SWAPFIELD(SMgrRelation, rd_smgr);
+		/* rd_refcnt must be preserved */
+		SWAPFIELD(int, rd_refcnt);
+		/* isnailed shouldn't change */
+		Assert(newrel->rd_isnailed == relation->rd_isnailed);
+		/* creation sub-XIDs must be preserved */
+		SWAPFIELD(SubTransactionId, rd_createSubid);
+		SWAPFIELD(SubTransactionId, rd_newRelfilenodeSubid);
+		/* un-swap rd_rel pointers, swap contents instead */
+		SWAPFIELD(Form_pg_class, rd_rel);
+		/* ... but actually, we don't have to update newrel->rd_rel */
+		memcpy(relation->rd_rel, newrel->rd_rel, CLASS_TUPLE_SIZE);
+		/* preserve old tupledesc and rules if no logical change */
+		if (keep_tupdesc)
+			SWAPFIELD(TupleDesc, rd_att);
+		if (keep_rules)
 		{
-			if (old_rulescxt)
-				MemoryContextDelete(old_rulescxt);
+			SWAPFIELD(RuleLock *, rd_rules);
+			SWAPFIELD(MemoryContext, rd_rulescxt);
 		}
+		/* pgstat_info must be preserved */
+		SWAPFIELD(struct PgStat_TableStatus *, pgstat_info);
+
+#undef SWAPFIELD
+
+		/* And now we can throw away the temporary entry */
+		RelationDestroyRelation(newrel);
 	}
 }
 
@@ -2836,7 +2893,7 @@ load_critical_index(Oid indexoid)
 	Relation	ird;
 
 	LockRelationOid(indexoid, AccessShareLock);
-	ird = RelationBuildDesc(indexoid, NULL);
+	ird = RelationBuildDesc(indexoid, true);
 	if (ird == NULL)
 		elog(PANIC, "could not open critical system index %u", indexoid);
 	ird->rd_isnailed = true;
@@ -3293,7 +3350,7 @@ RelationGetIndexExpressions(Relation relation)
 	fix_opfuncids((Node *) result);
 
 	/* Now save a copy of the completed tree in the relcache entry. */
-	oldcxt = MemoryContextSwitchTo(CacheMemoryContext);
+	oldcxt = MemoryContextSwitchTo(relation->rd_indexcxt);
 	relation->rd_indexprs = (List *) copyObject(result);
 	MemoryContextSwitchTo(oldcxt);
 
@@ -3368,7 +3425,7 @@ RelationGetIndexPredicate(Relation relation)
 	fix_opfuncids((Node *) result);
 
 	/* Now save a copy of the completed tree in the relcache entry. */
-	oldcxt = MemoryContextSwitchTo(CacheMemoryContext);
+	oldcxt = MemoryContextSwitchTo(relation->rd_indexcxt);
 	relation->rd_indpred = (List *) copyObject(result);
 	MemoryContextSwitchTo(oldcxt);
 
