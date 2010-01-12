@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/acl.c,v 1.154 2010/01/02 16:57:53 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/acl.c,v 1.155 2010/01/12 02:39:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1680,9 +1680,9 @@ convert_aclright_to_string(int aclright)
 Datum
 aclexplode(PG_FUNCTION_ARGS)
 {
+	Acl		   *acl = PG_GETARG_ACL_P(0);
 	FuncCallContext	*funcctx;
 	int		   *idx;
-	Acl		   *acl = PG_GETARG_ACL_P(0);
 	AclItem	   *aidat;
 
 	if (SRF_IS_FIRSTCALL())
@@ -1722,34 +1722,36 @@ aclexplode(PG_FUNCTION_ARGS)
 
 	funcctx = SRF_PERCALL_SETUP();
 	idx = (int *) funcctx->user_fctx;
-
 	aidat = ACL_DAT(acl);
-	while (1)
+
+	/* need test here in case acl has no items */
+	while (idx[0] < ACL_NUM(acl))
 	{
+		AclItem    *aidata;
+		AclMode		priv_bit;
+
 		idx[1]++;
 		if (idx[1] == N_ACL_RIGHTS)
 		{
 			idx[1] = 0;
 			idx[0]++;
-			if (idx[0] == ACL_NUM(acl))
-				/* done */
+			if (idx[0] >= ACL_NUM(acl))				/* done */
 				break;
 		}
+		aidata = &aidat[idx[0]];
+		priv_bit = 1 << idx[1];
 
-		Assert(idx[0] < ACL_NUM(acl));
-		Assert(idx[1] < N_ACL_RIGHTS);
-
-		if (ACLITEM_GET_PRIVS(aidat[idx[0]]) & (1 << idx[1]))
+		if (ACLITEM_GET_PRIVS(*aidata) & priv_bit)
 		{
 			Datum		result;
 			Datum		values[4];
 			bool		nulls[4];
 			HeapTuple	tuple;
 
-			values[0] = ObjectIdGetDatum(aidat[idx[0]].ai_grantor);
-			values[1] = ObjectIdGetDatum(aidat[idx[0]].ai_grantee);
-			values[2] = CStringGetTextDatum(convert_aclright_to_string(1 << idx[1]));
-			values[3] = BoolGetDatum(ACLITEM_GET_GOPTIONS(aidat[idx[0]]) & (1 << idx[1]));
+			values[0] = ObjectIdGetDatum(aidata->ai_grantor);
+			values[1] = ObjectIdGetDatum(aidata->ai_grantee);
+			values[2] = CStringGetTextDatum(convert_aclright_to_string(priv_bit));
+			values[3] = BoolGetDatum((ACLITEM_GET_GOPTIONS(*aidata) & priv_bit) != 0);
 
 			MemSet(nulls, 0, sizeof(nulls));
 
