@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/install-win32.sgml,v 1.54 2009/07/23 17:06:48 adunstan Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/install-win32.sgml,v 1.55 2010/01/12 20:13:32 mha Exp $ -->
 
 <chapter id="install-win32">
  <title>Installation from Source Code on <productname>Windows</productname></title>
@@ -10,7 +10,7 @@
 
  <para>
   It is recommended that most users download the binary distribution for 
-  Windows, available as a <productname>Windows Installer</productname> package
+  Windows, available as a one-click installer package
   from the <productname>PostgreSQL</productname> website. Building from source
   is only intended for people developing <productname>PostgreSQL</productname>
   or extensions.
@@ -18,11 +18,24 @@
 
  <para>
   There are several different ways of building PostgreSQL on
-  <productname>Windows</productname>. The complete system can
-  be built using <productname>MinGW</productname> or
-  <productname>Visual C++ 2005</productname>. It can also be
-  built for older versions of <productname>Windows</productname> using
-  <productname>Cygwin</productname>. Finally, the client access library
+  <productname>Windows</productname>. The simplest way to build with
+  Microsoft tools is to intall a modern version of the
+  <productname>Microsoft Platform SDK</productname> and use use the included
+  compiler. It is also possible to build with the full
+  <productname>Microsoft Visual C++ 2005 or 2008</productname>. In some cases
+  that requires the installation of the <productname>Platform SDK</productname>
+  in addition to the compiler.
+ </para>
+
+ <para>
+  It is also possible to build PostgreSQL using the GNU compiler tools
+  provided by <productname>MinGW</productname>, or using
+  <productname>Cygwin</productname> for older versions of
+  <productname>Windows</productname>.
+ </para>
+
+ <para>
+  Finally, the client access library
   (<application>libpq</application>) can be built using
   <productname>Visual C++ 7.1</productname> or 
   <productname>Borland C++</productname> for compatibility with statically
@@ -34,29 +47,69 @@
   <productname>Cygwin</productname> uses the normal build system, see
   <xref linkend="installation"> and the specific notes in
   <xref linkend="installation-notes-mingw"> and <xref linkend="installation-notes-cygwin">.
+  These builds cannot generate 64-bit binaries.
   <productname>Cygwin</productname> is not recommended and should
   only be used for older versions of <productname>Windows</productname> where
   the native build does not work, such as 
-  <productname>Windows 98</productname>.
+  <productname>Windows 98</productname>. <productname>MinGW</productname> is
+  only recommended if you are building other modules using it. The official
+  binaries are built using <productname>Visual Studio</productname>.
  </para>
 
  <sect1 id="install-win32-full">
-  <title>Building with <productname>Visual C++ 2005</productname></title>
+  <title>Building with <productname>Visual C++</productname> or the
+  <productname>Platform SDK</productname></title>
 
  <para>
-  The tools for building using <productname>Visual C++ 2005</productname>,
-  are in the <filename>src/tools/msvc</filename> directory. When building,
-  make sure there are no tools from <productname>MinGW</productname> or
-  <productname>Cygwin</productname> present in your system PATH. Also, make
-  sure you have all the required Visual C++ tools available in the PATH,
-  usually by starting a <application>Visual Studio Command Prompt</application>
-  and running the commands from there. All commands should be run from the
-  <filename>src\tools\msvc</filename> directory.
+  PostgreSQL can be built using the Visual C++ compiler suite from Microsoft.
+  These compilers can be either from <productname>Visual Studio</productname>,
+  <productname>Visual Studio Express</productname> or recent versions of the
+  <productname>Platform SDK</productname>. If you do not already have a
+  <productname>Visual Studio</productname> environment set up, the easiest
+  way us to use the compilers in the <productname>Platform SDK</productname>,
+  which is a free download from Microsoft.
  </para>
 
  <para>
-  Before you build, edit the file <filename>config.pl</filename> to reflect the
-  configuration options you want set, including the paths to libraries used.
+  PostgreSQL supports the compilers from
+  <productname>Visual Studio 2005</productname> and
+  <productname>Visual Studio 2008</productname>. When using the Platform SDK
+  only, or when building for 64-bit Windows, only
+  <productname>Visual Studio 2008</productname> is supported.
+ </para>
+
+ <para>
+  The tools for building using <productname>Visual C++</productname>,
+  are in the <filename>src/tools/msvc</filename> directory. When building,
+  make sure there are no tools from <productname>MinGW</productname> or
+  <productname>Cygwin</productname> present in your system PATH. Also, make
+  sure you have all the required Visual C++ tools available in the PATH. In
+  <productname>Visual Studio</productname>, start the
+  <application>Visual Studio Command Prompt</application>. In the
+  <productname>Platform SDK</productname>, start the
+  <application>CMD shell</application> listed under the SDK on the Start Menu.
+  If you wish to build a 64-bit version, you must use the 64-bit version of
+  the command, and vice versa.
+  All commands should be run from the <filename>src\tools\msvc</filename>
+  directory.
+ </para>
+
+ <para>
+  Before you build, you may need to edit the file <filename>config.pl</filename>
+  to reflect any configuration options you want to change, or the paths to
+  any third party libraries to use. The complete configuration is determined
+  by first reading and parsing the file <filename>config_default.pl</filename>,
+  and then apply any changes from <filename>config.pl</filename>. For example,
+  to specify the location of your <productname>Python</productname> installation,
+  put the following in <filename>config.pl</filename>:
+  <screen>
+   $config->{python} = 'c:\python26';
+  </screen>
+  You only need to specify those parameters that are different from what's in
+  <filename>config_default.pl</filename>.
+ </para>
+
+ <para>
   If you need to set any other environment variables, create a file called
   <filename>buildenv.pl</filename> and put the required commands there. For
   example, to add the path for bison when it's not in the PATH, create a file
@@ -69,14 +122,28 @@
  <sect2>
   <title>Requirements</title>
   <para>
-   PostgreSQL will build using either the professional versions (any edition)
-   or the free Express edition of
-   <productname>Visual Studio 2005</productname>. The following additional products
-   are required to build the complete package. Use the
+   The following additional products are required to build
+   <productname>PostgreSQL</productname>. Use the
    <filename>config.pl</filename> file to specify which directories the libraries
    are available in.
 
    <variablelist>
+    <varlistentry>
+     <term><productname>Microsoft Platform SDK</productname></term>
+     <listitem><para>
+      It is recommended that you upgrade to the latest available version
+      of the <productname>Microsoft Platform SDK</productname>, available
+      for download from <ulink url="http://www.microsoft.com/downloads/"></>.
+     </para>
+     <para>
+      You must always include the
+      <application>Windows Headers and Libraries</application> part of the SDK.
+      If you install the <productname>Platform SDK</productname>
+      including the <application>Visual C++ Compilers</application>,
+      you don't need <productname>Visual Studio</productname> to build.
+     </para></listitem>
+    </varlistentry>
+
     <varlistentry>
      <term><productname>ActiveState Perl</productname></term>
      <listitem><para>
@@ -88,6 +155,15 @@
      </para></listitem>
     </varlistentry>
 
+   </variablelist>
+  </para>
+  <para>
+   The following additional products are not required to get started,
+   but are required to build the complete package. Use the
+   <filename>config.pl</filename> file to specify which directories the libraries
+   are available in.
+
+   <variablelist>
     <varlistentry>
      <term><productname>ActiveState TCL</productname></term>
      <listitem><para>
@@ -123,15 +199,6 @@
       Gettext is required to build with NLS support, and can be downloaded
       from <ulink url="http://gnuwin32.sourceforge.net"></>. Note that binaries,
       dependencies and developer files are all needed.
-     </para></listitem>
-    </varlistentry>
-
-    <varlistentry>
-     <term><productname>Microsoft Platform SDK</productname></term>
-     <listitem><para>
-      It is recommended that you upgrade to the latest available version
-      of the <productname>Microsoft Platform SDK</productname>, available
-      for download from <ulink url="http://www.microsoft.com/downloads/"></>.
      </para></listitem>
     </varlistentry>
 
@@ -191,6 +258,31 @@
     </varlistentry>
 
    </variablelist>
+  </para>
+ </sect2>
+
+ <sect2>
+  <title>Special considerations for 64-bit Windows</title>
+
+  <para>
+   PostgreSQL will only build for the x64 architecture on 64-bit Windows, there
+   is no support for Itanium processors.
+  </para>
+
+  <para>
+   Mixing 32- and 64-bit versions in the same build tree is not supported.
+   The build system will automatically detect if it's running in a 32- or
+   64-bit environment, and build PostgreSQL accordingly. For this reason, it
+   is important to start the correct command prompt before building.
+  </para>
+
+  <para>
+   To use a server-side third party library such as <productname>python</> or
+   <productname>openssl</>, this library <emphasis>must</emphasis> also be
+   64-bit. There is no support for loading a 32-bit library in a 64-bit
+   server. Several of the third party libraries that PostgreSQL supports may
+   only be available in 32-bit versions, in which case they cannot be used with
+   64-bit PostgreSQL.
   </para>
  </sect2>
 
@@ -264,7 +356,7 @@
    required to initialize and use the database, run the command:
    <screen>
     <userinput>
-     perl install.pl c:\destination\directory
+     install c:\destination\directory
     </userinput>
    </screen>
   </para>
@@ -374,12 +466,13 @@
   <productname>Borland C++</productname></title>
 
  <para>
-  Using <productname>Visual C++ 7.1-8.0</productname> or
+  Using <productname>Visual C++ 7.1-9.0</productname> or
   <productname>Borland C++</productname> to build libpq is only recommended
   if you need a version with different debug/release flags, or if you need a
   static library to link into an application. For normal use the
   <productname>MinGW</productname> or
-  <productname>Visual Studio 2005</productname> version is recommended.
+  <productname>Visual Studio</productname> or
+  <productname>Platform SDK</productname> method is recommended.
  </para>
 
  <para>
