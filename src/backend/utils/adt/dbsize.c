@@ -5,7 +5,7 @@
  * Copyright (c) 2002-2010, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/dbsize.c,v 1.25 2010/01/02 16:57:53 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/dbsize.c,v 1.26 2010/01/12 02:42:52 momjian Exp $
  *
  */
 
@@ -108,8 +108,8 @@ calculate_database_size(Oid dbOid)
 			strcmp(direntry->d_name, "..") == 0)
 			continue;
 
-		snprintf(pathname, MAXPGPATH, "pg_tblspc/%s/%u",
-				 direntry->d_name, dbOid);
+		snprintf(pathname, MAXPGPATH, "pg_tblspc/%s/%s/%u",
+				 direntry->d_name, TABLESPACE_VERSION_DIRECTORY, dbOid);
 		totalsize += db_dir_size(pathname);
 	}
 
@@ -179,7 +179,8 @@ calculate_tablespace_size(Oid tblspcOid)
 	else if (tblspcOid == GLOBALTABLESPACE_OID)
 		snprintf(tblspcPath, MAXPGPATH, "global");
 	else
-		snprintf(tblspcPath, MAXPGPATH, "pg_tblspc/%u", tblspcOid);
+		snprintf(tblspcPath, MAXPGPATH, "pg_tblspc/%u/%s", tblspcOid,
+										 TABLESPACE_VERSION_DIRECTORY);
 
 	dirdesc = AllocateDir(tblspcPath);
 

@@ -7,18 +7,21 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/catalog.h,v 1.46 2010/01/06 02:41:37 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/catalog.h,v 1.47 2010/01/12 02:42:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef CATALOG_H
 #define CATALOG_H
 
+#include "catalog/catversion.h"
 #include "catalog/pg_class.h"
 #include "storage/relfilenode.h"
 #include "utils/relcache.h"
 
 #define OIDCHARS		10		/* max chars printed by %u */
+#define TABLESPACE_VERSION_DIRECTORY	"PG_" PG_MAJORVERSION "_" \
+									CppAsString2(CATALOG_VERSION_NO)
 
 extern const char *forkNames[];
 extern ForkNumber forkname_to_number(char *forkName);

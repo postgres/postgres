@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/catalog.c,v 1.86 2010/01/06 02:41:37 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/catalog.c,v 1.87 2010/01/12 02:42:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -115,16 +115,17 @@ relpath(RelFileNode rnode, ForkNumber forknum)
 	else
 	{
 		/* All other tablespaces are accessed via symlinks */
-		pathlen = 10 + OIDCHARS + 1 + OIDCHARS + 1 + OIDCHARS + 1
-			+ FORKNAMECHARS + 1;
+		pathlen = 9 + 1 + OIDCHARS + 1 + strlen(TABLESPACE_VERSION_DIRECTORY) +
+			1 + OIDCHARS + 1 + OIDCHARS + 1 + FORKNAMECHARS + 1;
 		path = (char *) palloc(pathlen);
 		if (forknum != MAIN_FORKNUM)
-			snprintf(path, pathlen, "pg_tblspc/%u/%u/%u_%s",
-					 rnode.spcNode, rnode.dbNode, rnode.relNode,
-					 forkNames[forknum]);
+			snprintf(path, pathlen, "pg_tblspc/%u/%s/%u/%u_%s",
+					 rnode.spcNode, TABLESPACE_VERSION_DIRECTORY,
+					 rnode.dbNode, rnode.relNode, forkNames[forknum]);
 		else
-			snprintf(path, pathlen, "pg_tblspc/%u/%u/%u",
-					 rnode.spcNode, rnode.dbNode, rnode.relNode);
+			snprintf(path, pathlen, "pg_tblspc/%u/%s/%u/%u",
+					 rnode.spcNode, TABLESPACE_VERSION_DIRECTORY,
+					 rnode.dbNode, rnode.relNode);
 	}
 	return path;
 }
@@ -161,10 +162,11 @@ GetDatabasePath(Oid dbNode, Oid spcNode)
 	else
 	{
 		/* All other tablespaces are accessed via symlinks */
-		pathlen = 10 + OIDCHARS + 1 + OIDCHARS + 1;
+		pathlen = 9 + 1 + OIDCHARS + 1 + strlen(TABLESPACE_VERSION_DIRECTORY) +
+				  1 + OIDCHARS + 1;
 		path = (char *) palloc(pathlen);
-		snprintf(path, pathlen, "pg_tblspc/%u/%u",
-				 spcNode, dbNode);
+		snprintf(path, pathlen, "pg_tblspc/%u/%s/%u",
+				 spcNode, TABLESPACE_VERSION_DIRECTORY, dbNode);
 	}
 	return path;
 }

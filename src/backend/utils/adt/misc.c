@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/misc.c,v 1.73 2010/01/02 16:57:54 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/misc.c,v 1.74 2010/01/12 02:42:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,6 +20,7 @@
 #include <math.h>
 
 #include "access/xact.h"
+#include "catalog/catalog.h"
 #include "catalog/pg_type.h"
 #include "catalog/pg_tablespace.h"
 #include "commands/dbcommands.h"
@@ -185,7 +186,8 @@ pg_tablespace_databases(PG_FUNCTION_ARGS)
 		/*
 		 * size = tablespace dirname length + dir sep char + oid + terminator
 		 */
-		fctx->location = (char *) palloc(10 + 10 + 1);
+		fctx->location = (char *) palloc(9 + 1 + OIDCHARS + 1 +
+						 strlen(TABLESPACE_VERSION_DIRECTORY) + 1);
 		if (tablespaceOid == GLOBALTABLESPACE_OID)
 		{
 			fctx->dirdesc = NULL;
@@ -197,7 +199,8 @@ pg_tablespace_databases(PG_FUNCTION_ARGS)
 			if (tablespaceOid == DEFAULTTABLESPACE_OID)
 				sprintf(fctx->location, "base");
 			else
-				sprintf(fctx->location, "pg_tblspc/%u", tablespaceOid);
+				sprintf(fctx->location, "pg_tblspc/%u/%s", tablespaceOid,
+						TABLESPACE_VERSION_DIRECTORY);
 
 			fctx->dirdesc = AllocateDir(fctx->location);
 

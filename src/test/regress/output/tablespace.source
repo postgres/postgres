@@ -65,7 +65,7 @@ SELECT COUNT(*) FROM testschema.atable;		-- checks heap
 
 -- Will fail with bad path
 CREATE TABLESPACE badspace LOCATION '/no/such/location';
-ERROR:  could not set permissions on directory "/no/such/location": No such file or directory
+ERROR:  directory "/no/such/location" does not exist
 -- No such tablespace
 CREATE TABLE bar (i int) TABLESPACE nosuchspace;
 ERROR:  tablespace "nosuchspace" does not exist
