@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.299 2010/01/12 18:12:18 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.300 2010/01/13 23:07:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,9 +46,11 @@
 #include "catalog/pg_database.h"
 #include "catalog/pg_namespace.h"
 #include "catalog/pg_opclass.h"
+#include "catalog/pg_operator.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_rewrite.h"
 #include "catalog/pg_tablespace.h"
+#include "catalog/pg_trigger.h"
 #include "catalog/pg_type.h"
 #include "catalog/schemapg.h"
 #include "commands/trigger.h"
@@ -217,7 +219,7 @@ static void RelationParseRelOptions(Relation relation, HeapTuple tuple);
 static void RelationBuildTupleDesc(Relation relation);
 static Relation RelationBuildDesc(Oid targetRelId, bool insertIt);
 static void RelationInitPhysicalAddr(Relation relation);
-static void load_critical_index(Oid indexoid);
+static void load_critical_index(Oid indexoid, Oid heapoid);
 static TupleDesc GetPgClassDescriptor(void);
 static TupleDesc GetPgIndexDescriptor(void);
 static void AttrDefaultFetch(Relation relation);
@@ -2719,15 +2721,24 @@ RelationCacheInitializePhase3(void)
 	 */
 	if (!criticalRelcachesBuilt)
 	{
-		load_critical_index(ClassOidIndexId);
-		load_critical_index(AttributeRelidNumIndexId);
-		load_critical_index(IndexRelidIndexId);
-		load_critical_index(OpclassOidIndexId);
-		load_critical_index(AccessMethodStrategyIndexId);
-		load_critical_index(AccessMethodProcedureIndexId);
-		load_critical_index(OperatorOidIndexId);
-		load_critical_index(RewriteRelRulenameIndexId);
-		load_critical_index(TriggerRelidNameIndexId);
+		load_critical_index(ClassOidIndexId,
+							RelationRelationId);
+		load_critical_index(AttributeRelidNumIndexId,
+							AttributeRelationId);
+		load_critical_index(IndexRelidIndexId,
+							IndexRelationId);
+		load_critical_index(OpclassOidIndexId,
+							OperatorClassRelationId);
+		load_critical_index(AccessMethodStrategyIndexId,
+							AccessMethodOperatorRelationId);
+		load_critical_index(AccessMethodProcedureIndexId,
+							AccessMethodProcedureRelationId);
+		load_critical_index(OperatorOidIndexId,
+							OperatorRelationId);
+		load_critical_index(RewriteRelRulenameIndexId,
+							RewriteRelationId);
+		load_critical_index(TriggerRelidNameIndexId,
+							TriggerRelationId);
 
 #define NUM_CRITICAL_LOCAL_INDEXES	9		/* fix if you change list above */
 
@@ -2744,8 +2755,10 @@ RelationCacheInitializePhase3(void)
 	 */
 	if (!criticalSharedRelcachesBuilt)
 	{
-		load_critical_index(DatabaseNameIndexId);
-		load_critical_index(DatabaseOidIndexId);
+		load_critical_index(DatabaseNameIndexId,
+							DatabaseRelationId);
+		load_critical_index(DatabaseOidIndexId,
+							DatabaseRelationId);
 
 #define NUM_CRITICAL_SHARED_INDEXES	2		/* fix if you change list above */
 
@@ -2886,12 +2899,22 @@ RelationCacheInitializePhase3(void)
 
 /*
  * Load one critical system index into the relcache
+ *
+ * indexoid is the OID of the target index, heapoid is the OID of the catalog
+ * it belongs to.
  */
 static void
-load_critical_index(Oid indexoid)
+load_critical_index(Oid indexoid, Oid heapoid)
 {
 	Relation	ird;
 
+	/*
+	 * We must lock the underlying catalog before locking the index to avoid
+	 * deadlock, since RelationBuildDesc might well need to read the catalog,
+	 * and if anyone else is exclusive-locking this catalog and index they'll
+	 * be doing it in that order.
+	 */
+	LockRelationOid(heapoid, AccessShareLock);
 	LockRelationOid(indexoid, AccessShareLock);
 	ird = RelationBuildDesc(indexoid, true);
 	if (ird == NULL)
@@ -2899,6 +2922,7 @@ load_critical_index(Oid indexoid)
 	ird->rd_isnailed = true;
 	ird->rd_refcnt = 1;
 	UnlockRelationOid(indexoid, AccessShareLock);
+	UnlockRelationOid(heapoid, AccessShareLock);
 }
 
 /*
