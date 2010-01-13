@@ -149,10 +149,7 @@ main ()
 		printf ("varchar()");
 	      break;
 	    default:
-	      if (TYPE < 0)
-		printf ("<OID %d>", -TYPE);
-	      else
-		printf ("<SQL3 %d>", TYPE);
+	      printf ("<SQL3 %d>", TYPE);
 	      break;
 	    }
 	  printf (")\n\toctet_length: %d returned_octet_length: %d)\n\t= ",

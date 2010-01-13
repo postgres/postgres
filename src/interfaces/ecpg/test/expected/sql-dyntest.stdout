@@ -8,7 +8,7 @@ Found 7 columns
  3	i (type: 4 length: -5 precision: -1 scale: 65531 = integer)
 	octet_length: 4 returned_octet_length: 2)
 	= 14
- 4	bignumber (type: -20 length: -5 precision: -1 scale: 65531 = <OID 20>)
+ 4	bignumber (type: 0 length: -5 precision: -1 scale: 65531 = <SQL3 0>)
 	octet_length: 8 returned_octet_length: 12)
 	= <"123045607890">
  5	b (type: 16 length: -5 precision: -1 scale: 65531 = bool)
@@ -29,7 +29,7 @@ Found 7 columns
  3	i (type: 4 length: -5 precision: -1 scale: 65531 = integer)
 	octet_length: 4 returned_octet_length: 4)
 	= 1407
- 4	bignumber (type: -20 length: -5 precision: -1 scale: 65531 = <OID 20>)
+ 4	bignumber (type: 0 length: -5 precision: -1 scale: 65531 = <SQL3 0>)
 	octet_length: 8 returned_octet_length: 12)
 	= <"987065403210">
  5	b (type: 16 length: -5 precision: -1 scale: 65531 = bool)
