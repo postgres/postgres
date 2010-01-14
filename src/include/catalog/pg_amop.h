@@ -29,7 +29,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_amop.h,v 1.92 2010/01/05 01:06:56 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_amop.h,v 1.93 2010/01/14 16:31:09 teodor Exp $
  *
  * NOTES
  *	 the genbki.pl script reads this file and generates .bki
@@ -581,6 +581,22 @@ DATA(insert (	2593   603 603 11 2573	783 ));
 DATA(insert (	2593   603 603 12 2572	783 ));
 DATA(insert (	2593   603 603 13 2863	783 ));
 DATA(insert (	2593   603 603 14 2862	783 ));
+
+/*
+ * gist point_ops
+ */
+DATA(insert (	1029   600 600 11 506 783 ));
+DATA(insert (	1029   600 600 1  507 783 ));
+DATA(insert (	1029   600 600 5  508 783 ));
+DATA(insert (	1029   600 600 10 509 783 ));
+DATA(insert (	1029   600 600 6  510 783 ));
+DATA(insert (	1029   603 600 27  433 783 ));
+DATA(insert (	1029   600 603 28  511 783 ));
+DATA(insert (	1029   604 600 47 757 783 ));
+DATA(insert (	1029   600 604 48 756 783 ));
+DATA(insert (	1029   718 600 67 759 783 ));
+DATA(insert (	1029   600 718 68 758 783 ));
+
 
 /*
  *	gist poly_ops (supports polygons)

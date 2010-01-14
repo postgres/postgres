@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/geo_ops.c,v 1.106 2010/01/02 16:57:54 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/geo_ops.c,v 1.107 2010/01/14 16:31:09 teodor Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3197,6 +3197,16 @@ on_pb(PG_FUNCTION_ARGS)
 {
 	Point	   *pt = PG_GETARG_POINT_P(0);
 	BOX		   *box = PG_GETARG_BOX_P(1);
+
+	PG_RETURN_BOOL(pt->x <= box->high.x && pt->x >= box->low.x &&
+				   pt->y <= box->high.y && pt->y >= box->low.y);
+}
+
+Datum
+box_contain_pt(PG_FUNCTION_ARGS) 
+{
+	BOX		   *box = PG_GETARG_BOX_P(0);
+	Point	   *pt = PG_GETARG_POINT_P(1);
 
 	PG_RETURN_BOOL(pt->x <= box->high.x && pt->x >= box->low.x &&
 				   pt->y <= box->high.y && pt->y >= box->low.y);

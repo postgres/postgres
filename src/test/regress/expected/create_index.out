@@ -51,6 +51,7 @@ CREATE INDEX onek2_stu1_prtl ON onek2 USING btree(stringu1 name_ops)
 CREATE INDEX grect2ind ON fast_emp4000 USING gist (home_base);
 CREATE INDEX gpolygonind ON polygon_tbl USING gist (f1);
 CREATE INDEX gcircleind ON circle_tbl USING gist (f1);
+CREATE INDEX gpointind ON point_tbl USING gist (f1);
 CREATE TEMP TABLE gpolygon_tbl AS
     SELECT polygon(home_base) AS f1 FROM slow_emp4000;
 INSERT INTO gpolygon_tbl VALUES ( '(1000,0,0,1000)' ); 
@@ -110,6 +111,60 @@ SELECT count(*) FROM gcircle_tbl WHERE f1 && '<(500,500),500>'::circle;
  count 
 -------
      2
+(1 row)
+
+SELECT count(*) FROM point_tbl WHERE f1 <@ box '(0,0,100,100)';
+ count 
+-------
+     3
+(1 row)
+
+SELECT count(*) FROM point_tbl WHERE box '(0,0,100,100)' @> f1;
+ count 
+-------
+     3
+(1 row)
+
+SELECT count(*) FROM point_tbl WHERE f1 <@ polygon '(0,0),(0,100),(100,100),(50,50),(100,0),(0,0)';
+ count 
+-------
+     3
+(1 row)
+
+SELECT count(*) FROM point_tbl WHERE f1 <@ circle '<(50,50),50>';
+ count 
+-------
+     1
+(1 row)
+
+SELECT count(*) FROM point_tbl p WHERE p.f1 << '(0.0, 0.0)';
+ count 
+-------
+     3
+(1 row)
+
+SELECT count(*) FROM point_tbl p WHERE p.f1 >> '(0.0, 0.0)';
+ count 
+-------
+     2
+(1 row)
+
+SELECT count(*) FROM point_tbl p WHERE p.f1 <^ '(0.0, 0.0)';
+ count 
+-------
+     1
+(1 row)
+
+SELECT count(*) FROM point_tbl p WHERE p.f1 >^ '(0.0, 0.0)';
+ count 
+-------
+     3
+(1 row)
+
+SELECT count(*) FROM point_tbl p WHERE p.f1 ~= '(-5, -12)';
+ count 
+-------
+     1
 (1 row)
 
 SET enable_seqscan = OFF;
@@ -243,6 +298,141 @@ SELECT count(*) FROM gcircle_tbl WHERE f1 && '<(500,500),500>'::circle;
  count 
 -------
      2
+(1 row)
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM point_tbl WHERE f1 <@ box '(0,0,100,100)';
+                     QUERY PLAN                     
+----------------------------------------------------
+ Aggregate
+   ->  Index Scan using gpointind on point_tbl
+         Index Cond: (f1 <@ '(100,100),(0,0)'::box)
+(3 rows)
+
+SELECT count(*) FROM point_tbl WHERE f1 <@ box '(0,0,100,100)';
+ count 
+-------
+     3
+(1 row)
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM point_tbl WHERE box '(0,0,100,100)' @> f1;
+                     QUERY PLAN                     
+----------------------------------------------------
+ Aggregate
+   ->  Index Scan using gpointind on point_tbl
+         Index Cond: ('(100,100),(0,0)'::box @> f1)
+(3 rows)
+
+SELECT count(*) FROM point_tbl WHERE box '(0,0,100,100)' @> f1;
+ count 
+-------
+     3
+(1 row)
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM point_tbl WHERE f1 <@ polygon '(0,0),(0,100),(100,100),(50,50),(100,0),(0,0)';
+                                       QUERY PLAN                                       
+----------------------------------------------------------------------------------------
+ Aggregate
+   ->  Index Scan using gpointind on point_tbl
+         Index Cond: (f1 <@ '((0,0),(0,100),(100,100),(50,50),(100,0),(0,0))'::polygon)
+(3 rows)
+
+SELECT count(*) FROM point_tbl WHERE f1 <@ polygon '(0,0),(0,100),(100,100),(50,50),(100,0),(0,0)';
+ count 
+-------
+     3
+(1 row)
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM point_tbl WHERE f1 <@ circle '<(50,50),50>';
+                     QUERY PLAN                     
+----------------------------------------------------
+ Aggregate
+   ->  Index Scan using gpointind on point_tbl
+         Index Cond: (f1 <@ '<(50,50),50>'::circle)
+(3 rows)
+
+SELECT count(*) FROM point_tbl WHERE f1 <@ circle '<(50,50),50>';
+ count 
+-------
+     1
+(1 row)
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM point_tbl p WHERE p.f1 << '(0.0, 0.0)';
+                   QUERY PLAN                    
+-------------------------------------------------
+ Aggregate
+   ->  Index Scan using gpointind on point_tbl p
+         Index Cond: (f1 << '(0,0)'::point)
+(3 rows)
+
+SELECT count(*) FROM point_tbl p WHERE p.f1 << '(0.0, 0.0)';
+ count 
+-------
+     3
+(1 row)
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM point_tbl p WHERE p.f1 >> '(0.0, 0.0)';
+                   QUERY PLAN                    
+-------------------------------------------------
+ Aggregate
+   ->  Index Scan using gpointind on point_tbl p
+         Index Cond: (f1 >> '(0,0)'::point)
+(3 rows)
+
+SELECT count(*) FROM point_tbl p WHERE p.f1 >> '(0.0, 0.0)';
+ count 
+-------
+     2
+(1 row)
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM point_tbl p WHERE p.f1 <^ '(0.0, 0.0)';
+                   QUERY PLAN                    
+-------------------------------------------------
+ Aggregate
+   ->  Index Scan using gpointind on point_tbl p
+         Index Cond: (f1 <^ '(0,0)'::point)
+(3 rows)
+
+SELECT count(*) FROM point_tbl p WHERE p.f1 <^ '(0.0, 0.0)';
+ count 
+-------
+     1
+(1 row)
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM point_tbl p WHERE p.f1 >^ '(0.0, 0.0)';
+                   QUERY PLAN                    
+-------------------------------------------------
+ Aggregate
+   ->  Index Scan using gpointind on point_tbl p
+         Index Cond: (f1 >^ '(0,0)'::point)
+(3 rows)
+
+SELECT count(*) FROM point_tbl p WHERE p.f1 >^ '(0.0, 0.0)';
+ count 
+-------
+     3
+(1 row)
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM point_tbl p WHERE p.f1 ~= '(-5, -12)';
+                   QUERY PLAN                    
+-------------------------------------------------
+ Aggregate
+   ->  Index Scan using gpointind on point_tbl p
+         Index Cond: (f1 ~= '(-5,-12)'::point)
+(3 rows)
+
+SELECT count(*) FROM point_tbl p WHERE p.f1 ~= '(-5, -12)';
+ count 
+-------
+     1
 (1 row)
 
 RESET enable_seqscan;

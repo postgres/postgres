@@ -46,10 +46,16 @@ SELECT '' AS three, p.* FROM POINT_TBL p
    WHERE p.f1 <@ box '(0,0,100,100)';
 
 SELECT '' AS three, p.* FROM POINT_TBL p
+   WHERE box '(0,0,100,100)' @> p.f1;
+
+SELECT '' AS three, p.* FROM POINT_TBL p
    WHERE not p.f1 <@ box '(0,0,100,100)';
 
 SELECT '' AS two, p.* FROM POINT_TBL p
    WHERE p.f1 <@ path '[(0,0),(-10,0),(-10,10)]';
+
+SELECT '' AS three, p.* FROM POINT_TBL p
+   WHERE not box '(0,0,100,100)' @> p.f1;
 
 SELECT '' AS six, p.f1, p.f1 <-> point '(0,0)' AS dist
    FROM POINT_TBL p

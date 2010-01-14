@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.560 2010/01/07 20:17:44 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.561 2010/01/14 16:31:09 teodor Exp $
  *
  * NOTES
  *	  The script catalog/genbki.pl reads this file and generates .bki
@@ -396,6 +396,8 @@ DATA(insert OID = 191 (  box_right		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "
 DESCR("is right of");
 DATA(insert OID = 192 (  box_contained	   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "603 603" _null_ _null_ _null_ _null_ box_contained _null_ _null_ _null_ ));
 DESCR("is contained by?");
+DATA(insert OID = 193 (  box_contain_pt	   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "603 600" _null_ _null_ _null_ _null_ box_contain_pt _null_ _null_ _null_ ));
+DESCR("contains?");
 
 /* OIDS 200 - 299 */
 
@@ -4204,6 +4206,10 @@ DESCR("GiST support");
 DATA(insert OID = 2591 (  gist_circle_consistent PGNSP PGUID 12 1 0 0 f f f t f i 5 0 16 "2281 718 23 26 2281" _null_ _null_ _null_ _null_	gist_circle_consistent _null_ _null_ _null_ ));
 DESCR("GiST support");
 DATA(insert OID = 2592 (  gist_circle_compress	PGNSP PGUID 12 1 0 0 f f f t f i 1 0 2281 "2281" _null_ _null_ _null_ _null_ gist_circle_compress _null_ _null_ _null_ ));
+DESCR("GiST support");
+DATA(insert OID = 1030 (  gist_point_compress	PGNSP PGUID 12 1 0 0 f f f t f i 1 0 2281 "2281" _null_ _null_ _null_ _null_ gist_point_compress _null_ _null_ _null_ ));
+DESCR("GiST support");
+DATA(insert OID = 2179 (  gist_point_consistent	PGNSP PGUID 12 1 0 0 f f f t f i 5 0 16 "2281 603 23 26 2281" _null_ _null_ _null_ _null_	gist_point_consistent _null_ _null_ _null_ ));
 DESCR("GiST support");
 
 /* GIN */

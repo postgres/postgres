@@ -127,7 +127,7 @@ SELECT relname, relhasindex
  pg_ts_template          | t
  pg_type                 | t
  pg_user_mapping         | t
- point_tbl               | f
+ point_tbl               | t
  polygon_tbl             | t
  ramp                    | f
  real_city               | f

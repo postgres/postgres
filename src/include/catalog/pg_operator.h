@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_operator.h,v 1.169 2010/01/05 01:06:56 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_operator.h,v 1.170 2010/01/14 16:31:09 teodor Exp $
  *
  * NOTES
  *	  the genbki.pl script reads this file and generates .bki
@@ -171,7 +171,8 @@ DATA(insert OID = 507 (  "<<"	   PGNSP PGUID b f f 600 600	16	 0	 0 point_left p
 DATA(insert OID = 508 (  ">>"	   PGNSP PGUID b f f 600 600	16	 0	 0 point_right positionsel positionjoinsel ));
 DATA(insert OID = 509 (  "<^"	   PGNSP PGUID b f f 600 600	16	 0	 0 point_below positionsel positionjoinsel ));
 DATA(insert OID = 510 (  "~="	   PGNSP PGUID b f f 600 600	16 510 713 point_eq eqsel eqjoinsel ));
-DATA(insert OID = 511 (  "<@"	   PGNSP PGUID b f f 600 603	16	 0	 0 on_pb - - ));
+DATA(insert OID = 511 (  "<@"	   PGNSP PGUID b f f 600 603	16 433	 0 on_pb contsel contjoinsel ));
+DATA(insert OID = 433 (  "@>"	   PGNSP PGUID b f f 603 600	16 511	 0 box_contain_pt contsel contjoinsel ));
 DATA(insert OID = 512 (  "<@"	   PGNSP PGUID b f f 600 602	16 755	 0 on_ppath - - ));
 DATA(insert OID = 513 (  "@@"	   PGNSP PGUID l f f	 0 603 600	 0	 0 box_center - - ));
 DATA(insert OID = 514 (  "*"	   PGNSP PGUID b f f	23	23	23 514	 0 int4mul - - ));
@@ -359,10 +360,10 @@ DATA(insert OID = 737 (  "-"	   PGNSP PGUID b f f	602  600	602    0  0 path_sub_
 DATA(insert OID = 738 (  "*"	   PGNSP PGUID b f f	602  600	602    0  0 path_mul_pt - - ));
 DATA(insert OID = 739 (  "/"	   PGNSP PGUID b f f	602  600	602    0  0 path_div_pt - - ));
 DATA(insert OID = 755 (  "@>"	   PGNSP PGUID b f f	602  600	 16  512  0 path_contain_pt - - ));
-DATA(insert OID = 756 (  "<@"	   PGNSP PGUID b f f	600  604	 16  757  0 pt_contained_poly - - ));
-DATA(insert OID = 757 (  "@>"	   PGNSP PGUID b f f	604  600	 16  756  0 poly_contain_pt - - ));
-DATA(insert OID = 758 (  "<@"	   PGNSP PGUID b f f	600  718	 16  759  0 pt_contained_circle - - ));
-DATA(insert OID = 759 (  "@>"	   PGNSP PGUID b f f	718  600	 16  758  0 circle_contain_pt - - ));
+DATA(insert OID = 756 (  "<@"	   PGNSP PGUID b f f	600  604	 16  757  0 pt_contained_poly contsel contjoinsel ));
+DATA(insert OID = 757 (  "@>"	   PGNSP PGUID b f f	604  600	 16  756  0 poly_contain_pt contsel contjoinsel ));
+DATA(insert OID = 758 (  "<@"	   PGNSP PGUID b f f	600  718	 16  759  0 pt_contained_circle contsel contjoinsel ));
+DATA(insert OID = 759 (  "@>"	   PGNSP PGUID b f f	718  600	 16  758  0 circle_contain_pt contsel contjoinsel ));
 
 DATA(insert OID = 773 (  "@"	   PGNSP PGUID l f f	 0	23	23	 0	 0 int4abs - - ));
 
