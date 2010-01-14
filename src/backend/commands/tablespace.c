@@ -40,7 +40,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablespace.c,v 1.71 2010/01/12 02:42:51 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablespace.c,v 1.72 2010/01/14 11:08:01 sriggs Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1377,33 +1377,7 @@ tblspc_redo(XLogRecPtr lsn, XLogRecord *record)
 		 */
 		if (!destroy_tablespace_directories(xlrec->ts_id, true))
 		{
-			VirtualTransactionId *temp_file_users;
-
-			/*
-			 * Standby users may be currently using this tablespace for
-			 * for their temporary files. We only care about current
-			 * users because temp_tablespace parameter will just ignore
-			 * tablespaces that no longer exist.
-			 *
-			 * Ask everybody to cancel their queries immediately so
-			 * we can ensure no temp files remain and we can remove the
-			 * tablespace. Nuke the entire site from orbit, it's the only
-			 * way to be sure.
-			 *
-			 * XXX: We could work out the pids of active backends
-			 * using this tablespace by examining the temp filenames in the
-			 * directory. We would then convert the pids into VirtualXIDs
-			 * before attempting to cancel them.
-			 *
-			 * We don't wait for commit because drop tablespace is
-			 * non-transactional.
-			 */
-			temp_file_users = GetConflictingVirtualXIDs(InvalidTransactionId,
-														InvalidOid,
-														false);
-			ResolveRecoveryConflictWithVirtualXIDs(temp_file_users,
-												   "drop tablespace",
-												   CONFLICT_MODE_ERROR);
+			ResolveRecoveryConflictWithTablespace(xlrec->ts_id);
 
 			/*
 			 * If we did recovery processing then hopefully the

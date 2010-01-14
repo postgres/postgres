@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.231 2010/01/10 15:44:28 sriggs Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.232 2010/01/14 11:08:00 sriggs Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1944,29 +1944,7 @@ dbase_redo(XLogRecPtr lsn, XLogRecord *record)
 		dst_path = GetDatabasePath(xlrec->db_id, xlrec->tablespace_id);
 
 		if (InHotStandby)
-		{
-			/*
-			 * We don't do ResolveRecoveryConflictWithVirutalXIDs() here since
-			 * that only waits for transactions and completely idle sessions
-			 * would block us. This is rare enough that we do this as simply
-			 * as possible: no wait, just force them off immediately. 
-			 *
-			 * No locking is required here because we already acquired
-			 * AccessExclusiveLock. Anybody trying to connect while we do this
-			 * will block during InitPostgres() and then disconnect when they
-			 * see the database has been removed.
-			 */
-			while (CountDBBackends(xlrec->db_id) > 0)
-			{
-				CancelDBBackends(xlrec->db_id);
-
-				/*
-				 * Wait awhile for them to die so that we avoid flooding an
-				 * unresponsive backend when system is heavily loaded.
-				 */
-				pg_usleep(10000);
-			}
-		}
+			ResolveRecoveryConflictWithDatabase(xlrec->db_id);
 
 		/* Drop pages for this database that are in the shared buffer cache */
 		DropDatabaseBuffers(xlrec->db_id);

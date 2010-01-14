@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtxlog.c,v 1.57 2010/01/02 16:57:35 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtxlog.c,v 1.58 2010/01/14 11:08:00 sriggs Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -822,28 +822,18 @@ btree_redo(XLogRecPtr lsn, XLogRecord *record)
 	 * just once when that arrives. After that any we know that no conflicts
 	 * exist from individual btree vacuum records on that index.
 	 */
-	if (InHotStandby)
+	if (InHotStandby && info == XLOG_BTREE_DELETE)
 	{
-		if (info == XLOG_BTREE_DELETE)
-		{
-			xl_btree_delete *xlrec = (xl_btree_delete *) XLogRecGetData(record);
-			VirtualTransactionId *backends;
+		xl_btree_delete *xlrec = (xl_btree_delete *) XLogRecGetData(record);
 
-			/*
-			 * XXX Currently we put everybody on death row, because
-			 * currently _bt_delitems() supplies InvalidTransactionId.
-			 * This can be fairly painful, so providing a better value
-			 * here is worth some thought and possibly some effort to
-			 * improve.
-			 */
-			backends = GetConflictingVirtualXIDs(xlrec->latestRemovedXid,
-												 InvalidOid,
-												 true);
-
-			ResolveRecoveryConflictWithVirtualXIDs(backends,
-												   "b-tree delete",
-												   CONFLICT_MODE_ERROR);
-		}
+		/*
+		 * XXX Currently we put everybody on death row, because
+		 * currently _bt_delitems() supplies InvalidTransactionId.
+		 * This can be fairly painful, so providing a better value
+		 * here is worth some thought and possibly some effort to
+		 * improve.
+		 */
+		ResolveRecoveryConflictWithSnapshot(xlrec->latestRemovedXid);
 	}
 
 	/*

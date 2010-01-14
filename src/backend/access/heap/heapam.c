@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.281 2010/01/10 04:26:36 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.282 2010/01/14 11:08:00 sriggs Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -4139,16 +4139,7 @@ heap_xlog_cleanup_info(XLogRecPtr lsn, XLogRecord *record)
 	xl_heap_cleanup_info *xlrec = (xl_heap_cleanup_info *) XLogRecGetData(record);
 
 	if (InHotStandby)
-	{
-		VirtualTransactionId *backends;
-
-		backends = GetConflictingVirtualXIDs(xlrec->latestRemovedXid,
-											 InvalidOid,
-											 true);
-		ResolveRecoveryConflictWithVirtualXIDs(backends,
-											   "VACUUM index cleanup",
-											   CONFLICT_MODE_ERROR);
-	}
+		ResolveRecoveryConflictWithSnapshot(xlrec->latestRemovedXid);
 
 	/*
 	 * Actual operation is a no-op. Record type exists to provide a means
@@ -4180,16 +4171,7 @@ heap_xlog_clean(XLogRecPtr lsn, XLogRecord *record, bool clean_move)
 	 * no queries running for which the removed tuples are still visible.
 	 */
 	if (InHotStandby)
-	{
-		VirtualTransactionId *backends;
-
-		backends = GetConflictingVirtualXIDs(xlrec->latestRemovedXid,
-											 InvalidOid,
-											 true);
-		ResolveRecoveryConflictWithVirtualXIDs(backends,
-											   "VACUUM heap cleanup",
-											   CONFLICT_MODE_ERROR);
-	}
+		ResolveRecoveryConflictWithSnapshot(xlrec->latestRemovedXid);
 
 	RestoreBkpBlocks(lsn, record, true);
 
@@ -4259,25 +4241,7 @@ heap_xlog_freeze(XLogRecPtr lsn, XLogRecord *record)
 	 * consider the frozen xids as running.
 	 */
 	if (InHotStandby)
-	{
-		VirtualTransactionId *backends;
-
-		/*
-		 * XXX: Using cutoff_xid is overly conservative. Even if cutoff_xid
-		 * is recent enough to conflict with a backend, the actual values
-		 * being frozen might not be. With a typical vacuum_freeze_min_age
-		 * setting in the ballpark of millions of transactions, it won't make
-		 * a difference, but it might if you run a manual VACUUM FREEZE.
-		 * Typically the cutoff is much earlier than any recently deceased
-		 * tuple versions removed by this vacuum, so don't worry too much.
-		 */
-		backends = GetConflictingVirtualXIDs(cutoff_xid,
-											 InvalidOid,
-											 true);
-		ResolveRecoveryConflictWithVirtualXIDs(backends,
-											   "VACUUM heap freeze",
-											   CONFLICT_MODE_ERROR);
-	}
+		ResolveRecoveryConflictWithSnapshot(cutoff_xid);
 
 	RestoreBkpBlocks(lsn, record, false);
 

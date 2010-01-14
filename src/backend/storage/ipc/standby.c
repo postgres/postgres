@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/standby.c,v 1.3 2010/01/02 16:57:51 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/standby.c,v 1.4 2010/01/14 11:08:02 sriggs Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,6 +37,9 @@ int		vacuum_defer_cleanup_age;
 
 static List *RecoveryLockList;
 
+static void ResolveRecoveryConflictWithVirtualXIDs(VirtualTransactionId *waitlist,
+									   char *reason, int cancel_mode);
+static void ResolveRecoveryConflictWithLock(Oid dbOid, Oid relOid);
 static void LogCurrentRunningXacts(RunningTransactions CurrRunningXacts);
 static void LogAccessExclusiveLocks(int nlocks, xl_standby_lock *locks);
 
@@ -162,7 +165,7 @@ WaitExceedsMaxStandbyDelay(void)
  *
  * We may ask for a specific cancel_mode, typically ERROR or FATAL.
  */
-void
+static void
 ResolveRecoveryConflictWithVirtualXIDs(VirtualTransactionId *waitlist,
 									   char *reason, int cancel_mode)
 {
@@ -272,6 +275,119 @@ ResolveRecoveryConflictWithVirtualXIDs(VirtualTransactionId *waitlist,
     }
 }
 
+void
+ResolveRecoveryConflictWithSnapshot(TransactionId latestRemovedXid)
+{
+	VirtualTransactionId *backends;
+
+	backends = GetConflictingVirtualXIDs(latestRemovedXid,
+										 InvalidOid,
+										 true);
+
+	ResolveRecoveryConflictWithVirtualXIDs(backends,
+										   "snapshot conflict",
+										   CONFLICT_MODE_ERROR);
+}
+
+void
+ResolveRecoveryConflictWithTablespace(Oid tsid)
+{
+	VirtualTransactionId *temp_file_users;
+
+	/*
+	 * Standby users may be currently using this tablespace for
+	 * for their temporary files. We only care about current
+	 * users because temp_tablespace parameter will just ignore
+	 * tablespaces that no longer exist.
+	 *
+	 * Ask everybody to cancel their queries immediately so
+	 * we can ensure no temp files remain and we can remove the
+	 * tablespace. Nuke the entire site from orbit, it's the only
+	 * way to be sure.
+	 *
+	 * XXX: We could work out the pids of active backends
+	 * using this tablespace by examining the temp filenames in the
+	 * directory. We would then convert the pids into VirtualXIDs
+	 * before attempting to cancel them.
+	 *
+	 * We don't wait for commit because drop tablespace is
+	 * non-transactional.
+	 */
+	temp_file_users = GetConflictingVirtualXIDs(InvalidTransactionId,
+												InvalidOid,
+												false);
+	ResolveRecoveryConflictWithVirtualXIDs(temp_file_users,
+										   "drop tablespace",
+										   CONFLICT_MODE_ERROR);
+}
+
+void
+ResolveRecoveryConflictWithDatabase(Oid dbid)
+{
+	/*
+	 * We don't do ResolveRecoveryConflictWithVirutalXIDs() here since
+	 * that only waits for transactions and completely idle sessions
+	 * would block us. This is rare enough that we do this as simply
+	 * as possible: no wait, just force them off immediately.
+	 *
+	 * No locking is required here because we already acquired
+	 * AccessExclusiveLock. Anybody trying to connect while we do this
+	 * will block during InitPostgres() and then disconnect when they
+	 * see the database has been removed.
+	 */
+	while (CountDBBackends(dbid) > 0)
+	{
+		CancelDBBackends(dbid);
+
+		/*
+		 * Wait awhile for them to die so that we avoid flooding an
+		 * unresponsive backend when system is heavily loaded.
+		 */
+		pg_usleep(10000);
+	}
+}
+
+static void
+ResolveRecoveryConflictWithLock(Oid dbOid, Oid relOid)
+{
+	VirtualTransactionId *backends;
+	bool			report_memory_error = false;
+	bool			lock_acquired = false;
+	int				num_attempts = 0;
+	LOCKTAG			locktag;
+
+	SET_LOCKTAG_RELATION(locktag, dbOid, relOid);
+
+	/*
+	 * If blowing away everybody with conflicting locks doesn't work,
+	 * after the first two attempts then we just start blowing everybody
+	 * away until it does work. We do this because its likely that we
+	 * either have too many locks and we just can't get one at all,
+	 * or that there are many people crowding for the same table.
+	 * Recovery must win; the end justifies the means.
+	 */
+	while (!lock_acquired)
+	{
+		if (++num_attempts < 3)
+			backends = GetLockConflicts(&locktag, AccessExclusiveLock);
+		else
+		{
+			backends = GetConflictingVirtualXIDs(InvalidTransactionId,
+												 InvalidOid,
+												 true);
+			report_memory_error = true;
+		}
+
+		ResolveRecoveryConflictWithVirtualXIDs(backends,
+											   "exclusive lock",
+											   CONFLICT_MODE_ERROR);
+
+		if (LockAcquireExtended(&locktag, AccessExclusiveLock, true, true, false)
+											!= LOCKACQUIRE_NOT_AVAIL)
+			lock_acquired = true;
+	}
+}
+
 /*
  * -----------------------------------------------------
  * Locking in Recovery Mode
@@ -303,8 +419,6 @@ StandbyAcquireAccessExclusiveLock(TransactionId xid, Oid dbOid, Oid relOid)
 {
 	xl_standby_lock	*newlock;
 	LOCKTAG			locktag;
-	bool			report_memory_error = false;
-	int				num_attempts = 0;
 
 	/* Already processed? */
 	if (TransactionIdDidCommit(xid) || TransactionIdDidAbort(xid))
@@ -323,41 +437,13 @@ StandbyAcquireAccessExclusiveLock(TransactionId xid, Oid dbOid, Oid relOid)
 	RecoveryLockList = lappend(RecoveryLockList, newlock);
 
 	/*
-	 * Attempt to acquire the lock as requested.
+	 * Attempt to acquire the lock as requested, if not resolve conflict
 	 */
 	SET_LOCKTAG_RELATION(locktag, newlock->dbOid, newlock->relOid);
 
-	/*
-	 * Wait for lock to clear or kill anyone in our way.
-	 */
-	while (LockAcquireExtended(&locktag, AccessExclusiveLock,
-								true, true, report_memory_error)
+	if (LockAcquireExtended(&locktag, AccessExclusiveLock, true, true, false)
 											== LOCKACQUIRE_NOT_AVAIL)
-	{
-		VirtualTransactionId *backends;
-
-		/*
-		 * If blowing away everybody with conflicting locks doesn't work,
-		 * after the first two attempts then we just start blowing everybody
-		 * away until it does work. We do this because its likely that we
-		 * either have too many locks and we just can't get one at all,
-		 * or that there are many people crowding for the same table.
-		 * Recovery must win; the end justifies the means.
-		 */
-		if (++num_attempts < 3)
-			backends = GetLockConflicts(&locktag, AccessExclusiveLock);
-		else
-		{
-			backends = GetConflictingVirtualXIDs(InvalidTransactionId,
-												 InvalidOid,
-												 true);
-			report_memory_error = true;
-		}
-
-		ResolveRecoveryConflictWithVirtualXIDs(backends,
-											   "exclusive lock",
-											   CONFLICT_MODE_ERROR);
-	}
+		ResolveRecoveryConflictWithLock(newlock->dbOid, newlock->relOid);
 }
 
 static void
