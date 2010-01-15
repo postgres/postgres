@@ -1,6 +1,6 @@
 /* dynamic SQL support routines
  *
- * $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/descriptor.c,v 1.33 2009/08/07 10:51:20 meskes Exp $
+ * $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/descriptor.c,v 1.34 2010/01/15 10:44:34 meskes Exp $
  */
 
 #define POSTGRES_ECPG_INTERNAL
@@ -13,6 +13,7 @@
 #include "ecpgerrno.h"
 #include "extern.h"
 #include "sqlca.h"
+#include "sqlda.h"
 #include "sql3types.h"
 
 static void descriptor_free(struct descriptor * desc);
@@ -226,6 +227,12 @@ get_char_item(int lineno, void *var, enum ECPGttype vartype, char *value, int va
 	return (true);
 }
 
+#define RETURN_IF_NO_DATA	if (ntuples < 1) \
+				{ \
+					ecpg_raise(lineno, ECPG_NOT_FOUND, ECPG_SQLSTATE_NO_DATA, NULL); \
+					return (false); \
+				}
+
 bool
 ECPGget_desc(int lineno, const char *desc_name, int index,...)
 {
@@ -244,11 +251,6 @@ ECPGget_desc(int lineno, const char *desc_name, int index,...)
 		return (false);
 
 	ntuples = PQntuples(ECPGresult);
-	if (ntuples < 1)
-	{
-		ecpg_raise(lineno, ECPG_NOT_FOUND, ECPG_SQLSTATE_NO_DATA, NULL);
-		return (false);
-	}
 
 	if (index < 1 || index > PQnfields(ECPGresult))
 	{
@@ -283,6 +285,7 @@ ECPGget_desc(int lineno, const char *desc_name, int index,...)
 		switch (type)
 		{
 			case (ECPGd_indicator):
+				RETURN_IF_NO_DATA;
 				data_var.ind_type = vartype;
 				data_var.ind_pointer = var;
 				data_var.ind_varcharsize = varcharsize;
@@ -295,6 +298,7 @@ ECPGget_desc(int lineno, const char *desc_name, int index,...)
 				break;
 
 			case ECPGd_data:
+				RETURN_IF_NO_DATA;
 				data_var.type = vartype;
 				data_var.pointer = var;
 				data_var.varcharsize = varcharsize;
@@ -377,6 +381,7 @@ ECPGget_desc(int lineno, const char *desc_name, int index,...)
 			case ECPGd_ret_length:
 			case ECPGd_ret_octet:
 
+				RETURN_IF_NO_DATA;
 				/*
 				 * this is like ECPGstore_result
 				 */
@@ -480,6 +485,7 @@ ECPGget_desc(int lineno, const char *desc_name, int index,...)
 	sqlca->sqlerrd[2] = ntuples;
 	return (true);
 }
+#undef RETURN_IF_NO_DATA
 
 bool
 ECPGset_desc_header(int lineno, const char *desc_name, int count)
@@ -723,8 +729,140 @@ ecpg_find_desc(int line, const char *name)
 }
 
 bool
-ECPGdescribe(int line, bool input, const char *statement,...)
+ECPGdescribe(int line, int compat, bool input, const char *connection_name, const char *stmt_name, ...)
 {
-	ecpg_log("ECPGdescribe called on line %d for %s: %s\n", line, input ? "input" : "output", statement);
-	return false;
+	bool		ret = false;
+	struct connection *con;
+	struct prepared_statement *prep;
+	PGresult   *res;
+	va_list		args;
+
+	/* DESCRIBE INPUT is not yet supported */
+	if (input)
+		return ret;
+
+	con = ecpg_get_connection(connection_name);
+	if (!con)
+		return false;
+	prep = ecpg_find_prepared_statement(stmt_name, con, NULL);
+	if (!prep)
+		return ret;
+
+	va_start(args, stmt_name);
+
+	for (;;)
+	{
+		enum ECPGttype	type, dummy_type;
+		void		*ptr, *dummy_ptr;
+		long		dummy;
+
+		/* variable type */
+		type = va_arg(args, enum ECPGttype);
+
+		if (type == ECPGt_EORT)
+			break;
+
+		/* rest of variable parameters*/
+		ptr = va_arg(args, void *);
+		dummy = va_arg(args, long);
+		dummy = va_arg(args, long);
+		dummy = va_arg(args, long);
+
+		/* variable indicator */
+		dummy_type = va_arg(args, enum ECPGttype);
+		dummy_ptr = va_arg(args, void *);
+		dummy = va_arg(args, long);
+		dummy = va_arg(args, long);
+		dummy = va_arg(args, long);
+
+		switch (type)
+		{
+			case ECPGt_descriptor:
+			{
+				char	*name = ptr;
+				struct descriptor *desc = ecpg_find_desc(line, name);
+
+				if (desc == NULL)
+					break;
+
+				res = PQdescribePrepared(con->connection, stmt_name);
+				if (!ecpg_check_PQresult(res, line, con->connection, compat))
+					break;
+
+				if (desc->result != NULL)
+					PQclear(desc->result);
+
+				desc->result = res;
+				ret = true;
+				break;
+			}
+			case ECPGt_sqlda:
+			{
+				if (INFORMIX_MODE(compat))
+				{
+					struct sqlda_compat **_sqlda = ptr;
+					struct sqlda_compat *sqlda;
+
+					res = PQdescribePrepared(con->connection, stmt_name);
+					if (!ecpg_check_PQresult(res, line, con->connection, compat))
+						break;
+
+					sqlda = ecpg_build_compat_sqlda(line, res, -1, compat);
+					if (sqlda)
+					{
+						struct sqlda_compat *sqlda_old = *_sqlda;
+						struct sqlda_compat *sqlda_old1;
+
+						while (sqlda_old)
+						{
+							sqlda_old1 = sqlda_old->desc_next;
+							free(sqlda_old);
+							sqlda_old = sqlda_old1;
+						}
+
+						*_sqlda = sqlda;
+						ret = true;
+					}
+
+					PQclear(res);
+				}
+				else
+				{
+					struct sqlda_struct **_sqlda = ptr;
+					struct sqlda_struct *sqlda;
+
+					res = PQdescribePrepared(con->connection, stmt_name);
+					if (!ecpg_check_PQresult(res, line, con->connection, compat))
+						break;
+
+					sqlda = ecpg_build_native_sqlda(line, res, -1, compat);
+					if (sqlda)
+					{
+						struct sqlda_struct *sqlda_old = *_sqlda;
+						struct sqlda_struct *sqlda_old1;
+
+						while (sqlda_old)
+						{
+							sqlda_old1 = sqlda_old->desc_next;
+							free(sqlda_old);
+							sqlda_old = sqlda_old1;
+						}
+
+						*_sqlda = sqlda;
+						ret = true;
+					}
+
+					PQclear(res);
+				}
+				break;
+			}
+			default:
+				/* nothing else may come */
+				;
+		}
+	}
+
+	va_end(args);
+
+	return ret;
 }

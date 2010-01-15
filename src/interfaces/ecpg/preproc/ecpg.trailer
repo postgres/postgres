@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.trailer,v 1.17 2010/01/05 16:38:23 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.trailer,v 1.18 2010/01/15 10:44:37 meskes Exp $ */
 
 statements: /*EMPTY*/
                 | statements statement
@@ -994,6 +994,13 @@ into_descriptor: INTO SQL_SQL SQL_DESCRIPTOR quoted_ident_stringvar
 		}
 		;
 
+into_sqlda: INTO name
+		{
+			add_variable_to_head(&argsresult, sqlda_variable($2), &no_indicator);
+			$$ = EMPTY;
+		}
+		;
+
 using_list: UsingValue | UsingValue ',' using_list;
 
 UsingValue: UsingConst
@@ -1019,28 +1026,45 @@ UsingConst: Iconst			{ $$ = $1; }
 		;
 
 /*
- * We accept descibe but do nothing with it so far.
+ * We accept DESCRIBE [OUTPUT] but do nothing with DESCRIBE INPUT so far.
  */
-ECPGDescribe: SQL_DESCRIBE INPUT_P name using_descriptor
+ECPGDescribe: SQL_DESCRIBE INPUT_P prepared_name using_descriptor
 	{
 		const char *con = connection ? connection : "NULL";
 		mmerror(PARSE_ERROR, ET_WARNING, "using unsupported DESCRIBE statement");
-		$$ = (char *) mm_alloc(sizeof("1, ECPGprepared_statement(, \"\", __LINE__)") + strlen(con) + strlen($3));
-		sprintf($$, "1, ECPGprepared_statement(%s, \"%s\", __LINE__)", con, $3);
+		$$ = (char *) mm_alloc(sizeof("1, , ") + strlen(con) + strlen($3));
+		sprintf($$, "1, %s, %s", con, $3);
 	}
-	| SQL_DESCRIBE opt_output name using_descriptor
+	| SQL_DESCRIBE opt_output prepared_name using_descriptor
 	{
 		const char *con = connection ? connection : "NULL";
-		mmerror(PARSE_ERROR, ET_WARNING, "using unsupported DESCRIBE statement");
-		$$ = (char *) mm_alloc(sizeof("0, ECPGprepared_statement(, \"\", __LINE__)") + strlen(con) + strlen($3));
-		sprintf($$, "0, ECPGprepared_statement(%s, \"%s\", __LINE__)", con, $3);
+		struct variable *var;
+
+		var = argsinsert->variable;
+		remove_variable_from_list(&argsinsert, var);
+		add_variable_to_head(&argsresult, var, &no_indicator);
+
+		$$ = (char *) mm_alloc(sizeof("0, , ") + strlen(con) + strlen($3));
+		sprintf($$, "0, %s, %s", con, $3);
 	}
-	| SQL_DESCRIBE opt_output name into_descriptor
+	| SQL_DESCRIBE opt_output prepared_name into_descriptor
+	{
+		const char *con = connection ? connection : "NULL";
+		$$ = (char *) mm_alloc(sizeof("0, , ") + strlen(con) + strlen($3));
+		sprintf($$, "0, %s, %s", con, $3);
+	}
+	| SQL_DESCRIBE INPUT_P prepared_name into_sqlda
 	{
 		const char *con = connection ? connection : "NULL";
 		mmerror(PARSE_ERROR, ET_WARNING, "using unsupported DESCRIBE statement");
-		$$ = (char *) mm_alloc(sizeof("0, ECPGprepared_statement(, \"\", __LINE__)") + strlen(con) + strlen($3));
-		sprintf($$, "0, ECPGprepared_statement(%s, \"%s\", __LINE__)", con, $3);
+		$$ = (char *) mm_alloc(sizeof("1, , ") + strlen(con) + strlen($3));
+		sprintf($$, "1, %s, %s", con, $3);
+	}
+	| SQL_DESCRIBE opt_output prepared_name into_sqlda
+	{
+		const char *con = connection ? connection : "NULL";
+		$$ = (char *) mm_alloc(sizeof("0, , ") + strlen(con) + strlen($3));
+		sprintf($$, "0, %s, %s", con, $3);
 	}
 	;
 

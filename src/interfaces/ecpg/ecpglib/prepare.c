@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/prepare.c,v 1.33 2009/10/15 10:20:15 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/prepare.c,v 1.34 2010/01/15 10:44:34 meskes Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -10,14 +10,6 @@
 #include "ecpgerrno.h"
 #include "extern.h"
 #include "sqlca.h"
-
-struct prepared_statement
-{
-	char	   *name;
-	bool		prepared;
-	struct statement *stmt;
-	struct prepared_statement *next;
-};
 
 #define STMTID_SIZE 32
 
@@ -35,8 +27,6 @@ static const int stmtCacheNBuckets = 2039;		/* # buckets - a prime # */
 static const int stmtCacheEntPerBucket = 8;		/* # entries/bucket		*/
 static stmtCacheEntry stmtCacheEntries[16384] = {{0, {0}, 0, 0, 0}};
 
-static struct prepared_statement *find_prepared_statement(const char *name,
-				 struct connection * con, struct prepared_statement ** prev);
 static bool deallocate_one(int lineno, enum COMPAT_MODE c, struct connection * con,
 		 struct prepared_statement * prev, struct prepared_statement * this);
 
@@ -126,7 +116,7 @@ ECPGprepare(int lineno, const char *connection_name, const bool questionmarks, c
 		return false;
 
 	/* check if we already have prepared this statement */
-	this = find_prepared_statement(name, con, &prev);
+	this = ecpg_find_prepared_statement(name, con, &prev);
 	if (this && !deallocate_one(lineno, ECPG_COMPAT_PGSQL, con, prev, this))
 		return false;
 
@@ -179,8 +169,8 @@ ECPGprepare(int lineno, const char *connection_name, const bool questionmarks, c
 	return true;
 }
 
-static struct prepared_statement *
-find_prepared_statement(const char *name,
+struct prepared_statement *
+ecpg_find_prepared_statement(const char *name,
 				 struct connection * con, struct prepared_statement ** prev_)
 {
 	struct prepared_statement *this,
@@ -262,7 +252,7 @@ ECPGdeallocate(int lineno, int c, const char *connection_name, const char *name)
 	if (!ecpg_init(con, connection_name, lineno))
 		return false;
 
-	this = find_prepared_statement(name, con, &prev);
+	this = ecpg_find_prepared_statement(name, con, &prev);
 	if (this)
 		return deallocate_one(lineno, c, con, prev, this);
 
@@ -297,7 +287,7 @@ ecpg_prepared(const char *name, struct connection * con)
 {
 	struct prepared_statement *this;
 
-	this = find_prepared_statement(name, con, NULL);
+	this = ecpg_find_prepared_statement(name, con, NULL);
 	return this ? this->stmt->command : NULL;
 }
 
@@ -394,7 +384,7 @@ ecpg_freeStmtCacheEntry(int lineno, int compat, int entNo)		/* entry # to free *
 	con = ecpg_get_connection(entry->connection);
 
 	/* free the 'prepared_statement' list entry		  */
-	this = find_prepared_statement(entry->stmtID, con, &prev);
+	this = ecpg_find_prepared_statement(entry->stmtID, con, &prev);
 	if (this && !deallocate_one(lineno, compat, con, prev, this))
 		return (-1);
 

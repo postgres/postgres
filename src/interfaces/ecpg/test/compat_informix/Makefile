@@ -17,6 +17,7 @@ TESTS = test_informix test_informix.c \
         rfmtlong rfmtlong.c \
         rnull rnull.c \
         sqlda sqlda.c \
+        describe describe.c \
         charfuncs charfuncs.c
 
 all: $(TESTS)

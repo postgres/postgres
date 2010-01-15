@@ -1,0 +1,199 @@
+#include <stdlib.h>
+#include <string.h>
+
+exec sql include ../regression;
+exec sql include sqlda.h;
+
+exec sql whenever sqlerror stop;
+
+sqlda_t	*sqlda1, *sqlda2, *sqlda3;
+
+int
+main (void)
+{
+exec sql begin declare section;
+	char	*stmt1 = "SELECT id, t FROM descr_t2";
+	char	*stmt2 = "SELECT id, t FROM descr_t2 WHERE id = -1";
+	int	i, count1, count2;
+	char	field_name1[30] = "not set";
+	char	field_name2[30] = "not set";
+exec sql end declare section;
+
+	char msg[128];
+
+	ECPGdebug(1, stderr);
+
+	strcpy(msg, "connect");
+	exec sql connect to REGRESSDB1;
+
+	strcpy(msg, "set");
+	exec sql set datestyle to iso;
+
+	strcpy(msg, "create");
+	exec sql create table descr_t2(id serial primary key, t text);
+
+	strcpy(msg, "insert");
+	exec sql insert into descr_t2(id, t) values (default, 'a');
+	exec sql insert into descr_t2(id, t) values (default, 'b');
+	exec sql insert into descr_t2(id, t) values (default, 'c');
+	exec sql insert into descr_t2(id, t) values (default, 'd');
+
+	strcpy(msg, "commit");
+	exec sql commit;
+
+	/*
+	 * Test DESCRIBE with a query producing tuples.
+	 * DESCRIPTOR and SQL DESCRIPTOR are NOT the same in
+	 * Informix-compat mode.
+	 */
+
+	strcpy(msg, "allocate");
+	exec sql allocate descriptor desc1;
+	exec sql allocate descriptor desc2;
+
+	strcpy(msg, "prepare");
+	exec sql prepare st_id1 FROM :stmt1;
+
+	sqlda1 = sqlda2 = sqlda3 = NULL;
+
+	strcpy(msg, "describe");
+	exec sql describe st_id1 into sql descriptor desc1;
+	exec sql describe st_id1 using sql descriptor desc2;
+
+	exec sql describe st_id1 into descriptor sqlda1;
+	exec sql describe st_id1 using descriptor sqlda2;
+	exec sql describe st_id1 into sqlda3;
+
+	if (sqlda1 == NULL)
+	{
+		printf("sqlda1 NULL\n");
+		exit(1);
+	}
+
+	if (sqlda2 == NULL)
+	{
+		printf("sqlda2 NULL\n");
+		exit(1);
+	}
+
+	if (sqlda3 == NULL)
+	{
+		printf("sqlda3 NULL\n");
+		exit(1);
+	}
+
+	strcpy(msg, "get descriptor");
+	exec sql get descriptor desc1 :count1 = count;
+	exec sql get descriptor desc1 :count2 = count;
+
+	if (count1 != count2)
+	{
+		printf("count1 (%d) != count2 (%d)\n", count1, count2);
+		exit(1);
+	}
+
+	if (count1 != sqlda1->sqld)
+	{
+		printf("count1 (%d) != sqlda1->sqld (%d)\n", count1, sqlda1->sqld);
+		exit(1);
+	}
+
+	if (count1 != sqlda2->sqld)
+	{
+		printf("count1 (%d) != sqlda2->sqld (%d)\n", count1, sqlda2->sqld);
+		exit(1);
+	}
+
+	if (count1 != sqlda3->sqld)
+	{
+		printf("count1 (%d) != sqlda3->sqld (%d)\n", count1, sqlda3->sqld);
+		exit(1);
+	}
+
+	for (i = 1; i <= count1; i++)
+	{
+		exec sql get descriptor desc1 value :i :field_name1 = name;
+		exec sql get descriptor desc2 value :i :field_name2 = name;
+		printf("%d\n\tfield_name1 '%s'\n\tfield_name2 '%s'\n\t"
+			"sqlda1 '%s'\n\tsqlda2 '%s'\n\tsqlda3 '%s'\n",
+			i, field_name1, field_name2,
+			sqlda1->sqlvar[i-1].sqlname.data,
+			sqlda2->sqlvar[i-1].sqlname.data,
+			sqlda3->sqlvar[i-1].sqlname.data);
+	}
+
+	strcpy(msg, "deallocate");
+	exec sql deallocate descriptor desc1;
+	exec sql deallocate descriptor desc2;
+	free(sqlda1);
+	free(sqlda2);
+	free(sqlda3);
+
+	exec sql deallocate prepare st_id1;
+
+	/* Test DESCRIBE with a query not producing tuples */
+
+	strcpy(msg, "allocate");
+	exec sql allocate descriptor desc1;
+	exec sql allocate descriptor desc2;
+
+	strcpy(msg, "prepare");
+	exec sql prepare st_id2 FROM :stmt2;
+
+	sqlda1 = sqlda2 = sqlda3 = NULL;
+
+	strcpy(msg, "describe");
+	exec sql describe st_id2 into sql descriptor desc1;
+	exec sql describe st_id2 using sql descriptor desc2;
+
+	exec sql describe st_id2 into descriptor sqlda1;
+	exec sql describe st_id2 using descriptor sqlda2;
+	exec sql describe st_id2 into sqlda3;
+
+	if (sqlda1 == NULL || sqlda1 == NULL || sqlda2 == NULL)
+		exit(1);
+
+	strcpy(msg, "get descriptor");
+	exec sql get descriptor desc1 :count1 = count;
+	exec sql get descriptor desc1 :count2 = count;
+
+	if (!(	count1 == count2 &&
+		count1 == sqlda1->sqld &&
+		count1 == sqlda2->sqld &&
+		count1 == sqlda3->sqld))
+		exit(1);
+
+	for (i = 1; i <= count1; i++)
+	{
+		exec sql get descriptor desc1 value :i :field_name1 = name;
+		exec sql get descriptor desc2 value :i :field_name2 = name;
+		printf("%d\n\tfield_name1 '%s'\n\tfield_name2 '%s'\n\t"
+			"sqlda1 '%s'\n\tsqlda2 '%s'\n\tsqlda3 '%s'\n",
+			i, field_name1, field_name2,
+			sqlda1->sqlvar[i-1].sqlname.data,
+			sqlda2->sqlvar[i-1].sqlname.data,
+			sqlda3->sqlvar[i-1].sqlname.data);
+	}
+
+	strcpy(msg, "deallocate");
+	exec sql deallocate descriptor desc1;
+	exec sql deallocate descriptor desc2;
+	free(sqlda1);
+	free(sqlda2);
+	free(sqlda3);
+
+	exec sql deallocate prepare st_id2;
+
+	/* End test */
+
+	strcpy(msg, "drop");
+	exec sql drop table descr_t2;
+
+	strcpy(msg, "commit");
+	exec sql commit;
+
+	strcpy(msg, "disconnect"); 
+	exec sql disconnect;
+
+	return (0);
+}

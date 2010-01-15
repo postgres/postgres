@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.addons,v 1.13 2010/01/05 16:38:23 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.addons,v 1.14 2010/01/15 10:44:37 meskes Exp $ */
 ECPG: stmtClosePortalStmt block
 	{
 		if (INFORMIX_MODE)
@@ -84,7 +84,7 @@ ECPG: stmtViewStmt rule
 	}
 	| ECPGDescribe
 	{
-		fprintf(yyout, "{ ECPGdescribe(__LINE__, %s,", $1);
+		fprintf(yyout, "{ ECPGdescribe(__LINE__, %d, %s,", compat, $1);
 		dump_variables(argsresult, 1);
 		fputs("ECPGt_EORT);", yyout);
 		fprintf(yyout, "}");

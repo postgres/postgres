@@ -9,6 +9,8 @@ TESTS = array array.c \
         copystdout copystdout.c \
 	define define.c \
         desc desc.c \
+        sqlda sqlda.c \
+        describe describe.c \
         dyntest dyntest.c \
         dynalloc dynalloc.c \
         dynalloc2 dynalloc2.c \
@@ -20,7 +22,6 @@ TESTS = array array.c \
         parser parser.c \
         quote quote.c \
         show show.c \
-        sqlda sqlda.c \
         insupd insupd.c 
 
 all: $(TESTS)

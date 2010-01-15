@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/extern.h,v 1.36 2010/01/05 16:38:23 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/extern.h,v 1.37 2010/01/15 10:44:34 meskes Exp $ */
 
 #ifndef _ECPG_LIB_EXTERN_H
 #define _ECPG_LIB_EXTERN_H
@@ -58,6 +58,15 @@ struct statement
 	bool		questionmarks;
 	struct variable *inlist;
 	struct variable *outlist;
+};
+
+/* structure to store prepared statements for a connection */
+struct prepared_statement
+{
+	char	   *name;
+	bool		prepared;
+	struct statement *stmt;
+	struct prepared_statement *next;
 };
 
 /* structure to store connections */
@@ -138,6 +147,9 @@ void		ecpg_clear_auto_mem(void);
 struct descriptor *ecpggetdescp(int, char *);
 
 struct descriptor *ecpg_find_desc(int line, const char *name);
+
+struct prepared_statement *ecpg_find_prepared_statement(const char *,
+				  struct connection *, struct prepared_statement **);
 
 bool ecpg_store_result(const PGresult *results, int act_field,
 				  const struct statement * stmt, struct variable * var);

@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.type,v 1.5 2010/01/05 16:38:23 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.type,v 1.6 2010/01/15 10:44:37 meskes Exp $ */
 %type <str> ECPGAllocateDescr
 %type <str> ECPGCKeywords
 %type <str> ECPGColId
@@ -72,6 +72,7 @@
 %type <str> execute_rest
 %type <str> indicator
 %type <str> into_descriptor
+%type <str> into_sqlda
 %type <str> Iresult
 %type <str> on_off
 %type <str> opt_bit_field

@@ -4,6 +4,7 @@ test: compat_informix/rfmtdate
 test: compat_informix/rfmtlong
 test: compat_informix/rnull
 test: compat_informix/sqlda
+test: compat_informix/describe
 test: compat_informix/test_informix
 test: compat_informix/test_informix2
 test: connect/test2
@@ -31,6 +32,7 @@ test: sql/copystdout
 test: sql/define
 test: sql/desc
 test: sql/sqlda
+test: sql/describe
 test: sql/dynalloc
 test: sql/dynalloc2
 test: sql/dyntest
