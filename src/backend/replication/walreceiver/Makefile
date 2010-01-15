@@ -4,7 +4,7 @@
 #    Makefile for src/backend/replication/walreceiver
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/backend/replication/walreceiver/Makefile,v 1.3 2010/01/15 20:45:42 tgl Exp $
+#    $PostgreSQL: pgsql/src/backend/replication/walreceiver/Makefile,v 1.4 2010/01/15 21:06:26 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -16,7 +16,7 @@ override CPPFLAGS := -I$(libpq_srcdir) $(CPPFLAGS)
 
 OBJS = walreceiver.o
 
-SHLIB_LINK = $(libpq) $(BE_DLLLIBS)
+SHLIB_LINK = $(libpq)
 
 NAME := walreceiver
 
