@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/explain.c,v 1.198 2010/01/02 16:57:37 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/explain.c,v 1.199 2010/01/15 22:36:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -158,19 +158,19 @@ ExplainQuery(ExplainStmt *stmt, const char *queryString,
 			 errmsg("EXPLAIN option BUFFERS requires ANALYZE")));
 
 	/*
-	 * Run parse analysis and rewrite.	Note this also acquires sufficient
-	 * locks on the source table(s).
+	 * Parse analysis was done already, but we still have to run the rule
+	 * rewriter.  We do not do AcquireRewriteLocks: we assume the query
+	 * either came straight from the parser, or suitable locks were
+	 * acquired by plancache.c.
 	 *
-	 * Because the parser and planner tend to scribble on their input, we make
+	 * Because the rewriter and planner tend to scribble on the input, we make
 	 * a preliminary copy of the source querytree.	This prevents problems in
 	 * the case that the EXPLAIN is in a portal or plpgsql function and is
 	 * executed repeatedly.  (See also the same hack in DECLARE CURSOR and
 	 * PREPARE.)  XXX FIXME someday.
 	 */
-	rewritten = pg_analyze_and_rewrite_params((Node *) copyObject(stmt->query),
-											  queryString,
-											  (ParserSetupHook) setupParserWithParamList,
-											  params);
+	Assert(IsA(stmt->query, Query));
+	rewritten = QueryRewrite((Query *) copyObject(stmt->query));
 
 	/* emit opening boilerplate */
 	ExplainBeginOutput(&es);
@@ -248,6 +248,7 @@ ExplainResultDesc(ExplainStmt *stmt)
 			char   *p = defGetString(opt);
 
 			xml = (strcmp(p, "xml") == 0);
+			/* don't "break", as ExplainQuery will use the last value */
 		}
 	}
 

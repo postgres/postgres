@@ -35,7 +35,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/plancache.c,v 1.33 2010/01/13 16:56:56 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/plancache.c,v 1.34 2010/01/15 22:36:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -359,13 +359,27 @@ StoreCachedPlan(CachedPlanSource *plansource,
 	plan->context = plan_context;
 	if (plansource->fully_planned)
 	{
-		/* Planner already extracted dependencies, we don't have to */
+		/*
+		 * Planner already extracted dependencies, we don't have to ...
+		 * except in the case of EXPLAIN.  We assume here that EXPLAIN
+		 * can't appear in a list with other commands.
+		 */
 		plan->relationOids = plan->invalItems = NIL;
+
+		if (list_length(stmt_list) == 1 &&
+			IsA(linitial(stmt_list), ExplainStmt))
+		{
+			ExplainStmt *estmt = (ExplainStmt *) linitial(stmt_list);
+
+			extract_query_dependencies(estmt->query,
+									   &plan->relationOids,
+									   &plan->invalItems);
+		}
 	}
 	else
 	{
 		/* Use the planner machinery to extract dependencies */
-		extract_query_dependencies(stmt_list,
+		extract_query_dependencies((Node *) stmt_list,
 								   &plan->relationOids,
 								   &plan->invalItems);
 	}
@@ -685,7 +699,24 @@ AcquireExecutorLocks(List *stmt_list, bool acquire)
 
 		Assert(!IsA(plannedstmt, Query));
 		if (!IsA(plannedstmt, PlannedStmt))
-			continue;			/* Ignore utility statements */
+		{
+			/*
+			 * Ignore utility statements, except EXPLAIN which contains a
+			 * parsed-but-not-planned query.  Note: it's okay to use
+			 * ScanQueryForLocks, even though the query hasn't been through
+			 * rule rewriting, because rewriting doesn't change the query
+			 * representation.
+			 */
+			if (IsA(plannedstmt, ExplainStmt))
+			{
+				Query	   *query;
+
+				query = (Query *) ((ExplainStmt *) plannedstmt)->query;
+				Assert(IsA(query, Query));
+				ScanQueryForLocks(query, acquire);
+			}
+			continue;
+		}
 
 		rt_index = 0;
 		foreach(lc2, plannedstmt->rtable)
@@ -739,6 +770,19 @@ AcquirePlannerLocks(List *stmt_list, bool acquire)
 		Query	   *query = (Query *) lfirst(lc);
 
 		Assert(IsA(query, Query));
+
+		if (query->commandType == CMD_UTILITY)
+		{
+			/* Ignore utility statements, except EXPLAIN */
+			if (IsA(query->utilityStmt, ExplainStmt))
+			{
+				query = (Query *) ((ExplainStmt *) query->utilityStmt)->query;
+				Assert(IsA(query, Query));
+				ScanQueryForLocks(query, acquire);
+			}
+			continue;
+		}
+
 		ScanQueryForLocks(query, acquire);
 	}
 }
@@ -751,6 +795,9 @@ ScanQueryForLocks(Query *parsetree, bool acquire)
 {
 	ListCell   *lc;
 	int			rt_index;
+
+	/* Shouldn't get called on utility commands */
+	Assert(parsetree->commandType != CMD_UTILITY);
 
 	/*
 	 * First, process RTEs of the current query level.
@@ -942,7 +989,16 @@ PlanCacheRelCallback(Datum arg, Oid relid)
 		/* No work if it's already invalidated */
 		if (!plan || plan->dead)
 			continue;
-		if (plan->fully_planned)
+
+		/*
+		 * Check the list we built ourselves; this covers unplanned cases
+		 * including EXPLAIN.
+		 */
+		if ((relid == InvalidOid) ? plan->relationOids != NIL :
+			list_member_oid(plan->relationOids, relid))
+			plan->dead = true;
+
+		if (plan->fully_planned && !plan->dead)
 		{
 			/* Have to check the per-PlannedStmt relid lists */
 			ListCell   *lc2;
@@ -962,13 +1018,6 @@ PlanCacheRelCallback(Datum arg, Oid relid)
 					break;		/* out of stmt_list scan */
 				}
 			}
-		}
-		else
-		{
-			/* Otherwise check the single list we built ourselves */
-			if ((relid == InvalidOid) ? plan->relationOids != NIL :
-				list_member_oid(plan->relationOids, relid))
-				plan->dead = true;
 		}
 	}
 }
@@ -992,15 +1041,34 @@ PlanCacheFuncCallback(Datum arg, int cacheid, ItemPointer tuplePtr)
 	{
 		CachedPlanSource *plansource = (CachedPlanSource *) lfirst(lc1);
 		CachedPlan *plan = plansource->plan;
+		ListCell   *lc2;
 
 		/* No work if it's already invalidated */
 		if (!plan || plan->dead)
 			continue;
-		if (plan->fully_planned)
+
+		/*
+		 * Check the list we built ourselves; this covers unplanned cases
+		 * including EXPLAIN.
+		 */
+		foreach(lc2, plan->invalItems)
+		{
+			PlanInvalItem *item = (PlanInvalItem *) lfirst(lc2);
+
+			if (item->cacheId != cacheid)
+				continue;
+			if (tuplePtr == NULL ||
+				ItemPointerEquals(tuplePtr, &item->tupleId))
+			{
+				/* Invalidate the plan! */
+				plan->dead = true;
+				break;
+			}
+		}
+
+		if (plan->fully_planned && !plan->dead)
 		{
 			/* Have to check the per-PlannedStmt inval-item lists */
-			ListCell   *lc2;
-
 			foreach(lc2, plan->stmt_list)
 			{
 				PlannedStmt *plannedstmt = (PlannedStmt *) lfirst(lc2);
@@ -1025,26 +1093,6 @@ PlanCacheFuncCallback(Datum arg, int cacheid, ItemPointer tuplePtr)
 				}
 				if (plan->dead)
 					break;		/* out of stmt_list scan */
-			}
-		}
-		else
-		{
-			/* Otherwise check the single list we built ourselves */
-			ListCell   *lc2;
-
-			foreach(lc2, plan->invalItems)
-			{
-				PlanInvalItem *item = (PlanInvalItem *) lfirst(lc2);
-
-				if (item->cacheId != cacheid)
-					continue;
-				if (tuplePtr == NULL ||
-					ItemPointerEquals(tuplePtr, &item->tupleId))
-				{
-					/* Invalidate the plan! */
-					plan->dead = true;
-					break;
-				}
 			}
 		}
 	}
@@ -1086,7 +1134,9 @@ ResetPlanCache(void)
 		 * aborted transactions when we can't revalidate them (cf bug #5269).
 		 * In general there is no point in invalidating utility statements
 		 * since they have no plans anyway.  So mark it dead only if it
-		 * contains at least one non-utility statement.
+		 * contains at least one non-utility statement.  (EXPLAIN counts as
+		 * a non-utility statement, though, since it contains an analyzed
+		 * query that might have dependencies.)
 		 */
 		if (plan->fully_planned)
 		{
@@ -1096,7 +1146,8 @@ ResetPlanCache(void)
 				PlannedStmt *plannedstmt = (PlannedStmt *) lfirst(lc2);
 
 				Assert(!IsA(plannedstmt, Query));
-				if (IsA(plannedstmt, PlannedStmt))
+				if (IsA(plannedstmt, PlannedStmt) ||
+					IsA(plannedstmt, ExplainStmt))
 				{
 					/* non-utility statement, so invalidate */
 					plan->dead = true;
@@ -1112,7 +1163,8 @@ ResetPlanCache(void)
 				Query	   *query = (Query *) lfirst(lc2);
 
 				Assert(IsA(query, Query));
-				if (query->commandType != CMD_UTILITY)
+				if (query->commandType != CMD_UTILITY ||
+					IsA(query->utilityStmt, ExplainStmt))
 				{
 					/* non-utility statement, so invalidate */
 					plan->dead = true;

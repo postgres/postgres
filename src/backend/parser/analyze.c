@@ -17,7 +17,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.399 2010/01/02 16:57:48 momjian Exp $
+ *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.400 2010/01/15 22:36:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -257,16 +257,12 @@ analyze_requires_snapshot(Node *parseTree)
 			break;
 
 		case T_ExplainStmt:
-
-			/*
-			 * We only need a snapshot in varparams case, but it doesn't seem
-			 * worth complicating this function's API to distinguish that.
-			 */
+			/* yes, because we must analyze the contained statement */
 			result = true;
 			break;
 
 		default:
-			/* utility statements don't have any active parse analysis */
+			/* other utility statements don't have any real parse analysis */
 			result = false;
 			break;
 	}
@@ -1993,29 +1989,21 @@ transformDeclareCursorStmt(ParseState *pstate, DeclareCursorStmt *stmt)
  * transformExplainStmt -
  *	transform an EXPLAIN Statement
  *
- * EXPLAIN is just like other utility statements in that we emit it as a
- * CMD_UTILITY Query node with no transformation of the raw parse tree.
- * However, if p_coerce_param_hook is set, it could be that the client is
- * expecting us to resolve parameter types in something like
- *		EXPLAIN SELECT * FROM tab WHERE col = $1
- * To deal with such cases, we run parse analysis and throw away the result;
- * this is a bit grotty but not worth contorting the rest of the system for.
- * (The approach we use for DECLARE CURSOR won't work because the statement
- * being explained isn't necessarily a SELECT, and in particular might rewrite
- * to multiple parsetrees.)
+ * EXPLAIN is like other utility statements in that we emit it as a
+ * CMD_UTILITY Query node; however, we must first transform the contained
+ * query.  We used to postpone that until execution, but it's really necessary
+ * to do it during the normal parse analysis phase to ensure that side effects
+ * of parser hooks happen at the expected time.
  */
 static Query *
 transformExplainStmt(ParseState *pstate, ExplainStmt *stmt)
 {
 	Query	   *result;
 
-	if (pstate->p_coerce_param_hook != NULL)
-	{
-		/* Since parse analysis scribbles on its input, copy the tree first! */
-		(void) transformStmt(pstate, copyObject(stmt->query));
-	}
+	/* transform contained query */
+	stmt->query = (Node *) transformStmt(pstate, stmt->query);
 
-	/* Now return the untransformed command as a utility Query */
+	/* represent the command as a utility Query */
 	result = makeNode(Query);
 	result->commandType = CMD_UTILITY;
 	result->utilityStmt = (Node *) stmt;

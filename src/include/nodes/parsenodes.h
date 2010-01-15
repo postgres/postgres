@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.423 2010/01/06 05:31:14 itagaki Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.424 2010/01/15 22:36:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2260,12 +2260,16 @@ typedef struct VacuumStmt
 
 /* ----------------------
  *		Explain Statement
+ *
+ * The "query" field is either a raw parse tree (SelectStmt, InsertStmt, etc)
+ * or a Query node if parse analysis has been done.  Note that rewriting and
+ * planning of the query are always postponed until execution of EXPLAIN.
  * ----------------------
  */
 typedef struct ExplainStmt
 {
 	NodeTag		type;
-	Node	   *query;			/* the query (as a raw parse tree) */
+	Node	   *query;			/* the query (see comments above) */
 	List	   *options;		/* list of DefElem nodes */
 } ExplainStmt;
 

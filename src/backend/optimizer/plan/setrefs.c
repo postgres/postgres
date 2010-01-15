@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/setrefs.c,v 1.156 2010/01/02 16:57:47 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/setrefs.c,v 1.157 2010/01/15 22:36:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1905,14 +1905,15 @@ record_plan_function_dependency(PlannerGlobal *glob, Oid funcid)
 
 /*
  * extract_query_dependencies
- *		Given a list of not-yet-planned queries (i.e. Query nodes),
- *		extract their dependencies just as set_plan_references would do.
+ *		Given a not-yet-planned query or queries (i.e. a Query node or list
+ *		of Query nodes), extract dependencies just as set_plan_references
+ *		would do.
  *
  * This is needed by plancache.c to handle invalidation of cached unplanned
  * queries.
  */
 void
-extract_query_dependencies(List *queries,
+extract_query_dependencies(Node *query,
 						   List **relationOids,
 						   List **invalItems)
 {
@@ -1924,7 +1925,7 @@ extract_query_dependencies(List *queries,
 	glob.relationOids = NIL;
 	glob.invalItems = NIL;
 
-	(void) extract_query_dependencies_walker((Node *) queries, &glob);
+	(void) extract_query_dependencies_walker(query, &glob);
 
 	*relationOids = glob.relationOids;
 	*invalItems = glob.invalItems;
@@ -1942,6 +1943,19 @@ extract_query_dependencies_walker(Node *node, PlannerGlobal *context)
 	{
 		Query	   *query = (Query *) node;
 		ListCell   *lc;
+
+		if (query->commandType == CMD_UTILITY)
+		{
+			/* Ignore utility statements, except EXPLAIN */
+			if (IsA(query->utilityStmt, ExplainStmt))
+			{
+				query = (Query *) ((ExplainStmt *) query->utilityStmt)->query;
+				Assert(IsA(query, Query));
+				Assert(query->commandType != CMD_UTILITY);
+			}
+			else
+				return false;
+		}
 
 		/* Collect relation OIDs in this Query's rtable */
 		foreach(lc, query->rtable)

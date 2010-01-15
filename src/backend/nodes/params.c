@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/params.c,v 1.13 2010/01/02 16:57:46 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/params.c,v 1.14 2010/01/15 22:36:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -74,48 +74,4 @@ copyParamList(ParamListInfo from)
 	}
 
 	return retval;
-}
-
-/*
- * Set up the parser to treat the given list of run-time parameters
- * as available external parameters during parsing of a new query.
- *
- * Note that the parser doesn't actually care about the *values* of the given
- * parameters, only about their *types*.  Also, the code that originally
- * provided the ParamListInfo may have provided a setupHook, which should
- * override applying parse_fixed_parameters().
- */
-void
-setupParserWithParamList(struct ParseState *pstate,
-						 ParamListInfo params)
-{
-	if (params == NULL)			/* no params, nothing to do */
-		return;
-
-	/* If there is a parserSetup hook, it gets to do this */
-	if (params->parserSetup != NULL)
-	{
-		(*params->parserSetup) (pstate, params->parserSetupArg);
-		return;
-	}
-
-	/* Else, treat any available parameters as being of fixed type */
-	if (params->numParams > 0)
-	{
-		Oid		   *ptypes;
-		int			i;
-
-		ptypes = (Oid *) palloc(params->numParams * sizeof(Oid));
-		for (i = 0; i < params->numParams; i++)
-		{
-			ParamExternData *prm = &params->params[i];
-
-			/* give hook a chance in case parameter is dynamic */
-			if (!OidIsValid(prm->ptype) && params->paramFetch != NULL)
-				(*params->paramFetch) (params, i+1);
-
-			ptypes[i] = prm->ptype;
-		}
-		parse_fixed_parameters(pstate, ptypes, params->numParams);
-	}
 }
