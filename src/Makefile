@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/Makefile,v 1.48 2010/01/15 09:18:59 heikki Exp $
+# $PostgreSQL: pgsql/src/Makefile,v 1.49 2010/01/15 17:01:06 heikki Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -18,10 +18,10 @@ all install installdirs uninstall distprep:
 	$(MAKE) -C timezone $@
 	$(MAKE) -C backend $@
 	$(MAKE) -C backend/utils/mb/conversion_procs $@
-	$(MAKE) -C backend/replication/walreceiver $@
 	$(MAKE) -C backend/snowball $@
 	$(MAKE) -C include $@
 	$(MAKE) -C interfaces $@
+	$(MAKE) -C backend/replication/walreceiver $@
 	$(MAKE) -C bin $@
 	$(MAKE) -C pl $@
 	$(MAKE) -C makefiles $@
@@ -52,6 +52,7 @@ clean:
 	$(MAKE) -C backend/snowball $@
 	$(MAKE) -C include $@
 	$(MAKE) -C interfaces $@
+	$(MAKE) -C backend/replication/walreceiver $@
 	$(MAKE) -C bin $@
 	$(MAKE) -C pl $@
 	$(MAKE) -C makefiles $@
@@ -66,6 +67,7 @@ distclean maintainer-clean:
 	$(MAKE) -C backend/snowball $@
 	$(MAKE) -C include $@
 	$(MAKE) -C interfaces $@
+	$(MAKE) -C backend/replication/walreceiver $@
 	$(MAKE) -C bin $@
 	$(MAKE) -C pl $@
 	$(MAKE) -C makefiles $@
@@ -80,6 +82,7 @@ coverage:
 	$(MAKE) -C backend/utils/mb/conversion_procs $@
 	$(MAKE) -C backend/snowball $@
 	$(MAKE) -C interfaces $@
+	$(MAKE) -C backend/replication/walreceiver $@
 	$(MAKE) -C bin $@
 	$(MAKE) -C pl $@
 
