@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.532 2010/01/07 04:53:35 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.533 2010/01/15 09:19:04 heikki Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -55,6 +55,7 @@
 #include "postmaster/postmaster.h"
 #include "postmaster/syslogger.h"
 #include "postmaster/walwriter.h"
+#include "replication/walsender.h"
 #include "storage/bufmgr.h"
 #include "storage/fd.h"
 #include "tcop/tcopprot.h"
@@ -494,6 +495,8 @@ const char *const config_group_names[] =
 	gettext_noop("Write-Ahead Log / Settings"),
 	/* WAL_CHECKPOINTS */
 	gettext_noop("Write-Ahead Log / Checkpoints"),
+	/* WAL_REPLICATION */
+	gettext_noop("Write-Ahead Log / Replication"),
 	/* QUERY_TUNING */
 	gettext_noop("Query Tuning"),
 	/* QUERY_TUNING_METHOD */
@@ -1694,6 +1697,26 @@ static struct config_int ConfigureNamesInt[] =
 			GUC_UNIT_MS
 		},
 		&WalWriterDelay,
+		200, 1, 10000, NULL, NULL
+	},
+
+	{
+		/* see max_connections */
+		{"max_wal_senders", PGC_POSTMASTER, WAL_REPLICATION,
+			gettext_noop("Sets the maximum number of simultaneously running WAL sender processes."),
+			NULL
+		},
+		&MaxWalSenders,
+		0, 0, INT_MAX / 4, NULL, NULL
+	},
+
+	{
+		{"wal_sender_delay", PGC_SIGHUP, WAL_REPLICATION,
+			gettext_noop("WAL sender sleep time between WAL replications."),
+			NULL,
+			GUC_UNIT_MS
+		},
+		&WalSndDelay,
 		200, 1, 10000, NULL, NULL
 	},
 

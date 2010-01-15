@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/xlog.h,v 1.95 2010/01/02 16:58:00 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/access/xlog.h,v 1.96 2010/01/15 09:19:06 heikki Exp $
  */
 #ifndef XLOG_H
 #define XLOG_H
@@ -188,6 +188,18 @@ extern int MaxStandbyDelay;
 #define XLogArchiveCommandSet() (XLogArchiveCommand[0] != '\0')
 #define XLogStandbyInfoActive()	(XLogRequestRecoveryConnections && XLogArchiveMode)
 
+/*
+ * This is in walsender.c, but declared here so that we don't need to include
+ * walsender.h in all files that check XLogIsNeeded()
+ */
+extern int	MaxWalSenders;
+
+/*
+ * Is WAL-logging necessary? We need to log an XLOG record iff either
+ * WAL archiving is enabled or XLOG streaming is allowed.
+ */
+#define XLogIsNeeded() (XLogArchivingActive() || (MaxWalSenders > 0))
+
 #ifdef WAL_DEBUG
 extern bool XLOG_DEBUG;
 #endif
@@ -228,12 +240,19 @@ typedef struct CheckpointStatsData
 
 extern CheckpointStatsData CheckpointStats;
 
+/* Read from recovery.conf, in startup process */
+extern char *TriggerFile;
+
 
 extern XLogRecPtr XLogInsert(RmgrId rmid, uint8 info, XLogRecData *rdata);
 extern void XLogFlush(XLogRecPtr RecPtr);
 extern void XLogBackgroundFlush(void);
 extern void XLogAsyncCommitFlush(void);
 extern bool XLogNeedsFlush(XLogRecPtr RecPtr);
+extern int	XLogFileInit(uint32 log, uint32 seg,
+						 bool *use_existent, bool use_lock);
+extern int	XLogFileOpen(uint32 log, uint32 seg);
+
 
 extern void XLogSetAsyncCommitLSN(XLogRecPtr record);
 
@@ -242,11 +261,14 @@ extern void RestoreBkpBlocks(XLogRecPtr lsn, XLogRecord *record, bool cleanup);
 extern void xlog_redo(XLogRecPtr lsn, XLogRecord *record);
 extern void xlog_desc(StringInfo buf, uint8 xl_info, char *rec);
 
+extern void issue_xlog_fsync(int fd, uint32 log, uint32 seg);
+
 extern bool RecoveryInProgress(void);
 extern bool XLogInsertAllowed(void);
 extern TimestampTz GetLatestXLogTime(void);
 
 extern void UpdateControlFile(void);
+extern uint64 GetSystemIdentifier(void);
 extern Size XLOGShmemSize(void);
 extern void XLOGShmemInit(void);
 extern void BootStrapXLOG(void);
@@ -258,8 +280,11 @@ extern bool CreateRestartPoint(int flags);
 extern void XLogPutNextOid(Oid nextOid);
 extern XLogRecPtr GetRedoRecPtr(void);
 extern XLogRecPtr GetInsertRecPtr(void);
+extern XLogRecPtr GetWriteRecPtr(void);
 extern void GetNextXidAndEpoch(TransactionId *xid, uint32 *epoch);
+extern TimeLineID GetRecoveryTargetTLI(void);
 
+extern void HandleStartupProcInterrupts(void);
 extern void StartupProcessMain(void);
 
 #endif   /* XLOG_H */

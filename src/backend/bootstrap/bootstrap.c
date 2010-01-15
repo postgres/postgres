@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootstrap.c,v 1.255 2010/01/02 16:57:36 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootstrap.c,v 1.256 2010/01/15 09:19:00 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,6 +32,7 @@
 #include "nodes/makefuncs.h"
 #include "postmaster/bgwriter.h"
 #include "postmaster/walwriter.h"
+#include "replication/walreceiver.h"
 #include "storage/bufmgr.h"
 #include "storage/ipc.h"
 #include "storage/proc.h"
@@ -173,7 +174,7 @@ static IndexList *ILHead = NULL;
  *	 AuxiliaryProcessMain
  *
  *	 The main entry point for auxiliary processes, such as the bgwriter,
- *	 walwriter, bootstrapper and the shared memory checker code.
+ *	 walwriter, walreceiver, bootstrapper and the shared memory checker code.
  *
  *	 This code is here just because of historical reasons.
  */
@@ -314,6 +315,9 @@ AuxiliaryProcessMain(int argc, char *argv[])
 			case WalWriterProcess:
 				statmsg = "wal writer process";
 				break;
+			case WalReceiverProcess:
+				statmsg = "wal receiver process";
+				break;
 			default:
 				statmsg = "??? process";
 				break;
@@ -417,6 +421,24 @@ AuxiliaryProcessMain(int argc, char *argv[])
 			/* don't set signals, walwriter has its own agenda */
 			InitXLOGAccess();
 			WalWriterMain();
+			proc_exit(1);		/* should never return */
+
+		case WalReceiverProcess:
+			/* don't set signals, walreceiver has its own agenda */
+			{
+				PGFunction WalReceiverMain;
+
+				/*
+				 * Walreceiver is not linked directly into the server
+				 * binary because we would then need to link the server
+				 * with libpq. It's compiled as a dynamically loaded module
+				 * to avoid that.
+				 */
+				WalReceiverMain = load_external_function("walreceiver",
+														 "WalReceiverMain",
+														 true, NULL);
+				WalReceiverMain(NULL);
+			}
 			proc_exit(1);		/* should never return */
 
 		default:

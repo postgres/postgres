@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.125 2009/12/12 21:35:21 mha Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.126 2010/01/15 09:18:56 heikki Exp $ -->
 
 <chapter id="client-authentication">
  <title>Client Authentication</title>
@@ -181,6 +181,8 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
        the requested user must be a member of the role with the same
        name as the requested database.  (<literal>samegroup</> is an
        obsolete but still accepted spelling of <literal>samerole</>.)
+       The value <literal>replication</> specifies that the record
+       matches if streaming replication is requested.
        Otherwise, this is the name of
        a specific <productname>PostgreSQL</productname> database.
        Multiple database names can be supplied by separating them with

@@ -2,13 +2,14 @@
 # PostgreSQL recovery config file
 # -------------------------------
 #
-# Edit this file to provide the parameters that PostgreSQL
-# needs to perform an archive recovery of a database.
+# Edit this file to provide the parameters that PostgreSQL needs to
+# perform an archive recovery of a database, or to act as a log-streaming
+# replication standby.
 #
 # If "recovery.conf" is present in the PostgreSQL data directory, it is
 # read on postmaster startup.  After successful recovery, it is renamed
 # to "recovery.done" to ensure that we do not accidentally re-enter
-# archive recovery mode.
+# archive recovery or standby mode.
 #
 # This file consists of lines of the form:
 #
@@ -23,7 +24,7 @@
 # are example values.
 #
 #---------------------------------------------------------------------------
-# REQUIRED PARAMETERS
+# ARCHIVE RECOVERY PARAMETERS
 #---------------------------------------------------------------------------
 #
 # restore_command
@@ -32,6 +33,9 @@
 # back from archival storage.  The command string may contain %f,
 # which is replaced by the name of the desired log file, and %p,
 # which is replaced by the absolute path to copy the log file to.
+#
+# This parameter is *required* for an archive recovery, but optional
+# for replication.
 #
 # It is important that the command return nonzero exit status on failure.
 # The command *will* be asked for log files that are not present in the
@@ -42,10 +46,6 @@
 #
 #restore_command = 'cp /mnt/server/archivedir/%f %p'
 #
-#
-#---------------------------------------------------------------------------
-# OPTIONAL PARAMETERS
-#---------------------------------------------------------------------------
 #
 # recovery_end_command
 #
@@ -77,6 +77,28 @@
 #
 #recovery_target_timeline = '33'		# number or 'latest'
 #
+#
+#---------------------------------------------------------------------------
+# LOG-STREAMING REPLICATION PARAMETERS
+#---------------------------------------------------------------------------
+#
+# When standby_mode is enabled, the PostgreSQL server will work as
+# a standby. It tries to connect to the primary according to the
+# connection settings primary_conninfo, and receives XLOG records
+# continuously.
+#
+#standby_mode = 'false'				# 'true' or 'false'
+#
+#primary_conninfo = 'host=localhost port=5432'
+#
+#
+# By default, a standby server keeps streaming XLOG records from the
+# primary indefinitely. If you want to stop streaming and finish recovery,
+# opening up the system in read/write mode, specify path to a trigger file.
+# Server will poll the trigger file path periodically and stop streaming
+# when it's found.
+#
+#trigger_file = ''
 #
 #---------------------------------------------------------------------------
 # HOT STANDBY PARAMETERS

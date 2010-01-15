@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.495 2009/12/19 17:49:50 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.496 2010/01/15 09:18:58 heikki Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -12984,7 +12984,8 @@ SELECT set_config('log_statement_stats', 'off', false);
    <para>
     The functions shown in <xref
     linkend="functions-admin-backup-table"> assist in making on-line backups.
-    Use of the first three functions is restricted to superusers.
+    Use of the first three functions is restricted to superusers. The first
+    five functions cannot be executed during recovery.
    </para>
 
    <table id="functions-admin-backup-table">
@@ -13135,11 +13136,17 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
    <indexterm>
     <primary>pg_is_in_recovery</primary>
    </indexterm>
+   <indexterm>
+    <primary>pg_last_xlog_receive_location</primary>
+   </indexterm>
+   <indexterm>
+    <primary>pg_last_xlog_replay_location</primary>
+   </indexterm>
 
    <para>
     The functions shown in <xref
     linkend="functions-recovery-info-table"> provide information
-    about the current status of Hot Standby.
+    about the current status of the standby.
     These functions may be executed during both recovery and in normal running.
    </para>
 
@@ -13158,6 +13165,33 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
         </entry>
        <entry><type>bool</type></entry>
        <entry>True if recovery is still in progress.
+       </entry>
+      </row>
+      <row>
+       <entry>
+        <literal><function>pg_last_xlog_receive_location</function>()</literal>
+        </entry>
+       <entry><type>text</type></entry>
+       <entry>Get last transaction log location received and synced to disk during
+              streaming recovery. If streaming recovery is still in progress
+              this will increase monotonically. If streaming recovery has completed
+              then this value will remain static at the value of the last WAL record
+              received and synced to disk during that recovery. When the server has
+              been started without a streaming recovery then the return value will be
+              InvalidXLogRecPtr (0/0).
+       </entry>
+      </row>
+      <row>
+       <entry>
+        <literal><function>pg_last_xlog_replay_location</function>()</literal>
+        </entry>
+       <entry><type>text</type></entry>
+       <entry>Get last transaction log location replayed during recovery.
+              If recovery is still in progress this will increase monotonically.
+              If recovery has completed then this value will remain static at
+              the value of the last WAL record applied during that recovery.
+              When the server has been started normally without a recovery
+              then the return value will be InvalidXLogRecPtr (0/0).
        </entry>
       </row>
      </tbody>

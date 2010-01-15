@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/proc.c,v 1.211 2010/01/02 16:57:52 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/proc.c,v 1.212 2010/01/15 09:19:03 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,6 +39,7 @@
 #include "access/xact.h"
 #include "miscadmin.h"
 #include "postmaster/autovacuum.h"
+#include "replication/walsender.h"
 #include "storage/ipc.h"
 #include "storage/lmgr.h"
 #include "storage/pmsignal.h"
@@ -290,7 +291,12 @@ InitProcess(void)
 	 * this; it probably should.)
 	 */
 	if (IsUnderPostmaster && !IsAutoVacuumLauncherProcess())
-		MarkPostmasterChildActive();
+	{
+		if (am_walsender)
+			MarkPostmasterChildWalSender();
+		else
+			MarkPostmasterChildActive();
+	}
 
 	/*
 	 * Initialize all fields of MyProc, except for the semaphore which was

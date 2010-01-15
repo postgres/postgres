@@ -1,0 +1,58 @@
+$PostgreSQL: pgsql/src/backend/replication/README,v 1.1 2010/01/15 09:19:03 heikki Exp $
+
+Walreceiver IPC
+---------------
+
+When the WAL replay in startup process has reached the end of archived WAL,
+recoverable using recovery_command, it starts up the walreceiver process
+to fetch more WAL (if streaming replication is configured).
+
+Walreceiver is a postmaster subprocess, so the startup process can't fork it
+directly. Instead, it sends a signal to postmaster, asking postmaster to launch
+it. Before that, however, startup process fills in WalRcvData->conninfo,
+and initializes the starting point in WalRcvData->receivedUpTo.
+
+As walreceiver receives WAL from the master server, and writes and flushes
+it to disk (in pg_xlog), it updates WalRcvData->receivedUpTo. Startup process
+polls that to know how far it can proceed with WAL replay.
+
+Walsender IPC
+-------------
+
+At shutdown, postmaster handles walsender processes differently from regular
+backends. It waits for regular backends to die before writing the
+shutdown checkpoint and terminating pgarch and other auxiliary processes, but
+that's not desirable for walsenders, because we want the standby servers to
+receive all the WAL, including the shutdown checkpoint, before the master
+is shut down. Therefore postmaster treats walsenders like the pgarch process,
+and instructs them to terminate at PM_SHUTDOWN_2 phase, after all regular
+backends have died and bgwriter has written the shutdown checkpoint.
+
+When postmaster accepts a connection, it immediately forks a new process
+to handle the handshake and authentication, and the process initializes to
+become a backend. Postmaster doesn't know if the process becomes a regular
+backend or a walsender process at that time - that's indicated in the
+connection handshake - so we need some extra signaling to let postmaster
+identify walsender processes.
+
+When walsender process starts up, it marks itself as a walsender process in
+the PMSignal array. That way postmaster can tell it apart from regular
+backends.
+
+Note that no big harm is done if postmaster thinks that a walsender is a
+regular backend; it will just terminate the walsender earlier in the shutdown
+phase. A walsenders will look like a regular backends until it's done with the
+initialization and has marked itself in PMSignal array, and at process
+termination, after unmarking the PMSignal slot.
+
+Each walsender allocates an entry from the WalSndCtl array, and advertises
+there how far it has streamed WAL already. This is used at checkpoints, to
+avoid recycling WAL that hasn't been streamed to a slave yet. However,
+that doesn't stop such WAL from being recycled when the connection is not
+established.
+
+
+Walsender - walreceiver protocol
+--------------------------------
+
+See manual.

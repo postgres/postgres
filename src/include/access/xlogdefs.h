@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/xlogdefs.h,v 1.24 2010/01/02 16:58:01 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/access/xlogdefs.h,v 1.25 2010/01/15 09:19:06 heikki Exp $
  */
 #ifndef XLOG_DEFS_H
 #define XLOG_DEFS_H
@@ -54,6 +54,22 @@ typedef struct XLogRecPtr
 
 #define XLByteEQ(a, b)		\
 			((a).xlogid == (b).xlogid && (a).xrecoff == (b).xrecoff)
+
+
+/*
+ * Macro for advancing a record pointer by the specified number of bytes.
+ */
+#define XLByteAdvance(recptr, nbytes)						\
+	do {													\
+		if (recptr.xrecoff + nbytes >= XLogFileSize)		\
+		{													\
+			recptr.xlogid += 1;								\
+			recptr.xrecoff									\
+				= recptr.xrecoff + nbytes - XLogFileSize;	\
+		}													\
+		else												\
+			recptr.xrecoff += nbytes;						\
+	} while (0)
 
 
 /*

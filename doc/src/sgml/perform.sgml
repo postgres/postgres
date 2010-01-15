@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/perform.sgml,v 1.72 2009/08/07 20:54:31 alvherre Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/perform.sgml,v 1.73 2010/01/15 09:18:59 heikki Exp $ -->
 
  <chapter id="performance-tips">
   <title>Performance Tips</title>
@@ -836,8 +836,9 @@ SELECT * FROM x, y, a, b, c WHERE something AND somethingelse;
     needs to be written, because in case of an error, the files
     containing the newly loaded data will be removed anyway.
     However, this consideration does not apply when
-    <xref linkend="guc-archive-mode"> is on, as all commands
-    must write WAL in that case.
+    <xref linkend="guc-archive-mode"> is on or streaming replication
+    is allowed (i.e., <xref linkend="guc-max-wal-senders"> is more
+    than or equal to one), as all commands must write WAL in that case.
    </para>
 
   </sect2>

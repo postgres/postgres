@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.341 2010/01/08 02:44:00 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.342 2010/01/15 09:19:02 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2213,11 +2213,11 @@ OpenIntoRel(QueryDesc *queryDesc)
 	myState->rel = intoRelationDesc;
 
 	/*
-	 * We can skip WAL-logging the insertions, unless PITR is in use.  We can
-	 * skip the FSM in any case.
+	 * We can skip WAL-logging the insertions, unless PITR or streaming
+	 * replication is in use. We can skip the FSM in any case.
 	 */
 	myState->hi_options = HEAP_INSERT_SKIP_FSM |
-		(XLogArchivingActive() ? 0 : HEAP_INSERT_SKIP_WAL);
+		(XLogIsNeeded() ? 0 : HEAP_INSERT_SKIP_WAL);
 	myState->bistate = GetBulkInsertState();
 
 	/* Not using WAL requires rd_targblock be initially invalid */

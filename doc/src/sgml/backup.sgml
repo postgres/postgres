@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.135 2010/01/12 02:33:45 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.136 2010/01/15 09:18:56 heikki Exp $ -->
 
 <chapter id="backup">
  <title>Backup and Restore</title>
@@ -1088,6 +1088,8 @@ restore_command = 'cp /mnt/server/archivedir/%f %p'
       file, and apply only for the duration of the recovery. They must be
       reset for any subsequent recovery you wish to perform. They cannot be
       changed once recovery has begun.
+      The parameters for streaming replication are described in <xref
+      linkend="replication-config-settings">.
      </para>
 
      <variablelist>
@@ -1097,7 +1099,8 @@ restore_command = 'cp /mnt/server/archivedir/%f %p'
       <listitem>
        <para>
         The shell command to execute to retrieve an archived segment of
-        the WAL file series. This parameter is required.
+        the WAL file series. This parameter is required for archive recovery,
+        but optional for streaming replication.
         Any <literal>%f</> in the string is
         replaced by the name of the file to retrieve from the archive,
         and any <literal>%p</> is replaced by the path name to copy
@@ -1843,6 +1846,227 @@ if (!triggered)
     cooperation of the <varname>restore_command</> script with the data
     copying program.
    </para>
+
+   <para>
+    Starting with <productname>PostgreSQL</> version 8.5, you can use
+    streaming replication (see <xref linkend="streaming-replication">) to
+    achieve the same with less effort.
+   </para>
+  </sect2>
+
+  <sect2 id="streaming-replication">
+   <title>Streaming Replication</title>
+
+   <para>
+    <productname>PostgreSQL</> includes a simple streaming replication
+    mechanism, which lets the standby server to stay more up-to-date than
+    file-based replication allows. The standby connects to the primary
+    and the primary starts streaming WAL records from where the standby
+    left off, and continues streaming them as they are generated, without
+    waiting for the WAL file to be filled. So with streaming replication,
+    <varname>archive_timeout</> does not need to be configured.
+   </para>
+
+   <para>
+    Streaming replication relies on file-based continuous archiving for
+    making the base backup and for allowing a standby to catch up if it's
+    disconnected from the primary for long enough for the primary to
+    delete old WAL files still required by the standby.
+   </para>
+
+   <sect3 id="streaming-replication-setup">
+    <title>Setup</title>
+    <para>
+     The short procedure for configuring streaming replication is as follows.
+     For full details of each step, refer to other sections as noted.
+     <orderedlist>
+      <listitem>
+       <para>
+        Set up primary and standby systems as near identically as possible,
+        including two identical copies of <productname>PostgreSQL</> at the
+        same release level.
+       </para>
+      </listitem>
+     <listitem>
+      <para>
+       Set up continuous archiving from the primary to a WAL archive located
+       in a directory on the standby server. Ensure that
+       <xref linkend="guc-archive-mode">,
+       <xref linkend="guc-archive-command"> and
+       <xref linkend="guc-archive-timeout">
+       are set appropriately on the primary
+       (see <xref linkend="backup-archiving-wal">).
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Set up connections and authentication so that the standby server can
+       successfully connect to the pseudo <literal>replication</> database of
+       the primary server (see
+       <xref linkend="streaming-replication-authentication">). Ensure that
+       <xref linkend="guc-listen-addresses"> and <filename>pg_hba.conf</> are
+       configured appropriately on the primary.
+      </para>
+      <para>
+       On systems that support the keepalive socket option, setting
+       <xref linkend="guc-tcp-keepalives-idle">,
+       <xref linkend="guc-tcp-keepalives-interval"> and
+       <xref linkend="guc-tcp-keepalives-count"> helps you to find the
+       troubles with replication (e.g., the network outage or the failure of
+       the standby server) as soon as possible.
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       Set the maximum number of concurrent connections from the standby servers
+       (see <xref linkend="guc-max-wal-senders"> for details).
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       Enable WAL archiving in the primary server because we need to make a base
+       backup of it later (see <xref linkend="guc-archive-mode"> and
+       <xref linkend="guc-archive-command"> for details).
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       Start the <productname>PostgreSQL</> server on the primary.
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       Make a base backup of the primary server (see
+       <xref linkend="backup-base-backup">), and load this data onto the
+       standby. Note that all files present in <filename>pg_xlog</>
+       and <filename>pg_xlog/archive_status</> on the <emphasis>standby</>
+       server should be removed because they might be obsolete.
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       Set up WAL archiving, connections and authentication like the primary
+       server, because the standby server might work as a primary server after
+       failover. Ensure that your settings are consistent with the
+       <emphasis>future</> environment after the primary and the standby
+       server are interchanged by failover. If you're setting up the standby
+       server for e.g reporting purposes, with no plans to fail over to it,
+       configure the standby accordingly.
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       Create a recovery command file <filename>recovery.conf</> in the data
+       directory on the standby server.
+      </para>
+
+      <variablelist id="replication-config-settings" xreflabel="Replication Settings">
+       <varlistentry id="standby-mode" xreflabel="standby_mode">
+        <term><varname>standby_mode</varname> (<type>boolean</type>)</term>
+        <listitem>
+         <para>
+          Specifies whether to start the <productname>PostgreSQL</> server as
+          a standby. If this parameter is <literal>on</>, the streaming
+          replication is enabled and the standby server will try to connect
+          to the primary to receive and apply WAL records continuously. The
+          default is <literal>off</>, which allows only an archive recovery
+          without replication. So, streaming replication requires this
+          parameter to be explicitly set to <literal>on</>.
+         </para>
+        </listitem>
+       </varlistentry>
+       <varlistentry id="primary-conninfo" xreflabel="primary_conninfo">
+        <term><varname>primary_conninfo</varname> (<type>string</type>)</term>
+        <listitem>
+         <para>
+          Specifies a connection string which is used for the standby server
+          to connect with the primary. This string is in the same format as
+          described in <xref linkend="libpq-connect">. If any option is
+          unspecified in this string, then the corresponding environment
+          variable (see <xref linkend="libpq-envars">) is checked. If the
+          environment variable is not set either, then the indicated built-in
+          defaults are used.
+         </para>
+         <para>
+          The built-in replication requires that a host name (or host address)
+          or port number which the primary server listens on should be
+          specified in this string, respectively. Also ensure that a role with
+          the <literal>SUPERUSER</> and <literal>LOGIN</> privileges on the
+          primary is set (see
+          <xref linkend="streaming-replication-authentication">). Note that
+          the password needs to be set if the primary demands password
+          authentication.
+         </para>
+        </listitem>
+       </varlistentry>
+       <varlistentry id="trigger-file" xreflabel="trigger_file">
+        <term><varname>trigger_file</varname> (<type>string</type>)</term>
+        <listitem>
+         <para>
+          Specifies a trigger file whose presence activates the standby.
+          If no trigger file is specified, the standby never exits
+          recovery.
+         </para>
+        </listitem>
+       </varlistentry>
+      </variablelist>
+     </listitem>
+     <listitem>
+      <para>
+       Start the <productname>PostgreSQL</> server on the standby. The standby
+       server will go into recovery mode and proceeds to receive WAL records
+       from the primary and apply them continuously.
+      </para>
+     </listitem>
+     </orderedlist>
+    </para>
+   </sect3>
+   <sect3 id="streaming-replication-authentication">
+    <title>Authentication</title>
+    <para>
+     It's very important that the access privilege for replication are set
+     properly so that only trusted users can read the WAL stream, because it's
+     easy to extract serious information from it.
+    </para>
+    <para>
+     Only superuser is allowed to connect to the primary as the replication
+     standby. So a role with the <literal>SUPERUSER</> and <literal>LOGIN</>
+     privileges needs to be created in the primary.
+    </para>
+    <para>
+     Client authentication for replication is controlled by the
+     <filename>pg_hba.conf</> record specifying <literal>replication</> in the
+     <replaceable>database</> field. For example, if the standby is running on
+     host IP <literal>192.168.1.100</> and the superuser's name for replication
+     is <literal>foo</>, the administrator can add the following line to the
+     <filename>pg_hba.conf</> file on the primary.
+
+<programlisting>
+# Allow the user "foo" from host 192.168.1.100 to connect to the primary
+# as a replication standby if the user's password is correctly supplied.
+#
+# TYPE  DATABASE    USER        CIDR-ADDRESS          METHOD
+host    replication foo         192.168.1.100/32      md5
+</programlisting>
+    </para>
+    <para>
+     The host name and port number of the primary, user name to connect as,
+     and password are specified in the <filename>recovery.conf</> file or
+     the corresponding environment variable on the standby.
+     For example, if the primary is running on host IP <literal>192.168.1.50</>,
+     port <literal>5432</literal>, the superuser's name for replication is
+     <literal>foo</>, and the password is <literal>foopass</>, the administrator
+     can add the following line to the <filename>recovery.conf</> file on the
+     standby.
+
+<programlisting>
+# The standby connects to the primary that is running on host 192.168.1.50
+# and port 5432 as the user "foo" whose password is "foopass".
+primary_conninfo = 'host=192.168.1.50 port=5432 user=foo password=foopass'
+</programlisting>
+    </para>
+   </sect3>
   </sect2>
 
   <sect2 id="backup-incremental-updated">

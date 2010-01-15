@@ -30,7 +30,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/libpq/pqcomm.c,v 1.201 2010/01/10 14:16:07 mha Exp $
+ *	$PostgreSQL: pgsql/src/backend/libpq/pqcomm.c,v 1.202 2010/01/15 09:19:02 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -55,6 +55,7 @@
  *		pq_peekbyte		- peek at next byte from connection
  *		pq_putbytes		- send bytes to connection (not flushed until pq_flush)
  *		pq_flush		- flush pending output
+ *		pq_getbyte_if_available	- get a byte if available without blocking
  *
  * message-level I/O (and old-style-COPY-OUT cruft):
  *		pq_putmessage	- send a normal message (suppressed in COPY OUT mode)
@@ -813,6 +814,56 @@ pq_peekbyte(void)
 			return EOF;			/* Failed to recv data */
 	}
 	return (unsigned char) PqRecvBuffer[PqRecvPointer];
+}
+
+
+/* --------------------------------
+ *		pq_getbyte_if_available	- get a single byte from connection,
+ *			if available
+ *
+ * The received byte is stored in *c. Returns 1 if a byte was read, 0 if
+ * if no data was available, or EOF.
+ * --------------------------------
+ */
+int
+pq_getbyte_if_available(unsigned char *c)
+{
+	int r;
+
+	if (PqRecvPointer < PqRecvLength)
+	{
+		*c = PqRecvBuffer[PqRecvPointer++];
+		return 1;
+	}
+
+	/* Temporarily put the socket into non-blocking mode */
+	if (!pg_set_noblock(MyProcPort->sock))
+		ereport(ERROR,
+				(errmsg("couldn't put socket to non-blocking mode: %m")));
+	MyProcPort->noblock = true;
+	PG_TRY();
+	{
+		r = secure_read(MyProcPort, c, 1);
+	}
+	PG_CATCH();
+	{
+		/*
+		 * The rest of the backend code assumes the socket is in blocking
+		 * mode, so treat failure as FATAL.
+		 */
+		if (!pg_set_block(MyProcPort->sock))
+			ereport(FATAL,
+					(errmsg("couldn't put socket to blocking mode: %m")));
+		MyProcPort->noblock = false;
+		PG_RE_THROW();
+	}
+	PG_END_TRY();
+	if (!pg_set_block(MyProcPort->sock))
+		ereport(FATAL,
+				(errmsg("couldn't put socket to blocking mode: %m")));
+	MyProcPort->noblock = false;
+
+	return r;
 }
 
 /* --------------------------------

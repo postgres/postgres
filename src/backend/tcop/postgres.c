@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.581 2010/01/07 16:29:58 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.582 2010/01/15 09:19:04 heikki Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -56,6 +56,7 @@
 #include "parser/parser.h"
 #include "postmaster/autovacuum.h"
 #include "postmaster/postmaster.h"
+#include "replication/walsender.h"
 #include "rewrite/rewriteHandler.h"
 #include "storage/bufmgr.h"
 #include "storage/ipc.h"
@@ -3331,36 +3332,41 @@ PostgresMain(int argc, char *argv[], const char *username)
 	 * an issue for signals that are locally generated, such as SIGALRM and
 	 * SIGPIPE.)
 	 */
-	pqsignal(SIGHUP, SigHupHandler);	/* set flag to read config file */
-	pqsignal(SIGINT, StatementCancelHandler);	/* cancel current query */
-	pqsignal(SIGTERM, die);		/* cancel current query and exit */
-
-	/*
-	 * In a standalone backend, SIGQUIT can be generated from the keyboard
-	 * easily, while SIGTERM cannot, so we make both signals do die() rather
-	 * than quickdie().
-	 */
-	if (IsUnderPostmaster)
-		pqsignal(SIGQUIT, quickdie);	/* hard crash time */
+	if (am_walsender)
+		WalSndSignals();
 	else
-		pqsignal(SIGQUIT, die); /* cancel current query and exit */
-	pqsignal(SIGALRM, handle_sig_alarm);		/* timeout conditions */
+	{
+		pqsignal(SIGHUP, SigHupHandler);	/* set flag to read config file */
+		pqsignal(SIGINT, StatementCancelHandler);	/* cancel current query */
+		pqsignal(SIGTERM, die);		/* cancel current query and exit */
 
-	/*
-	 * Ignore failure to write to frontend. Note: if frontend closes
-	 * connection, we will notice it and exit cleanly when control next
-	 * returns to outer loop.  This seems safer than forcing exit in the midst
-	 * of output during who-knows-what operation...
-	 */
-	pqsignal(SIGPIPE, SIG_IGN);
-	pqsignal(SIGUSR1, procsignal_sigusr1_handler);
-	pqsignal(SIGUSR2, SIG_IGN);
-	pqsignal(SIGFPE, FloatExceptionHandler);
+		/*
+		 * In a standalone backend, SIGQUIT can be generated from the keyboard
+		 * easily, while SIGTERM cannot, so we make both signals do die() rather
+		 * than quickdie().
+		 */
+		if (IsUnderPostmaster)
+			pqsignal(SIGQUIT, quickdie);	/* hard crash time */
+		else
+			pqsignal(SIGQUIT, die); /* cancel current query and exit */
+		pqsignal(SIGALRM, handle_sig_alarm);		/* timeout conditions */
 
-	/*
-	 * Reset some signals that are accepted by postmaster but not by backend
-	 */
-	pqsignal(SIGCHLD, SIG_DFL); /* system() requires this on some platforms */
+		/*
+		 * Ignore failure to write to frontend. Note: if frontend closes
+		 * connection, we will notice it and exit cleanly when control next
+		 * returns to outer loop.  This seems safer than forcing exit in the midst
+		 * of output during who-knows-what operation...
+		 */
+		pqsignal(SIGPIPE, SIG_IGN);
+		pqsignal(SIGUSR1, procsignal_sigusr1_handler);
+		pqsignal(SIGUSR2, SIG_IGN);
+		pqsignal(SIGFPE, FloatExceptionHandler);
+
+		/*
+		 * Reset some signals that are accepted by postmaster but not by backend
+		 */
+		pqsignal(SIGCHLD, SIG_DFL); /* system() requires this on some platforms */
+	}
 
 	pqinitmask();
 
@@ -3455,6 +3461,10 @@ PostgresMain(int argc, char *argv[], const char *username)
 	 */
 	if (IsUnderPostmaster && Log_disconnections)
 		on_proc_exit(log_disconnections, 0);
+
+	/* If this is a WAL sender process, we're done with initialization. */
+	if (am_walsender)
+		proc_exit(WalSenderMain());
 
 	/*
 	 * process any libraries that should be preloaded at backend start (this

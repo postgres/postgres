@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.314 2010/01/06 03:04:00 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.315 2010/01/15 09:19:01 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -7044,10 +7044,10 @@ copy_relation_data(SMgrRelation src, SMgrRelation dst,
 	Page		page = (Page) buf;
 
 	/*
-	 * We need to log the copied data in WAL iff WAL archiving is enabled AND
-	 * it's not a temp rel.
+	 * We need to log the copied data in WAL iff WAL archiving/streaming is
+	 * enabled AND it's not a temp rel.
 	 */
-	use_wal = XLogArchivingActive() && !istemp;
+	use_wal = XLogIsNeeded() && !istemp;
 
 	nblocks = smgrnblocks(src, forkNum);
 

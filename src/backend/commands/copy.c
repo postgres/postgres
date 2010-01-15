@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.320 2010/01/02 16:57:37 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.321 2010/01/15 09:19:01 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1725,7 +1725,7 @@ CopyFrom(CopyState cstate)
 	/*----------
 	 * Check to see if we can avoid writing WAL
 	 *
-	 * If archive logging is not enabled *and* either
+	 * If archive logging/streaming is not enabled *and* either
 	 *	- table was created in same transaction as this COPY
 	 *	- data is being written to relfilenode created in this transaction
 	 * then we can skip writing WAL.  It's safe because if the transaction
@@ -1753,7 +1753,7 @@ CopyFrom(CopyState cstate)
 		cstate->rel->rd_newRelfilenodeSubid != InvalidSubTransactionId)
 	{
 		hi_options |= HEAP_INSERT_SKIP_FSM;
-		if (!XLogArchivingActive())
+		if (!XLogIsNeeded())
 			hi_options |= HEAP_INSERT_SKIP_WAL;
 	}
 

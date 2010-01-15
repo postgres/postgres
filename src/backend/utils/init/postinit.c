@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/init/postinit.c,v 1.200 2010/01/02 16:57:56 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/init/postinit.c,v 1.201 2010/01/15 09:19:04 heikki Exp $
  *
  *
  *-------------------------------------------------------------------------
@@ -36,6 +36,7 @@
 #include "pgstat.h"
 #include "postmaster/autovacuum.h"
 #include "postmaster/postmaster.h"
+#include "replication/walsender.h"
 #include "storage/bufmgr.h"
 #include "storage/fd.h"
 #include "storage/ipc.h"
@@ -446,6 +447,7 @@ BaseInit(void)
  * In bootstrap mode no parameters are used.  The autovacuum launcher process
  * doesn't use any parameters either, because it only goes far enough to be
  * able to read pg_database; it doesn't connect to any particular database.
+ * In walsender mode only username is used.
  *
  * As of PostgreSQL 8.2, we expect InitProcess() was already called, so we
  * already have a PGPROC struct ... but it's not completely filled in yet.
@@ -557,10 +559,10 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 	 * Set up the global variables holding database id and default tablespace.
 	 * But note we won't actually try to touch the database just yet.
 	 *
-	 * We take a shortcut in the bootstrap case, otherwise we have to look up
-	 * the db's entry in pg_database.
+	 * We take a shortcut in the bootstrap and walsender case, otherwise we
+	 * have to look up the db's entry in pg_database.
 	 */
-	if (bootstrap)
+	if (bootstrap || am_walsender)
 	{
 		MyDatabaseId = TemplateDbOid;
 		MyDatabaseTableSpace = DEFAULTTABLESPACE_OID;
@@ -623,7 +625,7 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 	 * AccessShareLock for such sessions and thereby not conflict against
 	 * CREATE DATABASE.
 	 */
-	if (!bootstrap)
+	if (!bootstrap && !am_walsender)
 		LockSharedObject(DatabaseRelationId, MyDatabaseId, 0,
 						 RowExclusiveLock);
 
@@ -632,7 +634,7 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 	 * If there was a concurrent DROP DATABASE, this ensures we will die
 	 * cleanly without creating a mess.
 	 */
-	if (!bootstrap)
+	if (!bootstrap && !am_walsender)
 	{
 		HeapTuple tuple;
 
@@ -652,7 +654,7 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 	 */
 	fullpath = GetDatabasePath(MyDatabaseId, MyDatabaseTableSpace);
 
-	if (!bootstrap)
+	if (!bootstrap && !am_walsender)
 	{
 		if (access(fullpath, F_OK) == -1)
 		{
@@ -727,7 +729,7 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 	 * database-access infrastructure is up.  (Also, it wants to know if the
 	 * user is a superuser, so the above stuff has to happen first.)
 	 */
-	if (!bootstrap)
+	if (!bootstrap && !am_walsender)
 		CheckMyDatabase(dbname, am_superuser);
 
 	/*
@@ -823,6 +825,10 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 
 	/* initialize client encoding */
 	InitializeClientEncoding();
+
+	/* reset the database for walsender */
+	if (am_walsender)
+		MyProc->databaseId = MyDatabaseId = InvalidOid;
 
 	/* report this backend in the PgBackendStatus array */
 	if (!bootstrap)

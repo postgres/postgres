@@ -20,8 +20,8 @@
 # "host" is either a plain or SSL-encrypted TCP/IP socket, "hostssl" is an
 # SSL-encrypted TCP/IP socket, and "hostnossl" is a plain TCP/IP socket.
 #
-# DATABASE can be "all", "sameuser", "samerole", a database name, or
-# a comma-separated list thereof.
+# DATABASE can be "all", "sameuser", "samerole", "replication",
+# a database name, or a comma-separated list thereof.
 #
 # USER can be "all", a user name, a group name prefixed with "+", or
 # a comma-separated list thereof.  In both the DATABASE and USER fields
@@ -47,9 +47,9 @@
 # for a list of which options are available for which authentication methods.
 #
 # Database and user names containing spaces, commas, quotes and other special
-# characters must be quoted. Quoting one of the keywords "all", "sameuser" or
-# "samerole" makes the name lose its special character, and just match a
-# database or username with that name.
+# characters must be quoted. Quoting one of the keywords "all", "sameuser",
+# "samerole" or "replication" makes the name lose its special character,
+# and just match a database or username with that name.
 #
 # This file is read on server startup and when the postmaster receives
 # a SIGHUP signal.  If you edit the file on a running system, you have

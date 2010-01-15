@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/protocol.sgml,v 1.76 2009/12/02 04:54:10 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/protocol.sgml,v 1.77 2010/01/15 09:18:59 heikki Exp $ -->
 
 <chapter id="protocol">
  <title>Frontend/Backend Protocol</title>
@@ -4140,6 +4140,66 @@ not line breaks.
 
 </sect1>
 
+<sect1 id="protocol-replication">
+<title>Streaming Replication Protocol</title>
+
+<para>
+To initiate streaming replication, the frontend sends the "replication"
+parameter in the startup message. This tells the backend to go into
+walsender mode, where a small set of replication commands can be issued
+instead of SQL statements. Only the simple query protocol can be used in
+walsender mode.
+
+The commands accepted in walsender mode are:
+
+<variablelist>
+  <varlistentry>
+    <term>IDENTIFY_SYSTEM</term>
+    <listitem>
+     <para>
+      Requests the server to idenfity itself. Server replies with a result
+      set of a single row, and two fields:
+
+      systemid: The unique system identifier identifying the cluster. This
+      can be used to check that the base backup used to initialize the
+      slave came from the same cluster.
+
+      timeline: Current TimelineID. Also used to check that the slave is
+      consistent with the master.
+     </para>
+    </listitem>
+  </varlistentry>
+
+  <varlistentry>
+    <term>START_REPLICATION XXX/XXX</term>
+    <listitem>
+     <para>
+      Instructs backend to start streaming WAL, starting at point XXX/XXX.
+      Server can reply with an error e.g if the requested piece of WAL has
+      already been recycled. On success, server responds with a
+      CopyOutResponse message, and backend starts to stream WAL as CopyData
+      messages.
+     </para>
+
+     <para>
+      The payload in each CopyData message consists of an XLogRecPtr,
+      indicating the starting point of the WAL in the message, immediately
+      followed by the WAL data itself.
+     </para>
+     <para>
+       A single WAL record is never split across two CopyData messages. When
+       a WAL record crosses a WAL page boundary, however, and is therefore
+       already split using continuation records, it can be split at the page
+       boundary. In other words, the first main WAL record and its
+       continuation records can be split across different CopyData messages.
+     </para>
+    </listitem>
+  </varlistentry>
+</variablelist>
+
+</para>
+
+</sect1>
 
 <sect1 id="protocol-changes">
 <title>Summary of Changes since Protocol 2.0</title>

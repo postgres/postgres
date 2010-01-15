@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/be-secure.c,v 1.95 2010/01/02 16:57:45 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/be-secure.c,v 1.96 2010/01/15 09:19:02 heikki Exp $
  *
  *	  Since the server static private key ($DataDir/server.key)
  *	  will normally be stored unencrypted so that the database
@@ -255,6 +255,8 @@ rloop:
 				break;
 			case SSL_ERROR_WANT_READ:
 			case SSL_ERROR_WANT_WRITE:
+				if (port->noblock)
+					return 0;
 #ifdef WIN32
 				pgwin32_waitforsinglesocket(SSL_get_fd(port->ssl),
 											(err == SSL_ERROR_WANT_READ) ?

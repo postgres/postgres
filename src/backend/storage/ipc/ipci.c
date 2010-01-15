@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/ipci.c,v 1.102 2010/01/02 16:57:51 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/ipci.c,v 1.103 2010/01/15 09:19:03 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,6 +25,8 @@
 #include "postmaster/autovacuum.h"
 #include "postmaster/bgwriter.h"
 #include "postmaster/postmaster.h"
+#include "replication/walreceiver.h"
+#include "replication/walsender.h"
 #include "storage/bufmgr.h"
 #include "storage/ipc.h"
 #include "storage/pg_shmem.h"
@@ -116,6 +118,8 @@ CreateSharedMemoryAndSemaphores(bool makePrivate, int port)
 		size = add_size(size, ProcSignalShmemSize());
 		size = add_size(size, BgWriterShmemSize());
 		size = add_size(size, AutoVacuumShmemSize());
+		size = add_size(size, WalSndShmemSize());
+		size = add_size(size, WalRcvShmemSize());
 		size = add_size(size, BTreeShmemSize());
 		size = add_size(size, SyncScanShmemSize());
 #ifdef EXEC_BACKEND
@@ -213,6 +217,8 @@ CreateSharedMemoryAndSemaphores(bool makePrivate, int port)
 	ProcSignalShmemInit();
 	BgWriterShmemInit();
 	AutoVacuumShmemInit();
+	WalSndShmemInit();
+	WalRcvShmemInit();
 
 	/*
 	 * Set up other modules that need some shared memory space

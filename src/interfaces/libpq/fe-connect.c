@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.382 2010/01/02 16:58:11 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.383 2010/01/15 09:19:10 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -226,6 +226,9 @@ static const PQconninfoOption PQconninfoOptions[] = {
 	{"gsslib", "PGGSSLIB", NULL, NULL,
 	"GSS-library", "", 7},		/* sizeof("gssapi") = 7 */
 #endif
+
+	{"replication", NULL, NULL, NULL,
+	 "Replication", "D", 5},
 
 	/* Terminating entry --- MUST BE LAST */
 	{NULL, NULL, NULL, NULL,
@@ -472,6 +475,8 @@ connectOptions1(PGconn *conn, const char *conninfo)
 	tmp = conninfo_getval(connOptions, "gsslib");
 	conn->gsslib = tmp ? strdup(tmp) : NULL;
 #endif
+	tmp = conninfo_getval(connOptions, "replication");
+	conn->replication = tmp ? strdup(tmp) : NULL;
 
 	/*
 	 * Free the option info - all is in conn now
@@ -2136,6 +2141,8 @@ freePGconn(PGconn *conn)
 		free(conn->fbappname);
 	if (conn->dbName)
 		free(conn->dbName);
+	if (conn->replication)
+		free(conn->replication);
 	if (conn->pguser)
 		free(conn->pguser);
 	if (conn->pgpass)

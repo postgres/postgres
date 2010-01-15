@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/interfaces/libpq/libpq-int.h,v 1.147 2010/01/02 16:58:12 momjian Exp $
+ * $PostgreSQL: pgsql/src/interfaces/libpq/libpq-int.h,v 1.148 2010/01/15 09:19:10 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -298,6 +298,7 @@ struct pg_conn
 	char	   *appname;		/* application name */
 	char	   *fbappname;		/* fallback application name */
 	char	   *dbName;			/* database name */
+	char	   *replication;	/* connect as the replication standby? */
 	char	   *pguser;			/* Postgres username and password, if any */
 	char	   *pgpass;
 	char	   *sslmode;		/* SSL mode (require,prefer,allow,disable) */

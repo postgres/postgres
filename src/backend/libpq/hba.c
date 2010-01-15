@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.194 2010/01/02 16:57:45 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.195 2010/01/15 09:19:02 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,6 +28,7 @@
 #include "libpq/ip.h"
 #include "libpq/libpq.h"
 #include "regex/regex.h"
+#include "replication/walsender.h"
 #include "storage/fd.h"
 #include "utils/acl.h"
 #include "utils/guc.h"
@@ -190,7 +191,8 @@ next_token(FILE *fp, char *buf, int bufsz)
 		(strcmp(start_buf, "all") == 0 ||
 		 strcmp(start_buf, "sameuser") == 0 ||
 		 strcmp(start_buf, "samegroup") == 0 ||
-		 strcmp(start_buf, "samerole") == 0))
+		 strcmp(start_buf, "samerole") == 0 ||
+		 strcmp(start_buf, "replication") == 0))
 	{
 		/* append newline to a magical keyword */
 		*buf++ = '\n';
@@ -514,6 +516,9 @@ check_db(const char *dbname, const char *role, Oid roleid, char *param_str)
 			if (is_member(roleid, dbname))
 				return true;
 		}
+		else if (strcmp(tok, "replication\n") == 0 &&
+				 am_walsender)
+			return true;
 		else if (strcmp(tok, dbname) == 0)
 			return true;
 	}

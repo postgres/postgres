@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/libpq/libpq.h,v 1.73 2010/01/10 14:16:08 mha Exp $
+ * $PostgreSQL: pgsql/src/include/libpq/libpq.h,v 1.74 2010/01/15 09:19:08 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,6 +57,7 @@ extern int	pq_getstring(StringInfo s);
 extern int	pq_getmessage(StringInfo s, int maxlen);
 extern int	pq_getbyte(void);
 extern int	pq_peekbyte(void);
+extern int	pq_getbyte_if_available(unsigned char *c);
 extern int	pq_putbytes(const char *s, size_t len);
 extern int	pq_flush(void);
 extern int	pq_putmessage(char msgtype, const char *s, size_t len);

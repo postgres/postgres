@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.243 2010/01/06 02:41:37 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.244 2010/01/15 09:18:58 heikki Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -1746,6 +1746,51 @@ archive_command = 'copy "%p" "C:\\server\\archivedir\\%f"'  # Windows
      </variablelist>
     </sect2>
 
+    <sect2 id="runtime-config-replication">
+     <title>Streaming Replication</title>
+
+     <para>
+      These settings control the behavior of the built-in
+      <firstterm>streaming replication</> feature.
+     </para>
+
+     <variablelist>
+      <varlistentry id="guc-max-wal-senders" xreflabel="max_wal_senders">
+       <term><varname>max_wal_senders</varname> (<type>integer</type>)</term>
+       <indexterm>
+        <primary><varname>max_wal_senders</> configuration parameter</primary>
+       </indexterm>
+       <listitem>
+       <para>
+        Specifies the maximum number of concurrent connections from standby
+        servers (i.e., the maximum number of simultaneously running WAL sender
+        processes). The default is zero. This parameter can only be set at
+        server start.
+       </para>
+       </listitem>
+      </varlistentry>
+      <varlistentry id="guc-wal-sender-delay" xreflabel="wal_sender_delay">
+       <term><varname>wal_sender_delay</varname> (<type>integer</type>)</term>
+       <indexterm>
+        <primary><varname>wal_sender_delay</> configuration parameter</primary>
+       </indexterm>
+       <listitem>
+       <para>
+        Specifies the delay between activity rounds for the WAL sender.
+        In each round the WAL sender sends any WAL accumulated since last
+        round to the standby server. It then sleeps for
+        <varname>wal_sender_delay</> milliseconds, and repeats. The default
+        value is 200 milliseconds (<literal>200ms</>).
+        Note that on many systems, the effective resolution of sleep delays is
+        10 milliseconds; setting <varname>wal_sender_delay</> to a value that
+        is not a multiple of 10 might have the same results as setting it to
+        the next higher multiple of 10. This parameter can only be set in the
+        <filename>postgresql.conf</> file or on the server command line.
+       </para>
+       </listitem>
+      </varlistentry>
+     </variablelist>
+    </sect2>
     <sect2 id="runtime-config-standby">
     <title>Standby Servers</title>
 

@@ -185,6 +185,12 @@
 #max_standby_delay = 30		# max acceptable standby lag (s) to help queries
 				# complete without conflict; -1 disables
 
+# - Replication -
+
+#max_wal_senders = 0		# max number of walsender processes
+#wal_sender_delay = 200ms	# 1-10000 milliseconds
+
+
 #------------------------------------------------------------------------------
 # QUERY TUNING
 #------------------------------------------------------------------------------
