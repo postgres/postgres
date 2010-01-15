@@ -30,7 +30,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/replication/walsender.c,v 1.1 2010/01/15 09:19:03 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/replication/walsender.c,v 1.2 2010/01/15 11:47:15 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -452,14 +452,13 @@ static void
 InitWalSnd(void)
 {
 	/* use volatile pointer to prevent code rearrangement */
-	volatile WalSndCtlData *walsndctl = WalSndCtl;
 	int		i;
 
 	/*
 	 * WalSndCtl should be set up already (we inherit this by fork() or
 	 * EXEC_BACKEND mechanism from the postmaster).
 	 */
-	Assert(walsndctl != NULL);
+	Assert(WalSndCtl != NULL);
 	Assert(MyWalSnd == NULL);
 
 	/*
