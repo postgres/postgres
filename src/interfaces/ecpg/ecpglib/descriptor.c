@@ -1,6 +1,6 @@
 /* dynamic SQL support routines
  *
- * $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/descriptor.c,v 1.34 2010/01/15 10:44:34 meskes Exp $
+ * $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/descriptor.c,v 1.35 2010/01/15 13:19:12 meskes Exp $
  */
 
 #define POSTGRES_ECPG_INTERNAL
@@ -739,14 +739,24 @@ ECPGdescribe(int line, int compat, bool input, const char *connection_name, cons
 
 	/* DESCRIBE INPUT is not yet supported */
 	if (input)
+	{
+		ecpg_raise(line, ECPG_UNSUPPORTED, ECPG_SQLSTATE_ECPG_INTERNAL_ERROR, "DESCRIBE INPUT");
 		return ret;
+	}
 
 	con = ecpg_get_connection(connection_name);
 	if (!con)
-		return false;
+	{
+		ecpg_raise(line, ECPG_NO_CONN, ECPG_SQLSTATE_CONNECTION_DOES_NOT_EXIST,
+				connection_name ? connection_name : ecpg_gettext("NULL"));
+		return ret;
+	}
 	prep = ecpg_find_prepared_statement(stmt_name, con, NULL);
 	if (!prep)
+	{
+		ecpg_raise(line, ECPG_INVALID_STMT, ECPG_SQLSTATE_INVALID_SQL_STATEMENT_NAME, stmt_name);
 		return ret;
+	}
 
 	va_start(args, stmt_name);
 
