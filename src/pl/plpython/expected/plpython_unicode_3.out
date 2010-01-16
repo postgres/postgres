@@ -25,12 +25,12 @@ return rv[0]["testvalue"]
 ' LANGUAGE plpythonu;
 SELECT unicode_return();
 ERROR:  PL/Python: could not convert Python Unicode object to PostgreSQL server encoding
-DETAIL:  exceptions.UnicodeEncodeError: 'ascii' codec can't encode character u'\x80' in position 0: ordinal not in range(128)
+DETAIL:  UnicodeEncodeError: 'ascii' codec can't encode character u'\x80' in position 0: ordinal not in range(128)
 CONTEXT:  while creating return value
 PL/Python function "unicode_return"
 INSERT INTO unicode_test (testvalue) VALUES ('test');
 ERROR:  PL/Python: could not convert Python Unicode object to PostgreSQL server encoding
-DETAIL:  exceptions.UnicodeEncodeError: 'ascii' codec can't encode character u'\x80' in position 0: ordinal not in range(128)
+DETAIL:  UnicodeEncodeError: 'ascii' codec can't encode character u'\x80' in position 0: ordinal not in range(128)
 CONTEXT:  while modifying trigger row
 PL/Python function "unicode_trigger"
 SELECT * FROM unicode_test;
@@ -42,7 +42,7 @@ SELECT unicode_plan1();
 WARNING:  PL/Python: plpy.Error: unrecognized error in PLy_spi_execute_plan
 CONTEXT:  PL/Python function "unicode_plan1"
 ERROR:  PL/Python: could not convert Python Unicode object to PostgreSQL server encoding
-DETAIL:  exceptions.UnicodeEncodeError: 'ascii' codec can't encode character u'\x80' in position 0: ordinal not in range(128)
+DETAIL:  UnicodeEncodeError: 'ascii' codec can't encode character u'\x80' in position 0: ordinal not in range(128)
 CONTEXT:  PL/Python function "unicode_plan1"
 SELECT unicode_plan2();
  unicode_plan2 

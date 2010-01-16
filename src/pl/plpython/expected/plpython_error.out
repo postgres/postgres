@@ -8,7 +8,7 @@ CREATE FUNCTION sql_syntax_error() RETURNS text
 'plpy.execute("syntax error")'
         LANGUAGE plpythonu;
 SELECT sql_syntax_error();
-WARNING:  PL/Python: <class 'plpy.SPIError'>: unrecognized error in PLy_spi_execute_query
+WARNING:  PL/Python: plpy.SPIError: unrecognized error in PLy_spi_execute_query
 CONTEXT:  PL/Python function "sql_syntax_error"
 ERROR:  syntax error at or near "syntax"
 LINE 1: syntax error
@@ -23,7 +23,7 @@ CREATE FUNCTION exception_index_invalid(text) RETURNS text
 	LANGUAGE plpythonu;
 SELECT exception_index_invalid('test');
 ERROR:  PL/Python: PL/Python function "exception_index_invalid" failed
-DETAIL:  <type 'exceptions.IndexError'>: list index out of range
+DETAIL:  IndexError: list index out of range
 CONTEXT:  PL/Python function "exception_index_invalid"
 /* check handling of nested exceptions
  */
@@ -33,7 +33,7 @@ CREATE FUNCTION exception_index_invalid_nested() RETURNS text
 return rv[0]'
 	LANGUAGE plpythonu;
 SELECT exception_index_invalid_nested();
-WARNING:  PL/Python: <class 'plpy.SPIError'>: unrecognized error in PLy_spi_execute_query
+WARNING:  PL/Python: plpy.SPIError: unrecognized error in PLy_spi_execute_query
 CONTEXT:  PL/Python function "exception_index_invalid_nested"
 ERROR:  function test5(unknown) does not exist
 LINE 1: SELECT test5('foo')
@@ -55,7 +55,7 @@ return None
 '
 	LANGUAGE plpythonu;
 SELECT invalid_type_uncaught('rick');
-WARNING:  PL/Python: <class 'plpy.SPIError'>: unrecognized error in PLy_spi_prepare
+WARNING:  PL/Python: plpy.SPIError: unrecognized error in PLy_spi_prepare
 CONTEXT:  PL/Python function "invalid_type_uncaught"
 ERROR:  type "test" does not exist
 CONTEXT:  PL/Python function "invalid_type_uncaught"
@@ -78,7 +78,7 @@ return None
 '
 	LANGUAGE plpythonu;
 SELECT invalid_type_caught('rick');
-WARNING:  PL/Python: <class 'plpy.SPIError'>: unrecognized error in PLy_spi_prepare
+WARNING:  PL/Python: plpy.SPIError: unrecognized error in PLy_spi_prepare
 CONTEXT:  PL/Python function "invalid_type_caught"
 ERROR:  type "test" does not exist
 CONTEXT:  PL/Python function "invalid_type_caught"
@@ -100,7 +100,7 @@ return None
 '
 	LANGUAGE plpythonu;
 SELECT invalid_type_reraised('rick');
-WARNING:  PL/Python: <class 'plpy.SPIError'>: unrecognized error in PLy_spi_prepare
+WARNING:  PL/Python: plpy.SPIError: unrecognized error in PLy_spi_prepare
 CONTEXT:  PL/Python function "invalid_type_reraised"
 ERROR:  type "test" does not exist
 CONTEXT:  PL/Python function "invalid_type_reraised"

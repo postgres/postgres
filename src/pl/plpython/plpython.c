@@ -1,7 +1,7 @@
 /**********************************************************************
  * plpython.c - python as a procedural language for PostgreSQL
  *
- *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.134 2009/12/15 22:59:54 petere Exp $
+ *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.135 2010/01/16 11:03:51 petere Exp $
  *
  *********************************************************************
  */
@@ -3453,10 +3453,12 @@ PLy_traceback(int *xlevel)
 	PyObject   *e,
 			   *v,
 			   *tb;
-	PyObject   *eob,
-			   *vob = NULL;
-	char	   *vstr,
-			   *estr;
+	PyObject   *e_type_o;
+	PyObject   *e_module_o;
+	char	   *e_type_s = NULL;
+	char	   *e_module_s = NULL;
+	PyObject   *vob = NULL;
+	char	   *vstr;
 	StringInfoData xstr;
 
 	/*
@@ -3476,23 +3478,39 @@ PLy_traceback(int *xlevel)
 	PyErr_NormalizeException(&e, &v, &tb);
 	Py_XDECREF(tb);
 
-	eob = PyObject_Str(e);
+	e_type_o = PyObject_GetAttrString(e, "__name__");
+	e_module_o = PyObject_GetAttrString(e, "__module__");
+	if (e_type_o)
+		e_type_s = PyString_AsString(e_type_o);
+	if (e_type_s)
+		e_module_s = PyString_AsString(e_module_o);
+
 	if (v && ((vob = PyObject_Str(v)) != NULL))
 		vstr = PyString_AsString(vob);
 	else
 		vstr = "unknown";
 
-	/*
-	 * I'm not sure what to do if eob is NULL here -- we can't call PLy_elog
-	 * because that function calls us, so we could end up with infinite
-	 * recursion.  I'm not even sure if eob could be NULL here -- would an
-	 * Assert() be more appropriate?
-	 */
-	estr = eob ? PyString_AsString(eob) : "unrecognized exception";
 	initStringInfo(&xstr);
-	appendStringInfo(&xstr, "%s: %s", estr, vstr);
+	if (!e_type_s || !e_module_s)
+	{
+		if (PyString_Check(e))
+			/* deprecated string exceptions */
+			appendStringInfoString(&xstr, PyString_AsString(e));
+		else
+			/* shouldn't happen */
+			appendStringInfoString(&xstr, "unrecognized exception");
+	}
+	/* mimics behavior of traceback.format_exception_only */
+	else if (strcmp(e_module_s, "builtins") == 0
+			 || strcmp(e_module_s, "__main__") == 0
+			 || strcmp(e_module_s, "exceptions") == 0)
+		appendStringInfo(&xstr, "%s", e_type_s);
+	else
+		appendStringInfo(&xstr, "%s.%s", e_module_s, e_type_s);
+	appendStringInfo(&xstr, ": %s", vstr);
 
-	Py_DECREF(eob);
+	Py_XDECREF(e_type_o);
+	Py_XDECREF(e_module_o);
 	Py_XDECREF(vob);
 	Py_XDECREF(v);
 
