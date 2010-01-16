@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/procarray.c,v 1.56 2010/01/16 10:05:50 sriggs Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/procarray.c,v 1.57 2010/01/16 17:17:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -135,8 +135,6 @@ static void DisplayXidCache(void);
 #endif   /* XIDCACHE_DEBUG */
 
 /* Primitives for KnownAssignedXids array handling for standby */
-static Size KnownAssignedXidsShmemSize(int size);
-static void KnownAssignedXidsInit(int size);
 static int  KnownAssignedXidsGet(TransactionId *xarray, TransactionId xmax);
 static int	KnownAssignedXidsGetAndSetXmin(TransactionId *xarray, TransactionId *xmin,
 											TransactionId xmax);
@@ -161,16 +159,19 @@ ProcArrayShmemSize(void)
 	size = add_size(size, mul_size(sizeof(PGPROC *), PROCARRAY_MAXPROCS));
 
 	/*
-	 * During recovery processing we have a data structure called KnownAssignedXids,
-	 * created in shared memory. Local data structures are also created in various
-	 * backends during GetSnapshotData(), TransactionIdIsInProgress() and
-	 * GetRunningTransactionData(). All of the main structures created in those
-	 * functions must be identically sized, since we may at times copy the whole
-	 * of the data structures around. We refer to this as TOTAL_MAX_CACHED_SUBXIDS.
+	 * During recovery processing we have a data structure called
+	 * KnownAssignedXids, created in shared memory. Local data structures are
+	 * also created in various backends during GetSnapshotData(),
+	 * TransactionIdIsInProgress() and GetRunningTransactionData(). All of the
+	 * main structures created in those functions must be identically sized,
+	 * since we may at times copy the whole of the data structures around. We
+	 * refer to this size as TOTAL_MAX_CACHED_SUBXIDS.
 	 */
 #define TOTAL_MAX_CACHED_SUBXIDS ((PGPROC_MAX_CACHED_SUBXIDS + 1) * PROCARRAY_MAXPROCS)
 	if (XLogRequestRecoveryConnections)
-		size = add_size(size, KnownAssignedXidsShmemSize(TOTAL_MAX_CACHED_SUBXIDS));
+		size = add_size(size,
+						hash_estimate_size(TOTAL_MAX_CACHED_SUBXIDS,
+										   sizeof(TransactionId)));
 
 	return size;
 }
@@ -186,8 +187,8 @@ CreateSharedProcArray(void)
 	/* Create or attach to the ProcArray shared structure */
 	procArray = (ProcArrayStruct *)
 		ShmemInitStruct("Proc Array",
-							mul_size(sizeof(PGPROC *), PROCARRAY_MAXPROCS),
-							&found);
+						mul_size(sizeof(PGPROC *), PROCARRAY_MAXPROCS),
+						&found);
 
 	if (!found)
 	{
@@ -197,9 +198,28 @@ CreateSharedProcArray(void)
 		/* Normal processing */
 		procArray->numProcs = 0;
 		procArray->maxProcs = PROCARRAY_MAXPROCS;
+		procArray->numKnownAssignedXids = 0;
+		procArray->maxKnownAssignedXids = TOTAL_MAX_CACHED_SUBXIDS;
+		procArray->lastOverflowedXid = InvalidTransactionId;
+	}
 
-		if (XLogRequestRecoveryConnections)
-			KnownAssignedXidsInit(TOTAL_MAX_CACHED_SUBXIDS);
+	if (XLogRequestRecoveryConnections)
+	{
+		/* Create or attach to the KnownAssignedXids hash table */
+		HASHCTL		info;
+
+		MemSet(&info, 0, sizeof(info));
+		info.keysize = sizeof(TransactionId);
+		info.entrysize = sizeof(TransactionId);
+		info.hash = tag_hash;
+
+		KnownAssignedXidsHash = ShmemInitHash("KnownAssignedXids Hash",
+											  TOTAL_MAX_CACHED_SUBXIDS,
+											  TOTAL_MAX_CACHED_SUBXIDS,
+											  &info,
+											  HASH_ELEM | HASH_FUNCTION);
+		if (!KnownAssignedXidsHash)
+			elog(FATAL, "could not initialize known assigned xids hash table");
 	}
 }
 
@@ -2290,36 +2310,6 @@ ExpireOldKnownAssignedTransactionIds(TransactionId xid)
  * having the standby process changes quickly so that it can provide
  * high availability. So we choose to implement as a hash table.
  */
-
-static Size
-KnownAssignedXidsShmemSize(int size)
-{
-	return hash_estimate_size(size, sizeof(TransactionId));
-}
-
-static void
-KnownAssignedXidsInit(int size)
-{
-	HASHCTL		info;
-
-	/* assume no locking is needed yet */
-
-	info.keysize = sizeof(TransactionId);
-	info.entrysize = sizeof(TransactionId);
-	info.hash = tag_hash;
-
-	KnownAssignedXidsHash = ShmemInitHash("KnownAssignedXids Hash",
-								  size, size,
-								  &info,
-								  HASH_ELEM | HASH_FUNCTION);
-
-	if (!KnownAssignedXidsHash)
-		elog(FATAL, "could not initialize known assigned xids hash table");
-
-	procArray->numKnownAssignedXids = 0;
-	procArray->maxKnownAssignedXids = TOTAL_MAX_CACHED_SUBXIDS;
-	procArray->lastOverflowedXid = InvalidTransactionId;
-}
 
 /*
  * Add xids into KnownAssignedXids.
