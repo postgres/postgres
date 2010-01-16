@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.337 2010/01/10 15:54:11 mha Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.338 2010/01/16 20:38:54 mha Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -2413,7 +2413,7 @@ createlang: language installation failed: ERROR:  could not load library "/opt/d
    <title>Cygwin</title>
 
    <indexterm zone="installation-notes-cygwin">
-    <primary>Cyginw</primary>
+    <primary>Cygwin</primary>
     <secondary>installation on</secondary>
    </indexterm>
 
