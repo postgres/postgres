@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/proc.c,v 1.212 2010/01/15 09:19:03 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/proc.c,v 1.213 2010/01/16 10:05:50 sriggs Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -324,7 +324,7 @@ InitProcess(void)
 	MyProc->waitProcLock = NULL;
 	for (i = 0; i < NUM_LOCK_PARTITIONS; i++)
 		SHMQueueInit(&(MyProc->myProcLocks[i]));
-	MyProc->recoveryConflictMode = 0;
+	MyProc->recoveryConflictPending = false;
 
 	/*
 	 * We might be reusing a semaphore that belonged to a failed process. So

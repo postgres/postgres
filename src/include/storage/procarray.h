@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/procarray.h,v 1.29 2010/01/10 15:44:28 sriggs Exp $
+ * $PostgreSQL: pgsql/src/include/storage/procarray.h,v 1.30 2010/01/16 10:05:56 sriggs Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,6 +15,7 @@
 #define PROCARRAY_H
 
 #include "storage/lock.h"
+#include "storage/procsignal.h"
 #include "storage/standby.h"
 #include "utils/snapshot.h"
 
@@ -58,8 +59,7 @@ extern VirtualTransactionId *GetCurrentVirtualXIDs(TransactionId limitXmin,
 					  int *nvxids);
 extern VirtualTransactionId *GetConflictingVirtualXIDs(TransactionId limitXmin,
 					Oid dbOid, bool skipExistingConflicts);
-extern pid_t CancelVirtualTransaction(VirtualTransactionId vxid,
-						 int cancel_mode);
+extern pid_t CancelVirtualTransaction(VirtualTransactionId vxid, ProcSignalReason sigmode);
 
 extern int	CountActiveBackends(void);
 extern int	CountDBBackends(Oid databaseid);

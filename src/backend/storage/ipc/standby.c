@@ -3,19 +3,15 @@
  * standby.c
  *	  Misc functions used in Hot Standby mode.
  *
- *	InitRecoveryTransactionEnvironment()
- *  ShutdownRecoveryTransactionEnvironment()
- *
- *  ResolveRecoveryConflictWithVirtualXIDs()
- *
  *  All functions for handling RM_STANDBY_ID, which relate to
  *  AccessExclusiveLocks and starting snapshots for Hot Standby mode.
+ *  Plus conflict recovery processing.
  *
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/standby.c,v 1.4 2010/01/14 11:08:02 sriggs Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/standby.c,v 1.5 2010/01/16 10:05:50 sriggs Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,7 +34,7 @@ int		vacuum_defer_cleanup_age;
 static List *RecoveryLockList;
 
 static void ResolveRecoveryConflictWithVirtualXIDs(VirtualTransactionId *waitlist,
-									   char *reason, int cancel_mode);
+									   ProcSignalReason reason);
 static void ResolveRecoveryConflictWithLock(Oid dbOid, Oid relOid);
 static void LogCurrentRunningXacts(RunningTransactions CurrRunningXacts);
 static void LogAccessExclusiveLocks(int nlocks, xl_standby_lock *locks);
@@ -162,16 +158,12 @@ WaitExceedsMaxStandbyDelay(void)
  * recovery processing. Judgement has already been passed on it within
  * a specific rmgr. Here we just issue the orders to the procs. The procs
  * then throw the required error as instructed.
- *
- * We may ask for a specific cancel_mode, typically ERROR or FATAL.
  */
 static void
 ResolveRecoveryConflictWithVirtualXIDs(VirtualTransactionId *waitlist,
-									   char *reason, int cancel_mode)
+									   ProcSignalReason reason)
 {
 	char		waitactivitymsg[100];
-
-	Assert(cancel_mode > 0);
 
 	while (VirtualTransactionIdIsValid(*waitlist))
 	{
@@ -206,12 +198,6 @@ ResolveRecoveryConflictWithVirtualXIDs(VirtualTransactionId *waitlist,
 					len = 100;
 				memcpy(waitactivitymsg, oldactivitymsg, len);
 
-				ereport(trace_recovery(DEBUG5),
-						(errmsg("virtual transaction %u/%u is blocking %s",
-								waitlist->backendId,
-								waitlist->localTransactionId,
-								reason)));
-
 				pgstat_report_waiting(true);
 
 				logged = true;
@@ -226,40 +212,14 @@ ResolveRecoveryConflictWithVirtualXIDs(VirtualTransactionId *waitlist,
 				 * Now find out who to throw out of the balloon.
 				 */
 				Assert(VirtualTransactionIdIsValid(*waitlist));
-				pid = CancelVirtualTransaction(*waitlist, cancel_mode);
+				pid = CancelVirtualTransaction(*waitlist, reason);
 
+				/*
+				 * Wait awhile for it to die so that we avoid flooding an
+				 * unresponsive backend when system is heavily loaded.
+				 */
 				if (pid != 0)
-				{
-					/*
-					 * Startup process debug messages
-					 */
-					switch (cancel_mode)
-					{
-						case CONFLICT_MODE_FATAL:
-							elog(trace_recovery(DEBUG1),
-								 "recovery disconnects session with pid %ld because of conflict with %s",
-								 (long) pid,
-								 reason);
-							break;
-						case CONFLICT_MODE_ERROR:
-							elog(trace_recovery(DEBUG1),
-								 "recovery cancels virtual transaction %u/%u pid %ld because of conflict with %s",
-								 waitlist->backendId,
-								 waitlist->localTransactionId,
-								 (long) pid,
-								 reason);
-							break;
-						default:
-							/* No conflict pending, so fall through */
-							break;
-					}
-
-					/*
-					 * Wait awhile for it to die so that we avoid flooding an
-					 * unresponsive backend when system is heavily loaded.
-					 */
 					pg_usleep(5000);
-				}
 			}
 		}
 
@@ -285,8 +245,7 @@ ResolveRecoveryConflictWithSnapshot(TransactionId latestRemovedXid)
 										 true);
 
 	ResolveRecoveryConflictWithVirtualXIDs(backends,
-										   "snapshot conflict",
-										   CONFLICT_MODE_ERROR);
+										   PROCSIG_RECOVERY_CONFLICT_SNAPSHOT);
 }
 
 void
@@ -317,8 +276,7 @@ ResolveRecoveryConflictWithTablespace(Oid tsid)
 												InvalidOid,
 												false);
 	ResolveRecoveryConflictWithVirtualXIDs(temp_file_users,
-										   "drop tablespace",
-										   CONFLICT_MODE_ERROR);
+										   PROCSIG_RECOVERY_CONFLICT_TABLESPACE);
 }
 
 void
@@ -379,8 +337,7 @@ ResolveRecoveryConflictWithLock(Oid dbOid, Oid relOid)
 		}
 
 		ResolveRecoveryConflictWithVirtualXIDs(backends,
-											   "exclusive lock",
-											   CONFLICT_MODE_ERROR);
+											   PROCSIG_RECOVERY_CONFLICT_LOCK);
 
 		if (LockAcquireExtended(&locktag, AccessExclusiveLock, true, true, false)
 											!= LOCKACQUIRE_NOT_AVAIL)

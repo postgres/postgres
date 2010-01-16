@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.280 2010/01/09 16:49:27 sriggs Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.281 2010/01/16 10:05:50 sriggs Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -313,8 +313,7 @@ IsTransactionState(void)
 /*
  *	IsAbortedTransactionBlockState
  *
- *	This returns true if we are currently running a query
- *	within an aborted transaction block.
+ *	This returns true if we are within an aborted transaction block.
  */
 bool
 IsAbortedTransactionBlockState(void)

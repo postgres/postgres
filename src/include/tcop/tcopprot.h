@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/tcop/tcopprot.h,v 1.102 2010/01/02 16:58:09 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/tcop/tcopprot.h,v 1.103 2010/01/16 10:05:59 sriggs Exp $
  *
  * OLD COMMENTS
  *	  This file was created so that other c files could get the two
@@ -21,6 +21,7 @@
 
 #include "executor/execdesc.h"
 #include "nodes/parsenodes.h"
+#include "storage/procsignal.h"
 #include "utils/guc.h"
 
 
@@ -64,6 +65,7 @@ extern void die(SIGNAL_ARGS);
 extern void quickdie(SIGNAL_ARGS);
 extern void StatementCancelHandler(SIGNAL_ARGS);
 extern void FloatExceptionHandler(SIGNAL_ARGS);
+extern void RecoveryConflictInterrupt(ProcSignalReason reason); /* called from SIGUSR1 handler */
 extern void prepare_for_client_read(void);
 extern void client_read_ended(void);
 extern const char *process_postgres_switches(int argc, char *argv[],

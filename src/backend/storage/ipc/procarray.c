@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/procarray.c,v 1.55 2010/01/10 15:44:28 sriggs Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/procarray.c,v 1.56 2010/01/16 10:05:50 sriggs Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -324,6 +324,7 @@ ProcArrayEndTransaction(PGPROC *proc, TransactionId latestXid)
 		/* must be cleared with xid/xmin: */
 		proc->vacuumFlags &= ~PROC_VACUUM_STATE_MASK;
 		proc->inCommit = false; /* be sure this is cleared in abort */
+		proc->recoveryConflictPending = false;
 
 		/* Clear the subtransaction-XID cache too while holding the lock */
 		proc->subxids.nxids = 0;
@@ -350,6 +351,7 @@ ProcArrayEndTransaction(PGPROC *proc, TransactionId latestXid)
 		/* must be cleared with xid/xmin: */
 		proc->vacuumFlags &= ~PROC_VACUUM_STATE_MASK;
 		proc->inCommit = false; /* be sure this is cleared in abort */
+		proc->recoveryConflictPending = false;
 
 		Assert(proc->subxids.nxids == 0);
 		Assert(proc->subxids.overflowed == false);
@@ -377,7 +379,7 @@ ProcArrayClearTransaction(PGPROC *proc)
 	proc->xid = InvalidTransactionId;
 	proc->lxid = InvalidLocalTransactionId;
 	proc->xmin = InvalidTransactionId;
-	proc->recoveryConflictMode = 0;
+	proc->recoveryConflictPending = false;
 
 	/* redundant, but just in case */
 	proc->vacuumFlags &= ~PROC_VACUUM_STATE_MASK;
@@ -1665,7 +1667,7 @@ GetConflictingVirtualXIDs(TransactionId limitXmin, Oid dbOid,
 		if (proc->pid == 0)
 			continue;
 
-		if (skipExistingConflicts && proc->recoveryConflictMode > 0)
+		if (skipExistingConflicts && proc->recoveryConflictPending)
 			continue;
 
 		if (!OidIsValid(dbOid) ||
@@ -1704,7 +1706,7 @@ GetConflictingVirtualXIDs(TransactionId limitXmin, Oid dbOid,
  * Returns pid of the process signaled, or 0 if not found.
  */
 pid_t
-CancelVirtualTransaction(VirtualTransactionId vxid, int cancel_mode)
+CancelVirtualTransaction(VirtualTransactionId vxid, ProcSignalReason sigmode)
 {
 	ProcArrayStruct *arrayP = procArray;
 	int			index;
@@ -1722,27 +1724,21 @@ CancelVirtualTransaction(VirtualTransactionId vxid, int cancel_mode)
 		if (procvxid.backendId == vxid.backendId &&
 			procvxid.localTransactionId == vxid.localTransactionId)
 		{
-			/*
-			 * Issue orders for the proc to read next time it receives SIGINT
-			 */
-			if (proc->recoveryConflictMode < cancel_mode)
-				proc->recoveryConflictMode = cancel_mode;
-
+			proc->recoveryConflictPending = true;
 			pid = proc->pid;
+			if (pid != 0)
+			{
+				/*
+				 * Kill the pid if it's still here. If not, that's what we wanted
+				 * so ignore any errors.
+				 */
+				(void) SendProcSignal(pid, sigmode, vxid.backendId);
+			}
 			break;
 		}
 	}
 
 	LWLockRelease(ProcArrayLock);
-
-	if (pid != 0)
-	{
-		/*
-		 * Kill the pid if it's still here. If not, that's what we wanted
-		 * so ignore any errors.
-		 */
-		kill(pid, SIGINT);
-	}
 
 	return pid;
 }
@@ -1834,6 +1830,7 @@ CancelDBBackends(Oid databaseid)
 {
 	ProcArrayStruct *arrayP = procArray;
 	int			index;
+	pid_t		pid = 0;
 
 	/* tell all backends to die */
 	LWLockAcquire(ProcArrayLock, LW_EXCLUSIVE);
@@ -1844,8 +1841,21 @@ CancelDBBackends(Oid databaseid)
 
 		if (proc->databaseId == databaseid)
 		{
-			proc->recoveryConflictMode = CONFLICT_MODE_FATAL;
-			kill(proc->pid, SIGINT);
+			VirtualTransactionId procvxid;
+
+			GET_VXID_FROM_PGPROC(procvxid, *proc);
+
+			proc->recoveryConflictPending = true;
+			pid = proc->pid;
+			if (pid != 0)
+			{
+				/*
+				 * Kill the pid if it's still here. If not, that's what we wanted
+				 * so ignore any errors.
+				 */
+				(void) SendProcSignal(pid, PROCSIG_RECOVERY_CONFLICT_DATABASE,
+										procvxid.backendId);
+			}
 		}
 	}
 
