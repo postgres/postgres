@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/xlog.h,v 1.96 2010/01/15 09:19:06 heikki Exp $
+ * $PostgreSQL: pgsql/src/include/access/xlog.h,v 1.97 2010/01/16 00:04:41 tgl Exp $
  */
 #ifndef XLOG_H
 #define XLOG_H
@@ -132,7 +132,7 @@ typedef struct XLogRecData
 	struct XLogRecData *next;	/* next struct in chain, or NULL */
 } XLogRecData;
 
-extern TimeLineID ThisTimeLineID;		/* current TLI */
+extern PGDLLIMPORT TimeLineID ThisTimeLineID;		/* current TLI */
 
 /*
  * Prior to 8.4, all activity during recovery was carried out by Startup
