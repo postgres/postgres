@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.232 2010/01/14 11:08:00 sriggs Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.233 2010/01/16 14:16:31 sriggs Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1944,7 +1944,15 @@ dbase_redo(XLogRecPtr lsn, XLogRecord *record)
 		dst_path = GetDatabasePath(xlrec->db_id, xlrec->tablespace_id);
 
 		if (InHotStandby)
+		{
+			/*
+			 * Lock database while we resolve conflicts to ensure that InitPostgres()
+			 * cannot fully re-execute concurrently. This avoids backends re-connecting
+			 * automatically to same database, which can happen in some cases.
+			 */
+			LockSharedObjectForSession(DatabaseRelationId, xlrec->db_id, 0, AccessExclusiveLock);
 			ResolveRecoveryConflictWithDatabase(xlrec->db_id);
+		}
 
 		/* Drop pages for this database that are in the shared buffer cache */
 		DropDatabaseBuffers(xlrec->db_id);
@@ -1960,6 +1968,17 @@ dbase_redo(XLogRecPtr lsn, XLogRecord *record)
 			ereport(WARNING,
 					(errmsg("some useless files may be left behind in old database directory \"%s\"",
 							dst_path)));
+
+		if (InHotStandby)
+		{
+			/*
+			 * Release locks prior to commit. XXX There is a race condition here that may allow
+			 * backends to reconnect, but the window for this is small because the gap between
+			 * here and commit is mostly fairly small and it is unlikely that people will be
+			 * dropping databases that we are trying to connect to anyway.
+			 */
+			UnlockSharedObjectForSession(DatabaseRelationId, xlrec->db_id, 0, AccessExclusiveLock);
+		}
 	}
 	else
 		elog(PANIC, "dbase_redo: unknown op code %u", info);
