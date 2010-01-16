@@ -28,13 +28,14 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/replication/walreceiver/walreceiver.c,v 1.1 2010/01/15 09:19:03 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/replication/walreceiver/walreceiver.c,v 1.2 2010/01/16 01:55:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
 #include <unistd.h>
+#include <sys/time.h>
 
 #include "access/xlog_internal.h"
 #include "libpq-fe.h"
