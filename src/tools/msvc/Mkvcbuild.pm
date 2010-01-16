@@ -3,7 +3,7 @@ package Mkvcbuild;
 #
 # Package that generates build files for msvc build
 #
-# $PostgreSQL: pgsql/src/tools/msvc/Mkvcbuild.pm,v 1.46 2010/01/11 14:16:18 adunstan Exp $
+# $PostgreSQL: pgsql/src/tools/msvc/Mkvcbuild.pm,v 1.47 2010/01/16 11:55:38 mha Exp $
 #
 use Carp;
 use Win32;
@@ -174,6 +174,10 @@ sub mkvcbuild
     $libpq->UseDef('src\interfaces\libpq\libpqdll.def');
     $libpq->ReplaceFile('src\interfaces\libpq\libpqrc.c','src\interfaces\libpq\libpq.rc');
     $libpq->AddReference($libpgport);
+
+    my $walreceiver = $solution->AddProject('walreceiver', 'dll', '', 'src\backend\replication\walreceiver');
+    $walreceiver->AddIncludeDir('src\interfaces\libpq');
+    $walreceiver->AddReference($postgres,$libpq);
 
     my $pgtypes =
       $solution->AddProject('libpgtypes','dll','interfaces','src\interfaces\ecpg\pgtypeslib');
