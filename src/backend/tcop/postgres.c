@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.583 2010/01/16 10:05:50 sriggs Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.584 2010/01/17 04:27:54 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -2867,22 +2867,14 @@ ProcessInterrupts(void)
 			ImmediateInterruptOK = false;	/* not idle anymore */
 			DisableNotifyInterrupt();
 			DisableCatchupInterrupt();
-
 			if (DoingCommandRead)
-			{
-				ProcDiePending = false;
-				QueryCancelPending = false;
 				ereport(FATAL,
 						(errcode(ERRCODE_ADMIN_SHUTDOWN),
 						 errmsg("terminating connection due to conflict with recovery")));
-			}
 			else
-			{
-				QueryCancelPending = false;
 				ereport(ERROR,
 						(errcode(ERRCODE_QUERY_CANCELED),
 						 errmsg("canceling statement due to conflict with recovery")));
-			}
 		}
 
 		/*
