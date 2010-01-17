@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/trigger.sgml,v 1.61 2009/11/23 21:41:20 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/trigger.sgml,v 1.62 2010/01/17 22:56:21 tgl Exp $ -->
 
  <chapter id="triggers">
   <title>Triggers</title>
@@ -506,7 +506,7 @@ typedef struct Trigger
     Oid         tgfoid;
     int16       tgtype;
     bool        tgenabled;
-    bool        tgisconstraint;
+    bool        tgisinternal;
     Oid         tgconstrrelid;
     Oid         tgconstrindid;
     Oid         tgconstraint;

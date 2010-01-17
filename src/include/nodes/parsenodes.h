@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.424 2010/01/15 22:36:35 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.425 2010/01/17 22:56:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1593,9 +1593,8 @@ typedef struct CreateTrigStmt
 	int16		events;			/* INSERT/UPDATE/DELETE/TRUNCATE */
 	List	   *columns;		/* column names, or NIL for all columns */
 	Node	   *whenClause;		/* qual expression, or NULL if none */
-
-	/* The following are used for constraint triggers (RI and unique checks) */
 	bool		isconstraint;	/* This is a constraint trigger */
+	/* The remaining fields are only used for constraint triggers */
 	bool		deferrable;		/* [NOT] DEFERRABLE */
 	bool		initdeferred;	/* INITIALLY {DEFERRED|IMMEDIATE} */
 	RangeVar   *constrrel;		/* opposite relation, if RI trigger */

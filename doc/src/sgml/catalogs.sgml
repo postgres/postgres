@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.217 2010/01/10 01:23:08 rhaas Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.218 2010/01/17 22:56:21 tgl Exp $ -->
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
  -->
@@ -1722,6 +1722,11 @@
   </para>
 
   <para>
+   User-defined constraint triggers (created with <command>CREATE CONSTRAINT
+   TRIGGER</>) also give rise to an entry in this table.
+  </para>
+
+  <para>
    Check constraints on domains are stored here, too.
   </para>
 
@@ -1764,6 +1769,7 @@
         <literal>f</> = foreign key constraint,
         <literal>p</> = primary key constraint,
         <literal>u</> = unique constraint,
+        <literal>t</> = constraint trigger,
         <literal>x</> = exclusion constraint
       </entry>
      </row>
@@ -1873,7 +1879,8 @@
       <entry><structfield>conkey</structfield></entry>
       <entry><type>int2[]</type></entry>
       <entry><literal><link linkend="catalog-pg-attribute"><structname>pg_attribute</structname></link>.attnum</></entry>
-      <entry>If a table constraint (including a foreign key), list of the constrained columns</entry>
+      <entry>If a table constraint (including foreign keys, but not constraint
+       triggers), list of the constrained columns</entry>
      </row>
 
      <row>
@@ -4826,17 +4833,11 @@
      </row>
 
      <row>
-      <entry><structfield>tgisconstraint</structfield></entry>
+      <entry><structfield>tgisinternal</structfield></entry>
       <entry><type>bool</type></entry>
       <entry></entry>
-      <entry>True if trigger is a <quote>constraint trigger</></entry>
-     </row>
-
-     <row>
-      <entry><structfield>tgconstrname</structfield></entry>
-      <entry><type>name</type></entry>
-      <entry></entry>
-      <entry>Constraint name, if a constraint trigger</entry>
+      <entry>True if trigger is internally generated (usually, to enforce
+       the constraint identified by <structfield>tgconstraint</>)</entry>
      </row>
 
      <row>
@@ -4857,7 +4858,7 @@
       <entry><structfield>tgconstraint</structfield></entry>
       <entry><type>oid</type></entry>
       <entry><literal><link linkend="catalog-pg-constraint"><structname>pg_constraint</structname></link>.oid</literal></entry>
-      <entry>The <structname>pg_constraint</> entry owning the trigger, if any</entry>
+      <entry>The <structname>pg_constraint</> entry associated with the trigger, if any</entry>
      </row>
 
      <row>
@@ -4919,13 +4920,12 @@
   <note>
    <para>
     When <structfield>tgconstraint</> is nonzero,
-    <structfield>tgisconstraint</> must be true, and
-    <structfield>tgconstrname</>, <structfield>tgconstrrelid</>,
-    <structfield>tgconstrindid</>,
-    <structfield>tgdeferrable</>, <structfield>tginitdeferred</> are redundant
-    with the referenced <structname>pg_constraint</> entry.  The reason we
-    keep these fields is that we support <quote>stand-alone</> constraint
-    triggers with no corresponding <structname>pg_constraint</> entry.
+    <structfield>tgconstrrelid</>, <structfield>tgconstrindid</>,
+    <structfield>tgdeferrable</>, and <structfield>tginitdeferred</> are
+    largely redundant with the referenced <structname>pg_constraint</> entry.
+    However, it is possible for a non-deferrable trigger to be associated
+    with a deferrable constraint: foreign key constraints can have some
+    deferrable and some non-deferrable triggers.
    </para>
   </note>
 

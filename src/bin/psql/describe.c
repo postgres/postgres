@@ -8,7 +8,7 @@
  *
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.233 2010/01/02 16:57:59 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.234 2010/01/17 22:56:23 tgl Exp $
  */
 #include "postgres_fe.h"
 
@@ -1849,7 +1849,7 @@ describeOneTableDetails(const char *schemaname,
 			PQclear(result);
 		}
 
-		/* print triggers (but ignore RI and unique constraint triggers) */
+		/* print triggers (but only user-defined triggers) */
 		if (tableinfo.hastriggers)
 		{
 			printfPQExpBuffer(&buf,
@@ -1859,7 +1859,9 @@ describeOneTableDetails(const char *schemaname,
 							  "FROM pg_catalog.pg_trigger t\n"
 							  "WHERE t.tgrelid = '%s' AND ",
 							  oid);
-			if (pset.sversion >= 80300)
+			if (pset.sversion >= 80500)
+				appendPQExpBuffer(&buf, "NOT t.tgisinternal");
+			else if (pset.sversion >= 80300)
 				appendPQExpBuffer(&buf, "t.tgconstraint = 0");
 			else
 				appendPQExpBuffer(&buf,

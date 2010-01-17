@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.315 2010/01/15 09:19:01 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.316 2010/01/17 22:56:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -5338,7 +5338,7 @@ validateForeignKeyConstraint(Constraint *fkconstraint,
 	trig.tgoid = InvalidOid;
 	trig.tgname = fkconstraint->conname;
 	trig.tgenabled = TRIGGER_FIRES_ON_ORIGIN;
-	trig.tgisconstraint = TRUE;
+	trig.tgisinternal = TRUE;
 	trig.tgconstrrelid = RelationGetRelid(pkrel);
 	trig.tgconstrindid = pkindOid;
 	trig.tgconstraint = constraintOid;
@@ -5399,7 +5399,7 @@ CreateFKCheckTrigger(RangeVar *myRel, Constraint *fkconstraint,
 	CreateTrigStmt *fk_trigger;
 
 	fk_trigger = makeNode(CreateTrigStmt);
-	fk_trigger->trigname = fkconstraint->conname;
+	fk_trigger->trigname = "RI_ConstraintTrigger";
 	fk_trigger->relation = myRel;
 	fk_trigger->before = false;
 	fk_trigger->row = true;
@@ -5424,8 +5424,7 @@ CreateFKCheckTrigger(RangeVar *myRel, Constraint *fkconstraint,
 	fk_trigger->constrrel = fkconstraint->pktable;
 	fk_trigger->args = NIL;
 
-	(void) CreateTrigger(fk_trigger, NULL, constraintOid, indexOid,
-						 "RI_ConstraintTrigger", false);
+	(void) CreateTrigger(fk_trigger, NULL, constraintOid, indexOid, true);
 
 	/* Make changes-so-far visible */
 	CommandCounterIncrement();
@@ -5463,7 +5462,7 @@ createForeignKeyTriggers(Relation rel, Constraint *fkconstraint,
 	 * DELETE action on the referenced table.
 	 */
 	fk_trigger = makeNode(CreateTrigStmt);
-	fk_trigger->trigname = fkconstraint->conname;
+	fk_trigger->trigname = "RI_ConstraintTrigger";
 	fk_trigger->relation = fkconstraint->pktable;
 	fk_trigger->before = false;
 	fk_trigger->row = true;
@@ -5506,8 +5505,7 @@ createForeignKeyTriggers(Relation rel, Constraint *fkconstraint,
 	}
 	fk_trigger->args = NIL;
 
-	(void) CreateTrigger(fk_trigger, NULL, constraintOid, indexOid,
-						 "RI_ConstraintTrigger", false);
+	(void) CreateTrigger(fk_trigger, NULL, constraintOid, indexOid, true);
 
 	/* Make changes-so-far visible */
 	CommandCounterIncrement();
@@ -5517,7 +5515,7 @@ createForeignKeyTriggers(Relation rel, Constraint *fkconstraint,
 	 * UPDATE action on the referenced table.
 	 */
 	fk_trigger = makeNode(CreateTrigStmt);
-	fk_trigger->trigname = fkconstraint->conname;
+	fk_trigger->trigname = "RI_ConstraintTrigger";
 	fk_trigger->relation = fkconstraint->pktable;
 	fk_trigger->before = false;
 	fk_trigger->row = true;
@@ -5560,8 +5558,7 @@ createForeignKeyTriggers(Relation rel, Constraint *fkconstraint,
 	}
 	fk_trigger->args = NIL;
 
-	(void) CreateTrigger(fk_trigger, NULL, constraintOid, indexOid,
-						 "RI_ConstraintTrigger", false);
+	(void) CreateTrigger(fk_trigger, NULL, constraintOid, indexOid, true);
 }
 
 /*

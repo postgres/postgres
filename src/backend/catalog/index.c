@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.329 2010/01/06 03:03:58 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.330 2010/01/17 22:56:21 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -825,7 +825,8 @@ index_create(Oid heapRelationId,
 									   -1);
 
 				trigger = makeNode(CreateTrigStmt);
-				trigger->trigname = pstrdup(indexRelationName);
+				trigger->trigname = (isprimary ? "PK_ConstraintTrigger" :
+									 "Unique_ConstraintTrigger");
 				trigger->relation = heapRel;
 				trigger->funcname = SystemFuncName("unique_key_recheck");
 				trigger->args = NIL;
@@ -840,9 +841,7 @@ index_create(Oid heapRelationId,
 				trigger->constrrel = NULL;
 
 				(void) CreateTrigger(trigger, NULL, conOid, indexRelationId,
-									 isprimary ? "PK_ConstraintTrigger" :
-									 "Unique_ConstraintTrigger",
-									 false);
+									 true);
 			}
 		}
 		else

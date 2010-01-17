@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.318 2010/01/02 16:57:55 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.319 2010/01/17 22:56:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -519,7 +519,7 @@ pg_get_triggerdef_worker(Oid trigid, bool pretty)
 
 	tgname = NameStr(trigrec->tgname);
 	appendStringInfo(&buf, "CREATE %sTRIGGER %s",
-					 trigrec->tgisconstraint ? "CONSTRAINT " : "",
+					 OidIsValid(trigrec->tgconstraint) ? "CONSTRAINT " : "",
 					 quote_identifier(tgname));
 	appendStringInfoString(&buf, pretty ? "\n    " : " ");
 
@@ -577,7 +577,7 @@ pg_get_triggerdef_worker(Oid trigid, bool pretty)
 					 generate_relation_name(trigrec->tgrelid, NIL));
 	appendStringInfoString(&buf, pretty ? "\n    " : " ");
 
-	if (trigrec->tgisconstraint)
+	if (OidIsValid(trigrec->tgconstraint))
 	{
 		if (OidIsValid(trigrec->tgconstrrelid))
 		{
@@ -1276,6 +1276,15 @@ pg_get_constraintdef_worker(Oid constraintId, bool fullCommand,
 
 				break;
 			}
+		case CONSTRAINT_TRIGGER:
+			/*
+			 * There isn't an ALTER TABLE syntax for creating a user-defined
+			 * constraint trigger, but it seems better to print something
+			 * than throw an error; if we throw error then this function
+			 * couldn't safely be applied to all rows of pg_constraint.
+			 */
+			appendStringInfo(&buf, "TRIGGER");
+			break;
 		case CONSTRAINT_EXCLUSION:
 			{
 				Oid		 indexOid = conForm->conindid;

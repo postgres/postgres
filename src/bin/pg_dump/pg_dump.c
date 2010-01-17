@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.566 2010/01/06 05:18:18 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.567 2010/01/17 22:56:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -4584,7 +4584,7 @@ getTriggers(TableInfo tblinfo[], int numTables)
 							  "tgenabled, tableoid, oid "
 							  "FROM pg_catalog.pg_trigger t "
 							  "WHERE tgrelid = '%u'::pg_catalog.oid "
-							  "AND tgconstraint = 0",
+							  "AND NOT tgisinternal",
 							  tbinfo->dobj.catId.oid);
 		}
 		else if (g_fout->remoteVersion >= 80300)
