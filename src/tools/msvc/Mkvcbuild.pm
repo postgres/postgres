@@ -3,7 +3,7 @@ package Mkvcbuild;
 #
 # Package that generates build files for msvc build
 #
-# $PostgreSQL: pgsql/src/tools/msvc/Mkvcbuild.pm,v 1.47 2010/01/16 11:55:38 mha Exp $
+# $PostgreSQL: pgsql/src/tools/msvc/Mkvcbuild.pm,v 1.48 2010/01/17 13:21:50 mha Exp $
 #
 use Carp;
 use Win32;
@@ -28,7 +28,7 @@ my $contrib_defines = {'refint' => 'REFINT_VERBOSE'};
 my @contrib_uselibpq = ('dblink', 'oid2name', 'pgbench', 'vacuumlo');
 my @contrib_uselibpgport = ('oid2name', 'pgbench', 'pg_standby', 'vacuumlo');
 my $contrib_extralibs = {'pgbench' => ['wsock32.lib']};
-my $contrib_extraincludes = {'tsearch2' => ['contrib/tsearch2']};
+my $contrib_extraincludes = {'tsearch2' => ['contrib/tsearch2'], 'dblink' => ['src/backend']};
 my $contrib_extrasource = {
     'cube' => ['cubescan.l','cubeparse.y'],
     'seg' => ['segscan.l','segparse.y']
