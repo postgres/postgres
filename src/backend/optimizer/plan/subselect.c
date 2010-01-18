@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/subselect.c,v 1.150.2.1 2009/07/06 02:16:14 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/subselect.c,v 1.150.2.2 2010/01/18 18:17:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1118,6 +1118,17 @@ convert_EXISTS_sublink_to_join(PlannerInfo *root, SubLink *sublink,
 	Relids		upper_varnos;
 
 	Assert(sublink->subLinkType == EXISTS_SUBLINK);
+
+	/*
+	 * Can't flatten if it contains WITH.  (We could arrange to pull up the
+	 * WITH into the parent query's cteList, but that risks changing the
+	 * semantics, since a WITH ought to be executed once per associated query
+	 * call.)  Note that convert_ANY_sublink_to_join doesn't have to reject
+	 * this case, since it just produces a subquery RTE that doesn't have to
+	 * get flattened into the parent query.
+	 */
+	if (subselect->cteList)
+		return NULL;
 
 	/*
 	 * Copy the subquery so we can modify it safely (see comments in
