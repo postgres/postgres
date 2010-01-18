@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/read.c,v 1.53 2010/01/02 16:57:46 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/read.c,v 1.54 2010/01/18 22:19:34 petere Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -289,7 +289,7 @@ nodeRead(char *token, int tok_len)
 
 	type = nodeTokenType(token, tok_len);
 
-	switch (type)
+	switch ((int) type)
 	{
 		case LEFT_BRACE:
 			result = parseNodeString();
