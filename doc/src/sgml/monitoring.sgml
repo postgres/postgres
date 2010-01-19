@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/monitoring.sgml,v 1.73 2009/11/29 18:14:30 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/monitoring.sgml,v 1.74 2010/01/19 14:11:30 mha Exp $ -->
 
 <chapter id="monitoring">
  <title>Monitoring Database Activity</title>
@@ -916,6 +916,17 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
       <entry>
        Reset all statistics counters for the current database to zero
        (requires superuser privileges)
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal><function>pg_stat_reset_shared</function>(text)</literal></entry>
+      <entry><type>void</type></entry>
+      <entry>
+       Reset some of the shared statistics counters for the database cluster to
+       zero (requires superuser privileges).  Calling
+       <literal>pg_stat_reset_shared('bgwriter')</> will zero all the values shown by
+       <structname>pg_stat_bgwriter</>.
       </entry>
      </row>
     </tbody>

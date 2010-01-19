@@ -5,7 +5,7 @@
  *
  *	Copyright (c) 2001-2010, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/include/pgstat.h,v 1.86 2010/01/02 16:58:00 momjian Exp $
+ *	$PostgreSQL: pgsql/src/include/pgstat.h,v 1.87 2010/01/19 14:11:31 mha Exp $
  * ----------
  */
 #ifndef PGSTAT_H
@@ -38,6 +38,7 @@ typedef enum StatMsgType
 	PGSTAT_MTYPE_TABPURGE,
 	PGSTAT_MTYPE_DROPDB,
 	PGSTAT_MTYPE_RESETCOUNTER,
+	PGSTAT_MTYPE_RESETSHAREDCOUNTER,
 	PGSTAT_MTYPE_AUTOVAC_START,
 	PGSTAT_MTYPE_VACUUM,
 	PGSTAT_MTYPE_ANALYZE,
@@ -92,6 +93,12 @@ typedef struct PgStat_TableCounts
 	PgStat_Counter t_blocks_fetched;
 	PgStat_Counter t_blocks_hit;
 } PgStat_TableCounts;
+
+/* Possible targets for resetting cluster-wide shared values */
+typedef enum PgStat_Shared_Reset_Target
+{
+    RESET_BGWRITER
+} PgStat_Shared_Reset_Target;
 
 
 /* ------------------------------------------------------------
@@ -260,6 +267,16 @@ typedef struct PgStat_MsgResetcounter
 	Oid			m_databaseid;
 } PgStat_MsgResetcounter;
 
+/* ----------
+ * PgStat_MsgResetsharedcounter	Sent by the backend to tell the collector
+ *								to reset a shared counter
+ * ----------
+ */
+typedef struct PgStat_MsgResetsharedcounter
+{
+	PgStat_MsgHdr m_hdr;
+	PgStat_Shared_Reset_Target m_resettarget;
+} PgStat_MsgResetsharedcounter;
 
 /* ----------
  * PgStat_MsgAutovacStart		Sent by the autovacuum daemon to signal
@@ -414,6 +431,7 @@ typedef union PgStat_Msg
 	PgStat_MsgTabpurge msg_tabpurge;
 	PgStat_MsgDropdb msg_dropdb;
 	PgStat_MsgResetcounter msg_resetcounter;
+	PgStat_MsgResetsharedcounter msg_resetsharedcounter;
 	PgStat_MsgAutovacStart msg_autovacuum;
 	PgStat_MsgVacuum msg_vacuum;
 	PgStat_MsgAnalyze msg_analyze;
@@ -635,6 +653,7 @@ extern void pgstat_drop_database(Oid databaseid);
 
 extern void pgstat_clear_snapshot(void);
 extern void pgstat_reset_counters(void);
+extern void pgstat_reset_shared_counters(const char *);
 
 extern void pgstat_report_autovac(Oid dboid);
 extern void pgstat_report_vacuum(Oid tableoid, bool shared, bool adopt_counts,

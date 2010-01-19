@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/pgstatfuncs.c,v 1.57 2010/01/02 16:57:54 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/pgstatfuncs.c,v 1.58 2010/01/19 14:11:31 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -78,6 +78,7 @@ extern Datum pg_stat_get_buf_alloc(PG_FUNCTION_ARGS);
 
 extern Datum pg_stat_clear_snapshot(PG_FUNCTION_ARGS);
 extern Datum pg_stat_reset(PG_FUNCTION_ARGS);
+extern Datum pg_stat_reset_shared(PG_FUNCTION_ARGS);
 
 /* Global bgwriter statistics, from bgwriter.c */
 extern PgStat_MsgBgWriter bgwriterStats;
@@ -1105,6 +1106,17 @@ Datum
 pg_stat_reset(PG_FUNCTION_ARGS)
 {
 	pgstat_reset_counters();
+
+	PG_RETURN_VOID();
+}
+
+/* Reset some shared cluster-wide counters */
+Datum
+pg_stat_reset_shared(PG_FUNCTION_ARGS)
+{
+	char	*target = text_to_cstring(PG_GETARG_TEXT_PP(0));
+
+	pgstat_reset_shared_counters(target);
 
 	PG_RETURN_VOID();
 }
