@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.496 2010/01/15 09:18:58 heikki Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.497 2010/01/19 05:50:18 tgl Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -13173,12 +13173,12 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
         </entry>
        <entry><type>text</type></entry>
        <entry>Get last transaction log location received and synced to disk during
-              streaming recovery. If streaming recovery is still in progress
-              this will increase monotonically. If streaming recovery has completed
-              then this value will remain static at the value of the last WAL record
-              received and synced to disk during that recovery. When the server has
-              been started without a streaming recovery then the return value will be
-              InvalidXLogRecPtr (0/0).
+        streaming recovery. If streaming recovery is still in progress
+        this will increase monotonically. If streaming recovery has completed
+        then this value will remain static at the value of the last WAL record
+        received and synced to disk during that recovery. When the server has
+        been started without a streaming recovery then the return value will be
+        InvalidXLogRecPtr (0/0).
        </entry>
       </row>
       <row>
@@ -13187,11 +13187,11 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
         </entry>
        <entry><type>text</type></entry>
        <entry>Get last transaction log location replayed during recovery.
-              If recovery is still in progress this will increase monotonically.
-              If recovery has completed then this value will remain static at
-              the value of the last WAL record applied during that recovery.
-              When the server has been started normally without a recovery
-              then the return value will be InvalidXLogRecPtr (0/0).
+        If recovery is still in progress this will increase monotonically.
+        If recovery has completed then this value will remain static at
+        the value of the last WAL record applied during that recovery.
+        When the server has been started normally without a recovery
+        then the return value will be InvalidXLogRecPtr (0/0).
        </entry>
       </row>
      </tbody>
@@ -13207,19 +13207,25 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
     <primary>pg_column_size</primary>
    </indexterm>
    <indexterm>
+    <primary>pg_total_relation_size</primary>
+   </indexterm>
+   <indexterm>
+    <primary>pg_table_size</primary>
+   </indexterm>
+   <indexterm>
+    <primary>pg_indexes_size</primary>
+   </indexterm>
+   <indexterm>
     <primary>pg_database_size</primary>
+   </indexterm>
+   <indexterm>
+    <primary>pg_tablespace_size</primary>
    </indexterm>
    <indexterm>
     <primary>pg_relation_size</primary>
    </indexterm>
    <indexterm>
     <primary>pg_size_pretty</primary>
-   </indexterm>
-   <indexterm>
-    <primary>pg_tablespace_size</primary>
-   </indexterm>
-   <indexterm>
-    <primary>pg_total_relation_size</primary>
    </indexterm>
 
    <table id="functions-admin-dbsize">
@@ -13238,6 +13244,37 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
       </row>
       <row>
        <entry>
+        <literal><function>pg_total_relation_size</function>(<type>regclass</type>)</literal>
+        </entry>
+       <entry><type>bigint</type></entry>
+       <entry>
+        Total disk space used by the table with the specified OID or name,
+        including all indexes and <acronym>TOAST</> data
+       </entry>
+      </row>
+      <row>
+       <entry>
+        <literal><function>pg_table_size</function>(<type>regclass</type>)</literal>
+        </entry>
+       <entry><type>bigint</type></entry>
+       <entry>
+        Disk space used by the table with the specified OID or name,
+        excluding indexes (but including TOAST, free space map, and visibility
+        map)
+       </entry>
+      </row>
+      <row>
+       <entry>
+        <literal><function>pg_indexes_size</function>(<type>regclass</type>)</literal>
+        </entry>
+       <entry><type>bigint</type></entry>
+       <entry>
+        Total disk space used by indexes attached to the table with the
+        specified OID or name
+       </entry>
+      </row>
+      <row>
+       <entry>
         <literal><function>pg_database_size</function>(<type>oid</type>)</literal>
         </entry>
        <entry><type>bigint</type></entry>
@@ -13249,6 +13286,20 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
         </entry>
        <entry><type>bigint</type></entry>
        <entry>Disk space used by the database with the specified name</entry>
+      </row>
+      <row>
+       <entry>
+        <literal><function>pg_tablespace_size</function>(<type>oid</type>)</literal>
+        </entry>
+       <entry><type>bigint</type></entry>
+       <entry>Disk space used by the tablespace with the specified OID</entry>
+      </row>
+      <row>
+       <entry>
+        <literal><function>pg_tablespace_size</function>(<type>name</type>)</literal>
+        </entry>
+       <entry><type>bigint</type></entry>
+       <entry>Disk space used by the tablespace with the specified name</entry>
       </row>
       <row>
        <entry>
@@ -13277,30 +13328,6 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
        <entry><type>text</type></entry>
        <entry>Converts a size in bytes into a human-readable format with size units</entry>
       </row>
-      <row>
-       <entry>
-        <literal><function>pg_tablespace_size</function>(<type>oid</type>)</literal>
-        </entry>
-       <entry><type>bigint</type></entry>
-       <entry>Disk space used by the tablespace with the specified OID</entry>
-      </row>
-      <row>
-       <entry>
-        <literal><function>pg_tablespace_size</function>(<type>name</type>)</literal>
-        </entry>
-       <entry><type>bigint</type></entry>
-       <entry>Disk space used by the tablespace with the specified name</entry>
-      </row>
-      <row>
-       <entry>
-        <literal><function>pg_total_relation_size</function>(<type>regclass</type>)</literal>
-        </entry>
-       <entry><type>bigint</type></entry>
-       <entry>
-        Total disk space used by the table with the specified OID or name,
-        including indexes and <acronym>TOAST</> data
-       </entry>
-      </row>
      </tbody>
     </tgroup>
    </table>
@@ -13311,6 +13338,26 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
    </para>
 
    <para>
+    <function>pg_total_relation_size</> accepts the OID or name of a
+    table or toast table, and returns the total on-disk space used for
+    that table, including all associated indexes.  This function is
+    equivalent to <function>pg_table_size</function>
+    <literal>+</> <function>pg_indexes_size</function>.
+   </para>
+
+   <para>
+    <function>pg_table_size</> accepts the OID or name of a table and
+    returns the disk space needed for that table, exclusive of indexes.
+    (TOAST space, free space map, and visibility map are included.)
+   </para>
+
+   <para>
+    <function>pg_indexes_size</> accepts the OID or name of a table and
+    returns the total disk space used by all the indexes attached to that
+    table.
+   </para>
+
+   <para>
     <function>pg_database_size</function> and <function>pg_tablespace_size</>
     accept the OID or name of a database or tablespace, and return the total
     disk space used therein.
@@ -13318,26 +13365,23 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
 
    <para>
     <function>pg_relation_size</> accepts the OID or name of a table, index or
-    toast table, and returns the size in bytes. Specifying
+    toast table, and returns the on-disk size in bytes. Specifying
     <literal>'main'</literal> or leaving out the second argument returns the
     size of the main data fork of the relation. Specifying
     <literal>'fsm'</literal> returns the size of the
     Free Space Map (see <xref linkend="storage-fsm">) associated with the
     relation. Specifying <literal>'vm'</literal> returns the size of the
     Visibility Map (see <xref linkend="storage-vm">) associated with the
-    relation.
+    relation.  Note that this function shows the size of only one fork;
+    for most purposes it is more convenient to use the higher-level
+    functions <function>pg_total_relation_size</> or
+    <function>pg_table_size</>.
    </para>
 
    <para>
     <function>pg_size_pretty</> can be used to format the result of one of
     the other functions in a human-readable way, using kB, MB, GB or TB as
     appropriate.
-   </para>
-
-   <para>
-    <function>pg_total_relation_size</> accepts the OID or name of a
-    table or toast table, and returns the size in bytes of the data
-    and all associated indexes and toast tables.
    </para>
 
    <para>

@@ -5,7 +5,7 @@
  * Copyright (c) 2002-2010, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/dbsize.c,v 1.26 2010/01/12 02:42:52 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/dbsize.c,v 1.27 2010/01/19 05:50:18 tgl Exp $
  *
  */
 
@@ -246,7 +246,7 @@ pg_tablespace_size_name(PG_FUNCTION_ARGS)
 
 
 /*
- * calculate size of a relation
+ * calculate size of (one fork of) a relation
  */
 static int64
 calculate_relation_size(RelFileNode *rfn, ForkNumber forknum)
@@ -302,54 +302,148 @@ pg_relation_size(PG_FUNCTION_ARGS)
 	PG_RETURN_INT64(size);
 }
 
-
 /*
- *	Compute the on-disk size of files for the relation according to the
- *	stat function, including heap data, index data, and toast data.
+ * Calculate total on-disk size of a TOAST relation, including its index.
+ * Must not be applied to non-TOAST relations.
  */
 static int64
-calculate_total_relation_size(Oid Relid)
+calculate_toast_table_size(Oid toastrelid)
 {
-	Relation	heapRel;
-	Oid			toastOid;
-	int64		size;
-	ListCell   *cell;
-	ForkNumber	forkNum;
+	int64      size = 0;
+	Relation   toastRel;
+	Relation   toastIdxRel;
+	ForkNumber forkNum;
 
-	heapRel = relation_open(Relid, AccessShareLock);
-	toastOid = heapRel->rd_rel->reltoastrelid;
+	toastRel = relation_open(toastrelid, AccessShareLock);
 
-	/* Get the heap size */
-	size = 0;
+	/* toast heap size, including FSM and VM size */
 	for (forkNum = 0; forkNum <= MAX_FORKNUM; forkNum++)
-		size += calculate_relation_size(&(heapRel->rd_node), forkNum);
+		size += calculate_relation_size(&(toastRel->rd_node), forkNum);
 
-	/* Include any dependent indexes */
-	if (heapRel->rd_rel->relhasindex)
+	/* toast index size, including FSM and VM size */
+	toastIdxRel = relation_open(toastRel->rd_rel->reltoastidxid, AccessShareLock);
+	for (forkNum = 0; forkNum <= MAX_FORKNUM; forkNum++)
+		size += calculate_relation_size(&(toastIdxRel->rd_node), forkNum);
+
+	relation_close(toastIdxRel, AccessShareLock);
+	relation_close(toastRel, AccessShareLock);
+
+	return size;
+}
+
+/*
+ * Calculate total on-disk size of a given table,
+ * including FSM and VM, plus TOAST table if any.
+ * Indexes other than the TOAST table's index are not included.
+ *
+ * Note that this also behaves sanely if applied to an index or toast table;
+ * those won't have attached toast tables, but they can have multiple forks.
+ */
+static int64
+calculate_table_size(Oid relOid)
+{
+	int64      size = 0;
+	Relation   rel;
+	ForkNumber forkNum;
+
+	rel = relation_open(relOid, AccessShareLock);
+
+	/*
+	 * heap size, including FSM and VM
+	 */
+	for (forkNum = 0; forkNum <= MAX_FORKNUM; forkNum++)
+		size += calculate_relation_size(&(rel->rd_node), forkNum);
+
+	/*
+	 * Size of toast relation
+	 */
+	if (OidIsValid(rel->rd_rel->reltoastrelid))
+		size += calculate_toast_table_size(rel->rd_rel->reltoastrelid);
+
+	relation_close(rel, AccessShareLock);
+
+	return size;
+}
+
+/*
+ * Calculate total on-disk size of all indexes attached to the given table.
+ *
+ * Can be applied safely to an index, but you'll just get zero.
+ */
+static int64
+calculate_indexes_size(Oid relOid)
+{
+	int64    size = 0;
+	Relation rel;
+
+	rel = relation_open(relOid, AccessShareLock);
+
+	/*
+	 * Aggregate all indexes on the given relation
+	 */
+	if (rel->rd_rel->relhasindex)
 	{
-		List	   *index_oids = RelationGetIndexList(heapRel);
+		List	 *index_oids = RelationGetIndexList(rel);
+		ListCell *cell;
 
 		foreach(cell, index_oids)
 		{
 			Oid			idxOid = lfirst_oid(cell);
-			Relation	iRel;
+			Relation	idxRel;
+			ForkNumber  forkNum;
 
-			iRel = relation_open(idxOid, AccessShareLock);
+			idxRel = relation_open(idxOid, AccessShareLock);
 
 			for (forkNum = 0; forkNum <= MAX_FORKNUM; forkNum++)
-				size += calculate_relation_size(&(iRel->rd_node), forkNum);
+				size += calculate_relation_size(&(idxRel->rd_node), forkNum);
 
-			relation_close(iRel, AccessShareLock);
+			relation_close(idxRel, AccessShareLock);
 		}
 
 		list_free(index_oids);
 	}
 
-	/* Recursively include toast table (and index) size */
-	if (OidIsValid(toastOid))
-		size += calculate_total_relation_size(toastOid);
+	relation_close(rel, AccessShareLock);
 
-	relation_close(heapRel, AccessShareLock);
+	return size;
+}
+
+Datum
+pg_table_size(PG_FUNCTION_ARGS)
+{
+	Oid			relOid = PG_GETARG_OID(0);
+
+	PG_RETURN_INT64(calculate_table_size(relOid));
+}
+
+Datum
+pg_indexes_size(PG_FUNCTION_ARGS)
+{
+	Oid			relOid = PG_GETARG_OID(0);
+
+	PG_RETURN_INT64(calculate_indexes_size(relOid));
+}
+
+/*
+ *	Compute the on-disk size of all files for the relation,
+ *	including heap data, index data, toast data, FSM, VM.
+ */
+static int64
+calculate_total_relation_size(Oid Relid)
+{
+	int64		size;
+
+	/*
+	 * Aggregate the table size, this includes size of
+	 * the heap, toast and toast index with free space
+	 * and visibility map
+	 */
+	size = calculate_table_size(Relid);
+
+	/*
+	 * Add size of all attached indexes as well
+	 */
+	size += calculate_indexes_size(Relid);
 
 	return size;
 }

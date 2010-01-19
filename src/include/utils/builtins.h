@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/builtins.h,v 1.343 2010/01/02 16:58:10 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/builtins.h,v 1.344 2010/01/19 05:50:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -433,6 +433,8 @@ extern Datum pg_database_size_name(PG_FUNCTION_ARGS);
 extern Datum pg_relation_size(PG_FUNCTION_ARGS);
 extern Datum pg_total_relation_size(PG_FUNCTION_ARGS);
 extern Datum pg_size_pretty(PG_FUNCTION_ARGS);
+extern Datum pg_table_size(PG_FUNCTION_ARGS);
+extern Datum pg_indexes_size(PG_FUNCTION_ARGS);
 
 /* genfile.c */
 extern Datum pg_stat_file(PG_FUNCTION_ARGS);
