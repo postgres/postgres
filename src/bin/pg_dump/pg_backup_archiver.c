@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.177 2009/12/14 00:39:10 itagaki Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.178 2010/01/19 18:39:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -134,7 +134,8 @@ static bool has_lock_conflicts(TocEntry *te1, TocEntry *te2);
 static void repoint_table_dependencies(ArchiveHandle *AH,
 						   DumpId tableId, DumpId tableDataId);
 static void identify_locking_dependencies(TocEntry *te,
-							  TocEntry **tocsByDumpId);
+							  TocEntry **tocsByDumpId,
+							  DumpId maxDumpId);
 static void reduce_dependencies(ArchiveHandle *AH, TocEntry *te,
 								TocEntry *ready_list);
 static void mark_create_done(ArchiveHandle *AH, TocEntry *te);
@@ -3091,6 +3092,10 @@ restore_toc_entries_parallel(ArchiveHandle *AH)
 	if (AH->ClonePtr == NULL || AH->ReopenPtr == NULL)
 		die_horribly(AH, modulename, "parallel restore is not supported with this archive file format\n");
 
+	/* doesn't work if the archive represents dependencies as OIDs, either */
+	if (AH->version < K_VERS_1_8)
+		die_horribly(AH, modulename, "parallel restore is not supported with archives made by pre-8.0 pg_dump\n");
+
 	slots = (ParallelSlot *) calloc(sizeof(ParallelSlot), n_slots);
 
 	/* Adjust dependency information */
@@ -3649,6 +3654,7 @@ fix_dependencies(ArchiveHandle *AH)
 {
 	TocEntry  **tocsByDumpId;
 	TocEntry   *te;
+	DumpId		maxDumpId;
 	int			i;
 
 	/*
@@ -3656,10 +3662,15 @@ fix_dependencies(ArchiveHandle *AH)
 	 * indexes the TOC entries by dump ID, rather than searching the TOC list
 	 * repeatedly.	Entries for dump IDs not present in the TOC will be NULL.
 	 *
+	 * NOTE: because maxDumpId is just the highest dump ID defined in the
+	 * archive, there might be dependencies for IDs > maxDumpId.  All uses
+	 * of this array must guard against out-of-range dependency numbers.
+	 *
 	 * Also, initialize the depCount fields, and make sure all the TOC items
 	 * are marked as not being in any parallel-processing list.
 	 */
-	tocsByDumpId = (TocEntry **) calloc(AH->maxDumpId, sizeof(TocEntry *));
+	maxDumpId = AH->maxDumpId;
+	tocsByDumpId = (TocEntry **) calloc(maxDumpId, sizeof(TocEntry *));
 	for (te = AH->toc->next; te != AH->toc; te = te->next)
 	{
 		tocsByDumpId[te->dumpId - 1] = te;
@@ -3688,7 +3699,8 @@ fix_dependencies(ArchiveHandle *AH)
 		{
 			DumpId		tableId = te->dependencies[0];
 
-			if (tocsByDumpId[tableId - 1] == NULL ||
+			if (tableId > maxDumpId ||
+				tocsByDumpId[tableId - 1] == NULL ||
 				strcmp(tocsByDumpId[tableId - 1]->desc, "TABLE") == 0)
 			{
 				repoint_table_dependencies(AH, tableId, te->dumpId);
@@ -3733,7 +3745,9 @@ fix_dependencies(ArchiveHandle *AH)
 	{
 		for (i = 0; i < te->nDeps; i++)
 		{
-			if (tocsByDumpId[te->dependencies[i] - 1] == NULL)
+			DumpId		depid = te->dependencies[i];
+
+			if (depid > maxDumpId || tocsByDumpId[depid - 1] == NULL)
 				te->depCount--;
 		}
 	}
@@ -3745,7 +3759,7 @@ fix_dependencies(ArchiveHandle *AH)
 	{
 		te->lockDeps = NULL;
 		te->nLockDeps = 0;
-		identify_locking_dependencies(te, tocsByDumpId);
+		identify_locking_dependencies(te, tocsByDumpId, maxDumpId);
 	}
 
 	free(tocsByDumpId);
@@ -3782,11 +3796,13 @@ repoint_table_dependencies(ArchiveHandle *AH,
  * Identify which objects we'll need exclusive lock on in order to restore
  * the given TOC entry (*other* than the one identified by the TOC entry
  * itself).  Record their dump IDs in the entry's lockDeps[] array.
- * tocsByDumpId[] is a convenience array to avoid searching the TOC
- * for each dependency.
+ * tocsByDumpId[] is a convenience array (of size maxDumpId) to avoid
+ * searching the TOC for each dependency.
  */
 static void
-identify_locking_dependencies(TocEntry *te, TocEntry **tocsByDumpId)
+identify_locking_dependencies(TocEntry *te,
+							  TocEntry **tocsByDumpId,
+							  DumpId maxDumpId)
 {
 	DumpId	   *lockids;
 	int			nlockids;
@@ -3817,7 +3833,7 @@ identify_locking_dependencies(TocEntry *te, TocEntry **tocsByDumpId)
 	{
 		DumpId		depid = te->dependencies[i];
 
-		if (tocsByDumpId[depid - 1] &&
+		if (depid <= maxDumpId && tocsByDumpId[depid - 1] &&
 			strcmp(tocsByDumpId[depid - 1]->desc, "TABLE DATA") == 0)
 			lockids[nlockids++] = depid;
 	}
