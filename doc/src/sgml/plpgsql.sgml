@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.149 2009/12/28 19:11:51 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.150 2010/01/19 01:35:30 tgl Exp $ -->
 
 <chapter id="plpgsql">
   <title><application>PL/pgSQL</application> - <acronym>SQL</acronym> Procedural Language</title>
@@ -1016,7 +1016,7 @@ END;
      <command>EXECUTE</command> statement is provided:
 
 <synopsis>
-EXECUTE <replaceable class="command">command-string</replaceable> <optional> INTO <optional>STRICT</optional> <replaceable>target</replaceable> </optional> <optional> USING <replaceable>expression</replaceable> <optional>, ...</optional> </optional>;
+EXECUTE <replaceable class="command">command-string</replaceable> <optional> INTO <optional>STRICT</optional> <replaceable>target</replaceable> </optional> <optional> USING <replaceable>expression</replaceable> <optional>, ... </optional> </optional>;
 </synopsis>
 
      where <replaceable>command-string</replaceable> is an expression
@@ -1500,7 +1500,7 @@ RETURN <replaceable>expression</replaceable>;
 <synopsis>
 RETURN NEXT <replaceable>expression</replaceable>;
 RETURN QUERY <replaceable>query</replaceable>;
-RETURN QUERY EXECUTE <replaceable class="command">command-string</replaceable> <optional> USING <replaceable>expression</replaceable> <optional>, ...</optional> </optional>;
+RETURN QUERY EXECUTE <replaceable class="command">command-string</replaceable> <optional> USING <replaceable>expression</replaceable> <optional>, ... </optional> </optional>;
 </synopsis>
 
      <para>
@@ -2190,7 +2190,7 @@ $$ LANGUAGE plpgsql;
      rows:
 <synopsis>
 <optional> &lt;&lt;<replaceable>label</replaceable>&gt;&gt; </optional>
-FOR <replaceable>target</replaceable> IN EXECUTE <replaceable>text_expression</replaceable> <optional> USING <replaceable>expression</replaceable> <optional>, ...</optional> </optional> LOOP
+FOR <replaceable>target</replaceable> IN EXECUTE <replaceable>text_expression</replaceable> <optional> USING <replaceable>expression</replaceable> <optional>, ... </optional> </optional> LOOP
     <replaceable>statements</replaceable>
 END LOOP <optional> <replaceable>label</replaceable> </optional>;
 </synopsis>
@@ -2495,7 +2495,7 @@ OPEN curs1 FOR SELECT * FROM foo WHERE key = mykey;
      <title><command>OPEN FOR EXECUTE</command></title>
 
 <synopsis>
-OPEN <replaceable>unbound_cursorvar</replaceable> <optional> <optional> NO </optional> SCROLL </optional> FOR EXECUTE <replaceable class="command">query_string</replaceable>;
+OPEN <replaceable>unbound_cursorvar</replaceable> <optional> <optional> NO </optional> SCROLL </optional> FOR EXECUTE <replaceable class="command">query_string</replaceable> <optional> USING <replaceable>expression</replaceable> <optional>, ... </optional> </optional>;
 </synopsis>
 
          <para>
@@ -2507,7 +2507,8 @@ OPEN <replaceable>unbound_cursorvar</replaceable> <optional> <optional> NO </opt
           command.  As usual, this gives flexibility so the query plan can vary
           from one run to the next (see <xref linkend="plpgsql-plan-caching">),
           and it also means that variable substitution is not done on the
-          command string.
+          command string. As with <command>EXECUTE</command>, parameter values
+          can be inserted into the dynamic command via <literal>USING</>.
           The <literal>SCROLL</> and
           <literal>NO SCROLL</> options have the same meanings as for a bound
           cursor.
@@ -2516,8 +2517,12 @@ OPEN <replaceable>unbound_cursorvar</replaceable> <optional> <optional> NO </opt
        <para>
         An example:
 <programlisting>
-OPEN curs1 FOR EXECUTE 'SELECT * FROM ' || quote_ident($1);
+OPEN curs1 FOR EXECUTE 'SELECT * FROM ' || quote_ident(tabname) ' WHERE col1 = $1' USING keyvalue;
 </programlisting>
+        In this example, the table name is inserted into the query textually,
+        so use of <function>quote_ident()</> is recommended to guard against
+        SQL injection.  The comparison value for <literal>col1</> is inserted
+        via a <literal>USING</> parameter, so it needs no quoting.
        </para>
      </sect3>
 
@@ -2893,7 +2898,7 @@ END LOOP <optional> <replaceable>label</replaceable> </optional>;
     raise errors.
 
 <synopsis>
-RAISE <optional> <replaceable class="parameter">level</replaceable> </optional> '<replaceable class="parameter">format</replaceable>' <optional>, <replaceable class="parameter">expression</replaceable> <optional>, ...</optional></optional> <optional> USING <replaceable class="parameter">option</replaceable> = <replaceable class="parameter">expression</replaceable> <optional>, ... </optional> </optional>;
+RAISE <optional> <replaceable class="parameter">level</replaceable> </optional> '<replaceable class="parameter">format</replaceable>' <optional>, <replaceable class="parameter">expression</replaceable> <optional>, ... </optional></optional> <optional> USING <replaceable class="parameter">option</replaceable> = <replaceable class="parameter">expression</replaceable> <optional>, ... </optional> </optional>;
 RAISE <optional> <replaceable class="parameter">level</replaceable> </optional> <replaceable class="parameter">condition_name</> <optional> USING <replaceable class="parameter">option</replaceable> = <replaceable class="parameter">expression</replaceable> <optional>, ... </optional> </optional>;
 RAISE <optional> <replaceable class="parameter">level</replaceable> </optional> SQLSTATE '<replaceable class="parameter">sqlstate</>' <optional> USING <replaceable class="parameter">option</replaceable> = <replaceable class="parameter">expression</replaceable> <optional>, ... </optional> </optional>;
 RAISE <optional> <replaceable class="parameter">level</replaceable> </optional> USING <replaceable class="parameter">option</replaceable> = <replaceable class="parameter">expression</replaceable> <optional>, ... </optional>;

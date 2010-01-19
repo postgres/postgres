@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.139 2010/01/10 17:56:50 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.140 2010/01/19 01:35:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1704,7 +1704,27 @@ stmt_open		: K_OPEN cursor_variable
 							tok = yylex();
 							if (tok == K_EXECUTE)
 							{
-								new->dynquery = read_sql_stmt("SELECT ");
+								int		endtoken;
+
+								new->dynquery =
+									read_sql_expression2(K_USING, ';',
+														 "USING or ;",
+														 &endtoken);
+
+								/* If we found "USING", collect argument(s) */
+								if (endtoken == K_USING)
+								{
+									PLpgSQL_expr *expr;
+									
+									do
+									{
+										expr = read_sql_expression2(',', ';',
+																	", or ;",
+																	&endtoken);
+										new->params = lappend(new->params,
+															  expr);
+									} while (endtoken == ',');
+								}
 							}
 							else
 							{

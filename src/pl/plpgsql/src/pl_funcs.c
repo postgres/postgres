@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_funcs.c,v 1.87 2010/01/02 16:58:13 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_funcs.c,v 1.88 2010/01/19 01:35:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -619,9 +619,28 @@ dump_open(PLpgSQL_stmt_open *stmt)
 		printf("  execute = '");
 		dump_expr(stmt->dynquery);
 		printf("'\n");
+
+		if (stmt->params != NIL)
+		{
+			ListCell   *lc;
+			int			i;
+
+			dump_indent += 2;
+			dump_ind();
+			printf("    USING\n");
+			dump_indent += 2;
+			i = 1;
+			foreach(lc, stmt->params)
+			{
+				dump_ind();
+				printf("    parameter $%d: ", i++);
+				dump_expr((PLpgSQL_expr *) lfirst(lc));
+				printf("\n");
+			}
+			dump_indent -= 4;
+		}
 	}
 	dump_indent -= 2;
-
 }
 
 static void

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.253 2010/01/02 16:58:13 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.254 2010/01/19 01:35:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -200,7 +200,8 @@ static PreparedParamsData *exec_eval_using_params(PLpgSQL_execstate *estate,
 					   List *params);
 static void free_params_data(PreparedParamsData *ppd);
 static Portal exec_dynquery_with_params(PLpgSQL_execstate *estate,
-						  PLpgSQL_expr *query, List *params);
+						  PLpgSQL_expr *dynquery, List *params,
+						  const char *portalname, int cursorOptions);
 
 
 /* ----------
@@ -2337,7 +2338,7 @@ exec_stmt_return_query(PLpgSQL_execstate *estate,
 		/* RETURN QUERY EXECUTE */
 		Assert(stmt->dynquery != NULL);
 		portal = exec_dynquery_with_params(estate, stmt->dynquery,
-										   stmt->params);
+										   stmt->params, NULL, 0);
 	}
 
 	tupmap = convert_tuples_by_position(portal->tupDesc,
@@ -3133,7 +3134,8 @@ exec_stmt_dynfors(PLpgSQL_execstate *estate, PLpgSQL_stmt_dynfors *stmt)
 	Portal		portal;
 	int			rc;
 
-	portal = exec_dynquery_with_params(estate, stmt->query, stmt->params);
+	portal = exec_dynquery_with_params(estate, stmt->query, stmt->params,
+									   NULL, 0);
 
 	/*
 	 * Execute the loop
@@ -3161,7 +3163,6 @@ exec_stmt_open(PLpgSQL_execstate *estate, PLpgSQL_stmt_open *stmt)
 	PLpgSQL_expr *query;
 	Portal		portal;
 	ParamListInfo paramLI;
-	bool		isnull;
 
 	/* ----------
 	 * Get the cursor variable and if it has an assigned name, check
@@ -3201,43 +3202,11 @@ exec_stmt_open(PLpgSQL_execstate *estate, PLpgSQL_stmt_open *stmt)
 		 * This is an OPEN refcursor FOR EXECUTE ...
 		 * ----------
 		 */
-		Datum		queryD;
-		Oid			restype;
-		char	   *querystr;
-		SPIPlanPtr	curplan;
-
-		/* ----------
-		 * We evaluate the string expression after the
-		 * EXECUTE keyword. It's result is the querystring we have
-		 * to execute.
-		 * ----------
-		 */
-		queryD = exec_eval_expr(estate, stmt->dynquery, &isnull, &restype);
-		if (isnull)
-			ereport(ERROR,
-					(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
-					 errmsg("query string argument of EXECUTE is null")));
-
-		/* Get the C-String representation */
-		querystr = convert_value_to_string(queryD, restype);
-
-		exec_eval_cleanup(estate);
-
-		/* ----------
-		 * Now we prepare a query plan for it and open a cursor
-		 * ----------
-		 */
-		curplan = SPI_prepare_cursor(querystr, 0, NULL, stmt->cursor_options);
-		if (curplan == NULL)
-			elog(ERROR, "SPI_prepare_cursor failed for \"%s\": %s",
-				 querystr, SPI_result_code_string(SPI_result));
-		portal = SPI_cursor_open(curname, curplan, NULL, NULL,
-								 estate->readonly_func);
-		if (portal == NULL)
-			elog(ERROR, "could not open cursor for query \"%s\": %s",
-				 querystr, SPI_result_code_string(SPI_result));
-		pfree(querystr);
-		SPI_freeplan(curplan);
+		portal = exec_dynquery_with_params(estate,
+										   stmt->dynquery,
+										   stmt->params,
+										   curname,
+										   stmt->cursor_options);
 
 		/*
 		 * If cursor variable was NULL, store the generated portal name in it
@@ -5530,8 +5499,11 @@ free_params_data(PreparedParamsData *ppd)
  * Open portal for dynamic query
  */
 static Portal
-exec_dynquery_with_params(PLpgSQL_execstate *estate, PLpgSQL_expr *dynquery,
-						  List *params)
+exec_dynquery_with_params(PLpgSQL_execstate *estate,
+						  PLpgSQL_expr *dynquery,
+						  List *params,
+						  const char *portalname,
+						  int cursorOptions)
 {
 	Portal		portal;
 	Datum		query;
@@ -5564,20 +5536,22 @@ exec_dynquery_with_params(PLpgSQL_execstate *estate, PLpgSQL_expr *dynquery,
 		PreparedParamsData *ppd;
 
 		ppd = exec_eval_using_params(estate, params);
-		portal = SPI_cursor_open_with_args(NULL,
+		portal = SPI_cursor_open_with_args(portalname,
 										   querystr,
 										   ppd->nargs, ppd->types,
 										   ppd->values, ppd->nulls,
-										   estate->readonly_func, 0);
+										   estate->readonly_func, 
+										   cursorOptions);
 		free_params_data(ppd);
 	}
 	else
 	{
-		portal = SPI_cursor_open_with_args(NULL,
+		portal = SPI_cursor_open_with_args(portalname,
 										   querystr,
 										   0, NULL,
 										   NULL, NULL,
-										   estate->readonly_func, 0);
+										   estate->readonly_func, 
+										   cursorOptions);
 	}
 
 	if (portal == NULL)
