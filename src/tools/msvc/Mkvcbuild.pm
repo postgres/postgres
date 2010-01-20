@@ -3,7 +3,7 @@ package Mkvcbuild;
 #
 # Package that generates build files for msvc build
 #
-# $PostgreSQL: pgsql/src/tools/msvc/Mkvcbuild.pm,v 1.48 2010/01/17 13:21:50 mha Exp $
+# $PostgreSQL: pgsql/src/tools/msvc/Mkvcbuild.pm,v 1.49 2010/01/20 04:14:06 adunstan Exp $
 #
 use Carp;
 use Win32;
@@ -87,24 +87,31 @@ sub mkvcbuild
 
     if ($solution->{options}->{perl})
     {
+		my $plperlsrc = "src\\pl\\plperl\\";
         my $plperl = $solution->AddProject('plperl','dll','PLs','src\pl\plperl');
         $plperl->AddIncludeDir($solution->{options}->{perl} . '/lib/CORE');
         $plperl->AddDefine('PLPERL_HAVE_UID_GID');
-        if (Solution::IsNewer('src\pl\plperl\SPI.c','src\pl\plperl\SPI.xs'))
-        {
-            print 'Building src\pl\plperl\SPI.c...' . "\n";
-            system( $solution->{options}->{perl}
-                  . '/bin/perl '
-                  . $solution->{options}->{perl}
-                  . '/lib/ExtUtils/xsubpp -typemap '
-                  . $solution->{options}->{perl}
-                  . '/lib/ExtUtils/typemap src\pl\plperl\SPI.xs >src\pl\plperl\SPI.c');
-            if ((!(-f 'src\pl\plperl\SPI.c')) || -z 'src\pl\plperl\SPI.c')
-            {
-                unlink('src\pl\plperl\SPI.c'); # if zero size
-                die 'Failed to create SPI.c' . "\n";
-            }
-        }
+		foreach my $xs ('SPI.xs', 'Util.xs')
+		{
+			(my $xsc = $xs) =~ s/\.xs/.c/;
+			if (Solution::IsNewer("$plperlsrc$xsc","$plperlsrc$xs"))
+			{
+				print "Building $plperlsrc$xsc...\n";
+				system( $solution->{options}->{perl}
+						. '/bin/perl '
+						. $solution->{options}->{perl}
+						. '/lib/ExtUtils/xsubpp -typemap '
+						. $solution->{options}->{perl}
+						. '/lib/ExtUtils/typemap ' 
+						. "$plperlsrc$xs " 
+						. ">plperlsrc$xsc");
+				if ((!(-f "$plperlsrc$xsc")) || -z "$plperlsrc$xsc")
+				{
+					unlink("$plperlsrc$xsc"); # if zero size
+					die "Failed to create $xsc.\n";
+				}
+			}
+		}
         if (  Solution::IsNewer('src\pl\plperl\perlchunks.h','src\pl\plperl\plc_perlboot.pl')
             ||Solution::IsNewer('src\pl\plperl\perlchunks.h','src\pl\plperl\plc_safe_bad.pl')
             ||Solution::IsNewer('src\pl\plperl\perlchunks.h','src\pl\plperl\plc_safe_ok.pl'))
