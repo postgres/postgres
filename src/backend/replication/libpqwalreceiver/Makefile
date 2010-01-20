@@ -1,24 +1,22 @@
 #-------------------------------------------------------------------------
 #
 # Makefile--
-#    Makefile for src/backend/replication/walreceiver
+#    Makefile for src/backend/replication/libpqwalreceiver
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/backend/replication/walreceiver/Makefile,v 1.4 2010/01/15 21:06:26 tgl Exp $
+#    $PostgreSQL: pgsql/src/backend/replication/libpqwalreceiver/Makefile,v 1.1 2010/01/20 09:16:24 heikki Exp $
 #
 #-------------------------------------------------------------------------
 
-subdir = src/backend/replication/walreceiver
+subdir = src/backend/postmaster/libpqwalreceiver
 top_builddir = ../../../..
 include $(top_builddir)/src/Makefile.global
 
-override CPPFLAGS := -I$(libpq_srcdir) $(CPPFLAGS)
+override CPPFLAGS := -I$(srcdir) -I$(libpq_srcdir) $(CPPFLAGS)
 
-OBJS = walreceiver.o
-
+OBJS = libpqwalreceiver.o
 SHLIB_LINK = $(libpq)
-
-NAME := walreceiver
+NAME = libpqwalreceiver
 
 all: submake-libpq all-shared-lib
 

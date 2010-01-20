@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootstrap.c,v 1.256 2010/01/15 09:19:00 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootstrap.c,v 1.257 2010/01/20 09:16:23 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -425,20 +425,7 @@ AuxiliaryProcessMain(int argc, char *argv[])
 
 		case WalReceiverProcess:
 			/* don't set signals, walreceiver has its own agenda */
-			{
-				PGFunction WalReceiverMain;
-
-				/*
-				 * Walreceiver is not linked directly into the server
-				 * binary because we would then need to link the server
-				 * with libpq. It's compiled as a dynamically loaded module
-				 * to avoid that.
-				 */
-				WalReceiverMain = load_external_function("walreceiver",
-														 "WalReceiverMain",
-														 true, NULL);
-				WalReceiverMain(NULL);
-			}
+			WalReceiverMain();
 			proc_exit(1);		/* should never return */
 
 		default:

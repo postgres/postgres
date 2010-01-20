@@ -4,13 +4,13 @@
  *
  * This file contains functions used by the startup process to communicate
  * with the walreceiver process. Functions implementing walreceiver itself
- * are in src/backend/replication/walreceiver subdirectory.
+ * are in walreceiver.c.
  *
  * Portions Copyright (c) 2010-2010, PostgreSQL Global Development Group
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/replication/walreceiverfuncs.c,v 1.1 2010/01/15 09:19:03 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/replication/walreceiverfuncs.c,v 1.2 2010/01/20 09:16:24 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */

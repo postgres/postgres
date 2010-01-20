@@ -1,4 +1,36 @@
-$PostgreSQL: pgsql/src/backend/replication/README,v 1.1 2010/01/15 09:19:03 heikki Exp $
+$PostgreSQL: pgsql/src/backend/replication/README,v 1.2 2010/01/20 09:16:24 heikki Exp $
+
+Walreceiver - libpqwalreceiver API
+----------------------------------
+
+The transport-specific part of walreceiver, responsible for connecting to
+the primary server and receiving WAL files, is loaded dynamically to avoid
+having to link the main server binary with libpq. The dynamically loaded
+module is in libpqwalreceiver subdirectory.
+
+The dynamically loaded module implements three functions:
+
+
+bool walrcv_connect(char *conninfo, XLogRecPtr startpoint)
+
+Establish connection to the primary, and starts streaming from 'startpoint'.
+Returns true on success.
+
+
+bool walrcv_receive(int timeout, XLogRecPtr *recptr, char **buffer, int *len)
+
+Retrieve any WAL record available through the connection, blocking for
+maximum of 'timeout' ms.
+
+
+void walrcv_disconnect(void);
+
+Disconnect.
+
+
+This API should be considered internal at the moment, but we could open it
+up for 3rd party replacements of libpqwalreceiver in the future, allowing
+pluggable methods for receiveing WAL.
 
 Walreceiver IPC
 ---------------
