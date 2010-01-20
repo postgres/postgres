@@ -21,7 +21,6 @@ create or replace function perl_warn(text) returns void language plperl as $$
 $$;
 select perl_warn('implicit elog via warn');
 NOTICE:  implicit elog via warn at line 4.
-
 CONTEXT:  PL/Perl function "perl_warn"
  perl_warn 
 -----------

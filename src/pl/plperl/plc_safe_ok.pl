@@ -1,3 +1,7 @@
+
+
+#  $PostgreSQL: pgsql/src/pl/plperl/plc_safe_ok.pl,v 1.2 2010/01/20 01:08:21 adunstan Exp $
+
 use vars qw($PLContainer);
 
 $PLContainer = new Safe('PLPerl');
@@ -7,8 +11,11 @@ $PLContainer->permit(qw[:base_math !:base_io sort time]);
 $PLContainer->share(qw[&elog &return_next
 	&spi_query &spi_fetchrow &spi_cursor_close &spi_exec_query
 	&spi_prepare &spi_exec_prepared &spi_query_prepared &spi_freeplan
-	&_plperl_to_pg_array
 	&DEBUG &LOG &INFO &NOTICE &WARNING &ERROR %_SHARED
+	&quote_literal &quote_nullable &quote_ident
+	&encode_bytea &decode_bytea
+	&encode_array_literal &encode_array_constructor
+	&looks_like_number
 ]);
 
 # Load strict into the container.

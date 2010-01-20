@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/plperl.sgml,v 2.72 2010/01/09 02:40:50 adunstan Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/plperl.sgml,v 2.73 2010/01/20 01:08:21 adunstan Exp $ -->
 
  <chapter id="plperl">
   <title>PL/Perl - Perl Procedural Language</title>
@@ -13,7 +13,7 @@
 
   <para>
    PL/Perl is a loadable procedural language that enables you to write
-   <productname>PostgreSQL</productname> functions in the 
+   <productname>PostgreSQL</productname> functions in the
    <ulink url="http://www.perl.org">Perl programming language</ulink>.
   </para>
 
@@ -101,7 +101,7 @@ $$ LANGUAGE plperl;
    linkend="sql-syntax-dollar-quoting">) for the string constant.
    If you choose to use escape string syntax <literal>E''</>,
    you must double the single quote marks (<literal>'</>) and backslashes
-   (<literal>\</>) used in the body of the function 
+   (<literal>\</>) used in the body of the function
    (see <xref linkend="sql-syntax-strings">).
   </para>
 
@@ -141,13 +141,13 @@ $$ LANGUAGE plperl;
 
 <programlisting>
 CREATE FUNCTION perl_max (integer, integer) RETURNS integer AS $$
-    my ($x,$y) = @_;
-    if (! defined $x) {
-        if (! defined $y) { return undef; }
+    my ($x, $y) = @_;
+    if (not defined $x) {
+        return undef if not defined $y;
         return $y;
     }
-    if (! defined $y) { return $x; }
-    if ($x &gt; $y) { return $x; }
+    return $x if not defined $y;
+    return $x if $x &gt; $y;
     return $y;
 $$ LANGUAGE plperl;
 </programlisting>
@@ -158,32 +158,21 @@ $$ LANGUAGE plperl;
 
   <para>
    Anything in a function argument that is not a reference is
-   a string, which is in the standard <productname>PostgreSQL</productname> 
+   a string, which is in the standard <productname>PostgreSQL</productname>
    external text representation for the relevant data type. In the case of
    ordinary numeric or text types, Perl will just do the right thing and
    the programmer will normally not have to worry about it. However, in
-   other cases the argument will need to be converted into a form that is 
-   more usable in Perl. For example, here is how to convert an argument of 
-   type <type>bytea</> into unescaped binary 
-   data:
-
-<programlisting>
-    my $arg = shift;
-    $arg =~ s!\\(?:\\|(\d{3}))!$1 ? chr(oct($1)) : "\\"!ge;
-</programlisting>
-
+   other cases the argument will need to be converted into a form that is
+   more usable in Perl. For example, the <function>decode_bytea</function>
+   function can be used to convert an argument of
+   type <type>bytea</> into unescaped binary.
   </para>
 
   <para>
-   Similarly, values passed back to <productname>PostgreSQL</productname> 
-   must be in the external text representation format. For example, here 
-   is how to escape binary data for a return value of type <type>bytea</>:
-
-<programlisting>
-    $retval =~ s!(\\|[^ -~])!sprintf("\\%03o",ord($1))!ge;
-    return $retval;
-</programlisting>
-
+   Similarly, values passed back to <productname>PostgreSQL</productname>
+   must be in the external text representation format. For example, the
+   <function>encode_bytea</function> function can be used to
+   to escape binary data for a return value of type <type>bytea</>.
   </para>
 
   <para>
@@ -322,7 +311,10 @@ BEGIN { strict->import(); }
   </para>
  </sect1>
 
- <sect1 id="plperl-database">
+ <sect1 id="plperl-builtins">
+  <title>Built-in Functions</title>
+
+ <sect2 id="plperl-database">
   <title>Database Access from PL/Perl</title>
 
   <para>
@@ -340,7 +332,7 @@ BEGIN { strict->import(); }
      <term><literal><function>spi_query</>(<replaceable>command</replaceable>)</literal></term>
      <term><literal><function>spi_fetchrow</>(<replaceable>cursor</replaceable>)</literal></term>
      <term><literal><function>spi_prepare</>(<replaceable>command</replaceable>, <replaceable>argument types</replaceable>)</literal></term>
-     <term><literal><function>spi_exec_prepared</>(<replaceable>plan</replaceable>)</literal></term>
+     <term><literal><function>spi_exec_prepared</>(<replaceable>plan</replaceable>, <replaceable>arguments</replaceable>)</literal></term>
      <term><literal><function>spi_query_prepared</>(<replaceable>plan</replaceable> [, <replaceable>attributes</replaceable>], <replaceable>arguments</replaceable>)</literal></term>
      <term><literal><function>spi_cursor_close</>(<replaceable>cursor</replaceable>)</literal></term>
      <term><literal><function>spi_freeplan</>(<replaceable>plan</replaceable>)</literal></term>
@@ -455,19 +447,19 @@ $$ LANGUAGE plperlu;
 SELECT * from lotsa_md5(500);
 </programlisting>
     </para>
-      
+
     <para>
-    <literal>spi_prepare</literal>, <literal>spi_query_prepared</literal>, <literal>spi_exec_prepared</literal>, 
+    <literal>spi_prepare</literal>, <literal>spi_query_prepared</literal>, <literal>spi_exec_prepared</literal>,
     and <literal>spi_freeplan</literal> implement the same functionality but for prepared queries. Once
     a query plan is prepared by a call to <literal>spi_prepare</literal>, the plan can be used instead
     of the string query, either in <literal>spi_exec_prepared</literal>, where the result is the same as returned
     by <literal>spi_exec_query</literal>, or in <literal>spi_query_prepared</literal> which returns a cursor
     exactly as <literal>spi_query</literal> does, which can be later passed to <literal>spi_fetchrow</literal>.
     </para>
-    
+
     <para>
     The advantage of prepared queries is that is it possible to use one prepared plan for more
-    than one query execution. After the plan is not needed anymore, it can be freed with 
+    than one query execution. After the plan is not needed anymore, it can be freed with
     <literal>spi_freeplan</literal>:
     </para>
 
@@ -478,7 +470,7 @@ CREATE OR REPLACE FUNCTION init() RETURNS INTEGER AS $$
 $$ LANGUAGE plperl;
 
 CREATE OR REPLACE FUNCTION add_time( INTERVAL ) RETURNS TEXT AS $$
-        return spi_exec_prepared( 
+        return spi_exec_prepared(
                 $_SHARED{my_plan},
                 $_[0],
         )->{rows}->[0]->{now};
@@ -493,7 +485,7 @@ SELECT init();
 SELECT add_time('1 day'), add_time('2 days'), add_time('3 days');
 SELECT done();
 
-  add_time  |  add_time  |  add_time  
+  add_time  |  add_time  |  add_time
 ------------+------------+------------
  2005-12-10 | 2005-12-11 | 2005-12-12
     </programlisting>
@@ -516,7 +508,13 @@ SELECT done();
     </para>
      </listitem>
     </varlistentry>
+   </variablelist>
+ </sect2>
 
+ <sect2 id="plperl-utility-functions">
+  <title>Utility functions in PL/Perl</title>
+
+   <variablelist>
     <varlistentry>
      <indexterm>
       <primary>elog</primary>
@@ -545,8 +543,143 @@ SELECT done();
       </para>
      </listitem>
     </varlistentry>
+
+    <varlistentry>
+     <indexterm>
+      <primary>quote_literal</primary>
+      <secondary>in PL/Perl</secondary>
+     </indexterm>
+
+     <term><literal><function>quote_literal</>(<replaceable>string</replaceable>)</literal></term>
+     <listitem>
+      <para>
+        Return the given string suitably quoted to be used as a string literal in an SQL
+        statement string. Embedded single-quotes and backslashes are properly doubled.
+        Note that <function>quote_literal</> returns undef on undef input; if the argument
+        might be undef, <function>quote_nullable</> is often more suitable.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <indexterm>
+      <primary>quote_nullable</primary>
+      <secondary>in PL/Perl</secondary>
+     </indexterm>
+
+     <term><literal><function>quote_nullable</>(<replaceable>string</replaceable>)</literal></term>
+     <listitem>
+      <para>
+        Return the given string suitably quoted to be used as a string literal in an SQL
+        statement string; or, if the argument is undef, return the unquoted string "NULL".
+        Embedded single-quotes and backslashes are properly doubled.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <indexterm>
+      <primary>quote_ident</primary>
+      <secondary>in PL/Perl</secondary>
+     </indexterm>
+
+     <term><literal><function>quote_ident</>(<replaceable>string</replaceable>)</literal></term>
+     <listitem>
+      <para>
+        Return the given string suitably quoted to be used as an identifier in
+        an SQL statement string. Quotes are added only if necessary (i.e., if
+        the string contains non-identifier characters or would be case-folded).
+        Embedded quotes are properly doubled.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <indexterm>
+      <primary>decode_bytea</primary>
+      <secondary>in PL/Perl</secondary>
+     </indexterm>
+
+     <term><literal><function>decode_bytea</>(<replaceable>string</replaceable>)</literal></term>
+     <listitem>
+      <para>
+        Return the unescaped binary data represented by the contents of the given string,
+        which should be bytea encoded.
+        </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <indexterm>
+      <primary>encode_bytea</primary>
+      <secondary>in PL/Perl</secondary>
+     </indexterm>
+
+     <term><literal><function>encode_bytea</>(<replaceable>string</replaceable>)</literal></term>
+     <listitem>
+      <para>
+        Return the bytea encoded form of the binary data contents of the given string.
+        </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <indexterm>
+      <primary>encode_array_literal</primary>
+      <secondary>in PL/Perl</secondary>
+     </indexterm>
+
+     <term><literal><function>encode_array_literal</>(<replaceable>array</replaceable>)</literal></term>
+     <term><literal><function>encode_array_literal</>(<replaceable>array</replaceable>, <replaceable>delimiter</replaceable>)</literal></term>
+     <listitem>
+      <para>
+        Returns the contents of the referenced array as a string in array literal format
+        (see <xref linkend="arrays-input">).
+        Returns the argument value unaltered if it's not a reference to an array.
+        The delimiter used between elements of the array literal defaults to "<literal>, </literal>"
+        if a delimiter is not specified or is undef.
+        </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <indexterm>
+      <primary>encode_array_constructor</primary>
+      <secondary>in PL/Perl</secondary>
+     </indexterm>
+
+     <term><literal><function>encode_array_constructor</>(<replaceable>array</replaceable>)</literal></term>
+     <listitem>
+      <para>
+        Returns the contents of the referenced array as a string in array constructor format
+        (see <xref linkend="sql-syntax-array-constructors">).
+        Individual values are quoted using <function>quote_nullable</function>.
+        Returns the argument value, quoted using <function>quote_nullable</function>,
+        if it's not a reference to an array.
+        </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <indexterm>
+      <primary>looks_like_number</primary>
+      <secondary>in PL/Perl</secondary>
+     </indexterm>
+
+     <term><literal><function>looks_like_number</>(<replaceable>string</replaceable>)</literal></term>
+     <listitem>
+      <para>
+        Returns a true value if the content of the given string looks like a
+        number, according to Perl, returns false otherwise.
+        Returns undef if the argument is undef.  Leading and trailing space is
+        ignored. <literal>Inf</> and <literal>Infinity</> are regarded as numbers.
+        </para>
+     </listitem>
+    </varlistentry>
+
    </variablelist>
   </para>
+ </sect2>
  </sect1>
 
  <sect1 id="plperl-data">
@@ -587,7 +720,7 @@ CREATE OR REPLACE FUNCTION get_var(name text) RETURNS text AS $$
     return $_SHARED{$_[0]};
 $$ LANGUAGE plperl;
 
-SELECT set_var('sample', 'Hello, PL/Perl!  How's tricks?');
+SELECT set_var('sample', 'Hello, PL/Perl!  How''s tricks?');
 SELECT get_var('sample');
 </programlisting>
   </para>
@@ -701,15 +834,16 @@ $$ LANGUAGE plperl;
       However, not all installations are compiled with the requisite flags.
       If <productname>PostgreSQL</> detects that this is the case then it will
       not start a second interpreter, but instead create an error. In
-      consequence, in such an installation, you cannot use both 
+      consequence, in such an installation, you cannot use both
       <application>PL/PerlU</> and <application>PL/Perl</> in the same backend
-      process. The remedy for this is to obtain a Perl installation created
-      with the appropriate flags, namely either <literal>usemultiplicity</> or
-      both <literal>usethreads</> and <literal>useithreads</>. 
-      For more details,see the <literal>perlembed</> manual page.
+      process. The remedy for this is to obtain a Perl installation configured
+      with the appropriate flags, namely either <literal>usemultiplicity</>
+      or <literal>useithreads</>. <literal>usemultiplicity</> is preferred
+      unless you actually need to use threads. For more details, see the
+      <citerefentry><refentrytitle>perlembed</></citerefentry> man page.
     </para>
   </note>
-  
+
  </sect1>
 
  <sect1 id="plperl-triggers">
@@ -718,8 +852,8 @@ $$ LANGUAGE plperl;
   <para>
    PL/Perl can be used to write trigger functions.  In a trigger function,
    the hash reference <varname>$_TD</varname> contains information about the
-   current trigger event. <varname>$_TD</> is a global variable, 
-   which gets a separate local value for each invocation of the trigger. 
+   current trigger event. <varname>$_TD</> is a global variable,
+   which gets a separate local value for each invocation of the trigger.
    The fields of the <varname>$_TD</varname> hash reference are:
 
    <variablelist>
@@ -801,7 +935,7 @@ $$ LANGUAGE plperl;
      <listitem>
       <para>
        Name of the table on which the trigger fired. This has been deprecated,
-       and could be removed in a future release. 
+       and could be removed in a future release.
        Please use $_TD-&gt;{table_name} instead.
       </para>
      </listitem>

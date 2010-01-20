@@ -1,3 +1,6 @@
+
+#  $PostgreSQL: pgsql/src/pl/plperl/plc_safe_bad.pl,v 1.2 2010/01/20 01:08:21 adunstan Exp $
+
 use vars qw($PLContainer);
 
 $PLContainer = new Safe('PLPerl');

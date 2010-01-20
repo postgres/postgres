@@ -1,7 +1,7 @@
 /**********************************************************************
  * plperl.c - perl as a procedural language for PostgreSQL
  *
- *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.159 2010/01/09 02:40:50 adunstan Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.160 2010/01/20 01:08:21 adunstan Exp $
  *
  **********************************************************************/
 
@@ -589,12 +589,12 @@ plperl_convert_to_pg_array(SV *src)
 	XPUSHs(src);
 	PUTBACK;
 
-	count = call_pv("::_plperl_to_pg_array", G_SCALAR);
+	count = perl_call_pv("::encode_array_literal", G_SCALAR);
 
 	SPAGAIN;
 
 	if (count != 1)
-		elog(ERROR, "unexpected _plperl_to_pg_array failure");
+		elog(ERROR, "unexpected encode_array_literal failure");
 
 	rv = POPs;
 
@@ -1089,7 +1089,8 @@ plperl_create_sub(plperl_proc_desc *prodesc, char *s)
  **********************************************************************/
 
 EXTERN_C void boot_DynaLoader(pTHX_ CV *cv);
-EXTERN_C void boot_SPI(pTHX_ CV *cv);
+EXTERN_C void boot_PostgreSQL__InServer__SPI(pTHX_ CV *cv);
+EXTERN_C void boot_PostgreSQL__InServer__Util(pTHX_ CV *cv);
 
 static void
 plperl_init_shared_libs(pTHX)
@@ -1097,7 +1098,10 @@ plperl_init_shared_libs(pTHX)
 	char	   *file = __FILE__;
 
 	newXS("DynaLoader::boot_DynaLoader", boot_DynaLoader, file);
-	newXS("SPI::bootstrap", boot_SPI, file);
+	newXS("PostgreSQL::InServer::SPI::bootstrap",
+		  boot_PostgreSQL__InServer__SPI, file);
+	newXS("PostgreSQL::InServer::Util::bootstrap",
+		boot_PostgreSQL__InServer__Util, file);
 }
 
 

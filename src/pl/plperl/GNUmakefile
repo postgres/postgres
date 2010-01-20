@@ -1,5 +1,5 @@
 # Makefile for PL/Perl
-# $PostgreSQL: pgsql/src/pl/plperl/GNUmakefile,v 1.41 2010/01/10 18:10:03 tgl Exp $
+# $PostgreSQL: pgsql/src/pl/plperl/GNUmakefile,v 1.42 2010/01/20 01:08:21 adunstan Exp $
 
 subdir = src/pl/plperl
 top_builddir = ../../..
@@ -34,14 +34,14 @@ rpathdir = $(perl_archlibexp)/CORE
 
 NAME = plperl
 
-OBJS = plperl.o spi_internal.o SPI.o
+OBJS = plperl.o SPI.o Util.o
 
 PERLCHUNKS = plc_perlboot.pl plc_safe_bad.pl plc_safe_ok.pl
 
 SHLIB_LINK = $(perl_embed_ldflags)
 
 REGRESS_OPTS = --dbname=$(PL_TESTDB) --load-language=plperl  --load-language=plperlu
-REGRESS = plperl plperl_trigger plperl_shared plperl_elog plperlu
+REGRESS = plperl plperl_trigger plperl_shared plperl_elog plperl_util plperlu
 # if Perl can support two interpreters in one backend, 
 # test plperl-and-plperlu cases
 ifneq ($(PERL),)
@@ -64,6 +64,9 @@ all: all-lib
 SPI.c: SPI.xs
 	$(PERL) $(perl_privlibexp)/ExtUtils/xsubpp -typemap $(perl_privlibexp)/ExtUtils/typemap $< >$@
 
+Util.c: Util.xs
+	$(PERL) $(perl_privlibexp)/ExtUtils/xsubpp -typemap $(perl_privlibexp)/ExtUtils/typemap $< >$@
+
 install: all installdirs install-lib
 
 installdirs: installdirs-lib
@@ -78,7 +81,7 @@ submake:
 	$(MAKE) -C $(top_builddir)/src/test/regress pg_regress$(X)
 
 clean distclean maintainer-clean: clean-lib
-	rm -f SPI.c $(OBJS) perlchunks.h
+	rm -f SPI.c Util.c $(OBJS) perlchunks.h
 	rm -rf results
 	rm -f regression.diffs regression.out
 

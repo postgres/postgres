@@ -1,3 +1,12 @@
+/**********************************************************************
+ * PostgreSQL::InServer::SPI
+ *
+ * SPI interface for plperl.  
+ *
+ *    $PostgreSQL: pgsql/src/pl/plperl/SPI.xs,v 1.21 2010/01/20 01:08:21 adunstan Exp $
+ *
+ **********************************************************************/
+
 /* this must be first: */
 #include "postgres.h"
 /* Defined by Perl */
@@ -6,40 +15,6 @@
 /* perl stuff */
 #include "plperl.h"
 
-
-/*
- * Implementation of plperl's elog() function
- *
- * If the error level is less than ERROR, we'll just emit the message and
- * return.  When it is ERROR, elog() will longjmp, which we catch and
- * turn into a Perl croak().  Note we are assuming that elog() can't have
- * any internal failures that are so bad as to require a transaction abort.
- *
- * This is out-of-line to suppress "might be clobbered by longjmp" warnings.
- */
-static void
-do_spi_elog(int level, char *message)
-{
-	MemoryContext oldcontext = CurrentMemoryContext;
-
-	PG_TRY();
-	{
-		elog(level, "%s", message);
-	}
-	PG_CATCH();
-	{
-		ErrorData  *edata;
-
-		/* Must reset elog.c's state */
-		MemoryContextSwitchTo(oldcontext);
-		edata = CopyErrorData();
-		FlushErrorState();
-
-		/* Punt the error to Perl */
-		croak("%s", edata->message);
-	}
-	PG_END_TRY();
-}
 
 /*
  * Interface routine to catch ereports and punt them to Perl
@@ -69,39 +44,10 @@ do_plperl_return_next(SV *sv)
 }
 
 
-MODULE = SPI PREFIX = spi_
+MODULE = PostgreSQL::InServer::SPI PREFIX = spi_
 
 PROTOTYPES: ENABLE
 VERSIONCHECK: DISABLE
-
-void
-spi_elog(level, message)
-	int level
-	char* message
-	CODE:
-		if (level > ERROR)		/* no PANIC allowed thanks */
-			level = ERROR;
-		if (level < DEBUG5)
-			level = DEBUG5;
-		do_spi_elog(level, message);
-
-int
-spi_DEBUG()
-
-int
-spi_LOG()
-
-int
-spi_INFO()
-
-int
-spi_NOTICE()
-
-int
-spi_WARNING()
-
-int
-spi_ERROR()
 
 SV*
 spi_spi_exec_query(query, ...)

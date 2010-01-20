@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1995, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/pl/plperl/plperl.h,v 1.10 2010/01/02 16:58:12 momjian Exp $
+ * $PostgreSQL: pgsql/src/pl/plperl/plperl.h,v 1.11 2010/01/20 01:08:21 adunstan Exp $
  */
 
 #ifndef PL_PERL_H
@@ -30,28 +30,19 @@
 #include "EXTERN.h"
 #include "perl.h"
 #include "XSUB.h"
-#include "ppport.h"
 
-/* just in case these symbols aren't provided */
-#ifndef pTHX_
-#define pTHX_
-#define pTHX void
-#endif
+/* perl version and platform portability */
+#define NEED_eval_pv
+#define NEED_newRV_noinc
+#define NEED_sv_2pv_flags
+#include "ppport.h"
 
 /* perl may have a different width of "bool", don't buy it */
 #ifdef bool
 #undef bool
 #endif
 
-/* routines from spi_internal.c */
-int			spi_DEBUG(void);
-int			spi_LOG(void);
-int			spi_INFO(void);
-int			spi_NOTICE(void);
-int			spi_WARNING(void);
-int			spi_ERROR(void);
-
-/* routines from plperl.c */
+/* declare routines from plperl.c for access by .xs files */
 HV		   *plperl_spi_exec(char *, int);
 void		plperl_return_next(SV *);
 SV		   *plperl_spi_query(char *);
