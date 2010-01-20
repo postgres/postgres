@@ -5,7 +5,7 @@
  *
  * Portions Copyright (c) 2010-2010, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/replication/walreceiver.h,v 1.3 2010/01/20 09:16:24 heikki Exp $
+ * $PostgreSQL: pgsql/src/include/replication/walreceiver.h,v 1.4 2010/01/20 18:54:27 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -59,7 +59,7 @@ typedef struct
 	slock_t	mutex;		/* locks shared variables shown above */
 } WalRcvData;
 
-extern PGDLLIMPORT WalRcvData *WalRcv;
+extern WalRcvData *WalRcv;
 
 /* libpqwalreceiver hooks */
 typedef bool (*walrcv_connect_type) (char *conninfo, XLogRecPtr startpoint);

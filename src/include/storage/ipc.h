@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/ipc.h,v 1.80 2010/01/16 00:04:41 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/storage/ipc.h,v 1.81 2010/01/20 18:54:27 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -62,7 +62,7 @@ typedef void (*shmem_startup_hook_type) (void);
 
 
 /* ipc.c */
-extern PGDLLIMPORT bool proc_exit_inprogress;
+extern bool proc_exit_inprogress;
 
 extern void proc_exit(int code);
 extern void shmem_exit(int code);
