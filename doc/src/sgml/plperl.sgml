@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/plperl.sgml,v 2.73 2010/01/20 01:08:21 adunstan Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/plperl.sgml,v 2.74 2010/01/20 03:37:10 rhaas Exp $ -->
 
  <chapter id="plperl">
   <title>PL/Perl - Perl Procedural Language</title>
@@ -320,6 +320,7 @@ BEGIN { strict->import(); }
   <para>
    Access to the database itself from your Perl function can be done
    via the following functions:
+  </para>
 
    <variablelist>
     <varlistentry>
@@ -678,7 +679,6 @@ SELECT done();
     </varlistentry>
 
    </variablelist>
-  </para>
  </sect2>
  </sect1>
 
