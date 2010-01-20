@@ -4,11 +4,11 @@
 #    Makefile for src/backend/replication/libpqwalreceiver
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/backend/replication/libpqwalreceiver/Makefile,v 1.1 2010/01/20 09:16:24 heikki Exp $
+#    $PostgreSQL: pgsql/src/backend/replication/libpqwalreceiver/Makefile,v 1.2 2010/01/20 20:34:51 heikki Exp $
 #
 #-------------------------------------------------------------------------
 
-subdir = src/backend/postmaster/libpqwalreceiver
+subdir = src/backend/replication/libpqwalreceiver
 top_builddir = ../../../..
 include $(top_builddir)/src/Makefile.global
 
