@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/src/makefiles/Makefile.win32,v 1.14 2010/01/15 21:43:21 tgl Exp $
+# $PostgreSQL: pgsql/src/makefiles/Makefile.win32,v 1.15 2010/01/20 09:30:07 heikki Exp $
 
 # Use replacement include files for those missing on Win32
 override CPPFLAGS+="-I$(top_srcdir)/src/include/port/win32"
@@ -21,7 +21,7 @@ CFLAGS_SL =
 ifneq (,$(findstring backend,$(subdir)))
 ifeq (,$(findstring conversion_procs,$(subdir)))
 ifeq (,$(findstring snowball,$(subdir)))
-ifeq (,$(findstring walreceiver,$(subdir)))
+ifeq (,$(findstring libpqwalreceiver,$(subdir)))
 override CPPFLAGS+= -DBUILDING_DLL
 endif
 endif
