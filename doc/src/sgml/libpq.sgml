@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.292 2009/12/02 14:07:25 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.293 2010/01/20 00:42:28 rhaas Exp $ -->
 
 <chapter id="libpq">
  <title><application>libpq</application> - C Library</title>
@@ -2926,117 +2926,125 @@ typedef struct {
    <title>Escaping Strings for Inclusion in SQL Commands</title>
 
    <indexterm zone="libpq-exec-escape-string">
-    <primary>PQescapeStringConn</primary>
-   </indexterm>
-   <indexterm zone="libpq-exec-escape-string">
-    <primary>PQescapeString</primary>
-   </indexterm>
-   <indexterm zone="libpq-exec-escape-string">
     <primary>escaping strings</primary>
     <secondary>in libpq</secondary>
    </indexterm>
 
-   <para>
-    <function>PQescapeStringConn</function> escapes a string for use within an SQL
-    command.  This is useful when inserting data values as literal constants
-    in SQL commands.  Certain characters (such as quotes and backslashes) must
-    be escaped to prevent them from being interpreted specially by the SQL parser.
-    <function>PQescapeStringConn</> performs this operation.
-   </para>
-
-   <tip>
-    <para>
-     It is especially important to do proper escaping when handling strings that
-     were received from an untrustworthy source.  Otherwise there is a security
-     risk: you are vulnerable to <quote>SQL injection</> attacks wherein unwanted
-     SQL commands are fed to your database.
-    </para>
-   </tip>
-
-   <para>
-    Note that it is not necessary nor correct to do escaping when a data
-    value is passed as a separate parameter in <function>PQexecParams</> or
-    its sibling routines.
-
-    <synopsis>
-     size_t PQescapeStringConn (PGconn *conn,
-                                char *to, const char *from, size_t length,
-                                int *error);
-    </synopsis>
-   </para>
-
-   <para>
-    <function>PQescapeStringConn</> writes an escaped version of the
-    <parameter>from</> string to the <parameter>to</> buffer, escaping
-    special characters so that they cannot cause any harm, and adding a
-    terminating zero byte.  The single quotes that must surround
-    <productname>PostgreSQL</> string literals are not included in the
-    result string; they should be provided in the SQL command that the
-    result is inserted into.  The parameter <parameter>from</> points to
-    the first character of the string that is to be escaped, and the
-    <parameter>length</> parameter gives the number of bytes in this
-    string.  A terminating zero byte is not required, and should not be
-    counted in <parameter>length</>.  (If a terminating zero byte is found
-    before <parameter>length</> bytes are processed,
-    <function>PQescapeStringConn</> stops at the zero; the behavior is
-    thus rather like <function>strncpy</>.) <parameter>to</> shall point
-    to a buffer that is able to hold at least one more byte than twice
-    the value of <parameter>length</>, otherwise the behavior is undefined.
-    Behavior is likewise undefined if the <parameter>to</> and
-    <parameter>from</> strings overlap.
-   </para>
-
-   <para>
-    If the <parameter>error</> parameter is not NULL, then
-    <literal>*error</> is set to zero on success, nonzero on error.
-    Presently the only possible error conditions involve invalid multibyte
-    encoding in the source string.  The output string is still generated
-    on error, but it can be expected that the server will reject it as
-    malformed.  On error, a suitable message is stored in the
-    <parameter>conn</> object, whether or not <parameter>error</> is NULL.
-   </para>
-
-   <para>
-    <function>PQescapeStringConn</> returns the number of bytes written
-    to <parameter>to</>, not including the terminating zero byte.
-   </para>
-
-   <para>
-    <synopsis>
-     size_t PQescapeString (char *to, const char *from, size_t length);
-    </synopsis>
-   </para>
-
-   <para>
-    <function>PQescapeString</> is an older, deprecated version of
-    <function>PQescapeStringConn</>; the difference is that it does
-    not take <parameter>conn</> or <parameter>error</> parameters.
-    Because of this, it cannot adjust its behavior depending on the
-    connection properties (such as character encoding) and therefore
-    <emphasis>it might give the wrong results</>.  Also, it has no way
-    to report error conditions.
-   </para>
-
-   <para>
-    <function>PQescapeString</> can be used safely in single-threaded
-    client programs that work with only one <productname>PostgreSQL</>
-    connection at a time (in this case it can find out what it needs to
-    know <quote>behind the scenes</>).  In other contexts it is a security
-    hazard and should be avoided in favor of
-    <function>PQescapeStringConn</>.
-   </para>
-  </sect2>
-
-
-  <sect2 id="libpq-exec-escape-bytea">
-   <title>Escaping Binary Strings for Inclusion in SQL Commands</title>
-
-   <indexterm zone="libpq-exec-escape-bytea">
-    <primary>bytea</primary>
-    <secondary sortas="libpq">in libpq</secondary>
-   </indexterm>
-
    <variablelist>
+    <varlistentry>
+     <term>
+      <function>PQescapeStringConn</function>
+      <indexterm>
+       <primary>PQescapeStringConn</primary>
+      </indexterm>
+     </term>
+
+     <listitem>
+     <para>
+      <function>PQescapeStringConn</function> escapes a string for
+      use within an SQL command.  This is useful when inserting data
+      values as literal constants in SQL commands.  Certain characters
+      (such as quotes and backslashes) must be escaped to prevent them
+      from being interpreted specially by the SQL parser.
+      <function>PQescapeStringConn</> performs this operation.
+     </para>
+
+     <tip>
+      <para>
+       It is especially important to do proper escaping when handling
+       strings that were received from an untrustworthy source.
+       Otherwise there is a security risk: you are vulnerable to
+       <quote>SQL injection</> attacks wherein unwanted SQL commands are
+       fed to your database.
+      </para>
+     </tip>
+
+     <para>
+      Note that it is not necessary nor correct to do escaping when a data
+      value is passed as a separate parameter in <function>PQexecParams</> or
+      its sibling routines.
+
+      <synopsis>
+       size_t PQescapeStringConn (PGconn *conn,
+                                  char *to, const char *from, size_t length,
+                                  int *error);
+      </synopsis>
+     </para>
+
+     <para>
+      <function>PQescapeStringConn</> writes an escaped version of the
+      <parameter>from</> string to the <parameter>to</> buffer, escaping
+      special characters so that they cannot cause any harm, and adding a
+      terminating zero byte.  The single quotes that must surround
+      <productname>PostgreSQL</> string literals are not included in the
+      result string; they should be provided in the SQL command that the
+      result is inserted into.  The parameter <parameter>from</> points to
+      the first character of the string that is to be escaped, and the
+      <parameter>length</> parameter gives the number of bytes in this
+      string.  A terminating zero byte is not required, and should not be
+      counted in <parameter>length</>.  (If a terminating zero byte is found
+      before <parameter>length</> bytes are processed,
+      <function>PQescapeStringConn</> stops at the zero; the behavior is
+      thus rather like <function>strncpy</>.) <parameter>to</> shall point
+      to a buffer that is able to hold at least one more byte than twice
+      the value of <parameter>length</>, otherwise the behavior is undefined.
+      Behavior is likewise undefined if the <parameter>to</> and
+      <parameter>from</> strings overlap.
+     </para>
+
+     <para>
+      If the <parameter>error</> parameter is not NULL, then
+      <literal>*error</> is set to zero on success, nonzero on error.
+      Presently the only possible error conditions involve invalid multibyte
+      encoding in the source string.  The output string is still generated
+      on error, but it can be expected that the server will reject it as
+      malformed.  On error, a suitable message is stored in the
+      <parameter>conn</> object, whether or not <parameter>error</> is NULL.
+     </para>
+
+     <para>
+      <function>PQescapeStringConn</> returns the number of bytes written
+      to <parameter>to</>, not including the terminating zero byte.
+     </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term>
+      <function>PQescapeString</function>
+      <indexterm>
+       <primary>PQescapeString</primary>
+      </indexterm>
+     </term>
+
+     <listitem>
+     <para>
+      <synopsis>
+       size_t PQescapeString (char *to, const char *from, size_t length);
+      </synopsis>
+     </para>
+
+     <para>
+      <function>PQescapeString</> is an older, deprecated version of
+      <function>PQescapeStringConn</>; the difference is that it does
+      not take <parameter>conn</> or <parameter>error</> parameters.
+      Because of this, it cannot adjust its behavior depending on the
+      connection properties (such as character encoding) and therefore
+      <emphasis>it might give the wrong results</>.  Also, it has no way
+      to report error conditions.
+     </para>
+
+     <para>
+      <function>PQescapeString</> can be used safely in single-threaded
+      client programs that work with only one <productname>PostgreSQL</>
+      connection at a time (in this case it can find out what it needs to
+      know <quote>behind the scenes</>).  In other contexts it is a security
+      hazard and should be avoided in favor of
+      <function>PQescapeStringConn</>.
+     </para>
+     </listitem>
+    </varlistentry>
+
     <varlistentry>
      <term>
       <function>PQescapeByteaConn</function>
