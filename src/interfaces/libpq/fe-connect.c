@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.383 2010/01/15 09:19:10 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.384 2010/01/20 21:15:21 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -272,6 +272,11 @@ static void defaultNoticeReceiver(void *arg, const PGresult *res);
 static void defaultNoticeProcessor(void *arg, const char *message);
 static int parseServiceInfo(PQconninfoOption *options,
 				 PQExpBuffer errorMessage);
+static int parseServiceFile(const char *serviceFile,
+							const char *service,
+							PQconninfoOption *options,
+							PQExpBuffer errorMessage,
+							bool *group_found);
 static char *pwdfMatchesString(char *buf, char *token);
 static char *PasswordFromFile(char *hostname, char *port, char *dbname,
 				 char *username);
@@ -3095,9 +3100,10 @@ parseServiceInfo(PQconninfoOption *options, PQExpBuffer errorMessage)
 {
 	char	   *service = conninfo_getval(options, "service");
 	char		serviceFile[MAXPGPATH];
+	char	   *env;
 	bool		group_found = false;
-	int			linenr = 0,
-				i;
+	int			status;
+	struct stat stat_buf;
 
 	/*
 	 * We have to special-case the environment variable PGSERVICE here, since
@@ -3107,153 +3113,195 @@ parseServiceInfo(PQconninfoOption *options, PQExpBuffer errorMessage)
 	if (service == NULL)
 		service = getenv("PGSERVICE");
 
+	if (service == NULL)
+		return 0;
+
+	if ((env = getenv("PGSERVICEFILE")) != NULL)
+		strlcpy(serviceFile, env, sizeof(serviceFile));
+	else
+	{
+		char		homedir[MAXPGPATH];
+
+		if (!pqGetHomeDirectory(homedir, sizeof(homedir)))
+		{
+			printfPQExpBuffer(errorMessage, libpq_gettext("could not get home directory to locate service definition file"));
+			return 1;
+		}
+		snprintf(serviceFile, MAXPGPATH, "%s/%s", homedir, ".pg_service.conf");
+		errno = 0;
+		if (stat(serviceFile, &stat_buf) != 0 && errno == ENOENT)
+			goto next_file;
+	}
+
+	status = parseServiceFile(serviceFile, service, options, errorMessage, &group_found);
+	if (group_found || status != 0)
+		return status;
+
+next_file:
 	/*
 	 * This could be used by any application so we can't use the binary
 	 * location to find our config files.
 	 */
 	snprintf(serviceFile, MAXPGPATH, "%s/pg_service.conf",
 			 getenv("PGSYSCONFDIR") ? getenv("PGSYSCONFDIR") : SYSCONFDIR);
+	errno = 0;
+	if (stat(serviceFile, &stat_buf) != 0 && errno == ENOENT)
+		goto last_file;
 
-	if (service != NULL)
+	status = parseServiceFile(serviceFile, service, options, errorMessage, &group_found);
+	if (status != 0)
+		return status;
+
+last_file:
+	if (!group_found)
 	{
-		FILE	   *f;
-		char		buf[MAXBUFSIZE],
-				   *line;
+		printfPQExpBuffer(errorMessage,
+						  libpq_gettext("definition of service \"%s\" not found\n"), service);
+		return 3;
+	}
 
-		f = fopen(serviceFile, "r");
-		if (f == NULL)
+	return 0;
+}
+
+static int
+parseServiceFile(const char *serviceFile,
+				 const char *service,
+				 PQconninfoOption *options,
+				 PQExpBuffer errorMessage,
+				 bool *group_found)
+{	
+	int			linenr = 0,
+				i;
+	FILE	   *f;
+	char		buf[MAXBUFSIZE],
+			   *line;
+
+	f = fopen(serviceFile, "r");
+	if (f == NULL)
+	{
+		printfPQExpBuffer(errorMessage, libpq_gettext("service file \"%s\" not found\n"),
+						  serviceFile);
+		return 1;
+	}
+
+	while ((line = fgets(buf, sizeof(buf), f)) != NULL)
+	{
+		linenr++;
+
+		if (strlen(line) >= sizeof(buf) - 1)
 		{
-			printfPQExpBuffer(errorMessage, libpq_gettext("service file \"%s\" not found\n"),
+			fclose(f);
+			printfPQExpBuffer(errorMessage,
+							  libpq_gettext("line %d too long in service file \"%s\"\n"),
+							  linenr,
 							  serviceFile);
-			return 1;
+			return 2;
 		}
 
-		while ((line = fgets(buf, sizeof(buf), f)) != NULL)
+		/* ignore EOL at end of line */
+		if (strlen(line) && line[strlen(line) - 1] == '\n')
+			line[strlen(line) - 1] = 0;
+
+		/* ignore leading blanks */
+		while (*line && isspace((unsigned char) line[0]))
+			line++;
+
+		/* ignore comments and empty lines */
+		if (strlen(line) == 0 || line[0] == '#')
+			continue;
+
+		/* Check for right groupname */
+		if (line[0] == '[')
 		{
-			linenr++;
-
-			if (strlen(line) >= sizeof(buf) - 1)
+			if (*group_found)
 			{
+				/* group info already read */
 				fclose(f);
-				printfPQExpBuffer(errorMessage,
-								  libpq_gettext("line %d too long in service file \"%s\"\n"),
-								  linenr,
-								  serviceFile);
-				return 2;
+				return 0;
 			}
 
-			/* ignore EOL at end of line */
-			if (strlen(line) && line[strlen(line) - 1] == '\n')
-				line[strlen(line) - 1] = 0;
-
-			/* ignore leading blanks */
-			while (*line && isspace((unsigned char) line[0]))
-				line++;
-
-			/* ignore comments and empty lines */
-			if (strlen(line) == 0 || line[0] == '#')
-				continue;
-
-			/* Check for right groupname */
-			if (line[0] == '[')
-			{
-				if (group_found)
-				{
-					/* group info already read */
-					fclose(f);
-					return 0;
-				}
-
-				if (strncmp(line + 1, service, strlen(service)) == 0 &&
-					line[strlen(service) + 1] == ']')
-					group_found = true;
-				else
-					group_found = false;
-			}
+			if (strncmp(line + 1, service, strlen(service)) == 0 &&
+				line[strlen(service) + 1] == ']')
+				*group_found = true;
 			else
+				*group_found = false;
+		}
+		else
+		{
+			if (*group_found)
 			{
-				if (group_found)
-				{
-					/*
-					 * Finally, we are in the right group and can parse the
-					 * line
-					 */
-					char	   *key,
-							   *val;
-					bool		found_keyword;
+				/*
+				 * Finally, we are in the right group and can parse
+				 * the line
+				 */
+				char	   *key,
+						   *val;
+				bool		found_keyword;
 
 #ifdef USE_LDAP
-					if (strncmp(line, "ldap", 4) == 0)
-					{
-						int			rc = ldapServiceLookup(line, options, errorMessage);
+				if (strncmp(line, "ldap", 4) == 0)
+				{
+					int			rc = ldapServiceLookup(line, options, errorMessage);
 
-						/* if rc = 2, go on reading for fallback */
-						switch (rc)
-						{
-							case 0:
-								fclose(f);
-								return 0;
-							case 1:
-							case 3:
-								fclose(f);
-								return 3;
-							case 2:
-								continue;
-						}
+					/* if rc = 2, go on reading for fallback */
+					switch (rc)
+					{
+						case 0:
+							fclose(f);
+							return 0;
+						case 1:
+						case 3:
+							fclose(f);
+							return 3;
+						case 2:
+							continue;
 					}
+				}
 #endif
 
-					key = line;
-					val = strchr(line, '=');
-					if (val == NULL)
-					{
-						printfPQExpBuffer(errorMessage,
-										  libpq_gettext("syntax error in service file \"%s\", line %d\n"),
-										  serviceFile,
-										  linenr);
-						fclose(f);
-						return 3;
-					}
-					*val++ = '\0';
+				key = line;
+				val = strchr(line, '=');
+				if (val == NULL)
+				{
+					printfPQExpBuffer(errorMessage,
+									  libpq_gettext("syntax error in service file \"%s\", line %d\n"),
+									  serviceFile,
+									  linenr);
+					fclose(f);
+					return 3;
+				}
+				*val++ = '\0';
 
-					/*
-					 * Set the parameter --- but don't override any previous
-					 * explicit setting.
-					 */
-					found_keyword = false;
-					for (i = 0; options[i].keyword; i++)
+				/*
+				 * Set the parameter --- but don't override any previous
+				 * explicit setting.
+				 */
+				found_keyword = false;
+				for (i = 0; options[i].keyword; i++)
+				{
+					if (strcmp(options[i].keyword, key) == 0)
 					{
-						if (strcmp(options[i].keyword, key) == 0)
-						{
-							if (options[i].val == NULL)
-								options[i].val = strdup(val);
-							found_keyword = true;
-							break;
-						}
+						if (options[i].val == NULL)
+							options[i].val = strdup(val);
+						found_keyword = true;
+						break;
 					}
+				}
 
-					if (!found_keyword)
-					{
-						printfPQExpBuffer(errorMessage,
-										  libpq_gettext("syntax error in service file \"%s\", line %d\n"),
-										  serviceFile,
-										  linenr);
-						fclose(f);
-						return 3;
-					}
+				if (!found_keyword)
+				{
+					printfPQExpBuffer(errorMessage,
+									  libpq_gettext("syntax error in service file \"%s\", line %d\n"),
+									  serviceFile,
+									  linenr);
+					fclose(f);
+					return 3;
 				}
 			}
 		}
-
-		fclose(f);
-
-		if (!group_found)
-		{
-			printfPQExpBuffer(errorMessage,
-							  libpq_gettext("definition of service \"%s\" not found\n"), service);
-			return 3;
-		}
 	}
+
+	fclose(f);
 
 	return 0;
 }

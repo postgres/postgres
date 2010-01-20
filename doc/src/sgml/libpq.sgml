@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.293 2010/01/20 00:42:28 rhaas Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.294 2010/01/20 21:15:21 petere Exp $ -->
 
 <chapter id="libpq">
  <title><application>libpq</application> - C Library</title>
@@ -5794,6 +5794,18 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
     <listitem>
      <para>
       <indexterm>
+       <primary><envar>PGSERVICEFILE</envar></primary>
+      </indexterm>
+      <envar>PGSERVICEFILE</envar> specifies the name of the per-user
+      connection service file.  If not set, it defaults
+      to <filename>~/.pg_service.conf</>
+      (see <xref linkend="libpq-pgservice">).
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      <indexterm>
        <primary><envar>PGREALM</envar></primary>
       </indexterm>
       <envar>PGREALM</envar> sets the Kerberos realm to use with
@@ -5987,7 +5999,8 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
        <primary><envar>PGSYSCONFDIR</envar></primary>
       </indexterm>
       <envar>PGSYSCONFDIR</envar> sets the directory containing the
-      <filename>pg_service.conf</> file.
+      <filename>pg_service.conf</> file and in a future version
+      possibly other system-wide configuration files.
      </para>
     </listitem>
 
@@ -6063,6 +6076,9 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
   <indexterm zone="libpq-pgservice">
    <primary>pg_service.conf</primary>
   </indexterm>
+  <indexterm zone="libpq-pgservice">
+   <primary>.pg_service.conf</primary>
+  </indexterm>
 
   <para>
    The connection service file allows libpq connection parameters to be
@@ -6074,12 +6090,31 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
   </para>
 
   <para>
-   To use this feature, copy
-   <filename>share/pg_service.conf.sample</filename> to
-   <filename>etc/pg_service.conf</filename> and edit the file to add
-   service names and parameters. This file can be used for client-only
-   installs too. The file's location can also be specified by the
-   <envar>PGSYSCONFDIR</envar> environment variable.
+   The connection service file can be a per-user service file
+   at <filename>~/.pg_service.conf</filename> or the location
+   specified by the environment variable <envar>PGSERVICEFILE</envar>,
+   or it can be a system-wide file
+   at <filename>etc/pg_service.conf</filename> or in the directory
+   specified by the environment variable
+   <envar>PGSYSCONFDIR</envar>.  If service definitions with the same
+   name exist in the user and the system file, the user file takes
+   precedence.
+  </para>
+
+  <para>
+   The file uses an <quote>INI file</quote> format where the section
+   name is the service name and the parameters are connection
+   parameters; see <xref linkend="libpq-connect"> for a list.  For
+   example:
+<programlisting>
+# comment
+[mydb]
+host=somehost
+port=5433
+user=admin
+</programlisting>
+   An example file is provided at
+   <filename>share/pg_service.conf.sample</filename>.
   </para>
  </sect1>
 
