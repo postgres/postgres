@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_control.h,v 1.48 2010/01/04 12:50:50 heikki Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_control.h,v 1.49 2010/01/20 19:43:40 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -63,6 +63,7 @@ typedef struct CheckPoint
 #define XLOG_NEXTOID					0x30
 #define XLOG_SWITCH						0x40
 #define XLOG_BACKUP_END					0x50
+#define XLOG_UNLOGGED					0x60
 
 
 /* System status indicator */

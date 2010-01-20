@@ -59,7 +59,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtsort.c,v 1.122 2010/01/15 09:19:00 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtsort.c,v 1.123 2010/01/20 19:43:40 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -214,6 +214,18 @@ _bt_leafbuild(BTSpool *btspool, BTSpool *btspool2)
 	 * enabled AND it's not a temp index.
 	 */
 	wstate.btws_use_wal = XLogIsNeeded() && !wstate.index->rd_istemp;
+
+	/*
+	 * Write an XLOG UNLOGGED record if WAL-logging was skipped because
+	 * WAL archiving is not enabled.
+	 */
+	if (!wstate.btws_use_wal && !wstate.index->rd_istemp)
+	{
+		char reason[NAMEDATALEN + 20];
+		snprintf(reason, sizeof(reason), "b-tree build on \"%s\"",
+				 RelationGetRelationName(wstate.index));
+		XLogReportUnloggedStatement(reason);
+	}
 
 	/* reserve the metapage */
 	wstate.btws_pages_alloced = BTREE_METAPAGE + 1;

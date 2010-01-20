@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.358 2010/01/15 09:19:00 heikki Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.359 2010/01/20 19:43:40 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -7562,6 +7562,31 @@ RequestXLogSwitch(void)
 }
 
 /*
+ * Write an XLOG UNLOGGED record, indicating that some operation was
+ * performed on data that we fsync()'d directly to disk, skipping
+ * WAL-logging.
+ *
+ * Such operations screw up archive recovery, so we complain if we see
+ * these records during archive recovery. That shouldn't happen in a
+ * correctly configured server, but you can induce it by temporarily
+ * disabling archiving and restarting, so it's good to at least get a
+ * warning of silent data loss in such cases. These records serve no
+ * other purpose and are simply ignored during crash recovery.
+ */
+void
+XLogReportUnloggedStatement(char *reason)
+{
+	XLogRecData rdata;
+
+	rdata.buffer = InvalidBuffer;
+	rdata.data = reason;
+	rdata.len = strlen(reason) + 1;
+	rdata.next = NULL;
+
+	XLogInsert(RM_XLOG_ID, XLOG_UNLOGGED, &rdata);
+}
+
+/*
  * XLOG resource manager's routines
  *
  * Definitions of info values are in include/catalog/pg_control.h, though
@@ -7703,6 +7728,19 @@ xlog_redo(XLogRecPtr lsn, XLogRecord *record)
 			LWLockRelease(ControlFileLock);
 		}
 	}
+	else if (info == XLOG_UNLOGGED)
+	{
+		if (InArchiveRecovery)
+		{
+			/*
+			 * Note: We don't print the reason string from the record,
+			 * because that gets added as a line using xlog_desc()
+			 */
+			ereport(WARNING,
+					(errmsg("unlogged operation performed, data may be missing"),
+					 errhint("This can happen if you temporarily disable archive_mode without taking a new base backup.")));
+		}
+	}
 }
 
 void
@@ -7751,6 +7789,12 @@ xlog_desc(StringInfo buf, uint8 xl_info, char *rec)
 		memcpy(&startpoint, rec, sizeof(XLogRecPtr));
 		appendStringInfo(buf, "backup end: %X/%X",
 						 startpoint.xlogid, startpoint.xrecoff);
+	}
+	else if (info == XLOG_UNLOGGED)
+	{
+		char *reason = rec;
+
+		appendStringInfo(buf, "unlogged operation: %s", reason);
 	}
 	else
 		appendStringInfo(buf, "UNKNOWN");

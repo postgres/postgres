@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/xlog.h,v 1.97 2010/01/16 00:04:41 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/xlog.h,v 1.98 2010/01/20 19:43:40 heikki Exp $
  */
 #ifndef XLOG_H
 #define XLOG_H
@@ -278,6 +278,7 @@ extern void InitXLOGAccess(void);
 extern void CreateCheckPoint(int flags);
 extern bool CreateRestartPoint(int flags);
 extern void XLogPutNextOid(Oid nextOid);
+extern void XLogReportUnloggedStatement(char *reason);
 extern XLogRecPtr GetRedoRecPtr(void);
 extern XLogRecPtr GetInsertRecPtr(void);
 extern XLogRecPtr GetWriteRecPtr(void);
