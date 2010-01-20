@@ -3,7 +3,7 @@ package Mkvcbuild;
 #
 # Package that generates build files for msvc build
 #
-# $PostgreSQL: pgsql/src/tools/msvc/Mkvcbuild.pm,v 1.49 2010/01/20 04:14:06 adunstan Exp $
+# $PostgreSQL: pgsql/src/tools/msvc/Mkvcbuild.pm,v 1.50 2010/01/20 04:29:07 adunstan Exp $
 #
 use Carp;
 use Win32;
@@ -104,7 +104,7 @@ sub mkvcbuild
 						. $solution->{options}->{perl}
 						. '/lib/ExtUtils/typemap ' 
 						. "$plperlsrc$xs " 
-						. ">plperlsrc$xsc");
+						. ">$plperlsrc$xsc");
 				if ((!(-f "$plperlsrc$xsc")) || -z "$plperlsrc$xsc")
 				{
 					unlink("$plperlsrc$xsc"); # if zero size
