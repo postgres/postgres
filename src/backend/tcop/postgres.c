@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.584 2010/01/17 04:27:54 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.585 2010/01/21 09:30:36 sriggs Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -2865,6 +2865,7 @@ ProcessInterrupts(void)
 		if (RecoveryConflictPending)
 		{
 			ImmediateInterruptOK = false;	/* not idle anymore */
+			RecoveryConflictPending = false;
 			DisableNotifyInterrupt();
 			DisableCatchupInterrupt();
 			if (DoingCommandRead)
