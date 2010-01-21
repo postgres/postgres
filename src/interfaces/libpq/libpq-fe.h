@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/interfaces/libpq/libpq-fe.h,v 1.148 2010/01/02 16:58:12 momjian Exp $
+ * $PostgreSQL: pgsql/src/interfaces/libpq/libpq-fe.h,v 1.149 2010/01/21 14:58:53 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -471,6 +471,8 @@ extern int	PQsetvalue(PGresult *res, int tup_num, int field_num, char *value, in
 extern size_t PQescapeStringConn(PGconn *conn,
 				   char *to, const char *from, size_t length,
 				   int *error);
+extern char *PQescapeLiteral(PGconn *conn, const char *str, size_t len);
+extern char *PQescapeIdentifier(PGconn *conn, const char *str, size_t len);
 extern unsigned char *PQescapeByteaConn(PGconn *conn,
 				  const unsigned char *from, size_t from_length,
 				  size_t *to_length);

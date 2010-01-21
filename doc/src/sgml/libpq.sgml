@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.294 2010/01/20 21:15:21 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.295 2010/01/21 14:58:52 rhaas Exp $ -->
 
 <chapter id="libpq">
  <title><application>libpq</application> - C Library</title>
@@ -2933,20 +2933,48 @@ typedef struct {
    <variablelist>
     <varlistentry>
      <term>
-      <function>PQescapeStringConn</function>
+      <function>PQescapeLiteral</function>
       <indexterm>
-       <primary>PQescapeStringConn</primary>
+       <primary>PQescapeLiteral</primary>
       </indexterm>
      </term>
 
      <listitem>
      <para>
-      <function>PQescapeStringConn</function> escapes a string for
+      <synopsis>
+       size_t PQescapeLiteral(PGconn *conn, char *str, size_t len)
+      </synopsis>
+     </para>
+
+     <para>
+      <function>PQescapeLiteral</function> escapes a string for
       use within an SQL command.  This is useful when inserting data
       values as literal constants in SQL commands.  Certain characters
       (such as quotes and backslashes) must be escaped to prevent them
       from being interpreted specially by the SQL parser.
-      <function>PQescapeStringConn</> performs this operation.
+      <function>PQescapeLiteral</> performs this operation.
+     </para>
+
+     <para>
+      <function>PQescapeLiteral</> returns an escaped version of the
+      <parameter>str</parameter> parameter in memory allocated with
+      <function>malloc()</>.  This memory should be freed using
+      <function>PQfreemem()</> when the result is no longer needed.
+      A terminating zero byte is not required, and should not be
+      counted in <parameter>length</>.  (If a terminating zero byte is found
+      before <parameter>length</> bytes are processed,
+      <function>PQescapeLiteral</> stops at the zero; the behavior is
+      thus rather like <function>strncpy</>.) The
+      return string has all special characters replaced so that they can
+      be properly processed by the <productname>PostgreSQL</productname>
+      string literal parser.  A terminating zero byte is also added.  The
+      single quotes that must surround <productname>PostgreSQL</productname>
+      string literals are included in the result string.
+     </para>
+
+     <para>
+      On error, <function>PQescapeLiteral</> returns NULL and a suitable
+      message is stored in the <parameter>conn</> object.
      </para>
 
      <tip>
@@ -2963,7 +2991,75 @@ typedef struct {
       Note that it is not necessary nor correct to do escaping when a data
       value is passed as a separate parameter in <function>PQexecParams</> or
       its sibling routines.
+     </para>
+     </listitem>
+    </varlistentry>
 
+    <varlistentry>
+     <term>
+      <function>PQescapeIdentifier</function>
+      <indexterm>
+       <primary>PQescapeIdentifier</primary>
+      </indexterm>
+     </term>
+
+     <listitem>
+     <para>
+      <synopsis>
+       size_t PQescapeIdentifier(PGconn *conn, char *str, size_t len)
+      </synopsis>
+     </para>
+
+     <para>
+      <function>PQescapeIndentifier</function> escapes a string for
+      use as an SQL identifier, such as a table, column, or function name.
+      This is useful when a user-supplied identifier might contain
+      special characters that would otherwise not be interpreted as part
+      of the identifier by the SQL parser, or when the identifier might
+      contain uppercase characters whose case should be preserved.
+     </para>
+
+     <para>
+      <function>PQescapeIdentifier</> returns a version of the
+      <parameter>str</parameter> parameter escaped as an SQL identifier
+      in memory allocated with <function>malloc()</>.  This memory must be
+      freed using <function>PQfreemem()</> when the result is no longer
+      needed.  A terminating zero byte is not required, and should not be
+      counted in <parameter>length</>.  (If a terminating zero byte is found
+      before <parameter>length</> bytes are processed,
+      <function>PQescapeIdentifier</> stops at the zero; the behavior is
+      thus rather like <function>strncpy</>.) The
+      return string has all special characters replaced so that it
+      will be properly processed as an SQL identifier.  A terminating zero byte
+      is also added.  The return string will also be surrounded by double
+      quotes.
+     </para>
+
+     <para>
+      On error, <function>PQescapeIdentifier</> returns NULL and a suitable
+      message is stored in the <parameter>conn</> object.
+     </para>
+
+     <tip>
+      <para>
+       As with string literals, to prevent SQL injection attacks,
+       SQL identifiers must be escaped when they are received from an
+       untrustworthy source.
+      </para>
+     </tip>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term>
+      <function>PQescapeStringConn</function>
+      <indexterm>
+       <primary>PQescapeStringConn</primary>
+      </indexterm>
+     </term>
+
+     <listitem>
+     <para>
       <synopsis>
        size_t PQescapeStringConn (PGconn *conn,
                                   char *to, const char *from, size_t length,
@@ -2972,12 +3068,12 @@ typedef struct {
      </para>
 
      <para>
-      <function>PQescapeStringConn</> writes an escaped version of the
-      <parameter>from</> string to the <parameter>to</> buffer, escaping
-      special characters so that they cannot cause any harm, and adding a
-      terminating zero byte.  The single quotes that must surround
-      <productname>PostgreSQL</> string literals are not included in the
-      result string; they should be provided in the SQL command that the
+      <function>PQescapeStringConn</> escapes string literals, much like
+      <function>PQescapeLiteral</>.  Unlike <function>PQescapeLiteral</>,
+      the caller is responsible for providing an appropriately sized buffer.
+      Furthermore, <function>PQescapeStringConn</> does not generate the
+      single quotes that must surround <productname>PostgreSQL</> string
+      literals; they should be provided in the SQL command that the
       result is inserted into.  The parameter <parameter>from</> points to
       the first character of the string that is to be escaped, and the
       <parameter>length</> parameter gives the number of bytes in this
@@ -3093,7 +3189,7 @@ typedef struct {
       <para>
        <function>PQescapeByteaConn</> returns an escaped version of the
        <parameter>from</parameter> parameter binary string in memory
-       allocated with <function>malloc()</>.  This memory must be freed using
+       allocated with <function>malloc()</>.  This memory should be freed using
        <function>PQfreemem()</> when the result is no longer needed.  The
        return string has all special characters replaced so that they can
        be properly processed by the <productname>PostgreSQL</productname>
@@ -4285,7 +4381,7 @@ typedef struct {
        be non-<symbol>NULL</symbol>.  <parameter>*buffer</> is set to
        point to the allocated memory, or to <symbol>NULL</symbol> in cases
        where no buffer is returned.  A non-<symbol>NULL</symbol> result
-       buffer must be freed using <function>PQfreemem</> when no longer
+       buffer should be freed using <function>PQfreemem</> when no longer
        needed.
       </para>
 
