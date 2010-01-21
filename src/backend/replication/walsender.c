@@ -30,7 +30,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/replication/walsender.c,v 1.2 2010/01/15 11:47:15 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/replication/walsender.c,v 1.3 2010/01/21 08:19:57 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -602,7 +602,7 @@ XLogSend(StringInfo outMsg)
 		sentPtr.xrecoff == 0)
 		return true;
 
-	/* Attempt to send all the records which were written to the disk */
+	/* Attempt to send all records flushed to the disk already */
 	SendRqstPtr = GetWriteRecPtr();
 
 	/* Quick exit if nothing to do */
@@ -610,18 +610,10 @@ XLogSend(StringInfo outMsg)
 		return true;
 
 	/*
-	 * Since successive pages in a segment are consecutively written,
-	 * we can gather multiple records together by issuing just one
-	 * read() call, and send them as one CopyData message at one time;
-	 * nmsgs is the number of CopyData messages sent in this XLogSend;
-	 * npages is the number of pages we have determined can be read and
-	 * sent together; startpos is the starting position of reading and
-	 * sending in the first page, startoff is the file offset at which
-	 * it should go and endpos is the end position of reading and
-	 * sending in the last page. We must initialize all of them to
-	 * keep the compiler quiet.
+	 * We gather multiple records together by issuing just one read() of
+	 * a suitable size, and send them as one CopyData message. Repeat
+	 * until we've sent everything we can.
 	 */
-
 	while (XLByteLT(sentPtr, SendRqstPtr))
 	{
 		XLogRecPtr startptr;
@@ -631,31 +623,30 @@ XLogSend(StringInfo outMsg)
 		/*
 		 * Figure out how much to send in one message. If there's less than
 		 * MAX_SEND_SIZE bytes to send, send everything. Otherwise send
-		 * MAX_SEND_SIZE bytes, but round to page boundary for efficiency.
+		 * MAX_SEND_SIZE bytes, but round to page boundary.
+		 *
+		 * The rounding is not only for performance reasons. Walreceiver
+		 * relies on the fact that we never split a WAL record across two
+		 * messages. Since a long WAL record is split at page boundary into
+		 * continuation records, page boundary is alwayssafe cut-off point.
+		 * We also assume that SendRqstPtr never points in the middle of a
+		 * WAL record.
 		 */
 		startptr = sentPtr;
 		endptr = startptr;
 		XLByteAdvance(endptr, MAX_SEND_SIZE);
-
-		/*
-		 * Round down to page boundary. This is not only for performance
-		 * reasons, walreceiver relies on the fact that we never split a WAL
-		 * record across two messages. Since a long WAL record is split at
-		 * page boundary into continuation records, page boundary is always
-		 * safe cut-off point. We also assume that SendRqstPtr never points
-		 * in the middle of a WAL record.
-		 */
+		/* round down to page boundary. */
 		endptr.xrecoff -= (endptr.xrecoff % XLOG_BLCKSZ);
-
+		/* if we went beyond SendRqstPtr, back off */
 		if (XLByteLT(SendRqstPtr, endptr))
 			endptr = SendRqstPtr;
 
 		/*
-		 * OK to read and send the log.
+		 * OK to read and send the slice.
 		 *
 		 * We don't need to convert the xlogid/xrecoff from host byte order
 		 * to network byte order because the both server can be expected to
-		 * have the same byte order. If they have the different order, we
+		 * have the same byte order. If they have different byte order, we
 		 * don't reach here.
 		 */
 		pq_sendbytes(outMsg, (char *) &startptr, sizeof(startptr));
@@ -671,7 +662,7 @@ XLogSend(StringInfo outMsg)
 		sentPtr = endptr;
 
 		/*
-		 * Read the log into the output buffer directly to prevent
+		 * Read the log directly into the output buffer to prevent
 		 * extra memcpy calls.
 		 */
 		enlargeStringInfo(outMsg, nbytes);
