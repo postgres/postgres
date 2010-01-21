@@ -8,7 +8,7 @@
  *
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.234 2010/01/17 22:56:23 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.235 2010/01/21 06:11:46 itagaki Exp $
  */
 #include "postgres_fe.h"
 
@@ -1854,10 +1854,11 @@ describeOneTableDetails(const char *schemaname,
 		{
 			printfPQExpBuffer(&buf,
 							  "SELECT t.tgname, "
-							  "pg_catalog.pg_get_triggerdef(t.oid), "
+							  "pg_catalog.pg_get_triggerdef(t.oid%s), "
 							  "t.tgenabled\n"
 							  "FROM pg_catalog.pg_trigger t\n"
 							  "WHERE t.tgrelid = '%s' AND ",
+							  (pset.sversion >= 80500 ? ", true" : ""),
 							  oid);
 			if (pset.sversion >= 80500)
 				appendPQExpBuffer(&buf, "NOT t.tgisinternal");
