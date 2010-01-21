@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-exec.c,v 1.207 2010/01/21 14:58:53 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-exec.c,v 1.208 2010/01/21 18:43:25 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3066,7 +3066,7 @@ PQescapeString(char *to, const char *from, size_t length)
  * of memory condition, we return NULL, storing an error message into conn.
  */
 static char *
-PQescapeInternal(PGconn *conn, const char *str, size_t len, int as_ident)
+PQescapeInternal(PGconn *conn, const char *str, size_t len, bool as_ident)
 {
 	const char *s;
 	char   *result;
@@ -3082,7 +3082,7 @@ PQescapeInternal(PGconn *conn, const char *str, size_t len, int as_ident)
 		return NULL;
 
 	/* Scan the string for characters that must be escaped. */
-	for (s = str; *s != '\0' && (s - str) < len; ++s)
+	for (s = str; (s - str) < len && *s != '\0'; ++s)
 	{
 		if (*s == quote_char)
 			++num_quotes;
@@ -3188,13 +3188,13 @@ PQescapeInternal(PGconn *conn, const char *str, size_t len, int as_ident)
 char *
 PQescapeLiteral(PGconn *conn, const char *str, size_t len)
 {
-	return PQescapeInternal(conn, str, len, 0);
+	return PQescapeInternal(conn, str, len, false);
 }
 
 char *
 PQescapeIdentifier(PGconn *conn, const char *str, size_t len)
 {
-	return PQescapeInternal(conn, str, len, 1);
+	return PQescapeInternal(conn, str, len, true);
 }
 
 /* HEX encoding support for bytea */
