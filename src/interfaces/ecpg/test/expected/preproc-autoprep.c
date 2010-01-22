@@ -23,7 +23,7 @@
 #line 6 "autoprep.pgc"
 
 
-int main() {
+static void test(void) {
   /* exec sql begin declare section */
   	     
 	  
@@ -246,6 +246,11 @@ if (sqlca.sqlwarn[0] == 'W') sqlprint();
 if (sqlca.sqlcode < 0) sqlprint();}
 #line 64 "autoprep.pgc"
 
+}
+
+int main() {
+  test();
+  test();     /* retry */
 
   return 0;
 }

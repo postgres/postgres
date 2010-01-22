@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/prepare.c,v 1.34 2010/01/15 10:44:34 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/prepare.c,v 1.35 2010/01/22 14:13:03 meskes Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -99,26 +99,12 @@ replace_variables(char **text, int lineno)
 	return true;
 }
 
-/* handle the EXEC SQL PREPARE statement */
-/* questionmarks is not needed but remians in there for the time being to not change the API */
-bool
-ECPGprepare(int lineno, const char *connection_name, const bool questionmarks, const char *name, const char *variable)
+static bool
+prepare_common(int lineno, struct connection *con, const bool questionmarks, const char *name, const char *variable)
 {
-	struct connection *con;
 	struct statement *stmt;
-	struct prepared_statement *this,
-			   *prev;
+	struct prepared_statement *this;
 	PGresult   *query;
-
-	con = ecpg_get_connection(connection_name);
-
-	if (!ecpg_init(con, connection_name, lineno))
-		return false;
-
-	/* check if we already have prepared this statement */
-	this = ecpg_find_prepared_statement(name, con, &prev);
-	if (this && !deallocate_one(lineno, ECPG_COMPAT_PGSQL, con, prev, this))
-		return false;
 
 	/* allocate new statement */
 	this = (struct prepared_statement *) ecpg_alloc(sizeof(struct prepared_statement), lineno);
@@ -167,6 +153,28 @@ ECPGprepare(int lineno, const char *connection_name, const bool questionmarks, c
 
 	con->prep_stmts = this;
 	return true;
+}
+
+/* handle the EXEC SQL PREPARE statement */
+/* questionmarks is not needed but remians in there for the time being to not change the API */
+bool
+ECPGprepare(int lineno, const char *connection_name, const bool questionmarks, const char *name, const char *variable)
+{
+	struct connection *con;
+	struct prepared_statement *this,
+			   *prev;
+
+	con = ecpg_get_connection(connection_name);
+
+	if (!ecpg_init(con, connection_name, lineno))
+		return false;
+
+	/* check if we already have prepared this statement */
+	this = ecpg_find_prepared_statement(name, con, &prev);
+	if (this && !deallocate_one(lineno, ECPG_COMPAT_PGSQL, con, prev, this))
+		return false;
+
+	return prepare_common(lineno, con, questionmarks, name, variable);
 }
 
 struct prepared_statement *
@@ -465,21 +473,37 @@ ecpg_auto_prepare(int lineno, const char *connection_name, const int compat, cha
 	/* if not found - add the statement to the cache	*/
 	if (entNo)
 	{
+		char	   *stmtID;
+		struct connection *con;
+		struct prepared_statement *prep;
+
 		ecpg_log("ecpg_auto_prepare on line %d: statement found in cache; entry %d\n", lineno, entNo);
-		*name = ecpg_strdup(stmtCacheEntries[entNo].stmtID, lineno);
+
+		stmtID = stmtCacheEntries[entNo].stmtID;
+
+		con = ecpg_get_connection(connection_name);
+		prep = ecpg_find_prepared_statement(stmtID, con, NULL);
+		/* This prepared name doesn't exist on this connection. */
+		if (!prep && !prepare_common(lineno, con, 0, stmtID, query))
+			return (false);
+
+		*name = ecpg_strdup(stmtID, lineno);
 	}
 	else
 	{
+		char	stmtID[STMTID_SIZE];
+
 		ecpg_log("ecpg_auto_prepare on line %d: statement not in cache; inserting\n", lineno);
 
 		/* generate a statement ID */
-		*name = (char *) ecpg_alloc(STMTID_SIZE, lineno);
-		sprintf(*name, "ecpg%d", nextStmtID++);
+		sprintf(stmtID, "ecpg%d", nextStmtID++);
 
-		if (!ECPGprepare(lineno, connection_name, 0, ecpg_strdup(*name, lineno), query))
+		if (!ECPGprepare(lineno, connection_name, 0, stmtID, query))
 			return (false);
-		if (AddStmtToCache(lineno, *name, connection_name, compat, query) < 0)
+		if (AddStmtToCache(lineno, stmtID, connection_name, compat, query) < 0)
 			return (false);
+
+		*name = ecpg_strdup(stmtID, lineno);
 	}
 
 	/* increase usage counter */

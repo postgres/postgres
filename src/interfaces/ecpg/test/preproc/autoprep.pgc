@@ -5,7 +5,7 @@
 /* test automatic prepare for all statements */
 EXEC SQL INCLUDE ../regression;
 
-int main() {
+static void test(void) {
   EXEC SQL BEGIN DECLARE SECTION;
   	int item[4], ind[4], i = 1;
 	int item1, ind1;
@@ -62,6 +62,11 @@ int main() {
   EXEC SQL DROP TABLE T;
 
   EXEC SQL DISCONNECT ALL;
+}
+
+int main() {
+  test();
+  test();     /* retry */
 
   return 0;
 }

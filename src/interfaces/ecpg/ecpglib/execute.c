@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.88 2010/01/05 16:38:23 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.89 2010/01/22 14:13:03 meskes Exp $ */
 
 /*
  * The aim is to get a simpler inteface to the database routines.
@@ -1753,7 +1753,10 @@ ECPGdo(const int lineno, const int compat, const int force_indicator, const char
 			stmt->command = ecpg_strdup(command, lineno);
 		}
 		else
+		{
 			ecpg_raise(lineno, ECPG_INVALID_STMT, ECPG_SQLSTATE_INVALID_SQL_STATEMENT_NAME, stmt->command);
+			return (false);
+		}
 	}
 
 	stmt->connection = con;
