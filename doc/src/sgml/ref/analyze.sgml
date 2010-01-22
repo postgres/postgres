@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/analyze.sgml,v 1.27 2009/08/04 22:04:37 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/analyze.sgml,v 1.28 2010/01/22 16:40:18 rhaas Exp $
 PostgreSQL documentation
 -->
 
@@ -173,7 +173,7 @@ ANALYZE [ VERBOSE ] [ <replaceable class="PARAMETER">table</replaceable> [ ( <re
    with the largest possible statistics target.  If this inaccuracy leads to
    bad query plans, a more accurate value can be determined manually and then
    installed with
-   <command>ALTER TABLE ... ALTER COLUMN ... SET STATISTICS DISTINCT</>
+   <command>ALTER TABLE ... ALTER COLUMN ... SET (n_distinct = ...)</>
    (see <xref linkend="sql-altertable" endterm="sql-altertable-title">).
   </para>
  </refsect1>

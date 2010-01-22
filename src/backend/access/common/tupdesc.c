@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/common/tupdesc.c,v 1.131 2010/01/02 16:57:33 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/common/tupdesc.c,v 1.132 2010/01/22 16:40:18 rhaas Exp $
  *
  * NOTES
  *	  some of the executor utility code such as "ExecTypeFromTL" should be
@@ -338,8 +338,6 @@ equalTupleDescs(TupleDesc tupdesc1, TupleDesc tupdesc2)
 			return false;
 		if (attr1->attstattarget != attr2->attstattarget)
 			return false;
-		if (attr1->attdistinct != attr2->attdistinct)
-			return false;
 		if (attr1->attlen != attr2->attlen)
 			return false;
 		if (attr1->attndims != attr2->attndims)
@@ -362,7 +360,7 @@ equalTupleDescs(TupleDesc tupdesc1, TupleDesc tupdesc2)
 			return false;
 		if (attr1->attinhcount != attr2->attinhcount)
 			return false;
-		/* attacl is ignored, since it's not even present... */
+		/* attacl and attoptions are not even present... */
 	}
 
 	if (tupdesc1->constr != NULL)
@@ -467,7 +465,6 @@ TupleDescInitEntry(TupleDesc desc,
 		MemSet(NameStr(att->attname), 0, NAMEDATALEN);
 
 	att->attstattarget = -1;
-	att->attdistinct = 0;
 	att->attcacheoff = -1;
 	att->atttypmod = typmod;
 
@@ -479,7 +476,7 @@ TupleDescInitEntry(TupleDesc desc,
 	att->attisdropped = false;
 	att->attislocal = true;
 	att->attinhcount = 0;
-	/* attacl is not set because it's not present in tupledescs */
+	/* attacl and attoptions are not present in tupledescs */
 
 	tuple = SearchSysCache(TYPEOID,
 						   ObjectIdGetDatum(oidtypeid),

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/analyze.c,v 1.147 2010/01/02 16:57:36 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/analyze.c,v 1.148 2010/01/22 16:40:18 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,6 +39,7 @@
 #include "storage/proc.h"
 #include "storage/procarray.h"
 #include "utils/acl.h"
+#include "utils/attoptcache.h"
 #include "utils/datum.h"
 #include "utils/guc.h"
 #include "utils/lsyscache.h"
@@ -493,6 +494,8 @@ do_analyze_rel(Relation onerel, VacuumStmt *vacstmt,
 		for (i = 0; i < attr_cnt; i++)
 		{
 			VacAttrStats *stats = vacattrstats[i];
+			AttributeOpts *aopt =
+				get_attribute_options(onerel->rd_id, stats->attr->attnum);
 
 			stats->rows = rows;
 			stats->tupDesc = onerel->rd_att;
@@ -501,9 +504,17 @@ do_analyze_rel(Relation onerel, VacuumStmt *vacstmt,
 									 numrows,
 									 totalrows);
 
-			/* If attdistinct is set, override with that value */
-			if (stats->attr->attdistinct != 0)
-				stats->stadistinct = stats->attr->attdistinct;
+			/*
+			 * If the appropriate flavor of the n_distinct option is
+			 * specified, override with the corresponding value.
+			 */
+			if (aopt != NULL)
+			{
+				float8	n_distinct =
+					inh ? aopt->n_distinct_inherited : aopt->n_distinct;
+				if (n_distinct != 0.0)
+					stats->stadistinct = n_distinct;
+			}
 
 			MemoryContextResetAndDeleteChildren(col_context);
 		}
@@ -751,6 +762,9 @@ compute_index_stats(Relation onerel, double totalrows,
 			for (i = 0; i < attr_cnt; i++)
 			{
 				VacAttrStats *stats = thisdata->vacattrstats[i];
+				AttributeOpts *aopt =
+					get_attribute_options(stats->attr->attrelid,
+						stats->attr->attnum);
 
 				stats->exprvals = exprvals + i;
 				stats->exprnulls = exprnulls + i;
@@ -759,9 +773,15 @@ compute_index_stats(Relation onerel, double totalrows,
 										 ind_fetch_func,
 										 numindexrows,
 										 totalindexrows);
-				/* If attdistinct is set, override with that value */
-				if (stats->attr->attdistinct != 0)
-					stats->stadistinct = stats->attr->attdistinct;
+
+				/*
+				 * If the n_distinct option is specified, it overrides the
+				 * above computation.  For indices, we always use just
+				 * n_distinct, not n_distinct_inherited.
+				 */
+				if (aopt != NULL && aopt->n_distinct != 0.0)
+					stats->stadistinct = aopt->n_distinct;
+
 				MemoryContextResetAndDeleteChildren(col_context);
 			}
 		}

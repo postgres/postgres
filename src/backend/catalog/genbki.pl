@@ -10,7 +10,7 @@
 # Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/backend/catalog/genbki.pl,v 1.6 2010/01/06 22:02:45 tgl Exp $
+# $PostgreSQL: pgsql/src/backend/catalog/genbki.pl,v 1.7 2010/01/22 16:40:18 rhaas Exp $
 #
 #----------------------------------------------------------------------
 
@@ -200,7 +200,8 @@ foreach my $catname ( @{ $catalogs->{names} } )
                 # Store schemapg entries for later.
                 $row = emit_schemapg_row($row, grep { $bki_attr{$_} eq 'bool' } @attnames);
                 push @{ $schemapg_entries{$table_name} },
-                  '{ ' . join(', ', map $row->{$_}, @attnames) . ' }';
+					'{ ' . join(', ', grep { defined $_ }
+					map $row->{$_}, @attnames) . ' }';
             }
 
             # Generate entries for system attributes.
@@ -351,14 +352,14 @@ sub emit_pgattr_row
 
     # Add in default values for pg_attribute
     my %PGATTR_DEFAULTS = (
-        attdistinct   => '0',
         attcacheoff   => '-1',
         atttypmod     => '-1',
         atthasdef     => 'f',
         attisdropped  => 'f',
         attislocal    => 't',
         attinhcount   => '0',
-        attacl        => '_null_'
+        attacl        => '_null_',
+        attoptions    => '_null_'
     );
     return {%PGATTR_DEFAULTS, %row};
 }
@@ -384,7 +385,11 @@ sub emit_schemapg_row
     $row->{attname}     = q|{"| . $row->{attname}    . q|"}|;
     $row->{attstorage}  = q|'|  . $row->{attstorage} . q|'|;
     $row->{attalign}    = q|'|  . $row->{attalign}   . q|'|;
-    $row->{attacl}      = q|{ 0 }|;
+
+    # We don't emit initializers for the variable length fields at all.
+    # Only the fixed-size portions of the descriptors are ever used.
+    delete $row->{attacl};
+    delete $row->{attoptions};
 
     # Expand booleans from 'f'/'t' to 'false'/'true'.
     # Some values might be other macros (eg FLOAT4PASSBYVAL), don't change.

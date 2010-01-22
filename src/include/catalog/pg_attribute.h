@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_attribute.h,v 1.157 2010/01/05 01:06:56 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_attribute.h,v 1.158 2010/01/22 16:40:19 rhaas Exp $
  *
  * NOTES
  *	  the genbki.pl script reads this file and generates .bki
@@ -55,13 +55,6 @@ CATALOG(pg_attribute,1249) BKI_BOOTSTRAP BKI_WITHOUT_OIDS BKI_ROWTYPE_OID(75) BK
 	 * should use the default setting.
 	 */
 	int4		attstattarget;
-
-	/*
-	 * attdistinct, if nonzero, is a user-specified ndistinct value to be used
-	 * instead of estimating the number of distinct values during ANALYZE.
-	 * Nonzero values have the same meanings as for pg_statistic.stadistinct.
-	 */
-	float4		attdistinct;
 
 	/*
 	 * attlen is a copy of the typlen field from pg_type for this attribute.
@@ -157,6 +150,9 @@ CATALOG(pg_attribute,1249) BKI_BOOTSTRAP BKI_WITHOUT_OIDS BKI_ROWTYPE_OID(75) BK
 
 	/* Column-level access permissions */
 	aclitem		attacl[1];
+
+	/* Column-level options */
+	text		attoptions[1];
 } FormData_pg_attribute;
 
 /*
@@ -185,21 +181,21 @@ typedef FormData_pg_attribute *Form_pg_attribute;
 #define Anum_pg_attribute_attname		2
 #define Anum_pg_attribute_atttypid		3
 #define Anum_pg_attribute_attstattarget 4
-#define Anum_pg_attribute_attdistinct	5
-#define Anum_pg_attribute_attlen		6
-#define Anum_pg_attribute_attnum		7
-#define Anum_pg_attribute_attndims		8
-#define Anum_pg_attribute_attcacheoff	9
-#define Anum_pg_attribute_atttypmod		10
-#define Anum_pg_attribute_attbyval		11
-#define Anum_pg_attribute_attstorage	12
-#define Anum_pg_attribute_attalign		13
-#define Anum_pg_attribute_attnotnull	14
-#define Anum_pg_attribute_atthasdef		15
-#define Anum_pg_attribute_attisdropped	16
-#define Anum_pg_attribute_attislocal	17
-#define Anum_pg_attribute_attinhcount	18
-#define Anum_pg_attribute_attacl		19
+#define Anum_pg_attribute_attlen		5
+#define Anum_pg_attribute_attnum		6
+#define Anum_pg_attribute_attndims		7
+#define Anum_pg_attribute_attcacheoff	8
+#define Anum_pg_attribute_atttypmod		9
+#define Anum_pg_attribute_attbyval		10
+#define Anum_pg_attribute_attstorage	11
+#define Anum_pg_attribute_attalign		12
+#define Anum_pg_attribute_attnotnull	13
+#define Anum_pg_attribute_atthasdef		14
+#define Anum_pg_attribute_attisdropped	15
+#define Anum_pg_attribute_attislocal	16
+#define Anum_pg_attribute_attinhcount	17
+#define Anum_pg_attribute_attacl		18
+#define Anum_pg_attribute_attoptions	19
 
 
 /* ----------------

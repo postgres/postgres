@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.366 2010/01/06 05:18:18 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.367 2010/01/22 16:40:18 rhaas Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -116,40 +116,46 @@ Oid binary_upgrade_next_toast_relfilenode = InvalidOid;
  *		Disadvantage:  special cases will be all over the place.
  */
 
+/*
+ * The initializers below do not include the attoptions or attacl fields,
+ * but that's OK - we're never going to reference anything beyond the
+ * fixed-size portion of the structure anyway.
+ */
+
 static FormData_pg_attribute a1 = {
-	0, {"ctid"}, TIDOID, 0, 0, sizeof(ItemPointerData),
+	0, {"ctid"}, TIDOID, 0, sizeof(ItemPointerData),
 	SelfItemPointerAttributeNumber, 0, -1, -1,
-	false, 'p', 's', true, false, false, true, 0, {0}
+	false, 'p', 's', true, false, false, true, 0
 };
 
 static FormData_pg_attribute a2 = {
-	0, {"oid"}, OIDOID, 0, 0, sizeof(Oid),
+	0, {"oid"}, OIDOID, 0, sizeof(Oid),
 	ObjectIdAttributeNumber, 0, -1, -1,
-	true, 'p', 'i', true, false, false, true, 0, {0}
+	true, 'p', 'i', true, false, false, true, 0
 };
 
 static FormData_pg_attribute a3 = {
-	0, {"xmin"}, XIDOID, 0, 0, sizeof(TransactionId),
+	0, {"xmin"}, XIDOID, 0, sizeof(TransactionId),
 	MinTransactionIdAttributeNumber, 0, -1, -1,
-	true, 'p', 'i', true, false, false, true, 0, {0}
+	true, 'p', 'i', true, false, false, true, 0
 };
 
 static FormData_pg_attribute a4 = {
-	0, {"cmin"}, CIDOID, 0, 0, sizeof(CommandId),
+	0, {"cmin"}, CIDOID, 0, sizeof(CommandId),
 	MinCommandIdAttributeNumber, 0, -1, -1,
-	true, 'p', 'i', true, false, false, true, 0, {0}
+	true, 'p', 'i', true, false, false, true, 0
 };
 
 static FormData_pg_attribute a5 = {
-	0, {"xmax"}, XIDOID, 0, 0, sizeof(TransactionId),
+	0, {"xmax"}, XIDOID, 0, sizeof(TransactionId),
 	MaxTransactionIdAttributeNumber, 0, -1, -1,
-	true, 'p', 'i', true, false, false, true, 0, {0}
+	true, 'p', 'i', true, false, false, true, 0
 };
 
 static FormData_pg_attribute a6 = {
-	0, {"cmax"}, CIDOID, 0, 0, sizeof(CommandId),
+	0, {"cmax"}, CIDOID, 0, sizeof(CommandId),
 	MaxCommandIdAttributeNumber, 0, -1, -1,
-	true, 'p', 'i', true, false, false, true, 0, {0}
+	true, 'p', 'i', true, false, false, true, 0
 };
 
 /*
@@ -159,9 +165,9 @@ static FormData_pg_attribute a6 = {
  * used in SQL.
  */
 static FormData_pg_attribute a7 = {
-	0, {"tableoid"}, OIDOID, 0, 0, sizeof(Oid),
+	0, {"tableoid"}, OIDOID, 0, sizeof(Oid),
 	TableOidAttributeNumber, 0, -1, -1,
-	true, 'p', 'i', true, false, false, true, 0, {0}
+	true, 'p', 'i', true, false, false, true, 0
 };
 
 static const Form_pg_attribute SysAtt[] = {&a1, &a2, &a3, &a4, &a5, &a6, &a7};
@@ -482,13 +488,12 @@ CheckAttributeType(const char *attname, Oid atttypid)
  *		Construct and insert a new tuple in pg_attribute.
  *
  * Caller has already opened and locked pg_attribute.  new_attribute is the
- * attribute to insert (but we ignore its attacl, if indeed it has one).
+ * attribute to insert (but we ignore attacl and attoptions, which are always
+ * initialized to NULL).
  *
  * indstate is the index state for CatalogIndexInsert.	It can be passed as
  * NULL, in which case we'll fetch the necessary info.  (Don't do this when
  * inserting multiple attributes, because it's a tad more expensive.)
- *
- * We always initialize attacl to NULL (i.e., default permissions).
  */
 void
 InsertPgAttributeTuple(Relation pg_attribute_rel,
@@ -507,7 +512,6 @@ InsertPgAttributeTuple(Relation pg_attribute_rel,
 	values[Anum_pg_attribute_attname - 1] = NameGetDatum(&new_attribute->attname);
 	values[Anum_pg_attribute_atttypid - 1] = ObjectIdGetDatum(new_attribute->atttypid);
 	values[Anum_pg_attribute_attstattarget - 1] = Int32GetDatum(new_attribute->attstattarget);
-	values[Anum_pg_attribute_attdistinct - 1] = Float4GetDatum(new_attribute->attdistinct);
 	values[Anum_pg_attribute_attlen - 1] = Int16GetDatum(new_attribute->attlen);
 	values[Anum_pg_attribute_attnum - 1] = Int16GetDatum(new_attribute->attnum);
 	values[Anum_pg_attribute_attndims - 1] = Int32GetDatum(new_attribute->attndims);
@@ -522,8 +526,9 @@ InsertPgAttributeTuple(Relation pg_attribute_rel,
 	values[Anum_pg_attribute_attislocal - 1] = BoolGetDatum(new_attribute->attislocal);
 	values[Anum_pg_attribute_attinhcount - 1] = Int32GetDatum(new_attribute->attinhcount);
 
-	/* start out with empty permissions */
+	/* start out with empty permissions and empty options */
 	nulls[Anum_pg_attribute_attacl - 1] = true;
+	nulls[Anum_pg_attribute_attoptions - 1] = true;
 
 	tup = heap_form_tuple(RelationGetDescr(pg_attribute_rel), values, nulls);
 
@@ -578,7 +583,6 @@ AddNewAttributeTuples(Oid new_rel_oid,
 		attr->attrelid = new_rel_oid;
 		/* Make sure these are OK, too */
 		attr->attstattarget = -1;
-		attr->attdistinct = 0;
 		attr->attcacheoff = -1;
 
 		InsertPgAttributeTuple(rel, attr, indstate);

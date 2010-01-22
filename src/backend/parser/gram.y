@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.703 2010/01/06 05:31:13 itagaki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.704 2010/01/22 16:40:18 rhaas Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -1645,13 +1645,22 @@ alter_table_cmd:
 					n->def = (Node *) makeInteger($6);
 					$$ = (Node *)n;
 				}
-			/* ALTER TABLE <name> ALTER [COLUMN] <colname> SET STATISTICS DISTINCT <NumericOnly> */
-			| ALTER opt_column ColId SET STATISTICS DISTINCT NumericOnly
+			/* ALTER TABLE <name> ALTER [COLUMN] <colname> SET ( column_parameter = value [, ... ] ) */
+			| ALTER opt_column ColId SET reloptions
 				{
 					AlterTableCmd *n = makeNode(AlterTableCmd);
-					n->subtype = AT_SetDistinct;
+					n->subtype = AT_SetOptions;
 					n->name = $3;
-					n->def = (Node *) $7;
+					n->def = (Node *) $5;
+					$$ = (Node *)n;
+				}
+			/* ALTER TABLE <name> ALTER [COLUMN] <colname> SET ( column_parameter = value [, ... ] ) */
+			| ALTER opt_column ColId RESET reloptions
+				{
+					AlterTableCmd *n = makeNode(AlterTableCmd);
+					n->subtype = AT_ResetOptions;
+					n->name = $3;
+					n->def = (Node *) $5;
 					$$ = (Node *)n;
 				}
 			/* ALTER TABLE <name> ALTER [COLUMN] <colname> SET STORAGE <storagemode> */

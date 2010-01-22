@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/common/reloptions.c,v 1.31 2010/01/05 21:53:58 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/common/reloptions.c,v 1.32 2010/01/22 16:40:18 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,6 +24,7 @@
 #include "commands/tablespace.h"
 #include "nodes/makefuncs.h"
 #include "utils/array.h"
+#include "utils/attoptcache.h"
 #include "utils/builtins.h"
 #include "utils/guc.h"
 #include "utils/memutils.h"
@@ -195,6 +196,22 @@ static relopt_real realRelOpts[] =
 			RELOPT_KIND_TABLESPACE
 		},
 		-1, 0.0, DBL_MAX
+	},
+	{
+		{
+			"n_distinct",
+			"Sets the planner's estimate of the number of distinct values appearing in a column (excluding child relations).",
+			RELOPT_KIND_ATTRIBUTE
+		},
+		0, -1.0, DBL_MAX
+	},
+	{
+		{
+			"n_distinct_inherited",
+			"Sets the planner's estimate of the number of distinct values appearing in a column (including child relations).",
+			RELOPT_KIND_ATTRIBUTE
+		},
+		0, -1.0, DBL_MAX
 	},
 	/* list terminator */
 	{{NULL}}
@@ -1184,6 +1201,37 @@ index_reloptions(RegProcedure amoptions, Datum reloptions, bool validate)
 		return NULL;
 
 	return DatumGetByteaP(result);
+}
+
+/*
+ * Option parser for attribute reloptions
+ */
+bytea *
+attribute_reloptions(Datum reloptions, bool validate)
+{
+	relopt_value *options;
+	AttributeOpts  *aopts;
+	int			numoptions;
+	static const relopt_parse_elt tab[] = {
+		{"n_distinct", RELOPT_TYPE_REAL, offsetof(AttributeOpts, n_distinct)},
+		{"n_distinct_inherited", RELOPT_TYPE_REAL, offsetof(AttributeOpts, n_distinct_inherited)}
+	};
+
+	options = parseRelOptions(reloptions, validate, RELOPT_KIND_ATTRIBUTE,
+							  &numoptions);
+
+	/* if none set, we're done */
+	if (numoptions == 0)
+		return NULL;
+
+	aopts = allocateReloptStruct(sizeof(AttributeOpts), options, numoptions);
+
+	fillRelOptions((void *) aopts, sizeof(AttributeOpts), options, numoptions,
+				   validate, tab, lengthof(tab));
+
+	pfree(options);
+
+	return (bytea *) aopts;
 }
 
 /*

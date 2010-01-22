@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootstrap.c,v 1.257 2010/01/20 09:16:23 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootstrap.c,v 1.258 2010/01/22 16:40:18 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -737,7 +737,6 @@ DefineAttr(char *name, char *type, int attnum)
 	}
 
 	attrtypes[attnum]->attstattarget = -1;
-	attrtypes[attnum]->attdistinct = 0;
 	attrtypes[attnum]->attcacheoff = -1;
 	attrtypes[attnum]->atttypmod = -1;
 	attrtypes[attnum]->attislocal = true;

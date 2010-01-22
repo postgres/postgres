@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.317 2010/01/20 19:43:40 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.318 2010/01/22 16:40:18 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -284,10 +284,8 @@ static void ATPrepSetStatistics(Relation rel, const char *colName,
 					Node *newValue);
 static void ATExecSetStatistics(Relation rel, const char *colName,
 					Node *newValue);
-static void ATPrepSetDistinct(Relation rel, const char *colName,
-					Node *newValue);
-static void ATExecSetDistinct(Relation rel, const char *colName,
-				 Node *newValue);
+static void ATExecSetOptions(Relation rel, const char *colName,
+				 Node *options, bool isReset);
 static void ATExecSetStorage(Relation rel, const char *colName,
 				 Node *newValue);
 static void ATExecDropColumn(List **wqueue, Relation rel, const char *colName,
@@ -2425,10 +2423,10 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 			ATPrepSetStatistics(rel, cmd->name, cmd->def);
 			pass = AT_PASS_COL_ATTRS;
 			break;
-		case AT_SetDistinct:	/* ALTER COLUMN SET STATISTICS DISTINCT */
-			ATSimpleRecursion(wqueue, rel, cmd, recurse);
-			/* Performs own permission checks */
-			ATPrepSetDistinct(rel, cmd->name, cmd->def);
+		case AT_SetOptions:		/* ALTER COLUMN SET ( options ) */
+		case AT_ResetOptions:	/* ALTER COLUMN RESET ( options ) */
+			ATSimplePermissionsRelationOrIndex(rel);
+			/* This command never recurses */
 			pass = AT_PASS_COL_ATTRS;
 			break;
 		case AT_SetStorage:		/* ALTER COLUMN SET STORAGE */
@@ -2644,8 +2642,11 @@ ATExecCmd(List **wqueue, AlteredTableInfo *tab, Relation rel,
 		case AT_SetStatistics:	/* ALTER COLUMN SET STATISTICS */
 			ATExecSetStatistics(rel, cmd->name, cmd->def);
 			break;
-		case AT_SetDistinct:	/* ALTER COLUMN SET STATISTICS DISTINCT */
-			ATExecSetDistinct(rel, cmd->name, cmd->def);
+		case AT_SetOptions:		/* ALTER COLUMN SET ( options ) */
+			ATExecSetOptions(rel, cmd->name, cmd->def, false);
+			break;
+		case AT_ResetOptions:	/* ALTER COLUMN RESET ( options ) */
+			ATExecSetOptions(rel, cmd->name, cmd->def, true);
 			break;
 		case AT_SetStorage:		/* ALTER COLUMN SET STORAGE */
 			ATExecSetStorage(rel, cmd->name, cmd->def);
@@ -3682,7 +3683,6 @@ ATExecAddColumn(AlteredTableInfo *tab, Relation rel,
 	namestrcpy(&(attribute.attname), colDef->colname);
 	attribute.atttypid = typeOid;
 	attribute.attstattarget = (newattnum > 0) ? -1 : 0;
-	attribute.attdistinct = 0;
 	attribute.attlen = tform->typlen;
 	attribute.attcacheoff = -1;
 	attribute.atttypmod = typmod;
@@ -4151,68 +4151,24 @@ ATExecSetStatistics(Relation rel, const char *colName, Node *newValue)
 	heap_close(attrelation, RowExclusiveLock);
 }
 
-/*
- * ALTER TABLE ALTER COLUMN SET STATISTICS DISTINCT
- */
 static void
-ATPrepSetDistinct(Relation rel, const char *colName, Node *newValue)
+ATExecSetOptions(Relation rel, const char *colName, Node *options,
+				 bool isReset)
 {
-	/*
-	 * We do our own permission checking because (a) we want to allow SET
-	 * DISTINCT on indexes (for expressional index columns), and (b) we want
-	 * to allow SET DISTINCT on system catalogs without requiring
-	 * allowSystemTableMods to be turned on.
-	 */
-	if (rel->rd_rel->relkind != RELKIND_RELATION &&
-		rel->rd_rel->relkind != RELKIND_INDEX)
-		ereport(ERROR,
-				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				 errmsg("\"%s\" is not a table or index",
-						RelationGetRelationName(rel))));
-
-	/* Permissions checks */
-	if (!pg_class_ownercheck(RelationGetRelid(rel), GetUserId()))
-		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CLASS,
-					   RelationGetRelationName(rel));
-}
-
-static void
-ATExecSetDistinct(Relation rel, const char *colName, Node *newValue)
-{
-	float4		newdistinct;
 	Relation	attrelation;
-	HeapTuple	tuple;
+	HeapTuple	tuple,
+				newtuple;
 	Form_pg_attribute attrtuple;
-
-	switch (nodeTag(newValue))
-	{
-		case T_Integer:
-			newdistinct = intVal(newValue);
-			break;
-		case T_Float:
-			newdistinct = floatVal(newValue);
-			break;
-		default:
-			elog(ERROR, "unrecognized node type: %d",
-				 (int) nodeTag(newValue));
-			newdistinct = 0;	/* keep compiler quiet */
-			break;
-	}
-
-	/*
-	 * Limit ndistinct to sane values
-	 */
-	if (newdistinct < -1.0)
-	{
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("number of distinct values %g is too low",
-						newdistinct)));
-	}
+	Datum		datum,
+				newOptions;
+	bool		isnull;
+	Datum		repl_val[Natts_pg_attribute];
+	bool		repl_null[Natts_pg_attribute];
+	bool		repl_repl[Natts_pg_attribute];
 
 	attrelation = heap_open(AttributeRelationId, RowExclusiveLock);
 
-	tuple = SearchSysCacheCopyAttName(RelationGetRelid(rel), colName);
+	tuple = SearchSysCacheAttName(RelationGetRelid(rel), colName);
 
 	if (!HeapTupleIsValid(tuple))
 		ereport(ERROR,
@@ -4227,14 +4183,32 @@ ATExecSetDistinct(Relation rel, const char *colName, Node *newValue)
 				 errmsg("cannot alter system column \"%s\"",
 						colName)));
 
-	attrtuple->attdistinct = newdistinct;
+	/* Generate new proposed attoptions (text array) */
+	Assert(IsA(options, List));
+	datum = SysCacheGetAttr(ATTNAME, tuple, Anum_pg_attribute_attoptions,
+		&isnull);
+	newOptions = transformRelOptions(isnull ? (Datum) 0 : datum,
+									 (List *) options, NULL, NULL, false,
+									 isReset);
+	/* Validate new options */
+	(void) attribute_reloptions(newOptions, true);
 
-	simple_heap_update(attrelation, &tuple->t_self, tuple);
+	/* Build new tuple. */
+	memset(repl_null, false, sizeof(repl_null));
+	memset(repl_repl, false, sizeof(repl_repl));
+	if (newOptions != (Datum) 0)
+		repl_val[Anum_pg_attribute_attoptions - 1] = newOptions;
+	else
+		repl_null[Anum_pg_attribute_attoptions - 1] = true;
+	repl_repl[Anum_pg_attribute_attoptions - 1] = true;
+	newtuple = heap_modify_tuple(tuple, RelationGetDescr(attrelation),
+								 repl_val, repl_null, repl_repl);
+	ReleaseSysCache(tuple);
 
-	/* keep system catalog indexes current */
-	CatalogUpdateIndexes(attrelation, tuple);
-
-	heap_freetuple(tuple);
+	/* Update system catalog. */
+	simple_heap_update(attrelation, &newtuple->t_self, newtuple);
+	CatalogUpdateIndexes(attrelation, newtuple);
+	heap_freetuple(newtuple);
 
 	heap_close(attrelation, RowExclusiveLock);
 }

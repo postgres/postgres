@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.567 2010/01/17 22:56:22 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.568 2010/01/22 16:40:19 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -5056,7 +5056,6 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 	int			i_atttypname;
 	int			i_atttypmod;
 	int			i_attstattarget;
-	int			i_attdistinct;
 	int			i_attstorage;
 	int			i_typstorage;
 	int			i_attnotnull;
@@ -5065,6 +5064,7 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 	int			i_attlen;
 	int			i_attalign;
 	int			i_attislocal;
+	int			i_attoptions;
 	PGresult   *res;
 	int			ntups;
 	bool		hasdefaults;
@@ -5104,13 +5104,13 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 
 		if (g_fout->remoteVersion >= 80500)
 		{
-			/* attdistinct is new in 8.5 */
+			/* attoptions is new in 8.5 */
 			appendPQExpBuffer(q, "SELECT a.attnum, a.attname, a.atttypmod, "
-							  "a.attstattarget, a.attdistinct, "
-							  "a.attstorage, t.typstorage, "
+							  "a.attstattarget, a.attstorage, t.typstorage, "
 							  "a.attnotnull, a.atthasdef, a.attisdropped, "
 							  "a.attlen, a.attalign, a.attislocal, "
-				   "pg_catalog.format_type(t.oid,a.atttypmod) AS atttypname "
+				   "pg_catalog.format_type(t.oid,a.atttypmod) AS atttypname, "
+							"array_to_string(attoptions, ', ') AS attoptions "
 			 "FROM pg_catalog.pg_attribute a LEFT JOIN pg_catalog.pg_type t "
 							  "ON a.atttypid = t.oid "
 							  "WHERE a.attrelid = '%u'::pg_catalog.oid "
@@ -5122,11 +5122,11 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 		{
 			/* need left join here to not fail on dropped columns ... */
 			appendPQExpBuffer(q, "SELECT a.attnum, a.attname, a.atttypmod, "
-							  "a.attstattarget, 0 AS attdistinct, "
-							  "a.attstorage, t.typstorage, "
+							  "a.attstattarget, a.attstorage, t.typstorage, "
 							  "a.attnotnull, a.atthasdef, a.attisdropped, "
 							  "a.attlen, a.attalign, a.attislocal, "
-				   "pg_catalog.format_type(t.oid,a.atttypmod) AS atttypname "
+				   "pg_catalog.format_type(t.oid,a.atttypmod) AS atttypname, "
+							  "'' AS attoptions "
 			 "FROM pg_catalog.pg_attribute a LEFT JOIN pg_catalog.pg_type t "
 							  "ON a.atttypid = t.oid "
 							  "WHERE a.attrelid = '%u'::pg_catalog.oid "
@@ -5142,12 +5142,12 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 			 * explicitly set or was just a default.
 			 */
 			appendPQExpBuffer(q, "SELECT a.attnum, a.attname, a.atttypmod, "
-							  "-1 AS attstattarget, 0 AS attdistinct, "
-							  "a.attstorage, "
+							  "-1 AS attstattarget, a.attstorage, "
 							  "t.typstorage, a.attnotnull, a.atthasdef, "
 							  "false AS attisdropped, a.attlen, "
 							  "a.attalign, false AS attislocal, "
-							  "format_type(t.oid,a.atttypmod) AS atttypname "
+							  "format_type(t.oid,a.atttypmod) AS atttypname, "
+							  "'' AS attoptions "
 							  "FROM pg_attribute a LEFT JOIN pg_type t "
 							  "ON a.atttypid = t.oid "
 							  "WHERE a.attrelid = '%u'::oid "
@@ -5159,12 +5159,13 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 		{
 			/* format_type not available before 7.1 */
 			appendPQExpBuffer(q, "SELECT attnum, attname, atttypmod, "
-							  "-1 AS attstattarget, 0 AS attdistinct, "
+							  "-1 AS attstattarget, "
 							  "attstorage, attstorage AS typstorage, "
 							  "attnotnull, atthasdef, false AS attisdropped, "
 							  "attlen, attalign, "
 							  "false AS attislocal, "
-							  "(SELECT typname FROM pg_type WHERE oid = atttypid) AS atttypname "
+							  "(SELECT typname FROM pg_type WHERE oid = atttypid) AS atttypname, "
+							  "'' AS attoptions "
 							  "FROM pg_attribute a "
 							  "WHERE attrelid = '%u'::oid "
 							  "AND attnum > 0::int2 "
@@ -5182,7 +5183,6 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 		i_atttypname = PQfnumber(res, "atttypname");
 		i_atttypmod = PQfnumber(res, "atttypmod");
 		i_attstattarget = PQfnumber(res, "attstattarget");
-		i_attdistinct = PQfnumber(res, "attdistinct");
 		i_attstorage = PQfnumber(res, "attstorage");
 		i_typstorage = PQfnumber(res, "typstorage");
 		i_attnotnull = PQfnumber(res, "attnotnull");
@@ -5191,13 +5191,13 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 		i_attlen = PQfnumber(res, "attlen");
 		i_attalign = PQfnumber(res, "attalign");
 		i_attislocal = PQfnumber(res, "attislocal");
+		i_attoptions = PQfnumber(res, "attoptions");
 
 		tbinfo->numatts = ntups;
 		tbinfo->attnames = (char **) malloc(ntups * sizeof(char *));
 		tbinfo->atttypnames = (char **) malloc(ntups * sizeof(char *));
 		tbinfo->atttypmod = (int *) malloc(ntups * sizeof(int));
 		tbinfo->attstattarget = (int *) malloc(ntups * sizeof(int));
-		tbinfo->attdistinct = (float4 *) malloc(ntups * sizeof(float4));
 		tbinfo->attstorage = (char *) malloc(ntups * sizeof(char));
 		tbinfo->typstorage = (char *) malloc(ntups * sizeof(char));
 		tbinfo->attisdropped = (bool *) malloc(ntups * sizeof(bool));
@@ -5206,6 +5206,7 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 		tbinfo->attislocal = (bool *) malloc(ntups * sizeof(bool));
 		tbinfo->notnull = (bool *) malloc(ntups * sizeof(bool));
 		tbinfo->attrdefs = (AttrDefInfo **) malloc(ntups * sizeof(AttrDefInfo *));
+		tbinfo->attoptions = (char **) malloc(ntups * sizeof(char *));
 		tbinfo->inhAttrs = (bool *) malloc(ntups * sizeof(bool));
 		tbinfo->inhAttrDef = (bool *) malloc(ntups * sizeof(bool));
 		tbinfo->inhNotNull = (bool *) malloc(ntups * sizeof(bool));
@@ -5223,8 +5224,6 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 			tbinfo->atttypnames[j] = strdup(PQgetvalue(res, j, i_atttypname));
 			tbinfo->atttypmod[j] = atoi(PQgetvalue(res, j, i_atttypmod));
 			tbinfo->attstattarget[j] = atoi(PQgetvalue(res, j, i_attstattarget));
-			tbinfo->attdistinct[j] = strtod(PQgetvalue(res, j, i_attdistinct),
-											(char **) NULL);
 			tbinfo->attstorage[j] = *(PQgetvalue(res, j, i_attstorage));
 			tbinfo->typstorage[j] = *(PQgetvalue(res, j, i_typstorage));
 			tbinfo->attisdropped[j] = (PQgetvalue(res, j, i_attisdropped)[0] == 't');
@@ -5232,6 +5231,7 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 			tbinfo->attalign[j] = *(PQgetvalue(res, j, i_attalign));
 			tbinfo->attislocal[j] = (PQgetvalue(res, j, i_attislocal)[0] == 't');
 			tbinfo->notnull[j] = (PQgetvalue(res, j, i_attnotnull)[0] == 't');
+			tbinfo->attoptions[j] = strdup(PQgetvalue(res, j, i_attoptions));
 			tbinfo->attrdefs[j] = NULL; /* fix below */
 			if (PQgetvalue(res, j, i_atthasdef)[0] == 't')
 				hasdefaults = true;
@@ -10798,22 +10798,6 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 			}
 
 			/*
-			 * Dump per-column ndistinct information. We only issue an ALTER
-			 * TABLE statement if the attdistinct entry for this column is
-			 * non-zero (i.e. it's not the default value)
-			 */
-			if (tbinfo->attdistinct[j] != 0 &&
-				!tbinfo->attisdropped[j])
-			{
-				appendPQExpBuffer(q, "ALTER TABLE ONLY %s ",
-								  fmtId(tbinfo->dobj.name));
-				appendPQExpBuffer(q, "ALTER COLUMN %s ",
-								  fmtId(tbinfo->attnames[j]));
-				appendPQExpBuffer(q, "SET STATISTICS DISTINCT %g;\n",
-								  tbinfo->attdistinct[j]);
-			}
-
-			/*
 			 * Dump per-column storage information.  The statement is only
 			 * dumped if the storage has been changed from the type's default.
 			 */
@@ -10849,6 +10833,19 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 					appendPQExpBuffer(q, "SET STORAGE %s;\n",
 									  storage);
 				}
+			}
+
+			/*
+			 * Dump per-column attributes.
+			 */
+			if (tbinfo->attoptions[j] && tbinfo->attoptions[j][0] != '\0')
+			{
+				appendPQExpBuffer(q, "ALTER TABLE ONLY %s ",
+								  fmtId(tbinfo->dobj.name));
+				appendPQExpBuffer(q, "ALTER COLUMN %s ",
+								  fmtId(tbinfo->attnames[j]));
+				appendPQExpBuffer(q, "SET (%s);\n",
+								  tbinfo->attoptions[j]);
 			}
 		}
 	}

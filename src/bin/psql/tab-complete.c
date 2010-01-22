@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.190 2010/01/02 21:28:46 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.191 2010/01/22 16:40:19 rhaas Exp $
  */
 
 /*----------------------------------------------------------------------
@@ -991,17 +991,6 @@ psql_completion(char *text, int start, int end)
 		{"DEFAULT", "NOT NULL", "STATISTICS", "STORAGE", NULL};
 
 		COMPLETE_WITH_LIST(list_COLUMNSET);
-	}
-	else if (((pg_strcasecmp(prev5_wd, "ALTER") == 0 &&
-			   pg_strcasecmp(prev4_wd, "COLUMN") == 0) ||
-			  pg_strcasecmp(prev4_wd, "ALTER") == 0) &&
-			 pg_strcasecmp(prev2_wd, "SET") == 0 &&
-			 pg_strcasecmp(prev_wd, "STATISTICS") == 0)
-	{
-		static const char *const list_COLUMNSETSTATS[] =
-		{"DISTINCT", NULL};
-
-		COMPLETE_WITH_LIST(list_COLUMNSETSTATS);
 	}
 	else if (((pg_strcasecmp(prev4_wd, "ALTER") == 0 &&
 			   pg_strcasecmp(prev3_wd, "COLUMN") == 0) ||

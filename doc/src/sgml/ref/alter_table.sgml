@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.109 2009/09/18 05:00:41 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.110 2010/01/22 16:40:18 rhaas Exp $
 PostgreSQL documentation
 -->
 
@@ -39,7 +39,8 @@ ALTER TABLE <replaceable class="PARAMETER">name</replaceable>
     ALTER [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> DROP DEFAULT
     ALTER [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> { SET | DROP } NOT NULL
     ALTER [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> SET STATISTICS <replaceable class="PARAMETER">integer</replaceable>
-    ALTER [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> SET STATISTICS DISTINCT <replaceable class="PARAMETER">number</replaceable>
+    ALTER [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> SET ( <replaceable class="PARAMETER">attribute_option</replaceable> = <replaceable class="PARAMETER">value</replaceable> [, ... ] )
+    ALTER [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> RESET ( <replaceable class="PARAMETER">attribute_option</replaceable> [, ... ] )
     ALTER [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> SET STORAGE { PLAIN | EXTERNAL | EXTENDED | MAIN }
     ADD <replaceable class="PARAMETER">table_constraint</replaceable>
     DROP CONSTRAINT [ IF EXISTS ]  <replaceable class="PARAMETER">constraint_name</replaceable> [ RESTRICT | CASCADE ]
@@ -158,14 +159,21 @@ ALTER TABLE <replaceable class="PARAMETER">name</replaceable>
    </varlistentry>
 
    <varlistentry>
-    <term><literal>SET STATISTICS DISTINCT</literal></term>
+    <term><literal>SET ( <replaceable class="PARAMETER">attribute_option</replaceable> = <replaceable class="PARAMETER">value</replaceable> [, ... ] )</term></literal>
+    <term><literal>RESET ( <replaceable class="PARAMETER">attribute_option</replaceable> [, ... ] )</literal>
     <listitem>
      <para>
-      This form overrides the number-of-distinct-values estimate made by
-      subsequent <xref linkend="sql-analyze" endterm="sql-analyze-title">
-      operations.  When set to a positive value, <command>ANALYZE</> will
-      assume that the column contains exactly the specified number of distinct
-      nonnull values.  When set to a negative value, which must be greater
+      This form sets or resets attribute-level options.  Currently, the only
+      define attribute-level options are <literal>n_distinct</> and
+      <literal>n_distinct_inherited</>, which override the
+      number-of-distinct-values estimate made by subsequent
+      <xref linkend="sql-analyze" endterm="sql-analyze-title">
+      operations.  <literal>n_distinct</> affects the statistics for the table
+      itself, while <literal>n_distinct_inherited</> affects the statistics
+      gathered for the table and its inheritance children.  When set to a
+      positive value, <command>ANALYZE</> will assume that the column contains
+      exactly the specified number of distinct nonnull values.  When set to a
+      negative value, which must be greater
       than or equal to -1, <command>ANALYZE</> will assume that the number of
       distinct nonnull values in the column is linear in the size of the
       table; the exact count is to be computed by multiplying the estimated
