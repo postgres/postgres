@@ -1,7 +1,7 @@
 /**********************************************************************
  * plpython.c - python as a procedural language for PostgreSQL
  *
- *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.135 2010/01/16 11:03:51 petere Exp $
+ *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.136 2010/01/22 15:45:15 petere Exp $
  *
  *********************************************************************
  */
@@ -243,14 +243,13 @@ typedef struct PLyResultObject
 
 /* function declarations */
 
-/* Two exported functions: first is the magic telling Postgresql
- * what function call interface it implements. Second is for
- * initialization of the interpreter during library load.
- */
+/* exported functions */
 Datum		plpython_call_handler(PG_FUNCTION_ARGS);
+Datum		plpython_inline_handler(PG_FUNCTION_ARGS);
 void		_PG_init(void);
 
 PG_FUNCTION_INFO_V1(plpython_call_handler);
+PG_FUNCTION_INFO_V1(plpython_inline_handler);
 
 /* most of the remaining of the declarations, all static */
 
@@ -419,6 +418,12 @@ plpython_error_callback(void *arg)
 }
 
 static void
+plpython_inline_error_callback(void *arg)
+{
+	errcontext("PL/Python anonymous code block");
+}
+
+static void
 plpython_trigger_error_callback(void *arg)
 {
 	if (PLy_curr_procedure)
@@ -493,6 +498,60 @@ plpython_call_handler(PG_FUNCTION_ARGS)
 	Py_DECREF(proc->me);
 
 	return retval;
+}
+
+Datum
+plpython_inline_handler(PG_FUNCTION_ARGS)
+{
+	InlineCodeBlock *codeblock = (InlineCodeBlock *) DatumGetPointer(PG_GETARG_DATUM(0));
+	FunctionCallInfoData fake_fcinfo;
+	FmgrInfo	flinfo;
+	PLyProcedure *save_curr_proc;
+	PLyProcedure *volatile proc = NULL;
+	ErrorContextCallback plerrcontext;
+
+	if (SPI_connect() != SPI_OK_CONNECT)
+		elog(ERROR, "SPI_connect failed");
+
+	save_curr_proc = PLy_curr_procedure;
+
+	/*
+	 * Setup error traceback support for ereport()
+	 */
+	plerrcontext.callback = plpython_inline_error_callback;
+	plerrcontext.previous = error_context_stack;
+	error_context_stack = &plerrcontext;
+
+	MemSet(&fake_fcinfo, 0, sizeof(fake_fcinfo));
+	MemSet(&flinfo, 0, sizeof(flinfo));
+	fake_fcinfo.flinfo = &flinfo;
+	flinfo.fn_oid = InvalidOid;
+	flinfo.fn_mcxt = CurrentMemoryContext;
+
+	proc = PLy_malloc0(sizeof(PLyProcedure));
+	proc->pyname = PLy_strdup("__plpython_inline_block");
+	proc->result.out.d.typoid = VOIDOID;
+
+	PG_TRY();
+	{
+		PLy_procedure_compile(proc, codeblock->source_text);
+		PLy_curr_procedure = proc;
+		PLy_function_handler(&fake_fcinfo, proc);
+	}
+	PG_CATCH();
+	{
+		PLy_curr_procedure = save_curr_proc;
+		PyErr_Clear();
+		PG_RE_THROW();
+	}
+	PG_END_TRY();
+
+	/* Pop the error context stack */
+	error_context_stack = plerrcontext.previous;
+
+	PLy_curr_procedure = save_curr_proc;
+
+	PG_RETURN_VOID();
 }
 
 /* trigger and function sub handlers
@@ -1107,7 +1166,7 @@ PLy_procedure_call(PLyProcedure *proc, char *kargs, PyObject *vargs)
 	if (rv == NULL || PyErr_Occurred())
 	{
 		Py_XDECREF(rv);
-		PLy_elog(ERROR, "PL/Python function \"%s\" failed", proc->proname);
+		PLy_elog(ERROR, NULL);
 	}
 
 	return rv;

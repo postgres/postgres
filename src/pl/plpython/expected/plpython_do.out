@@ -1,0 +1,6 @@
+DO $$ plpy.notice("This is plpythonu.") $$ LANGUAGE plpythonu;
+NOTICE:  This is plpythonu.
+CONTEXT:  PL/Python anonymous code block
+DO $$ nonsense $$ LANGUAGE plpythonu;
+ERROR:  PL/Python: NameError: global name 'nonsense' is not defined
+CONTEXT:  PL/Python anonymous code block

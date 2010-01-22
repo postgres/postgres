@@ -22,8 +22,7 @@ CREATE FUNCTION exception_index_invalid(text) RETURNS text
 'return args[1]'
 	LANGUAGE plpythonu;
 SELECT exception_index_invalid('test');
-ERROR:  PL/Python: PL/Python function "exception_index_invalid" failed
-DETAIL:  IndexError: list index out of range
+ERROR:  PL/Python: IndexError: list index out of range
 CONTEXT:  PL/Python function "exception_index_invalid"
 /* check handling of nested exceptions
  */
