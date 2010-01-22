@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.338 2010/01/16 20:38:54 mha Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.339 2010/01/22 22:50:03 momjian Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -79,7 +79,7 @@ su - postgres
 <screen>
 <userinput>gmake --version</userinput>
 </screen>
-      It is recommended to use version 3.76.1 or later.
+      It is recommended to use version 3.79.1 or later.
      </para>
     </listitem>
 

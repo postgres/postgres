@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/docguide.sgml,v 1.79 2010/01/22 15:49:29 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/docguide.sgml,v 1.80 2010/01/22 22:50:03 momjian Exp $ -->
 
 <appendix id="docguide">
  <title>Documentation</title>
@@ -590,8 +590,7 @@ gmake man
 
    <para>
     If you want to use <application>JadeTex</application> to produce a
-    printable rendition of the documentation, you must first build the
-    <acronym>HTML</acronym> output as outlined above, then you can use one of the
+    printable rendition of the documentation, you can use one of the
     following commands:
 
     <itemizedlist>
