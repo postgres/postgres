@@ -5,7 +5,7 @@
  * Copyright (c) 2002-2005, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/dbsize.c,v 1.7.2.2 2008/03/31 01:32:48 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/dbsize.c,v 1.7.2.3 2010/01/23 21:29:23 tgl Exp $
  *
  */
 
@@ -43,6 +43,8 @@ db_dir_size(const char *path)
 	while ((direntry = ReadDir(dirdesc, path)) != NULL)
 	{
 		struct stat fst;
+
+		CHECK_FOR_INTERRUPTS();
 
 		if (strcmp(direntry->d_name, ".") == 0 ||
 			strcmp(direntry->d_name, "..") == 0)
@@ -95,6 +97,8 @@ calculate_database_size(Oid dbOid)
 
 	while ((direntry = ReadDir(dirdesc, dirpath)) != NULL)
 	{
+		CHECK_FOR_INTERRUPTS();
+
 		if (strcmp(direntry->d_name, ".") == 0 ||
 			strcmp(direntry->d_name, "..") == 0)
 			continue;
@@ -169,6 +173,8 @@ calculate_tablespace_size(Oid tblspcOid)
 	while ((direntry = ReadDir(dirdesc, tblspcPath)) != NULL)
 	{
 		struct stat fst;
+
+		CHECK_FOR_INTERRUPTS();
 
 		if (strcmp(direntry->d_name, ".") == 0 ||
 			strcmp(direntry->d_name, "..") == 0)
@@ -245,6 +251,8 @@ calculate_relation_size(RelFileNode *rfn)
 	for (segcount = 0;; segcount++)
 	{
 		struct stat fst;
+
+		CHECK_FOR_INTERRUPTS();
 
 		if (segcount == 0)
 			snprintf(pathname, MAXPGPATH, "%s/%u",
