@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.586 2010/01/23 16:37:12 sriggs Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.587 2010/01/23 17:04:05 sriggs Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -172,8 +172,9 @@ static int	UseNewLine = 1;		/* Use newlines query delimiters (the default) */
 static int	UseNewLine = 0;		/* Use EOF as query delimiters */
 #endif   /* TCOP_DONTUSENEWLINE */
 
-/* whether we were cancelled during recovery by conflict processing or not */
+/* whether or not, and why, we were cancelled by conflict with recovery */
 static bool RecoveryConflictPending = false;
+static ProcSignalReason	RecoveryConflictReason;
 
 /* ----------------------------------------------------------------
  *		decls for routines only used in this file
@@ -188,6 +189,7 @@ static bool check_log_statement(List *stmt_list);
 static int	errdetail_execute(List *raw_parsetree_list);
 static int	errdetail_params(ParamListInfo params);
 static int  errdetail_abort(void);
+static int  errdetail_recovery_conflict(void);
 static void start_xact_command(void);
 static void finish_xact_command(void);
 static bool IsTransactionExitStmt(Node *parsetree);
@@ -2255,6 +2257,39 @@ errdetail_abort(void)
 }
 
 /*
+ * errdetail_recovery_conflict
+ *
+ * Add an errdetail() line showing conflict source.
+ */
+static int
+errdetail_recovery_conflict(void)
+{
+	switch (RecoveryConflictReason)
+	{
+		case PROCSIG_RECOVERY_CONFLICT_BUFFERPIN:
+				errdetail("User was holding shared buffer pin for too long.");
+				break;
+		case PROCSIG_RECOVERY_CONFLICT_LOCK:
+				errdetail("User was holding a relation lock for too long.");
+				break;
+		case PROCSIG_RECOVERY_CONFLICT_TABLESPACE:
+				errdetail("User was or may have been using tablespace that must be dropped.");
+				break;
+		case PROCSIG_RECOVERY_CONFLICT_SNAPSHOT:
+				errdetail("User query might have needed to see row versions that must be removed.");
+				break;
+		case PROCSIG_RECOVERY_CONFLICT_DATABASE:
+				errdetail("User was connected to a database that must be dropped.");
+				break;
+		default:
+				break;
+				/* no errdetail */
+	}
+
+	return 0;
+}
+
+/*
  * exec_describe_statement_message
  *
  * Process a "Describe" message for a prepared statement
@@ -2716,6 +2751,7 @@ RecoveryConflictInterrupt(ProcSignalReason reason)
 	*/
 	if (!proc_exit_inprogress)
 	{
+		RecoveryConflictReason = reason;
 		switch (reason)
 		{
 			case PROCSIG_RECOVERY_CONFLICT_BUFFERPIN:
@@ -2835,7 +2871,8 @@ ProcessInterrupts(void)
 		else if (RecoveryConflictPending)
 			ereport(FATAL,
 					(errcode(ERRCODE_ADMIN_SHUTDOWN),
-					 errmsg("terminating connection due to conflict with recovery")));
+					 errmsg("terminating connection due to conflict with recovery"),
+					 errdetail_recovery_conflict()));
 		else
 			ereport(FATAL,
 					(errcode(ERRCODE_ADMIN_SHUTDOWN),
@@ -2883,11 +2920,15 @@ ProcessInterrupts(void)
 			if (DoingCommandRead)
 				ereport(FATAL,
 						(errcode(ERRCODE_ADMIN_SHUTDOWN),
-						 errmsg("terminating connection due to conflict with recovery")));
+						 errmsg("terminating connection due to conflict with recovery"),
+						 errdetail_recovery_conflict(),
+						 errhint("In a moment you should be able to reconnect to the"
+								 " database and repeat your command.")));
 			else
 				ereport(ERROR,
 						(errcode(ERRCODE_QUERY_CANCELED),
-						 errmsg("canceling statement due to conflict with recovery")));
+						 errmsg("canceling statement due to conflict with recovery"),
+						 errdetail_recovery_conflict()));
 		}
 
 		/*
