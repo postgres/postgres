@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.244 2010/01/15 09:18:58 heikki Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.245 2010/01/23 16:37:12 sriggs Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -1825,14 +1825,15 @@ archive_command = 'copy "%p" "C:\\server\\archivedir\\%f"'  # Windows
       <listitem>
        <para>
         When server acts as a standby, this parameter specifies a wait policy
-        for queries that conflict with incoming data changes. Valid settings
-        are -1, meaning wait forever, or a wait time of 0 or more seconds.
-        If a conflict should occur the server will delay up to this
-        amount before it begins trying to resolve things less amicably, as
+        for queries that conflict with data changes being replayed by recovery.
+        If a conflict should occur the server will delay up to this number
+        of seconds before it begins trying to resolve things less amicably, as
         described in <xref linkend="hot-standby-conflict">. Typically,
         this parameter makes sense only during replication, so when
-        performing an archive recovery to recover from data loss a
-        parameter setting of 0 is recommended.  The default is 30 seconds.
+        performing an archive recovery to recover from data loss a very high
+        parameter setting is recommended.  The default is 30 seconds.
+        There is no wait-forever setting because of the potential for deadlock
+        which that setting would introduce.
         This parameter can only be set in the <filename>postgresql.conf</>
         file or on the server command line.
        </para>

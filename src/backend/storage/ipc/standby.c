@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/standby.c,v 1.6 2010/01/16 10:13:04 sriggs Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/standby.c,v 1.7 2010/01/23 16:37:12 sriggs Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -126,10 +126,6 @@ WaitExceedsMaxStandbyDelay(void)
 	long	delay_secs;
 	int		delay_usecs;
 
-	/* max_standby_delay = -1 means wait forever, if necessary */
-	if (MaxStandbyDelay < 0)
-		return false;
-
 	/* Are we past max_standby_delay? */
 	TimestampDifference(GetLatestXLogTime(), GetCurrentTimestamp(),
 						&delay_secs, &delay_usecs);
@@ -241,8 +237,7 @@ ResolveRecoveryConflictWithSnapshot(TransactionId latestRemovedXid)
 	VirtualTransactionId *backends;
 
 	backends = GetConflictingVirtualXIDs(latestRemovedXid,
-										 InvalidOid,
-										 true);
+										 InvalidOid);
 
 	ResolveRecoveryConflictWithVirtualXIDs(backends,
 										   PROCSIG_RECOVERY_CONFLICT_SNAPSHOT);
@@ -273,8 +268,7 @@ ResolveRecoveryConflictWithTablespace(Oid tsid)
 	 * non-transactional.
 	 */
 	temp_file_users = GetConflictingVirtualXIDs(InvalidTransactionId,
-												InvalidOid,
-												false);
+												InvalidOid);
 	ResolveRecoveryConflictWithVirtualXIDs(temp_file_users,
 										   PROCSIG_RECOVERY_CONFLICT_TABLESPACE);
 }
@@ -295,7 +289,7 @@ ResolveRecoveryConflictWithDatabase(Oid dbid)
 	 */
 	while (CountDBBackends(dbid) > 0)
 	{
-		CancelDBBackends(dbid);
+		CancelDBBackends(dbid, PROCSIG_RECOVERY_CONFLICT_TABLESPACE, true);
 
 		/*
 		 * Wait awhile for them to die so that we avoid flooding an
@@ -331,8 +325,7 @@ ResolveRecoveryConflictWithLock(Oid dbOid, Oid relOid)
 		else
 		{
 			backends = GetConflictingVirtualXIDs(InvalidTransactionId,
-												 InvalidOid,
-												 true);
+												 InvalidOid);
 			report_memory_error = true;
 		}
 
@@ -343,6 +336,113 @@ ResolveRecoveryConflictWithLock(Oid dbOid, Oid relOid)
 											!= LOCKACQUIRE_NOT_AVAIL)
 			lock_acquired = true;
 	}
+}
+
+/*
+ * ResolveRecoveryConflictWithBufferPin is called from LockBufferForCleanup()
+ * to resolve conflicts with other backends holding buffer pins.
+ *
+ * We either resolve conflicts immediately or set a SIGALRM to wake us at
+ * the limit of our patience. The sleep in LockBufferForCleanup() is
+ * performed here, for code clarity.
+ *
+ * Resolve conflict by sending a SIGUSR1 reason to all backends to check if
+ * they hold one of the buffer pins that is blocking Startup process. If so,
+ * backends will take an appropriate error action, ERROR or FATAL.
+ *
+ * A secondary purpose of this is to avoid deadlocks that might occur between
+ * the Startup process and lock waiters. Deadlocks occur because if queries
+ * wait on a lock, that must be behind an AccessExclusiveLock, which can only
+ * be clared if the Startup process replays a transaction completion record.
+ * If Startup process is waiting then that is a deadlock. If we allowed a
+ * setting of max_standby_delay that meant "wait forever" we would then need
+ * special code to protect against deadlock. Such deadlocks are rare, so the
+ * code would be almost certainly buggy, so we avoid both long waits and
+ * deadlocks using the same mechanism.
+ */
+void
+ResolveRecoveryConflictWithBufferPin(void)
+{
+	bool	sig_alarm_enabled = false;
+
+	Assert(InHotStandby);
+
+	/*
+	 * Signal immediately or set alarm for later.
+	 */
+	if (MaxStandbyDelay == 0)
+		SendRecoveryConflictWithBufferPin();
+	else
+	{
+		TimestampTz now;
+		long	standby_delay_secs;		/* How far Startup process is lagging */
+		int		standby_delay_usecs;
+
+		now = GetCurrentTimestamp();
+
+		/* Are we past max_standby_delay? */
+		TimestampDifference(GetLatestXLogTime(), now,
+							&standby_delay_secs, &standby_delay_usecs);
+
+		if (standby_delay_secs >= (long) MaxStandbyDelay)
+			SendRecoveryConflictWithBufferPin();
+		else
+		{
+			TimestampTz fin_time;			/* Expected wake-up time by timer */
+			long	timer_delay_secs;		/* Amount of time we set timer for */
+			int		timer_delay_usecs = 0;
+
+			/*
+			 * How much longer we should wait?
+			 */
+			timer_delay_secs = MaxStandbyDelay - standby_delay_secs;
+			if (standby_delay_usecs > 0)
+			{
+				timer_delay_secs -= 1;
+				timer_delay_usecs = 1000000 - standby_delay_usecs;
+			}
+
+			/*
+			 * It's possible that the difference is less than a microsecond;
+			 * ensure we don't cancel, rather than set, the interrupt.
+			 */
+			if (timer_delay_secs == 0 && timer_delay_usecs == 0)
+				timer_delay_usecs = 1;
+
+			/*
+			 * When is the finish time? We recheck this if we are woken early.
+			 */
+			fin_time = TimestampTzPlusMilliseconds(now,
+													(timer_delay_secs * 1000) +
+													(timer_delay_usecs / 1000));
+
+			if (enable_standby_sig_alarm(timer_delay_secs, timer_delay_usecs, fin_time))
+				sig_alarm_enabled = true;
+			else
+				elog(FATAL, "could not set timer for process wakeup");
+		}
+	}
+
+	/* Wait to be signaled by UnpinBuffer() */
+	ProcWaitForSignal();
+
+	if (sig_alarm_enabled)
+	{
+		if (!disable_standby_sig_alarm())
+			elog(FATAL, "could not disable timer for process wakeup");
+	}
+}
+
+void
+SendRecoveryConflictWithBufferPin(void)
+{
+	/*
+	 * We send signal to all backends to ask them if they are holding
+	 * the buffer pin which is delaying the Startup process. We must
+	 * not set the conflict flag yet, since most backends will be innocent.
+	 * Let the SIGUSR1 handling in each backend decide their own fate.
+	 */
+	CancelDBBackends(InvalidOid, PROCSIG_RECOVERY_CONFLICT_BUFFERPIN, false);
 }
 
 /*

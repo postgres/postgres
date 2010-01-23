@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.254 2010/01/02 16:57:51 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.255 2010/01/23 16:37:12 sriggs Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,6 +44,7 @@
 #include "storage/ipc.h"
 #include "storage/proc.h"
 #include "storage/smgr.h"
+#include "storage/standby.h"
 #include "utils/rel.h"
 #include "utils/resowner.h"
 
@@ -2417,11 +2418,46 @@ LockBufferForCleanup(Buffer buffer)
 		PinCountWaitBuf = bufHdr;
 		UnlockBufHdr(bufHdr);
 		LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
+
 		/* Wait to be signaled by UnpinBuffer() */
-		ProcWaitForSignal();
+		if (InHotStandby)
+		{
+			/* Share the bufid that Startup process waits on */
+			SetStartupBufferPinWaitBufId(buffer - 1);
+			/* Set alarm and then wait to be signaled by UnpinBuffer() */
+			ResolveRecoveryConflictWithBufferPin();
+			SetStartupBufferPinWaitBufId(-1);
+		}
+		else
+			ProcWaitForSignal();
+
 		PinCountWaitBuf = NULL;
 		/* Loop back and try again */
 	}
+}
+
+/*
+ * Check called from RecoveryConflictInterrupt handler when Startup
+ * process requests cancelation of all pin holders that are blocking it.
+ */
+bool
+HoldingBufferPinThatDelaysRecovery(void)
+{
+	int		bufid = GetStartupBufferPinWaitBufId();
+
+	/*
+	 * If we get woken slowly then it's possible that the Startup process
+	 * was already woken by other backends before we got here. Also possible
+	 * that we get here by multiple interrupts or interrupts at inappropriate
+	 * times, so make sure we do nothing if the bufid is not set.
+	 */
+	if (bufid < 0)
+		return false;
+
+	if (PrivateRefCount[bufid] > 0)
+		return true;
+
+	return false;
 }
 
 /*

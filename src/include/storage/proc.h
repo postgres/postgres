@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/proc.h,v 1.118 2010/01/16 10:05:50 sriggs Exp $
+ * $PostgreSQL: pgsql/src/include/storage/proc.h,v 1.119 2010/01/23 16:37:12 sriggs Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,7 +16,7 @@
 
 #include "storage/lock.h"
 #include "storage/pg_sema.h"
-
+#include "utils/timestamp.h"
 
 /*
  * Each backend advertises up to PGPROC_MAX_CACHED_SUBXIDS TransactionIds
@@ -145,6 +145,8 @@ typedef struct PROC_HDR
 	/* The proc of the Startup process, since not in ProcArray */
 	PGPROC	   *startupProc;
 	int			startupProcPid;
+	/* Buffer id of the buffer that Startup process waits for pin on */
+	int			startupBufferPinWaitBufId;
 } PROC_HDR;
 
 /*
@@ -177,6 +179,8 @@ extern void InitProcessPhase2(void);
 extern void InitAuxiliaryProcess(void);
 
 extern void PublishStartupProcessInformation(void);
+extern void SetStartupBufferPinWaitBufId(int bufid);
+extern int GetStartupBufferPinWaitBufId(void);
 
 extern bool HaveNFreeProcs(int n);
 extern void ProcReleaseLocks(bool isCommit);
@@ -193,5 +197,9 @@ extern void ProcSendSignal(int pid);
 extern bool enable_sig_alarm(int delayms, bool is_statement_timeout);
 extern bool disable_sig_alarm(bool is_statement_timeout);
 extern void handle_sig_alarm(SIGNAL_ARGS);
+
+extern bool enable_standby_sig_alarm(long delay_s, int delay_us, TimestampTz fin_time);
+extern bool disable_standby_sig_alarm(void);
+extern void handle_standby_sig_alarm(SIGNAL_ARGS);
 
 #endif   /* PROC_H */

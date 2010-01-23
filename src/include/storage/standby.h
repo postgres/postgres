@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/standby.h,v 1.4 2010/01/16 10:05:57 sriggs Exp $
+ * $PostgreSQL: pgsql/src/include/storage/standby.h,v 1.5 2010/01/23 16:37:12 sriggs Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,12 +19,15 @@
 
 extern int	vacuum_defer_cleanup_age;
 
+extern void InitRecoveryTransactionEnvironment(void);
+extern void ShutdownRecoveryTransactionEnvironment(void);
+
 extern void ResolveRecoveryConflictWithSnapshot(TransactionId latestRemovedXid);
 extern void ResolveRecoveryConflictWithTablespace(Oid tsid);
 extern void ResolveRecoveryConflictWithDatabase(Oid dbid);
 
-extern void InitRecoveryTransactionEnvironment(void);
-extern void ShutdownRecoveryTransactionEnvironment(void);
+extern void ResolveRecoveryConflictWithBufferPin(void);
+extern void SendRecoveryConflictWithBufferPin(void);
 
 /*
  * Standby Rmgr (RM_STANDBY_ID)

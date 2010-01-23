@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.136 2010/01/15 09:18:56 heikki Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.137 2010/01/23 16:37:12 sriggs Exp $ -->
 
 <chapter id="backup">
  <title>Backup and Restore</title>
@@ -2399,7 +2399,7 @@ primary_conninfo = 'host=192.168.1.50 port=5432 user=foo password=foopass'
        </listitem>
        <listitem>
         <para>
-         Waiting to acquire buffer cleanup locks (for which there is no time out)
+         Waiting to acquire buffer cleanup locks
         </para>
        </listitem>
        <listitem>
@@ -2536,11 +2536,7 @@ primary_conninfo = 'host=192.168.1.50 port=5432 user=foo password=foopass'
     Three-way deadlocks are possible between AccessExclusiveLocks arriving from
     the primary, cleanup WAL records that require buffer cleanup locks and
     user requests that are waiting behind replayed AccessExclusiveLocks. Deadlocks
-    are currently resolved by the cancellation of user processes that would
-    need to wait on a lock. This is heavy-handed and generates more query
-    cancellations than we need to, though does remove the possibility of deadlock.
-    This behaviour is expected to improve substantially for the main release
-    version of 8.5.
+    are resolved by time-out when we exceed <varname>max_standby_delay</>.
    </para>
 
    <para>
@@ -2630,11 +2626,7 @@ LOG:  database system is ready to accept read only connections
     <varname>max_standby_delay</> or even set it to zero, though that is a
     very aggressive setting. If the standby server is tasked as an additional
     server for decision support queries then it may be acceptable to set this
-    to a value of many hours (in seconds).  It is also possible to set
-    <varname>max_standby_delay</> to -1 which means wait forever for queries
-    to complete, if there are conflicts; this will be useful when performing
-    an archive recovery from a backup.
-   </para>
+    to a value of many hours (in seconds).
 
    <para>
     Transaction status "hint bits" written on primary are not WAL-logged,

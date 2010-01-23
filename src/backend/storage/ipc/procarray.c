@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/procarray.c,v 1.58 2010/01/21 00:53:58 sriggs Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/procarray.c,v 1.59 2010/01/23 16:37:12 sriggs Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1680,15 +1680,13 @@ GetCurrentVirtualXIDs(TransactionId limitXmin, bool excludeXmin0,
  * latestCompletedXid since doing so would be a performance issue during
  * normal running, so we check it essentially for free on the standby.
  *
- * If dbOid is valid we skip backends attached to other databases. Some
- * callers choose to skipExistingConflicts.
+ * If dbOid is valid we skip backends attached to other databases.
  *
  * Be careful to *not* pfree the result from this function. We reuse
  * this array sufficiently often that we use malloc for the result.
  */
 VirtualTransactionId *
-GetConflictingVirtualXIDs(TransactionId limitXmin, Oid dbOid,
-						  bool skipExistingConflicts)
+GetConflictingVirtualXIDs(TransactionId limitXmin, Oid dbOid)
 {
 	static VirtualTransactionId *vxids;
 	ProcArrayStruct *arrayP = procArray;
@@ -1725,9 +1723,6 @@ GetConflictingVirtualXIDs(TransactionId limitXmin, Oid dbOid,
 
 		/* Exclude prepared transactions */
 		if (proc->pid == 0)
-			continue;
-
-		if (skipExistingConflicts && proc->recoveryConflictPending)
 			continue;
 
 		if (!OidIsValid(dbOid) ||
@@ -1886,7 +1881,7 @@ CountDBBackends(Oid databaseid)
  * CancelDBBackends --- cancel backends that are using specified database
  */
 void
-CancelDBBackends(Oid databaseid)
+CancelDBBackends(Oid databaseid, ProcSignalReason sigmode, bool conflictPending)
 {
 	ProcArrayStruct *arrayP = procArray;
 	int			index;
@@ -1899,13 +1894,13 @@ CancelDBBackends(Oid databaseid)
 	{
 		volatile PGPROC *proc = arrayP->procs[index];
 
-		if (proc->databaseId == databaseid)
+		if (databaseid == InvalidOid || proc->databaseId == databaseid)
 		{
 			VirtualTransactionId procvxid;
 
 			GET_VXID_FROM_PGPROC(procvxid, *proc);
 
-			proc->recoveryConflictPending = true;
+			proc->recoveryConflictPending = conflictPending;
 			pid = proc->pid;
 			if (pid != 0)
 			{
@@ -1913,8 +1908,7 @@ CancelDBBackends(Oid databaseid)
 				 * Kill the pid if it's still here. If not, that's what we wanted
 				 * so ignore any errors.
 				 */
-				(void) SendProcSignal(pid, PROCSIG_RECOVERY_CONFLICT_DATABASE,
-										procvxid.backendId);
+				(void) SendProcSignal(pid, sigmode, procvxid.backendId);
 			}
 		}
 	}

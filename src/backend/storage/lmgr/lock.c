@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lock.c,v 1.190 2010/01/02 16:57:52 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lock.c,v 1.191 2010/01/23 16:37:12 sriggs Exp $
  *
  * NOTES
  *	  A lock table is a shared memory hash table.  When
@@ -812,25 +812,6 @@ LockAcquireExtended(const LOCKTAG *locktag,
 			if (locallock->nLocks == 0)
 				RemoveLocalLock(locallock);
 			return LOCKACQUIRE_NOT_AVAIL;
-		}
-
-		/*
-		 * In Hot Standby we abort the lock wait if Startup process is waiting
-		 * since this would result in a deadlock. The deadlock occurs because
-		 * if we are waiting it must be behind an AccessExclusiveLock, which
-		 * can only clear when a transaction completion record is replayed.
-		 * If Startup process is waiting we never will clear that lock, so to
-		 * wait for it just causes a deadlock.
-		 */
-		if (RecoveryInProgress() && !InRecovery &&
-			locktag->locktag_type == LOCKTAG_RELATION)
-		{
-			LWLockRelease(partitionLock);
-			ereport(ERROR,
-					(errcode(ERRCODE_T_R_DEADLOCK_DETECTED),
-					 errmsg("possible deadlock detected"),
-					 errdetail("process conflicts with recovery - please resubmit query later"),
-					 errdetail_log("process conflicts with recovery")));
 		}
 
 		/*

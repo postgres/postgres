@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/proc.c,v 1.213 2010/01/16 10:05:50 sriggs Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/proc.c,v 1.214 2010/01/23 16:37:12 sriggs Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -73,6 +73,7 @@ NON_EXEC_STATIC PGPROC *AuxiliaryProcs = NULL;
 static LOCALLOCK *lockAwaited = NULL;
 
 /* Mark these volatile because they can be changed by signal handler */
+static volatile bool standby_timeout_active = false;
 static volatile bool statement_timeout_active = false;
 static volatile bool deadlock_timeout_active = false;
 static volatile DeadLockState deadlock_state = DS_NOT_YET_CHECKED;
@@ -89,6 +90,7 @@ static void RemoveProcFromArray(int code, Datum arg);
 static void ProcKill(int code, Datum arg);
 static void AuxiliaryProcKill(int code, Datum arg);
 static bool CheckStatementTimeout(void);
+static bool CheckStandbyTimeout(void);
 
 
 /*
@@ -107,6 +109,8 @@ ProcGlobalShmemSize(void)
 	size = add_size(size, mul_size(MaxBackends, sizeof(PGPROC)));
 	/* ProcStructLock */
 	size = add_size(size, sizeof(slock_t));
+	/* startupBufferPinWaitBufId */
+	size = add_size(size, sizeof(NBuffers));
 
 	return size;
 }
@@ -487,8 +491,41 @@ PublishStartupProcessInformation(void)
 
 	procglobal->startupProc = MyProc;
 	procglobal->startupProcPid = MyProcPid;
+	procglobal->startupBufferPinWaitBufId = 0;
 
 	SpinLockRelease(ProcStructLock);
+}
+
+/*
+ * Used from bufgr to share the value of the buffer that Startup waits on,
+ * or to reset the value to "not waiting" (-1). This allows processing
+ * of recovery conflicts for buffer pins. Set is made before backends look
+ * at this value, so locking not required, especially since the set is
+ * an atomic integer set operation.
+ */
+void
+SetStartupBufferPinWaitBufId(int bufid)
+{
+	/* use volatile pointer to prevent code rearrangement */
+	volatile PROC_HDR *procglobal = ProcGlobal;
+
+	procglobal->startupBufferPinWaitBufId = bufid;
+}
+
+/*
+ * Used by backends when they receive a request to check for buffer pin waits.
+ */
+int
+GetStartupBufferPinWaitBufId(void)
+{
+	int bufid;
+
+	/* use volatile pointer to prevent code rearrangement */
+	volatile PROC_HDR *procglobal = ProcGlobal;
+
+	bufid = procglobal->startupBufferPinWaitBufId;
+
+	return bufid;
 }
 
 /*
@@ -1542,7 +1579,7 @@ CheckStatementTimeout(void)
 
 
 /*
- * Signal handler for SIGALRM
+ * Signal handler for SIGALRM for normal user backends
  *
  * Process deadlock check and/or statement timeout check, as needed.
  * To avoid various edge cases, we must be careful to do nothing
@@ -1562,6 +1599,115 @@ handle_sig_alarm(SIGNAL_ARGS)
 
 	if (statement_timeout_active)
 		(void) CheckStatementTimeout();
+
+	errno = save_errno;
+}
+
+/*
+ * Signal handler for SIGALRM in Startup process
+ *
+ * To avoid various edge cases, we must be careful to do nothing
+ * when there is nothing to be done.  We also need to be able to
+ * reschedule the timer interrupt if called before end of statement.
+ */
+bool
+enable_standby_sig_alarm(long delay_s, int delay_us, TimestampTz fin_time)
+{
+	struct itimerval timeval;
+
+	Assert(delay_s >= 0 && delay_us >= 0);
+
+	statement_fin_time = fin_time;
+
+	standby_timeout_active = true;
+
+	MemSet(&timeval, 0, sizeof(struct itimerval));
+	timeval.it_value.tv_sec = delay_s;
+	timeval.it_value.tv_usec = delay_us;
+	if (setitimer(ITIMER_REAL, &timeval, NULL))
+		return false;
+	return true;
+}
+
+bool
+disable_standby_sig_alarm(void)
+{
+	/*
+	 * Always disable the interrupt if it is active; this avoids being
+	 * interrupted by the signal handler and thereby possibly getting
+	 * confused.
+	 *
+	 * We will re-enable the interrupt if necessary in CheckStandbyTimeout.
+	 */
+	if (standby_timeout_active)
+	{
+		struct itimerval timeval;
+
+		MemSet(&timeval, 0, sizeof(struct itimerval));
+		if (setitimer(ITIMER_REAL, &timeval, NULL))
+		{
+			standby_timeout_active = false;
+			return false;
+		}
+	}
+
+	standby_timeout_active = false;
+
+	return true;
+}
+
+/*
+ * CheckStandbyTimeout() runs unconditionally in the Startup process
+ * SIGALRM handler. Timers will only be set when InHotStandby.
+ * We simply ignore any signals unless the timer has been set.
+ */
+static bool
+CheckStandbyTimeout(void)
+{
+	TimestampTz now;
+
+	standby_timeout_active = false;
+
+	now = GetCurrentTimestamp();
+
+	if (now >= statement_fin_time)
+		SendRecoveryConflictWithBufferPin();
+	else
+	{
+		/* Not time yet, so (re)schedule the interrupt */
+		long		secs;
+		int			usecs;
+		struct itimerval timeval;
+
+		TimestampDifference(now, statement_fin_time,
+							&secs, &usecs);
+
+		/*
+		 * It's possible that the difference is less than a microsecond;
+		 * ensure we don't cancel, rather than set, the interrupt.
+		 */
+		if (secs == 0 && usecs == 0)
+			usecs = 1;
+
+		standby_timeout_active = true;
+
+		MemSet(&timeval, 0, sizeof(struct itimerval));
+		timeval.it_value.tv_sec = secs;
+		timeval.it_value.tv_usec = usecs;
+		if (setitimer(ITIMER_REAL, &timeval, NULL))
+			return false;
+	}
+
+	return true;
+}
+
+void
+handle_standby_sig_alarm(SIGNAL_ARGS)
+{
+	int save_errno = errno;
+
+	if (standby_timeout_active)
+		(void) CheckStandbyTimeout();
 
 	errno = save_errno;
 }
