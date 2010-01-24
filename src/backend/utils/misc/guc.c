@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.534 2010/01/23 16:37:12 sriggs Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.535 2010/01/24 21:49:17 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -3904,7 +3904,14 @@ AtEOXact_GUC(bool isCommit, int nestLevel)
 	bool		still_dirty;
 	int			i;
 
-	Assert(nestLevel > 0 && nestLevel <= GUCNestLevel);
+	/*
+	 * Note: it's possible to get here with GUCNestLevel == nestLevel-1 during
+	 * abort, if there is a failure during transaction start before
+	 * AtStart_GUC is called.
+	 */
+	Assert(nestLevel > 0 &&
+		   (nestLevel <= GUCNestLevel ||
+			(nestLevel == GUCNestLevel + 1 && !isCommit)));
 
 	/* Quick exit if nothing's changed in this transaction */
 	if (!guc_dirty)

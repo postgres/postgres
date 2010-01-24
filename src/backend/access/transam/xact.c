@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.281 2010/01/16 10:05:50 sriggs Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.282 2010/01/24 21:49:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2170,37 +2170,40 @@ AbortTransaction(void)
 
 	/*
 	 * Post-abort cleanup.	See notes in CommitTransaction() concerning
-	 * ordering.
+	 * ordering.  We can skip all of it if the transaction failed before
+	 * creating a resource owner.
 	 */
+	if (TopTransactionResourceOwner != NULL)
+	{
+		CallXactCallbacks(XACT_EVENT_ABORT);
 
-	CallXactCallbacks(XACT_EVENT_ABORT);
+		ResourceOwnerRelease(TopTransactionResourceOwner,
+							 RESOURCE_RELEASE_BEFORE_LOCKS,
+							 false, true);
+		AtEOXact_Buffers(false);
+		AtEOXact_RelationCache(false);
+		AtEOXact_Inval(false);
+		smgrDoPendingDeletes(false);
+		AtEOXact_MultiXact();
+		ResourceOwnerRelease(TopTransactionResourceOwner,
+							 RESOURCE_RELEASE_LOCKS,
+							 false, true);
+		ResourceOwnerRelease(TopTransactionResourceOwner,
+							 RESOURCE_RELEASE_AFTER_LOCKS,
+							 false, true);
+		AtEOXact_CatCache(false);
 
-	ResourceOwnerRelease(TopTransactionResourceOwner,
-						 RESOURCE_RELEASE_BEFORE_LOCKS,
-						 false, true);
-	AtEOXact_Buffers(false);
-	AtEOXact_RelationCache(false);
-	AtEOXact_Inval(false);
-	smgrDoPendingDeletes(false);
-	AtEOXact_MultiXact();
-	ResourceOwnerRelease(TopTransactionResourceOwner,
-						 RESOURCE_RELEASE_LOCKS,
-						 false, true);
-	ResourceOwnerRelease(TopTransactionResourceOwner,
-						 RESOURCE_RELEASE_AFTER_LOCKS,
-						 false, true);
-	AtEOXact_CatCache(false);
-
-	AtEOXact_GUC(false, 1);
-	AtEOXact_SPI(false);
-	AtEOXact_on_commit_actions(false);
-	AtEOXact_Namespace(false);
-	AtEOXact_Files();
-	AtEOXact_ComboCid();
-	AtEOXact_HashTables(false);
-	AtEOXact_PgStat(false);
-	AtEOXact_Snapshot(false);
-	pgstat_report_xact_timestamp(0);
+		AtEOXact_GUC(false, 1);
+		AtEOXact_SPI(false);
+		AtEOXact_on_commit_actions(false);
+		AtEOXact_Namespace(false);
+		AtEOXact_Files();
+		AtEOXact_ComboCid();
+		AtEOXact_HashTables(false);
+		AtEOXact_PgStat(false);
+		AtEOXact_Snapshot(false);
+		pgstat_report_xact_timestamp(0);
+	}
 
 	/*
 	 * State remains TRANS_ABORT until CleanupTransaction().
