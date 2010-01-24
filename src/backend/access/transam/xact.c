@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.195.4.5 2009/12/09 21:58:54 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.195.4.6 2010/01/24 21:50:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1699,32 +1699,35 @@ AbortTransaction(void)
 
 	/*
 	 * Post-abort cleanup.	See notes in CommitTransaction() concerning
-	 * ordering.
+	 * ordering.  We can skip all of it if the transaction failed before
+	 * creating a resource owner.
 	 */
+	if (TopTransactionResourceOwner != NULL)
+	{
+		CallXactCallbacks(XACT_EVENT_ABORT);
 
-	CallXactCallbacks(XACT_EVENT_ABORT);
+		ResourceOwnerRelease(TopTransactionResourceOwner,
+							 RESOURCE_RELEASE_BEFORE_LOCKS,
+							 false, true);
+		AtEOXact_Buffers(false);
+		AtEOXact_Inval(false);
+		smgrDoPendingDeletes(false);
+		ResourceOwnerRelease(TopTransactionResourceOwner,
+							 RESOURCE_RELEASE_LOCKS,
+							 false, true);
+		ResourceOwnerRelease(TopTransactionResourceOwner,
+							 RESOURCE_RELEASE_AFTER_LOCKS,
+							 false, true);
 
-	ResourceOwnerRelease(TopTransactionResourceOwner,
-						 RESOURCE_RELEASE_BEFORE_LOCKS,
-						 false, true);
-	AtEOXact_Buffers(false);
-	AtEOXact_Inval(false);
-	smgrDoPendingDeletes(false);
-	ResourceOwnerRelease(TopTransactionResourceOwner,
-						 RESOURCE_RELEASE_LOCKS,
-						 false, true);
-	ResourceOwnerRelease(TopTransactionResourceOwner,
-						 RESOURCE_RELEASE_AFTER_LOCKS,
-						 false, true);
-
-	AtEOXact_GUC(false, 1);
-	AtEOXact_SPI(false);
-	AtEOXact_on_commit_actions(false);
-	AtEOXact_Namespace(false);
-	smgrabort();
-	AtEOXact_Files();
-	AtEOXact_HashTables(false);
-	pgstat_count_xact_rollback();
+		AtEOXact_GUC(false, 1);
+		AtEOXact_SPI(false);
+		AtEOXact_on_commit_actions(false);
+		AtEOXact_Namespace(false);
+		smgrabort();
+		AtEOXact_Files();
+		AtEOXact_HashTables(false);
+		pgstat_count_xact_rollback();
+	}
 
 	/*
 	 * State remains TRANS_ABORT until CleanupTransaction().

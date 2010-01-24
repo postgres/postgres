@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.177.4.7 2009/10/27 20:15:04 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.177.4.8 2010/01/24 21:50:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2530,10 +2530,9 @@ AfterTriggerEndSubXact(bool isCommit)
 	/*
 	 * Pop the prior state if needed.
 	 */
-	Assert(my_level < afterTriggers->maxtransdepth);
-
 	if (isCommit)
 	{
+		Assert(my_level < afterTriggers->maxtransdepth);
 		/* If we saved a prior state, we don't need it anymore */
 		state = afterTriggers->state_stack[my_level];
 		if (state != NULL)
@@ -2546,7 +2545,15 @@ AfterTriggerEndSubXact(bool isCommit)
 	else
 	{
 		/*
-		 * Aborting --- restore the pointers from the stacks.
+		 * Aborting.  It is possible subxact start failed before calling
+		 * AfterTriggerBeginSubXact, in which case we mustn't risk touching
+		 * stack levels that aren't there.
+		 */
+		if (my_level >= afterTriggers->maxtransdepth)
+			return;
+
+		/*
+		 * Restore the pointers from the stacks.
 		 */
 		afterTriggers->events = afterTriggers->events_stack[my_level];
 		afterTriggers->query_depth = afterTriggers->depth_stack[my_level];
