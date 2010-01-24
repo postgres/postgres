@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.137 2010/01/23 16:37:12 sriggs Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.138 2010/01/24 14:46:01 mha Exp $ -->
 
 <chapter id="backup">
  <title>Backup and Restore</title>
@@ -2627,6 +2627,7 @@ LOG:  database system is ready to accept read only connections
     very aggressive setting. If the standby server is tasked as an additional
     server for decision support queries then it may be acceptable to set this
     to a value of many hours (in seconds).
+   </para>
 
    <para>
     Transaction status "hint bits" written on primary are not WAL-logged,
