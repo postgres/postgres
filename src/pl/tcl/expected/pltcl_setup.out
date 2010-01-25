@@ -402,3 +402,23 @@ create operator @< (
 		rightarg = int4,
 		procedure = tcl_int4lt
 	);
+--
+-- Test usage of Tcl's "clock" command.  In recent Tcl versions this
+-- command fails without working "unknown" support, so it's a good canary
+-- for initialization problems.
+--
+create function tcl_date_week(int4,int4,int4) returns text as '
+    return [clock format [clock scan "$2/$3/$1"] -format "%U"]
+' language pltcl immutable;
+select tcl_date_week(2010,1,24);
+ tcl_date_week 
+---------------
+ 04
+(1 row)
+
+select tcl_date_week(2001,10,24);
+ tcl_date_week 
+---------------
+ 42
+(1 row)
+
