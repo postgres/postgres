@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.564 2010/01/19 14:11:32 mha Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.565 2010/01/25 20:55:32 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.pl reads this file and generates .bki
@@ -957,6 +957,10 @@ DATA(insert OID = 723 (  get_bit		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 23 "17
 DESCR("get bit");
 DATA(insert OID = 724 (  set_bit		   PGNSP PGUID 12 1 0 0 f f f t f i 3 0 17 "17 23 23" _null_ _null_ _null_ _null_	byteaSetBit _null_ _null_ _null_ ));
 DESCR("set bit");
+DATA(insert OID = 749 (  overlay		   PGNSP PGUID 12 1 0 0 f f f t f i 4 0 17 "17 17 23 23" _null_ _null_ _null_ _null_	byteaoverlay _null_ _null_ _null_ ));
+DESCR("substitute portion of string");
+DATA(insert OID = 752 (  overlay		   PGNSP PGUID 12 1 0 0 f f f t f i 3 0 17 "17 17 23" _null_ _null_ _null_ _null_	byteaoverlay_no_len _null_ _null_ _null_ ));
+DESCR("substitute portion of string");
 
 DATA(insert OID = 725 (  dist_pl		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 701 "600 628" _null_ _null_ _null_ _null_	dist_pl _null_ _null_ _null_ ));
 DESCR("distance between point and line");
@@ -1832,9 +1836,9 @@ DESCR("current schema name");
 DATA(insert OID = 1403 (  current_schemas	PGNSP PGUID 12 1 0 0 f f f t f s 1 0 1003 "16" _null_ _null_ _null_ _null_	current_schemas _null_ _null_ _null_ ));
 DESCR("current schema search list");
 
-DATA(insert OID = 1404 (  overlay			PGNSP PGUID 14 1 0 0 f f f t f i 4 0 25 "25 25 23 23" _null_ _null_ _null_ _null_	"select pg_catalog.substring($1, 1, ($3 - 1)) || $2 || pg_catalog.substring($1, ($3 + $4))" _null_ _null_ _null_ ));
+DATA(insert OID = 1404 (  overlay			PGNSP PGUID 12 1 0 0 f f f t f i 4 0 25 "25 25 23 23" _null_ _null_ _null_ _null_	textoverlay _null_ _null_ _null_ ));
 DESCR("substitute portion of string");
-DATA(insert OID = 1405 (  overlay			PGNSP PGUID 14 1 0 0 f f f t f i 3 0 25 "25 25 23" _null_ _null_ _null_ _null_	"select pg_catalog.substring($1, 1, ($3 - 1)) || $2 || pg_catalog.substring($1, ($3 + pg_catalog.char_length($2)))" _null_ _null_ _null_ ));
+DATA(insert OID = 1405 (  overlay			PGNSP PGUID 12 1 0 0 f f f t f i 3 0 25 "25 25 23" _null_ _null_ _null_ _null_	textoverlay_no_len _null_ _null_ _null_ ));
 DESCR("substitute portion of string");
 
 DATA(insert OID = 1406 (  isvertical		PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "600 600" _null_ _null_ _null_ _null_  point_vert _null_ _null_ _null_ ));
@@ -2402,9 +2406,17 @@ DESCR("adjust varbit() to typmod length");
 
 DATA(insert OID = 1698 (  position		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 23 "1560 1560" _null_ _null_ _null_ _null_ bitposition _null_ _null_ _null_ ));
 DESCR("return position of sub-bitstring");
-DATA(insert OID = 1699 (  substring			PGNSP PGUID 12 1 0 0 f f f t f i 2 0 1560 "1560 23" _null_ _null_ _null_ _null_ bitsubstr_no_len _null_ _null_ _null_ ));
+DATA(insert OID = 1699 (  substring		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 1560 "1560 23" _null_ _null_ _null_ _null_ bitsubstr_no_len _null_ _null_ _null_ ));
 DESCR("return portion of bitstring");
 
+DATA(insert OID = 3030 (  overlay		   PGNSP PGUID 12 1 0 0 f f f t f i 4 0 1560 "1560 1560 23 23" _null_ _null_ _null_ _null_	bitoverlay _null_ _null_ _null_ ));
+DESCR("substitute portion of bitstring");
+DATA(insert OID = 3031 (  overlay		   PGNSP PGUID 12 1 0 0 f f f t f i 3 0 1560 "1560 1560 23" _null_ _null_ _null_ _null_	bitoverlay_no_len _null_ _null_ _null_ ));
+DESCR("substitute portion of bitstring");
+DATA(insert OID = 3032 (  get_bit		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 23 "1560 23" _null_ _null_ _null_ _null_ bitgetbit _null_ _null_ _null_ ));
+DESCR("get bit");
+DATA(insert OID = 3033 (  set_bit		   PGNSP PGUID 12 1 0 0 f f f t f i 3 0 1560 "1560 23 23" _null_ _null_ _null_ _null_ bitsetbit _null_ _null_ _null_ ));
+DESCR("set bit");
 
 /* for mac type support */
 DATA(insert OID = 436 (  macaddr_in			PGNSP PGUID 12 1 0 0 f f f t f i 1 0 829 "2275" _null_ _null_ _null_ _null_ macaddr_in _null_ _null_ _null_ ));

@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/varbit.c,v 1.63 2010/01/07 20:17:43 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/varbit.c,v 1.64 2010/01/25 20:55:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,8 +23,10 @@
 
 #define HEXDIG(z)	 ((z)<10 ? ((z)+'0') : ((z)-10+'A'))
 
+static VarBit *bit_catenate(VarBit *arg1, VarBit *arg2);
 static VarBit *bitsubstring(VarBit *arg, int32 s, int32 l,
 							bool length_not_specified);
+static VarBit *bit_overlay(VarBit *t1, VarBit *t2, int sp, int sl);
 
 
 /* common code for bittypmodin and varbittypmodin */
@@ -877,6 +879,13 @@ bitcat(PG_FUNCTION_ARGS)
 {
 	VarBit	   *arg1 = PG_GETARG_VARBIT_P(0);
 	VarBit	   *arg2 = PG_GETARG_VARBIT_P(1);
+
+	PG_RETURN_VARBIT_P(bit_catenate(arg1, arg2));
+}
+
+static VarBit *
+bit_catenate(VarBit *arg1, VarBit *arg2)
+{
 	VarBit	   *result;
 	int			bitlen1,
 				bitlen2,
@@ -919,7 +928,7 @@ bitcat(PG_FUNCTION_ARGS)
 		}
 	}
 
-	PG_RETURN_VARBIT_P(result);
+	return result;
 }
 
 /* bitsubstr
@@ -1030,6 +1039,67 @@ bitsubstring(VarBit *arg, int32 s, int32 l, bool length_not_specified)
 			*(VARBITS(result) + len - 1) &= mask;
 		}
 	}
+
+	return result;
+}
+
+/*
+ * bitoverlay
+ *	Replace specified substring of first string with second
+ *
+ * The SQL standard defines OVERLAY() in terms of substring and concatenation.
+ * This code is a direct implementation of what the standard says.
+ */
+Datum
+bitoverlay(PG_FUNCTION_ARGS)
+{
+	VarBit	   *t1 = PG_GETARG_VARBIT_P(0);
+	VarBit	   *t2 = PG_GETARG_VARBIT_P(1);
+	int			sp = PG_GETARG_INT32(2); /* substring start position */
+	int			sl = PG_GETARG_INT32(3); /* substring length */
+
+	PG_RETURN_VARBIT_P(bit_overlay(t1, t2, sp, sl));
+}
+
+Datum
+bitoverlay_no_len(PG_FUNCTION_ARGS)
+{
+	VarBit	   *t1 = PG_GETARG_VARBIT_P(0);
+	VarBit	   *t2 = PG_GETARG_VARBIT_P(1);
+	int			sp = PG_GETARG_INT32(2); /* substring start position */
+	int			sl;
+
+	sl = VARBITLEN(t2);				/* defaults to length(t2) */
+	PG_RETURN_VARBIT_P(bit_overlay(t1, t2, sp, sl));
+}
+
+static VarBit *
+bit_overlay(VarBit *t1, VarBit *t2, int sp, int sl)
+{
+	VarBit	   *result;
+	VarBit	   *s1;
+	VarBit	   *s2;
+	int			sp_pl_sl;
+
+	/*
+	 * Check for possible integer-overflow cases.  For negative sp,
+	 * throw a "substring length" error because that's what should be
+	 * expected according to the spec's definition of OVERLAY().
+	 */
+	if (sp <= 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_SUBSTRING_ERROR),
+				 errmsg("negative substring length not allowed")));
+	sp_pl_sl = sp + sl;
+	if (sp_pl_sl <= sl)
+		ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("integer out of range")));
+
+	s1 = bitsubstring(t1, 1, sp-1, false);
+	s2 = bitsubstring(t1, sp_pl_sl, -1, true);
+	result = bit_catenate(s1, t2);
+	result = bit_catenate(result, s2);
 
 	return result;
 }
@@ -1605,4 +1675,104 @@ bitposition(PG_FUNCTION_ARGS)
 		}
 	}
 	PG_RETURN_INT32(0);
+}
+
+
+/*
+ * bitsetbit
+ *
+ * Given an instance of type 'bit' creates a new one with
+ * the Nth bit set to the given value.
+ *
+ * The bit location is specified left-to-right in a zero-based fashion
+ * consistent with the other get_bit and set_bit functions, but
+ * inconsistent with the standard substring, position, overlay functions
+ */
+Datum
+bitsetbit(PG_FUNCTION_ARGS)
+{
+	VarBit	   *arg1 = PG_GETARG_VARBIT_P(0);
+	int32		n = PG_GETARG_INT32(1);
+	int32		newBit = PG_GETARG_INT32(2);
+	VarBit	   *result;
+	int			len,
+				bitlen;
+	bits8	   *r,
+			   *p;
+	int			byteNo,
+				bitNo;
+
+	bitlen = VARBITLEN(arg1);
+	if (n < 0 || n >= bitlen)
+		ereport(ERROR,
+				(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
+				 errmsg("bit index %d out of valid range (0..%d)",
+						n, bitlen - 1)));
+	/*
+	 * sanity check!
+	 */
+	if (newBit != 0 && newBit != 1)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("new bit must be 0 or 1")));
+
+	len = VARSIZE(arg1);
+	result = (VarBit *) palloc(len);
+	SET_VARSIZE(result, len);
+	VARBITLEN(result) = bitlen;
+
+	p = VARBITS(arg1);
+	r = VARBITS(result);
+
+	memcpy(r, p, VARBITBYTES(arg1));
+
+	byteNo = n / BITS_PER_BYTE;
+	bitNo = BITS_PER_BYTE - 1 - (n % BITS_PER_BYTE);
+
+	/*
+	 * Update the byte.
+	 */
+	if (newBit == 0)
+		r[byteNo] &= (~(1 << bitNo));
+	else
+		r[byteNo] |= (1 << bitNo);
+
+	PG_RETURN_VARBIT_P(result);
+}
+
+/*
+ * bitgetbit
+ *
+ * returns the value of the Nth bit of a bit array (0 or 1).
+ *
+ * The bit location is specified left-to-right in a zero-based fashion
+ * consistent with the other get_bit and set_bit functions, but
+ * inconsistent with the standard substring, position, overlay functions
+ */
+Datum
+bitgetbit(PG_FUNCTION_ARGS)
+{
+	VarBit	   *arg1 = PG_GETARG_VARBIT_P(0);
+	int32		n = PG_GETARG_INT32(1);
+	int			bitlen;
+	bits8	   *p;
+	int			byteNo,
+				bitNo;
+
+	bitlen = VARBITLEN(arg1);
+	if (n < 0 || n >= bitlen)
+		ereport(ERROR,
+				(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
+				 errmsg("bit index %d out of valid range (0..%d)",
+						n, bitlen - 1)));
+
+	p = VARBITS(arg1);
+
+	byteNo = n / BITS_PER_BYTE;
+	bitNo = BITS_PER_BYTE - 1 - (n % BITS_PER_BYTE);
+
+	if (p[byteNo] & (1 << bitNo))
+		PG_RETURN_INT32(1);
+	else
+		PG_RETURN_INT32(0);
 }

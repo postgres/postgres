@@ -547,3 +547,6 @@ SELECT trim(E'\\000'::bytea from E'\\000Tom\\000'::bytea);
 SELECT btrim(E'\\000trim\\000'::bytea, E'\\000'::bytea);
 SELECT btrim(''::bytea, E'\\000'::bytea);
 SELECT btrim(E'\\000trim\\000'::bytea, ''::bytea);
+SELECT encode(overlay(E'Th\\000omas'::bytea placing E'Th\\001omas'::bytea from 2),'escape');
+SELECT encode(overlay(E'Th\\000omas'::bytea placing E'\\002\\003'::bytea from 8),'escape');
+SELECT encode(overlay(E'Th\\000omas'::bytea placing E'\\002\\003'::bytea from 5 for 3),'escape');

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/bytea.h,v 1.2 2010/01/02 16:58:10 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/bytea.h,v 1.3 2010/01/25 20:55:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,5 +46,7 @@ extern Datum byteacat(PG_FUNCTION_ARGS);
 extern Datum byteapos(PG_FUNCTION_ARGS);
 extern Datum bytea_substr(PG_FUNCTION_ARGS);
 extern Datum bytea_substr_no_len(PG_FUNCTION_ARGS);
+extern Datum byteaoverlay(PG_FUNCTION_ARGS);
+extern Datum byteaoverlay_no_len(PG_FUNCTION_ARGS);
 
 #endif   /* BYTEA_H */

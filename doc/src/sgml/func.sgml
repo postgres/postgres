@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.497 2010/01/19 05:50:18 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.498 2010/01/25 20:55:32 tgl Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -2620,7 +2620,7 @@
        <entry>Return Type</entry>
        <entry>Description</entry>
        <entry>Example</entry>
-       <entry>Result</entry>  
+       <entry>Result</entry>
       </row>
      </thead>
 
@@ -2641,32 +2641,6 @@
       </row>
 
       <row>
-       <entry><function>get_bit</function>(<parameter>string</parameter>, <parameter>offset</parameter>)</entry>
-       <entry><type>int</type></entry>
-       <entry>
-        Extract bit from string
-        <indexterm>
-         <primary>get_bit</primary>
-        </indexterm>
-       </entry>
-       <entry><literal>get_bit(E'Th\\000omas'::bytea, 45)</literal></entry>
-       <entry><literal>1</literal></entry>
-      </row>
-
-      <row>
-       <entry><function>get_byte</function>(<parameter>string</parameter>, <parameter>offset</parameter>)</entry>
-       <entry><type>int</type></entry>
-       <entry>
-        Extract byte from string
-        <indexterm>
-         <primary>get_byte</primary>
-        </indexterm>
-       </entry>
-       <entry><literal>get_byte(E'Th\\000omas'::bytea, 4)</literal></entry>
-       <entry><literal>109</literal></entry>
-      </row>
-
-      <row>
        <entry><literal><function>octet_length</function>(<parameter>string</parameter>)</literal></entry>
        <entry><type>int</type></entry>
        <entry>Number of bytes in binary string</entry>
@@ -2675,39 +2649,21 @@
       </row>
 
       <row>
+       <entry><literal><function>overlay</function>(<parameter>string</parameter> placing <parameter>string</parameter> from <type>int</type> <optional>for <type>int</type></optional>)</literal></entry>
+       <entry><type>bytea</type></entry>
+       <entry>
+        Replace substring
+       </entry>
+       <entry><literal>overlay(E'Th\\000omas'::bytea placing E'\\002\\003'::bytea from 2 for 3)</literal></entry>
+       <entry><literal>T\\002\\003mas</literal></entry>
+      </row>
+
+      <row>
        <entry><literal><function>position</function>(<parameter>substring</parameter> in <parameter>string</parameter>)</literal></entry>
        <entry><type>int</type></entry>
        <entry>Location of specified substring</entry>
       <entry><literal>position(E'\\000om'::bytea in E'Th\\000omas'::bytea)</literal></entry>
        <entry><literal>3</literal></entry>
-      </row>
-
-      <row>
-       <entry><function>set_bit</function>(<parameter>string</parameter>,
-       <parameter>offset</parameter>, <parameter>newvalue</>)</entry>
-       <entry><type>bytea</type></entry>
-       <entry>
-        Set bit in string
-        <indexterm>
-         <primary>set_bit</primary>
-        </indexterm>
-       </entry>
-       <entry><literal>set_bit(E'Th\\000omas'::bytea, 45, 0)</literal></entry>
-       <entry><literal>Th\000omAs</literal></entry>
-      </row>
-
-      <row>
-       <entry><function>set_byte</function>(<parameter>string</parameter>,
-       <parameter>offset</parameter>, <parameter>newvalue</>)</entry>
-       <entry><type>bytea</type></entry>
-       <entry>
-        Set byte in string
-        <indexterm>
-         <primary>set_byte</primary>
-        </indexterm>
-       </entry>
-       <entry><literal>set_byte(E'Th\\000omas'::bytea, 4, 64)</literal></entry>
-       <entry><literal>Th\000o@as</literal></entry>
       </row>
 
       <row>
@@ -2784,7 +2740,7 @@
       </entry>
       <entry><type>bytea</type></entry>
       <entry>
-       Decode binary string from <parameter>string</parameter> previously 
+       Decode binary string from <parameter>string</parameter> previously
        encoded with <function>encode</>.  Parameter type is same as in <function>encode</>.
       </entry>
       <entry><literal>decode(E'123\\000456', 'escape')</literal></entry>
@@ -2804,6 +2760,36 @@
       <entry><literal>encode(E'123\\000456'::bytea, 'escape')</literal></entry>
       <entry><literal>123\000456</literal></entry>
      </row>
+
+      <row>
+       <entry>
+        <literal><function>get_bit</function>(<parameter>string</parameter>, <parameter>offset</parameter>)</literal>
+       </entry>
+       <entry><type>int</type></entry>
+       <entry>
+        Extract bit from string
+        <indexterm>
+         <primary>get_bit</primary>
+        </indexterm>
+       </entry>
+       <entry><literal>get_bit(E'Th\\000omas'::bytea, 45)</literal></entry>
+       <entry><literal>1</literal></entry>
+      </row>
+
+      <row>
+       <entry>
+        <literal><function>get_byte</function>(<parameter>string</parameter>, <parameter>offset</parameter>)</literal>
+       </entry>
+       <entry><type>int</type></entry>
+       <entry>
+        Extract byte from string
+        <indexterm>
+         <primary>get_byte</primary>
+        </indexterm>
+       </entry>
+       <entry><literal>get_byte(E'Th\\000omas'::bytea, 4)</literal></entry>
+       <entry><literal>109</literal></entry>
+      </row>
 
      <row>
       <entry><literal><function>length</function>(<parameter>string</parameter>)</literal></entry>
@@ -2834,6 +2820,38 @@
       <entry><literal>md5(E'Th\\000omas'::bytea)</literal></entry>
       <entry><literal>8ab2d3c9689aaf18 b4958c334c82d8b1</literal></entry>
      </row>
+
+      <row>
+       <entry>
+        <literal><function>set_bit</function>(<parameter>string</parameter>,
+        <parameter>offset</parameter>, <parameter>newvalue</>)</literal>
+       </entry>
+       <entry><type>bytea</type></entry>
+       <entry>
+        Set bit in string
+        <indexterm>
+         <primary>set_bit</primary>
+        </indexterm>
+       </entry>
+       <entry><literal>set_bit(E'Th\\000omas'::bytea, 45, 0)</literal></entry>
+       <entry><literal>Th\000omAs</literal></entry>
+      </row>
+
+      <row>
+       <entry>
+        <literal><function>set_byte</function>(<parameter>string</parameter>,
+        <parameter>offset</parameter>, <parameter>newvalue</>)</literal>
+       </entry>
+       <entry><type>bytea</type></entry>
+       <entry>
+        Set byte in string
+        <indexterm>
+         <primary>set_byte</primary>
+        </indexterm>
+       </entry>
+       <entry><literal>set_byte(E'Th\\000omas'::bytea, 4, 64)</literal></entry>
+       <entry><literal>Th\000o@as</literal></entry>
+      </row>
     </tbody>
    </tgroup>
   </table>
@@ -2934,7 +2952,15 @@
     <literal><function>bit_length</function></literal>,
     <literal><function>octet_length</function></literal>,
     <literal><function>position</function></literal>,
-    <literal><function>substring</function></literal>.
+    <literal><function>substring</function></literal>,
+    <literal><function>overlay</function></literal>.
+   </para>
+
+   <para>
+    The following functions work on bit strings as well as binary
+    strings:
+    <literal><function>get_bit</function></literal>,
+    <literal><function>set_bit</function></literal>.
    </para>
 
    <para>

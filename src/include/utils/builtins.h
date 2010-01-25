@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/builtins.h,v 1.344 2010/01/19 05:50:18 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/builtins.h,v 1.345 2010/01/25 20:55:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -698,6 +698,8 @@ extern Datum textoctetlen(PG_FUNCTION_ARGS);
 extern Datum textpos(PG_FUNCTION_ARGS);
 extern Datum text_substr(PG_FUNCTION_ARGS);
 extern Datum text_substr_no_len(PG_FUNCTION_ARGS);
+extern Datum textoverlay(PG_FUNCTION_ARGS);
+extern Datum textoverlay_no_len(PG_FUNCTION_ARGS);
 extern Datum name_text(PG_FUNCTION_ARGS);
 extern Datum text_name(PG_FUNCTION_ARGS);
 extern int	varstr_cmp(char *arg1, int len1, char *arg2, int len2);

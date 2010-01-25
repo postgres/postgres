@@ -1579,3 +1579,21 @@ SELECT btrim(E'\\000trim\\000'::bytea, ''::bytea);
  \000trim\000
 (1 row)
 
+SELECT encode(overlay(E'Th\\000omas'::bytea placing E'Th\\001omas'::bytea from 2),'escape');
+   encode    
+-------------
+ TTh\x01omas
+(1 row)
+
+SELECT encode(overlay(E'Th\\000omas'::bytea placing E'\\002\\003'::bytea from 8),'escape');
+       encode       
+--------------------
+ Th\000omas\x02\x03
+(1 row)
+
+SELECT encode(overlay(E'Th\\000omas'::bytea placing E'\\002\\003'::bytea from 5 for 3),'escape');
+     encode      
+-----------------
+ Th\000o\x02\x03
+(1 row)
+

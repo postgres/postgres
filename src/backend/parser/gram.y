@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.704 2010/01/22 16:40:18 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.705 2010/01/25 20:55:32 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -9586,9 +9586,9 @@ func_expr:	func_name '(' ')' over_clause
 			| OVERLAY '(' overlay_list ')'
 				{
 					/* overlay(A PLACING B FROM C FOR D) is converted to
-					 * substring(A, 1, C-1) || B || substring(A, C+1, C+D)
+					 * overlay(A, B, C, D)
 					 * overlay(A PLACING B FROM C) is converted to
-					 * substring(A, 1, C-1) || B || substring(A, C+1, C+char_length(B))
+					 * overlay(A, B, C)
 					 */
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = SystemFuncName("overlay");
@@ -10150,6 +10150,7 @@ extract_arg:
  * SQL99 defines the OVERLAY() function:
  * o overlay(text placing text from int for int)
  * o overlay(text placing text from int)
+ * and similarly for binary strings
  */
 overlay_list:
 			a_expr overlay_placing substr_from substr_for

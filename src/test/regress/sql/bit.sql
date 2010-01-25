@@ -184,3 +184,14 @@ SELECT POSITION(B'1101' IN v),
 
 DROP TABLE BIT_SHIFT_TABLE;
 DROP TABLE VARBIT_SHIFT_TABLE;
+
+-- Get/Set bit
+SELECT get_bit(B'0101011000100', 10);
+SELECT set_bit(B'0101011000100100', 15, 1);
+SELECT set_bit(B'0101011000100100', 16, 1);	-- fail
+
+-- Overlay
+SELECT overlay(B'0101011100' placing '001' from 2 for 3);
+SELECT overlay(B'0101011100' placing '101' from 6);
+SELECT overlay(B'0101011100' placing '001' from 11);
+SELECT overlay(B'0101011100' placing '001' from 20);

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/varbit.h,v 1.30 2010/01/07 20:17:44 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/varbit.h,v 1.31 2010/01/25 20:55:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -89,6 +89,8 @@ extern Datum bitshiftright(PG_FUNCTION_ARGS);
 extern Datum bitcat(PG_FUNCTION_ARGS);
 extern Datum bitsubstr(PG_FUNCTION_ARGS);
 extern Datum bitsubstr_no_len(PG_FUNCTION_ARGS);
+extern Datum bitoverlay(PG_FUNCTION_ARGS);
+extern Datum bitoverlay_no_len(PG_FUNCTION_ARGS);
 extern Datum bitlength(PG_FUNCTION_ARGS);
 extern Datum bitoctetlength(PG_FUNCTION_ARGS);
 extern Datum bitfromint4(PG_FUNCTION_ARGS);
@@ -96,5 +98,7 @@ extern Datum bittoint4(PG_FUNCTION_ARGS);
 extern Datum bitfromint8(PG_FUNCTION_ARGS);
 extern Datum bittoint8(PG_FUNCTION_ARGS);
 extern Datum bitposition(PG_FUNCTION_ARGS);
+extern Datum bitsetbit(PG_FUNCTION_ARGS);
+extern Datum bitgetbit(PG_FUNCTION_ARGS);
 
 #endif
