@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.191 2010/01/22 16:40:19 rhaas Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.192 2010/01/25 18:23:09 heikki Exp $
  */
 
 /*----------------------------------------------------------------------
@@ -1881,6 +1881,11 @@ psql_completion(char *text, int start, int end)
 
 		COMPLETE_WITH_LIST(list_PREPARE);
 	}
+
+/*
+ * PREPARE TRANSACTION is missing on purpose. It's intended for transaction
+ * managers, not for manual use in interactive sessions.
+ */
 
 /* REASSIGN OWNED BY xxx TO yyy */
 	else if (pg_strcasecmp(prev_wd, "REASSIGN") == 0)

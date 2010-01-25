@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/prepare_transaction.sgml,v 1.9 2009/04/23 00:23:45 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/prepare_transaction.sgml,v 1.10 2010/01/25 18:23:10 heikki Exp $
 PostgreSQL documentation
 -->
 
@@ -81,6 +81,15 @@ PREPARE TRANSACTION <replaceable class="PARAMETER">transaction_id</replaceable>
 
  <refsect1>
   <title>Notes</title>
+
+  <para>
+   <command>PREPARE TRANSACTION</> is not intended for use in applications
+   or interactive sessions. It's purpose is to allow an external
+   transaction manager to perform atomic global transactions across multiple
+   databases or other transactional resources. Unless you're writing a
+   transaction manager, you probably shouldn't be using <command>PREPARE
+   TRANSACTION</>.
+  </para>
 
   <para>
    This command must be used inside a transaction block. Use <xref
