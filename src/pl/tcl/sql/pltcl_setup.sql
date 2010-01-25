@@ -542,3 +542,15 @@ CREATE OPERATOR CLASS tcl_int4_ops
 	OPERATOR 4  @>=,
 	OPERATOR 5  @>,
 	FUNCTION 1  tcl_int4cmp(int4,int4) ;
+
+--
+-- Test usage of Tcl's "clock" command.  In recent Tcl versions this
+-- command fails without working "unknown" support, so it's a good canary
+-- for initialization problems.
+--
+create function tcl_date_week(int4,int4,int4) returns text as $$
+    return [clock format [clock scan "$2/$3/$1"] -format "%U"]
+$$ language pltcl immutable;
+
+select tcl_date_week(2010,1,24);
+select tcl_date_week(2001,10,24);
