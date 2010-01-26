@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.360 2010/01/23 16:37:12 sriggs Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.361 2010/01/26 00:07:13 sriggs Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -4142,6 +4142,10 @@ readTimeLineHistory(TimeLineID targetTLI)
 	char		fline[MAXPGPATH];
 	FILE	   *fd;
 
+	/* Timeline 1 does not have a history file, so no need to check */
+	if (targetTLI == 1)
+		return list_make1_int((int) targetTLI);
+
 	if (InArchiveRecovery)
 	{
 		TLHistoryFileName(histfname, targetTLI);
@@ -4226,6 +4230,10 @@ existsTimeLineHistory(TimeLineID probeTLI)
 	char		path[MAXPGPATH];
 	char		histfname[MAXFNAMELEN];
 	FILE	   *fd;
+
+	/* Timeline 1 does not have a history file, so no need to check */
+	if (probeTLI == 1)
+		return false;
 
 	if (InArchiveRecovery)
 	{
