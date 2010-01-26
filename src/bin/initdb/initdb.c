@@ -42,7 +42,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.183 2010/01/26 06:58:39 petere Exp $
+ * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.184 2010/01/26 16:18:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1215,14 +1215,14 @@ setup_config(void)
 		if (err != 0 ||
 			getaddrinfo("::1", NULL, &hints, &gai_result) != 0)
 			conflines = replace_token(conflines,
-									  "host    all         all         ::1",
-									  "#host    all         all         ::1");
+									  "host    all             all             ::1",
+									  "#host    all             all             ::1");
 	}
 #else							/* !HAVE_IPV6 */
 	/* If we didn't compile IPV6 support at all, always comment it out */
 	conflines = replace_token(conflines,
-							  "host    all         all         ::1",
-							  "#host    all         all         ::1");
+							  "host    all             all             ::1",
+							  "#host    all             all             ::1");
 #endif   /* HAVE_IPV6 */
 
 	/* Replace default authentication methods */
