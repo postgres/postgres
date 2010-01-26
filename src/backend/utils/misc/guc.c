@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.535 2010/01/24 21:49:17 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.536 2010/01/26 16:33:40 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -382,8 +382,6 @@ char	   *IdentFileName;
 char	   *external_pid_file;
 
 char	   *pgstat_temp_directory;
-
-char	   *default_do_language;
 
 char	   *application_name;
 
@@ -2602,15 +2600,6 @@ static struct config_string ConfigureNamesString[] =
 		"ALL:!ADH:!LOW:!EXP:!MD5:@STRENGTH", NULL, NULL
 	},
 #endif   /* USE_SSL */
-
-	{
-		{"default_do_language", PGC_USERSET, CLIENT_CONN_STATEMENT,
-			gettext_noop("Sets the language used in DO statement if LANGUAGE is not specified."),
-			NULL
-		},
-		&default_do_language,
-		"plpgsql", NULL, NULL
-	},
 
 	{
 		{"application_name", PGC_USERSET, LOGGING,

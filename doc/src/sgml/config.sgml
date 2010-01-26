@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.245 2010/01/23 16:37:12 sriggs Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.246 2010/01/26 16:33:40 tgl Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -4128,21 +4128,6 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
         endterm="sql-createfunction-title">. Disabling validation is
         occasionally useful to avoid problems such as forward references
         when restoring function definitions from a dump.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry id="guc-default-do-language" xreflabel="default_do_language">
-      <term><varname>default_do_language</varname> (<type>string</type>)</term>
-      <indexterm>
-       <primary><varname>default_do_language</> configuration parameter</primary>
-      </indexterm>
-      <listitem>
-       <para>
-        This parameter specifies the language to use when the
-        <literal>LANGUAGE</> option is omitted in a
-        <xref linkend="sql-do" endterm="sql-do-title"> statement.
-        The default is <literal>plpgsql</literal>.
        </para>
       </listitem>
      </varlistentry>

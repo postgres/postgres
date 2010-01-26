@@ -3984,7 +3984,7 @@ BEGIN
     LOOP
         RAISE NOTICE '%, %', r.roomno, r.comment;
     END LOOP;
-END$$ LANGUAGE plpgsql;
+END$$;
 NOTICE:  001, Entrance
 NOTICE:  002, Office
 NOTICE:  003, Office
@@ -4000,7 +4000,7 @@ DO LANGUAGE plpgsql $$begin return 1; end$$;
 ERROR:  RETURN cannot have a parameter in function returning void
 LINE 1: DO LANGUAGE plpgsql $$begin return 1; end$$;
                                            ^
-DO LANGUAGE plpgsql $$
+DO $$
 DECLARE r record;
 BEGIN
     FOR r IN SELECT rtrim(roomno) AS roomno, foo FROM Room ORDER BY roomno

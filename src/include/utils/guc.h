@@ -7,7 +7,7 @@
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
- * $PostgreSQL: pgsql/src/include/utils/guc.h,v 1.111 2010/01/02 16:58:10 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/guc.h,v 1.112 2010/01/26 16:33:40 tgl Exp $
  *--------------------------------------------------------------------
  */
 #ifndef GUC_H
@@ -180,8 +180,6 @@ extern char *ConfigFileName;
 extern char *HbaFileName;
 extern char *IdentFileName;
 extern char *external_pid_file;
-
-extern char *default_do_language;
 
 extern char *application_name;
 

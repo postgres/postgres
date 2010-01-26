@@ -3164,12 +3164,12 @@ BEGIN
     LOOP
         RAISE NOTICE '%, %', r.roomno, r.comment;
     END LOOP;
-END$$ LANGUAGE plpgsql;
+END$$;
 
 -- these are to check syntax error reporting
 DO LANGUAGE plpgsql $$begin return 1; end$$;
 
-DO LANGUAGE plpgsql $$
+DO $$
 DECLARE r record;
 BEGIN
     FOR r IN SELECT rtrim(roomno) AS roomno, foo FROM Room ORDER BY roomno
