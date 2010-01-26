@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.138 2010/01/24 14:46:01 mha Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.139 2010/01/26 06:45:31 petere Exp $ -->
 
 <chapter id="backup">
  <title>Backup and Restore</title>
@@ -2046,8 +2046,8 @@ if (!triggered)
 # Allow the user "foo" from host 192.168.1.100 to connect to the primary
 # as a replication standby if the user's password is correctly supplied.
 #
-# TYPE  DATABASE    USER        CIDR-ADDRESS          METHOD
-host    replication foo         192.168.1.100/32      md5
+# TYPE  DATABASE        USER            CIDR-ADDRESS            METHOD
+host    replication     foo             192.168.1.100/32        md5
 </programlisting>
     </para>
     <para>

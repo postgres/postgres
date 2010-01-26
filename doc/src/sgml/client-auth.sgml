@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.126 2010/01/15 09:18:56 heikki Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.127 2010/01/26 06:45:31 petere Exp $ -->
 
 <chapter id="client-authentication">
  <title>Client Authentication</title>
@@ -492,31 +492,31 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
 # any database user name using Unix-domain sockets (the default for local
 # connections).
 #
-# TYPE  DATABASE    USER        CIDR-ADDRESS          METHOD
-local   all         all                               trust
+# TYPE  DATABASE        USER            CIDR-ADDRESS            METHOD
+local   all             all                                     trust
 
 # The same using local loopback TCP/IP connections.
 #
-# TYPE  DATABASE    USER        CIDR-ADDRESS          METHOD
-host    all         all         127.0.0.1/32          trust
+# TYPE  DATABASE        USER            CIDR-ADDRESS            METHOD
+host    all             all             127.0.0.1/32            trust
 
 # The same as the previous line, but using a separate netmask column
 #
-# TYPE  DATABASE    USER        IP-ADDRESS    IP-MASK             METHOD
-host    all         all         127.0.0.1     255.255.255.255     trust
+# TYPE  DATABASE        USER            IP-ADDRESS      IP-MASK             METHOD
+host    all             all             127.0.0.1       255.255.255.255     trust
 
 # Allow any user from any host with IP address 192.168.93.x to connect
 # to database "postgres" as the same user name that ident reports for
 # the connection (typically the Unix user name).
 #
-# TYPE  DATABASE    USER        CIDR-ADDRESS          METHOD
-host    postgres    all         192.168.93.0/24       ident
+# TYPE  DATABASE        USER            CIDR-ADDRESS            METHOD
+host    postgres        all             192.168.93.0/24         ident
 
 # Allow any user from host 192.168.12.10 to connect to database
 # "postgres" if the user's password is correctly supplied.
 #
-# TYPE  DATABASE    USER        CIDR-ADDRESS          METHOD
-host    postgres    all         192.168.12.10/32      md5
+# TYPE  DATABASE        USER            CIDR-ADDRESS            METHOD
+host    postgres        all             192.168.12.10/32        md5
 
 # In the absence of preceding "host" lines, these two lines will
 # reject all connections from 192.168.54.1 (since that entry will be
@@ -524,9 +524,9 @@ host    postgres    all         192.168.12.10/32      md5
 # on the Internet.  The zero mask means that no bits of the host IP
 # address are considered so it matches any host.
 #
-# TYPE  DATABASE    USER        CIDR-ADDRESS          METHOD
-host    all         all         192.168.54.1/32       reject
-host    all         all         0.0.0.0/0             krb5
+# TYPE  DATABASE        USER            CIDR-ADDRESS            METHOD
+host    all             all             192.168.54.1/32         reject
+host    all             all             0.0.0.0/0               krb5
 
 # Allow users from 192.168.x.x hosts to connect to any database, if
 # they pass the ident check.  If, for example, ident says the user is
@@ -534,8 +534,8 @@ host    all         all         0.0.0.0/0             krb5
 # connection is allowed if there is an entry in pg_ident.conf for map
 # "omicron" that says "bryanh" is allowed to connect as "guest1".
 #
-# TYPE  DATABASE    USER        CIDR-ADDRESS          METHOD
-host    all         all         192.168.0.0/16        ident map=omicron
+# TYPE  DATABASE        USER            CIDR-ADDRESS            METHOD
+host    all             all             192.168.0.0/16          ident map=omicron
 
 # If these are the only three lines for local connections, they will
 # allow local users to connect only to their own databases (databases
@@ -544,16 +544,16 @@ host    all         all         192.168.0.0/16        ident map=omicron
 # $PGDATA/admins contains a list of names of administrators.  Passwords
 # are required in all cases.
 #
-# TYPE  DATABASE    USER        CIDR-ADDRESS          METHOD
-local   sameuser    all                               md5
-local   all         @admins                           md5
-local   all         +support                          md5
+# TYPE  DATABASE        USER            CIDR-ADDRESS            METHOD
+local   sameuser        all                                     md5
+local   all             @admins                                 md5
+local   all             +support                                md5
 
 # The last two lines above can be combined into a single line:
-local   all         @admins,+support                  md5
+local   all             @admins,+support                        md5
 
 # The database column can also use lists and file names:
-local   db1,db2,@demodbs  all                         md5
+local   db1,db2,@demodbs  all                                   md5
 </programlisting>
    </example>
  </sect1>
@@ -668,14 +668,14 @@ mymap   /^(.*)@otherdomain\.com$   guest
   <example id="example-pg-ident.conf">
    <title>An example <filename>pg_ident.conf</> file</title>
 <programlisting>
-# MAPNAME     SYSTEM-USERNAME   PG-USERNAME
+# MAPNAME       SYSTEM-USERNAME         PG-USERNAME
 
-omicron       bryanh            bryanh
-omicron       ann               ann
+omicron         bryanh                  bryanh
+omicron         ann                     ann
 # bob has user name robert on these machines
-omicron       robert            bob
+omicron         robert                  bob
 # bryanh can also connect as guest1
-omicron       bryanh            guest1
+omicron         bryanh                  guest1
 </programlisting>
   </example>
  </sect1>

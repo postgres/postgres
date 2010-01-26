@@ -67,11 +67,11 @@
 
 @authcomment@
 
-# TYPE  DATABASE    USER        CIDR-ADDRESS          METHOD
+# TYPE  DATABASE        USER            CIDR-ADDRESS            METHOD
 
 @remove-line-for-nolocal@# "local" is for Unix domain socket connections only
-@remove-line-for-nolocal@local   all         all                               @authmethod@
+@remove-line-for-nolocal@local   all             all                                     @authmethod@
 # IPv4 local connections:
-host    all         all         127.0.0.1/32          @authmethod@
+host    all             all             127.0.0.1/32            @authmethod@
 # IPv6 local connections:
-host    all         all         ::1/128               @authmethod@
+host    all             all             ::1/128                 @authmethod@
