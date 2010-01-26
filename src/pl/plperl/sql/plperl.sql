@@ -368,5 +368,13 @@ DO $$
 $$ LANGUAGE plperl;
 
 -- check that restricted operations are rejected in a plperl DO block
-DO $$ use Config; $$ LANGUAGE plperl;
+DO $$ eval "1+1"; $$ LANGUAGE plperl;
+
+-- check that we can't "use" a module that's not been loaded already
+-- compile-time error: "Unable to load blib.pm into plperl"
+DO $$ use blib; $$ LANGUAGE plperl;
+
+-- check that we can "use" a module that has already been loaded
+-- runtime error: "Can't use string ("foo") as a SCALAR ref while "strict refs" in use
+DO $do$ use strict; my $name = "foo"; my $ref = $$name; $do$ LANGUAGE plperl;
 

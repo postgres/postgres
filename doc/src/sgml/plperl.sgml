@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/plperl.sgml,v 2.74 2010/01/20 03:37:10 rhaas Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/plperl.sgml,v 2.75 2010/01/26 23:11:56 adunstan Exp $ -->
 
  <chapter id="plperl">
   <title>PL/Perl - Perl Procedural Language</title>
@@ -285,29 +285,39 @@ SELECT * FROM perl_set();
   </para>
 
   <para>
-   If you wish to use the <literal>strict</> pragma with your code,
-   the easiest way to do so is to <command>SET</>
-   <literal>plperl.use_strict</literal> to true.  This parameter affects
-   subsequent compilations of <application>PL/Perl</> functions, but not
-   functions already compiled in the current session.  To set the
-   parameter before <application>PL/Perl</> has been loaded, it is
-   necessary to have added <quote><literal>plperl</></> to the <xref
-   linkend="guc-custom-variable-classes"> list in
-   <filename>postgresql.conf</filename>.
+   If you wish to use the <literal>strict</> pragma with your code you have a few options.
+   For temporary global use you can <command>SET</> <literal>plperl.use_strict</literal>
+   to true (see <xref linkend="plperl.use_strict">).
+   This will affect subsequent compilations of <application>PL/Perl</>
+   functions, but not functions already compiled in the current session.
+   For permanent global use you can set <literal>plperl.use_strict</literal>
+   to true in the <filename>postgresql.conf</filename> file.
   </para>
 
   <para>
-   Another way to use the <literal>strict</> pragma is to put:
+   For permanent use in specific functions you can simply put:
 <programlisting>
 use strict;
 </programlisting>
-   in the function body.  But this only works in <application>PL/PerlU</>
-   functions, since the <literal>use</> triggers a <literal>require</>
-   which is not a trusted operation.  In
-   <application>PL/Perl</> functions you can instead do:
-<programlisting>
-BEGIN { strict->import(); }
-</programlisting>
+   at the top of the function body.
+  </para>
+
+  <para>
+  The <literal>feature</> pragma is also available to <function>use</> if your Perl is version 5.10.0 or higher.
+  </para>
+
+ </sect1>
+
+ <sect1 id="plperl-data">
+  <title>Data Values in PL/Perl</title>
+
+  <para>
+   The argument values supplied to a PL/Perl function's code are
+   simply the input arguments converted to text form (just as if they
+   had been displayed by a <command>SELECT</command> statement).
+   Conversely, the <function>return</function> and <function>return_next</function>
+   commands will accept any string that is acceptable input format
+   for the function's declared return type.
   </para>
  </sect1>
 
@@ -682,18 +692,6 @@ SELECT done();
  </sect2>
  </sect1>
 
- <sect1 id="plperl-data">
-  <title>Data Values in PL/Perl</title>
-
-  <para>
-   The argument values supplied to a PL/Perl function's code are
-   simply the input arguments converted to text form (just as if they
-   had been displayed by a <command>SELECT</command> statement).
-   Conversely, the <literal>return</> command will accept any string
-   that is acceptable input format for the function's declared return
-   type.  So, within the PL/Perl function,
-   all values are just text strings.
-  </para>
  </sect1>
 
  <sect1 id="plperl-global">
@@ -1042,8 +1040,7 @@ CREATE TRIGGER test_valid_id_trig
    <itemizedlist>
     <listitem>
      <para>
-      PL/Perl functions cannot call each other directly (because they
-      are anonymous subroutines inside Perl).
+      PL/Perl functions cannot call each other directly.
      </para>
     </listitem>
 
@@ -1072,6 +1069,8 @@ CREATE TRIGGER test_valid_id_trig
     </listitem>
    </itemizedlist>
   </para>
+ </sect2>
+
  </sect1>
 
 </chapter>

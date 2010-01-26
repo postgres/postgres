@@ -563,6 +563,17 @@ $$ LANGUAGE plperl;
 NOTICE:  This is a test
 CONTEXT:  PL/Perl anonymous code block
 -- check that restricted operations are rejected in a plperl DO block
-DO $$ use Config; $$ LANGUAGE plperl;
-ERROR:  'require' trapped by operation mask at line 1.
+DO $$ eval "1+1"; $$ LANGUAGE plperl;
+ERROR:  'eval "string"' trapped by operation mask at line 1.
+CONTEXT:  PL/Perl anonymous code block
+-- check that we can't "use" a module that's not been loaded already
+-- compile-time error: "Unable to load blib.pm into plperl"
+DO $$ use blib; $$ LANGUAGE plperl;
+ERROR:  Unable to load blib.pm into plperl at line 1.
+BEGIN failed--compilation aborted at line 1.
+CONTEXT:  PL/Perl anonymous code block
+-- check that we can "use" a module that has already been loaded
+-- runtime error: "Can't use string ("foo") as a SCALAR ref while "strict refs" in use
+DO $do$ use strict; my $name = "foo"; my $ref = $$name; $do$ LANGUAGE plperl;
+ERROR:  Can't use string ("foo") as a SCALAR ref while "strict refs" in use at line 1.
 CONTEXT:  PL/Perl anonymous code block

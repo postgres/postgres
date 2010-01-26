@@ -1,5 +1,5 @@
 
-#  $PostgreSQL: pgsql/src/pl/plperl/plc_perlboot.pl,v 1.2 2010/01/20 01:08:21 adunstan Exp $
+#  $PostgreSQL: pgsql/src/pl/plperl/plc_perlboot.pl,v 1.3 2010/01/26 23:11:56 adunstan Exp $
 
 PostgreSQL::InServer::Util::bootstrap();
 PostgreSQL::InServer::SPI::bootstrap();
@@ -21,17 +21,25 @@ sub ::plperl_die {
 }
 $SIG{__DIE__} = \&::plperl_die;
 
+sub ::mkfuncsrc {
+	my ($name, $imports, $prolog, $src) = @_;
 
-sub ::mkunsafefunc {
-	my $ret = eval(qq[ sub { $_[0] $_[1] } ]);
-	$@ =~ s/\(eval \d+\) //g if $@;
-	return $ret;
+	my $BEGIN = join "\n", map {
+		my $names = $imports->{$_} || [];
+		"$_->import(qw(@$names));"
+	} sort keys %$imports;
+	$BEGIN &&= "BEGIN { $BEGIN }";
+
+	$name =~ s/\\/\\\\/g;
+	$name =~ s/::|'/_/g; # avoid package delimiters
+
+	return qq[ undef *{'$name'}; *{'$name'} = sub { $BEGIN $prolog $src } ];
 }
-  
-use strict;
 
-sub ::mk_strict_unsafefunc {
-	my $ret = eval(qq[ sub { use strict; $_[0] $_[1] } ]);
+# see also mksafefunc() in plc_safe_ok.pl
+sub ::mkunsafefunc {
+	no strict; # default to no strict for the eval
+	my $ret = eval(::mkfuncsrc(@_));
 	$@ =~ s/\(eval \d+\) //g if $@;
 	return $ret;
 }
@@ -64,7 +72,7 @@ sub ::encode_array_constructor {
 		if ref $arg ne 'ARRAY';
 	my $res = join ", ", map {
 		(ref $_) ? ::encode_array_constructor($_)
-				 : ::quote_nullable($_)
+		         : ::quote_nullable($_)
 	} @$arg;
 	return "ARRAY[$res]";
 }
