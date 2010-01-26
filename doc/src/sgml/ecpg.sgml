@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ecpg.sgml,v 1.94 2010/01/26 09:10:11 meskes Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ecpg.sgml,v 1.95 2010/01/26 14:21:29 momjian Exp $ -->
 
 <chapter id="ecpg">
  <title><application>ECPG</application> - Embedded <acronym>SQL</acronym> in C</title>
@@ -2652,7 +2652,7 @@ EXEC SQL GET DESCRIPTOR mydesc VALUE 1 :id = DATA;
     record from the resultset.
 <programlisting>
 EXEC SQL include sqlda.h;
-sqlda_t	*mysqlda;
+sqlda_t         *mysqlda;
 
 EXEC SQL FETCH 3 FROM mycursor INTO DESCRIPTOR mysqlda;
 </programlisting>
@@ -2933,7 +2933,7 @@ struct sqlname
         there is no <literal>FREE cursor_name</> statement in ECPG. This is because in ECPG,
         <literal>DECLARE CURSOR</literal> doesn't translate to a function call into
         the runtime library that uses to the cursor name. This means that there's no runtime
-	bookkeeping of SQL cursors in the ECPG runtime library, only in the PostgreSQL server.
+        bookkeeping of SQL cursors in the ECPG runtime library, only in the PostgreSQL server.
        </para>
       </listitem>
      </varlistentry>
