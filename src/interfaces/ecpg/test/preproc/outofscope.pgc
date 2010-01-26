@@ -1,0 +1,125 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <limits.h>
+
+exec sql include ../regression;
+
+exec sql include pgtypes_numeric.h;
+
+exec sql begin declare section;
+exec sql include struct.h;
+exec sql end declare section;
+
+exec sql whenever sqlerror stop;
+
+/* Functions for test 1 */
+
+static void
+get_var1(MYTYPE **myvar0, MYNULLTYPE **mynullvar0)
+{
+	exec sql begin declare section;
+	MYTYPE		*myvar = malloc(sizeof(MYTYPE));
+	MYNULLTYPE	*mynullvar = malloc(sizeof(MYNULLTYPE));
+	exec sql end declare section;
+
+	/* Test DECLARE ... SELECT ... INTO with pointers */
+
+	exec sql declare mycur cursor for select * INTO :myvar :mynullvar from a1;
+
+	if (sqlca.sqlcode != 0)
+		exit(1);
+
+	*myvar0 = myvar;
+	*mynullvar0 = mynullvar;
+}
+
+static void
+open_cur1(void)
+{
+	exec sql open mycur;
+
+	if (sqlca.sqlcode != 0)
+		exit(1);
+}
+
+static void
+get_record1(void)
+{
+	exec sql fetch mycur;
+
+	if (sqlca.sqlcode != 0 && sqlca.sqlcode != ECPG_NOT_FOUND)
+		exit(1);
+}
+
+static void
+close_cur1(void)
+{
+	exec sql close mycur;
+
+	if (sqlca.sqlcode != 0)
+		exit(1);
+}
+
+int
+main (void)
+{
+	MYTYPE		*myvar;
+	MYNULLTYPE	*mynullvar;
+
+	char msg[128];
+
+	ECPGdebug(1, stderr);
+
+	strcpy(msg, "connect");
+	exec sql connect to REGRESSDB1;
+
+	strcpy(msg, "set");
+	exec sql set datestyle to iso;
+
+	strcpy(msg, "create");
+	exec sql create table a1(id serial primary key, t text, d1 numeric, d2 float8, c character(10));
+
+	strcpy(msg, "insert");
+	exec sql insert into a1(id, t, d1, d2, c) values (default, 'a', 1.0, 2, 'a');
+	exec sql insert into a1(id, t, d1, d2, c) values (default, null, null, null, null);
+	exec sql insert into a1(id, t, d1, d2, c) values (default, '"a"', -1.0, 'nan'::float8, 'a');
+	exec sql insert into a1(id, t, d1, d2, c) values (default, 'b', 2.0, 3, 'b');
+
+	strcpy(msg, "commit");
+	exec sql commit;
+
+	/* Test out-of-scope DECLARE/OPEN/FETCH/CLOSE */
+
+	get_var1(&myvar, &mynullvar);
+	open_cur1();
+
+	exec sql whenever not found do break;
+
+	while (1)
+	{
+		memset(myvar, 0, sizeof(MYTYPE));
+		get_record1();
+		if (sqlca.sqlcode == ECPG_NOT_FOUND)
+			break;
+		printf("id=%d%s t='%s'%s d1=%lf%s d2=%lf%s c = '%s'%s\n",
+			myvar->id, mynullvar->id ? " (NULL)" : "",
+			myvar->t, mynullvar->t ? " (NULL)" : "",
+			myvar->d1, mynullvar->d1 ? " (NULL)" : "",
+			myvar->d2, mynullvar->d2 ? " (NULL)" : "",
+			myvar->c, mynullvar->c ? " (NULL)" : "");
+	}
+
+	close_cur1();
+
+	strcpy(msg, "drop");
+	exec sql drop table a1;
+
+	strcpy(msg, "commit");
+	exec sql commit;
+
+	strcpy(msg, "disconnect"); 
+	exec sql disconnect;
+
+	return (0);
+}
