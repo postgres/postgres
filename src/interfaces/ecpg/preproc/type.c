@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/type.c,v 1.86 2010/01/05 16:38:23 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/type.c,v 1.87 2010/01/26 09:07:31 meskes Exp $ */
 
 #include "postgres_fe.h"
 
@@ -46,7 +46,7 @@ ECPGstruct_member_dup(struct ECPGstruct_member * rm)
 		{
 			case ECPGt_struct:
 			case ECPGt_union:
-				type = ECPGmake_struct_type(rm->type->u.members, rm->type->type, rm->type->struct_sizeof);
+				type = ECPGmake_struct_type(rm->type->u.members, rm->type->type, rm->type->type_name, rm->type->struct_sizeof);
 				break;
 			case ECPGt_array:
 
@@ -55,7 +55,7 @@ ECPGstruct_member_dup(struct ECPGstruct_member * rm)
 				 * create the struct too
 				 */
 				if (rm->type->u.element->type == ECPGt_struct)
-					type = ECPGmake_struct_type(rm->type->u.element->u.members, rm->type->u.element->type, rm->type->u.element->struct_sizeof);
+					type = ECPGmake_struct_type(rm->type->u.element->u.members, rm->type->u.element->type, rm->type->u.element->type_name, rm->type->u.element->struct_sizeof);
 				else
 					type = ECPGmake_array_type(ECPGmake_simple_type(rm->type->u.element->type, rm->type->u.element->size, rm->type->u.element->lineno), rm->type->size);
 				break;
@@ -98,6 +98,7 @@ ECPGmake_simple_type(enum ECPGttype type, char *size, int lineno)
 	struct ECPGtype *ne = (struct ECPGtype *) mm_alloc(sizeof(struct ECPGtype));
 
 	ne->type = type;
+	ne->type_name = NULL;
 	ne->size = size;
 	ne->u.element = NULL;
 	ne->struct_sizeof = NULL;
@@ -117,10 +118,11 @@ ECPGmake_array_type(struct ECPGtype * type, char *size)
 }
 
 struct ECPGtype *
-ECPGmake_struct_type(struct ECPGstruct_member * rm, enum ECPGttype type, char *struct_sizeof)
+ECPGmake_struct_type(struct ECPGstruct_member * rm, enum ECPGttype type, char *type_name, char *struct_sizeof)
 {
 	struct ECPGtype *ne = ECPGmake_simple_type(type, make_str("1"), 0);
 
+	ne->type_name = mm_strdup(type_name);
 	ne->u.members = ECPGstruct_member_dup(rm);
 	ne->struct_sizeof = struct_sizeof;
 

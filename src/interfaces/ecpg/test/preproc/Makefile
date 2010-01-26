@@ -11,6 +11,7 @@ TESTS = array_of_struct array_of_struct.c \
 	define define.c \
 	init init.c \
 	strings strings.c \
+	outofscope outofscope.c \
 	type type.c \
 	variable variable.c \
 	whenever whenever.c

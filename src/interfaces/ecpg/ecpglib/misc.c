@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/misc.c,v 1.53 2009/11/24 16:30:31 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/misc.c,v 1.54 2010/01/26 09:07:31 meskes Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -505,3 +505,55 @@ ecpg_gettext(const char *msgid)
 }
 
 #endif   /* ENABLE_NLS */
+
+static struct var_list
+{
+	int		number;
+	void	   *pointer;
+	struct var_list *next;
+} *ivlist = NULL;
+
+void
+ECPGset_var(int number, void *pointer, int lineno)
+{
+	struct var_list *ptr;
+
+	for (ptr = ivlist; ptr != NULL; ptr = ptr->next)
+	{
+		if (ptr->number == number)
+		{
+			/* already known => just change pointer value */
+			ptr->pointer = pointer;
+			return;
+		}
+	}
+
+	/* a new one has to be added */
+	ptr = (struct var_list *) calloc(1L, sizeof(struct var_list));
+	if (!ptr)
+	{
+		struct sqlca_t *sqlca = ECPGget_sqlca();
+		sqlca->sqlcode = ECPG_OUT_OF_MEMORY;
+		strncpy(sqlca->sqlstate, "YE001", sizeof("YE001"));
+		snprintf(sqlca->sqlerrm.sqlerrmc, sizeof(sqlca->sqlerrm.sqlerrmc), "out of memory on line %d", lineno);
+		sqlca->sqlerrm.sqlerrml = strlen(sqlca->sqlerrm.sqlerrmc);
+		/* free all memory we have allocated for the user */
+		ECPGfree_auto_mem();
+	}
+	else
+	{
+		ptr->number = number;
+		ptr->pointer = pointer;
+		ptr->next = ivlist;
+		ivlist = ptr;
+	}
+}
+
+void *
+ECPGget_var(int number)
+{
+	struct var_list *ptr;
+
+	for (ptr = ivlist; ptr != NULL && ptr->number != number; ptr = ptr->next);
+		return (ptr) ? ptr->pointer : NULL;
+}

@@ -24,6 +24,7 @@ test: preproc/init
 test: preproc/strings
 test: preproc/type
 test: preproc/variable
+test: preproc/outofscope
 test: preproc/whenever
 test: sql/array
 test: sql/binary

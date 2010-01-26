@@ -107,7 +107,8 @@ main (void)
       exit (sqlca.sqlcode);
     }
 
-  /* declare C cursor for select name , accs , byte from empl where idnum = $1  */
+  ECPGset_var( 0, &( empl.idnum ), __LINE__);\
+ /* declare C cursor for select name , accs , byte from empl where idnum = $1  */
 #line 58 "binary.pgc"
 
   { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "declare C cursor for select name , accs , byte from empl where idnum = $1 ", 
@@ -133,7 +134,8 @@ main (void)
   printf ("name=%s, accs=%d byte=%s\n", empl.name, empl.accs, empl.byte);
 
   memset(empl.name, 0, 21L);
-  /* declare B binary cursor for select name , accs , byte from empl where idnum = $1  */
+  ECPGset_var( 1, &( empl.idnum ), __LINE__);\
+ /* declare B binary cursor for select name , accs , byte from empl where idnum = $1  */
 #line 70 "binary.pgc"
 
   { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "declare B binary cursor for select name , accs , byte from empl where idnum = $1 ", 
@@ -166,7 +168,8 @@ main (void)
 	printf("(%o)", (unsigned char)empl.byte[i]);
   printf("\n");
 
-  /* declare A binary cursor for select byte from empl where idnum = $1  */
+  ECPGset_var( 2, &( empl.idnum ), __LINE__);\
+ /* declare A binary cursor for select byte from empl where idnum = $1  */
 #line 87 "binary.pgc"
 
   { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "declare A binary cursor for select byte from empl where idnum = $1 ", 

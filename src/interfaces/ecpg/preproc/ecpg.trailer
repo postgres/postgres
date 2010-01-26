@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.trailer,v 1.18 2010/01/15 10:44:37 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.trailer,v 1.19 2010/01/26 09:07:31 meskes Exp $ */
 
 statements: /*EMPTY*/
                 | statements statement
@@ -16,7 +16,17 @@ statement: ecpgstart at stmt ';'        { connection = NULL; }
                 | c_thing               { fprintf(yyout, "%s", $1); free($1); }
                 | CPP_LINE              { fprintf(yyout, "%s", $1); free($1); }
                 | '{'                   { braces_open++; fputs("{", yyout); }
-                | '}'                   { remove_typedefs(braces_open); remove_variables(braces_open--); fputs("}", yyout); }
+                | '}'
+		{
+			remove_typedefs(braces_open);
+			remove_variables(braces_open--);
+			if (braces_open == 0)
+			{
+				free(current_function);
+				current_function = NULL;
+			}
+			fputs("}", yyout);
+		}
                 ;
 
 CreateAsStmt: CREATE OptTemp TABLE create_as_target AS {FoundInto = 0;} SelectStmt opt_with_data
@@ -281,6 +291,7 @@ ECPGCursorStmt:  DECLARE cursor_name cursor_options CURSOR opt_hold FOR prepared
 			char *cursor_marker = $2[0] == ':' ? make_str("$0") : mm_strdup($2);
 			struct variable *thisquery = (struct variable *)mm_alloc(sizeof(struct variable));
 			const char *con = connection ? connection : "NULL";
+			char *comment;
 
 			for (ptr = cur; ptr != NULL; ptr = ptr->next)
 			{
@@ -294,9 +305,11 @@ ECPGCursorStmt:  DECLARE cursor_name cursor_options CURSOR opt_hold FOR prepared
 			/* initial definition */
 			this->next = cur;
 			this->name = $2;
+			this->function = (current_function ? mm_strdup(current_function) : NULL);
 			this->connection = connection;
 			this->command =  cat_str(6, make_str("declare"), cursor_marker, $3, make_str("cursor"), $5, make_str("for $1"));
 			this->argsresult = NULL;
+			this->argsresult_oos = NULL;
 
 			thisquery->type = &ecpg_query;
 			thisquery->brace_level = 0;
@@ -305,6 +318,7 @@ ECPGCursorStmt:  DECLARE cursor_name cursor_options CURSOR opt_hold FOR prepared
 			sprintf(thisquery->name, "ECPGprepared_statement(%s, %s, __LINE__)", con, $7);
 
 			this->argsinsert = NULL;
+			this->argsinsert_oos = NULL;
 			if ($2[0] == ':')
 			{
 				struct variable *var = find_variable($2 + 1);
@@ -315,10 +329,19 @@ ECPGCursorStmt:  DECLARE cursor_name cursor_options CURSOR opt_hold FOR prepared
 
 			cur = this;
 
-			if (INFORMIX_MODE && braces_open > 0) /* we're in a function */
-				$$ = cat_str(4, make_str("ECPG_informix_reset_sqlca();"), make_str("/*"), mm_strdup(this->command), make_str("*/"));
+			comment = cat_str(3, make_str("/*"), mm_strdup(this->command), make_str("*/"));
+
+			if ((braces_open > 0) && INFORMIX_MODE) /* we're in a function */
+				$$ = cat_str(4,
+					adjust_outofscope_cursor_vars(this, true),
+					adjust_outofscope_cursor_vars(this, false),
+					make_str("ECPG_informix_reset_sqlca();"),
+					comment);
 			else
-				$$ = cat_str(3, make_str("/*"), mm_strdup(this->command), make_str("*/"));
+				$$ = cat_str(3,
+					adjust_outofscope_cursor_vars(this, true),
+					adjust_outofscope_cursor_vars(this, false),
+					comment);
 		}
 		;
 
@@ -402,6 +425,7 @@ var_declaration: storage_declaration
 		var_type
 		{
 			actual_type[struct_level].type_enum = $2.type_enum;
+			actual_type[struct_level].type_str = $2.type_str;
 			actual_type[struct_level].type_dimension = $2.type_dimension;
 			actual_type[struct_level].type_index = $2.type_index;
 			actual_type[struct_level].type_sizeof = $2.type_sizeof;
@@ -415,6 +439,7 @@ var_declaration: storage_declaration
 		| var_type
 		{
 			actual_type[struct_level].type_enum = $1.type_enum;
+			actual_type[struct_level].type_str = $1.type_str;
 			actual_type[struct_level].type_dimension = $1.type_dimension;
 			actual_type[struct_level].type_index = $1.type_index;
 			actual_type[struct_level].type_sizeof = $1.type_sizeof;
@@ -826,9 +851,9 @@ variable: opt_pointer ECPGColLabel opt_array_bounds opt_bit_field opt_initialize
 				case ECPGt_struct:
 				case ECPGt_union:
 					if (atoi(dimension) < 0)
-						type = ECPGmake_struct_type(struct_member_list[struct_level], actual_type[struct_level].type_enum, actual_type[struct_level].type_sizeof);
+						type = ECPGmake_struct_type(struct_member_list[struct_level], actual_type[struct_level].type_enum, actual_type[struct_level].type_str, actual_type[struct_level].type_sizeof);
 					else
-						type = ECPGmake_array_type(ECPGmake_struct_type(struct_member_list[struct_level], actual_type[struct_level].type_enum, actual_type[struct_level].type_sizeof), dimension);
+						type = ECPGmake_array_type(ECPGmake_struct_type(struct_member_list[struct_level], actual_type[struct_level].type_enum, actual_type[struct_level].type_str, actual_type[struct_level].type_sizeof), dimension);
 
 					$$ = cat_str(5, $1, mm_strdup($2), $3.str, $4, $5);
 					break;
@@ -1303,9 +1328,9 @@ ECPGVar: SQL_VAR
 					case ECPGt_struct:
 					case ECPGt_union:
 						if (atoi(dimension) < 0)
-							type = ECPGmake_struct_type(struct_member_list[struct_level], $5.type_enum, $5.type_sizeof);
+							type = ECPGmake_struct_type(struct_member_list[struct_level], $5.type_enum, $5.type_str, $5.type_sizeof);
 						else
-							type = ECPGmake_array_type(ECPGmake_struct_type(struct_member_list[struct_level], $5.type_enum,$5.type_sizeof), dimension);
+							type = ECPGmake_array_type(ECPGmake_struct_type(struct_member_list[struct_level], $5.type_enum, $5.type_str, $5.type_sizeof), dimension);
 						break;
 
 					case ECPGt_varchar:

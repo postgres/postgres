@@ -147,7 +147,7 @@ if (sqlca.sqlcode < 0) dosqlprint ( );}
 
 
 	sqlca.sqlcode = 100;
-	ECPG_informix_set_var( 0, &( i ), __LINE__);\
+	ECPGset_var( 0, &( i ), __LINE__);\
  ECPG_informix_reset_sqlca(); /* declare c cursor for select * from test where i <= $1  */
 #line 49 "test_informix.pgc"
 
@@ -245,7 +245,7 @@ if (sqlca.sqlcode < 0) dosqlprint ( );}
 static void openit(void)
 {
 	{ ECPGdo(__LINE__, 1, 1, NULL, 0, ECPGst_normal, "declare c cursor for select * from test where i <= $1 ", 
-	ECPGt_int,&(*( int  *)(ECPG_informix_get_var( 0))),(long)1,(long)1,sizeof(int), 
+	ECPGt_int,&(*( int  *)(ECPGget_var( 0))),(long)1,(long)1,sizeof(int), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EOIT, ECPGt_EORT);
 #line 95 "test_informix.pgc"
 

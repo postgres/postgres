@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.c,v 1.112 2010/01/02 16:58:11 momjian Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.c,v 1.113 2010/01/26 09:07:31 meskes Exp $ */
 
 /* Main for ecpg, the PostgreSQL embedded SQL precompiler. */
 /* Copyright (c) 1996-2010, PostgreSQL Global Development Group */
@@ -419,8 +419,8 @@ main(int argc, char *const argv[])
 				/* and structure member lists */
 				memset(struct_member_list, 0, sizeof(struct_member_list));
 
-				/* and our variable counter for Informix compatibility */
-				ecpg_informix_var = 0;
+				/* and our variable counter for out of scope cursors' variables */
+				ecpg_internal_var = 0;
 
 				/* finally the actual connection */
 				connection = NULL;

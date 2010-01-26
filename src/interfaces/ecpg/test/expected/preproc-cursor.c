@@ -153,7 +153,8 @@ if (sqlca.sqlcode < 0) exit (1);}
 	/* Dynamic cursorname test with INTO list in FETCH stmts */
 
 	strcpy(msg, "declare");
-	/* declare $0 cursor for select id , t from t1 */
+	ECPGset_var( 0, &( curname1 ), __LINE__);\
+ /* declare $0 cursor for select id , t from t1 */
 #line 59 "cursor.pgc"
 
 
@@ -286,7 +287,10 @@ if (sqlca.sqlcode < 0) exit (1);}
 	/* Dynamic cursorname test with INTO list in DECLARE stmt */
 
 	strcpy(msg, "declare");
-	/* declare $0 cursor for select id , t from t1 */
+	ECPGset_var( 3, &( curname2 ), __LINE__);\
+ ECPGset_var( 1, ( t ), __LINE__);\
+ ECPGset_var( 2, &( id ), __LINE__);\
+ /* declare $0 cursor for select id , t from t1 */
 #line 100 "cursor.pgc"
 
 
@@ -435,7 +439,8 @@ if (sqlca.sqlcode < 0) exit (1);}
 
 
 	strcpy(msg, "declare");
-	/* declare $0 cursor for $1 */
+	ECPGset_var( 4, &( curname3 ), __LINE__);\
+ /* declare $0 cursor for $1 */
 #line 143 "cursor.pgc"
 
 
@@ -590,7 +595,8 @@ if (sqlca.sqlcode < 0) exit (1);}
 
 
 	strcpy(msg, "declare");
-	/* declare $0 cursor for $1 */
+	ECPGset_var( 5, &( curname4 ), __LINE__);\
+ /* declare $0 cursor for $1 */
 #line 193 "cursor.pgc"
 
 

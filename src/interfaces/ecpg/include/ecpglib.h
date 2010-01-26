@@ -1,7 +1,7 @@
 /*
  * this is a small part of c.h since we don't want to leak all postgres
  * definitions into ecpg programs
- * $PostgreSQL: pgsql/src/interfaces/ecpg/include/ecpglib.h,v 1.81 2010/01/15 10:44:36 meskes Exp $
+ * $PostgreSQL: pgsql/src/interfaces/ecpg/include/ecpglib.h,v 1.82 2010/01/26 09:07:31 meskes Exp $
  */
 
 #ifndef _ECPGLIB_H
@@ -84,6 +84,9 @@ bool		ECPGset_desc(int, const char *, int,...);
 void		ECPGset_noind_null(enum ECPGttype, void *);
 bool		ECPGis_noind_null(enum ECPGttype, void *);
 bool		ECPGdescribe(int, int, bool, const char *, const char *, ...);
+
+void		ECPGset_var(int, void *, int);
+void	   *ECPGget_var(int number);
 
 /* dynamic result allocation */
 void		ECPGfree_auto_mem(void);
