@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/plperl.sgml,v 2.75 2010/01/26 23:11:56 adunstan Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/plperl.sgml,v 2.76 2010/01/27 02:55:04 adunstan Exp $ -->
 
  <chapter id="plperl">
   <title>PL/Perl - Perl Procedural Language</title>
@@ -285,9 +285,9 @@ SELECT * FROM perl_set();
   </para>
 
   <para>
-   If you wish to use the <literal>strict</> pragma with your code you have a few options.
-   For temporary global use you can <command>SET</> <literal>plperl.use_strict</literal>
-   to true (see <xref linkend="plperl.use_strict">).
+   If you wish to use the <literal>strict</> pragma with your code you 
+   have a few options. For temporary global use you can <command>SET</> 
+   <literal>plperl.use_strict</literal> to true.
    This will affect subsequent compilations of <application>PL/Perl</>
    functions, but not functions already compiled in the current session.
    For permanent global use you can set <literal>plperl.use_strict</literal>
@@ -692,8 +692,6 @@ SELECT done();
  </sect2>
  </sect1>
 
- </sect1>
-
  <sect1 id="plperl-global">
   <title>Global Values in PL/Perl</title>
 
@@ -1069,8 +1067,6 @@ CREATE TRIGGER test_valid_id_trig
     </listitem>
    </itemizedlist>
   </para>
- </sect2>
-
  </sect1>
 
 </chapter>
