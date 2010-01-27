@@ -4,7 +4,7 @@
  *	  Interface to hba.c
  *
  *
- * $PostgreSQL: pgsql/src/include/libpq/hba.h,v 1.60 2009/12/12 21:35:21 mha Exp $
+ * $PostgreSQL: pgsql/src/include/libpq/hba.h,v 1.61 2010/01/27 12:12:00 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,7 +27,8 @@ typedef enum UserAuth
 	uaSSPI,
 	uaPAM,
 	uaLDAP,
-	uaCert
+	uaCert,
+	uaRADIUS
 } UserAuth;
 
 typedef enum IPCompareMethod
@@ -71,6 +72,10 @@ typedef struct
 	char	   *krb_server_hostname;
 	char	   *krb_realm;
 	bool		include_realm;
+	char	   *radiusserver;
+	char	   *radiussecret;
+	char	   *radiusidentifier;
+	int			radiusport;
 } HbaLine;
 
 /* kluge to avoid including libpq/libpq-be.h here */

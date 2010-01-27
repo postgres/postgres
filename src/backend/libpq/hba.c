@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.195 2010/01/15 09:19:02 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.196 2010/01/27 12:11:59 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -952,6 +952,8 @@ parse_hba_line(List *line, int line_num, HbaLine *parsedline)
 #else
 		unsupauth = "cert";
 #endif
+	else if (strcmp(token, "radius")== 0)
+		parsedline->auth_method = uaRADIUS;
 	else
 	{
 		ereport(LOG,
@@ -1162,6 +1164,45 @@ parse_hba_line(List *line, int line_num, HbaLine *parsedline)
 				else
 					parsedline->include_realm = false;
 			}
+			else if (strcmp(token, "radiusserver") == 0)
+			{
+				REQUIRE_AUTH_OPTION(uaRADIUS, "radiusserver", "radius");
+				if (inet_addr(c) == INADDR_NONE)
+				{
+					ereport(LOG,
+							(errcode(ERRCODE_CONFIG_FILE_ERROR),
+							 errmsg("invalid RADIUS server IP address: \"%s\"", c),
+						   errcontext("line %d of configuration file \"%s\"",
+									  line_num, HbaFileName)));
+					return false;
+
+				}
+				parsedline->radiusserver = pstrdup(c);
+			}
+			else if (strcmp(token, "radiusport") == 0)
+			{
+				REQUIRE_AUTH_OPTION(uaRADIUS, "radiusport", "radius");
+				parsedline->radiusport = atoi(c);
+				if (parsedline->radiusport == 0)
+				{
+					ereport(LOG,
+							(errcode(ERRCODE_CONFIG_FILE_ERROR),
+							 errmsg("invalid RADIUS port number: \"%s\"", c),
+						   errcontext("line %d of configuration file \"%s\"",
+									  line_num, HbaFileName)));
+					return false;
+				}
+			}
+			else if (strcmp(token, "radiussecret") == 0)
+			{
+				REQUIRE_AUTH_OPTION(uaRADIUS, "radiussecret", "radius");
+				parsedline->radiussecret = pstrdup(c);
+			}
+			else if (strcmp(token, "radiusidentifier") == 0)
+			{
+				REQUIRE_AUTH_OPTION(uaRADIUS, "radiusidentifier", "radius");
+				parsedline->radiusidentifier = pstrdup(c);
+			}
 			else
 			{
 				ereport(LOG,
@@ -1212,6 +1253,12 @@ parse_hba_line(List *line, int line_num, HbaLine *parsedline)
 								line_num, HbaFileName)));
 			return false;
 		}
+	}
+
+	if (parsedline->auth_method == uaRADIUS)
+	{
+		MANDATORY_AUTH_ARG(parsedline->radiusserver, "radiusserver", "radius");
+		MANDATORY_AUTH_ARG(parsedline->radiussecret, "radiussecret", "radius");
 	}
 
 	/*

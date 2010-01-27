@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.127 2010/01/26 06:45:31 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.128 2010/01/27 12:11:59 mha Exp $ -->
 
 <chapter id="client-authentication">
  <title>Client Authentication</title>
@@ -390,6 +390,16 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
          <para>
           Authenticate using an LDAP server. See <xref
           linkend="auth-ldap"> for details.
+         </para>
+        </listitem>
+       </varlistentry>
+
+       <varlistentry>
+        <term><literal>radius</></term>
+        <listitem>
+         <para>
+          Authenticate using a RADIUS server. See <xref
+          linkend="auth-radius"> for detauls.
          </para>
         </listitem>
        </varlistentry>
@@ -1329,6 +1339,95 @@ omicron         bryanh                  guest1
 ldapserver=ldap.example.net ldapprefix="cn=" ldapsuffix=", dc=example, dc=net"
     </synopsis>
 
+  </sect2>
+
+  <sect2 id="auth-radius">
+   <title>RADIUS authentication</title>
+
+   <indexterm zone="auth-radius">
+    <primary>RADIUS</primary>
+   </indexterm>
+
+   <para>
+    This authentication method operates similarly to
+    <literal>password</literal> except that it uses RADIUS
+    as the password verification method. RADIUS is used only to validate
+    the user name/password pairs. Therefore the user must already
+    exist in the database before RADIUS can be used for
+    authentication.
+   </para>
+
+   <para>
+    When using RADIUS authentication, an Access Request message will be sent
+    to the configured RADIUS server. This request will be of type
+    <literal>Authenticate Only</literal>, and include parameters for
+    <literal>user name</>, <literal>password</> (encrypted) and
+    <literal>NAS Identifier</>. The request will be encrypted using
+    a secret shared with the server. The RADIUS server will respond to
+    this server with either <literal>Access Accept</> or
+    <literal>Access Reject</>. There is no support for RADIUS accounting.
+   </para>
+
+   <para>
+    The following configuration options are supported for RADIUS:
+     <variablelist>
+      <varlistentry>
+       <term><literal>radiusserver</literal></term>
+       <listitem>
+        <para>
+         The IP address of the RADIUS server to connect to. This must
+         be an IPV4 address and not a hostname. This parameter is required.
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term><literal>radiussecret</literal></term>
+       <listitem>
+        <para>
+         The shared secret used when talking securely to the RADIUS
+         server. This must have exactly the same value on the PostgreSQL
+         and RADIUS servers. It is recommended that this is a string of
+         at least 16 characters. This parameter is required.
+         <note>
+         <para>
+          The encryption vector used will only be cryptographically
+          strong if <productname>PostgreSQL</> is built with support for
+          <productname>OpenSSL</>. In other cases, the transmission to the
+          RADIUS server should only be considered obfuscated, not secured, and
+          external security measures should be applied if necessary.
+         </para>
+         </note>
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term><literal>radiusport</literal></term>
+       <listitem>
+        <para>
+         The port number on the RADIUS server to connect to. If no port
+         is specified, the default port <literal>1812</> will be used.
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term><literal>radiusidentifier</literal></term>
+       <listitem>
+        <para>
+         The string used as <literal>NAS Identifier</> in the RADIUS
+         requests. This parameter can be used as a second parameter
+         identifying for example which database the user is attempting
+         to authenticate as, which can be used for policy matching on
+         the RADIUS server. If no identifier is specified, the default
+         <literal>postgresql</> will be used.
+        </para>
+       </listitem>
+      </varlistentry>
+
+     </variablelist>
+   </para>
   </sect2>
 
   <sect2 id="auth-cert">

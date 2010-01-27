@@ -14,7 +14,7 @@
  *	Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/md5.c,v 1.38 2010/01/02 16:57:45 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/md5.c,v 1.39 2010/01/27 12:11:59 mha Exp $
  */
 
 /* This is intended to be used in both frontend and backend, so use c.h */
@@ -298,6 +298,12 @@ pg_md5_hash(const void *buff, size_t len, char *hexsum)
 	return true;
 }
 
+bool pg_md5_binary(const void *buff, size_t len, void *outbuf)
+{
+	if (!calculateDigestFromBuffer((uint8 *) buff, len, outbuf))
+		return false;
+	return true;
+}
 
 
 /*

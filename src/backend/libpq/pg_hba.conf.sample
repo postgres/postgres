@@ -39,9 +39,9 @@
 # any subnet that the server is directly connected to.
 #
 # METHOD can be "trust", "reject", "md5", "password", "gss", "sspi",
-# "krb5", "ident", "pam", "ldap" or "cert".  Note that "password"
-# sends passwords in clear text; "md5" is preferred since it sends
-# encrypted passwords.
+# "krb5", "ident", "pam", "ldap", "radius" or "cert".  Note that
+# "password" sends passwords in clear text; "md5" is preferred since
+# it sends encrypted passwords.
 #
 # OPTIONS are a set of options for the authentication in the format
 # NAME=VALUE.  The available options depend on the different
