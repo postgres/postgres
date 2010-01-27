@@ -30,7 +30,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/replication/walsender.c,v 1.3 2010/01/21 08:19:57 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/replication/walsender.c,v 1.4 2010/01/27 16:41:09 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -610,8 +610,8 @@ XLogSend(StringInfo outMsg)
 		return true;
 
 	/*
-	 * We gather multiple records together by issuing just one read() of
-	 * a suitable size, and send them as one CopyData message. Repeat
+	 * We gather multiple records together by issuing just one XLogRead()
+	 * of a suitable size, and send them as one CopyData message. Repeat
 	 * until we've sent everything we can.
 	 */
 	while (XLByteLT(sentPtr, SendRqstPtr))
@@ -628,11 +628,21 @@ XLogSend(StringInfo outMsg)
 		 * The rounding is not only for performance reasons. Walreceiver
 		 * relies on the fact that we never split a WAL record across two
 		 * messages. Since a long WAL record is split at page boundary into
-		 * continuation records, page boundary is alwayssafe cut-off point.
+		 * continuation records, page boundary is always a safe cut-off point.
 		 * We also assume that SendRqstPtr never points in the middle of a
 		 * WAL record.
 		 */
 		startptr = sentPtr;
+		if (startptr.xrecoff >= XLogFileSize)
+		{
+			/*
+			 * crossing a logid boundary, skip the non-existent last log
+			 * segment in previous logical log file.
+			 */
+			startptr.xlogid += 1;
+			startptr.xrecoff = 0;
+		}
+
 		endptr = startptr;
 		XLByteAdvance(endptr, MAX_SEND_SIZE);
 		/* round down to page boundary. */

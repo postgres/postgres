@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.362 2010/01/27 15:27:50 heikki Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.363 2010/01/27 16:41:09 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3573,6 +3573,12 @@ ReadRecord(XLogRecPtr *RecPtr, int emode_arg, bool fetching_ckpt)
 		{
 			NextLogPage(tmpRecPtr);
 			/* We will account for page header size below */
+		}
+
+		if (tmpRecPtr.xrecoff >= XLogFileSize)
+		{
+			(tmpRecPtr.xlogid)++;
+			tmpRecPtr.xrecoff = 0;
 		}
 	}
 	else
