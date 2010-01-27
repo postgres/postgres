@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.128 2010/01/27 12:11:59 mha Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.129 2010/01/27 13:03:17 mha Exp $ -->
 
 <chapter id="client-authentication">
  <title>Client Authentication</title>
@@ -399,7 +399,7 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
         <listitem>
          <para>
           Authenticate using a RADIUS server. See <xref
-          linkend="auth-radius"> for detauls.
+          linkend="auth-radius"> for details.
          </para>
         </listitem>
        </varlistentry>
