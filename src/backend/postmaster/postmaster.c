@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.601 2010/01/15 09:19:02 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.602 2010/01/27 15:27:50 heikki Exp $
  *
  * NOTES
  *
@@ -223,9 +223,6 @@ static int	Shutdown = NoShutdown;
 
 static bool FatalError = false; /* T if recovering from backend crash */
 static bool RecoveryError = false;		/* T if WAL recovery failed */
-
-/* If WalReceiverActive is true, restart walreceiver if it dies */
-static bool WalReceiverActive = false;
 
 /*
  * We use a simple state machine to control startup, shutdown, and
@@ -1468,11 +1465,6 @@ ServerLoop(void)
 		/* If we have lost the stats collector, try to start a new one */
 		if (PgStatPID == 0 && pmState == PM_RUN)
 			PgStatPID = pgstat_start();
-
-		/* If we have lost walreceiver, try to start a new one */
-		if (WalReceiverPID == 0 && WalReceiverActive &&
-			(pmState == PM_RECOVERY || pmState == PM_RECOVERY_CONSISTENT))
-			WalReceiverPID = StartWalReceiver();
 
 		/* If we need to signal the autovacuum launcher, do so now */
 		if (avlauncher_needs_signal)
@@ -4167,14 +4159,7 @@ sigusr1_handler(SIGNAL_ARGS)
 		WalReceiverPID == 0)
 	{
 		/* Startup Process wants us to start the walreceiver process. */
-		WalReceiverActive = true;
 		WalReceiverPID = StartWalReceiver();
-	}
-
-	if (CheckPostmasterSignal(PMSIGNAL_SHUTDOWN_WALRECEIVER))
-	{
-		/* The walreceiver process doesn't want to be restarted anymore */
-		WalReceiverActive = false;
 	}
 
 	PG_SETMASK(&UnBlockSig);
