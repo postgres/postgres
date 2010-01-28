@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.459 2010/01/05 21:53:58 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.460 2010/01/28 23:21:11 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2507,6 +2507,7 @@ _copyCreateStmt(CreateStmt *from)
 	COPY_NODE_FIELD(relation);
 	COPY_NODE_FIELD(tableElts);
 	COPY_NODE_FIELD(inhRelations);
+	COPY_NODE_FIELD(ofTypename);
 	COPY_NODE_FIELD(constraints);
 	COPY_NODE_FIELD(options);
 	COPY_SCALAR_FIELD(oncommit);

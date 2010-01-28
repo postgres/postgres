@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_table.sgml,v 1.120 2009/12/07 05:22:21 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_table.sgml,v 1.121 2010/01/28 23:21:11 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -28,6 +28,16 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE <replaceable class="PAR
     [, ... ]
 ] )
 [ INHERITS ( <replaceable>parent_table</replaceable> [, ... ] ) ]
+[ WITH ( <replaceable class="PARAMETER">storage_parameter</replaceable> [= <replaceable class="PARAMETER">value</replaceable>] [, ... ] ) | WITH OIDS | WITHOUT OIDS ]
+[ ON COMMIT { PRESERVE ROWS | DELETE ROWS | DROP } ]
+[ TABLESPACE <replaceable class="PARAMETER">tablespace</replaceable> ]
+
+CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE <replaceable class="PARAMETER">table_name</replaceable>
+    OF <replaceable class="PARAMETER">type_name</replaceable> [ (
+  { <replaceable class="PARAMETER">column_name</replaceable> WITH OPTIONS [ DEFAULT <replaceable>default_expr</replaceable> ] [ <replaceable class="PARAMETER">column_constraint</replaceable> [ ... ] ]
+    | <replaceable>table_constraint</replaceable> }
+    [, ... ]
+) ]
 [ WITH ( <replaceable class="PARAMETER">storage_parameter</replaceable> [= <replaceable class="PARAMETER">value</replaceable>] [, ... ] ) | WITH OIDS | WITHOUT OIDS ]
 [ ON COMMIT { PRESERVE ROWS | DELETE ROWS | DROP } ]
 [ TABLESPACE <replaceable class="PARAMETER">tablespace</replaceable> ]
@@ -149,6 +159,27 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE <replaceable class="PAR
     <listitem>
      <para>
       The name (optionally schema-qualified) of the table to be created.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>OF <replaceable class="PARAMETER">type_name</replaceable></literal></term>
+    <listitem>
+     <para>
+      Creates a <firstterm>typed table</firstterm>, which takes its
+      structure from the specified composite type (name optionally
+      schema-qualified).  A typed table is tied to its type; for
+      example the table will be dropped if the type is dropped
+      (with <literal>DROP TYPE ... CASCADE</literal>).
+     </para>
+
+     <para>
+      When a typed table is created, then the data types of the
+      columns are determined by the underlying composite type and are
+      not specified by the <literal>CREATE TABLE</literal> command.
+      But the <literal>CREATE TABLE</literal> command can add defaults
+      and constraints to the table and can specify storage parameters.
      </para>
     </listitem>
    </varlistentry>
@@ -1182,6 +1213,17 @@ CREATE TABLE cinemas (
 </programlisting>
   </para>
 
+  <para>
+   Create a composite type and a typed table:
+<programlisting>
+CREATE TYPE employee_type AS (name text, salary numeric);
+
+CREATE TABLE employees OF employee_type (
+    PRIMARY KEY (name),
+    salary WITH OPTIONS DEFAULT 1000
+);
+</programlisting>
+  </para>
  </refsect1>
 
  <refsect1 id="SQL-CREATETABLE-compatibility">
@@ -1331,6 +1373,19 @@ CREATE TABLE cinemas (
     and <literal>USING INDEX TABLESPACE</literal> are extensions.
    </para>
   </refsect2>
+
+  <refsect2>
+   <title>Typed Tables</title>
+
+   <para>
+    Typed tables implement a subset of the SQL standard.  According to
+    the standard, a typed table has columns corresponding to the
+    underlying composite type as well as one other column that is
+    the <quote>self-referencing column</quote>.  PostgreSQL does not
+    support these self-referencing columns explicitly, but the same
+    effect can be had using the OID feature.
+   </para>
+  </refsect2>
  </refsect1>
 
 
@@ -1341,6 +1396,7 @@ CREATE TABLE cinemas (
    <member><xref linkend="sql-altertable" endterm="sql-altertable-title"></member>
    <member><xref linkend="sql-droptable" endterm="sql-droptable-title"></member>
    <member><xref linkend="sql-createtablespace" endterm="sql-createtablespace-title"></member>
+   <member><xref linkend="sql-createtype" endterm="sql-createtype-title"></member>
   </simplelist>
  </refsect1>
 </refentry>

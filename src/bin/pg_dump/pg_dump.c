@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.568 2010/01/22 16:40:19 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.569 2010/01/28 23:21:12 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3441,6 +3441,7 @@ getTables(int *numTables)
 	int			i_reltablespace;
 	int			i_reloptions;
 	int			i_toastreloptions;
+	int			i_reloftype;
 
 	/* Make sure we are in proper schema */
 	selectSourceSchema("pg_catalog");
@@ -3465,7 +3466,7 @@ getTables(int *numTables)
 	 * we cannot correctly identify inherited columns, owned sequences, etc.
 	 */
 
-	if (g_fout->remoteVersion >= 80400)
+	if (g_fout->remoteVersion >= 80500)
 	{
 		/*
 		 * Left join to pick up dependency info linking sequences to their
@@ -3478,6 +3479,40 @@ getTables(int *numTables)
 						  "c.relchecks, c.relhastriggers, "
 						  "c.relhasindex, c.relhasrules, c.relhasoids, "
 						  "c.relfrozenxid, "
+						  "CASE WHEN c.reloftype <> 0 THEN c.reloftype::pg_catalog.regtype ELSE NULL END AS reloftype, "
+						  "d.refobjid AS owning_tab, "
+						  "d.refobjsubid AS owning_col, "
+						  "(SELECT spcname FROM pg_tablespace t WHERE t.oid = c.reltablespace) AS reltablespace, "
+						"array_to_string(c.reloptions, ', ') AS reloptions, "
+						  "array_to_string(array(SELECT 'toast.' || x FROM unnest(tc.reloptions) x), ', ') AS toast_reloptions "
+						  "FROM pg_class c "
+						  "LEFT JOIN pg_depend d ON "
+						  "(c.relkind = '%c' AND "
+						  "d.classid = c.tableoid AND d.objid = c.oid AND "
+						  "d.objsubid = 0 AND "
+						  "d.refclassid = c.tableoid AND d.deptype = 'a') "
+					   "LEFT JOIN pg_class tc ON (c.reltoastrelid = tc.oid) "
+						  "WHERE c.relkind in ('%c', '%c', '%c', '%c') "
+						  "ORDER BY c.oid",
+						  username_subquery,
+						  RELKIND_SEQUENCE,
+						  RELKIND_RELATION, RELKIND_SEQUENCE,
+						  RELKIND_VIEW, RELKIND_COMPOSITE_TYPE);
+	}
+	else if (g_fout->remoteVersion >= 80400)
+	{
+		/*
+		 * Left join to pick up dependency info linking sequences to their
+		 * owning column, if any (note this dependency is AUTO as of 8.2)
+		 */
+		appendPQExpBuffer(query,
+						  "SELECT c.tableoid, c.oid, c.relname, "
+						  "c.relacl, c.relkind, c.relnamespace, "
+						  "(%s c.relowner) AS rolname, "
+						  "c.relchecks, c.relhastriggers, "
+						  "c.relhasindex, c.relhasrules, c.relhasoids, "
+						  "c.relfrozenxid, "
+						  "NULL AS reloftype, "
 						  "d.refobjid AS owning_tab, "
 						  "d.refobjsubid AS owning_col, "
 						  "(SELECT spcname FROM pg_tablespace t WHERE t.oid = c.reltablespace) AS reltablespace, "
@@ -3510,6 +3545,7 @@ getTables(int *numTables)
 						  "relchecks, (reltriggers <> 0) AS relhastriggers, "
 						  "relhasindex, relhasrules, relhasoids, "
 						  "relfrozenxid, "
+						  "NULL AS reloftype, "
 						  "d.refobjid AS owning_tab, "
 						  "d.refobjsubid AS owning_col, "
 						  "(SELECT spcname FROM pg_tablespace t WHERE t.oid = c.reltablespace) AS reltablespace, "
@@ -3541,6 +3577,7 @@ getTables(int *numTables)
 						  "relchecks, (reltriggers <> 0) AS relhastriggers, "
 						  "relhasindex, relhasrules, relhasoids, "
 						  "0 AS relfrozenxid, "
+						  "NULL AS reloftype, "
 						  "d.refobjid AS owning_tab, "
 						  "d.refobjsubid AS owning_col, "
 						  "(SELECT spcname FROM pg_tablespace t WHERE t.oid = c.reltablespace) AS reltablespace, "
@@ -3572,6 +3609,7 @@ getTables(int *numTables)
 						  "relchecks, (reltriggers <> 0) AS relhastriggers, "
 						  "relhasindex, relhasrules, relhasoids, "
 						  "0 AS relfrozenxid, "
+						  "NULL AS reloftype, "
 						  "d.refobjid AS owning_tab, "
 						  "d.refobjsubid AS owning_col, "
 						  "NULL AS reltablespace, "
@@ -3599,6 +3637,7 @@ getTables(int *numTables)
 						  "relchecks, (reltriggers <> 0) AS relhastriggers, "
 						  "relhasindex, relhasrules, relhasoids, "
 						  "0 AS relfrozenxid, "
+						  "NULL AS reloftype, "
 						  "NULL::oid AS owning_tab, "
 						  "NULL::int4 AS owning_col, "
 						  "NULL AS reltablespace, "
@@ -3621,6 +3660,7 @@ getTables(int *numTables)
 						  "relhasindex, relhasrules, "
 						  "'t'::bool AS relhasoids, "
 						  "0 AS relfrozenxid, "
+						  "NULL AS reloftype, "
 						  "NULL::oid AS owning_tab, "
 						  "NULL::int4 AS owning_col, "
 						  "NULL AS reltablespace, "
@@ -3653,6 +3693,7 @@ getTables(int *numTables)
 						  "relhasindex, relhasrules, "
 						  "'t'::bool AS relhasoids, "
 						  "0 as relfrozenxid, "
+						  "NULL AS reloftype, "
 						  "NULL::oid AS owning_tab, "
 						  "NULL::int4 AS owning_col, "
 						  "NULL AS reltablespace, "
@@ -3702,6 +3743,7 @@ getTables(int *numTables)
 	i_reltablespace = PQfnumber(res, "reltablespace");
 	i_reloptions = PQfnumber(res, "reloptions");
 	i_toastreloptions = PQfnumber(res, "toast_reloptions");
+	i_reloftype = PQfnumber(res, "reloftype");
 
 	if (lockWaitTimeout && g_fout->remoteVersion >= 70300)
 	{
@@ -3735,6 +3777,10 @@ getTables(int *numTables)
 		tblinfo[i].hastriggers = (strcmp(PQgetvalue(res, i, i_relhastriggers), "t") == 0);
 		tblinfo[i].hasoids = (strcmp(PQgetvalue(res, i, i_relhasoids), "t") == 0);
 		tblinfo[i].frozenxid = atooid(PQgetvalue(res, i, i_relfrozenxid));
+		if (PQgetisnull(res, i, i_reloftype))
+			tblinfo[i].reloftype = NULL;
+		else
+			tblinfo[i].reloftype = strdup(PQgetvalue(res, i, i_reloftype));
 		tblinfo[i].ncheck = atoi(PQgetvalue(res, i, i_relchecks));
 		if (PQgetisnull(res, i, i_owning_tab))
 		{
@@ -10552,8 +10598,10 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 		if (binary_upgrade)
 			binary_upgrade_set_relfilenodes(q, tbinfo->dobj.catId.oid, false);
 
-		appendPQExpBuffer(q, "CREATE TABLE %s (",
+		appendPQExpBuffer(q, "CREATE TABLE %s",
 						  fmtId(tbinfo->dobj.name));
+		if (tbinfo->reloftype)
+			appendPQExpBuffer(q, " OF %s", tbinfo->reloftype);
 		actual_atts = 0;
 		for (j = 0; j < tbinfo->numatts; j++)
 		{
@@ -10564,8 +10612,28 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 			if ((!tbinfo->inhAttrs[j] && !tbinfo->attisdropped[j]) ||
 				binary_upgrade)
 			{
+				/*
+				 * Default value --- suppress if inherited (except in
+				 * binary-upgrade case, where we're not doing normal
+				 * inheritance) or if it's to be printed separately.
+				 */
+				bool has_default = (tbinfo->attrdefs[j] != NULL
+									&& (!tbinfo->inhAttrDef[j] || binary_upgrade)
+									&& !tbinfo->attrdefs[j]->separate);
+				/*
+				 * Not Null constraint --- suppress if inherited, except
+				 * in binary-upgrade case.
+				 */
+				bool has_notnull =  (tbinfo->notnull[j]
+									 &&	(!tbinfo->inhNotNull[j] || binary_upgrade));
+
+				if (tbinfo->reloftype && !has_default && !has_notnull)
+					continue;
+
 				/* Format properly if not first attr */
-				if (actual_atts > 0)
+				if (actual_atts == 0)
+					appendPQExpBuffer(q, " (");
+				else
 					appendPQExpBuffer(q, ",");
 				appendPQExpBuffer(q, "\n    ");
 				actual_atts++;
@@ -10587,7 +10655,11 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 				}
 
 				/* Attribute type */
-				if (g_fout->remoteVersion >= 70100)
+				if (tbinfo->reloftype)
+				{
+					appendPQExpBuffer(q, "WITH OPTIONS");
+				}
+				else if (g_fout->remoteVersion >= 70100)
 				{
 					appendPQExpBuffer(q, "%s",
 									  tbinfo->atttypnames[j]);
@@ -10600,23 +10672,11 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 												   tbinfo->atttypmod[j]));
 				}
 
-				/*
-				 * Default value --- suppress if inherited (except in
-				 * binary-upgrade case, where we're not doing normal
-				 * inheritance) or if it's to be printed separately.
-				 */
-				if (tbinfo->attrdefs[j] != NULL &&
-					(!tbinfo->inhAttrDef[j] || binary_upgrade) &&
-					!tbinfo->attrdefs[j]->separate)
+				if (has_default)
 					appendPQExpBuffer(q, " DEFAULT %s",
 									  tbinfo->attrdefs[j]->adef_expr);
 
-				/*
-				 * Not Null constraint --- suppress if inherited, except
-				 * in binary-upgrade case.
-				 */
-				if (tbinfo->notnull[j] &&
-					(!tbinfo->inhNotNull[j] || binary_upgrade))
+				if (has_notnull)
 					appendPQExpBuffer(q, " NOT NULL");
 			}
 		}
@@ -10631,7 +10691,9 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 			if (constr->separate || !constr->conislocal)
 				continue;
 
-			if (actual_atts > 0)
+			if (actual_atts == 0)
+				appendPQExpBuffer(q, " (\n    ");
+			else
 				appendPQExpBuffer(q, ",\n    ");
 
 			appendPQExpBuffer(q, "CONSTRAINT %s ",
@@ -10641,7 +10703,8 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 			actual_atts++;
 		}
 
-		appendPQExpBuffer(q, "\n)");
+		if (actual_atts)
+			appendPQExpBuffer(q, "\n)");
 
 		if (numParents > 0 && !binary_upgrade)
 		{

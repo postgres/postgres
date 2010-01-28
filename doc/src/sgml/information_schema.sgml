@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/information_schema.sgml,v 1.44 2009/12/31 14:41:23 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/information_schema.sgml,v 1.45 2010/01/28 23:21:10 petere Exp $ -->
 
 <chapter id="information-schema">
  <title>The Information Schema</title>
@@ -4750,19 +4750,29 @@ ORDER BY c.ordinal_position;
      <row>
       <entry><literal>user_defined_type_catalog</literal></entry>
       <entry><type>sql_identifier</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>
+       If the table is a typed table, the name of the database that
+       contains the underlying data type (always the current
+       database), else null.
+      </entry>
      </row>
 
      <row>
       <entry><literal>user_defined_type_schema</literal></entry>
       <entry><type>sql_identifier</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>
+       If the table is a typed table, the name of the schema that
+       contains the underlying data type, else null.
+      </entry>
      </row>
 
      <row>
       <entry><literal>user_defined_type_name</literal></entry>
       <entry><type>sql_identifier</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>
+       If the table is a typed table, the name of the underlying data
+       type, else null.
+      </entry>
      </row>
 
      <row>
@@ -4778,7 +4788,7 @@ ORDER BY c.ordinal_position;
      <row>
       <entry><literal>is_typed</literal></entry>
       <entry><type>yes_or_no</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry><literal>YES</literal> if the table is a typed table, <literal>NO</literal> if not</entry>
      </row>
 
      <row>

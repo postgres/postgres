@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.367 2010/01/22 16:40:18 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.368 2010/01/28 23:21:11 petere Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -72,7 +72,9 @@
 
 static void AddNewRelationTuple(Relation pg_class_desc,
 					Relation new_rel_desc,
-					Oid new_rel_oid, Oid new_type_oid,
+					Oid new_rel_oid,
+					Oid new_type_oid,
+					Oid reloftype,
 					Oid relowner,
 					char relkind,
 					Datum relacl,
@@ -669,6 +671,7 @@ InsertPgClassTuple(Relation pg_class_desc,
 	values[Anum_pg_class_relname - 1] = NameGetDatum(&rd_rel->relname);
 	values[Anum_pg_class_relnamespace - 1] = ObjectIdGetDatum(rd_rel->relnamespace);
 	values[Anum_pg_class_reltype - 1] = ObjectIdGetDatum(rd_rel->reltype);
+	values[Anum_pg_class_reloftype - 1] = ObjectIdGetDatum(rd_rel->reloftype);
 	values[Anum_pg_class_relowner - 1] = ObjectIdGetDatum(rd_rel->relowner);
 	values[Anum_pg_class_relam - 1] = ObjectIdGetDatum(rd_rel->relam);
 	values[Anum_pg_class_relfilenode - 1] = ObjectIdGetDatum(rd_rel->relfilenode);
@@ -727,6 +730,7 @@ AddNewRelationTuple(Relation pg_class_desc,
 					Relation new_rel_desc,
 					Oid new_rel_oid,
 					Oid new_type_oid,
+					Oid reloftype,
 					Oid relowner,
 					char relkind,
 					Datum relacl,
@@ -785,6 +789,7 @@ AddNewRelationTuple(Relation pg_class_desc,
 
 	new_rel_reltup->relowner = relowner;
 	new_rel_reltup->reltype = new_type_oid;
+	new_rel_reltup->reloftype = reloftype;
 	new_rel_reltup->relkind = relkind;
 
 	new_rel_desc->rd_att->tdtypeid = new_type_oid;
@@ -876,6 +881,7 @@ heap_create_with_catalog(const char *relname,
 						 Oid reltablespace,
 						 Oid relid,
 						 Oid reltypeid,
+						 Oid reloftypeid,
 						 Oid ownerid,
 						 TupleDesc tupdesc,
 						 List *cooked_constraints,
@@ -1097,6 +1103,7 @@ heap_create_with_catalog(const char *relname,
 						new_rel_desc,
 						relid,
 						new_type_oid,
+						reloftypeid,
 						ownerid,
 						relkind,
 						PointerGetDatum(relacl),
@@ -1138,6 +1145,14 @@ heap_create_with_catalog(const char *relname,
 		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
 
 		recordDependencyOnOwner(RelationRelationId, relid, ownerid);
+
+		if (reloftypeid)
+		{
+			referenced.classId = TypeRelationId;
+			referenced.objectId = reloftypeid;
+			referenced.objectSubId = 0;
+			recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
+		}
 
 		if (relacl != NULL)
 		{

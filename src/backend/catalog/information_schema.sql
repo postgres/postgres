@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2003-2010, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/catalog/information_schema.sql,v 1.64 2010/01/17 22:56:21 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/catalog/information_schema.sql,v 1.65 2010/01/28 23:21:11 petere Exp $
  */
 
 /*
@@ -1799,25 +1799,25 @@ CREATE VIEW tables AS
            CAST(null AS sql_identifier) AS self_referencing_column_name,
            CAST(null AS character_data) AS reference_generation,
 
-           CAST(null AS sql_identifier) AS user_defined_type_catalog,
-           CAST(null AS sql_identifier) AS user_defined_type_schema,
-           CAST(null AS sql_identifier) AS user_defined_type_name,
+           CAST(CASE WHEN t.typname IS NOT NULL THEN current_database() ELSE null END AS sql_identifier) AS user_defined_type_catalog,
+           CAST(nt.nspname AS sql_identifier) AS user_defined_type_schema,
+           CAST(t.typname AS sql_identifier) AS user_defined_type_name,
 
            CAST(CASE WHEN c.relkind = 'r'
                           OR (c.relkind = 'v'
                               AND EXISTS (SELECT 1 FROM pg_rewrite WHERE ev_class = c.oid AND ev_type = '3' AND is_instead))
                 THEN 'YES' ELSE 'NO' END AS yes_or_no) AS is_insertable_into,
 
-           CAST('NO' AS yes_or_no) AS is_typed,
+           CAST(CASE WHEN t.typname IS NOT NULL THEN 'YES' ELSE 'NO' END AS yes_or_no) AS is_typed,
            CAST(
              CASE WHEN nc.oid = pg_my_temp_schema() THEN 'PRESERVE' -- FIXME
                   ELSE null END
              AS character_data) AS commit_action
 
-    FROM pg_namespace nc, pg_class c
+    FROM pg_namespace nc JOIN pg_class c ON (nc.oid = c.relnamespace)
+           LEFT JOIN (pg_type t JOIN pg_namespace nt ON (t.typnamespace = nt.oid)) ON (c.reloftype = t.oid)
 
-    WHERE c.relnamespace = nc.oid
-          AND c.relkind IN ('r', 'v')
+    WHERE c.relkind IN ('r', 'v')
           AND (NOT pg_is_other_temp_schema(nc.oid))
           AND (pg_has_role(c.relowner, 'USAGE')
                OR has_table_privilege(c.oid, 'SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER')

@@ -19,7 +19,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/parser/parse_utilcmd.c,v 2.36 2010/01/02 16:57:50 momjian Exp $
+ *	$PostgreSQL: pgsql/src/backend/parser/parse_utilcmd.c,v 2.37 2010/01/28 23:21:12 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -58,6 +58,7 @@
 #include "utils/lsyscache.h"
 #include "utils/relcache.h"
 #include "utils/syscache.h"
+#include "utils/typcache.h"
 
 
 /* State shared by transformCreateStmt and its subroutines */
@@ -104,6 +105,8 @@ static void transformTableConstraint(ParseState *pstate,
 						 Constraint *constraint);
 static void transformInhRelation(ParseState *pstate, CreateStmtContext *cxt,
 					 InhRelation *inhrelation);
+static void transformOfType(ParseState *pstate, CreateStmtContext *cxt,
+					 TypeName *ofTypename);
 static char *chooseIndexName(const RangeVar *relation, IndexStmt *index_stmt);
 static IndexStmt *generateClonedIndexStmt(CreateStmtContext *cxt,
 						Relation parent_index, AttrNumber *attmap);
@@ -182,6 +185,11 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString)
 	cxt.alist = NIL;
 	cxt.pkey = NULL;
 	cxt.hasoids = interpretOidsOption(stmt->options);
+
+	Assert(!stmt->ofTypename || !stmt->inhRelations); /* grammar enforces */
+
+	if (stmt->ofTypename)
+		transformOfType(pstate, &cxt, stmt->ofTypename);
 
 	/*
 	 * Run through each primary element in the table creation clause. Separate
@@ -266,8 +274,9 @@ transformColumnDefinition(ParseState *pstate, CreateStmtContext *cxt,
 
 	/* Check for SERIAL pseudo-types */
 	is_serial = false;
-	if (list_length(column->typeName->names) == 1 &&
-		!column->typeName->pct_type)
+	if (column->typeName
+		&& list_length(column->typeName->names) == 1
+		&& !column->typeName->pct_type)
 	{
 		char	   *typname = strVal(linitial(column->typeName->names));
 
@@ -299,7 +308,8 @@ transformColumnDefinition(ParseState *pstate, CreateStmtContext *cxt,
 	}
 
 	/* Do necessary work on the column type declaration */
-	transformColumnType(pstate, column);
+	if (column->typeName)
+		transformColumnType(pstate, column);
 
 	/* Special actions for SERIAL pseudo-types */
 	if (is_serial)
@@ -785,6 +795,46 @@ transformInhRelation(ParseState *pstate, CreateStmtContext *cxt,
 	 * parent before the child is committed.
 	 */
 	heap_close(relation, NoLock);
+}
+
+static void
+transformOfType(ParseState *pstate, CreateStmtContext *cxt, TypeName *ofTypename)
+{
+	HeapTuple	tuple;
+	Form_pg_type typ;
+	TupleDesc	tupdesc;
+	int			i;
+	Oid			ofTypeId;
+
+	AssertArg(ofTypename);
+
+	tuple = typenameType(NULL, ofTypename, NULL);
+	typ = (Form_pg_type) GETSTRUCT(tuple);
+	ofTypeId = HeapTupleGetOid(tuple);
+	ofTypename->typeOid = ofTypeId; /* cached for later */
+
+	if (typ->typtype != TYPTYPE_COMPOSITE)
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("type %s is not a composite type",
+						format_type_be(ofTypeId))));
+
+	tupdesc = lookup_rowtype_tupdesc(ofTypeId, -1);
+	for (i = 0; i < tupdesc->natts; i++)
+	{
+		ColumnDef *n = makeNode(ColumnDef);
+		Form_pg_attribute attr = tupdesc->attrs[i];
+
+		n->colname = NameStr(attr->attname);
+		n->typeName = makeTypeNameFromOid(attr->atttypid, attr->atttypmod);
+		n->constraints = NULL;
+		n->is_local = true;
+		n->is_from_type = true;
+		cxt->columns = lappend(cxt->columns, n);
+	}
+	DecrTupleDescRefCount(tupdesc);
+
+	ReleaseSysCache(tuple);
 }
 
 /*

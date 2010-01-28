@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/src/test/regress/serial_schedule,v 1.54 2009/08/24 03:10:16 tgl Exp $
+# $PostgreSQL: pgsql/src/test/regress/serial_schedule,v 1.55 2010/01/28 23:21:13 petere Exp $
 # This should probably be in an order similar to parallel_schedule.
 test: tablespace
 test: boolean
@@ -60,6 +60,7 @@ test: create_operator
 test: create_index
 test: drop_if_exists
 test: inherit
+test: typed_table
 test: vacuum
 test: create_view
 test: sanity_check

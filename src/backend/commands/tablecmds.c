@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.319 2010/01/28 07:31:42 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.320 2010/01/28 23:21:11 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -361,6 +361,7 @@ DefineRelation(CreateStmt *stmt, char relkind)
 	ListCell   *listptr;
 	AttrNumber	attnum;
 	static char *validnsps[] = HEAP_RELOPT_NAMESPACES;
+	Oid			ofTypeId;
 
 	/*
 	 * Truncate relname to appropriate length (probably a waste of time, as
@@ -443,6 +444,11 @@ DefineRelation(CreateStmt *stmt, char relkind)
 
 	(void) heap_reloptions(relkind, reloptions, true);
 
+	if (stmt->ofTypename)
+		ofTypeId = typenameTypeId(NULL, stmt->ofTypename, NULL);
+	else
+		ofTypeId = InvalidOid;
+
 	/*
 	 * Look up inheritance ancestors and generate relation schema, including
 	 * inherited attributes.
@@ -521,6 +527,7 @@ DefineRelation(CreateStmt *stmt, char relkind)
 										  tablespaceId,
 										  InvalidOid,
 										  InvalidOid,
+										  ofTypeId,
 										  GetUserId(),
 										  descriptor,
 										  list_concat(cookedDefaults,
@@ -1230,17 +1237,46 @@ MergeAttributes(List *schema, List *supers, bool istemp,
 	foreach(entry, schema)
 	{
 		ColumnDef  *coldef = lfirst(entry);
-		ListCell   *rest;
+		ListCell   *rest = lnext(entry);
+		ListCell   *prev = entry;
 
-		for_each_cell(rest, lnext(entry))
+		if (coldef->typeName == NULL)
+			/*
+			 * Typed table column option that does not belong to a
+			 * column from the type.  This works because the columns
+			 * from the type come first in the list.
+			 */
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_COLUMN),
+					 errmsg("column \"%s\" does not exist",
+							coldef->colname)));
+
+		while (rest != NULL)
 		{
 			ColumnDef  *restdef = lfirst(rest);
+			ListCell   *next = lnext(rest); /* need to save it in case we delete it */
 
 			if (strcmp(coldef->colname, restdef->colname) == 0)
-				ereport(ERROR,
-						(errcode(ERRCODE_DUPLICATE_COLUMN),
-						 errmsg("column \"%s\" specified more than once",
-								coldef->colname)));
+			{
+				if (coldef->is_from_type)
+				{
+					/* merge the column options into the column from
+					 * the type */
+					coldef->is_not_null = restdef->is_not_null;
+					coldef->raw_default = restdef->raw_default;
+					coldef->cooked_default = restdef->cooked_default;
+					coldef->constraints = restdef->constraints;
+					coldef->is_from_type = false;
+					list_delete_cell(schema, rest, prev);
+				}
+				else
+					ereport(ERROR,
+							(errcode(ERRCODE_DUPLICATE_COLUMN),
+							 errmsg("column \"%s\" specified more than once",
+									coldef->colname)));
+			}
+			prev = rest;
+			rest = next;
 		}
 	}
 
@@ -1920,6 +1956,11 @@ renameatt(Oid myrelid,
 	 * until end of transaction.
 	 */
 	targetrelation = relation_open(myrelid, AccessExclusiveLock);
+
+	if (targetrelation->rd_rel->reloftype)
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("cannot rename column of typed table")));
 
 	/*
 	 * permissions checking.  this would normally be done in utility.c, but
@@ -3586,6 +3627,11 @@ ATExecAddColumn(AlteredTableInfo *tab, Relation rel,
 	Form_pg_type tform;
 	Expr	   *defval;
 
+	if (rel->rd_rel->reloftype)
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("cannot add column to typed table")));
+
 	attrdesc = heap_open(AttributeRelationId, RowExclusiveLock);
 
 	/*
@@ -4306,6 +4352,11 @@ ATExecDropColumn(List **wqueue, Relation rel, const char *colName,
 	AttrNumber	attnum;
 	List	   *children;
 	ObjectAddress object;
+
+	if (rel->rd_rel->reloftype)
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("cannot drop column from typed table")));
 
 	/* At top level, permission check was done in ATPrepCmd, else do it */
 	if (recursing)
