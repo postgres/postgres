@@ -29,7 +29,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuumlazy.c,v 1.127 2010/01/02 16:57:40 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuumlazy.c,v 1.128 2010/01/28 07:31:42 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -288,7 +288,7 @@ vacuum_log_cleanup_info(Relation rel, LVRelStats *vacrelstats)
 	 * No need to log changes for temp tables, they do not contain
 	 * data visible on the standby server.
 	 */
-	if (rel->rd_istemp || !XLogArchivingActive())
+	if (rel->rd_istemp || !XLogIsNeeded())
 		return;
 
 	(void) log_heap_cleanup_info(rel->rd_node, vacrelstats->latestRemovedXid);

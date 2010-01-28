@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/xlog.h,v 1.98 2010/01/20 19:43:40 heikki Exp $
+ * $PostgreSQL: pgsql/src/include/access/xlog.h,v 1.99 2010/01/28 07:31:42 heikki Exp $
  */
 #ifndef XLOG_H
 #define XLOG_H
@@ -186,7 +186,6 @@ extern int MaxStandbyDelay;
 
 #define XLogArchivingActive()	(XLogArchiveMode)
 #define XLogArchiveCommandSet() (XLogArchiveCommand[0] != '\0')
-#define XLogStandbyInfoActive()	(XLogRequestRecoveryConnections && XLogArchiveMode)
 
 /*
  * This is in walsender.c, but declared here so that we don't need to include
@@ -199,6 +198,9 @@ extern int	MaxWalSenders;
  * WAL archiving is enabled or XLOG streaming is allowed.
  */
 #define XLogIsNeeded() (XLogArchivingActive() || (MaxWalSenders > 0))
+
+/* Do we need to WAL-log information required only for Hot Standby? */
+#define XLogStandbyInfoActive()	(XLogRequestRecoveryConnections && XLogIsNeeded())
 
 #ifdef WAL_DEBUG
 extern bool XLOG_DEBUG;
