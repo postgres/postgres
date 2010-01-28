@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.363 2010/01/27 16:41:09 heikki Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.364 2010/01/28 19:17:22 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2760,7 +2760,7 @@ RestoreArchivedFile(char *path, const char *xlogfname,
 	uint32		restartSeg;
 
 	/* In standby mode, restore_command might not be supplied */
-	if (StandbyMode && recoveryRestoreCommand == NULL)
+	if (recoveryRestoreCommand == NULL)
 		goto not_available;
 
 	/*
