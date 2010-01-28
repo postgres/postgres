@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.295 2010/01/21 14:58:52 rhaas Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.296 2010/01/28 06:28:26 joe Exp $ -->
 
 <chapter id="libpq">
  <title><application>libpq</application> - C Library</title>
@@ -56,7 +56,8 @@
    one time.  (One reason to do that is to access more than one
    database.)  Each connection is represented by a
    <structname>PGconn</><indexterm><primary>PGconn</></> object, which
-   is obtained from the function <function>PQconnectdb</> or
+   is obtained from the function <function>PQconnectdb</>,
+   <function>PQconnectdbParams</>, or
    <function>PQsetdbLogin</>.  Note that these functions will always
    return a non-null object pointer, unless perhaps there is too
    little memory even to allocate the <structname>PGconn</> object.
@@ -91,35 +92,33 @@
 
    <variablelist>
     <varlistentry>
-     <term><function>PQconnectdb</function><indexterm><primary>PQconnectdb</></></term>
+     <term><function>PQconnectdbParams</function><indexterm><primary>PQconnectdbParams</></></term>
      <listitem>
       <para>
        Makes a new connection to the database server.
 
        <synopsis>
-        PGconn *PQconnectdb(const char *conninfo);
+        PGconn *PQconnectdbParams(const char **keywords, const char **values);
        </synopsis>
       </para>
 
       <para>
        This function opens a new database connection using the parameters taken
-       from the string <literal>conninfo</literal>.  Unlike <function>PQsetdbLogin</> below,
-       the parameter set can be extended without changing the function signature,
-       so use of this function (or its nonblocking analogues <function>PQconnectStart</>
-       and <function>PQconnectPoll</function>) is preferred for new application programming.
+       from two <symbol>NULL</symbol>-terminated arrays. The first,
+       <literal>keywords</literal>, is defined as an array of strings, each one
+       being a key word. The second, <literal>values</literal>, gives the value
+       for each key word. Unlike <function>PQsetdbLogin</> below, the parameter
+       set can be extended without changing the function signature, so use of
+       this function (or its nonblocking analogs <function>PQconnectStartParams</>
+       and <function>PQconnectPoll</function>) is preferred for new application
+       programming.
       </para>
 
       <para>
-       The passed string
-       can be empty to use all default parameters, or it can contain one or more
-       parameter settings separated by whitespace.
-       Each parameter setting is in the form <literal>keyword = value</literal>.
-       Spaces around the equal sign are optional.
-       To write an empty value or a value containing
-       spaces, surround it with single quotes, e.g.,
-       <literal>keyword = 'a value'</literal>.
-       Single quotes and backslashes within the value must be escaped with a
-       backslash, i.e., <literal>\'</literal> and <literal>\\</literal>.
+       The passed arrays can be empty to use all default parameters, or can
+       contain one or more parameter settings. They should be matched in length.
+       Processing will stop with the last non-<symbol>NULL</symbol> element
+       of the <literal>keywords</literal> array.
       </para>
 
       <para>
@@ -478,6 +477,39 @@
     </varlistentry>
 
     <varlistentry>
+     <term><function>PQconnectdb</function><indexterm><primary>PQconnectdb</></></term>
+     <listitem>
+      <para>
+       Makes a new connection to the database server.
+
+       <synopsis>
+        PGconn *PQconnectdb(const char *conninfo);
+       </synopsis>
+      </para>
+
+      <para>
+       This function opens a new database connection using the parameters taken
+       from the string <literal>conninfo</literal>.
+      </para>
+
+      <para>
+       The passed string can be empty to use all default parameters, or it can
+       contain one or more parameter settings separated by whitespace.
+       Each parameter setting is in the form <literal>keyword = value</literal>.
+       Spaces around the equal sign are optional. To write an empty value,
+       or a value containing spaces, surround it with single quotes, e.g.,
+       <literal>keyword = 'a value'</literal>. Single quotes and backslashes
+       within the value must be escaped with a backslash, i.e.,
+       <literal>\'</literal> and <literal>\\</literal>.
+      </para>
+
+      <para>
+       The currently recognized parameter key words are the same as above.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
      <term><function>PQsetdbLogin</function><indexterm><primary>PQsetdbLogin</></></term>
      <listitem>
       <para>
@@ -532,12 +564,17 @@ PGconn *PQsetdb(char *pghost,
     </varlistentry>
 
     <varlistentry>
+     <term><function>PQconnectStartParams</function><indexterm><primary>PQconnectStartParams</></></term>
      <term><function>PQconnectStart</function><indexterm><primary>PQconnectStart</></></term>
      <term><function>PQconnectPoll</function><indexterm><primary>PQconnectPoll</></></term>
      <listitem>
       <para>
        <indexterm><primary>nonblocking connection</primary></indexterm>
        Make a connection to the database server in a nonblocking manner.
+
+       <synopsis>
+        PGconn *PQconnectStartParams(const char **keywords, const char **values);
+       </synopsis>
 
        <synopsis>
         PGconn *PQconnectStart(const char *conninfo);
@@ -549,29 +586,37 @@ PGconn *PQsetdb(char *pghost,
       </para>
 
       <para>
-       These two functions are used to open a connection to a database server such
+       These three functions are used to open a connection to a database server such
        that your application's thread of execution is not blocked on remote I/O
-       whilst doing so.
-       The point of this approach is that the waits for I/O to complete can occur
-       in the application's main loop, rather than down inside
-       <function>PQconnectdb</>, and so the application can manage this
-       operation in parallel with other activities.
+       whilst doing so. The point of this approach is that the waits for I/O to
+       complete can occur in the application's main loop, rather than down inside
+       <function>PQconnectdbParams</> or <function>PQconnectdb</>, and so the
+       application can manage this operation in parallel with other activities.
       </para>
 
       <para>
-       The database connection is made using the parameters taken from the string
-       <literal>conninfo</literal>, passed to <function>PQconnectStart</function>. This string is in
-       the same format as described above for <function>PQconnectdb</function>.
+       With <function>PQconnectStartParams</function>, the database connection is made
+       using the parameters taken from the <literal>keywords</literal> and
+       <literal>values</literal> arrays, as described above for
+       <function>PQconnectdbParams</function>.
       </para>
+
       <para>
-       Neither <function>PQconnectStart</function> nor <function>PQconnectPoll</function> will block, so long as a number of
+       With <function>PQconnectStart</function>, the database connection is made
+       using the parameters taken from the string <literal>conninfo</literal> as
+       described above for <function>PQconnectdb</function>.
+      </para>
+
+      <para>
+       Neither <function>PQconnectStartParams</function> nor <function>PQconnectStart</function>
+       nor <function>PQconnectPoll</function> will block, so long as a number of
        restrictions are met:
        <itemizedlist>
         <listitem>
          <para>
           The <literal>hostaddr</> and <literal>host</> parameters are used appropriately to ensure that
           name and reverse name queries are not made. See the documentation of
-          these parameters under <function>PQconnectdb</function> above for details.
+          these parameters under <function>PQconnectdbParams</function> above for details.
          </para>
         </listitem>
 
@@ -589,6 +634,11 @@ PGconn *PQsetdb(char *pghost,
          </para>
         </listitem>
        </itemizedlist>
+      </para>
+
+      <para>
+       Note: use of <function>PQconnectStartParams</> is analogous to
+       <function>PQconnectStart</> shown below.
       </para>
 
       <para>
@@ -883,7 +933,8 @@ PQconninfoOption *PQconninfoParse(const char *conninfo, char **errmsg);
        parameters previously used. This can be useful for error recovery if a
        working connection is lost. They differ from <function>PQreset</function> (above) in that they
        act in a nonblocking manner. These functions suffer from the same
-       restrictions as <function>PQconnectStart</> and <function>PQconnectPoll</>.
+       restrictions as <function>PQconnectStartParams</>, <function>PQconnectStart</>
+       and <function>PQconnectPoll</>.
       </para>
 
       <para>
@@ -1096,9 +1147,9 @@ PQconninfoOption *PQconninfoParse(const char *conninfo, char **errmsg);
       </para>
 
       <para>
-       See the entry for <function>PQconnectStart</> and <function>PQconnectPoll</> with regards
-       to other status codes
-       that might be seen.
+       See the entry for <function>PQconnectStartParams</>, <function>PQconnectStart</>
+       and <function>PQconnectPoll</> with regards to other status codes that
+       might be seen.
       </para>
      </listitem>
     </varlistentry>

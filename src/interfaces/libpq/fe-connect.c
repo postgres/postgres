@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.384 2010/01/20 21:15:21 petere Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.385 2010/01/28 06:28:26 joe Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -262,10 +262,14 @@ static bool connectOptions2(PGconn *conn);
 static int	connectDBStart(PGconn *conn);
 static int	connectDBComplete(PGconn *conn);
 static PGconn *makeEmptyPGconn(void);
+static void fillPGconn(PGconn *conn, PQconninfoOption *connOptions);
 static void freePGconn(PGconn *conn);
 static void closePGconn(PGconn *conn);
 static PQconninfoOption *conninfo_parse(const char *conninfo,
 			   PQExpBuffer errorMessage, bool use_defaults);
+static PQconninfoOption *conninfo_array_parse(const char **keywords,
+				const char **values, PQExpBuffer errorMessage,
+				bool use_defaults);
 static char *conninfo_getval(PQconninfoOption *connOptions,
 				const char *keyword);
 static void defaultNoticeReceiver(void *arg, const PGresult *res);
@@ -290,21 +294,58 @@ pgthreadlock_t pg_g_threadlock = default_threadlock;
 /*
  *		Connecting to a Database
  *
- * There are now four different ways a user of this API can connect to the
+ * There are now six different ways a user of this API can connect to the
  * database.  Two are not recommended for use in new code, because of their
  * lack of extensibility with respect to the passing of options to the
  * backend.  These are PQsetdb and PQsetdbLogin (the former now being a macro
  * to the latter).
  *
  * If it is desired to connect in a synchronous (blocking) manner, use the
- * function PQconnectdb.
+ * function PQconnectdb or PQconnectdbParams. The former accepts a string
+ * of option = value pairs which must be parsed; the latter takes two NULL
+ * terminated arrays instead.
  *
  * To connect in an asynchronous (non-blocking) manner, use the functions
- * PQconnectStart, and PQconnectPoll.
+ * PQconnectStart or PQconnectStartParams (which differ in the same way as 
+ * PQconnectdb and PQconnectdbParams) and PQconnectPoll.
  *
  * Internally, the static functions connectDBStart, connectDBComplete
  * are part of the connection procedure.
  */
+
+/*
+ *		PQconnectdbParams
+ *
+ * establishes a connection to a postgres backend through the postmaster
+ * using connection information in two arrays.
+ *
+ * The keywords array is defined as
+ *
+ *	   const char *params[] = {"option1", "option2", NULL}
+ *
+ * The values array is defined as
+ *
+ *	   const char *values[] = {"value1", "value2", NULL}
+ *
+ * Returns a PGconn* which is needed for all subsequent libpq calls, or NULL
+ * if a memory allocation failed.
+ * If the status field of the connection returned is CONNECTION_BAD,
+ * then some fields may be null'ed out instead of having valid values.
+ *
+ * You should call PQfinish (if conn is not NULL) regardless of whether this
+ * call succeeded.
+ */
+PGconn *
+PQconnectdbParams(const char **keywords, const char **values)
+{
+	PGconn	   *conn = PQconnectStartParams(keywords, values);
+
+	if (conn && conn->status != CONNECTION_BAD)
+		(void) connectDBComplete(conn);
+
+	return conn;
+
+}
 
 /*
  *		PQconnectdb
@@ -335,6 +376,78 @@ PQconnectdb(const char *conninfo)
 
 	if (conn && conn->status != CONNECTION_BAD)
 		(void) connectDBComplete(conn);
+
+	return conn;
+}
+
+/*
+ *		PQconnectStartParams
+ *
+ * Begins the establishment of a connection to a postgres backend through the
+ * postmaster using connection information in a struct.
+ *
+ * See comment for PQconnectdbParams for the definition of the string format.
+ *
+ * Returns a PGconn*.  If NULL is returned, a malloc error has occurred, and
+ * you should not attempt to proceed with this connection.	If the status
+ * field of the connection returned is CONNECTION_BAD, an error has
+ * occurred. In this case you should call PQfinish on the result, (perhaps
+ * inspecting the error message first).  Other fields of the structure may not
+ * be valid if that occurs.  If the status field is not CONNECTION_BAD, then
+ * this stage has succeeded - call PQconnectPoll, using select(2) to see when
+ * this is necessary.
+ *
+ * See PQconnectPoll for more info.
+ */
+PGconn *
+PQconnectStartParams(const char **keywords, const char **values)
+{
+	PGconn			   *conn;
+	PQconninfoOption   *connOptions;
+
+	/*
+	 * Allocate memory for the conn structure
+	 */
+	conn = makeEmptyPGconn();
+	if (conn == NULL)
+		return NULL;
+
+	/*
+	 * Parse the conninfo arrays
+	 */
+	connOptions = conninfo_array_parse(keywords, values,
+									   &conn->errorMessage, true);
+	if (connOptions == NULL)
+	{
+		conn->status = CONNECTION_BAD;
+		/* errorMessage is already set */
+		return false;
+	}
+
+	/*
+	 * Move option values into conn structure
+	 */
+    fillPGconn(conn, connOptions);
+
+	/*
+	 * Free the option info - all is in conn now
+	 */
+	PQconninfoFree(connOptions);
+
+	/*
+	 * Compute derived options
+	 */
+	if (!connectOptions2(conn))
+		return conn;
+
+	/*
+	 * Connect to the database
+	 */
+	if (!connectDBStart(conn))
+	{
+		/* Just in case we failed to set it in connectDBStart */
+		conn->status = CONNECTION_BAD;
+	}
 
 	return conn;
 }
@@ -394,33 +507,10 @@ PQconnectStart(const char *conninfo)
 	return conn;
 }
 
-/*
- *		connectOptions1
- *
- * Internal subroutine to set up connection parameters given an already-
- * created PGconn and a conninfo string.  Derived settings should be
- * processed by calling connectOptions2 next.  (We split them because
- * PQsetdbLogin overrides defaults in between.)
- *
- * Returns true if OK, false if trouble (in which case errorMessage is set
- * and so is conn->status).
- */
-static bool
-connectOptions1(PGconn *conn, const char *conninfo)
+static void
+fillPGconn(PGconn *conn, PQconninfoOption *connOptions)
 {
-	PQconninfoOption *connOptions;
 	char	   *tmp;
-
-	/*
-	 * Parse the conninfo string
-	 */
-	connOptions = conninfo_parse(conninfo, &conn->errorMessage, true);
-	if (connOptions == NULL)
-	{
-		conn->status = CONNECTION_BAD;
-		/* errorMessage is already set */
-		return false;
-	}
 
 	/*
 	 * Move option values into conn structure
@@ -482,6 +572,39 @@ connectOptions1(PGconn *conn, const char *conninfo)
 #endif
 	tmp = conninfo_getval(connOptions, "replication");
 	conn->replication = tmp ? strdup(tmp) : NULL;
+}
+
+/*
+ *		connectOptions1
+ *
+ * Internal subroutine to set up connection parameters given an already-
+ * created PGconn and a conninfo string.  Derived settings should be
+ * processed by calling connectOptions2 next.  (We split them because
+ * PQsetdbLogin overrides defaults in between.)
+ *
+ * Returns true if OK, false if trouble (in which case errorMessage is set
+ * and so is conn->status).
+ */
+static bool
+connectOptions1(PGconn *conn, const char *conninfo)
+{
+	PQconninfoOption *connOptions;
+
+	/*
+	 * Parse the conninfo string
+	 */
+	connOptions = conninfo_parse(conninfo, &conn->errorMessage, true);
+	if (connOptions == NULL)
+	{
+		conn->status = CONNECTION_BAD;
+		/* errorMessage is already set */
+		return false;
+	}
+
+	/*
+	 * Move option values into conn structure
+	 */
+    fillPGconn(conn, connOptions);
 
 	/*
 	 * Free the option info - all is in conn now
@@ -3598,6 +3721,149 @@ conninfo_parse(const char *conninfo, PQExpBuffer errorMessage,
 	return options;
 }
 
+/*
+ * Conninfo array parser routine
+ *
+ * If successful, a malloc'd PQconninfoOption array is returned.
+ * If not successful, NULL is returned and an error message is
+ * left in errorMessage.
+ * Defaults are supplied (from a service file, environment variables, etc)
+ * for unspecified options, but only if use_defaults is TRUE.
+ */
+static PQconninfoOption *
+conninfo_array_parse(const char **keywords, const char **values,
+					 PQExpBuffer errorMessage, bool use_defaults)
+{
+	char			   *tmp;
+	PQconninfoOption   *options;
+	PQconninfoOption   *option;
+	int					i = 0;
+
+	/* Make a working copy of PQconninfoOptions */
+	options = malloc(sizeof(PQconninfoOptions));
+	if (options == NULL)
+	{
+		printfPQExpBuffer(errorMessage,
+						  libpq_gettext("out of memory\n"));
+		return NULL;
+	}
+	memcpy(options, PQconninfoOptions, sizeof(PQconninfoOptions));
+
+	/* Parse the keywords/values arrays */
+	while(keywords[i])
+	{
+		const char *pname = keywords[i];
+		const char *pvalue  = values[i];
+
+		if (pvalue != NULL)
+		{
+			/* Search for the param record */
+			for (option = options; option->keyword != NULL; option++)
+			{
+				if (strcmp(option->keyword, pname) == 0)
+					break;
+			}
+
+			/* Check for invalid connection option */
+			if (option->keyword == NULL)
+			{
+				printfPQExpBuffer(errorMessage,
+							 libpq_gettext("invalid connection option \"%s\"\n"),
+								  pname);
+				PQconninfoFree(options);
+				return NULL;
+			}
+
+		    /*
+		     * Store the value
+		     */
+		    if (option->val)
+		    	free(option->val);
+		    option->val = strdup(pvalue);
+		    if (!option->val)
+		    {
+		    	printfPQExpBuffer(errorMessage,
+		    					  libpq_gettext("out of memory\n"));
+		    	PQconninfoFree(options);
+		    	return NULL;
+		    }
+		}
+		++i;
+	}
+
+	/*
+	 * Stop here if caller doesn't want defaults filled in.
+	 */
+	if (!use_defaults)
+		return options;
+
+	/*
+	 * If there's a service spec, use it to obtain any not-explicitly-given
+	 * parameters.
+	 */
+	if (parseServiceInfo(options, errorMessage))
+	{
+		PQconninfoFree(options);
+		return NULL;
+	}
+
+	/*
+	 * Get the fallback resources for parameters not specified in the conninfo
+	 * string nor the service.
+	 */
+	for (option = options; option->keyword != NULL; option++)
+	{
+		if (option->val != NULL)
+			continue;			/* Value was in conninfo or service */
+
+		/*
+		 * Try to get the environment variable fallback
+		 */
+		if (option->envvar != NULL)
+		{
+			if ((tmp = getenv(option->envvar)) != NULL)
+			{
+				option->val = strdup(tmp);
+				if (!option->val)
+				{
+					printfPQExpBuffer(errorMessage,
+									  libpq_gettext("out of memory\n"));
+					PQconninfoFree(options);
+					return NULL;
+				}
+				continue;
+			}
+		}
+
+		/*
+		 * No environment variable specified or this one isn't set - try
+		 * compiled in
+		 */
+		if (option->compiled != NULL)
+		{
+			option->val = strdup(option->compiled);
+			if (!option->val)
+			{
+				printfPQExpBuffer(errorMessage,
+								  libpq_gettext("out of memory\n"));
+				PQconninfoFree(options);
+				return NULL;
+			}
+			continue;
+		}
+
+		/*
+		 * Special handling for user
+		 */
+		if (strcmp(option->keyword, "user") == 0)
+		{
+			option->val = pg_fe_getauthname(errorMessage);
+			continue;
+		}
+	}
+
+	return options;
+}
 
 static char *
 conninfo_getval(PQconninfoOption *connOptions,
