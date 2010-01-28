@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/pgstatfuncs.c,v 1.58 2010/01/19 14:11:31 mha Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/pgstatfuncs.c,v 1.59 2010/01/28 14:25:41 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -79,6 +79,8 @@ extern Datum pg_stat_get_buf_alloc(PG_FUNCTION_ARGS);
 extern Datum pg_stat_clear_snapshot(PG_FUNCTION_ARGS);
 extern Datum pg_stat_reset(PG_FUNCTION_ARGS);
 extern Datum pg_stat_reset_shared(PG_FUNCTION_ARGS);
+extern Datum pg_stat_reset_single_table_counters(PG_FUNCTION_ARGS);
+extern Datum pg_stat_reset_single_function_counters(PG_FUNCTION_ARGS);
 
 /* Global bgwriter statistics, from bgwriter.c */
 extern PgStat_MsgBgWriter bgwriterStats;
@@ -1117,6 +1119,27 @@ pg_stat_reset_shared(PG_FUNCTION_ARGS)
 	char	*target = text_to_cstring(PG_GETARG_TEXT_PP(0));
 
 	pgstat_reset_shared_counters(target);
+
+	PG_RETURN_VOID();
+}
+
+/* Reset a a single counter in the current database */
+Datum
+pg_stat_reset_single_table_counters(PG_FUNCTION_ARGS)
+{
+	Oid		taboid = PG_GETARG_OID(0);
+
+	pgstat_reset_single_counter(taboid, RESET_TABLE);
+
+	PG_RETURN_VOID();
+}
+
+Datum
+pg_stat_reset_single_function_counters(PG_FUNCTION_ARGS)
+{
+	Oid		funcoid = PG_GETARG_OID(0);
+
+	pgstat_reset_single_counter(funcoid, RESET_FUNCTION);
 
 	PG_RETURN_VOID();
 }

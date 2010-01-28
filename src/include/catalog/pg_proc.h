@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.565 2010/01/25 20:55:32 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.566 2010/01/28 14:25:41 mha Exp $
  *
  * NOTES
  *	  The script catalog/genbki.pl reads this file and generates .bki
@@ -3087,6 +3087,10 @@ DATA(insert OID = 2274 (  pg_stat_reset					PGNSP PGUID 12 1 0 0 f f f f f v 0 0
 DESCR("statistics: reset collected statistics for current database");
 DATA(insert OID = 3775 (  pg_stat_reset_shared			PGNSP PGUID 12 1 0 0 f f f f f v 1 0 2278 "25" _null_ _null_ _null_ _null_	pg_stat_reset_shared _null_ _null_ _null_ ));
 DESCR("statistics: reset collected statistics shared across the cluster");
+DATA(insert OID = 3776 (  pg_stat_reset_single_table_counters	PGNSP PGUID 12 1 0 0 f f f f f v 1 0 2278 "26" _null_ _null_ _null_ _null_  pg_stat_reset_single_table_counters _null_ _null_ _null_ ));
+DESCR("statistics: reset collected statistics for a single table or index in the current database");
+DATA(insert OID = 3777 (  pg_stat_reset_single_function_counters	PGNSP PGUID 12 1 0 0 f f f f f v 1 0 2278 "26" _null_ _null_ _null_ _null_  pg_stat_reset_single_function_counters _null_ _null_ _null_ ));
+DESCR("statistics: reset collected statistics for a single function in the current database");
 
 DATA(insert OID = 1946 (  encode						PGNSP PGUID 12 1 0 0 f f f t f i 2 0 25 "17 25" _null_ _null_ _null_ _null_ binary_encode _null_ _null_ _null_ ));
 DESCR("convert bytea value into some ascii-only text string");

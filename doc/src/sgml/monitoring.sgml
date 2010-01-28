@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/monitoring.sgml,v 1.74 2010/01/19 14:11:30 mha Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/monitoring.sgml,v 1.75 2010/01/28 14:25:41 mha Exp $ -->
 
 <chapter id="monitoring">
  <title>Monitoring Database Activity</title>
@@ -927,6 +927,24 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
        zero (requires superuser privileges).  Calling
        <literal>pg_stat_reset_shared('bgwriter')</> will zero all the values shown by
        <structname>pg_stat_bgwriter</>.
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal><function>pg_stat_reset_single_table_counters</function>(oid)</literal></entry>
+      <entry><type>void</type></entry>
+      <entry>
+       Reset statistics for a single table or index in the current database to
+       zero (requires superuser privileges)
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal><function>pg_stat_reset_single_function_counters</function>(oid)</literal></entry>
+      <entry><type>void</type></entry>
+      <entry>
+       Reset statistics for a single function in the current database to
+       zero (requires superuser privileges)
       </entry>
      </row>
     </tbody>
