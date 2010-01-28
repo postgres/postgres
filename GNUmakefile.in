@@ -1,7 +1,7 @@
 #
 # PostgreSQL top level makefile
 #
-# $PostgreSQL: pgsql/GNUmakefile.in,v 1.55 2009/11/03 21:28:10 petere Exp $
+# $PostgreSQL: pgsql/GNUmakefile.in,v 1.56 2010/01/28 23:59:52 adunstan Exp $
 #
 
 subdir =
@@ -14,6 +14,13 @@ all:
 	$(MAKE) -C config all
 	@echo "All of PostgreSQL successfully made. Ready to install."
 
+world:
+	$(MAKE) -C doc html
+	$(MAKE) -C src all
+	$(MAKE) -C config all
+	$(MAKE) -C contrib all
+	@echo "PostgreSQL, contrib and HTML documentation successfully made. Ready to install."
+
 html man:
 	$(MAKE) -C doc $@
 
@@ -22,6 +29,13 @@ install:
 	$(MAKE) -C src $@
 	$(MAKE) -C config $@
 	@echo "PostgreSQL installation complete."
+
+install-world:
+	$(MAKE) -C doc install
+	$(MAKE) -C src install
+	$(MAKE) -C config install
+	$(MAKE) -C contrib install
+	@echo "PostgreSQL and contrib installation complete."
 
 installdirs uninstall coverage:
 	$(MAKE) -C doc $@
@@ -59,6 +73,12 @@ check: all
 
 check installcheck installcheck-parallel:
 	$(MAKE) -C src/test $@
+
+installcheck-world:
+	$(MAKE) -C src/test installcheck
+	$(MAKE) -C src/pl installcheck
+	$(MAKE) -C interfaces/ecpg installcheck
+	$(MAKE) -C contrib installcheck
 
 GNUmakefile: GNUmakefile.in $(top_builddir)/config.status
 	./config.status $@

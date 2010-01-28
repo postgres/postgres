@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/contrib.sgml,v 1.15 2009/11/18 21:57:56 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/contrib.sgml,v 1.16 2010/01/28 23:59:52 adunstan Exp $ -->
 
 <appendix id="contrib">
  <title>Additional Supplied Modules</title>
@@ -16,7 +16,9 @@
 
  <para>
   When building from the source distribution, these modules are not built
-  automatically.  You can build and install all of them by running:
+  automatically, unless you build the "world" target 
+  (see <xref linkend="build">).
+  You can build and install all of them by running:
 <screen>
 <userinput>gmake</userinput>
 <userinput>gmake install</userinput>
