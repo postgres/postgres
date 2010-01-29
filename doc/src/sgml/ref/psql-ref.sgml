@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.236 2009/12/24 23:36:39 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.237 2010/01/29 17:44:12 rhaas Exp $
 PostgreSQL documentation
 -->
 
@@ -658,7 +658,12 @@ testdb=&gt;
     <para>
     If an unquoted argument begins with a colon (<literal>:</literal>),
     it is taken as a <application>psql</> variable and the value of the
-    variable is used as the argument instead.
+    variable is used as the argument instead.  If the variable name is
+    surrounded by single quotes (e.g. <literal>:'var'</literal>), it
+    will be escaped as an SQL literal and the result will be used as
+    the argument.  If the variable name is surrounded by double quotes,
+    it will be escaped as an SQL identifier and the result will be used
+    as the argument.
     </para>
 
     <para>
@@ -2711,18 +2716,35 @@ bar
     <para>
     An additional useful feature of <application>psql</application>
     variables is that you can substitute (<quote>interpolate</quote>)
-    them into regular <acronym>SQL</acronym> statements. The syntax for
-    this is again to prepend the variable name with a colon
+    them into regular <acronym>SQL</acronym> statements.
+    <application>psql</application> provides special facilities for
+    ensuring that values used as SQL literals and identifiers are
+    properly escaped.  The syntax for interpolating a value without
+    any special escaping is again to prepend the variable name with a colon
     (<literal>:</literal>):
 <programlisting>
 testdb=&gt; <userinput>\set foo 'my_table'</userinput>
 testdb=&gt; <userinput>SELECT * FROM :foo;</userinput>
 </programlisting>
-    would then query the table <literal>my_table</literal>. The value of
-    the variable is copied literally, so it can even contain unbalanced
-    quotes or backslash commands. You must make sure that it makes sense
-    where you put it. Variable interpolation will not be performed into
-    quoted <acronym>SQL</acronym> entities.
+    would then query the table <literal>my_table</literal>. Note that this
+    may be unsafe: the value of the variable is copied literally, so it can
+    even contain unbalanced quotes or backslash commands. You must make sure
+    that it makes sense where you put it.
+    </para>
+
+    <para>
+    When a value is to be used as an SQL literal or identifier, it is
+    safest to arrange for it to be escaped.  To escape the value of
+    a variable as an SQL literal, write a colon followed by the variable
+    name in single quotes.  To escape the value an SQL identifier, write
+    a colon followed by the variable name in double quotes.  The previous
+    example would be more safely written this way:
+<programlisting>
+testdb=&gt; <userinput>\set foo 'my_table'</userinput>
+testdb=&gt; <userinput>SELECT * FROM :"foo";</userinput>
+</programlisting>
+    Variable interpolation will not be performed into quoted
+    <acronym>SQL</acronym> entities.
     </para>
 
     <para>
@@ -2730,40 +2752,26 @@ testdb=&gt; <userinput>SELECT * FROM :foo;</userinput>
     copy the contents of a file into a table column. First load the file into a
     variable and then proceed as above:
 <programlisting>
-testdb=&gt; <userinput>\set content '''' `cat my_file.txt` ''''</userinput>
-testdb=&gt; <userinput>INSERT INTO my_table VALUES (:content);</userinput>
+testdb=&gt; <userinput>\set content `cat my_file.txt`</userinput>
+testdb=&gt; <userinput>INSERT INTO my_table VALUES (:'content');</userinput>
 </programlisting>
-    One problem with this approach is that <filename>my_file.txt</filename>
-    might contain single quotes. These need to be escaped so that
-    they don't cause a syntax error when the second line is processed. This
-    could be done with the program <command>sed</command>:
-<programlisting>
-testdb=&gt; <userinput>\set content '''' `sed -e "s/'/''/g" &lt; my_file.txt` ''''</userinput>
-</programlisting>
-    If you are using non-standard-conforming strings then you'll also need
-    to double backslashes.  This is a bit tricky:
-<programlisting>
-testdb=&gt; <userinput>\set content '''' `sed -e "s/'/''/g" -e 's/\\/\\\\/g' &lt; my_file.txt` ''''</userinput>
-</programlisting>
-    Note the use of different shell quoting conventions so that neither
-    the single quote marks nor the backslashes are special to the shell.
-    Backslashes are still special to <command>sed</command>, however, so
-    we need to double them.  (Perhaps
-    at one point you thought it was great that all Unix commands use the
-    same escape character.)
+    (Note that this still won't work if my_file.txt contains NUL bytes.
+    psql does not support embedded NUL bytes in variable values.)
     </para>
 
     <para>
-    Since colons can legally appear in SQL commands, the following rule
-    applies: the character sequence
-    <quote>:name</quote> is not changed unless <quote>name</> is the name
-    of a variable that is currently set. In any case you can escape
-    a colon with a backslash to protect it from substitution. (The
-    colon syntax for variables is standard <acronym>SQL</acronym> for
+    Since colons can legally appear in SQL commands, an apparent attempt
+    at interpolation (such as <literal>:name</literal>,
+    <literal>:'name'</literal>, or <literal>:"name"</literal>) is not
+    changed unless the named variable is currently set. In any case you
+    can escape a colon with a backslash to protect it from substitution.
+    (The colon syntax for variables is standard <acronym>SQL</acronym> for
     embedded query languages, such as <application>ECPG</application>.
     The colon syntax for array slices and type casts are
     <productname>PostgreSQL</productname> extensions, hence the
-    conflict.)
+    conflict.  The colon syntax for escaping a variable's value as an
+    SQL literal or identifier is a <application>psql</application>
+    extension.)
     </para>
 
    </refsect3>

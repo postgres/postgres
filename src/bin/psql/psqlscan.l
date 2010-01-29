@@ -33,7 +33,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/psql/psqlscan.l,v 1.31 2010/01/02 16:57:59 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/bin/psql/psqlscan.l,v 1.32 2010/01/29 17:44:12 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -118,6 +118,7 @@ static YY_BUFFER_STATE prepare_buffer(const char *txt, int len,
 									  char **txtcopy);
 static void emit(const char *txt, int len);
 static bool is_utf16_surrogate_first(uint32 c);
+static void escape_variable(bool as_ident);
 
 #define ECHO emit(yytext, yyleng)
 
@@ -707,6 +708,14 @@ other			.
 					}
 				}
 
+:'[A-Za-z0-9_]+'	{
+					escape_variable(false);
+				}
+
+:\"[A-Za-z0-9_]+\"	{
+					escape_variable(true);
+				}
+
 	/*
 	 * Back to backend-compatible rules.
 	 */
@@ -925,6 +934,27 @@ other			.
 					*option_quote = ':';
 
 					return LEXRES_OK;
+				}
+
+:'[A-Za-z0-9_]+'	{
+					if (option_type == OT_VERBATIM)
+						ECHO;
+					else
+					{
+						escape_variable(false);
+						return LEXRES_OK;
+					}
+				}
+
+
+:\"[A-Za-z0-9_]+\"	{
+					if (option_type == OT_VERBATIM)
+						ECHO;
+					else
+					{
+						escape_variable(true);
+						return LEXRES_OK;
+					}
 				}
 
 "|"				{
@@ -1739,4 +1769,52 @@ static bool
 is_utf16_surrogate_first(uint32 c)
 {
 	return (c >= 0xD800 && c <= 0xDBFF);
+}
+
+static void
+escape_variable(bool as_ident)
+{
+	char		saved_char;
+	const char *value;
+
+	/* Variable lookup. */
+	saved_char = yytext[yyleng - 1];
+	yytext[yyleng - 1] = '\0';
+	value = GetVariable(pset.vars, yytext + 2);
+
+	/* Escaping. */
+	if (value)
+	{
+		if (!pset.db)
+			psql_error("can't escape without active connection\n");
+		else
+		{
+			char   *escaped_value;
+
+			if (as_ident)
+				escaped_value =
+					PQescapeIdentifier(pset.db, value, strlen(value));
+			else
+				escaped_value =
+					PQescapeLiteral(pset.db, value, strlen(value));
+			if (escaped_value == NULL)
+			{
+				const char *error = PQerrorMessage(pset.db);
+				psql_error("%s", error);
+			}
+			else
+			{
+				appendPQExpBufferStr(output_buf, escaped_value);
+				PQfreemem(escaped_value);
+				return;
+			}
+		}
+	}
+
+	/*
+	 * If we reach this point, some kind of error has occurred.  Emit the
+	 * original text into the output buffer.
+	 */
+	yytext[yyleng - 1] = saved_char;
+	emit(yytext, yyleng);
 }
