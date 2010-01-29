@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.header,v 1.11 2010/01/26 09:07:31 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.header,v 1.12 2010/01/29 15:57:01 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -308,7 +308,7 @@ adjust_outofscope_cursor_vars(struct cursor *cur, bool insert)
 			sprintf(temp, "%d, &(", ecpg_internal_var++);
 		}
 
-		/* create call to "ECPGset_var(<counter>, <pointer>. <linen number>)" */
+		/* create call to "ECPGset_var(<counter>, <pointer>, <line number>)" */
 		if (!skip_set_var)
 			result = cat_str(5, result, make_str("ECPGset_var("), mm_strdup(temp), mm_strdup(original_var), make_str("), __LINE__);\n"));
 
@@ -354,7 +354,7 @@ adjust_outofscope_cursor_vars(struct cursor *cur, bool insert)
 				sprintf(temp, "%d, &(", ecpg_internal_var++);
 			}
 
-			/* create call to "ECPGset_var(<counter>, <pointer>. <linen number>)" */
+			/* create call to "ECPGset_var(<counter>, <pointer>, <line number>)" */
 			result = cat_str(5, result, make_str("ECPGset_var("), mm_strdup(temp), mm_strdup(original_var), make_str("), __LINE__);\n"));
 		}
 
