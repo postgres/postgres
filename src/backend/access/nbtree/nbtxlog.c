@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtxlog.c,v 1.58 2010/01/14 11:08:00 sriggs Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtxlog.c,v 1.59 2010/01/29 17:10:05 sriggs Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -833,7 +833,7 @@ btree_redo(XLogRecPtr lsn, XLogRecord *record)
 		 * here is worth some thought and possibly some effort to
 		 * improve.
 		 */
-		ResolveRecoveryConflictWithSnapshot(xlrec->latestRemovedXid);
+		ResolveRecoveryConflictWithSnapshot(xlrec->latestRemovedXid, xlrec->node);
 	}
 
 	/*

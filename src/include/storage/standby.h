@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/standby.h,v 1.5 2010/01/23 16:37:12 sriggs Exp $
+ * $PostgreSQL: pgsql/src/include/storage/standby.h,v 1.6 2010/01/29 17:10:05 sriggs Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,13 +16,16 @@
 
 #include "access/xlog.h"
 #include "storage/lock.h"
+#include "storage/relfilenode.h"
 
 extern int	vacuum_defer_cleanup_age;
 
 extern void InitRecoveryTransactionEnvironment(void);
 extern void ShutdownRecoveryTransactionEnvironment(void);
 
-extern void ResolveRecoveryConflictWithSnapshot(TransactionId latestRemovedXid);
+extern void ResolveRecoveryConflictWithSnapshot(TransactionId latestRemovedXid,
+												RelFileNode node);
+extern void ResolveRecoveryConflictWithRemovedTransactionId(void);
 extern void ResolveRecoveryConflictWithTablespace(Oid tsid);
 extern void ResolveRecoveryConflictWithDatabase(Oid dbid);
 

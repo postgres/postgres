@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.283 2010/01/20 19:43:40 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.284 2010/01/29 17:10:05 sriggs Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -4139,7 +4139,7 @@ heap_xlog_cleanup_info(XLogRecPtr lsn, XLogRecord *record)
 	xl_heap_cleanup_info *xlrec = (xl_heap_cleanup_info *) XLogRecGetData(record);
 
 	if (InHotStandby)
-		ResolveRecoveryConflictWithSnapshot(xlrec->latestRemovedXid);
+		ResolveRecoveryConflictWithSnapshot(xlrec->latestRemovedXid, xlrec->node);
 
 	/*
 	 * Actual operation is a no-op. Record type exists to provide a means
@@ -4171,7 +4171,7 @@ heap_xlog_clean(XLogRecPtr lsn, XLogRecord *record, bool clean_move)
 	 * no queries running for which the removed tuples are still visible.
 	 */
 	if (InHotStandby)
-		ResolveRecoveryConflictWithSnapshot(xlrec->latestRemovedXid);
+		ResolveRecoveryConflictWithSnapshot(xlrec->latestRemovedXid, xlrec->node);
 
 	RestoreBkpBlocks(lsn, record, true);
 
@@ -4241,7 +4241,7 @@ heap_xlog_freeze(XLogRecPtr lsn, XLogRecord *record)
 	 * consider the frozen xids as running.
 	 */
 	if (InHotStandby)
-		ResolveRecoveryConflictWithSnapshot(cutoff_xid);
+		ResolveRecoveryConflictWithSnapshot(cutoff_xid, xlrec->node);
 
 	RestoreBkpBlocks(lsn, record, false);
 
