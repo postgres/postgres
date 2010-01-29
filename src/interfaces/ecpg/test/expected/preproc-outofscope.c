@@ -305,25 +305,19 @@ if (sqlca.sqlcode < 0) exit (1);}
 if (sqlca.sqlcode < 0) exit (1);}
 #line 85 "outofscope.pgc"
 
-	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "insert into a1 ( id , t , d1 , d2 , c ) values ( default , '\"a\"' , - 1.0 , 'nan' :: float8 , 'a' )", ECPGt_EOIT, ECPGt_EORT);
-#line 86 "outofscope.pgc"
-
-if (sqlca.sqlcode < 0) exit (1);}
-#line 86 "outofscope.pgc"
-
 	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "insert into a1 ( id , t , d1 , d2 , c ) values ( default , 'b' , 2.0 , 3 , 'b' )", ECPGt_EOIT, ECPGt_EORT);
-#line 87 "outofscope.pgc"
+#line 86 "outofscope.pgc"
 
 if (sqlca.sqlcode < 0) exit (1);}
-#line 87 "outofscope.pgc"
+#line 86 "outofscope.pgc"
 
 
 	strcpy(msg, "commit");
 	{ ECPGtrans(__LINE__, NULL, "commit");
-#line 90 "outofscope.pgc"
+#line 89 "outofscope.pgc"
 
 if (sqlca.sqlcode < 0) exit (1);}
-#line 90 "outofscope.pgc"
+#line 89 "outofscope.pgc"
 
 
 	/* Test out-of-scope DECLARE/OPEN/FETCH/CLOSE */
@@ -332,7 +326,7 @@ if (sqlca.sqlcode < 0) exit (1);}
 	open_cur1();
 
 	/* exec sql whenever not found  break ; */
-#line 97 "outofscope.pgc"
+#line 96 "outofscope.pgc"
 
 
 	while (1)
@@ -353,26 +347,26 @@ if (sqlca.sqlcode < 0) exit (1);}
 
 	strcpy(msg, "drop");
 	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "drop table a1", ECPGt_EOIT, ECPGt_EORT);
-#line 116 "outofscope.pgc"
+#line 115 "outofscope.pgc"
 
 if (sqlca.sqlcode < 0) exit (1);}
-#line 116 "outofscope.pgc"
+#line 115 "outofscope.pgc"
 
 
 	strcpy(msg, "commit");
 	{ ECPGtrans(__LINE__, NULL, "commit");
-#line 119 "outofscope.pgc"
+#line 118 "outofscope.pgc"
 
 if (sqlca.sqlcode < 0) exit (1);}
-#line 119 "outofscope.pgc"
+#line 118 "outofscope.pgc"
 
 
 	strcpy(msg, "disconnect"); 
 	{ ECPGdisconnect(__LINE__, "CURRENT");
-#line 122 "outofscope.pgc"
+#line 121 "outofscope.pgc"
 
 if (sqlca.sqlcode < 0) exit (1);}
-#line 122 "outofscope.pgc"
+#line 121 "outofscope.pgc"
 
 
 	return (0);

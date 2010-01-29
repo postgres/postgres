@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.trailer,v 1.19 2010/01/26 09:07:31 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.trailer,v 1.20 2010/01/29 16:28:13 meskes Exp $ */
 
 statements: /*EMPTY*/
                 | statements statement
@@ -332,16 +332,11 @@ ECPGCursorStmt:  DECLARE cursor_name cursor_options CURSOR opt_hold FOR prepared
 			comment = cat_str(3, make_str("/*"), mm_strdup(this->command), make_str("*/"));
 
 			if ((braces_open > 0) && INFORMIX_MODE) /* we're in a function */
-				$$ = cat_str(4,
-					adjust_outofscope_cursor_vars(this, true),
-					adjust_outofscope_cursor_vars(this, false),
+				$$ = cat_str(3, adjust_outofscope_cursor_vars(this),
 					make_str("ECPG_informix_reset_sqlca();"),
 					comment);
 			else
-				$$ = cat_str(3,
-					adjust_outofscope_cursor_vars(this, true),
-					adjust_outofscope_cursor_vars(this, false),
-					comment);
+				$$ = cat2_str(adjust_outofscope_cursor_vars(this), comment);
 		}
 		;
 

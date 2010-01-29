@@ -26,19 +26,13 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 85: OK: INSERT 0 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 86: query: insert into a1 ( id , t , d1 , d2 , c ) values ( default , '"a"' , - 1.0 , 'nan' :: float8 , 'a' ); with 0 parameter(s) on connection regress1
+[NO_PID]: ecpg_execute on line 86: query: insert into a1 ( id , t , d1 , d2 , c ) values ( default , 'b' , 2.0 , 3 , 'b' ); with 0 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 86: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 86: OK: INSERT 0 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 87: query: insert into a1 ( id , t , d1 , d2 , c ) values ( default , 'b' , 2.0 , 3 , 'b' ); with 0 parameter(s) on connection regress1
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 87: using PQexec
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 87: OK: INSERT 0 1
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGtrans on line 90: action "commit"; connection "regress1"
+[NO_PID]: ECPGtrans on line 89: action "commit"; connection "regress1"
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 40: query: declare mycur cursor for select * from a1; with 0 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -86,22 +80,6 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_get_data on line 49: RESULT: 3 offset: -1; array: yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 49: RESULT: "a" offset: -1; array: yes
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 49: RESULT: -1.0 offset: -1; array: yes
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 49: RESULT: NaN offset: -1; array: yes
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 49: RESULT: a          offset: -1; array: yes
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 49: query: fetch mycur; with 0 parameter(s) on connection regress1
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 49: using PQexec
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 49: correctly got 1 tuples with 5 fields
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 49: RESULT: 4 offset: -1; array: yes
-[NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_get_data on line 49: RESULT: b offset: -1; array: yes
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_get_data on line 49: RESULT: 2.0 offset: -1; array: yes
@@ -124,13 +102,13 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 58: OK: CLOSE CURSOR
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 116: query: drop table a1; with 0 parameter(s) on connection regress1
+[NO_PID]: ecpg_execute on line 115: query: drop table a1; with 0 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 116: using PQexec
+[NO_PID]: ecpg_execute on line 115: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 116: OK: DROP TABLE
+[NO_PID]: ecpg_execute on line 115: OK: DROP TABLE
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGtrans on line 119: action "commit"; connection "regress1"
+[NO_PID]: ECPGtrans on line 118: action "commit"; connection "regress1"
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_finish: connection regress1 closed
 [NO_PID]: sqlca: code: 0, state: 00000

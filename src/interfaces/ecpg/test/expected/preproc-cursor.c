@@ -287,9 +287,9 @@ if (sqlca.sqlcode < 0) exit (1);}
 	/* Dynamic cursorname test with INTO list in DECLARE stmt */
 
 	strcpy(msg, "declare");
-	ECPGset_var( 3, &( curname2 ), __LINE__);\
- ECPGset_var( 1, ( t ), __LINE__);\
- ECPGset_var( 2, &( id ), __LINE__);\
+	ECPGset_var( 1, &( curname2 ), __LINE__);\
+ ECPGset_var( 2, ( t ), __LINE__);\
+ ECPGset_var( 3, &( id ), __LINE__);\
  /* declare $0 cursor for select id , t from t1 */
 #line 100 "cursor.pgc"
 

@@ -83,7 +83,6 @@ main (void)
 	strcpy(msg, "insert");
 	exec sql insert into a1(id, t, d1, d2, c) values (default, 'a', 1.0, 2, 'a');
 	exec sql insert into a1(id, t, d1, d2, c) values (default, null, null, null, null);
-	exec sql insert into a1(id, t, d1, d2, c) values (default, '"a"', -1.0, 'nan'::float8, 'a');
 	exec sql insert into a1(id, t, d1, d2, c) values (default, 'b', 2.0, 3, 'b');
 
 	strcpy(msg, "commit");
