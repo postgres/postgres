@@ -181,7 +181,10 @@
 #archive_timeout = 0		# force a logfile segment switch after this
 				# number of seconds; 0 disables
 
+# - Hot Standby -
+
 #recovery_connections = on	# allows connections during recovery
+#minimize_standby_conflicts = on # additional WAL info to avoid conflicts
 #max_standby_delay = 30		# max acceptable standby lag (s) to help queries
 				# complete without conflict; -1 disables
 

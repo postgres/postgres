@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtpage.c,v 1.115 2010/01/02 16:57:35 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtpage.c,v 1.116 2010/01/29 18:39:05 sriggs Exp $
  *
  *	NOTES
  *	   Postgres btree pages look like ordinary relation pages.	The opaque
@@ -29,6 +29,7 @@
 #include "storage/freespace.h"
 #include "storage/indexfsm.h"
 #include "storage/lmgr.h"
+#include "storage/procarray.h"
 #include "utils/inval.h"
 #include "utils/snapmgr.h"
 
@@ -671,8 +672,17 @@ _bt_delitems(Relation rel, Buffer buf,
 {
 	Page		page = BufferGetPage(buf);
 	BTPageOpaque opaque;
+	TransactionId latestRemovedXid = InvalidTransactionId;
 
 	Assert(isVacuum || lastBlockVacuumed == 0);
+
+	/*
+	 * If allowed, calculate an accurate latestRemovedXid, otherwise
+	 * pass InvalidTransactionId which can cause false positive
+	 * conflicts to be assessed when we replay this WAL record.
+	 */
+	if (!isVacuum && XLogStandbyInfoActive() && MinimizeStandbyConflicts)
+		latestRemovedXid = GetOldestXmin(false, true);
 
 	/* No ereport(ERROR) until changes are logged */
 	START_CRIT_SECTION();
@@ -721,13 +731,7 @@ _bt_delitems(Relation rel, Buffer buf,
 			xlrec_delete.node = rel->rd_node;
 			xlrec_delete.block = BufferGetBlockNumber(buf);
 
-			/*
-			 * XXX: We would like to set an accurate latestRemovedXid, but
-			 * there is no easy way of obtaining a useful value. So we punt
-			 * and store InvalidTransactionId, which forces the standby to
-			 * wait for/cancel all currently running transactions.
-			 */
-			xlrec_delete.latestRemovedXid = InvalidTransactionId;
+			xlrec_delete.latestRemovedXid = latestRemovedXid;
 			rdata[0].data = (char *) &xlrec_delete;
 			rdata[0].len = SizeOfBtreeDelete;
 		}
