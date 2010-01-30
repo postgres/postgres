@@ -16,4 +16,3 @@ $$ LANGUAGE plperlu; -- compile plperlu code
 SELECT * FROM bar(); -- throws exception normally (running plperl)
 SELECT * FROM foo(); -- used to cause backend crash (after switching to plperlu)
 
-

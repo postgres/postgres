@@ -1,8 +1,7 @@
 
-#  $PostgreSQL: pgsql/src/pl/plperl/plc_perlboot.pl,v 1.3 2010/01/26 23:11:56 adunstan Exp $
+#  $PostgreSQL: pgsql/src/pl/plperl/plc_perlboot.pl,v 1.4 2010/01/30 01:46:57 adunstan Exp $
 
 PostgreSQL::InServer::Util::bootstrap();
-PostgreSQL::InServer::SPI::bootstrap();
 
 use strict;
 use warnings;

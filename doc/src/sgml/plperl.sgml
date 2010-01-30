@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/plperl.sgml,v 2.76 2010/01/27 02:55:04 adunstan Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/plperl.sgml,v 2.77 2010/01/30 01:46:57 adunstan Exp $ -->
 
  <chapter id="plperl">
   <title>PL/Perl - Perl Procedural Language</title>
@@ -1028,7 +1028,72 @@ CREATE TRIGGER test_valid_id_trig
   </para>
  </sect1>
 
- <sect1 id="plperl-missing">
+ <sect1 id="plperl-under-the-hood">
+  <title>PL/Perl Under the Hood</title>
+
+ <sect2 id="plperl-config">
+  <title>Configuration</title>
+
+  <para>
+  This section lists configuration parameters that affect <application>PL/Perl</>.
+  To set any of these parameters before <application>PL/Perl</> has been loaded,
+  it is necessary to have added <quote><literal>plperl</></> to the
+  <xref linkend="guc-custom-variable-classes"> list in
+  <filename>postgresql.conf</filename>.
+  </para>
+
+  <variablelist>
+
+     <varlistentry id="guc-plperl-on-perl-init" xreflabel="plperl.on_perl_init">
+      <term><varname>plperl.on_perl_init</varname> (<type>string</type>)</term>
+      <indexterm>
+       <primary><varname>plperl.on_perl_init</> configuration parameter</primary>
+      </indexterm>
+      <listitem>
+       <para>
+       Specifies perl code to be executed when a perl interpreter is first initialized.
+       The SPI functions are not available when this code is executed.
+       If the code fails with an error it will abort the initialization of the interpreter
+       and propagate out to the calling query, causing the current transaction
+       or subtransaction to be aborted.
+       </para>
+       <para>
+	   The perl code is limited to a single string. Longer code can be placed
+	   into a module and loaded by the <literal>on_perl_init</> string.
+	   Examples:
+<programlisting>
+plplerl.on_perl_init = '$ENV{NYTPROF}="start=no"; require Devel::NYTProf::PgPLPerl'
+plplerl.on_perl_init = 'use lib "/my/app"; use MyApp::PgInit;'
+</programlisting>
+       </para>
+       <para>
+       Initialization will happen in the postmaster if the plperl library is included
+       in <literal>shared_preload_libraries</> (see <xref linkend="guc-shared-preload-libraries">),
+       in which case extra consideration should be given to the risk of destabilizing the postmaster.
+       </para>
+       <para>
+       This parameter can only be set in the postgresql.conf file or on the server command line.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-plperl-use-strict" xreflabel="plperl.use_strict">
+      <term><varname>plperl.use_strict</varname> (<type>boolean</type>)</term>
+      <indexterm>
+       <primary><varname>plperl.use_strict</> configuration parameter</primary>
+      </indexterm>
+      <listitem>
+       <para>
+       When set true subsequent compilations of PL/Perl functions have the <literal>strict</> pragma enabled.
+       This parameter does not affect functions already compiled in the current session.
+       </para>
+      </listitem>
+     </varlistentry>
+
+  </variablelist>
+</sect2>
+
+ <sect2 id="plperl-missing">
   <title>Limitations and Missing Features</title>
 
   <para>
@@ -1063,10 +1128,21 @@ CREATE TRIGGER test_valid_id_trig
         <literal>return_next</literal> for each row returned, as shown
         previously.
      </para>
-
     </listitem>
+
+     <listitem>
+      <para>
+        When a session ends normally, not due to a fatal error, any
+        <literal>END</> blocks that have been defined are executed.
+        Currently no other actions are performed. Specifically, 
+        file handles are not automatically flushed and objects are 
+        not automatically destroyed.
+      </para>
+     </listitem>
    </itemizedlist>
   </para>
+ </sect2>
+
  </sect1>
 
 </chapter>
