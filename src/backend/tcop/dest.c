@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/dest.c,v 1.70 2006/08/30 23:34:21 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/dest.c,v 1.70.2.1 2010/01/30 20:10:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -149,7 +149,11 @@ EndCommand(const char *commandTag, CommandDest dest)
 	{
 		case DestRemote:
 		case DestRemoteExecute:
-			pq_puttextmessage('C', commandTag);
+			/*
+			 * We assume the commandTag is plain ASCII and therefore
+			 * requires no encoding conversion.
+			 */
+			pq_putmessage('C', commandTag, strlen(commandTag) + 1);
 			break;
 
 		case DestNone:
@@ -189,7 +193,7 @@ NullCommand(CommandDest dest)
 			if (PG_PROTOCOL_MAJOR(FrontendProtocol) >= 3)
 				pq_putemptymessage('I');
 			else
-				pq_puttextmessage('I', "");
+				pq_putmessage('I', "", 1);
 			break;
 
 		case DestNone:
