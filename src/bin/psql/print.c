@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/print.c,v 1.120 2010/01/02 16:57:59 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/print.c,v 1.121 2010/01/30 18:59:51 tgl Exp $
  */
 #include "postgres_fe.h"
 
@@ -1047,6 +1047,11 @@ print_aligned_text(const printTableContent *cont, FILE *fout)
 	}
 
 	/* clean up */
+	for (i = 0; i < col_count; i++)
+	{
+		free(col_lineptrs[i]);
+		free(format_buf[i]);
+	}
 	free(width_header);
 	free(width_average);
 	free(max_width);
@@ -1055,11 +1060,10 @@ print_aligned_text(const printTableContent *cont, FILE *fout)
 	free(curr_nl_line);
 	free(col_lineptrs);
 	free(max_bytes);
+	free(format_buf);
 	free(header_done);
 	free(bytes_output);
-	for (i = 0; i < col_count; i++)
-		free(format_buf[i]);
-	free(format_buf);
+	free(wrap);
 
 	if (is_pager)
 		ClosePager(fout);
