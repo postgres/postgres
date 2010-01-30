@@ -28,7 +28,7 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/src/backend/regex/regcomp.c,v 1.46 2008/02/14 17:33:37 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/regex/regcomp.c,v 1.47 2010/01/30 04:18:00 tgl Exp $
  *
  */
 
@@ -1012,8 +1012,10 @@ parseqatom(struct vars * v,
 	}
 
 	/*
-	 * hard part:  something messy That is, capturing parens, back reference,
-	 * short/long clash, or an atom with substructure containing one of those.
+	 * hard part:  something messy
+	 *
+	 * That is, capturing parens, back reference, short/long clash, or an atom
+	 * with substructure containing one of those.
 	 */
 
 	/* now we'll need a subre for the contents even if they're boring */
@@ -1023,13 +1025,15 @@ parseqatom(struct vars * v,
 		NOERR();
 	}
 
-	/*
-	 * prepare a general-purpose state skeleton
+	/*----------
+	 * Prepare a general-purpose state skeleton.
 	 *
-	 * ---> [s] ---prefix---> [begin] ---atom---> [end] ----rest---> [rp] / /
+	 *    ---> [s] ---prefix---> [begin] ---atom---> [end] ----rest---> [rp]
+	 *   /                                            /
 	 * [lp] ----> [s2] ----bypass---------------------
 	 *
 	 * where bypass is an empty, and prefix is some repetitions of atom
+	 *----------
 	 */
 	s = newstate(v->nfa);		/* first, new endpoints for the atom */
 	s2 = newstate(v->nfa);
@@ -1050,6 +1054,7 @@ parseqatom(struct vars * v,
 	t = subre(v, '.', COMBINE(qprefer, atom->flags), lp, rp);
 	t->left = atom;
 	atomp = &t->left;
+
 	/* here we should recurse... but we must postpone that to the end */
 
 	/* split top into prefix and remaining */
@@ -1064,9 +1069,12 @@ parseqatom(struct vars * v,
 		assert(atom->begin->nouts == 1);		/* just the EMPTY */
 		delsub(v->nfa, atom->begin, atom->end);
 		assert(v->subs[subno] != NULL);
-		/* and here's why the recursion got postponed:  it must */
-		/* wait until the skeleton is filled in, because it may */
-		/* hit a backref that wants to copy the filled-in skeleton */
+
+		/*
+		 * And here's why the recursion got postponed: it must wait until the
+		 * skeleton is filled in, because it may hit a backref that wants to
+		 * copy the filled-in skeleton.
+		 */
 		dupnfa(v->nfa, v->subs[subno]->begin, v->subs[subno]->end,
 			   atom->begin, atom->end);
 		NOERR();
@@ -1108,8 +1116,10 @@ parseqatom(struct vars * v,
 	}
 	else
 	{
-		/* turn x{m,n} into x{m-1,n-1}x, with capturing */
-		/* parens in only second x */
+		/*
+		 * Turn x{m,n} into x{m-1,n-1}x, with capturing parens in only the
+		 * second x
+		 */
 		dupnfa(v->nfa, atom->begin, atom->end, s, atom->begin);
 		assert(m >= 1 && m != INFINITY && n >= 1);
 		repeat(v, s, atom->begin, m - 1, (n == INFINITY) ? n : n - 1);
