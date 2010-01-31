@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/port.h,v 1.129 2010/01/10 14:16:08 mha Exp $
+ * $PostgreSQL: pgsql/src/include/port.h,v 1.130 2010/01/31 17:35:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,7 +20,7 @@
 /* socket has a different definition on WIN32 */
 #ifndef WIN32
 typedef int pgsocket;
-#define PGINVALID_SOCKET -1
+#define PGINVALID_SOCKET (-1)
 #else
 typedef SOCKET pgsocket;
 #define PGINVALID_SOCKET INVALID_SOCKET
