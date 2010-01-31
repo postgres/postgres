@@ -13,7 +13,7 @@
  *
  *	Copyright (c) 2001-2010, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.199 2010/01/28 14:25:41 mha Exp $
+ *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.200 2010/01/31 17:39:34 mha Exp $
  * ----------
  */
 #include "postgres.h"
@@ -353,7 +353,7 @@ pgstat_init(void)
 		/*
 		 * Create the socket.
 		 */
-		if ((pgStatSock = socket(addr->ai_family, SOCK_DGRAM, 0)) < 0)
+		if ((pgStatSock = socket(addr->ai_family, SOCK_DGRAM, 0)) == PGINVALID_SOCKET)
 		{
 			ereport(LOG,
 					(errcode_for_socket_access(),
@@ -494,7 +494,7 @@ retry2:
 	}
 
 	/* Did we find a working address? */
-	if (!addr || pgStatSock < 0)
+	if (!addr || pgStatSock == PGINVALID_SOCKET)
 		goto startup_failed;
 
 	/*
@@ -521,7 +521,7 @@ startup_failed:
 	if (addrs)
 		pg_freeaddrinfo_all(hints.ai_family, addrs);
 
-	if (pgStatSock >= 0)
+	if (pgStatSock != PGINVALID_SOCKET)
 		closesocket(pgStatSock);
 	pgStatSock = PGINVALID_SOCKET;
 
@@ -592,7 +592,7 @@ pgstat_start(void)
 	 * Check that the socket is there, else pgstat_init failed and we can do
 	 * nothing useful.
 	 */
-	if (pgStatSock < 0)
+	if (pgStatSock == PGINVALID_SOCKET)
 		return 0;
 
 	/*
@@ -768,7 +768,7 @@ pgstat_send_tabstat(PgStat_MsgTabstat *tsmsg)
 	int			len;
 
 	/* It's unlikely we'd get here with no socket, but maybe not impossible */
-	if (pgStatSock < 0)
+	if (pgStatSock == PGINVALID_SOCKET)
 		return;
 
 	/*
@@ -870,7 +870,7 @@ pgstat_vacuum_stat(void)
 	PgStat_StatFuncEntry *funcentry;
 	int			len;
 
-	if (pgStatSock < 0)
+	if (pgStatSock == PGINVALID_SOCKET)
 		return;
 
 	/*
@@ -1089,7 +1089,7 @@ pgstat_drop_database(Oid databaseid)
 {
 	PgStat_MsgDropdb msg;
 
-	if (pgStatSock < 0)
+	if (pgStatSock == PGINVALID_SOCKET)
 		return;
 
 	pgstat_setheader(&msg.m_hdr, PGSTAT_MTYPE_DROPDB);
@@ -1116,7 +1116,7 @@ pgstat_drop_relation(Oid relid)
 	PgStat_MsgTabpurge msg;
 	int			len;
 
-	if (pgStatSock < 0)
+	if (pgStatSock == PGINVALID_SOCKET)
 		return;
 
 	msg.m_tableid[0] = relid;
@@ -1142,7 +1142,7 @@ pgstat_reset_counters(void)
 {
 	PgStat_MsgResetcounter msg;
 
-	if (pgStatSock < 0)
+	if (pgStatSock == PGINVALID_SOCKET)
 		return;
 
 	if (!superuser())
@@ -1166,7 +1166,7 @@ pgstat_reset_shared_counters(const char *target)
 {
 	PgStat_MsgResetsharedcounter msg;
 
-	if (pgStatSock < 0)
+	if (pgStatSock == PGINVALID_SOCKET)
 		return;
 
 	if (!superuser())
@@ -1198,7 +1198,7 @@ void pgstat_reset_single_counter(Oid objoid, PgStat_Single_Reset_Type type)
 {
 	PgStat_MsgResetsinglecounter msg;
 
-	if (pgStatSock < 0)
+	if (pgStatSock == PGINVALID_SOCKET)
 		return;
 
 	if (!superuser())
@@ -1227,7 +1227,7 @@ pgstat_report_autovac(Oid dboid)
 {
 	PgStat_MsgAutovacStart msg;
 
-	if (pgStatSock < 0)
+	if (pgStatSock == PGINVALID_SOCKET)
 		return;
 
 	pgstat_setheader(&msg.m_hdr, PGSTAT_MTYPE_AUTOVAC_START);
@@ -1250,7 +1250,7 @@ pgstat_report_vacuum(Oid tableoid, bool shared, bool adopt_counts,
 {
 	PgStat_MsgVacuum msg;
 
-	if (pgStatSock < 0 || !pgstat_track_counts)
+	if (pgStatSock == PGINVALID_SOCKET || !pgstat_track_counts)
 		return;
 
 	pgstat_setheader(&msg.m_hdr, PGSTAT_MTYPE_VACUUM);
@@ -1275,7 +1275,7 @@ pgstat_report_analyze(Relation rel, bool adopt_counts,
 {
 	PgStat_MsgAnalyze msg;
 
-	if (pgStatSock < 0 || !pgstat_track_counts)
+	if (pgStatSock == PGINVALID_SOCKET || !pgstat_track_counts)
 		return;
 
 	/*
@@ -1327,7 +1327,7 @@ pgstat_ping(void)
 {
 	PgStat_MsgDummy msg;
 
-	if (pgStatSock < 0)
+	if (pgStatSock == PGINVALID_SOCKET)
 		return;
 
 	pgstat_setheader(&msg.m_hdr, PGSTAT_MTYPE_DUMMY);
@@ -1485,7 +1485,7 @@ pgstat_initstats(Relation rel)
 		return;
 	}
 
-	if (pgStatSock < 0 || !pgstat_track_counts)
+	if (pgStatSock == PGINVALID_SOCKET || !pgstat_track_counts)
 	{
 		/* We're not counting at all */
 		rel->pgstat_info = NULL;
@@ -2691,7 +2691,7 @@ pgstat_send(void *msg, int len)
 {
 	int			rc;
 
-	if (pgStatSock < 0)
+	if (pgStatSock == PGINVALID_SOCKET)
 		return;
 
 	((PgStat_MsgHdr *) msg)->m_size = len;
