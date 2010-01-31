@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/standby.c,v 1.8 2010/01/29 17:10:05 sriggs Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/standby.c,v 1.9 2010/01/31 19:01:11 sriggs Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,6 +22,7 @@
 #include "access/xlog.h"
 #include "miscadmin.h"
 #include "pgstat.h"
+#include "storage/bufmgr.h"
 #include "storage/lmgr.h"
 #include "storage/proc.h"
 #include "storage/procarray.h"
@@ -384,7 +385,7 @@ ResolveRecoveryConflictWithBufferPin(void)
 		TimestampDifference(GetLatestXLogTime(), now,
 							&standby_delay_secs, &standby_delay_usecs);
 
-		if (standby_delay_secs >= (long) MaxStandbyDelay)
+		if (standby_delay_secs >= MaxStandbyDelay)
 			SendRecoveryConflictWithBufferPin();
 		else
 		{
@@ -443,6 +444,39 @@ SendRecoveryConflictWithBufferPin(void)
 	 * Let the SIGUSR1 handling in each backend decide their own fate.
 	 */
 	CancelDBBackends(InvalidOid, PROCSIG_RECOVERY_CONFLICT_BUFFERPIN, false);
+}
+
+/*
+ * In Hot Standby perform early deadlock detection.  We abort the lock
+ * wait if are about to sleep while holding the buffer pin that Startup
+ * process is waiting for. The deadlock occurs because we can only be
+ * waiting behind an AccessExclusiveLock, which can only clear when a
+ * transaction completion record is replayed, which can only occur when
+ * Startup process is not waiting. So if Startup process is waiting we
+ * never will clear that lock, so if we wait we cause deadlock. If we
+ * are the Startup process then no need to check for deadlocks.
+ */
+void
+CheckRecoveryConflictDeadlock(LWLockId partitionLock)
+{
+	Assert(!InRecovery);
+
+	if (!HoldingBufferPinThatDelaysRecovery())
+		return;
+
+	LWLockRelease(partitionLock);
+
+	/*
+	 * Error message should match ProcessInterrupts() but we avoid calling
+	 * that because we aren't handling an interrupt at this point. Note
+	 * that we only cancel the current transaction here, so if we are in a
+	 * subtransaction and the pin is held by a parent, then the Startup
+	 * process will continue to wait even though we have avoided deadlock.
+	 */
+	ereport(ERROR,
+			(errcode(ERRCODE_QUERY_CANCELED),
+			 errmsg("canceling statement due to conflict with recovery"),
+			 errdetail("User transaction caused buffer deadlock with recovery.")));
 }
 
 /*

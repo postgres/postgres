@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lock.c,v 1.193 2010/01/29 19:45:12 sriggs Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lock.c,v 1.194 2010/01/31 19:01:11 sriggs Exp $
  *
  * NOTES
  *	  A lock table is a shared memory hash table.  When
@@ -813,6 +813,13 @@ LockAcquireExtended(const LOCKTAG *locktag,
 				RemoveLocalLock(locallock);
 			return LOCKACQUIRE_NOT_AVAIL;
 		}
+
+		/*
+		 * In Hot Standby perform early deadlock detection in normal backends.
+		 * If deadlock found we release partition lock but do not return.
+		 */
+		if (RecoveryInProgress() && !InRecovery)
+			CheckRecoveryConflictDeadlock(partitionLock);
 
 		/*
 		 * Set bitmask of locks this process already holds on this object.
