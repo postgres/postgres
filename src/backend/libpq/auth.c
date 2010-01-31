@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/auth.c,v 1.192 2010/01/27 12:11:59 mha Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/auth.c,v 1.193 2010/01/31 17:27:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2523,7 +2523,7 @@ CheckRADIUSAuth(Port *port)
 	pgsocket			sock;
 	struct sockaddr_in	localaddr;
 	struct sockaddr_in	remoteaddr;
-	socklen_t			addrsize;
+	ACCEPT_TYPE_ARG3	addrsize;
 	fd_set				fdset;
 	struct timeval		timeout;
 	int					i,r;
