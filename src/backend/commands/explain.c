@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/explain.c,v 1.199 2010/01/15 22:36:29 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/explain.c,v 1.200 2010/02/01 15:43:35 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,6 +20,7 @@
 #include "commands/explain.h"
 #include "commands/prepare.h"
 #include "commands/trigger.h"
+#include "executor/hashjoin.h"
 #include "executor/instrument.h"
 #include "optimizer/clauses.h"
 #include "optimizer/planner.h"
@@ -67,6 +68,7 @@ static void show_upper_qual(List *qual, const char *qlabel, Plan *plan,
 				ExplainState *es);
 static void show_sort_keys(Plan *sortplan, ExplainState *es);
 static void show_sort_info(SortState *sortstate, ExplainState *es);
+static void show_hash_info(HashState *hashstate, ExplainState *es);
 static const char *explain_get_index_name(Oid indexId);
 static void ExplainScanTarget(Scan *plan, ExplainState *es);
 static void ExplainMemberNodes(List *plans, PlanState **planstate,
@@ -1052,6 +1054,9 @@ ExplainNode(Plan *plan, PlanState *planstate,
 							"One-Time Filter", plan, es);
 			show_upper_qual(plan->qual, "Filter", plan, es);
 			break;
+		case T_Hash:
+			show_hash_info((HashState *) planstate, es);
+			break;
 		default:
 			break;
 	}
@@ -1400,6 +1405,47 @@ show_sort_info(SortState *sortstate, ExplainState *es)
 			ExplainPropertyText("Sort Method", sortMethod, es);
 			ExplainPropertyLong("Sort Space Used", spaceUsed, es);
 			ExplainPropertyText("Sort Space Type", spaceType, es);
+		}
+	}
+}
+
+/*
+ * Show information on hash buckets/batches.
+ */
+static void
+show_hash_info(HashState *hashstate, ExplainState *es)
+{
+	HashJoinTable hashtable;
+
+	Assert(IsA(hashstate, HashState));
+	hashtable = hashstate->hashtable;
+
+	if (hashtable)
+	{
+		long spacePeakKb = (hashtable->spacePeak + 1023) / 1024;
+		if (es->format != EXPLAIN_FORMAT_TEXT)
+		{
+			ExplainPropertyLong("Hash Buckets", hashtable->nbuckets, es);
+			ExplainPropertyLong("Hash Batches", hashtable->nbatch, es);
+			ExplainPropertyLong("Original Hash Batches",
+								hashtable->nbatch_original, es);
+			ExplainPropertyLong("Peak Memory Usage", spacePeakKb, es);
+		}
+		else if (hashtable->nbatch_original != hashtable->nbatch)
+		{
+			appendStringInfoSpaces(es->str, es->indent * 2);
+			appendStringInfo(es->str,
+							 "Buckets: %d  Batches: %d (originally %d)  Memory Usage: %ldkB\n",
+							 hashtable->nbuckets, hashtable->nbatch,
+							 hashtable->nbatch_original, spacePeakKb);
+		}
+		else
+		{
+			appendStringInfoSpaces(es->str, es->indent * 2);
+			appendStringInfo(es->str,
+							 "Buckets: %d  Batches: %d  Memory Usage: %ldkB\n",
+							 hashtable->nbuckets, hashtable->nbatch,
+							 spacePeakKb);
 		}
 	}
 }

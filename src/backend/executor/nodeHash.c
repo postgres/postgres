@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeHash.c,v 1.126 2010/01/04 02:44:39 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeHash.c,v 1.127 2010/02/01 15:43:36 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -287,6 +287,7 @@ ExecHashTableCreate(Hash *node, List *hashOperators)
 	hashtable->innerBatchFile = NULL;
 	hashtable->outerBatchFile = NULL;
 	hashtable->spaceUsed = 0;
+	hashtable->spacePeak = 0;
 	hashtable->spaceAllowed = work_mem * 1024L;
 	hashtable->spaceUsedSkew = 0;
 	hashtable->spaceAllowedSkew =
@@ -719,6 +720,8 @@ ExecHashTableInsert(HashJoinTable hashtable,
 		hashTuple->next = hashtable->buckets[bucketno];
 		hashtable->buckets[bucketno] = hashTuple;
 		hashtable->spaceUsed += hashTupleSize;
+		if (hashtable->spaceUsed > hashtable->spacePeak)
+			hashtable->spacePeak = hashtable->spaceUsed;
 		if (hashtable->spaceUsed > hashtable->spaceAllowed)
 			ExecHashIncreaseNumBatches(hashtable);
 	}
@@ -1071,6 +1074,8 @@ ExecHashBuildSkewHash(HashJoinTable hashtable, Hash *node, int mcvsToUse)
 			+ mcvsToUse * sizeof(int);
 		hashtable->spaceUsedSkew += nbuckets * sizeof(HashSkewBucket *)
 			+ mcvsToUse * sizeof(int);
+		if (hashtable->spaceUsed > hashtable->spacePeak)
+			hashtable->spacePeak = hashtable->spaceUsed;
 
 		/*
 		 * Create a skew bucket for each MCV hash value.
@@ -1119,6 +1124,8 @@ ExecHashBuildSkewHash(HashJoinTable hashtable, Hash *node, int mcvsToUse)
 			hashtable->nSkewBuckets++;
 			hashtable->spaceUsed += SKEW_BUCKET_OVERHEAD;
 			hashtable->spaceUsedSkew += SKEW_BUCKET_OVERHEAD;
+			if (hashtable->spaceUsed > hashtable->spacePeak)
+				hashtable->spacePeak = hashtable->spaceUsed;
 		}
 
 		free_attstatsslot(node->skewColType,
@@ -1205,6 +1212,8 @@ ExecHashSkewTableInsert(HashJoinTable hashtable,
 	/* Account for space used, and back off if we've used too much */
 	hashtable->spaceUsed += hashTupleSize;
 	hashtable->spaceUsedSkew += hashTupleSize;
+	if (hashtable->spaceUsed > hashtable->spacePeak)
+		hashtable->spacePeak = hashtable->spaceUsed;
 	while (hashtable->spaceUsedSkew > hashtable->spaceAllowedSkew)
 		ExecHashRemoveNextSkewBucket(hashtable);
 
