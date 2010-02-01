@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/varlena.c,v 1.174 2010/01/25 20:55:32 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/varlena.c,v 1.175 2010/02/01 03:14:43 itagaki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,6 +21,7 @@
 #include "libpq/md5.h"
 #include "libpq/pqformat.h"
 #include "miscadmin.h"
+#include "nodes/execnodes.h"
 #include "parser/scansup.h"
 #include "regex/regex.h"
 #include "utils/builtins.h"
@@ -73,6 +74,7 @@ static bytea *bytea_substring(Datum str,
 				int L,
 				bool length_not_specified);
 static bytea *bytea_overlay(bytea *t1, bytea *t2, int sp, int sl);
+static StringInfo makeStringAggState(fmNodePtr context);
 
 
 /*****************************************************************************
@@ -3314,4 +3316,106 @@ pg_column_size(PG_FUNCTION_ARGS)
 	}
 
 	PG_RETURN_INT32(result);
+}
+
+/*
+ * string_agg - Concatenates values and returns string.
+ *
+ * Syntax: string_agg(value text, delimiter text = '') RETURNS text
+ *
+ * Note: Any NULL values are ignored. The first-call delimiter isn't
+ * actually used at all, and on subsequent calls the delimiter precedes
+ * the associated value.
+ */
+static StringInfo
+makeStringAggState(fmNodePtr context)
+{
+	StringInfo		state;
+	MemoryContext	aggcontext;
+	MemoryContext	oldcontext;
+
+	if (context && IsA(context, AggState))
+		aggcontext = ((AggState *) context)->aggcontext;
+	else if (context && IsA(context, WindowAggState))
+		aggcontext = ((WindowAggState *) context)->wincontext;
+	else
+	{
+		/* cannot be called directly because of internal-type argument */
+		elog(ERROR, "string_agg_transfn called in non-aggregate context");
+		aggcontext = NULL;		/* keep compiler quiet */
+	}
+
+	/* Create state in aggregate context */
+	oldcontext = MemoryContextSwitchTo(aggcontext);
+	state = makeStringInfo();
+	MemoryContextSwitchTo(oldcontext);
+
+	return state;
+}
+
+Datum
+string_agg_transfn(PG_FUNCTION_ARGS)
+{
+	StringInfo		state;
+
+	state = PG_ARGISNULL(0) ? NULL : (StringInfo) PG_GETARG_POINTER(0);
+
+	/* Append the element unless not null. */
+	if (!PG_ARGISNULL(1))
+	{
+		if (state == NULL)
+			state = makeStringAggState(fcinfo->context);
+		appendStringInfoText(state, PG_GETARG_TEXT_PP(1));	/* value */
+	}
+
+	/*
+	 * The transition type for string_agg() is declared to be "internal", which
+	 * is a pass-by-value type the same size as a pointer.	
+	 */
+	PG_RETURN_POINTER(state);
+}
+
+Datum 
+string_agg_delim_transfn(PG_FUNCTION_ARGS)
+{
+	StringInfo		state;
+
+	state = PG_ARGISNULL(0) ? NULL : (StringInfo) PG_GETARG_POINTER(0);
+
+	/* Append the value unless not null. */
+	if (!PG_ARGISNULL(1))
+	{
+		if (state == NULL)
+			state = makeStringAggState(fcinfo->context);
+		else if (!PG_ARGISNULL(2))
+			appendStringInfoText(state, PG_GETARG_TEXT_PP(2));	/* delimiter */
+
+		appendStringInfoText(state, PG_GETARG_TEXT_PP(1));	/* value */
+	}
+
+	/*
+	 * The transition type for string_agg() is declared to be "internal", which
+	 * is a pass-by-value type the same size as a pointer.
+	 */
+	PG_RETURN_POINTER(state);
+}
+
+Datum
+string_agg_finalfn(PG_FUNCTION_ARGS)
+{
+	StringInfo		state;
+
+	if (PG_ARGISNULL(0))
+		PG_RETURN_NULL();
+
+	/* cannot be called directly because of internal-type argument */
+	Assert(fcinfo->context &&
+		   (IsA(fcinfo->context, AggState) ||
+			IsA(fcinfo->context, WindowAggState)));
+
+	state = (StringInfo) PG_GETARG_POINTER(0);
+	if (state != NULL)
+		PG_RETURN_TEXT_P(cstring_to_text(state->data));
+	else
+		PG_RETURN_NULL();
 }

@@ -799,3 +799,34 @@ select aggfns(distinct a,a,c order by a,b)
 ERROR:  in an aggregate with DISTINCT, ORDER BY expressions must appear in argument list
 LINE 1: select aggfns(distinct a,a,c order by a,b)
                                                 ^
+-- string_agg tests
+select string_agg(a) from (values('aaaa'),('bbbb'),('cccc')) g(a);
+  string_agg  
+--------------
+ aaaabbbbcccc
+(1 row)
+
+select string_agg(a,',') from (values('aaaa'),('bbbb'),('cccc')) g(a);
+   string_agg   
+----------------
+ aaaa,bbbb,cccc
+(1 row)
+
+select string_agg(a,',') from (values('aaaa'),(null),('bbbb'),('cccc')) g(a);
+   string_agg   
+----------------
+ aaaa,bbbb,cccc
+(1 row)
+
+select string_agg(a,',') from (values(null),(null),('bbbb'),('cccc')) g(a);
+ string_agg 
+------------
+ bbbb,cccc
+(1 row)
+
+select string_agg(a,',') from (values(null),(null)) g(a);
+ string_agg 
+------------
+ 
+(1 row)
+

@@ -355,3 +355,10 @@ select aggfns(distinct a,b,c order by a,b,i,c)
   from (values (1,1,'foo')) v(a,b,c), generate_series(1,2) i;
 select aggfns(distinct a,a,c order by a,b)
   from (values (1,1,'foo')) v(a,b,c), generate_series(1,2) i;
+
+-- string_agg tests
+select string_agg(a) from (values('aaaa'),('bbbb'),('cccc')) g(a);
+select string_agg(a,',') from (values('aaaa'),('bbbb'),('cccc')) g(a);
+select string_agg(a,',') from (values('aaaa'),(null),('bbbb'),('cccc')) g(a);
+select string_agg(a,',') from (values(null),(null),('bbbb'),('cccc')) g(a);
+select string_agg(a,',') from (values(null),(null)) g(a);

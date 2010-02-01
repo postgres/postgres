@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.566 2010/01/28 14:25:41 mha Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.567 2010/02/01 03:14:44 itagaki Exp $
  *
  * NOTES
  *	  The script catalog/genbki.pl reads this file and generates .bki
@@ -2829,6 +2829,16 @@ DATA(insert OID = 2816 (  float8_covar_samp			PGNSP PGUID 12 1 0 0 f f f t f i 1
 DESCR("COVAR_SAMP(double, double) aggregate final function");
 DATA(insert OID = 2817 (  float8_corr				PGNSP PGUID 12 1 0 0 f f f t f i 1 0 701 "1022" _null_ _null_ _null_ _null_ float8_corr _null_ _null_ _null_ ));
 DESCR("CORR(double, double) aggregate final function");
+DATA(insert OID = 3534 (  string_agg_transfn		PGNSP PGUID 12 1 0 0 f f f f f i 2 0 2281 "2281 25" _null_ _null_ _null_ _null_ string_agg_transfn _null_ _null_ _null_ ));
+DESCR("string_agg(text) transition function");
+DATA(insert OID = 3535 (  string_agg_delim_transfn	PGNSP PGUID 12 1 0 0 f f f f f i 3 0 2281 "2281 25 25" _null_ _null_ _null_ _null_ string_agg_delim_transfn _null_ _null_ _null_ ));
+DESCR("string_agg(text, text) transition function");
+DATA(insert OID = 3536 (  string_agg_finalfn		PGNSP PGUID 12 1 0 0 f f f f f i 1 0 25 "2281" _null_ _null_ _null_ _null_ string_agg_finalfn _null_ _null_ _null_ ));
+DESCR("string_agg final function");
+DATA(insert OID = 3537 (  string_agg				PGNSP PGUID 12 1 0 0 t f f f f i 1 0 25 "25" _null_ _null_ _null_ _null_ aggregate_dummy _null_ _null_ _null_ ));
+DESCR("concatenate aggregate input into an string");
+DATA(insert OID = 3538 (  string_agg				PGNSP PGUID 12 1 0 0 t f f f f i 2 0 25 "25 25" _null_ _null_ _null_ _null_ aggregate_dummy _null_ _null_ _null_ ));
+DESCR("concatenate aggregate input into an string with delimiter");
 
 /* To ASCII conversion */
 DATA(insert OID = 1845 ( to_ascii	PGNSP PGUID 12 1 0 0 f f f t f i 1 0 25 "25" _null_ _null_ _null_ _null_	to_ascii_default _null_ _null_ _null_ ));

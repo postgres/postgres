@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.498 2010/01/25 20:55:32 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.499 2010/02/01 03:14:43 itagaki Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -1789,6 +1789,10 @@
     </tgroup>
    </table>
 
+   <para>
+   See also <xref linkend="functions-aggregate"> about the aggregate
+   function <function>string_agg</function>.
+   </para>
 
    <table id="conversion-names">
     <title>Built-in Conversions</title>
@@ -9834,6 +9838,25 @@ SELECT NULLIF(value, '(none)') ...
        class="parameter">expression</replaceable> across all input
        values
       </entry>
+     </row>
+
+     <row>
+      <entry>
+       <indexterm>
+        <primary>string_agg</primary>
+       </indexterm>
+       <function>
+         string_agg(<replaceable class="parameter">expression</replaceable> 
+                    [, <replaceable class="parameter">delimiter</replaceable> ] )
+       </function>
+      </entry>
+      <entry>
+       <type>text</type>
+      </entry>
+      <entry>
+       <type>text</type>
+      </entry>
+      <entry>input values concatenated into a string, optionally with delimiters</entry>
      </row>
 
      <row>
