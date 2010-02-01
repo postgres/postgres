@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/plperl.sgml,v 2.77 2010/01/30 01:46:57 adunstan Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/plperl.sgml,v 2.78 2010/02/01 15:48:35 momjian Exp $ -->
 
  <chapter id="plperl">
   <title>PL/Perl - Perl Procedural Language</title>
@@ -1058,9 +1058,9 @@ CREATE TRIGGER test_valid_id_trig
        or subtransaction to be aborted.
        </para>
        <para>
-	   The perl code is limited to a single string. Longer code can be placed
-	   into a module and loaded by the <literal>on_perl_init</> string.
-	   Examples:
+       The perl code is limited to a single string. Longer code can be placed
+       into a module and loaded by the <literal>on_perl_init</> string.
+       Examples:
 <programlisting>
 plplerl.on_perl_init = '$ENV{NYTPROF}="start=no"; require Devel::NYTProf::PgPLPerl'
 plplerl.on_perl_init = 'use lib "/my/app"; use MyApp::PgInit;'
