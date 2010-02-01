@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepunion.c,v 1.179 2010/01/02 16:57:47 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepunion.c,v 1.180 2010/02/01 19:28:56 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1180,7 +1180,7 @@ expand_inherited_rtentry(PlannerInfo *root, RangeTblEntry *rte, Index rti)
 		lockmode = AccessShareLock;
 
 	/* Scan for all members of inheritance set, acquire needed locks */
-	inhOIDs = find_all_inheritors(parentOID, lockmode);
+	inhOIDs = find_all_inheritors(parentOID, lockmode, NULL);
 
 	/*
 	 * Check that there's at least one descendant, else treat as no-child

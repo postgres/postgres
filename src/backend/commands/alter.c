@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/alter.c,v 1.33 2010/01/02 16:57:36 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/alter.c,v 1.34 2010/02/01 19:28:56 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -126,7 +126,7 @@ ExecRenameStmt(RenameStmt *stmt)
 								  stmt->subname,		/* old att name */
 								  stmt->newname,		/* new att name */
 								  interpretInhOption(stmt->relation->inhOpt),	/* recursive? */
-								  false);		/* recursing already? */
+								  0);			/* expected inhcount */
 						break;
 					case OBJECT_TRIGGER:
 						renametrig(relid,

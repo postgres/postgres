@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_inherits.c,v 1.5 2010/01/02 16:57:36 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_inherits.c,v 1.6 2010/02/01 19:28:56 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -148,6 +148,9 @@ find_inheritance_children(Oid parentrelId, LOCKMODE lockmode)
  * find_all_inheritors -
  *		Returns a list of relation OIDs including the given rel plus
  *		all relations that inherit from it, directly or indirectly.
+ *		Optionally, it also returns the number of parents found for
+ *		each such relation within the inheritance tree rooted at the
+ *		given rel.
  *
  * The specified lock type is acquired on all child relations (but not on the
  * given rel; caller should already have locked it).  If lockmode is NoLock
@@ -155,9 +158,9 @@ find_inheritance_children(Oid parentrelId, LOCKMODE lockmode)
  * against possible DROPs of child relations.
  */
 List *
-find_all_inheritors(Oid parentrelId, LOCKMODE lockmode)
+find_all_inheritors(Oid parentrelId, LOCKMODE lockmode, List **numparents)
 {
-	List	   *rels_list;
+	List	   *rels_list, *rel_numparents;
 	ListCell   *l;
 
 	/*
@@ -168,11 +171,13 @@ find_all_inheritors(Oid parentrelId, LOCKMODE lockmode)
 	 * doesn't fetch the next list element until the bottom of the loop.
 	 */
 	rels_list = list_make1_oid(parentrelId);
+	rel_numparents = list_make1_int(0);
 
 	foreach(l, rels_list)
 	{
 		Oid			currentrel = lfirst_oid(l);
 		List	   *currentchildren;
+		ListCell   *lc;
 
 		/* Get the direct children of this rel */
 		currentchildren = find_inheritance_children(currentrel, lockmode);
@@ -184,9 +189,37 @@ find_all_inheritors(Oid parentrelId, LOCKMODE lockmode)
 		 * loop, though theoretically there can't be any cycles in the
 		 * inheritance graph anyway.)
 		 */
-		rels_list = list_concat_unique_oid(rels_list, currentchildren);
+		foreach(lc, currentchildren)
+		{
+			Oid		child_oid = lfirst_oid(lc);
+			bool	found = false;
+			ListCell   *lo;
+			ListCell   *li;
+
+			/* if the rel is already there, bump number-of-parents counter */
+			forboth(lo, rels_list, li, rel_numparents)
+			{
+				if (lfirst_oid(lo) == child_oid)
+				{
+					lfirst_int(li)++;
+					found = true;
+					break;
+				}
+			}
+
+			/* if it's not there, add it. expect 1 parent, initially. */
+			if (!found)
+			{
+				rels_list = lappend_oid(rels_list, child_oid);
+				rel_numparents = lappend_int(rel_numparents, 1);
+			}
+		}
 	}
 
+	if (numparents)
+		*numparents = rel_numparents;
+	else
+		list_free(rel_numparents);
 	return rels_list;
 }
 

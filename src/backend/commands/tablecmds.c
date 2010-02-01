@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.320 2010/01/28 23:21:11 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.321 2010/02/01 19:28:56 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -824,7 +824,7 @@ ExecuteTruncate(TruncateStmt *stmt)
 			ListCell   *child;
 			List	   *children;
 
-			children = find_all_inheritors(myrelid, AccessExclusiveLock);
+			children = find_all_inheritors(myrelid, AccessExclusiveLock, NULL);
 
 			foreach(child, children)
 			{
@@ -1943,7 +1943,7 @@ renameatt(Oid myrelid,
 		  const char *oldattname,
 		  const char *newattname,
 		  bool recurse,
-		  bool recursing)
+		  int expected_parents)
 {
 	Relation	targetrelation;
 	Relation	attrelation;
@@ -1987,24 +1987,31 @@ renameatt(Oid myrelid,
 	 */
 	if (recurse)
 	{
-		ListCell   *child;
-		List	   *children;
+		List	   *child_oids, *child_numparents;
+		ListCell   *lo, *li;
 
-		children = find_all_inheritors(myrelid, AccessExclusiveLock);
+		/*
+		 * we need the number of parents for each child so that the recursive
+		 * calls to renameatt() can determine whether there are any parents
+		 * outside the inheritance hierarchy being processed.
+		 */
+		child_oids = find_all_inheritors(myrelid, AccessExclusiveLock,
+										 &child_numparents);
 
 		/*
 		 * find_all_inheritors does the recursive search of the inheritance
 		 * hierarchy, so all we have to do is process all of the relids in the
 		 * list that it returns.
 		 */
-		foreach(child, children)
+		forboth(lo, child_oids, li, child_numparents)
 		{
-			Oid			childrelid = lfirst_oid(child);
+			Oid			childrelid = lfirst_oid(lo);
+			int			numparents = lfirst_int(li);
 
 			if (childrelid == myrelid)
 				continue;
 			/* note we need not recurse again */
-			renameatt(childrelid, oldattname, newattname, false, true);
+			renameatt(childrelid, oldattname, newattname, false, numparents);
 		}
 	}
 	else
@@ -2012,8 +2019,10 @@ renameatt(Oid myrelid,
 		/*
 		 * If we are told not to recurse, there had better not be any child
 		 * tables; else the rename would put them out of step.
+		 *
+		 * expected_parents will only be 0 if we are not already recursing.
 		 */
-		if (!recursing &&
+		if (expected_parents == 0 &&
 			find_inheritance_children(myrelid, NoLock) != NIL)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
@@ -2039,10 +2048,15 @@ renameatt(Oid myrelid,
 						oldattname)));
 
 	/*
-	 * if the attribute is inherited, forbid the renaming, unless we are
-	 * already inside a recursive rename.
+	 * if the attribute is inherited, forbid the renaming.  if this is a
+	 * top-level call to renameatt(), then expected_parents will be 0, so the
+	 * effect of this code will be to prohibit the renaming if the attribute
+	 * is inherited at all.  if this is a recursive call to renameatt(),
+	 * expected_parents will be the number of parents the current relation has
+	 * within the inheritance hierarchy being processed, so we'll prohibit
+	 * the renaming only if there are additional parents from elsewhere.
 	 */
-	if (attform->attinhcount > 0 && !recursing)
+	if (attform->attinhcount > expected_parents)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
 				 errmsg("cannot rename inherited column \"%s\"",
@@ -3410,7 +3424,7 @@ ATSimpleRecursion(List **wqueue, Relation rel,
 		ListCell   *child;
 		List	   *children;
 
-		children = find_all_inheritors(relid, AccessExclusiveLock);
+		children = find_all_inheritors(relid, AccessExclusiveLock, NULL);
 
 		/*
 		 * find_all_inheritors does the recursive search of the inheritance
@@ -7233,7 +7247,7 @@ ATExecAddInherit(Relation child_rel, RangeVar *parent)
 	 * We use weakest lock we can on child's children, namely AccessShareLock.
 	 */
 	children = find_all_inheritors(RelationGetRelid(child_rel),
-								   AccessShareLock);
+								   AccessShareLock, NULL);
 
 	if (list_member_oid(children, RelationGetRelid(parent_rel)))
 		ereport(ERROR,

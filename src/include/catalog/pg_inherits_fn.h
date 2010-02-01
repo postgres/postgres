@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_inherits_fn.h,v 1.2 2010/01/02 16:58:01 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_inherits_fn.h,v 1.3 2010/02/01 19:28:56 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,7 +18,8 @@
 #include "storage/lock.h"
 
 extern List *find_inheritance_children(Oid parentrelId, LOCKMODE lockmode);
-extern List *find_all_inheritors(Oid parentrelId, LOCKMODE lockmode);
+extern List *find_all_inheritors(Oid parentrelId, LOCKMODE lockmode,
+					List **parents);
 extern bool has_subclass(Oid relationId);
 extern bool typeInheritsFrom(Oid subclassTypeId, Oid superclassTypeId);
 

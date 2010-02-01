@@ -1053,3 +1053,97 @@ NOTICE:  merging column "a" with inherited definition
 ERROR:  column "a" has a storage parameter conflict
 DETAIL:  MAIN versus EXTENDED
 DROP TABLE t1, t2, t3, t4, t12_storage, t12_comments, t1_inh, t13_inh, t13_like, t_all;
+-- Test for renaming in simple multiple inheritance
+CREATE TABLE t1 (a int, b int);
+CREATE TABLE s1 (b int, c int);
+CREATE TABLE ts (d int) INHERITS (t1, s1);
+NOTICE:  merging multiple inherited definitions of column "b"
+ALTER TABLE t1 RENAME a TO aa;
+ALTER TABLE t1 RENAME b TO bb;                -- to be failed
+ERROR:  cannot rename inherited column "b"
+ALTER TABLE ts RENAME aa TO aaa;      -- to be failed
+ERROR:  cannot rename inherited column "aa"
+ALTER TABLE ts RENAME d TO dd;
+\d+ ts
+                  Table "public.ts"
+ Column |  Type   | Modifiers | Storage | Description 
+--------+---------+-----------+---------+-------------
+ aa     | integer |           | plain   | 
+ b      | integer |           | plain   | 
+ c      | integer |           | plain   | 
+ dd     | integer |           | plain   | 
+Inherits: t1,
+          s1
+Has OIDs: no
+
+DROP TABLE ts;
+-- Test for renaming in diamond inheritance
+CREATE TABLE t2 (x int) INHERITS (t1);
+CREATE TABLE t3 (y int) INHERITS (t1);
+CREATE TABLE t4 (z int) INHERITS (t2, t3);
+NOTICE:  merging multiple inherited definitions of column "aa"
+NOTICE:  merging multiple inherited definitions of column "b"
+ALTER TABLE t1 RENAME aa TO aaa;
+\d+ t4
+                  Table "public.t4"
+ Column |  Type   | Modifiers | Storage | Description 
+--------+---------+-----------+---------+-------------
+ aaa    | integer |           | plain   | 
+ b      | integer |           | plain   | 
+ x      | integer |           | plain   | 
+ y      | integer |           | plain   | 
+ z      | integer |           | plain   | 
+Inherits: t2,
+          t3
+Has OIDs: no
+
+CREATE TABLE ts (d int) INHERITS (t2, s1);
+NOTICE:  merging multiple inherited definitions of column "b"
+ALTER TABLE t1 RENAME aaa TO aaaa;
+ALTER TABLE t1 RENAME b TO bb;                -- to be failed
+ERROR:  cannot rename inherited column "b"
+\d+ ts
+                  Table "public.ts"
+ Column |  Type   | Modifiers | Storage | Description 
+--------+---------+-----------+---------+-------------
+ aaaa   | integer |           | plain   | 
+ b      | integer |           | plain   | 
+ x      | integer |           | plain   | 
+ c      | integer |           | plain   | 
+ d      | integer |           | plain   | 
+Inherits: t2,
+          s1
+Has OIDs: no
+
+WITH RECURSIVE r AS (
+  SELECT 't1'::regclass AS inhrelid
+UNION ALL
+  SELECT c.inhrelid FROM pg_inherits c, r WHERE r.inhrelid = c.inhparent
+)
+SELECT a.attrelid::regclass, a.attname, a.attinhcount, e.expected
+  FROM (SELECT inhrelid, count(*) AS expected FROM pg_inherits
+        WHERE inhparent IN (SELECT inhrelid FROM r) GROUP BY inhrelid) e
+  JOIN pg_attribute a ON e.inhrelid = a.attrelid WHERE NOT attislocal
+  ORDER BY a.attrelid::regclass::text, a.attnum;
+ attrelid | attname | attinhcount | expected 
+----------+---------+-------------+----------
+ t2       | aaaa    |           1 |        1
+ t2       | b       |           1 |        1
+ t3       | aaaa    |           1 |        1
+ t3       | b       |           1 |        1
+ t4       | aaaa    |           2 |        2
+ t4       | b       |           2 |        2
+ t4       | x       |           1 |        2
+ t4       | y       |           1 |        2
+ ts       | aaaa    |           1 |        1
+ ts       | b       |           2 |        1
+ ts       | x       |           1 |        1
+ ts       | c       |           1 |        1
+(12 rows)
+
+DROP TABLE t1, s1 CASCADE;
+NOTICE:  drop cascades to 4 other objects
+DETAIL:  drop cascades to table t2
+drop cascades to table ts
+drop cascades to table t3
+drop cascades to table t4
