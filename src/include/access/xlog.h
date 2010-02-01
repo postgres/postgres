@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/xlog.h,v 1.100 2010/01/29 18:39:05 sriggs Exp $
+ * $PostgreSQL: pgsql/src/include/access/xlog.h,v 1.101 2010/02/01 13:40:28 sriggs Exp $
  */
 #ifndef XLOG_H
 #define XLOG_H
@@ -183,7 +183,6 @@ extern int	XLogArchiveTimeout;
 extern bool log_checkpoints;
 extern bool XLogRequestRecoveryConnections;
 extern int MaxStandbyDelay;
-extern bool MinimizeStandbyConflicts;
 
 #define XLogArchivingActive()	(XLogArchiveMode)
 #define XLogArchiveCommandSet() (XLogArchiveCommand[0] != '\0')

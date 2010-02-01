@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.365 2010/01/29 18:39:05 sriggs Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.366 2010/02/01 13:40:28 sriggs Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -71,7 +71,6 @@ bool		XLogArchiveMode = false;
 char	   *XLogArchiveCommand = NULL;
 bool 		XLogRequestRecoveryConnections = true;
 int			MaxStandbyDelay = 30;
-bool		MinimizeStandbyConflicts = false;
 bool		fullPageWrites = true;
 bool		log_checkpoints = false;
 int			sync_method = DEFAULT_SYNC_METHOD;

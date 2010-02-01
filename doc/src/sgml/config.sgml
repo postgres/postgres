@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.247 2010/01/29 18:39:05 sriggs Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.248 2010/02/01 13:40:28 sriggs Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -1836,22 +1836,6 @@ archive_command = 'copy "%p" "C:\\server\\archivedir\\%f"'  # Windows
         which that setting would introduce.
         This parameter can only be set in the <filename>postgresql.conf</>
         file or on the server command line.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry id="minimize-standby-conflicts" xreflabel="minimize_standby_conflicts">
-      <term><varname>minimize_standby_conflicts</varname> (<type>boolean</type>)</term>
-      <indexterm>
-       <primary><varname>minimize_standby_conflicts</> configuration parameter</primary>
-      </indexterm>
-      <listitem>
-       <para>
-        Generates additional information to the transaction log (WAL) to minimize
-        the number of false positive cancelations caused by recovery conflicts on
-        a standby server that consumes WAL data from this server.
-        There is additional performance cost to enabling this parameter.
-        Parameter has no effect during recovery, only in normal running.
        </para>
       </listitem>
      </varlistentry>

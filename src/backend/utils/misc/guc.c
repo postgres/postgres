@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.537 2010/01/29 18:39:05 sriggs Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.538 2010/02/01 13:40:28 sriggs Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -1220,17 +1220,6 @@ static struct config_bool ConfigureNamesBool[] =
 		},
 		&XLogRequestRecoveryConnections,
 		true, NULL, NULL
-	},
-
-	{
-		{"minimize_standby_conflicts", PGC_POSTMASTER, WAL_SETTINGS,
-			gettext_noop("Additional information is added to WAL records to"
-						 " minimize the number of false positive cancelations"
-						 " caused by recovery conflicts on WAL standby nodes."),
-			NULL
-		},
-		&MinimizeStandbyConflicts,
-		false, NULL, NULL
 	},
 
 	{
