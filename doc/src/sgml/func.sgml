@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.499 2010/02/01 03:14:43 itagaki Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.500 2010/02/01 15:38:21 rhaas Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -1790,8 +1790,8 @@
    </table>
 
    <para>
-   See also <xref linkend="functions-aggregate"> about the aggregate
-   function <function>string_agg</function>.
+   See also the aggregate function <function>string_agg</function> in
+   <xref linkend="functions-aggregate">.
    </para>
 
    <table id="conversion-names">
@@ -9945,7 +9945,8 @@ SELECT count(*) FROM sometable;
   </note>
 
   <para>
-   The aggregate functions <function>array_agg</function>
+   The aggregate functions <function>array_agg</function>,
+   <function>string_agg</function>,
    and <function>xmlagg</function>, as well as similar user-defined
    aggregate functions, produce meaningfully different result values
    depending on the order of the input values.  This ordering is
