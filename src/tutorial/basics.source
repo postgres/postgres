@@ -4,9 +4,7 @@
 --    Tutorial on the basics (table creation and data manipulation)
 --
 --
--- Copyright (c) 1994, Andrew Yu, University of California
---
--- $PostgreSQL: pgsql/src/tutorial/basics.source,v 1.5 2003/11/29 22:41:33 pgsql Exp $
+-- $PostgreSQL: pgsql/src/tutorial/basics.source,v 1.6 2010/02/02 18:52:02 momjian Exp $
 --
 ---------------------------------------------------------------------------
 
