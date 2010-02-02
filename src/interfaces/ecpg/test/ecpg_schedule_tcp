@@ -15,6 +15,7 @@ test: pgtypeslib/dt_test
 test: pgtypeslib/dt_test2
 test: pgtypeslib/num_test
 test: pgtypeslib/num_test2
+test: pgtypeslib/nan_test
 test: preproc/array_of_struct
 test: preproc/autoprep
 test: preproc/comment

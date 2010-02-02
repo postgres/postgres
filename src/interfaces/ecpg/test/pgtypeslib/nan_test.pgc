@@ -1,0 +1,84 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
+#include <pgtypes_numeric.h>
+#include <decimal.h>
+
+exec sql include ../regression;
+
+int
+main(void)
+{
+	exec sql begin declare section;
+	int	id;
+	double	d;
+	numeric	*num;
+	char	val[16];
+	exec sql end declare section;
+
+	ECPGdebug(1, stderr);
+	exec sql whenever sqlerror do sqlprint();
+
+	exec sql connect to REGRESSDB1;
+
+	exec sql create table nantest1 (id int4, d float8);
+	exec sql insert into nantest1 (id, d) values (1, 'nan'::float8), (2, 'inf'::float8), (3, '-inf'::float8);
+
+	exec sql declare cur cursor for select id, d, d from nantest1;
+	exec sql open cur;
+	while (1)
+	{
+		exec sql fetch from cur into :id, :d, :val;
+		if (sqlca.sqlcode)
+			break;
+		if (isinf(d))
+			printf("%d %sInf '%s'\n", id, (d < 0 ? "-" : "+"), val);
+		if (isnan(d))
+			printf("%d  NaN '%s'\n", id, val);
+
+		exec sql insert into nantest1 (id, d) values (:id + 3, :d);
+		exec sql insert into nantest1 (id, d) values (:id + 6, :val);
+	}
+	exec sql close cur;
+
+	exec sql open cur;
+	while (1)
+	{
+		exec sql fetch from cur into :id, :d, :val;
+		if (sqlca.sqlcode)
+			break;
+		if (isinf(d))
+			printf("%d %sInf '%s'\n", id, (d < 0 ? "-" : "+"), val);
+		if (isnan(d))
+			printf("%d  NaN '%s'\n", id, val);
+	}
+	exec sql close cur;
+
+	num = PGTYPESnumeric_new();
+
+	exec sql create table nantest2 (id int4, d numeric);
+	exec sql insert into nantest2 (id, d) values (4, 'nan'::numeric);
+
+	exec sql select id, d, d into :id, :num, :val from nantest2 where id = 4;
+
+	printf("%d %s '%s'\n", id, (num->sign == NUMERIC_NAN ? "NaN" : "not NaN"), val);
+
+	exec sql insert into nantest2 (id, d) values (5, :num);
+	exec sql insert into nantest2 (id, d) values (6, :val);
+
+	exec sql declare cur1 cursor for select id, d, d from nantest2;
+	exec sql open cur1;
+	while (1)
+	{
+		exec sql fetch from cur1 into :id, :num, :val;
+		if (sqlca.sqlcode)
+			break;
+		printf("%d %s '%s'\n", id, (num->sign == NUMERIC_NAN ? "NaN" : "not NaN"), val);
+	}
+	exec sql close cur1;
+
+	exec sql rollback;
+	exec sql disconnect;
+
+	return (0);
+}

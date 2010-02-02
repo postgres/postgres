@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.90 2010/01/29 15:57:01 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.91 2010/02/02 16:09:11 meskes Exp $ */
 
 /*
  * The aim is to get a simpler inteface to the database routines.
@@ -17,6 +17,7 @@
 #include "postgres_fe.h"
 
 #include <locale.h>
+#include <math.h>
 
 #include "pg_type.h"
 
@@ -463,6 +464,38 @@ ecpg_store_result(const PGresult *results, int act_field,
 	return status;
 }
 
+static void
+sprintf_double_value(char *ptr, double value, const char *delim)
+{
+	if (isinf(value))
+	{
+		if (value < 0)
+			sprintf(ptr, "%s%s", "-Infinity", delim);
+		else
+			sprintf(ptr, "%s%s", "Infinity", delim);
+	}
+	else if (isnan(value))
+		sprintf(ptr, "%s%s", "NaN", delim);
+	else
+		sprintf(ptr, "%.14g%s", value, delim);
+}
+
+static void
+sprintf_float_value(char *ptr, float value, const char *delim)
+{
+	if (isinf(value))
+	{
+		if (value < 0)
+			sprintf(ptr, "%s%s", "-Infinity", delim);
+		else
+			sprintf(ptr, "%s%s", "Infinity", delim);
+	}
+	else if (isnan(value))
+		sprintf(ptr, "%s%s", "NaN", delim);
+	else
+		sprintf(ptr, "%.14g%s", value, delim);
+}
+
 bool
 ecpg_store_input(const int lineno, const bool force_indicator, const struct variable * var,
 				 char **tobeinserted_p, bool quote)
@@ -693,12 +726,12 @@ ecpg_store_input(const int lineno, const bool force_indicator, const struct vari
 					strcpy(mallocedval, "array [");
 
 					for (element = 0; element < asize; element++)
-						sprintf(mallocedval + strlen(mallocedval), "%.14g,", ((float *) var->value)[element]);
+						sprintf_float_value(mallocedval + strlen(mallocedval), ((float *) var->value)[element], ",");
 
 					strcpy(mallocedval + strlen(mallocedval) - 1, "]");
 				}
 				else
-					sprintf(mallocedval, "%.14g", *((float *) var->value));
+					sprintf_float_value(mallocedval, *((float *) var->value), "");
 
 				*tobeinserted_p = mallocedval;
 				break;
@@ -712,12 +745,12 @@ ecpg_store_input(const int lineno, const bool force_indicator, const struct vari
 					strcpy(mallocedval, "array [");
 
 					for (element = 0; element < asize; element++)
-						sprintf(mallocedval + strlen(mallocedval), "%.14g,", ((double *) var->value)[element]);
+						sprintf_double_value(mallocedval + strlen(mallocedval), ((double *) var->value)[element], ",");
 
 					strcpy(mallocedval + strlen(mallocedval) - 1, "]");
 				}
 				else
-					sprintf(mallocedval, "%.14g", *((double *) var->value));
+					sprintf_double_value(mallocedval, *((double *) var->value), "");
 
 				*tobeinserted_p = mallocedval;
 				break;

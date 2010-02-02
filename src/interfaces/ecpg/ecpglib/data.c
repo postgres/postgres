@@ -1,10 +1,11 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/data.c,v 1.47 2009/12/31 19:41:36 tgl Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/data.c,v 1.48 2010/02/02 16:09:11 meskes Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
 
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 
 #include "ecpgtype.h"
 #include "ecpglib.h"
@@ -34,6 +35,58 @@ garbage_left(enum ARRAY_TYPE isarray, char *scan_length, enum COMPAT_MODE compat
 
 	if (isarray == ECPG_ARRAY_NONE && *scan_length != ' ' && *scan_length != '\0')
 		return true;
+
+	return false;
+}
+
+/* stolen code from src/backend/utils/adt/float.c */
+#if defined(WIN32) && !defined(NAN)
+static const uint32 nan[2] = {0xffffffff, 0x7fffffff};
+
+#define NAN (*(const double *) nan)
+#endif
+
+static double
+get_float8_infinity(void)
+{
+#ifdef INFINITY
+	return (double) INFINITY;
+#else
+	return (double) (HUGE_VAL * HUGE_VAL);
+#endif
+}
+
+static double
+get_float8_nan(void)
+{
+#ifdef NAN
+	return (double) NAN;  
+#else
+	return (double) (0.0 / 0.0);
+#endif
+}
+
+static bool
+check_special_value(char *ptr, double *retval, char **endptr)
+{
+	if (!pg_strncasecmp(ptr, "NaN", 3))
+	{
+		*retval = get_float8_nan();
+		*endptr = ptr + 3;
+		return true;
+	}
+	else if (!pg_strncasecmp(ptr, "Infinity", 8))
+	{
+		*retval = get_float8_infinity();
+		*endptr = ptr + 8;
+		return true;
+	}
+	else if (!pg_strncasecmp(ptr, "-Infinity", 9))
+	{
+		*retval = -get_float8_infinity();
+		*endptr = ptr + 9;
+		return true;
+	}
 
 	return false;
 }
@@ -300,8 +353,9 @@ ecpg_get_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 				case ECPGt_float:
 				case ECPGt_double:
 					if (isarray && *pval == '"')
-						dres = strtod(pval + 1, &scan_length);
-					else
+						pval++;
+
+					if (!check_special_value(pval, &dres, &scan_length))
 						dres = strtod(pval, &scan_length);
 
 					if (isarray && *scan_length == '"')
