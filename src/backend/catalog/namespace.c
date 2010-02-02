@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/namespace.c,v 1.121 2010/01/02 16:57:36 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/namespace.c,v 1.122 2010/02/02 18:52:33 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2836,7 +2836,10 @@ FindConversionByName(List *name)
 	{
 		/* use exact schema given */
 		namespaceId = LookupExplicitNamespace(schemaname);
-		return FindConversion(conversion_name, namespaceId);
+		return GetSysCacheOid(CONNAMENSP,
+							  PointerGetDatum(conversion_name),
+							  ObjectIdGetDatum(namespaceId),
+							  0, 0);
 	}
 	else
 	{
@@ -2850,7 +2853,10 @@ FindConversionByName(List *name)
 			if (namespaceId == myTempNamespace)
 				continue;		/* do not look in temp namespace */
 
-			conoid = FindConversion(conversion_name, namespaceId);
+			conoid = GetSysCacheOid(CONNAMENSP,
+									PointerGetDatum(conversion_name),
+									ObjectIdGetDatum(namespaceId),
+									0, 0);
 			if (OidIsValid(conoid))
 				return conoid;
 		}
