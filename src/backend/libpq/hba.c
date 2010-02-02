@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.196 2010/01/27 12:11:59 mha Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.197 2010/02/02 19:09:37 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1167,16 +1167,25 @@ parse_hba_line(List *line, int line_num, HbaLine *parsedline)
 			else if (strcmp(token, "radiusserver") == 0)
 			{
 				REQUIRE_AUTH_OPTION(uaRADIUS, "radiusserver", "radius");
-				if (inet_addr(c) == INADDR_NONE)
+
+				MemSet(&hints, 0, sizeof(hints));
+				hints.ai_socktype = SOCK_DGRAM;
+				hints.ai_family = AF_UNSPEC;
+
+				ret = pg_getaddrinfo_all(c, NULL, &hints, &gai_result);
+				if (ret || !gai_result)
 				{
 					ereport(LOG,
 							(errcode(ERRCODE_CONFIG_FILE_ERROR),
-							 errmsg("invalid RADIUS server IP address: \"%s\"", c),
+							 errmsg("could not translate RADIUS server name \"%s\" to address: %s",
+									c, gai_strerror(ret)),
 						   errcontext("line %d of configuration file \"%s\"",
 									  line_num, HbaFileName)));
+					if (gai_result)
+						pg_freeaddrinfo_all(hints.ai_family, gai_result);
 					return false;
-
 				}
+				pg_freeaddrinfo_all(hints.ai_family, gai_result);
 				parsedline->radiusserver = pstrdup(c);
 			}
 			else if (strcmp(token, "radiusport") == 0)

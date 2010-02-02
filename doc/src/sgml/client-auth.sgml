@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.129 2010/01/27 13:03:17 mha Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.130 2010/02/02 19:09:36 mha Exp $ -->
 
 <chapter id="client-authentication">
  <title>Client Authentication</title>
@@ -1375,8 +1375,8 @@ ldapserver=ldap.example.net ldapprefix="cn=" ldapsuffix=", dc=example, dc=net"
        <term><literal>radiusserver</literal></term>
        <listitem>
         <para>
-         The IP address of the RADIUS server to connect to. This must
-         be an IPV4 address and not a hostname. This parameter is required.
+         The name or IP address of the RADIUS server to connect to.
+         This parameter is required.
         </para>
        </listitem>
       </varlistentry>

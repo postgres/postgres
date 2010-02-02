@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/auth.c,v 1.193 2010/01/31 17:27:22 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/auth.c,v 1.194 2010/02/02 19:09:36 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2521,8 +2521,16 @@ CheckRADIUSAuth(Port *port)
 	uint8				encryptedpassword[RADIUS_VECTOR_LENGTH];
 	int					packetlength;
 	pgsocket			sock;
+#ifdef HAVE_IPV6
+	struct sockaddr_in6 localaddr;
+	struct sockaddr_in6 remoteaddr;
+#else
 	struct sockaddr_in	localaddr;
 	struct sockaddr_in	remoteaddr;
+#endif
+	struct addrinfo		hint;
+	struct addrinfo	   *serveraddrs;
+	char				portstr[128];
 	ACCEPT_TYPE_ARG3	addrsize;
 	fd_set				fdset;
 	struct timeval		timeout;
@@ -2549,17 +2557,22 @@ CheckRADIUSAuth(Port *port)
 	if (port->hba->radiusport == 0)
 		port->hba->radiusport = 1812;
 
-	memset(&remoteaddr, 0, sizeof(remoteaddr));
-	remoteaddr.sin_family = AF_INET;
-	remoteaddr.sin_addr.s_addr = inet_addr(port->hba->radiusserver);
-	if (remoteaddr.sin_addr.s_addr == INADDR_NONE)
+	MemSet(&hint, 0, sizeof(hint));
+	hint.ai_socktype = SOCK_DGRAM;
+	hint.ai_family = AF_UNSPEC;
+	snprintf(portstr, sizeof(portstr), "%d", port->hba->radiusport);
+
+	r = pg_getaddrinfo_all(port->hba->radiusserver, portstr, &hint, &serveraddrs);
+	if (r || !serveraddrs)
 	{
 		ereport(LOG,
-				(errmsg("RADIUS server '%s' is not a valid IP address",
-						port->hba->radiusserver)));
+				(errmsg("could not translate RADIUS server name \"%s\" to address: %s",
+						port->hba->radiusserver, gai_strerror(r))));
+		if (serveraddrs)
+			pg_freeaddrinfo_all(hint.ai_family, serveraddrs);
 		return STATUS_ERROR;
 	}
-	remoteaddr.sin_port = htons(port->hba->radiusport);
+	/* XXX: add support for multiple returned addresses? */
 
 	if (port->hba->radiusidentifier && port->hba->radiusidentifier[0])
 		identifier = port->hba->radiusidentifier;
@@ -2633,34 +2646,51 @@ CheckRADIUSAuth(Port *port)
 	packetlength = packet->length;
 	packet->length = htons(packet->length);
 
-	sock = socket(AF_INET, SOCK_DGRAM, 0);
+	sock = socket(serveraddrs[0].ai_family, SOCK_DGRAM, 0);
 	if (sock < 0)
 	{
 		ereport(LOG,
 				(errmsg("could not create RADIUS socket: %m")));
+		pg_freeaddrinfo_all(hint.ai_family, serveraddrs);
 		return STATUS_ERROR;
 	}
 
 	memset(&localaddr, 0, sizeof(localaddr));
-	localaddr.sin_family = AF_INET;
+#ifdef HAVE_IPV6
+	localaddr.sin6_family = serveraddrs[0].ai_family;
+	localaddr.sin6_addr = in6addr_any;
+	if (localaddr.sin6_family == AF_INET6)
+		addrsize = sizeof(struct sockaddr_in6);
+	else
+		addrsize = sizeof(struct sockaddr_in);
+#else
+	localaddr.sin_family = serveraddrs[0].ai_family;
 	localaddr.sin_addr.s_addr = INADDR_ANY;
-	if (bind(sock, (struct sockaddr *) &localaddr, sizeof(localaddr)))
+	addrsize = sizeof(struct sockaddr_in);
+#endif
+	if (bind(sock, (struct sockaddr *) &localaddr, addrsize))
 	{
 		ereport(LOG,
 				(errmsg("could not bind local RADIUS socket: %m")));
 		closesocket(sock);
+		pg_freeaddrinfo_all(hint.ai_family, serveraddrs);
 		return STATUS_ERROR;
 	}
 
 	if (sendto(sock, radius_buffer, packetlength, 0,
-			   (struct sockaddr *) &remoteaddr, sizeof(remoteaddr)) < 0)
+			   serveraddrs[0].ai_addr, serveraddrs[0].ai_addrlen) < 0)
 	{
 		ereport(LOG,
 				(errmsg("could not send RADIUS packet: %m")));
 		closesocket(sock);
+		pg_freeaddrinfo_all(hint.ai_family, serveraddrs);
 		return STATUS_ERROR;
 	}
 
+	/* Don't need the server address anymore */
+	pg_freeaddrinfo_all(hint.ai_family, serveraddrs);
+
+	/* Wait for a response */
 	timeout.tv_sec = RADIUS_TIMEOUT;
 	timeout.tv_usec = 0;
 	FD_ZERO(&fdset);
@@ -2705,11 +2735,21 @@ CheckRADIUSAuth(Port *port)
 
 	closesocket(sock);
 
+#ifdef HAVE_IPV6
+	if (remoteaddr.sin6_port != htons(port->hba->radiusport))
+#else
 	if (remoteaddr.sin_port != htons(port->hba->radiusport))
+#endif
 	{
+#ifdef HAVE_IPV6
+		ereport(LOG,
+				(errmsg("RADIUS response was sent from incorrect port: %i",
+						ntohs(remoteaddr.sin6_port))));
+#else
 		ereport(LOG,
 				(errmsg("RADIUS response was sent from incorrect port: %i",
 						ntohs(remoteaddr.sin_port))));
+#endif
 		return STATUS_ERROR;
 	}
 

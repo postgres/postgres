@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/include/port/solaris.h,v 1.18 2010/01/28 11:36:14 mha Exp $ */
+/* $PostgreSQL: pgsql/src/include/port/solaris.h,v 1.19 2010/02/02 19:09:37 mha Exp $ */
 
 /*
  * Sort this out for all operating systems some time.  The __xxx
@@ -36,11 +36,3 @@
  * still use our own fix for the buggy version.
  */
 #define HAVE_BUGGY_SOLARIS_STRTOD
-
-/*
- * Many versions of Solaris are missing the definition of INADDR_NONE
- */
-#ifndef INADDR_NONE
-#define INADDR_NONE ((in_addr_t)(-1))
-#endif
-
