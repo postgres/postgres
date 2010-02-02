@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/standby.c,v 1.9 2010/01/31 19:01:11 sriggs Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/standby.c,v 1.10 2010/02/02 22:01:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -516,7 +516,7 @@ StandbyAcquireAccessExclusiveLock(TransactionId xid, Oid dbOid, Oid relOid)
 		return;
 
 	elog(trace_recovery(DEBUG4),
-		 "adding recovery lock: db %d rel %d", dbOid, relOid);
+		 "adding recovery lock: db %u rel %u", dbOid, relOid);
 
 	/* dbOid is InvalidOid when we are locking a shared relation. */
 	Assert(OidIsValid(relOid));
@@ -558,15 +558,13 @@ StandbyReleaseLocks(TransactionId xid)
 			LOCKTAG		locktag;
 
 			elog(trace_recovery(DEBUG4),
-					"releasing recovery lock: xid %u db %d rel %d",
-							lock->xid, lock->dbOid, lock->relOid);
+				 "releasing recovery lock: xid %u db %u rel %u",
+				 lock->xid, lock->dbOid, lock->relOid);
 			SET_LOCKTAG_RELATION(locktag, lock->dbOid, lock->relOid);
 			if (!LockRelease(&locktag, AccessExclusiveLock, true))
 				elog(trace_recovery(LOG),
-					"RecoveryLockList contains entry for lock "
-					"no longer recorded by lock manager "
-					"xid %u database %d relation %d",
-						lock->xid, lock->dbOid, lock->relOid);
+					 "RecoveryLockList contains entry for lock no longer recorded by lock manager: xid %u database %u relation %u",
+					 lock->xid, lock->dbOid, lock->relOid);
 
 			RecoveryLockList = list_delete_cell(RecoveryLockList, cell, prev);
 			pfree(lock);
@@ -621,14 +619,12 @@ StandbyReleaseLocksMany(TransactionId removeXid, bool keepPreparedXacts)
 			if (keepPreparedXacts && StandbyTransactionIdIsPrepared(lock->xid))
 				continue;
 			elog(trace_recovery(DEBUG4),
-				 "releasing recovery lock: xid %u db %d rel %d",
+				 "releasing recovery lock: xid %u db %u rel %u",
 				 lock->xid, lock->dbOid, lock->relOid);
 			SET_LOCKTAG_RELATION(locktag, lock->dbOid, lock->relOid);
 			if (!LockRelease(&locktag, AccessExclusiveLock, true))
 				elog(trace_recovery(LOG),
-					 "RecoveryLockList contains entry for lock "
-					 "no longer recorded by lock manager "
-					 "xid %u database %d relation %d",
+					 "RecoveryLockList contains entry for lock no longer recorded by lock manager: xid %u database %u relation %u",
 					 lock->xid, lock->dbOid, lock->relOid);
 			RecoveryLockList = list_delete_cell(RecoveryLockList, cell, prev);
 			pfree(lock);
@@ -708,8 +704,7 @@ standby_desc_running_xacts(StringInfo buf, xl_running_xacts *xlrec)
 {
 	int			i;
 
-	appendStringInfo(buf,
-					 " nextXid %u oldestRunningXid %u",
+	appendStringInfo(buf, " nextXid %u oldestRunningXid %u",
 					 xlrec->nextXid,
 					 xlrec->oldestRunningXid);
 	if (xlrec->xcnt > 0)
@@ -736,7 +731,7 @@ standby_desc(StringInfo buf, uint8 xl_info, char *rec)
 		appendStringInfo(buf, "AccessExclusive locks:");
 
 		for (i = 0; i < xlrec->nlocks; i++)
-			appendStringInfo(buf, " xid %u db %d rel %d",
+			appendStringInfo(buf, " xid %u db %u rel %u",
 							 xlrec->locks[i].xid, xlrec->locks[i].dbOid,
 							 xlrec->locks[i].relOid);
 	}
