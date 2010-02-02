@@ -434,6 +434,18 @@ SELECT * FROM clustertest;
  100
 (5 rows)
 
+-- check that temp tables can be clustered
+create temp table clstr_temp (col1 int primary key, col2 text);
+NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "clstr_temp_pkey" for table "clstr_temp"
+insert into clstr_temp values (2, 'two'), (1, 'one');
+cluster clstr_temp using clstr_temp_pkey;
+select * from clstr_temp;
+ col1 | col2 
+------+------
+    1 | one
+    2 | two
+(2 rows)
+
 -- clean up
 \c -
 DROP TABLE clustertest;

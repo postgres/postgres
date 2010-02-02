@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/cluster.c,v 1.195 2010/01/28 23:21:11 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/cluster.c,v 1.196 2010/02/02 19:12:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -657,20 +657,25 @@ rebuild_relation(Relation OldHeap, Oid indexOid,
 	newrel = heap_open(tableOid, NoLock);
 	if (OidIsValid(newrel->rd_rel->reltoastrelid))
 	{
-		char		NewToastName[NAMEDATALEN];
 		Relation	toastrel;
+		Oid			toastidx;
+		Oid			toastnamespace;
+		char		NewToastName[NAMEDATALEN];
+
+		toastrel = relation_open(newrel->rd_rel->reltoastrelid, AccessShareLock);
+		toastidx = toastrel->rd_rel->reltoastidxid;
+		toastnamespace = toastrel->rd_rel->relnamespace;
+		relation_close(toastrel, AccessShareLock);
 
 		/* rename the toast table ... */
 		snprintf(NewToastName, NAMEDATALEN, "pg_toast_%u", tableOid);
 		RenameRelationInternal(newrel->rd_rel->reltoastrelid, NewToastName,
-							   PG_TOAST_NAMESPACE);
+							   toastnamespace);
 
 		/* ... and its index too */
-		toastrel = relation_open(newrel->rd_rel->reltoastrelid, AccessShareLock);
 		snprintf(NewToastName, NAMEDATALEN, "pg_toast_%u_index", tableOid);
-		RenameRelationInternal(toastrel->rd_rel->reltoastidxid, NewToastName,
-							   PG_TOAST_NAMESPACE);
-		relation_close(toastrel, AccessShareLock);
+		RenameRelationInternal(toastidx, NewToastName,
+							   toastnamespace);
 	}
 	relation_close(newrel, NoLock);
 }
