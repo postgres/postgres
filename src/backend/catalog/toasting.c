@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/toasting.c,v 1.28 2010/01/28 23:21:11 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/toasting.c,v 1.29 2010/02/03 01:14:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,8 +31,10 @@
 #include "utils/builtins.h"
 #include "utils/syscache.h"
 
-Oid binary_upgrade_next_pg_type_toast_oid = InvalidOid;
+/* Kluges for upgrade-in-place support */
 extern Oid binary_upgrade_next_toast_relfilenode;
+
+Oid binary_upgrade_next_pg_type_toast_oid = InvalidOid;
 
 static bool create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid,
 				   Datum reloptions);
@@ -145,7 +147,9 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid, Datum reloptio
 
 	/*
 	 * Check to see whether the table actually needs a TOAST table.
-	 * If the relfilenode is specified, force toast file creation.
+	 *
+	 * If an update-in-place relfilenode is specified, force toast file
+	 * creation even if it seems not to need one.
 	 */
 	if (!needs_toast_table(rel) &&
 		!OidIsValid(binary_upgrade_next_toast_relfilenode))

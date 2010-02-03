@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.300 2010/01/13 23:07:08 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.301 2010/02/03 01:14:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,6 +33,7 @@
 #include "access/genam.h"
 #include "access/reloptions.h"
 #include "access/sysattr.h"
+#include "access/transam.h"
 #include "access/xact.h"
 #include "catalog/catalog.h"
 #include "catalog/index.h"
@@ -53,6 +54,7 @@
 #include "catalog/pg_trigger.h"
 #include "catalog/pg_type.h"
 #include "catalog/schemapg.h"
+#include "catalog/storage.h"
 #include "commands/trigger.h"
 #include "miscadmin.h"
 #include "optimizer/clauses.h"
@@ -2377,22 +2379,6 @@ AtEOSubXact_RelationCache(bool isCommit, SubTransactionId mySubid,
 	}
 }
 
-/*
- * RelationCacheMarkNewRelfilenode
- *
- *	Mark the rel as having been given a new relfilenode in the current
- *	(sub) transaction.	This is a hint that can be used to optimize
- *	later operations on the rel in the same transaction.
- */
-void
-RelationCacheMarkNewRelfilenode(Relation rel)
-{
-	/* Mark it... */
-	rel->rd_newRelfilenodeSubid = GetCurrentSubTransactionId();
-	/* ... and now we have eoxact cleanup work to do */
-	need_eoxact_work = true;
-}
-
 
 /*
  *		RelationBuildLocalRelation
@@ -2561,6 +2547,109 @@ RelationBuildLocalRelation(const char *relname,
 
 	return rel;
 }
+
+
+/*
+ * RelationSetNewRelfilenode
+ *
+ * Assign a new relfilenode (physical file name) to the relation.
+ *
+ * This allows a full rewrite of the relation to be done with transactional
+ * safety (since the filenode assignment can be rolled back).  Note however
+ * that there is no simple way to access the relation's old data for the
+ * remainder of the current transaction.  This limits the usefulness to cases
+ * such as TRUNCATE or rebuilding an index from scratch.
+ *
+ * Caller must already hold exclusive lock on the relation.
+ *
+ * The relation is marked with relfrozenxid = freezeXid (InvalidTransactionId
+ * must be passed for indexes).  This should be a lower bound on the XIDs
+ * that will be put into the new relation contents.
+ */
+void
+RelationSetNewRelfilenode(Relation relation, TransactionId freezeXid)
+{
+	Oid			newrelfilenode;
+	RelFileNode newrnode;
+	Relation	pg_class;
+	HeapTuple	tuple;
+	Form_pg_class classform;
+
+	/* Can't change relfilenode for nailed tables (indexes ok though) */
+	Assert(!relation->rd_isnailed ||
+		   relation->rd_rel->relkind == RELKIND_INDEX);
+	/* Can't change for shared tables or indexes */
+	Assert(!relation->rd_rel->relisshared);
+	/* Indexes must have Invalid frozenxid; other relations must not */
+	Assert((relation->rd_rel->relkind == RELKIND_INDEX &&
+			freezeXid == InvalidTransactionId) ||
+		   TransactionIdIsNormal(freezeXid));
+
+	/* Allocate a new relfilenode */
+	newrelfilenode = GetNewRelFileNode(relation->rd_rel->reltablespace,
+									   relation->rd_rel->relisshared,
+									   NULL);
+
+	/*
+	 * Find the pg_class tuple for the given relation.	This is not used
+	 * during bootstrap, so okay to use heap_update always.
+	 */
+	pg_class = heap_open(RelationRelationId, RowExclusiveLock);
+
+	tuple = SearchSysCacheCopy(RELOID,
+							   ObjectIdGetDatum(RelationGetRelid(relation)),
+							   0, 0, 0);
+	if (!HeapTupleIsValid(tuple))
+		elog(ERROR, "could not find tuple for relation %u",
+			 RelationGetRelid(relation));
+	classform = (Form_pg_class) GETSTRUCT(tuple);
+
+	/*
+	 * Create storage for the main fork of the new relfilenode.
+	 *
+	 * NOTE: any conflict in relfilenode value will be caught here, if
+	 * GetNewRelFileNode messes up for any reason.
+	 */
+	newrnode = relation->rd_node;
+	newrnode.relNode = newrelfilenode;
+	RelationCreateStorage(newrnode, relation->rd_istemp);
+	smgrclosenode(newrnode);
+
+	/*
+	 * Schedule unlinking of the old storage at transaction commit.
+	 */
+	RelationDropStorage(relation);
+
+	/*
+	 * Now update the pg_class row.
+	 */
+	classform->relfilenode = newrelfilenode;
+	classform->relpages = 0;		/* it's empty until further notice */
+	classform->reltuples = 0;
+	classform->relfrozenxid = freezeXid;
+	simple_heap_update(pg_class, &tuple->t_self, tuple);
+	CatalogUpdateIndexes(pg_class, tuple);
+
+	heap_freetuple(tuple);
+
+	heap_close(pg_class, RowExclusiveLock);
+
+	/*
+	 * Make the pg_class row change visible.  This will cause the relcache
+	 * entry to get updated, too.
+	 */
+	CommandCounterIncrement();
+
+	/*
+	 * Mark the rel as having been given a new relfilenode in the current
+	 * (sub) transaction.  This is a hint that can be used to optimize
+	 * later operations on the rel in the same transaction.
+	 */
+	relation->rd_newRelfilenodeSubid = GetCurrentSubTransactionId();
+	/* ... and now we have eoxact cleanup work to do */
+	need_eoxact_work = true;
+}
+
 
 /*
  *		RelationCacheInitialize

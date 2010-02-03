@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.331 2010/01/22 16:40:18 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.332 2010/02/03 01:14:16 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -69,6 +69,9 @@
 #include "utils/tqual.h"
 
 
+/* Kluge for upgrade-in-place support */
+Oid binary_upgrade_next_index_relfilenode = InvalidOid;
+
 /* state info for validate_index bulkdelete callback */
 typedef struct
 {
@@ -78,9 +81,6 @@ typedef struct
 				itups,
 				tups_inserted;
 } v_i_state;
-
-/* For simple relation creation, this is the toast index relfilenode */
-Oid binary_upgrade_next_index_relfilenode = InvalidOid;
 
 /* non-export function prototypes */
 static TupleDesc ConstructTupleDescriptor(Relation heapRelation,
@@ -642,21 +642,23 @@ index_create(Oid heapRelationId,
 											accessMethodObjectId,
 											classObjectId);
 
-	if (OidIsValid(binary_upgrade_next_index_relfilenode))
+	/*
+	 * Allocate an OID for the index, unless we were told what to use.
+	 *
+	 * The OID will be the relfilenode as well, so make sure it doesn't
+	 * collide with either pg_class OIDs or existing physical files.
+	 */
+	if (!OidIsValid(indexRelationId))
 	{
-		indexRelationId = binary_upgrade_next_index_relfilenode;
-		binary_upgrade_next_index_relfilenode = InvalidOid;
-	}
-	else if (!OidIsValid(indexRelationId))
-	{
-		/*
-		 * Allocate an OID for the index, unless we were told what to use.
-		 *
-		 * The OID will be the relfilenode as well, so make sure it doesn't
-		 * collide with either pg_class OIDs or existing physical files.
-		 */
-		indexRelationId = GetNewRelFileNode(tableSpaceId, shared_relation,
-											pg_class);
+		/* Use binary-upgrade override if applicable */
+		if (OidIsValid(binary_upgrade_next_index_relfilenode))
+		{
+			indexRelationId = binary_upgrade_next_index_relfilenode;
+			binary_upgrade_next_index_relfilenode = InvalidOid;
+		}
+		else
+			indexRelationId = GetNewRelFileNode(tableSpaceId, shared_relation,
+												pg_class);
 	}
 
 	/*
@@ -1389,87 +1391,6 @@ index_update_stats(Relation rel,
 	heap_freetuple(tuple);
 
 	heap_close(pg_class, RowExclusiveLock);
-}
-
-/*
- * setNewRelfilenode		- assign a new relfilenode value to the relation
- *
- * Caller must already hold exclusive lock on the relation.
- *
- * The relation is marked with relfrozenxid=freezeXid (InvalidTransactionId
- * must be passed for indexes)
- */
-void
-setNewRelfilenode(Relation relation, TransactionId freezeXid)
-{
-	Oid			newrelfilenode;
-	RelFileNode newrnode;
-	Relation	pg_class;
-	HeapTuple	tuple;
-	Form_pg_class rd_rel;
-
-	/* Can't change relfilenode for nailed tables (indexes ok though) */
-	Assert(!relation->rd_isnailed ||
-		   relation->rd_rel->relkind == RELKIND_INDEX);
-	/* Can't change for shared tables or indexes */
-	Assert(!relation->rd_rel->relisshared);
-	/* Indexes must have Invalid frozenxid; other relations must not */
-	Assert((relation->rd_rel->relkind == RELKIND_INDEX &&
-			freezeXid == InvalidTransactionId) ||
-		   TransactionIdIsNormal(freezeXid));
-
-	/* Allocate a new relfilenode */
-	newrelfilenode = GetNewRelFileNode(relation->rd_rel->reltablespace,
-									   relation->rd_rel->relisshared,
-									   NULL);
-
-	/*
-	 * Find the pg_class tuple for the given relation.	This is not used
-	 * during bootstrap, so okay to use heap_update always.
-	 */
-	pg_class = heap_open(RelationRelationId, RowExclusiveLock);
-
-	tuple = SearchSysCacheCopy(RELOID,
-							   ObjectIdGetDatum(RelationGetRelid(relation)),
-							   0, 0, 0);
-	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "could not find tuple for relation %u",
-			 RelationGetRelid(relation));
-	rd_rel = (Form_pg_class) GETSTRUCT(tuple);
-
-	/*
-	 * ... and create storage for corresponding forks in the new relfilenode.
-	 *
-	 * NOTE: any conflict in relfilenode value will be caught here
-	 */
-	newrnode = relation->rd_node;
-	newrnode.relNode = newrelfilenode;
-
-	/*
-	 * Create the main fork, like heap_create() does, and drop the old
-	 * storage.
-	 */
-	RelationCreateStorage(newrnode, relation->rd_istemp);
-	smgrclosenode(newrnode);
-	RelationDropStorage(relation);
-
-	/* update the pg_class row */
-	rd_rel->relfilenode = newrelfilenode;
-	rd_rel->relpages = 0;		/* it's empty until further notice */
-	rd_rel->reltuples = 0;
-	rd_rel->relfrozenxid = freezeXid;
-	simple_heap_update(pg_class, &tuple->t_self, tuple);
-	CatalogUpdateIndexes(pg_class, tuple);
-
-	heap_freetuple(tuple);
-
-	heap_close(pg_class, RowExclusiveLock);
-
-	/* Make sure the relfilenode change is visible */
-	CommandCounterIncrement();
-
-	/* Mark the rel as having a new relfilenode in current transaction */
-	RelationCacheMarkNewRelfilenode(relation);
 }
 
 
@@ -2562,7 +2483,7 @@ reindex_index(Oid indexId)
 			/*
 			 * We'll build a new physical relation for the index.
 			 */
-			setNewRelfilenode(iRel, InvalidTransactionId);
+			RelationSetNewRelfilenode(iRel, InvalidTransactionId);
 		}
 
 		/* Initialize the index and rebuild */
@@ -2660,8 +2581,8 @@ reindex_relation(Oid relid, bool toast_too)
 	 * yet because all of this is transaction-safe.  If we fail partway
 	 * through, the updated rows are dead and it doesn't matter whether they
 	 * have index entries.	Also, a new pg_class index will be created with an
-	 * entry for its own pg_class row because we do setNewRelfilenode() before
-	 * we do index_build().
+	 * entry for its own pg_class row because we do RelationSetNewRelfilenode()
+	 * before we do index_build().
 	 *
 	 * Note that we also clear pg_class's rd_oidindex until the loop is done,
 	 * so that that index can't be accessed either.  This means we cannot

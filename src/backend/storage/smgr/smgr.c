@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/smgr/smgr.c,v 1.118 2010/01/02 16:57:52 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/smgr/smgr.c,v 1.119 2010/02/03 01:14:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,6 +24,7 @@
 #include "storage/ipc.h"
 #include "storage/smgr.h"
 #include "utils/hsearch.h"
+#include "utils/inval.h"
 
 
 /*
@@ -351,13 +352,21 @@ smgr_internal_unlink(RelFileNode rnode, ForkNumber forknum,
 	 */
 
 	/*
-	 * And delete the physical files.
+	 * Delete the physical file(s).
 	 *
 	 * Note: smgr_unlink must treat deletion failure as a WARNING, not an
 	 * ERROR, because we've already decided to commit or abort the current
 	 * xact.
 	 */
 	(*(smgrsw[which].smgr_unlink)) (rnode, forknum, isRedo);
+
+	/*
+	 * Lastly, send a shared-inval message to force other backends to close
+	 * any dangling smgr references they may have for this rel.  We do this
+	 * last because the sinval will eventually come back to this backend, too,
+	 * and thereby provide a backstop that we closed our own smgr rel.
+	 */
+	CacheInvalidateSmgr(rnode);
 }
 
 /*
@@ -437,6 +446,8 @@ smgrnblocks(SMgrRelation reln, ForkNumber forknum)
 /*
  *	smgrtruncate() -- Truncate supplied relation to the specified number
  *					  of blocks
+ *
+ * The truncation is done immediately, so this can't be rolled back.
  */
 void
 smgrtruncate(SMgrRelation reln, ForkNumber forknum, BlockNumber nblocks,
@@ -448,9 +459,21 @@ smgrtruncate(SMgrRelation reln, ForkNumber forknum, BlockNumber nblocks,
 	 */
 	DropRelFileNodeBuffers(reln->smgr_rnode, forknum, isTemp, nblocks);
 
-	/* Do the truncation */
+	/*
+	 * Do the truncation.
+	 */
 	(*(smgrsw[reln->smgr_which].smgr_truncate)) (reln, forknum, nblocks,
 												 isTemp);
+
+	/*
+	 * Send a shared-inval message to force other backends to close any smgr
+	 * references they may have for this rel.  This is useful because they
+	 * might have open file pointers to segments that got removed.  (The inval
+	 * message will come back to our backend, too, causing a
+	 * probably-unnecessary smgr flush.  But we don't expect that this is
+	 * a performance-critical path.)
+	 */
+	CacheInvalidateSmgr(reln->smgr_rnode);
 }
 
 /*

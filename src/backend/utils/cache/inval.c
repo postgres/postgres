@@ -53,14 +53,14 @@
  *
  *	Also, whenever we see an operation on a pg_class or pg_attribute tuple,
  *	we register a relcache flush operation for the relation described by that
- *	tuple.	pg_class updates trigger an smgr flush operation as well.
+ *	tuple.
  *
- *	We keep the relcache and smgr flush requests in lists separate from the
- *	catcache tuple flush requests.	This allows us to issue all the pending
- *	catcache flushes before we issue relcache flushes, which saves us from
- *	loading a catcache tuple during relcache load only to flush it again
- *	right away.  Also, we avoid queuing multiple relcache flush requests for
- *	the same relation, since a relcache flush is relatively expensive to do.
+ *	We keep the relcache flush requests in lists separate from the catcache
+ *	tuple flush requests.  This allows us to issue all the pending catcache
+ *	flushes before we issue relcache flushes, which saves us from loading
+ *	a catcache tuple during relcache load only to flush it again right away.
+ *	Also, we avoid queuing multiple relcache flush requests for the same
+ *	relation, since a relcache flush is relatively expensive to do.
  *	(XXX is it worth testing likewise for duplicate catcache flush entries?
  *	Probably not.)
  *
@@ -80,7 +80,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/inval.c,v 1.92 2010/01/09 16:49:27 sriggs Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/inval.c,v 1.93 2010/02/03 01:14:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -116,7 +116,7 @@ typedef struct InvalidationChunk
 typedef struct InvalidationListHeader
 {
 	InvalidationChunk *cclist;	/* list of chunks holding catcache msgs */
-	InvalidationChunk *rclist;	/* list of chunks holding relcache/smgr msgs */
+	InvalidationChunk *rclist;	/* list of chunks holding relcache msgs */
 } InvalidationListHeader;
 
 /*----------------
@@ -304,7 +304,7 @@ AppendInvalidationMessageList(InvalidationChunk **destHdr,
  *				Invalidation set support functions
  *
  * These routines understand about the division of a logical invalidation
- * list into separate physical lists for catcache and relcache/smgr entries.
+ * list into separate physical lists for catcache and relcache entries.
  * ----------------------------------------------------------------
  */
 
@@ -345,27 +345,6 @@ AddRelcacheInvalidationMessage(InvalidationListHeader *hdr,
 	msg.rc.id = SHAREDINVALRELCACHE_ID;
 	msg.rc.dbId = dbId;
 	msg.rc.relId = relId;
-	AddInvalidationMessage(&hdr->rclist, &msg);
-}
-
-/*
- * Add an smgr inval entry
- */
-static void
-AddSmgrInvalidationMessage(InvalidationListHeader *hdr,
-						   RelFileNode rnode)
-{
-	SharedInvalidationMessage msg;
-
-	/* Don't add a duplicate item */
-	ProcessMessageList(hdr->rclist,
-					   if (msg->sm.id == SHAREDINVALSMGR_ID &&
-						   RelFileNodeEquals(msg->sm.rnode, rnode))
-					   return);
-
-	/* OK, add the item */
-	msg.sm.id = SHAREDINVALSMGR_ID;
-	msg.sm.rnode = rnode;
 	AddInvalidationMessage(&hdr->rclist, &msg);
 }
 
@@ -452,23 +431,6 @@ RegisterRelcacheInvalidation(Oid dbId, Oid relId)
 	 */
 	if (RelationIdIsInInitFile(relId))
 		transInvalInfo->RelcacheInitFileInval = true;
-}
-
-/*
- * RegisterSmgrInvalidation
- *
- * As above, but register an smgr invalidation event.
- */
-static void
-RegisterSmgrInvalidation(RelFileNode rnode)
-{
-	AddSmgrInvalidationMessage(&transInvalInfo->CurrentCmdInvalidMsgs,
-							   rnode);
-
-	/*
-	 * As above, just in case there is not an associated catalog change.
-	 */
-	(void) GetCurrentCommandId(true);
 }
 
 /*
@@ -606,35 +568,12 @@ PrepareForTupleInvalidation(Relation relation, HeapTuple tuple)
 	if (tupleRelId == RelationRelationId)
 	{
 		Form_pg_class classtup = (Form_pg_class) GETSTRUCT(tuple);
-		RelFileNode rnode;
 
 		relationId = HeapTupleGetOid(tuple);
 		if (classtup->relisshared)
 			databaseId = InvalidOid;
 		else
 			databaseId = MyDatabaseId;
-
-		/*
-		 * We need to send out an smgr inval as well as a relcache inval. This
-		 * is needed because other backends might possibly possess smgr cache
-		 * but not relcache entries for the target relation.
-		 *
-		 * Note: during a pg_class row update that assigns a new relfilenode
-		 * or reltablespace value, we will be called on both the old and new
-		 * tuples, and thus will broadcast invalidation messages showing both
-		 * the old and new RelFileNode values.	This ensures that other
-		 * backends will close smgr references to the old file.
-		 *
-		 * XXX possible future cleanup: it might be better to trigger smgr
-		 * flushes explicitly, rather than indirectly from pg_class updates.
-		 */
-		if (classtup->reltablespace)
-			rnode.spcNode = classtup->reltablespace;
-		else
-			rnode.spcNode = MyDatabaseTableSpace;
-		rnode.dbNode = databaseId;
-		rnode.relNode = classtup->relfilenode;
-		RegisterSmgrInvalidation(rnode);
 	}
 	else if (tupleRelId == AttributeRelationId)
 	{
@@ -902,7 +841,7 @@ xactGetCommittedInvalidationMessages(SharedInvalidationMessage **msgs,
  */
 void
 ProcessCommittedInvalidationMessages(SharedInvalidationMessage *msgs,
-										int nmsgs, bool RelcacheInitFileInval)
+									 int nmsgs, bool RelcacheInitFileInval)
 {
 	Oid 		dboid = 0;
 	bool		invalidate_global = false;
@@ -1251,10 +1190,6 @@ CacheInvalidateHeapTuple(Relation relation, HeapTuple tuple)
  * This is used in places that need to force relcache rebuild but aren't
  * changing any of the tuples recognized as contributors to the relcache
  * entry by PrepareForTupleInvalidation.  (An example is dropping an index.)
- * We assume in particular that relfilenode/reltablespace aren't changing
- * (so the rd_node value is still good).
- *
- * XXX most callers of this probably don't need to force an smgr flush.
  */
 void
 CacheInvalidateRelcache(Relation relation)
@@ -1269,7 +1204,6 @@ CacheInvalidateRelcache(Relation relation)
 		databaseId = MyDatabaseId;
 
 	RegisterRelcacheInvalidation(databaseId, relationId);
-	RegisterSmgrInvalidation(relation->rd_node);
 }
 
 /*
@@ -1282,22 +1216,13 @@ CacheInvalidateRelcacheByTuple(HeapTuple classTuple)
 	Form_pg_class classtup = (Form_pg_class) GETSTRUCT(classTuple);
 	Oid			databaseId;
 	Oid			relationId;
-	RelFileNode rnode;
 
 	relationId = HeapTupleGetOid(classTuple);
 	if (classtup->relisshared)
 		databaseId = InvalidOid;
 	else
 		databaseId = MyDatabaseId;
-	if (classtup->reltablespace)
-		rnode.spcNode = classtup->reltablespace;
-	else
-		rnode.spcNode = MyDatabaseTableSpace;
-	rnode.dbNode = databaseId;
-	rnode.relNode = classtup->relfilenode;
-
 	RegisterRelcacheInvalidation(databaseId, relationId);
-	RegisterSmgrInvalidation(rnode);
 }
 
 /*
@@ -1319,6 +1244,39 @@ CacheInvalidateRelcacheByRelid(Oid relid)
 	CacheInvalidateRelcacheByTuple(tup);
 	ReleaseSysCache(tup);
 }
+
+
+/*
+ * CacheInvalidateSmgr
+ *		Register invalidation of smgr references to a physical relation.
+ *
+ * Sending this type of invalidation msg forces other backends to close open
+ * smgr entries for the rel.  This should be done to flush dangling open-file
+ * references when the physical rel is being dropped or truncated.  Because
+ * these are nontransactional (i.e., not-rollback-able) operations, we just
+ * send the inval message immediately without any queuing.
+ *
+ * Note: in most cases there will have been a relcache flush issued against
+ * the rel at the logical level.  We need a separate smgr-level flush because
+ * it is possible for backends to have open smgr entries for rels they don't
+ * have a relcache entry for, e.g. because the only thing they ever did with
+ * the rel is write out dirty shared buffers.
+ *
+ * Note: because these messages are nontransactional, they won't be captured
+ * in commit/abort WAL entries.  Instead, calls to CacheInvalidateSmgr()
+ * should happen in low-level smgr.c routines, which are executed while
+ * replaying WAL as well as when creating it.
+ */
+void
+CacheInvalidateSmgr(RelFileNode rnode)
+{
+	SharedInvalidationMessage msg;
+
+	msg.sm.id = SHAREDINVALSMGR_ID;
+	msg.sm.rnode = rnode;
+	SendSharedInvalidMessages(&msg, 1);
+}
+
 
 /*
  * CacheRegisterSyscacheCallback

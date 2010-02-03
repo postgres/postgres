@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.368 2010/01/28 23:21:11 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.369 2010/02/03 01:14:16 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -70,6 +70,10 @@
 #include "utils/tqual.h"
 
 
+/* Kluge for upgrade-in-place support */
+Oid binary_upgrade_next_heap_relfilenode = InvalidOid;
+Oid binary_upgrade_next_toast_relfilenode = InvalidOid;
+
 static void AddNewRelationTuple(Relation pg_class_desc,
 					Relation new_rel_desc,
 					Oid new_rel_oid,
@@ -97,9 +101,6 @@ static Node *cookConstraint(ParseState *pstate,
 			   Node *raw_constraint,
 			   char *relname);
 static List *insert_ordered_unique_oid(List *list, Oid datum);
-
-Oid binary_upgrade_next_heap_relfilenode = InvalidOid;
-Oid binary_upgrade_next_toast_relfilenode = InvalidOid;
 
 
 /* ----------------------------------------------------------------
@@ -955,29 +956,31 @@ heap_create_with_catalog(const char *relname,
 					 errmsg("only shared relations can be placed in pg_global tablespace")));
 	}
 
-	if ((relkind == RELKIND_RELATION || relkind == RELKIND_SEQUENCE ||
-		 relkind == RELKIND_VIEW || relkind == RELKIND_COMPOSITE_TYPE) &&
-		OidIsValid(binary_upgrade_next_heap_relfilenode))
+	/*
+	 * Allocate an OID for the relation, unless we were told what to use.
+	 *
+	 * The OID will be the relfilenode as well, so make sure it doesn't
+	 * collide with either pg_class OIDs or existing physical files.
+	 */
+	if (!OidIsValid(relid))
 	{
-		relid = binary_upgrade_next_heap_relfilenode;
-		binary_upgrade_next_heap_relfilenode = InvalidOid;
-	}
-	else if (relkind == RELKIND_TOASTVALUE &&
-		OidIsValid(binary_upgrade_next_toast_relfilenode))
-	{
-		relid = binary_upgrade_next_toast_relfilenode;
-		binary_upgrade_next_toast_relfilenode = InvalidOid;
-	}
-	else if (!OidIsValid(relid))
-	{
-		/*
-		 * Allocate an OID for the relation, unless we were told what to use.
-		 *
-		 * The OID will be the relfilenode as well, so make sure it doesn't
-		 * collide with either pg_class OIDs or existing physical files.
-		 */
-		relid = GetNewRelFileNode(reltablespace, shared_relation,
-								  pg_class_desc);
+		/* Use binary-upgrade overrides if applicable */
+		if (OidIsValid(binary_upgrade_next_heap_relfilenode) &&
+			(relkind == RELKIND_RELATION || relkind == RELKIND_SEQUENCE ||
+			 relkind == RELKIND_VIEW || relkind == RELKIND_COMPOSITE_TYPE))
+		{
+			relid = binary_upgrade_next_heap_relfilenode;
+			binary_upgrade_next_heap_relfilenode = InvalidOid;
+		}
+		else if (OidIsValid(binary_upgrade_next_toast_relfilenode) &&
+				 relkind == RELKIND_TOASTVALUE)
+		{
+			relid = binary_upgrade_next_toast_relfilenode;
+			binary_upgrade_next_toast_relfilenode = InvalidOid;
+		}
+		else
+			relid = GetNewRelFileNode(reltablespace, shared_relation,
+									  pg_class_desc);
 	}
 
 	/*

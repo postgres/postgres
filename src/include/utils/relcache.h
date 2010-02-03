@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/relcache.h,v 1.66 2010/01/02 16:58:10 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/relcache.h,v 1.67 2010/02/03 01:14:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -71,6 +71,12 @@ extern Relation RelationBuildLocalRelation(const char *relname,
 						   bool shared_relation);
 
 /*
+ * Routine to manage assignment of new relfilenode to a relation
+ */
+extern void RelationSetNewRelfilenode(Relation relation,
+									  TransactionId freezeXid);
+
+/*
  * Routines for flushing/rebuilding relcache entries in various scenarios
  */
 extern void RelationForgetRelation(Oid rid);
@@ -82,8 +88,6 @@ extern void RelationCacheInvalidate(void);
 extern void AtEOXact_RelationCache(bool isCommit);
 extern void AtEOSubXact_RelationCache(bool isCommit, SubTransactionId mySubid,
 						  SubTransactionId parentSubid);
-
-extern void RelationCacheMarkNewRelfilenode(Relation rel);
 
 /*
  * Routines to help manage rebuilding of relcache init files
