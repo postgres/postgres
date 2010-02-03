@@ -8,7 +8,7 @@
  * Darko Prenosil <Darko.Prenosil@finteh.hr>
  * Shridhar Daithankar <shridhar_daithankar@persistent.co.in>
  *
- * $PostgreSQL: pgsql/contrib/dblink/dblink.c,v 1.87 2010/01/24 22:19:38 joe Exp $
+ * $PostgreSQL: pgsql/contrib/dblink/dblink.c,v 1.88 2010/02/03 23:01:11 joe Exp $
  * Copyright (c) 2001-2010, PostgreSQL Global Development Group
  * ALL RIGHTS RESERVED;
  *
@@ -101,6 +101,7 @@ static void dblink_security_check(PGconn *conn, remoteConn *rconn);
 static void dblink_res_error(const char *conname, PGresult *res, const char *dblink_context_msg, bool fail);
 static char *get_connect_string(const char *servername);
 static char *escape_param_str(const char *from);
+static int get_nondropped_natts(Oid relid);
 
 /* Global */
 static remoteConn *pconn = NULL;
@@ -1262,6 +1263,7 @@ dblink_build_sql_insert(PG_FUNCTION_ARGS)
 	int			src_nitems;
 	int			tgt_nitems;
 	char	   *sql;
+	int			nondropped_natts;
 
 	/*
 	 * Convert relname to rel OID.
@@ -1288,6 +1290,15 @@ dblink_build_sql_insert(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("input for number of primary key " \
 						"attributes too large")));
+
+	/*
+	 * ensure we don't ask for more pk attributes than we have
+	 * non-dropped columns
+	 */
+	nondropped_natts = get_nondropped_natts(relid);
+	if (pknumatts > nondropped_natts)
+		ereport(ERROR, (errcode(ERRCODE_SYNTAX_ERROR),
+				errmsg("number of primary key fields exceeds number of specified relation attributes")));
 
 	/*
 	 * Source array is made up of key values that will be used to locate the
@@ -1354,6 +1365,7 @@ dblink_build_sql_delete(PG_FUNCTION_ARGS)
 	int2vector *pkattnums = (int2vector *) PG_GETARG_POINTER(1);
 	int32		pknumatts_tmp = PG_GETARG_INT32(2);
 	ArrayType  *tgt_pkattvals_arry = PG_GETARG_ARRAYTYPE_P(3);
+	int			nondropped_natts;
 	Oid			relid;
 	int16		pknumatts = 0;
 	char	  **tgt_pkattvals;
@@ -1385,6 +1397,15 @@ dblink_build_sql_delete(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("input for number of primary key " \
 						"attributes too large")));
+
+	/*
+	 * ensure we don't ask for more pk attributes than we have
+	 * non-dropped columns
+	 */
+	nondropped_natts = get_nondropped_natts(relid);
+	if (pknumatts > nondropped_natts)
+		ereport(ERROR, (errcode(ERRCODE_SYNTAX_ERROR),
+				errmsg("number of primary key fields exceeds number of specified relation attributes")));
 
 	/*
 	 * Target array is made up of key values that will be used to build the
@@ -1441,6 +1462,7 @@ dblink_build_sql_update(PG_FUNCTION_ARGS)
 	int32		pknumatts_tmp = PG_GETARG_INT32(2);
 	ArrayType  *src_pkattvals_arry = PG_GETARG_ARRAYTYPE_P(3);
 	ArrayType  *tgt_pkattvals_arry = PG_GETARG_ARRAYTYPE_P(4);
+	int			nondropped_natts;
 	Oid			relid;
 	int16		pknumatts = 0;
 	char	  **src_pkattvals;
@@ -1474,6 +1496,15 @@ dblink_build_sql_update(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("input for number of primary key " \
 						"attributes too large")));
+
+	/*
+	 * ensure we don't ask for more pk attributes than we have
+	 * non-dropped columns
+	 */
+	nondropped_natts = get_nondropped_natts(relid);
+	if (pknumatts > nondropped_natts)
+		ereport(ERROR, (errcode(ERRCODE_SYNTAX_ERROR),
+				errmsg("number of primary key fields exceeds number of specified relation attributes")));
 
 	/*
 	 * Source array is made up of key values that will be used to locate the
@@ -2442,3 +2473,28 @@ escape_param_str(const char *str)
 
 	return buf->data;
 }
+
+static int
+get_nondropped_natts(Oid relid)
+{
+	int			nondropped_natts = 0;
+	TupleDesc	tupdesc;
+	Relation	rel;
+	int			natts;
+	int			i;
+
+	rel = relation_open(relid, AccessShareLock);
+	tupdesc = rel->rd_att;
+	natts = tupdesc->natts;
+
+	for (i = 0; i < natts; i++)
+	{
+		if (tupdesc->attrs[i]->attisdropped)
+			continue;
+		nondropped_natts++;
+	}
+
+	relation_close(rel, AccessShareLock);
+	return nondropped_natts;
+}
+
