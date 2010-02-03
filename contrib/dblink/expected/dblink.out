@@ -39,6 +39,9 @@ SELECT dblink_build_sql_insert('foo','1 2',2,'{"0", "a"}','{"99", "xyz"}');
  INSERT INTO foo(f1,f2,f3) VALUES('99','xyz','{a0,b0,c0}')
 (1 row)
 
+-- too many pk fields, should fail
+SELECT dblink_build_sql_insert('foo','1 2 3 4',4,'{"0", "a", "{a0,b0,c0}"}','{"99", "xyz", "{za0,zb0,zc0}"}');
+ERROR:  number of primary key fields exceeds number of specified relation attributes
 -- build an update statement based on a local tuple,
 -- replacing the primary key values with new ones
 SELECT dblink_build_sql_update('foo','1 2',2,'{"0", "a"}','{"99", "xyz"}');
@@ -47,6 +50,9 @@ SELECT dblink_build_sql_update('foo','1 2',2,'{"0", "a"}','{"99", "xyz"}');
  UPDATE foo SET f1 = '99', f2 = 'xyz', f3 = '{a0,b0,c0}' WHERE f1 = '99' AND f2 = 'xyz'
 (1 row)
 
+-- too many pk fields, should fail
+SELECT dblink_build_sql_update('foo','1 2 3 4',4,'{"0", "a", "{a0,b0,c0}"}','{"99", "xyz", "{za0,zb0,zc0}"}');
+ERROR:  number of primary key fields exceeds number of specified relation attributes
 -- build a delete statement based on a local tuple,
 SELECT dblink_build_sql_delete('foo','1 2',2,'{"0", "a"}');
            dblink_build_sql_delete           
@@ -54,6 +60,9 @@ SELECT dblink_build_sql_delete('foo','1 2',2,'{"0", "a"}');
  DELETE FROM foo WHERE f1 = '0' AND f2 = 'a'
 (1 row)
 
+-- too many pk fields, should fail
+SELECT dblink_build_sql_delete('foo','1 2 3 4',4,'{"0", "a", "{a0,b0,c0}"}');
+ERROR:  number of primary key fields exceeds number of specified relation attributes
 -- retest using a quoted and schema qualified table
 CREATE SCHEMA "MySchema";
 CREATE TABLE "MySchema"."Foo"(f1 int, f2 text, f3 text[], primary key (f1,f2));
