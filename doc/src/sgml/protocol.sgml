@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/protocol.sgml,v 1.77 2010/01/15 09:18:59 heikki Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/protocol.sgml,v 1.78 2010/02/03 09:47:19 heikki Exp $ -->
 
 <chapter id="protocol">
  <title>Frontend/Backend Protocol</title>
@@ -4179,12 +4179,65 @@ The commands accepted in walsender mode are:
       already been recycled. On success, server responds with a
       CopyOutResponse message, and backend starts to stream WAL as CopyData
       messages.
+      The payload in CopyData message consists of the following format.
      </para>
 
      <para>
-      The payload in each CopyData message consists of an XLogRecPtr,
-      indicating the starting point of the WAL in the message, immediately
-      followed by the WAL data itself.
+      <variablelist>
+      <varlistentry>
+      <term>
+          XLogData (B)
+      </term>
+      <listitem>
+      <para>
+      <variablelist>
+      <varlistentry>
+      <term>
+          Byte1('w')
+      </term>
+      <listitem>
+      <para>
+          Identifies the message as WAL data.
+      </para>
+      </listitem>
+      </varlistentry>
+      <varlistentry>
+      <term>
+          Int32
+      </term>
+      <listitem>
+      <para>
+          The log file number of the LSN, indicating the starting point of
+          the WAL in the message.
+      </para>
+      </listitem>
+      </varlistentry>
+      <varlistentry>
+      <term>
+          Int32
+      </term>
+      <listitem>
+      <para>
+          The byte offset of the LSN, indicating the starting point of
+          the WAL in the message.
+      </para>
+      </listitem>
+      </varlistentry>
+      <varlistentry>
+      <term>
+          Byte<replaceable>n</replaceable>
+      </term>
+      <listitem>
+      <para>
+          Data that forms part of WAL data stream.
+      </para>
+      </listitem>
+      </varlistentry>
+      </variablelist>
+      </para>
+      </listitem>
+      </varlistentry>
+      </variablelist>
      </para>
      <para>
        A single WAL record is never split across two CopyData messages. When

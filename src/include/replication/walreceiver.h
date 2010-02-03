@@ -5,7 +5,7 @@
  *
  * Portions Copyright (c) 2010-2010, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/replication/walreceiver.h,v 1.5 2010/01/27 15:27:51 heikki Exp $
+ * $PostgreSQL: pgsql/src/include/replication/walreceiver.h,v 1.6 2010/02/03 09:47:19 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -66,7 +66,8 @@ extern WalRcvData *WalRcv;
 typedef bool (*walrcv_connect_type) (char *conninfo, XLogRecPtr startpoint);
 extern PGDLLIMPORT walrcv_connect_type walrcv_connect;
 
-typedef bool (*walrcv_receive_type) (int timeout, XLogRecPtr *recptr, char **buffer, int *len);
+typedef bool (*walrcv_receive_type) (int timeout, unsigned char *type,
+									 char **buffer, int *len);
 extern PGDLLIMPORT walrcv_receive_type walrcv_receive;
 
 typedef void (*walrcv_disconnect_type) (void);

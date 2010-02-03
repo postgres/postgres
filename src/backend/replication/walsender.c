@@ -30,7 +30,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/replication/walsender.c,v 1.4 2010/01/27 16:41:09 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/replication/walsender.c,v 1.5 2010/02/03 09:47:19 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -659,6 +659,7 @@ XLogSend(StringInfo outMsg)
 		 * have the same byte order. If they have different byte order, we
 		 * don't reach here.
 		 */
+		pq_sendbyte(outMsg, 'w');
 		pq_sendbytes(outMsg, (char *) &startptr, sizeof(startptr));
 
 		if (endptr.xlogid != startptr.xlogid)

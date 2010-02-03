@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/replication/libpqwalreceiver/libpqwalreceiver.c,v 1.2 2010/01/20 11:58:44 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/replication/libpqwalreceiver/libpqwalreceiver.c,v 1.3 2010/02/03 09:47:19 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,8 +48,8 @@ static char *recvBuf = NULL;
 
 /* Prototypes for interface functions */
 static bool libpqrcv_connect(char *conninfo, XLogRecPtr startpoint);
-static bool libpqrcv_receive(int timeout, XLogRecPtr *recptr, char **buffer,
-			  int *len);
+static bool libpqrcv_receive(int timeout, unsigned char *type,
+							 char **buffer, int *len);
 static void libpqrcv_disconnect(void);
 
 /* Prototypes for private functions */
@@ -236,13 +236,13 @@ libpqrcv_disconnect(void)
 }
 
 /*
- * Receive any WAL records available from XLOG stream, blocking for
+ * Receive a message available from XLOG stream, blocking for
  * maximum of 'timeout' ms.
  *
  * Returns:
  *
- *   True if data was received. *recptr, *buffer and *len are set to
- *   the WAL location of the received data, buffer holding it, and length,
+ *   True if data was received. *type, *buffer and *len are set to
+ *   the type of the received data, buffer holding it, and length,
  *   respectively.
  *
  *   False if no data was available within timeout, or wait was interrupted
@@ -254,7 +254,7 @@ libpqrcv_disconnect(void)
  * ereports on error.
  */
 static bool
-libpqrcv_receive(int timeout, XLogRecPtr *recptr, char **buffer, int *len)
+libpqrcv_receive(int timeout, unsigned char *type, char **buffer, int *len)
 {
 	int			rawlen;
 
@@ -275,14 +275,14 @@ libpqrcv_receive(int timeout, XLogRecPtr *recptr, char **buffer, int *len)
 
 		if (PQconsumeInput(streamConn) == 0)
 			ereport(ERROR,
-					(errmsg("could not read xlog records: %s",
+					(errmsg("could not receive data from XLOG stream: %s",
 							PQerrorMessage(streamConn))));
 	}
 	justconnected = false;
 
 	/* Receive CopyData message */
 	rawlen = PQgetCopyData(streamConn, &recvBuf, 1);
-	if (rawlen == 0)	/* no records available yet, then return */
+	if (rawlen == 0)	/* no data available yet, then return */
 		return false;
 	if (rawlen == -1)	/* end-of-streaming or error */
 	{
@@ -297,22 +297,18 @@ libpqrcv_receive(int timeout, XLogRecPtr *recptr, char **buffer, int *len)
 		}
 		PQclear(res);
 		ereport(ERROR,
-				(errmsg("could not read xlog records: %s",
+				(errmsg("could not receive data from XLOG stream: %s",
 						PQerrorMessage(streamConn))));
 	}
 	if (rawlen < -1)
 		ereport(ERROR,
-				(errmsg("could not read xlog records: %s",
+				(errmsg("could not receive data from XLOG stream: %s",
 						PQerrorMessage(streamConn))));
 
-	if (rawlen < sizeof(XLogRecPtr))
-		ereport(ERROR,
-				(errmsg("invalid WAL message received from primary")));
-
-	/* Return received WAL records to caller */
-	*recptr = *((XLogRecPtr *) recvBuf);
-	*buffer = recvBuf + sizeof(XLogRecPtr);
-	*len = rawlen - sizeof(XLogRecPtr);
+	/* Return received messages to caller */
+	*type = *((unsigned char *) recvBuf);
+	*buffer = recvBuf + sizeof(*type);
+	*len = rawlen - sizeof(*type);
 
 	return true;
 }
