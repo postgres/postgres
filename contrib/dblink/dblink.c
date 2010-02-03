@@ -85,6 +85,7 @@ static Oid	get_relid_from_relname(text *relname_text);
 static char *generate_relation_name(Oid relid);
 static char *connstr_strip_password(const char *connstr);
 static void dblink_security_check(PGconn *conn, remoteConn *rconn, const char *connstr);
+static int get_nondropped_natts(Oid relid);
 
 /* Global */
 static remoteConn *pconn = NULL;
@@ -1169,6 +1170,7 @@ dblink_build_sql_insert(PG_FUNCTION_ARGS)
 	int16		typlen;
 	bool		typbyval;
 	char		typalign;
+	int			nondropped_natts;
 
 	relname_text = PG_GETARG_TEXT_P(0);
 
@@ -1202,6 +1204,15 @@ dblink_build_sql_insert(PG_FUNCTION_ARGS)
 
 	src_pkattvals_arry = PG_GETARG_ARRAYTYPE_P(3);
 	tgt_pkattvals_arry = PG_GETARG_ARRAYTYPE_P(4);
+
+	/*
+	 * ensure we don't ask for more pk attributes than we have
+	 * non-dropped columns
+	 */
+	nondropped_natts = get_nondropped_natts(relid);
+	if (pknumatts > nondropped_natts)
+		ereport(ERROR, (errcode(ERRCODE_SYNTAX_ERROR),
+				errmsg("number of primary key fields exceeds number of specified relation attributes")));
 
 	/*
 	 * Source array is made up of key values that will be used to locate the
@@ -1316,6 +1327,7 @@ dblink_build_sql_delete(PG_FUNCTION_ARGS)
 	int16		typlen;
 	bool		typbyval;
 	char		typalign;
+	int			nondropped_natts;
 
 	relname_text = PG_GETARG_TEXT_P(0);
 
@@ -1348,6 +1360,15 @@ dblink_build_sql_delete(PG_FUNCTION_ARGS)
 				 errmsg("number of key attributes must be > 0")));
 
 	tgt_pkattvals_arry = PG_GETARG_ARRAYTYPE_P(3);
+
+	/*
+	 * ensure we don't ask for more pk attributes than we have
+	 * non-dropped columns
+	 */
+	nondropped_natts = get_nondropped_natts(relid);
+	if (pknumatts > nondropped_natts)
+		ereport(ERROR, (errcode(ERRCODE_SYNTAX_ERROR),
+				errmsg("number of primary key fields exceeds number of specified relation attributes")));
 
 	/*
 	 * Target array is made up of key values that will be used to build the
@@ -1438,6 +1459,7 @@ dblink_build_sql_update(PG_FUNCTION_ARGS)
 	int16		typlen;
 	bool		typbyval;
 	char		typalign;
+	int			nondropped_natts;
 
 	relname_text = PG_GETARG_TEXT_P(0);
 
@@ -1471,6 +1493,15 @@ dblink_build_sql_update(PG_FUNCTION_ARGS)
 
 	src_pkattvals_arry = PG_GETARG_ARRAYTYPE_P(3);
 	tgt_pkattvals_arry = PG_GETARG_ARRAYTYPE_P(4);
+
+	/*
+	 * ensure we don't ask for more pk attributes than we have
+	 * non-dropped columns
+	 */
+	nondropped_natts = get_nondropped_natts(relid);
+	if (pknumatts > nondropped_natts)
+		ereport(ERROR, (errcode(ERRCODE_SYNTAX_ERROR),
+				errmsg("number of primary key fields exceeds number of specified relation attributes")));
 
 	/*
 	 * Source array is made up of key values that will be used to locate the
@@ -2304,3 +2335,28 @@ dblink_security_check(PGconn *conn, remoteConn *rconn, const char *connstr)
 			PQfinish(conn);
 	}
 }
+
+static int
+get_nondropped_natts(Oid relid)
+{
+	int			nondropped_natts = 0;
+	TupleDesc	tupdesc;
+	Relation	rel;
+	int			natts;
+	int			i;
+
+	rel = relation_open(relid, AccessShareLock);
+	tupdesc = rel->rd_att;
+	natts = tupdesc->natts;
+
+	for (i = 0; i < natts; i++)
+	{
+		if (tupdesc->attrs[i]->attisdropped)
+			continue;
+		nondropped_natts++;
+	}
+
+	relation_close(rel, AccessShareLock);
+	return nondropped_natts;
+}
+
