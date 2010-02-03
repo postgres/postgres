@@ -22,7 +22,7 @@ main(void)
 	exec sql connect to REGRESSDB1;
 
 	exec sql create table nantest1 (id int4, d float8);
-	exec sql insert into nantest1 (id, d) values (1, 'nan'::float8), (2, 'inf'::float8), (3, '-inf'::float8);
+	exec sql insert into nantest1 (id, d) values (1, 'nan'::float8), (2, 'infinity'::float8), (3, '-infinity'::float8);
 
 	exec sql declare cur cursor for select id, d, d from nantest1;
 	exec sql open cur;

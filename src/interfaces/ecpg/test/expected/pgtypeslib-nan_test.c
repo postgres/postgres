@@ -66,7 +66,7 @@ if (sqlca.sqlcode < 0) sqlprint ( );}
 if (sqlca.sqlcode < 0) sqlprint ( );}
 #line 24 "nan_test.pgc"
 
-	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "insert into nantest1 ( id , d ) values ( 1 , 'nan' :: float8 ) , ( 2 , 'inf' :: float8 ) , ( 3 , '-inf' :: float8 )", ECPGt_EOIT, ECPGt_EORT);
+	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "insert into nantest1 ( id , d ) values ( 1 , 'nan' :: float8 ) , ( 2 , 'infinity' :: float8 ) , ( 3 , '-infinity' :: float8 )", ECPGt_EOIT, ECPGt_EORT);
 #line 25 "nan_test.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint ( );}

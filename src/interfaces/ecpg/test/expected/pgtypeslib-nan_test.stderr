@@ -8,7 +8,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 24: OK: CREATE TABLE
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 25: query: insert into nantest1 ( id , d ) values ( 1 , 'nan' :: float8 ) , ( 2 , 'inf' :: float8 ) , ( 3 , '-inf' :: float8 ); with 0 parameter(s) on connection regress1
+[NO_PID]: ecpg_execute on line 25: query: insert into nantest1 ( id , d ) values ( 1 , 'nan' :: float8 ) , ( 2 , 'infinity' :: float8 ) , ( 3 , '-infinity' :: float8 ); with 0 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 25: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
