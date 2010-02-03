@@ -446,6 +446,7 @@ select * from clstr_temp;
     2 | two
 (2 rows)
 
+drop table clstr_temp;
 -- clean up
 \c -
 DROP TABLE clustertest;
