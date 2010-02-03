@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.91 2010/02/02 16:09:11 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.92 2010/02/03 03:25:55 tgl Exp $ */
 
 /*
  * The aim is to get a simpler inteface to the database routines.
@@ -17,6 +17,7 @@
 #include "postgres_fe.h"
 
 #include <locale.h>
+#include <float.h>
 #include <math.h>
 
 #include "pg_type.h"
