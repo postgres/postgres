@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/install-win32.sgml,v 1.55 2010/01/12 20:13:32 mha Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/install-win32.sgml,v 1.56 2010/02/03 17:25:05 momjian Exp $ -->
 
 <chapter id="install-win32">
  <title>Installation from Source Code on <productname>Windows</productname></title>
@@ -388,7 +388,7 @@
     </userinput>
    </screen>
 
-   To change the schedule used (default is the parallel), append it to the
+   To change the schedule used (default is parallel), append it to the
    command line like:
    <screen>
     <userinput>
@@ -544,9 +544,10 @@
   Normally you do not need to install any of the client files. You should
   place the <filename>libpq.dll</filename> file in the same directory
   as your applications executable file. Do not install
-  <filename>libpq.dll</filename> into your Windows, System or System32
-  directory unless absolutely necessary.
-  If this file is installed using a setup program, it should
+  <filename>libpq.dll</filename> into your <filename>Windows</>,
+  <filename>System</> or <filename>System32</> directory unless
+  absolutely necessary.
+  If this file is installed using a setup program, then it should
   be installed with version checking using the
   <symbol>VERSIONINFO</symbol> resource included in the file, to
   ensure that a newer version of the library is not overwritten.

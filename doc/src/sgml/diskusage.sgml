@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/diskusage.sgml,v 1.18 2007/01/31 20:56:16 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/diskusage.sgml,v 1.19 2010/02/03 17:25:05 momjian Exp $ -->
 
 <chapter id="diskusage">
  <title>Monitoring Disk Usage</title>
@@ -18,10 +18,10 @@
   <para>
    Each table has a primary heap disk file where most of the data is
    stored. If the table has any columns with potentially-wide values,
-   there is also a <acronym>TOAST</> file associated with the table,
+   there also might be a <acronym>TOAST</> file associated with the table,
    which is used to store values too wide to fit comfortably in the main
    table (see <xref linkend="storage-toast">).  There will be one index on the
-   <acronym>TOAST</> table, if present. There might also be indexes associated
+   <acronym>TOAST</> table, if present. There also might be indexes associated
    with the base table.  Each table and index is stored in a separate disk
    file &mdash; possibly more than one file, if the file would exceed one
    gigabyte.  Naming conventions for these files are described in <xref
@@ -29,7 +29,7 @@
   </para>
 
   <para>
-   You can monitor disk space from three ways:  using
+   You can monitor disk space three ways:  using
    SQL functions listed in <xref linkend="functions-admin-dbsize">,
    using <command>VACUUM</> information, and from the command line 
    using the tools in <filename>contrib/oid2name</>.  The SQL functions
@@ -60,13 +60,15 @@ SELECT relfilenode, relpages FROM pg_class WHERE relname = 'customer';
    like the following:
 <programlisting>
 SELECT relname, relpages
-    FROM pg_class,
-         (SELECT reltoastrelid FROM pg_class
-          WHERE relname = 'customer') ss
-    WHERE oid = ss.reltoastrelid
-       OR oid = (SELECT reltoastidxid FROM pg_class
-                 WHERE oid = ss.reltoastrelid)
-    ORDER BY relname;
+FROM pg_class,
+     (SELECT reltoastrelid
+      FROM pg_class
+      WHERE relname = 'customer') AS ss
+WHERE oid = ss.reltoastrelid OR
+      oid = (SELECT reltoastidxid
+             FROM pg_class
+             WHERE oid = ss.reltoastrelid)
+ORDER BY relname;
 
        relname        | relpages 
 ----------------------+----------
@@ -79,11 +81,11 @@ SELECT relname, relpages
    You can easily display index sizes, too:
 <programlisting>
 SELECT c2.relname, c2.relpages
-    FROM pg_class c, pg_class c2, pg_index i
-    WHERE c.relname = 'customer'
-        AND c.oid = i.indrelid
-        AND c2.oid = i.indexrelid
-    ORDER BY c2.relname;
+FROM pg_class c, pg_class c2, pg_index i
+WHERE c.relname = 'customer' AND
+      c.oid = i.indrelid AND
+      c2.oid = i.indexrelid
+ORDER BY c2.relname;
 
        relname        | relpages 
 ----------------------+----------
@@ -95,7 +97,9 @@ SELECT c2.relname, c2.relpages
    It is easy to find your largest tables and indexes using this
    information:
 <programlisting>
-SELECT relname, relpages FROM pg_class ORDER BY relpages DESC;
+SELECT relname, relpages
+FROM pg_class
+ORDER BY relpages DESC;
 
        relname        | relpages 
 ----------------------+----------
@@ -105,9 +109,8 @@ SELECT relname, relpages FROM pg_class ORDER BY relpages DESC;
   </para>
 
   <para>
-   You can also use <filename>contrib/oid2name</> to show disk usage. See
-   <filename>README.oid2name</> in that directory for examples. It includes a script that
-   shows disk usage for each database.
+   You can also use <filename>contrib/oid2name</> to show disk usage; see
+   <xref linkend="oid2name"> for more details and examples.
   </para>
  </sect1>
 
@@ -116,7 +119,7 @@ SELECT relname, relpages FROM pg_class ORDER BY relpages DESC;
 
   <para>
    The most important disk monitoring task of a database administrator
-   is to make sure the disk doesn't grow full.  A filled data disk will
+   is to make sure the disk doesn't become full.  A filled data disk will
    not result in data corruption, but it might prevent useful activity
    from occurring. If the disk holding the WAL files grows full, database
    server panic and consequent shutdown might occur.
@@ -140,7 +143,7 @@ SELECT relname, relpages FROM pg_class ORDER BY relpages DESC;
    If your system supports per-user disk quotas, then the database
    will naturally be subject to whatever quota is placed on the user
    the server runs as.  Exceeding the quota will have the same bad
-   effects as running out of space entirely.
+   effects as running out of disk space entirely.
   </para>
  </sect1>
 </chapter>

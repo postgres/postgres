@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/user-manag.sgml,v 1.41 2008/10/28 12:10:42 mha Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/user-manag.sgml,v 1.42 2010/02/03 17:25:06 momjian Exp $ -->
 
 <chapter id="user-manag">
  <title>Database Roles and Privileges</title>
@@ -11,8 +11,7 @@
   tables) and can assign privileges on those objects to other roles to
   control who has access to which objects.  Furthermore, it is possible
   to grant <firstterm>membership</> in a role to another role, thus
-  allowing the member role use of privileges assigned to the role it is
-  a member of.
+  allowing the member role to use privileges assigned to another role.
  </para>
 
  <para>
@@ -110,9 +109,9 @@ SELECT rolname FROM pg_roles;
   </para>
 
   <para>
-   Every connection to the database server is made in the name of some
+   Every connection to the database server is made using the name of some
    particular role, and this role determines the initial access privileges for
-   commands issued on that connection.
+   commands issued in that connection.
    The role name to use for a particular database
    connection is indicated by the client that is initiating the
    connection request in an application-specific fashion. For example,
@@ -129,11 +128,11 @@ SELECT rolname FROM pg_roles;
    The set of database roles a given client connection can connect as
    is determined by the client authentication setup, as explained in
    <xref linkend="client-authentication">. (Thus, a client is not
-   necessarily limited to connect as the role with the same name as
+   limited to connect as the role matching
    its operating system user, just as a person's login name 
    need not match her real name.)  Since the role
    identity determines the set of privileges available to a connected
-   client, it is important to carefully configure this when setting up
+   client, it is important to carefully configure privileges when setting up
    a multiuser environment.
   </para>
  </sect1>
@@ -152,7 +151,7 @@ SELECT rolname FROM pg_roles;
        <para>
         Only roles that have the <literal>LOGIN</> attribute can be used
         as the initial role name for a database connection.  A role with
-        the <literal>LOGIN</> attribute can be considered the same thing
+        the <literal>LOGIN</> attribute can be considered the same
         as a <quote>database user</>.  To create a role with login privilege,
         use either:
 <programlisting>
@@ -204,7 +203,7 @@ CREATE USER <replaceable>name</replaceable>;
         other roles, too, as well as grant or revoke membership in them.
         However, to create, alter, drop, or change membership of a
         superuser role, superuser status is required;
-        <literal>CREATEROLE</> is not sufficient for that.
+        <literal>CREATEROLE</> is insufficient for that.
        </para>
       </listitem>
      </varlistentry>
@@ -250,15 +249,15 @@ CREATE USER <replaceable>name</replaceable>;
    want to disable index scans (hint: not a good idea) anytime you
    connect, you can use:
 <programlisting>
-ALTER ROLE myname SET enable_indexscan TO off;
+ALTER ROLE myname SET statement_timeout = '5min';
 </programlisting>
    This will save the setting (but not set it immediately).  In
    subsequent connections by this role it will appear as though
-   <literal>SET enable_indexscan TO off;</literal> had been executed
+   <literal>SET statement_timeout = '5min'</literal> had been executed
    just before the session started.
    You can still alter this setting during the session; it will only
    be the default. To remove a role-specific default setting, use
-   <literal>ALTER ROLE <replaceable>rolename</> RESET <replaceable>varname</>;</literal>.
+   <literal>ALTER ROLE <replaceable>rolename</> RESET <replaceable>varname</></literal>.
    Note that role-specific defaults attached to roles without
    <literal>LOGIN</> privilege are fairly useless, since they will never
    be invoked.
@@ -381,15 +380,16 @@ REVOKE <replaceable>group_role</replaceable> FROM <replaceable>role1</replaceabl
   </para>
 
   <para>
-   The members of a role can use the privileges of the group role in two
+   The members of a group role can use the privileges of the role in two
    ways.  First, every member of a group can explicitly do
    <xref linkend="sql-set-role" endterm="sql-set-role-title"> to
    temporarily <quote>become</> the group role.  In this state, the
    database session has access to the privileges of the group role rather
    than the original login role, and any database objects created are
    considered owned by the group role not the login role.  Second, member
-   roles that have the <literal>INHERIT</> attribute automatically have use of
-   privileges of roles they are members of.  As an example, suppose we have
+   roles that have the <literal>INHERIT</> attribute automatically inherit the
+   privileges of roles of which they are members, including their
+   <literal>INHERIT</> attributes.  As an example, suppose we have
    done:
 <programlisting>
 CREATE ROLE joe LOGIN INHERIT;
@@ -454,7 +454,7 @@ RESET ROLE;
    special privileges, but they are never inherited as ordinary privileges
    on database objects are.  You must actually <command>SET ROLE</> to a
    specific role having one of these attributes in order to make use of
-   the attribute.  Continuing the above example, we might well choose to
+   the attribute.  Continuing the above example, we might choose to
    grant <literal>CREATEDB</> and <literal>CREATEROLE</> to the
    <literal>admin</> role.  Then a session connecting as role <literal>joe</>
    would not have these privileges immediately, only after doing
@@ -478,7 +478,7 @@ DROP ROLE <replaceable>name</replaceable>;
  </sect1>
 
  <sect1 id="perm-functions">
-  <title>Functions and Triggers</title>
+  <title>Function and Trigger Security</title>
 
   <para>
    Functions and triggers allow users to insert code into the backend

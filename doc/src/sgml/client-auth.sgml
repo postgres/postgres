@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.130 2010/02/02 19:09:36 mha Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.131 2010/02/03 17:25:05 momjian Exp $ -->
 
 <chapter id="client-authentication">
  <title>Client Authentication</title>
@@ -162,7 +162,7 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
      <term><literal>hostnossl</literal></term>
      <listitem>
       <para>
-       This record type has the opposite logic to <literal>hostssl</>:
+       This record type has the opposite behavior of <literal>hostssl</>;
        it only matches connection attempts made over
        TCP/IP that do not use <acronym>SSL</acronym>.
       </para>
@@ -218,7 +218,7 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
       <para>
        Specifies the client machine IP address range that this record
        matches. This field contains an IP address in standard dotted decimal
-       notation and a CIDR mask length. (IP addresses can only be
+       notation and a <acronym>CIDR</> mask length. (IP addresses can only be
        specified numerically, not as domain or host names.)  The mask
        length indicates the number of high-order bits of the client
        IP address that must match.  Bits to the right of this must
@@ -238,7 +238,8 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
        Typical examples of a <replaceable>CIDR-address</replaceable> are
        <literal>172.20.143.89/32</literal> for a single host, or
        <literal>172.20.143.0/24</literal> for a small network, or
-       <literal>10.6.0.0/16</literal> for a larger one.
+       <literal>10.6.0.0/16</literal> for a larger one.  
+       <literal>0.0.0.0/0</literal> (<quote>all balls</>) represents all addresses.
        To specify a single host, use a CIDR mask of 32 for IPv4 or
        128 for IPv6.  In a network address, do not omit trailing zeroes.
       </para>
@@ -296,8 +297,8 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
           Allow the connection unconditionally. This method
           allows anyone that can connect to the
           <productname>PostgreSQL</productname> database server to login as
-          any <productname>PostgreSQL</productname> user they like,
-          without the need for a password.  See <xref
+          any <productname>PostgreSQL</productname> user they wish,
+          without the need for a password or any other authentication.  See <xref
           linkend="auth-trust"> for details.
          </para>
         </listitem>
@@ -308,7 +309,10 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
         <listitem>
          <para>
           Reject the connection unconditionally. This is useful for
-          <quote>filtering out</> certain hosts from a group.
+          <quote>filtering out</> certain hosts from a group, e.g. a
+          <literal>reject</> line blocks a specific host from connecting,
+          but a later line allows the remaining hosts in a specific
+          network to connect.
          </para>
         </listitem>
        </varlistentry>
@@ -388,7 +392,7 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
         <term><literal>ldap</></term>
         <listitem>
          <para>
-          Authenticate using an LDAP server. See <xref
+          Authenticate using an <acronym>LDAP</> server. See <xref
           linkend="auth-ldap"> for details.
          </para>
         </listitem>
@@ -473,7 +477,7 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
    the main server process receives a
    <systemitem>SIGHUP</systemitem><indexterm><primary>SIGHUP</primary></indexterm>
    signal. If you edit the file on an
-   active system, you will need to signal the server
+   active system, you will need to signal the postmaster
    (using <literal>pg_ctl reload</> or <literal>kill -HUP</>) to make it
    re-read the file.
   </para>
@@ -485,7 +489,7 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
     <literal>CONNECT</> privilege for the database.  If you wish to
     restrict which users can connect to which databases, it's usually
     easier to control this by granting/revoking <literal>CONNECT</> privilege
-    than to put the rules into <filename>pg_hba.conf</filename> entries.
+    than to put the rules in <filename>pg_hba.conf</filename> entries.
    </para>
   </tip>
 
@@ -498,7 +502,7 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
    <example id="example-pg-hba.conf">
     <title>Example <filename>pg_hba.conf</filename> entries</title>
 <programlisting>
-# Allow any user on the local system to connect to any database under
+# Allow any user on the local system to connect to any database with
 # any database user name using Unix-domain sockets (the default for local
 # connections).
 #
@@ -517,7 +521,7 @@ host    all             all             127.0.0.1       255.255.255.255     trus
 
 # Allow any user from any host with IP address 192.168.93.x to connect
 # to database "postgres" as the same user name that ident reports for
-# the connection (typically the Unix user name).
+# the connection (typically the operating system user name).
 #
 # TYPE  DATABASE        USER            CIDR-ADDRESS            METHOD
 host    postgres        all             192.168.93.0/24         ident
@@ -531,8 +535,8 @@ host    postgres        all             192.168.12.10/32        md5
 # In the absence of preceding "host" lines, these two lines will
 # reject all connections from 192.168.54.1 (since that entry will be
 # matched first), but allow Kerberos 5 connections from anywhere else
-# on the Internet.  The zero mask means that no bits of the host IP
-# address are considered so it matches any host.
+# on the Internet.  The zero mask causes no bits of the host IP
+# address to be considered, so it matches any host.
 #
 # TYPE  DATABASE        USER            CIDR-ADDRESS            METHOD
 host    all             all             192.168.54.1/32         reject
@@ -654,7 +658,7 @@ mymap   /^(.*)@otherdomain\.com$   guest
    when the main server process receives a
    <systemitem>SIGHUP</systemitem><indexterm><primary>SIGHUP</primary></indexterm>
    signal. If you edit the file on an
-   active system, you will need to signal the server
+   active system, you will need to signal the postmaster
    (using <literal>pg_ctl reload</> or <literal>kill -HUP</>) to make it
    re-read the file.
   </para>
@@ -663,16 +667,16 @@ mymap   /^(.*)@otherdomain\.com$   guest
    A <filename>pg_ident.conf</filename> file that could be used in
    conjunction with the <filename>pg_hba.conf</> file in <xref
    linkend="example-pg-hba.conf"> is shown in <xref
-   linkend="example-pg-ident.conf">. In this example setup, anyone
+   linkend="example-pg-ident.conf">. In this example, anyone
    logged in to a machine on the 192.168 network that does not have the
-   Unix user name <literal>bryanh</>, <literal>ann</>, or
+   operating system user name <literal>bryanh</>, <literal>ann</>, or
    <literal>robert</> would not be granted access. Unix user
    <literal>robert</> would only be allowed access when he tries to
    connect as <productname>PostgreSQL</> user <literal>bob</>, not
    as <literal>robert</> or anyone else. <literal>ann</> would
    only be allowed to connect as <literal>ann</>. User
    <literal>bryanh</> would be allowed to connect as either
-   <literal>bryanh</> himself or as <literal>guest1</>.
+   <literal>bryanh</> or as <literal>guest1</>.
   </para>
 
   <example id="example-pg-ident.conf">
@@ -759,7 +763,7 @@ omicron         bryanh                  guest1
     The password-based authentication methods are <literal>md5</>
     and <literal>password</>. These methods operate
     similarly except for the way that the password is sent across the
-    connection: respectively, MD5-hashed and clear-text.
+    connection, i.e. respectively, MD5-hashed and clear-text.
    </para>
 
    <para>
@@ -780,8 +784,8 @@ omicron         bryanh                  guest1
     catalog. Passwords can be managed with the SQL commands
     <xref linkend="sql-createuser" endterm="sql-createuser-title"> and
     <xref linkend="sql-alteruser" endterm="sql-alteruser-title">,
-    e.g., <userinput>CREATE USER foo WITH PASSWORD 'secret';</userinput>.
-    By default, that is, if no password has been set up, the stored password
+    e.g., <userinput>CREATE USER foo WITH PASSWORD 'secret'</userinput>.
+    If no password has been set up for a user, the stored password
     is null and password authentication will always fail for that user.
    </para>
 
@@ -802,7 +806,7 @@ omicron         bryanh                  guest1
     authentication according to RFC 1964. <productname>GSSAPI</productname>
     provides automatic authentication (single sign-on) for systems
     that support it. The authentication itself is secure, but the
-    data sent over the database connection will be in clear unless
+    data sent over the database connection will be send unencrypted unless
     <acronym>SSL</acronym> is used.
    </para>
 
@@ -877,7 +881,7 @@ omicron         bryanh                  guest1
    <para>
     When using <productname>Kerberos</productname> authentication,
     <productname>SSPI</productname> works the same way
-    <productname>GSSAPI</productname> does. See <xref linkend="gssapi-auth">
+    <productname>GSSAPI</productname> does; see <xref linkend="gssapi-auth">
     for details.
    </para>
 
@@ -941,7 +945,7 @@ omicron         bryanh                  guest1
     <productname>Kerberos</productname> is an industry-standard secure
     authentication system suitable for distributed computing over a public
     network. A description of the <productname>Kerberos</productname> system
-    is far beyond the scope of this document; in full generality it can be
+    is beyond the scope of this document; in full generality it can be
     quite complex (yet powerful). The
     <ulink url="http://www.nrl.navy.mil/CCS/people/kenh/kerberos-faq.html">
     Kerberos <acronym>FAQ</></ulink> or
@@ -973,8 +977,9 @@ omicron         bryanh                  guest1
     changed from the default <literal>postgres</literal> at build time using
     <literal>./configure --with-krb-srvnam=</><replaceable>whatever</>.
     In most environments,
-    this parameter never needs to be changed. However, to support multiple
-    <productname>PostgreSQL</> installations on the same host it is necessary.
+    this parameter never needs to be changed. However, it is necessary
+    when supporting multiple <productname>PostgreSQL</> installations
+    on the same host.
     Some Kerberos implementations might also require a different service name,
     such as Microsoft Active Directory which requires the service name
     to be in uppercase (<literal>POSTGRES</literal>).
@@ -1005,7 +1010,7 @@ omicron         bryanh                  guest1
     of the key file is specified by the <xref
     linkend="guc-krb-server-keyfile"> configuration
     parameter. The default is
-    <filename>/usr/local/pgsql/etc/krb5.keytab</> (or whichever
+    <filename>/usr/local/pgsql/etc/krb5.keytab</> (or whatever
     directory was specified as <varname>sysconfdir</> at build time).
    </para>
 
@@ -1035,7 +1040,7 @@ omicron         bryanh                  guest1
     <productname>Apache</productname> web server, you can use
     <literal>AuthType KerberosV5SaveCredentials</literal> with a
     <application>mod_perl</application> script. This gives secure
-    database access over the web, no extra passwords required.
+    database access over the web, with no additional passwords required.
    </para>
 
    <para>
@@ -1137,13 +1142,13 @@ omicron         bryanh                  guest1
     Since <productname>PostgreSQL</> knows both <replaceable>X</> and
     <replaceable>Y</> when a physical connection is established, it
     can interrogate the ident server on the host of the connecting
-    client and could theoretically determine the operating system user
-    for any given connection this way.
+    client and can theoretically determine the operating system user
+    for any given connection.
    </para>
 
    <para>
     The drawback of this procedure is that it depends on the integrity
-    of the client: if the client machine is untrusted or compromised
+    of the client: if the client machine is untrusted or compromised,
     an attacker could run just about any program on port 113 and
     return any user name he chooses. This authentication method is
     therefore only appropriate for closed networks where each client
@@ -1562,7 +1567,7 @@ FATAL:  database "testdb" does not exist
    <para>
     The server log might contain more information about an
     authentication failure than is reported to the client. If you are
-    confused about the reason for a failure, check the log.
+    confused about the reason for a failure, check the server log.
    </para>
    </tip>
   </sect1>

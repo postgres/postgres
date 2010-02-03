@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.97 2009/11/16 21:32:06 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.98 2010/02/03 17:25:05 momjian Exp $ -->
 
 <chapter id="maintenance">
  <title>Routine Database Maintenance Tasks</title>
@@ -17,13 +17,13 @@
    discussed here are <emphasis>required</emphasis>, but they
    are repetitive in nature and can easily be automated using standard
    tools such as <application>cron</application> scripts or
-   Windows' <application>Task Scheduler</>.  But it is the database
+   Windows' <application>Task Scheduler</>.  It is the database
    administrator's responsibility to set up appropriate scripts, and to
    check that they execute successfully.
   </para>
 
   <para>
-   One obvious maintenance task is creation of backup copies of the data on a
+   One obvious maintenance task is the creation of backup copies of the data on a
    regular schedule.  Without a recent backup, you have no chance of recovery
    after a catastrophe (disk failure, fire, mistakenly dropping a critical
    table, etc.).  The backup and recovery mechanisms available in
@@ -118,7 +118,7 @@
     the standard form of <command>VACUUM</> can run in parallel with production
     database operations.  (Commands such as <command>SELECT</command>,
     <command>INSERT</command>, <command>UPDATE</command>, and
-    <command>DELETE</command> will continue to function as normal, though you
+    <command>DELETE</command> will continue to function normally, though you
     will not be able to modify the definition of a table with commands such as
     <command>ALTER TABLE</command> while it is being vacuumed.)
     <command>VACUUM FULL</> requires exclusive lock on the table it is
@@ -151,11 +151,11 @@
     <command>UPDATE</> or <command>DELETE</> of a row does not
     immediately remove the old version of the row.
     This approach is necessary to gain the benefits of multiversion
-    concurrency control (see <xref linkend="mvcc">): the row version
+    concurrency control (<acronym>MVCC</>, see <xref linkend="mvcc">): the row version
     must not be deleted while it is still potentially visible to other
     transactions. But eventually, an outdated or deleted row version is no
     longer of interest to any transaction. The space it occupies must then be
-    reclaimed for reuse by new rows, to avoid infinite growth of disk
+    reclaimed for reuse by new rows, to avoid unbounded growth of disk
     space requirements. This is done by running <command>VACUUM</>.
    </para>
 
@@ -309,14 +309,14 @@
     statistics more frequently than others if your application requires it.
     In practice, however, it is usually best to just analyze the entire
     database, because it is a fast operation.  <command>ANALYZE</> uses a
-    statistical random sampling of the rows of a table rather than reading
+    statistically random sampling of the rows of a table rather than reading
     every single row.
    </para>
 
    <tip>
     <para>
      Although per-column tweaking of <command>ANALYZE</> frequency might not be
-     very productive, you might well find it worthwhile to do per-column
+     very productive, you might find it worthwhile to do per-column
      adjustment of the level of detail of the statistics collected by
      <command>ANALYZE</>.  Columns that are heavily used in <literal>WHERE</>
      clauses and have highly irregular data distributions might require a
@@ -341,11 +341,11 @@
     numbers: a row version with an insertion XID greater than the current
     transaction's XID is <quote>in the future</> and should not be visible
     to the current transaction.  But since transaction IDs have limited size
-    (32 bits at this writing) a cluster that runs for a long time (more
+    (32 bits) a cluster that runs for a long time (more
     than 4 billion transactions) would suffer <firstterm>transaction ID
     wraparound</>: the XID counter wraps around to zero, and all of a sudden
     transactions that were in the past appear to be in the future &mdash; which
-    means their outputs become invisible.  In short, catastrophic data loss.
+    means their output become invisible.  In short, catastrophic data loss.
     (Actually the data is still there, but that's cold comfort if you cannot
     get at it.)  To avoid this, it is necessary to vacuum every table
     in every database at least once every two billion transactions.
@@ -353,8 +353,9 @@
 
    <para>
     The reason that periodic vacuuming solves the problem is that
-    <productname>PostgreSQL</productname> distinguishes a special XID
-    <literal>FrozenXID</>.  This XID is always considered older
+    <productname>PostgreSQL</productname> reserves a special XID
+    as <literal>FrozenXID</>.  This XID does not follow the normal XID
+    comparison rules and is always considered older
     than every normal XID. Normal XIDs are
     compared using modulo-2<superscript>31</> arithmetic. This means
     that for every normal XID, there are two billion XIDs that are
@@ -365,12 +366,12 @@
     the next two billion transactions, no matter which normal XID we are
     talking about. If the row version still exists after more than two billion
     transactions, it will suddenly appear to be in the future. To
-    prevent data loss, old row versions must be reassigned the XID
+    prevent this, old row versions must be reassigned the XID
     <literal>FrozenXID</> sometime before they reach the
     two-billion-transactions-old mark. Once they are assigned this
     special XID, they will appear to be <quote>in the past</> to all
     normal transactions regardless of wraparound issues, and so such
-    row versions will be good until deleted, no matter how long that is.
+    row versions will be valid until deleted, no matter how long that is.
     This reassignment of old XIDs is handled by <command>VACUUM</>.
    </para>
 
@@ -398,14 +399,14 @@
 
    <para>
     The maximum time that a table can go unvacuumed is two billion
-    transactions minus the <varname>vacuum_freeze_min_age</> that was used
-    when <command>VACUUM</> last scanned the whole table.  If it were to go
+    transactions minus the <varname>vacuum_freeze_min_age</> value at
+    the time <command>VACUUM</> last scanned the whole table.  If it were to go
     unvacuumed for longer than
     that, data loss could result.  To ensure that this does not happen,
     autovacuum is invoked on any table that might contain XIDs older than the
     age specified by the configuration parameter <xref
     linkend="guc-autovacuum-freeze-max-age">.  (This will happen even if
-    autovacuum is otherwise disabled.)
+    autovacuum is disabled.)
    </para>
 
    <para>
@@ -416,10 +417,10 @@
     For tables that are regularly vacuumed for space reclamation purposes,
     this is of little importance.  However, for static tables
     (including tables that receive inserts, but no updates or deletes),
-    there is no need for vacuuming for space reclamation, and so it can
+    there is no need to vacuum for space reclamation, so it can
     be useful to try to maximize the interval between forced autovacuums
     on very large static tables.  Obviously one can do this either by
-    increasing <varname>autovacuum_freeze_max_age</> or by decreasing
+    increasing <varname>autovacuum_freeze_max_age</> or decreasing
     <varname>vacuum_freeze_min_age</>.
    </para>
 
@@ -444,10 +445,10 @@
     The sole disadvantage of increasing <varname>autovacuum_freeze_max_age</>
     (and <varname>vacuum_freeze_table_age</> along with it)
     is that the <filename>pg_clog</> subdirectory of the database cluster
-    will take more space, because it must store the commit status for all
+    will take more space, because it must store the commit status of all
     transactions back to the <varname>autovacuum_freeze_max_age</> horizon.
     The commit status uses two bits per transaction, so if
-    <varname>autovacuum_freeze_max_age</> has its maximum allowed value of
+    <varname>autovacuum_freeze_max_age</> is set to its maximum allowed value of
     a little less than two billion, <filename>pg_clog</> can be expected to
     grow to about half a gigabyte.  If this is trivial compared to your
     total database size, setting <varname>autovacuum_freeze_max_age</> to
@@ -530,7 +531,7 @@ HINT:  To avoid a database shutdown, execute a database-wide VACUUM in "mydb".
     superuser, else it will fail to process system catalogs and thus not
     be able to advance the database's <structfield>datfrozenxid</>.)
     If these warnings are
-    ignored, the system will shut down and refuse to execute any new
+    ignored, the system will shut down and refuse to start any new
     transactions once there are fewer than 1 million transactions left
     until wraparound:
 
@@ -592,14 +593,14 @@ HINT:  Stop the postmaster and use a standalone backend to VACUUM in "mydb".
     The <xref linkend="guc-autovacuum-max-workers"> setting limits how many
     workers may be running at any time. If several large tables all become
     eligible for vacuuming in a short amount of time, all autovacuum workers
-    may become occupied with vacuuming those tables for a long period.
+    might become occupied with vacuuming those tables for a long period.
     This would result
     in other tables and databases not being vacuumed until a worker became
-    available. There is not a limit on how many workers might be in a
+    available. There is no limit on how many workers might be in a
     single database, but workers do try to avoid repeating work that has
     already been done by other workers. Note that the number of running
-    workers does not count towards the <xref linkend="guc-max-connections"> nor
-    the <xref linkend="guc-superuser-reserved-connections"> limits.
+    workers does not count towards <xref linkend="guc-max-connections"> or
+    <xref linkend="guc-superuser-reserved-connections"> limits.
    </para>
 
    <para>
@@ -699,36 +700,26 @@ analyze threshold = analyze base threshold + analyze scale factor * number of tu
   </para>
 
   <para>
-   In <productname>PostgreSQL</> releases before 7.4, periodic reindexing
-   was frequently necessary to avoid <quote>index bloat</>, due to lack of
-   internal space reclamation in B-tree indexes.  Any situation in which the
-   range of index keys changed over time &mdash; for example, an index on
-   timestamps in a table where old entries are eventually deleted &mdash;
-   would result in bloat, because index pages for no-longer-needed portions
-   of the key range were not reclaimed for re-use.  Over time, the index size
-   could become indefinitely much larger than the amount of useful data in it.
-  </para>
-
-  <para>
-   In <productname>PostgreSQL</> 7.4 and later, index pages that have become
-   completely empty are reclaimed for re-use.  There is still a possibility
-   for inefficient use of space: if all but a few index keys on a page have
-   been deleted, the page remains allocated.  So a usage pattern in which all
-   but a few keys in each range are eventually deleted will see poor use of
-   space.  For such usage patterns, periodic reindexing is recommended.
+   Index pages that have become
+   completely empty are reclaimed for re-use.  However, here is still the possibility
+   of inefficient use of space: if all but a few index keys on a page have
+   been deleted, the page remains allocated.  Therefore, a usage
+   pattern in which most, but not all, keys in each range are eventually
+   deleted will see poor use of space.  For such usage patterns,
+   periodic reindexing is recommended.
   </para>
 
   <para>
    The potential for bloat in non-B-tree indexes has not been well
-   characterized.  It is a good idea to keep an eye on the index's physical
+   researched.  It is a good idea to periodically monitor the index's physical
    size when using any non-B-tree index type.
   </para>
 
   <para>
-   Also, for B-tree indexes a freshly-constructed index is somewhat faster to
-   access than one that has been updated many times, because logically
+   Also, for B-tree indexes, a freshly-constructed index is slightly faster to
+   access than one that has been updated many times because logically
    adjacent pages are usually also physically adjacent in a newly built index.
-   (This consideration does not currently apply to non-B-tree indexes.)  It
+   (This consideration does not apply to non-B-tree indexes.)  It
    might be worthwhile to reindex periodically just to improve access speed.
   </para>
  </sect1>
@@ -744,11 +735,11 @@ analyze threshold = analyze base threshold + analyze scale factor * number of tu
 
   <para>
    It is a good idea to save the database server's log output
-   somewhere, rather than just routing it to <filename>/dev/null</>.
-   The log output is invaluable when it comes time to diagnose
+   somewhere, rather than just discarding it via <filename>/dev/null</>.
+   The log output is invaluable when diagnosing
    problems.  However, the log output tends to be voluminous
-   (especially at higher debug levels) and you won't want to save it
-   indefinitely.  You need to <quote>rotate</> the log files so that
+   (especially at higher debug levels) so you won't want to save it
+   indefinitely.  You need to <emphasis>rotate</> the log files so that
    new log files are started and old ones removed after a reasonable
    period of time.
   </para>
@@ -758,7 +749,7 @@ analyze threshold = analyze base threshold + analyze scale factor * number of tu
    <command>postgres</command> into a
    file, you will have log output, but
    the only way to truncate the log file is to stop and restart
-   the server. This might be OK if you are using
+   the server. This might be acceptable if you are using
    <productname>PostgreSQL</productname> in a development environment,
    but few production servers would find this behavior acceptable.
   </para>
@@ -766,17 +757,18 @@ analyze threshold = analyze base threshold + analyze scale factor * number of tu
   <para>
    A better approach is to send the server's
    <systemitem>stderr</> output to some type of log rotation program.
-   There is a built-in log rotation program, which you can use by
+   There is a built-in log rotation facility, which you can use by
    setting the configuration parameter <literal>logging_collector</> to
    <literal>true</> in <filename>postgresql.conf</>.  The control
    parameters for this program are described in <xref
    linkend="runtime-config-logging-where">. You can also use this approach
-   to capture the log data in machine readable CSV format.
+   to capture the log data in machine readable <acronym>CSV</>
+   (comma-separated values) format.
   </para>
 
   <para>
    Alternatively, you might prefer to use an external log rotation
-   program, if you have one that you are already using with other
+   program if you have one that you are already using with other
    server software. For example, the <application>rotatelogs</application>
    tool included in the <productname>Apache</productname> distribution
    can be used with <productname>PostgreSQL</productname>.  To do this,
@@ -794,7 +786,7 @@ pg_ctl start | rotatelogs /var/log/pgsql_log 86400
 
   <para>
    Another production-grade approach to managing log output is to
-   send it all to <application>syslog</> and let
+   send it to <application>syslog</> and let
    <application>syslog</> deal with file rotation. To do this, set the
    configuration parameter <literal>log_destination</> to <literal>syslog</>
    (to log to <application>syslog</> only) in
@@ -810,15 +802,15 @@ pg_ctl start | rotatelogs /var/log/pgsql_log 86400
    On many systems, however, <application>syslog</> is not very reliable,
    particularly with large log messages; it might truncate or drop messages
    just when you need them the most.  Also, on <productname>Linux</>,
-   <application>syslog</> will sync each message to disk, yielding poor
-   performance.  (You can use a <literal>-</> at the start of the file name
+   <application>syslog</> will flush each message to disk, yielding poor
+   performance.  (You can use a <quote><literal>-</></> at the start of the file name
    in the <application>syslog</> configuration file to disable syncing.)
   </para>
 
   <para>
    Note that all the solutions described above take care of starting new
    log files at configurable intervals, but they do not handle deletion
-   of old, no-longer-interesting log files.  You will probably want to set
+   of old, no-longer-useful log files.  You will probably want to set
    up a batch job to periodically delete old log files.  Another possibility
    is to configure the rotation program so that old log files are overwritten
    cyclically.

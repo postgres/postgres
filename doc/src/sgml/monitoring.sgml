@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/monitoring.sgml,v 1.75 2010/01/28 14:25:41 mha Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/monitoring.sgml,v 1.76 2010/02/03 17:25:05 momjian Exp $ -->
 
 <chapter id="monitoring">
  <title>Monitoring Database Activity</title>
@@ -43,7 +43,7 @@
   </indexterm>
 
   <para>
-   On most platforms, <productname>PostgreSQL</productname> modifies its
+   On most Unix platforms, <productname>PostgreSQL</productname> modifies its
    command title as reported by <command>ps</>, so that individual server
    processes can readily be identified.  A sample display is
 
@@ -61,7 +61,7 @@ postgres  1016  0.1  2.4  6532 3080 pts/1    SN   13:19   0:00 postgres: tgl reg
    platforms, as do the details of what is shown.  This example is from a
    recent Linux system.)  The first process listed here is the
    master server process.  The command arguments
-   shown for it are the same ones given when it was launched.  The next two
+   shown for it are the same ones used when it was launched.  The next two
    processes are background worker processes automatically launched by the
    master process.  (The <quote>stats collector</> process will not be present
    if you have set
@@ -73,22 +73,22 @@ postgres  1016  0.1  2.4  6532 3080 pts/1    SN   13:19   0:00 postgres: tgl reg
 postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <replaceable>activity</>
 </screen>
 
-  The user, database, and connection source host items remain the same for
+  The user, database, and (client) host items remain the same for
   the life of the client connection, but the activity indicator changes.
   The activity can be <literal>idle</> (i.e., waiting for a client command),
   <literal>idle in transaction</> (waiting for client inside a <command>BEGIN</> block),
   or a command type name such as <literal>SELECT</>.  Also,
-  <literal>waiting</> is attached if the server process is presently waiting
-  on a lock held by another server process.  In the above example we can infer
+  <literal>waiting</> is appended if the server process is presently waiting
+  on a lock held by another session.  In the above example we can infer
   that process 1003 is waiting for process 1016 to complete its transaction and
-  thereby release some lock or other.
+  thereby release some lock.
   </para>
 
   <para>
    If you have turned off <xref linkend="guc-update-process-title"> then the
    activity indicator is not updated; the process title is set only once
-   when a new process is launched.  On some platforms this saves a useful
-   amount of per-command overhead, on others it's insignificant.
+   when a new process is launched.  On some platforms this saves a measurable
+   amount of per-command overhead;  on others it's insignificant.
   </para>
 
   <tip>
@@ -118,15 +118,15 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
    is a subsystem that supports collection and reporting of information about
    server activity.  Presently, the collector can count accesses to tables
    and indexes in both disk-block and individual-row terms.  It also tracks
-   total numbers of rows in each table, and the last vacuum and analyze times
+   the total number of rows in each table, and the last vacuum and analyze times
    for each table.  It can also count calls to user-defined functions and
    the total time spent in each one.
   </para>
 
   <para>
-   <productname>PostgreSQL</productname> also supports determining the exact
+   <productname>PostgreSQL</productname> also supports reporting of the exact
    command currently being executed by other server processes.  This is an
-   independent facility that does not depend on the collector process.
+   facility independent of the collector process.
   </para>
 
  <sect2 id="monitoring-stats-setup">
@@ -172,7 +172,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
    When the postmaster shuts down, a permanent copy of the statistics
    data is stored in the <filename>global</filename> subdirectory. For increased
    performance, the parameter <xref linkend="guc-stats-temp-directory"> can
-   be pointed at a RAM based filesystem, decreasing physical I/O requirements.
+   be pointed at a RAM-based file system, decreasing physical I/O requirements.
   </para>
 
  </sect2>
@@ -205,9 +205,9 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
    any of these statistics, it first fetches the most recent report emitted by
    the collector process and then continues to use this snapshot for all
    statistical views and functions until the end of its current transaction.
-   So the statistics will appear not to change as long as you continue the
+   So the statistics will show static information as long as you continue the
    current transaction.  Similarly, information about the current queries of
-   all processes is collected when any such information is first requested
+   all sessions is collected when any such information is first requested
    within a transaction, and the same information will be displayed throughout
    the transaction.
    This is a feature, not a bug, because it allows you to perform several
@@ -1603,7 +1603,7 @@ Total time (ns)                        2312105013
     SystemTap uses a different notation for trace scripts than DTrace does,
     even though the underlying trace points are compatible.  One point worth
     noting is that at this writing, SystemTap scripts must reference probe
-    names using double underlines in place of hyphens.  This is expected to
+    names using double underscores in place of hyphens.  This is expected to
     be fixed in future SystemTap releases.
    </para>
   </note>

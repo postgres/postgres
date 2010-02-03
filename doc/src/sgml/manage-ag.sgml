@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/manage-ag.sgml,v 2.60 2009/12/19 01:49:02 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/manage-ag.sgml,v 2.61 2010/02/03 17:25:05 momjian Exp $ -->
 
 <chapter id="managing-databases">
  <title>Managing Databases</title>
@@ -25,7 +25,7 @@
    A database is a named collection of <acronym>SQL</acronym> objects
    (<quote>database objects</quote>).  Generally, every database
    object (tables, functions, etc.) belongs to one and only one
-   database.  (But there are a few system catalogs, for example
+   database.  (However there are a few system catalogs, for example
    <literal>pg_database</>, that belong to a whole cluster and
    are accessible from each database within the cluster.)  More
    accurately, a database is a collection of schemas and the schemas
@@ -38,15 +38,15 @@
    When connecting to the database server, a client must specify in
    its connection request the name of the database it wants to connect
    to. It is not possible to access more than one database per
-   connection. (But an application is not restricted in the number of
-   connections it opens to the same or other databases.)  Databases are
+   connection. However, an application is not restricted in the number of
+   connections it opens to the same or other databases.  Databases are
    physically separated and access control is managed at the
    connection level.  If one <productname>PostgreSQL</> server
    instance is to house projects or users that should be separate and
    for the most part unaware of each other, it is therefore
    recommendable to put them into separate databases.  If the projects
    or users are interrelated and should be able to use each other's
-   resources they should be put in the same database, but possibly
+   resources, they should be put in the same database but possibly
    into separate schemas.  Schemas are a purely logical structure and who can
    access what is managed by the privilege system.  More information about
    managing schemas is in <xref linkend="ddl-schemas">.
@@ -94,7 +94,7 @@ CREATE DATABASE <replaceable>name</>;
    where <replaceable>name</> follows the usual rules for
    <acronym>SQL</acronym> identifiers.  The current role automatically
    becomes the owner of the new database. It is the privilege of the
-   owner of a database to remove it later on (which also removes all
+   owner of a database to remove it later (which also removes all
    the objects in it, even if they have a different owner).
   </para>
 
@@ -123,14 +123,14 @@ CREATE DATABASE <replaceable>name</>;
    new database is created within the
    cluster, <literal>template1</literal> is essentially cloned.
    This means that any changes you make in <literal>template1</> are
-   propagated to all subsequently created databases. Therefore it is
-   unwise to use <literal>template1</> for real work, but when
-   used judiciously this feature can be convenient.  More details
+   propagated to all subsequently created databases. Because of this,
+   avoid creating objects in <literal>template1</> unless you want them
+   propagated to every newly created database.  More details
    appear in <xref linkend="manage-ag-templatedbs">.
   </para>
 
   <para>
-   As a convenience, there is a program that you can
+   As a convenience, there is a program you can
    execute from the shell to create new databases,
    <command>createdb</>.<indexterm><primary>createdb</></>
 
@@ -143,8 +143,7 @@ createdb <replaceable class="parameter">dbname</replaceable>
    exactly as described above.
    The <xref linkend="app-createdb"> reference page contains the invocation
    details. Note that <command>createdb</> without any arguments will create
-   a database with the current user name, which might or might not be what
-   you want.
+   a database with the current user name.
   </para>
 
   <note>
@@ -155,8 +154,8 @@ createdb <replaceable class="parameter">dbname</replaceable>
   </note>
 
   <para>
-   Sometimes you want to create a database for someone else.  That
-   role should become the owner of the new database, so he can
+   Sometimes you want to create a database for someone else, and have him
+   become the owner of the new database, so he can
    configure and manage it himself.  To achieve that, use one of the
    following commands:
 <programlisting>
@@ -167,7 +166,7 @@ CREATE DATABASE <replaceable>dbname</> OWNER <replaceable>rolename</>;
 createdb -O <replaceable>rolename</> <replaceable>dbname</>
 </programlisting>
    from the shell.
-   You must be a superuser to be allowed to create a database for
+   Only the superuser is allowed to create a database for
    someone else (that is, for a role you are not a member of).
   </para>
  </sect1>
@@ -186,7 +185,7 @@ createdb -O <replaceable>rolename</> <replaceable>dbname</>
    objects in databases.  For example, if you install the procedural
    language <application>PL/Perl</> in <literal>template1</>, it will
    automatically be available in user databases without any extra
-   action being taken when those databases are made.
+   action being taken when those databases are created.
   </para>
 
   <para>
@@ -204,7 +203,7 @@ createdb -O <replaceable>rolename</> <replaceable>dbname</>
    <literal>template1</>.  This is particularly handy when restoring a
    <literal>pg_dump</> dump: the dump script should be restored in a
    virgin database to ensure that one recreates the correct contents
-   of the dumped database, without any conflicts with objects that
+   of the dumped database, without conflicting with objects that
    might have been added to <literal>template1</> later on.
   </para>
 
@@ -238,8 +237,8 @@ createdb -T template0 <replaceable>dbname</>
    The principal limitation is that no other sessions can be connected to
    the source database while it is being copied.  <command>CREATE
    DATABASE</> will fail if any other connection exists when it starts;
-   otherwise, new connections to the source database are locked out
-   until <command>CREATE DATABASE</> completes.
+   during the copy operation, new connections to the source database
+   are prevented.
   </para>
 
   <para>
@@ -251,9 +250,9 @@ createdb -T template0 <replaceable>dbname</>
    cloned by any user with <literal>CREATEDB</> privileges; if it is not set,
    only superusers and the owner of the database can clone it.
    If <literal>datallowconn</literal> is false, then no new connections
-   to that database will be allowed (but existing sessions are not killed
+   to that database will be allowed (but existing sessions are not terminated
    simply by setting the flag false).  The <literal>template0</literal>
-   database is normally marked <literal>datallowconn = false</> to prevent modification of it.
+   database is normally marked <literal>datallowconn = false</> to prevent its modification.
    Both <literal>template0</literal> and <literal>template1</literal>
    should always be marked with <literal>datistemplate = true</>.
   </para>
@@ -274,7 +273,7 @@ createdb -T template0 <replaceable>dbname</>
     The <literal>postgres</> database is also created when a database
     cluster is initialized.  This database is meant as a default database for
     users and applications to connect to. It is simply a copy of
-    <literal>template1</> and can be dropped and recreated if required.
+    <literal>template1</> and can be dropped and recreated if necessary.
    </para>
   </note>
  </sect1>
@@ -294,7 +293,7 @@ createdb -T template0 <replaceable>dbname</>
    <acronym>GEQO</acronym> optimizer for a given database, you'd
    ordinarily have to either disable it for all databases or make sure
    that every connecting client is careful to issue <literal>SET geqo
-   TO off;</literal>.  To make this setting the default within a particular
+   TO off</literal>.  To make this setting the default within a particular
    database, you can execute the command:
 <programlisting>
 ALTER DATABASE mydb SET geqo TO off;
@@ -306,7 +305,7 @@ ALTER DATABASE mydb SET geqo TO off;
    Note that users can still alter this setting during their sessions; it
    will only be the default.  To undo any such setting, use
    <literal>ALTER DATABASE <replaceable>dbname</> RESET
-   <replaceable>varname</>;</literal>.
+   <replaceable>varname</></literal>.
   </para>
  </sect1>
 
@@ -387,7 +386,7 @@ dropdb <replaceable class="parameter">dbname</replaceable>
 CREATE TABLESPACE fastspace LOCATION '/mnt/sda1/postgresql/data';
 </programlisting>
    The location must be an existing, empty directory that is owned by
-   the <productname>PostgreSQL</> system user.  All objects subsequently
+   the <productname>PostgreSQL</> operating system user.  All objects subsequently
    created within the tablespace will be stored in files underneath this
    directory.
   </para>
@@ -405,7 +404,7 @@ CREATE TABLESPACE fastspace LOCATION '/mnt/sda1/postgresql/data';
 
   <para>
    Creation of the tablespace itself must be done as a database superuser,
-   but after that you can allow ordinary database users to make use of it.
+   but after that you can allow ordinary database users to use it.
    To do that, grant them the <literal>CREATE</> privilege on it.
   </para>
 
@@ -500,8 +499,8 @@ SELECT spcname FROM pg_tablespace;
    Although not recommended, it is possible to adjust the tablespace
    layout by hand by redefining these links.  Two warnings: do not do so
    while the server is running; and after you restart the server,
-   update the <structname>pg_tablespace</> catalog to show the new
-   locations.  (If you do not, <literal>pg_dump</> will continue to show
+   update the <structname>pg_tablespace</> catalog with the new
+   locations.  (If you do not, <literal>pg_dump</> will continue to output
    the old tablespace locations.)
   </para>
 

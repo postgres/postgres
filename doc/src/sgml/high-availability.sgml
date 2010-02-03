@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/high-availability.sgml,v 1.36 2010/01/15 09:18:59 heikki Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/high-availability.sgml,v 1.37 2010/02/03 17:25:05 momjian Exp $ -->
 
 <chapter id="high-availability">
  <title>High Availability, Load Balancing, and Replication</title>
@@ -67,7 +67,7 @@
  <para>
   Performance must be considered in any choice.  There is usually a
   trade-off between functionality and
-  performance.  For example, a full synchronous solution over a slow
+  performance.  For example, a fully synchronous solution over a slow
   network might cut performance by more than half, while an asynchronous
   one might have a minimal performance impact.
  </para>
@@ -89,7 +89,7 @@
      Shared disk failover avoids synchronization overhead by having only one
      copy of the database.  It uses a single disk array that is shared by
      multiple servers.  If the main database server fails, the standby server
-     is able to mount and start the database as though it was recovering from
+     is able to mount and start the database as though it were recovering from
      a database crash.  This allows rapid failover with no data loss.
     </para>
 
@@ -149,7 +149,7 @@ protocol to make nodes agree on a serializable transactional order.
     <para>
      A PITR warm standby server can be kept more up-to-date using the
      streaming replication feature built into <productname>PostgreSQL</> 8.5
-     onwards.
+     onwards;  see <xref linkend="warm-standby">.
     </para>
    </listitem>
   </varlistentry>
@@ -190,7 +190,7 @@ protocol to make nodes agree on a serializable transactional order.
     <para>
      If queries are simply broadcast unmodified, functions like
      <function>random()</>, <function>CURRENT_TIMESTAMP</>, and
-     sequences would have different values on different servers.
+     sequences can have different values on different servers.
      This is because each server operates independently, and because
      SQL queries are broadcast (and not actual modified rows).  If
      this is unacceptable, either the middleware or the application

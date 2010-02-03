@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.340 2010/01/28 23:59:52 adunstan Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.341 2010/02/03 17:25:05 momjian Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -1106,7 +1106,7 @@ su - postgres
          a larger segment size.  This can be helpful to reduce the number of
          file descriptors consumed when working with very large tables.
          But be careful not to select a value larger than is supported
-         by your platform and the filesystem(s) you intend to use.  Other
+         by your platform and the file systems you intend to use.  Other
          tools you might wish to use, such as <application>tar</>, could
          also set limits on the usable file size.
          It is recommended, though not absolutely required, that this value

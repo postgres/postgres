@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.430 2010/01/11 18:39:32 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.431 2010/02/03 17:25:06 momjian Exp $ -->
 
 <chapter Id="runtime">
  <title>Server Setup and Operation</title>
@@ -16,7 +16,7 @@
   </indexterm>
 
   <para>
-   As with any other server daemon that is accessible to the outside world,
+   As with any server daemon that is accessible to the outside world,
    it is advisable to run <productname>PostgreSQL</productname> under a
    separate user account. This user account should only own the data
    that is managed by the server, and should not be shared with other
@@ -146,7 +146,7 @@ postgres$ <userinput>initdb -D /usr/local/pgsql/data</userinput>
    superuser</></indexterm>  Also, specify <option>-A md5</> or
    <option>-A password</> so that the default <literal>trust</> authentication
    mode is not used; or modify the generated <filename>pg_hba.conf</filename>
-   file after running <command>initdb</command>,
+   file after running <command>initdb</command>, but
    <emphasis>before</> you start the server for the first time. (Other
    reasonable approaches include using <literal>ident</literal> authentication
    or file system permissions to restrict connections. See <xref
@@ -230,7 +230,7 @@ $ <userinput>postgres -D /usr/local/pgsql/data</userinput>
 
   <para>
    Normally it is better to start <command>postgres</command> in the
-   background.  For this, use the usual shell syntax:
+   background.  For this, use the usual Unix shell syntax:
 <screen>
 $ <userinput>postgres -D /usr/local/pgsql/data &gt;logfile 2&gt;&amp;1 &amp;</userinput>
 </screen>
@@ -449,7 +449,7 @@ DETAIL:  Failed system call was semget(5440126, 17, 03600).
     <para>
      Although the error conditions possible on the client side are quite
      varied and application-dependent, a few of them might be directly
-     related to how the server was started up. Conditions other than
+     related to how the server was started. Conditions other than
      those shown below should be documented with the respective client
      application.
     </para>
@@ -524,16 +524,16 @@ psql: could not connect to server: No such file or directory
     relevant for <productname>PostgreSQL</>). Almost all modern
     operating systems provide these features, but not all of them have
     them turned on or sufficiently sized by default, especially systems
-    with BSD heritage. (On <systemitem class="osname">Windows</>,
+    with a BSD heritage. (On <systemitem class="osname">Windows</>,
     <productname>PostgreSQL</> provides its own replacement 
-    implementation of these facilities, and so most of this section
+    implementation of these facilities, so most of this section
     can be disregarded.)
    </para>
 
    <para>
     The complete lack of these facilities is usually manifested by an
     <errorname>Illegal system call</> error upon server start. In
-    that case there's nothing left to do but to reconfigure your
+    that case there is no alternative but to reconfigure your
     kernel.  <productname>PostgreSQL</> won't work without them.
    </para>
 
@@ -541,7 +541,7 @@ psql: could not connect to server: No such file or directory
     When <productname>PostgreSQL</> exceeds one of the various hard
     <acronym>IPC</> limits, the server will refuse to start and
     should leave an instructive error message describing the problem
-    encountered and what to do about it. (See also <xref
+    and what to do about it. (See also <xref
     linkend="server-start-failures">.) The relevant kernel
     parameters are named consistently across different systems; <xref
     linkend="sysvipc-parameters"> gives an overview. The methods to set
@@ -621,7 +621,7 @@ psql: could not connect to server: No such file or directory
        <row>
         <entry><varname>SEMVMX</></>
         <entry>Maximum value of semaphore</>
-        <entry>at least 1000 (The default is often 32767, don't change unless forced to)</>
+        <entry>at least 1000 (The default is often 32767; do not change unless necessary)</>
        </row>
 
      </tbody>
@@ -633,7 +633,7 @@ psql: could not connect to server: No such file or directory
     <indexterm><primary>SHMMAX</primary></indexterm> The most important
     shared memory parameter is <varname>SHMMAX</>, the maximum size, in
     bytes, of a shared memory segment. If you get an error message from
-    <function>shmget</> like <errorname>Invalid argument</>, it is
+    <function>shmget</> like <quote>Invalid argument</>, it is
     likely that this limit has been exceeded.  The size of the required
     shared memory segment varies depending on several
     <productname>PostgreSQL</> configuration parameters, as shown in
@@ -681,7 +681,7 @@ psql: could not connect to server: No such file or directory
     least <literal>ceil((max_connections + autovacuum_max_workers) / 16)</>.
     Lowering the number
     of allowed connections is a temporary workaround for failures,
-    which are usually confusingly worded <errorname>No space
+    which are usually confusingly worded <quote>No space
     left on device</>, from the function <function>semget</>.
    </para>
 
@@ -706,8 +706,8 @@ psql: could not connect to server: No such file or directory
 
    <para>
     Various other settings related to <quote>semaphore undo</>, such as
-    <varname>SEMMNU</> and <varname>SEMUME</>, are not of concern
-    for <productname>PostgreSQL</>.
+    <varname>SEMMNU</> and <varname>SEMUME</>, do not affect
+    <productname>PostgreSQL</>.
    </para>
 
 
@@ -757,24 +757,6 @@ options "SHMMAX=\(SHMALL*PAGE_SIZE\)"
          Once all changes have been made, recompile the kernel, and reboot.
         </para>
        </formalpara>
-
-       <para>
-        For those running 4.0 and earlier releases, use <command>bpatch</>
-        to find the <varname>sysptsize</> value in the current
-        kernel. This is computed dynamically at boot time.
-<screen>
-$ <userinput>bpatch -r sysptsize</>
-<computeroutput>0x9 = 9</>
-</screen>
-        Next, add <varname>SYSPTSIZE</> as a hard-coded value in the
-        kernel configuration file. Increase the value you found using
-        <command>bpatch</>. Add 1 for every additional 4 MB of
-        shared memory you desire.
-<programlisting>
-options "SYSPTSIZE=16"
-</programlisting>
-        <varname>sysptsize</> cannot be changed by <command>sysctl</command>.
-       </para>
 
        <formalpara>
         <title>Semaphores</>
@@ -837,9 +819,9 @@ options "SEMMNS=240"
         <literal>security.jail.sysvipc_allowed</>, <application>postmaster</>s
         running in different jails should be run by different operating system
         users.  This improves security because it prevents non-root users
-        from interfering with shared memory or semaphores in a different jail,
+        from interfering with shared memory or semaphores in different jails,
         and it allows the PostgreSQL IPC cleanup code to function properly.
-        (In FreeBSD 6.0 and later the IPC cleanup code doesn't properly detect
+        (In FreeBSD 6.0 and later the IPC cleanup code does not properly detect
         processes in other jails, preventing the running of postmasters on the
         same port in different jails.)
        </para>
@@ -863,7 +845,8 @@ options "SEMMNS=240"
         to be enabled when the kernel is compiled. (They are by
         default.) The maximum size of shared memory is determined by
         the option <varname>SHMMAXPGS</> (in pages). The following
-        shows an example of how to set the various parameters 
+        shows an example of how to set the various parameters on
+        <systemitem class="osname">NetBSD</>
         (<systemitem class="osname">OpenBSD</> uses <literal>option</> instead):
 <programlisting>
 options        SYSVSHM
@@ -902,7 +885,7 @@ options        SEMMAP=256
         <acronym>IPC</> parameters can be set in the <application>System
         Administration Manager</> (<acronym>SAM</>) under
         <menuchoice><guimenu>Kernel
-        Configuration</><guimenuitem>Configurable Parameters</></>. Hit
+        Configuration</><guimenuitem>Configurable Parameters</></>. Choose
         <guibutton>Create A New Kernel</> when you're done.
        </para>
       </listitem>
@@ -926,8 +909,8 @@ options        SEMMAP=256
 <prompt>$</prompt> <userinput>sysctl -w kernel.shmmax=134217728</userinput>
 <prompt>$</prompt> <userinput>sysctl -w kernel.shmall=2097152</userinput>
 </screen>
-        In addition these settings can be saved between reboots in 
-        <filename>/etc/sysctl.conf</filename>.
+        In addition these settings can be preserved  between reboots in
+        the file <filename>/etc/sysctl.conf</filename>.
        </para>
 
        <para>
@@ -964,7 +947,7 @@ sysctl -w kern.sysv.shmall
         In OS X 10.3 and later, these commands have been moved to
         <filename>/etc/rc</> and must be edited there.  Note that
         <filename>/etc/rc</> is usually overwritten by OS X updates (such as
-        10.3.6 to 10.3.7) so you should expect to have to redo your editing
+        10.3.6 to 10.3.7) so you should expect to have to redo your edits
         after each update.
        </para>
 
@@ -995,7 +978,7 @@ kern.sysv.shmall=1024
        </para>
 
        <para>
-        In all OS X versions, you'll need to reboot to make changes in the
+        In all OS X versions, you will need to reboot to have changes in the
         shared memory parameters take effect.  
        </para>
       </listitem>
@@ -1304,11 +1287,11 @@ echo -17 > /proc/self/oom_adj
     Some vendors' Linux 2.4 kernels are reported to have early versions
     of the 2.6 overcommit <command>sysctl</command> parameter.  However, setting
     <literal>vm.overcommit_memory</> to 2
-    on a kernel that does not have the relevant code will make
-    things worse not better.  It is recommended that you inspect
+    on a 2.4 kernel that does not have the relevant code will make
+    things worse, not better.  It is recommended that you inspect
     the actual kernel source code (see the function
     <function>vm_enough_memory</> in the file <filename>mm/mmap.c</>)
-    to verify what is supported in your copy before you try this in a 2.4
+    to verify what is supported in your kernel before you try this in a 2.4
     installation.  The presence of the <filename>overcommit-accounting</>
     documentation file should <emphasis>not</> be taken as evidence that the
     feature is there.  If in any doubt, consult a kernel expert or your
@@ -1357,7 +1340,7 @@ echo -17 > /proc/self/oom_adj
        The server disallows new connections and sends all existing
        server processes <systemitem>SIGTERM</systemitem>, which will cause them
        to abort their current transactions and exit promptly. It then
-       waits for the server processes to exit and finally shuts down.
+       waits for all server processes to exit and finally shuts down.
        If the server is in online backup mode, backup mode will be
        terminated, rendering the backup useless.
       </para>
@@ -1428,7 +1411,7 @@ $ <userinput>kill -INT `head -1 /usr/local/pgsql/data/postmaster.pid`</userinput
   <para>
    While the server is running, it is not possible for a malicious user
    to take the place of the normal database server.  However, when the
-   server is down it is possible for a local user to spoof the normal
+   server is down, it is possible for a local user to spoof the normal
    server by starting their own server.  The spoof server could read
    passwords and queries sent by clients, but could not return any data
    because the <varname>PGDATA</> directory would still be secure because
@@ -1489,7 +1472,7 @@ $ <userinput>kill -INT `head -1 /usr/local/pgsql/data/postmaster.pid`</userinput
      the administrator cannot determine the actual password assigned
      to the user. If MD5 encryption is used for client authentication,
      the unencrypted password is never even temporarily present on the
-     server because the client MD5 encrypts it before being sent
+     server because the client MD5-encrypts it before being sent
      across the network.
     </para>
    </listitem>
@@ -1523,11 +1506,12 @@ $ <userinput>kill -INT `head -1 /usr/local/pgsql/data/postmaster.pid`</userinput
 
    <listitem>
     <para>
-     On Linux, encryption can be layered on top of a file system mount
+     On Linux, encryption can be layered on top of a file system
      using a <quote>loopback device</quote>. This allows an entire
-     file system partition be encrypted on disk, and decrypted by the
+     file system partition to be encrypted on disk, and decrypted by the
      operating system. On FreeBSD, the equivalent facility is called
-     GEOM Based Disk Encryption, or <acronym>gbde</acronym>.
+     GEOM Based Disk Encryption (<acronym>gbde</acronym>), and many
+     other operating systems support this functionality, including Windows.
     </para>
 
     <para>
@@ -1550,7 +1534,7 @@ $ <userinput>kill -INT `head -1 /usr/local/pgsql/data/postmaster.pid`</userinput
      <para>
       The <literal>MD5</> authentication method double-encrypts the
       password on the client before sending it to the server. It first
-      MD5 encrypts it based on the user name, and then encrypts it
+      MD5-encrypts it based on the user name, and then encrypts it
       based on a random salt sent by the server when the database
       connection was made. It is this double-encrypted value that is
       sent over the network to the server. Double-encryption not only
@@ -1635,7 +1619,7 @@ $ <userinput>kill -INT `head -1 /usr/local/pgsql/data/postmaster.pid`</userinput
    <productname>PostgreSQL</> server can be started with
    <acronym>SSL</> enabled by setting the parameter
    <xref linkend="guc-ssl"> to <literal>on</> in
-   <filename>postgresql.conf</>.  The server will listen for both standard
+   <filename>postgresql.conf</>.  The server will listen for both normal
    and <acronym>SSL</> connections on the same TCP port, and will negotiate
    with any connecting client on whether to use <acronym>SSL</>.  By
    default, this is at the client's option; see <xref
@@ -1750,7 +1734,7 @@ $ <userinput>kill -INT `head -1 /usr/local/pgsql/data/postmaster.pid`</userinput
      <row>
       <entry><filename>server.key</></entry>
       <entry>server private key</entry>
-      <entry>proves server certificate sent by owner; does not indicate
+      <entry>proves server certificate was sent by the owner; it does not indicate
       certificate owner is trustworthy</entry>
      </row>
 
@@ -1828,7 +1812,7 @@ chmod og-rwx server.key
   </indexterm>
 
   <para>
-   One can use <application>SSH</application> to encrypt the network
+   It is possible to use <application>SSH</application> to encrypt the network
    connection between clients and a
    <productname>PostgreSQL</productname> server. Done properly, this
    provides an adequately secure network connection, even for non-SSL-capable
@@ -1845,7 +1829,7 @@ chmod og-rwx server.key
 ssh -L 63333:localhost:5432 joe@foo.com
 </programlisting>
    The first number in the <option>-L</option> argument, 63333, is the
-   port number of your end of the tunnel; it can be chosen freely.
+   port number of your end of the tunnel; it can be any unused port.
    (IANA reserves ports 49152 through 65535 for private use.)  The
    second number, 5432, is the remote end of the tunnel: the port
    number your server is using. The name or IP address between the
@@ -1873,7 +1857,7 @@ psql -h localhost -p 63333 postgres
    In order for the
    tunnel setup to succeed you must be allowed to connect via
    <command>ssh</command> as <literal>joe@foo.com</literal>, just
-   as if you had attempted to use <command>ssh</command> to set up a
+   as if you had attempted to use <command>ssh</command> to create a
    terminal session.
   </para>
 

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/regress.sgml,v 1.64 2009/08/07 20:50:21 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/regress.sgml,v 1.65 2010/02/03 17:25:06 momjian Exp $ -->
 
  <chapter id="regress">
   <title id="regress-title">Regression Tests</title>
@@ -26,17 +26,14 @@
    running server, or using a temporary installation within the build
    tree.  Furthermore, there is a <quote>parallel</quote> and a
    <quote>sequential</quote> mode for running the tests.  The
-   sequential method runs each test script in turn, whereas the
+   sequential method runs each test script alone, while the
    parallel method starts up multiple server processes to run groups
    of tests in parallel.  Parallel testing gives confidence that
-   interprocess communication and locking are working correctly.  For
-   historical reasons, the sequential test is usually run against an
-   existing installation and the parallel method against a temporary
-   installation, but there are no technical reasons for this.
+   interprocess communication and locking are working correctly.
   </para>
 
   <para>
-   To run the regression tests after building but before installation,
+   To run the parallel regression tests after building but before installation,
    type:
 <screen>
 gmake check
@@ -44,7 +41,7 @@ gmake check
    in the top-level directory.  (Or you can change to
    <filename>src/test/regress</filename> and run the command there.)
    This will first build several auxiliary files, such as
-   some sample user-defined trigger functions, and then run the test driver
+   sample user-defined trigger functions, and then run the test driver
    script.  At the end you should see something like:
 <screen>
 <computeroutput>
@@ -206,9 +203,9 @@ gmake installcheck
     <para>
      If you run the tests against a server that was
      initialized with a collation-order locale other than C, then
-     there might be differences due to sort order and follow-up
+     there might be differences due to sort order and subsequent
      failures.  The regression test suite is set up to handle this
-     problem by providing alternative result files that together are
+     problem by providing alternate result files that together are
      known to handle a large number of locales.
     </para>
 
@@ -270,7 +267,7 @@ gmake check NO_LOCALE=1
      results involving mathematical functions of <type>double
      precision</type> columns have been observed.  The <literal>float8</> and
      <literal>geometry</> tests are particularly prone to small differences
-     across platforms, or even with different compiler optimization options.
+     across platforms, or even with different compiler optimization setting.
      Human eyeball comparison is needed to determine the real
      significance of these differences which are usually 10 places to
      the right of the decimal point.
@@ -298,10 +295,10 @@ different order than what appears in the expected file.  In most cases
 this is not, strictly speaking, a bug.  Most of the regression test
 scripts are not so pedantic as to use an <literal>ORDER BY</> for every single
 <literal>SELECT</>, and so their result row orderings are not well-defined
-according to the letter of the SQL specification.  In practice, since we are
+according to the SQL specification.  In practice, since we are
 looking at the same queries being executed on the same data by the same
-software, we usually get the same result ordering on all platforms, and
-so the lack of <literal>ORDER BY</> isn't a problem.  Some queries do exhibit
+software, we usually get the same result ordering on all platforms,
+so the lack of <literal>ORDER BY</> is not a problem.  Some queries do exhibit
 cross-platform ordering differences, however.  When testing against an
 already-installed server, ordering differences can also be caused by
 non-C locale settings or non-default parameter settings, such as custom values
@@ -311,8 +308,8 @@ of <varname>work_mem</> or the planner cost parameters.
     <para>
 Therefore, if you see an ordering difference, it's not something to
 worry about, unless the query does have an <literal>ORDER BY</> that your
-result is violating.  But please report it anyway, so that we can add an
-<literal>ORDER BY</> to that particular query and thereby eliminate the bogus
+result is violating.  However, please report it anyway, so that we can add an
+<literal>ORDER BY</> to that particular query to eliminate the bogus
 <quote>failure</quote> in future releases.
     </para>
 
@@ -364,7 +361,7 @@ diff results/random.out expected/random.out
 
    <para>
     Since some of the tests inherently produce environment-dependent
-    results, we have provided ways to specify alternative <quote>expected</>
+    results, we have provided ways to specify alternate <quote>expected</>
     result files.  Each regression test can have several comparison files
     showing possible results on different platforms.  There are two
     independent mechanisms for determining which comparison file is used
@@ -410,7 +407,7 @@ testname:output:platformpattern=comparisonfilename
 <programlisting>
 float8:out:i.86-.*-openbsd=float8-small-is-zero.out
 </programlisting>
-    which will trigger on any machine for which the output of
+    which will trigger on any machine where the output of
     <command>config.guess</command> matches <literal>i.86-.*-openbsd</literal>.
     Other lines
     in <filename>resultmap</> select the variant comparison file for other
