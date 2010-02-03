@@ -76,6 +76,7 @@ static void remove_res_ptr(dblink_results * results);
 static char *generate_relation_name(Oid relid);
 static char *connstr_strip_password(const char *connstr);
 static void dblink_security_check(PGconn *conn, const char *connstr);
+static int get_nondropped_natts(Oid relid);
 
 /* Global */
 List	   *res_id = NIL;
@@ -1100,6 +1101,7 @@ dblink_build_sql_insert(PG_FUNCTION_ARGS)
 	int16		typlen;
 	bool		typbyval;
 	char		typalign;
+	int			nondropped_natts;
 
 	relname_text = PG_GETARG_TEXT_P(0);
 
@@ -1122,6 +1124,14 @@ dblink_build_sql_insert(PG_FUNCTION_ARGS)
 	 */
 	if (pknumatts == 0)
 		elog(ERROR, "dblink_build_sql_insert: number of key attributes must be > 0.");
+
+	/*
+	 * ensure we don't ask for more pk attributes than we have
+	 * non-dropped columns
+	 */
+	nondropped_natts = get_nondropped_natts(relid);
+	if (pknumatts > nondropped_natts)
+		elog(ERROR, "number of primary key fields exceeds number of specified relation attributes");
 
 	src_pkattvals_arry = PG_GETARG_ARRAYTYPE_P(3);
 	tgt_pkattvals_arry = PG_GETARG_ARRAYTYPE_P(4);
@@ -1239,6 +1249,7 @@ dblink_build_sql_delete(PG_FUNCTION_ARGS)
 	int16		typlen;
 	bool		typbyval;
 	char		typalign;
+	int			nondropped_natts;
 
 	relname_text = PG_GETARG_TEXT_P(0);
 
@@ -1261,6 +1272,14 @@ dblink_build_sql_delete(PG_FUNCTION_ARGS)
 	 */
 	if (pknumatts == 0)
 		elog(ERROR, "dblink_build_sql_insert: number of key attributes must be > 0.");
+
+	/*
+	 * ensure we don't ask for more pk attributes than we have
+	 * non-dropped columns
+	 */
+	nondropped_natts = get_nondropped_natts(relid);
+	if (pknumatts > nondropped_natts)
+		elog(ERROR, "number of primary key fields exceeds number of specified relation attributes");
 
 	tgt_pkattvals_arry = PG_GETARG_ARRAYTYPE_P(3);
 
@@ -1356,6 +1375,7 @@ dblink_build_sql_update(PG_FUNCTION_ARGS)
 	int16		typlen;
 	bool		typbyval;
 	char		typalign;
+	int			nondropped_natts;
 
 	relname_text = PG_GETARG_TEXT_P(0);
 
@@ -1378,6 +1398,14 @@ dblink_build_sql_update(PG_FUNCTION_ARGS)
 	 */
 	if (pknumatts == 0)
 		elog(ERROR, "dblink_build_sql_insert: number of key attributes must be > 0.");
+
+	/*
+	 * ensure we don't ask for more pk attributes than we have
+	 * non-dropped columns
+	 */
+	nondropped_natts = get_nondropped_natts(relid);
+	if (pknumatts > nondropped_natts)
+		elog(ERROR, "number of primary key fields exceeds number of specified relation attributes");
 
 	src_pkattvals_arry = PG_GETARG_ARRAYTYPE_P(3);
 	tgt_pkattvals_arry = PG_GETARG_ARRAYTYPE_P(4);
@@ -2190,4 +2218,28 @@ dblink_security_check(PGconn *conn, const char *connstr)
 		else
 			PQfinish(conn);
 	}
+}
+
+static int
+get_nondropped_natts(Oid relid)
+{
+	int			nondropped_natts = 0;
+	TupleDesc	tupdesc;
+	Relation	rel;
+	int			natts;
+	int			i;
+
+	rel = relation_open(relid, AccessShareLock);
+	tupdesc = rel->rd_att;
+	natts = tupdesc->natts;
+
+	for (i = 0; i < natts; i++)
+	{
+		if (tupdesc->attrs[i]->attisdropped)
+			continue;
+		nondropped_natts++;
+	}
+
+	relation_close(rel, AccessShareLock);
+	return nondropped_natts;
 }
