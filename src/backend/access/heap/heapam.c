@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.284 2010/01/29 17:10:05 sriggs Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.285 2010/02/03 10:01:29 heikki Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -5074,15 +5074,9 @@ heap2_desc(StringInfo buf, uint8 xl_info, char *rec)
 void
 heap_sync(Relation rel)
 {
-	char reason[NAMEDATALEN + 30];
-
 	/* temp tables never need fsync */
 	if (rel->rd_istemp)
 		return;
-
-	snprintf(reason, sizeof(reason), "heap inserts on \"%s\"",
-			 RelationGetRelationName(rel));
-	XLogReportUnloggedStatement(reason);
 
 	/* main heap */
 	FlushRelationBuffers(rel);

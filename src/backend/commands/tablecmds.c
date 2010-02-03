@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.322 2010/02/03 01:14:16 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.323 2010/02/03 10:01:29 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3297,7 +3297,13 @@ ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap)
 
 		/* If we skipped writing WAL, then we need to sync the heap. */
 		if (hi_options & HEAP_INSERT_SKIP_WAL)
+		{
+			char reason[NAMEDATALEN + 30];
+			snprintf(reason, sizeof(reason), "table rewrite on \"%s\"",
+					 RelationGetRelationName(newrel));
+			XLogReportUnloggedStatement(reason);
 			heap_sync(newrel);
+		}
 
 		heap_close(newrel, NoLock);
 	}

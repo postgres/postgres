@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.343 2010/01/28 23:21:11 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.344 2010/02/03 10:01:30 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2240,7 +2240,13 @@ CloseIntoRel(QueryDesc *queryDesc)
 
 		/* If we skipped using WAL, must heap_sync before commit */
 		if (myState->hi_options & HEAP_INSERT_SKIP_WAL)
+		{
+			char reason[NAMEDATALEN + 30];
+			snprintf(reason, sizeof(reason), "SELECT INTO on \"%s\"",
+					 RelationGetRelationName(myState->rel));
+			XLogReportUnloggedStatement(reason);
 			heap_sync(myState->rel);
+		}
 
 		/* close rel, but keep lock until commit */
 		heap_close(myState->rel, NoLock);
