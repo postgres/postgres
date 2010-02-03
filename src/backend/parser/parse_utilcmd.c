@@ -19,7 +19,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/parser/parse_utilcmd.c,v 2.37 2010/01/28 23:21:12 petere Exp $
+ *	$PostgreSQL: pgsql/src/backend/parser/parse_utilcmd.c,v 2.38 2010/02/03 05:46:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -822,10 +822,10 @@ transformOfType(ParseState *pstate, CreateStmtContext *cxt, TypeName *ofTypename
 	tupdesc = lookup_rowtype_tupdesc(ofTypeId, -1);
 	for (i = 0; i < tupdesc->natts; i++)
 	{
-		ColumnDef *n = makeNode(ColumnDef);
 		Form_pg_attribute attr = tupdesc->attrs[i];
+		ColumnDef *n = makeNode(ColumnDef);
 
-		n->colname = NameStr(attr->attname);
+		n->colname = pstrdup(NameStr(attr->attname));
 		n->typeName = makeTypeNameFromOid(attr->atttypid, attr->atttypmod);
 		n->constraints = NULL;
 		n->is_local = true;
