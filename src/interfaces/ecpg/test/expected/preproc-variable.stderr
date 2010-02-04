@@ -58,17 +58,17 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 71: correctly got 1 tuples with 5 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 71: RESULT: Mum      offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 71: RESULT: Mum      offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 71: RESULT:  offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 71: RESULT:  offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 71: RESULT:  offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 71: RESULT:  offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_store_result on line 71: allocating memory for 1 tuples
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 71: RESULT: 1987-07-14 offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 71: RESULT: 1987-07-14 offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 71: RESULT: 3 offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 71: RESULT: 3 offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 71: query: fetch cur; with 0 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -76,17 +76,17 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 71: correctly got 1 tuples with 5 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 71: RESULT: Dad      offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 71: RESULT: Dad      offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 71: RESULT: 19610721 offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 71: RESULT: 19610721 offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 71: RESULT:  offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 71: RESULT:  offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_store_result on line 71: allocating memory for 1 tuples
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 71: RESULT: 1987-07-14 offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 71: RESULT: 1987-07-14 offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 71: RESULT: 3 offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 71: RESULT: 3 offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 71: query: fetch cur; with 0 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -94,17 +94,17 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 71: correctly got 1 tuples with 5 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 71: RESULT: Child 1  offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 71: RESULT: Child 1  offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 71: RESULT:  offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 71: RESULT:  offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 71: RESULT: 16 offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 71: RESULT: 16 offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_store_result on line 71: allocating memory for 1 tuples
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 71: RESULT:  offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 71: RESULT:  offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 71: RESULT:  offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 71: RESULT:  offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 71: query: fetch cur; with 0 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -112,17 +112,17 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 71: correctly got 1 tuples with 5 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 71: RESULT: Child 2  offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 71: RESULT: Child 2  offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 71: RESULT:  offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 71: RESULT:  offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 71: RESULT: 14 offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 71: RESULT: 14 offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_store_result on line 71: allocating memory for 1 tuples
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 71: RESULT:  offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 71: RESULT:  offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 71: RESULT:  offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 71: RESULT:  offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 71: query: fetch cur; with 0 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -130,17 +130,17 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 71: correctly got 1 tuples with 5 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 71: RESULT: Child 3  offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 71: RESULT: Child 3  offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 71: RESULT:  offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 71: RESULT:  offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 71: RESULT: 9 offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 71: RESULT: 9 offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_store_result on line 71: allocating memory for 1 tuples
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 71: RESULT:  offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 71: RESULT:  offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 71: RESULT:  offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 71: RESULT:  offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 71: query: fetch cur; with 0 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000

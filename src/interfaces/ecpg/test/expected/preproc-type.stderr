@@ -22,19 +22,19 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 65: correctly got 1 tuples with 6 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 65: RESULT: 1 offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 65: RESULT: 1 offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 65: RESULT: user name            offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 65: RESULT: user name            offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 65: RESULT: 320 offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 65: RESULT: 320 offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 65: RESULT: first str  offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 65: RESULT: first str  offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_store_result on line 65: allocating memory for 1 tuples
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 65: RESULT: second str offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 65: RESULT: second str offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 65: RESULT: third str  offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 65: RESULT: third str  offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_finish: connection regress1 closed
 [NO_PID]: sqlca: code: 0, state: 00000

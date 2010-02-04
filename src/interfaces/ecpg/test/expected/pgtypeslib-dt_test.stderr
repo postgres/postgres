@@ -38,9 +38,9 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 38: correctly got 1 tuples with 2 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 38: RESULT: 1966-01-17 offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 38: RESULT: 1966-01-17 offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 38: RESULT: 2000-07-12 17:34:29 offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 38: RESULT: 2000-07-12 17:34:29 offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGtrans on line 358: action "rollback"; connection "regress1"
 [NO_PID]: sqlca: code: 0, state: 00000

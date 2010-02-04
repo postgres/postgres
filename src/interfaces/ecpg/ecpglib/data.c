@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/data.c,v 1.48 2010/02/02 16:09:11 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/data.c,v 1.49 2010/02/04 09:41:34 meskes Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -17,6 +17,33 @@
 #include "pgtypes_timestamp.h"
 #include "pgtypes_interval.h"
 
+/* returns true if character c is a delimiter for the given array type */
+static bool
+array_delimiter(enum ARRAY_TYPE isarray, char c)
+{
+	if (isarray == ECPG_ARRAY_ARRAY && c == ',')
+		return true;
+
+	if (isarray == ECPG_ARRAY_VECTOR && c == ' ')
+		return true;
+	
+	return false;
+}
+
+/* returns true if character c marks the boundary for the given array type */
+static bool
+array_boundary(enum ARRAY_TYPE isarray, char c)
+{
+	if (isarray == ECPG_ARRAY_ARRAY && c == '}')
+		return true;
+
+	if (isarray == ECPG_ARRAY_VECTOR && c == '\0')
+		return true;
+	
+	return false;
+}
+
+/* returns true if some garbage is found at the end of the scanned string */
 static bool
 garbage_left(enum ARRAY_TYPE isarray, char *scan_length, enum COMPAT_MODE compat)
 {
@@ -24,16 +51,15 @@ garbage_left(enum ARRAY_TYPE isarray, char *scan_length, enum COMPAT_MODE compat
 	 * INFORMIX allows for selecting a numeric into an int, the result is
 	 * truncated
 	 */
-	if (isarray == ECPG_ARRAY_NONE && INFORMIX_MODE(compat) && *scan_length == '.')
-		return false;
+	if (isarray == ECPG_ARRAY_NONE)
+	{
+		if (INFORMIX_MODE(compat) && *scan_length == '.')
+			return false;
 
-	if (isarray == ECPG_ARRAY_ARRAY && *scan_length != ',' && *scan_length != '}')
-		return true;
-
-	if (isarray == ECPG_ARRAY_VECTOR && *scan_length != ' ' && *scan_length != '\0')
-		return true;
-
-	if (isarray == ECPG_ARRAY_NONE && *scan_length != ' ' && *scan_length != '\0')
+		if (*scan_length != ' ' && *scan_length != '\0')
+			return true;
+	}
+	else if (ECPG_IS_ARRAY(isarray) && !array_delimiter(isarray, *scan_length) && !array_boundary(isarray, *scan_length))
 		return true;
 
 	return false;
@@ -113,7 +139,7 @@ ecpg_get_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 	else
 		log_offset = offset;
 
-	ecpg_log("ecpg_get_data on line %d: RESULT: %s offset: %ld; array: %s\n", lineno, pval ? (binary ? "BINARY" : pval) : "EMPTY", log_offset, isarray ? "yes" : "no");
+	ecpg_log("ecpg_get_data on line %d: RESULT: %s offset: %ld; array: %s\n", lineno, pval ? (binary ? "BINARY" : pval) : "EMPTY", log_offset, ECPG_IS_ARRAY(isarray) ? "yes" : "no");
 
 	/* pval is a pointer to the value */
 	if (!pval) 
@@ -726,7 +752,7 @@ ecpg_get_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 					return (false);
 					break;
 			}
-			if (isarray == ECPG_ARRAY_ARRAY)
+			if (ECPG_IS_ARRAY(isarray))
 			{
 				bool		string = false;
 
@@ -734,30 +760,16 @@ ecpg_get_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 				++act_tuple;
 
 				/* set pval to the next entry */
-				for (; string || (*pval != ',' && *pval != '}' && *pval != '\0'); ++pval)
+				/* *pval != '\0' should not be needed, but is used as a safety guard */
+				for (; *pval != '\0' && (string || (!array_delimiter(isarray, *pval) && !array_boundary(isarray, *pval))); ++pval)
 					if (*pval == '"')
 						string = string ? false : true;
 
-				if (*pval == ',')
-					++pval;
-			}
-			else if (isarray == ECPG_ARRAY_VECTOR)
-			{
-				bool		string = false;
-
-				/* set array to next entry */
-				++act_tuple;
-
-				/* set pval to the next entry */
-				for (; string || (*pval != ' ' && *pval != '\0'); ++pval)
-					if (*pval == '"')
-						string = string ? false : true;
-
-				if (*pval == ' ')
+				if (array_delimiter(isarray, *pval))
 					++pval;
 			}
 		}
-	} while (*pval != '\0' && ((isarray == ECPG_ARRAY_ARRAY && *pval != '}') || isarray == ECPG_ARRAY_VECTOR));
+	} while (*pval != '\0' && array_boundary(isarray, *pval));
 
 	return (true);
 }

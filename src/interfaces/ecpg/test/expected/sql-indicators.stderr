@@ -42,7 +42,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 33: correctly got 1 tuples with 1 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 33: RESULT: 0 offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 33: RESULT: 0 offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 34: query: select val from indicator_test where id = 2; with 0 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -50,7 +50,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 34: correctly got 1 tuples with 1 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 34: RESULT:  offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 34: RESULT:  offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 36: query: select val from indicator_test where id = 3; with 0 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -58,7 +58,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 36: correctly got 1 tuples with 1 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 36: RESULT: 5 offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 36: RESULT: 5 offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 41: query: update indicator_test set val = $1  where id = 1; with 1 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -74,7 +74,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 42: correctly got 1 tuples with 1 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 42: RESULT:  offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 42: RESULT:  offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 45: query: drop table indicator_test; with 0 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000

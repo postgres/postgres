@@ -64,7 +64,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGget_desc: reading items for tuple 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 183: RESULT: first entry    offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 183: RESULT: first entry    offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGget_desc: reading items for tuple 2
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -86,7 +86,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGget_desc: reading items for tuple 2
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 172: RESULT: 14.7 offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 172: RESULT: 14.7 offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGget_desc: reading items for tuple 3
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -108,7 +108,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGget_desc: reading items for tuple 3
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 168: RESULT: 14 offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 168: RESULT: 14 offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGget_desc: reading items for tuple 4
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -130,7 +130,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGget_desc: reading items for tuple 4
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 187: RESULT: 123045607890 offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 187: RESULT: 123045607890 offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGget_desc: reading items for tuple 5
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -152,7 +152,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGget_desc: reading items for tuple 5
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 163: RESULT: t offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 163: RESULT: t offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGget_desc: reading items for tuple 6
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -174,7 +174,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGget_desc: reading items for tuple 6
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 183: RESULT: The world's most advanced open source database. offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 183: RESULT: The world's most advanced open source database. offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGget_desc: reading items for tuple 7
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -202,7 +202,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGget_desc: TYPE = 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 176: RESULT: 14.07.1987 offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 176: RESULT: 14.07.1987 offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 64: query: fetch in MYCURS; with 0 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -234,7 +234,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGget_desc: reading items for tuple 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 183: RESULT: second entry   offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 183: RESULT: second entry   offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGget_desc: reading items for tuple 2
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -256,7 +256,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGget_desc: reading items for tuple 2
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 172: RESULT: 1407.87 offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 172: RESULT: 1407.87 offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGget_desc: reading items for tuple 3
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -278,7 +278,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGget_desc: reading items for tuple 3
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 168: RESULT: 1407 offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 168: RESULT: 1407 offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGget_desc: reading items for tuple 4
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -300,7 +300,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGget_desc: reading items for tuple 4
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 187: RESULT: 987065403210 offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 187: RESULT: 987065403210 offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGget_desc: reading items for tuple 5
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -322,7 +322,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGget_desc: reading items for tuple 5
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 163: RESULT: f offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 163: RESULT: f offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGget_desc: reading items for tuple 6
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -344,7 +344,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGget_desc: reading items for tuple 6
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 183: RESULT: The elephant never forgets. offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 183: RESULT: The elephant never forgets. offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGget_desc: reading items for tuple 7
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -372,7 +372,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGget_desc: TYPE = 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 176: RESULT: 05.11.1999 offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 176: RESULT: 05.11.1999 offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 64: query: fetch in MYCURS; with 0 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000

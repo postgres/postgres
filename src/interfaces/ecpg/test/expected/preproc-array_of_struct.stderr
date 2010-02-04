@@ -26,13 +26,13 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 56: correctly got 2 tuples with 2 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 56: RESULT: John Doe offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 56: RESULT: John Doe offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 56: RESULT: Jane Doe offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 56: RESULT: Jane Doe offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 56: RESULT: 12345 offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 56: RESULT: 12345 offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 56: RESULT: 67890 offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 56: RESULT: 67890 offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 64: query: select * from customers limit 2; with 0 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -40,13 +40,13 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 64: correctly got 2 tuples with 2 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 64: RESULT: John Doe offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 64: RESULT: John Doe offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 64: RESULT: Jane Doe offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 64: RESULT: Jane Doe offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 64: RESULT: 12345 offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 64: RESULT: 12345 offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 64: RESULT: 67890 offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 64: RESULT: 67890 offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 72: query: select * from customers limit 2; with 0 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -54,13 +54,13 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 72: correctly got 2 tuples with 2 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 72: RESULT: John Doe offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 72: RESULT: John Doe offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 72: RESULT: Jane Doe offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 72: RESULT: Jane Doe offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 72: RESULT: 12345 offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 72: RESULT: 12345 offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 72: RESULT: 67890 offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 72: RESULT: 67890 offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 80: query: select * from customers limit 1; with 0 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -68,9 +68,9 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 80: correctly got 1 tuples with 2 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 80: RESULT: John Doe offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 80: RESULT: John Doe offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 80: RESULT: 12345 offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 80: RESULT: 12345 offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 85: query: select c from customers limit 2; with 0 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -78,9 +78,9 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 85: correctly got 2 tuples with 1 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 85: RESULT: John Doe offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 85: RESULT: John Doe offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 85: RESULT: Jane Doe offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 85: RESULT: Jane Doe offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_finish: connection regress1 closed
 [NO_PID]: sqlca: code: 0, state: 00000

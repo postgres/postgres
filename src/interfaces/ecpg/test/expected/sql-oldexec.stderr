@@ -54,53 +54,53 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 53: correctly got 8 tuples with 3 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 53: RESULT: db: 'r1' offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 53: RESULT: db: 'r1' offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 53: RESULT: db: 'r1' offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 53: RESULT: db: 'r1' offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 53: RESULT: db: 'r1' offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 53: RESULT: db: 'r1' offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 53: RESULT: db: 'r1' offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 53: RESULT: db: 'r1' offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 53: RESULT: db: 'r1' offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 53: RESULT: db: 'r1' offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 53: RESULT: db: 'r1' offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 53: RESULT: db: 'r1' offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 53: RESULT: db: 'r1' offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 53: RESULT: db: 'r1' offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 53: RESULT: db: 'r1' offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 53: RESULT: db: 'r1' offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 53: RESULT: 1 offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 53: RESULT: 1 offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 53: RESULT: 2 offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 53: RESULT: 2 offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 53: RESULT: 11 offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 53: RESULT: 11 offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 53: RESULT: 12 offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 53: RESULT: 12 offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 53: RESULT: 101 offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 53: RESULT: 101 offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 53: RESULT: 102 offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 53: RESULT: 102 offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 53: RESULT: 111 offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 53: RESULT: 111 offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 53: RESULT: 112 offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 53: RESULT: 112 offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 53: RESULT: f offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 53: RESULT: f offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 53: RESULT: t offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 53: RESULT: t offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 53: RESULT: f offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 53: RESULT: f offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 53: RESULT: t offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 53: RESULT: t offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 53: RESULT: f offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 53: RESULT: f offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 53: RESULT: t offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 53: RESULT: t offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 53: RESULT: f offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 53: RESULT: f offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 53: RESULT: t offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 53: RESULT: t offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 66: query: close CUR; with 0 parameter(s) on connection main
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -126,11 +126,11 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 74: correctly got 1 tuples with 3 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 74: RESULT: db: 'r1' offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 74: RESULT: db: 'r1' offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 74: RESULT: 1 offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 74: RESULT: 1 offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 74: RESULT: f offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 74: RESULT: f offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 87: query: close CUR3; with 0 parameter(s) on connection main
 [NO_PID]: sqlca: code: 0, state: 00000

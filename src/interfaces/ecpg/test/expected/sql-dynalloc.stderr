@@ -38,65 +38,65 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_store_result on line 43: allocating memory for 2 tuples
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 43: RESULT: 1 offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 43: RESULT: 1 offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 43: RESULT: 2 offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 43: RESULT: 2 offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGget_desc: reading items for tuple 2
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_store_result on line 44: allocating memory for 2 tuples
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 44: RESULT: 23.456 offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 44: RESULT: 23.456 offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 44: RESULT: 2.446 offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 44: RESULT: 2.446 offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGget_desc: reading items for tuple 3
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_store_result on line 45: allocating memory for 2 tuples
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 45: RESULT: varchar offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 45: RESULT: varchar offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 45: RESULT:  offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 45: RESULT:  offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGget_desc: reading items for tuple 4
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_store_result on line 46: allocating memory for 2 tuples
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 46: RESULT: v offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 46: RESULT: v offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 46: RESULT: v offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 46: RESULT: v offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGget_desc: reading items for tuple 5
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_store_result on line 47: allocating memory for 2 tuples
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 47: RESULT: c    offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 47: RESULT: c    offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 47: RESULT: c    offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 47: RESULT: c    offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGget_desc: reading items for tuple 6
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_store_result on line 48: allocating memory for 2 tuples
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 48: RESULT: Mon Mar 03 11:33:07 2003 PST offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 48: RESULT: Mon Mar 03 11:33:07 2003 PST offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 48: RESULT: Mon Mar 03 11:33:07 2003 PST offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 48: RESULT: Mon Mar 03 11:33:07 2003 PST offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGget_desc: reading items for tuple 7
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_store_result on line 49: allocating memory for 2 tuples
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 49: RESULT: t offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 49: RESULT: t offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 49: RESULT: f offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 49: RESULT: f offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGget_desc: reading items for tuple 9
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_store_result on line 52: allocating memory for 2 tuples
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 52: RESULT: 2001:4f8:3:ba:2e0:81ff:fe22:d1f1 offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 52: RESULT: 2001:4f8:3:ba:2e0:81ff:fe22:d1f1 offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 52: RESULT:  offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 52: RESULT:  offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_finish: connection regress1 closed
 [NO_PID]: sqlca: code: 0, state: 00000

@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/extern.h,v 1.37 2010/01/15 10:44:34 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/extern.h,v 1.38 2010/02/04 09:41:34 meskes Exp $ */
 
 #ifndef _ECPG_LIB_EXTERN_H
 #define _ECPG_LIB_EXTERN_H
@@ -26,6 +26,8 @@ enum ARRAY_TYPE
 {
 	ECPG_ARRAY_ERROR, ECPG_ARRAY_NOT_SET, ECPG_ARRAY_ARRAY, ECPG_ARRAY_VECTOR, ECPG_ARRAY_NONE
 };
+
+#define ECPG_IS_ARRAY(X) ((X) == ECPG_ARRAY_ARRAY || (X) == ECPG_ARRAY_VECTOR)
 
 /* A generic varchar type. */
 struct ECPGgeneric_varchar

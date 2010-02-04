@@ -10,7 +10,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 28: correctly got 1 tuples with 1 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 28: RESULT: regress1 offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 28: RESULT: regress1 offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 29: query: select current_database ( ); with 0 parameter(s) on connection first
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -18,7 +18,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 29: correctly got 1 tuples with 1 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 29: RESULT: connectdb offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 29: RESULT: connectdb offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 30: query: select current_database ( ); with 0 parameter(s) on connection second
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -26,7 +26,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 30: correctly got 1 tuples with 1 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 30: RESULT: regress1 offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 30: RESULT: regress1 offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 33: query: select current_database ( ); with 0 parameter(s) on connection first
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -34,7 +34,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 33: correctly got 1 tuples with 1 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 33: RESULT: connectdb offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 33: RESULT: connectdb offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_finish: connection first closed
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -44,7 +44,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 37: correctly got 1 tuples with 1 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 37: RESULT: regress1 offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 37: RESULT: regress1 offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: raising sqlcode -220 on line 40: connection "first" does not exist on line 40
 [NO_PID]: sqlca: code: -220, state: 08003

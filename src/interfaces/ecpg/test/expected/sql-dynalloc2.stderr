@@ -64,33 +64,33 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_store_result on line 35: allocating memory for 6 tuples
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 35: RESULT: 1 offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 35: RESULT: 1 offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 35: RESULT: 2 offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 35: RESULT: 2 offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 35: RESULT:  offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 35: RESULT:  offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 35: RESULT: 4 offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 35: RESULT: 4 offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 35: RESULT: 5 offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 35: RESULT: 5 offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 35: RESULT:  offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 35: RESULT:  offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGget_desc: reading items for tuple 2
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_store_result on line 36: allocating memory for 6 tuples
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 36: RESULT: one offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 36: RESULT: one offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 36: RESULT: two offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 36: RESULT: two offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 36: RESULT: three offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 36: RESULT: three offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 36: RESULT: four offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 36: RESULT: four offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 36: RESULT:  offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 36: RESULT:  offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 36: RESULT:  offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 36: RESULT:  offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGtrans on line 52: action "rollback"; connection "regress1"
 [NO_PID]: sqlca: code: 0, state: 00000

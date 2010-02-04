@@ -26,7 +26,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 76: correctly got 1 tuples with 1 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 76: RESULT: Wed 07 May 13:28:34 2003 offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 76: RESULT: Wed 07 May 13:28:34 2003 offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 81: query: select customerid , timestamp from history where timestamp = $1  limit 1; with 1 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -36,9 +36,9 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 81: correctly got 1 tuples with 2 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 81: RESULT: 1 offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 81: RESULT: 1 offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 81: RESULT: Wed 07 May 13:28:34 2003 offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 81: RESULT: Wed 07 May 13:28:34 2003 offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 95: query: insert into history ( customerid , timestamp , action_taken , narrative ) values ( $1  , $2  , 'test' , 'test' ); with 2 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000

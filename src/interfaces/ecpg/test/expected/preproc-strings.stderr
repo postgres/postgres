@@ -16,27 +16,27 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_store_result on line 17: allocating memory for 1 tuples
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 17: RESULT: abcdef offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 17: RESULT: abcdef offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_store_result on line 17: allocating memory for 1 tuples
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 17: RESULT: abcdef offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 17: RESULT: abcdef offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_store_result on line 17: allocating memory for 1 tuples
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 17: RESULT: abcdef offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 17: RESULT: abcdef offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_store_result on line 17: allocating memory for 1 tuples
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 17: RESULT: data offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 17: RESULT: data offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_store_result on line 17: allocating memory for 1 tuples
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 17: RESULT: data offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 17: RESULT: data offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_store_result on line 17: allocating memory for 1 tuples
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 17: RESULT: abc$def offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 17: RESULT: abc$def offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_finish: connection regress1 closed
 [NO_PID]: sqlca: code: 0, state: 00000

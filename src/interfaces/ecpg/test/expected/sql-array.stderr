@@ -50,9 +50,9 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 45: correctly got 1 tuples with 2 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 45: RESULT: 14.07 offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 45: RESULT: 14.07 offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 45: RESULT: 0123456789 offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 45: RESULT: 0123456789 offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 53: query: select a , text from test where f = $1 ; with 1 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -66,7 +66,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_get_data on line 53: RESULT: {9,8,7,6,5,4,3,2,1,0} offset: -1; array: yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 53: RESULT: klmnopqrst offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 53: RESULT: klmnopqrst offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 63: query: select a from test where f = $1 ; with 1 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000

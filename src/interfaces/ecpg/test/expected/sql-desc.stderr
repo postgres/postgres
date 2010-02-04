@@ -62,7 +62,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGget_desc: reading items for tuple 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 54: RESULT: 1 offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 54: RESULT: 1 offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 58: query: declare c1 cursor for SELECT * from test1 where a = $1 and b = $2; with 2 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -80,9 +80,9 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 60: correctly got 1 tuples with 2 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 60: RESULT: 1 offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 60: RESULT: 1 offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 60: RESULT: one offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 60: RESULT: one offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 64: query: close c1; with 0 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -104,9 +104,9 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 72: correctly got 1 tuples with 2 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 72: RESULT: 2 offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 72: RESULT: 2 offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 72: RESULT:  offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 72: RESULT:  offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 75: query: close c2; with 0 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -120,9 +120,9 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 77: correctly got 1 tuples with 2 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 77: RESULT: 3 offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 77: RESULT: 3 offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 77: RESULT: this is a long test offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 77: RESULT: this is a long test offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 80: query: drop table test1; with 0 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
