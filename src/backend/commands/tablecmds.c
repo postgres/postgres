@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.323 2010/02/03 10:01:29 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.324 2010/02/04 00:09:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2866,11 +2866,9 @@ ATRewriteTables(List **wqueue)
 		if (tab->newvals != NIL || tab->new_changeoids)
 		{
 			/* Build a temporary relation and copy data */
-			Oid			OIDNewHeap;
-			char		NewHeapName[NAMEDATALEN];
-			Oid			NewTableSpace;
 			Relation	OldHeap;
-			ObjectAddress object;
+			Oid			OIDNewHeap;
+			Oid			NewTableSpace;
 
 			OldHeap = heap_open(tab->relid, NoLock);
 
@@ -2905,18 +2903,8 @@ ATRewriteTables(List **wqueue)
 
 			heap_close(OldHeap, NoLock);
 
-			/*
-			 * Create the new heap, using a temporary name in the same
-			 * namespace as the existing table.  NOTE: there is some risk of
-			 * collision with user relnames.  Working around this seems more
-			 * trouble than it's worth; in particular, we can't create the new
-			 * heap in a different namespace from the old, or we will have
-			 * problems with the TEMP status of temp tables.
-			 */
-			snprintf(NewHeapName, sizeof(NewHeapName),
-					 "pg_temp_%u", tab->relid);
-
-			OIDNewHeap = make_new_heap(tab->relid, NewHeapName, NewTableSpace);
+			/* Create transient table that will receive the modified data */
+			OIDNewHeap = make_new_heap(tab->relid, NewTableSpace);
 
 			/*
 			 * Copy the heap data into the new table with the desired
@@ -2929,30 +2917,14 @@ ATRewriteTables(List **wqueue)
 			 * Swap the physical files of the old and new heaps.  Since we are
 			 * generating a new heap, we can use RecentXmin for the table's
 			 * new relfrozenxid because we rewrote all the tuples on
-			 * ATRewriteTable, so no older Xid remains on the table.
+			 * ATRewriteTable, so no older Xid remains in the table.  Also,
+			 * we never try to swap toast tables by content, since we have
+			 * no interest in letting this code work on system catalogs.
 			 */
-			swap_relation_files(tab->relid, OIDNewHeap, RecentXmin);
+			swap_relation_files(tab->relid, OIDNewHeap, false, RecentXmin);
 
-			CommandCounterIncrement();
-
-			/* Destroy new heap with old filenode */
-			object.classId = RelationRelationId;
-			object.objectId = OIDNewHeap;
-			object.objectSubId = 0;
-
-			/*
-			 * The new relation is local to our transaction and we know
-			 * nothing depends on it, so DROP_RESTRICT should be OK.
-			 */
-			performDeletion(&object, DROP_RESTRICT);
-			/* performDeletion does CommandCounterIncrement at end */
-
-			/*
-			 * Rebuild each index on the relation (but not the toast table,
-			 * which is all-new anyway).  We do not need
-			 * CommandCounterIncrement() because reindex_relation does it.
-			 */
-			reindex_relation(tab->relid, false);
+			/* Destroy the new heap, removing the old data along with it. */
+			cleanup_heap_swap(tab->relid, OIDNewHeap, false);
 		}
 		else
 		{

@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/cluster.c,v 1.196 2010/02/02 19:12:29 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/cluster.c,v 1.197 2010/02/04 00:09:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -63,8 +63,9 @@ typedef struct
 
 static void rebuild_relation(Relation OldHeap, Oid indexOid,
 							 int freeze_min_age, int freeze_table_age);
-static TransactionId copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap,
-					Oid OIDOldIndex, int freeze_min_age, int freeze_table_age);
+static void copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex,
+			   int freeze_min_age, int freeze_table_age,
+			   bool *pSwapToastByContent, TransactionId *pFreezeXid);
 static List *get_tables_to_cluster(MemoryContext cluster_context);
 
 
@@ -584,10 +585,8 @@ rebuild_relation(Relation OldHeap, Oid indexOid,
 	Oid			tableOid = RelationGetRelid(OldHeap);
 	Oid			tableSpace = OldHeap->rd_rel->reltablespace;
 	Oid			OIDNewHeap;
-	char		NewHeapName[NAMEDATALEN];
+	bool		swap_toast_by_content;
 	TransactionId frozenXid;
-	ObjectAddress object;
-	Relation	newrel;
 
 	/* Mark the correct index as clustered */
 	if (OidIsValid(indexOid))
@@ -596,98 +595,39 @@ rebuild_relation(Relation OldHeap, Oid indexOid,
 	/* Close relcache entry, but keep lock until transaction commit */
 	heap_close(OldHeap, NoLock);
 
-	/*
-	 * Create the new heap, using a temporary name in the same namespace as
-	 * the existing table.	NOTE: there is some risk of collision with user
-	 * relnames.  Working around this seems more trouble than it's worth; in
-	 * particular, we can't create the new heap in a different namespace from
-	 * the old, or we will have problems with the TEMP status of temp tables.
-	 */
-	snprintf(NewHeapName, sizeof(NewHeapName), "pg_temp_%u", tableOid);
+	/* Create the transient table that will receive the re-ordered data */
+	OIDNewHeap = make_new_heap(tableOid, tableSpace);
 
-	OIDNewHeap = make_new_heap(tableOid, NewHeapName, tableSpace);
+	/* Copy the heap data into the new table in the desired order */
+	copy_heap_data(OIDNewHeap, tableOid, indexOid,
+				   freeze_min_age, freeze_table_age,
+				   &swap_toast_by_content, &frozenXid);
 
-	/*
-	 * We don't need CommandCounterIncrement() because make_new_heap did it.
-	 */
+	/* Swap the physical files of the old and new heaps */
+	swap_relation_files(tableOid, OIDNewHeap,
+						swap_toast_by_content, frozenXid);
 
-	/*
-	 * Copy the heap data into the new table in the desired order.
-	 */
-	frozenXid = copy_heap_data(OIDNewHeap, tableOid, indexOid,
-							   freeze_min_age, freeze_table_age);
-
-	/* To make the new heap's data visible (probably not needed?). */
-	CommandCounterIncrement();
-
-	/* Swap the physical files of the old and new heaps. */
-	swap_relation_files(tableOid, OIDNewHeap, frozenXid);
-
-	CommandCounterIncrement();
-
-	/* Destroy new heap with old filenode */
-	object.classId = RelationRelationId;
-	object.objectId = OIDNewHeap;
-	object.objectSubId = 0;
-
-	/*
-	 * The new relation is local to our transaction and we know nothing
-	 * depends on it, so DROP_RESTRICT should be OK.
-	 */
-	performDeletion(&object, DROP_RESTRICT);
-
-	/* performDeletion does CommandCounterIncrement at end */
-
-	/*
-	 * Rebuild each index on the relation (but not the toast table, which is
-	 * all-new at this point).	We do not need CommandCounterIncrement()
-	 * because reindex_relation does it.
-	 */
-	reindex_relation(tableOid, false);
-
-	/*
-	 * At this point, everything is kosher except that the toast table's name
-	 * corresponds to the temporary table.	The name is irrelevant to the
-	 * backend because it's referenced by OID, but users looking at the
-	 * catalogs could be confused.	Rename it to prevent this problem.
-	 *
-	 * Note no lock required on the relation, because we already hold an
-	 * exclusive lock on it.
-	 */
-	newrel = heap_open(tableOid, NoLock);
-	if (OidIsValid(newrel->rd_rel->reltoastrelid))
-	{
-		Relation	toastrel;
-		Oid			toastidx;
-		Oid			toastnamespace;
-		char		NewToastName[NAMEDATALEN];
-
-		toastrel = relation_open(newrel->rd_rel->reltoastrelid, AccessShareLock);
-		toastidx = toastrel->rd_rel->reltoastidxid;
-		toastnamespace = toastrel->rd_rel->relnamespace;
-		relation_close(toastrel, AccessShareLock);
-
-		/* rename the toast table ... */
-		snprintf(NewToastName, NAMEDATALEN, "pg_toast_%u", tableOid);
-		RenameRelationInternal(newrel->rd_rel->reltoastrelid, NewToastName,
-							   toastnamespace);
-
-		/* ... and its index too */
-		snprintf(NewToastName, NAMEDATALEN, "pg_toast_%u_index", tableOid);
-		RenameRelationInternal(toastidx, NewToastName,
-							   toastnamespace);
-	}
-	relation_close(newrel, NoLock);
+	/* Destroy the new heap, removing the old data along with it */
+	cleanup_heap_swap(tableOid, OIDNewHeap, swap_toast_by_content);
 }
 
+
 /*
- * Create the new table that we will fill with correctly-ordered data.
+ * Create the transient table that will be filled with new data during
+ * CLUSTER, ALTER TABLE, and similar operations.  The transient table
+ * duplicates the logical structure of the OldHeap, but is placed in
+ * NewTableSpace which might be different from OldHeap's.
+ *
+ * After this, the caller should load the new heap with transferred/modified
+ * data, then call swap_relation_files, and finally call cleanup_heap_swap to
+ * remove the debris.
  */
 Oid
-make_new_heap(Oid OIDOldHeap, const char *NewName, Oid NewTableSpace)
+make_new_heap(Oid OIDOldHeap, Oid NewTableSpace)
 {
 	TupleDesc	OldHeapDesc,
 				tupdesc;
+	char		NewHeapName[NAMEDATALEN];
 	Oid			OIDNewHeap;
 	Oid			toastid;
 	Relation	OldHeap;
@@ -708,7 +648,7 @@ make_new_heap(Oid OIDOldHeap, const char *NewName, Oid NewTableSpace)
 	tupdesc = CreateTupleDescCopy(OldHeapDesc);
 
 	/*
-	 * Use options of the old heap for new heap.
+	 * But we do want to use reloptions of the old heap for new heap.
 	 */
 	tuple = SearchSysCache(RELOID,
 						   ObjectIdGetDatum(OIDOldHeap),
@@ -720,7 +660,16 @@ make_new_heap(Oid OIDOldHeap, const char *NewName, Oid NewTableSpace)
 	if (isNull)
 		reloptions = (Datum) 0;
 
-	OIDNewHeap = heap_create_with_catalog(NewName,
+	/*
+	 * Create the new heap, using a temporary name in the same namespace as
+	 * the existing table.	NOTE: there is some risk of collision with user
+	 * relnames.  Working around this seems more trouble than it's worth; in
+	 * particular, we can't create the new heap in a different namespace from
+	 * the old, or we will have problems with the TEMP status of temp tables.
+	 */
+	snprintf(NewHeapName, sizeof(NewHeapName), "pg_temp_%u", OIDOldHeap);
+
+	OIDNewHeap = heap_create_with_catalog(NewHeapName,
 										  RelationGetNamespace(OldHeap),
 										  NewTableSpace,
 										  InvalidOid,
@@ -776,12 +725,16 @@ make_new_heap(Oid OIDOldHeap, const char *NewName, Oid NewTableSpace)
 }
 
 /*
- * Do the physical copying of heap data.  Returns the TransactionId used as
- * freeze cutoff point for the tuples.
+ * Do the physical copying of heap data.
+ *
+ * There are two output parameters:
+ * *pSwapToastByContent is set true if toast tables must be swapped by content.
+ * *pFreezeXid receives the TransactionId used as freeze cutoff point.
  */
-static TransactionId
+static void
 copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex,
-			   int freeze_min_age, int freeze_table_age)
+			   int freeze_min_age, int freeze_table_age,
+			   bool *pSwapToastByContent, TransactionId *pFreezeXid)
 {
 	Relation	NewHeap,
 				OldHeap,
@@ -843,12 +796,40 @@ copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex,
 	Assert(NewHeap->rd_targblock == InvalidBlockNumber);
 
 	/*
+	 * If both tables have TOAST tables, perform toast swap by content.  It is
+	 * possible that the old table has a toast table but the new one doesn't,
+	 * if toastable columns have been dropped.  In that case we have to do
+	 * swap by links.  This is okay because swap by content is only essential
+	 * for system catalogs, and we don't support schema changes for them.
+	 */
+	if (OldHeap->rd_rel->reltoastrelid && NewHeap->rd_rel->reltoastrelid)
+	{
+		*pSwapToastByContent = true;
+
+		/*
+		 * When doing swap by content, any toast pointers written into NewHeap
+		 * must use the old toast table's OID, because that's where the toast
+		 * data will eventually be found.  Set this up by setting rd_toastoid.
+		 * Note that we must hold NewHeap open until we are done writing data,
+		 * since the relcache will not guarantee to remember this setting once
+		 * the relation is closed.  Also, this technique depends on the fact
+		 * that no one will try to read from the NewHeap until after we've
+		 * finished writing it and swapping the rels --- otherwise they could
+		 * follow the toast pointers to the wrong place.
+		 */
+		NewHeap->rd_toastoid = OldHeap->rd_rel->reltoastrelid;
+	}
+	else
+		*pSwapToastByContent = false;
+
+	/*
 	 * compute xids used to freeze and weed out dead tuples.  We use -1
 	 * freeze_min_age to avoid having CLUSTER freeze tuples earlier than a
 	 * plain VACUUM would.
 	 */
 	vacuum_set_xid_limits(freeze_min_age, freeze_table_age,
-				OldHeap->rd_rel->relisshared, &OldestXmin, &FreezeXid, NULL);
+						  OldHeap->rd_rel->relisshared,
+						  &OldestXmin, &FreezeXid, NULL);
 
 	/*
 	 * FreezeXid will become the table's new relfrozenxid, and that mustn't go
@@ -857,20 +838,23 @@ copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex,
 	if (TransactionIdPrecedes(FreezeXid, OldHeap->rd_rel->relfrozenxid))
 		FreezeXid = OldHeap->rd_rel->relfrozenxid;
 
+	/* return selected value to caller */
+	*pFreezeXid = FreezeXid;
+
 	/* Initialize the rewrite operation */
 	rwstate = begin_heap_rewrite(NewHeap, OldestXmin, FreezeXid, use_wal);
 
 	/*
-	 * Scan through the OldHeap in OldIndex order and copy each tuple into the
-	 * NewHeap.  To ensure we see recently-dead tuples that still need to be
-	 * copied, we scan with SnapshotAny and use HeapTupleSatisfiesVacuum for
-	 * the visibility test.
+	 * Scan through the OldHeap, either in OldIndex order or sequentially,
+	 * and copy each tuple into the NewHeap.  To ensure we see recently-dead
+	 * tuples that still need to be copied, we scan with SnapshotAny and use
+	 * HeapTupleSatisfiesVacuum for the visibility test.
 	 */
 	if (OldIndex != NULL)
 	{
 		heapScan = NULL;
 		indexScan = index_beginscan(OldHeap, OldIndex,
-						   SnapshotAny, 0, (ScanKey) NULL);
+									SnapshotAny, 0, (ScanKey) NULL);
 	}
 	else
 	{
@@ -1005,6 +989,10 @@ copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex,
 	/* Write out any remaining tuples, and fsync if needed */
 	end_heap_rewrite(rwstate);
 
+	/* Reset rd_toastoid just to be tidy --- it shouldn't be looked at again */
+	NewHeap->rd_toastoid = InvalidOid;
+
+	/* Clean up */
 	pfree(values);
 	pfree(isnull);
 
@@ -1012,8 +1000,6 @@ copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex,
 		index_close(OldIndex, NoLock);
 	heap_close(OldHeap, NoLock);
 	heap_close(NewHeap, NoLock);
-
-	return FreezeXid;
 }
 
 /*
@@ -1022,18 +1008,23 @@ copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex,
  * We swap the physical identity (reltablespace and relfilenode) while
  * keeping the same logical identities of the two relations.
  *
- * Also swap any TOAST links, so that the toast data moves along with
- * the main-table data.
+ * We can swap associated TOAST data in either of two ways: recursively swap
+ * the physical content of the toast tables (and their indexes), or swap the
+ * TOAST links in the given relations' pg_class entries.  The former is needed
+ * to manage rewrites of shared catalogs (where we cannot change the pg_class
+ * links) while the latter is the only way to handle cases in which a toast
+ * table is added or removed altogether.
  *
  * Additionally, the first relation is marked with relfrozenxid set to
  * frozenXid.  It seems a bit ugly to have this here, but all callers would
- * have to do it anyway, so having it here saves a heap_update.  Note: the
- * TOAST table needs no special handling, because since we swapped the links,
- * the entry for the TOAST table will now contain RecentXmin in relfrozenxid,
- * which is the correct value.
+ * have to do it anyway, so having it here saves a heap_update.  Note: in
+ * the swap-toast-links case, we assume we don't need to change the toast
+ * table's relfrozenxid: the new version of the toast table should already
+ * have relfrozenxid set to RecentXmin, which is good enough.
  */
 void
-swap_relation_files(Oid r1, Oid r2, TransactionId frozenXid)
+swap_relation_files(Oid r1, Oid r2, bool swap_toast_by_content,
+					TransactionId frozenXid)
 {
 	Relation	relRelation;
 	HeapTuple	reltup1,
@@ -1071,15 +1062,26 @@ swap_relation_files(Oid r1, Oid r2, TransactionId frozenXid)
 	relform1->reltablespace = relform2->reltablespace;
 	relform2->reltablespace = swaptemp;
 
-	swaptemp = relform1->reltoastrelid;
-	relform1->reltoastrelid = relform2->reltoastrelid;
-	relform2->reltoastrelid = swaptemp;
+	if (!swap_toast_by_content)
+	{
+		swaptemp = relform1->reltoastrelid;
+		relform1->reltoastrelid = relform2->reltoastrelid;
+		relform2->reltoastrelid = swaptemp;
 
-	/* we should not swap reltoastidxid */
+		/* we should not swap reltoastidxid */
+	}
+
+	/*
+	 * In the case of a shared catalog, these next few steps only affect our
+	 * own database's pg_class row; but that's okay.
+	 */
 
 	/* set rel1's frozen Xid */
-	Assert(TransactionIdIsNormal(frozenXid));
-	relform1->relfrozenxid = frozenXid;
+	if (relform1->relkind != RELKIND_INDEX)
+	{
+		Assert(TransactionIdIsNormal(frozenXid));
+		relform1->relfrozenxid = frozenXid;
+	}
 
 	/* swap size statistics too, since new rel has freshly-updated stats */
 	{
@@ -1107,62 +1109,95 @@ swap_relation_files(Oid r1, Oid r2, TransactionId frozenXid)
 
 	/*
 	 * If we have toast tables associated with the relations being swapped,
-	 * change their dependency links to re-associate them with their new
-	 * owning relations.  Otherwise the wrong one will get dropped ...
-	 *
-	 * NOTE: it is possible that only one table has a toast table; this can
-	 * happen in CLUSTER if there were dropped columns in the old table, and
-	 * in ALTER TABLE when adding or changing type of columns.
-	 *
-	 * NOTE: at present, a TOAST table's only dependency is the one on its
-	 * owning table.  If more are ever created, we'd need to use something
-	 * more selective than deleteDependencyRecordsFor() to get rid of only the
-	 * link we want.
+	 * deal with them too.
 	 */
 	if (relform1->reltoastrelid || relform2->reltoastrelid)
 	{
-		ObjectAddress baseobject,
-					toastobject;
-		long		count;
-
-		/* Delete old dependencies */
-		if (relform1->reltoastrelid)
+		if (swap_toast_by_content)
 		{
-			count = deleteDependencyRecordsFor(RelationRelationId,
-											   relform1->reltoastrelid);
-			if (count != 1)
-				elog(ERROR, "expected one dependency record for TOAST table, found %ld",
-					 count);
+			if (relform1->reltoastrelid && relform2->reltoastrelid)
+			{
+				/* Recursively swap the contents of the toast tables */
+				swap_relation_files(relform1->reltoastrelid,
+									relform2->reltoastrelid,
+									true,
+									frozenXid);
+			}
+			else
+			{
+				/* caller messed up */
+				elog(ERROR, "cannot swap toast files by content when there's only one");
+			}
 		}
-		if (relform2->reltoastrelid)
+		else
 		{
-			count = deleteDependencyRecordsFor(RelationRelationId,
-											   relform2->reltoastrelid);
-			if (count != 1)
-				elog(ERROR, "expected one dependency record for TOAST table, found %ld",
-					 count);
-		}
+			/*
+			 * We swapped the ownership links, so we need to change dependency
+			 * data to match.
+			 *
+			 * NOTE: it is possible that only one table has a toast table.
+			 *
+			 * NOTE: at present, a TOAST table's only dependency is the one on
+			 * its owning table.  If more are ever created, we'd need to use
+			 * something more selective than deleteDependencyRecordsFor() to
+			 * get rid of just the link we want.
+			 */
+			ObjectAddress baseobject,
+						toastobject;
+			long		count;
 
-		/* Register new dependencies */
-		baseobject.classId = RelationRelationId;
-		baseobject.objectSubId = 0;
-		toastobject.classId = RelationRelationId;
-		toastobject.objectSubId = 0;
+			/* Delete old dependencies */
+			if (relform1->reltoastrelid)
+			{
+				count = deleteDependencyRecordsFor(RelationRelationId,
+												   relform1->reltoastrelid);
+				if (count != 1)
+					elog(ERROR, "expected one dependency record for TOAST table, found %ld",
+						 count);
+			}
+			if (relform2->reltoastrelid)
+			{
+				count = deleteDependencyRecordsFor(RelationRelationId,
+												   relform2->reltoastrelid);
+				if (count != 1)
+					elog(ERROR, "expected one dependency record for TOAST table, found %ld",
+						 count);
+			}
 
-		if (relform1->reltoastrelid)
-		{
-			baseobject.objectId = r1;
-			toastobject.objectId = relform1->reltoastrelid;
-			recordDependencyOn(&toastobject, &baseobject, DEPENDENCY_INTERNAL);
-		}
+			/* Register new dependencies */
+			baseobject.classId = RelationRelationId;
+			baseobject.objectSubId = 0;
+			toastobject.classId = RelationRelationId;
+			toastobject.objectSubId = 0;
 
-		if (relform2->reltoastrelid)
-		{
-			baseobject.objectId = r2;
-			toastobject.objectId = relform2->reltoastrelid;
-			recordDependencyOn(&toastobject, &baseobject, DEPENDENCY_INTERNAL);
+			if (relform1->reltoastrelid)
+			{
+				baseobject.objectId = r1;
+				toastobject.objectId = relform1->reltoastrelid;
+				recordDependencyOn(&toastobject, &baseobject,
+								   DEPENDENCY_INTERNAL);
+			}
+
+			if (relform2->reltoastrelid)
+			{
+				baseobject.objectId = r2;
+				toastobject.objectId = relform2->reltoastrelid;
+				recordDependencyOn(&toastobject, &baseobject,
+								   DEPENDENCY_INTERNAL);
+			}
 		}
 	}
+
+	/*
+	 * If we're swapping two toast tables by content, do the same for their
+	 * indexes.
+	 */
+	if (swap_toast_by_content &&
+		relform1->reltoastidxid && relform2->reltoastidxid)
+			swap_relation_files(relform1->reltoastidxid,
+								relform2->reltoastidxid,
+								true,
+								InvalidTransactionId);
 
 	/*
 	 * Blow away the old relcache entries now.	We need this kluge because
@@ -1186,6 +1221,85 @@ swap_relation_files(Oid r1, Oid r2, TransactionId frozenXid)
 
 	heap_close(relRelation, RowExclusiveLock);
 }
+
+/*
+ * Remove the transient table that was built by make_new_heap, and finish
+ * cleaning up (including rebuilding all indexes on the old heap).
+ */
+void
+cleanup_heap_swap(Oid OIDOldHeap, Oid OIDNewHeap, bool swap_toast_by_content)
+{
+	ObjectAddress object;
+
+	/* Make swap_relation_files' changes visible in the catalogs. */
+	CommandCounterIncrement();
+
+	/* Destroy new heap with old filenode */
+	object.classId = RelationRelationId;
+	object.objectId = OIDNewHeap;
+	object.objectSubId = 0;
+
+	/*
+	 * The new relation is local to our transaction and we know nothing
+	 * depends on it, so DROP_RESTRICT should be OK.
+	 */
+	performDeletion(&object, DROP_RESTRICT);
+
+	/* performDeletion does CommandCounterIncrement at end */
+
+	/*
+	 * Rebuild each index on the relation (but not the toast table, which is
+	 * all-new at this point).	We do not need CommandCounterIncrement()
+	 * because reindex_relation does it.
+	 */
+	reindex_relation(OIDOldHeap, false);
+
+	/*
+	 * At this point, everything is kosher except that, if we did toast swap
+	 * by links, the toast table's name corresponds to the transient table.
+	 * The name is irrelevant to the backend because it's referenced by OID,
+	 * but users looking at the catalogs could be confused.  Rename it to
+	 * prevent this problem.
+	 *
+	 * Note no lock required on the relation, because we already hold an
+	 * exclusive lock on it.
+	 */
+	if (!swap_toast_by_content)
+	{
+		Relation	newrel;
+
+		newrel = heap_open(OIDOldHeap, NoLock);
+		if (OidIsValid(newrel->rd_rel->reltoastrelid))
+		{
+			Relation	toastrel;
+			Oid			toastidx;
+			Oid			toastnamespace;
+			char		NewToastName[NAMEDATALEN];
+
+			toastrel = relation_open(newrel->rd_rel->reltoastrelid,
+									 AccessShareLock);
+			toastidx = toastrel->rd_rel->reltoastidxid;
+			toastnamespace = toastrel->rd_rel->relnamespace;
+			relation_close(toastrel, AccessShareLock);
+
+			/* rename the toast table ... */
+			snprintf(NewToastName, NAMEDATALEN, "pg_toast_%u",
+					 OIDOldHeap);
+			RenameRelationInternal(newrel->rd_rel->reltoastrelid,
+								   NewToastName,
+								   toastnamespace);
+
+			/* ... and its index too */
+			snprintf(NewToastName, NAMEDATALEN, "pg_toast_%u_index",
+					 OIDOldHeap);
+			RenameRelationInternal(toastidx,
+								   NewToastName,
+								   toastnamespace);
+		}
+		relation_close(newrel, NoLock);
+	}
+}
+
 
 /*
  * Get a list of tables that the current user owns and

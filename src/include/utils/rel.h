@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/rel.h,v 1.120 2010/01/17 22:56:23 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/rel.h,v 1.121 2010/02/04 00:09:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -201,6 +201,16 @@ typedef struct RelationData
 	Oid		   *rd_exclprocs;	/* OIDs of exclusion ops' procs, if any */
 	uint16	   *rd_exclstrats;	/* exclusion ops' strategy numbers, if any */
 	void	   *rd_amcache;		/* available for use by index AM */
+
+	/*
+	 * Hack for CLUSTER, rewriting ALTER TABLE, etc: when writing a new
+	 * version of a table, we need to make any toast pointers inserted into it
+	 * have the existing toast table's OID, not the OID of the transient toast
+	 * table.  If rd_toastoid isn't InvalidOid, it is the OID to place in
+	 * toast pointers inserted into this rel.  (Note it's set on the new
+	 * version of the main heap, not the toast table itself.)
+	 */
+	Oid			rd_toastoid;	/* Real TOAST table's OID, or InvalidOid */
 
 	/*
 	 * sizes of the free space and visibility map forks, or InvalidBlockNumber
