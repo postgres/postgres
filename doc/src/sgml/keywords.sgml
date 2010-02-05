@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/keywords.sgml,v 2.25 2009/04/06 15:01:36 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/keywords.sgml,v 2.25.2.1 2010/02/05 19:34:57 momjian Exp $ -->
 
 <appendix id="sql-keywords-appendix">
  <title><acronym>SQL</acronym> Key Words</title>
@@ -3521,7 +3521,7 @@
    </row>
    <row>
     <entry><token>OVER</token></entry>
-    <entry></entry>
+    <entry>reserved (can be function or type)</entry>
     <entry>reserved</entry>
     <entry>reserved</entry>
     <entry></entry>
@@ -5561,7 +5561,7 @@
    </row>
    <row>
     <entry><token>WINDOW</token></entry>
-    <entry></entry>
+    <entry>reserved</entry>
     <entry>reserved</entry>
     <entry>reserved</entry>
     <entry></entry>
