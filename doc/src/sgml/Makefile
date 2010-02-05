@@ -2,7 +2,7 @@
 #
 # PostgreSQL documentation makefile
 #
-# $PostgreSQL: pgsql/doc/src/sgml/Makefile,v 1.137 2010/02/05 19:28:39 momjian Exp $
+# $PostgreSQL: pgsql/doc/src/sgml/Makefile,v 1.138 2010/02/05 19:31:18 momjian Exp $
 #
 #----------------------------------------------------------------------------
 
@@ -345,6 +345,7 @@ clean-man:
 
 endif # sqlmansectnum != 7
 
+# tabs are harmless, but it is best to avoid them in SGML files
 check-tabs:
 	@( ! grep '	' $(wildcard $(srcdir)/*.sgml $(srcdir)/ref/*.sgml) ) || (echo "Tabs appear in SGML files";  exit 1)
 
