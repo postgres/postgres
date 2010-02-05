@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/high-availability.sgml,v 1.37 2010/02/03 17:25:05 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/high-availability.sgml,v 1.38 2010/02/05 23:53:22 momjian Exp $ -->
 
 <chapter id="high-availability">
  <title>High Availability, Load Balancing, and Replication</title>
@@ -135,21 +135,22 @@ protocol to make nodes agree on a serializable transactional order.
   </varlistentry>
 
   <varlistentry>
-   <term>Warm Standby Using Point-In-Time Recovery (<acronym>PITR</>)</term>
+   <term>Warm and Hot Standby Using Point-In-Time Recovery (<acronym>PITR</>)</term>
    <listitem>
 
     <para>
-     A warm standby server (see <xref linkend="warm-standby">) can
-     be kept current by reading a stream of write-ahead log (<acronym>WAL</>)
+     Warm and hot standby servers can be kept current by reading a
+     stream of write-ahead log (<acronym>WAL</>)
      records.  If the main server fails, the warm standby contains
      almost all of the data of the main server, and can be quickly
      made the new master database server.  This is asynchronous and
      can only be done for the entire database server.
     </para>
     <para>
-     A PITR warm standby server can be kept more up-to-date using the
-     streaming replication feature built into <productname>PostgreSQL</> 8.5
-     onwards;  see <xref linkend="warm-standby">.
+     A PITR standby server can be kept more up-to-date using streaming
+     replication.;  see <xref linkend="streaming-replication">.  For
+     warm standby information, see <xref linkend="warm-standby">, and
+     for hot standby, see <xref linkend="hot-standby">.
     </para>
    </listitem>
   </varlistentry>
