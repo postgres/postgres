@@ -3,11 +3,11 @@
  * isn.h
  *	  PostgreSQL type definitions for ISNs (ISBN, ISMN, ISSN, EAN13, UPC)
  *
- * Copyright (c) 2004-2006, Germán Méndez Bravo (Kronuz)
+ * Author:  German Mendez Bravo (Kronuz)
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/contrib/isn/isn.h,v 1.8 2010/01/02 16:57:32 momjian Exp $
+ *	  $PostgreSQL: pgsql/contrib/isn/isn.h,v 1.9 2010/02/05 04:34:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
