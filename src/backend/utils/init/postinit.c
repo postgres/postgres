@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/init/postinit.c,v 1.201 2010/01/15 09:19:04 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/init/postinit.c,v 1.202 2010/02/05 20:26:56 momjian Exp $
  *
  *
  *-------------------------------------------------------------------------
@@ -855,6 +855,7 @@ process_settings(Oid databaseid, Oid roleid)
 
 	relsetting = heap_open(DbRoleSettingRelationId, AccessShareLock);
 
+	/* Later settings are ignored if set earlier. */
 	ApplySetting(databaseid, roleid, relsetting, PGC_S_DATABASE_USER);
 	ApplySetting(InvalidOid, roleid, relsetting, PGC_S_USER);
 	ApplySetting(databaseid, InvalidOid, relsetting, PGC_S_DATABASE);
