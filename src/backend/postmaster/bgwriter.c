@@ -38,7 +38,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/bgwriter.c,v 1.66 2010/01/15 09:19:02 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/bgwriter.c,v 1.67 2010/02/05 23:37:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -543,7 +543,10 @@ BackgroundWriterMain(void)
 
 /*
  * CheckArchiveTimeout -- check for archive_timeout and switch xlog files
- *		if needed
+ *
+ * This will switch to a new WAL file and force an archive file write
+ * if any activity is recorded in the current WAL file, including just
+ * a single checkpoint record.
  */
 static void
 CheckArchiveTimeout(void)

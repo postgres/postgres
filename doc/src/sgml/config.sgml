@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.249 2010/02/03 17:25:05 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.250 2010/02/05 23:37:43 momjian Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -1739,7 +1739,11 @@ archive_command = 'copy "%p" "C:\\server\\archivedir\\%f"'  # Windows
         server to switch to a new WAL segment file periodically.  When this
         parameter is greater than zero, the server will switch to a new
         segment file whenever this many seconds have elapsed since the last
-        segment file switch.  Note that archived files that are closed early
+        segment file switch, and there has been any database activity,
+        including a single checkpoint.  (Increasing
+        <varname>checkpoint_timeout</> will reduce unnecessary
+        checkpoints on an idle system.)
+        Note that archived files that are closed early
         due to a forced switch are still the same length as completely full
         files.  Therefore, it is unwise to use a very short
         <varname>archive_timeout</> &mdash; it will bloat your archive
