@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/keywords.sgml,v 2.29 2010/02/05 19:28:39 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/keywords.sgml,v 2.30 2010/02/05 19:38:21 momjian Exp $ -->
 
 <appendix id="sql-keywords-appendix">
  <title><acronym>SQL</acronym> Key Words</title>
@@ -18,7 +18,7 @@
  <para>
   SQL distinguishes between <firstterm>reserved</firstterm> and
   <firstterm>non-reserved</firstterm> key words.  According to the standard,
-  reserved key words
+  reserved key words 
   are the only real key words; they are never allowed as identifiers.
   Non-reserved key words only have a special meaning in particular
   contexts and can be used as identifiers in other contexts.  Most
