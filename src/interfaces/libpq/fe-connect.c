@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.385 2010/01/28 06:28:26 joe Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.386 2010/02/05 03:09:05 joe Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -269,7 +269,7 @@ static PQconninfoOption *conninfo_parse(const char *conninfo,
 			   PQExpBuffer errorMessage, bool use_defaults);
 static PQconninfoOption *conninfo_array_parse(const char **keywords,
 				const char **values, PQExpBuffer errorMessage,
-				bool use_defaults);
+				bool use_defaults, int expand_dbname);
 static char *conninfo_getval(PQconninfoOption *connOptions,
 				const char *keyword);
 static void defaultNoticeReceiver(void *arg, const PGresult *res);
@@ -336,9 +336,11 @@ pgthreadlock_t pg_g_threadlock = default_threadlock;
  * call succeeded.
  */
 PGconn *
-PQconnectdbParams(const char **keywords, const char **values)
+PQconnectdbParams(const char **keywords,
+				  const char **values,
+				  int expand_dbname)
 {
-	PGconn	   *conn = PQconnectStartParams(keywords, values);
+	PGconn	   *conn = PQconnectStartParams(keywords, values, expand_dbname);
 
 	if (conn && conn->status != CONNECTION_BAD)
 		(void) connectDBComplete(conn);
@@ -400,7 +402,9 @@ PQconnectdb(const char *conninfo)
  * See PQconnectPoll for more info.
  */
 PGconn *
-PQconnectStartParams(const char **keywords, const char **values)
+PQconnectStartParams(const char **keywords,
+					 const char **values,
+					 int expand_dbname)
 {
 	PGconn			   *conn;
 	PQconninfoOption   *connOptions;
@@ -416,7 +420,8 @@ PQconnectStartParams(const char **keywords, const char **values)
 	 * Parse the conninfo arrays
 	 */
 	connOptions = conninfo_array_parse(keywords, values,
-									   &conn->errorMessage, true);
+									   &conn->errorMessage,
+									   true, expand_dbname);
 	if (connOptions == NULL)
 	{
 		conn->status = CONNECTION_BAD;
@@ -3729,15 +3734,52 @@ conninfo_parse(const char *conninfo, PQExpBuffer errorMessage,
  * left in errorMessage.
  * Defaults are supplied (from a service file, environment variables, etc)
  * for unspecified options, but only if use_defaults is TRUE.
+ *
+ * If expand_dbname is non-zero, and the value passed for keyword "dbname"
+ * contains an "=", assume it is a conninfo string and process it,
+ * overriding any previously processed conflicting keywords. Subsequent
+ * keywords will take precedence, however.
  */
 static PQconninfoOption *
 conninfo_array_parse(const char **keywords, const char **values,
-					 PQExpBuffer errorMessage, bool use_defaults)
+					 PQExpBuffer errorMessage, bool use_defaults,
+					 int expand_dbname)
 {
 	char			   *tmp;
 	PQconninfoOption   *options;
+	PQconninfoOption   *str_options = NULL;
 	PQconninfoOption   *option;
 	int					i = 0;
+
+	/*
+	 * If expand_dbname is non-zero, check keyword "dbname"
+	 * to see if val is actually a conninfo string
+	 */
+	while(expand_dbname && keywords[i])
+	{
+		const char *pname = keywords[i];
+		const char *pvalue  = values[i];
+
+		/* first find "dbname" if any */
+		if (strcmp(pname, "dbname") == 0)
+		{
+			/* next look for "=" in the value */
+			if (pvalue && strchr(pvalue, '='))
+			{
+				/*
+				 * Must be a conninfo string, so parse it, but do not
+				 * use defaults here -- those get picked up later.
+				 * We only want to override for those parameters actually
+				 * passed.
+				 */
+				str_options = conninfo_parse(pvalue, errorMessage, false);
+				if (str_options == NULL)
+					return NULL;
+			}
+			break;
+		}
+		++i;
+	}
 
 	/* Make a working copy of PQconninfoOptions */
 	options = malloc(sizeof(PQconninfoOptions));
@@ -3749,6 +3791,7 @@ conninfo_array_parse(const char **keywords, const char **values,
 	}
 	memcpy(options, PQconninfoOptions, sizeof(PQconninfoOptions));
 
+	i = 0;
 	/* Parse the keywords/values arrays */
 	while(keywords[i])
 	{
@@ -3774,22 +3817,54 @@ conninfo_array_parse(const char **keywords, const char **values,
 				return NULL;
 			}
 
-		    /*
-		     * Store the value
-		     */
-		    if (option->val)
-		    	free(option->val);
-		    option->val = strdup(pvalue);
-		    if (!option->val)
-		    {
-		    	printfPQExpBuffer(errorMessage,
-		    					  libpq_gettext("out of memory\n"));
-		    	PQconninfoFree(options);
-		    	return NULL;
-		    }
+			/*
+			 * If we are on the dbname parameter, and we have a parsed
+			 * conninfo string, copy those parameters across, overriding
+			 * any existing previous settings
+			 */
+			if (strcmp(pname, "dbname") == 0 && str_options)
+			{
+				PQconninfoOption *str_option;
+
+				for (str_option = str_options; str_option->keyword != NULL; str_option++)
+				{
+					if (str_option->val != NULL)
+					{
+						int			k;
+
+						for (k = 0; options[k].keyword; k++)
+						{
+							if (strcmp(options[k].keyword, str_option->keyword) == 0)
+							{
+								if (options[k].val)
+									free(options[k].val);
+								options[k].val = strdup(str_option->val);
+								break;
+							}
+						}
+					}
+				}
+			}
+			else
+			{
+				/*
+				 * Store the value, overriding previous settings
+				 */
+				if (option->val)
+					free(option->val);
+				option->val = strdup(pvalue);
+				if (!option->val)
+				{
+					printfPQExpBuffer(errorMessage,
+									  libpq_gettext("out of memory\n"));
+					PQconninfoFree(options);
+					return NULL;
+				}
+			}
 		}
 		++i;
 	}
+	PQconninfoFree(str_options);
 
 	/*
 	 * Stop here if caller doesn't want defaults filled in.

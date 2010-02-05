@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/startup.c,v 1.159 2010/01/28 06:28:26 joe Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/startup.c,v 1.160 2010/02/05 03:09:05 joe Exp $
  */
 #include "postgres_fe.h"
 
@@ -90,8 +90,6 @@ main(int argc, char *argv[])
 	char	   *password = NULL;
 	char	   *password_prompt = NULL;
 	bool		new_pass;
-	const char *keywords[] = {"host","port","dbname","user",
-							  "password","application_name",NULL};
 
 	set_pglocale_pgservice(argv[0], PG_TEXTDOMAIN("psql"));
 
@@ -173,20 +171,31 @@ main(int argc, char *argv[])
 	/* loop until we have a password if requested by backend */
 	do
 	{
-        const char *values[] = {
-                  options.host,
-                  options.port,
-                  (options.action == ACT_LIST_DB && 
-                               options.dbname == NULL) ? "postgres" : options.dbname,
-                  options.username,
-                  password,
-                  pset.progname,
-                  NULL
-              };
-        
-        new_pass = false;
+#define PARAMS_ARRAY_SIZE	7
+		const char **keywords = pg_malloc(PARAMS_ARRAY_SIZE * sizeof(*keywords));
+		const char **values = pg_malloc(PARAMS_ARRAY_SIZE * sizeof(*values));
 
-        pset.db = PQconnectdbParams(keywords, values);
+		keywords[0]	= "host";
+		values[0]	= options.host;
+		keywords[1]	= "port";
+		values[1]	= options.port;
+		keywords[2]	= "user";
+		values[2]	= options.username;
+		keywords[3]	= "password";
+		values[3]	= password;
+		keywords[4]	= "dbname";
+		values[4]	= (options.action == ACT_LIST_DB &&
+						options.dbname == NULL) ?
+						"postgres" : options.dbname;
+		keywords[5]	= "fallback_application_name";
+		values[5]	= pset.progname;
+		keywords[6]	= NULL;
+		values[6]	= NULL;
+
+		new_pass = false;
+		pset.db = PQconnectdbParams(keywords, values, true);
+		free(keywords);
+		free(values);
 
 		if (PQstatus(pset.db) == CONNECTION_BAD &&
 			PQconnectionNeedsPassword(pset.db) &&

@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.213 2010/01/02 16:57:59 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.214 2010/02/05 03:09:05 joe Exp $
  */
 #include "postgres_fe.h"
 #include "command.h"
@@ -1213,7 +1213,7 @@ param_is_newly_set(const char *old_val, const char *new_val)
  * Connects to a database with given parameters. If there exists an
  * established connection, NULL values will be replaced with the ones
  * in the current connection. Otherwise NULL will be passed for that
- * parameter to PQsetdbLogin(), so the libpq defaults will be used.
+ * parameter to PQconnectdbParams(), so the libpq defaults will be used.
  *
  * In interactive mode, if connection fails with the given parameters,
  * the old connection will be kept.
@@ -1255,8 +1255,29 @@ do_connect(char *dbname, char *user, char *host, char *port)
 
 	while (true)
 	{
-		n_conn = PQsetdbLogin(host, port, NULL, NULL,
-							  dbname, user, password);
+#define PARAMS_ARRAY_SIZE	7
+		const char **keywords = pg_malloc(PARAMS_ARRAY_SIZE * sizeof(*keywords));
+		const char **values = pg_malloc(PARAMS_ARRAY_SIZE * sizeof(*values));
+
+		keywords[0]	= "host";
+		values[0]	= host;
+		keywords[1]	= "port";
+		values[1]	= port;
+		keywords[2]	= "user";
+		values[2]	= user;
+		keywords[3]	= "password";
+		values[3]	= password;
+		keywords[4]	= "dbname";
+		values[4]	= dbname;
+		keywords[5]	= "fallback_application_name";
+		values[5]	= pset.progname;
+		keywords[6]	= NULL;
+		values[6]	= NULL;
+
+		n_conn = PQconnectdbParams(keywords, values, true);
+
+		free(keywords);
+		free(values);
 
 		/* We can immediately discard the password -- no longer needed */
 		if (password)

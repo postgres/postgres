@@ -5,7 +5,7 @@
  *	Implements the basic DB functions used by the archiver.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.85 2009/12/14 00:39:11 itagaki Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.86 2010/02/05 03:09:05 joe Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -154,10 +154,34 @@ _connectDB(ArchiveHandle *AH, const char *reqdb, const char *requser)
 
 	do
 	{
+#define PARAMS_ARRAY_SIZE	7
+		const char **keywords = malloc(PARAMS_ARRAY_SIZE * sizeof(*keywords));
+		const char **values = malloc(PARAMS_ARRAY_SIZE * sizeof(*values));
+
+		if (!keywords || !values)
+			die_horribly(AH, modulename, "out of memory\n");
+
+		keywords[0]	= "host";
+		values[0]	= PQhost(AH->connection);
+		keywords[1]	= "port";
+		values[1]	= PQport(AH->connection);
+		keywords[2]	= "user";
+		values[2]	= newuser;
+		keywords[3]	= "password";
+		values[3]	= password;
+		keywords[4]	= "dbname";
+		values[4]	= newdb;
+		keywords[5]	= "fallback_application_name";
+		values[5]	= progname;
+		keywords[6]	= NULL;
+		values[6]	= NULL;
+
 		new_pass = false;
-		newConn = PQsetdbLogin(PQhost(AH->connection), PQport(AH->connection),
-							   NULL, NULL, newdb,
-							   newuser, password);
+		newConn = PQconnectdbParams(keywords, values, true);
+
+		free(keywords);
+		free(values);
+
 		if (!newConn)
 			die_horribly(AH, modulename, "failed to reconnect to database\n");
 
@@ -237,9 +261,33 @@ ConnectDatabase(Archive *AHX,
 	 */
 	do
 	{
+#define PARAMS_ARRAY_SIZE	7
+		const char **keywords = malloc(PARAMS_ARRAY_SIZE * sizeof(*keywords));
+		const char **values = malloc(PARAMS_ARRAY_SIZE * sizeof(*values));
+
+		if (!keywords || !values)
+			die_horribly(AH, modulename, "out of memory\n");
+
+		keywords[0]	= "host";
+		values[0]	= pghost;
+		keywords[1]	= "port";
+		values[1]	= pgport;
+		keywords[2]	= "user";
+		values[2]	= username;
+		keywords[3]	= "password";
+		values[3]	= password;
+		keywords[4]	= "dbname";
+		values[4]	= dbname;
+		keywords[5]	= "fallback_application_name";
+		values[5]	= progname;
+		keywords[6]	= NULL;
+		values[6]	= NULL;
+
 		new_pass = false;
-		AH->connection = PQsetdbLogin(pghost, pgport, NULL, NULL,
-									  dbname, username, password);
+		AH->connection = PQconnectdbParams(keywords, values, true);
+
+		free(keywords);
+		free(values);
 
 		if (!AH->connection)
 			die_horribly(AH, modulename, "failed to connect to database\n");
@@ -697,3 +745,4 @@ _isDQChar(unsigned char c, bool atStart)
 	else
 		return false;
 }
+

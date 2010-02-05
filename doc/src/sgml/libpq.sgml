@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.296 2010/01/28 06:28:26 joe Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.297 2010/02/05 03:09:04 joe Exp $ -->
 
 <chapter id="libpq">
  <title><application>libpq</application> - C Library</title>
@@ -98,7 +98,7 @@
        Makes a new connection to the database server.
 
        <synopsis>
-        PGconn *PQconnectdbParams(const char **keywords, const char **values);
+        PGconn *PQconnectdbParams(const char **keywords, const char **values, int expand_dbname);
        </synopsis>
       </para>
 
@@ -112,6 +112,12 @@
        this function (or its nonblocking analogs <function>PQconnectStartParams</>
        and <function>PQconnectPoll</function>) is preferred for new application
        programming.
+      </para>
+
+      <para>
+       When <literal>expand_dbname</literal> is non-zero, the
+       <parameter>dbname</parameter> key word value is allowed to be recognized
+       as a <parameter>conninfo</parameter> string. See below for details.
       </para>
 
       <para>
@@ -473,6 +479,24 @@
        is checked. If the  environment  variable is not set either,
        then the indicated built-in defaults are used.
       </para>
+
+      <para>
+        If <literal>expand_dbname</literal> is non-zero and 
+        <parameter>dbname</parameter> contains an <symbol>=</symbol> sign, it
+        is taken as a <parameter>conninfo</parameter> string in exactly the same way as
+        if it had been passed to <function>PQconnectdb</function>(see below). Previously
+        processed key words will be overridden by key words in the
+        <parameter>conninfo</parameter> string.
+      </para>
+
+      <para>
+        In general key words are processed from the beginning of these arrays in index
+        order. The effect of this is that when key words are repeated, the last processed
+        value is retained. Therefore, through careful placement of the
+        <parameter>dbname</parameter> key word, it is possible to determine what may
+        be overridden by a <parameter>conninfo</parameter> string, and what may not.
+      </para>
+
      </listitem>
     </varlistentry>
 
@@ -573,7 +597,7 @@ PGconn *PQsetdb(char *pghost,
        Make a connection to the database server in a nonblocking manner.
 
        <synopsis>
-        PGconn *PQconnectStartParams(const char **keywords, const char **values);
+        PGconn *PQconnectStartParams(const char **keywords, const char **values, int expand_dbname);
        </synopsis>
 
        <synopsis>
@@ -597,8 +621,8 @@ PGconn *PQsetdb(char *pghost,
       <para>
        With <function>PQconnectStartParams</function>, the database connection is made
        using the parameters taken from the <literal>keywords</literal> and
-       <literal>values</literal> arrays, as described above for
-       <function>PQconnectdbParams</function>.
+       <literal>values</literal> arrays, and controlled by <literal>expand_dbname</literal>,
+       as described above for <function>PQconnectdbParams</function>.
       </para>
 
       <para>
