@@ -371,13 +371,16 @@ CheckForExternalTrigger(void)
 		 * recovery completes, we will be asked again for the same file from
 		 * the archive using pg_standby so must remove trigger file so we can
 		 * reload file again and come up correctly.
+		 *
+		 * If it fails, return with an exit code that the server will treat
+		 * as a FATAL error.
 		 */
 		rc = unlink(triggerPath);
 		if (rc != 0)
 		{
 			fprintf(stderr, "\n ERROR: could not remove \"%s\": %s", triggerPath, strerror(errno));
 			fflush(stderr);
-			exit(rc);
+			exit(200);
 		}
 		return true;
 	}
