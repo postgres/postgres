@@ -1,5 +1,5 @@
 # ----------
-# $PostgreSQL: pgsql/src/test/regress/parallel_schedule,v 1.59 2010/02/07 20:48:13 tgl Exp $
+# $PostgreSQL: pgsql/src/test/regress/parallel_schedule,v 1.60 2010/02/07 22:40:33 tgl Exp $
 #
 # By convention, we put no more than twenty tests in any one parallel group;
 # this limits the number of connections needed to run the tests.
@@ -52,10 +52,7 @@ test: copy copyselect
 # ----------
 # Another group of parallel tests
 # ----------
-test: constraints triggers create_misc create_aggregate create_operator inherit typed_table drop_if_exists create_cast
-
-# XXX temporarily run this by itself
-test: vacuum
+test: constraints triggers create_misc create_aggregate create_operator inherit typed_table vacuum drop_if_exists create_cast
 
 # Depends on the above
 test: create_index create_view

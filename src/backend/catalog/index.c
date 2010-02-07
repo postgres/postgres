@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.333 2010/02/07 20:48:09 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.334 2010/02/07 22:40:33 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1541,6 +1541,8 @@ IndexBuildHeapScan(Relation heapRelation,
 				   IndexBuildCallback callback,
 				   void *callback_state)
 {
+	bool		is_system_catalog;
+	bool		checking_uniqueness;
 	HeapScanDesc scan;
 	HeapTuple	heapTuple;
 	Datum		values[INDEX_MAX_KEYS];
@@ -1559,6 +1561,13 @@ IndexBuildHeapScan(Relation heapRelation,
 	 * sanity checks
 	 */
 	Assert(OidIsValid(indexRelation->rd_rel->relam));
+
+	/* Remember if it's a system catalog */
+	is_system_catalog = IsSystemRelation(heapRelation);
+
+	/* See whether we're verifying uniqueness/exclusion properties */
+	checking_uniqueness = (indexInfo->ii_Unique ||
+						   indexInfo->ii_ExclusionOps != NULL);
 
 	/*
 	 * Need an EState for evaluation of index expressions and partial-index
@@ -1652,6 +1661,7 @@ IndexBuildHeapScan(Relation heapRelation,
 		{
 			/* do our own time qual check */
 			bool		indexIt;
+			TransactionId xwait;
 
 	recheck:
 
@@ -1710,29 +1720,31 @@ IndexBuildHeapScan(Relation heapRelation,
 				case HEAPTUPLE_INSERT_IN_PROGRESS:
 
 					/*
-					 * Since caller should hold ShareLock or better, we should
-					 * not see any tuples inserted by open transactions ---
-					 * unless it's our own transaction. (Consider INSERT
-					 * followed by CREATE INDEX within a transaction.)	An
-					 * exception occurs when reindexing a system catalog,
-					 * because we often release lock on system catalogs before
-					 * committing.	In that case we wait for the inserting
-					 * transaction to finish and check again.  (We could do
-					 * that on user tables too, but since the case is not
-					 * expected it seems better to throw an error.)
+					 * Since caller should hold ShareLock or better, normally
+					 * the only way to see this is if it was inserted earlier
+					 * in our own transaction.  However, it can happen in
+					 * system catalogs, since we tend to release write lock
+					 * before commit there.  Give a warning if neither case
+					 * applies.
 					 */
-					if (!TransactionIdIsCurrentTransactionId(
-								  HeapTupleHeaderGetXmin(heapTuple->t_data)))
+					xwait = HeapTupleHeaderGetXmin(heapTuple->t_data);
+					if (!TransactionIdIsCurrentTransactionId(xwait))
 					{
-						if (!IsSystemRelation(heapRelation))
-							elog(ERROR, "concurrent insert in progress");
-						else
+						if (!is_system_catalog)
+							elog(WARNING, "concurrent insert in progress within table \"%s\"",
+								 RelationGetRelationName(heapRelation));
+
+						/*
+						 * If we are performing uniqueness checks, indexing
+						 * such a tuple could lead to a bogus uniqueness
+						 * failure.  In that case we wait for the inserting
+						 * transaction to finish and check again.
+						 */
+						if (checking_uniqueness)
 						{
 							/*
 							 * Must drop the lock on the buffer before we wait
 							 */
-							TransactionId xwait = HeapTupleHeaderGetXmin(heapTuple->t_data);
-
 							LockBuffer(scan->rs_cbuf, BUFFER_LOCK_UNLOCK);
 							XactLockTableWait(xwait);
 							goto recheck;
@@ -1749,30 +1761,27 @@ IndexBuildHeapScan(Relation heapRelation,
 				case HEAPTUPLE_DELETE_IN_PROGRESS:
 
 					/*
-					 * Since caller should hold ShareLock or better, we should
-					 * not see any tuples deleted by open transactions ---
-					 * unless it's our own transaction. (Consider DELETE
-					 * followed by CREATE INDEX within a transaction.)	An
-					 * exception occurs when reindexing a system catalog,
-					 * because we often release lock on system catalogs before
-					 * committing.	In that case we wait for the deleting
-					 * transaction to finish and check again.  (We could do
-					 * that on user tables too, but since the case is not
-					 * expected it seems better to throw an error.)
+					 * Similar situation to INSERT_IN_PROGRESS case.
 					 */
 					Assert(!(heapTuple->t_data->t_infomask & HEAP_XMAX_IS_MULTI));
-					if (!TransactionIdIsCurrentTransactionId(
-								  HeapTupleHeaderGetXmax(heapTuple->t_data)))
+					xwait = HeapTupleHeaderGetXmax(heapTuple->t_data);
+					if (!TransactionIdIsCurrentTransactionId(xwait))
 					{
-						if (!IsSystemRelation(heapRelation))
-							elog(ERROR, "concurrent delete in progress");
-						else
+						if (!is_system_catalog)
+							elog(WARNING, "concurrent delete in progress within table \"%s\"",
+								 RelationGetRelationName(heapRelation));
+
+						/*
+						 * If we are performing uniqueness checks, assuming
+						 * the tuple is dead could lead to missing a uniqueness
+						 * violation.  In that case we wait for the deleting
+						 * transaction to finish and check again.
+						 */
+						if (checking_uniqueness)
 						{
 							/*
 							 * Must drop the lock on the buffer before we wait
 							 */
-							TransactionId xwait = HeapTupleHeaderGetXmax(heapTuple->t_data);
-
 							LockBuffer(scan->rs_cbuf, BUFFER_LOCK_UNLOCK);
 							XactLockTableWait(xwait);
 							goto recheck;
@@ -2402,7 +2411,7 @@ IndexGetRelation(Oid indexId)
  * reindex_index - This routine is used to recreate a single index
  */
 void
-reindex_index(Oid indexId)
+reindex_index(Oid indexId, bool skip_constraint_checks)
 {
 	Relation	iRel,
 				heapRelation,
@@ -2411,6 +2420,7 @@ reindex_index(Oid indexId)
 	IndexInfo  *indexInfo;
 	HeapTuple	indexTuple;
 	Form_pg_index indexForm;
+	volatile bool skipped_constraint = false;
 
 	/*
 	 * Open and lock the parent heap relation.	ShareLock is sufficient since
@@ -2448,6 +2458,17 @@ reindex_index(Oid indexId)
 		/* Fetch info needed for index_build */
 		indexInfo = BuildIndexInfo(iRel);
 
+		/* If requested, skip checking uniqueness/exclusion constraints */
+		if (skip_constraint_checks)
+		{
+			if (indexInfo->ii_Unique || indexInfo->ii_ExclusionOps != NULL)
+				skipped_constraint = true;
+			indexInfo->ii_Unique = false;
+			indexInfo->ii_ExclusionOps = NULL;
+			indexInfo->ii_ExclusionProcs = NULL;
+			indexInfo->ii_ExclusionStrats = NULL;
+		}
+
 		/* We'll build a new physical relation for the index */
 		RelationSetNewRelfilenode(iRel, InvalidTransactionId);
 
@@ -2466,33 +2487,38 @@ reindex_index(Oid indexId)
 
 	/*
 	 * If the index is marked invalid or not ready (ie, it's from a failed
-	 * CREATE INDEX CONCURRENTLY), we can now mark it valid.  This allows
-	 * REINDEX to be used to clean up in such cases.
+	 * CREATE INDEX CONCURRENTLY), and we didn't skip a uniqueness check,
+	 * we can now mark it valid.  This allows REINDEX to be used to clean up
+	 * in such cases.
 	 *
 	 * We can also reset indcheckxmin, because we have now done a
 	 * non-concurrent index build, *except* in the case where index_build
 	 * found some still-broken HOT chains.
 	 */
-	pg_index = heap_open(IndexRelationId, RowExclusiveLock);
-
-	indexTuple = SearchSysCacheCopy(INDEXRELID,
-									ObjectIdGetDatum(indexId),
-									0, 0, 0);
-	if (!HeapTupleIsValid(indexTuple))
-		elog(ERROR, "cache lookup failed for index %u", indexId);
-	indexForm = (Form_pg_index) GETSTRUCT(indexTuple);
-
-	if (!indexForm->indisvalid || !indexForm->indisready ||
-		(indexForm->indcheckxmin && !indexInfo->ii_BrokenHotChain))
+	if (!skipped_constraint)
 	{
-		indexForm->indisvalid = true;
-		indexForm->indisready = true;
-		if (!indexInfo->ii_BrokenHotChain)
-			indexForm->indcheckxmin = false;
-		simple_heap_update(pg_index, &indexTuple->t_self, indexTuple);
-		CatalogUpdateIndexes(pg_index, indexTuple);
+		pg_index = heap_open(IndexRelationId, RowExclusiveLock);
+
+		indexTuple = SearchSysCacheCopy(INDEXRELID,
+										ObjectIdGetDatum(indexId),
+										0, 0, 0);
+		if (!HeapTupleIsValid(indexTuple))
+			elog(ERROR, "cache lookup failed for index %u", indexId);
+		indexForm = (Form_pg_index) GETSTRUCT(indexTuple);
+
+		if (!indexForm->indisvalid || !indexForm->indisready ||
+			(indexForm->indcheckxmin && !indexInfo->ii_BrokenHotChain))
+		{
+			indexForm->indisvalid = true;
+			indexForm->indisready = true;
+			if (!indexInfo->ii_BrokenHotChain)
+				indexForm->indcheckxmin = false;
+			simple_heap_update(pg_index, &indexTuple->t_self, indexTuple);
+			CatalogUpdateIndexes(pg_index, indexTuple);
+		}
+
+		heap_close(pg_index, RowExclusiveLock);
 	}
-	heap_close(pg_index, RowExclusiveLock);
 
 	/* Close rels, but keep locks */
 	index_close(iRel, NoLock);
@@ -2512,6 +2538,11 @@ reindex_index(Oid indexId)
  * made the rebuilt versions visible by doing CommandCounterIncrement; we'll
  * do CCI after having collected the index list.  (This way we can still use
  * catalog indexes while collecting the list.)
+ *
+ * We also skip rechecking uniqueness/exclusion constraint properties if
+ * heap_rebuilt is true.  This avoids likely deadlock conditions when doing
+ * VACUUM FULL or CLUSTER on system catalogs.  REINDEX should be used to
+ * rebuild an index if constraint inconsistency is suspected.
  *
  * Returns true if any indexes were rebuilt.  Note that a
  * CommandCounterIncrement will occur after each index rebuild.
@@ -2594,7 +2625,7 @@ reindex_relation(Oid relid, bool toast_too, bool heap_rebuilt)
 			if (is_pg_class)
 				RelationSetIndexList(rel, doneIndexes, InvalidOid);
 
-			reindex_index(indexOid);
+			reindex_index(indexOid, heap_rebuilt);
 
 			CommandCounterIncrement();
 
