@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/indexcmds.c,v 1.190 2010/01/02 16:57:37 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/indexcmds.c,v 1.191 2010/02/07 20:48:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -244,10 +244,15 @@ DefineIndex(RangeVar *heapRelation,
 
 	/*
 	 * Force shared indexes into the pg_global tablespace.	This is a bit of a
-	 * hack but seems simpler than marking them in the BKI commands.
+	 * hack but seems simpler than marking them in the BKI commands.  On the
+	 * other hand, if it's not shared, don't allow it to be placed there.
 	 */
 	if (rel->rd_rel->relisshared)
 		tablespaceId = GLOBALTABLESPACE_OID;
+	else if (tablespaceId == GLOBALTABLESPACE_OID)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("only shared relations can be placed in pg_global tablespace")));
 
 	/*
 	 * Choose the index column names.
@@ -1615,16 +1620,9 @@ ReindexTable(RangeVar *relation)
 		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CLASS,
 					   relation->relname);
 
-	/* Can't reindex shared tables except in standalone mode */
-	if (((Form_pg_class) GETSTRUCT(tuple))->relisshared && IsUnderPostmaster)
-		ereport(ERROR,
-				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("shared table \"%s\" can only be reindexed in stand-alone mode",
-						relation->relname)));
-
 	ReleaseSysCache(tuple);
 
-	if (!reindex_relation(heapOid, true))
+	if (!reindex_relation(heapOid, true, false))
 		ereport(NOTICE,
 				(errmsg("table \"%s\" has no indexes",
 						relation->relname)));
@@ -1717,12 +1715,6 @@ ReindexDatabase(const char *databaseName, bool do_system, bool do_user)
 				continue;
 		}
 
-		if (IsUnderPostmaster)	/* silently ignore shared tables */
-		{
-			if (classtuple->relisshared)
-				continue;
-		}
-
 		if (HeapTupleGetOid(tuple) == RelationRelationId)
 			continue;			/* got it already */
 
@@ -1743,7 +1735,7 @@ ReindexDatabase(const char *databaseName, bool do_system, bool do_user)
 		StartTransactionCommand();
 		/* functions in indexes may want a snapshot set */
 		PushActiveSnapshot(GetTransactionSnapshot());
-		if (reindex_relation(relid, true))
+		if (reindex_relation(relid, true, false))
 			ereport(NOTICE,
 					(errmsg("table \"%s\" was reindexed",
 							get_rel_name(relid))));

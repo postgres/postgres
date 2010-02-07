@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/storage.h,v 1.4 2010/01/02 16:58:02 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/storage.h,v 1.5 2010/02/07 20:48:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,6 +22,7 @@
 
 extern void RelationCreateStorage(RelFileNode rnode, bool istemp);
 extern void RelationDropStorage(Relation rel);
+extern void RelationPreserveStorage(RelFileNode rnode);
 extern void RelationTruncate(Relation rel, BlockNumber nblocks);
 
 /*

@@ -80,7 +80,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/inval.c,v 1.93 2010/02/03 01:14:17 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/inval.c,v 1.94 2010/02/07 20:48:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -96,6 +96,7 @@
 #include "utils/inval.h"
 #include "utils/memutils.h"
 #include "utils/rel.h"
+#include "utils/relmapper.h"
 #include "utils/syscache.h"
 
 
@@ -326,6 +327,21 @@ AddCatcacheInvalidationMessage(InvalidationListHeader *hdr,
 }
 
 /*
+ * Add a whole-catalog inval entry
+ */
+static void
+AddCatalogInvalidationMessage(InvalidationListHeader *hdr,
+							  Oid dbId, Oid catId)
+{
+	SharedInvalidationMessage msg;
+
+	msg.cat.id = SHAREDINVALCATALOG_ID;
+	msg.cat.dbId = dbId;
+	msg.cat.catId = catId;
+	AddInvalidationMessage(&hdr->cclist, &msg);
+}
+
+/*
  * Add a relcache inval entry
  */
 static void
@@ -407,6 +423,18 @@ RegisterCatcacheInvalidation(int cacheId,
 }
 
 /*
+ * RegisterCatalogInvalidation
+ *
+ * Register an invalidation event for all catcache entries from a catalog.
+ */
+static void
+RegisterCatalogInvalidation(Oid dbId, Oid catId)
+{
+	AddCatalogInvalidationMessage(&transInvalInfo->CurrentCmdInvalidMsgs,
+								  dbId, catId);
+}
+
+/*
  * RegisterRelcacheInvalidation
  *
  * As above, but register a relcache invalidation event.
@@ -443,30 +471,32 @@ RegisterRelcacheInvalidation(Oid dbId, Oid relId)
 static void
 LocalExecuteInvalidationMessage(SharedInvalidationMessage *msg)
 {
-	int			i;
-
 	if (msg->id >= 0)
 	{
-		if (msg->cc.dbId == MyDatabaseId || msg->cc.dbId == 0)
+		if (msg->cc.dbId == MyDatabaseId || msg->cc.dbId == InvalidOid)
 		{
 			CatalogCacheIdInvalidate(msg->cc.id,
 									 msg->cc.hashValue,
 									 &msg->cc.tuplePtr);
 
-			for (i = 0; i < syscache_callback_count; i++)
-			{
-				struct SYSCACHECALLBACK *ccitem = syscache_callback_list + i;
+			CallSyscacheCallbacks(msg->cc.id, &msg->cc.tuplePtr);
+		}
+	}
+	else if (msg->id == SHAREDINVALCATALOG_ID)
+	{
+		if (msg->cat.dbId == MyDatabaseId || msg->cat.dbId == InvalidOid)
+		{
+			CatalogCacheFlushCatalog(msg->cat.catId);
 
-				if (ccitem->id == msg->cc.id)
-					(*ccitem->function) (ccitem->arg,
-										 msg->cc.id, &msg->cc.tuplePtr);
-			}
+			/* CatalogCacheFlushCatalog calls CallSyscacheCallbacks as needed */
 		}
 	}
 	else if (msg->id == SHAREDINVALRELCACHE_ID)
 	{
 		if (msg->rc.dbId == MyDatabaseId || msg->rc.dbId == InvalidOid)
 		{
+			int			i;
+
 			RelationCacheInvalidateEntry(msg->rc.relId);
 
 			for (i = 0; i < relcache_callback_count; i++)
@@ -484,6 +514,14 @@ LocalExecuteInvalidationMessage(SharedInvalidationMessage *msg)
 		 * short-circuit test is possible here.
 		 */
 		smgrclosenode(msg->sm.rnode);
+	}
+	else if (msg->id == SHAREDINVALRELMAP_ID)
+	{
+		/* We only care about our own database and shared catalogs */
+		if (msg->rm.dbId == InvalidOid)
+			RelationMapInvalidate(true);
+		else if (msg->rm.dbId == MyDatabaseId)
+			RelationMapInvalidate(false);
 	}
 	else
 		elog(FATAL, "unrecognized SI message id: %d", msg->id);
@@ -506,7 +544,7 @@ InvalidateSystemCaches(void)
 	int			i;
 
 	ResetCatalogCaches();
-	RelationCacheInvalidate();	/* gets smgr cache too */
+	RelationCacheInvalidate();	/* gets smgr and relmap too */
 
 	for (i = 0; i < syscache_callback_count; i++)
 	{
@@ -874,7 +912,7 @@ ProcessCommittedInvalidationMessages(SharedInvalidationMessage *msgs,
 			else
 			{
 				/*
-				 * Invalidation message is a SHAREDINVALSMGR_ID
+				 * Invalidation message is a catalog or nontransactional inval,
 				 * which never cause relcache file invalidation,
 				 * so we ignore them, no matter which db they're for.
 				 */
@@ -1183,6 +1221,30 @@ CacheInvalidateHeapTuple(Relation relation, HeapTuple tuple)
 }
 
 /*
+ * CacheInvalidateCatalog
+ *		Register invalidation of the whole content of a system catalog.
+ *
+ * This is normally used in VACUUM FULL/CLUSTER, where we haven't so much
+ * changed any tuples as moved them around.  Some uses of catcache entries
+ * expect their TIDs to be correct, so we have to blow away the entries.
+ *
+ * Note: we expect caller to verify that the rel actually is a system
+ * catalog.  If it isn't, no great harm is done, just a wasted sinval message.
+ */
+void
+CacheInvalidateCatalog(Oid catalogId)
+{
+	Oid			databaseId;
+
+	if (IsSharedRelation(catalogId))
+		databaseId = InvalidOid;
+	else
+		databaseId = MyDatabaseId;
+
+	RegisterCatalogInvalidation(databaseId, catalogId);
+}
+
+/*
  * CacheInvalidateRelcache
  *		Register invalidation of the specified relation's relcache entry
  *		at end of command.
@@ -1277,6 +1339,31 @@ CacheInvalidateSmgr(RelFileNode rnode)
 	SendSharedInvalidMessages(&msg, 1);
 }
 
+/*
+ * CacheInvalidateRelmap
+ *		Register invalidation of the relation mapping for a database,
+ *		or for the shared catalogs if databaseId is zero.
+ *
+ * Sending this type of invalidation msg forces other backends to re-read
+ * the indicated relation mapping file.  It is also necessary to send a
+ * relcache inval for the specific relations whose mapping has been altered,
+ * else the relcache won't get updated with the new filenode data.
+ *
+ * Note: because these messages are nontransactional, they won't be captured
+ * in commit/abort WAL entries.  Instead, calls to CacheInvalidateRelmap()
+ * should happen in low-level relmapper.c routines, which are executed while
+ * replaying WAL as well as when creating it.
+ */
+void
+CacheInvalidateRelmap(Oid databaseId)
+{
+	SharedInvalidationMessage msg;
+
+	msg.rm.id = SHAREDINVALRELMAP_ID;
+	msg.rm.dbId = databaseId;
+	SendSharedInvalidMessages(&msg, 1);
+}
+
 
 /*
  * CacheRegisterSyscacheCallback
@@ -1322,4 +1409,24 @@ CacheRegisterRelcacheCallback(RelcacheCallbackFunction func,
 	relcache_callback_list[relcache_callback_count].arg = arg;
 
 	++relcache_callback_count;
+}
+
+/*
+ * CallSyscacheCallbacks
+ *
+ * This is exported so that CatalogCacheFlushCatalog can call it, saving
+ * this module from knowing which catcache IDs correspond to which catalogs.
+ */
+void
+CallSyscacheCallbacks(int cacheid, ItemPointer tuplePtr)
+{
+	int			i;
+
+	for (i = 0; i < syscache_callback_count; i++)
+	{
+		struct SYSCACHECALLBACK *ccitem = syscache_callback_list + i;
+
+		if (ccitem->id == cacheid)
+			(*ccitem->function) (ccitem->arg, cacheid, tuplePtr);
+	}
 }

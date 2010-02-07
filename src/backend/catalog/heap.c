@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.369 2010/02/03 01:14:16 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.370 2010/02/07 20:48:09 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -237,6 +237,7 @@ heap_create(const char *relname,
 			TupleDesc tupDesc,
 			char relkind,
 			bool shared_relation,
+			bool mapped_relation,
 			bool allow_system_table_mods)
 {
 	bool		create_storage;
@@ -307,7 +308,8 @@ heap_create(const char *relname,
 									 tupDesc,
 									 relid,
 									 reltablespace,
-									 shared_relation);
+									 shared_relation,
+									 mapped_relation);
 
 	/*
 	 * Have the storage manager create the relation's disk file, if needed.
@@ -364,7 +366,8 @@ heap_create(const char *relname,
  * --------------------------------
  */
 void
-CheckAttributeNamesTypes(TupleDesc tupdesc, char relkind)
+CheckAttributeNamesTypes(TupleDesc tupdesc, char relkind,
+						 bool allow_system_table_mods)
 {
 	int			i;
 	int			j;
@@ -418,7 +421,8 @@ CheckAttributeNamesTypes(TupleDesc tupdesc, char relkind)
 	for (i = 0; i < natts; i++)
 	{
 		CheckAttributeType(NameStr(tupdesc->attrs[i]->attname),
-						   tupdesc->attrs[i]->atttypid);
+						   tupdesc->attrs[i]->atttypid,
+						   allow_system_table_mods);
 	}
 }
 
@@ -431,7 +435,8 @@ CheckAttributeNamesTypes(TupleDesc tupdesc, char relkind)
  * --------------------------------
  */
 void
-CheckAttributeType(const char *attname, Oid atttypid)
+CheckAttributeType(const char *attname, Oid atttypid,
+				   bool allow_system_table_mods)
 {
 	char		att_typtype = get_typtype(atttypid);
 
@@ -450,9 +455,11 @@ CheckAttributeType(const char *attname, Oid atttypid)
 	{
 		/*
 		 * Refuse any attempt to create a pseudo-type column, except for a
-		 * special hack for pg_statistic: allow ANYARRAY during initdb
+		 * special hack for pg_statistic: allow ANYARRAY when modifying
+		 * system catalogs (this allows creating pg_statistic and cloning it
+		 * during VACUUM FULL)
 		 */
-		if (atttypid != ANYARRAYOID || IsUnderPostmaster)
+		if (atttypid != ANYARRAYOID || !allow_system_table_mods)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
 					 errmsg("column \"%s\" has pseudo-type %s",
@@ -479,7 +486,8 @@ CheckAttributeType(const char *attname, Oid atttypid)
 
 			if (attr->attisdropped)
 				continue;
-			CheckAttributeType(NameStr(attr->attname), attr->atttypid);
+			CheckAttributeType(NameStr(attr->attname), attr->atttypid,
+							   allow_system_table_mods);
 		}
 
 		relation_close(relation, AccessShareLock);
@@ -865,6 +873,7 @@ AddNewRelationType(const char *typeName,
  *	cooked_constraints: list of precooked check constraints and defaults
  *	relkind: relkind for new rel
  *	shared_relation: TRUE if it's to be a shared relation
+ *	mapped_relation: TRUE if the relation will use the relfilenode map
  *	oidislocal: TRUE if oid column (if any) should be marked attislocal
  *	oidinhcount: attinhcount to assign to oid column (if any)
  *	oncommit: ON COMMIT marking (only relevant if it's a temp table)
@@ -888,6 +897,7 @@ heap_create_with_catalog(const char *relname,
 						 List *cooked_constraints,
 						 char relkind,
 						 bool shared_relation,
+						 bool mapped_relation,
 						 bool oidislocal,
 						 int oidinhcount,
 						 OnCommitAction oncommit,
@@ -909,7 +919,7 @@ heap_create_with_catalog(const char *relname,
 	 */
 	Assert(IsNormalProcessingMode() || IsBootstrapProcessingMode());
 
-	CheckAttributeNamesTypes(tupdesc, relkind);
+	CheckAttributeNamesTypes(tupdesc, relkind, allow_system_table_mods);
 
 	if (get_relname_relid(relname, relnamespace))
 		ereport(ERROR,
@@ -938,23 +948,10 @@ heap_create_with_catalog(const char *relname,
 	}
 
 	/*
-	 * Validate shared/non-shared tablespace (must check this before doing
-	 * GetNewRelFileNode, to prevent Assert therein)
+	 * Shared relations must be in pg_global (last-ditch check)
 	 */
-	if (shared_relation)
-	{
-		if (reltablespace != GLOBALTABLESPACE_OID)
-			/* elog since this is not a user-facing error */
-			elog(ERROR,
-				 "shared relations must be placed in pg_global tablespace");
-	}
-	else
-	{
-		if (reltablespace == GLOBALTABLESPACE_OID)
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("only shared relations can be placed in pg_global tablespace")));
-	}
+	if (shared_relation && reltablespace != GLOBALTABLESPACE_OID)
+		elog(ERROR, "shared relations must be placed in pg_global tablespace");
 
 	/*
 	 * Allocate an OID for the relation, unless we were told what to use.
@@ -979,8 +976,7 @@ heap_create_with_catalog(const char *relname,
 			binary_upgrade_next_toast_relfilenode = InvalidOid;
 		}
 		else
-			relid = GetNewRelFileNode(reltablespace, shared_relation,
-									  pg_class_desc);
+			relid = GetNewRelFileNode(reltablespace, pg_class_desc);
 	}
 
 	/*
@@ -1019,6 +1015,7 @@ heap_create_with_catalog(const char *relname,
 							   tupdesc,
 							   relkind,
 							   shared_relation,
+							   mapped_relation,
 							   allow_system_table_mods);
 
 	Assert(relid == RelationGetRelid(new_rel_desc));

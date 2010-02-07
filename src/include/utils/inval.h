@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/inval.h,v 1.47 2010/02/03 01:14:17 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/inval.h,v 1.48 2010/02/07 20:48:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,6 +45,8 @@ extern void EndNonTransactionalInvalidation(void);
 
 extern void CacheInvalidateHeapTuple(Relation relation, HeapTuple tuple);
 
+extern void CacheInvalidateCatalog(Oid catalogId);
+
 extern void CacheInvalidateRelcache(Relation relation);
 
 extern void CacheInvalidateRelcacheByTuple(HeapTuple classTuple);
@@ -53,12 +55,16 @@ extern void CacheInvalidateRelcacheByRelid(Oid relid);
 
 extern void CacheInvalidateSmgr(RelFileNode rnode);
 
+extern void CacheInvalidateRelmap(Oid databaseId);
+
 extern void CacheRegisterSyscacheCallback(int cacheid,
 							  SyscacheCallbackFunction func,
 							  Datum arg);
 
 extern void CacheRegisterRelcacheCallback(RelcacheCallbackFunction func,
 							  Datum arg);
+
+extern void CallSyscacheCallbacks(int cacheid, ItemPointer tuplePtr);
 
 extern void inval_twophase_postcommit(TransactionId xid, uint16 info,
 						  void *recdata, uint32 len);

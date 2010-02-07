@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/sinval.h,v 1.56 2010/01/09 16:49:27 sriggs Exp $
+ * $PostgreSQL: pgsql/src/include/storage/sinval.h,v 1.57 2010/02/07 20:48:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,14 +19,16 @@
 
 
 /*
- * We currently support three types of shared-invalidation messages: one that
- * invalidates an entry in a catcache, one that invalidates a relcache entry,
- * and one that invalidates an smgr cache entry.  More types could be added
- * if needed.  The message type is identified by the first "int16" field of
- * the message struct.	Zero or positive means a catcache inval message (and
- * also serves as the catcache ID field).  -1 means a relcache inval message.
- * -2 means an smgr inval message.	Other negative values are available to
- * identify other inval message types.
+ * We support several types of shared-invalidation messages:
+ *	* invalidate a specific tuple in a specific catcache
+ *	* invalidate all catcache entries from a given system catalog
+ *	* invalidate a relcache entry for a specific logical relation
+ *	* invalidate an smgr cache entry for a specific physical relation
+ *	* invalidate the mapped-relation mapping for a given database
+ * More types could be added if needed.  The message type is identified by
+ * the first "int16" field of the message struct.  Zero or positive means a
+ * specific-catcache inval message (and also serves as the catcache ID field).
+ * Negative values identify the other message types, as per codes below.
  *
  * Catcache inval events are initially driven by detecting tuple inserts,
  * updates and deletions in system catalogs (see CacheInvalidateHeapTuple).
@@ -46,6 +48,16 @@
  * and so that negative cache entries can be recognized with good accuracy.
  * (Of course this assumes that all the backends are using identical hashing
  * code, but that should be OK.)
+ *
+ * Catcache and relcache invalidations are transactional, and so are sent
+ * to other backends upon commit.  Internally to the generating backend,
+ * they are also processed at CommandCounterIncrement so that later commands
+ * in the same transaction see the new state.  The generating backend also
+ * has to process them at abort, to flush out any cache state it's loaded
+ * from no-longer-valid entries.
+ *
+ * smgr and relation mapping invalidations are non-transactional: they are
+ * sent immediately when the underlying file change is made.
  */
 
 typedef struct
@@ -57,7 +69,16 @@ typedef struct
 	uint32		hashValue;		/* hash value of key for this catcache */
 } SharedInvalCatcacheMsg;
 
-#define SHAREDINVALRELCACHE_ID	(-1)
+#define SHAREDINVALCATALOG_ID	(-1)
+
+typedef struct
+{
+	int16		id;				/* type field --- must be first */
+	Oid			dbId;			/* database ID, or 0 if a shared catalog */
+	Oid			catId;			/* ID of catalog whose contents are invalid */
+} SharedInvalCatalogMsg;
+
+#define SHAREDINVALRELCACHE_ID	(-2)
 
 typedef struct
 {
@@ -66,7 +87,7 @@ typedef struct
 	Oid			relId;			/* relation ID */
 } SharedInvalRelcacheMsg;
 
-#define SHAREDINVALSMGR_ID		(-2)
+#define SHAREDINVALSMGR_ID		(-3)
 
 typedef struct
 {
@@ -74,12 +95,22 @@ typedef struct
 	RelFileNode rnode;			/* physical file ID */
 } SharedInvalSmgrMsg;
 
+#define SHAREDINVALRELMAP_ID	(-4)
+
+typedef struct
+{
+	int16		id;				/* type field --- must be first */
+	Oid			dbId;			/* database ID, or 0 for shared catalogs */
+} SharedInvalRelmapMsg;
+
 typedef union
 {
 	int16		id;				/* type field --- must be first */
 	SharedInvalCatcacheMsg cc;
+	SharedInvalCatalogMsg cat;
 	SharedInvalRelcacheMsg rc;
 	SharedInvalSmgrMsg sm;
+	SharedInvalRelmapMsg rm;
 } SharedInvalidationMessage;
 
 

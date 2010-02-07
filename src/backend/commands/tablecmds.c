@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.324 2010/02/04 00:09:14 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.325 2010/02/07 20:48:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -436,6 +436,12 @@ DefineRelation(CreateStmt *stmt, char relkind)
 						   get_tablespace_name(tablespaceId));
 	}
 
+	/* In all cases disallow placing user relations in pg_global */
+	if (tablespaceId == GLOBALTABLESPACE_OID)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("only shared relations can be placed in pg_global tablespace")));
+
 	/*
 	 * Parse and validate reloptions, if any.
 	 */
@@ -533,6 +539,7 @@ DefineRelation(CreateStmt *stmt, char relkind)
 										  list_concat(cookedDefaults,
 													  old_constraints),
 										  relkind,
+										  false,
 										  false,
 										  localHasOids,
 										  parentOidCount,
@@ -1014,7 +1021,7 @@ ExecuteTruncate(TruncateStmt *stmt)
 			/*
 			 * Reconstruct the indexes to match, and we're done.
 			 */
-			reindex_relation(heap_relid, true);
+			reindex_relation(heap_relid, true, false);
 		}
 	}
 
@@ -1089,16 +1096,6 @@ truncate_check_rel(Relation rel)
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 errmsg("permission denied: \"%s\" is a system catalog",
-						RelationGetRelationName(rel))));
-
-	/*
-	 * We can never allow truncation of shared or nailed-in-cache relations,
-	 * because we can't support changing their relfilenode values.
-	 */
-	if (rel->rd_rel->relisshared || rel->rd_isnailed)
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("cannot truncate system relation \"%s\"",
 						RelationGetRelationName(rel))));
 
 	/*
@@ -2873,11 +2870,11 @@ ATRewriteTables(List **wqueue)
 			OldHeap = heap_open(tab->relid, NoLock);
 
 			/*
-			 * We can never allow rewriting of shared or nailed-in-cache
-			 * relations, because we can't support changing their relfilenode
-			 * values.
+			 * We don't support rewriting of system catalogs; there are
+			 * too many corner cases and too little benefit.  In particular
+			 * this is certainly not going to work for mapped catalogs.
 			 */
-			if (OldHeap->rd_rel->relisshared || OldHeap->rd_isnailed)
+			if (IsSystemRelation(OldHeap))
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 						 errmsg("cannot rewrite system relation \"%s\"",
@@ -2914,17 +2911,14 @@ ATRewriteTables(List **wqueue)
 			ATRewriteTable(tab, OIDNewHeap);
 
 			/*
-			 * Swap the physical files of the old and new heaps.  Since we are
-			 * generating a new heap, we can use RecentXmin for the table's
-			 * new relfrozenxid because we rewrote all the tuples on
-			 * ATRewriteTable, so no older Xid remains in the table.  Also,
-			 * we never try to swap toast tables by content, since we have
-			 * no interest in letting this code work on system catalogs.
+			 * Swap the physical files of the old and new heaps, then rebuild
+			 * indexes and discard the new heap.  We can use RecentXmin for
+			 * the table's new relfrozenxid because we rewrote all the tuples
+			 * in ATRewriteTable, so no older Xid remains in the table.  Also,
+			 * we never try to swap toast tables by content, since we have no
+			 * interest in letting this code work on system catalogs.
 			 */
-			swap_relation_files(tab->relid, OIDNewHeap, false, RecentXmin);
-
-			/* Destroy the new heap, removing the old data along with it. */
-			cleanup_heap_swap(tab->relid, OIDNewHeap, false);
+			finish_heap_swap(tab->relid, OIDNewHeap, false, false, RecentXmin);
 		}
 		else
 		{
@@ -3715,7 +3709,7 @@ ATExecAddColumn(AlteredTableInfo *tab, Relation rel,
 	typeOid = HeapTupleGetOid(typeTuple);
 
 	/* make sure datatype is legal for a column */
-	CheckAttributeType(colDef->colname, typeOid);
+	CheckAttributeType(colDef->colname, typeOid, false);
 
 	/* construct new attribute's pg_attribute entry */
 	attribute.attrelid = myrelid;
@@ -5825,7 +5819,7 @@ ATPrepAlterColumnType(List **wqueue,
 	targettype = typenameTypeId(NULL, typeName, &targettypmod);
 
 	/* make sure datatype is legal for a column */
-	CheckAttributeType(colName, targettype);
+	CheckAttributeType(colName, targettype, false);
 
 	/*
 	 * Set up an expression to transform the old data value to the new type.
@@ -6925,10 +6919,21 @@ ATExecSetTableSpace(Oid tableOid, Oid newTableSpace)
 	rel = relation_open(tableOid, AccessExclusiveLock);
 
 	/*
-	 * We can never allow moving of shared or nailed-in-cache relations,
-	 * because we can't support changing their reltablespace values.
+	 * No work if no change in tablespace.
 	 */
-	if (rel->rd_rel->relisshared || rel->rd_isnailed)
+	oldTableSpace = rel->rd_rel->reltablespace;
+	if (newTableSpace == oldTableSpace ||
+		(newTableSpace == MyDatabaseTableSpace && oldTableSpace == 0))
+	{
+		relation_close(rel, NoLock);
+		return;
+	}
+
+	/*
+	 * We cannot support moving mapped relations into different tablespaces.
+	 * (In particular this eliminates all shared catalogs.)
+	 */
+	if (RelationIsMapped(rel))
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("cannot move system relation \"%s\"",
@@ -6948,17 +6953,6 @@ ATExecSetTableSpace(Oid tableOid, Oid newTableSpace)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("cannot move temporary tables of other sessions")));
-
-	/*
-	 * No work if no change in tablespace.
-	 */
-	oldTableSpace = rel->rd_rel->reltablespace;
-	if (newTableSpace == oldTableSpace ||
-		(newTableSpace == MyDatabaseTableSpace && oldTableSpace == 0))
-	{
-		relation_close(rel, NoLock);
-		return;
-	}
 
 	reltoastrelid = rel->rd_rel->reltoastrelid;
 	reltoastidxid = rel->rd_rel->reltoastidxid;
@@ -6985,9 +6979,7 @@ ATExecSetTableSpace(Oid tableOid, Oid newTableSpace)
 	 * Relfilenodes are not unique across tablespaces, so we need to allocate
 	 * a new one in the new tablespace.
 	 */
-	newrelfilenode = GetNewRelFileNode(newTableSpace,
-									   rel->rd_rel->relisshared,
-									   NULL);
+	newrelfilenode = GetNewRelFileNode(newTableSpace, NULL);
 
 	/* Open old and new relation */
 	newrnode = rel->rd_node;

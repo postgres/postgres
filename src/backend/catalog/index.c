@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.332 2010/02/03 01:14:16 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.333 2010/02/07 20:48:09 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -111,6 +111,11 @@ static void validate_index_heapscan(Relation heapRelation,
 						Snapshot snapshot,
 						v_i_state *state);
 static Oid	IndexGetRelation(Oid indexId);
+static void SetReindexProcessing(Oid heapOid, Oid indexOid);
+static void ResetReindexProcessing(void);
+static void SetReindexPending(List *indexes);
+static void RemoveReindexPending(Oid indexOid);
+static void ResetReindexPending(void);
 
 
 /*
@@ -257,7 +262,7 @@ ConstructTupleDescriptor(Relation heapRelation,
 			 * whether a table column is of a safe type (which is why we
 			 * needn't check for the non-expression case).
 			 */
-			CheckAttributeType(NameStr(to->attname), to->atttypid);
+			CheckAttributeType(NameStr(to->attname), to->atttypid, false);
 		}
 
 		/*
@@ -544,6 +549,7 @@ index_create(Oid heapRelationId,
 	Relation	indexRelation;
 	TupleDesc	indexTupDesc;
 	bool		shared_relation;
+	bool		mapped_relation;
 	bool		is_exclusion;
 	Oid			namespaceId;
 	int			i;
@@ -562,10 +568,12 @@ index_create(Oid heapRelationId,
 
 	/*
 	 * The index will be in the same namespace as its parent table, and is
-	 * shared across databases if and only if the parent is.
+	 * shared across databases if and only if the parent is.  Likewise,
+	 * it will use the relfilenode map if and only if the parent does.
 	 */
 	namespaceId = RelationGetNamespace(heapRelation);
 	shared_relation = heapRelation->rd_rel->relisshared;
+	mapped_relation = RelationIsMapped(heapRelation);
 
 	/*
 	 * check parameters
@@ -609,23 +617,10 @@ index_create(Oid heapRelationId,
 				 errmsg("shared indexes cannot be created after initdb")));
 
 	/*
-	 * Validate shared/non-shared tablespace (must check this before doing
-	 * GetNewRelFileNode, to prevent Assert therein)
+	 * Shared relations must be in pg_global, too (last-ditch check)
 	 */
-	if (shared_relation)
-	{
-		if (tableSpaceId != GLOBALTABLESPACE_OID)
-			/* elog since this is not a user-facing error */
-			elog(ERROR,
-				 "shared relations must be placed in pg_global tablespace");
-	}
-	else
-	{
-		if (tableSpaceId == GLOBALTABLESPACE_OID)
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("only shared relations can be placed in pg_global tablespace")));
-	}
+	if (shared_relation && tableSpaceId != GLOBALTABLESPACE_OID)
+		elog(ERROR, "shared relations must be placed in pg_global tablespace");
 
 	if (get_relname_relid(indexRelationName, namespaceId))
 		ereport(ERROR,
@@ -657,8 +652,7 @@ index_create(Oid heapRelationId,
 			binary_upgrade_next_index_relfilenode = InvalidOid;
 		}
 		else
-			indexRelationId = GetNewRelFileNode(tableSpaceId, shared_relation,
-												pg_class);
+			indexRelationId = GetNewRelFileNode(tableSpaceId, pg_class);
 	}
 
 	/*
@@ -673,6 +667,7 @@ index_create(Oid heapRelationId,
 								indexTupDesc,
 								RELKIND_INDEX,
 								shared_relation,
+								mapped_relation,
 								allow_system_table_mods);
 
 	Assert(indexRelationId == RelationGetRelid(indexRelation));
@@ -2413,7 +2408,6 @@ reindex_index(Oid indexId)
 				heapRelation,
 				pg_index;
 	Oid			heapId;
-	bool		inplace;
 	IndexInfo  *indexInfo;
 	HeapTuple	indexTuple;
 	Form_pg_index indexForm;
@@ -2446,23 +2440,6 @@ reindex_index(Oid indexId)
 	 */
 	CheckTableNotInUse(iRel, "REINDEX INDEX");
 
-	/*
-	 * If it's a shared index, we must do inplace processing (because we have
-	 * no way to update relfilenode in other databases).  Otherwise we can do
-	 * it the normal transaction-safe way.
-	 *
-	 * Since inplace processing isn't crash-safe, we only allow it in a
-	 * standalone backend.	(In the REINDEX TABLE and REINDEX DATABASE cases,
-	 * the caller should have detected this.)
-	 */
-	inplace = iRel->rd_rel->relisshared;
-
-	if (inplace && IsUnderPostmaster)
-		ereport(ERROR,
-				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("shared index \"%s\" can only be reindexed in stand-alone mode",
-						RelationGetRelationName(iRel))));
-
 	PG_TRY();
 	{
 		/* Suppress use of the target index while rebuilding it */
@@ -2471,20 +2448,8 @@ reindex_index(Oid indexId)
 		/* Fetch info needed for index_build */
 		indexInfo = BuildIndexInfo(iRel);
 
-		if (inplace)
-		{
-			/*
-			 * Truncate the actual file (and discard buffers).
-			 */
-			RelationTruncate(iRel, 0);
-		}
-		else
-		{
-			/*
-			 * We'll build a new physical relation for the index.
-			 */
-			RelationSetNewRelfilenode(iRel, InvalidTransactionId);
-		}
+		/* We'll build a new physical relation for the index */
+		RelationSetNewRelfilenode(iRel, InvalidTransactionId);
 
 		/* Initialize the index and rebuild */
 		/* Note: we do not need to re-establish pkey setting */
@@ -2538,19 +2503,27 @@ reindex_index(Oid indexId)
  * reindex_relation - This routine is used to recreate all indexes
  * of a relation (and optionally its toast relation too, if any).
  *
+ * If heap_rebuilt is true, then the relation was just completely rebuilt by
+ * an operation such as VACUUM FULL or CLUSTER, and therefore its indexes are
+ * inconsistent with it.  This makes things tricky if the relation is a system
+ * catalog that we might consult during the reindexing.  To deal with that
+ * case, we mark all of the indexes as pending rebuild so that they won't be
+ * trusted until rebuilt.  The caller is required to call us *without* having
+ * made the rebuilt versions visible by doing CommandCounterIncrement; we'll
+ * do CCI after having collected the index list.  (This way we can still use
+ * catalog indexes while collecting the list.)
+ *
  * Returns true if any indexes were rebuilt.  Note that a
  * CommandCounterIncrement will occur after each index rebuild.
  */
 bool
-reindex_relation(Oid relid, bool toast_too)
+reindex_relation(Oid relid, bool toast_too, bool heap_rebuilt)
 {
 	Relation	rel;
 	Oid			toast_relid;
+	List	   *indexIds;
 	bool		is_pg_class;
 	bool		result;
-	List	   *indexIds,
-			   *doneIndexes;
-	ListCell   *indexId;
 
 	/*
 	 * Open and lock the relation.	ShareLock is sufficient since we only need
@@ -2580,9 +2553,9 @@ reindex_relation(Oid relid, bool toast_too)
 	 * It is okay to not insert entries into the indexes we have not processed
 	 * yet because all of this is transaction-safe.  If we fail partway
 	 * through, the updated rows are dead and it doesn't matter whether they
-	 * have index entries.	Also, a new pg_class index will be created with an
-	 * entry for its own pg_class row because we do RelationSetNewRelfilenode()
-	 * before we do index_build().
+	 * have index entries.  Also, a new pg_class index will be created with a
+	 * correct entry for its own pg_class row because we do
+	 * RelationSetNewRelfilenode() before we do index_build().
 	 *
 	 * Note that we also clear pg_class's rd_oidindex until the loop is done,
 	 * so that that index can't be accessed either.  This means we cannot
@@ -2595,22 +2568,51 @@ reindex_relation(Oid relid, bool toast_too)
 	if (is_pg_class)
 		(void) RelationGetIndexAttrBitmap(rel);
 
-	/* Reindex all the indexes. */
-	doneIndexes = NIL;
-	foreach(indexId, indexIds)
+	PG_TRY();
 	{
-		Oid			indexOid = lfirst_oid(indexId);
+		List	   *doneIndexes;
+		ListCell   *indexId;
 
-		if (is_pg_class)
-			RelationSetIndexList(rel, doneIndexes, InvalidOid);
+		if (heap_rebuilt)
+		{
+			/* Suppress use of all the indexes until they are rebuilt */
+			SetReindexPending(indexIds);
 
-		reindex_index(indexOid);
+			/*
+			 * Make the new heap contents visible --- now things might be
+			 * inconsistent!
+			 */
+			CommandCounterIncrement();
+		}
 
-		CommandCounterIncrement();
+		/* Reindex all the indexes. */
+		doneIndexes = NIL;
+		foreach(indexId, indexIds)
+		{
+			Oid			indexOid = lfirst_oid(indexId);
 
-		if (is_pg_class)
-			doneIndexes = lappend_oid(doneIndexes, indexOid);
+			if (is_pg_class)
+				RelationSetIndexList(rel, doneIndexes, InvalidOid);
+
+			reindex_index(indexOid);
+
+			CommandCounterIncrement();
+
+			if (heap_rebuilt)
+				RemoveReindexPending(indexOid);
+
+			if (is_pg_class)
+				doneIndexes = lappend_oid(doneIndexes, indexOid);
+		}
 	}
+	PG_CATCH();
+	{
+		/* Make sure list gets cleared on error exit */
+		ResetReindexPending();
+		PG_RE_THROW();
+	}
+	PG_END_TRY();
+	ResetReindexPending();
 
 	if (is_pg_class)
 		RelationSetIndexList(rel, indexIds, ClassOidIndexId);
@@ -2627,7 +2629,107 @@ reindex_relation(Oid relid, bool toast_too)
 	 * still hold the lock on the master table.
 	 */
 	if (toast_too && OidIsValid(toast_relid))
-		result |= reindex_relation(toast_relid, false);
+		result |= reindex_relation(toast_relid, false, false);
 
 	return result;
+}
+
+
+/* ----------------------------------------------------------------
+ *		System index reindexing support
+ *
+ * When we are busy reindexing a system index, this code provides support
+ * for preventing catalog lookups from using that index.
+ * ----------------------------------------------------------------
+ */
+
+static Oid	currentlyReindexedHeap = InvalidOid;
+static Oid	currentlyReindexedIndex = InvalidOid;
+static List *pendingReindexedIndexes = NIL;
+
+/*
+ * ReindexIsProcessingHeap
+ *		True if heap specified by OID is currently being reindexed.
+ */
+bool
+ReindexIsProcessingHeap(Oid heapOid)
+{
+	return heapOid == currentlyReindexedHeap;
+}
+
+/*
+ * ReindexIsProcessingIndex
+ *		True if index specified by OID is currently being reindexed,
+ *		or should be treated as invalid because it is awaiting reindex.
+ */
+bool
+ReindexIsProcessingIndex(Oid indexOid)
+{
+	return indexOid == currentlyReindexedIndex ||
+		list_member_oid(pendingReindexedIndexes, indexOid);
+}
+
+/*
+ * SetReindexProcessing
+ *		Set flag that specified heap/index are being reindexed.
+ *
+ * NB: caller must use a PG_TRY block to ensure ResetReindexProcessing is done.
+ */
+static void
+SetReindexProcessing(Oid heapOid, Oid indexOid)
+{
+	Assert(OidIsValid(heapOid) && OidIsValid(indexOid));
+	/* Reindexing is not re-entrant. */
+	if (OidIsValid(currentlyReindexedHeap))
+		elog(ERROR, "cannot reindex while reindexing");
+	currentlyReindexedHeap = heapOid;
+	currentlyReindexedIndex = indexOid;
+}
+
+/*
+ * ResetReindexProcessing
+ *		Unset reindexing status.
+ */
+static void
+ResetReindexProcessing(void)
+{
+	currentlyReindexedHeap = InvalidOid;
+	currentlyReindexedIndex = InvalidOid;
+}
+
+/*
+ * SetReindexPending
+ *		Mark the given indexes as pending reindex.
+ *
+ * NB: caller must use a PG_TRY block to ensure ResetReindexPending is done.
+ * Also, we assume that the current memory context stays valid throughout.
+ */
+static void
+SetReindexPending(List *indexes)
+{
+	/* Reindexing is not re-entrant. */
+	if (pendingReindexedIndexes)
+		elog(ERROR, "cannot reindex while reindexing");
+	pendingReindexedIndexes = list_copy(indexes);
+}
+
+/*
+ * RemoveReindexPending
+ *		Remove the given index from the pending list.
+ */
+static void
+RemoveReindexPending(Oid indexOid)
+{
+	pendingReindexedIndexes = list_delete_oid(pendingReindexedIndexes,
+											  indexOid);
+}
+
+/*
+ * ResetReindexPending
+ *		Unset reindex-pending status.
+ */
+static void
+ResetReindexPending(void)
+{
+	pendingReindexedIndexes = NIL;
 }

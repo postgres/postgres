@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/rel.h,v 1.121 2010/02/04 00:09:14 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/rel.h,v 1.122 2010/02/07 20:48:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -338,6 +338,16 @@ typedef struct StdRdOptions
  */
 #define RelationGetNamespace(relation) \
 	((relation)->rd_rel->relnamespace)
+
+/*
+ * RelationIsMapped
+ *		True if the relation uses the relfilenode map.
+ *
+ * NB: this is only meaningful for relkinds that have storage, else it
+ * will misleadingly say "true".
+ */
+#define RelationIsMapped(relation) \
+	((relation)->rd_rel->relfilenode == InvalidOid)
 
 /*
  * RelationOpenSmgr

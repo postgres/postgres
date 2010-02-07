@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.403 2010/01/06 05:31:13 itagaki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.404 2010/02/07 20:48:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1183,11 +1183,10 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt, bool do_toast, bool for_wraparound,
 
 	/*
 	 * Do the actual work --- either FULL, FULL INPLACE, or "lazy" vacuum.
-	 * We can use only FULL INPLACE vacuum for system relations.
 	 */
 	if (!(vacstmt->options & VACOPT_FULL))
 		heldoff = lazy_vacuum_rel(onerel, vacstmt, vac_strategy, scanned_all);
-	else if ((vacstmt->options & VACOPT_INPLACE) || IsSystemRelation(onerel))
+	else if (vacstmt->options & VACOPT_INPLACE)
 		heldoff = full_vacuum_rel(onerel, vacstmt);
 	else
 	{
@@ -1196,8 +1195,8 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt, bool do_toast, bool for_wraparound,
 		onerel = NULL;
 
 		cluster_rel(relid, InvalidOid, false,
-			(vacstmt->options & VACOPT_VERBOSE) != 0,
-			vacstmt->freeze_min_age, vacstmt->freeze_table_age);
+					(vacstmt->options & VACOPT_VERBOSE) != 0,
+					vacstmt->freeze_min_age, vacstmt->freeze_table_age);
 		heldoff = false;
 	}
 

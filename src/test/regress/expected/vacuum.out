@@ -108,7 +108,7 @@ SELECT relid,
  ORDER BY relid::text;
     relid    | cluster | full_inplace | full 
 -------------+---------+--------------+------
- pg_am       | t       | t            | t
+ pg_am       | t       | t            | f
  pg_class    | t       | t            | t
  pg_database | t       | t            | t
  vaccluster  | f       | t            | f

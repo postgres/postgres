@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/miscadmin.h,v 1.217 2010/01/02 16:58:00 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/miscadmin.h,v 1.218 2010/02/07 20:48:13 tgl Exp $
  *
  * NOTES
  *	  some of the information in this file should be moved to other files.
@@ -347,10 +347,6 @@ extern PGDLLIMPORT bool process_shared_preload_libraries_in_progress;
 extern char *shared_preload_libraries_string;
 extern char *local_preload_libraries_string;
 
-extern void SetReindexProcessing(Oid heapOid, Oid indexOid);
-extern void ResetReindexProcessing(void);
-extern bool ReindexIsProcessingHeap(Oid heapOid);
-extern bool ReindexIsProcessingIndex(Oid indexOid);
 extern void CreateDataDirLockFile(bool amPostmaster);
 extern void CreateSocketLockFile(const char *socketfile, bool amPostmaster);
 extern void TouchSocketLockFile(void);

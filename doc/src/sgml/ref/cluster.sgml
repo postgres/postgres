@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/cluster.sgml,v 1.47 2009/09/19 10:23:26 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/cluster.sgml,v 1.48 2010/02/07 20:48:09 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -30,12 +30,12 @@ CLUSTER [VERBOSE]
   <title>Description</title>
 
   <para>
-   <command>CLUSTER</command> instructs <productname>PostgreSQL</productname> 
+   <command>CLUSTER</command> instructs <productname>PostgreSQL</productname>
    to cluster the table specified
    by <replaceable class="parameter">table_name</replaceable>
    based on the index specified by
    <replaceable class="parameter">index_name</replaceable>. The index must
-   already have been defined on 
+   already have been defined on
    <replaceable class="parameter">table_name</replaceable>.
   </para>
 
@@ -46,9 +46,9 @@ CLUSTER [VERBOSE]
    not clustered.  That is, no attempt is made to store new or
    updated rows according to their index order.  (If one wishes, one can
    periodically recluster by issuing the command again.  Also, setting
-   the table's <literal>FILLFACTOR</literal> storage parameter to less than 100% can aid
-   in preserving cluster ordering during updates, since updated rows
-   are preferentially kept on the same page.)
+   the table's <literal>FILLFACTOR</literal> storage parameter to less than
+   100% can aid in preserving cluster ordering during updates, since updated
+   rows are kept on the same page if enough space is available there.)
   </para>
 
   <para>

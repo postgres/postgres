@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/index/genam.c,v 1.79 2010/01/02 16:57:35 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/index/genam.c,v 1.80 2010/02/07 20:48:09 tgl Exp $
  *
  * NOTES
  *	  many of the old access method routines have been turned into
@@ -21,6 +21,7 @@
 
 #include "access/relscan.h"
 #include "access/transam.h"
+#include "catalog/index.h"
 #include "miscadmin.h"
 #include "pgstat.h"
 #include "storage/bufmgr.h"
@@ -419,7 +420,7 @@ systable_beginscan_ordered(Relation heapRelation,
 
 	/* REINDEX can probably be a hard error here ... */
 	if (ReindexIsProcessingIndex(RelationGetRelid(indexRelation)))
-		elog(ERROR, "cannot do ordered scan on index \"%s\", because it is the current REINDEX target",
+		elog(ERROR, "cannot do ordered scan on index \"%s\", because it is being reindexed",
 			 RelationGetRelationName(indexRelation));
 	/* ... but we only throw a warning about violating IgnoreSystemIndexes */
 	if (IgnoreSystemIndexes)

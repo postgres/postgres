@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.344 2010/02/03 10:01:30 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.345 2010/02/07 20:48:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2167,6 +2167,7 @@ OpenIntoRel(QueryDesc *queryDesc)
 											  tupdesc,
 											  NIL,
 											  RELKIND_RELATION,
+											  false,
 											  false,
 											  true,
 											  0,

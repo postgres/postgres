@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootparse.y,v 1.104 2010/01/28 23:21:11 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootparse.y,v 1.105 2010/02/07 20:48:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -185,10 +185,25 @@ Boot_CreateStmt:
 		  RPAREN
 				{
 					TupleDesc tupdesc;
+					bool	shared_relation;
+					bool	mapped_relation;
 
 					do_start();
 
 					tupdesc = CreateTupleDesc(numattr, !($6), attrtypes);
+
+					shared_relation = $5;
+
+					/*
+					 * The catalogs that use the relation mapper are the
+					 * bootstrap catalogs plus the shared catalogs.  If this
+					 * ever gets more complicated, we should invent a BKI
+					 * keyword to mark the mapped catalogs, but for now a
+					 * quick hack seems the most appropriate thing.  Note in
+					 * particular that all "nailed" heap rels (see formrdesc
+					 * in relcache.c) must be mapped.
+					 */
+					mapped_relation = ($4 || shared_relation);
 
 					if ($4)
 					{
@@ -200,11 +215,12 @@ Boot_CreateStmt:
 
 						boot_reldesc = heap_create($2,
 												   PG_CATALOG_NAMESPACE,
-												   $5 ? GLOBALTABLESPACE_OID : 0,
+												   shared_relation ? GLOBALTABLESPACE_OID : 0,
 												   $3,
 												   tupdesc,
 												   RELKIND_RELATION,
-												   $5,
+												   shared_relation,
+												   mapped_relation,
 												   true);
 						elog(DEBUG4, "bootstrap relation created");
 					}
@@ -214,7 +230,7 @@ Boot_CreateStmt:
 
 						id = heap_create_with_catalog($2,
 													  PG_CATALOG_NAMESPACE,
-													  $5 ? GLOBALTABLESPACE_OID : 0,
+													  shared_relation ? GLOBALTABLESPACE_OID : 0,
 													  $3,
 													  $7,
 													  InvalidOid,
@@ -222,7 +238,8 @@ Boot_CreateStmt:
 													  tupdesc,
 													  NIL,
 													  RELKIND_RELATION,
-													  $5,
+													  shared_relation,
+													  mapped_relation,
 													  true,
 													  0,
 													  ONCOMMIT_NOOP,

@@ -1,11 +1,11 @@
 /*
  * dbsize.c
- *		object size functions
+ *		Database object size functions, and related inquiries
  *
  * Copyright (c) 2002-2010, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/dbsize.c,v 1.28 2010/01/23 21:29:00 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/dbsize.c,v 1.29 2010/02/07 20:48:10 tgl Exp $
  *
  */
 
@@ -25,6 +25,7 @@
 #include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/rel.h"
+#include "utils/relmapper.h"
 #include "utils/syscache.h"
 
 
@@ -506,4 +507,122 @@ pg_size_pretty(PG_FUNCTION_ARGS)
 	}
 
 	PG_RETURN_TEXT_P(cstring_to_text(buf));
+}
+
+/*
+ * Get the filenode of a relation
+ *
+ * This is expected to be used in queries like
+ *		SELECT pg_relation_filenode(oid) FROM pg_class;
+ * That leads to a couple of choices.  We work from the pg_class row alone
+ * rather than actually opening each relation, for efficiency.  We don't
+ * fail if we can't find the relation --- some rows might be visible in
+ * the query's MVCC snapshot but already dead according to SnapshotNow.
+ * (Note: we could avoid using the catcache, but there's little point
+ * because the relation mapper also works "in the now".)  We also don't
+ * fail if the relation doesn't have storage.  In all these cases it
+ * seems better to quietly return NULL.
+ */
+Datum
+pg_relation_filenode(PG_FUNCTION_ARGS)
+{
+	Oid			relid = PG_GETARG_OID(0);
+	Oid			result;
+	HeapTuple	tuple;
+	Form_pg_class relform;
+
+	tuple = SearchSysCache(RELOID,
+						   ObjectIdGetDatum(relid),
+						   0, 0, 0);
+	if (!HeapTupleIsValid(tuple))
+		PG_RETURN_NULL();
+	relform = (Form_pg_class) GETSTRUCT(tuple);
+
+	switch (relform->relkind)
+	{
+		case RELKIND_RELATION:
+		case RELKIND_INDEX:
+		case RELKIND_SEQUENCE:
+		case RELKIND_TOASTVALUE:
+			/* okay, these have storage */
+			if (relform->relfilenode)
+				result = relform->relfilenode;
+			else				/* Consult the relation mapper */
+				result = RelationMapOidToFilenode(relid,
+												  relform->relisshared);
+			break;
+
+		default:
+			/* no storage, return NULL */
+			result = InvalidOid;
+			break;
+	}
+
+	ReleaseSysCache(tuple);
+
+	if (!OidIsValid(result))
+		PG_RETURN_NULL();
+
+	PG_RETURN_OID(result);
+}
+
+/*
+ * Get the pathname (relative to $PGDATA) of a relation
+ *
+ * See comments for pg_relation_filenode.
+ */
+Datum
+pg_relation_filepath(PG_FUNCTION_ARGS)
+{
+	Oid			relid = PG_GETARG_OID(0);
+	HeapTuple	tuple;
+	Form_pg_class relform;
+	RelFileNode rnode;
+	char	   *path;
+
+	tuple = SearchSysCache(RELOID,
+						   ObjectIdGetDatum(relid),
+						   0, 0, 0);
+	if (!HeapTupleIsValid(tuple))
+		PG_RETURN_NULL();
+	relform = (Form_pg_class) GETSTRUCT(tuple);
+
+	switch (relform->relkind)
+	{
+		case RELKIND_RELATION:
+		case RELKIND_INDEX:
+		case RELKIND_SEQUENCE:
+		case RELKIND_TOASTVALUE:
+			/* okay, these have storage */
+
+			/* This logic should match RelationInitPhysicalAddr */
+			if (relform->reltablespace)
+				rnode.spcNode = relform->reltablespace;
+			else
+				rnode.spcNode = MyDatabaseTableSpace;
+			if (rnode.spcNode == GLOBALTABLESPACE_OID)
+				rnode.dbNode = InvalidOid;
+			else
+				rnode.dbNode = MyDatabaseId;
+			if (relform->relfilenode)
+				rnode.relNode = relform->relfilenode;
+			else				/* Consult the relation mapper */
+				rnode.relNode = RelationMapOidToFilenode(relid,
+														 relform->relisshared);
+			break;
+
+		default:
+			/* no storage, return NULL */
+			rnode.relNode = InvalidOid;
+			break;
+	}
+
+	ReleaseSysCache(tuple);
+
+	if (!OidIsValid(rnode.relNode))
+		PG_RETURN_NULL();
+
+	path = relpath(rnode, MAIN_FORKNUM);
+
+	PG_RETURN_TEXT_P(cstring_to_text(path));
 }

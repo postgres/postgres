@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.302 2010/02/04 00:09:14 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.303 2010/02/07 20:48:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -72,6 +72,7 @@
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
 #include "utils/relcache.h"
+#include "utils/relmapper.h"
 #include "utils/resowner.h"
 #include "utils/syscache.h"
 #include "utils/tqual.h"
@@ -838,6 +839,7 @@ RelationBuildDesc(Oid targetRelId, bool insertIt)
 	 */
 	relid = HeapTupleGetOid(pg_class_tuple);
 	relp = (Form_pg_class) GETSTRUCT(pg_class_tuple);
+	Assert(relid == targetRelId);
 
 	/*
 	 * allocate storage for the relation descriptor, and copy pg_class_tuple
@@ -927,6 +929,10 @@ RelationBuildDesc(Oid targetRelId, bool insertIt)
 
 /*
  * Initialize the physical addressing info (RelFileNode) for a relcache entry
+ *
+ * Note: at the physical level, relations in the pg_global tablespace must
+ * be treated as shared, even if relisshared isn't set.  Hence we do not
+ * look at relisshared here.
  */
 static void
 RelationInitPhysicalAddr(Relation relation)
@@ -935,11 +941,22 @@ RelationInitPhysicalAddr(Relation relation)
 		relation->rd_node.spcNode = relation->rd_rel->reltablespace;
 	else
 		relation->rd_node.spcNode = MyDatabaseTableSpace;
-	if (relation->rd_rel->relisshared)
+	if (relation->rd_node.spcNode == GLOBALTABLESPACE_OID)
 		relation->rd_node.dbNode = InvalidOid;
 	else
 		relation->rd_node.dbNode = MyDatabaseId;
-	relation->rd_node.relNode = relation->rd_rel->relfilenode;
+	if (relation->rd_rel->relfilenode)
+		relation->rd_node.relNode = relation->rd_rel->relfilenode;
+	else
+	{
+		/* Consult the relation mapper */
+		relation->rd_node.relNode =
+			RelationMapOidToFilenode(relation->rd_id,
+									 relation->rd_rel->relisshared);
+		if (!OidIsValid(relation->rd_node.relNode))
+			elog(ERROR, "could not find relation mapping for relation \"%s\", OID %u",
+				 RelationGetRelationName(relation), relation->rd_id);
+	}
 }
 
 /*
@@ -1496,7 +1513,18 @@ formrdesc(const char *relationName, Oid relationReltype,
 	 * initialize relation id from info in att array (my, this is ugly)
 	 */
 	RelationGetRelid(relation) = relation->rd_att->attrs[0]->attrelid;
-	relation->rd_rel->relfilenode = RelationGetRelid(relation);
+
+	/*
+	 * All relations made with formrdesc are mapped.  This is necessarily so
+	 * because there is no other way to know what filenode they currently
+	 * have.  In bootstrap mode, add them to the initial relation mapper data,
+	 * specifying that the initial filenode is the same as the OID.
+	 */
+	relation->rd_rel->relfilenode = InvalidOid;
+	if (IsBootstrapProcessingMode())
+		RelationMapUpdateMap(RelationGetRelid(relation),
+							 RelationGetRelid(relation),
+							 isshared, true);
 
 	/*
 	 * initialize the relation lock manager information
@@ -1841,7 +1869,9 @@ RelationClearRelation(Relation relation, bool rebuild)
 	 * Never, never ever blow away a nailed-in system relation, because we'd
 	 * be unable to recover.  However, we must reset rd_targblock, in case we
 	 * got called because of a relation cache flush that was triggered by
-	 * VACUUM.  Likewise reset the fsm and vm size info.
+	 * VACUUM.  Likewise reset the fsm and vm size info.  Also, redo
+	 * RelationInitPhysicalAddr in case it is a mapped relation whose mapping
+	 * changed.
 	 *
 	 * If it's a nailed index, then we need to re-read the pg_class row to see
 	 * if its relfilenode changed.	We can't necessarily do that here, because
@@ -1855,6 +1885,9 @@ RelationClearRelation(Relation relation, bool rebuild)
 		relation->rd_targblock = InvalidBlockNumber;
 		relation->rd_fsm_nblocks = InvalidBlockNumber;
 		relation->rd_vm_nblocks = InvalidBlockNumber;
+		/* We must recalculate physical address in case it changed */
+		RelationInitPhysicalAddr(relation);
+
 		if (relation->rd_rel->relkind == RELKIND_INDEX)
 		{
 			relation->rd_isvalid = false;		/* needs to be revalidated */
@@ -1885,7 +1918,8 @@ RelationClearRelation(Relation relation, bool rebuild)
 
 	/*
 	 * Clear out catcache's entries for this relation.  This is a bit of
-	 * a hack, but it's a convenient place to do it.
+	 * a hack, but it's a convenient place to do it.  (XXX do we really
+	 * still need this?)
 	 */
 	CatalogCacheFlushRelation(RelationGetRelid(relation));
 
@@ -2104,7 +2138,7 @@ RelationCacheInvalidateEntry(Oid relationId)
  * RelationCacheInvalidate
  *	 Blow away cached relation descriptors that have zero reference counts,
  *	 and rebuild those with positive reference counts.	Also reset the smgr
- *	 relation cache.
+ *	 relation cache and re-read relation mapping data.
  *
  *	 This is currently used only to recover from SI message buffer overflow,
  *	 so we do not touch new-in-transaction relations; they cannot be targets
@@ -2190,6 +2224,11 @@ RelationCacheInvalidate(void)
 	 */
 	smgrcloseall();
 
+	/*
+	 * Reload relation mapping data before starting to reconstruct cache.
+	 */
+	RelationMapInvalidateAll();
+
 	/* Phase 2: rebuild the items found to need rebuild in phase 1 */
 	foreach(l, rebuildFirstList)
 	{
@@ -2203,6 +2242,25 @@ RelationCacheInvalidate(void)
 		RelationClearRelation(relation, true);
 	}
 	list_free(rebuildList);
+}
+
+/*
+ * RelationCloseSmgrByOid - close a relcache entry's smgr link
+ *
+ * Needed in some cases where we are changing a relation's physical mapping.
+ * The link will be automatically reopened on next use.
+ */
+void
+RelationCloseSmgrByOid(Oid relationId)
+{
+	Relation	relation;
+
+	RelationIdCacheLookup(relationId, relation);
+
+	if (!PointerIsValid(relation))
+		return;					/* not in cache, nothing to do */
+
+	RelationCloseSmgr(relation);
 }
 
 /*
@@ -2393,7 +2451,8 @@ RelationBuildLocalRelation(const char *relname,
 						   TupleDesc tupDesc,
 						   Oid relid,
 						   Oid reltablespace,
-						   bool shared_relation)
+						   bool shared_relation,
+						   bool mapped_relation)
 {
 	Relation	rel;
 	MemoryContext oldcxt;
@@ -2409,6 +2468,8 @@ RelationBuildLocalRelation(const char *relname,
 	 *
 	 * XXX this list had better match the relations specially handled in
 	 * RelationCacheInitializePhase2/3.
+	 *
+	 * XXX do we need this at all??
 	 */
 	switch (relid)
 	{
@@ -2433,6 +2494,9 @@ RelationBuildLocalRelation(const char *relname,
 	if (shared_relation != IsSharedRelation(relid))
 		elog(ERROR, "shared_relation flag for \"%s\" does not match IsSharedRelation(%u)",
 			 relname, relid);
+
+	/* Shared relations had better be mapped, too */
+	Assert(mapped_relation || !shared_relation);
 
 	/*
 	 * switch to the cache context to create the relcache entry.
@@ -2512,7 +2576,9 @@ RelationBuildLocalRelation(const char *relname,
 	/*
 	 * Insert relation physical and logical identifiers (OIDs) into the right
 	 * places.	Note that the physical ID (relfilenode) is initially the same
-	 * as the logical ID (OID).
+	 * as the logical ID (OID); except that for a mapped relation, we set
+	 * relfilenode to zero and rely on RelationInitPhysicalAddr to consult
+	 * the map.
 	 */
 	rel->rd_rel->relisshared = shared_relation;
 	rel->rd_rel->relistemp = rel->rd_istemp;
@@ -2522,8 +2588,16 @@ RelationBuildLocalRelation(const char *relname,
 	for (i = 0; i < natts; i++)
 		rel->rd_att->attrs[i]->attrelid = relid;
 
-	rel->rd_rel->relfilenode = relid;
 	rel->rd_rel->reltablespace = reltablespace;
+
+	if (mapped_relation)
+	{
+		rel->rd_rel->relfilenode = InvalidOid;
+		/* Add it to the active mapping information */
+		RelationMapUpdateMap(relid, relid, shared_relation, true);
+	}
+	else
+		rel->rd_rel->relfilenode = relid;
 
 	RelationInitLockInfo(rel);	/* see lmgr.c */
 
@@ -2577,24 +2651,16 @@ RelationSetNewRelfilenode(Relation relation, TransactionId freezeXid)
 	HeapTuple	tuple;
 	Form_pg_class classform;
 
-	/* Can't change relfilenode for nailed tables (indexes ok though) */
-	Assert(!relation->rd_isnailed ||
-		   relation->rd_rel->relkind == RELKIND_INDEX);
-	/* Can't change for shared tables or indexes */
-	Assert(!relation->rd_rel->relisshared);
 	/* Indexes must have Invalid frozenxid; other relations must not */
 	Assert((relation->rd_rel->relkind == RELKIND_INDEX &&
 			freezeXid == InvalidTransactionId) ||
 		   TransactionIdIsNormal(freezeXid));
 
 	/* Allocate a new relfilenode */
-	newrelfilenode = GetNewRelFileNode(relation->rd_rel->reltablespace,
-									   relation->rd_rel->relisshared,
-									   NULL);
+	newrelfilenode = GetNewRelFileNode(relation->rd_rel->reltablespace, NULL);
 
 	/*
-	 * Find the pg_class tuple for the given relation.	This is not used
-	 * during bootstrap, so okay to use heap_update always.
+	 * Get a writable copy of the pg_class tuple for the given relation.
 	 */
 	pg_class = heap_open(RelationRelationId, RowExclusiveLock);
 
@@ -2623,12 +2689,23 @@ RelationSetNewRelfilenode(Relation relation, TransactionId freezeXid)
 	RelationDropStorage(relation);
 
 	/*
-	 * Now update the pg_class row.
+	 * Now update the pg_class row.  However, if we're dealing with a mapped
+	 * index, pg_class.relfilenode doesn't change; instead we have to send
+	 * the update to the relation mapper.
 	 */
-	classform->relfilenode = newrelfilenode;
+	if (RelationIsMapped(relation))
+		RelationMapUpdateMap(RelationGetRelid(relation),
+							 newrelfilenode,
+							 relation->rd_rel->relisshared,
+							 false);
+	else
+		classform->relfilenode = newrelfilenode;
+
+	/* These changes are safe even for a mapped relation */
 	classform->relpages = 0;		/* it's empty until further notice */
 	classform->reltuples = 0;
 	classform->relfrozenxid = freezeXid;
+
 	simple_heap_update(pg_class, &tuple->t_self, tuple);
 	CatalogUpdateIndexes(pg_class, tuple);
 
@@ -2637,8 +2714,8 @@ RelationSetNewRelfilenode(Relation relation, TransactionId freezeXid)
 	heap_close(pg_class, RowExclusiveLock);
 
 	/*
-	 * Make the pg_class row change visible.  This will cause the relcache
-	 * entry to get updated, too.
+	 * Make the pg_class row change visible, as well as the relation map
+	 * change if any.  This will cause the relcache entry to get updated, too.
 	 */
 	CommandCounterIncrement();
 
@@ -2687,6 +2764,11 @@ RelationCacheInitialize(void)
 	ctl.hash = oid_hash;
 	RelationIdCache = hash_create("Relcache by OID", INITRELCACHESIZE,
 								  &ctl, HASH_ELEM | HASH_FUNCTION);
+
+	/*
+	 * relation mapper needs initialized too
+	 */
+	RelationMapInitialize();
 }
 
 /*
@@ -2703,6 +2785,11 @@ void
 RelationCacheInitializePhase2(void)
 {
 	MemoryContext oldcxt;
+
+	/*
+	 * relation mapper needs initialized too
+	 */
+	RelationMapInitializePhase2();
 
 	/*
 	 * In bootstrap mode, pg_database isn't there yet anyway, so do nothing.
@@ -2751,6 +2838,11 @@ RelationCacheInitializePhase3(void)
 	RelIdCacheEnt *idhentry;
 	MemoryContext oldcxt;
 	bool		needNewCacheFile = !criticalSharedRelcachesBuilt;
+
+	/*
+	 * relation mapper needs initialized too
+	 */
+	RelationMapInitializePhase3();
 
 	/*
 	 * switch to cache memory context

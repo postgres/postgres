@@ -5,7 +5,7 @@
  * Originally by
  * B. Palmer, bpalmer@crimelabs.net 1-17-2001
  *
- * $PostgreSQL: pgsql/contrib/oid2name/oid2name.c,v 1.36 2009/06/11 14:48:51 momjian Exp $
+ * $PostgreSQL: pgsql/contrib/oid2name/oid2name.c,v 1.37 2010/02/07 20:48:08 tgl Exp $
  */
 #include "postgres_fe.h"
 
@@ -440,7 +440,7 @@ sql_exec_dumpalldbs(PGconn *conn, struct options * opts)
 	/* get the oid and database name from the system pg_database table */
 	snprintf(todo, sizeof(todo),
 			 "SELECT d.oid AS \"Oid\", datname AS \"Database Name\", "
-	  "spcname AS \"Tablespace\" FROM pg_database d JOIN pg_tablespace t ON "
+	  "spcname AS \"Tablespace\" FROM pg_catalog.pg_database d JOIN pg_catalog.pg_tablespace t ON "
 			 "(dattablespace = t.oid) ORDER BY 2");
 
 	sql_exec(conn, todo, opts->quiet);
@@ -456,10 +456,10 @@ sql_exec_dumpalltables(PGconn *conn, struct options * opts)
 	char	   *addfields = ",c.oid AS \"Oid\", nspname AS \"Schema\", spcname as \"Tablespace\" ";
 
 	snprintf(todo, sizeof(todo),
-		  "SELECT relfilenode as \"Filenode\", relname as \"Table Name\" %s "
+		  "SELECT pg_catalog.pg_relation_filenode(c.oid) as \"Filenode\", relname as \"Table Name\" %s "
 			 "FROM pg_class c "
 		   "	LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace "
-	"	LEFT JOIN pg_catalog.pg_database d ON d.datname = current_database(),"
+	"	LEFT JOIN pg_catalog.pg_database d ON d.datname = pg_catalog.current_database(),"
 			 "	pg_catalog.pg_tablespace t "
 			 "WHERE relkind IN ('r'%s%s) AND "
 			 "	%s"
@@ -477,7 +477,7 @@ sql_exec_dumpalltables(PGconn *conn, struct options * opts)
 }
 
 /*
- * Show oid, relfilenode, name, schema and tablespace for each of the
+ * Show oid, filenode, name, schema and tablespace for each of the
  * given objects in the current database.
  */
 void
@@ -492,7 +492,7 @@ sql_exec_searchtables(PGconn *conn, struct options * opts)
 	bool		written = false;
 	char	   *addfields = ",c.oid AS \"Oid\", nspname AS \"Schema\", spcname as \"Tablespace\" ";
 
-	/* get tables qualifiers, whether names, relfilenodes, or OIDs */
+	/* get tables qualifiers, whether names, filenodes, or OIDs */
 	comma_oids = get_comma_elts(opts->oids);
 	comma_tables = get_comma_elts(opts->tables);
 	comma_filenodes = get_comma_elts(opts->filenodes);
@@ -511,7 +511,7 @@ sql_exec_searchtables(PGconn *conn, struct options * opts)
 	{
 		if (written)
 			ptr += sprintf(ptr, " OR ");
-		ptr += sprintf(ptr, "c.relfilenode IN (%s)", comma_filenodes);
+		ptr += sprintf(ptr, "pg_catalog.pg_relation_filenode(c.oid) IN (%s)", comma_filenodes);
 		written = true;
 	}
 	if (opts->tables->num > 0)
@@ -527,10 +527,10 @@ sql_exec_searchtables(PGconn *conn, struct options * opts)
 	/* now build the query */
 	todo = (char *) myalloc(650 + strlen(qualifiers));
 	snprintf(todo, 650 + strlen(qualifiers),
-		 "SELECT relfilenode as \"Filenode\", relname as \"Table Name\" %s\n"
-			 "FROM pg_class c \n"
+		 "SELECT pg_catalog.pg_relation_filenode(c.oid) as \"Filenode\", relname as \"Table Name\" %s\n"
+			 "FROM pg_catalog.pg_class c \n"
 		 "	LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace \n"
-			 "	LEFT JOIN pg_catalog.pg_database d ON d.datname = current_database(),\n"
+			 "	LEFT JOIN pg_catalog.pg_database d ON d.datname = pg_catalog.current_database(),\n"
 			 "	pg_catalog.pg_tablespace t \n"
 			 "WHERE relkind IN ('r', 'i', 'S', 't') AND \n"
 			 "		t.oid = CASE\n"
@@ -554,7 +554,7 @@ sql_exec_dumpalltbspc(PGconn *conn, struct options * opts)
 
 	snprintf(todo, sizeof(todo),
 			 "SELECT oid AS \"Oid\", spcname as \"Tablespace Name\"\n"
-			 "FROM pg_tablespace");
+			 "FROM pg_catalog.pg_tablespace");
 
 	sql_exec(conn, todo, opts->quiet);
 }

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/reindex.sgml,v 1.38 2008/11/14 10:22:47 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/reindex.sgml,v 1.39 2010/02/07 20:48:09 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -77,7 +77,7 @@ REINDEX { INDEX | TABLE | DATABASE | SYSTEM } <replaceable class="PARAMETER">nam
    </itemizedlist>
   </para>
  </refsect1>
-  
+
  <refsect1>
   <title>Parameters</title>
 
@@ -106,9 +106,9 @@ REINDEX { INDEX | TABLE | DATABASE | SYSTEM } <replaceable class="PARAMETER">nam
     <listitem>
      <para>
       Recreate all indexes within the current database.
-      Indexes on shared system catalogs are skipped except in stand-alone mode
-      (see below). This form of <command>REINDEX</command> cannot be executed 
-      inside a transaction block.
+      Indexes on shared system catalogs are also processed.
+      This form of <command>REINDEX</command> cannot be executed inside a
+      transaction block.
      </para>
     </listitem>
    </varlistentry>
@@ -118,8 +118,8 @@ REINDEX { INDEX | TABLE | DATABASE | SYSTEM } <replaceable class="PARAMETER">nam
     <listitem>
      <para>
       Recreate all indexes on system catalogs within the current database.
-      Indexes on user tables are not processed.  Also, indexes on shared
-      system catalogs are skipped except in stand-alone mode (see below).
+      Indexes on shared system catalogs are included.
+      Indexes on user tables are not processed.
       This form of <command>REINDEX</command> cannot be executed inside a
       transaction block.
      </para>
@@ -134,7 +134,7 @@ REINDEX { INDEX | TABLE | DATABASE | SYSTEM } <replaceable class="PARAMETER">nam
       reindexed.  Index and table names can be schema-qualified.
       Presently, <command>REINDEX DATABASE</> and <command>REINDEX SYSTEM</>
       can only reindex the current database, so their parameter must match
-      the current database's name. 
+      the current database's name.
      </para>
     </listitem>
    </varlistentry>
@@ -156,7 +156,7 @@ REINDEX { INDEX | TABLE | DATABASE | SYSTEM } <replaceable class="PARAMETER">nam
   <para>
    If you suspect corruption of an index on a user table, you can
    simply rebuild that index, or all indexes on the table, using
-   <command>REINDEX INDEX</command> or <command>REINDEX TABLE</command>.  
+   <command>REINDEX INDEX</command> or <command>REINDEX TABLE</command>.
   </para>
 
   <para>
@@ -195,30 +195,6 @@ REINDEX { INDEX | TABLE | DATABASE | SYSTEM } <replaceable class="PARAMETER">nam
    require locking out other clients, it might still be wise to prevent
    other users from connecting to the damaged database until repairs
    have been completed.
-  </para>
-
-  <para>
-   If corruption is suspected in the indexes of any of the shared
-   system catalogs (which are <structname>pg_authid</structname>,
-   <structname>pg_auth_members</structname>,
-   <structname>pg_database</structname>,
-   <structname>pg_pltemplate</structname>,
-   <structname>pg_shdepend</structname>,
-   <structname>pg_shdescription</structname>, and
-   <structname>pg_tablespace</structname>), then a standalone server
-   must be used to repair it.  <command>REINDEX</> will not process
-   shared catalogs in multiuser mode.
-  </para>
-
-  <para>
-   For all indexes except the shared system catalogs, <command>REINDEX</>
-   is crash-safe and transaction-safe.  <command>REINDEX</> is not
-   crash-safe for shared indexes, which is why this case is disallowed
-   during normal operation.  If a failure occurs while reindexing one
-   of these catalogs in standalone mode, it will not be possible to
-   restart the regular server until the problem is rectified.  (The
-   typical symptom of a partially rebuilt shared index is <quote>index is not
-   a btree</> errors.)
   </para>
 
   <para>
@@ -290,7 +266,7 @@ broken_db=&gt; \q
 </programlisting>
   </para>
  </refsect1>
- 
+
  <refsect1>
   <title>Compatibility</title>
 

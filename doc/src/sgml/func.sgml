@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.500 2010/02/01 15:38:21 rhaas Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.501 2010/02/07 20:48:09 tgl Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -13432,6 +13432,68 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
     <function>pg_size_pretty</> can be used to format the result of one of
     the other functions in a human-readable way, using kB, MB, GB or TB as
     appropriate.
+   </para>
+
+   <para>
+    The functions shown in <xref linkend="functions-admin-dblocation"> assist
+    in identifying the specific disk files associated with database objects.
+   </para>
+
+   <indexterm>
+    <primary>pg_relation_filenode</primary>
+   </indexterm>
+   <indexterm>
+    <primary>pg_relation_filepath</primary>
+   </indexterm>
+
+   <table id="functions-admin-dblocation">
+    <title>Database Object Location Functions</title>
+    <tgroup cols="3">
+     <thead>
+      <row><entry>Name</entry> <entry>Return Type</entry> <entry>Description</entry>
+      </row>
+     </thead>
+
+     <tbody>
+      <row>
+       <entry>
+        <literal><function>pg_relation_filenode</function>(<parameter>relation</parameter> <type>regclass</type>)</literal>
+        </entry>
+       <entry><type>oid</type></entry>
+       <entry>
+        Filenode number of the relation with the specified OID or name
+       </entry>
+      </row>
+      <row>
+       <entry>
+        <literal><function>pg_relation_filepath</function>(<parameter>relation</parameter> <type>regclass</type>)</literal>
+        </entry>
+       <entry><type>text</type></entry>
+       <entry>
+        File path name of the relation with the specified OID or name
+       </entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
+
+   <para>
+    <function>pg_relation_filenode</> accepts the OID or name of a table,
+    index, sequence, or toast table, and returns the <quote>filenode</> number
+    currently assigned to it.  The filenode is the base component of the file
+    name(s) used for the relation (see <xref linkend="storage-file-layout">
+    for more information).  For most tables the result is the same as
+    <structname>pg_class</>.<structfield>relfilenode</>, but for certain
+    system catalogs <structfield>relfilenode</> is zero and this function must
+    be used to get the correct value.  The function returns NULL if passed
+    a relation that does not have storage, such as a view.
+   </para>
+
+   <para>
+    <function>pg_relation_filepath</> is similar to
+    <function>pg_relation_filenode</>, but it returns the entire file pathname
+    (relative to the database cluster's data directory <varname>PGDATA</>) of
+    the relation.
    </para>
 
    <para>

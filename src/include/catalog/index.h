@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/index.h,v 1.81 2010/02/03 01:14:17 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/index.h,v 1.82 2010/02/07 20:48:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -71,6 +71,9 @@ extern double IndexBuildHeapScan(Relation heapRelation,
 extern void validate_index(Oid heapId, Oid indexId, Snapshot snapshot);
 
 extern void reindex_index(Oid indexId);
-extern bool reindex_relation(Oid relid, bool toast_too);
+extern bool reindex_relation(Oid relid, bool toast_too, bool heap_rebuilt);
+
+extern bool ReindexIsProcessingHeap(Oid heapOid);
+extern bool ReindexIsProcessingIndex(Oid indexOid);
 
 #endif   /* INDEX_H */

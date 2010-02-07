@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.220 2010/02/03 17:25:05 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.221 2010/02/07 20:48:09 tgl Exp $ -->
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
  -->
@@ -1473,7 +1473,9 @@
       <entry><structfield>relfilenode</structfield></entry>
       <entry><type>oid</type></entry>
       <entry></entry>
-      <entry>Name of the on-disk file of this relation; 0 if none</entry>
+      <entry>Name of the on-disk file of this relation; zero means this
+       is a <quote>mapped</> relation whose disk file name is determined
+       by low-level state</entry>
      </row>
 
      <row>

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/relfilenode.h,v 1.24 2010/01/02 16:58:08 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/storage/relfilenode.h,v 1.25 2010/02/07 20:48:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,6 +61,10 @@ typedef enum ForkNumber
  * identified by pg_database.dattablespace).  However this shorthand
  * is NOT allowed in RelFileNode structs --- the real tablespace ID
  * must be supplied when setting spcNode.
+ *
+ * Note: in pg_class, relfilenode can be zero to denote that the relation
+ * is a "mapped" relation, whose current true filenode number is available
+ * from relmapper.c.  Again, this case is NOT allowed in RelFileNodes.
  */
 typedef struct RelFileNode
 {
