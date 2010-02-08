@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/htup.h,v 1.111 2010/02/08 04:33:54 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/htup.h,v 1.112 2010/02/08 14:10:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -176,9 +176,11 @@ typedef HeapTupleHeaderData *HeapTupleHeader;
 #define HEAP_XMAX_IS_MULTI		0x1000	/* t_xmax is a MultiXactId */
 #define HEAP_UPDATED			0x2000	/* this is UPDATEd version of row */
 #define HEAP_MOVED_OFF			0x4000	/* moved to another place by
-										 * old-style VACUUM FULL */
+										 * pre-9.0 VACUUM FULL; kept
+										 * for binary upgrade support */
 #define HEAP_MOVED_IN			0x8000	/* moved from another place by
-										 * old-style VACUUM FULL */
+										 * pre-9.0 VACUUM FULL; kept
+										 * for binary upgrade support */
 #define HEAP_MOVED (HEAP_MOVED_OFF | HEAP_MOVED_IN)
 
 #define HEAP_XACT_MASK			0xFFE0	/* visibility-related bits */
