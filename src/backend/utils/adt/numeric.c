@@ -14,7 +14,7 @@
  * Copyright (c) 1998-2010, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/numeric.c,v 1.121 2010/01/07 04:53:34 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/numeric.c,v 1.122 2010/02/08 20:39:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2679,16 +2679,14 @@ int2_sum(PG_FUNCTION_ARGS)
 	}
 
 	/*
-	 * If we're invoked by nodeAgg, we can cheat and modify our first
+	 * If we're invoked as an aggregate, we can cheat and modify our first
 	 * parameter in-place to avoid palloc overhead. If not, we need to return
 	 * the new value of the transition variable. (If int8 is pass-by-value,
 	 * then of course this is useless as well as incorrect, so just ifdef it
 	 * out.)
 	 */
 #ifndef USE_FLOAT8_BYVAL		/* controls int8 too */
-	if (fcinfo->context &&
-		(IsA(fcinfo->context, AggState) ||
-		 IsA(fcinfo->context, WindowAggState)))
+	if (AggCheckCallContext(fcinfo, NULL))
 	{
 		int64	   *oldsum = (int64 *) PG_GETARG_POINTER(0);
 
@@ -2730,16 +2728,14 @@ int4_sum(PG_FUNCTION_ARGS)
 	}
 
 	/*
-	 * If we're invoked by nodeAgg, we can cheat and modify our first
+	 * If we're invoked as an aggregate, we can cheat and modify our first
 	 * parameter in-place to avoid palloc overhead. If not, we need to return
 	 * the new value of the transition variable. (If int8 is pass-by-value,
 	 * then of course this is useless as well as incorrect, so just ifdef it
 	 * out.)
 	 */
 #ifndef USE_FLOAT8_BYVAL		/* controls int8 too */
-	if (fcinfo->context &&
-		(IsA(fcinfo->context, AggState) ||
-		 IsA(fcinfo->context, WindowAggState)))
+	if (AggCheckCallContext(fcinfo, NULL))
 	{
 		int64	   *oldsum = (int64 *) PG_GETARG_POINTER(0);
 
@@ -2782,7 +2778,7 @@ int8_sum(PG_FUNCTION_ARGS)
 	}
 
 	/*
-	 * Note that we cannot special-case the nodeAgg case here, as we do for
+	 * Note that we cannot special-case the aggregate case here, as we do for
 	 * int2_sum and int4_sum: numeric is of variable size, so we cannot modify
 	 * our first parameter in-place.
 	 */
@@ -2820,13 +2816,11 @@ int2_avg_accum(PG_FUNCTION_ARGS)
 	Int8TransTypeData *transdata;
 
 	/*
-	 * If we're invoked by nodeAgg, we can cheat and modify our first
+	 * If we're invoked as an aggregate, we can cheat and modify our first
 	 * parameter in-place to reduce palloc overhead. Otherwise we need to make
 	 * a copy of it before scribbling on it.
 	 */
-	if (fcinfo->context &&
-		(IsA(fcinfo->context, AggState) ||
-		 IsA(fcinfo->context, WindowAggState)))
+	if (AggCheckCallContext(fcinfo, NULL))
 		transarray = PG_GETARG_ARRAYTYPE_P(0);
 	else
 		transarray = PG_GETARG_ARRAYTYPE_P_COPY(0);
@@ -2850,13 +2844,11 @@ int4_avg_accum(PG_FUNCTION_ARGS)
 	Int8TransTypeData *transdata;
 
 	/*
-	 * If we're invoked by nodeAgg, we can cheat and modify our first
+	 * If we're invoked as an aggregate, we can cheat and modify our first
 	 * parameter in-place to reduce palloc overhead. Otherwise we need to make
 	 * a copy of it before scribbling on it.
 	 */
-	if (fcinfo->context &&
-		(IsA(fcinfo->context, AggState) ||
-		 IsA(fcinfo->context, WindowAggState)))
+	if (AggCheckCallContext(fcinfo, NULL))
 		transarray = PG_GETARG_ARRAYTYPE_P(0);
 	else
 		transarray = PG_GETARG_ARRAYTYPE_P_COPY(0);

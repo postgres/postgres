@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/varlena.c,v 1.175 2010/02/01 03:14:43 itagaki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/varlena.c,v 1.176 2010/02/08 20:39:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,7 +21,6 @@
 #include "libpq/md5.h"
 #include "libpq/pqformat.h"
 #include "miscadmin.h"
-#include "nodes/execnodes.h"
 #include "parser/scansup.h"
 #include "regex/regex.h"
 #include "utils/builtins.h"
@@ -74,7 +73,7 @@ static bytea *bytea_substring(Datum str,
 				int L,
 				bool length_not_specified);
 static bytea *bytea_overlay(bytea *t1, bytea *t2, int sp, int sl);
-static StringInfo makeStringAggState(fmNodePtr context);
+static StringInfo makeStringAggState(FunctionCallInfo fcinfo);
 
 
 /*****************************************************************************
@@ -3327,25 +3326,25 @@ pg_column_size(PG_FUNCTION_ARGS)
  * actually used at all, and on subsequent calls the delimiter precedes
  * the associated value.
  */
+
+/* subroutine to initialize state */
 static StringInfo
-makeStringAggState(fmNodePtr context)
+makeStringAggState(FunctionCallInfo fcinfo)
 {
 	StringInfo		state;
 	MemoryContext	aggcontext;
 	MemoryContext	oldcontext;
 
-	if (context && IsA(context, AggState))
-		aggcontext = ((AggState *) context)->aggcontext;
-	else if (context && IsA(context, WindowAggState))
-		aggcontext = ((WindowAggState *) context)->wincontext;
-	else
+	if (!AggCheckCallContext(fcinfo, &aggcontext))
 	{
 		/* cannot be called directly because of internal-type argument */
 		elog(ERROR, "string_agg_transfn called in non-aggregate context");
-		aggcontext = NULL;		/* keep compiler quiet */
 	}
 
-	/* Create state in aggregate context */
+	/*
+	 * Create state in aggregate context.  It'll stay there across subsequent
+	 * calls.
+	 */
 	oldcontext = MemoryContextSwitchTo(aggcontext);
 	state = makeStringInfo();
 	MemoryContextSwitchTo(oldcontext);
@@ -3360,11 +3359,11 @@ string_agg_transfn(PG_FUNCTION_ARGS)
 
 	state = PG_ARGISNULL(0) ? NULL : (StringInfo) PG_GETARG_POINTER(0);
 
-	/* Append the element unless not null. */
+	/* Append the element unless null. */
 	if (!PG_ARGISNULL(1))
 	{
 		if (state == NULL)
-			state = makeStringAggState(fcinfo->context);
+			state = makeStringAggState(fcinfo);
 		appendStringInfoText(state, PG_GETARG_TEXT_PP(1));	/* value */
 	}
 
@@ -3382,11 +3381,12 @@ string_agg_delim_transfn(PG_FUNCTION_ARGS)
 
 	state = PG_ARGISNULL(0) ? NULL : (StringInfo) PG_GETARG_POINTER(0);
 
-	/* Append the value unless not null. */
+	/* Append the value unless null. */
 	if (!PG_ARGISNULL(1))
 	{
+		/* On the first time through, we ignore the delimiter. */
 		if (state == NULL)
-			state = makeStringAggState(fcinfo->context);
+			state = makeStringAggState(fcinfo);
 		else if (!PG_ARGISNULL(2))
 			appendStringInfoText(state, PG_GETARG_TEXT_PP(2));	/* delimiter */
 
@@ -3405,15 +3405,11 @@ string_agg_finalfn(PG_FUNCTION_ARGS)
 {
 	StringInfo		state;
 
-	if (PG_ARGISNULL(0))
-		PG_RETURN_NULL();
-
 	/* cannot be called directly because of internal-type argument */
-	Assert(fcinfo->context &&
-		   (IsA(fcinfo->context, AggState) ||
-			IsA(fcinfo->context, WindowAggState)));
+	Assert(AggCheckCallContext(fcinfo, NULL));
 
-	state = (StringInfo) PG_GETARG_POINTER(0);
+	state = PG_ARGISNULL(0) ? NULL : (StringInfo) PG_GETARG_POINTER(0);
+
 	if (state != NULL)
 		PG_RETURN_TEXT_P(cstring_to_text(state->data));
 	else

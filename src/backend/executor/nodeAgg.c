@@ -44,30 +44,34 @@
  *	  is used to run finalize functions and compute the output tuple;
  *	  this context can be reset once per output tuple.
  *
- *	  Beginning in PostgreSQL 8.1, the executor's AggState node is passed as
- *	  the fmgr "context" value in all transfunc and finalfunc calls.  It is
- *	  not really intended that the transition functions will look into the
- *	  AggState node, but they can use code like
- *			if (fcinfo->context && IsA(fcinfo->context, AggState))
- *	  to verify that they are being called by nodeAgg.c and not as ordinary
- *	  SQL functions.  The main reason a transition function might want to know
- *	  that is that it can avoid palloc'ing a fixed-size pass-by-ref transition
- *	  value on every call: it can instead just scribble on and return its left
- *	  input.  Ordinarily it is completely forbidden for functions to modify
- *	  pass-by-ref inputs, but in the aggregate case we know the left input is
- *	  either the initial transition value or a previous function result, and
- *	  in either case its value need not be preserved.  See int8inc() for an
- *	  example.	Notice that advance_transition_function() is coded to avoid a
- *	  data copy step when the previous transition value pointer is returned.
- *	  Also, some transition functions make use of the aggcontext to store
- *	  working state.
+ *	  The executor's AggState node is passed as the fmgr "context" value in
+ *	  all transfunc and finalfunc calls.  It is not recommended that the
+ *	  transition functions look at the AggState node directly, but they can
+ *	  use AggCheckCallContext() to verify that they are being called by
+ *	  nodeAgg.c (and not as ordinary SQL functions).  The main reason a
+ *	  transition function might want to know this is so that it can avoid
+ *	  palloc'ing a fixed-size pass-by-ref transition value on every call:
+ *	  it can instead just scribble on and return its left input.  Ordinarily
+ *	  it is completely forbidden for functions to modify pass-by-ref inputs,
+ *	  but in the aggregate case we know the left input is either the initial
+ *	  transition value or a previous function result, and in either case its
+ *	  value need not be preserved.  See int8inc() for an example.  Notice that
+ *	  advance_transition_function() is coded to avoid a data copy step when
+ *	  the previous transition value pointer is returned.  Also, some
+ *	  transition functions want to store working state in addition to the
+ *	  nominal transition value; they can use the memory context returned by
+ *	  AggCheckCallContext() to do that.
+ *
+ *	  Note: AggCheckCallContext() is available as of PostgreSQL 9.0.  The
+ *	  AggState is available as context in earlier releases (back to 8.1),
+ *	  but direct examination of the node is needed to use it before 9.0.
  *
  *
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeAgg.c,v 1.171 2010/01/02 16:57:41 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeAgg.c,v 1.172 2010/02/08 20:39:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1967,6 +1971,42 @@ ExecReScanAgg(AggState *node, ExprContext *exprCtxt)
 	 */
 	if (((PlanState *) node)->lefttree->chgParam == NULL)
 		ExecReScan(((PlanState *) node)->lefttree, exprCtxt);
+}
+
+/*
+ * AggCheckCallContext - test if a SQL function is being called as an aggregate
+ *
+ * The transition and/or final functions of an aggregate may want to verify
+ * that they are being called as aggregates, rather than as plain SQL
+ * functions.  They should use this function to do so.  The return value
+ * is nonzero if being called as an aggregate, or zero if not.  (Specific
+ * nonzero values are AGG_CONTEXT_AGGREGATE or AGG_CONTEXT_WINDOW, but more
+ * values could conceivably appear in future.)
+ *
+ * If aggcontext isn't NULL, the function also stores at *aggcontext the
+ * identity of the memory context that aggregate transition values are
+ * being stored in.
+ */
+int
+AggCheckCallContext(FunctionCallInfo fcinfo, MemoryContext *aggcontext)
+{
+	if (fcinfo->context && IsA(fcinfo->context, AggState))
+	{
+		if (aggcontext)
+			*aggcontext = ((AggState *) fcinfo->context)->aggcontext;
+		return AGG_CONTEXT_AGGREGATE;
+	}
+	if (fcinfo->context && IsA(fcinfo->context, WindowAggState))
+	{
+		if (aggcontext)
+			*aggcontext = ((WindowAggState *) fcinfo->context)->wincontext;
+		return AGG_CONTEXT_WINDOW;
+	}
+
+	/* this is just to prevent "uninitialized variable" warnings */
+	if (aggcontext)
+		*aggcontext = NULL;
+	return 0;
 }
 
 /*

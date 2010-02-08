@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/int8.c,v 1.77 2010/01/07 04:53:34 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/int8.c,v 1.78 2010/02/08 20:39:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,7 +19,6 @@
 
 #include "funcapi.h"
 #include "libpq/pqformat.h"
-#include "nodes/nodes.h"
 #include "utils/int8.h"
 
 
@@ -654,15 +653,13 @@ int8inc(PG_FUNCTION_ARGS)
 {
 	/*
 	 * When int8 is pass-by-reference, we provide this special case to avoid
-	 * palloc overhead for COUNT(): when called from nodeAgg, we know that the
-	 * argument is modifiable local storage, so just update it in-place. (If
-	 * int8 is pass-by-value, then of course this is useless as well as
-	 * incorrect, so just ifdef it out.)
+	 * palloc overhead for COUNT(): when called as an aggregate, we know that
+	 * the argument is modifiable local storage, so just update it
+	 * in-place. (If int8 is pass-by-value, then of course this is useless as
+	 * well as incorrect, so just ifdef it out.)
 	 */
 #ifndef USE_FLOAT8_BYVAL		/* controls int8 too */
-	if (fcinfo->context &&
-		(IsA(fcinfo->context, AggState) ||
-		 IsA(fcinfo->context, WindowAggState)))
+	if (AggCheckCallContext(fcinfo, NULL))
 	{
 		int64	   *arg = (int64 *) PG_GETARG_POINTER(0);
 		int64		result;
@@ -680,7 +677,7 @@ int8inc(PG_FUNCTION_ARGS)
 	else
 #endif
 	{
-		/* Not called by nodeAgg, so just do it the dumb way */
+		/* Not called as an aggregate, so just do it the dumb way */
 		int64		arg = PG_GETARG_INT64(0);
 		int64		result;
 

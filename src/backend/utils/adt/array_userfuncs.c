@@ -6,13 +6,12 @@
  * Copyright (c) 2003-2010, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/array_userfuncs.c,v 1.33 2010/01/02 16:57:53 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/array_userfuncs.c,v 1.34 2010/02/08 20:39:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
-#include "nodes/execnodes.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
@@ -484,15 +483,10 @@ array_agg_transfn(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("could not determine input data type")));
 
-	if (fcinfo->context && IsA(fcinfo->context, AggState))
-		aggcontext = ((AggState *) fcinfo->context)->aggcontext;
-	else if (fcinfo->context && IsA(fcinfo->context, WindowAggState))
-		aggcontext = ((WindowAggState *) fcinfo->context)->wincontext;
-	else
+	if (!AggCheckCallContext(fcinfo, &aggcontext))
 	{
 		/* cannot be called directly because of internal-type argument */
 		elog(ERROR, "array_agg_transfn called in non-aggregate context");
-		aggcontext = NULL;		/* keep compiler quiet */
 	}
 
 	state = PG_ARGISNULL(0) ? NULL : (ArrayBuildState *) PG_GETARG_POINTER(0);
@@ -528,9 +522,7 @@ array_agg_finalfn(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();		/* returns null iff no input values */
 
 	/* cannot be called directly because of internal-type argument */
-	Assert(fcinfo->context &&
-		   (IsA(fcinfo->context, AggState) ||
-			IsA(fcinfo->context, WindowAggState)));
+	Assert(AggCheckCallContext(fcinfo, NULL));
 
 	state = (ArrayBuildState *) PG_GETARG_POINTER(0);
 

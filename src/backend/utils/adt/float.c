@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/float.c,v 1.164 2010/01/02 16:57:53 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/float.c,v 1.165 2010/02/08 20:39:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1765,13 +1765,11 @@ float8_accum(PG_FUNCTION_ARGS)
 	CHECKFLOATVAL(sumX2, isinf(transvalues[2]) || isinf(newval), true);
 
 	/*
-	 * If we're invoked by nodeAgg, we can cheat and modify our first
+	 * If we're invoked as an aggregate, we can cheat and modify our first
 	 * parameter in-place to reduce palloc overhead. Otherwise we construct a
 	 * new array with the updated transition data and return it.
 	 */
-	if (fcinfo->context &&
-		(IsA(fcinfo->context, AggState) ||
-		 IsA(fcinfo->context, WindowAggState)))
+	if (AggCheckCallContext(fcinfo, NULL))
 	{
 		transvalues[0] = N;
 		transvalues[1] = sumX;
@@ -1820,13 +1818,11 @@ float4_accum(PG_FUNCTION_ARGS)
 	CHECKFLOATVAL(sumX2, isinf(transvalues[2]) || isinf(newval), true);
 
 	/*
-	 * If we're invoked by nodeAgg, we can cheat and modify our first
+	 * If we're invoked as an aggregate, we can cheat and modify our first
 	 * parameter in-place to reduce palloc overhead. Otherwise we construct a
 	 * new array with the updated transition data and return it.
 	 */
-	if (fcinfo->context &&
-		(IsA(fcinfo->context, AggState) ||
-		 IsA(fcinfo->context, WindowAggState)))
+	if (AggCheckCallContext(fcinfo, NULL))
 	{
 		transvalues[0] = N;
 		transvalues[1] = sumX;
@@ -2039,13 +2035,11 @@ float8_regr_accum(PG_FUNCTION_ARGS)
 				  isinf(newvalY), true);
 
 	/*
-	 * If we're invoked by nodeAgg, we can cheat and modify our first
+	 * If we're invoked as an aggregate, we can cheat and modify our first
 	 * parameter in-place to reduce palloc overhead. Otherwise we construct a
 	 * new array with the updated transition data and return it.
 	 */
-	if (fcinfo->context &&
-		(IsA(fcinfo->context, AggState) ||
-		 IsA(fcinfo->context, WindowAggState)))
+	if (AggCheckCallContext(fcinfo, NULL))
 	{
 		transvalues[0] = N;
 		transvalues[1] = sumX;
