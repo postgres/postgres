@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/high-availability.sgml,v 1.38 2010/02/05 23:53:22 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/high-availability.sgml,v 1.39 2010/02/08 13:41:06 momjian Exp $ -->
 
 <chapter id="high-availability">
  <title>High Availability, Load Balancing, and Replication</title>
@@ -283,7 +283,7 @@ protocol to make nodes agree on a serializable transactional order.
      <entry>Feature</entry>
      <entry>Shared Disk Failover</entry>
      <entry>File System Replication</entry>
-     <entry>Warm Standby Using PITR</entry>
+     <entry>Hot/Warm Standby Using PITR</entry>
      <entry>Trigger-Based Master-Slave Replication</entry>
      <entry>Statement-Based Replication Middleware</entry>
      <entry>Asynchronous Multimaster Replication</entry>
@@ -374,7 +374,7 @@ protocol to make nodes agree on a serializable transactional order.
      <entry>Slaves accept read-only queries</entry>
      <entry align="center"></entry>
      <entry align="center"></entry>
-     <entry align="center"></entry>
+     <entry align="center">Hot only</entry>
      <entry align="center">&bull;</entry>
      <entry align="center">&bull;</entry>
      <entry align="center">&bull;</entry>
