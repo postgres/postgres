@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.323 2010/02/03 10:01:29 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.324 2010/02/08 04:33:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2166,7 +2166,7 @@ CopyFrom(CopyState cstate)
 
 			if (resultRelInfo->ri_NumIndices > 0)
 				recheckIndexes = ExecInsertIndexTuples(slot, &(tuple->t_self),
-													   estate, false);
+													   estate);
 
 			/* AFTER ROW INSERT Triggers */
 			ExecARInsertTriggers(estate, resultRelInfo, tuple,

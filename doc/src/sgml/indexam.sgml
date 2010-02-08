@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/indexam.sgml,v 2.32 2010/01/01 21:53:49 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/indexam.sgml,v 2.33 2010/02/08 04:33:51 tgl Exp $ -->
 
 <chapter id="indexam">
  <title>Index Access Method Interface Definition</title>
@@ -577,11 +577,10 @@ amrestrpos (IndexScanDesc scan);
    The core <productname>PostgreSQL</productname> system obtains
    <literal>AccessShareLock</> on the index during an index scan, and
    <literal>RowExclusiveLock</> when updating the index (including plain
-   <command>VACUUM</>).  Since these lock
-   types do not conflict, the access method is responsible for handling any
-   fine-grained locking it might need.  An exclusive lock on the index as a whole
-   will be taken only during index creation, destruction,
-   <command>REINDEX</>, or <command>VACUUM FULL</>.
+   <command>VACUUM</>).  Since these lock types do not conflict, the access
+   method is responsible for handling any fine-grained locking it might need.
+   An exclusive lock on the index as a whole will be taken only during index
+   creation, destruction, or <command>REINDEX</>.
   </para>
 
   <para>

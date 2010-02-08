@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/inval.h,v 1.48 2010/02/07 20:48:13 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/inval.h,v 1.49 2010/02/08 04:33:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,10 +38,6 @@ extern void AtPrepare_Inval(void);
 extern void PostPrepare_Inval(void);
 
 extern void CommandEndInvalidationMessages(void);
-
-extern void BeginNonTransactionalInvalidation(void);
-
-extern void EndNonTransactionalInvalidation(void);
 
 extern void CacheInvalidateHeapTuple(Relation relation, HeapTuple tuple);
 

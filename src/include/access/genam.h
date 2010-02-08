@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/genam.h,v 1.82 2010/01/02 16:58:00 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/access/genam.h,v 1.83 2010/02/08 04:33:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,7 +42,6 @@ typedef struct IndexBuildResult
 typedef struct IndexVacuumInfo
 {
 	Relation	index;			/* the index being vacuumed */
-	bool		vacuum_full;	/* VACUUM FULL (we have exclusive lock) */
 	bool		analyze_only;	/* ANALYZE (without any actual vacuum) */
 	bool		estimated_count;	/* num_heap_tuples is an estimate */
 	int			message_level;	/* ereport level for progress messages */

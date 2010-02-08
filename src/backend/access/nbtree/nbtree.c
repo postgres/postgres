@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtree.c,v 1.174 2010/01/02 16:57:35 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtree.c,v 1.175 2010/02/08 04:33:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -579,12 +579,12 @@ btvacuumcleanup(PG_FUNCTION_ARGS)
 	IndexFreeSpaceMapVacuum(info->index);
 
 	/*
-	 * During a non-FULL vacuum it's quite possible for us to be fooled by
-	 * concurrent page splits into double-counting some index tuples, so
-	 * disbelieve any total that exceeds the underlying heap's count ... if we
-	 * know that accurately.  Otherwise this might just make matters worse.
+	 * It's quite possible for us to be fooled by concurrent page splits into
+	 * double-counting some index tuples, so disbelieve any total that exceeds
+	 * the underlying heap's count ... if we know that accurately.  Otherwise
+	 * this might just make matters worse.
 	 */
-	if (!info->vacuum_full && !info->estimated_count)
+	if (!info->estimated_count)
 	{
 		if (stats->num_index_tuples > info->num_heap_tuples)
 			stats->num_index_tuples = info->num_heap_tuples;
@@ -684,27 +684,6 @@ btvacuumscan(IndexVacuumInfo *info, IndexBulkDeleteResult *stats,
 		{
 			btvacuumpage(&vstate, blkno, blkno);
 		}
-	}
-
-	/*
-	 * During VACUUM FULL, we truncate off any recyclable pages at the end of
-	 * the index.  In a normal vacuum it'd be unsafe to do this except by
-	 * acquiring exclusive lock on the index and then rechecking all the
-	 * pages; doesn't seem worth it.
-	 */
-	if (info->vacuum_full && vstate.lastUsedPage < num_pages - 1)
-	{
-		BlockNumber new_pages = vstate.lastUsedPage + 1;
-
-		/*
-		 * Okay to truncate.
-		 */
-		RelationTruncate(rel, new_pages);
-
-		/* update statistics */
-		stats->pages_removed += num_pages - new_pages;
-		vstate.totFreePages -= (num_pages - new_pages);
-		num_pages = new_pages;
 	}
 
 	/*
@@ -963,25 +942,11 @@ restart:
 		MemoryContextReset(vstate->pagedelcontext);
 		oldcontext = MemoryContextSwitchTo(vstate->pagedelcontext);
 
-		ndel = _bt_pagedel(rel, buf, NULL, info->vacuum_full);
+		ndel = _bt_pagedel(rel, buf, NULL);
 
 		/* count only this page, else may double-count parent */
 		if (ndel)
 			stats->pages_deleted++;
-
-		/*
-		 * During VACUUM FULL it's okay to recycle deleted pages immediately,
-		 * since there can be no other transactions scanning the index.  Note
-		 * that we will only recycle the current page and not any parent pages
-		 * that _bt_pagedel might have recursed to; this seems reasonable in
-		 * the name of simplicity.	(Trying to do otherwise would mean we'd
-		 * have to sort the list of recyclable pages we're building.)
-		 */
-		if (ndel && info->vacuum_full)
-		{
-			RecordFreeIndexPage(rel, blkno);
-			vstate->totFreePages++;
-		}
 
 		MemoryContextSwitchTo(oldcontext);
 		/* pagedel released buffer, so we shouldn't */

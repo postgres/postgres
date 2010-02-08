@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/analyze.c,v 1.149 2010/02/01 19:28:56 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/analyze.c,v 1.150 2010/02/08 04:33:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -595,7 +595,6 @@ cleanup:
 			IndexVacuumInfo ivinfo;
 
 			ivinfo.index = Irel[ind];
-			ivinfo.vacuum_full = false;
 			ivinfo.analyze_only = true;
 			ivinfo.estimated_count = true;
 			ivinfo.message_level = elevel;

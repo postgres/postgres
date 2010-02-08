@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/htup.h,v 1.110 2010/01/10 04:26:36 rhaas Exp $
+ * $PostgreSQL: pgsql/src/include/access/htup.h,v 1.111 2010/02/08 04:33:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -74,11 +74,11 @@
  * transaction respectively.  If a tuple is inserted and deleted in the same
  * transaction, we store a "combo" command id that can be mapped to the real
  * cmin and cmax, but only by use of local state within the originating
- * backend.  See combocid.c for more details.  Meanwhile, Xvac is only set
- * by VACUUM FULL, which does not have any command sub-structure and so does
- * not need either Cmin or Cmax.  (This requires that VACUUM FULL never try
- * to move a tuple whose Cmin or Cmax is still interesting, ie, an insert-
- * in-progress or delete-in-progress tuple.)
+ * backend.  See combocid.c for more details.  Meanwhile, Xvac is only set by
+ * old-style VACUUM FULL, which does not have any command sub-structure and so
+ * does not need either Cmin or Cmax.  (This requires that old-style VACUUM
+ * FULL never try to move a tuple whose Cmin or Cmax is still interesting,
+ * ie, an insert-in-progress or delete-in-progress tuple.)
  *
  * A word about t_ctid: whenever a new tuple is stored on disk, its t_ctid
  * is initialized with its own TID (location).	If the tuple is ever updated,
@@ -111,7 +111,7 @@ typedef struct HeapTupleFields
 	union
 	{
 		CommandId	t_cid;		/* inserting or deleting command ID, or both */
-		TransactionId t_xvac;	/* VACUUM FULL xact ID */
+		TransactionId t_xvac;	/* old-style VACUUM FULL xact ID */
 	}			t_field3;
 } HeapTupleFields;
 
@@ -175,10 +175,10 @@ typedef HeapTupleHeaderData *HeapTupleHeader;
 #define HEAP_XMAX_INVALID		0x0800	/* t_xmax invalid/aborted */
 #define HEAP_XMAX_IS_MULTI		0x1000	/* t_xmax is a MultiXactId */
 #define HEAP_UPDATED			0x2000	/* this is UPDATEd version of row */
-#define HEAP_MOVED_OFF			0x4000	/* moved to another place by VACUUM
-										 * FULL */
-#define HEAP_MOVED_IN			0x8000	/* moved from another place by VACUUM
-										 * FULL */
+#define HEAP_MOVED_OFF			0x4000	/* moved to another place by
+										 * old-style VACUUM FULL */
+#define HEAP_MOVED_IN			0x8000	/* moved from another place by
+										 * old-style VACUUM FULL */
 #define HEAP_MOVED (HEAP_MOVED_OFF | HEAP_MOVED_IN)
 
 #define HEAP_XACT_MASK			0xFFE0	/* visibility-related bits */
@@ -559,7 +559,7 @@ typedef HeapTupleData *HeapTuple;
 #define XLOG_HEAP_INSERT		0x00
 #define XLOG_HEAP_DELETE		0x10
 #define XLOG_HEAP_UPDATE		0x20
-#define XLOG_HEAP_MOVE			0x30
+/* 0x030 is free, was XLOG_HEAP_MOVE */
 #define XLOG_HEAP_HOT_UPDATE	0x40
 #define XLOG_HEAP_NEWPAGE		0x50
 #define XLOG_HEAP_LOCK			0x60
@@ -579,7 +579,7 @@ typedef HeapTupleData *HeapTuple;
  */
 #define XLOG_HEAP2_FREEZE		0x00
 #define XLOG_HEAP2_CLEAN		0x10
-#define XLOG_HEAP2_CLEAN_MOVE	0x20
+/* 0x20 is free, was XLOG_HEAP2_CLEAN_MOVE */
 #define XLOG_HEAP2_CLEANUP_INFO 0x30
 
 /*
@@ -634,15 +634,14 @@ typedef struct xl_heap_insert
 
 #define SizeOfHeapInsert	(offsetof(xl_heap_insert, all_visible_cleared) + sizeof(bool))
 
-/* This is what we need to know about update|move|hot_update */
+/* This is what we need to know about update|hot_update */
 typedef struct xl_heap_update
 {
 	xl_heaptid	target;			/* deleted tuple id */
 	ItemPointerData newtid;		/* new inserted tuple id */
 	bool		all_visible_cleared;	/* PD_ALL_VISIBLE was cleared */
-	bool		new_all_visible_cleared;		/* same for the page of newtid */
-	/* NEW TUPLE xl_heap_header (PLUS xmax & xmin IF MOVE OP) */
-	/* and TUPLE DATA FOLLOWS AT END OF STRUCT */
+	bool		new_all_visible_cleared;	/* same for the page of newtid */
+	/* NEW TUPLE xl_heap_header AND TUPLE DATA FOLLOWS AT END OF STRUCT */
 } xl_heap_update;
 
 #define SizeOfHeapUpdate	(offsetof(xl_heap_update, new_all_visible_cleared) + sizeof(bool))
@@ -657,13 +656,6 @@ typedef struct xl_heap_update
  * The total number of OffsetNumbers is therefore 2*nredirected+ndead+nunused.
  * Note that nunused is not explicitly stored, but may be found by reference
  * to the total record length.
- *
- * If the opcode is CLEAN_MOVE instead of CLEAN, then each redirection pair
- * should be interpreted as physically moving the "to" item pointer to the
- * "from" slot, rather than placing a redirection item in the "from" slot.
- * The moved pointers should be replaced by LP_UNUSED items (there will not
- * be explicit entries in the "now-unused" list for this).	Also, the
- * HEAP_ONLY bit in the moved tuples must be turned off.
  */
 typedef struct xl_heap_clean
 {

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.283 2010/02/07 20:48:09 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.284 2010/02/08 04:33:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -881,11 +881,9 @@ AtSubStart_ResourceOwner(void)
  *
  * Returns latest XID among xact and its children, or InvalidTransactionId
  * if the xact has no XID.	(We compute that here just because it's easier.)
- *
- * This is exported only to support an ugly hack in VACUUM FULL.
  */
-TransactionId
-RecordTransactionCommit(bool isVacuumFull)
+static TransactionId
+RecordTransactionCommit(void)
 {
 	TransactionId xid = GetTopTransactionIdIfAny();
 	bool		markXidCommitted = TransactionIdIsValid(xid);
@@ -950,8 +948,6 @@ RecordTransactionCommit(bool isVacuumFull)
 		xlrec.xinfo = 0;
 		if (RelcacheInitFileInval)
 			xlrec.xinfo |= XACT_COMPLETION_UPDATE_RELCACHE_FILE;
-		if (isVacuumFull)
-			xlrec.xinfo |= XACT_COMPLETION_VACUUM_FULL;
 		if (forceSyncCommit)
 			xlrec.xinfo |= XACT_COMPLETION_FORCE_SYNC_COMMIT;
 
@@ -1755,7 +1751,7 @@ CommitTransaction(void)
 	/*
 	 * Here is where we really truly commit.
 	 */
-	latestXid = RecordTransactionCommit(false);
+	latestXid = RecordTransactionCommit();
 
 	TRACE_POSTGRESQL_TRANSACTION_COMMIT(MyProc->lxid);
 
@@ -4374,28 +4370,23 @@ xact_redo_commit(xl_xact_commit *xlrec, TransactionId xid, XLogRecPtr lsn)
 		LWLockRelease(XidGenLock);
 	}
 
-	if (!InHotStandby || XactCompletionVacuumFull(xlrec))
+	if (!InHotStandby)
 	{
 		/*
 		 * Mark the transaction committed in pg_clog.
-		 *
-		 * If InHotStandby and this is the first commit of a VACUUM FULL INPLACE
-		 * we perform only the actual commit to clog. Strangely, there are two
-		 * commits that share the same xid for every VFI, so we need to skip
-		 * some steps for the first commit. It's OK to repeat the clog update
-		 * when we see the second commit on a VFI.
 		 */
 		TransactionIdCommitTree(xid, xlrec->nsubxacts, sub_xids);
 	}
 	else
 	{
 		/*
-		 * If a transaction completion record arrives that has as-yet unobserved
-		 * subtransactions then this will not have been fully handled by the call
-		 * to RecordKnownAssignedTransactionIds() in the main recovery loop in
-		 * xlog.c. So we need to do bookkeeping again to cover that case. This is
-		 * confusing and it is easy to think this call is irrelevant, which has
-		 * happened three times in development already. Leave it in.
+		 * If a transaction completion record arrives that has as-yet
+		 * unobserved subtransactions then this will not have been fully
+		 * handled by the call to RecordKnownAssignedTransactionIds() in the
+		 * main recovery loop in xlog.c. So we need to do bookkeeping again to
+		 * cover that case. This is confusing and it is easy to think this
+		 * call is irrelevant, which has happened three times in development
+		 * already. Leave it in.
 		 */
 		RecordKnownAssignedTransactionIds(max_xid);
 

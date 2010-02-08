@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeModifyTable.c,v 1.5 2010/01/31 18:15:39 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeModifyTable.c,v 1.6 2010/02/08 04:33:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -249,7 +249,7 @@ ExecInsert(TupleTableSlot *slot,
 	 */
 	if (resultRelInfo->ri_NumIndices > 0)
 		recheckIndexes = ExecInsertIndexTuples(slot, &(tuple->t_self),
-											   estate, false);
+											   estate);
 
 	/* AFTER ROW INSERT Triggers */
 	ExecARInsertTriggers(estate, resultRelInfo, tuple, recheckIndexes);
@@ -566,7 +566,7 @@ lreplace:;
 	 */
 	if (resultRelInfo->ri_NumIndices > 0 && !HeapTupleIsHeapOnly(tuple))
 		recheckIndexes = ExecInsertIndexTuples(slot, &(tuple->t_self),
-											   estate, false);
+											   estate);
 
 	/* AFTER ROW UPDATE Triggers */
 	ExecARUpdateTriggers(estate, resultRelInfo, tupleid, tuple,

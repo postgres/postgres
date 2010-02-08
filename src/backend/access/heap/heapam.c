@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.285 2010/02/03 10:01:29 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.286 2010/02/08 04:33:52 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -79,7 +79,7 @@ static HeapScanDesc heap_beginscan_internal(Relation relation,
 						bool allow_strat, bool allow_sync,
 						bool is_bitmapscan);
 static XLogRecPtr log_heap_update(Relation reln, Buffer oldbuf,
-		   ItemPointerData from, Buffer newbuf, HeapTuple newtup, bool move,
+		   ItemPointerData from, Buffer newbuf, HeapTuple newtup,
 		   bool all_visible_cleared, bool new_all_visible_cleared);
 static bool HeapSatisfiesHOTUpdate(Relation relation, Bitmapset *hot_attrs,
 					   HeapTuple oldtup, HeapTuple newtup);
@@ -2785,7 +2785,7 @@ l2:
 	if (!relation->rd_istemp)
 	{
 		XLogRecPtr	recptr = log_heap_update(relation, buffer, oldtup.t_self,
-											 newbuf, heaptup, false,
+											 newbuf, heaptup,
 											 all_visible_cleared,
 											 all_visible_cleared_new);
 
@@ -3664,9 +3664,13 @@ recheck_xmax:
 	}
 
 	/*
-	 * Although xvac per se could only be set by VACUUM, it shares physical
-	 * storage space with cmax, and so could be wiped out by someone setting
-	 * xmax.  Hence recheck after changing lock, same as for xmax itself.
+	 * Although xvac per se could only be set by old-style VACUUM FULL, it
+	 * shares physical storage space with cmax, and so could be wiped out by
+	 * someone setting xmax.  Hence recheck after changing lock, same as for
+	 * xmax itself.
+	 *
+	 * Old-style VACUUM FULL is gone, but we have to keep this code as long
+	 * as we support having MOVED_OFF/MOVED_IN tuples in the database.
 	 */
 recheck_xvac:
 	if (tuple->t_infomask & HEAP_MOVED)
@@ -3785,8 +3789,7 @@ HeapTupleHeaderAdvanceLatestRemovedXid(HeapTupleHeader tuple,
 	TransactionId xmax = HeapTupleHeaderGetXmax(tuple);
 	TransactionId xvac = HeapTupleHeaderGetXvac(tuple);
 
-	if (tuple->t_infomask & HEAP_MOVED_OFF ||
-		tuple->t_infomask & HEAP_MOVED_IN)
+	if (tuple->t_infomask & HEAP_MOVED)
 	{
 		if (TransactionIdPrecedes(*latestRemovedXid, xvac))
 			*latestRemovedXid = xvac;
@@ -3844,7 +3847,7 @@ log_heap_clean(Relation reln, Buffer buffer,
 			   OffsetNumber *redirected, int nredirected,
 			   OffsetNumber *nowdead, int ndead,
 			   OffsetNumber *nowunused, int nunused,
-			   TransactionId latestRemovedXid, bool redirect_move)
+			   TransactionId latestRemovedXid)
 {
 	xl_heap_clean xlrec;
 	uint8		info;
@@ -3915,7 +3918,7 @@ log_heap_clean(Relation reln, Buffer buffer,
 	rdata[3].buffer_std = true;
 	rdata[3].next = NULL;
 
-	info = redirect_move ? XLOG_HEAP2_CLEAN_MOVE : XLOG_HEAP2_CLEAN;
+	info = XLOG_HEAP2_CLEAN;
 	recptr = XLogInsert(RM_HEAP2_ID, info, rdata);
 
 	return recptr;
@@ -3970,23 +3973,11 @@ log_heap_freeze(Relation reln, Buffer buffer,
  */
 static XLogRecPtr
 log_heap_update(Relation reln, Buffer oldbuf, ItemPointerData from,
-				Buffer newbuf, HeapTuple newtup, bool move,
+				Buffer newbuf, HeapTuple newtup,
 				bool all_visible_cleared, bool new_all_visible_cleared)
 {
-	/*
-	 * Note: xlhdr is declared to have adequate size and correct alignment for
-	 * an xl_heap_header.  However the two tids, if present at all, will be
-	 * packed in with no wasted space after the xl_heap_header; they aren't
-	 * necessarily aligned as implied by this struct declaration.
-	 */
-	struct
-	{
-		xl_heap_header hdr;
-		TransactionId tid1;
-		TransactionId tid2;
-	}			xlhdr;
-	int			hsize = SizeOfHeapHeader;
 	xl_heap_update xlrec;
+	xl_heap_header xlhdr;
 	uint8		info;
 	XLogRecPtr	recptr;
 	XLogRecData rdata[4];
@@ -3995,12 +3986,7 @@ log_heap_update(Relation reln, Buffer oldbuf, ItemPointerData from,
 	/* Caller should not call me on a temp relation */
 	Assert(!reln->rd_istemp);
 
-	if (move)
-	{
-		Assert(!HeapTupleIsHeapOnly(newtup));
-		info = XLOG_HEAP_MOVE;
-	}
-	else if (HeapTupleIsHeapOnly(newtup))
+	if (HeapTupleIsHeapOnly(newtup))
 		info = XLOG_HEAP_HOT_UPDATE;
 	else
 		info = XLOG_HEAP_UPDATE;
@@ -4022,30 +4008,16 @@ log_heap_update(Relation reln, Buffer oldbuf, ItemPointerData from,
 	rdata[1].buffer_std = true;
 	rdata[1].next = &(rdata[2]);
 
-	xlhdr.hdr.t_infomask2 = newtup->t_data->t_infomask2;
-	xlhdr.hdr.t_infomask = newtup->t_data->t_infomask;
-	xlhdr.hdr.t_hoff = newtup->t_data->t_hoff;
-	if (move)					/* remember xmax & xmin */
-	{
-		TransactionId xid[2];	/* xmax, xmin */
-
-		if (newtup->t_data->t_infomask & (HEAP_XMAX_INVALID | HEAP_IS_LOCKED))
-			xid[0] = InvalidTransactionId;
-		else
-			xid[0] = HeapTupleHeaderGetXmax(newtup->t_data);
-		xid[1] = HeapTupleHeaderGetXmin(newtup->t_data);
-		memcpy((char *) &xlhdr + hsize,
-			   (char *) xid,
-			   2 * sizeof(TransactionId));
-		hsize += 2 * sizeof(TransactionId);
-	}
+	xlhdr.t_infomask2 = newtup->t_data->t_infomask2;
+	xlhdr.t_infomask = newtup->t_data->t_infomask;
+	xlhdr.t_hoff = newtup->t_data->t_hoff;
 
 	/*
 	 * As with insert records, we need not store the rdata[2] segment if we
 	 * decide to store the whole buffer instead.
 	 */
 	rdata[2].data = (char *) &xlhdr;
-	rdata[2].len = hsize;
+	rdata[2].len = SizeOfHeapHeader;
 	rdata[2].buffer = newbuf;
 	rdata[2].buffer_std = true;
 	rdata[2].next = &(rdata[3]);
@@ -4068,19 +4040,6 @@ log_heap_update(Relation reln, Buffer oldbuf, ItemPointerData from,
 	recptr = XLogInsert(RM_HEAP_ID, info, rdata);
 
 	return recptr;
-}
-
-/*
- * Perform XLogInsert for a heap-move operation.  Caller must already
- * have modified the buffers and marked them dirty.
- */
-XLogRecPtr
-log_heap_move(Relation reln, Buffer oldbuf, ItemPointerData from,
-			  Buffer newbuf, HeapTuple newtup,
-			  bool all_visible_cleared, bool new_all_visible_cleared)
-{
-	return log_heap_update(reln, oldbuf, from, newbuf, newtup, true,
-						   all_visible_cleared, new_all_visible_cleared);
 }
 
 /*
@@ -4149,10 +4108,10 @@ heap_xlog_cleanup_info(XLogRecPtr lsn, XLogRecord *record)
 }
 
 /*
- * Handles CLEAN and CLEAN_MOVE record types
+ * Handles HEAP_CLEAN record type
  */
 static void
-heap_xlog_clean(XLogRecPtr lsn, XLogRecord *record, bool clean_move)
+heap_xlog_clean(XLogRecPtr lsn, XLogRecord *record)
 {
 	xl_heap_clean *xlrec = (xl_heap_clean *) XLogRecGetData(record);
 	Buffer		buffer;
@@ -4171,7 +4130,8 @@ heap_xlog_clean(XLogRecPtr lsn, XLogRecord *record, bool clean_move)
 	 * no queries running for which the removed tuples are still visible.
 	 */
 	if (InHotStandby)
-		ResolveRecoveryConflictWithSnapshot(xlrec->latestRemovedXid, xlrec->node);
+		ResolveRecoveryConflictWithSnapshot(xlrec->latestRemovedXid,
+											xlrec->node);
 
 	RestoreBkpBlocks(lsn, record, true);
 
@@ -4203,8 +4163,7 @@ heap_xlog_clean(XLogRecPtr lsn, XLogRecord *record, bool clean_move)
 	heap_page_prune_execute(buffer,
 							redirected, nredirected,
 							nowdead, ndead,
-							nowunused, nunused,
-							clean_move);
+							nowunused, nunused);
 
 	freespace = PageGetHeapFreeSpace(page);		/* needed to update FSM below */
 
@@ -4489,10 +4448,10 @@ heap_xlog_insert(XLogRecPtr lsn, XLogRecord *record)
 }
 
 /*
- * Handles UPDATE, HOT_UPDATE & MOVE
+ * Handles UPDATE and HOT_UPDATE
  */
 static void
-heap_xlog_update(XLogRecPtr lsn, XLogRecord *record, bool move, bool hot_update)
+heap_xlog_update(XLogRecPtr lsn, XLogRecord *record, bool hot_update)
 {
 	xl_heap_update *xlrec = (xl_heap_update *) XLogRecGetData(record);
 	Buffer		buffer;
@@ -4558,33 +4517,19 @@ heap_xlog_update(XLogRecPtr lsn, XLogRecord *record, bool move, bool hot_update)
 
 	htup = (HeapTupleHeader) PageGetItem(page, lp);
 
-	if (move)
-	{
-		htup->t_infomask &= ~(HEAP_XMIN_COMMITTED |
-							  HEAP_XMIN_INVALID |
-							  HEAP_MOVED_IN);
-		htup->t_infomask |= HEAP_MOVED_OFF;
-		HeapTupleHeaderClearHotUpdated(htup);
-		HeapTupleHeaderSetXvac(htup, record->xl_xid);
-		/* Make sure there is no forward chain link in t_ctid */
-		htup->t_ctid = xlrec->target.tid;
-	}
+	htup->t_infomask &= ~(HEAP_XMAX_COMMITTED |
+						  HEAP_XMAX_INVALID |
+						  HEAP_XMAX_IS_MULTI |
+						  HEAP_IS_LOCKED |
+						  HEAP_MOVED);
+	if (hot_update)
+		HeapTupleHeaderSetHotUpdated(htup);
 	else
-	{
-		htup->t_infomask &= ~(HEAP_XMAX_COMMITTED |
-							  HEAP_XMAX_INVALID |
-							  HEAP_XMAX_IS_MULTI |
-							  HEAP_IS_LOCKED |
-							  HEAP_MOVED);
-		if (hot_update)
-			HeapTupleHeaderSetHotUpdated(htup);
-		else
-			HeapTupleHeaderClearHotUpdated(htup);
-		HeapTupleHeaderSetXmax(htup, record->xl_xid);
-		HeapTupleHeaderSetCmax(htup, FirstCommandId, false);
-		/* Set forward chain link in t_ctid */
-		htup->t_ctid = xlrec->newtid;
-	}
+		HeapTupleHeaderClearHotUpdated(htup);
+	HeapTupleHeaderSetXmax(htup, record->xl_xid);
+	HeapTupleHeaderSetCmax(htup, FirstCommandId, false);
+	/* Set forward chain link in t_ctid */
+	htup->t_ctid = xlrec->newtid;
 
 	/* Mark the page as a candidate for pruning */
 	PageSetPrunable(page, record->xl_xid);
@@ -4655,8 +4600,6 @@ newsame:;
 		elog(PANIC, "heap_update_redo: invalid max offset number");
 
 	hsize = SizeOfHeapUpdate + SizeOfHeapHeader;
-	if (move)
-		hsize += (2 * sizeof(TransactionId));
 
 	newlen = record->xl_len - hsize;
 	Assert(newlen <= MaxHeapTupleSize);
@@ -4674,22 +4617,8 @@ newsame:;
 	htup->t_infomask = xlhdr.t_infomask;
 	htup->t_hoff = xlhdr.t_hoff;
 
-	if (move)
-	{
-		TransactionId xid[2];	/* xmax, xmin */
-
-		memcpy((char *) xid,
-			   (char *) xlrec + SizeOfHeapUpdate + SizeOfHeapHeader,
-			   2 * sizeof(TransactionId));
-		HeapTupleHeaderSetXmin(htup, xid[1]);
-		HeapTupleHeaderSetXmax(htup, xid[0]);
-		HeapTupleHeaderSetXvac(htup, record->xl_xid);
-	}
-	else
-	{
-		HeapTupleHeaderSetXmin(htup, record->xl_xid);
-		HeapTupleHeaderSetCmin(htup, FirstCommandId);
-	}
+	HeapTupleHeaderSetXmin(htup, record->xl_xid);
+	HeapTupleHeaderSetCmin(htup, FirstCommandId);
 	/* Make sure there is no forward chain link in t_ctid */
 	htup->t_ctid = xlrec->newtid;
 
@@ -4857,13 +4786,10 @@ heap_redo(XLogRecPtr lsn, XLogRecord *record)
 			heap_xlog_delete(lsn, record);
 			break;
 		case XLOG_HEAP_UPDATE:
-			heap_xlog_update(lsn, record, false, false);
-			break;
-		case XLOG_HEAP_MOVE:
-			heap_xlog_update(lsn, record, true, false);
+			heap_xlog_update(lsn, record, false);
 			break;
 		case XLOG_HEAP_HOT_UPDATE:
-			heap_xlog_update(lsn, record, false, true);
+			heap_xlog_update(lsn, record, true);
 			break;
 		case XLOG_HEAP_NEWPAGE:
 			heap_xlog_newpage(lsn, record);
@@ -4895,10 +4821,7 @@ heap2_redo(XLogRecPtr lsn, XLogRecord *record)
 			heap_xlog_freeze(lsn, record);
 			break;
 		case XLOG_HEAP2_CLEAN:
-			heap_xlog_clean(lsn, record, false);
-			break;
-		case XLOG_HEAP2_CLEAN_MOVE:
-			heap_xlog_clean(lsn, record, true);
+			heap_xlog_clean(lsn, record);
 			break;
 		case XLOG_HEAP2_CLEANUP_INFO:
 			heap_xlog_cleanup_info(lsn, record);
@@ -4948,19 +4871,6 @@ heap_desc(StringInfo buf, uint8 xl_info, char *rec)
 			appendStringInfo(buf, "update(init): ");
 		else
 			appendStringInfo(buf, "update: ");
-		out_target(buf, &(xlrec->target));
-		appendStringInfo(buf, "; new %u/%u",
-						 ItemPointerGetBlockNumber(&(xlrec->newtid)),
-						 ItemPointerGetOffsetNumber(&(xlrec->newtid)));
-	}
-	else if (info == XLOG_HEAP_MOVE)
-	{
-		xl_heap_update *xlrec = (xl_heap_update *) rec;
-
-		if (xl_info & XLOG_HEAP_INIT_PAGE)
-			appendStringInfo(buf, "move(init): ");
-		else
-			appendStringInfo(buf, "move: ");
 		out_target(buf, &(xlrec->target));
 		appendStringInfo(buf, "; new %u/%u",
 						 ItemPointerGetBlockNumber(&(xlrec->newtid)),
@@ -5033,15 +4943,6 @@ heap2_desc(StringInfo buf, uint8 xl_info, char *rec)
 		xl_heap_clean *xlrec = (xl_heap_clean *) rec;
 
 		appendStringInfo(buf, "clean: rel %u/%u/%u; blk %u remxid %u",
-						 xlrec->node.spcNode, xlrec->node.dbNode,
-						 xlrec->node.relNode, xlrec->block,
-						 xlrec->latestRemovedXid);
-	}
-	else if (info == XLOG_HEAP2_CLEAN_MOVE)
-	{
-		xl_heap_clean *xlrec = (xl_heap_clean *) rec;
-
-		appendStringInfo(buf, "clean_move: rel %u/%u/%u; blk %u remxid %u",
 						 xlrec->node.spcNode, xlrec->node.dbNode,
 						 xlrec->node.relNode, xlrec->block,
 						 xlrec->latestRemovedXid);

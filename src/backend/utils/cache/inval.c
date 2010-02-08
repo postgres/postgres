@@ -80,7 +80,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/inval.c,v 1.94 2010/02/07 20:48:10 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/inval.c,v 1.95 2010/02/08 04:33:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1109,103 +1109,6 @@ CommandEndInvalidationMessages(void)
 								LocalExecuteInvalidationMessage);
 	AppendInvalidationMessages(&transInvalInfo->PriorCmdInvalidMsgs,
 							   &transInvalInfo->CurrentCmdInvalidMsgs);
-}
-
-
-/*
- * BeginNonTransactionalInvalidation
- *		Prepare for invalidation messages for nontransactional updates.
- *
- * A nontransactional invalidation is one that must be sent whether or not
- * the current transaction eventually commits.	We arrange for all invals
- * queued between this call and EndNonTransactionalInvalidation() to be sent
- * immediately when the latter is called.
- *
- * Currently, this is only used by heap_page_prune(), and only when it is
- * invoked during VACUUM FULL's first pass over a table.  We expect therefore
- * that we are not inside a subtransaction and there are no already-pending
- * invalidations.  This could be relaxed by setting up a new nesting level of
- * invalidation data, but for now there's no need.  Note that heap_page_prune
- * knows that this function does not change any state, and therefore there's
- * no need to worry about cleaning up if there's an elog(ERROR) before
- * reaching EndNonTransactionalInvalidation (the invals will just be thrown
- * away if that happens).
- *
- * Note that these are not replayed in standby mode.
- */
-void
-BeginNonTransactionalInvalidation(void)
-{
-	/* Must be at top of stack */
-	Assert(transInvalInfo != NULL && transInvalInfo->parent == NULL);
-
-	/* Must not have any previously-queued activity */
-	Assert(transInvalInfo->PriorCmdInvalidMsgs.cclist == NULL);
-	Assert(transInvalInfo->PriorCmdInvalidMsgs.rclist == NULL);
-	Assert(transInvalInfo->CurrentCmdInvalidMsgs.cclist == NULL);
-	Assert(transInvalInfo->CurrentCmdInvalidMsgs.rclist == NULL);
-	Assert(transInvalInfo->RelcacheInitFileInval == false);
-
-	SharedInvalidMessagesArray = NULL;
-	numSharedInvalidMessagesArray = 0;
-}
-
-/*
- * EndNonTransactionalInvalidation
- *		Process queued-up invalidation messages for nontransactional updates.
- *
- * We expect to find messages in CurrentCmdInvalidMsgs only (else there
- * was a CommandCounterIncrement within the "nontransactional" update).
- * We must process them locally and send them out to the shared invalidation
- * message queue.
- *
- * We must also reset the lists to empty and explicitly free memory (we can't
- * rely on end-of-transaction cleanup for that).
- */
-void
-EndNonTransactionalInvalidation(void)
-{
-	InvalidationChunk *chunk;
-	InvalidationChunk *next;
-
-	/* Must be at top of stack */
-	Assert(transInvalInfo != NULL && transInvalInfo->parent == NULL);
-
-	/* Must not have any prior-command messages */
-	Assert(transInvalInfo->PriorCmdInvalidMsgs.cclist == NULL);
-	Assert(transInvalInfo->PriorCmdInvalidMsgs.rclist == NULL);
-
-	/*
-	 * At present, this function is only used for CTID-changing updates; since
-	 * the relcache init file doesn't store any tuple CTIDs, we don't have to
-	 * invalidate it.  That might not be true forever though, in which case
-	 * we'd need code similar to AtEOXact_Inval.
-	 */
-
-	/* Send out the invals */
-	ProcessInvalidationMessages(&transInvalInfo->CurrentCmdInvalidMsgs,
-								LocalExecuteInvalidationMessage);
-	ProcessInvalidationMessagesMulti(&transInvalInfo->CurrentCmdInvalidMsgs,
-									 SendSharedInvalidMessages);
-
-	/* Clean up and release memory */
-	for (chunk = transInvalInfo->CurrentCmdInvalidMsgs.cclist;
-		 chunk != NULL;
-		 chunk = next)
-	{
-		next = chunk->next;
-		pfree(chunk);
-	}
-	for (chunk = transInvalInfo->CurrentCmdInvalidMsgs.rclist;
-		 chunk != NULL;
-		 chunk = next)
-	{
-		next = chunk->next;
-		pfree(chunk);
-	}
-	transInvalInfo->CurrentCmdInvalidMsgs.cclist = NULL;
-	transInvalInfo->CurrentCmdInvalidMsgs.rclist = NULL;
-	transInvalInfo->RelcacheInitFileInval = false;
 }
 
 

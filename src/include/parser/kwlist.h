@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/include/parser/kwlist.h,v 1.10 2010/01/06 05:31:14 itagaki Exp $
+ *	  $PostgreSQL: pgsql/src/include/parser/kwlist.h,v 1.11 2010/02/08 04:33:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -193,7 +193,6 @@ PG_KEYWORD("initially", INITIALLY, RESERVED_KEYWORD)
 PG_KEYWORD("inline", INLINE_P, UNRESERVED_KEYWORD)
 PG_KEYWORD("inner", INNER_P, TYPE_FUNC_NAME_KEYWORD)
 PG_KEYWORD("inout", INOUT, COL_NAME_KEYWORD)
-PG_KEYWORD("inplace", INPLACE, UNRESERVED_KEYWORD)
 PG_KEYWORD("input", INPUT_P, UNRESERVED_KEYWORD)
 PG_KEYWORD("insensitive", INSENSITIVE, UNRESERVED_KEYWORD)
 PG_KEYWORD("insert", INSERT, UNRESERVED_KEYWORD)

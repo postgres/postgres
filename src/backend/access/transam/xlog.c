@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.367 2010/02/07 20:48:09 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.368 2010/02/08 04:33:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2104,32 +2104,6 @@ XLogBackgroundFlush(void)
 	LWLockRelease(WALWriteLock);
 
 	END_CRIT_SECTION();
-}
-
-/*
- * Flush any previous asynchronously-committed transactions' commit records.
- *
- * NOTE: it is unwise to assume that this provides any strong guarantees.
- * In particular, because of the inexact LSN bookkeeping used by clog.c,
- * we cannot assume that hint bits will be settable for these transactions.
- */
-void
-XLogAsyncCommitFlush(void)
-{
-	XLogRecPtr	WriteRqstPtr;
-
-	/* use volatile pointer to prevent code rearrangement */
-	volatile XLogCtlData *xlogctl = XLogCtl;
-
-	/* There's no asynchronously committed transactions during recovery */
-	if (RecoveryInProgress())
-		return;
-
-	SpinLockAcquire(&xlogctl->info_lck);
-	WriteRqstPtr = xlogctl->asyncCommitLSN;
-	SpinLockRelease(&xlogctl->info_lck);
-
-	XLogFlush(WriteRqstPtr);
 }
 
 /*

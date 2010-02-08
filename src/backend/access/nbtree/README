@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/backend/access/nbtree/README,v 1.21 2009/12/19 01:32:32 sriggs Exp $
+$PostgreSQL: pgsql/src/backend/access/nbtree/README,v 1.22 2010/02/08 04:33:53 tgl Exp $
 
 Btree Indexing
 ==============
@@ -171,9 +171,9 @@ We consider deleting an entire page from the btree only when it's become
 completely empty of items.  (Merging partly-full pages would allow better
 space reuse, but it seems impractical to move existing data items left or
 right to make this happen --- a scan moving in the opposite direction
-might miss the items if so.  We could do it during VACUUM FULL, though.)
-Also, we *never* delete the rightmost page on a tree level (this
-restriction simplifies the traversal algorithms, as explained below).
+might miss the items if so.)  Also, we *never* delete the rightmost page
+on a tree level (this restriction simplifies the traversal algorithms, as
+explained below).
 
 To delete an empty page, we acquire write lock on its left sibling (if
 any), the target page itself, the right sibling (there must be one), and
@@ -266,8 +266,7 @@ transactions that were running at the time of deletion are dead; which is
 overly strong, but is simple to implement within Postgres.  When marked
 dead, a deleted page is labeled with the next-transaction counter value.
 VACUUM can reclaim the page for re-use when this transaction number is
-older than the oldest open transaction.  (NOTE: VACUUM FULL can reclaim
-such pages immediately.)
+older than the oldest open transaction.
 
 Reclaiming a page doesn't actually change its state on disk --- we simply
 record it in the shared-memory free space map, from which it will be

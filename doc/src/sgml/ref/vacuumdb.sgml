@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/vacuumdb.sgml,v 1.49 2010/01/07 14:35:44 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/vacuumdb.sgml,v 1.50 2010/02/08 04:33:51 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -24,7 +24,6 @@ PostgreSQL documentation
    <command>vacuumdb</command>
    <arg rep="repeat"><replaceable>connection-option</replaceable></arg>
    <group><arg>--full</arg><arg>-f</arg></group>
-   <group><arg>--inplace</arg><arg>-i</arg></group>
    <group><arg>--freeze</arg><arg>-F</arg></group>
    <group><arg>--verbose</arg><arg>-v</arg></group>
    <group><arg>--analyze</arg><arg>-z</arg></group>
@@ -38,14 +37,12 @@ PostgreSQL documentation
    <arg rep="repeat"><replaceable>connection-options</replaceable></arg>
    <group><arg>--all</arg><arg>-a</arg></group>
    <group><arg>--full</arg><arg>-f</arg></group>
-   <group><arg>--inplace</arg><arg>-i</arg></group>
    <group><arg>--freeze</arg><arg>-F</arg></group>
    <group><arg>--verbose</arg><arg>-v</arg></group>
    <group><arg>--analyze</arg><arg>-z</arg></group>
    <group><arg>--analyze-only</arg><arg>-Z</arg></group>
   </cmdsynopsis>
  </refsynopsisdiv>
- 
 
  <refsect1>
   <title>Description</title>
@@ -60,8 +57,8 @@ PostgreSQL documentation
   <para>
    <application>vacuumdb</application> is a wrapper around the SQL
    command <xref linkend="SQL-VACUUM" endterm="SQL-VACUUM-title">.
-   There is no effective difference between vacuuming and analyzing 
-   databases via this utility and via other methods for accessing the 
+   There is no effective difference between vacuuming and analyzing
+   databases via this utility and via other methods for accessing the
    server.
   </para>
 
@@ -73,7 +70,6 @@ PostgreSQL documentation
 
    <para>
     <application>vacuumdb</application> accepts the following command-line arguments:
-    
     <variablelist>
      <varlistentry>
       <term><option>-a</option></term>
@@ -127,16 +123,6 @@ PostgreSQL documentation
       <listitem>
        <para>
         Aggressively <quote>freeze</quote> tuples.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><option>-i</option></term>
-      <term><option>--inplace</option></term>
-      <listitem>
-       <para>
-        Perform <quote>full inplace</quote> vacuuming.
        </para>
       </listitem>
      </varlistentry>
@@ -203,18 +189,16 @@ PostgreSQL documentation
    </para>
 
    <para>
-    <application>vacuumdb</application> also accepts 
+    <application>vacuumdb</application> also accepts
     the following command-line arguments for connection parameters:
-    
     <variablelist>
      <varlistentry>
       <term><option>-h <replaceable class="parameter">host</replaceable></></term>
       <term><option>--host <replaceable class="parameter">host</replaceable></></term>
       <listitem>
        <para>
-        Specifies the host name of the machine on which the 
-        server
-        is running.  If the value begins with a slash, it is used 
+        Specifies the host name of the machine on which the server
+        is running.  If the value begins with a slash, it is used
         as the directory for the Unix domain socket.
        </para>
       </listitem>
@@ -225,7 +209,7 @@ PostgreSQL documentation
       <term><option>--port <replaceable class="parameter">port</replaceable></></term>
       <listitem>
        <para>
-        Specifies the TCP port or local Unix domain socket file 
+        Specifies the TCP port or local Unix domain socket file
         extension on which the server
         is listening for connections.
        </para>
@@ -263,7 +247,7 @@ PostgreSQL documentation
       <listitem>
        <para>
         Force <application>vacuumdb</application> to prompt for a
-        password before connecting to a database.  
+        password before connecting to a database.
        </para>
 
        <para>

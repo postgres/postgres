@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtxlog.c,v 1.59 2010/01/29 17:10:05 sriggs Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtxlog.c,v 1.60 2010/02/08 04:33:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1079,8 +1079,8 @@ btree_xlog_cleanup(void)
 				Relation	reln;
 
 				reln = CreateFakeRelcacheEntry(action->node);
-				if (_bt_pagedel(reln, buf, NULL, true) == 0)
-					elog(PANIC, "btree_xlog_cleanup: _bt_pagdel failed");
+				if (_bt_pagedel(reln, buf, NULL) == 0)
+					elog(PANIC, "btree_xlog_cleanup: _bt_pagedel failed");
 				FreeFakeRelcacheEntry(reln);
 			}
 		}

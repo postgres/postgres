@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.98 2010/02/03 17:25:05 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.99 2010/02/08 04:33:51 tgl Exp $ -->
 
 <chapter id="maintenance">
  <title>Routine Database Maintenance Tasks</title>
@@ -123,9 +123,7 @@
     <command>ALTER TABLE</command> while it is being vacuumed.)
     <command>VACUUM FULL</> requires exclusive lock on the table it is
     working on, and therefore cannot be done in parallel with other use
-    of the table.  Another disadvantage of <command>VACUUM FULL</> is that
-    while it reduces table size, it does not reduce index size proportionally;
-    in fact it can make indexes <emphasis>larger</>.  Generally, therefore,
+    of the table.  Generally, therefore,
     administrators should strive to use standard <command>VACUUM</> and
     avoid <command>VACUUM FULL</>.
    </para>
@@ -166,13 +164,10 @@
     system, except in the special case where one or more pages at the
     end of a table become entirely free and an exclusive table lock can be
     easily obtained.  In contrast, <command>VACUUM FULL</> actively compacts
-    tables by moving row versions to earlier pages.  It is thus able to
-    force pages at the end of the table to become entirely free, whereupon
-    it will return them to the operating system.  However, if many rows
-    must be moved, this can take a long time.  Also, moving a row requires
-    transiently making duplicate index entries for it (the entry pointing
-    to its new location must be made before the old entry can be removed);
-    so moving a lot of rows this way causes severe index bloat.
+    tables by writing a complete new version of the table file with no dead
+    space.  This minimizes the size of the table, but can take a long time.
+    It also requires extra disk space for the new copy of the table, until
+    the operation completes.
    </para>
 
    <para>
@@ -220,20 +215,19 @@
 
    <tip>
    <para>
-    Neither form of <command>VACUUM</> is entirely satisfactory when
+    Plain <command>VACUUM</> may not be satisfactory when
     a table contains large numbers of dead row versions as a result of
     massive update or delete activity.  If you have such a table and
-    you need to reclaim the excess disk space it occupies, the best
-    way is to use <xref linkend="sql-cluster" endterm="sql-cluster-title">
+    you need to reclaim the excess disk space it occupies, you will need
+    to use <command>VACUUM FULL</>, or alternatively
+    <xref linkend="sql-cluster" endterm="sql-cluster-title">
     or one of the table-rewriting variants of
     <xref linkend="sql-altertable" endterm="sql-altertable-title">.
     These commands rewrite an entire new copy of the table and build
-    new indexes for it.  Like <command>VACUUM FULL</>, they require
-    exclusive lock.  Note that they also temporarily use extra disk
-    space, since the old copies of the table and indexes can't be
-    released until the new ones are complete.  In the worst case where
-    your disk is nearly full, <command>VACUUM FULL</> may be the only
-    workable alternative.
+    new indexes for it.  All these options require exclusive lock.  Note that
+    they also temporarily use extra disk space approximately equal to the size
+    of the table, since the old copies of the table and indexes can't be
+    released until the new ones are complete.
    </para>
    </tip>
 
@@ -579,22 +573,22 @@ HINT:  Stop the postmaster and use a standalone backend to VACUUM in "mydb".
     <firstterm>autovacuum launcher</firstterm>, which is in charge of starting
     <firstterm>autovacuum worker</firstterm> processes for all databases. The
     launcher will distribute the work across time, attempting to start one
-    worker on each database every <xref linkend="guc-autovacuum-naptime">
-    seconds. One worker will be launched for each database, with a maximum
-    of <xref linkend="guc-autovacuum-max-workers"> processes running at the
-    same time. If there are more than
-    <xref linkend="guc-autovacuum-max-workers"> databases to be processed,
+    worker within each database every <xref linkend="guc-autovacuum-naptime">
+    seconds.  (Therefore, if the installation has <replaceable>N</> databases,
+    a new worker will be launched every
+    <varname>autovacuum_naptime</>/<replaceable>N</> seconds.)
+    A maximum of <xref linkend="guc-autovacuum-max-workers"> worker processes
+    are allowed to run at the same time. If there are more than
+    <varname>autovacuum_max_workers</> databases to be processed,
     the next database will be processed as soon as the first worker finishes.
     Each worker process will check each table within its database and
     execute <command>VACUUM</> and/or <command>ANALYZE</> as needed.
    </para>
 
    <para>
-    The <xref linkend="guc-autovacuum-max-workers"> setting limits how many
-    workers may be running at any time. If several large tables all become
-    eligible for vacuuming in a short amount of time, all autovacuum workers
-    might become occupied with vacuuming those tables for a long period.
-    This would result
+    If several large tables all become eligible for vacuuming in a short
+    amount of time, all autovacuum workers might become occupied with
+    vacuuming those tables for a long period.  This would result
     in other tables and databases not being vacuumed until a worker became
     available. There is no limit on how many workers might be in a
     single database, but workers do try to avoid repeating work that has
@@ -700,8 +694,8 @@ analyze threshold = analyze base threshold + analyze scale factor * number of tu
   </para>
 
   <para>
-   Index pages that have become
-   completely empty are reclaimed for re-use.  However, here is still the possibility
+   B-tree index pages that have become completely empty are reclaimed for
+   re-use.  However, there is still a possibility
    of inefficient use of space: if all but a few index keys on a page have
    been deleted, the page remains allocated.  Therefore, a usage
    pattern in which most, but not all, keys in each range are eventually

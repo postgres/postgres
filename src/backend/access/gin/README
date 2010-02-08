@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/backend/access/gin/README,v 1.6 2008/07/08 03:25:42 neilc Exp $
+$PostgreSQL: pgsql/src/backend/access/gin/README,v 1.7 2010/02/08 04:33:52 tgl Exp $
 
 Gin for PostgreSQL
 ==================
@@ -98,13 +98,6 @@ We appreciate any comments, help and suggestions.
   * Teach optimizer/executor that GIN is intrinsically clustered. i.e., it
     always returns ItemPointer in ascending order.
   * Tweak gincostestimate.
-  * GIN stores several ItemPointer to heap tuple, so VACUUM FULL produces
-    this warning message:
-
-     WARNING:  index "idx" contains 88395 row versions, but table contains 
-     				51812 row versions
-     HINT:  Rebuild the index with REINDEX.
-	**** Workaround added
 
 TODO
 ----

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			$PostgreSQL: pgsql/src/backend/access/gin/ginvacuum.c,v 1.32 2010/01/02 16:57:33 momjian Exp $
+ *			$PostgreSQL: pgsql/src/backend/access/gin/ginvacuum.c,v 1.33 2010/02/08 04:33:52 tgl Exp $
  *-------------------------------------------------------------------------
  */
 
@@ -745,13 +745,9 @@ ginvacuumcleanup(PG_FUNCTION_ARGS)
 	stats->estimated_count = info->estimated_count;
 
 	/*
-	 * If vacuum full, we already have exclusive lock on the index. Otherwise,
-	 * need lock unless it's local to this backend.
+	 * Need lock unless it's local to this backend.
 	 */
-	if (info->vacuum_full)
-		needLock = false;
-	else
-		needLock = !RELATION_IS_LOCAL(index);
+	needLock = !RELATION_IS_LOCAL(index);
 
 	if (needLock)
 		LockRelationForExtension(index, ExclusiveLock);
@@ -784,15 +780,6 @@ ginvacuumcleanup(PG_FUNCTION_ARGS)
 		UnlockReleaseBuffer(buffer);
 	}
 	lastBlock = npages - 1;
-
-	if (info->vacuum_full && lastBlock > lastFilledBlock)
-	{
-		/* try to truncate index */
-		RelationTruncate(index, lastFilledBlock + 1);
-
-		stats->pages_removed = lastBlock - lastFilledBlock;
-		totFreePages = totFreePages - stats->pages_removed;
-	}
 
 	/* Finally, vacuum the FSM */
 	IndexFreeSpaceMapVacuum(info->index);

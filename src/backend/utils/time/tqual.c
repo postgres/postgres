@@ -50,7 +50,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/time/tqual.c,v 1.115 2010/01/02 16:57:58 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/time/tqual.c,v 1.116 2010/02/08 04:33:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -91,9 +91,12 @@ static bool XidInMVCCSnapshot(TransactionId xid, Snapshot snapshot);
  * code in heapam.c relies on that!)
  *
  * Also, if we are cleaning up HEAP_MOVED_IN or HEAP_MOVED_OFF entries, then
- * we can always set the hint bits, since VACUUM FULL always uses synchronous
- * commits and doesn't move tuples that weren't previously hinted.	(This is
- * not known by this subroutine, but is applied by its callers.)
+ * we can always set the hint bits, since old-style VACUUM FULL always used
+ * synchronous commits and didn't move tuples that weren't previously
+ * hinted.  (This is not known by this subroutine, but is applied by its
+ * callers.)  Note: old-style VACUUM FULL is gone, but we have to keep this
+ * module's support for MOVED_OFF/MOVED_IN flag bits for as long as we
+ * support in-place update from pre-9.0 databases.
  *
  * Normal commits may be asynchronous, so for those we need to get the LSN
  * of the transaction and then check whether this is flushed.

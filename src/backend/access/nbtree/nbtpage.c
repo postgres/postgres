@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtpage.c,v 1.117 2010/02/01 13:40:28 sriggs Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtpage.c,v 1.118 2010/02/08 04:33:53 tgl Exp $
  *
  *	NOTES
  *	   Postgres btree pages look like ordinary relation pages.	The opaque
@@ -877,7 +877,7 @@ _bt_parent_deletion_safe(Relation rel, BlockNumber target, BTStack stack)
  * frequently.
  */
 int
-_bt_pagedel(Relation rel, Buffer buf, BTStack stack, bool vacuum_full)
+_bt_pagedel(Relation rel, Buffer buf, BTStack stack)
 {
 	int			result;
 	BlockNumber target,
@@ -1207,14 +1207,13 @@ _bt_pagedel(Relation rel, Buffer buf, BTStack stack, bool vacuum_full)
 
 	/*
 	 * Mark the page itself deleted.  It can be recycled when all current
-	 * transactions are gone; or immediately if we're doing VACUUM FULL.
+	 * transactions are gone.
 	 */
 	page = BufferGetPage(buf);
 	opaque = (BTPageOpaque) PageGetSpecialPointer(page);
 	opaque->btpo_flags &= ~BTP_HALF_DEAD;
 	opaque->btpo_flags |= BTP_DELETED;
-	opaque->btpo.xact =
-		vacuum_full ? FrozenTransactionId : ReadNewTransactionId();
+	opaque->btpo.xact = ReadNewTransactionId();
 
 	/* And update the metapage, if needed */
 	if (BufferIsValid(metabuf))
@@ -1350,7 +1349,7 @@ _bt_pagedel(Relation rel, Buffer buf, BTStack stack, bool vacuum_full)
 	{
 		/* recursive call will release pbuf */
 		_bt_relbuf(rel, rbuf);
-		result = _bt_pagedel(rel, pbuf, stack->bts_parent, vacuum_full) + 1;
+		result = _bt_pagedel(rel, pbuf, stack->bts_parent) + 1;
 		_bt_relbuf(rel, buf);
 	}
 	else if (parent_one_child && rightsib_empty)
@@ -1358,7 +1357,7 @@ _bt_pagedel(Relation rel, Buffer buf, BTStack stack, bool vacuum_full)
 		_bt_relbuf(rel, pbuf);
 		_bt_relbuf(rel, buf);
 		/* recursive call will release rbuf */
-		result = _bt_pagedel(rel, rbuf, stack, vacuum_full) + 1;
+		result = _bt_pagedel(rel, rbuf, stack) + 1;
 	}
 	else
 	{

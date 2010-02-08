@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/pruneheap.c,v 1.20 2010/01/02 16:57:34 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/pruneheap.c,v 1.21 2010/02/08 04:33:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,7 +21,6 @@
 #include "pgstat.h"
 #include "storage/bufmgr.h"
 #include "storage/off.h"
-#include "utils/inval.h"
 #include "utils/rel.h"
 #include "utils/tqual.h"
 
@@ -46,8 +45,7 @@ typedef struct
 static int heap_prune_chain(Relation relation, Buffer buffer,
 				 OffsetNumber rootoffnum,
 				 TransactionId OldestXmin,
-				 PruneState *prstate,
-				 bool redirect_move);
+				 PruneState *prstate);
 static void heap_prune_record_prunable(PruneState *prstate, TransactionId xid);
 static void heap_prune_record_redirect(PruneState *prstate,
 						   OffsetNumber offnum, OffsetNumber rdoffnum);
@@ -123,8 +121,8 @@ heap_page_prune_opt(Relation relation, Buffer buffer, TransactionId OldestXmin)
 		 */
 		if (PageIsFull(page) || PageGetHeapFreeSpace(page) < minfree)
 		{
-			/* OK to prune (though not to remove redirects) */
-			(void) heap_page_prune(relation, buffer, OldestXmin, false, true);
+			/* OK to prune */
+			(void) heap_page_prune(relation, buffer, OldestXmin, true);
 		}
 
 		/* And release buffer lock */
@@ -141,14 +139,6 @@ heap_page_prune_opt(Relation relation, Buffer buffer, TransactionId OldestXmin)
  * OldestXmin is the cutoff XID used to distinguish whether tuples are DEAD
  * or RECENTLY_DEAD (see HeapTupleSatisfiesVacuum).
  *
- * If redirect_move is set, we remove redirecting line pointers by
- * updating the root line pointer to point directly to the first non-dead
- * tuple in the chain.	NOTE: eliminating the redirect changes the first
- * tuple's effective CTID, and is therefore unsafe except within VACUUM FULL.
- * The only reason we support this capability at all is that by using it,
- * VACUUM FULL need not cope with LP_REDIRECT items at all; which seems a
- * good thing since VACUUM FULL is overly complicated already.
- *
  * If report_stats is true then we send the number of reclaimed heap-only
  * tuples to pgstats.  (This must be FALSE during vacuum, since vacuum will
  * send its own new total to pgstats, and we don't want this delta applied
@@ -158,7 +148,7 @@ heap_page_prune_opt(Relation relation, Buffer buffer, TransactionId OldestXmin)
  */
 int
 heap_page_prune(Relation relation, Buffer buffer, TransactionId OldestXmin,
-				bool redirect_move, bool report_stats)
+				bool report_stats)
 {
 	int			ndeleted = 0;
 	Page		page = BufferGetPage(buffer);
@@ -172,17 +162,10 @@ heap_page_prune(Relation relation, Buffer buffer, TransactionId OldestXmin,
 	 * logic as possible out of the critical section, and also ensures that
 	 * WAL replay will work the same as the normal case.
 	 *
-	 * First, inform inval.c that upcoming CacheInvalidateHeapTuple calls are
-	 * nontransactional.
-	 */
-	if (redirect_move)
-		BeginNonTransactionalInvalidation();
-
-	/*
-	 * Initialize the new pd_prune_xid value to zero (indicating no prunable
-	 * tuples).  If we find any tuples which may soon become prunable, we will
-	 * save the lowest relevant XID in new_prune_xid. Also initialize the rest
-	 * of our working state.
+	 * First, initialize the new pd_prune_xid value to zero (indicating no
+	 * prunable tuples).  If we find any tuples which may soon become
+	 * prunable, we will save the lowest relevant XID in new_prune_xid.
+	 * Also initialize the rest of our working state.
 	 */
 	prstate.new_prune_xid = InvalidTransactionId;
 	prstate.latestRemovedXid = InvalidTransactionId;
@@ -209,21 +192,8 @@ heap_page_prune(Relation relation, Buffer buffer, TransactionId OldestXmin,
 		/* Process this item or chain of items */
 		ndeleted += heap_prune_chain(relation, buffer, offnum,
 									 OldestXmin,
-									 &prstate,
-									 redirect_move);
+									 &prstate);
 	}
-
-	/*
-	 * Send invalidation messages for any tuples we are about to move. It is
-	 * safe to do this now, even though we could theoretically still fail
-	 * before making the actual page update, because a useless cache
-	 * invalidation doesn't hurt anything.  Also, no one else can reload the
-	 * tuples while we have exclusive buffer lock, so it's not too early to
-	 * send the invals.  This avoids sending the invals while inside the
-	 * critical section, which is a good thing for robustness.
-	 */
-	if (redirect_move)
-		EndNonTransactionalInvalidation();
 
 	/* Any error while applying the changes is critical */
 	START_CRIT_SECTION();
@@ -238,8 +208,7 @@ heap_page_prune(Relation relation, Buffer buffer, TransactionId OldestXmin,
 		heap_page_prune_execute(buffer,
 								prstate.redirected, prstate.nredirected,
 								prstate.nowdead, prstate.ndead,
-								prstate.nowunused, prstate.nunused,
-								redirect_move);
+								prstate.nowunused, prstate.nunused);
 
 		/*
 		 * Update the page's pd_prune_xid field to either zero, or the lowest
@@ -257,7 +226,7 @@ heap_page_prune(Relation relation, Buffer buffer, TransactionId OldestXmin,
 		MarkBufferDirty(buffer);
 
 		/*
-		 * Emit a WAL HEAP_CLEAN or HEAP_CLEAN_MOVE record showing what we did
+		 * Emit a WAL HEAP_CLEAN record showing what we did
 		 */
 		if (!relation->rd_istemp)
 		{
@@ -267,7 +236,7 @@ heap_page_prune(Relation relation, Buffer buffer, TransactionId OldestXmin,
 									prstate.redirected, prstate.nredirected,
 									prstate.nowdead, prstate.ndead,
 									prstate.nowunused, prstate.nunused,
-									prstate.latestRemovedXid, redirect_move);
+									prstate.latestRemovedXid);
 
 			PageSetLSN(BufferGetPage(buffer), recptr);
 			PageSetTLI(BufferGetPage(buffer), ThisTimeLineID);
@@ -349,16 +318,12 @@ heap_page_prune(Relation relation, Buffer buffer, TransactionId OldestXmin,
  * LP_DEAD state are added to nowdead[]; and items to be set to LP_UNUSED
  * state are added to nowunused[].
  *
- * If redirect_move is true, we intend to get rid of redirecting line pointers,
- * not just make redirection entries.
- *
  * Returns the number of tuples (to be) deleted from the page.
  */
 static int
 heap_prune_chain(Relation relation, Buffer buffer, OffsetNumber rootoffnum,
 				 TransactionId OldestXmin,
-				 PruneState *prstate,
-				 bool redirect_move)
+				 PruneState *prstate)
 {
 	int			ndeleted = 0;
 	Page		dp = (Page) BufferGetPage(buffer);
@@ -366,7 +331,6 @@ heap_prune_chain(Relation relation, Buffer buffer, OffsetNumber rootoffnum,
 	ItemId		rootlp;
 	HeapTupleHeader htup;
 	OffsetNumber latestdead = InvalidOffsetNumber,
-				redirect_target = InvalidOffsetNumber,
 				maxoff = PageGetMaxOffsetNumber(dp),
 				offnum;
 	OffsetNumber chainitems[MaxHeapTuplesPerPage];
@@ -592,12 +556,7 @@ heap_prune_chain(Relation relation, Buffer buffer, OffsetNumber rootoffnum,
 		if (i >= nchain)
 			heap_prune_record_dead(prstate, rootoffnum);
 		else
-		{
 			heap_prune_record_redirect(prstate, rootoffnum, chainitems[i]);
-			/* If the redirection will be a move, need more processing */
-			if (redirect_move)
-				redirect_target = chainitems[i];
-		}
 	}
 	else if (nchain < 2 && ItemIdIsRedirected(rootlp))
 	{
@@ -609,42 +568,6 @@ heap_prune_chain(Relation relation, Buffer buffer, OffsetNumber rootoffnum,
 		 * DEAD state.
 		 */
 		heap_prune_record_dead(prstate, rootoffnum);
-	}
-	else if (redirect_move && ItemIdIsRedirected(rootlp))
-	{
-		/*
-		 * If we desire to eliminate LP_REDIRECT items by moving tuples, make
-		 * a redirection entry for each redirected root item; this will cause
-		 * heap_page_prune_execute to actually do the move. (We get here only
-		 * when there are no DEAD tuples in the chain; otherwise the
-		 * redirection entry was made above.)
-		 */
-		heap_prune_record_redirect(prstate, rootoffnum, chainitems[1]);
-		redirect_target = chainitems[1];
-	}
-
-	/*
-	 * If we are going to implement a redirect by moving tuples, we have to
-	 * issue a cache invalidation against the redirection target tuple,
-	 * because its CTID will be effectively changed by the move.  Note that
-	 * CacheInvalidateHeapTuple only queues the request, it doesn't send it;
-	 * if we fail before reaching EndNonTransactionalInvalidation, nothing
-	 * happens and no harm is done.
-	 */
-	if (OffsetNumberIsValid(redirect_target))
-	{
-		ItemId		firstlp = PageGetItemId(dp, redirect_target);
-		HeapTupleData firsttup;
-
-		Assert(ItemIdIsNormal(firstlp));
-		/* Set up firsttup to reference the tuple at its existing CTID */
-		firsttup.t_data = (HeapTupleHeader) PageGetItem(dp, firstlp);
-		firsttup.t_len = ItemIdGetLength(firstlp);
-		ItemPointerSet(&firsttup.t_self,
-					   BufferGetBlockNumber(buffer),
-					   redirect_target);
-		firsttup.t_tableOid = RelationGetRelid(relation);
-		CacheInvalidateHeapTuple(relation, &firsttup);
 	}
 
 	return ndeleted;
@@ -715,14 +638,13 @@ void
 heap_page_prune_execute(Buffer buffer,
 						OffsetNumber *redirected, int nredirected,
 						OffsetNumber *nowdead, int ndead,
-						OffsetNumber *nowunused, int nunused,
-						bool redirect_move)
+						OffsetNumber *nowunused, int nunused)
 {
 	Page		page = (Page) BufferGetPage(buffer);
 	OffsetNumber *offnum;
 	int			i;
 
-	/* Update all redirected or moved line pointers */
+	/* Update all redirected line pointers */
 	offnum = redirected;
 	for (i = 0; i < nredirected; i++)
 	{
@@ -730,30 +652,7 @@ heap_page_prune_execute(Buffer buffer,
 		OffsetNumber tooff = *offnum++;
 		ItemId		fromlp = PageGetItemId(page, fromoff);
 
-		if (redirect_move)
-		{
-			/* Physically move the "to" item to the "from" slot */
-			ItemId		tolp = PageGetItemId(page, tooff);
-			HeapTupleHeader htup;
-
-			*fromlp = *tolp;
-			ItemIdSetUnused(tolp);
-
-			/*
-			 * Change heap-only status of the tuple because after the line
-			 * pointer manipulation, it's no longer a heap-only tuple, but is
-			 * directly pointed to by index entries.
-			 */
-			Assert(ItemIdIsNormal(fromlp));
-			htup = (HeapTupleHeader) PageGetItem(page, fromlp);
-			Assert(HeapTupleHeaderIsHeapOnly(htup));
-			HeapTupleHeaderClearHeapOnly(htup);
-		}
-		else
-		{
-			/* Just insert a REDIRECT link at fromoff */
-			ItemIdSetRedirect(fromlp, tooff);
-		}
+		ItemIdSetRedirect(fromlp, tooff);
 	}
 
 	/* Update all now-dead line pointers */

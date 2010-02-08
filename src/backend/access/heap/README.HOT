@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/backend/access/heap/README.HOT,v 1.4 2008/10/02 20:59:31 momjian Exp $
+$PostgreSQL: pgsql/src/backend/access/heap/README.HOT,v 1.5 2010/02/08 04:33:52 tgl Exp $
 
 Heap Only Tuples (HOT)
 ======================
@@ -253,27 +253,6 @@ VACUUM
 There is little change to regular vacuum.  It performs pruning to remove
 dead heap-only tuples, and cleans up any dead line pointers as if they were
 regular dead tuples.
-
-
-VACUUM FULL
------------
-
-VACUUM FULL performs an extra operation of collapsing out redirecting line
-pointers, by moving the first non-DEAD tuple of each HOT chain to the root
-position and clearing its heap-only-tuple flag.  This effectively changes
-the user-visible CTID of that tuple.  This would be completely unsafe
-during normal concurrent operation, but since VACUUM FULL takes full
-exclusive lock on the table, it should be OK.  (Note that VACUUM FULL has
-always felt free to change tuples' CTIDs by moving them across pages.)
-Eliminating redirection links means that the main body of VACUUM FULL
-doesn't have to deal with them, which seems a good thing since VACUUM FULL
-is horrendously complex already.
-
-When VACUUM FULL tries to move tuple chains, it does not distinguish regular
-and heap-only tuples, but just moves both types the same.  This is OK because
-it will move the entire non-DEAD tail of an update chain and remove index
-entries for each item moved.  At worst, we'll uselessly search for index
-entries matching the heap-only tuples included in the move.
 
 
 Statistics

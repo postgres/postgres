@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execUtils.c,v 1.169 2010/01/02 17:53:56 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execUtils.c,v 1.170 2010/02/08 04:33:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -977,8 +977,7 @@ ExecCloseIndices(ResultRelInfo *resultRelInfo)
 List *
 ExecInsertIndexTuples(TupleTableSlot *slot,
 					  ItemPointer tupleid,
-					  EState *estate,
-					  bool is_vacuum_full)
+					  EState *estate)
 {
 	List	   *result = NIL;
 	ResultRelInfo *resultRelInfo;
@@ -1070,12 +1069,8 @@ ExecInsertIndexTuples(TupleTableSlot *slot,
 		 * For a deferrable unique index, we tell the index AM to just detect
 		 * possible non-uniqueness, and we add the index OID to the result
 		 * list if further checking is needed.
-		 *
-		 * Special hack: we suppress unique-index checks if we are being
-		 * called from VACUUM FULL, since VACUUM FULL may need to move dead
-		 * tuples that have the same keys as live ones.
 		 */
-		if (is_vacuum_full || !indexRelation->rd_index->indisunique)
+		if (!indexRelation->rd_index->indisunique)
 			checkUnique = UNIQUE_CHECK_NO;
 		else if (indexRelation->rd_index->indimmediate)
 			checkUnique = UNIQUE_CHECK_YES;

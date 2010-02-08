@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/scripts/vacuumdb.c,v 1.33 2010/01/07 14:35:44 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/scripts/vacuumdb.c,v 1.34 2010/02/08 04:33:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -14,12 +14,12 @@
 #include "common.h"
 
 
-static void vacuum_one_database(const char *dbname, bool full, bool inplace, bool verbose,
+static void vacuum_one_database(const char *dbname, bool full, bool verbose,
 					bool and_analyze, bool analyze_only, bool freeze,
 					const char *table, const char *host, const char *port,
 					const char *username, enum trivalue prompt_password,
 					const char *progname, bool echo);
-static void vacuum_all_databases(bool full, bool inplace, bool verbose, bool and_analyze,
+static void vacuum_all_databases(bool full, bool verbose, bool and_analyze,
 					 bool analyze_only, bool freeze,
 					 const char *host, const char *port,
 					 const char *username, enum trivalue prompt_password,
@@ -47,7 +47,6 @@ main(int argc, char *argv[])
 		{"table", required_argument, NULL, 't'},
 		{"full", no_argument, NULL, 'f'},
 		{"verbose", no_argument, NULL, 'v'},
-		{"inplace", no_argument, NULL, 'i'},
 		{NULL, 0, NULL, 0}
 	};
 
@@ -69,14 +68,13 @@ main(int argc, char *argv[])
 	char	   *table = NULL;
 	bool		full = false;
 	bool		verbose = false;
-	bool		inplace = false;
 
 	progname = get_progname(argv[0]);
 	set_pglocale_pgservice(argv[0], PG_TEXTDOMAIN("pgscripts"));
 
 	handle_help_version_opts(argc, argv, "vacuumdb", help);
 
-	while ((c = getopt_long(argc, argv, "h:p:U:wWeqd:zaFt:fiv", long_options, &optindex)) != -1)
+	while ((c = getopt_long(argc, argv, "h:p:U:wWeqd:zaFt:fv", long_options, &optindex)) != -1)
 	{
 		switch (c)
 		{
@@ -122,9 +120,6 @@ main(int argc, char *argv[])
 			case 'f':
 				full = true;
 				break;
-			case 'i':
-				inplace = true;
-				break;
 			case 'v':
 				verbose = true;
 				break;
@@ -146,13 +141,6 @@ main(int argc, char *argv[])
 					progname, argv[optind + 1]);
 			fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
 			exit(1);
-	}
-
-	if (inplace && !full)
-	{
-		fprintf(stderr, _("%s: cannot use the \"inplace\" option when performing full vacuum\n"),
-				progname);
-		exit(1);
 	}
 
 	if (analyze_only)
@@ -189,7 +177,7 @@ main(int argc, char *argv[])
 			exit(1);
 		}
 
-		vacuum_all_databases(full, inplace, verbose, and_analyze, analyze_only, freeze,
+		vacuum_all_databases(full, verbose, and_analyze, analyze_only, freeze,
 							 host, port, username, prompt_password,
 							 progname, echo, quiet);
 	}
@@ -205,7 +193,7 @@ main(int argc, char *argv[])
 				dbname = get_user_name(progname);
 		}
 
-		vacuum_one_database(dbname, full, inplace, verbose, and_analyze, analyze_only,
+		vacuum_one_database(dbname, full, verbose, and_analyze, analyze_only,
 							freeze, table,
 							host, port, username, prompt_password,
 							progname, echo);
@@ -216,7 +204,7 @@ main(int argc, char *argv[])
 
 
 static void
-vacuum_one_database(const char *dbname, bool full, bool inplace, bool verbose, bool and_analyze,
+vacuum_one_database(const char *dbname, bool full, bool verbose, bool and_analyze,
 					bool analyze_only, bool freeze, const char *table,
 					const char *host, const char *port,
 					const char *username, enum trivalue prompt_password,
@@ -247,8 +235,7 @@ vacuum_one_database(const char *dbname, bool full, bool inplace, bool verbose, b
 
 			if (full)
 			{
-				appendPQExpBuffer(&sql, "%sFULL%s", sep,
-								  inplace ? " INPLACE" : "");
+				appendPQExpBuffer(&sql, "%sFULL", sep);
 				sep = comma;
 			}
 			if (freeze)
@@ -271,10 +258,6 @@ vacuum_one_database(const char *dbname, bool full, bool inplace, bool verbose, b
 		}
 		else
 		{
-			/*
-			 * On older servers, VACUUM FULL is equivalent to VACUUM (FULL
-			 * INPLACE) on newer servers, so we can ignore 'inplace'.
-			 */
 			if (full)
 				appendPQExpBuffer(&sql, " FULL");
 			if (freeze)
@@ -306,7 +289,7 @@ vacuum_one_database(const char *dbname, bool full, bool inplace, bool verbose, b
 
 
 static void
-vacuum_all_databases(bool full, bool inplace, bool verbose, bool and_analyze, bool analyze_only,
+vacuum_all_databases(bool full, bool verbose, bool and_analyze, bool analyze_only,
 					 bool freeze, const char *host, const char *port,
 					 const char *username, enum trivalue prompt_password,
 					 const char *progname, bool echo, bool quiet)
@@ -329,7 +312,7 @@ vacuum_all_databases(bool full, bool inplace, bool verbose, bool and_analyze, bo
 			fflush(stdout);
 		}
 
-		vacuum_one_database(dbname, full, inplace, verbose, and_analyze, analyze_only,
+		vacuum_one_database(dbname, full, verbose, and_analyze, analyze_only,
 							freeze, NULL, host, port, username, prompt_password,
 							progname, echo);
 	}
@@ -350,7 +333,6 @@ help(const char *progname)
 	printf(_("  -e, --echo                      show the commands being sent to the server\n"));
 	printf(_("  -f, --full                      do full vacuuming\n"));
 	printf(_("  -F, --freeze                    freeze row transaction information\n"));
-	printf(_("  -i, --inplace                   do full inplace vacuuming\n"));
 	printf(_("  -q, --quiet                     don't write any messages\n"));
 	printf(_("  -t, --table='TABLE[(COLUMNS)]'  vacuum specific table only\n"));
 	printf(_("  -v, --verbose                   write a lot of output\n"));
