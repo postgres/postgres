@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.303 2010/02/07 20:48:10 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.304 2010/02/08 05:53:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1917,13 +1917,6 @@ RelationClearRelation(Relation relation, bool rebuild)
 	relation->rd_isvalid = false;
 
 	/*
-	 * Clear out catcache's entries for this relation.  This is a bit of
-	 * a hack, but it's a convenient place to do it.  (XXX do we really
-	 * still need this?)
-	 */
-	CatalogCacheFlushRelation(RelationGetRelid(relation));
-
-	/*
 	 * If we're really done with the relcache entry, blow it away. But if
 	 * someone is still using it, reconstruct the whole deal without moving
 	 * the physical RelationData record (so that the someone's pointer is
@@ -2468,8 +2461,6 @@ RelationBuildLocalRelation(const char *relname,
 	 *
 	 * XXX this list had better match the relations specially handled in
 	 * RelationCacheInitializePhase2/3.
-	 *
-	 * XXX do we need this at all??
 	 */
 	switch (relid)
 	{

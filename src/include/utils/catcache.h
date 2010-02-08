@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/catcache.h,v 1.70 2010/02/07 20:48:13 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/catcache.h,v 1.71 2010/02/08 05:53:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,7 +41,6 @@ typedef struct catcache
 	Oid			cc_indexoid;	/* OID of index matching cache keys */
 	bool		cc_relisshared; /* is relation shared across databases? */
 	TupleDesc	cc_tupdesc;		/* tuple descriptor (copied from reldesc) */
-	int			cc_reloidattr;	/* AttrNumber of relation OID attr, or 0 */
 	int			cc_ntup;		/* # of tuples currently in this cache */
 	int			cc_nbuckets;	/* # of hash buckets in this cache */
 	int			cc_nkeys;		/* # of keys (1..4) */
@@ -163,7 +162,6 @@ extern void CreateCacheMemoryContext(void);
 extern void AtEOXact_CatCache(bool isCommit);
 
 extern CatCache *InitCatCache(int id, Oid reloid, Oid indexoid,
-			 int reloidattr,
 			 int nkeys, const int *key,
 			 int nbuckets);
 extern void InitCatCachePhase2(CatCache *cache, bool touch_index);
@@ -179,7 +177,6 @@ extern CatCList *SearchCatCacheList(CatCache *cache, int nkeys,
 extern void ReleaseCatCacheList(CatCList *list);
 
 extern void ResetCatalogCaches(void);
-extern void CatalogCacheFlushRelation(Oid relId);
 extern void CatalogCacheFlushCatalog(Oid catId);
 extern void CatalogCacheIdInvalidate(int cacheId, uint32 hashValue,
 						 ItemPointer pointer);
