@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.368 2010/02/08 04:33:53 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.369 2010/02/08 09:08:51 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -5655,11 +5655,6 @@ StartupXLOG(void)
 			/* initialize minRecoveryPoint if not set yet */
 			if (XLByteLT(ControlFile->minRecoveryPoint, checkPoint.redo))
 				ControlFile->minRecoveryPoint = checkPoint.redo;
-		}
-		else
-		{
-			XLogRecPtr	InvalidXLogRecPtr = {0, 0};
-			ControlFile->minRecoveryPoint = InvalidXLogRecPtr;
 		}
 		/*
 		 * set backupStartupPoint if we're starting archive recovery from a
