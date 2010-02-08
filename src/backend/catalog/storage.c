@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/storage.c,v 1.6 2009/06/11 14:48:55 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/storage.c,v 1.6.2.1 2010/02/08 20:00:55 heikki Exp $
  *
  * NOTES
  *	  Some of this code used to be in storage/smgr/smgr.c, and the
@@ -170,7 +170,7 @@ RelationDropStorage(Relation rel)
  *		Physically truncate a relation to the specified number of blocks.
  *
  * This includes getting rid of any buffers for the blocks that are to be
- * dropped. If 'fsm' is true, the FSM of the relation is truncated as well.
+ * dropped.
  */
 void
 RelationTruncate(Relation rel, BlockNumber nblocks)
