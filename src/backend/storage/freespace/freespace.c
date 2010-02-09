@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/freespace/freespace.c,v 1.74 2010/01/02 16:57:51 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/freespace/freespace.c,v 1.75 2010/02/09 00:28:57 tgl Exp $
  *
  *
  * NOTES:
@@ -748,6 +748,8 @@ fsm_vacuum_page(Relation rel, FSMAddress addr, bool *eof_p)
 		for (slot = 0; slot < SlotsPerFSMPage; slot++)
 		{
 			int			child_avail;
+
+			CHECK_FOR_INTERRUPTS();
 
 			/* After we hit end-of-file, just clear the rest of the slots */
 			if (!eof)
