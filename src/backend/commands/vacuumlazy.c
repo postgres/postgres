@@ -29,7 +29,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuumlazy.c,v 1.130 2010/02/09 00:28:30 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuumlazy.c,v 1.131 2010/02/09 21:43:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,7 +50,6 @@
 #include "storage/bufmgr.h"
 #include "storage/freespace.h"
 #include "storage/lmgr.h"
-#include "utils/inval.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
 #include "utils/pg_rusage.h"
@@ -123,7 +122,7 @@ static void lazy_cleanup_index(Relation indrel,
 				   LVRelStats *vacrelstats);
 static int lazy_vacuum_page(Relation onerel, BlockNumber blkno, Buffer buffer,
 				 int tupindex, LVRelStats *vacrelstats);
-static bool lazy_truncate_heap(Relation onerel, LVRelStats *vacrelstats);
+static void lazy_truncate_heap(Relation onerel, LVRelStats *vacrelstats);
 static BlockNumber count_nondeletable_pages(Relation onerel,
 						 LVRelStats *vacrelstats);
 static void lazy_space_alloc(LVRelStats *vacrelstats, BlockNumber relblocks);
@@ -141,11 +140,8 @@ static int	vac_cmp_itemptr(const void *left, const void *right);
  *
  *		At entry, we have already established a transaction and opened
  *		and locked the relation.
- *
- *		The return value indicates whether this function has held off
- *		interrupts -- if true, caller must RESUME_INTERRUPTS() after commit.
  */
-bool
+void
 lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt,
 				BufferAccessStrategy bstrategy, bool *scanned_all)
 {
@@ -157,7 +153,6 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt,
 	TimestampTz starttime = 0;
 	bool		scan_all;
 	TransactionId freezeTableLimit;
-	bool		heldoff = false;
 
 	pg_rusage_init(&ru0);
 
@@ -194,15 +189,8 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt,
 	/* Done with indexes */
 	vac_close_indexes(nindexes, Irel, NoLock);
 
-	/* Vacuum the Free Space Map */
-	FreeSpaceMapVacuum(onerel);
-
 	/*
 	 * Optionally truncate the relation.
-	 *
-	 * NB: there should be as little code as possible after this point,
-	 * to minimize the chance of failure as well as the time spent ignoring
-	 * cancel/die interrupts.
 	 *
 	 * Don't even think about it unless we have a shot at releasing a goodly
 	 * number of pages.  Otherwise, the time taken isn't worth it.
@@ -211,7 +199,10 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt,
 	if (possibly_freeable > 0 &&
 		(possibly_freeable >= REL_TRUNCATE_MINIMUM ||
 		 possibly_freeable >= vacrelstats->rel_pages / REL_TRUNCATE_FRACTION))
-		heldoff = lazy_truncate_heap(onerel, vacrelstats);
+		lazy_truncate_heap(onerel, vacrelstats);
+
+	/* Vacuum the Free Space Map */
+	FreeSpaceMapVacuum(onerel);
 
 	/*
 	 * Update statistics in pg_class.  But only if we didn't skip any pages;
@@ -255,8 +246,6 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt,
 
 	if (scanned_all)
 		*scanned_all = vacrelstats->scanned_all;
-
-	return heldoff;
 }
 
 /*
@@ -996,11 +985,8 @@ lazy_cleanup_index(Relation indrel,
 
 /*
  * lazy_truncate_heap - try to truncate off any empty pages at the end
- *
- *		The return value indicates whether this function has held off
- *		interrupts -- if true, caller must RESUME_INTERRUPTS() after commit.
  */
-static bool
+static void
 lazy_truncate_heap(Relation onerel, LVRelStats *vacrelstats)
 {
 	BlockNumber old_rel_pages = vacrelstats->rel_pages;
@@ -1016,7 +1002,7 @@ lazy_truncate_heap(Relation onerel, LVRelStats *vacrelstats)
 	 * possible considering we already hold a lower-grade lock).
 	 */
 	if (!ConditionalLockRelation(onerel, AccessExclusiveLock))
-		return false;
+		return;
 
 	/*
 	 * Now that we have exclusive lock, look to see if the rel has grown
@@ -1029,7 +1015,7 @@ lazy_truncate_heap(Relation onerel, LVRelStats *vacrelstats)
 		/* might as well use the latest news when we update pg_class stats */
 		vacrelstats->rel_pages = new_rel_pages;
 		UnlockRelation(onerel, AccessExclusiveLock);
-		return false;
+		return;
 	}
 
 	/*
@@ -1044,34 +1030,22 @@ lazy_truncate_heap(Relation onerel, LVRelStats *vacrelstats)
 	{
 		/* can't do anything after all */
 		UnlockRelation(onerel, AccessExclusiveLock);
-		return false;
+		return;
 	}
 
 	/*
-	 * Prevent cancel/die interrupts from now till commit.  Once we have
-	 * truncated, it is essential that we send the sinval message before
-	 * releasing exclusive lock on the relation; both of which will
-	 * happen during commit.  Other backends must receive the sinval
-	 * message to reset their rd_targblock values before they can safely
-	 * write to the table again.  While we can't positively guarantee
-	 * no error before commit, we can at least prevent cancel interrupts.
-	 *
-	 * XXX it would be better if we had a way to send the inval message
-	 * nontransactionally; an error after the truncate will mean that the
-	 * message is lost.  Note however that turning this all into a critical
-	 * section would not be an improvement.  Making it critical would mean
-	 * that an error forces PANIC, whereas losing the sinval will at worst
-	 * cause unexpected nonfatal errors in other sessions.
-	 */
-	HOLD_INTERRUPTS();
-
-	/* force relcache inval so all backends reset their rd_targblock */
-	CacheInvalidateRelcache(onerel);
-
-	/*
-	 * Okay to truncate.  Do as little as possible between here and commit.
+	 * Okay to truncate.
 	 */
 	RelationTruncate(onerel, new_rel_pages);
+
+	/*
+	 * We can release the exclusive lock as soon as we have truncated.  Other
+	 * backends can't safely access the relation until they have processed the
+	 * smgr invalidation that smgrtruncate sent out ... but that should happen
+	 * as part of standard invalidation processing once they acquire lock on
+	 * the relation.
+	 */
+	UnlockRelation(onerel, AccessExclusiveLock);
 
 	/* update statistics */
 	vacrelstats->rel_pages = new_rel_pages;
@@ -1083,8 +1057,6 @@ lazy_truncate_heap(Relation onerel, LVRelStats *vacrelstats)
 					old_rel_pages, new_rel_pages),
 			 errdetail("%s.",
 					   pg_rusage_show(&ru0))));
-
-	return true;				/* interrupts are held off */
 }
 
 /*

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.304 2010/02/08 05:53:55 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.305 2010/02/09 21:43:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -327,13 +327,6 @@ AllocateRelationDesc(Form_pg_class relp)
 	 * allocate and zero space for new relation descriptor
 	 */
 	relation = (Relation) palloc0(sizeof(RelationData));
-
-	/*
-	 * clear fields of reldesc that should initialize to something non-zero
-	 */
-	relation->rd_targblock = InvalidBlockNumber;
-	relation->rd_fsm_nblocks = InvalidBlockNumber;
-	relation->rd_vm_nblocks = InvalidBlockNumber;
 
 	/* make sure relation is marked as having no open file yet */
 	relation->rd_smgr = NULL;
@@ -1413,9 +1406,6 @@ formrdesc(const char *relationName, Oid relationReltype,
 	 * allocate new relation desc, clear all fields of reldesc
 	 */
 	relation = (Relation) palloc0(sizeof(RelationData));
-	relation->rd_targblock = InvalidBlockNumber;
-	relation->rd_fsm_nblocks = InvalidBlockNumber;
-	relation->rd_vm_nblocks = InvalidBlockNumber;
 
 	/* make sure relation is marked as having no open file yet */
 	relation->rd_smgr = NULL;
@@ -1714,14 +1704,7 @@ RelationReloadIndexInfo(Relation relation)
 	/* Should be closed at smgr level */
 	Assert(relation->rd_smgr == NULL);
 
-	/*
-	 * Must reset targblock, fsm_nblocks and vm_nblocks in case rel was
-	 * truncated
-	 */
-	relation->rd_targblock = InvalidBlockNumber;
-	relation->rd_fsm_nblocks = InvalidBlockNumber;
-	relation->rd_vm_nblocks = InvalidBlockNumber;
-	/* Must free any AM cached data, too */
+	/* Must free any AM cached data upon relcache flush */
 	if (relation->rd_amcache)
 		pfree(relation->rd_amcache);
 	relation->rd_amcache = NULL;
@@ -1867,11 +1850,8 @@ RelationClearRelation(Relation relation, bool rebuild)
 
 	/*
 	 * Never, never ever blow away a nailed-in system relation, because we'd
-	 * be unable to recover.  However, we must reset rd_targblock, in case we
-	 * got called because of a relation cache flush that was triggered by
-	 * VACUUM.  Likewise reset the fsm and vm size info.  Also, redo
-	 * RelationInitPhysicalAddr in case it is a mapped relation whose mapping
-	 * changed.
+	 * be unable to recover.  However, we must redo RelationInitPhysicalAddr
+	 * in case it is a mapped relation whose mapping changed.
 	 *
 	 * If it's a nailed index, then we need to re-read the pg_class row to see
 	 * if its relfilenode changed.	We can't necessarily do that here, because
@@ -1882,10 +1862,6 @@ RelationClearRelation(Relation relation, bool rebuild)
 	 */
 	if (relation->rd_isnailed)
 	{
-		relation->rd_targblock = InvalidBlockNumber;
-		relation->rd_fsm_nblocks = InvalidBlockNumber;
-		relation->rd_vm_nblocks = InvalidBlockNumber;
-		/* We must recalculate physical address in case it changed */
 		RelationInitPhysicalAddr(relation);
 
 		if (relation->rd_rel->relkind == RELKIND_INDEX)
@@ -2501,10 +2477,6 @@ RelationBuildLocalRelation(const char *relname,
 	 * allocate a new relation descriptor and fill in basic state fields.
 	 */
 	rel = (Relation) palloc0(sizeof(RelationData));
-
-	rel->rd_targblock = InvalidBlockNumber;
-	rel->rd_fsm_nblocks = InvalidBlockNumber;
-	rel->rd_vm_nblocks = InvalidBlockNumber;
 
 	/* make sure relation is marked as having no open file yet */
 	rel->rd_smgr = NULL;
@@ -4169,9 +4141,6 @@ load_relcache_init_file(bool shared)
 		 * Reset transient-state fields in the relcache entry
 		 */
 		rel->rd_smgr = NULL;
-		rel->rd_targblock = InvalidBlockNumber;
-		rel->rd_fsm_nblocks = InvalidBlockNumber;
-		rel->rd_vm_nblocks = InvalidBlockNumber;
 		if (rel->rd_isnailed)
 			rel->rd_refcnt = 1;
 		else

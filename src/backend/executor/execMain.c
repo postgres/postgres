@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.345 2010/02/07 20:48:10 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.346 2010/02/09 21:43:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,6 +49,7 @@
 #include "parser/parsetree.h"
 #include "storage/bufmgr.h"
 #include "storage/lmgr.h"
+#include "storage/smgr.h"
 #include "utils/acl.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
@@ -2222,8 +2223,8 @@ OpenIntoRel(QueryDesc *queryDesc)
 		(XLogIsNeeded() ? 0 : HEAP_INSERT_SKIP_WAL);
 	myState->bistate = GetBulkInsertState();
 
-	/* Not using WAL requires rd_targblock be initially invalid */
-	Assert(intoRelationDesc->rd_targblock == InvalidBlockNumber);
+	/* Not using WAL requires smgr_targblock be initially invalid */
+	Assert(RelationGetTargetBlock(intoRelationDesc) == InvalidBlockNumber);
 }
 
 /*

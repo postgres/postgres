@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/sequence.c,v 1.164 2010/01/02 16:57:37 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/sequence.c,v 1.165 2010/02/09 21:43:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,6 +29,7 @@
 #include "storage/bufmgr.h"
 #include "storage/lmgr.h"
 #include "storage/proc.h"
+#include "storage/smgr.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
@@ -220,7 +221,7 @@ DefineSequence(CreateSeqStmt *seq)
 	sm->magic = SEQ_MAGIC;
 
 	/* hack: ensure heap_insert will insert on the just-created page */
-	rel->rd_targblock = 0;
+	RelationSetTargetBlock(rel, 0);
 
 	/* Now form & insert sequence tuple */
 	tuple = heap_form_tuple(tupDesc, value, null);

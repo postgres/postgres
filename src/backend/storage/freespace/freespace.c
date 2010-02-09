@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/freespace/freespace.c,v 1.75 2010/02/09 00:28:57 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/freespace/freespace.c,v 1.76 2010/02/09 21:43:30 tgl Exp $
  *
  *
  * NOTES:
@@ -25,16 +25,16 @@
 
 #include "access/htup.h"
 #include "access/xlogutils.h"
-#include "storage/bufpage.h"
+#include "miscadmin.h"
 #include "storage/bufmgr.h"
+#include "storage/bufpage.h"
 #include "storage/freespace.h"
 #include "storage/fsm_internals.h"
 #include "storage/lmgr.h"
 #include "storage/lwlock.h"
 #include "storage/smgr.h"
 #include "utils/rel.h"
-#include "utils/inval.h"
-#include "miscadmin.h"
+
 
 /*
  * We use just one byte to store the amount of free space on a page, so we
@@ -251,9 +251,9 @@ GetRecordedFreeSpace(Relation rel, BlockNumber heapBlk)
 /*
  * FreeSpaceMapTruncateRel - adjust for truncation of a relation.
  *
- * The caller must hold AccessExclusiveLock on the relation, to ensure
- * that other backends receive the relcache invalidation event that this
- * function sends, before accessing the FSM again.
+ * The caller must hold AccessExclusiveLock on the relation, to ensure that
+ * other backends receive the smgr invalidation event that this function sends
+ * before they access the FSM again.
  *
  * nblocks is the new size of the heap.
  */
@@ -302,17 +302,18 @@ FreeSpaceMapTruncateRel(Relation rel, BlockNumber nblocks)
 			return;				/* nothing to do; the FSM was already smaller */
 	}
 
-	/* Truncate the unused FSM pages */
+	/* Truncate the unused FSM pages, and send smgr inval message */
 	smgrtruncate(rel->rd_smgr, FSM_FORKNUM, new_nfsmblocks, rel->rd_istemp);
 
 	/*
-	 * Need to invalidate the relcache entry, because rd_fsm_nblocks seen by
-	 * other backends is no longer valid.
+	 * We might as well update the local smgr_fsm_nblocks setting.
+	 * smgrtruncate sent an smgr cache inval message, which will cause
+	 * other backends to invalidate their copy of smgr_fsm_nblocks, and
+	 * this one too at the next command boundary.  But this ensures it
+	 * isn't outright wrong until then.
 	 */
-	if (!InRecovery)
-		CacheInvalidateRelcache(rel);
-
-	rel->rd_fsm_nblocks = new_nfsmblocks;
+	if (rel->rd_smgr)
+		rel->rd_smgr->smgr_fsm_nblocks = new_nfsmblocks;
 }
 
 /*
@@ -506,17 +507,24 @@ fsm_readbuf(Relation rel, FSMAddress addr, bool extend)
 
 	RelationOpenSmgr(rel);
 
-	/* If we haven't cached the size of the FSM yet, check it first */
-	if (rel->rd_fsm_nblocks == InvalidBlockNumber)
+	/*
+	 * If we haven't cached the size of the FSM yet, check it first.  Also
+	 * recheck if the requested block seems to be past end, since our
+	 * cached value might be stale.  (We send smgr inval messages on
+	 * truncation, but not on extension.)
+	 */
+	if (rel->rd_smgr->smgr_fsm_nblocks == InvalidBlockNumber ||
+		blkno >= rel->rd_smgr->smgr_fsm_nblocks)
 	{
 		if (smgrexists(rel->rd_smgr, FSM_FORKNUM))
-			rel->rd_fsm_nblocks = smgrnblocks(rel->rd_smgr, FSM_FORKNUM);
+			rel->rd_smgr->smgr_fsm_nblocks = smgrnblocks(rel->rd_smgr,
+														 FSM_FORKNUM);
 		else
-			rel->rd_fsm_nblocks = 0;
+			rel->rd_smgr->smgr_fsm_nblocks = 0;
 	}
 
 	/* Handle requests beyond EOF */
-	if (blkno >= rel->rd_fsm_nblocks)
+	if (blkno >= rel->rd_smgr->smgr_fsm_nblocks)
 	{
 		if (extend)
 			fsm_extend(rel, blkno + 1);
@@ -559,19 +567,23 @@ fsm_extend(Relation rel, BlockNumber fsm_nblocks)
 	 * it.
 	 *
 	 * Note that another backend might have extended or created the relation
-	 * before we get the lock.
+	 * by the time we get the lock.
 	 */
 	LockRelationForExtension(rel, ExclusiveLock);
 
-	/* Create the FSM file first if it doesn't exist */
-	if ((rel->rd_fsm_nblocks == 0 || rel->rd_fsm_nblocks == InvalidBlockNumber)
-		&& !smgrexists(rel->rd_smgr, FSM_FORKNUM))
-	{
+	/* Might have to re-open if a cache flush happened */
+	RelationOpenSmgr(rel);
+
+	/*
+	 * Create the FSM file first if it doesn't exist.  If smgr_fsm_nblocks
+	 * is positive then it must exist, no need for an smgrexists call.
+	 */
+	if ((rel->rd_smgr->smgr_fsm_nblocks == 0 ||
+		 rel->rd_smgr->smgr_fsm_nblocks == InvalidBlockNumber) &&
+		!smgrexists(rel->rd_smgr, FSM_FORKNUM))
 		smgrcreate(rel->rd_smgr, FSM_FORKNUM, false);
-		fsm_nblocks_now = 0;
-	}
-	else
-		fsm_nblocks_now = smgrnblocks(rel->rd_smgr, FSM_FORKNUM);
+
+	fsm_nblocks_now = smgrnblocks(rel->rd_smgr, FSM_FORKNUM);
 
 	while (fsm_nblocks_now < fsm_nblocks)
 	{
@@ -580,14 +592,12 @@ fsm_extend(Relation rel, BlockNumber fsm_nblocks)
 		fsm_nblocks_now++;
 	}
 
+	/* Update local cache with the up-to-date size */
+	rel->rd_smgr->smgr_fsm_nblocks = fsm_nblocks_now;
+
 	UnlockRelationForExtension(rel, ExclusiveLock);
 
 	pfree(pg);
-
-	/* Update the relcache with the up-to-date size */
-	if (!InRecovery)
-		CacheInvalidateRelcache(rel);
-	rel->rd_fsm_nblocks = fsm_nblocks_now;
 }
 
 /*

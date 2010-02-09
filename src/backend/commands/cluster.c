@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/cluster.c,v 1.199 2010/02/07 22:40:33 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/cluster.c,v 1.200 2010/02/09 21:43:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,6 +38,7 @@
 #include "miscadmin.h"
 #include "storage/bufmgr.h"
 #include "storage/procarray.h"
+#include "storage/smgr.h"
 #include "utils/acl.h"
 #include "utils/fmgroids.h"
 #include "utils/inval.h"
@@ -559,16 +560,12 @@ mark_index_clustered(Relation rel, Oid indexOid)
 			indexForm->indisclustered = false;
 			simple_heap_update(pg_index, &indexTuple->t_self, indexTuple);
 			CatalogUpdateIndexes(pg_index, indexTuple);
-			/* Ensure we see the update in the index's relcache entry */
-			CacheInvalidateRelcacheByRelid(thisIndexOid);
 		}
 		else if (thisIndexOid == indexOid)
 		{
 			indexForm->indisclustered = true;
 			simple_heap_update(pg_index, &indexTuple->t_self, indexTuple);
 			CatalogUpdateIndexes(pg_index, indexTuple);
-			/* Ensure we see the update in the index's relcache entry */
-			CacheInvalidateRelcacheByRelid(thisIndexOid);
 		}
 		heap_freetuple(indexTuple);
 	}
@@ -819,8 +816,8 @@ copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex,
 		XLogReportUnloggedStatement(reason);
 	}
 
-	/* use_wal off requires rd_targblock be initially invalid */
-	Assert(NewHeap->rd_targblock == InvalidBlockNumber);
+	/* use_wal off requires smgr_targblock be initially invalid */
+	Assert(RelationGetTargetBlock(NewHeap) == InvalidBlockNumber);
 
 	/*
 	 * If both tables have TOAST tables, perform toast swap by content.  It is

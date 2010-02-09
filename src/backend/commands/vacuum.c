@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.406 2010/02/08 16:50:21 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.407 2010/02/09 21:43:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -789,7 +789,6 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt, bool do_toast, bool for_wraparound,
 	Oid			save_userid;
 	int			save_sec_context;
 	int			save_nestlevel;
-	bool		heldoff;
 
 	if (scanned_all)
 		*scanned_all = false;
@@ -970,10 +969,9 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt, bool do_toast, bool for_wraparound,
 		cluster_rel(relid, InvalidOid, false,
 					(vacstmt->options & VACOPT_VERBOSE) != 0,
 					vacstmt->freeze_min_age, vacstmt->freeze_table_age);
-		heldoff = false;
 	}
 	else
-		heldoff = lazy_vacuum_rel(onerel, vacstmt, vac_strategy, scanned_all);
+		lazy_vacuum_rel(onerel, vacstmt, vac_strategy, scanned_all);
 
 	/* Roll back any GUC changes executed by index functions */
 	AtEOXact_GUC(false, save_nestlevel);
@@ -990,10 +988,6 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt, bool do_toast, bool for_wraparound,
 	 */
 	PopActiveSnapshot();
 	CommitTransactionCommand();
-
-	/* now we can allow interrupts again, if disabled */
-	if (heldoff)
-		RESUME_INTERRUPTS();
 
 	/*
 	 * If the relation has a secondary toast rel, vacuum that too while we

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/storage.c,v 1.9 2010/02/08 19:59:49 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/storage.c,v 1.10 2010/02/09 21:43:30 tgl Exp $
  *
  * NOTES
  *	  Some of this code used to be in storage/smgr/smgr.c, and the
@@ -226,8 +226,12 @@ RelationTruncate(Relation rel, BlockNumber nblocks)
 	/* Open it at the smgr level if not already done */
 	RelationOpenSmgr(rel);
 
-	/* Make sure rd_targblock isn't pointing somewhere past end */
-	rel->rd_targblock = InvalidBlockNumber;
+	/*
+	 * Make sure smgr_targblock etc aren't pointing somewhere past new end
+	 */
+	rel->rd_smgr->smgr_targblock = InvalidBlockNumber;
+	rel->rd_smgr->smgr_fsm_nblocks = InvalidBlockNumber;
+	rel->rd_smgr->smgr_vm_nblocks = InvalidBlockNumber;
 
 	/* Truncate the FSM first if it exists */
 	fsm = smgrexists(rel->rd_smgr, FSM_FORKNUM);
@@ -459,6 +463,7 @@ smgr_redo(XLogRecPtr lsn, XLogRecord *record)
 	{
 		xl_smgr_truncate *xlrec = (xl_smgr_truncate *) XLogRecGetData(record);
 		SMgrRelation reln;
+		Relation	rel;
 
 		reln = smgropen(xlrec->rnode);
 
@@ -475,14 +480,15 @@ smgr_redo(XLogRecPtr lsn, XLogRecord *record)
 		/* Also tell xlogutils.c about it */
 		XLogTruncateRelation(xlrec->rnode, MAIN_FORKNUM, xlrec->blkno);
 
-		/* Truncate FSM too */
-		if (smgrexists(reln, FSM_FORKNUM))
-		{
-			Relation	rel = CreateFakeRelcacheEntry(xlrec->rnode);
+		/* Truncate FSM and VM too */
+		rel = CreateFakeRelcacheEntry(xlrec->rnode);
 
+		if (smgrexists(reln, FSM_FORKNUM))
 			FreeSpaceMapTruncateRel(rel, xlrec->blkno);
-			FreeFakeRelcacheEntry(rel);
-		}
+		if (smgrexists(reln, VISIBILITYMAP_FORKNUM))
+			visibilitymap_truncate(rel, xlrec->blkno);
+
+		FreeFakeRelcacheEntry(rel);
 	}
 	else
 		elog(PANIC, "smgr_redo: unknown op code %u", info);

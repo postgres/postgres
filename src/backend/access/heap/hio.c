@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/hio.c,v 1.77 2010/01/02 16:57:34 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/hio.c,v 1.78 2010/02/09 21:43:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,6 +20,7 @@
 #include "storage/bufmgr.h"
 #include "storage/freespace.h"
 #include "storage/lmgr.h"
+#include "storage/smgr.h"
 
 
 /*
@@ -126,7 +127,7 @@ ReadBufferBI(Relation relation, BlockNumber targetBlock,
  *
  *	HEAP_INSERT_SKIP_FSM is also useful for non-WAL-logged additions to a
  *	relation, if the caller holds exclusive lock and is careful to invalidate
- *	relation->rd_targblock before the first insertion --- that ensures that
+ *	relation's smgr_targblock before the first insertion --- that ensures that
  *	all insertions will occur into newly added pages and not be intermixed
  *	with tuples from other transactions.  That way, a crash can't risk losing
  *	any committed data of other transactions.  (See heap_insert's comments
@@ -206,7 +207,7 @@ RelationGetBufferForTuple(Relation relation, Size len,
 	else if (bistate && bistate->current_buf != InvalidBuffer)
 		targetBlock = BufferGetBlockNumber(bistate->current_buf);
 	else
-		targetBlock = relation->rd_targblock;
+		targetBlock = RelationGetTargetBlock(relation);
 
 	if (targetBlock == InvalidBlockNumber && use_fsm)
 	{
@@ -273,7 +274,7 @@ RelationGetBufferForTuple(Relation relation, Size len,
 		if (len + saveFreeSpace <= pageFreeSpace)
 		{
 			/* use this page as future insert target, too */
-			relation->rd_targblock = targetBlock;
+			RelationSetTargetBlock(relation, targetBlock);
 			return buffer;
 		}
 
@@ -377,7 +378,7 @@ RelationGetBufferForTuple(Relation relation, Size len,
 	 * current backend to make more insertions or not, which is probably a
 	 * good bet most of the time.  So for now, don't add it to FSM yet.
 	 */
-	relation->rd_targblock = BufferGetBlockNumber(buffer);
+	RelationSetTargetBlock(relation, BufferGetBlockNumber(buffer));
 
 	return buffer;
 }

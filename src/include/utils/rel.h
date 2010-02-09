@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/rel.h,v 1.122 2010/02/07 20:48:13 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/rel.h,v 1.123 2010/02/09 21:43:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -125,8 +125,6 @@ typedef struct RelationData
 	RelFileNode rd_node;		/* relation physical identifier */
 	/* use "struct" here to avoid needing to include smgr.h: */
 	struct SMgrRelationData *rd_smgr;	/* cached file handle, or NULL */
-	BlockNumber rd_targblock;	/* current insertion target block, or
-								 * InvalidBlockNumber */
 	int			rd_refcnt;		/* reference count */
 	bool		rd_istemp;		/* rel is a temporary relation */
 	bool		rd_islocaltemp; /* rel is a temp rel of this session */
@@ -211,13 +209,6 @@ typedef struct RelationData
 	 * version of the main heap, not the toast table itself.)
 	 */
 	Oid			rd_toastoid;	/* Real TOAST table's OID, or InvalidOid */
-
-	/*
-	 * sizes of the free space and visibility map forks, or InvalidBlockNumber
-	 * if not known yet
-	 */
-	BlockNumber rd_fsm_nblocks;
-	BlockNumber rd_vm_nblocks;
 
 	/* use "struct" here to avoid needing to include pgstat.h: */
 	struct PgStat_TableStatus *pgstat_info;		/* statistics collection area */
@@ -372,6 +363,26 @@ typedef struct StdRdOptions
 			smgrclose((relation)->rd_smgr); \
 			Assert((relation)->rd_smgr == NULL); \
 		} \
+	} while (0)
+
+/*
+ * RelationGetTargetBlock
+ *		Fetch relation's current insertion target block.
+ *
+ * Returns InvalidBlockNumber if there is no current target block.  Note
+ * that the target block status is discarded on any smgr-level invalidation.
+ */
+#define RelationGetTargetBlock(relation) \
+	( (relation)->rd_smgr != NULL ? (relation)->rd_smgr->smgr_targblock : InvalidBlockNumber )
+
+/*
+ * RelationSetTargetBlock
+ *		Set relation's current insertion target block.
+ */
+#define RelationSetTargetBlock(relation, targblock) \
+	do { \
+		RelationOpenSmgr(relation); \
+		(relation)->rd_smgr->smgr_targblock = (targblock); \
 	} while (0)
 
 /*
