@@ -7,6 +7,11 @@
 
 exec sql include ../regression;
 
+#ifdef WIN32
+#define isinf(x) ((_fpclass(x) == _FPCLASS_PINF) || (_fpclass(x) == _FPCLASS_NINF))
+#define isnan(x) _isnan(x)
+#endif   /* WIN32 */
+
 int
 main(void)
 {
