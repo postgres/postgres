@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/port/win32/mingwcompat.c,v 1.9 2010/02/09 19:55:14 mha Exp $
+ *	  $PostgreSQL: pgsql/src/backend/port/win32/mingwcompat.c,v 1.10 2010/02/09 20:22:20 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,7 +16,7 @@
 #ifndef WIN32_ONLY_COMPILER
 /*
  * MingW defines an extern to this struct, but the actual struct isn't present
- * in any library. It's trivial enough that we can safely defined it
+ * in any library. It's trivial enough that we can safely define it
  * ourselves.
  */
 const struct in6_addr in6addr_any = {{{0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0}}};
