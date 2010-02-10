@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.369 2010/02/08 09:08:51 heikki Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.370 2010/02/10 08:25:25 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -5085,16 +5085,14 @@ exitArchiveRecovery(TimeLineID endTLI, uint32 endLogId, uint32 endLogSeg)
 	UpdateMinRecoveryPoint(InvalidXLogRecPtr, true);
 
 	/*
-	 * We should have the ending log segment currently open.  Verify, and then
-	 * close it (to avoid problems on Windows with trying to rename or delete
-	 * an open file).
+	 * If the ending log segment is still open, close it (to avoid
+	 * problems on Windows with trying to rename or delete an open file).
 	 */
-	Assert(readFile >= 0);
-	Assert(readId == endLogId);
-	Assert(readSeg == endLogSeg);
-
-	close(readFile);
-	readFile = -1;
+	if (readFile >= 0)
+	{
+		close(readFile);
+		readFile = -1;
+	}
 
 	/*
 	 * If the segment was fetched from archival storage, we want to replace
