@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.263 2010/01/02 16:57:47 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.264 2010/02/10 03:38:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -71,11 +71,15 @@ static double preprocess_limit(PlannerInfo *root,
 static void preprocess_groupclause(PlannerInfo *root);
 static bool choose_hashed_grouping(PlannerInfo *root,
 					   double tuple_fraction, double limit_tuples,
+					   double path_rows, int path_width,
 					   Path *cheapest_path, Path *sorted_path,
 					   double dNumGroups, AggClauseCounts *agg_counts);
 static bool choose_hashed_distinct(PlannerInfo *root,
-					   Plan *input_plan, List *input_pathkeys,
 					   double tuple_fraction, double limit_tuples,
+					   double path_rows, int path_width,
+					   Cost cheapest_startup_cost, Cost cheapest_total_cost,
+					   Cost sorted_startup_cost, Cost sorted_total_cost,
+					   List *sorted_pathkeys,
 					   double dNumDistinctRows);
 static List *make_subplanTargetList(PlannerInfo *root, List *tlist,
 					   AttrNumber **groupColIdx, bool *need_tlist_eval);
@@ -855,6 +859,8 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 	Plan	   *result_plan;
 	List	   *current_pathkeys;
 	double		dNumGroups = 0;
+	bool		use_hashed_distinct = false;
+	bool		tested_hashed_distinct = false;
 
 	/* Tweak caller-supplied tuple_fraction if have LIMIT/OFFSET */
 	if (parse->limitCount || parse->limitOffset)
@@ -945,6 +951,8 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 		long		numGroups = 0;
 		AggClauseCounts agg_counts;
 		int			numGroupCols;
+		double		path_rows;
+		int			path_width;
 		bool		use_hashed_grouping = false;
 		WindowFuncLists *wflists = NULL;
 		List	   *activeWindows = NIL;
@@ -1088,43 +1096,54 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 					  &cheapest_path, &sorted_path, &dNumGroups);
 
 		/*
-		 * If grouping, decide whether to use sorted or hashed grouping.
+		 * Extract rowcount and width estimates for possible use in grouping
+		 * decisions.  Beware here of the possibility that
+		 * cheapest_path->parent is NULL (ie, there is no FROM clause).
 		 */
+		if (cheapest_path->parent)
+		{
+			path_rows = cheapest_path->parent->rows;
+			path_width = cheapest_path->parent->width;
+		}
+		else
+		{
+			path_rows = 1;				/* assume non-set result */
+			path_width = 100;			/* arbitrary */
+		}
+
 		if (parse->groupClause)
 		{
-			bool		can_hash;
-			bool		can_sort;
-
 			/*
-			 * Executor doesn't support hashed aggregation with DISTINCT or
-			 * ORDER BY aggregates.  (Doing so would imply storing *all* the
-			 * input values in the hash table, and/or running many sorts in
-			 * parallel, either of which seems like a certain loser.)
+			 * If grouping, decide whether to use sorted or hashed grouping.
 			 */
-			can_hash = (agg_counts.numOrderedAggs == 0 &&
-						grouping_is_hashable(parse->groupClause));
-			can_sort = grouping_is_sortable(parse->groupClause);
-			if (can_hash && can_sort)
-			{
-				/* we have a meaningful choice to make ... */
-				use_hashed_grouping =
-					choose_hashed_grouping(root,
-										   tuple_fraction, limit_tuples,
-										   cheapest_path, sorted_path,
-										   dNumGroups, &agg_counts);
-			}
-			else if (can_hash)
-				use_hashed_grouping = true;
-			else if (can_sort)
-				use_hashed_grouping = false;
-			else
-				ereport(ERROR,
-						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("could not implement GROUP BY"),
-						 errdetail("Some of the datatypes only support hashing, while others only support sorting.")));
-
+			use_hashed_grouping =
+				choose_hashed_grouping(root,
+									   tuple_fraction, limit_tuples,
+									   path_rows, path_width,
+									   cheapest_path, sorted_path,
+									   dNumGroups, &agg_counts);
 			/* Also convert # groups to long int --- but 'ware overflow! */
 			numGroups = (long) Min(dNumGroups, (double) LONG_MAX);
+		}
+		else if (parse->distinctClause && sorted_path &&
+				 !root->hasHavingQual && !parse->hasAggs && !activeWindows)
+		{
+			/*
+			 * We'll reach the DISTINCT stage without any intermediate
+			 * processing, so figure out whether we will want to hash or not
+			 * so we can choose whether to use cheapest or sorted path.
+			 */
+			use_hashed_distinct =
+				choose_hashed_distinct(root,
+									   tuple_fraction, limit_tuples,
+									   path_rows, path_width,
+									   cheapest_path->startup_cost,
+									   cheapest_path->total_cost,
+									   sorted_path->startup_cost,
+									   sorted_path->total_cost,
+									   sorted_path->pathkeys,
+									   dNumGroups);
+			tested_hashed_distinct = true;
 		}
 
 		/*
@@ -1132,7 +1151,7 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 		 * always read all the input tuples, so use the cheapest-total path.
 		 * Otherwise, trust query_planner's decision about which to use.
 		 */
-		if (use_hashed_grouping || !sorted_path)
+		if (use_hashed_grouping || use_hashed_distinct || !sorted_path)
 			best_path = cheapest_path;
 		else
 			best_path = sorted_path;
@@ -1506,9 +1525,6 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 	{
 		double		dNumDistinctRows;
 		long		numDistinctRows;
-		bool		use_hashed_distinct;
-		bool		can_sort;
-		bool		can_hash;
 
 		/*
 		 * If there was grouping or aggregation, use the current number of
@@ -1524,37 +1540,25 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 		/* Also convert to long int --- but 'ware overflow! */
 		numDistinctRows = (long) Min(dNumDistinctRows, (double) LONG_MAX);
 
-		/*
-		 * If we have a sortable DISTINCT ON clause, we always use sorting.
-		 * This enforces the expected behavior of DISTINCT ON.
-		 */
-		can_sort = grouping_is_sortable(parse->distinctClause);
-		if (can_sort && parse->hasDistinctOn)
-			use_hashed_distinct = false;
-		else
+		/* Choose implementation method if we didn't already */
+		if (!tested_hashed_distinct)
 		{
-			can_hash = grouping_is_hashable(parse->distinctClause);
-			if (can_hash && can_sort)
-			{
-				/* we have a meaningful choice to make ... */
-				use_hashed_distinct =
-					choose_hashed_distinct(root,
-										   result_plan, current_pathkeys,
-										   tuple_fraction, limit_tuples,
-										   dNumDistinctRows);
-			}
-			else if (can_hash)
-				use_hashed_distinct = true;
-			else if (can_sort)
-				use_hashed_distinct = false;
-			else
-			{
-				ereport(ERROR,
-						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("could not implement DISTINCT"),
-						 errdetail("Some of the datatypes only support hashing, while others only support sorting.")));
-				use_hashed_distinct = false;	/* keep compiler quiet */
-			}
+			/*
+			 * At this point, either hashed or sorted grouping will have to
+			 * work from result_plan, so we pass that as both "cheapest" and
+			 * "sorted".
+			 */
+			use_hashed_distinct =
+				choose_hashed_distinct(root,
+									   tuple_fraction, limit_tuples,
+									   result_plan->plan_rows,
+									   result_plan->plan_width,
+									   result_plan->startup_cost,
+									   result_plan->total_cost,
+									   result_plan->startup_cost,
+									   result_plan->total_cost,
+									   current_pathkeys,
+									   dNumDistinctRows);
 		}
 
 		if (use_hashed_distinct)
@@ -2155,22 +2159,48 @@ preprocess_groupclause(PlannerInfo *root)
 /*
  * choose_hashed_grouping - should we use hashed grouping?
  *
- * Note: this is only applied when both alternatives are actually feasible.
+ * Returns TRUE to select hashing, FALSE to select sorting.
  */
 static bool
 choose_hashed_grouping(PlannerInfo *root,
 					   double tuple_fraction, double limit_tuples,
+					   double path_rows, int path_width,
 					   Path *cheapest_path, Path *sorted_path,
 					   double dNumGroups, AggClauseCounts *agg_counts)
 {
-	int			numGroupCols = list_length(root->parse->groupClause);
-	double		cheapest_path_rows;
-	int			cheapest_path_width;
+	Query	   *parse = root->parse;
+	int			numGroupCols = list_length(parse->groupClause);
+	bool		can_hash;
+	bool		can_sort;
 	Size		hashentrysize;
 	List	   *target_pathkeys;
 	List	   *current_pathkeys;
 	Path		hashed_p;
 	Path		sorted_p;
+
+	/*
+	 * Executor doesn't support hashed aggregation with DISTINCT or ORDER BY
+	 * aggregates.  (Doing so would imply storing *all* the input values in
+	 * the hash table, and/or running many sorts in parallel, either of which
+	 * seems like a certain loser.)
+	 */
+	can_hash = (agg_counts->numOrderedAggs == 0 &&
+				grouping_is_hashable(parse->groupClause));
+	can_sort = grouping_is_sortable(parse->groupClause);
+
+	/* Quick out if only one choice is workable */
+	if (!(can_hash && can_sort))
+	{
+		if (can_hash)
+			return true;
+		else if (can_sort)
+			return false;
+		else
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("could not implement GROUP BY"),
+					 errdetail("Some of the datatypes only support hashing, while others only support sorting.")));
+	}
 
 	/* Prefer sorting when enable_hashagg is off */
 	if (!enable_hashagg)
@@ -2179,23 +2209,10 @@ choose_hashed_grouping(PlannerInfo *root,
 	/*
 	 * Don't do it if it doesn't look like the hashtable will fit into
 	 * work_mem.
-	 *
-	 * Beware here of the possibility that cheapest_path->parent is NULL. This
-	 * could happen if user does something silly like SELECT 'foo' GROUP BY 1;
 	 */
-	if (cheapest_path->parent)
-	{
-		cheapest_path_rows = cheapest_path->parent->rows;
-		cheapest_path_width = cheapest_path->parent->width;
-	}
-	else
-	{
-		cheapest_path_rows = 1; /* assume non-set result */
-		cheapest_path_width = 100;		/* arbitrary */
-	}
 
 	/* Estimate per-hash-entry space at tuple width... */
-	hashentrysize = MAXALIGN(cheapest_path_width) + MAXALIGN(sizeof(MinimalTupleData));
+	hashentrysize = MAXALIGN(path_width) + MAXALIGN(sizeof(MinimalTupleData));
 	/* plus space for pass-by-ref transition values... */
 	hashentrysize += agg_counts->transitionSpace;
 	/* plus the per-hash-entry overhead */
@@ -2236,11 +2253,11 @@ choose_hashed_grouping(PlannerInfo *root,
 	cost_agg(&hashed_p, root, AGG_HASHED, agg_counts->numAggs,
 			 numGroupCols, dNumGroups,
 			 cheapest_path->startup_cost, cheapest_path->total_cost,
-			 cheapest_path_rows);
+			 path_rows);
 	/* Result of hashed agg is always unsorted */
 	if (target_pathkeys)
 		cost_sort(&hashed_p, root, target_pathkeys, hashed_p.total_cost,
-				  dNumGroups, cheapest_path_width, limit_tuples);
+				  dNumGroups, path_width, limit_tuples);
 
 	if (sorted_path)
 	{
@@ -2257,24 +2274,24 @@ choose_hashed_grouping(PlannerInfo *root,
 	if (!pathkeys_contained_in(root->group_pathkeys, current_pathkeys))
 	{
 		cost_sort(&sorted_p, root, root->group_pathkeys, sorted_p.total_cost,
-				  cheapest_path_rows, cheapest_path_width, -1.0);
+				  path_rows, path_width, -1.0);
 		current_pathkeys = root->group_pathkeys;
 	}
 
-	if (root->parse->hasAggs)
+	if (parse->hasAggs)
 		cost_agg(&sorted_p, root, AGG_SORTED, agg_counts->numAggs,
 				 numGroupCols, dNumGroups,
 				 sorted_p.startup_cost, sorted_p.total_cost,
-				 cheapest_path_rows);
+				 path_rows);
 	else
 		cost_group(&sorted_p, root, numGroupCols, dNumGroups,
 				   sorted_p.startup_cost, sorted_p.total_cost,
-				   cheapest_path_rows);
+				   path_rows);
 	/* The Agg or Group node will preserve ordering */
 	if (target_pathkeys &&
 		!pathkeys_contained_in(target_pathkeys, current_pathkeys))
 		cost_sort(&sorted_p, root, target_pathkeys, sorted_p.total_cost,
-				  dNumGroups, cheapest_path_width, limit_tuples);
+				  dNumGroups, path_width, limit_tuples);
 
 	/*
 	 * Now make the decision using the top-level tuple fraction.  First we
@@ -2297,6 +2314,9 @@ choose_hashed_grouping(PlannerInfo *root,
  *
  * This is fairly similar to choose_hashed_grouping, but there are enough
  * differences that it doesn't seem worth trying to unify the two functions.
+ * (One difference is that we sometimes apply this after forming a Plan,
+ * so the input alternatives can't be represented as Paths --- instead we
+ * pass in the costs as individual variables.)
  *
  * But note that making the two choices independently is a bit bogus in
  * itself.	If the two could be combined into a single choice operation
@@ -2306,20 +2326,50 @@ choose_hashed_grouping(PlannerInfo *root,
  * extra preference to using a sorting implementation when a common sort key
  * is available ... and that's not necessarily wrong anyway.
  *
- * Note: this is only applied when both alternatives are actually feasible.
+ * Returns TRUE to select hashing, FALSE to select sorting.
  */
 static bool
 choose_hashed_distinct(PlannerInfo *root,
-					   Plan *input_plan, List *input_pathkeys,
 					   double tuple_fraction, double limit_tuples,
+					   double path_rows, int path_width,
+					   Cost cheapest_startup_cost, Cost cheapest_total_cost,
+					   Cost sorted_startup_cost, Cost sorted_total_cost,
+					   List *sorted_pathkeys,
 					   double dNumDistinctRows)
 {
-	int			numDistinctCols = list_length(root->parse->distinctClause);
+	Query	   *parse = root->parse;
+	int			numDistinctCols = list_length(parse->distinctClause);
+	bool		can_sort;
+	bool		can_hash;
 	Size		hashentrysize;
 	List	   *current_pathkeys;
 	List	   *needed_pathkeys;
 	Path		hashed_p;
 	Path		sorted_p;
+
+	/*
+	 * If we have a sortable DISTINCT ON clause, we always use sorting.
+	 * This enforces the expected behavior of DISTINCT ON.
+	 */
+	can_sort = grouping_is_sortable(parse->distinctClause);
+	if (can_sort && parse->hasDistinctOn)
+		return false;
+
+	can_hash = grouping_is_hashable(parse->distinctClause);
+
+	/* Quick out if only one choice is workable */
+	if (!(can_hash && can_sort))
+	{
+		if (can_hash)
+			return true;
+		else if (can_sort)
+			return false;
+		else
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("could not implement DISTINCT"),
+					 errdetail("Some of the datatypes only support hashing, while others only support sorting.")));
+	}
 
 	/* Prefer sorting when enable_hashagg is off */
 	if (!enable_hashagg)
@@ -2329,7 +2379,7 @@ choose_hashed_distinct(PlannerInfo *root,
 	 * Don't do it if it doesn't look like the hashtable will fit into
 	 * work_mem.
 	 */
-	hashentrysize = MAXALIGN(input_plan->plan_width) + MAXALIGN(sizeof(MinimalTupleData));
+	hashentrysize = MAXALIGN(path_width) + MAXALIGN(sizeof(MinimalTupleData));
 
 	if (hashentrysize * dNumDistinctRows > work_mem * 1024L)
 		return false;
@@ -2340,8 +2390,8 @@ choose_hashed_distinct(PlannerInfo *root,
 	 * output won't be sorted may be a loss; so we need to do an actual cost
 	 * comparison.
 	 *
-	 * We need to consider input_plan + hashagg [+ final sort] versus
-	 * input_plan [+ sort] + group [+ final sort] where brackets indicate a
+	 * We need to consider cheapest_path + hashagg [+ final sort] versus
+	 * sorted_path [+ sort] + group [+ final sort] where brackets indicate a
 	 * step that may not be needed.
 	 *
 	 * These path variables are dummies that just hold cost fields; we don't
@@ -2349,25 +2399,25 @@ choose_hashed_distinct(PlannerInfo *root,
 	 */
 	cost_agg(&hashed_p, root, AGG_HASHED, 0,
 			 numDistinctCols, dNumDistinctRows,
-			 input_plan->startup_cost, input_plan->total_cost,
-			 input_plan->plan_rows);
+			 cheapest_startup_cost, cheapest_total_cost,
+			 path_rows);
 
 	/*
 	 * Result of hashed agg is always unsorted, so if ORDER BY is present we
 	 * need to charge for the final sort.
 	 */
-	if (root->parse->sortClause)
+	if (parse->sortClause)
 		cost_sort(&hashed_p, root, root->sort_pathkeys, hashed_p.total_cost,
-				  dNumDistinctRows, input_plan->plan_width, limit_tuples);
+				  dNumDistinctRows, path_width, limit_tuples);
 
 	/*
 	 * Now for the GROUP case.	See comments in grouping_planner about the
 	 * sorting choices here --- this code should match that code.
 	 */
-	sorted_p.startup_cost = input_plan->startup_cost;
-	sorted_p.total_cost = input_plan->total_cost;
-	current_pathkeys = input_pathkeys;
-	if (root->parse->hasDistinctOn &&
+	sorted_p.startup_cost = sorted_startup_cost;
+	sorted_p.total_cost = sorted_total_cost;
+	current_pathkeys = sorted_pathkeys;
+	if (parse->hasDistinctOn &&
 		list_length(root->distinct_pathkeys) <
 		list_length(root->sort_pathkeys))
 		needed_pathkeys = root->sort_pathkeys;
@@ -2381,15 +2431,15 @@ choose_hashed_distinct(PlannerInfo *root,
 		else
 			current_pathkeys = root->sort_pathkeys;
 		cost_sort(&sorted_p, root, current_pathkeys, sorted_p.total_cost,
-				  input_plan->plan_rows, input_plan->plan_width, -1.0);
+				  path_rows, path_width, -1.0);
 	}
 	cost_group(&sorted_p, root, numDistinctCols, dNumDistinctRows,
 			   sorted_p.startup_cost, sorted_p.total_cost,
-			   input_plan->plan_rows);
-	if (root->parse->sortClause &&
+			   path_rows);
+	if (parse->sortClause &&
 		!pathkeys_contained_in(root->sort_pathkeys, current_pathkeys))
 		cost_sort(&sorted_p, root, root->sort_pathkeys, sorted_p.total_cost,
-				  dNumDistinctRows, input_plan->plan_width, limit_tuples);
+				  dNumDistinctRows, path_width, limit_tuples);
 
 	/*
 	 * Now make the decision using the top-level tuple fraction.  First we
@@ -2407,7 +2457,7 @@ choose_hashed_distinct(PlannerInfo *root,
 	return false;
 }
 
-/*---------------
+/*
  * make_subplanTargetList
  *	  Generate appropriate target list when grouping is required.
  *
@@ -2446,7 +2496,6 @@ choose_hashed_distinct(PlannerInfo *root,
  *			result tlist.
  *
  * The result is the targetlist to be passed to the subplan.
- *---------------
  */
 static List *
 make_subplanTargetList(PlannerInfo *root,
