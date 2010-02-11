@@ -4,7 +4,7 @@
  *
  *	Copyright (c) 2006-2010, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/include/access/gin.h,v 1.36 2010/01/02 16:58:00 momjian Exp $
+ *	$PostgreSQL: pgsql/src/include/access/gin.h,v 1.37 2010/02/11 14:29:50 teodor Exp $
  *--------------------------------------------------------------------------
  */
 #ifndef GIN_H
@@ -13,6 +13,7 @@
 #include "access/genam.h"
 #include "access/itup.h"
 #include "access/xlog.h"
+#include "utils/rbtree.h"
 #include "fmgr.h"
 
 
@@ -25,14 +26,6 @@
 #define GIN_CONSISTENT_PROC			   4
 #define GIN_COMPARE_PARTIAL_PROC	   5
 #define GINNProcs					   5
-
-/*
- * Max depth allowed in search tree during bulk inserts.  This is to keep from
- * degenerating to O(N^2) behavior when the tree is unbalanced due to sorted
- * or nearly-sorted input.	(Perhaps it would be better to use a balanced-tree
- * algorithm, but in common cases that would only add useless overhead.)
- */
-#define GIN_MAX_TREE_DEPTH 100
 
 /*
  * Page opaque data in a inverted index page.
@@ -570,27 +563,23 @@ extern Datum ginarrayconsistent(PG_FUNCTION_ARGS);
 /* ginbulk.c */
 typedef struct EntryAccumulator
 {
-	OffsetNumber attnum;
 	Datum		value;
 	uint32		length;
 	uint32		number;
-	ItemPointerData *list;
+	OffsetNumber attnum;
 	bool		shouldSort;
-	struct EntryAccumulator *left;
-	struct EntryAccumulator *right;
+	ItemPointerData *list;
 } EntryAccumulator;
 
 typedef struct
 {
 	GinState   *ginstate;
-	EntryAccumulator *entries;
-	uint32		maxdepth;
-	EntryAccumulator **stack;
-	uint32		stackpos;
 	long		allocatedMemory;
-
 	uint32		length;
-	EntryAccumulator *entryallocator;
+	EntryAccumulator   *entryallocator;
+	ItemPointerData	   *tmpList;
+	RBTree	   *tree;
+	RBTreeIterator *iterator;
 } BuildAccumulator;
 
 extern void ginInitBA(BuildAccumulator *accum);
