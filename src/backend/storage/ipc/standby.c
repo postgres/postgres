@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/standby.c,v 1.10 2010/02/02 22:01:53 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/standby.c,v 1.11 2010/02/11 19:35:22 sriggs Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -290,7 +290,7 @@ ResolveRecoveryConflictWithDatabase(Oid dbid)
 	 */
 	while (CountDBBackends(dbid) > 0)
 	{
-		CancelDBBackends(dbid, PROCSIG_RECOVERY_CONFLICT_TABLESPACE, true);
+		CancelDBBackends(dbid, PROCSIG_RECOVERY_CONFLICT_DATABASE, true);
 
 		/*
 		 * Wait awhile for them to die so that we avoid flooding an
