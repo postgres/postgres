@@ -20,7 +20,7 @@
  * Copyright (c) 1996-2009, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/rbtree.c,v 1.1 2010/02/11 14:29:50 teodor Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/rbtree.c,v 1.2 2010/02/11 22:17:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -320,6 +320,7 @@ rb_insert(RBTree *rb, void *data)
 	/* find where node belongs */
 	current = rb->root;
 	parent = NULL;
+	cmp = 0;
 	while (current != RBNIL)
 	{
 		cmp = rb->comparator(data, current->data, rb->arg);
