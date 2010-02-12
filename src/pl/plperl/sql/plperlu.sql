@@ -1,6 +1,13 @@
 -- Use ONLY plperlu tests here. For plperl/plerlu combined tests
 -- see plperl_plperlu.sql
 
+-- Avoid need for custom_variable_classes = 'plperl'
+LOAD 'plperl';
+
+-- Test plperl.on_plperlu_init gets run
+SET plperl.on_plperlu_init = '$_SHARED{init} = 42';
+DO $$ warn $_SHARED{init} $$ language plperlu;
+
 --
 -- Test compilation of unicode regex - regardless of locale.
 -- This code fails in plain plperl in a non-UTF8 database.

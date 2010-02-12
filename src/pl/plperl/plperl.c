@@ -1,7 +1,7 @@
 /**********************************************************************
  * plperl.c - perl as a procedural language for PostgreSQL
  *
- *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.164 2010/02/12 04:31:14 adunstan Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.165 2010/02/12 19:35:25 adunstan Exp $
  *
  **********************************************************************/
 
@@ -139,7 +139,9 @@ static HTAB *plperl_proc_hash = NULL;
 static HTAB *plperl_query_hash = NULL;
 
 static bool plperl_use_strict = false;
-static char *plperl_on_perl_init = NULL;
+static char *plperl_on_init = NULL;
+static char *plperl_on_plperl_init = NULL;
+static char *plperl_on_plperlu_init = NULL;
 static bool plperl_ending = false;
 
 /* this is saved and restored by plperl_call_handler */
@@ -164,7 +166,8 @@ static plperl_proc_desc *compile_plperl_function(Oid fn_oid, bool is_trigger);
 
 static SV  *plperl_hash_from_tuple(HeapTuple tuple, TupleDesc tupdesc);
 static void plperl_init_shared_libs(pTHX);
-static void plperl_safe_init(void);
+static void plperl_trusted_init(void);
+static void plperl_untrusted_init(void);
 static HV  *plperl_spi_execute_fetch_result(SPITupleTable *, int, int);
 static SV  *newSVstring(const char *str);
 static SV **hv_store_string(HV *hv, const char *key, SV *val);
@@ -242,12 +245,36 @@ _PG_init(void)
 							 PGC_USERSET, 0,
 							 NULL, NULL);
 
-	DefineCustomStringVariable("plperl.on_perl_init",
-							gettext_noop("Perl code to execute when the perl interpreter is initialized."),
+	DefineCustomStringVariable("plperl.on_init",
+							gettext_noop("Perl initialization code to execute when a perl interpreter is initialized."),
 							NULL,
-							&plperl_on_perl_init,
+							&plperl_on_init,
 							NULL,
 							PGC_SIGHUP, 0,
+							NULL, NULL);
+
+	/*
+	 * plperl.on_plperl_init is currently PGC_SUSET to avoid issues whereby a user
+	 * who doesn't have USAGE privileges on the plperl language could possibly use
+	 * SET plperl.on_plperl_init='...' to influence the behaviour of any existing
+	 * plperl function that they can EXECUTE (which may be security definer).
+	 * Set http://archives.postgresql.org/pgsql-hackers/2010-02/msg00281.php
+	 * and the overall thread.
+	 */
+	DefineCustomStringVariable("plperl.on_plperl_init",
+							gettext_noop("Perl initialization code to execute once when plperl is first used."),
+							NULL,
+							&plperl_on_plperl_init,
+							NULL,
+							PGC_SUSET, 0,
+							NULL, NULL);
+
+	DefineCustomStringVariable("plperl.on_plperlu_init",
+							gettext_noop("Perl initialization code to execute once when plperlu is first used."),
+							NULL,
+							&plperl_on_plperlu_init,
+							NULL,
+							PGC_SUSET, 0,
 							NULL, NULL);
 
 	EmitWarningsOnPlaceholders("plperl");
@@ -285,7 +312,9 @@ plperl_fini(int code, Datum arg)
 	elog(DEBUG3, "plperl_fini");
 
 	/*
-	 * Disable use of spi_* functions when running END/DESTROY code.
+	 * Indicate that perl is terminating.
+	 * Disables use of spi_* functions when running END/DESTROY code.
+	 * See check_spi_usage_allowed().
 	 * Could be enabled in future, with care, using a transaction
 	 * http://archives.postgresql.org/pgsql-hackers/2010-01/msg02743.php
 	 */
@@ -340,11 +369,13 @@ select_perl_context(bool trusted)
 
 		if (trusted)
 		{
+			plperl_trusted_init();
 			plperl_trusted_interp = plperl_held_interp;
 			interp_state = INTERP_TRUSTED;
 		}
 		else
 		{
+			plperl_untrusted_init();
 			plperl_untrusted_interp = plperl_held_interp;
 			interp_state = INTERP_UNTRUSTED;
 		}
@@ -353,10 +384,14 @@ select_perl_context(bool trusted)
 	{
 #ifdef MULTIPLICITY
 		PerlInterpreter *plperl = plperl_init_interp();
-		if (trusted)
+		if (trusted) {
+			plperl_trusted_init();
 			plperl_trusted_interp = plperl;
-		else
+		}
+		else {
+			plperl_untrusted_init();
 			plperl_untrusted_interp = plperl;
+		}
 		interp_state = INTERP_BOTH;
 #else
 		elog(ERROR,
@@ -367,17 +402,11 @@ select_perl_context(bool trusted)
 	trusted_context = trusted;
 
 	/*
-	 * initialization - done after plperl_*_interp and trusted_context
-	 * updates above to ensure a clean state (and thereby avoid recursion via
-	 * plperl_safe_init caling plperl_call_perl_func for utf8fix)
-	 */
-	if (trusted) {
-		plperl_safe_init();
-		PL_ppaddr[OP_REQUIRE] = pp_require_safe;
-	}
-
-	/*
-	 * enable access to the database
+	 * Since the timing of first use of PL/Perl can't be predicted,
+	 * any database interaction during initialization is problematic.
+	 * Including, but not limited to, security definer issues.
+	 * So we only enable access to the database AFTER on_*_init code has run.
+	 * See http://archives.postgresql.org/message-id/20100127143318.GE713@timac.local
 	 */
 	newXS("PostgreSQL::InServer::SPI::bootstrap",
 		boot_PostgreSQL__InServer__SPI, __FILE__);
@@ -474,10 +503,10 @@ plperl_init_interp(void)
 	save_time = loc ? pstrdup(loc) : NULL;
 #endif
 
-	if (plperl_on_perl_init)
+	if (plperl_on_init)
 	{
 		embedding[nargs++] = "-e";
-		embedding[nargs++] = plperl_on_perl_init;
+		embedding[nargs++] = plperl_on_init;
 	}
 
 	/****
@@ -645,7 +674,7 @@ plperl_destroy_interp(PerlInterpreter **interp)
 
 
 static void
-plperl_safe_init(void)
+plperl_trusted_init(void)
 {
 	SV		   *safe_version_sv;
 	IV			safe_version_x100;
@@ -684,37 +713,63 @@ plperl_safe_init(void)
 		if (GetDatabaseEncoding() == PG_UTF8)
 		{
 			/*
-			 * Fill in just enough information to set up this perl function in
-			 * the safe container and call it. For some reason not entirely
-			 * clear, it prevents errors that can arise from the regex code
-			 * later trying to load utf8 modules.
+			 * Force loading of utf8 module now to prevent errors that can
+			 * arise from the regex code later trying to load utf8 modules.
 			 * See http://rt.perl.org/rt3/Ticket/Display.html?id=47576
 			 */
-			plperl_proc_desc desc;
-			FunctionCallInfoData fcinfo;
-			SV *perlret;
+			eval_pv("my $a=chr(0x100); return $a =~ /\\xa9/i", FALSE);
+			if (SvTRUE(ERRSV))
+			{
+				ereport(ERROR,
+					(errcode(ERRCODE_INTERNAL_ERROR),
+						errmsg("while executing utf8fix"),
+						errdetail("%s", strip_trailing_ws(SvPV_nolen(ERRSV))) ));
+			}
+		}
 
-			desc.proname = "utf8fix";
-			desc.lanpltrusted = true;
-			desc.nargs = 1;
-			desc.arg_is_rowtype[0] = false;
-			fmgr_info(F_TEXTOUT, &(desc.arg_out_func[0]));
+		/* switch to the safe require opcode */
+		PL_ppaddr[OP_REQUIRE] = pp_require_safe;
 
-			/* compile the function */
-			plperl_create_sub(&desc,
-					"return shift =~ /\\xa9/i ? 'true' : 'false' ;", 0);
+		if (plperl_on_plperl_init && *plperl_on_plperl_init)
+		{
+			dSP;
 
-			/* set up to call the function with a single text argument 'a' */
-			fcinfo.arg[0] = CStringGetTextDatum("a");
-			fcinfo.argnull[0] = false;
+			PUSHMARK(SP);
+			XPUSHs(sv_2mortal(newSVstring(plperl_on_plperl_init)));
+			PUTBACK;
 
-			/* and make the call */
-			perlret = plperl_call_perl_func(&desc, &fcinfo);
+			call_pv("::safe_eval", G_VOID);
+			SPAGAIN;
 
-			SvREFCNT_dec(perlret);
+			if (SvTRUE(ERRSV))
+			{
+				ereport(ERROR,
+					(errcode(ERRCODE_INTERNAL_ERROR),
+						errmsg("while executing plperl.on_plperl_init"),
+						errdetail("%s", strip_trailing_ws(SvPV_nolen(ERRSV))) ));
+			}
+		}
+
+	}
+}
+
+
+static void
+plperl_untrusted_init(void)
+{
+	if (plperl_on_plperlu_init && *plperl_on_plperlu_init)
+	{
+		eval_pv(plperl_on_plperlu_init, FALSE);
+		if (SvTRUE(ERRSV))
+		{
+			ereport(ERROR,
+				(errcode(ERRCODE_INTERNAL_ERROR),
+					errmsg("while executing plperl.on_plperlu_init"),
+					errdetail("%s", strip_trailing_ws(SvPV_nolen(ERRSV))) ));
 		}
 	}
 }
+
 
 /*
  * Perl likes to put a newline after its error messages; clean up such
@@ -1284,6 +1339,7 @@ plperl_init_shared_libs(pTHX)
 	newXS("DynaLoader::boot_DynaLoader", boot_DynaLoader, file);
 	newXS("PostgreSQL::InServer::Util::bootstrap",
 		boot_PostgreSQL__InServer__Util, file);
+	/* newXS for...::SPI::bootstrap is in select_perl_context() */
 }
 
 
@@ -2023,6 +2079,7 @@ plperl_hash_from_tuple(HeapTuple tuple, TupleDesc tupdesc)
 static void
 check_spi_usage_allowed()
 {
+	/* see comment in plperl_fini() */
 	if (plperl_ending) {
 		/* simple croak as we don't want to involve PostgreSQL code */
 		croak("SPI functions can not be used in END blocks");

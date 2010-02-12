@@ -1,6 +1,6 @@
 
 
-#  $PostgreSQL: pgsql/src/pl/plperl/plc_safe_ok.pl,v 1.3 2010/01/26 23:11:56 adunstan Exp $
+#  $PostgreSQL: pgsql/src/pl/plperl/plc_safe_ok.pl,v 1.4 2010/02/12 19:35:25 adunstan Exp $
 
 use strict;
 use vars qw($PLContainer);
@@ -31,6 +31,7 @@ $PLContainer->permit(qw[caller]);
 }) or die $@;
 $PLContainer->deny(qw[caller]);
 
+# called directly for plperl.on_plperl_init
 sub ::safe_eval {
 	my $ret = $PLContainer->reval(shift);
 	$@ =~ s/\(eval \d+\) //g if $@;

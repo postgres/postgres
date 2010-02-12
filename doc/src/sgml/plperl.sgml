@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/plperl.sgml,v 2.79 2010/02/05 18:11:46 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/plperl.sgml,v 2.80 2010/02/12 19:35:25 adunstan Exp $ -->
 
  <chapter id="plperl">
   <title>PL/Perl - Perl Procedural Language</title>
@@ -831,6 +831,13 @@ $$ LANGUAGE plperl;
    <literal>return $_SHARED{myquote}-&gt;($_[0]);</literal>
    at the expense of readability.)
   </para>
+
+  <para>
+    The <varname>%_SHARED</varname> variable and other global state within
+    the language is public data, available to all PL/Perl functions within a
+    session. Use with care, especially in situations that involve use of 
+    multiple roles or <literal>SECURITY DEFINER</> functions.
+  </para>
  </sect1>
 
  <sect1 id="plperl-trusted">
@@ -1127,26 +1134,27 @@ CREATE TRIGGER test_valid_id_trig
 
   <variablelist>
 
-     <varlistentry id="guc-plperl-on-perl-init" xreflabel="plperl.on_perl_init">
-      <term><varname>plperl.on_perl_init</varname> (<type>string</type>)</term>
+     <varlistentry id="guc-plperl-on-init" xreflabel="plperl.on_init">
+      <term><varname>plperl.on_init</varname> (<type>string</type>)</term>
       <indexterm>
-       <primary><varname>plperl.on_perl_init</> configuration parameter</primary>
+       <primary><varname>plperl.on_init</> configuration parameter</primary>
       </indexterm>
       <listitem>
        <para>
-       Specifies perl code to be executed when a perl interpreter is first initialized.
+       Specifies Perl code to be executed when a Perl interpreter is first initialized
+       and before it is specialized for use by <literal>plperl</> or <literal>plperlu</>.
        The SPI functions are not available when this code is executed.
        If the code fails with an error it will abort the initialization of the interpreter
        and propagate out to the calling query, causing the current transaction
        or subtransaction to be aborted.
        </para>
        <para>
-       The perl code is limited to a single string. Longer code can be placed
-       into a module and loaded by the <literal>on_perl_init</> string.
+       The Perl code is limited to a single string. Longer code can be placed
+       into a module and loaded by the <literal>on_init</> string.
        Examples:
 <programlisting>
-plplerl.on_perl_init = '$ENV{NYTPROF}="start=no"; require Devel::NYTProf::PgPLPerl'
-plplerl.on_perl_init = 'use lib "/my/app"; use MyApp::PgInit;'
+plplerl.on_init = '$ENV{NYTPROF}="start=no"; require Devel::NYTProf::PgPLPerl'
+plplerl.on_init = 'use lib "/my/app"; use MyApp::PgInit;'
 </programlisting>
        </para>
        <para>
@@ -1156,6 +1164,56 @@ plplerl.on_perl_init = 'use lib "/my/app"; use MyApp::PgInit;'
        </para>
        <para>
        This parameter can only be set in the postgresql.conf file or on the server command line.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-plperl-on-plperl-init" xreflabel="plperl.on_plperl_init">
+      <term><varname>plperl.on_plperl_init</varname> (<type>string</type>)</term>
+      <term><varname>plperl.on_plperlu_init</varname> (<type>string</type>)</term>
+      <indexterm>
+       <primary><varname>plperl.on_plperl_init</> configuration parameter</primary>
+      </indexterm>
+      <indexterm>
+       <primary><varname>plperl.on_plperlu_init</> configuration parameter</primary>
+      </indexterm>
+      <listitem>
+       <para>
+       These parameters specify Perl code to be executed when the
+       <literal>plperl</>, or <literal>plperlu</> language is first used in a
+       session.  Changes to these parameters after the corresponding language
+       has been used will have no effect.
+       The SPI functions are not available when this code is executed.
+       Only superusers can change these settings.
+       The Perl code in <literal>plperl.on_plperl_init</> can only perform trusted operations.
+       </para>
+       <para>
+       The effect of setting these parameters is very similar to executing a
+       <literal>DO</> command with the Perl code before any other use of the
+       language.  The parameters are useful when you want to execute the Perl
+       code automatically on every connection, or when a connection is not
+       interactive. The parameters can be used by non-superusers by having a
+       superuser execute an <literal>ALTER USER ... SET ...</> command.
+       For example:
+<programlisting>
+ALTER USER joe SET plplerl.on_plperl_init = '$_SHARED{debug} = 1';
+</programlisting>
+       </para>
+       <para>
+       If the code fails with an error it will abort the initialization and
+       propagate out to the calling query, causing the current transaction or
+       subtransaction to be aborted. Any changes within Perl won't be undone.
+       If the language is used again the initialization will be repeated.
+       </para>
+       <para>
+       The difference between these two settings and the 
+       <literal>plperl.on_init</> setting is that these can be used for
+       settings specific to the trusted or untrusted language variant, such
+       as setting values in the <varname>%_SHARED</> variable. By contrast,
+       <literal>plperl.on_init</> is more useful for doing things like
+       setting the library search path for <productname>Perl</> or 
+       loading Perl modules that don't interact directly with 
+       <productname>PostgreSQL</>.
        </para>
       </listitem>
      </varlistentry>
