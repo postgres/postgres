@@ -17,3 +17,49 @@ CONTEXT:  PL/Perl function "bar"
 SELECT * FROM foo(); -- used to cause backend crash (after switching to plperlu)
 ERROR:  syntax error at or near "invalid" at line 4. at line 2.
 CONTEXT:  PL/Perl function "foo"
+-- test redefinition of specific SP switching languages
+-- http://archives.postgresql.org/pgsql-bugs/2010-01/msg00116.php
+-- plperl first
+create or replace function foo(text) returns text language plperl  as 'shift';
+select foo('hey');
+ foo 
+-----
+ hey
+(1 row)
+
+create or replace function foo(text) returns text language plperlu as 'shift';
+select foo('hey');
+ foo 
+-----
+ hey
+(1 row)
+
+create or replace function foo(text) returns text language plperl  as 'shift';
+select foo('hey');
+ foo 
+-----
+ hey
+(1 row)
+
+-- plperlu first
+create or replace function bar(text) returns text language plperlu as 'shift';
+select bar('hey');
+ bar 
+-----
+ hey
+(1 row)
+
+create or replace function bar(text) returns text language plperl  as 'shift';
+select bar('hey');
+ bar 
+-----
+ hey
+(1 row)
+
+create or replace function bar(text) returns text language plperlu as 'shift';
+select bar('hey');
+ bar 
+-----
+ hey
+(1 row)
+
