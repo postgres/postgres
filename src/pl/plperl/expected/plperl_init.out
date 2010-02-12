@@ -1,0 +1,14 @@
+-- test plperl.on_plperl_init errors are fatal
+-- Avoid need for custom_variable_classes = 'plperl'
+LOAD 'plperl';
+SET SESSION plperl.on_plperl_init = ' eval "1+1" ';
+SHOW plperl.on_plperl_init;
+ plperl.on_plperl_init 
+-----------------------
+  eval "1+1" 
+(1 row)
+
+DO $$ warn 42 $$ language plperl;
+ERROR:  while executing plperl.on_plperl_init
+DETAIL:  'eval "string"' trapped by operation mask at line 2.
+CONTEXT:  PL/Perl anonymous code block
