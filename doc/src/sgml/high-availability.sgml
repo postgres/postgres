@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/high-availability.sgml,v 1.41 2010/02/12 08:28:44 heikki Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/high-availability.sgml,v 1.42 2010/02/12 14:53:22 heikki Exp $ -->
 
 <chapter id="high-availability">
  <title>High Availability, Load Balancing, and Replication</title>
@@ -1488,7 +1488,7 @@ primary_conninfo = 'host=192.168.1.50 port=5432 user=foo password=foopass'
     in the server logs
 
 <programlisting>
-LOG:  initializing recovery connections
+LOG:  entering standby mode
 
 ... then some time later ...
 
