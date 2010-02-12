@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.371 2010/02/12 07:36:44 heikki Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.372 2010/02/12 07:56:36 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -8796,8 +8796,9 @@ XLogPageRead(XLogRecPtr *RecPtr, int emode, bool fetching_ckpt,
 					 * that when we later jump backwards to start redo at
 					 * RedoStartLSN, we will have the logs streamed already.
 					 */
-					RequestXLogStreaming(fetching_ckpt ? RedoStartLSN : *RecPtr,
-										 PrimaryConnInfo);
+					if (PrimaryConnInfo)
+						RequestXLogStreaming(fetching_ckpt ? RedoStartLSN : *RecPtr,
+											 PrimaryConnInfo);
 				}
 
 				/*
