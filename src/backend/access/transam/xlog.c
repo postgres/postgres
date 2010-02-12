@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.370 2010/02/10 08:25:25 heikki Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.371 2010/02/12 07:36:44 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2891,21 +2891,36 @@ RestoreArchivedFile(char *path, const char *xlogfname,
 		/*
 		 * command apparently succeeded, but let's make sure the file is
 		 * really there now and has the correct size.
-		 *
-		 * XXX I made wrong-size a fatal error to ensure the DBA would notice
-		 * it, but is that too strong?	We could try to plow ahead with a
-		 * local copy of the file ... but the problem is that there probably
-		 * isn't one, and we'd incorrectly conclude we've reached the end of
-		 * WAL and we're done recovering ...
 		 */
 		if (stat(xlogpath, &stat_buf) == 0)
 		{
 			if (expectedSize > 0 && stat_buf.st_size != expectedSize)
-				ereport(FATAL,
+			{
+				int elevel;
+
+				/*
+				 * If we find a partial file in standby mode, we assume it's
+				 * because it's just being copied to the archive, and keep
+				 * trying.
+				 *
+				 * Otherwise treat a wrong-sized file as FATAL to ensure the
+				 * DBA would notice it, but is that too strong?	We could try
+				 * to plow ahead with a local copy of the file ... but the
+				 * problem is that there probably isn't one, and we'd
+				 * incorrectly conclude we've reached the end of WAL and
+				 * we're done recovering ...
+				 */
+				if (StandbyMode && stat_buf.st_size < expectedSize)
+					elevel = DEBUG1;
+				else
+					elevel = FATAL;
+				ereport(elevel,
 						(errmsg("archive file \"%s\" has wrong size: %lu instead of %lu",
 								xlogfname,
 								(unsigned long) stat_buf.st_size,
 								(unsigned long) expectedSize)));
+				return false;
+			}
 			else
 			{
 				ereport(LOG,
