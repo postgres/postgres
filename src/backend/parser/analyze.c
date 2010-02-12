@@ -17,7 +17,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.400 2010/01/15 22:36:33 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.401 2010/02/12 22:48:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -783,18 +783,18 @@ transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
 
 	qry->commandType = CMD_SELECT;
 
-	/* make FOR UPDATE/FOR SHARE info available to addRangeTableEntry */
-	pstate->p_locking_clause = stmt->lockingClause;
-
-	/* make WINDOW info available for window functions, too */
-	pstate->p_windowdefs = stmt->windowClause;
-
-	/* process the WITH clause */
+	/* process the WITH clause independently of all else */
 	if (stmt->withClause)
 	{
 		qry->hasRecursive = stmt->withClause->recursive;
 		qry->cteList = transformWithClause(pstate, stmt->withClause);
 	}
+
+	/* make FOR UPDATE/FOR SHARE info available to addRangeTableEntry */
+	pstate->p_locking_clause = stmt->lockingClause;
+
+	/* make WINDOW info available for window functions, too */
+	pstate->p_windowdefs = stmt->windowClause;
 
 	/* process the FROM clause */
 	transformFromClause(pstate, stmt->fromClause);
@@ -929,7 +929,7 @@ transformValuesClause(ParseState *pstate, SelectStmt *stmt)
 	Assert(stmt->windowClause == NIL);
 	Assert(stmt->op == SETOP_NONE);
 
-	/* process the WITH clause */
+	/* process the WITH clause independently of all else */
 	if (stmt->withClause)
 	{
 		qry->hasRecursive = stmt->withClause->recursive;
@@ -1149,6 +1149,13 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 
 	qry->commandType = CMD_SELECT;
 
+	/* process the WITH clause independently of all else */
+	if (stmt->withClause)
+	{
+		qry->hasRecursive = stmt->withClause->recursive;
+		qry->cteList = transformWithClause(pstate, stmt->withClause);
+	}
+
 	/*
 	 * Find leftmost leaf SelectStmt; extract the one-time-only items from it
 	 * and from the top-level node.
@@ -1187,13 +1194,6 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("SELECT FOR UPDATE/SHARE is not allowed with UNION/INTERSECT/EXCEPT")));
-
-	/* process the WITH clause */
-	if (stmt->withClause)
-	{
-		qry->hasRecursive = stmt->withClause->recursive;
-		qry->cteList = transformWithClause(pstate, stmt->withClause);
-	}
 
 	/*
 	 * Recursively transform the components of the tree.
