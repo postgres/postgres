@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/high-availability.sgml,v 1.40 2010/02/09 16:50:25 heikki Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/high-availability.sgml,v 1.41 2010/02/12 08:28:44 heikki Exp $ -->
 
 <chapter id="high-availability">
  <title>High Availability, Load Balancing, and Replication</title>
@@ -764,7 +764,7 @@ if (!triggered)
    <para>
     <productname>PostgreSQL</> includes a simple streaming replication
     mechanism, which lets the standby server to stay more up-to-date than
-    file-based replication allows. The standby connects to the primary
+    file-based log shipping allows. The standby connects to the primary
     and the primary starts streaming WAL records from where the standby
     left off, and continues streaming them as they are generated, without
     waiting for the WAL file to be filled. So with streaming replication,
@@ -805,33 +805,23 @@ if (!triggered)
 
      <listitem>
       <para>
-       Set up connections and authentication so that the standby server can
-       successfully connect to the pseudo <literal>replication</> database of
-       the primary server (see
-       <xref linkend="streaming-replication-authentication">). Ensure that
-       <xref linkend="guc-listen-addresses"> and <filename>pg_hba.conf</> are
-       configured appropriately on the primary.
+       Set <xref linkend="guc-listen-addresses"> and authentication options
+       (see <filename>pg_hba.conf</>) so that the standby server can connect to
+       the pseudo <literal>replication</> database of the primary server (see
+       <xref linkend="streaming-replication-authentication">).
       </para>
       <para>
        On systems that support the keepalive socket option, setting
        <xref linkend="guc-tcp-keepalives-idle">,
        <xref linkend="guc-tcp-keepalives-interval"> and
-       <xref linkend="guc-tcp-keepalives-count"> helps you to find the
-       troubles with replication (e.g., the network outage or the failure of
-       the standby server) as soon as possible.
+       <xref linkend="guc-tcp-keepalives-count"> helps the master to notice
+       a broken connection promptly.
       </para>
      </listitem>
      <listitem>
       <para>
        Set the maximum number of concurrent connections from the standby servers
        (see <xref linkend="guc-max-wal-senders"> for details).
-      </para>
-     </listitem>
-     <listitem>
-      <para>
-       Enable WAL archiving in the primary server because we need to make a base
-       backup of it later (see <xref linkend="guc-archive-mode"> and
-       <xref linkend="guc-archive-command"> for details).
       </para>
      </listitem>
      <listitem>
@@ -850,13 +840,12 @@ if (!triggered)
      </listitem>
      <listitem>
       <para>
-       Set up WAL archiving, connections and authentication like the primary
-       server, because the standby server might work as a primary server after
-       failover. Ensure that your settings are consistent with the
-       <emphasis>future</> environment after the primary and the standby
-       server are interchanged by failover. If you're setting up the standby
-       server for e.g reporting purposes, with no plans to fail over to it,
-       configure the standby accordingly.
+       If you're setting up the standby server for high availability purposes,
+       set up WAL archiving, connections and authentication like the primary
+       server, because the standby server will work as a primary server after
+       failover. If you're setting up the standby server for e.g reporting
+       purposes, with no plans to fail over to it, configure the standby
+       accordingly.
       </para>
      </listitem>
      <listitem>
@@ -871,12 +860,25 @@ if (!triggered)
         <listitem>
          <para>
           Specifies whether to start the <productname>PostgreSQL</> server as
-          a standby. If this parameter is <literal>on</>, the streaming
-          replication is enabled and the standby server will try to connect
-          to the primary to receive and apply WAL records continuously. The
-          default is <literal>off</>, which allows only an archive recovery
-          without replication. So, streaming replication requires this
-          parameter to be explicitly set to <literal>on</>.
+          a standby. If this parameter is <literal>on</>, the server will
+          not end recovery when the end of archived WAL is reached, but
+          will keep trying to continue recovery using <varname>restore_command</>
+          and by connecting to the primary server as specified by
+          <varname>primary_conninfo</> setting.
+         </para>
+        </listitem>
+       </varlistentry>
+       <varlistentry>
+        <term><varname>restore_command</varname> (<type>string</type>)</term>
+        <term><varname>restore_end_command</varname> (<type>string</type>)</term>
+        <listitem>
+         <para>
+	  In standby-mode, <varname>restore_command</> (and <varname>restore_end_command</>) is set to a
+	  simple command or script like in PITR. pg_standby or similar tools
+	  that wait for the next WAL file to arrive, cannot be used with
+          streaming replication, as the server handles retries and waiting
+          itself. Set <varname>restore_command</> as you would if you were
+          recovering using a Continuous archiving backup (see <xref linkend="backup-pitr-recovery">).
          </para>
         </listitem>
        </varlistentry>
@@ -902,15 +904,21 @@ if (!triggered)
           the password needs to be set if the primary demands password
           authentication.
          </para>
+         <para>
+          This setting has no effect if <varname>standby_mode</> is <literal>off</>.
+         </para>
         </listitem>
        </varlistentry>
        <varlistentry id="trigger-file" xreflabel="trigger_file">
         <term><varname>trigger_file</varname> (<type>string</type>)</term>
         <listitem>
          <para>
-          Specifies a trigger file whose presence activates the standby.
-          If no trigger file is specified, the standby never exits
+          Specifies a trigger file whose presence ends recovery in the
+          standby. If no trigger file is specified, the standby never exits
           recovery.
+         </para>
+         <para>
+          This setting has no effect if <varname>standby_mode</> is <literal>off</>.
          </para>
         </listitem>
        </varlistentry>
