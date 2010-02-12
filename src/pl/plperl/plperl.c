@@ -1,7 +1,7 @@
 /**********************************************************************
  * plperl.c - perl as a procedural language for PostgreSQL
  *
- *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.123.2.10 2009/12/29 17:41:25 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.123.2.11 2010/02/12 04:33:22 adunstan Exp $
  *
  **********************************************************************/
 
@@ -1504,8 +1504,11 @@ compile_plperl_function(Oid fn_oid, bool is_trigger)
 		{
 			hash_search(plperl_proc_hash, internal_proname,
 						HASH_REMOVE, NULL);
-			if (prodesc->reference)
+			if (prodesc->reference) {
+				check_interp(prodesc->lanpltrusted);
 				SvREFCNT_dec(prodesc->reference);
+				restore_context(oldcontext);
+			}
 			free(prodesc->proname);
 			free(prodesc);
 			prodesc = NULL;
