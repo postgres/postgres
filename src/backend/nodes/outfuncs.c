@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.381 2010/01/28 23:21:12 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.382 2010/02/12 17:33:20 tgl Exp $
  *
  * NOTES
  *	  Every node type that can appear in stored rules' parsetrees *must*
@@ -610,6 +610,8 @@ _outWindowAgg(StringInfo str, WindowAgg *node)
 		appendStringInfo(str, " %u", node->ordOperators[i]);
 
 	WRITE_INT_FIELD(frameOptions);
+	WRITE_NODE_FIELD(startOffset);
+	WRITE_NODE_FIELD(endOffset);
 }
 
 static void
@@ -2035,6 +2037,8 @@ _outWindowClause(StringInfo str, WindowClause *node)
 	WRITE_NODE_FIELD(partitionClause);
 	WRITE_NODE_FIELD(orderClause);
 	WRITE_INT_FIELD(frameOptions);
+	WRITE_NODE_FIELD(startOffset);
+	WRITE_NODE_FIELD(endOffset);
 	WRITE_UINT_FIELD(winref);
 	WRITE_BOOL_FIELD(copiedOrder);
 }
@@ -2326,6 +2330,8 @@ _outWindowDef(StringInfo str, WindowDef *node)
 	WRITE_NODE_FIELD(partitionClause);
 	WRITE_NODE_FIELD(orderClause);
 	WRITE_INT_FIELD(frameOptions);
+	WRITE_NODE_FIELD(startOffset);
+	WRITE_NODE_FIELD(endOffset);
 	WRITE_LOCATION_FIELD(location);
 }
 

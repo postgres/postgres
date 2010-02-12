@@ -22,7 +22,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.381 2010/01/28 23:21:11 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.382 2010/02/12 17:33:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2056,6 +2056,8 @@ _equalWindowDef(WindowDef *a, WindowDef *b)
 	COMPARE_NODE_FIELD(partitionClause);
 	COMPARE_NODE_FIELD(orderClause);
 	COMPARE_SCALAR_FIELD(frameOptions);
+	COMPARE_NODE_FIELD(startOffset);
+	COMPARE_NODE_FIELD(endOffset);
 	COMPARE_LOCATION_FIELD(location);
 
 	return true;
@@ -2205,6 +2207,8 @@ _equalWindowClause(WindowClause *a, WindowClause *b)
 	COMPARE_NODE_FIELD(partitionClause);
 	COMPARE_NODE_FIELD(orderClause);
 	COMPARE_SCALAR_FIELD(frameOptions);
+	COMPARE_NODE_FIELD(startOffset);
+	COMPARE_NODE_FIELD(endOffset);
 	COMPARE_SCALAR_FIELD(winref);
 	COMPARE_SCALAR_FIELD(copiedOrder);
 

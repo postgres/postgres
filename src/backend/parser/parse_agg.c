@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_agg.c,v 1.90 2010/01/02 16:57:49 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_agg.c,v 1.91 2010/02/12 17:33:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -258,7 +258,9 @@ transformWindowFuncCall(ParseState *pstate, WindowFunc *wfunc,
 				continue;
 			if (equal(refwin->partitionClause, windef->partitionClause) &&
 				equal(refwin->orderClause, windef->orderClause) &&
-				refwin->frameOptions == windef->frameOptions)
+				refwin->frameOptions == windef->frameOptions &&
+				equal(refwin->startOffset, windef->startOffset) &&
+				equal(refwin->endOffset, windef->endOffset))
 			{
 				/* found a duplicate window specification */
 				wfunc->winref = winref;
@@ -505,6 +507,7 @@ parseCheckWindowFuncs(ParseState *pstate, Query *qry)
 						 parser_errposition(pstate,
 											locate_windowfunc(expr))));
 		}
+		/* startOffset and limitOffset were checked in transformFrameOffset */
 	}
 }
 

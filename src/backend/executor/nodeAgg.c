@@ -71,7 +71,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeAgg.c,v 1.172 2010/02/08 20:39:51 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeAgg.c,v 1.173 2010/02/12 17:33:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1999,7 +1999,7 @@ AggCheckCallContext(FunctionCallInfo fcinfo, MemoryContext *aggcontext)
 	if (fcinfo->context && IsA(fcinfo->context, WindowAggState))
 	{
 		if (aggcontext)
-			*aggcontext = ((WindowAggState *) fcinfo->context)->wincontext;
+			*aggcontext = ((WindowAggState *) fcinfo->context)->aggcontext;
 		return AGG_CONTEXT_WINDOW;
 	}
 

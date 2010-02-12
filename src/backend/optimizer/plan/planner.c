@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.264 2010/02/10 03:38:35 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.265 2010/02/12 17:33:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -398,7 +398,10 @@ subquery_planner(PlannerGlobal *glob, Query *parse,
 	root->hasPseudoConstantQuals = false;
 
 	/*
-	 * Do expression preprocessing on targetlist and quals.
+	 * Do expression preprocessing on targetlist and quals, as well as other
+	 * random expressions in the querytree.  Note that we do not need to
+	 * handle sort/group expressions explicitly, because they are actually
+	 * part of the targetlist.
 	 */
 	parse->targetList = (List *)
 		preprocess_expression(root, (Node *) parse->targetList,
@@ -412,6 +415,17 @@ subquery_planner(PlannerGlobal *glob, Query *parse,
 
 	parse->havingQual = preprocess_expression(root, parse->havingQual,
 											  EXPRKIND_QUAL);
+
+	foreach(l, parse->windowClause)
+	{
+		WindowClause *wc = (WindowClause *) lfirst(l);
+
+		/* partitionClause/orderClause are sort/group expressions */
+		wc->startOffset = preprocess_expression(root, wc->startOffset,
+												EXPRKIND_LIMIT);
+		wc->endOffset = preprocess_expression(root, wc->endOffset,
+											  EXPRKIND_LIMIT);
+	}
 
 	parse->limitOffset = preprocess_expression(root, parse->limitOffset,
 											   EXPRKIND_LIMIT);
@@ -1513,6 +1527,8 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 								   ordColIdx,
 								   ordOperators,
 								   wc->frameOptions,
+								   wc->startOffset,
+								   wc->endOffset,
 								   result_plan);
 			}
 		}

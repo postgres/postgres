@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/plannodes.h,v 1.115 2010/01/02 16:58:04 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/plannodes.h,v 1.116 2010/02/12 17:33:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -552,6 +552,8 @@ typedef struct WindowAgg
 	AttrNumber *ordColIdx;		/* their indexes in the target list */
 	Oid		   *ordOperators;	/* equality operators for ordering columns */
 	int			frameOptions;	/* frame_clause options, see WindowDef */
+	Node	   *startOffset;	/* expression for starting bound, if any */
+	Node	   *endOffset;		/* expression for ending bound, if any */
 } WindowAgg;
 
 /* ----------------

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.320 2010/01/21 06:11:45 itagaki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.321 2010/02/12 17:33:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3160,6 +3160,16 @@ get_rule_windowspec(WindowClause *wc, List *targetList,
 			appendStringInfoString(buf, "UNBOUNDED PRECEDING ");
 		else if (wc->frameOptions & FRAMEOPTION_START_CURRENT_ROW)
 			appendStringInfoString(buf, "CURRENT ROW ");
+		else if (wc->frameOptions & FRAMEOPTION_START_VALUE)
+		{
+			get_rule_expr(wc->startOffset, context, false);
+			if (wc->frameOptions & FRAMEOPTION_START_VALUE_PRECEDING)
+				appendStringInfoString(buf, " PRECEDING ");
+			else if (wc->frameOptions & FRAMEOPTION_START_VALUE_FOLLOWING)
+				appendStringInfoString(buf, " FOLLOWING ");
+			else
+				Assert(false);
+		}
 		else
 			Assert(false);
 		if (wc->frameOptions & FRAMEOPTION_BETWEEN)
@@ -3169,6 +3179,16 @@ get_rule_windowspec(WindowClause *wc, List *targetList,
 				appendStringInfoString(buf, "UNBOUNDED FOLLOWING ");
 			else if (wc->frameOptions & FRAMEOPTION_END_CURRENT_ROW)
 				appendStringInfoString(buf, "CURRENT ROW ");
+			else if (wc->frameOptions & FRAMEOPTION_END_VALUE)
+			{
+				get_rule_expr(wc->endOffset, context, false);
+				if (wc->frameOptions & FRAMEOPTION_END_VALUE_PRECEDING)
+					appendStringInfoString(buf, " PRECEDING ");
+				else if (wc->frameOptions & FRAMEOPTION_END_VALUE_FOLLOWING)
+					appendStringInfoString(buf, " FOLLOWING ");
+				else
+					Assert(false);
+			}
 			else
 				Assert(false);
 		}

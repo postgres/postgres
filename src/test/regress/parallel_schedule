@@ -1,5 +1,5 @@
 # ----------
-# $PostgreSQL: pgsql/src/test/regress/parallel_schedule,v 1.60 2010/02/07 22:40:33 tgl Exp $
+# $PostgreSQL: pgsql/src/test/regress/parallel_schedule,v 1.61 2010/02/12 17:33:21 tgl Exp $
 #
 # By convention, we put no more than twenty tests in any one parallel group;
 # this limits the number of connections needed to run the tests.
@@ -78,18 +78,19 @@ test: select_into select_distinct select_distinct_on select_implicit select_havi
 
 test: privileges
 test: misc
+# rules cannot run concurrently with any test that creates a view
+test: rules
 
 # ----------
 # Another group of parallel tests
 # ----------
-test: select_views portals_p2 rules foreign_key cluster dependency guc bitmapops combocid tsearch tsdicts foreign_data window xmlmap
+test: select_views portals_p2 foreign_key cluster dependency guc bitmapops combocid tsearch tsdicts foreign_data window xmlmap
 
 # ----------
 # Another group of parallel tests
 # NB: temp.sql does a reconnect which transiently uses 2 connections,
 # so keep this parallel group to at most 19 tests
 # ----------
-# "plpgsql" cannot run concurrently with "rules", nor can "plancache"
 test: plancache limit plpgsql copy2 temp domain rangefuncs prepare without_oid conversion truncate alter_table sequence polymorphism rowtypes returning largeobject with xml
 
 # run stats by itself because its delay may be insufficient under heavy load

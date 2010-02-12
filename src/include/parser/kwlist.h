@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/include/parser/kwlist.h,v 1.11 2010/02/08 04:33:55 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/include/parser/kwlist.h,v 1.12 2010/02/12 17:33:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,7 +53,7 @@ PG_KEYWORD("authorization", AUTHORIZATION, TYPE_FUNC_NAME_KEYWORD)
 PG_KEYWORD("backward", BACKWARD, UNRESERVED_KEYWORD)
 PG_KEYWORD("before", BEFORE, UNRESERVED_KEYWORD)
 PG_KEYWORD("begin", BEGIN_P, UNRESERVED_KEYWORD)
-PG_KEYWORD("between", BETWEEN, TYPE_FUNC_NAME_KEYWORD)
+PG_KEYWORD("between", BETWEEN, COL_NAME_KEYWORD)
 PG_KEYWORD("bigint", BIGINT, COL_NAME_KEYWORD)
 PG_KEYWORD("binary", BINARY, TYPE_FUNC_NAME_KEYWORD)
 PG_KEYWORD("bit", BIT, COL_NAME_KEYWORD)

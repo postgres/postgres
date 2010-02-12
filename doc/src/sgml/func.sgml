@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.501 2010/02/07 20:48:09 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.502 2010/02/12 17:33:19 tgl Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -10559,21 +10559,23 @@ SELECT xmlagg(x) FROM (SELECT x FROM test ORDER BY y DESC) AS tab;
    <function>nth_value</> consider only the rows within the <quote>window
    frame</>, which by default contains the rows from the start of the
    partition through the last peer of the current row.  This is
-   likely to give unhelpful results for <function>nth_value</> and
-   particularly <function>last_value</>.  You can redefine the frame as
-   being the whole partition by adding <literal>ROWS BETWEEN UNBOUNDED
-   PRECEDING AND UNBOUNDED FOLLOWING</> to the <literal>OVER</> clause.
-   See <xref linkend="syntax-window-functions"> for more information.
+   likely to give unhelpful results for <function>last_value</> and
+   sometimes also <function>nth_value</>.  You can redefine the frame by
+   adding a suitable frame specification (<literal>RANGE</> or
+   <literal>ROWS</>) to the <literal>OVER</> clause.
+   See <xref linkend="syntax-window-functions"> for more information
+   about frame specifications.
   </para>
 
   <para>
    When an aggregate function is used as a window function, it aggregates
-   over the rows within the current row's window frame.  To obtain
-   aggregation over the whole partition, omit <literal>ORDER BY</> or use
-   <literal>ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING</>.
+   over the rows within the current row's window frame.
    An aggregate used with <literal>ORDER BY</> and the default window frame
    definition produces a <quote>running sum</> type of behavior, which may or
-   may not be what's wanted.
+   may not be what's wanted.  To obtain
+   aggregation over the whole partition, omit <literal>ORDER BY</> or use
+   <literal>ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING</>.
+   Other frame specifications can be used to obtain other effects.
   </para>
 
   <note>

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/execnodes.h,v 1.217 2010/01/05 23:25:36 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/execnodes.h,v 1.218 2010/02/12 17:33:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1595,23 +1595,36 @@ typedef struct WindowAggState
 	FmgrInfo   *ordEqfunctions; /* equality funcs for ordering columns */
 	Tuplestorestate *buffer;	/* stores rows of current partition */
 	int			current_ptr;	/* read pointer # for current */
-	int			agg_ptr;		/* read pointer # for aggregates */
 	int64		spooled_rows;	/* total # of rows in buffer */
 	int64		currentpos;		/* position of current row in partition */
+	int64		frameheadpos;	/* current frame head position */
 	int64		frametailpos;	/* current frame tail position */
+	/* use struct pointer to avoid including windowapi.h here */
+	struct WindowObjectData *agg_winobj;	/* winobj for aggregate fetches */
+	int64		aggregatedbase; /* start row for current aggregates */
 	int64		aggregatedupto; /* rows before this one are aggregated */
 
-	MemoryContext wincontext;	/* context for partition-lifespan data */
+	int			frameOptions;	/* frame_clause options, see WindowDef */
+	ExprState  *startOffset;	/* expression for starting bound offset */
+	ExprState  *endOffset;		/* expression for ending bound offset */
+	Datum		startOffsetValue;	/* result of startOffset evaluation */
+	Datum		endOffsetValue;		/* result of endOffset evaluation */
+
+	MemoryContext partcontext;	/* context for partition-lifespan data */
+	MemoryContext aggcontext;	/* context for each aggregate data */
 	ExprContext *tmpcontext;	/* short-term evaluation context */
 
+	bool		all_first;		/* true if the scan is starting */
 	bool		all_done;		/* true if the scan is finished */
 	bool		partition_spooled;		/* true if all tuples in current
 										 * partition have been spooled into
 										 * tuplestore */
-	bool		more_partitions;/* true if there's more partitions after this
-								 * one */
-	bool		frametail_valid;/* true if frametailpos is known up to date
-								 * for current row */
+	bool		more_partitions;	/* true if there's more partitions after
+									 * this one */
+	bool		framehead_valid;	/* true if frameheadpos is known up to date
+									 * for current row */
+	bool		frametail_valid;	/* true if frametailpos is known up to date
+									 * for current row */
 
 	TupleTableSlot *first_part_slot;	/* first tuple of current or next
 										 * partition */

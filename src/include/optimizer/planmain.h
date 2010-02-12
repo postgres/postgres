@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/optimizer/planmain.h,v 1.124 2010/01/15 22:36:35 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/optimizer/planmain.h,v 1.125 2010/02/12 17:33:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -62,7 +62,8 @@ extern WindowAgg *make_windowagg(PlannerInfo *root, List *tlist,
 			   int numWindowFuncs, Index winref,
 			   int partNumCols, AttrNumber *partColIdx, Oid *partOperators,
 			   int ordNumCols, AttrNumber *ordColIdx, Oid *ordOperators,
-			   int frameOptions, Plan *lefttree);
+			   int frameOptions, Node *startOffset, Node *endOffset,
+			   Plan *lefttree);
 extern Group *make_group(PlannerInfo *root, List *tlist, List *qual,
 		   int numGroupCols, AttrNumber *grpColIdx, Oid *grpOperators,
 		   double numGroups,

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/setrefs.c,v 1.157 2010/01/15 22:36:32 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/setrefs.c,v 1.158 2010/02/12 17:33:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -466,9 +466,25 @@ set_plan_refs(PlannerGlobal *glob, Plan *plan, int rtoffset)
 			}
 			break;
 		case T_Agg:
-		case T_WindowAgg:
 		case T_Group:
 			set_upper_references(glob, plan, rtoffset);
+			break;
+		case T_WindowAgg:
+			{
+				WindowAgg	   *wplan = (WindowAgg *) plan;
+
+				set_upper_references(glob, plan, rtoffset);
+
+				/*
+				 * Like Limit node limit/offset expressions, WindowAgg has
+				 * frame offset expressions, which cannot contain subplan
+				 * variable refs, so fix_scan_expr works for them.
+				 */
+				wplan->startOffset =
+					fix_scan_expr(glob, wplan->startOffset, rtoffset);
+				wplan->endOffset =
+					fix_scan_expr(glob, wplan->endOffset, rtoffset);
+			}
 			break;
 		case T_Result:
 			{

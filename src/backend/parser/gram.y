@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.707 2010/02/08 04:33:54 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.708 2010/02/12 17:33:20 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -434,8 +434,8 @@ static TypeName *TableFuncTypeName(List *columns);
 
 %type <list>	window_clause window_definition_list opt_partition_clause
 %type <windef>	window_definition over_clause window_specification
+				opt_frame_clause frame_extent frame_bound
 %type <str>		opt_existing_window_name
-%type <ival>	opt_frame_clause frame_extent frame_bound
 
 
 /*
@@ -578,8 +578,18 @@ static TypeName *TableFuncTypeName(List *columns);
  * RANGE, ROWS to support opt_existing_window_name; and for RANGE, ROWS
  * so that they can follow a_expr without creating
  * postfix-operator problems.
+ *
+ * The frame_bound productions UNBOUNDED PRECEDING and UNBOUNDED FOLLOWING
+ * are even messier: since UNBOUNDED is an unreserved keyword (per spec!),
+ * there is no principled way to distinguish these from the productions
+ * a_expr PRECEDING/FOLLOWING.  We hack this up by giving UNBOUNDED slightly
+ * lower precedence than PRECEDING and FOLLOWING.  At present this doesn't
+ * appear to cause UNBOUNDED to be treated differently from other unreserved
+ * keywords anywhere else in the grammar, but it's definitely risky.  We can
+ * blame any funny behavior of UNBOUNDED on the SQL standard, though.
  */
-%nonassoc	IDENT PARTITION RANGE ROWS
+%nonassoc	UNBOUNDED		/* ideally should have same precedence as IDENT */
+%nonassoc	IDENT PARTITION RANGE ROWS PRECEDING FOLLOWING
 %left		Op OPERATOR		/* multi-character ops and user-defined operators */
 %nonassoc	NOTNULL
 %nonassoc	ISNULL
@@ -9907,6 +9917,8 @@ over_clause: OVER window_specification
 					n->partitionClause = NIL;
 					n->orderClause = NIL;
 					n->frameOptions = FRAMEOPTION_DEFAULTS;
+					n->startOffset = NULL;
+					n->endOffset = NULL;
 					n->location = @2;
 					$$ = n;
 				}
@@ -9922,7 +9934,10 @@ window_specification: '(' opt_existing_window_name opt_partition_clause
 					n->refname = $2;
 					n->partitionClause = $3;
 					n->orderClause = $4;
-					n->frameOptions = $5;
+					/* copy relevant fields of opt_frame_clause */
+					n->frameOptions = $5->frameOptions;
+					n->startOffset = $5->startOffset;
+					n->endOffset = $5->endOffset;
 					n->location = @1;
 					$$ = n;
 				}
@@ -9947,58 +9962,100 @@ opt_partition_clause: PARTITION BY expr_list		{ $$ = $3; }
 		;
 
 /*
+ * For frame clauses, we return a WindowDef, but only some fields are used:
+ * frameOptions, startOffset, and endOffset.
+ *
  * This is only a subset of the full SQL:2008 frame_clause grammar.
- * We don't support <expression> PRECEDING, <expression> FOLLOWING,
- * nor <window frame exclusion> yet.
+ * We don't support <window frame exclusion> yet.
  */
 opt_frame_clause:
 			RANGE frame_extent
 				{
-					$$ = FRAMEOPTION_NONDEFAULT | FRAMEOPTION_RANGE | $2;
+					WindowDef *n = $2;
+					n->frameOptions |= FRAMEOPTION_NONDEFAULT | FRAMEOPTION_RANGE;
+					if (n->frameOptions & (FRAMEOPTION_START_VALUE_PRECEDING |
+										   FRAMEOPTION_END_VALUE_PRECEDING))
+						ereport(ERROR,
+								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+								 errmsg("RANGE PRECEDING is only supported with UNBOUNDED"),
+								 parser_errposition(@1)));
+					if (n->frameOptions & (FRAMEOPTION_START_VALUE_FOLLOWING |
+										   FRAMEOPTION_END_VALUE_FOLLOWING))
+						ereport(ERROR,
+								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+								 errmsg("RANGE FOLLOWING is only supported with UNBOUNDED"),
+								 parser_errposition(@1)));
+					$$ = n;
 				}
 			| ROWS frame_extent
 				{
-					$$ = FRAMEOPTION_NONDEFAULT | FRAMEOPTION_ROWS | $2;
+					WindowDef *n = $2;
+					n->frameOptions |= FRAMEOPTION_NONDEFAULT | FRAMEOPTION_ROWS;
+					$$ = n;
 				}
 			| /*EMPTY*/
-				{ $$ = FRAMEOPTION_DEFAULTS; }
+				{
+					WindowDef *n = makeNode(WindowDef);
+					n->frameOptions = FRAMEOPTION_DEFAULTS;
+					n->startOffset = NULL;
+					n->endOffset = NULL;
+					$$ = n;
+				}
 		;
 
 frame_extent: frame_bound
 				{
+					WindowDef *n = $1;
 					/* reject invalid cases */
-					if ($1 & FRAMEOPTION_START_UNBOUNDED_FOLLOWING)
+					if (n->frameOptions & FRAMEOPTION_START_UNBOUNDED_FOLLOWING)
 						ereport(ERROR,
 								(errcode(ERRCODE_WINDOWING_ERROR),
 								 errmsg("frame start cannot be UNBOUNDED FOLLOWING"),
 								 parser_errposition(@1)));
-					if ($1 & FRAMEOPTION_START_CURRENT_ROW)
+					if (n->frameOptions & FRAMEOPTION_START_VALUE_FOLLOWING)
 						ereport(ERROR,
-								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-								 errmsg("frame start at CURRENT ROW is not implemented"),
+								(errcode(ERRCODE_WINDOWING_ERROR),
+								 errmsg("frame starting from following row cannot end with current row"),
 								 parser_errposition(@1)));
-					$$ = $1 | FRAMEOPTION_END_CURRENT_ROW;
+					n->frameOptions |= FRAMEOPTION_END_CURRENT_ROW;
+					$$ = n;
 				}
 			| BETWEEN frame_bound AND frame_bound
 				{
+					WindowDef *n1 = $2;
+					WindowDef *n2 = $4;
+					/* form merged options */
+					int		frameOptions = n1->frameOptions;
+					/* shift converts START_ options to END_ options */
+					frameOptions |= n2->frameOptions << 1;
+					frameOptions |= FRAMEOPTION_BETWEEN;
 					/* reject invalid cases */
-					if ($2 & FRAMEOPTION_START_UNBOUNDED_FOLLOWING)
+					if (frameOptions & FRAMEOPTION_START_UNBOUNDED_FOLLOWING)
 						ereport(ERROR,
 								(errcode(ERRCODE_WINDOWING_ERROR),
 								 errmsg("frame start cannot be UNBOUNDED FOLLOWING"),
 								 parser_errposition(@2)));
-					if ($2 & FRAMEOPTION_START_CURRENT_ROW)
-						ereport(ERROR,
-								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-								 errmsg("frame start at CURRENT ROW is not implemented"),
-								 parser_errposition(@2)));
-					if ($4 & FRAMEOPTION_START_UNBOUNDED_PRECEDING)
+					if (frameOptions & FRAMEOPTION_END_UNBOUNDED_PRECEDING)
 						ereport(ERROR,
 								(errcode(ERRCODE_WINDOWING_ERROR),
 								 errmsg("frame end cannot be UNBOUNDED PRECEDING"),
 								 parser_errposition(@4)));
-					/* shift converts START_ options to END_ options */
-					$$ = FRAMEOPTION_BETWEEN | $2 | ($4 << 1);
+					if ((frameOptions & FRAMEOPTION_START_CURRENT_ROW) &&
+						(frameOptions & FRAMEOPTION_END_VALUE_PRECEDING))
+						ereport(ERROR,
+								(errcode(ERRCODE_WINDOWING_ERROR),
+								 errmsg("frame starting from current row cannot have preceding rows"),
+								 parser_errposition(@4)));
+					if ((frameOptions & FRAMEOPTION_START_VALUE_FOLLOWING) &&
+						(frameOptions & (FRAMEOPTION_END_VALUE_PRECEDING |
+										 FRAMEOPTION_END_CURRENT_ROW)))
+						ereport(ERROR,
+								(errcode(ERRCODE_WINDOWING_ERROR),
+								 errmsg("frame starting from following row cannot have preceding rows"),
+								 parser_errposition(@4)));
+					n1->frameOptions = frameOptions;
+					n1->endOffset = n2->startOffset;
+					$$ = n1;
 				}
 		;
 
@@ -10010,15 +10067,43 @@ frame_extent: frame_bound
 frame_bound:
 			UNBOUNDED PRECEDING
 				{
-					$$ = FRAMEOPTION_START_UNBOUNDED_PRECEDING;
+					WindowDef *n = makeNode(WindowDef);
+					n->frameOptions = FRAMEOPTION_START_UNBOUNDED_PRECEDING;
+					n->startOffset = NULL;
+					n->endOffset = NULL;
+					$$ = n;
 				}
 			| UNBOUNDED FOLLOWING
 				{
-					$$ = FRAMEOPTION_START_UNBOUNDED_FOLLOWING;
+					WindowDef *n = makeNode(WindowDef);
+					n->frameOptions = FRAMEOPTION_START_UNBOUNDED_FOLLOWING;
+					n->startOffset = NULL;
+					n->endOffset = NULL;
+					$$ = n;
 				}
 			| CURRENT_P ROW
 				{
-					$$ = FRAMEOPTION_START_CURRENT_ROW;
+					WindowDef *n = makeNode(WindowDef);
+					n->frameOptions = FRAMEOPTION_START_CURRENT_ROW;
+					n->startOffset = NULL;
+					n->endOffset = NULL;
+					$$ = n;
+				}
+			| a_expr PRECEDING
+				{
+					WindowDef *n = makeNode(WindowDef);
+					n->frameOptions = FRAMEOPTION_START_VALUE_PRECEDING;
+					n->startOffset = $1;
+					n->endOffset = NULL;
+					$$ = n;
+				}
+			| a_expr FOLLOWING
+				{
+					WindowDef *n = makeNode(WindowDef);
+					n->frameOptions = FRAMEOPTION_START_VALUE_FOLLOWING;
+					n->startOffset = $1;
+					n->endOffset = NULL;
+					$$ = n;
 				}
 		;
 
@@ -10981,7 +11066,8 @@ unreserved_keyword:
  * looks too much like a function call for an LR(1) parser.
  */
 col_name_keyword:
-			  BIGINT
+			  BETWEEN
+			| BIGINT
 			| BIT
 			| BOOLEAN_P
 			| CHAR_P
@@ -11040,7 +11126,6 @@ col_name_keyword:
  */
 type_func_name_keyword:
 			  AUTHORIZATION
-			| BETWEEN
 			| BINARY
 			| CONCURRENTLY
 			| CROSS

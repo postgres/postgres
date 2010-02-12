@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.428 2010/02/08 04:33:54 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.429 2010/02/12 17:33:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -393,6 +393,8 @@ typedef struct WindowDef
 	List	   *partitionClause;	/* PARTITION BY expression list */
 	List	   *orderClause;	/* ORDER BY (list of SortBy) */
 	int			frameOptions;	/* frame_clause options, see below */
+	Node	   *startOffset;	/* expression for starting bound, if any */
+	Node	   *endOffset;		/* expression for ending bound, if any */
 	int			location;		/* parse location, or -1 if none/unknown */
 } WindowDef;
 
@@ -414,6 +416,15 @@ typedef struct WindowDef
 #define FRAMEOPTION_END_UNBOUNDED_FOLLOWING		0x00080 /* end is U. F. */
 #define FRAMEOPTION_START_CURRENT_ROW			0x00100 /* start is C. R. */
 #define FRAMEOPTION_END_CURRENT_ROW				0x00200 /* end is C. R. */
+#define FRAMEOPTION_START_VALUE_PRECEDING		0x00400 /* start is V. P. */
+#define FRAMEOPTION_END_VALUE_PRECEDING			0x00800 /* end is V. P. */
+#define FRAMEOPTION_START_VALUE_FOLLOWING		0x01000 /* start is V. F. */
+#define FRAMEOPTION_END_VALUE_FOLLOWING			0x02000 /* end is V. F. */
+
+#define FRAMEOPTION_START_VALUE \
+	(FRAMEOPTION_START_VALUE_PRECEDING | FRAMEOPTION_START_VALUE_FOLLOWING)
+#define FRAMEOPTION_END_VALUE \
+	(FRAMEOPTION_END_VALUE_PRECEDING | FRAMEOPTION_END_VALUE_FOLLOWING)
 
 #define FRAMEOPTION_DEFAULTS \
 	(FRAMEOPTION_RANGE | FRAMEOPTION_START_UNBOUNDED_PRECEDING | \
@@ -799,6 +810,8 @@ typedef struct WindowClause
 	List	   *partitionClause;	/* PARTITION BY list */
 	List	   *orderClause;	/* ORDER BY list */
 	int			frameOptions;	/* frame_clause options, see WindowDef */
+	Node	   *startOffset;	/* expression for starting bound, if any */
+	Node	   *endOffset;		/* expression for ending bound, if any */
 	Index		winref;			/* ID referenced by window functions */
 	bool		copiedOrder;	/* did we copy orderClause from refname? */
 } WindowClause;

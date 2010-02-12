@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_clause.c,v 1.196 2010/02/07 20:48:10 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_clause.c,v 1.197 2010/02/12 17:33:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -72,6 +72,8 @@ static Node *transformFromClauseItem(ParseState *pstate, Node *n,
 						Relids *containedRels);
 static Node *buildMergedJoinVar(ParseState *pstate, JoinType jointype,
 				   Var *l_colvar, Var *r_colvar);
+static void checkExprIsVarFree(ParseState *pstate, Node *n,
+							   const char *constructName);
 static TargetEntry *findTargetlistEntrySQL92(ParseState *pstate, Node *node,
 						 List **tlist, int clause);
 static TargetEntry *findTargetlistEntrySQL99(ParseState *pstate, Node *node,
@@ -85,6 +87,8 @@ static List *addTargetToGroupList(ParseState *pstate, TargetEntry *tle,
 					 List *grouplist, List *targetlist, int location,
 					 bool resolveUnknown);
 static WindowClause *findWindowClause(List *wclist, const char *name);
+static Node *transformFrameOffset(ParseState *pstate, int frameOptions,
+								  Node *clause);
 
 
 /*
@@ -1177,10 +1181,28 @@ transformLimitClause(ParseState *pstate, Node *clause,
 
 	qual = coerce_to_specific_type(pstate, qual, INT8OID, constructName);
 
-	/*
-	 * LIMIT can't refer to any vars or aggregates of the current query
-	 */
-	if (contain_vars_of_level(qual, 0))
+	/* LIMIT can't refer to any vars or aggregates of the current query */
+	checkExprIsVarFree(pstate, qual, constructName);
+
+	return qual;
+}
+
+/*
+ * checkExprIsVarFree
+ *		Check that given expr has no Vars of the current query level
+ *		(and no aggregates or window functions, either).
+ *
+ * This is used to check expressions that have to have a consistent value
+ * across all rows of the query, such as a LIMIT.  Arguably it should reject
+ * volatile functions, too, but we don't do that --- whatever value the
+ * function gives on first execution is what you get.
+ *
+ * constructName does not affect the semantics, but is used in error messages
+ */
+static void
+checkExprIsVarFree(ParseState *pstate, Node *n, const char *constructName)
+{
+	if (contain_vars_of_level(n, 0))
 	{
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
@@ -1188,10 +1210,10 @@ transformLimitClause(ParseState *pstate, Node *clause,
 				 errmsg("argument of %s must not contain variables",
 						constructName),
 				 parser_errposition(pstate,
-									locate_var_of_level(qual, 0))));
+									locate_var_of_level(n, 0))));
 	}
 	if (pstate->p_hasAggs &&
-		checkExprHasAggs(qual))
+		checkExprHasAggs(n))
 	{
 		ereport(ERROR,
 				(errcode(ERRCODE_GROUPING_ERROR),
@@ -1199,10 +1221,10 @@ transformLimitClause(ParseState *pstate, Node *clause,
 				 errmsg("argument of %s must not contain aggregate functions",
 						constructName),
 				 parser_errposition(pstate,
-									locate_agg_of_level(qual, 0))));
+									locate_agg_of_level(n, 0))));
 	}
 	if (pstate->p_hasWindowFuncs &&
-		checkExprHasWindowFuncs(qual))
+		checkExprHasWindowFuncs(n))
 	{
 		ereport(ERROR,
 				(errcode(ERRCODE_WINDOWING_ERROR),
@@ -1210,10 +1232,8 @@ transformLimitClause(ParseState *pstate, Node *clause,
 				 errmsg("argument of %s must not contain window functions",
 						constructName),
 				 parser_errposition(pstate,
-									locate_windowfunc(qual))));
+									locate_windowfunc(n))));
 	}
-
-	return qual;
 }
 
 
@@ -1664,6 +1684,11 @@ transformWindowDefinitions(ParseState *pstate,
 							windef->refname),
 					 parser_errposition(pstate, windef->location)));
 		wc->frameOptions = windef->frameOptions;
+		/* Process frame offset expressions */
+		wc->startOffset = transformFrameOffset(pstate, wc->frameOptions,
+											   windef->startOffset);
+		wc->endOffset = transformFrameOffset(pstate, wc->frameOptions,
+											 windef->endOffset);
 		wc->winref = winref;
 
 		result = lappend(result, wc);
@@ -2165,4 +2190,48 @@ findWindowClause(List *wclist, const char *name)
 	}
 
 	return NULL;
+}
+
+/*
+ * transformFrameOffset
+ *		Process a window frame offset expression
+ */
+static Node *
+transformFrameOffset(ParseState *pstate, int frameOptions, Node *clause)
+{
+	const char *constructName = NULL;
+	Node	   *node;
+
+	/* Quick exit if no offset expression */
+	if (clause == NULL)
+		return NULL;
+
+	/* Transform the raw expression tree */
+	node = transformExpr(pstate, clause);
+
+	if (frameOptions & FRAMEOPTION_ROWS)
+	{
+		/*
+		 * Like LIMIT clause, simply coerce to int8
+		 */
+		constructName = "ROWS";
+		node = coerce_to_specific_type(pstate, node, INT8OID, constructName);
+	}
+	else if (frameOptions & FRAMEOPTION_RANGE)
+	{
+		/*
+		 * this needs a lot of thought to decide how to support in the
+		 * context of Postgres' extensible datatype framework
+		 */
+		constructName = "RANGE";
+		/* error was already thrown by gram.y, this is just a backstop */
+		elog(ERROR, "window frame with value offset is not implemented");
+	}
+	else
+		Assert(false);
+
+	/* Disallow variables and aggregates in frame offsets */
+	checkExprIsVarFree(pstate, node, constructName);
+
+	return node;
 }
