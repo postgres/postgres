@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.202.2.6 2009/12/29 17:41:18 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.202.2.7 2010/02/12 19:37:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3445,11 +3445,6 @@ exec_assign_value(PLpgSQL_execstate *estate,
 				 */
 				PLpgSQL_row *row = (PLpgSQL_row *) target;
 
-				/* Source must be of RECORD or composite type */
-				if (!type_is_rowtype(valtype))
-					ereport(ERROR,
-							(errcode(ERRCODE_DATATYPE_MISMATCH),
-							 errmsg("cannot assign non-composite value to a row variable")));
 				if (*isNull)
 				{
 					/* If source is null, just assign nulls to the row */
@@ -3463,7 +3458,12 @@ exec_assign_value(PLpgSQL_execstate *estate,
 					TupleDesc	tupdesc;
 					HeapTupleData tmptup;
 
-					/* Else source is a tuple Datum, safe to do this: */
+					/* Source must be of RECORD or composite type */
+					if (!type_is_rowtype(valtype))
+						ereport(ERROR,
+								(errcode(ERRCODE_DATATYPE_MISMATCH),
+								 errmsg("cannot assign non-composite value to a row variable")));
+					/* Source is a tuple Datum, so safe to do this: */
 					td = DatumGetHeapTupleHeader(value);
 					/* Extract rowtype info and find a tupdesc */
 					tupType = HeapTupleHeaderGetTypeId(td);
@@ -3487,11 +3487,6 @@ exec_assign_value(PLpgSQL_execstate *estate,
 				 */
 				PLpgSQL_rec *rec = (PLpgSQL_rec *) target;
 
-				/* Source must be of RECORD or composite type */
-				if (!type_is_rowtype(valtype))
-					ereport(ERROR,
-							(errcode(ERRCODE_DATATYPE_MISMATCH),
-							 errmsg("cannot assign non-composite value to a record variable")));
 				if (*isNull)
 				{
 					/* If source is null, just assign nulls to the record */
@@ -3505,7 +3500,13 @@ exec_assign_value(PLpgSQL_execstate *estate,
 					TupleDesc	tupdesc;
 					HeapTupleData tmptup;
 
-					/* Else source is a tuple Datum, safe to do this: */
+					/* Source must be of RECORD or composite type */
+					if (!type_is_rowtype(valtype))
+						ereport(ERROR,
+								(errcode(ERRCODE_DATATYPE_MISMATCH),
+								 errmsg("cannot assign non-composite value to a record variable")));
+
+					/* Source is a tuple Datum, so safe to do this: */
 					td = DatumGetHeapTupleHeader(value);
 					/* Extract rowtype info and find a tupdesc */
 					tupType = HeapTupleHeaderGetTypeId(td);
@@ -4426,6 +4427,10 @@ exec_move_row(PLpgSQL_execstate *estate,
 			{
 				value = (Datum) 0;
 				isnull = true;
+				/*
+				 * InvalidOid is OK because exec_assign_value doesn't care
+				 * about the type of a source NULL
+				 */
 				valtype = InvalidOid;
 			}
 
