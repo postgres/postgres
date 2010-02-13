@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/nbtree.h,v 1.128 2010/02/08 04:33:54 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/nbtree.h,v 1.129 2010/02/13 00:59:58 sriggs Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -221,6 +221,7 @@ typedef struct BTMetaPageData
 #define XLOG_BTREE_DELETE_PAGE_HALF 0xB0		/* page deletion that makes
 												 * parent half-dead */
 #define XLOG_BTREE_VACUUM		0xC0	/* delete entries on a page during vacuum */
+#define XLOG_BTREE_REUSE_PAGE	0xD0	/* old page is about to be reused from FSM */
 
 /*
  * All that we need to find changed index tuple
@@ -320,6 +321,18 @@ typedef struct xl_btree_delete
 } xl_btree_delete;
 
 #define SizeOfBtreeDelete	(offsetof(xl_btree_delete, latestRemovedXid) + sizeof(TransactionId))
+
+/*
+ * This is what we need to know about page reuse within btree.
+ */
+typedef struct xl_btree_reuse_page
+{
+	RelFileNode node;
+	BlockNumber block;
+	TransactionId	latestRemovedXid;
+} xl_btree_reuse_page;
+
+#define SizeOfBtreeReusePage	(sizeof(xl_btree_reuse_page))
 
 /*
  * This is what we need to know about vacuum of individual leaf index tuples.

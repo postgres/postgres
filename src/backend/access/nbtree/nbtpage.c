@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtpage.c,v 1.118 2010/02/08 04:33:53 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtpage.c,v 1.119 2010/02/13 00:59:58 sriggs Exp $
  *
  *	NOTES
  *	   Postgres btree pages look like ordinary relation pages.	The opaque
@@ -447,6 +447,48 @@ _bt_checkpage(Relation rel, Buffer buf)
 }
 
 /*
+ * Log the reuse of a page from the FSM.
+ */
+static void
+_bt_log_reuse_page(Relation rel, BlockNumber blkno, TransactionId latestRemovedXid)
+{
+	if (rel->rd_istemp)
+		return;
+
+	/* No ereport(ERROR) until changes are logged */
+	START_CRIT_SECTION();
+
+	/*
+	 * We don't do MarkBufferDirty here because we're about initialise
+	 * the page, and nobody else can see it yet.
+	 */
+
+	/* XLOG stuff */
+	{
+		XLogRecPtr	recptr;
+		XLogRecData rdata[1];
+		xl_btree_reuse_page xlrec_reuse;
+
+		xlrec_reuse.node = rel->rd_node;
+		xlrec_reuse.block = blkno;
+		xlrec_reuse.latestRemovedXid = latestRemovedXid;
+		rdata[0].data = (char *) &xlrec_reuse;
+		rdata[0].len = SizeOfBtreeReusePage;
+		rdata[0].buffer = InvalidBuffer;
+		rdata[0].next = NULL;
+
+		recptr = XLogInsert(RM_BTREE_ID, XLOG_BTREE_REUSE_PAGE, rdata);
+
+		/*
+		 * We don't do PageSetLSN or PageSetTLI here because
+		 * we're about initialise the page, so no need.
+		 */
+	}
+
+	END_CRIT_SECTION();
+}
+
+/*
  *	_bt_getbuf() -- Get a buffer by block number for read or write.
  *
  *		blkno == P_NEW means to get an unallocated index page.	The page
@@ -510,7 +552,19 @@ _bt_getbuf(Relation rel, BlockNumber blkno, int access)
 			{
 				page = BufferGetPage(buf);
 				if (_bt_page_recyclable(page))
-				{
+				{					
+					/*
+					 * If we are generating WAL for Hot Standby then create
+					 * a WAL record that will allow us to conflict with
+					 * queries running on standby.
+					 */
+					if (XLogStandbyInfoActive())
+					{
+						BTPageOpaque opaque = (BTPageOpaque) PageGetSpecialPointer(page);
+
+						_bt_log_reuse_page(rel, blkno, opaque->btpo.xact);
+					}
+
 					/* Okay to use page.  Re-initialize and return it */
 					_bt_pageinit(page, BufferGetPageSize(buf));
 					return buf;

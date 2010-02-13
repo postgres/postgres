@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtxlog.c,v 1.60 2010/02/08 04:33:53 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtxlog.c,v 1.61 2010/02/13 00:59:58 sriggs Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -814,26 +814,48 @@ btree_redo(XLogRecPtr lsn, XLogRecord *record)
 {
 	uint8		info = record->xl_info & ~XLR_INFO_MASK;
 
-	/*
-	 * Btree delete records can conflict with standby queries. You might
-	 * think that vacuum records would conflict as well, but we've handled
-	 * that already. XLOG_HEAP2_CLEANUP_INFO records provide the highest xid
-	 * cleaned by the vacuum of the heap and so we can resolve any conflicts
-	 * just once when that arrives. After that any we know that no conflicts
-	 * exist from individual btree vacuum records on that index.
-	 */
-	if (InHotStandby && info == XLOG_BTREE_DELETE)
+	if (InHotStandby)
 	{
-		xl_btree_delete *xlrec = (xl_btree_delete *) XLogRecGetData(record);
+		switch (info)
+		{
+			case XLOG_BTREE_DELETE:
+				/*
+				 * Btree delete records can conflict with standby queries. You might
+				 * think that vacuum records would conflict as well, but we've handled
+				 * that already. XLOG_HEAP2_CLEANUP_INFO records provide the highest xid
+				 * cleaned by the vacuum of the heap and so we can resolve any conflicts
+				 * just once when that arrives. After that any we know that no conflicts
+				 * exist from individual btree vacuum records on that index.
+				 */
+				{
+					xl_btree_delete *xlrec = (xl_btree_delete *) XLogRecGetData(record);
 
-		/*
-		 * XXX Currently we put everybody on death row, because
-		 * currently _bt_delitems() supplies InvalidTransactionId.
-		 * This can be fairly painful, so providing a better value
-		 * here is worth some thought and possibly some effort to
-		 * improve.
-		 */
-		ResolveRecoveryConflictWithSnapshot(xlrec->latestRemovedXid, xlrec->node);
+					/*
+					 * XXX Currently we put everybody on death row, because
+					 * currently _bt_delitems() supplies InvalidTransactionId.
+					 * This can be fairly painful, so providing a better value
+					 * here is worth some thought and possibly some effort to
+					 * improve.
+					 */
+					ResolveRecoveryConflictWithSnapshot(xlrec->latestRemovedXid, xlrec->node);
+				}
+				break;
+
+			case XLOG_BTREE_REUSE_PAGE:
+				/*
+				 * Btree reuse page records exist to provide a conflict point when we
+				 * reuse pages in the index via the FSM. That's all it does though.
+				 */
+				{
+					xl_btree_reuse_page *xlrec = (xl_btree_reuse_page *) XLogRecGetData(record);
+
+					ResolveRecoveryConflictWithSnapshot(xlrec->latestRemovedXid, xlrec->node);
+				}
+				return;
+
+			default:
+				break;
+		}
 	}
 
 	/*
