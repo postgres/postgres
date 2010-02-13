@@ -21,7 +21,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/palloc.h,v 1.43 2010/02/13 02:34:16 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/palloc.h,v 1.44 2010/02/13 20:46:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -73,8 +73,12 @@ extern void *repalloc(void *pointer, Size size);
 /*
  * MemoryContextSwitchTo can't be a macro in standard C compilers.
  * But we can make it an inline function if the compiler supports it.
+ *
+ * This file has to be includable by some non-backend code such as
+ * pg_resetxlog, so don't expose the CurrentMemoryContext reference
+ * if FRONTEND is defined.
  */
-#ifdef USE_INLINE
+#if defined(USE_INLINE) && !defined(FRONTEND)
 
 static inline MemoryContext
 MemoryContextSwitchTo(MemoryContext context)
@@ -87,7 +91,7 @@ MemoryContextSwitchTo(MemoryContext context)
 #else
 
 extern MemoryContext MemoryContextSwitchTo(MemoryContext context);
-#endif   /* USE_INLINE */
+#endif   /* USE_INLINE && !FRONTEND */
 
 /*
  * These are like standard strdup() except the copied string is
