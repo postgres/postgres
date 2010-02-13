@@ -14535,6 +14535,75 @@ _ACEOF
     ;;
 esac
 
+{ $as_echo "$as_me:$LINENO: checking for quiet inline (no complaint if unreferenced)" >&5
+$as_echo_n "checking for quiet inline (no complaint if unreferenced)... " >&6; }
+if test "${pgac_cv_c_inline_quietly+set}" = set; then
+  $as_echo_n "(cached) " >&6
+else
+  pgac_cv_c_inline_quietly=no
+  if test "$ac_cv_c_inline" != no; then
+    pgac_c_inline_save_werror=$ac_c_werror_flag
+    ac_c_werror_flag=yes
+    cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+static inline int fun () {return 0;}
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (ac_try="$ac_link"
+case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval ac_try_echo="\"\$as_me:$LINENO: $ac_try_echo\""
+$as_echo "$ac_try_echo") >&5
+  (eval "$ac_link") 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  $as_echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } && {
+	 test -z "$ac_c_werror_flag" ||
+	 test ! -s conftest.err
+       } && test -s conftest$ac_exeext && {
+	 test "$cross_compiling" = yes ||
+	 $as_test_x conftest$ac_exeext
+       }; then
+  pgac_cv_c_inline_quietly=yes
+else
+  $as_echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+
+fi
+
+rm -rf conftest.dSYM
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
+      conftest$ac_exeext conftest.$ac_ext
+    ac_c_werror_flag=$pgac_c_inline_save_werror
+  fi
+fi
+{ $as_echo "$as_me:$LINENO: result: $pgac_cv_c_inline_quietly" >&5
+$as_echo "$pgac_cv_c_inline_quietly" >&6; }
+if test "$pgac_cv_c_inline_quietly" != no; then
+
+cat >>confdefs.h <<_ACEOF
+#define USE_INLINE 1
+_ACEOF
+
+fi
+
 { $as_echo "$as_me:$LINENO: checking for preprocessor stringizing operator" >&5
 $as_echo_n "checking for preprocessor stringizing operator... " >&6; }
 if test "${ac_cv_c_stringize+set}" = set; then

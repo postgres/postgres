@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/include/port/win32.h,v 1.91 2010/01/02 22:47:37 mha Exp $ */
+/* $PostgreSQL: pgsql/src/include/port/win32.h,v 1.92 2010/02/13 02:34:14 tgl Exp $ */
 
 #if defined(_MSC_VER) || defined(__BORLANDC__)
 #define WIN32_ONLY_COMPILER
@@ -312,15 +312,6 @@ typedef __int64 ssize_t;
 #ifndef __BORLANDC__
 typedef unsigned short mode_t;
 #endif
-
-/*
- *	Certain "standard edition" versions of MSVC throw a warning
- *	that later generates an error for "inline" statements, but
- *	__inline seems to work.  e.g.  Microsoft Visual C++ .NET
- *	Version 7.1.3088
- */
-#define inline __inline
-#define __inline__ __inline
 
 #ifndef __BORLANDC__
 #define _S_IRWXU	(_S_IREAD | _S_IWRITE | _S_IEXEC)

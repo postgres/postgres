@@ -30,7 +30,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/pg_list.h,v 1.62 2010/01/02 16:58:04 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/pg_list.h,v 1.63 2010/02/13 02:34:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -71,24 +71,24 @@ struct ListCell
 /*
  * These routines are used frequently. However, we can't implement
  * them as macros, since we want to avoid double-evaluation of macro
- * arguments. Therefore, we implement them using GCC inline functions,
- * and as regular functions with non-GCC compilers.
+ * arguments. Therefore, we implement them using static inline functions
+ * if supported by the compiler, or as regular functions otherwise.
  */
-#ifdef __GNUC__
+#ifdef USE_INLINE
 
-static __inline__ ListCell *
+static inline ListCell *
 list_head(List *l)
 {
 	return l ? l->head : NULL;
 }
 
-static __inline__ ListCell *
+static inline ListCell *
 list_tail(List *l)
 {
 	return l ? l->tail : NULL;
 }
 
-static __inline__ int
+static inline int
 list_length(List *l)
 {
 	return l ? l->length : 0;
@@ -98,7 +98,7 @@ list_length(List *l)
 extern ListCell *list_head(List *l);
 extern ListCell *list_tail(List *l);
 extern int	list_length(List *l);
-#endif   /* __GNUC__ */
+#endif   /* USE_INLINE */
 
 /*
  * NB: There is an unfortunate legacy from a previous incarnation of

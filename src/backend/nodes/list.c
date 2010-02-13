@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/list.c,v 1.73 2010/01/02 16:57:46 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/list.c,v 1.74 2010/02/13 02:34:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1224,12 +1224,10 @@ list_copy_tail(List *oldlist, int nskip)
 }
 
 /*
- * When using non-GCC compilers, we can't define these as inline
- * functions in pg_list.h, so they are defined here.
- *
- * TODO: investigate supporting inlining for some non-GCC compilers.
+ * pg_list.h defines inline versions of these functions if allowed by the
+ * compiler; in which case the definitions below are skipped.
  */
-#ifndef __GNUC__
+#ifndef USE_INLINE
 
 ListCell *
 list_head(List *l)
@@ -1248,7 +1246,7 @@ list_length(List *l)
 {
 	return l ? l->length : 0;
 }
-#endif   /* ! __GNUC__ */
+#endif   /* ! USE_INLINE */
 
 /*
  * Temporary compatibility functions

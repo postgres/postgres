@@ -749,6 +749,10 @@
    (--enable-float8-byval) */
 #undef USE_FLOAT8_BYVAL
 
+/* Define to 1 if "static inline" works without unwanted warnings from
+   compilations where static inline functions are defined but not called. */
+#undef USE_INLINE
+
 /* Define to 1 if you want 64-bit integer timestamp and interval support.
    (--enable-integer-datetimes) */
 #undef USE_INTEGER_DATETIMES

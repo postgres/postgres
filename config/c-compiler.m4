@@ -1,5 +1,5 @@
 # Macros to detect C compiler features
-# $PostgreSQL: pgsql/config/c-compiler.m4,v 1.19 2008/06/27 00:36:16 tgl Exp $
+# $PostgreSQL: pgsql/config/c-compiler.m4,v 1.20 2010/02/13 02:34:08 tgl Exp $
 
 
 # PGAC_C_SIGNED
@@ -14,6 +14,30 @@ AC_DEFUN([PGAC_C_SIGNED],
 if test x"$pgac_cv_c_signed" = xno ; then
   AC_DEFINE(signed,, [Define to empty if the C compiler does not understand signed types.])
 fi])# PGAC_C_SIGNED
+
+
+
+# PGAC_C_INLINE
+# -------------
+# Check if the C compiler understands inline functions.
+# Defines: inline, USE_INLINE
+AC_DEFUN([PGAC_C_INLINE],
+[AC_C_INLINE
+AC_CACHE_CHECK([for quiet inline (no complaint if unreferenced)], pgac_cv_c_inline_quietly,
+  [pgac_cv_c_inline_quietly=no
+  if test "$ac_cv_c_inline" != no; then
+    pgac_c_inline_save_werror=$ac_c_werror_flag
+    ac_c_werror_flag=yes
+    AC_LINK_IFELSE([AC_LANG_PROGRAM([static inline int fun () {return 0;}],[])],
+                   [pgac_cv_c_inline_quietly=yes])
+    ac_c_werror_flag=$pgac_c_inline_save_werror
+  fi])
+if test "$pgac_cv_c_inline_quietly" != no; then
+  AC_DEFINE_UNQUOTED([USE_INLINE], 1,
+    [Define to 1 if "static inline" works without unwanted warnings from ]
+    [compilations where static inline functions are defined but not called.])
+fi
+])# PGAC_C_INLINE
 
 
 

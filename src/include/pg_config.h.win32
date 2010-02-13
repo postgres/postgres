@@ -6,8 +6,8 @@
  *
  * HAVE_CBRT, HAVE_FUNCNAME_FUNC, HAVE_GETOPT, HAVE_GETOPT_H,
  * HAVE_GETOPT_LONG, HAVE_RINT, HAVE_STRINGS_H, HAVE_STRTOLL,
- * HAVE_STRTOULL, HAVE_STRUCT_OPTION, ENABLE_THREAD_SAFETY
- *
+ * HAVE_STRTOULL, HAVE_STRUCT_OPTION, ENABLE_THREAD_SAFETY,
+ * USE_INLINE, inline
  */
 
 /* Define to the type of arg 1 of 'accept' */
@@ -621,6 +621,10 @@
 /* Define to 1 to build with Bonjour support. (--with-bonjour) */
 /* #undef USE_BONJOUR */
 
+/* Define to 1 if "static inline" works without unwanted warnings from
+   compilations where static inline functions are defined but not called. */
+#define USE_INLINE 1
+
 /* Define to 1 if you want 64-bit integer timestamp and interval support.
    (--enable-integer-datetimes) */
 /* #undef USE_INTEGER_DATETIMES */
@@ -664,9 +668,11 @@
 /* Define to empty if `const' does not conform to ANSI C. */
 /* #undef const */
 
-/* Define as `__inline' if that's what the C compiler calls it, or to nothing
-   if it is not supported. */
-/* #undef inline */
+/* Define to `__inline__' or `__inline' if that's what the C compiler
+   calls it, or to nothing if 'inline' is not supported under any name.  */
+#ifndef __cplusplus
+#define inline __inline
+#endif
 
 /* Define to empty if the C compiler does not understand signed types. */
 /* #undef signed */
