@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/procsignal.h,v 1.4 2010/01/23 16:37:12 sriggs Exp $
+ * $PostgreSQL: pgsql/src/include/storage/procsignal.h,v 1.5 2010/02/13 01:32:20 sriggs Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,6 +38,7 @@ typedef enum
 	PROCSIG_RECOVERY_CONFLICT_LOCK,
 	PROCSIG_RECOVERY_CONFLICT_SNAPSHOT,
 	PROCSIG_RECOVERY_CONFLICT_BUFFERPIN,
+	PROCSIG_RECOVERY_CONFLICT_STARTUP_DEADLOCK,
 
 	NUM_PROCSIGNALS				/* Must be last! */
 } ProcSignalReason;

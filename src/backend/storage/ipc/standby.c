@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/standby.c,v 1.11 2010/02/11 19:35:22 sriggs Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/standby.c,v 1.12 2010/02/13 01:32:19 sriggs Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -126,6 +126,9 @@ WaitExceedsMaxStandbyDelay(void)
 {
 	long	delay_secs;
 	int		delay_usecs;
+
+	if (MaxStandbyDelay == -1)
+		return false;
 
 	/* Are we past max_standby_delay? */
 	TimestampDifference(GetLatestXLogTime(), GetCurrentTimestamp(),
@@ -351,15 +354,15 @@ ResolveRecoveryConflictWithLock(Oid dbOid, Oid relOid)
  * they hold one of the buffer pins that is blocking Startup process. If so,
  * backends will take an appropriate error action, ERROR or FATAL.
  *
- * A secondary purpose of this is to avoid deadlocks that might occur between
- * the Startup process and lock waiters. Deadlocks occur because if queries
+ * We also check for deadlocks before we wait, though applications that cause
+ * these will be extremely rare.  Deadlocks occur because if queries
  * wait on a lock, that must be behind an AccessExclusiveLock, which can only
- * be clared if the Startup process replays a transaction completion record.
- * If Startup process is waiting then that is a deadlock. If we allowed a
- * setting of max_standby_delay that meant "wait forever" we would then need
- * special code to protect against deadlock. Such deadlocks are rare, so the
- * code would be almost certainly buggy, so we avoid both long waits and
- * deadlocks using the same mechanism.
+ * be cleared if the Startup process replays a transaction completion record.
+ * If Startup process is also waiting then that is a deadlock. The deadlock
+ * can occur if the query is waiting and then the Startup sleeps, or if
+ * Startup is sleeping and the the query waits on a lock. We protect against
+ * only the former sequence here, the latter sequence is checked prior to
+ * the query sleeping, in CheckRecoveryConflictDeadlock().
  */
 void
 ResolveRecoveryConflictWithBufferPin(void)
@@ -368,11 +371,23 @@ ResolveRecoveryConflictWithBufferPin(void)
 
 	Assert(InHotStandby);
 
-	/*
-	 * Signal immediately or set alarm for later.
-	 */
 	if (MaxStandbyDelay == 0)
-		SendRecoveryConflictWithBufferPin();
+	{
+		/*
+		 * We don't want to wait, so just tell everybody holding the pin to 
+		 * get out of town.
+		 */
+		SendRecoveryConflictWithBufferPin(PROCSIG_RECOVERY_CONFLICT_BUFFERPIN);
+	}
+	else if (MaxStandbyDelay == -1)
+	{
+		/*
+		 * Send out a request to check for buffer pin deadlocks before we wait.
+		 * This is fairly cheap, so no need to wait for deadlock timeout before
+		 * trying to send it out.
+		 */
+		SendRecoveryConflictWithBufferPin(PROCSIG_RECOVERY_CONFLICT_STARTUP_DEADLOCK);
+	}
 	else
 	{
 		TimestampTz now;
@@ -386,12 +401,24 @@ ResolveRecoveryConflictWithBufferPin(void)
 							&standby_delay_secs, &standby_delay_usecs);
 
 		if (standby_delay_secs >= MaxStandbyDelay)
-			SendRecoveryConflictWithBufferPin();
+		{
+			/*
+			 * We're already behind, so clear a path as quickly as possible.
+			 */
+			SendRecoveryConflictWithBufferPin(PROCSIG_RECOVERY_CONFLICT_BUFFERPIN);
+		}
 		else
 		{
 			TimestampTz fin_time;			/* Expected wake-up time by timer */
 			long	timer_delay_secs;		/* Amount of time we set timer for */
 			int		timer_delay_usecs = 0;
+
+			/*
+			 * Send out a request to check for buffer pin deadlocks before we wait.
+			 * This is fairly cheap, so no need to wait for deadlock timeout before
+			 * trying to send it out.
+			 */
+			SendRecoveryConflictWithBufferPin(PROCSIG_RECOVERY_CONFLICT_STARTUP_DEADLOCK);
 
 			/*
 			 * How much longer we should wait?
@@ -435,15 +462,18 @@ ResolveRecoveryConflictWithBufferPin(void)
 }
 
 void
-SendRecoveryConflictWithBufferPin(void)
+SendRecoveryConflictWithBufferPin(ProcSignalReason reason)
 {
+	Assert(reason == PROCSIG_RECOVERY_CONFLICT_BUFFERPIN ||
+		   reason == PROCSIG_RECOVERY_CONFLICT_STARTUP_DEADLOCK);
+
 	/*
 	 * We send signal to all backends to ask them if they are holding
 	 * the buffer pin which is delaying the Startup process. We must
 	 * not set the conflict flag yet, since most backends will be innocent.
 	 * Let the SIGUSR1 handling in each backend decide their own fate.
 	 */
-	CancelDBBackends(InvalidOid, PROCSIG_RECOVERY_CONFLICT_BUFFERPIN, false);
+	CancelDBBackends(InvalidOid, reason, false);
 }
 
 /*

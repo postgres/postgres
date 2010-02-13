@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/proc.h,v 1.119 2010/01/23 16:37:12 sriggs Exp $
+ * $PostgreSQL: pgsql/src/include/storage/proc.h,v 1.120 2010/02/13 01:32:20 sriggs Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -189,6 +189,7 @@ extern void ProcQueueInit(PROC_QUEUE *queue);
 extern int	ProcSleep(LOCALLOCK *locallock, LockMethod lockMethodTable);
 extern PGPROC *ProcWakeup(PGPROC *proc, int waitStatus);
 extern void ProcLockWakeup(LockMethod lockMethodTable, LOCK *lock);
+extern bool IsWaitingForLock(void);
 extern void LockWaitCancel(void);
 
 extern void ProcWaitForSignal(void);

@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.538 2010/02/01 13:40:28 sriggs Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.539 2010/02/13 01:32:20 sriggs Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -1381,7 +1381,7 @@ static struct config_int ConfigureNamesInt[] =
 			NULL
 		},
 		&MaxStandbyDelay,
-		30, 0, INT_MAX, NULL, NULL
+		30, -1, INT_MAX, NULL, NULL
 	},
 
 	{

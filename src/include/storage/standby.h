@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/standby.h,v 1.7 2010/01/31 19:01:11 sriggs Exp $
+ * $PostgreSQL: pgsql/src/include/storage/standby.h,v 1.8 2010/02/13 01:32:20 sriggs Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,6 +16,7 @@
 
 #include "access/xlog.h"
 #include "storage/lock.h"
+#include "storage/procsignal.h"
 #include "storage/relfilenode.h"
 
 extern int	vacuum_defer_cleanup_age;
@@ -30,7 +31,7 @@ extern void ResolveRecoveryConflictWithTablespace(Oid tsid);
 extern void ResolveRecoveryConflictWithDatabase(Oid dbid);
 
 extern void ResolveRecoveryConflictWithBufferPin(void);
-extern void SendRecoveryConflictWithBufferPin(void);
+extern void SendRecoveryConflictWithBufferPin(ProcSignalReason reason);
 extern void CheckRecoveryConflictDeadlock(LWLockId partitionLock);
 
 /*
