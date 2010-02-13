@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/high-availability.sgml,v 1.42 2010/02/12 14:53:22 heikki Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/high-availability.sgml,v 1.43 2010/02/13 03:38:26 momjian Exp $ -->
 
 <chapter id="high-availability">
  <title>High Availability, Load Balancing, and Replication</title>
@@ -873,9 +873,9 @@ if (!triggered)
         <term><varname>restore_end_command</varname> (<type>string</type>)</term>
         <listitem>
          <para>
-	  In standby-mode, <varname>restore_command</> (and <varname>restore_end_command</>) is set to a
-	  simple command or script like in PITR. pg_standby or similar tools
-	  that wait for the next WAL file to arrive, cannot be used with
+          In standby-mode, <varname>restore_command</> (and <varname>restore_end_command</>) is set to a
+          simple command or script like in PITR. pg_standby or similar tools
+          that wait for the next WAL file to arrive, cannot be used with
           streaming replication, as the server handles retries and waiting
           itself. Set <varname>restore_command</> as you would if you were
           recovering using a Continuous archiving backup (see <xref linkend="backup-pitr-recovery">).
