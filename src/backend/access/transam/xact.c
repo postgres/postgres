@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.284 2010/02/08 04:33:53 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.285 2010/02/13 16:15:46 sriggs Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -950,6 +950,9 @@ RecordTransactionCommit(void)
 			xlrec.xinfo |= XACT_COMPLETION_UPDATE_RELCACHE_FILE;
 		if (forceSyncCommit)
 			xlrec.xinfo |= XACT_COMPLETION_FORCE_SYNC_COMMIT;
+
+		xlrec.dbId = MyDatabaseId;
+		xlrec.tsId = MyDatabaseTableSpace;
 
 		/*
 		 * Mark ourselves as within our "commit critical section".	This
@@ -4412,7 +4415,8 @@ xact_redo_commit(xl_xact_commit *xlrec, TransactionId xid, XLogRecPtr lsn)
 		 * as occurs in 	.
 		 */
 		ProcessCommittedInvalidationMessages(inval_msgs, xlrec->nmsgs,
-									XactCompletionRelcacheInitFileInval(xlrec));
+									XactCompletionRelcacheInitFileInval(xlrec),
+									xlrec->dbId, xlrec->tsId);
 
 		/*
 		 * Release locks, if any. We do this for both two phase and normal
@@ -4596,15 +4600,11 @@ xact_desc_commit(StringInfo buf, xl_xact_commit *xlrec)
 {
 	int			i;
 	TransactionId *xacts;
-	SharedInvalidationMessage *msgs;
 
 	xacts = (TransactionId *) &xlrec->xnodes[xlrec->nrels];
-	msgs = (SharedInvalidationMessage *) &xacts[xlrec->nsubxacts];
-
-	if (XactCompletionRelcacheInitFileInval(xlrec))
-		appendStringInfo(buf, "; relcache init file inval");
 
 	appendStringInfoString(buf, timestamptz_to_str(xlrec->xact_time));
+
 	if (xlrec->nrels > 0)
 	{
 		appendStringInfo(buf, "; rels:");
@@ -4624,6 +4624,14 @@ xact_desc_commit(StringInfo buf, xl_xact_commit *xlrec)
 	}
 	if (xlrec->nmsgs > 0)
 	{
+		SharedInvalidationMessage *msgs;
+
+		msgs = (SharedInvalidationMessage *) &xacts[xlrec->nsubxacts];
+
+		if (XactCompletionRelcacheInitFileInval(xlrec))
+			appendStringInfo(buf, "; relcache init file inval dbid %u tsid %u", 
+										xlrec->dbId, xlrec->tsId);
+
 		appendStringInfo(buf, "; inval msgs:");
 		for (i = 0; i < xlrec->nmsgs; i++)
 		{
