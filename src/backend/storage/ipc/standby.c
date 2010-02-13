@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/standby.c,v 1.12 2010/02/13 01:32:19 sriggs Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/standby.c,v 1.13 2010/02/13 16:29:38 sriggs Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -164,6 +164,7 @@ ResolveRecoveryConflictWithVirtualXIDs(VirtualTransactionId *waitlist,
 									   ProcSignalReason reason)
 {
 	char		waitactivitymsg[100];
+	char		oldactivitymsg[101];
 
 	while (VirtualTransactionIdIsValid(*waitlist))
 	{
@@ -186,17 +187,21 @@ ResolveRecoveryConflictWithVirtualXIDs(VirtualTransactionId *waitlist,
 			TimestampDifference(waitStart, now, &wait_s, &wait_us);
 			if (!logged && (wait_s > 0 || wait_us > 500000))
 			{
-				const char *oldactivitymsg;
+				const char *oldactivitymsgp;
 				int			len;
 
-				oldactivitymsg = get_ps_display(&len);
+				oldactivitymsgp = get_ps_display(&len);
+
+				if (len > 100)
+					len = 100;
+
+				memcpy(oldactivitymsg, oldactivitymsgp, len);
+				oldactivitymsg[len] = 0;
+
 				snprintf(waitactivitymsg, sizeof(waitactivitymsg),
 						 "waiting for max_standby_delay (%u s)",
 						 MaxStandbyDelay);
 				set_ps_display(waitactivitymsg, false);
-				if (len > 100)
-					len = 100;
-				memcpy(waitactivitymsg, oldactivitymsg, len);
 
 				pgstat_report_waiting(true);
 
@@ -226,7 +231,7 @@ ResolveRecoveryConflictWithVirtualXIDs(VirtualTransactionId *waitlist,
 		/* Reset ps display */
 		if (logged)
 		{
-			set_ps_display(waitactivitymsg, false);
+			set_ps_display(oldactivitymsg, false);
 			pgstat_report_waiting(false);
 		}
 
