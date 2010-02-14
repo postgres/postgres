@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/spccache.c,v 1.4 2010/01/07 03:53:08 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/spccache.c,v 1.5 2010/02/14 18:42:17 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -133,9 +133,7 @@ get_tablespace(Oid spcid)
 	 * details for a non-existent tablespace.  We'll just treat that case as if
 	 * no options were specified.
 	 */
-	tp = SearchSysCache(TABLESPACEOID,
-						ObjectIdGetDatum(spcid),
-						0, 0, 0);
+	tp = SearchSysCache1(TABLESPACEOID, ObjectIdGetDatum(spcid));
 	if (!HeapTupleIsValid(tp))
 		opts = NULL;
 	else

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeHash.c,v 1.127 2010/02/01 15:43:36 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeHash.c,v 1.128 2010/02/14 18:42:14 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -999,11 +999,10 @@ ExecHashBuildSkewHash(HashJoinTable hashtable, Hash *node, int mcvsToUse)
 	/*
 	 * Try to find the MCV statistics for the outer relation's join key.
 	 */
-	statsTuple = SearchSysCache(STATRELATTINH,
-								ObjectIdGetDatum(node->skewTable),
-								Int16GetDatum(node->skewColumn),
-								BoolGetDatum(node->skewInherit),
-								0);
+	statsTuple = SearchSysCache3(STATRELATTINH,
+								 ObjectIdGetDatum(node->skewTable),
+								 Int16GetDatum(node->skewColumn),
+								 BoolGetDatum(node->skewInherit));
 	if (!HeapTupleIsValid(statsTuple))
 		return;
 

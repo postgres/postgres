@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.148 2010/01/10 17:15:18 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.149 2010/02/14 18:42:18 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -142,9 +142,7 @@ plpgsql_compile(FunctionCallInfo fcinfo, bool forValidator)
 	/*
 	 * Lookup the pg_proc tuple by Oid; we'll need it in any case
 	 */
-	procTup = SearchSysCache(PROCOID,
-							 ObjectIdGetDatum(funcOid),
-							 0, 0, 0);
+	procTup = SearchSysCache1(PROCOID, ObjectIdGetDatum(funcOid));
 	if (!HeapTupleIsValid(procTup))
 		elog(ERROR, "cache lookup failed for function %u", funcOid);
 	procStruct = (Form_pg_proc) GETSTRUCT(procTup);
@@ -515,9 +513,7 @@ do_compile(FunctionCallInfo fcinfo,
 			/*
 			 * Lookup the function's return type
 			 */
-			typeTup = SearchSysCache(TYPEOID,
-									 ObjectIdGetDatum(rettypeid),
-									 0, 0, 0);
+			typeTup = SearchSysCache1(TYPEOID, ObjectIdGetDatum(rettypeid));
 			if (!HeapTupleIsValid(typeTup))
 				elog(ERROR, "cache lookup failed for type %u", rettypeid);
 			typeStruct = (Form_pg_type) GETSTRUCT(typeTup);
@@ -1629,9 +1625,7 @@ plpgsql_parse_cwordtype(List *idents)
 	else
 		goto done;
 
-	classtup = SearchSysCache(RELOID,
-							  ObjectIdGetDatum(classOid),
-							  0, 0, 0);
+	classtup = SearchSysCache1(RELOID, ObjectIdGetDatum(classOid));
 	if (!HeapTupleIsValid(classtup))
 		goto done;
 	classStruct = (Form_pg_class) GETSTRUCT(classtup);
@@ -1653,9 +1647,8 @@ plpgsql_parse_cwordtype(List *idents)
 		goto done;
 	attrStruct = (Form_pg_attribute) GETSTRUCT(attrtup);
 
-	typetup = SearchSysCache(TYPEOID,
-							 ObjectIdGetDatum(attrStruct->atttypid),
-							 0, 0, 0);
+	typetup = SearchSysCache1(TYPEOID,
+							  ObjectIdGetDatum(attrStruct->atttypid));
 	if (!HeapTupleIsValid(typetup))
 		elog(ERROR, "cache lookup failed for type %u", attrStruct->atttypid);
 
@@ -1998,9 +1991,7 @@ plpgsql_build_datatype(Oid typeOid, int32 typmod)
 	HeapTuple	typeTup;
 	PLpgSQL_type *typ;
 
-	typeTup = SearchSysCache(TYPEOID,
-							 ObjectIdGetDatum(typeOid),
-							 0, 0, 0);
+	typeTup = SearchSysCache1(TYPEOID, ObjectIdGetDatum(typeOid));
 	if (!HeapTupleIsValid(typeTup))
 		elog(ERROR, "cache lookup failed for type %u", typeOid);
 

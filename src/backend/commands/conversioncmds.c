@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/conversioncmds.c,v 1.40 2010/01/02 16:57:37 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/conversioncmds.c,v 1.41 2010/02/14 18:42:14 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -162,9 +162,7 @@ DropConversionsCommand(DropStmt *drop)
 			continue;
 		}
 
-		tuple = SearchSysCache(CONVOID,
-							   ObjectIdGetDatum(conversionOid),
-							   0, 0, 0);
+		tuple = SearchSysCache1(CONVOID, ObjectIdGetDatum(conversionOid));
 		if (!HeapTupleIsValid(tuple))
 			elog(ERROR, "cache lookup failed for conversion %u",
 				 conversionOid);
@@ -211,19 +209,16 @@ RenameConversion(List *name, const char *newname)
 				 errmsg("conversion \"%s\" does not exist",
 						NameListToString(name))));
 
-	tup = SearchSysCacheCopy(CONVOID,
-							 ObjectIdGetDatum(conversionOid),
-							 0, 0, 0);
+	tup = SearchSysCacheCopy1(CONVOID, ObjectIdGetDatum(conversionOid));
 	if (!HeapTupleIsValid(tup)) /* should not happen */
 		elog(ERROR, "cache lookup failed for conversion %u", conversionOid);
 
 	namespaceOid = ((Form_pg_conversion) GETSTRUCT(tup))->connamespace;
 
 	/* make sure the new name doesn't exist */
-	if (SearchSysCacheExists(CONNAMENSP,
-							 CStringGetDatum(newname),
-							 ObjectIdGetDatum(namespaceOid),
-							 0, 0))
+	if (SearchSysCacheExists2(CONNAMENSP,
+							  CStringGetDatum(newname),
+							  ObjectIdGetDatum(namespaceOid)))
 		ereport(ERROR,
 				(errcode(ERRCODE_DUPLICATE_OBJECT),
 				 errmsg("conversion \"%s\" already exists in schema \"%s\"",
@@ -301,9 +296,7 @@ AlterConversionOwner_internal(Relation rel, Oid conversionOid, Oid newOwnerId)
 
 	Assert(RelationGetRelid(rel) == ConversionRelationId);
 
-	tup = SearchSysCacheCopy(CONVOID,
-							 ObjectIdGetDatum(conversionOid),
-							 0, 0, 0);
+	tup = SearchSysCacheCopy1(CONVOID, ObjectIdGetDatum(conversionOid));
 	if (!HeapTupleIsValid(tup)) /* should not happen */
 		elog(ERROR, "cache lookup failed for conversion %u", conversionOid);
 

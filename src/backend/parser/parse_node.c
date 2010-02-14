@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_node.c,v 1.107 2010/01/02 16:57:49 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_node.c,v 1.108 2010/02/14 18:42:15 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -208,9 +208,7 @@ transformArrayType(Oid arrayType)
 	Form_pg_type type_struct_array;
 
 	/* Get the type tuple for the array */
-	type_tuple_array = SearchSysCache(TYPEOID,
-									  ObjectIdGetDatum(arrayType),
-									  0, 0, 0);
+	type_tuple_array = SearchSysCache1(TYPEOID, ObjectIdGetDatum(arrayType));
 	if (!HeapTupleIsValid(type_tuple_array))
 		elog(ERROR, "cache lookup failed for type %u", arrayType);
 	type_struct_array = (Form_pg_type) GETSTRUCT(type_tuple_array);

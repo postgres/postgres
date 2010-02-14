@@ -1,7 +1,7 @@
 /**********************************************************************
  * plpython.c - python as a procedural language for PostgreSQL
  *
- *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.136 2010/01/22 15:45:15 petere Exp $
+ *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.137 2010/02/14 18:42:19 rhaas Exp $
  *
  *********************************************************************
  */
@@ -1287,9 +1287,7 @@ PLy_procedure_get(FunctionCallInfo fcinfo, Oid tgreloid)
 	int			rv;
 
 	fn_oid = fcinfo->flinfo->fn_oid;
-	procTup = SearchSysCache(PROCOID,
-							 ObjectIdGetDatum(fn_oid),
-							 0, 0, 0);
+	procTup = SearchSysCache1(PROCOID, ObjectIdGetDatum(fn_oid));
 	if (!HeapTupleIsValid(procTup))
 		elog(ERROR, "cache lookup failed for function %u", fn_oid);
 
@@ -1399,9 +1397,8 @@ PLy_procedure_create(HeapTuple procTup, Oid tgreloid, char *key)
 			HeapTuple	rvTypeTup;
 			Form_pg_type rvTypeStruct;
 
-			rvTypeTup = SearchSysCache(TYPEOID,
-									ObjectIdGetDatum(procStruct->prorettype),
-									   0, 0, 0);
+			rvTypeTup = SearchSysCache1(TYPEOID,
+									ObjectIdGetDatum(procStruct->prorettype));
 			if (!HeapTupleIsValid(rvTypeTup))
 				elog(ERROR, "cache lookup failed for type %u",
 					 procStruct->prorettype);
@@ -1483,9 +1480,8 @@ PLy_procedure_create(HeapTuple procTup, Oid tgreloid, char *key)
 
 				Assert(types[i] == procStruct->proargtypes.values[pos]);
 
-				argTypeTup = SearchSysCache(TYPEOID,
-											ObjectIdGetDatum(types[i]),
-											0, 0, 0);
+				argTypeTup = SearchSysCache1(TYPEOID,
+											 ObjectIdGetDatum(types[i]));
 				if (!HeapTupleIsValid(argTypeTup))
 					elog(ERROR, "cache lookup failed for type %u", types[i]);
 				argTypeStruct = (Form_pg_type) GETSTRUCT(argTypeTup);
@@ -1699,9 +1695,8 @@ PLy_input_tuple_funcs(PLyTypeInfo *arg, TupleDesc desc)
 		if (arg->in.r.atts[i].typoid == desc->attrs[i]->atttypid)
 			continue;			/* already set up this entry */
 
-		typeTup = SearchSysCache(TYPEOID,
-								 ObjectIdGetDatum(desc->attrs[i]->atttypid),
-								 0, 0, 0);
+		typeTup = SearchSysCache1(TYPEOID,
+								  ObjectIdGetDatum(desc->attrs[i]->atttypid));
 		if (!HeapTupleIsValid(typeTup))
 			elog(ERROR, "cache lookup failed for type %u",
 				 desc->attrs[i]->atttypid);
@@ -1741,9 +1736,8 @@ PLy_output_tuple_funcs(PLyTypeInfo *arg, TupleDesc desc)
 		if (arg->out.r.atts[i].typoid == desc->attrs[i]->atttypid)
 			continue;			/* already set up this entry */
 
-		typeTup = SearchSysCache(TYPEOID,
-								 ObjectIdGetDatum(desc->attrs[i]->atttypid),
-								 0, 0, 0);
+		typeTup = SearchSysCache1(TYPEOID,
+								  ObjectIdGetDatum(desc->attrs[i]->atttypid));
 		if (!HeapTupleIsValid(typeTup))
 			elog(ERROR, "cache lookup failed for type %u",
 				 desc->attrs[i]->atttypid);
@@ -2850,9 +2844,8 @@ PLy_spi_prepare(PyObject *self, PyObject *args)
 
 					parseTypeString(sptr, &typeId, &typmod);
 
-					typeTup = SearchSysCache(TYPEOID,
-											 ObjectIdGetDatum(typeId),
-											 0, 0, 0);
+					typeTup = SearchSysCache1(TYPEOID,
+											  ObjectIdGetDatum(typeId));
 					if (!HeapTupleIsValid(typeTup))
 						elog(ERROR, "cache lookup failed for type %u", typeId);
 

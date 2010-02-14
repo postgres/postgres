@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/regproc.c,v 1.112 2010/01/02 16:57:55 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/regproc.c,v 1.113 2010/02/14 18:42:16 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -164,9 +164,7 @@ regprocout(PG_FUNCTION_ARGS)
 		PG_RETURN_CSTRING(result);
 	}
 
-	proctup = SearchSysCache(PROCOID,
-							 ObjectIdGetDatum(proid),
-							 0, 0, 0);
+	proctup = SearchSysCache1(PROCOID, ObjectIdGetDatum(proid));
 
 	if (HeapTupleIsValid(proctup))
 	{
@@ -307,9 +305,7 @@ format_procedure(Oid procedure_oid)
 	char	   *result;
 	HeapTuple	proctup;
 
-	proctup = SearchSysCache(PROCOID,
-							 ObjectIdGetDatum(procedure_oid),
-							 0, 0, 0);
+	proctup = SearchSysCache1(PROCOID, ObjectIdGetDatum(procedure_oid));
 
 	if (HeapTupleIsValid(proctup))
 	{
@@ -513,9 +509,7 @@ regoperout(PG_FUNCTION_ARGS)
 		PG_RETURN_CSTRING(result);
 	}
 
-	opertup = SearchSysCache(OPEROID,
-							 ObjectIdGetDatum(oprid),
-							 0, 0, 0);
+	opertup = SearchSysCache1(OPEROID, ObjectIdGetDatum(oprid));
 
 	if (HeapTupleIsValid(opertup))
 	{
@@ -663,9 +657,7 @@ format_operator(Oid operator_oid)
 	char	   *result;
 	HeapTuple	opertup;
 
-	opertup = SearchSysCache(OPEROID,
-							 ObjectIdGetDatum(operator_oid),
-							 0, 0, 0);
+	opertup = SearchSysCache1(OPEROID, ObjectIdGetDatum(operator_oid));
 
 	if (HeapTupleIsValid(opertup))
 	{
@@ -852,9 +844,7 @@ regclassout(PG_FUNCTION_ARGS)
 		PG_RETURN_CSTRING(result);
 	}
 
-	classtup = SearchSysCache(RELOID,
-							  ObjectIdGetDatum(classid),
-							  0, 0, 0);
+	classtup = SearchSysCache1(RELOID, ObjectIdGetDatum(classid));
 
 	if (HeapTupleIsValid(classtup))
 	{
@@ -1015,9 +1005,7 @@ regtypeout(PG_FUNCTION_ARGS)
 		PG_RETURN_CSTRING(result);
 	}
 
-	typetup = SearchSysCache(TYPEOID,
-							 ObjectIdGetDatum(typid),
-							 0, 0, 0);
+	typetup = SearchSysCache1(TYPEOID, ObjectIdGetDatum(typid));
 
 	if (HeapTupleIsValid(typetup))
 	{
@@ -1129,9 +1117,7 @@ regconfigout(PG_FUNCTION_ARGS)
 		PG_RETURN_CSTRING(result);
 	}
 
-	cfgtup = SearchSysCache(TSCONFIGOID,
-							ObjectIdGetDatum(cfgid),
-							0, 0, 0);
+	cfgtup = SearchSysCache1(TSCONFIGOID, ObjectIdGetDatum(cfgid));
 
 	if (HeapTupleIsValid(cfgtup))
 	{
@@ -1241,9 +1227,7 @@ regdictionaryout(PG_FUNCTION_ARGS)
 		PG_RETURN_CSTRING(result);
 	}
 
-	dicttup = SearchSysCache(TSDICTOID,
-							 ObjectIdGetDatum(dictid),
-							 0, 0, 0);
+	dicttup = SearchSysCache1(TSDICTOID, ObjectIdGetDatum(dictid));
 
 	if (HeapTupleIsValid(dicttup))
 	{

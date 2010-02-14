@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/predtest.c,v 1.30 2010/01/02 16:57:48 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/predtest.c,v 1.31 2010/02/14 18:42:15 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1585,9 +1585,7 @@ get_btree_test_op(Oid pred_op, Oid clause_op, bool refute_it)
 	 * corresponding test operator.  This should work for any logically
 	 * consistent opfamilies.
 	 */
-	catlist = SearchSysCacheList(AMOPOPID, 1,
-								 ObjectIdGetDatum(pred_op),
-								 0, 0, 0);
+	catlist = SearchSysCacheList1(AMOPOPID, ObjectIdGetDatum(pred_op));
 
 	/*
 	 * If we couldn't find any opfamily containing the pred_op, perhaps it is
@@ -1601,9 +1599,8 @@ get_btree_test_op(Oid pred_op, Oid clause_op, bool refute_it)
 		{
 			pred_op_negated = true;
 			ReleaseSysCacheList(catlist);
-			catlist = SearchSysCacheList(AMOPOPID, 1,
-										 ObjectIdGetDatum(pred_op_negator),
-										 0, 0, 0);
+			catlist = SearchSysCacheList1(AMOPOPID,
+										  ObjectIdGetDatum(pred_op_negator));
 		}
 	}
 
@@ -1638,10 +1635,9 @@ get_btree_test_op(Oid pred_op, Oid clause_op, bool refute_it)
 		 * From the same opfamily, find a strategy number for the clause_op,
 		 * if possible
 		 */
-		clause_tuple = SearchSysCache(AMOPOPID,
-									  ObjectIdGetDatum(clause_op),
-									  ObjectIdGetDatum(opfamily_id),
-									  0, 0);
+		clause_tuple = SearchSysCache2(AMOPOPID,
+									   ObjectIdGetDatum(clause_op),
+									   ObjectIdGetDatum(opfamily_id));
 		if (HeapTupleIsValid(clause_tuple))
 		{
 			Form_pg_amop clause_form = (Form_pg_amop) GETSTRUCT(clause_tuple);
@@ -1655,10 +1651,9 @@ get_btree_test_op(Oid pred_op, Oid clause_op, bool refute_it)
 		}
 		else if (OidIsValid(clause_op_negator))
 		{
-			clause_tuple = SearchSysCache(AMOPOPID,
-										  ObjectIdGetDatum(clause_op_negator),
-										  ObjectIdGetDatum(opfamily_id),
-										  0, 0);
+			clause_tuple = SearchSysCache2(AMOPOPID,
+										   ObjectIdGetDatum(clause_op_negator),
+										   ObjectIdGetDatum(opfamily_id));
 			if (HeapTupleIsValid(clause_tuple))
 			{
 				Form_pg_amop clause_form = (Form_pg_amop) GETSTRUCT(clause_tuple);

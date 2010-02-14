@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_inherits.c,v 1.6 2010/02/01 19:28:56 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_inherits.c,v 1.7 2010/02/14 18:42:13 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -124,9 +124,7 @@ find_inheritance_children(Oid parentrelId, LOCKMODE lockmode)
 			 * really exists or not.  If not, assume it was dropped while we
 			 * waited to acquire lock, and ignore it.
 			 */
-			if (!SearchSysCacheExists(RELOID,
-									  ObjectIdGetDatum(inhrelid),
-									  0, 0, 0))
+			if (!SearchSysCacheExists1(RELOID, ObjectIdGetDatum(inhrelid)))
 			{
 				/* Release useless lock */
 				UnlockRelationOid(inhrelid, lockmode);
@@ -245,9 +243,7 @@ has_subclass(Oid relationId)
 	HeapTuple	tuple;
 	bool		result;
 
-	tuple = SearchSysCache(RELOID,
-						   ObjectIdGetDatum(relationId),
-						   0, 0, 0);
+	tuple = SearchSysCache1(RELOID, ObjectIdGetDatum(relationId));
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "cache lookup failed for relation %u", relationId);
 

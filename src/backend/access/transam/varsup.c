@@ -6,7 +6,7 @@
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/varsup.c,v 1.87 2010/01/02 16:57:35 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/varsup.c,v 1.88 2010/02/14 18:42:12 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -402,9 +402,7 @@ ForceTransactionIdLimitUpdate(void)
 	if (TransactionIdFollowsOrEquals(nextXid, xidVacLimit) &&
 		TransactionIdIsValid(xidVacLimit))
 		return true;			/* past VacLimit, don't delay updating */
-	if (!SearchSysCacheExists(DATABASEOID,
-							  ObjectIdGetDatum(oldestXidDB),
-							  0, 0, 0))
+	if (!SearchSysCacheExists1(DATABASEOID, ObjectIdGetDatum(oldestXidDB)))
 		return true;			/* could happen, per comments above */
 	return false;
 }

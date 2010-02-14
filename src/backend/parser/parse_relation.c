@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_relation.c,v 1.148 2010/01/02 16:57:50 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_relation.c,v 1.149 2010/02/14 18:42:15 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -502,10 +502,9 @@ scanRTEForColumn(ParseState *pstate, RangeTblEntry *rte, char *colname,
 		if (attnum != InvalidAttrNumber)
 		{
 			/* now check to see if column actually is defined */
-			if (SearchSysCacheExists(ATTNUM,
-									 ObjectIdGetDatum(rte->relid),
-									 Int16GetDatum(attnum),
-									 0, 0))
+			if (SearchSysCacheExists2(ATTNUM,
+									  ObjectIdGetDatum(rte->relid),
+									  Int16GetDatum(attnum)))
 			{
 				var = make_var(pstate, rte, attnum, location);
 				/* Require read access to the column */
@@ -1979,10 +1978,9 @@ get_rte_attribute_type(RangeTblEntry *rte, AttrNumber attnum,
 				HeapTuple	tp;
 				Form_pg_attribute att_tup;
 
-				tp = SearchSysCache(ATTNUM,
-									ObjectIdGetDatum(rte->relid),
-									Int16GetDatum(attnum),
-									0, 0);
+				tp = SearchSysCache2(ATTNUM,
+									 ObjectIdGetDatum(rte->relid),
+									 Int16GetDatum(attnum));
 				if (!HeapTupleIsValid(tp))		/* shouldn't happen */
 					elog(ERROR, "cache lookup failed for attribute %d of relation %u",
 						 attnum, rte->relid);
@@ -2133,10 +2131,9 @@ get_rte_attribute_is_dropped(RangeTblEntry *rte, AttrNumber attnum)
 				HeapTuple	tp;
 				Form_pg_attribute att_tup;
 
-				tp = SearchSysCache(ATTNUM,
-									ObjectIdGetDatum(rte->relid),
-									Int16GetDatum(attnum),
-									0, 0);
+				tp = SearchSysCache2(ATTNUM,
+									 ObjectIdGetDatum(rte->relid),
+									 Int16GetDatum(attnum));
 				if (!HeapTupleIsValid(tp))		/* shouldn't happen */
 					elog(ERROR, "cache lookup failed for attribute %d of relation %u",
 						 attnum, rte->relid);
@@ -2186,10 +2183,9 @@ get_rte_attribute_is_dropped(RangeTblEntry *rte, AttrNumber attnum)
 					HeapTuple	tp;
 					Form_pg_attribute att_tup;
 
-					tp = SearchSysCache(ATTNUM,
-										ObjectIdGetDatum(funcrelid),
-										Int16GetDatum(attnum),
-										0, 0);
+					tp = SearchSysCache2(ATTNUM,
+										 ObjectIdGetDatum(funcrelid),
+										 Int16GetDatum(attnum));
 					if (!HeapTupleIsValid(tp))	/* shouldn't happen */
 						elog(ERROR, "cache lookup failed for attribute %d of relation %u",
 							 attnum, funcrelid);

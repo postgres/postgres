@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/variable.c,v 1.132 2010/01/02 16:57:40 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/variable.c,v 1.133 2010/02/14 18:42:14 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -727,9 +727,7 @@ assign_session_authorization(const char *value, bool doit, GucSource source)
 			return NULL;
 		}
 
-		roleTup = SearchSysCache(AUTHNAME,
-								 PointerGetDatum(value),
-								 0, 0, 0);
+		roleTup = SearchSysCache1(AUTHNAME, PointerGetDatum(value));
 		if (!HeapTupleIsValid(roleTup))
 		{
 			ereport(GUC_complaint_elevel(source),
@@ -839,9 +837,7 @@ assign_role(const char *value, bool doit, GucSource source)
 			return NULL;
 		}
 
-		roleTup = SearchSysCache(AUTHNAME,
-								 PointerGetDatum(value),
-								 0, 0, 0);
+		roleTup = SearchSysCache1(AUTHNAME, PointerGetDatum(value));
 		if (!HeapTupleIsValid(roleTup))
 		{
 			ereport(GUC_complaint_elevel(source),

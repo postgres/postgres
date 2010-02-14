@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_type.c,v 1.105 2010/01/02 16:57:50 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_type.c,v 1.106 2010/02/14 18:42:15 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -143,10 +143,9 @@ LookupTypeName(ParseState *pstate, const TypeName *typeName,
 			Oid			namespaceId;
 
 			namespaceId = LookupExplicitNamespace(schemaname);
-			typoid = GetSysCacheOid(TYPENAMENSP,
-									PointerGetDatum(typname),
-									ObjectIdGetDatum(namespaceId),
-									0, 0);
+			typoid = GetSysCacheOid2(TYPENAMENSP,
+									 PointerGetDatum(typname),
+									 ObjectIdGetDatum(namespaceId));
 		}
 		else
 		{
@@ -166,9 +165,7 @@ LookupTypeName(ParseState *pstate, const TypeName *typeName,
 		return NULL;
 	}
 
-	tup = SearchSysCache(TYPEOID,
-						 ObjectIdGetDatum(typoid),
-						 0, 0, 0);
+	tup = SearchSysCache1(TYPEOID, ObjectIdGetDatum(typoid));
 	if (!HeapTupleIsValid(tup)) /* should not happen */
 		elog(ERROR, "cache lookup failed for type %u", typoid);
 
@@ -423,9 +420,7 @@ typeidType(Oid id)
 {
 	HeapTuple	tup;
 
-	tup = SearchSysCache(TYPEOID,
-						 ObjectIdGetDatum(id),
-						 0, 0, 0);
+	tup = SearchSysCache1(TYPEOID, ObjectIdGetDatum(id));
 	if (!HeapTupleIsValid(tup))
 		elog(ERROR, "cache lookup failed for type %u", id);
 	return (Type) tup;
@@ -532,9 +527,7 @@ typeidTypeRelid(Oid type_id)
 	Form_pg_type type;
 	Oid			result;
 
-	typeTuple = SearchSysCache(TYPEOID,
-							   ObjectIdGetDatum(type_id),
-							   0, 0, 0);
+	typeTuple = SearchSysCache1(TYPEOID, ObjectIdGetDatum(type_id));
 	if (!HeapTupleIsValid(typeTuple))
 		elog(ERROR, "cache lookup failed for type %u", type_id);
 

@@ -5,7 +5,7 @@
  * Copyright (c) 2002-2010, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/dbsize.c,v 1.29 2010/02/07 20:48:10 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/dbsize.c,v 1.30 2010/02/14 18:42:16 rhaas Exp $
  *
  */
 
@@ -531,9 +531,7 @@ pg_relation_filenode(PG_FUNCTION_ARGS)
 	HeapTuple	tuple;
 	Form_pg_class relform;
 
-	tuple = SearchSysCache(RELOID,
-						   ObjectIdGetDatum(relid),
-						   0, 0, 0);
+	tuple = SearchSysCache1(RELOID, ObjectIdGetDatum(relid));
 	if (!HeapTupleIsValid(tuple))
 		PG_RETURN_NULL();
 	relform = (Form_pg_class) GETSTRUCT(tuple);
@@ -580,9 +578,7 @@ pg_relation_filepath(PG_FUNCTION_ARGS)
 	RelFileNode rnode;
 	char	   *path;
 
-	tuple = SearchSysCache(RELOID,
-						   ObjectIdGetDatum(relid),
-						   0, 0, 0);
+	tuple = SearchSysCache1(RELOID, ObjectIdGetDatum(relid));
 	if (!HeapTupleIsValid(tuple))
 		PG_RETURN_NULL();
 	relform = (Form_pg_class) GETSTRUCT(tuple);

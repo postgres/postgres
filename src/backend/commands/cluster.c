@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/cluster.c,v 1.200 2010/02/09 21:43:30 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/cluster.c,v 1.201 2010/02/14 18:42:14 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -136,9 +136,8 @@ cluster(ClusterStmt *stmt, bool isTopLevel)
 				Form_pg_index indexForm;
 
 				indexOid = lfirst_oid(index);
-				idxtuple = SearchSysCache(INDEXRELID,
-										  ObjectIdGetDatum(indexOid),
-										  0, 0, 0);
+				idxtuple = SearchSysCache1(INDEXRELID,
+										   ObjectIdGetDatum(indexOid));
 				if (!HeapTupleIsValid(idxtuple))
 					elog(ERROR, "cache lookup failed for index %u", indexOid);
 				indexForm = (Form_pg_index) GETSTRUCT(idxtuple);
@@ -316,9 +315,7 @@ cluster_rel(Oid tableOid, Oid indexOid, bool recheck, bool verbose,
 			/*
 			 * Check that the index still exists
 			 */
-			if (!SearchSysCacheExists(RELOID,
-									  ObjectIdGetDatum(indexOid),
-									  0, 0, 0))
+			if (!SearchSysCacheExists1(RELOID, ObjectIdGetDatum(indexOid)))
 			{
 				relation_close(OldHeap, AccessExclusiveLock);
 				return;
@@ -327,9 +324,7 @@ cluster_rel(Oid tableOid, Oid indexOid, bool recheck, bool verbose,
 			/*
 			 * Check that the index is still the one with indisclustered set.
 			 */
-			tuple = SearchSysCache(INDEXRELID,
-								   ObjectIdGetDatum(indexOid),
-								   0, 0, 0);
+			tuple = SearchSysCache1(INDEXRELID, ObjectIdGetDatum(indexOid));
 			if (!HeapTupleIsValid(tuple))	/* probably can't happen */
 			{
 				relation_close(OldHeap, AccessExclusiveLock);
@@ -519,9 +514,7 @@ mark_index_clustered(Relation rel, Oid indexOid)
 	 */
 	if (OidIsValid(indexOid))
 	{
-		indexTuple = SearchSysCache(INDEXRELID,
-									ObjectIdGetDatum(indexOid),
-									0, 0, 0);
+		indexTuple = SearchSysCache1(INDEXRELID, ObjectIdGetDatum(indexOid));
 		if (!HeapTupleIsValid(indexTuple))
 			elog(ERROR, "cache lookup failed for index %u", indexOid);
 		indexForm = (Form_pg_index) GETSTRUCT(indexTuple);
@@ -544,9 +537,8 @@ mark_index_clustered(Relation rel, Oid indexOid)
 	{
 		Oid			thisIndexOid = lfirst_oid(index);
 
-		indexTuple = SearchSysCacheCopy(INDEXRELID,
-										ObjectIdGetDatum(thisIndexOid),
-										0, 0, 0);
+		indexTuple = SearchSysCacheCopy1(INDEXRELID,
+										 ObjectIdGetDatum(thisIndexOid));
 		if (!HeapTupleIsValid(indexTuple))
 			elog(ERROR, "cache lookup failed for index %u", thisIndexOid);
 		indexForm = (Form_pg_index) GETSTRUCT(indexTuple);
@@ -656,9 +648,7 @@ make_new_heap(Oid OIDOldHeap, Oid NewTableSpace)
 	/*
 	 * But we do want to use reloptions of the old heap for new heap.
 	 */
-	tuple = SearchSysCache(RELOID,
-						   ObjectIdGetDatum(OIDOldHeap),
-						   0, 0, 0);
+	tuple = SearchSysCache1(RELOID, ObjectIdGetDatum(OIDOldHeap));
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "cache lookup failed for relation %u", OIDOldHeap);
 	reloptions = SysCacheGetAttr(RELOID, tuple, Anum_pg_class_reloptions,
@@ -722,9 +712,7 @@ make_new_heap(Oid OIDOldHeap, Oid NewTableSpace)
 	if (OidIsValid(toastid))
 	{
 		/* keep the existing toast table's reloptions, if any */
-		tuple = SearchSysCache(RELOID,
-							   ObjectIdGetDatum(toastid),
-							   0, 0, 0);
+		tuple = SearchSysCache1(RELOID, ObjectIdGetDatum(toastid));
 		if (!HeapTupleIsValid(tuple))
 			elog(ERROR, "cache lookup failed for relation %u", toastid);
 		reloptions = SysCacheGetAttr(RELOID, tuple, Anum_pg_class_reloptions,
@@ -1077,16 +1065,12 @@ swap_relation_files(Oid r1, Oid r2, bool target_is_pg_class,
 	/* We need writable copies of both pg_class tuples. */
 	relRelation = heap_open(RelationRelationId, RowExclusiveLock);
 
-	reltup1 = SearchSysCacheCopy(RELOID,
-								 ObjectIdGetDatum(r1),
-								 0, 0, 0);
+	reltup1 = SearchSysCacheCopy1(RELOID, ObjectIdGetDatum(r1));
 	if (!HeapTupleIsValid(reltup1))
 		elog(ERROR, "cache lookup failed for relation %u", r1);
 	relform1 = (Form_pg_class) GETSTRUCT(reltup1);
 
-	reltup2 = SearchSysCacheCopy(RELOID,
-								 ObjectIdGetDatum(r2),
-								 0, 0, 0);
+	reltup2 = SearchSysCacheCopy1(RELOID, ObjectIdGetDatum(r2));
 	if (!HeapTupleIsValid(reltup2))
 		elog(ERROR, "cache lookup failed for relation %u", r2);
 	relform2 = (Form_pg_class) GETSTRUCT(reltup2);

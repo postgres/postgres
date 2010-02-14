@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_shdepend.c,v 1.38 2010/01/02 16:57:36 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_shdepend.c,v 1.39 2010/02/14 18:42:13 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -973,9 +973,7 @@ shdepLockAndCheckObject(Oid classId, Oid objectId)
 	switch (classId)
 	{
 		case AuthIdRelationId:
-			if (!SearchSysCacheExists(AUTHOID,
-									  ObjectIdGetDatum(objectId),
-									  0, 0, 0))
+			if (!SearchSysCacheExists1(AUTHOID, ObjectIdGetDatum(objectId)))
 				ereport(ERROR,
 						(errcode(ERRCODE_UNDEFINED_OBJECT),
 						 errmsg("role %u was concurrently dropped",

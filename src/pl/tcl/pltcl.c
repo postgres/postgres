@@ -2,7 +2,7 @@
  * pltcl.c		- PostgreSQL support for Tcl as
  *				  procedural language (PL)
  *
- *	  $PostgreSQL: pgsql/src/pl/tcl/pltcl.c,v 1.130 2010/01/25 01:58:13 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/tcl/pltcl.c,v 1.131 2010/02/14 18:42:19 rhaas Exp $
  *
  **********************************************************************/
 
@@ -958,9 +958,8 @@ pltcl_trigger_handler(PG_FUNCTION_ARGS)
 			 * Lookup the attribute type in the syscache
 			 * for the input function
 			 ************************************************************/
-			typeTup = SearchSysCache(TYPEOID,
-					  ObjectIdGetDatum(tupdesc->attrs[attnum - 1]->atttypid),
-									 0, 0, 0);
+			typeTup = SearchSysCache1(TYPEOID,
+					  ObjectIdGetDatum(tupdesc->attrs[attnum - 1]->atttypid));
 			if (!HeapTupleIsValid(typeTup))
 				elog(ERROR, "cache lookup failed for type %u",
 					 tupdesc->attrs[attnum - 1]->atttypid);
@@ -1055,9 +1054,7 @@ compile_pltcl_function(Oid fn_oid, Oid tgreloid)
 	int			tcl_rc;
 
 	/* We'll need the pg_proc tuple in any case... */
-	procTup = SearchSysCache(PROCOID,
-							 ObjectIdGetDatum(fn_oid),
-							 0, 0, 0);
+	procTup = SearchSysCache1(PROCOID, ObjectIdGetDatum(fn_oid));
 	if (!HeapTupleIsValid(procTup))
 		elog(ERROR, "cache lookup failed for function %u", fn_oid);
 	procStruct = (Form_pg_proc) GETSTRUCT(procTup);
@@ -1141,9 +1138,8 @@ compile_pltcl_function(Oid fn_oid, Oid tgreloid)
 		/************************************************************
 		 * Lookup the pg_language tuple by Oid
 		 ************************************************************/
-		langTup = SearchSysCache(LANGOID,
-								 ObjectIdGetDatum(procStruct->prolang),
-								 0, 0, 0);
+		langTup = SearchSysCache1(LANGOID,
+								  ObjectIdGetDatum(procStruct->prolang));
 		if (!HeapTupleIsValid(langTup))
 		{
 			free(prodesc->user_proname);
@@ -1167,9 +1163,9 @@ compile_pltcl_function(Oid fn_oid, Oid tgreloid)
 		 ************************************************************/
 		if (!is_trigger)
 		{
-			typeTup = SearchSysCache(TYPEOID,
-									 ObjectIdGetDatum(procStruct->prorettype),
-									 0, 0, 0);
+			typeTup =
+				SearchSysCache1(TYPEOID,
+							    ObjectIdGetDatum(procStruct->prorettype));
 			if (!HeapTupleIsValid(typeTup))
 			{
 				free(prodesc->user_proname);
@@ -1232,9 +1228,8 @@ compile_pltcl_function(Oid fn_oid, Oid tgreloid)
 			proc_internal_args[0] = '\0';
 			for (i = 0; i < prodesc->nargs; i++)
 			{
-				typeTup = SearchSysCache(TYPEOID,
-						 ObjectIdGetDatum(procStruct->proargtypes.values[i]),
-										 0, 0, 0);
+				typeTup = SearchSysCache1(TYPEOID,
+						 ObjectIdGetDatum(procStruct->proargtypes.values[i]));
 				if (!HeapTupleIsValid(typeTup))
 				{
 					free(prodesc->user_proname);
@@ -2337,9 +2332,8 @@ pltcl_set_tuple_values(Tcl_Interp *interp, CONST84 char *arrayname,
 		 * Lookup the attribute type in the syscache
 		 * for the output function
 		 ************************************************************/
-		typeTup = SearchSysCache(TYPEOID,
-							   ObjectIdGetDatum(tupdesc->attrs[i]->atttypid),
-								 0, 0, 0);
+		typeTup = SearchSysCache1(TYPEOID,
+							   ObjectIdGetDatum(tupdesc->attrs[i]->atttypid));
 		if (!HeapTupleIsValid(typeTup))
 			elog(ERROR, "cache lookup failed for type %u",
 				 tupdesc->attrs[i]->atttypid);
@@ -2406,9 +2400,8 @@ pltcl_build_tuple_argument(HeapTuple tuple, TupleDesc tupdesc,
 		 * Lookup the attribute type in the syscache
 		 * for the output function
 		 ************************************************************/
-		typeTup = SearchSysCache(TYPEOID,
-							   ObjectIdGetDatum(tupdesc->attrs[i]->atttypid),
-								 0, 0, 0);
+		typeTup = SearchSysCache1(TYPEOID,
+							   ObjectIdGetDatum(tupdesc->attrs[i]->atttypid));
 		if (!HeapTupleIsValid(typeTup))
 			elog(ERROR, "cache lookup failed for type %u",
 				 tupdesc->attrs[i]->atttypid);

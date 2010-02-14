@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_coerce.c,v 2.179 2010/01/02 16:57:49 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_coerce.c,v 2.180 2010/02/14 18:42:15 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -684,9 +684,7 @@ build_coercion_expression(Node *node,
 		HeapTuple	tp;
 		Form_pg_proc procstruct;
 
-		tp = SearchSysCache(PROCOID,
-							ObjectIdGetDatum(funcId),
-							0, 0, 0);
+		tp = SearchSysCache1(PROCOID, ObjectIdGetDatum(funcId));
 		if (!HeapTupleIsValid(tp))
 			elog(ERROR, "cache lookup failed for function %u", funcId);
 		procstruct = (Form_pg_proc) GETSTRUCT(tp);
@@ -1787,10 +1785,9 @@ IsBinaryCoercible(Oid srctype, Oid targettype)
 			return true;
 
 	/* Else look in pg_cast */
-	tuple = SearchSysCache(CASTSOURCETARGET,
-						   ObjectIdGetDatum(srctype),
-						   ObjectIdGetDatum(targettype),
-						   0, 0);
+	tuple = SearchSysCache2(CASTSOURCETARGET,
+							ObjectIdGetDatum(srctype),
+							ObjectIdGetDatum(targettype));
 	if (!HeapTupleIsValid(tuple))
 		return false;			/* no cast */
 	castForm = (Form_pg_cast) GETSTRUCT(tuple);
@@ -1852,10 +1849,9 @@ find_coercion_pathway(Oid targetTypeId, Oid sourceTypeId,
 		return COERCION_PATH_RELABELTYPE;
 
 	/* Look in pg_cast */
-	tuple = SearchSysCache(CASTSOURCETARGET,
-						   ObjectIdGetDatum(sourceTypeId),
-						   ObjectIdGetDatum(targetTypeId),
-						   0, 0);
+	tuple = SearchSysCache2(CASTSOURCETARGET,
+							ObjectIdGetDatum(sourceTypeId),
+							ObjectIdGetDatum(targetTypeId));
 
 	if (HeapTupleIsValid(tuple))
 	{
@@ -2017,10 +2013,9 @@ find_typmod_coercion_function(Oid typeId,
 	ReleaseSysCache(targetType);
 
 	/* Look in pg_cast */
-	tuple = SearchSysCache(CASTSOURCETARGET,
-						   ObjectIdGetDatum(typeId),
-						   ObjectIdGetDatum(typeId),
-						   0, 0);
+	tuple = SearchSysCache2(CASTSOURCETARGET,
+							ObjectIdGetDatum(typeId),
+							ObjectIdGetDatum(typeId));
 
 	if (HeapTupleIsValid(tuple))
 	{

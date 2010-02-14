@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/proclang.c,v 1.88 2010/01/02 16:57:37 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/proclang.c,v 1.89 2010/02/14 18:42:14 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -78,9 +78,7 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 	 */
 	languageName = case_translate_language_name(stmt->plname);
 
-	if (SearchSysCacheExists(LANGNAME,
-							 PointerGetDatum(languageName),
-							 0, 0, 0))
+	if (SearchSysCacheExists1(LANGNAME, PointerGetDatum(languageName)))
 		ereport(ERROR,
 				(errcode(ERRCODE_DUPLICATE_OBJECT),
 				 errmsg("language \"%s\" already exists", languageName)));
@@ -489,9 +487,7 @@ DropProceduralLanguage(DropPLangStmt *stmt)
 	 */
 	languageName = case_translate_language_name(stmt->plname);
 
-	langTup = SearchSysCache(LANGNAME,
-							 CStringGetDatum(languageName),
-							 0, 0, 0);
+	langTup = SearchSysCache1(LANGNAME, CStringGetDatum(languageName));
 	if (!HeapTupleIsValid(langTup))
 	{
 		if (!stmt->missing_ok)
@@ -536,9 +532,7 @@ DropProceduralLanguageById(Oid langOid)
 
 	rel = heap_open(LanguageRelationId, RowExclusiveLock);
 
-	langTup = SearchSysCache(LANGOID,
-							 ObjectIdGetDatum(langOid),
-							 0, 0, 0);
+	langTup = SearchSysCache1(LANGOID, ObjectIdGetDatum(langOid));
 	if (!HeapTupleIsValid(langTup))		/* should not happen */
 		elog(ERROR, "cache lookup failed for language %u", langOid);
 
@@ -564,18 +558,14 @@ RenameLanguage(const char *oldname, const char *newname)
 
 	rel = heap_open(LanguageRelationId, RowExclusiveLock);
 
-	tup = SearchSysCacheCopy(LANGNAME,
-							 CStringGetDatum(oldname),
-							 0, 0, 0);
+	tup = SearchSysCacheCopy1(LANGNAME, CStringGetDatum(oldname));
 	if (!HeapTupleIsValid(tup))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
 				 errmsg("language \"%s\" does not exist", oldname)));
 
 	/* make sure the new name doesn't exist */
-	if (SearchSysCacheExists(LANGNAME,
-							 CStringGetDatum(newname),
-							 0, 0, 0))
+	if (SearchSysCacheExists1(LANGNAME, CStringGetDatum(newname)))
 		ereport(ERROR,
 				(errcode(ERRCODE_DUPLICATE_OBJECT),
 				 errmsg("language \"%s\" already exists", newname)));
@@ -608,9 +598,7 @@ AlterLanguageOwner(const char *name, Oid newOwnerId)
 
 	rel = heap_open(LanguageRelationId, RowExclusiveLock);
 
-	tup = SearchSysCache(LANGNAME,
-						 CStringGetDatum(name),
-						 0, 0, 0);
+	tup = SearchSysCache1(LANGNAME, CStringGetDatum(name));
 	if (!HeapTupleIsValid(tup))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
@@ -635,9 +623,7 @@ AlterLanguageOwner_oid(Oid oid, Oid newOwnerId)
 
 	rel = heap_open(LanguageRelationId, RowExclusiveLock);
 
-	tup = SearchSysCache(LANGOID,
-						 ObjectIdGetDatum(oid),
-						 0, 0, 0);
+	tup = SearchSysCache1(LANGOID, ObjectIdGetDatum(oid));
 	if (!HeapTupleIsValid(tup))
 		elog(ERROR, "cache lookup failed for language %u", oid);
 

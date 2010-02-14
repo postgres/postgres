@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.268 2010/01/05 21:53:59 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.269 2010/02/14 18:42:16 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -4117,11 +4117,10 @@ examine_variable(PlannerInfo *root, Node *node, int varRelid,
 		}
 		else if (rte->rtekind == RTE_RELATION)
 		{
-			vardata->statsTuple = SearchSysCache(STATRELATTINH,
-												 ObjectIdGetDatum(rte->relid),
-												 Int16GetDatum(var->varattno),
-												 BoolGetDatum(rte->inh),
-												 0);
+			vardata->statsTuple = SearchSysCache3(STATRELATTINH,
+												  ObjectIdGetDatum(rte->relid),
+												  Int16GetDatum(var->varattno),
+												  BoolGetDatum(rte->inh));
 			vardata->freefunc = ReleaseSysCache;
 		}
 		else
@@ -4258,11 +4257,10 @@ examine_variable(PlannerInfo *root, Node *node, int varRelid,
 						else if (index->indpred == NIL)
 						{
 							vardata->statsTuple =
-								SearchSysCache(STATRELATTINH,
+								SearchSysCache3(STATRELATTINH,
 										   ObjectIdGetDatum(index->indexoid),
-											   Int16GetDatum(pos + 1),
-											   BoolGetDatum(false),
-											   0);
+											    Int16GetDatum(pos + 1),
+											    BoolGetDatum(false));
 							vardata->freefunc = ReleaseSysCache;
 						}
 						if (vardata->statsTuple)
@@ -6116,11 +6114,10 @@ btcostestimate(PG_FUNCTION_ARGS)
 		}
 		else
 		{
-			vardata.statsTuple = SearchSysCache(STATRELATTINH,
-												ObjectIdGetDatum(relid),
-												Int16GetDatum(colnum),
-												BoolGetDatum(rte->inh),
-												0);
+			vardata.statsTuple = SearchSysCache3(STATRELATTINH,
+												 ObjectIdGetDatum(relid),
+												 Int16GetDatum(colnum),
+												 BoolGetDatum(rte->inh));
 			vardata.freefunc = ReleaseSysCache;
 		}
 	}
@@ -6143,11 +6140,10 @@ btcostestimate(PG_FUNCTION_ARGS)
 		}
 		else
 		{
-			vardata.statsTuple = SearchSysCache(STATRELATTINH,
-												ObjectIdGetDatum(relid),
-												Int16GetDatum(colnum),
-												BoolGetDatum(false),
-												0);
+			vardata.statsTuple = SearchSysCache3(STATRELATTINH,
+												 ObjectIdGetDatum(relid),
+												 Int16GetDatum(colnum),
+												 BoolGetDatum(false));
 			vardata.freefunc = ReleaseSysCache;
 		}
 	}

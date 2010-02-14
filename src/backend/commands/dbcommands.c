@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.233 2010/01/16 14:16:31 sriggs Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.234 2010/02/14 18:42:14 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -809,9 +809,7 @@ dropdb(const char *dbname, bool missing_ok)
 	/*
 	 * Remove the database's tuple from pg_database.
 	 */
-	tup = SearchSysCache(DATABASEOID,
-						 ObjectIdGetDatum(db_id),
-						 0, 0, 0);
+	tup = SearchSysCache1(DATABASEOID, ObjectIdGetDatum(db_id));
 	if (!HeapTupleIsValid(tup))
 		elog(ERROR, "cache lookup failed for database %u", db_id);
 
@@ -951,9 +949,7 @@ RenameDatabase(const char *oldname, const char *newname)
 				 errdetail_busy_db(notherbackends, npreparedxacts)));
 
 	/* rename */
-	newtup = SearchSysCacheCopy(DATABASEOID,
-								ObjectIdGetDatum(db_id),
-								0, 0, 0);
+	newtup = SearchSysCacheCopy1(DATABASEOID, ObjectIdGetDatum(db_id));
 	if (!HeapTupleIsValid(newtup))
 		elog(ERROR, "cache lookup failed for database %u", db_id);
 	namestrcpy(&(((Form_pg_database) GETSTRUCT(newtup))->datname), newname);
@@ -1611,9 +1607,7 @@ get_db_info(const char *name, LOCKMODE lockmode,
 		 * the same name, we win; else, drop the lock and loop back to try
 		 * again.
 		 */
-		tuple = SearchSysCache(DATABASEOID,
-							   ObjectIdGetDatum(dbOid),
-							   0, 0, 0);
+		tuple = SearchSysCache1(DATABASEOID, ObjectIdGetDatum(dbOid));
 		if (HeapTupleIsValid(tuple))
 		{
 			Form_pg_database dbform = (Form_pg_database) GETSTRUCT(tuple);
@@ -1677,9 +1671,7 @@ have_createdb_privilege(void)
 	if (superuser())
 		return true;
 
-	utup = SearchSysCache(AUTHOID,
-						  ObjectIdGetDatum(GetUserId()),
-						  0, 0, 0);
+	utup = SearchSysCache1(AUTHOID, ObjectIdGetDatum(GetUserId()));
 	if (HeapTupleIsValid(utup))
 	{
 		result = ((Form_pg_authid) GETSTRUCT(utup))->rolcreatedb;
@@ -1875,9 +1867,7 @@ get_database_name(Oid dbid)
 	HeapTuple	dbtuple;
 	char	   *result;
 
-	dbtuple = SearchSysCache(DATABASEOID,
-							 ObjectIdGetDatum(dbid),
-							 0, 0, 0);
+	dbtuple = SearchSysCache1(DATABASEOID, ObjectIdGetDatum(dbid));
 	if (HeapTupleIsValid(dbtuple))
 	{
 		result = pstrdup(NameStr(((Form_pg_database) GETSTRUCT(dbtuple))->datname));

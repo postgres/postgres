@@ -7,7 +7,7 @@
  * Copyright (c) 1996-2010, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/comment.c,v 1.112 2010/01/02 16:57:37 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/comment.c,v 1.113 2010/02/14 18:42:14 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -800,9 +800,7 @@ CommentNamespace(List *qualname, char *comment)
 				 errmsg("schema name cannot be qualified")));
 	namespace = strVal(linitial(qualname));
 
-	oid = GetSysCacheOid(NAMESPACENAME,
-						 CStringGetDatum(namespace),
-						 0, 0, 0);
+	oid = GetSysCacheOid1(NAMESPACENAME, CStringGetDatum(namespace));
 	if (!OidIsValid(oid))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_SCHEMA),
@@ -904,10 +902,9 @@ CommentRule(List *qualname, char *comment)
 		reloid = RelationGetRelid(relation);
 
 		/* Find the rule's pg_rewrite tuple, get its OID */
-		tuple = SearchSysCache(RULERELNAME,
-							   ObjectIdGetDatum(reloid),
-							   PointerGetDatum(rulename),
-							   0, 0);
+		tuple = SearchSysCache2(RULERELNAME,
+						 		ObjectIdGetDatum(reloid),
+								PointerGetDatum(rulename));
 		if (!HeapTupleIsValid(tuple))
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_OBJECT),
@@ -1217,9 +1214,7 @@ CommentLanguage(List *qualname, char *comment)
 				 errmsg("language name cannot be qualified")));
 	language = strVal(linitial(qualname));
 
-	oid = GetSysCacheOid(LANGNAME,
-						 CStringGetDatum(language),
-						 0, 0, 0);
+	oid = GetSysCacheOid1(LANGNAME, CStringGetDatum(language));
 	if (!OidIsValid(oid))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_SCHEMA),
@@ -1260,9 +1255,7 @@ CommentOpClass(List *qualname, List *arguments, char *comment)
 	/*
 	 * Get the access method's OID.
 	 */
-	amID = GetSysCacheOid(AMNAME,
-						  CStringGetDatum(amname),
-						  0, 0, 0);
+	amID = GetSysCacheOid1(AMNAME, CStringGetDatum(amname));
 	if (!OidIsValid(amID))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
@@ -1282,11 +1275,10 @@ CommentOpClass(List *qualname, List *arguments, char *comment)
 		Oid			namespaceId;
 
 		namespaceId = LookupExplicitNamespace(schemaname);
-		tuple = SearchSysCache(CLAAMNAMENSP,
-							   ObjectIdGetDatum(amID),
-							   PointerGetDatum(opcname),
-							   ObjectIdGetDatum(namespaceId),
-							   0);
+		tuple = SearchSysCache3(CLAAMNAMENSP,
+								ObjectIdGetDatum(amID),
+								PointerGetDatum(opcname),
+								ObjectIdGetDatum(namespaceId));
 	}
 	else
 	{
@@ -1297,9 +1289,7 @@ CommentOpClass(List *qualname, List *arguments, char *comment)
 					(errcode(ERRCODE_UNDEFINED_OBJECT),
 					 errmsg("operator class \"%s\" does not exist for access method \"%s\"",
 							opcname, amname)));
-		tuple = SearchSysCache(CLAOID,
-							   ObjectIdGetDatum(opcID),
-							   0, 0, 0);
+		tuple = SearchSysCache1(CLAOID, ObjectIdGetDatum(opcID));
 	}
 
 	if (!HeapTupleIsValid(tuple))
@@ -1346,9 +1336,7 @@ CommentOpFamily(List *qualname, List *arguments, char *comment)
 	/*
 	 * Get the access method's OID.
 	 */
-	amID = GetSysCacheOid(AMNAME,
-						  CStringGetDatum(amname),
-						  0, 0, 0);
+	amID = GetSysCacheOid1(AMNAME, CStringGetDatum(amname));
 	if (!OidIsValid(amID))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
@@ -1368,11 +1356,10 @@ CommentOpFamily(List *qualname, List *arguments, char *comment)
 		Oid			namespaceId;
 
 		namespaceId = LookupExplicitNamespace(schemaname);
-		tuple = SearchSysCache(OPFAMILYAMNAMENSP,
-							   ObjectIdGetDatum(amID),
-							   PointerGetDatum(opfname),
-							   ObjectIdGetDatum(namespaceId),
-							   0);
+		tuple = SearchSysCache3(OPFAMILYAMNAMENSP,
+								ObjectIdGetDatum(amID),
+						 		PointerGetDatum(opfname),
+								ObjectIdGetDatum(namespaceId));
 	}
 	else
 	{
@@ -1383,9 +1370,7 @@ CommentOpFamily(List *qualname, List *arguments, char *comment)
 					(errcode(ERRCODE_UNDEFINED_OBJECT),
 					 errmsg("operator family \"%s\" does not exist for access method \"%s\"",
 							opfname, amname)));
-		tuple = SearchSysCache(OPFAMILYOID,
-							   ObjectIdGetDatum(opfID),
-							   0, 0, 0);
+		tuple = SearchSysCache1(OPFAMILYOID, ObjectIdGetDatum(opfID));
 	}
 
 	if (!HeapTupleIsValid(tuple))
@@ -1500,10 +1485,9 @@ CommentCast(List *qualname, List *arguments, char *comment)
 	sourcetypeid = typenameTypeId(NULL, sourcetype, NULL);
 	targettypeid = typenameTypeId(NULL, targettype, NULL);
 
-	tuple = SearchSysCache(CASTSOURCETARGET,
-						   ObjectIdGetDatum(sourcetypeid),
-						   ObjectIdGetDatum(targettypeid),
-						   0, 0);
+	tuple = SearchSysCache2(CASTSOURCETARGET,
+							ObjectIdGetDatum(sourcetypeid),
+							ObjectIdGetDatum(targettypeid));
 	if (!HeapTupleIsValid(tuple))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),

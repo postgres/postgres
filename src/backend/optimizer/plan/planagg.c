@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planagg.c,v 1.50 2010/01/02 16:57:47 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planagg.c,v 1.51 2010/02/14 18:42:15 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -627,9 +627,7 @@ fetch_agg_sort_op(Oid aggfnoid)
 	Oid			aggsortop;
 
 	/* fetch aggregate entry from pg_aggregate */
-	aggTuple = SearchSysCache(AGGFNOID,
-							  ObjectIdGetDatum(aggfnoid),
-							  0, 0, 0);
+	aggTuple = SearchSysCache1(AGGFNOID, ObjectIdGetDatum(aggfnoid));
 	if (!HeapTupleIsValid(aggTuple))
 		return InvalidOid;
 	aggform = (Form_pg_aggregate) GETSTRUCT(aggTuple);

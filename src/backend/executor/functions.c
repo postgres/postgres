@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/functions.c,v 1.140 2010/01/02 16:57:41 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/functions.c,v 1.141 2010/02/14 18:42:14 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -232,9 +232,7 @@ init_sql_fcache(FmgrInfo *finfo, bool lazyEvalOK)
 	/*
 	 * get the procedure tuple corresponding to the given function Oid
 	 */
-	procedureTuple = SearchSysCache(PROCOID,
-									ObjectIdGetDatum(foid),
-									0, 0, 0);
+	procedureTuple = SearchSysCache1(PROCOID, ObjectIdGetDatum(foid));
 	if (!HeapTupleIsValid(procedureTuple))
 		elog(ERROR, "cache lookup failed for function %u", foid);
 	procedureStruct = (Form_pg_proc) GETSTRUCT(procedureTuple);
@@ -885,9 +883,7 @@ sql_exec_error_callback(void *arg)
 	int			syntaxerrposition;
 
 	/* Need access to function's pg_proc tuple */
-	func_tuple = SearchSysCache(PROCOID,
-								ObjectIdGetDatum(flinfo->fn_oid),
-								0, 0, 0);
+	func_tuple = SearchSysCache1(PROCOID, ObjectIdGetDatum(flinfo->fn_oid));
 	if (!HeapTupleIsValid(func_tuple))
 		return;					/* shouldn't happen */
 	functup = (Form_pg_proc) GETSTRUCT(func_tuple);

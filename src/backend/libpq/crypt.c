@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/libpq/crypt.c,v 1.79 2010/01/02 16:57:45 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/libpq/crypt.c,v 1.80 2010/02/14 18:42:15 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,9 +48,7 @@ md5_crypt_verify(const Port *port, const char *role, char *client_pass)
 	ImmediateInterruptOK = false;
 
 	/* Get role info from pg_authid */
-	roleTup = SearchSysCache(AUTHNAME,
-							 PointerGetDatum(role),
-							 0, 0, 0);
+	roleTup = SearchSysCache1(AUTHNAME, PointerGetDatum(role));
 	if (!HeapTupleIsValid(roleTup))
 		return STATUS_ERROR;					/* no such user */
 

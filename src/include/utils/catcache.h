@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/catcache.h,v 1.71 2010/02/08 05:53:55 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/catcache.h,v 1.72 2010/02/14 18:42:18 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,6 +32,8 @@
  *		struct catcacheheader:	information for managing all the caches.
  */
 
+#define CATCACHE_MAXKEYS		4
+
 typedef struct catcache
 {
 	int			id;				/* cache identifier --- see syscache.h */
@@ -43,11 +45,11 @@ typedef struct catcache
 	TupleDesc	cc_tupdesc;		/* tuple descriptor (copied from reldesc) */
 	int			cc_ntup;		/* # of tuples currently in this cache */
 	int			cc_nbuckets;	/* # of hash buckets in this cache */
-	int			cc_nkeys;		/* # of keys (1..4) */
-	int			cc_key[4];		/* AttrNumber of each key */
-	PGFunction	cc_hashfunc[4]; /* hash function to use for each key */
-	ScanKeyData cc_skey[4];		/* precomputed key info for heap scans */
-	bool		cc_isname[4];	/* flag key columns that are NAMEs */
+	int			cc_nkeys;		/* # of keys (1..CATCACHE_MAXKEYS) */
+	int			cc_key[CATCACHE_MAXKEYS];		/* AttrNumber of each key */
+	PGFunction	cc_hashfunc[CATCACHE_MAXKEYS]; /* hash function for each key */
+	ScanKeyData cc_skey[CATCACHE_MAXKEYS];		/* precomputed key info for heap scans */
+	bool		cc_isname[CATCACHE_MAXKEYS];	/* flag "name" key columns */
 	Dllist		cc_lists;		/* list of CatCList structs */
 #ifdef CATCACHE_STATS
 	long		cc_searches;	/* total # searches against this cache */

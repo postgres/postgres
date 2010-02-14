@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/fastpath.c,v 1.102 2010/01/02 16:57:52 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/fastpath.c,v 1.103 2010/02/14 18:42:15 rhaas Exp $
  *
  * NOTES
  *	  This cruft is the server side of PQfn.
@@ -214,9 +214,7 @@ fetch_fp_info(Oid func_id, struct fp_info * fip)
 
 	fmgr_info(func_id, &fip->flinfo);
 
-	func_htp = SearchSysCache(PROCOID,
-							  ObjectIdGetDatum(func_id),
-							  0, 0, 0);
+	func_htp = SearchSysCache1(PROCOID, ObjectIdGetDatum(func_id));
 	if (!HeapTupleIsValid(func_htp))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_FUNCTION),

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.305 2010/02/09 21:43:30 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.306 2010/02/14 18:42:17 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -976,9 +976,8 @@ RelationInitIndexAccessInfo(Relation relation)
 	 * contains variable-length and possibly-null fields, we have to do this
 	 * honestly rather than just treating it as a Form_pg_index struct.
 	 */
-	tuple = SearchSysCache(INDEXRELID,
-						   ObjectIdGetDatum(RelationGetRelid(relation)),
-						   0, 0, 0);
+	tuple = SearchSysCache1(INDEXRELID,
+						    ObjectIdGetDatum(RelationGetRelid(relation)));
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "cache lookup failed for index %u",
 			 RelationGetRelid(relation));
@@ -991,9 +990,7 @@ RelationInitIndexAccessInfo(Relation relation)
 	/*
 	 * Make a copy of the pg_am entry for the index's access method
 	 */
-	tuple = SearchSysCache(AMOID,
-						   ObjectIdGetDatum(relation->rd_rel->relam),
-						   0, 0, 0);
+	tuple = SearchSysCache1(AMOID, ObjectIdGetDatum(relation->rd_rel->relam));
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "cache lookup failed for access method %u",
 			 relation->rd_rel->relam);
@@ -1757,9 +1754,8 @@ RelationReloadIndexInfo(Relation relation)
 		HeapTuple	tuple;
 		Form_pg_index index;
 
-		tuple = SearchSysCache(INDEXRELID,
-							   ObjectIdGetDatum(RelationGetRelid(relation)),
-							   0, 0, 0);
+		tuple = SearchSysCache1(INDEXRELID,
+							 	ObjectIdGetDatum(RelationGetRelid(relation)));
 		if (!HeapTupleIsValid(tuple))
 			elog(ERROR, "cache lookup failed for index %u",
 				 RelationGetRelid(relation));
@@ -2627,9 +2623,8 @@ RelationSetNewRelfilenode(Relation relation, TransactionId freezeXid)
 	 */
 	pg_class = heap_open(RelationRelationId, RowExclusiveLock);
 
-	tuple = SearchSysCacheCopy(RELOID,
-							   ObjectIdGetDatum(RelationGetRelid(relation)),
-							   0, 0, 0);
+	tuple = SearchSysCacheCopy1(RELOID,
+								ObjectIdGetDatum(RelationGetRelid(relation)));
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "could not find tuple for relation %u",
 			 RelationGetRelid(relation));
@@ -2947,9 +2942,8 @@ RelationCacheInitializePhase3(void)
 			HeapTuple	htup;
 			Form_pg_class relp;
 
-			htup = SearchSysCache(RELOID,
-								ObjectIdGetDatum(RelationGetRelid(relation)),
-								  0, 0, 0);
+			htup = SearchSysCache1(RELOID,
+								ObjectIdGetDatum(RelationGetRelid(relation)));
 			if (!HeapTupleIsValid(htup))
 				elog(FATAL, "cache lookup failed for relation %u",
 					 RelationGetRelid(relation));

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/aclchk.c,v 1.161 2010/01/07 02:41:15 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/aclchk.c,v 1.162 2010/02/14 18:42:12 rhaas Exp $
  *
  * NOTES
  *	  See acl.h.
@@ -596,9 +596,7 @@ objectNamesToOids(GrantObjectType objtype, List *objnames)
 				char	   *langname = strVal(lfirst(cell));
 				HeapTuple	tuple;
 
-				tuple = SearchSysCache(LANGNAME,
-									   PointerGetDatum(langname),
-									   0, 0, 0);
+				tuple = SearchSysCache1(LANGNAME, PointerGetDatum(langname));
 				if (!HeapTupleIsValid(tuple))
 					ereport(ERROR,
 							(errcode(ERRCODE_UNDEFINED_OBJECT),
@@ -630,9 +628,8 @@ objectNamesToOids(GrantObjectType objtype, List *objnames)
 				char	   *nspname = strVal(lfirst(cell));
 				HeapTuple	tuple;
 
-				tuple = SearchSysCache(NAMESPACENAME,
-									   CStringGetDatum(nspname),
-									   0, 0, 0);
+				tuple = SearchSysCache1(NAMESPACENAME,
+										CStringGetDatum(nspname));
 				if (!HeapTupleIsValid(tuple))
 					ereport(ERROR,
 							(errcode(ERRCODE_UNDEFINED_SCHEMA),
@@ -1009,9 +1006,8 @@ SetDefaultACLsInSchemas(InternalDefaultACL *iacls, List *nspnames)
 			 * CREATE privileges, since without CREATE you won't be able to do
 			 * anything using the default privs anyway.
 			 */
-			iacls->nspid = GetSysCacheOid(NAMESPACENAME,
-										  CStringGetDatum(nspname),
-										  0, 0, 0);
+			iacls->nspid = GetSysCacheOid1(NAMESPACENAME,
+										   CStringGetDatum(nspname));
 			if (!OidIsValid(iacls->nspid))
 				ereport(ERROR,
 						(errcode(ERRCODE_UNDEFINED_SCHEMA),
@@ -1085,11 +1081,10 @@ SetDefaultACL(InternalDefaultACL *iacls)
 	}
 
 	/* Search for existing row for this object type in catalog */
-	tuple = SearchSysCache(DEFACLROLENSPOBJ,
-						   ObjectIdGetDatum(iacls->roleid),
-						   ObjectIdGetDatum(iacls->nspid),
-						   CharGetDatum(objtype),
-						   0);
+	tuple = SearchSysCache3(DEFACLROLENSPOBJ,
+							ObjectIdGetDatum(iacls->roleid),
+							ObjectIdGetDatum(iacls->nspid),
+					 		CharGetDatum(objtype));
 
 	if (HeapTupleIsValid(tuple))
 	{
@@ -1433,10 +1428,9 @@ expand_all_col_privileges(Oid table_oid, Form_pg_class classForm,
 		if (classForm->relkind == RELKIND_VIEW && curr_att < 0)
 			continue;
 
-		attTuple = SearchSysCache(ATTNUM,
-								  ObjectIdGetDatum(table_oid),
-								  Int16GetDatum(curr_att),
-								  0, 0);
+		attTuple = SearchSysCache2(ATTNUM,
+								   ObjectIdGetDatum(table_oid),
+								   Int16GetDatum(curr_att));
 		if (!HeapTupleIsValid(attTuple))
 			elog(ERROR, "cache lookup failed for attribute %d of relation %u",
 				 curr_att, table_oid);
@@ -1481,10 +1475,9 @@ ExecGrant_Attribute(InternalGrant *istmt, Oid relOid, const char *relname,
 	Oid		   *oldmembers;
 	Oid		   *newmembers;
 
-	attr_tuple = SearchSysCache(ATTNUM,
-								ObjectIdGetDatum(relOid),
-								Int16GetDatum(attnum),
-								0, 0);
+	attr_tuple = SearchSysCache2(ATTNUM,
+								 ObjectIdGetDatum(relOid),
+								 Int16GetDatum(attnum));
 	if (!HeapTupleIsValid(attr_tuple))
 		elog(ERROR, "cache lookup failed for attribute %d of relation %u",
 			 attnum, relOid);
@@ -1623,9 +1616,7 @@ ExecGrant_Relation(InternalGrant *istmt)
 		HeapTuple	tuple;
 		ListCell   *cell_colprivs;
 
-		tuple = SearchSysCache(RELOID,
-							   ObjectIdGetDatum(relOid),
-							   0, 0, 0);
+		tuple = SearchSysCache1(RELOID, ObjectIdGetDatum(relOid));
 		if (!HeapTupleIsValid(tuple))
 			elog(ERROR, "cache lookup failed for relation %u", relOid);
 		pg_class_tuple = (Form_pg_class) GETSTRUCT(tuple);
@@ -1939,9 +1930,7 @@ ExecGrant_Database(InternalGrant *istmt)
 		Oid		   *newmembers;
 		HeapTuple	tuple;
 
-		tuple = SearchSysCache(DATABASEOID,
-							   ObjectIdGetDatum(datId),
-							   0, 0, 0);
+		tuple = SearchSysCache1(DATABASEOID, ObjectIdGetDatum(datId));
 		if (!HeapTupleIsValid(tuple))
 			elog(ERROR, "cache lookup failed for database %u", datId);
 
@@ -2056,9 +2045,8 @@ ExecGrant_Fdw(InternalGrant *istmt)
 		Oid		   *oldmembers;
 		Oid		   *newmembers;
 
-		tuple = SearchSysCache(FOREIGNDATAWRAPPEROID,
-							   ObjectIdGetDatum(fdwid),
-							   0, 0, 0);
+		tuple = SearchSysCache1(FOREIGNDATAWRAPPEROID,
+							    ObjectIdGetDatum(fdwid));
 		if (!HeapTupleIsValid(tuple))
 			elog(ERROR, "cache lookup failed for foreign-data wrapper %u", fdwid);
 
@@ -2175,9 +2163,7 @@ ExecGrant_ForeignServer(InternalGrant *istmt)
 		Oid		   *oldmembers;
 		Oid		   *newmembers;
 
-		tuple = SearchSysCache(FOREIGNSERVEROID,
-							   ObjectIdGetDatum(srvid),
-							   0, 0, 0);
+		tuple = SearchSysCache1(FOREIGNSERVEROID, ObjectIdGetDatum(srvid));
 		if (!HeapTupleIsValid(tuple))
 			elog(ERROR, "cache lookup failed for foreign server %u", srvid);
 
@@ -2294,9 +2280,7 @@ ExecGrant_Function(InternalGrant *istmt)
 		Oid		   *oldmembers;
 		Oid		   *newmembers;
 
-		tuple = SearchSysCache(PROCOID,
-							   ObjectIdGetDatum(funcId),
-							   0, 0, 0);
+		tuple = SearchSysCache1(PROCOID, ObjectIdGetDatum(funcId));
 		if (!HeapTupleIsValid(tuple))
 			elog(ERROR, "cache lookup failed for function %u", funcId);
 
@@ -2411,9 +2395,7 @@ ExecGrant_Language(InternalGrant *istmt)
 		Oid		   *oldmembers;
 		Oid		   *newmembers;
 
-		tuple = SearchSysCache(LANGOID,
-							   ObjectIdGetDatum(langId),
-							   0, 0, 0);
+		tuple = SearchSysCache1(LANGOID, ObjectIdGetDatum(langId));
 		if (!HeapTupleIsValid(tuple))
 			elog(ERROR, "cache lookup failed for language %u", langId);
 
@@ -2667,9 +2649,7 @@ ExecGrant_Namespace(InternalGrant *istmt)
 		Oid		   *oldmembers;
 		Oid		   *newmembers;
 
-		tuple = SearchSysCache(NAMESPACEOID,
-							   ObjectIdGetDatum(nspid),
-							   0, 0, 0);
+		tuple = SearchSysCache1(NAMESPACEOID, ObjectIdGetDatum(nspid));
 		if (!HeapTupleIsValid(tuple))
 			elog(ERROR, "cache lookup failed for namespace %u", nspid);
 
@@ -2786,8 +2766,7 @@ ExecGrant_Tablespace(InternalGrant *istmt)
 		HeapTuple	tuple;
 
 		/* Search syscache for pg_tablespace */
-		tuple = SearchSysCache(TABLESPACEOID, ObjectIdGetDatum(tblId),
-							   0, 0, 0);
+		tuple = SearchSysCache1(TABLESPACEOID, ObjectIdGetDatum(tblId));
 		if (!HeapTupleIsValid(tuple))
 			elog(ERROR, "cache lookup failed for tablespace %u", tblId);
 
@@ -3090,9 +3069,7 @@ has_rolcatupdate(Oid roleid)
 	bool		rolcatupdate;
 	HeapTuple	tuple;
 
-	tuple = SearchSysCache(AUTHOID,
-						   ObjectIdGetDatum(roleid),
-						   0, 0, 0);
+	tuple = SearchSysCache1(AUTHOID, ObjectIdGetDatum(roleid));
 	if (!HeapTupleIsValid(tuple))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
@@ -3183,10 +3160,9 @@ pg_attribute_aclmask(Oid table_oid, AttrNumber attnum, Oid roleid,
 	/*
 	 * First, get the column's ACL from its pg_attribute entry
 	 */
-	attTuple = SearchSysCache(ATTNUM,
-							  ObjectIdGetDatum(table_oid),
-							  Int16GetDatum(attnum),
-							  0, 0);
+	attTuple = SearchSysCache2(ATTNUM,
+							   ObjectIdGetDatum(table_oid),
+							   Int16GetDatum(attnum));
 	if (!HeapTupleIsValid(attTuple))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_COLUMN),
@@ -3223,9 +3199,7 @@ pg_attribute_aclmask(Oid table_oid, AttrNumber attnum, Oid roleid,
 	 * privileges" rather than failing in such a case, so as to avoid unwanted
 	 * failures in has_column_privilege() tests.
 	 */
-	classTuple = SearchSysCache(RELOID,
-								ObjectIdGetDatum(table_oid),
-								0, 0, 0);
+	classTuple = SearchSysCache1(RELOID, ObjectIdGetDatum(table_oid));
 	if (!HeapTupleIsValid(classTuple))
 	{
 		ReleaseSysCache(attTuple);
@@ -3269,9 +3243,7 @@ pg_class_aclmask(Oid table_oid, Oid roleid,
 	/*
 	 * Must get the relation's tuple from pg_class
 	 */
-	tuple = SearchSysCache(RELOID,
-						   ObjectIdGetDatum(table_oid),
-						   0, 0, 0);
+	tuple = SearchSysCache1(RELOID, ObjectIdGetDatum(table_oid));
 	if (!HeapTupleIsValid(tuple))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_TABLE),
@@ -3365,9 +3337,7 @@ pg_database_aclmask(Oid db_oid, Oid roleid,
 	/*
 	 * Get the database's ACL from pg_database
 	 */
-	tuple = SearchSysCache(DATABASEOID,
-						   ObjectIdGetDatum(db_oid),
-						   0, 0, 0);
+	tuple = SearchSysCache1(DATABASEOID, ObjectIdGetDatum(db_oid));
 	if (!HeapTupleIsValid(tuple))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_DATABASE),
@@ -3421,9 +3391,7 @@ pg_proc_aclmask(Oid proc_oid, Oid roleid,
 	/*
 	 * Get the function's ACL from pg_proc
 	 */
-	tuple = SearchSysCache(PROCOID,
-						   ObjectIdGetDatum(proc_oid),
-						   0, 0, 0);
+	tuple = SearchSysCache1(PROCOID, ObjectIdGetDatum(proc_oid));
 	if (!HeapTupleIsValid(tuple))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_FUNCTION),
@@ -3477,9 +3445,7 @@ pg_language_aclmask(Oid lang_oid, Oid roleid,
 	/*
 	 * Get the language's ACL from pg_language
 	 */
-	tuple = SearchSysCache(LANGOID,
-						   ObjectIdGetDatum(lang_oid),
-						   0, 0, 0);
+	tuple = SearchSysCache1(LANGOID, ObjectIdGetDatum(lang_oid));
 	if (!HeapTupleIsValid(tuple))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
@@ -3640,9 +3606,7 @@ pg_namespace_aclmask(Oid nsp_oid, Oid roleid,
 	/*
 	 * Get the schema's ACL from pg_namespace
 	 */
-	tuple = SearchSysCache(NAMESPACEOID,
-						   ObjectIdGetDatum(nsp_oid),
-						   0, 0, 0);
+	tuple = SearchSysCache1(NAMESPACEOID, ObjectIdGetDatum(nsp_oid));
 	if (!HeapTupleIsValid(tuple))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_SCHEMA),
@@ -3696,8 +3660,7 @@ pg_tablespace_aclmask(Oid spc_oid, Oid roleid,
 	/*
 	 * Get the tablespace's ACL from pg_tablespace
 	 */
-	tuple = SearchSysCache(TABLESPACEOID, ObjectIdGetDatum(spc_oid),
-						   0, 0, 0);
+	tuple = SearchSysCache1(TABLESPACEOID, ObjectIdGetDatum(spc_oid));
 	if (!HeapTupleIsValid(tuple))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
@@ -3756,9 +3719,7 @@ pg_foreign_data_wrapper_aclmask(Oid fdw_oid, Oid roleid,
 	/*
 	 * Must get the FDW's tuple from pg_foreign_data_wrapper
 	 */
-	tuple = SearchSysCache(FOREIGNDATAWRAPPEROID,
-						   ObjectIdGetDatum(fdw_oid),
-						   0, 0, 0);
+	tuple = SearchSysCache1(FOREIGNDATAWRAPPEROID, ObjectIdGetDatum(fdw_oid));
 	if (!HeapTupleIsValid(tuple))
 		ereport(ERROR,
 				(errmsg("foreign-data wrapper with OID %u does not exist",
@@ -3819,9 +3780,7 @@ pg_foreign_server_aclmask(Oid srv_oid, Oid roleid,
 	/*
 	 * Must get the FDW's tuple from pg_foreign_data_wrapper
 	 */
-	tuple = SearchSysCache(FOREIGNSERVEROID,
-						   ObjectIdGetDatum(srv_oid),
-						   0, 0, 0);
+	tuple = SearchSysCache1(FOREIGNSERVEROID, ObjectIdGetDatum(srv_oid));
 	if (!HeapTupleIsValid(tuple))
 		ereport(ERROR,
 				(errmsg("foreign server with OID %u does not exist",
@@ -3912,9 +3871,7 @@ pg_attribute_aclcheck_all(Oid table_oid, Oid roleid, AclMode mode,
 	 * pg_attribute_aclmask, we prefer to return "no privileges" instead of
 	 * throwing an error if we get any unexpected lookup errors.
 	 */
-	classTuple = SearchSysCache(RELOID,
-								ObjectIdGetDatum(table_oid),
-								0, 0, 0);
+	classTuple = SearchSysCache1(RELOID, ObjectIdGetDatum(table_oid));
 	if (!HeapTupleIsValid(classTuple))
 		return ACLCHECK_NO_PRIV;
 	classForm = (Form_pg_class) GETSTRUCT(classTuple);
@@ -3934,10 +3891,9 @@ pg_attribute_aclcheck_all(Oid table_oid, Oid roleid, AclMode mode,
 		HeapTuple	attTuple;
 		AclMode		attmask;
 
-		attTuple = SearchSysCache(ATTNUM,
-								  ObjectIdGetDatum(table_oid),
-								  Int16GetDatum(curr_att),
-								  0, 0);
+		attTuple = SearchSysCache2(ATTNUM,
+								   ObjectIdGetDatum(table_oid),
+								   Int16GetDatum(curr_att));
 		if (!HeapTupleIsValid(attTuple))
 			continue;
 
@@ -4107,9 +4063,7 @@ pg_class_ownercheck(Oid class_oid, Oid roleid)
 	if (superuser_arg(roleid))
 		return true;
 
-	tuple = SearchSysCache(RELOID,
-						   ObjectIdGetDatum(class_oid),
-						   0, 0, 0);
+	tuple = SearchSysCache1(RELOID, ObjectIdGetDatum(class_oid));
 	if (!HeapTupleIsValid(tuple))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_TABLE),
@@ -4135,9 +4089,7 @@ pg_type_ownercheck(Oid type_oid, Oid roleid)
 	if (superuser_arg(roleid))
 		return true;
 
-	tuple = SearchSysCache(TYPEOID,
-						   ObjectIdGetDatum(type_oid),
-						   0, 0, 0);
+	tuple = SearchSysCache1(TYPEOID, ObjectIdGetDatum(type_oid));
 	if (!HeapTupleIsValid(tuple))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
@@ -4163,9 +4115,7 @@ pg_oper_ownercheck(Oid oper_oid, Oid roleid)
 	if (superuser_arg(roleid))
 		return true;
 
-	tuple = SearchSysCache(OPEROID,
-						   ObjectIdGetDatum(oper_oid),
-						   0, 0, 0);
+	tuple = SearchSysCache1(OPEROID, ObjectIdGetDatum(oper_oid));
 	if (!HeapTupleIsValid(tuple))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_FUNCTION),
@@ -4191,9 +4141,7 @@ pg_proc_ownercheck(Oid proc_oid, Oid roleid)
 	if (superuser_arg(roleid))
 		return true;
 
-	tuple = SearchSysCache(PROCOID,
-						   ObjectIdGetDatum(proc_oid),
-						   0, 0, 0);
+	tuple = SearchSysCache1(PROCOID, ObjectIdGetDatum(proc_oid));
 	if (!HeapTupleIsValid(tuple))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_FUNCTION),
@@ -4219,9 +4167,7 @@ pg_language_ownercheck(Oid lan_oid, Oid roleid)
 	if (superuser_arg(roleid))
 		return true;
 
-	tuple = SearchSysCache(LANGOID,
-						   ObjectIdGetDatum(lan_oid),
-						   0, 0, 0);
+	tuple = SearchSysCache1(LANGOID, ObjectIdGetDatum(lan_oid));
 	if (!HeapTupleIsValid(tuple))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_FUNCTION),
@@ -4293,9 +4239,7 @@ pg_namespace_ownercheck(Oid nsp_oid, Oid roleid)
 	if (superuser_arg(roleid))
 		return true;
 
-	tuple = SearchSysCache(NAMESPACEOID,
-						   ObjectIdGetDatum(nsp_oid),
-						   0, 0, 0);
+	tuple = SearchSysCache1(NAMESPACEOID, ObjectIdGetDatum(nsp_oid));
 	if (!HeapTupleIsValid(tuple))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_SCHEMA),
@@ -4322,8 +4266,7 @@ pg_tablespace_ownercheck(Oid spc_oid, Oid roleid)
 		return true;
 
 	/* Search syscache for pg_tablespace */
-	spctuple = SearchSysCache(TABLESPACEOID, ObjectIdGetDatum(spc_oid),
-							  0, 0, 0);
+	spctuple = SearchSysCache1(TABLESPACEOID, ObjectIdGetDatum(spc_oid));
 	if (!HeapTupleIsValid(spctuple))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
@@ -4349,9 +4292,7 @@ pg_opclass_ownercheck(Oid opc_oid, Oid roleid)
 	if (superuser_arg(roleid))
 		return true;
 
-	tuple = SearchSysCache(CLAOID,
-						   ObjectIdGetDatum(opc_oid),
-						   0, 0, 0);
+	tuple = SearchSysCache1(CLAOID, ObjectIdGetDatum(opc_oid));
 	if (!HeapTupleIsValid(tuple))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
@@ -4378,9 +4319,7 @@ pg_opfamily_ownercheck(Oid opf_oid, Oid roleid)
 	if (superuser_arg(roleid))
 		return true;
 
-	tuple = SearchSysCache(OPFAMILYOID,
-						   ObjectIdGetDatum(opf_oid),
-						   0, 0, 0);
+	tuple = SearchSysCache1(OPFAMILYOID, ObjectIdGetDatum(opf_oid));
 	if (!HeapTupleIsValid(tuple))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
@@ -4407,9 +4346,7 @@ pg_ts_dict_ownercheck(Oid dict_oid, Oid roleid)
 	if (superuser_arg(roleid))
 		return true;
 
-	tuple = SearchSysCache(TSDICTOID,
-						   ObjectIdGetDatum(dict_oid),
-						   0, 0, 0);
+	tuple = SearchSysCache1(TSDICTOID, ObjectIdGetDatum(dict_oid));
 	if (!HeapTupleIsValid(tuple))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
@@ -4436,9 +4373,7 @@ pg_ts_config_ownercheck(Oid cfg_oid, Oid roleid)
 	if (superuser_arg(roleid))
 		return true;
 
-	tuple = SearchSysCache(TSCONFIGOID,
-						   ObjectIdGetDatum(cfg_oid),
-						   0, 0, 0);
+	tuple = SearchSysCache1(TSCONFIGOID, ObjectIdGetDatum(cfg_oid));
 	if (!HeapTupleIsValid(tuple))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
@@ -4465,9 +4400,7 @@ pg_foreign_server_ownercheck(Oid srv_oid, Oid roleid)
 	if (superuser_arg(roleid))
 		return true;
 
-	tuple = SearchSysCache(FOREIGNSERVEROID,
-						   ObjectIdGetDatum(srv_oid),
-						   0, 0, 0);
+	tuple = SearchSysCache1(FOREIGNSERVEROID, ObjectIdGetDatum(srv_oid));
 	if (!HeapTupleIsValid(tuple))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
@@ -4494,9 +4427,7 @@ pg_database_ownercheck(Oid db_oid, Oid roleid)
 	if (superuser_arg(roleid))
 		return true;
 
-	tuple = SearchSysCache(DATABASEOID,
-						   ObjectIdGetDatum(db_oid),
-						   0, 0, 0);
+	tuple = SearchSysCache1(DATABASEOID, ObjectIdGetDatum(db_oid));
 	if (!HeapTupleIsValid(tuple))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_DATABASE),
@@ -4522,9 +4453,7 @@ pg_conversion_ownercheck(Oid conv_oid, Oid roleid)
 	if (superuser_arg(roleid))
 		return true;
 
-	tuple = SearchSysCache(CONVOID,
-						   ObjectIdGetDatum(conv_oid),
-						   0, 0, 0);
+	tuple = SearchSysCache1(CONVOID, ObjectIdGetDatum(conv_oid));
 	if (!HeapTupleIsValid(tuple))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
@@ -4548,11 +4477,10 @@ get_default_acl_internal(Oid roleId, Oid nsp_oid, char objtype)
 	Acl		   *result = NULL;
 	HeapTuple	tuple;
 
-	tuple = SearchSysCache(DEFACLROLENSPOBJ,
-						   ObjectIdGetDatum(roleId),
-						   ObjectIdGetDatum(nsp_oid),
-						   CharGetDatum(objtype),
-						   0);
+	tuple = SearchSysCache3(DEFACLROLENSPOBJ,
+							ObjectIdGetDatum(roleId),
+							ObjectIdGetDatum(nsp_oid),
+							CharGetDatum(objtype));
 
 	if (HeapTupleIsValid(tuple))
 	{

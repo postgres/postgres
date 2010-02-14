@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_type.c,v 1.131 2010/01/02 16:57:36 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_type.c,v 1.132 2010/02/14 18:42:13 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -370,10 +370,9 @@ TypeCreate(Oid newTypeOid,
 	 */
 	pg_type_desc = heap_open(TypeRelationId, RowExclusiveLock);
 
-	tup = SearchSysCacheCopy(TYPENAMENSP,
-							 CStringGetDatum(typeName),
-							 ObjectIdGetDatum(typeNamespace),
-							 0, 0);
+	tup = SearchSysCacheCopy2(TYPENAMENSP,
+							  CStringGetDatum(typeName),
+							  ObjectIdGetDatum(typeNamespace));
 	if (HeapTupleIsValid(tup))
 	{
 		/*
@@ -647,9 +646,7 @@ RenameTypeInternal(Oid typeOid, const char *newTypeName, Oid typeNamespace)
 
 	pg_type_desc = heap_open(TypeRelationId, RowExclusiveLock);
 
-	tuple = SearchSysCacheCopy(TYPEOID,
-							   ObjectIdGetDatum(typeOid),
-							   0, 0, 0);
+	tuple = SearchSysCacheCopy1(TYPEOID, ObjectIdGetDatum(typeOid));
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "cache lookup failed for type %u", typeOid);
 	typ = (Form_pg_type) GETSTRUCT(tuple);
@@ -660,10 +657,9 @@ RenameTypeInternal(Oid typeOid, const char *newTypeName, Oid typeNamespace)
 	arrayOid = typ->typarray;
 
 	/* Just to give a more friendly error than unique-index violation */
-	if (SearchSysCacheExists(TYPENAMENSP,
-							 CStringGetDatum(newTypeName),
-							 ObjectIdGetDatum(typeNamespace),
-							 0, 0))
+	if (SearchSysCacheExists2(TYPENAMENSP,
+							  CStringGetDatum(newTypeName),
+							  ObjectIdGetDatum(typeNamespace)))
 		ereport(ERROR,
 				(errcode(ERRCODE_DUPLICATE_OBJECT),
 				 errmsg("type \"%s\" already exists", newTypeName)));
@@ -720,10 +716,9 @@ makeArrayTypeName(const char *typeName, Oid typeNamespace)
 			memcpy(arr + i, typeName, NAMEDATALEN - i);
 			truncate_identifier(arr, NAMEDATALEN, false);
 		}
-		if (!SearchSysCacheExists(TYPENAMENSP,
-								  CStringGetDatum(arr),
-								  ObjectIdGetDatum(typeNamespace),
-								  0, 0))
+		if (!SearchSysCacheExists2(TYPENAMENSP,
+								   CStringGetDatum(arr),
+								   ObjectIdGetDatum(typeNamespace)))
 			break;
 	}
 

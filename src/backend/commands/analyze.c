@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/analyze.c,v 1.150 2010/02/08 04:33:53 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/analyze.c,v 1.151 2010/02/14 18:42:13 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -827,9 +827,7 @@ examine_attribute(Relation onerel, int attnum)
 	stats = (VacAttrStats *) palloc0(sizeof(VacAttrStats));
 	stats->attr = (Form_pg_attribute) palloc(ATTRIBUTE_FIXED_PART_SIZE);
 	memcpy(stats->attr, attr, ATTRIBUTE_FIXED_PART_SIZE);
-	typtuple = SearchSysCache(TYPEOID,
-							  ObjectIdGetDatum(attr->atttypid),
-							  0, 0, 0);
+	typtuple = SearchSysCache1(TYPEOID, ObjectIdGetDatum(attr->atttypid));
 	if (!HeapTupleIsValid(typtuple))
 		elog(ERROR, "cache lookup failed for type %u", attr->atttypid);
 	stats->attrtype = (Form_pg_type) palloc(sizeof(FormData_pg_type));
@@ -1633,11 +1631,10 @@ update_attstats(Oid relid, bool inh, int natts, VacAttrStats **vacattrstats)
 		}
 
 		/* Is there already a pg_statistic tuple for this attribute? */
-		oldtup = SearchSysCache(STATRELATTINH,
-								ObjectIdGetDatum(relid),
-								Int16GetDatum(stats->attr->attnum),
-								BoolGetDatum(inh),
-								0);
+		oldtup = SearchSysCache3(STATRELATTINH,
+								 ObjectIdGetDatum(relid),
+								 Int16GetDatum(stats->attr->attnum),
+								 BoolGetDatum(inh));
 
 		if (HeapTupleIsValid(oldtup))
 		{

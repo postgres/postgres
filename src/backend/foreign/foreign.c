@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *		  $PostgreSQL: pgsql/src/backend/foreign/foreign.c,v 1.7 2010/01/02 16:57:45 momjian Exp $
+ *		  $PostgreSQL: pgsql/src/backend/foreign/foreign.c,v 1.8 2010/02/14 18:42:14 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,9 +47,7 @@ GetForeignDataWrapper(Oid fdwid)
 	HeapTuple	tp;
 	bool		isnull;
 
-	tp = SearchSysCache(FOREIGNDATAWRAPPEROID,
-						ObjectIdGetDatum(fdwid),
-						0, 0, 0);
+	tp = SearchSysCache1(FOREIGNDATAWRAPPEROID, ObjectIdGetDatum(fdwid));
 
 	if (!HeapTupleIsValid(tp))
 		elog(ERROR, "cache lookup failed for foreign-data wrapper %u", fdwid);
@@ -84,9 +82,7 @@ GetForeignDataWrapperOidByName(const char *fdwname, bool missing_ok)
 {
 	Oid			fdwId;
 
-	fdwId = GetSysCacheOid(FOREIGNDATAWRAPPERNAME,
-						   CStringGetDatum(fdwname),
-						   0, 0, 0);
+	fdwId = GetSysCacheOid1(FOREIGNDATAWRAPPERNAME, CStringGetDatum(fdwname));
 
 	if (!OidIsValid(fdwId) && !missing_ok)
 		ereport(ERROR,
@@ -125,9 +121,7 @@ GetForeignServer(Oid serverid)
 	Datum		datum;
 	bool		isnull;
 
-	tp = SearchSysCache(FOREIGNSERVEROID,
-						ObjectIdGetDatum(serverid),
-						0, 0, 0);
+	tp = SearchSysCache1(FOREIGNSERVEROID, ObjectIdGetDatum(serverid));
 
 	if (!HeapTupleIsValid(tp))
 		elog(ERROR, "cache lookup failed for foreign server %u", serverid);
@@ -177,9 +171,7 @@ GetForeignServerOidByName(const char *srvname, bool missing_ok)
 {
 	Oid			serverid;
 
-	serverid = GetSysCacheOid(FOREIGNSERVERNAME,
-							  CStringGetDatum(srvname),
-							  0, 0, 0);
+	serverid = GetSysCacheOid1(FOREIGNSERVERNAME, CStringGetDatum(srvname));
 
 	if (!OidIsValid(serverid) && !missing_ok)
 		ereport(ERROR,
@@ -220,18 +212,16 @@ GetUserMapping(Oid userid, Oid serverid)
 	bool		isnull;
 	UserMapping *um;
 
-	tp = SearchSysCache(USERMAPPINGUSERSERVER,
-						ObjectIdGetDatum(userid),
-						ObjectIdGetDatum(serverid),
-						0, 0);
+	tp = SearchSysCache2(USERMAPPINGUSERSERVER,
+						 ObjectIdGetDatum(userid),
+						 ObjectIdGetDatum(serverid));
 
 	if (!HeapTupleIsValid(tp))
 	{
 		/* Not found for the specific user -- try PUBLIC */
-		tp = SearchSysCache(USERMAPPINGUSERSERVER,
-							ObjectIdGetDatum(InvalidOid),
-							ObjectIdGetDatum(serverid),
-							0, 0);
+		tp = SearchSysCache2(USERMAPPINGUSERSERVER,
+							 ObjectIdGetDatum(InvalidOid),
+							 ObjectIdGetDatum(serverid));
 	}
 
 	if (!HeapTupleIsValid(tp))

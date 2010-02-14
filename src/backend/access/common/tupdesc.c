@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/common/tupdesc.c,v 1.132 2010/01/22 16:40:18 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/common/tupdesc.c,v 1.133 2010/02/14 18:42:12 rhaas Exp $
  *
  * NOTES
  *	  some of the executor utility code such as "ExecTypeFromTL" should be
@@ -478,9 +478,7 @@ TupleDescInitEntry(TupleDesc desc,
 	att->attinhcount = 0;
 	/* attacl and attoptions are not present in tupledescs */
 
-	tuple = SearchSysCache(TYPEOID,
-						   ObjectIdGetDatum(oidtypeid),
-						   0, 0, 0);
+	tuple = SearchSysCache1(TYPEOID, ObjectIdGetDatum(oidtypeid));
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "cache lookup failed for type %u", oidtypeid);
 	typeForm = (Form_pg_type) GETSTRUCT(tuple);

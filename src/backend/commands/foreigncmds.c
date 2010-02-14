@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/foreigncmds.c,v 1.10 2010/01/02 16:57:37 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/foreigncmds.c,v 1.11 2010/02/14 18:42:14 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -220,9 +220,7 @@ AlterForeignDataWrapperOwner(const char *name, Oid newOwnerId)
 
 	rel = heap_open(ForeignDataWrapperRelationId, RowExclusiveLock);
 
-	tup = SearchSysCacheCopy(FOREIGNDATAWRAPPERNAME,
-							 CStringGetDatum(name),
-							 0, 0, 0);
+	tup = SearchSysCacheCopy1(FOREIGNDATAWRAPPERNAME, CStringGetDatum(name));
 
 	if (!HeapTupleIsValid(tup))
 		ereport(ERROR,
@@ -264,9 +262,7 @@ AlterForeignServerOwner(const char *name, Oid newOwnerId)
 
 	rel = heap_open(ForeignServerRelationId, RowExclusiveLock);
 
-	tup = SearchSysCacheCopy(FOREIGNSERVERNAME,
-							 CStringGetDatum(name),
-							 0, 0, 0);
+	tup = SearchSysCacheCopy1(FOREIGNSERVERNAME, CStringGetDatum(name));
 
 	if (!HeapTupleIsValid(tup))
 		ereport(ERROR,
@@ -447,9 +443,8 @@ AlterForeignDataWrapper(AlterFdwStmt *stmt)
 					stmt->fdwname),
 			 errhint("Must be superuser to alter a foreign-data wrapper.")));
 
-	tp = SearchSysCacheCopy(FOREIGNDATAWRAPPERNAME,
-							CStringGetDatum(stmt->fdwname),
-							0, 0, 0);
+	tp = SearchSysCacheCopy1(FOREIGNDATAWRAPPERNAME,
+							 CStringGetDatum(stmt->fdwname));
 
 	if (!HeapTupleIsValid(tp))
 		ereport(ERROR,
@@ -587,9 +582,7 @@ RemoveForeignDataWrapperById(Oid fdwId)
 
 	rel = heap_open(ForeignDataWrapperRelationId, RowExclusiveLock);
 
-	tp = SearchSysCache(FOREIGNDATAWRAPPEROID,
-						ObjectIdGetDatum(fdwId),
-						0, 0, 0);
+	tp = SearchSysCache1(FOREIGNDATAWRAPPEROID, ObjectIdGetDatum(fdwId));
 
 	if (!HeapTupleIsValid(tp))
 		elog(ERROR, "cache lookup failed for foreign-data wrapper %u", fdwId);
@@ -721,9 +714,8 @@ AlterForeignServer(AlterForeignServerStmt *stmt)
 	Oid			srvId;
 	Form_pg_foreign_server srvForm;
 
-	tp = SearchSysCacheCopy(FOREIGNSERVERNAME,
-							CStringGetDatum(stmt->servername),
-							0, 0, 0);
+	tp = SearchSysCacheCopy1(FOREIGNSERVERNAME,
+							 CStringGetDatum(stmt->servername));
 
 	if (!HeapTupleIsValid(tp))
 		ereport(ERROR,
@@ -851,9 +843,7 @@ RemoveForeignServerById(Oid srvId)
 
 	rel = heap_open(ForeignServerRelationId, RowExclusiveLock);
 
-	tp = SearchSysCache(FOREIGNSERVEROID,
-						ObjectIdGetDatum(srvId),
-						0, 0, 0);
+	tp = SearchSysCache1(FOREIGNSERVEROID, ObjectIdGetDatum(srvId));
 
 	if (!HeapTupleIsValid(tp))
 		elog(ERROR, "cache lookup failed for foreign server %u", srvId);
@@ -921,10 +911,9 @@ CreateUserMapping(CreateUserMappingStmt *stmt)
 	/*
 	 * Check that the user mapping is unique within server.
 	 */
-	umId = GetSysCacheOid(USERMAPPINGUSERSERVER,
-						  ObjectIdGetDatum(useId),
-						  ObjectIdGetDatum(srv->serverid),
-						  0, 0);
+	umId = GetSysCacheOid2(USERMAPPINGUSERSERVER,
+						   ObjectIdGetDatum(useId),
+						   ObjectIdGetDatum(srv->serverid));
 	if (OidIsValid(umId))
 		ereport(ERROR,
 				(errcode(ERRCODE_DUPLICATE_OBJECT),
@@ -1000,10 +989,9 @@ AlterUserMapping(AlterUserMappingStmt *stmt)
 	useId = GetUserOidFromMapping(stmt->username, false);
 	srv = GetForeignServerByName(stmt->servername, false);
 
-	umId = GetSysCacheOid(USERMAPPINGUSERSERVER,
-						  ObjectIdGetDatum(useId),
-						  ObjectIdGetDatum(srv->serverid),
-						  0, 0);
+	umId = GetSysCacheOid2(USERMAPPINGUSERSERVER,
+						   ObjectIdGetDatum(useId),
+						   ObjectIdGetDatum(srv->serverid));
 	if (!OidIsValid(umId))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
@@ -1012,9 +1000,7 @@ AlterUserMapping(AlterUserMappingStmt *stmt)
 
 	user_mapping_ddl_aclcheck(useId, srv->serverid, stmt->servername);
 
-	tp = SearchSysCacheCopy(USERMAPPINGOID,
-							ObjectIdGetDatum(umId),
-							0, 0, 0);
+	tp = SearchSysCacheCopy1(USERMAPPINGOID, ObjectIdGetDatum(umId));
 
 	if (!HeapTupleIsValid(tp))
 		elog(ERROR, "cache lookup failed for user mapping %u", umId);
@@ -1107,10 +1093,9 @@ RemoveUserMapping(DropUserMappingStmt *stmt)
 		return;
 	}
 
-	umId = GetSysCacheOid(USERMAPPINGUSERSERVER,
-						  ObjectIdGetDatum(useId),
-						  ObjectIdGetDatum(srv->serverid),
-						  0, 0);
+	umId = GetSysCacheOid2(USERMAPPINGUSERSERVER,
+						   ObjectIdGetDatum(useId),
+						   ObjectIdGetDatum(srv->serverid));
 
 	if (!OidIsValid(umId))
 	{
@@ -1151,9 +1136,7 @@ RemoveUserMappingById(Oid umId)
 
 	rel = heap_open(UserMappingRelationId, RowExclusiveLock);
 
-	tp = SearchSysCache(USERMAPPINGOID,
-						ObjectIdGetDatum(umId),
-						0, 0, 0);
+	tp = SearchSysCache1(USERMAPPINGOID, ObjectIdGetDatum(umId));
 
 	if (!HeapTupleIsValid(tp))
 		elog(ERROR, "cache lookup failed for user mapping %u", umId);

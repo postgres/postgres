@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.335 2010/02/08 04:33:53 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.336 2010/02/14 18:42:13 rhaas Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -141,9 +141,8 @@ ConstructTupleDescriptor(Relation heapRelation,
 	int			i;
 
 	/* We need access to the index AM's pg_am tuple */
-	amtuple = SearchSysCache(AMOID,
-							 ObjectIdGetDatum(accessMethodObjectId),
-							 0, 0, 0);
+	amtuple = SearchSysCache1(AMOID,
+							  ObjectIdGetDatum(accessMethodObjectId));
 	if (!HeapTupleIsValid(amtuple))
 		elog(ERROR, "cache lookup failed for access method %u",
 			 accessMethodObjectId);
@@ -230,9 +229,7 @@ ConstructTupleDescriptor(Relation heapRelation,
 			 * Lookup the expression type in pg_type for the type length etc.
 			 */
 			keyType = exprType(indexkey);
-			tuple = SearchSysCache(TYPEOID,
-								   ObjectIdGetDatum(keyType),
-								   0, 0, 0);
+			tuple = SearchSysCache1(TYPEOID, ObjectIdGetDatum(keyType));
 			if (!HeapTupleIsValid(tuple))
 				elog(ERROR, "cache lookup failed for type %u", keyType);
 			typeTup = (Form_pg_type) GETSTRUCT(tuple);
@@ -284,9 +281,7 @@ ConstructTupleDescriptor(Relation heapRelation,
 		 * Check the opclass and index AM to see if either provides a keytype
 		 * (overriding the attribute type).  Opclass takes precedence.
 		 */
-		tuple = SearchSysCache(CLAOID,
-							   ObjectIdGetDatum(classObjectId[i]),
-							   0, 0, 0);
+		tuple = SearchSysCache1(CLAOID, ObjectIdGetDatum(classObjectId[i]));
 		if (!HeapTupleIsValid(tuple))
 			elog(ERROR, "cache lookup failed for opclass %u",
 				 classObjectId[i]);
@@ -300,9 +295,7 @@ ConstructTupleDescriptor(Relation heapRelation,
 		if (OidIsValid(keyType) && keyType != to->atttypid)
 		{
 			/* index value and heap value have different types */
-			tuple = SearchSysCache(TYPEOID,
-								   ObjectIdGetDatum(keyType),
-								   0, 0, 0);
+			tuple = SearchSysCache1(TYPEOID, ObjectIdGetDatum(keyType));
 			if (!HeapTupleIsValid(tuple))
 				elog(ERROR, "cache lookup failed for type %u", keyType);
 			typeTup = (Form_pg_type) GETSTRUCT(tuple);
@@ -1031,9 +1024,7 @@ index_drop(Oid indexId)
 	 */
 	indexRelation = heap_open(IndexRelationId, RowExclusiveLock);
 
-	tuple = SearchSysCache(INDEXRELID,
-						   ObjectIdGetDatum(indexId),
-						   0, 0, 0);
+	tuple = SearchSysCache1(INDEXRELID, ObjectIdGetDatum(indexId));
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "cache lookup failed for index %u", indexId);
 
@@ -1316,9 +1307,7 @@ index_update_stats(Relation rel,
 	else
 	{
 		/* normal case, use syscache */
-		tuple = SearchSysCacheCopy(RELOID,
-								   ObjectIdGetDatum(relid),
-								   0, 0, 0);
+		tuple = SearchSysCacheCopy1(RELOID, ObjectIdGetDatum(relid));
 	}
 
 	if (!HeapTupleIsValid(tuple))
@@ -1473,9 +1462,8 @@ index_build(Relation heapRelation,
 
 		pg_index = heap_open(IndexRelationId, RowExclusiveLock);
 
-		indexTuple = SearchSysCacheCopy(INDEXRELID,
-										ObjectIdGetDatum(indexId),
-										0, 0, 0);
+		indexTuple = SearchSysCacheCopy1(INDEXRELID,
+										 ObjectIdGetDatum(indexId));
 		if (!HeapTupleIsValid(indexTuple))
 			elog(ERROR, "cache lookup failed for index %u", indexId);
 		indexForm = (Form_pg_index) GETSTRUCT(indexTuple);
@@ -2393,9 +2381,7 @@ IndexGetRelation(Oid indexId)
 	Form_pg_index index;
 	Oid			result;
 
-	tuple = SearchSysCache(INDEXRELID,
-						   ObjectIdGetDatum(indexId),
-						   0, 0, 0);
+	tuple = SearchSysCache1(INDEXRELID, ObjectIdGetDatum(indexId));
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "cache lookup failed for index %u", indexId);
 	index = (Form_pg_index) GETSTRUCT(tuple);
@@ -2498,9 +2484,8 @@ reindex_index(Oid indexId, bool skip_constraint_checks)
 	{
 		pg_index = heap_open(IndexRelationId, RowExclusiveLock);
 
-		indexTuple = SearchSysCacheCopy(INDEXRELID,
-										ObjectIdGetDatum(indexId),
-										0, 0, 0);
+		indexTuple = SearchSysCacheCopy1(INDEXRELID,
+										 ObjectIdGetDatum(indexId));
 		if (!HeapTupleIsValid(indexTuple))
 			elog(ERROR, "cache lookup failed for index %u", indexId);
 		indexForm = (Form_pg_index) GETSTRUCT(indexTuple);

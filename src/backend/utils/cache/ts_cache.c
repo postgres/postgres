@@ -20,7 +20,7 @@
  * Copyright (c) 2006-2010, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/ts_cache.c,v 1.11 2010/01/02 16:57:56 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/ts_cache.c,v 1.12 2010/02/14 18:42:17 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -151,9 +151,7 @@ lookup_ts_parser_cache(Oid prsId)
 		HeapTuple	tp;
 		Form_pg_ts_parser prs;
 
-		tp = SearchSysCache(TSPARSEROID,
-							ObjectIdGetDatum(prsId),
-							0, 0, 0);
+		tp = SearchSysCache1(TSPARSEROID, ObjectIdGetDatum(prsId));
 		if (!HeapTupleIsValid(tp))
 			elog(ERROR, "cache lookup failed for text search parser %u",
 				 prsId);
@@ -257,9 +255,7 @@ lookup_ts_dictionary_cache(Oid dictId)
 		Form_pg_ts_template template;
 		MemoryContext saveCtx;
 
-		tpdict = SearchSysCache(TSDICTOID,
-								ObjectIdGetDatum(dictId),
-								0, 0, 0);
+		tpdict = SearchSysCache1(TSDICTOID, ObjectIdGetDatum(dictId));
 		if (!HeapTupleIsValid(tpdict))
 			elog(ERROR, "cache lookup failed for text search dictionary %u",
 				 dictId);
@@ -274,9 +270,8 @@ lookup_ts_dictionary_cache(Oid dictId)
 		/*
 		 * Retrieve dictionary's template
 		 */
-		tptmpl = SearchSysCache(TSTEMPLATEOID,
-								ObjectIdGetDatum(dict->dicttemplate),
-								0, 0, 0);
+		tptmpl = SearchSysCache1(TSTEMPLATEOID,
+								 ObjectIdGetDatum(dict->dicttemplate));
 		if (!HeapTupleIsValid(tptmpl))
 			elog(ERROR, "cache lookup failed for text search template %u",
 				 dict->dicttemplate);
@@ -430,9 +425,7 @@ lookup_ts_config_cache(Oid cfgId)
 		int			ndicts;
 		int			i;
 
-		tp = SearchSysCache(TSCONFIGOID,
-							ObjectIdGetDatum(cfgId),
-							0, 0, 0);
+		tp = SearchSysCache1(TSCONFIGOID, ObjectIdGetDatum(cfgId));
 		if (!HeapTupleIsValid(tp))
 			elog(ERROR, "cache lookup failed for text search configuration %u",
 				 cfgId);
@@ -617,9 +610,7 @@ assignTSCurrentConfig(const char *newval, bool doit, GucSource source)
 		 * Modify the actually stored value to be fully qualified, to ensure
 		 * later changes of search_path don't affect it.
 		 */
-		tuple = SearchSysCache(TSCONFIGOID,
-							   ObjectIdGetDatum(cfgId),
-							   0, 0, 0);
+		tuple = SearchSysCache1(TSCONFIGOID, ObjectIdGetDatum(cfgId));
 		if (!HeapTupleIsValid(tuple))
 			elog(ERROR, "cache lookup failed for text search configuration %u",
 				 cfgId);

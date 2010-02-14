@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/syscache.h,v 1.78 2010/01/05 21:54:00 rhaas Exp $
+ * $PostgreSQL: pgsql/src/include/utils/syscache.h,v 1.79 2010/02/14 18:42:18 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -112,6 +112,56 @@ extern Datum SysCacheGetAttr(int cacheId, HeapTuple tup,
 /* list-search interface.  Users of this must import catcache.h too */
 extern struct catclist *SearchSysCacheList(int cacheId, int nkeys,
 				   Datum key1, Datum key2, Datum key3, Datum key4);
+
+/*
+ * The use of the macros below rather than direct calls to the corresponding
+ * functions is encouraged, as it insulates the caller from changes in the
+ * maximum number of keys.
+ */
+#define SearchSysCache1(cacheId, key1) \
+	SearchSysCache(cacheId, key1, 0, 0, 0)
+#define SearchSysCache2(cacheId, key1, key2) \
+	SearchSysCache(cacheId, key1, key2, 0, 0)
+#define SearchSysCache3(cacheId, key1, key2, key3) \
+	SearchSysCache(cacheId, key1, key2, key3, 0)
+#define SearchSysCache4(cacheId, key1, key2, key3, key4) \
+	SearchSysCache(cacheId, key1, key2, key3, key4)
+
+#define SearchSysCacheCopy1(cacheId, key1) \
+	SearchSysCacheCopy(cacheId, key1, 0, 0, 0)
+#define SearchSysCacheCopy2(cacheId, key1, key2) \
+	SearchSysCacheCopy(cacheId, key1, key2, 0, 0)
+#define SearchSysCacheCopy3(cacheId, key1, key2, key3) \
+	SearchSysCacheCopy(cacheId, key1, key2, key3, 0)
+#define SearchSysCacheCopy4(cacheId, key1, key2, key3, key4) \
+	SearchSysCacheCopy(cacheId, key1, key2, key3, key4)
+
+#define SearchSysCacheExists1(cacheId, key1) \
+	SearchSysCacheExists(cacheId, key1, 0, 0, 0)
+#define SearchSysCacheExists2(cacheId, key1, key2) \
+	SearchSysCacheExists(cacheId, key1, key2, 0, 0)
+#define SearchSysCacheExists3(cacheId, key1, key2, key3) \
+	SearchSysCacheExists(cacheId, key1, key2, key3, 0)
+#define SearchSysCacheExists4(cacheId, key1, key2, key3, key4) \
+	SearchSysCacheExists(cacheId, key1, key2, key3, key4)
+
+#define GetSysCacheOid1(cacheId, key1) \
+	GetSysCacheOid(cacheId, key1, 0, 0, 0)
+#define GetSysCacheOid2(cacheId, key1, key2) \
+	GetSysCacheOid(cacheId, key1, key2, 0, 0)
+#define GetSysCacheOid3(cacheId, key1, key2, key3) \
+	GetSysCacheOid(cacheId, key1, key2, key3, 0)
+#define GetSysCacheOid4(cacheId, key1, key2, key3, key4) \
+	GetSysCacheOid(cacheId, key1, key2, key3, key4)
+
+#define SearchSysCacheList1(cacheId, key1) \
+	SearchSysCacheList(cacheId, 1, key1, 0, 0, 0)
+#define SearchSysCacheList2(cacheId, key1, key2) \
+	SearchSysCacheList(cacheId, 2, key1, key2, 0, 0)
+#define SearchSysCacheList3(cacheId, key1, key2, key3) \
+	SearchSysCacheList(cacheId, 3, key1, key2, key3, 0)
+#define SearchSysCacheList4(cacheId, key1, key2, key3, key4) \
+	SearchSysCacheList(cacheId, 4, key1, key2, key3, key4)
 
 #define ReleaseSysCacheList(x)	ReleaseCatCacheList(x)
 

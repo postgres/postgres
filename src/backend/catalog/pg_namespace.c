@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_namespace.c,v 1.22 2010/01/02 16:57:36 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_namespace.c,v 1.23 2010/02/14 18:42:13 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,9 +44,7 @@ NamespaceCreate(const char *nspName, Oid ownerId)
 		elog(ERROR, "no namespace name supplied");
 
 	/* make sure there is no existing namespace of same name */
-	if (SearchSysCacheExists(NAMESPACENAME,
-							 PointerGetDatum(nspName),
-							 0, 0, 0))
+	if (SearchSysCacheExists1(NAMESPACENAME, PointerGetDatum(nspName)))
 		ereport(ERROR,
 				(errcode(ERRCODE_DUPLICATE_SCHEMA),
 				 errmsg("schema \"%s\" already exists", nspName)));

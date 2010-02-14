@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/init/postinit.c,v 1.202 2010/02/05 20:26:56 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/init/postinit.c,v 1.203 2010/02/14 18:42:18 rhaas Exp $
  *
  *
  *-------------------------------------------------------------------------
@@ -240,9 +240,7 @@ CheckMyDatabase(const char *name, bool am_superuser)
 	char	   *ctype;
 
 	/* Fetch our pg_database row normally, via syscache */
-	tup = SearchSysCache(DATABASEOID,
-						 ObjectIdGetDatum(MyDatabaseId),
-						 0, 0, 0);
+	tup = SearchSysCache1(DATABASEOID, ObjectIdGetDatum(MyDatabaseId));
 	if (!HeapTupleIsValid(tup))
 		elog(ERROR, "cache lookup failed for database %u", MyDatabaseId);
 	dbform = (Form_pg_database) GETSTRUCT(tup);

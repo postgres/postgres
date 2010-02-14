@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/attoptcache.c,v 1.1 2010/01/22 16:42:31 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/attoptcache.c,v 1.2 2010/02/14 18:42:17 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -128,10 +128,9 @@ get_attribute_options(Oid attrelid, int attnum)
 	{
 		AttributeOpts *opts;
 
-		tp = SearchSysCache(ATTNUM,
-							ObjectIdGetDatum(attrelid),
-							Int16GetDatum(attnum),
-							0, 0);
+		tp = SearchSysCache2(ATTNUM,
+							 ObjectIdGetDatum(attrelid),
+							 Int16GetDatum(attnum));
 
 		/*
 		 * If we don't find a valid HeapTuple, it must mean someone has

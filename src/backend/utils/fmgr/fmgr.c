@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/fmgr.c,v 1.129 2010/01/07 04:53:34 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/fmgr.c,v 1.130 2010/02/14 18:42:17 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -206,9 +206,7 @@ fmgr_info_cxt_security(Oid functionId, FmgrInfo *finfo, MemoryContext mcxt,
 	}
 
 	/* Otherwise we need the pg_proc entry */
-	procedureTuple = SearchSysCache(PROCOID,
-									ObjectIdGetDatum(functionId),
-									0, 0, 0);
+	procedureTuple = SearchSysCache1(PROCOID, ObjectIdGetDatum(functionId));
 	if (!HeapTupleIsValid(procedureTuple))
 		elog(ERROR, "cache lookup failed for function %u", functionId);
 	procedureStruct = (Form_pg_proc) GETSTRUCT(procedureTuple);
@@ -396,9 +394,7 @@ fmgr_info_other_lang(Oid functionId, FmgrInfo *finfo, HeapTuple procedureTuple)
 	Form_pg_language languageStruct;
 	FmgrInfo	plfinfo;
 
-	languageTuple = SearchSysCache(LANGOID,
-								   ObjectIdGetDatum(language),
-								   0, 0, 0);
+	languageTuple = SearchSysCache1(LANGOID, ObjectIdGetDatum(language));
 	if (!HeapTupleIsValid(languageTuple))
 		elog(ERROR, "cache lookup failed for language %u", language);
 	languageStruct = (Form_pg_language) GETSTRUCT(languageTuple);
@@ -899,9 +895,8 @@ fmgr_security_definer(PG_FUNCTION_ARGS)
 							   fcinfo->flinfo->fn_mcxt, true);
 		fcache->flinfo.fn_expr = fcinfo->flinfo->fn_expr;
 
-		tuple = SearchSysCache(PROCOID,
-							   ObjectIdGetDatum(fcinfo->flinfo->fn_oid),
-							   0, 0, 0);
+		tuple = SearchSysCache1(PROCOID,
+								ObjectIdGetDatum(fcinfo->flinfo->fn_oid));
 		if (!HeapTupleIsValid(tuple))
 			elog(ERROR, "cache lookup failed for function %u",
 				 fcinfo->flinfo->fn_oid);
