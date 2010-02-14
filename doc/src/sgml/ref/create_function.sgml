@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_function.sgml,v 1.84.2.3 2010/02/14 00:48:20 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_function.sgml,v 1.84.2.4 2010/02/14 01:01:40 tgl Exp $
 -->
 
 <refentry id="SQL-CREATEFUNCTION">
@@ -574,7 +574,7 @@ CREATE FUNCTION foo(int, int default 42) ...
     If a function is declared <literal>STRICT</> with a <literal>VARIADIC</>
     argument, the strictness check tests that the variadic array <emphasis>as
     a whole</> is non-null.  The function will still be called if the
-    array has non-null elements.
+    array has null elements.
    </para>
 
  </refsect1>
