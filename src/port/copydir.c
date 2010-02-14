@@ -11,7 +11,7 @@
  *	as a service.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/copydir.c,v 1.24 2010/01/02 16:58:13 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/port/copydir.c,v 1.25 2010/02/14 17:50:52 stark Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,6 +50,7 @@ copydir(char *fromdir, char *todir, bool recurse)
 {
 	DIR		   *xldir;
 	struct dirent *xlde;
+	int         dirfd;
 	char		fromfile[MAXPGPATH];
 	char		tofile[MAXPGPATH];
 
@@ -91,6 +92,26 @@ copydir(char *fromdir, char *todir, bool recurse)
 	}
 
 	FreeDir(xldir);
+
+	/*
+	 * fsync the directory to make sure not just the data but also the
+	 * new directory file entries have reached the disk. While needed
+	 * by most filesystems, the window got bigger with newer ones like
+	 * ext4.
+	 */
+	dirfd = BasicOpenFile(todir,
+	                      O_RDONLY | PG_BINARY,
+	                      S_IRUSR | S_IWUSR);
+	if(dirfd == -1)
+		ereport(ERROR,
+		        (errcode_for_file_access(),
+		         errmsg("could not open directory for fsync \"%s\": %m", todir)));
+
+	if(pg_fsync(dirfd) == -1)
+		ereport(ERROR,
+				(errcode_for_file_access(),
+				 errmsg("could not fsync directory \"%s\": %m", todir)));
+	close(dirfd);
 }
 
 /*
