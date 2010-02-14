@@ -3,7 +3,7 @@ package Mkvcbuild;
 #
 # Package that generates build files for msvc build
 #
-# $PostgreSQL: pgsql/src/tools/msvc/Mkvcbuild.pm,v 1.51 2010/01/20 09:22:43 heikki Exp $
+# $PostgreSQL: pgsql/src/tools/msvc/Mkvcbuild.pm,v 1.52 2010/02/14 14:10:23 mha Exp $
 #
 use Carp;
 use Win32;
@@ -147,11 +147,18 @@ sub mkvcbuild
 
     if ($solution->{options}->{python})
     {
+        # Attempt to get python version and location. Assume python.exe in specified dir.
+        open(P, $solution->{options}->{python} . "\\python -c \"import sys;print(sys.prefix);print(str(sys.version_info[0])+str(sys.version_info[1]))\" |") || die "Could not query for python versoin!\n";
+        my $pyprefix = <P>;chomp($pyprefix);
+        my $pyver = <P>;chomp($pyver);
+        close(P);
+
+        # Sometimes (always?) if python is not present, the execution actually works, but gives no data...
+        die "Failed to query python for version information\n" if (!(defined($pyprefix) && defined($pyver)));
+
         my $plpython = $solution->AddProject('plpython','dll','PLs','src\pl\plpython');
-        $plpython->AddIncludeDir($solution->{options}->{python} . '\include');
-        $solution->{options}->{python} =~ /\\Python(\d{2})/i
-          || croak "Could not determine python version from path";
-        $plpython->AddLibrary($solution->{options}->{python} . "\\Libs\\python$1.lib");
+        $plpython->AddIncludeDir($pyprefix . '\include');
+        $plpython->AddLibrary($pyprefix . "\\Libs\\python$pyver.lib");
         $plpython->AddReference($postgres);
     }
 
