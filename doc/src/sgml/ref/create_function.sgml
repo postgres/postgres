@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_function.sgml,v 1.84.2.2 2009/10/02 18:13:10 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_function.sgml,v 1.84.2.3 2010/02/14 00:48:20 tgl Exp $
 -->
 
 <refentry id="SQL-CREATEFUNCTION">
@@ -568,6 +568,13 @@ CREATE FUNCTION foo(int, int default 42) ...
     do not change.  All other function properties are assigned the
     values specified or implied in the command.  You must own the function
     to replace it (this includes being a member of the owning role).
+   </para>
+
+   <para>
+    If a function is declared <literal>STRICT</> with a <literal>VARIADIC</>
+    argument, the strictness check tests that the variadic array <emphasis>as
+    a whole</> is non-null.  The function will still be called if the
+    array has non-null elements.
    </para>
 
  </refsect1>
