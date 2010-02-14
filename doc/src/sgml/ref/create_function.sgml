@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_function.sgml,v 1.88 2009/10/08 02:39:14 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_function.sgml,v 1.89 2010/02/14 00:48:12 tgl Exp $
 -->
 
 <refentry id="SQL-CREATEFUNCTION">
@@ -583,6 +583,13 @@ CREATE FUNCTION foo(int, int default 42) ...
     column names of the anonymous composite type that describes the
     function's result.  These restrictions are made to ensure that
     existing calls of the function do not stop working when it is replaced.
+   </para>
+
+   <para>
+    If a function is declared <literal>STRICT</> with a <literal>VARIADIC</>
+    argument, the strictness check tests that the variadic array <emphasis>as
+    a whole</> is non-null.  The function will still be called if the
+    array has non-null elements.
    </para>
 
  </refsect1>
