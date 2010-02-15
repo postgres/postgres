@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.408 2010/02/14 18:42:14 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.409 2010/02/15 16:10:34 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -683,7 +683,7 @@ vac_update_datfrozenxid(void)
  *		The passed XID is simply the one I just wrote into my pg_database
  *		entry.	It's used to initialize the "min" calculation.
  *
- *		This routine is only only invoked when we've managed to change our
+ *		This routine is only invoked when we've managed to change our
  *		DB's datfrozenxid entry, or we found that the shared XID-wrap-limit
  *		info is stale.
  */
