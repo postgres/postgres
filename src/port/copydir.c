@@ -11,7 +11,7 @@
  *	as a service.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/copydir.c,v 1.27 2010/02/15 04:05:06 itagaki Exp $
+ *	  $PostgreSQL: pgsql/src/port/copydir.c,v 1.28 2010/02/15 11:40:49 stark Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -101,22 +101,36 @@ copydir(char *fromdir, char *todir, bool recurse)
 
 	while ((xlde = ReadDir(xldir, fromdir)) != NULL)
 	{
+		struct stat fst;
+
 		if (strcmp(xlde->d_name, ".") == 0 ||
 			strcmp(xlde->d_name, "..") == 0)
 			continue;
 
 		snprintf(tofile, MAXPGPATH, "%s/%s", todir, xlde->d_name);
-		fsync_fname(tofile);
+
+		/* We don't need to sync directories here since the recursive
+		 * copydir will do it before it returns */
+		if (lstat(fromfile, &fst) < 0)
+			ereport(ERROR,
+					(errcode_for_file_access(),
+					 errmsg("could not stat file \"%s\": %m", fromfile)));
+		if (S_ISREG(fst.st_mode))
+		{
+			fsync_fname(tofile);
+		}
 	}
 	FreeDir(xldir);
 
+#ifdef NOTYET
 	/* It's important to fsync the destination directory itself as
 	 * individual file fsyncs don't guarantee that the directory entry
 	 * for the file is synced. Recent versions of ext4 have made the
 	 * window much wider but it's been true for ext3 and other
-	 * filesyetems in the past 
+	 * filesystems in the past 
 	 */
 	fsync_fname(todir);
+#endif
 }
 
 /*
