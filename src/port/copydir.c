@@ -11,7 +11,7 @@
  *	as a service.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/copydir.c,v 1.26 2010/02/15 00:50:57 stark Exp $
+ *	  $PostgreSQL: pgsql/src/port/copydir.c,v 1.27 2010/02/15 04:05:06 itagaki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,7 +51,6 @@ copydir(char *fromdir, char *todir, bool recurse)
 {
 	DIR		   *xldir;
 	struct dirent *xlde;
-	int         dirfd;
 	char		fromfile[MAXPGPATH];
 	char		tofile[MAXPGPATH];
 
