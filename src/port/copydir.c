@@ -11,7 +11,7 @@
  *	as a service.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/copydir.c,v 1.25 2010/02/14 17:50:52 stark Exp $
+ *	  $PostgreSQL: pgsql/src/port/copydir.c,v 1.26 2010/02/15 00:50:57 stark Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,6 +37,7 @@
 
 
 static void copy_file(char *fromfile, char *tofile);
+static void fsync_fname(char *fname);
 
 
 /*
@@ -91,27 +92,32 @@ copydir(char *fromdir, char *todir, bool recurse)
 			copy_file(fromfile, tofile);
 	}
 
-	FreeDir(xldir);
-
 	/*
-	 * fsync the directory to make sure not just the data but also the
-	 * new directory file entries have reached the disk. While needed
-	 * by most filesystems, the window got bigger with newer ones like
-	 * ext4.
+	 * Be paranoid here and fsync all files to ensure we catch problems.
 	 */
-	dirfd = BasicOpenFile(todir,
-	                      O_RDONLY | PG_BINARY,
-	                      S_IRUSR | S_IWUSR);
-	if(dirfd == -1)
-		ereport(ERROR,
-		        (errcode_for_file_access(),
-		         errmsg("could not open directory for fsync \"%s\": %m", todir)));
-
-	if(pg_fsync(dirfd) == -1)
+	if (xldir == NULL)
 		ereport(ERROR,
 				(errcode_for_file_access(),
-				 errmsg("could not fsync directory \"%s\": %m", todir)));
-	close(dirfd);
+				 errmsg("could not open directory \"%s\": %m", fromdir)));
+
+	while ((xlde = ReadDir(xldir, fromdir)) != NULL)
+	{
+		if (strcmp(xlde->d_name, ".") == 0 ||
+			strcmp(xlde->d_name, "..") == 0)
+			continue;
+
+		snprintf(tofile, MAXPGPATH, "%s/%s", todir, xlde->d_name);
+		fsync_fname(tofile);
+	}
+	FreeDir(xldir);
+
+	/* It's important to fsync the destination directory itself as
+	 * individual file fsyncs don't guarantee that the directory entry
+	 * for the file is synced. Recent versions of ext4 have made the
+	 * window much wider but it's been true for ext3 and other
+	 * filesyetems in the past 
+	 */
+	fsync_fname(todir);
 }
 
 /*
@@ -124,6 +130,7 @@ copy_file(char *fromfile, char *tofile)
 	int			srcfd;
 	int			dstfd;
 	int			nbytes;
+	off_t		offset;
 
 	/* Use palloc to ensure we get a maxaligned buffer */
 #define COPY_BUF_SIZE (8 * BLCKSZ)
@@ -149,7 +156,7 @@ copy_file(char *fromfile, char *tofile)
 	/*
 	 * Do the data copying.
 	 */
-	for (;;)
+	for (offset=0; ; offset+=nbytes)
 	{
 		nbytes = read(srcfd, buffer, COPY_BUF_SIZE);
 		if (nbytes < 0)
@@ -168,15 +175,14 @@ copy_file(char *fromfile, char *tofile)
 					(errcode_for_file_access(),
 					 errmsg("could not write to file \"%s\": %m", tofile)));
 		}
-	}
 
-	/*
-	 * Be paranoid here to ensure we catch problems.
-	 */
-	if (pg_fsync(dstfd) != 0)
-		ereport(ERROR,
-				(errcode_for_file_access(),
-				 errmsg("could not fsync file \"%s\": %m", tofile)));
+		/*
+		 * We fsync the files later but first flush them to avoid spamming
+		 * the cache and hopefully get the kernel to start writing them
+		 * out before the fsync comes.
+		 */
+		pg_flush_data(dstfd, offset, nbytes);
+	}
 
 	if (close(dstfd))
 		ereport(ERROR,
@@ -186,4 +192,28 @@ copy_file(char *fromfile, char *tofile)
 	close(srcfd);
 
 	pfree(buffer);
+}
+
+
+
+/*
+ * fsync a file
+ */
+static void
+fsync_fname(char *fname)
+{
+	int	fd = BasicOpenFile(fname, 
+						   O_RDONLY | PG_BINARY,
+						   S_IRUSR | S_IWUSR);
+
+	if (fd < 0)
+		ereport(ERROR,
+				(errcode_for_file_access(),
+				 errmsg("could not open file \"%s\": %m", fname)));
+
+	if (pg_fsync(fd) != 0)
+		ereport(ERROR,
+				(errcode_for_file_access(),
+				 errmsg("could not fsync file \"%s\": %m", fname)));
+	close(fd);
 }

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/file/fd.c,v 1.153 2010/01/12 02:42:52 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/file/fd.c,v 1.154 2010/02/15 00:50:57 stark Exp $
  *
  * NOTES:
  *
@@ -318,6 +318,22 @@ pg_fdatasync(int fd)
 	else
 		return 0;
 }
+
+/*
+ * pg_flush_data --- advise OS that the data described won't be needed soon
+ *
+ * Not all platforms have posix_fadvise; treat as noop if not available.
+ */
+int
+pg_flush_data(int fd, off_t offset, off_t amount)
+{
+#if defined(USE_POSIX_FADVISE) && defined(POSIX_FADV_DONTNEED)
+	return posix_fadvise(fd, offset, amount, POSIX_FADV_DONTNEED);
+#else
+	return 0;
+#endif
+}
+
 
 /*
  * InitFileAccess --- initialize this module during backend startup
