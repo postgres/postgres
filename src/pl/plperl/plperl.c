@@ -1,7 +1,7 @@
 /**********************************************************************
  * plperl.c - perl as a procedural language for PostgreSQL
  *
- *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.166 2010/02/14 18:42:18 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.167 2010/02/15 22:23:25 alvherre Exp $
  *
  **********************************************************************/
 
@@ -413,13 +413,9 @@ select_perl_context(bool trusted)
 
 	eval_pv("PostgreSQL::InServer::SPI::bootstrap()", FALSE);
 	if (SvTRUE(ERRSV))
-	{
 		ereport(ERROR,
-			(errcode(ERRCODE_INTERNAL_ERROR),
-			errmsg("%s", strip_trailing_ws(SvPV_nolen(ERRSV))),
-			errdetail("While executing PostgreSQL::InServer::SPI::bootstrap")));
-	}
-
+				(errmsg("%s", strip_trailing_ws(SvPV_nolen(ERRSV))),
+				 errdetail("While executing PostgreSQL::InServer::SPI::bootstrap.")));
 }
 
 /*
@@ -553,15 +549,13 @@ plperl_init_interp(void)
 	if (perl_parse(plperl, plperl_init_shared_libs,
 			   nargs, embedding, NULL) != 0)
 		ereport(ERROR,
-			(errcode(ERRCODE_INTERNAL_ERROR),
-				errmsg("while parsing perl initialization"),
-				errdetail("%s", strip_trailing_ws(SvPV_nolen(ERRSV))) ));
+				(errmsg("%s", strip_trailing_ws(SvPV_nolen(ERRSV))),
+				 errcontext("While parsing perl initialization.")));
 
 	if (perl_run(plperl) != 0)
 		ereport(ERROR,
-			(errcode(ERRCODE_INTERNAL_ERROR),
-				errmsg("while running perl initialization"),
-				errdetail("%s", strip_trailing_ws(SvPV_nolen(ERRSV))) ));
+				(errmsg("%s", strip_trailing_ws(SvPV_nolen(ERRSV))),
+				 errcontext("While running perl initialization.")));
 
 #ifdef WIN32
 
@@ -691,24 +685,17 @@ plperl_trusted_init(void)
 		/* not safe, so disallow all trusted funcs */
 		eval_pv(PLC_SAFE_BAD, FALSE);
 		if (SvTRUE(ERRSV))
-		{
 			ereport(ERROR,
-				(errcode(ERRCODE_INTERNAL_ERROR),
-				 errmsg("while executing PLC_SAFE_BAD"),
-				 errdetail("%s", strip_trailing_ws(SvPV_nolen(ERRSV))) ));
-		}
-
+					(errmsg("%s", strip_trailing_ws(SvPV_nolen(ERRSV))),
+					 errcontext("While executing PLC_SAFE_BAD.")));
 	}
 	else
 	{
 		eval_pv(PLC_SAFE_OK, FALSE);
 		if (SvTRUE(ERRSV))
-		{
 			ereport(ERROR,
-				(errcode(ERRCODE_INTERNAL_ERROR),
-				 errmsg("while executing PLC_SAFE_OK"),
-				 errdetail("%s", strip_trailing_ws(SvPV_nolen(ERRSV))) ));
-		}
+					(errmsg("%s", strip_trailing_ws(SvPV_nolen(ERRSV))),
+					 errcontext("While executing PLC_SAFE_OK.")));
 
 		if (GetDatabaseEncoding() == PG_UTF8)
 		{
@@ -719,12 +706,9 @@ plperl_trusted_init(void)
 			 */
 			eval_pv("my $a=chr(0x100); return $a =~ /\\xa9/i", FALSE);
 			if (SvTRUE(ERRSV))
-			{
 				ereport(ERROR,
-					(errcode(ERRCODE_INTERNAL_ERROR),
-						errmsg("while executing utf8fix"),
-						errdetail("%s", strip_trailing_ws(SvPV_nolen(ERRSV))) ));
-			}
+						(errmsg("%s", strip_trailing_ws(SvPV_nolen(ERRSV))),
+						 errcontext("While executing utf8fix.")));
 		}
 
 		/* switch to the safe require opcode */
@@ -742,12 +726,9 @@ plperl_trusted_init(void)
 			SPAGAIN;
 
 			if (SvTRUE(ERRSV))
-			{
 				ereport(ERROR,
-					(errcode(ERRCODE_INTERNAL_ERROR),
-						errmsg("while executing plperl.on_plperl_init"),
-						errdetail("%s", strip_trailing_ws(SvPV_nolen(ERRSV))) ));
-			}
+						(errmsg("%s", strip_trailing_ws(SvPV_nolen(ERRSV))),
+						 errcontext("While executing plperl.on_plperl_init.")));
 		}
 
 	}
@@ -761,12 +742,9 @@ plperl_untrusted_init(void)
 	{
 		eval_pv(plperl_on_plperlu_init, FALSE);
 		if (SvTRUE(ERRSV))
-		{
 			ereport(ERROR,
-				(errcode(ERRCODE_INTERNAL_ERROR),
-					errmsg("while executing plperl.on_plperlu_init"),
-					errdetail("%s", strip_trailing_ws(SvPV_nolen(ERRSV))) ));
-		}
+					(errmsg("%s", strip_trailing_ws(SvPV_nolen(ERRSV))),
+					 errcontext("While executing plperl.on_plperlu_init.")));
 	}
 }
 
@@ -1299,18 +1277,14 @@ plperl_create_sub(plperl_proc_desc *prodesc, char *s, Oid fn_oid)
 	LEAVE;
 
 	if (SvTRUE(ERRSV))
-	{
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("%s", strip_trailing_ws(SvPV_nolen(ERRSV)))));
-	}
 
 	if (!subref)
-	{
 		ereport(ERROR,
-				(errcode(ERRCODE_INTERNAL_ERROR),
-				 errmsg("didn't get a GLOB from compiling %s via %s", prodesc->proname, compile_sub)));
-	}
+				(errmsg("didn't get a GLOB from compiling %s via %s",
+						prodesc->proname, compile_sub)));
 
 	prodesc->reference = newSVsv(subref);
 
