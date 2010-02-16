@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/protocol.sgml,v 1.78 2010/02/03 09:47:19 heikki Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/protocol.sgml,v 1.79 2010/02/16 20:15:14 momjian Exp $ -->
 
 <chapter id="protocol">
  <title>Frontend/Backend Protocol</title>
@@ -737,9 +737,9 @@
    <para>
     The unnamed prepared statement is likewise planned during Parse processing
     if the Parse message defines no parameters.  But if there are parameters,
-    query planning occurs during Bind processing instead.  This allows the
-    planner to make use of the actual values of the parameters provided in
-    the Bind message when planning the query.
+    query planning occurs every time Bind parameters are supplied.  This allows the
+    planner to make use of the actual values of the parameters provided by
+    each Bind message, rather than use generic estimates.
    </para>
 
    <note>

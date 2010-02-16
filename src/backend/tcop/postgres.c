@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.588 2010/02/13 01:32:19 sriggs Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.589 2010/02/16 20:15:14 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -1469,7 +1469,7 @@ exec_bind_message(StringInfo input_message)
 	}
 	else
 	{
-		/* special-case the unnamed statement */
+		/* Unnamed statements are re-prepared for every bind */
 		psrc = unnamed_stmt_psrc;
 		if (!psrc)
 			ereport(ERROR,
