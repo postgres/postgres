@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/do.sgml,v 1.4 2010/02/15 02:55:01 itagaki Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/do.sgml,v 1.5 2010/02/16 00:49:42 itagaki Exp $
 PostgreSQL documentation
 -->
 
@@ -25,7 +25,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-DO { [ LANGUAGE <replaceable class="PARAMETER">lang_name</replaceable> ] | <replaceable class="PARAMETER">code</replaceable> } ...
+DO [ LANGUAGE <replaceable class="PARAMETER">lang_name</replaceable> ] <replaceable class="PARAMETER">code</replaceable>
 </synopsis>
  </refsynopsisdiv>
 
