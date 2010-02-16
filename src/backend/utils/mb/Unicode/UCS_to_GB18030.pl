@@ -1,22 +1,18 @@
 #! /usr/bin/perl
 #
-# Copyright 2002 by Bill Huang
+# Copyright (c) 2007-2010, PostgreSQL Global Development Group
 #
-# $PostgreSQL: pgsql/src/backend/utils/mb/Unicode/UCS_to_GB18030.pl,v 1.5 2005/03/07 04:30:52 momjian Exp $
+# $Id: UCS_to_GB18030.pl,v 1.6 2010/02/16 20:35:07 momjian Exp $
 #
 # Generate UTF-8 <--> GB18030 code conversion tables from
-# map files provided by Unicode organization.
-# Unfortunately it is prohibited by the organization
-# to distribute the map files. So if you try to use this script,
-# you have to obtain ISO10646-GB18030.TXT from 
-# the organization's ftp site.
+# "ISO10646-GB18030.TXT"
 #
-# ISO10646-GB18030.TXT format:
-#		 GB18030 code in hex
-#		 UCS-2 code in hex
-#		 # and Unicode name (not used in this script)
+# file format:
+#		GB18030 hex code
+#		UCS-2 hex code
 
 require "ucs2utf.pl";
+
 
 # first generate UTF-8 --> GB18030 table
 
@@ -45,6 +41,7 @@ while( <FILE> ){
 }
 close( FILE );
 
+
 #
 # first, generate UTF8 --> GB18030 table
 #
@@ -65,6 +62,7 @@ for $index ( sort {$a <=> $b} keys( %array ) ){
 
 print FILE "};\n";
 close(FILE);
+
 
 #
 # then generate GB18030 --> UTF8 table
