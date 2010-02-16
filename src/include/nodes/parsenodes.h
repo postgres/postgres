@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.429 2010/02/12 17:33:20 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.430 2010/02/16 22:34:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2097,6 +2097,7 @@ typedef struct NotifyStmt
 {
 	NodeTag		type;
 	char	   *conditionname;	/* condition name to notify */
+	char	   *payload;		/* the payload string, or NULL if none */
 } NotifyStmt;
 
 /* ----------------------

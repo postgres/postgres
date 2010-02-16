@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.221 2010/02/07 20:48:09 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.222 2010/02/16 22:34:41 tgl Exp $ -->
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
  -->
@@ -166,11 +166,6 @@
      <row>
       <entry><link linkend="catalog-pg-largeobject-metadata"><structname>pg_largeobject_metadata</structname></link></entry>
       <entry>metadata for large objects</entry>
-     </row>
-
-     <row>
-      <entry><link linkend="catalog-pg-listener"><structname>pg_listener</structname></link></entry>
-      <entry>asynchronous notification support</entry>
      </row>
 
      <row>
@@ -3252,68 +3247,6 @@
    </tgroup>
   </table>
  </sect1>
-
- <sect1 id="catalog-pg-listener">
-  <title><structname>pg_listener</structname></title>
-
-  <indexterm zone="catalog-pg-listener">
-   <primary>pg_listener</primary>
-  </indexterm>
-
-  <para>
-   The catalog <structname>pg_listener</structname> supports the
-   <xref linkend="sql-listen" endterm="sql-listen-title"> and
-   <xref linkend="sql-notify" endterm="sql-notify-title">
-   commands.  A listener creates an entry in
-   <structname>pg_listener</structname> for each notification name
-   it is listening for.  A notifier scans <structname>pg_listener</structname>
-   and updates each matching entry to show that a notification has occurred.
-   The notifier also sends a signal (using the PID recorded in the table)
-   to awaken the listener from sleep.
-  </para>
-
-  <table>
-   <title><structname>pg_listener</> Columns</title>
-
-   <tgroup cols="3">
-    <thead>
-     <row>
-      <entry>Name</entry>
-      <entry>Type</entry>
-      <entry>Description</entry>
-     </row>
-    </thead>
-
-    <tbody>
-     <row>
-      <entry><structfield>relname</structfield></entry>
-      <entry><type>name</type></entry>
-      <entry>
-       Notify condition name.  (The name need not match any actual
-       relation in the database; the name <structfield>relname</> is historical.)
-      </entry>
-     </row>
-
-     <row>
-      <entry><structfield>listenerpid</structfield></entry>
-      <entry><type>int4</type></entry>
-      <entry>PID of the server process that created this entry</entry>
-     </row>
-
-     <row>
-      <entry><structfield>notification</structfield></entry>
-      <entry><type>int4</type></entry>
-      <entry>
-       Zero if no event is pending for this listener.  If an event is
-       pending, the PID of the server process that sent the notification
-      </entry>
-     </row>
-    </tbody>
-   </tgroup>
-  </table>
-
- </sect1>
-
 
  <sect1 id="catalog-pg-namespace">
   <title><structname>pg_namespace</structname></title>

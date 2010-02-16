@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.589 2010/02/16 20:15:14 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.590 2010/02/16 22:34:50 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -3779,7 +3779,8 @@ PostgresMain(int argc, char *argv[], const char *username)
 		 * collector, and to update the PS stats display.  We avoid doing
 		 * those every time through the message loop because it'd slow down
 		 * processing of batched messages, and because we don't want to report
-		 * uncommitted updates (that confuses autovacuum).
+		 * uncommitted updates (that confuses autovacuum).  The notification
+		 * processor wants a call too, if we are not in a transaction block.
 		 */
 		if (send_ready_for_query)
 		{
@@ -3795,6 +3796,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 			}
 			else
 			{
+				ProcessCompletedNotifies();
 				pgstat_report_stat(false);
 
 				set_ps_display("idle", false);

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.503 2010/02/16 21:18:01 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.504 2010/02/16 22:34:42 tgl Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -11530,6 +11530,12 @@ postgres=# select * from unnest2(array[[1,2],[3,4]]);
       </row>
 
       <row>
+       <entry><literal><function>pg_listening_channels</function>()</literal></entry>
+       <entry><type>setof text</type></entry>
+       <entry>channel names that the session is currently listening on</entry>
+      </row>
+
+      <row>
        <entry><literal><function>inet_client_addr</function>()</literal></entry>
        <entry><type>inet</type></entry>
        <entry>address of the remote connection</entry>
@@ -11673,6 +11679,16 @@ SET search_path TO <replaceable>schema</> <optional>, <replaceable>schema</>, ..
 </programlisting>
     </para>
    </note>
+
+   <indexterm>
+    <primary>pg_listening_channels</primary>
+   </indexterm>
+
+   <para>
+    <function>pg_listening_channels</function> returns a set of names of
+    channels that the current session is listening to.  See <xref
+    linkend="sql-listen" endterm="sql-listen-title"> for more information.
+   </para>
 
    <indexterm>
     <primary>inet_client_addr</primary>

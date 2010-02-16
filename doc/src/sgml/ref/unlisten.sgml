@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/unlisten.sgml,v 1.30 2008/11/14 10:22:47 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/unlisten.sgml,v 1.31 2010/02/16 22:34:43 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -21,7 +21,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-UNLISTEN { <replaceable class="PARAMETER">name</replaceable> | * }
+UNLISTEN { <replaceable class="PARAMETER">channel</replaceable> | * }
 </synopsis>
  </refsynopsisdiv>
 
@@ -33,8 +33,8 @@ UNLISTEN { <replaceable class="PARAMETER">name</replaceable> | * }
    registration for <command>NOTIFY</command> events.
    <command>UNLISTEN</command> cancels any existing registration of
    the current <productname>PostgreSQL</productname> session as a
-   listener on the notification <replaceable
-   class="PARAMETER">name</replaceable>.  The special wildcard
+   listener on the notification channel named <replaceable
+   class="PARAMETER">channel</replaceable>.  The special wildcard
    <literal>*</literal> cancels all listener registrations for the
    current session.
   </para>
@@ -52,10 +52,10 @@ UNLISTEN { <replaceable class="PARAMETER">name</replaceable> | * }
 
   <variablelist>
    <varlistentry>
-    <term><replaceable class="PARAMETER">name</replaceable></term>
+    <term><replaceable class="PARAMETER">channel</replaceable></term>
     <listitem>
      <para>
-      Name of a notification (any identifier).
+      Name of a notification channel (any identifier).
      </para>
     </listitem>
    </varlistentry>
@@ -83,6 +83,11 @@ UNLISTEN { <replaceable class="PARAMETER">name</replaceable> | * }
    At the end of each session, <command>UNLISTEN *</command> is
    automatically executed.
   </para>
+
+  <para>
+   A transaction that has executed <command>UNLISTEN</command> cannot be
+   prepared for two-phase commit.
+  </para>
  </refsect1>
 
  <refsect1>
@@ -100,7 +105,7 @@ Asynchronous notification "virtual" received from server process with PID 8448.
 
   <para>
    Once <command>UNLISTEN</> has been executed, further <command>NOTIFY</>
-   commands will be ignored:
+   messages will be ignored:
 
 <programlisting>
 UNLISTEN virtual;

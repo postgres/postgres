@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/listen.sgml,v 1.23 2008/11/14 10:22:47 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/listen.sgml,v 1.24 2010/02/16 22:34:43 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -21,7 +21,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-LISTEN <replaceable class="PARAMETER">name</replaceable>
+LISTEN <replaceable class="PARAMETER">channel</replaceable>
 </synopsis>
  </refsynopsisdiv>
 
@@ -30,24 +30,23 @@ LISTEN <replaceable class="PARAMETER">name</replaceable>
 
   <para>
    <command>LISTEN</command> registers the current session as a
-   listener on the notification condition <replaceable
-   class="PARAMETER">name</replaceable>.
+   listener on the notification channel named <replaceable
+   class="PARAMETER">channel</replaceable>.
    If the current session is already registered as a listener for
-   this notification condition, nothing is done.
+   this notification channel, nothing is done.
   </para>
 
   <para>
    Whenever the command <command>NOTIFY <replaceable
-   class="PARAMETER">name</replaceable></command> is invoked, either
+   class="PARAMETER">channel</replaceable></command> is invoked, either
    by this session or another one connected to the same database, all
-   the sessions currently listening on that notification condition are
+   the sessions currently listening on that notification channel are
    notified, and each will in turn notify its connected client
-   application.  See the discussion of <command>NOTIFY</command> for
-   more information.
+   application.
   </para>
 
   <para>
-   A session can be unregistered for a given notify condition with the
+   A session can be unregistered for a given notification channel with the
    <command>UNLISTEN</command> command.  A session's listen
    registrations are automatically cleared when the session ends.
   </para>
@@ -78,14 +77,29 @@ LISTEN <replaceable class="PARAMETER">name</replaceable>
 
   <variablelist>
    <varlistentry>
-    <term><replaceable class="PARAMETER">name</replaceable></term>
+    <term><replaceable class="PARAMETER">channel</replaceable></term>
     <listitem>
      <para>
-      Name of a notify condition (any identifier).
+      Name of a notification channel (any identifier).
      </para>
     </listitem>
    </varlistentry>
   </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Notes</title>
+
+  <para>
+   <command>LISTEN</command> takes effect at transaction commit.
+   If <command>LISTEN</command> or <command>UNLISTEN</command> is executed
+   within a transaction that later rolls back, the set of notification
+   channels being listened to is unchanged.
+  </para>
+  <para>
+   A transaction that has executed <command>LISTEN</command> cannot be
+   prepared for two-phase commit.
+  </para>
  </refsect1>
 
  <refsect1>

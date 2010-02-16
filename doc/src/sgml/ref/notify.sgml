@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/notify.sgml,v 1.31 2008/11/14 10:22:47 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/notify.sgml,v 1.32 2010/02/16 22:34:43 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -21,7 +21,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-NOTIFY <replaceable class="PARAMETER">name</replaceable>        
+NOTIFY <replaceable class="PARAMETER">channel</replaceable> [ , <replaceable class="PARAMETER">payload</replaceable> ]
 </synopsis>
  </refsynopsisdiv>
 
@@ -29,35 +29,39 @@ NOTIFY <replaceable class="PARAMETER">name</replaceable>
   <title>Description</title>
 
   <para>
-   The <command>NOTIFY</command> command sends a notification event to each
-   client application that has previously executed
-   <command>LISTEN <replaceable class="parameter">name</replaceable></command>
-   for the specified notification name in the current database.
+   The <command>NOTIFY</command> command sends a notification event together
+   with an optional <quote>payload</> string to each client application that
+   has previously executed
+   <command>LISTEN <replaceable class="parameter">channel</></command>
+   for the specified channel name in the current database.
   </para>
 
   <para>
-   <command>NOTIFY</command> provides a simple form of signal or
+   <command>NOTIFY</command> provides a simple
    interprocess communication mechanism for a collection of processes
    accessing the same <productname>PostgreSQL</productname> database.
-   Higher-level mechanisms can be built by using tables in the database to
-   pass additional data (beyond a mere notification name) from notifier to
-   listener(s).
+   A payload string can be sent along with the notification, and
+   higher-level mechanisms for passing structured data can be built by using
+   tables in the database to pass additional data from notifier to listener(s).
   </para>
 
   <para>
-   The information passed to the client for a notification event includes the notification
-   name and the notifying session's server process <acronym>PID</>.  It is up to the
-   database designer to define the notification names that will be used in a given
-   database and what each one means.
+   The information passed to the client for a notification event includes the
+   notification channel
+   name, the notifying session's server process <acronym>PID</>, and the
+   payload string, which is an empty string if it has not been specified.
   </para>
 
   <para>
-   Commonly, the notification name is the same as the name of some table in
+   It is up to the database designer to define the channel names that will
+   be used in a given database and what each one means.
+   Commonly, the channel name is the same as the name of some table in
    the database, and the notify event essentially means, <quote>I changed this table,
    take a look at it to see what's new</quote>.  But no such association is enforced by
    the <command>NOTIFY</command> and <command>LISTEN</command> commands.  For
-   example, a database designer could use several different notification names
-   to signal different sorts of changes to a single table.
+   example, a database designer could use several different channel names
+   to signal different sorts of changes to a single table.  Alternatively,
+   the payload string could be used to differentiate various cases.
   </para>
 
   <para>
@@ -89,19 +93,22 @@ NOTIFY <replaceable class="PARAMETER">name</replaceable>
   </para>
 
   <para>
-   <command>NOTIFY</command> behaves like Unix signals in one important
-   respect: if the same notification name is signaled multiple times in quick
-   succession, recipients might get only one notification event for several executions
-   of <command>NOTIFY</command>.  So it is a bad idea to depend on the number
-   of notifications received.  Instead, use <command>NOTIFY</command> to wake up
-   applications that need to pay attention to something, and use a database
-   object (such as a sequence) to keep track of what happened or how many times
-   it happened.
+   If the same channel name is signaled multiple times from the same
+   transaction with identical payload strings, the
+   database server can decide to deliver a single notification only.
+   On the other hand, notifications with distinct payload strings will
+   always be delivered as distinct notifications. Similarly, notifications from
+   different transactions will never get folded into one notification.
+   Except for dropping later instances of duplicate notifications,
+   <command>NOTIFY</command> guarantees that notifications from the same
+   transaction get delivered in the order they were sent.  It is also
+   guaranteed that messages from different transactions are delivered in
+   the order in which the transactions committed.
   </para>
 
   <para>
    It is common for a client that executes <command>NOTIFY</command>
-   to be listening on the same notification name itself.  In that case
+   to be listening on the same notification channel itself.  In that case
    it will get back a notification event, just like all the other
    listening sessions.  Depending on the application logic, this could
    result in useless work, for example, reading a database table to
@@ -111,12 +118,7 @@ NOTIFY <replaceable class="PARAMETER">name</replaceable>
    notification event message) is the same as one's own session's
    <acronym>PID</> (available from <application>libpq</>).  When they
    are the same, the notification event is one's own work bouncing
-   back, and can be ignored.  (Despite what was said in the preceding
-   paragraph, this is a safe technique.
-   <productname>PostgreSQL</productname> keeps self-notifications
-   separate from notifications arriving from other sessions, so you
-   cannot miss an outside notification by ignoring your own
-   notifications.)
+   back, and can be ignored.
   </para>
  </refsect1>
 
@@ -125,14 +127,59 @@ NOTIFY <replaceable class="PARAMETER">name</replaceable>
 
   <variablelist>
    <varlistentry>
-    <term><replaceable class="PARAMETER">name</replaceable></term>
+    <term><replaceable class="PARAMETER">channel</replaceable></term>
     <listitem>
      <para>
-      Name of the notification to be signaled (any identifier).
+      Name of the notification channel to be signaled (any identifier).
+     </para>
+    </listitem>
+   </varlistentry>
+   <varlistentry>
+    <term><replaceable class="PARAMETER">payload</replaceable></term>
+    <listitem>
+     <para>
+      The <quote>payload</> string to be communicated along with the
+      notification. This string must be shorter than 8000 bytes, and
+      is treated as text.
+      (If binary data or large amounts of information need to be communicated,
+      it's best to put it in a database table and send the key of the record.)
      </para>
     </listitem>
    </varlistentry>
   </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Notes</title>
+
+  <indexterm>
+   <primary>pg_notify</primary>
+  </indexterm>
+
+  <para>
+   To send a notification you can also use the function
+   <literal><function>pg_notify</function>(<type>text</type>,
+   <type>text</type>)</literal>. The function takes the channel name as the
+   first argument and the payload as the second. The function is much easier
+   to use than the <command>NOTIFY</command> command if you need to work with
+   non-constant channel names and payloads.
+  </para>
+  <para>
+   There is a queue that holds notifications that have been sent but not
+   yet processed by all listening sessions.  If this queue becomes full,
+   transactions calling <command>NOTIFY</command> will fail at commit.
+   The queue is quite large (8GB in a standard installation) and should be
+   sufficiently sized for almost every use case. However, no cleanup can take
+   place if a session executes <command>LISTEN</command> and then enters a
+   transaction for a very long time. Once the queue is half full you will see
+   warnings in the log file pointing you to the session that is preventing
+   cleanup. In this case you should make sure that this session ends its
+   current transaction so that cleanup can proceed.
+  </para>
+  <para>
+   A transaction that has executed <command>NOTIFY</command> cannot be
+   prepared for two-phase commit.
+  </para>
  </refsect1>
 
  <refsect1>
@@ -146,6 +193,12 @@ NOTIFY <replaceable class="PARAMETER">name</replaceable>
 LISTEN virtual;
 NOTIFY virtual;
 Asynchronous notification "virtual" received from server process with PID 8448.
+NOTIFY virtual, 'This is the payload';
+Asynchronous notification "virtual" with payload "This is the payload" received from server process with PID 8448.
+
+LISTEN foo;
+SELECT pg_notify('fo' || 'o', 'pay' || 'load');
+Asynchronous notification "foo" with payload "payload" received from server process with PID 14728.
 </programlisting>
   </para>
  </refsect1>

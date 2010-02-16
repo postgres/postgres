@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/storage.sgml,v 1.31 2010/02/07 20:48:09 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/storage.sgml,v 1.32 2010/02/16 22:34:43 tgl Exp $ -->
 
 <chapter id="storage">
 
@@ -75,6 +75,11 @@ Item
  <entry><filename>pg_multixact</></entry>
  <entry>Subdirectory containing multitransaction status data
   (used for shared row locks)</entry>
+</row>
+
+<row>
+ <entry><filename>pg_notify</></entry>
+ <entry>Subdirectory containing LISTEN/NOTIFY status data</entry>
 </row>
 
 <row>

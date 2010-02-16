@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/common.c,v 1.143 2010/01/02 16:57:59 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/common.c,v 1.144 2010/02/16 22:34:50 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"
@@ -555,8 +555,13 @@ PrintNotifications(void)
 
 	while ((notify = PQnotifies(pset.db)))
 	{
-		fprintf(pset.queryFout, _("Asynchronous notification \"%s\" received from server process with PID %d.\n"),
-				notify->relname, notify->be_pid);
+		/* for backward compatibility, only show payload if nonempty */
+		if (notify->extra[0])
+			fprintf(pset.queryFout, _("Asynchronous notification \"%s\" with payload \"%s\" received from server process with PID %d.\n"),
+					notify->relname, notify->extra, notify->be_pid);
+		else
+			fprintf(pset.queryFout, _("Asynchronous notification \"%s\" received from server process with PID %d.\n"),
+					notify->relname, notify->be_pid);
 		fflush(pset.queryFout);
 		PQfreemem(notify);
 	}

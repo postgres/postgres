@@ -165,7 +165,7 @@ CREATE TEMP TABLE tmp_foo (data text) ON COMMIT DELETE ROWS;
 CREATE ROLE temp_reset_user;
 SET SESSION AUTHORIZATION temp_reset_user;
 -- look changes
-SELECT relname FROM pg_listener;
+SELECT pg_listening_channels();
 SELECT name FROM pg_prepared_statements;
 SELECT name FROM pg_cursors;
 SHOW vacuum_cost_delay;
@@ -174,7 +174,7 @@ SELECT current_user = 'temp_reset_user';
 -- discard everything
 DISCARD ALL;
 -- look again
-SELECT relname FROM pg_listener;
+SELECT pg_listening_channels();
 SELECT name FROM pg_prepared_statements;
 SELECT name FROM pg_cursors;
 SHOW vacuum_cost_delay;

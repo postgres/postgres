@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.298 2010/02/16 20:58:13 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.299 2010/02/16 22:34:42 tgl Exp $ -->
 
 <chapter id="libpq">
  <title><application>libpq</application> - C Library</title>
@@ -307,28 +307,28 @@
               <entry>Description</entry>
              </row>
             </thead>
-        
+
             <tbody>
-        
+
              <row>
               <entry><literal>disable</></entry>
               <entry>only try a non-<acronym>SSL</> connection</entry>
              </row>
-        
+
              <row>
               <entry><literal>allow</></entry>
               <entry>first try a non-<acronym>SSL</>
                connection;  if that fails, try an <acronym>SSL</>
                connection</entry>
              </row>
-        
+
              <row>
               <entry><literal>prefer</> (default)</entry>
               <entry>first try an <acronym>SSL</> connection;  if
               that fails, try a non-<acronym>SSL</>
               connection</entry>
              </row>
-        
+
              <row>
               <entry><literal>require</></entry>
               <entry>only try an <acronym>SSL</> connection</entry>
@@ -481,7 +481,7 @@
       </para>
 
       <para>
-        If <literal>expand_dbname</literal> is non-zero and 
+        If <literal>expand_dbname</literal> is non-zero and
         <parameter>dbname</parameter> contains an <symbol>=</symbol> sign, it
         is taken as a <parameter>conninfo</parameter> string in exactly the same way as
         if it had been passed to <function>PQconnectdb</function>(see below). Previously
@@ -4111,50 +4111,48 @@ typedef struct {
    <productname>PostgreSQL</productname> offers asynchronous notification
    via the <command>LISTEN</command> and <command>NOTIFY</command>
    commands.  A client session registers its interest in a particular
-   notification condition with the <command>LISTEN</command> command (and
+   notification channel with the <command>LISTEN</command> command (and
    can stop listening with the <command>UNLISTEN</command> command).  All
-   sessions listening on a particular condition will be notified
+   sessions listening on a particular channel will be notified
    asynchronously when a <command>NOTIFY</command> command with that
-   condition name is executed by any session.  No additional information
-   is passed from the notifier to the listener.  Thus, typically, any
-   actual data that needs to be communicated is transferred through a
-   database table.  Commonly, the condition name is the same as the
-   associated table, but it is not necessary for there to be any associated
-   table.
+   channel name is executed by any session. A <quote>payload</> string can
+   be passed to communicate additional data to the listeners.
   </para>
 
   <para>
    <application>libpq</application> applications submit
-   <command>LISTEN</command> and <command>UNLISTEN</command> commands as
+   <command>LISTEN</command>, <command>UNLISTEN</command>,
+   and <command>NOTIFY</command> commands as
    ordinary SQL commands.  The arrival of <command>NOTIFY</command>
    messages can subsequently be detected by calling
    <function>PQnotifies</function>.<indexterm><primary>PQnotifies</></>
   </para>
 
   <para>
-   The function <function>PQnotifies</function>
-             returns  the next notification from a list of unhandled
-             notification messages received from the server.  It returns a null pointer if
-             there are no pending notifications.  Once a notification is
-             returned from <function>PQnotifies</>, it is considered handled and will be
-             removed from the list of notifications.
+   The function <function>PQnotifies</function> returns the next notification
+   from a list of unhandled notification messages received from the server.
+   It returns a null pointer if there are no pending notifications.  Once a
+   notification is returned from <function>PQnotifies</>, it is considered
+   handled and will be removed from the list of notifications.
+
    <synopsis>
    PGnotify *PQnotifies(PGconn *conn);
 
    typedef struct pgNotify {
-       char *relname;              /* notification condition name */
+       char *relname;              /* notification channel name */
        int  be_pid;                /* process ID of notifying server process */
-       char *extra;                /* notification parameter */
+       char *extra;                /* notification payload string */
    } PGnotify;
    </synopsis>
+
    After processing a <structname>PGnotify</structname> object returned
    by <function>PQnotifies</function>, be sure to free it with
    <function>PQfreemem</function>.  It is sufficient to free the
    <structname>PGnotify</structname> pointer; the
    <structfield>relname</structfield> and <structfield>extra</structfield>
-   fields do not represent separate allocations.  (At present, the
-   <structfield>extra</structfield> field is unused and will always point
-   to an empty string.)
+   fields do not represent separate allocations.  (The names of these fields
+   are historical; in particular, channel names need not have anything to
+   do with relation names.)
   </para>
 
   <para>

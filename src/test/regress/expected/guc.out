@@ -532,9 +532,9 @@ CREATE TEMP TABLE tmp_foo (data text) ON COMMIT DELETE ROWS;
 CREATE ROLE temp_reset_user;
 SET SESSION AUTHORIZATION temp_reset_user;
 -- look changes
-SELECT relname FROM pg_listener;
-  relname  
------------
+SELECT pg_listening_channels();
+ pg_listening_channels 
+-----------------------
  foo_event
 (1 row)
 
@@ -571,9 +571,9 @@ SELECT current_user = 'temp_reset_user';
 -- discard everything
 DISCARD ALL;
 -- look again
-SELECT relname FROM pg_listener;
- relname 
----------
+SELECT pg_listening_channels();
+ pg_listening_channels 
+-----------------------
 (0 rows)
 
 SELECT name FROM pg_prepared_statements;

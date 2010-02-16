@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.708 2010/02/12 17:33:20 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.709 2010/02/16 22:34:49 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -400,7 +400,7 @@ static TypeName *TableFuncTypeName(List *columns);
 
 %type <ival>	Iconst SignedIconst
 %type <list>	Iconst_list
-%type <str>		Sconst comment_text
+%type <str>		Sconst comment_text notify_payload
 %type <str>		RoleId opt_granted_by opt_boolean ColId_or_Sconst
 %type <list>	var_list
 %type <str>		ColId ColLabel var_name type_function_name param_name
@@ -6123,12 +6123,18 @@ DropRuleStmt:
  *
  *****************************************************************************/
 
-NotifyStmt: NOTIFY ColId
+NotifyStmt: NOTIFY ColId notify_payload
 				{
 					NotifyStmt *n = makeNode(NotifyStmt);
 					n->conditionname = $2;
+					n->payload = $3;
 					$$ = (Node *)n;
 				}
+		;
+
+notify_payload:
+			',' Sconst							{ $$ = $2; }
+			| /*EMPTY*/							{ $$ = NULL; }
 		;
 
 ListenStmt: LISTEN ColId

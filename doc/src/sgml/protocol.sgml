@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/protocol.sgml,v 1.80 2010/02/16 20:58:14 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/protocol.sgml,v 1.81 2010/02/16 22:34:43 tgl Exp $ -->
 
 <chapter id="protocol">
  <title>Frontend/Backend Protocol</title>
@@ -354,7 +354,7 @@
        <para>
         This message contains the response data from the previous step
         of GSSAPI or SSPI negotiation (AuthenticationGSS, AuthenticationSSPI
-        or a previous AuthenticationGSSContinue). If the GSSAPI 
+        or a previous AuthenticationGSSContinue). If the GSSAPI
         or SSPI data in this message
         indicates more data is needed to complete the authentication,
         the frontend must send that data as another PasswordMessage. If
@@ -992,7 +992,7 @@
 
    <para>
     In the event of a backend-detected error during copy-in mode (including
-    receipt of a CopyFail message), the backend will issue an ErrorResponse 
+    receipt of a CopyFail message), the backend will issue an ErrorResponse
     message.  If the <command>COPY</> command was issued via an extended-query
     message, the backend will now discard frontend messages until a Sync
     message is received, then it will issue ReadyForQuery and return to normal
@@ -1117,7 +1117,7 @@
     backend will send a NotificationResponse message (not to be
     confused with NoticeResponse!)  whenever a
     <command>NOTIFY</command> command is executed for the same
-    notification name.
+    channel name.
    </para>
 
    <note>
@@ -1340,7 +1340,7 @@ This section describes the base data types used in messages.
                 value that will appear, otherwise the value is variable.
                 Eg. String, String("user").
 </para>
-                
+
 <note>
 <para>
 <emphasis>There is no predefined limit</emphasis> on the length of a string
@@ -1951,7 +1951,7 @@ Bind (F)
                 (denoted <replaceable>R</> below).
                 This can be zero to indicate that there are no result columns
                 or that the result columns should all use the default format
-                (text); 
+                (text);
                 or one, in which case the specified format code is applied
                 to all result columns (if any); or it can equal the actual
                 number of result columns of the query.
@@ -2500,7 +2500,7 @@ CopyOutResponse (B)
                 separated by separator characters, etc). 1 indicates
                 the overall copy format is binary (similar to DataRow
                 format). See <xref linkend="sql-copy"
-                endterm="sql-copy-title"> for more information. 
+                endterm="sql-copy-title"> for more information.
 </para>
 </listitem>
 </varlistentry>
@@ -3187,7 +3187,7 @@ NotificationResponse (B)
 </term>
 <listitem>
 <para>
-                The name of the condition that the notify has been raised on.
+                The name of the channel that the notify has been raised on.
 </para>
 </listitem>
 </varlistentry>
@@ -3197,9 +3197,7 @@ NotificationResponse (B)
 </term>
 <listitem>
 <para>
-                Additional information passed from the notifying process.
-                (Currently, this feature is unimplemented so the field
-                is always an empty string.)
+                The <quote>payload</> string passed from the notifying process.
 </para>
 </listitem>
 </varlistentry>
@@ -4353,7 +4351,7 @@ the backend.
 
 <para>
 The NotificationResponse ('<literal>A</>') message has an additional string
-field, which is presently empty but might someday carry additional data passed
+field, which can carry a <quote>payload</> string passed
 from the <command>NOTIFY</command> event sender.
 </para>
 
@@ -4363,6 +4361,5 @@ string parameter; this has been removed.
 </para>
 
 </sect1>
-
 
 </chapter>

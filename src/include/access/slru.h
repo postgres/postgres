@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/slru.h,v 1.25 2010/01/02 16:58:00 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/access/slru.h,v 1.26 2010/02/16 22:34:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,6 +16,25 @@
 #include "access/xlogdefs.h"
 #include "storage/lwlock.h"
 
+
+/*
+ * Define SLRU segment size.  A page is the same BLCKSZ as is used everywhere
+ * else in Postgres.  The segment size can be chosen somewhat arbitrarily;
+ * we make it 32 pages by default, or 256Kb, i.e. 1M transactions for CLOG
+ * or 64K transactions for SUBTRANS.
+ *
+ * Note: because TransactionIds are 32 bits and wrap around at 0xFFFFFFFF,
+ * page numbering also wraps around at 0xFFFFFFFF/xxxx_XACTS_PER_PAGE (where
+ * xxxx is CLOG or SUBTRANS, respectively), and segment numbering at
+ * 0xFFFFFFFF/xxxx_XACTS_PER_PAGE/SLRU_PAGES_PER_SEGMENT.  We need
+ * take no explicit notice of that fact in slru.c, except when comparing
+ * segment and page numbers in SimpleLruTruncate (see PagePrecedes()).
+ *
+ * Note: slru.c currently assumes that segment file names will be four hex
+ * digits.  This sets a lower bound on the segment size (64K transactions
+ * for 32-bit TransactionIds).
+ */
+#define SLRU_PAGES_PER_SEGMENT	32
 
 /*
  * Page status codes.  Note that these do not include the "dirty" bit.
@@ -55,8 +74,8 @@ typedef struct SlruSharedData
 	/*
 	 * Optional array of WAL flush LSNs associated with entries in the SLRU
 	 * pages.  If not zero/NULL, we must flush WAL before writing pages (true
-	 * for pg_clog, false for multixact and pg_subtrans).  group_lsn[] has
-	 * lsn_groups_per_page entries per buffer slot, each containing the
+	 * for pg_clog, false for multixact, pg_subtrans, pg_notify).  group_lsn[]
+	 * has lsn_groups_per_page entries per buffer slot, each containing the
 	 * highest LSN known for a contiguous group of SLRU entries on that slot's
 	 * page.
 	 */
@@ -94,7 +113,7 @@ typedef struct SlruCtlData
 
 	/*
 	 * This flag tells whether to fsync writes (true for pg_clog and multixact
-	 * stuff, false for pg_subtrans).
+	 * stuff, false for pg_subtrans and pg_notify).
 	 */
 	bool		do_fsync;
 
