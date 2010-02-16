@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.250 2010/02/05 23:37:43 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.251 2010/02/16 21:35:51 momjian Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -2833,26 +2833,6 @@ local0.*    /var/log/postgresql
       </listitem>
      </varlistentry>
 
-     <varlistentry id="guc-log-error-verbosity" xreflabel="log_error_verbosity">
-      <term><varname>log_error_verbosity</varname> (<type>enum</type>)</term>
-      <indexterm>
-       <primary><varname>log_error_verbosity</> configuration parameter</primary>
-      </indexterm>
-      <listitem>
-       <para>
-        Controls the amount of detail written in the server log for each
-        message that is logged.  Valid values are <literal>TERSE</>,
-        <literal>DEFAULT</>, and <literal>VERBOSE</>, each adding more
-        fields to displayed messages.  <literal>VERBOSE</> logging
-        output includes the <link
-        linkend="errcodes-appendix">SQLSTATE</> error
-        code and the source code file name, function name,
-        and line number that generated the error.
-        Only superusers can change this setting.
-       </para>
-      </listitem>
-     </varlistentry>
-
      <varlistentry id="guc-log-min-error-statement" xreflabel="log_min_error_statement">
       <term><varname>log_min_error_statement</varname> (<type>enum</type>)</term>
       <indexterm>
@@ -3169,6 +3149,28 @@ local0.*    /var/log/postgresql
          gathering statistics in high-load installations.
         </para>
        </note>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-log-error-verbosity" xreflabel="log_error_verbosity">
+      <term><varname>log_error_verbosity</varname> (<type>enum</type>)</term>
+      <indexterm>
+       <primary><varname>log_error_verbosity</> configuration parameter</primary>
+      </indexterm>
+      <listitem>
+       <para>
+        Controls the amount of detail written in the server log for each
+        message that is logged.  Valid values are <literal>TERSE</>,
+        <literal>DEFAULT</>, and <literal>VERBOSE</>, each adding more
+        fields to displayed messages.  <literal>TERSE</> excludes
+        the logging of <literal>DETAIL</>, <literal>HINT</>,
+        <literal>QUERY</>, and <literal>CONTEXT</> error information.
+        <literal>VERBOSE</> output includes the <link
+        linkend="errcodes-appendix">SQLSTATE</> error
+        code and the source code file name, function name,
+        and line number that generated the error.
+        Only superusers can change this setting.
+       </para>
       </listitem>
      </varlistentry>
 

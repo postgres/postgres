@@ -311,8 +311,6 @@
 					#   fatal
 					#   panic
 
-#log_error_verbosity = default		# terse, default, or verbose messages
-
 #log_min_error_statement = error	# values in order of decreasing detail:
 				 	#   debug5
 					#   debug4
@@ -343,6 +341,7 @@
 #log_connections = off
 #log_disconnections = off
 #log_duration = off
+#log_error_verbosity = default		# terse, default, or verbose messages
 #log_hostname = off
 #log_line_prefix = ''			# special values:
 					#   %a = application name
