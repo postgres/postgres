@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.297 2010/02/05 03:09:04 joe Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.298 2010/02/16 20:58:13 momjian Exp $ -->
 
 <chapter id="libpq">
  <title><application>libpq</application> - C Library</title>
@@ -2869,12 +2869,11 @@ typedef struct {
   </sect2>
 
   <sect2 id="libpq-exec-nonselect">
-   <title>Retrieving Result Information for Other Commands</title>
+   <title>Retrieving Other Result Information</title>
 
    <para>
-    These functions are used to extract information from
-    <structname>PGresult</structname> objects that are not
-    <command>SELECT</> results.
+    These functions are used to extract other information from
+    <structname>PGresult</structname> objects.
    </para>
 
    <variablelist>
@@ -2925,12 +2924,12 @@ typedef struct {
        This function returns a string containing the number of rows
        affected by the <acronym>SQL</> statement that generated the
        <structname>PGresult</>. This function can only be used following
-       the execution of an <command>INSERT</>, <command>UPDATE</>,
-       <command>DELETE</>, <command>MOVE</>, <command>FETCH</>, or
-       <command>COPY</> statement, or an <command>EXECUTE</> of a
-       prepared query that contains an <command>INSERT</>,
-       <command>UPDATE</>, or <command>DELETE</> statement.  If the
-       command that generated the <structname>PGresult</> was anything
+       the execution of a <command>SELECT</>, <command>CREATE TABLE AS</>,
+       <command>INSERT</>, <command>UPDATE</>, <command>DELETE</>,
+       <command>MOVE</>, <command>FETCH</>, or <command>COPY</> statement,
+       or an <command>EXECUTE</> of a prepared query that contains an
+       <command>INSERT</>, <command>UPDATE</>, or <command>DELETE</> statement.
+       If the command that generated the <structname>PGresult</> was anything
        else, <function>PQcmdTuples</> returns an empty string. The caller
        should not free the return value directly. It will be freed when
        the associated <structname>PGresult</> handle is passed to

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/protocol.sgml,v 1.79 2010/02/16 20:15:14 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/protocol.sgml,v 1.80 2010/02/16 20:58:14 momjian Exp $ -->
 
 <chapter id="protocol">
  <title>Frontend/Backend Protocol</title>
@@ -2219,6 +2219,12 @@ CommandComplete (B)
         For an <command>UPDATE</command> command, the tag is
         <literal>UPDATE <replaceable>rows</replaceable></literal> where
         <replaceable>rows</replaceable> is the number of rows updated.
+       </para>
+
+       <para>
+        For a <command>SELECT</command> or <command>CREATE TABLE AS</command>
+        command, the tag is <literal>SELECT <replaceable>rows</replaceable></literal>
+        where <replaceable>rows</replaceable> is the number of rows retrieved.
        </para>
 
        <para>

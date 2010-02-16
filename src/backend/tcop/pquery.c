@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/pquery.c,v 1.135 2010/02/13 22:45:41 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/pquery.c,v 1.136 2010/02/16 20:58:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -205,7 +205,8 @@ ProcessQuery(PlannedStmt *plan,
 		switch (queryDesc->operation)
 		{
 			case CMD_SELECT:
-				strcpy(completionTag, "SELECT");
+				snprintf(completionTag, COMPLETION_TAG_BUFSIZE,
+						 "SELECT %u", queryDesc->estate->es_processed);
 				break;
 			case CMD_INSERT:
 				if (queryDesc->estate->es_processed == 1)
@@ -714,6 +715,7 @@ PortalRun(Portal portal, long count, bool isTopLevel,
 		  char *completionTag)
 {
 	bool		result;
+	uint32		nprocessed;
 	ResourceOwner saveTopTransactionResourceOwner;
 	MemoryContext saveTopTransactionContext;
 	Portal		saveActivePortal;
@@ -776,39 +778,35 @@ PortalRun(Portal portal, long count, bool isTopLevel,
 		switch (portal->strategy)
 		{
 			case PORTAL_ONE_SELECT:
-				(void) PortalRunSelect(portal, true, count, dest);
-
-				/* we know the query is supposed to set the tag */
-				if (completionTag && portal->commandTag)
-					strcpy(completionTag, portal->commandTag);
-
-				/* Mark portal not active */
-				portal->status = PORTAL_READY;
-
-				/*
-				 * Since it's a forward fetch, say DONE iff atEnd is now true.
-				 */
-				result = portal->atEnd;
-				break;
-
 			case PORTAL_ONE_RETURNING:
 			case PORTAL_UTIL_SELECT:
 
 				/*
 				 * If we have not yet run the command, do so, storing its
-				 * results in the portal's tuplestore.
+				 * results in the portal's tuplestore. Do this only for the
+				 * PORTAL_ONE_RETURNING and PORTAL_UTIL_SELECT cases.
 				 */
-				if (!portal->holdStore)
+				if (portal->strategy != PORTAL_ONE_SELECT && !portal->holdStore)
 					FillPortalStore(portal, isTopLevel);
 
 				/*
 				 * Now fetch desired portion of results.
 				 */
-				(void) PortalRunSelect(portal, true, count, dest);
+				nprocessed = PortalRunSelect(portal, true, count, dest);
 
-				/* we know the query is supposed to set the tag */
+				/*
+				 * If the portal result contains a command tag and the caller
+				 * gave us a pointer to store it, copy it. Patch the "SELECT"
+				 * tag to also provide the rowcount.
+				 */
 				if (completionTag && portal->commandTag)
-					strcpy(completionTag, portal->commandTag);
+				{
+					if (strcmp(portal->commandTag, "SELECT") == 0)
+						snprintf(completionTag, COMPLETION_TAG_BUFSIZE,
+										"SELECT %u", nprocessed);
+					else
+						strcpy(completionTag, portal->commandTag);
+				}
 
 				/* Mark portal not active */
 				portal->status = PORTAL_READY;
@@ -1331,7 +1329,9 @@ PortalRunMulti(Portal portal, bool isTopLevel,
 	{
 		if (portal->commandTag)
 			strcpy(completionTag, portal->commandTag);
-		if (strcmp(completionTag, "INSERT") == 0)
+		if (strcmp(completionTag, "SELECT") == 0)
+			sprintf(completionTag, "SELECT 0 0");
+		else if (strcmp(completionTag, "INSERT") == 0)
 			strcpy(completionTag, "INSERT 0 0");
 		else if (strcmp(completionTag, "UPDATE") == 0)
 			strcpy(completionTag, "UPDATE 0");

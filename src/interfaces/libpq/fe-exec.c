@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-exec.c,v 1.208 2010/01/21 18:43:25 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-exec.c,v 1.209 2010/02/16 20:58:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2752,7 +2752,8 @@ PQcmdTuples(PGresult *res)
 			goto interpret_error;		/* no space? */
 		p++;
 	}
-	else if (strncmp(res->cmdStatus, "DELETE ", 7) == 0 ||
+	else if (strncmp(res->cmdStatus, "SELECT ", 7) == 0 ||
+			 strncmp(res->cmdStatus, "DELETE ", 7) == 0 ||
 			 strncmp(res->cmdStatus, "UPDATE ", 7) == 0)
 		p = res->cmdStatus + 7;
 	else if (strncmp(res->cmdStatus, "FETCH ", 6) == 0)
