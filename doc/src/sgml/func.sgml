@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.502 2010/02/12 17:33:19 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.503 2010/02/16 21:18:01 momjian Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -5174,7 +5174,11 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
       <para>
        <literal>FM</literal> suppresses leading zeroes and trailing blanks
        that would otherwise be added to make the output of a pattern be
-       fixed-width.
+       fixed-width.  In <productname>PostgreSQL</productname>,
+       <literal>FM</literal> modifies only the next specification, while in
+       Oracle <literal>FM</literal> affects all subsequent
+       specifications, and repeated <literal>FM</literal> modifiers
+       toggle fill mode on and off.
       </para>
      </listitem>
 

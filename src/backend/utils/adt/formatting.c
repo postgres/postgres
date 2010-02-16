@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.162 2010/01/02 16:57:53 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.163 2010/02/16 21:18:01 momjian Exp $
  *
  *
  *	 Portions Copyright (c) 1999-2010, PostgreSQL Global Development Group
@@ -515,6 +515,7 @@ do { \
 #define S_th(_s)	(((_s) & DCH_S_th) ? 1 : 0)
 #define S_TH_TYPE(_s)	(((_s) & DCH_S_TH) ? TH_UPPER : TH_LOWER)
 
+/* Oracle toggles FM behavior, we don't; see docs. */
 #define S_FM(_s)	(((_s) & DCH_S_FM) ? 1 : 0)
 #define S_SP(_s)	(((_s) & DCH_S_SP) ? 1 : 0)
 #define S_TM(_s)	(((_s) & DCH_S_TM) ? 1 : 0)
@@ -2411,28 +2412,30 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out)
 				break;
 			case DCH_YYY:
 			case DCH_IYY:
-				snprintf(buff, sizeof(buff), "%03d",
+				snprintf(buff, sizeof(buff), "%0*d",
+						 S_FM(n->suffix) ? 0 : 3,
 						 n->key->id == DCH_YYY ?
 						 ADJUST_YEAR(tm->tm_year, is_interval) :
 						 ADJUST_YEAR(date2isoyear(tm->tm_year,
 												  tm->tm_mon, tm->tm_mday),
 									 is_interval));
 				i = strlen(buff);
-				strcpy(s, buff + (i - 3));
+				strcpy(s, buff + (i > 3 ? i - 3 : 0));
 				if (S_THth(n->suffix))
 					str_numth(s, s, S_TH_TYPE(n->suffix));
 				s += strlen(s);
 				break;
 			case DCH_YY:
 			case DCH_IY:
-				snprintf(buff, sizeof(buff), "%02d",
+				snprintf(buff, sizeof(buff), "%0*d",
+						 S_FM(n->suffix) ? 0 : 2,
 						 n->key->id == DCH_YY ?
 						 ADJUST_YEAR(tm->tm_year, is_interval) :
 						 ADJUST_YEAR(date2isoyear(tm->tm_year,
 												  tm->tm_mon, tm->tm_mday),
 									 is_interval));
 				i = strlen(buff);
-				strcpy(s, buff + (i - 2));
+				strcpy(s, buff + (i > 2 ? i - 2 : 0));
 				if (S_THth(n->suffix))
 					str_numth(s, s, S_TH_TYPE(n->suffix));
 				s += strlen(s);
@@ -2446,7 +2449,7 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out)
 												  tm->tm_mon, tm->tm_mday),
 									 is_interval));
 				i = strlen(buff);
-				strcpy(s, buff + (i - 1));
+				strcpy(s, buff + (i > 1 ? i - 1 : 0));
 				if (S_THth(n->suffix))
 					str_numth(s, s, S_TH_TYPE(n->suffix));
 				s += strlen(s);
