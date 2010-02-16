@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/explain.c,v 1.201 2010/02/15 02:36:26 stark Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/explain.c,v 1.202 2010/02/16 20:07:13 stark Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -98,7 +98,7 @@ static void ExplainJSONLineEnding(ExplainState *es);
 static void ExplainYAMLLineStarting(ExplainState *es);
 static void escape_json(StringInfo buf, const char *str);
 static void escape_yaml(StringInfo buf, const char *str);
-static double normalize_memory(double amount, char **unit, int *precision);
+
 
 
 /*
@@ -1082,63 +1082,47 @@ ExplainNode(Plan *plan, PlanState *planstate,
 			if (has_shared || has_local || has_temp)
 			{
 				appendStringInfoSpaces(es->str, es->indent * 2);
-				appendStringInfoString(es->str, "Total Buffer Usage:");
+				appendStringInfoString(es->str, "Buffers:");
 
 				if (has_shared)
 				{
-					char *hit_unit, *read_unit, *written_unit;
-					int   hit_prec,  read_prec,  written_prec;
-					double hit_mem      = normalize_memory((double)usage->shared_blks_hit      * BLCKSZ, &hit_unit,      &hit_prec);
-					double read_mem     = normalize_memory((double)usage->shared_blks_read     * BLCKSZ, &read_unit,     &read_prec);
-					double written_mem  = normalize_memory((double)usage->shared_blks_written  * BLCKSZ, &written_unit,  &written_prec);
-
 					appendStringInfoString(es->str, " shared");
-						appendStringInfo(es->str, " hit=%.*f%s", 
-										 hit_prec, hit_mem, hit_unit);
+					if (usage->shared_blks_hit > 0)
+						appendStringInfo(es->str, " hit=%ld",
+							usage->shared_blks_hit);
 					if (usage->shared_blks_read > 0)
-						appendStringInfo(es->str, " read=%.*f%s",
-										 read_prec, read_mem, read_unit);
+						appendStringInfo(es->str, " read=%ld",
+							usage->shared_blks_read);
 					if (usage->shared_blks_written > 0)
-						appendStringInfo(es->str, " written=%.*f%s",
-										 written_prec, written_mem, written_unit);
+						appendStringInfo(es->str, " written=%ld",
+							usage->shared_blks_written);
 					if (has_local || has_temp)
 						appendStringInfoChar(es->str, ',');
 				}
 				if (has_local)
 				{
-					char *hit_unit, *read_unit, *written_unit;
-					int   hit_prec,  read_prec,  written_prec;
-					double hit_mem      = normalize_memory((double)usage->local_blks_hit      * BLCKSZ, &hit_unit,      &hit_prec);
-					double read_mem     = normalize_memory((double)usage->local_blks_read     * BLCKSZ, &read_unit,     &read_prec);
-					double written_mem  = normalize_memory((double)usage->local_blks_written  * BLCKSZ, &written_unit,  &written_prec);
-
- 					appendStringInfoString(es->str, " local");
- 					if (usage->local_blks_hit > 0)
-						appendStringInfo(es->str, " hit=%.*f%s", 
-										 hit_prec, hit_mem, hit_unit);
- 					if (usage->local_blks_read > 0)
-						appendStringInfo(es->str, " read=%.*f%s",
-										 read_prec, read_mem, read_unit);
- 					if (usage->local_blks_written > 0)
-						appendStringInfo(es->str, " written=%.*f%s",
-										 written_prec, written_mem, written_unit);
+					appendStringInfoString(es->str, " local");
+					if (usage->local_blks_hit > 0)
+						appendStringInfo(es->str, " hit=%ld",
+							usage->local_blks_hit);
+					if (usage->local_blks_read > 0)
+						appendStringInfo(es->str, " read=%ld",
+							usage->local_blks_read);
+					if (usage->local_blks_written > 0)
+						appendStringInfo(es->str, " written=%ld",
+							usage->local_blks_written);
 					if (has_temp)
 						appendStringInfoChar(es->str, ',');
 				}
 				if (has_temp)
 				{
-					char *read_unit, *written_unit;
-					int   read_prec,  written_prec;
-					double read_mem     = normalize_memory((double)usage->temp_blks_read     * BLCKSZ, &read_unit,     &read_prec);
-					double written_mem  = normalize_memory((double)usage->temp_blks_written  * BLCKSZ, &written_unit,  &written_prec);
-
 					appendStringInfoString(es->str, " temp");
 					if (usage->temp_blks_read > 0)
-						appendStringInfo(es->str, " read=%.*f%s",
-										 read_prec, read_mem, read_unit);
- 					if (usage->temp_blks_written > 0)
-						appendStringInfo(es->str, " written=%.*f%s",
-										 written_prec, written_mem, written_unit);
+						appendStringInfo(es->str, " read=%ld",
+							usage->temp_blks_read);
+					if (usage->temp_blks_written > 0)
+						appendStringInfo(es->str, " written=%ld",
+							usage->temp_blks_written);
 				}
 				appendStringInfoChar(es->str, '\n');
 			}
@@ -2169,37 +2153,4 @@ escape_yaml(StringInfo buf, const char *str)
 	}
 
 	appendStringInfo(buf, "%s", str);
-}
-
-/*
- * For a quantity of bytes pick a reasonable display unit for it and
- * return the quantity in that unit. Also return the unit name and a
- * reasonable precision via the reference parameters.
- */
-
-static double normalize_memory(double amount, char **unit, int *precision)
-{
-	static char *units[] = {"bytes", "kB", "MB", "GB", "TB", "PB"};
-	char **u = units, **last = units + (sizeof(units)/sizeof(*units)-1);
-
-	while (amount > 1024.0 && u < last)
-	{
-		amount /= 1024.0;
-		u += 1;
-	}
-
-	*unit = *u;
-
-	/* if it's bytes or kB then don't print decimals since that's less
-	 * than blocksize, otherwise always print 3 significant digits */
-	if (u == units || u == units+1 )
-		*precision = 0;
-	else if (amount < 10)
-		*precision = 2;
-	else if (amount < 100)
-		*precision = 1;
-	else
-		*precision = 0;
-
-	return amount;
 }
