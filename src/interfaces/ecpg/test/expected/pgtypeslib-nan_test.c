@@ -104,10 +104,10 @@ if (sqlca.sqlcode < 0) sqlprint ( );}
 
 		if (sqlca.sqlcode)
 			break;
-		if (isinf(d))
-			printf("%d %sInf '%s'\n", id, (d < 0 ? "-" : "+"), val);
 		if (isnan(d))
 			printf("%d  NaN '%s'\n", id, val);
+		else if (isinf(d))
+			printf("%d %sInf '%s'\n", id, (d < 0 ? "-" : "+"), val);
 
 		{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "insert into nantest1 ( id , d ) values ( $1  + 3 , $2  )", 
 	ECPGt_int,&(id),(long)1,(long)1,sizeof(int), 

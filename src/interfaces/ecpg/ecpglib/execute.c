@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.93 2010/02/04 09:41:34 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.94 2010/02/16 18:41:23 meskes Exp $ */
 
 /*
  * The aim is to get a simpler inteface to the database routines.
@@ -468,15 +468,15 @@ ecpg_store_result(const PGresult *results, int act_field,
 static void
 sprintf_double_value(char *ptr, double value, const char *delim)
 {
-	if (isinf(value))
+	if (isnan(value))
+		sprintf(ptr, "%s%s", "NaN", delim);
+	else if (isinf(value))
 	{
 		if (value < 0)
 			sprintf(ptr, "%s%s", "-Infinity", delim);
 		else
 			sprintf(ptr, "%s%s", "Infinity", delim);
 	}
-	else if (isnan(value))
-		sprintf(ptr, "%s%s", "NaN", delim);
 	else
 		sprintf(ptr, "%.14g%s", value, delim);
 }
@@ -484,15 +484,15 @@ sprintf_double_value(char *ptr, double value, const char *delim)
 static void
 sprintf_float_value(char *ptr, float value, const char *delim)
 {
-	if (isinf(value))
+	if (isnan(value))
+		sprintf(ptr, "%s%s", "NaN", delim);
+	else if (isinf(value))
 	{
 		if (value < 0)
 			sprintf(ptr, "%s%s", "-Infinity", delim);
 		else
 			sprintf(ptr, "%s%s", "Infinity", delim);
 	}
-	else if (isnan(value))
-		sprintf(ptr, "%s%s", "NaN", delim);
 	else
 		sprintf(ptr, "%.14g%s", value, delim);
 }

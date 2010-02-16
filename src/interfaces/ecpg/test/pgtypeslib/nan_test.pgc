@@ -37,10 +37,10 @@ main(void)
 		exec sql fetch from cur into :id, :d, :val;
 		if (sqlca.sqlcode)
 			break;
-		if (isinf(d))
-			printf("%d %sInf '%s'\n", id, (d < 0 ? "-" : "+"), val);
 		if (isnan(d))
 			printf("%d  NaN '%s'\n", id, val);
+		else if (isinf(d))
+			printf("%d %sInf '%s'\n", id, (d < 0 ? "-" : "+"), val);
 
 		exec sql insert into nantest1 (id, d) values (:id + 3, :d);
 		exec sql insert into nantest1 (id, d) values (:id + 6, :val);
