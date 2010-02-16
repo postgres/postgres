@@ -30,7 +30,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/libpq/pqcomm.c,v 1.202 2010/01/15 09:19:02 heikki Exp $
+ *	$PostgreSQL: pgsql/src/backend/libpq/pqcomm.c,v 1.203 2010/02/16 19:26:02 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -837,9 +837,13 @@ pq_getbyte_if_available(unsigned char *c)
 	}
 
 	/* Temporarily put the socket into non-blocking mode */
+#ifdef WIN32
+	pgwin32_noblock = 1;
+#else
 	if (!pg_set_noblock(MyProcPort->sock))
 		ereport(ERROR,
 				(errmsg("couldn't put socket to non-blocking mode: %m")));
+#endif
 	MyProcPort->noblock = true;
 	PG_TRY();
 	{
@@ -851,16 +855,24 @@ pq_getbyte_if_available(unsigned char *c)
 		 * The rest of the backend code assumes the socket is in blocking
 		 * mode, so treat failure as FATAL.
 		 */
+#ifdef WIN32
+		pgwin32_noblock = 0;
+#else
 		if (!pg_set_block(MyProcPort->sock))
 			ereport(FATAL,
 					(errmsg("couldn't put socket to blocking mode: %m")));
+#endif
 		MyProcPort->noblock = false;
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
+#ifdef WIN32
+	pgwin32_noblock = 0;
+#else
 	if (!pg_set_block(MyProcPort->sock))
 		ereport(FATAL,
 				(errmsg("couldn't put socket to blocking mode: %m")));
+#endif
 	MyProcPort->noblock = false;
 
 	return r;

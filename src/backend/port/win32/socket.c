@@ -6,12 +6,25 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/port/win32/socket.c,v 1.23 2010/01/02 16:57:50 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/port/win32/socket.c,v 1.24 2010/02/16 19:26:02 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include "postgres.h"
+
+/*
+ * Indicate if pgwin32_recv() should operate in non-blocking mode.
+ *
+ * Since the socket emulation layer always sets the actual socket to
+ * non-blocking mode in order to be able to deliver signals, we must
+ * specify this in a separate flag if we actually need non-blocking
+ * operation.
+ *
+ * This flag changes the behaviour *globally* for all socket operations,
+ * so it should only be set for very short periods of time.
+ */
+int	pgwin32_noblock = 0;
 
 #undef socket
 #undef accept
@@ -307,6 +320,16 @@ pgwin32_recv(SOCKET s, char *buf, int len, int f)
 		WSAGetLastError() != WSAEWOULDBLOCK)
 	{
 		TranslateSocketError();
+		return -1;
+	}
+
+	if (pgwin32_noblock)
+	{
+		/*
+		 * No data received, and we are in "emulated non-blocking mode", so return
+		 * indicating thta we'd block if we were to continue.
+		 */
+		errno = EWOULDBLOCK;
 		return -1;
 	}
 
