@@ -1,26 +1,30 @@
 
-#  $PostgreSQL: pgsql/src/pl/plperl/plc_perlboot.pl,v 1.4 2010/01/30 01:46:57 adunstan Exp $
+#  $PostgreSQL: pgsql/src/pl/plperl/plc_perlboot.pl,v 1.5 2010/02/16 21:39:52 adunstan Exp $
+
+use 5.008001;
 
 PostgreSQL::InServer::Util::bootstrap();
+
+package PostgreSQL::InServer;
 
 use strict;
 use warnings;
 use vars qw(%_SHARED);
 
-sub ::plperl_warn {
+sub plperl_warn {
 	(my $msg = shift) =~ s/\(eval \d+\) //g;
 	chomp $msg;
-	&elog(&NOTICE, $msg);
+	&::elog(&::WARNING, $msg);
 }
-$SIG{__WARN__} = \&::plperl_warn;
+$SIG{__WARN__} = \&plperl_warn;
 
-sub ::plperl_die {
+sub plperl_die {
 	(my $msg = shift) =~ s/\(eval \d+\) //g;
 	die $msg;
 }
-$SIG{__DIE__} = \&::plperl_die;
+$SIG{__DIE__} = \&plperl_die;
 
-sub ::mkfuncsrc {
+sub mkfuncsrc {
 	my ($name, $imports, $prolog, $src) = @_;
 
 	my $BEGIN = join "\n", map {
@@ -32,13 +36,13 @@ sub ::mkfuncsrc {
 	$name =~ s/\\/\\\\/g;
 	$name =~ s/::|'/_/g; # avoid package delimiters
 
-	return qq[ undef *{'$name'}; *{'$name'} = sub { $BEGIN $prolog $src } ];
+	return qq[ package main; undef *{'$name'}; *{'$name'} = sub { $BEGIN $prolog $src } ];
 }
 
 # see also mksafefunc() in plc_safe_ok.pl
-sub ::mkunsafefunc {
+sub mkunsafefunc {
 	no strict; # default to no strict for the eval
-	my $ret = eval(::mkfuncsrc(@_));
+	my $ret = eval(mkfuncsrc(@_));
 	$@ =~ s/\(eval \d+\) //g if $@;
 	return $ret;
 }
@@ -67,7 +71,7 @@ sub ::encode_array_literal {
 
 sub ::encode_array_constructor {
 	my $arg = shift;
-	return quote_nullable($arg)
+	return ::quote_nullable($arg)
 		if ref $arg ne 'ARRAY';
 	my $res = join ", ", map {
 		(ref $_) ? ::encode_array_constructor($_)

@@ -378,3 +378,7 @@ DO $$ use blib; $$ LANGUAGE plperl;
 -- runtime error: "Can't use string ("foo") as a SCALAR ref while "strict refs" in use
 DO $do$ use strict; my $name = "foo"; my $ref = $$name; $do$ LANGUAGE plperl;
 
+-- check that we can "use warnings" (in this case to turn a warn into an error)
+-- yields "ERROR:  Useless use of length in void context"
+DO $do$ use warnings FATAL => qw(void) ; length "abc" ; 1; $do$ LANGUAGE plperl;
+

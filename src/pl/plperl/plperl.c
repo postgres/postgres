@@ -1,7 +1,7 @@
 /**********************************************************************
  * plperl.c - perl as a procedural language for PostgreSQL
  *
- *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.167 2010/02/15 22:23:25 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.168 2010/02/16 21:39:52 adunstan Exp $
  *
  **********************************************************************/
 
@@ -365,8 +365,6 @@ select_perl_context(bool trusted)
 	{
 		/* first actual use of a perl interpreter */
 
-		on_proc_exit(plperl_fini, 0);
-
 		if (trusted)
 		{
 			plperl_trusted_init();
@@ -379,6 +377,10 @@ select_perl_context(bool trusted)
 			plperl_untrusted_interp = plperl_held_interp;
 			interp_state = INTERP_UNTRUSTED;
 		}
+
+		/* successfully initialized, so arrange for cleanup */
+		on_proc_exit(plperl_fini, 0);
+
 	}
 	else
 	{
@@ -673,14 +675,16 @@ plperl_trusted_init(void)
 	SV		   *safe_version_sv;
 	IV			safe_version_x100;
 
-	safe_version_sv = eval_pv(SAFE_MODULE, FALSE);	/* TRUE = croak if failure */
+	safe_version_sv = eval_pv(SAFE_MODULE, FALSE);/* TRUE = croak if failure */
 	safe_version_x100 = (int)(SvNV(safe_version_sv) * 100);
 
 	/*
 	 * Reject too-old versions of Safe and some others:
 	 * 2.20: http://rt.perl.org/rt3/Ticket/Display.html?id=72068
+	 * 2.21: http://rt.perl.org/rt3/Ticket/Display.html?id=72700
 	 */
-	if (safe_version_x100 < 209 || safe_version_x100 == 220)
+	if (safe_version_x100 < 209 || safe_version_x100 == 220 || 
+		safe_version_x100 == 221)
 	{
 		/* not safe, so disallow all trusted funcs */
 		eval_pv(PLC_SAFE_BAD, FALSE);
@@ -722,7 +726,7 @@ plperl_trusted_init(void)
 			XPUSHs(sv_2mortal(newSVstring(plperl_on_plperl_init)));
 			PUTBACK;
 
-			call_pv("::safe_eval", G_VOID);
+			call_pv("PostgreSQL::InServer::safe::safe_eval", G_VOID);
 			SPAGAIN;
 
 			if (SvTRUE(ERRSV))
@@ -1259,7 +1263,9 @@ plperl_create_sub(plperl_proc_desc *prodesc, char *s, Oid fn_oid)
 	 * errors properly.  Perhaps it's because there's another level of eval
 	 * inside mksafefunc?
 	 */
-	compile_sub = (trusted) ? "::mksafefunc" : "::mkunsafefunc";
+	compile_sub = (trusted)
+		? "PostgreSQL::InServer::safe::mksafefunc"
+		: "PostgreSQL::InServer::mkunsafefunc";
 	count = perl_call_pv(compile_sub, G_SCALAR | G_EVAL | G_KEEPERR);
 	SPAGAIN;
 
