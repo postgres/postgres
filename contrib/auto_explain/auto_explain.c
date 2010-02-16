@@ -6,7 +6,7 @@
  * Copyright (c) 2008-2010, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/contrib/auto_explain/auto_explain.c,v 1.12 2010/01/06 18:07:19 tgl Exp $
+ *	  $PostgreSQL: pgsql/contrib/auto_explain/auto_explain.c,v 1.13 2010/02/16 22:19:59 adunstan Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -240,6 +240,7 @@ explain_ExecutorEnd(QueryDesc *queryDesc)
 			es.format = auto_explain_log_format;
 
 			ExplainBeginOutput(&es);
+			ExplainQueryText(&es, queryDesc);
 			ExplainPrintPlan(&es, queryDesc);
 			ExplainEndOutput(&es);
 
@@ -255,7 +256,8 @@ explain_ExecutorEnd(QueryDesc *queryDesc)
 			 */
 			ereport(LOG,
 					(errmsg("duration: %.3f ms  plan:\n%s",
-							msec, es.str->data)));
+							msec, es.str->data),
+						errhidestmt(true)));
 
 			pfree(es.str->data);
 		}

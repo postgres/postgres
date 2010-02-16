@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/explain.c,v 1.202 2010/02/16 20:07:13 stark Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/explain.c,v 1.203 2010/02/16 22:19:59 adunstan Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -485,6 +485,21 @@ ExplainPrintPlan(ExplainState *es, QueryDesc *queryDesc)
 	es->rtable = queryDesc->plannedstmt->rtable;
 	ExplainNode(queryDesc->plannedstmt->planTree, queryDesc->planstate,
 				NULL, NULL, NULL, es);
+}
+
+/*
+ * ExplainQueryText -
+ *    add a "Query Text" node that contains the actual text of the query
+ * 
+ * The caller should have set up the options fields of *es, as well as
+ * initializing the output buffer es->str. 
+ *
+ */
+void
+ExplainQueryText(ExplainState *es, QueryDesc *queryDesc)
+{
+	if (queryDesc->sourceText)
+		ExplainPropertyText("Query Text", queryDesc->sourceText, es);
 }
 
 /*
