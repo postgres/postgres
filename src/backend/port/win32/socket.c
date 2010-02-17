@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/port/win32/socket.c,v 1.24 2010/02/16 19:26:02 mha Exp $
+ *	  $PostgreSQL: pgsql/src/backend/port/win32/socket.c,v 1.25 2010/02/17 05:51:40 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -327,7 +327,7 @@ pgwin32_recv(SOCKET s, char *buf, int len, int f)
 	{
 		/*
 		 * No data received, and we are in "emulated non-blocking mode", so return
-		 * indicating thta we'd block if we were to continue.
+		 * indicating that we'd block if we were to continue.
 		 */
 		errno = EWOULDBLOCK;
 		return -1;
