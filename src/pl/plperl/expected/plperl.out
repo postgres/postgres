@@ -578,7 +578,7 @@ DO $do$ use strict; my $name = "foo"; my $ref = $$name; $do$ LANGUAGE plperl;
 ERROR:  Can't use string ("foo") as a SCALAR ref while "strict refs" in use at line 1.
 CONTEXT:  PL/Perl anonymous code block
 -- check that we can "use warnings" (in this case to turn a warn into an error)
--- yields "ERROR:  Useless use of length in void context"
-DO $do$ use warnings FATAL => qw(void) ; length "abc" ; 1; $do$ LANGUAGE plperl;
-ERROR:  Useless use of length in void context at line 1.
+-- yields "ERROR:  Useless use of sort in scalar context."
+DO $do$ use warnings FATAL => qw(void) ; my @y; my $x = sort @y; 1; $do$ LANGUAGE plperl;
+ERROR:  Useless use of sort in scalar context at line 1.
 CONTEXT:  PL/Perl anonymous code block
