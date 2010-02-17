@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.373 2010/02/12 09:49:08 heikki Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.374 2010/02/17 03:10:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -4761,8 +4761,7 @@ BootStrapXLOG(void)
 	ShmemVariableCache->nextOid = checkPoint.nextOid;
 	ShmemVariableCache->oidCount = 0;
 	MultiXactSetNextMXact(checkPoint.nextMulti, checkPoint.nextMultiOffset);
-	ShmemVariableCache->oldestXid = checkPoint.oldestXid;
-	ShmemVariableCache->oldestXidDB = checkPoint.oldestXidDB;
+	SetTransactionIdLimit(checkPoint.oldestXid, checkPoint.oldestXidDB);
 
 	/* Set up the XLOG page header */
 	page->xlp_magic = XLOG_PAGE_MAGIC;
@@ -5597,8 +5596,7 @@ StartupXLOG(void)
 	ShmemVariableCache->nextOid = checkPoint.nextOid;
 	ShmemVariableCache->oidCount = 0;
 	MultiXactSetNextMXact(checkPoint.nextMulti, checkPoint.nextMultiOffset);
-	ShmemVariableCache->oldestXid = checkPoint.oldestXid;
-	ShmemVariableCache->oldestXidDB = checkPoint.oldestXidDB;
+	SetTransactionIdLimit(checkPoint.oldestXid, checkPoint.oldestXidDB);
 
 	/*
 	 * We must replay WAL entries using the same TimeLineID they were created
@@ -7447,8 +7445,7 @@ xlog_redo(XLogRecPtr lsn, XLogRecord *record)
 		ShmemVariableCache->oidCount = 0;
 		MultiXactSetNextMXact(checkPoint.nextMulti,
 							  checkPoint.nextMultiOffset);
-		ShmemVariableCache->oldestXid = checkPoint.oldestXid;
-		ShmemVariableCache->oldestXidDB = checkPoint.oldestXidDB;
+		SetTransactionIdLimit(checkPoint.oldestXid, checkPoint.oldestXidDB);
 
 		/* Check to see if any changes to max_connections give problems */
 		if (standbyState != STANDBY_DISABLED)
@@ -7502,10 +7499,8 @@ xlog_redo(XLogRecPtr lsn, XLogRecord *record)
 								  checkPoint.nextMultiOffset);
 		if (TransactionIdPrecedes(ShmemVariableCache->oldestXid,
 								  checkPoint.oldestXid))
-		{
-			ShmemVariableCache->oldestXid = checkPoint.oldestXid;
-			ShmemVariableCache->oldestXidDB = checkPoint.oldestXidDB;
-		}
+			SetTransactionIdLimit(checkPoint.oldestXid,
+								  checkPoint.oldestXidDB);
 
 		/* ControlFile->checkPointCopy always tracks the latest ckpt XID */
 		ControlFile->checkPointCopy.nextXidEpoch = checkPoint.nextXidEpoch;

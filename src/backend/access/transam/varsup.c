@@ -6,7 +6,7 @@
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/varsup.c,v 1.88 2010/02/14 18:42:12 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/varsup.c,v 1.89 2010/02/17 03:10:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -71,13 +71,9 @@ GetNewTransactionId(bool isSubXact)
 	 * If we're past xidStopLimit, refuse to execute transactions, unless
 	 * we are running in a standalone backend (which gives an escape hatch
 	 * to the DBA who somehow got past the earlier defenses).
-	 *
-	 * Test is coded to fall out as fast as possible during normal operation,
-	 * ie, when the vac limit is set and we haven't violated it.
 	 *----------
 	 */
-	if (TransactionIdFollowsOrEquals(xid, ShmemVariableCache->xidVacLimit) &&
-		TransactionIdIsValid(ShmemVariableCache->xidVacLimit))
+	if (TransactionIdFollowsOrEquals(xid, ShmemVariableCache->xidVacLimit))
 	{
 		/*
 		 * For safety's sake, we release XidGenLock while sending signals,
@@ -340,11 +336,11 @@ SetTransactionIdLimit(TransactionId oldest_datfrozenxid, Oid oldest_datoid)
 	 * another iteration immediately if there are still any old databases.
 	 */
 	if (TransactionIdFollowsOrEquals(curXid, xidVacLimit) &&
-		IsUnderPostmaster)
+		IsUnderPostmaster && !InRecovery)
 		SendPostmasterSignal(PMSIGNAL_START_AUTOVAC_LAUNCHER);
 
 	/* Give an immediate warning if past the wrap warn point */
-	if (TransactionIdFollowsOrEquals(curXid, xidWarnLimit))
+	if (TransactionIdFollowsOrEquals(curXid, xidWarnLimit) && !InRecovery)
 	{
 		char   *oldest_datname = get_database_name(oldest_datoid);
 
@@ -399,8 +395,9 @@ ForceTransactionIdLimitUpdate(void)
 
 	if (!TransactionIdIsNormal(oldestXid))
 		return true;			/* shouldn't happen, but just in case */
-	if (TransactionIdFollowsOrEquals(nextXid, xidVacLimit) &&
-		TransactionIdIsValid(xidVacLimit))
+	if (!TransactionIdIsValid(xidVacLimit))
+		return true;			/* this shouldn't happen anymore either */
+	if (TransactionIdFollowsOrEquals(nextXid, xidVacLimit))
 		return true;			/* past VacLimit, don't delay updating */
 	if (!SearchSysCacheExists1(DATABASEOID, ObjectIdGetDatum(oldestXidDB)))
 		return true;			/* could happen, per comments above */
