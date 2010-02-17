@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/notify.sgml,v 1.32 2010/02/16 22:34:43 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/notify.sgml,v 1.33 2010/02/17 00:57:06 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -139,8 +139,8 @@ NOTIFY <replaceable class="PARAMETER">channel</replaceable> [ , <replaceable cla
     <listitem>
      <para>
       The <quote>payload</> string to be communicated along with the
-      notification. This string must be shorter than 8000 bytes, and
-      is treated as text.
+      notification.  This must be specified as a simple string literal.
+      In the default configuration it must be shorter than 8000 bytes.
       (If binary data or large amounts of information need to be communicated,
       it's best to put it in a database table and send the key of the record.)
      </para>
