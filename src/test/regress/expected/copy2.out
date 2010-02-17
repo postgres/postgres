@@ -195,7 +195,7 @@ COPY y TO stdout WITH CSV FORCE QUOTE *;
 "Jackson, Sam","\h"
 "It is ""perfect"".","	"
 "",
--- Repeat above tests with new 8.5 option syntax
+-- Repeat above tests with new 9.0 option syntax
 COPY y TO stdout (FORMAT CSV);
 "Jackson, Sam",\h
 "It is ""perfect"".",	

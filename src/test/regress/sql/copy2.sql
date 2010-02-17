@@ -130,7 +130,7 @@ COPY y TO stdout WITH CSV QUOTE '''' DELIMITER '|';
 COPY y TO stdout WITH CSV FORCE QUOTE col2 ESCAPE E'\\';
 COPY y TO stdout WITH CSV FORCE QUOTE *;
 
--- Repeat above tests with new 8.5 option syntax
+-- Repeat above tests with new 9.0 option syntax
 
 COPY y TO stdout (FORMAT CSV);
 COPY y TO stdout (FORMAT CSV, QUOTE '''', DELIMITER '|');

@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.570 2010/02/07 20:48:10 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.571 2010/02/17 04:19:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -604,7 +604,7 @@ main(int argc, char **argv)
 	 * If supported, set extra_float_digits so that we can dump float data
 	 * exactly (given correctly implemented float I/O code, anyway)
 	 */
-	if (g_fout->remoteVersion >= 80500)
+	if (g_fout->remoteVersion >= 90000)
 		do_sql_command(g_conn, "SET extra_float_digits TO 3");
 	else if (g_fout->remoteVersion >= 70400)
 		do_sql_command(g_conn, "SET extra_float_digits TO 2");
@@ -1952,7 +1952,7 @@ hasBlobs(Archive *AH)
 	selectSourceSchema("pg_catalog");
 
 	/* Check for BLOB OIDs */
-	if (AH->remoteVersion >= 80500)
+	if (AH->remoteVersion >= 90000)
 		blobQry = "SELECT oid FROM pg_largeobject_metadata LIMIT 1";
 	else if (AH->remoteVersion >= 70100)
 		blobQry = "SELECT loid FROM pg_largeobject LIMIT 1";
@@ -1990,7 +1990,7 @@ dumpBlobs(Archive *AH, void *arg)
 	selectSourceSchema("pg_catalog");
 
 	/* Cursor to get all BLOB OIDs */
-	if (AH->remoteVersion >= 80500)
+	if (AH->remoteVersion >= 90000)
 		blobQry = "DECLARE bloboid CURSOR FOR SELECT oid FROM pg_largeobject_metadata";
 	else if (AH->remoteVersion >= 70100)
 		blobQry = "DECLARE bloboid CURSOR FOR SELECT DISTINCT loid FROM pg_largeobject";
@@ -2080,7 +2080,7 @@ dumpBlobComments(Archive *AH, void *arg)
 	selectSourceSchema("pg_catalog");
 
 	/* Cursor to get all BLOB comments */
-	if (AH->remoteVersion >= 80500)
+	if (AH->remoteVersion >= 90000)
 		blobQry = "DECLARE blobcmt CURSOR FOR SELECT oid, "
 			"obj_description(oid, 'pg_largeobject'), "
 			"pg_get_userbyid(lomowner), lomacl "
@@ -3472,7 +3472,7 @@ getTables(int *numTables)
 	 * we cannot correctly identify inherited columns, owned sequences, etc.
 	 */
 
-	if (g_fout->remoteVersion >= 80500)
+	if (g_fout->remoteVersion >= 90000)
 	{
 		/*
 		 * Left join to pick up dependency info linking sequences to their
@@ -3992,7 +3992,7 @@ getIndexes(TableInfo tblinfo[], int numTables)
 		 * assume an index won't have more than one internal dependency.
 		 */
 		resetPQExpBuffer(query);
-		if (g_fout->remoteVersion >= 80500)
+		if (g_fout->remoteVersion >= 90000)
 		{
 			appendPQExpBuffer(query,
 							  "SELECT t.tableoid, t.oid, "
@@ -4622,7 +4622,7 @@ getTriggers(TableInfo tblinfo[], int numTables)
 		selectSourceSchema(tbinfo->dobj.namespace->dobj.name);
 
 		resetPQExpBuffer(query);
-		if (g_fout->remoteVersion >= 80500)
+		if (g_fout->remoteVersion >= 90000)
 		{
 			/*
 			 * NB: think not to use pretty=true in pg_get_triggerdef.  It
@@ -4831,7 +4831,7 @@ getProcLangs(int *numProcLangs)
 	/* Make sure we are in proper schema */
 	selectSourceSchema("pg_catalog");
 
-	if (g_fout->remoteVersion >= 80500)
+	if (g_fout->remoteVersion >= 90000)
 	{
 		/* pg_language has a laninline column */
 		appendPQExpBuffer(query, "SELECT tableoid, oid, "
@@ -5154,9 +5154,9 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 
 		resetPQExpBuffer(q);
 
-		if (g_fout->remoteVersion >= 80500)
+		if (g_fout->remoteVersion >= 90000)
 		{
-			/* attoptions is new in 8.5 */
+			/* attoptions is new in 9.0 */
 			appendPQExpBuffer(q, "SELECT a.attnum, a.attname, a.atttypmod, "
 							  "a.attstattarget, a.attstorage, t.typstorage, "
 							  "a.attnotnull, a.atthasdef, a.attisdropped, "
@@ -6048,7 +6048,7 @@ getDefaultACLs(int *numDefaultACLs)
 	int			i,
 				ntups;
 
-	if (g_fout->remoteVersion < 80500)
+	if (g_fout->remoteVersion < 90000)
 	{
 		*numDefaultACLs = 0;
 		return NULL;

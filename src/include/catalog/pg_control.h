@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_control.h,v 1.49 2010/01/20 19:43:40 heikki Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_control.h,v 1.50 2010/02/17 04:19:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,7 +21,7 @@
 
 
 /* Version identifier for this pg_control format */
-#define PG_CONTROL_VERSION	853
+#define PG_CONTROL_VERSION	901
 
 /*
  * Body of CheckPoint XLOG records.  This is declared here because we keep

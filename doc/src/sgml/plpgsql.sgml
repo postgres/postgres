@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.150 2010/01/19 01:35:30 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.151 2010/02/17 04:19:37 tgl Exp $ -->
 
 <chapter id="plpgsql">
   <title><application>PL/pgSQL</application> - <acronym>SQL</acronym> Procedural Language</title>
@@ -59,7 +59,7 @@
    </para>
 
    <para>
-    In <productname>PostgreSQL</> 8.5 and later,
+    In <productname>PostgreSQL</> 9.0 and later,
     <application>PL/pgSQL</application> is installed by default.
     However it is still a loadable module, so especially security-conscious
     administrators could choose to remove it.
@@ -3520,7 +3520,7 @@ SELECT * FROM sales_summary_bytime;
 
    <note>
     <para>
-     <productname>PostgreSQL</productname> versions before 8.5 would try
+     <productname>PostgreSQL</productname> versions before 9.0 would try
      to substitute the variable in all three cases, leading to syntax errors.
     </para>
    </note>
@@ -3583,7 +3583,7 @@ SELECT * FROM sales_summary_bytime;
     large body of <application>PL/pgSQL</> code.  In such cases you can
     specify that <application>PL/pgSQL</> should resolve ambiguous references
     as the variable (which is compatible with <application>PL/pgSQL</>'s
-    behavior before <productname>PostgreSQL</productname> 8.5), or as the
+    behavior before <productname>PostgreSQL</productname> 9.0), or as the
     table column (which is compatible with some other systems such as
     <productname>Oracle</productname>).
    </para>

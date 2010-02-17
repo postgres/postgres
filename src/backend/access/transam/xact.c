@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.286 2010/02/16 22:34:43 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.287 2010/02/17 04:19:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -4344,7 +4344,7 @@ xactGetCommittedChildren(TransactionId **ptr)
  */
 
 /*
- * Before 8.5 this was a fairly short function, but now it performs many
+ * Before 9.0 this was a fairly short function, but now it performs many
  * actions for which the order of execution is critical.
  */
 static void

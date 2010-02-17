@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.132 2010/02/05 03:09:05 joe Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.133 2010/02/17 04:19:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -507,7 +507,7 @@ main(int argc, char *argv[])
 		/* Dump role/database settings */
 		if (!tablespaces_only && !roles_only)
 		{
-			if (server_version >= 80500)
+			if (server_version >= 90000)
 				dumpDbRoleConfig(conn);
 		}
 	}
@@ -956,7 +956,7 @@ dumpTablespaces(PGconn *conn)
 	 * Get all tablespaces except built-in ones (which we assume are named
 	 * pg_xxx)
 	 */
-	if (server_version >= 80500)
+	if (server_version >= 90000)
 		res = executeQuery(conn, "SELECT spcname, "
 						 "pg_catalog.pg_get_userbyid(spcowner) AS spcowner, "
 						   "spclocation, spcacl, "
@@ -1348,14 +1348,14 @@ dumpDatabaseConfig(PGconn *conn, const char *dbname)
 	{
 		PGresult   *res;
 
-		if (server_version >= 80500)
+		if (server_version >= 90000)
 			printfPQExpBuffer(buf, "SELECT setconfig[%d] FROM pg_db_role_setting WHERE "
 							  "setrole = 0 AND setdatabase = (SELECT oid FROM pg_database WHERE datname = ", count);
 		else
 			printfPQExpBuffer(buf, "SELECT datconfig[%d] FROM pg_database WHERE datname = ", count);
 		appendStringLiteralConn(buf, dbname, conn);
 
-		if (server_version >= 80500)
+		if (server_version >= 90000)
 			appendPQExpBuffer(buf, ")");
 
 		appendPQExpBuffer(buf, ";");
@@ -1394,7 +1394,7 @@ dumpUserConfig(PGconn *conn, const char *username)
 	{
 		PGresult   *res;
 
-		if (server_version >= 80500)
+		if (server_version >= 90000)
 			printfPQExpBuffer(buf, "SELECT setconfig[%d] FROM pg_db_role_setting WHERE "
 							  "setdatabase = 0 AND setrole = "
 							  "(SELECT oid FROM pg_authid WHERE rolname = ", count);
@@ -1403,7 +1403,7 @@ dumpUserConfig(PGconn *conn, const char *username)
 		else
 			printfPQExpBuffer(buf, "SELECT useconfig[%d] FROM pg_shadow WHERE usename = ", count);
 		appendStringLiteralConn(buf, username, conn);
-		if (server_version >= 80500)
+		if (server_version >= 90000)
 			appendPQExpBuffer(buf, ")");
 
 		res = executeQuery(conn, buf->data);

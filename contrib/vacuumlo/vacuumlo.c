@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/contrib/vacuumlo/vacuumlo.c,v 1.44 2010/01/02 16:57:33 momjian Exp $
+ *	  $PostgreSQL: pgsql/contrib/vacuumlo/vacuumlo.c,v 1.45 2010/02/17 04:19:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -142,7 +142,7 @@ vacuumlo(char *database, struct _param * param)
 	 */
 	buf[0] = '\0';
 	strcat(buf, "CREATE TEMP TABLE vacuum_l AS ");
-	if (PQserverVersion(conn) >= 80500)
+	if (PQserverVersion(conn) >= 90000)
 		strcat(buf, "SELECT oid AS lo FROM pg_largeobject_metadata");
 	else
 		strcat(buf, "SELECT DISTINCT loid AS lo FROM pg_largeobject");

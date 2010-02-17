@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/high-availability.sgml,v 1.43 2010/02/13 03:38:26 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/high-availability.sgml,v 1.44 2010/02/17 04:19:37 tgl Exp $ -->
 
 <chapter id="high-availability">
  <title>High Availability, Load Balancing, and Replication</title>
@@ -747,7 +747,7 @@ if (!triggered)
    </para>
 
    <para>
-    Starting with <productname>PostgreSQL</> version 8.5, you can use
+    Starting with <productname>PostgreSQL</> version 9.0, you can use
     streaming replication (see <xref linkend="streaming-replication">) to
     achieve the same with less effort.
    </para>

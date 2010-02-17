@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/vacuum.sgml,v 1.58 2010/02/08 04:33:51 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/vacuum.sgml,v 1.59 2010/02/17 04:19:39 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -70,7 +70,7 @@ VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] ANALYZE [ <replaceable class="PARAMETER">
    When the option list is surrounded by parentheses, the options can be
    written in any order.  Without parentheses, options must be specified
    in exactly the order shown above.
-   Prior to <productname>PostgreSQL</productname> 8.5, the unparenthesized
+   Prior to <productname>PostgreSQL</productname> 9.0, the unparenthesized
    syntax was the only one supported.  It is expected that all new options
    will be supported only in the parenthesized syntax.
   </para>

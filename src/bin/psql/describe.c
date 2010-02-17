@@ -8,7 +8,7 @@
  *
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.236 2010/01/28 23:21:12 petere Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.237 2010/02/17 04:19:40 tgl Exp $
  */
 #include "postgres_fe.h"
 
@@ -745,7 +745,7 @@ listDefaultACLs(const char *pattern)
 	printQueryOpt myopt = pset.popt;
 	static const bool translate_columns[] = {false, false, true, false};
 
-	if (pset.sversion < 80500)
+	if (pset.sversion < 90000)
 	{
 		fprintf(stderr, _("The server (version %d.%d) does not support altering default privileges.\n"),
 				pset.sversion / 10000, (pset.sversion / 100) % 100);
@@ -1123,7 +1123,7 @@ describeOneTableDetails(const char *schemaname,
 	initPQExpBuffer(&tmpbuf);
 
 	/* Get general table info */
-	if (pset.sversion >= 80500)
+	if (pset.sversion >= 90000)
 	{
 		printfPQExpBuffer(&buf,
 			  "SELECT c.relchecks, c.relkind, c.relhasindex, c.relhasrules, "
@@ -1207,9 +1207,9 @@ describeOneTableDetails(const char *schemaname,
 		strdup(PQgetvalue(res, 0, 6)) : 0;
 	tableinfo.tablespace = (pset.sversion >= 80000) ?
 		atooid(PQgetvalue(res, 0, 7)) : 0;
-	tableinfo.hasexclusion = (pset.sversion >= 80500) ?
+	tableinfo.hasexclusion = (pset.sversion >= 90000) ?
 		strcmp(PQgetvalue(res, 0, 8), "t") == 0 : false;
-	tableinfo.reloftype = (pset.sversion >= 80500 && strcmp(PQgetvalue(res, 0, 9), "") != 0) ?
+	tableinfo.reloftype = (pset.sversion >= 90000 && strcmp(PQgetvalue(res, 0, 9), "") != 0) ?
 		strdup(PQgetvalue(res, 0, 9)) : 0;
 	PQclear(res);
 	res = NULL;
@@ -1413,7 +1413,7 @@ describeOneTableDetails(const char *schemaname,
 			appendPQExpBuffer(&buf, "i.indisvalid,\n");
 		else
 			appendPQExpBuffer(&buf, "true AS indisvalid,\n");
-		if (pset.sversion >= 80500)
+		if (pset.sversion >= 90000)
 			appendPQExpBuffer(&buf,
 							  "  (NOT i.indimmediate) AND "
 							  "EXISTS (SELECT 1 FROM pg_catalog.pg_depend d, "
@@ -1549,7 +1549,7 @@ describeOneTableDetails(const char *schemaname,
 			else
 				appendPQExpBuffer(&buf, "true as indisvalid, ");
 			appendPQExpBuffer(&buf, "pg_catalog.pg_get_indexdef(i.indexrelid, 0, true)");
-			if (pset.sversion >= 80500)
+			if (pset.sversion >= 90000)
 				appendPQExpBuffer(&buf,
 							  ",\n  (NOT i.indimmediate) AND "
 							  "EXISTS (SELECT 1 FROM pg_catalog.pg_depend d, "
@@ -1862,9 +1862,9 @@ describeOneTableDetails(const char *schemaname,
 							  "t.tgenabled\n"
 							  "FROM pg_catalog.pg_trigger t\n"
 							  "WHERE t.tgrelid = '%s' AND ",
-							  (pset.sversion >= 80500 ? ", true" : ""),
+							  (pset.sversion >= 90000 ? ", true" : ""),
 							  oid);
-			if (pset.sversion >= 80500)
+			if (pset.sversion >= 90000)
 				appendPQExpBuffer(&buf, "NOT t.tgisinternal");
 			else if (pset.sversion >= 80300)
 				appendPQExpBuffer(&buf, "t.tgconstraint = 0");
@@ -2319,7 +2319,7 @@ listDbRoleSettings(const char *pattern, const char *pattern2)
 
 	initPQExpBuffer(&buf);
 
-	if (pset.sversion >= 80500)
+	if (pset.sversion >= 90000)
 	{
 		bool	havewhere;
 

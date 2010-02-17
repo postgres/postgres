@@ -1,7 +1,7 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release-8.5.sgml,v 1.14 2009/12/19 20:33:12 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release-9.0.sgml,v 2.1 2010/02/17 04:19:37 tgl Exp $ -->
 
-<sect1 id="release-8-5">
-  <title>Release 8.5alpha3</title>
+<sect1 id="release-9-0">
+  <title>Release 9.0alpha3</title>
   <sect2>
     <title>Overview</title>
     <para>

@@ -5,7 +5,7 @@
  *	Implements the basic DB functions used by the archiver.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.86 2010/02/05 03:09:05 joe Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.87 2010/02/17 04:19:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -704,7 +704,7 @@ void
 DropBlobIfExists(ArchiveHandle *AH, Oid oid)
 {
 	/* Call lo_unlink only if exists to avoid not-found error. */
-	if (PQserverVersion(AH->connection) >= 80500)
+	if (PQserverVersion(AH->connection) >= 90000)
 	{
 		ahprintf(AH, "SELECT pg_catalog.lo_unlink(oid) "
 					 "FROM pg_catalog.pg_largeobject_metadata "

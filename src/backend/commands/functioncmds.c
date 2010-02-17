@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/functioncmds.c,v 1.116 2010/02/14 18:42:14 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/functioncmds.c,v 1.117 2010/02/17 04:19:39 tgl Exp $
  *
  * DESCRIPTION
  *	  These routines take the parse tree and pick out the
@@ -288,7 +288,7 @@ examine_parameter_list(List *parameters, Oid languageOid,
 			ListCell   *px;
 
 			/*
-			 * As of Postgres 8.5 we disallow using the same name for two
+			 * As of Postgres 9.0 we disallow using the same name for two
 			 * input or two output function parameters.  Depending on the
 			 * function's language, conflicting input and output names might
 			 * be bad too, but we leave it to the PL to complain if so.

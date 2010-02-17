@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/lobj.sgml,v 1.51 2009/12/17 14:36:16 rhaas Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/lobj.sgml,v 1.52 2010/02/17 04:19:37 tgl Exp $ -->
 
  <chapter id="largeObjects">
   <title id="largeObjects-title">Large Objects</title>
@@ -61,7 +61,7 @@
    </para>
 
    <para>
-    As of <productname>PostgreSQL</> 8.5, large objects have an owner
+    As of <productname>PostgreSQL</> 9.0, large objects have an owner
     and a set of access permissions, which can be managed using
     <xref linkend="sql-grant" endterm="sql-grant-title"> and
     <xref linkend="sql-revoke" endterm="sql-revoke-title">.  

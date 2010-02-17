@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/copy.sgml,v 1.92 2009/09/21 20:10:21 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/copy.sgml,v 1.93 2010/02/17 04:19:39 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -839,7 +839,7 @@ ZW      ZIMBABWE
 
   <para>
    The following syntax was used before <productname>PostgreSQL</>
-   version 8.5 and is still supported:
+   version 9.0 and is still supported:
 
 <synopsis>
 COPY <replaceable class="parameter">table_name</replaceable> [ ( <replaceable class="parameter">column</replaceable> [, ...] ) ]

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.374 2010/02/17 03:10:33 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.375 2010/02/17 04:19:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -7958,7 +7958,7 @@ pg_start_backup_callback(int code, Datum arg)
  * created by pg_start_backup, creating a backup history file in pg_xlog
  * instead (whence it will immediately be archived). The backup history file
  * contains the same info found in the label file, plus the backup-end time
- * and WAL location. Before 8.5, the backup-end time was read from the backup
+ * and WAL location. Before 9.0, the backup-end time was read from the backup
  * history file at the beginning of archive recovery, but we now use the WAL
  * record for that and the file is for informational and debug purposes only.
  *

@@ -28,7 +28,7 @@
 <xsl:param name="man.output.base.dir"></xsl:param>
 <xsl:param name="man.output.in.separate.dir" select="1"></xsl:param>
 <xsl:param name="refentry.meta.get.quietly" select="0"></xsl:param>
-<xsl:param name="man.th.extra3.max.length">40</xsl:param> <!-- enough room for "PostgreSQL 8.5devel Documentation" -->
+<xsl:param name="man.th.extra3.max.length">40</xsl:param> <!-- enough room for "PostgreSQL X.Ydevel Documentation" -->
 <xsl:param name="refentry.xref.manvolnum" select="1"/> <!-- overridden from stylesheet-common.xsl -->
 
 <!-- Fixup for apostrophe groff output.  See the following references:

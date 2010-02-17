@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.386 2010/02/05 03:09:05 joe Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.387 2010/02/17 04:19:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -84,7 +84,7 @@ static int ldapServiceLookup(const char *purl, PQconninfoOption *options,
 #endif
 
 /*
- * Pre-8.5 servers will return this SQLSTATE if asked to set
+ * Pre-9.0 servers will return this SQLSTATE if asked to set
  * application_name in a startup packet.  We hard-wire the value rather
  * than looking into errcodes.h since it reflects historical behavior
  * rather than that of the current code.
@@ -2033,7 +2033,7 @@ keep_going:						/* We will come back to here until there is
 					{
 						/*
 						 * If we tried to send application_name, check to see
-						 * if the error is about that --- pre-8.5 servers will
+						 * if the error is about that --- pre-9.0 servers will
 						 * reject it at this stage of the process.  If so,
 						 * close the connection and retry without sending
 						 * application_name.  We could possibly get a false

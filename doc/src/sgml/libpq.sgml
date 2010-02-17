@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.299 2010/02/16 22:34:42 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.300 2010/02/17 04:19:37 tgl Exp $ -->
 
 <chapter id="libpq">
  <title><application>libpq</application> - C Library</title>
@@ -1255,7 +1255,7 @@ PQconninfoOption *PQconninfoParse(const char *conninfo, char **errmsg);
        <literal>standard_conforming_strings</> was not reported by releases
        before 8.1;
        <literal>IntervalStyle</> was not reported by releases before 8.4;
-       <literal>application_name</> was not reported by releases before 8.5.)
+       <literal>application_name</> was not reported by releases before 9.0.)
        Note that
        <literal>server_version</>,
        <literal>server_encoding</> and

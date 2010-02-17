@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/scripts/vacuumdb.c,v 1.34 2010/02/08 04:33:54 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/scripts/vacuumdb.c,v 1.35 2010/02/17 04:19:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -227,7 +227,7 @@ vacuum_one_database(const char *dbname, bool full, bool verbose, bool and_analyz
 	else
 	{
 		appendPQExpBuffer(&sql, "VACUUM");
-		if (PQserverVersion(conn) >= 80500)
+		if (PQserverVersion(conn) >= 90000)
 		{
 			const char *paren = " (";
 			const char *comma = ", ";

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ecpg.sgml,v 1.95 2010/01/26 14:21:29 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ecpg.sgml,v 1.96 2010/02/17 04:19:37 tgl Exp $ -->
 
 <chapter id="ecpg">
  <title><application>ECPG</application> - Embedded <acronym>SQL</acronym> in C</title>
@@ -2439,7 +2439,7 @@ EXEC SQL DESCRIBE stmt1 INTO SQL DESCRIPTOR mydesc;
    </para>
 
    <para>
-    Before PostgreSQL 8.5, the <literal>SQL</literal> keyword was optional,
+    Before PostgreSQL 9.0, the <literal>SQL</literal> keyword was optional,
     so using <literal>DESCRIPTOR</literal> and <literal>SQL DESCRIPTOR</literal>
     produced named SQL Descriptor Areas. Now it is mandatory, omitting
     the <literal>SQL</literal> keyword produces SQLDA Descriptor Areas,

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_largeobject.c,v 1.37 2010/01/07 02:41:16 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_largeobject.c,v 1.38 2010/02/17 04:19:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -191,7 +191,7 @@ LargeObjectAlterOwner(Oid loid, Oid newOwnerId)
 			/*
 			 * lo_compat_privileges is not checked here, because ALTER
 			 * LARGE OBJECT ... OWNER did not exist at all prior to
-			 * PostgreSQL 8.5.
+			 * PostgreSQL 9.0.
 			 *
 			 * We must be the owner of the existing object.
 			 */

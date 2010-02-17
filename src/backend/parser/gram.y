@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.709 2010/02/16 22:34:49 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.710 2010/02/17 04:19:39 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -1997,7 +1997,7 @@ ClosePortalStmt:
  *				COPY ( SELECT ... ) TO file [WITH] [(options)]
  *
  *				In the preferred syntax the options are comma-separated
- *				and use generic identifiers instead of keywords.  The pre-8.5
+ *				and use generic identifiers instead of keywords.  The pre-9.0
  *				syntax had a hard-wired, space-separated set of options.
  *
  *				Really old syntax, from versions 7.2 and prior:

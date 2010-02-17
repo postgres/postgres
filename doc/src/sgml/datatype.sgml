@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.241 2009/08/04 16:08:35 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.242 2010/02/17 04:19:37 tgl Exp $ -->
 
  <chapter id="datatype">
   <title id="datatype-title">Data Types</title>
@@ -1197,7 +1197,7 @@ SELECT b, char_length(b) FROM test2;
     of these are always accepted on input.  The output format depends
     on the configuration parameter <xref linkend="guc-bytea-output">;
     the default is hex.  (Note that the hex format was introduced in
-    <productname>PostgreSQL</productname> 8.5; earlier versions and some
+    <productname>PostgreSQL</productname> 9.0; earlier versions and some
     tools don't understand it.)
    </para>
 

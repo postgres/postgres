@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/large_obj.c,v 1.54 2010/01/02 16:57:59 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/large_obj.c,v 1.55 2010/02/17 04:19:40 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "large_obj.h"
@@ -278,7 +278,7 @@ do_lo_list(void)
 	char		buf[1024];
 	printQueryOpt myopt = pset.popt;
 
-	if (pset.sversion >= 80500)
+	if (pset.sversion >= 90000)
 	{
 		snprintf(buf, sizeof(buf),
 				 "SELECT oid as \"%s\",\n"

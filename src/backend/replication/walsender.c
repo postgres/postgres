@@ -2,7 +2,7 @@
  *
  * walsender.c
  *
- * The WAL sender process (walsender) is new as of Postgres 8.5. It takes
+ * The WAL sender process (walsender) is new as of Postgres 9.0. It takes
  * charge of XLOG streaming sender in the primary server. At first, it is
  * started by the postmaster when the walreceiver in the standby server
  * connects to the primary server and requests XLOG streaming replication,
@@ -30,7 +30,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/replication/walsender.c,v 1.5 2010/02/03 09:47:19 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/replication/walsender.c,v 1.6 2010/02/17 04:19:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
