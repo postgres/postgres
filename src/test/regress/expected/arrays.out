@@ -894,3 +894,19 @@ select c2[2].f2 from comptable;
 drop type _comptype;
 drop table comptable;
 drop type comptype;
+-- Insert/update on a column that is array of composite
+create temp table t1 (f1 int8_tbl[]);
+insert into t1 (f1[5].q1) values(42);
+select * from t1;
+       f1        
+-----------------
+ [5:5]={"(42,)"}
+(1 row)
+
+update t1 set f1[5].q2 = 43;
+select * from t1;
+        f1         
+-------------------
+ [5:5]={"(42,43)"}
+(1 row)
+
