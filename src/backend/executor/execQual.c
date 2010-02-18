@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.261 2010/01/11 15:31:04 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.262 2010/02/18 18:41:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,6 +61,7 @@
 static Datum ExecEvalArrayRef(ArrayRefExprState *astate,
 				 ExprContext *econtext,
 				 bool *isNull, ExprDoneCond *isDone);
+static bool isAssignmentIndirectionExpr(ExprState *exprstate);
 static Datum ExecEvalAggref(AggrefExprState *aggref,
 			   ExprContext *econtext,
 			   bool *isNull, ExprDoneCond *isDone);
@@ -349,21 +350,73 @@ ExecEvalArrayRef(ArrayRefExprState *astate,
 	if (isAssignment)
 	{
 		Datum		sourceData;
+		Datum		save_datum;
+		bool		save_isNull;
+
+		/*
+		 * We might have a nested-assignment situation, in which the
+		 * refassgnexpr is itself a FieldStore or ArrayRef that needs to
+		 * obtain and modify the previous value of the array element or slice
+		 * being replaced.  If so, we have to extract that value from the
+		 * array and pass it down via the econtext's caseValue.  It's safe to
+		 * reuse the CASE mechanism because there cannot be a CASE between
+		 * here and where the value would be needed, and an array assignment
+		 * can't be within a CASE either.  (So saving and restoring the
+		 * caseValue is just paranoia, but let's do it anyway.)
+		 *
+		 * Since fetching the old element might be a nontrivial expense, do it
+		 * only if the argument appears to actually need it.
+		 */
+		save_datum = econtext->caseValue_datum;
+		save_isNull = econtext->caseValue_isNull;
+
+		if (isAssignmentIndirectionExpr(astate->refassgnexpr))
+		{
+			if (*isNull)
+			{
+				/* whole array is null, so any element or slice is too */
+				econtext->caseValue_datum = (Datum) 0;
+				econtext->caseValue_isNull = true;
+			}
+			else if (lIndex == NULL)
+			{
+				econtext->caseValue_datum = array_ref(array_source, i,
+													  upper.indx,
+													  astate->refattrlength,
+													  astate->refelemlength,
+													  astate->refelembyval,
+													  astate->refelemalign,
+													  &econtext->caseValue_isNull);
+			}
+			else
+			{
+				resultArray = array_get_slice(array_source, i,
+											  upper.indx, lower.indx,
+											  astate->refattrlength,
+											  astate->refelemlength,
+											  astate->refelembyval,
+											  astate->refelemalign);
+				econtext->caseValue_datum = PointerGetDatum(resultArray);
+				econtext->caseValue_isNull = false;
+			}
+		}
+		else
+		{
+			/* argument shouldn't need caseValue, but for safety set it null */
+			econtext->caseValue_datum = (Datum) 0;
+			econtext->caseValue_isNull = true;
+		}
 
 		/*
 		 * Evaluate the value to be assigned into the array.
-		 *
-		 * XXX At some point we'll need to look into making the old value of
-		 * the array element available via CaseTestExpr, as is done by
-		 * ExecEvalFieldStore.	This is not needed now but will be needed to
-		 * support arrays of composite types; in an assignment to a field of
-		 * an array member, the parser would generate a FieldStore that
-		 * expects to fetch its input tuple via CaseTestExpr.
 		 */
 		sourceData = ExecEvalExpr(astate->refassgnexpr,
 								  econtext,
 								  &eisnull,
 								  NULL);
+
+		econtext->caseValue_datum = save_datum;
+		econtext->caseValue_isNull = save_isNull;
 
 		/*
 		 * For an assignment to a fixed-length array type, both the original
@@ -426,6 +479,34 @@ ExecEvalArrayRef(ArrayRefExprState *astate,
 	}
 }
 
+/*
+ * Helper for ExecEvalArrayRef: is expr a nested FieldStore or ArrayRef
+ * that might need the old element value passed down?
+ *
+ * (We could use this in ExecEvalFieldStore too, but in that case passing
+ * the old value is so cheap there's no need.)
+ */
+static bool
+isAssignmentIndirectionExpr(ExprState *exprstate)
+{
+	if (exprstate == NULL)
+		return false;			/* just paranoia */
+	if (IsA(exprstate, FieldStoreState))
+	{
+		FieldStore *fstore = (FieldStore *) exprstate->expr;
+
+		if (fstore->arg && IsA(fstore->arg, CaseTestExpr))
+			return true;
+	}
+	else if (IsA(exprstate, ArrayRefExprState))
+	{
+		ArrayRef   *arrayRef = (ArrayRef *) exprstate->expr;
+
+		if (arrayRef->refexpr && IsA(arrayRef->refexpr, CaseTestExpr))
+			return true;
+	}
+	return false;
+}
 
 /* ----------------------------------------------------------------
  *		ExecEvalAggref
@@ -3902,10 +3983,12 @@ ExecEvalFieldStore(FieldStoreState *fstate,
 
 		/*
 		 * Use the CaseTestExpr mechanism to pass down the old value of the
-		 * field being replaced; this is useful in case we have a nested field
-		 * update situation.  It's safe to reuse the CASE mechanism because
-		 * there cannot be a CASE between here and where the value would be
-		 * needed.
+		 * field being replaced; this is needed in case the newval is itself a
+		 * FieldStore or ArrayRef that has to obtain and modify the old value.
+		 * It's safe to reuse the CASE mechanism because there cannot be a
+		 * CASE between here and where the value would be needed, and a field
+		 * assignment can't be within a CASE either.  (So saving and restoring
+		 * the caseValue is just paranoia, but let's do it anyway.)
 		 */
 		econtext->caseValue_datum = values[fieldnum - 1];
 		econtext->caseValue_isNull = isnull[fieldnum - 1];
