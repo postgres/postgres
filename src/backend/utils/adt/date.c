@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/date.c,v 1.150 2010/01/02 16:57:53 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/date.c,v 1.151 2010/02/18 04:31:16 itagaki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -208,8 +208,10 @@ date_recv(PG_FUNCTION_ARGS)
 	result = (DateADT) pq_getmsgint(buf, sizeof(DateADT));
 
 	/* Limit to the same range that date_in() accepts. */
-	if (result < -POSTGRES_EPOCH_JDATE ||
-		result >= JULIAN_MAX - POSTGRES_EPOCH_JDATE)
+	if (DATE_NOT_FINITE(result))
+		 /* ok */ ;
+	else if (result < -POSTGRES_EPOCH_JDATE ||
+			 result >= JULIAN_MAX - POSTGRES_EPOCH_JDATE)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 				 errmsg("date out of range")));
