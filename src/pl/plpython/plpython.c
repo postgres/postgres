@@ -29,7 +29,7 @@
  * MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.66.2.7 2009/11/03 08:12:46 petere Exp $
+ *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.66.2.8 2010/02/18 23:50:33 tgl Exp $
  *
  *********************************************************************
  */
@@ -1853,7 +1853,7 @@ PLy_spi_prepare(PyObject * self, PyObject * args)
 	PyObject   *volatile optr = NULL;
 	char	   *query;
 	void	   *tmpplan;
-	MemoryContext oldcontext;
+	volatile MemoryContext oldcontext;
 
 	/* Can't execute more if we have an unhandled error */
 	if (PLy_error_in_progress)
@@ -2006,7 +2006,7 @@ PLy_spi_execute_plan(PyObject * ob, PyObject * list, long limit)
 	int			i,
 				rv;
 	PLyPlanObject *plan;
-	MemoryContext oldcontext;
+	volatile MemoryContext oldcontext;
 
 	if (list != NULL)
 	{
@@ -2150,7 +2150,7 @@ static PyObject *
 PLy_spi_execute_query(char *query, long limit)
 {
 	int			rv;
-	MemoryContext oldcontext;
+	volatile MemoryContext oldcontext;
 
 	oldcontext = CurrentMemoryContext;
 	PG_TRY();
@@ -2187,7 +2187,7 @@ static PyObject *
 PLy_spi_execute_fetch_result(SPITupleTable *tuptable, int rows, int status)
 {
 	PLyResultObject *result;
-	MemoryContext oldcontext;
+	volatile MemoryContext oldcontext;
 
 	result = (PLyResultObject *) PLy_result_new();
 	Py_DECREF(result->status);
