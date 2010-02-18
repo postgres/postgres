@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.323 2010/02/16 22:34:50 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.324 2010/02/18 22:43:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -4469,6 +4469,22 @@ get_rule_expr(Node *node, deparse_context *context,
 				bool		need_parens;
 
 				/*
+				 * If the argument is a CaseTestExpr, we must be inside a
+				 * FieldStore, ie, we are assigning to an element of an
+				 * array within a composite column.  Since we already punted
+				 * on displaying the FieldStore's target information, just
+				 * punt here too, and display only the assignment source
+				 * expression.
+				 */
+				if (IsA(aref->refexpr, CaseTestExpr))
+				{
+					Assert(aref->refassgnexpr);
+					get_rule_expr((Node *) aref->refassgnexpr,
+								  context, showimplicit);
+					break;
+				}
+
+				/*
 				 * Parenthesize the argument unless it's a simple Var or a
 				 * FieldSelect.  (In particular, if it's another ArrayRef, we
 				 * *must* parenthesize to avoid confusion.)
@@ -4480,14 +4496,35 @@ get_rule_expr(Node *node, deparse_context *context,
 				get_rule_expr((Node *) aref->refexpr, context, showimplicit);
 				if (need_parens)
 					appendStringInfoChar(buf, ')');
-				printSubscripts(aref, context);
 
 				/*
-				 * Array assignment nodes should have been handled in
-				 * processIndirection().
+				 * If there's a refassgnexpr, we want to print the node in
+				 * the format "array[subscripts] := refassgnexpr".  This is
+				 * not legal SQL, so decompilation of INSERT or UPDATE
+				 * statements should always use processIndirection as part
+				 * of the statement-level syntax.  We should only see this
+				 * when EXPLAIN tries to print the targetlist of a plan
+				 * resulting from such a statement.
 				 */
 				if (aref->refassgnexpr)
-					elog(ERROR, "unexpected refassgnexpr");
+				{
+					Node   *refassgnexpr;
+
+					/*
+					 * Use processIndirection to print this node's
+					 * subscripts as well as any additional field selections
+					 * or subscripting in immediate descendants.  It returns
+					 * the RHS expr that is actually being "assigned".
+					 */
+					refassgnexpr = processIndirection(node, context, true);
+					appendStringInfoString(buf, " := ");
+					get_rule_expr(refassgnexpr, context, showimplicit);
+				}
+				else
+				{
+					/* Just an ordinary array fetch, so print subscripts */
+					printSubscripts(aref, context);
+				}
 			}
 			break;
 
@@ -4679,12 +4716,36 @@ get_rule_expr(Node *node, deparse_context *context,
 			break;
 
 		case T_FieldStore:
+			{
+				FieldStore *fstore = (FieldStore *) node;
+				bool		need_parens;
 
-			/*
-			 * We shouldn't see FieldStore here; it should have been stripped
-			 * off by processIndirection().
-			 */
-			elog(ERROR, "unexpected FieldStore");
+				/*
+				 * There is no good way to represent a FieldStore as real SQL,
+				 * so decompilation of INSERT or UPDATE statements should
+				 * always use processIndirection as part of the
+				 * statement-level syntax.  We should only get here when
+				 * EXPLAIN tries to print the targetlist of a plan resulting
+				 * from such a statement.  The plan case is even harder than
+				 * ordinary rules would be, because the planner tries to
+				 * collapse multiple assignments to the same field or subfield
+				 * into one FieldStore; so we can see a list of target fields
+				 * not just one, and the arguments could be FieldStores
+				 * themselves.  We don't bother to try to print the target
+				 * field names; we just print the source arguments, with a
+				 * ROW() around them if there's more than one.  This isn't
+				 * terribly complete, but it's probably good enough for
+				 * EXPLAIN's purposes; especially since anything more would be
+				 * either hopelessly confusing or an even poorer
+				 * representation of what the plan is actually doing.
+				 */
+				need_parens = (list_length(fstore->newvals) != 1);
+				if (need_parens)
+					appendStringInfoString(buf, "ROW(");
+				get_rule_expr((Node *) fstore->newvals, context, showimplicit);
+				if (need_parens)
+					appendStringInfoChar(buf, ')');
+			}
 			break;
 
 		case T_RelabelType:
@@ -6307,12 +6368,11 @@ processIndirection(Node *node, deparse_context *context, bool printit)
 					 format_type_be(fstore->resulttype));
 
 			/*
-			 * Print the field name.  Note we assume here that there's only
-			 * one field being assigned to.  This is okay in stored rules but
-			 * could be wrong in executable target lists.  Presently no
-			 * problem since explain.c doesn't print plan targetlists, but
-			 * someday may have to think of something ...
+			 * Print the field name.  There should only be one target field
+			 * in stored rules.  There could be more than that in executable
+			 * target lists, but this function cannot be used for that case.
 			 */
+			Assert(list_length(fstore->fieldnums) == 1);
 			fieldname = get_relid_attribute_name(typrelid,
 											linitial_int(fstore->fieldnums));
 			if (printit)
