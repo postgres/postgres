@@ -30,7 +30,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/replication/walsender.c,v 1.6 2010/02/17 04:19:39 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/replication/walsender.c,v 1.7 2010/02/18 11:13:46 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -176,14 +176,7 @@ WalSndHandshake(void)
 			ProcessConfigFile(PGC_SIGHUP);
 		}
 
-		if (firstchar == EOF)
-		{
-			/* standby disconnected */
-			ereport(COMMERROR,
-					(errcode(ERRCODE_PROTOCOL_VIOLATION),
-					 errmsg("unexpected EOF on standby connection")));
-		}
-		else
+		if (firstchar != EOF)
 		{
 			/*
 			 * Read the message contents. This is expected to be done without
@@ -193,9 +186,7 @@ WalSndHandshake(void)
 				firstchar = EOF;		/* suitable message already logged */
 		}
 
-
 		/* Handle the very limited subset of commands expected in this phase */
-
 		switch (firstchar)
 		{
 			case 'Q':	/* Query message */
@@ -286,14 +277,16 @@ WalSndHandshake(void)
 				break;
 			}
 
-			/* 'X' means that the standby is closing the connection */
 			case 'X':
+				/* standby is closing the connection */
 				proc_exit(0);
 
 			case EOF:
-				ereport(ERROR,
+				/* standby disconnected unexpectedly */
+				ereport(COMMERROR,
 						(errcode(ERRCODE_PROTOCOL_VIOLATION),
 						 errmsg("unexpected EOF on standby connection")));
+				proc_exit(0);
 
 			default:
 				ereport(FATAL,
@@ -315,36 +308,23 @@ CheckClosedConnection(void)
 	r = pq_getbyte_if_available(&firstchar);
 	if (r < 0)
 	{
-		/* no data available */
-		if (errno == EAGAIN || errno == EWOULDBLOCK)
-			return;
-
-		/*
-		 * Ok if interrupted, though it shouldn't really happen with
-		 * a non-blocking operation.
-		 */
-		if (errno == EINTR)
-			return;
-
+		/* unexpected error or EOF */
 		ereport(COMMERROR,
-				(errcode_for_socket_access(),
-				 errmsg("could not receive data from client: %m")));
+				(errcode(ERRCODE_PROTOCOL_VIOLATION),
+				 errmsg("unexpected EOF on standby connection")));
+		proc_exit(0);
 	}
 	if (r == 0)
 	{
-		/* standby disconnected unexpectedly */
-		ereport(ERROR,
-				(errcode(ERRCODE_PROTOCOL_VIOLATION),
-				 errmsg("unexpected EOF on standby connection")));
+		/* no data available without blocking */
+		return;
 	}
 
 	/* Handle the very limited subset of commands expected in this phase */
 	switch (firstchar)
 	{
 		/*
-		 * 'X' means that the standby is closing down the socket. EOF means
-		 * unexpected loss of standby connection. Either way, perform normal
-		 * shutdown.
+		 * 'X' means that the standby is closing down the socket.
 		 */
 		case 'X':
 			proc_exit(0);

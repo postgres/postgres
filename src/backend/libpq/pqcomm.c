@@ -30,7 +30,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/libpq/pqcomm.c,v 1.203 2010/02/16 19:26:02 mha Exp $
+ *	$PostgreSQL: pgsql/src/backend/libpq/pqcomm.c,v 1.204 2010/02/18 11:13:45 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -821,8 +821,8 @@ pq_peekbyte(void)
  *		pq_getbyte_if_available	- get a single byte from connection,
  *			if available
  *
- * The received byte is stored in *c. Returns 1 if a byte was read, 0 if
- * if no data was available, or EOF.
+ * The received byte is stored in *c. Returns 1 if a byte was read,
+ * 0 if no data was available, or EOF if trouble.
  * --------------------------------
  */
 int
@@ -848,6 +848,33 @@ pq_getbyte_if_available(unsigned char *c)
 	PG_TRY();
 	{
 		r = secure_read(MyProcPort, c, 1);
+		if (r < 0)
+		{
+			/*
+			 * Ok if no data available without blocking or interrupted
+			 * (though EINTR really shouldn't happen with a non-blocking
+			 * socket). Report other errors.
+			 */
+			if (errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR)
+				r = 0;
+			else
+			{
+				/*
+				 * Careful: an ereport() that tries to write to the client would
+				 * cause recursion to here, leading to stack overflow and core
+				 * dump!  This message must go *only* to the postmaster log.
+				 */
+				ereport(COMMERROR,
+						(errcode_for_socket_access(),
+						 errmsg("could not receive data from client: %m")));
+				r = EOF;
+			}
+		}
+		else if (r == 0)
+		{
+			/* EOF detected */
+			r = EOF;
+		}
 	}
 	PG_CATCH();
 	{
