@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/high-availability.sgml,v 1.45 2010/02/18 03:16:09 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/high-availability.sgml,v 1.46 2010/02/18 04:14:38 momjian Exp $ -->
 
 <chapter id="high-availability">
  <title>High Availability, Load Balancing, and Replication</title>
@@ -1257,7 +1257,7 @@ primary_conninfo = 'host=192.168.1.50 port=5432 user=foo password=foopass'
     recovery is to allow the last two actions, so there are small and
     subtle differences in behaviour between read-only transactions
     run on a standby and run during normal operation.
-    It is possible that <command>LISTEN, <command>UNLISTEN</>,
+    It is possible that <command>LISTEN</>, <command>UNLISTEN</>,
     <command>NOTIFY</>, and temporary tables might be allowed in a
     future release.
    </para>
