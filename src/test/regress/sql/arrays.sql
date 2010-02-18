@@ -404,3 +404,11 @@ select unnest(array[1,2,3,4.5]::float8[]);
 select unnest(array[1,2,3,4.5]::numeric[]);
 select unnest(array[1,2,3,null,4,null,null,5,6]);
 select unnest(array[1,2,3,null,4,null,null,5,6]::text[]);
+
+-- Insert/update on a column that is array of composite
+
+create temp table t1 (f1 int8_tbl[]);
+insert into t1 (f1[5].q1) values(42);
+select * from t1;
+update t1 set f1[5].q2 = 43;
+select * from t1;
