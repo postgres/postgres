@@ -17,7 +17,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.h,v 1.83 2009/12/14 00:39:11 itagaki Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.h,v 1.84 2010/02/18 01:29:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,16 +61,16 @@ typedef struct _z_stream
 typedef z_stream *z_streamp;
 #endif
 
+/* Current archive version number (the format we can output) */
 #define K_VERS_MAJOR 1
-#define K_VERS_MINOR 11
+#define K_VERS_MINOR 12
 #define K_VERS_REV 0
 
 /* Data block types */
 #define BLK_DATA 1
-#define BLK_BLOB 2
 #define BLK_BLOBS 3
 
-/* Some important version numbers (checked in code) */
+/* Historical version numbers (checked in code) */
 #define K_VERS_1_0 (( (1 * 256 + 0) * 256 + 0) * 256 + 0)
 #define K_VERS_1_2 (( (1 * 256 + 2) * 256 + 0) * 256 + 0)		/* Allow No ZLIB */
 #define K_VERS_1_3 (( (1 * 256 + 3) * 256 + 0) * 256 + 0)		/* BLOBs */
@@ -87,8 +87,11 @@ typedef z_stream *z_streamp;
 #define K_VERS_1_10 (( (1 * 256 + 10) * 256 + 0) * 256 + 0)		/* add tablespace */
 #define K_VERS_1_11 (( (1 * 256 + 11) * 256 + 0) * 256 + 0)		/* add toc section
 																 * indicator */
+#define K_VERS_1_12 (( (1 * 256 + 12) * 256 + 0) * 256 + 0)		/* add separate BLOB
+																 * entries */
 
-#define K_VERS_MAX (( (1 * 256 + 11) * 256 + 255) * 256 + 0)
+/* Newest format we can read */
+#define K_VERS_MAX (( (1 * 256 + 12) * 256 + 255) * 256 + 0)
 
 
 /* Flags to indicate disposition of offsets stored in files */

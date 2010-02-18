@@ -5,7 +5,7 @@
  *	Implements the basic DB functions used by the archiver.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.87 2010/02/17 04:19:40 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.88 2010/02/18 01:29:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -703,16 +703,26 @@ CommitTransaction(ArchiveHandle *AH)
 void
 DropBlobIfExists(ArchiveHandle *AH, Oid oid)
 {
-	/* Call lo_unlink only if exists to avoid not-found error. */
-	if (PQserverVersion(AH->connection) >= 90000)
+	/*
+	 * If we are not restoring to a direct database connection, we have to
+	 * guess about how to detect whether the blob exists.  Assume new-style.
+	 */
+	if (AH->connection == NULL ||
+		PQserverVersion(AH->connection) >= 90000)
 	{
-		ahprintf(AH, "SELECT pg_catalog.lo_unlink(oid) "
-					 "FROM pg_catalog.pg_largeobject_metadata "
-					 "WHERE oid = %u;\n", oid);
+		ahprintf(AH,
+				 "SELECT pg_catalog.lo_unlink(oid) "
+				 "FROM pg_catalog.pg_largeobject_metadata "
+				 "WHERE oid = '%u';\n",
+				 oid);
 	}
 	else
 	{
-		ahprintf(AH, "SELECT CASE WHEN EXISTS(SELECT 1 FROM pg_catalog.pg_largeobject WHERE loid = '%u') THEN pg_catalog.lo_unlink('%u') END;\n",
+		/* Restoring to pre-9.0 server, so do it the old way */
+		ahprintf(AH,
+				 "SELECT CASE WHEN EXISTS("
+				 "SELECT 1 FROM pg_catalog.pg_largeobject WHERE loid = '%u'"
+				 ") THEN pg_catalog.lo_unlink('%u') END;\n",
 				 oid, oid);
 	}
 }

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/dumputils.c,v 1.53 2010/01/02 16:57:59 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/dumputils.c,v 1.54 2010/02/18 01:29:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -486,7 +486,8 @@ parsePGArray(const char *atext, char ***itemarray, int *nitems)
  *	name: the object name, in the form to use in the commands (already quoted)
  *	subname: the sub-object name, if any (already quoted); NULL if none
  *	type: the object type (as seen in GRANT command: must be one of
- *		TABLE, SEQUENCE, FUNCTION, LANGUAGE, SCHEMA, DATABASE, or TABLESPACE)
+ *		TABLE, SEQUENCE, FUNCTION, LANGUAGE, SCHEMA, DATABASE, TABLESPACE,
+ *		FOREIGN DATA WRAPPER, SERVER, or LARGE OBJECT)
  *	acls: the ACL string fetched from the database
  *	owner: username of object owner (will be passed through fmtId); can be
  *		NULL or empty string to indicate "no owner known"

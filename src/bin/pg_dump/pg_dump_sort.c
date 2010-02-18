@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump_sort.c,v 1.28 2010/02/15 19:59:47 petere Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump_sort.c,v 1.29 2010/02/18 01:29:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,7 +46,7 @@ static const int oldObjectTypePriority[] =
 	16,							/* DO_FK_CONSTRAINT */
 	2,							/* DO_PROCLANG */
 	2,							/* DO_CAST */
-	9,							/* DO_TABLE_DATA */
+	10,							/* DO_TABLE_DATA */
 	7,							/* DO_DUMMY_TYPE */
 	3,							/* DO_TSPARSER */
 	4,							/* DO_TSDICT */
@@ -55,8 +55,8 @@ static const int oldObjectTypePriority[] =
 	3,							/* DO_FDW */
 	4,							/* DO_FOREIGN_SERVER */
 	17,							/* DO_DEFAULT_ACL */
-	10,							/* DO_BLOBS */
-	11							/* DO_BLOB_COMMENTS */
+	9,							/* DO_BLOB */
+	11							/* DO_BLOB_DATA */
 };
 
 /*
@@ -83,7 +83,7 @@ static const int newObjectTypePriority[] =
 	26,							/* DO_FK_CONSTRAINT */
 	2,							/* DO_PROCLANG */
 	8,							/* DO_CAST */
-	19,							/* DO_TABLE_DATA */
+	20,							/* DO_TABLE_DATA */
 	17,							/* DO_DUMMY_TYPE */
 	10,							/* DO_TSPARSER */
 	12,							/* DO_TSDICT */
@@ -92,8 +92,8 @@ static const int newObjectTypePriority[] =
 	14,							/* DO_FDW */
 	15,							/* DO_FOREIGN_SERVER */
 	27,							/* DO_DEFAULT_ACL */
-	20,							/* DO_BLOBS */
-	21							/* DO_BLOB_COMMENTS */
+	19,							/* DO_BLOB */
+	21							/* DO_BLOB_DATA */
 };
 
 
@@ -1157,14 +1157,14 @@ describeDumpableObject(DumpableObject *obj, char *buf, int bufsize)
 					 "DEFAULT ACL %s  (ID %d OID %u)",
 					 obj->name, obj->dumpId, obj->catId.oid);
 			return;
-		case DO_BLOBS:
+		case DO_BLOB:
 			snprintf(buf, bufsize,
-					 "BLOBS  (ID %d)",
-					 obj->dumpId);
+					 "BLOB  (ID %d OID %u)",
+					 obj->dumpId, obj->catId.oid);
 			return;
-		case DO_BLOB_COMMENTS:
+		case DO_BLOB_DATA:
 			snprintf(buf, bufsize,
-					 "BLOB COMMENTS  (ID %d)",
+					 "BLOB DATA  (ID %d)",
 					 obj->dumpId);
 			return;
 	}

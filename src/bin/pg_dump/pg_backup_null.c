@@ -17,7 +17,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_null.c,v 1.23 2009/12/14 00:39:11 itagaki Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_null.c,v 1.24 2010/02/18 01:29:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -147,14 +147,21 @@ _StartBlobs(ArchiveHandle *AH, TocEntry *te)
 static void
 _StartBlob(ArchiveHandle *AH, TocEntry *te, Oid oid)
 {
+	bool		old_blob_style = (AH->version < K_VERS_1_12);
+
 	if (oid == 0)
 		die_horribly(AH, NULL, "invalid OID for large object\n");
 
-	if (AH->ropt->dropSchema)
+	/* With an old archive we must do drop and create logic here */
+	if (old_blob_style && AH->ropt->dropSchema)
 		DropBlobIfExists(AH, oid);
 
-	ahprintf(AH, "SELECT pg_catalog.lo_open(pg_catalog.lo_create('%u'), %d);\n",
-			 oid, INV_WRITE);
+	if (old_blob_style)
+		ahprintf(AH, "SELECT pg_catalog.lo_open(pg_catalog.lo_create('%u'), %d);\n",
+				 oid, INV_WRITE);
+	else
+		ahprintf(AH, "SELECT pg_catalog.lo_open('%u', %d);\n",
+				 oid, INV_WRITE);
 
 	AH->WriteDataPtr = _WriteBlobData;
 }
