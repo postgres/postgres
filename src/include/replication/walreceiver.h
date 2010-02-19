@@ -5,7 +5,7 @@
  *
  * Portions Copyright (c) 2010-2010, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/replication/walreceiver.h,v 1.6 2010/02/03 09:47:19 heikki Exp $
+ * $PostgreSQL: pgsql/src/include/replication/walreceiver.h,v 1.7 2010/02/19 10:51:04 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -14,6 +14,8 @@
 
 #include "access/xlogdefs.h"
 #include "storage/spin.h"
+
+extern bool am_walreceiver;
 
 /*
  * MAXCONNINFO: maximum size of a connection string.

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.376 2010/02/19 01:04:03 itagaki Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.377 2010/02/19 10:51:03 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2686,13 +2686,10 @@ XLogFileClose(void)
 	 * WAL segment files will not be re-read in normal operation, so we advise
 	 * the OS to release any cached pages.	But do not do so if WAL archiving
 	 * or streaming is active, because archiver and walsender process could use
-	 * the cache to read the WAL segment.  Also, don't bother with it if we
-	 * are using O_DIRECT, since the kernel is presumably not caching in that
-	 * case.
+	 * the cache to read the WAL segment.
 	 */
 #if defined(USE_POSIX_FADVISE) && defined(POSIX_FADV_DONTNEED)
-	if (!XLogIsNeeded() &&
-		(get_sync_bit(sync_method) & PG_O_DIRECT) == 0)
+	if (!XLogIsNeeded())
 		(void) posix_fadvise(openLogFile, 0, 0, POSIX_FADV_DONTNEED);
 #endif
 
@@ -7652,9 +7649,28 @@ xlog_outrec(StringInfo buf, XLogRecord *record)
 static int
 get_sync_bit(int method)
 {
+	int o_direct_flag = 0;
+
 	/* If fsync is disabled, never open in sync mode */
 	if (!enableFsync)
 		return 0;
+
+	/*
+	 * Optimize writes by bypassing kernel cache with O_DIRECT when using
+	 * O_SYNC, O_DSYNC or O_FSYNC. But only if archiving and streaming are
+	 * disabled, otherwise the archive command or walsender process will
+	 * read the WAL soon after writing it, which is guaranteed to cause a
+	 * physical read if we bypassed the kernel cache. We also skip the
+	 * posix_fadvise(POSIX_FADV_DONTNEED) call in XLogFileClose() for the
+	 * same reason.
+	 *
+	 * Never use O_DIRECT in walreceiver process for similar reasons; the WAL
+	 * written by walreceiver is normally read by the startup process soon
+	 * after its written. Also, walreceiver performs unaligned writes, which
+	 * don't work with O_DIRECT, so it is required for correctness too.
+	 */
+	if (!XLogIsNeeded() && !am_walreceiver)
+		o_direct_flag = PG_O_DIRECT;
 
 	switch (method)
 	{
@@ -7670,11 +7686,11 @@ get_sync_bit(int method)
 			return 0;
 #ifdef OPEN_SYNC_FLAG
 		case SYNC_METHOD_OPEN:
-			return OPEN_SYNC_FLAG;
+			return OPEN_SYNC_FLAG | o_direct_flag;
 #endif
 #ifdef OPEN_DATASYNC_FLAG
 		case SYNC_METHOD_OPEN_DSYNC:
-			return OPEN_DATASYNC_FLAG;
+			return OPEN_DATASYNC_FLAG | o_direct_flag;
 #endif
 		default:
 			/* can't happen (unless we are out of sync with option array) */

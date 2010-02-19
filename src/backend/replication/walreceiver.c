@@ -29,7 +29,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/replication/walreceiver.c,v 1.4 2010/02/17 04:19:39 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/replication/walreceiver.c,v 1.5 2010/02/19 10:51:04 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,6 +49,9 @@
 #include "utils/memutils.h"
 #include "utils/ps_status.h"
 #include "utils/resowner.h"
+
+/* Global variable to indicate if this process is a walreceiver process */
+bool am_walreceiver;
 
 /* libpqreceiver hooks to these when loaded */
 walrcv_connect_type walrcv_connect = NULL;
@@ -157,6 +160,8 @@ WalReceiverMain(void)
 	XLogRecPtr startpoint;
 	/* use volatile pointer to prevent code rearrangement */
 	volatile WalRcvData *walrcv = WalRcv;
+
+	am_walreceiver = true;
 
 	/*
 	 * WalRcv should be set up already (if we are a backend, we inherit
@@ -424,16 +429,18 @@ XLogWalRcvWrite(char *buf, Size nbytes, XLogRecPtr recptr)
 			bool	use_existent;
 
 			/*
-			 * XLOG segment files will be re-read in recovery operation soon,
-			 * so we don't need to advise the OS to release any cache page.
+			 * fsync() and close current file before we switch to next one.
+			 * We would otherwise have to reopen this file to fsync it later
 			 */
 			if (recvFile >= 0)
 			{
-				/*
-				 * fsync() before we switch to next file. We would otherwise
-				 * have to reopen this file to fsync it later
-				 */
 				XLogWalRcvFlush();
+
+				/*
+				 * XLOG segment files will be re-read by recovery in startup
+				 * process soon, so we don't advise the OS to release cache
+				 * pages associated with the file like XLogFileClose() does.
+				 */
 				if (close(recvFile) != 0)
 					ereport(PANIC,
 							(errcode_for_file_access(),
@@ -445,8 +452,7 @@ XLogWalRcvWrite(char *buf, Size nbytes, XLogRecPtr recptr)
 			/* Create/use new log file */
 			XLByteToSeg(recptr, recvId, recvSeg);
 			use_existent = true;
-			recvFile = XLogFileInit(recvId, recvSeg,
-									&use_existent, true);
+			recvFile = XLogFileInit(recvId, recvSeg, &use_existent, true);
 			recvOff = 0;
 		}
 

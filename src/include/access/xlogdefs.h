@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/xlogdefs.h,v 1.25 2010/01/15 09:19:06 heikki Exp $
+ * $PostgreSQL: pgsql/src/include/access/xlogdefs.h,v 1.26 2010/02/19 10:51:04 heikki Exp $
  */
 #ifndef XLOG_DEFS_H
 #define XLOG_DEFS_H
@@ -106,23 +106,20 @@ typedef uint32 TimeLineID;
  * configure determined whether fdatasync() is.
  */
 #if defined(O_SYNC)
-#define BARE_OPEN_SYNC_FLAG		O_SYNC
+#define OPEN_SYNC_FLAG		O_SYNC
 #elif defined(O_FSYNC)
-#define BARE_OPEN_SYNC_FLAG		O_FSYNC
-#endif
-#ifdef BARE_OPEN_SYNC_FLAG
-#define OPEN_SYNC_FLAG			(BARE_OPEN_SYNC_FLAG | PG_O_DIRECT)
+#define OPEN_SYNC_FLAG		O_FSYNC
 #endif
 
 #if defined(O_DSYNC)
 #if defined(OPEN_SYNC_FLAG)
 /* O_DSYNC is distinct? */
-#if O_DSYNC != BARE_OPEN_SYNC_FLAG
-#define OPEN_DATASYNC_FLAG		(O_DSYNC | PG_O_DIRECT)
+#if O_DSYNC != OPEN_SYNC_FLAG
+#define OPEN_DATASYNC_FLAG		O_DSYNC
 #endif
 #else							/* !defined(OPEN_SYNC_FLAG) */
 /* Win32 only has O_DSYNC */
-#define OPEN_DATASYNC_FLAG		(O_DSYNC | PG_O_DIRECT)
+#define OPEN_DATASYNC_FLAG		O_DSYNC
 #endif
 #endif
 
