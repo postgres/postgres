@@ -4,7 +4,7 @@
  *
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.118 2010/01/02 16:57:58 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.119 2010/02/19 14:12:19 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -748,7 +748,9 @@ do_start(void)
 
 		if (test_postmaster_connection(false) == false)
 		{
-			printf(_("could not start server\n"));
+			write_stderr(_("%s: could not start server\n"
+						   "Examine the log output.\n"),
+						 progname);
 			exit(1);
 		}
 		else
@@ -828,7 +830,7 @@ do_stop(void)
 		}
 		print_msg(_(" done\n"));
 
-		printf(_("server stopped\n"));
+		print_msg(_("server stopped\n"));
 	}
 }
 
@@ -907,7 +909,7 @@ do_restart(void)
 		}
 
 		print_msg(_(" done\n"));
-		printf(_("server stopped\n"));
+		print_msg(_("server stopped\n"));
 	}
 	else
 	{
