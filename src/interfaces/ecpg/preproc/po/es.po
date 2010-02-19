@@ -1,4 +1,5 @@
 # Spanish translation file for ecpg
+#
 # Copyright (C) 2009 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
 #
@@ -6,15 +7,14 @@
 # Alvaro Herrera <alvherre@alvh.no-ip.org>, 2009
 # Franco Catena, <francocatena@gmail.com>, 2009
 #
-# pgtranslation Id: ecpg.po,v 1.5 2009/06/13 20:09:38 petere Exp $
-# $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/po/es.po,v 1.3 2009/06/26 19:33:51 petere Exp $
+# pgtranslation Id: ecpg.po,v 1.7 2010/02/02 20:07:49 alvherre Exp $
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.4\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2009-06-12 21:16+0000\n"
-"PO-Revision-Date: 2009-04-17 11:31-0400\n"
+"PO-Revision-Date: 2010-02-02 17:01-0300\n"
 "Last-Translator: Álvaro Herrera <alvherre@alvh.no-ip.org\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@postgresql.org>\n"
 "MIME-Version: 1.0\n"

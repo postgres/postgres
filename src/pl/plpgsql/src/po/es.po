@@ -1,15 +1,19 @@
 # Spanish message translation file for plpgsql
 #
-# Álvaro Herrera <alvherre@alvh.no-ip.org> 2008-2009
+# Copyright (C) 2008-2010 PostgreSQL Global Development Group
+# This file is distributed under the same license as the PostgreSQL package.
+#
+# Álvaro Herrera <alvherre@alvh.no-ip.org> 2008-2010
 # Emanuel Calvo Franco <postgres.arg@gmail.com> 2008
 #
-# pgtranslation Id: plpgsql.po,v 1.8 2009/11/03 19:53:02 alvherre Exp $
+# pgtranslation Id: plpgsql.po,v 1.9 2010/02/02 20:07:49 alvherre Exp $
+#
 msgid ""
 msgstr ""
-"Project-Id-Version: PostgreSQL 8.4\n"
+"Project-Id-Version: plpgsql (PostgreSQL 8.4)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2009-11-03 17:08+0000\n"
-"PO-Revision-Date: 2009-11-03 16:52-0300\n"
+"PO-Revision-Date: 2010-02-02 17:01-0300\n"
 "Last-Translator: Álvaro Herrera <alvherre@alvh.no-ip.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@postgresql.org>\n"
 "MIME-Version: 1.0\n"

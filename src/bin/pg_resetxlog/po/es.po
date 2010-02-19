@@ -1,14 +1,20 @@
 # Spanish message translation file for pg_resetxlog
+#
+# Copyright (C) 2003-2010 PostgreSQL Global Development Group
+# This file is distributed under the same license as the PostgreSQL package.
+#
 # Ivan Hernandez <ivanx@ciencias.unam.mx>, 2003.
-# Alvaro Herrera <alvherre@alvh.no-ip.org>, 2004-2009
+# Alvaro Herrera <alvherre@alvh.no-ip.org>, 2004-2010
 # Jaime Casanova <systemguards@gmail.com>, 2005
+#
+# pgtranslation Id: pg_resetxlog.po,v 1.7 2010/02/02 20:07:49 alvherre Exp $
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_resetxlog (PostgreSQL 8.4)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2009-11-03 17:15+0000\n"
-"PO-Revision-Date: 2009-11-03 17:04-0300\n"
+"PO-Revision-Date: 2010-02-02 17:01-0300\n"
 "Last-Translator: Álvaro Herrera <alvherre@alvh.no-ip.org>\n"
 "Language-Team: Español <pgsql-es-ayuda@postgresql.org>\n"
 "MIME-Version: 1.0\n"

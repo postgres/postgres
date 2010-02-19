@@ -1,16 +1,20 @@
 # Spanish message translation file for libpq
+#
+# Copyright (C) 2002-2010 PostgreSQL Global Development Group
+# This file is distributed under the same license as the PostgreSQL package.
+#
 # Karim <karim@mribti.com>, 2002.
 # Updated on 2003-2009 by Alvaro Herrera <alvherre@alvh.no-ip.org>
 # Mario González <gonzalemario@gmail.com>, 2005
 #
-# pgtranslation Id: libpq.po,v 1.9 2009/06/25 15:14:23 alvherre Exp $
+# pgtranslation Id: libpq.po,v 1.10 2010/02/02 20:07:49 alvherre Exp $
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: libpq 8.4\n"
+"Project-Id-Version: libpq (PostgreSQL 8.4)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2009-06-25 13:16+0000\n"
-"PO-Revision-Date: 2009-06-25 11:13-0400\n"
+"PO-Revision-Date: 2010-02-02 17:01-0300\n"
 "Last-Translator: Álvaro Herrera <alvherre@alvh.no-ip.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@postgresql.org>\n"
 "MIME-Version: 1.0\n"

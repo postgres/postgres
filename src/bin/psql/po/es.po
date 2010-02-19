@@ -1,15 +1,19 @@
-# translation of psql.
-# (c) <alvherre@alvh.no-ip.org>, 2003-2009
-# (c) Diego A. Gil <diego@adminsa.com>, 2005
+# spanish translation of psql.
 #
-# pgtranslation Id: psql.po,v 1.18 2009/10/16 13:23:34 alvherre Exp $
+# Copyright (C) 2003-2010 PostgreSQL Global Development Group
+# This file is distributed under the same license as the PostgreSQL package.
+#
+# Alvaro Herrera, <alvherre@alvh.no-ip.org>, 2003-2010
+# Diego A. Gil <diego@adminsa.com>, 2005
+#
+# pgtranslation Id: psql.po,v 1.19 2010/02/02 20:07:49 alvherre Exp $
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: psql (PostgreSQL 8.4)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2009-10-16 01:09+0000\n"
-"PO-Revision-Date: 2009-10-16 10:22-0300\n"
+"POT-Creation-Date: 2009-06-21 21:08+0000\n"
+"PO-Revision-Date: 2010-02-02 17:00-0300\n"
 "Last-Translator: Álvaro Herrera <alvherre@alvh.no-ip.org>\n"
 "Language-Team: PgSQL Español <pgsql-es-ayuda@postgresql.org>\n"
 "MIME-Version: 1.0\n"

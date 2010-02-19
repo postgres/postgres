@@ -16,7 +16,7 @@
 #  * Mirko Tebaldi <mirko.tebaldi@libero.it>, 2004.
 # 
 #
-# Copyright (c) 2009, Associazione Culturale ITPUG
+# Copyright (c) 2010, Associazione Culturale ITPUG
 # Distributed under the same license of the PostgreSQL project
 #
 msgid ""

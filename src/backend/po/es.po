@@ -1,11 +1,14 @@
 # Spanish message translation file for PostgreSQL server
+#
+# Copyright (C) 2002-2010 PostgreSQL Global Development Group
+# This file is distributed under the same license as the PostgreSQL package.
+#
 # Karim Mribti  <karim@mribti.com> 2002.
-# Alvaro Herrera <alvherre@dcc.uchile.cl> 2003-2009
+# Alvaro Herrera <alvherre@dcc.uchile.cl> 2003-2010
 # Jaime Casanova <systemguards@gmail.com> 2005, 2006
 # Emanuel Calvo Franco <postgres-arg@gmail.com> 2008
 #
-# pgtranslation Id: postgres.po,v 1.23 2009/06/24 15:17:52 petere Exp $
-# $PostgreSQL: pgsql/src/backend/po/es.po,v 1.18 2009/06/26 19:33:44 petere Exp $
+# pgtranslation Id: postgres.po,v 1.25 2010/02/02 20:07:49 alvherre Exp $
 #
 # FIXME -- quizas sea necesario buscar un termino mejor que
 # "Entrada" para traducir "entry".
@@ -37,10 +40,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: PostgreSQL 8.4\n"
+"Project-Id-Version: PostgreSQL server 8.4\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2009-06-23 04:41+0000\n"
-"PO-Revision-Date: 2009-06-23 10:04+0300\n"
+"PO-Revision-Date: 2010-02-02 17:01-0300\n"
 "Last-Translator: Álvaro Herrera <alvherre@alvh.no-ip.org>\n"
 "Language-Team: PgSQL Español <pgsql-es-ayuda@postgresql.org>\n"
 "MIME-Version: 1.0\n"
