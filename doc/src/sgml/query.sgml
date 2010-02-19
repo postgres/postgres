@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/query.sgml,v 1.53 2009/06/17 21:58:49 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/query.sgml,v 1.54 2010/02/19 01:15:54 momjian Exp $ -->
 
  <chapter id="tutorial-sql">
   <title>The <acronym>SQL</acronym> Language</title>
@@ -26,7 +26,9 @@
    <para>
     Examples in this manual can also be found in the
     <productname>PostgreSQL</productname> source distribution
-    in the directory <filename>src/tutorial/</filename>.  To use those
+    in the directory <filename>src/tutorial/</filename>.  (Binary
+    distributions of <productname>PostgreSQL</productname> might not
+    compile these files.)  To use those
     files, first change to that directory and run <application>make</>:
 
 <screen>
@@ -35,12 +37,7 @@
 </screen>
 
     This creates the scripts and compiles the C files containing user-defined
-    functions and types.  (If you installed a pre-packaged version of
-    <productname>PostgreSQL</productname> rather than building from source,
-    look for a directory named <filename>tutorial</> within the
-    <productname>PostgreSQL</productname> distribution.  The <quote>make</>
-    part should already have been done for you.)
-    Then, to start the tutorial, do the following:
+    functions and types.  Then, to start the tutorial, do the following:
 
 <screen>
 <prompt>$</prompt> <userinput>cd <replaceable>....</replaceable>/tutorial</userinput>
