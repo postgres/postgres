@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/initdb.sgml,v 1.45 2009/12/10 06:32:28 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/initdb.sgml,v 1.46 2010/02/19 14:36:45 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -280,6 +280,28 @@ PostgreSQL documentation
        </para>
       </listitem>
      </varlistentry>
+
+     <varlistentry>
+       <term><option>-V</></term>
+       <term><option>--version</></term>
+       <listitem>
+       <para>
+       Print the <application>initdb</application> version and exit.
+       </para>
+       </listitem>
+     </varlistentry>
+
+     <varlistentry>
+       <term><option>-?</></term>
+       <term><option>--help</></term>
+       <listitem>
+       <para>
+       Show help about <application>initdb</application> command line
+       arguments, and exit.
+       </para>
+       </listitem>
+     </varlistentry>
+
     </variablelist>
    </para>
 

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/pg_resetxlog.sgml,v 1.21 2008/09/23 09:20:35 heikki Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/pg_resetxlog.sgml,v 1.22 2010/02/19 14:36:45 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -178,6 +178,14 @@ PostgreSQL documentation
    This is mainly a debugging tool, but can be useful as a sanity check
    before allowing <command>pg_resetxlog</command> to proceed for real.
   </para>
+
+  <para>
+   The <literal>-V</> and <literal>--version</> options print 
+   the <application>pg_resetxlog</application> version and exit.  The
+   options <literal>-?</> and <literal>--help</> show supported arguments,
+   and exit.
+  </para>
+
  </refsect1>
 
  <refsect1>

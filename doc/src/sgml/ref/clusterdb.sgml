@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/clusterdb.sgml,v 1.26 2010/02/19 03:50:03 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/clusterdb.sgml,v 1.27 2010/02/19 14:36:45 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -128,6 +128,27 @@ PostgreSQL documentation
        </para>
       </listitem>
      </varlistentry>
+
+    <varlistentry>
+      <term><option>-V</></term>
+      <term><option>--version</></term>
+      <listitem>
+      <para>
+      Print the <application>clusterdb</application> version and exit.
+      </para>
+      </listitem>
+    </varlistentry>
+
+    <varlistentry>
+      <term><option>-?</></term>
+      <term><option>--help</></term>
+      <listitem>
+      <para>
+      Show help about <application>clusterdb</application> command line
+      arguments, and exit.
+      </para>
+      </listitem>
+    </varlistentry>
 
     </variablelist>
    </para>

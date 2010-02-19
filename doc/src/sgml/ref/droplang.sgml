@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/droplang.sgml,v 1.32 2009/02/26 16:02:37 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/droplang.sgml,v 1.33 2010/02/19 14:36:45 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -102,6 +102,27 @@ PostgreSQL documentation
         Show a list of already installed languages in the target database.
        </para>
       </listitem>
+     </varlistentry>
+
+     <varlistentry>
+       <term><option>-V</></term>
+       <term><option>--version</></term>
+       <listitem>
+       <para>
+       Print the <application>droplang</application> version and exit.
+       </para>
+       </listitem>
+     </varlistentry>
+
+     <varlistentry>
+       <term><option>-?</></term>
+       <term><option>--help</></term>
+       <listitem>
+       <para>
+       Show help about <application>droplang</application> command line
+       arguments, and exit.
+       </para>
+       </listitem>
      </varlistentry>
 
     </variablelist>

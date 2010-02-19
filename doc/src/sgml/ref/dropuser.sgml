@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/dropuser.sgml,v 1.41 2010/02/19 03:50:03 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/dropuser.sgml,v 1.42 2010/02/19 14:36:45 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -88,6 +88,28 @@ PostgreSQL documentation
        </para>
       </listitem>
      </varlistentry>
+
+     <varlistentry>
+       <term><option>-V</></term>
+       <term><option>--version</></term>
+       <listitem>
+       <para>
+       Print the <application>dropuser</application> version and exit.
+       </para>
+       </listitem>
+     </varlistentry>
+
+     <varlistentry>
+       <term><option>-?</></term>
+       <term><option>--help</></term>
+       <listitem>
+       <para>
+       Show help about <application>dropuser</application> command line
+       arguments, and exit.
+       </para>
+       </listitem>
+     </varlistentry>
+
     </variablelist>
   </para>
 

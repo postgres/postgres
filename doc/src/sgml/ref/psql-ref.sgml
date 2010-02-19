@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.238 2010/02/19 03:50:03 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.239 2010/02/19 14:36:45 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -514,6 +514,7 @@ PostgreSQL documentation
       </para>
       </listitem>
     </varlistentry>
+
   </variablelist>
  </refsect1>
 

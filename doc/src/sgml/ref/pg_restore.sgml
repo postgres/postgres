@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/pg_restore.sgml,v 1.83 2010/02/19 03:50:03 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/pg_restore.sgml,v 1.84 2010/02/19 14:36:45 momjian Exp $ -->
 
 <refentry id="APP-PGRESTORE">
  <refmeta>
@@ -403,6 +403,16 @@
      </varlistentry>
 
      <varlistentry>
+       <term><option>-V</></term>
+       <term><option>--version</></term>
+       <listitem>
+       <para>
+       Print the <application>pg_restore</application> version and exit.
+       </para>
+       </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>-x</option></term>
       <term><option>--no-privileges</option></term>
       <term><option>--no-acl</option></term>
@@ -482,6 +492,17 @@
         <option>--exit-on-error</>.
        </para>
       </listitem>
+     </varlistentry>
+
+     <varlistentry>
+       <term><option>-?</></term>
+       <term><option>--help</></term>
+       <listitem>
+       <para>
+       Show help about <application>pg_restore</application> command line
+       arguments, and exit.
+       </para>
+       </listitem>
      </varlistentry>
 
     </variablelist>
