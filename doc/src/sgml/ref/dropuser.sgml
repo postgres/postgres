@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/dropuser.sgml,v 1.40 2009/02/26 16:02:37 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/dropuser.sgml,v 1.41 2010/02/19 03:50:03 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -22,6 +22,7 @@ PostgreSQL documentation
  <refsynopsisdiv>
   <cmdsynopsis>
    <command>dropuser</command>
+   <arg rep="repeat"><replaceable>connection-option</replaceable></arg>
    <arg rep="repeat"><replaceable>option</replaceable></arg>
    <arg><replaceable>username</replaceable></arg>
   </cmdsynopsis>

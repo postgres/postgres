@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.114 2009/08/07 20:54:31 alvherre Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.115 2010/02/19 03:50:03 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -25,6 +25,7 @@ PostgreSQL documentation
  <refsynopsisdiv>
   <cmdsynopsis>
    <command>pg_dump</command>
+   <arg rep="repeat"><replaceable>connection-option</replaceable></arg>
    <arg rep="repeat"><replaceable>option</replaceable></arg>
    <arg><replaceable>dbname</replaceable></arg>
   </cmdsynopsis>
@@ -51,7 +52,7 @@ PostgreSQL documentation
    saved. To restore from such a script, feed it to <xref
    linkend="app-psql">. Script files
    can be used to reconstruct the database even on other machines and
-   other architectures; with some modifications even on other SQL
+   other architectures; with some modifications, even on other SQL
    database products.
   </para>
 
@@ -530,7 +531,7 @@ PostgreSQL documentation
         than <command>COPY</command>).  This will make restoration very slow;
         it is mainly useful for making dumps that can be loaded into
         non-<productname>PostgreSQL</productname> databases.
-        Also, since this option generates a separate command for each row,
+        However, since this option generates a separate command for each row,
         an error in reloading a row causes only that row to be lost rather
         than the entire table contents.
         Note that
@@ -553,7 +554,7 @@ PostgreSQL documentation
         ...</literal>).  This will make restoration very slow; it is mainly
         useful for making dumps that can be loaded into
         non-<productname>PostgreSQL</productname> databases.
-        Also, since this option generates a separate command for each row,
+        However, since this option generates a separate command for each row,
         an error in reloading a row causes only that row to be lost rather
         than the entire table contents.
        </para>
@@ -636,7 +637,7 @@ PostgreSQL documentation
        <para>
         Output SQL-standard <command>SET SESSION AUTHORIZATION</> commands
         instead of <command>ALTER OWNER</> commands to determine object
-        ownership.  This makes the dump more standards compatible, but
+        ownership.  This makes the dump more standards-compatible, but
         depending on the history of the objects in the dump, might not restore
         properly.  Also, a dump using <command>SET SESSION AUTHORIZATION</>
         will certainly require superuser privileges to restore correctly,
@@ -834,7 +835,7 @@ CREATE DATABASE foo WITH TEMPLATE template0;
    does not contain the statistics used by the optimizer to make
    query planning decisions.  Therefore, it is wise to run
    <command>ANALYZE</command> after restoring from a dump file
-   to ensure good performance; see <xref linkend="vacuum-for-statistics">
+   to ensure optimal performance; see <xref linkend="vacuum-for-statistics">
    and <xref linkend="autovacuum"> for more information.
    The dump file also does not
    contain any <command>ALTER DATABASE ... SET</> commands;

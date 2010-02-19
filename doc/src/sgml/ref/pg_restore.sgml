@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/pg_restore.sgml,v 1.82 2009/08/07 20:54:31 alvherre Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/pg_restore.sgml,v 1.83 2010/02/19 03:50:03 momjian Exp $ -->
 
 <refentry id="APP-PGRESTORE">
  <refmeta>
@@ -23,6 +23,7 @@
  <refsynopsisdiv>
   <cmdsynopsis>
    <command>pg_restore</command>
+   <arg rep="repeat"><replaceable>connection-option</replaceable></arg>
    <arg rep="repeat"><replaceable>option</replaceable></arg>
    <arg><replaceable>filename</replaceable></arg>
   </cmdsynopsis>
@@ -241,7 +242,7 @@
         good place to start is the number of CPU cores on the server,
         but values larger than that can also lead to faster restore
         times in many cases.  Of course, values that are too high will
-        lead to decreasing performance because of thrashing.
+        lead to decreased performance because of thrashing.
        </para>
 
        <para>
@@ -353,7 +354,7 @@
       <listitem>
        <para>
         Restore only the schema (data definitions), not the data (table
-        contents).  Sequence current values will not be restored, either.
+        contents).  Current sequence values will not be restored, either.
         (Do not confuse this with the <option>--schema</> option, which
         uses the word <quote>schema</> in a different meaning.)
        </para>
@@ -440,7 +441,7 @@
        <para>
         Output SQL-standard <command>SET SESSION AUTHORIZATION</> commands
         instead of <command>ALTER OWNER</> commands to determine object
-        ownership.  This makes the dump more standards compatible, but
+        ownership.  This makes the dump more standards-compatible, but
         depending on the history of the objects in the dump, might not restore
         properly.
        </para>
@@ -653,7 +654,7 @@ CREATE DATABASE foo WITH TEMPLATE template0;
       When restoring data to a pre-existing table and the option
       <option>--disable-triggers</> is used,
       <application>pg_restore</application> emits commands
-      to disable triggers on user tables before inserting the data then emits commands to
+      to disable triggers on user tables before inserting the data, then emits commands to
       re-enable them after the data has been inserted.  If the restore is stopped in the
       middle, the system catalogs might be left in the wrong state.
      </para>
@@ -662,7 +663,7 @@ CREATE DATABASE foo WITH TEMPLATE template0;
     <listitem>
      <para>
       <application>pg_restore</application> cannot restore large objects
-      selectively, for instance only those for a specific table.  If
+      selectively;  for instance, only those for a specific table.  If
       an archive contains large objects, then all large objects will be
       restored, or none of them if they are excluded via <option>-L</option>,
       <option>-t</option>, or other options.

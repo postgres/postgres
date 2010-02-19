@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/clusterdb.sgml,v 1.25 2009/02/26 16:02:37 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/clusterdb.sgml,v 1.26 2010/02/19 03:50:03 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -29,8 +29,8 @@ PostgreSQL documentation
    <sbr>
    <command>clusterdb</command>
    <arg rep="repeat"><replaceable>connection-option</replaceable></arg>
-   <group><arg>--all</arg><arg>-a</arg></group>
    <group><arg>--verbose</arg><arg>-v</arg></group>
+   <group><arg>--all</arg><arg>-a</arg></group>
   </cmdsynopsis>
  </refsynopsisdiv>
  

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/createlang.sgml,v 1.43 2009/02/26 16:02:37 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/createlang.sgml,v 1.44 2010/02/19 03:50:03 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -69,7 +69,7 @@ PostgreSQL documentation
       <term><option><optional>--dbname</> <replaceable class="parameter">dbname</replaceable></></term>
       <listitem>
        <para>
-        Specifies to which database the language should be added.
+        Specifies the database to which the language should be added.
         The default is to use the database with the same name as the
         current system user.
        </para>
@@ -213,7 +213,7 @@ PostgreSQL documentation
    <para>
     Most error messages are self-explanatory. If not, run
     <application>createlang</application> with the <option>--echo</option>
-    option and see under the respective <acronym>SQL</acronym> command
+    option and see the respective <acronym>SQL</acronym> command
     for details.  Also, any default connection settings and environment
     variables used by the <application>libpq</application> front-end
     library will apply.

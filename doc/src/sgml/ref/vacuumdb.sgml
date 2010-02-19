@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/vacuumdb.sgml,v 1.50 2010/02/08 04:33:51 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/vacuumdb.sgml,v 1.51 2010/02/19 03:50:03 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -34,13 +34,13 @@ PostgreSQL documentation
    <arg><replaceable>dbname</replaceable></arg>
    <sbr>
    <command>vacuumdb</command>
-   <arg rep="repeat"><replaceable>connection-options</replaceable></arg>
-   <group><arg>--all</arg><arg>-a</arg></group>
+   <arg rep="repeat"><replaceable>connection-option</replaceable></arg>
    <group><arg>--full</arg><arg>-f</arg></group>
    <group><arg>--freeze</arg><arg>-F</arg></group>
    <group><arg>--verbose</arg><arg>-v</arg></group>
    <group><arg>--analyze</arg><arg>-z</arg></group>
    <group><arg>--analyze-only</arg><arg>-Z</arg></group>
+   <group><arg>--all</arg><arg>-a</arg></group>
   </cmdsynopsis>
  </refsynopsisdiv>
 

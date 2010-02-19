@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/ecpg-ref.sgml,v 1.32 2007/01/31 23:26:03 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/ecpg-ref.sgml,v 1.33 2010/02/19 03:50:03 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -192,7 +192,7 @@ PostgreSQL documentation
   <para>
    When compiling the preprocessed C code files, the compiler needs to
    be able to find the <application>ECPG</> header files in the
-   <productname>PostgreSQL</> include directory.  Therefore, one might
+   <productname>PostgreSQL</> include directory.  Therefore, you might
    have to use the <option>-I</> option when invoking the compiler
    (e.g., <literal>-I/usr/local/pgsql/include</literal>).
   </para>

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.237 2010/01/29 17:44:12 rhaas Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.238 2010/02/19 03:50:03 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -54,7 +54,7 @@ PostgreSQL documentation
       <listitem>
       <para>
       Print all input lines to standard output as they are read. This is more
-      useful for script processing rather than interactive mode. This is
+      useful for script processing than interactive mode. This is
       equivalent to setting the variable <varname>ECHO</varname> to
       <literal>all</literal>.
       </para>
@@ -84,7 +84,7 @@ PostgreSQL documentation
       <para>
       <replaceable class="parameter">command</replaceable> must be either
       a command string that is completely parsable by the server (i.e.,
-      it contains no <application>psql</application> specific features),
+      it contains no <application>psql</application>-specific features),
       or a single backslash command. Thus you cannot mix
       <acronym>SQL</acronym> and <application>psql</application>
       meta-commands with this option. To achieve that, you could
@@ -173,7 +173,7 @@ PostgreSQL documentation
       numbers. There is also a slight chance that using this option will
       reduce the start-up overhead. On the other hand, the variant using
       the shell's input redirection is (in theory) guaranteed to yield
-      exactly the same output that you would have gotten had you entered
+      exactly the same output you would have received had you entered
       everything by hand.
       </para>
       </listitem>
@@ -285,7 +285,7 @@ PostgreSQL documentation
       Specifies printing options, in the style of
       <command>\pset</command>. Note that here you
       have to separate name and value with an equal sign instead of a
-      space. Thus to set the output format to LaTeX, you could write
+      space. For example, to set the output format to LaTeX, you could write
       <literal>-P format=latex</literal>.
       </para>
       </listitem>
@@ -523,8 +523,8 @@ PostgreSQL documentation
 
   <para>
    <application>psql</application> returns 0 to the shell if it
-   finished normally, 1 if a fatal error of its own (out of memory,
-   file not found) occurs, 2 if the connection to the server went bad
+   finished normally, 1 if a fatal error of its own occurs (e.g. out of memory,
+   file not found), 2 if the connection to the server went bad
    and the session was not interactive, and 3 if an error occurred in a
    script and the variable <varname>ON_ERROR_STOP</varname> was set.
   </para>
@@ -541,14 +541,14 @@ PostgreSQL documentation
     <application>psql</application> is a regular
     <productname>PostgreSQL</productname> client application. In order
     to connect to a database you need to know the name of your target
-    database, the host name and port number of the server and what user
+    database, the host name and port number of the server, and what user
     name you want to connect as. <application>psql</application> can be
     told about those parameters via command line options, namely
     <option>-d</option>, <option>-h</option>, <option>-p</option>, and
     <option>-U</option> respectively. If an argument is found that does
     not belong to any option it will be interpreted as the database name
     (or the user name, if the database name is already given). Not all
-    these options are required; there are useful defaults. If you omit the host
+    of these options are required; there are useful defaults. If you omit the host
     name, <application>psql</> will connect via a Unix-domain socket
     to a server on the local host, or via TCP/IP to <literal>localhost</> on
     machines that don't have Unix-domain sockets. The default port number is
@@ -633,7 +633,7 @@ testdb=&gt;
     Anything you enter in <application>psql</application> that begins
     with an unquoted backslash is a <application>psql</application>
     meta-command that is processed by <application>psql</application>
-    itself. These commands help make
+    itself. These commands make
     <application>psql</application> more useful for administration or
     scripting. Meta-commands are often called slash or backslash commands.
     </para>
@@ -1727,7 +1727,7 @@ lo_import 152801
 
           <para>
           <literal>aligned</literal> format is the standard, human-readable,
-          nicely formatted text output that is default.
+          nicely formatted text output;  this is the default.
           </para>
 
           <para>
@@ -2189,7 +2189,7 @@ lo_import 152801
         <para>
         Escapes to a separate Unix shell or executes the Unix command
         <replaceable class="parameter">command</replaceable>. The
-        arguments are not further interpreted, the shell will see them
+        arguments are not further interpreted; the shell will see them
         as-is.
         </para>
         </listitem>
@@ -2351,7 +2351,7 @@ bar
     number of them. A number of these variables are treated specially
     by <application>psql</application>. They indicate certain option
     settings that can be changed at run time by altering the value of
-    the variable or represent some state of the application. Although
+    the variable or that represent some state of the application. Although
     you can use these variables for any other purpose, this is not
     recommended, as the program behavior might grow really strange
     really quickly. By convention, all specially treated variables
@@ -2763,7 +2763,7 @@ testdb=&gt; <userinput>INSERT INTO my_table VALUES (:'content');</userinput>
     Since colons can legally appear in SQL commands, an apparent attempt
     at interpolation (such as <literal>:name</literal>,
     <literal>:'name'</literal>, or <literal>:"name"</literal>) is not
-    changed unless the named variable is currently set. In any case you
+    changed unless the named variable is currently set. In any case, you
     can escape a colon with a backslash to protect it from substitution.
     (The colon syntax for variables is standard <acronym>SQL</acronym> for
     embedded query languages, such as <application>ECPG</application>.

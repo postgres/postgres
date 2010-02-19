@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/createdb.sgml,v 1.49 2009/02/26 16:02:37 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/createdb.sgml,v 1.50 2010/02/19 03:50:03 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -22,6 +22,7 @@ PostgreSQL documentation
  <refsynopsisdiv>
   <cmdsynopsis>
    <command>createdb</command>
+   <arg rep="repeat"><replaceable>connection-option</replaceable></arg>
    <arg rep="repeat"><replaceable>option</replaceable></arg>
    <arg><replaceable>dbname</replaceable></arg>
    <arg><replaceable>description</replaceable></arg>
@@ -41,7 +42,7 @@ PostgreSQL documentation
   <para>
    Normally, the database user who executes this command becomes the owner of
    the new database.
-   However a different owner can be specified via the <option>-O</option>
+   However, a different owner can be specified via the <option>-O</option>
    option, if the executing user has appropriate privileges.
   </para>
 
@@ -171,7 +172,7 @@ PostgreSQL documentation
    </para>
 
    <para>
-    The options <option>-D</option>, <option>-E</option>, <option>-l</option>,
+    The options <option>-D</option>, <option>-l</option>, <option>-E</option>, 
     <option>-O</option>, and
     <option>-T</option> correspond to options of the underlying
     SQL command <xref linkend="SQL-CREATEDATABASE"

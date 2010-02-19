@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/reference.sgml,v 1.70 2009/12/11 03:34:55 itagaki Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/reference.sgml,v 1.71 2010/02/19 03:50:02 momjian Exp $ -->
 
 <part id="reference">
  <title>Reference</title>
@@ -184,7 +184,7 @@
    <para>
     This part contains reference information for
     <productname>PostgreSQL</productname> client applications and
-    utilities.  Not all of these commands are of general utility, some
+    utilities.  Not all of these commands are of general utility; some
     might require special privileges.  The common feature of these
     applications is that they can be run on any host, independent of
     where the database server resides.
