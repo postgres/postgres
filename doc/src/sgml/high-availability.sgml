@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/high-availability.sgml,v 1.46 2010/02/18 04:14:38 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/high-availability.sgml,v 1.47 2010/02/19 00:15:25 momjian Exp $ -->
 
 <chapter id="high-availability">
  <title>High Availability, Load Balancing, and Replication</title>
@@ -1056,8 +1056,8 @@ primary_conninfo = 'host=192.168.1.50 port=5432 user=foo password=foopass'
     is useful for both log shipping replication and for restoring a backup
     to an exact state with great precision.
     The term Hot Standby also refers to the ability of the server to move
-    from recovery through to normal running while users continue running
-    queries and/or continue their connections.
+    from recovery through to normal operation while users continue running
+    queries and/or keep their connections open.
    </para>
 
    <para>
@@ -1082,7 +1082,7 @@ primary_conninfo = 'host=192.168.1.50 port=5432 user=foo password=foopass'
     return differing results. Eventually, the standby will be
     consistent with the primary.
     Queries executed on the standby will be correct with regard to the transactions
-    that had been recovered at the start of the query, or start of first statement,
+    that had been recovered at the start of the query, or start of first statement
     in the case of serializable transactions. In comparison with the primary,
     the standby returns query results that could have been obtained on the primary
     at some moment in the past.
@@ -1103,8 +1103,8 @@ primary_conninfo = 'host=192.168.1.50 port=5432 user=foo password=foopass'
    </para>
 
    <para>
-    "Read-only" above means no writes to the permanent database tables.
-    There are no problems with queries that use transient sort and
+    "Read-only" above means no writes to the permanent or temporary database
+    tables.  There are no problems with queries that use transient sort and
     work files.
    </para>
 
@@ -1203,8 +1203,12 @@ primary_conninfo = 'host=192.168.1.50 port=5432 user=foo password=foopass'
      </listitem>
      <listitem>
       <para>
-       <command>LOCK TABLE</>, in short default form, since it requests <literal>ACCESS EXCLUSIVE MODE</>.
        <command>LOCK TABLE</> that explicitly requests a mode higher than <literal>ROW EXCLUSIVE MODE</>.
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       <command>LOCK TABLE</> in short default form, since it requests <literal>ACCESS EXCLUSIVE MODE</>.
       </para>
      </listitem>
      <listitem>
@@ -1241,7 +1245,7 @@ primary_conninfo = 'host=192.168.1.50 port=5432 user=foo password=foopass'
      </listitem>
      <listitem>
       <para>
-       sequence update - nextval()
+       Sequence update - <function>nextval()</>
       </para>
      </listitem>
      <listitem>
@@ -1253,9 +1257,9 @@ primary_conninfo = 'host=192.168.1.50 port=5432 user=foo password=foopass'
    </para>
 
    <para>
-    Note that the current behaviour of read only transactions when not in
+    Note that the current behavior of read only transactions when not in
     recovery is to allow the last two actions, so there are small and
-    subtle differences in behaviour between read-only transactions
+    subtle differences in behavior between read-only transactions
     run on a standby and run during normal operation.
     It is possible that <command>LISTEN</>, <command>UNLISTEN</>,
     <command>NOTIFY</>, and temporary tables might be allowed in a
@@ -1275,7 +1279,7 @@ primary_conninfo = 'host=192.168.1.50 port=5432 user=foo password=foopass'
     issuing <command>SHOW transaction_read_only</>.  In addition, a set of
     functions (<xref linkend="functions-recovery-info-table">) allow users to
     access information about the standby server. These allow you to write
-    functions that are aware of the current state of the database. These
+    programs that are aware of the current state of the database. These
     can be used to monitor the progress of recovery, or to allow you to
     write complex programs that restore the database to particular states.
    </para>
@@ -1338,7 +1342,8 @@ primary_conninfo = 'host=192.168.1.50 port=5432 user=foo password=foopass'
        </listitem>
        <listitem>
         <para>
-         Waiting to acquire buffer cleanup locks
+         The standby waiting longer than <varname>max_standby_delay</>
+         to acquire a buffer cleanup lock.
         </para>
        </listitem>
        <listitem>
@@ -1350,27 +1355,28 @@ primary_conninfo = 'host=192.168.1.50 port=5432 user=foo password=foopass'
    </para>
 
    <para>
-    Some WAL redo actions will be for <acronym>DDL</> actions. These DDL actions are
-    repeating actions that have already committed on the primary node, so
-    they must not fail on the standby node. These DDL locks take priority
-    and will automatically *cancel* any read-only transactions that get in
-    their way, after a grace period. This is similar to the possibility of
-    being canceled by the deadlock detector, but in this case the standby
-    process always wins, since the replayed actions must not fail. This
-    also ensures that replication does not fall behind while waiting for a
-    query to complete. Again, the assumption is that the standby is
-    primarily for high availability.
+    Some WAL redo actions will be for <acronym>DDL</> execution. These DDL
+    actions are replaying changes that have already committed on the primary
+    node, so they must not fail on the standby node. These DDL locks take
+    priority and will automatically *cancel* any read-only transactions that
+    get in their way, after a grace period. This is similar to the possibility
+    of being canceled by the deadlock detector.  But in this case, the standby
+    recovery process always wins, since the replayed actions must not fail.
+    This also ensures that replication does not fall behind while waiting for a
+    query to complete. This prioritization presumes that the standby exists
+    primarily for high availability, and that adjusting the grace period
+    will allow a sufficient guard against unexpected cancellation.
    </para>
 
    <para>
-    An example of the above would be an Administrator on Primary server
+    An example of the above would be an administrator on the primary server
     running <command>DROP TABLE</> on a table that is currently being queried
     on the standby server.
     Clearly the query cannot continue if <command>DROP TABLE</>
     proceeds. If this situation occurred on the primary, the <command>DROP TABLE</>
     would wait until the query had finished. When <command>DROP TABLE</> is
     run on the primary, the primary doesn't have
-    information about which queries are running on the standby and so
+    information about which queries are running on the standby, so it
     cannot wait for any of the standby queries. The WAL change records come through to the
     standby while the standby query is still running, causing a conflict.
    </para>
@@ -1407,8 +1413,8 @@ primary_conninfo = 'host=192.168.1.50 port=5432 user=foo password=foopass'
         <para>
          If the conflict is caused by a lock, the conflicting standby
          transaction is cancelled immediately. If the transaction is
-         idle-in-transaction then the session is aborted
-         instead, though this might change in the future.
+         idle-in-transaction, then the session is aborted instead.
+         This behavior might change in the future.
         </para>
        </listitem>
 
@@ -1456,12 +1462,13 @@ primary_conninfo = 'host=192.168.1.50 port=5432 user=foo password=foopass'
     for as long as needed to run queries on the standby. This guarantees that
     a WAL cleanup record is never generated and query conflicts do not occur,
     as described above. This could be done using <filename>contrib/dblink</>
-    and <function>pg_sleep()</>, or via other mechanisms. If you do this, you should note
-    that this will delay cleanup of dead rows by vacuum or HOT and
-    people might find this undesirable. However, remember that the
-    primary and standby nodes are linked via the WAL, so this situation is no
-    different from the case where the query ran on the primary node itself
-    except for the benefit of off-loading the execution onto the standby.
+    and <function>pg_sleep()</>, or via other mechanisms. If you do this, you
+    should note that this will delay cleanup of dead rows on the primary by
+    vacuum or HOT, and people might find this undesirable. However, remember
+    that the primary and standby nodes are linked via the WAL, so the cleanup
+    situation is no different from the case where the query ran on the primary
+    node itself.  And you are still getting the benefit of off-loading the
+    execution onto the standby.
    </para>
 
    <para>
@@ -1494,8 +1501,10 @@ primary_conninfo = 'host=192.168.1.50 port=5432 user=foo password=foopass'
     be disabled via <filename>postgresql.conf</>. The server might take
     some time to enable recovery connections since the server must first complete
     sufficient recovery to provide a consistent state against which queries
-    can run before enabling read only connections. Look for these messages
-    in the server logs:
+    can run before enabling read only connections.  During this period,
+    clients that attempt to connect will be refused with an error message.
+    To confirm the server has come up, either loop retrying to connect from
+    the application, or look for these messages in the server logs:
 
 <programlisting>
 LOG:  entering standby mode
@@ -1617,9 +1626,9 @@ LOG:  database system is ready to accept read only connections
 
    <para>
     As a result, you cannot create additional indexes that exist solely
-    on the standby, nor can statistics exist solely on the standby.
-    If these administration commands are needed they should be executed
-    on the primary so that the changes will propagate to the
+    on the standby, nor statistics that exist solely on the standby.
+    If these administration commands are needed, they should be executed
+    on the primary, and eventually those changes will propagate to the
     standby.
    </para>
 
@@ -1646,12 +1655,12 @@ LOG:  database system is ready to accept read only connections
 
    <para>
     The <productname>Nagios</> plugin <productname>check_pgsql</> will
-    work, but it is very simple.
-    <productname>check_postgres</> will also work, though some actions
-    could give different or confusing results.
+    work, because the simple information it checks for exists.
+    The <productname>check_postgres</> monitoring script will also work,
+    though some reported values could give different or confusing results.
     For example, last vacuum time will not be maintained, since no
-    vacuum occurs on the standby (though vacuums running on the primary do
-    send their changes to the standby).
+    vacuum occurs on the standby.  Vacuums running on the primary
+    do still send their changes to the standby.
    </para>
 
    <para>
@@ -1715,7 +1724,7 @@ LOG:  database system is ready to accept read only connections
     In normal (non-recovery) mode, if you issue <command>DROP USER</> or <command>DROP ROLE</>
     for a role with login capability while that user is still connected then
     nothing happens to the connected user - they remain connected. The user cannot
-    reconnect however. This behaviour applies in recovery also, so a
+    reconnect however. This behavior applies in recovery also, so a
     <command>DROP USER</> on the primary does not disconnect that user on the standby.
    </para>
 
@@ -1729,15 +1738,15 @@ LOG:  database system is ready to accept read only connections
    </para>
 
    <para>
-    Autovacuum is not active during recovery, though it will start normally
-    at the end of recovery.
+    Autovacuum is not active during recovery, it will start normally at the
+    end of recovery.
    </para>
 
    <para>
     The background writer is active during recovery and will perform
     restartpoints (similar to checkpoints on the primary) and normal block
-    cleaning activities. (Remember, hint bits will cause blocks to
-    be modified on the standby server.)
+    cleaning activities. This can include updates of the hint bit
+    information stored on the standby server.
     The <command>CHECKPOINT</> command is accepted during recovery,
     though it performs a restartpoint rather than a new checkpoint.
    </para>
@@ -1792,11 +1801,15 @@ LOG:  database system is ready to accept read only connections
     <para>
      Valid starting points for recovery connections are generated at each
      checkpoint on the master. If the standby is shut down while the master
-     is in a shutdown state it might not be possible to re-enter Hot Standby
-     until the primary is started up so that it generates further starting
-     points in the WAL logs. This is not considered a serious issue
-     because the standby is usually switched to act as primary when
-     the first node is taken down.
+     is in a shutdown state, it might not be possible to re-enter Hot Standby
+     until the primary is started up, so that it generates further starting
+     points in the WAL logs.  This situation isn't a problem in the most
+     common situations where it might happen. Generally, if the primary is
+     shut down and not available anymore, that's likely due to a serious
+     failure that requires the standby being converted to operate as
+     the new primary anyway.  And in situations where the primary is
+     being intentionally taken down, coordinating to make sure the standby
+     becomes the new primary smoothly is also standard procedure.
     </para>
    </listitem>
    <listitem>

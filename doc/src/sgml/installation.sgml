@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.341 2010/02/03 17:25:05 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.342 2010/02/19 00:15:25 momjian Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -2237,7 +2237,7 @@ kill `cat /usr/local/pgsql/data/postmaster.pid`
      When implementing PostgreSQL version 8.1 on AIX 5.3, we
      periodically ran into problems where the statistics collector
      would <quote>mysteriously</quote> not come up successfully.  This
-     appears to be the result of unexpected behaviour in the IPv6
+     appears to be the result of unexpected behavior in the IPv6
      implementation.  It looks like PostgreSQL and IPv6 do not play
      very well together at this time on AIX.
     </para>

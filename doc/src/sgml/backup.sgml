@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.141 2010/02/09 16:50:25 heikki Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.142 2010/02/19 00:15:25 momjian Exp $ -->
 
 <chapter id="backup">
  <title>Backup and Restore</title>
@@ -126,7 +126,7 @@ psql <replaceable class="parameter">dbname</replaceable> &lt; <replaceable class
     execute after an SQL error is encountered. You might wish to run
     <application>psql</application> with
     the <literal>ON_ERROR_STOP</> variable set to alter that
-    behaviour and have <application>psql</application> exit with an
+    behavior and have <application>psql</application> exit with an
     exit status of 3 if an SQL error occurs:
 <programlisting>
 psql --set ON_ERROR_STOP=on dbname &lt; infile

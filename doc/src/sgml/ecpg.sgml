@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ecpg.sgml,v 1.96 2010/02/17 04:19:37 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ecpg.sgml,v 1.97 2010/02/19 00:15:25 momjian Exp $ -->
 
 <chapter id="ecpg">
  <title><application>ECPG</application> - Embedded <acronym>SQL</acronym> in C</title>
@@ -2882,7 +2882,7 @@ struct sqlname
    program and most of the additional functions of the <productname>Informix</productname> compatibility
    mode allow you to operate on those C host program types. Note however that
    the extent of the compatibility is limited. It does not try to copy <productname>Informix</productname>
-   behaviour; it allows you to do more or less the same operations and gives
+   behavior; it allows you to do more or less the same operations and gives
    you functions that have the same name and the same basic behavior but it is
    no drop-in replacement if you are using <productname>Informix</productname> at the moment. Moreover,
    some of the data types are different. For example,

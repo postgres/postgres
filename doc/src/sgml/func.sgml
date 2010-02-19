@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.504 2010/02/16 22:34:42 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.505 2010/02/19 00:15:25 momjian Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -13801,8 +13801,8 @@ SELECT (pg_stat_file('filename')).modification;
       function, <function>suppress_redundant_updates_trigger</>, 
       which will prevent any update
       that does not actually change the data in the row from taking place, in
-      contrast to the normal behaviour which always performs the update
-      regardless of whether or not the data has changed. (This normal behaviour
+      contrast to the normal behavior which always performs the update
+      regardless of whether or not the data has changed. (This normal behavior
       makes updates run faster, since no checking is required, and is also
       useful in certain cases.)
     </para>
