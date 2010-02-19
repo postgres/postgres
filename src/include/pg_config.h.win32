@@ -560,13 +560,13 @@
 #define PACKAGE_NAME "PostgreSQL"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "PostgreSQL 9.0alpha4"
+#define PACKAGE_STRING "PostgreSQL 9.0devel"
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "9.0alpha4"
+#define PACKAGE_VERSION "9.0devel"
 
 /* PostgreSQL version as a string */
-#define PG_VERSION "9.0alpha4"
+#define PG_VERSION "9.0devel"
 
 /* PostgreSQL version as a number */
 #define PG_VERSION_NUM 90000
