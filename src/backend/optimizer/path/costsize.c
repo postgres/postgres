@@ -59,7 +59,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.214 2010/01/05 21:53:58 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.215 2010/02/19 21:49:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1189,7 +1189,9 @@ cost_sort(Path *path, PlannerInfo *root,
 
 	/*
 	 * Also charge a small amount (arbitrarily set equal to operator cost) per
-	 * extracted tuple.  Note it's correct to use tuples not output_tuples
+	 * extracted tuple.  We don't charge cpu_tuple_cost because a Sort node
+	 * doesn't do qual-checking or projection, so it has less overhead than
+	 * most plan nodes.  Note it's correct to use tuples not output_tuples
 	 * here --- the upper LIMIT will pro-rate the run cost so we'd be double
 	 * counting the LIMIT otherwise.
 	 */
@@ -1222,14 +1224,18 @@ cost_material(Path *path,
 	long		work_mem_bytes = work_mem * 1024L;
 
 	/*
-	 * Whether spilling or not, charge 2x cpu_tuple_cost per tuple to reflect
-	 * bookkeeping overhead.  (This rate must be more than cpu_tuple_cost;
+	 * Whether spilling or not, charge 2x cpu_operator_cost per tuple to
+	 * reflect bookkeeping overhead.  (This rate must be more than what
+	 * cost_rescan charges for materialize, ie, cpu_operator_cost per tuple;
 	 * if it is exactly the same then there will be a cost tie between
 	 * nestloop with A outer, materialized B inner and nestloop with B outer,
 	 * materialized A inner.  The extra cost ensures we'll prefer
-	 * materializing the smaller rel.)
+	 * materializing the smaller rel.)  Note that this is normally a good deal
+	 * less than cpu_tuple_cost; which is OK because a Material plan node
+	 * doesn't do qual-checking or projection, so it's got less overhead than
+	 * most plan nodes.
 	 */
-	run_cost += 2 * cpu_tuple_cost * tuples;
+	run_cost += 2 * cpu_operator_cost * tuples;
 
 	/*
 	 * If we will spill to disk, charge at the rate of seq_page_cost per page.
@@ -1830,11 +1836,11 @@ cost_mergejoin(MergePath *path, PlannerInfo *root, SpecialJoinInfo *sjinfo)
 	bare_inner_cost = inner_run_cost * rescanratio;
 	/*
 	 * When we interpose a Material node the re-fetch cost is assumed to be
-	 * just cpu_tuple_cost per tuple, independently of the underlying plan's
-	 * cost; but we have to charge an extra cpu_tuple_cost per original fetch
-	 * as well.  Note that we're assuming the materialize node will never
-	 * spill to disk, since it only has to remember tuples back to the last
-	 * mark.  (If there are a huge number of duplicates, our other cost
+	 * just cpu_operator_cost per tuple, independently of the underlying
+	 * plan's cost; and we charge an extra cpu_operator_cost per original
+	 * fetch as well.  Note that we're assuming the materialize node will
+	 * never spill to disk, since it only has to remember tuples back to the
+	 * last mark.  (If there are a huge number of duplicates, our other cost
 	 * factors will make the path so expensive that it probably won't get
 	 * chosen anyway.)  So we don't use cost_rescan here.
 	 *
@@ -1842,7 +1848,7 @@ cost_mergejoin(MergePath *path, PlannerInfo *root, SpecialJoinInfo *sjinfo)
 	 * of the generated Material node.
 	 */
 	mat_inner_cost = inner_run_cost +
-		cpu_tuple_cost * inner_path_rows * rescanratio;
+		cpu_operator_cost * inner_path_rows * rescanratio;
 
 	/* Prefer materializing if it looks cheaper */
 	if (mat_inner_cost < bare_inner_cost)
@@ -2354,10 +2360,8 @@ cost_rescan(PlannerInfo *root, Path *path,
 			*rescan_startup_cost = 0;
 			*rescan_total_cost = path->total_cost - path->startup_cost;
 			break;
-		case T_Material:
 		case T_CteScan:
 		case T_WorkTableScan:
-		case T_Sort:
 			{
 				/*
 				 * These plan types materialize their final result in a
@@ -2366,6 +2370,33 @@ cost_rescan(PlannerInfo *root, Path *path,
 				 * to spill to disk.
 				 */
 				Cost	run_cost = cpu_tuple_cost * path->parent->rows;
+				double	nbytes = relation_byte_size(path->parent->rows,
+													path->parent->width);
+				long	work_mem_bytes = work_mem * 1024L;
+
+				if (nbytes > work_mem_bytes)
+				{
+					/* It will spill, so account for re-read cost */
+					double		npages = ceil(nbytes / BLCKSZ);
+
+					run_cost += seq_page_cost * npages;
+				}
+				*rescan_startup_cost = 0;
+				*rescan_total_cost = run_cost;
+			}
+			break;
+		case T_Material:
+		case T_Sort:
+			{
+				/*
+				 * These plan types not only materialize their results, but
+				 * do not implement qual filtering or projection.  So they
+				 * are even cheaper to rescan than the ones above.  We charge
+				 * only cpu_operator_cost per tuple.  (Note: keep that in
+				 * sync with the run_cost charge in cost_sort, and also see
+				 * comments in cost_material before you change it.)
+				 */
+				Cost	run_cost = cpu_operator_cost * path->parent->rows;
 				double	nbytes = relation_byte_size(path->parent->rows,
 													path->parent->width);
 				long	work_mem_bytes = work_mem * 1024L;
