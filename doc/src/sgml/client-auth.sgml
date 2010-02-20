@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.131 2010/02/03 17:25:05 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.132 2010/02/20 19:21:14 momjian Exp $ -->
 
 <chapter id="client-authentication">
  <title>Client Authentication</title>
@@ -824,16 +824,6 @@ omicron         bryanh                  guest1
     The following configuration options are supported for <productname>GSSAPI</productname>:
     <variablelist>
      <varlistentry>
-      <term><literal>map</literal></term>
-      <listitem>
-       <para>
-        Allows for mapping between system and database usernames. See
-        <xref linkend="auth-username-maps"> for details.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
       <term><literal>include_realm</literal></term>
       <listitem>
        <para>
@@ -841,6 +831,21 @@ omicron         bryanh                  guest1
         principal is included in the system user name that's passed through
         username mapping (<xref linkend="auth-username-maps">). This is
         useful for handling users from multiple realms.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><literal>map</literal></term>
+      <listitem>
+       <para>
+        Allows for mapping between system and database usernames. See
+        <xref linkend="auth-username-maps"> for details. For a Kerboros
+        principal <literal>username/hostbased@EXAMPLE.COM</literal>, the
+        username used for mapping is <literal>username/hostbased</literal>
+        if <literal>include_realm</literal> is disabled, and
+        <literal>username/hostbased@EXAMPLE.COM</literal> if
+        <literal>include_realm</literal> is enabled.
        </para>
       </listitem>
      </varlistentry>
@@ -1027,10 +1032,10 @@ omicron         bryanh                  guest1
    <para>
     When connecting to the database make sure you have a ticket for a
     principal matching the requested database user name. For example, for
-    database user name <literal>fred</>, both principal
-    <literal>fred@EXAMPLE.COM</> and
-    <literal>fred/users.example.com@EXAMPLE.COM</> could be used to
-    authenticate to the database server.
+    database user name <literal>fred</>, principal
+    <literal>fred@EXAMPLE.COM</> would be able to connect. To also allow
+    principle <literal>fred/users.example.com@EXAMPLE.COM</>, use a username
+    map, as described in <xref linkend="auth-username-maps">.
    </para>
 
    <para>
