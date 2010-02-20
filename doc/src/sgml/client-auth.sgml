@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.132 2010/02/20 19:21:14 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.133 2010/02/20 21:04:28 momjian Exp $ -->
 
 <chapter id="client-authentication">
  <title>Client Authentication</title>
@@ -893,15 +893,6 @@ omicron         bryanh                  guest1
    <para>
     The following configuration options are supported for <productname>SSPI</productname>:
     <variablelist>
-     <varlistentry>
-      <term><literal>map</literal></term>
-      <listitem>
-       <para>
-        Allows for mapping between system and database usernames. See
-        <xref linkend="auth-username-maps"> for details.
-       </para>
-      </listitem>
-     </varlistentry>
 
      <varlistentry>
       <term><literal>include_realm</literal></term>
@@ -911,6 +902,16 @@ omicron         bryanh                  guest1
         principal is included in the system user name that's passed through
         username mapping (<xref linkend="auth-username-maps">). This is
         useful for handling users from multiple realms.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><literal>map</literal></term>
+      <listitem>
+       <para>
+        Allows for mapping between system and database usernames. See
+        <xref linkend="auth-username-maps"> for details.
        </para>
       </listitem>
      </varlistentry>
