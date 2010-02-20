@@ -14,7 +14,7 @@
  *	Author: Jan Wieck, Afilias USA INC.
  *	64-bit txids: Marko Kreen, Skype Technologies
  *
- *	$PostgreSQL: pgsql/src/backend/utils/adt/txid.c,v 1.11 2010/01/07 04:53:34 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/utils/adt/txid.c,v 1.12 2010/02/20 21:24:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -336,7 +336,7 @@ txid_current(PG_FUNCTION_ARGS)
 	 * return a valid current xid, so we should not change
 	 * this to return NULL or similar invalid xid.
 	 */
-	PreventCommandDuringRecovery();
+	PreventCommandDuringRecovery("txid_current()");
 
 	load_xid_epoch(&state);
 

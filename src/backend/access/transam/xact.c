@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.287 2010/02/17 04:19:39 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.288 2010/02/20 21:24:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -401,9 +401,6 @@ AssignTransactionId(TransactionState s)
 {
 	bool		isSubXact = (s->parent != NULL);
 	ResourceOwner currentOwner;
-
-	if (RecoveryInProgress())
-		elog(ERROR, "cannot assign TransactionIds during recovery");
 
 	/* Assert that caller didn't screw up */
 	Assert(!TransactionIdIsValid(s->transactionId));

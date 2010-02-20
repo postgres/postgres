@@ -6,7 +6,7 @@
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/varsup.c,v 1.89 2010/02/17 03:10:33 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/varsup.c,v 1.90 2010/02/20 21:24:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,6 +57,10 @@ GetNewTransactionId(bool isSubXact)
 		MyProc->xid = BootstrapTransactionId;
 		return BootstrapTransactionId;
 	}
+
+	/* safety check, we should never get this far in a HS slave */
+	if (RecoveryInProgress())
+		elog(ERROR, "cannot assign TransactionIds during recovery");
 
 	LWLockAcquire(XidGenLock, LW_EXCLUSIVE);
 
@@ -419,6 +423,10 @@ Oid
 GetNewObjectId(void)
 {
 	Oid			result;
+
+	/* safety check, we should never get this far in a HS slave */
+	if (RecoveryInProgress())
+		elog(ERROR, "cannot assign OIDs during recovery");
 
 	LWLockAcquire(OidGenLock, LW_EXCLUSIVE);
 

@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/namespace.c,v 1.123 2010/02/14 18:42:13 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/namespace.c,v 1.124 2010/02/20 21:24:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3016,6 +3016,21 @@ InitTempTableNamespace(void)
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 errmsg("permission denied to create temporary tables in database \"%s\"",
 						get_database_name(MyDatabaseId))));
+
+	/*
+	 * Do not allow a Hot Standby slave session to make temp tables.  Aside
+	 * from problems with modifying the system catalogs, there is a naming
+	 * conflict: pg_temp_N belongs to the session with BackendId N on the
+	 * master, not to a slave session with the same BackendId.  We should
+	 * not be able to get here anyway due to XactReadOnly checks, but let's
+	 * just make real sure.  Note that this also backstops various operations
+	 * that allow XactReadOnly transactions to modify temp tables; they'd need
+	 * RecoveryInProgress checks if not for this.
+	 */
+	if (RecoveryInProgress())
+		ereport(ERROR,
+				(errcode(ERRCODE_READ_ONLY_SQL_TRANSACTION),
+				 errmsg("cannot create temporary tables during recovery")));
 
 	snprintf(namespaceName, sizeof(namespaceName), "pg_temp_%d", MyBackendId);
 

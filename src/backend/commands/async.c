@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/async.c,v 1.153 2010/02/17 16:54:06 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/async.c,v 1.154 2010/02/20 21:24:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -533,6 +533,9 @@ pg_notify(PG_FUNCTION_ARGS)
 		payload = "";
 	else
 		payload = text_to_cstring(PG_GETARG_TEXT_PP(1));
+
+	/* For NOTIFY as a statement, this is checked in ProcessUtility */
+	PreventCommandDuringRecovery("NOTIFY");
 
 	Async_Notify(channel, payload);
 

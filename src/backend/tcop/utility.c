@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.333 2010/02/16 22:34:50 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.334 2010/02/20 21:24:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -151,7 +151,8 @@ check_xact_readonly(Node *parsetree)
 	/*
 	 * Note: Commands that need to do more complicated checking are handled
 	 * elsewhere, in particular COPY and plannable statements do their own
-	 * checking.
+	 * checking.  However they should all call PreventCommandIfReadOnly to
+	 * actually throw the error.
 	 */
 
 	switch (nodeTag(parsetree))
@@ -217,9 +218,7 @@ check_xact_readonly(Node *parsetree)
 		case T_AlterUserMappingStmt:
 		case T_DropUserMappingStmt:
 		case T_AlterTableSpaceOptionsStmt:
-			ereport(ERROR,
-					(errcode(ERRCODE_READ_ONLY_SQL_TRANSACTION),
-					 errmsg("transaction is read-only")));
+			PreventCommandIfReadOnly(CreateCommandTag(parsetree));
 			break;
 		default:
 			/* do nothing */
@@ -227,6 +226,41 @@ check_xact_readonly(Node *parsetree)
 	}
 }
 
+/*
+ * PreventCommandIfReadOnly: throw error if XactReadOnly
+ *
+ * This is useful mainly to ensure consistency of the error message wording;
+ * most callers have checked XactReadOnly for themselves.
+ */
+void
+PreventCommandIfReadOnly(const char *cmdname)
+{
+	if (XactReadOnly)
+		ereport(ERROR,
+				(errcode(ERRCODE_READ_ONLY_SQL_TRANSACTION),
+				 /* translator: %s is name of a SQL command, eg CREATE */
+				 errmsg("cannot execute %s in a read-only transaction",
+						cmdname)));
+}
+
+/*
+ * PreventCommandDuringRecovery: throw error if RecoveryInProgress
+ *
+ * The majority of operations that are unsafe in a Hot Standby slave
+ * will be rejected by XactReadOnly tests.  However there are a few
+ * commands that are allowed in "read-only" xacts but cannot be allowed
+ * in Hot Standby mode.  Those commands should call this function.
+ */
+void
+PreventCommandDuringRecovery(const char *cmdname)
+{
+	if (RecoveryInProgress())
+		ereport(ERROR,
+				(errcode(ERRCODE_READ_ONLY_SQL_TRANSACTION),
+				 /* translator: %s is name of a SQL command, eg CREATE */
+				 errmsg("cannot execute %s during recovery",
+						cmdname)));
+}
 
 /*
  * CheckRestrictedOperation: throw error for hazardous command if we're
@@ -350,7 +384,7 @@ standard_ProcessUtility(Node *parsetree,
 						break;
 
 					case TRANS_STMT_PREPARE:
-						PreventCommandDuringRecovery();
+						PreventCommandDuringRecovery("PREPARE TRANSACTION");
 						if (!PrepareTransactionBlock(stmt->gid))
 						{
 							/* report unsuccessful commit in completionTag */
@@ -360,14 +394,14 @@ standard_ProcessUtility(Node *parsetree,
 						break;
 
 					case TRANS_STMT_COMMIT_PREPARED:
-						PreventCommandDuringRecovery();
 						PreventTransactionChain(isTopLevel, "COMMIT PREPARED");
+						PreventCommandDuringRecovery("COMMIT PREPARED");
 						FinishPreparedTransaction(stmt->gid, true);
 						break;
 
 					case TRANS_STMT_ROLLBACK_PREPARED:
-						PreventCommandDuringRecovery();
 						PreventTransactionChain(isTopLevel, "ROLLBACK PREPARED");
+						PreventCommandDuringRecovery("ROLLBACK PREPARED");
 						FinishPreparedTransaction(stmt->gid, false);
 						break;
 
@@ -744,7 +778,6 @@ standard_ProcessUtility(Node *parsetree,
 			break;
 
 		case T_GrantStmt:
-			PreventCommandDuringRecovery();
 			ExecuteGrantStmt((GrantStmt *) parsetree);
 			break;
 
@@ -927,7 +960,7 @@ standard_ProcessUtility(Node *parsetree,
 			{
 				NotifyStmt *stmt = (NotifyStmt *) parsetree;
 
-				PreventCommandDuringRecovery();
+				PreventCommandDuringRecovery("NOTIFY");
 				Async_Notify(stmt->conditionname, stmt->payload);
 			}
 			break;
@@ -936,7 +969,7 @@ standard_ProcessUtility(Node *parsetree,
 			{
 				ListenStmt *stmt = (ListenStmt *) parsetree;
 
-				PreventCommandDuringRecovery();
+				PreventCommandDuringRecovery("LISTEN");
 				CheckRestrictedOperation("LISTEN");
 				Async_Listen(stmt->conditionname);
 			}
@@ -946,7 +979,7 @@ standard_ProcessUtility(Node *parsetree,
 			{
 				UnlistenStmt *stmt = (UnlistenStmt *) parsetree;
 
-				PreventCommandDuringRecovery();
+				PreventCommandDuringRecovery("UNLISTEN");
 				CheckRestrictedOperation("UNLISTEN");
 				if (stmt->conditionname)
 					Async_Unlisten(stmt->conditionname);
@@ -966,12 +999,14 @@ standard_ProcessUtility(Node *parsetree,
 			break;
 
 		case T_ClusterStmt:
-			PreventCommandDuringRecovery();
+			/* we choose to allow this during "read only" transactions */
+			PreventCommandDuringRecovery("CLUSTER");
 			cluster((ClusterStmt *) parsetree, isTopLevel);
 			break;
 
 		case T_VacuumStmt:
-			PreventCommandDuringRecovery();
+			/* we choose to allow this during "read only" transactions */
+			PreventCommandDuringRecovery("VACUUM");
 			vacuum((VacuumStmt *) parsetree, InvalidOid, true, NULL, false,
 				   isTopLevel);
 			break;
@@ -1099,14 +1134,15 @@ standard_ProcessUtility(Node *parsetree,
 			 * using various forms of replication.
 			 */
 			RequestCheckpoint(CHECKPOINT_IMMEDIATE | CHECKPOINT_WAIT |
-								(RecoveryInProgress() ? 0 : CHECKPOINT_FORCE));
+							  (RecoveryInProgress() ? 0 : CHECKPOINT_FORCE));
 			break;
 
 		case T_ReindexStmt:
 			{
 				ReindexStmt *stmt = (ReindexStmt *) parsetree;
 
-				PreventCommandDuringRecovery();
+				/* we choose to allow this during "read only" transactions */
+				PreventCommandDuringRecovery("REINDEX");
 				switch (stmt->kind)
 				{
 					case OBJECT_INDEX:
@@ -2629,13 +2665,4 @@ GetCommandLogLevel(Node *parsetree)
 	}
 
 	return lev;
-}
-
-void
-PreventCommandDuringRecovery(void)
-{
-	if (RecoveryInProgress())
-		ereport(ERROR,
-			(errcode(ERRCODE_READ_ONLY_SQL_TRANSACTION),
-			 errmsg("cannot be executed during recovery")));
 }

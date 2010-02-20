@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.346 2010/02/09 21:43:30 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.347 2010/02/20 21:24:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,6 +50,7 @@
 #include "storage/bufmgr.h"
 #include "storage/lmgr.h"
 #include "storage/smgr.h"
+#include "tcop/utility.h"
 #include "utils/acl.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
@@ -568,6 +569,10 @@ ExecCheckRTEPerms(RangeTblEntry *rte)
 
 /*
  * Check that the query does not imply any writes to non-temp tables.
+ *
+ * Note: in a Hot Standby slave this would need to reject writes to temp
+ * tables as well; but an HS slave can't have created any temp tables
+ * in the first place, so no need to check that.
  */
 static void
 ExecCheckXactReadOnly(PlannedStmt *plannedstmt)
@@ -577,10 +582,11 @@ ExecCheckXactReadOnly(PlannedStmt *plannedstmt)
 	/*
 	 * CREATE TABLE AS or SELECT INTO?
 	 *
-	 * XXX should we allow this if the destination is temp?
+	 * XXX should we allow this if the destination is temp?  Considering
+	 * that it would still require catalog changes, probably not.
 	 */
 	if (plannedstmt->intoClause != NULL)
-		goto fail;
+		PreventCommandIfReadOnly(CreateCommandTag((Node *) plannedstmt));
 
 	/* Fail if write permissions are requested on any non-temp table */
 	foreach(l, plannedstmt->rtable)
@@ -596,15 +602,8 @@ ExecCheckXactReadOnly(PlannedStmt *plannedstmt)
 		if (isTempNamespace(get_rel_namespace(rte->relid)))
 			continue;
 
-		goto fail;
+		PreventCommandIfReadOnly(CreateCommandTag((Node *) plannedstmt));
 	}
-
-	return;
-
-fail:
-	ereport(ERROR,
-			(errcode(ERRCODE_READ_ONLY_SQL_TRANSACTION),
-			 errmsg("transaction is read-only")));
 }
 
 

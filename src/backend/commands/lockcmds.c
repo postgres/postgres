@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/lockcmds.c,v 1.27 2010/01/02 16:57:37 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/lockcmds.c,v 1.28 2010/02/20 21:24:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -55,7 +55,7 @@ LockTableCommand(LockStmt *lockstmt)
 		 * This test must match the restrictions defined in LockAcquire()
 		 */
 		if (lockstmt->mode > RowExclusiveLock)
-			PreventCommandDuringRecovery();
+			PreventCommandDuringRecovery("LOCK TABLE");
 
 		LockTableRecurse(reloid, relation,
 						 lockstmt->mode, lockstmt->nowait, recurse);
