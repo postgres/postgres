@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/auto-explain.sgml,v 1.6 2009/12/15 04:57:47 rhaas Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/auto-explain.sgml,v 1.7 2010/02/20 22:24:29 adunstan Exp $ -->
 
 <sect1 id="auto-explain">
  <title>auto_explain</title>
@@ -188,17 +188,18 @@ auto_explain.log_min_duration = '3s'
   </para>
 
   <programlisting><![CDATA[
-  LOG:  duration: 0.986 ms  plan:
-          Aggregate  (cost=14.90..14.91 rows=1 width=0)
-            ->  Hash Join  (cost=3.91..14.70 rows=81 width=0)
-                  Hash Cond: (pg_class.oid = pg_index.indrelid)
-                  ->  Seq Scan on pg_class  (cost=0.00..8.27 rows=227 width=4)
-                  ->  Hash  (cost=2.90..2.90 rows=81 width=4)
-                        ->  Seq Scan on pg_index  (cost=0.00..2.90 rows=81 width=4)
-                              Filter: indisunique
-  STATEMENT:  SELECT count(*)
-            FROM pg_class, pg_index
-           WHERE oid = indrelid AND indisunique;
+  LOG:  duration: 3.651 ms  plan:
+    Query Text: SELECT count(*)
+                FROM pg_class, pg_index
+               WHERE oid = indrelid AND indisunique;
+    Aggregate  (cost=16.79..16.80 rows=1 width=0) (actual time=3.626..3.627 rows=1 loops=1)
+      ->  Hash Join  (cost=4.17..16.55 rows=92 width=0) (actual time=3.349..3.594 rows=92 loops=1)
+            Hash Cond: (pg_class.oid = pg_index.indrelid)
+            ->  Seq Scan on pg_class  (cost=0.00..9.55 rows=255 width=4) (actual time=0.016..0.140 rows=255 loops=1)
+            ->  Hash  (cost=3.02..3.02 rows=92 width=4) (actual time=3.238..3.238 rows=92 loops=1)
+                  Buckets: 1024  Batches: 1  Memory Usage: 4kB
+                  ->  Seq Scan on pg_index  (cost=0.00..3.02 rows=92 width=4) (actual time=0.008..3.187 rows=92 loops=1)
+                        Filter: indisunique
 ]]>
   </programlisting>
  </sect2>
