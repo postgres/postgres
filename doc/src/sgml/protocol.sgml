@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/protocol.sgml,v 1.82 2010/02/17 04:19:37 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/protocol.sgml,v 1.83 2010/02/22 18:12:04 momjian Exp $ -->
 
 <chapter id="protocol">
  <title>Frontend/Backend Protocol</title>
@@ -26,12 +26,6 @@
   startup-request message tells the server which protocol version the
   client is attempting to use, and then the server follows that protocol
   if it is able.
- </para>
-
- <para>
-  Higher level features built on this protocol (for example, how
-  <application>libpq</application> passes certain environment
-  variables when the connection is established) are covered elsewhere.
  </para>
 
   <para>
