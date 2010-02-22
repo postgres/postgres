@@ -11,7 +11,7 @@
  *	as a service.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/copydir.c,v 1.29 2010/02/22 00:11:05 stark Exp $
+ *	  $PostgreSQL: pgsql/src/port/copydir.c,v 1.30 2010/02/22 02:50:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -90,18 +90,18 @@ copydir(char *fromdir, char *todir, bool recurse)
 		else if (S_ISREG(fst.st_mode))
 			copy_file(fromfile, tofile);
 	}
-	Free(xldir);
+	FreeDir(xldir);
 
 	/*
-	 * Be paranoid here and fsync all files to ensure we catch problems.
+	 * Be paranoid here and fsync all files to ensure the copy is really done.
 	 */
-	AllocateDir(fromdir);
+	xldir = AllocateDir(todir);
 	if (xldir == NULL)
 		ereport(ERROR,
 				(errcode_for_file_access(),
-				 errmsg("could not open directory \"%s\": %m", fromdir)));
+				 errmsg("could not open directory \"%s\": %m", todir)));
 
-	while ((xlde = ReadDir(xldir, fromdir)) != NULL)
+	while ((xlde = ReadDir(xldir, todir)) != NULL)
 	{
 		struct stat fst;
 
@@ -111,25 +111,29 @@ copydir(char *fromdir, char *todir, bool recurse)
 
 		snprintf(tofile, MAXPGPATH, "%s/%s", todir, xlde->d_name);
 
-		/* We don't need to sync directories here since the recursive
-		 * copydir will do it before it returns */
-		if (lstat(fromfile, &fst) < 0)
+		/*
+		 * We don't need to sync subdirectories here since the recursive
+		 * copydir will do it before it returns
+		 */
+		if (lstat(tofile, &fst) < 0)
 			ereport(ERROR,
 					(errcode_for_file_access(),
-					 errmsg("could not stat file \"%s\": %m", fromfile)));
+					 errmsg("could not stat file \"%s\": %m", tofile)));
+
 		if (S_ISREG(fst.st_mode))
-		{
 			fsync_fname(tofile);
-		}
 	}
 	FreeDir(xldir);
 
 #ifdef NOTYET
-	/* It's important to fsync the destination directory itself as
+	/*
+	 * It's important to fsync the destination directory itself as
 	 * individual file fsyncs don't guarantee that the directory entry
 	 * for the file is synced. Recent versions of ext4 have made the
 	 * window much wider but it's been true for ext3 and other
-	 * filesystems in the past 
+	 * filesystems in the past.
+	 *
+	 * However we can't do this just yet, it has portability issues.
 	 */
 	fsync_fname(todir);
 #endif
@@ -208,7 +212,6 @@ copy_file(char *fromfile, char *tofile)
 
 	pfree(buffer);
 }
-
 
 
 /*
