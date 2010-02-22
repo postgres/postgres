@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.143 2010/02/22 11:47:30 heikki Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.144 2010/02/22 17:15:10 momjian Exp $ -->
 
 <chapter id="backup">
  <title>Backup and Restore</title>
@@ -484,6 +484,16 @@ tar -cf backup.tar /usr/local/pgsql/data
   </itemizedlist>
   </para>
 
+  <note>
+   <para>
+    <application>pg_dump</application> and
+    <application>pg_dumpall</application> do not produce file-system-level
+    backups and cannot be used as part of a continuous-archiving solution.
+    Such dumps are <emphasis>logical</> and do not contain enough
+    information to used by WAL reply.
+   </para>
+  </note>
+
   <para>
    As with the plain file-system-backup technique, this method can only
    support restoration of an entire database cluster, not a subset.
@@ -744,7 +754,9 @@ SELECT pg_start_backup('label', true);
    <listitem>
     <para>
      Perform the backup, using any convenient file-system-backup tool
-     such as <application>tar</> or <application>cpio</>.  It is neither
+     such as <application>tar</> or <application>cpio</> (not
+     <application>pg_dump</application> or
+     <application>pg_dumpall</application>).  It is neither
      necessary nor desirable to stop normal operation of the database
      while you do this.
     </para>
