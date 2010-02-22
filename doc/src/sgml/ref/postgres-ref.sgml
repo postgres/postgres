@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/postgres-ref.sgml,v 1.51 2007/07/09 01:08:09 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/postgres-ref.sgml,v 1.52 2010/02/22 22:30:10 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -579,7 +579,7 @@ PostgreSQL documentation
 
     <listitem>
      <para>
-      Default port (preferably set in the configuration file)
+      Default port number (preferably set in the configuration file)
      </para>
     </listitem>
    </varlistentry>

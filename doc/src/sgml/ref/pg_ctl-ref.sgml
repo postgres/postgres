@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/pg_ctl-ref.sgml,v 1.47 2009/12/10 06:32:28 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/pg_ctl-ref.sgml,v 1.48 2010/02/22 22:30:10 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -393,14 +393,26 @@ PostgreSQL documentation
    </varlistentry>
 
    <varlistentry>
+    <term><envar>PGHOST</envar></term>
+
+    <listitem>
+     <para>
+      Default hostname or Unix-domain socket location for <xref
+      linkend="app-psql"> (used by the -w option).
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
     <term><envar>PGPORT</envar></term>
 
     <listitem>
      <para>
-      Default port for <xref linkend="app-psql"> (used by the -w option).
+      Default port number for <xref linkend="app-psql"> (used by the -w option).
      </para>
     </listitem>
    </varlistentry>
+
   </variablelist>
 
   <para>
