@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/config/programs.m4,v 1.26 2009/07/13 05:36:53 tgl Exp $
+# $PostgreSQL: pgsql/config/programs.m4,v 1.27 2010/02/22 18:02:06 momjian Exp $
 
 
 # PGAC_PATH_BISON
@@ -29,7 +29,7 @@ if test -z "$BISON"; then
   AC_MSG_WARN([
 *** Without Bison you will not be able to build PostgreSQL from CVS nor
 *** change any of the parser definition files.  You can obtain Bison from
-*** a GNU mirror site.  (If you are using the official distribution of
+*** a GNU mirror site.  (If you are using the bundled distribution of
 *** PostgreSQL then you do not need to worry about this, because the Bison
 *** output is pre-generated.)])
 fi
@@ -91,7 +91,7 @@ if test x"$pgac_cv_path_flex" = x"no"; then
   AC_MSG_WARN([
 *** Without Flex you will not be able to build PostgreSQL from CVS nor
 *** change any of the scanner definition files.  You can obtain Flex from
-*** a GNU mirror site.  (If you are using the official distribution of
+*** a GNU mirror site.  (If you are using the bundled distribution of
 *** PostgreSQL then you do not need to worry about this because the Flex
 *** output is pre-generated.)])
 
