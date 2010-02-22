@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/filelist.sgml,v 1.66 2010/02/17 04:19:37 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/filelist.sgml,v 1.67 2010/02/22 11:47:30 heikki Exp $ -->
 
 <!entity history    SYSTEM "history.sgml">
 <!entity info       SYSTEM "info.sgml">
@@ -42,6 +42,7 @@
 <!entity manage-ag     SYSTEM "manage-ag.sgml">
 <!entity monitoring    SYSTEM "monitoring.sgml">
 <!entity regress       SYSTEM "regress.sgml">
+<!entity recovery-config SYSTEM "recovery-config.sgml">
 <!entity runtime       SYSTEM "runtime.sgml">
 <!entity config        SYSTEM "config.sgml">
 <!entity user-manag    SYSTEM "user-manag.sgml">

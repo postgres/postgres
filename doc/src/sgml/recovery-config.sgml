@@ -1,0 +1,233 @@
+<!-- $PostgreSQL: pgsql/doc/src/sgml/recovery-config.sgml,v 2.1 2010/02/22 11:47:30 heikki Exp $ -->
+
+<chapter Id="recovery-config">
+  <title>Recovery Configuration</title>
+
+  <indexterm>
+   <primary>configuration</primary>
+   <secondary>of recovery</secondary>
+   <tertiary>of a standby server</tertiary>
+  </indexterm>
+
+   <para>
+      This chapter describes the settings available in
+      <filename>recovery.conf</> file. They apply only for the duration of
+      the recovery.  (A sample file, <filename>share/recovery.conf.sample</>,
+      exists in the installation's <filename>share/</> directory.)  They must
+      be reset for any subsequent recovery you wish to perform. They cannot
+      be changed once recovery has begun.
+   </para>
+
+  <sect1 id="archive-recovery-settings">
+
+    <title>Archive recovery settings</title>
+     <variablelist>
+
+     <varlistentry id="restore-command" xreflabel="restore_command">
+      <term><varname>restore_command</varname> (<type>string</type>)</term>
+      <listitem>
+       <para>
+        The shell command to execute to retrieve an archived segment of
+        the WAL file series. This parameter is required for archive recovery,
+        but optional for streaming replication.
+        Any <literal>%f</> in the string is
+        replaced by the name of the file to retrieve from the archive,
+        and any <literal>%p</> is replaced by the copy destination path name
+        on the server.
+        (The path name is relative to the current working directory,
+        i.e., the cluster's data directory.)
+        Any <literal>%r</> is replaced by the name of the file containing the
+        last valid restart point. That is the earliest file that must be kept
+        to allow a restore to be restartable, so this information can be used
+        to truncate the archive to just the minimum required to support
+        restarting from the current restore. <literal>%r</> is typically only
+        used by warm-standby configurations
+        (see <xref linkend="warm-standby">).
+        Write <literal>%%</> to embed an actual <literal>%</> character.
+       </para>
+
+       <para>
+        It is important for the command to return a zero exit status
+        only if it succeeds.  The command <emphasis>will</> be asked for file
+        names that are not present in the archive; it must return nonzero
+        when so asked.  Examples:
+<programlisting>
+restore_command = 'cp /mnt/server/archivedir/%f "%p"'
+restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
+</programlisting>
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="recovery-end-command" xreflabel="recovery_end_command">
+      <term><varname>recovery_end_command</varname> (<type>string</type>)</term>
+      <listitem>
+       <para>
+        This parameter specifies a shell command that will be executed once only
+        at the end of recovery. This parameter is optional. The purpose of the
+        <varname>recovery_end_command</> is to provide a mechanism for cleanup
+        following replication or recovery.
+        Any <literal>%r</> is replaced by the name of the file
+        containing the last valid restart point. That is the earliest file that
+        must be kept to allow a restore to be restartable, so this information
+        can be used to truncate the archive to just the minimum required to
+        support restart from the current restore. <literal>%r</> would
+        typically be used in a warm-standby configuration
+        (see <xref linkend="warm-standby">).
+        Write <literal>%%</> to embed an actual <literal>%</> character
+        in the command.
+       </para>
+       <para>
+        If the command returns a non-zero exit status then a WARNING log
+        message will be written and the database will proceed to start up
+        anyway.  An exception is that if the command was terminated by a
+        signal, the database will not proceed with startup.
+       </para>
+      </listitem>
+     </varlistentry>
+
+    </variablelist>
+
+  </sect1>
+
+  <sect1 id="recovery-target-settings">
+
+    <title>Recovery target settings</title>
+     <variablelist>
+
+     <varlistentry id="recovery-target-time" xreflabel="recovery_target_time">
+      <term><varname>recovery_target_time</varname>
+           (<type>timestamp</type>)
+      </term>
+      <listitem>
+       <para>
+        This parameter specifies the time stamp up to which recovery
+        will proceed.
+        At most one of <varname>recovery_target_time</> and
+        <xref linkend="recovery-target-xid"> can be specified.
+        The default is to recover to the end of the WAL log.
+        The precise stopping point is also influenced by
+        <xref linkend="recovery-target-inclusive">.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="recovery-target-xid" xreflabel="recovery_target_xid">
+      <term><varname>recovery_target_xid</varname> (<type>string</type>)</term>
+      <listitem>
+       <para>
+        This parameter specifies the transaction ID up to which recovery
+        will proceed. Keep in mind
+        that while transaction IDs are assigned sequentially at transaction
+        start, transactions can complete in a different numeric order.
+        The transactions that will be recovered are those that committed
+        before (and optionally including) the specified one.
+        At most one of <varname>recovery_target_xid</> and
+        <xref linkend="recovery-target-time"> can be specified.
+        The default is to recover to the end of the WAL log.
+        The precise stopping point is also influenced by
+        <xref linkend="recovery-target-inclusive">.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="recovery-target-inclusive"
+                   xreflabel="recovery_target_inclusive">
+      <term><varname>recovery_target_inclusive</varname>
+        (<type>boolean</type>)
+      </term>
+      <listitem>
+       <para>
+        Specifies whether we stop just after the specified recovery target
+        (<literal>true</literal>), or just before the recovery target
+        (<literal>false</literal>).
+        Applies to both <xref linkend="recovery-target-time">
+        and <xref linkend="recovery-target-xid">, whichever one is
+        specified for this recovery.  This indicates whether transactions
+        having exactly the target commit time or ID, respectively, will
+        be included in the recovery.  Default is <literal>true</>.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="recovery-target-timeline"
+                   xreflabel="recovery_target_timeline">
+      <term><varname>recovery_target_timeline</varname>
+        (<type>string</type>)
+      </term>
+      <listitem>
+       <para>
+        Specifies recovering into a particular timeline.  The default is
+        to recover along the same timeline that was current when the
+        base backup was taken.  You only need to set this parameter
+        in complex re-recovery situations, where you need to return to
+        a state that itself was reached after a point-in-time recovery.
+        See <xref linkend="backup-timelines"> for discussion.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     </variablelist>
+   </sect1>
+
+  <sect1 id="standby-settings">
+
+    <title>Standby server settings</title>
+     <variablelist>
+
+       <varlistentry id="standby-mode" xreflabel="standby_mode">
+        <term><varname>standby_mode</varname> (<type>boolean</type>)</term>
+        <listitem>
+         <para>
+          Specifies whether to start the <productname>PostgreSQL</> server as
+          a standby. If this parameter is <literal>on</>, the server will
+          not end recovery when the end of archived WAL is reached, but
+          will keep trying to continue recovery using <varname>restore_command</>
+          and by connecting to the primary server as specified by the
+          <varname>primary_conninfo</> setting.
+         </para>
+        </listitem>
+       </varlistentry>
+       <varlistentry id="primary-conninfo" xreflabel="primary_conninfo">
+        <term><varname>primary_conninfo</varname> (<type>string</type>)</term>
+        <listitem>
+         <para>
+          Specifies a connection string to be used for the standby server
+          to connect with the primary. This string is in the same format as
+          described in <xref linkend="libpq-connect">. If any option is
+          unspecified in this string, then the corresponding environment
+          variable (see <xref linkend="libpq-envars">) is checked. If the
+          environment variable is not set either, then
+          defaults are used.
+         </para>
+         <para>
+          The built-in replication requires that a host name (or host address)
+          or port number which the primary server listens on be
+          specified in this string. Also ensure that a role with
+          the <literal>SUPERUSER</> and <literal>LOGIN</> privileges on the
+          primary is set (see
+          <xref linkend="streaming-replication-authentication">). Note that
+          the password needs to be set if the primary demands password
+          authentication.
+         </para>
+         <para>
+          This setting has no effect if <varname>standby_mode</> is <literal>off</>.
+         </para>
+        </listitem>
+       </varlistentry>
+       <varlistentry id="trigger-file" xreflabel="trigger_file">
+        <term><varname>trigger_file</varname> (<type>string</type>)</term>
+        <listitem>
+         <para>
+          Specifies a trigger file whose presence ends recovery in the
+          standby. If no trigger file is specified, the standby never exits
+          recovery.
+          This setting has no effect if <varname>standby_mode</> is <literal>off</>.
+         </para>
+        </listitem>
+       </varlistentry>
+
+     </variablelist>
+   </sect1>
+
+</chapter>

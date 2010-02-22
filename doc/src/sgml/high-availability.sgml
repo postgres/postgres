@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/high-availability.sgml,v 1.48 2010/02/20 10:07:27 sriggs Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/high-availability.sgml,v 1.49 2010/02/22 11:47:30 heikki Exp $ -->
 
 <chapter id="high-availability">
  <title>High Availability, Load Balancing, and Replication</title>
@@ -853,77 +853,15 @@ if (!triggered)
      <listitem>
       <para>
        Create a recovery command file <filename>recovery.conf</> in the data
-       directory on the standby server.
+       directory on the standby server. Set <varname>restore_command</varname>
+       as you would in normal recovery from a continuous archiving backup
+       (see <xref linkend="backup-pitr-recovery">). <literal>pg_standby</> or
+       similar tools that wait for the next WAL file to arrive cannot be used
+       with streaming replication, as the server handles retries and waiting
+       itself. Enable <varname>standby_mode</varname>. Set
+       <varname>primary_conninfo</varname> to point to the primary server.
       </para>
 
-      <variablelist id="replication-config-settings" xreflabel="Replication Settings">
-       <varlistentry id="standby-mode" xreflabel="standby_mode">
-        <term><varname>standby_mode</varname> (<type>boolean</type>)</term>
-        <listitem>
-         <para>
-          Specifies whether to start the <productname>PostgreSQL</> server as
-          a standby. If this parameter is <literal>on</>, the server will
-          not end recovery when the end of archived WAL is reached, but
-          will keep trying to continue recovery using <varname>restore_command</>
-          and by connecting to the primary server as specified by the
-          <varname>primary_conninfo</> setting.
-         </para>
-        </listitem>
-       </varlistentry>
-       <varlistentry>
-        <term><varname>restore_command</varname> (<type>string</type>)</term>
-        <term><varname>restore_end_command</varname> (<type>string</type>)</term>
-        <listitem>
-         <para>
-          With <varname>standby_mode</> enabled, <varname>restore_command</>
-          (and <varname>restore_end_command</>) should be set to a
-          simple command or script like in PITR. <literal>pg_standby</> or similar tools
-          that wait for the next WAL file to arrive cannot be used with
-          streaming replication, as the server handles retries and waiting
-          itself. Set <varname>restore_command</> as you would if you were
-          recovering using a Continuous archiving backup (see <xref linkend="backup-pitr-recovery">).
-         </para>
-        </listitem>
-       </varlistentry>
-       <varlistentry id="primary-conninfo" xreflabel="primary_conninfo">
-        <term><varname>primary_conninfo</varname> (<type>string</type>)</term>
-        <listitem>
-         <para>
-          Specifies a connection string to be used for the standby server
-          to connect with the primary. This string is in the same format as
-          described in <xref linkend="libpq-connect">. If any option is
-          unspecified in this string, then the corresponding environment
-          variable (see <xref linkend="libpq-envars">) is checked. If the
-          environment variable is not set either, then
-          defaults are used.
-         </para>
-         <para>
-          The built-in replication requires that a host name (or host address)
-          or port number which the primary server listens on be
-          specified in this string. Also ensure that a role with
-          the <literal>SUPERUSER</> and <literal>LOGIN</> privileges on the
-          primary is set (see
-          <xref linkend="streaming-replication-authentication">). Note that
-          the password needs to be set if the primary demands password
-          authentication.
-         </para>
-         <para>
-          This setting has no effect if <varname>standby_mode</> is <literal>off</>.
-         </para>
-        </listitem>
-       </varlistentry>
-       <varlistentry id="trigger-file" xreflabel="trigger_file">
-        <term><varname>trigger_file</varname> (<type>string</type>)</term>
-        <listitem>
-         <para>
-          Specifies a trigger file whose presence ends recovery in the
-          standby. If no trigger file is specified, the standby never exits
-          recovery.
-          This setting has no effect if <varname>standby_mode</> is <literal>off</>.
-         </para>
-        </listitem>
-       </varlistentry>
-      </variablelist>
      </listitem>
      <listitem>
       <para>
