@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_table.sgml,v 1.121 2010/01/28 23:21:11 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_table.sgml,v 1.122 2010/02/22 23:51:40 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -274,19 +274,6 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE <replaceable class="PAR
       Column <literal>STORAGE</> settings are also copied from parent tables.
      </para>
 
-<!--
-     <para>
-      <productname>PostgreSQL</> automatically allows the
-     created table to inherit
-      functions on tables above it in the inheritance hierarchy; that
-      is, if we create table <literal>foo</literal> inheriting from
-      <literal>bar</literal>, then functions that accept the tuple
-      type <literal>bar</literal> can also be applied to instances of
-      <literal>foo</literal>.  (Currently, this works reliably for
-      functions on the first or only parent table, but not so well for
-      functions on additional parents.)
-     </para>
--->
     </listitem>
    </varlistentry>
 
