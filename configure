@@ -6736,13 +6736,13 @@ if test -z "$BISON"; then
   { $as_echo "$as_me:$LINENO: WARNING:
 *** Without Bison you will not be able to build PostgreSQL from CVS nor
 *** change any of the parser definition files.  You can obtain Bison from
-*** a GNU mirror site.  (If you are using the bundled distribution of
+*** a GNU mirror site.  (If you are using the official distribution of
 *** PostgreSQL then you do not need to worry about this, because the Bison
 *** output is pre-generated.)" >&5
 $as_echo "$as_me: WARNING:
 *** Without Bison you will not be able to build PostgreSQL from CVS nor
 *** change any of the parser definition files.  You can obtain Bison from
-*** a GNU mirror site.  (If you are using the bundled distribution of
+*** a GNU mirror site.  (If you are using the official distribution of
 *** PostgreSQL then you do not need to worry about this, because the Bison
 *** output is pre-generated.)" >&2;}
 fi
@@ -6800,13 +6800,13 @@ if test x"$pgac_cv_path_flex" = x"no"; then
   { $as_echo "$as_me:$LINENO: WARNING:
 *** Without Flex you will not be able to build PostgreSQL from CVS nor
 *** change any of the scanner definition files.  You can obtain Flex from
-*** a GNU mirror site.  (If you are using the bundled distribution of
+*** a GNU mirror site.  (If you are using the official distribution of
 *** PostgreSQL then you do not need to worry about this because the Flex
 *** output is pre-generated.)" >&5
 $as_echo "$as_me: WARNING:
 *** Without Flex you will not be able to build PostgreSQL from CVS nor
 *** change any of the scanner definition files.  You can obtain Flex from
-*** a GNU mirror site.  (If you are using the bundled distribution of
+*** a GNU mirror site.  (If you are using the official distribution of
 *** PostgreSQL then you do not need to worry about this because the Flex
 *** output is pre-generated.)" >&2;}
 
@@ -6887,12 +6887,12 @@ if test -z "$PERL"; then
   { $as_echo "$as_me:$LINENO: WARNING:
 *** Without Perl you will not be able to build PostgreSQL from CVS.
 *** You can obtain Perl from any CPAN mirror site.
-*** (If you are using the bundled distribution of PostgreSQL then you do not
+*** (If you are using the official distribution of PostgreSQL then you do not
 *** need to worry about this, because the Perl output is pre-generated.)" >&5
 $as_echo "$as_me: WARNING:
 *** Without Perl you will not be able to build PostgreSQL from CVS.
 *** You can obtain Perl from any CPAN mirror site.
-*** (If you are using the bundled distribution of PostgreSQL then you do not
+*** (If you are using the official distribution of PostgreSQL then you do not
 *** need to worry about this, because the Perl output is pre-generated.)" >&2;}
 fi
 
