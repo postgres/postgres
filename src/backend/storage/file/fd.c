@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/file/fd.c,v 1.154 2010/02/15 00:50:57 stark Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/file/fd.c,v 1.155 2010/02/22 15:26:14 tgl Exp $
  *
  * NOTES:
  *
@@ -292,6 +292,7 @@ pg_fsync_writethrough(int fd)
 #elif defined(F_FULLFSYNC)
 		return (fcntl(fd, F_FULLFSYNC, 0) == -1) ? -1 : 0;
 #else
+		errno = ENOSYS;
 		return -1;
 #endif
 	}
