@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/config/perl.m4,v 1.8 2010/02/22 21:16:50 momjian Exp $
+# $PostgreSQL: pgsql/config/perl.m4,v 1.9 2010/02/23 18:35:06 tgl Exp $
 
 
 # PGAC_PATH_PERL
@@ -10,7 +10,7 @@ if test -z "$PERL"; then
 fi
 
 if test "$PERL"; then
-  pgac_perl_version=`$PERL -v 2>/dev/null | sed -n ['s/This is perl, v[a-z ]*//p'] | sed ['s/ .*//']`
+  pgac_perl_version=`$PERL -v 2>/dev/null | sed -n ['s/This is perl.*v[a-z ]*\([0-9]\.[0-9][0-9.]*\).*$/\1/p']`
   AC_MSG_NOTICE([using perl $pgac_perl_version])
   if echo "$pgac_perl_version" | sed ['s/[.a-z_]/ /g'] | \
     $AWK '{ if ([$]1 = 5 && [$]2 >= 8) exit 1; else exit 0;}'

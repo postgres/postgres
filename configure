@@ -6867,7 +6867,7 @@ fi
 fi
 
 if test "$PERL"; then
-  pgac_perl_version=`$PERL -v 2>/dev/null | sed -n 's/This is perl, v[a-z ]*//p' | sed 's/ .*//'`
+  pgac_perl_version=`$PERL -v 2>/dev/null | sed -n 's/This is perl.*v[a-z ]*\([0-9]\.[0-9][0-9.]*\).*$/\1/p'`
   { $as_echo "$as_me:$LINENO: using perl $pgac_perl_version" >&5
 $as_echo "$as_me: using perl $pgac_perl_version" >&6;}
   if echo "$pgac_perl_version" | sed 's/[.a-z_]/ /g' | \
