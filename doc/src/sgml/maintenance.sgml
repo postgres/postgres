@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.99 2010/02/08 04:33:51 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.100 2010/02/23 02:47:27 momjian Exp $ -->
 
 <chapter id="maintenance">
  <title>Routine Database Maintenance Tasks</title>
@@ -317,6 +317,14 @@
      finer-grain data histogram than other columns.  See <command>ALTER TABLE
      SET STATISTICS</>, or change the database-wide default using the <xref
      linkend="guc-default-statistics-target"> configuration parameter.
+    </para>
+
+    <para>
+     Also, by default there is limited information available about
+     the selectivity of functions.  However, if you create an expression
+     index that uses a function call, useful statistics will be
+     gathered about the function, which can greatly improve query
+     plans that use the expression index.
     </para>
    </tip>
   </sect2>
