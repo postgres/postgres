@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/pg_restore.sgml,v 1.84 2010/02/19 14:36:45 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/pg_restore.sgml,v 1.85 2010/02/23 00:21:19 momjian Exp $ -->
 
 <refentry id="APP-PGRESTORE">
  <refmeta>
@@ -759,28 +759,25 @@ CREATE DATABASE foo WITH TEMPLATE template0;
    The listing file consists of a header and one line for each item, e.g.:
 <programlisting>
 ;
-; Archive created at Fri Jul 28 22:28:36 2000
-;     dbname: mydb
-;     TOC Entries: 74
-;     Compression: 0
-;     Dump Version: 1.4-0
+; Archive created at Mon Sep 14 13:55:39 2009
+;     dbname: DBDEMOS
+;     TOC Entries: 81
+;     Compression: 9
+;     Dump Version: 1.10-0
 ;     Format: CUSTOM
+;     Integer: 4 bytes
+;     Offset: 8 bytes
+;     Dumped from database version: 8.3.5
+;     Dumped by pg_dump version: 8.3.8
 ;
 ;
 ; Selected TOC Entries:
 ;
-2; 145344 TABLE species postgres
-3; 145344 ACL species
-4; 145359 TABLE nt_header postgres
-5; 145359 ACL nt_header
-6; 145402 TABLE species_records postgres
-7; 145402 ACL species_records
-8; 145416 TABLE ss_old postgres
-9; 145416 ACL ss_old
-10; 145433 TABLE map_resolutions postgres
-11; 145433 ACL map_resolutions
-12; 145443 TABLE hs_old postgres
-13; 145443 ACL hs_old
+3; 2615 2200 SCHEMA - public pasha
+1861; 0 0 COMMENT - SCHEMA public pasha
+1862; 0 0 ACL - public pasha
+317; 1247 17715 TYPE public composite pasha
+319; 1247 25899 DOMAIN public domain0 pasha
 </programlisting>
    Semicolons start a comment, and the numbers at the start of lines refer to the
    internal archive ID assigned to each item.
