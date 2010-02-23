@@ -6,7 +6,7 @@
 # Created through merger of the Linux start script by Ryan Kirkpatrick
 # and the script in the FreeBSD ports collection.
 
-# $PostgreSQL: pgsql/contrib/start-scripts/freebsd,v 1.5 2009/08/27 16:59:38 tgl Exp $
+# $PostgreSQL: pgsql/contrib/start-scripts/freebsd,v 1.6 2010/02/23 22:15:35 momjian Exp $
 
 ## EDIT FROM HERE
 
@@ -36,7 +36,14 @@ DAEMON="$prefix/bin/postmaster"
 PGCTL="$prefix/bin/pg_ctl"
 
 # Only start if we can find the postmaster.
-test -x "$DAEMON" || exit 0
+test -x $DAEMON ||
+{
+	echo "$DAEMON not found"
+	if [ "$1" = "stop" ]
+	then exit 0
+	else exit 5
+	fi
+}
 
 case $1 in
     start)

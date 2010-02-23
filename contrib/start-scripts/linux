@@ -24,7 +24,7 @@
 
 # Original author:  Ryan Kirkpatrick <pgsql@rkirkpat.net>
 
-# $PostgreSQL: pgsql/contrib/start-scripts/linux,v 1.10 2010/01/11 18:39:32 tgl Exp $
+# $PostgreSQL: pgsql/contrib/start-scripts/linux,v 1.11 2010/02/23 22:15:35 momjian Exp $
 
 ## EDIT FROM HERE
 
@@ -64,7 +64,15 @@ PGCTL="$prefix/bin/pg_ctl"
 set -e
 
 # Only start if we can find the postmaster.
-test -x $DAEMON || exit 0
+test -x $DAEMON ||
+{
+	echo "$DAEMON not found"
+	if [ "$1" = "stop" ]
+	then exit 0
+	else exit 5
+	fi
+}
+
 
 # Parse command line parameters.
 case $1 in
