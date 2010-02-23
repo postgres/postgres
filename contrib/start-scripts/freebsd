@@ -6,7 +6,7 @@
 # Created through merger of the Linux start script by Ryan Kirkpatrick
 # and the script in the FreeBSD ports collection.
 
-# $PostgreSQL: pgsql/contrib/start-scripts/freebsd,v 1.6 2010/02/23 22:15:35 momjian Exp $
+# $PostgreSQL: pgsql/contrib/start-scripts/freebsd,v 1.7 2010/02/23 22:17:25 momjian Exp $
 
 ## EDIT FROM HERE
 
@@ -39,10 +39,7 @@ PGCTL="$prefix/bin/pg_ctl"
 test -x $DAEMON ||
 {
 	echo "$DAEMON not found"
-	if [ "$1" = "stop" ]
-	then exit 0
-	else exit 5
-	fi
+	exit 0
 }
 
 case $1 in
