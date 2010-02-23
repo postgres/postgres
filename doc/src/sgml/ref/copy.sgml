@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/copy.sgml,v 1.93 2010/02/17 04:19:39 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/copy.sgml,v 1.94 2010/02/23 05:17:33 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -367,10 +367,10 @@ COPY <replaceable class="parameter">count</replaceable>
    </para>
 
    <para>
-    Input data is interpreted according to the current client encoding,
-    and output data is encoded in the the current client encoding, even
-    if the data does not pass through the client but is read from or
-    written to a file.
+    <command>COPY</command> always processes data according to the
+    current client encoding, even if the data does not pass through
+    the client but is read from or written to a file directly by the
+    server.
    </para>
 
    <para>
