@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.462 2010/02/16 22:34:43 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.463 2010/02/23 22:51:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3237,6 +3237,7 @@ _copyCreatePLangStmt(CreatePLangStmt *from)
 {
 	CreatePLangStmt *newnode = makeNode(CreatePLangStmt);
 
+	COPY_SCALAR_FIELD(replace);
 	COPY_STRING_FIELD(plname);
 	COPY_NODE_FIELD(plhandler);
 	COPY_NODE_FIELD(plinline);

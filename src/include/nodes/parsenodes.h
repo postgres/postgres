@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.430 2010/02/16 22:34:57 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.431 2010/02/23 22:51:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1623,6 +1623,7 @@ typedef struct CreateTrigStmt
 typedef struct CreatePLangStmt
 {
 	NodeTag		type;
+	bool		replace;		/* T => replace if already exists */
 	char	   *plname;			/* PL name */
 	List	   *plhandler;		/* PL call handler function (qual. name) */
 	List	   *plinline;		/* optional inline function (qual. name) */

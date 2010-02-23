@@ -22,7 +22,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.383 2010/02/16 22:34:43 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.384 2010/02/23 22:51:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1710,6 +1710,7 @@ _equalDropPropertyStmt(DropPropertyStmt *a, DropPropertyStmt *b)
 static bool
 _equalCreatePLangStmt(CreatePLangStmt *a, CreatePLangStmt *b)
 {
+	COMPARE_SCALAR_FIELD(replace);
 	COMPARE_STRING_FIELD(plname);
 	COMPARE_NODE_FIELD(plhandler);
 	COMPARE_NODE_FIELD(plinline);

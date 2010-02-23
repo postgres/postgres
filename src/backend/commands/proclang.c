@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/proclang.c,v 1.89 2010/02/14 18:42:14 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/proclang.c,v 1.90 2010/02/23 22:51:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,7 +17,6 @@
 #include "access/heapam.h"
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
-#include "catalog/pg_authid.h"
 #include "catalog/pg_language.h"
 #include "catalog/pg_namespace.h"
 #include "catalog/pg_pltemplate.h"
@@ -49,7 +48,7 @@ typedef struct
 	char	   *tmpllibrary;	/* path of shared library */
 } PLTemplate;
 
-static void create_proc_lang(const char *languageName,
+static void create_proc_lang(const char *languageName, bool replace,
 				 Oid languageOwner, Oid handlerOid, Oid inlineOid,
 				 Oid valOid, bool trusted);
 static PLTemplate *find_language_template(const char *languageName);
@@ -73,15 +72,9 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 	Oid			funcargtypes[1];
 
 	/*
-	 * Translate the language name and check that this language doesn't
-	 * already exist
+	 * Translate the language name to lower case
 	 */
 	languageName = case_translate_language_name(stmt->plname);
-
-	if (SearchSysCacheExists1(LANGNAME, PointerGetDatum(languageName)))
-		ereport(ERROR,
-				(errcode(ERRCODE_DUPLICATE_OBJECT),
-				 errmsg("language \"%s\" already exists", languageName)));
 
 	/*
 	 * If we have template information for the language, ignore the supplied
@@ -232,7 +225,8 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 			valOid = InvalidOid;
 
 		/* ok, create it */
-		create_proc_lang(languageName, GetUserId(), handlerOid, inlineOid,
+		create_proc_lang(languageName, stmt->replace, GetUserId(),
+						 handlerOid, inlineOid,
 						 valOid, pltemplate->tmpltrusted);
 	}
 	else
@@ -306,7 +300,8 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 			valOid = InvalidOid;
 
 		/* ok, create it */
-		create_proc_lang(languageName, GetUserId(), handlerOid, inlineOid,
+		create_proc_lang(languageName, stmt->replace, GetUserId(),
+						 handlerOid, inlineOid,
 						 valOid, stmt->pltrusted);
 	}
 }
@@ -315,7 +310,7 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
  * Guts of language creation.
  */
 static void
-create_proc_lang(const char *languageName,
+create_proc_lang(const char *languageName, bool replace,
 				 Oid languageOwner, Oid handlerOid, Oid inlineOid,
 				 Oid valOid, bool trusted)
 {
@@ -323,19 +318,21 @@ create_proc_lang(const char *languageName,
 	TupleDesc	tupDesc;
 	Datum		values[Natts_pg_language];
 	bool		nulls[Natts_pg_language];
+	bool		replaces[Natts_pg_language];
 	NameData	langname;
+	HeapTuple	oldtup;
 	HeapTuple	tup;
+	bool		is_update;
 	ObjectAddress myself,
 				referenced;
 
-	/*
-	 * Insert the new language into pg_language
-	 */
 	rel = heap_open(LanguageRelationId, RowExclusiveLock);
-	tupDesc = rel->rd_att;
+	tupDesc = RelationGetDescr(rel);
 
+	/* Prepare data to be inserted */
 	memset(values, 0, sizeof(values));
 	memset(nulls, false, sizeof(nulls));
+	memset(replaces, true, sizeof(replaces));
 
 	namestrcpy(&langname, languageName);
 	values[Anum_pg_language_lanname - 1] = NameGetDatum(&langname);
@@ -347,24 +344,62 @@ create_proc_lang(const char *languageName,
 	values[Anum_pg_language_lanvalidator - 1] = ObjectIdGetDatum(valOid);
 	nulls[Anum_pg_language_lanacl - 1] = true;
 
-	tup = heap_form_tuple(tupDesc, values, nulls);
+	/* Check for pre-existing definition */
+	oldtup = SearchSysCache1(LANGNAME, PointerGetDatum(languageName));
 
-	simple_heap_insert(rel, tup);
+	if (HeapTupleIsValid(oldtup))
+	{
+		/* There is one; okay to replace it? */
+		if (!replace)
+			ereport(ERROR,
+					(errcode(ERRCODE_DUPLICATE_OBJECT),
+					 errmsg("language \"%s\" already exists", languageName)));
+		if (!pg_language_ownercheck(HeapTupleGetOid(oldtup), languageOwner))
+			aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_LANGUAGE,
+						   languageName);
 
+		/*
+		 * Do not change existing ownership or permissions.  Note
+		 * dependency-update code below has to agree with this decision.
+		 */
+		replaces[Anum_pg_language_lanowner - 1] = false;
+		replaces[Anum_pg_language_lanacl - 1] = false;
+
+		/* Okay, do it... */
+		tup = heap_modify_tuple(oldtup, tupDesc, values, nulls, replaces);
+		simple_heap_update(rel, &tup->t_self, tup);
+
+		ReleaseSysCache(oldtup);
+		is_update = true;
+	}
+	else
+	{
+		/* Creating a new language */
+		tup = heap_form_tuple(tupDesc, values, nulls);
+		simple_heap_insert(rel, tup);
+		is_update = false;
+	}
+
+	/* Need to update indexes for either the insert or update case */
 	CatalogUpdateIndexes(rel, tup);
 
 	/*
-	 * Create dependencies for language
+	 * Create dependencies for the new language.  If we are updating an
+	 * existing language, first delete any existing pg_depend entries.
+	 * (However, since we are not changing ownership or permissions, the
+	 * shared dependencies do *not* need to change, and we leave them alone.)
 	 */
 	myself.classId = LanguageRelationId;
 	myself.objectId = HeapTupleGetOid(tup);
 	myself.objectSubId = 0;
 
+	if (is_update)
+		deleteDependencyRecordsFor(myself.classId, myself.objectId);
+
 	/* dependency on owner of language */
-	referenced.classId = AuthIdRelationId;
-	referenced.objectId = languageOwner;
-	referenced.objectSubId = 0;
-	recordSharedDependencyOn(&myself, &referenced, SHARED_DEPENDENCY_OWNER);
+	if (!is_update)
+		recordDependencyOnOwner(myself.classId, myself.objectId,
+								languageOwner);
 
 	/* dependency on the PL handler function */
 	referenced.classId = ProcedureRelationId;

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_language.sgml,v 1.48 2009/12/19 01:49:02 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_language.sgml,v 1.49 2010/02/23 22:51:42 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -21,8 +21,8 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-CREATE [ PROCEDURAL ] LANGUAGE <replaceable class="parameter">name</replaceable>
-CREATE [ TRUSTED ] [ PROCEDURAL ] LANGUAGE <replaceable class="parameter">name</replaceable>
+CREATE [ OR REPLACE ] [ PROCEDURAL ] LANGUAGE <replaceable class="parameter">name</replaceable>
+CREATE [ OR REPLACE ] [ TRUSTED ] [ PROCEDURAL ] LANGUAGE <replaceable class="parameter">name</replaceable>
     HANDLER <replaceable class="parameter">call_handler</replaceable> [ INLINE <replaceable class="parameter">inline_handler</replaceable> ] [ VALIDATOR <replaceable>valfunction</replaceable> ]
 </synopsis>
  </refsynopsisdiv>
@@ -31,8 +31,7 @@ CREATE [ TRUSTED ] [ PROCEDURAL ] LANGUAGE <replaceable class="parameter">name</
   <title>Description</title>
 
   <para>
-   Using <command>CREATE LANGUAGE</command>, a
-   <productname>PostgreSQL</productname> user can register a new
+   <command>CREATE LANGUAGE</command> registers a new
    procedural language with a <productname>PostgreSQL</productname>
    database.  Subsequently, functions and trigger procedures can be
    defined in this new language.
@@ -40,9 +39,9 @@ CREATE [ TRUSTED ] [ PROCEDURAL ] LANGUAGE <replaceable class="parameter">name</
 
   <para>
    <command>CREATE LANGUAGE</command> effectively associates the
-   language name with a call handler that is responsible for executing
+   language name with handler function(s) that are responsible for executing
    functions written in the language.  Refer to <xref linkend="plhandler">
-   for more information about language call handlers.
+   for more information about language handlers.
   </para>
 
   <para>
@@ -77,6 +76,23 @@ CREATE [ TRUSTED ] [ PROCEDURAL ] LANGUAGE <replaceable class="parameter">name</
    The creator of a language becomes its owner and can later
    drop it, rename it, or assign it to a new owner.
   </para>
+
+  <para>
+   <command>CREATE OR REPLACE LANGUAGE</command> will either create a
+   new language, or replace an existing definition.  If the language
+   already exists, its parameters are updated according to the values
+   specified or taken from <structname>pg_pltemplate</structname>,
+   but the language's ownership and permissions settings do not change,
+   and any existing functions written in the language are assumed to still
+   be valid.  In addition to the normal privilege requirements for creating
+   a language, the user must be superuser or owner of the existing language.
+   The <literal>REPLACE</> case is mainly meant to be used to
+   ensure that the language exists.  If the language has a
+   <structname>pg_pltemplate</structname> entry then <literal>REPLACE</>
+   will not actually change anything about an existing definition, except in
+   the unusual case where the <structname>pg_pltemplate</structname> entry
+   has been modified since the language was created.
+  </para>
  </refsect1>
 
  <refsect1 id="sql-createlanguage-parameters">
@@ -88,7 +104,7 @@ CREATE [ TRUSTED ] [ PROCEDURAL ] LANGUAGE <replaceable class="parameter">name</
 
      <listitem>
       <para>
-       <literal>TRUSTED</literal> specifies that the call handler for
+       <literal>TRUSTED</literal> specifies that
        the language is safe, that is, it does not offer an
        unprivileged user any functionality to bypass access
        restrictions. If this key word is omitted when registering the
