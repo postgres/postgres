@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.163 2010/02/16 21:18:01 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.164 2010/02/23 01:42:19 momjian Exp $
  *
  *
  *	 Portions Copyright (c) 1999-2010, PostgreSQL Global Development Group
@@ -2089,8 +2089,8 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out)
 			case DCH_HH:
 			case DCH_HH12:
 				sprintf(s, "%0*d", S_FM(n->suffix) ? 0 : 2,
-						tm->tm_hour % (HOURS_PER_DAY / 2) == 0 ? 12 :
-						tm->tm_hour % (HOURS_PER_DAY / 2));
+						!is_interval && tm->tm_hour % (HOURS_PER_DAY / 2) == 0 ?
+						12 : tm->tm_hour % (HOURS_PER_DAY / 2));
 				if (S_THth(n->suffix))
 					str_numth(s, s, S_TH_TYPE(n->suffix));
 				s += strlen(s);
