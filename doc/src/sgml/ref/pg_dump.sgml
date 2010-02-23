@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.116 2010/02/19 14:36:45 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.117 2010/02/23 17:28:09 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -77,8 +77,8 @@ PostgreSQL documentation
    the <quote>custom</quote> format (<option>-Fc</option>). It allows
    for selection and reordering of all archived items, and is compressed
    by default. The <application>tar</application> format
-   (<option>-Ft</option>) is not compressed and it is not possible to
-   reorder data when loading, but it is otherwise quite flexible;
+   (<option>-Ft</option>) is not compressed and has restrictions on
+   reordering data when loading, but it is otherwise quite flexible;
    moreover, it can be manipulated with standard Unix tools such as
    <command>tar</command>.
   </para>
@@ -224,10 +224,11 @@ PostgreSQL documentation
          <term><literal>custom</></term>
          <listitem>
           <para>
-           Output a custom archive suitable for input into
-           <application>pg_restore</application>. This is the most flexible
-           format in that it allows reordering of loading data as well
-           as object definitions. This format is also compressed by default.
+           Output a custom-format archive suitable for input into
+           <application>pg_restore</application>.
+           This is the most flexible output format in that it allows manual
+           selection and reordering of archived items during restore.
+           This format is also compressed by default.
           </para>
          </listitem>
         </varlistentry>
@@ -237,11 +238,14 @@ PostgreSQL documentation
          <term><literal>tar</></term>
          <listitem>
           <para>
-           Output a <command>tar</command> archive suitable for input into
-           <application>pg_restore</application>. Using this archive format
-           allows reordering and/or exclusion of database objects
-           at the time the database is restored. It is also possible to limit
-           which data is reloaded at restore time.
+           Output a <command>tar</command>-format archive suitable for input
+           into <application>pg_restore</application>.
+           This output format allows manual selection and reordering of
+           archived items during restore, but there is a restriction: the
+           relative order of table data items cannot be changed during
+           restore.  Also, <command>tar</command> format does not support
+           compression and has a limit of 8 GB on the size of individual
+           tables.
           </para>
          </listitem>
         </varlistentry>
