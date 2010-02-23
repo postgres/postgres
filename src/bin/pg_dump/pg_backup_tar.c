@@ -16,7 +16,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_tar.c,v 1.67 2010/01/07 04:53:35 tgl Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_tar.c,v 1.68 2010/02/23 16:55:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -211,8 +211,7 @@ InitArchiveFmt_Tar(ArchiveHandle *AH)
 		 * positioning.
 		 */
 		if (AH->compression != 0)
-			die_horribly(NULL, modulename, "compression not supported by tar output format\n");
-
+			die_horribly(NULL, modulename, "compression is not supported by tar archive format\n");
 	}
 	else
 	{							/* Read Mode */
@@ -348,12 +347,19 @@ tarOpen(ArchiveHandle *AH, const char *filename, char mode)
 		tm = _tarPositionTo(AH, filename);
 		if (!tm)				/* Not found */
 		{
-			if (filename)		/* Couldn't find the requested file. Future:
-								 * DO SEEK(0) and retry. */
-				die_horribly(AH, modulename, "could not find file %s in archive\n", filename);
+			if (filename)
+			{
+				/*
+				 * Couldn't find the requested file. Future:
+				 * do SEEK(0) and retry.
+				 */
+				die_horribly(AH, modulename, "could not find file \"%s\" in archive\n", filename);
+			}
 			else
-				/* Any file OK, non left, so return NULL */
+			{
+				/* Any file OK, none left, so return NULL */
 				return NULL;
+			}
 		}
 
 #ifdef HAVE_LIBZ
@@ -361,12 +367,11 @@ tarOpen(ArchiveHandle *AH, const char *filename, char mode)
 		if (AH->compression == 0)
 			tm->nFH = ctx->tarFH;
 		else
-			die_horribly(AH, modulename, "compression support is disabled in this format\n");
+			die_horribly(AH, modulename, "compression is not supported by tar archive format\n");
 		/* tm->zFH = gzdopen(dup(fileno(ctx->tarFH)), "rb"); */
 #else
 		tm->nFH = ctx->tarFH;
 #endif
-
 	}
 	else
 	{
@@ -414,7 +419,6 @@ tarOpen(ArchiveHandle *AH, const char *filename, char mode)
 			tm->zFH = gzdopen(dup(fileno(tm->tmpFH)), fmode);
 			if (tm->zFH == NULL)
 				die_horribly(AH, modulename, "could not open temporary file\n");
-
 		}
 		else
 			tm->nFH = tm->tmpFH;
@@ -431,7 +435,6 @@ tarOpen(ArchiveHandle *AH, const char *filename, char mode)
 	tm->tarFH = ctx->tarFH;
 
 	return tm;
-
 }
 
 static void
@@ -1150,20 +1153,19 @@ _tarPositionTo(ArchiveHandle *AH, const char *filename)
 		ahlog(AH, 4, "now at file position %s\n", buf);
 	}
 
-	/* We are at the start of the file. or at the next member */
+	/* We are at the start of the file, or at the next member */
 
 	/* Get the header */
 	if (!_tarGetHeader(AH, th))
 	{
 		if (filename)
-			die_horribly(AH, modulename, "could not find header for file %s in tar archive\n", filename);
+			die_horribly(AH, modulename, "could not find header for file \"%s\" in tar archive\n", filename);
 		else
-
+		{
 			/*
-			 * We're just scanning the archibe for the next file, so return
+			 * We're just scanning the archive for the next file, so return
 			 * null
 			 */
-		{
 			free(th);
 			return NULL;
 		}
@@ -1175,8 +1177,8 @@ _tarPositionTo(ArchiveHandle *AH, const char *filename)
 
 		id = atoi(th->targetFile);
 		if ((TocIDRequired(AH, id, AH->ropt) & REQ_DATA) != 0)
-			die_horribly(AH, modulename, "dumping data out of order is not supported in this archive format: "
-				"%s is required, but comes before %s in the archive file.\n",
+			die_horribly(AH, modulename, "restoring data out of order is not supported in this archive format: "
+				"\"%s\" is required, but comes before \"%s\" in the archive file.\n",
 						 th->targetFile, filename);
 
 		/* Header doesn't match, so read to next header */
@@ -1187,8 +1189,7 @@ _tarPositionTo(ArchiveHandle *AH, const char *filename)
 			_tarReadRaw(AH, &header[0], 512, NULL, ctx->tarFH);
 
 		if (!_tarGetHeader(AH, th))
-			die_horribly(AH, modulename, "could not find header for file %s in tar archive\n", filename);
-
+			die_horribly(AH, modulename, "could not find header for file \"%s\" in tar archive\n", filename);
 	}
 
 	ctx->tarNextMember = ctx->tarFHpos + ((th->fileLen + 511) & ~511);
