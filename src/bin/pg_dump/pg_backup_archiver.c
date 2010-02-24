@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.180 2010/02/23 21:48:32 momjian Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.181 2010/02/24 02:42:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -304,15 +304,14 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 
 	if (AH->public.verbose)
 	{
-		ahprintf(AH, "--\n-- pg_dump version: %s\n", PG_VERSION);
-		ahprintf(AH, "--\n-- remote database version: %s (%d)\n"
-			,AHX->remoteVersionStr
-			,AHX->remoteVersion) ;
-		ahprintf(AH, "--\n\n");
-	}
-
-	if (AH->public.verbose)
+		if (AH->archiveRemoteVersion)
+			ahprintf(AH, "-- Dumped from database version %s\n",
+					 AH->archiveRemoteVersion);
+		if (AH->archiveDumpVersion)
+			ahprintf(AH, "-- Dumped by pg_dump version %s\n",
+					 AH->archiveDumpVersion);
 		dumpTimestamp(AH, "Started on", AH->createDate);
+	}
 
 	if (ropt->single_txn)
 	{
@@ -1860,6 +1859,8 @@ _allocAH(const char *FileSpec, const ArchiveFormat fmt,
 	AH->public.exit_on_error = true;
 	AH->public.n_errors = 0;
 
+	AH->archiveDumpVersion = PG_VERSION;
+
 	AH->createDate = time(NULL);
 
 	AH->intSize = sizeof(int);
@@ -3059,7 +3060,6 @@ ReadHead(ArchiveHandle *AH)
 		AH->archiveRemoteVersion = ReadStr(AH);
 		AH->archiveDumpVersion = ReadStr(AH);
 	}
-
 }
 
 

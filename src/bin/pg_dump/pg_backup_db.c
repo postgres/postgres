@@ -5,7 +5,7 @@
  *	Implements the basic DB functions used by the archiver.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.88 2010/02/18 01:29:10 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.89 2010/02/24 02:42:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -64,6 +64,8 @@ _check_database_version(ArchiveHandle *AH)
 
 	AH->public.remoteVersionStr = strdup(remoteversion_str);
 	AH->public.remoteVersion = remoteversion;
+	if (!AH->archiveRemoteVersion)
+		AH->archiveRemoteVersion = AH->public.remoteVersionStr;
 
 	if (myversion != remoteversion
 		&& (remoteversion < AH->public.minRemoteVersion ||
