@@ -8,7 +8,7 @@
  * Darko Prenosil <Darko.Prenosil@finteh.hr>
  * Shridhar Daithankar <shridhar_daithankar@persistent.co.in>
  *
- * $PostgreSQL: pgsql/contrib/dblink/dblink.c,v 1.89 2010/02/14 18:42:11 rhaas Exp $
+ * $PostgreSQL: pgsql/contrib/dblink/dblink.c,v 1.90 2010/02/24 05:20:49 itagaki Exp $
  * Copyright (c) 2001-2010, PostgreSQL Global Development Group
  * ALL RIGHTS RESERVED;
  *
@@ -1017,7 +1017,6 @@ dblink_exec(PG_FUNCTION_ARGS)
 	char	   *msg;
 	PGresult   *res = NULL;
 	text	   *sql_cmd_status = NULL;
-	TupleDesc	tupdesc = NULL;
 	PGconn	   *conn = NULL;
 	char	   *connstr = NULL;
 	char	   *sql = NULL;
@@ -1070,11 +1069,6 @@ dblink_exec(PG_FUNCTION_ARGS)
 	{
 		dblink_res_error(conname, res, "could not execute command", fail);
 
-		/* need a tuple descriptor representing one TEXT column */
-		tupdesc = CreateTemplateTupleDesc(1, false);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 1, "status",
-						   TEXTOID, -1, 0);
-
 		/*
 		 * and save a copy of the command status string to return as our
 		 * result tuple
@@ -1083,11 +1077,6 @@ dblink_exec(PG_FUNCTION_ARGS)
 	}
 	else if (PQresultStatus(res) == PGRES_COMMAND_OK)
 	{
-		/* need a tuple descriptor representing one TEXT column */
-		tupdesc = CreateTemplateTupleDesc(1, false);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 1, "status",
-						   TEXTOID, -1, 0);
-
 		/*
 		 * and save a copy of the command status string to return as our
 		 * result tuple
