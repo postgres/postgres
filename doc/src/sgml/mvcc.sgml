@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/mvcc.sgml,v 2.72 2009/06/17 21:58:49 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/mvcc.sgml,v 2.73 2010/02/24 14:10:24 alvherre Exp $ -->
 
  <chapter id="mvcc">
   <title>Concurrency Control</title>
@@ -1080,7 +1080,7 @@ SELECT pg_advisory_lock(id) FROM foo WHERE id = 12345; -- ok
 SELECT pg_advisory_lock(id) FROM foo WHERE id &gt; 12345 LIMIT 100; -- danger!
 SELECT pg_advisory_lock(q.id) FROM
 (
-  SELECT id FROM foo WHERE id &gt; 12345 LIMIT 100;
+  SELECT id FROM foo WHERE id &gt; 12345 LIMIT 100
 ) q; -- ok
 </screen>
      In the above queries, the second form is dangerous because the
