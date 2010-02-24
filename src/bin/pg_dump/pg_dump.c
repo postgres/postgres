@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.573 2010/02/24 01:57:16 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.574 2010/02/24 02:15:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -10685,6 +10685,14 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 
 		if (actual_atts)
 			appendPQExpBuffer(q, "\n)");
+		else if (!tbinfo->reloftype)
+		{
+			/*
+			 * We must have a parenthesized attribute list, even though empty,
+			 * when not using the OF TYPE syntax.
+			 */
+			appendPQExpBuffer(q, " (\n)");
+		}
 
 		if (numParents > 0 && !binary_upgrade)
 		{
