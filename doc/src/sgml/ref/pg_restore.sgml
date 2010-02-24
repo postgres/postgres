@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/pg_restore.sgml,v 1.85 2010/02/23 00:21:19 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/pg_restore.sgml,v 1.86 2010/02/24 16:27:40 momjian Exp $ -->
 
 <refentry id="APP-PGRESTORE">
  <refmeta>
@@ -377,7 +377,8 @@
       <term><option>--table=<replaceable class="parameter">table</replaceable></option></term>
       <listitem>
        <para>
-        Restore definition and/or data of named table only.
+        Restore definition and/or data of named table only.  This can be
+        combined with the <option>-n</option> option to specify a schema.
        </para>
       </listitem>
      </varlistentry>
