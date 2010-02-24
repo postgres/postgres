@@ -1,7 +1,7 @@
 /*
  * op function for ltree and lquery
  * Teodor Sigaev <teodor@stack.net>
- * $PostgreSQL: pgsql/contrib/ltree/lquery_op.c,v 1.14 2009/06/11 14:48:51 momjian Exp $
+ * $PostgreSQL: pgsql/contrib/ltree/lquery_op.c,v 1.15 2010/02/24 18:02:24 tgl Exp $
  */
 #include "postgres.h"
 
@@ -344,7 +344,7 @@ lt_q_regex(PG_FUNCTION_ARGS)
 	bool		res = false;
 	int			num = ArrayGetNItems(ARR_NDIM(_query), ARR_DIMS(_query));
 
-	if (ARR_NDIM(_query) != 1)
+	if (ARR_NDIM(_query) > 1)
 		ereport(ERROR,
 				(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
 				 errmsg("array must be one-dimensional")));

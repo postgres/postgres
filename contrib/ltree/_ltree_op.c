@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/ltree/_ltree_op.c,v 1.13 2009/06/11 14:48:51 momjian Exp $
+ * $PostgreSQL: pgsql/contrib/ltree/_ltree_op.c,v 1.14 2010/02/24 18:02:24 tgl Exp $
  *
  *
  * op function for ltree[]
@@ -48,7 +48,7 @@ array_iterator(ArrayType *la, PGCALL2 callback, void *param, ltree **found)
 	int			num = ArrayGetNItems(ARR_NDIM(la), ARR_DIMS(la));
 	ltree	   *item = (ltree *) ARR_DATA_PTR(la);
 
-	if (ARR_NDIM(la) != 1)
+	if (ARR_NDIM(la) > 1)
 		ereport(ERROR,
 				(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
 				 errmsg("array must be one-dimensional")));
@@ -148,7 +148,7 @@ _lt_q_regex(PG_FUNCTION_ARGS)
 	bool		res = false;
 	int			num = ArrayGetNItems(ARR_NDIM(_query), ARR_DIMS(_query));
 
-	if (ARR_NDIM(_query) != 1)
+	if (ARR_NDIM(_query) > 1)
 		ereport(ERROR,
 				(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
 				 errmsg("array must be one-dimensional")));
@@ -306,7 +306,7 @@ _lca(PG_FUNCTION_ARGS)
 	ltree	  **a,
 			   *res;
 
-	if (ARR_NDIM(la) != 1)
+	if (ARR_NDIM(la) > 1)
 		ereport(ERROR,
 				(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
 				 errmsg("array must be one-dimensional")));
