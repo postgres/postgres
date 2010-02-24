@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/rules.sgml,v 1.53 2009/11/05 23:24:22 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/rules.sgml,v 1.54 2010/02/24 03:33:49 momjian Exp $ -->
 
 <chapter id="rules">
 <title>The Rule System</title>
@@ -1828,9 +1828,6 @@ GRANT SELECT ON phone_number TO secretary;
      </listitem>
     </itemizedlist>
 
-    (This system was established in <productname>PostgreSQL</> 7.3.
-    In versions before that, the command status might show different
-    results when rules exist.)
 </para>
 
 <para>

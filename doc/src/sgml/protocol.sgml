@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/protocol.sgml,v 1.83 2010/02/22 18:12:04 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/protocol.sgml,v 1.84 2010/02/24 03:33:49 momjian Exp $ -->
 
 <chapter id="protocol">
  <title>Frontend/Backend Protocol</title>
@@ -165,8 +165,8 @@
 
    <para>
     Data of a particular data type might be transmitted in any of several
-    different <firstterm>formats</>.  As of <productname>PostgreSQL</> 7.4
-    the only supported formats are <quote>text</> and <quote>binary</>,
+    different <firstterm>formats</>.
+    The only supported formats are <quote>text</> and <quote>binary</>,
     but the protocol makes provision for future extensions.  The desired
     format for any value is specified by a <firstterm>format code</>.
     Clients can specify a format code for each transmitted parameter value

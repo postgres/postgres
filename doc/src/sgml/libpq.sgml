@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.300 2010/02/17 04:19:37 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.301 2010/02/24 03:33:49 momjian Exp $ -->
 
 <chapter id="libpq">
  <title><application>libpq</application> - C Library</title>
@@ -1203,14 +1203,6 @@ PQconninfoOption *PQconninfoParse(const char *conninfo, char **errmsg);
        has been sent to the server and not yet completed.
       </para>
 
-      <caution>
-       <para>
-        <function>PQtransactionStatus</> will give incorrect results when using
-        a <productname>PostgreSQL</> 7.3 server that has the parameter <literal>autocommit</>
-        set to off.  The server-side autocommit feature has been
-        deprecated and does not exist in later server versions.
-       </para>
-      </caution>
      </listitem>
     </varlistentry>
 
