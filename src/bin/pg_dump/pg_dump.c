@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.572 2010/02/18 01:29:10 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.573 2010/02/24 01:57:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,7 +32,6 @@
 
 #include "access/attnum.h"
 #include "access/sysattr.h"
-#include "access/transam.h"
 #include "catalog/pg_cast.h"
 #include "catalog/pg_class.h"
 #include "catalog/pg_default_acl.h"
@@ -4795,10 +4794,8 @@ getProcLangs(int *numProcLangs)
 						  "(%s lanowner) AS lanowner "
 						  "FROM pg_language "
 						  "WHERE lanispl "
-						  /* do not dump initdb-installed languages */
-						  "AND oid >= %u "
 						  "ORDER BY oid",
-						  username_subquery, FirstNormalObjectId);
+						  username_subquery);
 	}
 	else if (g_fout->remoteVersion >= 80300)
 	{
@@ -4808,10 +4805,9 @@ getProcLangs(int *numProcLangs)
 						  "lanvalidator,  lanacl, "
 						  "(%s lanowner) AS lanowner "
 						  "FROM pg_language "
-						  "WHERE lanispl%s "
+						  "WHERE lanispl "
 						  "ORDER BY oid",
-						  username_subquery,
-						  binary_upgrade ? "\nAND lanname != 'plpgsql'" : "");
+						  username_subquery);
 	}
 	else if (g_fout->remoteVersion >= 80100)
 	{
@@ -7552,11 +7548,11 @@ dumpProcLang(Archive *fout, ProcLangInfo *plang)
 	appendPQExpBuffer(delqry, "DROP PROCEDURAL LANGUAGE %s;\n",
 					  qlanname);
 
-	appendPQExpBuffer(defqry, "CREATE %sPROCEDURAL LANGUAGE %s",
-					  (useParams && plang->lanpltrusted) ? "TRUSTED " : "",
-					  qlanname);
 	if (useParams)
 	{
+		appendPQExpBuffer(defqry, "CREATE %sPROCEDURAL LANGUAGE %s",
+						  plang->lanpltrusted ? "TRUSTED " : "",
+						  qlanname);
 		appendPQExpBuffer(defqry, " HANDLER %s",
 						  fmtId(funcInfo->dobj.name));
 		if (OidIsValid(plang->laninline))
@@ -7579,6 +7575,20 @@ dumpProcLang(Archive *fout, ProcLangInfo *plang)
 			appendPQExpBuffer(defqry, "%s",
 							  fmtId(validatorInfo->dobj.name));
 		}
+	}
+	else
+	{
+		/*
+		 * If not dumping parameters, then use CREATE OR REPLACE so that
+		 * the command will not fail if the language is preinstalled in the
+		 * target database.  We restrict the use of REPLACE to this case so
+		 * as to eliminate the risk of replacing a language with incompatible
+		 * parameter settings: this command will only succeed at all if there
+		 * is a pg_pltemplate entry, and if there is one, the existing entry
+		 * must match it too.
+		 */
+		appendPQExpBuffer(defqry, "CREATE OR REPLACE PROCEDURAL LANGUAGE %s",
+						  qlanname);
 	}
 	appendPQExpBuffer(defqry, ";\n");
 
