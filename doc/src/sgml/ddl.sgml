@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ddl.sgml,v 1.89 2010/02/24 03:33:48 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ddl.sgml,v 1.90 2010/02/24 15:54:31 momjian Exp $ -->
 
 <chapter id="ddl">
  <title>Data Definition</title>
@@ -1795,12 +1795,18 @@ REVOKE CREATE ON SCHEMA public FROM PUBLIC;
    </para>
 
    <para>
-    It is best to avoid table names beginning with <literal>pg_</>
-    because they might someday conflict with system catalogs of the
-    same name.  (<productname>PostgreSQL</productname> system catalog
-    table names always start with <literal>pg_</>).  Of course, table
-    names can always be schema-qualified to avoid conflicting with
-    system catalog table names.
+    In <productname>PostgreSQL</productname> versions before 7.3,
+    table names beginning with <literal>pg_</> were reserved.  This is
+    no longer true: you can create such a table name if you wish, in
+    any non-system schema.  However, it's best to continue to avoid
+    such names, to ensure that you won't suffer a conflict if some
+    future version defines a system table named the same as your
+    table.  (With the default search path, an unqualified reference to
+    your table name would then be resolved as the system table instead.)
+    System tables will continue to follow the convention of having
+    names beginning with <literal>pg_</>, so that they will not
+    conflict with unqualified user-table names so long as users avoid
+    the <literal>pg_</> prefix.
    </para>
   </sect2>
 
@@ -3034,6 +3040,15 @@ DROP TABLE products CASCADE;
    </para>
   </note>
 
+  <note>
+   <para>
+    Foreign key constraint dependencies and serial column dependencies
+    from <productname>PostgreSQL</productname> versions prior to 7.3
+    are <emphasis>not</emphasis> maintained or created during the
+    upgrade process.  All other dependency types will be properly
+    created during an upgrade from a pre-7.3 database.
+   </para>
+  </note>
  </sect1>
 
 </chapter>

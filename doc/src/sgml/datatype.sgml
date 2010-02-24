@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.243 2010/02/24 03:33:48 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.244 2010/02/24 15:54:31 momjian Exp $ -->
 
  <chapter id="datatype">
   <title id="datatype-title">Data Types</title>
@@ -715,7 +715,11 @@ NUMERIC
 
     <note>
      <para>
-      The assumption that <type>real</type> and
+      Prior to <productname>PostgreSQL</productname> 7.4, the precision in
+      <type>float(<replaceable>p</replaceable>)</type> was taken to mean
+      so many <emphasis>decimal</> digits.  This has been corrected to match the SQL
+      standard, which specifies that the precision is measured in binary
+      digits.  The assumption that <type>real</type> and
       <type>double precision</type> have exactly 24 and 53 bits in the
       mantissa respectively is correct for IEEE-standard floating point
       implementations.  On non-IEEE platforms it might be off a little, but
@@ -791,9 +795,11 @@ ALTER SEQUENCE <replaceable class="parameter">tablename</replaceable>_<replaceab
 
     <note>
      <para>
-      If you wish a serial column to have a unique constraint or be
-      a primary key, it must be specified, just like any other data
-      type.
+      Prior to <productname>PostgreSQL</productname> 7.3, <type>serial</type>
+      implied <literal>UNIQUE</literal>.  This is no longer automatic.  If
+      you wish a serial column to have a unique constraint or be a
+      primary key, it must now be specified, just like
+      any other data type.
      </para>
     </note>
 
@@ -1514,6 +1520,14 @@ SELECT E'\\xDEADBEEF';
       </tbody>
      </tgroup>
     </table>
+
+   <note>
+    <para>
+     Prior to <productname>PostgreSQL</productname> 7.3, writing just
+     <type>timestamp</type> was equivalent to <type>timestamp with
+     time zone</type>.  This was changed for SQL compliance.
+    </para>
+   </note>
 
    <para>
     <type>time</type>, <type>timestamp</type>, and
