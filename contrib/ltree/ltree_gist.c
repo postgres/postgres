@@ -1,7 +1,7 @@
 /*
  * GiST support for ltree
  * Teodor Sigaev <teodor@stack.net>
- * $PostgreSQL: pgsql/contrib/ltree/ltree_gist.c,v 1.22 2007/11/16 01:12:24 momjian Exp $
+ * $PostgreSQL: pgsql/contrib/ltree/ltree_gist.c,v 1.22.2.1 2010/02/24 18:02:36 tgl Exp $
  */
 
 #include "ltree.h"
@@ -601,7 +601,7 @@ arrq_cons(ltree_gist * key, ArrayType *_query)
 	lquery	   *query = (lquery *) ARR_DATA_PTR(_query);
 	int			num = ArrayGetNItems(ARR_NDIM(_query), ARR_DIMS(_query));
 
-	if (ARR_NDIM(_query) != 1)
+	if (ARR_NDIM(_query) > 1)
 		ereport(ERROR,
 				(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
 				 errmsg("array must be one-dimensional")));
