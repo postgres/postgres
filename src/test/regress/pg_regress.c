@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/test/regress/pg_regress.c,v 1.69 2010/01/02 16:58:15 momjian Exp $
+ * $PostgreSQL: pgsql/src/test/regress/pg_regress.c,v 1.70 2010/02/24 01:35:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1791,12 +1791,13 @@ create_database(const char *dbname)
 				 dbname, dbname, dbname, dbname, dbname);
 
 	/*
-	 * Install any requested procedural languages
+	 * Install any requested procedural languages.  We use CREATE OR REPLACE
+	 * so that this will work whether or not the language is preinstalled.
 	 */
 	for (sl = loadlanguage; sl != NULL; sl = sl->next)
 	{
 		header(_("installing %s"), sl->str);
-		psql_command(dbname, "CREATE LANGUAGE \"%s\"", sl->str);
+		psql_command(dbname, "CREATE OR REPLACE LANGUAGE \"%s\"", sl->str);
 	}
 }
 
