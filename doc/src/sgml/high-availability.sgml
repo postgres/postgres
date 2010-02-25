@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/high-availability.sgml,v 1.50 2010/02/25 08:57:47 heikki Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/high-availability.sgml,v 1.51 2010/02/25 09:16:42 heikki Exp $ -->
 
 <chapter id="high-availability">
  <title>High Availability, Load Balancing, and Replication</title>
@@ -769,7 +769,7 @@ if (!triggered)
    </para>
 
    <para>
-    Streaming replication is asynchronous, so there is stilll a small delay
+    Streaming replication is asynchronous, so there is still a small delay
     between committing a transaction in the primary and for the changes to
     become visible in the standby. The delay is however much smaller than with
     file-based log shipping, typically under one second assuming the standby
