@@ -76,6 +76,7 @@
 #ssl = off				# (change requires restart)
 #ssl_ciphers = 'ALL:!ADH:!LOW:!EXP:!MD5:@STRENGTH'	# allowed SSL ciphers
 					# (change requires restart)
+#ssl_renegotiation_limit = 512MB	# amount of data between renegotiations
 #password_encryption = on
 #db_user_namespace = off
 
