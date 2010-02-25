@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/plperl.sgml,v 2.80 2010/02/12 19:35:25 adunstan Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/plperl.sgml,v 2.81 2010/02/25 03:08:07 tgl Exp $ -->
 
  <chapter id="plperl">
   <title>PL/Perl - Perl Procedural Language</title>
@@ -85,12 +85,13 @@ $$ LANGUAGE plperl;
    <para>
     The use of named nested subroutines is dangerous in Perl, especially if
     they refer to lexical variables in the enclosing scope. Because a PL/Perl
-    function is wrapped in a subroutine, any named subroutine you create will
-    be nested. In general, it is far safer to create anonymous subroutines
-    which you call via a coderef. See <literal>Variable "%s" will not stay shared</literal>
-    and <literal>Variable "%s" is not available</literal> in the
-    <citerefentry><refentrytitle>perldiag</></citerefentry> man page for more
-    details.
+    function is wrapped in a subroutine, any named subroutine you place inside
+    one will be nested. In general, it is far safer to create anonymous
+    subroutines which you call via a coderef. For more information, see the
+    entries for <literal>Variable "%s" will not stay shared</literal> and
+    <literal>Variable "%s" is not available</literal> in the
+    <citerefentry><refentrytitle>perldiag</></citerefentry> man page, or
+    search the Internet for <quote>perl nested named subroutine</>.
    </para>
   </note>
 
