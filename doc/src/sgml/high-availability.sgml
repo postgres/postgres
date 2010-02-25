@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/high-availability.sgml,v 1.49 2010/02/22 11:47:30 heikki Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/high-availability.sgml,v 1.50 2010/02/25 08:57:47 heikki Exp $ -->
 
 <chapter id="high-availability">
  <title>High Availability, Load Balancing, and Replication</title>
@@ -523,8 +523,8 @@ protocol to make nodes agree on a serializable transactional order.
    <varname>archive_timeout</varname> parameter, which can be set as low
    as a few seconds.  However such a low setting will
    substantially increase the bandwidth required for file shipping.
-   If you need a window of less than a minute or so, it is probably better
-   to consider record-based log shipping.
+   If you need a window of less than a minute or so, consider using
+   <xref linkend="streaming-replication">.
   </para>
 
   <para>
@@ -762,19 +762,25 @@ if (!triggered)
    </indexterm>
 
    <para>
-    <productname>PostgreSQL</> includes a simple streaming replication
-    mechanism, which allows the standby server to stay more up-to-date than
-    file-based log shipping. The standby connects to the primary
-    and the primary starts streaming WAL records from where the standby
-    left off, and continues streaming them as they are generated, without
-    waiting for the WAL file to be filled. So with streaming replication,
-    <varname>archive_timeout</> does not need to be changed to reduce
-    possible data loss.
+    Streaming replication allows a standby server to stay more up-to-date
+    than is possible with file-based log shipping. The standby connects
+    to the primary, which streams WAL records to the standby as they're
+    generated, without waiting for the WAL file to be filled.
+   </para>
+
+   <para>
+    Streaming replication is asynchronous, so there is stilll a small delay
+    between committing a transaction in the primary and for the changes to
+    become visible in the standby. The delay is however much smaller than with
+    file-based log shipping, typically under one second assuming the standby
+    is powerful enough to keep up with the load. With streaming replication,
+    <varname>archive_timeout</> is not required to reduce the data loss
+    window.
    </para>
 
    <para>
     Streaming replication relies on file-based continuous archiving for
-    making the base backup and for allowing a standby to catch up if it is
+    making the base backup and for allowing the standby to catch up if it is
     disconnected from the primary for long enough for the primary to
     delete old WAL files still required by the standby.
    </para>
@@ -796,11 +802,10 @@ if (!triggered)
      <listitem>
       <para>
        Set up continuous archiving from the primary to a WAL archive located
-       in a directory on the standby server. Ensure that
-       <xref linkend="guc-archive-mode">,
-       <xref linkend="guc-archive-command"> and
-       <xref linkend="guc-archive-timeout">
-       are set appropriately on the primary
+       in a directory on the standby server. In particular, set
+       <xref linkend="guc-archive-mode"> and
+       <xref linkend="guc-archive-command">
+       to archive WAL files in a location accessible from the standby
        (see <xref linkend="backup-archiving-wal">).
       </para>
      </listitem>
@@ -808,7 +813,7 @@ if (!triggered)
      <listitem>
       <para>
        Set <xref linkend="guc-listen-addresses"> and authentication options
-       (see <filename>pg_hba.conf</>) so the standby server can connect to
+       (see <filename>pg_hba.conf</>) on the primary so that the standby server can connect to
        the <literal>replication</> pseudo-database on the primary server (see
        <xref linkend="streaming-replication-authentication">).
       </para>
