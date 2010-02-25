@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.541 2010/02/17 04:19:40 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.542 2010/02/25 13:26:15 mha Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -117,6 +117,7 @@ extern char *temp_tablespaces;
 extern bool synchronize_seqscans;
 extern bool fullPageWrites;
 extern int	vacuum_defer_cleanup_age;
+extern int	ssl_renegotiation_limit;
 
 int	trace_recovery_messages = LOG;
 
@@ -1966,6 +1967,16 @@ static struct config_int ConfigureNamesInt[] =
 		},
 		&tcp_keepalives_interval,
 		0, 0, INT_MAX, assign_tcp_keepalives_interval, show_tcp_keepalives_interval
+	},
+
+	{
+		{"ssl_renegotiation_limit", PGC_USERSET, CONN_AUTH_SECURITY,
+			gettext_noop("Set the amount of traffic to send and receive before renegotiating the encryption keys."),
+			NULL,
+			GUC_UNIT_KB,
+		},
+		&ssl_renegotiation_limit,
+		512 * 1024, 0, MAX_KILOBYTES, NULL, NULL
 	},
 
 	{
