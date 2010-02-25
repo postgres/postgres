@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/be-secure.c,v 1.59.2.5 2009/12/09 06:37:17 mha Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/be-secure.c,v 1.59.2.6 2010/02/25 23:44:27 tgl Exp $
  *
  *	  Since the server static private key ($DataDir/server.key)
  *	  will normally be stored unencrypted so that the database
@@ -117,13 +117,14 @@ static void close_SSL(Port *);
 static const char *SSLerrmessage(void);
 #endif
 
-#ifdef USE_SSL
 /*
  *	How much data can be sent across a secure connection
  *	(total in both directions) before we require renegotiation.
+ *	Set to 0 to disable renegotiation completely.
  */
-#define RENEGOTIATION_LIMIT (512 * 1024 * 1024)
+int ssl_renegotiation_limit;
 
+#ifdef USE_SSL
 static SSL_CTX *SSL_context = NULL;
 #endif
 
@@ -332,7 +333,7 @@ secure_write(Port *port, void *ptr, size_t len)
 	{
 		int			err;
 
-		if (port->count > RENEGOTIATION_LIMIT)
+		if (ssl_renegotiation_limit && port->count > ssl_renegotiation_limit * 1024L)
 		{
 			SSL_set_session_id_context(port->ssl, (void *) &SSL_context,
 									   sizeof(SSL_context));

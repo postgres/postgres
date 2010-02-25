@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.299.2.7 2010/01/24 21:49:58 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.299.2.8 2010/02/25 23:44:27 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -97,6 +97,7 @@ extern int	CommitDelay;
 extern int	CommitSiblings;
 extern char *default_tablespace;
 extern bool fullPageWrites;
+extern int	ssl_renegotiation_limit;
 
 #ifdef TRACE_SORT
 extern bool trace_sort;
@@ -1498,6 +1499,15 @@ static struct config_int ConfigureNamesInt[] =
 		},
 		&autovacuum_anl_thresh,
 		500, 0, INT_MAX, NULL, NULL
+	},
+
+	{
+		{"ssl_renegotiation_limit", PGC_USERSET, CONN_AUTH_SECURITY,
+			gettext_noop("Set the amount of traffic to send and receive before renegotiating the encryption keys."),
+			NULL
+		},
+		&ssl_renegotiation_limit,
+		512 * 1024, 0, MAX_KILOBYTES, NULL, NULL
 	},
 
 	{
