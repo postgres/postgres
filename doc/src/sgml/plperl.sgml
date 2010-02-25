@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/plperl.sgml,v 2.81 2010/02/25 03:08:07 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/plperl.sgml,v 2.82 2010/02/25 10:02:30 mha Exp $ -->
 
  <chapter id="plperl">
   <title>PL/Perl - Perl Procedural Language</title>
@@ -1154,8 +1154,8 @@ CREATE TRIGGER test_valid_id_trig
        into a module and loaded by the <literal>on_init</> string.
        Examples:
 <programlisting>
-plplerl.on_init = '$ENV{NYTPROF}="start=no"; require Devel::NYTProf::PgPLPerl'
-plplerl.on_init = 'use lib "/my/app"; use MyApp::PgInit;'
+plperl.on_init = '$ENV{NYTPROF}="start=no"; require Devel::NYTProf::PgPLPerl'
+plperl.on_init = 'use lib "/my/app"; use MyApp::PgInit;'
 </programlisting>
        </para>
        <para>
@@ -1197,7 +1197,7 @@ plplerl.on_init = 'use lib "/my/app"; use MyApp::PgInit;'
        superuser execute an <literal>ALTER USER ... SET ...</> command.
        For example:
 <programlisting>
-ALTER USER joe SET plplerl.on_plperl_init = '$_SHARED{debug} = 1';
+ALTER USER joe SET plperl.on_plperl_init = '$_SHARED{debug} = 1';
 </programlisting>
        </para>
        <para>
