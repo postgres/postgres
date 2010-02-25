@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_function.sgml,v 1.90 2010/02/14 01:01:35 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_function.sgml,v 1.91 2010/02/25 22:24:00 momjian Exp $
 -->
 
 <refentry id="SQL-CREATEFUNCTION">
@@ -289,7 +289,9 @@ CREATE [ OR REPLACE ] FUNCTION
        return the same result for the same argument values, but that its
        result could change across SQL statements.  This is the appropriate
        selection for functions whose results depend on database lookups,
-       parameter variables (such as the current time zone), etc.  Also note
+       parameter variables (such as the current time zone), etc.  (It is
+       inappropriate for <literal>AFTER</> triggers that wish to
+       query rows modified by the current command.)  Also note
        that the <function>current_timestamp</> family of functions qualify
        as stable, since their values do not change within a transaction.
       </para>
