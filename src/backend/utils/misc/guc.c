@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.252.4.8 2010/01/24 21:50:09 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.252.4.9 2010/02/25 23:45:04 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -81,6 +81,7 @@ extern int	CommitDelay;
 extern int	CommitSiblings;
 extern int	DebugSharedBuffers;
 extern char *default_tablespace;
+extern int	ssl_renegotiation_limit;
 
 static const char *assign_log_destination(const char *value,
 					   bool doit, GucSource source);
@@ -978,6 +979,15 @@ static struct config_int ConfigureNamesInt[] =
 		},
 		&PostPortNumber,
 		DEF_PGPORT, 1, 65535, NULL, NULL
+	},
+
+	{
+		{"ssl_renegotiation_limit", PGC_USERSET, CONN_AUTH_SECURITY,
+			gettext_noop("Set the amount of traffic to send and receive before renegotiating the encryption keys."),
+			NULL
+		},
+		&ssl_renegotiation_limit,
+		512 * 1024, 0, INT_MAX / 1024, NULL, NULL
 	},
 
 	{
