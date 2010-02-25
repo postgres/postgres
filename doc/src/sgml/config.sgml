@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.253 2010/02/25 13:26:15 mha Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.254 2010/02/25 19:20:38 momjian Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -3392,8 +3392,8 @@ FROM pg_stat_activity;
       <listitem>
        <para>
         Controls which SQL statements are logged. Valid values are
-        <literal>none</>, <literal>ddl</>, <literal>mod</>, and
-        <literal>all</>. <literal>ddl</> logs all data definition
+        <literal>none</> (off), <literal>ddl</>, <literal>mod</>, and
+        <literal>all</> (all statements). <literal>ddl</> logs all data definition
         statements, such as <command>CREATE</>, <command>ALTER</>, and
         <command>DROP</> statements. <literal>mod</> logs all
         <literal>ddl</> statements, plus data-modifying statements
