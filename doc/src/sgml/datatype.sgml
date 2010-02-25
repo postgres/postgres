@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.244 2010/02/24 15:54:31 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.245 2010/02/25 18:16:53 momjian Exp $ -->
 
  <chapter id="datatype">
   <title id="datatype-title">Data Types</title>
@@ -1523,9 +1523,11 @@ SELECT E'\\xDEADBEEF';
 
    <note>
     <para>
-     Prior to <productname>PostgreSQL</productname> 7.3, writing just
-     <type>timestamp</type> was equivalent to <type>timestamp with
-     time zone</type>.  This was changed for SQL compliance.
+     The SQL standard requires that writing just <type>timestamp</type>
+     be equivalent to <type>timestamp <emphasis>without</> time
+     zone</type>, and <productname>PostgreSQL</productname> honors that
+     behavior.  (Releases prior to 7.3 treated it as <type>timestamp
+     with time zone</type>.)
     </para>
    </note>
 
