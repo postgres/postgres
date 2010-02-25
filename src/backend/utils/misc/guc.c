@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.164.2.7 2009/12/09 21:59:07 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.164.2.8 2010/02/25 23:45:28 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -75,6 +75,7 @@ extern int	CheckPointTimeout;
 extern int	CommitDelay;
 extern int	CommitSiblings;
 extern char *preload_libraries_string;
+extern int	ssl_renegotiation_limit;
 
 #ifdef HAVE_SYSLOG
 extern char *Syslog_facility;
@@ -974,6 +975,15 @@ static struct config_int ConfigureNamesInt[] =
 		},
 		&PostPortNumber,
 		DEF_PGPORT, 1, 65535, NULL, NULL
+	},
+
+	{
+		{"ssl_renegotiation_limit", PGC_USERSET, CONN_AUTH_SECURITY,
+			gettext_noop("Set the amount of traffic to send and receive before renegotiating the encryption keys."),
+			NULL
+		},
+		&ssl_renegotiation_limit,
+		512 * 1024, 0, INT_MAX / 1024, NULL, NULL
 	},
 
 	{

@@ -44,6 +44,8 @@
 
 #authentication_timeout = 60	# 1-600, in seconds
 #ssl = false
+#ssl_renegotiation_limit = 524288	# amount of data between renegotiations
+					# in kilobytes
 #password_encryption = true
 #krb_server_keyfile = ''
 #db_user_namespace = false

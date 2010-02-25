@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.215.2.10 2007/04/20 02:38:46 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.215.2.11 2010/02/25 23:45:28 tgl Exp $
 -->
 
 <Chapter Id="runtime">
@@ -752,6 +752,32 @@ SET ENABLE_SEQSCAN TO OFF;
         <xref linkend="ssl-tcp"> before using this. The default
         is off.
        </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><varname>ssl_renegotiation_limit</varname> (<type>int</type>)</term>
+      <indexterm>
+       <primary><varname>ssl_renegotiation_limit</> configuration parameter</primary>
+      </indexterm>
+      <listitem>
+       <para>
+        Specifies how much data can flow over an <acronym>SSL</> encrypted connection
+        before renegotiation of the session will take place. Renegotiation of the
+        session decreases the chance of doing cryptanalysis when large amounts of data
+        are sent, but it also carries a large performance penalty. The sum of
+        sent and received traffic is used to check the limit. If the parameter is
+        set to 0, renegotiation is disabled. The default is <literal>512MB</>.
+       </para>
+       <note>
+        <para>
+         SSL libraries from before November 2009 are insecure when using SSL
+         renegotiation, due to a vulnerability in the SSL protocol. As a stop-gap fix
+         for this vulnerability, some vendors also shipped SSL libraries incapable
+         of doing renegotiation. If any of these libraries are in use on the client
+         or server, SSL renegotiation should be disabled.
+        </para>
+       </note>
       </listitem>
      </varlistentry>
 
