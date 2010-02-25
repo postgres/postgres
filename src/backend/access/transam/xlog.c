@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.377 2010/02/19 10:51:03 heikki Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.378 2010/02/25 02:17:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -8132,7 +8132,8 @@ pg_stop_backup(PG_FUNCTION_ARGS)
 	 *
 	 * We wait forever, since archive_command is supposed to work and we
 	 * assume the admin wanted his backup to work completely. If you don't
-	 * wish to wait, you can set statement_timeout.
+	 * wish to wait, you can set statement_timeout.  Also, some notices
+	 * are issued to clue in anyone who might be doing this interactively.
 	 */
 	XLByteToPrevSeg(stoppoint, _logId, _logSeg);
 	XLogFileName(lastxlogfilename, ThisTimeLineID, _logId, _logSeg);
@@ -8140,6 +8141,9 @@ pg_stop_backup(PG_FUNCTION_ARGS)
 	XLByteToSeg(startpoint, _logId, _logSeg);
 	BackupHistoryFileName(histfilename, ThisTimeLineID, _logId, _logSeg,
 						  startpoint.xrecoff % XLogSegSize);
+
+	ereport(NOTICE,
+			(errmsg("pg_stop_backup cleanup done, waiting for required WAL segments to be archived")));
 
 	seconds_before_warning = 60;
 	waits = 0;
@@ -8155,8 +8159,11 @@ pg_stop_backup(PG_FUNCTION_ARGS)
 		{
 			seconds_before_warning *= 2;		/* This wraps in >10 years... */
 			ereport(WARNING,
-					(errmsg("pg_stop_backup still waiting for archive to complete (%d seconds elapsed)",
-							waits)));
+					(errmsg("pg_stop_backup still waiting for all required WAL segments to be archived (%d seconds elapsed)",
+							waits),
+					 errhint("Check that your archive_command is executing properly. "
+							 "pg_stop_backup can be cancelled safely, "
+							 "but the database backup will not be usable without all the WAL segments.")));
 		}
 	}
 
