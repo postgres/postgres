@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/recovery-config.sgml,v 2.1 2010/02/22 11:47:30 heikki Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/recovery-config.sgml,v 2.2 2010/02/25 09:32:19 heikki Exp $ -->
 
 <chapter Id="recovery-config">
   <title>Recovery Configuration</title>
@@ -193,7 +193,8 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
         <listitem>
          <para>
           Specifies a connection string to be used for the standby server
-          to connect with the primary. This string is in the same format as
+          to connect with the primary. This string is in the format
+          accepted by the libpq <function>PQconnectdb</function> function,
           described in <xref linkend="libpq-connect">. If any option is
           unspecified in this string, then the corresponding environment
           variable (see <xref linkend="libpq-envars">) is checked. If the
