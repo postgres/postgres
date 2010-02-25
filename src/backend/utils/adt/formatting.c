@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.166 2010/02/23 16:14:26 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.167 2010/02/25 18:36:14 momjian Exp $
  *
  *
  *	 Portions Copyright (c) 1999-2010, PostgreSQL Global Development Group
@@ -3097,6 +3097,9 @@ to_date(PG_FUNCTION_ARGS)
  *
  * The TmFromChar is then analysed and converted into the final results in
  * struct 'tm' and 'fsec'.
+ *
+ * This function does very little error checking, e.g.
+ * to_timestamp('20096040','YYYYMMDD') works
  */
 static void
 do_to_timestamp(text *date_txt, text *fmt,
