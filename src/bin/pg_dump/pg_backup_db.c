@@ -5,7 +5,7 @@
  *	Implements the basic DB functions used by the archiver.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.89 2010/02/24 02:42:55 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.90 2010/02/26 02:01:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -163,20 +163,20 @@ _connectDB(ArchiveHandle *AH, const char *reqdb, const char *requser)
 		if (!keywords || !values)
 			die_horribly(AH, modulename, "out of memory\n");
 
-		keywords[0]	= "host";
-		values[0]	= PQhost(AH->connection);
-		keywords[1]	= "port";
-		values[1]	= PQport(AH->connection);
-		keywords[2]	= "user";
-		values[2]	= newuser;
-		keywords[3]	= "password";
-		values[3]	= password;
-		keywords[4]	= "dbname";
-		values[4]	= newdb;
-		keywords[5]	= "fallback_application_name";
-		values[5]	= progname;
-		keywords[6]	= NULL;
-		values[6]	= NULL;
+		keywords[0] = "host";
+		values[0] = PQhost(AH->connection);
+		keywords[1] = "port";
+		values[1] = PQport(AH->connection);
+		keywords[2] = "user";
+		values[2] = newuser;
+		keywords[3] = "password";
+		values[3] = password;
+		keywords[4] = "dbname";
+		values[4] = newdb;
+		keywords[5] = "fallback_application_name";
+		values[5] = progname;
+		keywords[6] = NULL;
+		values[6] = NULL;
 
 		new_pass = false;
 		newConn = PQconnectdbParams(keywords, values, true);
@@ -270,20 +270,20 @@ ConnectDatabase(Archive *AHX,
 		if (!keywords || !values)
 			die_horribly(AH, modulename, "out of memory\n");
 
-		keywords[0]	= "host";
-		values[0]	= pghost;
-		keywords[1]	= "port";
-		values[1]	= pgport;
-		keywords[2]	= "user";
-		values[2]	= username;
-		keywords[3]	= "password";
-		values[3]	= password;
-		keywords[4]	= "dbname";
-		values[4]	= dbname;
-		keywords[5]	= "fallback_application_name";
-		values[5]	= progname;
-		keywords[6]	= NULL;
-		values[6]	= NULL;
+		keywords[0] = "host";
+		values[0] = pghost;
+		keywords[1] = "port";
+		values[1] = pgport;
+		keywords[2] = "user";
+		values[2] = username;
+		keywords[3] = "password";
+		values[3] = password;
+		keywords[4] = "dbname";
+		values[4] = dbname;
+		keywords[5] = "fallback_application_name";
+		values[5] = progname;
+		keywords[6] = NULL;
+		values[6] = NULL;
 
 		new_pass = false;
 		AH->connection = PQconnectdbParams(keywords, values, true);
@@ -757,4 +757,3 @@ _isDQChar(unsigned char c, bool atStart)
 	else
 		return false;
 }
-

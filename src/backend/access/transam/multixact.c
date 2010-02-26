@@ -42,7 +42,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/multixact.c,v 1.34 2010/01/02 16:57:35 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/multixact.c,v 1.35 2010/02/26 02:00:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1298,11 +1298,11 @@ PostPrepare_MultiXact(TransactionId xid)
 	myOldestMember = OldestMemberMXactId[MyBackendId];
 	if (MultiXactIdIsValid(myOldestMember))
 	{
-		BackendId dummyBackendId = TwoPhaseGetDummyBackendId(xid);
+		BackendId	dummyBackendId = TwoPhaseGetDummyBackendId(xid);
 
 		/*
-		 * Even though storing MultiXactId is atomic, acquire lock to make sure
-		 * others see both changes, not just the reset of the slot of the
+		 * Even though storing MultiXactId is atomic, acquire lock to make
+		 * sure others see both changes, not just the reset of the slot of the
 		 * current backend. Using a volatile pointer might suffice, but this
 		 * isn't a hot spot.
 		 */
@@ -1316,8 +1316,8 @@ PostPrepare_MultiXact(TransactionId xid)
 
 	/*
 	 * We don't need to transfer OldestVisibleMXactId value, because the
-	 * transaction is not going to be looking at any more multixacts once
-	 * it's prepared.
+	 * transaction is not going to be looking at any more multixacts once it's
+	 * prepared.
 	 *
 	 * We assume that storing a MultiXactId is atomic and so we need not take
 	 * MultiXactGenLock to do this.
@@ -1340,14 +1340,14 @@ multixact_twophase_recover(TransactionId xid, uint16 info,
 						   void *recdata, uint32 len)
 {
 	BackendId	dummyBackendId = TwoPhaseGetDummyBackendId(xid);
-	MultiXactId	oldestMember;
+	MultiXactId oldestMember;
 
 	/*
-	 * Get the oldest member XID from the state file record, and set it in
-	 * the OldestMemberMXactId slot reserved for this prepared transaction.
+	 * Get the oldest member XID from the state file record, and set it in the
+	 * OldestMemberMXactId slot reserved for this prepared transaction.
 	 */
 	Assert(len == sizeof(MultiXactId));
-	oldestMember = *((MultiXactId *)recdata);
+	oldestMember = *((MultiXactId *) recdata);
 
 	OldestMemberMXactId[dummyBackendId] = oldestMember;
 }
@@ -1373,7 +1373,7 @@ multixact_twophase_postcommit(TransactionId xid, uint16 info,
  */
 void
 multixact_twophase_postabort(TransactionId xid, uint16 info,
-						void *recdata, uint32 len)
+							 void *recdata, uint32 len)
 {
 	multixact_twophase_postcommit(xid, info, recdata, len);
 }
@@ -2031,9 +2031,10 @@ multixact_redo(XLogRecPtr lsn, XLogRecord *record)
 				max_xid = xids[i];
 		}
 
-		/* We don't expect anyone else to modify nextXid, hence startup process
-		 * doesn't need to hold a lock while checking this. We still acquire
-		 * the lock to modify it, though.
+		/*
+		 * We don't expect anyone else to modify nextXid, hence startup
+		 * process doesn't need to hold a lock while checking this. We still
+		 * acquire the lock to modify it, though.
 		 */
 		if (TransactionIdFollowsOrEquals(max_xid,
 										 ShmemVariableCache->nextXid))

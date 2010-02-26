@@ -1,12 +1,12 @@
 /*
  * pg_db_role_setting.c
  *		Routines to support manipulation of the pg_db_role_setting relation
- *    
+ *
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/backend/catalog/pg_db_role_setting.c,v 1.2 2010/01/02 16:57:36 momjian Exp $
+ *		$PostgreSQL: pgsql/src/backend/catalog/pg_db_role_setting.c,v 1.3 2010/02/26 02:00:37 momjian Exp $
  */
 #include "postgres.h"
 
@@ -51,11 +51,11 @@ AlterSetting(Oid databaseid, Oid roleid, VariableSetStmt *setstmt)
 	 *
 	 * - in RESET ALL, simply delete the pg_db_role_setting tuple (if any)
 	 *
-	 * - in other commands, if there's a tuple in pg_db_role_setting, update it;
-	 *   if it ends up empty, delete it
+	 * - in other commands, if there's a tuple in pg_db_role_setting, update
+	 * it; if it ends up empty, delete it
 	 *
 	 * - otherwise, insert a new pg_db_role_setting tuple, but only if the
-	 *   command is not RESET
+	 * command is not RESET
 	 */
 	if (setstmt->kind == VAR_RESET_ALL)
 	{
@@ -111,7 +111,7 @@ AlterSetting(Oid databaseid, Oid roleid, VariableSetStmt *setstmt)
 		ArrayType  *a;
 
 		memset(nulls, false, sizeof(nulls));
-		
+
 		a = GUCArrayAdd(NULL, setstmt->name, valuestr);
 
 		values[Anum_pg_db_role_setting_setdatabase - 1] =
@@ -134,17 +134,17 @@ AlterSetting(Oid databaseid, Oid roleid, VariableSetStmt *setstmt)
 
 /*
  * Drop some settings from the catalog.  These can be for a particular
- * database, or for a particular role.  (It is of course possible to do both
+ * database, or for a particular role.	(It is of course possible to do both
  * too, but it doesn't make sense for current uses.)
  */
 void
 DropSetting(Oid databaseid, Oid roleid)
 {
-	Relation		relsetting;
-	HeapScanDesc	scan;
-	ScanKeyData		keys[2];
-	HeapTuple		tup;
-	int				numkeys = 0;
+	Relation	relsetting;
+	HeapScanDesc scan;
+	ScanKeyData keys[2];
+	HeapTuple	tup;
+	int			numkeys = 0;
 
 	relsetting = heap_open(DbRoleSettingRelationId, RowExclusiveLock);
 
@@ -190,9 +190,9 @@ DropSetting(Oid databaseid, Oid roleid)
 void
 ApplySetting(Oid databaseid, Oid roleid, Relation relsetting, GucSource source)
 {
-	SysScanDesc		scan;
-	ScanKeyData		keys[2];
-	HeapTuple		tup;
+	SysScanDesc scan;
+	ScanKeyData keys[2];
+	HeapTuple	tup;
 
 	ScanKeyInit(&keys[0],
 				Anum_pg_db_role_setting_setdatabase,
@@ -209,8 +209,8 @@ ApplySetting(Oid databaseid, Oid roleid, Relation relsetting, GucSource source)
 							  SnapshotNow, 2, keys);
 	while (HeapTupleIsValid(tup = systable_getnext(scan)))
 	{
-		bool	isnull;
-		Datum	datum;
+		bool		isnull;
+		Datum		datum;
 
 		datum = heap_getattr(tup, Anum_pg_db_role_setting_setconfig,
 							 RelationGetDescr(relsetting), &isnull);

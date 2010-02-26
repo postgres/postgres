@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/proclang.c,v 1.90 2010/02/23 22:51:42 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/proclang.c,v 1.91 2010/02/26 02:00:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -149,8 +149,8 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 		}
 
 		/*
-		 * Likewise for the anonymous block handler, if required;
-		 * but we don't care about its return type.
+		 * Likewise for the anonymous block handler, if required; but we don't
+		 * care about its return type.
 		 */
 		if (pltemplate->tmplinline)
 		{
@@ -161,17 +161,17 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 			{
 				inlineOid = ProcedureCreate(pltemplate->tmplinline,
 											PG_CATALOG_NAMESPACE,
-											false, /* replace */
-											false, /* returnsSet */
+											false,		/* replace */
+											false,		/* returnsSet */
 											VOIDOID,
 											ClanguageId,
 											F_FMGR_C_VALIDATOR,
 											pltemplate->tmplinline,
 											pltemplate->tmpllibrary,
-											false, /* isAgg */
-											false, /* isWindowFunc */
-											false, /* security_definer */
-											true, /* isStrict */
+											false,		/* isAgg */
+											false,		/* isWindowFunc */
+											false,		/* security_definer */
+											true,		/* isStrict */
 											PROVOLATILE_VOLATILE,
 											buildoidvector(funcargtypes, 1),
 											PointerGetDatum(NULL),
@@ -209,7 +209,7 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 										 false, /* isAgg */
 										 false, /* isWindowFunc */
 										 false, /* security_definer */
-										 true, /* isStrict */
+										 true,	/* isStrict */
 										 PROVOLATILE_VOLATILE,
 										 buildoidvector(funcargtypes, 1),
 										 PointerGetDatum(NULL),

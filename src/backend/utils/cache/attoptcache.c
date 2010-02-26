@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/attoptcache.c,v 1.2 2010/02/14 18:42:17 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/attoptcache.c,v 1.3 2010/02/26 02:01:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,7 +48,7 @@ typedef struct
  *		Flush all cache entries when pg_attribute is updated.
  *
  * When pg_attribute is updated, we must flush the cache entry at least
- * for that attribute.  Currently, we just flush them all.  Since attribute
+ * for that attribute.	Currently, we just flush them all.	Since attribute
  * options are not currently used in performance-critical paths (such as
  * query execution), this seems OK.
  */
@@ -78,7 +78,7 @@ InvalidateAttoptCacheCallback(Datum arg, int cacheid, ItemPointer tuplePtr)
 static void
 InitializeAttoptCache(void)
 {
-	HASHCTL ctl;
+	HASHCTL		ctl;
 
 	/* Initialize the hash table. */
 	MemSet(&ctl, 0, sizeof(ctl));
@@ -87,7 +87,7 @@ InitializeAttoptCache(void)
 	ctl.hash = tag_hash;
 	AttoptCacheHash =
 		hash_create("Attopt cache", 256, &ctl,
-				    HASH_ELEM | HASH_FUNCTION);
+					HASH_ELEM | HASH_FUNCTION);
 
 	/* Make sure we've initialized CacheMemoryContext. */
 	if (!CacheMemoryContext)
@@ -108,18 +108,19 @@ get_attribute_options(Oid attrelid, int attnum)
 {
 	AttoptCacheKey key;
 	AttoptCacheEntry *attopt;
-	AttributeOpts  *result;
+	AttributeOpts *result;
 	HeapTuple	tp;
 
 	/* Find existing cache entry, if any. */
 	if (!AttoptCacheHash)
 		InitializeAttoptCache();
-	memset(&key, 0, sizeof(key));	/* make sure any padding bits are unset */
+	memset(&key, 0, sizeof(key));		/* make sure any padding bits are
+										 * unset */
 	key.attrelid = attrelid;
 	key.attnum = attnum;
 	attopt =
 		(AttoptCacheEntry *) hash_search(AttoptCacheHash,
-								         (void *) &key,
+										 (void *) &key,
 										 HASH_FIND,
 										 NULL);
 
@@ -141,8 +142,8 @@ get_attribute_options(Oid attrelid, int attnum)
 			opts = NULL;
 		else
 		{
-			Datum	datum;
-			bool	isNull;
+			Datum		datum;
+			bool		isNull;
 
 			datum = SysCacheGetAttr(ATTNUM,
 									tp,
@@ -152,7 +153,8 @@ get_attribute_options(Oid attrelid, int attnum)
 				opts = NULL;
 			else
 			{
-				bytea *bytea_opts = attribute_reloptions(datum, false);
+				bytea	   *bytea_opts = attribute_reloptions(datum, false);
+
 				opts = MemoryContextAlloc(CacheMemoryContext,
 										  VARSIZE(bytea_opts));
 				memcpy(opts, bytea_opts, VARSIZE(bytea_opts));
@@ -161,13 +163,13 @@ get_attribute_options(Oid attrelid, int attnum)
 		}
 
 		/*
-		 * It's important to create the actual cache entry only after
-		 * reading pg_attribute, since the read could cause a cache flush.
+		 * It's important to create the actual cache entry only after reading
+		 * pg_attribute, since the read could cause a cache flush.
 		 */
 		attopt = (AttoptCacheEntry *) hash_search(AttoptCacheHash,
-												   (void *) &key,
-												   HASH_ENTER,
-												   NULL);
+												  (void *) &key,
+												  HASH_ENTER,
+												  NULL);
 		attopt->opts = opts;
 	}
 

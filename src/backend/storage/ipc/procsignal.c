@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/procsignal.c,v 1.5 2010/02/13 01:32:19 sriggs Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/procsignal.c,v 1.6 2010/02/26 02:01:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,12 +36,12 @@
  * reason is signaled more than once nearly simultaneously, the process may
  * observe it only once.)
  *
- * Each process that wants to receive signals registers its process ID 
+ * Each process that wants to receive signals registers its process ID
  * in the ProcSignalSlots array. The array is indexed by backend ID to make
  * slot allocation simple, and to avoid having to search the array when you
  * know the backend ID of the process you're signalling.  (We do support
  * signalling without backend ID, but it's a bit less efficient.)
- * 
+ *
  * The flags are actually declared as "volatile sig_atomic_t" for maximum
  * portability.  This should ensure that loads and stores of the flag
  * values are atomic, allowing us to dispense with any explicit locking.
@@ -57,7 +57,7 @@ typedef struct
  * possible auxiliary process type.  (This scheme assumes there is not
  * more than one of any auxiliary process type at a time.)
  */
-#define NumProcSignalSlots  (MaxBackends + NUM_AUXPROCTYPES)
+#define NumProcSignalSlots	(MaxBackends + NUM_AUXPROCTYPES)
 
 static ProcSignalSlot *ProcSignalSlots = NULL;
 static volatile ProcSignalSlot *MyProcSignalSlot = NULL;
@@ -146,8 +146,8 @@ CleanupProcSignalState(int status, Datum arg)
 	if (slot->pss_pid != MyProcPid)
 	{
 		/*
-		 * don't ERROR here. We're exiting anyway, and don't want to
-		 * get into infinite loop trying to exit
+		 * don't ERROR here. We're exiting anyway, and don't want to get into
+		 * infinite loop trying to exit
 		 */
 		elog(LOG, "process %d releasing ProcSignal slot %d, but it contains %d",
 			 MyProcPid, pss_idx, (int) slot->pss_pid);
@@ -201,7 +201,7 @@ SendProcSignal(pid_t pid, ProcSignalReason reason, BackendId backendId)
 		 * InvalidBackendId means that the target is most likely an auxiliary
 		 * process, which will have a slot near the end of the array.
 		 */
-		int		i;
+		int			i;
 
 		for (i = NumProcSignalSlots - 1; i >= 0; i--)
 		{
@@ -252,7 +252,7 @@ CheckProcSignal(ProcSignalReason reason)
 void
 procsignal_sigusr1_handler(SIGNAL_ARGS)
 {
-	int		save_errno = errno;
+	int			save_errno = errno;
 
 	if (CheckProcSignal(PROCSIG_CATCHUP_INTERRUPT))
 		HandleCatchupInterrupt();

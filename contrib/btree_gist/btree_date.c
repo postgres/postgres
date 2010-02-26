@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/btree_gist/btree_date.c,v 1.8 2009/12/02 13:13:24 teodor Exp $
+ * $PostgreSQL: pgsql/contrib/btree_gist/btree_date.c,v 1.9 2010/02/26 02:00:31 momjian Exp $
  */
 #include "btree_gist.h"
 #include "btree_utils_num.h"
@@ -73,9 +73,9 @@ gbt_datelt(const void *a, const void *b)
 static int
 gbt_datekey_cmp(const void *a, const void *b)
 {
-	dateKEY *ia = (dateKEY*)(((Nsrt *) a)->t);	
-	dateKEY *ib = (dateKEY*)(((Nsrt *) b)->t);
-	int res;
+	dateKEY    *ia = (dateKEY *) (((Nsrt *) a)->t);
+	dateKEY    *ib = (dateKEY *) (((Nsrt *) b)->t);
+	int			res;
 
 	res = DatumGetInt32(DirectFunctionCall2(date_cmp, DateADTGetDatum(ia->lower), DateADTGetDatum(ib->lower)));
 	if (res == 0)

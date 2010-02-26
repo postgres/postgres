@@ -14,7 +14,7 @@
  * Copyright (c) 1998-2010, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/numeric.c,v 1.122 2010/02/08 20:39:51 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/numeric.c,v 1.123 2010/02/26 02:01:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3403,7 +3403,7 @@ static char *
 get_str_from_var_sci(NumericVar *var, int rscale)
 {
 	int32		exponent;
-	NumericVar  denominator;
+	NumericVar	denominator;
 	NumericVar	significand;
 	int			denom_scale;
 	size_t		len;
@@ -3466,9 +3466,9 @@ get_str_from_var_sci(NumericVar *var, int rscale)
 	/*
 	 * Allocate space for the result.
 	 *
-	 * In addition to the significand, we need room for the exponent decoration
-	 * ("e"), the sign of the exponent, up to 10 digits for the exponent
-	 * itself, and of course the null terminator.
+	 * In addition to the significand, we need room for the exponent
+	 * decoration ("e"), the sign of the exponent, up to 10 digits for the
+	 * exponent itself, and of course the null terminator.
 	 */
 	len = strlen(sig_out) + 13;
 	str = palloc(len);

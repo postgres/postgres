@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.542 2010/02/25 13:26:15 mha Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.543 2010/02/26 02:01:14 momjian Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -119,7 +119,7 @@ extern bool fullPageWrites;
 extern int	vacuum_defer_cleanup_age;
 extern int	ssl_renegotiation_limit;
 
-int	trace_recovery_messages = LOG;
+int			trace_recovery_messages = LOG;
 
 #ifdef TRACE_SORT
 extern bool trace_sort;
@@ -1215,8 +1215,8 @@ static struct config_bool ConfigureNamesBool[] =
 	{
 		{"recovery_connections", PGC_POSTMASTER, WAL_SETTINGS,
 			gettext_noop("During recovery, allows connections and queries. "
-						 " During normal running, causes additional info to be written"
-						 " to WAL to enable hot standby mode on WAL standby nodes."),
+			   " During normal running, causes additional info to be written"
+				 " to WAL to enable hot standby mode on WAL standby nodes."),
 			NULL
 		},
 		&XLogRequestRecoveryConnections,
@@ -1248,7 +1248,7 @@ static struct config_bool ConfigureNamesBool[] =
 		{"lo_compat_privileges", PGC_SUSET, COMPAT_OPTIONS_PREVIOUS,
 			gettext_noop("Enables backward compatibility mode for privilege checks on large objects"),
 			gettext_noop("Skips privilege checks when reading or modifying large objects, "
-						 "for compatibility with PostgreSQL releases prior to 9.0.")
+				  "for compatibility with PostgreSQL releases prior to 9.0.")
 		},
 		&lo_compat_privileges,
 		false, NULL, NULL
@@ -2614,9 +2614,9 @@ static struct config_string ConfigureNamesString[] =
 
 	{
 		{"application_name", PGC_USERSET, LOGGING,
-		 gettext_noop("Sets the application name to be reported in statistics and logs."),
-		 NULL,
-		 GUC_IS_NAME | GUC_REPORT | GUC_NOT_IN_SAMPLE
+			gettext_noop("Sets the application name to be reported in statistics and logs."),
+			NULL,
+			GUC_IS_NAME | GUC_REPORT | GUC_NOT_IN_SAMPLE
 		},
 		&application_name,
 		"", assign_application_name, NULL
@@ -4687,16 +4687,16 @@ set_config_option(const char *name, const char *value,
 				if (changeVal && !is_newvalue_equal(record, value))
 					ereport(elevel,
 							(errcode(ERRCODE_CANT_CHANGE_RUNTIME_PARAM),
-					   errmsg("parameter \"%s\" cannot be changed without restarting the server",
-							  name)));
+							 errmsg("parameter \"%s\" cannot be changed without restarting the server",
+									name)));
 				return true;
 			}
 			if (context != PGC_POSTMASTER)
 			{
 				ereport(elevel,
 						(errcode(ERRCODE_CANT_CHANGE_RUNTIME_PARAM),
-					   errmsg("parameter \"%s\" cannot be changed without restarting the server",
-							  name)));
+						 errmsg("parameter \"%s\" cannot be changed without restarting the server",
+								name)));
 				return false;
 			}
 			break;
@@ -4758,20 +4758,20 @@ set_config_option(const char *name, const char *value,
 
 	/*
 	 * Disallow changing GUC_NOT_WHILE_SEC_REST values if we are inside a
-	 * security restriction context.  We can reject this regardless of
-	 * the GUC context or source, mainly because sources that it might be
-	 * reasonable to override for won't be seen while inside a function.
+	 * security restriction context.  We can reject this regardless of the GUC
+	 * context or source, mainly because sources that it might be reasonable
+	 * to override for won't be seen while inside a function.
 	 *
 	 * Note: variables marked GUC_NOT_WHILE_SEC_REST should usually be marked
 	 * GUC_NO_RESET_ALL as well, because ResetAllOptions() doesn't check this.
 	 * An exception might be made if the reset value is assumed to be "safe".
 	 *
 	 * Note: this flag is currently used for "session_authorization" and
-	 * "role".  We need to prohibit changing these inside a local userid
+	 * "role".	We need to prohibit changing these inside a local userid
 	 * context because when we exit it, GUC won't be notified, leaving things
 	 * out of sync.  (This could be fixed by forcing a new GUC nesting level,
-	 * but that would change behavior in possibly-undesirable ways.)  Also,
-	 * we prohibit changing these in a security-restricted operation because
+	 * but that would change behavior in possibly-undesirable ways.)  Also, we
+	 * prohibit changing these in a security-restricted operation because
 	 * otherwise RESET could be used to regain the session user's privileges.
 	 */
 	if (record->flags & GUC_NOT_WHILE_SEC_REST)
@@ -4779,8 +4779,8 @@ set_config_option(const char *name, const char *value,
 		if (InLocalUserIdChange())
 		{
 			/*
-			 * Phrasing of this error message is historical, but it's the
-			 * most common case.
+			 * Phrasing of this error message is historical, but it's the most
+			 * common case.
 			 */
 			ereport(elevel,
 					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
@@ -6132,8 +6132,8 @@ ShowAllGUCConfig(DestReceiver *dest)
 	int			i;
 	TupOutputState *tstate;
 	TupleDesc	tupdesc;
-	Datum	    values[3];
-	bool		isnull[3] = { false, false, false };
+	Datum		values[3];
+	bool		isnull[3] = {false, false, false};
 
 	/* need a tuple descriptor representing three TEXT columns */
 	tupdesc = CreateTemplateTupleDesc(3, false);
@@ -6150,7 +6150,7 @@ ShowAllGUCConfig(DestReceiver *dest)
 	for (i = 0; i < num_guc_variables; i++)
 	{
 		struct config_generic *conf = guc_variables[i];
-		char   *setting;
+		char	   *setting;
 
 		if ((conf->flags & GUC_NO_SHOW_ALL) ||
 			((conf->flags & GUC_SUPERUSER_ONLY) && !am_superuser))
@@ -7591,7 +7591,7 @@ assign_transaction_read_only(bool newval, bool doit, GucSource source)
 	{
 		ereport(GUC_complaint_elevel(source),
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("cannot set transaction read-write mode during recovery")));
+		  errmsg("cannot set transaction read-write mode during recovery")));
 		/* source == PGC_S_OVERRIDE means do it anyway, eg at xact abort */
 		if (source != PGC_S_OVERRIDE)
 			return false;

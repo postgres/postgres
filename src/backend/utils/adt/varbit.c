@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/varbit.c,v 1.64 2010/01/25 20:55:32 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/varbit.c,v 1.65 2010/02/26 02:01:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,7 +25,7 @@
 
 static VarBit *bit_catenate(VarBit *arg1, VarBit *arg2);
 static VarBit *bitsubstring(VarBit *arg, int32 s, int32 l,
-							bool length_not_specified);
+			 bool length_not_specified);
 static VarBit *bit_overlay(VarBit *t1, VarBit *t2, int sp, int sl);
 
 
@@ -980,9 +980,10 @@ bitsubstring(VarBit *arg, int32 s, int32 l, bool length_not_specified)
 	else
 	{
 		e = s + l;
+
 		/*
-		 * A negative value for L is the only way for the end position
-		 * to be before the start. SQL99 says to throw an error.
+		 * A negative value for L is the only way for the end position to be
+		 * before the start. SQL99 says to throw an error.
 		 */
 		if (e < s)
 			ereport(ERROR,
@@ -1055,8 +1056,8 @@ bitoverlay(PG_FUNCTION_ARGS)
 {
 	VarBit	   *t1 = PG_GETARG_VARBIT_P(0);
 	VarBit	   *t2 = PG_GETARG_VARBIT_P(1);
-	int			sp = PG_GETARG_INT32(2); /* substring start position */
-	int			sl = PG_GETARG_INT32(3); /* substring length */
+	int			sp = PG_GETARG_INT32(2);		/* substring start position */
+	int			sl = PG_GETARG_INT32(3);		/* substring length */
 
 	PG_RETURN_VARBIT_P(bit_overlay(t1, t2, sp, sl));
 }
@@ -1066,10 +1067,10 @@ bitoverlay_no_len(PG_FUNCTION_ARGS)
 {
 	VarBit	   *t1 = PG_GETARG_VARBIT_P(0);
 	VarBit	   *t2 = PG_GETARG_VARBIT_P(1);
-	int			sp = PG_GETARG_INT32(2); /* substring start position */
+	int			sp = PG_GETARG_INT32(2);		/* substring start position */
 	int			sl;
 
-	sl = VARBITLEN(t2);				/* defaults to length(t2) */
+	sl = VARBITLEN(t2);			/* defaults to length(t2) */
 	PG_RETURN_VARBIT_P(bit_overlay(t1, t2, sp, sl));
 }
 
@@ -1082,9 +1083,9 @@ bit_overlay(VarBit *t1, VarBit *t2, int sp, int sl)
 	int			sp_pl_sl;
 
 	/*
-	 * Check for possible integer-overflow cases.  For negative sp,
-	 * throw a "substring length" error because that's what should be
-	 * expected according to the spec's definition of OVERLAY().
+	 * Check for possible integer-overflow cases.  For negative sp, throw a
+	 * "substring length" error because that's what should be expected
+	 * according to the spec's definition of OVERLAY().
 	 */
 	if (sp <= 0)
 		ereport(ERROR,
@@ -1096,7 +1097,7 @@ bit_overlay(VarBit *t1, VarBit *t2, int sp, int sl)
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("integer out of range")));
 
-	s1 = bitsubstring(t1, 1, sp-1, false);
+	s1 = bitsubstring(t1, 1, sp - 1, false);
 	s2 = bitsubstring(t1, sp_pl_sl, -1, true);
 	result = bit_catenate(s1, t2);
 	result = bit_catenate(result, s2);
@@ -1446,7 +1447,7 @@ bitfromint4(PG_FUNCTION_ARGS)
 	/* store first fractional byte */
 	if (destbitsleft > srcbitsleft)
 	{
-		int		val = (int) (a >> (destbitsleft - 8));
+		int			val = (int) (a >> (destbitsleft - 8));
 
 		/* Force sign-fill in case the compiler implements >> as zero-fill */
 		if (a < 0)
@@ -1526,7 +1527,7 @@ bitfromint8(PG_FUNCTION_ARGS)
 	/* store first fractional byte */
 	if (destbitsleft > srcbitsleft)
 	{
-		int		val = (int) (a >> (destbitsleft - 8));
+		int			val = (int) (a >> (destbitsleft - 8));
 
 		/* Force sign-fill in case the compiler implements >> as zero-fill */
 		if (a < 0)
@@ -1708,6 +1709,7 @@ bitsetbit(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
 				 errmsg("bit index %d out of valid range (0..%d)",
 						n, bitlen - 1)));
+
 	/*
 	 * sanity check!
 	 */

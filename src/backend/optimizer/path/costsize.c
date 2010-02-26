@@ -59,7 +59,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.215 2010/02/19 21:49:10 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.216 2010/02/26 02:00:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -635,11 +635,11 @@ cost_bitmap_heap_scan(Path *path, PlannerInfo *root, RelOptInfo *baserel,
 		pages_fetched = ceil(pages_fetched);
 
 	/*
-	 * For small numbers of pages we should charge spc_random_page_cost apiece,
-	 * while if nearly all the table's pages are being read, it's more
-	 * appropriate to charge spc_seq_page_cost apiece.	The effect is nonlinear,
-	 * too. For lack of a better idea, interpolate like this to determine the
-	 * cost per page.
+	 * For small numbers of pages we should charge spc_random_page_cost
+	 * apiece, while if nearly all the table's pages are being read, it's more
+	 * appropriate to charge spc_seq_page_cost apiece.	The effect is
+	 * nonlinear, too. For lack of a better idea, interpolate like this to
+	 * determine the cost per page.
 	 */
 	if (pages_fetched >= 2.0)
 		cost_per_page = spc_random_page_cost -
@@ -936,13 +936,13 @@ cost_functionscan(Path *path, PlannerInfo *root, RelOptInfo *baserel)
 	 *
 	 * Currently, nodeFunctionscan.c always executes the function to
 	 * completion before returning any rows, and caches the results in a
-	 * tuplestore.  So the function eval cost is all startup cost, and
-	 * per-row costs are minimal.
+	 * tuplestore.	So the function eval cost is all startup cost, and per-row
+	 * costs are minimal.
 	 *
 	 * XXX in principle we ought to charge tuplestore spill costs if the
 	 * number of rows is large.  However, given how phony our rowcount
-	 * estimates for functions tend to be, there's not a lot of point
-	 * in that refinement right now.
+	 * estimates for functions tend to be, there's not a lot of point in that
+	 * refinement right now.
 	 */
 	cost_qual_eval_node(&exprcost, rte->funcexpr, root);
 
@@ -1230,7 +1230,7 @@ cost_material(Path *path,
 	 * if it is exactly the same then there will be a cost tie between
 	 * nestloop with A outer, materialized B inner and nestloop with B outer,
 	 * materialized A inner.  The extra cost ensures we'll prefer
-	 * materializing the smaller rel.)  Note that this is normally a good deal
+	 * materializing the smaller rel.)	Note that this is normally a good deal
 	 * less than cpu_tuple_cost; which is OK because a Material plan node
 	 * doesn't do qual-checking or projection, so it's got less overhead than
 	 * most plan nodes.
@@ -1526,9 +1526,10 @@ cost_nestloop(NestPath *path, PlannerInfo *root, SpecialJoinInfo *sjinfo)
 		{
 			run_cost += (outer_path_rows - outer_matched_rows) *
 				inner_rescan_run_cost / inner_path_rows;
+
 			/*
-			 * We won't be evaluating any quals at all for these rows,
-			 * so don't add them to ntuples.
+			 * We won't be evaluating any quals at all for these rows, so
+			 * don't add them to ntuples.
 			 */
 		}
 		else
@@ -1568,10 +1569,10 @@ cost_nestloop(NestPath *path, PlannerInfo *root, SpecialJoinInfo *sjinfo)
  * Unlike other costsize functions, this routine makes one actual decision:
  * whether we should materialize the inner path.  We do that either because
  * the inner path can't support mark/restore, or because it's cheaper to
- * use an interposed Material node to handle mark/restore.  When the decision
+ * use an interposed Material node to handle mark/restore.	When the decision
  * is cost-based it would be logically cleaner to build and cost two separate
  * paths with and without that flag set; but that would require repeating most
- * of the calculations here, which are not all that cheap.  Since the choice
+ * of the calculations here, which are not all that cheap.	Since the choice
  * will not affect output pathkeys or startup cost, only total cost, there is
  * no possibility of wanting to keep both paths.  So it seems best to make
  * the decision here and record it in the path's materialize_inner field.
@@ -1826,14 +1827,15 @@ cost_mergejoin(MergePath *path, PlannerInfo *root, SpecialJoinInfo *sjinfo)
 
 	/*
 	 * Decide whether we want to materialize the inner input to shield it from
-	 * mark/restore and performing re-fetches.  Our cost model for regular
+	 * mark/restore and performing re-fetches.	Our cost model for regular
 	 * re-fetches is that a re-fetch costs the same as an original fetch,
 	 * which is probably an overestimate; but on the other hand we ignore the
 	 * bookkeeping costs of mark/restore.  Not clear if it's worth developing
-	 * a more refined model.  So we just need to inflate the inner run cost
-	 * by rescanratio.
+	 * a more refined model.  So we just need to inflate the inner run cost by
+	 * rescanratio.
 	 */
 	bare_inner_cost = inner_run_cost * rescanratio;
+
 	/*
 	 * When we interpose a Material node the re-fetch cost is assumed to be
 	 * just cpu_operator_cost per tuple, independently of the underlying
@@ -1842,7 +1844,7 @@ cost_mergejoin(MergePath *path, PlannerInfo *root, SpecialJoinInfo *sjinfo)
 	 * never spill to disk, since it only has to remember tuples back to the
 	 * last mark.  (If there are a huge number of duplicates, our other cost
 	 * factors will make the path so expensive that it probably won't get
-	 * chosen anyway.)  So we don't use cost_rescan here.
+	 * chosen anyway.)	So we don't use cost_rescan here.
 	 *
 	 * Note: keep this estimate in sync with create_mergejoin_plan's labeling
 	 * of the generated Material node.
@@ -1853,6 +1855,7 @@ cost_mergejoin(MergePath *path, PlannerInfo *root, SpecialJoinInfo *sjinfo)
 	/* Prefer materializing if it looks cheaper */
 	if (mat_inner_cost < bare_inner_cost)
 		path->materialize_inner = true;
+
 	/*
 	 * Even if materializing doesn't look cheaper, we *must* do it if the
 	 * inner path is to be used directly (without sorting) and it doesn't
@@ -1868,6 +1871,7 @@ cost_mergejoin(MergePath *path, PlannerInfo *root, SpecialJoinInfo *sjinfo)
 	else if (innersortkeys == NIL &&
 			 !ExecSupportsMarkRestore(inner_path->pathtype))
 		path->materialize_inner = true;
+
 	/*
 	 * Also, force materializing if the inner path is to be sorted and the
 	 * sort is expected to spill to disk.  This is because the final merge
@@ -2323,10 +2327,10 @@ cost_subplan(PlannerInfo *root, SubPlan *subplan, Plan *plan)
 /*
  * cost_rescan
  *		Given a finished Path, estimate the costs of rescanning it after
- *		having done so the first time.  For some Path types a rescan is
+ *		having done so the first time.	For some Path types a rescan is
  *		cheaper than an original scan (if no parameters change), and this
  *		function embodies knowledge about that.  The default is to return
- *		the same costs stored in the Path.  (Note that the cost estimates
+ *		the same costs stored in the Path.	(Note that the cost estimates
  *		actually stored in Paths are always for first scans.)
  *
  * This function is not currently intended to model effects such as rescans
@@ -2336,23 +2340,25 @@ cost_subplan(PlannerInfo *root, SubPlan *subplan, Plan *plan)
  */
 static void
 cost_rescan(PlannerInfo *root, Path *path,
-			Cost *rescan_startup_cost,		/* output parameters */
+			Cost *rescan_startup_cost,	/* output parameters */
 			Cost *rescan_total_cost)
 {
 	switch (path->pathtype)
 	{
 		case T_FunctionScan:
+
 			/*
-			 * Currently, nodeFunctionscan.c always executes the function
-			 * to completion before returning any rows, and caches the
-			 * results in a tuplestore.  So the function eval cost is
-			 * all startup cost and isn't paid over again on rescans.
-			 * However, all run costs will be paid over again.
+			 * Currently, nodeFunctionscan.c always executes the function to
+			 * completion before returning any rows, and caches the results in
+			 * a tuplestore.  So the function eval cost is all startup cost
+			 * and isn't paid over again on rescans. However, all run costs
+			 * will be paid over again.
 			 */
 			*rescan_startup_cost = 0;
 			*rescan_total_cost = path->total_cost - path->startup_cost;
 			break;
 		case T_HashJoin:
+
 			/*
 			 * Assume that all of the startup cost represents hash table
 			 * building, which we won't have to do over.
@@ -2365,14 +2371,14 @@ cost_rescan(PlannerInfo *root, Path *path,
 			{
 				/*
 				 * These plan types materialize their final result in a
-				 * tuplestore or tuplesort object.  So the rescan cost is only
+				 * tuplestore or tuplesort object.	So the rescan cost is only
 				 * cpu_tuple_cost per tuple, unless the result is large enough
 				 * to spill to disk.
 				 */
-				Cost	run_cost = cpu_tuple_cost * path->parent->rows;
-				double	nbytes = relation_byte_size(path->parent->rows,
-													path->parent->width);
-				long	work_mem_bytes = work_mem * 1024L;
+				Cost		run_cost = cpu_tuple_cost * path->parent->rows;
+				double		nbytes = relation_byte_size(path->parent->rows,
+														path->parent->width);
+				long		work_mem_bytes = work_mem * 1024L;
 
 				if (nbytes > work_mem_bytes)
 				{
@@ -2389,17 +2395,17 @@ cost_rescan(PlannerInfo *root, Path *path,
 		case T_Sort:
 			{
 				/*
-				 * These plan types not only materialize their results, but
-				 * do not implement qual filtering or projection.  So they
-				 * are even cheaper to rescan than the ones above.  We charge
-				 * only cpu_operator_cost per tuple.  (Note: keep that in
-				 * sync with the run_cost charge in cost_sort, and also see
-				 * comments in cost_material before you change it.)
+				 * These plan types not only materialize their results, but do
+				 * not implement qual filtering or projection.	So they are
+				 * even cheaper to rescan than the ones above.	We charge only
+				 * cpu_operator_cost per tuple.  (Note: keep that in sync with
+				 * the run_cost charge in cost_sort, and also see comments in
+				 * cost_material before you change it.)
 				 */
-				Cost	run_cost = cpu_operator_cost * path->parent->rows;
-				double	nbytes = relation_byte_size(path->parent->rows,
-													path->parent->width);
-				long	work_mem_bytes = work_mem * 1024L;
+				Cost		run_cost = cpu_operator_cost * path->parent->rows;
+				double		nbytes = relation_byte_size(path->parent->rows,
+														path->parent->width);
+				long		work_mem_bytes = work_mem * 1024L;
 
 				if (nbytes > work_mem_bytes)
 				{
@@ -3212,8 +3218,8 @@ set_rel_width(PlannerInfo *root, RelOptInfo *rel)
 		{
 			/*
 			 * We could be looking at an expression pulled up from a subquery,
-			 * or a ROW() representing a whole-row child Var, etc.  Do what
-			 * we can using the expression type information.
+			 * or a ROW() representing a whole-row child Var, etc.	Do what we
+			 * can using the expression type information.
 			 */
 			int32		item_width;
 

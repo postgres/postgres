@@ -11,7 +11,7 @@
  *	as a service.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/copydir.c,v 1.32 2010/02/23 05:44:55 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/port/copydir.c,v 1.33 2010/02/26 02:01:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -126,12 +126,12 @@ copydir(char *fromdir, char *todir, bool recurse)
 	FreeDir(xldir);
 
 #ifdef NOTYET
+
 	/*
-	 * It's important to fsync the destination directory itself as
-	 * individual file fsyncs don't guarantee that the directory entry
-	 * for the file is synced. Recent versions of ext4 have made the
-	 * window much wider but it's been true for ext3 and other
-	 * filesystems in the past.
+	 * It's important to fsync the destination directory itself as individual
+	 * file fsyncs don't guarantee that the directory entry for the file is
+	 * synced. Recent versions of ext4 have made the window much wider but
+	 * it's been true for ext3 and other filesystems in the past.
 	 *
 	 * However we can't do this just yet, it has portability issues.
 	 */
@@ -175,7 +175,7 @@ copy_file(char *fromfile, char *tofile)
 	/*
 	 * Do the data copying.
 	 */
-	for (offset=0; ; offset+=nbytes)
+	for (offset = 0;; offset += nbytes)
 	{
 		nbytes = read(srcfd, buffer, COPY_BUF_SIZE);
 		if (nbytes < 0)
@@ -196,9 +196,9 @@ copy_file(char *fromfile, char *tofile)
 		}
 
 		/*
-		 * We fsync the files later but first flush them to avoid spamming
-		 * the cache and hopefully get the kernel to start writing them
-		 * out before the fsync comes.
+		 * We fsync the files later but first flush them to avoid spamming the
+		 * cache and hopefully get the kernel to start writing them out before
+		 * the fsync comes.
 		 */
 		pg_flush_data(dstfd, offset, nbytes);
 	}
@@ -220,9 +220,9 @@ copy_file(char *fromfile, char *tofile)
 static void
 fsync_fname(char *fname)
 {
-	int	fd = BasicOpenFile(fname, 
-						   O_RDWR | PG_BINARY,
-						   S_IRUSR | S_IWUSR);
+	int			fd = BasicOpenFile(fname,
+								   O_RDWR | PG_BINARY,
+								   S_IRUSR | S_IWUSR);
 
 	if (fd < 0)
 		ereport(ERROR,

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootstrap.c,v 1.259 2010/02/07 20:48:09 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootstrap.c,v 1.260 2010/02/26 02:00:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -370,7 +370,7 @@ AuxiliaryProcessMain(int argc, char *argv[])
 #endif
 
 		/*
-		 * Assign the ProcSignalSlot for an auxiliary process.  Since it
+		 * Assign the ProcSignalSlot for an auxiliary process.	Since it
 		 * doesn't have a BackendId, the slot is statically allocated based on
 		 * the auxiliary process type (auxType).  Backends use slots indexed
 		 * in the range from 1 to MaxBackends (inclusive), so we use
@@ -493,8 +493,8 @@ BootstrapModeMain(void)
 	boot_yyparse();
 
 	/*
-	 * We should now know about all mapped relations, so it's okay to
-	 * write out the initial relation mapping files.
+	 * We should now know about all mapped relations, so it's okay to write
+	 * out the initial relation mapping files.
 	 */
 	RelationMapFinishBootstrap();
 

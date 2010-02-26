@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_largeobject.c,v 1.38 2010/02/17 04:19:39 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_largeobject.c,v 1.39 2010/02/26 02:00:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -79,7 +79,7 @@ LargeObjectCreate(Oid loid)
 }
 
 /*
- * Drop a large object having the given LO identifier.  Both the data pages
+ * Drop a large object having the given LO identifier.	Both the data pages
  * and metadata must be dropped.
  */
 void
@@ -103,7 +103,7 @@ LargeObjectDrop(Oid loid)
 	ScanKeyInit(&skey[0],
 				ObjectIdAttributeNumber,
 				BTEqualStrategyNumber, F_OIDEQ,
-				ObjectIdGetDatum(loid));	
+				ObjectIdGetDatum(loid));
 
 	scan = systable_beginscan(pg_lo_meta,
 							  LargeObjectMetadataOidIndexId, true,
@@ -150,10 +150,10 @@ LargeObjectDrop(Oid loid)
 void
 LargeObjectAlterOwner(Oid loid, Oid newOwnerId)
 {
-	Form_pg_largeobject_metadata	form_lo_meta;
+	Form_pg_largeobject_metadata form_lo_meta;
 	Relation	pg_lo_meta;
-	ScanKeyData	skey[1];
-	SysScanDesc	scan;
+	ScanKeyData skey[1];
+	SysScanDesc scan;
 	HeapTuple	oldtup;
 	HeapTuple	newtup;
 
@@ -189,9 +189,8 @@ LargeObjectAlterOwner(Oid loid, Oid newOwnerId)
 		if (!superuser())
 		{
 			/*
-			 * lo_compat_privileges is not checked here, because ALTER
-			 * LARGE OBJECT ... OWNER did not exist at all prior to
-			 * PostgreSQL 9.0.
+			 * lo_compat_privileges is not checked here, because ALTER LARGE
+			 * OBJECT ... OWNER did not exist at all prior to PostgreSQL 9.0.
 			 *
 			 * We must be the owner of the existing object.
 			 */
@@ -213,8 +212,8 @@ LargeObjectAlterOwner(Oid loid, Oid newOwnerId)
 		replaces[Anum_pg_largeobject_metadata_lomowner - 1] = true;
 
 		/*
-		 * Determine the modified ACL for the new owner.
-		 * This is only necessary when the ACL is non-null.
+		 * Determine the modified ACL for the new owner. This is only
+		 * necessary when the ACL is non-null.
 		 */
 		aclDatum = heap_getattr(oldtup,
 								Anum_pg_largeobject_metadata_lomacl,
@@ -261,8 +260,8 @@ bool
 LargeObjectExists(Oid loid)
 {
 	Relation	pg_lo_meta;
-	ScanKeyData	skey[1];
-	SysScanDesc	sd;
+	ScanKeyData skey[1];
+	SysScanDesc sd;
 	HeapTuple	tuple;
 	bool		retval = false;
 

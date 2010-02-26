@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteHandler.c,v 1.193 2010/01/02 16:57:51 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteHandler.c,v 1.194 2010/02/26 02:00:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -56,7 +56,7 @@ static void markQueryForLocking(Query *qry, Node *jtnode,
 static List *matchLocks(CmdType event, RuleLock *rulelocks,
 		   int varno, Query *parsetree);
 static Query *fireRIRrules(Query *parsetree, List *activeRIRs,
-						   bool forUpdatePushedDown);
+			 bool forUpdatePushedDown);
 
 
 /*
@@ -214,7 +214,7 @@ AcquireRewriteLocks(Query *parsetree, bool forUpdatePushedDown)
 				 */
 				AcquireRewriteLocks(rte->subquery,
 									(forUpdatePushedDown ||
-									 get_parse_rowmark(parsetree, rt_index) != NULL));
+							get_parse_rowmark(parsetree, rt_index) != NULL));
 				break;
 
 			default:
@@ -1205,9 +1205,9 @@ ApplyRetrieveRule(Query *parsetree,
 	rte->modifiedCols = NULL;
 
 	/*
-	 * If FOR UPDATE/SHARE of view, mark all the contained tables as
-	 * implicit FOR UPDATE/SHARE, the same as the parser would have done
-	 * if the view's subquery had been written out explicitly.
+	 * If FOR UPDATE/SHARE of view, mark all the contained tables as implicit
+	 * FOR UPDATE/SHARE, the same as the parser would have done if the view's
+	 * subquery had been written out explicitly.
 	 *
 	 * Note: we don't consider forUpdatePushedDown here; such marks will be
 	 * made by recursing from the upper level in markQueryForLocking.
@@ -1350,7 +1350,7 @@ fireRIRrules(Query *parsetree, List *activeRIRs, bool forUpdatePushedDown)
 		{
 			rte->subquery = fireRIRrules(rte->subquery, activeRIRs,
 										 (forUpdatePushedDown ||
-										  get_parse_rowmark(parsetree, rt_index) != NULL));
+							get_parse_rowmark(parsetree, rt_index) != NULL));
 			continue;
 		}
 

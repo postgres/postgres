@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/portalmem.c,v 1.117 2010/02/18 03:06:46 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/portalmem.c,v 1.118 2010/02/26 02:01:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -330,9 +330,9 @@ PortalReleaseCachedPlan(Portal portal)
 		portal->cplan = NULL;
 
 		/*
-		 * We must also clear portal->stmts which is now a dangling
-		 * reference to the cached plan's plan list.  This protects any
-		 * code that might try to examine the Portal later.
+		 * We must also clear portal->stmts which is now a dangling reference
+		 * to the cached plan's plan list.  This protects any code that might
+		 * try to examine the Portal later.
 		 */
 		portal->stmts = NIL;
 	}
@@ -822,16 +822,16 @@ AtSubAbort_Portals(SubTransactionId mySubid,
 
 		/*
 		 * Any resources belonging to the portal will be released in the
-		 * upcoming transaction-wide cleanup; they will be gone before we
-		 * run PortalDrop.
+		 * upcoming transaction-wide cleanup; they will be gone before we run
+		 * PortalDrop.
 		 */
 		portal->resowner = NULL;
 
 		/*
-		 * Although we can't delete the portal data structure proper, we
-		 * can release any memory in subsidiary contexts, such as executor
-		 * state.  The cleanup hook was the last thing that might have
-		 * needed data there.
+		 * Although we can't delete the portal data structure proper, we can
+		 * release any memory in subsidiary contexts, such as executor state.
+		 * The cleanup hook was the last thing that might have needed data
+		 * there.
 		 */
 		MemoryContextDeleteChildren(PortalGetHeapMemory(portal));
 	}

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/interfaces/libpq/libpq-fe.h,v 1.151 2010/02/05 03:09:05 joe Exp $
+ * $PostgreSQL: pgsql/src/interfaces/libpq/libpq-fe.h,v 1.152 2010/02/26 02:01:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -227,13 +227,13 @@ typedef struct pgresAttDesc
 /* Asynchronous (non-blocking) */
 extern PGconn *PQconnectStart(const char *conninfo);
 extern PGconn *PQconnectStartParams(const char **keywords,
-			 const char **values, int expand_dbname);
+					 const char **values, int expand_dbname);
 extern PostgresPollingStatusType PQconnectPoll(PGconn *conn);
 
 /* Synchronous (blocking) */
 extern PGconn *PQconnectdb(const char *conninfo);
 extern PGconn *PQconnectdbParams(const char **keywords,
-			 const char **values, int expand_dbname);
+				  const char **values, int expand_dbname);
 extern PGconn *PQsetdbLogin(const char *pghost, const char *pgport,
 			 const char *pgoptions, const char *pgtty,
 			 const char *dbName,

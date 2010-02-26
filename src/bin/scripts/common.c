@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/scripts/common.c,v 1.39 2010/02/05 03:09:05 joe Exp $
+ * $PostgreSQL: pgsql/src/bin/scripts/common.c,v 1.40 2010/02/26 02:01:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -118,20 +118,20 @@ connectDatabase(const char *dbname, const char *pghost, const char *pgport,
 			exit(1);
 		}
 
-		keywords[0]	= "host";
-		values[0]	= pghost;
-		keywords[1]	= "port";
-		values[1]	= pgport;
-		keywords[2]	= "user";
-		values[2]	= pguser;
-		keywords[3]	= "password";
-		values[3]	= password;
-		keywords[4]	= "dbname";
-		values[4]	= dbname;
-		keywords[5]	= "fallback_application_name";
-		values[5]	= progname;
-		keywords[6]	= NULL;
-		values[6]	= NULL;
+		keywords[0] = "host";
+		values[0] = pghost;
+		keywords[1] = "port";
+		values[1] = pgport;
+		keywords[2] = "user";
+		values[2] = pguser;
+		keywords[3] = "password";
+		values[3] = password;
+		keywords[4] = "dbname";
+		values[4] = dbname;
+		keywords[5] = "fallback_application_name";
+		values[5] = progname;
+		keywords[6] = NULL;
+		values[6] = NULL;
 
 		new_pass = false;
 		conn = PQconnectdbParams(keywords, values, true);

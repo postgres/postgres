@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/src/tools/ifaddrs/test_ifaddrs.c,v 1.1 2009/10/01 01:58:58 tgl Exp $
+ * $PostgreSQL: pgsql/src/tools/ifaddrs/test_ifaddrs.c,v 1.2 2010/02/26 02:01:40 momjian Exp $
  *
  *
  *	test_ifaddrs.c
@@ -16,10 +16,11 @@
 
 
 static void
-print_addr(struct sockaddr *addr)
+print_addr(struct sockaddr * addr)
 {
-	char buffer[256];
-	int ret, len;
+	char		buffer[256];
+	int			ret,
+				len;
 
 	switch (addr->sa_family)
 	{
@@ -45,7 +46,7 @@ print_addr(struct sockaddr *addr)
 }
 
 static void
-callback(struct sockaddr *addr, struct sockaddr *mask, void *unused)
+callback(struct sockaddr * addr, struct sockaddr * mask, void *unused)
 {
 	printf("addr: ");
 	print_addr(addr);
@@ -58,7 +59,7 @@ int
 main(int argc, char *argv[])
 {
 #ifdef WIN32
-	WSADATA wsaData;
+	WSADATA		wsaData;
 
 	if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0)
 	{

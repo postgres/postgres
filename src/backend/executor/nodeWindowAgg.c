@@ -27,7 +27,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeWindowAgg.c,v 1.11 2010/02/14 18:42:14 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeWindowAgg.c,v 1.12 2010/02/26 02:00:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -416,8 +416,8 @@ eval_windowaggregates(WindowAggState *winstate)
 	 * need the current aggregate value.  This is considerably more efficient
 	 * than the naive approach of re-running the entire aggregate calculation
 	 * for each current row.  It does assume that the final function doesn't
-	 * damage the running transition value, but we have the same assumption
-	 * in nodeAgg.c too (when it rescans an existing hash table).
+	 * damage the running transition value, but we have the same assumption in
+	 * nodeAgg.c too (when it rescans an existing hash table).
 	 *
 	 * For other frame start rules, we discard the aggregate state and re-run
 	 * the aggregates whenever the frame head row moves.  We can still
@@ -434,11 +434,11 @@ eval_windowaggregates(WindowAggState *winstate)
 	 * accumulated into the aggregate transition values.  Whenever we start a
 	 * new peer group, we accumulate forward to the end of the peer group.
 	 *
-	 * TODO: Rerunning aggregates from the frame start can be pretty slow.
-	 * For some aggregates like SUM and COUNT we could avoid that by
-	 * implementing a "negative transition function" that would be called for
-	 * each row as it exits the frame.  We'd have to think about avoiding
-	 * recalculation of volatile arguments of aggregate functions, too.
+	 * TODO: Rerunning aggregates from the frame start can be pretty slow. For
+	 * some aggregates like SUM and COUNT we could avoid that by implementing
+	 * a "negative transition function" that would be called for each row as
+	 * it exits the frame.	We'd have to think about avoiding recalculation of
+	 * volatile arguments of aggregate functions, too.
 	 */
 
 	/*
@@ -447,8 +447,8 @@ eval_windowaggregates(WindowAggState *winstate)
 	update_frameheadpos(agg_winobj, winstate->temp_slot_1);
 
 	/*
-	 * Initialize aggregates on first call for partition, or if the frame
-	 * head position moved since last time.
+	 * Initialize aggregates on first call for partition, or if the frame head
+	 * position moved since last time.
 	 */
 	if (winstate->currentpos == 0 ||
 		winstate->frameheadpos != winstate->aggregatedbase)
@@ -468,8 +468,8 @@ eval_windowaggregates(WindowAggState *winstate)
 		}
 
 		/*
-		 * If we created a mark pointer for aggregates, keep it pushed up
-		 * to frame head, so that tuplestore can discard unnecessary rows.
+		 * If we created a mark pointer for aggregates, keep it pushed up to
+		 * frame head, so that tuplestore can discard unnecessary rows.
 		 */
 		if (agg_winobj->markptr >= 0)
 			WinSetMarkPosition(agg_winobj, winstate->frameheadpos);
@@ -485,9 +485,9 @@ eval_windowaggregates(WindowAggState *winstate)
 	/*
 	 * In UNBOUNDED_FOLLOWING mode, we don't have to recalculate aggregates
 	 * except when the frame head moves.  In END_CURRENT_ROW mode, we only
-	 * have to recalculate when the frame head moves or currentpos has advanced
-	 * past the place we'd aggregated up to.  Check for these cases and if
-	 * so, reuse the saved result values.
+	 * have to recalculate when the frame head moves or currentpos has
+	 * advanced past the place we'd aggregated up to.  Check for these cases
+	 * and if so, reuse the saved result values.
 	 */
 	if ((winstate->frameOptions & (FRAMEOPTION_END_UNBOUNDED_FOLLOWING |
 								   FRAMEOPTION_END_CURRENT_ROW)) &&
@@ -508,7 +508,7 @@ eval_windowaggregates(WindowAggState *winstate)
 	 * Advance until we reach a row not in frame (or end of partition).
 	 *
 	 * Note the loop invariant: agg_row_slot is either empty or holds the row
-	 * at position aggregatedupto.  We advance aggregatedupto after processing
+	 * at position aggregatedupto.	We advance aggregatedupto after processing
 	 * a row.
 	 */
 	for (;;)
@@ -896,7 +896,7 @@ row_is_in_frame(WindowAggState *winstate, int64 pos, TupleTableSlot *slot)
 	{
 		if (frameOptions & FRAMEOPTION_ROWS)
 		{
-			int64	offset = DatumGetInt64(winstate->startOffsetValue);
+			int64		offset = DatumGetInt64(winstate->startOffsetValue);
 
 			/* rows before current row + offset are out of frame */
 			if (frameOptions & FRAMEOPTION_START_VALUE_PRECEDING)
@@ -937,7 +937,7 @@ row_is_in_frame(WindowAggState *winstate, int64 pos, TupleTableSlot *slot)
 	{
 		if (frameOptions & FRAMEOPTION_ROWS)
 		{
-			int64	offset = DatumGetInt64(winstate->endOffsetValue);
+			int64		offset = DatumGetInt64(winstate->endOffsetValue);
 
 			/* rows after current row + offset are out of frame */
 			if (frameOptions & FRAMEOPTION_END_VALUE_PRECEDING)
@@ -965,7 +965,7 @@ row_is_in_frame(WindowAggState *winstate, int64 pos, TupleTableSlot *slot)
  *
  * Uses the winobj's read pointer for any required fetches; hence, if the
  * frame mode is one that requires row comparisons, the winobj's mark must
- * not be past the currently known frame head.  Also uses the specified slot
+ * not be past the currently known frame head.	Also uses the specified slot
  * for any required fetches.
  */
 static void
@@ -1007,9 +1007,9 @@ update_frameheadpos(WindowObject winobj, TupleTableSlot *slot)
 			/*
 			 * In RANGE START_CURRENT mode, frame head is the first row that
 			 * is a peer of current row.  We search backwards from current,
-			 * which could be a bit inefficient if peer sets are large.
-			 * Might be better to have a separate read pointer that moves
-			 * forward tracking the frame head.
+			 * which could be a bit inefficient if peer sets are large. Might
+			 * be better to have a separate read pointer that moves forward
+			 * tracking the frame head.
 			 */
 			fhprev = winstate->currentpos - 1;
 			for (;;)
@@ -1018,9 +1018,9 @@ update_frameheadpos(WindowObject winobj, TupleTableSlot *slot)
 				if (fhprev < winstate->frameheadpos)
 					break;
 				if (!window_gettupleslot(winobj, fhprev, slot))
-					break;				/* start of partition */
+					break;		/* start of partition */
 				if (!are_peers(winstate, slot, winstate->ss.ss_ScanTupleSlot))
-					break;				/* not peer of current row */
+					break;		/* not peer of current row */
 				fhprev--;
 			}
 			winstate->frameheadpos = fhprev + 1;
@@ -1034,7 +1034,7 @@ update_frameheadpos(WindowObject winobj, TupleTableSlot *slot)
 		if (frameOptions & FRAMEOPTION_ROWS)
 		{
 			/* In ROWS mode, bound is physically n before/after current */
-			int64	offset = DatumGetInt64(winstate->startOffsetValue);
+			int64		offset = DatumGetInt64(winstate->startOffsetValue);
 
 			if (frameOptions & FRAMEOPTION_START_VALUE_PRECEDING)
 				offset = -offset;
@@ -1070,7 +1070,7 @@ update_frameheadpos(WindowObject winobj, TupleTableSlot *slot)
  *
  * Uses the winobj's read pointer for any required fetches; hence, if the
  * frame mode is one that requires row comparisons, the winobj's mark must
- * not be past the currently known frame tail.  Also uses the specified slot
+ * not be past the currently known frame tail.	Also uses the specified slot
  * for any required fetches.
  */
 static void
@@ -1122,9 +1122,9 @@ update_frametailpos(WindowObject winobj, TupleTableSlot *slot)
 			for (;;)
 			{
 				if (!window_gettupleslot(winobj, ftnext, slot))
-					break;				/* end of partition */
+					break;		/* end of partition */
 				if (!are_peers(winstate, slot, winstate->ss.ss_ScanTupleSlot))
-					break;				/* not peer of current row */
+					break;		/* not peer of current row */
 				ftnext++;
 			}
 			winstate->frametailpos = ftnext - 1;
@@ -1138,7 +1138,7 @@ update_frametailpos(WindowObject winobj, TupleTableSlot *slot)
 		if (frameOptions & FRAMEOPTION_ROWS)
 		{
 			/* In ROWS mode, bound is physically n before/after current */
-			int64	offset = DatumGetInt64(winstate->endOffsetValue);
+			int64		offset = DatumGetInt64(winstate->endOffsetValue);
 
 			if (frameOptions & FRAMEOPTION_END_VALUE_PRECEDING)
 				offset = -offset;
@@ -1213,12 +1213,12 @@ ExecWindowAgg(WindowAggState *winstate)
 	 */
 	if (winstate->all_first)
 	{
-		int				frameOptions = winstate->frameOptions;
-		ExprContext	   *econtext = winstate->ss.ps.ps_ExprContext;
-		Datum			value;
-		bool			isnull;
-		int16			len;
-		bool			byval;
+		int			frameOptions = winstate->frameOptions;
+		ExprContext *econtext = winstate->ss.ps.ps_ExprContext;
+		Datum		value;
+		bool		isnull;
+		int16		len;
+		bool		byval;
 
 		if (frameOptions & FRAMEOPTION_START_VALUE)
 		{
@@ -1238,12 +1238,12 @@ ExecWindowAgg(WindowAggState *winstate)
 			if (frameOptions & FRAMEOPTION_ROWS)
 			{
 				/* value is known to be int8 */
-				int64	offset = DatumGetInt64(value);
+				int64		offset = DatumGetInt64(value);
 
 				if (offset < 0)
 					ereport(ERROR,
 							(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-							 errmsg("frame starting offset must not be negative")));
+					  errmsg("frame starting offset must not be negative")));
 			}
 		}
 		if (frameOptions & FRAMEOPTION_END_VALUE)
@@ -1264,12 +1264,12 @@ ExecWindowAgg(WindowAggState *winstate)
 			if (frameOptions & FRAMEOPTION_ROWS)
 			{
 				/* value is known to be int8 */
-				int64	offset = DatumGetInt64(value);
+				int64		offset = DatumGetInt64(value);
 
 				if (offset < 0)
 					ereport(ERROR,
 							(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-							 errmsg("frame ending offset must not be negative")));
+						errmsg("frame ending offset must not be negative")));
 			}
 		}
 		winstate->all_first = false;
@@ -2146,8 +2146,8 @@ WinGetFuncArgInPartition(WindowObject winobj, int argno,
 			*isout = false;
 		if (set_mark)
 		{
-			int		frameOptions = winstate->frameOptions;
-			int64	mark_pos = abs_pos;
+			int			frameOptions = winstate->frameOptions;
+			int64		mark_pos = abs_pos;
 
 			/*
 			 * In RANGE mode with a moving frame head, we must not let the
@@ -2155,10 +2155,10 @@ WinGetFuncArgInPartition(WindowObject winobj, int argno,
 			 * fetchable during future update_frameheadpos calls.
 			 *
 			 * XXX it is very ugly to pollute window functions' marks with
-			 * this consideration; it could for instance mask a logic bug
-			 * that lets a window function fetch rows before what it had
-			 * claimed was its mark.  Perhaps use a separate mark for
-			 * frame head probes?
+			 * this consideration; it could for instance mask a logic bug that
+			 * lets a window function fetch rows before what it had claimed
+			 * was its mark.  Perhaps use a separate mark for frame head
+			 * probes?
 			 */
 			if ((frameOptions & FRAMEOPTION_RANGE) &&
 				!(frameOptions & FRAMEOPTION_START_UNBOUNDED_PRECEDING))
@@ -2245,8 +2245,8 @@ WinGetFuncArgInFrame(WindowObject winobj, int argno,
 			*isout = false;
 		if (set_mark)
 		{
-			int		frameOptions = winstate->frameOptions;
-			int64	mark_pos = abs_pos;
+			int			frameOptions = winstate->frameOptions;
+			int64		mark_pos = abs_pos;
 
 			/*
 			 * In RANGE mode with a moving frame head, we must not let the
@@ -2254,10 +2254,10 @@ WinGetFuncArgInFrame(WindowObject winobj, int argno,
 			 * fetchable during future update_frameheadpos calls.
 			 *
 			 * XXX it is very ugly to pollute window functions' marks with
-			 * this consideration; it could for instance mask a logic bug
-			 * that lets a window function fetch rows before what it had
-			 * claimed was its mark.  Perhaps use a separate mark for
-			 * frame head probes?
+			 * this consideration; it could for instance mask a logic bug that
+			 * lets a window function fetch rows before what it had claimed
+			 * was its mark.  Perhaps use a separate mark for frame head
+			 * probes?
 			 */
 			if ((frameOptions & FRAMEOPTION_RANGE) &&
 				!(frameOptions & FRAMEOPTION_START_UNBOUNDED_PRECEDING))

@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/startup.c,v 1.161 2010/02/16 21:07:01 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/startup.c,v 1.162 2010/02/26 02:01:19 momjian Exp $
  */
 #include "postgres_fe.h"
 
@@ -175,22 +175,22 @@ main(int argc, char *argv[])
 		const char **keywords = pg_malloc(PARAMS_ARRAY_SIZE * sizeof(*keywords));
 		const char **values = pg_malloc(PARAMS_ARRAY_SIZE * sizeof(*values));
 
-		keywords[0]	= "host";
-		values[0]	= options.host;
-		keywords[1]	= "port";
-		values[1]	= options.port;
-		keywords[2]	= "user";
-		values[2]	= options.username;
-		keywords[3]	= "password";
-		values[3]	= password;
-		keywords[4]	= "dbname";
-		values[4]	= (options.action == ACT_LIST_DB &&
-						options.dbname == NULL) ?
-						"postgres" : options.dbname;
-		keywords[5]	= "fallback_application_name";
-		values[5]	= pset.progname;
-		keywords[6]	= NULL;
-		values[6]	= NULL;
+		keywords[0] = "host";
+		values[0] = options.host;
+		keywords[1] = "port";
+		values[1] = options.port;
+		keywords[2] = "user";
+		values[2] = options.username;
+		keywords[3] = "password";
+		values[3] = password;
+		keywords[4] = "dbname";
+		values[4] = (options.action == ACT_LIST_DB &&
+					 options.dbname == NULL) ?
+			"postgres" : options.dbname;
+		keywords[5] = "fallback_application_name";
+		values[5] = pset.progname;
+		keywords[6] = NULL;
+		values[6] = NULL;
 
 		new_pass = false;
 		pset.db = PQconnectdbParams(keywords, values, true);

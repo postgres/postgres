@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/input.h,v 1.34 2010/01/02 16:57:59 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/input.h,v 1.35 2010/02/26 02:01:19 momjian Exp $
  */
 #ifndef INPUT_H
 #define INPUT_H
@@ -22,21 +22,18 @@
 #if defined(HAVE_READLINE_HISTORY_H)
 #include <readline/history.h>
 #endif
-
 #elif defined(HAVE_EDITLINE_READLINE_H)
 #include <editline/readline.h>
 #if defined(HAVE_EDITLINE_HISTORY_H)
 #include <editline/history.h>
 #endif
-
 #elif defined(HAVE_READLINE_H)
 #include <readline.h>
 #if defined(HAVE_HISTORY_H)
 #include <history.h>
 #endif
-
-#endif /* HAVE_READLINE_READLINE_H, etc */
-#endif /* HAVE_LIBREADLINE */
+#endif   /* HAVE_READLINE_READLINE_H, etc */
+#endif   /* HAVE_LIBREADLINE */
 
 #include "pqexpbuffer.h"
 

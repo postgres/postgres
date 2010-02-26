@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/type.h,v 1.52 2010/01/26 09:07:31 meskes Exp $
+ * $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/type.h,v 1.53 2010/02/26 02:01:31 momjian Exp $
  */
 #ifndef _ECPG_PREPROC_TYPE_H
 #define _ECPG_PREPROC_TYPE_H
@@ -17,7 +17,8 @@ struct ECPGstruct_member
 struct ECPGtype
 {
 	enum ECPGttype type;
-	char	   *type_name;			/* For struct and union types it is the struct name */
+	char	   *type_name;		/* For struct and union types it is the struct
+								 * name */
 	char	   *size;			/* For array it is the number of elements. For
 								 * varchar it is the maxsize of the area. */
 	char	   *struct_sizeof;	/* For a struct this is the sizeof() type as

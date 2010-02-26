@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/chklocale.c,v 1.14 2010/01/02 16:58:13 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/port/chklocale.c,v 1.15 2010/02/26 02:01:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -244,17 +244,17 @@ pg_get_encoding_from_locale(const char *ctype)
 
 		save = setlocale(LC_CTYPE, NULL);
 		if (!save)
-			return -1;				/* setlocale() broken? */
+			return -1;			/* setlocale() broken? */
 		/* must copy result, or it might change after setlocale */
 		save = strdup(save);
 		if (!save)
-			return -1;				/* out of memory; unlikely */
+			return -1;			/* out of memory; unlikely */
 
 		name = setlocale(LC_CTYPE, ctype);
 		if (!name)
 		{
 			free(save);
-			return -1;				/* bogus ctype passed in? */
+			return -1;			/* bogus ctype passed in? */
 		}
 
 #ifndef WIN32
@@ -273,7 +273,7 @@ pg_get_encoding_from_locale(const char *ctype)
 		/* much easier... */
 		ctype = setlocale(LC_CTYPE, NULL);
 		if (!ctype)
-			return -1;				/* setlocale() broken? */
+			return -1;			/* setlocale() broken? */
 
 		/* If locale is C or POSIX, we can allow all encodings */
 		if (pg_strcasecmp(ctype, "C") == 0 ||
@@ -290,7 +290,7 @@ pg_get_encoding_from_locale(const char *ctype)
 	}
 
 	if (!sys)
-		return -1;					/* out of memory; unlikely */
+		return -1;				/* out of memory; unlikely */
 
 	/* Check the table */
 	for (i = 0; encoding_match_list[i].system_enc_name; i++)

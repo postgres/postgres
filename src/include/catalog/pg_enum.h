@@ -7,7 +7,7 @@
  *
  * Copyright (c) 2006-2010, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_enum.h,v 1.8 2010/01/05 01:06:56 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_enum.h,v 1.9 2010/02/26 02:01:21 momjian Exp $
  *
  * NOTES
  *	  the genbki.pl script reads this file and generates .bki
@@ -61,7 +61,7 @@ typedef FormData_pg_enum *Form_pg_enum;
  * prototypes for functions in pg_enum.c
  */
 extern void EnumValuesCreate(Oid enumTypeOid, List *vals,
-			Oid binary_upgrade_next_pg_enum_oid);
+				 Oid binary_upgrade_next_pg_enum_oid);
 extern void EnumValuesDelete(Oid enumTypeOid);
 
 #endif   /* PG_ENUM_H */

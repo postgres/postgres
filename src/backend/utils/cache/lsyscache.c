@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/lsyscache.c,v 1.167 2010/02/14 18:42:17 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/lsyscache.c,v 1.168 2010/02/26 02:01:11 momjian Exp $
  *
  * NOTES
  *	  Eventually, the index information should go through here, too.
@@ -622,7 +622,7 @@ get_op_btree_interpretation(Oid opno, List **opfamilies, List **opstrats)
 		{
 			op_negated = true;
 			ReleaseSysCacheList(catlist);
-			catlist = SearchSysCacheList1(AMOPOPID, 
+			catlist = SearchSysCacheList1(AMOPOPID,
 										  ObjectIdGetDatum(op_negator));
 		}
 	}

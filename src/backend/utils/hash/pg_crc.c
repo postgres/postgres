@@ -19,7 +19,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/hash/pg_crc.c,v 1.23 2010/01/07 04:53:34 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/hash/pg_crc.c,v 1.24 2010/02/26 02:01:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -115,7 +115,7 @@ const uint32 pg_crc32_table[256] = {
  * (ECMA-182, available from http://www.ecma.ch/ecma1/STAND/ECMA-182.HTM)
  */
 
-#if SIZEOF_VOID_P < 8		/* this test must match the one in pg_crc.h */
+#if SIZEOF_VOID_P < 8			/* this test must match the one in pg_crc.h */
 
 const uint32 pg_crc64_table0[256] = {
 	0x00000000, 0xA9EA3693,
@@ -378,7 +378,6 @@ const uint32 pg_crc64_table1[256] = {
 	0x5DEDC41A, 0x1F1D25F1,
 	0xD80C07CD, 0x9AFCE626
 };
-
 #else							/* use int64 implementation */
 
 const uint64 pg_crc64_table[256] = {

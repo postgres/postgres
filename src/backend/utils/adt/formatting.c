@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.167 2010/02/25 18:36:14 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.168 2010/02/26 02:01:08 momjian Exp $
  *
  *
  *	 Portions Copyright (c) 1999-2010, PostgreSQL Global Development Group
@@ -1053,165 +1053,165 @@ NUMDesc_prepare(NUMDesc *num, FormatNode *n)
 	 */
 	PG_TRY();
 	{
-	if (IS_EEEE(num) && n->key->id != NUM_E)
-		ereport(ERROR,
-				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("\"EEEE\" must be the last pattern used")));
+		if (IS_EEEE(num) && n->key->id != NUM_E)
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("\"EEEE\" must be the last pattern used")));
 
-	switch (n->key->id)
-	{
-		case NUM_9:
-			if (IS_BRACKET(num))
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("\"9\" must be ahead of \"PR\"")));
-			if (IS_MULTI(num))
-			{
-				++num->multi;
+		switch (n->key->id)
+		{
+			case NUM_9:
+				if (IS_BRACKET(num))
+					ereport(ERROR,
+							(errcode(ERRCODE_SYNTAX_ERROR),
+							 errmsg("\"9\" must be ahead of \"PR\"")));
+				if (IS_MULTI(num))
+				{
+					++num->multi;
+					break;
+				}
+				if (IS_DECIMAL(num))
+					++num->post;
+				else
+					++num->pre;
 				break;
-			}
-			if (IS_DECIMAL(num))
-				++num->post;
-			else
-				++num->pre;
-			break;
 
-		case NUM_0:
-			if (IS_BRACKET(num))
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("\"0\" must be ahead of \"PR\"")));
-			if (!IS_ZERO(num) && !IS_DECIMAL(num))
-			{
-				num->flag |= NUM_F_ZERO;
-				num->zero_start = num->pre + 1;
-			}
-			if (!IS_DECIMAL(num))
-				++num->pre;
-			else
-				++num->post;
+			case NUM_0:
+				if (IS_BRACKET(num))
+					ereport(ERROR,
+							(errcode(ERRCODE_SYNTAX_ERROR),
+							 errmsg("\"0\" must be ahead of \"PR\"")));
+				if (!IS_ZERO(num) && !IS_DECIMAL(num))
+				{
+					num->flag |= NUM_F_ZERO;
+					num->zero_start = num->pre + 1;
+				}
+				if (!IS_DECIMAL(num))
+					++num->pre;
+				else
+					++num->post;
 
-			num->zero_end = num->pre + num->post;
-			break;
+				num->zero_end = num->pre + num->post;
+				break;
 
-		case NUM_B:
-			if (num->pre == 0 && num->post == 0 && (!IS_ZERO(num)))
-				num->flag |= NUM_F_BLANK;
-			break;
+			case NUM_B:
+				if (num->pre == 0 && num->post == 0 && (!IS_ZERO(num)))
+					num->flag |= NUM_F_BLANK;
+				break;
 
-		case NUM_D:
-			num->flag |= NUM_F_LDECIMAL;
-			num->need_locale = TRUE;
-		case NUM_DEC:
-			if (IS_DECIMAL(num))
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("multiple decimal points")));
-			if (IS_MULTI(num))
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("cannot use \"V\" and decimal point together")));
-			num->flag |= NUM_F_DECIMAL;
-			break;
-
-		case NUM_FM:
-			num->flag |= NUM_F_FILLMODE;
-			break;
-
-		case NUM_S:
-			if (IS_LSIGN(num))
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("cannot use \"S\" twice")));
-			if (IS_PLUS(num) || IS_MINUS(num) || IS_BRACKET(num))
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("cannot use \"S\" and \"PL\"/\"MI\"/\"SG\"/\"PR\" together")));
-			if (!IS_DECIMAL(num))
-			{
-				num->lsign = NUM_LSIGN_PRE;
-				num->pre_lsign_num = num->pre;
+			case NUM_D:
+				num->flag |= NUM_F_LDECIMAL;
 				num->need_locale = TRUE;
-				num->flag |= NUM_F_LSIGN;
-			}
-			else if (num->lsign == NUM_LSIGN_NONE)
-			{
-				num->lsign = NUM_LSIGN_POST;
-				num->need_locale = TRUE;
-				num->flag |= NUM_F_LSIGN;
-			}
-			break;
-
-		case NUM_MI:
-			if (IS_LSIGN(num))
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("cannot use \"S\" and \"MI\" together")));
-			num->flag |= NUM_F_MINUS;
-			if (IS_DECIMAL(num))
-				num->flag |= NUM_F_MINUS_POST;
-			break;
-
-		case NUM_PL:
-			if (IS_LSIGN(num))
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("cannot use \"S\" and \"PL\" together")));
-			num->flag |= NUM_F_PLUS;
-			if (IS_DECIMAL(num))
-				num->flag |= NUM_F_PLUS_POST;
-			break;
-
-		case NUM_SG:
-			if (IS_LSIGN(num))
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("cannot use \"S\" and \"SG\" together")));
-			num->flag |= NUM_F_MINUS;
-			num->flag |= NUM_F_PLUS;
-			break;
-
-		case NUM_PR:
-			if (IS_LSIGN(num) || IS_PLUS(num) || IS_MINUS(num))
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("cannot use \"PR\" and \"S\"/\"PL\"/\"MI\"/\"SG\" together")));
-			num->flag |= NUM_F_BRACKET;
-			break;
-
-		case NUM_rn:
-		case NUM_RN:
-			num->flag |= NUM_F_ROMAN;
-			break;
-
-		case NUM_L:
-		case NUM_G:
-			num->need_locale = TRUE;
-			break;
-
-		case NUM_V:
-			if (IS_DECIMAL(num))
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
+			case NUM_DEC:
+				if (IS_DECIMAL(num))
+					ereport(ERROR,
+							(errcode(ERRCODE_SYNTAX_ERROR),
+							 errmsg("multiple decimal points")));
+				if (IS_MULTI(num))
+					ereport(ERROR,
+							(errcode(ERRCODE_SYNTAX_ERROR),
 					 errmsg("cannot use \"V\" and decimal point together")));
-			num->flag |= NUM_F_MULTI;
-			break;
+				num->flag |= NUM_F_DECIMAL;
+				break;
 
-		case NUM_E:
-			if (IS_EEEE(num))
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("cannot use \"EEEE\" twice")));
-			if (IS_BLANK(num) || IS_FILLMODE(num) || IS_LSIGN(num) ||
-				IS_BRACKET(num) || IS_MINUS(num) || IS_PLUS(num) ||
-				IS_ROMAN(num) || IS_MULTI(num))
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("\"EEEE\" is incompatible with other formats"),
-						 errdetail("\"EEEE\" may only be used together with digit and decimal point patterns.")));
-			num->flag |= NUM_F_EEEE;
-			break;
-	}
+			case NUM_FM:
+				num->flag |= NUM_F_FILLMODE;
+				break;
+
+			case NUM_S:
+				if (IS_LSIGN(num))
+					ereport(ERROR,
+							(errcode(ERRCODE_SYNTAX_ERROR),
+							 errmsg("cannot use \"S\" twice")));
+				if (IS_PLUS(num) || IS_MINUS(num) || IS_BRACKET(num))
+					ereport(ERROR,
+							(errcode(ERRCODE_SYNTAX_ERROR),
+							 errmsg("cannot use \"S\" and \"PL\"/\"MI\"/\"SG\"/\"PR\" together")));
+				if (!IS_DECIMAL(num))
+				{
+					num->lsign = NUM_LSIGN_PRE;
+					num->pre_lsign_num = num->pre;
+					num->need_locale = TRUE;
+					num->flag |= NUM_F_LSIGN;
+				}
+				else if (num->lsign == NUM_LSIGN_NONE)
+				{
+					num->lsign = NUM_LSIGN_POST;
+					num->need_locale = TRUE;
+					num->flag |= NUM_F_LSIGN;
+				}
+				break;
+
+			case NUM_MI:
+				if (IS_LSIGN(num))
+					ereport(ERROR,
+							(errcode(ERRCODE_SYNTAX_ERROR),
+							 errmsg("cannot use \"S\" and \"MI\" together")));
+				num->flag |= NUM_F_MINUS;
+				if (IS_DECIMAL(num))
+					num->flag |= NUM_F_MINUS_POST;
+				break;
+
+			case NUM_PL:
+				if (IS_LSIGN(num))
+					ereport(ERROR,
+							(errcode(ERRCODE_SYNTAX_ERROR),
+							 errmsg("cannot use \"S\" and \"PL\" together")));
+				num->flag |= NUM_F_PLUS;
+				if (IS_DECIMAL(num))
+					num->flag |= NUM_F_PLUS_POST;
+				break;
+
+			case NUM_SG:
+				if (IS_LSIGN(num))
+					ereport(ERROR,
+							(errcode(ERRCODE_SYNTAX_ERROR),
+							 errmsg("cannot use \"S\" and \"SG\" together")));
+				num->flag |= NUM_F_MINUS;
+				num->flag |= NUM_F_PLUS;
+				break;
+
+			case NUM_PR:
+				if (IS_LSIGN(num) || IS_PLUS(num) || IS_MINUS(num))
+					ereport(ERROR,
+							(errcode(ERRCODE_SYNTAX_ERROR),
+							 errmsg("cannot use \"PR\" and \"S\"/\"PL\"/\"MI\"/\"SG\" together")));
+				num->flag |= NUM_F_BRACKET;
+				break;
+
+			case NUM_rn:
+			case NUM_RN:
+				num->flag |= NUM_F_ROMAN;
+				break;
+
+			case NUM_L:
+			case NUM_G:
+				num->need_locale = TRUE;
+				break;
+
+			case NUM_V:
+				if (IS_DECIMAL(num))
+					ereport(ERROR,
+							(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("cannot use \"V\" and decimal point together")));
+				num->flag |= NUM_F_MULTI;
+				break;
+
+			case NUM_E:
+				if (IS_EEEE(num))
+					ereport(ERROR,
+							(errcode(ERRCODE_SYNTAX_ERROR),
+							 errmsg("cannot use \"EEEE\" twice")));
+				if (IS_BLANK(num) || IS_FILLMODE(num) || IS_LSIGN(num) ||
+					IS_BRACKET(num) || IS_MINUS(num) || IS_PLUS(num) ||
+					IS_ROMAN(num) || IS_MULTI(num))
+					ereport(ERROR,
+							(errcode(ERRCODE_SYNTAX_ERROR),
+					   errmsg("\"EEEE\" is incompatible with other formats"),
+							 errdetail("\"EEEE\" may only be used together with digit and decimal point patterns.")));
+				num->flag |= NUM_F_EEEE;
+				break;
+		}
 	}
 	PG_CATCH();
 	{
@@ -2088,7 +2088,11 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out)
 				break;
 			case DCH_HH:
 			case DCH_HH12:
-				/* display time as shown on a 12-hour clock, even for intervals */
+
+				/*
+				 * display time as shown on a 12-hour clock, even for
+				 * intervals
+				 */
 				sprintf(s, "%0*d", S_FM(n->suffix) ? 0 : 2,
 						tm->tm_hour % (HOURS_PER_DAY / 2) == 0 ? 12 :
 						tm->tm_hour % (HOURS_PER_DAY / 2));
@@ -4652,8 +4656,8 @@ numeric_to_char(PG_FUNCTION_ARGS)
 		if (strcmp(orgnum, "NaN") == 0)
 		{
 			/*
-			 * Allow 6 characters for the leading sign, the decimal point, "e",
-			 * the exponent's sign and two exponent digits.
+			 * Allow 6 characters for the leading sign, the decimal point,
+			 * "e", the exponent's sign and two exponent digits.
 			 */
 			numstr = (char *) palloc(Num.pre + Num.post + 7);
 			fill_str(numstr, '#', Num.pre + Num.post + 6);
@@ -4757,7 +4761,7 @@ int4_to_char(PG_FUNCTION_ARGS)
 	else if (IS_EEEE(&Num))
 	{
 		/* we can do it easily because float8 won't lose any precision */
-		float8	val = (float8) value;
+		float8		val = (float8) value;
 
 		orgnum = (char *) palloc(MAXDOUBLEWIDTH + 1);
 		snprintf(orgnum, MAXDOUBLEWIDTH + 1, "%+.*e", Num.post, val);
@@ -4852,7 +4856,7 @@ int8_to_char(PG_FUNCTION_ARGS)
 	else if (IS_EEEE(&Num))
 	{
 		/* to avoid loss of precision, must go via numeric not float8 */
-		Numeric	val;
+		Numeric		val;
 
 		val = DatumGetNumeric(DirectFunctionCall1(int8_numeric,
 												  Int64GetDatum(value)));
@@ -4956,8 +4960,8 @@ float4_to_char(PG_FUNCTION_ARGS)
 		if (isnan(value) || is_infinite(value))
 		{
 			/*
-			 * Allow 6 characters for the leading sign, the decimal point, "e",
-			 * the exponent's sign and two exponent digits.
+			 * Allow 6 characters for the leading sign, the decimal point,
+			 * "e", the exponent's sign and two exponent digits.
 			 */
 			numstr = (char *) palloc(Num.pre + Num.post + 7);
 			fill_str(numstr, '#', Num.pre + Num.post + 6);
@@ -5060,8 +5064,8 @@ float8_to_char(PG_FUNCTION_ARGS)
 		if (isnan(value) || is_infinite(value))
 		{
 			/*
-			 * Allow 6 characters for the leading sign, the decimal point, "e",
-			 * the exponent's sign and two exponent digits.
+			 * Allow 6 characters for the leading sign, the decimal point,
+			 * "e", the exponent's sign and two exponent digits.
 			 */
 			numstr = (char *) palloc(Num.pre + Num.post + 7);
 			fill_str(numstr, '#', Num.pre + Num.post + 6);

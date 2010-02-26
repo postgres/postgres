@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/datetime.h,v 1.78 2010/01/02 16:58:10 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/datetime.h,v 1.79 2010/02/26 02:01:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -262,7 +262,7 @@ extern const int day_tab[2][13];
   || (((m) == JULIAN_MINMONTH) && ((d) >= JULIAN_MINDAY))))) \
  && ((y) < JULIAN_MAXYEAR))
 
-#define JULIAN_MAX (2147483494)	/* == date2j(JULIAN_MAXYEAR, 1 ,1) */
+#define JULIAN_MAX (2147483494) /* == date2j(JULIAN_MAXYEAR, 1 ,1) */
 
 /* Julian-date equivalents of Day 0 in Unix and Postgres reckoning */
 #define UNIX_EPOCH_JDATE		2440588 /* == date2j(1970, 1, 1) */

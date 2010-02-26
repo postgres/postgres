@@ -47,7 +47,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/sort/tuplestore.c,v 1.50 2010/01/02 16:57:58 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/sort/tuplestore.c,v 1.51 2010/02/26 02:01:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -586,7 +586,7 @@ tuplestore_putvalues(Tuplestorestate *state, TupleDesc tdesc,
 
 	tuplestore_puttuple_common(state, (void *) tuple);
 
-	MemoryContextSwitchTo(oldcxt);	
+	MemoryContextSwitchTo(oldcxt);
 }
 
 static void

@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepunion.c,v 1.180 2010/02/01 19:28:56 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepunion.c,v 1.181 2010/02/26 02:00:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1196,8 +1196,8 @@ expand_inherited_rtentry(PlannerInfo *root, RangeTblEntry *rte, Index rti)
 
 	/*
 	 * If parent relation is selected FOR UPDATE/SHARE, we need to mark its
-	 * PlanRowMark as isParent = true, and generate a new PlanRowMark for
-	 * each child.
+	 * PlanRowMark as isParent = true, and generate a new PlanRowMark for each
+	 * child.
 	 */
 	if (oldrc)
 		oldrc->isParent = true;
@@ -1244,7 +1244,8 @@ expand_inherited_rtentry(PlannerInfo *root, RangeTblEntry *rte, Index rti)
 		childrte = copyObject(rte);
 		childrte->relid = childOID;
 		childrte->inh = false;
-		childrte->requiredPerms = 0; /* do not require permissions on child tables */
+		childrte->requiredPerms = 0;	/* do not require permissions on child
+										 * tables */
 		parse->rtable = lappend(parse->rtable, childrte);
 		childRTindex = list_length(parse->rtable);
 

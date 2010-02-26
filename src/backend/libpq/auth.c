@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/auth.c,v 1.194 2010/02/02 19:09:36 mha Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/auth.c,v 1.195 2010/02/26 02:00:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -313,9 +313,9 @@ ClientAuthentication(Port *port)
 				 errhint("See server log for details.")));
 
 	/*
-	 * Enable immediate response to SIGTERM/SIGINT/timeout interrupts.
-	 * (We don't want this during hba_getauthmethod() because it might
-	 * have to do database access, eg for role membership checks.)
+	 * Enable immediate response to SIGTERM/SIGINT/timeout interrupts. (We
+	 * don't want this during hba_getauthmethod() because it might have to do
+	 * database access, eg for role membership checks.)
 	 */
 	ImmediateInterruptOK = true;
 	/* And don't forget to detect one that already arrived */
@@ -1960,7 +1960,7 @@ pam_passwd_conv_proc(int num_msg, const struct pam_message ** msg,
 					if (strlen(passwd) == 0)
 					{
 						ereport(LOG,
-								(errmsg("empty password returned by client")));
+							  (errmsg("empty password returned by client")));
 						goto fail;
 					}
 				}
@@ -2243,20 +2243,21 @@ CheckLDAPAuth(Port *port)
 	if (port->hba->ldapbasedn)
 	{
 		/*
-		 * First perform an LDAP search to find the DN for the user we are trying to log
-		 * in as.
+		 * First perform an LDAP search to find the DN for the user we are
+		 * trying to log in as.
 		 */
-		char		   *filter;
-		LDAPMessage	   *search_message;
-		LDAPMessage	   *entry;
-		char		   *attributes[2];
-		char		   *dn;
-		char		   *c;
+		char	   *filter;
+		LDAPMessage *search_message;
+		LDAPMessage *entry;
+		char	   *attributes[2];
+		char	   *dn;
+		char	   *c;
 
 		/*
-		 * Disallow any characters that we would otherwise need to escape, since they
-		 * aren't really reasonable in a username anyway. Allowing them would make it
-		 * possible to inject any kind of custom filters in the LDAP filter.
+		 * Disallow any characters that we would otherwise need to escape,
+		 * since they aren't really reasonable in a username anyway. Allowing
+		 * them would make it possible to inject any kind of custom filters in
+		 * the LDAP filter.
 		 */
 		for (c = port->user_name; *c; c++)
 		{
@@ -2273,17 +2274,17 @@ CheckLDAPAuth(Port *port)
 		}
 
 		/*
-		 * Bind with a pre-defined username/password (if available) for searching. If
-		 * none is specified, this turns into an anonymous bind.
+		 * Bind with a pre-defined username/password (if available) for
+		 * searching. If none is specified, this turns into an anonymous bind.
 		 */
 		r = ldap_simple_bind_s(ldap,
-							   port->hba->ldapbinddn ? port->hba->ldapbinddn : "",
-							   port->hba->ldapbindpasswd ? port->hba->ldapbindpasswd : "");
+						  port->hba->ldapbinddn ? port->hba->ldapbinddn : "",
+				 port->hba->ldapbindpasswd ? port->hba->ldapbindpasswd : "");
 		if (r != LDAP_SUCCESS)
 		{
 			ereport(LOG,
 					(errmsg("could not perform initial LDAP bind for ldapbinddn \"%s\" on server \"%s\": error code %d",
-							port->hba->ldapbinddn, port->hba->ldapserver, r)));
+						  port->hba->ldapbinddn, port->hba->ldapserver, r)));
 			return STATUS_ERROR;
 		}
 
@@ -2291,10 +2292,10 @@ CheckLDAPAuth(Port *port)
 		attributes[0] = port->hba->ldapsearchattribute ? port->hba->ldapsearchattribute : "uid";
 		attributes[1] = NULL;
 
-		filter = palloc(strlen(attributes[0])+strlen(port->user_name)+4);
+		filter = palloc(strlen(attributes[0]) + strlen(port->user_name) + 4);
 		sprintf(filter, "(%s=%s)",
-				 attributes[0],
-				 port->user_name);
+				attributes[0],
+				port->user_name);
 
 		r = ldap_search_s(ldap,
 						  port->hba->ldapbasedn,
@@ -2323,7 +2324,7 @@ CheckLDAPAuth(Port *port)
 				ereport(LOG,
 						(errmsg("LDAP search failed for filter \"%s\" on server \"%s\": user is not unique (%ld matches)",
 								filter, port->hba->ldapserver,
-								(long) ldap_count_entries(ldap, search_message))));
+						  (long) ldap_count_entries(ldap, search_message))));
 
 			pfree(filter);
 			ldap_msgfree(search_message);
@@ -2334,11 +2335,12 @@ CheckLDAPAuth(Port *port)
 		dn = ldap_get_dn(ldap, entry);
 		if (dn == NULL)
 		{
-			int error;
-			(void)ldap_get_option(ldap, LDAP_OPT_ERROR_NUMBER, &error);
+			int			error;
+
+			(void) ldap_get_option(ldap, LDAP_OPT_ERROR_NUMBER, &error);
 			ereport(LOG,
 					(errmsg("could not get dn for the first entry matching \"%s\" on server \"%s\": %s",
-							filter, port->hba->ldapserver, ldap_err2string(error))));
+					filter, port->hba->ldapserver, ldap_err2string(error))));
 			pfree(filter);
 			ldap_msgfree(search_message);
 			return STATUS_ERROR;
@@ -2353,18 +2355,19 @@ CheckLDAPAuth(Port *port)
 		r = ldap_unbind_s(ldap);
 		if (r != LDAP_SUCCESS)
 		{
-			int error;
-			(void)ldap_get_option(ldap, LDAP_OPT_ERROR_NUMBER, &error);
+			int			error;
+
+			(void) ldap_get_option(ldap, LDAP_OPT_ERROR_NUMBER, &error);
 			ereport(LOG,
 					(errmsg("could not unbind after searching for user \"%s\" on server \"%s\": %s",
-							fulluser, port->hba->ldapserver, ldap_err2string(error))));
+				  fulluser, port->hba->ldapserver, ldap_err2string(error))));
 			pfree(fulluser);
 			return STATUS_ERROR;
 		}
 
 		/*
-		 * Need to re-initialize the LDAP connection, so that we can bind
-		 * to it with a different username.
+		 * Need to re-initialize the LDAP connection, so that we can bind to
+		 * it with a different username.
 		 */
 		if (InitializeLDAPConnection(port, &ldap) == STATUS_ERROR)
 		{
@@ -2378,13 +2381,13 @@ CheckLDAPAuth(Port *port)
 	{
 		fulluser = palloc((port->hba->ldapprefix ? strlen(port->hba->ldapprefix) : 0) +
 						  strlen(port->user_name) +
-						  (port->hba->ldapsuffix ? strlen(port->hba->ldapsuffix) : 0) +
+				(port->hba->ldapsuffix ? strlen(port->hba->ldapsuffix) : 0) +
 						  1);
 
 		sprintf(fulluser, "%s%s%s",
-				 port->hba->ldapprefix ? port->hba->ldapprefix : "",
-				 port->user_name,
-				 port->hba->ldapsuffix ? port->hba->ldapsuffix : "");
+				port->hba->ldapprefix ? port->hba->ldapprefix : "",
+				port->user_name,
+				port->hba->ldapsuffix ? port->hba->ldapsuffix : "");
 	}
 
 	r = ldap_simple_bind_s(ldap, fulluser, passwd);
@@ -2429,7 +2432,6 @@ CheckCertAuth(Port *port)
 	/* Just pass the certificate CN to the usermap check */
 	return check_usermap(port->hba->usermap, port->user_name, port->peer_cn, false);
 }
-
 #endif
 
 
@@ -2448,17 +2450,17 @@ CheckCertAuth(Port *port)
 
 typedef struct
 {
-	uint8	attribute;
-	uint8	length;
-	uint8	data[1];
+	uint8		attribute;
+	uint8		length;
+	uint8		data[1];
 } radius_attribute;
 
 typedef struct
 {
-	uint8	code;
-	uint8	id;
-	uint16	length;
-	uint8	vector[RADIUS_VECTOR_LENGTH];
+	uint8		code;
+	uint8		id;
+	uint16		length;
+	uint8		vector[RADIUS_VECTOR_LENGTH];
 } radius_packet;
 
 /* RADIUS packet types */
@@ -2484,14 +2486,15 @@ typedef struct
 static void
 radius_add_attribute(radius_packet *packet, uint8 type, const unsigned char *data, int len)
 {
-	radius_attribute		*attr;
+	radius_attribute *attr;
 
 	if (packet->length + len > RADIUS_BUFFER_SIZE)
 	{
 		/*
-		 * With remotely realistic data, this can never happen. But catch it just to make
-		 * sure we don't overrun a buffer. We'll just skip adding the broken attribute,
-		 * which will in the end cause authentication to fail.
+		 * With remotely realistic data, this can never happen. But catch it
+		 * just to make sure we don't overrun a buffer. We'll just skip adding
+		 * the broken attribute, which will in the end cause authentication to
+		 * fail.
 		 */
 		elog(WARNING,
 			 "Adding attribute code %i with length %i to radius packet would create oversize packet, ignoring",
@@ -2500,9 +2503,9 @@ radius_add_attribute(radius_packet *packet, uint8 type, const unsigned char *dat
 
 	}
 
-	attr = (radius_attribute *) ((unsigned char *)packet + packet->length);
+	attr = (radius_attribute *) ((unsigned char *) packet + packet->length);
 	attr->attribute = type;
-	attr->length = len + 2; /* total size includes type and length */
+	attr->length = len + 2;		/* total size includes type and length */
 	memcpy(attr->data, data, len);
 	packet->length += attr->length;
 }
@@ -2510,31 +2513,33 @@ radius_add_attribute(radius_packet *packet, uint8 type, const unsigned char *dat
 static int
 CheckRADIUSAuth(Port *port)
 {
-	char			   *passwd;
-	char			   *identifier = "postgresql";
-	char				radius_buffer[RADIUS_BUFFER_SIZE];
-	char				receive_buffer[RADIUS_BUFFER_SIZE];
-	radius_packet	   *packet = (radius_packet *)radius_buffer;
-	radius_packet	   *receivepacket = (radius_packet *)receive_buffer;
-	int32				service = htonl(RADIUS_AUTHENTICATE_ONLY);
-	uint8			   *cryptvector;
-	uint8				encryptedpassword[RADIUS_VECTOR_LENGTH];
-	int					packetlength;
-	pgsocket			sock;
+	char	   *passwd;
+	char	   *identifier = "postgresql";
+	char		radius_buffer[RADIUS_BUFFER_SIZE];
+	char		receive_buffer[RADIUS_BUFFER_SIZE];
+	radius_packet *packet = (radius_packet *) radius_buffer;
+	radius_packet *receivepacket = (radius_packet *) receive_buffer;
+	int32		service = htonl(RADIUS_AUTHENTICATE_ONLY);
+	uint8	   *cryptvector;
+	uint8		encryptedpassword[RADIUS_VECTOR_LENGTH];
+	int			packetlength;
+	pgsocket	sock;
+
 #ifdef HAVE_IPV6
 	struct sockaddr_in6 localaddr;
 	struct sockaddr_in6 remoteaddr;
 #else
-	struct sockaddr_in	localaddr;
-	struct sockaddr_in	remoteaddr;
+	struct sockaddr_in localaddr;
+	struct sockaddr_in remoteaddr;
 #endif
-	struct addrinfo		hint;
-	struct addrinfo	   *serveraddrs;
-	char				portstr[128];
-	ACCEPT_TYPE_ARG3	addrsize;
-	fd_set				fdset;
-	struct timeval		timeout;
-	int					i,r;
+	struct addrinfo hint;
+	struct addrinfo *serveraddrs;
+	char		portstr[128];
+	ACCEPT_TYPE_ARG3 addrsize;
+	fd_set		fdset;
+	struct timeval timeout;
+	int			i,
+				r;
 
 	/* Make sure struct alignment is correct */
 	Assert(offsetof(radius_packet, vector) == 4);
@@ -2619,8 +2624,8 @@ CheckRADIUSAuth(Port *port)
 	radius_add_attribute(packet, RADIUS_NAS_IDENTIFIER, (unsigned char *) identifier, strlen(identifier));
 
 	/*
-	 * RADIUS password attributes are calculated as:
-	 * e[0] = p[0] XOR MD5(secret + vector)
+	 * RADIUS password attributes are calculated as: e[0] = p[0] XOR
+	 * MD5(secret + vector)
 	 */
 	cryptvector = palloc(RADIUS_VECTOR_LENGTH + strlen(port->hba->radiussecret));
 	memcpy(cryptvector, port->hba->radiussecret, strlen(port->hba->radiussecret));
@@ -2668,7 +2673,7 @@ CheckRADIUSAuth(Port *port)
 	localaddr.sin_addr.s_addr = INADDR_ANY;
 	addrsize = sizeof(struct sockaddr_in);
 #endif
-	if (bind(sock, (struct sockaddr *) &localaddr, addrsize))
+	if (bind(sock, (struct sockaddr *) & localaddr, addrsize))
 	{
 		ereport(LOG,
 				(errmsg("could not bind local RADIUS socket: %m")));
@@ -2694,7 +2699,8 @@ CheckRADIUSAuth(Port *port)
 	timeout.tv_sec = RADIUS_TIMEOUT;
 	timeout.tv_usec = 0;
 	FD_ZERO(&fdset);
-	FD_SET(sock, &fdset);
+	FD_SET		(sock, &fdset);
+
 	while (true)
 	{
 		r = select(sock + 1, &fdset, NULL, NULL, &timeout);
@@ -2724,7 +2730,7 @@ CheckRADIUSAuth(Port *port)
 	/* Read the response packet */
 	addrsize = sizeof(remoteaddr);
 	packetlength = recvfrom(sock, receive_buffer, RADIUS_BUFFER_SIZE, 0,
-							(struct sockaddr *) &remoteaddr, &addrsize);
+							(struct sockaddr *) & remoteaddr, &addrsize);
 	if (packetlength < 0)
 	{
 		ereport(LOG,
@@ -2763,8 +2769,8 @@ CheckRADIUSAuth(Port *port)
 	if (packetlength != ntohs(receivepacket->length))
 	{
 		ereport(LOG,
-				(errmsg("RADIUS response has corrupt length: %i (actual length %i)",
-						ntohs(receivepacket->length), packetlength)));
+		 (errmsg("RADIUS response has corrupt length: %i (actual length %i)",
+				 ntohs(receivepacket->length), packetlength)));
 		return STATUS_ERROR;
 	}
 
@@ -2783,23 +2789,26 @@ CheckRADIUSAuth(Port *port)
 	cryptvector = palloc(packetlength + strlen(port->hba->radiussecret));
 
 	memcpy(cryptvector, receivepacket, 4);		/* code+id+length */
-	memcpy(cryptvector+4, packet->vector, RADIUS_VECTOR_LENGTH);	/* request authenticator, from original packet */
-	if (packetlength > RADIUS_HEADER_LENGTH)	/* there may be no attributes at all */
-		memcpy(cryptvector+RADIUS_HEADER_LENGTH, receive_buffer + RADIUS_HEADER_LENGTH, packetlength-RADIUS_HEADER_LENGTH);
-	memcpy(cryptvector+packetlength, port->hba->radiussecret, strlen(port->hba->radiussecret));
+	memcpy(cryptvector + 4, packet->vector, RADIUS_VECTOR_LENGTH);		/* request
+																		 * authenticator, from
+																		 * original packet */
+	if (packetlength > RADIUS_HEADER_LENGTH)	/* there may be no attributes
+												 * at all */
+		memcpy(cryptvector + RADIUS_HEADER_LENGTH, receive_buffer + RADIUS_HEADER_LENGTH, packetlength - RADIUS_HEADER_LENGTH);
+	memcpy(cryptvector + packetlength, port->hba->radiussecret, strlen(port->hba->radiussecret));
 
 	if (!pg_md5_binary(cryptvector,
 					   packetlength + strlen(port->hba->radiussecret),
 					   encryptedpassword))
 	{
 		ereport(LOG,
-				(errmsg("could not perform md5 encryption of received packet")));
+			(errmsg("could not perform md5 encryption of received packet")));
 		pfree(cryptvector);
 		return STATUS_ERROR;
 	}
 	pfree(cryptvector);
 
-	if (memcmp(receivepacket->vector, encryptedpassword, RADIUS_VECTOR_LENGTH)  != 0)
+	if (memcmp(receivepacket->vector, encryptedpassword, RADIUS_VECTOR_LENGTH) != 0)
 	{
 		ereport(LOG,
 				(errmsg("RADIUS response has incorrect MD5 signature")));

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.133 2010/02/17 04:19:40 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.134 2010/02/26 02:01:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1397,7 +1397,7 @@ dumpUserConfig(PGconn *conn, const char *username)
 		if (server_version >= 90000)
 			printfPQExpBuffer(buf, "SELECT setconfig[%d] FROM pg_db_role_setting WHERE "
 							  "setdatabase = 0 AND setrole = "
-							  "(SELECT oid FROM pg_authid WHERE rolname = ", count);
+					   "(SELECT oid FROM pg_authid WHERE rolname = ", count);
 		else if (server_version >= 80100)
 			printfPQExpBuffer(buf, "SELECT rolconfig[%d] FROM pg_authid WHERE rolname = ", count);
 		else
@@ -1432,13 +1432,13 @@ dumpUserConfig(PGconn *conn, const char *username)
 static void
 dumpDbRoleConfig(PGconn *conn)
 {
-	PQExpBuffer	buf = createPQExpBuffer();
+	PQExpBuffer buf = createPQExpBuffer();
 	PGresult   *res;
 	int			i;
 
 	printfPQExpBuffer(buf, "SELECT rolname, datname, unnest(setconfig) "
 					  "FROM pg_db_role_setting, pg_authid, pg_database "
-					  "WHERE setrole = pg_authid.oid AND setdatabase = pg_database.oid");
+		  "WHERE setrole = pg_authid.oid AND setdatabase = pg_database.oid");
 	res = executeQuery(conn, buf->data);
 
 	if (PQntuples(res) > 0)
@@ -1628,20 +1628,20 @@ connectDatabase(const char *dbname, const char *pghost, const char *pgport,
 			exit(1);
 		}
 
-		keywords[0]	= "host";
-		values[0]	= pghost;
-		keywords[1]	= "port";
-		values[1]	= pgport;
-		keywords[2]	= "user";
-		values[2]	= pguser;
-		keywords[3]	= "password";
-		values[3]	= password;
-		keywords[4]	= "dbname";
-		values[4]	= dbname;
-		keywords[5]	= "fallback_application_name";
-		values[5]	= progname;
-		keywords[6]	= NULL;
-		values[6]	= NULL;
+		keywords[0] = "host";
+		values[0] = pghost;
+		keywords[1] = "port";
+		values[1] = pgport;
+		keywords[2] = "user";
+		values[2] = pguser;
+		keywords[3] = "password";
+		values[3] = password;
+		keywords[4] = "dbname";
+		values[4] = dbname;
+		keywords[5] = "fallback_application_name";
+		values[5] = progname;
+		keywords[6] = NULL;
+		values[6] = NULL;
 
 		new_pass = false;
 		conn = PQconnectdbParams(keywords, values, true);

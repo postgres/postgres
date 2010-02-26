@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/interfaces/libpq/libpq-int.h,v 1.148 2010/01/15 09:19:10 heikki Exp $
+ * $PostgreSQL: pgsql/src/interfaces/libpq/libpq-int.h,v 1.149 2010/02/26 02:01:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -80,8 +80,7 @@ typedef struct
 #if (SSLEAY_VERSION_NUMBER >= 0x00907000L) && !defined(OPENSSL_NO_ENGINE)
 #define USE_SSL_ENGINE
 #endif
-
-#endif /* USE_SSL */
+#endif   /* USE_SSL */
 
 /*
  * POSTGRES backend dependent Constants.
@@ -397,10 +396,10 @@ struct pg_conn
 #ifdef USE_SSL_ENGINE
 	ENGINE	   *engine;			/* SSL engine, if any */
 #else
-	void	   *engine;			/* dummy field to keep struct the same
-								   if OpenSSL version changes */
+	void	   *engine;			/* dummy field to keep struct the same if
+								 * OpenSSL version changes */
 #endif
-#endif /* USE_SSL */
+#endif   /* USE_SSL */
 
 #ifdef ENABLE_GSS
 	gss_ctx_id_t gctx;			/* GSS context */

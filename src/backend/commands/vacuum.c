@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.409 2010/02/15 16:10:34 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.410 2010/02/26 02:00:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -109,7 +109,7 @@ vacuum(VacuumStmt *vacstmt, Oid relid, bool do_toast,
 	/*
 	 * We cannot run VACUUM inside a user transaction block; if we were inside
 	 * a transaction, then our commit- and start-transaction-command calls
-	 * would not have the intended effect!  There are numerous other subtle
+	 * would not have the intended effect!	There are numerous other subtle
 	 * dependencies on this, too.
 	 *
 	 * ANALYZE (without VACUUM) can run either way.
@@ -664,9 +664,9 @@ vac_update_datfrozenxid(void)
 	heap_close(relation, RowExclusiveLock);
 
 	/*
-	 * If we were able to advance datfrozenxid, see if we can truncate pg_clog.
-	 * Also do it if the shared XID-wrap-limit info is stale, since this
-	 * action will update that too.
+	 * If we were able to advance datfrozenxid, see if we can truncate
+	 * pg_clog. Also do it if the shared XID-wrap-limit info is stale, since
+	 * this action will update that too.
 	 */
 	if (dirty || ForceTransactionIdLimitUpdate())
 		vac_truncate_clog(newFrozenXid);
@@ -944,8 +944,8 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt, bool do_toast, bool for_wraparound,
 	/*
 	 * Switch to the table owner's userid, so that any index functions are run
 	 * as that user.  Also lock down security-restricted operations and
-	 * arrange to make GUC variable changes local to this command.
-	 * (This is unnecessary, but harmless, for lazy VACUUM.)
+	 * arrange to make GUC variable changes local to this command. (This is
+	 * unnecessary, but harmless, for lazy VACUUM.)
 	 */
 	GetUserIdAndSecContext(&save_userid, &save_sec_context);
 	SetUserIdAndSecContext(onerel->rd_rel->relowner,

@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.234 2010/02/14 18:42:14 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.235 2010/02/26 02:00:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -338,11 +338,11 @@ createdb(const CreatedbStmt *stmt)
 	 * fails when presented with data in an encoding it's not expecting. We
 	 * allow mismatch in four cases:
 	 *
-	 * 1. locale encoding = SQL_ASCII, which means that the locale is
-	 * C/POSIX which works with any encoding.
+	 * 1. locale encoding = SQL_ASCII, which means that the locale is C/POSIX
+	 * which works with any encoding.
 	 *
-	 * 2. locale encoding = -1, which means that we couldn't determine
-	 * the locale's encoding and have to trust the user to get it right.
+	 * 2. locale encoding = -1, which means that we couldn't determine the
+	 * locale's encoding and have to trust the user to get it right.
 	 *
 	 * 3. selected encoding is UTF8 and platform is win32. This is because
 	 * UTF8 is a pseudo codepage that is supported in all locales since it's
@@ -551,7 +551,7 @@ createdb(const CreatedbStmt *stmt)
 
 	/*
 	 * We deliberately set datacl to default (NULL), rather than copying it
-	 * from the template database.  Copying it would be a bad idea when the
+	 * from the template database.	Copying it would be a bad idea when the
 	 * owner is not the same as the template's owner.
 	 */
 	new_record_nulls[Anum_pg_database_datacl - 1] = true;
@@ -871,9 +871,9 @@ dropdb(const char *dbname, bool missing_ok)
 	heap_close(pgdbrel, NoLock);
 
 	/*
-	 * Force synchronous commit, thus minimizing the window between removal
-	 * of the database files and commital of the transaction. If we crash
-	 * before committing, we'll have a DB that's gone on disk but still there
+	 * Force synchronous commit, thus minimizing the window between removal of
+	 * the database files and commital of the transaction. If we crash before
+	 * committing, we'll have a DB that's gone on disk but still there
 	 * according to pg_database, which is not good.
 	 */
 	ForceSyncCommit();
@@ -1402,13 +1402,13 @@ AlterDatabase(AlterDatabaseStmt *stmt, bool isTopLevel)
 void
 AlterDatabaseSet(AlterDatabaseSetStmt *stmt)
 {
-	Oid		datid = get_database_oid(stmt->dbname);
+	Oid			datid = get_database_oid(stmt->dbname);
 
 	if (!OidIsValid(datid))
-  		ereport(ERROR,
-  				(errcode(ERRCODE_UNDEFINED_DATABASE),
-  				 errmsg("database \"%s\" does not exist", stmt->dbname)));
-  
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_DATABASE),
+				 errmsg("database \"%s\" does not exist", stmt->dbname)));
+
 	/*
 	 * Obtain a lock on the database and make sure it didn't go away in the
 	 * meantime.
@@ -1416,11 +1416,11 @@ AlterDatabaseSet(AlterDatabaseSetStmt *stmt)
 	shdepLockAndCheckObject(DatabaseRelationId, datid);
 
 	if (!pg_database_ownercheck(datid, GetUserId()))
-  		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_DATABASE,
-  					   stmt->dbname);
+		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_DATABASE,
+					   stmt->dbname);
 
 	AlterSetting(datid, InvalidOid, stmt->setstmt);
-  
+
 	UnlockSharedObject(DatabaseRelationId, datid, 0, AccessShareLock);
 }
 
@@ -1936,9 +1936,10 @@ dbase_redo(XLogRecPtr lsn, XLogRecord *record)
 		if (InHotStandby)
 		{
 			/*
-			 * Lock database while we resolve conflicts to ensure that InitPostgres()
-			 * cannot fully re-execute concurrently. This avoids backends re-connecting
-			 * automatically to same database, which can happen in some cases.
+			 * Lock database while we resolve conflicts to ensure that
+			 * InitPostgres() cannot fully re-execute concurrently. This
+			 * avoids backends re-connecting automatically to same database,
+			 * which can happen in some cases.
 			 */
 			LockSharedObjectForSession(DatabaseRelationId, xlrec->db_id, 0, AccessExclusiveLock);
 			ResolveRecoveryConflictWithDatabase(xlrec->db_id);
@@ -1962,10 +1963,11 @@ dbase_redo(XLogRecPtr lsn, XLogRecord *record)
 		if (InHotStandby)
 		{
 			/*
-			 * Release locks prior to commit. XXX There is a race condition here that may allow
-			 * backends to reconnect, but the window for this is small because the gap between
-			 * here and commit is mostly fairly small and it is unlikely that people will be
-			 * dropping databases that we are trying to connect to anyway.
+			 * Release locks prior to commit. XXX There is a race condition
+			 * here that may allow backends to reconnect, but the window for
+			 * this is small because the gap between here and commit is mostly
+			 * fairly small and it is unlikely that people will be dropping
+			 * databases that we are trying to connect to anyway.
 			 */
 			UnlockSharedObjectForSession(DatabaseRelationId, xlrec->db_id, 0, AccessExclusiveLock);
 		}

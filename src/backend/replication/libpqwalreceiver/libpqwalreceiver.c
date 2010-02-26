@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/replication/libpqwalreceiver/libpqwalreceiver.c,v 1.4 2010/02/25 07:31:40 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/replication/libpqwalreceiver/libpqwalreceiver.c,v 1.5 2010/02/26 02:00:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,7 +49,7 @@ static char *recvBuf = NULL;
 /* Prototypes for interface functions */
 static bool libpqrcv_connect(char *conninfo, XLogRecPtr startpoint);
 static bool libpqrcv_receive(int timeout, unsigned char *type,
-							 char **buffer, int *len);
+				 char **buffer, int *len);
 static void libpqrcv_disconnect(void);
 
 /* Prototypes for private functions */
@@ -94,22 +94,23 @@ libpqrcv_connect(char *conninfo, XLogRecPtr startpoint)
 						PQerrorMessage(streamConn))));
 
 	/*
-	 * Get the system identifier and timeline ID as a DataRow message
-	 * from the primary server.
+	 * Get the system identifier and timeline ID as a DataRow message from the
+	 * primary server.
 	 */
 	res = PQexec(streamConn, "IDENTIFY_SYSTEM");
 	if (PQresultStatus(res) != PGRES_TUPLES_OK)
-    {
+	{
 		PQclear(res);
 		ereport(ERROR,
 				(errmsg("could not receive the SYSID and timeline ID from "
 						"the primary server: %s",
 						PQerrorMessage(streamConn))));
-    }
+	}
 	if (PQnfields(res) != 2 || PQntuples(res) != 1)
 	{
-		int ntuples = PQntuples(res);
-		int nfields = PQnfields(res);
+		int			ntuples = PQntuples(res);
+		int			nfields = PQnfields(res);
+
 		PQclear(res);
 		ereport(ERROR,
 				(errmsg("invalid response from primary server"),
@@ -120,8 +121,7 @@ libpqrcv_connect(char *conninfo, XLogRecPtr startpoint)
 	primary_tli = pg_atoi(PQgetvalue(res, 0, 1), 4, 0);
 
 	/*
-	 * Confirm that the system identifier of the primary is the same
-	 * as ours.
+	 * Confirm that the system identifier of the primary is the same as ours.
 	 */
 	snprintf(standby_sysid, sizeof(standby_sysid), UINT64_FORMAT,
 			 GetSystemIdentifier());
@@ -135,8 +135,8 @@ libpqrcv_connect(char *conninfo, XLogRecPtr startpoint)
 	}
 
 	/*
-	 * Confirm that the current timeline of the primary is the same
-	 * as the recovery target timeline.
+	 * Confirm that the current timeline of the primary is the same as the
+	 * recovery target timeline.
 	 */
 	standby_tli = GetRecoveryTargetTLI();
 	PQclear(res);
@@ -172,7 +172,7 @@ libpqrcv_connect(char *conninfo, XLogRecPtr startpoint)
 static bool
 libpq_select(int timeout_ms)
 {
-	int	ret;
+	int			ret;
 
 	Assert(streamConn != NULL);
 	if (PQsocket(streamConn) < 0)
@@ -197,15 +197,15 @@ libpq_select(int timeout_ms)
 		struct timeval *ptr_timeout;
 
 		FD_ZERO(&input_mask);
-		FD_SET(PQsocket(streamConn), &input_mask);
+		FD_SET		(PQsocket(streamConn), &input_mask);
 
 		if (timeout_ms < 0)
 			ptr_timeout = NULL;
 		else
 		{
-			timeout.tv_sec	= timeout_ms / 1000;
-			timeout.tv_usec	= (timeout_ms % 1000) * 1000;
-			ptr_timeout		= &timeout;
+			timeout.tv_sec = timeout_ms / 1000;
+			timeout.tv_usec = (timeout_ms % 1000) * 1000;
+			ptr_timeout = &timeout;
 		}
 
 		ret = select(PQsocket(streamConn) + 1, &input_mask,
@@ -239,12 +239,12 @@ libpqrcv_disconnect(void)
  *
  * Returns:
  *
- *   True if data was received. *type, *buffer and *len are set to
- *   the type of the received data, buffer holding it, and length,
- *   respectively.
+ *	 True if data was received. *type, *buffer and *len are set to
+ *	 the type of the received data, buffer holding it, and length,
+ *	 respectively.
  *
- *   False if no data was available within timeout, or wait was interrupted
- *   by signal.
+ *	 False if no data was available within timeout, or wait was interrupted
+ *	 by signal.
  *
  * The buffer returned is only valid until the next call of this function or
  * libpq_connect/disconnect.
@@ -261,10 +261,10 @@ libpqrcv_receive(int timeout, unsigned char *type, char **buffer, int *len)
 	recvBuf = NULL;
 
 	/*
-	 * If the caller requested to block, wait for data to arrive. But if
-	 * this is the first call after connecting, don't wait, because
-	 * there might already be some data in libpq buffer that we haven't
-	 * returned to caller.
+	 * If the caller requested to block, wait for data to arrive. But if this
+	 * is the first call after connecting, don't wait, because there might
+	 * already be some data in libpq buffer that we haven't returned to
+	 * caller.
 	 */
 	if (timeout > 0 && !justconnected)
 	{
@@ -280,11 +280,11 @@ libpqrcv_receive(int timeout, unsigned char *type, char **buffer, int *len)
 
 	/* Receive CopyData message */
 	rawlen = PQgetCopyData(streamConn, &recvBuf, 1);
-	if (rawlen == 0)	/* no data available yet, then return */
+	if (rawlen == 0)			/* no data available yet, then return */
 		return false;
-	if (rawlen == -1)	/* end-of-streaming or error */
+	if (rawlen == -1)			/* end-of-streaming or error */
 	{
-		PGresult	*res;
+		PGresult   *res;
 
 		res = PQgetResult(streamConn);
 		if (PQresultStatus(res) == PGRES_COMMAND_OK)

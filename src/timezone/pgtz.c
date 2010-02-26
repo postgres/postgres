@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/timezone/pgtz.c,v 1.65 2010/01/02 16:58:16 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/timezone/pgtz.c,v 1.66 2010/02/26 02:01:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -975,7 +975,7 @@ static const struct
 		"Australia/Perth"
 	},							/* (GMT+08:00) Perth */
 /*	{"W. Central Africa Standard Time", "W. Central Africa Daylight Time",
-	 *	 *	 *	 *	 *	 *	 *	 *	""}, Could not find a match for this one. Excluded for now. *//* (
+	 *	 *	 *	 *	 *	 *	 *	 *	 *	""}, Could not find a match for this one. Excluded for now. *//* (
 	 * G MT+01:00) West Central Africa */
 	{
 		"W. Europe Standard Time", "W. Europe Daylight Time",

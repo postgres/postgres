@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/compatlib/informix.c,v 1.63 2010/01/26 09:07:31 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/compatlib/informix.c,v 1.64 2010/02/26 02:01:29 momjian Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -767,7 +767,7 @@ rfmtlong(long lng_val, char *fmt, char *outbuf)
 	size_t		fmt_len = strlen(fmt);
 	size_t		temp_len;
 	int			i,
-				j, /* position in temp */
+				j,				/* position in temp */
 				k,
 				dotpos;
 	int			leftalign = 0,

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeHash.c,v 1.128 2010/02/14 18:42:14 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeHash.c,v 1.129 2010/02/26 02:00:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -458,7 +458,7 @@ ExecChooseHashTableSize(double ntuples, int tupwidth, bool useskew,
 	/*
 	 * Set nbuckets to achieve an average bucket load of NTUP_PER_BUCKET when
 	 * memory is filled.  Set nbatch to the smallest power of 2 that appears
-	 * sufficient.  The Min() steps limit the results so that the pointer
+	 * sufficient.	The Min() steps limit the results so that the pointer
 	 * arrays we'll try to allocate do not exceed work_mem.
 	 */
 	max_pointers = (work_mem * 1024L) / sizeof(void *);

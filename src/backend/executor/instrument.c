@@ -7,7 +7,7 @@
  * Copyright (c) 2001-2010, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/instrument.c,v 1.24 2010/01/02 16:57:41 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/instrument.c,v 1.25 2010/02/26 02:00:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,10 +17,10 @@
 
 #include "executor/instrument.h"
 
-BufferUsage			pgBufferUsage;
+BufferUsage pgBufferUsage;
 
 static void BufferUsageAccumDiff(BufferUsage *dst,
-		const BufferUsage *add, const BufferUsage *sub);
+					 const BufferUsage *add, const BufferUsage *sub);
 
 /* Allocate new instrumentation structure(s) */
 Instrumentation *
@@ -34,7 +34,7 @@ InstrAlloc(int n, int instrument_options)
 	instr = palloc0(n * sizeof(Instrumentation));
 	if (instrument_options & INSTRUMENT_BUFFERS)
 	{
-		int		i;
+		int			i;
 
 		for (i = 0; i < n; i++)
 			instr[i].needs_bufusage = true;
@@ -80,7 +80,7 @@ InstrStopNode(Instrumentation *instr, double nTuples)
 	/* Adds delta of buffer usage to node's count. */
 	if (instr->needs_bufusage)
 		BufferUsageAccumDiff(&instr->bufusage,
-			&pgBufferUsage, &instr->bufusage_start);
+							 &pgBufferUsage, &instr->bufusage_start);
 
 	/* Is this the first tuple of this cycle? */
 	if (!instr->running)

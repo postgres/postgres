@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.325 2010/02/20 21:24:02 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.326 2010/02/26 02:00:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -743,7 +743,7 @@ DoCopy(const CopyStmt *stmt, const char *queryString)
 
 		if (strcmp(defel->defname, "format") == 0)
 		{
-			char   *fmt = defGetString(defel);
+			char	   *fmt = defGetString(defel);
 
 			if (format_specified)
 				ereport(ERROR,
@@ -751,7 +751,7 @@ DoCopy(const CopyStmt *stmt, const char *queryString)
 						 errmsg("conflicting or redundant options")));
 			format_specified = true;
 			if (strcmp(fmt, "text") == 0)
-				/* default format */ ;
+				 /* default format */ ;
 			else if (strcmp(fmt, "csv") == 0)
 				cstate->csv_mode = true;
 			else if (strcmp(fmt, "binary") == 0)
@@ -821,9 +821,9 @@ DoCopy(const CopyStmt *stmt, const char *queryString)
 				force_quote = (List *) defel->arg;
 			else
 				ereport(ERROR,
-					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("argument to option \"%s\" must be a list of column names",
-							defel->defname)));
+						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+						 errmsg("argument to option \"%s\" must be a list of column names",
+								defel->defname)));
 		}
 		else if (strcmp(defel->defname, "force_not_null") == 0)
 		{
@@ -835,9 +835,9 @@ DoCopy(const CopyStmt *stmt, const char *queryString)
 				force_notnull = (List *) defel->arg;
 			else
 				ereport(ERROR,
-					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("argument to option \"%s\" must be a list of column names",
-							defel->defname)));
+						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+						 errmsg("argument to option \"%s\" must be a list of column names",
+								defel->defname)));
 		}
 		else
 			ereport(ERROR,
@@ -1113,7 +1113,7 @@ DoCopy(const CopyStmt *stmt, const char *queryString)
 	cstate->force_quote_flags = (bool *) palloc0(num_phys_attrs * sizeof(bool));
 	if (force_quote_all)
 	{
-		int		i;
+		int			i;
 
 		for (i = 0; i < num_phys_attrs; i++)
 			cstate->force_quote_flags[i] = true;
@@ -2150,7 +2150,7 @@ CopyFrom(CopyState cstate)
 
 		if (!skip_tuple)
 		{
-			List *recheckIndexes = NIL;
+			List	   *recheckIndexes = NIL;
 
 			/* Place tuple in tuple slot */
 			ExecStoreTuple(tuple, slot, InvalidBuffer, false);
@@ -2224,7 +2224,8 @@ CopyFrom(CopyState cstate)
 	 */
 	if (hi_options & HEAP_INSERT_SKIP_WAL)
 	{
-		char reason[NAMEDATALEN + 30];
+		char		reason[NAMEDATALEN + 30];
+
 		snprintf(reason, sizeof(reason), "COPY FROM on \"%s\"",
 				 RelationGetRelationName(cstate->rel));
 		XLogReportUnloggedStatement(reason);

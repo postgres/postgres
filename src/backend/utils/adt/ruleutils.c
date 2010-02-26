@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.324 2010/02/18 22:43:31 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.325 2010/02/26 02:01:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -221,7 +221,7 @@ static Node *processIndirection(Node *node, deparse_context *context,
 static void printSubscripts(ArrayRef *aref, deparse_context *context);
 static char *generate_relation_name(Oid relid, List *namespaces);
 static char *generate_function_name(Oid funcid, int nargs, List *argnames,
-									Oid *argtypes, bool *is_variadic);
+					   Oid *argtypes, bool *is_variadic);
 static char *generate_operator_name(Oid operid, Oid arg1, Oid arg2);
 static text *string_to_text(char *str);
 static char *flatten_reloptions(Oid relid);
@@ -549,12 +549,12 @@ pg_get_triggerdef_worker(Oid trigid, bool pretty)
 		/* tgattr is first var-width field, so OK to access directly */
 		if (trigrec->tgattr.dim1 > 0)
 		{
-			int		i;
+			int			i;
 
 			appendStringInfoString(&buf, " OF ");
 			for (i = 0; i < trigrec->tgattr.dim1; i++)
 			{
-				char   *attname;
+				char	   *attname;
 
 				if (i > 0)
 					appendStringInfoString(&buf, ", ");
@@ -579,7 +579,7 @@ pg_get_triggerdef_worker(Oid trigid, bool pretty)
 	{
 		if (OidIsValid(trigrec->tgconstrrelid))
 			appendStringInfo(&buf, "FROM %s ",
-							 generate_relation_name(trigrec->tgconstrrelid, NIL));
+						generate_relation_name(trigrec->tgconstrrelid, NIL));
 		if (!trigrec->tgdeferrable)
 			appendStringInfo(&buf, "NOT ");
 		appendStringInfo(&buf, "DEFERRABLE INITIALLY ");
@@ -599,11 +599,11 @@ pg_get_triggerdef_worker(Oid trigid, bool pretty)
 						tgrel->rd_att, &isnull);
 	if (!isnull)
 	{
-		Node			   *qual;
-		deparse_context		context;
-		deparse_namespace	dpns;
-		RangeTblEntry	   *oldrte;
-		RangeTblEntry	   *newrte;
+		Node	   *qual;
+		deparse_context context;
+		deparse_namespace dpns;
+		RangeTblEntry *oldrte;
+		RangeTblEntry *newrte;
 
 		appendStringInfoString(&buf, "WHEN (");
 
@@ -848,7 +848,7 @@ pg_get_indexdef_worker(Oid indexrelid, int colno,
 							 quote_identifier(NameStr(idxrelrec->relname)),
 							 generate_relation_name(indrelid, NIL),
 							 quote_identifier(NameStr(amrec->amname)));
-		else					/* currently, must be EXCLUDE constraint */
+		else	/* currently, must be EXCLUDE constraint */
 			appendStringInfo(&buf, "EXCLUDE USING %s (",
 							 quote_identifier(NameStr(amrec->amname)));
 	}
@@ -1262,23 +1262,24 @@ pg_get_constraintdef_worker(Oid constraintId, bool fullCommand,
 				break;
 			}
 		case CONSTRAINT_TRIGGER:
+
 			/*
 			 * There isn't an ALTER TABLE syntax for creating a user-defined
-			 * constraint trigger, but it seems better to print something
-			 * than throw an error; if we throw error then this function
-			 * couldn't safely be applied to all rows of pg_constraint.
+			 * constraint trigger, but it seems better to print something than
+			 * throw an error; if we throw error then this function couldn't
+			 * safely be applied to all rows of pg_constraint.
 			 */
 			appendStringInfo(&buf, "TRIGGER");
 			break;
 		case CONSTRAINT_EXCLUSION:
 			{
-				Oid		 indexOid = conForm->conindid;
-				Datum	 val;
-				bool	 isnull;
-				Datum	*elems;
-				int		 nElems;
-				int		 i;
-				Oid		*operators;
+				Oid			indexOid = conForm->conindid;
+				Datum		val;
+				bool		isnull;
+				Datum	   *elems;
+				int			nElems;
+				int			i;
+				Oid		   *operators;
 
 				/* Extract operator OIDs from the pg_constraint tuple */
 				val = SysCacheGetAttr(CONSTROID, tup,
@@ -3497,10 +3498,10 @@ push_plan(deparse_namespace *dpns, Plan *subplan)
 	/*
 	 * We special-case Append to pretend that the first child plan is the
 	 * OUTER referent; we have to interpret OUTER Vars in the Append's tlist
-	 * according to one of the children, and the first one is the most
-	 * natural choice.  Likewise special-case ModifyTable to pretend that the
-	 * first child plan is the OUTER referent; this is to support RETURNING
-	 * lists containing references to non-target relations.
+	 * according to one of the children, and the first one is the most natural
+	 * choice.	Likewise special-case ModifyTable to pretend that the first
+	 * child plan is the OUTER referent; this is to support RETURNING lists
+	 * containing references to non-target relations.
 	 */
 	if (IsA(subplan, Append))
 		dpns->outer_plan = (Plan *) linitial(((Append *) subplan)->appendplans);
@@ -4470,10 +4471,10 @@ get_rule_expr(Node *node, deparse_context *context,
 
 				/*
 				 * If the argument is a CaseTestExpr, we must be inside a
-				 * FieldStore, ie, we are assigning to an element of an
-				 * array within a composite column.  Since we already punted
-				 * on displaying the FieldStore's target information, just
-				 * punt here too, and display only the assignment source
+				 * FieldStore, ie, we are assigning to an element of an array
+				 * within a composite column.  Since we already punted on
+				 * displaying the FieldStore's target information, just punt
+				 * here too, and display only the assignment source
 				 * expression.
 				 */
 				if (IsA(aref->refexpr, CaseTestExpr))
@@ -4498,23 +4499,23 @@ get_rule_expr(Node *node, deparse_context *context,
 					appendStringInfoChar(buf, ')');
 
 				/*
-				 * If there's a refassgnexpr, we want to print the node in
-				 * the format "array[subscripts] := refassgnexpr".  This is
-				 * not legal SQL, so decompilation of INSERT or UPDATE
-				 * statements should always use processIndirection as part
-				 * of the statement-level syntax.  We should only see this
-				 * when EXPLAIN tries to print the targetlist of a plan
-				 * resulting from such a statement.
+				 * If there's a refassgnexpr, we want to print the node in the
+				 * format "array[subscripts] := refassgnexpr".	This is not
+				 * legal SQL, so decompilation of INSERT or UPDATE statements
+				 * should always use processIndirection as part of the
+				 * statement-level syntax.	We should only see this when
+				 * EXPLAIN tries to print the targetlist of a plan resulting
+				 * from such a statement.
 				 */
 				if (aref->refassgnexpr)
 				{
-					Node   *refassgnexpr;
+					Node	   *refassgnexpr;
 
 					/*
-					 * Use processIndirection to print this node's
-					 * subscripts as well as any additional field selections
-					 * or subscripting in immediate descendants.  It returns
-					 * the RHS expr that is actually being "assigned".
+					 * Use processIndirection to print this node's subscripts
+					 * as well as any additional field selections or
+					 * subscripting in immediate descendants.  It returns the
+					 * RHS expr that is actually being "assigned".
 					 */
 					refassgnexpr = processIndirection(node, context, true);
 					appendStringInfoString(buf, " := ");
@@ -4724,14 +4725,14 @@ get_rule_expr(Node *node, deparse_context *context,
 				 * There is no good way to represent a FieldStore as real SQL,
 				 * so decompilation of INSERT or UPDATE statements should
 				 * always use processIndirection as part of the
-				 * statement-level syntax.  We should only get here when
+				 * statement-level syntax.	We should only get here when
 				 * EXPLAIN tries to print the targetlist of a plan resulting
 				 * from such a statement.  The plan case is even harder than
 				 * ordinary rules would be, because the planner tries to
 				 * collapse multiple assignments to the same field or subfield
 				 * into one FieldStore; so we can see a list of target fields
 				 * not just one, and the arguments could be FieldStores
-				 * themselves.  We don't bother to try to print the target
+				 * themselves.	We don't bother to try to print the target
 				 * field names; we just print the source arguments, with a
 				 * ROW() around them if there's more than one.  This isn't
 				 * terribly complete, but it's probably good enough for
@@ -5474,7 +5475,7 @@ get_func_expr(FuncExpr *expr, deparse_context *context,
 	argnames = NIL;
 	foreach(l, expr->args)
 	{
-		Node   *arg = (Node *) lfirst(l);
+		Node	   *arg = (Node *) lfirst(l);
 
 		if (IsA(arg, NamedArgExpr))
 			argnames = lappend(argnames, ((NamedArgExpr *) arg)->name);
@@ -5506,7 +5507,7 @@ get_agg_expr(Aggref *aggref, deparse_context *context)
 {
 	StringInfo	buf = context->buf;
 	Oid			argtypes[FUNC_MAX_ARGS];
-	List       *arglist;
+	List	   *arglist;
 	int			nargs;
 	ListCell   *l;
 
@@ -5516,12 +5517,12 @@ get_agg_expr(Aggref *aggref, deparse_context *context)
 	foreach(l, aggref->args)
 	{
 		TargetEntry *tle = (TargetEntry *) lfirst(l);
-		Node   *arg = (Node *) tle->expr;
+		Node	   *arg = (Node *) tle->expr;
 
 		Assert(!IsA(arg, NamedArgExpr));
 		if (tle->resjunk)
 			continue;
-		if (nargs >= FUNC_MAX_ARGS)				/* paranoia */
+		if (nargs >= FUNC_MAX_ARGS)		/* paranoia */
 			ereport(ERROR,
 					(errcode(ERRCODE_TOO_MANY_ARGUMENTS),
 					 errmsg("too many arguments")));
@@ -5565,7 +5566,7 @@ get_windowfunc_expr(WindowFunc *wfunc, deparse_context *context)
 	nargs = 0;
 	foreach(l, wfunc->args)
 	{
-		Node   *arg = (Node *) lfirst(l);
+		Node	   *arg = (Node *) lfirst(l);
 
 		Assert(!IsA(arg, NamedArgExpr));
 		argtypes[nargs] = exprType(arg);
@@ -6368,8 +6369,8 @@ processIndirection(Node *node, deparse_context *context, bool printit)
 					 format_type_be(fstore->resulttype));
 
 			/*
-			 * Print the field name.  There should only be one target field
-			 * in stored rules.  There could be more than that in executable
+			 * Print the field name.  There should only be one target field in
+			 * stored rules.  There could be more than that in executable
 			 * target lists, but this function cannot be used for that case.
 			 */
 			Assert(list_length(fstore->fieldnums) == 1);
@@ -6598,7 +6599,7 @@ generate_relation_name(Oid relid, List *namespaces)
  * generate_function_name
  *		Compute the name to display for a function specified by OID,
  *		given that it is being called with the specified actual arg names and
- *		types.  (Those matter because of ambiguous-function resolution rules.)
+ *		types.	(Those matter because of ambiguous-function resolution rules.)
  *
  * The result includes all necessary quoting and schema-prefixing.	We can
  * also pass back an indication of whether the function is variadic.
@@ -6628,7 +6629,7 @@ generate_function_name(Oid funcid, int nargs, List *argnames,
 	/*
 	 * The idea here is to schema-qualify only if the parser would fail to
 	 * resolve the correct function given the unqualified func name with the
-	 * specified argtypes.  If the function is variadic, we should presume
+	 * specified argtypes.	If the function is variadic, we should presume
 	 * that VARIADIC will be included in the call.
 	 */
 	p_result = func_get_detail(list_make1(makeString(proname)),

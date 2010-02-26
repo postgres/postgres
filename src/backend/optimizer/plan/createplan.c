@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.272 2010/02/19 21:49:10 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.273 2010/02/26 02:00:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1694,8 +1694,8 @@ create_mergejoin_plan(PlannerInfo *root,
 		innerpathkeys = best_path->jpath.innerjoinpath->pathkeys;
 
 	/*
-	 * If specified, add a materialize node to shield the inner plan from
-	 * the need to handle mark/restore.
+	 * If specified, add a materialize node to shield the inner plan from the
+	 * need to handle mark/restore.
 	 */
 	if (best_path->materialize_inner)
 	{
@@ -1754,9 +1754,9 @@ create_mergejoin_plan(PlannerInfo *root,
 		Assert(ieclass != NULL);
 
 		/*
-		 * For debugging purposes, we check that the eclasses match the
-		 * paths' pathkeys.  In typical cases the merge clauses are one-to-one
-		 * with the pathkeys, but when dealing with partially redundant query
+		 * For debugging purposes, we check that the eclasses match the paths'
+		 * pathkeys.  In typical cases the merge clauses are one-to-one with
+		 * the pathkeys, but when dealing with partially redundant query
 		 * conditions, we might have clauses that re-reference earlier path
 		 * keys.  The case that we need to reject is where a pathkey is
 		 * entirely skipped over.
@@ -1861,9 +1861,9 @@ create_mergejoin_plan(PlannerInfo *root,
 	}
 
 	/*
-	 * Note: it is not an error if we have additional pathkey elements
-	 * (i.e., lop or lip isn't NULL here).  The input paths might be
-	 * better-sorted than we need for the current mergejoin.
+	 * Note: it is not an error if we have additional pathkey elements (i.e.,
+	 * lop or lip isn't NULL here).  The input paths might be better-sorted
+	 * than we need for the current mergejoin.
 	 */
 
 	/*
@@ -3751,7 +3751,7 @@ make_result(PlannerInfo *root,
  *	  Build a ModifyTable plan node
  *
  * Currently, we don't charge anything extra for the actual table modification
- * work, nor for the RETURNING expressions if any.  It would only be window
+ * work, nor for the RETURNING expressions if any.	It would only be window
  * dressing, since these are always top-level nodes and there is no way for
  * the costs to change any higher-level planning choices.  But we might want
  * to make it look better sometime.
@@ -3781,7 +3781,7 @@ make_modifytable(CmdType operation, List *resultRelations,
 	{
 		Plan	   *subplan = (Plan *) lfirst(subnode);
 
-		if (subnode == list_head(subplans))	/* first node? */
+		if (subnode == list_head(subplans))		/* first node? */
 			plan->startup_cost = subplan->startup_cost;
 		plan->total_cost += subplan->total_cost;
 		plan->plan_rows += subplan->plan_rows;
@@ -3798,8 +3798,8 @@ make_modifytable(CmdType operation, List *resultRelations,
 
 	/*
 	 * Set up the visible plan targetlist as being the same as the first
-	 * RETURNING list.  This is for the use of EXPLAIN; the executor won't
-	 * pay any attention to the targetlist.
+	 * RETURNING list.	This is for the use of EXPLAIN; the executor won't pay
+	 * any attention to the targetlist.
 	 */
 	if (returningLists)
 		node->plan.targetlist = copyObject(linitial(returningLists));

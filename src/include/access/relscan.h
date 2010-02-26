@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/relscan.h,v 1.69 2010/01/02 16:58:00 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/access/relscan.h,v 1.70 2010/02/26 02:01:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -68,7 +68,8 @@ typedef struct IndexScanDescData
 	/* signaling to index AM about killing index tuples */
 	bool		kill_prior_tuple;		/* last-returned tuple is dead */
 	bool		ignore_killed_tuples;	/* do not return killed entries */
-	bool		xactStartedInRecovery;	/* prevents killing/seeing killed tuples */
+	bool		xactStartedInRecovery;	/* prevents killing/seeing killed
+										 * tuples */
 
 	/* index access method's private state */
 	void	   *opaque;			/* access-method-specific info */

@@ -17,7 +17,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/preptlist.c,v 1.99 2010/01/02 16:57:47 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/preptlist.c,v 1.100 2010/02/26 02:00:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -109,11 +109,10 @@ preprocess_targetlist(PlannerInfo *root, List *tlist)
 	}
 
 	/*
-	 * Add necessary junk columns for rowmarked rels.  These values are
-	 * needed for locking of rels selected FOR UPDATE/SHARE, and to do
-	 * EvalPlanQual rechecking.  While we are at it, store these junk attnos
-	 * in the PlanRowMark list so that we don't have to redetermine them
-	 * at runtime.
+	 * Add necessary junk columns for rowmarked rels.  These values are needed
+	 * for locking of rels selected FOR UPDATE/SHARE, and to do EvalPlanQual
+	 * rechecking.	While we are at it, store these junk attnos in the
+	 * PlanRowMark list so that we don't have to redetermine them at runtime.
 	 */
 	foreach(lc, root->rowMarks)
 	{

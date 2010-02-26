@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.265 2010/02/12 17:33:20 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.266 2010/02/26 02:00:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -370,7 +370,7 @@ subquery_planner(PlannerGlobal *glob, Query *parse,
 	}
 
 	/*
-	 * Preprocess RowMark information.  We need to do this after subquery
+	 * Preprocess RowMark information.	We need to do this after subquery
 	 * pullup (so that all non-inherited RTEs are present) and before
 	 * inheritance expansion (so that the info is available for
 	 * expand_inherited_tables to examine and modify).
@@ -525,8 +525,8 @@ subquery_planner(PlannerGlobal *glob, Query *parse,
 		/* If it's not SELECT, we need a ModifyTable node */
 		if (parse->commandType != CMD_SELECT)
 		{
-			List   *returningLists;
-			List   *rowMarks;
+			List	   *returningLists;
+			List	   *rowMarks;
 
 			/*
 			 * Deal with the RETURNING clause if any.  It's convenient to pass
@@ -542,7 +542,7 @@ subquery_planner(PlannerGlobal *glob, Query *parse,
 				rlist = set_returning_clause_references(root->glob,
 														parse->returningList,
 														plan,
-														parse->resultRelation);
+													  parse->resultRelation);
 				returningLists = list_make1(rlist);
 			}
 			else
@@ -559,7 +559,7 @@ subquery_planner(PlannerGlobal *glob, Query *parse,
 				rowMarks = root->rowMarks;
 
 			plan = (Plan *) make_modifytable(parse->commandType,
-											 copyObject(root->resultRelations),
+										   copyObject(root->resultRelations),
 											 list_make1(plan),
 											 returningLists,
 											 rowMarks,
@@ -614,11 +614,11 @@ preprocess_expression(PlannerInfo *root, Node *expr, int kind)
 	 * Simplify constant expressions.
 	 *
 	 * Note: an essential effect of this is to convert named-argument function
-	 * calls to positional notation and insert the current actual values
-	 * of any default arguments for functions.	To ensure that happens, we
-	 * *must* process all expressions here.  Previous PG versions sometimes
-	 * skipped const-simplification if it didn't seem worth the trouble, but
-	 * we can't do that anymore.
+	 * calls to positional notation and insert the current actual values of
+	 * any default arguments for functions.  To ensure that happens, we *must*
+	 * process all expressions here.  Previous PG versions sometimes skipped
+	 * const-simplification if it didn't seem worth the trouble, but we can't
+	 * do that anymore.
 	 *
 	 * Note: this also flattens nested AND and OR expressions into N-argument
 	 * form.  All processing of a qual expression after this point must be
@@ -783,7 +783,7 @@ inheritance_planner(PlannerInfo *root)
 			List	   *rlist;
 
 			rlist = set_returning_clause_references(root->glob,
-													subroot.parse->returningList,
+												subroot.parse->returningList,
 													subplan,
 													appinfo->child_relid);
 			returningLists = lappend(returningLists, rlist);
@@ -796,8 +796,8 @@ inheritance_planner(PlannerInfo *root)
 	root->query_pathkeys = NIL;
 
 	/*
-	 * If we managed to exclude every child rel, return a dummy plan;
-	 * it doesn't even need a ModifyTable node.
+	 * If we managed to exclude every child rel, return a dummy plan; it
+	 * doesn't even need a ModifyTable node.
 	 */
 	if (subplans == NIL)
 	{
@@ -825,9 +825,9 @@ inheritance_planner(PlannerInfo *root)
 	parse->rtable = rtable;
 
 	/*
-	 * If there was a FOR UPDATE/SHARE clause, the LockRows node will
-	 * have dealt with fetching non-locked marked rows, else we need
-	 * to have ModifyTable do that.
+	 * If there was a FOR UPDATE/SHARE clause, the LockRows node will have
+	 * dealt with fetching non-locked marked rows, else we need to have
+	 * ModifyTable do that.
 	 */
 	if (parse->rowMarks)
 		rowMarks = NIL;
@@ -837,7 +837,7 @@ inheritance_planner(PlannerInfo *root)
 	/* And last, tack on a ModifyTable node to do the UPDATE/DELETE work */
 	return (Plan *) make_modifytable(parse->commandType,
 									 copyObject(root->resultRelations),
-									 subplans, 
+									 subplans,
 									 returningLists,
 									 rowMarks,
 									 SS_assign_special_param(root));
@@ -1121,8 +1121,8 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 		}
 		else
 		{
-			path_rows = 1;				/* assume non-set result */
-			path_width = 100;			/* arbitrary */
+			path_rows = 1;		/* assume non-set result */
+			path_width = 100;	/* arbitrary */
 		}
 
 		if (parse->groupClause)
@@ -1424,8 +1424,8 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 			 * WindowFuncs.  It's probably not worth trying to optimize that
 			 * though.)  We also need any volatile sort expressions, because
 			 * make_sort_from_pathkeys won't add those on its own, and anyway
-			 * we want them evaluated only once at the bottom of the stack.
-			 * As we climb up the stack, we add outputs for the WindowFuncs
+			 * we want them evaluated only once at the bottom of the stack. As
+			 * we climb up the stack, we add outputs for the WindowFuncs
 			 * computed at each level.	Also, each input tlist has to present
 			 * all the columns needed to sort the data for the next WindowAgg
 			 * step.  That's handled internally by make_sort_from_pathkeys,
@@ -1659,16 +1659,17 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 	}
 
 	/*
-	 * If there is a FOR UPDATE/SHARE clause, add the LockRows node.
-	 * (Note: we intentionally test parse->rowMarks not root->rowMarks here.
-	 * If there are only non-locking rowmarks, they should be handled by
-	 * the ModifyTable node instead.)
+	 * If there is a FOR UPDATE/SHARE clause, add the LockRows node. (Note: we
+	 * intentionally test parse->rowMarks not root->rowMarks here. If there
+	 * are only non-locking rowmarks, they should be handled by the
+	 * ModifyTable node instead.)
 	 */
 	if (parse->rowMarks)
 	{
 		result_plan = (Plan *) make_lockrows(result_plan,
 											 root->rowMarks,
 											 SS_assign_special_param(root));
+
 		/*
 		 * The result can no longer be assumed sorted, since locking might
 		 * cause the sort key columns to be replaced with new values.
@@ -1811,9 +1812,9 @@ preprocess_rowmarks(PlannerInfo *root)
 	}
 
 	/*
-	 * We need to have rowmarks for all base relations except the target.
-	 * We make a bitmapset of all base rels and then remove the items we
-	 * don't need or have FOR UPDATE/SHARE marks for.
+	 * We need to have rowmarks for all base relations except the target. We
+	 * make a bitmapset of all base rels and then remove the items we don't
+	 * need or have FOR UPDATE/SHARE marks for.
 	 */
 	rels = get_base_rel_indexes((Node *) parse->jointree);
 	if (parse->resultRelation)
@@ -1831,16 +1832,16 @@ preprocess_rowmarks(PlannerInfo *root)
 
 		/*
 		 * Currently, it is syntactically impossible to have FOR UPDATE
-		 * applied to an update/delete target rel.  If that ever becomes
+		 * applied to an update/delete target rel.	If that ever becomes
 		 * possible, we should drop the target from the PlanRowMark list.
 		 */
 		Assert(rc->rti != parse->resultRelation);
 
 		/*
-		 * Ignore RowMarkClauses for subqueries; they aren't real tables
-		 * and can't support true locking.  Subqueries that got flattened
-		 * into the main query should be ignored completely.  Any that didn't
-		 * will get ROW_MARK_COPY items in the next loop.
+		 * Ignore RowMarkClauses for subqueries; they aren't real tables and
+		 * can't support true locking.  Subqueries that got flattened into the
+		 * main query should be ignored completely.  Any that didn't will get
+		 * ROW_MARK_COPY items in the next loop.
 		 */
 		if (rte->rtekind != RTE_RELATION)
 			continue;
@@ -1883,7 +1884,7 @@ preprocess_rowmarks(PlannerInfo *root)
 			newrc->markType = ROW_MARK_REFERENCE;
 		else
 			newrc->markType = ROW_MARK_COPY;
-		newrc->noWait = false;			/* doesn't matter */
+		newrc->noWait = false;	/* doesn't matter */
 		newrc->isParent = false;
 		/* attnos will be assigned in preprocess_targetlist */
 		newrc->ctidAttNo = InvalidAttrNumber;
@@ -2196,7 +2197,7 @@ choose_hashed_grouping(PlannerInfo *root,
 
 	/*
 	 * Executor doesn't support hashed aggregation with DISTINCT or ORDER BY
-	 * aggregates.  (Doing so would imply storing *all* the input values in
+	 * aggregates.	(Doing so would imply storing *all* the input values in
 	 * the hash table, and/or running many sorts in parallel, either of which
 	 * seems like a certain loser.)
 	 */
@@ -2364,8 +2365,8 @@ choose_hashed_distinct(PlannerInfo *root,
 	Path		sorted_p;
 
 	/*
-	 * If we have a sortable DISTINCT ON clause, we always use sorting.
-	 * This enforces the expected behavior of DISTINCT ON.
+	 * If we have a sortable DISTINCT ON clause, we always use sorting. This
+	 * enforces the expected behavior of DISTINCT ON.
 	 */
 	can_sort = grouping_is_sortable(parse->distinctClause);
 	if (can_sort && parse->hasDistinctOn)

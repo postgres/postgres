@@ -13,14 +13,14 @@
  *
  * Red-black trees are a type of balanced binary tree wherein (1) any child of
  * a red node is always black, and (2) every path from root to leaf traverses
- * an equal number of black nodes.  From these properties, it follows that the
+ * an equal number of black nodes.	From these properties, it follows that the
  * longest path from root to leaf is only about twice as long as the shortest,
  * so lookups are guaranteed to run in O(lg n) time.
  *
  * Copyright (c) 1996-2009, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/rbtree.c,v 1.2 2010/02/11 22:17:27 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/rbtree.c,v 1.3 2010/02/26 02:01:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,7 +35,7 @@
 /*
  * Values for RBNode->iteratorState
  */
-#define InitialState 	(0)
+#define InitialState	(0)
 #define FirstStepDone	(1)
 #define SecondStepDone	(2)
 #define ThirdStepDone	(3)
@@ -49,13 +49,13 @@
 typedef struct RBNode
 {
 	uint32		iteratorState:2,
-				color:	1 ,
-				unused: 29;
+	color:		1,
+				unused:29;
 	struct RBNode *left;
 	struct RBNode *right;
 	struct RBNode *parent;
 	void	   *data;
-}	RBNode;
+} RBNode;
 
 struct RBTree
 {
@@ -86,7 +86,7 @@ RBNode		sentinel = {InitialState, RBBLACK, 0, RBNIL, RBNIL, NULL, NULL};
 
 RBTree *
 rb_create(rb_comparator comparator, rb_appendator appendator,
-				  rb_freefunc freefunc, void *arg)
+		  rb_freefunc freefunc, void *arg)
 {
 	RBTree	   *tree = palloc(sizeof(RBTree));
 
@@ -94,6 +94,7 @@ rb_create(rb_comparator comparator, rb_appendator appendator,
 	tree->comparator = comparator;
 	tree->appendator = appendator;
 	tree->freefunc = freefunc;
+
 	tree->arg = arg;
 
 	return tree;
@@ -205,10 +206,10 @@ rb_rotate_right(RBTree *rb, RBNode *x)
 /*
  * Maintain Red-Black tree balance after inserting node x.
  *
- * The newly inserted node is always initially marked red.  That may lead to
+ * The newly inserted node is always initially marked red.	That may lead to
  * a situation where a red node has a red child, which is prohibited.  We can
  * always fix the problem by a series of color changes and/or "rotations",
- * which move the problem progressively higher up in the tree.  If one of the
+ * which move the problem progressively higher up in the tree.	If one of the
  * two red nodes is the root, we can always fix the problem by changing the
  * root from red to black.
  *
@@ -219,8 +220,8 @@ static void
 rb_insert_fixup(RBTree *rb, RBNode *x)
 {
 	/*
-	 * x is always a red node.  Initially, it is the newly inserted node.
-	 * Each iteration of this loop moves it higher up in the tree.
+	 * x is always a red node.	Initially, it is the newly inserted node. Each
+	 * iteration of this loop moves it higher up in the tree.
 	 */
 	while (x != rb->root && x->parent->color == RBRED)
 	{
@@ -234,11 +235,11 @@ rb_insert_fixup(RBTree *rb, RBNode *x)
 		 * grandparent still has a problem.
 		 *
 		 * If the uncle is black, we will perform one or two "rotations" to
-		 * balance the tree.  Either x or x->parent will take the grandparent's
-		 * position in the tree and recolored black, and the original
-		 * grandparent will be recolored red and become a child of that node.
-		 * This always leaves us with a valid red-black tree, so the loop
-		 * will terminate.
+		 * balance the tree.  Either x or x->parent will take the
+		 * grandparent's position in the tree and recolored black, and the
+		 * original grandparent will be recolored red and become a child of
+		 * that node. This always leaves us with a valid red-black tree, so
+		 * the loop will terminate.
 		 */
 		if (x->parent == x->parent->parent->left)
 		{
@@ -250,6 +251,7 @@ rb_insert_fixup(RBTree *rb, RBNode *x)
 				x->parent->color = RBBLACK;
 				y->color = RBBLACK;
 				x->parent->parent->color = RBRED;
+
 				x = x->parent->parent;
 			}
 			else
@@ -265,6 +267,7 @@ rb_insert_fixup(RBTree *rb, RBNode *x)
 				/* recolor and rotate */
 				x->parent->color = RBBLACK;
 				x->parent->parent->color = RBRED;
+
 				rb_rotate_right(rb, x->parent->parent);
 			}
 		}
@@ -279,6 +282,7 @@ rb_insert_fixup(RBTree *rb, RBNode *x)
 				x->parent->color = RBBLACK;
 				y->color = RBBLACK;
 				x->parent->parent->color = RBRED;
+
 				x = x->parent->parent;
 			}
 			else
@@ -291,6 +295,7 @@ rb_insert_fixup(RBTree *rb, RBNode *x)
 				}
 				x->parent->color = RBBLACK;
 				x->parent->parent->color = RBRED;
+
 				rb_rotate_left(rb, x->parent->parent);
 			}
 		}
@@ -355,6 +360,7 @@ rb_insert(RBTree *rb, void *data)
 	x->left = RBNIL;
 	x->right = RBNIL;
 	x->color = RBRED;
+
 	x->iteratorState = InitialState;
 
 	/* insert node in tree */
@@ -392,11 +398,11 @@ rb_delete_fixup(RBTree *rb, RBNode *x)
 	while (x != rb->root && x->color == RBBLACK)
 	{
 		/*
-		 * Left and right cases are symmetric.  Any nodes that are children
-		 * of x have a black-height one less than the remainder of the nodes
-		 * in the tree.  We rotate and recolor nodes to move the problem up
-		 * the tree: at some stage we'll either fix the problem, or reach the
-		 * root (where the black-height is allowed to decrease).
+		 * Left and right cases are symmetric.	Any nodes that are children of
+		 * x have a black-height one less than the remainder of the nodes in
+		 * the tree.  We rotate and recolor nodes to move the problem up the
+		 * tree: at some stage we'll either fix the problem, or reach the root
+		 * (where the black-height is allowed to decrease).
 		 */
 		if (x == x->parent->left)
 		{
@@ -406,6 +412,7 @@ rb_delete_fixup(RBTree *rb, RBNode *x)
 			{
 				w->color = RBBLACK;
 				x->parent->color = RBRED;
+
 				rb_rotate_left(rb, x->parent);
 				w = x->parent->right;
 			}
@@ -413,6 +420,7 @@ rb_delete_fixup(RBTree *rb, RBNode *x)
 			if (w->left->color == RBBLACK && w->right->color == RBBLACK)
 			{
 				w->color = RBRED;
+
 				x = x->parent;
 			}
 			else
@@ -421,14 +429,16 @@ rb_delete_fixup(RBTree *rb, RBNode *x)
 				{
 					w->left->color = RBBLACK;
 					w->color = RBRED;
+
 					rb_rotate_right(rb, w);
 					w = x->parent->right;
 				}
 				w->color = x->parent->color;
 				x->parent->color = RBBLACK;
 				w->right->color = RBBLACK;
+
 				rb_rotate_left(rb, x->parent);
-				x = rb->root;		/* Arrange for loop to terminate. */
+				x = rb->root;	/* Arrange for loop to terminate. */
 			}
 		}
 		else
@@ -439,6 +449,7 @@ rb_delete_fixup(RBTree *rb, RBNode *x)
 			{
 				w->color = RBBLACK;
 				x->parent->color = RBRED;
+
 				rb_rotate_right(rb, x->parent);
 				w = x->parent->left;
 			}
@@ -446,6 +457,7 @@ rb_delete_fixup(RBTree *rb, RBNode *x)
 			if (w->right->color == RBBLACK && w->left->color == RBBLACK)
 			{
 				w->color = RBRED;
+
 				x = x->parent;
 			}
 			else
@@ -454,14 +466,16 @@ rb_delete_fixup(RBTree *rb, RBNode *x)
 				{
 					w->right->color = RBBLACK;
 					w->color = RBRED;
+
 					rb_rotate_left(rb, w);
 					w = x->parent->left;
 				}
 				w->color = x->parent->color;
 				x->parent->color = RBBLACK;
 				w->left->color = RBBLACK;
+
 				rb_rotate_right(rb, x->parent);
-				x = rb->root;		/* Arrange for loop to terminate. */
+				x = rb->root;	/* Arrange for loop to terminate. */
 			}
 		}
 	}
@@ -519,9 +533,8 @@ rb_delete_node(RBTree *rb, RBNode *z)
 	}
 
 	/*
-	 * If we removed the tree successor of z rather than z itself, then
-	 * attach the data for the removed node to the one we were supposed to
-	 * remove.
+	 * If we removed the tree successor of z rather than z itself, then attach
+	 * the data for the removed node to the one we were supposed to remove.
 	 */
 	if (y != z)
 		z->data = y->data;
@@ -550,7 +563,8 @@ rb_delete(RBTree *rb, void *data)
 		{
 			/* found node to delete */
 			if (rb->freefunc)
-				rb->freefunc(node->data);
+				rb->freefunc (node->data);
+
 			node->data = NULL;
 			rb_delete_node(rb, node);
 			return;
@@ -756,16 +770,16 @@ rb_begin_iterate(RBTree *rb, RBOrderControl ctrl)
 
 	switch (ctrl)
 	{
-		case LeftRightWalk:			/* visit left, then self, then right */
+		case LeftRightWalk:		/* visit left, then self, then right */
 			iterator->iterate = rb_left_right_iterator;
 			break;
-		case RightLeftWalk:			/* visit right, then self, then left */
+		case RightLeftWalk:		/* visit right, then self, then left */
 			iterator->iterate = rb_right_left_iterator;
 			break;
-		case DirectWalk:			/* visit self, then left, then right */
+		case DirectWalk:		/* visit self, then left, then right */
 			iterator->iterate = rb_direct_iterator;
 			break;
-		case InvertedWalk:			/* visit left, then right, then self */
+		case InvertedWalk:		/* visit left, then right, then self */
 			iterator->iterate = rb_inverted_iterator;
 			break;
 		default:

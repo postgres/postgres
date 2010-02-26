@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/replication/walreceiverfuncs.c,v 1.3 2010/01/27 15:27:51 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/replication/walreceiverfuncs.c,v 1.4 2010/02/26 02:00:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,7 +42,7 @@ WalRcvData *WalRcv = NULL;
 Size
 WalRcvShmemSize(void)
 {
-	Size size = 0;
+	Size		size = 0;
 
 	size = add_size(size, sizeof(WalRcvData));
 
@@ -53,7 +53,7 @@ WalRcvShmemSize(void)
 void
 WalRcvShmemInit(void)
 {
-	bool	found;
+	bool		found;
 
 	WalRcv = (WalRcvData *)
 		ShmemInitStruct("Wal Receiver Ctl", WalRcvShmemSize(), &found);
@@ -78,7 +78,7 @@ WalRcvInProgress(void)
 	/* use volatile pointer to prevent code rearrangement */
 	volatile WalRcvData *walrcv = WalRcv;
 	WalRcvState state;
-	pg_time_t startTime;
+	pg_time_t	startTime;
 
 	SpinLockAcquire(&walrcv->mutex);
 
@@ -88,14 +88,14 @@ WalRcvInProgress(void)
 	SpinLockRelease(&walrcv->mutex);
 
 	/*
-	 * If it has taken too long for walreceiver to start up, give up.
-	 * Setting the state to STOPPED ensures that if walreceiver later
-	 * does start up after all, it will see that it's not supposed to be
-	 * running and die without doing anything.
+	 * If it has taken too long for walreceiver to start up, give up. Setting
+	 * the state to STOPPED ensures that if walreceiver later does start up
+	 * after all, it will see that it's not supposed to be running and die
+	 * without doing anything.
 	 */
 	if (state == WALRCV_STARTING)
 	{
-		pg_time_t now = (pg_time_t) time(NULL);
+		pg_time_t	now = (pg_time_t) time(NULL);
 
 		if ((now - startTime) > WALRCV_STARTUP_TIMEOUT)
 		{
@@ -122,7 +122,7 @@ ShutdownWalRcv(void)
 {
 	/* use volatile pointer to prevent code rearrangement */
 	volatile WalRcvData *walrcv = WalRcv;
-	pid_t walrcvpid = 0;
+	pid_t		walrcvpid = 0;
 
 	/*
 	 * Request walreceiver to stop. Walreceiver will switch to WALRCV_STOPPED
@@ -130,7 +130,7 @@ ShutdownWalRcv(void)
 	 * restart itself.
 	 */
 	SpinLockAcquire(&walrcv->mutex);
-	switch(walrcv->walRcvState)
+	switch (walrcv->walRcvState)
 	{
 		case WALRCV_STOPPED:
 			break;
@@ -180,14 +180,13 @@ RequestXLogStreaming(XLogRecPtr recptr, const char *conninfo)
 {
 	/* use volatile pointer to prevent code rearrangement */
 	volatile WalRcvData *walrcv = WalRcv;
-	pg_time_t now = (pg_time_t) time(NULL);
+	pg_time_t	now = (pg_time_t) time(NULL);
 
 	/*
-	 * We always start at the beginning of the segment.
-	 * That prevents a broken segment (i.e., with no records in the
-	 * first half of a segment) from being created by XLOG streaming,
-	 * which might cause trouble later on if the segment is e.g
-	 * archived.
+	 * We always start at the beginning of the segment. That prevents a broken
+	 * segment (i.e., with no records in the first half of a segment) from
+	 * being created by XLOG streaming, which might cause trouble later on if
+	 * the segment is e.g archived.
 	 */
 	if (recptr.xrecoff % XLogSegSize != 0)
 		recptr.xrecoff -= recptr.xrecoff % XLogSegSize;
@@ -225,4 +224,3 @@ GetWalRcvWriteRecPtr(void)
 
 	return recptr;
 }
-

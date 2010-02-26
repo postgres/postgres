@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_class.h,v 1.121 2010/02/07 20:48:11 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_class.h,v 1.122 2010/02/26 02:01:21 momjian Exp $
  *
  * NOTES
  *	  the genbki.pl script reads this file and generates .bki
@@ -33,11 +33,14 @@ CATALOG(pg_class,1259) BKI_BOOTSTRAP BKI_ROWTYPE_OID(83) BKI_SCHEMA_MACRO
 {
 	NameData	relname;		/* class name */
 	Oid			relnamespace;	/* OID of namespace containing this class */
-	Oid			reltype;		/* OID of entry in pg_type for table's implicit row type */
-	Oid			reloftype;		/* OID of entry in pg_type for underlying composite type */
+	Oid			reltype;		/* OID of entry in pg_type for table's
+								 * implicit row type */
+	Oid			reloftype;		/* OID of entry in pg_type for underlying
+								 * composite type */
 	Oid			relowner;		/* class owner */
 	Oid			relam;			/* index access method; 0 if not an index */
 	Oid			relfilenode;	/* identifier of physical storage file */
+
 	/* relfilenode == 0 means it is a "mapped" relation, see relmapper.c */
 	Oid			reltablespace;	/* identifier of table space for relation */
 	int4		relpages;		/* # of blocks (not always up-to-date) */
@@ -58,7 +61,7 @@ CATALOG(pg_class,1259) BKI_BOOTSTRAP BKI_ROWTYPE_OID(83) BKI_SCHEMA_MACRO
 	int2		relchecks;		/* # of CHECK constraints for class */
 	bool		relhasoids;		/* T if we generate OIDs for rows of rel */
 	bool		relhaspkey;		/* has (or has had) PRIMARY KEY index */
-	bool		relhasexclusion; /* has (or has had) exclusion constraint */
+	bool		relhasexclusion;	/* has (or has had) exclusion constraint */
 	bool		relhasrules;	/* has (or has had) any rules */
 	bool		relhastriggers; /* has (or has had) any TRIGGERs */
 	bool		relhassubclass; /* has (or has had) derived classes */

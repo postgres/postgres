@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/btree_gist/btree_float8.c,v 1.9 2009/12/02 13:13:24 teodor Exp $
+ * $PostgreSQL: pgsql/contrib/btree_gist/btree_float8.c,v 1.10 2010/02/26 02:00:31 momjian Exp $
  */
 #include "btree_gist.h"
 #include "btree_utils_num.h"
@@ -57,8 +57,8 @@ gbt_float8lt(const void *a, const void *b)
 static int
 gbt_float8key_cmp(const void *a, const void *b)
 {
-    float8KEY    *ia = (float8KEY*)(((Nsrt *) a)->t);
-	float8KEY    *ib = (float8KEY*)(((Nsrt *) b)->t);
+	float8KEY  *ia = (float8KEY *) (((Nsrt *) a)->t);
+	float8KEY  *ib = (float8KEY *) (((Nsrt *) b)->t);
 
 	if (ia->lower == ib->lower)
 	{

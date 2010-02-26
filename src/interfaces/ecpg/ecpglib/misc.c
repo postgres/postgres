@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/misc.c,v 1.55 2010/02/02 16:09:11 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/misc.c,v 1.56 2010/02/26 02:01:30 momjian Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -176,7 +176,8 @@ ECPGtransactionStatus(const char *connection_name)
 	const struct connection *con;
 
 	con = ecpg_get_connection(connection_name);
-	if (con == NULL) {
+	if (con == NULL)
+	{
 		/* transaction status is unknown */
 		return PQTRANS_UNKNOWN;
 	}
@@ -503,15 +504,14 @@ ecpg_gettext(const char *msgid)
 
 	return dgettext(PG_TEXTDOMAIN("ecpg"), msgid);
 }
-
 #endif   /* ENABLE_NLS */
 
 static struct var_list
 {
-	int		number;
+	int			number;
 	void	   *pointer;
 	struct var_list *next;
-} *ivlist = NULL;
+}	*ivlist = NULL;
 
 void
 ECPGset_var(int number, void *pointer, int lineno)
@@ -533,6 +533,7 @@ ECPGset_var(int number, void *pointer, int lineno)
 	if (!ptr)
 	{
 		struct sqlca_t *sqlca = ECPGget_sqlca();
+
 		sqlca->sqlcode = ECPG_OUT_OF_MEMORY;
 		strncpy(sqlca->sqlstate, "YE001", sizeof("YE001"));
 		snprintf(sqlca->sqlerrm.sqlerrmc, sizeof(sqlca->sqlerrm.sqlerrmc), "out of memory on line %d", lineno);
@@ -555,5 +556,5 @@ ECPGget_var(int number)
 	struct var_list *ptr;
 
 	for (ptr = ivlist; ptr != NULL && ptr->number != number; ptr = ptr->next);
-		return (ptr) ? ptr->pointer : NULL;
+	return (ptr) ? ptr->pointer : NULL;
 }

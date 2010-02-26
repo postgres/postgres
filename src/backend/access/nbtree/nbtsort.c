@@ -59,7 +59,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtsort.c,v 1.123 2010/01/20 19:43:40 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtsort.c,v 1.124 2010/02/26 02:00:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -216,12 +216,13 @@ _bt_leafbuild(BTSpool *btspool, BTSpool *btspool2)
 	wstate.btws_use_wal = XLogIsNeeded() && !wstate.index->rd_istemp;
 
 	/*
-	 * Write an XLOG UNLOGGED record if WAL-logging was skipped because
-	 * WAL archiving is not enabled.
+	 * Write an XLOG UNLOGGED record if WAL-logging was skipped because WAL
+	 * archiving is not enabled.
 	 */
 	if (!wstate.btws_use_wal && !wstate.index->rd_istemp)
 	{
-		char reason[NAMEDATALEN + 20];
+		char		reason[NAMEDATALEN + 20];
+
 		snprintf(reason, sizeof(reason), "b-tree build on \"%s\"",
 				 RelationGetRelationName(wstate.index));
 		XLogReportUnloggedStatement(reason);
@@ -492,10 +493,10 @@ _bt_buildadd(BTWriteState *wstate, BTPageState *state, IndexTuple itup)
 	if (itupsz > BTMaxItemSize(npage))
 		ereport(ERROR,
 				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-				 errmsg("index row size %lu exceeds maximum %lu for index \"%s\"",
-						(unsigned long) itupsz,
-						(unsigned long) BTMaxItemSize(npage),
-						RelationGetRelationName(wstate->index)),
+			errmsg("index row size %lu exceeds maximum %lu for index \"%s\"",
+				   (unsigned long) itupsz,
+				   (unsigned long) BTMaxItemSize(npage),
+				   RelationGetRelationName(wstate->index)),
 		errhint("Values larger than 1/3 of a buffer page cannot be indexed.\n"
 				"Consider a function index of an MD5 hash of the value, "
 				"or use full text indexing.")));

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/standby.h,v 1.8 2010/02/13 01:32:20 sriggs Exp $
+ * $PostgreSQL: pgsql/src/include/storage/standby.h,v 1.9 2010/02/26 02:01:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,7 +25,7 @@ extern void InitRecoveryTransactionEnvironment(void);
 extern void ShutdownRecoveryTransactionEnvironment(void);
 
 extern void ResolveRecoveryConflictWithSnapshot(TransactionId latestRemovedXid,
-												RelFileNode node);
+									RelFileNode node);
 extern void ResolveRecoveryConflictWithRemovedTransactionId(void);
 extern void ResolveRecoveryConflictWithTablespace(Oid tsid);
 extern void ResolveRecoveryConflictWithDatabase(Oid dbid);
@@ -43,7 +43,7 @@ extern void CheckRecoveryConflictDeadlock(LWLockId partitionLock);
  */
 extern void StandbyAcquireAccessExclusiveLock(TransactionId xid, Oid dbOid, Oid relOid);
 extern void StandbyReleaseLockTree(TransactionId xid,
-								   int nsubxids, TransactionId *subxids);
+					   int nsubxids, TransactionId *subxids);
 extern void StandbyReleaseAllLocks(void);
 extern void StandbyReleaseOldLocks(TransactionId removeXid);
 
@@ -55,8 +55,8 @@ extern void StandbyReleaseOldLocks(TransactionId removeXid);
 
 typedef struct xl_standby_locks
 {
-	int				nlocks;		/* number of entries in locks array */
-	xl_standby_lock	locks[1];	/* VARIABLE LENGTH ARRAY */
+	int			nlocks;			/* number of entries in locks array */
+	xl_standby_lock locks[1];	/* VARIABLE LENGTH ARRAY */
 } xl_standby_locks;
 
 /*
@@ -64,12 +64,12 @@ typedef struct xl_standby_locks
  */
 typedef struct xl_running_xacts
 {
-	int				xcnt;				/* # of xact ids in xids[] */
-	bool			subxid_overflow;	/* snapshot overflowed, subxids missing */
-	TransactionId	nextXid;			/* copy of ShmemVariableCache->nextXid */
-	TransactionId	oldestRunningXid;	/* *not* oldestXmin */
+	int			xcnt;			/* # of xact ids in xids[] */
+	bool		subxid_overflow;	/* snapshot overflowed, subxids missing */
+	TransactionId nextXid;		/* copy of ShmemVariableCache->nextXid */
+	TransactionId oldestRunningXid;		/* *not* oldestXmin */
 
-	TransactionId	xids[1];		/* VARIABLE LENGTH ARRAY */
+	TransactionId xids[1];		/* VARIABLE LENGTH ARRAY */
 } xl_running_xacts;
 
 #define MinSizeOfXactRunningXacts offsetof(xl_running_xacts, xids)
@@ -93,12 +93,12 @@ extern void standby_desc(StringInfo buf, uint8 xl_info, char *rec);
 
 typedef struct RunningTransactionsData
 {
-	int				xcnt;				/* # of xact ids in xids[] */
-	bool			subxid_overflow;	/* snapshot overflowed, subxids missing */
-	TransactionId 	nextXid;			/* copy of ShmemVariableCache->nextXid */
-	TransactionId	oldestRunningXid;	/* *not* oldestXmin */
+	int			xcnt;			/* # of xact ids in xids[] */
+	bool		subxid_overflow;	/* snapshot overflowed, subxids missing */
+	TransactionId nextXid;		/* copy of ShmemVariableCache->nextXid */
+	TransactionId oldestRunningXid;		/* *not* oldestXmin */
 
-	TransactionId  *xids;				/* array of (sub)xids still running */
+	TransactionId *xids;		/* array of (sub)xids still running */
 } RunningTransactionsData;
 
 typedef RunningTransactionsData *RunningTransactions;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/acl.c,v 1.156 2010/02/14 18:42:16 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/acl.c,v 1.157 2010/02/26 02:01:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -78,7 +78,7 @@ static Acl *allocacl(int n);
 static void check_acl(const Acl *acl);
 static const char *aclparse(const char *s, AclItem *aip);
 static bool aclitem_match(const AclItem *a1, const AclItem *a2);
-static int aclitemComparator(const void *arg1, const void *arg2);
+static int	aclitemComparator(const void *arg1, const void *arg2);
 static void check_circularity(const Acl *old_acl, const AclItem *mod_aip,
 				  Oid ownerId);
 static Acl *recursive_revoke(Acl *acl, Oid grantee, AclMode revoke_privs,
@@ -470,7 +470,7 @@ aclmerge(const Acl *left_acl, const Acl *right_acl, Oid ownerId)
 
 	for (i = 0; i < num; i++, aip++)
 	{
-		Acl *tmp_acl;
+		Acl		   *tmp_acl;
 
 		tmp_acl = aclupdate(result_acl, aip, ACL_MODECHG_ADD,
 							ownerId, DROP_RESTRICT);
@@ -1669,17 +1669,17 @@ convert_aclright_to_string(int aclright)
  * returns the table
  *
  * {{ OID(joe), 0::OID,   'SELECT', false },
- *  { OID(joe), OID(foo), 'INSERT', true },
- *  { OID(joe), OID(foo), 'UPDATE', false }}
+ *	{ OID(joe), OID(foo), 'INSERT', true },
+ *	{ OID(joe), OID(foo), 'UPDATE', false }}
  *----------
  */
 Datum
 aclexplode(PG_FUNCTION_ARGS)
 {
 	Acl		   *acl = PG_GETARG_ACL_P(0);
-	FuncCallContext	*funcctx;
+	FuncCallContext *funcctx;
 	int		   *idx;
-	AclItem	   *aidat;
+	AclItem    *aidat;
 
 	if (SRF_IS_FIRSTCALL())
 	{
@@ -1692,8 +1692,8 @@ aclexplode(PG_FUNCTION_ARGS)
 		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
 		/*
-		 * build tupdesc for result tuples (matches out parameters in
-		 * pg_proc entry)
+		 * build tupdesc for result tuples (matches out parameters in pg_proc
+		 * entry)
 		 */
 		tupdesc = CreateTemplateTupleDesc(4, false);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 1, "grantor",
@@ -1731,7 +1731,7 @@ aclexplode(PG_FUNCTION_ARGS)
 		{
 			idx[1] = 0;
 			idx[0]++;
-			if (idx[0] >= ACL_NUM(acl))				/* done */
+			if (idx[0] >= ACL_NUM(acl)) /* done */
 				break;
 		}
 		aidata = &aidat[idx[0]];
@@ -2003,8 +2003,8 @@ has_sequence_privilege_name_name(PG_FUNCTION_ARGS)
 	if (get_rel_relkind(sequenceoid) != RELKIND_SEQUENCE)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				errmsg("\"%s\" is not a sequence",
-				text_to_cstring(sequencename))));
+				 errmsg("\"%s\" is not a sequence",
+						text_to_cstring(sequencename))));
 
 	aclresult = pg_class_aclcheck(sequenceoid, roleid, mode);
 
@@ -2033,8 +2033,8 @@ has_sequence_privilege_name(PG_FUNCTION_ARGS)
 	if (get_rel_relkind(sequenceoid) != RELKIND_SEQUENCE)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				errmsg("\"%s\" is not a sequence",
-				text_to_cstring(sequencename))));
+				 errmsg("\"%s\" is not a sequence",
+						text_to_cstring(sequencename))));
 
 	aclresult = pg_class_aclcheck(sequenceoid, roleid, mode);
 
@@ -2065,8 +2065,8 @@ has_sequence_privilege_name_id(PG_FUNCTION_ARGS)
 	else if (relkind != RELKIND_SEQUENCE)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				errmsg("\"%s\" is not a sequence",
-				get_rel_name(sequenceoid))));
+				 errmsg("\"%s\" is not a sequence",
+						get_rel_name(sequenceoid))));
 
 	aclresult = pg_class_aclcheck(sequenceoid, roleid, mode);
 
@@ -2097,8 +2097,8 @@ has_sequence_privilege_id(PG_FUNCTION_ARGS)
 	else if (relkind != RELKIND_SEQUENCE)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				errmsg("\"%s\" is not a sequence",
-				get_rel_name(sequenceoid))));
+				 errmsg("\"%s\" is not a sequence",
+						get_rel_name(sequenceoid))));
 
 	aclresult = pg_class_aclcheck(sequenceoid, roleid, mode);
 
@@ -2125,8 +2125,8 @@ has_sequence_privilege_id_name(PG_FUNCTION_ARGS)
 	if (get_rel_relkind(sequenceoid) != RELKIND_SEQUENCE)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				errmsg("\"%s\" is not a sequence",
-				text_to_cstring(sequencename))));
+				 errmsg("\"%s\" is not a sequence",
+						text_to_cstring(sequencename))));
 
 	aclresult = pg_class_aclcheck(sequenceoid, roleid, mode);
 
@@ -2155,8 +2155,8 @@ has_sequence_privilege_id_id(PG_FUNCTION_ARGS)
 	else if (relkind != RELKIND_SEQUENCE)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				errmsg("\"%s\" is not a sequence",
-				get_rel_name(sequenceoid))));
+				 errmsg("\"%s\" is not a sequence",
+						get_rel_name(sequenceoid))));
 
 	aclresult = pg_class_aclcheck(sequenceoid, roleid, mode);
 
@@ -2171,10 +2171,10 @@ static AclMode
 convert_sequence_priv_string(text *priv_type_text)
 {
 	static const priv_map sequence_priv_map[] = {
-		{ "USAGE", ACL_USAGE },
-		{ "SELECT", ACL_SELECT },
-		{ "UPDATE", ACL_UPDATE },
-		{ NULL, 0 }
+		{"USAGE", ACL_USAGE},
+		{"SELECT", ACL_SELECT},
+		{"UPDATE", ACL_UPDATE},
+		{NULL, 0}
 	};
 
 	return convert_any_priv_string(priv_type_text, sequence_priv_map);

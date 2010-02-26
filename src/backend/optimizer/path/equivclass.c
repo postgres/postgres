@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/equivclass.c,v 1.22 2010/01/02 16:57:46 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/equivclass.c,v 1.23 2010/02/26 02:00:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -115,14 +115,13 @@ process_equivalence(PlannerInfo *root, RestrictInfo *restrictinfo,
 	item2_relids = restrictinfo->right_relids;
 
 	/*
-	 * Reject clauses of the form X=X.  These are not as redundant as they
+	 * Reject clauses of the form X=X.	These are not as redundant as they
 	 * might seem at first glance: assuming the operator is strict, this is
-	 * really an expensive way to write X IS NOT NULL.  So we must not risk
-	 * just losing the clause, which would be possible if there is already
-	 * a single-element EquivalenceClass containing X.  The case is not
-	 * common enough to be worth contorting the EC machinery for, so just
-	 * reject the clause and let it be processed as a normal restriction
-	 * clause.
+	 * really an expensive way to write X IS NOT NULL.	So we must not risk
+	 * just losing the clause, which would be possible if there is already a
+	 * single-element EquivalenceClass containing X.  The case is not common
+	 * enough to be worth contorting the EC machinery for, so just reject the
+	 * clause and let it be processed as a normal restriction clause.
 	 */
 	if (equal(item1, item2))
 		return false;			/* X=X is not a useful equivalence */
@@ -367,7 +366,7 @@ add_eq_member(EquivalenceClass *ec, Expr *expr, Relids relids,
  *	  EquivalenceClass for it.
  *
  * sortref is the SortGroupRef of the originating SortGroupClause, if any,
- * or zero if not.  (It should never be zero if the expression is volatile!)
+ * or zero if not.	(It should never be zero if the expression is volatile!)
  *
  * This can be used safely both before and after EquivalenceClass merging;
  * since it never causes merging it does not invalidate any existing ECs
@@ -448,7 +447,7 @@ get_eclass_for_sort_expr(PlannerInfo *root,
 	newec->ec_sortref = sortref;
 	newec->ec_merged = NULL;
 
-	if (newec->ec_has_volatile && sortref == 0)		/* should not happen */
+	if (newec->ec_has_volatile && sortref == 0) /* should not happen */
 		elog(ERROR, "volatile EquivalenceClass has no sortref");
 
 	newem = add_eq_member(newec, expr, pull_varnos((Node *) expr),

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.129 2010/01/19 01:35:31 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.130 2010/02/26 02:01:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -798,9 +798,9 @@ typedef struct
 
 typedef enum
 {
-	IDENTIFIER_LOOKUP_NORMAL,		/* normal processing of var names */
-	IDENTIFIER_LOOKUP_DECLARE,		/* In DECLARE --- don't look up names */
-	IDENTIFIER_LOOKUP_EXPR			/* In SQL expression --- special case */
+	IDENTIFIER_LOOKUP_NORMAL,	/* normal processing of var names */
+	IDENTIFIER_LOOKUP_DECLARE,	/* In DECLARE --- don't look up names */
+	IDENTIFIER_LOOKUP_EXPR		/* In SQL expression --- special case */
 } IdentifierLookup;
 
 extern IdentifierLookup plpgsql_IdentifierLookup;
@@ -834,13 +834,13 @@ extern PLpgSQL_function *plpgsql_compile(FunctionCallInfo fcinfo,
 				bool forValidator);
 extern PLpgSQL_function *plpgsql_compile_inline(char *proc_source);
 extern void plpgsql_parser_setup(struct ParseState *pstate,
-								 PLpgSQL_expr *expr);
+					 PLpgSQL_expr *expr);
 extern bool plpgsql_parse_word(char *word1, const char *yytxt,
-							   PLwdatum *wdatum, PLword *word);
+				   PLwdatum *wdatum, PLword *word);
 extern bool plpgsql_parse_dblword(char *word1, char *word2,
-								  PLwdatum *wdatum, PLcword *cword);
+					  PLwdatum *wdatum, PLcword *cword);
 extern bool plpgsql_parse_tripword(char *word1, char *word2, char *word3,
-								   PLwdatum *wdatum, PLcword *cword);
+					   PLwdatum *wdatum, PLcword *cword);
 extern PLpgSQL_type *plpgsql_parse_wordtype(char *ident);
 extern PLpgSQL_type *plpgsql_parse_cwordtype(List *idents);
 extern PLpgSQL_type *plpgsql_parse_wordrowtype(char *ident);
@@ -879,7 +879,7 @@ extern void plpgsql_xact_cb(XactEvent event, void *arg);
 extern void plpgsql_subxact_cb(SubXactEvent event, SubTransactionId mySubid,
 				   SubTransactionId parentSubid, void *arg);
 extern Oid exec_get_datum_type(PLpgSQL_execstate *estate,
-							   PLpgSQL_datum *datum);
+					PLpgSQL_datum *datum);
 extern Oid exec_get_rec_fieldtype(PLpgSQL_rec *rec, const char *fieldname,
 					   int *fieldno);
 
@@ -893,10 +893,10 @@ extern void plpgsql_ns_pop(void);
 extern PLpgSQL_nsitem *plpgsql_ns_top(void);
 extern void plpgsql_ns_additem(int itemtype, int itemno, const char *name);
 extern PLpgSQL_nsitem *plpgsql_ns_lookup(PLpgSQL_nsitem *ns_cur, bool localmode,
-										 const char *name1, const char *name2,
-										 const char *name3, int *names_used);
+				  const char *name1, const char *name2,
+				  const char *name3, int *names_used);
 extern PLpgSQL_nsitem *plpgsql_ns_lookup_label(PLpgSQL_nsitem *ns_cur,
-											   const char *name);
+						const char *name);
 
 /* ----------
  * Other functions in pl_funcs.c
@@ -913,7 +913,7 @@ extern int	plpgsql_base_yylex(void);
 extern int	plpgsql_yylex(void);
 extern void plpgsql_push_back_token(int token);
 extern void plpgsql_append_source_text(StringInfo buf,
-									   int startlocation, int endlocation);
+						   int startlocation, int endlocation);
 extern int	plpgsql_scanner_errposition(int location);
 extern void plpgsql_yyerror(const char *message);
 extern int	plpgsql_location_to_lineno(int location);

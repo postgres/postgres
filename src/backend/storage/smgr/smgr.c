@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/smgr/smgr.c,v 1.120 2010/02/09 21:43:30 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/smgr/smgr.c,v 1.121 2010/02/26 02:01:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -356,11 +356,11 @@ smgr_internal_unlink(RelFileNode rnode, ForkNumber forknum,
 
 	/*
 	 * Send a shared-inval message to force other backends to close any
-	 * dangling smgr references they may have for this rel.  We should do
-	 * this before starting the actual unlinking, in case we fail partway
-	 * through that step.  Note that the sinval message will eventually come
-	 * back to this backend, too, and thereby provide a backstop that we
-	 * closed our own smgr rel.
+	 * dangling smgr references they may have for this rel.  We should do this
+	 * before starting the actual unlinking, in case we fail partway through
+	 * that step.  Note that the sinval message will eventually come back to
+	 * this backend, too, and thereby provide a backstop that we closed our
+	 * own smgr rel.
 	 */
 	CacheInvalidateSmgr(rnode);
 
@@ -468,11 +468,11 @@ smgrtruncate(SMgrRelation reln, ForkNumber forknum, BlockNumber nblocks,
 	 * Send a shared-inval message to force other backends to close any smgr
 	 * references they may have for this rel.  This is useful because they
 	 * might have open file pointers to segments that got removed, and/or
-	 * smgr_targblock variables pointing past the new rel end.  (The inval
+	 * smgr_targblock variables pointing past the new rel end.	(The inval
 	 * message will come back to our backend, too, causing a
 	 * probably-unnecessary local smgr flush.  But we don't expect that this
-	 * is a performance-critical path.)  As in the unlink code, we want to
-	 * be sure the message is sent before we start changing things on-disk.
+	 * is a performance-critical path.)  As in the unlink code, we want to be
+	 * sure the message is sent before we start changing things on-disk.
 	 */
 	CacheInvalidateSmgr(reln->smgr_rnode);
 

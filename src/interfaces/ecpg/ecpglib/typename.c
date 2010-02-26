@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/typename.c,v 1.18 2010/01/13 09:06:51 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/typename.c,v 1.19 2010/02/26 02:01:30 momjian Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -136,7 +136,7 @@ sqlda_dynamic_type(Oid type, enum COMPAT_MODE compat)
 #ifdef HAVE_LONG_INT_64
 			return ECPGt_long;
 #endif
-		/* Unhandled types always return a string */
+			/* Unhandled types always return a string */
 		default:
 			return ECPGt_char;
 	}

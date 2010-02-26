@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_relation.c,v 1.149 2010/02/14 18:42:15 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_relation.c,v 1.150 2010/02/26 02:00:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -88,11 +88,11 @@ refnameRangeTblEntry(ParseState *pstate,
 
 		/*
 		 * We can use LookupNamespaceNoError() here because we are only
-		 * interested in finding existing RTEs.  Checking USAGE permission
-		 * on the schema is unnecessary since it would have already been
-		 * checked when the RTE was made.  Furthermore, we want to report
-		 * "RTE not found", not "no permissions for schema", if the name
-		 * happens to match a schema name the user hasn't got access to.
+		 * interested in finding existing RTEs.  Checking USAGE permission on
+		 * the schema is unnecessary since it would have already been checked
+		 * when the RTE was made.  Furthermore, we want to report "RTE not
+		 * found", not "no permissions for schema", if the name happens to
+		 * match a schema name the user hasn't got access to.
 		 */
 		namespaceId = LookupNamespaceNoError(schemaname);
 		if (!OidIsValid(relId))
@@ -2369,8 +2369,8 @@ errorMissingRTE(ParseState *pstate, RangeVar *relation)
 
 	/*
 	 * Check to see if there are any potential matches in the query's
-	 * rangetable.  (Note: cases involving a bad schema name in the
-	 * RangeVar will throw error immediately here.  That seems OK.)
+	 * rangetable.	(Note: cases involving a bad schema name in the RangeVar
+	 * will throw error immediately here.  That seems OK.)
 	 */
 	rte = searchRangeTable(pstate, relation);
 
@@ -2394,11 +2394,11 @@ errorMissingRTE(ParseState *pstate, RangeVar *relation)
 	if (rte)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_TABLE),
-				 errmsg("invalid reference to FROM-clause entry for table \"%s\"",
-						relation->relname),
+			errmsg("invalid reference to FROM-clause entry for table \"%s\"",
+				   relation->relname),
 				 (badAlias ?
-				  errhint("Perhaps you meant to reference the table alias \"%s\".",
-						  badAlias) :
+			errhint("Perhaps you meant to reference the table alias \"%s\".",
+					badAlias) :
 				  errhint("There is an entry for table \"%s\", but it cannot be referenced from this part of the query.",
 						  rte->eref->aliasname)),
 				 parser_errposition(pstate, relation->location)));

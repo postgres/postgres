@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.326 2010/02/14 18:42:14 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.327 2010/02/26 02:00:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -304,9 +304,9 @@ static void ATAddCheckConstraint(List **wqueue,
 static void ATAddForeignKeyConstraint(AlteredTableInfo *tab, Relation rel,
 						  Constraint *fkconstraint);
 static void ATExecDropConstraint(Relation rel, const char *constrName,
-								 DropBehavior behavior,
-								 bool recurse, bool recursing,
-								 bool missing_ok);
+					 DropBehavior behavior,
+					 bool recurse, bool recursing,
+					 bool missing_ok);
 static void ATPrepAlterColumnType(List **wqueue,
 					  AlteredTableInfo *tab, Relation rel,
 					  bool recurse, bool recursing,
@@ -974,12 +974,11 @@ ExecuteTruncate(TruncateStmt *stmt)
 		Relation	rel = (Relation) lfirst(cell);
 
 		/*
-		 * Normally, we need a transaction-safe truncation here.  However,
-		 * if the table was either created in the current (sub)transaction
-		 * or has a new relfilenode in the current (sub)transaction, then
-		 * we can just truncate it in-place, because a rollback would
-		 * cause the whole table or the current physical file to be
-		 * thrown away anyway.
+		 * Normally, we need a transaction-safe truncation here.  However, if
+		 * the table was either created in the current (sub)transaction or has
+		 * a new relfilenode in the current (sub)transaction, then we can just
+		 * truncate it in-place, because a rollback would cause the whole
+		 * table or the current physical file to be thrown away anyway.
 		 */
 		if (rel->rd_createSubid == mySubid ||
 			rel->rd_newRelfilenodeSubid == mySubid)
@@ -1112,7 +1111,7 @@ truncate_check_rel(Relation rel)
 
 /*
  * storage_name
- *    returns the name corresponding to a typstorage/attstorage enum value
+ *	  returns the name corresponding to a typstorage/attstorage enum value
  */
 static const char *
 storage_name(char c)
@@ -1201,7 +1200,7 @@ MergeAttributes(List *schema, List *supers, bool istemp,
 	int			parentsWithOids = 0;
 	bool		have_bogus_defaults = false;
 	int			child_attno;
-	static Node	bogus_marker = { 0 };		/* marks conflicting defaults */
+	static Node bogus_marker = {0};		/* marks conflicting defaults */
 
 	/*
 	 * Check for and reject tables with too many columns. We perform this
@@ -1234,10 +1233,11 @@ MergeAttributes(List *schema, List *supers, bool istemp,
 		ListCell   *prev = entry;
 
 		if (coldef->typeName == NULL)
+
 			/*
-			 * Typed table column option that does not belong to a
-			 * column from the type.  This works because the columns
-			 * from the type come first in the list.
+			 * Typed table column option that does not belong to a column from
+			 * the type.  This works because the columns from the type come
+			 * first in the list.
 			 */
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_COLUMN),
@@ -1247,14 +1247,16 @@ MergeAttributes(List *schema, List *supers, bool istemp,
 		while (rest != NULL)
 		{
 			ColumnDef  *restdef = lfirst(rest);
-			ListCell   *next = lnext(rest); /* need to save it in case we delete it */
+			ListCell   *next = lnext(rest);		/* need to save it in case we
+												 * delete it */
 
 			if (strcmp(coldef->colname, restdef->colname) == 0)
 			{
 				if (coldef->is_from_type)
 				{
-					/* merge the column options into the column from
-					 * the type */
+					/*
+					 * merge the column options into the column from the type
+					 */
 					coldef->is_not_null = restdef->is_not_null;
 					coldef->raw_default = restdef->raw_default;
 					coldef->cooked_default = restdef->cooked_default;
@@ -1391,11 +1393,11 @@ MergeAttributes(List *schema, List *supers, bool istemp,
 				else if (def->storage != attribute->attstorage)
 					ereport(ERROR,
 							(errcode(ERRCODE_DATATYPE_MISMATCH),
-						errmsg("inherited column \"%s\" has a storage parameter conflict",
-							   attributeName),
-							   errdetail("%s versus %s",
-										 storage_name(def->storage),
-										 storage_name(attribute->attstorage))));
+							 errmsg("inherited column \"%s\" has a storage parameter conflict",
+									attributeName),
+							 errdetail("%s versus %s",
+									   storage_name(def->storage),
+									   storage_name(attribute->attstorage))));
 
 				def->inhcount++;
 				/* Merge of NOT NULL constraints = OR 'em together */
@@ -1563,11 +1565,11 @@ MergeAttributes(List *schema, List *supers, bool istemp,
 				else if (newdef->storage != 0 && def->storage != newdef->storage)
 					ereport(ERROR,
 							(errcode(ERRCODE_DATATYPE_MISMATCH),
-						errmsg("column \"%s\" has a storage parameter conflict",
-							   attributeName),
-							   errdetail("%s versus %s",
-										 storage_name(def->storage),
-										 storage_name(newdef->storage))));
+					 errmsg("column \"%s\" has a storage parameter conflict",
+							attributeName),
+							 errdetail("%s versus %s",
+									   storage_name(def->storage),
+									   storage_name(newdef->storage))));
 
 				/* Mark the column as locally defined */
 				def->is_local = true;
@@ -1978,8 +1980,10 @@ renameatt(Oid myrelid,
 	 */
 	if (recurse)
 	{
-		List	   *child_oids, *child_numparents;
-		ListCell   *lo, *li;
+		List	   *child_oids,
+				   *child_numparents;
+		ListCell   *lo,
+				   *li;
 
 		/*
 		 * we need the number of parents for each child so that the recursive
@@ -2039,13 +2043,13 @@ renameatt(Oid myrelid,
 						oldattname)));
 
 	/*
-	 * if the attribute is inherited, forbid the renaming.  if this is a
+	 * if the attribute is inherited, forbid the renaming.	if this is a
 	 * top-level call to renameatt(), then expected_parents will be 0, so the
 	 * effect of this code will be to prohibit the renaming if the attribute
 	 * is inherited at all.  if this is a recursive call to renameatt(),
 	 * expected_parents will be the number of parents the current relation has
-	 * within the inheritance hierarchy being processed, so we'll prohibit
-	 * the renaming only if there are additional parents from elsewhere.
+	 * within the inheritance hierarchy being processed, so we'll prohibit the
+	 * renaming only if there are additional parents from elsewhere.
 	 */
 	if (attform->attinhcount > expected_parents)
 		ereport(ERROR,
@@ -2861,9 +2865,9 @@ ATRewriteTables(List **wqueue)
 			OldHeap = heap_open(tab->relid, NoLock);
 
 			/*
-			 * We don't support rewriting of system catalogs; there are
-			 * too many corner cases and too little benefit.  In particular
-			 * this is certainly not going to work for mapped catalogs.
+			 * We don't support rewriting of system catalogs; there are too
+			 * many corner cases and too little benefit.  In particular this
+			 * is certainly not going to work for mapped catalogs.
 			 */
 			if (IsSystemRelation(OldHeap))
 				ereport(ERROR,
@@ -3007,11 +3011,10 @@ ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap)
 		newrel = NULL;
 
 	/*
-	 * Prepare a BulkInsertState and options for heap_insert. Because
-	 * we're building a new heap, we can skip WAL-logging and fsync it
-	 * to disk at the end instead (unless WAL-logging is required for
-	 * archiving or streaming replication). The FSM is empty too,
-	 * so don't bother using it.
+	 * Prepare a BulkInsertState and options for heap_insert. Because we're
+	 * building a new heap, we can skip WAL-logging and fsync it to disk at
+	 * the end instead (unless WAL-logging is required for archiving or
+	 * streaming replication). The FSM is empty too, so don't bother using it.
 	 */
 	if (newrel)
 	{
@@ -3255,7 +3258,8 @@ ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap)
 		/* If we skipped writing WAL, then we need to sync the heap. */
 		if (hi_options & HEAP_INSERT_SKIP_WAL)
 		{
-			char reason[NAMEDATALEN + 30];
+			char		reason[NAMEDATALEN + 30];
+
 			snprintf(reason, sizeof(reason), "table rewrite on \"%s\"",
 					 RelationGetRelationName(newrel));
 			XLogReportUnloggedStatement(reason);
@@ -4205,7 +4209,7 @@ ATExecSetOptions(Relation rel, const char *colName, Node *options,
 	/* Generate new proposed attoptions (text array) */
 	Assert(IsA(options, List));
 	datum = SysCacheGetAttr(ATTNAME, tuple, Anum_pg_attribute_attoptions,
-		&isnull);
+							&isnull);
 	newOptions = transformRelOptions(isnull ? (Datum) 0 : datum,
 									 (List *) options, NULL, NULL, false,
 									 isReset);
@@ -4338,8 +4342,10 @@ ATExecDropColumn(List **wqueue, Relation rel, const char *colName,
 	 * get the number of the attribute
 	 */
 	tuple = SearchSysCacheAttName(RelationGetRelid(rel), colName);
-	if (!HeapTupleIsValid(tuple)){
-		if (!missing_ok){
+	if (!HeapTupleIsValid(tuple))
+	{
+		if (!missing_ok)
+		{
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_COLUMN),
 					 errmsg("column \"%s\" of relation \"%s\" does not exist",
@@ -4574,9 +4580,10 @@ ATExecAddConstraint(List **wqueue, AlteredTableInfo *tab, Relation rel,
 			break;
 
 		case CONSTR_FOREIGN:
+
 			/*
-			 * Note that we currently never recurse for FK constraints, so
-			 * the "recurse" flag is silently ignored.
+			 * Note that we currently never recurse for FK constraints, so the
+			 * "recurse" flag is silently ignored.
 			 *
 			 * Assign or validate constraint name
 			 */
@@ -4595,7 +4602,7 @@ ATExecAddConstraint(List **wqueue, AlteredTableInfo *tab, Relation rel,
 			else
 				newConstraint->conname =
 					ChooseConstraintName(RelationGetRelationName(rel),
-										 strVal(linitial(newConstraint->fk_attrs)),
+								   strVal(linitial(newConstraint->fk_attrs)),
 										 "fkey",
 										 RelationGetNamespace(rel),
 										 NIL);
@@ -5093,9 +5100,9 @@ transformFkeyGetPrimaryKey(Relation pkrel, Oid *indexOid,
 		if (indexStruct->indisprimary)
 		{
 			/*
-			 * Refuse to use a deferrable primary key.  This is per SQL spec,
-			 * and there would be a lot of interesting semantic problems if
-			 * we tried to allow it.
+			 * Refuse to use a deferrable primary key.	This is per SQL spec,
+			 * and there would be a lot of interesting semantic problems if we
+			 * tried to allow it.
 			 */
 			if (!indexStruct->indimmediate)
 				ereport(ERROR,
@@ -5243,15 +5250,15 @@ transformFkeyCheckAttrs(Relation pkrel,
 			}
 
 			/*
-			 * Refuse to use a deferrable unique/primary key.  This is per
-			 * SQL spec, and there would be a lot of interesting semantic
-			 * problems if we tried to allow it.
+			 * Refuse to use a deferrable unique/primary key.  This is per SQL
+			 * spec, and there would be a lot of interesting semantic problems
+			 * if we tried to allow it.
 			 */
 			if (found && !indexStruct->indimmediate)
 			{
 				/*
-				 * Remember that we found an otherwise matching index, so
-				 * that we can generate a more appropriate error message.
+				 * Remember that we found an otherwise matching index, so that
+				 * we can generate a more appropriate error message.
 				 */
 				found_deferrable = true;
 				found = false;
@@ -5623,12 +5630,14 @@ ATExecDropConstraint(Relation rel, const char *constrName,
 
 	systable_endscan(scan);
 
-	if (!found){
-		if (!missing_ok){
+	if (!found)
+	{
+		if (!missing_ok)
+		{
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_OBJECT),
-					 errmsg("constraint \"%s\" of relation \"%s\" does not exist",
-							constrName, RelationGetRelationName(rel))));
+				errmsg("constraint \"%s\" of relation \"%s\" does not exist",
+					   constrName, RelationGetRelationName(rel))));
 		}
 		else
 		{
@@ -5639,6 +5648,7 @@ ATExecDropConstraint(Relation rel, const char *constrName,
 			return;
 		}
 	}
+
 	/*
 	 * Propagate to children as appropriate.  Unlike most other ALTER
 	 * routines, we have to do this one level of recursion at a time; we can't
@@ -6997,12 +7007,13 @@ ATExecSetTableSpace(Oid tableOid, Oid newTableSpace)
 	heap_close(pg_class, RowExclusiveLock);
 
 	/*
-	 * Write an XLOG UNLOGGED record if WAL-logging was skipped because
-	 * WAL archiving is not enabled.
+	 * Write an XLOG UNLOGGED record if WAL-logging was skipped because WAL
+	 * archiving is not enabled.
 	 */
 	if (!XLogIsNeeded() && !rel->rd_istemp)
 	{
-		char reason[NAMEDATALEN + 40];
+		char		reason[NAMEDATALEN + 40];
+
 		snprintf(reason, sizeof(reason), "ALTER TABLE SET TABLESPACE on \"%s\"",
 				 RelationGetRelationName(rel));
 
@@ -7039,8 +7050,8 @@ copy_relation_data(SMgrRelation src, SMgrRelation dst,
 	 * enabled AND it's not a temp rel.
 	 *
 	 * Note: If you change the conditions here, update the conditions in
-	 * ATExecSetTableSpace() for when an XLOG UNLOGGED record is written
-	 * to match.
+	 * ATExecSetTableSpace() for when an XLOG UNLOGGED record is written to
+	 * match.
 	 */
 	use_wal = XLogIsNeeded() && !istemp;
 

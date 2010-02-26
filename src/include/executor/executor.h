@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/executor/executor.h,v 1.167 2010/02/08 04:33:54 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/executor/executor.h,v 1.168 2010/02/26 02:01:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -172,12 +172,13 @@ extern TupleTableSlot *EvalPlanQual(EState *estate, EPQState *epqstate,
 extern HeapTuple EvalPlanQualFetch(EState *estate, Relation relation,
 				  int lockmode, ItemPointer tid, TransactionId priorXmax);
 extern void EvalPlanQualInit(EPQState *epqstate, EState *estate,
-							 Plan *subplan, int epqParam);
+				 Plan *subplan, int epqParam);
 extern void EvalPlanQualSetPlan(EPQState *epqstate, Plan *subplan);
 extern void EvalPlanQualAddRowMark(EPQState *epqstate, ExecRowMark *erm);
 extern void EvalPlanQualSetTuple(EPQState *epqstate, Index rti,
-								 HeapTuple tuple);
+					 HeapTuple tuple);
 extern HeapTuple EvalPlanQualGetTuple(EPQState *epqstate, Index rti);
+
 #define EvalPlanQualSetSlot(epqstate, slot)  ((epqstate)->origslot = (slot))
 extern void EvalPlanQualFetchRowMarks(EPQState *epqstate);
 extern TupleTableSlot *EvalPlanQualNext(EPQState *epqstate);
@@ -221,7 +222,7 @@ typedef TupleTableSlot *(*ExecScanAccessMtd) (ScanState *node);
 typedef bool (*ExecScanRecheckMtd) (ScanState *node, TupleTableSlot *slot);
 
 extern TupleTableSlot *ExecScan(ScanState *node, ExecScanAccessMtd accessMtd,
-								ExecScanRecheckMtd recheckMtd);
+		 ExecScanRecheckMtd recheckMtd);
 extern void ExecAssignScanProjectionInfo(ScanState *node);
 extern void ExecScanReScan(ScanState *node);
 
@@ -322,11 +323,11 @@ extern void ExecCloseIndices(ResultRelInfo *resultRelInfo);
 extern List *ExecInsertIndexTuples(TupleTableSlot *slot, ItemPointer tupleid,
 					  EState *estate);
 extern bool check_exclusion_constraint(Relation heap, Relation index,
-									   IndexInfo *indexInfo,
-									   ItemPointer tupleid,
-									   Datum *values, bool *isnull,
-									   EState *estate,
-									   bool newIndex, bool errorOK);
+						   IndexInfo *indexInfo,
+						   ItemPointer tupleid,
+						   Datum *values, bool *isnull,
+						   EState *estate,
+						   bool newIndex, bool errorOK);
 
 extern void RegisterExprContextCallback(ExprContext *econtext,
 							ExprContextCallbackFunction function,

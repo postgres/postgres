@@ -1,6 +1,6 @@
 /* dynamic SQL support routines
  *
- * $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/descriptor.c,v 1.35 2010/01/15 13:19:12 meskes Exp $
+ * $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/descriptor.c,v 1.36 2010/02/26 02:01:30 momjian Exp $
  */
 
 #define POSTGRES_ECPG_INTERNAL
@@ -382,6 +382,7 @@ ECPGget_desc(int lineno, const char *desc_name, int index,...)
 			case ECPGd_ret_octet:
 
 				RETURN_IF_NO_DATA;
+
 				/*
 				 * this is like ECPGstore_result
 				 */
@@ -485,6 +486,7 @@ ECPGget_desc(int lineno, const char *desc_name, int index,...)
 	sqlca->sqlerrd[2] = ntuples;
 	return (true);
 }
+
 #undef RETURN_IF_NO_DATA
 
 bool
@@ -729,7 +731,7 @@ ecpg_find_desc(int line, const char *name)
 }
 
 bool
-ECPGdescribe(int line, int compat, bool input, const char *connection_name, const char *stmt_name, ...)
+ECPGdescribe(int line, int compat, bool input, const char *connection_name, const char *stmt_name,...)
 {
 	bool		ret = false;
 	struct connection *con;
@@ -748,7 +750,7 @@ ECPGdescribe(int line, int compat, bool input, const char *connection_name, cons
 	if (!con)
 	{
 		ecpg_raise(line, ECPG_NO_CONN, ECPG_SQLSTATE_CONNECTION_DOES_NOT_EXIST,
-				connection_name ? connection_name : ecpg_gettext("NULL"));
+				   connection_name ? connection_name : ecpg_gettext("NULL"));
 		return ret;
 	}
 	prep = ecpg_find_prepared_statement(stmt_name, con, NULL);
@@ -762,8 +764,10 @@ ECPGdescribe(int line, int compat, bool input, const char *connection_name, cons
 
 	for (;;)
 	{
-		enum ECPGttype	type, dummy_type;
-		void		*ptr, *dummy_ptr;
+		enum ECPGttype type,
+					dummy_type;
+		void	   *ptr,
+				   *dummy_ptr;
 		long		dummy;
 
 		/* variable type */
@@ -772,7 +776,7 @@ ECPGdescribe(int line, int compat, bool input, const char *connection_name, cons
 		if (type == ECPGt_EORT)
 			break;
 
-		/* rest of variable parameters*/
+		/* rest of variable parameters */
 		ptr = va_arg(args, void *);
 		dummy = va_arg(args, long);
 		dummy = va_arg(args, long);
@@ -788,84 +792,84 @@ ECPGdescribe(int line, int compat, bool input, const char *connection_name, cons
 		switch (type)
 		{
 			case ECPGt_descriptor:
-			{
-				char	*name = ptr;
-				struct descriptor *desc = ecpg_find_desc(line, name);
+				{
+					char	   *name = ptr;
+					struct descriptor *desc = ecpg_find_desc(line, name);
 
-				if (desc == NULL)
+					if (desc == NULL)
+						break;
+
+					res = PQdescribePrepared(con->connection, stmt_name);
+					if (!ecpg_check_PQresult(res, line, con->connection, compat))
+						break;
+
+					if (desc->result != NULL)
+						PQclear(desc->result);
+
+					desc->result = res;
+					ret = true;
 					break;
-
-				res = PQdescribePrepared(con->connection, stmt_name);
-				if (!ecpg_check_PQresult(res, line, con->connection, compat))
-					break;
-
-				if (desc->result != NULL)
-					PQclear(desc->result);
-
-				desc->result = res;
-				ret = true;
-				break;
-			}
+				}
 			case ECPGt_sqlda:
-			{
-				if (INFORMIX_MODE(compat))
 				{
-					struct sqlda_compat **_sqlda = ptr;
-					struct sqlda_compat *sqlda;
-
-					res = PQdescribePrepared(con->connection, stmt_name);
-					if (!ecpg_check_PQresult(res, line, con->connection, compat))
-						break;
-
-					sqlda = ecpg_build_compat_sqlda(line, res, -1, compat);
-					if (sqlda)
+					if (INFORMIX_MODE(compat))
 					{
-						struct sqlda_compat *sqlda_old = *_sqlda;
-						struct sqlda_compat *sqlda_old1;
+						struct sqlda_compat **_sqlda = ptr;
+						struct sqlda_compat *sqlda;
 
-						while (sqlda_old)
+						res = PQdescribePrepared(con->connection, stmt_name);
+						if (!ecpg_check_PQresult(res, line, con->connection, compat))
+							break;
+
+						sqlda = ecpg_build_compat_sqlda(line, res, -1, compat);
+						if (sqlda)
 						{
-							sqlda_old1 = sqlda_old->desc_next;
-							free(sqlda_old);
-							sqlda_old = sqlda_old1;
+							struct sqlda_compat *sqlda_old = *_sqlda;
+							struct sqlda_compat *sqlda_old1;
+
+							while (sqlda_old)
+							{
+								sqlda_old1 = sqlda_old->desc_next;
+								free(sqlda_old);
+								sqlda_old = sqlda_old1;
+							}
+
+							*_sqlda = sqlda;
+							ret = true;
 						}
 
-						*_sqlda = sqlda;
-						ret = true;
+						PQclear(res);
 					}
-
-					PQclear(res);
-				}
-				else
-				{
-					struct sqlda_struct **_sqlda = ptr;
-					struct sqlda_struct *sqlda;
-
-					res = PQdescribePrepared(con->connection, stmt_name);
-					if (!ecpg_check_PQresult(res, line, con->connection, compat))
-						break;
-
-					sqlda = ecpg_build_native_sqlda(line, res, -1, compat);
-					if (sqlda)
+					else
 					{
-						struct sqlda_struct *sqlda_old = *_sqlda;
-						struct sqlda_struct *sqlda_old1;
+						struct sqlda_struct **_sqlda = ptr;
+						struct sqlda_struct *sqlda;
 
-						while (sqlda_old)
+						res = PQdescribePrepared(con->connection, stmt_name);
+						if (!ecpg_check_PQresult(res, line, con->connection, compat))
+							break;
+
+						sqlda = ecpg_build_native_sqlda(line, res, -1, compat);
+						if (sqlda)
 						{
-							sqlda_old1 = sqlda_old->desc_next;
-							free(sqlda_old);
-							sqlda_old = sqlda_old1;
+							struct sqlda_struct *sqlda_old = *_sqlda;
+							struct sqlda_struct *sqlda_old1;
+
+							while (sqlda_old)
+							{
+								sqlda_old1 = sqlda_old->desc_next;
+								free(sqlda_old);
+								sqlda_old = sqlda_old1;
+							}
+
+							*_sqlda = sqlda;
+							ret = true;
 						}
 
-						*_sqlda = sqlda;
-						ret = true;
+						PQclear(res);
 					}
-
-					PQclear(res);
+					break;
 				}
-				break;
-			}
 			default:
 				/* nothing else may come */
 				;

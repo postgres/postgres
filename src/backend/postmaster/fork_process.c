@@ -7,7 +7,7 @@
  * Copyright (c) 1996-2010, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/fork_process.c,v 1.11 2010/01/11 18:39:32 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/fork_process.c,v 1.12 2010/02/26 02:00:55 momjian Exp $
  */
 #include "postgres.h"
 #include "postmaster/fork_process.h"
@@ -69,31 +69,31 @@ fork_process(void)
 		 * stupid, but the kernel hackers seem uninterested in improving it.)
 		 * Therefore it's often a good idea to protect the postmaster by
 		 * setting its oom_adj value negative (which has to be done in a
-		 * root-owned startup script).  If you just do that much, all child
+		 * root-owned startup script).	If you just do that much, all child
 		 * processes will also be protected against OOM kill, which might not
 		 * be desirable.  You can then choose to build with LINUX_OOM_ADJ
-		 * #defined to 0, or some other value that you want child processes
-		 * to adopt here.
+		 * #defined to 0, or some other value that you want child processes to
+		 * adopt here.
 		 */
 #ifdef LINUX_OOM_ADJ
 		{
 			/*
-			 * Use open() not stdio, to ensure we control the open flags.
-			 * Some Linux security environments reject anything but O_WRONLY.
+			 * Use open() not stdio, to ensure we control the open flags. Some
+			 * Linux security environments reject anything but O_WRONLY.
 			 */
-			int		fd = open("/proc/self/oom_adj", O_WRONLY, 0);
+			int			fd = open("/proc/self/oom_adj", O_WRONLY, 0);
 
 			/* We ignore all errors */
 			if (fd >= 0)
 			{
-				char	buf[16];
+				char		buf[16];
 
 				snprintf(buf, sizeof(buf), "%d\n", LINUX_OOM_ADJ);
 				(void) write(fd, buf, strlen(buf));
 				close(fd);
 			}
 		}
-#endif /* LINUX_OOM_ADJ */
+#endif   /* LINUX_OOM_ADJ */
 	}
 
 	return result;

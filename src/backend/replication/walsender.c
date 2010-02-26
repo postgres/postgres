@@ -30,7 +30,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/replication/walsender.c,v 1.8 2010/02/25 07:31:40 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/replication/walsender.c,v 1.9 2010/02/26 02:00:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,11 +61,11 @@ WalSndCtlData *WalSndCtl = NULL;
 static WalSnd *MyWalSnd = NULL;
 
 /* Global state */
-bool	am_walsender	= false;	/* Am I a walsender process ? */
+bool		am_walsender = false;		/* Am I a walsender process ? */
 
 /* User-settable parameters for walsender */
-int	MaxWalSenders = 0;		/* the maximum number of concurrent walsenders */
-int	WalSndDelay	= 200;		/* max sleep time between some actions */
+int			MaxWalSenders = 0;	/* the maximum number of concurrent walsenders */
+int			WalSndDelay = 200;	/* max sleep time between some actions */
 
 #define NAPTIME_PER_CYCLE 100	/* max sleep time between cycles (100ms) */
 
@@ -96,9 +96,9 @@ static void WalSndQuickDieHandler(SIGNAL_ARGS);
 
 /* Prototypes for private functions */
 static int	WalSndLoop(void);
-static void	InitWalSnd(void);
-static void	WalSndHandshake(void);
-static void	WalSndKill(int code, Datum arg);
+static void InitWalSnd(void);
+static void WalSndHandshake(void);
+static void WalSndKill(int code, Datum arg);
 static void XLogRead(char *buf, XLogRecPtr recptr, Size nbytes);
 static bool XLogSend(StringInfo outMsg);
 static void CheckClosedConnection(void);
@@ -155,13 +155,13 @@ static void
 WalSndHandshake(void)
 {
 	StringInfoData input_message;
-	bool replication_started = false;
+	bool		replication_started = false;
 
 	initStringInfo(&input_message);
 
 	while (!replication_started)
 	{
-		int firstchar;
+		int			firstchar;
 
 		/* Wait for a command to arrive */
 		firstchar = pq_getbyte();
@@ -183,99 +183,99 @@ WalSndHandshake(void)
 			 * blocking because we've been able to get message type code.
 			 */
 			if (pq_getmessage(&input_message, 0))
-				firstchar = EOF;		/* suitable message already logged */
+				firstchar = EOF;	/* suitable message already logged */
 		}
 
 		/* Handle the very limited subset of commands expected in this phase */
 		switch (firstchar)
 		{
-			case 'Q':	/* Query message */
-			{
-				const char *query_string;
-				XLogRecPtr	recptr;
-
-				query_string = pq_getmsgstring(&input_message);
-				pq_getmsgend(&input_message);
-
-				if (strcmp(query_string, "IDENTIFY_SYSTEM") == 0)
+			case 'Q':			/* Query message */
 				{
-					StringInfoData	buf;
-					char	sysid[32];
-					char	tli[11];
+					const char *query_string;
+					XLogRecPtr	recptr;
 
-					/*
-					 * Reply with a result set with one row, two columns.
-					 * First col is system ID, and second if timeline ID
-					 */
+					query_string = pq_getmsgstring(&input_message);
+					pq_getmsgend(&input_message);
 
-					snprintf(sysid, sizeof(sysid), UINT64_FORMAT,
-							 GetSystemIdentifier());
-					snprintf(tli, sizeof(tli), "%u", ThisTimeLineID);
+					if (strcmp(query_string, "IDENTIFY_SYSTEM") == 0)
+					{
+						StringInfoData buf;
+						char		sysid[32];
+						char		tli[11];
 
-					/* Send a RowDescription message */
-					pq_beginmessage(&buf, 'T');
-					pq_sendint(&buf, 2, 2); /* 2 fields */
+						/*
+						 * Reply with a result set with one row, two columns.
+						 * First col is system ID, and second if timeline ID
+						 */
 
-					/* first field */
-					pq_sendstring(&buf, "systemid"); /* col name */
-					pq_sendint(&buf, 0, 4);			/* table oid */
-					pq_sendint(&buf, 0, 2);			/* attnum */
-					pq_sendint(&buf, TEXTOID, 4);	/* type oid */
-					pq_sendint(&buf, -1, 2);		/* typlen */
-					pq_sendint(&buf, 0, 4);			/* typmod */
-					pq_sendint(&buf, 0, 2);			/* format code */
+						snprintf(sysid, sizeof(sysid), UINT64_FORMAT,
+								 GetSystemIdentifier());
+						snprintf(tli, sizeof(tli), "%u", ThisTimeLineID);
 
-					/* second field */
-					pq_sendstring(&buf, "timeline"); /* col name */
-					pq_sendint(&buf, 0, 4);			/* table oid */
-					pq_sendint(&buf, 0, 2);			/* attnum */
-					pq_sendint(&buf, INT4OID, 4);	/* type oid */
-					pq_sendint(&buf, 4, 2);			/* typlen */
-					pq_sendint(&buf, 0, 4);			/* typmod */
-					pq_sendint(&buf, 0, 2);			/* format code */
-					pq_endmessage(&buf);
+						/* Send a RowDescription message */
+						pq_beginmessage(&buf, 'T');
+						pq_sendint(&buf, 2, 2); /* 2 fields */
 
-					/* Send a DataRow message */
-					pq_beginmessage(&buf, 'D');
-					pq_sendint(&buf, 2, 2);			/* # of columns */
-					pq_sendint(&buf, strlen(sysid), 4); /* col1 len */
-					pq_sendbytes(&buf, (char *) &sysid, strlen(sysid));
-					pq_sendint(&buf, strlen(tli), 4); /* col2 len */
-					pq_sendbytes(&buf, (char *) tli, strlen(tli));
-					pq_endmessage(&buf);
+						/* first field */
+						pq_sendstring(&buf, "systemid");		/* col name */
+						pq_sendint(&buf, 0, 4); /* table oid */
+						pq_sendint(&buf, 0, 2); /* attnum */
+						pq_sendint(&buf, TEXTOID, 4);	/* type oid */
+						pq_sendint(&buf, -1, 2);		/* typlen */
+						pq_sendint(&buf, 0, 4); /* typmod */
+						pq_sendint(&buf, 0, 2); /* format code */
 
-					/* Send CommandComplete and ReadyForQuery messages */
-					EndCommand("SELECT", DestRemote);
-					ReadyForQuery(DestRemote);
+						/* second field */
+						pq_sendstring(&buf, "timeline");		/* col name */
+						pq_sendint(&buf, 0, 4); /* table oid */
+						pq_sendint(&buf, 0, 2); /* attnum */
+						pq_sendint(&buf, INT4OID, 4);	/* type oid */
+						pq_sendint(&buf, 4, 2); /* typlen */
+						pq_sendint(&buf, 0, 4); /* typmod */
+						pq_sendint(&buf, 0, 2); /* format code */
+						pq_endmessage(&buf);
+
+						/* Send a DataRow message */
+						pq_beginmessage(&buf, 'D');
+						pq_sendint(&buf, 2, 2); /* # of columns */
+						pq_sendint(&buf, strlen(sysid), 4);		/* col1 len */
+						pq_sendbytes(&buf, (char *) &sysid, strlen(sysid));
+						pq_sendint(&buf, strlen(tli), 4);		/* col2 len */
+						pq_sendbytes(&buf, (char *) tli, strlen(tli));
+						pq_endmessage(&buf);
+
+						/* Send CommandComplete and ReadyForQuery messages */
+						EndCommand("SELECT", DestRemote);
+						ReadyForQuery(DestRemote);
+					}
+					else if (sscanf(query_string, "START_REPLICATION %X/%X",
+									&recptr.xlogid, &recptr.xrecoff) == 2)
+					{
+						StringInfoData buf;
+
+						/* Send a CopyOutResponse message, and start streaming */
+						pq_beginmessage(&buf, 'H');
+						pq_sendbyte(&buf, 0);
+						pq_sendint(&buf, 0, 2);
+						pq_endmessage(&buf);
+
+						/*
+						 * Initialize position to the received one, then the
+						 * xlog records begin to be shipped from that position
+						 */
+						sentPtr = recptr;
+
+						/* break out of the loop */
+						replication_started = true;
+					}
+					else
+					{
+						ereport(FATAL,
+								(errcode(ERRCODE_PROTOCOL_VIOLATION),
+								 errmsg("invalid standby query string: %s", query_string)));
+					}
+					break;
 				}
-				else if (sscanf(query_string, "START_REPLICATION %X/%X",
-								&recptr.xlogid, &recptr.xrecoff) == 2)
-				{
-					StringInfoData	buf;
-
-					/* Send a CopyOutResponse message, and start streaming */
-					pq_beginmessage(&buf, 'H');
-					pq_sendbyte(&buf, 0);
-					pq_sendint(&buf, 0, 2);
-					pq_endmessage(&buf);
-
-					/*
-					 * Initialize position to the received one, then
-					 * the xlog records begin to be shipped from that position
-					 */
-					sentPtr	= recptr;
-
-					/* break out of the loop */
-					replication_started = true;
-				}
-				else
-				{
-					ereport(FATAL,
-							(errcode(ERRCODE_PROTOCOL_VIOLATION),
-							 errmsg("invalid standby query string: %s", query_string)));
-				}
-				break;
-			}
 
 			case 'X':
 				/* standby is closing the connection */
@@ -303,7 +303,7 @@ static void
 CheckClosedConnection(void)
 {
 	unsigned char firstchar;
-	int r;
+	int			r;
 
 	r = pq_getbyte_if_available(&firstchar);
 	if (r < 0)
@@ -323,9 +323,9 @@ CheckClosedConnection(void)
 	/* Handle the very limited subset of commands expected in this phase */
 	switch (firstchar)
 	{
-		/*
-		 * 'X' means that the standby is closing down the socket.
-		 */
+			/*
+			 * 'X' means that the standby is closing down the socket.
+			 */
 		case 'X':
 			proc_exit(0);
 
@@ -348,7 +348,7 @@ WalSndLoop(void)
 	/* Loop forever */
 	for (;;)
 	{
-		int remain;	/* remaining time (ms) */
+		int			remain;		/* remaining time (ms) */
 
 		/*
 		 * Emergency bailout if postmaster has died.  This is to avoid the
@@ -416,15 +416,16 @@ WalSndLoop(void)
 	return 1;
 
 eof:
+
 	/*
-	 * Reset whereToSendOutput to prevent ereport from attempting
-	 * to send any more messages to the standby.
+	 * Reset whereToSendOutput to prevent ereport from attempting to send any
+	 * more messages to the standby.
 	 */
 	if (whereToSendOutput == DestRemote)
 		whereToSendOutput = DestNone;
 
 	proc_exit(0);
-	return 1;		/* keep the compiler quiet */
+	return 1;					/* keep the compiler quiet */
 }
 
 /* Initialize a per-walsender data structure for this walsender process */
@@ -432,7 +433,7 @@ static void
 InitWalSnd(void)
 {
 	/* use volatile pointer to prevent code rearrangement */
-	int		i;
+	int			i;
 
 	/*
 	 * WalSndCtl should be set up already (we inherit this by fork() or
@@ -497,13 +498,13 @@ WalSndKill(int code, Datum arg)
 void
 XLogRead(char *buf, XLogRecPtr recptr, Size nbytes)
 {
-	char path[MAXPGPATH];
-	uint32 startoff;
+	char		path[MAXPGPATH];
+	uint32		startoff;
 
 	while (nbytes > 0)
 	{
-		int segbytes;
-		int readbytes;
+		int			segbytes;
+		int			readbytes;
 
 		startoff = recptr.xrecoff % XLogSegSize;
 
@@ -518,7 +519,7 @@ XLogRead(char *buf, XLogRecPtr recptr, Size nbytes)
 
 			sendFile = BasicOpenFile(path, O_RDONLY | PG_BINARY, 0);
 			if (sendFile < 0)
-				ereport(FATAL, /* XXX: Why FATAL? */
+				ereport(FATAL,	/* XXX: Why FATAL? */
 						(errcode_for_file_access(),
 						 errmsg("could not open file \"%s\" (log file %u, segment %u): %m",
 								path, sendId, sendSeg)));
@@ -546,9 +547,9 @@ XLogRead(char *buf, XLogRecPtr recptr, Size nbytes)
 		if (readbytes <= 0)
 			ereport(FATAL,
 					(errcode_for_file_access(),
-					 errmsg("could not read from log file %u, segment %u, offset %u, "
-							"length %lu: %m",
-							sendId, sendSeg, sendOff, (unsigned long) segbytes)));
+			errmsg("could not read from log file %u, segment %u, offset %u, "
+				   "length %lu: %m",
+				   sendId, sendSeg, sendOff, (unsigned long) segbytes)));
 
 		/* Update state for read */
 		XLByteAdvance(recptr, readbytes);
@@ -569,7 +570,8 @@ static bool
 XLogSend(StringInfo outMsg)
 {
 	XLogRecPtr	SendRqstPtr;
-	char	activitymsg[50];
+	char		activitymsg[50];
+
 	/* use volatile pointer to prevent code rearrangement */
 	volatile WalSnd *walsnd = MyWalSnd;
 
@@ -581,15 +583,15 @@ XLogSend(StringInfo outMsg)
 		return true;
 
 	/*
-	 * We gather multiple records together by issuing just one XLogRead()
-	 * of a suitable size, and send them as one CopyData message. Repeat
-	 * until we've sent everything we can.
+	 * We gather multiple records together by issuing just one XLogRead() of a
+	 * suitable size, and send them as one CopyData message. Repeat until
+	 * we've sent everything we can.
 	 */
 	while (XLByteLT(sentPtr, SendRqstPtr))
 	{
-		XLogRecPtr startptr;
-		XLogRecPtr endptr;
-		Size	nbytes;
+		XLogRecPtr	startptr;
+		XLogRecPtr	endptr;
+		Size		nbytes;
 
 		/*
 		 * Figure out how much to send in one message. If there's less than
@@ -600,8 +602,8 @@ XLogSend(StringInfo outMsg)
 		 * relies on the fact that we never split a WAL record across two
 		 * messages. Since a long WAL record is split at page boundary into
 		 * continuation records, page boundary is always a safe cut-off point.
-		 * We also assume that SendRqstPtr never points in the middle of a
-		 * WAL record.
+		 * We also assume that SendRqstPtr never points in the middle of a WAL
+		 * record.
 		 */
 		startptr = sentPtr;
 		if (startptr.xrecoff >= XLogFileSize)
@@ -625,10 +627,10 @@ XLogSend(StringInfo outMsg)
 		/*
 		 * OK to read and send the slice.
 		 *
-		 * We don't need to convert the xlogid/xrecoff from host byte order
-		 * to network byte order because the both server can be expected to
-		 * have the same byte order. If they have different byte order, we
-		 * don't reach here.
+		 * We don't need to convert the xlogid/xrecoff from host byte order to
+		 * network byte order because the both server can be expected to have
+		 * the same byte order. If they have different byte order, we don't
+		 * reach here.
 		 */
 		pq_sendbyte(outMsg, 'w');
 		pq_sendbytes(outMsg, (char *) &startptr, sizeof(startptr));
@@ -644,8 +646,8 @@ XLogSend(StringInfo outMsg)
 		sentPtr = endptr;
 
 		/*
-		 * Read the log directly into the output buffer to prevent
-		 * extra memcpy calls.
+		 * Read the log directly into the output buffer to prevent extra
+		 * memcpy calls.
 		 */
 		enlargeStringInfo(outMsg, nbytes);
 
@@ -714,8 +716,8 @@ WalSndQuickDieHandler(SIGNAL_ARGS)
 	 * system reset cycle if some idiot DBA sends a manual SIGQUIT to a random
 	 * backend.  This is necessary precisely because we don't clean up our
 	 * shared memory state.  (The "dead man switch" mechanism in pmsignal.c
-	 * should ensure the postmaster sees this as a crash, too, but no harm
-	 * in being doubly sure.)
+	 * should ensure the postmaster sees this as a crash, too, but no harm in
+	 * being doubly sure.)
 	 */
 	exit(2);
 }
@@ -732,14 +734,16 @@ void
 WalSndSignals(void)
 {
 	/* Set up signal handlers */
-	pqsignal(SIGHUP, WalSndSigHupHandler);	/* set flag to read config file */
+	pqsignal(SIGHUP, WalSndSigHupHandler);		/* set flag to read config
+												 * file */
 	pqsignal(SIGINT, SIG_IGN);	/* not used */
 	pqsignal(SIGTERM, WalSndShutdownHandler);	/* request shutdown */
 	pqsignal(SIGQUIT, WalSndQuickDieHandler);	/* hard crash time */
 	pqsignal(SIGALRM, SIG_IGN);
 	pqsignal(SIGPIPE, SIG_IGN);
-	pqsignal(SIGUSR1, SIG_IGN);	/* not used */
-	pqsignal(SIGUSR2, WalSndLastCycleHandler);	/* request a last cycle and shutdown */
+	pqsignal(SIGUSR1, SIG_IGN); /* not used */
+	pqsignal(SIGUSR2, WalSndLastCycleHandler);	/* request a last cycle and
+												 * shutdown */
 
 	/* Reset some signals that are accepted by postmaster but not here */
 	pqsignal(SIGCHLD, SIG_DFL);
@@ -753,7 +757,7 @@ WalSndSignals(void)
 Size
 WalSndShmemSize(void)
 {
-	Size size = 0;
+	Size		size = 0;
 
 	size = offsetof(WalSndCtlData, walsnds);
 	size = add_size(size, mul_size(MaxWalSenders, sizeof(WalSnd)));
@@ -765,8 +769,8 @@ WalSndShmemSize(void)
 void
 WalSndShmemInit(void)
 {
-	bool	found;
-	int		i;
+	bool		found;
+	int			i;
 
 	WalSndCtl = (WalSndCtlData *)
 		ShmemInitStruct("Wal Sender Ctl", WalSndShmemSize(), &found);
@@ -783,7 +787,8 @@ WalSndShmemInit(void)
 
 	for (i = 0; i < MaxWalSenders; i++)
 	{
-		WalSnd	*walsnd = &WalSndCtl->walsnds[i];
+		WalSnd	   *walsnd = &WalSndCtl->walsnds[i];
+
 		SpinLockInit(&walsnd->mutex);
 	}
 }
@@ -795,15 +800,15 @@ WalSndShmemInit(void)
 XLogRecPtr
 GetOldestWALSendPointer(void)
 {
-	XLogRecPtr oldest = {0, 0};
-	int		i;
-	bool	found = false;
+	XLogRecPtr	oldest = {0, 0};
+	int			i;
+	bool		found = false;
 
 	for (i = 0; i < MaxWalSenders; i++)
 	{
 		/* use volatile pointer to prevent code rearrangement */
-		volatile WalSnd	*walsnd = &WalSndCtl->walsnds[i];
-		XLogRecPtr recptr;
+		volatile WalSnd *walsnd = &WalSndCtl->walsnds[i];
+		XLogRecPtr	recptr;
 
 		if (walsnd->pid == 0)
 			continue;

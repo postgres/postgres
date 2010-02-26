@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/init/miscinit.c,v 1.182 2010/02/14 18:42:17 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/init/miscinit.c,v 1.183 2010/02/26 02:01:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -299,7 +299,7 @@ SetSessionUserId(Oid userid, bool is_superuser)
  * Currently there are two valid bits in SecurityRestrictionContext:
  *
  * SECURITY_LOCAL_USERID_CHANGE indicates that we are inside an operation
- * that is temporarily changing CurrentUserId via these functions.  This is
+ * that is temporarily changing CurrentUserId via these functions.	This is
  * needed to indicate that the actual value of CurrentUserId is not in sync
  * with guc.c's internal state, so SET ROLE has to be disallowed.
  *
@@ -360,7 +360,7 @@ InSecurityRestrictedOperation(void)
 /*
  * These are obsolete versions of Get/SetUserIdAndSecContext that are
  * only provided for bug-compatibility with some rather dubious code in
- * pljava.  We allow the userid to be set, but only when not inside a
+ * pljava.	We allow the userid to be set, but only when not inside a
  * security restriction context.
  */
 void
@@ -690,9 +690,10 @@ CreateLockFile(const char *filename, bool amPostmaster,
 #ifndef WIN32
 	my_p_pid = getppid();
 #else
+
 	/*
-	 * Windows hasn't got getppid(), but doesn't need it since it's not
-	 * using real kill() either...
+	 * Windows hasn't got getppid(), but doesn't need it since it's not using
+	 * real kill() either...
 	 */
 	my_p_pid = 0;
 #endif

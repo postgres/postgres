@@ -35,7 +35,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/plancache.c,v 1.34 2010/01/15 22:36:34 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/plancache.c,v 1.35 2010/02/26 02:01:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -284,7 +284,7 @@ FastCreateCachedPlan(Node *raw_parse_tree,
  * CachedPlanSetParserHook: set up to use parser callback hooks
  *
  * Use this when a caller wants to manage parameter information via parser
- * callbacks rather than a fixed parameter-types list.  Beware that the
+ * callbacks rather than a fixed parameter-types list.	Beware that the
  * information pointed to by parserSetupArg must be valid for as long as
  * the cached plan might be replanned!
  */
@@ -360,9 +360,9 @@ StoreCachedPlan(CachedPlanSource *plansource,
 	if (plansource->fully_planned)
 	{
 		/*
-		 * Planner already extracted dependencies, we don't have to ...
-		 * except in the case of EXPLAIN.  We assume here that EXPLAIN
-		 * can't appear in a list with other commands.
+		 * Planner already extracted dependencies, we don't have to ... except
+		 * in the case of EXPLAIN.	We assume here that EXPLAIN can't appear
+		 * in a list with other commands.
 		 */
 		plan->relationOids = plan->invalItems = NIL;
 
@@ -552,12 +552,12 @@ RevalidateCachedPlan(CachedPlanSource *plansource, bool useResOwner)
 			/*
 			 * Generate plans for queries.
 			 *
-			 * The planner may try to call SPI-using functions, which causes
-			 * a problem if we're already inside one.  Rather than expect
-			 * all SPI-using code to do SPI_push whenever a replan could
-			 * happen, it seems best to take care of the case here.
+			 * The planner may try to call SPI-using functions, which causes a
+			 * problem if we're already inside one.  Rather than expect all
+			 * SPI-using code to do SPI_push whenever a replan could happen,
+			 * it seems best to take care of the case here.
 			 */
-			bool	pushed;
+			bool		pushed;
 
 			pushed = SPI_push_conditional();
 
@@ -1134,9 +1134,9 @@ ResetPlanCache(void)
 		 * aborted transactions when we can't revalidate them (cf bug #5269).
 		 * In general there is no point in invalidating utility statements
 		 * since they have no plans anyway.  So mark it dead only if it
-		 * contains at least one non-utility statement.  (EXPLAIN counts as
-		 * a non-utility statement, though, since it contains an analyzed
-		 * query that might have dependencies.)
+		 * contains at least one non-utility statement.  (EXPLAIN counts as a
+		 * non-utility statement, though, since it contains an analyzed query
+		 * that might have dependencies.)
 		 */
 		if (plan->fully_planned)
 		{

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/indexcmds.c,v 1.193 2010/02/14 18:42:14 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/indexcmds.c,v 1.194 2010/02/26 02:00:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -310,8 +310,8 @@ DefineIndex(RangeVar *heapRelation,
 	if (exclusionOpNames != NIL && !OidIsValid(accessMethodForm->amgettuple))
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("access method \"%s\" does not support exclusion constraints",
-						accessMethodName)));
+		errmsg("access method \"%s\" does not support exclusion constraints",
+			   accessMethodName)));
 
 	amcanorder = accessMethodForm->amcanorder;
 	amoptions = accessMethodForm->amoptions;
@@ -460,7 +460,7 @@ DefineIndex(RangeVar *heapRelation,
 		else
 		{
 			elog(ERROR, "unknown constraint type");
-			constraint_type = NULL;	/* keep compiler quiet */
+			constraint_type = NULL;		/* keep compiler quiet */
 		}
 
 		ereport(NOTICE,
@@ -476,8 +476,8 @@ DefineIndex(RangeVar *heapRelation,
 	heap_close(rel, NoLock);
 
 	/*
-	 * Make the catalog entries for the index, including constraints.
-	 * Then, if not skip_build || concurrent, actually build the index.
+	 * Make the catalog entries for the index, including constraints. Then, if
+	 * not skip_build || concurrent, actually build the index.
 	 */
 	indexRelationId =
 		index_create(relationId, indexRelationName, indexRelationId,
@@ -494,10 +494,10 @@ DefineIndex(RangeVar *heapRelation,
 
 	/*
 	 * For a concurrent build, it's important to make the catalog entries
-	 * visible to other transactions before we start to build the index.
-	 * That will prevent them from making incompatible HOT updates.  The new
-	 * index will be marked not indisready and not indisvalid, so that no one
-	 * else tries to either insert into it or use it for queries.
+	 * visible to other transactions before we start to build the index. That
+	 * will prevent them from making incompatible HOT updates.	The new index
+	 * will be marked not indisready and not indisvalid, so that no one else
+	 * tries to either insert into it or use it for queries.
 	 *
 	 * We must commit our current transaction so that the index becomes
 	 * visible; then start another.  Note that all the data structures we just
@@ -835,7 +835,7 @@ ComputeIndexAttrs(IndexInfo *indexInfo,
 	/* Allocate space for exclusion operator info, if needed */
 	if (exclusionOpNames)
 	{
-		int		ncols = list_length(attList);
+		int			ncols = list_length(attList);
 
 		Assert(list_length(exclusionOpNames) == ncols);
 		indexInfo->ii_ExclusionOps = (Oid *) palloc(sizeof(Oid) * ncols);
@@ -941,10 +941,10 @@ ComputeIndexAttrs(IndexInfo *indexInfo,
 		 */
 		if (nextExclOp)
 		{
-			List   *opname = (List *) lfirst(nextExclOp);
-			Oid		opid;
-			Oid		opfamily;
-			int		strat;
+			List	   *opname = (List *) lfirst(nextExclOp);
+			Oid			opid;
+			Oid			opfamily;
+			int			strat;
 
 			/*
 			 * Find the operator --- it must accept the column datatype
@@ -971,7 +971,7 @@ ComputeIndexAttrs(IndexInfo *indexInfo,
 			strat = get_op_opfamily_strategy(opid, opfamily);
 			if (strat == 0)
 			{
-				HeapTuple opftuple;
+				HeapTuple	opftuple;
 				Form_pg_opfamily opfform;
 
 				/*
@@ -1433,7 +1433,7 @@ ChooseIndexNameAddition(List *colnames)
 		const char *name = (const char *) lfirst(lc);
 
 		if (buflen > 0)
-			buf[buflen++] = '_';			/* insert _ between names */
+			buf[buflen++] = '_';	/* insert _ between names */
 
 		/*
 		 * At this point we have buflen <= NAMEDATALEN.  name should be less
@@ -1449,7 +1449,7 @@ ChooseIndexNameAddition(List *colnames)
 
 /*
  * Select the actual names to be used for the columns of an index, given the
- * list of IndexElems for the columns.  This is mostly about ensuring the
+ * list of IndexElems for the columns.	This is mostly about ensuring the
  * names are unique so we don't get a conflicting-attribute-names error.
  *
  * Returns a List of plain strings (char *, not String nodes).
@@ -1470,11 +1470,11 @@ ChooseIndexColumnNames(List *indexElems)
 
 		/* Get the preliminary name from the IndexElem */
 		if (ielem->indexcolname)
-			origname = ielem->indexcolname;	/* caller-specified name */
+			origname = ielem->indexcolname;		/* caller-specified name */
 		else if (ielem->name)
-			origname = ielem->name;			/* simple column reference */
+			origname = ielem->name;		/* simple column reference */
 		else
-			origname = "expr";				/* default name for expression */
+			origname = "expr";	/* default name for expression */
 
 		/* If it conflicts with any previous column, tweak it */
 		curname = origname;

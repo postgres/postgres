@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/catalog.c,v 1.88 2010/02/07 20:48:09 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/catalog.c,v 1.89 2010/02/26 02:00:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -163,7 +163,7 @@ GetDatabasePath(Oid dbNode, Oid spcNode)
 	{
 		/* All other tablespaces are accessed via symlinks */
 		pathlen = 9 + 1 + OIDCHARS + 1 + strlen(TABLESPACE_VERSION_DIRECTORY) +
-				  1 + OIDCHARS + 1;
+			1 + OIDCHARS + 1;
 		path = (char *) palloc(pathlen);
 		snprintf(path, pathlen, "pg_tblspc/%u/%s/%u",
 				 spcNode, TABLESPACE_VERSION_DIRECTORY, dbNode);

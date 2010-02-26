@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/pquery.c,v 1.136 2010/02/16 20:58:14 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/pquery.c,v 1.137 2010/02/26 02:01:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -80,7 +80,8 @@ CreateQueryDesc(PlannedStmt *plannedstmt,
 	qd->crosscheck_snapshot = RegisterSnapshot(crosscheck_snapshot);
 	qd->dest = dest;			/* output dest */
 	qd->params = params;		/* parameter values passed into query */
-	qd->instrument_options = instrument_options;	/* instrumentation wanted? */
+	qd->instrument_options = instrument_options;		/* instrumentation
+														 * wanted? */
 
 	/* null these fields until set by ExecutorStart */
 	qd->tupDesc = NULL;
@@ -111,7 +112,7 @@ CreateUtilityQueryDesc(Node *utilitystmt,
 	qd->crosscheck_snapshot = InvalidSnapshot;	/* RI check snapshot */
 	qd->dest = dest;			/* output dest */
 	qd->params = params;		/* parameter values passed into query */
-	qd->instrument_options = false;	/* uninteresting for utilities */
+	qd->instrument_options = false;		/* uninteresting for utilities */
 
 	/* null these fields until set by ExecutorStart */
 	qd->tupDesc = NULL;
@@ -803,7 +804,7 @@ PortalRun(Portal portal, long count, bool isTopLevel,
 				{
 					if (strcmp(portal->commandTag, "SELECT") == 0)
 						snprintf(completionTag, COMPLETION_TAG_BUFSIZE,
-										"SELECT %u", nprocessed);
+								 "SELECT %u", nprocessed);
 					else
 						strcpy(completionTag, portal->commandTag);
 				}
@@ -1316,14 +1317,13 @@ PortalRunMulti(Portal portal, bool isTopLevel,
 	 * If a command completion tag was supplied, use it.  Otherwise use the
 	 * portal's commandTag as the default completion tag.
 	 *
-	 * Exception: Clients expect INSERT/UPDATE/DELETE tags to have
-	 * counts, so fake them with zeros.  This can happen with DO INSTEAD
-	 * rules if there is no replacement query of the same type as the
-	 * original.  We print "0 0" here because technically there is no
-	 * query of the matching tag type, and printing a non-zero count for
-	 * a different query type seems wrong, e.g.  an INSERT that does
-	 * an UPDATE instead should not print "0 1" if one row
-	 * was updated.  See QueryRewrite(), step 3, for details.
+	 * Exception: Clients expect INSERT/UPDATE/DELETE tags to have counts, so
+	 * fake them with zeros.  This can happen with DO INSTEAD rules if there
+	 * is no replacement query of the same type as the original.  We print "0
+	 * 0" here because technically there is no query of the matching tag type,
+	 * and printing a non-zero count for a different query type seems wrong,
+	 * e.g.  an INSERT that does an UPDATE instead should not print "0 1" if
+	 * one row was updated.  See QueryRewrite(), step 3, for details.
 	 */
 	if (completionTag && completionTag[0] == '\0')
 	{

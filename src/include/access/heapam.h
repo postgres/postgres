@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/heapam.h,v 1.147 2010/02/08 04:33:54 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/heapam.h,v 1.148 2010/02/26 02:01:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -127,7 +127,7 @@ extern void heap2_redo(XLogRecPtr lsn, XLogRecord *rptr);
 extern void heap2_desc(StringInfo buf, uint8 xl_info, char *rec);
 
 extern XLogRecPtr log_heap_cleanup_info(RelFileNode rnode,
-				TransactionId latestRemovedXid);
+					  TransactionId latestRemovedXid);
 extern XLogRecPtr log_heap_clean(Relation reln, Buffer buffer,
 			   OffsetNumber *redirected, int nredirected,
 			   OffsetNumber *nowdead, int ndead,

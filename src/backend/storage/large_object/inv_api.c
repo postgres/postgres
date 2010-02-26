@@ -24,7 +24,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/large_object/inv_api.c,v 1.140 2010/01/02 16:57:51 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/large_object/inv_api.c,v 1.141 2010/02/26 02:01:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -145,8 +145,8 @@ static bool
 myLargeObjectExists(Oid loid, Snapshot snapshot)
 {
 	Relation	pg_lo_meta;
-	ScanKeyData	skey[1];
-	SysScanDesc	sd;
+	ScanKeyData skey[1];
+	SysScanDesc sd;
 	HeapTuple	tuple;
 	bool		retval = false;
 
@@ -210,14 +210,14 @@ inv_create(Oid lobjId)
 	 * dependency on the owner of largeobject
 	 *
 	 * The reason why we use LargeObjectRelationId instead of
-	 * LargeObjectMetadataRelationId here is to provide backward
-	 * compatibility to the applications which utilize a knowledge
-	 * about internal layout of system catalogs.
-	 * OID of pg_largeobject_metadata and loid of pg_largeobject
-	 * are same value, so there are no actual differences here.
+	 * LargeObjectMetadataRelationId here is to provide backward compatibility
+	 * to the applications which utilize a knowledge about internal layout of
+	 * system catalogs. OID of pg_largeobject_metadata and loid of
+	 * pg_largeobject are same value, so there are no actual differences here.
 	 */
 	recordDependencyOnOwner(LargeObjectRelationId,
 							lobjId_new, GetUserId());
+
 	/*
 	 * Advance command counter to make new tuple visible to later operations.
 	 */
@@ -298,7 +298,7 @@ inv_close(LargeObjectDesc *obj_desc)
 int
 inv_drop(Oid lobjId)
 {
-	ObjectAddress	object;
+	ObjectAddress object;
 
 	/*
 	 * Delete any comments and dependencies on the large object
@@ -554,7 +554,7 @@ inv_write(LargeObjectDesc *obj_desc, const char *buf, int nbytes)
 	if (!LargeObjectExists(obj_desc->id))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("large object %u was already dropped", obj_desc->id)));
+			   errmsg("large object %u was already dropped", obj_desc->id)));
 
 	if (nbytes <= 0)
 		return 0;
@@ -751,7 +751,7 @@ inv_truncate(LargeObjectDesc *obj_desc, int len)
 	if (!LargeObjectExists(obj_desc->id))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("large object %u was already dropped", obj_desc->id)));
+			   errmsg("large object %u was already dropped", obj_desc->id)));
 
 	open_lo_relation();
 

@@ -5,7 +5,7 @@
  * All types that can be handled for host variable declarations has to
  * be handled eventually.
  *
- * $PostgreSQL: pgsql/src/interfaces/ecpg/include/ecpgtype.h,v 1.39 2010/01/05 16:38:23 meskes Exp $
+ * $PostgreSQL: pgsql/src/interfaces/ecpg/include/ecpgtype.h,v 1.40 2010/02/26 02:01:31 momjian Exp $
  */
 
 /*
@@ -63,7 +63,7 @@ enum ECPGttype
 	ECPGt_EORT,					/* End of result types. */
 	ECPGt_NO_INDICATOR,			/* no indicator */
 	ECPGt_string,				/* trimmed (char *) type */
-	ECPGt_sqlda				/* C struct descriptor */
+	ECPGt_sqlda					/* C struct descriptor */
 };
 
  /* descriptor items */

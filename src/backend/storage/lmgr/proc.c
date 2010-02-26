@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/proc.c,v 1.216 2010/02/13 01:32:19 sriggs Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/proc.c,v 1.217 2010/02/26 02:01:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -519,7 +519,7 @@ SetStartupBufferPinWaitBufId(int bufid)
 int
 GetStartupBufferPinWaitBufId(void)
 {
-	int bufid;
+	int			bufid;
 
 	/* use volatile pointer to prevent code rearrangement */
 	volatile PROC_HDR *procglobal = ProcGlobal;
@@ -702,8 +702,8 @@ ProcKill(int code, Datum arg)
 
 	/*
 	 * This process is no longer present in shared memory in any meaningful
-	 * way, so tell the postmaster we've cleaned up acceptably well.
-	 * (XXX autovac launcher should be included here someday)
+	 * way, so tell the postmaster we've cleaned up acceptably well. (XXX
+	 * autovac launcher should be included here someday)
 	 */
 	if (IsUnderPostmaster && !IsAutoVacuumLauncherProcess())
 		MarkPostmasterChildInactive();
@@ -1376,11 +1376,11 @@ ProcSendSignal(int pid)
 
 		/*
 		 * Check to see whether it is the Startup process we wish to signal.
-		 * This call is made by the buffer manager when it wishes to wake
-		 * up a process that has been waiting for a pin in so it can obtain a
+		 * This call is made by the buffer manager when it wishes to wake up a
+		 * process that has been waiting for a pin in so it can obtain a
 		 * cleanup lock using LockBufferForCleanup(). Startup is not a normal
-		 * backend, so BackendPidGetProc() will not return any pid at all.
-		 * So we remember the information for this special case.
+		 * backend, so BackendPidGetProc() will not return any pid at all. So
+		 * we remember the information for this special case.
 		 */
 		if (pid == procglobal->startupProcPid)
 			proc = procglobal->startupProc;
@@ -1713,7 +1713,7 @@ CheckStandbyTimeout(void)
 void
 handle_standby_sig_alarm(SIGNAL_ARGS)
 {
-	int save_errno = errno;
+	int			save_errno = errno;
 
 	if (standby_timeout_active)
 		(void) CheckStandbyTimeout();

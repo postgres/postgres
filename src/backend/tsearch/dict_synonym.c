@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tsearch/dict_synonym.c,v 1.12 2010/01/02 16:57:53 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tsearch/dict_synonym.c,v 1.13 2010/02/26 02:01:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -67,7 +67,7 @@ findwrd(char *in, char **end, uint16 *flags)
 		in += pg_mblen(in);
 	}
 
-	if ( in - lastchar == 1 && t_iseq(lastchar, '*') && flags )
+	if (in - lastchar == 1 && t_iseq(lastchar, '*') && flags)
 	{
 		*flags = TSL_PREFIX;
 		*end = lastchar;
@@ -75,7 +75,7 @@ findwrd(char *in, char **end, uint16 *flags)
 	else
 	{
 		if (flags)
-				*flags = 0;
+			*flags = 0;
 		*end = in;
 	}
 
@@ -189,7 +189,7 @@ dsynonym_init(PG_FUNCTION_ARGS)
 		}
 
 		d->syn[cur].outlen = strlen(starto);
-		d->syn[cur].flags = flags; 
+		d->syn[cur].flags = flags;
 
 		cur++;
 

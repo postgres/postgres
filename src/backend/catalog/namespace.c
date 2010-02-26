@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/namespace.c,v 1.124 2010/02/20 21:24:01 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/namespace.c,v 1.125 2010/02/26 02:00:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -190,7 +190,7 @@ static void RemoveTempRelations(Oid tempNamespaceId);
 static void RemoveTempRelationsCallback(int code, Datum arg);
 static void NamespaceCallback(Datum arg, int cacheid, ItemPointer tuplePtr);
 static bool MatchNamedCall(HeapTuple proctup, int nargs, List *argnames,
-						   int **argnumbers);
+			   int **argnumbers);
 
 /* These don't really need to appear in any header file */
 Datum		pg_table_is_visible(PG_FUNCTION_ARGS);
@@ -333,7 +333,7 @@ RangeVarGetCreationNamespace(const RangeVar *newRelation)
 		}
 		/* use exact schema given */
 		namespaceId = GetSysCacheOid1(NAMESPACENAME,
-									  CStringGetDatum(newRelation->schemaname));
+								   CStringGetDatum(newRelation->schemaname));
 		if (!OidIsValid(namespaceId))
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_SCHEMA),
@@ -689,10 +689,9 @@ FuncnameGetCandidates(List *names, int nargs, List *argnames,
 			/*
 			 * Call uses named or mixed notation
 			 *
-			 * Named or mixed notation can match a variadic function only
-			 * if expand_variadic is off; otherwise there is no way to match
-			 * the presumed-nameless parameters expanded from the variadic
-			 * array.
+			 * Named or mixed notation can match a variadic function only if
+			 * expand_variadic is off; otherwise there is no way to match the
+			 * presumed-nameless parameters expanded from the variadic array.
 			 */
 			if (OidIsValid(procform->provariadic) && expand_variadic)
 				continue;
@@ -702,7 +701,7 @@ FuncnameGetCandidates(List *names, int nargs, List *argnames,
 			/*
 			 * Check argument count.
 			 */
-			Assert(nargs >= 0);			/* -1 not supported with argnames */
+			Assert(nargs >= 0); /* -1 not supported with argnames */
 
 			if (pronargs > nargs && expand_defaults)
 			{
@@ -732,7 +731,7 @@ FuncnameGetCandidates(List *names, int nargs, List *argnames,
 			 * Call uses positional notation
 			 *
 			 * Check if function is variadic, and get variadic element type if
-			 * so.  If expand_variadic is false, we should just ignore
+			 * so.	If expand_variadic is false, we should just ignore
 			 * variadic-ness.
 			 */
 			if (pronargs <= nargs && expand_variadic)
@@ -1020,9 +1019,9 @@ MatchNamedCall(HeapTuple proctup, int nargs, List *argnames,
 	/* now examine the named args */
 	foreach(lc, argnames)
 	{
-		char   *argname = (char *) lfirst(lc);
-		bool	found;
-		int		i;
+		char	   *argname = (char *) lfirst(lc);
+		bool		found;
+		int			i;
 
 		pp = 0;
 		found = false;
@@ -1058,7 +1057,7 @@ MatchNamedCall(HeapTuple proctup, int nargs, List *argnames,
 	/* Check for default arguments */
 	if (nargs < pronargs)
 	{
-		int		first_arg_with_default = pronargs - procform->pronargdefaults;
+		int			first_arg_with_default = pronargs - procform->pronargdefaults;
 
 		for (pp = numposargs; pp < pronargs; pp++)
 		{
@@ -3021,10 +3020,10 @@ InitTempTableNamespace(void)
 	 * Do not allow a Hot Standby slave session to make temp tables.  Aside
 	 * from problems with modifying the system catalogs, there is a naming
 	 * conflict: pg_temp_N belongs to the session with BackendId N on the
-	 * master, not to a slave session with the same BackendId.  We should
-	 * not be able to get here anyway due to XactReadOnly checks, but let's
-	 * just make real sure.  Note that this also backstops various operations
-	 * that allow XactReadOnly transactions to modify temp tables; they'd need
+	 * master, not to a slave session with the same BackendId.	We should not
+	 * be able to get here anyway due to XactReadOnly checks, but let's just
+	 * make real sure.	Note that this also backstops various operations that
+	 * allow XactReadOnly transactions to modify temp tables; they'd need
 	 * RecoveryInProgress checks if not for this.
 	 */
 	if (RecoveryInProgress())

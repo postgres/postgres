@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.176 2010/01/02 16:57:35 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.177 2010/02/26 02:00:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -88,7 +88,7 @@ static void _bt_vacuum_one_page(Relation rel, Buffer buffer);
  *		and btinsert.  By here, itup is filled in, including the TID.
  *
  *		If checkUnique is UNIQUE_CHECK_NO or UNIQUE_CHECK_PARTIAL, this
- *		will allow duplicates.  Otherwise (UNIQUE_CHECK_YES or
+ *		will allow duplicates.	Otherwise (UNIQUE_CHECK_YES or
  *		UNIQUE_CHECK_EXISTING) it will throw error for a duplicate.
  *		For UNIQUE_CHECK_EXISTING we merely run the duplicate check, and
  *		don't actually insert.
@@ -149,9 +149,9 @@ top:
 	 * If we must wait for another xact, we release the lock while waiting,
 	 * and then must start over completely.
 	 *
-	 * For a partial uniqueness check, we don't wait for the other xact.
-	 * Just let the tuple in and return false for possibly non-unique,
-	 * or true for definitely unique.
+	 * For a partial uniqueness check, we don't wait for the other xact. Just
+	 * let the tuple in and return false for possibly non-unique, or true for
+	 * definitely unique.
 	 */
 	if (checkUnique != UNIQUE_CHECK_NO)
 	{
@@ -281,7 +281,7 @@ _bt_check_unique(Relation rel, IndexTuple itup, Relation heapRel,
 
 				/*
 				 * If we are doing a recheck, we expect to find the tuple we
-				 * are rechecking.  It's not a duplicate, but we have to keep
+				 * are rechecking.	It's not a duplicate, but we have to keep
 				 * scanning.
 				 */
 				if (checkUnique == UNIQUE_CHECK_EXISTING &&
@@ -302,10 +302,10 @@ _bt_check_unique(Relation rel, IndexTuple itup, Relation heapRel,
 
 					/*
 					 * It is a duplicate. If we are only doing a partial
-					 * check, then don't bother checking if the tuple is
-					 * being updated in another transaction. Just return
-					 * the fact that it is a potential conflict and leave
-					 * the full check till later.
+					 * check, then don't bother checking if the tuple is being
+					 * updated in another transaction. Just return the fact
+					 * that it is a potential conflict and leave the full
+					 * check till later.
 					 */
 					if (checkUnique == UNIQUE_CHECK_PARTIAL)
 					{
@@ -362,20 +362,20 @@ _bt_check_unique(Relation rel, IndexTuple itup, Relation heapRel,
 					}
 
 					/*
-					 * This is a definite conflict.  Break the tuple down
-					 * into datums and report the error.  But first, make
-					 * sure we release the buffer locks we're holding ---
+					 * This is a definite conflict.  Break the tuple down into
+					 * datums and report the error.  But first, make sure we
+					 * release the buffer locks we're holding ---
 					 * BuildIndexValueDescription could make catalog accesses,
-					 * which in the worst case might touch this same index
-					 * and cause deadlocks.
+					 * which in the worst case might touch this same index and
+					 * cause deadlocks.
 					 */
 					if (nbuf != InvalidBuffer)
 						_bt_relbuf(rel, nbuf);
 					_bt_relbuf(rel, buf);
 
 					{
-						Datum	values[INDEX_MAX_KEYS];
-						bool	isnull[INDEX_MAX_KEYS];
+						Datum		values[INDEX_MAX_KEYS];
+						bool		isnull[INDEX_MAX_KEYS];
 
 						index_deform_tuple(itup, RelationGetDescr(rel),
 										   values, isnull);
@@ -385,7 +385,7 @@ _bt_check_unique(Relation rel, IndexTuple itup, Relation heapRel,
 										RelationGetRelationName(rel)),
 								 errdetail("Key %s already exists.",
 										   BuildIndexValueDescription(rel,
-															values, isnull))));
+														  values, isnull))));
 					}
 				}
 				else if (all_dead)
@@ -438,16 +438,16 @@ _bt_check_unique(Relation rel, IndexTuple itup, Relation heapRel,
 	}
 
 	/*
-	 * If we are doing a recheck then we should have found the tuple we
-	 * are checking.  Otherwise there's something very wrong --- probably,
-	 * the index is on a non-immutable expression.
+	 * If we are doing a recheck then we should have found the tuple we are
+	 * checking.  Otherwise there's something very wrong --- probably, the
+	 * index is on a non-immutable expression.
 	 */
 	if (checkUnique == UNIQUE_CHECK_EXISTING && !found)
 		ereport(ERROR,
 				(errcode(ERRCODE_INTERNAL_ERROR),
 				 errmsg("failed to re-find tuple within index \"%s\"",
 						RelationGetRelationName(rel)),
-				 errhint("This may be because of a non-immutable index expression.")));
+		errhint("This may be because of a non-immutable index expression.")));
 
 	if (nbuf != InvalidBuffer)
 		_bt_relbuf(rel, nbuf);
@@ -518,10 +518,10 @@ _bt_findinsertloc(Relation rel,
 	if (itemsz > BTMaxItemSize(page))
 		ereport(ERROR,
 				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-				 errmsg("index row size %lu exceeds maximum %lu for index \"%s\"",
-						(unsigned long) itemsz,
-						(unsigned long) BTMaxItemSize(page),
-						RelationGetRelationName(rel)),
+			errmsg("index row size %lu exceeds maximum %lu for index \"%s\"",
+				   (unsigned long) itemsz,
+				   (unsigned long) BTMaxItemSize(page),
+				   RelationGetRelationName(rel)),
 		errhint("Values larger than 1/3 of a buffer page cannot be indexed.\n"
 				"Consider a function index of an MD5 hash of the value, "
 				"or use full text indexing.")));

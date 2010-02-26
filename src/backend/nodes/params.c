@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/params.c,v 1.14 2010/01/15 22:36:31 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/params.c,v 1.15 2010/02/26 02:00:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,7 +28,7 @@
  *
  * Note: the intent of this function is to make a static, self-contained
  * set of parameter values.  If dynamic parameter hooks are present, we
- * intentionally do not copy them into the result.  Rather, we forcibly
+ * intentionally do not copy them into the result.	Rather, we forcibly
  * instantiate all available parameter values and copy the datum values.
  */
 ParamListInfo
@@ -61,7 +61,7 @@ copyParamList(ParamListInfo from)
 
 		/* give hook a chance in case parameter is dynamic */
 		if (!OidIsValid(oprm->ptype) && from->paramFetch != NULL)
-			(*from->paramFetch) (from, i+1);
+			(*from->paramFetch) (from, i + 1);
 
 		/* flat-copy the parameter info */
 		*nprm = *oprm;

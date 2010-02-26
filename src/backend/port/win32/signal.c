@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/port/win32/signal.c,v 1.24 2010/01/31 17:16:23 mha Exp $
+ *	  $PostgreSQL: pgsql/src/backend/port/win32/signal.c,v 1.25 2010/02/26 02:00:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -275,31 +275,34 @@ pg_signal_thread(LPVOID param)
 		fConnected = ConnectNamedPipe(pipe, NULL) ? TRUE : (GetLastError() == ERROR_PIPE_CONNECTED);
 		if (fConnected)
 		{
-			HANDLE newpipe;
+			HANDLE		newpipe;
 
 			/*
-			 * We have a connected pipe. Pass this off to a separate thread that will do the actual
-			 * processing of the pipe.
+			 * We have a connected pipe. Pass this off to a separate thread
+			 * that will do the actual processing of the pipe.
 			 *
-			 * We must also create a new instance of the pipe *before* we start running the new
-			 * thread. If we don't, there is a race condition whereby the dispatch thread might
-			 * run CloseHandle() before we have created a new instance, thereby causing a small
+			 * We must also create a new instance of the pipe *before* we
+			 * start running the new thread. If we don't, there is a race
+			 * condition whereby the dispatch thread might run CloseHandle()
+			 * before we have created a new instance, thereby causing a small
 			 * window of time where we will miss incoming requests.
 			 */
 			newpipe = CreateNamedPipe(pipename, PIPE_ACCESS_DUPLEX,
-									   PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE | PIPE_WAIT,
-									   PIPE_UNLIMITED_INSTANCES, 16, 16, 1000, NULL);
+					   PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE | PIPE_WAIT,
+							   PIPE_UNLIMITED_INSTANCES, 16, 16, 1000, NULL);
 			if (newpipe == INVALID_HANDLE_VALUE)
 			{
 				/*
-				 * This really should never fail. Just retry in case it does, even though we have
-				 * a small race window in that case. There is nothing else we can do other than
-				 * abort the whole process which will be even worse.
+				 * This really should never fail. Just retry in case it does,
+				 * even though we have a small race window in that case. There
+				 * is nothing else we can do other than abort the whole
+				 * process which will be even worse.
 				 */
 				write_stderr("could not create signal listener pipe: error code %d; retrying\n", (int) GetLastError());
+
 				/*
-				 * Keep going so we at least dispatch this signal. Hopefully, the call will succeed
-				 * when retried in the loop soon after.
+				 * Keep going so we at least dispatch this signal. Hopefully,
+				 * the call will succeed when retried in the loop soon after.
 				 */
 			}
 			hThread = CreateThread(NULL, 0,
@@ -312,8 +315,9 @@ pg_signal_thread(LPVOID param)
 				CloseHandle(hThread);
 
 			/*
-			 * Background thread is running with our instance of the pipe. So replace our reference
-			 * with the newly created one and loop back up for another run.
+			 * Background thread is running with our instance of the pipe. So
+			 * replace our reference with the newly created one and loop back
+			 * up for another run.
 			 */
 			pipe = newpipe;
 		}
@@ -322,8 +326,8 @@ pg_signal_thread(LPVOID param)
 			/*
 			 * Connection failed. Cleanup and try again.
 			 *
-			 * This should never happen. If it does, we have a small race condition until we loop
-			 * up and re-create the pipe.
+			 * This should never happen. If it does, we have a small race
+			 * condition until we loop up and re-create the pipe.
 			 */
 			CloseHandle(pipe);
 			pipe = INVALID_HANDLE_VALUE;

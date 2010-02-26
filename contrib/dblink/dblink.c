@@ -8,7 +8,7 @@
  * Darko Prenosil <Darko.Prenosil@finteh.hr>
  * Shridhar Daithankar <shridhar_daithankar@persistent.co.in>
  *
- * $PostgreSQL: pgsql/contrib/dblink/dblink.c,v 1.90 2010/02/24 05:20:49 itagaki Exp $
+ * $PostgreSQL: pgsql/contrib/dblink/dblink.c,v 1.91 2010/02/26 02:00:32 momjian Exp $
  * Copyright (c) 2001-2010, PostgreSQL Global Development Group
  * ALL RIGHTS RESERVED;
  *
@@ -101,7 +101,7 @@ static void dblink_security_check(PGconn *conn, remoteConn *rconn);
 static void dblink_res_error(const char *conname, PGresult *res, const char *dblink_context_msg, bool fail);
 static char *get_connect_string(const char *servername);
 static char *escape_param_str(const char *from);
-static int get_nondropped_natts(Oid relid);
+static int	get_nondropped_natts(Oid relid);
 
 /* Global */
 static remoteConn *pconn = NULL;
@@ -506,15 +506,15 @@ PG_FUNCTION_INFO_V1(dblink_fetch);
 Datum
 dblink_fetch(PG_FUNCTION_ARGS)
 {
-	ReturnSetInfo  *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
-	PGresult	   *res = NULL;
-	char		   *conname = NULL;
-	remoteConn	   *rconn = NULL;
-	PGconn		   *conn = NULL;
-	StringInfoData	buf;
-	char		   *curname = NULL;
-	int				howmany = 0;
-	bool			fail = true;	/* default to backward compatible */
+	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
+	PGresult   *res = NULL;
+	char	   *conname = NULL;
+	remoteConn *rconn = NULL;
+	PGconn	   *conn = NULL;
+	StringInfoData buf;
+	char	   *curname = NULL;
+	int			howmany = 0;
+	bool		fail = true;	/* default to backward compatible */
 
 	DBLINK_INIT;
 
@@ -572,8 +572,8 @@ dblink_fetch(PG_FUNCTION_ARGS)
 
 	/*
 	 * Try to execute the query.  Note that since libpq uses malloc, the
-	 * PGresult will be long-lived even though we are still in a
-	 * short-lived memory context.
+	 * PGresult will be long-lived even though we are still in a short-lived
+	 * memory context.
 	 */
 	res = PQexec(conn, buf.data);
 	if (!res ||
@@ -645,16 +645,16 @@ dblink_get_result(PG_FUNCTION_ARGS)
 static Datum
 dblink_record_internal(FunctionCallInfo fcinfo, bool is_async)
 {
-	ReturnSetInfo  *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
-	char		   *msg;
-	PGresult	   *res = NULL;
-	PGconn		   *conn = NULL;
-	char		   *connstr = NULL;
-	char		   *sql = NULL;
-	char		   *conname = NULL;
-	remoteConn	   *rconn = NULL;
-	bool			fail = true;	/* default to backward compatible */
-	bool			freeconn = false;
+	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
+	char	   *msg;
+	PGresult   *res = NULL;
+	PGconn	   *conn = NULL;
+	char	   *connstr = NULL;
+	char	   *sql = NULL;
+	char	   *conname = NULL;
+	remoteConn *rconn = NULL;
+	bool		fail = true;	/* default to backward compatible */
+	bool		freeconn = false;
 
 	/* check to see if caller supports us returning a tuplestore */
 	if (rsinfo == NULL || !IsA(rsinfo, ReturnSetInfo))
@@ -764,7 +764,7 @@ dblink_record_internal(FunctionCallInfo fcinfo, bool is_async)
 static void
 materializeResult(FunctionCallInfo fcinfo, PGresult *res)
 {
-	ReturnSetInfo  *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
+	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
 
 	Assert(rsinfo->returnMode == SFRM_Materialize);
 
@@ -780,8 +780,8 @@ materializeResult(FunctionCallInfo fcinfo, PGresult *res)
 			is_sql_cmd = true;
 
 			/*
-			 * need a tuple descriptor representing one TEXT column to
-			 * return the command status string as our result tuple
+			 * need a tuple descriptor representing one TEXT column to return
+			 * the command status string as our result tuple
 			 */
 			tupdesc = CreateTemplateTupleDesc(1, false);
 			TupleDescInitEntry(tupdesc, (AttrNumber) 1, "status",
@@ -831,16 +831,16 @@ materializeResult(FunctionCallInfo fcinfo, PGresult *res)
 
 		if (ntuples > 0)
 		{
-			AttInMetadata	   *attinmeta;
-			Tuplestorestate	   *tupstore;
-			MemoryContext		oldcontext;
-			int					row;
-			char			  **values;
+			AttInMetadata *attinmeta;
+			Tuplestorestate *tupstore;
+			MemoryContext oldcontext;
+			int			row;
+			char	  **values;
 
 			attinmeta = TupleDescGetAttInMetadata(tupdesc);
 
 			oldcontext = MemoryContextSwitchTo(
-								rsinfo->econtext->ecxt_per_query_memory);
+									rsinfo->econtext->ecxt_per_query_memory);
 			tupstore = tuplestore_begin_heap(true, false, work_mem);
 			rsinfo->setResult = tupstore;
 			rsinfo->setDesc = tupdesc;
@@ -1281,13 +1281,13 @@ dblink_build_sql_insert(PG_FUNCTION_ARGS)
 						"attributes too large")));
 
 	/*
-	 * ensure we don't ask for more pk attributes than we have
-	 * non-dropped columns
+	 * ensure we don't ask for more pk attributes than we have non-dropped
+	 * columns
 	 */
 	nondropped_natts = get_nondropped_natts(relid);
 	if (pknumatts > nondropped_natts)
 		ereport(ERROR, (errcode(ERRCODE_SYNTAX_ERROR),
-				errmsg("number of primary key fields exceeds number of specified relation attributes")));
+						errmsg("number of primary key fields exceeds number of specified relation attributes")));
 
 	/*
 	 * Source array is made up of key values that will be used to locate the
@@ -1388,13 +1388,13 @@ dblink_build_sql_delete(PG_FUNCTION_ARGS)
 						"attributes too large")));
 
 	/*
-	 * ensure we don't ask for more pk attributes than we have
-	 * non-dropped columns
+	 * ensure we don't ask for more pk attributes than we have non-dropped
+	 * columns
 	 */
 	nondropped_natts = get_nondropped_natts(relid);
 	if (pknumatts > nondropped_natts)
 		ereport(ERROR, (errcode(ERRCODE_SYNTAX_ERROR),
-				errmsg("number of primary key fields exceeds number of specified relation attributes")));
+						errmsg("number of primary key fields exceeds number of specified relation attributes")));
 
 	/*
 	 * Target array is made up of key values that will be used to build the
@@ -1487,13 +1487,13 @@ dblink_build_sql_update(PG_FUNCTION_ARGS)
 						"attributes too large")));
 
 	/*
-	 * ensure we don't ask for more pk attributes than we have
-	 * non-dropped columns
+	 * ensure we don't ask for more pk attributes than we have non-dropped
+	 * columns
 	 */
 	nondropped_natts = get_nondropped_natts(relid);
 	if (pknumatts > nondropped_natts)
 		ereport(ERROR, (errcode(ERRCODE_SYNTAX_ERROR),
-				errmsg("number of primary key fields exceeds number of specified relation attributes")));
+						errmsg("number of primary key fields exceeds number of specified relation attributes")));
 
 	/*
 	 * Source array is made up of key values that will be used to locate the
@@ -1551,7 +1551,7 @@ dblink_current_query(PG_FUNCTION_ARGS)
 }
 
 /*
- * Retrieve async notifications for a connection. 
+ * Retrieve async notifications for a connection.
  *
  * Returns an setof record of notifications, or an empty set if none recieved.
  * Can optionally take a named connection as parameter, but uses the unnamed connection per default.
@@ -1563,14 +1563,14 @@ PG_FUNCTION_INFO_V1(dblink_get_notify);
 Datum
 dblink_get_notify(PG_FUNCTION_ARGS)
 {
-	PGconn			   *conn = NULL;
-	remoteConn		   *rconn = NULL;
-	PGnotify		   *notify;
-	ReturnSetInfo	   *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
-	TupleDesc			tupdesc;
-	Tuplestorestate	   *tupstore;
-	MemoryContext		per_query_ctx;
-	MemoryContext		oldcontext;
+	PGconn	   *conn = NULL;
+	remoteConn *rconn = NULL;
+	PGnotify   *notify;
+	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
+	TupleDesc	tupdesc;
+	Tuplestorestate *tupstore;
+	MemoryContext per_query_ctx;
+	MemoryContext oldcontext;
 
 	DBLINK_INIT;
 	if (PG_NARGS() == 1)
@@ -2484,4 +2484,3 @@ get_nondropped_natts(Oid relid)
 	relation_close(rel, AccessShareLock);
 	return nondropped_natts;
 }
-

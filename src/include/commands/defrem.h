@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/commands/defrem.h,v 1.100 2010/01/02 16:58:03 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/commands/defrem.h,v 1.101 2010/02/26 02:01:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,8 +46,8 @@ extern char *makeObjectName(const char *name1, const char *name2,
 extern char *ChooseRelationName(const char *name1, const char *name2,
 				   const char *label, Oid namespaceid);
 extern char *ChooseIndexName(const char *tabname, Oid namespaceId,
-							 List *colnames, List *exclusionOpNames,
-							 bool primary, bool isconstraint);
+				List *colnames, List *exclusionOpNames,
+				bool primary, bool isconstraint);
 extern List *ChooseIndexColumnNames(List *indexElems);
 extern Oid	GetDefaultOpClass(Oid type_id, Oid am_id);
 

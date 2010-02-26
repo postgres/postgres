@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/setrefs.c,v 1.159 2010/02/14 18:42:15 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/setrefs.c,v 1.160 2010/02/26 02:00:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -431,8 +431,8 @@ set_plan_refs(PlannerGlobal *glob, Plan *plan, int rtoffset)
 
 				/*
 				 * Like the plan types above, LockRows doesn't evaluate its
-				 * tlist or quals.  But we have to fix up the RT indexes
-				 * in its rowmarks.
+				 * tlist or quals.	But we have to fix up the RT indexes in
+				 * its rowmarks.
 				 */
 				set_dummy_tlist_references(plan, rtoffset);
 				Assert(splan->plan.qual == NIL);
@@ -471,7 +471,7 @@ set_plan_refs(PlannerGlobal *glob, Plan *plan, int rtoffset)
 			break;
 		case T_WindowAgg:
 			{
-				WindowAgg	   *wplan = (WindowAgg *) plan;
+				WindowAgg  *wplan = (WindowAgg *) plan;
 
 				set_upper_references(glob, plan, rtoffset);
 
@@ -1514,7 +1514,7 @@ search_indexed_tlist_for_sortgroupref(Node *node,
 							 exprType((Node *) tle->expr),
 							 exprTypmod((Node *) tle->expr),
 							 0);
-			newvar->varnoold = 0;	/* wasn't ever a plain Var */
+			newvar->varnoold = 0;		/* wasn't ever a plain Var */
 			newvar->varoattno = 0;
 			return newvar;
 		}

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lock.c,v 1.194 2010/01/31 19:01:11 sriggs Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lock.c,v 1.195 2010/02/26 02:01:00 momjian Exp $
  *
  * NOTES
  *	  A lock table is a shared memory hash table.  When
@@ -484,10 +484,10 @@ LockAcquire(const LOCKTAG *locktag,
  */
 LockAcquireResult
 LockAcquireExtended(const LOCKTAG *locktag,
-			LOCKMODE lockmode,
-			bool sessionLock,
-			bool dontWait,
-			bool reportMemoryError)
+					LOCKMODE lockmode,
+					bool sessionLock,
+					bool dontWait,
+					bool reportMemoryError)
 {
 	LOCKMETHODID lockmethodid = locktag->locktag_lockmethodid;
 	LockMethod	lockMethodTable;
@@ -512,12 +512,12 @@ LockAcquireExtended(const LOCKTAG *locktag,
 
 	if (RecoveryInProgress() && !InRecovery &&
 		(locktag->locktag_type == LOCKTAG_OBJECT ||
-		 locktag->locktag_type == LOCKTAG_RELATION ) &&
+		 locktag->locktag_type == LOCKTAG_RELATION) &&
 		lockmode > RowExclusiveLock)
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 				 errmsg("cannot acquire lockmode %s on database objects while recovery is in progress",
-									lockMethodTable->lockModeNames[lockmode]),
+						lockMethodTable->lockModeNames[lockmode]),
 				 errhint("Only RowExclusiveLock or less can be acquired on database objects during recovery.")));
 
 #ifdef LOCK_DEBUG
@@ -612,7 +612,7 @@ LockAcquireExtended(const LOCKTAG *locktag,
 			ereport(ERROR,
 					(errcode(ERRCODE_OUT_OF_MEMORY),
 					 errmsg("out of shared memory"),
-				  errhint("You might need to increase max_locks_per_transaction.")));
+					 errhint("You might need to increase max_locks_per_transaction.")));
 		else
 			return LOCKACQUIRE_NOT_AVAIL;
 	}
@@ -681,7 +681,7 @@ LockAcquireExtended(const LOCKTAG *locktag,
 			ereport(ERROR,
 					(errcode(ERRCODE_OUT_OF_MEMORY),
 					 errmsg("out of shared memory"),
-				  errhint("You might need to increase max_locks_per_transaction.")));
+					 errhint("You might need to increase max_locks_per_transaction.")));
 		else
 			return LOCKACQUIRE_NOT_AVAIL;
 	}
@@ -871,9 +871,9 @@ LockAcquireExtended(const LOCKTAG *locktag,
 	LWLockRelease(partitionLock);
 
 	/*
-	 * Emit a WAL record if acquisition of this lock need to be replayed in
-	 * a standby server. Only AccessExclusiveLocks can conflict with lock
-	 * types that read-only transactions can acquire in a standby server.
+	 * Emit a WAL record if acquisition of this lock need to be replayed in a
+	 * standby server. Only AccessExclusiveLocks can conflict with lock types
+	 * that read-only transactions can acquire in a standby server.
 	 *
 	 * Make sure this definition matches the one GetRunningTransactionLocks().
 	 */
@@ -883,9 +883,9 @@ LockAcquireExtended(const LOCKTAG *locktag,
 		XLogStandbyInfoActive())
 	{
 		/*
-		 * Decode the locktag back to the original values, to avoid
-		 * sending lots of empty bytes with every message.  See
-		 * lock.h to check how a locktag is defined for LOCKTAG_RELATION
+		 * Decode the locktag back to the original values, to avoid sending
+		 * lots of empty bytes with every message.	See lock.h to check how a
+		 * locktag is defined for LOCKTAG_RELATION
 		 */
 		LogAccessExclusiveLock(locktag->locktag_field1,
 							   locktag->locktag_field2);
@@ -1824,7 +1824,7 @@ GetLockConflicts(const LOCKTAG *locktag, LOCKMODE lockmode)
 		if (vxids == NULL)
 			vxids = (VirtualTransactionId *)
 				MemoryContextAlloc(TopMemoryContext,
-					sizeof(VirtualTransactionId) * (MaxBackends + 1));
+						   sizeof(VirtualTransactionId) * (MaxBackends + 1));
 	}
 	else
 		vxids = (VirtualTransactionId *)
@@ -2275,7 +2275,7 @@ GetRunningTransactionLocks(int *nlocks)
 	PROCLOCK   *proclock;
 	HASH_SEQ_STATUS seqstat;
 	int			i;
-	int 		index;
+	int			index;
 	int			els;
 	xl_standby_lock *accessExclusiveLocks;
 
@@ -2300,11 +2300,11 @@ GetRunningTransactionLocks(int *nlocks)
 	accessExclusiveLocks = palloc(els * sizeof(xl_standby_lock));
 
 	/*
-	 * If lock is a currently granted AccessExclusiveLock then
-	 * it will have just one proclock holder, so locks are never
-	 * accessed twice in this particular case. Don't copy this code
-	 * for use elsewhere because in the general case this will
-	 * give you duplicate locks when looking at non-exclusive lock types.
+	 * If lock is a currently granted AccessExclusiveLock then it will have
+	 * just one proclock holder, so locks are never accessed twice in this
+	 * particular case. Don't copy this code for use elsewhere because in the
+	 * general case this will give you duplicate locks when looking at
+	 * non-exclusive lock types.
 	 */
 	index = 0;
 	while ((proclock = (PROCLOCK *) hash_seq_search(&seqstat)))
@@ -2313,11 +2313,11 @@ GetRunningTransactionLocks(int *nlocks)
 		if ((proclock->holdMask & LOCKBIT_ON(AccessExclusiveLock)) &&
 			proclock->tag.myLock->tag.locktag_type == LOCKTAG_RELATION)
 		{
-			PGPROC	*proc = proclock->tag.myProc;
-			LOCK	*lock = proclock->tag.myLock;
+			PGPROC	   *proc = proclock->tag.myProc;
+			LOCK	   *lock = proclock->tag.myLock;
 
-			accessExclusiveLocks[index].xid 	= proc->xid;
-			accessExclusiveLocks[index].dbOid  = lock->tag.locktag_field1;
+			accessExclusiveLocks[index].xid = proc->xid;
+			accessExclusiveLocks[index].dbOid = lock->tag.locktag_field1;
 			accessExclusiveLocks[index].relOid = lock->tag.locktag_field2;
 
 			index++;
@@ -2605,8 +2605,8 @@ lock_twophase_recover(TransactionId xid, uint16 info,
 			 lock->tag.locktag_field3);
 
 	/*
-	 * We ignore any possible conflicts and just grant ourselves the lock.
-	 * Not only because we don't bother, but also to avoid deadlocks when
+	 * We ignore any possible conflicts and just grant ourselves the lock. Not
+	 * only because we don't bother, but also to avoid deadlocks when
 	 * switching from standby to normal mode. See function comment.
 	 */
 	GrantLock(lock, proclock, lockmode);
@@ -2639,8 +2639,8 @@ lock_twophase_standby_recover(TransactionId xid, uint16 info,
 		locktag->locktag_type == LOCKTAG_RELATION)
 	{
 		StandbyAcquireAccessExclusiveLock(xid,
-										  locktag->locktag_field1 /* dboid */,
-										  locktag->locktag_field2 /* reloid */);
+										locktag->locktag_field1 /* dboid */ ,
+									  locktag->locktag_field2 /* reloid */ );
 	}
 }
 

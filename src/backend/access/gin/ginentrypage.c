@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			$PostgreSQL: pgsql/src/backend/access/gin/ginentrypage.c,v 1.23 2010/01/02 16:57:33 momjian Exp $
+ *			$PostgreSQL: pgsql/src/backend/access/gin/ginentrypage.c,v 1.24 2010/02/26 02:00:33 momjian Exp $
  *-------------------------------------------------------------------------
  */
 
@@ -104,7 +104,7 @@ GinFormTuple(Relation index, GinState *ginstate,
 		 * Gin tuple without any ItemPointers should be large enough to keep
 		 * one ItemPointer, to prevent inconsistency between
 		 * ginHeapTupleFastCollect and ginEntryInsert called by
-		 * ginHeapTupleInsert.  ginHeapTupleFastCollect forms tuple without
+		 * ginHeapTupleInsert.	ginHeapTupleFastCollect forms tuple without
 		 * extra pointer to heap, but ginEntryInsert (called for pending list
 		 * cleanup during vacuum) will form the same tuple with one
 		 * ItemPointer.

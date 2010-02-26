@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			$PostgreSQL: pgsql/src/backend/access/gin/ginbulk.c,v 1.18 2010/02/11 14:29:50 teodor Exp $
+ *			$PostgreSQL: pgsql/src/backend/access/gin/ginbulk.c,v 1.19 2010/02/26 02:00:33 momjian Exp $
  *-------------------------------------------------------------------------
  */
 
@@ -22,20 +22,20 @@
 #define DEF_NENTRY	2048
 #define DEF_NPTR	4
 
-static void*
+static void *
 ginAppendData(void *old, void *new, void *arg)
 {
-	EntryAccumulator	*eo = (EntryAccumulator*)old,
-						*en = (EntryAccumulator*)new;
+	EntryAccumulator *eo = (EntryAccumulator *) old,
+			   *en = (EntryAccumulator *) new;
 
-	BuildAccumulator	*accum = (BuildAccumulator*)arg;
+	BuildAccumulator *accum = (BuildAccumulator *) arg;
 
 	if (eo->number >= eo->length)
 	{
 		accum->allocatedMemory -= GetMemoryChunkSpace(eo->list);
 		eo->length *= 2;
 		eo->list = (ItemPointerData *) repalloc(eo->list,
-									sizeof(ItemPointerData) * eo->length);
+									   sizeof(ItemPointerData) * eo->length);
 		accum->allocatedMemory += GetMemoryChunkSpace(eo->list);
 	}
 
@@ -60,9 +60,9 @@ ginAppendData(void *old, void *new, void *arg)
 static int
 cmpEntryAccumulator(const void *a, const void *b, void *arg)
 {
-	EntryAccumulator	*ea = (EntryAccumulator*)a;
-	EntryAccumulator	*eb = (EntryAccumulator*)b;
-	BuildAccumulator	*accum = (BuildAccumulator*)arg;
+	EntryAccumulator *ea = (EntryAccumulator *) a;
+	EntryAccumulator *eb = (EntryAccumulator *) b;
+	BuildAccumulator *accum = (BuildAccumulator *) arg;
 
 	return compareAttEntries(accum->ginstate, ea->attnum, ea->value,
 							 eb->attnum, eb->value);
@@ -104,13 +104,13 @@ getDatumCopy(BuildAccumulator *accum, OffsetNumber attnum, Datum value)
 static void
 ginInsertEntry(BuildAccumulator *accum, ItemPointer heapptr, OffsetNumber attnum, Datum entry)
 {
-	EntryAccumulator 	*key,
-						*ea;
+	EntryAccumulator *key,
+			   *ea;
 
-	/* 
-	 * Allocate memory by rather big chunk to decrease overhead, we don't
-	 * keep pointer to previously allocated chunks because they will free
-	 * by MemoryContextReset() call.
+	/*
+	 * Allocate memory by rather big chunk to decrease overhead, we don't keep
+	 * pointer to previously allocated chunks because they will free by
+	 * MemoryContextReset() call.
 	 */
 	if (accum->entryallocator == NULL || accum->length >= DEF_NENTRY)
 	{
@@ -125,7 +125,7 @@ ginInsertEntry(BuildAccumulator *accum, ItemPointer heapptr, OffsetNumber attnum
 
 	key->attnum = attnum;
 	key->value = entry;
-	/* To prevent multiple palloc/pfree cycles, we reuse array */ 
+	/* To prevent multiple palloc/pfree cycles, we reuse array */
 	if (accum->tmpList == NULL)
 		accum->tmpList =
 			(ItemPointerData *) palloc(sizeof(ItemPointerData) * DEF_NPTR);
@@ -149,8 +149,8 @@ ginInsertEntry(BuildAccumulator *accum, ItemPointer heapptr, OffsetNumber attnum
 	else
 	{
 		/*
-		 * The key has been appended, so "free" allocated
-		 * key by decrementing chunk's counter.
+		 * The key has been appended, so "free" allocated key by decrementing
+		 * chunk's counter.
 		 */
 		accum->length--;
 	}
@@ -162,7 +162,7 @@ ginInsertEntry(BuildAccumulator *accum, ItemPointer heapptr, OffsetNumber attnum
  * Since the entries are being inserted into a balanced binary tree, you
  * might think that the order of insertion wouldn't be critical, but it turns
  * out that inserting the entries in sorted order results in a lot of
- * rebalancing operations and is slow.  To prevent this, we attempt to insert
+ * rebalancing operations and is slow.	To prevent this, we attempt to insert
  * the nodes in an order that will produce a nearly-balanced tree if the input
  * is in fact sorted.
  *
@@ -172,11 +172,11 @@ ginInsertEntry(BuildAccumulator *accum, ItemPointer heapptr, OffsetNumber attnum
  * tree; then, we insert the middles of each half of out virtual array, then
  * middles of quarters, etc.
  */
-	 void
+void
 ginInsertRecordBA(BuildAccumulator *accum, ItemPointer heapptr, OffsetNumber attnum,
 				  Datum *entries, int32 nentry)
 {
-	uint32	step = nentry;
+	uint32		step = nentry;
 
 	if (nentry <= 0)
 		return;
@@ -186,21 +186,22 @@ ginInsertRecordBA(BuildAccumulator *accum, ItemPointer heapptr, OffsetNumber att
 	/*
 	 * step will contain largest power of 2 and <= nentry
 	 */
-	step |= (step >>  1);
-	step |= (step >>  2);
-	step |= (step >>  4);
-	step |= (step >>  8);
+	step |= (step >> 1);
+	step |= (step >> 2);
+	step |= (step >> 4);
+	step |= (step >> 8);
 	step |= (step >> 16);
 	step >>= 1;
-	step ++;
+	step++;
 
-	while(step > 0) {
-		int i;
+	while (step > 0)
+	{
+		int			i;
 
-		for (i = step - 1; i < nentry && i >= 0; i += step << 1 /* *2 */)
+		for (i = step - 1; i < nentry && i >= 0; i += step << 1 /* *2 */ )
 			ginInsertEntry(accum, heapptr, attnum, entries[i]);
 
-		step >>= 1; /* /2 */
+		step >>= 1;				/* /2 */
 	}
 }
 

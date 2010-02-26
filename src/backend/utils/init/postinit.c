@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/init/postinit.c,v 1.203 2010/02/14 18:42:18 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/init/postinit.c,v 1.204 2010/02/26 02:01:13 momjian Exp $
  *
  *
  *-------------------------------------------------------------------------
@@ -75,7 +75,7 @@ static void process_settings(Oid databaseid, Oid roleid);
  * GetDatabaseTuple -- fetch the pg_database row for a database
  *
  * This is used during backend startup when we don't yet have any access to
- * system catalogs in general.  In the worst case, we can seqscan pg_database
+ * system catalogs in general.	In the worst case, we can seqscan pg_database
  * using nothing but the hard-wired descriptor that relcache.c creates for
  * pg_database.  In more typical cases, relcache.c was able to load
  * descriptors for both pg_database and its indexes from the shared relcache
@@ -99,7 +99,7 @@ GetDatabaseTuple(const char *dbname)
 				CStringGetDatum(dbname));
 
 	/*
-	 * Open pg_database and fetch a tuple.  Force heap scan if we haven't yet
+	 * Open pg_database and fetch a tuple.	Force heap scan if we haven't yet
 	 * built the critical shared relcache entries (i.e., we're starting up
 	 * without a shared relcache cache file).
 	 */
@@ -142,7 +142,7 @@ GetDatabaseTupleByOid(Oid dboid)
 				ObjectIdGetDatum(dboid));
 
 	/*
-	 * Open pg_database and fetch a tuple.  Force heap scan if we haven't yet
+	 * Open pg_database and fetch a tuple.	Force heap scan if we haven't yet
 	 * built the critical shared relcache entries (i.e., we're starting up
 	 * without a shared relcache cache file).
 	 */
@@ -179,9 +179,9 @@ PerformAuthentication(Port *port)
 
 	/*
 	 * In EXEC_BACKEND case, we didn't inherit the contents of pg_hba.conf
-	 * etcetera from the postmaster, and have to load them ourselves.  Note
-	 * we are loading them into the startup transaction's memory context,
-	 * not PostmasterContext, but that shouldn't matter.
+	 * etcetera from the postmaster, and have to load them ourselves.  Note we
+	 * are loading them into the startup transaction's memory context, not
+	 * PostmasterContext, but that shouldn't matter.
 	 *
 	 * FIXME: [fork/exec] Ugh.	Is there a way around this overhead?
 	 */
@@ -377,7 +377,7 @@ InitCommunication(void)
 /*
  * pg_split_opts -- split a string of options and append it to an argv array
  *
- * NB: the input string is destructively modified!  Also, caller is responsible
+ * NB: the input string is destructively modified!	Also, caller is responsible
  * for ensuring the argv array is large enough.  The maximum possible number
  * of arguments added by this routine is (strlen(optstr) + 1) / 2.
  *
@@ -495,8 +495,8 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 	InitBufferPoolBackend();
 
 	/*
-	 * Initialize local process's access to XLOG, if appropriate.  In bootstrap
-	 * case we skip this since StartupXLOG() was run instead.
+	 * Initialize local process's access to XLOG, if appropriate.  In
+	 * bootstrap case we skip this since StartupXLOG() was run instead.
 	 */
 	if (!bootstrap)
 		(void) RecoveryInProgress();
@@ -519,8 +519,8 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 		pgstat_initialize();
 
 	/*
-	 * Load relcache entries for the shared system catalogs.  This must
-	 * create at least an entry for pg_database.
+	 * Load relcache entries for the shared system catalogs.  This must create
+	 * at least an entry for pg_database.
 	 */
 	RelationCacheInitializePhase2();
 
@@ -542,10 +542,10 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 	/*
 	 * Start a new transaction here before first access to db, and get a
 	 * snapshot.  We don't have a use for the snapshot itself, but we're
-	 * interested in the secondary effect that it sets RecentGlobalXmin.
-	 * (This is critical for anything that reads heap pages, because HOT
-	 * may decide to prune them even if the process doesn't attempt to
-	 * modify any tuples.)
+	 * interested in the secondary effect that it sets RecentGlobalXmin. (This
+	 * is critical for anything that reads heap pages, because HOT may decide
+	 * to prune them even if the process doesn't attempt to modify any
+	 * tuples.)
 	 */
 	if (!bootstrap)
 	{
@@ -567,7 +567,7 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 	}
 	else if (in_dbname != NULL)
 	{
-		HeapTuple tuple;
+		HeapTuple	tuple;
 		Form_pg_database dbform;
 
 		tuple = GetDatabaseTuple(in_dbname);
@@ -584,7 +584,7 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 	else
 	{
 		/* caller specified database by OID */
-		HeapTuple tuple;
+		HeapTuple	tuple;
 		Form_pg_database dbform;
 
 		tuple = GetDatabaseTupleByOid(dboid);
@@ -608,8 +608,8 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 
 	/*
 	 * Now, take a writer's lock on the database we are trying to connect to.
-	 * If there is a concurrently running DROP DATABASE on that database,
-	 * this will block us until it finishes (and has committed its update of
+	 * If there is a concurrently running DROP DATABASE on that database, this
+	 * will block us until it finishes (and has committed its update of
 	 * pg_database).
 	 *
 	 * Note that the lock is not held long, only until the end of this startup
@@ -634,7 +634,7 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 	 */
 	if (!bootstrap && !am_walsender)
 	{
-		HeapTuple tuple;
+		HeapTuple	tuple;
 
 		tuple = GetDatabaseTuple(dbname);
 		if (!HeapTupleIsValid(tuple) ||
@@ -722,8 +722,8 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 	process_settings(MyDatabaseId, GetSessionUserId());
 
 	/*
-	 * Re-read the pg_database row for our database, check permissions and
-	 * set up database-specific GUC settings.  We can't do this until all the
+	 * Re-read the pg_database row for our database, check permissions and set
+	 * up database-specific GUC settings.  We can't do this until all the
 	 * database-access infrastructure is up.  (Also, it wants to know if the
 	 * user is a superuser, so the above stuff has to happen first.)
 	 */
@@ -752,7 +752,7 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 
 	/*
 	 * Now process any command-line switches that were included in the startup
-	 * packet, if we are in a regular backend.  We couldn't do this before
+	 * packet, if we are in a regular backend.	We couldn't do this before
 	 * because we didn't know if client is a superuser.
 	 */
 	gucctx = am_superuser ? PGC_SUSET : PGC_BACKEND;
@@ -846,7 +846,7 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 static void
 process_settings(Oid databaseid, Oid roleid)
 {
-	Relation		relsetting;
+	Relation	relsetting;
 
 	if (!IsUnderPostmaster)
 		return;

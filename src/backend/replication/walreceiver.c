@@ -29,7 +29,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/replication/walreceiver.c,v 1.5 2010/02/19 10:51:04 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/replication/walreceiver.c,v 1.6 2010/02/26 02:00:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,7 +51,7 @@
 #include "utils/resowner.h"
 
 /* Global variable to indicate if this process is a walreceiver process */
-bool am_walreceiver;
+bool		am_walreceiver;
 
 /* libpqreceiver hooks to these when loaded */
 walrcv_connect_type walrcv_connect = NULL;
@@ -102,9 +102,9 @@ static void
 ProcessWalRcvInterrupts(void)
 {
 	/*
-	 * Although walreceiver interrupt handling doesn't use the same scheme
-	 * as regular backends, call CHECK_FOR_INTERRUPTS() to make sure we
-	 * receive any incoming signals on Win32.
+	 * Although walreceiver interrupt handling doesn't use the same scheme as
+	 * regular backends, call CHECK_FOR_INTERRUPTS() to make sure we receive
+	 * any incoming signals on Win32.
 	 */
 	CHECK_FOR_INTERRUPTS();
 
@@ -148,37 +148,38 @@ static void XLogWalRcvFlush(void);
  */
 static struct
 {
-	XLogRecPtr	Write;	/* last byte + 1 written out in the standby */
-	XLogRecPtr	Flush;	/* last byte + 1 flushed in the standby */
-} LogstreamResult;
+	XLogRecPtr	Write;			/* last byte + 1 written out in the standby */
+	XLogRecPtr	Flush;			/* last byte + 1 flushed in the standby */
+}	LogstreamResult;
 
 /* Main entry point for walreceiver process */
 void
 WalReceiverMain(void)
 {
-	char conninfo[MAXCONNINFO];
-	XLogRecPtr startpoint;
+	char		conninfo[MAXCONNINFO];
+	XLogRecPtr	startpoint;
+
 	/* use volatile pointer to prevent code rearrangement */
 	volatile WalRcvData *walrcv = WalRcv;
 
 	am_walreceiver = true;
 
 	/*
-	 * WalRcv should be set up already (if we are a backend, we inherit
-	 * this by fork() or EXEC_BACKEND mechanism from the postmaster).
+	 * WalRcv should be set up already (if we are a backend, we inherit this
+	 * by fork() or EXEC_BACKEND mechanism from the postmaster).
 	 */
 	Assert(walrcv != NULL);
 
 	/*
 	 * Mark walreceiver as running in shared memory.
 	 *
-	 * Do this as early as possible, so that if we fail later on, we'll
-	 * set state to STOPPED. If we die before this, the startup process
-	 * will keep waiting for us to start up, until it times out.
+	 * Do this as early as possible, so that if we fail later on, we'll set
+	 * state to STOPPED. If we die before this, the startup process will keep
+	 * waiting for us to start up, until it times out.
 	 */
 	SpinLockAcquire(&walrcv->mutex);
 	Assert(walrcv->pid == 0);
-	switch(walrcv->walRcvState)
+	switch (walrcv->walRcvState)
 	{
 		case WALRCV_STOPPING:
 			/* If we've already been requested to stop, don't start up. */
@@ -222,7 +223,8 @@ WalReceiverMain(void)
 #endif
 
 	/* Properly accept or ignore signals the postmaster might send us */
-	pqsignal(SIGHUP, WalRcvSigHupHandler);		/* set flag to read config file */
+	pqsignal(SIGHUP, WalRcvSigHupHandler);		/* set flag to read config
+												 * file */
 	pqsignal(SIGINT, SIG_IGN);
 	pqsignal(SIGTERM, WalRcvShutdownHandler);	/* request shutdown */
 	pqsignal(SIGQUIT, WalRcvQuickDieHandler);	/* hard crash time */
@@ -264,9 +266,9 @@ WalReceiverMain(void)
 	/* Loop until end-of-streaming or error */
 	for (;;)
 	{
-		unsigned char	type;
-		char   *buf;
-		int		len;
+		unsigned char type;
+		char	   *buf;
+		int			len;
 
 		/*
 		 * Emergency bailout if postmaster has died.  This is to avoid the
@@ -299,12 +301,12 @@ WalReceiverMain(void)
 			XLogWalRcvProcessMsg(type, buf, len);
 
 			/* Receive any more data we can without sleeping */
-			while(walrcv_receive(0, &type, &buf, &len))
+			while (walrcv_receive(0, &type, &buf, &len))
 				XLogWalRcvProcessMsg(type, buf, len);
 
 			/*
-			 * If we've written some records, flush them to disk and
-			 * let the startup process know about them.
+			 * If we've written some records, flush them to disk and let the
+			 * startup process know about them.
 			 */
 			XLogWalRcvFlush();
 		}
@@ -375,8 +377,8 @@ WalRcvQuickDieHandler(SIGNAL_ARGS)
 	 * system reset cycle if some idiot DBA sends a manual SIGQUIT to a random
 	 * backend.  This is necessary precisely because we don't clean up our
 	 * shared memory state.  (The "dead man switch" mechanism in pmsignal.c
-	 * should ensure the postmaster sees this as a crash, too, but no harm
-	 * in being doubly sure.)
+	 * should ensure the postmaster sees this as a crash, too, but no harm in
+	 * being doubly sure.)
 	 */
 	exit(2);
 }
@@ -389,20 +391,20 @@ XLogWalRcvProcessMsg(unsigned char type, char *buf, Size len)
 {
 	switch (type)
 	{
-		case 'w':	/* WAL records */
-		{
-			XLogRecPtr	recptr;
+		case 'w':				/* WAL records */
+			{
+				XLogRecPtr	recptr;
 
-			if (len < sizeof(XLogRecPtr))
-				ereport(ERROR,
-						(errmsg("invalid WAL message received from primary")));
+				if (len < sizeof(XLogRecPtr))
+					ereport(ERROR,
+					  (errmsg("invalid WAL message received from primary")));
 
-			recptr = *((XLogRecPtr *) buf);
-			buf += sizeof(XLogRecPtr);
-			len -= sizeof(XLogRecPtr);
-			XLogWalRcvWrite(buf, len, recptr);
-			break;
-		}
+				recptr = *((XLogRecPtr *) buf);
+				buf += sizeof(XLogRecPtr);
+				len -= sizeof(XLogRecPtr);
+				XLogWalRcvWrite(buf, len, recptr);
+				break;
+			}
 		default:
 			ereport(ERROR,
 					(errcode(ERRCODE_PROTOCOL_VIOLATION),
@@ -417,20 +419,20 @@ XLogWalRcvProcessMsg(unsigned char type, char *buf, Size len)
 static void
 XLogWalRcvWrite(char *buf, Size nbytes, XLogRecPtr recptr)
 {
-	int		startoff;
-	int		byteswritten;
+	int			startoff;
+	int			byteswritten;
 
 	while (nbytes > 0)
 	{
-		int		segbytes;
+		int			segbytes;
 
 		if (recvFile < 0 || !XLByteInSeg(recptr, recvId, recvSeg))
 		{
-			bool	use_existent;
+			bool		use_existent;
 
 			/*
-			 * fsync() and close current file before we switch to next one.
-			 * We would otherwise have to reopen this file to fsync it later
+			 * fsync() and close current file before we switch to next one. We
+			 * would otherwise have to reopen this file to fsync it later
 			 */
 			if (recvFile >= 0)
 			{
@@ -444,8 +446,8 @@ XLogWalRcvWrite(char *buf, Size nbytes, XLogRecPtr recptr)
 				if (close(recvFile) != 0)
 					ereport(PANIC,
 							(errcode_for_file_access(),
-							 errmsg("could not close log file %u, segment %u: %m",
-									recvId, recvSeg)));
+						errmsg("could not close log file %u, segment %u: %m",
+							   recvId, recvSeg)));
 			}
 			recvFile = -1;
 
@@ -500,14 +502,13 @@ XLogWalRcvWrite(char *buf, Size nbytes, XLogRecPtr recptr)
 		nbytes -= byteswritten;
 		buf += byteswritten;
 
-		LogstreamResult.Write	= recptr;
+		LogstreamResult.Write = recptr;
 
 		/*
-		 * XXX: Should we signal bgwriter to start a restartpoint
-		 * if we've consumed too much xlog since the last one, like
-		 * in normal processing? But this is not worth doing unless
-		 * a restartpoint can be created independently from a
-		 * checkpoint record.
+		 * XXX: Should we signal bgwriter to start a restartpoint if we've
+		 * consumed too much xlog since the last one, like in normal
+		 * processing? But this is not worth doing unless a restartpoint can
+		 * be created independently from a checkpoint record.
 		 */
 	}
 }
@@ -520,7 +521,7 @@ XLogWalRcvFlush(void)
 	{
 		/* use volatile pointer to prevent code rearrangement */
 		volatile WalRcvData *walrcv = WalRcv;
-		char	activitymsg[50];
+		char		activitymsg[50];
 
 		issue_xlog_fsync(recvFile, recvId, recvSeg);
 

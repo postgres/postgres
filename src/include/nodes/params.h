@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/params.h,v 1.41 2010/01/15 22:36:35 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/params.h,v 1.42 2010/02/26 02:01:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,13 +29,13 @@ struct ParseState;
  *	  Although parameter numbers are normally consecutive, we allow
  *	  ptype == InvalidOid to signal an unused array entry.
  *
- *	  pflags is a flags field.  Currently the only used bit is:
+ *	  pflags is a flags field.	Currently the only used bit is:
  *	  PARAM_FLAG_CONST signals the planner that it may treat this parameter
  *	  as a constant (i.e., generate a plan that works only for this value
  *	  of the parameter).
  *
  *	  There are two hook functions that can be associated with a ParamListInfo
- *	  array to support dynamic parameter handling.  First, if paramFetch
+ *	  array to support dynamic parameter handling.	First, if paramFetch
  *	  isn't null and the executor requires a value for an invalid parameter
  *	  (one with ptype == InvalidOid), the paramFetch hook is called to give
  *	  it a chance to fill in the parameter value.  Second, a parserSetup
@@ -68,7 +68,7 @@ typedef struct ParamListInfoData
 {
 	ParamFetchHook paramFetch;	/* parameter fetch hook */
 	void	   *paramFetchArg;
-	ParserSetupHook parserSetup; /* parser setup hook */
+	ParserSetupHook parserSetup;	/* parser setup hook */
 	void	   *parserSetupArg;
 	int			numParams;		/* number of ParamExternDatas following */
 	ParamExternData params[1];	/* VARIABLE LENGTH ARRAY */

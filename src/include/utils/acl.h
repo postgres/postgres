@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/acl.h,v 1.112 2010/01/02 16:58:09 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/acl.h,v 1.113 2010/02/26 02:01:28 momjian Exp $
  *
  * NOTES
  *	  An ACL array is simply an array of AclItems, representing the union
@@ -202,7 +202,7 @@ typedef enum AclObjectKind
  */
 extern Acl *acldefault(GrantObjectType objtype, Oid ownerId);
 extern Acl *get_user_default_acl(GrantObjectType objtype, Oid ownerId,
-								 Oid nsp_oid);
+					 Oid nsp_oid);
 
 extern Acl *aclupdate(const Acl *old_acl, const AclItem *mod_aip,
 		  int modechg, Oid ownerId, DropBehavior behavior);
@@ -263,7 +263,7 @@ extern AclMode pg_proc_aclmask(Oid proc_oid, Oid roleid,
 extern AclMode pg_language_aclmask(Oid lang_oid, Oid roleid,
 					AclMode mask, AclMaskHow how);
 extern AclMode pg_largeobject_aclmask_snapshot(Oid lobj_oid, Oid roleid,
-					AclMode mask, AclMaskHow how, Snapshot snapshot);
+							AclMode mask, AclMaskHow how, Snapshot snapshot);
 extern AclMode pg_namespace_aclmask(Oid nsp_oid, Oid roleid,
 					 AclMode mask, AclMaskHow how);
 extern AclMode pg_tablespace_aclmask(Oid spc_oid, Oid roleid,
@@ -282,7 +282,7 @@ extern AclResult pg_database_aclcheck(Oid db_oid, Oid roleid, AclMode mode);
 extern AclResult pg_proc_aclcheck(Oid proc_oid, Oid roleid, AclMode mode);
 extern AclResult pg_language_aclcheck(Oid lang_oid, Oid roleid, AclMode mode);
 extern AclResult pg_largeobject_aclcheck_snapshot(Oid lang_oid, Oid roleid,
-												  AclMode mode, Snapshot snapshot);
+								 AclMode mode, Snapshot snapshot);
 extern AclResult pg_namespace_aclcheck(Oid nsp_oid, Oid roleid, AclMode mode);
 extern AclResult pg_tablespace_aclcheck(Oid spc_oid, Oid roleid, AclMode mode);
 extern AclResult pg_foreign_data_wrapper_aclcheck(Oid fdw_oid, Oid roleid, AclMode mode);

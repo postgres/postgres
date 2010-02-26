@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/nbtree.h,v 1.129 2010/02/13 00:59:58 sriggs Exp $
+ * $PostgreSQL: pgsql/src/include/access/nbtree.h,v 1.130 2010/02/26 02:01:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -220,8 +220,10 @@ typedef struct BTMetaPageData
 #define XLOG_BTREE_NEWROOT		0xA0	/* new root page */
 #define XLOG_BTREE_DELETE_PAGE_HALF 0xB0		/* page deletion that makes
 												 * parent half-dead */
-#define XLOG_BTREE_VACUUM		0xC0	/* delete entries on a page during vacuum */
-#define XLOG_BTREE_REUSE_PAGE	0xD0	/* old page is about to be reused from FSM */
+#define XLOG_BTREE_VACUUM		0xC0	/* delete entries on a page during
+										 * vacuum */
+#define XLOG_BTREE_REUSE_PAGE	0xD0	/* old page is about to be reused from
+										 * FSM */
 
 /*
  * All that we need to find changed index tuple
@@ -314,8 +316,8 @@ typedef struct xl_btree_delete
 {
 	RelFileNode node;
 	BlockNumber block;
-	TransactionId	latestRemovedXid;
-	int			numItems;		 /* number of items in the offset array */
+	TransactionId latestRemovedXid;
+	int			numItems;		/* number of items in the offset array */
 
 	/* TARGET OFFSET NUMBERS FOLLOW AT THE END */
 } xl_btree_delete;
@@ -329,7 +331,7 @@ typedef struct xl_btree_reuse_page
 {
 	RelFileNode node;
 	BlockNumber block;
-	TransactionId	latestRemovedXid;
+	TransactionId latestRemovedXid;
 } xl_btree_reuse_page;
 
 #define SizeOfBtreeReusePage	(sizeof(xl_btree_reuse_page))
@@ -341,7 +343,7 @@ typedef struct xl_btree_reuse_page
  *
  * The correctness requirement for applying these changes during recovery is
  * that we must do one of these two things for every block in the index:
- * 		* lock the block for cleanup and apply any required changes
+ *		* lock the block for cleanup and apply any required changes
  *		* EnsureBlockUnpinned()
  * The purpose of this is to ensure that no index scans started before we
  * finish scanning the index are still running by the time we begin to remove
@@ -361,7 +363,7 @@ typedef struct xl_btree_vacuum
 	RelFileNode node;
 	BlockNumber block;
 	BlockNumber lastBlockVacuumed;
-	int			numItems;		 /* number of items in the offset array */
+	int			numItems;		/* number of items in the offset array */
 
 	/* TARGET OFFSET NUMBERS FOLLOW */
 } xl_btree_vacuum;
@@ -590,7 +592,7 @@ extern bool _bt_page_recyclable(Page page);
 extern void _bt_delitems(Relation rel, Buffer buf,
 			 OffsetNumber *itemnos, int nitems, bool isVacuum,
 			 BlockNumber lastBlockVacuumed);
-extern int _bt_pagedel(Relation rel, Buffer buf, BTStack stack);
+extern int	_bt_pagedel(Relation rel, Buffer buf, BTStack stack);
 
 /*
  * prototypes for functions in nbtsearch.c

@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/extern.h,v 1.38 2010/02/04 09:41:34 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/extern.h,v 1.39 2010/02/26 02:01:30 momjian Exp $ */
 
 #ifndef _ECPG_LIB_EXTERN_H
 #define _ECPG_LIB_EXTERN_H
@@ -151,7 +151,7 @@ struct descriptor *ecpggetdescp(int, char *);
 struct descriptor *ecpg_find_desc(int line, const char *name);
 
 struct prepared_statement *ecpg_find_prepared_statement(const char *,
-				  struct connection *, struct prepared_statement **);
+						  struct connection *, struct prepared_statement **);
 
 bool ecpg_store_result(const PGresult *results, int act_field,
 				  const struct statement * stmt, struct variable * var);

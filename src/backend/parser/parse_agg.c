@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_agg.c,v 1.91 2010/02/12 17:33:20 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_agg.c,v 1.92 2010/02/26 02:00:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,7 +51,7 @@ static bool check_ungrouped_columns_walker(Node *node,
  *
  * Here we convert the args list into a targetlist by inserting TargetEntry
  * nodes, and then transform the aggorder and agg_distinct specifications to
- * produce lists of SortGroupClause nodes.  (That might also result in adding
+ * produce lists of SortGroupClause nodes.	(That might also result in adding
  * resjunk expressions to the targetlist.)
  *
  * We must also determine which query level the aggregate actually belongs to,
@@ -61,11 +61,11 @@ static bool check_ungrouped_columns_walker(Node *node,
 void
 transformAggregateCall(ParseState *pstate, Aggref *agg, bool agg_distinct)
 {
-	List       *tlist;
-	List       *torder;
-	List       *tdistinct = NIL;
-	AttrNumber  attno;
-	int         save_next_resno;
+	List	   *tlist;
+	List	   *torder;
+	List	   *tdistinct = NIL;
+	AttrNumber	attno;
+	int			save_next_resno;
 	int			min_varlevel;
 	ListCell   *lc;
 
@@ -77,7 +77,7 @@ transformAggregateCall(ParseState *pstate, Aggref *agg, bool agg_distinct)
 	attno = 1;
 	foreach(lc, agg->args)
 	{
-		Expr        *arg  = (Expr *) lfirst(lc);
+		Expr	   *arg = (Expr *) lfirst(lc);
 		TargetEntry *tle = makeTargetEntry(arg, attno++, NULL, false);
 
 		tlist = lappend(tlist, tle);
@@ -98,8 +98,8 @@ transformAggregateCall(ParseState *pstate, Aggref *agg, bool agg_distinct)
 	torder = transformSortClause(pstate,
 								 agg->aggorder,
 								 &tlist,
-								 true /* fix unknowns */,
-								 true /* force SQL99 rules */);
+								 true /* fix unknowns */ ,
+								 true /* force SQL99 rules */ );
 
 	/*
 	 * If we have DISTINCT, transform that to produce a distinctList.
@@ -118,12 +118,12 @@ transformAggregateCall(ParseState *pstate, Aggref *agg, bool agg_distinct)
 
 			if (!OidIsValid(sortcl->sortop))
 			{
-				Node   *expr = get_sortgroupclause_expr(sortcl, tlist);
+				Node	   *expr = get_sortgroupclause_expr(sortcl, tlist);
 
 				ereport(ERROR,
 						(errcode(ERRCODE_UNDEFINED_FUNCTION),
-						 errmsg("could not identify an ordering operator for type %s",
-								format_type_be(exprType(expr))),
+				errmsg("could not identify an ordering operator for type %s",
+					   format_type_be(exprType(expr))),
 						 errdetail("Aggregates with DISTINCT must be able to sort their inputs."),
 						 parser_errposition(pstate, exprLocation(expr))));
 			}

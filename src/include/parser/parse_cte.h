@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/parser/parse_cte.h,v 1.4 2010/01/02 16:58:07 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/parser/parse_cte.h,v 1.5 2010/02/26 02:01:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,6 +19,6 @@
 extern List *transformWithClause(ParseState *pstate, WithClause *withClause);
 
 extern void analyzeCTETargetList(ParseState *pstate, CommonTableExpr *cte,
-								 List *tlist);
+					 List *tlist);
 
 #endif   /* PARSE_CTE_H */

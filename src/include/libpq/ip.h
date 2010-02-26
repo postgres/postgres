@@ -8,7 +8,7 @@
  *
  * Copyright (c) 2003-2010, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/libpq/ip.h,v 1.23 2010/01/02 16:58:04 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/libpq/ip.h,v 1.24 2010/02/26 02:01:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,9 +25,9 @@
 #define IS_AF_UNIX(fam) (0)
 #endif
 
-typedef void (*PgIfAddrCallback) (struct sockaddr *addr,
-								  struct sockaddr *netmask,
-								  void *cb_data);
+typedef void (*PgIfAddrCallback) (struct sockaddr * addr,
+											  struct sockaddr * netmask,
+											  void *cb_data);
 
 extern int pg_getaddrinfo_all(const char *hostname, const char *servname,
 				   const struct addrinfo * hintp,
@@ -51,6 +51,6 @@ extern void pg_promote_v4_to_v6_addr(struct sockaddr_storage * addr);
 extern void pg_promote_v4_to_v6_mask(struct sockaddr_storage * addr);
 #endif
 
-extern int pg_foreach_ifaddr(PgIfAddrCallback callback, void *cb_data);
+extern int	pg_foreach_ifaddr(PgIfAddrCallback callback, void *cb_data);
 
 #endif   /* IP_H */

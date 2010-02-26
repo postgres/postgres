@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/functions.c,v 1.141 2010/02/14 18:42:14 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/functions.c,v 1.142 2010/02/26 02:00:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -636,8 +636,8 @@ fmgr_sql(PG_FUNCTION_ARGS)
 		/*
 		 * For simplicity, we require callers to support both set eval modes.
 		 * There are cases where we must use one or must use the other, and
-		 * it's not really worthwhile to postpone the check till we know.
-		 * But note we do not require caller to provide an expectedDesc.
+		 * it's not really worthwhile to postpone the check till we know. But
+		 * note we do not require caller to provide an expectedDesc.
 		 */
 		if (!rsi || !IsA(rsi, ReturnSetInfo) ||
 			(rsi->allowedModes & SFRM_ValuePerCall) == 0 ||
@@ -1042,7 +1042,7 @@ check_sql_fn_retval(Oid func_id, Oid rettype, List *queryTreeList,
 	AssertArg(!IsPolymorphicType(rettype));
 
 	if (modifyTargetList)
-		*modifyTargetList = false;	/* initialize for no change */
+		*modifyTargetList = false;		/* initialize for no change */
 	if (junkFilter)
 		*junkFilter = NULL;		/* initialize in case of VOID result */
 
@@ -1219,7 +1219,7 @@ check_sql_fn_retval(Oid func_id, Oid rettype, List *queryTreeList,
 		/*
 		 * Verify that the targetlist matches the return tuple type. We scan
 		 * the non-deleted attributes to ensure that they match the datatypes
-		 * of the non-resjunk columns.  For deleted attributes, insert NULL
+		 * of the non-resjunk columns.	For deleted attributes, insert NULL
 		 * result columns if the caller asked for that.
 		 */
 		tupnatts = tupdesc->natts;
@@ -1254,7 +1254,7 @@ check_sql_fn_retval(Oid func_id, Oid rettype, List *queryTreeList,
 				attr = tupdesc->attrs[colindex - 1];
 				if (attr->attisdropped && modifyTargetList)
 				{
-					Expr   *null_expr;
+					Expr	   *null_expr;
 
 					/* The type of the null we insert isn't important */
 					null_expr = (Expr *) makeConst(INT4OID,
@@ -1311,17 +1311,17 @@ check_sql_fn_retval(Oid func_id, Oid rettype, List *queryTreeList,
 						(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
 						 errmsg("return type mismatch in function declared to return %s",
 								format_type_be(rettype)),
-						 errdetail("Final statement returns too few columns.")));
+					 errdetail("Final statement returns too few columns.")));
 			if (modifyTargetList)
 			{
-				Expr   *null_expr;
+				Expr	   *null_expr;
 
 				/* The type of the null we insert isn't important */
 				null_expr = (Expr *) makeConst(INT4OID,
 											   -1,
 											   sizeof(int32),
 											   (Datum) 0,
-											   true,		/* isnull */
+											   true,	/* isnull */
 											   true /* byval */ );
 				newtlist = lappend(newtlist,
 								   makeTargetEntry(null_expr,

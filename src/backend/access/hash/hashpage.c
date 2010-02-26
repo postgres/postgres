@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/hash/hashpage.c,v 1.82 2010/01/02 16:57:34 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/hash/hashpage.c,v 1.83 2010/02/26 02:00:33 momjian Exp $
  *
  * NOTES
  *	  Postgres hash pages look like ordinary relation pages.  The opaque
@@ -799,8 +799,8 @@ _hash_splitbucket(Relation rel,
 	/*
 	 * Partition the tuples in the old bucket between the old bucket and the
 	 * new bucket, advancing along the old bucket's overflow bucket chain and
-	 * adding overflow pages to the new bucket as needed.  Outer loop
-	 * iterates once per page in old bucket.
+	 * adding overflow pages to the new bucket as needed.  Outer loop iterates
+	 * once per page in old bucket.
 	 */
 	for (;;)
 	{

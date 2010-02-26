@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/pathkeys.c,v 1.100 2010/01/02 16:57:47 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/pathkeys.c,v 1.101 2010/02/26 02:00:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -637,12 +637,12 @@ convert_subquery_pathkeys(PlannerInfo *root, RelOptInfo *rel,
 							0);
 
 				/*
-				 * Note: it might look funny to be setting sortref = 0 for
-				 * a reference to a volatile sub_eclass.  However, the
-				 * expression is *not* volatile in the outer query: it's
-				 * just a Var referencing whatever the subquery emitted.
-				 * (IOW, the outer query isn't going to re-execute the
-				 * volatile expression itself.)  So this is okay.
+				 * Note: it might look funny to be setting sortref = 0 for a
+				 * reference to a volatile sub_eclass.	However, the
+				 * expression is *not* volatile in the outer query: it's just
+				 * a Var referencing whatever the subquery emitted. (IOW, the
+				 * outer query isn't going to re-execute the volatile
+				 * expression itself.)	So this is okay.
 				 */
 				outer_ec =
 					get_eclass_for_sort_expr(root,
@@ -1000,7 +1000,7 @@ find_mergeclauses_for_pathkeys(PlannerInfo *root,
 		 * It's possible that multiple matching clauses might have different
 		 * ECs on the other side, in which case the order we put them into our
 		 * result makes a difference in the pathkeys required for the other
-		 * input path.  However this routine hasn't got any info about which
+		 * input path.	However this routine hasn't got any info about which
 		 * order would be best, so we don't worry about that.
 		 *
 		 * It's also possible that the selected mergejoin clauses produce

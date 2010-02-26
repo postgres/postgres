@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/btree_gist/btree_ts.c,v 1.18 2009/12/02 13:13:24 teodor Exp $
+ * $PostgreSQL: pgsql/contrib/btree_gist/btree_ts.c,v 1.19 2010/02/26 02:00:32 momjian Exp $
  */
 #include "btree_gist.h"
 #include "btree_utils_num.h"
@@ -99,9 +99,9 @@ gbt_tslt(const void *a, const void *b)
 static int
 gbt_tskey_cmp(const void *a, const void *b)
 {
-    tsKEY *ia = (tsKEY*)(((Nsrt *) a)->t);
-	tsKEY *ib = (tsKEY*)(((Nsrt *) b)->t);
-	int res;
+	tsKEY	   *ia = (tsKEY *) (((Nsrt *) a)->t);
+	tsKEY	   *ib = (tsKEY *) (((Nsrt *) b)->t);
+	int			res;
 
 	res = DatumGetInt32(DirectFunctionCall2(timestamp_cmp, TimestampGetDatumFast(ia->lower), TimestampGetDatumFast(ib->lower)));
 	if (res == 0)

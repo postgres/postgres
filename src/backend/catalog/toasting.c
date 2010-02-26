@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/toasting.c,v 1.31 2010/02/14 18:42:13 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/toasting.c,v 1.32 2010/02/26 02:00:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,9 +32,9 @@
 #include "utils/syscache.h"
 
 /* Kluges for upgrade-in-place support */
-extern Oid binary_upgrade_next_toast_relfilenode;
+extern Oid	binary_upgrade_next_toast_relfilenode;
 
-Oid binary_upgrade_next_pg_type_toast_oid = InvalidOid;
+Oid			binary_upgrade_next_pg_type_toast_oid = InvalidOid;
 
 static bool create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid,
 				   Datum reloptions);

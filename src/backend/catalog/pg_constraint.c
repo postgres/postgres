@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_constraint.c,v 1.52 2010/02/14 18:42:13 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_constraint.c,v 1.53 2010/02/26 02:00:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -298,9 +298,9 @@ CreateConstraintEntry(const char *constraintName,
 	{
 		/*
 		 * Register normal dependency on the unique index that supports a
-		 * foreign-key constraint.  (Note: for indexes associated with
-		 * unique or primary-key constraints, the dependency runs the other
-		 * way, and is not made here.)
+		 * foreign-key constraint.	(Note: for indexes associated with unique
+		 * or primary-key constraints, the dependency runs the other way, and
+		 * is not made here.)
 		 */
 		ObjectAddress relobject;
 
@@ -342,11 +342,11 @@ CreateConstraintEntry(const char *constraintName,
 	}
 
 	/*
-	 * We don't bother to register dependencies on the exclusion operators
-	 * of an exclusion constraint.  We assume they are members of the opclass
-	 * supporting the index, so there's an indirect dependency via that.
-	 * (This would be pretty dicey for cross-type operators, but exclusion
-	 * operators can never be cross-type.)
+	 * We don't bother to register dependencies on the exclusion operators of
+	 * an exclusion constraint.  We assume they are members of the opclass
+	 * supporting the index, so there's an indirect dependency via that. (This
+	 * would be pretty dicey for cross-type operators, but exclusion operators
+	 * can never be cross-type.)
 	 */
 
 	if (conExpr != NULL)
@@ -764,8 +764,8 @@ GetConstraintByName(Oid relid, const char *conname)
 			if (OidIsValid(conOid))
 				ereport(ERROR,
 						(errcode(ERRCODE_DUPLICATE_OBJECT),
-						 errmsg("table \"%s\" has multiple constraints named \"%s\"",
-								get_rel_name(relid), conname)));
+				 errmsg("table \"%s\" has multiple constraints named \"%s\"",
+						get_rel_name(relid), conname)));
 			conOid = HeapTupleGetOid(tuple);
 		}
 	}

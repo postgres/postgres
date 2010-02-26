@@ -7,7 +7,7 @@
  * Copyright (c) 1996-2010, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/comment.c,v 1.113 2010/02/14 18:42:14 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/comment.c,v 1.114 2010/02/26 02:00:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -498,11 +498,11 @@ GetComment(Oid oid, Oid classoid, int32 subid)
 	sd = systable_beginscan(description, DescriptionObjIndexId, true,
 							SnapshotNow, 3, skey);
 
-	comment  = NULL;
+	comment = NULL;
 	while ((tuple = systable_getnext(sd)) != NULL)
 	{
-		Datum	value;
-		bool	isnull;
+		Datum		value;
+		bool		isnull;
 
 		/* Found the tuple, get description field */
 		value = heap_getattr(tuple, Anum_pg_description_description, tupdesc, &isnull);
@@ -631,9 +631,8 @@ CommentAttribute(List *qualname, char *comment)
 	 * Allow comments only on columns of tables, views, and composite types
 	 * (which are the only relkinds for which pg_dump will dump per-column
 	 * comments).  In particular we wish to disallow comments on index
-	 * columns, because the naming of an index's columns may change across
-	 * PG versions, so dumping per-column comments could create reload
-	 * failures.
+	 * columns, because the naming of an index's columns may change across PG
+	 * versions, so dumping per-column comments could create reload failures.
 	 */
 	if (relation->rd_rel->relkind != RELKIND_RELATION &&
 		relation->rd_rel->relkind != RELKIND_VIEW &&
@@ -903,7 +902,7 @@ CommentRule(List *qualname, char *comment)
 
 		/* Find the rule's pg_rewrite tuple, get its OID */
 		tuple = SearchSysCache2(RULERELNAME,
-						 		ObjectIdGetDatum(reloid),
+								ObjectIdGetDatum(reloid),
 								PointerGetDatum(rulename));
 		if (!HeapTupleIsValid(tuple))
 			ereport(ERROR,
@@ -1358,7 +1357,7 @@ CommentOpFamily(List *qualname, List *arguments, char *comment)
 		namespaceId = LookupExplicitNamespace(schemaname);
 		tuple = SearchSysCache3(OPFAMILYAMNAMENSP,
 								ObjectIdGetDatum(amID),
-						 		PointerGetDatum(opfname),
+								PointerGetDatum(opfname),
 								ObjectIdGetDatum(namespaceId));
 	}
 	else
@@ -1448,9 +1447,8 @@ CommentLargeObject(List *qualname, char *comment)
 	/*
 	 * Call CreateComments() to create/drop the comments
 	 *
-	 * See the comment in the inv_create() which describes
-	 * the reason why LargeObjectRelationId is used instead
-	 * of LargeObjectMetadataRelationId.
+	 * See the comment in the inv_create() which describes the reason why
+	 * LargeObjectRelationId is used instead of LargeObjectMetadataRelationId.
 	 */
 	CreateComments(loid, LargeObjectRelationId, 0, comment);
 }

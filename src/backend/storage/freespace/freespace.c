@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/freespace/freespace.c,v 1.76 2010/02/09 21:43:30 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/freespace/freespace.c,v 1.77 2010/02/26 02:00:59 momjian Exp $
  *
  *
  * NOTES:
@@ -307,10 +307,10 @@ FreeSpaceMapTruncateRel(Relation rel, BlockNumber nblocks)
 
 	/*
 	 * We might as well update the local smgr_fsm_nblocks setting.
-	 * smgrtruncate sent an smgr cache inval message, which will cause
-	 * other backends to invalidate their copy of smgr_fsm_nblocks, and
-	 * this one too at the next command boundary.  But this ensures it
-	 * isn't outright wrong until then.
+	 * smgrtruncate sent an smgr cache inval message, which will cause other
+	 * backends to invalidate their copy of smgr_fsm_nblocks, and this one too
+	 * at the next command boundary.  But this ensures it isn't outright wrong
+	 * until then.
 	 */
 	if (rel->rd_smgr)
 		rel->rd_smgr->smgr_fsm_nblocks = new_nfsmblocks;
@@ -509,9 +509,9 @@ fsm_readbuf(Relation rel, FSMAddress addr, bool extend)
 
 	/*
 	 * If we haven't cached the size of the FSM yet, check it first.  Also
-	 * recheck if the requested block seems to be past end, since our
-	 * cached value might be stale.  (We send smgr inval messages on
-	 * truncation, but not on extension.)
+	 * recheck if the requested block seems to be past end, since our cached
+	 * value might be stale.  (We send smgr inval messages on truncation, but
+	 * not on extension.)
 	 */
 	if (rel->rd_smgr->smgr_fsm_nblocks == InvalidBlockNumber ||
 		blkno >= rel->rd_smgr->smgr_fsm_nblocks)
@@ -575,8 +575,8 @@ fsm_extend(Relation rel, BlockNumber fsm_nblocks)
 	RelationOpenSmgr(rel);
 
 	/*
-	 * Create the FSM file first if it doesn't exist.  If smgr_fsm_nblocks
-	 * is positive then it must exist, no need for an smgrexists call.
+	 * Create the FSM file first if it doesn't exist.  If smgr_fsm_nblocks is
+	 * positive then it must exist, no need for an smgrexists call.
 	 */
 	if ((rel->rd_smgr->smgr_fsm_nblocks == 0 ||
 		 rel->rd_smgr->smgr_fsm_nblocks == InvalidBlockNumber) &&

@@ -4,7 +4,7 @@
  *	  Tablespace cache management.
  *
  * We cache the parsed version of spcoptions for each tablespace to avoid
- * needing to reparse on every lookup.  Right now, there doesn't appear to
+ * needing to reparse on every lookup.	Right now, there doesn't appear to
  * be a measurable performance gain from doing this, but that might change
  * in the future as we add more options.
  *
@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/spccache.c,v 1.5 2010/02/14 18:42:17 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/spccache.c,v 1.6 2010/02/26 02:01:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -75,7 +75,7 @@ InvalidateTableSpaceCacheCallback(Datum arg, int cacheid, ItemPointer tuplePtr)
 static void
 InitializeTableSpaceCache(void)
 {
-	HASHCTL ctl;
+	HASHCTL		ctl;
 
 	/* Initialize the hash table. */
 	MemSet(&ctl, 0, sizeof(ctl));
@@ -84,7 +84,7 @@ InitializeTableSpaceCache(void)
 	ctl.hash = oid_hash;
 	TableSpaceCacheHash =
 		hash_create("TableSpace cache", 16, &ctl,
-				    HASH_ELEM | HASH_FUNCTION);
+					HASH_ELEM | HASH_FUNCTION);
 
 	/* Make sure we've initialized CacheMemoryContext. */
 	if (!CacheMemoryContext)
@@ -128,18 +128,18 @@ get_tablespace(Oid spcid)
 		return spc;
 
 	/*
-	 * Not found in TableSpace cache.  Check catcache.  If we don't find a
+	 * Not found in TableSpace cache.  Check catcache.	If we don't find a
 	 * valid HeapTuple, it must mean someone has managed to request tablespace
-	 * details for a non-existent tablespace.  We'll just treat that case as if
-	 * no options were specified.
+	 * details for a non-existent tablespace.  We'll just treat that case as
+	 * if no options were specified.
 	 */
 	tp = SearchSysCache1(TABLESPACEOID, ObjectIdGetDatum(spcid));
 	if (!HeapTupleIsValid(tp))
 		opts = NULL;
 	else
 	{
-		Datum	datum;
-		bool	isNull;
+		Datum		datum;
+		bool		isNull;
 
 		datum = SysCacheGetAttr(TABLESPACEOID,
 								tp,
@@ -149,7 +149,8 @@ get_tablespace(Oid spcid)
 			opts = NULL;
 		else
 		{
-			bytea *bytea_opts = tablespace_reloptions(datum, false);
+			bytea	   *bytea_opts = tablespace_reloptions(datum, false);
+
 			opts = MemoryContextAlloc(CacheMemoryContext, VARSIZE(bytea_opts));
 			memcpy(opts, bytea_opts, VARSIZE(bytea_opts));
 		}
@@ -157,7 +158,7 @@ get_tablespace(Oid spcid)
 	}
 
 	/*
-	 * Now create the cache entry.  It's important to do this only after
+	 * Now create the cache entry.	It's important to do this only after
 	 * reading the pg_tablespace entry, since doing so could cause a cache
 	 * flush.
 	 */

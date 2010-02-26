@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/hstore/hstore_gin.c,v 1.7 2009/09/30 19:50:22 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/hstore/hstore_gin.c,v 1.8 2010/02/26 02:00:32 momjian Exp $
  */
 #include "postgres.h"
 
@@ -36,10 +36,10 @@ gin_extract_hstore(PG_FUNCTION_ARGS)
 	HStore	   *hs = PG_GETARG_HS(0);
 	int32	   *nentries = (int32 *) PG_GETARG_POINTER(1);
 	Datum	   *entries = NULL;
-	HEntry     *hsent = ARRPTR(hs);
-	char       *ptr = STRPTR(hs);
-	int        count = HS_COUNT(hs);
-	int        i;
+	HEntry	   *hsent = ARRPTR(hs);
+	char	   *ptr = STRPTR(hs);
+	int			count = HS_COUNT(hs);
+	int			i;
 
 	*nentries = 2 * count;
 	if (count)
@@ -49,21 +49,21 @@ gin_extract_hstore(PG_FUNCTION_ARGS)
 	{
 		text	   *item;
 
-		item = makeitem(HS_KEY(hsent,ptr,i), HS_KEYLEN(hsent,i));
+		item = makeitem(HS_KEY(hsent, ptr, i), HS_KEYLEN(hsent, i));
 		*VARDATA(item) = KEYFLAG;
-		entries[2*i] = PointerGetDatum(item);
+		entries[2 * i] = PointerGetDatum(item);
 
-		if (HS_VALISNULL(hsent,i))
+		if (HS_VALISNULL(hsent, i))
 		{
 			item = makeitem(NULL, 0);
 			*VARDATA(item) = NULLFLAG;
 		}
 		else
 		{
-			item = makeitem(HS_VAL(hsent,ptr,i), HS_VALLEN(hsent,i));
+			item = makeitem(HS_VAL(hsent, ptr, i), HS_VALLEN(hsent, i));
 			*VARDATA(item) = VALFLAG;
 		}
-		entries[2*i+1] = PointerGetDatum(item);
+		entries[2 * i + 1] = PointerGetDatum(item);
 	}
 
 	PG_RETURN_POINTER(entries);
@@ -103,14 +103,15 @@ gin_extract_hstore_query(PG_FUNCTION_ARGS)
 	else if (strategy == HStoreExistsAnyStrategyNumber ||
 			 strategy == HStoreExistsAllStrategyNumber)
 	{
-		ArrayType   *query = PG_GETARG_ARRAYTYPE_P(0);
-		Datum      *key_datums;
-		bool       *key_nulls;
-		int        key_count;
-		int        i,j;
+		ArrayType  *query = PG_GETARG_ARRAYTYPE_P(0);
+		Datum	   *key_datums;
+		bool	   *key_nulls;
+		int			key_count;
+		int			i,
+					j;
 		int32	   *nentries = (int32 *) PG_GETARG_POINTER(1);
 		Datum	   *entries = NULL;
-		text       *item;
+		text	   *item;
 
 		deconstruct_array(query,
 						  TEXTOID, -1, false, 'i',
@@ -145,8 +146,10 @@ gin_consistent_hstore(PG_FUNCTION_ARGS)
 {
 	bool	   *check = (bool *) PG_GETARG_POINTER(0);
 	StrategyNumber strategy = PG_GETARG_UINT16(1);
+
 	/* HStore	   *query = PG_GETARG_HS(2); */
 	int32		nkeys = PG_GETARG_INT32(3);
+
 	/* Pointer	   *extra_data = (Pointer *) PG_GETARG_POINTER(4); */
 	bool	   *recheck = (bool *) PG_GETARG_POINTER(5);
 	bool		res = true;
@@ -178,7 +181,7 @@ gin_consistent_hstore(PG_FUNCTION_ARGS)
 	}
 	else if (strategy == HStoreExistsAllStrategyNumber)
 	{
-		int        i;
+		int			i;
 
 		for (i = 0; res && i < nkeys; ++i)
 			if (!check[i])

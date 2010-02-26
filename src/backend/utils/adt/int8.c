@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/int8.c,v 1.78 2010/02/08 20:39:51 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/int8.c,v 1.79 2010/02/26 02:01:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -654,9 +654,9 @@ int8inc(PG_FUNCTION_ARGS)
 	/*
 	 * When int8 is pass-by-reference, we provide this special case to avoid
 	 * palloc overhead for COUNT(): when called as an aggregate, we know that
-	 * the argument is modifiable local storage, so just update it
-	 * in-place. (If int8 is pass-by-value, then of course this is useless as
-	 * well as incorrect, so just ifdef it out.)
+	 * the argument is modifiable local storage, so just update it in-place.
+	 * (If int8 is pass-by-value, then of course this is useless as well as
+	 * incorrect, so just ifdef it out.)
 	 */
 #ifndef USE_FLOAT8_BYVAL		/* controls int8 too */
 	if (AggCheckCallContext(fcinfo, NULL))

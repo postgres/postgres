@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_handler.c,v 1.50 2010/02/14 18:42:18 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_handler.c,v 1.51 2010/02/26 02:01:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,7 +34,7 @@ static const struct config_enum_entry variable_conflict_options[] = {
 	{NULL, 0, false}
 };
 
-int		plpgsql_variable_conflict = PLPGSQL_RESOLVE_ERROR;
+int			plpgsql_variable_conflict = PLPGSQL_RESOLVE_ERROR;
 
 /* Hook for plugins */
 PLpgSQL_plugin **plugin_ptr = NULL;

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/explain.c,v 1.203 2010/02/16 22:19:59 adunstan Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/explain.c,v 1.204 2010/02/26 02:00:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -55,9 +55,9 @@ static void report_triggers(ResultRelInfo *rInfo, bool show_relname,
 				ExplainState *es);
 static double elapsed_time(instr_time *starttime);
 static void ExplainNode(Plan *plan, PlanState *planstate,
-				Plan *outer_plan,
-				const char *relationship, const char *plan_name,
-				ExplainState *es);
+			Plan *outer_plan,
+			const char *relationship, const char *plan_name,
+			ExplainState *es);
 static void show_plan_tlist(Plan *plan, ExplainState *es);
 static void show_qual(List *qual, const char *qlabel, Plan *plan,
 		  Plan *outer_plan, bool useprefix, ExplainState *es);
@@ -74,25 +74,26 @@ static void ExplainScanTarget(Scan *plan, ExplainState *es);
 static void ExplainMemberNodes(List *plans, PlanState **planstate,
 				   Plan *outer_plan, ExplainState *es);
 static void ExplainSubPlans(List *plans, const char *relationship,
-							ExplainState *es);
+				ExplainState *es);
 static void ExplainPropertyList(const char *qlabel, List *data,
-								ExplainState *es);
+					ExplainState *es);
 static void ExplainProperty(const char *qlabel, const char *value,
-							bool numeric, ExplainState *es);
-#define ExplainPropertyText(qlabel, value, es)  \
+				bool numeric, ExplainState *es);
+
+#define ExplainPropertyText(qlabel, value, es)	\
 	ExplainProperty(qlabel, value, false, es)
 static void ExplainPropertyInteger(const char *qlabel, int value,
-								   ExplainState *es);
+					   ExplainState *es);
 static void ExplainPropertyLong(const char *qlabel, long value,
-								ExplainState *es);
+					ExplainState *es);
 static void ExplainPropertyFloat(const char *qlabel, double value, int ndigits,
-								 ExplainState *es);
+					 ExplainState *es);
 static void ExplainOpenGroup(const char *objtype, const char *labelname,
 				 bool labeled, ExplainState *es);
 static void ExplainCloseGroup(const char *objtype, const char *labelname,
-				 bool labeled, ExplainState *es);
+				  bool labeled, ExplainState *es);
 static void ExplainDummyGroup(const char *objtype, const char *labelname,
-							  ExplainState *es);
+				  ExplainState *es);
 static void ExplainXMLTag(const char *tagname, int flags, ExplainState *es);
 static void ExplainJSONLineEnding(ExplainState *es);
 static void ExplainYAMLLineStarting(ExplainState *es);
@@ -120,7 +121,7 @@ ExplainQuery(ExplainStmt *stmt, const char *queryString,
 	/* Parse options list. */
 	foreach(lc, stmt->options)
 	{
-		DefElem *opt = (DefElem *) lfirst(lc);
+		DefElem    *opt = (DefElem *) lfirst(lc);
 
 		if (strcmp(opt->defname, "analyze") == 0)
 			es.analyze = defGetBoolean(opt);
@@ -132,7 +133,7 @@ ExplainQuery(ExplainStmt *stmt, const char *queryString,
 			es.buffers = defGetBoolean(opt);
 		else if (strcmp(opt->defname, "format") == 0)
 		{
-			char   *p = defGetString(opt);
+			char	   *p = defGetString(opt);
 
 			if (strcmp(p, "text") == 0)
 				es.format = EXPLAIN_FORMAT_TEXT;
@@ -144,9 +145,9 @@ ExplainQuery(ExplainStmt *stmt, const char *queryString,
 				es.format = EXPLAIN_FORMAT_YAML;
 			else
 				ereport(ERROR,
-					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("unrecognized value for EXPLAIN option \"%s\": \"%s\"",
-							opt->defname, p)));
+						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				errmsg("unrecognized value for EXPLAIN option \"%s\": \"%s\"",
+					   opt->defname, p)));
 		}
 		else
 			ereport(ERROR,
@@ -157,14 +158,14 @@ ExplainQuery(ExplainStmt *stmt, const char *queryString,
 
 	if (es.buffers && !es.analyze)
 		ereport(ERROR,
-			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-			 errmsg("EXPLAIN option BUFFERS requires ANALYZE")));
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("EXPLAIN option BUFFERS requires ANALYZE")));
 
 	/*
 	 * Parse analysis was done already, but we still have to run the rule
-	 * rewriter.  We do not do AcquireRewriteLocks: we assume the query
-	 * either came straight from the parser, or suitable locks were
-	 * acquired by plancache.c.
+	 * rewriter.  We do not do AcquireRewriteLocks: we assume the query either
+	 * came straight from the parser, or suitable locks were acquired by
+	 * plancache.c.
 	 *
 	 * Because the rewriter and planner tend to scribble on the input, we make
 	 * a preliminary copy of the source querytree.	This prevents problems in
@@ -244,11 +245,11 @@ ExplainResultDesc(ExplainStmt *stmt)
 	/* Check for XML format option */
 	foreach(lc, stmt->options)
 	{
-		DefElem *opt = (DefElem *) lfirst(lc);
+		DefElem    *opt = (DefElem *) lfirst(lc);
 
 		if (strcmp(opt->defname, "format") == 0)
 		{
-			char   *p = defGetString(opt);
+			char	   *p = defGetString(opt);
 
 			xml = (strcmp(p, "xml") == 0);
 			/* don't "break", as ExplainQuery will use the last value */
@@ -322,7 +323,7 @@ ExplainOneUtility(Node *utilityStmt, ExplainState *es,
 	{
 		if (es->format == EXPLAIN_FORMAT_TEXT)
 			appendStringInfoString(es->str,
-							   "Utility statements have no plan structure\n");
+							  "Utility statements have no plan structure\n");
 		else
 			ExplainDummyGroup("Utility Statement", NULL, es);
 	}
@@ -472,7 +473,7 @@ ExplainOnePlan(PlannedStmt *plannedstmt, ExplainState *es,
  *	  convert a QueryDesc's plan tree to text and append it to es->str
  *
  * The caller should have set up the options fields of *es, as well as
- * initializing the output buffer es->str.  Other fields in *es are
+ * initializing the output buffer es->str.	Other fields in *es are
  * initialized here.
  *
  * NB: will not work on utility statements
@@ -489,10 +490,10 @@ ExplainPrintPlan(ExplainState *es, QueryDesc *queryDesc)
 
 /*
  * ExplainQueryText -
- *    add a "Query Text" node that contains the actual text of the query
- * 
+ *	  add a "Query Text" node that contains the actual text of the query
+ *
  * The caller should have set up the options fields of *es, as well as
- * initializing the output buffer es->str. 
+ * initializing the output buffer es->str.
  *
  */
 void
@@ -538,8 +539,8 @@ report_triggers(ResultRelInfo *rInfo, bool show_relname, ExplainState *es)
 
 		/*
 		 * In text format, we avoid printing both the trigger name and the
-		 * constraint name unless VERBOSE is specified.  In non-text
-		 * formats we just print everything.
+		 * constraint name unless VERBOSE is specified.  In non-text formats
+		 * we just print everything.
 		 */
 		if (es->format == EXPLAIN_FORMAT_TEXT)
 		{
@@ -657,11 +658,11 @@ ExplainNode(Plan *plan, PlanState *planstate,
 			pname = sname = "Nested Loop";
 			break;
 		case T_MergeJoin:
-			pname = "Merge";		/* "Join" gets added by jointype switch */
+			pname = "Merge";	/* "Join" gets added by jointype switch */
 			sname = "Merge Join";
 			break;
 		case T_HashJoin:
-			pname = "Hash";			/* "Join" gets added by jointype switch */
+			pname = "Hash";		/* "Join" gets added by jointype switch */
 			sname = "Hash Join";
 			break;
 		case T_SeqScan:
@@ -801,9 +802,9 @@ ExplainNode(Plan *plan, PlanState *planstate,
 	{
 		case T_IndexScan:
 			{
-				IndexScan *indexscan = (IndexScan *) plan;
+				IndexScan  *indexscan = (IndexScan *) plan;
 				const char *indexname =
-					explain_get_index_name(indexscan->indexid);
+				explain_get_index_name(indexscan->indexid);
 
 				if (es->format == EXPLAIN_FORMAT_TEXT)
 				{
@@ -849,7 +850,7 @@ ExplainNode(Plan *plan, PlanState *planstate,
 			{
 				BitmapIndexScan *bitmapindexscan = (BitmapIndexScan *) plan;
 				const char *indexname =
-					explain_get_index_name(bitmapindexscan->indexid);
+				explain_get_index_name(bitmapindexscan->indexid);
 
 				if (es->format == EXPLAIN_FORMAT_TEXT)
 					appendStringInfo(es->str, " on %s", indexname);
@@ -1084,14 +1085,14 @@ ExplainNode(Plan *plan, PlanState *planstate,
 
 		if (es->format == EXPLAIN_FORMAT_TEXT)
 		{
-			bool	has_shared = (usage->shared_blks_hit > 0 ||
-								  usage->shared_blks_read > 0 ||
-								  usage->shared_blks_written);
-			bool	has_local = (usage->local_blks_hit > 0 ||
-								 usage->local_blks_read > 0 ||
-								 usage->local_blks_written);
-			bool	has_temp = (usage->temp_blks_read > 0 ||
-								usage->temp_blks_written);
+			bool		has_shared = (usage->shared_blks_hit > 0 ||
+									  usage->shared_blks_read > 0 ||
+									  usage->shared_blks_written);
+			bool		has_local = (usage->local_blks_hit > 0 ||
+									 usage->local_blks_read > 0 ||
+									 usage->local_blks_written);
+			bool		has_temp = (usage->temp_blks_read > 0 ||
+									usage->temp_blks_written);
 
 			/* Show only positive counter values. */
 			if (has_shared || has_local || has_temp)
@@ -1104,13 +1105,13 @@ ExplainNode(Plan *plan, PlanState *planstate,
 					appendStringInfoString(es->str, " shared");
 					if (usage->shared_blks_hit > 0)
 						appendStringInfo(es->str, " hit=%ld",
-							usage->shared_blks_hit);
+										 usage->shared_blks_hit);
 					if (usage->shared_blks_read > 0)
 						appendStringInfo(es->str, " read=%ld",
-							usage->shared_blks_read);
+										 usage->shared_blks_read);
 					if (usage->shared_blks_written > 0)
 						appendStringInfo(es->str, " written=%ld",
-							usage->shared_blks_written);
+										 usage->shared_blks_written);
 					if (has_local || has_temp)
 						appendStringInfoChar(es->str, ',');
 				}
@@ -1119,13 +1120,13 @@ ExplainNode(Plan *plan, PlanState *planstate,
 					appendStringInfoString(es->str, " local");
 					if (usage->local_blks_hit > 0)
 						appendStringInfo(es->str, " hit=%ld",
-							usage->local_blks_hit);
+										 usage->local_blks_hit);
 					if (usage->local_blks_read > 0)
 						appendStringInfo(es->str, " read=%ld",
-							usage->local_blks_read);
+										 usage->local_blks_read);
 					if (usage->local_blks_written > 0)
 						appendStringInfo(es->str, " written=%ld",
-							usage->local_blks_written);
+										 usage->local_blks_written);
 					if (has_temp)
 						appendStringInfoChar(es->str, ',');
 				}
@@ -1134,10 +1135,10 @@ ExplainNode(Plan *plan, PlanState *planstate,
 					appendStringInfoString(es->str, " temp");
 					if (usage->temp_blks_read > 0)
 						appendStringInfo(es->str, " read=%ld",
-							usage->temp_blks_read);
+										 usage->temp_blks_read);
 					if (usage->temp_blks_written > 0)
 						appendStringInfo(es->str, " written=%ld",
-							usage->temp_blks_written);
+										 usage->temp_blks_written);
 				}
 				appendStringInfoChar(es->str, '\n');
 			}
@@ -1283,7 +1284,7 @@ show_plan_tlist(Plan *plan, ExplainState *es)
 		TargetEntry *tle = (TargetEntry *) lfirst(lc);
 
 		result = lappend(result,
-					     deparse_expression((Node *) tle->expr, context,
+						 deparse_expression((Node *) tle->expr, context,
 											useprefix, false));
 	}
 
@@ -1403,7 +1404,7 @@ show_sort_info(SortState *sortstate, ExplainState *es)
 	if (es->analyze && sortstate->sort_Done &&
 		sortstate->tuplesortstate != NULL)
 	{
-		Tuplesortstate	*state = (Tuplesortstate *) sortstate->tuplesortstate;
+		Tuplesortstate *state = (Tuplesortstate *) sortstate->tuplesortstate;
 		const char *sortMethod;
 		const char *spaceType;
 		long		spaceUsed;
@@ -1438,7 +1439,8 @@ show_hash_info(HashState *hashstate, ExplainState *es)
 
 	if (hashtable)
 	{
-		long spacePeakKb = (hashtable->spacePeak + 1023) / 1024;
+		long		spacePeakKb = (hashtable->spacePeak + 1023) / 1024;
+
 		if (es->format != EXPLAIN_FORMAT_TEXT)
 		{
 			ExplainPropertyLong("Hash Buckets", hashtable->nbuckets, es);
@@ -1451,7 +1453,7 @@ show_hash_info(HashState *hashstate, ExplainState *es)
 		{
 			appendStringInfoSpaces(es->str, es->indent * 2);
 			appendStringInfo(es->str,
-							 "Buckets: %d  Batches: %d (originally %d)  Memory Usage: %ldkB\n",
+			"Buckets: %d  Batches: %d (originally %d)  Memory Usage: %ldkB\n",
 							 hashtable->nbuckets, hashtable->nbatch,
 							 hashtable->nbatch_original, spacePeakKb);
 		}
@@ -1459,7 +1461,7 @@ show_hash_info(HashState *hashstate, ExplainState *es)
 		{
 			appendStringInfoSpaces(es->str, es->indent * 2);
 			appendStringInfo(es->str,
-							 "Buckets: %d  Batches: %d  Memory Usage: %ldkB\n",
+						   "Buckets: %d  Batches: %d  Memory Usage: %ldkB\n",
 							 hashtable->nbuckets, hashtable->nbatch,
 							 spacePeakKb);
 		}
@@ -1600,7 +1602,7 @@ ExplainScanTarget(Scan *plan, ExplainState *es)
  */
 static void
 ExplainMemberNodes(List *plans, PlanState **planstate, Plan *outer_plan,
-		           ExplainState *es)
+				   ExplainState *es)
 {
 	ListCell   *lst;
 	int			j = 0;
@@ -1667,7 +1669,7 @@ ExplainPropertyList(const char *qlabel, List *data, ExplainState *es)
 			ExplainXMLTag(qlabel, X_OPENING, es);
 			foreach(lc, data)
 			{
-				char   *str;
+				char	   *str;
 
 				appendStringInfoSpaces(es->str, es->indent * 2 + 2);
 				appendStringInfoString(es->str, "<Item>");
@@ -1731,7 +1733,7 @@ ExplainProperty(const char *qlabel, const char *value, bool numeric,
 
 		case EXPLAIN_FORMAT_XML:
 			{
-				char   *str;
+				char	   *str;
 
 				appendStringInfoSpaces(es->str, es->indent * 2);
 				ExplainXMLTag(qlabel, X_OPENING | X_NOWHITESPACE, es);
@@ -1768,7 +1770,7 @@ ExplainProperty(const char *qlabel, const char *value, bool numeric,
 static void
 ExplainPropertyInteger(const char *qlabel, int value, ExplainState *es)
 {
-	char	buf[32];
+	char		buf[32];
 
 	snprintf(buf, sizeof(buf), "%d", value);
 	ExplainProperty(qlabel, buf, true, es);
@@ -1780,7 +1782,7 @@ ExplainPropertyInteger(const char *qlabel, int value, ExplainState *es)
 static void
 ExplainPropertyLong(const char *qlabel, long value, ExplainState *es)
 {
-	char	buf[32];
+	char		buf[32];
 
 	snprintf(buf, sizeof(buf), "%ld", value);
 	ExplainProperty(qlabel, buf, true, es);
@@ -1794,7 +1796,7 @@ static void
 ExplainPropertyFloat(const char *qlabel, double value, int ndigits,
 					 ExplainState *es)
 {
-	char	buf[256];
+	char		buf[256];
 
 	snprintf(buf, sizeof(buf), "%.*f", ndigits, value);
 	ExplainProperty(qlabel, buf, true, es);
@@ -1837,8 +1839,8 @@ ExplainOpenGroup(const char *objtype, const char *labelname,
 			/*
 			 * In JSON format, the grouping_stack is an integer list.  0 means
 			 * we've emitted nothing at this grouping level, 1 means we've
-			 * emitted something (and so the next item needs a comma).
-			 * See ExplainJSONLineEnding().
+			 * emitted something (and so the next item needs a comma). See
+			 * ExplainJSONLineEnding().
 			 */
 			es->grouping_stack = lcons_int(0, es->grouping_stack);
 			es->indent++;
@@ -1966,7 +1968,7 @@ ExplainBeginOutput(ExplainState *es)
 
 		case EXPLAIN_FORMAT_XML:
 			appendStringInfoString(es->str,
-								   "<explain xmlns=\"http://www.postgresql.org/2009/explain\">\n");
+			 "<explain xmlns=\"http://www.postgresql.org/2009/explain\">\n");
 			es->indent++;
 			break;
 
@@ -2065,7 +2067,7 @@ ExplainXMLTag(const char *tagname, int flags, ExplainState *es)
 /*
  * Emit a JSON line ending.
  *
- * JSON requires a comma after each property but the last.  To facilitate this,
+ * JSON requires a comma after each property but the last.	To facilitate this,
  * in JSON format, the text emitted for each property begins just prior to the
  * preceding line-break (and comma, if applicable).
  */
@@ -2086,7 +2088,7 @@ ExplainJSONLineEnding(ExplainState *es)
  * YAML lines are ordinarily indented by two spaces per indentation level.
  * The text emitted for each property begins just prior to the preceding
  * line-break, except for the first property in an unlabelled group, for which
- * it begins immediately after the "- " that introduces the group.  The first
+ * it begins immediately after the "- " that introduces the group.	The first
  * property of the group appears on the same line as the opening "- ".
  */
 static void

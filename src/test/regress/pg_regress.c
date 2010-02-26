@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/test/regress/pg_regress.c,v 1.70 2010/02/24 01:35:14 tgl Exp $
+ * $PostgreSQL: pgsql/src/test/regress/pg_regress.c,v 1.71 2010/02/26 02:01:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -67,7 +67,7 @@ static char *shellprog = SHELLPROG;
 
 /*
  * On Windows we use -w in diff switches to avoid problems with inconsistent
- * newline representation.  The actual result files will generally have
+ * newline representation.	The actual result files will generally have
  * Windows-style newlines, but the comparison files might or might not.
  */
 #ifndef WIN32
@@ -1791,7 +1791,7 @@ create_database(const char *dbname)
 				 dbname, dbname, dbname, dbname, dbname);
 
 	/*
-	 * Install any requested procedural languages.  We use CREATE OR REPLACE
+	 * Install any requested procedural languages.	We use CREATE OR REPLACE
 	 * so that this will work whether or not the language is preinstalled.
 	 */
 	for (sl = loadlanguage; sl != NULL; sl = sl->next)

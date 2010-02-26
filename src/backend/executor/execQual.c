@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.262 2010/02/18 18:41:47 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.263 2010/02/26 02:00:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -357,7 +357,7 @@ ExecEvalArrayRef(ArrayRefExprState *astate,
 		 * We might have a nested-assignment situation, in which the
 		 * refassgnexpr is itself a FieldStore or ArrayRef that needs to
 		 * obtain and modify the previous value of the array element or slice
-		 * being replaced.  If so, we have to extract that value from the
+		 * being replaced.	If so, we have to extract that value from the
 		 * array and pass it down via the econtext's caseValue.  It's safe to
 		 * reuse the CASE mechanism because there cannot be a CASE between
 		 * here and where the value would be needed, and an array assignment
@@ -386,7 +386,7 @@ ExecEvalArrayRef(ArrayRefExprState *astate,
 													  astate->refelemlength,
 													  astate->refelembyval,
 													  astate->refelemalign,
-													  &econtext->caseValue_isNull);
+												&econtext->caseValue_isNull);
 			}
 			else
 			{
@@ -673,7 +673,7 @@ ExecEvalVar(ExprState *exprstate, ExprContext *econtext,
 			 * We really only care about number of attributes and data type.
 			 * Also, we can ignore type mismatch on columns that are dropped
 			 * in the destination type, so long as (1) the physical storage
-			 * matches or (2) the actual column value is NULL.  Case (1) is
+			 * matches or (2) the actual column value is NULL.	Case (1) is
 			 * helpful in some cases involving out-of-date cached plans, while
 			 * case (2) is expected behavior in situations such as an INSERT
 			 * into a table with dropped columns (the planner typically
@@ -682,8 +682,8 @@ ExecEvalVar(ExprState *exprstate, ExprContext *econtext,
 			 * holds, we have to use ExecEvalWholeRowSlow to check (2) for
 			 * each row.  Also, we have to allow the case that the slot has
 			 * more columns than the Var's type, because we might be looking
-			 * at the output of a subplan that includes resjunk columns.
-			 * (XXX it would be nice to verify that the extra columns are all
+			 * at the output of a subplan that includes resjunk columns. (XXX
+			 * it would be nice to verify that the extra columns are all
 			 * marked resjunk, but we haven't got access to the subplan
 			 * targetlist here...) Resjunk columns should always be at the end
 			 * of a targetlist, so it's sufficient to ignore them here; but we
@@ -702,7 +702,7 @@ ExecEvalVar(ExprState *exprstate, ExprContext *econtext,
 										  slot_tupdesc->natts,
 										  var_tupdesc->natts)));
 			else if (var_tupdesc->natts < slot_tupdesc->natts)
-				needslow = true;			/* need to trim trailing atts */
+				needslow = true;	/* need to trim trailing atts */
 
 			for (i = 0; i < var_tupdesc->natts; i++)
 			{
@@ -722,7 +722,7 @@ ExecEvalVar(ExprState *exprstate, ExprContext *econtext,
 
 				if (vattr->attlen != sattr->attlen ||
 					vattr->attalign != sattr->attalign)
-					needslow = true;		/* need runtime check for null */
+					needslow = true;	/* need runtime check for null */
 			}
 
 			ReleaseTupleDesc(var_tupdesc);
@@ -907,7 +907,7 @@ ExecEvalWholeRowSlow(ExprState *exprstate, ExprContext *econtext,
 
 		if (!vattr->attisdropped)
 			continue;			/* already checked non-dropped cols */
-		if (heap_attisnull(tuple, i+1))
+		if (heap_attisnull(tuple, i + 1))
 			continue;			/* null is always okay */
 		if (vattr->attlen != sattr->attlen ||
 			vattr->attalign != sattr->attalign)
@@ -2722,7 +2722,7 @@ ExecEvalConvertRowtype(ConvertRowtypeExprState *cstate,
 		/* prepare map from old to new attribute numbers */
 		cstate->map = convert_tuples_by_name(cstate->indesc,
 											 cstate->outdesc,
-											 gettext_noop("could not convert row type"));
+								 gettext_noop("could not convert row type"));
 		cstate->initialized = true;
 
 		MemoryContextSwitchTo(old_cxt);
@@ -3870,11 +3870,11 @@ ExecEvalFieldSelect(FieldSelectState *fstate,
 								 &fstate->argdesc, econtext);
 
 	/*
-	 * Find field's attr record.  Note we don't support system columns here:
-	 * a datum tuple doesn't have valid values for most of the interesting
+	 * Find field's attr record.  Note we don't support system columns here: a
+	 * datum tuple doesn't have valid values for most of the interesting
 	 * system columns anyway.
 	 */
-	if (fieldnum <= 0)					/* should never happen */
+	if (fieldnum <= 0)			/* should never happen */
 		elog(ERROR, "unsupported reference to system column %d in FieldSelect",
 			 fieldnum);
 	if (fieldnum > tupDesc->natts)		/* should never happen */

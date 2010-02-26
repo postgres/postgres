@@ -22,7 +22,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/subtrans.c,v 1.26 2010/01/02 16:57:35 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/subtrans.c,v 1.27 2010/02/26 02:00:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -89,7 +89,7 @@ SubTransSetParent(TransactionId xid, TransactionId parent, bool overwriteOK)
 
 	/* Current state should be 0 */
 	Assert(*ptr == InvalidTransactionId ||
-			(*ptr == parent && overwriteOK));
+		   (*ptr == parent && overwriteOK));
 
 	*ptr = parent;
 

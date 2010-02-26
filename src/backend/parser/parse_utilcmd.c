@@ -19,7 +19,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/parser/parse_utilcmd.c,v 2.39 2010/02/14 18:42:15 rhaas Exp $
+ *	$PostgreSQL: pgsql/src/backend/parser/parse_utilcmd.c,v 2.40 2010/02/26 02:00:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -106,7 +106,7 @@ static void transformTableConstraint(ParseState *pstate,
 static void transformInhRelation(ParseState *pstate, CreateStmtContext *cxt,
 					 InhRelation *inhrelation);
 static void transformOfType(ParseState *pstate, CreateStmtContext *cxt,
-					 TypeName *ofTypename);
+				TypeName *ofTypename);
 static char *chooseIndexName(const RangeVar *relation, IndexStmt *index_stmt);
 static IndexStmt *generateClonedIndexStmt(CreateStmtContext *cxt,
 						Relation parent_index, AttrNumber *attmap);
@@ -186,7 +186,7 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString)
 	cxt.pkey = NULL;
 	cxt.hasoids = interpretOidsOption(stmt->options);
 
-	Assert(!stmt->ofTypename || !stmt->inhRelations); /* grammar enforces */
+	Assert(!stmt->ofTypename || !stmt->inhRelations);	/* grammar enforces */
 
 	if (stmt->ofTypename)
 		transformOfType(pstate, &cxt, stmt->ofTypename);
@@ -486,6 +486,7 @@ transformColumnDefinition(ParseState *pstate, CreateStmtContext *cxt,
 				break;
 
 			case CONSTR_FOREIGN:
+
 				/*
 				 * Fill in the current attribute's name and throw it into the
 				 * list of FK constraints to be processed later.
@@ -760,11 +761,11 @@ transformInhRelation(ParseState *pstate, CreateStmtContext *cxt,
 
 				if (comment != NULL)
 				{
-					CommentStmt	   *stmt;
+					CommentStmt *stmt;
 
 					/*
-					 * We have to assign the index a name now, so that we
-					 * can reference it in CommentStmt.
+					 * We have to assign the index a name now, so that we can
+					 * reference it in CommentStmt.
 					 */
 					if (index_stmt->idxname == NULL)
 						index_stmt->idxname = chooseIndexName(cxt->relation,
@@ -811,7 +812,7 @@ transformOfType(ParseState *pstate, CreateStmtContext *cxt, TypeName *ofTypename
 	tuple = typenameType(NULL, ofTypename, NULL);
 	typ = (Form_pg_type) GETSTRUCT(tuple);
 	ofTypeId = HeapTupleGetOid(tuple);
-	ofTypename->typeOid = ofTypeId; /* cached for later */
+	ofTypename->typeOid = ofTypeId;		/* cached for later */
 
 	if (typ->typtype != TYPTYPE_COMPOSITE)
 		ereport(ERROR,
@@ -823,7 +824,7 @@ transformOfType(ParseState *pstate, CreateStmtContext *cxt, TypeName *ofTypename
 	for (i = 0; i < tupdesc->natts; i++)
 	{
 		Form_pg_attribute attr = tupdesc->attrs[i];
-		ColumnDef *n = makeNode(ColumnDef);
+		ColumnDef  *n = makeNode(ColumnDef);
 
 		n->colname = pstrdup(NameStr(attr->attname));
 		n->typeName = makeTypeNameFromOid(attr->atttypid, attr->atttypmod);
@@ -934,7 +935,7 @@ generateClonedIndexStmt(CreateStmtContext *cxt, Relation source_idx,
 	 */
 	if (index->primary || index->unique || idxrelrec->relhasexclusion)
 	{
-		Oid		constraintId = get_index_constraint(source_relid);
+		Oid			constraintId = get_index_constraint(source_relid);
 
 		if (OidIsValid(constraintId))
 		{
@@ -942,7 +943,7 @@ generateClonedIndexStmt(CreateStmtContext *cxt, Relation source_idx,
 			Form_pg_constraint conrec;
 
 			ht_constr = SearchSysCache1(CONSTROID,
-									    ObjectIdGetDatum(constraintId));
+										ObjectIdGetDatum(constraintId));
 			if (!HeapTupleIsValid(ht_constr))
 				elog(ERROR, "cache lookup failed for constraint %u",
 					 constraintId);
@@ -955,9 +956,9 @@ generateClonedIndexStmt(CreateStmtContext *cxt, Relation source_idx,
 			/* If it's an exclusion constraint, we need the operator names */
 			if (idxrelrec->relhasexclusion)
 			{
-				Datum  *elems;
-				int		nElems;
-				int		i;
+				Datum	   *elems;
+				int			nElems;
+				int			i;
 
 				Assert(conrec->contype == CONSTRAINT_EXCLUSION);
 				/* Extract operator OIDs from the pg_constraint tuple */
@@ -1310,17 +1311,17 @@ transformIndexConstraint(Constraint *constraint, CreateStmtContext *cxt)
 	index->concurrent = false;
 
 	/*
-	 * If it's an EXCLUDE constraint, the grammar returns a list of pairs
-	 * of IndexElems and operator names.  We have to break that apart into
+	 * If it's an EXCLUDE constraint, the grammar returns a list of pairs of
+	 * IndexElems and operator names.  We have to break that apart into
 	 * separate lists.
 	 */
 	if (constraint->contype == CONSTR_EXCLUSION)
 	{
 		foreach(lc, constraint->exclusions)
 		{
-			List	*pair = (List *) lfirst(lc);
-			IndexElem *elem;
-			List   *opname;
+			List	   *pair = (List *) lfirst(lc);
+			IndexElem  *elem;
+			List	   *opname;
 
 			Assert(list_length(pair) == 2);
 			elem = (IndexElem *) linitial(pair);

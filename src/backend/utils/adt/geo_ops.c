@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/geo_ops.c,v 1.107 2010/01/14 16:31:09 teodor Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/geo_ops.c,v 1.108 2010/02/26 02:01:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -67,7 +67,7 @@ static double dist_pl_internal(Point *pt, LINE *line);
 static double dist_ps_internal(Point *pt, LSEG *lseg);
 static Point *line_interpt_internal(LINE *l1, LINE *l2);
 static bool lseg_inside_poly(Point *a, Point *b, POLYGON *poly, int start);
-static Point* lseg_interpt_internal(LSEG *l1, LSEG *l2);
+static Point *lseg_interpt_internal(LSEG *l1, LSEG *l2);
 
 
 /*
@@ -2354,7 +2354,7 @@ lseg_center(PG_FUNCTION_ARGS)
 	PG_RETURN_POINT_P(result);
 }
 
-static Point*
+static Point *
 lseg_interpt_internal(LSEG *l1, LSEG *l2)
 {
 	Point	   *result;
@@ -2411,7 +2411,7 @@ lseg_interpt(PG_FUNCTION_ARGS)
 	LSEG	   *l1 = PG_GETARG_LSEG_P(0);
 	LSEG	   *l2 = PG_GETARG_LSEG_P(1);
 	Point	   *result;
-	
+
 	result = lseg_interpt_internal(l1, l2);
 	if (!PointerIsValid(result))
 		PG_RETURN_NULL();
@@ -2466,8 +2466,8 @@ dist_ps_internal(Point *pt, LSEG *lseg)
 	Point	   *ip;
 
 	/*
-	 * Construct a line perpendicular to the input segment
-	 * and through the input point
+	 * Construct a line perpendicular to the input segment and through the
+	 * input point
 	 */
 	if (lseg->p[1].x == lseg->p[0].x)
 		m = 0;
@@ -3203,7 +3203,7 @@ on_pb(PG_FUNCTION_ARGS)
 }
 
 Datum
-box_contain_pt(PG_FUNCTION_ARGS) 
+box_contain_pt(PG_FUNCTION_ARGS)
 {
 	BOX		   *box = PG_GETARG_BOX_P(0);
 	Point	   *pt = PG_GETARG_POINT_P(1);
@@ -3768,7 +3768,7 @@ poly_same(PG_FUNCTION_ARGS)
 }
 
 /*-----------------------------------------------------------------
- * Determine if polygon A overlaps polygon B 
+ * Determine if polygon A overlaps polygon B
  *-----------------------------------------------------------------*/
 Datum
 poly_overlap(PG_FUNCTION_ARGS)
@@ -3778,51 +3778,51 @@ poly_overlap(PG_FUNCTION_ARGS)
 	bool		result;
 
 	/* Quick check by bounding box */
-	result = (polya->npts > 0 && polyb->npts > 0 && 
-			box_ov(&polya->boundbox, &polyb->boundbox)) ? true : false;
+	result = (polya->npts > 0 && polyb->npts > 0 &&
+			  box_ov(&polya->boundbox, &polyb->boundbox)) ? true : false;
 
 	/*
-	 * Brute-force algorithm - try to find intersected edges,
-	 * if so then polygons are overlapped else check is one 
-	 * polygon inside other or not by testing single point 
-	 * of them.
+	 * Brute-force algorithm - try to find intersected edges, if so then
+	 * polygons are overlapped else check is one polygon inside other or not
+	 * by testing single point of them.
 	 */
 	if (result)
 	{
-		int		ia, ib;
-		LSEG	sa, sb;
+		int			ia,
+					ib;
+		LSEG		sa,
+					sb;
 
 		/* Init first of polya's edge with last point */
 		sa.p[0] = polya->p[polya->npts - 1];
 		result = false;
 
-		for(ia=0; ia<polya->npts && result == false; ia++)
+		for (ia = 0; ia < polya->npts && result == false; ia++)
 		{
-			/* Second point of polya's edge is a current one */ 
+			/* Second point of polya's edge is a current one */
 			sa.p[1] = polya->p[ia];
 
 			/* Init first of polyb's edge with last point */
 			sb.p[0] = polyb->p[polyb->npts - 1];
 
-			for(ib=0; ib<polyb->npts && result == false; ib++)
+			for (ib = 0; ib < polyb->npts && result == false; ib++)
 			{
 				sb.p[1] = polyb->p[ib];
 				result = lseg_intersect_internal(&sa, &sb);
 				sb.p[0] = sb.p[1];
 			}
 
-			/* 
-			 * move current endpoint to the first point
-			 * of next edge
+			/*
+			 * move current endpoint to the first point of next edge
 			 */
 			sa.p[0] = sa.p[1];
 		}
 
-		if (result==false)
+		if (result == false)
 		{
-			result = ( 	point_inside(polya->p, polyb->npts, polyb->p)
-						||
-						point_inside(polyb->p, polya->npts, polya->p) );
+			result = (point_inside(polya->p, polyb->npts, polyb->p)
+					  ||
+					  point_inside(polyb->p, polya->npts, polya->p));
 		}
 	}
 
@@ -3838,93 +3838,93 @@ poly_overlap(PG_FUNCTION_ARGS)
 /*
  * Tests special kind of segment for in/out of polygon.
  * Special kind means:
- *  - point a should be on segment s
- *  - segment (a,b) should not be contained by s
+ *	- point a should be on segment s
+ *	- segment (a,b) should not be contained by s
  * Returns true if:
- *  - segment (a,b) is collinear to s and (a,b) is in polygon
- *  - segment (a,b) s not collinear to s. Note: that doesn't
- *    mean that segment is in polygon! 
- */ 
+ *	- segment (a,b) is collinear to s and (a,b) is in polygon
+ *	- segment (a,b) s not collinear to s. Note: that doesn't
+ *	  mean that segment is in polygon!
+ */
 
 static bool
 touched_lseg_inside_poly(Point *a, Point *b, LSEG *s, POLYGON *poly, int start)
 {
 	/* point a is on s, b is not */
-	LSEG t;
+	LSEG		t;
 
 	t.p[0] = *a;
 	t.p[1] = *b;
-	
-#define POINTEQ(pt1, pt2)   (FPeq((pt1)->x, (pt2)->x) && FPeq((pt1)->y, (pt2)->y))
-	if ( POINTEQ(a, s->p) )
+
+#define POINTEQ(pt1, pt2)	(FPeq((pt1)->x, (pt2)->x) && FPeq((pt1)->y, (pt2)->y))
+	if (POINTEQ(a, s->p))
 	{
-		if ( on_ps_internal(s->p+1, &t) )
-			return lseg_inside_poly(b, s->p+1, poly, start);
+		if (on_ps_internal(s->p + 1, &t))
+			return lseg_inside_poly(b, s->p + 1, poly, start);
 	}
-	else if (POINTEQ(a, s->p+1))
+	else if (POINTEQ(a, s->p + 1))
 	{
-		if ( on_ps_internal(s->p, &t) )
+		if (on_ps_internal(s->p, &t))
 			return lseg_inside_poly(b, s->p, poly, start);
 	}
-	else if ( on_ps_internal(s->p, &t) )
+	else if (on_ps_internal(s->p, &t))
 	{
 		return lseg_inside_poly(b, s->p, poly, start);
 	}
-	else if ( on_ps_internal(s->p+1, &t) )
+	else if (on_ps_internal(s->p + 1, &t))
 	{
-		return lseg_inside_poly(b, s->p+1, poly, start);
+		return lseg_inside_poly(b, s->p + 1, poly, start);
 	}
 
-	return true; /* may be not true, but that will check later */
+	return true;				/* may be not true, but that will check later */
 }
 
 /*
  * Returns true if segment (a,b) is in polygon, option
- * start is used for optimization - function checks 
+ * start is used for optimization - function checks
  * polygon's edges started from start
  */
 static bool
 lseg_inside_poly(Point *a, Point *b, POLYGON *poly, int start)
 {
-	LSEG	s,
-			t;
-	int 	i;
-	bool 	res = true,
-			intersection = false;
+	LSEG		s,
+				t;
+	int			i;
+	bool		res = true,
+				intersection = false;
 
 	t.p[0] = *a;
 	t.p[1] = *b;
-	s.p[0] = poly->p[( start == 0) ? (poly->npts - 1) : (start - 1)];
+	s.p[0] = poly->p[(start == 0) ? (poly->npts - 1) : (start - 1)];
 
-	for(i=start; i<poly->npts && res == true; i++)
+	for (i = start; i < poly->npts && res == true; i++)
 	{
-		Point	*interpt;
+		Point	   *interpt;
 
 		s.p[1] = poly->p[i];
 
-		if ( on_ps_internal(t.p, &s) )
+		if (on_ps_internal(t.p, &s))
 		{
-			if ( on_ps_internal(t.p+1, &s) )
-				return true; /* t is contained by s */
+			if (on_ps_internal(t.p + 1, &s))
+				return true;	/* t is contained by s */
 
 			/* Y-cross */
-			res = touched_lseg_inside_poly(t.p, t.p+1, &s, poly, i+1);
-		} 
-		else if ( on_ps_internal(t.p+1, &s) )
+			res = touched_lseg_inside_poly(t.p, t.p + 1, &s, poly, i + 1);
+		}
+		else if (on_ps_internal(t.p + 1, &s))
 		{
 			/* Y-cross */
-			res = touched_lseg_inside_poly(t.p+1, t.p, &s, poly, i+1);
+			res = touched_lseg_inside_poly(t.p + 1, t.p, &s, poly, i + 1);
 		}
-		else if ( (interpt = lseg_interpt_internal(&t, &s)) != NULL )
+		else if ((interpt = lseg_interpt_internal(&t, &s)) != NULL)
 		{
 			/*
 			 * segments are X-crossing, go to check each subsegment
 			 */
 
 			intersection = true;
-			res = lseg_inside_poly(t.p, interpt, poly, i+1);
+			res = lseg_inside_poly(t.p, interpt, poly, i + 1);
 			if (res)
-				res = lseg_inside_poly(t.p+1, interpt, poly, i+1);
+				res = lseg_inside_poly(t.p + 1, interpt, poly, i + 1);
 			pfree(interpt);
 		}
 
@@ -3933,17 +3933,16 @@ lseg_inside_poly(Point *a, Point *b, POLYGON *poly, int start)
 
 	if (res && !intersection)
 	{
-		Point p;
+		Point		p;
 
 		/*
-		 * if X-intersection wasn't found  then check central point
-		 * of tested segment. In opposite case we already check all 
-		 * subsegments
+		 * if X-intersection wasn't found  then check central point of tested
+		 * segment. In opposite case we already check all subsegments
 		 */
-		p.x = (t.p[0].x + t.p[1].x) / 2.0; 
+		p.x = (t.p[0].x + t.p[1].x) / 2.0;
 		p.y = (t.p[0].y + t.p[1].y) / 2.0;
 
-		res = point_inside(&p, poly->npts, poly->p); 
+		res = point_inside(&p, poly->npts, poly->p);
 	}
 
 	return res;
@@ -3963,20 +3962,20 @@ poly_contain(PG_FUNCTION_ARGS)
 	 * Quick check to see if bounding box is contained.
 	 */
 	if (polya->npts > 0 && polyb->npts > 0 &&
-			DatumGetBool(DirectFunctionCall2(box_contain,
-											BoxPGetDatum(&polya->boundbox),
-											BoxPGetDatum(&polyb->boundbox))))
+		DatumGetBool(DirectFunctionCall2(box_contain,
+										 BoxPGetDatum(&polya->boundbox),
+										 BoxPGetDatum(&polyb->boundbox))))
 	{
-		int		i;
-		LSEG	s;
+		int			i;
+		LSEG		s;
 
 		s.p[0] = polyb->p[polyb->npts - 1];
 		result = true;
 
-		for(i=0; i<polyb->npts && result == true; i++)
+		for (i = 0; i < polyb->npts && result == true; i++)
 		{
 			s.p[1] = polyb->p[i];
-			result = lseg_inside_poly(s.p, s.p+1, polya, 0);
+			result = lseg_inside_poly(s.p, s.p + 1, polya, 0);
 			s.p[0] = s.p[1];
 		}
 	}

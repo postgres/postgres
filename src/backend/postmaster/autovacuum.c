@@ -55,7 +55,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.108 2010/02/14 18:42:15 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.109 2010/02/26 02:00:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -653,7 +653,7 @@ AutoVacLauncherMain(int argc, char *argv[])
 				 * of a worker will continue to fail in the same way.
 				 */
 				AutoVacuumShmem->av_signal[AutoVacForkFailed] = false;
-				pg_usleep(1000000L);		/* 1s */
+				pg_usleep(1000000L);	/* 1s */
 				SendPostmasterSignal(PMSIGNAL_START_AUTOVAC_WORKER);
 				continue;
 			}
@@ -1770,7 +1770,7 @@ get_database_list(void)
 	/*
 	 * Start a transaction so we can access pg_database, and get a snapshot.
 	 * We don't have a use for the snapshot itself, but we're interested in
-	 * the secondary effect that it sets RecentGlobalXmin.  (This is critical
+	 * the secondary effect that it sets RecentGlobalXmin.	(This is critical
 	 * for anything that reads heap pages, because HOT may decide to prune
 	 * them even if the process doesn't attempt to modify any tuples.)
 	 */
@@ -1786,7 +1786,7 @@ get_database_list(void)
 	while (HeapTupleIsValid(tup = heap_getnext(scan, ForwardScanDirection)))
 	{
 		Form_pg_database pgdatabase = (Form_pg_database) GETSTRUCT(tup);
-		avw_dbase   *avdb;
+		avw_dbase  *avdb;
 
 		avdb = (avw_dbase *) palloc(sizeof(avw_dbase));
 
@@ -2428,15 +2428,15 @@ table_recheck_autovac(Oid relid, HTAB *table_toast_map,
 		vac_cost_delay = (avopts && avopts->vacuum_cost_delay >= 0)
 			? avopts->vacuum_cost_delay
 			: (autovacuum_vac_cost_delay >= 0)
-				? autovacuum_vac_cost_delay
-				: VacuumCostDelay;
+			? autovacuum_vac_cost_delay
+			: VacuumCostDelay;
 
 		/* 0 or -1 in autovac setting means use plain vacuum_cost_limit */
 		vac_cost_limit = (avopts && avopts->vacuum_cost_limit > 0)
 			? avopts->vacuum_cost_limit
 			: (autovacuum_vac_cost_limit > 0)
-				? autovacuum_vac_cost_limit
-				: VacuumCostLimit;
+			? autovacuum_vac_cost_limit
+			: VacuumCostLimit;
 
 		/* these do not have autovacuum-specific settings */
 		freeze_min_age = (avopts && avopts->freeze_min_age >= 0)

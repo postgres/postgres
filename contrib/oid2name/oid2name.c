@@ -5,7 +5,7 @@
  * Originally by
  * B. Palmer, bpalmer@crimelabs.net 1-17-2001
  *
- * $PostgreSQL: pgsql/contrib/oid2name/oid2name.c,v 1.37 2010/02/07 20:48:08 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/oid2name/oid2name.c,v 1.38 2010/02/26 02:00:32 momjian Exp $
  */
 #include "postgres_fe.h"
 
@@ -440,7 +440,7 @@ sql_exec_dumpalldbs(PGconn *conn, struct options * opts)
 	/* get the oid and database name from the system pg_database table */
 	snprintf(todo, sizeof(todo),
 			 "SELECT d.oid AS \"Oid\", datname AS \"Database Name\", "
-	  "spcname AS \"Tablespace\" FROM pg_catalog.pg_database d JOIN pg_catalog.pg_tablespace t ON "
+			 "spcname AS \"Tablespace\" FROM pg_catalog.pg_database d JOIN pg_catalog.pg_tablespace t ON "
 			 "(dattablespace = t.oid) ORDER BY 2");
 
 	sql_exec(conn, todo, opts->quiet);
@@ -456,10 +456,10 @@ sql_exec_dumpalltables(PGconn *conn, struct options * opts)
 	char	   *addfields = ",c.oid AS \"Oid\", nspname AS \"Schema\", spcname as \"Tablespace\" ";
 
 	snprintf(todo, sizeof(todo),
-		  "SELECT pg_catalog.pg_relation_filenode(c.oid) as \"Filenode\", relname as \"Table Name\" %s "
+			 "SELECT pg_catalog.pg_relation_filenode(c.oid) as \"Filenode\", relname as \"Table Name\" %s "
 			 "FROM pg_class c "
 		   "	LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace "
-	"	LEFT JOIN pg_catalog.pg_database d ON d.datname = pg_catalog.current_database(),"
+			 "	LEFT JOIN pg_catalog.pg_database d ON d.datname = pg_catalog.current_database(),"
 			 "	pg_catalog.pg_tablespace t "
 			 "WHERE relkind IN ('r'%s%s) AND "
 			 "	%s"
@@ -527,7 +527,7 @@ sql_exec_searchtables(PGconn *conn, struct options * opts)
 	/* now build the query */
 	todo = (char *) myalloc(650 + strlen(qualifiers));
 	snprintf(todo, 650 + strlen(qualifiers),
-		 "SELECT pg_catalog.pg_relation_filenode(c.oid) as \"Filenode\", relname as \"Table Name\" %s\n"
+			 "SELECT pg_catalog.pg_relation_filenode(c.oid) as \"Filenode\", relname as \"Table Name\" %s\n"
 			 "FROM pg_catalog.pg_class c \n"
 		 "	LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace \n"
 			 "	LEFT JOIN pg_catalog.pg_database d ON d.datname = pg_catalog.current_database(),\n"

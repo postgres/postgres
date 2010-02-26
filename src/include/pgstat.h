@@ -5,7 +5,7 @@
  *
  *	Copyright (c) 2001-2010, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/include/pgstat.h,v 1.88 2010/01/28 14:25:41 mha Exp $
+ *	$PostgreSQL: pgsql/src/include/pgstat.h,v 1.89 2010/02/26 02:01:20 momjian Exp $
  * ----------
  */
 #ifndef PGSTAT_H
@@ -98,7 +98,7 @@ typedef struct PgStat_TableCounts
 /* Possible targets for resetting cluster-wide shared values */
 typedef enum PgStat_Shared_Reset_Target
 {
-    RESET_BGWRITER
+	RESET_BGWRITER
 } PgStat_Shared_Reset_Target;
 
 /* Possible object types for resetting single counters */
@@ -275,7 +275,7 @@ typedef struct PgStat_MsgResetcounter
 } PgStat_MsgResetcounter;
 
 /* ----------
- * PgStat_MsgResetsharedcounter	Sent by the backend to tell the collector
+ * PgStat_MsgResetsharedcounter Sent by the backend to tell the collector
  *								to reset a shared counter
  * ----------
  */
@@ -286,7 +286,7 @@ typedef struct PgStat_MsgResetsharedcounter
 } PgStat_MsgResetsharedcounter;
 
 /* ----------
- * PgStat_MsgResetsinglecounter	Sent by the backend to tell the collector
+ * PgStat_MsgResetsinglecounter Sent by the backend to tell the collector
  *								to reset a single counter
  * ----------
  */
@@ -606,7 +606,7 @@ typedef struct PgBackendStatus
 	bool		st_waiting;
 
 	/* application name; MUST be null-terminated */
-	char       *st_appname;
+	char	   *st_appname;
 
 	/* current command string; MUST be null-terminated */
 	char	   *st_activity;

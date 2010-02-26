@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.h,v 1.163 2010/02/18 01:29:10 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.h,v 1.164 2010/02/26 02:01:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -338,7 +338,7 @@ typedef struct _triggerInfo
  * to sort them the way we want.
  *
  * Note: condeferrable and condeferred are currently only valid for
- * unique/primary-key constraints.  Otherwise that info is in condef.
+ * unique/primary-key constraints.	Otherwise that info is in condef.
  */
 typedef struct _constraintInfo
 {
@@ -439,13 +439,13 @@ typedef struct _defaultACLInfo
 {
 	DumpableObject dobj;
 	char	   *defaclrole;
-	char	    defaclobjtype;
+	char		defaclobjtype;
 	char	   *defaclacl;
 } DefaultACLInfo;
 
 typedef struct _blobInfo
 {
-	DumpableObject	dobj;
+	DumpableObject dobj;
 	char	   *rolname;
 	char	   *blobacl;
 } BlobInfo;

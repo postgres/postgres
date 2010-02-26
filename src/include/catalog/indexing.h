@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/indexing.h,v 1.116 2010/01/17 22:56:23 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/indexing.h,v 1.117 2010/02/26 02:01:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -212,7 +212,7 @@ DECLARE_INDEX(pg_shdepend_reference_index, 1233, on pg_shdepend using btree(refc
 #define SharedDependReferenceIndexId	1233
 
 DECLARE_UNIQUE_INDEX(pg_statistic_relid_att_inh_index, 2696, on pg_statistic using btree(starelid oid_ops, staattnum int2_ops, stainherit bool_ops));
-#define StatisticRelidAttnumInhIndexId  2696
+#define StatisticRelidAttnumInhIndexId	2696
 
 DECLARE_UNIQUE_INDEX(pg_tablespace_oid_index, 2697, on pg_tablespace using btree(oid oid_ops));
 #define TablespaceOidIndexId  2697
@@ -274,7 +274,7 @@ DECLARE_UNIQUE_INDEX(pg_user_mapping_user_server_index, 175, on pg_user_mapping 
 #define UserMappingUserServerIndexId	175
 
 DECLARE_UNIQUE_INDEX(pg_default_acl_role_nsp_obj_index, 827, on pg_default_acl using btree(defaclrole oid_ops, defaclnamespace oid_ops, defaclobjtype char_ops));
-#define DefaultAclRoleNspObjIndexId	827
+#define DefaultAclRoleNspObjIndexId 827
 DECLARE_UNIQUE_INDEX(pg_default_acl_oid_index, 828, on pg_default_acl using btree(oid oid_ops));
 #define DefaultAclOidIndexId	828
 

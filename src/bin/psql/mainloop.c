@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/mainloop.c,v 1.98 2010/01/02 16:57:59 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/mainloop.c,v 1.99 2010/02/26 02:01:19 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "mainloop.h"
@@ -419,7 +419,7 @@ MainLoop(FILE *source)
  * psqlscan.c is #include'd here instead of being compiled on its own.
  * This is because we need postgres_fe.h to be read before any system
  * include files, else things tend to break on platforms that have
- * multiple infrastructures for stdio.h and so on.  flex is absolutely
+ * multiple infrastructures for stdio.h and so on.	flex is absolutely
  * uncooperative about that, so we can't compile psqlscan.c on its own.
  */
 #include "psqlscan.c"

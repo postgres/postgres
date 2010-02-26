@@ -9,7 +9,7 @@
  *
  * Copyright (c) 2002-2010, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/funcapi.h,v 1.31 2010/01/02 16:58:00 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/funcapi.h,v 1.32 2010/02/26 02:01:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -174,7 +174,7 @@ extern int get_func_arg_info(HeapTuple procTup,
 				  char **p_argmodes);
 
 extern int get_func_input_arg_names(Datum proargnames, Datum proargmodes,
-									char ***arg_names);
+						 char ***arg_names);
 
 extern char *get_func_result_name(Oid functionId);
 

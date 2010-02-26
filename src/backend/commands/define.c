@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/define.c,v 1.107 2010/01/02 16:57:37 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/define.c,v 1.108 2010/02/26 02:00:38 momjian Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -156,8 +156,8 @@ defGetBoolean(DefElem *def)
 				char	   *sval = defGetString(def);
 
 				/*
-				 * The set of strings accepted here should match up with
-				 * the grammar's opt_boolean production.
+				 * The set of strings accepted here should match up with the
+				 * grammar's opt_boolean production.
 				 */
 				if (pg_strcasecmp(sval, "true") == 0)
 					return true;

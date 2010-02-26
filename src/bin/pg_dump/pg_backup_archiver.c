@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.181 2010/02/24 02:42:54 tgl Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.182 2010/02/26 02:01:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -138,7 +138,7 @@ static void identify_locking_dependencies(TocEntry *te,
 							  TocEntry **tocsByDumpId,
 							  DumpId maxDumpId);
 static void reduce_dependencies(ArchiveHandle *AH, TocEntry *te,
-								TocEntry *ready_list);
+					TocEntry *ready_list);
 static void mark_create_done(ArchiveHandle *AH, TocEntry *te);
 static void inhibit_data_for_failed_table(ArchiveHandle *AH, TocEntry *te);
 static ArchiveHandle *CloneArchive(ArchiveHandle *AH);
@@ -339,7 +339,7 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 
 			reqs = _tocEntryRequired(te, ropt, false /* needn't drop ACLs */ );
 			/* We want anything that's selected and has a dropStmt */
-			if (((reqs & (REQ_SCHEMA|REQ_DATA)) != 0) && te->dropStmt)
+			if (((reqs & (REQ_SCHEMA | REQ_DATA)) != 0) && te->dropStmt)
 			{
 				ahlog(AH, 1, "dropping %s %s\n", te->desc, te->tag);
 				/* Select owner and schema as necessary */
@@ -391,7 +391,7 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 		reqs = _tocEntryRequired(te, ropt, true);
 
 		/* Both schema and data objects might now have ownership/ACLs */
-		if ((reqs & (REQ_SCHEMA|REQ_DATA)) != 0)
+		if ((reqs & (REQ_SCHEMA | REQ_DATA)) != 0)
 		{
 			ahlog(AH, 1, "setting owner and privileges for %s %s\n",
 				  te->desc, te->tag);
@@ -2311,11 +2311,11 @@ _tocEntryRequired(TocEntry *te, RestoreOptions *ropt, bool include_acls)
 	if (!te->hadDumper)
 	{
 		/*
-		 * Special Case: If 'SEQUENCE SET' or anything to do with BLOBs,
-		 * then it is considered a data entry.  We don't need to check for
-		 * the BLOBS entry or old-style BLOB COMMENTS, because they will
-		 * have hadDumper = true ... but we do need to check new-style
-		 * BLOB comments.
+		 * Special Case: If 'SEQUENCE SET' or anything to do with BLOBs, then
+		 * it is considered a data entry.  We don't need to check for the
+		 * BLOBS entry or old-style BLOB COMMENTS, because they will have
+		 * hadDumper = true ... but we do need to check new-style BLOB
+		 * comments.
 		 */
 		if (strcmp(te->desc, "SEQUENCE SET") == 0 ||
 			strcmp(te->desc, "BLOB") == 0 ||
@@ -3197,13 +3197,13 @@ restore_toc_entries_parallel(ArchiveHandle *AH)
 	AH->currWithOids = -1;
 
 	/*
-	 * Initialize the lists of pending and ready items.  After this setup,
-	 * the pending list is everything that needs to be done but is blocked
-	 * by one or more dependencies, while the ready list contains items that
-	 * have no remaining dependencies.  Note: we don't yet filter out entries
-	 * that aren't going to be restored.  They might participate in
-	 * dependency chains connecting entries that should be restored, so we
-	 * treat them as live until we actually process them.
+	 * Initialize the lists of pending and ready items.  After this setup, the
+	 * pending list is everything that needs to be done but is blocked by one
+	 * or more dependencies, while the ready list contains items that have no
+	 * remaining dependencies.	Note: we don't yet filter out entries that
+	 * aren't going to be restored.  They might participate in dependency
+	 * chains connecting entries that should be restored, so we treat them as
+	 * live until we actually process them.
 	 */
 	par_list_header_init(&pending_list);
 	par_list_header_init(&ready_list);
@@ -3716,8 +3716,8 @@ fix_dependencies(ArchiveHandle *AH)
 	 * repeatedly.	Entries for dump IDs not present in the TOC will be NULL.
 	 *
 	 * NOTE: because maxDumpId is just the highest dump ID defined in the
-	 * archive, there might be dependencies for IDs > maxDumpId.  All uses
-	 * of this array must guard against out-of-range dependency numbers.
+	 * archive, there might be dependencies for IDs > maxDumpId.  All uses of
+	 * this array must guard against out-of-range dependency numbers.
 	 *
 	 * Also, initialize the depCount fields, and make sure all the TOC items
 	 * are marked as not being in any parallel-processing list.

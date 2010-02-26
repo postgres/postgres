@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_shdepend.c,v 1.39 2010/02/14 18:42:13 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_shdepend.c,v 1.40 2010/02/26 02:00:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1015,7 +1015,7 @@ shdepLockAndCheckObject(Oid classId, Oid objectId)
 				pfree(database);
 				break;
 			}
-		
+
 
 		default:
 			elog(ERROR, "unrecognized shared classId: %u", classId);
@@ -1351,9 +1351,10 @@ shdepReassignOwned(List *roleids, Oid newrole)
 					break;
 
 				case DefaultAclRelationId:
+
 					/*
-					 * Ignore default ACLs; they should be handled by
-					 * DROP OWNED, not REASSIGN OWNED.
+					 * Ignore default ACLs; they should be handled by DROP
+					 * OWNED, not REASSIGN OWNED.
 					 */
 					break;
 

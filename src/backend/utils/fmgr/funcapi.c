@@ -7,7 +7,7 @@
  * Copyright (c) 2002-2010, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/funcapi.c,v 1.48 2010/02/14 18:42:17 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/funcapi.c,v 1.49 2010/02/26 02:01:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -795,8 +795,8 @@ get_func_input_arg_names(Datum proargnames, Datum proargmodes,
 
 	/*
 	 * We expect the arrays to be 1-D arrays of the right types; verify that.
-	 * For proargmodes, we don't need to use deconstruct_array()
-	 * since the array data is just going to look like a C array of values.
+	 * For proargmodes, we don't need to use deconstruct_array() since the
+	 * array data is just going to look like a C array of values.
 	 */
 	arr = DatumGetArrayTypeP(proargnames);		/* ensure not toasted */
 	if (ARR_NDIM(arr) != 1 ||

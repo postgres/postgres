@@ -8,7 +8,7 @@
  *
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.237 2010/02/17 04:19:40 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.238 2010/02/26 02:01:18 momjian Exp $
  */
 #include "postgres_fe.h"
 
@@ -755,7 +755,7 @@ listDefaultACLs(const char *pattern)
 	initPQExpBuffer(&buf);
 
 	printfPQExpBuffer(&buf,
-					  "SELECT pg_catalog.pg_get_userbyid(d.defaclrole) AS \"%s\",\n"
+			   "SELECT pg_catalog.pg_get_userbyid(d.defaclrole) AS \"%s\",\n"
 					  "  n.nspname AS \"%s\",\n"
 					  "  CASE d.defaclobjtype WHEN 'r' THEN '%s' WHEN 'S' THEN '%s' WHEN 'f' THEN '%s' END AS \"%s\",\n"
 					  "  ",
@@ -769,7 +769,7 @@ listDefaultACLs(const char *pattern)
 	printACLColumn(&buf, "d.defaclacl");
 
 	appendPQExpBuffer(&buf, "\nFROM pg_catalog.pg_default_acl d\n"
-	   "     LEFT JOIN pg_catalog.pg_namespace n ON n.oid = d.defaclnamespace\n");
+					  "     LEFT JOIN pg_catalog.pg_namespace n ON n.oid = d.defaclnamespace\n");
 
 	processSQLNamePattern(pset.db, &buf, pattern, false, false,
 						  NULL,
@@ -1388,7 +1388,7 @@ describeOneTableDetails(const char *schemaname,
 		if (verbose)
 		{
 			int			firstvcol = (tableinfo.relkind == 'i' ? 6 : 5);
-			char	   *storage  = PQgetvalue(res, i, firstvcol);
+			char	   *storage = PQgetvalue(res, i, firstvcol);
 
 			/* these strings are literal in our syntax, so not translated. */
 			printTableAddCell(&cont, (storage[0] == 'p' ? "plain" :
@@ -1418,7 +1418,7 @@ describeOneTableDetails(const char *schemaname,
 							  "  (NOT i.indimmediate) AND "
 							  "EXISTS (SELECT 1 FROM pg_catalog.pg_depend d, "
 							  "pg_catalog.pg_constraint con WHERE "
-							  "d.classid = 'pg_catalog.pg_class'::pg_catalog.regclass AND "
+				"d.classid = 'pg_catalog.pg_class'::pg_catalog.regclass AND "
 							  "d.objid = i.indexrelid AND "
 							  "d.refclassid = 'pg_catalog.pg_constraint'::pg_catalog.regclass AND "
 							  "d.refobjid = con.oid AND d.deptype = 'i' AND "
@@ -1426,7 +1426,7 @@ describeOneTableDetails(const char *schemaname,
 							  "  (NOT i.indimmediate) AND "
 							  "EXISTS (SELECT 1 FROM pg_catalog.pg_depend d, "
 							  "pg_catalog.pg_constraint con WHERE "
-							  "d.classid = 'pg_catalog.pg_class'::pg_catalog.regclass AND "
+				"d.classid = 'pg_catalog.pg_class'::pg_catalog.regclass AND "
 							  "d.objid = i.indexrelid AND "
 							  "d.refclassid = 'pg_catalog.pg_constraint'::pg_catalog.regclass AND "
 							  "d.refobjid = con.oid AND d.deptype = 'i' AND "
@@ -1435,7 +1435,7 @@ describeOneTableDetails(const char *schemaname,
 			appendPQExpBuffer(&buf,
 						"  false AS condeferrable, false AS condeferred,\n");
 		appendPQExpBuffer(&buf, "  a.amname, c2.relname, "
-						  "pg_catalog.pg_get_expr(i.indpred, i.indrelid, true)\n"
+					  "pg_catalog.pg_get_expr(i.indpred, i.indrelid, true)\n"
 						  "FROM pg_catalog.pg_index i, pg_catalog.pg_class c, pg_catalog.pg_class c2, pg_catalog.pg_am a\n"
 		  "WHERE i.indexrelid = c.oid AND c.oid = '%s' AND c.relam = a.oid\n"
 						  "AND i.indrelid = c2.oid",
@@ -1551,22 +1551,22 @@ describeOneTableDetails(const char *schemaname,
 			appendPQExpBuffer(&buf, "pg_catalog.pg_get_indexdef(i.indexrelid, 0, true)");
 			if (pset.sversion >= 90000)
 				appendPQExpBuffer(&buf,
-							  ",\n  (NOT i.indimmediate) AND "
-							  "EXISTS (SELECT 1 FROM pg_catalog.pg_depend d, "
-							  "pg_catalog.pg_constraint con WHERE "
-							  "d.classid = 'pg_catalog.pg_class'::pg_catalog.regclass AND "
-							  "d.objid = i.indexrelid AND "
-							  "d.refclassid = 'pg_catalog.pg_constraint'::pg_catalog.regclass AND "
+								  ",\n  (NOT i.indimmediate) AND "
+							 "EXISTS (SELECT 1 FROM pg_catalog.pg_depend d, "
+								  "pg_catalog.pg_constraint con WHERE "
+				"d.classid = 'pg_catalog.pg_class'::pg_catalog.regclass AND "
+								  "d.objid = i.indexrelid AND "
+								  "d.refclassid = 'pg_catalog.pg_constraint'::pg_catalog.regclass AND "
 							  "d.refobjid = con.oid AND d.deptype = 'i' AND "
-							  "con.condeferrable) AS condeferrable"
-							  ",\n  (NOT i.indimmediate) AND "
-							  "EXISTS (SELECT 1 FROM pg_catalog.pg_depend d, "
-							  "pg_catalog.pg_constraint con WHERE "
-							  "d.classid = 'pg_catalog.pg_class'::pg_catalog.regclass AND "
-							  "d.objid = i.indexrelid AND "
-							  "d.refclassid = 'pg_catalog.pg_constraint'::pg_catalog.regclass AND "
+								  "con.condeferrable) AS condeferrable"
+								  ",\n  (NOT i.indimmediate) AND "
+							 "EXISTS (SELECT 1 FROM pg_catalog.pg_depend d, "
+								  "pg_catalog.pg_constraint con WHERE "
+				"d.classid = 'pg_catalog.pg_class'::pg_catalog.regclass AND "
+								  "d.objid = i.indexrelid AND "
+								  "d.refclassid = 'pg_catalog.pg_constraint'::pg_catalog.regclass AND "
 							  "d.refobjid = con.oid AND d.deptype = 'i' AND "
-							  "con.condeferred) AS condeferred");
+								  "con.condeferred) AS condeferred");
 			else
 				appendPQExpBuffer(&buf, ", false AS condeferrable, false AS condeferred");
 			if (pset.sversion >= 80000)
@@ -2313,23 +2313,23 @@ add_role_attribute(PQExpBuffer buf, const char *const str)
 bool
 listDbRoleSettings(const char *pattern, const char *pattern2)
 {
-	PQExpBufferData	buf;
-	PGresult	   *res;
+	PQExpBufferData buf;
+	PGresult   *res;
 	printQueryOpt myopt = pset.popt;
 
 	initPQExpBuffer(&buf);
 
 	if (pset.sversion >= 90000)
 	{
-		bool	havewhere;
+		bool		havewhere;
 
 		printfPQExpBuffer(&buf, "SELECT rolname AS role, datname AS database,\n"
-						  "pg_catalog.array_to_string(setconfig, E'\\n') AS settings\n"
+				"pg_catalog.array_to_string(setconfig, E'\\n') AS settings\n"
 						  "FROM pg_db_role_setting AS s\n"
-						  "LEFT JOIN pg_database ON pg_database.oid = setdatabase\n"
+				   "LEFT JOIN pg_database ON pg_database.oid = setdatabase\n"
 						  "LEFT JOIN pg_roles ON pg_roles.oid = setrole\n");
 		havewhere = processSQLNamePattern(pset.db, &buf, pattern, false, false,
-										  NULL, "pg_roles.rolname", NULL, NULL);
+									   NULL, "pg_roles.rolname", NULL, NULL);
 		processSQLNamePattern(pset.db, &buf, pattern2, havewhere, false,
 							  NULL, "pg_database.datname", NULL, NULL);
 		appendPQExpBufferStr(&buf, "ORDER BY role, database");
@@ -2337,7 +2337,7 @@ listDbRoleSettings(const char *pattern, const char *pattern2)
 	else
 	{
 		fprintf(pset.queryFout,
-				_("No per-database role settings support in this server version.\n"));
+		_("No per-database role settings support in this server version.\n"));
 		return false;
 	}
 

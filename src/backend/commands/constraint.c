@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/constraint.c,v 1.3 2010/01/02 16:57:37 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/constraint.c,v 1.4 2010/02/26 02:00:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,9 +49,9 @@ unique_key_recheck(PG_FUNCTION_ARGS)
 	bool		isnull[INDEX_MAX_KEYS];
 
 	/*
-	 * Make sure this is being called as an AFTER ROW trigger.  Note:
-	 * translatable error strings are shared with ri_triggers.c, so
-	 * resist the temptation to fold the function name into them.
+	 * Make sure this is being called as an AFTER ROW trigger.	Note:
+	 * translatable error strings are shared with ri_triggers.c, so resist the
+	 * temptation to fold the function name into them.
 	 */
 	if (!CALLED_AS_TRIGGER(fcinfo))
 		ereport(ERROR,
@@ -86,7 +86,7 @@ unique_key_recheck(PG_FUNCTION_ARGS)
 	 * If the new_row is now dead (ie, inserted and then deleted within our
 	 * transaction), we can skip the check.  However, we have to be careful,
 	 * because this trigger gets queued only in response to index insertions;
-	 * which means it does not get queued for HOT updates.  The row we are
+	 * which means it does not get queued for HOT updates.	The row we are
 	 * called for might now be dead, but have a live HOT child, in which case
 	 * we still need to make the check.  Therefore we have to use
 	 * heap_hot_search, not just HeapTupleSatisfiesVisibility as is done in
@@ -109,9 +109,9 @@ unique_key_recheck(PG_FUNCTION_ARGS)
 	}
 
 	/*
-	 * Open the index, acquiring a RowExclusiveLock, just as if we were
-	 * going to update it.  (This protects against possible changes of the
-	 * index schema, not against concurrent updates.)
+	 * Open the index, acquiring a RowExclusiveLock, just as if we were going
+	 * to update it.  (This protects against possible changes of the index
+	 * schema, not against concurrent updates.)
 	 */
 	indexRel = index_open(trigdata->tg_trigger->tgconstrindid,
 						  RowExclusiveLock);
@@ -125,9 +125,9 @@ unique_key_recheck(PG_FUNCTION_ARGS)
 	ExecStoreTuple(new_row, slot, InvalidBuffer, false);
 
 	/*
-	 * Typically the index won't have expressions, but if it does we need
-	 * an EState to evaluate them.  We need it for exclusion constraints
-	 * too, even if they are just on simple columns.
+	 * Typically the index won't have expressions, but if it does we need an
+	 * EState to evaluate them.  We need it for exclusion constraints too,
+	 * even if they are just on simple columns.
 	 */
 	if (indexInfo->ii_Expressions != NIL ||
 		indexInfo->ii_ExclusionOps != NULL)
@@ -140,13 +140,13 @@ unique_key_recheck(PG_FUNCTION_ARGS)
 		estate = NULL;
 
 	/*
-	 * Form the index values and isnull flags for the index entry that
-	 * we need to check.
+	 * Form the index values and isnull flags for the index entry that we need
+	 * to check.
 	 *
-	 * Note: if the index uses functions that are not as immutable as they
-	 * are supposed to be, this could produce an index tuple different from
-	 * the original.  The index AM can catch such errors by verifying that
-	 * it finds a matching index entry with the tuple's TID.  For exclusion
+	 * Note: if the index uses functions that are not as immutable as they are
+	 * supposed to be, this could produce an index tuple different from the
+	 * original.  The index AM can catch such errors by verifying that it
+	 * finds a matching index entry with the tuple's TID.  For exclusion
 	 * constraints we check this in check_exclusion_constraint().
 	 */
 	FormIndexDatum(indexInfo, slot, estate, values, isnull);
@@ -166,8 +166,8 @@ unique_key_recheck(PG_FUNCTION_ARGS)
 	else
 	{
 		/*
-		 * For exclusion constraints we just do the normal check, but now
-		 * it's okay to throw error.
+		 * For exclusion constraints we just do the normal check, but now it's
+		 * okay to throw error.
 		 */
 		check_exclusion_constraint(trigdata->tg_relation, indexRel, indexInfo,
 								   &(new_row->t_self), values, isnull,
@@ -175,8 +175,8 @@ unique_key_recheck(PG_FUNCTION_ARGS)
 	}
 
 	/*
-	 * If that worked, then this index entry is unique or non-excluded,
-	 * and we are done.
+	 * If that worked, then this index entry is unique or non-excluded, and we
+	 * are done.
 	 */
 	if (estate != NULL)
 		FreeExecutorState(estate);

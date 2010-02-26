@@ -28,7 +28,7 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/src/backend/regex/regcomp.c,v 1.47 2010/01/30 04:18:00 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/regex/regcomp.c,v 1.48 2010/02/26 02:00:57 momjian Exp $
  *
  */
 
@@ -1028,8 +1028,8 @@ parseqatom(struct vars * v,
 	/*----------
 	 * Prepare a general-purpose state skeleton.
 	 *
-	 *    ---> [s] ---prefix---> [begin] ---atom---> [end] ----rest---> [rp]
-	 *   /                                            /
+	 *	  ---> [s] ---prefix---> [begin] ---atom---> [end] ----rest---> [rp]
+	 *	 /											  /
 	 * [lp] ----> [s2] ----bypass---------------------
 	 *
 	 * where bypass is an empty, and prefix is some repetitions of atom

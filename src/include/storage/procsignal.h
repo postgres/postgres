@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/procsignal.h,v 1.5 2010/02/13 01:32:20 sriggs Exp $
+ * $PostgreSQL: pgsql/src/include/storage/procsignal.h,v 1.6 2010/02/26 02:01:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,8 +50,8 @@ extern Size ProcSignalShmemSize(void);
 extern void ProcSignalShmemInit(void);
 
 extern void ProcSignalInit(int pss_idx);
-extern int  SendProcSignal(pid_t pid, ProcSignalReason reason,
-						   BackendId backendId);
+extern int SendProcSignal(pid_t pid, ProcSignalReason reason,
+			   BackendId backendId);
 
 extern void procsignal_sigusr1_handler(SIGNAL_ARGS);
 

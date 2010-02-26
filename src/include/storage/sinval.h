@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/sinval.h,v 1.58 2010/02/13 16:15:48 sriggs Exp $
+ * $PostgreSQL: pgsql/src/include/storage/sinval.h,v 1.59 2010/02/26 02:01:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -132,9 +132,9 @@ extern void EnableCatchupInterrupt(void);
 extern bool DisableCatchupInterrupt(void);
 
 extern int xactGetCommittedInvalidationMessages(SharedInvalidationMessage **msgs,
-										bool *RelcacheInitFileInval);
+									 bool *RelcacheInitFileInval);
 extern void ProcessCommittedInvalidationMessages(SharedInvalidationMessage *msgs,
-										int nmsgs, bool RelcacheInitFileInval,
-										Oid dbid, Oid tsid);
+									 int nmsgs, bool RelcacheInitFileInval,
+									 Oid dbid, Oid tsid);
 
 #endif   /* SINVAL_H */

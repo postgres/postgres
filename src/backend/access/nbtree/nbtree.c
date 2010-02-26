@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtree.c,v 1.175 2010/02/08 04:33:53 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtree.c,v 1.176 2010/02/26 02:00:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,8 +57,8 @@ typedef struct
 	IndexBulkDeleteCallback callback;
 	void	   *callback_state;
 	BTCycleId	cycleid;
-	BlockNumber lastBlockVacuumed; 	/* last blkno reached by Vacuum scan */
-	BlockNumber lastUsedPage;		/* blkno of last non-recyclable page */
+	BlockNumber lastBlockVacuumed;		/* last blkno reached by Vacuum scan */
+	BlockNumber lastUsedPage;	/* blkno of last non-recyclable page */
 	BlockNumber totFreePages;	/* true total # of free pages */
 	MemoryContext pagedelcontext;
 } BTVacState;
@@ -630,7 +630,7 @@ btvacuumscan(IndexVacuumInfo *info, IndexBulkDeleteResult *stats,
 	vstate.callback = callback;
 	vstate.callback_state = callback_state;
 	vstate.cycleid = cycleid;
-	vstate.lastBlockVacuumed = BTREE_METAPAGE; /* Initialise at first block */
+	vstate.lastBlockVacuumed = BTREE_METAPAGE;	/* Initialise at first block */
 	vstate.lastUsedPage = BTREE_METAPAGE;
 	vstate.totFreePages = 0;
 
@@ -702,8 +702,8 @@ btvacuumscan(IndexVacuumInfo *info, IndexBulkDeleteResult *stats,
 		/*
 		 * We can't use _bt_getbuf() here because it always applies
 		 * _bt_checkpage(), which will barf on an all-zero page. We want to
-		 * recycle all-zero pages, not fail.  Also, we want to use a nondefault
-		 * buffer access strategy.
+		 * recycle all-zero pages, not fail.  Also, we want to use a
+		 * nondefault buffer access strategy.
 		 */
 		buf = ReadBufferExtended(rel, MAIN_FORKNUM, num_pages - 1, RBM_NORMAL,
 								 info->strategy);
@@ -856,23 +856,25 @@ restart:
 				htup = &(itup->t_tid);
 
 				/*
-				 * During Hot Standby we currently assume that XLOG_BTREE_VACUUM
-				 * records do not produce conflicts. That is only true as long
-				 * as the callback function depends only upon whether the index
-				 * tuple refers to heap tuples removed in the initial heap scan.
-				 * When vacuum starts it derives a value of OldestXmin. Backends
-				 * taking later snapshots could have a RecentGlobalXmin with a
-				 * later xid than the vacuum's OldestXmin, so it is possible that
-				 * row versions deleted after OldestXmin could be marked as killed
-				 * by other backends. The callback function *could* look at the
-				 * index tuple state in isolation and decide to delete the index
-				 * tuple, though currently it does not. If it ever did, we would
-				 * need to reconsider whether XLOG_BTREE_VACUUM records should
-				 * cause conflicts. If they did cause conflicts they would be
-				 * fairly harsh conflicts, since we haven't yet worked out a way
-				 * to pass a useful value for latestRemovedXid on the
-				 * XLOG_BTREE_VACUUM records. This applies to *any* type of index
-				 * that marks index tuples as killed.
+				 * During Hot Standby we currently assume that
+				 * XLOG_BTREE_VACUUM records do not produce conflicts. That is
+				 * only true as long as the callback function depends only
+				 * upon whether the index tuple refers to heap tuples removed
+				 * in the initial heap scan. When vacuum starts it derives a
+				 * value of OldestXmin. Backends taking later snapshots could
+				 * have a RecentGlobalXmin with a later xid than the vacuum's
+				 * OldestXmin, so it is possible that row versions deleted
+				 * after OldestXmin could be marked as killed by other
+				 * backends. The callback function *could* look at the index
+				 * tuple state in isolation and decide to delete the index
+				 * tuple, though currently it does not. If it ever did, we
+				 * would need to reconsider whether XLOG_BTREE_VACUUM records
+				 * should cause conflicts. If they did cause conflicts they
+				 * would be fairly harsh conflicts, since we haven't yet
+				 * worked out a way to pass a useful value for
+				 * latestRemovedXid on the XLOG_BTREE_VACUUM records. This
+				 * applies to *any* type of index that marks index tuples as
+				 * killed.
 				 */
 				if (callback(htup, callback_state))
 					deletable[ndeletable++] = offnum;
@@ -885,13 +887,13 @@ restart:
 		 */
 		if (ndeletable > 0)
 		{
-			BlockNumber	lastBlockVacuumed = BufferGetBlockNumber(buf);
+			BlockNumber lastBlockVacuumed = BufferGetBlockNumber(buf);
 
 			_bt_delitems(rel, buf, deletable, ndeletable, true, vstate->lastBlockVacuumed);
 
 			/*
-			 * Keep track of the block number of the lastBlockVacuumed, so
-			 * we can scan those blocks as well during WAL replay. This then
+			 * Keep track of the block number of the lastBlockVacuumed, so we
+			 * can scan those blocks as well during WAL replay. This then
 			 * provides concurrency protection and allows btrees to be used
 			 * while in recovery.
 			 */

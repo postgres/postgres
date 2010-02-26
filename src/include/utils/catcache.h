@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/catcache.h,v 1.72 2010/02/14 18:42:18 rhaas Exp $
+ * $PostgreSQL: pgsql/src/include/utils/catcache.h,v 1.73 2010/02/26 02:01:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,8 +47,9 @@ typedef struct catcache
 	int			cc_nbuckets;	/* # of hash buckets in this cache */
 	int			cc_nkeys;		/* # of keys (1..CATCACHE_MAXKEYS) */
 	int			cc_key[CATCACHE_MAXKEYS];		/* AttrNumber of each key */
-	PGFunction	cc_hashfunc[CATCACHE_MAXKEYS]; /* hash function for each key */
-	ScanKeyData cc_skey[CATCACHE_MAXKEYS];		/* precomputed key info for heap scans */
+	PGFunction	cc_hashfunc[CATCACHE_MAXKEYS];	/* hash function for each key */
+	ScanKeyData cc_skey[CATCACHE_MAXKEYS];		/* precomputed key info for
+												 * heap scans */
 	bool		cc_isname[CATCACHE_MAXKEYS];	/* flag "name" key columns */
 	Dllist		cc_lists;		/* list of CatCList structs */
 #ifdef CATCACHE_STATS

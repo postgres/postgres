@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/optimizer/geqo/geqo_eval.c,v 1.92 2010/01/02 16:57:46 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/optimizer/geqo/geqo_eval.c,v 1.93 2010/02/26 02:00:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,7 +40,7 @@ typedef struct
 } Clump;
 
 static List *merge_clump(PlannerInfo *root, List *clumps, Clump *new_clump,
-						 bool force);
+			bool force);
 static bool desirable_join(PlannerInfo *root,
 			   RelOptInfo *outer_rel, RelOptInfo *inner_rel);
 
@@ -156,14 +156,14 @@ gimme_tree(PlannerInfo *root, Gene *tour, int num_gene)
 	/*
 	 * Sometimes, a relation can't yet be joined to others due to heuristics
 	 * or actual semantic restrictions.  We maintain a list of "clumps" of
-	 * successfully joined relations, with larger clumps at the front.
-	 * Each new relation from the tour is added to the first clump it can
-	 * be joined to; if there is none then it becomes a new clump of its own.
-	 * When we enlarge an existing clump we check to see if it can now be
-	 * merged with any other clumps.  After the tour is all scanned, we
-	 * forget about the heuristics and try to forcibly join any remaining
-	 * clumps.  Some forced joins might still fail due to semantics, but
-	 * we should always be able to find some join order that works.
+	 * successfully joined relations, with larger clumps at the front. Each
+	 * new relation from the tour is added to the first clump it can be joined
+	 * to; if there is none then it becomes a new clump of its own. When we
+	 * enlarge an existing clump we check to see if it can now be merged with
+	 * any other clumps.  After the tour is all scanned, we forget about the
+	 * heuristics and try to forcibly join any remaining clumps.  Some forced
+	 * joins might still fail due to semantics, but we should always be able
+	 * to find some join order that works.
 	 */
 	clumps = NIL;
 
@@ -214,7 +214,7 @@ gimme_tree(PlannerInfo *root, Gene *tour, int num_gene)
  * Merge a "clump" into the list of existing clumps for gimme_tree.
  *
  * We try to merge the clump into some existing clump, and repeat if
- * successful.  When no more merging is possible, insert the clump
+ * successful.	When no more merging is possible, insert the clump
  * into the list, preserving the list ordering rule (namely, that
  * clumps of larger size appear earlier).
  *
@@ -265,7 +265,7 @@ merge_clump(PlannerInfo *root, List *clumps, Clump *new_clump, bool force)
 
 				/*
 				 * Recursively try to merge the enlarged old_clump with
-				 * others.  When no further merge is possible, we'll reinsert
+				 * others.	When no further merge is possible, we'll reinsert
 				 * it into the list.
 				 */
 				return merge_clump(root, clumps, old_clump, force);
@@ -276,7 +276,7 @@ merge_clump(PlannerInfo *root, List *clumps, Clump *new_clump, bool force)
 
 	/*
 	 * No merging is possible, so add new_clump as an independent clump, in
-	 * proper order according to size.  We can be fast for the common case
+	 * proper order according to size.	We can be fast for the common case
 	 * where it has size 1 --- it should always go at the end.
 	 */
 	if (clumps == NIL || new_clump->size == 1)

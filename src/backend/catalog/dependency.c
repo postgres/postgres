@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/dependency.c,v 1.95 2010/02/14 18:42:12 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/dependency.c,v 1.96 2010/02/26 02:00:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -148,7 +148,7 @@ static const Oid object_classes[MAX_OCLASS] = {
 	AuthIdRelationId,			/* OCLASS_ROLE */
 	DatabaseRelationId,			/* OCLASS_DATABASE */
 	TableSpaceRelationId,		/* OCLASS_TBLSPACE */
-	ForeignDataWrapperRelationId,	/* OCLASS_FDW */
+	ForeignDataWrapperRelationId,		/* OCLASS_FDW */
 	ForeignServerRelationId,	/* OCLASS_FOREIGN_SERVER */
 	UserMappingRelationId,		/* OCLASS_USER_MAPPING */
 	DefaultAclRelationId		/* OCLASS_DEFACL */
@@ -1129,8 +1129,8 @@ doDeletion(const ObjectAddress *object)
 			break;
 
 			/*
-			 * OCLASS_ROLE, OCLASS_DATABASE, OCLASS_TBLSPACE intentionally
-			 * not handled here
+			 * OCLASS_ROLE, OCLASS_DATABASE, OCLASS_TBLSPACE intentionally not
+			 * handled here
 			 */
 
 		case OCLASS_FDW:
@@ -2637,31 +2637,31 @@ getObjectDescription(const ObjectAddress *object)
 					case DEFACLOBJ_RELATION:
 						appendStringInfo(&buffer,
 										 _("default privileges on new relations belonging to role %s"),
-										 GetUserNameFromId(defacl->defaclrole));
+									  GetUserNameFromId(defacl->defaclrole));
 						break;
 					case DEFACLOBJ_SEQUENCE:
 						appendStringInfo(&buffer,
 										 _("default privileges on new sequences belonging to role %s"),
-										 GetUserNameFromId(defacl->defaclrole));
+									  GetUserNameFromId(defacl->defaclrole));
 						break;
 					case DEFACLOBJ_FUNCTION:
 						appendStringInfo(&buffer,
 										 _("default privileges on new functions belonging to role %s"),
-										 GetUserNameFromId(defacl->defaclrole));
+									  GetUserNameFromId(defacl->defaclrole));
 						break;
 					default:
 						/* shouldn't get here */
 						appendStringInfo(&buffer,
-										 _("default privileges belonging to role %s"),
-										 GetUserNameFromId(defacl->defaclrole));
+								_("default privileges belonging to role %s"),
+									  GetUserNameFromId(defacl->defaclrole));
 						break;
 				}
 
 				if (OidIsValid(defacl->defaclnamespace))
 				{
 					appendStringInfo(&buffer,
-									_(" in schema %s"),
-									get_namespace_name(defacl->defaclnamespace));
+									 _(" in schema %s"),
+								get_namespace_name(defacl->defaclnamespace));
 				}
 
 				systable_endscan(rcscan);

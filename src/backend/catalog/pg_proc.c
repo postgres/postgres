@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_proc.c,v 1.171 2010/02/14 18:42:13 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_proc.c,v 1.172 2010/02/26 02:00:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -396,8 +396,8 @@ ProcedureCreate(const char *procedureName,
 
 		/*
 		 * If there were any named input parameters, check to make sure the
-		 * names have not been changed, as this could break existing calls.
-		 * We allow adding names to formerly unnamed parameters, though.
+		 * names have not been changed, as this could break existing calls. We
+		 * allow adding names to formerly unnamed parameters, though.
 		 */
 		proargnames = SysCacheGetAttr(PROCNAMEARGSNSP, oldtup,
 									  Anum_pg_proc_proargnames,
@@ -431,11 +431,11 @@ ProcedureCreate(const char *procedureName,
 					strcmp(old_arg_names[j], new_arg_names[j]) != 0)
 					ereport(ERROR,
 							(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-							 errmsg("cannot change name of input parameter \"%s\"",
-									old_arg_names[j]),
+					   errmsg("cannot change name of input parameter \"%s\"",
+							  old_arg_names[j]),
 							 errhint("Use DROP FUNCTION first.")));
 			}
-		 }
+		}
 
 		/*
 		 * If there are existing defaults, check compatibility: redefinition
@@ -845,7 +845,7 @@ sql_function_parse_error_callback(void *arg)
 
 /*
  * Adjust a syntax error occurring inside the function body of a CREATE
- * FUNCTION or DO command.  This can be used by any function validator or
+ * FUNCTION or DO command.	This can be used by any function validator or
  * anonymous-block handler, not only for SQL-language functions.
  * It is assumed that the syntax error position is initially relative to the
  * function body string (as passed in).  If possible, we adjust the position

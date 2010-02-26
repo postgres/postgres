@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.334 2010/02/20 21:24:02 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.335 2010/02/26 02:01:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -238,7 +238,7 @@ PreventCommandIfReadOnly(const char *cmdname)
 	if (XactReadOnly)
 		ereport(ERROR,
 				(errcode(ERRCODE_READ_ONLY_SQL_TRANSACTION),
-				 /* translator: %s is name of a SQL command, eg CREATE */
+		/* translator: %s is name of a SQL command, eg CREATE */
 				 errmsg("cannot execute %s in a read-only transaction",
 						cmdname)));
 }
@@ -247,7 +247,7 @@ PreventCommandIfReadOnly(const char *cmdname)
  * PreventCommandDuringRecovery: throw error if RecoveryInProgress
  *
  * The majority of operations that are unsafe in a Hot Standby slave
- * will be rejected by XactReadOnly tests.  However there are a few
+ * will be rejected by XactReadOnly tests.	However there are a few
  * commands that are allowed in "read-only" xacts but cannot be allowed
  * in Hot Standby mode.  Those commands should call this function.
  */
@@ -257,7 +257,7 @@ PreventCommandDuringRecovery(const char *cmdname)
 	if (RecoveryInProgress())
 		ereport(ERROR,
 				(errcode(ERRCODE_READ_ONLY_SQL_TRANSACTION),
-				 /* translator: %s is name of a SQL command, eg CREATE */
+		/* translator: %s is name of a SQL command, eg CREATE */
 				 errmsg("cannot execute %s during recovery",
 						cmdname)));
 }
@@ -275,9 +275,9 @@ CheckRestrictedOperation(const char *cmdname)
 	if (InSecurityRestrictedOperation())
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 /* translator: %s is name of a SQL command, eg PREPARE */
-				 errmsg("cannot execute %s within security-restricted operation",
-						cmdname)));
+		/* translator: %s is name of a SQL command, eg PREPARE */
+			 errmsg("cannot execute %s within security-restricted operation",
+					cmdname)));
 }
 
 
@@ -312,9 +312,9 @@ ProcessUtility(Node *parsetree,
 	Assert(queryString != NULL);	/* required as of 8.4 */
 
 	/*
-	 * We provide a function hook variable that lets loadable plugins
-	 * get control when ProcessUtility is called.  Such a plugin would
-	 * normally call standard_ProcessUtility().
+	 * We provide a function hook variable that lets loadable plugins get
+	 * control when ProcessUtility is called.  Such a plugin would normally
+	 * call standard_ProcessUtility().
 	 */
 	if (ProcessUtility_hook)
 		(*ProcessUtility_hook) (parsetree, queryString, params,
@@ -1126,12 +1126,13 @@ standard_ProcessUtility(Node *parsetree,
 				ereport(ERROR,
 						(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 						 errmsg("must be superuser to do CHECKPOINT")));
+
 			/*
 			 * You might think we should have a PreventCommandDuringRecovery()
-			 * here, but we interpret a CHECKPOINT command during recovery
-			 * as a request for a restartpoint instead. We allow this since
-			 * it can be a useful way of reducing switchover time when
-			 * using various forms of replication.
+			 * here, but we interpret a CHECKPOINT command during recovery as
+			 * a request for a restartpoint instead. We allow this since it
+			 * can be a useful way of reducing switchover time when using
+			 * various forms of replication.
 			 */
 			RequestCheckpoint(CHECKPOINT_IMMEDIATE | CHECKPOINT_WAIT |
 							  (RecoveryInProgress() ? 0 : CHECKPOINT_FORCE));
@@ -2462,13 +2463,13 @@ GetCommandLogLevel(Node *parsetree)
 		case T_ExplainStmt:
 			{
 				ExplainStmt *stmt = (ExplainStmt *) parsetree;
-				bool		 analyze = false;
-				ListCell	*lc;
+				bool		analyze = false;
+				ListCell   *lc;
 
 				/* Look through an EXPLAIN ANALYZE to the contained stmt */
 				foreach(lc, stmt->options)
 				{
-					DefElem *opt = (DefElem *) lfirst(lc);
+					DefElem    *opt = (DefElem *) lfirst(lc);
 
 					if (strcmp(opt->defname, "analyze") == 0)
 						analyze = defGetBoolean(opt);

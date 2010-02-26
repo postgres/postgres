@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/file/fd.c,v 1.155 2010/02/22 15:26:14 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/file/fd.c,v 1.156 2010/02/26 02:00:59 momjian Exp $
  *
  * NOTES:
  *
@@ -395,7 +395,7 @@ count_usable_fds(int max_to_probe, int *usable_fds, int *already_open)
 #ifdef HAVE_GETRLIMIT
 #ifdef RLIMIT_NOFILE			/* most platforms use RLIMIT_NOFILE */
 	getrlimit_status = getrlimit(RLIMIT_NOFILE, &rlim);
-#else	/* but BSD doesn't ... */
+#else							/* but BSD doesn't ... */
 	getrlimit_status = getrlimit(RLIMIT_OFILE, &rlim);
 #endif   /* RLIMIT_NOFILE */
 	if (getrlimit_status != 0)
@@ -1798,9 +1798,9 @@ CleanupTempFiles(bool isProcExit)
 				/*
 				 * If we're in the process of exiting a backend process, close
 				 * all temporary files. Otherwise, only close temporary files
-				 * local to the current transaction. They should be closed
-				 * by the ResourceOwner mechanism already, so this is just
-				 * a debugging cross-check.
+				 * local to the current transaction. They should be closed by
+				 * the ResourceOwner mechanism already, so this is just a
+				 * debugging cross-check.
 				 */
 				if (isProcExit)
 					FileClose(i);
@@ -1860,7 +1860,7 @@ RemovePgTempFiles(void)
 			continue;
 
 		snprintf(temp_path, sizeof(temp_path), "pg_tblspc/%s/%s/%s",
-				 spc_de->d_name, TABLESPACE_VERSION_DIRECTORY, PG_TEMP_FILES_DIR);
+			spc_de->d_name, TABLESPACE_VERSION_DIRECTORY, PG_TEMP_FILES_DIR);
 		RemovePgTempFilesInDir(temp_path);
 	}
 

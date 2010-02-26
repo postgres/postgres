@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/backend/access/transam/twophase.c,v 1.58 2010/01/02 16:57:35 momjian Exp $
+ *		$PostgreSQL: pgsql/src/backend/access/transam/twophase.c,v 1.59 2010/02/26 02:00:34 momjian Exp $
  *
  * NOTES
  *		Each global transaction is associated with a global transaction
@@ -110,7 +110,7 @@ int			max_prepared_xacts = 0;
 typedef struct GlobalTransactionData
 {
 	PGPROC		proc;			/* dummy proc */
-	BackendId	dummyBackendId;	/* similar to backend id for backends */
+	BackendId	dummyBackendId; /* similar to backend id for backends */
 	TimestampTz prepared_at;	/* time of preparation */
 	XLogRecPtr	prepare_lsn;	/* XLOG offset of prepare record */
 	Oid			owner;			/* ID of user that executed the xact */
@@ -209,14 +209,14 @@ TwoPhaseShmemInit(void)
 			/*
 			 * Assign a unique ID for each dummy proc, so that the range of
 			 * dummy backend IDs immediately follows the range of normal
-			 * backend IDs. We don't dare to assign a real backend ID to
-			 * dummy procs, because prepared transactions don't take part in
-			 * cache invalidation like a real backend ID would imply, but
-			 * having a unique ID for them is nevertheless handy. This
-			 * arrangement allows you to allocate an array of size
-			 * (MaxBackends + max_prepared_xacts + 1), and have a slot for
-			 * every backend and prepared transaction. Currently multixact.c
-			 * uses that technique.
+			 * backend IDs. We don't dare to assign a real backend ID to dummy
+			 * procs, because prepared transactions don't take part in cache
+			 * invalidation like a real backend ID would imply, but having a
+			 * unique ID for them is nevertheless handy. This arrangement
+			 * allows you to allocate an array of size (MaxBackends +
+			 * max_prepared_xacts + 1), and have a slot for every backend and
+			 * prepared transaction. Currently multixact.c uses that
+			 * technique.
 			 */
 			gxacts[i].dummyBackendId = MaxBackends + 1 + i;
 		}
@@ -677,7 +677,7 @@ pg_prepared_xact(PG_FUNCTION_ARGS)
 BackendId
 TwoPhaseGetDummyBackendId(TransactionId xid)
 {
-	PGPROC *proc = TwoPhaseGetDummyProc(xid);
+	PGPROC	   *proc = TwoPhaseGetDummyProc(xid);
 
 	return ((GlobalTransaction) proc)->dummyBackendId;
 }
@@ -874,8 +874,8 @@ StartPrepare(GlobalTransaction gxact)
 	save_state_data(&hdr, sizeof(TwoPhaseFileHeader));
 
 	/*
-	 * Add the additional info about subxacts, deletable files and
-	 * cache invalidation messages.
+	 * Add the additional info about subxacts, deletable files and cache
+	 * invalidation messages.
 	 */
 	if (hdr.nsubxacts > 0)
 	{
@@ -1331,8 +1331,8 @@ FinishPreparedTransaction(const char *gid, bool isCommit)
 	/*
 	 * Handle cache invalidation messages.
 	 *
-	 * Relcache init file invalidation requires processing both
-	 * before and after we send the SI messages. See AtEOXact_Inval()
+	 * Relcache init file invalidation requires processing both before and
+	 * after we send the SI messages. See AtEOXact_Inval()
 	 */
 	if (hdr->initfileinval)
 		RelationCacheInitFileInvalidate(true);
@@ -1786,8 +1786,8 @@ RecoverPreparedTransactions(void)
 			bufptr += MAXALIGN(hdr->ninvalmsgs * sizeof(SharedInvalidationMessage));
 
 			/*
-			 * It's possible that SubTransSetParent has been set before, if the
-			 * prepared transaction generated xid assignment records. Test
+			 * It's possible that SubTransSetParent has been set before, if
+			 * the prepared transaction generated xid assignment records. Test
 			 * here must match one used in AssignTransactionId().
 			 */
 			if (InHotStandby && hdr->nsubxacts >= PGPROC_MAX_CACHED_SUBXIDS)

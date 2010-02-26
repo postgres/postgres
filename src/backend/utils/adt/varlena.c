@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/varlena.c,v 1.176 2010/02/08 20:39:51 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/varlena.c,v 1.177 2010/02/26 02:01:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,7 +30,7 @@
 
 
 /* GUC variable */
-int		bytea_output = BYTEA_OUTPUT_HEX;
+int			bytea_output = BYTEA_OUTPUT_HEX;
 
 typedef struct varlena unknown;
 
@@ -205,12 +205,12 @@ byteain(PG_FUNCTION_ARGS)
 	/* Recognize hex input */
 	if (inputText[0] == '\\' && inputText[1] == 'x')
 	{
-		size_t len = strlen(inputText);
+		size_t		len = strlen(inputText);
 
-		bc = (len - 2)/2 + VARHDRSZ;		/* maximum possible length */
+		bc = (len - 2) / 2 + VARHDRSZ;	/* maximum possible length */
 		result = palloc(bc);
 		bc = hex_decode(inputText + 2, len - 2, VARDATA(result));
-		SET_VARSIZE(result, bc + VARHDRSZ);	/* actual length */
+		SET_VARSIZE(result, bc + VARHDRSZ);		/* actual length */
 
 		PG_RETURN_BYTEA_P(result);
 	}
@@ -306,47 +306,47 @@ byteaout(PG_FUNCTION_ARGS)
 	}
 	else if (bytea_output == BYTEA_OUTPUT_ESCAPE)
 	{
-	/* Print traditional escaped format */
-	char	   *vp;
-	int			len;
-	int			i;
+		/* Print traditional escaped format */
+		char	   *vp;
+		int			len;
+		int			i;
 
-	len = 1;					/* empty string has 1 char */
-	vp = VARDATA_ANY(vlena);
-	for (i = VARSIZE_ANY_EXHDR(vlena); i != 0; i--, vp++)
-	{
-		if (*vp == '\\')
-			len += 2;
-		else if ((unsigned char) *vp < 0x20 || (unsigned char) *vp > 0x7e)
-			len += 4;
-		else
-			len++;
-	}
-	rp = result = (char *) palloc(len);
-	vp = VARDATA_ANY(vlena);
-	for (i = VARSIZE_ANY_EXHDR(vlena); i != 0; i--, vp++)
-	{
-		if (*vp == '\\')
+		len = 1;				/* empty string has 1 char */
+		vp = VARDATA_ANY(vlena);
+		for (i = VARSIZE_ANY_EXHDR(vlena); i != 0; i--, vp++)
 		{
-			*rp++ = '\\';
-			*rp++ = '\\';
+			if (*vp == '\\')
+				len += 2;
+			else if ((unsigned char) *vp < 0x20 || (unsigned char) *vp > 0x7e)
+				len += 4;
+			else
+				len++;
 		}
-		else if ((unsigned char) *vp < 0x20 || (unsigned char) *vp > 0x7e)
+		rp = result = (char *) palloc(len);
+		vp = VARDATA_ANY(vlena);
+		for (i = VARSIZE_ANY_EXHDR(vlena); i != 0; i--, vp++)
 		{
-			int			val;			/* holds unprintable chars */
+			if (*vp == '\\')
+			{
+				*rp++ = '\\';
+				*rp++ = '\\';
+			}
+			else if ((unsigned char) *vp < 0x20 || (unsigned char) *vp > 0x7e)
+			{
+				int			val;	/* holds unprintable chars */
 
-			val = *vp;
-			rp[0] = '\\';
-			rp[3] = DIG(val & 07);
-			val >>= 3;
-			rp[2] = DIG(val & 07);
-			val >>= 3;
-			rp[1] = DIG(val & 03);
-			rp += 4;
+				val = *vp;
+				rp[0] = '\\';
+				rp[3] = DIG(val & 07);
+				val >>= 3;
+				rp[2] = DIG(val & 07);
+				val >>= 3;
+				rp[1] = DIG(val & 03);
+				rp += 4;
+			}
+			else
+				*rp++ = *vp;
 		}
-		else
-			*rp++ = *vp;
-	}
 	}
 	else
 	{
@@ -900,8 +900,8 @@ textoverlay(PG_FUNCTION_ARGS)
 {
 	text	   *t1 = PG_GETARG_TEXT_PP(0);
 	text	   *t2 = PG_GETARG_TEXT_PP(1);
-	int			sp = PG_GETARG_INT32(2); /* substring start position */
-	int			sl = PG_GETARG_INT32(3); /* substring length */
+	int			sp = PG_GETARG_INT32(2);		/* substring start position */
+	int			sl = PG_GETARG_INT32(3);		/* substring length */
 
 	PG_RETURN_TEXT_P(text_overlay(t1, t2, sp, sl));
 }
@@ -911,10 +911,10 @@ textoverlay_no_len(PG_FUNCTION_ARGS)
 {
 	text	   *t1 = PG_GETARG_TEXT_PP(0);
 	text	   *t2 = PG_GETARG_TEXT_PP(1);
-	int			sp = PG_GETARG_INT32(2); /* substring start position */
+	int			sp = PG_GETARG_INT32(2);		/* substring start position */
 	int			sl;
 
-	sl = text_length(PointerGetDatum(t2)); /* defaults to length(t2) */
+	sl = text_length(PointerGetDatum(t2));		/* defaults to length(t2) */
 	PG_RETURN_TEXT_P(text_overlay(t1, t2, sp, sl));
 }
 
@@ -927,9 +927,9 @@ text_overlay(text *t1, text *t2, int sp, int sl)
 	int			sp_pl_sl;
 
 	/*
-	 * Check for possible integer-overflow cases.  For negative sp,
-	 * throw a "substring length" error because that's what should be
-	 * expected according to the spec's definition of OVERLAY().
+	 * Check for possible integer-overflow cases.  For negative sp, throw a
+	 * "substring length" error because that's what should be expected
+	 * according to the spec's definition of OVERLAY().
 	 */
 	if (sp <= 0)
 		ereport(ERROR,
@@ -941,7 +941,7 @@ text_overlay(text *t1, text *t2, int sp, int sl)
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("integer out of range")));
 
-	s1 = text_substring(PointerGetDatum(t1), 1, sp-1, false);
+	s1 = text_substring(PointerGetDatum(t1), 1, sp - 1, false);
 	s2 = text_substring(PointerGetDatum(t1), sp_pl_sl, -1, true);
 	result = text_catenate(s1, t2);
 	result = text_catenate(result, s2);
@@ -1823,8 +1823,8 @@ bytea_substring(Datum str,
 	if (length_not_specified)
 	{
 		/*
-		 * Not passed a length - DatumGetByteaPSlice() grabs everything to
-		 * the end of the string if we pass it a negative value for length.
+		 * Not passed a length - DatumGetByteaPSlice() grabs everything to the
+		 * end of the string if we pass it a negative value for length.
 		 */
 		L1 = -1;
 	}
@@ -1855,8 +1855,8 @@ bytea_substring(Datum str,
 
 	/*
 	 * If the start position is past the end of the string, SQL99 says to
-	 * return a zero-length string -- DatumGetByteaPSlice() will do that
-	 * for us. Convert to zero-based starting position
+	 * return a zero-length string -- DatumGetByteaPSlice() will do that for
+	 * us. Convert to zero-based starting position
 	 */
 	return DatumGetByteaPSlice(str, S1 - 1, L1);
 }
@@ -1873,8 +1873,8 @@ byteaoverlay(PG_FUNCTION_ARGS)
 {
 	bytea	   *t1 = PG_GETARG_BYTEA_PP(0);
 	bytea	   *t2 = PG_GETARG_BYTEA_PP(1);
-	int			sp = PG_GETARG_INT32(2); /* substring start position */
-	int			sl = PG_GETARG_INT32(3); /* substring length */
+	int			sp = PG_GETARG_INT32(2);		/* substring start position */
+	int			sl = PG_GETARG_INT32(3);		/* substring length */
 
 	PG_RETURN_BYTEA_P(bytea_overlay(t1, t2, sp, sl));
 }
@@ -1884,10 +1884,10 @@ byteaoverlay_no_len(PG_FUNCTION_ARGS)
 {
 	bytea	   *t1 = PG_GETARG_BYTEA_PP(0);
 	bytea	   *t2 = PG_GETARG_BYTEA_PP(1);
-	int			sp = PG_GETARG_INT32(2); /* substring start position */
+	int			sp = PG_GETARG_INT32(2);		/* substring start position */
 	int			sl;
 
-	sl = VARSIZE_ANY_EXHDR(t2);			/* defaults to length(t2) */
+	sl = VARSIZE_ANY_EXHDR(t2); /* defaults to length(t2) */
 	PG_RETURN_BYTEA_P(bytea_overlay(t1, t2, sp, sl));
 }
 
@@ -1900,9 +1900,9 @@ bytea_overlay(bytea *t1, bytea *t2, int sp, int sl)
 	int			sp_pl_sl;
 
 	/*
-	 * Check for possible integer-overflow cases.  For negative sp,
-	 * throw a "substring length" error because that's what should be
-	 * expected according to the spec's definition of OVERLAY().
+	 * Check for possible integer-overflow cases.  For negative sp, throw a
+	 * "substring length" error because that's what should be expected
+	 * according to the spec's definition of OVERLAY().
 	 */
 	if (sp <= 0)
 		ereport(ERROR,
@@ -1914,7 +1914,7 @@ bytea_overlay(bytea *t1, bytea *t2, int sp, int sl)
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("integer out of range")));
 
-	s1 = bytea_substring(PointerGetDatum(t1), 1, sp-1, false);
+	s1 = bytea_substring(PointerGetDatum(t1), 1, sp - 1, false);
 	s2 = bytea_substring(PointerGetDatum(t1), sp_pl_sl, -1, true);
 	result = bytea_catenate(s1, t2);
 	result = bytea_catenate(result, s2);
@@ -3331,9 +3331,9 @@ pg_column_size(PG_FUNCTION_ARGS)
 static StringInfo
 makeStringAggState(FunctionCallInfo fcinfo)
 {
-	StringInfo		state;
-	MemoryContext	aggcontext;
-	MemoryContext	oldcontext;
+	StringInfo	state;
+	MemoryContext aggcontext;
+	MemoryContext oldcontext;
 
 	if (!AggCheckCallContext(fcinfo, &aggcontext))
 	{
@@ -3355,7 +3355,7 @@ makeStringAggState(FunctionCallInfo fcinfo)
 Datum
 string_agg_transfn(PG_FUNCTION_ARGS)
 {
-	StringInfo		state;
+	StringInfo	state;
 
 	state = PG_ARGISNULL(0) ? NULL : (StringInfo) PG_GETARG_POINTER(0);
 
@@ -3364,20 +3364,20 @@ string_agg_transfn(PG_FUNCTION_ARGS)
 	{
 		if (state == NULL)
 			state = makeStringAggState(fcinfo);
-		appendStringInfoText(state, PG_GETARG_TEXT_PP(1));	/* value */
+		appendStringInfoText(state, PG_GETARG_TEXT_PP(1));		/* value */
 	}
 
 	/*
-	 * The transition type for string_agg() is declared to be "internal", which
-	 * is a pass-by-value type the same size as a pointer.	
+	 * The transition type for string_agg() is declared to be "internal",
+	 * which is a pass-by-value type the same size as a pointer.
 	 */
 	PG_RETURN_POINTER(state);
 }
 
-Datum 
+Datum
 string_agg_delim_transfn(PG_FUNCTION_ARGS)
 {
-	StringInfo		state;
+	StringInfo	state;
 
 	state = PG_ARGISNULL(0) ? NULL : (StringInfo) PG_GETARG_POINTER(0);
 
@@ -3390,12 +3390,12 @@ string_agg_delim_transfn(PG_FUNCTION_ARGS)
 		else if (!PG_ARGISNULL(2))
 			appendStringInfoText(state, PG_GETARG_TEXT_PP(2));	/* delimiter */
 
-		appendStringInfoText(state, PG_GETARG_TEXT_PP(1));	/* value */
+		appendStringInfoText(state, PG_GETARG_TEXT_PP(1));		/* value */
 	}
 
 	/*
-	 * The transition type for string_agg() is declared to be "internal", which
-	 * is a pass-by-value type the same size as a pointer.
+	 * The transition type for string_agg() is declared to be "internal",
+	 * which is a pass-by-value type the same size as a pointer.
 	 */
 	PG_RETURN_POINTER(state);
 }
@@ -3403,7 +3403,7 @@ string_agg_delim_transfn(PG_FUNCTION_ARGS)
 Datum
 string_agg_finalfn(PG_FUNCTION_ARGS)
 {
-	StringInfo		state;
+	StringInfo	state;
 
 	/* cannot be called directly because of internal-type argument */
 	Assert(AggCheckCallContext(fcinfo, NULL));

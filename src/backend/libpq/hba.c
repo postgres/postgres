@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.197 2010/02/02 19:09:37 mha Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.198 2010/02/26 02:00:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -56,8 +56,8 @@ static List *parsed_hba_lines = NIL;
 
 /*
  * These variables hold the pre-parsed contents of the ident usermap
- * configuration file.  ident_lines is a list of sublists, one sublist for
- * each (non-empty, non-comment) line of the file.  The sublist items are
+ * configuration file.	ident_lines is a list of sublists, one sublist for
+ * each (non-empty, non-comment) line of the file.	The sublist items are
  * palloc'd strings, one string per token on the line.  Note there will always
  * be at least one token, since blank lines are not entered in the data
  * structure.  ident_line_nums is an integer list containing the actual line
@@ -529,14 +529,14 @@ check_db(const char *dbname, const char *role, Oid roleid, char *param_str)
  * Check to see if a connecting IP matches the given address and netmask.
  */
 static bool
-check_ip(SockAddr *raddr, struct sockaddr *addr, struct sockaddr *mask)
+check_ip(SockAddr *raddr, struct sockaddr * addr, struct sockaddr * mask)
 {
 	if (raddr->addr.ss_family == addr->sa_family)
 	{
 		/* Same address family */
 		if (!pg_range_sockaddr(&raddr->addr,
-							   (struct sockaddr_storage*)addr,
-		                       (struct sockaddr_storage*)mask))
+							   (struct sockaddr_storage *) addr,
+							   (struct sockaddr_storage *) mask))
 			return false;
 	}
 #ifdef HAVE_IPV6
@@ -545,8 +545,8 @@ check_ip(SockAddr *raddr, struct sockaddr *addr, struct sockaddr *mask)
 	{
 		/*
 		 * If we're connected on IPv6 but the file specifies an IPv4 address
-		 * to match against, promote the latter to an IPv6 address
-		 * before trying to match the client's address.
+		 * to match against, promote the latter to an IPv6 address before
+		 * trying to match the client's address.
 		 */
 		struct sockaddr_storage addrcopy,
 					maskcopy;
@@ -573,7 +573,7 @@ check_ip(SockAddr *raddr, struct sockaddr *addr, struct sockaddr *mask)
  * pg_foreach_ifaddr callback: does client addr match this machine interface?
  */
 static void
-check_network_callback(struct sockaddr *addr, struct sockaddr *netmask,
+check_network_callback(struct sockaddr * addr, struct sockaddr * netmask,
 					   void *cb_data)
 {
 	check_network_data *cn = (check_network_data *) cb_data;
@@ -587,7 +587,7 @@ check_network_callback(struct sockaddr *addr, struct sockaddr *netmask,
 	{
 		/* Make an all-ones netmask of appropriate length for family */
 		pg_sockaddr_cidr_mask(&mask, NULL, addr->sa_family);
-		cn->result = check_ip(cn->raddr, addr, (struct sockaddr*) &mask);
+		cn->result = check_ip(cn->raddr, addr, (struct sockaddr *) & mask);
 	}
 	else
 	{
@@ -825,13 +825,13 @@ parse_hba_line(List *line, int line_num, HbaLine *parsedline)
 				if (pg_sockaddr_cidr_mask(&parsedline->mask, cidr_slash + 1,
 										  parsedline->addr.ss_family) < 0)
 				{
-					*cidr_slash = '/';		/* restore token for message */
+					*cidr_slash = '/';	/* restore token for message */
 					ereport(LOG,
 							(errcode(ERRCODE_CONFIG_FILE_ERROR),
 							 errmsg("invalid CIDR mask in address \"%s\"",
 									token),
-							 errcontext("line %d of configuration file \"%s\"",
-										line_num, HbaFileName)));
+						   errcontext("line %d of configuration file \"%s\"",
+									  line_num, HbaFileName)));
 					pfree(token);
 					return false;
 				}
@@ -846,9 +846,9 @@ parse_hba_line(List *line, int line_num, HbaLine *parsedline)
 				{
 					ereport(LOG,
 							(errcode(ERRCODE_CONFIG_FILE_ERROR),
-							 errmsg("end-of-line before netmask specification"),
-							 errcontext("line %d of configuration file \"%s\"",
-										line_num, HbaFileName)));
+						  errmsg("end-of-line before netmask specification"),
+						   errcontext("line %d of configuration file \"%s\"",
+									  line_num, HbaFileName)));
 					return false;
 				}
 				token = lfirst(line_item);
@@ -860,8 +860,8 @@ parse_hba_line(List *line, int line_num, HbaLine *parsedline)
 							(errcode(ERRCODE_CONFIG_FILE_ERROR),
 							 errmsg("invalid IP mask \"%s\": %s",
 									token, gai_strerror(ret)),
-							 errcontext("line %d of configuration file \"%s\"",
-										line_num, HbaFileName)));
+						   errcontext("line %d of configuration file \"%s\"",
+									  line_num, HbaFileName)));
 					if (gai_result)
 						pg_freeaddrinfo_all(hints.ai_family, gai_result);
 					return false;
@@ -952,7 +952,7 @@ parse_hba_line(List *line, int line_num, HbaLine *parsedline)
 #else
 		unsupauth = "cert";
 #endif
-	else if (strcmp(token, "radius")== 0)
+	else if (strcmp(token, "radius") == 0)
 		parsedline->auth_method = uaRADIUS;
 	else
 	{
@@ -1234,8 +1234,8 @@ parse_hba_line(List *line, int line_num, HbaLine *parsedline)
 
 		/*
 		 * LDAP can operate in two modes: either with a direct bind, using
-		 * ldapprefix and ldapsuffix, or using a search+bind,
-		 * using ldapbasedn, ldapbinddn, ldapbindpasswd and ldapsearchattribute.
+		 * ldapprefix and ldapsuffix, or using a search+bind, using
+		 * ldapbasedn, ldapbinddn, ldapbindpasswd and ldapsearchattribute.
 		 * Disallow mixing these parameters.
 		 */
 		if (parsedline->ldapprefix || parsedline->ldapsuffix)
@@ -1336,8 +1336,8 @@ check_hba(hbaPort *port)
 			{
 				case ipCmpMask:
 					if (!check_ip(&port->raddr,
-								  (struct sockaddr *) &hba->addr,
-								  (struct sockaddr *) &hba->mask))
+								  (struct sockaddr *) & hba->addr,
+								  (struct sockaddr *) & hba->mask))
 						continue;
 					break;
 				case ipCmpSameHost:

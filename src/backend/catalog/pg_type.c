@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_type.c,v 1.132 2010/02/14 18:42:13 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_type.c,v 1.133 2010/02/26 02:00:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,7 +32,7 @@
 #include "utils/rel.h"
 #include "utils/syscache.h"
 
-Oid binary_upgrade_next_pg_type_oid = InvalidOid;
+Oid			binary_upgrade_next_pg_type_oid = InvalidOid;
 
 /* ----------------------------------------------------------------
  *		TypeShellMake
@@ -424,7 +424,7 @@ TypeCreate(Oid newTypeOid,
 			binary_upgrade_next_pg_type_oid = InvalidOid;
 		}
 		/* else allow system to assign oid */
-		
+
 		typeObjectId = simple_heap_insert(pg_type_desc, tup);
 	}
 

@@ -14,7 +14,7 @@
  * Copyright (c) 2008-2010, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/contrib/pg_stat_statements/pg_stat_statements.c,v 1.12 2010/01/08 00:38:19 itagaki Exp $
+ *	  $PostgreSQL: pgsql/contrib/pg_stat_statements/pg_stat_statements.c,v 1.13 2010/02/26 02:00:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -76,18 +76,18 @@ typedef struct pgssHashKey
  */
 typedef struct Counters
 {
-	int64		calls;				/* # of times executed */
-	double		total_time;			/* total execution time in seconds */
-	int64		rows;				/* total # of retrieved or affected rows */
+	int64		calls;			/* # of times executed */
+	double		total_time;		/* total execution time in seconds */
+	int64		rows;			/* total # of retrieved or affected rows */
 	int64		shared_blks_hit;	/* # of shared buffer hits */
-	int64		shared_blks_read;	/* # of shared disk blocks read */
-	int64		shared_blks_written;/* # of shared disk blocks written */
-	int64		local_blks_hit;		/* # of local buffer hits */
+	int64		shared_blks_read;		/* # of shared disk blocks read */
+	int64		shared_blks_written;	/* # of shared disk blocks written */
+	int64		local_blks_hit; /* # of local buffer hits */
 	int64		local_blks_read;	/* # of local disk blocks read */
-	int64		local_blks_written;	/* # of local disk blocks written */
-	int64		temp_blks_read;		/* # of temp blocks read */
-	int64		temp_blks_written;	/* # of temp blocks written */
-	double		usage;				/* usage factor */
+	int64		local_blks_written;		/* # of local disk blocks written */
+	int64		temp_blks_read; /* # of temp blocks read */
+	int64		temp_blks_written;		/* # of temp blocks written */
+	double		usage;			/* usage factor */
 } Counters;
 
 /*
@@ -148,7 +148,7 @@ static const struct config_enum_entry track_options[] =
 
 static int	pgss_max;			/* max # statements to track */
 static int	pgss_track;			/* tracking level */
-static bool pgss_track_utility;	/* whether to track utility commands */
+static bool pgss_track_utility; /* whether to track utility commands */
 static bool pgss_save;			/* whether to save stats across shutdown */
 
 
@@ -175,12 +175,12 @@ static void pgss_ExecutorRun(QueryDesc *queryDesc,
 				 long count);
 static void pgss_ExecutorEnd(QueryDesc *queryDesc);
 static void pgss_ProcessUtility(Node *parsetree,
-			   const char *queryString, ParamListInfo params, bool isTopLevel,
-			   DestReceiver *dest, char *completionTag);
+			  const char *queryString, ParamListInfo params, bool isTopLevel,
+					DestReceiver *dest, char *completionTag);
 static uint32 pgss_hash_fn(const void *key, Size keysize);
 static int	pgss_match_fn(const void *key1, const void *key2, Size keysize);
 static void pgss_store(const char *query, double total_time, uint64 rows,
-					   const BufferUsage *bufusage);
+		   const BufferUsage *bufusage);
 static Size pgss_memsize(void);
 static pgssEntry *entry_alloc(pgssHashKey *key);
 static void entry_dealloc(void);
@@ -231,7 +231,7 @@ _PG_init(void)
 							 NULL);
 
 	DefineCustomBoolVariable("pg_stat_statements.track_utility",
-			   "Selects whether utility commands are tracked by pg_stat_statements.",
+	   "Selects whether utility commands are tracked by pg_stat_statements.",
 							 NULL,
 							 &pgss_track_utility,
 							 true,
@@ -356,8 +356,8 @@ pgss_shmem_startup(void)
 		on_shmem_exit(pgss_shmem_shutdown, (Datum) 0);
 
 	/*
-	 * Attempt to load old statistics from the dump file, if this is the
-	 * first time through and we weren't told not to.
+	 * Attempt to load old statistics from the dump file, if this is the first
+	 * time through and we weren't told not to.
 	 */
 	if (found || !pgss_save)
 		return;
@@ -592,7 +592,7 @@ pgss_ProcessUtility(Node *parsetree, const char *queryString,
 		instr_time	start;
 		instr_time	duration;
 		uint64		rows = 0;
-		BufferUsage	bufusage;
+		BufferUsage bufusage;
 
 		bufusage = pgBufferUsage;
 		INSTR_TIME_SET_CURRENT(start);

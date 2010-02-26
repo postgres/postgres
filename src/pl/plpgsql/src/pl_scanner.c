@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_scanner.c,v 1.4 2010/01/10 17:15:18 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_scanner.c,v 1.5 2010/02/26 02:01:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,7 +24,7 @@
 
 
 /* Klugy flag to tell scanner how to look up identifiers */
-IdentifierLookup	plpgsql_IdentifierLookup = IDENTIFIER_LOOKUP_NORMAL;
+IdentifierLookup plpgsql_IdentifierLookup = IDENTIFIER_LOOKUP_NORMAL;
 
 /*
  * A word about keywords:
@@ -44,7 +44,7 @@ IdentifierLookup	plpgsql_IdentifierLookup = IDENTIFIER_LOOKUP_NORMAL;
  *
  * For the most part, the reserved keywords are those that start a PL/pgSQL
  * statement (and so would conflict with an assignment to a variable of the
- * same name).  We also don't sweat it much about reserving keywords that
+ * same name).	We also don't sweat it much about reserving keywords that
  * are reserved in the core grammar.  Try to avoid reserving other words.
  */
 
@@ -154,7 +154,7 @@ typedef struct
 
 /*
  * Scanner working state.  At some point we might wish to fold all this
- * into a YY_EXTRA struct.  For the moment, there is no need for plpgsql's
+ * into a YY_EXTRA struct.	For the moment, there is no need for plpgsql's
  * lexer to be re-entrant, and the notational burden of passing a yyscanner
  * pointer around is great enough to not want to do it without need.
  */
@@ -167,14 +167,14 @@ static core_yy_extra_type core_yy;
 static const char *scanorig;
 
 /* Current token's length (corresponds to plpgsql_yylval and plpgsql_yylloc) */
-static int		plpgsql_yyleng;
+static int	plpgsql_yyleng;
 
 /* Token pushback stack */
 #define MAX_PUSHBACKS 4
 
-static int			num_pushbacks;
-static int			pushback_token[MAX_PUSHBACKS];
-static TokenAuxData	pushback_auxdata[MAX_PUSHBACKS];
+static int	num_pushbacks;
+static int	pushback_token[MAX_PUSHBACKS];
+static TokenAuxData pushback_auxdata[MAX_PUSHBACKS];
 
 /* State for plpgsql_location_to_lineno() */
 static const char *cur_line_start;
@@ -322,7 +322,7 @@ plpgsql_yylex(void)
 
 /*
  * Internal yylex function.  This wraps the core lexer and adds one feature:
- * a token pushback stack.  We also make a couple of trivial single-token
+ * a token pushback stack.	We also make a couple of trivial single-token
  * translations from what the core lexer does to what we want, in particular
  * interfacing from the core_YYSTYPE to YYSTYPE union.
  */
@@ -391,7 +391,7 @@ push_back_token(int token, TokenAuxData *auxdata)
 void
 plpgsql_push_back_token(int token)
 {
-	TokenAuxData	auxdata;
+	TokenAuxData auxdata;
 
 	auxdata.lval = plpgsql_yylval;
 	auxdata.lloc = plpgsql_yylloc;
@@ -426,7 +426,7 @@ plpgsql_append_source_text(StringInfo buf,
 int
 plpgsql_scanner_errposition(int location)
 {
-	int		pos;
+	int			pos;
 
 	if (location < 0 || scanorig == NULL)
 		return 0;				/* no-op if location is unknown */
@@ -459,7 +459,7 @@ plpgsql_yyerror(const char *message)
 	{
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
-				 /* translator: %s is typically the translation of "syntax error" */
+		/* translator: %s is typically the translation of "syntax error" */
 				 errmsg("%s at end of input", _(message)),
 				 plpgsql_scanner_errposition(plpgsql_yylloc)));
 	}
@@ -467,15 +467,15 @@ plpgsql_yyerror(const char *message)
 	{
 		/*
 		 * If we have done any lookahead then flex will have restored the
-		 * character after the end-of-token.  Zap it again so that we
-		 * report only the single token here.  This modifies scanbuf but
-		 * we no longer care about that.
+		 * character after the end-of-token.  Zap it again so that we report
+		 * only the single token here.	This modifies scanbuf but we no longer
+		 * care about that.
 		 */
 		yytext[plpgsql_yyleng] = '\0';
 
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
-				 /* translator: first %s is typically the translation of "syntax error" */
+		/* translator: first %s is typically the translation of "syntax error" */
 				 errmsg("%s at or near \"%s\"", _(message), yytext),
 				 plpgsql_scanner_errposition(plpgsql_yylloc)));
 	}
@@ -527,10 +527,10 @@ location_lineno_init(void)
 	 * we will think "line 1" is what the programmer thinks of as line 1.
 	 *----------
 	 */
-    if (*cur_line_start == '\r')
-        cur_line_start++;
-    if (*cur_line_start == '\n')
-        cur_line_start++;
+	if (*cur_line_start == '\r')
+		cur_line_start++;
+	if (*cur_line_start == '\n')
+		cur_line_start++;
 
 	cur_line_end = strchr(cur_line_start, '\n');
 }

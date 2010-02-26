@@ -29,7 +29,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuumlazy.c,v 1.131 2010/02/09 21:43:30 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuumlazy.c,v 1.132 2010/02/26 02:00:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -268,8 +268,8 @@ static void
 vacuum_log_cleanup_info(Relation rel, LVRelStats *vacrelstats)
 {
 	/*
-	 * No need to log changes for temp tables, they do not contain
-	 * data visible on the standby server.
+	 * No need to log changes for temp tables, they do not contain data
+	 * visible on the standby server.
 	 */
 	if (rel->rd_istemp || !XLogIsNeeded())
 		return;
@@ -629,7 +629,7 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 			{
 				lazy_record_dead_tuple(vacrelstats, &(tuple.t_self));
 				HeapTupleHeaderAdvanceLatestRemovedXid(tuple.t_data,
-												&vacrelstats->latestRemovedXid);
+											 &vacrelstats->latestRemovedXid);
 				tups_vacuumed += 1;
 			}
 			else
@@ -1039,7 +1039,7 @@ lazy_truncate_heap(Relation onerel, LVRelStats *vacrelstats)
 	RelationTruncate(onerel, new_rel_pages);
 
 	/*
-	 * We can release the exclusive lock as soon as we have truncated.  Other
+	 * We can release the exclusive lock as soon as we have truncated.	Other
 	 * backends can't safely access the relation until they have processed the
 	 * smgr invalidation that smgrtruncate sent out ... but that should happen
 	 * as part of standard invalidation processing once they acquire lock on

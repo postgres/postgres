@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/input.c,v 1.68 2010/01/02 16:57:59 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/input.c,v 1.69 2010/02/26 02:01:18 momjian Exp $
  */
 #include "postgres_fe.h"
 
@@ -357,8 +357,8 @@ saveHistory(char *fname, int max_lines, bool appendFlag, bool encodeFlag)
 		 * On newer versions of libreadline, truncate the history file as
 		 * needed and then append what we've added.  This avoids overwriting
 		 * history from other concurrent sessions (although there are still
-		 * race conditions when two sessions exit at about the same time).
-		 * If we don't have those functions, fall back to write_history().
+		 * race conditions when two sessions exit at about the same time). If
+		 * we don't have those functions, fall back to write_history().
 		 *
 		 * Note: return value of write_history is not standardized across GNU
 		 * readline and libedit.  Therefore, check for errno becoming set to
@@ -367,8 +367,8 @@ saveHistory(char *fname, int max_lines, bool appendFlag, bool encodeFlag)
 #if defined(HAVE_HISTORY_TRUNCATE_FILE) && defined(HAVE_APPEND_HISTORY)
 		if (appendFlag)
 		{
-			int		nlines;
-			int		fd;
+			int			nlines;
+			int			fd;
 
 			/* truncate previous entries if needed */
 			if (max_lines >= 0)
@@ -396,7 +396,7 @@ saveHistory(char *fname, int max_lines, bool appendFlag, bool encodeFlag)
 			/* truncate what we have ... */
 			if (max_lines >= 0)
 				stifle_history(max_lines);
-			/* ... and overwrite file.  Tough luck for concurrent sessions. */
+			/* ... and overwrite file.	Tough luck for concurrent sessions. */
 			errno = 0;
 			(void) write_history(fname);
 			if (errno == 0)

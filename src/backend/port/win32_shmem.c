@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/port/win32_shmem.c,v 1.15 2010/01/04 01:06:21 itagaki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/port/win32_shmem.c,v 1.16 2010/02/26 02:00:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -159,8 +159,8 @@ PGSharedMemoryCreate(Size size, bool makePrivate, int port)
 		hmap = CreateFileMapping(INVALID_HANDLE_VALUE,	/* Use the pagefile */
 								 NULL,	/* Default security attrs */
 								 PAGE_READWRITE,		/* Memory is Read/Write */
-								 size_high,	/* Size Upper 32 Bits	*/
-								 size_low,	/* Size Lower 32 bits */
+								 size_high,		/* Size Upper 32 Bits	*/
+								 size_low,		/* Size Lower 32 bits */
 								 szShareMem);
 
 		if (!hmap)
@@ -341,14 +341,15 @@ pgwin32_SharedMemoryDelete(int status, Datum shmId)
 int
 pgwin32_ReserveSharedMemoryRegion(HANDLE hChild)
 {
-	void *address;
+	void	   *address;
 
 	Assert(UsedShmemSegAddr != NULL);
 	Assert(UsedShmemSegSize != 0);
 
 	address = VirtualAllocEx(hChild, UsedShmemSegAddr, UsedShmemSegSize,
-								MEM_RESERVE, PAGE_READWRITE);
-	if (address == NULL) {
+							 MEM_RESERVE, PAGE_READWRITE);
+	if (address == NULL)
+	{
 		/* Don't use FATAL since we're running in the postmaster */
 		elog(LOG, "could not reserve shared memory region (addr=%p) for child %p: %lu",
 			 UsedShmemSegAddr, hChild, GetLastError());
@@ -357,12 +358,12 @@ pgwin32_ReserveSharedMemoryRegion(HANDLE hChild)
 	if (address != UsedShmemSegAddr)
 	{
 		/*
-		 * Should never happen - in theory if allocation granularity causes strange
-		 * effects it could, so check just in case.
+		 * Should never happen - in theory if allocation granularity causes
+		 * strange effects it could, so check just in case.
 		 *
 		 * Don't use FATAL since we're running in the postmaster.
 		 */
-	    elog(LOG, "reserved shared memory region got incorrect address %p, expected %p",
+		elog(LOG, "reserved shared memory region got incorrect address %p, expected %p",
 			 address, UsedShmemSegAddr);
 		VirtualFreeEx(hChild, address, 0, MEM_RELEASE);
 		return false;

@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
  * unaccent.c
- *    Text search unaccent dictionary
+ *	  Text search unaccent dictionary
  *
  * Copyright (c) 2009-2010, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *    $PostgreSQL: pgsql/contrib/unaccent/unaccent.c,v 1.4 2010/01/02 16:57:33 momjian Exp $
+ *	  $PostgreSQL: pgsql/contrib/unaccent/unaccent.c,v 1.5 2010/02/26 02:00:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,26 +25,27 @@
 PG_MODULE_MAGIC;
 
 /*
- * Unaccent dictionary uses uncompressed suffix tree to find a 
- * character to replace. Each node of tree is an array of 
+ * Unaccent dictionary uses uncompressed suffix tree to find a
+ * character to replace. Each node of tree is an array of
  * SuffixChar struct with length = 256 (n-th element of array
  * corresponds to byte)
  */
-typedef struct SuffixChar {
-	struct SuffixChar	*nextChar;
-	char				*replaceTo;
-	int					replacelen;
+typedef struct SuffixChar
+{
+	struct SuffixChar *nextChar;
+	char	   *replaceTo;
+	int			replacelen;
 } SuffixChar;
 
 /*
  * placeChar - put str into tree's structure, byte by byte.
  */
-static SuffixChar*
+static SuffixChar *
 placeChar(SuffixChar *node, unsigned char *str, int lenstr, char *replaceTo, int replacelen)
 {
-	SuffixChar	*curnode;
+	SuffixChar *curnode;
 
-	if ( !node )
+	if (!node)
 	{
 		node = palloc(sizeof(SuffixChar) * 256);
 		memset(node, 0, sizeof(SuffixChar) * 256);
@@ -52,20 +53,20 @@ placeChar(SuffixChar *node, unsigned char *str, int lenstr, char *replaceTo, int
 
 	curnode = node + *str;
 
-	if ( lenstr == 1 )
+	if (lenstr == 1)
 	{
-		if ( curnode->replaceTo )
+		if (curnode->replaceTo)
 			elog(WARNING, "duplicate TO argument, use first one");
 		else
 		{
 			curnode->replacelen = replacelen;
-			curnode->replaceTo = palloc( replacelen );
+			curnode->replaceTo = palloc(replacelen);
 			memcpy(curnode->replaceTo, replaceTo, replacelen);
 		}
 	}
 	else
 	{
-		curnode->nextChar = placeChar( curnode->nextChar, str+1, lenstr-1, replaceTo, replacelen);
+		curnode->nextChar = placeChar(curnode->nextChar, str + 1, lenstr - 1, replaceTo, replacelen);
 	}
 
 	return node;
@@ -75,13 +76,13 @@ placeChar(SuffixChar *node, unsigned char *str, int lenstr, char *replaceTo, int
  * initSuffixTree  - create suffix tree from file. Function converts
  * UTF8-encoded file into current encoding.
  */
-static SuffixChar*
-initSuffixTree(char *filename) 
+static SuffixChar *
+initSuffixTree(char *filename)
 {
-	SuffixChar * volatile rootSuffixTree = NULL;
+	SuffixChar *volatile rootSuffixTree = NULL;
 	MemoryContext ccxt = CurrentMemoryContext;
-	tsearch_readline_state	trst;
-	volatile bool	skip;
+	tsearch_readline_state trst;
+	volatile bool skip;
 
 	filename = get_tsearch_config_filename(filename, "rules");
 	if (!tsearch_readline_begin(&trst, filename))
@@ -90,34 +91,34 @@ initSuffixTree(char *filename)
 				 errmsg("could not open unaccent file \"%s\": %m",
 						filename)));
 
-	do	
+	do
 	{
-		char	src[4096];
-		char	trg[4096];
-		int		srclen;
-		int		trglen;
-		char   *line = NULL;
+		char		src[4096];
+		char		trg[4096];
+		int			srclen;
+		int			trglen;
+		char	   *line = NULL;
 
 		skip = true;
 
 		PG_TRY();
 		{
 			/*
-			 * pg_do_encoding_conversion() (called by tsearch_readline())
-			 * will emit exception if it finds untranslatable characters in current locale.
-			 * We just skip such characters.
+			 * pg_do_encoding_conversion() (called by tsearch_readline()) will
+			 * emit exception if it finds untranslatable characters in current
+			 * locale. We just skip such characters.
 			 */
 			while ((line = tsearch_readline(&trst)) != NULL)
 			{
-				if ( sscanf(line, "%s\t%s\n", src, trg)!=2 )
+				if (sscanf(line, "%s\t%s\n", src, trg) != 2)
 					continue;
 
 				srclen = strlen(src);
 				trglen = strlen(trg);
 
-				rootSuffixTree = placeChar(rootSuffixTree, 
-											(unsigned char*)src, srclen, 
-											trg, trglen);
+				rootSuffixTree = placeChar(rootSuffixTree,
+										   (unsigned char *) src, srclen,
+										   trg, trglen);
 				skip = false;
 				pfree(line);
 			}
@@ -141,7 +142,7 @@ initSuffixTree(char *filename)
 		}
 		PG_END_TRY();
 	}
-	while(skip);
+	while (skip);
 
 	tsearch_readline_end(&trst);
 
@@ -151,13 +152,13 @@ initSuffixTree(char *filename)
 /*
  * findReplaceTo - find multibyte character in tree
  */
-static SuffixChar * 
-findReplaceTo( SuffixChar *node, unsigned char *src, int srclen )
+static SuffixChar *
+findReplaceTo(SuffixChar *node, unsigned char *src, int srclen)
 {
-	while( node ) 
+	while (node)
 	{
 		node = node + *src;
-		if ( srclen == 1 )
+		if (srclen == 1)
 			return node;
 
 		src++;
@@ -169,13 +170,13 @@ findReplaceTo( SuffixChar *node, unsigned char *src, int srclen )
 }
 
 PG_FUNCTION_INFO_V1(unaccent_init);
-Datum       unaccent_init(PG_FUNCTION_ARGS);
+Datum		unaccent_init(PG_FUNCTION_ARGS);
 Datum
 unaccent_init(PG_FUNCTION_ARGS)
 {
-	List       *dictoptions = (List *) PG_GETARG_POINTER(0);
+	List	   *dictoptions = (List *) PG_GETARG_POINTER(0);
 	SuffixChar *rootSuffixTree = NULL;
-	bool        fileloaded = false;
+	bool		fileloaded = false;
 	ListCell   *l;
 
 	foreach(l, dictoptions)
@@ -188,8 +189,8 @@ unaccent_init(PG_FUNCTION_ARGS)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 						 errmsg("multiple Rules parameters")));
-				rootSuffixTree = initSuffixTree(defGetString(defel));
-				fileloaded = true;
+			rootSuffixTree = initSuffixTree(defGetString(defel));
+			fileloaded = true;
 		}
 		else
 		{
@@ -211,51 +212,52 @@ unaccent_init(PG_FUNCTION_ARGS)
 }
 
 PG_FUNCTION_INFO_V1(unaccent_lexize);
-Datum       unaccent_lexize(PG_FUNCTION_ARGS);
+Datum		unaccent_lexize(PG_FUNCTION_ARGS);
 Datum
 unaccent_lexize(PG_FUNCTION_ARGS)
 {
-	SuffixChar *rootSuffixTree = (SuffixChar*)PG_GETARG_POINTER(0);
-	char       *srcchar = (char *) PG_GETARG_POINTER(1);
+	SuffixChar *rootSuffixTree = (SuffixChar *) PG_GETARG_POINTER(0);
+	char	   *srcchar = (char *) PG_GETARG_POINTER(1);
 	int32		len = PG_GETARG_INT32(2);
-	char	   *srcstart, *trgchar = NULL;
+	char	   *srcstart,
+			   *trgchar = NULL;
 	int			charlen;
 	TSLexeme   *res = NULL;
 	SuffixChar *node;
 
 	srcstart = srcchar;
-	while( srcchar - srcstart < len )
+	while (srcchar - srcstart < len)
 	{
 		charlen = pg_mblen(srcchar);
 
-		node = findReplaceTo( rootSuffixTree, (unsigned char *) srcchar, charlen );
-		if ( node  && node->replaceTo )
+		node = findReplaceTo(rootSuffixTree, (unsigned char *) srcchar, charlen);
+		if (node && node->replaceTo)
 		{
-			if ( !res )
+			if (!res)
 			{
 				/* allocate res only it it's needed */
 				res = palloc0(sizeof(TSLexeme) * 2);
-				res->lexeme = trgchar = palloc( len * pg_database_encoding_max_length() + 1 /* \0 */ );
+				res->lexeme = trgchar = palloc(len * pg_database_encoding_max_length() + 1 /* \0 */ );
 				res->flags = TSL_FILTER;
-				if ( srcchar != srcstart )
+				if (srcchar != srcstart)
 				{
 					memcpy(trgchar, srcstart, srcchar - srcstart);
 					trgchar += (srcchar - srcstart);
 				}
 			}
-			memcpy( trgchar, node->replaceTo, node->replacelen );
-			trgchar += node->replacelen; 
+			memcpy(trgchar, node->replaceTo, node->replacelen);
+			trgchar += node->replacelen;
 		}
-		else if ( res )
+		else if (res)
 		{
-			memcpy( trgchar, srcchar, charlen );
+			memcpy(trgchar, srcchar, charlen);
 			trgchar += charlen;
 		}
 
 		srcchar += charlen;
 	}
 
-	if ( res )
+	if (res)
 		*trgchar = '\0';
 
 	PG_RETURN_POINTER(res);
@@ -265,15 +267,15 @@ unaccent_lexize(PG_FUNCTION_ARGS)
  * Function-like wrapper for dictionary
  */
 PG_FUNCTION_INFO_V1(unaccent_dict);
-Datum       unaccent_dict(PG_FUNCTION_ARGS);
+Datum		unaccent_dict(PG_FUNCTION_ARGS);
 Datum
 unaccent_dict(PG_FUNCTION_ARGS)
 {
-	text	*str;
-	int		strArg;
-	Oid		dictOid;
-	TSDictionaryCacheEntry	*dict;
-	TSLexeme *res;
+	text	   *str;
+	int			strArg;
+	Oid			dictOid;
+	TSDictionaryCacheEntry *dict;
+	TSLexeme   *res;
 
 	if (PG_NARGS() == 1)
 	{
@@ -290,25 +292,25 @@ unaccent_dict(PG_FUNCTION_ARGS)
 	dict = lookup_ts_dictionary_cache(dictOid);
 
 	res = (TSLexeme *) DatumGetPointer(FunctionCall4(&(dict->lexize),
-													 PointerGetDatum(dict->dictData),
-													 PointerGetDatum(VARDATA(str)),
-													 Int32GetDatum(VARSIZE(str) - VARHDRSZ),
+											 PointerGetDatum(dict->dictData),
+											   PointerGetDatum(VARDATA(str)),
+									  Int32GetDatum(VARSIZE(str) - VARHDRSZ),
 													 PointerGetDatum(NULL)));
 
 	PG_FREE_IF_COPY(str, strArg);
 
-	if ( res == NULL )
+	if (res == NULL)
 	{
 		PG_RETURN_TEXT_P(PG_GETARG_TEXT_P_COPY(strArg));
 	}
-	else if ( res->lexeme == NULL )
+	else if (res->lexeme == NULL)
 	{
 		pfree(res);
 		PG_RETURN_TEXT_P(PG_GETARG_TEXT_P_COPY(strArg));
 	}
 	else
 	{
-		text *txt = cstring_to_text(res->lexeme);
+		text	   *txt = cstring_to_text(res->lexeme);
 
 		pfree(res->lexeme);
 		pfree(res);

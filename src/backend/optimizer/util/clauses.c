@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.285 2010/02/14 18:42:15 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.286 2010/02/26 02:00:46 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -106,7 +106,7 @@ static List *add_function_defaults(List *args, Oid result_type,
 					  eval_const_expressions_context *context);
 static List *fetch_function_defaults(HeapTuple func_tuple);
 static void recheck_cast_function_args(List *args, Oid result_type,
-									   HeapTuple func_tuple);
+						   HeapTuple func_tuple);
 static Expr *evaluate_function(Oid funcid,
 				  Oid result_type, int32 result_typmod, List *args,
 				  HeapTuple func_tuple,
@@ -2127,14 +2127,14 @@ eval_const_expressions_mutator(Node *node,
 		ListCell   *lc;
 
 		/*
-		 * Reduce constants in the FuncExpr's arguments, and check to see
-		 * if there are any named args.
+		 * Reduce constants in the FuncExpr's arguments, and check to see if
+		 * there are any named args.
 		 */
 		args = NIL;
 		has_named_args = false;
 		foreach(lc, expr->args)
 		{
-			Node   *arg = (Node *) lfirst(lc);
+			Node	   *arg = (Node *) lfirst(lc);
 
 			arg = eval_const_expressions_mutator(arg, context);
 			if (IsA(arg, NamedArgExpr))
@@ -2158,8 +2158,8 @@ eval_const_expressions_mutator(Node *node,
 		/*
 		 * The expression cannot be simplified any further, so build and
 		 * return a replacement FuncExpr node using the possibly-simplified
-		 * arguments.  Note that we have also converted the argument list
-		 * to positional notation.
+		 * arguments.  Note that we have also converted the argument list to
+		 * positional notation.
 		 */
 		newexpr = makeNode(FuncExpr);
 		newexpr->funcid = expr->funcid;
@@ -3219,16 +3219,16 @@ simplify_boolean_equality(Oid opno, List *args)
 		if (opno == BooleanEqualOperator)
 		{
 			if (DatumGetBool(((Const *) leftop)->constvalue))
-				return rightop;		/* true = foo */
+				return rightop; /* true = foo */
 			else
-				return make_notclause(rightop);		/* false = foo */
+				return make_notclause(rightop); /* false = foo */
 		}
 		else
 		{
 			if (DatumGetBool(((Const *) leftop)->constvalue))
-				return make_notclause(rightop);		/* true <> foo */
+				return make_notclause(rightop); /* true <> foo */
 			else
-				return rightop;		/* false <> foo */
+				return rightop; /* false <> foo */
 		}
 	}
 	if (rightop && IsA(rightop, Const))
@@ -3237,16 +3237,16 @@ simplify_boolean_equality(Oid opno, List *args)
 		if (opno == BooleanEqualOperator)
 		{
 			if (DatumGetBool(((Const *) rightop)->constvalue))
-				return leftop;		/* foo = true */
+				return leftop;	/* foo = true */
 			else
-				return make_notclause(leftop);		/* foo = false */
+				return make_notclause(leftop);	/* foo = false */
 		}
 		else
 		{
 			if (DatumGetBool(((Const *) rightop)->constvalue))
-				return make_notclause(leftop);		/* foo <> true */
+				return make_notclause(leftop);	/* foo <> true */
 			else
-				return leftop;		/* foo <> false */
+				return leftop;	/* foo <> false */
 		}
 	}
 	return NULL;
@@ -3340,7 +3340,7 @@ reorder_function_arguments(List *args, Oid result_type, HeapTuple func_tuple,
 	i = 0;
 	foreach(lc, args)
 	{
-		Node   *arg = (Node *) lfirst(lc);
+		Node	   *arg = (Node *) lfirst(lc);
 
 		if (!IsA(arg, NamedArgExpr))
 		{
@@ -3358,13 +3358,13 @@ reorder_function_arguments(List *args, Oid result_type, HeapTuple func_tuple,
 	}
 
 	/*
-	 * Fetch default expressions, if needed, and insert into array at
-	 * proper locations (they aren't necessarily consecutive or all used)
+	 * Fetch default expressions, if needed, and insert into array at proper
+	 * locations (they aren't necessarily consecutive or all used)
 	 */
 	defargnumbers = NULL;
 	if (nargsprovided < pronargs)
 	{
-		List   *defaults = fetch_function_defaults(func_tuple);
+		List	   *defaults = fetch_function_defaults(func_tuple);
 
 		i = pronargs - funcform->pronargdefaults;
 		foreach(lc, defaults)
@@ -3390,10 +3390,10 @@ reorder_function_arguments(List *args, Oid result_type, HeapTuple func_tuple,
 	recheck_cast_function_args(args, result_type, func_tuple);
 
 	/*
-	 * Lastly, we have to recursively simplify the defaults we just added
-	 * (but don't recurse on the args passed in, as we already did those).
-	 * This isn't merely an optimization, it's *necessary* since there could
-	 * be functions with named or defaulted arguments down in there.
+	 * Lastly, we have to recursively simplify the defaults we just added (but
+	 * don't recurse on the args passed in, as we already did those). This
+	 * isn't merely an optimization, it's *necessary* since there could be
+	 * functions with named or defaulted arguments down in there.
 	 *
 	 * Note that we do this last in hopes of simplifying any typecasts that
 	 * were added by recheck_cast_function_args --- there shouldn't be any new
@@ -3448,10 +3448,10 @@ add_function_defaults(List *args, Oid result_type, HeapTuple func_tuple,
 	recheck_cast_function_args(args, result_type, func_tuple);
 
 	/*
-	 * Lastly, we have to recursively simplify the defaults we just added
-	 * (but don't recurse on the args passed in, as we already did those).
-	 * This isn't merely an optimization, it's *necessary* since there could
-	 * be functions with named or defaulted arguments down in there.
+	 * Lastly, we have to recursively simplify the defaults we just added (but
+	 * don't recurse on the args passed in, as we already did those). This
+	 * isn't merely an optimization, it's *necessary* since there could be
+	 * functions with named or defaulted arguments down in there.
 	 *
 	 * Note that we do this last in hopes of simplifying any typecasts that
 	 * were added by recheck_cast_function_args --- there shouldn't be any new
@@ -4191,11 +4191,11 @@ inline_set_returning_function(PlannerInfo *root, RangeTblEntry *rte)
 	oldcxt = MemoryContextSwitchTo(mycxt);
 
 	/*
-	 * Run eval_const_expressions on the function call.  This is necessary
-	 * to ensure that named-argument notation is converted to positional
-	 * notation and any default arguments are inserted.  It's a bit of
-	 * overkill for the arguments, since they'll get processed again later,
-	 * but no harm will be done.
+	 * Run eval_const_expressions on the function call.  This is necessary to
+	 * ensure that named-argument notation is converted to positional notation
+	 * and any default arguments are inserted.	It's a bit of overkill for the
+	 * arguments, since they'll get processed again later, but no harm will be
+	 * done.
 	 */
 	fexpr = (FuncExpr *) eval_const_expressions(root, (Node *) fexpr);
 

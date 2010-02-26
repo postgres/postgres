@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  *
  * cluster.c
- *	  CLUSTER a table on an index.  This is now also used for VACUUM FULL.
+ *	  CLUSTER a table on an index.	This is now also used for VACUUM FULL.
  *
  * There is hardly anything left of Paul Brown's original implementation...
  *
@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/cluster.c,v 1.201 2010/02/14 18:42:14 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/cluster.c,v 1.202 2010/02/26 02:00:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -64,7 +64,7 @@ typedef struct
 
 
 static void rebuild_relation(Relation OldHeap, Oid indexOid,
-							 int freeze_min_age, int freeze_table_age);
+				 int freeze_min_age, int freeze_table_age);
 static void copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex,
 			   int freeze_min_age, int freeze_table_age,
 			   bool *pSwapToastByContent, TransactionId *pFreezeXid);
@@ -252,7 +252,7 @@ cluster(ClusterStmt *stmt, bool isTopLevel)
  * them incrementally while we load the table.
  *
  * If indexOid is InvalidOid, the table will be rewritten in physical order
- * instead of index order.  This is the new implementation of VACUUM FULL,
+ * instead of index order.	This is the new implementation of VACUUM FULL,
  * and error messages should refer to the operation as VACUUM not CLUSTER.
  */
 void
@@ -301,8 +301,8 @@ cluster_rel(Oid tableOid, Oid indexOid, bool recheck, bool verbose,
 		 * check in the "recheck" case is appropriate (which currently means
 		 * somebody is executing a database-wide CLUSTER), because there is
 		 * another check in cluster() which will stop any attempt to cluster
-		 * remote temp tables by name.	There is another check in
-		 * cluster_rel which is redundant, but we leave it for extra safety.
+		 * remote temp tables by name.	There is another check in cluster_rel
+		 * which is redundant, but we leave it for extra safety.
 		 */
 		if (RELATION_IS_OTHER_TEMP(OldHeap))
 		{
@@ -325,7 +325,7 @@ cluster_rel(Oid tableOid, Oid indexOid, bool recheck, bool verbose,
 			 * Check that the index is still the one with indisclustered set.
 			 */
 			tuple = SearchSysCache1(INDEXRELID, ObjectIdGetDatum(indexOid));
-			if (!HeapTupleIsValid(tuple))	/* probably can't happen */
+			if (!HeapTupleIsValid(tuple))		/* probably can't happen */
 			{
 				relation_close(OldHeap, AccessExclusiveLock);
 				return;
@@ -353,19 +353,19 @@ cluster_rel(Oid tableOid, Oid indexOid, bool recheck, bool verbose,
 				 errmsg("cannot cluster a shared catalog")));
 
 	/*
-	 * Don't process temp tables of other backends ... their local
-	 * buffer manager is not going to cope.
+	 * Don't process temp tables of other backends ... their local buffer
+	 * manager is not going to cope.
 	 */
 	if (RELATION_IS_OTHER_TEMP(OldHeap))
 	{
 		if (OidIsValid(indexOid))
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("cannot cluster temporary tables of other sessions")));
+			   errmsg("cannot cluster temporary tables of other sessions")));
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("cannot vacuum temporary tables of other sessions")));
+				errmsg("cannot vacuum temporary tables of other sessions")));
 	}
 
 	/*
@@ -664,8 +664,8 @@ make_new_heap(Oid OIDOldHeap, Oid NewTableSpace)
 	 * the old, or we will have problems with the TEMP status of temp tables.
 	 *
 	 * Note: the new heap is not a shared relation, even if we are rebuilding
-	 * a shared rel.  However, we do make the new heap mapped if the source
-	 * is mapped.  This simplifies swap_relation_files, and is absolutely
+	 * a shared rel.  However, we do make the new heap mapped if the source is
+	 * mapped.	This simplifies swap_relation_files, and is absolutely
 	 * necessary for rebuilding pg_class, for reasons explained there.
 	 */
 	snprintf(NewHeapName, sizeof(NewHeapName), "pg_temp_%u", OIDOldHeap);
@@ -701,9 +701,9 @@ make_new_heap(Oid OIDOldHeap, Oid NewTableSpace)
 	 * If necessary, create a TOAST table for the new relation.
 	 *
 	 * If the relation doesn't have a TOAST table already, we can't need one
-	 * for the new relation.  The other way around is possible though: if
-	 * some wide columns have been dropped, AlterTableCreateToastTable
-	 * can decide that no TOAST table is needed for the new table.
+	 * for the new relation.  The other way around is possible though: if some
+	 * wide columns have been dropped, AlterTableCreateToastTable can decide
+	 * that no TOAST table is needed for the new table.
 	 *
 	 * Note that AlterTableCreateToastTable ends with CommandCounterIncrement,
 	 * so that the TOAST table will be visible for insertion.
@@ -782,18 +782,18 @@ copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex,
 	isnull = (bool *) palloc(natts * sizeof(bool));
 
 	/*
-	 * We need to log the copied data in WAL iff WAL archiving/streaming
-	 * is enabled AND it's not a temp rel.
+	 * We need to log the copied data in WAL iff WAL archiving/streaming is
+	 * enabled AND it's not a temp rel.
 	 */
 	use_wal = XLogIsNeeded() && !NewHeap->rd_istemp;
 
 	/*
-	 * Write an XLOG UNLOGGED record if WAL-logging was skipped because
-	 * WAL archiving is not enabled.
+	 * Write an XLOG UNLOGGED record if WAL-logging was skipped because WAL
+	 * archiving is not enabled.
 	 */
 	if (!use_wal && !NewHeap->rd_istemp)
 	{
-		char reason[NAMEDATALEN + 32];
+		char		reason[NAMEDATALEN + 32];
 
 		if (OldIndex != NULL)
 			snprintf(reason, sizeof(reason), "CLUSTER on \"%s\"",
@@ -810,7 +810,7 @@ copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex,
 	/*
 	 * If both tables have TOAST tables, perform toast swap by content.  It is
 	 * possible that the old table has a toast table but the new one doesn't,
-	 * if toastable columns have been dropped.  In that case we have to do
+	 * if toastable columns have been dropped.	In that case we have to do
 	 * swap by links.  This is okay because swap by content is only essential
 	 * for system catalogs, and we don't support schema changes for them.
 	 */
@@ -824,7 +824,7 @@ copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex,
 		 * data will eventually be found.  Set this up by setting rd_toastoid.
 		 * Note that we must hold NewHeap open until we are done writing data,
 		 * since the relcache will not guarantee to remember this setting once
-		 * the relation is closed.  Also, this technique depends on the fact
+		 * the relation is closed.	Also, this technique depends on the fact
 		 * that no one will try to read from the NewHeap until after we've
 		 * finished writing it and swapping the rels --- otherwise they could
 		 * follow the toast pointers to the wrong place.
@@ -860,8 +860,8 @@ copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex,
 	rwstate = begin_heap_rewrite(NewHeap, OldestXmin, FreezeXid, use_wal);
 
 	/*
-	 * Scan through the OldHeap, either in OldIndex order or sequentially,
-	 * and copy each tuple into the NewHeap.  To ensure we see recently-dead
+	 * Scan through the OldHeap, either in OldIndex order or sequentially, and
+	 * copy each tuple into the NewHeap.  To ensure we see recently-dead
 	 * tuples that still need to be copied, we scan with SnapshotAny and use
 	 * HeapTupleSatisfiesVacuum for the visibility test.
 	 */
@@ -924,12 +924,12 @@ copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex,
 			case HEAPTUPLE_INSERT_IN_PROGRESS:
 
 				/*
-				 * Since we hold exclusive lock on the relation, normally
-				 * the only way to see this is if it was inserted earlier
-				 * in our own transaction.  However, it can happen in system
+				 * Since we hold exclusive lock on the relation, normally the
+				 * only way to see this is if it was inserted earlier in our
+				 * own transaction.  However, it can happen in system
 				 * catalogs, since we tend to release write lock before commit
-				 * there.  Give a warning if neither case applies; but in
-				 * any case we had better copy it.
+				 * there.  Give a warning if neither case applies; but in any
+				 * case we had better copy it.
 				 */
 				if (!is_system_catalog &&
 					!TransactionIdIsCurrentTransactionId(HeapTupleHeaderGetXmin(tuple->t_data)))
@@ -1139,7 +1139,7 @@ swap_relation_files(Oid r1, Oid r2, bool target_is_pg_class,
 				 NameStr(relform2->relname), r2);
 
 		/*
-		 * Send replacement mappings to relmapper.  Note these won't actually
+		 * Send replacement mappings to relmapper.	Note these won't actually
 		 * take effect until CommandCounterIncrement.
 		 */
 		RelationMapUpdateMap(r1, relfilenode2, relform1->relisshared, false);
@@ -1151,10 +1151,10 @@ swap_relation_files(Oid r1, Oid r2, bool target_is_pg_class,
 
 	/*
 	 * In the case of a shared catalog, these next few steps will only affect
-	 * our own database's pg_class row; but that's okay, because they are
-	 * all noncritical updates.  That's also an important fact for the case
-	 * of a mapped catalog, because it's possible that we'll commit the map
-	 * change and then fail to commit the pg_class update.
+	 * our own database's pg_class row; but that's okay, because they are all
+	 * noncritical updates.  That's also an important fact for the case of a
+	 * mapped catalog, because it's possible that we'll commit the map change
+	 * and then fail to commit the pg_class update.
 	 */
 
 	/* set rel1's frozen Xid */
@@ -1181,10 +1181,10 @@ swap_relation_files(Oid r1, Oid r2, bool target_is_pg_class,
 	/*
 	 * Update the tuples in pg_class --- unless the target relation of the
 	 * swap is pg_class itself.  In that case, there is zero point in making
-	 * changes because we'd be updating the old data that we're about to
-	 * throw away.  Because the real work being done here for a mapped relation
-	 * is just to change the relation map settings, it's all right to not
-	 * update the pg_class rows in this case.
+	 * changes because we'd be updating the old data that we're about to throw
+	 * away.  Because the real work being done here for a mapped relation is
+	 * just to change the relation map settings, it's all right to not update
+	 * the pg_class rows in this case.
 	 */
 	if (!target_is_pg_class)
 	{
@@ -1248,8 +1248,8 @@ swap_relation_files(Oid r1, Oid r2, bool target_is_pg_class,
 			/*
 			 * We disallow this case for system catalogs, to avoid the
 			 * possibility that the catalog we're rebuilding is one of the
-			 * ones the dependency changes would change.  It's too late
-			 * to be making any data changes to the target catalog.
+			 * ones the dependency changes would change.  It's too late to be
+			 * making any data changes to the target catalog.
 			 */
 			if (IsSystemClass(relform1))
 				elog(ERROR, "cannot swap toast files by links for system catalogs");
@@ -1302,12 +1302,12 @@ swap_relation_files(Oid r1, Oid r2, bool target_is_pg_class,
 	 */
 	if (swap_toast_by_content &&
 		relform1->reltoastidxid && relform2->reltoastidxid)
-			swap_relation_files(relform1->reltoastidxid,
-								relform2->reltoastidxid,
-								target_is_pg_class,
-								swap_toast_by_content,
-								InvalidTransactionId,
-								mapped_tables);
+		swap_relation_files(relform1->reltoastidxid,
+							relform2->reltoastidxid,
+							target_is_pg_class,
+							swap_toast_by_content,
+							InvalidTransactionId,
+							mapped_tables);
 
 	/* Clean up. */
 	heap_freetuple(reltup1);
@@ -1327,7 +1327,7 @@ swap_relation_files(Oid r1, Oid r2, bool target_is_pg_class,
 	 * non-transient relation.)
 	 *
 	 * Caution: the placement of this step interacts with the decision to
-	 * handle toast rels by recursion.  When we are trying to rebuild pg_class
+	 * handle toast rels by recursion.	When we are trying to rebuild pg_class
 	 * itself, the smgr close on pg_class must happen after all accesses in
 	 * this function.
 	 */
@@ -1369,12 +1369,12 @@ finish_heap_swap(Oid OIDOldHeap, Oid OIDNewHeap,
 
 	/*
 	 * Rebuild each index on the relation (but not the toast table, which is
-	 * all-new at this point).  It is important to do this before the DROP
+	 * all-new at this point).	It is important to do this before the DROP
 	 * step because if we are processing a system catalog that will be used
-	 * during DROP, we want to have its indexes available.  There is no
+	 * during DROP, we want to have its indexes available.	There is no
 	 * advantage to the other order anyway because this is all transactional,
-	 * so no chance to reclaim disk space before commit.  We do not need
-	 * a final CommandCounterIncrement() because reindex_relation does it.
+	 * so no chance to reclaim disk space before commit.  We do not need a
+	 * final CommandCounterIncrement() because reindex_relation does it.
 	 */
 	reindex_relation(OIDOldHeap, false, true);
 
@@ -1393,9 +1393,9 @@ finish_heap_swap(Oid OIDOldHeap, Oid OIDNewHeap,
 
 	/*
 	 * Now we must remove any relation mapping entries that we set up for the
-	 * transient table, as well as its toast table and toast index if any.
-	 * If we fail to do this before commit, the relmapper will complain about
-	 * new permanent map entries being added post-bootstrap.
+	 * transient table, as well as its toast table and toast index if any. If
+	 * we fail to do this before commit, the relmapper will complain about new
+	 * permanent map entries being added post-bootstrap.
 	 */
 	for (i = 0; OidIsValid(mapped_tables[i]); i++)
 		RelationMapRemoveMapping(mapped_tables[i]);

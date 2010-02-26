@@ -23,7 +23,7 @@
  * mapped catalogs can only be relocated by operations such as VACUUM FULL
  * and CLUSTER, which make no transactionally-significant changes: it must be
  * safe for the new file to replace the old, even if the transaction itself
- * aborts.  An important factor here is that the indexes and toast table of
+ * aborts.	An important factor here is that the indexes and toast table of
  * a mapped catalog must also be mapped, so that the rewrites/relocations of
  * all these files commit in a single map file update rather than being tied
  * to transaction commit.
@@ -33,7 +33,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/relmapper.c,v 1.2 2010/02/07 22:00:53 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/relmapper.c,v 1.3 2010/02/26 02:01:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -58,21 +58,21 @@
 /*
  * The map file is critical data: we have no automatic method for recovering
  * from loss or corruption of it.  We use a CRC so that we can detect
- * corruption.  To minimize the risk of failed updates, the map file should
+ * corruption.	To minimize the risk of failed updates, the map file should
  * be kept to no more than one standard-size disk sector (ie 512 bytes),
  * and we use overwrite-in-place rather than playing renaming games.
  * The struct layout below is designed to occupy exactly 512 bytes, which
  * might make filesystem updates a bit more efficient.
  *
- * Entries in the mappings[] array are in no particular order.  We could
+ * Entries in the mappings[] array are in no particular order.	We could
  * speed searching by insisting on OID order, but it really shouldn't be
  * worth the trouble given the intended size of the mapping sets.
  */
 #define RELMAPPER_FILENAME		"pg_filenode.map"
 
-#define RELMAPPER_FILEMAGIC		0x592717	/* version ID value */
+#define RELMAPPER_FILEMAGIC		0x592717		/* version ID value */
 
-#define MAX_MAPPINGS			62			/* 62 * 8 + 16 = 512 */
+#define MAX_MAPPINGS			62		/* 62 * 8 + 16 = 512 */
 
 typedef struct RelMapping
 {
@@ -91,7 +91,7 @@ typedef struct RelMapFile
 
 /*
  * The currently known contents of the shared map file and our database's
- * local map file are stored here.  These can be reloaded from disk
+ * local map file are stored here.	These can be reloaded from disk
  * immediately whenever we receive an update sinval message.
  */
 static RelMapFile shared_map;
@@ -118,9 +118,9 @@ static RelMapFile pending_local_updates;
 
 /* non-export function prototypes */
 static void apply_map_update(RelMapFile *map, Oid relationId, Oid fileNode,
-							 bool add_okay);
+				 bool add_okay);
 static void merge_map_updates(RelMapFile *map, const RelMapFile *updates,
-							  bool add_okay);
+				  bool add_okay);
 static void load_relmap_file(bool shared);
 static void write_relmap_file(bool shared, RelMapFile *newmap,
 				  bool write_wal, bool send_sinval, bool preserve_files,
@@ -208,9 +208,9 @@ RelationMapUpdateMap(Oid relationId, Oid fileNode, bool shared,
 	else
 	{
 		/*
-		 * We don't currently support map changes within subtransactions.
-		 * This could be done with more bookkeeping infrastructure, but it
-		 * doesn't presently seem worth it.
+		 * We don't currently support map changes within subtransactions. This
+		 * could be done with more bookkeeping infrastructure, but it doesn't
+		 * presently seem worth it.
 		 */
 		if (GetCurrentTransactionNestLevel() > 1)
 			elog(ERROR, "cannot change relation mapping within subtransaction");
@@ -294,7 +294,7 @@ merge_map_updates(RelMapFile *map, const RelMapFile *updates, bool add_okay)
  * RelationMapRemoveMapping
  *
  * Remove a relation's entry in the map.  This is only allowed for "active"
- * (but not committed) local mappings.  We need it so we can back out the
+ * (but not committed) local mappings.	We need it so we can back out the
  * entry for the transient target file when doing VACUUM FULL/CLUSTER on
  * a mapped relation.
  */
@@ -322,7 +322,7 @@ RelationMapRemoveMapping(Oid relationId)
  * RelationMapInvalidate
  *
  * This routine is invoked for SI cache flush messages.  We must re-read
- * the indicated map file.  However, we might receive a SI message in a
+ * the indicated map file.	However, we might receive a SI message in a
  * process that hasn't yet, and might never, load the mapping files;
  * for example the autovacuum launcher, which *must not* try to read
  * a local map since it is attached to no particular database.
@@ -390,7 +390,7 @@ AtCCI_RelationMap(void)
  *
  * During commit, this must be called as late as possible before the actual
  * transaction commit, so as to minimize the window where the transaction
- * could still roll back after committing map changes.  Although nothing
+ * could still roll back after committing map changes.	Although nothing
  * critically bad happens in such a case, we still would prefer that it
  * not happen, since we'd possibly be losing useful updates to the relations'
  * pg_class row(s).
@@ -457,7 +457,7 @@ AtPrepare_RelationMap(void)
 /*
  * CheckPointRelationMap
  *
- * This is called during a checkpoint.  It must ensure that any relation map
+ * This is called during a checkpoint.	It must ensure that any relation map
  * updates that were WAL-logged before the start of the checkpoint are
  * securely flushed to disk and will not need to be replayed later.  This
  * seems unlikely to be a performance-critical issue, so we use a simple
@@ -599,10 +599,9 @@ load_relmap_file(bool shared)
 	/*
 	 * Note: we could take RelationMappingLock in shared mode here, but it
 	 * seems unnecessary since our read() should be atomic against any
-	 * concurrent updater's write().  If the file is updated shortly after
-	 * we look, the sinval signaling mechanism will make us re-read it
-	 * before we are able to access any relation that's affected by the
-	 * change.
+	 * concurrent updater's write().  If the file is updated shortly after we
+	 * look, the sinval signaling mechanism will make us re-read it before we
+	 * are able to access any relation that's affected by the change.
 	 */
 	if (read(fd, map, sizeof(RelMapFile)) != sizeof(RelMapFile))
 		ereport(FATAL,
@@ -627,8 +626,8 @@ load_relmap_file(bool shared)
 
 	if (!EQ_CRC32(crc, map->crc))
 		ereport(FATAL,
-				(errmsg("relation mapping file \"%s\" contains incorrect checksum",
-						mapfilename)));
+		  (errmsg("relation mapping file \"%s\" contains incorrect checksum",
+				  mapfilename)));
 }
 
 /*
@@ -648,7 +647,7 @@ load_relmap_file(bool shared)
  *
  * Because this may be called during WAL replay when MyDatabaseId,
  * DatabasePath, etc aren't valid, we require the caller to pass in suitable
- * values.  The caller is also responsible for being sure no concurrent
+ * values.	The caller is also responsible for being sure no concurrent
  * map update could be happening.
  */
 static void
@@ -676,10 +675,10 @@ write_relmap_file(bool shared, RelMapFile *newmap,
 	 * critical section, so that an open() failure need not force PANIC.
 	 *
 	 * Note: since we use BasicOpenFile, we are nominally responsible for
-	 * ensuring the fd is closed on error.  In practice, this isn't important
-	 * because either an error happens inside the critical section, or we
-	 * are in bootstrap or WAL replay; so an error past this point is always
-	 * fatal anyway.
+	 * ensuring the fd is closed on error.	In practice, this isn't important
+	 * because either an error happens inside the critical section, or we are
+	 * in bootstrap or WAL replay; so an error past this point is always fatal
+	 * anyway.
 	 */
 	if (shared)
 	{
@@ -773,11 +772,11 @@ write_relmap_file(bool shared, RelMapFile *newmap,
 		CacheInvalidateRelmap(dbid);
 
 	/*
-	 * Make sure that the files listed in the map are not deleted if the
-	 * outer transaction aborts.  This had better be within the critical
-	 * section too: it's not likely to fail, but if it did, we'd arrive
-	 * at transaction abort with the files still vulnerable.  PANICing
-	 * will leave things in a good state on-disk.
+	 * Make sure that the files listed in the map are not deleted if the outer
+	 * transaction aborts.	This had better be within the critical section
+	 * too: it's not likely to fail, but if it did, we'd arrive at transaction
+	 * abort with the files still vulnerable.  PANICing will leave things in a
+	 * good state on-disk.
 	 *
 	 * Note: we're cheating a little bit here by assuming that mapped files
 	 * are either in pg_global or the database's default tablespace.
@@ -816,13 +815,13 @@ perform_relmap_update(bool shared, const RelMapFile *updates)
 	RelMapFile	newmap;
 
 	/*
-	 * Anyone updating a relation's mapping info should take exclusive lock
-	 * on that rel and hold it until commit.  This ensures that there will
-	 * not be concurrent updates on the same mapping value; but there could
-	 * easily be concurrent updates on different values in the same file.
-	 * We cover that by acquiring the RelationMappingLock, re-reading the
-	 * target file to ensure it's up to date, applying the updates, and
-	 * writing the data before releasing RelationMappingLock.
+	 * Anyone updating a relation's mapping info should take exclusive lock on
+	 * that rel and hold it until commit.  This ensures that there will not be
+	 * concurrent updates on the same mapping value; but there could easily be
+	 * concurrent updates on different values in the same file. We cover that
+	 * by acquiring the RelationMappingLock, re-reading the target file to
+	 * ensure it's up to date, applying the updates, and writing the data
+	 * before releasing RelationMappingLock.
 	 *
 	 * There is only one RelationMappingLock.  In principle we could try to
 	 * have one per mapping file, but it seems unlikely to be worth the
@@ -866,8 +865,8 @@ relmap_redo(XLogRecPtr lsn, XLogRecord *record)
 	if (info == XLOG_RELMAP_UPDATE)
 	{
 		xl_relmap_update *xlrec = (xl_relmap_update *) XLogRecGetData(record);
-		RelMapFile newmap;
-		char   *dbpath;
+		RelMapFile	newmap;
+		char	   *dbpath;
 
 		if (xlrec->nbytes != sizeof(RelMapFile))
 			elog(PANIC, "relmap_redo: wrong size %u in relmap update record",
@@ -878,14 +877,13 @@ relmap_redo(XLogRecPtr lsn, XLogRecord *record)
 		dbpath = GetDatabasePath(xlrec->dbid, xlrec->tsid);
 
 		/*
-		 * Write out the new map and send sinval, but of course don't
-		 * write a new WAL entry.  There's no surrounding transaction
-		 * to tell to preserve files, either.
+		 * Write out the new map and send sinval, but of course don't write a
+		 * new WAL entry.  There's no surrounding transaction to tell to
+		 * preserve files, either.
 		 *
 		 * There shouldn't be anyone else updating relmaps during WAL replay,
-		 * so we don't bother to take the RelationMappingLock.  We would
-		 * need to do so if load_relmap_file needed to interlock against
-		 * writers.
+		 * so we don't bother to take the RelationMappingLock.  We would need
+		 * to do so if load_relmap_file needed to interlock against writers.
 		 */
 		write_relmap_file((xlrec->dbid == InvalidOid), &newmap,
 						  false, true, false,

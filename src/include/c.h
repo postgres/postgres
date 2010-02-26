@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/c.h,v 1.239 2010/01/07 04:53:35 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/c.h,v 1.240 2010/02/26 02:01:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -270,7 +270,6 @@ typedef long int int64;
 #ifndef HAVE_UINT64
 typedef unsigned long int uint64;
 #endif
-
 #elif defined(HAVE_LONG_LONG_INT_64)
 /* We have working support for "long long int", use that */
 
@@ -280,7 +279,6 @@ typedef long long int int64;
 #ifndef HAVE_UINT64
 typedef unsigned long long int uint64;
 #endif
-
 #else
 /* neither HAVE_LONG_INT_64 nor HAVE_LONG_LONG_INT_64 */
 #error must have a working 64-bit integer datatype

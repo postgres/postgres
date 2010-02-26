@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/port/win32/mingwcompat.c,v 1.10 2010/02/09 20:22:20 mha Exp $
+ *	  $PostgreSQL: pgsql/src/backend/port/win32/mingwcompat.c,v 1.11 2010/02/26 02:00:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,7 +19,7 @@
  * in any library. It's trivial enough that we can safely define it
  * ourselves.
  */
-const struct in6_addr in6addr_any = {{{0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0}}};
+const struct in6_addr in6addr_any = {{{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}}};
 
 
 /*

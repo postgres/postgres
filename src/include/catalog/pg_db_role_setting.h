@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_db_role_setting.h,v 1.3 2010/01/05 01:06:56 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_db_role_setting.h,v 1.4 2010/02/26 02:01:21 momjian Exp $
  *
  * NOTES
  *		the genbki.pl script reads this file and generates .bki
@@ -27,11 +27,11 @@
 #include "utils/relcache.h"
 
 /* ----------------
- *		pg_db_role_setting definition.  cpp turns this into
+ *		pg_db_role_setting definition.	cpp turns this into
  *		typedef struct FormData_pg_db_role_setting
  * ----------------
  */
-#define DbRoleSettingRelationId	2964
+#define DbRoleSettingRelationId 2964
 
 CATALOG(pg_db_role_setting,2964) BKI_SHARED_RELATION BKI_WITHOUT_OIDS
 {

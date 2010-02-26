@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/misc.c,v 1.74 2010/01/12 02:42:52 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/misc.c,v 1.75 2010/02/26 02:01:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -187,7 +187,7 @@ pg_tablespace_databases(PG_FUNCTION_ARGS)
 		 * size = tablespace dirname length + dir sep char + oid + terminator
 		 */
 		fctx->location = (char *) palloc(9 + 1 + OIDCHARS + 1 +
-						 strlen(TABLESPACE_VERSION_DIRECTORY) + 1);
+								   strlen(TABLESPACE_VERSION_DIRECTORY) + 1);
 		if (tablespaceOid == GLOBALTABLESPACE_OID)
 		{
 			fctx->dirdesc = NULL;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/common/reloptions.c,v 1.32 2010/01/22 16:40:18 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/common/reloptions.c,v 1.33 2010/02/26 02:00:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1210,7 +1210,7 @@ bytea *
 attribute_reloptions(Datum reloptions, bool validate)
 {
 	relopt_value *options;
-	AttributeOpts  *aopts;
+	AttributeOpts *aopts;
 	int			numoptions;
 	static const relopt_parse_elt tab[] = {
 		{"n_distinct", RELOPT_TYPE_REAL, offsetof(AttributeOpts, n_distinct)},
@@ -1241,7 +1241,7 @@ bytea *
 tablespace_reloptions(Datum reloptions, bool validate)
 {
 	relopt_value *options;
-	TableSpaceOpts	*tsopts;
+	TableSpaceOpts *tsopts;
 	int			numoptions;
 	static const relopt_parse_elt tab[] = {
 		{"random_page_cost", RELOPT_TYPE_REAL, offsetof(TableSpaceOpts, random_page_cost)},

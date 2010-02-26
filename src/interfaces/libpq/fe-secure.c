@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-secure.c,v 1.131 2010/01/02 16:58:12 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-secure.c,v 1.132 2010/02/26 02:01:33 momjian Exp $
  *
  * NOTES
  *
@@ -159,8 +159,7 @@ struct sigpipe_info
 			pq_reset_sigpipe(&(spinfo).oldsigmask, (spinfo).sigpipe_pending, \
 							 (spinfo).got_epipe); \
 	} while (0)
-
-#else /* !ENABLE_THREAD_SAFETY */
+#else							/* !ENABLE_THREAD_SAFETY */
 
 #define DECLARE_SIGPIPE_INFO(spinfo) pqsigfunc spinfo = NULL
 
@@ -177,17 +176,14 @@ struct sigpipe_info
 		if (!SIGPIPE_MASKED(conn)) \
 			pqsignal(SIGPIPE, spinfo); \
 	} while (0)
-
-#endif	/* ENABLE_THREAD_SAFETY */
-
-#else	/* WIN32 */
+#endif   /* ENABLE_THREAD_SAFETY */
+#else							/* WIN32 */
 
 #define DECLARE_SIGPIPE_INFO(spinfo)
 #define DISABLE_SIGPIPE(conn, spinfo, failaction)
 #define REMEMBER_EPIPE(spinfo, cond)
 #define RESTORE_SIGPIPE(conn, spinfo)
-
-#endif	/* WIN32 */
+#endif   /* WIN32 */
 
 /* ------------------------------------------------------------ */
 /*			 Procedures common to all secure sessions			*/
@@ -318,6 +314,7 @@ pqsecure_read(PGconn *conn, void *ptr, size_t len)
 	if (conn->ssl)
 	{
 		int			err;
+
 		DECLARE_SIGPIPE_INFO(spinfo);
 
 		/* SSL_read can write to the socket, so we need to disable SIGPIPE */
@@ -401,6 +398,7 @@ ssize_t
 pqsecure_write(PGconn *conn, const void *ptr, size_t len)
 {
 	ssize_t		n;
+
 	DECLARE_SIGPIPE_INFO(spinfo);
 
 #ifdef USE_SSL
@@ -473,15 +471,14 @@ pqsecure_write(PGconn *conn, const void *ptr, size_t len)
 	else
 #endif
 	{
-		int		flags = 0;
+		int			flags = 0;
 
 #ifdef MSG_NOSIGNAL
 		if (conn->sigpipe_flag)
 			flags |= MSG_NOSIGNAL;
 
 retry_masked:
-
-#endif /* MSG_NOSIGNAL */
+#endif   /* MSG_NOSIGNAL */
 
 		DISABLE_SIGPIPE(conn, spinfo, return -1);
 
@@ -501,7 +498,7 @@ retry_masked:
 				flags = 0;
 				goto retry_masked;
 			}
-#endif /* MSG_NOSIGNAL */
+#endif   /* MSG_NOSIGNAL */
 
 			REMEMBER_EPIPE(spinfo, SOCK_ERRNO == EPIPE);
 		}
@@ -764,7 +761,7 @@ client_cert_cb(SSL *ssl, X509 **x509, EVP_PKEY **pkey)
 				char	   *err = SSLerrmessage();
 
 				printfPQExpBuffer(&conn->errorMessage,
-					 libpq_gettext("could not initialize SSL engine \"%s\": %s\n"),
+				libpq_gettext("could not initialize SSL engine \"%s\": %s\n"),
 								  engine_str, err);
 				SSLerrfree(err);
 				ENGINE_free(conn->engine);
@@ -1268,8 +1265,8 @@ open_client_SSL(PGconn *conn)
 	conn->peer_dn[sizeof(conn->peer_dn) - 1] = '\0';
 
 	r = X509_NAME_get_text_by_NID(X509_get_subject_name(conn->peer),
-							  NID_commonName, conn->peer_cn, SM_USER);
-	conn->peer_cn[SM_USER] = '\0'; /* buffer is SM_USER+1 chars! */
+								  NID_commonName, conn->peer_cn, SM_USER);
+	conn->peer_cn[SM_USER] = '\0';		/* buffer is SM_USER+1 chars! */
 	if (r == -1)
 	{
 		/* Unable to get the CN, set it to blank so it can't be used */
@@ -1278,8 +1275,8 @@ open_client_SSL(PGconn *conn)
 	else
 	{
 		/*
-		 * Reject embedded NULLs in certificate common name to prevent attacks like
-		 * CVE-2009-4034.
+		 * Reject embedded NULLs in certificate common name to prevent attacks
+		 * like CVE-2009-4034.
 		 */
 		if (r != strlen(conn->peer_cn))
 		{

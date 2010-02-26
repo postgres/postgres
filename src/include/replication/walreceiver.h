@@ -5,7 +5,7 @@
  *
  * Portions Copyright (c) 2010-2010, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/replication/walreceiver.h,v 1.7 2010/02/19 10:51:04 heikki Exp $
+ * $PostgreSQL: pgsql/src/include/replication/walreceiver.h,v 1.8 2010/02/26 02:01:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,37 +29,37 @@ extern bool am_walreceiver;
  */
 typedef enum
 {
-	WALRCV_STOPPED,		/* stopped and mustn't start up again */
-	WALRCV_STARTING,	/* launched, but the process hasn't initialized yet */
-	WALRCV_RUNNING,		/* walreceiver is running */
-	WALRCV_STOPPING		/* requested to stop, but still running */
+	WALRCV_STOPPED,				/* stopped and mustn't start up again */
+	WALRCV_STARTING,			/* launched, but the process hasn't
+								 * initialized yet */
+	WALRCV_RUNNING,				/* walreceiver is running */
+	WALRCV_STOPPING				/* requested to stop, but still running */
 } WalRcvState;
 
 /* Shared memory area for management of walreceiver process */
 typedef struct
 {
 	/*
-	 * connection string; is used for walreceiver to connect with
-	 * the primary.
+	 * connection string; is used for walreceiver to connect with the primary.
 	 */
-	char	conninfo[MAXCONNINFO];
+	char		conninfo[MAXCONNINFO];
 
 	/*
 	 * PID of currently active walreceiver process, and the current state.
 	 */
-	pid_t	pid;
+	pid_t		pid;
 	WalRcvState walRcvState;
-	pg_time_t startTime;
+	pg_time_t	startTime;
 
 	/*
 	 * receivedUpto-1 is the last byte position that has been already
-	 * received. When startup process starts the walreceiver, it sets this
-	 * to the point where it wants the streaming to begin. After that,
+	 * received. When startup process starts the walreceiver, it sets this to
+	 * the point where it wants the streaming to begin. After that,
 	 * walreceiver updates this whenever it flushes the received WAL.
 	 */
 	XLogRecPtr	receivedUpto;
 
-	slock_t	mutex;		/* locks shared variables shown above */
+	slock_t		mutex;			/* locks shared variables shown above */
 } WalRcvData;
 
 extern WalRcvData *WalRcv;
@@ -69,7 +69,7 @@ typedef bool (*walrcv_connect_type) (char *conninfo, XLogRecPtr startpoint);
 extern PGDLLIMPORT walrcv_connect_type walrcv_connect;
 
 typedef bool (*walrcv_receive_type) (int timeout, unsigned char *type,
-									 char **buffer, int *len);
+												 char **buffer, int *len);
 extern PGDLLIMPORT walrcv_receive_type walrcv_receive;
 
 typedef void (*walrcv_disconnect_type) (void);

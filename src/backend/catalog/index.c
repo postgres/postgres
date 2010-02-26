@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.336 2010/02/14 18:42:13 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.337 2010/02/26 02:00:36 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -70,7 +70,7 @@
 
 
 /* Kluge for upgrade-in-place support */
-Oid binary_upgrade_next_index_relfilenode = InvalidOid;
+Oid			binary_upgrade_next_index_relfilenode = InvalidOid;
 
 /* state info for validate_index bulkdelete callback */
 typedef struct
@@ -272,7 +272,7 @@ ConstructTupleDescriptor(Relation heapRelation,
 		/*
 		 * Set the attribute name as specified by caller.
 		 */
-		if (colnames_item == NULL)	/* shouldn't happen */
+		if (colnames_item == NULL)		/* shouldn't happen */
 			elog(ERROR, "too few entries in colnames list");
 		namestrcpy(&to->attname, (const char *) lfirst(colnames_item));
 		colnames_item = lnext(colnames_item);
@@ -561,8 +561,8 @@ index_create(Oid heapRelationId,
 
 	/*
 	 * The index will be in the same namespace as its parent table, and is
-	 * shared across databases if and only if the parent is.  Likewise,
-	 * it will use the relfilenode map if and only if the parent does.
+	 * shared across databases if and only if the parent is.  Likewise, it
+	 * will use the relfilenode map if and only if the parent does.
 	 */
 	namespaceId = RelationGetNamespace(heapRelation);
 	shared_relation = heapRelation->rd_rel->relisshared;
@@ -592,8 +592,8 @@ index_create(Oid heapRelationId,
 				 errmsg("concurrent index creation on system catalog tables is not supported")));
 
 	/*
-	 * This case is currently not supported, but there's no way to ask for
-	 * it in the grammar anyway, so it can't happen.
+	 * This case is currently not supported, but there's no way to ask for it
+	 * in the grammar anyway, so it can't happen.
 	 */
 	if (concurrent && is_exclusion)
 		ereport(ERROR,
@@ -775,7 +775,7 @@ index_create(Oid heapRelationId,
 										   indexInfo->ii_KeyAttrNumbers,
 										   indexInfo->ii_NumIndexAttrs,
 										   InvalidOid,	/* no domain */
-										   indexRelationId,	/* index OID */
+										   indexRelationId,		/* index OID */
 										   InvalidOid,	/* no foreign key */
 										   NULL,
 										   NULL,
@@ -810,7 +810,7 @@ index_create(Oid heapRelationId,
 				CreateTrigStmt *trigger;
 
 				heapRel = makeRangeVar(get_namespace_name(namespaceId),
-									   pstrdup(RelationGetRelationName(heapRelation)),
+							  pstrdup(RelationGetRelationName(heapRelation)),
 									   -1);
 
 				trigger = makeNode(CreateTrigStmt);
@@ -1436,8 +1436,8 @@ index_build(Relation heapRelation,
 	Assert(PointerIsValid(stats));
 
 	/*
-	 * If it's for an exclusion constraint, make a second pass over the
-	 * heap to verify that the constraint is satisfied.
+	 * If it's for an exclusion constraint, make a second pass over the heap
+	 * to verify that the constraint is satisfied.
 	 */
 	if (indexInfo->ii_ExclusionOps != NULL)
 		IndexCheckExclusion(heapRelation, indexRelation, indexInfo);
@@ -1710,7 +1710,7 @@ IndexBuildHeapScan(Relation heapRelation,
 					/*
 					 * Since caller should hold ShareLock or better, normally
 					 * the only way to see this is if it was inserted earlier
-					 * in our own transaction.  However, it can happen in
+					 * in our own transaction.	However, it can happen in
 					 * system catalogs, since we tend to release write lock
 					 * before commit there.  Give a warning if neither case
 					 * applies.
@@ -1761,9 +1761,9 @@ IndexBuildHeapScan(Relation heapRelation,
 
 						/*
 						 * If we are performing uniqueness checks, assuming
-						 * the tuple is dead could lead to missing a uniqueness
-						 * violation.  In that case we wait for the deleting
-						 * transaction to finish and check again.
+						 * the tuple is dead could lead to missing a
+						 * uniqueness violation.  In that case we wait for the
+						 * deleting transaction to finish and check again.
 						 */
 						if (checking_uniqueness)
 						{
@@ -2472,9 +2472,9 @@ reindex_index(Oid indexId, bool skip_constraint_checks)
 
 	/*
 	 * If the index is marked invalid or not ready (ie, it's from a failed
-	 * CREATE INDEX CONCURRENTLY), and we didn't skip a uniqueness check,
-	 * we can now mark it valid.  This allows REINDEX to be used to clean up
-	 * in such cases.
+	 * CREATE INDEX CONCURRENTLY), and we didn't skip a uniqueness check, we
+	 * can now mark it valid.  This allows REINDEX to be used to clean up in
+	 * such cases.
 	 *
 	 * We can also reset indcheckxmin, because we have now done a
 	 * non-concurrent index build, *except* in the case where index_build
@@ -2568,7 +2568,7 @@ reindex_relation(Oid relid, bool toast_too, bool heap_rebuilt)
 	 * It is okay to not insert entries into the indexes we have not processed
 	 * yet because all of this is transaction-safe.  If we fail partway
 	 * through, the updated rows are dead and it doesn't matter whether they
-	 * have index entries.  Also, a new pg_class index will be created with a
+	 * have index entries.	Also, a new pg_class index will be created with a
 	 * correct entry for its own pg_class row because we do
 	 * RelationSetNewRelfilenode() before we do index_build().
 	 *

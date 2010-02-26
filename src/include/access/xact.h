@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/xact.h,v 1.102 2010/02/13 16:15:47 sriggs Exp $
+ * $PostgreSQL: pgsql/src/include/access/xact.h,v 1.103 2010/02/26 02:01:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -88,9 +88,9 @@ typedef void (*SubXactCallback) (SubXactEvent event, SubTransactionId mySubid,
 
 typedef struct xl_xact_assignment
 {
-	TransactionId	xtop;		/* assigned XID's top-level XID */
-	int				nsubxacts;	/* number of subtransaction XIDs */
-	TransactionId	xsub[1];	/* assigned subxids */
+	TransactionId xtop;			/* assigned XID's top-level XID */
+	int			nsubxacts;		/* number of subtransaction XIDs */
+	TransactionId xsub[1];		/* assigned subxids */
 } xl_xact_assignment;
 
 #define MinSizeOfXactAssignment offsetof(xl_xact_assignment, xsub)
@@ -136,6 +136,7 @@ typedef struct xl_xact_abort
 	RelFileNode xnodes[1];		/* VARIABLE LENGTH ARRAY */
 	/* ARRAY OF ABORTED SUBTRANSACTION XIDs FOLLOWS */
 } xl_xact_abort;
+
 /* Note the intentional lack of an invalidation message array c.f. commit */
 
 #define MinSizeOfXactAbort offsetof(xl_xact_abort, xnodes)

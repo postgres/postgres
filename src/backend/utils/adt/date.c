@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/date.c,v 1.151 2010/02/18 04:31:16 itagaki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/date.c,v 1.152 2010/02/26 02:01:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -203,7 +203,7 @@ Datum
 date_recv(PG_FUNCTION_ARGS)
 {
 	StringInfo	buf = (StringInfo) PG_GETARG_POINTER(0);
-	DateADT result;
+	DateADT		result;
 
 	result = (DateADT) pq_getmsgint(buf, sizeof(DateADT));
 

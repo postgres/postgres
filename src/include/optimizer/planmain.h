@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/optimizer/planmain.h,v 1.125 2010/02/12 17:33:21 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/optimizer/planmain.h,v 1.126 2010/02/26 02:01:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -79,8 +79,8 @@ extern SetOp *make_setop(SetOpCmd cmd, SetOpStrategy strategy, Plan *lefttree,
 extern Result *make_result(PlannerInfo *root, List *tlist,
 			Node *resconstantqual, Plan *subplan);
 extern ModifyTable *make_modifytable(CmdType operation, List *resultRelations,
-									 List *subplans, List *returningLists,
-									 List *rowMarks, int epqParam);
+				 List *subplans, List *returningLists,
+				 List *rowMarks, int epqParam);
 extern bool is_projection_capable_plan(Plan *plan);
 
 /*

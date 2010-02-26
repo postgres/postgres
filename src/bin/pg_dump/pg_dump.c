@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.574 2010/02/24 02:15:58 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.575 2010/02/26 02:01:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -196,11 +196,11 @@ static void dumpDatabase(Archive *AH);
 static void dumpEncoding(Archive *AH);
 static void dumpStdStrings(Archive *AH);
 static void binary_upgrade_set_type_oids_by_type_oid(
-					PQExpBuffer upgrade_buffer, Oid pg_type_oid);
+								PQExpBuffer upgrade_buffer, Oid pg_type_oid);
 static bool binary_upgrade_set_type_oids_by_rel_oid(
-					PQExpBuffer upgrade_buffer, Oid pg_rel_oid);
+								 PQExpBuffer upgrade_buffer, Oid pg_rel_oid);
 static void binary_upgrade_set_relfilenodes(PQExpBuffer upgrade_buffer,
-					Oid pg_class_oid, bool is_index);
+								Oid pg_class_oid, bool is_index);
 static const char *getAttrName(int attrnum, TableInfo *tblInfo);
 static const char *fmtCopyColumnList(const TableInfo *ti);
 static void do_sql_command(PGconn *conn, const char *query);
@@ -1778,8 +1778,8 @@ dumpDatabase(Archive *AH)
 				 NULL);			/* Dumper Arg */
 
 	/*
-	 *	pg_largeobject comes from the old system intact, so set
-	 *	its relfrozenxid.
+	 * pg_largeobject comes from the old system intact, so set its
+	 * relfrozenxid.
 	 */
 	if (binary_upgrade)
 	{
@@ -1789,9 +1789,9 @@ dumpDatabase(Archive *AH)
 		int			i_relfrozenxid;
 
 		appendPQExpBuffer(loFrozenQry, "SELECT relfrozenxid\n"
-							"FROM pg_catalog.pg_class\n"
-							"WHERE oid = %u;\n",
-							LargeObjectRelationId);
+						  "FROM pg_catalog.pg_class\n"
+						  "WHERE oid = %u;\n",
+						  LargeObjectRelationId);
 
 		lo_res = PQexec(g_conn, loFrozenQry->data);
 		check_sql_result(lo_res, g_conn, loFrozenQry->data, PGRES_TUPLES_OK);
@@ -1926,10 +1926,10 @@ dumpStdStrings(Archive *AH)
 static void
 getBlobs(Archive *AH)
 {
-	PQExpBuffer		blobQry = createPQExpBuffer();
-	BlobInfo	   *binfo;
+	PQExpBuffer blobQry = createPQExpBuffer();
+	BlobInfo   *binfo;
 	DumpableObject *bdata;
-	PGresult	   *res;
+	PGresult   *res;
 	int			ntups;
 	int			i;
 
@@ -2007,8 +2007,8 @@ getBlobs(Archive *AH)
 static void
 dumpBlob(Archive *AH, BlobInfo *binfo)
 {
-	PQExpBuffer		cquery = createPQExpBuffer();
-	PQExpBuffer		dquery = createPQExpBuffer();
+	PQExpBuffer cquery = createPQExpBuffer();
+	PQExpBuffer dquery = createPQExpBuffer();
 
 	appendPQExpBuffer(cquery,
 					  "SELECT pg_catalog.lo_create('%s');\n",
@@ -2068,8 +2068,8 @@ dumpBlobs(Archive *AH, void *arg)
 	selectSourceSchema("pg_catalog");
 
 	/*
-	 * Currently, we re-fetch all BLOB OIDs using a cursor.  Consider
-	 * scanning the already-in-memory dumpable objects instead...
+	 * Currently, we re-fetch all BLOB OIDs using a cursor.  Consider scanning
+	 * the already-in-memory dumpable objects instead...
 	 */
 	if (AH->remoteVersion >= 90000)
 		blobQry = "DECLARE bloboid CURSOR FOR SELECT oid FROM pg_largeobject_metadata";
@@ -2138,17 +2138,17 @@ dumpBlobs(Archive *AH, void *arg)
 
 static void
 binary_upgrade_set_type_oids_by_type_oid(PQExpBuffer upgrade_buffer,
-											   Oid pg_type_oid)
+										 Oid pg_type_oid)
 {
 	PQExpBuffer upgrade_query = createPQExpBuffer();
 	int			ntups;
 	PGresult   *upgrade_res;
 	Oid			pg_type_array_oid;
-			
+
 	appendPQExpBuffer(upgrade_buffer, "\n-- For binary upgrade, must preserve pg_type oid\n");
 	appendPQExpBuffer(upgrade_buffer,
-		"SELECT binary_upgrade.set_next_pg_type_oid('%u'::pg_catalog.oid);\n\n",
-		pg_type_oid);
+	 "SELECT binary_upgrade.set_next_pg_type_oid('%u'::pg_catalog.oid);\n\n",
+					  pg_type_oid);
 
 	/* we only support old >= 8.3 for binary upgrades */
 	appendPQExpBuffer(upgrade_query,
@@ -2176,10 +2176,10 @@ binary_upgrade_set_type_oids_by_type_oid(PQExpBuffer upgrade_buffer,
 	if (OidIsValid(pg_type_array_oid))
 	{
 		appendPQExpBuffer(upgrade_buffer,
-							"\n-- For binary upgrade, must preserve pg_type array oid\n");
+			   "\n-- For binary upgrade, must preserve pg_type array oid\n");
 		appendPQExpBuffer(upgrade_buffer,
-			"SELECT binary_upgrade.set_next_pg_type_array_oid('%u'::pg_catalog.oid);\n\n",
-			pg_type_array_oid);
+						  "SELECT binary_upgrade.set_next_pg_type_array_oid('%u'::pg_catalog.oid);\n\n",
+						  pg_type_array_oid);
 	}
 
 	PQclear(upgrade_res);
@@ -2188,14 +2188,14 @@ binary_upgrade_set_type_oids_by_type_oid(PQExpBuffer upgrade_buffer,
 
 static bool
 binary_upgrade_set_type_oids_by_rel_oid(PQExpBuffer upgrade_buffer,
-											   Oid pg_rel_oid)
+										Oid pg_rel_oid)
 {
 	PQExpBuffer upgrade_query = createPQExpBuffer();
 	int			ntups;
 	PGresult   *upgrade_res;
 	Oid			pg_type_oid;
 	bool		toast_set = false;
-	
+
 	/* we only support old >= 8.3 for binary upgrades */
 	appendPQExpBuffer(upgrade_query,
 					  "SELECT c.reltype AS crel, t.reltype AS trel "
@@ -2226,13 +2226,13 @@ binary_upgrade_set_type_oids_by_rel_oid(PQExpBuffer upgrade_buffer,
 	if (!PQgetisnull(upgrade_res, 0, PQfnumber(upgrade_res, "trel")))
 	{
 		/* Toast tables do not have pg_type array rows */
-		Oid pg_type_toast_oid = atooid(PQgetvalue(upgrade_res, 0,
-										PQfnumber(upgrade_res, "trel")));
+		Oid			pg_type_toast_oid = atooid(PQgetvalue(upgrade_res, 0,
+											PQfnumber(upgrade_res, "trel")));
 
 		appendPQExpBuffer(upgrade_buffer, "\n-- For binary upgrade, must preserve pg_type toast oid\n");
 		appendPQExpBuffer(upgrade_buffer,
-			"SELECT binary_upgrade.set_next_pg_type_toast_oid('%u'::pg_catalog.oid);\n\n",
-			pg_type_toast_oid);
+						  "SELECT binary_upgrade.set_next_pg_type_toast_oid('%u'::pg_catalog.oid);\n\n",
+						  pg_type_toast_oid);
 
 		toast_set = true;
 	}
@@ -2256,12 +2256,12 @@ binary_upgrade_set_relfilenodes(PQExpBuffer upgrade_buffer, Oid pg_class_oid,
 
 	/*
 	 * Note: we don't need to use pg_relation_filenode() here because this
-	 * function is not intended to be used against system catalogs.
-	 * Otherwise we'd have to worry about which versions pg_relation_filenode
-	 * is available in.
+	 * function is not intended to be used against system catalogs. Otherwise
+	 * we'd have to worry about which versions pg_relation_filenode is
+	 * available in.
 	 */
 	appendPQExpBuffer(upgrade_query,
-					  "SELECT c.relfilenode, c.reltoastrelid, t.reltoastidxid "
+					"SELECT c.relfilenode, c.reltoastrelid, t.reltoastidxid "
 					  "FROM pg_catalog.pg_class c LEFT JOIN "
 					  "pg_catalog.pg_class t ON (c.reltoastrelid = t.oid) "
 					  "WHERE c.oid = '%u'::pg_catalog.oid;",
@@ -2286,37 +2286,36 @@ binary_upgrade_set_relfilenodes(PQExpBuffer upgrade_buffer, Oid pg_class_oid,
 	pg_class_reltoastidxid = atooid(PQgetvalue(upgrade_res, 0, PQfnumber(upgrade_res, "reltoastidxid")));
 
 	appendPQExpBuffer(upgrade_buffer,
-						"\n-- For binary upgrade, must preserve relfilenodes\n");
+					"\n-- For binary upgrade, must preserve relfilenodes\n");
 
 	if (!is_index)
 		appendPQExpBuffer(upgrade_buffer,
-			"SELECT binary_upgrade.set_next_heap_relfilenode('%u'::pg_catalog.oid);\n",
-			pg_class_relfilenode);
+						  "SELECT binary_upgrade.set_next_heap_relfilenode('%u'::pg_catalog.oid);\n",
+						  pg_class_relfilenode);
 	else
 		appendPQExpBuffer(upgrade_buffer,
-			"SELECT binary_upgrade.set_next_index_relfilenode('%u'::pg_catalog.oid);\n",
-			pg_class_relfilenode);
-	
+						  "SELECT binary_upgrade.set_next_index_relfilenode('%u'::pg_catalog.oid);\n",
+						  pg_class_relfilenode);
+
 	if (OidIsValid(pg_class_reltoastrelid))
 	{
 		/*
-		 *  One complexity is that the table definition might not require
-		 *	the creation of a TOAST table, and the TOAST table might have
-		 *	been created long after table creation, when the table was
-		 *	loaded with wide data.  By setting the TOAST relfilenode we
-		 *	force creation of the TOAST heap and TOAST index by the
-		 *	backend so we can cleanly migrate the files during binary
-		 *	migration.
+		 * One complexity is that the table definition might not require the
+		 * creation of a TOAST table, and the TOAST table might have been
+		 * created long after table creation, when the table was loaded with
+		 * wide data.  By setting the TOAST relfilenode we force creation of
+		 * the TOAST heap and TOAST index by the backend so we can cleanly
+		 * migrate the files during binary migration.
 		 */
 
 		appendPQExpBuffer(upgrade_buffer,
-			"SELECT binary_upgrade.set_next_toast_relfilenode('%u'::pg_catalog.oid);\n",
-			pg_class_reltoastrelid);
+						  "SELECT binary_upgrade.set_next_toast_relfilenode('%u'::pg_catalog.oid);\n",
+						  pg_class_reltoastrelid);
 
 		/* every toast table has an index */
 		appendPQExpBuffer(upgrade_buffer,
-			"SELECT binary_upgrade.set_next_index_relfilenode('%u'::pg_catalog.oid);\n",
-			pg_class_reltoastidxid);
+						  "SELECT binary_upgrade.set_next_index_relfilenode('%u'::pg_catalog.oid);\n",
+						  pg_class_reltoastidxid);
 	}
 	appendPQExpBuffer(upgrade_buffer, "\n");
 
@@ -2612,7 +2611,7 @@ getTypes(int *numTypes)
 		AssignDumpId(&tyinfo[i].dobj);
 		tyinfo[i].dobj.name = strdup(PQgetvalue(res, i, i_typname));
 		tyinfo[i].dobj.namespace = findNamespace(atooid(PQgetvalue(res, i, i_typnamespace)),
-												tyinfo[i].dobj.catId.oid);
+												 tyinfo[i].dobj.catId.oid);
 		tyinfo[i].rolname = strdup(PQgetvalue(res, i, i_rolname));
 		tyinfo[i].typelem = atooid(PQgetvalue(res, i, i_typelem));
 		tyinfo[i].typrelid = atooid(PQgetvalue(res, i, i_typrelid));
@@ -3958,7 +3957,7 @@ getIndexes(TableInfo tblinfo[], int numTables)
 							  "c.condeferrable, c.condeferred, "
 							  "c.tableoid AS contableoid, "
 							  "c.oid AS conoid, "
-							  "pg_catalog.pg_get_constraintdef(c.oid, false) AS condef, "
+				  "pg_catalog.pg_get_constraintdef(c.oid, false) AS condef, "
 							  "(SELECT spcname FROM pg_catalog.pg_tablespace s WHERE s.oid = t.reltablespace) AS tablespace, "
 							"array_to_string(t.reloptions, ', ') AS options "
 							  "FROM pg_catalog.pg_index i "
@@ -4586,7 +4585,7 @@ getTriggers(TableInfo tblinfo[], int numTables)
 			appendPQExpBuffer(query,
 							  "SELECT tgname, "
 							  "tgfoid::pg_catalog.regproc AS tgfname, "
-							  "pg_catalog.pg_get_triggerdef(oid, false) AS tgdef, "
+						"pg_catalog.pg_get_triggerdef(oid, false) AS tgdef, "
 							  "tgenabled, tableoid, oid "
 							  "FROM pg_catalog.pg_trigger t "
 							  "WHERE tgrelid = '%u'::pg_catalog.oid "
@@ -5112,8 +5111,8 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 							  "a.attstattarget, a.attstorage, t.typstorage, "
 							  "a.attnotnull, a.atthasdef, a.attisdropped, "
 							  "a.attlen, a.attalign, a.attislocal, "
-				   "pg_catalog.format_type(t.oid,a.atttypmod) AS atttypname, "
-							"array_to_string(attoptions, ', ') AS attoptions "
+				  "pg_catalog.format_type(t.oid,a.atttypmod) AS atttypname, "
+						   "array_to_string(attoptions, ', ') AS attoptions "
 			 "FROM pg_catalog.pg_attribute a LEFT JOIN pg_catalog.pg_type t "
 							  "ON a.atttypid = t.oid "
 							  "WHERE a.attrelid = '%u'::pg_catalog.oid "
@@ -5128,7 +5127,7 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 							  "a.attstattarget, a.attstorage, t.typstorage, "
 							  "a.attnotnull, a.atthasdef, a.attisdropped, "
 							  "a.attlen, a.attalign, a.attislocal, "
-				   "pg_catalog.format_type(t.oid,a.atttypmod) AS atttypname, "
+				  "pg_catalog.format_type(t.oid,a.atttypmod) AS atttypname, "
 							  "'' AS attoptions "
 			 "FROM pg_catalog.pg_attribute a LEFT JOIN pg_catalog.pg_type t "
 							  "ON a.atttypid = t.oid "
@@ -6035,7 +6034,7 @@ getDefaultACLs(int *numDefaultACLs)
 
 	for (i = 0; i < ntups; i++)
 	{
-		Oid		nspid = atooid(PQgetvalue(res, i, i_defaclnamespace));
+		Oid			nspid = atooid(PQgetvalue(res, i, i_defaclnamespace));
 
 		daclinfo[i].dobj.objType = DO_DEFAULT_ACL;
 		daclinfo[i].dobj.catId.tableoid = atooid(PQgetvalue(res, i, i_tableoid));
@@ -6046,7 +6045,7 @@ getDefaultACLs(int *numDefaultACLs)
 
 		if (nspid != InvalidOid)
 			daclinfo[i].dobj.namespace = findNamespace(nspid,
-													   daclinfo[i].dobj.catId.oid);
+												 daclinfo[i].dobj.catId.oid);
 		else
 			daclinfo[i].dobj.namespace = NULL;
 
@@ -6651,9 +6650,9 @@ dumpEnumType(Archive *fout, TypeInfo *tyinfo)
 			if (i == 0)
 				appendPQExpBuffer(q, "\n-- For binary upgrade, must preserve pg_enum oids\n");
 			appendPQExpBuffer(q,
-				"SELECT binary_upgrade.add_pg_enum_label('%u'::pg_catalog.oid, "
-				"'%u'::pg_catalog.oid, ",
-				enum_oid, tyinfo->dobj.catId.oid);
+			 "SELECT binary_upgrade.add_pg_enum_label('%u'::pg_catalog.oid, "
+							  "'%u'::pg_catalog.oid, ",
+							  enum_oid, tyinfo->dobj.catId.oid);
 			appendStringLiteralAH(q, label, fout);
 			appendPQExpBuffer(q, ");\n");
 		}
@@ -7208,8 +7207,8 @@ dumpCompositeType(Archive *fout, TypeInfo *tyinfo)
 	/* We assume here that remoteVersion must be at least 70300 */
 
 	appendPQExpBuffer(query, "SELECT a.attname, "
-			 "pg_catalog.format_type(a.atttypid, a.atttypmod) AS atttypdefn, "
-			 		  "typrelid "
+			"pg_catalog.format_type(a.atttypid, a.atttypmod) AS atttypdefn, "
+					  "typrelid "
 					  "FROM pg_catalog.pg_type t, pg_catalog.pg_attribute a "
 					  "WHERE t.oid = '%u'::pg_catalog.oid "
 					  "AND a.attrelid = t.typrelid "
@@ -7234,8 +7233,8 @@ dumpCompositeType(Archive *fout, TypeInfo *tyinfo)
 
 	if (binary_upgrade)
 	{
-		Oid typrelid = atooid(PQgetvalue(res, 0, i_typrelid));
-		
+		Oid			typrelid = atooid(PQgetvalue(res, 0, i_typrelid));
+
 		binary_upgrade_set_type_oids_by_type_oid(q, tyinfo->dobj.catId.oid);
 		binary_upgrade_set_relfilenodes(q, typrelid, false);
 	}
@@ -7302,15 +7301,15 @@ static void
 dumpCompositeTypeColComments(Archive *fout, TypeInfo *tyinfo)
 {
 	CommentItem *comments;
-	int ncomments;
-	PGresult *res;
+	int			ncomments;
+	PGresult   *res;
 	PQExpBuffer query;
 	PQExpBuffer target;
-	Oid pgClassOid;
-	int i;
-	int ntups;
-	int i_attname;
-	int i_attnum;
+	Oid			pgClassOid;
+	int			i;
+	int			ntups;
+	int			i_attname;
+	int			i_attnum;
 
 	query = createPQExpBuffer();
 
@@ -7431,7 +7430,7 @@ dumpShellType(Archive *fout, ShellTypeInfo *stinfo)
 
 	if (binary_upgrade)
 		binary_upgrade_set_type_oids_by_type_oid(q,
-								stinfo->baseType->dobj.catId.oid);
+										   stinfo->baseType->dobj.catId.oid);
 
 	appendPQExpBuffer(q, "CREATE TYPE %s;\n",
 					  fmtId(stinfo->dobj.name));
@@ -7561,7 +7560,7 @@ dumpProcLang(Archive *fout, ProcLangInfo *plang)
 			/* Cope with possibility that inline is in different schema */
 			if (inlineInfo->dobj.namespace != funcInfo->dobj.namespace)
 				appendPQExpBuffer(defqry, "%s.",
-							fmtId(inlineInfo->dobj.namespace->dobj.name));
+							   fmtId(inlineInfo->dobj.namespace->dobj.name));
 			appendPQExpBuffer(defqry, "%s",
 							  fmtId(inlineInfo->dobj.name));
 		}
@@ -7579,10 +7578,10 @@ dumpProcLang(Archive *fout, ProcLangInfo *plang)
 	else
 	{
 		/*
-		 * If not dumping parameters, then use CREATE OR REPLACE so that
-		 * the command will not fail if the language is preinstalled in the
-		 * target database.  We restrict the use of REPLACE to this case so
-		 * as to eliminate the risk of replacing a language with incompatible
+		 * If not dumping parameters, then use CREATE OR REPLACE so that the
+		 * command will not fail if the language is preinstalled in the target
+		 * database.  We restrict the use of REPLACE to this case so as to
+		 * eliminate the risk of replacing a language with incompatible
 		 * parameter settings: this command will only succeed at all if there
 		 * is a pg_pltemplate entry, and if there is one, the existing entry
 		 * must match it too.
@@ -10333,7 +10332,7 @@ dumpDefaultACL(Archive *fout, DefaultACLInfo *daclinfo)
 
 	ArchiveEntry(fout, daclinfo->dobj.catId, daclinfo->dobj.dumpId,
 				 tag->data,
-				 daclinfo->dobj.namespace ? daclinfo->dobj.namespace->dobj.name : NULL,
+	   daclinfo->dobj.namespace ? daclinfo->dobj.namespace->dobj.name : NULL,
 				 NULL,
 				 daclinfo->defaclrole,
 				 false, "DEFAULT ACL", SECTION_NONE,
@@ -10489,13 +10488,13 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 	int			j,
 				k;
 	bool		toast_set = false;
-	
+
 	/* Make sure we are in proper schema */
 	selectSourceSchema(tbinfo->dobj.namespace->dobj.name);
 
 	if (binary_upgrade)
 		toast_set = binary_upgrade_set_type_oids_by_rel_oid(q,
-												tbinfo->dobj.catId.oid);
+													 tbinfo->dobj.catId.oid);
 
 	/* Is it a table or a view? */
 	if (tbinfo->relkind == RELKIND_VIEW)
@@ -10597,15 +10596,16 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 				 * binary-upgrade case, where we're not doing normal
 				 * inheritance) or if it's to be printed separately.
 				 */
-				bool has_default = (tbinfo->attrdefs[j] != NULL
-									&& (!tbinfo->inhAttrDef[j] || binary_upgrade)
-									&& !tbinfo->attrdefs[j]->separate);
+				bool		has_default = (tbinfo->attrdefs[j] != NULL
+								&& (!tbinfo->inhAttrDef[j] || binary_upgrade)
+										   && !tbinfo->attrdefs[j]->separate);
+
 				/*
-				 * Not Null constraint --- suppress if inherited, except
-				 * in binary-upgrade case.
+				 * Not Null constraint --- suppress if inherited, except in
+				 * binary-upgrade case.
 				 */
-				bool has_notnull =  (tbinfo->notnull[j]
-									 &&	(!tbinfo->inhNotNull[j] || binary_upgrade));
+				bool		has_notnull = (tbinfo->notnull[j]
+							  && (!tbinfo->inhNotNull[j] || binary_upgrade));
 
 				if (tbinfo->reloftype && !has_default && !has_notnull)
 					continue;
@@ -10734,15 +10734,15 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 		appendPQExpBuffer(q, ";\n");
 
 		/*
-		 * To create binary-compatible heap files, we have to ensure the
-		 * same physical column order, including dropped columns, as in the
-		 * original.  Therefore, we create dropped columns above and drop
-		 * them here, also updating their attlen/attalign values so that
-		 * the dropped column can be skipped properly.  (We do not bother
-		 * with restoring the original attbyval setting.)  Also, inheritance
+		 * To create binary-compatible heap files, we have to ensure the same
+		 * physical column order, including dropped columns, as in the
+		 * original.  Therefore, we create dropped columns above and drop them
+		 * here, also updating their attlen/attalign values so that the
+		 * dropped column can be skipped properly.	(We do not bother with
+		 * restoring the original attbyval setting.)  Also, inheritance
 		 * relationships are set up by doing ALTER INHERIT rather than using
-		 * an INHERITS clause --- the latter would possibly mess up the
-		 * column order.  That also means we have to take care about setting
+		 * an INHERITS clause --- the latter would possibly mess up the column
+		 * order.  That also means we have to take care about setting
 		 * attislocal correctly, plus fix up any inherited CHECK constraints.
 		 */
 		if (binary_upgrade)
@@ -10814,7 +10814,7 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 									  fmtId(tbinfo->dobj.name));
 					if (parentRel->dobj.namespace != tbinfo->dobj.namespace)
 						appendPQExpBuffer(q, "%s.",
-										  fmtId(parentRel->dobj.namespace->dobj.name));
+								fmtId(parentRel->dobj.namespace->dobj.name));
 					appendPQExpBuffer(q, "%s;\n",
 									  fmtId(parentRel->dobj.name));
 				}
@@ -11142,7 +11142,7 @@ dumpConstraint(Archive *fout, ConstraintInfo *coninfo)
 		else
 		{
 			appendPQExpBuffer(q, "%s (",
-							  coninfo->contype == 'p' ? "PRIMARY KEY" : "UNIQUE");
+						 coninfo->contype == 'p' ? "PRIMARY KEY" : "UNIQUE");
 			for (k = 0; k < indxinfo->indnkeys; k++)
 			{
 				int			indkey = (int) indxinfo->indkeys[k];
@@ -11579,8 +11579,8 @@ dumpSequence(Archive *fout, TableInfo *tbinfo)
 
 		appendPQExpBuffer(query, ";\n");
 
-		/* binary_upgrade:  no need to clear TOAST table oid */
-		
+		/* binary_upgrade:	no need to clear TOAST table oid */
+
 		ArchiveEntry(fout, tbinfo->dobj.catId, tbinfo->dobj.dumpId,
 					 tbinfo->dobj.name,
 					 tbinfo->dobj.namespace->dobj.name,
@@ -11785,7 +11785,7 @@ dumpTrigger(Archive *fout, TriggerInfo *tginfo)
 		for (findx = 0; findx < tginfo->tgnargs; findx++)
 		{
 			/* find the embedded null that terminates this trigger argument */
-			size_t	tlen = strlen(p);
+			size_t		tlen = strlen(p);
 
 			if (p + tlen >= tgargs + lentgargs)
 			{

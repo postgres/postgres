@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/be-secure.c,v 1.98 2010/02/25 13:26:15 mha Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/be-secure.c,v 1.99 2010/02/26 02:00:42 momjian Exp $
  *
  *	  Since the server static private key ($DataDir/server.key)
  *	  will normally be stored unencrypted so that the database
@@ -98,7 +98,7 @@ static const char *SSLerrmessage(void);
  *	(total in both directions) before we require renegotiation.
  *	Set to 0 to disable renegotiation completely.
  */
-int ssl_renegotiation_limit;
+int			ssl_renegotiation_limit;
 
 #ifdef USE_SSL
 static SSL_CTX *SSL_context = NULL;
@@ -973,8 +973,8 @@ aloop:
 		else
 		{
 			/*
-			 * Reject embedded NULLs in certificate common name to prevent attacks like
-			 * CVE-2009-4034.
+			 * Reject embedded NULLs in certificate common name to prevent
+			 * attacks like CVE-2009-4034.
 			 */
 			if (r != strlen(port->peer_cn))
 			{

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/analyze.c,v 1.151 2010/02/14 18:42:13 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/analyze.c,v 1.152 2010/02/26 02:00:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -99,11 +99,11 @@ static double random_fract(void);
 static double init_selection_state(int n);
 static double get_next_S(double t, int n, double *stateptr);
 static int	compare_rows(const void *a, const void *b);
-static int	acquire_inherited_sample_rows(Relation onerel,
+static int acquire_inherited_sample_rows(Relation onerel,
 							  HeapTuple *rows, int targrows,
 							  double *totalrows, double *totaldeadrows);
 static void update_attstats(Oid relid, bool inh,
-							int natts, VacAttrStats **vacattrstats);
+				int natts, VacAttrStats **vacattrstats);
 static Datum std_fetch_func(VacAttrStatsP stats, int rownum, bool *isNull);
 static Datum ind_fetch_func(VacAttrStatsP stats, int rownum, bool *isNull);
 
@@ -289,8 +289,8 @@ do_analyze_rel(Relation onerel, VacuumStmt *vacstmt,
 						RelationGetRelationName(onerel))));
 
 	/*
-	 * Set up a working context so that we can easily free whatever junk
-	 * gets created.
+	 * Set up a working context so that we can easily free whatever junk gets
+	 * created.
 	 */
 	anl_context = AllocSetContextCreate(CurrentMemoryContext,
 										"Analyze",
@@ -364,8 +364,8 @@ do_analyze_rel(Relation onerel, VacuumStmt *vacstmt,
 	 * Open all indexes of the relation, and see if there are any analyzable
 	 * columns in the indexes.	We do not analyze index columns if there was
 	 * an explicit column list in the ANALYZE command, however.  If we are
-	 * doing a recursive scan, we don't want to touch the parent's indexes
-	 * at all.
+	 * doing a recursive scan, we don't want to touch the parent's indexes at
+	 * all.
 	 */
 	if (!inh)
 		vac_open_indexes(onerel, AccessShareLock, &nindexes, &Irel);
@@ -495,7 +495,7 @@ do_analyze_rel(Relation onerel, VacuumStmt *vacstmt,
 		{
 			VacAttrStats *stats = vacattrstats[i];
 			AttributeOpts *aopt =
-				get_attribute_options(onerel->rd_id, stats->attr->attnum);
+			get_attribute_options(onerel->rd_id, stats->attr->attnum);
 
 			stats->rows = rows;
 			stats->tupDesc = onerel->rd_att;
@@ -510,8 +510,9 @@ do_analyze_rel(Relation onerel, VacuumStmt *vacstmt,
 			 */
 			if (aopt != NULL)
 			{
-				float8	n_distinct =
-					inh ? aopt->n_distinct_inherited : aopt->n_distinct;
+				float8		n_distinct =
+				inh ? aopt->n_distinct_inherited : aopt->n_distinct;
+
 				if (n_distinct != 0.0)
 					stats->stadistinct = n_distinct;
 			}
@@ -546,8 +547,8 @@ do_analyze_rel(Relation onerel, VacuumStmt *vacstmt,
 	}
 
 	/*
-	 * Update pages/tuples stats in pg_class, but not if we're inside a
-	 * VACUUM that got a more precise number.
+	 * Update pages/tuples stats in pg_class, but not if we're inside a VACUUM
+	 * that got a more precise number.
 	 */
 	if (update_reltuples)
 		vac_update_relstats(onerel,
@@ -574,10 +575,9 @@ do_analyze_rel(Relation onerel, VacuumStmt *vacstmt,
 	}
 
 	/*
-	 * Report ANALYZE to the stats collector, too; likewise, tell it to
-	 * adopt these numbers only if we're not inside a VACUUM that got a
-	 * better number.  However, a call with inh = true shouldn't reset
-	 * the stats.
+	 * Report ANALYZE to the stats collector, too; likewise, tell it to adopt
+	 * these numbers only if we're not inside a VACUUM that got a better
+	 * number.	However, a call with inh = true shouldn't reset the stats.
 	 */
 	if (!inh)
 		pgstat_report_analyze(onerel, update_reltuples,
@@ -762,8 +762,8 @@ compute_index_stats(Relation onerel, double totalrows,
 			{
 				VacAttrStats *stats = thisdata->vacattrstats[i];
 				AttributeOpts *aopt =
-					get_attribute_options(stats->attr->attrelid,
-						stats->attr->attnum);
+				get_attribute_options(stats->attr->attrelid,
+									  stats->attr->attnum);
 
 				stats->exprvals = exprvals + i;
 				stats->exprnulls = exprnulls + i;
@@ -1436,10 +1436,10 @@ acquire_inherited_sample_rows(Relation onerel, HeapTuple *rows, int targrows,
 	}
 
 	/*
-	 * Now sample rows from each relation, proportionally to its fraction
-	 * of the total block count.  (This might be less than desirable if the
-	 * child rels have radically different free-space percentages, but it's
-	 * not clear that it's worth working harder.)
+	 * Now sample rows from each relation, proportionally to its fraction of
+	 * the total block count.  (This might be less than desirable if the child
+	 * rels have radically different free-space percentages, but it's not
+	 * clear that it's worth working harder.)
 	 */
 	numrows = 0;
 	*totalrows = 0;
@@ -1451,7 +1451,7 @@ acquire_inherited_sample_rows(Relation onerel, HeapTuple *rows, int targrows,
 
 		if (childblocks > 0)
 		{
-			int		childtargrows;
+			int			childtargrows;
 
 			childtargrows = (int) rint(targrows * childblocks / totalblocks);
 			/* Make sure we don't overrun due to roundoff error */
@@ -1478,10 +1478,10 @@ acquire_inherited_sample_rows(Relation onerel, HeapTuple *rows, int targrows,
 
 					map = convert_tuples_by_name(RelationGetDescr(childrel),
 												 RelationGetDescr(onerel),
-												 gettext_noop("could not convert row type"));
+								 gettext_noop("could not convert row type"));
 					if (map != NULL)
 					{
-						int		j;
+						int			j;
 
 						for (j = 0; j < childrows; j++)
 						{

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.149 2010/02/14 18:42:18 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.150 2010/02/26 02:01:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -332,8 +332,8 @@ do_compile(FunctionCallInfo fcinfo,
 	plpgsql_curr_compile = function;
 
 	/*
-	 * All the permanent output of compilation (e.g. parse tree) is kept in
-	 * a per-function memory context, so it can be reclaimed easily.
+	 * All the permanent output of compilation (e.g. parse tree) is kept in a
+	 * per-function memory context, so it can be reclaimed easily.
 	 */
 	func_cxt = AllocSetContextCreate(TopMemoryContext,
 									 "PL/PgSQL function context",
@@ -364,7 +364,7 @@ do_compile(FunctionCallInfo fcinfo,
 	plpgsql_nDatums = 0;
 	/* This is short-lived, so needn't allocate in function's cxt */
 	plpgsql_Datums = MemoryContextAlloc(compile_tmp_cxt,
-										sizeof(PLpgSQL_datum *) * datums_alloc);
+									 sizeof(PLpgSQL_datum *) * datums_alloc);
 	datums_last = 0;
 
 	switch (is_trigger)
@@ -640,7 +640,7 @@ do_compile(FunctionCallInfo fcinfo,
 
 			/* Add the variable tg_argv */
 			var = plpgsql_build_variable("tg_argv", 0,
-										 plpgsql_build_datatype(TEXTARRAYOID, -1),
+									plpgsql_build_datatype(TEXTARRAYOID, -1),
 										 true);
 			function->tg_argv_varno = var->dno;
 
@@ -800,8 +800,8 @@ plpgsql_compile_inline(char *proc_source)
 	fmgr_info(typinput, &(function->fn_retinput));
 
 	/*
-	 * Remember if function is STABLE/IMMUTABLE.  XXX would it be better
-	 * to set this TRUE inside a read-only transaction?  Not clear.
+	 * Remember if function is STABLE/IMMUTABLE.  XXX would it be better to
+	 * set this TRUE inside a read-only transaction?  Not clear.
 	 */
 	function->fn_readonly = false;
 
@@ -970,8 +970,8 @@ plpgsql_post_column_ref(ParseState *pstate, ColumnRef *cref, Node *var)
 	if (myvar != NULL && var != NULL)
 	{
 		/*
-		 * We could leave it to the core parser to throw this error, but
-		 * we can add a more useful detail message than the core could.
+		 * We could leave it to the core parser to throw this error, but we
+		 * can add a more useful detail message than the core could.
 		 */
 		ereport(ERROR,
 				(errcode(ERRCODE_AMBIGUOUS_COLUMN),
@@ -1147,8 +1147,8 @@ resolve_column_ref(PLpgSQL_expr *expr, ColumnRef *cref)
 				/*
 				 * We should not get here, because a RECFIELD datum should
 				 * have been built at parse time for every possible qualified
-				 * reference to fields of this record.  But if we do, fall
-				 * out and return NULL.
+				 * reference to fields of this record.	But if we do, fall out
+				 * and return NULL.
 				 */
 			}
 			break;
@@ -1239,8 +1239,8 @@ plpgsql_parse_word(char *word1, const char *yytxt,
 
 	/*
 	 * We should do nothing in DECLARE sections.  In SQL expressions, there's
-	 * no need to do anything either --- lookup will happen when the expression
-	 * is compiled.
+	 * no need to do anything either --- lookup will happen when the
+	 * expression is compiled.
 	 */
 	if (plpgsql_IdentifierLookup == IDENTIFIER_LOOKUP_NORMAL)
 	{
@@ -1299,9 +1299,9 @@ plpgsql_parse_dblword(char *word1, char *word2,
 						makeString(word2));
 
 	/*
-	 * We should do nothing in DECLARE sections.  In SQL expressions,
-	 * we really only need to make sure that RECFIELD datums are created
-	 * when needed.
+	 * We should do nothing in DECLARE sections.  In SQL expressions, we
+	 * really only need to make sure that RECFIELD datums are created when
+	 * needed.
 	 */
 	if (plpgsql_IdentifierLookup != IDENTIFIER_LOOKUP_DECLARE)
 	{
@@ -1319,7 +1319,7 @@ plpgsql_parse_dblword(char *word1, char *word2,
 					/* Block-qualified reference to scalar variable. */
 					wdatum->datum = plpgsql_Datums[ns->itemno];
 					wdatum->ident = NULL;
-					wdatum->quoted = false; /* not used */
+					wdatum->quoted = false;		/* not used */
 					wdatum->idents = idents;
 					return true;
 
@@ -1349,7 +1349,7 @@ plpgsql_parse_dblword(char *word1, char *word2,
 						wdatum->datum = plpgsql_Datums[ns->itemno];
 					}
 					wdatum->ident = NULL;
-					wdatum->quoted = false; /* not used */
+					wdatum->quoted = false;		/* not used */
 					wdatum->idents = idents;
 					return true;
 
@@ -1357,8 +1357,8 @@ plpgsql_parse_dblword(char *word1, char *word2,
 					if (nnames == 1)
 					{
 						/*
-						 * First word is a row name, so second word could be
-						 * a field in this row.  Again, no error now if it
+						 * First word is a row name, so second word could be a
+						 * field in this row.  Again, no error now if it
 						 * isn't.
 						 */
 						PLpgSQL_row *row;
@@ -1420,9 +1420,9 @@ plpgsql_parse_tripword(char *word1, char *word2, char *word3,
 						makeString(word3));
 
 	/*
-	 * We should do nothing in DECLARE sections.  In SQL expressions,
-	 * we really only need to make sure that RECFIELD datums are created
-	 * when needed.
+	 * We should do nothing in DECLARE sections.  In SQL expressions, we
+	 * really only need to make sure that RECFIELD datums are created when
+	 * needed.
 	 */
 	if (plpgsql_IdentifierLookup != IDENTIFIER_LOOKUP_DECLARE)
 	{
@@ -1438,52 +1438,52 @@ plpgsql_parse_tripword(char *word1, char *word2, char *word3,
 			switch (ns->itemtype)
 			{
 				case PLPGSQL_NSTYPE_REC:
-				{
-					/*
-					 * words 1/2 are a record name, so third word could be a
-					 * field in this record.
-					 */
-					PLpgSQL_recfield *new;
+					{
+						/*
+						 * words 1/2 are a record name, so third word could be
+						 * a field in this record.
+						 */
+						PLpgSQL_recfield *new;
 
-					new = palloc(sizeof(PLpgSQL_recfield));
-					new->dtype = PLPGSQL_DTYPE_RECFIELD;
-					new->fieldname = pstrdup(word3);
-					new->recparentno = ns->itemno;
+						new = palloc(sizeof(PLpgSQL_recfield));
+						new->dtype = PLPGSQL_DTYPE_RECFIELD;
+						new->fieldname = pstrdup(word3);
+						new->recparentno = ns->itemno;
 
-					plpgsql_adddatum((PLpgSQL_datum *) new);
+						plpgsql_adddatum((PLpgSQL_datum *) new);
 
-					wdatum->datum = (PLpgSQL_datum *) new;
-					wdatum->ident = NULL;
-					wdatum->quoted = false; /* not used */
-					wdatum->idents = idents;
-					return true;
-				}
+						wdatum->datum = (PLpgSQL_datum *) new;
+						wdatum->ident = NULL;
+						wdatum->quoted = false; /* not used */
+						wdatum->idents = idents;
+						return true;
+					}
 
 				case PLPGSQL_NSTYPE_ROW:
-				{
-					/*
-					 * words 1/2 are a row name, so third word could be a
-					 * field in this row.
-					 */
-					PLpgSQL_row *row;
-					int			i;
-
-					row = (PLpgSQL_row *) (plpgsql_Datums[ns->itemno]);
-					for (i = 0; i < row->nfields; i++)
 					{
-						if (row->fieldnames[i] &&
-							strcmp(row->fieldnames[i], word3) == 0)
+						/*
+						 * words 1/2 are a row name, so third word could be a
+						 * field in this row.
+						 */
+						PLpgSQL_row *row;
+						int			i;
+
+						row = (PLpgSQL_row *) (plpgsql_Datums[ns->itemno]);
+						for (i = 0; i < row->nfields; i++)
 						{
-							wdatum->datum = plpgsql_Datums[row->varnos[i]];
-							wdatum->ident = NULL;
-							wdatum->quoted = false; /* not used */
-							wdatum->idents = idents;
-							return true;
+							if (row->fieldnames[i] &&
+								strcmp(row->fieldnames[i], word3) == 0)
+							{
+								wdatum->datum = plpgsql_Datums[row->varnos[i]];
+								wdatum->ident = NULL;
+								wdatum->quoted = false; /* not used */
+								wdatum->idents = idents;
+								return true;
+							}
 						}
+						/* fall through to return CWORD */
+						break;
 					}
-					/* fall through to return CWORD */
-					break;
-				}
 
 				default:
 					break;
@@ -1533,8 +1533,8 @@ plpgsql_parse_wordtype(char *ident)
 	}
 
 	/*
-	 * Word wasn't found in the namespace stack. Try to find a data type
-	 * with that name, but ignore shell types and complex types.
+	 * Word wasn't found in the namespace stack. Try to find a data type with
+	 * that name, but ignore shell types and complex types.
 	 */
 	typeTup = LookupTypeName(NULL, makeTypeName(ident), NULL);
 	if (typeTup)
@@ -1586,9 +1586,9 @@ plpgsql_parse_cwordtype(List *idents)
 	if (list_length(idents) == 2)
 	{
 		/*
-		 * Do a lookup in the current namespace stack.
-		 * We don't need to check number of names matched, because we will
-		 * only consider scalar variables.
+		 * Do a lookup in the current namespace stack. We don't need to check
+		 * number of names matched, because we will only consider scalar
+		 * variables.
 		 */
 		nse = plpgsql_ns_lookup(plpgsql_ns_top(), false,
 								strVal(linitial(idents)),

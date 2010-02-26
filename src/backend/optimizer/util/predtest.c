@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/predtest.c,v 1.32 2010/02/25 20:59:53 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/predtest.c,v 1.33 2010/02/26 02:00:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -657,10 +657,10 @@ predicate_refuted_by_recurse(Node *clause, Node *predicate)
 			/*
 			 * If A is a strong NOT-clause, A R=> B if B equals A's arg
 			 *
-			 * We cannot make the stronger conclusion that B is refuted if
-			 * B implies A's arg; that would only prove that B is not-TRUE,
-			 * not that it's not NULL either.  Hence use equal() rather than
-			 * predicate_implied_by_recurse().  We could do the latter if we
+			 * We cannot make the stronger conclusion that B is refuted if B
+			 * implies A's arg; that would only prove that B is not-TRUE, not
+			 * that it's not NULL either.  Hence use equal() rather than
+			 * predicate_implied_by_recurse().	We could do the latter if we
 			 * ever had a need for the weak form of refutation.
 			 */
 			not_arg = extract_strong_not_arg(clause);
@@ -1678,7 +1678,7 @@ get_btree_test_op(Oid pred_op, Oid clause_op, bool refute_it)
 		else if (OidIsValid(clause_op_negator))
 		{
 			clause_tuple = SearchSysCache2(AMOPOPID,
-										   ObjectIdGetDatum(clause_op_negator),
+										 ObjectIdGetDatum(clause_op_negator),
 										   ObjectIdGetDatum(opfamily_id));
 			if (HeapTupleIsValid(clause_tuple))
 			{

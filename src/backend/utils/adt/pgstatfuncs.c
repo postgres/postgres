@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/pgstatfuncs.c,v 1.59 2010/01/28 14:25:41 mha Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/pgstatfuncs.c,v 1.60 2010/02/26 02:01:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1116,7 +1116,7 @@ pg_stat_reset(PG_FUNCTION_ARGS)
 Datum
 pg_stat_reset_shared(PG_FUNCTION_ARGS)
 {
-	char	*target = text_to_cstring(PG_GETARG_TEXT_PP(0));
+	char	   *target = text_to_cstring(PG_GETARG_TEXT_PP(0));
 
 	pgstat_reset_shared_counters(target);
 
@@ -1127,7 +1127,7 @@ pg_stat_reset_shared(PG_FUNCTION_ARGS)
 Datum
 pg_stat_reset_single_table_counters(PG_FUNCTION_ARGS)
 {
-	Oid		taboid = PG_GETARG_OID(0);
+	Oid			taboid = PG_GETARG_OID(0);
 
 	pgstat_reset_single_counter(taboid, RESET_TABLE);
 
@@ -1137,7 +1137,7 @@ pg_stat_reset_single_table_counters(PG_FUNCTION_ARGS)
 Datum
 pg_stat_reset_single_function_counters(PG_FUNCTION_ARGS)
 {
-	Oid		funcoid = PG_GETARG_OID(0);
+	Oid			funcoid = PG_GETARG_OID(0);
 
 	pgstat_reset_single_counter(funcoid, RESET_FUNCTION);
 

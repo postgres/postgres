@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/joinpath.c,v 1.129 2010/01/05 23:25:36 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/joinpath.c,v 1.130 2010/02/26 02:00:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -161,7 +161,7 @@ add_paths_to_joinrel(PlannerInfo *root,
  * We already know that the clause is a binary opclause referencing only the
  * rels in the current join.  The point here is to check whether it has the
  * form "outerrel_expr op innerrel_expr" or "innerrel_expr op outerrel_expr",
- * rather than mixing outer and inner vars on either side.  If it matches,
+ * rather than mixing outer and inner vars on either side.	If it matches,
  * we set the transient flag outer_is_left to identify which side is which.
  */
 static inline bool
@@ -212,7 +212,7 @@ join_is_removable(PlannerInfo *root,
 
 	/*
 	 * Currently, we only know how to remove left joins to a baserel with
-	 * unique indexes.  We can check most of these criteria pretty trivially
+	 * unique indexes.	We can check most of these criteria pretty trivially
 	 * to avoid doing useless extra work.  But checking whether any of the
 	 * indexes are unique would require iterating over the indexlist, so for
 	 * now we just make sure there are indexes of some sort or other.  If none
@@ -225,13 +225,12 @@ join_is_removable(PlannerInfo *root,
 		return false;
 
 	/*
-	 * We can't remove the join if any inner-rel attributes are used above
-	 * the join.
+	 * We can't remove the join if any inner-rel attributes are used above the
+	 * join.
 	 *
-	 * Note that this test only detects use of inner-rel attributes in
-	 * higher join conditions and the target list.  There might be such
-	 * attributes in pushed-down conditions at this join, too.  We check
-	 * that case below.
+	 * Note that this test only detects use of inner-rel attributes in higher
+	 * join conditions and the target list.  There might be such attributes in
+	 * pushed-down conditions at this join, too.  We check that case below.
 	 *
 	 * As a micro-optimization, it seems better to start with max_attr and
 	 * count down rather than starting with min_attr and counting up, on the
@@ -249,9 +248,9 @@ join_is_removable(PlannerInfo *root,
 	/*
 	 * Search for mergejoinable clauses that constrain the inner rel against
 	 * either the outer rel or a pseudoconstant.  If an operator is
-	 * mergejoinable then it behaves like equality for some btree opclass,
-	 * so it's what we want.  The mergejoinability test also eliminates
-	 * clauses containing volatile functions, which we couldn't depend on.
+	 * mergejoinable then it behaves like equality for some btree opclass, so
+	 * it's what we want.  The mergejoinability test also eliminates clauses
+	 * containing volatile functions, which we couldn't depend on.
 	 */
 	foreach(l, restrictlist)
 	{
@@ -259,10 +258,10 @@ join_is_removable(PlannerInfo *root,
 
 		/*
 		 * If we find a pushed-down clause, it must have come from above the
-		 * outer join and it must contain references to the inner rel.  (If
-		 * it had only outer-rel variables, it'd have been pushed down into
-		 * the outer rel.)  Therefore, we can conclude that join removal
-		 * is unsafe without any examination of the clause contents.
+		 * outer join and it must contain references to the inner rel.	(If it
+		 * had only outer-rel variables, it'd have been pushed down into the
+		 * outer rel.)	Therefore, we can conclude that join removal is unsafe
+		 * without any examination of the clause contents.
 		 */
 		if (restrictinfo->is_pushed_down)
 			return false;
@@ -289,15 +288,15 @@ join_is_removable(PlannerInfo *root,
 
 		/*
 		 * Note: can_join won't be set for a restriction clause, but
-		 * mergeopfamilies will be if it has a mergejoinable operator
-		 * and doesn't contain volatile functions.
+		 * mergeopfamilies will be if it has a mergejoinable operator and
+		 * doesn't contain volatile functions.
 		 */
 		if (restrictinfo->mergeopfamilies == NIL)
 			continue;			/* not mergejoinable */
 
 		/*
-		 * The clause certainly doesn't refer to anything but the given
-		 * rel.  If either side is pseudoconstant then we can use it.
+		 * The clause certainly doesn't refer to anything but the given rel.
+		 * If either side is pseudoconstant then we can use it.
 		 */
 		if (bms_is_empty(restrictinfo->left_relids))
 		{
@@ -340,13 +339,13 @@ generate_outer_only(PlannerInfo *root, RelOptInfo *joinrel,
 	/*
 	 * For the moment, replicate all of the outerrel's paths as join paths.
 	 * Some of them might not really be interesting above the join, if they
-	 * have sort orderings that have no real use except to do a mergejoin
-	 * for the join we've just found we don't need.  But distinguishing that
-	 * case probably isn't worth the extra code it would take.
+	 * have sort orderings that have no real use except to do a mergejoin for
+	 * the join we've just found we don't need.  But distinguishing that case
+	 * probably isn't worth the extra code it would take.
 	 */
 	foreach(lc, outerrel->pathlist)
 	{
-		Path   *outerpath = (Path *) lfirst(lc);
+		Path	   *outerpath = (Path *) lfirst(lc);
 
 		add_path(joinrel, (Path *)
 				 create_noop_path(root, joinrel, outerpath));
@@ -1189,8 +1188,8 @@ select_mergejoin_clauses(PlannerInfo *root,
 			restrictinfo->mergeopfamilies == NIL)
 		{
 			/*
-			 * The executor can handle extra joinquals that are constants,
-			 * but not anything else, when doing right/full merge join.  (The
+			 * The executor can handle extra joinquals that are constants, but
+			 * not anything else, when doing right/full merge join.  (The
 			 * reason to support constants is so we can do FULL JOIN ON
 			 * FALSE.)
 			 */

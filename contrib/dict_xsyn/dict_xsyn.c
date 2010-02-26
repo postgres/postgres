@@ -6,7 +6,7 @@
  * Copyright (c) 2007-2010, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/contrib/dict_xsyn/dict_xsyn.c,v 1.8 2010/01/02 16:57:32 momjian Exp $
+ *	  $PostgreSQL: pgsql/contrib/dict_xsyn/dict_xsyn.c,v 1.9 2010/02/26 02:00:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -147,7 +147,7 @@ dxsyn_init(PG_FUNCTION_ARGS)
 	List	   *dictoptions = (List *) PG_GETARG_POINTER(0);
 	DictSyn    *d;
 	ListCell   *l;
-	char       *filename = NULL;
+	char	   *filename = NULL;
 
 	d = (DictSyn *) palloc0(sizeof(DictSyn));
 	d->len = 0;

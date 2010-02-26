@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.245 2010/01/02 16:57:46 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.246 2010/02/26 02:00:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1944,8 +1944,8 @@ relation_has_unique_index_for(PlannerInfo *root, RelOptInfo *rel,
 	/* Examine each index of the relation ... */
 	foreach(ic, rel->indexlist)
 	{
-		IndexOptInfo   *ind = (IndexOptInfo *) lfirst(ic);
-		int				c;
+		IndexOptInfo *ind = (IndexOptInfo *) lfirst(ic);
+		int			c;
 
 		/*
 		 * If the index is not unique or if it's a partial index that doesn't
@@ -1964,13 +1964,13 @@ relation_has_unique_index_for(PlannerInfo *root, RelOptInfo *rel,
 
 			foreach(lc, restrictlist)
 			{
-				RestrictInfo   *rinfo = (RestrictInfo *) lfirst(lc);
-				Node   *rexpr;
+				RestrictInfo *rinfo = (RestrictInfo *) lfirst(lc);
+				Node	   *rexpr;
 
 				/*
 				 * The condition's equality operator must be a member of the
-				 * index opfamily, else it is not asserting the right kind
-				 * of equality behavior for this index.  We check this first
+				 * index opfamily, else it is not asserting the right kind of
+				 * equality behavior for this index.  We check this first
 				 * since it's probably cheaper than match_index_to_operand().
 				 */
 				if (!list_member_oid(rinfo->mergeopfamilies, ind->opfamily[c]))

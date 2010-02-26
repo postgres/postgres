@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/src/tools/fsync/test_fsync.c,v 1.26 2009/11/28 15:04:54 momjian Exp $
+ * $PostgreSQL: pgsql/src/tools/fsync/test_fsync.c,v 1.27 2010/02/26 02:01:39 momjian Exp $
  *
  *
  *	test_fsync.c
@@ -30,7 +30,7 @@
 #define FSYNC_FILENAME	"/var/tmp/test_fsync.out"
 #endif
 
-#define WRITE_SIZE	(8 * 1024) /* 8k */
+#define WRITE_SIZE	(8 * 1024)	/* 8k */
 
 #define LABEL_FORMAT	"\t%-30s"
 
@@ -74,7 +74,7 @@ main(int argc, char *argv[])
 	buf = (char *) TYPEALIGN(ALIGNOF_XLOG_BUFFER, full_buf);
 
 	/*
-	 *	Simple write
+	 * Simple write
 	 */
 	printf("Simple 8k write timing:\n");
 	/* write only */
@@ -92,7 +92,7 @@ main(int argc, char *argv[])
 	print_elapse(start_t, stop_t);
 
 	/*
-	 *	Compare file sync methods with one 8k write
+	 * Compare file sync methods with one 8k write
 	 */
 	printf("\nCompare file sync methods using one 8k write:\n");
 
@@ -176,7 +176,7 @@ main(int argc, char *argv[])
 	print_elapse(start_t, stop_t);
 
 	/*
-	 *	Compare file sync methods with two 8k write
+	 * Compare file sync methods with two 8k write
 	 */
 	printf("\nCompare file sync methods using two 8k writes:\n");
 
@@ -266,7 +266,7 @@ main(int argc, char *argv[])
 	print_elapse(start_t, stop_t);
 
 	/*
-	 *	Compare 1 to 2 writes
+	 * Compare 1 to 2 writes
 	 */
 	printf("\nCompare open_sync sizes:\n");
 
@@ -309,7 +309,7 @@ main(int argc, char *argv[])
 #endif
 
 	/*
-	 *	Fsync another file descriptor?
+	 * Fsync another file descriptor?
 	 */
 	printf("\nCompare fsync times on write() and new file descriptors (if the times\n");
 	printf("are similar, fsync() can sync data written on a different descriptor):\n");

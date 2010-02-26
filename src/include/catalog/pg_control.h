@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_control.h,v 1.50 2010/02/17 04:19:40 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_control.h,v 1.51 2010/02/26 02:01:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,10 +42,10 @@ typedef struct CheckPoint
 	pg_time_t	time;			/* time stamp of checkpoint */
 
 	/* Important parameter settings at time of shutdown checkpoints */
-	int		MaxConnections;
-	int		max_prepared_xacts;
-	int		max_locks_per_xact;
-	bool	XLogStandbyInfoMode;
+	int			MaxConnections;
+	int			max_prepared_xacts;
+	int			max_locks_per_xact;
+	bool		XLogStandbyInfoMode;
 
 	/*
 	 * Oldest XID still running. This is only needed to initialize hot standby
@@ -53,7 +53,7 @@ typedef struct CheckPoint
 	 * online checkpoints and only when archiving is enabled. Otherwise it's
 	 * set to InvalidTransactionId.
 	 */
-	TransactionId   oldestActiveXid;
+	TransactionId oldestActiveXid;
 } CheckPoint;
 
 /* XLOG info values for XLOG rmgr */

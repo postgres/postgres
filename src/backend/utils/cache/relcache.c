@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.307 2010/02/17 04:19:39 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.308 2010/02/26 02:01:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -977,7 +977,7 @@ RelationInitIndexAccessInfo(Relation relation)
 	 * honestly rather than just treating it as a Form_pg_index struct.
 	 */
 	tuple = SearchSysCache1(INDEXRELID,
-						    ObjectIdGetDatum(RelationGetRelid(relation)));
+							ObjectIdGetDatum(RelationGetRelid(relation)));
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "cache lookup failed for index %u",
 			 RelationGetRelid(relation));
@@ -1427,9 +1427,9 @@ formrdesc(const char *relationName, Oid relationReltype,
 	 *
 	 * The data we insert here is pretty incomplete/bogus, but it'll serve to
 	 * get us launched.  RelationCacheInitializePhase3() will read the real
-	 * data from pg_class and replace what we've done here.  Note in particular
-	 * that relowner is left as zero; this cues RelationCacheInitializePhase3
-	 * that the real data isn't there yet.
+	 * data from pg_class and replace what we've done here.  Note in
+	 * particular that relowner is left as zero; this cues
+	 * RelationCacheInitializePhase3 that the real data isn't there yet.
 	 */
 	relation->rd_rel = (Form_pg_class) palloc0(CLASS_TUPLE_SIZE);
 
@@ -1707,11 +1707,11 @@ RelationReloadIndexInfo(Relation relation)
 	relation->rd_amcache = NULL;
 
 	/*
-	 * If it's a shared index, we might be called before backend startup
-	 * has finished selecting a database, in which case we have no way to
-	 * read pg_class yet.  However, a shared index can never have any
-	 * significant schema updates, so it's okay to ignore the invalidation
-	 * signal.  Just mark it valid and return without doing anything more.
+	 * If it's a shared index, we might be called before backend startup has
+	 * finished selecting a database, in which case we have no way to read
+	 * pg_class yet.  However, a shared index can never have any significant
+	 * schema updates, so it's okay to ignore the invalidation signal.  Just
+	 * mark it valid and return without doing anything more.
 	 */
 	if (relation->rd_rel->relisshared && !criticalRelcachesBuilt)
 	{
@@ -1755,7 +1755,7 @@ RelationReloadIndexInfo(Relation relation)
 		Form_pg_index index;
 
 		tuple = SearchSysCache1(INDEXRELID,
-							 	ObjectIdGetDatum(RelationGetRelid(relation)));
+								ObjectIdGetDatum(RelationGetRelid(relation)));
 		if (!HeapTupleIsValid(tuple))
 			elog(ERROR, "cache lookup failed for index %u",
 				 RelationGetRelid(relation));
@@ -1793,8 +1793,8 @@ RelationDestroyRelation(Relation relation)
 	RelationCloseSmgr(relation);
 
 	/*
-	 * Free all the subsidiary data structures of the relcache entry,
-	 * then the entry itself.
+	 * Free all the subsidiary data structures of the relcache entry, then the
+	 * entry itself.
 	 */
 	if (relation->rd_rel)
 		pfree(relation->rd_rel);
@@ -1908,21 +1908,21 @@ RelationClearRelation(Relation relation, bool rebuild)
 	else
 	{
 		/*
-		 * Our strategy for rebuilding an open relcache entry is to build
-		 * a new entry from scratch, swap its contents with the old entry,
-		 * and finally delete the new entry (along with any infrastructure
-		 * swapped over from the old entry).  This is to avoid trouble in case
-		 * an error causes us to lose control partway through.  The old entry
+		 * Our strategy for rebuilding an open relcache entry is to build a
+		 * new entry from scratch, swap its contents with the old entry, and
+		 * finally delete the new entry (along with any infrastructure swapped
+		 * over from the old entry).  This is to avoid trouble in case an
+		 * error causes us to lose control partway through.  The old entry
 		 * will still be marked !rd_isvalid, so we'll try to rebuild it again
-		 * on next access.  Meanwhile it's not any less valid than it was
+		 * on next access.	Meanwhile it's not any less valid than it was
 		 * before, so any code that might expect to continue accessing it
 		 * isn't hurt by the rebuild failure.  (Consider for example a
 		 * subtransaction that ALTERs a table and then gets cancelled partway
 		 * through the cache entry rebuild.  The outer transaction should
 		 * still see the not-modified cache entry as valid.)  The worst
-		 * consequence of an error is leaking the necessarily-unreferenced
-		 * new entry, and this shouldn't happen often enough for that to be
-		 * a big problem.
+		 * consequence of an error is leaking the necessarily-unreferenced new
+		 * entry, and this shouldn't happen often enough for that to be a big
+		 * problem.
 		 *
 		 * When rebuilding an open relcache entry, we must preserve ref count,
 		 * rd_createSubid/rd_newRelfilenodeSubid, and rd_toastoid state.  Also
@@ -1959,13 +1959,13 @@ RelationClearRelation(Relation relation, bool rebuild)
 
 		/*
 		 * Perform swapping of the relcache entry contents.  Within this
-		 * process the old entry is momentarily invalid, so there *must*
-		 * be no possibility of CHECK_FOR_INTERRUPTS within this sequence.
-		 * Do it in all-in-line code for safety.
+		 * process the old entry is momentarily invalid, so there *must* be no
+		 * possibility of CHECK_FOR_INTERRUPTS within this sequence. Do it in
+		 * all-in-line code for safety.
 		 *
-		 * Since the vast majority of fields should be swapped, our method
-		 * is to swap the whole structures and then re-swap those few fields
-		 * we didn't want swapped.
+		 * Since the vast majority of fields should be swapped, our method is
+		 * to swap the whole structures and then re-swap those few fields we
+		 * didn't want swapped.
 		 */
 #define SWAPFIELD(fldtype, fldname) \
 		do { \
@@ -2536,8 +2536,8 @@ RelationBuildLocalRelation(const char *relname,
 	 * Insert relation physical and logical identifiers (OIDs) into the right
 	 * places.	Note that the physical ID (relfilenode) is initially the same
 	 * as the logical ID (OID); except that for a mapped relation, we set
-	 * relfilenode to zero and rely on RelationInitPhysicalAddr to consult
-	 * the map.
+	 * relfilenode to zero and rely on RelationInitPhysicalAddr to consult the
+	 * map.
 	 */
 	rel->rd_rel->relisshared = shared_relation;
 	rel->rd_rel->relistemp = rel->rd_istemp;
@@ -2648,8 +2648,8 @@ RelationSetNewRelfilenode(Relation relation, TransactionId freezeXid)
 
 	/*
 	 * Now update the pg_class row.  However, if we're dealing with a mapped
-	 * index, pg_class.relfilenode doesn't change; instead we have to send
-	 * the update to the relation mapper.
+	 * index, pg_class.relfilenode doesn't change; instead we have to send the
+	 * update to the relation mapper.
 	 */
 	if (RelationIsMapped(relation))
 		RelationMapUpdateMap(RelationGetRelid(relation),
@@ -2660,7 +2660,7 @@ RelationSetNewRelfilenode(Relation relation, TransactionId freezeXid)
 		classform->relfilenode = newrelfilenode;
 
 	/* These changes are safe even for a mapped relation */
-	classform->relpages = 0;		/* it's empty until further notice */
+	classform->relpages = 0;	/* it's empty until further notice */
 	classform->reltuples = 0;
 	classform->relfrozenxid = freezeXid;
 
@@ -2679,8 +2679,8 @@ RelationSetNewRelfilenode(Relation relation, TransactionId freezeXid)
 
 	/*
 	 * Mark the rel as having been given a new relfilenode in the current
-	 * (sub) transaction.  This is a hint that can be used to optimize
-	 * later operations on the rel in the same transaction.
+	 * (sub) transaction.  This is a hint that can be used to optimize later
+	 * operations on the rel in the same transaction.
 	 */
 	relation->rd_newRelfilenodeSubid = GetCurrentSubTransactionId();
 	/* ... and now we have eoxact cleanup work to do */
@@ -2761,8 +2761,8 @@ RelationCacheInitializePhase2(void)
 	oldcxt = MemoryContextSwitchTo(CacheMemoryContext);
 
 	/*
-	 * Try to load the shared relcache cache file.  If unsuccessful,
-	 * bootstrap the cache with a pre-made descriptor for pg_database.
+	 * Try to load the shared relcache cache file.	If unsuccessful, bootstrap
+	 * the cache with a pre-made descriptor for pg_database.
 	 */
 	if (!load_relcache_init_file(true))
 	{
@@ -2808,9 +2808,9 @@ RelationCacheInitializePhase3(void)
 	oldcxt = MemoryContextSwitchTo(CacheMemoryContext);
 
 	/*
-	 * Try to load the local relcache cache file.  If unsuccessful,
-	 * bootstrap the cache with pre-made descriptors for the critical
-	 * "nailed-in" system catalogs.
+	 * Try to load the local relcache cache file.  If unsuccessful, bootstrap
+	 * the cache with pre-made descriptors for the critical "nailed-in" system
+	 * catalogs.
 	 */
 	if (IsBootstrapProcessingMode() ||
 		!load_relcache_init_file(false))
@@ -2826,7 +2826,7 @@ RelationCacheInitializePhase3(void)
 		formrdesc("pg_type", TypeRelation_Rowtype_Id, false,
 				  true, Natts_pg_type, Desc_pg_type);
 
-#define NUM_CRITICAL_LOCAL_RELS	4	/* fix if you change list above */
+#define NUM_CRITICAL_LOCAL_RELS 4		/* fix if you change list above */
 	}
 
 	MemoryContextSwitchTo(oldcxt);
@@ -2881,7 +2881,7 @@ RelationCacheInitializePhase3(void)
 		load_critical_index(TriggerRelidNameIndexId,
 							TriggerRelationId);
 
-#define NUM_CRITICAL_LOCAL_INDEXES	9		/* fix if you change list above */
+#define NUM_CRITICAL_LOCAL_INDEXES	9	/* fix if you change list above */
 
 		criticalRelcachesBuilt = true;
 	}
@@ -2889,10 +2889,10 @@ RelationCacheInitializePhase3(void)
 	/*
 	 * Process critical shared indexes too.
 	 *
-	 * DatabaseNameIndexId isn't critical for relcache loading, but rather
-	 * for initial lookup of MyDatabaseId, without which we'll never find
-	 * any non-shared catalogs at all.  Autovacuum calls InitPostgres with
-	 * a database OID, so it instead depends on DatabaseOidIndexId.
+	 * DatabaseNameIndexId isn't critical for relcache loading, but rather for
+	 * initial lookup of MyDatabaseId, without which we'll never find any
+	 * non-shared catalogs at all.	Autovacuum calls InitPostgres with a
+	 * database OID, so it instead depends on DatabaseOidIndexId.
 	 */
 	if (!criticalSharedRelcachesBuilt)
 	{
@@ -2901,7 +2901,7 @@ RelationCacheInitializePhase3(void)
 		load_critical_index(DatabaseOidIndexId,
 							DatabaseRelationId);
 
-#define NUM_CRITICAL_SHARED_INDEXES	2		/* fix if you change list above */
+#define NUM_CRITICAL_SHARED_INDEXES 2	/* fix if you change list above */
 
 		criticalSharedRelcachesBuilt = true;
 	}
@@ -2914,8 +2914,8 @@ RelationCacheInitializePhase3(void)
 	 * relcache entries have rules or triggers, load that info the hard way
 	 * since it isn't recorded in the cache file.
 	 *
-	 * Whenever we access the catalogs to read data, there is a possibility
-	 * of a shared-inval cache flush causing relcache entries to be removed.
+	 * Whenever we access the catalogs to read data, there is a possibility of
+	 * a shared-inval cache flush causing relcache entries to be removed.
 	 * Since hash_seq_search only guarantees to still work after the *current*
 	 * entry is removed, it's unsafe to continue the hashtable scan afterward.
 	 * We handle this by restarting the scan from scratch after each access.
@@ -2943,7 +2943,7 @@ RelationCacheInitializePhase3(void)
 			Form_pg_class relp;
 
 			htup = SearchSysCache1(RELOID,
-								ObjectIdGetDatum(RelationGetRelid(relation)));
+							   ObjectIdGetDatum(RelationGetRelid(relation)));
 			if (!HeapTupleIsValid(htup))
 				elog(FATAL, "cache lookup failed for relation %u",
 					 RelationGetRelid(relation));
@@ -2962,9 +2962,9 @@ RelationCacheInitializePhase3(void)
 
 			/*
 			 * Check the values in rd_att were set up correctly.  (We cannot
-			 * just copy them over now: formrdesc must have set up the
-			 * rd_att data correctly to start with, because it may already
-			 * have been copied into one or more catcache entries.)
+			 * just copy them over now: formrdesc must have set up the rd_att
+			 * data correctly to start with, because it may already have been
+			 * copied into one or more catcache entries.)
 			 */
 			Assert(relation->rd_att->tdtypeid == relp->reltype);
 			Assert(relation->rd_att->tdtypmod == -1);
@@ -3701,8 +3701,8 @@ RelationGetExclusionInfo(Relation indexRelation,
 	Oid		   *funcs;
 	uint16	   *strats;
 	Relation	conrel;
-	SysScanDesc	conscan;
-	ScanKeyData	skey[1];
+	SysScanDesc conscan;
+	ScanKeyData skey[1];
 	HeapTuple	htup;
 	bool		found;
 	MemoryContext oldcxt;
@@ -3723,9 +3723,9 @@ RelationGetExclusionInfo(Relation indexRelation,
 	}
 
 	/*
-	 * Search pg_constraint for the constraint associated with the index.
-	 * To make this not too painfully slow, we use the index on conrelid;
-	 * that will hold the parent relation's OID not the index's own OID.
+	 * Search pg_constraint for the constraint associated with the index. To
+	 * make this not too painfully slow, we use the index on conrelid; that
+	 * will hold the parent relation's OID not the index's own OID.
 	 */
 	ScanKeyInit(&skey[0],
 				Anum_pg_constraint_conrelid,
@@ -3739,7 +3739,7 @@ RelationGetExclusionInfo(Relation indexRelation,
 
 	while (HeapTupleIsValid(htup = systable_getnext(conscan)))
 	{
-		Form_pg_constraint	 conform = (Form_pg_constraint) GETSTRUCT(htup);
+		Form_pg_constraint conform = (Form_pg_constraint) GETSTRUCT(htup);
 		Datum		val;
 		bool		isnull;
 		ArrayType  *arr;
@@ -4483,7 +4483,7 @@ RelationCacheInitFileInvalidate(bool beforeSend)
  *
  * We used to keep the init files across restarts, but that is unsafe in PITR
  * scenarios, and even in simple crash-recovery cases there are windows for
- * the init files to become out-of-sync with the database.  So now we just
+ * the init files to become out-of-sync with the database.	So now we just
  * remove them during startup and expect the first backend launch to rebuild
  * them.  Of course, this has to happen in each database of the cluster.
  */

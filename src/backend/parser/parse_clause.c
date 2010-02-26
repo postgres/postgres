@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_clause.c,v 1.197 2010/02/12 17:33:20 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_clause.c,v 1.198 2010/02/26 02:00:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -73,7 +73,7 @@ static Node *transformFromClauseItem(ParseState *pstate, Node *n,
 static Node *buildMergedJoinVar(ParseState *pstate, JoinType jointype,
 				   Var *l_colvar, Var *r_colvar);
 static void checkExprIsVarFree(ParseState *pstate, Node *n,
-							   const char *constructName);
+				   const char *constructName);
 static TargetEntry *findTargetlistEntrySQL92(ParseState *pstate, Node *node,
 						 List **tlist, int clause);
 static TargetEntry *findTargetlistEntrySQL99(ParseState *pstate, Node *node,
@@ -88,7 +88,7 @@ static List *addTargetToGroupList(ParseState *pstate, TargetEntry *tle,
 					 bool resolveUnknown);
 static WindowClause *findWindowClause(List *wclist, const char *name);
 static Node *transformFrameOffset(ParseState *pstate, int frameOptions,
-								  Node *clause);
+					 Node *clause);
 
 
 /*
@@ -802,7 +802,7 @@ transformFromClauseItem(ParseState *pstate, Node *n,
 			ListCell   *lx,
 					   *rx;
 
-			Assert(j->usingClause == NIL);	/* shouldn't have USING() too */
+			Assert(j->usingClause == NIL);		/* shouldn't have USING() too */
 
 			foreach(lx, l_colnames)
 			{
@@ -1245,9 +1245,9 @@ checkExprIsVarFree(ParseState *pstate, Node *n, const char *constructName)
  *
  * This function supports the old SQL92 ORDER BY interpretation, where the
  * expression is an output column name or number.  If we fail to find a
- * match of that sort, we fall through to the SQL99 rules.  For historical
+ * match of that sort, we fall through to the SQL99 rules.	For historical
  * reasons, Postgres also allows this interpretation for GROUP BY, though
- * the standard never did.  However, for GROUP BY we prefer a SQL99 match.
+ * the standard never did.	However, for GROUP BY we prefer a SQL99 match.
  * This function is *not* used for WINDOW definitions.
  *
  * node		the ORDER BY, GROUP BY, or DISTINCT ON expression to be matched
@@ -1421,7 +1421,7 @@ findTargetlistEntrySQL99(ParseState *pstate, Node *node, List **tlist)
 	/*
 	 * Convert the untransformed node to a transformed expression, and search
 	 * for a match in the tlist.  NOTE: it doesn't really matter whether there
-	 * is more than one match.  Also, we are willing to match an existing
+	 * is more than one match.	Also, we are willing to match an existing
 	 * resjunk target here, though the SQL92 cases above must ignore resjunk
 	 * targets.
 	 */
@@ -1617,13 +1617,13 @@ transformWindowDefinitions(ParseState *pstate,
 		orderClause = transformSortClause(pstate,
 										  windef->orderClause,
 										  targetlist,
-										  true /* fix unknowns */,
-										  true /* force SQL99 rules */);
+										  true /* fix unknowns */ ,
+										  true /* force SQL99 rules */ );
 		partitionClause = transformGroupClause(pstate,
 											   windef->partitionClause,
 											   targetlist,
 											   orderClause,
-											   true /* force SQL99 rules */);
+											   true /* force SQL99 rules */ );
 
 		/*
 		 * And prepare the new WindowClause.
@@ -2220,8 +2220,8 @@ transformFrameOffset(ParseState *pstate, int frameOptions, Node *clause)
 	else if (frameOptions & FRAMEOPTION_RANGE)
 	{
 		/*
-		 * this needs a lot of thought to decide how to support in the
-		 * context of Postgres' extensible datatype framework
+		 * this needs a lot of thought to decide how to support in the context
+		 * of Postgres' extensible datatype framework
 		 */
 		constructName = "RANGE";
 		/* error was already thrown by gram.y, this is just a backstop */

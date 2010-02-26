@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.195 2010/02/17 04:09:40 itagaki Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.196 2010/02/26 02:01:20 momjian Exp $
  */
 
 /*----------------------------------------------------------------------
@@ -1437,7 +1437,7 @@ psql_completion(char *text, int start, int end)
 			 pg_strcasecmp(prev2_wd, "ON") == 0)
 	{
 		static const char *const list_CREATE_INDEX2[] =
-		{"(", "USING",  NULL};
+		{"(", "USING", NULL};
 
 		COMPLETE_WITH_LIST(list_CREATE_INDEX2);
 	}
@@ -1577,7 +1577,11 @@ psql_completion(char *text, int start, int end)
 
 		COMPLETE_WITH_LIST(list_CREATETRIGGER2);
 	}
-	/* complete CREATE TRIGGER <name> BEFORE,AFTER event ON with a list of tables */
+
+	/*
+	 * complete CREATE TRIGGER <name> BEFORE,AFTER event ON with a list of
+	 * tables
+	 */
 	else if (pg_strcasecmp(prev5_wd, "TRIGGER") == 0 &&
 			 (pg_strcasecmp(prev3_wd, "BEFORE") == 0 ||
 			  pg_strcasecmp(prev3_wd, "AFTER") == 0) &&
@@ -1692,6 +1696,7 @@ psql_completion(char *text, int start, int end)
 	}
 
 /* DO */
+
 	/*
 	 * Complete DO with LANGUAGE.
 	 */
@@ -1966,8 +1971,8 @@ psql_completion(char *text, int start, int end)
 		COMPLETE_WITH_ATTR(prev2_wd, "");
 
 	/*
-	 * Complete INSERT INTO <table> with "(" or "VALUES" or "SELECT" or "TABLE"
-	 * or "DEFAULT VALUES"
+	 * Complete INSERT INTO <table> with "(" or "VALUES" or "SELECT" or
+	 * "TABLE" or "DEFAULT VALUES"
 	 */
 	else if (pg_strcasecmp(prev3_wd, "INSERT") == 0 &&
 			 pg_strcasecmp(prev2_wd, "INTO") == 0)
@@ -2452,8 +2457,8 @@ psql_completion(char *text, int start, int end)
 	{
 		static const char *const my_list[] =
 		{"format", "border", "expanded",
-		 "null", "fieldsep", "tuples_only", "title", "tableattr",
-		 "linestyle", "pager", "recordsep", NULL};
+			"null", "fieldsep", "tuples_only", "title", "tableattr",
+		"linestyle", "pager", "recordsep", NULL};
 
 		COMPLETE_WITH_LIST(my_list);
 	}
@@ -2955,7 +2960,7 @@ previous_word(int point, int skip)
 
 	while (skip-- >= 0)
 	{
-		int		parentheses = 0;
+		int			parentheses = 0;
 
 		/* now find the first non-space which then constitutes the end */
 		for (i = point; i >= 0; i--)

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteManip.c,v 1.126 2010/01/02 16:57:51 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteManip.c,v 1.127 2010/02/26 02:00:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -940,9 +940,9 @@ getInsertSelectQuery(Query *parsetree, Query ***subquery_ptr)
 
 	/*
 	 * Currently, this is ONLY applied to rule-action queries, and so we
-	 * expect to find the OLD and NEW placeholder entries in the given
-	 * query.  If they're not there, it must be an INSERT/SELECT in which
-	 * they've been pushed down to the SELECT.
+	 * expect to find the OLD and NEW placeholder entries in the given query.
+	 * If they're not there, it must be an INSERT/SELECT in which they've been
+	 * pushed down to the SELECT.
 	 */
 	if (list_length(parsetree->rtable) >= 2 &&
 		strcmp(rt_fetch(PRS2_OLD_VARNO, parsetree->rtable)->eref->aliasname,
@@ -1236,11 +1236,11 @@ ResolveNew_callback(Var *var,
 		List	   *fields;
 
 		/*
-		 * If generating an expansion for a var of a named rowtype
-		 * (ie, this is a plain relation RTE), then we must include
-		 * dummy items for dropped columns.  If the var is RECORD (ie,
-		 * this is a JOIN), then omit dropped columns.	Either way,
-		 * attach column names to the RowExpr for use of ruleutils.c.
+		 * If generating an expansion for a var of a named rowtype (ie, this
+		 * is a plain relation RTE), then we must include dummy items for
+		 * dropped columns.  If the var is RECORD (ie, this is a JOIN), then
+		 * omit dropped columns.  Either way, attach column names to the
+		 * RowExpr for use of ruleutils.c.
 		 */
 		expandRTE(rcon->target_rte,
 				  var->varno, var->varlevelsup, var->location,

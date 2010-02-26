@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/hstore/hstore_io.c,v 1.12 2009/09/30 19:50:22 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/hstore/hstore_io.c,v 1.13 2010/02/26 02:00:32 momjian Exp $
  */
 #include "postgres.h"
 
@@ -18,7 +18,7 @@
 PG_MODULE_MAGIC;
 
 /* old names for C functions */
-HSTORE_POLLUTE(hstore_from_text,tconvert);
+HSTORE_POLLUTE(hstore_from_text, tconvert);
 
 
 typedef struct
@@ -370,12 +370,12 @@ hstoreCheckValLen(size_t len)
 HStore *
 hstorePairs(Pairs *pairs, int4 pcount, int4 buflen)
 {
-	HStore     *out;
+	HStore	   *out;
 	HEntry	   *entry;
 	char	   *ptr;
 	char	   *buf;
-	int4       len;
-	int4       i;
+	int4		len;
+	int4		i;
 
 	len = CALCDATASIZE(pcount, buflen);
 	out = palloc(len);
@@ -389,9 +389,9 @@ hstorePairs(Pairs *pairs, int4 pcount, int4 buflen)
 	buf = ptr = STRPTR(out);
 
 	for (i = 0; i < pcount; i++)
-		HS_ADDITEM(entry,buf,ptr,pairs[i]);
+		HS_ADDITEM(entry, buf, ptr, pairs[i]);
 
-	HS_FINALIZE(out,pcount,buf,ptr);
+	HS_FINALIZE(out, pcount, buf, ptr);
 
 	return out;
 }
@@ -426,9 +426,9 @@ hstore_recv(PG_FUNCTION_ARGS)
 	int4		buflen;
 	HStore	   *out;
 	Pairs	   *pairs;
-	int4	   i;
-	int4	   pcount;
-	StringInfo buf = (StringInfo) PG_GETARG_POINTER(0);
+	int4		i;
+	int4		pcount;
+	StringInfo	buf = (StringInfo) PG_GETARG_POINTER(0);
 
 	pcount = pq_getmsgint(buf, 4);
 
@@ -442,8 +442,8 @@ hstore_recv(PG_FUNCTION_ARGS)
 
 	for (i = 0; i < pcount; ++i)
 	{
-		int rawlen = pq_getmsgint(buf, 4);
-		int len;
+		int			rawlen = pq_getmsgint(buf, 4);
+		int			len;
 
 		if (rawlen < 0)
 			ereport(ERROR,
@@ -482,9 +482,9 @@ Datum		hstore_from_text(PG_FUNCTION_ARGS);
 Datum
 hstore_from_text(PG_FUNCTION_ARGS)
 {
-	text       *key;
-	text       *val = NULL;
-	Pairs      p;
+	text	   *key;
+	text	   *val = NULL;
+	Pairs		p;
 	HStore	   *out;
 
 	if (PG_ARGISNULL(0))
@@ -524,13 +524,13 @@ hstore_from_arrays(PG_FUNCTION_ARGS)
 	Pairs	   *pairs;
 	Datum	   *key_datums;
 	bool	   *key_nulls;
-	int		   key_count;
+	int			key_count;
 	Datum	   *value_datums;
 	bool	   *value_nulls;
-	int		   value_count;
+	int			value_count;
 	ArrayType  *key_array;
 	ArrayType  *value_array;
-	int		   i;
+	int			i;
 
 	if (PG_ARGISNULL(0))
 		PG_RETURN_NULL();
@@ -540,8 +540,8 @@ hstore_from_arrays(PG_FUNCTION_ARGS)
 	Assert(ARR_ELEMTYPE(key_array) == TEXTOID);
 
 	/*
-	 * must check >1 rather than != 1 because empty arrays have
-	 * 0 dimensions, not 1
+	 * must check >1 rather than != 1 because empty arrays have 0 dimensions,
+	 * not 1
 	 */
 
 	if (ARR_NDIM(key_array) > 1)
@@ -631,15 +631,15 @@ Datum
 hstore_from_array(PG_FUNCTION_ARGS)
 {
 	ArrayType  *in_array = PG_GETARG_ARRAYTYPE_P(0);
-	int         ndims = ARR_NDIM(in_array);
-	int         count;
+	int			ndims = ARR_NDIM(in_array);
+	int			count;
 	int4		buflen;
 	HStore	   *out;
 	Pairs	   *pairs;
 	Datum	   *in_datums;
 	bool	   *in_nulls;
-	int		    in_count;
-	int		    i;
+	int			in_count;
+	int			i;
 
 	Assert(ARR_ELEMTYPE(in_array) == TEXTOID);
 
@@ -667,7 +667,7 @@ hstore_from_array(PG_FUNCTION_ARGS)
 			ereport(ERROR,
 					(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
 					 errmsg("wrong number of array subscripts")));
-	}			
+	}
 
 	deconstruct_array(in_array,
 					  TEXTOID, -1, false, 'i',
@@ -679,26 +679,26 @@ hstore_from_array(PG_FUNCTION_ARGS)
 
 	for (i = 0; i < count; ++i)
 	{
-		if (in_nulls[i*2])
+		if (in_nulls[i * 2])
 			ereport(ERROR,
 					(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
 					 errmsg("null value not allowed for hstore key")));
 
-		if (in_nulls[i*2+1])
+		if (in_nulls[i * 2 + 1])
 		{
-			pairs[i].key = VARDATA_ANY(in_datums[i*2]);
+			pairs[i].key = VARDATA_ANY(in_datums[i * 2]);
 			pairs[i].val = NULL;
-			pairs[i].keylen = hstoreCheckKeyLen(VARSIZE_ANY_EXHDR(in_datums[i*2]));
+			pairs[i].keylen = hstoreCheckKeyLen(VARSIZE_ANY_EXHDR(in_datums[i * 2]));
 			pairs[i].vallen = 4;
 			pairs[i].isnull = true;
 			pairs[i].needfree = false;
 		}
 		else
 		{
-			pairs[i].key = VARDATA_ANY(in_datums[i*2]);
-			pairs[i].val = VARDATA_ANY(in_datums[i*2+1]);
-			pairs[i].keylen = hstoreCheckKeyLen(VARSIZE_ANY_EXHDR(in_datums[i*2]));
-			pairs[i].vallen = hstoreCheckValLen(VARSIZE_ANY_EXHDR(in_datums[i*2+1]));
+			pairs[i].key = VARDATA_ANY(in_datums[i * 2]);
+			pairs[i].val = VARDATA_ANY(in_datums[i * 2 + 1]);
+			pairs[i].keylen = hstoreCheckKeyLen(VARSIZE_ANY_EXHDR(in_datums[i * 2]));
+			pairs[i].vallen = hstoreCheckValLen(VARSIZE_ANY_EXHDR(in_datums[i * 2 + 1]));
 			pairs[i].isnull = false;
 			pairs[i].needfree = false;
 		}
@@ -740,25 +740,26 @@ hstore_from_record(PG_FUNCTION_ARGS)
 	HeapTupleHeader rec;
 	int4		buflen;
 	HStore	   *out;
-	Pairs      *pairs;
+	Pairs	   *pairs;
 	Oid			tupType;
 	int32		tupTypmod;
 	TupleDesc	tupdesc;
 	HeapTupleData tuple;
 	RecordIOData *my_extra;
 	int			ncolumns;
-	int			i,j;
+	int			i,
+				j;
 	Datum	   *values;
 	bool	   *nulls;
 
 	if (PG_ARGISNULL(0))
 	{
-		Oid     argtype = get_fn_expr_argtype(fcinfo->flinfo,0);
+		Oid			argtype = get_fn_expr_argtype(fcinfo->flinfo, 0);
 
 		/*
-		 * have no tuple to look at, so the only source of type info
-		 * is the argtype. The lookup_rowtype_tupdesc call below will
-		 * error out if we don't have a known composite type oid here.
+		 * have no tuple to look at, so the only source of type info is the
+		 * argtype. The lookup_rowtype_tupdesc call below will error out if we
+		 * don't have a known composite type oid here.
 		 */
 		tupType = argtype;
 		tupTypmod = -1;
@@ -855,7 +856,7 @@ hstore_from_record(PG_FUNCTION_ARGS)
 		 */
 		if (column_info->column_type != column_type)
 		{
-			bool typIsVarlena;
+			bool		typIsVarlena;
 
 			getTypeOutputInfo(column_type,
 							  &column_info->typiofunc,
@@ -889,18 +890,18 @@ Datum		hstore_populate_record(PG_FUNCTION_ARGS);
 Datum
 hstore_populate_record(PG_FUNCTION_ARGS)
 {
-	Oid         argtype = get_fn_expr_argtype(fcinfo->flinfo,0);
-	HStore     *hs;
-	HEntry     *entries;
-	char       *ptr;
+	Oid			argtype = get_fn_expr_argtype(fcinfo->flinfo, 0);
+	HStore	   *hs;
+	HEntry	   *entries;
+	char	   *ptr;
 	HeapTupleHeader rec;
 	Oid			tupType;
 	int32		tupTypmod;
 	TupleDesc	tupdesc;
 	HeapTupleData tuple;
-	HeapTuple   rettuple;
+	HeapTuple	rettuple;
 	RecordIOData *my_extra;
-	int         ncolumns;
+	int			ncolumns;
 	int			i;
 	Datum	   *values;
 	bool	   *nulls;
@@ -918,9 +919,9 @@ hstore_populate_record(PG_FUNCTION_ARGS)
 		rec = NULL;
 
 		/*
-		 * have no tuple to look at, so the only source of type info
-		 * is the argtype. The lookup_rowtype_tupdesc call below will
-		 * error out if we don't have a known composite type oid here.
+		 * have no tuple to look at, so the only source of type info is the
+		 * argtype. The lookup_rowtype_tupdesc call below will error out if we
+		 * don't have a known composite type oid here.
 		 */
 		tupType = argtype;
 		tupTypmod = -1;
@@ -942,9 +943,9 @@ hstore_populate_record(PG_FUNCTION_ARGS)
 	ptr = STRPTR(hs);
 
 	/*
-	 * if the input hstore is empty, we can only skip the rest if
-	 * we were passed in a non-null record, since otherwise there
-	 * may be issues with domain nulls.
+	 * if the input hstore is empty, we can only skip the rest if we were
+	 * passed in a non-null record, since otherwise there may be issues with
+	 * domain nulls.
 	 */
 
 	if (HS_COUNT(hs) == 0 && rec)
@@ -1012,8 +1013,8 @@ hstore_populate_record(PG_FUNCTION_ARGS)
 		ColumnIOData *column_info = &my_extra->columns[i];
 		Oid			column_type = tupdesc->attrs[i]->atttypid;
 		char	   *value;
-		int        idx;
-		int        vallen;
+		int			idx;
+		int			vallen;
 
 		/* Ignore dropped columns in datatype */
 		if (tupdesc->attrs[i]->attisdropped)
@@ -1025,14 +1026,14 @@ hstore_populate_record(PG_FUNCTION_ARGS)
 		idx = hstoreFindKey(hs, 0,
 							NameStr(tupdesc->attrs[i]->attname),
 							strlen(NameStr(tupdesc->attrs[i]->attname)));
+
 		/*
-		 * we can't just skip here if the key wasn't found since we
-		 * might have a domain to deal with. If we were passed in a
-		 * non-null record datum, we assume that the existing values
-		 * are valid (if they're not, then it's not our fault), but if
-		 * we were passed in a null, then every field which we don't
-		 * populate needs to be run through the input function just in
-		 * case it's a domain type.
+		 * we can't just skip here if the key wasn't found since we might have
+		 * a domain to deal with. If we were passed in a non-null record
+		 * datum, we assume that the existing values are valid (if they're
+		 * not, then it's not our fault), but if we were passed in a null,
+		 * then every field which we don't populate needs to be run through
+		 * the input function just in case it's a domain type.
 		 */
 		if (idx < 0 && rec)
 			continue;
@@ -1050,11 +1051,11 @@ hstore_populate_record(PG_FUNCTION_ARGS)
 			column_info->column_type = column_type;
 		}
 
-		if (idx < 0 || HS_VALISNULL(entries,idx))
+		if (idx < 0 || HS_VALISNULL(entries, idx))
 		{
 			/*
-			 * need InputFunctionCall to happen even for nulls, so
-			 * that domain checks are done
+			 * need InputFunctionCall to happen even for nulls, so that domain
+			 * checks are done
 			 */
 			values[i] = InputFunctionCall(&column_info->proc, NULL,
 										  column_info->typioparam,
@@ -1063,9 +1064,9 @@ hstore_populate_record(PG_FUNCTION_ARGS)
 		}
 		else
 		{
-			vallen = HS_VALLEN(entries,idx);
+			vallen = HS_VALLEN(entries, idx);
 			value = palloc(1 + vallen);
-			memcpy(value, HS_VAL(entries,ptr,idx), vallen);
+			memcpy(value, HS_VAL(entries, ptr, idx), vallen);
 			value[vallen] = 0;
 
 			values[i] = InputFunctionCall(&column_info->proc, value,
@@ -1105,7 +1106,7 @@ hstore_out(PG_FUNCTION_ARGS)
 	HStore	   *in = PG_GETARG_HS(0);
 	int			buflen,
 				i;
-	int        count = HS_COUNT(in);
+	int			count = HS_COUNT(in);
 	char	   *out,
 			   *ptr;
 	char	   *base = STRPTR(in);
@@ -1121,21 +1122,21 @@ hstore_out(PG_FUNCTION_ARGS)
 	buflen = 0;
 
 	/*
-	 * this loop overestimates due to pessimistic assumptions about
-	 * escaping, so very large hstore values can't be output. this
-	 * could be fixed, but many other data types probably have the
-	 * same issue. This replaced code that used the original varlena
-	 * size for calculations, which was wrong in some subtle ways.
+	 * this loop overestimates due to pessimistic assumptions about escaping,
+	 * so very large hstore values can't be output. this could be fixed, but
+	 * many other data types probably have the same issue. This replaced code
+	 * that used the original varlena size for calculations, which was wrong
+	 * in some subtle ways.
 	 */
 
 	for (i = 0; i < count; i++)
 	{
 		/* include "" and => and comma-space */
-		buflen += 6 + 2 * HS_KEYLEN(entries,i);
+		buflen += 6 + 2 * HS_KEYLEN(entries, i);
 		/* include "" only if nonnull */
-		buflen += 2 + (HS_VALISNULL(entries,i)
+		buflen += 2 + (HS_VALISNULL(entries, i)
 					   ? 2
-					   : 2 * HS_VALLEN(entries,i));
+					   : 2 * HS_VALLEN(entries, i));
 	}
 
 	out = ptr = palloc(buflen);
@@ -1143,11 +1144,11 @@ hstore_out(PG_FUNCTION_ARGS)
 	for (i = 0; i < count; i++)
 	{
 		*ptr++ = '"';
-		ptr = cpw(ptr, HS_KEY(entries,base,i), HS_KEYLEN(entries,i));
+		ptr = cpw(ptr, HS_KEY(entries, base, i), HS_KEYLEN(entries, i));
 		*ptr++ = '"';
 		*ptr++ = '=';
 		*ptr++ = '>';
-		if (HS_VALISNULL(entries,i))
+		if (HS_VALISNULL(entries, i))
 		{
 			*ptr++ = 'N';
 			*ptr++ = 'U';
@@ -1157,7 +1158,7 @@ hstore_out(PG_FUNCTION_ARGS)
 		else
 		{
 			*ptr++ = '"';
-			ptr = cpw(ptr, HS_VAL(entries,base,i), HS_VALLEN(entries,i));
+			ptr = cpw(ptr, HS_VAL(entries, base, i), HS_VALLEN(entries, i));
 			*ptr++ = '"';
 		}
 
@@ -1179,8 +1180,8 @@ Datum
 hstore_send(PG_FUNCTION_ARGS)
 {
 	HStore	   *in = PG_GETARG_HS(0);
-	int        i;
-	int        count = HS_COUNT(in);
+	int			i;
+	int			count = HS_COUNT(in);
 	char	   *base = STRPTR(in);
 	HEntry	   *entries = ARRPTR(in);
 	StringInfoData buf;
@@ -1191,18 +1192,20 @@ hstore_send(PG_FUNCTION_ARGS)
 
 	for (i = 0; i < count; i++)
 	{
-		int32 keylen = HS_KEYLEN(entries,i);
+		int32		keylen = HS_KEYLEN(entries, i);
+
 		pq_sendint(&buf, keylen, 4);
-		pq_sendtext(&buf, HS_KEY(entries,base,i), keylen);
-		if (HS_VALISNULL(entries,i))
+		pq_sendtext(&buf, HS_KEY(entries, base, i), keylen);
+		if (HS_VALISNULL(entries, i))
 		{
 			pq_sendint(&buf, -1, 4);
 		}
 		else
 		{
-			int32 vallen = HS_VALLEN(entries,i);
+			int32		vallen = HS_VALLEN(entries, i);
+
 			pq_sendint(&buf, vallen, 4);
-			pq_sendtext(&buf, HS_VAL(entries,base,i), vallen);
+			pq_sendtext(&buf, HS_VAL(entries, base, i), vallen);
 		}
 	}
 

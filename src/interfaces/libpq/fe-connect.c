@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.387 2010/02/17 04:19:41 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.388 2010/02/26 02:01:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -228,7 +228,7 @@ static const PQconninfoOption PQconninfoOptions[] = {
 #endif
 
 	{"replication", NULL, NULL, NULL,
-	 "Replication", "D", 5},
+	"Replication", "D", 5},
 
 	/* Terminating entry --- MUST BE LAST */
 	{NULL, NULL, NULL, NULL,
@@ -268,8 +268,8 @@ static void closePGconn(PGconn *conn);
 static PQconninfoOption *conninfo_parse(const char *conninfo,
 			   PQExpBuffer errorMessage, bool use_defaults);
 static PQconninfoOption *conninfo_array_parse(const char **keywords,
-				const char **values, PQExpBuffer errorMessage,
-				bool use_defaults, int expand_dbname);
+					 const char **values, PQExpBuffer errorMessage,
+					 bool use_defaults, int expand_dbname);
 static char *conninfo_getval(PQconninfoOption *connOptions,
 				const char *keyword);
 static void defaultNoticeReceiver(void *arg, const PGresult *res);
@@ -277,10 +277,10 @@ static void defaultNoticeProcessor(void *arg, const char *message);
 static int parseServiceInfo(PQconninfoOption *options,
 				 PQExpBuffer errorMessage);
 static int parseServiceFile(const char *serviceFile,
-							const char *service,
-							PQconninfoOption *options,
-							PQExpBuffer errorMessage,
-							bool *group_found);
+				 const char *service,
+				 PQconninfoOption *options,
+				 PQExpBuffer errorMessage,
+				 bool *group_found);
 static char *pwdfMatchesString(char *buf, char *token);
 static char *PasswordFromFile(char *hostname, char *port, char *dbname,
 				 char *username);
@@ -306,7 +306,7 @@ pgthreadlock_t pg_g_threadlock = default_threadlock;
  * terminated arrays instead.
  *
  * To connect in an asynchronous (non-blocking) manner, use the functions
- * PQconnectStart or PQconnectStartParams (which differ in the same way as 
+ * PQconnectStart or PQconnectStartParams (which differ in the same way as
  * PQconnectdb and PQconnectdbParams) and PQconnectPoll.
  *
  * Internally, the static functions connectDBStart, connectDBComplete
@@ -406,8 +406,8 @@ PQconnectStartParams(const char **keywords,
 					 const char **values,
 					 int expand_dbname)
 {
-	PGconn			   *conn;
-	PQconninfoOption   *connOptions;
+	PGconn	   *conn;
+	PQconninfoOption *connOptions;
 
 	/*
 	 * Allocate memory for the conn structure
@@ -432,7 +432,7 @@ PQconnectStartParams(const char **keywords,
 	/*
 	 * Move option values into conn structure
 	 */
-    fillPGconn(conn, connOptions);
+	fillPGconn(conn, connOptions);
 
 	/*
 	 * Free the option info - all is in conn now
@@ -609,7 +609,7 @@ connectOptions1(PGconn *conn, const char *conninfo)
 	/*
 	 * Move option values into conn structure
 	 */
-    fillPGconn(conn, connOptions);
+	fillPGconn(conn, connOptions);
 
 	/*
 	 * Free the option info - all is in conn now
@@ -1326,9 +1326,9 @@ keep_going:						/* We will come back to here until there is
 					 * We have three methods of blocking SIGPIPE during
 					 * send() calls to this socket:
 					 *
-					 *  - setsockopt(sock, SO_NOSIGPIPE)
-					 *  - send(sock, ..., MSG_NOSIGNAL)
-					 *  - setting the signal mask to SIG_IGN during send()
+					 *	- setsockopt(sock, SO_NOSIGPIPE)
+					 *	- send(sock, ..., MSG_NOSIGNAL)
+					 *	- setting the signal mask to SIG_IGN during send()
 					 *
 					 * The third method requires three syscalls per send,
 					 * so we prefer either of the first two, but they are
@@ -1350,7 +1350,7 @@ keep_going:						/* We will come back to here until there is
 					conn->sigpipe_flag = true;
 #else
 					conn->sigpipe_flag = false;
-#endif /* MSG_NOSIGNAL */
+#endif   /* MSG_NOSIGNAL */
 
 #ifdef SO_NOSIGPIPE
 					optval = 1;
@@ -1360,7 +1360,7 @@ keep_going:						/* We will come back to here until there is
 						conn->sigpipe_so = true;
 						conn->sigpipe_flag = false;
 					}
-#endif /* SO_NOSIGPIPE */
+#endif   /* SO_NOSIGPIPE */
 
 					/*
 					 * Start/make connection.  This should not block, since we
@@ -2034,7 +2034,7 @@ keep_going:						/* We will come back to here until there is
 						/*
 						 * If we tried to send application_name, check to see
 						 * if the error is about that --- pre-9.0 servers will
-						 * reject it at this stage of the process.  If so,
+						 * reject it at this stage of the process.	If so,
 						 * close the connection and retry without sending
 						 * application_name.  We could possibly get a false
 						 * SQLSTATE match here and retry uselessly, but there
@@ -2124,7 +2124,7 @@ keep_going:						/* We will come back to here until there is
 		default:
 			appendPQExpBuffer(&conn->errorMessage,
 							  libpq_gettext("invalid connection state %d, "
-								 "probably indicative of memory corruption\n"),
+							   "probably indicative of memory corruption\n"),
 							  conn->status);
 			goto error_return;
 	}
@@ -3266,6 +3266,7 @@ parseServiceInfo(PQconninfoOption *options, PQExpBuffer errorMessage)
 		return status;
 
 next_file:
+
 	/*
 	 * This could be used by any application so we can't use the binary
 	 * location to find our config files.
@@ -3284,7 +3285,7 @@ last_file:
 	if (!group_found)
 	{
 		printfPQExpBuffer(errorMessage,
-						  libpq_gettext("definition of service \"%s\" not found\n"), service);
+		 libpq_gettext("definition of service \"%s\" not found\n"), service);
 		return 3;
 	}
 
@@ -3297,7 +3298,7 @@ parseServiceFile(const char *serviceFile,
 				 PQconninfoOption *options,
 				 PQExpBuffer errorMessage,
 				 bool *group_found)
-{	
+{
 	int			linenr = 0,
 				i;
 	FILE	   *f;
@@ -3320,7 +3321,7 @@ parseServiceFile(const char *serviceFile,
 		{
 			fclose(f);
 			printfPQExpBuffer(errorMessage,
-							  libpq_gettext("line %d too long in service file \"%s\"\n"),
+				  libpq_gettext("line %d too long in service file \"%s\"\n"),
 							  linenr,
 							  serviceFile);
 			return 2;
@@ -3359,8 +3360,7 @@ parseServiceFile(const char *serviceFile,
 			if (*group_found)
 			{
 				/*
-				 * Finally, we are in the right group and can parse
-				 * the line
+				 * Finally, we are in the right group and can parse the line
 				 */
 				char	   *key,
 						   *val;
@@ -3745,20 +3745,20 @@ conninfo_array_parse(const char **keywords, const char **values,
 					 PQExpBuffer errorMessage, bool use_defaults,
 					 int expand_dbname)
 {
-	char			   *tmp;
-	PQconninfoOption   *options;
-	PQconninfoOption   *str_options = NULL;
-	PQconninfoOption   *option;
-	int					i = 0;
+	char	   *tmp;
+	PQconninfoOption *options;
+	PQconninfoOption *str_options = NULL;
+	PQconninfoOption *option;
+	int			i = 0;
 
 	/*
-	 * If expand_dbname is non-zero, check keyword "dbname"
-	 * to see if val is actually a conninfo string
+	 * If expand_dbname is non-zero, check keyword "dbname" to see if val is
+	 * actually a conninfo string
 	 */
-	while(expand_dbname && keywords[i])
+	while (expand_dbname && keywords[i])
 	{
 		const char *pname = keywords[i];
-		const char *pvalue  = values[i];
+		const char *pvalue = values[i];
 
 		/* first find "dbname" if any */
 		if (strcmp(pname, "dbname") == 0)
@@ -3767,10 +3767,9 @@ conninfo_array_parse(const char **keywords, const char **values,
 			if (pvalue && strchr(pvalue, '='))
 			{
 				/*
-				 * Must be a conninfo string, so parse it, but do not
-				 * use defaults here -- those get picked up later.
-				 * We only want to override for those parameters actually
-				 * passed.
+				 * Must be a conninfo string, so parse it, but do not use
+				 * defaults here -- those get picked up later. We only want to
+				 * override for those parameters actually passed.
 				 */
 				str_options = conninfo_parse(pvalue, errorMessage, false);
 				if (str_options == NULL)
@@ -3793,10 +3792,10 @@ conninfo_array_parse(const char **keywords, const char **values,
 
 	i = 0;
 	/* Parse the keywords/values arrays */
-	while(keywords[i])
+	while (keywords[i])
 	{
 		const char *pname = keywords[i];
-		const char *pvalue  = values[i];
+		const char *pvalue = values[i];
 
 		if (pvalue != NULL)
 		{
@@ -3811,7 +3810,7 @@ conninfo_array_parse(const char **keywords, const char **values,
 			if (option->keyword == NULL)
 			{
 				printfPQExpBuffer(errorMessage,
-							 libpq_gettext("invalid connection option \"%s\"\n"),
+						 libpq_gettext("invalid connection option \"%s\"\n"),
 								  pname);
 				PQconninfoFree(options);
 				return NULL;
@@ -3819,8 +3818,8 @@ conninfo_array_parse(const char **keywords, const char **values,
 
 			/*
 			 * If we are on the dbname parameter, and we have a parsed
-			 * conninfo string, copy those parameters across, overriding
-			 * any existing previous settings
+			 * conninfo string, copy those parameters across, overriding any
+			 * existing previous settings
 			 */
 			if (strcmp(pname, "dbname") == 0 && str_options)
 			{

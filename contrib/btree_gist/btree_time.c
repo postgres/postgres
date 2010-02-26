@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/btree_gist/btree_time.c,v 1.17 2009/12/02 13:13:24 teodor Exp $
+ * $PostgreSQL: pgsql/contrib/btree_gist/btree_time.c,v 1.18 2010/02/26 02:00:31 momjian Exp $
  */
 #include "btree_gist.h"
 #include "btree_utils_num.h"
@@ -101,9 +101,9 @@ gbt_timelt(const void *a, const void *b)
 static int
 gbt_timekey_cmp(const void *a, const void *b)
 {
-    timeKEY *ia = (timeKEY*)(((Nsrt *) a)->t);
-	timeKEY *ib = (timeKEY*)(((Nsrt *) b)->t);
-	int res;
+	timeKEY    *ia = (timeKEY *) (((Nsrt *) a)->t);
+	timeKEY    *ib = (timeKEY *) (((Nsrt *) b)->t);
+	int			res;
 
 	res = DatumGetInt32(DirectFunctionCall2(time_cmp, TimeADTGetDatumFast(ia->lower), TimeADTGetDatumFast(ib->lower)));
 	if (res == 0)

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.371 2010/02/14 18:42:13 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.372 2010/02/26 02:00:36 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -71,8 +71,8 @@
 
 
 /* Kluge for upgrade-in-place support */
-Oid binary_upgrade_next_heap_relfilenode = InvalidOid;
-Oid binary_upgrade_next_toast_relfilenode = InvalidOid;
+Oid			binary_upgrade_next_heap_relfilenode = InvalidOid;
+Oid			binary_upgrade_next_toast_relfilenode = InvalidOid;
 
 static void AddNewRelationTuple(Relation pg_class_desc,
 					Relation new_rel_desc,
@@ -455,9 +455,9 @@ CheckAttributeType(const char *attname, Oid atttypid,
 	{
 		/*
 		 * Refuse any attempt to create a pseudo-type column, except for a
-		 * special hack for pg_statistic: allow ANYARRAY when modifying
-		 * system catalogs (this allows creating pg_statistic and cloning it
-		 * during VACUUM FULL)
+		 * special hack for pg_statistic: allow ANYARRAY when modifying system
+		 * catalogs (this allows creating pg_statistic and cloning it during
+		 * VACUUM FULL)
 		 */
 		if (atttypid != ANYARRAYOID || !allow_system_table_mods)
 			ereport(ERROR,
@@ -657,7 +657,7 @@ AddNewAttributeTuples(Oid new_rel_oid,
  * Tuple data is taken from new_rel_desc->rd_rel, except for the
  * variable-width fields which are not present in a cached reldesc.
  * relacl and reloptions are passed in Datum form (to avoid having
- * to reference the data types in heap.h).  Pass (Datum) 0 to set them
+ * to reference the data types in heap.h).	Pass (Datum) 0 to set them
  * to NULL.
  * --------------------------------
  */
@@ -825,7 +825,7 @@ AddNewRelationType(const char *typeName,
 				   Oid new_array_type)
 {
 	return
-		TypeCreate(new_row_type,		/* optional predetermined OID */
+		TypeCreate(new_row_type,	/* optional predetermined OID */
 				   typeName,	/* type name */
 				   typeNamespace,		/* type namespace */
 				   new_rel_oid, /* relation oid */
@@ -1032,9 +1032,9 @@ heap_create_with_catalog(const char *relname,
 
 	/*
 	 * Since defining a relation also defines a complex type, we add a new
-	 * system type corresponding to the new relation.  The OID of the type
-	 * can be preselected by the caller, but if reltypeid is InvalidOid,
-	 * we'll generate a new OID for it.
+	 * system type corresponding to the new relation.  The OID of the type can
+	 * be preselected by the caller, but if reltypeid is InvalidOid, we'll
+	 * generate a new OID for it.
 	 *
 	 * NOTE: we could get a unique-index failure here, in case someone else is
 	 * creating the same type name in parallel but hadn't committed yet when
@@ -1116,14 +1116,14 @@ heap_create_with_catalog(const char *relname,
 
 	/*
 	 * Make a dependency link to force the relation to be deleted if its
-	 * namespace is.  Also make a dependency link to its owner, as well
-	 * as dependencies for any roles mentioned in the default ACL.
+	 * namespace is.  Also make a dependency link to its owner, as well as
+	 * dependencies for any roles mentioned in the default ACL.
 	 *
 	 * For composite types, these dependencies are tracked for the pg_type
 	 * entry, so we needn't record them here.  Likewise, TOAST tables don't
 	 * need a namespace dependency (they live in a pinned namespace) nor an
-	 * owner dependency (they depend indirectly through the parent table),
-	 * nor should they have any ACL entries.
+	 * owner dependency (they depend indirectly through the parent table), nor
+	 * should they have any ACL entries.
 	 *
 	 * Also, skip this in bootstrap mode, since we don't make dependencies
 	 * while bootstrapping.
@@ -1774,7 +1774,7 @@ StoreRelCheck(Relation rel, char *ccname, Node *expr,
 						  ' ',
 						  ' ',
 						  ' ',
-						  NULL,	/* not an exclusion constraint */
+						  NULL, /* not an exclusion constraint */
 						  expr, /* Tree form of check constraint */
 						  ccbin,	/* Binary form of check constraint */
 						  ccsrc,	/* Source form of check constraint */

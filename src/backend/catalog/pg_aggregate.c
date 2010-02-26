@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_aggregate.c,v 1.105 2010/02/14 18:42:13 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_aggregate.c,v 1.106 2010/02/26 02:00:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -360,8 +360,8 @@ lookup_agg_function(List *fnName,
 			ereport(ERROR,
 					(errcode(ERRCODE_DATATYPE_MISMATCH),
 					 errmsg("function %s requires run-time type coercion",
-					 func_signature_string(fnName, nargs,
-										   NIL, true_oid_array))));
+							func_signature_string(fnName, nargs,
+												  NIL, true_oid_array))));
 	}
 
 	/* Check aggregate creator has permission to call the function */

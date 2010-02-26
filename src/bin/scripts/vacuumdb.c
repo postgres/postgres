@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/scripts/vacuumdb.c,v 1.35 2010/02/17 04:19:40 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/scripts/vacuumdb.c,v 1.36 2010/02/26 02:01:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -313,7 +313,7 @@ vacuum_all_databases(bool full, bool verbose, bool and_analyze, bool analyze_onl
 		}
 
 		vacuum_one_database(dbname, full, verbose, and_analyze, analyze_only,
-							freeze, NULL, host, port, username, prompt_password,
+						 freeze, NULL, host, port, username, prompt_password,
 							progname, echo);
 	}
 

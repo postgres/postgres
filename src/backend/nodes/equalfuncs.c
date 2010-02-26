@@ -22,7 +22,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.384 2010/02/23 22:51:42 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.385 2010/02/26 02:00:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1572,7 +1572,7 @@ _equalDropTableSpaceStmt(DropTableSpaceStmt *a, DropTableSpaceStmt *b)
 
 static bool
 _equalAlterTableSpaceOptionsStmt(AlterTableSpaceOptionsStmt *a,
-											 AlterTableSpaceOptionsStmt *b)
+								 AlterTableSpaceOptionsStmt *b)
 {
 	COMPARE_STRING_FIELD(tablespacename);
 	COMPARE_NODE_FIELD(options);

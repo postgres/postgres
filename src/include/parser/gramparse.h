@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/parser/gramparse.h,v 1.51 2010/01/02 16:58:07 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/parser/gramparse.h,v 1.52 2010/02/26 02:01:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,7 +29,7 @@
 #include "parser/gram.h"
 
 /*
- * The YY_EXTRA data that a flex scanner allows us to pass around.  Private
+ * The YY_EXTRA data that a flex scanner allows us to pass around.	Private
  * state needed for raw parsing/lexing goes here.
  */
 typedef struct base_yy_extra_type
@@ -42,10 +42,10 @@ typedef struct base_yy_extra_type
 	/*
 	 * State variables for base_yylex().
 	 */
-	bool		have_lookahead;		/* is lookahead info valid? */
+	bool		have_lookahead; /* is lookahead info valid? */
 	int			lookahead_token;	/* one-token lookahead */
-	core_YYSTYPE lookahead_yylval;	/* yylval for lookahead token */
-	YYLTYPE		lookahead_yylloc;	/* yylloc for lookahead token */
+	core_YYSTYPE lookahead_yylval;		/* yylval for lookahead token */
+	YYLTYPE		lookahead_yylloc;		/* yylloc for lookahead token */
 
 	/*
 	 * State variables that belong to the grammar.
@@ -63,8 +63,8 @@ typedef struct base_yy_extra_type
 
 
 /* from parser.c */
-extern int	base_yylex(YYSTYPE *lvalp, YYLTYPE *llocp,
-					   core_yyscan_t yyscanner);
+extern int base_yylex(YYSTYPE *lvalp, YYLTYPE *llocp,
+		   core_yyscan_t yyscanner);
 
 /* from gram.y */
 extern void parser_init(base_yy_extra_type *yyext);

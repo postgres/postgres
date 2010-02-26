@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/exec.c,v 1.67 2010/01/14 00:14:06 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/port/exec.c,v 1.68 2010/02/26 02:01:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -625,7 +625,7 @@ AddUserToTokenDacl(HANDLE hToken)
 	DWORD		dwSize = 0;
 	DWORD		dwTokenInfoLength = 0;
 	PACL		pacl = NULL;
-	PTOKEN_USER	pTokenUser = NULL;
+	PTOKEN_USER pTokenUser = NULL;
 	TOKEN_DEFAULT_DACL tddNew;
 	TOKEN_DEFAULT_DACL *ptdd = NULL;
 	TOKEN_INFORMATION_CLASS tic = TokenDefaultDacl;
@@ -666,8 +666,8 @@ AddUserToTokenDacl(HANDLE hToken)
 	}
 
 	/*
-	 * Get the user token for the current user, which provides us with the
-	 * SID that is needed for creating the ACL.
+	 * Get the user token for the current user, which provides us with the SID
+	 * that is needed for creating the ACL.
 	 */
 	if (!GetTokenUser(hToken, &pTokenUser))
 	{

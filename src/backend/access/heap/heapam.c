@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.287 2010/02/14 18:42:12 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.288 2010/02/26 02:00:33 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -79,8 +79,8 @@ static HeapScanDesc heap_beginscan_internal(Relation relation,
 						bool allow_strat, bool allow_sync,
 						bool is_bitmapscan);
 static XLogRecPtr log_heap_update(Relation reln, Buffer oldbuf,
-		   ItemPointerData from, Buffer newbuf, HeapTuple newtup,
-		   bool all_visible_cleared, bool new_all_visible_cleared);
+				ItemPointerData from, Buffer newbuf, HeapTuple newtup,
+				bool all_visible_cleared, bool new_all_visible_cleared);
 static bool HeapSatisfiesHOTUpdate(Relation relation, Bitmapset *hot_attrs,
 					   HeapTuple oldtup, HeapTuple newtup);
 
@@ -248,8 +248,8 @@ heapgetpage(HeapScanDesc scan, BlockNumber page)
 
 	/*
 	 * If the all-visible flag indicates that all tuples on the page are
-	 * visible to everyone, we can skip the per-tuple visibility tests.
-	 * But not in hot standby mode. A tuple that's already visible to all
+	 * visible to everyone, we can skip the per-tuple visibility tests. But
+	 * not in hot standby mode. A tuple that's already visible to all
 	 * transactions in the master might still be invisible to a read-only
 	 * transaction in the standby.
 	 */
@@ -3667,8 +3667,8 @@ recheck_xmax:
 	 * someone setting xmax.  Hence recheck after changing lock, same as for
 	 * xmax itself.
 	 *
-	 * Old-style VACUUM FULL is gone, but we have to keep this code as long
-	 * as we support having MOVED_OFF/MOVED_IN tuples in the database.
+	 * Old-style VACUUM FULL is gone, but we have to keep this code as long as
+	 * we support having MOVED_OFF/MOVED_IN tuples in the database.
 	 */
 recheck_xvac:
 	if (tuple->t_infomask & HEAP_MOVED)
@@ -4099,9 +4099,9 @@ heap_xlog_cleanup_info(XLogRecPtr lsn, XLogRecord *record)
 		ResolveRecoveryConflictWithSnapshot(xlrec->latestRemovedXid, xlrec->node);
 
 	/*
-	 * Actual operation is a no-op. Record type exists to provide a means
-	 * for conflict processing to occur before we begin index vacuum actions.
-	 * see vacuumlazy.c and also comments in btvacuumpage()
+	 * Actual operation is a no-op. Record type exists to provide a means for
+	 * conflict processing to occur before we begin index vacuum actions. see
+	 * vacuumlazy.c and also comments in btvacuumpage()
 	 */
 }
 
@@ -4769,8 +4769,8 @@ heap_redo(XLogRecPtr lsn, XLogRecord *record)
 	uint8		info = record->xl_info & ~XLR_INFO_MASK;
 
 	/*
-	 * These operations don't overwrite MVCC data so no conflict
-	 * processing is required. The ones in heap2 rmgr do.
+	 * These operations don't overwrite MVCC data so no conflict processing is
+	 * required. The ones in heap2 rmgr do.
 	 */
 
 	RestoreBkpBlocks(lsn, record, false);
@@ -4809,8 +4809,8 @@ heap2_redo(XLogRecPtr lsn, XLogRecord *record)
 	uint8		info = record->xl_info & ~XLR_INFO_MASK;
 
 	/*
-	 * Note that RestoreBkpBlocks() is called after conflict processing
-	 * within each record type handling function.
+	 * Note that RestoreBkpBlocks() is called after conflict processing within
+	 * each record type handling function.
 	 */
 
 	switch (info & XLOG_HEAP_OPMASK)

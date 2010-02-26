@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/itup.h,v 1.54 2010/01/10 04:26:36 rhaas Exp $
+ * $PostgreSQL: pgsql/src/include/access/itup.h,v 1.55 2010/02/26 02:01:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -144,7 +144,7 @@ extern IndexTuple index_form_tuple(TupleDesc tupleDescriptor,
 extern Datum nocache_index_getattr(IndexTuple tup, int attnum,
 					  TupleDesc tupleDesc);
 extern void index_deform_tuple(IndexTuple tup, TupleDesc tupleDescriptor,
-				 Datum *values, bool *isnull);
+				   Datum *values, bool *isnull);
 extern IndexTuple CopyIndexTuple(IndexTuple source);
 
 #endif   /* ITUP_H */

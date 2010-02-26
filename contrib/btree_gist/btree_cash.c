@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/btree_gist/btree_cash.c,v 1.10 2009/12/02 13:13:24 teodor Exp $
+ * $PostgreSQL: pgsql/contrib/btree_gist/btree_cash.c,v 1.11 2010/02/26 02:00:31 momjian Exp $
  */
 #include "btree_gist.h"
 #include "btree_utils_num.h"
@@ -57,8 +57,8 @@ gbt_cashlt(const void *a, const void *b)
 static int
 gbt_cashkey_cmp(const void *a, const void *b)
 {
-    cashKEY    *ia = (cashKEY*)(((Nsrt *) a)->t);
-	cashKEY    *ib = (cashKEY*)(((Nsrt *) b)->t);
+	cashKEY    *ia = (cashKEY *) (((Nsrt *) a)->t);
+	cashKEY    *ib = (cashKEY *) (((Nsrt *) b)->t);
 
 	if (ia->lower == ib->lower)
 	{

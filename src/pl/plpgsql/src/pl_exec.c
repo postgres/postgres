@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.255 2010/02/12 19:37:36 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.256 2010/02/26 02:01:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -171,7 +171,7 @@ static int exec_run_select(PLpgSQL_execstate *estate,
 static int exec_for_query(PLpgSQL_execstate *estate, PLpgSQL_stmt_forq *stmt,
 			   Portal portal, bool prefetch_ok);
 static ParamListInfo setup_param_list(PLpgSQL_execstate *estate,
-									  PLpgSQL_expr *expr);
+				 PLpgSQL_expr *expr);
 static void plpgsql_param_fetch(ParamListInfo params, int paramid);
 static void exec_move_row(PLpgSQL_execstate *estate,
 			  PLpgSQL_rec *rec,
@@ -515,10 +515,10 @@ plpgsql_exec_trigger(PLpgSQL_function *func,
 	/*
 	 * Put the OLD and NEW tuples into record variables
 	 *
-	 * We make the tupdescs available in both records even though only one
-	 * may have a value.  This allows parsing of record references to succeed
-	 * in functions that are used for multiple trigger types.  For example,
-	 * we might have a test like "if (TG_OP = 'INSERT' and NEW.foo = 'xyz')",
+	 * We make the tupdescs available in both records even though only one may
+	 * have a value.  This allows parsing of record references to succeed in
+	 * functions that are used for multiple trigger types.	For example, we
+	 * might have a test like "if (TG_OP = 'INSERT' and NEW.foo = 'xyz')",
 	 * which should parse regardless of the current trigger type.
 	 */
 	rec_new = (PLpgSQL_rec *) (estate.datums[func->new_varno]);
@@ -1968,8 +1968,8 @@ exec_stmt_forc(PLpgSQL_execstate *estate, PLpgSQL_stmt_forc *stmt)
 		exec_prepare_plan(estate, query, curvar->cursor_options);
 
 	/*
-	 * Set up ParamListInfo (note this is only carrying a hook function,
-	 * not any actual data values, at this point)
+	 * Set up ParamListInfo (note this is only carrying a hook function, not
+	 * any actual data values, at this point)
 	 */
 	paramLI = setup_param_list(estate, query);
 
@@ -2343,7 +2343,7 @@ exec_stmt_return_query(PLpgSQL_execstate *estate,
 
 	tupmap = convert_tuples_by_position(portal->tupDesc,
 										estate->rettupdesc,
-										gettext_noop("structure of query does not match function result type"));
+	 gettext_noop("structure of query does not match function result type"));
 
 	while (true)
 	{
@@ -2398,11 +2398,11 @@ exec_init_tuple_store(PLpgSQL_execstate *estate)
 				 errmsg("set-valued function called in context that cannot accept a set")));
 
 	/*
-	 * Switch to the right memory context and resource owner for storing
-	 * the tuplestore for return set. If we're within a subtransaction opened
-	 * for an exception-block, for example, we must still create the
-	 * tuplestore in the resource owner that was active when this function was
-	 * entered, and not in the subtransaction resource owner.
+	 * Switch to the right memory context and resource owner for storing the
+	 * tuplestore for return set. If we're within a subtransaction opened for
+	 * an exception-block, for example, we must still create the tuplestore in
+	 * the resource owner that was active when this function was entered, and
+	 * not in the subtransaction resource owner.
 	 */
 	oldcxt = MemoryContextSwitchTo(estate->tuple_store_cxt);
 	oldowner = CurrentResourceOwner;
@@ -2445,7 +2445,7 @@ exec_stmt_raise(PLpgSQL_execstate *estate, PLpgSQL_stmt_raise *stmt)
 
 	if (stmt->message)
 	{
-		StringInfoData	ds;
+		StringInfoData ds;
 		ListCell   *current_param;
 		char	   *cp;
 
@@ -2718,8 +2718,8 @@ exec_prepare_plan(PLpgSQL_execstate *estate,
 	SPIPlanPtr	plan;
 
 	/*
-	 * The grammar can't conveniently set expr->func while building the
-	 * parse tree, so make sure it's set before parser hooks need it.
+	 * The grammar can't conveniently set expr->func while building the parse
+	 * tree, so make sure it's set before parser hooks need it.
 	 */
 	expr->func = estate->func;
 
@@ -2800,8 +2800,8 @@ exec_stmt_execsql(PLpgSQL_execstate *estate,
 	}
 
 	/*
-	 * Set up ParamListInfo (note this is only carrying a hook function,
-	 * not any actual data values, at this point)
+	 * Set up ParamListInfo (note this is only carrying a hook function, not
+	 * any actual data values, at this point)
 	 */
 	paramLI = setup_param_list(estate, expr);
 
@@ -3266,8 +3266,8 @@ exec_stmt_open(PLpgSQL_execstate *estate, PLpgSQL_stmt_open *stmt)
 	}
 
 	/*
-	 * Set up ParamListInfo (note this is only carrying a hook function,
-	 * not any actual data values, at this point)
+	 * Set up ParamListInfo (note this is only carrying a hook function, not
+	 * any actual data values, at this point)
 	 */
 	paramLI = setup_param_list(estate, query);
 
@@ -4035,7 +4035,7 @@ exec_get_datum_type(PLpgSQL_execstate *estate,
 
 		default:
 			elog(ERROR, "unrecognized dtype: %d", datum->dtype);
-			typeid = InvalidOid;			/* keep compiler quiet */
+			typeid = InvalidOid;	/* keep compiler quiet */
 			break;
 	}
 
@@ -4210,8 +4210,8 @@ exec_run_select(PLpgSQL_execstate *estate,
 		exec_prepare_plan(estate, expr, 0);
 
 	/*
-	 * Set up ParamListInfo (note this is only carrying a hook function,
-	 * not any actual data values, at this point)
+	 * Set up ParamListInfo (note this is only carrying a hook function, not
+	 * any actual data values, at this point)
 	 */
 	paramLI = setup_param_list(estate, expr);
 
@@ -4497,9 +4497,9 @@ exec_eval_simple_expr(PLpgSQL_execstate *estate,
 	}
 
 	/*
-	 * Create the param list in econtext's temporary memory context.
-	 * We won't need to free it explicitly, since it will go away at the
-	 * next reset of that context.
+	 * Create the param list in econtext's temporary memory context. We won't
+	 * need to free it explicitly, since it will go away at the next reset of
+	 * that context.
 	 *
 	 * XXX think about avoiding repeated palloc's for param lists?  It should
 	 * be possible --- this routine isn't re-entrant anymore.
@@ -4547,7 +4547,7 @@ exec_eval_simple_expr(PLpgSQL_execstate *estate,
  *
  * The ParamListInfo array is initially all zeroes, in particular the
  * ptype values are all InvalidOid.  This causes the executor to call the
- * paramFetch hook each time it wants a value.  We thus evaluate only the
+ * paramFetch hook each time it wants a value.	We thus evaluate only the
  * parameters actually demanded.
  *
  * The result is a locally palloc'd array that should be pfree'd after use;
@@ -4559,16 +4559,16 @@ setup_param_list(PLpgSQL_execstate *estate, PLpgSQL_expr *expr)
 	ParamListInfo paramLI;
 
 	/*
-	 * Could we re-use these arrays instead of palloc'ing a new one each
-	 * time?  However, we'd have to zero the array each time anyway,
-	 * since new values might have been assigned to the variables.
+	 * Could we re-use these arrays instead of palloc'ing a new one each time?
+	 * However, we'd have to zero the array each time anyway, since new values
+	 * might have been assigned to the variables.
 	 */
 	if (estate->ndatums > 0)
 	{
 		/* sizeof(ParamListInfoData) includes the first array element */
 		paramLI = (ParamListInfo)
 			palloc0(sizeof(ParamListInfoData) +
-					(estate->ndatums - 1) * sizeof(ParamExternData));
+					(estate->ndatums - 1) *sizeof(ParamExternData));
 		paramLI->paramFetch = plpgsql_param_fetch;
 		paramLI->paramFetchArg = (void *) estate;
 		paramLI->parserSetup = (ParserSetupHook) plpgsql_parser_setup;
@@ -4577,15 +4577,15 @@ setup_param_list(PLpgSQL_execstate *estate, PLpgSQL_expr *expr)
 
 		/*
 		 * Set up link to active expr where the hook functions can find it.
-		 * Callers must save and restore cur_expr if there is any chance
-		 * that they are interrupting an active use of parameters.
+		 * Callers must save and restore cur_expr if there is any chance that
+		 * they are interrupting an active use of parameters.
 		 */
 		estate->cur_expr = expr;
 
 		/*
-		 * Also make sure this is set before parser hooks need it.  There
-		 * is no need to save and restore, since the value is always correct
-		 * once set.
+		 * Also make sure this is set before parser hooks need it.	There is
+		 * no need to save and restore, since the value is always correct once
+		 * set.
 		 */
 		expr->func = estate->func;
 	}
@@ -4616,9 +4616,9 @@ plpgsql_param_fetch(ParamListInfo params, int paramid)
 	Assert(params->numParams == estate->ndatums);
 
 	/*
-	 * Do nothing if asked for a value that's not supposed to be used by
-	 * this SQL expression.  This avoids unwanted evaluations when functions
-	 * such as copyParamList try to materialize all the values.
+	 * Do nothing if asked for a value that's not supposed to be used by this
+	 * SQL expression.	This avoids unwanted evaluations when functions such
+	 * as copyParamList try to materialize all the values.
 	 */
 	if (!bms_is_member(dno, expr->paramnos))
 		return;
@@ -4760,6 +4760,7 @@ exec_move_row(PLpgSQL_execstate *estate,
 			{
 				value = (Datum) 0;
 				isnull = true;
+
 				/*
 				 * InvalidOid is OK because exec_assign_value doesn't care
 				 * about the type of a source NULL
@@ -5545,7 +5546,7 @@ exec_dynquery_with_params(PLpgSQL_execstate *estate,
 										   querystr,
 										   ppd->nargs, ppd->types,
 										   ppd->values, ppd->nulls,
-										   estate->readonly_func, 
+										   estate->readonly_func,
 										   cursorOptions);
 		free_params_data(ppd);
 	}
@@ -5555,7 +5556,7 @@ exec_dynquery_with_params(PLpgSQL_execstate *estate,
 										   querystr,
 										   0, NULL,
 										   NULL, NULL,
-										   estate->readonly_func, 
+										   estate->readonly_func,
 										   cursorOptions);
 	}
 

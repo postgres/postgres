@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeLockRows.c,v 1.3 2010/01/02 16:57:42 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeLockRows.c,v 1.4 2010/02/26 02:00:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -154,8 +154,8 @@ lnext:
 				tuple.t_self = copyTuple->t_self;
 
 				/*
-				 * Need to run a recheck subquery.  Initialize EPQ state
-				 * if we didn't do so already.
+				 * Need to run a recheck subquery.	Initialize EPQ state if we
+				 * didn't do so already.
 				 */
 				if (!epq_started)
 				{
@@ -185,9 +185,9 @@ lnext:
 	{
 		/*
 		 * First, fetch a copy of any rows that were successfully locked
-		 * without any update having occurred.  (We do this in a separate
-		 * pass so as to avoid overhead in the common case where there are
-		 * no concurrent updates.)
+		 * without any update having occurred.	(We do this in a separate pass
+		 * so as to avoid overhead in the common case where there are no
+		 * concurrent updates.)
 		 */
 		foreach(lc, node->lr_rowMarks)
 		{
@@ -209,12 +209,14 @@ lnext:
 								 heap_copytuple(&tuple));
 			ReleaseBuffer(buffer);
 		}
+
 		/*
-		 * Now fetch any non-locked source rows --- the EPQ logic knows
-		 * how to do that.
+		 * Now fetch any non-locked source rows --- the EPQ logic knows how to
+		 * do that.
 		 */
 		EvalPlanQualSetSlot(&node->lr_epqstate, slot);
 		EvalPlanQualFetchRowMarks(&node->lr_epqstate);
+
 		/*
 		 * And finally we can re-evaluate the tuple.
 		 */
@@ -272,15 +274,15 @@ ExecInitLockRows(LockRows *node, EState *estate, int eflags)
 	outerPlanState(lrstate) = ExecInitNode(outerPlan, estate, eflags);
 
 	/*
-	 * LockRows nodes do no projections, so initialize projection info for this
-	 * node appropriately
+	 * LockRows nodes do no projections, so initialize projection info for
+	 * this node appropriately
 	 */
 	ExecAssignResultTypeFromTL(&lrstate->ps);
 	lrstate->ps.ps_ProjInfo = NULL;
 
 	/*
-	 * Locate the ExecRowMark(s) that this node is responsible for.
-	 * (InitPlan should already have built the global list of ExecRowMarks.)
+	 * Locate the ExecRowMark(s) that this node is responsible for. (InitPlan
+	 * should already have built the global list of ExecRowMarks.)
 	 */
 	lrstate->lr_rowMarks = NIL;
 	foreach(lc, node->rowMarks)
@@ -307,10 +309,10 @@ ExecInitLockRows(LockRows *node, EState *estate, int eflags)
 				 rc->rti);
 
 		/*
-		 * Only locking rowmarks go into our own list.  Non-locking marks
-		 * are passed off to the EvalPlanQual machinery.  This is because
-		 * we don't want to bother fetching non-locked rows unless we
-		 * actually have to do an EPQ recheck.
+		 * Only locking rowmarks go into our own list.	Non-locking marks are
+		 * passed off to the EvalPlanQual machinery.  This is because we don't
+		 * want to bother fetching non-locked rows unless we actually have to
+		 * do an EPQ recheck.
 		 */
 		if (RowMarkRequiresRowShareLock(erm->markType))
 			lrstate->lr_rowMarks = lappend(lrstate->lr_rowMarks, erm);

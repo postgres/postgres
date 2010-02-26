@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtxlog.c,v 1.61 2010/02/13 00:59:58 sriggs Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtxlog.c,v 1.62 2010/02/26 02:00:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -473,10 +473,10 @@ btree_xlog_vacuum(XLogRecPtr lsn, XLogRecord *record)
 	xlrec = (xl_btree_vacuum *) XLogRecGetData(record);
 
 	/*
-	 * If queries might be active then we need to ensure every block is unpinned
-	 * between the lastBlockVacuumed and the current block, if there are any.
-	 * This ensures that every block in the index is touched during VACUUM as
-	 * required to ensure scans work correctly.
+	 * If queries might be active then we need to ensure every block is
+	 * unpinned between the lastBlockVacuumed and the current block, if there
+	 * are any. This ensures that every block in the index is touched during
+	 * VACUUM as required to ensure scans work correctly.
 	 */
 	if (standbyState == STANDBY_SNAPSHOT_READY &&
 		(xlrec->lastBlockVacuumed + 1) != xlrec->block)
@@ -486,10 +486,10 @@ btree_xlog_vacuum(XLogRecPtr lsn, XLogRecord *record)
 		for (; blkno < xlrec->block; blkno++)
 		{
 			/*
-			 * XXX we don't actually need to read the block, we
-			 * just need to confirm it is unpinned. If we had a special call
-			 * into the buffer manager we could optimise this so that
-			 * if the block is not in shared_buffers we confirm it as unpinned.
+			 * XXX we don't actually need to read the block, we just need to
+			 * confirm it is unpinned. If we had a special call into the
+			 * buffer manager we could optimise this so that if the block is
+			 * not in shared_buffers we confirm it as unpinned.
 			 *
 			 * Another simple optimization would be to check if there's any
 			 * backends running; if not, we could just skip this.
@@ -505,9 +505,9 @@ btree_xlog_vacuum(XLogRecPtr lsn, XLogRecord *record)
 
 	/*
 	 * If the block was restored from a full page image, nothing more to do.
-	 * The RestoreBkpBlocks() call already pinned and took cleanup lock on
-	 * it. XXX: Perhaps we should call RestoreBkpBlocks() *after* the loop
-	 * above, to make the disk access more sequential.
+	 * The RestoreBkpBlocks() call already pinned and took cleanup lock on it.
+	 * XXX: Perhaps we should call RestoreBkpBlocks() *after* the loop above,
+	 * to make the disk access more sequential.
 	 */
 	if (record->xl_info & XLR_BKP_BLOCK_1)
 		return;
@@ -567,8 +567,8 @@ btree_xlog_delete(XLogRecPtr lsn, XLogRecord *record)
 	xlrec = (xl_btree_delete *) XLogRecGetData(record);
 
 	/*
-	 * We don't need to take a cleanup lock to apply these changes.
-	 * See nbtree/README for details.
+	 * We don't need to take a cleanup lock to apply these changes. See
+	 * nbtree/README for details.
 	 */
 	buffer = XLogReadBuffer(xlrec->node, xlrec->block, false);
 	if (!BufferIsValid(buffer))
@@ -819,13 +819,15 @@ btree_redo(XLogRecPtr lsn, XLogRecord *record)
 		switch (info)
 		{
 			case XLOG_BTREE_DELETE:
+
 				/*
-				 * Btree delete records can conflict with standby queries. You might
-				 * think that vacuum records would conflict as well, but we've handled
-				 * that already. XLOG_HEAP2_CLEANUP_INFO records provide the highest xid
-				 * cleaned by the vacuum of the heap and so we can resolve any conflicts
-				 * just once when that arrives. After that any we know that no conflicts
-				 * exist from individual btree vacuum records on that index.
+				 * Btree delete records can conflict with standby queries. You
+				 * might think that vacuum records would conflict as well, but
+				 * we've handled that already. XLOG_HEAP2_CLEANUP_INFO records
+				 * provide the highest xid cleaned by the vacuum of the heap
+				 * and so we can resolve any conflicts just once when that
+				 * arrives. After that any we know that no conflicts exist
+				 * from individual btree vacuum records on that index.
 				 */
 				{
 					xl_btree_delete *xlrec = (xl_btree_delete *) XLogRecGetData(record);
@@ -842,9 +844,11 @@ btree_redo(XLogRecPtr lsn, XLogRecord *record)
 				break;
 
 			case XLOG_BTREE_REUSE_PAGE:
+
 				/*
-				 * Btree reuse page records exist to provide a conflict point when we
-				 * reuse pages in the index via the FSM. That's all it does though.
+				 * Btree reuse page records exist to provide a conflict point
+				 * when we reuse pages in the index via the FSM. That's all it
+				 * does though.
 				 */
 				{
 					xl_btree_reuse_page *xlrec = (xl_btree_reuse_page *) XLogRecGetData(record);
@@ -859,8 +863,8 @@ btree_redo(XLogRecPtr lsn, XLogRecord *record)
 	}
 
 	/*
-	 * Vacuum needs to pin and take cleanup lock on every leaf page,
-	 * a regular exclusive lock is enough for all other purposes.
+	 * Vacuum needs to pin and take cleanup lock on every leaf page, a regular
+	 * exclusive lock is enough for all other purposes.
 	 */
 	RestoreBkpBlocks(lsn, record, (info == XLOG_BTREE_VACUUM));
 

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/gist/gistget.c,v 1.84 2010/01/02 16:57:34 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/gist/gistget.c,v 1.85 2010/02/26 02:00:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -414,7 +414,8 @@ gistindex_keytest(IndexTuple tuple,
 			/*
 			 * On non-leaf page we can't conclude that child hasn't NULL
 			 * values because of assumption in GiST: union (VAL, NULL) is VAL.
-			 * But if on non-leaf page key IS NULL, then all children are NULL.
+			 * But if on non-leaf page key IS NULL, then all children are
+			 * NULL.
 			 */
 			if (key->sk_flags & SK_SEARCHNULL)
 			{

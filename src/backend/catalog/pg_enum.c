@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_enum.c,v 1.13 2010/01/02 16:57:36 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_enum.c,v 1.14 2010/02/26 02:00:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -59,32 +59,32 @@ EnumValuesCreate(Oid enumTypeOid, List *vals,
 	tupDesc = pg_enum->rd_att;
 
 	/*
-	 *	Allocate oids
+	 * Allocate oids
 	 */
 	oids = (Oid *) palloc(num_elems * sizeof(Oid));
 	if (OidIsValid(binary_upgrade_next_pg_enum_oid))
 	{
-			if (num_elems != 1)
-				ereport(ERROR,
-						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						 errmsg("EnumValuesCreate() can only set a single OID")));
-			oids[0] = binary_upgrade_next_pg_enum_oid;
-			binary_upgrade_next_pg_enum_oid = InvalidOid;
-	}	
+		if (num_elems != 1)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("EnumValuesCreate() can only set a single OID")));
+		oids[0] = binary_upgrade_next_pg_enum_oid;
+		binary_upgrade_next_pg_enum_oid = InvalidOid;
+	}
 	else
 	{
 		/*
-		 * While this method does not absolutely guarantee that we generate
-		 * no duplicate oids (since we haven't entered each oid into the
-		 * table before allocating the next), trouble could only occur if
-		 * the oid counter wraps all the way around before we finish. Which
-		 * seems unlikely.
+		 * While this method does not absolutely guarantee that we generate no
+		 * duplicate oids (since we haven't entered each oid into the table
+		 * before allocating the next), trouble could only occur if the oid
+		 * counter wraps all the way around before we finish. Which seems
+		 * unlikely.
 		 */
 		for (elemno = 0; elemno < num_elems; elemno++)
 		{
 			/*
-			 *	The pg_enum.oid is stored in user tables.  This oid must be
-			 *	preserved by binary upgrades.
+			 * The pg_enum.oid is stored in user tables.  This oid must be
+			 * preserved by binary upgrades.
 			 */
 			oids[elemno] = GetNewOid(pg_enum);
 		}

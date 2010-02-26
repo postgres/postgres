@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.602 2010/01/27 15:27:50 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.603 2010/02/26 02:00:56 momjian Exp $
  *
  * NOTES
  *
@@ -232,7 +232,7 @@ static bool RecoveryError = false;		/* T if WAL recovery failed */
  * state and the startup process is launched. The startup process begins by
  * reading the control file and other preliminary initialization steps.
  * In a normal startup, or after crash recovery, the startup process exits
- * with exit code 0 and we switch to PM_RUN state.  However, archive recovery
+ * with exit code 0 and we switch to PM_RUN state.	However, archive recovery
  * is handled specially since it takes much longer and we would like to support
  * hot standby during archive recovery.
  *
@@ -280,7 +280,8 @@ typedef enum
 	PM_WAIT_BACKUP,				/* waiting for online backup mode to end */
 	PM_WAIT_BACKENDS,			/* waiting for live backends to exit */
 	PM_SHUTDOWN,				/* waiting for bgwriter to do shutdown ckpt */
-	PM_SHUTDOWN_2,				/* waiting for archiver and walsenders to finish */
+	PM_SHUTDOWN_2,				/* waiting for archiver and walsenders to
+								 * finish */
 	PM_WAIT_DEAD_END,			/* waiting for dead_end children to exit */
 	PM_NO_CHILDREN				/* all important children have exited */
 } PMState;
@@ -294,8 +295,9 @@ bool		redirection_done = false;	/* stderr redirected for syslogger? */
 
 /* received START_AUTOVAC_LAUNCHER signal */
 static volatile sig_atomic_t start_autovac_launcher = false;
+
 /* the launcher needs to be signalled to communicate some condition */
-static volatile bool		avlauncher_needs_signal = false;
+static volatile bool avlauncher_needs_signal = false;
 
 /*
  * State for assigning random salts and cancel keys.
@@ -352,7 +354,7 @@ static void RandomSalt(char *md5Salt);
 static void signal_child(pid_t pid, int signal);
 static bool SignalSomeChildren(int signal, int targets);
 
-#define SignalChildren(sig)            SignalSomeChildren(sig, BACKEND_TYPE_ALL)
+#define SignalChildren(sig)			   SignalSomeChildren(sig, BACKEND_TYPE_ALL)
 #define SignalAutovacWorkers(sig)  SignalSomeChildren(sig, BACKEND_TYPE_AUTOVAC)
 
 /*
@@ -394,8 +396,8 @@ static pid_t internal_forkexec(int argc, char *argv[], Port *port);
 #ifdef WIN32
 typedef struct
 {
-	SOCKET		origsocket;		/* Original socket value, or PGINVALID_SOCKET if not a
-								 * socket */
+	SOCKET		origsocket;		/* Original socket value, or PGINVALID_SOCKET
+								 * if not a socket */
 	WSAPROTOCOL_INFO wsainfo;
 } InheritableSocket;
 #else
@@ -418,7 +420,7 @@ typedef struct
 #ifndef WIN32
 	unsigned long UsedShmemSegID;
 #else
-	 HANDLE		UsedShmemSegID;
+	HANDLE		UsedShmemSegID;
 #endif
 	void	   *UsedShmemSegAddr;
 	slock_t    *ShmemLock;
@@ -898,12 +900,13 @@ PostmasterMain(int argc, char *argv[])
 		if (err != kDNSServiceErr_NoError)
 			elog(LOG, "DNSServiceRegister() failed: error code %ld",
 				 (long) err);
+
 		/*
-		 * We don't bother to read the mDNS daemon's reply, and we expect
-		 * that it will automatically terminate our registration when the
-		 * socket is closed at postmaster termination.  So there's nothing
-		 * more to be done here.  However, the bonjour_sdref is kept around
-		 * so that forked children can close their copies of the socket.
+		 * We don't bother to read the mDNS daemon's reply, and we expect that
+		 * it will automatically terminate our registration when the socket is
+		 * closed at postmaster termination.  So there's nothing more to be
+		 * done here.  However, the bonjour_sdref is kept around so that
+		 * forked children can close their copies of the socket.
 		 */
 	}
 #endif
@@ -1293,7 +1296,8 @@ pmdaemonize(void)
 
 	/*
 	 * Some systems use setsid() to dissociate from the TTY's process group,
-	 * while on others it depends on stdin/stdout/stderr.  Do both if possible.
+	 * while on others it depends on stdin/stdout/stderr.  Do both if
+	 * possible.
 	 */
 #ifdef HAVE_SETSID
 	if (setsid() < 0)
@@ -1306,17 +1310,20 @@ pmdaemonize(void)
 
 	/*
 	 * Reassociate stdin/stdout/stderr.  fork_process() cleared any pending
-	 * output, so this should be safe.  The only plausible error is EINTR,
+	 * output, so this should be safe.	The only plausible error is EINTR,
 	 * which just means we should retry.
 	 */
-	do {
+	do
+	{
 		res = dup2(dvnull, 0);
 	} while (res < 0 && errno == EINTR);
 	close(dvnull);
-	do {
+	do
+	{
 		res = dup2(pmlog, 1);
 	} while (res < 0 && errno == EINTR);
-	do {
+	do
+	{
 		res = dup2(pmlog, 2);
 	} while (res < 0 && errno == EINTR);
 	close(pmlog);
@@ -1654,8 +1661,8 @@ retry1:
 	/*
 	 * Now fetch parameters out of startup packet and save them into the Port
 	 * structure.  All data structures attached to the Port struct must be
-	 * allocated in TopMemoryContext so that they will remain available in
-	 * a running backend (even after PostmasterContext is destroyed).  We need
+	 * allocated in TopMemoryContext so that they will remain available in a
+	 * running backend (even after PostmasterContext is destroyed).  We need
 	 * not worry about leaking this storage on failure, since we aren't in the
 	 * postmaster process anymore.
 	 */
@@ -1693,7 +1700,7 @@ retry1:
 				port->cmdline_options = pstrdup(valptr);
 			else if (strcmp(nameptr, "replication") == 0)
 			{
-				if(!parse_bool(valptr, &am_walsender))
+				if (!parse_bool(valptr, &am_walsender))
 					ereport(FATAL,
 							(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 							 errmsg("invalid value for boolean option \"replication\"")));
@@ -1897,7 +1904,8 @@ static enum CAC_state
 canAcceptConnections(void)
 {
 	/*
-	 * Can't start backends when in startup/shutdown/inconsistent recovery state.
+	 * Can't start backends when in startup/shutdown/inconsistent recovery
+	 * state.
 	 *
 	 * In state PM_WAIT_BACKUP only superusers can connect (this must be
 	 * allowed so that a superuser can end online backup mode); we return
@@ -1914,8 +1922,8 @@ canAcceptConnections(void)
 			 pmState == PM_RECOVERY))
 			return CAC_STARTUP; /* normal startup */
 		if (!FatalError &&
-			 pmState == PM_RECOVERY_CONSISTENT)
-			return CAC_OK; /* connection OK during recovery */
+			pmState == PM_RECOVERY_CONSISTENT)
+			return CAC_OK;		/* connection OK during recovery */
 		return CAC_RECOVERY;	/* else must be crash recovery */
 	}
 
@@ -2169,9 +2177,9 @@ pmdie(SIGNAL_ARGS)
 			}
 
 			/*
-			 * Now wait for online backup mode to end and backends to exit.
-			 * If that is already the case, PostmasterStateMachine will take
-			 * the next step.
+			 * Now wait for online backup mode to end and backends to exit. If
+			 * that is already the case, PostmasterStateMachine will take the
+			 * next step.
 			 */
 			PostmasterStateMachine();
 			break;
@@ -2208,7 +2216,7 @@ pmdie(SIGNAL_ARGS)
 						(errmsg("aborting any active transactions")));
 				/* shut down all backends and autovac workers */
 				SignalSomeChildren(SIGTERM,
-								   BACKEND_TYPE_NORMAL | BACKEND_TYPE_AUTOVAC);
+								 BACKEND_TYPE_NORMAL | BACKEND_TYPE_AUTOVAC);
 				/* and the autovac launcher too */
 				if (AutoVacPID != 0)
 					signal_child(AutoVacPID, SIGTERM);
@@ -2478,10 +2486,9 @@ reaper(SIGNAL_ARGS)
 		/*
 		 * Was it the archiver?  If so, just try to start a new one; no need
 		 * to force reset of the rest of the system.  (If fail, we'll try
-		 * again in future cycles of the main loop.).  Unless we were
-		 * waiting for it to shut down; don't restart it in that case, and
-		 * and PostmasterStateMachine() will advance to the next shutdown
-		 * step.
+		 * again in future cycles of the main loop.).  Unless we were waiting
+		 * for it to shut down; don't restart it in that case, and and
+		 * PostmasterStateMachine() will advance to the next shutdown step.
 		 */
 		if (pid == PgArchPID)
 		{
@@ -2919,8 +2926,8 @@ PostmasterStateMachine(void)
 		/*
 		 * PM_SHUTDOWN_2 state ends when there's no other children than
 		 * dead_end children left. There shouldn't be any regular backends
-		 * left by now anyway; what we're really waiting for is walsenders
-		 * and archiver.
+		 * left by now anyway; what we're really waiting for is walsenders and
+		 * archiver.
 		 *
 		 * Walreceiver should normally be dead by now, but not when a fast
 		 * shutdown is performed during recovery.
@@ -3262,9 +3269,9 @@ BackendInitialize(Port *port)
 	/*
 	 * PreAuthDelay is a debugging aid for investigating problems in the
 	 * authentication cycle: it can be set in postgresql.conf to allow time to
-	 * attach to the newly-forked backend with a debugger.  (See also
-	 * PostAuthDelay, which we allow clients to pass through PGOPTIONS, but
-	 * it is not honored until after authentication.)
+	 * attach to the newly-forked backend with a debugger.	(See also
+	 * PostAuthDelay, which we allow clients to pass through PGOPTIONS, but it
+	 * is not honored until after authentication.)
 	 */
 	if (PreAuthDelay > 0)
 		pg_usleep(PreAuthDelay * 1000000L);
@@ -3298,8 +3305,8 @@ BackendInitialize(Port *port)
 #endif
 
 	/*
-	 * We arrange for a simple exit(1) if we receive SIGTERM or SIGQUIT
-	 * or timeout while trying to collect the startup packet.  Otherwise the
+	 * We arrange for a simple exit(1) if we receive SIGTERM or SIGQUIT or
+	 * timeout while trying to collect the startup packet.	Otherwise the
 	 * postmaster cannot shutdown the database FAST or IMMED cleanly if a
 	 * buggy client fails to send the packet promptly.
 	 */
@@ -3360,7 +3367,7 @@ BackendInitialize(Port *port)
 	status = ProcessStartupPacket(port, false);
 
 	/*
-	 * Stop here if it was bad or a cancel packet.  ProcessStartupPacket
+	 * Stop here if it was bad or a cancel packet.	ProcessStartupPacket
 	 * already did any appropriate error reporting.
 	 */
 	if (status != STATUS_OK)
@@ -3372,7 +3379,7 @@ BackendInitialize(Port *port)
 	 *
 	 * For a walsender, the ps display is set in the following form:
 	 *
-	 *     postgres: wal sender process <user> <host> <activity>
+	 * postgres: wal sender process <user> <host> <activity>
 	 *
 	 * To achieve that, we pass "wal sender process" as username and username
 	 * as dbname to init_ps_display(). XXX: should add a new variant of
@@ -3728,8 +3735,8 @@ internal_forkexec(int argc, char *argv[], Port *port)
 			 (int) GetLastError());
 
 	/*
-	 * Reserve the memory region used by our main shared memory segment before we
-	 * resume the child process.
+	 * Reserve the memory region used by our main shared memory segment before
+	 * we resume the child process.
 	 */
 	if (!pgwin32_ReserveSharedMemoryRegion(pi.hProcess))
 	{
@@ -3743,7 +3750,8 @@ internal_forkexec(int argc, char *argv[], Port *port)
 									 (int) GetLastError())));
 		CloseHandle(pi.hProcess);
 		CloseHandle(pi.hThread);
-		return -1;			/* logging done made by pgwin32_ReserveSharedMemoryRegion() */
+		return -1;				/* logging done made by
+								 * pgwin32_ReserveSharedMemoryRegion() */
 	}
 
 	/*
@@ -4113,7 +4121,7 @@ sigusr1_handler(SIGNAL_ARGS)
 		PgStatPID = pgstat_start();
 
 		ereport(LOG,
-				 (errmsg("database system is ready to accept read only connections")));
+		(errmsg("database system is ready to accept read only connections")));
 
 		pmState = PM_RECOVERY_CONSISTENT;
 	}
@@ -4588,8 +4596,8 @@ save_backend_variables(BackendParameters *param, Port *port,
 #ifdef WIN32
 	param->PostmasterHandle = PostmasterHandle;
 	if (!write_duplicated_handle(&param->initial_signal_pipe,
-							pgwin32_create_signal_listener(childPid),
-							childProcess))
+								 pgwin32_create_signal_listener(childPid),
+								 childProcess))
 		return false;
 #endif
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/index/indexam.c,v 1.117 2010/01/02 16:57:35 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/index/indexam.c,v 1.118 2010/02/26 02:00:34 momjian Exp $
  *
  * INTERFACE ROUTINES
  *		index_open		- open an index relation by relation OID
@@ -455,9 +455,9 @@ index_getnext(IndexScanDesc scan, ScanDirection direction)
 
 			/*
 			 * If we scanned a whole HOT chain and found only dead tuples,
-			 * tell index AM to kill its entry for that TID. We do not do
-			 * this when in recovery because it may violate MVCC to do so.
-			 * see comments in RelationGetIndexScan().
+			 * tell index AM to kill its entry for that TID. We do not do this
+			 * when in recovery because it may violate MVCC to do so. see
+			 * comments in RelationGetIndexScan().
 			 */
 			if (!scan->xactStartedInRecovery)
 				scan->kill_prior_tuple = scan->xs_hot_dead;

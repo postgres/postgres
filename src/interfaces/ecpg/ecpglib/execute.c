@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.94 2010/02/16 18:41:23 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.95 2010/02/26 02:01:30 momjian Exp $ */
 
 /*
  * The aim is to get a simpler inteface to the database routines.
@@ -505,8 +505,8 @@ ecpg_store_input(const int lineno, const bool force_indicator, const struct vari
 	char	   *newcopy = NULL;
 
 	/*
-	 * arrays are not possible unless the attribute is an array too
-	 * FIXME: we do not know if the attribute is an array here
+	 * arrays are not possible unless the attribute is an array too FIXME: we
+	 * do not know if the attribute is an array here
 	 */
 #if 0
 	if (var->arrsize > 1 &&...)
@@ -1213,9 +1213,9 @@ ecpg_execute(struct statement * stmt)
 		{
 			if (INFORMIX_MODE(stmt->compat))
 			{
-				struct sqlda_compat	   *sqlda = *(struct sqlda_compat **)var->pointer;
-				struct variable	desc_inlist;
-				int		i;
+				struct sqlda_compat *sqlda = *(struct sqlda_compat **) var->pointer;
+				struct variable desc_inlist;
+				int			i;
 
 				if (sqlda == NULL)
 					return false;
@@ -1268,9 +1268,9 @@ ecpg_execute(struct statement * stmt)
 			}
 			else
 			{
-				struct sqlda_struct	   *sqlda = *(struct sqlda_struct **)var->pointer;
-				struct variable	desc_inlist;
-				int		i;
+				struct sqlda_struct *sqlda = *(struct sqlda_struct **) var->pointer;
+				struct variable desc_inlist;
+				int			i;
 
 				if (sqlda == NULL)
 					return false;
@@ -1508,12 +1508,15 @@ ecpg_execute(struct statement * stmt)
 			{
 				if (INFORMIX_MODE(stmt->compat))
 				{
-					struct sqlda_compat  **_sqlda = (struct sqlda_compat **)var->pointer;
-					struct sqlda_compat   *sqlda = *_sqlda;
-					struct sqlda_compat   *sqlda_new;
-					int		i;
+					struct sqlda_compat **_sqlda = (struct sqlda_compat **) var->pointer;
+					struct sqlda_compat *sqlda = *_sqlda;
+					struct sqlda_compat *sqlda_new;
+					int			i;
 
-					/* If we are passed in a previously existing sqlda (chain) then free it. */
+					/*
+					 * If we are passed in a previously existing sqlda (chain)
+					 * then free it.
+					 */
 					while (sqlda)
 					{
 						sqlda_new = sqlda->desc_next;
@@ -1523,7 +1526,10 @@ ecpg_execute(struct statement * stmt)
 					*_sqlda = sqlda = sqlda_new = NULL;
 					for (i = ntuples - 1; i >= 0; i--)
 					{
-						/* Build a new sqlda structure. Note that only fetching 1 record is supported */
+						/*
+						 * Build a new sqlda structure. Note that only
+						 * fetching 1 record is supported
+						 */
 						sqlda_new = ecpg_build_compat_sqlda(stmt->lineno, results, i, stmt->compat);
 
 						if (!sqlda_new)
@@ -1549,7 +1555,7 @@ ecpg_execute(struct statement * stmt)
 
 							ecpg_set_compat_sqlda(stmt->lineno, _sqlda, results, i, stmt->compat);
 							ecpg_log("ecpg_execute on line %d: putting result (1 tuple %d fields) into sqlda descriptor\n",
-									stmt->lineno, PQnfields(results));
+									 stmt->lineno, PQnfields(results));
 
 							sqlda_new->desc_next = sqlda;
 							sqlda = sqlda_new;
@@ -1558,12 +1564,15 @@ ecpg_execute(struct statement * stmt)
 				}
 				else
 				{
-					struct sqlda_struct  **_sqlda = (struct sqlda_struct **)var->pointer;
-					struct sqlda_struct   *sqlda = *_sqlda;
-					struct sqlda_struct   *sqlda_new;
-					int		i;
+					struct sqlda_struct **_sqlda = (struct sqlda_struct **) var->pointer;
+					struct sqlda_struct *sqlda = *_sqlda;
+					struct sqlda_struct *sqlda_new;
+					int			i;
 
-					/* If we are passed in a previously existing sqlda (chain) then free it. */
+					/*
+					 * If we are passed in a previously existing sqlda (chain)
+					 * then free it.
+					 */
 					while (sqlda)
 					{
 						sqlda_new = sqlda->desc_next;
@@ -1573,7 +1582,10 @@ ecpg_execute(struct statement * stmt)
 					*_sqlda = sqlda = sqlda_new = NULL;
 					for (i = ntuples - 1; i >= 0; i--)
 					{
-						/* Build a new sqlda structure. Note that only fetching 1 record is supported */
+						/*
+						 * Build a new sqlda structure. Note that only
+						 * fetching 1 record is supported
+						 */
 						sqlda_new = ecpg_build_native_sqlda(stmt->lineno, results, i, stmt->compat);
 
 						if (!sqlda_new)
@@ -1599,7 +1611,7 @@ ecpg_execute(struct statement * stmt)
 
 							ecpg_set_native_sqlda(stmt->lineno, _sqlda, results, i, stmt->compat);
 							ecpg_log("ecpg_execute on line %d: putting result (1 tuple %d fields) into sqlda descriptor\n",
-									stmt->lineno, PQnfields(results));
+									 stmt->lineno, PQnfields(results));
 
 							sqlda_new->desc_next = sqlda;
 							sqlda = sqlda_new;

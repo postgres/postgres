@@ -5,7 +5,7 @@
  * Copyright (c) 2002-2010, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/dbsize.c,v 1.30 2010/02/14 18:42:16 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/dbsize.c,v 1.31 2010/02/26 02:01:07 momjian Exp $
  *
  */
 
@@ -185,7 +185,7 @@ calculate_tablespace_size(Oid tblspcOid)
 		snprintf(tblspcPath, MAXPGPATH, "global");
 	else
 		snprintf(tblspcPath, MAXPGPATH, "pg_tblspc/%u/%s", tblspcOid,
-										 TABLESPACE_VERSION_DIRECTORY);
+				 TABLESPACE_VERSION_DIRECTORY);
 
 	dirdesc = AllocateDir(tblspcPath);
 
@@ -318,10 +318,10 @@ pg_relation_size(PG_FUNCTION_ARGS)
 static int64
 calculate_toast_table_size(Oid toastrelid)
 {
-	int64      size = 0;
-	Relation   toastRel;
-	Relation   toastIdxRel;
-	ForkNumber forkNum;
+	int64		size = 0;
+	Relation	toastRel;
+	Relation	toastIdxRel;
+	ForkNumber	forkNum;
 
 	toastRel = relation_open(toastrelid, AccessShareLock);
 
@@ -351,9 +351,9 @@ calculate_toast_table_size(Oid toastrelid)
 static int64
 calculate_table_size(Oid relOid)
 {
-	int64      size = 0;
-	Relation   rel;
-	ForkNumber forkNum;
+	int64		size = 0;
+	Relation	rel;
+	ForkNumber	forkNum;
 
 	rel = relation_open(relOid, AccessShareLock);
 
@@ -382,8 +382,8 @@ calculate_table_size(Oid relOid)
 static int64
 calculate_indexes_size(Oid relOid)
 {
-	int64    size = 0;
-	Relation rel;
+	int64		size = 0;
+	Relation	rel;
 
 	rel = relation_open(relOid, AccessShareLock);
 
@@ -392,14 +392,14 @@ calculate_indexes_size(Oid relOid)
 	 */
 	if (rel->rd_rel->relhasindex)
 	{
-		List	 *index_oids = RelationGetIndexList(rel);
-		ListCell *cell;
+		List	   *index_oids = RelationGetIndexList(rel);
+		ListCell   *cell;
 
 		foreach(cell, index_oids)
 		{
 			Oid			idxOid = lfirst_oid(cell);
 			Relation	idxRel;
-			ForkNumber  forkNum;
+			ForkNumber	forkNum;
 
 			idxRel = relation_open(idxOid, AccessShareLock);
 
@@ -443,9 +443,8 @@ calculate_total_relation_size(Oid Relid)
 	int64		size;
 
 	/*
-	 * Aggregate the table size, this includes size of
-	 * the heap, toast and toast index with free space
-	 * and visibility map
+	 * Aggregate the table size, this includes size of the heap, toast and
+	 * toast index with free space and visibility map
 	 */
 	size = calculate_table_size(Relid);
 
@@ -515,7 +514,7 @@ pg_size_pretty(PG_FUNCTION_ARGS)
  * This is expected to be used in queries like
  *		SELECT pg_relation_filenode(oid) FROM pg_class;
  * That leads to a couple of choices.  We work from the pg_class row alone
- * rather than actually opening each relation, for efficiency.  We don't
+ * rather than actually opening each relation, for efficiency.	We don't
  * fail if we can't find the relation --- some rows might be visible in
  * the query's MVCC snapshot but already dead according to SnapshotNow.
  * (Note: we could avoid using the catcache, but there's little point
@@ -545,7 +544,7 @@ pg_relation_filenode(PG_FUNCTION_ARGS)
 			/* okay, these have storage */
 			if (relform->relfilenode)
 				result = relform->relfilenode;
-			else				/* Consult the relation mapper */
+			else	/* Consult the relation mapper */
 				result = RelationMapOidToFilenode(relid,
 												  relform->relisshared);
 			break;
@@ -602,9 +601,9 @@ pg_relation_filepath(PG_FUNCTION_ARGS)
 				rnode.dbNode = MyDatabaseId;
 			if (relform->relfilenode)
 				rnode.relNode = relform->relfilenode;
-			else				/* Consult the relation mapper */
+			else	/* Consult the relation mapper */
 				rnode.relNode = RelationMapOidToFilenode(relid,
-														 relform->relisshared);
+													   relform->relisshared);
 			break;
 
 		default:

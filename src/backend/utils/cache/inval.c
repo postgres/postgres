@@ -80,7 +80,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/inval.c,v 1.97 2010/02/14 18:42:17 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/inval.c,v 1.98 2010/02/26 02:01:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -158,8 +158,8 @@ typedef struct TransInvalidationInfo
 static TransInvalidationInfo *transInvalInfo = NULL;
 
 static SharedInvalidationMessage *SharedInvalidMessagesArray;
-static int 					numSharedInvalidMessagesArray;
-static int 					maxSharedInvalidMessagesArray;
+static int	numSharedInvalidMessagesArray;
+static int	maxSharedInvalidMessagesArray;
 
 
 /*
@@ -775,7 +775,7 @@ MakeSharedInvalidMessagesArray(const SharedInvalidationMessage *msgs, int n)
 		 * We're so close to EOXact that we now we're going to lose it anyhow.
 		 */
 		SharedInvalidMessagesArray = palloc(maxSharedInvalidMessagesArray
-											* sizeof(SharedInvalidationMessage));
+										* sizeof(SharedInvalidationMessage));
 	}
 
 	if ((numSharedInvalidMessagesArray + n) > maxSharedInvalidMessagesArray)
@@ -784,15 +784,15 @@ MakeSharedInvalidMessagesArray(const SharedInvalidationMessage *msgs, int n)
 			maxSharedInvalidMessagesArray *= 2;
 
 		SharedInvalidMessagesArray = repalloc(SharedInvalidMessagesArray,
-											maxSharedInvalidMessagesArray
-											* sizeof(SharedInvalidationMessage));
+											  maxSharedInvalidMessagesArray
+										* sizeof(SharedInvalidationMessage));
 	}
 
 	/*
 	 * Append the next chunk onto the array
 	 */
 	memcpy(SharedInvalidMessagesArray + numSharedInvalidMessagesArray,
-			msgs, n * sizeof(SharedInvalidationMessage));
+		   msgs, n * sizeof(SharedInvalidationMessage));
 	numSharedInvalidMessagesArray += n;
 }
 
@@ -820,18 +820,18 @@ xactGetCommittedInvalidationMessages(SharedInvalidationMessage **msgs,
 
 	/*
 	 * Relcache init file invalidation requires processing both before and
-	 * after we send the SI messages.  However, we need not do anything
-	 * unless we committed.
+	 * after we send the SI messages.  However, we need not do anything unless
+	 * we committed.
 	 */
 	*RelcacheInitFileInval = transInvalInfo->RelcacheInitFileInval;
 
 	/*
-	 * Walk through TransInvalidationInfo to collect all the messages
-	 * into a single contiguous array of invalidation messages. It must
-	 * be contiguous so we can copy directly into WAL message. Maintain the
-	 * order that they would be processed in by AtEOXact_Inval(), to ensure
-	 * emulated behaviour in redo is as similar as possible to original.
-	 * We want the same bugs, if any, not new ones.
+	 * Walk through TransInvalidationInfo to collect all the messages into a
+	 * single contiguous array of invalidation messages. It must be contiguous
+	 * so we can copy directly into WAL message. Maintain the order that they
+	 * would be processed in by AtEOXact_Inval(), to ensure emulated behaviour
+	 * in redo is as similar as possible to original. We want the same bugs,
+	 * if any, not new ones.
 	 */
 	oldcontext = MemoryContextSwitchTo(CurTransactionContext);
 
@@ -877,7 +877,7 @@ ProcessCommittedInvalidationMessages(SharedInvalidationMessage *msgs,
 		return;
 
 	elog(trace_recovery(DEBUG4), "replaying commit with %d messages%s", nmsgs,
-					(RelcacheInitFileInval ? " and relcache file invalidation" : ""));
+		 (RelcacheInitFileInval ? " and relcache file invalidation" : ""));
 
 	if (RelcacheInitFileInval)
 		RecoveryRelationCacheInitFileInvalidate(dbid, tsid, true);
@@ -1149,7 +1149,7 @@ CacheInvalidateRelcacheByRelid(Oid relid)
  *
  * Sending this type of invalidation msg forces other backends to close open
  * smgr entries for the rel.  This should be done to flush dangling open-file
- * references when the physical rel is being dropped or truncated.  Because
+ * references when the physical rel is being dropped or truncated.	Because
  * these are nontransactional (i.e., not-rollback-able) operations, we just
  * send the inval message immediately without any queuing.
  *

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/aclchk.c,v 1.162 2010/02/14 18:42:12 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/aclchk.c,v 1.163 2010/02/26 02:00:35 momjian Exp $
  *
  * NOTES
  *	  See acl.h.
@@ -85,8 +85,8 @@ typedef struct
  */
 typedef struct
 {
-	Oid			roleid;				/* owning role */
-	Oid			nspid;				/* namespace, or InvalidOid if none */
+	Oid			roleid;			/* owning role */
+	Oid			nspid;			/* namespace, or InvalidOid if none */
 	/* remaining fields are same as in InternalGrant: */
 	bool		is_grant;
 	GrantObjectType objtype;
@@ -353,7 +353,7 @@ ExecuteGrantStmt(GrantStmt *stmt)
 		case ACL_TARGET_ALL_IN_SCHEMA:
 			istmt.objects = objectsInSchemaToOids(stmt->objtype, stmt->objects);
 			break;
-		/* ACL_TARGET_DEFAULTS should not be seen here */
+			/* ACL_TARGET_DEFAULTS should not be seen here */
 		default:
 			elog(ERROR, "unrecognized GrantStmt.targtype: %d",
 				 (int) stmt->targtype);
@@ -611,7 +611,7 @@ objectNamesToOids(GrantObjectType objtype, List *objnames)
 		case ACL_OBJECT_LARGEOBJECT:
 			foreach(cell, objnames)
 			{
-				Oid		lobjOid = intVal(lfirst(cell));
+				Oid			lobjOid = intVal(lfirst(cell));
 
 				if (!LargeObjectExists(lobjOid))
 					ereport(ERROR,
@@ -880,8 +880,8 @@ ExecAlterDefaultPrivilegesStmt(AlterDefaultPrivilegesStmt *stmt)
 	}
 
 	/*
-	 * Convert action->privileges, a list of privilege strings,
-	 * into an AclMode bitmask.
+	 * Convert action->privileges, a list of privilege strings, into an
+	 * AclMode bitmask.
 	 */
 	switch (action->objtype)
 	{
@@ -928,7 +928,7 @@ ExecAlterDefaultPrivilegesStmt(AlterDefaultPrivilegesStmt *stmt)
 			if (privnode->cols)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_GRANT_OPERATION),
-						 errmsg("default privileges cannot be set for columns")));
+					errmsg("default privileges cannot be set for columns")));
 
 			if (privnode->priv_name == NULL)	/* parser mistake? */
 				elog(ERROR, "AccessPriv node must specify privilege");
@@ -962,10 +962,10 @@ ExecAlterDefaultPrivilegesStmt(AlterDefaultPrivilegesStmt *stmt)
 			iacls.roleid = get_roleid_checked(rolename);
 
 			/*
-			 * We insist that calling user be a member of each target role.
-			 * If he has that, he could become that role anyway via SET ROLE,
-			 * so FOR ROLE is just a syntactic convenience and doesn't give
-			 * any special privileges.
+			 * We insist that calling user be a member of each target role. If
+			 * he has that, he could become that role anyway via SET ROLE, so
+			 * FOR ROLE is just a syntactic convenience and doesn't give any
+			 * special privileges.
 			 */
 			check_is_member_of_role(GetUserId(), iacls.roleid);
 
@@ -1050,8 +1050,8 @@ SetDefaultACL(InternalDefaultACL *iacls)
 	rel = heap_open(DefaultAclRelationId, RowExclusiveLock);
 
 	/*
-	 * Convert ACL object type to pg_default_acl object type
-	 * and handle all_privs option
+	 * Convert ACL object type to pg_default_acl object type and handle
+	 * all_privs option
 	 */
 	switch (iacls->objtype)
 	{
@@ -1084,7 +1084,7 @@ SetDefaultACL(InternalDefaultACL *iacls)
 	tuple = SearchSysCache3(DEFACLROLENSPOBJ,
 							ObjectIdGetDatum(iacls->roleid),
 							ObjectIdGetDatum(iacls->nspid),
-					 		CharGetDatum(objtype));
+							CharGetDatum(objtype));
 
 	if (HeapTupleIsValid(tuple))
 	{
@@ -1110,9 +1110,9 @@ SetDefaultACL(InternalDefaultACL *iacls)
 	{
 		/*
 		 * If we are creating a global entry, start with the hard-wired
-		 * defaults and modify as per command.  Otherwise, start with an empty
-		 * ACL and modify that.  This is needed because global entries
-		 * replace the hard-wired defaults, while others do not.
+		 * defaults and modify as per command.	Otherwise, start with an empty
+		 * ACL and modify that.  This is needed because global entries replace
+		 * the hard-wired defaults, while others do not.
 		 */
 		if (!OidIsValid(iacls->nspid))
 			old_acl = acldefault(iacls->objtype, iacls->roleid);
@@ -1128,8 +1128,8 @@ SetDefaultACL(InternalDefaultACL *iacls)
 	noldmembers = aclmembers(old_acl, &oldmembers);
 
 	/*
-	 * Generate new ACL.  Grantor of rights is always the same as the
-	 * target role.
+	 * Generate new ACL.  Grantor of rights is always the same as the target
+	 * role.
 	 */
 	new_acl = merge_acl_with_grant(old_acl,
 								   iacls->is_grant,
@@ -1180,7 +1180,7 @@ SetDefaultACL(InternalDefaultACL *iacls)
 		if (OidIsValid(iacls->nspid))
 		{
 			ObjectAddress myself,
-						  referenced;
+						referenced;
 
 			myself.classId = DefaultAclRelationId;
 			myself.objectId = HeapTupleGetOid(newtuple);
@@ -2046,7 +2046,7 @@ ExecGrant_Fdw(InternalGrant *istmt)
 		Oid		   *newmembers;
 
 		tuple = SearchSysCache1(FOREIGNDATAWRAPPEROID,
-							    ObjectIdGetDatum(fdwid));
+								ObjectIdGetDatum(fdwid));
 		if (!HeapTupleIsValid(tuple))
 			elog(ERROR, "cache lookup failed for foreign-data wrapper %u", fdwid);
 
@@ -2499,7 +2499,7 @@ ExecGrant_Largeobject(InternalGrant *istmt)
 	foreach(cell, istmt->objects)
 	{
 		Oid			loid = lfirst_oid(cell);
-		Form_pg_largeobject_metadata	form_lo_meta;
+		Form_pg_largeobject_metadata form_lo_meta;
 		char		loname[NAMEDATALEN];
 		Datum		aclDatum;
 		bool		isNull;
@@ -2517,8 +2517,8 @@ ExecGrant_Largeobject(InternalGrant *istmt)
 		int			nnewmembers;
 		Oid		   *oldmembers;
 		Oid		   *newmembers;
-		ScanKeyData	entry[1];
-		SysScanDesc	scan;
+		ScanKeyData entry[1];
+		SysScanDesc scan;
 		HeapTuple	tuple;
 
 		/* There's no syscache for pg_largeobject_metadata */
@@ -3494,8 +3494,8 @@ pg_largeobject_aclmask_snapshot(Oid lobj_oid, Oid roleid,
 {
 	AclMode		result;
 	Relation	pg_lo_meta;
-	ScanKeyData	entry[1];
-	SysScanDesc	scan;
+	ScanKeyData entry[1];
+	SysScanDesc scan;
 	HeapTuple	tuple;
 	Datum		aclDatum;
 	bool		isNull;
@@ -3669,8 +3669,8 @@ pg_tablespace_aclmask(Oid spc_oid, Oid roleid,
 	ownerId = ((Form_pg_tablespace) GETSTRUCT(tuple))->spcowner;
 
 	aclDatum = SysCacheGetAttr(TABLESPACEOID, tuple,
-								   Anum_pg_tablespace_spcacl,
-								   &isNull);
+							   Anum_pg_tablespace_spcacl,
+							   &isNull);
 
 	if (isNull)
 	{
@@ -4190,8 +4190,8 @@ bool
 pg_largeobject_ownercheck(Oid lobj_oid, Oid roleid)
 {
 	Relation	pg_lo_meta;
-	ScanKeyData	entry[1];
-	SysScanDesc	scan;
+	ScanKeyData entry[1];
+	SysScanDesc scan;
 	HeapTuple	tuple;
 	Oid			ownerId;
 
@@ -4484,8 +4484,8 @@ get_default_acl_internal(Oid roleId, Oid nsp_oid, char objtype)
 
 	if (HeapTupleIsValid(tuple))
 	{
-		Datum	aclDatum;
-		bool	isNull;
+		Datum		aclDatum;
+		bool		isNull;
 
 		aclDatum = SysCacheGetAttr(DEFACLROLENSPOBJ, tuple,
 								   Anum_pg_default_acl_defaclacl,

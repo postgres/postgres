@@ -5,7 +5,7 @@
  *
  * These functions provide conversion between rowtypes that are logically
  * equivalent but might have columns in a different order or different sets
- * of dropped columns.  There is some overlap of functionality with the
+ * of dropped columns.	There is some overlap of functionality with the
  * executor's "junkfilter" routines, but these functions work on bare
  * HeapTuples rather than TupleTableSlots.
  *
@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/common/tupconvert.c,v 1.3 2010/01/02 16:57:33 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/common/tupconvert.c,v 1.4 2010/02/26 02:00:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -88,7 +88,7 @@ convert_tuples_by_position(TupleDesc indesc,
 		int32		atttypmod;
 
 		if (att->attisdropped)
-			continue;		/* attrMap[i] is already 0 */
+			continue;			/* attrMap[i] is already 0 */
 		noutcols++;
 		atttypid = att->atttypid;
 		atttypmod = att->atttypmod;
@@ -137,22 +137,22 @@ convert_tuples_by_position(TupleDesc indesc,
 						   nincols, noutcols)));
 
 	/*
-	 * Check to see if the map is one-to-one and the tuple types are the
-	 * same.  (We check the latter because if they're not, we want to do
-	 * conversion to inject the right OID into the tuple datum.)
+	 * Check to see if the map is one-to-one and the tuple types are the same.
+	 * (We check the latter because if they're not, we want to do conversion
+	 * to inject the right OID into the tuple datum.)
 	 */
 	if (indesc->natts == outdesc->natts &&
 		indesc->tdtypeid == outdesc->tdtypeid)
 	{
 		for (i = 0; i < n; i++)
 		{
-			if (attrMap[i] == (i+1))
+			if (attrMap[i] == (i + 1))
 				continue;
 
 			/*
-			 * If it's a dropped column and the corresponding input
-			 * column is also dropped, we needn't convert.  However,
-			 * attlen and attalign must agree.
+			 * If it's a dropped column and the corresponding input column is
+			 * also dropped, we needn't convert.  However, attlen and attalign
+			 * must agree.
 			 */
 			if (attrMap[i] == 0 &&
 				indesc->attrs[i]->attisdropped &&
@@ -182,10 +182,10 @@ convert_tuples_by_position(TupleDesc indesc,
 	/* preallocate workspace for Datum arrays */
 	map->outvalues = (Datum *) palloc(n * sizeof(Datum));
 	map->outisnull = (bool *) palloc(n * sizeof(bool));
-	n = indesc->natts + 1;						/* +1 for NULL */
+	n = indesc->natts + 1;		/* +1 for NULL */
 	map->invalues = (Datum *) palloc(n * sizeof(Datum));
 	map->inisnull = (bool *) palloc(n * sizeof(bool));
-	map->invalues[0] = (Datum) 0;				/* set up the NULL entry */
+	map->invalues[0] = (Datum) 0;		/* set up the NULL entry */
 	map->inisnull[0] = true;
 
 	return map;
@@ -193,7 +193,7 @@ convert_tuples_by_position(TupleDesc indesc,
 
 /*
  * Set up for tuple conversion, matching input and output columns by name.
- * (Dropped columns are ignored in both input and output.)  This is intended
+ * (Dropped columns are ignored in both input and output.)	This is intended
  * for use when the rowtypes are related by inheritance, so we expect an exact
  * match of both type and typmod.  The error messages will be a bit unhelpful
  * unless both rowtypes are named composite types.
@@ -221,7 +221,7 @@ convert_tuples_by_name(TupleDesc indesc,
 		int			j;
 
 		if (att->attisdropped)
-			continue;		/* attrMap[i] is already 0 */
+			continue;			/* attrMap[i] is already 0 */
 		attname = NameStr(att->attname);
 		atttypid = att->atttypid;
 		atttypmod = att->atttypmod;
@@ -256,9 +256,9 @@ convert_tuples_by_name(TupleDesc indesc,
 	}
 
 	/*
-	 * Check to see if the map is one-to-one and the tuple types are the
-	 * same.  (We check the latter because if they're not, we want to do
-	 * conversion to inject the right OID into the tuple datum.)
+	 * Check to see if the map is one-to-one and the tuple types are the same.
+	 * (We check the latter because if they're not, we want to do conversion
+	 * to inject the right OID into the tuple datum.)
 	 */
 	if (indesc->natts == outdesc->natts &&
 		indesc->tdtypeid == outdesc->tdtypeid)
@@ -266,13 +266,13 @@ convert_tuples_by_name(TupleDesc indesc,
 		same = true;
 		for (i = 0; i < n; i++)
 		{
-			if (attrMap[i] == (i+1))
+			if (attrMap[i] == (i + 1))
 				continue;
 
 			/*
-			 * If it's a dropped column and the corresponding input
-			 * column is also dropped, we needn't convert.  However,
-			 * attlen and attalign must agree.
+			 * If it's a dropped column and the corresponding input column is
+			 * also dropped, we needn't convert.  However, attlen and attalign
+			 * must agree.
 			 */
 			if (attrMap[i] == 0 &&
 				indesc->attrs[i]->attisdropped &&
@@ -302,10 +302,10 @@ convert_tuples_by_name(TupleDesc indesc,
 	/* preallocate workspace for Datum arrays */
 	map->outvalues = (Datum *) palloc(n * sizeof(Datum));
 	map->outisnull = (bool *) palloc(n * sizeof(bool));
-	n = indesc->natts + 1;						/* +1 for NULL */
+	n = indesc->natts + 1;		/* +1 for NULL */
 	map->invalues = (Datum *) palloc(n * sizeof(Datum));
 	map->inisnull = (bool *) palloc(n * sizeof(bool));
-	map->invalues[0] = (Datum) 0;				/* set up the NULL entry */
+	map->invalues[0] = (Datum) 0;		/* set up the NULL entry */
 	map->inisnull[0] = true;
 
 	return map;

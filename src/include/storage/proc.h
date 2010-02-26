@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/proc.h,v 1.120 2010/02/13 01:32:20 sriggs Exp $
+ * $PostgreSQL: pgsql/src/include/storage/proc.h,v 1.121 2010/02/26 02:01:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -180,7 +180,7 @@ extern void InitAuxiliaryProcess(void);
 
 extern void PublishStartupProcessInformation(void);
 extern void SetStartupBufferPinWaitBufId(int bufid);
-extern int GetStartupBufferPinWaitBufId(void);
+extern int	GetStartupBufferPinWaitBufId(void);
 
 extern bool HaveNFreeProcs(int n);
 extern void ProcReleaseLocks(bool isCommit);

@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/print.c,v 1.121 2010/01/30 18:59:51 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/print.c,v 1.122 2010/02/26 02:01:19 momjian Exp $
  */
 #include "postgres_fe.h"
 
@@ -49,10 +49,10 @@ const printTextFormat pg_asciiformat =
 {
 	"ascii",
 	{
-		{ "-", "+", "+", "+" },
-		{ "-", "+", "+", "+" },
-		{ "-", "+", "+", "+" },
-		{ "",  "|", "|", "|" }
+		{"-", "+", "+", "+"},
+		{"-", "+", "+", "+"},
+		{"-", "+", "+", "+"},
+		{"", "|", "|", "|"}
 	},
 	"|",
 	"|",
@@ -70,10 +70,10 @@ const printTextFormat pg_asciiformat_old =
 {
 	"old-ascii",
 	{
-		{ "-", "+", "+", "+" },
-		{ "-", "+", "+", "+" },
-		{ "-", "+", "+", "+" },
-		{ "",  "|", "|", "|" }
+		{"-", "+", "+", "+"},
+		{"-", "+", "+", "+"},
+		{"-", "+", "+", "+"},
+		{"", "|", "|", "|"}
 	},
 	":",
 	";",
@@ -92,13 +92,13 @@ const printTextFormat pg_utf8format =
 	"unicode",
 	{
 		/* ─, ┌, ┬, ┐ */
-		{ "\342\224\200", "\342\224\214", "\342\224\254", "\342\224\220" },
+		{"\342\224\200", "\342\224\214", "\342\224\254", "\342\224\220"},
 		/* ─, ├, ┼, ┤ */
-		{ "\342\224\200", "\342\224\234", "\342\224\274", "\342\224\244" },
+		{"\342\224\200", "\342\224\234", "\342\224\274", "\342\224\244"},
 		/* ─, └, ┴, ┘ */
-		{ "\342\224\200", "\342\224\224", "\342\224\264", "\342\224\230" },
+		{"\342\224\200", "\342\224\224", "\342\224\264", "\342\224\230"},
 		/* N/A, │, │, │ */
-		{ "", "\342\224\202", "\342\224\202", "\342\224\202" }
+		{"", "\342\224\202", "\342\224\202", "\342\224\202"}
 	},
 	/* │ */
 	"\342\224\202",
@@ -989,11 +989,11 @@ print_aligned_text(const printTableContent *cont, FILE *fout)
 				 * If left-aligned, pad out remaining space if needed (not
 				 * last column, and/or wrap marks required).
 				 */
-				if (cont->aligns[j] != 'r') /* Left aligned cell */
+				if (cont->aligns[j] != 'r')		/* Left aligned cell */
 				{
 					if (finalspaces ||
 						wrap[j] == PRINT_LINE_WRAP_WRAP ||
-					    wrap[j] == PRINT_LINE_WRAP_NEWLINE)
+						wrap[j] == PRINT_LINE_WRAP_NEWLINE)
 						fprintf(fout, "%*s",
 								width_wrap[j] - chars_to_output, "");
 				}
@@ -1009,9 +1009,9 @@ print_aligned_text(const printTableContent *cont, FILE *fout)
 				/* Print column divider, if not the last column */
 				if (opt_border != 0 && j < col_count - 1)
 				{
-					if (wrap[j+1] == PRINT_LINE_WRAP_WRAP)
+					if (wrap[j + 1] == PRINT_LINE_WRAP_WRAP)
 						fputs(format->midvrule_wrap, fout);
-					else if (wrap[j+1] == PRINT_LINE_WRAP_NEWLINE)
+					else if (wrap[j + 1] == PRINT_LINE_WRAP_NEWLINE)
 						fputs(format->midvrule_nl, fout);
 					else if (col_lineptrs[j + 1][curr_nl_line[j + 1]].ptr == NULL)
 						fputs(format->midvrule_blank, fout);
@@ -1080,9 +1080,9 @@ print_aligned_vertical_line(const printTableContent *cont,
 {
 	const printTextFormat *format = get_line_style(cont->opt);
 	const printTextLineFormat *lformat = &format->lrule[pos];
-	unsigned short	opt_border = cont->opt->border;
-	unsigned int	i;
-	int		reclen = 0;
+	unsigned short opt_border = cont->opt->border;
+	unsigned int i;
+	int			reclen = 0;
 
 	if (opt_border == 2)
 		fprintf(fout, "%s%s", lformat->leftvrule, lformat->hrule);
@@ -1231,8 +1231,8 @@ print_aligned_vertical(const printTableContent *cont, FILE *fout)
 			break;
 
 		if (i == 0)
-	  		pos = PRINT_RULE_TOP;
-		else if (!(*(ptr+1)))
+			pos = PRINT_RULE_TOP;
+		else if (!(*(ptr + 1)))
 			pos = PRINT_RULE_BOTTOM;
 		else
 			pos = PRINT_RULE_MIDDLE;
@@ -2555,8 +2555,8 @@ const printTextFormat *
 get_line_style(const printTableOpt *opt)
 {
 	/*
-	 * Note: this function mainly exists to preserve the convention that
-	 * a printTableOpt struct can be initialized to zeroes to get default
+	 * Note: this function mainly exists to preserve the convention that a
+	 * printTableOpt struct can be initialized to zeroes to get default
 	 * behavior.
 	 */
 	if (opt->line_style != NULL)

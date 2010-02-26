@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtutils.c,v 1.97 2010/01/03 05:39:08 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtutils.c,v 1.98 2010/02/26 02:00:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -515,7 +515,7 @@ _bt_compare_scankey_args(IndexScanDesc scan, ScanKey op,
 	StrategyNumber strat;
 
 	/*
-	 * First, deal with cases where one or both args are NULL.  This should
+	 * First, deal with cases where one or both args are NULL.	This should
 	 * only happen when the scankeys represent IS NULL/NOT NULL conditions.
 	 */
 	if ((leftarg->sk_flags | rightarg->sk_flags) & SK_ISNULL)
@@ -566,7 +566,7 @@ _bt_compare_scankey_args(IndexScanDesc scan, ScanKey op,
 				break;
 			default:
 				elog(ERROR, "unrecognized StrategyNumber: %d", (int) strat);
-				*result = false;		/* keep compiler quiet */
+				*result = false;	/* keep compiler quiet */
 				break;
 		}
 		return true;
@@ -612,8 +612,8 @@ _bt_compare_scankey_args(IndexScanDesc scan, ScanKey op,
 	 * indexscan initiated by syscache lookup will use cross-data-type
 	 * operators.)
 	 *
-	 * If the sk_strategy was flipped by _bt_fix_scankey_strategy, we
-	 * have to un-flip it to get the correct opfamily member.
+	 * If the sk_strategy was flipped by _bt_fix_scankey_strategy, we have to
+	 * un-flip it to get the correct opfamily member.
 	 */
 	strat = op->sk_strategy;
 	if (op->sk_flags & SK_BT_DESC)
@@ -653,7 +653,7 @@ _bt_compare_scankey_args(IndexScanDesc scan, ScanKey op,
  *
  * Lastly, for ordinary scankeys (not IS NULL/NOT NULL), we check for a
  * NULL comparison value.  Since all btree operators are assumed strict,
- * a NULL means that the qual cannot be satisfied.  We return TRUE if the
+ * a NULL means that the qual cannot be satisfied.	We return TRUE if the
  * comparison value isn't NULL, or FALSE if the scan should be abandoned.
  *
  * This function is applied to the *input* scankey structure; therefore
@@ -682,7 +682,7 @@ _bt_fix_scankey_strategy(ScanKey skey, int16 *indoption)
 	 * --- we can treat IS NULL as an equality operator for purposes of search
 	 * strategy.
 	 *
-	 * Likewise, "x IS NOT NULL" is supported.  We treat that as either "less
+	 * Likewise, "x IS NOT NULL" is supported.	We treat that as either "less
 	 * than NULL" in a NULLS LAST index, or "greater than NULL" in a NULLS
 	 * FIRST index.
 	 */
@@ -910,13 +910,13 @@ _bt_checkkeys(IndexScanDesc scan,
 			if (key->sk_flags & SK_SEARCHNULL)
 			{
 				if (isNull)
-					continue;		/* tuple satisfies this qual */
+					continue;	/* tuple satisfies this qual */
 			}
 			else
 			{
 				Assert(key->sk_flags & SK_SEARCHNOTNULL);
 				if (!isNull)
-					continue;		/* tuple satisfies this qual */
+					continue;	/* tuple satisfies this qual */
 			}
 
 			/*

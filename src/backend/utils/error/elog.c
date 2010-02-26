@@ -42,7 +42,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.222 2010/02/17 04:19:39 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.223 2010/02/26 02:01:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -76,7 +76,8 @@
 #undef _
 #define _(x) err_gettext(x)
 
-static const char *err_gettext(const char *str)
+static const char *
+err_gettext(const char *str)
 /* This extension allows gcc to check the format string for consistency with
    the supplied arguments. */
 __attribute__((format_arg(1)));
@@ -1572,9 +1573,9 @@ write_syslog(int level, const char *line)
 static void
 write_eventlog(int level, const char *line, int len)
 {
-	WCHAR		   *utf16;
-	int				eventlevel = EVENTLOG_ERROR_TYPE;
-	static HANDLE	evtHandle = INVALID_HANDLE_VALUE;
+	WCHAR	   *utf16;
+	int			eventlevel = EVENTLOG_ERROR_TYPE;
+	static HANDLE evtHandle = INVALID_HANDLE_VALUE;
 
 	if (evtHandle == INVALID_HANDLE_VALUE)
 	{
@@ -1611,11 +1612,11 @@ write_eventlog(int level, const char *line, int len)
 	}
 
 	/*
-	 * Convert message to UTF16 text and write it with ReportEventW,
-	 * but fall-back into ReportEventA if conversion failed.
+	 * Convert message to UTF16 text and write it with ReportEventW, but
+	 * fall-back into ReportEventA if conversion failed.
 	 *
-	 * Also verify that we are not on our way into error recursion trouble
-	 * due to error messages thrown deep inside pgwin32_toUTF16().
+	 * Also verify that we are not on our way into error recursion trouble due
+	 * to error messages thrown deep inside pgwin32_toUTF16().
 	 */
 	if (GetDatabaseEncoding() != GetPlatformEncoding() &&
 		!in_error_recursion_trouble())
@@ -1624,28 +1625,28 @@ write_eventlog(int level, const char *line, int len)
 		if (utf16)
 		{
 			ReportEventW(evtHandle,
-					eventlevel,
-					0,
-					0,				/* All events are Id 0 */
-					NULL,
-					1,
-					0,
-					(LPCWSTR *) &utf16,
-					NULL);
+						 eventlevel,
+						 0,
+						 0,		/* All events are Id 0 */
+						 NULL,
+						 1,
+						 0,
+						 (LPCWSTR *) &utf16,
+						 NULL);
 
 			pfree(utf16);
 			return;
 		}
 	}
 	ReportEventA(evtHandle,
-				eventlevel,
-				0,
-				0,				/* All events are Id 0 */
-				NULL,
-				1,
-				0,
-				&line,
-				NULL);
+				 eventlevel,
+				 0,
+				 0,				/* All events are Id 0 */
+				 NULL,
+				 1,
+				 0,
+				 &line,
+				 NULL);
 }
 #endif   /* WIN32 */
 
@@ -1653,6 +1654,7 @@ static void
 write_console(const char *line, int len)
 {
 #ifdef WIN32
+
 	/*
 	 * WriteConsoleW() will fail of stdout is redirected, so just fall through
 	 * to writing unconverted to the logfile in this case.
@@ -1678,17 +1680,18 @@ write_console(const char *line, int len)
 			}
 
 			/*
-			 * In case WriteConsoleW() failed, fall back to writing the message
-			 * unconverted.
+			 * In case WriteConsoleW() failed, fall back to writing the
+			 * message unconverted.
 			 */
 			pfree(utf16);
 		}
 	}
 #else
+
 	/*
-	 * Conversion on non-win32 platform is not implemented yet.
-	 * It requires non-throw version of pg_do_encoding_conversion(),
-	 * that converts unconvertable characters to '?' without errors.
+	 * Conversion on non-win32 platform is not implemented yet. It requires
+	 * non-throw version of pg_do_encoding_conversion(), that converts
+	 * unconvertable characters to '?' without errors.
 	 */
 #endif
 
@@ -2733,8 +2736,9 @@ void
 write_stderr(const char *fmt,...)
 {
 	va_list		ap;
+
 #ifdef WIN32
-	char		errbuf[2048];		/* Arbitrary size? */
+	char		errbuf[2048];	/* Arbitrary size? */
 #endif
 
 	fmt = _(fmt);
@@ -2808,7 +2812,7 @@ trace_recovery(int trace_level)
 {
 	if (trace_level < LOG &&
 		trace_level >= trace_recovery_messages)
-			return LOG;
+		return LOG;
 
 	return trace_level;
 }

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/visibilitymap.c,v 1.8 2010/02/09 21:43:29 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/visibilitymap.c,v 1.9 2010/02/26 02:00:33 momjian Exp $
  *
  * INTERFACE ROUTINES
  *		visibilitymap_clear - clear a bit in the visibility map
@@ -19,7 +19,7 @@
  * NOTES
  *
  * The visibility map is a bitmap with one bit per heap page. A set bit means
- * that all tuples on the page are known visible to all transactions, and 
+ * that all tuples on the page are known visible to all transactions, and
  * therefore the page doesn't need to be vacuumed. The map is conservative in
  * the sense that we make sure that whenever a bit is set, we know the
  * condition is true, but if a bit is not set, it might or might not be true.
@@ -377,11 +377,10 @@ visibilitymap_truncate(Relation rel, BlockNumber nheapblocks)
 				 rel->rd_istemp);
 
 	/*
-	 * We might as well update the local smgr_vm_nblocks setting.
-	 * smgrtruncate sent an smgr cache inval message, which will cause
-	 * other backends to invalidate their copy of smgr_vm_nblocks, and
-	 * this one too at the next command boundary.  But this ensures it
-	 * isn't outright wrong until then.
+	 * We might as well update the local smgr_vm_nblocks setting. smgrtruncate
+	 * sent an smgr cache inval message, which will cause other backends to
+	 * invalidate their copy of smgr_vm_nblocks, and this one too at the next
+	 * command boundary.  But this ensures it isn't outright wrong until then.
 	 */
 	if (rel->rd_smgr)
 		rel->rd_smgr->smgr_vm_nblocks = newnblocks;
@@ -411,7 +410,7 @@ vm_readbuf(Relation rel, BlockNumber blkno, bool extend)
 	{
 		if (smgrexists(rel->rd_smgr, VISIBILITYMAP_FORKNUM))
 			rel->rd_smgr->smgr_vm_nblocks = smgrnblocks(rel->rd_smgr,
-														VISIBILITYMAP_FORKNUM);
+													  VISIBILITYMAP_FORKNUM);
 		else
 			rel->rd_smgr->smgr_vm_nblocks = 0;
 	}
@@ -466,8 +465,8 @@ vm_extend(Relation rel, BlockNumber vm_nblocks)
 	RelationOpenSmgr(rel);
 
 	/*
-	 * Create the file first if it doesn't exist.  If smgr_vm_nblocks
-	 * is positive then it must exist, no need for an smgrexists call.
+	 * Create the file first if it doesn't exist.  If smgr_vm_nblocks is
+	 * positive then it must exist, no need for an smgrexists call.
 	 */
 	if ((rel->rd_smgr->smgr_vm_nblocks == 0 ||
 		 rel->rd_smgr->smgr_vm_nblocks == InvalidBlockNumber) &&

@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/hstore/hstore.h,v 1.9 2009/09/30 19:50:22 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/hstore/hstore.h,v 1.10 2010/02/26 02:00:32 momjian Exp $
  */
 #ifndef __HSTORE_H__
 #define __HSTORE_H__
@@ -12,7 +12,7 @@
  * HEntry: there is one of these for each key _and_ value in an hstore
  *
  * the position offset points to the _end_ so that we can get the length
- * by subtraction from the previous entry.  the ISFIRST flag lets us tell
+ * by subtraction from the previous entry.	the ISFIRST flag lets us tell
  * whether there is a previous entry.
  */
 typedef struct
@@ -51,7 +51,7 @@ typedef struct
 /*
  * it's not possible to get more than 2^28 items into an hstore,
  * so we reserve the top few bits of the size field. See hstore_compat.c
- * for one reason why.  Some bits are left for future use here.
+ * for one reason why.	Some bits are left for future use here.
  */
 #define HS_FLAG_NEWVERSION 0x80000000
 
@@ -88,7 +88,7 @@ typedef struct
  * evaluation here.
  */
 #define HS_COPYITEM(dent_,dbuf_,dptr_,sptr_,klen_,vlen_,vnull_)			\
-    do {																\
+	do {																\
 		memcpy((dptr_), (sptr_), (klen_)+(vlen_));						\
 		(dptr_) += (klen_)+(vlen_);										\
 		(dent_)++->entry = ((dptr_) - (dbuf_) - (vlen_)) & HENTRY_POSMASK; \
@@ -119,7 +119,7 @@ typedef struct
 /* finalize a newly-constructed hstore */
 #define HS_FINALIZE(hsp_,count_,buf_,ptr_)							\
 	do {															\
-		int	buflen = (ptr_) - (buf_);								\
+		int buflen = (ptr_) - (buf_);								\
 		if ((count_))												\
 			ARRPTR(hsp_)[0].entry |= HENTRY_ISFIRST;				\
 		if ((count_) != HS_COUNT((hsp_)))							\
@@ -133,7 +133,7 @@ typedef struct
 /* ensure the varlena size of an existing hstore is correct */
 #define HS_FIXSIZE(hsp_,count_)											\
 	do {																\
-		int bl = (count_) ? HSE_ENDPOS(ARRPTR(hsp_)[2*(count_)-1]) : 0;	\
+		int bl = (count_) ? HSE_ENDPOS(ARRPTR(hsp_)[2*(count_)-1]) : 0; \
 		SET_VARSIZE((hsp_), CALCDATASIZE((count_),bl));					\
 	} while (0)
 
@@ -172,7 +172,7 @@ extern Pairs *hstoreArrayToPairs(ArrayType *a, int *npairs);
 #define HStoreExistsStrategyNumber		9
 #define HStoreExistsAnyStrategyNumber	10
 #define HStoreExistsAllStrategyNumber	11
-#define HStoreOldContainsStrategyNumber	13		/* backwards compatibility */
+#define HStoreOldContainsStrategyNumber 13		/* backwards compatibility */
 
 /*
  * defining HSTORE_POLLUTE_NAMESPACE=0 will prevent use of old function names;

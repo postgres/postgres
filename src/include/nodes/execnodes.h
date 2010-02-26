@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/execnodes.h,v 1.218 2010/02/12 17:33:20 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/execnodes.h,v 1.219 2010/02/26 02:01:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,7 +61,7 @@ typedef struct IndexInfo
 	List	   *ii_ExpressionsState;	/* list of ExprState */
 	List	   *ii_Predicate;	/* list of Expr */
 	List	   *ii_PredicateState;		/* list of ExprState */
-	Oid		   *ii_ExclusionOps;		/* array with one entry per column */
+	Oid		   *ii_ExclusionOps;	/* array with one entry per column */
 	Oid		   *ii_ExclusionProcs;		/* array with one entry per column */
 	uint16	   *ii_ExclusionStrats;		/* array with one entry per column */
 	bool		ii_Unique;
@@ -353,8 +353,8 @@ typedef struct EState
 
 	/* Stuff used for firing triggers: */
 	List	   *es_trig_target_relations;		/* trigger-only ResultRelInfos */
-	TupleTableSlot *es_trig_tuple_slot;		/* for trigger output tuples */
-	TupleTableSlot *es_trig_oldtup_slot;	/* for trigger old tuples */
+	TupleTableSlot *es_trig_tuple_slot; /* for trigger output tuples */
+	TupleTableSlot *es_trig_oldtup_slot;		/* for trigger old tuples */
 
 	/* Parameter info: */
 	ParamListInfo es_param_list_info;	/* values of external params */
@@ -387,16 +387,16 @@ typedef struct EState
 
 	/*
 	 * These fields are for re-evaluating plan quals when an updated tuple is
-	 * substituted in READ COMMITTED mode.  es_epqTuple[] contains tuples
-	 * that scan plan nodes should return instead of whatever they'd normally
+	 * substituted in READ COMMITTED mode.	es_epqTuple[] contains tuples that
+	 * scan plan nodes should return instead of whatever they'd normally
 	 * return, or NULL if nothing to return; es_epqTupleSet[] is true if a
 	 * particular array entry is valid; and es_epqScanDone[] is state to
 	 * remember if the tuple has been returned already.  Arrays are of size
 	 * list_length(es_range_table) and are indexed by scan node scanrelid - 1.
 	 */
-	HeapTuple  *es_epqTuple;		/* array of EPQ substitute tuples */
-	bool	   *es_epqTupleSet;		/* true if EPQ tuple is provided */
-	bool	   *es_epqScanDone;		/* true if EPQ tuple has been fetched */
+	HeapTuple  *es_epqTuple;	/* array of EPQ substitute tuples */
+	bool	   *es_epqTupleSet; /* true if EPQ tuple is provided */
+	bool	   *es_epqScanDone; /* true if EPQ tuple has been fetched */
 } EState;
 
 
@@ -409,7 +409,7 @@ typedef struct EState
  * parent RTEs, which can be ignored at runtime).  See PlanRowMark for details
  * about most of the fields.
  *
- * es_rowMarks is a list of these structs.  Each LockRows node has its own
+ * es_rowMarks is a list of these structs.	Each LockRows node has its own
  * list, which is the subset of locks that it is supposed to enforce; note
  * that the per-node lists point to the same structs that are in the global
  * list.
@@ -419,7 +419,7 @@ typedef struct ExecRowMark
 	Relation	relation;		/* opened and suitably locked relation */
 	Index		rti;			/* its range table index */
 	Index		prti;			/* parent range table index, if child */
-	RowMarkType	markType;		/* see enum in nodes/plannodes.h */
+	RowMarkType markType;		/* see enum in nodes/plannodes.h */
 	bool		noWait;			/* NOWAIT option */
 	AttrNumber	ctidAttNo;		/* resno of ctid junk attribute, if any */
 	AttrNumber	toidAttNo;		/* resno of tableoid junk attribute, if any */
@@ -1024,13 +1024,13 @@ typedef struct ResultState
  */
 typedef struct ModifyTableState
 {
-	PlanState		ps;				/* its first field is NodeTag */
-	CmdType			operation;
-	PlanState	  **mt_plans;		/* subplans (one per target rel) */
-	int				mt_nplans;		/* number of plans in the array */
-	int				mt_whichplan;	/* which one is being executed (0..n-1) */
-	EPQState		mt_epqstate;	/* for evaluating EvalPlanQual rechecks */
-	bool			fireBSTriggers;	/* do we need to fire stmt triggers? */
+	PlanState	ps;				/* its first field is NodeTag */
+	CmdType		operation;
+	PlanState **mt_plans;		/* subplans (one per target rel) */
+	int			mt_nplans;		/* number of plans in the array */
+	int			mt_whichplan;	/* which one is being executed (0..n-1) */
+	EPQState	mt_epqstate;	/* for evaluating EvalPlanQual rechecks */
+	bool		fireBSTriggers; /* do we need to fire stmt triggers? */
 } ModifyTableState;
 
 /* ----------------
@@ -1600,15 +1600,16 @@ typedef struct WindowAggState
 	int64		frameheadpos;	/* current frame head position */
 	int64		frametailpos;	/* current frame tail position */
 	/* use struct pointer to avoid including windowapi.h here */
-	struct WindowObjectData *agg_winobj;	/* winobj for aggregate fetches */
+	struct WindowObjectData *agg_winobj;		/* winobj for aggregate
+												 * fetches */
 	int64		aggregatedbase; /* start row for current aggregates */
 	int64		aggregatedupto; /* rows before this one are aggregated */
 
 	int			frameOptions;	/* frame_clause options, see WindowDef */
 	ExprState  *startOffset;	/* expression for starting bound offset */
 	ExprState  *endOffset;		/* expression for ending bound offset */
-	Datum		startOffsetValue;	/* result of startOffset evaluation */
-	Datum		endOffsetValue;		/* result of endOffset evaluation */
+	Datum		startOffsetValue;		/* result of startOffset evaluation */
+	Datum		endOffsetValue; /* result of endOffset evaluation */
 
 	MemoryContext partcontext;	/* context for partition-lifespan data */
 	MemoryContext aggcontext;	/* context for each aggregate data */
@@ -1619,12 +1620,12 @@ typedef struct WindowAggState
 	bool		partition_spooled;		/* true if all tuples in current
 										 * partition have been spooled into
 										 * tuplestore */
-	bool		more_partitions;	/* true if there's more partitions after
-									 * this one */
-	bool		framehead_valid;	/* true if frameheadpos is known up to date
-									 * for current row */
-	bool		frametail_valid;	/* true if frametailpos is known up to date
-									 * for current row */
+	bool		more_partitions;/* true if there's more partitions after this
+								 * one */
+	bool		framehead_valid;/* true if frameheadpos is known up to date
+								 * for current row */
+	bool		frametail_valid;/* true if frametailpos is known up to date
+								 * for current row */
 
 	TupleTableSlot *first_part_slot;	/* first tuple of current or next
 										 * partition */

@@ -50,7 +50,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/time/tqual.c,v 1.117 2010/02/08 14:10:21 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/time/tqual.c,v 1.118 2010/02/26 02:01:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -93,7 +93,7 @@ static bool XidInMVCCSnapshot(TransactionId xid, Snapshot snapshot);
  * Also, if we are cleaning up HEAP_MOVED_IN or HEAP_MOVED_OFF entries, then
  * we can always set the hint bits, since pre-9.0 VACUUM FULL always used
  * synchronous commits and didn't move tuples that weren't previously
- * hinted.  (This is not known by this subroutine, but is applied by its
+ * hinted.	(This is not known by this subroutine, but is applied by its
  * callers.)  Note: old-style VACUUM FULL is gone, but we have to keep this
  * module's support for MOVED_OFF/MOVED_IN flag bits for as long as we
  * support in-place update from pre-9.0 databases.
@@ -1274,17 +1274,17 @@ XidInMVCCSnapshot(TransactionId xid, Snapshot snapshot)
 		return true;
 
 	/*
-	 * Snapshot information is stored slightly differently in snapshots
-	 * taken during recovery.
+	 * Snapshot information is stored slightly differently in snapshots taken
+	 * during recovery.
 	 */
 	if (!snapshot->takenDuringRecovery)
 	{
 		/*
-		 * If the snapshot contains full subxact data, the fastest way to check
-		 * things is just to compare the given XID against both subxact XIDs and
-		 * top-level XIDs.	If the snapshot overflowed, we have to use pg_subtrans
-		 * to convert a subxact XID to its parent XID, but then we need only look
-		 * at top-level XIDs not subxacts.
+		 * If the snapshot contains full subxact data, the fastest way to
+		 * check things is just to compare the given XID against both subxact
+		 * XIDs and top-level XIDs.  If the snapshot overflowed, we have to
+		 * use pg_subtrans to convert a subxact XID to its parent XID, but
+		 * then we need only look at top-level XIDs not subxacts.
 		 */
 		if (!snapshot->suboverflowed)
 		{
@@ -1305,8 +1305,9 @@ XidInMVCCSnapshot(TransactionId xid, Snapshot snapshot)
 			xid = SubTransGetTopmostTransaction(xid);
 
 			/*
-			 * If xid was indeed a subxact, we might now have an xid < xmin, so
-			 * recheck to avoid an array scan.	No point in rechecking xmax.
+			 * If xid was indeed a subxact, we might now have an xid < xmin,
+			 * so recheck to avoid an array scan.  No point in rechecking
+			 * xmax.
 			 */
 			if (TransactionIdPrecedes(xid, snapshot->xmin))
 				return false;
@@ -1323,9 +1324,9 @@ XidInMVCCSnapshot(TransactionId xid, Snapshot snapshot)
 		int32		j;
 
 		/*
-		 * In recovery we store all xids in the subxact array because it
-		 * is by far the bigger array, and we mostly don't know which xids
-		 * are top-level and which are subxacts. The xip array is empty.
+		 * In recovery we store all xids in the subxact array because it is by
+		 * far the bigger array, and we mostly don't know which xids are
+		 * top-level and which are subxacts. The xip array is empty.
 		 *
 		 * We start by searching subtrans, if we overflowed.
 		 */
@@ -1335,8 +1336,9 @@ XidInMVCCSnapshot(TransactionId xid, Snapshot snapshot)
 			xid = SubTransGetTopmostTransaction(xid);
 
 			/*
-			 * If xid was indeed a subxact, we might now have an xid < xmin, so
-			 * recheck to avoid an array scan.	No point in rechecking xmax.
+			 * If xid was indeed a subxact, we might now have an xid < xmin,
+			 * so recheck to avoid an array scan.  No point in rechecking
+			 * xmax.
 			 */
 			if (TransactionIdPrecedes(xid, snapshot->xmin))
 				return false;

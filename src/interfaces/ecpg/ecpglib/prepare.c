@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/prepare.c,v 1.36 2010/01/22 14:19:27 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/prepare.c,v 1.37 2010/02/26 02:01:30 momjian Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -100,7 +100,7 @@ replace_variables(char **text, int lineno)
 }
 
 static bool
-prepare_common(int lineno, struct connection *con, const bool questionmarks, const char *name, const char *variable)
+prepare_common(int lineno, struct connection * con, const bool questionmarks, const char *name, const char *variable)
 {
 	struct statement *stmt;
 	struct prepared_statement *this;
@@ -414,7 +414,7 @@ ecpg_freeStmtCacheEntry(int lineno, int compat, int entNo)		/* entry # to free *
  */
 static int
 AddStmtToCache(int lineno,		/* line # of statement		*/
-			   const char *stmtID,	/* statement ID				*/
+			   const char *stmtID,		/* statement ID				*/
 			   const char *connection,	/* connection				*/
 			   int compat,		/* compatibility level */
 			   const char *ecpgQuery)	/* query					*/
@@ -491,7 +491,7 @@ ecpg_auto_prepare(int lineno, const char *connection_name, const int compat, cha
 	}
 	else
 	{
-		char	stmtID[STMTID_SIZE];
+		char		stmtID[STMTID_SIZE];
 
 		ecpg_log("ecpg_auto_prepare on line %d: statement not in cache; inserting\n", lineno);
 

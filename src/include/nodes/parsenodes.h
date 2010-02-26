@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.431 2010/02/23 22:51:43 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.432 2010/02/26 02:01:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -276,7 +276,7 @@ typedef struct FuncCall
 	NodeTag		type;
 	List	   *funcname;		/* qualified name of function */
 	List	   *args;			/* the arguments (list of exprs) */
-	List       *agg_order;      /* ORDER BY (list of SortBy) */
+	List	   *agg_order;		/* ORDER BY (list of SortBy) */
 	bool		agg_star;		/* argument was really '*' */
 	bool		agg_distinct;	/* arguments were labeled DISTINCT */
 	bool		func_variadic;	/* last argument was labeled VARIADIC */
@@ -459,7 +459,7 @@ typedef struct RangeFunction
  * in either "raw" form (an untransformed parse tree) or "cooked" form
  * (a post-parse-analysis, executable expression tree), depending on
  * how this ColumnDef node was created (by parsing, or by inheritance
- * from an existing relation).  We should never have both in the same node!
+ * from an existing relation).	We should never have both in the same node!
  *
  * The constraints list may contain a CONSTR_DEFAULT item in a raw
  * parsetree produced by gram.y, but transformCreateStmt will remove
@@ -493,12 +493,12 @@ typedef struct InhRelation
 
 typedef enum CreateStmtLikeOption
 {
-	CREATE_TABLE_LIKE_DEFAULTS		= 1 << 0,
-	CREATE_TABLE_LIKE_CONSTRAINTS	= 1 << 1,
-	CREATE_TABLE_LIKE_INDEXES		= 1 << 2,
-	CREATE_TABLE_LIKE_STORAGE		= 1 << 3,
-	CREATE_TABLE_LIKE_COMMENTS		= 1 << 4,
-	CREATE_TABLE_LIKE_ALL			= 0x7FFFFFFF
+	CREATE_TABLE_LIKE_DEFAULTS = 1 << 0,
+	CREATE_TABLE_LIKE_CONSTRAINTS = 1 << 1,
+	CREATE_TABLE_LIKE_INDEXES = 1 << 2,
+	CREATE_TABLE_LIKE_STORAGE = 1 << 3,
+	CREATE_TABLE_LIKE_COMMENTS = 1 << 4,
+	CREATE_TABLE_LIKE_ALL = 0x7FFFFFFF
 } CreateStmtLikeOption;
 
 /*
@@ -1917,7 +1917,7 @@ typedef struct IndexStmt
 	List	   *indexParams;	/* a list of IndexElem */
 	List	   *options;		/* options from WITH clause */
 	Node	   *whereClause;	/* qualification (partial-index predicate) */
-	List	   *excludeOpNames;	/* exclusion operator names, or NIL if none */
+	List	   *excludeOpNames; /* exclusion operator names, or NIL if none */
 	bool		unique;			/* is index unique? */
 	bool		primary;		/* is index on primary key? */
 	bool		isconstraint;	/* is it from a CONSTRAINT clause? */
@@ -1998,7 +1998,7 @@ typedef struct InlineCodeBlock
 	NodeTag		type;
 	char	   *source_text;	/* source text of anonymous code block */
 	Oid			langOid;		/* OID of selected language */
-	bool        langIsTrusted;  /* trusted property of the language */
+	bool		langIsTrusted;	/* trusted property of the language */
 } InlineCodeBlock;
 
 /* ----------------------
@@ -2257,11 +2257,11 @@ typedef struct ClusterStmt
  */
 typedef enum VacuumOption
 {
-	VACOPT_VACUUM		= 1 << 0,	/* do VACUUM */
-	VACOPT_ANALYZE		= 1 << 1,	/* do ANALYZE */
-	VACOPT_VERBOSE		= 1 << 2,	/* print progress info */
-	VACOPT_FREEZE		= 1 << 3,	/* FREEZE option */
-	VACOPT_FULL			= 1 << 4	/* FULL (non-concurrent) vacuum */
+	VACOPT_VACUUM = 1 << 0,		/* do VACUUM */
+	VACOPT_ANALYZE = 1 << 1,	/* do ANALYZE */
+	VACOPT_VERBOSE = 1 << 2,	/* print progress info */
+	VACOPT_FREEZE = 1 << 3,		/* FREEZE option */
+	VACOPT_FULL = 1 << 4		/* FULL (non-concurrent) vacuum */
 } VacuumOption;
 
 typedef struct VacuumStmt

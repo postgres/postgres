@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtpage.c,v 1.119 2010/02/13 00:59:58 sriggs Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtpage.c,v 1.120 2010/02/26 02:00:34 momjian Exp $
  *
  *	NOTES
  *	   Postgres btree pages look like ordinary relation pages.	The opaque
@@ -459,8 +459,8 @@ _bt_log_reuse_page(Relation rel, BlockNumber blkno, TransactionId latestRemovedX
 	START_CRIT_SECTION();
 
 	/*
-	 * We don't do MarkBufferDirty here because we're about initialise
-	 * the page, and nobody else can see it yet.
+	 * We don't do MarkBufferDirty here because we're about initialise the
+	 * page, and nobody else can see it yet.
 	 */
 
 	/* XLOG stuff */
@@ -480,8 +480,8 @@ _bt_log_reuse_page(Relation rel, BlockNumber blkno, TransactionId latestRemovedX
 		recptr = XLogInsert(RM_BTREE_ID, XLOG_BTREE_REUSE_PAGE, rdata);
 
 		/*
-		 * We don't do PageSetLSN or PageSetTLI here because
-		 * we're about initialise the page, so no need.
+		 * We don't do PageSetLSN or PageSetTLI here because we're about
+		 * initialise the page, so no need.
 		 */
 	}
 
@@ -552,11 +552,11 @@ _bt_getbuf(Relation rel, BlockNumber blkno, int access)
 			{
 				page = BufferGetPage(buf);
 				if (_bt_page_recyclable(page))
-				{					
+				{
 					/*
-					 * If we are generating WAL for Hot Standby then create
-					 * a WAL record that will allow us to conflict with
-					 * queries running on standby.
+					 * If we are generating WAL for Hot Standby then create a
+					 * WAL record that will allow us to conflict with queries
+					 * running on standby.
 					 */
 					if (XLogStandbyInfoActive())
 					{
@@ -762,6 +762,7 @@ _bt_delitems(Relation rel, Buffer buf,
 		if (isVacuum)
 		{
 			xl_btree_vacuum xlrec_vacuum;
+
 			xlrec_vacuum.node = rel->rd_node;
 			xlrec_vacuum.block = BufferGetBlockNumber(buf);
 
@@ -772,6 +773,7 @@ _bt_delitems(Relation rel, Buffer buf,
 		else
 		{
 			xl_btree_delete xlrec_delete;
+
 			xlrec_delete.node = rel->rd_node;
 			xlrec_delete.block = BufferGetBlockNumber(buf);
 

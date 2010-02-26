@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/relmapper.h,v 1.1 2010/02/07 20:48:13 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/relmapper.h,v 1.2 2010/02/26 02:01:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,7 +37,7 @@ typedef struct xl_relmap_update
 extern Oid	RelationMapOidToFilenode(Oid relationId, bool shared);
 
 extern void RelationMapUpdateMap(Oid relationId, Oid fileNode, bool shared,
-								 bool immediate);
+					 bool immediate);
 
 extern void RelationMapRemoveMapping(Oid relationId);
 

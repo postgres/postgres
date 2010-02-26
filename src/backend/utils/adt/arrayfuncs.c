@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.163 2010/01/02 16:57:53 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.164 2010/02/26 02:01:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -328,10 +328,11 @@ array_in(PG_FUNCTION_ARGS)
 	SET_VARSIZE(retval, nbytes);
 	retval->ndim = ndim;
 	retval->dataoffset = dataoffset;
+
 	/*
-	 *	This comes from the array's pg_type.typelem (which points to the
-	 *	base data type's pg_type.oid) and stores system oids in user tables.
-	 *	This oid must be preserved by binary upgrades.
+	 * This comes from the array's pg_type.typelem (which points to the base
+	 * data type's pg_type.oid) and stores system oids in user tables. This
+	 * oid must be preserved by binary upgrades.
 	 */
 	retval->elemtype = element_type;
 	memcpy(ARR_DIMS(retval), dim, ndim * sizeof(int));
@@ -1212,7 +1213,7 @@ array_recv(PG_FUNCTION_ARGS)
 
 	for (i = 0; i < ndim; i++)
 	{
-		int ub;
+		int			ub;
 
 		dim[i] = pq_getmsgint(buf, 4);
 		lBound[i] = pq_getmsgint(buf, 4);
@@ -4194,12 +4195,12 @@ accumArrayResult(ArrayBuildState *astate,
 	}
 
 	/*
-	 * Ensure pass-by-ref stuff is copied into mcontext; and detoast it too
-	 * if it's varlena.  (You might think that detoasting is not needed here
+	 * Ensure pass-by-ref stuff is copied into mcontext; and detoast it too if
+	 * it's varlena.  (You might think that detoasting is not needed here
 	 * because construct_md_array can detoast the array elements later.
 	 * However, we must not let construct_md_array modify the ArrayBuildState
-	 * because that would mean array_agg_finalfn damages its input, which
-	 * is verboten.  Also, this way frequently saves one copying step.)
+	 * because that would mean array_agg_finalfn damages its input, which is
+	 * verboten.  Also, this way frequently saves one copying step.)
 	 */
 	if (!disnull && !astate->typbyval)
 	{

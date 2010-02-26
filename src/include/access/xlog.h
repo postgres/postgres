@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/xlog.h,v 1.102 2010/02/08 04:33:54 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/xlog.h,v 1.103 2010/02/26 02:01:21 momjian Exp $
  */
 #ifndef XLOG_H
 #define XLOG_H
@@ -132,7 +132,7 @@ typedef struct XLogRecData
 	struct XLogRecData *next;	/* next struct in chain, or NULL */
 } XLogRecData;
 
-extern PGDLLIMPORT TimeLineID ThisTimeLineID;		/* current TLI */
+extern PGDLLIMPORT TimeLineID ThisTimeLineID;	/* current TLI */
 
 /*
  * Prior to 8.4, all activity during recovery was carried out by Startup
@@ -182,7 +182,7 @@ extern char *XLogArchiveCommand;
 extern int	XLogArchiveTimeout;
 extern bool log_checkpoints;
 extern bool XLogRequestRecoveryConnections;
-extern int MaxStandbyDelay;
+extern int	MaxStandbyDelay;
 
 #define XLogArchivingActive()	(XLogArchiveMode)
 #define XLogArchiveCommandSet() (XLogArchiveCommand[0] != '\0')
@@ -200,7 +200,7 @@ extern int	MaxWalSenders;
 #define XLogIsNeeded() (XLogArchivingActive() || (MaxWalSenders > 0))
 
 /* Do we need to WAL-log information required only for Hot Standby? */
-#define XLogStandbyInfoActive()	(XLogRequestRecoveryConnections && XLogIsNeeded())
+#define XLogStandbyInfoActive() (XLogRequestRecoveryConnections && XLogIsNeeded())
 
 #ifdef WAL_DEBUG
 extern bool XLOG_DEBUG;
@@ -214,8 +214,9 @@ extern bool XLOG_DEBUG;
 
 /* These directly affect the behavior of CreateCheckPoint and subsidiaries */
 #define CHECKPOINT_IS_SHUTDOWN	0x0001	/* Checkpoint is for shutdown */
-#define CHECKPOINT_END_OF_RECOVERY	0x0002	/* Like shutdown checkpoint, but
-											 * issued at end of WAL recovery */
+#define CHECKPOINT_END_OF_RECOVERY	0x0002		/* Like shutdown checkpoint,
+												 * but issued at end of WAL
+												 * recovery */
 #define CHECKPOINT_IMMEDIATE	0x0004	/* Do it without delays */
 #define CHECKPOINT_FORCE		0x0008	/* Force even if no activity */
 /* These are important to RequestCheckpoint */
@@ -250,8 +251,8 @@ extern XLogRecPtr XLogInsert(RmgrId rmid, uint8 info, XLogRecData *rdata);
 extern void XLogFlush(XLogRecPtr RecPtr);
 extern void XLogBackgroundFlush(void);
 extern bool XLogNeedsFlush(XLogRecPtr RecPtr);
-extern int	XLogFileInit(uint32 log, uint32 seg,
-						 bool *use_existent, bool use_lock);
+extern int XLogFileInit(uint32 log, uint32 seg,
+			 bool *use_existent, bool use_lock);
 extern int	XLogFileOpen(uint32 log, uint32 seg);
 
 

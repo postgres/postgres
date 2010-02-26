@@ -13,7 +13,7 @@
  *
  *	Copyright (c) 2001-2010, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.200 2010/01/31 17:39:34 mha Exp $
+ *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.201 2010/02/26 02:00:55 momjian Exp $
  * ----------
  */
 #include "postgres.h"
@@ -248,7 +248,7 @@ static void pgstat_sighup_handler(SIGNAL_ARGS);
 
 static PgStat_StatDBEntry *pgstat_get_db_entry(Oid databaseid, bool create);
 static PgStat_StatTabEntry *pgstat_get_tab_entry(PgStat_StatDBEntry *dbentry,
-												 Oid tableoid, bool create);
+					 Oid tableoid, bool create);
 static void pgstat_write_statsfile(bool permanent);
 static HTAB *pgstat_read_statsfile(Oid onlydb, bool permanent);
 static void backend_read_statsfile(void);
@@ -1036,7 +1036,7 @@ pgstat_vacuum_stat(void)
  *
  *	Collect the OIDs of all objects listed in the specified system catalog
  *	into a temporary hash table.  Caller should hash_destroy the result
- *	when done with it.  (However, we make the table in CurrentMemoryContext
+ *	when done with it.	(However, we make the table in CurrentMemoryContext
  *	so that it will be freed properly in event of an error.)
  * ----------
  */
@@ -1194,7 +1194,8 @@ pgstat_reset_shared_counters(const char *target)
  *	Tell the statistics collector to reset a single counter.
  * ----------
  */
-void pgstat_reset_single_counter(Oid objoid, PgStat_Single_Reset_Type type)
+void
+pgstat_reset_single_counter(Oid objoid, PgStat_Single_Reset_Type type)
 {
 	PgStat_MsgResetsinglecounter msg;
 
@@ -1832,8 +1833,8 @@ AtEOSubXact_PgStat(bool isCommit, int nestDepth)
 			else
 			{
 				/*
-				 * On abort, update top-level tabstat counts, then forget
-				 * the subtransaction
+				 * On abort, update top-level tabstat counts, then forget the
+				 * subtransaction
 				 */
 
 				/* count attempted actions regardless of commit/abort */
@@ -2353,8 +2354,8 @@ pgstat_beshutdown_hook(int code, Datum arg)
 	volatile PgBackendStatus *beentry = MyBEEntry;
 
 	/*
-	 * If we got as far as discovering our own database ID, we can report
-	 * what we did to the collector.  Otherwise, we'd be sending an invalid
+	 * If we got as far as discovering our own database ID, we can report what
+	 * we did to the collector.  Otherwise, we'd be sending an invalid
 	 * database ID, so forget it.  (This means that accesses to pg_database
 	 * during failed backend starts might never get counted.)
 	 */
@@ -2977,14 +2978,14 @@ PgstatCollectorMain(int argc, char *argv[])
 
 				case PGSTAT_MTYPE_RESETSHAREDCOUNTER:
 					pgstat_recv_resetsharedcounter(
-											 (PgStat_MsgResetsharedcounter *) &msg,
-											 len);
+									   (PgStat_MsgResetsharedcounter *) &msg,
+												   len);
 					break;
 
 				case PGSTAT_MTYPE_RESETSINGLECOUNTER:
 					pgstat_recv_resetsinglecounter(
-											 (PgStat_MsgResetsinglecounter *) &msg,
-											 len);
+									   (PgStat_MsgResetsinglecounter *) &msg,
+												   len);
 					break;
 
 				case PGSTAT_MTYPE_AUTOVAC_START:
@@ -3752,7 +3753,7 @@ pgstat_recv_tabstat(PgStat_MsgTabstat *msg, int len)
 		PgStat_TableEntry *tabmsg = &(msg->m_entry[i]);
 
 		tabentry = (PgStat_StatTabEntry *) hash_search(dbentry->tables,
-													   (void *) &(tabmsg->t_id),
+													(void *) &(tabmsg->t_id),
 													   HASH_ENTER, &found);
 
 		if (!found)
@@ -3949,7 +3950,7 @@ pgstat_recv_resetcounter(PgStat_MsgResetcounter *msg, int len)
 static void
 pgstat_recv_resetsharedcounter(PgStat_MsgResetsharedcounter *msg, int len)
 {
-    if (msg->m_resettarget==RESET_BGWRITER)
+	if (msg->m_resettarget == RESET_BGWRITER)
 	{
 		/* Reset the global background writer statistics for the cluster. */
 		memset(&globalStats, 0, sizeof(globalStats));
@@ -3982,7 +3983,7 @@ pgstat_recv_resetsinglecounter(PgStat_MsgResetsinglecounter *msg, int len)
 	if (msg->m_resettype == RESET_TABLE)
 		(void) hash_search(dbentry->tables, (void *) &(msg->m_objectid), HASH_REMOVE, NULL);
 	else if (msg->m_resettype == RESET_FUNCTION)
-		(void) hash_search(dbentry->functions, (void *)&(msg->m_objectid), HASH_REMOVE, NULL);
+		(void) hash_search(dbentry->functions, (void *) &(msg->m_objectid), HASH_REMOVE, NULL);
 }
 
 /* ----------

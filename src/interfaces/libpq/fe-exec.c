@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-exec.c,v 1.210 2010/02/17 04:19:41 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-exec.c,v 1.211 2010/02/26 02:01:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3070,13 +3070,13 @@ static char *
 PQescapeInternal(PGconn *conn, const char *str, size_t len, bool as_ident)
 {
 	const char *s;
-	char   *result;
-	char   *rp;
-	int		num_quotes = 0;		/* single or double, depending on as_ident */
-	int		num_backslashes = 0;
-	int		input_len;
-	int		result_size;
-	char	quote_char = as_ident ? '"' : '\'';
+	char	   *result;
+	char	   *rp;
+	int			num_quotes = 0; /* single or double, depending on as_ident */
+	int			num_backslashes = 0;
+	int			input_len;
+	int			result_size;
+	char		quote_char = as_ident ? '"' : '\'';
 
 	/* We must have a connection, else fail immediately. */
 	if (!conn)
@@ -3091,7 +3091,7 @@ PQescapeInternal(PGconn *conn, const char *str, size_t len, bool as_ident)
 			++num_backslashes;
 		else if (IS_HIGHBIT_SET(*s))
 		{
-			int charlen;
+			int			charlen;
 
 			/* Slow path for possible multibyte characters */
 			charlen = pg_encoding_mblen(conn->client_encoding, s);
@@ -3111,7 +3111,7 @@ PQescapeInternal(PGconn *conn, const char *str, size_t len, bool as_ident)
 
 	/* Allocate output buffer. */
 	input_len = s - str;
-	result_size = input_len + num_quotes + 3;  /* two quotes, plus a NUL */
+	result_size = input_len + num_quotes + 3;	/* two quotes, plus a NUL */
 	if (!as_ident && num_backslashes > 0)
 		result_size += num_backslashes + 2;
 	result = rp = (char *) malloc(result_size);
@@ -3125,7 +3125,7 @@ PQescapeInternal(PGconn *conn, const char *str, size_t len, bool as_ident)
 	/*
 	 * If we are escaping a literal that contains backslashes, we use the
 	 * escape string syntax so that the result is correct under either value
-	 * of standard_conforming_strings.  We also emit a leading space in this
+	 * of standard_conforming_strings.	We also emit a leading space in this
 	 * case, to guard against the possibility that the result might be
 	 * interpolated immediately following an identifier.
 	 */
@@ -3143,8 +3143,8 @@ PQescapeInternal(PGconn *conn, const char *str, size_t len, bool as_ident)
 	 *
 	 * We've already verified that the input string is well-formed in the
 	 * current encoding.  If it contains no quotes and, in the case of
-	 * literal-escaping, no backslashes, then we can just copy it directly
-	 * to the output buffer, adding the necessary quotes.
+	 * literal-escaping, no backslashes, then we can just copy it directly to
+	 * the output buffer, adding the necessary quotes.
 	 *
 	 * If not, we must rescan the input and process each character
 	 * individually.
@@ -3167,13 +3167,14 @@ PQescapeInternal(PGconn *conn, const char *str, size_t len, bool as_ident)
 				*rp++ = *s;
 			else
 			{
-				int i = pg_encoding_mblen(conn->client_encoding, s);
+				int			i = pg_encoding_mblen(conn->client_encoding, s);
+
 				while (1)
 				{
 					*rp++ = *s;
 					if (--i == 0)
 						break;
-					++s;	/* for loop will provide the final increment */
+					++s;		/* for loop will provide the final increment */
 				}
 			}
 		}
@@ -3391,9 +3392,9 @@ PQunescapeBytea(const unsigned char *strtext, size_t *retbuflen)
 	if (strtext[0] == '\\' && strtext[1] == 'x')
 	{
 		const unsigned char *s;
-		unsigned char	*p;
+		unsigned char *p;
 
-		buflen = (strtextlen - 2)/2;
+		buflen = (strtextlen - 2) / 2;
 		/* Avoid unportable malloc(0) */
 		buffer = (unsigned char *) malloc(buflen > 0 ? buflen : 1);
 		if (buffer == NULL)
@@ -3403,8 +3404,8 @@ PQunescapeBytea(const unsigned char *strtext, size_t *retbuflen)
 		p = buffer;
 		while (*s)
 		{
-			char	v1,
-					v2;
+			char		v1,
+						v2;
 
 			/*
 			 * Bad input is silently ignored.  Note that this includes
@@ -3422,52 +3423,52 @@ PQunescapeBytea(const unsigned char *strtext, size_t *retbuflen)
 	}
 	else
 	{
-	/*
-	 * Length of input is max length of output, but add one to avoid
-	 * unportable malloc(0) if input is zero-length.
-	 */
-	buffer = (unsigned char *) malloc(strtextlen + 1);
-	if (buffer == NULL)
-		return NULL;
+		/*
+		 * Length of input is max length of output, but add one to avoid
+		 * unportable malloc(0) if input is zero-length.
+		 */
+		buffer = (unsigned char *) malloc(strtextlen + 1);
+		if (buffer == NULL)
+			return NULL;
 
-	for (i = j = 0; i < strtextlen;)
-	{
-		switch (strtext[i])
+		for (i = j = 0; i < strtextlen;)
 		{
-			case '\\':
-				i++;
-				if (strtext[i] == '\\')
-					buffer[j++] = strtext[i++];
-				else
-				{
-					if ((ISFIRSTOCTDIGIT(strtext[i])) &&
-						(ISOCTDIGIT(strtext[i + 1])) &&
-						(ISOCTDIGIT(strtext[i + 2])))
+			switch (strtext[i])
+			{
+				case '\\':
+					i++;
+					if (strtext[i] == '\\')
+						buffer[j++] = strtext[i++];
+					else
 					{
-						int byte;
+						if ((ISFIRSTOCTDIGIT(strtext[i])) &&
+							(ISOCTDIGIT(strtext[i + 1])) &&
+							(ISOCTDIGIT(strtext[i + 2])))
+						{
+							int byte;
 
-						byte = OCTVAL(strtext[i++]);
-						byte = (byte <<3) +OCTVAL(strtext[i++]);
-						byte = (byte <<3) +OCTVAL(strtext[i++]);
-						buffer[j++] = byte;
+							byte = OCTVAL(strtext[i++]);
+							byte = (byte <<3) +OCTVAL(strtext[i++]);
+							byte = (byte <<3) +OCTVAL(strtext[i++]);
+							buffer[j++] = byte;
+						}
 					}
-				}
 
-				/*
-				 * Note: if we see '\' followed by something that isn't a
-				 * recognized escape sequence, we loop around having done
-				 * nothing except advance i.  Therefore the something will be
-				 * emitted as ordinary data on the next cycle. Corner case:
-				 * '\' at end of string will just be discarded.
-				 */
-				break;
+					/*
+					 * Note: if we see '\' followed by something that isn't a
+					 * recognized escape sequence, we loop around having done
+					 * nothing except advance i.  Therefore the something will
+					 * be emitted as ordinary data on the next cycle. Corner
+					 * case: '\' at end of string will just be discarded.
+					 */
+					break;
 
-			default:
-				buffer[j++] = strtext[i++];
-				break;
+				default:
+					buffer[j++] = strtext[i++];
+					break;
+			}
 		}
-	}
-	buflen = j;					/* buflen is the length of the dequoted data */
+		buflen = j;				/* buflen is the length of the dequoted data */
 	}
 
 	/* Shrink the buffer to be no larger than necessary */

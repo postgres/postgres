@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeMergejoin.c,v 1.100 2010/01/05 23:25:36 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeMergejoin.c,v 1.101 2010/02/26 02:00:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -507,7 +507,7 @@ check_constant_qual(List *qual, bool *is_const_false)
 
 	foreach(lc, qual)
 	{
-		Const  *con = (Const *) lfirst(lc);
+		Const	   *con = (Const *) lfirst(lc);
 
 		if (!con || !IsA(con, Const))
 			return false;

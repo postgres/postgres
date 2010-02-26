@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/aset.c,v 1.82 2010/01/02 16:57:58 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/aset.c,v 1.83 2010/02/26 02:01:14 momjian Exp $
  *
  * NOTE:
  *	This is a new (Feb. 05, 1999) implementation of the allocation set
@@ -286,13 +286,13 @@ AllocSetFreeIndex(Size size)
 		tsize = (size - 1) >> ALLOC_MINBITS;
 
 		/*
-		 * At this point we need to obtain log2(tsize)+1, ie, the number
-		 * of not-all-zero bits at the right.  We used to do this with a
-		 * shift-and-count loop, but this function is enough of a hotspot
-		 * to justify micro-optimization effort.  The best approach seems
-		 * to be to use a lookup table.  Note that this code assumes that
-		 * ALLOCSET_NUM_FREELISTS <= 17, since we only cope with two bytes
-		 * of the tsize value.
+		 * At this point we need to obtain log2(tsize)+1, ie, the number of
+		 * not-all-zero bits at the right.	We used to do this with a
+		 * shift-and-count loop, but this function is enough of a hotspot to
+		 * justify micro-optimization effort.  The best approach seems to be
+		 * to use a lookup table.  Note that this code assumes that
+		 * ALLOCSET_NUM_FREELISTS <= 17, since we only cope with two bytes of
+		 * the tsize value.
 		 */
 		t = tsize >> 8;
 		idx = t ? LogTable256[t] + 8 : LogTable256[tsize];

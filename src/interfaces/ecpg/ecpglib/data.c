@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/data.c,v 1.49 2010/02/04 09:41:34 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/data.c,v 1.50 2010/02/26 02:01:29 momjian Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -26,7 +26,7 @@ array_delimiter(enum ARRAY_TYPE isarray, char c)
 
 	if (isarray == ECPG_ARRAY_VECTOR && c == ' ')
 		return true;
-	
+
 	return false;
 }
 
@@ -39,7 +39,7 @@ array_boundary(enum ARRAY_TYPE isarray, char c)
 
 	if (isarray == ECPG_ARRAY_VECTOR && c == '\0')
 		return true;
-	
+
 	return false;
 }
 
@@ -86,7 +86,7 @@ static double
 get_float8_nan(void)
 {
 #ifdef NAN
-	return (double) NAN;  
+	return (double) NAN;
 #else
 	return (double) (0.0 / 0.0);
 #endif
@@ -142,11 +142,11 @@ ecpg_get_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 	ecpg_log("ecpg_get_data on line %d: RESULT: %s offset: %ld; array: %s\n", lineno, pval ? (binary ? "BINARY" : pval) : "EMPTY", log_offset, ECPG_IS_ARRAY(isarray) ? "yes" : "no");
 
 	/* pval is a pointer to the value */
-	if (!pval) 
+	if (!pval)
 	{
 		/*
-		 * This should never happen because we already checked that we
-		 * found at least one tuple, but let's play it safe.
+		 * This should never happen because we already checked that we found
+		 * at least one tuple, but let's play it safe.
 		 */
 		ecpg_raise(lineno, ECPG_NOT_FOUND, ECPG_SQLSTATE_NO_DATA, NULL);
 		return (false);
@@ -365,7 +365,7 @@ ecpg_get_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 				case ECPGt_unsigned_long_long:
 					*((unsigned long long int *) (var + offset * act_tuple)) = strtoull(pval, &scan_length, 10);
 					if ((isarray && *scan_length != ',' && *scan_length != '}')
-						|| (!isarray && !(INFORMIX_MODE(compat) && *scan_length == '.') && *scan_length != '\0' && *scan_length != ' '))	/* Garbage left */
+						|| (!isarray && !(INFORMIX_MODE(compat) && *scan_length == '.') && *scan_length != '\0' && *scan_length != ' '))		/* Garbage left */
 					{
 						ecpg_raise(lineno, ECPG_UINT_FORMAT, ECPG_SQLSTATE_DATATYPE_MISMATCH, pval);
 						return (false);
@@ -449,14 +449,16 @@ ecpg_get_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 				case ECPGt_unsigned_char:
 				case ECPGt_string:
 					{
-						char	*str = (char *) (var + offset * act_tuple);
+						char	   *str = (char *) (var + offset * act_tuple);
+
 						if (varcharsize == 0 || varcharsize > size)
 						{
 							strncpy(str, pval, size + 1);
 							/* do the rtrim() */
 							if (type == ECPGt_string)
 							{
-								char	*last = str + size;
+								char	   *last = str + size;
+
 								while (last > str && (*last == ' ' || *last == '\0'))
 								{
 									*last = '\0';
@@ -564,8 +566,8 @@ ecpg_get_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 						if (INFORMIX_MODE(compat))
 						{
 							/*
-							 * Informix wants its own NULL value here
-							 * instead of an error
+							 * Informix wants its own NULL value here instead
+							 * of an error
 							 */
 							nres = PGTYPESnumeric_new();
 							if (nres)
@@ -573,14 +575,14 @@ ecpg_get_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 							else
 							{
 								ecpg_raise(lineno, ECPG_OUT_OF_MEMORY,
-								 ECPG_SQLSTATE_ECPG_OUT_OF_MEMORY, NULL);
+									 ECPG_SQLSTATE_ECPG_OUT_OF_MEMORY, NULL);
 								return (false);
 							}
 						}
 						else
 						{
 							ecpg_raise(lineno, ECPG_NUMERIC_FORMAT,
-								  ECPG_SQLSTATE_DATATYPE_MISMATCH, pval);
+									   ECPG_SQLSTATE_DATATYPE_MISMATCH, pval);
 							return (false);
 						}
 					}
@@ -593,7 +595,7 @@ ecpg_get_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 						{
 							free(nres);
 							ecpg_raise(lineno, ECPG_NUMERIC_FORMAT,
-								  ECPG_SQLSTATE_DATATYPE_MISMATCH, pval);
+									   ECPG_SQLSTATE_DATATYPE_MISMATCH, pval);
 							return (false);
 						}
 					}
@@ -622,8 +624,8 @@ ecpg_get_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 						if (INFORMIX_MODE(compat))
 						{
 							/*
-							 * Informix wants its own NULL value here
-							 * instead of an error
+							 * Informix wants its own NULL value here instead
+							 * of an error
 							 */
 							ires = (interval *) ecpg_alloc(sizeof(interval), lineno);
 							if (!ires)
@@ -634,7 +636,7 @@ ecpg_get_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 						else
 						{
 							ecpg_raise(lineno, ECPG_INTERVAL_FORMAT,
-								  ECPG_SQLSTATE_DATATYPE_MISMATCH, pval);
+									   ECPG_SQLSTATE_DATATYPE_MISMATCH, pval);
 							return (false);
 						}
 					}
@@ -647,7 +649,7 @@ ecpg_get_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 						{
 							free(ires);
 							ecpg_raise(lineno, ECPG_INTERVAL_FORMAT,
-								  ECPG_SQLSTATE_DATATYPE_MISMATCH, pval);
+									   ECPG_SQLSTATE_DATATYPE_MISMATCH, pval);
 							return (false);
 						}
 					}
@@ -672,15 +674,15 @@ ecpg_get_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 						if (INFORMIX_MODE(compat))
 						{
 							/*
-							 * Informix wants its own NULL value here
-							 * instead of an error
+							 * Informix wants its own NULL value here instead
+							 * of an error
 							 */
 							ECPGset_noind_null(ECPGt_date, &ddres);
 						}
 						else
 						{
 							ecpg_raise(lineno, ECPG_DATE_FORMAT,
-								  ECPG_SQLSTATE_DATATYPE_MISMATCH, pval);
+									   ECPG_SQLSTATE_DATATYPE_MISMATCH, pval);
 							return (false);
 						}
 					}
@@ -692,7 +694,7 @@ ecpg_get_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 						if (garbage_left(isarray, scan_length, compat))
 						{
 							ecpg_raise(lineno, ECPG_DATE_FORMAT,
-								  ECPG_SQLSTATE_DATATYPE_MISMATCH, pval);
+									   ECPG_SQLSTATE_DATATYPE_MISMATCH, pval);
 							return (false);
 						}
 					}
@@ -716,15 +718,15 @@ ecpg_get_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 						if (INFORMIX_MODE(compat))
 						{
 							/*
-							 * Informix wants its own NULL value here
-							 * instead of an error
+							 * Informix wants its own NULL value here instead
+							 * of an error
 							 */
 							ECPGset_noind_null(ECPGt_timestamp, &tres);
 						}
 						else
 						{
 							ecpg_raise(lineno, ECPG_TIMESTAMP_FORMAT,
-								  ECPG_SQLSTATE_DATATYPE_MISMATCH, pval);
+									   ECPG_SQLSTATE_DATATYPE_MISMATCH, pval);
 							return (false);
 						}
 					}
@@ -736,7 +738,7 @@ ecpg_get_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 						if (garbage_left(isarray, scan_length, compat))
 						{
 							ecpg_raise(lineno, ECPG_TIMESTAMP_FORMAT,
-								  ECPG_SQLSTATE_DATATYPE_MISMATCH, pval);
+									   ECPG_SQLSTATE_DATATYPE_MISMATCH, pval);
 							return (false);
 						}
 					}
@@ -760,7 +762,11 @@ ecpg_get_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 				++act_tuple;
 
 				/* set pval to the next entry */
-				/* *pval != '\0' should not be needed, but is used as a safety guard */
+
+				/*
+				 * *pval != '\0' should not be needed, but is used as a safety
+				 * guard
+				 */
 				for (; *pval != '\0' && (string || (!array_delimiter(isarray, *pval) && !array_boundary(isarray, *pval))); ++pval)
 					if (*pval == '"')
 						string = string ? false : true;

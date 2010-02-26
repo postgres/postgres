@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.463 2010/02/23 22:51:42 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.464 2010/02/26 02:00:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -160,7 +160,7 @@ _copyResult(Result *from)
 static ModifyTable *
 _copyModifyTable(ModifyTable *from)
 {
-	ModifyTable    *newnode = makeNode(ModifyTable);
+	ModifyTable *newnode = makeNode(ModifyTable);
 
 	/*
 	 * copy node superclass fields
@@ -806,7 +806,7 @@ _copySetOp(SetOp *from)
 static LockRows *
 _copyLockRows(LockRows *from)
 {
-	LockRows	   *newnode = makeNode(LockRows);
+	LockRows   *newnode = makeNode(LockRows);
 
 	/*
 	 * copy node superclass fields

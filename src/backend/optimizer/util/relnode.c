@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/relnode.c,v 1.97 2010/01/02 16:57:48 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/relnode.c,v 1.98 2010/02/26 02:00:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -404,9 +404,9 @@ build_join_rel(PlannerInfo *root,
 
 	/*
 	 * Also, if dynamic-programming join search is active, add the new joinrel
-	 * to the appropriate sublist.  Note: you might think the Assert on
-	 * number of members should be for equality, but some of the level 1
-	 * rels might have been joinrels already, so we can only assert <=.
+	 * to the appropriate sublist.	Note: you might think the Assert on number
+	 * of members should be for equality, but some of the level 1 rels might
+	 * have been joinrels already, so we can only assert <=.
 	 */
 	if (root->join_rel_level)
 	{

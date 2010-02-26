@@ -14,7 +14,7 @@
  *	Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/md5.c,v 1.39 2010/01/27 12:11:59 mha Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/md5.c,v 1.40 2010/02/26 02:00:43 momjian Exp $
  */
 
 /* This is intended to be used in both frontend and backend, so use c.h */
@@ -298,7 +298,8 @@ pg_md5_hash(const void *buff, size_t len, char *hexsum)
 	return true;
 }
 
-bool pg_md5_binary(const void *buff, size_t len, void *outbuf)
+bool
+pg_md5_binary(const void *buff, size_t len, void *outbuf)
 {
 	if (!calculateDigestFromBuffer((uint8 *) buff, len, outbuf))
 		return false;
@@ -320,6 +321,7 @@ pg_md5_encrypt(const char *passwd, const char *salt, size_t salt_len,
 			   char *buf)
 {
 	size_t		passwd_len = strlen(passwd);
+
 	/* +1 here is just to avoid risk of unportable malloc(0) */
 	char	   *crypt_buf = malloc(passwd_len + salt_len + 1);
 	bool		ret;

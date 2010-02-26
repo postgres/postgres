@@ -6,7 +6,7 @@
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/varsup.c,v 1.90 2010/02/20 21:24:01 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/varsup.c,v 1.91 2010/02/26 02:00:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,7 +39,7 @@ VariableCache ShmemVariableCache = NULL;
  *
  * Note: when this is called, we are actually already inside a valid
  * transaction, since XIDs are now not allocated until the transaction
- * does something.  So it is safe to do a database lookup if we want to
+ * does something.	So it is safe to do a database lookup if we want to
  * issue a warning about XID wrap.
  */
 TransactionId
@@ -83,13 +83,13 @@ GetNewTransactionId(bool isSubXact)
 		 * For safety's sake, we release XidGenLock while sending signals,
 		 * warnings, etc.  This is not so much because we care about
 		 * preserving concurrency in this situation, as to avoid any
-		 * possibility of deadlock while doing get_database_name().
-		 * First, copy all the shared values we'll need in this path.
+		 * possibility of deadlock while doing get_database_name(). First,
+		 * copy all the shared values we'll need in this path.
 		 */
 		TransactionId xidWarnLimit = ShmemVariableCache->xidWarnLimit;
 		TransactionId xidStopLimit = ShmemVariableCache->xidStopLimit;
 		TransactionId xidWrapLimit = ShmemVariableCache->xidWrapLimit;
-		Oid		oldest_datoid = ShmemVariableCache->oldestXidDB;
+		Oid			oldest_datoid = ShmemVariableCache->oldestXidDB;
 
 		LWLockRelease(XidGenLock);
 
@@ -104,7 +104,7 @@ GetNewTransactionId(bool isSubXact)
 		if (IsUnderPostmaster &&
 			TransactionIdFollowsOrEquals(xid, xidStopLimit))
 		{
-			char   *oldest_datname = get_database_name(oldest_datoid);
+			char	   *oldest_datname = get_database_name(oldest_datoid);
 
 			/* complain even if that DB has disappeared */
 			if (oldest_datname)
@@ -124,7 +124,7 @@ GetNewTransactionId(bool isSubXact)
 		}
 		else if (TransactionIdFollowsOrEquals(xid, xidWarnLimit))
 		{
-			char   *oldest_datname = get_database_name(oldest_datoid);
+			char	   *oldest_datname = get_database_name(oldest_datoid);
 
 			/* complain even if that DB has disappeared */
 			if (oldest_datname)
@@ -329,8 +329,8 @@ SetTransactionIdLimit(TransactionId oldest_datfrozenxid, Oid oldest_datoid)
 
 	/* Log the info */
 	ereport(DEBUG1,
-	   (errmsg("transaction ID wrap limit is %u, limited by database with OID %u",
-			   xidWrapLimit, oldest_datoid)));
+			(errmsg("transaction ID wrap limit is %u, limited by database with OID %u",
+					xidWrapLimit, oldest_datoid)));
 
 	/*
 	 * If past the autovacuum force point, immediately signal an autovac
@@ -346,7 +346,7 @@ SetTransactionIdLimit(TransactionId oldest_datfrozenxid, Oid oldest_datoid)
 	/* Give an immediate warning if past the wrap warn point */
 	if (TransactionIdFollowsOrEquals(curXid, xidWarnLimit) && !InRecovery)
 	{
-		char   *oldest_datname = get_database_name(oldest_datoid);
+		char	   *oldest_datname = get_database_name(oldest_datoid);
 
 		/*
 		 * Note: it's possible that get_database_name fails and returns NULL,
@@ -355,11 +355,11 @@ SetTransactionIdLimit(TransactionId oldest_datfrozenxid, Oid oldest_datoid)
 		 */
 		if (oldest_datname)
 			ereport(WARNING,
-					(errmsg("database \"%s\" must be vacuumed within %u transactions",
-							oldest_datname,
-							xidWrapLimit - curXid),
-					 errhint("To avoid a database shutdown, execute a database-wide VACUUM in that database.\n"
-							 "You might also need to commit or roll back old prepared transactions.")));
+			(errmsg("database \"%s\" must be vacuumed within %u transactions",
+					oldest_datname,
+					xidWrapLimit - curXid),
+			 errhint("To avoid a database shutdown, execute a database-wide VACUUM in that database.\n"
+					 "You might also need to commit or roll back old prepared transactions.")));
 		else
 			ereport(WARNING,
 					(errmsg("database with OID %u must be vacuumed within %u transactions",
@@ -377,7 +377,7 @@ SetTransactionIdLimit(TransactionId oldest_datfrozenxid, Oid oldest_datoid)
  * We primarily check whether oldestXidDB is valid.  The cases we have in
  * mind are that that database was dropped, or the field was reset to zero
  * by pg_resetxlog.  In either case we should force recalculation of the
- * wrap limit.  Also do it if oldestXid is old enough to be forcing
+ * wrap limit.	Also do it if oldestXid is old enough to be forcing
  * autovacuums or other actions; this ensures we update our state as soon
  * as possible once extra overhead is being incurred.
  */

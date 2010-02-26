@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/heap.h,v 1.97 2010/02/07 20:48:11 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/heap.h,v 1.98 2010/02/26 02:01:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -112,9 +112,9 @@ extern Form_pg_attribute SystemAttributeByName(const char *attname,
 					  bool relhasoids);
 
 extern void CheckAttributeNamesTypes(TupleDesc tupdesc, char relkind,
-									 bool allow_system_table_mods);
+						 bool allow_system_table_mods);
 
 extern void CheckAttributeType(const char *attname, Oid atttypid,
-							   bool allow_system_table_mods);
+				   bool allow_system_table_mods);
 
 #endif   /* HEAP_H */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeIndexscan.c,v 1.138 2010/01/02 16:57:42 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeIndexscan.c,v 1.139 2010/02/26 02:00:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -240,9 +240,9 @@ ExecIndexEvalRuntimeKeys(ExprContext *econtext,
 		 * necessary.
 		 *
 		 * It's also entirely possible that the result of the eval is a
-		 * toasted value.  In this case we should forcibly detoast it,
-		 * to avoid repeat detoastings each time the value is examined
-		 * by an index support function.
+		 * toasted value.  In this case we should forcibly detoast it, to
+		 * avoid repeat detoastings each time the value is examined by an
+		 * index support function.
 		 */
 		scanvalue = ExecEvalExpr(key_expr,
 								 econtext,

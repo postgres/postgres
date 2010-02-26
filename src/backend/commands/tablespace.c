@@ -40,7 +40,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablespace.c,v 1.73 2010/02/17 04:19:39 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablespace.c,v 1.74 2010/02/26 02:00:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -85,7 +85,7 @@ char	   *temp_tablespaces = NULL;
 
 
 static void create_tablespace_directories(const char *location,
-										 const Oid tablespaceoid);
+							  const Oid tablespaceoid);
 static bool destroy_tablespace_directories(Oid tablespaceoid, bool redo);
 
 
@@ -159,8 +159,8 @@ TablespaceCreateDbspace(Oid spcNode, Oid dbNode, bool isRedo)
 
 					/*
 					 * Parent directories are missing during WAL replay, so
-					 * continue by creating simple parent directories
-					 * rather than a symlink.
+					 * continue by creating simple parent directories rather
+					 * than a symlink.
 					 */
 
 					/* create two parents up if not exist */
@@ -272,7 +272,7 @@ CreateTableSpace(CreateTableSpaceStmt *stmt)
 
 	/*
 	 * Check that location isn't too long. Remember that we're going to append
-	 * 'PG_XXX/<dboid>/<relid>.<nnn>'.  FYI, we never actually reference the
+	 * 'PG_XXX/<dboid>/<relid>.<nnn>'.	FYI, we never actually reference the
 	 * whole path, but mkdir() uses the first two parts.
 	 */
 	if (strlen(location) + 1 + strlen(TABLESPACE_VERSION_DIRECTORY) + 1 +
@@ -535,13 +535,13 @@ DropTableSpace(DropTableSpaceStmt *stmt)
 static void
 create_tablespace_directories(const char *location, const Oid tablespaceoid)
 {
-	char *linkloc = palloc(OIDCHARS + OIDCHARS + 1);
-	char *location_with_version_dir = palloc(strlen(location) + 1 +
-										strlen(TABLESPACE_VERSION_DIRECTORY) + 1);
+	char	   *linkloc = palloc(OIDCHARS + OIDCHARS + 1);
+	char	   *location_with_version_dir = palloc(strlen(location) + 1 +
+								   strlen(TABLESPACE_VERSION_DIRECTORY) + 1);
 
 	sprintf(linkloc, "pg_tblspc/%u", tablespaceoid);
 	sprintf(location_with_version_dir, "%s/%s", location,
-										TABLESPACE_VERSION_DIRECTORY);
+			TABLESPACE_VERSION_DIRECTORY);
 
 	/*
 	 * Attempt to coerce target directory to safe permissions.	If this fails,
@@ -556,14 +556,14 @@ create_tablespace_directories(const char *location, const Oid tablespaceoid)
 							location)));
 		else
 			ereport(ERROR,
-				(errcode_for_file_access(),
-				 errmsg("could not set permissions on directory \"%s\": %m",
-						location)));
+					(errcode_for_file_access(),
+				  errmsg("could not set permissions on directory \"%s\": %m",
+						 location)));
 	}
 
 	/*
-	 * The creation of the version directory prevents more than one
-	 * 	tablespace in a single location.
+	 * The creation of the version directory prevents more than one tablespace
+	 * in a single location.
 	 */
 	if (mkdir(location_with_version_dir, S_IRWXU) < 0)
 	{
@@ -575,8 +575,8 @@ create_tablespace_directories(const char *location, const Oid tablespaceoid)
 		else
 			ereport(ERROR,
 					(errcode_for_file_access(),
-				  errmsg("could not create directory \"%s\": %m",
-						 location_with_version_dir)));
+					 errmsg("could not create directory \"%s\": %m",
+							location_with_version_dir)));
 	}
 
 	/*
@@ -613,9 +613,9 @@ destroy_tablespace_directories(Oid tablespaceoid, bool redo)
 	struct stat st;
 
 	linkloc_with_version_dir = palloc(9 + 1 + OIDCHARS + 1 +
-									strlen(TABLESPACE_VERSION_DIRECTORY));
+									  strlen(TABLESPACE_VERSION_DIRECTORY));
 	sprintf(linkloc_with_version_dir, "pg_tblspc/%u/%s", tablespaceoid,
-									TABLESPACE_VERSION_DIRECTORY);
+			TABLESPACE_VERSION_DIRECTORY);
 
 	/*
 	 * Check if the tablespace still contains any files.  We try to rmdir each
@@ -690,12 +690,12 @@ destroy_tablespace_directories(Oid tablespaceoid, bool redo)
 				(errcode_for_file_access(),
 				 errmsg("could not remove directory \"%s\": %m",
 						linkloc_with_version_dir)));
- 
+
 	/*
-	 * Try to remove the symlink.  We must however deal with the
-	 * possibility that it's a directory instead of a symlink --- this could
-	 * happen during WAL replay (see TablespaceCreateDbspace), and it is also
-	 * the case on Windows where junction points lstat() as directories.
+	 * Try to remove the symlink.  We must however deal with the possibility
+	 * that it's a directory instead of a symlink --- this could happen during
+	 * WAL replay (see TablespaceCreateDbspace), and it is also the case on
+	 * Windows where junction points lstat() as directories.
 	 */
 	linkloc = pstrdup(linkloc_with_version_dir);
 	get_parent_directory(linkloc);
@@ -948,7 +948,7 @@ AlterTableSpaceOptions(AlterTableSpaceOptionsStmt *stmt)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
 				 errmsg("tablespace \"%s\" does not exist",
-					stmt->tablespacename)));
+						stmt->tablespacename)));
 
 	/* Must be owner of the existing object */
 	if (!pg_tablespace_ownercheck(HeapTupleGetOid(tup), GetUserId()))
@@ -1366,30 +1366,30 @@ tblspc_redo(XLogRecPtr lsn, XLogRecord *record)
 		xl_tblspc_drop_rec *xlrec = (xl_tblspc_drop_rec *) XLogRecGetData(record);
 
 		/*
-		 * If we issued a WAL record for a drop tablespace it is
-		 * because there were no files in it at all. That means that
-		 * no permanent objects can exist in it at this point.
+		 * If we issued a WAL record for a drop tablespace it is because there
+		 * were no files in it at all. That means that no permanent objects
+		 * can exist in it at this point.
 		 *
-		 * It is possible for standby users to be using this tablespace
-		 * as a location for their temporary files, so if we fail to
-		 * remove all files then do conflict processing and try again,
-		 * if currently enabled.
+		 * It is possible for standby users to be using this tablespace as a
+		 * location for their temporary files, so if we fail to remove all
+		 * files then do conflict processing and try again, if currently
+		 * enabled.
 		 */
 		if (!destroy_tablespace_directories(xlrec->ts_id, true))
 		{
 			ResolveRecoveryConflictWithTablespace(xlrec->ts_id);
 
 			/*
-			 * If we did recovery processing then hopefully the
-			 * backends who wrote temp files should have cleaned up and
-			 * exited by now. So lets recheck before we throw an error.
-			 * If !process_conflicts then this will just fail again.
+			 * If we did recovery processing then hopefully the backends who
+			 * wrote temp files should have cleaned up and exited by now. So
+			 * lets recheck before we throw an error. If !process_conflicts
+			 * then this will just fail again.
 			 */
 			if (!destroy_tablespace_directories(xlrec->ts_id, true))
 				ereport(ERROR,
-					(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-					 errmsg("tablespace %u is not empty",
-							xlrec->ts_id)));
+						(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+						 errmsg("tablespace %u is not empty",
+								xlrec->ts_id)));
 		}
 	}
 	else

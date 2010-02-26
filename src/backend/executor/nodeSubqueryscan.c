@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeSubqueryscan.c,v 1.44 2010/01/02 16:57:45 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeSubqueryscan.c,v 1.45 2010/02/26 02:00:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,9 +53,9 @@ SubqueryNext(SubqueryScanState *node)
 	slot = ExecProcNode(node->subplan);
 
 	/*
-	 * We just return the subplan's result slot, rather than expending
-	 * extra cycles for ExecCopySlot().  (Our own ScanTupleSlot is used
-	 * only for EvalPlanQual rechecks.)
+	 * We just return the subplan's result slot, rather than expending extra
+	 * cycles for ExecCopySlot().  (Our own ScanTupleSlot is used only for
+	 * EvalPlanQual rechecks.)
 	 */
 	return slot;
 }

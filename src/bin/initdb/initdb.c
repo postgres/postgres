@@ -42,7 +42,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.185 2010/02/16 22:34:50 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.186 2010/02/26 02:01:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1215,8 +1215,8 @@ setup_config(void)
 		if (err != 0 ||
 			getaddrinfo("::1", NULL, &hints, &gai_result) != 0)
 			conflines = replace_token(conflines,
-									  "host    all             all             ::1",
-									  "#host    all             all             ::1");
+							   "host    all             all             ::1",
+							 "#host    all             all             ::1");
 	}
 #else							/* !HAVE_IPV6 */
 	/* If we didn't compile IPV6 support at all, always comment it out */
@@ -2345,7 +2345,7 @@ CreateRestrictedProcess(char *cmd, PROCESS_INFORMATION *processInfo)
 	}
 
 #ifndef __CYGWIN__
-    AddUserToTokenDacl(restrictedToken);
+	AddUserToTokenDacl(restrictedToken);
 #endif
 
 	if (!CreateProcessAsUser(restrictedToken,

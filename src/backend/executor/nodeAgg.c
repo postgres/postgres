@@ -55,7 +55,7 @@
  *	  it is completely forbidden for functions to modify pass-by-ref inputs,
  *	  but in the aggregate case we know the left input is either the initial
  *	  transition value or a previous function result, and in either case its
- *	  value need not be preserved.  See int8inc() for an example.  Notice that
+ *	  value need not be preserved.	See int8inc() for an example.  Notice that
  *	  advance_transition_function() is coded to avoid a data copy step when
  *	  the previous transition value pointer is returned.  Also, some
  *	  transition functions want to store working state in addition to the
@@ -71,7 +71,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeAgg.c,v 1.174 2010/02/14 18:42:14 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeAgg.c,v 1.175 2010/02/26 02:00:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -135,12 +135,12 @@ typedef struct AggStatePerAggData
 
 	/* number of sorting columns to consider in DISTINCT comparisons */
 	/* (this is either zero or the same as numSortCols) */
-	int         numDistinctCols;
+	int			numDistinctCols;
 
 	/* deconstructed sorting information (arrays of length numSortCols) */
 	AttrNumber *sortColIdx;
-	Oid        *sortOperators;
-	bool       *sortNullsFirst;
+	Oid		   *sortOperators;
+	bool	   *sortNullsFirst;
 
 	/*
 	 * fmgr lookup data for input columns' equality operators --- only
@@ -170,12 +170,12 @@ typedef struct AggStatePerAggData
 				transtypeByVal;
 
 	/*
-	 * Stuff for evaluation of inputs.  We used to just use ExecEvalExpr, but
+	 * Stuff for evaluation of inputs.	We used to just use ExecEvalExpr, but
 	 * with the addition of ORDER BY we now need at least a slot for passing
 	 * data to the sort object, which requires a tupledesc, so we might as
 	 * well go whole hog and use ExecProject too.
 	 */
-	TupleDesc   evaldesc;		/* descriptor of input tuples */
+	TupleDesc	evaldesc;		/* descriptor of input tuples */
 	ProjectionInfo *evalproj;	/* projection machinery */
 
 	/*
@@ -190,7 +190,7 @@ typedef struct AggStatePerAggData
 	 * input tuple group and updated for each input tuple.
 	 *
 	 * For a simple (non DISTINCT/ORDER BY) aggregate, we just feed the input
-	 * values straight to the transition function.  If it's DISTINCT or
+	 * values straight to the transition function.	If it's DISTINCT or
 	 * requires ORDER BY, we pass the input values into a Tuplesort object;
 	 * then at completion of the input tuple group, we scan the sorted values,
 	 * eliminate duplicates if needed, and run the transition function on the
@@ -257,11 +257,11 @@ static void advance_transition_function(AggState *aggstate,
 							FunctionCallInfoData *fcinfo);
 static void advance_aggregates(AggState *aggstate, AggStatePerGroup pergroup);
 static void process_ordered_aggregate_single(AggState *aggstate,
-						 AggStatePerAgg peraggstate,
-						 AggStatePerGroup pergroupstate);
+								 AggStatePerAgg peraggstate,
+								 AggStatePerGroup pergroupstate);
 static void process_ordered_aggregate_multi(AggState *aggstate,
-						 AggStatePerAgg peraggstate,
-						 AggStatePerGroup pergroupstate);
+								AggStatePerAgg peraggstate,
+								AggStatePerGroup pergroupstate);
 static void finalize_aggregate(AggState *aggstate,
 				   AggStatePerAgg peraggstate,
 				   AggStatePerGroup pergroupstate,
@@ -307,8 +307,8 @@ initialize_aggregates(AggState *aggstate,
 				tuplesort_end(peraggstate->sortstate);
 
 			/*
-			 * We use a plain Datum sorter when there's a single input
-			 * column; otherwise sort the full tuple.  (See comments for
+			 * We use a plain Datum sorter when there's a single input column;
+			 * otherwise sort the full tuple.  (See comments for
 			 * process_ordered_aggregate_single.)
 			 */
 			peraggstate->sortstate =
@@ -488,11 +488,11 @@ advance_aggregates(AggState *aggstate, AggStatePerGroup pergroup)
 			Assert(slot->tts_nvalid == peraggstate->numInputs);
 
 			/*
-			 * If the transfn is strict, we want to check for nullity
-			 * before storing the row in the sorter, to save space if
-			 * there are a lot of nulls.  Note that we must only check
-			 * numArguments columns, not numInputs, since nullity in
-			 * columns used only for sorting is not relevant here.
+			 * If the transfn is strict, we want to check for nullity before
+			 * storing the row in the sorter, to save space if there are a lot
+			 * of nulls.  Note that we must only check numArguments columns,
+			 * not numInputs, since nullity in columns used only for sorting
+			 * is not relevant here.
 			 */
 			if (peraggstate->transfn.fn_strict)
 			{
@@ -537,7 +537,7 @@ advance_aggregates(AggState *aggstate, AggStatePerGroup pergroup)
 /*
  * Run the transition function for a DISTINCT or ORDER BY aggregate
  * with only one input.  This is called after we have completed
- * entering all the input values into the sort object.  We complete the
+ * entering all the input values into the sort object.	We complete the
  * sort, read out the values in sorted order, and run the transition
  * function on each value (applying DISTINCT if appropriate).
  *
@@ -559,11 +559,11 @@ process_ordered_aggregate_single(AggState *aggstate,
 								 AggStatePerGroup pergroupstate)
 {
 	Datum		oldVal = (Datum) 0;
-	bool        oldIsNull = true;
+	bool		oldIsNull = true;
 	bool		haveOldVal = false;
 	MemoryContext workcontext = aggstate->tmpcontext->ecxt_per_tuple_memory;
 	MemoryContext oldContext;
-	bool        isDistinct = (peraggstate->numDistinctCols > 0);
+	bool		isDistinct = (peraggstate->numDistinctCols > 0);
 	Datum	   *newVal;
 	bool	   *isNull;
 	FunctionCallInfoData fcinfo;
@@ -632,7 +632,7 @@ process_ordered_aggregate_single(AggState *aggstate,
 /*
  * Run the transition function for a DISTINCT or ORDER BY aggregate
  * with more than one input.  This is called after we have completed
- * entering all the input values into the sort object.  We complete the
+ * entering all the input values into the sort object.	We complete the
  * sort, read out the values in sorted order, and run the transition
  * function on each value (applying DISTINCT if appropriate).
  *
@@ -647,10 +647,10 @@ process_ordered_aggregate_multi(AggState *aggstate,
 	FunctionCallInfoData fcinfo;
 	TupleTableSlot *slot1 = peraggstate->evalslot;
 	TupleTableSlot *slot2 = peraggstate->uniqslot;
-	int         numArguments = peraggstate->numArguments;
-	int         numDistinctCols = peraggstate->numDistinctCols;
-	bool        haveOldValue = false;
-	int         i;
+	int			numArguments = peraggstate->numArguments;
+	int			numDistinctCols = peraggstate->numDistinctCols;
+	bool		haveOldValue = false;
+	int			i;
 
 	tuplesort_performsort(peraggstate->sortstate);
 
@@ -983,9 +983,9 @@ ExecAgg(AggState *node)
 	}
 
 	/*
-	 * Exit if nothing left to do.  (We must do the ps_TupFromTlist check
-	 * first, because in some cases agg_done gets set before we emit the
-	 * final aggregate tuple, and we have to finish running SRFs for it.)
+	 * Exit if nothing left to do.	(We must do the ps_TupFromTlist check
+	 * first, because in some cases agg_done gets set before we emit the final
+	 * aggregate tuple, and we have to finish running SRFs for it.)
 	 */
 	if (node->agg_done)
 		return NULL;
@@ -1066,9 +1066,9 @@ agg_retrieve_direct(AggState *aggstate)
 
 		/*
 		 * Clear the per-output-tuple context for each group, as well as
-		 * aggcontext (which contains any pass-by-ref transvalues of the
-		 * old group).  We also clear any child contexts of the aggcontext;
-		 * some aggregate functions store working state in such contexts.
+		 * aggcontext (which contains any pass-by-ref transvalues of the old
+		 * group).	We also clear any child contexts of the aggcontext; some
+		 * aggregate functions store working state in such contexts.
 		 */
 		ResetExprContext(econtext);
 
@@ -1402,8 +1402,8 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 	 * structures and transition values.  NOTE: the details of what is stored
 	 * in aggcontext and what is stored in the regular per-query memory
 	 * context are driven by a simple decision: we want to reset the
-	 * aggcontext at group boundaries (if not hashing) and in ExecReScanAgg
-	 * to recover no-longer-wanted space.
+	 * aggcontext at group boundaries (if not hashing) and in ExecReScanAgg to
+	 * recover no-longer-wanted space.
 	 */
 	aggstate->aggcontext =
 		AllocSetContextCreate(CurrentMemoryContext,
@@ -1539,7 +1539,7 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 		int			numInputs;
 		int			numSortCols;
 		int			numDistinctCols;
-		List       *sortlist;
+		List	   *sortlist;
 		HeapTuple	aggTuple;
 		Form_pg_aggregate aggform;
 		Oid			aggtranstype;
@@ -1735,9 +1735,9 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 														NULL);
 
 		/*
-		 * If we're doing either DISTINCT or ORDER BY, then we have a list
-		 * of SortGroupClause nodes; fish out the data in them and
-		 * stick them into arrays.
+		 * If we're doing either DISTINCT or ORDER BY, then we have a list of
+		 * SortGroupClause nodes; fish out the data in them and stick them
+		 * into arrays.
 		 *
 		 * Note that by construction, if there is a DISTINCT clause then the
 		 * ORDER BY clause is a prefix of it (see transformDistinctClause).
@@ -1976,8 +1976,8 @@ ExecReScanAgg(AggState *node, ExprContext *exprCtxt)
  *
  * The transition and/or final functions of an aggregate may want to verify
  * that they are being called as aggregates, rather than as plain SQL
- * functions.  They should use this function to do so.  The return value
- * is nonzero if being called as an aggregate, or zero if not.  (Specific
+ * functions.  They should use this function to do so.	The return value
+ * is nonzero if being called as an aggregate, or zero if not.	(Specific
  * nonzero values are AGG_CONTEXT_AGGREGATE or AGG_CONTEXT_WINDOW, but more
  * values could conceivably appear in future.)
  *

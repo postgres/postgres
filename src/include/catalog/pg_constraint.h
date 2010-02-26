@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_constraint.h,v 1.37 2010/01/17 22:56:23 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_constraint.h,v 1.38 2010/02/26 02:01:21 momjian Exp $
  *
  * NOTES
  *	  the genbki.pl script reads this file and generates .bki
@@ -65,10 +65,10 @@ CATALOG(pg_constraint,2606)
 	/*
 	 * conindid links to the index supporting the constraint, if any;
 	 * otherwise it's 0.  This is used for unique and primary-key constraints,
-	 * and less obviously for foreign-key constraints (where the index is
-	 * a unique index on the referenced relation's referenced columns).
-	 * Notice that the index is on conrelid in the first case but confrelid
-	 * in the second.
+	 * and less obviously for foreign-key constraints (where the index is a
+	 * unique index on the referenced relation's referenced columns). Notice
+	 * that the index is on conrelid in the first case but confrelid in the
+	 * second.
 	 */
 	Oid			conindid;		/* index supporting this constraint */
 
@@ -92,8 +92,8 @@ CATALOG(pg_constraint,2606)
 	 */
 
 	/*
-	 * Columns of conrelid that the constraint applies to, if known
-	 * (this is NULL for trigger constraints)
+	 * Columns of conrelid that the constraint applies to, if known (this is
+	 * NULL for trigger constraints)
 	 */
 	int2		conkey[1];
 
@@ -237,6 +237,6 @@ extern char *ChooseConstraintName(const char *name1, const char *name2,
 
 extern void AlterConstraintNamespaces(Oid ownerId, Oid oldNspId,
 						  Oid newNspId, bool isType);
-extern Oid GetConstraintByName(Oid relid, const char *conname);
+extern Oid	GetConstraintByName(Oid relid, const char *conname);
 
 #endif   /* PG_CONSTRAINT_H */

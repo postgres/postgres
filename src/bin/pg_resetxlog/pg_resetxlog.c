@@ -23,7 +23,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/pg_resetxlog/pg_resetxlog.c,v 1.77 2010/01/04 12:50:49 heikki Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_resetxlog/pg_resetxlog.c,v 1.78 2010/02/26 02:01:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -312,10 +312,10 @@ main(int argc, char *argv[])
 
 		/*
 		 * For the moment, just set oldestXid to a value that will force
-		 * immediate autovacuum-for-wraparound.  It's not clear whether
-		 * adding user control of this is useful, so let's just do something
-		 * that's reasonably safe.  The magic constant here corresponds to
-		 * the maximum allowed value of autovacuum_freeze_max_age.
+		 * immediate autovacuum-for-wraparound.  It's not clear whether adding
+		 * user control of this is useful, so let's just do something that's
+		 * reasonably safe.  The magic constant here corresponds to the
+		 * maximum allowed value of autovacuum_freeze_max_age.
 		 */
 		ControlFile.checkPointCopy.oldestXid = set_xid - 2000000000;
 		if (ControlFile.checkPointCopy.oldestXid < FirstNormalTransactionId)

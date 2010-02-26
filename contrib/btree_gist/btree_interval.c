@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/btree_gist/btree_interval.c,v 1.13 2009/12/02 13:13:24 teodor Exp $
+ * $PostgreSQL: pgsql/contrib/btree_gist/btree_interval.c,v 1.14 2010/02/26 02:00:31 momjian Exp $
  */
 #include "btree_gist.h"
 #include "btree_utils_num.h"
@@ -65,9 +65,9 @@ gbt_intvlt(const void *a, const void *b)
 static int
 gbt_intvkey_cmp(const void *a, const void *b)
 {
-    intvKEY *ia = (intvKEY*)(((Nsrt *) a)->t);
-	intvKEY *ib = (intvKEY*)(((Nsrt *) b)->t);
-	int res;
+	intvKEY    *ia = (intvKEY *) (((Nsrt *) a)->t);
+	intvKEY    *ib = (intvKEY *) (((Nsrt *) b)->t);
+	int			res;
 
 	res = DatumGetInt32(DirectFunctionCall2(interval_cmp, IntervalPGetDatum(&ia->lower), IntervalPGetDatum(&ib->lower)));
 	if (res == 0)

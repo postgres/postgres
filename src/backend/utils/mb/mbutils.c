@@ -4,7 +4,7 @@
  *
  * Tatsuo Ishii
  *
- * $PostgreSQL: pgsql/src/backend/utils/mb/mbutils.c,v 1.93 2010/02/14 18:42:18 rhaas Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/mb/mbutils.c,v 1.94 2010/02/26 02:01:14 momjian Exp $
  */
 #include "postgres.h"
 
@@ -484,7 +484,7 @@ length_in_encoding(PG_FUNCTION_ARGS)
 Datum
 pg_encoding_max_length_sql(PG_FUNCTION_ARGS)
 {
-	int encoding = PG_GETARG_INT32(0);
+	int			encoding = PG_GETARG_INT32(0);
 
 	if (PG_VALID_ENCODING(encoding))
 		PG_RETURN_INT32(pg_wchar_table[encoding].maxmblen);
@@ -984,7 +984,7 @@ GetPlatformEncoding(void)
 	if (PlatformEncoding == NULL)
 	{
 		/* try to determine encoding of server's environment locale */
-		int		encoding = pg_get_encoding_from_locale("");
+		int			encoding = pg_get_encoding_from_locale("");
 
 		if (encoding < 0)
 			encoding = PG_SQL_ASCII;
@@ -1016,7 +1016,7 @@ pgwin32_toUTF16(const char *str, int len, int *utf16len)
 	{
 		utf16 = (WCHAR *) palloc(sizeof(WCHAR) * (len + 1));
 		dstlen = MultiByteToWideChar(codepage, 0, str, len, utf16, len);
-		utf16[dstlen] = L'\0';
+		utf16[dstlen] = L '\0';
 	}
 	else
 	{
@@ -1029,7 +1029,7 @@ pgwin32_toUTF16(const char *str, int len, int *utf16len)
 
 		utf16 = (WCHAR *) palloc(sizeof(WCHAR) * (len + 1));
 		dstlen = MultiByteToWideChar(CP_UTF8, 0, utf8, len, utf16, len);
-		utf16[dstlen] = L'\0';
+		utf16[dstlen] = L '\0';
 
 		if (utf8 != str)
 			pfree(utf8);
@@ -1038,7 +1038,7 @@ pgwin32_toUTF16(const char *str, int len, int *utf16len)
 	if (dstlen == 0 && len > 0)
 	{
 		pfree(utf16);
-		return NULL;	/* error */
+		return NULL;			/* error */
 	}
 
 	if (utf16len)

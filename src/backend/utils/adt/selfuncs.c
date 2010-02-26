@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.269 2010/02/14 18:42:16 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.270 2010/02/26 02:01:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -167,9 +167,9 @@ static double convert_timevalue_to_scalar(Datum value, Oid typid);
 static bool get_variable_range(PlannerInfo *root, VariableStatData *vardata,
 				   Oid sortop, Datum *min, Datum *max);
 static bool get_actual_variable_range(PlannerInfo *root,
-									  VariableStatData *vardata,
-									  Oid sortop,
-									  Datum *min, Datum *max);
+						  VariableStatData *vardata,
+						  Oid sortop,
+						  Datum *min, Datum *max);
 static Selectivity prefix_selectivity(PlannerInfo *root,
 				   VariableStatData *vardata,
 				   Oid vartype, Oid opfamily, Const *prefixcon);
@@ -749,13 +749,13 @@ ineq_histogram_selectivity(PlannerInfo *root,
 			 * results ... but probably not any more garbage-y than you would
 			 * from the old linear search.)
 			 *
-			 * If the binary search accesses the first or last histogram entry,
-			 * we try to replace that endpoint with the true column min or max
-			 * as found by get_actual_variable_range().  This ameliorates
-			 * misestimates when the min or max is moving as a result of
-			 * changes since the last ANALYZE.  Note that this could result
-			 * in effectively including MCVs into the histogram that weren't
-			 * there before, but we don't try to correct for that.
+			 * If the binary search accesses the first or last histogram
+			 * entry, we try to replace that endpoint with the true column min
+			 * or max as found by get_actual_variable_range().	This
+			 * ameliorates misestimates when the min or max is moving as a
+			 * result of changes since the last ANALYZE.  Note that this could
+			 * result in effectively including MCVs into the histogram that
+			 * weren't there before, but we don't try to correct for that.
 			 */
 			double		histfrac;
 			int			lobound = 0;	/* first possible slot to search */
@@ -3727,8 +3727,7 @@ convert_string_datum(Datum value, Oid typid)
 		/*
 		 *
 		 * http://connect.microsoft.com/VisualStudio/feedback/ViewFeedback.aspx?
-		 * FeedbackID=99694
-		 */
+		 * FeedbackID=99694 */
 		{
 			char		x[1];
 
@@ -4118,8 +4117,8 @@ examine_variable(PlannerInfo *root, Node *node, int varRelid,
 		else if (rte->rtekind == RTE_RELATION)
 		{
 			vardata->statsTuple = SearchSysCache3(STATRELATTINH,
-												  ObjectIdGetDatum(rte->relid),
-												  Int16GetDatum(var->varattno),
+												ObjectIdGetDatum(rte->relid),
+												Int16GetDatum(var->varattno),
 												  BoolGetDatum(rte->inh));
 			vardata->freefunc = ReleaseSysCache;
 		}
@@ -4259,8 +4258,8 @@ examine_variable(PlannerInfo *root, Node *node, int varRelid,
 							vardata->statsTuple =
 								SearchSysCache3(STATRELATTINH,
 										   ObjectIdGetDatum(index->indexoid),
-											    Int16GetDatum(pos + 1),
-											    BoolGetDatum(false));
+												Int16GetDatum(pos + 1),
+												BoolGetDatum(false));
 							vardata->freefunc = ReleaseSysCache;
 						}
 						if (vardata->statsTuple)
@@ -4407,11 +4406,11 @@ get_variable_range(PlannerInfo *root, VariableStatData *vardata, Oid sortop,
 	int			i;
 
 	/*
-	 * XXX It's very tempting to try to use the actual column min and max,
-	 * if we can get them relatively-cheaply with an index probe.  However,
-	 * since this function is called many times during join planning,
-	 * that could have unpleasant effects on planning speed.  Need more
-	 * investigation before enabling this.
+	 * XXX It's very tempting to try to use the actual column min and max, if
+	 * we can get them relatively-cheaply with an index probe.	However, since
+	 * this function is called many times during join planning, that could
+	 * have unpleasant effects on planning speed.  Need more investigation
+	 * before enabling this.
 	 */
 #ifdef NOT_USED
 	if (get_actual_variable_range(root, vardata, sortop, min, max))
@@ -4550,8 +4549,8 @@ get_actual_variable_range(PlannerInfo *root, VariableStatData *vardata,
 			continue;
 
 		/*
-		 * Ignore partial indexes --- we only want stats that cover the
-		 * entire relation.
+		 * Ignore partial indexes --- we only want stats that cover the entire
+		 * relation.
 		 */
 		if (index->indpred != NIL)
 			continue;
@@ -4577,8 +4576,8 @@ get_actual_variable_range(PlannerInfo *root, VariableStatData *vardata,
 			continue;
 
 		/*
-		 * Found a suitable index to extract data from.  We'll need an
-		 * EState and a bunch of other infrastructure.
+		 * Found a suitable index to extract data from.  We'll need an EState
+		 * and a bunch of other infrastructure.
 		 */
 		{
 			EState	   *estate;
@@ -4622,7 +4621,7 @@ get_actual_variable_range(PlannerInfo *root, VariableStatData *vardata,
 			/* set up an IS NOT NULL scan key so that we ignore nulls */
 			ScanKeyEntryInitialize(&scankeys[0],
 								   SK_ISNULL | SK_SEARCHNOTNULL,
-								   1,			/* index col to scan */
+								   1,	/* index col to scan */
 								   InvalidStrategy,		/* no strategy */
 								   InvalidOid,	/* no strategy subtype */
 								   InvalidOid,	/* no reg proc for this */
@@ -4641,7 +4640,7 @@ get_actual_variable_range(PlannerInfo *root, VariableStatData *vardata,
 										 indexscandir)) != NULL)
 				{
 					/* Extract the index column values from the heap tuple */
-					ExecStoreTuple(tup,	slot, InvalidBuffer, false);
+					ExecStoreTuple(tup, slot, InvalidBuffer, false);
 					FormIndexDatum(indexInfo, slot, estate,
 								   values, isnull);
 
@@ -4672,7 +4671,7 @@ get_actual_variable_range(PlannerInfo *root, VariableStatData *vardata,
 										 -indexscandir)) != NULL)
 				{
 					/* Extract the index column values from the heap tuple */
-					ExecStoreTuple(tup,	slot, InvalidBuffer, false);
+					ExecStoreTuple(tup, slot, InvalidBuffer, false);
 					FormIndexDatum(indexInfo, slot, estate,
 								   values, isnull);
 
@@ -4872,8 +4871,8 @@ regex_fixed_prefix(Const *patt_const, bool case_insensitive,
 
 	/*
 	 * Check for ARE director prefix.  It's worth our trouble to recognize
-	 * this because similar_escape() used to use it, and some other code
-	 * might still use it, to force ARE mode.
+	 * this because similar_escape() used to use it, and some other code might
+	 * still use it, to force ARE mode.
 	 */
 	pos = 0;
 	if (strncmp(patt, "***:", 4) == 0)
@@ -5808,7 +5807,7 @@ genericcostestimate(PlannerInfo *root,
 		 * since that's internal to the indexscan.)
 		 */
 		*indexTotalCost = (pages_fetched * spc_random_page_cost)
-							/ num_outer_scans;
+			/ num_outer_scans;
 	}
 	else
 	{

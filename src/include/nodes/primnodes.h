@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/primnodes.h,v 1.155 2010/02/17 04:19:40 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/primnodes.h,v 1.156 2010/02/26 02:01:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -211,14 +211,14 @@ typedef struct Param
  * Aggref
  *
  * The aggregate's args list is a targetlist, ie, a list of TargetEntry nodes
- * (before Postgres 9.0 it was just bare expressions).  The non-resjunk TLEs
+ * (before Postgres 9.0 it was just bare expressions).	The non-resjunk TLEs
  * represent the aggregate's regular arguments (if any) and resjunk TLEs can
  * be added at the end to represent ORDER BY expressions that are not also
  * arguments.  As in a top-level Query, the TLEs can be marked with
  * ressortgroupref indexes to let them be referenced by SortGroupClause
  * entries in the aggorder and/or aggdistinct lists.  This represents ORDER BY
  * and DISTINCT operations to be applied to the aggregate input rows before
- * they are passed to the transition function.  The grammar only allows a
+ * they are passed to the transition function.	The grammar only allows a
  * simple "DISTINCT" specifier for the arguments, but we use the full
  * query-level representation to allow more code sharing.
  */

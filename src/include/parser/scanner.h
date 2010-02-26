@@ -4,14 +4,14 @@
  *		API for the core scanner (flex machine)
  *
  * The core scanner is also used by PL/pgsql, so we provide a public API
- * for it.  However, the rest of the backend is only expected to use the
+ * for it.	However, the rest of the backend is only expected to use the
  * higher-level API provided by parser.h.
  *
  *
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/parser/scanner.h,v 1.2 2010/01/02 16:58:08 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/parser/scanner.h,v 1.3 2010/02/26 02:01:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -58,7 +58,7 @@ typedef union core_YYSTYPE
 
 /*
  * The YY_EXTRA data that a flex scanner allows us to pass around.
- * Private state needed by the core scanner goes here.  Note that the actual
+ * Private state needed by the core scanner goes here.	Note that the actual
  * yy_extra struct may be larger and have this as its first component, thus
  * allowing the calling parser to keep some fields of its own in YY_EXTRA.
  */
@@ -78,12 +78,11 @@ typedef struct core_yy_extra_type
 	int			num_keywords;
 
 	/*
-	 * literalbuf is used to accumulate literal values when multiple rules
-	 * are needed to parse a single literal.  Call startlit() to reset buffer
-	 * to empty, addlit() to add text.  NOTE: the string in literalbuf is
-	 * NOT necessarily null-terminated, but there always IS room to add a
-	 * trailing null at offset literallen.  We store a null only when we
-	 * need it.
+	 * literalbuf is used to accumulate literal values when multiple rules are
+	 * needed to parse a single literal.  Call startlit() to reset buffer to
+	 * empty, addlit() to add text.  NOTE: the string in literalbuf is NOT
+	 * necessarily null-terminated, but there always IS room to add a trailing
+	 * null at offset literallen.  We store a null only when we need it.
 	 */
 	char	   *literalbuf;		/* palloc'd expandable buffer */
 	int			literallen;		/* actual current string length */
@@ -108,12 +107,12 @@ typedef void *core_yyscan_t;
 
 /* Entry points in parser/scan.l */
 extern core_yyscan_t scanner_init(const char *str,
-								  core_yy_extra_type *yyext,
-								  const ScanKeyword *keywords,
-								  int num_keywords);
+			 core_yy_extra_type *yyext,
+			 const ScanKeyword *keywords,
+			 int num_keywords);
 extern void scanner_finish(core_yyscan_t yyscanner);
-extern int	core_yylex(core_YYSTYPE *lvalp, YYLTYPE *llocp,
-					   core_yyscan_t yyscanner);
+extern int core_yylex(core_YYSTYPE *lvalp, YYLTYPE *llocp,
+		   core_yyscan_t yyscanner);
 extern int	scanner_errposition(int location, core_yyscan_t yyscanner);
 extern void scanner_yyerror(const char *message, core_yyscan_t yyscanner);
 

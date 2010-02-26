@@ -5,7 +5,7 @@
  *
  * Portions Copyright (c) 2010-2010, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/replication/walsender.h,v 1.1 2010/01/15 09:19:09 heikki Exp $
+ * $PostgreSQL: pgsql/src/include/replication/walsender.h,v 1.2 2010/02/26 02:01:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,30 +20,30 @@
  */
 typedef struct WalSnd
 {
-	pid_t	pid;		/* this walsender's process id, or 0 */
-	XLogRecPtr sentPtr;	/* WAL has been sent up to this point */
+	pid_t		pid;			/* this walsender's process id, or 0 */
+	XLogRecPtr	sentPtr;		/* WAL has been sent up to this point */
 
-	slock_t	mutex;		/* locks shared variables shown above */
+	slock_t		mutex;			/* locks shared variables shown above */
 } WalSnd;
 
 /* There is one WalSndCtl struct for the whole database cluster */
 typedef struct
 {
-	WalSnd	walsnds[1];		/* VARIABLE LENGTH ARRAY */
+	WalSnd		walsnds[1];		/* VARIABLE LENGTH ARRAY */
 } WalSndCtlData;
 
 extern WalSndCtlData *WalSndCtl;
 
 /* global state */
-extern bool	am_walsender;
+extern bool am_walsender;
 
 /* user-settable parameters */
 extern int	WalSndDelay;
 
-extern int WalSenderMain(void);
+extern int	WalSenderMain(void);
 extern void WalSndSignals(void);
 extern Size WalSndShmemSize(void);
 extern void WalSndShmemInit(void);
 extern XLogRecPtr GetOldestWALSendPointer(void);
 
-#endif	/* _WALSENDER_H */
+#endif   /* _WALSENDER_H */

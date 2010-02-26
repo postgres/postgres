@@ -19,7 +19,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/time/snapmgr.c,v 1.14 2010/01/02 16:57:58 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/time/snapmgr.c,v 1.15 2010/02/26 02:01:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -226,9 +226,9 @@ CopySnapshot(Snapshot snapshot)
 
 	/*
 	 * Setup subXID array. Don't bother to copy it if it had overflowed,
-	 * though, because it's not used anywhere in that case. Except if it's
-	 * a snapshot taken during recovery; all the top-level XIDs are in subxip
-	 * as well in that case, so we mustn't lose them.
+	 * though, because it's not used anywhere in that case. Except if it's a
+	 * snapshot taken during recovery; all the top-level XIDs are in subxip as
+	 * well in that case, so we mustn't lose them.
 	 */
 	if (snapshot->subxcnt > 0 &&
 		(!snapshot->suboverflowed || snapshot->takenDuringRecovery))
@@ -263,7 +263,7 @@ FreeSnapshot(Snapshot snapshot)
  *
  * If the passed snapshot is a statically-allocated one, or it is possibly
  * subject to a future command counter update, create a new long-lived copy
- * with active refcount=1.  Otherwise, only increment the refcount.
+ * with active refcount=1.	Otherwise, only increment the refcount.
  */
 void
 PushActiveSnapshot(Snapshot snap)
@@ -275,8 +275,8 @@ PushActiveSnapshot(Snapshot snap)
 	newactive = MemoryContextAlloc(TopTransactionContext, sizeof(ActiveSnapshotElt));
 
 	/*
-	 * Checking SecondarySnapshot is probably useless here, but it seems better
-	 * to be sure.
+	 * Checking SecondarySnapshot is probably useless here, but it seems
+	 * better to be sure.
 	 */
 	if (snap == CurrentSnapshot || snap == SecondarySnapshot || !snap->copied)
 		newactive->as_snap = CopySnapshot(snap);

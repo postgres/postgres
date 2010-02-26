@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.347 2010/02/20 21:24:02 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.348 2010/02/26 02:00:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -76,7 +76,7 @@ static void ExecCheckRTPerms(List *rangeTable);
 static void ExecCheckRTEPerms(RangeTblEntry *rte);
 static void ExecCheckXactReadOnly(PlannedStmt *plannedstmt);
 static void EvalPlanQualStart(EPQState *epqstate, EState *parentestate,
-							  Plan *planTree);
+				  Plan *planTree);
 static void OpenIntoRel(QueryDesc *queryDesc);
 static void CloseIntoRel(QueryDesc *queryDesc);
 static void intorel_startup(DestReceiver *self, int operation, TupleDesc typeinfo);
@@ -582,8 +582,8 @@ ExecCheckXactReadOnly(PlannedStmt *plannedstmt)
 	/*
 	 * CREATE TABLE AS or SELECT INTO?
 	 *
-	 * XXX should we allow this if the destination is temp?  Considering
-	 * that it would still require catalog changes, probably not.
+	 * XXX should we allow this if the destination is temp?  Considering that
+	 * it would still require catalog changes, probably not.
 	 */
 	if (plannedstmt->intoClause != NULL)
 		PreventCommandIfReadOnly(CreateCommandTag((Node *) plannedstmt));
@@ -641,8 +641,8 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 	/*
 	 * initialize result relation stuff, and open/lock the result rels.
 	 *
-	 * We must do this before initializing the plan tree, else we might
-	 * try to do a lock upgrade if a result rel is also a source rel.
+	 * We must do this before initializing the plan tree, else we might try to
+	 * do a lock upgrade if a result rel is also a source rel.
 	 */
 	if (plannedstmt->resultRelations)
 	{
@@ -686,8 +686,8 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 
 	/*
 	 * Similarly, we have to lock relations selected FOR UPDATE/FOR SHARE
-	 * before we initialize the plan tree, else we'd be risking lock
-	 * upgrades.  While we are at it, build the ExecRowMark list.
+	 * before we initialize the plan tree, else we'd be risking lock upgrades.
+	 * While we are at it, build the ExecRowMark list.
 	 */
 	estate->es_rowMarks = NIL;
 	foreach(l, plannedstmt->rowMarks)
@@ -804,8 +804,8 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 	tupType = ExecGetResultType(planstate);
 
 	/*
-	 * Initialize the junk filter if needed.  SELECT queries need a
-	 * filter if there are any junk attrs in the top-level tlist.
+	 * Initialize the junk filter if needed.  SELECT queries need a filter if
+	 * there are any junk attrs in the top-level tlist.
 	 */
 	if (operation == CMD_SELECT)
 	{
@@ -1101,9 +1101,9 @@ ExecEndPlan(PlanState *planstate, EState *estate)
 
 	/*
 	 * destroy the executor's tuple table.  Actually we only care about
-	 * releasing buffer pins and tupdesc refcounts; there's no need to
-	 * pfree the TupleTableSlots, since the containing memory context
-	 * is about to go away anyway.
+	 * releasing buffer pins and tupdesc refcounts; there's no need to pfree
+	 * the TupleTableSlots, since the containing memory context is about to go
+	 * away anyway.
 	 */
 	ExecResetTupleTable(estate->es_tupleTable, false);
 
@@ -1208,8 +1208,8 @@ ExecutePlan(EState *estate,
 			slot = ExecFilterJunk(estate->es_junkFilter, slot);
 
 		/*
-		 * If we are supposed to send the tuple somewhere, do so.
-		 * (In practice, this is probably always the case at this point.)
+		 * If we are supposed to send the tuple somewhere, do so. (In
+		 * practice, this is probably always the case at this point.)
 		 */
 		if (sendTuples)
 			(*dest->receiveSlot) (slot, dest);
@@ -1390,8 +1390,8 @@ EvalPlanQual(EState *estate, EPQState *epqstate,
 	EvalPlanQualBegin(epqstate, estate);
 
 	/*
-	 * Free old test tuple, if any, and store new tuple where relation's
-	 * scan node will see it
+	 * Free old test tuple, if any, and store new tuple where relation's scan
+	 * node will see it
 	 */
 	EvalPlanQualSetTuple(epqstate, rti, copyTuple);
 
@@ -1406,19 +1406,19 @@ EvalPlanQual(EState *estate, EPQState *epqstate,
 	slot = EvalPlanQualNext(epqstate);
 
 	/*
-	 * If we got a tuple, force the slot to materialize the tuple so that
-	 * it is not dependent on any local state in the EPQ query (in particular,
+	 * If we got a tuple, force the slot to materialize the tuple so that it
+	 * is not dependent on any local state in the EPQ query (in particular,
 	 * it's highly likely that the slot contains references to any pass-by-ref
-	 * datums that may be present in copyTuple).  As with the next step,
-	 * this is to guard against early re-use of the EPQ query.
+	 * datums that may be present in copyTuple).  As with the next step, this
+	 * is to guard against early re-use of the EPQ query.
 	 */
 	if (!TupIsNull(slot))
 		(void) ExecMaterializeSlot(slot);
 
 	/*
-	 * Clear out the test tuple.  This is needed in case the EPQ query
-	 * is re-used to test a tuple for a different relation.  (Not clear
-	 * that can really happen, but let's be safe.)
+	 * Clear out the test tuple.  This is needed in case the EPQ query is
+	 * re-used to test a tuple for a different relation.  (Not clear that can
+	 * really happen, but let's be safe.)
 	 */
 	EvalPlanQualSetTuple(epqstate, rti, NULL);
 
@@ -1680,8 +1680,8 @@ EvalPlanQualSetTuple(EPQState *epqstate, Index rti, HeapTuple tuple)
 	Assert(rti > 0);
 
 	/*
-	 * free old test tuple, if any, and store new tuple where relation's
-	 * scan node will see it
+	 * free old test tuple, if any, and store new tuple where relation's scan
+	 * node will see it
 	 */
 	if (estate->es_epqTuple[rti - 1] != NULL)
 		heap_freetuple(estate->es_epqTuple[rti - 1]);
@@ -1704,7 +1704,7 @@ EvalPlanQualGetTuple(EPQState *epqstate, Index rti)
 
 /*
  * Fetch the current row values for any non-locked relations that need
- * to be scanned by an EvalPlanQual operation.  origslot must have been set
+ * to be scanned by an EvalPlanQual operation.	origslot must have been set
  * to contain the current result row (top-level row) that we need to recheck.
  */
 void
@@ -1841,7 +1841,7 @@ EvalPlanQualBegin(EPQState *epqstate, EState *parentestate)
 		/* Recopy current values of parent parameters */
 		if (parentestate->es_plannedstmt->nParamExec > 0)
 		{
-			int		i = parentestate->es_plannedstmt->nParamExec;
+			int			i = parentestate->es_plannedstmt->nParamExec;
 
 			while (--i >= 0)
 			{
@@ -1913,7 +1913,7 @@ EvalPlanQualStart(EPQState *epqstate, EState *parentestate, Plan *planTree)
 	estate->es_param_list_info = parentestate->es_param_list_info;
 	if (parentestate->es_plannedstmt->nParamExec > 0)
 	{
-		int		i = parentestate->es_plannedstmt->nParamExec;
+		int			i = parentestate->es_plannedstmt->nParamExec;
 
 		estate->es_param_exec_vals = (ParamExecData *)
 			palloc0(i * sizeof(ParamExecData));
@@ -1929,7 +1929,7 @@ EvalPlanQualStart(EPQState *epqstate, EState *parentestate, Plan *planTree)
 
 	/*
 	 * Each EState must have its own es_epqScanDone state, but if we have
-	 * nested EPQ checks they should share es_epqTuple arrays.  This allows
+	 * nested EPQ checks they should share es_epqTuple arrays.	This allows
 	 * sub-rechecks to inherit the values being examined by an outer recheck.
 	 */
 	estate->es_epqScanDone = (bool *) palloc0(rtsize * sizeof(bool));
@@ -1954,10 +1954,10 @@ EvalPlanQualStart(EPQState *epqstate, EState *parentestate, Plan *planTree)
 	/*
 	 * Initialize private state information for each SubPlan.  We must do this
 	 * before running ExecInitNode on the main query tree, since
-	 * ExecInitSubPlan expects to be able to find these entries.
-	 * Some of the SubPlans might not be used in the part of the plan tree
-	 * we intend to run, but since it's not easy to tell which, we just
-	 * initialize them all.
+	 * ExecInitSubPlan expects to be able to find these entries. Some of the
+	 * SubPlans might not be used in the part of the plan tree we intend to
+	 * run, but since it's not easy to tell which, we just initialize them
+	 * all.
 	 */
 	Assert(estate->es_subplanstates == NIL);
 	foreach(l, parentestate->es_plannedstmt->subplans)
@@ -1972,9 +1972,9 @@ EvalPlanQualStart(EPQState *epqstate, EState *parentestate, Plan *planTree)
 	}
 
 	/*
-	 * Initialize the private state information for all the nodes in the
-	 * part of the plan tree we need to run.  This opens files, allocates
-	 * storage and leaves us ready to start processing tuples.
+	 * Initialize the private state information for all the nodes in the part
+	 * of the plan tree we need to run.  This opens files, allocates storage
+	 * and leaves us ready to start processing tuples.
 	 */
 	epqstate->planstate = ExecInitNode(planTree, estate, 0);
 
@@ -2078,8 +2078,8 @@ OpenIntoRel(QueryDesc *queryDesc)
 	Assert(into);
 
 	/*
-	 * XXX This code needs to be kept in sync with DefineRelation().
-	 * Maybe we should try to use that function instead.
+	 * XXX This code needs to be kept in sync with DefineRelation(). Maybe we
+	 * should try to use that function instead.
 	 */
 
 	/*
@@ -2242,7 +2242,8 @@ CloseIntoRel(QueryDesc *queryDesc)
 		/* If we skipped using WAL, must heap_sync before commit */
 		if (myState->hi_options & HEAP_INSERT_SKIP_WAL)
 		{
-			char reason[NAMEDATALEN + 30];
+			char		reason[NAMEDATALEN + 30];
+
 			snprintf(reason, sizeof(reason), "SELECT INTO on \"%s\"",
 					 RelationGetRelationName(myState->rel));
 			XLogReportUnloggedStatement(reason);

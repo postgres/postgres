@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/xlog_internal.h,v 1.28 2010/01/15 09:19:06 heikki Exp $
+ * $PostgreSQL: pgsql/src/include/access/xlog_internal.h,v 1.29 2010/02/26 02:01:21 momjian Exp $
  */
 #ifndef XLOG_INTERNAL_H
 #define XLOG_INTERNAL_H
@@ -152,15 +152,15 @@ typedef XLogLongPageHeaderData *XLogLongPageHeader;
 	} while (0)
 
 /* Align a record pointer to next page */
-#define NextLogPage(recptr)	\
+#define NextLogPage(recptr) \
 	do {	\
 		if (recptr.xrecoff % XLOG_BLCKSZ != 0)	\
 			recptr.xrecoff +=	\
 				(XLOG_BLCKSZ - recptr.xrecoff % XLOG_BLCKSZ);	\
-		if (recptr.xrecoff >= XLogFileSize)	\
+		if (recptr.xrecoff >= XLogFileSize) \
 		{	\
 			(recptr.xlogid)++;	\
-			recptr.xrecoff = 0;	\
+			recptr.xrecoff = 0; \
 		}	\
 	} while (0)
 

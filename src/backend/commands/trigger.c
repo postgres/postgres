@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.261 2010/02/14 18:42:14 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.262 2010/02/26 02:00:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -117,7 +117,7 @@ CreateTrigger(CreateTrigStmt *stmt, const char *queryString,
 {
 	int16		tgtype;
 	int			ncolumns;
-	int2       *columns;
+	int2	   *columns;
 	int2vector *tgattr;
 	Node	   *whenClause;
 	List	   *whenRtable;
@@ -196,10 +196,10 @@ CreateTrigger(CreateTrigStmt *stmt, const char *queryString,
 	 */
 	if (stmt->whenClause)
 	{
-		ParseState	   *pstate;
+		ParseState *pstate;
 		RangeTblEntry *rte;
-		List		   *varList;
-		ListCell	   *lc;
+		List	   *varList;
+		ListCell   *lc;
 
 		/* Set up a pstate to parse with */
 		pstate = make_parsestate(NULL);
@@ -230,7 +230,7 @@ CreateTrigger(CreateTrigStmt *stmt, const char *queryString,
 		if (pstate->p_hasSubLinks)
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("cannot use subquery in trigger WHEN condition")));
+				   errmsg("cannot use subquery in trigger WHEN condition")));
 		if (pstate->p_hasAggs)
 			ereport(ERROR,
 					(errcode(ERRCODE_GROUPING_ERROR),
@@ -238,7 +238,7 @@ CreateTrigger(CreateTrigStmt *stmt, const char *queryString,
 		if (pstate->p_hasWindowFuncs)
 			ereport(ERROR,
 					(errcode(ERRCODE_WINDOWING_ERROR),
-					 errmsg("cannot use window function in trigger WHEN condition")));
+			errmsg("cannot use window function in trigger WHEN condition")));
 
 		/*
 		 * Check for disallowed references to OLD/NEW.
@@ -364,11 +364,11 @@ CreateTrigger(CreateTrigStmt *stmt, const char *queryString,
 											  stmt->deferrable,
 											  stmt->initdeferred,
 											  RelationGetRelid(rel),
-											  NULL,	/* no conkey */
+											  NULL,		/* no conkey */
 											  0,
-											  InvalidOid,	/* no domain */
-											  InvalidOid,	/* no index */
-											  InvalidOid,	/* no foreign key */
+											  InvalidOid,		/* no domain */
+											  InvalidOid,		/* no index */
+											  InvalidOid,		/* no foreign key */
 											  NULL,
 											  NULL,
 											  NULL,
@@ -382,7 +382,7 @@ CreateTrigger(CreateTrigStmt *stmt, const char *queryString,
 											  NULL,
 											  NULL,
 											  true,		/* islocal */
-											  0);	/* inhcount */
+											  0);		/* inhcount */
 	}
 
 	/*
@@ -394,9 +394,9 @@ CreateTrigger(CreateTrigStmt *stmt, const char *queryString,
 	trigoid = GetNewOid(tgrel);
 
 	/*
-	 * If trigger is internally generated, modify the provided trigger name
-	 * to ensure uniqueness by appending the trigger OID.  (Callers will
-	 * usually supply a simple constant trigger name in these cases.)
+	 * If trigger is internally generated, modify the provided trigger name to
+	 * ensure uniqueness by appending the trigger OID.	(Callers will usually
+	 * supply a simple constant trigger name in these cases.)
 	 */
 	if (isInternal)
 	{
@@ -413,8 +413,8 @@ CreateTrigger(CreateTrigStmt *stmt, const char *queryString,
 	/*
 	 * Scan pg_trigger for existing triggers on relation.  We do this only to
 	 * give a nice error message if there's already a trigger of the same
-	 * name.  (The unique index on tgrelid/tgname would complain anyway.)
-	 * We can skip this for internally generated triggers, since the name
+	 * name.  (The unique index on tgrelid/tgname would complain anyway.) We
+	 * can skip this for internally generated triggers, since the name
 	 * modification above should be sufficient.
 	 *
 	 * NOTE that this is cool only because we have AccessExclusiveLock on the
@@ -435,8 +435,8 @@ CreateTrigger(CreateTrigStmt *stmt, const char *queryString,
 			if (namestrcmp(&(pg_trigger->tgname), trigname) == 0)
 				ereport(ERROR,
 						(errcode(ERRCODE_DUPLICATE_OBJECT),
-						 errmsg("trigger \"%s\" for relation \"%s\" already exists",
-								trigname, stmt->relation->relname)));
+				  errmsg("trigger \"%s\" for relation \"%s\" already exists",
+						 trigname, stmt->relation->relname)));
 		}
 		systable_endscan(tgscan);
 	}
@@ -515,17 +515,17 @@ CreateTrigger(CreateTrigStmt *stmt, const char *queryString,
 		columns = (int2 *) palloc(ncolumns * sizeof(int2));
 		foreach(cell, stmt->columns)
 		{
-			char   *name = strVal(lfirst(cell));
-			int2	attnum;
-			int		j;
+			char	   *name = strVal(lfirst(cell));
+			int2		attnum;
+			int			j;
 
-			/* Lookup column name.  System columns are not allowed */
+			/* Lookup column name.	System columns are not allowed */
 			attnum = attnameAttNum(rel, name, false);
 			if (attnum == InvalidAttrNumber)
 				ereport(ERROR,
 						(errcode(ERRCODE_UNDEFINED_COLUMN),
-						 errmsg("column \"%s\" of relation \"%s\" does not exist",
-								name, RelationGetRelationName(rel))));
+					errmsg("column \"%s\" of relation \"%s\" does not exist",
+						   name, RelationGetRelationName(rel))));
 
 			/* Check for duplicates */
 			for (j = i - 1; j >= 0; j--)
@@ -624,7 +624,7 @@ CreateTrigger(CreateTrigStmt *stmt, const char *queryString,
 	else
 	{
 		/*
-		 * User CREATE TRIGGER, so place dependencies.  We make trigger be
+		 * User CREATE TRIGGER, so place dependencies.	We make trigger be
 		 * auto-dropped if its relation is dropped or if the FK relation is
 		 * dropped.  (Auto drop is compatible with our pre-7.3 behavior.)
 		 */
@@ -641,6 +641,7 @@ CreateTrigger(CreateTrigStmt *stmt, const char *queryString,
 		}
 		/* Not possible to have an index dependency in this case */
 		Assert(!OidIsValid(indexOid));
+
 		/*
 		 * If it's a user-specified constraint trigger, make the constraint
 		 * internally dependent on the trigger instead of vice versa.
@@ -657,7 +658,7 @@ CreateTrigger(CreateTrigStmt *stmt, const char *queryString,
 	/* If column-specific trigger, add normal dependencies on columns */
 	if (columns != NULL)
 	{
-		int		i;
+		int			i;
 
 		referenced.classId = RelationRelationId;
 		referenced.objectId = RelationGetRelid(rel);
@@ -669,8 +670,8 @@ CreateTrigger(CreateTrigStmt *stmt, const char *queryString,
 	}
 
 	/*
-	 * If it has a WHEN clause, add dependencies on objects mentioned in
-	 * the expression (eg, functions, as well as any columns used).
+	 * If it has a WHEN clause, add dependencies on objects mentioned in the
+	 * expression (eg, functions, as well as any columns used).
 	 */
 	if (whenClause != NULL)
 		recordDependencyOnExpr(&myself, whenClause, whenRtable,
@@ -1714,9 +1715,9 @@ equalTriggerDescs(TriggerDesc *trigdesc1, TriggerDesc *trigdesc2)
 	 * comparison; so we just compare corresponding slots of the two sets.
 	 *
 	 * Note: comparing the stringToNode forms of the WHEN clauses means that
-	 * parse column locations will affect the result.  This is okay as long
-	 * as this function is only used for detecting exact equality, as for
-	 * example in checking for staleness of a cache entry.
+	 * parse column locations will affect the result.  This is okay as long as
+	 * this function is only used for detecting exact equality, as for example
+	 * in checking for staleness of a cache entry.
 	 */
 	if (trigdesc1 != NULL)
 	{
@@ -1763,11 +1764,11 @@ equalTriggerDescs(TriggerDesc *trigdesc1, TriggerDesc *trigdesc2)
 				if (strcmp(trig1->tgargs[j], trig2->tgargs[j]) != 0)
 					return false;
 			if (trig1->tgqual == NULL && trig2->tgqual == NULL)
-				/* ok */ ;
+				 /* ok */ ;
 			else if (trig1->tgqual == NULL || trig2->tgqual == NULL)
 				return false;
 			else if (strcmp(trig1->tgqual, trig2->tgqual) != 0)
-					return false;
+				return false;
 		}
 	}
 	else if (trigdesc2 != NULL)
@@ -2114,7 +2115,7 @@ ExecBSUpdateTriggers(EState *estate, ResultRelInfo *relinfo)
 	int		   *tgindx;
 	int			i;
 	TriggerData LocTriggerData;
-	Bitmapset   *modifiedCols;
+	Bitmapset  *modifiedCols;
 
 	trigdesc = relinfo->ri_TrigDesc;
 
@@ -2185,7 +2186,7 @@ ExecBRUpdateTriggers(EState *estate, EPQState *epqstate,
 	HeapTuple	intuple = newtuple;
 	TupleTableSlot *newSlot;
 	int			i;
-	Bitmapset   *modifiedCols;
+	Bitmapset  *modifiedCols;
 
 	trigtuple = GetTupleForTrigger(estate, epqstate, relinfo, tupleid,
 								   &newSlot);
@@ -2381,9 +2382,9 @@ ltrmark:;
 
 						/*
 						 * EvalPlanQual already locked the tuple, but we
-						 * re-call heap_lock_tuple anyway as an easy way
-						 * of re-fetching the correct tuple.  Speed is
-						 * hardly a criterion in this path anyhow.
+						 * re-call heap_lock_tuple anyway as an easy way of
+						 * re-fetching the correct tuple.  Speed is hardly a
+						 * criterion in this path anyhow.
 						 */
 						goto ltrmark;
 					}
@@ -2485,8 +2486,8 @@ TriggerEnabled(EState *estate, ResultRelInfo *relinfo,
 		Assert(estate != NULL);
 
 		/*
-		 * trigger is an element of relinfo->ri_TrigDesc->triggers[];
-		 * find the matching element of relinfo->ri_TrigWhenExprs[]
+		 * trigger is an element of relinfo->ri_TrigDesc->triggers[]; find the
+		 * matching element of relinfo->ri_TrigWhenExprs[]
 		 */
 		i = trigger - relinfo->ri_TrigDesc->triggers;
 		predicate = &relinfo->ri_TrigWhenExprs[i];
@@ -2498,7 +2499,7 @@ TriggerEnabled(EState *estate, ResultRelInfo *relinfo,
 		 */
 		if (*predicate == NIL)
 		{
-			Node   *tgqual;
+			Node	   *tgqual;
 
 			oldContext = MemoryContextSwitchTo(estate->es_query_cxt);
 			tgqual = stringToNode(trigger->tgqual);
@@ -3895,9 +3896,9 @@ AfterTriggerSetState(ConstraintsSetStmt *stmt)
 		 * Handle SET CONSTRAINTS constraint-name [, ...]
 		 *
 		 * First, identify all the named constraints and make a list of their
-		 * OIDs.  Since, unlike the SQL spec, we allow multiple constraints
-		 * of the same name within a schema, the specifications are not
-		 * necessarily unique.  Our strategy is to target all matching
+		 * OIDs.  Since, unlike the SQL spec, we allow multiple constraints of
+		 * the same name within a schema, the specifications are not
+		 * necessarily unique.	Our strategy is to target all matching
 		 * constraints within the first search-path schema that has any
 		 * matches, but disregard matches in schemas beyond the first match.
 		 * (This is a bit odd but it's the historical behavior.)
@@ -4025,9 +4026,9 @@ AfterTriggerSetState(ConstraintsSetStmt *stmt)
 				Form_pg_trigger pg_trigger = (Form_pg_trigger) GETSTRUCT(htup);
 
 				/*
-				 * Silently skip triggers that are marked as non-deferrable
-				 * in pg_trigger.  This is not an error condition, since
-				 * a deferrable RI constraint may have some non-deferrable
+				 * Silently skip triggers that are marked as non-deferrable in
+				 * pg_trigger.	This is not an error condition, since a
+				 * deferrable RI constraint may have some non-deferrable
 				 * actions.
 				 */
 				if (pg_trigger->tgdeferrable)
@@ -4198,7 +4199,7 @@ AfterTriggerPendingOnRel(Oid relid)
  *	be fired for an event.
  *
  *	NOTE: this is called whenever there are any triggers associated with
- *	the event (even if they are disabled).  This function decides which
+ *	the event (even if they are disabled).	This function decides which
  *	triggers actually need to be queued.
  * ----------
  */
@@ -4217,9 +4218,9 @@ AfterTriggerSaveEvent(EState *estate, ResultRelInfo *relinfo,
 	int		   *tgindx;
 
 	/*
-	 * Check state.  We use normal tests not Asserts because it is possible
-	 * to reach here in the wrong state given misconfigured RI triggers,
-	 * in particular deferring a cascade action trigger.
+	 * Check state.  We use normal tests not Asserts because it is possible to
+	 * reach here in the wrong state given misconfigured RI triggers, in
+	 * particular deferring a cascade action trigger.
 	 */
 	if (afterTriggers == NULL)
 		elog(ERROR, "AfterTriggerSaveEvent() called outside of transaction");
@@ -4363,9 +4364,9 @@ AfterTriggerSaveEvent(EState *estate, ResultRelInfo *relinfo,
 		}
 
 		/*
-		 * If the trigger is a deferred unique constraint check trigger,
-		 * only queue it if the unique constraint was potentially violated,
-		 * which we know from index insertion time.
+		 * If the trigger is a deferred unique constraint check trigger, only
+		 * queue it if the unique constraint was potentially violated, which
+		 * we know from index insertion time.
 		 */
 		if (trigger->tgfoid == F_UNIQUE_KEY_RECHECK)
 		{

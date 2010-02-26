@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/htup.h,v 1.112 2010/02/08 14:10:21 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/access/htup.h,v 1.113 2010/02/26 02:01:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -175,12 +175,12 @@ typedef HeapTupleHeaderData *HeapTupleHeader;
 #define HEAP_XMAX_INVALID		0x0800	/* t_xmax invalid/aborted */
 #define HEAP_XMAX_IS_MULTI		0x1000	/* t_xmax is a MultiXactId */
 #define HEAP_UPDATED			0x2000	/* this is UPDATEd version of row */
-#define HEAP_MOVED_OFF			0x4000	/* moved to another place by
-										 * pre-9.0 VACUUM FULL; kept
-										 * for binary upgrade support */
-#define HEAP_MOVED_IN			0x8000	/* moved from another place by
-										 * pre-9.0 VACUUM FULL; kept
-										 * for binary upgrade support */
+#define HEAP_MOVED_OFF			0x4000	/* moved to another place by pre-9.0
+										 * VACUUM FULL; kept for binary
+										 * upgrade support */
+#define HEAP_MOVED_IN			0x8000	/* moved from another place by pre-9.0
+										 * VACUUM FULL; kept for binary
+										 * upgrade support */
 #define HEAP_MOVED (HEAP_MOVED_OFF | HEAP_MOVED_IN)
 
 #define HEAP_XACT_MASK			0xFFE0	/* visibility-related bits */
@@ -642,7 +642,7 @@ typedef struct xl_heap_update
 	xl_heaptid	target;			/* deleted tuple id */
 	ItemPointerData newtid;		/* new inserted tuple id */
 	bool		all_visible_cleared;	/* PD_ALL_VISIBLE was cleared */
-	bool		new_all_visible_cleared;	/* same for the page of newtid */
+	bool		new_all_visible_cleared;		/* same for the page of newtid */
 	/* NEW TUPLE xl_heap_header AND TUPLE DATA FOLLOWS AT END OF STRUCT */
 } xl_heap_update;
 
@@ -663,7 +663,7 @@ typedef struct xl_heap_clean
 {
 	RelFileNode node;
 	BlockNumber block;
-	TransactionId	latestRemovedXid;
+	TransactionId latestRemovedXid;
 	uint16		nredirected;
 	uint16		ndead;
 	/* OFFSET NUMBERS FOLLOW */
@@ -678,8 +678,8 @@ typedef struct xl_heap_clean
  */
 typedef struct xl_heap_cleanup_info
 {
-	RelFileNode 	node;
-	TransactionId	latestRemovedXid;
+	RelFileNode node;
+	TransactionId latestRemovedXid;
 } xl_heap_cleanup_info;
 
 #define SizeOfHeapCleanupInfo (sizeof(xl_heap_cleanup_info))
@@ -728,7 +728,7 @@ typedef struct xl_heap_freeze
 #define SizeOfHeapFreeze (offsetof(xl_heap_freeze, cutoff_xid) + sizeof(TransactionId))
 
 extern void HeapTupleHeaderAdvanceLatestRemovedXid(HeapTupleHeader tuple,
-										TransactionId *latestRemovedXid);
+									   TransactionId *latestRemovedXid);
 
 /* HeapTupleHeader functions implemented in utils/time/combocid.c */
 extern CommandId HeapTupleHeaderGetCmin(HeapTupleHeader tup);
