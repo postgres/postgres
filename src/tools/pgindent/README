@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/tools/pgindent/README,v 1.36 2010/02/26 15:42:36 momjian Exp $
+$PostgreSQL: pgsql/src/tools/pgindent/README,v 1.37 2010/02/26 15:57:34 momjian Exp $
 
 pgindent
 ========
@@ -12,8 +12,7 @@ This can format all PostgreSQL *.c and *.h files, but excludes *.y, and
 
 	wget -O src/tools/pgindent/typedefs.list http://www.pgbuildfarm.org/cgi-bin/typedefs.pl
 
-3) Clean out all derived files (pgindent has trouble with one of the
-   flex macros):
+3) Remove all derived files (pgindent has trouble with one of the flex macros):
 
 	gmake maintainer-clean
 
@@ -32,7 +31,7 @@ This can format all PostgreSQL *.c and *.h files, but excludes *.y, and
 
 We have standardized on NetBSD's indent.  We have fixed a few bugs which 
 requre the NetBSD source to be patched with indent.bsd.patch patch.  A 
-fully patched  version is available at ftp://ftp.postgresql.org/pub/dev.
+fully patched version is available at ftp://ftp.postgresql.org/pub/dev.
 
 GNU indent, version 2.2.6, has several problems, and is not recommended.
 These bugs become pretty major when you are doing >500k lines of code.
@@ -51,8 +50,6 @@ regression tests.
 src/include/snowball/libstemmer/ and src/backend/snowball/libstemmer/
 are excluded because those files are imported from an external project,
 not maintained locally, and are machine-generated anyway.
-
-YY_INPUT
 
 ---------------------------------------------------------------------------
 
