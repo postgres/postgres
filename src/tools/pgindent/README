@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/tools/pgindent/README,v 1.38 2010/02/26 17:07:55 momjian Exp $
+$PostgreSQL: pgsql/src/tools/pgindent/README,v 1.39 2010/02/26 18:00:15 momjian Exp $
 
 pgindent
 ========
@@ -26,7 +26,9 @@ This can format all PostgreSQL *.c and *.h files, but excludes *.y, and
 
 5) Remove any files that generate errors.
 
-6) Do a full test build.
+6) Do a full test build:
+
+	gmake installcheck-world
 
 
 ---------------------------------------------------------------------------
