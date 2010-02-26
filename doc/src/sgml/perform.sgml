@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/perform.sgml,v 1.73 2010/01/15 09:18:59 heikki Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/perform.sgml,v 1.74 2010/02/26 02:31:52 momjian Exp $ -->
 
  <chapter id="performance-tips">
   <title>Performance Tips</title>
@@ -1027,7 +1027,10 @@ SELECT * FROM x, y, a, b, c WHERE something AND somethingelse;
        possibly discarding many hours of processing.  Depending on how
        interrelated the data is, that might seem preferable to manual cleanup,
        or not.  <command>COPY</> commands will run fastest if you use a single
-       transaction and have WAL archiving turned off.
+       transaction and have WAL archiving turned off. 
+       <application>pg_restore</> also has a <option>--jobs</> option
+       which allows concurrent data loading and index creation, and has
+       the performance advantages of doing COPY in a single transaction.
       </para>
      </listitem>
      <listitem>
