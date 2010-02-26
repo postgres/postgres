@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/scripts/vacuumdb.c,v 1.36 2010/02/26 02:01:20 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/scripts/vacuumdb.c,v 1.37 2010/02/26 04:14:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -336,8 +336,8 @@ help(const char *progname)
 	printf(_("  -q, --quiet                     don't write any messages\n"));
 	printf(_("  -t, --table='TABLE[(COLUMNS)]'  vacuum specific table only\n"));
 	printf(_("  -v, --verbose                   write a lot of output\n"));
-	printf(_("  -z, --analyze                   update optimizer hints\n"));
-	printf(_("  -Z, --analyze-only              only update optimizer hints\n"));
+	printf(_("  -z, --analyze                   update optimizer statistics\n"));
+	printf(_("  -Z, --analyze-only              only update optimizer statistics\n"));
 	printf(_("  --help                          show this help, then exit\n"));
 	printf(_("  --version                       output version information, then exit\n"));
 	printf(_("\nConnection options:\n"));
