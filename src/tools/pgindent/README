@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/tools/pgindent/README,v 1.33 2010/02/26 02:11:52 momjian Exp $
+$PostgreSQL: pgsql/src/tools/pgindent/README,v 1.34 2010/02/26 02:58:49 momjian Exp $
 
 pgindent
 ========
@@ -6,17 +6,19 @@ pgindent
 This can format all PostgreSQL *.c and *.h files, but excludes *.y, and
 *.l files. 
 
+1) Change directory to the top of the CVS tree.
+
 1) Download the typedef file from the builfarm:
 
-	http://www.pgbuildfarm.org/cgi-bin/typedefs.pl
+	wget -O src/tools/pgindent/typedefs.list http://www.pgbuildfarm.org/cgi-bin/typedefs.pl
 
-2) Download a fresh CVS checkout
+2) Download a fresh CVS checkout.
 
-3) From the top of the source tree, run:
+3) Run pgindent:
 
 	find . -name '*.[ch]' -type f -print |
 	egrep -v '/s_lock.h|/ecpg/test/expected/|/snowball/libstemmer/' |
-	xargs -n100 pgindent /tmp/typedefs.pl
+	xargs -n100 pgindent src/tools/pgindent/typedefs.list
 
 4) Remove any files that generate errors.
 
