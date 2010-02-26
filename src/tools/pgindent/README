@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/tools/pgindent/README,v 1.37 2010/02/26 15:57:34 momjian Exp $
+$PostgreSQL: pgsql/src/tools/pgindent/README,v 1.38 2010/02/26 17:07:55 momjian Exp $
 
 pgindent
 ========
@@ -20,6 +20,8 @@ This can format all PostgreSQL *.c and *.h files, but excludes *.y, and
 
 	find . -name '*.[ch]' -type f -print |
 	egrep -v '/s_lock.h|/ecpg/test/expected/|/snowball/libstemmer/' |
+	egrep -v '/ecpg/include/(sqlda|sqltypes)\.h$' |
+	egrep -v '/ecpg/include/preproc/struct\.h$' |
 	xargs -n100 pgindent src/tools/pgindent/typedefs.list
 
 5) Remove any files that generate errors.
@@ -44,12 +46,13 @@ Notes about excluded files:
 src/include/storage/s_lock.h is excluded because it contains assembly code
 that pgindent tends to mess up.
 
-src/interfaces/ecpg/test/expected/ is excluded to avoid breaking the ecpg
-regression tests.
-
 src/include/snowball/libstemmer/ and src/backend/snowball/libstemmer/
 are excluded because those files are imported from an external project,
 not maintained locally, and are machine-generated anyway.
+
+src/interfaces/ecpg/test/expected/ is excluded to avoid breaking the ecpg
+regression tests.  Several *.h files are included in regression output so
+should not be changed.
 
 ---------------------------------------------------------------------------
 
