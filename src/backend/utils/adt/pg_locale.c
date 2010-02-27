@@ -4,7 +4,7 @@
  *
  * Portions Copyright (c) 2002-2010, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/pg_locale.c,v 1.51 2010/01/02 16:57:54 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/pg_locale.c,v 1.52 2010/02/27 20:16:17 momjian Exp $
  *
  *-----------------------------------------------------------------------
  */
@@ -386,6 +386,70 @@ free_struct_lconv(struct lconv * s)
 		free(s->positive_sign);
 }
 
+#ifdef	WIN32
+static char *db_strdup(const char *item, const char *str)
+{
+	int	db_encoding = GetDatabaseEncoding();
+	size_t	wchars, ilen, wclen, dstlen;
+	int	utflen, bytes_per_char;
+	wchar_t	*wbuf;
+	char	*dst;
+
+	if (!str[0])
+		return strdup(str);
+	ilen = strlen(str) + 1;
+	wclen = ilen * sizeof(wchar_t);
+	wbuf = (wchar_t *) palloc(wclen);
+
+	/* convert multi-byte string to a wide-character string */
+	wchars = mbstowcs(wbuf, str, ilen);
+	if (wchars == (size_t) -1)
+		elog(ERROR,
+			"could not convert string to wide characters: error %lu", GetLastError());
+
+	/* allocate target string */
+	bytes_per_char = pg_encoding_max_length(PG_UTF8);
+	if (pg_encoding_max_length(db_encoding) > bytes_per_char)
+		bytes_per_char = pg_encoding_max_length(db_encoding);
+	dstlen = wchars * bytes_per_char + 1;
+	if ((dst = malloc(dstlen)) == NULL)
+		elog(ERROR, "could not allocate a destination buffer");
+
+	/* Convert wide string to UTF8 */  
+	utflen = WideCharToMultiByte(CP_UTF8, 0, wbuf, wchars, dst, dstlen, NULL, NULL);
+	if (utflen == 0)
+		elog(ERROR,
+			"could not convert string %04x to UTF-8: error %lu", wbuf[0], GetLastError());
+	pfree(wbuf);
+
+	dst[utflen] = '\0';
+	if (db_encoding != PG_UTF8)
+	{
+		PG_TRY();
+		{
+			char *convstr = pg_do_encoding_conversion(dst, utflen, PG_UTF8, db_encoding);
+			if (dst != convstr)
+			{
+				strlcpy(dst, convstr, dstlen);
+				pfree(convstr);
+			}
+		}
+		PG_CATCH();
+		{
+			FlushErrorState();
+			dst[0] = '\0';
+		}
+		PG_END_TRY();
+	}
+
+	return dst;
+}
+#else
+static char *db_strdup(const char *item, const char *str)
+{
+	return strdup(str);
+}
+#endif /* WIN32 */
 
 /*
  * Return the POSIX lconv struct (contains number/money formatting
@@ -398,6 +462,9 @@ PGLC_localeconv(void)
 	struct lconv *extlconv;
 	char	   *save_lc_monetary;
 	char	   *save_lc_numeric;
+#ifdef	WIN32
+	char	   *save_lc_ctype = NULL;
+#endif
 
 	/* Did we do it already? */
 	if (CurrentLocaleConvValid)
@@ -413,30 +480,83 @@ PGLC_localeconv(void)
 	if (save_lc_numeric)
 		save_lc_numeric = pstrdup(save_lc_numeric);
 
-	setlocale(LC_MONETARY, locale_monetary);
-	setlocale(LC_NUMERIC, locale_numeric);
+#ifdef	WIN32
+	/*
+	 *	WIN32 returns an inaccurately encoded symbol, e.g. Euro,
+	 *	when the LC_CTYPE does not match the numeric or monetary
+	 *	lc types, so we switch to matching LC_CTYPEs as we access them.
+	 */
 
-	/* Get formatting information */
+	if ((save_lc_ctype = setlocale(LC_CTYPE, NULL)) != NULL)
+	{
+		/* Save for later restore */
+		save_lc_ctype = pstrdup(save_lc_ctype);
+
+		/* Set LC_CTYPE to match LC_MONETARY? */
+		if (pg_strcasecmp(save_lc_ctype, locale_monetary) != 0)
+			setlocale(LC_CTYPE, locale_monetary);
+	}
+	else
+		/* LC_CTYPE not set, unconditionally set it */
+		setlocale(LC_CTYPE, locale_monetary);
+
+	/*
+	 *	If LC_NUMERIC and LC_MONETARY match, we can set it now and
+	 *	avoid a second localeconv() call.
+	 */
+	if (pg_strcasecmp(locale_numeric, locale_monetary) == 0)
+#else
+		setlocale(LC_NUMERIC, locale_numeric);
+#endif
+
+	setlocale(LC_MONETARY, locale_monetary);
+	/*
+	 *	Get formatting information for LC_MONETARY, and LC_NUMERIC if they
+	 *	are the same.
+	 */
 	extlconv = localeconv();
 
 	/*
-	 * Must copy all values since restoring internal settings may overwrite
+	 * Must copy all values since restoring internal settings might overwrite
 	 * localeconv()'s results.
 	 */
 	CurrentLocaleConv = *extlconv;
-	CurrentLocaleConv.currency_symbol = strdup(extlconv->currency_symbol);
-	CurrentLocaleConv.decimal_point = strdup(extlconv->decimal_point);
-	CurrentLocaleConv.grouping = strdup(extlconv->grouping);
-	CurrentLocaleConv.thousands_sep = strdup(extlconv->thousands_sep);
-	CurrentLocaleConv.int_curr_symbol = strdup(extlconv->int_curr_symbol);
-	CurrentLocaleConv.mon_decimal_point = strdup(extlconv->mon_decimal_point);
+
+	/* The first argument of db_strdup() is only used on WIN32 */
+	CurrentLocaleConv.currency_symbol = db_strdup("currency_symbol", extlconv->currency_symbol);
+	CurrentLocaleConv.int_curr_symbol = db_strdup("int_curr_symbol", extlconv->int_curr_symbol);
+	CurrentLocaleConv.mon_decimal_point = db_strdup("mon_decimal_point", extlconv->mon_decimal_point);
 	CurrentLocaleConv.mon_grouping = strdup(extlconv->mon_grouping);
-	CurrentLocaleConv.mon_thousands_sep = strdup(extlconv->mon_thousands_sep);
-	CurrentLocaleConv.negative_sign = strdup(extlconv->negative_sign);
-	CurrentLocaleConv.positive_sign = strdup(extlconv->positive_sign);
+	CurrentLocaleConv.mon_thousands_sep = db_strdup("mon_thousands_sep", extlconv->mon_thousands_sep);
+	CurrentLocaleConv.negative_sign = db_strdup("negative_sign", extlconv->negative_sign);
+	CurrentLocaleConv.positive_sign = db_strdup("positive_sign", extlconv->positive_sign);
 	CurrentLocaleConv.n_sign_posn = extlconv->n_sign_posn;
 
-	/* Try to restore internal settings */
+#ifdef	WIN32
+	/* Do we need to change LC_CTYPE to match LC_NUMERIC? */
+	if (pg_strcasecmp(locale_numeric, locale_monetary) != 0)
+	{
+		setlocale(LC_CTYPE, locale_numeric);
+		setlocale(LC_NUMERIC, locale_numeric);
+		/* Get formatting information for LC_NUMERIC */
+		extlconv = localeconv();
+	}
+#endif
+
+	CurrentLocaleConv.decimal_point = db_strdup("decimal_point", extlconv->decimal_point);
+	CurrentLocaleConv.grouping = strdup(extlconv->grouping);
+	CurrentLocaleConv.thousands_sep = db_strdup("thousands_sep", extlconv->thousands_sep);
+
+	/*
+	 *	Restore internal settings
+	 */
+#ifdef	WIN32
+	if (save_lc_ctype)
+	{
+		setlocale(LC_CTYPE, save_lc_ctype);
+		pfree(save_lc_ctype);
+	}
+#endif
 	if (save_lc_monetary)
 	{
 		setlocale(LC_MONETARY, save_lc_monetary);
