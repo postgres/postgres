@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/hstore.sgml,v 1.7 2010/02/17 04:19:37 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/hstore.sgml,v 1.8 2010/02/27 04:29:44 tgl Exp $ -->
 
 <sect1 id="hstore">
  <title>hstore</title>
@@ -401,7 +401,7 @@ b
 
   <para>
    <type>hstore</> has GiST and GIN index support for the <literal>@&gt;</>,
-   <literal>?</>, <literal>?&</> and <literal>?|</> operators. For example:
+   <literal>?</>, <literal>?&amp;</> and <literal>?|</> operators. For example:
   </para>
   <programlisting>
 CREATE INDEX hidx ON testhstore USING GIST (h);

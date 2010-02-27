@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_table.sgml,v 1.122 2010/02/22 23:51:40 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_table.sgml,v 1.123 2010/02/27 04:29:44 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -471,7 +471,7 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE <replaceable class="PAR
       For example, you can specify a constraint that
       no two rows in the table contain overlapping circles
       (see <xref linkend="datatype-geometric">) by using the
-      <literal>&&</> operator.
+      <literal>&amp;&amp;</> operator.
      </para>
 
      <para>
@@ -1183,7 +1183,7 @@ WITH (fillfactor=70);
 <programlisting>
 CREATE TABLE circles (
     c circle,
-    EXCLUDE USING gist (c WITH &&)
+    EXCLUDE USING gist (c WITH &amp;&amp;)
 );
 </programlisting>
   </para>
