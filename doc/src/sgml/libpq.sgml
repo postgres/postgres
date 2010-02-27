@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.302 2010/02/24 15:54:31 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.303 2010/02/27 03:41:34 momjian Exp $ -->
 
 <chapter id="libpq">
  <title><application>libpq</application> - C Library</title>
@@ -7010,7 +7010,7 @@ testlibpq.o(.text+0xa4): undefined reference to `PQerrorMessage'
  */
 #include <stdio.h>
 #include <stdlib.h>
-#include "libpq-fe.h"
+#include <libpq-fe.h>
 
 static void
 exit_nicely(PGconn *conn)
@@ -7158,7 +7158,7 @@ main(int argc, char **argv)
 #include <string.h>
 #include <errno.h>
 #include <sys/time.h>
-#include "libpq-fe.h"
+#include <libpq-fe.h>
 
 static void
 exit_nicely(PGconn *conn)
@@ -7296,7 +7296,7 @@ main(int argc, char **argv)
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
-#include "libpq-fe.h"
+#include <libpq-fe.h>
 
 /* for ntohl/htonl */
 #include <netinet/in.h>
