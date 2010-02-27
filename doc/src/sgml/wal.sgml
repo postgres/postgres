@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/wal.sgml,v 1.62 2010/02/20 18:28:37 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/wal.sgml,v 1.63 2010/02/27 01:39:46 momjian Exp $ -->
 
 <chapter id="wal">
  <title>Reliability and the Write-Ahead Log</title>
@@ -59,8 +59,11 @@
    same concerns about data loss exist for write-back drive caches as
    exist for disk controller caches.  Consumer-grade IDE and SATA drives are
    particularly likely to have write-back caches that will not survive a
-   power failure.  Many solid-state drives also have volatile write-back
-   caches.  To check write caching on <productname>Linux</> use
+   power failure, though <acronym>ATAPI-6</> introduced a drive cache
+   flush command that some file systems use, e.g. <acronym>ZFS</>.
+   Many solid-state drives also have volatile write-back
+   caches, and many do not honor cache flush commands by default.
+   To check write caching on <productname>Linux</> use
    <command>hdparm -I</>;  it is enabled if there is a <literal>*</> next
    to <literal>Write cache</>; <command>hdparm -W</> to turn off
    write caching.  On <productname>FreeBSD</> use
