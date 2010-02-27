@@ -9,8 +9,8 @@
 #line 1 "nan_test.pgc"
 #include <stdio.h>
 #include <stdlib.h>
-#include <math.h>
 #include <float.h>
+#include <math.h>
 #include <pgtypes_numeric.h>
 #include <decimal.h>
 
