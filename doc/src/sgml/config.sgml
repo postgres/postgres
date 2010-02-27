@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.254 2010/02/25 19:20:38 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.255 2010/02/27 09:29:20 heikki Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -1868,9 +1868,8 @@ archive_command = 'copy "%p" "C:\\server\\archivedir\\%f"'  # Windows
         described in <xref linkend="hot-standby-conflict">. Typically,
         this parameter makes sense only during replication, so when
         performing an archive recovery to recover from data loss a very high
-        parameter setting is recommended.  The default is 30 seconds.
-        There is no wait-forever setting because of the potential for deadlock
-        which that setting would introduce.
+        parameter setting or -1 which means wait forever is recommended.
+        The default is 30 seconds.
         This parameter can only be set in the <filename>postgresql.conf</>
         file or on the server command line.
        </para>
