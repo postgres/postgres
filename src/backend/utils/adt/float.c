@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/float.c,v 1.165 2010/02/08 20:39:51 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/float.c,v 1.166 2010/02/27 21:53:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -130,7 +130,8 @@ get_float4_infinity(void)
 double
 get_float8_nan(void)
 {
-#ifdef NAN
+	/* (double) NAN doesn't work on some NetBSD/MIPS releases */
+#if defined(NAN) && !(defined(__NetBSD__) && defined(__mips__))
 	/* C99 standard way */
 	return (double) NAN;
 #else

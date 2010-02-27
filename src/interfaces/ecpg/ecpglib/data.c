@@ -1,10 +1,11 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/data.c,v 1.50 2010/02/26 02:01:29 momjian Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/data.c,v 1.51 2010/02/27 21:53:21 tgl Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
 
 #include <stdlib.h>
 #include <string.h>
+#include <float.h>
 #include <math.h>
 
 #include "ecpgtype.h"
@@ -85,7 +86,8 @@ get_float8_infinity(void)
 static double
 get_float8_nan(void)
 {
-#ifdef NAN
+	/* (double) NAN doesn't work on some NetBSD/MIPS releases */
+#if defined(NAN) && !(defined(__NetBSD__) && defined(__mips__))
 	return (double) NAN;
 #else
 	return (double) (0.0 / 0.0);
