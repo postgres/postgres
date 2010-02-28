@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/charset.sgml,v 2.97 2010/02/28 02:19:47 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/charset.sgml,v 2.98 2010/02/28 02:20:40 momjian Exp $ -->
 
 <chapter id="charset">
  <title>Localization</>
@@ -71,12 +71,12 @@ initdb --locale=sv_SE
     locale then the specifications can take the form
     <replaceable>language_territory.codeset</>.  For example,
     <literal>fr_BE.UTF-8</> represents the French language (fr) as
-    spoken in Belgium (BE), with a <acronym>UTF-8</> character set
+    spoken in Belgium (BE), with a <acronym>UTF-8</> character set 
     encoding.
    </para>
 
    <para>
-    What locales are available on your 
+    What locales are available on your
     system under what names depends on what was provided by the operating
     system vendor and what was installed.  On most Unix systems, the command
     <literal>locale -a</> will provide a list of available locales.
