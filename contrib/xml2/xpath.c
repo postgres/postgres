@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/xml2/xpath.c,v 1.26 2010/02/28 19:51:37 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/xml2/xpath.c,v 1.27 2010/02/28 21:31:57 tgl Exp $
  *
  * Parser interface for DOM-based parser (libxml) rather than
  * stream-based SAX-type parser
@@ -42,10 +42,6 @@ void		pgxml_parser_init(void);
 
 /* local declarations */
 
-static void *pgxml_palloc(size_t size);
-static void *pgxml_repalloc(void *ptr, size_t size);
-static void pgxml_pfree(void *ptr);
-static char *pgxml_pstrdup(const char *string);
 static void pgxml_errorHandler(void *ctxt, const char *msg,...);
 
 static xmlChar *pgxmlNodeSetToText(xmlNodeSetPtr nodeset,
@@ -59,40 +55,9 @@ static xmlChar *pgxml_texttoxmlchar(text *textstring);
 
 static xmlXPathObjectPtr pgxml_xpath(text *document, xmlChar *xpath);
 
-
 /* Global variables */
 static char *pgxml_errorMsg = NULL;		/* overall error message */
 
-
-/* memory handling passthrough functions (e.g. palloc, pstrdup are
-   currently macros, and the others might become so...) */
-
-static void *
-pgxml_palloc(size_t size)
-{
-/*	elog(DEBUG1,"Alloc %d in CMC %p",size,CurrentMemoryContext); */
-	return palloc(size);
-}
-
-static void *
-pgxml_repalloc(void *ptr, size_t size)
-{
-/*	elog(DEBUG1,"ReAlloc in CMC %p",CurrentMemoryContext);*/
-	return repalloc(ptr, size);
-}
-
-static void
-pgxml_pfree(void *ptr)
-{
-/*	elog(DEBUG1,"Free in CMC %p",CurrentMemoryContext); */
-	pfree(ptr);
-}
-
-static char *
-pgxml_pstrdup(const char *string)
-{
-	return pstrdup(string);
-}
 
 /*
  * The error handling function. This formats an error message and sets
@@ -156,9 +121,6 @@ pgxml_parser_init(void)
 	/* Set up error handling */
 	pgxml_errorMsg = NULL;
 	xmlSetGenericErrorFunc(NULL, pgxml_errorHandler);
-
-	/* Replace libxml memory handling (DANGEROUS) */
-	xmlMemSetup(pgxml_pfree, pgxml_palloc, pgxml_repalloc, pgxml_pstrdup);
 
 	/* Initialize libxml */
 	xmlInitParser();
@@ -627,7 +589,7 @@ xpath_table(PG_FUNCTION_ARGS)
 	int			j;
 	int			rownr;			/* For issuing multiple rows from one original
 								 * document */
-	int			had_values;		/* To determine end of nodeset results */
+	bool		had_values;		/* To determine end of nodeset results */
 	StringInfoData query_buf;
 
 	/* We only have a valid tuple description in table function mode */
@@ -654,7 +616,6 @@ xpath_table(PG_FUNCTION_ARGS)
 	 * The tuplestore must exist in a higher context than this function call
 	 * (per_query_ctx is used)
 	 */
-
 	per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
 	oldcontext = MemoryContextSwitchTo(per_query_ctx);
 
@@ -671,6 +632,12 @@ xpath_table(PG_FUNCTION_ARGS)
 	/* get the requested return tuple description */
 	ret_tupdesc = CreateTupleDescCopy(rsinfo->expectedDesc);
 
+	/* must have at least one output column (for the pkey) */
+	if (ret_tupdesc->natts < 1)
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("xpath_table must have at least one output column")));
+
 	/*
 	 * At the moment we assume that the returned attributes make sense for the
 	 * XPath specififed (i.e. we trust the caller). It's not fatal if they get
@@ -686,26 +653,27 @@ xpath_table(PG_FUNCTION_ARGS)
 	rsinfo->setDesc = ret_tupdesc;
 
 	values = (char **) palloc(ret_tupdesc->natts * sizeof(char *));
-
 	xpaths = (xmlChar **) palloc(ret_tupdesc->natts * sizeof(xmlChar *));
 
-	/* Split XPaths. xpathset is a writable CString. */
-
-	/* Note that we stop splitting once we've done all needed for tupdesc */
-
+	/*
+	 * Split XPaths. xpathset is a writable CString.
+	 *
+	 * Note that we stop splitting once we've done all needed for tupdesc
+	 */
 	numpaths = 0;
 	pos = xpathset;
-	do
+	while (numpaths < (ret_tupdesc->natts - 1))
 	{
-		xpaths[numpaths] = (xmlChar *) pos;
+		xpaths[numpaths++] = (xmlChar *) pos;
 		pos = strstr(pos, pathsep);
 		if (pos != NULL)
 		{
 			*pos = '\0';
 			pos++;
 		}
-		numpaths++;
-	} while ((pos != NULL) && (numpaths < (ret_tupdesc->natts - 1)));
+		else
+			break;
+	}
 
 	/* Now build query */
 	initStringInfo(&query_buf);
@@ -800,7 +768,7 @@ xpath_table(PG_FUNCTION_ARGS)
 			do
 			{
 				/* Now evaluate the set of xpaths. */
-				had_values = 0;
+				had_values = false;
 				for (j = 0; j < numpaths; j++)
 				{
 					ctxt = xmlXPathNewContext(doctree);
@@ -813,10 +781,7 @@ xpath_table(PG_FUNCTION_ARGS)
 					{
 						xmlCleanupParser();
 						xmlFreeDoc(doctree);
-
 						elog_error("XPath Syntax Error", true);
-
-						PG_RETURN_NULL();		/* Keep compiler happy */
 					}
 
 					/* Now evaluate the path expression. */
@@ -829,11 +794,12 @@ xpath_table(PG_FUNCTION_ARGS)
 						{
 							case XPATH_NODESET:
 								/* We see if this nodeset has enough nodes */
-								if ((res->nodesetval != NULL) && (rownr < res->nodesetval->nodeNr))
+								if (res->nodesetval != NULL &&
+									rownr < res->nodesetval->nodeNr)
 								{
 									resstr =
 										xmlXPathCastNodeToString(res->nodesetval->nodeTab[rownr]);
-									had_values = 1;
+									had_values = true;
 								}
 								else
 									resstr = NULL;
