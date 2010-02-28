@@ -11,7 +11,7 @@
  *	as a service.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/copydir.c,v 1.33 2010/02/26 02:01:38 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/port/copydir.c,v 1.34 2010/02/28 21:05:30 stark Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,7 +37,7 @@
 
 
 static void copy_file(char *fromfile, char *tofile);
-static void fsync_fname(char *fname);
+static void fsync_fname(char *fname, bool isdir);
 
 
 /*
@@ -121,22 +121,17 @@ copydir(char *fromdir, char *todir, bool recurse)
 					 errmsg("could not stat file \"%s\": %m", tofile)));
 
 		if (S_ISREG(fst.st_mode))
-			fsync_fname(tofile);
+			fsync_fname(tofile, false);
 	}
 	FreeDir(xldir);
-
-#ifdef NOTYET
 
 	/*
 	 * It's important to fsync the destination directory itself as individual
 	 * file fsyncs don't guarantee that the directory entry for the file is
 	 * synced. Recent versions of ext4 have made the window much wider but
 	 * it's been true for ext3 and other filesystems in the past.
-	 *
-	 * However we can't do this just yet, it has portability issues.
 	 */
-	fsync_fname(todir);
-#endif
+	fsync_fname(todir, true);
 }
 
 /*
@@ -216,20 +211,48 @@ copy_file(char *fromfile, char *tofile)
 
 /*
  * fsync a file
+ *
+ * Try to fsync directories but ignore errors that indicate the OS
+ * just doesn't allow/require fsyncing directories.
  */
 static void
-fsync_fname(char *fname)
+fsync_fname(char *fname, bool isdir)
 {
-	int			fd = BasicOpenFile(fname,
-								   O_RDWR | PG_BINARY,
-								   S_IRUSR | S_IWUSR);
+	int			fd;
+	int 		returncode;
 
-	if (fd < 0)
+	/* Some OSs require directories to be opened read-only whereas
+	 * other systems don't allow us to fsync files opened read-only so
+	 * we need both cases here 
+	 */
+	if (!isdir)
+		fd = BasicOpenFile(fname,
+						   O_RDWR | PG_BINARY,
+						   S_IRUSR | S_IWUSR);
+	else
+		fd = BasicOpenFile(fname,
+						   O_RDONLY | PG_BINARY,
+						   S_IRUSR | S_IWUSR);
+
+	/* Some OSs don't allow us to open directories at all */
+	if (fd < 0 && isdir && errno == EISDIR)
+		return;
+
+	else if (fd < 0)
 		ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("could not open file \"%s\": %m", fname)));
 
-	if (pg_fsync(fd) != 0)
+	returncode = pg_fsync(fd);
+	
+	/* Some OSs don't allow us to fsync directories at all */
+	if (returncode != 0 && isdir && errno == EBADF)
+	{
+		close(fd);
+		return;
+	}
+
+	if (returncode != 0)
 		ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("could not fsync file \"%s\": %m", fname)));
