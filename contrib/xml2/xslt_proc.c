@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/xml2/xslt_proc.c,v 1.16 2009/07/10 00:32:00 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/xml2/xslt_proc.c,v 1.17 2010/02/28 19:51:37 tgl Exp $
  *
  * XSLT processing functions (requiring libxslt)
  *
@@ -27,16 +27,16 @@
 #include <libxslt/xsltutils.h>
 
 
-/* declarations to come from xpath.c */
-extern void elog_error(int level, char *explain, int force);
-extern void pgxml_parser_init();
-extern xmlChar *pgxml_texttoxmlchar(text *textstring);
-
-/* local defs */
-static void parse_params(const char **params, text *paramstr);
+/* externally accessible functions */
 
 Datum		xslt_process(PG_FUNCTION_ARGS);
 
+/* declarations to come from xpath.c */
+extern void elog_error(const char *explain, bool force);
+extern void pgxml_parser_init(void);
+
+/* local defs */
+static void parse_params(const char **params, text *paramstr);
 
 #define MAXPARAMS 20			/* must be even, see parse_params() */
 
@@ -80,7 +80,7 @@ xslt_process(PG_FUNCTION_ARGS)
 	if (doctree == NULL)
 	{
 		xmlCleanupParser();
-		elog_error(ERROR, "error parsing XML document", 0);
+		elog_error("error parsing XML document", false);
 
 		PG_RETURN_NULL();
 	}
@@ -94,7 +94,7 @@ xslt_process(PG_FUNCTION_ARGS)
 		{
 			xmlFreeDoc(doctree);
 			xmlCleanupParser();
-			elog_error(ERROR, "error parsing stylesheet as XML document", 0);
+			elog_error("error parsing stylesheet as XML document", false);
 			PG_RETURN_NULL();
 		}
 
@@ -109,7 +109,7 @@ xslt_process(PG_FUNCTION_ARGS)
 		xmlFreeDoc(doctree);
 		xsltCleanupGlobals();
 		xmlCleanupParser();
-		elog_error(ERROR, "failed to parse stylesheet", 0);
+		elog_error("failed to parse stylesheet", false);
 		PG_RETURN_NULL();
 	}
 
