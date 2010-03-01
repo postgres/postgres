@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/print.c,v 1.79 2005/10/27 13:34:47 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/print.c,v 1.79.2.1 2010/03/01 20:56:15 heikki Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"
@@ -152,7 +152,7 @@ print_unaligned_text(const char *title, const char *const * headers,
 					 const char *const * cells, const char *const * footers,
 					 const char *opt_align, const char *opt_fieldsep,
 					 const char *opt_recordsep, bool opt_tuples_only,
-					 bool opt_numeric_locale, FILE *fout)
+					 FILE *fout)
 {
 	unsigned int col_count = 0;
 	unsigned int i;
@@ -191,15 +191,7 @@ print_unaligned_text(const char *title, const char *const * headers,
 			fputs(opt_recordsep, fout);
 			need_recordsep = false;
 		}
-		if (opt_align[i % col_count] == 'r' && opt_numeric_locale)
-		{
-			char	   *my_cell = format_numeric_locale(*ptr);
-
-			fputs(my_cell, fout);
-			free(my_cell);
-		}
-		else
-			fputs(*ptr, fout);
+		fputs(*ptr, fout);
 
 		if ((i + 1) % col_count)
 			fputs(opt_fieldsep, fout);
@@ -234,7 +226,7 @@ print_unaligned_vertical(const char *title, const char *const * headers,
 						 const char *const * cells,
 						 const char *const * footers, const char *opt_align,
 						 const char *opt_fieldsep, const char *opt_recordsep,
-				   bool opt_tuples_only, bool opt_numeric_locale, FILE *fout)
+						 bool opt_tuples_only, FILE *fout)
 {
 	unsigned int col_count = 0;
 	unsigned int i;
@@ -265,15 +257,7 @@ print_unaligned_vertical(const char *title, const char *const * headers,
 
 		fputs(headers[i % col_count], fout);
 		fputs(opt_fieldsep, fout);
-		if (opt_align[i % col_count] == 'r' && opt_numeric_locale)
-		{
-			char	   *my_cell = format_numeric_locale(*ptr);
-
-			fputs(my_cell, fout);
-			free(my_cell);
-		}
-		else
-			fputs(*ptr, fout);
+		fputs(*ptr, fout);
 	}
 
 	/* print footers */
@@ -336,7 +320,7 @@ _print_horizontal_line(const unsigned int col_count, const unsigned int *widths,
 static void
 print_aligned_text(const char *title, const char *const * headers,
 				   const char *const * cells, const char *const * footers,
-		const char *opt_align, bool opt_tuples_only, bool opt_numeric_locale,
+				   const char *opt_align, bool opt_tuples_only,
 				   unsigned short int opt_border, int encoding,
 				   FILE *fout)
 {
@@ -403,14 +387,7 @@ print_aligned_text(const char *title, const char *const * headers,
 
 	for (i = 0, ptr = cells; *ptr; ptr++, i++)
 	{
-		int			add_numeric_locale_len;
-
-		if (opt_align[i % col_count] == 'r' && opt_numeric_locale)
-			add_numeric_locale_len = additional_numeric_locale_len(*ptr);
-		else
-			add_numeric_locale_len = 0;
-
-		tmp = pg_wcswidth(*ptr, strlen(*ptr), encoding) + add_numeric_locale_len;
+		tmp = pg_wcswidth(*ptr, strlen(*ptr), encoding);
 		if (tmp > widths[i % col_count])
 			widths[i % col_count] = tmp;
 		cell_w[i] = tmp;
@@ -489,17 +466,7 @@ print_aligned_text(const char *title, const char *const * headers,
 
 		/* content */
 		if (opt_align[i % col_count] == 'r')
-		{
-			if (opt_numeric_locale)
-			{
-				char	   *my_cell = format_numeric_locale(*ptr);
-
-				fprintf(fout, "%*s%s", widths[i % col_count] - cell_w[i], "", my_cell);
-				free(my_cell);
-			}
-			else
-				fprintf(fout, "%*s%s", widths[i % col_count] - cell_w[i], "", *ptr);
-		}
+			fprintf(fout, "%*s%s", widths[i % col_count] - cell_w[i], "", *ptr);
 		else
 		{
 			if ((i + 1) % col_count == 0 && opt_border != 2)
@@ -554,7 +521,7 @@ static void
 print_aligned_vertical(const char *title, const char *const * headers,
 					   const char *const * cells, const char *const * footers,
 					   const char *opt_align, bool opt_tuples_only,
-					   bool opt_numeric_locale, unsigned short int opt_border,
+					   unsigned short int opt_border,
 					   int encoding, FILE *fout)
 {
 	unsigned int col_count = 0;
@@ -617,14 +584,7 @@ print_aligned_vertical(const char *title, const char *const * headers,
 	/* find longest data cell */
 	for (i = 0, ptr = cells; *ptr; ptr++, i++)
 	{
-		int			add_numeric_locale_len;
-
-		if (opt_align[i % col_count] == 'r' && opt_numeric_locale)
-			add_numeric_locale_len = additional_numeric_locale_len(*ptr);
-		else
-			add_numeric_locale_len = 0;
-
-		tmp = pg_wcswidth(*ptr, strlen(*ptr), encoding) + add_numeric_locale_len;
+		tmp = pg_wcswidth(*ptr, strlen(*ptr), encoding);
 		if (tmp > dwidth)
 			dwidth = tmp;
 		cell_w[i] = tmp;
@@ -698,23 +658,10 @@ print_aligned_vertical(const char *title, const char *const * headers,
 		else
 			fputs(" ", fout);
 
-		if (opt_align[i % col_count] == 'r' && opt_numeric_locale)
-		{
-			char	   *my_cell = format_numeric_locale(*ptr);
-
-			if (opt_border < 2)
-				fprintf(fout, "%s\n", my_cell);
-			else
-				fprintf(fout, "%-s%*s |\n", my_cell, dwidth - cell_w[i], "");
-			free(my_cell);
-		}
+		if (opt_border < 2)
+			fprintf(fout, "%s\n", *ptr);
 		else
-		{
-			if (opt_border < 2)
-				fprintf(fout, "%s\n", *ptr);
-			else
-				fprintf(fout, "%-s%*s |\n", *ptr, dwidth - cell_w[i], "");
-		}
+			fprintf(fout, "%-s%*s |\n", *ptr, dwidth - cell_w[i], "");
 	}
 
 	if (opt_border == 2)
@@ -795,7 +742,7 @@ static void
 print_html_text(const char *title, const char *const * headers,
 				const char *const * cells, const char *const * footers,
 				const char *opt_align, bool opt_tuples_only,
-				bool opt_numeric_locale, unsigned short int opt_border,
+				unsigned short int opt_border,
 				const char *opt_table_attr, FILE *fout)
 {
 	unsigned int col_count = 0;
@@ -841,13 +788,6 @@ print_html_text(const char *title, const char *const * headers,
 		/* is string only whitespace? */
 		if ((*ptr)[strspn(*ptr, " \t")] == '\0')
 			fputs("&nbsp; ", fout);
-		else if (opt_align[i % col_count] == 'r' && opt_numeric_locale)
-		{
-			char	   *my_cell = format_numeric_locale(*ptr);
-
-			html_escaped_print(my_cell, fout);
-			free(my_cell);
-		}
 		else
 			html_escaped_print(*ptr, fout);
 
@@ -880,7 +820,7 @@ static void
 print_html_vertical(const char *title, const char *const * headers,
 					const char *const * cells, const char *const * footers,
 					const char *opt_align, bool opt_tuples_only,
-					bool opt_numeric_locale, unsigned short int opt_border,
+					unsigned short int opt_border,
 					const char *opt_table_attr, FILE *fout)
 {
 	unsigned int col_count = 0;
@@ -924,13 +864,6 @@ print_html_vertical(const char *title, const char *const * headers,
 		/* is string only whitespace? */
 		if ((*ptr)[strspn(*ptr, " \t")] == '\0')
 			fputs("&nbsp; ", fout);
-		else if (opt_align[i % col_count] == 'r' && opt_numeric_locale)
-		{
-			char	   *my_cell = format_numeric_locale(*ptr);
-
-			html_escaped_print(my_cell, fout);
-			free(my_cell);
-		}
 		else
 			html_escaped_print(*ptr, fout);
 
@@ -1003,7 +936,7 @@ static void
 print_latex_text(const char *title, const char *const * headers,
 				 const char *const * cells, const char *const * footers,
 				 const char *opt_align, bool opt_tuples_only,
-				 bool opt_numeric_locale, unsigned short int opt_border,
+				 unsigned short int opt_border,
 				 FILE *fout)
 {
 	unsigned int col_count = 0;
@@ -1064,15 +997,7 @@ print_latex_text(const char *title, const char *const * headers,
 	/* print cells */
 	for (i = 0, ptr = cells; *ptr; i++, ptr++)
 	{
-		if (opt_numeric_locale)
-		{
-			char	   *my_cell = format_numeric_locale(*ptr);
-
-			latex_escaped_print(my_cell, fout);
-			free(my_cell);
-		}
-		else
-			latex_escaped_print(*ptr, fout);
+		latex_escaped_print(*ptr, fout);
 
 		if ((i + 1) % col_count == 0)
 			fputs(" \\\\\n", fout);
@@ -1104,7 +1029,7 @@ static void
 print_latex_vertical(const char *title, const char *const * headers,
 					 const char *const * cells, const char *const * footers,
 					 const char *opt_align, bool opt_tuples_only,
-					 bool opt_numeric_locale, unsigned short int opt_border,
+					 unsigned short int opt_border,
 					 FILE *fout)
 {
 	unsigned int col_count = 0;
@@ -1175,15 +1100,7 @@ print_latex_vertical(const char *title, const char *const * headers,
 	if (footers && !opt_tuples_only)
 		for (ptr = footers; *ptr; ptr++)
 		{
-			if (opt_numeric_locale)
-			{
-				char	   *my_cell = format_numeric_locale(*ptr);
-
-				latex_escaped_print(my_cell, fout);
-				free(my_cell);
-			}
-			else
-				latex_escaped_print(*ptr, fout);
+			latex_escaped_print(*ptr, fout);
 			fputs(" \\\\\n", fout);
 		}
 
@@ -1219,7 +1136,7 @@ static void
 print_troff_ms_text(const char *title, const char *const * headers,
 					const char *const * cells, const char *const * footers,
 					const char *opt_align, bool opt_tuples_only,
-					bool opt_numeric_locale, unsigned short int opt_border,
+					unsigned short int opt_border,
 					FILE *fout)
 {
 	unsigned int col_count = 0;
@@ -1273,15 +1190,7 @@ print_troff_ms_text(const char *title, const char *const * headers,
 	/* print cells */
 	for (i = 0, ptr = cells; *ptr; i++, ptr++)
 	{
-		if (opt_numeric_locale)
-		{
-			char	   *my_cell = format_numeric_locale(*ptr);
-
-			troff_ms_escaped_print(my_cell, fout);
-			free(my_cell);
-		}
-		else
-			troff_ms_escaped_print(*ptr, fout);
+		troff_ms_escaped_print(*ptr, fout);
 
 		if ((i + 1) % col_count == 0)
 			fputc('\n', fout);
@@ -1310,7 +1219,7 @@ static void
 print_troff_ms_vertical(const char *title, const char *const * headers,
 					  const char *const * cells, const char *const * footers,
 						const char *opt_align, bool opt_tuples_only,
-					  bool opt_numeric_locale, unsigned short int opt_border,
+						unsigned short int opt_border,
 						FILE *fout)
 {
 	unsigned int col_count = 0;
@@ -1383,15 +1292,7 @@ print_troff_ms_vertical(const char *title, const char *const * headers,
 
 		troff_ms_escaped_print(headers[i % col_count], fout);
 		fputc('\t', fout);
-		if (opt_numeric_locale)
-		{
-			char	   *my_cell = format_numeric_locale(*ptr);
-
-			troff_ms_escaped_print(my_cell, fout);
-			free(my_cell);
-		}
-		else
-			troff_ms_escaped_print(*ptr, fout);
+		troff_ms_escaped_print(*ptr, fout);
 
 		fputc('\n', fout);
 	}
@@ -1528,7 +1429,7 @@ printTable(const char *title,
 	/* print the stuff */
 
 	if (flog)
-		print_aligned_text(title, headers, cells, footers, align, opt->tuples_only, opt->numericLocale, border, opt->encoding, flog);
+		print_aligned_text(title, headers, cells, footers, align, opt->tuples_only, border, opt->encoding, flog);
 
 	switch (opt->format)
 	{
@@ -1536,50 +1437,50 @@ printTable(const char *title,
 			if (use_expanded)
 				print_unaligned_vertical(title, headers, cells, footers, align,
 										 opt->fieldSep, opt->recordSep,
-							   opt->tuples_only, opt->numericLocale, output);
+										 opt->tuples_only, output);
 			else
 				print_unaligned_text(title, headers, cells, footers, align,
 									 opt->fieldSep, opt->recordSep,
-							   opt->tuples_only, opt->numericLocale, output);
+									 opt->tuples_only, output);
 			break;
 		case PRINT_ALIGNED:
 			if (use_expanded)
 				print_aligned_vertical(title, headers, cells, footers, align,
-								opt->tuples_only, opt->numericLocale, border,
+									   opt->tuples_only, border,
 									   opt->encoding, output);
 			else
 				print_aligned_text(title, headers, cells, footers, align,
-								   opt->tuples_only, opt->numericLocale,
+								   opt->tuples_only,
 								   border, opt->encoding, output);
 			break;
 		case PRINT_HTML:
 			if (use_expanded)
 				print_html_vertical(title, headers, cells, footers, align,
-									opt->tuples_only, opt->numericLocale,
+									opt->tuples_only,
 									border, opt->tableAttr, output);
 			else
 				print_html_text(title, headers, cells, footers,
-						 align, opt->tuples_only, opt->numericLocale, border,
+						 align, opt->tuples_only, border,
 								opt->tableAttr, output);
 			break;
 		case PRINT_LATEX:
 			if (use_expanded)
 				print_latex_vertical(title, headers, cells, footers, align,
-									 opt->tuples_only, opt->numericLocale,
+									 opt->tuples_only,
 									 border, output);
 			else
 				print_latex_text(title, headers, cells, footers, align,
-								 opt->tuples_only, opt->numericLocale,
+								 opt->tuples_only,
 								 border, output);
 			break;
 		case PRINT_TROFF_MS:
 			if (use_expanded)
 				print_troff_ms_vertical(title, headers, cells, footers, align,
-										opt->tuples_only, opt->numericLocale,
+										opt->tuples_only,
 										border, output);
 			else
 				print_troff_ms_text(title, headers, cells, footers, align,
-									opt->tuples_only, opt->numericLocale,
+									opt->tuples_only,
 									border, output);
 			break;
 		default:
@@ -1606,6 +1507,7 @@ printQuery(const PGresult *result, const printQueryOpt *opt, FILE *fout, FILE *f
 	int			ncells;
 	const char **headers;
 	const char **cells;
+	bool	   *cellmustfree = NULL;
 	char	  **footers;
 	char	   *align;
 	int			i;
@@ -1623,6 +1525,32 @@ printQuery(const PGresult *result, const printQueryOpt *opt, FILE *fout, FILE *f
 	for (i = 0; i < nfields; i++)
 		headers[i] = mbvalidate(PQfname(result, i), opt->topt.encoding);
 
+	/* set alignment */
+	align = calloc(nfields + 1, sizeof(*align));
+	if (!align)
+	{
+		fprintf(stderr, _("out of memory\n"));
+		exit(EXIT_FAILURE);
+	}
+
+	for (i = 0; i < nfields; i++)
+	{
+		Oid			ftype = PQftype(result, i);
+
+		if (ftype == 20 ||		/* int8 */
+			ftype == 21 ||		/* int2 */
+			ftype == 23 ||		/* int4 */
+			(ftype >= 26 && ftype <= 30) ||		/* ?id */
+			ftype == 700 ||		/* float4 */
+			ftype == 701 ||		/* float8 */
+			ftype == 790 ||		/* money */
+			ftype == 1700		/* numeric */
+			)
+			align[i] = 'r';
+		else
+			align[i] = 'l';
+	}
+
 	/* set cells */
 	ncells = PQntuples(result) * nfields;
 	cells = calloc(ncells + 1, sizeof(*cells));
@@ -1637,7 +1565,30 @@ printQuery(const PGresult *result, const printQueryOpt *opt, FILE *fout, FILE *f
 		if (PQgetisnull(result, i / nfields, i % nfields))
 			cells[i] = opt->nullPrint ? opt->nullPrint : "";
 		else
+		{
 			cells[i] = mbvalidate(PQgetvalue(result, i / nfields, i % nfields), opt->topt.encoding);
+
+			if (align[i % nfields] == 'r' && opt->topt.numericLocale)
+			{
+				cells[i] = format_numeric_locale(cells[i]);
+
+				/*
+				 * format_numeric_locale() returns a malloc'd string, 
+				 * remember that it needs to be freed.
+				 */
+				if (cellmustfree == NULL)
+				{
+					cellmustfree = calloc(ncells + 1, sizeof(bool));
+					if (!cellmustfree)
+					{
+						fprintf(stderr, _("out of memory\n"));
+						exit(EXIT_FAILURE);
+					}
+				}
+
+				cellmustfree[i] = true;
+			}
+		}
 	}
 
 	/* set footers */
@@ -1694,6 +1645,15 @@ printQuery(const PGresult *result, const printQueryOpt *opt, FILE *fout, FILE *f
 			   align, &opt->topt, fout, flog);
 
 	free(headers);
+	if (cellmustfree)
+	{
+		for (i = 0; i < ncells; i++)
+		{
+			if (cellmustfree[i])
+				free((char *) cells[i]);
+		}
+		free(cellmustfree);
+	}
 	free(cells);
 	if (footers)
 	{
