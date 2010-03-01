@@ -139,12 +139,8 @@ xml_valid(PG_FUNCTION_ARGS)
 
 	doctree = xmlParseMemory((char *) VARDATA(t), docsize);
 	if (doctree == NULL)
-	{
-		xmlCleanupParser();
 		PG_RETURN_BOOL(false);	/* i.e. not well-formed */
-	}
 	xmlFreeDoc(doctree);
-	xmlCleanupParser();
 	PG_RETURN_BOOL(true);
 }
 
@@ -302,7 +298,6 @@ xpath_nodeset(PG_FUNCTION_ARGS)
 	xpres = pgxml_result_to_text(pgxml_xpath(PG_GETARG_TEXT_P(0), xpath),
 								 toptag, septag, NULL);
 
-	/* xmlCleanupParser(); done by result_to_text routine */
 	pfree(xpath);
 
 	if (xpres == NULL)
@@ -337,7 +332,6 @@ xpath_list(PG_FUNCTION_ARGS)
 	xpres = pgxml_result_to_text(pgxml_xpath(PG_GETARG_TEXT_P(0), xpath),
 								 NULL, NULL, plainsep);
 
-	/* xmlCleanupParser(); done by result_to_text routine */
 	pfree(xpath);
 
 	if (xpres == NULL)
@@ -376,7 +370,6 @@ xpath_string(PG_FUNCTION_ARGS)
 	xpres = pgxml_result_to_text(pgxml_xpath(PG_GETARG_TEXT_P(0), xpath),
 								 NULL, NULL, NULL);
 
-	xmlCleanupParser();
 	pfree(xpath);
 
 	if (xpres == NULL)
@@ -408,13 +401,10 @@ xpath_number(PG_FUNCTION_ARGS)
 	pfree(xpath);
 
 	if (res == NULL)
-	{
-		xmlCleanupParser();
 		PG_RETURN_NULL();
-	}
 
 	fRes = xmlXPathCastToNumber(res);
-	xmlCleanupParser();
+
 	if (xmlXPathIsNaN(fRes))
 		PG_RETURN_NULL();
 
@@ -445,13 +435,10 @@ xpath_bool(PG_FUNCTION_ARGS)
 	pfree(xpath);
 
 	if (res == NULL)
-	{
-		xmlCleanupParser();
 		PG_RETURN_BOOL(false);
-	}
 
 	bRes = xmlXPathCastToBoolean(res);
-	xmlCleanupParser();
+
 	PG_RETURN_BOOL(bRes);
 }
 
@@ -474,9 +461,7 @@ pgxml_xpath(text *document, xmlChar *xpath)
 
 	doctree = xmlParseMemory((char *) VARDATA(document), docsize);
 	if (doctree == NULL)
-	{							/* not well-formed */
-		return NULL;
-	}
+		return NULL;			/* not well-formed */
 
 	ctxt = xmlXPathNewContext(doctree);
 	ctxt->node = xmlDocGetRootElement(doctree);
@@ -485,7 +470,6 @@ pgxml_xpath(text *document, xmlChar *xpath)
 	comppath = xmlXPathCompile(xpath);
 	if (comppath == NULL)
 	{
-		xmlCleanupParser();
 		xmlFreeDoc(doctree);
 		elog_error("XPath Syntax Error", true);
 	}
@@ -497,7 +481,6 @@ pgxml_xpath(text *document, xmlChar *xpath)
 	if (res == NULL)
 	{
 		xmlXPathFreeContext(ctxt);
-		/* xmlCleanupParser(); */
 		xmlFreeDoc(doctree);
 
 		return NULL;
@@ -517,10 +500,8 @@ pgxml_result_to_text(xmlXPathObjectPtr res,
 	text	   *xpres;
 
 	if (res == NULL)
-	{
-		xmlCleanupParser();
 		return NULL;
-	}
+
 	switch (res->type)
 	{
 		case XPATH_NODESET:
@@ -545,9 +526,6 @@ pgxml_result_to_text(xmlXPathObjectPtr res,
 	VARATT_SIZEP(xpres) = ressize + VARHDRSZ;
 
 	/* Free various storage */
-	xmlCleanupParser();
-	/* xmlFreeDoc(doctree);  -- will die at end of tuple anyway */
-
 	xmlFree(xpresstr);
 
 	elog_error("XPath error", false);
@@ -786,7 +764,6 @@ xpath_table(PG_FUNCTION_ARGS)
 					comppath = xmlXPathCompile(xpaths[j]);
 					if (comppath == NULL)
 					{
-						xmlCleanupParser();
 						xmlFreeDoc(doctree);
 						elog_error("XPath Syntax Error", true);
 					}
@@ -850,8 +827,6 @@ xpath_table(PG_FUNCTION_ARGS)
 		if (xmldoc)
 			pfree(xmldoc);
 	}
-
-	xmlCleanupParser();
 
 	tuplestore_donestoring(tupstore);
 
