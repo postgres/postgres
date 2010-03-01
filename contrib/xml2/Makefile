@@ -10,6 +10,7 @@ SHLIB_LINK = -lxslt -lxml2
 
 DATA_built = pgxml.sql
 DATA = uninstall_pgxml.sql
+REGRESS = xml2
 DOCS = README.xml2
 
 PG_CPPFLAGS := $(shell xml2-config --cflags)
