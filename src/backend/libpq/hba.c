@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.198 2010/02/26 02:00:43 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.199 2010/03/01 16:02:01 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1011,8 +1011,6 @@ parse_hba_line(List *line, int line_num, HbaLine *parsedline)
 		{
 			/*
 			 * Got something that's not a name=value pair.
-			 *
-			 * XXX: attempt to do some backwards compatible parsing here?
 			 */
 			ereport(LOG,
 					(errcode(ERRCODE_CONFIG_FILE_ERROR),
