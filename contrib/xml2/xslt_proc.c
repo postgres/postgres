@@ -21,21 +21,20 @@
 #include <libxslt/xsltutils.h>
 
 
+/* externally accessible functions */
+
+Datum		xslt_process(PG_FUNCTION_ARGS);
+
 /* declarations to come from xpath.c */
-
-extern void elog_error(int level, char *explain, int force);
-extern void pgxml_parser_init();
-extern xmlChar *pgxml_texttoxmlchar(text *textstring);
-
-#define GET_STR(textp) DatumGetCString(DirectFunctionCall1(textout, PointerGetDatum(textp)))
+extern void elog_error(const char *explain, bool force);
+extern void pgxml_parser_init(void);
 
 /* local defs */
 static void parse_params(const char **params, text *paramstr);
 
-Datum		xslt_process(PG_FUNCTION_ARGS);
-
-
 #define MAXPARAMS 20			/* must be even, see parse_params() */
+
+#define GET_STR(textp) DatumGetCString(DirectFunctionCall1(textout, PointerGetDatum(textp)))
 
 
 PG_FUNCTION_INFO_V1(xslt_process);
@@ -82,7 +81,7 @@ xslt_process(PG_FUNCTION_ARGS)
 	if (doctree == NULL)
 	{
 		xmlCleanupParser();
-		elog_error(ERROR, "Error parsing XML document", 0);
+		elog_error("Error parsing XML document", false);
 
 		PG_RETURN_NULL();
 	}
@@ -96,7 +95,7 @@ xslt_process(PG_FUNCTION_ARGS)
 		{
 			xmlFreeDoc(doctree);
 			xmlCleanupParser();
-			elog_error(ERROR, "Error parsing stylesheet as XML document", 0);
+			elog_error("Error parsing stylesheet as XML document", false);
 			PG_RETURN_NULL();
 		}
 
@@ -111,7 +110,7 @@ xslt_process(PG_FUNCTION_ARGS)
 		xmlFreeDoc(doctree);
 		xsltCleanupGlobals();
 		xmlCleanupParser();
-		elog_error(ERROR, "Failed to parse stylesheet", 0);
+		elog_error("Failed to parse stylesheet", false);
 		PG_RETURN_NULL();
 	}
 
