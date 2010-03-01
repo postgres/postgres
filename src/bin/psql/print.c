@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2009, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/print.c,v 1.116.2.2 2010/03/01 20:55:53 heikki Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/print.c,v 1.116.2.3 2010/03/01 21:27:32 heikki Exp $
  */
 #include "postgres_fe.h"
 
@@ -1947,6 +1947,7 @@ printTableAddHeader(printTableContent *const content, const char *header,
  * Otherwise, the cell will not be translated.
  *
  * If mustfree is true, the cell string is freed by printTableCleanup().
+ * Note: Automatic freeing of translatable strings is not supported.
  */
 void
 printTableAddCell(printTableContent *const content, const char *cell,
@@ -1969,7 +1970,7 @@ printTableAddCell(printTableContent *const content, const char *cell,
 
 #ifdef ENABLE_NLS
 	if (translate)
-		*content->header = _(*content->header);
+		*content->cell = _(*content->cell);
 #endif
 
 	if (mustfree)
