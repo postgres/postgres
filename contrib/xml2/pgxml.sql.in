@@ -28,18 +28,13 @@ CREATE OR REPLACE FUNCTION xpath_list(text,text,text) RETURNS text
 	AS 'MODULE_PATHNAME'
 	LANGUAGE C STRICT IMMUTABLE;
 
-
 CREATE OR REPLACE FUNCTION xpath_list(text,text) RETURNS text 
 AS 'SELECT xpath_list($1,$2,'','')' LANGUAGE SQL STRICT IMMUTABLE;
 
-
-
 -- Wrapper functions for nodeset where no tags needed
-
 
 CREATE OR REPLACE FUNCTION xpath_nodeset(text,text) RETURNS text AS
 'SELECT xpath_nodeset($1,$2,'''','''')' LANGUAGE SQL STRICT IMMUTABLE;
-
 
 CREATE OR REPLACE FUNCTION xpath_nodeset(text,text,text) RETURNS text AS
 'SELECT xpath_nodeset($1,$2,'''',$3)' LANGUAGE SQL STRICT IMMUTABLE;
@@ -51,14 +46,10 @@ CREATE OR REPLACE FUNCTION xpath_table(text,text,text,text,text) RETURNS setof r
 	LANGUAGE C STRICT STABLE;
 
 -- XSLT functions
--- Delete from here to the end of the file if you are not compiling with
--- XSLT support.
-
 
 CREATE OR REPLACE FUNCTION xslt_process(text,text,text) RETURNS text 
 	AS 'MODULE_PATHNAME' LANGUAGE C STRICT VOLATILE;
 
 -- the function checks for the correct argument count
-
 CREATE OR REPLACE FUNCTION xslt_process(text,text) RETURNS text 
 	AS 'MODULE_PATHNAME' LANGUAGE C STRICT IMMUTABLE;
