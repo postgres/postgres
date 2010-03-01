@@ -1,8 +1,8 @@
-# $PostgreSQL: pgsql/contrib/xml2/Makefile,v 1.12.2.1 2010/03/01 03:41:04 tgl Exp $
+# $PostgreSQL: pgsql/contrib/xml2/Makefile,v 1.12.2.2 2010/03/01 18:08:07 tgl Exp $
 
 MODULE_big = pgxml
 
-OBJS = $(if $(filter -lxslt, $(LIBS)), xpath.o xslt_proc.o, xpath.o)
+OBJS = xpath.o xslt_proc.o
 
 SHLIB_LINK += $(filter -lxslt, $(LIBS)) $(filter -lxml2, $(LIBS))
 
