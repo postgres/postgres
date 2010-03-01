@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/print.h,v 1.44 2010/02/26 02:01:19 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/print.h,v 1.45 2010/03/01 20:55:45 heikki Exp $
  */
 #ifndef PRINT_H
 #define PRINT_H
@@ -119,6 +119,8 @@ typedef struct printTableContent
 	const char **cells;			/* NULL-terminated array of cell content
 								 * strings */
 	const char **cell;			/* Pointer to the last added cell */
+	long		cellsadded;		/* Number of cells added this far */
+	bool	   *cellmustfree;	/* true for cells that need to be free()d */
 	printTableFooter *footers;	/* Pointer to the first footer */
 	printTableFooter *footer;	/* Pointer to the last added footer */
 	char	   *aligns;			/* Array of alignment specifiers; 'l' or 'r',
@@ -156,7 +158,7 @@ extern void printTableInit(printTableContent *const content,
 extern void printTableAddHeader(printTableContent *const content,
 				 const char *header, const bool translate, const char align);
 extern void printTableAddCell(printTableContent *const content,
-				  const char *cell, const bool translate);
+				  const char *cell, const bool translate, const bool mustfree);
 extern void printTableAddFooter(printTableContent *const content,
 					const char *footer);
 extern void printTableSetFooter(printTableContent *const content,

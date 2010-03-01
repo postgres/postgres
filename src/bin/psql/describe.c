@@ -8,7 +8,7 @@
  *
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.238 2010/02/26 02:01:18 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.239 2010/03/01 20:55:45 heikki Exp $
  */
 #include "postgres_fe.h"
 
@@ -1349,10 +1349,10 @@ describeOneTableDetails(const char *schemaname,
 	for (i = 0; i < numrows; i++)
 	{
 		/* Column */
-		printTableAddCell(&cont, PQgetvalue(res, i, 0), false);
+		printTableAddCell(&cont, PQgetvalue(res, i, 0), false, false);
 
 		/* Type */
-		printTableAddCell(&cont, PQgetvalue(res, i, 1), false);
+		printTableAddCell(&cont, PQgetvalue(res, i, 1), false, false);
 
 		/* Modifiers: not null and default */
 		if (show_modifiers)
@@ -1373,16 +1373,16 @@ describeOneTableDetails(const char *schemaname,
 			}
 
 			modifiers[i] = pg_strdup(tmpbuf.data);
-			printTableAddCell(&cont, modifiers[i], false);
+			printTableAddCell(&cont, modifiers[i], false, false);
 		}
 
 		/* Value: for sequences only */
 		if (tableinfo.relkind == 'S')
-			printTableAddCell(&cont, seq_values[i], false);
+			printTableAddCell(&cont, seq_values[i], false, false);
 
 		/* Expression for index column */
 		if (tableinfo.relkind == 'i')
-			printTableAddCell(&cont, PQgetvalue(res, i, 5), false);
+			printTableAddCell(&cont, PQgetvalue(res, i, 5), false, false);
 
 		/* Storage and Description */
 		if (verbose)
@@ -1396,8 +1396,9 @@ describeOneTableDetails(const char *schemaname,
 									   (storage[0] == 'x' ? "extended" :
 										(storage[0] == 'e' ? "external" :
 										 "???")))),
-							  false);
-			printTableAddCell(&cont, PQgetvalue(res, i, firstvcol + 1), false);
+							  false, false);
+			printTableAddCell(&cont, PQgetvalue(res, i, firstvcol + 1),
+							  false, false);
 		}
 	}
 
@@ -2243,7 +2244,7 @@ describeRoles(const char *pattern, bool verbose)
 
 	for (i = 0; i < nrows; i++)
 	{
-		printTableAddCell(&cont, PQgetvalue(res, i, 0), false);
+		printTableAddCell(&cont, PQgetvalue(res, i, 0), false, false);
 
 		resetPQExpBuffer(&buf);
 		if (strcmp(PQgetvalue(res, i, 1), "t") == 0)
@@ -2278,12 +2279,12 @@ describeRoles(const char *pattern, bool verbose)
 
 		attr[i] = pg_strdup(buf.data);
 
-		printTableAddCell(&cont, attr[i], false);
+		printTableAddCell(&cont, attr[i], false, false);
 
-		printTableAddCell(&cont, PQgetvalue(res, i, 7), false);
+		printTableAddCell(&cont, PQgetvalue(res, i, 7), false, false);
 
 		if (verbose && pset.sversion >= 80200)
-			printTableAddCell(&cont, PQgetvalue(res, i, 8), false);
+			printTableAddCell(&cont, PQgetvalue(res, i, 8), false, false);
 	}
 	termPQExpBuffer(&buf);
 
