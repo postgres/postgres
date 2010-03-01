@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/xml2/xslt_proc.c,v 1.17 2010/02/28 19:51:37 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/xml2/xslt_proc.c,v 1.18 2010/03/01 05:16:35 tgl Exp $
  *
  * XSLT processing functions (requiring libxslt)
  *
@@ -79,7 +79,6 @@ xslt_process(PG_FUNCTION_ARGS)
 
 	if (doctree == NULL)
 	{
-		xmlCleanupParser();
 		elog_error("error parsing XML document", false);
 
 		PG_RETURN_NULL();
@@ -93,7 +92,6 @@ xslt_process(PG_FUNCTION_ARGS)
 		if (ssdoc == NULL)
 		{
 			xmlFreeDoc(doctree);
-			xmlCleanupParser();
 			elog_error("error parsing stylesheet as XML document", false);
 			PG_RETURN_NULL();
 		}
@@ -108,7 +106,6 @@ xslt_process(PG_FUNCTION_ARGS)
 	{
 		xmlFreeDoc(doctree);
 		xsltCleanupGlobals();
-		xmlCleanupParser();
 		elog_error("failed to parse stylesheet", false);
 		PG_RETURN_NULL();
 	}
@@ -121,7 +118,6 @@ xslt_process(PG_FUNCTION_ARGS)
 	xmlFreeDoc(doctree);
 
 	xsltCleanupGlobals();
-	xmlCleanupParser();
 
 	if (resstat < 0)
 		PG_RETURN_NULL();
