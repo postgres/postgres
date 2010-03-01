@@ -11,7 +11,7 @@
  *	as a service.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/copydir.c,v 1.34 2010/02/28 21:05:30 stark Exp $
+ *	  $PostgreSQL: pgsql/src/port/copydir.c,v 1.35 2010/03/01 00:04:06 stark Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -234,8 +234,10 @@ fsync_fname(char *fname, bool isdir)
 						   O_RDONLY | PG_BINARY,
 						   S_IRUSR | S_IWUSR);
 
-	/* Some OSs don't allow us to open directories at all */
-	if (fd < 0 && isdir && errno == EISDIR)
+	/* Some OSs don't allow us to open directories at all 
+	 * (Windows returns EPERM) 
+	 */
+	if (fd < 0 && isdir && (errno == EISDIR || errno == EPERM))
 		return;
 
 	else if (fd < 0)
