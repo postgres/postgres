@@ -7,6 +7,8 @@
 #include "funcapi.h"
 #include "miscadmin.h"
 
+#ifdef USE_LIBXSLT
+
 /* libxml includes */
 
 #include <libxml/xpath.h>
@@ -20,10 +22,14 @@
 #include <libxslt/transform.h>
 #include <libxslt/xsltutils.h>
 
+#endif /* USE_LIBXSLT */
+
 
 /* externally accessible functions */
 
 Datum		xslt_process(PG_FUNCTION_ARGS);
+
+#ifdef USE_LIBXSLT
 
 /* declarations to come from xpath.c */
 extern void elog_error(const char *explain, bool force);
@@ -36,13 +42,15 @@ static void parse_params(const char **params, text *paramstr);
 
 #define GET_STR(textp) DatumGetCString(DirectFunctionCall1(textout, PointerGetDatum(textp)))
 
+#endif /* USE_LIBXSLT */
+
 
 PG_FUNCTION_INFO_V1(xslt_process);
 
 Datum
 xslt_process(PG_FUNCTION_ARGS)
 {
-
+#ifdef USE_LIBXSLT
 
 	const char *params[MAXPARAMS + 1];	/* +1 for the terminator */
 	xsltStylesheetPtr stylesheet = NULL;
@@ -57,7 +65,6 @@ xslt_process(PG_FUNCTION_ARGS)
 	text	   *ssheet = PG_GETARG_TEXT_P(1);
 	text	   *paramstr;
 	text	   *tres;
-
 
 	if (fcinfo->nargs == 3)
 	{
@@ -128,8 +135,18 @@ xslt_process(PG_FUNCTION_ARGS)
 	SET_VARSIZE(tres, reslen + VARHDRSZ);
 
 	PG_RETURN_TEXT_P(tres);
+
+#else /* !USE_LIBXSLT */
+
+	ereport(ERROR,
+			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+			 errmsg("xslt_process() is not available without libxslt")));
+	PG_RETURN_NULL();
+
+#endif /* USE_LIBXSLT */
 }
 
+#ifdef USE_LIBXSLT
 
 static void
 parse_params(const char **params, text *paramstr)
@@ -178,3 +195,5 @@ parse_params(const char **params, text *paramstr)
 
 	params[i] = NULL;
 }
+
+#endif /* USE_LIBXSLT */
