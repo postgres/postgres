@@ -84,6 +84,10 @@ sub GenerateFiles {
 		print O "#define USE_SSL 1\n" if ($self->{options}->{openssl});
 		print O "#define ENABLE_NLS 1\n" if ($self->{options}->{nls});
 		print O "#define LOCALEDIR \"/usr/local/pgsql/share/locale\"\n" if ($self->{options}->{nls});
+        if ($self->{options}->{xml}) {
+            print O "#define HAVE_LIBXSLT\n";
+            print O "#define USE_LIBXSLT\n";
+        }
 		if ($self->{options}->{krb5}) {
 			print O "#define KRB5 1\n";
 			print O "#define HAVE_KRB5_ERROR_TEXT_DATA 1\n";
