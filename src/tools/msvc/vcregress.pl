@@ -1,7 +1,7 @@
 
 # -*-perl-*- hey - emacs - this is a perl file
 
-# $PostgreSQL: pgsql/src/tools/msvc/vcregress.pl,v 1.10 2008/12/01 13:39:45 tgl Exp $
+# $PostgreSQL: pgsql/src/tools/msvc/vcregress.pl,v 1.10.2.1 2010/03/02 18:16:16 adunstan Exp $
 
 use strict;
 
@@ -13,6 +13,8 @@ use File::Copy;
 my $startdir = getcwd();
 
 chdir "../../.." if (-d "../../../src/tools/msvc");
+
+require 'src/tools/msvc/config.pl';
 
 # buildenv.pl is for specifying the build environment settings
 # it should contian lines like:
@@ -178,6 +180,7 @@ sub contribcheck
     my $mstat = 0;
     foreach my $module (glob("*"))
     {
+		next if ($module eq 'xml2' && ! $config->{xml});
         next unless -d "$module/sql" && 
 			-d "$module/expected" && 
 			(-f "$module/Makefile" || -f "$module/GNUmakefile");
