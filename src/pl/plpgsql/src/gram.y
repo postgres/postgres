@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.140 2010/01/19 01:35:30 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.141 2010/03/02 16:14:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2881,6 +2881,13 @@ read_into_target(PLpgSQL_rec **rec, PLpgSQL_row **row, bool *strict)
 		tok = yylex();
 	}
 
+	/*
+	 * Currently, a row or record variable can be the single INTO target,
+	 * but not a member of a multi-target list.  So we throw error if there
+	 * is a comma after it, because that probably means the user tried to
+	 * write a multi-target list.  If this ever gets generalized, we should
+	 * probably refactor read_into_scalar_list so it handles all cases.
+	 */
 	switch (tok)
 	{
 		case T_DATUM:
@@ -2888,11 +2895,25 @@ read_into_target(PLpgSQL_rec **rec, PLpgSQL_row **row, bool *strict)
 			{
 				check_assignable(yylval.wdatum.datum, yylloc);
 				*row = (PLpgSQL_row *) yylval.wdatum.datum;
+
+				if ((tok = yylex()) == ',')
+					ereport(ERROR,
+							(errcode(ERRCODE_SYNTAX_ERROR),
+							 errmsg("record or row variable cannot be part of multiple-item INTO list"),
+							 parser_errposition(yylloc)));
+				plpgsql_push_back_token(tok);
 			}
 			else if (yylval.wdatum.datum->dtype == PLPGSQL_DTYPE_REC)
 			{
 				check_assignable(yylval.wdatum.datum, yylloc);
 				*rec = (PLpgSQL_rec *) yylval.wdatum.datum;
+
+				if ((tok = yylex()) == ',')
+					ereport(ERROR,
+							(errcode(ERRCODE_SYNTAX_ERROR),
+							 errmsg("record or row variable cannot be part of multiple-item INTO list"),
+							 parser_errposition(yylloc)));
+				plpgsql_push_back_token(tok);
 			}
 			else
 			{
