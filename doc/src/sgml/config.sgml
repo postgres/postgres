@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.256 2010/02/27 14:46:05 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.257 2010/03/02 21:18:59 momjian Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -1869,7 +1869,8 @@ archive_command = 'copy "%p" "C:\\server\\archivedir\\%f"'  # Windows
         this parameter makes sense only during replication, so when
         performing an archive recovery to recover from data loss a very high
         parameter setting or -1 which means wait forever is recommended.
-        The default is 30 seconds.
+        The default is 30 seconds.  Increasing this parameter can delay
+        master server changes from appearing on the standby.
         This parameter can only be set in the <filename>postgresql.conf</>
         file or on the server command line.
        </para>

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/high-availability.sgml,v 1.52 2010/02/27 09:29:20 heikki Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/high-availability.sgml,v 1.53 2010/03/02 21:18:59 momjian Exp $ -->
 
 <chapter id="high-availability">
  <title>High Availability, Load Balancing, and Replication</title>
@@ -1410,7 +1410,9 @@ primary_conninfo = 'host=192.168.1.50 port=5432 user=foo password=foopass'
     that the primary and standby nodes are linked via the WAL, so the cleanup
     situation is no different from the case where the query ran on the primary
     node itself.  And you are still getting the benefit of off-loading the
-    execution onto the standby.
+    execution onto the standby. <varname>max_standby_delay</> should
+    not be used in this case because delayed WAL files might already
+    contain entries that invalidate the current shapshot.
    </para>
 
    <para>
