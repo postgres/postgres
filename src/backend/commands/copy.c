@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.213.2.3 2006/05/21 20:06:43 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.213.2.4 2010/03/03 20:31:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -381,7 +381,7 @@ CopyGetData(void *databuf, int datasize)
 	{
 		case COPY_FILE:
 			fread(databuf, datasize, 1, copy_file);
-			if (feof(copy_file))
+			if (feof(copy_file) || ferror(copy_file))
 				fe_eof = true;
 			break;
 		case COPY_OLD_FE:

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.116.2.4 2004/11/17 19:54:34 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.116.2.5 2010/03/03 20:31:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -317,7 +317,7 @@ tokenize_file(FILE *file)
 	int			line_number = 1;
 	char	   *buf;
 
-	while (!feof(file))
+	while (!feof(file) && !ferror(file))
 	{
 		buf = next_token_expand(file);
 
