@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.168 2010/02/26 02:01:08 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.169 2010/03/03 22:28:42 momjian Exp $
  *
  *
  *	 Portions Copyright (c) 1999-2010, PostgreSQL Global Development Group
@@ -2671,10 +2671,12 @@ DCH_from_char(FormatNode *node, char *in, TmFromChar *out)
 				s += SKIP_THth(n->suffix);
 				break;
 			case DCH_Q:
-
 				/*
-				 * We ignore Q when converting to date because it is not
-				 * normative.
+				 * We ignore 'Q' when converting to date because it is
+				 * unclear which date in the quarter to use, and some
+				 * people specify both quarter and month, so if it was
+				 * honored it might conflict with the supplied month.
+				 * That is also why we don't throw an error.
 				 *
 				 * We still parse the source string for an integer, but it
 				 * isn't stored anywhere in 'out'.

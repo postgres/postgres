@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.506 2010/02/23 16:14:25 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.507 2010/03/03 22:28:42 momjian Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -5089,7 +5089,7 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
        </row>
        <row>
         <entry><literal>Q</literal></entry>
-        <entry>quarter</entry>
+        <entry>quarter (ignored by <function>to_date</> and <function>to_timestamp</>)</entry>
        </row>
        <row>
         <entry><literal>RM</literal></entry>
@@ -5209,7 +5209,10 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
        even if it contains pattern key words.  For example, in
        <literal>'"Hello Year "YYYY'</literal>, the <literal>YYYY</literal>
        will be replaced by the year data, but the single <literal>Y</literal> in <literal>Year</literal>
-       will not be.
+       will not be.  In <function>to_date</>, <function>to_number</>,
+       and <function>to_timestamp</>, double-quoted strings skip the number of
+       input characters contained in the string, e.g. <literal>"XX"</>
+       skips two input characters.
       </para>
      </listitem>
 
