@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_function.sgml,v 1.92 2010/03/03 03:14:08 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_function.sgml,v 1.93 2010/03/03 03:23:12 momjian Exp $
 -->
 
 <refentry id="SQL-CREATEFUNCTION">
@@ -48,8 +48,6 @@ CREATE [ OR REPLACE ] FUNCTION
    new function, or replace an existing definition.
    To be able to define a function, the user must have the
    <literal>USAGE</literal> privilege on the language.
-  </para>
-
   </para>
 
   <para>
@@ -518,12 +516,12 @@ CREATE [ OR REPLACE ] FUNCTION
 
    </variablelist>
 
- </refsect1>
+   <para>
+    Refer to <xref linkend="xfunc"> for further information on writing
+    functions.
+   </para>
 
- <para>
-  Refer to <xref linkend="xfunc"> for further information on writing
-  functions.
- </para>
+ </refsect1>
 
  <refsect1 id="sql-createfunction-overloading">
   <title>Overloading</title>
