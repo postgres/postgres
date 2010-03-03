@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.141 2010/03/02 16:14:39 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.142 2010/03/03 01:53:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -170,7 +170,6 @@ static	List			*read_raise_options(void);
 %type <datum>	decl_cursor_args
 %type <list>	decl_cursor_arglist
 %type <nsitem>	decl_aliasitem
-%type <str>		decl_stmts decl_stmt
 
 %type <expr>	expr_until_semi expr_until_rightbracket
 %type <expr>	expr_until_then expr_until_loop opt_expr_until_when
@@ -386,10 +385,7 @@ decl_sect		: opt_block_label
 				| opt_block_label decl_start decl_stmts
 					{
 						plpgsql_IdentifierLookup = IDENTIFIER_LOOKUP_NORMAL;
-						if ($3 != NULL)
-							$$.label = $3;
-						else
-							$$.label = $1;
+						$$.label	  = $1;
 						/* Remember variables declared in decl_stmts */
 						$$.n_initvars = plpgsql_add_initdatums(&($$.initvarnos));
 					}
@@ -408,17 +404,25 @@ decl_start		: K_DECLARE
 				;
 
 decl_stmts		: decl_stmts decl_stmt
-					{	$$ = $2;	}
 				| decl_stmt
-					{	$$ = $1;	}
 				;
 
-decl_stmt		: LESS_LESS any_identifier GREATER_GREATER
-					{	$$ = $2;	}
+decl_stmt		: decl_statement
 				| K_DECLARE
-					{	$$ = NULL;	}
-				| decl_statement
-					{	$$ = NULL;	}
+					{
+						/* We allow useless extra DECLAREs */
+					}
+				| LESS_LESS any_identifier GREATER_GREATER
+					{
+						/*
+						 * Throw a helpful error if user tries to put block
+						 * label just before BEGIN, instead of before DECLARE.
+						 */
+						ereport(ERROR,
+								(errcode(ERRCODE_SYNTAX_ERROR),
+								 errmsg("block label must be placed before DECLARE, not after"),
+								 parser_errposition(@1)));
+					}
 				;
 
 decl_statement	: decl_varname decl_const decl_datatype decl_notnull decl_defval
