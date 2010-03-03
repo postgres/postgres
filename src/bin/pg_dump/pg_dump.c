@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.575 2010/02/26 02:01:16 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.576 2010/03/03 20:10:48 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -10176,7 +10176,7 @@ dumpForeignServer(Archive *fout, ForeignServerInfo *srvinfo)
 	/* Handle the ACL */
 	namecopy = strdup(fmtId(srvinfo->dobj.name));
 	dumpACL(fout, srvinfo->dobj.catId, srvinfo->dobj.dumpId,
-			"SERVER",
+			"FOREIGN SERVER",
 			namecopy, NULL, srvinfo->dobj.name,
 			NULL, srvinfo->rolname,
 			srvinfo->srvacl);
