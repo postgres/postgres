@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.236.4.3 2006/05/21 20:06:16 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.236.4.4 2010/03/03 20:31:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -393,7 +393,7 @@ CopyGetData(void *databuf, int datasize)
 	{
 		case COPY_FILE:
 			fread(databuf, datasize, 1, copy_file);
-			if (feof(copy_file))
+			if (feof(copy_file) || ferror(copy_file))
 				fe_eof = true;
 			break;
 		case COPY_OLD_FE:
