@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.375 2009/06/11 14:49:13 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.375.2.1 2010/03/03 20:31:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3891,7 +3891,7 @@ PasswordFromFile(char *hostname, char *port, char *dbname, char *username)
 	if (fp == NULL)
 		return NULL;
 
-	while (!feof(fp))
+	while (!feof(fp) && !ferror(fp))
 	{
 		char	   *t = buf,
 				   *ret;
