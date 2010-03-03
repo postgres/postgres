@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_function.sgml,v 1.91 2010/02/25 22:24:00 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_function.sgml,v 1.92 2010/03/03 03:14:08 momjian Exp $
 -->
 
 <refentry id="SQL-CREATEFUNCTION">
@@ -46,6 +46,10 @@ CREATE [ OR REPLACE ] FUNCTION
    <command>CREATE FUNCTION</command> defines a new function.
    <command>CREATE OR REPLACE FUNCTION</command> will either create a
    new function, or replace an existing definition.
+   To be able to define a function, the user must have the
+   <literal>USAGE</literal> privilege on the language.
+  </para>
+
   </para>
 
   <para>
@@ -67,6 +71,14 @@ CREATE [ OR REPLACE ] FUNCTION
    you must drop and recreate the function.  (When using <literal>OUT</>
    parameters, that means you cannot change the types of any
    <literal>OUT</> parameters except by dropping the function.)
+  </para>
+
+  <para>
+   When <command>CREATE OR REPLACE FUNCTION</> is used to replace an
+   existing function, the ownership and permissions of the function
+   do not change.  All other function properties are assigned the
+   values specified or implied in the command.  You must own the function
+   to replace it (this includes being a member of the owning role).
   </para>
 
   <para>
@@ -401,6 +413,18 @@ CREATE [ OR REPLACE ] FUNCTION
       </para>
 
       <para>
+       If a <literal>SET</> clause is attached to a function, then
+       the effects of a <command>SET LOCAL</> command executed inside the
+       function for the same variable are restricted to the function: the
+       configuration parameter's prior value is still restored at function exit.
+       However, an ordinary
+       <command>SET</> command (without <literal>LOCAL</>) overrides the
+       <literal>SET</> clause, much as it would do for a previous <command>SET
+       LOCAL</> command: the effects of such a command will persist after
+       function exit, unless the current transaction is rolled back.
+      </para>
+   
+      <para>
        See <xref linkend="sql-set" endterm="sql-set-title"> and
        <xref linkend="runtime-config">
        for more information about allowed parameter names and values.
@@ -417,6 +441,15 @@ CREATE [ OR REPLACE ] FUNCTION
        language.  It can be an internal function name, the path to an
        object file, an SQL command, or text in a procedural language.
       </para>
+
+      <para>
+       It is often helpful to use dollar quoting (see <xref
+       linkend="sql-syntax-dollar-quoting">) to write the function definition
+       string, rather than the normal single quote syntax.  Without dollar
+       quoting, any single quotes or backslashes in the function definition must
+       be escaped by doubling them.
+      </para>
+
      </listitem>
     </varlistentry>
 
@@ -436,6 +469,14 @@ CREATE [ OR REPLACE ] FUNCTION
        language source code.  If the link symbol is omitted, it is assumed
        to be the same as the name of the SQL function being defined.
       </para>
+
+      <para>
+       When repeated <command>CREATE FUNCTION</command> calls refer to
+       the same object file, the file is only loaded once per session.
+       To unload and
+       reload the file (perhaps during development), start a new session.
+      </para>
+
      </listitem>
     </varlistentry>
 
@@ -479,23 +520,13 @@ CREATE [ OR REPLACE ] FUNCTION
 
  </refsect1>
 
- <refsect1 id="sql-createfunction-notes">
-  <title>Notes</title>
+ <para>
+  Refer to <xref linkend="xfunc"> for further information on writing
+  functions.
+ </para>
 
-   <para>
-    Refer to <xref linkend="xfunc"> for further information on writing
-    functions.
-   </para>
-
-   <para>
-    The full <acronym>SQL</acronym> type syntax is allowed for
-    input arguments and return value. However, some details of the
-    type specification (e.g., the precision field for
-    type <type>numeric</type>) are the responsibility of the
-    underlying function implementation and are silently swallowed
-    (i.e., not recognized or
-    enforced) by the <command>CREATE FUNCTION</command> command.
-   </para>
+ <refsect1 id="sql-createfunction-overloading">
+  <title>Overloading</title>
 
    <para>
     <productname>PostgreSQL</productname> allows function
@@ -529,50 +560,19 @@ CREATE FUNCTION foo(int, int default 42) ...
     function should be called.
    </para>
 
-   <para>
-    When repeated <command>CREATE FUNCTION</command> calls refer to
-    the same object file, the file is only loaded once per session.
-    To unload and
-    reload the file (perhaps during development), start a new session.
-   </para>
+ </refsect1>
+
+ <refsect1 id="sql-createfunction-notes">
+  <title>Notes</title>
 
    <para>
-    Use <xref linkend="sql-dropfunction"
-    endterm="sql-dropfunction-title"> to remove user-defined
-    functions.
-   </para>
-
-   <para>
-    It is often helpful to use dollar quoting (see <xref
-    linkend="sql-syntax-dollar-quoting">) to write the function definition
-    string, rather than the normal single quote syntax.  Without dollar
-    quoting, any single quotes or backslashes in the function definition must
-    be escaped by doubling them.
-   </para>
-
-   <para>
-    If a <literal>SET</> clause is attached to a function, then
-    the effects of a <command>SET LOCAL</> command executed inside the
-    function for the same variable are restricted to the function: the
-    configuration parameter's prior value is still restored at function exit.
-    However, an ordinary
-    <command>SET</> command (without <literal>LOCAL</>) overrides the
-    <literal>SET</> clause, much as it would do for a previous <command>SET
-    LOCAL</> command: the effects of such a command will persist after
-    function exit, unless the current transaction is rolled back.
-   </para>
-
-   <para>
-    To be able to define a function, the user must have the
-    <literal>USAGE</literal> privilege on the language.
-   </para>
-
-   <para>
-    When <command>CREATE OR REPLACE FUNCTION</> is used to replace an
-    existing function, the ownership and permissions of the function
-    do not change.  All other function properties are assigned the
-    values specified or implied in the command.  You must own the function
-    to replace it (this includes being a member of the owning role).
+    The full <acronym>SQL</acronym> type syntax is allowed for
+    input arguments and return value. However, some details of the
+    type specification (e.g., the precision field for
+    type <type>numeric</type>) are the responsibility of the
+    underlying function implementation and are silently swallowed
+    (i.e., not recognized or
+    enforced) by the <command>CREATE FUNCTION</command> command.
    </para>
 
    <para>
