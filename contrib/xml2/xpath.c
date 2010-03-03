@@ -7,6 +7,7 @@
 #include "funcapi.h"
 #include "miscadmin.h"
 #include "lib/stringinfo.h"
+#include "utils/xml.h"
 
 /* libxml includes */
 
@@ -30,14 +31,11 @@ Datum		xpath_bool(PG_FUNCTION_ARGS);
 Datum		xpath_list(PG_FUNCTION_ARGS);
 Datum		xpath_table(PG_FUNCTION_ARGS);
 
-/* these are exported for use by xslt_proc.c */
+/* exported for use by xslt_proc.c */
 
-void		elog_error(const char *explain, bool force);
 void		pgxml_parser_init(void);
 
 /* local declarations */
-
-static void pgxml_errorHandler(void *ctxt, const char *msg,...);
 
 static xmlChar *pgxmlNodeSetToText(xmlNodeSetPtr nodeset,
 				   xmlChar *toptagname, xmlChar *septagname,
@@ -50,64 +48,8 @@ static xmlChar *pgxml_texttoxmlchar(text *textstring);
 
 static xmlXPathObjectPtr pgxml_xpath(text *document, xmlChar *xpath);
 
-/* Global variables */
-static char *pgxml_errorMsg = NULL;		/* overall error message */
-
 #define GET_STR(textp) DatumGetCString(DirectFunctionCall1(textout, PointerGetDatum(textp)))
 
-
-/*
- * The error handling function. This formats an error message and sets
- * a flag - an ereport will be issued prior to return
- */
-static void
-pgxml_errorHandler(void *ctxt, const char *msg,...)
-{
-	char		errbuf[1024];				/* per line error buffer */
-	va_list		args;
-
-	/* Format the message */
-	va_start(args, msg);
-	vsnprintf(errbuf, sizeof(errbuf), msg, args);
-	va_end(args);
-	/* Store in, or append to, pgxml_errorMsg */
-	if (pgxml_errorMsg == NULL)
-		pgxml_errorMsg = pstrdup(errbuf);
-	else
-	{
-		size_t	oldsize = strlen(pgxml_errorMsg);
-		size_t	newsize = strlen(errbuf);
-
-		/*
-		 * We intentionally discard the last char of the existing message,
-		 * which should be a carriage return.  (XXX wouldn't it be saner
-		 * to keep it?)
-		 */
-		pgxml_errorMsg = repalloc(pgxml_errorMsg, oldsize + newsize);
-		memcpy(&pgxml_errorMsg[oldsize - 1], errbuf, newsize);
-		pgxml_errorMsg[oldsize + newsize - 1] = '\0';
-	}
-}
-
-/*
- * This function ereports the current message if any.  If force is true
- * then an error is thrown even if pgxml_errorMsg hasn't been set.
- */
-void
-elog_error(const char *explain, bool force)
-{
-	if (force || pgxml_errorMsg != NULL)
-	{
-		if (pgxml_errorMsg == NULL)
-			ereport(ERROR,
-					(errcode(ERRCODE_EXTERNAL_ROUTINE_EXCEPTION),
-					 errmsg("%s", explain)));
-		else
-			ereport(ERROR,
-					(errcode(ERRCODE_EXTERNAL_ROUTINE_EXCEPTION),
-					 errmsg("%s: %s", explain, pgxml_errorMsg)));
-	}
-}
 
 /*
  * Initialize for xml parsing.
@@ -115,9 +57,8 @@ elog_error(const char *explain, bool force)
 void
 pgxml_parser_init(void)
 {
-	/* Set up error handling */
-	pgxml_errorMsg = NULL;
-	xmlSetGenericErrorFunc(NULL, pgxml_errorHandler);
+	/* Set up error handling (we share the core's error handler) */
+	pg_xml_init();
 
 	/* Initialize libxml */
 	xmlInitParser();
@@ -474,7 +415,8 @@ pgxml_xpath(text *document, xmlChar *xpath)
 	if (comppath == NULL)
 	{
 		xmlFreeDoc(doctree);
-		elog_error("XPath Syntax Error", true);
+		xml_ereport(ERROR, ERRCODE_EXTERNAL_ROUTINE_EXCEPTION,
+					"XPath Syntax Error");
 	}
 
 	/* Now evaluate the path expression. */
@@ -530,8 +472,6 @@ pgxml_result_to_text(xmlXPathObjectPtr res,
 
 	/* Free various storage */
 	xmlFree(xpresstr);
-
-	elog_error("XPath error", false);
 
 	return xpres;
 }
@@ -701,10 +641,8 @@ xpath_table(PG_FUNCTION_ARGS)
 	}
 
 	/*
-	 * Setup the parser. Beware that this must happen in the same context as
-	 * the cleanup - which means that any error from here on must do cleanup
-	 * to ensure that the entity table doesn't get freed by being out of
-	 * context.
+	 * Setup the parser.  This should happen after we are done evaluating
+	 * the query, in case it calls functions that set up libxml differently.
 	 */
 	pgxml_parser_init();
 
@@ -761,14 +699,14 @@ xpath_table(PG_FUNCTION_ARGS)
 				{
 					ctxt = xmlXPathNewContext(doctree);
 					ctxt->node = xmlDocGetRootElement(doctree);
-					xmlSetGenericErrorFunc(ctxt, pgxml_errorHandler);
 
 					/* compile the path */
 					comppath = xmlXPathCompile(xpaths[j]);
 					if (comppath == NULL)
 					{
 						xmlFreeDoc(doctree);
-						elog_error("XPath Syntax Error", true);
+						xml_ereport(ERROR, ERRCODE_EXTERNAL_ROUTINE_EXCEPTION,
+									"XPath Syntax Error");
 					}
 
 					/* Now evaluate the path expression. */

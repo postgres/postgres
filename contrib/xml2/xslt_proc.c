@@ -6,6 +6,7 @@
 #include "executor/spi.h"
 #include "funcapi.h"
 #include "miscadmin.h"
+#include "utils/xml.h"
 
 #ifdef USE_LIBXSLT
 
@@ -32,7 +33,6 @@ Datum		xslt_process(PG_FUNCTION_ARGS);
 #ifdef USE_LIBXSLT
 
 /* declarations to come from xpath.c */
-extern void elog_error(const char *explain, bool force);
 extern void pgxml_parser_init(void);
 
 /* local defs */
@@ -86,11 +86,8 @@ xslt_process(PG_FUNCTION_ARGS)
 		doctree = xmlParseFile(GET_STR(doct));
 
 	if (doctree == NULL)
-	{
-		elog_error("error parsing XML document", false);
-
-		PG_RETURN_NULL();
-	}
+		xml_ereport(ERROR, ERRCODE_EXTERNAL_ROUTINE_EXCEPTION,
+					"error parsing XML document");
 
 	/* Same for stylesheet */
 	if (VARDATA(ssheet)[0] == '<')
@@ -100,8 +97,8 @@ xslt_process(PG_FUNCTION_ARGS)
 		if (ssdoc == NULL)
 		{
 			xmlFreeDoc(doctree);
-			elog_error("error parsing stylesheet as XML document", false);
-			PG_RETURN_NULL();
+			xml_ereport(ERROR, ERRCODE_EXTERNAL_ROUTINE_EXCEPTION,
+						"error parsing stylesheet as XML document");
 		}
 
 		stylesheet = xsltParseStylesheetDoc(ssdoc);
@@ -114,8 +111,8 @@ xslt_process(PG_FUNCTION_ARGS)
 	{
 		xmlFreeDoc(doctree);
 		xsltCleanupGlobals();
-		elog_error("failed to parse stylesheet", false);
-		PG_RETURN_NULL();
+		xml_ereport(ERROR, ERRCODE_EXTERNAL_ROUTINE_EXCEPTION,
+					"failed to parse stylesheet");
 	}
 
 	restree = xsltApplyStylesheet(stylesheet, doctree, params);
