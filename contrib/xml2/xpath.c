@@ -103,9 +103,20 @@ elog_error(const char *explain, bool force)
 					(errcode(ERRCODE_EXTERNAL_ROUTINE_EXCEPTION),
 					 errmsg("%s", explain)));
 		else
+		{
+			/*
+			 * Ensure pgxml_errorMsg is reset to null before we give up
+			 * control.  This provides some protection against crashes if
+			 * pgxml_errorHandler is invoked again later, perhaps as a
+			 * result of other modules' use of libxml.
+			 */
+			char   *msg = pgxml_errorMsg;
+
+			pgxml_errorMsg = NULL;
 			ereport(ERROR,
 					(errcode(ERRCODE_EXTERNAL_ROUTINE_EXCEPTION),
-					 errmsg("%s: %s", explain, pgxml_errorMsg)));
+					 errmsg("%s: %s", explain, msg)));
+		}
 	}
 }
 
