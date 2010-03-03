@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/xml.h,v 1.23.2.1 2010/03/01 02:21:40 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/xml.h,v 1.23.2.2 2010/03/03 17:30:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -63,6 +63,8 @@ typedef enum
 	XML_STANDALONE_OMITTED
 } XmlStandaloneType;
 
+extern void pg_xml_init(void);
+extern void xml_ereport(int level, int sqlcode, const char *msg);
 extern xmltype *xmlconcat(List *args);
 extern xmltype *xmlelement(XmlExprState *xmlExpr, ExprContext *econtext);
 extern xmltype *xmlparse(text *data, XmlOptionType xmloption, bool preserve_whitespace);
