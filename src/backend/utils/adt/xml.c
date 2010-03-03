@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.96 2010/02/14 18:42:17 rhaas Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.97 2010/03/03 17:29:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -86,7 +86,6 @@ int			xmloption;
 
 static StringInfo xml_err_buf = NULL;
 
-static void xml_ereport(int level, int sqlcode, const char *msg);
 static void xml_errorHandler(void *ctxt, const char *msg,...);
 static void xml_ereport_by_code(int level, int sqlcode,
 					const char *msg, int errcode);
@@ -102,7 +101,6 @@ static void xml_pfree(void *ptr);
 static char *xml_pstrdup(const char *string);
 #endif   /* USE_LIBXMLCONTEXT */
 
-static void xml_init(void);
 static xmlChar *xml_text2xmlChar(text *in);
 static int parse_xml_decl(const xmlChar *str, size_t *lenp,
 			   xmlChar **version, xmlChar **encoding, int *standalone);
@@ -599,7 +597,7 @@ xmlelement(XmlExprState *xmlExpr, ExprContext *econtext)
 	}
 
 	/* now safe to run libxml */
-	xml_init();
+	pg_xml_init();
 
 	PG_TRY();
 	{
@@ -845,14 +843,23 @@ xml_is_document(xmltype *arg)
 #ifdef USE_LIBXML
 
 /*
- * Set up for use of libxml --- this should be called by each function that
- * is about to use libxml facilities.
+ * pg_xml_init --- set up for use of libxml
+ *
+ * This should be called by each function that is about to use libxml
+ * facilities.  It has two responsibilities: verify compatibility with the
+ * loaded libxml version (done on first call in a session) and establish
+ * or re-establish our libxml error handler.  The latter needs to be done
+ * anytime we might have passed control to add-on modules (eg libperl) which
+ * might have set their own error handler for libxml.
+ *
+ * This is exported for use by contrib/xml2, as well as other code that might
+ * wish to share use of this module's libxml error handler.
  *
  * TODO: xmlChar is utf8-char, make proper tuning (initdb with enc!=utf8 and
  * check)
  */
-static void
-xml_init(void)
+void
+pg_xml_init(void)
 {
 	static bool first_time = true;
 
@@ -962,7 +969,7 @@ parse_xml_decl(const xmlChar *str, size_t *lenp,
 	int			utf8char;
 	int			utf8len;
 
-	xml_init();
+	pg_xml_init();
 
 	/* Initialize output arguments to "not present" */
 	if (version)
@@ -1114,7 +1121,7 @@ static bool
 print_xml_decl(StringInfo buf, const xmlChar *version,
 			   pg_enc encoding, int standalone)
 {
-	xml_init();					/* why is this here? */
+	pg_xml_init();					/* why is this here? */
 
 	if ((version && strcmp((char *) version, PG_XML_DEFAULT_VERSION) != 0)
 		|| (encoding && encoding != PG_UTF8)
@@ -1178,7 +1185,7 @@ xml_parse(text *data, XmlOptionType xmloption_arg, bool preserve_whitespace,
 										   PG_UTF8);
 
 	/* Start up libxml and its parser (no-ops if already done) */
-	xml_init();
+	pg_xml_init();
 	xmlInitParser();
 
 	ctxt = xmlNewParserCtxt();
@@ -1314,16 +1321,26 @@ xml_pstrdup(const char *string)
 
 
 /*
- * Wrapper for "ereport" function for XML-related errors.  The "msg"
- * is the SQL-level message; some can be adopted from the SQL/XML
- * standard.  This function adds libxml's native error messages, if
- * any, as detail.
+ * xml_ereport --- report an XML-related error
+ *
+ * The "msg" is the SQL-level message; some can be adopted from the SQL/XML
+ * standard.  This function adds libxml's native error message, if any, as
+ * detail.
+ *
+ * This is exported for modules that want to share the core libxml error
+ * handler.  Note that pg_xml_init() *must* have been called previously.
  */
-static void
+void
 xml_ereport(int level, int sqlcode, const char *msg)
 {
 	char	   *detail;
 
+	/*
+	 * It might seem that we should just pass xml_err_buf->data directly to
+	 * errdetail.  However, we want to clean out xml_err_buf before throwing
+	 * error, in case there is another function using libxml further down
+	 * the call stack.
+	 */
 	if (xml_err_buf->len > 0)
 	{
 		detail = pstrdup(xml_err_buf->data);
@@ -1332,11 +1349,11 @@ xml_ereport(int level, int sqlcode, const char *msg)
 	else
 		detail = NULL;
 
-	/* libxml error messages end in '\n'; get rid of it */
 	if (detail)
 	{
 		size_t		len;
 
+		/* libxml error messages end in '\n'; get rid of it */
 		len = strlen(detail);
 		if (len > 0 && detail[len - 1] == '\n')
 			detail[len - 1] = '\0';
@@ -1738,7 +1755,7 @@ map_sql_value_to_xml_value(Datum value, Oid type, bool xml_escape_strings)
 					xmlTextWriterPtr writer = NULL;
 					char	   *result;
 
-					xml_init();
+					pg_xml_init();
 
 					PG_TRY();
 					{
@@ -3367,7 +3384,7 @@ xpath(PG_FUNCTION_ARGS)
 	memcpy(xpath_expr, VARDATA(xpath_expr_text), xpath_len);
 	xpath_expr[xpath_len] = '\0';
 
-	xml_init();
+	pg_xml_init();
 	xmlInitParser();
 
 	PG_TRY();
