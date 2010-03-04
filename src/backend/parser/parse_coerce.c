@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_coerce.c,v 2.181 2010/02/26 02:00:52 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_coerce.c,v 2.182 2010/03/04 09:39:53 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1792,7 +1792,7 @@ IsBinaryCoercible(Oid srctype, Oid targettype)
 		return false;			/* no cast */
 	castForm = (Form_pg_cast) GETSTRUCT(tuple);
 
-	result = (castForm->castfunc == InvalidOid &&
+	result = (castForm->castmethod == COERCION_METHOD_BINARY &&
 			  castForm->castcontext == COERCION_CODE_IMPLICIT);
 
 	ReleaseSysCache(tuple);
