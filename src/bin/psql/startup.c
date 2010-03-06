@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/startup.c,v 1.162 2010/02/26 02:01:19 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/startup.c,v 1.163 2010/03/06 15:28:09 mha Exp $
  */
 #include "postgres_fe.h"
 
@@ -68,11 +68,12 @@ struct adhoc_opts
 	bool		no_readline;
 	bool		no_psqlrc;
 	bool		single_txn;
+	char	   *psqlrc;
 };
 
 static void parse_psql_options(int argc, char *argv[],
 				   struct adhoc_opts * options);
-static void process_psqlrc(char *argv0);
+static void process_psqlrc(char *argv0, struct adhoc_opts *options);
 static void process_psqlrc_file(char *filename);
 static void showVersion(void);
 static void EstablishVariableSpace(void);
@@ -247,8 +248,7 @@ main(int argc, char *argv[])
 	 */
 	if (options.action == ACT_FILE)
 	{
-		if (!options.no_psqlrc)
-			process_psqlrc(argv[0]);
+		process_psqlrc(argv[0], &options);
 
 		successResult = process_file(options.action_string, options.single_txn);
 	}
@@ -291,8 +291,7 @@ main(int argc, char *argv[])
 	 */
 	else
 	{
-		if (!options.no_psqlrc)
-			process_psqlrc(argv[0]);
+		process_psqlrc(argv[0], &options);
 
 		connection_warnings(true);
 		if (!pset.quiet && !pset.notty)
@@ -355,6 +354,7 @@ parse_psql_options(int argc, char *argv[], struct adhoc_opts * options)
 		{"password", no_argument, NULL, 'W'},
 		{"expanded", no_argument, NULL, 'x'},
 		{"no-psqlrc", no_argument, NULL, 'X'},
+		{"psqlrc", required_argument, NULL, 1},
 		{"help", no_argument, NULL, '?'},
 		{NULL, 0, NULL, 0}
 	};
@@ -515,6 +515,9 @@ parse_psql_options(int argc, char *argv[], struct adhoc_opts * options)
 			case 'X':
 				options->no_psqlrc = true;
 				break;
+			case 1:
+				options->psqlrc = pg_strdup(optarg);
+				break;
 			case '1':
 				options->single_txn = true;
 				break;
@@ -563,12 +566,15 @@ parse_psql_options(int argc, char *argv[], struct adhoc_opts * options)
  * Load .psqlrc file, if found.
  */
 static void
-process_psqlrc(char *argv0)
+process_psqlrc(char *argv0, struct adhoc_opts *options)
 {
 	char		home[MAXPGPATH];
 	char		rc_file[MAXPGPATH];
 	char		my_exec_path[MAXPGPATH];
 	char		etc_path[MAXPGPATH];
+
+	if (options->no_psqlrc)
+		return;
 
 	find_my_exec(argv0, my_exec_path);
 	get_etc_path(my_exec_path, etc_path);
@@ -576,7 +582,11 @@ process_psqlrc(char *argv0)
 	snprintf(rc_file, MAXPGPATH, "%s/%s", etc_path, SYSPSQLRC);
 	process_psqlrc_file(rc_file);
 
-	if (get_home_path(home))
+	if (options->psqlrc)
+	{
+		process_psqlrc_file(options->psqlrc);
+	}
+	else if (get_home_path(home))
 	{
 		snprintf(rc_file, MAXPGPATH, "%s/%s", home, PSQLRC);
 		process_psqlrc_file(rc_file);

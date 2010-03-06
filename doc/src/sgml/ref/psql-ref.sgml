@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.239 2010/02/19 14:36:45 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.240 2010/03/06 15:28:09 mha Exp $
 PostgreSQL documentation
 -->
 
@@ -477,6 +477,16 @@ PostgreSQL documentation
       Do not read the start-up file (neither the system-wide
       <filename>psqlrc</filename> file nor the user's
       <filename>~/.psqlrc</filename> file).
+      </para>
+      </listitem>
+    </varlistentry>
+
+    <varlistentry>
+      <term><option>--psqlrc=<replaceable class="parameter">FILENAME</></></term>
+      <listitem>
+      <para>
+      Read the start-up file from <replaceable class="parameter">FILENAME</>
+      instead of <filename>~/.psqlrc</>.
       </para>
       </listitem>
     </varlistentry>
