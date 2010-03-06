@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/aclchk.c,v 1.163 2010/02/26 02:00:35 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/aclchk.c,v 1.164 2010/03/06 23:10:42 tgl Exp $
  *
  * NOTES
  *	  See acl.h.
@@ -304,24 +304,60 @@ restrict_and_check_grant(bool is_grant, AclMode avail_goptions, bool all_privs,
 	if (is_grant)
 	{
 		if (this_privileges == 0)
-			ereport(WARNING,
-					(errcode(ERRCODE_WARNING_PRIVILEGE_NOT_GRANTED),
-				  errmsg("no privileges were granted for \"%s\"", objname)));
+	   	{
+			if (objkind == ACL_KIND_COLUMN && colname)
+				ereport(WARNING,
+						(errcode(ERRCODE_WARNING_PRIVILEGE_NOT_GRANTED),
+						 errmsg("no privileges were granted for column \"%s\" of relation \"%s\"",
+								colname, objname)));
+			else
+				ereport(WARNING,
+						(errcode(ERRCODE_WARNING_PRIVILEGE_NOT_GRANTED),
+						 errmsg("no privileges were granted for \"%s\"",
+								objname)));
+		}
 		else if (!all_privs && this_privileges != privileges)
-			ereport(WARNING,
-					(errcode(ERRCODE_WARNING_PRIVILEGE_NOT_GRANTED),
-			 errmsg("not all privileges were granted for \"%s\"", objname)));
+		{
+			if (objkind == ACL_KIND_COLUMN && colname)
+				ereport(WARNING,
+						(errcode(ERRCODE_WARNING_PRIVILEGE_NOT_GRANTED),
+						 errmsg("not all privileges were granted for column \"%s\" of relation \"%s\"",
+								colname, objname)));
+			else
+				ereport(WARNING,
+						(errcode(ERRCODE_WARNING_PRIVILEGE_NOT_GRANTED),
+						 errmsg("not all privileges were granted for \"%s\"",
+								objname)));
+		}
 	}
 	else
 	{
 		if (this_privileges == 0)
-			ereport(WARNING,
-					(errcode(ERRCODE_WARNING_PRIVILEGE_NOT_REVOKED),
-			  errmsg("no privileges could be revoked for \"%s\"", objname)));
+		{
+			if (objkind == ACL_KIND_COLUMN && colname)
+				ereport(WARNING,
+						(errcode(ERRCODE_WARNING_PRIVILEGE_NOT_REVOKED),
+						 errmsg("no privileges could be revoked for column \"%s\" of relation \"%s\"",
+								colname, objname)));
+			else
+				ereport(WARNING,
+						(errcode(ERRCODE_WARNING_PRIVILEGE_NOT_REVOKED),
+						 errmsg("no privileges could be revoked for \"%s\"",
+								objname)));
+		}
 		else if (!all_privs && this_privileges != privileges)
-			ereport(WARNING,
-					(errcode(ERRCODE_WARNING_PRIVILEGE_NOT_REVOKED),
-					 errmsg("not all privileges could be revoked for \"%s\"", objname)));
+		{
+			if (objkind == ACL_KIND_COLUMN && colname)
+				ereport(WARNING,
+						(errcode(ERRCODE_WARNING_PRIVILEGE_NOT_REVOKED),
+						 errmsg("not all privileges could be revoked for column \"%s\" of relation \"%s\"",
+								colname, objname)));
+			else
+				ereport(WARNING,
+						(errcode(ERRCODE_WARNING_PRIVILEGE_NOT_REVOKED),
+						 errmsg("not all privileges could be revoked for \"%s\"",
+								objname)));
+		}
 	}
 
 	return this_privileges;
@@ -3046,7 +3082,7 @@ aclcheck_error_col(AclResult aclerr, AclObjectKind objectkind,
 		case ACLCHECK_NO_PRIV:
 			ereport(ERROR,
 					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-					 errmsg("permission denied for column %s of relation %s",
+					 errmsg("permission denied for column \"%s\" of relation \"%s\"",
 							colname, objectname)));
 			break;
 		case ACLCHECK_NOT_OWNER:
