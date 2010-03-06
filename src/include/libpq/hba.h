@@ -4,7 +4,7 @@
  *	  Interface to hba.c
  *
  *
- * $Id: hba.h,v 1.33 2003/04/17 22:26:01 tgl Exp $
+ * $Id: hba.h,v 1.33.4.1 2010/03/06 00:46:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,7 +45,6 @@ typedef struct Port hbaPort;
 
 #define MAX_TOKEN	256
 
-extern void next_token(FILE *fp, char *buf, const int bufsz);
 extern List **get_user_line(const char *user);
 extern void load_hba(void);
 extern void load_ident(void);

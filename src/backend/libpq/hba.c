@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.116.2.5 2010/03/03 20:31:50 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.116.2.6 2010/03/06 00:46:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -89,14 +89,16 @@ pg_isblank(const char c)
  *	 next line or EOF, whichever comes first. Allow spaces in quoted
  *	 strings. Terminate on unquoted commas. Handle comments.
  */
-void
-next_token(FILE *fp, char *buf, const int bufsz)
+static void
+next_token(FILE *fp, char *buf, int bufsz, bool *initial_quote)
 {
 	int			c;
 	char	   *start_buf = buf;
 	char	   *end_buf = buf + (bufsz - 1);
 	bool		in_quote = false;
 	bool		was_quote = false;
+
+	*initial_quote = false;
 
 	/* Move over initial whitespace and commas */
 	while ((c = getc(fp)) != EOF && (pg_isblank(c) || c == ','))
@@ -149,7 +151,11 @@ next_token(FILE *fp, char *buf, const int bufsz)
 				was_quote = false;
 
 			if (c == '"')
+			{
 				in_quote = !in_quote;
+				if (buf == start_buf)
+					*initial_quote = true;
+			}
 
 			c = getc(fp);
 		}
@@ -178,12 +184,13 @@ next_token_expand(FILE *file)
 	char		buf[MAX_TOKEN];
 	char	   *comma_str = pstrdup("");
 	bool		trailing_comma;
+	bool		initial_quote;
 	char	   *incbuf;
 	int			needed;
 
 	do
 	{
-		next_token(file, buf, sizeof(buf));
+		next_token(file, buf, sizeof(buf), &initial_quote);
 		if (!*buf)
 			break;
 
@@ -196,7 +203,7 @@ next_token_expand(FILE *file)
 			trailing_comma = false;
 
 		/* Is this referencing a file? */
-		if (buf[0] == '@')
+		if (!initial_quote && buf[0] == '@' && buf[1] != '\0')
 			incbuf = tokenize_inc_file(buf + 1);
 		else
 			incbuf = pstrdup(buf);
