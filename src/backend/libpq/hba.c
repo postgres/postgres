@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.188.2.2 2010/03/03 20:31:16 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.188.2.3 2010/03/06 00:45:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -91,6 +91,10 @@ pg_isblank(const char c)
  * double quotes (this allows the inclusion of blanks, but not newlines).
  *
  * The token, if any, is returned at *buf (a buffer of size bufsz).
+ * Also, we set *initial_quote to indicate whether there was quoting before
+ * the first character.  (We use that to prevent "@x" from being treated
+ * as a file inclusion request.  Note that @"x" should be so treated;
+ * we want to allow that to support embedded spaces in file paths.)
  *
  * If successful: store null-terminated token at *buf and return TRUE.
  * If no more tokens on line: set *buf = '\0' and return FALSE.
@@ -105,7 +109,7 @@ pg_isblank(const char c)
  * token.
  */
 static bool
-next_token(FILE *fp, char *buf, int bufsz)
+next_token(FILE *fp, char *buf, int bufsz, bool *initial_quote)
 {
 	int			c;
 	char	   *start_buf = buf;
@@ -114,7 +118,10 @@ next_token(FILE *fp, char *buf, int bufsz)
 	bool		was_quote = false;
 	bool		saw_quote = false;
 
+	/* end_buf reserves two bytes to ensure we can append \n and \0 */
 	Assert(end_buf > start_buf);
+
+	*initial_quote = false;
 
 	/* Move over initial whitespace and commas */
 	while ((c = getc(fp)) != EOF && (pg_isblank(c) || c == ','))
@@ -174,6 +181,8 @@ next_token(FILE *fp, char *buf, int bufsz)
 		{
 			in_quote = !in_quote;
 			saw_quote = true;
+			if (buf == start_buf)
+				*initial_quote = true;
 		}
 
 		c = getc(fp);
@@ -216,12 +225,13 @@ next_token_expand(const char *filename, FILE *file)
 	char	   *comma_str = pstrdup("");
 	bool		got_something = false;
 	bool		trailing_comma;
+	bool		initial_quote;
 	char	   *incbuf;
 	int			needed;
 
 	do
 	{
-		if (!next_token(file, buf, sizeof(buf)))
+		if (!next_token(file, buf, sizeof(buf), &initial_quote))
 			break;
 
 		got_something = true;
@@ -235,7 +245,7 @@ next_token_expand(const char *filename, FILE *file)
 			trailing_comma = false;
 
 		/* Is this referencing a file? */
-		if (buf[0] == '@')
+		if (!initial_quote && buf[0] == '@' && buf[1] != '\0')
 			incbuf = tokenize_inc_file(filename, buf + 1);
 		else
 			incbuf = pstrdup(buf);
@@ -1396,28 +1406,29 @@ read_pg_database_line(FILE *fp, char *dbname, Oid *dboid,
 					  Oid *dbtablespace, TransactionId *dbfrozenxid)
 {
 	char		buf[MAX_TOKEN];
+	bool		initial_quote;
 
 	if (feof(fp))
 		return false;
-	if (!next_token(fp, buf, sizeof(buf)))
+	if (!next_token(fp, buf, sizeof(buf), &initial_quote))
 		return false;
 	if (strlen(buf) >= NAMEDATALEN)
 		elog(FATAL, "bad data in flat pg_database file");
 	strcpy(dbname, buf);
-	next_token(fp, buf, sizeof(buf));
+	next_token(fp, buf, sizeof(buf), &initial_quote);
 	if (!isdigit((unsigned char) buf[0]))
 		elog(FATAL, "bad data in flat pg_database file");
 	*dboid = atooid(buf);
-	next_token(fp, buf, sizeof(buf));
+	next_token(fp, buf, sizeof(buf), &initial_quote);
 	if (!isdigit((unsigned char) buf[0]))
 		elog(FATAL, "bad data in flat pg_database file");
 	*dbtablespace = atooid(buf);
-	next_token(fp, buf, sizeof(buf));
+	next_token(fp, buf, sizeof(buf), &initial_quote);
 	if (!isdigit((unsigned char) buf[0]))
 		elog(FATAL, "bad data in flat pg_database file");
 	*dbfrozenxid = atoxid(buf);
 	/* expect EOL next */
-	if (next_token(fp, buf, sizeof(buf)))
+	if (next_token(fp, buf, sizeof(buf), &initial_quote))
 		elog(FATAL, "bad data in flat pg_database file");
 	return true;
 }
