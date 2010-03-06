@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.136.4.2 2010/03/03 20:31:41 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.136.4.3 2010/03/06 00:46:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -111,7 +111,7 @@ pg_isblank(const char c)
  * database names specially, by appending a newline to them.
  */
 static void
-next_token(FILE *fp, char *buf, int bufsz)
+next_token(FILE *fp, char *buf, int bufsz, bool *initial_quote)
 {
 	int			c;
 	char	   *start_buf = buf;
@@ -120,7 +120,10 @@ next_token(FILE *fp, char *buf, int bufsz)
 	bool		was_quote = false;
 	bool		saw_quote = false;
 
+	/* end_buf reserves two bytes to ensure we can append \n and \0 */
 	Assert(end_buf > start_buf);
+
+	*initial_quote = false;
 
 	/* Move over initial whitespace and commas */
 	while ((c = getc(fp)) != EOF && (pg_isblank(c) || c == ','))
@@ -180,6 +183,8 @@ next_token(FILE *fp, char *buf, int bufsz)
 		{
 			in_quote = !in_quote;
 			saw_quote = true;
+			if (buf == start_buf)
+				*initial_quote = true;
 		}
 
 		c = getc(fp);
@@ -219,12 +224,13 @@ next_token_expand(const char *filename, FILE *file)
 	char		buf[MAX_TOKEN];
 	char	   *comma_str = pstrdup("");
 	bool		trailing_comma;
+	bool		initial_quote;
 	char	   *incbuf;
 	int			needed;
 
 	do
 	{
-		next_token(file, buf, sizeof(buf));
+		next_token(file, buf, sizeof(buf), &initial_quote);
 		if (!buf[0])
 			break;
 
@@ -237,7 +243,7 @@ next_token_expand(const char *filename, FILE *file)
 			trailing_comma = false;
 
 		/* Is this referencing a file? */
-		if (buf[0] == '@')
+		if (!initial_quote && buf[0] == '@' && buf[1] != '\0')
 			incbuf = tokenize_inc_file(filename, buf + 1);
 		else
 			incbuf = pstrdup(buf);
