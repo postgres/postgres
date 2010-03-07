@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/help.c,v 1.156 2010/03/06 15:28:09 mha Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/help.c,v 1.157 2010/03/07 17:02:34 mha Exp $
  */
 #include "postgres_fe.h"
 
@@ -99,7 +99,6 @@ usage(void)
 	printf(_("  -v, --set=, --variable=NAME=VALUE\n"
 			 "                           set psql variable NAME to VALUE\n"));
 	printf(_("  -X, --no-psqlrc          do not read startup file (~/.psqlrc)\n"));
-	printf(_("  --psqlrc=FILENAME        read startup commands from file (instead of ~/.psqlrc)\n"));
 	printf(_("  -1 (\"one\"), --single-transaction\n"
 			 "                           execute command file as a single transaction\n"));
 	printf(_("  --help                   show this help, then exit\n"));
