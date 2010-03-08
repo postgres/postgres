@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/error.c,v 1.19 2007/11/15 21:14:45 momjian Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/error.c,v 1.19.2.1 2010/03/08 13:15:51 meskes Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -170,6 +170,17 @@ ecpg_raise_backend(int line, PGresult *result, PGconn *conn, int compat)
 	{
 		sqlstate = ECPG_SQLSTATE_ECPG_INTERNAL_ERROR;
 		message = PQerrorMessage(conn);
+	}
+
+	if (strcmp(sqlstate, ECPG_SQLSTATE_ECPG_INTERNAL_ERROR) == 0)
+	{
+		/* we might get here if the connection breaks down, so let's
+		 * check for this instead of giving just the generic internal error */
+		if (PQstatus(conn) == CONNECTION_BAD)
+		{
+			sqlstate = "57P02";
+			message = "the connection to the server was lost";
+		}
 	}
 
 	/* copy error message */
