@@ -1,5 +1,5 @@
 # <pre>
-# @(#)southamerica	8.40
+# @(#)southamerica	8.41
 # This file is in the public domain, so clarified as of
 # 2009-05-17 by Arthur David Olson.
 
@@ -1364,8 +1364,24 @@ Rule	Para	2002	2003	-	Sep	Sun>=1	0:00	1:00	S
 # Decree 1,867 (2004-03-05)
 # From Carlos Raul Perasso via Jesper Norgaard Welen (2006-10-13)
 # <http://www.presidencia.gov.py/decretos/D1867.pdf>
-Rule	Para	2004	max	-	Oct	Sun>=15	0:00	1:00	S
-Rule	Para	2005	max	-	Mar	Sun>=8	0:00	0	-
+Rule	Para	2004	2009	-	Oct	Sun>=15	0:00	1:00	S
+Rule	Para	2005	2009	-	Mar	Sun>=8	0:00	0	-
+# From Carlos Raul Perasso (2010-02-18):
+# By decree number 3958 issued yesterday (
+# <a href="http://www.presidencia.gov.py/v1/wp-content/uploads/2010/02/decreto3958.pdf">
+# http://www.presidencia.gov.py/v1/wp-content/uploads/2010/02/decreto3958.pdf
+# </a>
+# )
+# Paraguay changes its DST schedule, postponing the March rule to April and
+# modifying the October date. The decree reads:
+# ...
+# Art. 1. It is hereby established that from the second Sunday of the month of
+# April of this year (2010), the official time is to be set back 60 minutes,
+# and that on the first Sunday of the month of October, it is to be set
+# forward 60 minutes, in all the territory of the Paraguayan Republic.
+# ...
+Rule	Para	2010	max	-	Oct	Sun<=7	0:00	1:00	S
+Rule	Para	2010	max	-	Apr	Sun>=8	0:00	0	-
 
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
 Zone America/Asuncion	-3:50:40 -	LMT	1890
