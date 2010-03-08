@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.201 2010/03/06 00:45:49 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.202 2010/03/08 09:57:26 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -997,6 +997,22 @@ parse_hba_line(List *line, int line_num, HbaLine *parsedline)
 							line_num, HbaFileName)));
 		return false;
 	}
+
+	if (parsedline->conntype == ctLocal &&
+		parsedline->auth_method == uaGSS)
+	{
+		ereport(LOG,
+				(errcode(ERRCODE_CONFIG_FILE_ERROR),
+			 errmsg("gssapi authentication is not supported on local sockets"),
+				 errcontext("line %d of configuration file \"%s\"",
+							line_num, HbaFileName)));
+		return false;
+	}
+	/*
+	 * SSPI authentication can never be enabled on ctLocal connections, because
+	 * it's only supported on Windows, where ctLocal isn't supported.
+	 */
+
 
 	if (parsedline->conntype != ctHostSSL &&
 		parsedline->auth_method == uaCert)
