@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.154.2.3 2009/08/15 20:22:59 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.154.2.4 2010/03/08 12:39:29 mha Exp $
 PostgreSQL documentation
 -->
 
@@ -682,7 +682,7 @@ testdb=&gt;
 
         <tip>
          <para>
-          To print your current working directory, use <literal>\!pwd</literal>.
+          To print your current working directory, use <literal>\! pwd</literal>.
          </para>
         </tip>
        </listitem>
