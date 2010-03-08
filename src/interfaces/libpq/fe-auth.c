@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-auth.c,v 1.143 2010/01/02 16:58:11 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-auth.c,v 1.144 2010/03/08 10:01:12 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -425,6 +425,12 @@ pg_GSS_startup(PGconn *conn)
 				min_stat;
 	int			maxlen;
 	gss_buffer_desc temp_gbuf;
+
+	if (!conn->pghost)
+	{
+		printfPQExpBuffer(&conn->errorMessage, libpq_gettext("host name must be specified\n"));
+		return STATUS_ERROR;
+	}
 
 	if (conn->gctx)
 	{
