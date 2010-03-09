@@ -1,7 +1,7 @@
 /**********************************************************************
  * plperl.c - perl as a procedural language for PostgreSQL
  *
- *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.169 2010/02/26 02:01:33 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.170 2010/03/09 02:48:33 adunstan Exp $
  *
  **********************************************************************/
 
@@ -2102,6 +2102,8 @@ plperl_spi_exec(char *query, int limit)
 	{
 		int			spi_rv;
 
+		pg_verifymbstr(query, strlen(query), false);
+
 		spi_rv = SPI_execute(query, current_call_data->prodesc->fn_readonly,
 							 limit);
 		ret_hv = plperl_spi_execute_fetch_result(SPI_tuptable, SPI_processed,
@@ -2343,6 +2345,9 @@ plperl_spi_query(char *query)
 		void	   *plan;
 		Portal		portal;
 
+		/* Make sure the query is validly encoded */
+		pg_verifymbstr(query, strlen(query), false);
+
 		/* Create a cursor for the query */
 		plan = SPI_prepare(query, 0, NULL);
 		if (plan == NULL)
@@ -2548,6 +2553,9 @@ plperl_spi_prepare(char *query, int argc, SV **argv)
 			perm_fmgr_info(typInput, &(qdesc->arginfuncs[i]));
 			qdesc->argtypioparams[i] = typIOParam;
 		}
+
+		/* Make sure the query is validly encoded */
+		pg_verifymbstr(query, strlen(query), false);
 
 		/************************************************************
 		 * Prepare the plan and check for errors
