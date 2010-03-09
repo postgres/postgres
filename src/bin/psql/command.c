@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.174 2006/10/06 17:14:00 petere Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.174.2.1 2010/03/09 01:09:54 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "command.h"
@@ -1390,10 +1390,28 @@ process_file(char *filename, bool single_txn)
 	pset.inputfile = filename;
 
 	if (single_txn)
-		res = PSQLexec("BEGIN", false);
+	{
+		if ((res = PSQLexec("BEGIN", false)) == NULL)
+		{
+			if (pset.on_error_stop)
+				return EXIT_USER;
+		}
+		else
+			PQclear(res);
+	}
+
 	result = MainLoop(fd);
+
 	if (single_txn)
-		res = PSQLexec("COMMIT", false);
+	{
+		if ((res = PSQLexec("COMMIT", false)) == NULL)
+		{
+			if (pset.on_error_stop)
+				return EXIT_USER;
+		}
+		else
+			PQclear(res);
+	}
 
 	fclose(fd);
 	pset.inputfile = oldfilename;
