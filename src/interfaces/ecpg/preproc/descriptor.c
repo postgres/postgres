@@ -1,7 +1,7 @@
 /*
  * functions needed for descriptor handling
  *
- * $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/descriptor.c,v 1.31 2010/02/26 02:01:31 momjian Exp $
+ * $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/descriptor.c,v 1.32 2010/03/09 11:09:45 meskes Exp $
  *
  * since descriptor might be either a string constant or a string var
  * we need to check for a constant if we expect a constant
@@ -338,7 +338,7 @@ sqlda_variable(const char *name)
 	p->type->size = NULL;
 	p->type->struct_sizeof = NULL;
 	p->type->u.element = NULL;
-	p->type->lineno = 0;
+	p->type->counter = 0;
 	p->brace_level = 0;
 	p->next = NULL;
 

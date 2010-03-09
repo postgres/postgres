@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.header,v 1.13 2010/01/29 16:28:13 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.header,v 1.14 2010/03/09 11:09:45 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -44,6 +44,7 @@ static int	pacounter = 1;
 static char     pacounter_buffer[sizeof(int) * CHAR_BIT * 10 / 3]; /* a rough guess at the size we need */
 static struct this_type actual_type[STRUCT_DEPTH];
 static char *actual_startline[STRUCT_DEPTH];
+static int 	varchar_counter = 1;
 
 /* temporarily store struct members while creating the data structure */
 struct ECPGstruct_member *struct_member_list[STRUCT_DEPTH] = { NULL };
@@ -275,12 +276,12 @@ adjust_outofscope_cursor_vars(struct cursor *cur)
 			}
 			else if ((ptr->variable->type->type != ECPGt_varchar && ptr->variable->type->type != ECPGt_char && ptr->variable->type->type != ECPGt_unsigned_char && ptr->variable->type->type != ECPGt_string) && atoi(ptr->variable->type->size) > 1)
 			{
-				newvar = new_variable(cat_str(4, make_str("("), mm_strdup(ecpg_type_name(ptr->variable->type->u.element->type)), make_str(" *)(ECPGget_var("), mm_strdup(temp)), ECPGmake_array_type(ECPGmake_simple_type(ptr->variable->type->u.element->type, make_str("1"), ptr->variable->type->u.element->lineno), ptr->variable->type->size), 0);
+				newvar = new_variable(cat_str(4, make_str("("), mm_strdup(ecpg_type_name(ptr->variable->type->u.element->type)), make_str(" *)(ECPGget_var("), mm_strdup(temp)), ECPGmake_array_type(ECPGmake_simple_type(ptr->variable->type->u.element->type, make_str("1"), ptr->variable->type->u.element->counter), ptr->variable->type->size), 0);
 				sprintf(temp, "%d, (", ecpg_internal_var++);
 			}
 			else if ((ptr->variable->type->type == ECPGt_varchar || ptr->variable->type->type == ECPGt_char || ptr->variable->type->type == ECPGt_unsigned_char || ptr->variable->type->type == ECPGt_string) && atoi(ptr->variable->type->size) > 1)
 			{
-				newvar = new_variable(cat_str(4, make_str("("), mm_strdup(ecpg_type_name(ptr->variable->type->type)), make_str(" *)(ECPGget_var("), mm_strdup(temp)), ECPGmake_simple_type(ptr->variable->type->type, ptr->variable->type->size, ptr->variable->type->lineno), 0);
+				newvar = new_variable(cat_str(4, make_str("("), mm_strdup(ecpg_type_name(ptr->variable->type->type)), make_str(" *)(ECPGget_var("), mm_strdup(temp)), ECPGmake_simple_type(ptr->variable->type->type, ptr->variable->type->size, ptr->variable->type->counter), 0);
 				if (ptr->variable->type->type == ECPGt_varchar)
 					sprintf(temp, "%d, &(", ecpg_internal_var++);
 				else
@@ -302,13 +303,13 @@ adjust_outofscope_cursor_vars(struct cursor *cur)
 				}
 				else
 				{
-					newvar = new_variable(cat_str(4, make_str("("), mm_strdup(ecpg_type_name(ptr->variable->type->type)), make_str(" *)(ECPGget_var("), mm_strdup(temp)), ECPGmake_array_type(ECPGmake_simple_type(ptr->variable->type->u.element->type, ptr->variable->type->u.element->size, ptr->variable->type->u.element->lineno), ptr->variable->type->size), 0);
+					newvar = new_variable(cat_str(4, make_str("("), mm_strdup(ecpg_type_name(ptr->variable->type->type)), make_str(" *)(ECPGget_var("), mm_strdup(temp)), ECPGmake_array_type(ECPGmake_simple_type(ptr->variable->type->u.element->type, ptr->variable->type->u.element->size, ptr->variable->type->u.element->counter), ptr->variable->type->size), 0);
 					sprintf(temp, "%d, &(", ecpg_internal_var++);
 				}
 			}
 			else
 			{
-				newvar = new_variable(cat_str(4, make_str("*("), mm_strdup(ecpg_type_name(ptr->variable->type->type)), make_str(" *)(ECPGget_var("), mm_strdup(temp)), ECPGmake_simple_type(ptr->variable->type->type, ptr->variable->type->size, ptr->variable->type->lineno), 0);
+				newvar = new_variable(cat_str(4, make_str("*("), mm_strdup(ecpg_type_name(ptr->variable->type->type)), make_str(" *)(ECPGget_var("), mm_strdup(temp)), ECPGmake_simple_type(ptr->variable->type->type, ptr->variable->type->size, ptr->variable->type->counter), 0);
 				sprintf(temp, "%d, &(", ecpg_internal_var++);
 			}
 
@@ -343,18 +344,18 @@ adjust_outofscope_cursor_vars(struct cursor *cur)
 					}
 					else
 					{
-						newind = new_variable(cat_str(4, make_str("("), mm_strdup(ecpg_type_name(ptr->indicator->type->u.element->type)), make_str(" *)(ECPGget_var("), mm_strdup(temp)), ECPGmake_array_type(ECPGmake_simple_type(ptr->indicator->type->u.element->type, ptr->indicator->type->u.element->size, ptr->indicator->type->u.element->lineno), ptr->indicator->type->size), 0);
+						newind = new_variable(cat_str(4, make_str("("), mm_strdup(ecpg_type_name(ptr->indicator->type->u.element->type)), make_str(" *)(ECPGget_var("), mm_strdup(temp)), ECPGmake_array_type(ECPGmake_simple_type(ptr->indicator->type->u.element->type, ptr->indicator->type->u.element->size, ptr->indicator->type->u.element->counter), ptr->indicator->type->size), 0);
 						sprintf(temp, "%d, &(", ecpg_internal_var++);
 					}
 				}
 				else if (atoi(ptr->indicator->type->size) > 1)
 				{
-					newind = new_variable(cat_str(4, make_str("("), mm_strdup(ecpg_type_name(ptr->indicator->type->type)), make_str(" *)(ECPGget_var("), mm_strdup(temp)), ECPGmake_simple_type(ptr->indicator->type->type, ptr->indicator->type->size, ptr->variable->type->lineno), 0);
+					newind = new_variable(cat_str(4, make_str("("), mm_strdup(ecpg_type_name(ptr->indicator->type->type)), make_str(" *)(ECPGget_var("), mm_strdup(temp)), ECPGmake_simple_type(ptr->indicator->type->type, ptr->indicator->type->size, ptr->variable->type->counter), 0);
 					sprintf(temp, "%d, (", ecpg_internal_var++);
 				}
 				else
 				{
-					newind = new_variable(cat_str(4, make_str("*("), mm_strdup(ecpg_type_name(ptr->indicator->type->type)), make_str(" *)(ECPGget_var("), mm_strdup(temp)), ECPGmake_simple_type(ptr->indicator->type->type, ptr->indicator->type->size, ptr->variable->type->lineno), 0);
+					newind = new_variable(cat_str(4, make_str("*("), mm_strdup(ecpg_type_name(ptr->indicator->type->type)), make_str(" *)(ECPGget_var("), mm_strdup(temp)), ECPGmake_simple_type(ptr->indicator->type->type, ptr->indicator->type->size, ptr->variable->type->counter), 0);
 					sprintf(temp, "%d, &(", ecpg_internal_var++);
 				}
 

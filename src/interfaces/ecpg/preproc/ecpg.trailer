@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.trailer,v 1.20 2010/01/29 16:28:13 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.trailer,v 1.21 2010/03/09 11:09:45 meskes Exp $ */
 
 statements: /*EMPTY*/
                 | statements statement
@@ -855,9 +855,9 @@ variable: opt_pointer ECPGColLabel opt_array_bounds opt_bit_field opt_initialize
 
 				case ECPGt_varchar:
 					if (atoi(dimension) < 0)
-						type = ECPGmake_simple_type(actual_type[struct_level].type_enum, length, yylineno);
+						type = ECPGmake_simple_type(actual_type[struct_level].type_enum, length, varchar_counter);
 					else
-						type = ECPGmake_array_type(ECPGmake_simple_type(actual_type[struct_level].type_enum, length, yylineno), dimension);
+						type = ECPGmake_array_type(ECPGmake_simple_type(actual_type[struct_level].type_enum, length, varchar_counter), dimension);
 					
 					if (strcmp(dimension, "0") == 0 || abs(atoi(dimension)) == 1)
 							*dim = '\0';
@@ -867,13 +867,14 @@ variable: opt_pointer ECPGColLabel opt_array_bounds opt_bit_field opt_initialize
 					if (atoi(length) < 0 || strcmp(length, "0") == 0)
 						mmerror(PARSE_ERROR, ET_ERROR, "pointers to varchar are not implemented");
 
-					/* make sure varchar struct name is unique by adding linenumer of its definition */
+					/* make sure varchar struct name is unique by adding a unique counter to its definition */
 					vcn = (char *) mm_alloc(strlen($2) + sizeof(int) * CHAR_BIT * 10 / 3);
-					sprintf(vcn, "%s_%d", $2, yylineno);
+					sprintf(vcn, "%s_%d", $2, varchar_counter);
 					if (strcmp(dimension, "0") == 0)
 						$$ = cat_str(7, make2_str(make_str(" struct varchar_"), vcn), make_str(" { int len; char arr["), mm_strdup(length), make_str("]; } *"), mm_strdup($2), $4, $5);
 					else
 						$$ = cat_str(8, make2_str(make_str(" struct varchar_"), vcn), make_str(" { int len; char arr["), mm_strdup(length), make_str("]; } "), mm_strdup($2), mm_strdup(dim), $4, $5);
+					varchar_counter++;
 					break;
 
 				case ECPGt_char:

@@ -74,7 +74,7 @@ main (void)
  char * curname3 = CURNAME ;
  
 #line 27 "cursor.pgc"
-  struct varchar_curname4_27  { int len; char arr[ 50 ]; }  curname4 ;
+  struct varchar_curname4_1  { int len; char arr[ 50 ]; }  curname4 ;
  
 #line 28 "cursor.pgc"
  int count ;
@@ -602,7 +602,7 @@ if (sqlca.sqlcode < 0) exit (1);}
 
 	strcpy(msg, "open");
 	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "declare $0 cursor for $1", 
-	ECPGt_varchar,&(curname4),(long)50,(long)1,sizeof(struct varchar_curname4_27), 
+	ECPGt_varchar,&(curname4),(long)50,(long)1,sizeof(struct varchar_curname4_1), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, 
 	ECPGt_char_variable,(ECPGprepared_statement(NULL, "st_id2", __LINE__)),(long)1,(long)1,(1)*sizeof(char), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EOIT, ECPGt_EORT);
@@ -614,7 +614,7 @@ if (sqlca.sqlcode < 0) exit (1);}
 
 	strcpy(msg, "fetch from");
 	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "fetch from $0", 
-	ECPGt_varchar,&(curname4),(long)50,(long)1,sizeof(struct varchar_curname4_27), 
+	ECPGt_varchar,&(curname4),(long)50,(long)1,sizeof(struct varchar_curname4_1), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EOIT, 
 	ECPGt_int,&(id),(long)1,(long)1,sizeof(int), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, 
@@ -629,7 +629,7 @@ if (sqlca.sqlcode < 0) exit (1);}
 
 	strcpy(msg, "fetch");
 	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "fetch $0", 
-	ECPGt_varchar,&(curname4),(long)50,(long)1,sizeof(struct varchar_curname4_27), 
+	ECPGt_varchar,&(curname4),(long)50,(long)1,sizeof(struct varchar_curname4_1), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EOIT, 
 	ECPGt_int,&(id),(long)1,(long)1,sizeof(int), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, 
@@ -644,7 +644,7 @@ if (sqlca.sqlcode < 0) exit (1);}
 
 	strcpy(msg, "fetch 1 from");
 	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "fetch 1 from $0", 
-	ECPGt_varchar,&(curname4),(long)50,(long)1,sizeof(struct varchar_curname4_27), 
+	ECPGt_varchar,&(curname4),(long)50,(long)1,sizeof(struct varchar_curname4_1), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EOIT, 
 	ECPGt_int,&(id),(long)1,(long)1,sizeof(int), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, 
@@ -662,7 +662,7 @@ if (sqlca.sqlcode < 0) exit (1);}
 	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "fetch $0 from $0", 
 	ECPGt_int,&(count),(long)1,(long)1,sizeof(int), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, 
-	ECPGt_varchar,&(curname4),(long)50,(long)1,sizeof(struct varchar_curname4_27), 
+	ECPGt_varchar,&(curname4),(long)50,(long)1,sizeof(struct varchar_curname4_1), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EOIT, 
 	ECPGt_int,&(id),(long)1,(long)1,sizeof(int), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, 
@@ -677,7 +677,7 @@ if (sqlca.sqlcode < 0) exit (1);}
 
 	strcpy(msg, "move");
 	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "move absolute 0 $0", 
-	ECPGt_varchar,&(curname4),(long)50,(long)1,sizeof(struct varchar_curname4_27), 
+	ECPGt_varchar,&(curname4),(long)50,(long)1,sizeof(struct varchar_curname4_1), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EOIT, ECPGt_EORT);
 #line 216 "cursor.pgc"
 
@@ -687,7 +687,7 @@ if (sqlca.sqlcode < 0) exit (1);}
 
 	strcpy(msg, "fetch 1");
 	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "fetch 1 $0", 
-	ECPGt_varchar,&(curname4),(long)50,(long)1,sizeof(struct varchar_curname4_27), 
+	ECPGt_varchar,&(curname4),(long)50,(long)1,sizeof(struct varchar_curname4_1), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EOIT, 
 	ECPGt_int,&(id),(long)1,(long)1,sizeof(int), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, 
@@ -705,7 +705,7 @@ if (sqlca.sqlcode < 0) exit (1);}
 	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "fetch $0 $0", 
 	ECPGt_int,&(count),(long)1,(long)1,sizeof(int), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, 
-	ECPGt_varchar,&(curname4),(long)50,(long)1,sizeof(struct varchar_curname4_27), 
+	ECPGt_varchar,&(curname4),(long)50,(long)1,sizeof(struct varchar_curname4_1), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EOIT, 
 	ECPGt_int,&(id),(long)1,(long)1,sizeof(int), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, 
@@ -720,7 +720,7 @@ if (sqlca.sqlcode < 0) exit (1);}
 
 	strcpy(msg, "close");
 	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "close $0", 
-	ECPGt_varchar,&(curname4),(long)50,(long)1,sizeof(struct varchar_curname4_27), 
+	ECPGt_varchar,&(curname4),(long)50,(long)1,sizeof(struct varchar_curname4_1), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EOIT, ECPGt_EORT);
 #line 228 "cursor.pgc"
 

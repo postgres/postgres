@@ -32,7 +32,7 @@
 
 typedef  struct { 
 #line 12 "array_of_struct.pgc"
-  struct varchar_name_12  { int len; char arr[ 50 ]; }  name ;
+  struct varchar_name_1  { int len; char arr[ 50 ]; }  name ;
  
 #line 13 "array_of_struct.pgc"
  int phone ;
@@ -61,7 +61,7 @@ int main()
              
        typedef struct { 
 #line 30 "array_of_struct.pgc"
-  struct varchar_name_30  { int len; char arr[ 50 ]; }  name ;
+  struct varchar_name_2  { int len; char arr[ 50 ]; }  name ;
  
 #line 31 "array_of_struct.pgc"
  int phone ;
@@ -95,7 +95,7 @@ int main()
 #line 38 "array_of_struct.pgc"
  struct customer3 { 
 #line 36 "array_of_struct.pgc"
-  struct varchar_name_36  { int len; char arr[ 50 ]; }  name ;
+  struct varchar_name_3  { int len; char arr[ 50 ]; }  name ;
  
 #line 37 "array_of_struct.pgc"
  int phone ;
@@ -104,7 +104,7 @@ int main()
 #line 43 "array_of_struct.pgc"
  struct customer4 { 
 #line 41 "array_of_struct.pgc"
-  struct varchar_name_41  { int len; char arr[ 50 ]; }  name ;
+  struct varchar_name_4  { int len; char arr[ 50 ]; }  name ;
  
 #line 42 "array_of_struct.pgc"
  int phone ;
@@ -114,7 +114,7 @@ int main()
  int r ;
  
 #line 45 "array_of_struct.pgc"
-  struct varchar_onlyname_45  { int len; char arr[ 50 ]; }  onlyname [2] ;
+  struct varchar_onlyname_5  { int len; char arr[ 50 ]; }  onlyname [2] ;
 /* exec sql end declare section */
 #line 46 "array_of_struct.pgc"
 
@@ -235,7 +235,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
     }
 
     { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "select * from customers limit 1", ECPGt_EOIT, 
-	ECPGt_varchar,&(custs4.name),(long)50,(long)1,sizeof(struct varchar_name_41), 
+	ECPGt_varchar,&(custs4.name),(long)50,(long)1,sizeof(struct varchar_name_4), 
 	ECPGt_short,&(inds[0].name_ind),(long)1,(long)1,sizeof(short), 
 	ECPGt_int,&(custs4.phone),(long)1,(long)1,sizeof(int), 
 	ECPGt_short,&(inds[0].phone_ind),(long)1,(long)1,sizeof(short), ECPGt_EORT);
@@ -255,7 +255,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
     printf( "phone - %d\n", custs4.phone );
 
     { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "select c from customers limit 2", ECPGt_EOIT, 
-	ECPGt_varchar,(onlyname),(long)50,(long)2,sizeof(struct varchar_onlyname_45), 
+	ECPGt_varchar,(onlyname),(long)50,(long)2,sizeof(struct varchar_onlyname_5), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EORT);
 #line 85 "array_of_struct.pgc"
 

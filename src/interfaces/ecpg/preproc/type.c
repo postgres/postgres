@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/type.c,v 1.87 2010/01/26 09:07:31 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/type.c,v 1.88 2010/03/09 11:09:45 meskes Exp $ */
 
 #include "postgres_fe.h"
 
@@ -57,10 +57,10 @@ ECPGstruct_member_dup(struct ECPGstruct_member * rm)
 				if (rm->type->u.element->type == ECPGt_struct)
 					type = ECPGmake_struct_type(rm->type->u.element->u.members, rm->type->u.element->type, rm->type->u.element->type_name, rm->type->u.element->struct_sizeof);
 				else
-					type = ECPGmake_array_type(ECPGmake_simple_type(rm->type->u.element->type, rm->type->u.element->size, rm->type->u.element->lineno), rm->type->size);
+					type = ECPGmake_array_type(ECPGmake_simple_type(rm->type->u.element->type, rm->type->u.element->size, rm->type->u.element->counter), rm->type->size);
 				break;
 			default:
-				type = ECPGmake_simple_type(rm->type->type, rm->type->size, rm->type->lineno);
+				type = ECPGmake_simple_type(rm->type->type, rm->type->size, rm->type->counter);
 				break;
 		}
 
@@ -93,7 +93,7 @@ ECPGmake_struct_member(char *name, struct ECPGtype * type, struct ECPGstruct_mem
 }
 
 struct ECPGtype *
-ECPGmake_simple_type(enum ECPGttype type, char *size, int lineno)
+ECPGmake_simple_type(enum ECPGttype type, char *size, int counter)
 {
 	struct ECPGtype *ne = (struct ECPGtype *) mm_alloc(sizeof(struct ECPGtype));
 
@@ -102,7 +102,7 @@ ECPGmake_simple_type(enum ECPGttype type, char *size, int lineno)
 	ne->size = size;
 	ne->u.element = NULL;
 	ne->struct_sizeof = NULL;
-	ne->lineno = lineno;		/* only needed for varchar */
+	ne->counter = counter;		/* only needed for varchar */
 
 	return ne;
 }
@@ -267,7 +267,7 @@ ECPGdump_a_type(FILE *o, const char *name, struct ECPGtype * type,
 
 					ECPGdump_a_simple(o, name,
 									  type->u.element->type,
-									  type->u.element->size, type->size, NULL, prefix, type->u.element->lineno);
+									  type->u.element->size, type->size, NULL, prefix, type->u.element->counter);
 
 					if (ind_type != NULL)
 					{
@@ -310,7 +310,7 @@ ECPGdump_a_type(FILE *o, const char *name, struct ECPGtype * type,
 			if (indicator_set && (ind_type->type == ECPGt_struct || ind_type->type == ECPGt_array))
 				mmerror(INDICATOR_NOT_SIMPLE, ET_FATAL, "indicator for simple data type has to be simple");
 
-			ECPGdump_a_simple(o, name, type->type, type->size, (arr_str_siz && strcmp(arr_str_siz, "0") != 0) ? arr_str_siz : make_str("-1"), struct_sizeof, prefix, type->lineno);
+			ECPGdump_a_simple(o, name, type->type, type->size, (arr_str_siz && strcmp(arr_str_siz, "0") != 0) ? arr_str_siz : make_str("-1"), struct_sizeof, prefix, type->counter);
 			if (ind_type != NULL)
 				ECPGdump_a_simple(o, ind_name, ind_type->type, ind_type->size, (arr_str_siz && strcmp(arr_str_siz, "0") != 0) ? arr_str_siz : make_str("-1"), ind_struct_sizeof, ind_prefix, 0);
 			break;
@@ -326,7 +326,7 @@ ECPGdump_a_simple(FILE *o, const char *name, enum ECPGttype type,
 				  char *arrsize,
 				  const char *siz,
 				  const char *prefix,
-				  int lineno)
+				  int counter)
 {
 	if (type == ECPGt_NO_INDICATOR)
 		fprintf(o, "\n\tECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ");
@@ -367,8 +367,8 @@ ECPGdump_a_simple(FILE *o, const char *name, enum ECPGttype type,
 				ptr = strchr(var_name, '[');
 				if (ptr)
 					*ptr = '\0';
-				if (lineno)
-					sprintf(offset, "sizeof(struct varchar_%s_%d)", var_name, lineno);
+				if (counter)
+					sprintf(offset, "sizeof(struct varchar_%s_%d)", var_name, counter);
 				else
 					sprintf(offset, "sizeof(struct varchar_%s)", var_name);
 				free(var_name);

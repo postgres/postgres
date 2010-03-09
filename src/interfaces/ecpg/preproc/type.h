@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/type.h,v 1.53 2010/02/26 02:01:31 momjian Exp $
+ * $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/type.h,v 1.54 2010/03/09 11:09:45 meskes Exp $
  */
 #ifndef _ECPG_PREPROC_TYPE_H
 #define _ECPG_PREPROC_TYPE_H
@@ -30,7 +30,7 @@ struct ECPGtype
 		struct ECPGstruct_member *members;		/* A pointer to a list of
 												 * members. */
 	}			u;
-	int			lineno;
+	int			counter;
 };
 
 /* Everything is malloced. */
