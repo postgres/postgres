@@ -1,5 +1,5 @@
 # <pre>
-# @(#)southamerica	8.41
+# @(#)southamerica	8.43
 # This file is in the public domain, so clarified as of
 # 2009-05-17 by Arthur David Olson.
 
@@ -1121,6 +1121,18 @@ Zone America/Rio_Branco	-4:31:12 -	LMT	1914
 # http://www.shoa.cl/noticias/2008/04hora/hora.htm
 # </a>.
 
+# From Angel Chiang (2010-03-04):
+# Subject: DST in Chile exceptionally extended to 3 April due to earthquake
+# <a href="http://www.gobiernodechile.cl/viewNoticia.aspx?idArticulo=30098">
+# http://www.gobiernodechile.cl/viewNoticia.aspx?idArticulo=30098
+# </a>
+# (in Spanish, last paragraph).
+#
+# This is breaking news. There should be more information available later.
+
+# From Arthur Daivd Olson (2010-03-06):
+# Angel Chiang's message confirmed by Julio Pacheco; Julio provided a patch.
+
 # Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
 Rule	Chile	1927	1932	-	Sep	 1	0:00	1:00	S
 Rule	Chile	1928	1932	-	Apr	 1	0:00	0	-
@@ -1155,7 +1167,9 @@ Rule	Chile	2000	2007	-	Mar	Sun>=9	3:00u	0	-
 # N.B.: the end of March 29 in Chile is March 30 in Universal time,
 # which is used below in specifying the transition.
 Rule	Chile	2008	only	-	Mar	30	3:00u	0	-
-Rule	Chile	2009	max	-	Mar	Sun>=9	3:00u	0	-
+Rule	Chile	2009	only	-	Mar	Sun>=9	3:00u	0	-
+Rule	Chile	2010	only	-	Apr	 4	3:00u	0	-
+Rule	Chile	2011	max	-	Mar	Sun>=9	3:00u	0	-
 # IATA SSIM anomalies: (1992-02) says 1992-03-14;
 # (1996-09) says 1998-03-08.  Ignore these.
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
@@ -1380,7 +1394,7 @@ Rule	Para	2005	2009	-	Mar	Sun>=8	0:00	0	-
 # and that on the first Sunday of the month of October, it is to be set
 # forward 60 minutes, in all the territory of the Paraguayan Republic.
 # ...
-Rule	Para	2010	max	-	Oct	Sun<=7	0:00	1:00	S
+Rule	Para	2010	max	-	Oct	Sun>=1	0:00	1:00	S
 Rule	Para	2010	max	-	Apr	Sun>=8	0:00	0	-
 
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
