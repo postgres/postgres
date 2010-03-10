@@ -1,5 +1,124 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release-7.4.sgml,v 1.4 2009/12/10 00:31:14 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release-7.4.sgml,v 1.5 2010/03/10 01:58:11 tgl Exp $ -->
 <!-- See header comment in release.sgml about typical markup -->
+
+ <sect1 id="release-7-4-28">
+  <title>Release 7.4.28</title>
+
+  <note>
+  <title>Release date</title>
+  <simpara>2010-03-15</simpara>
+  </note>
+
+  <para>
+   This release contains a variety of fixes from 7.4.27.
+   For information about new features in the 7.4 major release, see
+   <xref linkend="release-7-4">.
+  </para>
+
+  <para>
+   The <productname>PostgreSQL</> community will stop releasing updates
+   for the 7.4.X release series in July 2010.
+   Users are encouraged to update to a newer release branch soon.
+  </para>
+
+  <sect2>
+   <title>Migration to Version 7.4.28</title>
+
+   <para>
+    A dump/restore is not required for those running 7.4.X.
+    However, if you are upgrading from a version earlier than 7.4.26,
+    see the release notes for 7.4.26.
+   </para>
+
+  </sect2>
+
+  <sect2>
+   <title>Changes</title>
+
+   <itemizedlist>
+
+    <listitem>
+     <para>
+      Add new configuration parameter <varname>ssl_renegotiation_limit</> to
+      control how often we do session key renegotiation for an SSL connection
+      (Magnus)
+     </para>
+
+     <para>
+      This can be set to zero to disable renegotiation completely, which may
+      be required if a broken SSL library is used.  In particular, some
+      vendors are shipping stopgap patches for CVE-2009-3555 that cause
+      renegotiation attempts to fail.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Make <function>substring()</> for <type>bit</> types treat any negative
+      length as meaning <quote>all the rest of the string</> (Tom)
+     </para>
+
+     <para>
+      The previous coding treated only -1 that way, and would produce an
+      invalid result value for other negative values, possibly leading to
+      a crash (CVE-2010-0442).
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix some cases of pathologically slow regular expression matching (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      When reading <filename>pg_hba.conf</> and related files, do not treat
+      <literal>@something</> as a file inclusion request if the <literal>@</>
+      appears inside quote marks; also, never treat <literal>@</> by itself
+      as a file inclusion request (Tom)
+     </para>
+
+     <para>
+      This prevents erratic behavior if a role or database name starts with
+      <literal>@</>.  If you need to include a file whose path name
+      contains spaces, you can still do so, but you must write
+      <literal>@"/path to/file"</> rather than putting the quotes around
+      the whole construct.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Prevent infinite loop on some platforms if a directory is named as
+      an inclusion target in <filename>pg_hba.conf</> and related files
+      (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Ensure PL/Tcl initializes the Tcl interpreter fully (Tom)
+     </para>
+
+     <para>
+      The only known symptom of this oversight is that the Tcl
+      <literal>clock</> command misbehaves if using Tcl 8.5 or later.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Prevent crash in <filename>contrib/dblink</> when too many key
+      columns are specified to a <function>dblink_build_sql_*</> function
+      (Rushabh Lathia, Joe Conway)
+     </para>
+    </listitem>
+
+   </itemizedlist>
+
+  </sect2>
+ </sect1>
 
  <sect1 id="release-7-4-27">
   <title>Release 7.4.27</title>

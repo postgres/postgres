@@ -1,5 +1,472 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release-8.4.sgml,v 1.16 2009/12/10 00:31:14 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release-8.4.sgml,v 1.17 2010/03/10 01:58:11 tgl Exp $ -->
 <!-- See header comment in release.sgml about typical markup -->
+
+ <sect1 id="release-8-4-3">
+  <title>Release 8.4.3</title>
+
+  <note>
+  <title>Release date</title>
+  <simpara>2010-03-15</simpara>
+  </note>
+
+  <para>
+   This release contains a variety of fixes from 8.4.2.
+   For information about new features in the 8.4 major release, see
+   <xref linkend="release-8-4">.
+  </para>
+
+  <sect2>
+   <title>Migration to Version 8.4.3</title>
+
+   <para>
+    A dump/restore is not required for those running 8.4.X.
+    However, if you are upgrading from a version earlier than 8.4.2,
+    see the release notes for 8.4.2.
+   </para>
+
+  </sect2>
+
+  <sect2>
+   <title>Changes</title>
+
+   <itemizedlist>
+
+    <listitem>
+     <para>
+      Add new configuration parameter <varname>ssl_renegotiation_limit</> to
+      control how often we do session key renegotiation for an SSL connection
+      (Magnus)
+     </para>
+
+     <para>
+      This can be set to zero to disable renegotiation completely, which may
+      be required if a broken SSL library is used.  In particular, some
+      vendors are shipping stopgap patches for CVE-2009-3555 that cause
+      renegotiation attempts to fail.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix possible deadlock during backend startup (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix possible crashes due to not handling errors during relcache reload
+      cleanly (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix possible crash due to use of dangling pointer to a cached plan
+      (Tatsuo)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix possible crash due to overenthusiastic invalidation of cached
+      plan for <command>ROLLBACK</> (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix possible crashes when trying to recover from a failure in
+      subtransaction start (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix server memory leak associated with use of savepoints and a client
+      encoding different from server's encoding (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix incorrect WAL data emitted during end-of-recovery cleanup of a GIST
+      index page split (Yoichi Hirai)
+     </para>
+
+     <para>
+      This would result in index corruption, or even more likely an error
+      during WAL replay, if we were unlucky enough to crash during
+      end-of-recovery cleanup after having completed an incomplete GIST
+      insertion.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix bug in WAL redo cleanup method for GIN indexes (Heikki)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix incorrect comparison of scan key in GIN index search (Teodor)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Make <function>substring()</> for <type>bit</> types treat any negative
+      length as meaning <quote>all the rest of the string</> (Tom)
+     </para>
+
+     <para>
+      The previous coding treated only -1 that way, and would produce an
+      invalid result value for other negative values, possibly leading to
+      a crash (CVE-2010-0442).
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix integer-to-bit-string conversions to handle the first fractional
+      byte correctly when the output bit width is wider than the given
+      integer by something other than a multiple of 8 bits (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix some cases of pathologically slow regular expression matching (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix bug occurring when trying to inline a SQL function that returns
+      a set of a composite type that contains dropped columns (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix bug with trying to update a field of an element of a
+      composite-type array column (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Avoid failure when <command>EXPLAIN</> has to print a FieldStore or
+      assignment ArrayRef expression (Tom)
+     </para>
+
+     <para>
+      These cases can arise now that <command>EXPLAIN VERBOSE</> tries to
+      print plan node target lists.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Avoid an unnecessary coercion failure in some cases where an undecorated
+      literal string appears in a subquery within
+      <command>UNION</>/<command>INTERSECT</>/<command>EXCEPT</> (Tom)
+     </para>
+
+     <para>
+      This fixes a regression for some cases that worked before 8.4.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Avoid undesirable rowtype compatibility check failures in some cases
+      where a whole-row Var has a rowtype that contains dropped columns (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix the <literal>STOP WAL LOCATION</> entry in backup history files to
+      report the next WAL segment's name when the end location is exactly at a
+      segment boundary (Itagaki Takahiro)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Always pass the catalog ID to an option validator function specified in
+      <command>CREATE FOREIGN DATA WRAPPER</> (Martin Pihlak)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix some more cases of temporary-file leakage (Heikki)
+     </para>
+
+     <para>
+      This corrects a problem introduced in the previous minor release.
+      One case that failed is when a plpgsql function returning set is
+      called within another function's exception handler.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Add support for doing <literal>FULL JOIN ON FALSE</> (Tom)
+     </para>
+
+     <para>
+      This prevents a regression from pre-8.4 releases for some queries that
+      can now be simplified to a constant-false join condition.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Improve constraint exclusion processing of boolean-variable cases,
+      in particular make it possible to exclude a partition that has a
+      <quote>bool_column = false</> constraint (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Prevent treating an <literal>INOUT</> cast as representing binary
+      compatibility (Heikki)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Include column name in the message when warning about inability to
+      grant or revoke column-level privileges (Stephen Frost)
+     </para>
+
+     <para>
+      This is more useful than before and helps to prevent confusion when
+      a <command>REVOKE</> generates multiple messages, which formerly
+      appeared to be duplicates.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      When reading <filename>pg_hba.conf</> and related files, do not treat
+      <literal>@something</> as a file inclusion request if the <literal>@</>
+      appears inside quote marks; also, never treat <literal>@</> by itself
+      as a file inclusion request (Tom)
+     </para>
+
+     <para>
+      This prevents erratic behavior if a role or database name starts with
+      <literal>@</>.  If you need to include a file whose path name
+      contains spaces, you can still do so, but you must write
+      <literal>@"/path to/file"</> rather than putting the quotes around
+      the whole construct.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Prevent infinite loop on some platforms if a directory is named as
+      an inclusion target in <filename>pg_hba.conf</> and related files
+      (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix possible infinite loop if <function>SSL_read</> or
+      <function>SSL_write</> fails without setting <varname>errno</> (Tom)
+     </para>
+
+     <para>
+      This is reportedly possible with some Windows versions of
+      <application>openssl</>.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Disallow <acronym>GSSAPI</> authentication on local connections,
+      since it requires a hostname to function correctly (Magnus)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Protect <application>ecpg</> against applications freeing strings
+      unexpectedly (Michael)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Make <application>ecpg</> report the proper SQLSTATE if the connection
+      disappears (Michael)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix translation of cell contents in <application>psql</> <literal>\d</>
+      output (Heikki)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <application>psql</>'s <literal>numericlocale</> option to not
+      format strings it shouldn't in latex and troff output formats (Heikki)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix a small per-query memory leak in <application>psql</> (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Make <application>psql</> return the correct exit status (3) when
+      <literal>ON_ERROR_STOP</> and <literal>--single-transaction</> are
+      both specified and an error occurs during the implied <command>COMMIT</>
+      (Bruce)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <application>pg_dump</>'s output of permissions for foreign servers
+      (Heikki)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix possible crash in parallel <application>pg_restore</> due to
+      out-of-range dependency IDs (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix plpgsql failure in one case where a composite column is set to NULL
+      (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix possible failure when calling PL/Perl functions from PL/PerlU
+      or vice versa (Tim Bunce)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Add <literal>volatile</> markings in PL/Python to avoid possible
+      compiler-specific misbehavior (Zdenek Kotala)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Ensure PL/Tcl initializes the Tcl interpreter fully (Tom)
+     </para>
+
+     <para>
+      The only known symptom of this oversight is that the Tcl
+      <literal>clock</> command misbehaves if using Tcl 8.5 or later.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Prevent <function>ExecutorEnd</> from being run on portals created
+      within a failed transaction or subtransaction (Tom)
+     </para>
+
+     <para>
+      This is known to cause issues when using
+      <filename>contrib/auto_explain</>.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Prevent crash in <filename>contrib/dblink</> when too many key
+      columns are specified to a <function>dblink_build_sql_*</> function
+      (Rushabh Lathia, Joe Conway)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Allow zero-dimensional arrays in <filename>contrib/ltree</> operations
+      (Tom)
+     </para>
+
+     <para>
+      This case was formerly rejected as an error, but it's more convenient to
+      treat it the same as a zero-element array.  In particular this avoids
+      unnecessary failures when an <type>ltree</> operation is applied to the
+      result of <literal>ARRAY(SELECT ...)</> and the sub-select returns no
+      rows.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix assorted crashes in <filename>contrib/xml2</> caused by sloppy
+      memory management (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Make building of <filename>contrib/xml2</> more robust on Windows
+      (Andrew)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix race condition in Windows signal handling (Radu Ilie)
+     </para>
+
+     <para>
+      One known symptom of this bug is that rows in <structname>pg_listener</>
+      could be dropped under heavy load.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Make the configure script report failure if the C compiler does
+      not provide a working 64-bit integer datatype (Tom)
+     </para>
+
+     <para>
+      This case has been broken for some time, and no longer seems worth
+      supporting, so just reject it at configure time instead.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Update time zone data files to <application>tzdata</> release 2010e
+      for DST law changes in Bangladesh, Chile, Fiji, Mexico, Paraguay, Samoa.
+     </para>
+    </listitem>
+
+   </itemizedlist>
+
+  </sect2>
+ </sect1>
 
  <sect1 id="release-8-4-2">
   <title>Release 8.4.2</title>
@@ -448,6 +915,13 @@ WITH w AS (SELECT * FROM foo) SELECT * FROM w, bar ... FOR UPDATE
      <para>
       Re-allow regular expression special characters in <application>psql</>'s
       <literal>\df</> function name parameter (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      In <filename>contrib/fuzzystrmatch</>, correct the calculation of
+      <function>levenshtein</> distances with non-default costs (Marcin Mank)
      </para>
     </listitem>
 
