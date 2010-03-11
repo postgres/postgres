@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/common/reloptions.c,v 1.33 2010/02/26 02:00:32 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/common/reloptions.c,v 1.34 2010/03/11 21:47:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -244,8 +244,9 @@ static void
 initialize_reloptions(void)
 {
 	int			i;
-	int			j = 0;
+	int			j;
 
+	j = 0;
 	for (i = 0; boolRelOpts[i].gen.name; i++)
 		j++;
 	for (i = 0; intRelOpts[i].gen.name; i++)
@@ -302,6 +303,9 @@ initialize_reloptions(void)
 
 	/* add a list terminator */
 	relOpts[j] = NULL;
+
+	/* flag the work is complete */
+	need_initialization = false;
 }
 
 /*
