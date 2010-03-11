@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/procarray.c,v 1.60 2010/02/26 02:01:00 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/procarray.c,v 1.61 2010/03/11 09:26:59 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -448,6 +448,7 @@ ProcArrayApplyRecoveryInfo(RunningTransactions running)
 	/*
 	 * Remove stale transactions, if any.
 	 */
+	Assert(TransactionIdIsValid(running->oldestRunningXid));
 	ExpireOldKnownAssignedTransactionIds(running->oldestRunningXid);
 	StandbyReleaseOldLocks(running->oldestRunningXid);
 
@@ -2518,7 +2519,7 @@ KnownAssignedXidsRemoveMany(TransactionId xid, bool keepPreparedXacts)
 
 		if (!TransactionIdIsValid(xid) || TransactionIdPrecedes(removeXid, xid))
 		{
-			if (keepPreparedXacts && StandbyTransactionIdIsPrepared(xid))
+			if (keepPreparedXacts && StandbyTransactionIdIsPrepared(removeXid))
 				continue;
 			else
 			{
