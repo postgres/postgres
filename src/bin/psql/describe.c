@@ -8,7 +8,7 @@
  *
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.240 2010/03/11 04:36:43 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.241 2010/03/11 21:29:32 tgl Exp $
  */
 #include "postgres_fe.h"
 
@@ -1105,7 +1105,6 @@ describeOneTableDetails(const char *schemaname,
 		bool		hasrules;
 		bool		hastriggers;
 		bool		hasoids;
-		bool		hasexclusion;
 		Oid			tablespace;
 		char	   *reloptions;
 		char	   *reloftype;
@@ -1128,8 +1127,8 @@ describeOneTableDetails(const char *schemaname,
 		printfPQExpBuffer(&buf,
 			  "SELECT c.relchecks, c.relkind, c.relhasindex, c.relhasrules, "
 						  "c.relhastriggers, c.relhasoids, "
-						  "%s, c.reltablespace, c.relhasexclusion, "
-						  "CASE WHEN c.reloftype = 0 THEN '' ELSE c.reloftype::pg_catalog.regtype::text END\n"
+						  "%s, c.reltablespace, "
+						  "CASE WHEN c.reloftype = 0 THEN '' ELSE c.reloftype::pg_catalog.regtype::pg_catalog.text END\n"
 						  "FROM pg_catalog.pg_class c\n "
 		   "LEFT JOIN pg_catalog.pg_class tc ON (c.reltoastrelid = tc.oid)\n"
 						  "WHERE c.oid = '%s'\n",
@@ -1207,10 +1206,8 @@ describeOneTableDetails(const char *schemaname,
 		strdup(PQgetvalue(res, 0, 6)) : 0;
 	tableinfo.tablespace = (pset.sversion >= 80000) ?
 		atooid(PQgetvalue(res, 0, 7)) : 0;
-	tableinfo.hasexclusion = (pset.sversion >= 90000) ?
-		strcmp(PQgetvalue(res, 0, 8), "t") == 0 : false;
-	tableinfo.reloftype = (pset.sversion >= 90000 && strcmp(PQgetvalue(res, 0, 9), "") != 0) ?
-		strdup(PQgetvalue(res, 0, 9)) : 0;
+	tableinfo.reloftype = (pset.sversion >= 90000 && strcmp(PQgetvalue(res, 0, 8), "") != 0) ?
+		strdup(PQgetvalue(res, 0, 8)) : 0;
 	PQclear(res);
 	res = NULL;
 
@@ -1545,27 +1542,23 @@ describeOneTableDetails(const char *schemaname,
 				appendPQExpBuffer(&buf, "i.indisvalid, ");
 			else
 				appendPQExpBuffer(&buf, "true as indisvalid, ");
-			appendPQExpBuffer(&buf, "pg_catalog.pg_get_indexdef(i.indexrelid, 0, true)");
+			appendPQExpBuffer(&buf, "pg_catalog.pg_get_indexdef(i.indexrelid, 0, true),\n  ");
 			if (pset.sversion >= 90000)
 				appendPQExpBuffer(&buf,
-								  ",\n  (NOT i.indimmediate) AND "
-								  "EXISTS (SELECT 1 FROM pg_catalog.pg_constraint "
-								  "WHERE conrelid = i.indrelid AND "
-								  "conindid = i.indexrelid AND "
-								  "contype IN ('p','u','x') AND "
-								  "condeferrable) AS condeferrable"
-								  ",\n  (NOT i.indimmediate) AND "
-								  "EXISTS (SELECT 1 FROM pg_catalog.pg_constraint "
-								  "WHERE conrelid = i.indrelid AND "
-								  "conindid = i.indexrelid AND "
-								  "contype IN ('p','u','x') AND "
-								  "condeferred) AS condeferred");
+								  "pg_catalog.pg_get_constraintdef(con.oid, true), "
+								  "contype, condeferrable, condeferred");
 			else
-				appendPQExpBuffer(&buf, ", false AS condeferrable, false AS condeferred");
+				appendPQExpBuffer(&buf,
+								  "null AS constraintdef, null AS contype, "
+								  "false AS condeferrable, false AS condeferred");
 			if (pset.sversion >= 80000)
 				appendPQExpBuffer(&buf, ", c2.reltablespace");
 			appendPQExpBuffer(&buf,
-							  "\nFROM pg_catalog.pg_class c, pg_catalog.pg_class c2, pg_catalog.pg_index i\n"
+							  "\nFROM pg_catalog.pg_class c, pg_catalog.pg_class c2, pg_catalog.pg_index i\n");
+			if (pset.sversion >= 90000)
+				appendPQExpBuffer(&buf,
+								  "  LEFT JOIN pg_catalog.pg_constraint con ON (conrelid = i.indrelid AND conindid = i.indexrelid AND contype IN ('p','u','x'))\n");
+			appendPQExpBuffer(&buf,
 							  "WHERE c.oid = '%s' AND c.oid = i.indrelid AND i.indexrelid = c2.oid\n"
 			  "ORDER BY i.indisprimary DESC, i.indisunique DESC, c2.relname",
 							  oid);
@@ -1580,46 +1573,55 @@ describeOneTableDetails(const char *schemaname,
 				printTableAddFooter(&cont, _("Indexes:"));
 				for (i = 0; i < tuples; i++)
 				{
-					const char *indexdef;
-					const char *usingpos;
-
 					/* untranslated index name */
 					printfPQExpBuffer(&buf, "    \"%s\"",
 									  PQgetvalue(result, i, 0));
 
-					/* Label as primary key or unique (but not both) */
-					appendPQExpBuffer(&buf,
-								   strcmp(PQgetvalue(result, i, 1), "t") == 0
-									  ? " PRIMARY KEY," :
-								  (strcmp(PQgetvalue(result, i, 2), "t") == 0
-								   ? " UNIQUE,"
-								   : ""));
-					/* Everything after "USING" is echoed verbatim */
-					indexdef = PQgetvalue(result, i, 5);
-					usingpos = strstr(indexdef, " USING ");
-					if (usingpos)
-						indexdef = usingpos + 7;
+					/* If exclusion constraint, print the constraintdef */
+					if (strcmp(PQgetvalue(result, i, 7), "x") == 0)
+					{
+						appendPQExpBuffer(&buf, " %s",
+										  PQgetvalue(result, i, 6));
+					}
+					else
+					{
+						const char *indexdef;
+						const char *usingpos;
 
-					appendPQExpBuffer(&buf, " %s", indexdef);
+						/* Label as primary key or unique (but not both) */
+						if (strcmp(PQgetvalue(result, i, 1), "t") == 0)
+							appendPQExpBuffer(&buf, " PRIMARY KEY,");
+						else if (strcmp(PQgetvalue(result, i, 2), "t") == 0)
+							appendPQExpBuffer(&buf, " UNIQUE,");
 
+						/* Everything after "USING" is echoed verbatim */
+						indexdef = PQgetvalue(result, i, 5);
+						usingpos = strstr(indexdef, " USING ");
+						if (usingpos)
+							indexdef = usingpos + 7;
+						appendPQExpBuffer(&buf, " %s", indexdef);
+
+						/* Need these for deferrable PK/UNIQUE indexes */
+						if (strcmp(PQgetvalue(result, i, 8), "t") == 0)
+							appendPQExpBuffer(&buf, " DEFERRABLE");
+
+						if (strcmp(PQgetvalue(result, i, 9), "t") == 0)
+							appendPQExpBuffer(&buf, " INITIALLY DEFERRED");
+					}
+
+					/* Add these for all cases */
 					if (strcmp(PQgetvalue(result, i, 3), "t") == 0)
 						appendPQExpBuffer(&buf, " CLUSTER");
 
 					if (strcmp(PQgetvalue(result, i, 4), "t") != 0)
 						appendPQExpBuffer(&buf, " INVALID");
 
-					if (strcmp(PQgetvalue(result, i, 6), "t") == 0)
-						appendPQExpBuffer(&buf, " DEFERRABLE");
-
-					if (strcmp(PQgetvalue(result, i, 7), "t") == 0)
-						appendPQExpBuffer(&buf, " INITIALLY DEFERRED");
-
 					printTableAddFooter(&cont, buf.data);
 
 					/* Print tablespace of the index on the same line */
 					if (pset.sversion >= 80000)
 						add_tablespace_footer(&cont, 'i',
-											atooid(PQgetvalue(result, i, 8)),
+											atooid(PQgetvalue(result, i, 10)),
 											  false);
 				}
 			}
@@ -1644,38 +1646,6 @@ describeOneTableDetails(const char *schemaname,
 			if (tuples > 0)
 			{
 				printTableAddFooter(&cont, _("Check constraints:"));
-				for (i = 0; i < tuples; i++)
-				{
-					/* untranslated contraint name and def */
-					printfPQExpBuffer(&buf, "    \"%s\" %s",
-									  PQgetvalue(result, i, 0),
-									  PQgetvalue(result, i, 1));
-
-					printTableAddFooter(&cont, buf.data);
-				}
-			}
-			PQclear(result);
-		}
-
-		/* print exclusion constraints */
-		if (tableinfo.hasexclusion)
-		{
-			printfPQExpBuffer(&buf,
-							  "SELECT r.conname, "
-							  "pg_catalog.pg_get_constraintdef(r.oid, true)\n"
-							  "FROM pg_catalog.pg_constraint r\n"
-							  "WHERE r.conrelid = '%s' AND r.contype = 'x'\n"
-							  "ORDER BY 1",
-							  oid);
-			result = PSQLexec(buf.data, false);
-			if (!result)
-				goto error_return;
-			else
-				tuples = PQntuples(result);
-
-			if (tuples > 0)
-			{
-				printTableAddFooter(&cont, _("Exclusion constraints:"));
 				for (i = 0; i < tuples; i++)
 				{
 					/* untranslated contraint name and def */
