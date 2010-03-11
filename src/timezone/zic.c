@@ -3,7 +3,7 @@
  * 2006-07-17 by Arthur David Olson.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/timezone/zic.c,v 1.24 2009/06/11 14:49:15 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/timezone/zic.c,v 1.25 2010/03/11 18:43:24 tgl Exp $
  */
 
 #include "postgres_fe.h"
@@ -41,7 +41,7 @@ typedef int64 zic_t;
 #endif
 #endif
 
-static char elsieid[] = "@(#)zic.c  8.17";
+static char elsieid[] = "@(#)zic.c	8.20";
 
 /*
  * On some ancient hosts, predicates like `isspace(C)' are defined
@@ -162,7 +162,7 @@ static void rulesub(struct rule * rp,
 		const char *dayp, const char *timep);
 static void setboundaries(void);
 static pg_time_t tadd(const pg_time_t t1, long t2);
-static void usage(void);
+static void usage(FILE *stream, int status);
 static void writezone(const char *name, const char *string);
 static int	yearistype(int year, const char *type);
 
@@ -454,13 +454,15 @@ warning(const char *string)
 }
 
 static void
-usage(void)
+usage(FILE *stream, int status)
 {
-	(void) fprintf(stderr, _("%s: usage is %s \
-[ --version ] [ -v ] [ -l localtime ] [ -p posixrules ] \\\n\
-\t[ -d directory ] [ -L leapseconds ] [ -y yearistype ] [ filename ... ]\n"),
+	(void) fprintf(stream, _("%s: usage is %s \
+[ --version ] [ --help ] [ -v ] [ -l localtime ] [ -p posixrules ] \\\n\
+\t[ -d directory ] [ -L leapseconds ] [ -y yearistype ] [ filename ... ]\n\
+\n\
+Report bugs to tz@elsie.nci.nih.gov.\n"),
 				   progname, progname);
-	exit(EXIT_FAILURE);
+	exit(status);
 }
 
 static const char *psxrules;
@@ -492,11 +494,15 @@ main(int argc, char *argv[])
 			(void) printf("%s\n", elsieid);
 			exit(EXIT_SUCCESS);
 		}
+		else if (strcmp(argv[i], "--help") == 0)
+		{
+			usage(stdout, EXIT_SUCCESS);
+		}
 	while ((c = getopt(argc, argv, "d:l:p:L:vsy:")) != EOF && c != -1)
 		switch (c)
 		{
 			default:
-				usage();
+				usage(stderr, EXIT_FAILURE);
 			case 'd':
 				if (directory == NULL)
 					directory = optarg;
@@ -560,7 +566,7 @@ main(int argc, char *argv[])
 				break;
 		}
 	if (optind == argc - 1 && strcmp(argv[optind], "=") == 0)
-		usage();				/* usage message by request */
+		usage(stderr, EXIT_FAILURE);			/* usage message by request */
 	if (directory == NULL)
 		directory = "data";
 	if (yitcommand == NULL)
@@ -2035,7 +2041,7 @@ stringzone(char *result, const struct zone * zpfirst, int zonecount)
 		if (stdrp != NULL && stdrp->r_hiyear == 2037)
 			return;
 	}
-	if (stdrp == NULL && zp->z_nrules != 0)
+	if (stdrp == NULL && (zp->z_nrules != 0 || zp->z_stdoff != 0))
 		return;
 	abbrvar = (stdrp == NULL) ? "" : stdrp->r_abbrvar;
 	doabbr(result, zp->z_format, abbrvar, FALSE, TRUE);
@@ -2115,7 +2121,7 @@ outzone(const struct zone * zpfirst, int zonecount)
 	if (leapseen)
 	{
 		updateminmax(leapminyear);
-		updateminmax(leapmaxyear);
+		updateminmax(leapmaxyear + (leapmaxyear < INT_MAX));
 	}
 	for (i = 0; i < zonecount; ++i)
 	{

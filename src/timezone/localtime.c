@@ -3,7 +3,7 @@
  * 1996-06-05 by Arthur David Olson.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/timezone/localtime.c,v 1.21 2009/06/11 14:49:15 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/timezone/localtime.c,v 1.22 2010/03/11 18:43:24 tgl Exp $
  */
 
 /*
@@ -164,6 +164,7 @@ tzload(const char *name, char *canonname, struct state * sp, int doextend)
 									4 * TZ_MAX_TIMES];
 	}			u;
 
+	sp->goback = sp->goahead = FALSE;
 	if (name == NULL && (name = TZDEFAULT) == NULL)
 		return -1;
 	if (name[0] == ':')
@@ -357,16 +358,25 @@ tzload(const char *name, char *canonname, struct state * sp, int doextend)
 			sp->ttis[sp->typecnt++] = ts.ttis[1];
 		}
 	}
-	i = 2 * YEARSPERREPEAT;
-	sp->goback = sp->goahead = sp->timecnt > i;
-	sp->goback = sp->goback &&
-		typesequiv(sp, sp->types[i], sp->types[0]) &&
-		differ_by_repeat(sp->ats[i], sp->ats[0]);
-	sp->goahead = sp->goahead &&
-		typesequiv(sp, sp->types[sp->timecnt - 1],
-				   sp->types[sp->timecnt - 1 - i]) &&
-		differ_by_repeat(sp->ats[sp->timecnt - 1],
-						 sp->ats[sp->timecnt - 1 - i]);
+	if (sp->timecnt > 1)
+	{
+		for (i = 1; i < sp->timecnt; ++i)
+			if (typesequiv(sp, sp->types[i], sp->types[0]) &&
+				differ_by_repeat(sp->ats[i], sp->ats[0]))
+			{
+				sp->goback = TRUE;
+				break;
+			}
+		for (i = sp->timecnt - 2; i >= 0; --i)
+			if (typesequiv(sp, sp->types[sp->timecnt - 1],
+						   sp->types[i]) &&
+				differ_by_repeat(sp->ats[sp->timecnt - 1],
+								 sp->ats[i]))
+			{
+				sp->goahead = TRUE;
+				break;
+			}
+	}
 	return 0;
 }
 

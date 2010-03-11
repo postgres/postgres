@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/timezone/README,v 1.7 2008/03/21 13:23:29 momjian Exp $
+$PostgreSQL: pgsql/src/timezone/README,v 1.8 2010/03/11 18:43:24 tgl Exp $
 
 Timezone
 ========
@@ -7,7 +7,7 @@ This is a PostgreSQL adapted version of the timezone library from:
 
 	ftp://elsie.nci.nih.gov/pub/tzcode*.tar.gz
 
-The code is currently synced with release 2007k.  There are many cosmetic
+The code is currently synced with release 2010c.  There are many cosmetic
 (and not so cosmetic) differences from the original tzcode library, but
 diffs in the upstream version should usually be propagated to our version.
 
