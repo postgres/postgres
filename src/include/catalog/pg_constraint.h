@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_constraint.h,v 1.38 2010/02/26 02:01:21 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_constraint.h,v 1.39 2010/03/11 03:36:22 tgl Exp $
  *
  * NOTES
  *	  the genbki.pl script reads this file and generates .bki
@@ -64,11 +64,11 @@ CATALOG(pg_constraint,2606)
 
 	/*
 	 * conindid links to the index supporting the constraint, if any;
-	 * otherwise it's 0.  This is used for unique and primary-key constraints,
-	 * and less obviously for foreign-key constraints (where the index is a
-	 * unique index on the referenced relation's referenced columns). Notice
-	 * that the index is on conrelid in the first case but confrelid in the
-	 * second.
+	 * otherwise it's 0.  This is used for unique, primary-key, and exclusion
+	 * constraints, and less obviously for foreign-key constraints (where the
+	 * index is a unique index on the referenced relation's referenced
+	 * columns).  Notice that the index is on conrelid in the first case but
+	 * confrelid in the second.
 	 */
 	Oid			conindid;		/* index supporting this constraint */
 
