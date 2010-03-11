@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/standby.c,v 1.14 2010/02/26 02:01:00 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/standby.c,v 1.15 2010/03/11 09:10:25 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -629,9 +629,11 @@ StandbyReleaseLockTree(TransactionId xid, int nsubxids, TransactionId *subxids)
 }
 
 /*
- * StandbyReleaseOldLocks
+ * StandbyReleaseLocksMany
  *		Release standby locks held by XIDs < removeXid
- *		In some cases, keep prepared transactions.
+ *
+ * If keepPreparedXacts is true, keep prepared transactions even if
+ * they're older than removeXid
  */
 static void
 StandbyReleaseLocksMany(TransactionId removeXid, bool keepPreparedXacts)
