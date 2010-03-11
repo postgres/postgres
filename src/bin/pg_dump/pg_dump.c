@@ -25,7 +25,7 @@
  *	http://archives.postgresql.org/pgsql-bugs/2010-02/msg00187.php
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.577 2010/03/03 23:38:44 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.578 2010/03/11 04:36:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3956,6 +3956,11 @@ getIndexes(TableInfo tblinfo[], int numTables)
 		 * that is related by an internal dependency link to the index. If we
 		 * find one, create a CONSTRAINT entry linked to the INDEX entry.  We
 		 * assume an index won't have more than one internal dependency.
+		 *
+		 * As of 9.0 we don't need to look at pg_depend but can check for
+		 * a match to pg_constraint.conindid.  The check on conrelid is
+		 * redundant but useful because that column is indexed while conindid
+		 * is not.
 		 */
 		resetPQExpBuffer(query);
 		if (g_fout->remoteVersion >= 90000)
@@ -3975,13 +3980,10 @@ getIndexes(TableInfo tblinfo[], int numTables)
 							"array_to_string(t.reloptions, ', ') AS options "
 							  "FROM pg_catalog.pg_index i "
 					  "JOIN pg_catalog.pg_class t ON (t.oid = i.indexrelid) "
-							  "LEFT JOIN pg_catalog.pg_depend d "
-							  "ON (d.classid = t.tableoid "
-							  "AND d.objid = t.oid "
-							  "AND d.deptype = 'i') "
 							  "LEFT JOIN pg_catalog.pg_constraint c "
-							  "ON (d.refclassid = c.tableoid "
-							  "AND d.refobjid = c.oid) "
+							  "ON (i.indrelid = c.conrelid AND "
+							  "i.indexrelid = c.conindid AND "
+							  "c.contype IN ('p','u','x')) "
 							  "WHERE i.indrelid = '%u'::pg_catalog.oid "
 							  "ORDER BY indexname",
 							  tbinfo->dobj.catId.oid);

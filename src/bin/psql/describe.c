@@ -8,7 +8,7 @@
  *
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.239 2010/03/01 20:55:45 heikki Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.240 2010/03/11 04:36:43 tgl Exp $
  */
 #include "postgres_fe.h"
 
@@ -1417,21 +1417,17 @@ describeOneTableDetails(const char *schemaname,
 		if (pset.sversion >= 90000)
 			appendPQExpBuffer(&buf,
 							  "  (NOT i.indimmediate) AND "
-							  "EXISTS (SELECT 1 FROM pg_catalog.pg_depend d, "
-							  "pg_catalog.pg_constraint con WHERE "
-				"d.classid = 'pg_catalog.pg_class'::pg_catalog.regclass AND "
-							  "d.objid = i.indexrelid AND "
-							  "d.refclassid = 'pg_catalog.pg_constraint'::pg_catalog.regclass AND "
-							  "d.refobjid = con.oid AND d.deptype = 'i' AND "
-							  "con.condeferrable) AS condeferrable,\n"
+							  "EXISTS (SELECT 1 FROM pg_catalog.pg_constraint "
+							  "WHERE conrelid = i.indrelid AND "
+							  "conindid = i.indexrelid AND "
+							  "contype IN ('p','u','x') AND "
+							  "condeferrable) AS condeferrable,\n"
 							  "  (NOT i.indimmediate) AND "
-							  "EXISTS (SELECT 1 FROM pg_catalog.pg_depend d, "
-							  "pg_catalog.pg_constraint con WHERE "
-				"d.classid = 'pg_catalog.pg_class'::pg_catalog.regclass AND "
-							  "d.objid = i.indexrelid AND "
-							  "d.refclassid = 'pg_catalog.pg_constraint'::pg_catalog.regclass AND "
-							  "d.refobjid = con.oid AND d.deptype = 'i' AND "
-							  "con.condeferred) AS condeferred,\n");
+							  "EXISTS (SELECT 1 FROM pg_catalog.pg_constraint "
+							  "WHERE conrelid = i.indrelid AND "
+							  "conindid = i.indexrelid AND "
+							  "contype IN ('p','u','x') AND "
+							  "condeferred) AS condeferred,\n");
 		else
 			appendPQExpBuffer(&buf,
 						"  false AS condeferrable, false AS condeferred,\n");
@@ -1553,21 +1549,17 @@ describeOneTableDetails(const char *schemaname,
 			if (pset.sversion >= 90000)
 				appendPQExpBuffer(&buf,
 								  ",\n  (NOT i.indimmediate) AND "
-							 "EXISTS (SELECT 1 FROM pg_catalog.pg_depend d, "
-								  "pg_catalog.pg_constraint con WHERE "
-				"d.classid = 'pg_catalog.pg_class'::pg_catalog.regclass AND "
-								  "d.objid = i.indexrelid AND "
-								  "d.refclassid = 'pg_catalog.pg_constraint'::pg_catalog.regclass AND "
-							  "d.refobjid = con.oid AND d.deptype = 'i' AND "
-								  "con.condeferrable) AS condeferrable"
+								  "EXISTS (SELECT 1 FROM pg_catalog.pg_constraint "
+								  "WHERE conrelid = i.indrelid AND "
+								  "conindid = i.indexrelid AND "
+								  "contype IN ('p','u','x') AND "
+								  "condeferrable) AS condeferrable"
 								  ",\n  (NOT i.indimmediate) AND "
-							 "EXISTS (SELECT 1 FROM pg_catalog.pg_depend d, "
-								  "pg_catalog.pg_constraint con WHERE "
-				"d.classid = 'pg_catalog.pg_class'::pg_catalog.regclass AND "
-								  "d.objid = i.indexrelid AND "
-								  "d.refclassid = 'pg_catalog.pg_constraint'::pg_catalog.regclass AND "
-							  "d.refobjid = con.oid AND d.deptype = 'i' AND "
-								  "con.condeferred) AS condeferred");
+								  "EXISTS (SELECT 1 FROM pg_catalog.pg_constraint "
+								  "WHERE conrelid = i.indrelid AND "
+								  "conindid = i.indexrelid AND "
+								  "contype IN ('p','u','x') AND "
+								  "condeferred) AS condeferred");
 			else
 				appendPQExpBuffer(&buf, ", false AS condeferrable, false AS condeferred");
 			if (pset.sversion >= 80000)
