@@ -13,7 +13,7 @@
  *
  *	Copyright (c) 2001-2010, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.201 2010/02/26 02:00:55 momjian Exp $
+ *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.202 2010/03/12 22:19:19 tgl Exp $
  * ----------
  */
 #include "postgres.h"
@@ -1177,12 +1177,10 @@ pgstat_reset_shared_counters(const char *target)
 	if (strcmp(target, "bgwriter") == 0)
 		msg.m_resettarget = RESET_BGWRITER;
 	else
-	{
 		ereport(ERROR,
-				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("unrecognized reset target: '%s'", target),
-				 errhint("allowed targets are 'bgwriter'.")));
-	}
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("unrecognized reset target: \"%s\"", target),
+				 errhint("Target must be \"bgwriter\".")));
 
 	pgstat_setheader(&msg.m_hdr, PGSTAT_MTYPE_RESETSHAREDCOUNTER);
 	pgstat_send(&msg, sizeof(msg));
@@ -3292,11 +3290,15 @@ pgstat_write_statsfile(bool permanent)
 		/*
 		 * It's not entirely clear whether there could be clock skew between
 		 * backends and the collector; but just in case someone manages to
-		 * send us a stats request time that's far in the future, reset it.
+		 * send us a stats request time that's in the future, reset it.
 		 * This ensures that no inquiry message can cause more than one stats
 		 * file write to occur.
 		 */
-		last_statrequest = last_statwrite;
+		if (last_statrequest > last_statwrite)
+		{
+			elog(LOG, "last_statrequest is in the future, resetting");
+			last_statrequest = last_statwrite;
+		}
 	}
 
 	if (permanent)
@@ -3355,9 +3357,20 @@ pgstat_read_statsfile(Oid onlydb, bool permanent)
 	 * Try to open the status file. If it doesn't exist, the backends simply
 	 * return zero for anything and the collector simply starts from scratch
 	 * with empty counters.
+	 *
+	 * ENOENT is a possibility if the stats collector is not running or has
+	 * not yet written the stats file the first time.  Any other failure
+	 * condition is suspicious.
 	 */
 	if ((fpin = AllocateFile(statfile, PG_BINARY_R)) == NULL)
+	{
+		if (errno != ENOENT)
+			ereport(pgStatRunningInCollector ? LOG : WARNING,
+					(errcode_for_file_access(),
+					 errmsg("could not open statistics file \"%s\": %m",
+							statfile)));
 		return dbhash;
+	}
 
 	/*
 	 * Verify it's of the expected format.
@@ -3366,7 +3379,7 @@ pgstat_read_statsfile(Oid onlydb, bool permanent)
 		|| format_id != PGSTAT_FILE_FORMAT_ID)
 	{
 		ereport(pgStatRunningInCollector ? LOG : WARNING,
-				(errmsg("corrupted pgstat.stat file")));
+				(errmsg("corrupted statistics file \"%s\"", statfile)));
 		goto done;
 	}
 
@@ -3376,7 +3389,7 @@ pgstat_read_statsfile(Oid onlydb, bool permanent)
 	if (fread(&globalStats, 1, sizeof(globalStats), fpin) != sizeof(globalStats))
 	{
 		ereport(pgStatRunningInCollector ? LOG : WARNING,
-				(errmsg("corrupted pgstat.stat file")));
+				(errmsg("corrupted statistics file \"%s\"", statfile)));
 		goto done;
 	}
 
@@ -3398,7 +3411,8 @@ pgstat_read_statsfile(Oid onlydb, bool permanent)
 						  fpin) != offsetof(PgStat_StatDBEntry, tables))
 				{
 					ereport(pgStatRunningInCollector ? LOG : WARNING,
-							(errmsg("corrupted pgstat.stat file")));
+							(errmsg("corrupted statistics file \"%s\"",
+									statfile)));
 					goto done;
 				}
 
@@ -3412,7 +3426,8 @@ pgstat_read_statsfile(Oid onlydb, bool permanent)
 				if (found)
 				{
 					ereport(pgStatRunningInCollector ? LOG : WARNING,
-							(errmsg("corrupted pgstat.stat file")));
+							(errmsg("corrupted statistics file \"%s\"",
+									statfile)));
 					goto done;
 				}
 
@@ -3474,7 +3489,8 @@ pgstat_read_statsfile(Oid onlydb, bool permanent)
 						  fpin) != sizeof(PgStat_StatTabEntry))
 				{
 					ereport(pgStatRunningInCollector ? LOG : WARNING,
-							(errmsg("corrupted pgstat.stat file")));
+							(errmsg("corrupted statistics file \"%s\"",
+									statfile)));
 					goto done;
 				}
 
@@ -3491,7 +3507,8 @@ pgstat_read_statsfile(Oid onlydb, bool permanent)
 				if (found)
 				{
 					ereport(pgStatRunningInCollector ? LOG : WARNING,
-							(errmsg("corrupted pgstat.stat file")));
+							(errmsg("corrupted statistics file \"%s\"",
+									statfile)));
 					goto done;
 				}
 
@@ -3506,7 +3523,8 @@ pgstat_read_statsfile(Oid onlydb, bool permanent)
 						  fpin) != sizeof(PgStat_StatFuncEntry))
 				{
 					ereport(pgStatRunningInCollector ? LOG : WARNING,
-							(errmsg("corrupted pgstat.stat file")));
+							(errmsg("corrupted statistics file \"%s\"",
+									statfile)));
 					goto done;
 				}
 
@@ -3523,7 +3541,8 @@ pgstat_read_statsfile(Oid onlydb, bool permanent)
 				if (found)
 				{
 					ereport(pgStatRunningInCollector ? LOG : WARNING,
-							(errmsg("corrupted pgstat.stat file")));
+							(errmsg("corrupted statistics file \"%s\"",
+									statfile)));
 					goto done;
 				}
 
@@ -3538,7 +3557,8 @@ pgstat_read_statsfile(Oid onlydb, bool permanent)
 
 			default:
 				ereport(pgStatRunningInCollector ? LOG : WARNING,
-						(errmsg("corrupted pgstat.stat file")));
+						(errmsg("corrupted statistics file \"%s\"",
+								statfile)));
 				goto done;
 		}
 	}
@@ -3568,10 +3588,18 @@ pgstat_read_statsfile_timestamp(bool permanent, TimestampTz *ts)
 	const char *statfile = permanent ? PGSTAT_STAT_PERMANENT_FILENAME : pgstat_stat_filename;
 
 	/*
-	 * Try to open the status file.
+	 * Try to open the status file.  As above, anything but ENOENT is worthy
+	 * of complaining about.
 	 */
 	if ((fpin = AllocateFile(statfile, PG_BINARY_R)) == NULL)
+	{
+		if (errno != ENOENT)
+			ereport(pgStatRunningInCollector ? LOG : WARNING,
+					(errcode_for_file_access(),
+					 errmsg("could not open statistics file \"%s\": %m",
+							statfile)));
 		return false;
+	}
 
 	/*
 	 * Verify it's of the expected format.
@@ -3579,6 +3607,8 @@ pgstat_read_statsfile_timestamp(bool permanent, TimestampTz *ts)
 	if (fread(&format_id, 1, sizeof(format_id), fpin) != sizeof(format_id)
 		|| format_id != PGSTAT_FILE_FORMAT_ID)
 	{
+		ereport(pgStatRunningInCollector ? LOG : WARNING,
+				(errmsg("corrupted statistics file \"%s\"", statfile)));
 		FreeFile(fpin);
 		return false;
 	}
@@ -3588,6 +3618,8 @@ pgstat_read_statsfile_timestamp(bool permanent, TimestampTz *ts)
 	 */
 	if (fread(&myGlobalStats, 1, sizeof(myGlobalStats), fpin) != sizeof(myGlobalStats))
 	{
+		ereport(pgStatRunningInCollector ? LOG : WARNING,
+				(errmsg("corrupted statistics file \"%s\"", statfile)));
 		FreeFile(fpin);
 		return false;
 	}
