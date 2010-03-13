@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.431 2010/02/03 17:25:06 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.432 2010/03/13 11:00:19 petere Exp $ -->
 
 <chapter Id="runtime">
  <title>Server Setup and Operation</title>
@@ -522,9 +522,10 @@ psql: could not connect to server: No such file or directory
     <quote><systemitem class="osname">System V</>
     <acronym>IPC</></quote> (together with message queues, which are not
     relevant for <productname>PostgreSQL</>). Almost all modern
-    operating systems provide these features, but not all of them have
-    them turned on or sufficiently sized by default, especially systems
-    with a BSD heritage. (On <systemitem class="osname">Windows</>,
+    operating systems provide these features, but many of them don't have
+    them turned on or sufficiently sized by default, especially as
+    available RAM and the demands of database applications grow.
+    (On <systemitem class="osname">Windows</>,
     <productname>PostgreSQL</> provides its own replacement 
     implementation of these facilities, so most of this section
     can be disregarded.)
@@ -535,6 +536,7 @@ psql: could not connect to server: No such file or directory
     <errorname>Illegal system call</> error upon server start. In
     that case there is no alternative but to reconfigure your
     kernel.  <productname>PostgreSQL</> won't work without them.
+    This situation is rare, however, among modern operating systems.
    </para>
 
    <para>
@@ -546,8 +548,6 @@ psql: could not connect to server: No such file or directory
     parameters are named consistently across different systems; <xref
     linkend="sysvipc-parameters"> gives an overview. The methods to set
     them, however, vary. Suggestions for some platforms are given below.
-    Be warned that it is often necessary to reboot your machine, and
-    possibly even recompile the kernel, to change these settings.
    </para>
 
 
@@ -643,15 +643,15 @@ psql: could not connect to server: No such file or directory
     avoid the failure.  While it is possible to get
     <productname>PostgreSQL</> to run with <varname>SHMMAX</> as small as
     2 MB, you need considerably more for acceptable performance.  Desirable
-    settings are in the tens to hundreds of megabytes.
+    settings are in the hundreds of megabytes to a few gigabytes.
    </para>
 
    <para>
     Some systems also have a limit on the total amount of shared memory in
     the system (<varname>SHMALL</>).  Make sure this is large enough
     for <productname>PostgreSQL</> plus any other applications that
-    are using shared memory segments.  (Caution: <varname>SHMALL</>
-    is measured in pages rather than bytes on many systems.)
+    are using shared memory segments.  Note that <varname>SHMALL</>
+    is measured in pages rather than bytes on many systems.
    </para>
 
    <para>
@@ -898,29 +898,40 @@ options        SEMMAP=256
       <listitem>
        <para>
         The default maximum segment size is 32 MB, which is only adequate
-        for small <productname>PostgreSQL</productname> installations.
-        However, the remaining
-        defaults are quite generously sized, and usually do not require
-        changes. The maximum shared memory segment size can be changed via the 
-        <command>sysctl</command> interface.  For example, to allow 128 MB, 
-        and explicitly set the maximum total shared memory size to 2097152 
-        pages (the default):
-<screen>
-<prompt>$</prompt> <userinput>sysctl -w kernel.shmmax=134217728</userinput>
-<prompt>$</prompt> <userinput>sysctl -w kernel.shmall=2097152</userinput>
-</screen>
-        In addition these settings can be preserved  between reboots in
-        the file <filename>/etc/sysctl.conf</filename>.
+        for very small <productname>PostgreSQL</productname>
+        installations.  The default maximum total size is 2097152
+        pages.  A page is almost always 4096 bytes except in unusual
+        kernel configurations with <quote>huge pages</quote>
+        (use <literal>getconf PAGE_SIZE</literal> to verify).  That
+        makes a default limit of 8 GB, which is often enough, but not
+        always.
        </para>
 
        <para>
-        Older distributions might not have the <command>sysctl</command> program,
+        The shared memory size settings can be changed via the
+        <command>sysctl</command> interface.  For example, to allow 16 GB:
+<screen>
+<prompt>$</prompt> <userinput>sysctl -w kernel.shmmax=17179869184</userinput>
+<prompt>$</prompt> <userinput>sysctl -w kernel.shmall=4194304</userinput>
+</screen>
+        In addition these settings can be preserved between reboots in
+        the file <filename>/etc/sysctl.conf</filename>.  Doing that is
+        highly recommended.
+       </para>
+
+       <para>
+        Ancient distributions might not have the <command>sysctl</command> program,
         but equivalent changes can be made by manipulating the 
         <filename>/proc</filename> file system:
 <screen>
-<prompt>$</prompt> <userinput>echo 134217728 &gt;/proc/sys/kernel/shmmax</userinput>
-<prompt>$</prompt> <userinput>echo 2097152 &gt;/proc/sys/kernel/shmall</userinput>
+<prompt>$</prompt> <userinput>echo 17179869184 &gt;/proc/sys/kernel/shmmax</userinput>
+<prompt>$</prompt> <userinput>echo 4194304 &gt;/proc/sys/kernel/shmall</userinput>
 </screen>
+       </para>
+
+       <para>
+        The remaining defaults are quite generously sized, and usually
+        do not require changes.
        </para>
       </listitem>
      </varlistentry>
