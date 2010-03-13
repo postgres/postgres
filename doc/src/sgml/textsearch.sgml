@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/textsearch.sgml,v 1.53 2009/08/14 14:53:20 teodor Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/textsearch.sgml,v 1.54 2010/03/13 03:09:04 momjian Exp $ -->
 
 <chapter id="textsearch">
  <title id="textsearch-title">Full Text Search</title>
@@ -1942,6 +1942,13 @@ LIMIT 10;
     since it is sometimes useful to distinguish them.  In most European
     languages, token types <literal>word</> and <literal>asciiword</>
     should be treated alike.
+   </para>
+
+   <para>
+    <literal>email</> does not support all valid email characters as
+    defined by RFC 5322.  Specifically, the only non-alphanumeric
+    characters supported for email user names are period, dash, and
+    underscore.
    </para>
   </note>
 
