@@ -30,7 +30,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/libpq/pqcomm.c,v 1.206 2010/03/13 15:35:46 momjian Exp $
+ *	$PostgreSQL: pgsql/src/backend/libpq/pqcomm.c,v 1.207 2010/03/13 16:40:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1346,10 +1346,10 @@ pq_getkeepalivesidle(Port *port)
 int
 pq_setkeepalivesidle(int idle, Port *port)
 {
+#ifdef TCP_KEEPIDLE
 	if (port == NULL || IS_AF_UNIX(port->laddr.addr.ss_family))
 		return STATUS_OK;
 
-#ifdef TCP_KEEPIDLE
 	if (idle == port->keepalives_idle)
 		return STATUS_OK;
 
@@ -1490,10 +1490,10 @@ pq_getkeepalivescount(Port *port)
 int
 pq_setkeepalivescount(int count, Port *port)
 {
+#ifdef TCP_KEEPCNT
 	if (port == NULL || IS_AF_UNIX(port->laddr.addr.ss_family))
 		return STATUS_OK;
 
-#ifdef TCP_KEEPCNT
 	if (count == port->keepalives_count)
 		return STATUS_OK;
 
