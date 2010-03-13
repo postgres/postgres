@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tsearch/wparser_def.c,v 1.27 2010/01/02 16:57:53 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tsearch/wparser_def.c,v 1.28 2010/03/13 00:41:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1047,6 +1047,7 @@ static const TParserStateActionItem actionTPS_InAsciiWord[] = {
 	{p_iseqC, '.', A_PUSH, TPS_InFileNext, 0, NULL},
 	{p_iseqC, '-', A_PUSH, TPS_InHostFirstAN, 0, NULL},
 	{p_iseqC, '-', A_PUSH, TPS_InHyphenAsciiWordFirst, 0, NULL},
+	{p_iseqC, '_', A_PUSH, TPS_InHostFirstAN, 0, NULL},
 	{p_iseqC, '@', A_PUSH, TPS_InEmail, 0, NULL},
 	{p_iseqC, ':', A_PUSH, TPS_InProtocolFirst, 0, NULL},
 	{p_iseqC, '/', A_PUSH, TPS_InFileFirst, 0, NULL},
@@ -1375,6 +1376,7 @@ static const TParserStateActionItem actionTPS_InHostDomainSecond[] = {
 	{p_isasclet, 0, A_NEXT, TPS_InHostDomain, 0, NULL},
 	{p_isdigit, 0, A_PUSH, TPS_InHost, 0, NULL},
 	{p_iseqC, '-', A_PUSH, TPS_InHostFirstAN, 0, NULL},
+	{p_iseqC, '_', A_PUSH, TPS_InHostFirstAN, 0, NULL},
 	{p_iseqC, '.', A_PUSH, TPS_InHostFirstDomain, 0, NULL},
 	{p_iseqC, '@', A_PUSH, TPS_InEmail, 0, NULL},
 	{NULL, 0, A_POP, TPS_Null, 0, NULL}
@@ -1386,6 +1388,7 @@ static const TParserStateActionItem actionTPS_InHostDomain[] = {
 	{p_isdigit, 0, A_PUSH, TPS_InHost, 0, NULL},
 	{p_iseqC, ':', A_PUSH, TPS_InPortFirst, 0, NULL},
 	{p_iseqC, '-', A_PUSH, TPS_InHostFirstAN, 0, NULL},
+	{p_iseqC, '_', A_PUSH, TPS_InHostFirstAN, 0, NULL},
 	{p_iseqC, '.', A_PUSH, TPS_InHostFirstDomain, 0, NULL},
 	{p_iseqC, '@', A_PUSH, TPS_InEmail, 0, NULL},
 	{p_isdigit, 0, A_POP, TPS_Null, 0, NULL},
@@ -1422,6 +1425,7 @@ static const TParserStateActionItem actionTPS_InHost[] = {
 	{p_iseqC, '@', A_PUSH, TPS_InEmail, 0, NULL},
 	{p_iseqC, '.', A_PUSH, TPS_InHostFirstDomain, 0, NULL},
 	{p_iseqC, '-', A_PUSH, TPS_InHostFirstAN, 0, NULL},
+	{p_iseqC, '_', A_PUSH, TPS_InHostFirstAN, 0, NULL},
 	{NULL, 0, A_POP, TPS_Null, 0, NULL}
 };
 
