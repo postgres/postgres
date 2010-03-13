@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/plpython.sgml,v 1.44 2010/01/22 15:45:15 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/plpython.sgml,v 1.45 2010/03/13 20:55:05 petere Exp $ -->
 
 <chapter id="plpython">
  <title>PL/Python - Python Procedural Language</title>
@@ -153,9 +153,8 @@
   <title>PL/Python Functions</title>
 
   <para>
-   Functions in PL/Python are declared via the standard <xref
-   linkend="sql-createfunction" endterm="sql-createfunction-title">
-   syntax:
+   Functions in PL/Python are declared via the
+   standard <xref linkend="sql-createfunction"> syntax:
 
 <programlisting>
 CREATE FUNCTION <replaceable>funcname</replaceable> (<replaceable>argument-list</replaceable>)
@@ -168,11 +167,15 @@ $$ LANGUAGE plpythonu;
 
   <para>
    The body of a function is simply a Python script. When the function
-   is called, its arguments are passed as elements of the array
-   <varname>args[]</varname>; named arguments are also passed as ordinary
-   variables to the Python script. The result is returned from the Python code
+   is called, its arguments are passed as elements of the list
+   <varname>args</varname>; named arguments are also passed as
+   ordinary variables to the Python script.  Use of named arguments is
+   usually more readable.  The result is returned from the Python code
    in the usual way, with <literal>return</literal> or
-   <literal>yield</literal> (in case of a result-set statement).
+   <literal>yield</literal> (in case of a result-set statement).  If
+   you do not provide a return value, Python returns the default
+   <symbol>None</symbol>. <application>PL/Python</application> translates
+   Python's <symbol>None</symbol> into the SQL null value.
   </para>
 
   <para>
@@ -201,16 +204,6 @@ def __plpython_procedure_pymax_23456():
 
    assuming that 23456 is the OID assigned to the function by
    <productname>PostgreSQL</productname>.
-  </para>
-
-  <para>
-   The <productname>PostgreSQL</> function parameters are available in
-   the global <varname>args</varname> list.  In the
-   <function>pymax</function> example, <varname>args[0]</varname> contains
-   whatever was passed in as the first argument and
-   <varname>args[1]</varname> contains the second argument's
-   value. Alternatively, one can use named parameters as shown in the example
-   above.  Use of named parameters is usually more readable.
   </para>
 
   <para>
@@ -248,7 +241,122 @@ $$ LANGUAGE plpythonu;
    PL/Python.  It is better to treat the function parameters as
    read-only.
   </para>
+ </sect1>
 
+ <sect1>
+  <title>Data Values</title>
+  <para>
+   Generally speaking, the aim of PL/Python is to provide
+   a <quote>natural</quote> mapping between the PostgreSQL and the
+   Python worlds.  This informs the data mapping rules described
+   below.
+  </para>
+
+  <sect2>
+   <title>Data Type Mapping</title>
+   <para>
+    Function arguments are converted from their PostgreSQL type to a
+    corresponding Python type:
+    <itemizedlist>
+     <listitem>
+      <para>
+       PostgreSQL <type>boolean</type> is converted to Python <type>bool</type>.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       PostgreSQL <type>smallint</type> and <type>int</type> are
+       converted to Python <type>int</type>.
+       PostgreSQL <type>bigint</type> is converted
+       to <type>long</type> in Python 2 and to <type>int</type> in
+       Python 3.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       PostgreSQL <type>real</type>, <type>double</type>,
+       and <type>numeric</type> are converted to
+       Python <type>float</type>.  Note that for
+       the <type>numeric</type> this loses information and can lead to
+       incorrect results.  This might be fixed in a future
+       release.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       PostgreSQL <type>bytea</type> is converted to
+       Python <type>str</type> in Python 2 and to <type>bytes</type>
+       in Python 3.  In Python 2, the string should be treated as a
+       byte sequence without any character encoding.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       All other data types, including the PostgreSQL character string
+       types, are converted to a Python <type>str</type>.  In Python
+       2, this string will be in the PostgreSQL server encoding; in
+       Python 3, it will be a Unicode string like all strings.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       For nonscalar data types, see below.
+      </para>
+     </listitem>
+    </itemizedlist>
+   </para>
+
+   <para>
+    Function return values are converted to the declared PostgreSQL
+    return data type as follows:
+    <itemizedlist>
+     <listitem>
+      <para>
+       When the PostgreSQL return type is <type>boolean</type>, the
+       return value will be evaluated for truth according to the
+       <emphasis>Python</emphasis> rules.  That is, 0 and empty string
+       are false, but notably <literal>'f'</literal> is true.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       When the PostgreSQL return type is <type>bytea</type>, the
+       return value will be converted to a string (Python 2) or bytes
+       (Python 3) using the respective Python builtins, with the
+       result being converted <type>bytea</type>.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       For all other PostgreSQL return types, the returned Python
+       value is converted to a string using the Python
+       builtin <literal>str</literal>, and the result is passed to the
+       input function of the PostgreSQL data type.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       For nonscalar data types, see below.
+      </para>
+     </listitem>
+    </itemizedlist>
+
+    Note that logical mismatches between the declared PostgreSQL
+    return type and the Python data type of the actual return object
+    are not flagged; the value will be converted in any case.
+   </para>
+  </sect2>
+
+  <sect2>
+   <title>Null, None</title>
   <para>
    If an SQL null value<indexterm><primary>null value</primary><secondary
    sortas="PL/Python">PL/Python</secondary></indexterm> is passed to a
@@ -276,7 +384,10 @@ $$ LANGUAGE plpythonu;
    function, return the value <symbol>None</symbol>. This can be done whether the
    function is strict or not.
   </para>
+  </sect2>
 
+  <sect2>
+   <title>Arrays, Lists</title>
   <para>
    SQL array values are passed into PL/Python as a Python list.  To
    return an SQL array value out of a PL/Python function, return a
@@ -313,7 +424,10 @@ SELECT return_str_arr();
 (1 row)
 </programlisting>
   </para>
+  </sect2>
 
+  <sect2>
+   <title>Composite Types</title>
   <para>
    Composite-type arguments are passed to the function as Python mappings. The
    element names of the mapping are the attribute names of the composite type.
@@ -430,13 +544,10 @@ $$ LANGUAGE plpythonu;
     </varlistentry>
    </variablelist>
   </para>
+  </sect2>
 
-  <para>
-   If you do not provide a return value, Python returns the default
-   <symbol>None</symbol>. <application>PL/Python</application> translates
-   Python's <symbol>None</symbol> into the SQL null value.
-  </para>
-
+  <sect2>
+   <title>Set-Returning Functions</title>
   <para>
    A <application>PL/Python</application> function can also return sets of
    scalar or composite types. There are several ways to achieve this because
@@ -516,7 +627,7 @@ $$ LANGUAGE plpythonu;
 
        <warning>
         <para>
-         Currently, due to Python 
+         Due to Python
          <ulink url="http://bugs.python.org/issue1483133">bug #1483133</ulink>,
          some debug versions of Python 2.4
          (configured and compiled with option <literal>--with-pydebug</literal>)
@@ -532,7 +643,11 @@ $$ LANGUAGE plpythonu;
     </varlistentry>
    </variablelist>
   </para>
+  </sect2>
+ </sect1>
 
+ <sect1 id="plpython-sharing">
+  <title>Sharing Data</title>
   <para>
    The global dictionary <varname>SD</varname> is available to store
    data between function calls.  This variable is private static data.
@@ -579,24 +694,98 @@ $$ LANGUAGE plpythonu;
 
   <para>
    When a function is used as a trigger, the dictionary
-   <literal>TD</literal> contains trigger-related values.
-   <literal>TD["event"]</> contains
-   the event as a string (<literal>INSERT</>, <literal>UPDATE</>,
-   <literal>DELETE</>, <literal>TRUNCATE</>, or <literal>UNKNOWN</>).
-   <literal>TD["when"]</> contains one of <literal>BEFORE</>,
-   <literal>AFTER</>, or <literal>UNKNOWN</>.
-   <literal>TD["level"]</> contains one of <literal>ROW</>,
-   <literal>STATEMENT</>, or <literal>UNKNOWN</>.
-   For a row-level trigger, the trigger
-   rows are in <literal>TD["new"]</> and/or <literal>TD["old"]</>
-   depending on the trigger event.
-   <literal>TD["name"]</> contains the trigger name,
-   <literal>TD["table_name"]</> contains the name of the table on which the trigger occurred,
-   <literal>TD["table_schema"]</> contains the schema of the table on which the trigger occurred,
-   and <literal>TD["relid"]</> contains the OID of the table on
-   which the trigger occurred.  If the <command>CREATE TRIGGER</> command
-   included arguments, they are available in <literal>TD["args"][0]</> to
-   <literal>TD["args"][<replaceable>n</>-1]</>.
+   <literal>TD</literal> contains trigger-related values:
+   <variablelist>
+    <varlistentry>
+     <term><literal>TD["event"]</></term>
+     <listitem>
+      <para>
+       contains the event as a string:
+       <literal>INSERT</>, <literal>UPDATE</>,
+       <literal>DELETE</>, <literal>TRUNCATE</>,
+       or <literal>UNKNOWN</>.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><literal>TD["when"]</></term>
+     <listitem>
+      <para>
+       contains one of <literal>BEFORE</>, <literal>AFTER</>,
+       or <literal>UNKNOWN</>.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><literal>TD["level"]</></term>
+     <listitem>
+      <para>
+       contains one of <literal>ROW</>,
+       <literal>STATEMENT</>, or <literal>UNKNOWN</>.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><literal>TD["new"]</></term>
+     <term><literal>TD["old"]</></term>
+     <listitem>
+      <para>
+       For a row-level trigger, one or both of these fields contain
+       the respective trigger rows, depending on the trigger event.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><literal>TD["name"]</></term>
+     <listitem>
+      <para>
+       contains the trigger name.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><literal>TD["table_name"]</></term>
+     <listitem>
+      <para>
+       contains the name of the table on which the trigger occurred.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><literal>TD["table_schema"]</></term>
+     <listitem>
+      <para>
+       contains the schema of the table on which the trigger occurred.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><literal>TD["relid"]</></term>
+     <listitem>
+      <para>
+       contains the OID of the table on which the trigger occurred.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><literal>TD["args"]</></term>
+     <listitem>
+      <para>
+       If the <command>CREATE TRIGGER</> command
+       included arguments, they are available in <literal>TD["args"][0]</> to
+       <literal>TD["args"][<replaceable>n</>-1]</>.
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
   </para>
 
   <para>
@@ -617,35 +806,11 @@ $$ LANGUAGE plpythonu;
    The PL/Python language module automatically imports a Python module
    called <literal>plpy</literal>.  The functions and constants in
    this module are available to you in the Python code as
-   <literal>plpy.<replaceable>foo</replaceable></literal>.  At present
-   <literal>plpy</literal> implements the functions
-   <literal>plpy.debug(<replaceable>msg</>)</literal>,
-   <literal>plpy.log(<replaceable>msg</>)</literal>,
-   <literal>plpy.info(<replaceable>msg</>)</literal>,
-   <literal>plpy.notice(<replaceable>msg</>)</literal>,
-   <literal>plpy.warning(<replaceable>msg</>)</literal>,
-   <literal>plpy.error(<replaceable>msg</>)</literal>, and
-   <literal>plpy.fatal(<replaceable>msg</>)</literal>.<indexterm><primary>elog</><secondary>in PL/Python</></indexterm>
-   <function>plpy.error</function> and 
-   <function>plpy.fatal</function> actually raise a Python exception
-   which, if uncaught, propagates out to the calling query, causing
-   the current transaction or subtransaction to be aborted. 
-   <literal>raise plpy.ERROR(<replaceable>msg</>)</literal> and
-   <literal>raise plpy.FATAL(<replaceable>msg</>)</literal> are
-   equivalent to calling
-   <function>plpy.error</function> and
-   <function>plpy.fatal</function>, respectively.
-   The other functions only generate messages of different
-   priority levels.
-   Whether messages of a particular priority are reported to the client,
-   written to the server log, or both is controlled by the
-   <xref linkend="guc-log-min-messages"> and
-   <xref linkend="guc-client-min-messages"> configuration
-   variables. See <xref linkend="runtime-config"> for more information.
+   <literal>plpy.<replaceable>foo</replaceable></literal>.
   </para>
 
   <para>
-   Additionally, the <literal>plpy</literal> module provides two
+   The <literal>plpy</literal> module provides two
    functions called <function>execute</function> and
    <function>prepare</function>.  Calling
    <function>plpy.execute</function> with a query string and an
@@ -697,7 +862,7 @@ rv = plpy.execute(plan, [ "name" ], 5)
    In order to make effective use of this across function calls
    one needs to use one of the persistent storage dictionaries
    <literal>SD</literal> or <literal>GD</literal> (see
-   <xref linkend="plpython-funcs">). For example:
+   <xref linkend="plpython-sharing">). For example:
 <programlisting>
 CREATE FUNCTION usesavedplan() RETURNS trigger AS $$
     if SD.has_key("plan"):
@@ -711,31 +876,34 @@ $$ LANGUAGE plpythonu;
   </para>
  </sect1>
 
-<![IGNORE[
- <!-- NOT CURRENTLY SUPPORTED -->
-
- <sect1 id="plpython-trusted">
-  <title>Restricted Environment</title>
-
+ <sect1 id="plpython-util">
+  <title>Utility Functions</title>
   <para>
-   The current version of <application>PL/Python</application>
-   functions as a trusted language only; access to the file system and
-   other local resources is disabled.  Specifically,
-   <application>PL/Python</application> uses the Python restricted
-   execution environment, further restricts it to prevent the use of
-   the file <function>open</> call, and allows only modules from a
-   specific list to be imported.  Presently, that list includes:
-   <literal>array</>, <literal>bisect</>, <literal>binascii</>,
-   <literal>calendar</>, <literal>cmath</>, <literal>codecs</>,
-   <literal>errno</>, <literal>marshal</>, <literal>math</>, <literal>md5</>,
-   <literal>mpz</>, <literal>operator</>, <literal>pcre</>,
-   <literal>pickle</>, <literal>random</>, <literal>re</>, <literal>regex</>,
-   <literal>sre</>, <literal>sha</>, <literal>string</>, <literal>StringIO</>,
-   <literal>struct</>, <literal>time</>, <literal>whrandom</>, and
-   <literal>zlib</>.
+   The <literal>plpy</literal> module also provides the functions
+   <literal>plpy.debug(<replaceable>msg</>)</literal>,
+   <literal>plpy.log(<replaceable>msg</>)</literal>,
+   <literal>plpy.info(<replaceable>msg</>)</literal>,
+   <literal>plpy.notice(<replaceable>msg</>)</literal>,
+   <literal>plpy.warning(<replaceable>msg</>)</literal>,
+   <literal>plpy.error(<replaceable>msg</>)</literal>, and
+   <literal>plpy.fatal(<replaceable>msg</>)</literal>.<indexterm><primary>elog</><secondary>in PL/Python</></indexterm>
+   <function>plpy.error</function> and
+   <function>plpy.fatal</function> actually raise a Python exception
+   which, if uncaught, propagates out to the calling query, causing
+   the current transaction or subtransaction to be aborted.
+   <literal>raise plpy.ERROR(<replaceable>msg</>)</literal> and
+   <literal>raise plpy.FATAL(<replaceable>msg</>)</literal> are
+   equivalent to calling
+   <function>plpy.error</function> and
+   <function>plpy.fatal</function>, respectively.
+   The other functions only generate messages of different
+   priority levels.
+   Whether messages of a particular priority are reported to the client,
+   written to the server log, or both is controlled by the
+   <xref linkend="guc-log-min-messages"> and
+   <xref linkend="guc-client-min-messages"> configuration
+   variables. See <xref linkend="runtime-config"> for more information.
   </para>
  </sect1>
-
-]]>
 
 </chapter>
