@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.389 2010/03/03 20:31:09 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.390 2010/03/13 14:55:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -90,6 +90,9 @@ static int ldapServiceLookup(const char *purl, PQconninfoOption *options,
  * rather than that of the current code.
  */
 #define ERRCODE_APPNAME_UNKNOWN "42704"
+
+/* This is part of the protocol so just define it */
+#define ERRCODE_INVALID_PASSWORD "28P01"
 
 /*
  * fall back options if they are not specified by arguments or defined
@@ -284,6 +287,8 @@ static int parseServiceFile(const char *serviceFile,
 static char *pwdfMatchesString(char *buf, char *token);
 static char *PasswordFromFile(char *hostname, char *port, char *dbname,
 				 char *username);
+static bool getPgPassFilename(char *pgpassfile);
+static void dot_pg_pass_warning(PGconn *conn);
 static void default_threadlock(int acquire);
 
 
@@ -652,6 +657,8 @@ connectOptions2(PGconn *conn)
 										conn->dbName, conn->pguser);
 		if (conn->pgpass == NULL)
 			conn->pgpass = strdup(DefaultPassword);
+		else
+			conn->dot_pgpass_used = true;
 	}
 
 	/*
@@ -2133,6 +2140,8 @@ keep_going:						/* We will come back to here until there is
 
 error_return:
 
+	dot_pg_pass_warning(conn);
+	
 	/*
 	 * We used to close the socket at this point, but that makes it awkward
 	 * for those above us if they wish to remove this socket from their own
@@ -2191,6 +2200,7 @@ makeEmptyPGconn(void)
 	conn->verbosity = PQERRORS_DEFAULT;
 	conn->sock = -1;
 	conn->password_needed = false;
+	conn->dot_pgpass_used = false;
 #ifdef USE_SSL
 	conn->allow_ssl_try = true;
 	conn->wait_ssl_try = false;
@@ -4323,7 +4333,6 @@ PasswordFromFile(char *hostname, char *port, char *dbname, char *username)
 	FILE	   *fp;
 	char		pgpassfile[MAXPGPATH];
 	struct stat stat_buf;
-	char	   *passfile_env;
 
 #define LINELEN NAMEDATALEN*5
 	char		buf[LINELEN];
@@ -4349,17 +4358,8 @@ PasswordFromFile(char *hostname, char *port, char *dbname, char *username)
 	if (port == NULL)
 		port = DEF_PGPORT_STR;
 
-	if ((passfile_env = getenv("PGPASSFILE")) != NULL)
-		/* use the literal path from the environment, if set */
-		strlcpy(pgpassfile, passfile_env, sizeof(pgpassfile));
-	else
-	{
-		char		homedir[MAXPGPATH];
-
-		if (!pqGetHomeDirectory(homedir, sizeof(homedir)))
-			return NULL;
-		snprintf(pgpassfile, MAXPGPATH, "%s/%s", homedir, PGPASSFILE);
-	}
+	if (!getPgPassFilename(pgpassfile))
+		return NULL;
 
 	/* If password file cannot be opened, ignore it. */
 	if (stat(pgpassfile, &stat_buf) != 0)
@@ -4426,6 +4426,51 @@ PasswordFromFile(char *hostname, char *port, char *dbname, char *username)
 #undef LINELEN
 }
 
+
+static bool getPgPassFilename(char *pgpassfile)
+{
+	char	   *passfile_env;
+
+	if ((passfile_env = getenv("PGPASSFILE")) != NULL)
+		/* use the literal path from the environment, if set */
+		strlcpy(pgpassfile, passfile_env, MAXPGPATH);
+	else
+	{
+		char		homedir[MAXPGPATH];
+
+		if (!pqGetHomeDirectory(homedir, sizeof(homedir)))
+			return false;
+		snprintf(pgpassfile, MAXPGPATH, "%s/%s", homedir, PGPASSFILE);
+	}
+	return true;
+}
+
+/*
+ *	If the connection failed, we should mention if
+ *	we got the password from .pgpass in case that
+ *	password is wrong.
+ */
+static void
+dot_pg_pass_warning(PGconn *conn)
+{
+	/* If it was 'invalid authorization', add .pgpass mention */
+	if (conn->dot_pgpass_used && conn->password_needed && conn->result &&
+		/* only works with >= 9.0 servers */
+		strcmp(PQresultErrorField(conn->result, PG_DIAG_SQLSTATE),
+			ERRCODE_INVALID_PASSWORD) == 0)
+	{
+		char		pgpassfile[MAXPGPATH];
+
+		if (!getPgPassFilename(pgpassfile))
+			return;
+		appendPQExpBufferStr(&conn->errorMessage,
+			libpq_gettext("password retrieved from "));
+		appendPQExpBufferStr(&conn->errorMessage, pgpassfile);
+		appendPQExpBufferChar(&conn->errorMessage, '\n');
+	}
+}
+
+	
 /*
  * Obtain user's home directory, return in given buffer
  *

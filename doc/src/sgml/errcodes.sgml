@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/errcodes.sgml,v 1.28 2009/12/07 05:22:21 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/errcodes.sgml,v 1.29 2010/03/13 14:55:57 momjian Exp $ -->
 
 <appendix id="errcodes-appendix">
  <title><productname>PostgreSQL</productname> Error Codes</title>
@@ -759,6 +759,12 @@
 <entry><literal>28000</literal></entry>
 <entry>INVALID AUTHORIZATION SPECIFICATION</entry>
 <entry>invalid_authorization_specification</entry>
+</row>
+
+<row>
+<entry><literal>28P01</literal></entry>
+<entry>INVALID PASSWORD</entry>
+<entry>invalid_password</entry>
 </row>
 
 

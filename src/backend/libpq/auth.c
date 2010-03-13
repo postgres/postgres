@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/auth.c,v 1.195 2010/02/26 02:00:42 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/auth.c,v 1.196 2010/03/13 14:55:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -232,7 +232,8 @@ static void
 auth_failed(Port *port, int status)
 {
 	const char *errstr;
-
+	int		errcode_return = ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION;
+	
 	/*
 	 * If we failed due to EOF from client, just quit; there's no point in
 	 * trying to send a message to the client, and not much point in logging
@@ -269,6 +270,8 @@ auth_failed(Port *port, int status)
 		case uaMD5:
 		case uaPassword:
 			errstr = gettext_noop("password authentication failed for user \"%s\"");
+			/* We use it to indicate if a .pgpass password failed. */
+			errcode_return = ERRCODE_INVALID_PASSWORD;
 			break;
 		case uaPAM:
 			errstr = gettext_noop("PAM authentication failed for user \"%s\"");
@@ -285,7 +288,7 @@ auth_failed(Port *port, int status)
 	}
 
 	ereport(FATAL,
-			(errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
+			(errcode(errcode_return),
 			 errmsg(errstr, port->user_name)));
 	/* doesn't return */
 }
