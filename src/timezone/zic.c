@@ -3,7 +3,7 @@
  * 2006-07-17 by Arthur David Olson.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/timezone/zic.c,v 1.25 2010/03/11 18:43:24 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/timezone/zic.c,v 1.26 2010/03/13 00:40:43 momjian Exp $
  */
 
 #include "postgres_fe.h"
@@ -566,7 +566,7 @@ main(int argc, char *argv[])
 				break;
 		}
 	if (optind == argc - 1 && strcmp(argv[optind], "=") == 0)
-		usage(stderr, EXIT_FAILURE);			/* usage message by request */
+		usage(stderr, EXIT_FAILURE);	/* usage message by request */
 	if (directory == NULL)
 		directory = "data";
 	if (yitcommand == NULL)
