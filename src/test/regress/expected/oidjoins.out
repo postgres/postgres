@@ -377,6 +377,14 @@ WHERE	dattablespace != 0 AND
 ------+---------------
 (0 rows)
 
+SELECT	ctid, setdatabase 
+FROM	pg_catalog.pg_db_role_setting fk 
+WHERE	setdatabase != 0 AND 
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_database pk WHERE pk.oid = fk.setdatabase);
+ ctid | setdatabase 
+------+-------------
+(0 rows)
+
 SELECT	ctid, classid 
 FROM	pg_catalog.pg_depend fk 
 WHERE	classid != 0 AND 
@@ -423,6 +431,22 @@ WHERE	lanowner != 0 AND
 	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_authid pk WHERE pk.oid = fk.lanowner);
  ctid | lanowner 
 ------+----------
+(0 rows)
+
+SELECT	ctid, lanplcallfoid 
+FROM	pg_catalog.pg_language fk 
+WHERE	lanplcallfoid != 0 AND 
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_proc pk WHERE pk.oid = fk.lanplcallfoid);
+ ctid | lanplcallfoid 
+------+---------------
+(0 rows)
+
+SELECT	ctid, laninline 
+FROM	pg_catalog.pg_language fk 
+WHERE	laninline != 0 AND 
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_proc pk WHERE pk.oid = fk.laninline);
+ ctid | laninline 
+------+-----------
 (0 rows)
 
 SELECT	ctid, lanvalidator 
@@ -687,22 +711,6 @@ WHERE	spcowner != 0 AND
 	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_authid pk WHERE pk.oid = fk.spcowner);
  ctid | spcowner 
 ------+----------
-(0 rows)
-
-SELECT	ctid, tgrelid 
-FROM	pg_catalog.pg_trigger fk 
-WHERE	tgrelid != 0 AND 
-	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_class pk WHERE pk.oid = fk.tgrelid);
- ctid | tgrelid 
-------+---------
-(0 rows)
-
-SELECT	ctid, tgfoid 
-FROM	pg_catalog.pg_trigger fk 
-WHERE	tgfoid != 0 AND 
-	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_proc pk WHERE pk.oid = fk.tgfoid);
- ctid | tgfoid 
-------+--------
 (0 rows)
 
 SELECT	ctid, cfgnamespace 

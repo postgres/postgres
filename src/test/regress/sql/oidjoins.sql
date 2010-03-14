@@ -189,6 +189,10 @@ SELECT	ctid, dattablespace
 FROM	pg_catalog.pg_database fk 
 WHERE	dattablespace != 0 AND 
 	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_tablespace pk WHERE pk.oid = fk.dattablespace);
+SELECT	ctid, setdatabase 
+FROM	pg_catalog.pg_db_role_setting fk 
+WHERE	setdatabase != 0 AND 
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_database pk WHERE pk.oid = fk.setdatabase);
 SELECT	ctid, classid 
 FROM	pg_catalog.pg_depend fk 
 WHERE	classid != 0 AND 
@@ -213,6 +217,14 @@ SELECT	ctid, lanowner
 FROM	pg_catalog.pg_language fk 
 WHERE	lanowner != 0 AND 
 	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_authid pk WHERE pk.oid = fk.lanowner);
+SELECT	ctid, lanplcallfoid 
+FROM	pg_catalog.pg_language fk 
+WHERE	lanplcallfoid != 0 AND 
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_proc pk WHERE pk.oid = fk.lanplcallfoid);
+SELECT	ctid, laninline 
+FROM	pg_catalog.pg_language fk 
+WHERE	laninline != 0 AND 
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_proc pk WHERE pk.oid = fk.laninline);
 SELECT	ctid, lanvalidator 
 FROM	pg_catalog.pg_language fk 
 WHERE	lanvalidator != 0 AND 
@@ -345,14 +357,6 @@ SELECT	ctid, spcowner
 FROM	pg_catalog.pg_tablespace fk 
 WHERE	spcowner != 0 AND 
 	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_authid pk WHERE pk.oid = fk.spcowner);
-SELECT	ctid, tgrelid 
-FROM	pg_catalog.pg_trigger fk 
-WHERE	tgrelid != 0 AND 
-	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_class pk WHERE pk.oid = fk.tgrelid);
-SELECT	ctid, tgfoid 
-FROM	pg_catalog.pg_trigger fk 
-WHERE	tgfoid != 0 AND 
-	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_proc pk WHERE pk.oid = fk.tgfoid);
 SELECT	ctid, cfgnamespace 
 FROM	pg_catalog.pg_ts_config fk 
 WHERE	cfgnamespace != 0 AND 

@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/tools/findoidjoins/README,v 1.6 2008/10/13 12:59:57 tgl Exp $
+$PostgreSQL: pgsql/src/tools/findoidjoins/README,v 1.7 2010/03/14 04:17:54 tgl Exp $
 
 findoidjoins
 ============
@@ -9,10 +9,10 @@ anything but an empty database, such as template1; else it's likely to
 be very slow.
 
 Run on an empty database, it returns the system join relationships (shown
-below for 8.4devel).  Note that unexpected matches may indicate bogus entries
+below for 9.0devel).  Note that unexpected matches may indicate bogus entries
 in system tables --- don't accept a peculiar match without question.
 In particular, a field shown as joining to more than one target table is
-probably messed up.  In 8.4devel, the *only* fields that should join to more
+probably messed up.  In 9.0devel, the *only* fields that should join to more
 than one target are pg_description.objoid, pg_depend.objid,
 pg_depend.refobjid, pg_shdescription.objoid, pg_shdepend.objid, and
 pg_shdepend.refobjid.  (Running make_oidjoins_check is an easy way to spot
@@ -31,7 +31,7 @@ revision in the patterns of cross-links between system tables.
 (Ideally we'd just regenerate the script as part of the regression
 tests themselves, but that seems too slow...)
 
-NOTE: in 8.4devel, make_oidjoins_check produces two bogus join checks:
+NOTE: in 9.0devel, make_oidjoins_check produces two bogus join checks:
 Join pg_catalog.pg_class.relfilenode => pg_catalog.pg_class.oid
 Join pg_catalog.pg_database.datlastsysoid => pg_catalog.pg_database.oid
 These are artifacts and should not be added to the oidjoins regress test.
@@ -87,12 +87,15 @@ Join pg_catalog.pg_conversion.conowner => pg_catalog.pg_authid.oid
 Join pg_catalog.pg_conversion.conproc => pg_catalog.pg_proc.oid
 Join pg_catalog.pg_database.datdba => pg_catalog.pg_authid.oid
 Join pg_catalog.pg_database.dattablespace => pg_catalog.pg_tablespace.oid
+Join pg_catalog.pg_db_role_setting.setdatabase => pg_catalog.pg_database.oid
 Join pg_catalog.pg_depend.classid => pg_catalog.pg_class.oid
 Join pg_catalog.pg_depend.refclassid => pg_catalog.pg_class.oid
 Join pg_catalog.pg_description.classoid => pg_catalog.pg_class.oid
 Join pg_catalog.pg_index.indexrelid => pg_catalog.pg_class.oid
 Join pg_catalog.pg_index.indrelid => pg_catalog.pg_class.oid
 Join pg_catalog.pg_language.lanowner => pg_catalog.pg_authid.oid
+Join pg_catalog.pg_language.lanplcallfoid => pg_catalog.pg_proc.oid
+Join pg_catalog.pg_language.laninline => pg_catalog.pg_proc.oid
 Join pg_catalog.pg_language.lanvalidator => pg_catalog.pg_proc.oid
 Join pg_catalog.pg_namespace.nspowner => pg_catalog.pg_authid.oid
 Join pg_catalog.pg_opclass.opcmethod => pg_catalog.pg_am.oid
@@ -126,8 +129,6 @@ Join pg_catalog.pg_statistic.staop1 => pg_catalog.pg_operator.oid
 Join pg_catalog.pg_statistic.staop2 => pg_catalog.pg_operator.oid
 Join pg_catalog.pg_statistic.staop3 => pg_catalog.pg_operator.oid
 Join pg_catalog.pg_tablespace.spcowner => pg_catalog.pg_authid.oid
-Join pg_catalog.pg_trigger.tgrelid => pg_catalog.pg_class.oid
-Join pg_catalog.pg_trigger.tgfoid => pg_catalog.pg_proc.oid
 Join pg_catalog.pg_ts_config.cfgnamespace => pg_catalog.pg_namespace.oid
 Join pg_catalog.pg_ts_config.cfgowner => pg_catalog.pg_authid.oid
 Join pg_catalog.pg_ts_config.cfgparser => pg_catalog.pg_ts_parser.oid
