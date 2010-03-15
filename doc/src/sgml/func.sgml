@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.507 2010/03/03 22:28:42 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.508 2010/03/15 19:03:31 sriggs Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -910,7 +910,11 @@
    Finally, <xref linkend="functions-math-trig-table"> shows the
    available trigonometric functions.  All trigonometric functions
    take arguments and return values of type <type>double
-   precision</type>.
+   precision</type>. Trigonometric functions arguments are expressed
+   in radians. Inverse functions return values are expressed in
+   radians.  See unit transformation functions
+   <literal><function>radians</function>()</literal> and
+   <literal><function>degrees</function>()</literal> above.
   </para>
 
    <indexterm>
@@ -941,7 +945,7 @@
    <table id="functions-math-trig-table">
     <title>Trigonometric Functions</title>
 
-    <tgroup cols="2">
+    <tgroup cols="3">
      <thead>
       <row>
        <entry>Function</entry>
