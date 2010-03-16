@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.508 2010/03/15 19:03:31 sriggs Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.509 2010/03/16 16:03:24 sriggs Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -945,7 +945,7 @@
    <table id="functions-math-trig-table">
     <title>Trigonometric Functions</title>
 
-    <tgroup cols="3">
+    <tgroup cols="2">
      <thead>
       <row>
        <entry>Function</entry>
