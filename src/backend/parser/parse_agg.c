@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_agg.c,v 1.92 2010/02/26 02:00:49 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_agg.c,v 1.93 2010/03/17 16:52:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,10 +44,11 @@ static bool check_ungrouped_columns_walker(Node *node,
  * transformAggregateCall -
  *		Finish initial transformation of an aggregate call
  *
- * parse_func.c has recognized the function as an aggregate, and has set
- * up all the fields of the Aggref except aggdistinct and agglevelsup.
- * However, the args list is just bare expressions, and the aggorder list
- * hasn't been transformed at all.
+ * parse_func.c has recognized the function as an aggregate, and has set up
+ * all the fields of the Aggref except args, aggorder, aggdistinct and
+ * agglevelsup.  The passed-in args list has been through standard expression
+ * transformation, while the passed-in aggorder list hasn't been transformed
+ * at all.
  *
  * Here we convert the args list into a targetlist by inserting TargetEntry
  * nodes, and then transform the aggorder and agg_distinct specifications to
@@ -59,7 +60,8 @@ static bool check_ungrouped_columns_walker(Node *node,
  * pstate level.
  */
 void
-transformAggregateCall(ParseState *pstate, Aggref *agg, bool agg_distinct)
+transformAggregateCall(ParseState *pstate, Aggref *agg,
+					   List *args, List *aggorder, bool agg_distinct)
 {
 	List	   *tlist;
 	List	   *torder;
@@ -75,7 +77,7 @@ transformAggregateCall(ParseState *pstate, Aggref *agg, bool agg_distinct)
 	 */
 	tlist = NIL;
 	attno = 1;
-	foreach(lc, agg->args)
+	foreach(lc, args)
 	{
 		Expr	   *arg = (Expr *) lfirst(lc);
 		TargetEntry *tle = makeTargetEntry(arg, attno++, NULL, false);
@@ -96,7 +98,7 @@ transformAggregateCall(ParseState *pstate, Aggref *agg, bool agg_distinct)
 	pstate->p_next_resno = attno;
 
 	torder = transformSortClause(pstate,
-								 agg->aggorder,
+								 aggorder,
 								 &tlist,
 								 true /* fix unknowns */ ,
 								 true /* force SQL99 rules */ );

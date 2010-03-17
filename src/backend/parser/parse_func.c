@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_func.c,v 1.222 2010/02/26 02:00:52 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_func.c,v 1.223 2010/03/17 16:52:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -381,10 +381,7 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 
 		aggref->aggfnoid = funcid;
 		aggref->aggtype = rettype;
-		/* args and aggorder will be modified by transformAggregateCall */
-		aggref->args = fargs;
-		aggref->aggorder = agg_order;
-		/* aggdistinct will be set by transformAggregateCall */
+		/* args, aggorder, aggdistinct will be set by transformAggregateCall */
 		aggref->aggstar = agg_star;
 		/* agglevelsup will be set by transformAggregateCall */
 		aggref->location = location;
@@ -419,7 +416,7 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 					 parser_errposition(pstate, location)));
 
 		/* parse_agg.c does additional aggregate-specific processing */
-		transformAggregateCall(pstate, aggref, agg_distinct);
+		transformAggregateCall(pstate, aggref, fargs, agg_order, agg_distinct);
 
 		retval = (Node *) aggref;
 	}
