@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/grant.sgml,v 1.81 2009/12/17 14:36:16 rhaas Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/grant.sgml,v 1.82 2010/03/17 20:53:19 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -61,7 +61,7 @@ GRANT { USAGE | ALL [ PRIVILEGES ] }
 
 GRANT { { SELECT | UPDATE } [,...] | ALL [ PRIVILEGES ] }
     ON LARGE OBJECT <replaceable class="PARAMETER">loid</replaceable> [, ...]
-    TO { [ GROUP ] <replaceable class="PARAMETER">rolename</replaceable> | PUBLIC } [, ...] [ WITH GRANT OPTION ]
+    TO { [ GROUP ] <replaceable class="PARAMETER">role_name</replaceable> | PUBLIC } [, ...] [ WITH GRANT OPTION ]
 
 GRANT { { CREATE | USAGE } [,...] | ALL [ PRIVILEGES ] }
     ON SCHEMA <replaceable>schema_name</replaceable> [, ...]

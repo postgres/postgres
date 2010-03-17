@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/revoke.sgml,v 1.54 2009/12/11 03:34:55 itagaki Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/revoke.sgml,v 1.55 2010/03/17 20:53:19 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -78,7 +78,7 @@ REVOKE [ GRANT OPTION FOR ]
 REVOKE [ GRANT OPTION FOR ]
     { { SELECT | UPDATE } [,...] | ALL [ PRIVILEGES ] }
     ON LARGE OBJECT <replaceable class="PARAMETER">loid</replaceable> [, ...]
-    FROM { [ GROUP ] <replaceable class="PARAMETER">rolename</replaceable> | PUBLIC } [, ...]
+    FROM { [ GROUP ] <replaceable class="PARAMETER">role_name</replaceable> | PUBLIC } [, ...]
     [ CASCADE | RESTRICT ]
 
 REVOKE [ GRANT OPTION FOR ]
