@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.390 2010/03/13 14:55:57 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.391 2010/03/17 20:58:38 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -4463,10 +4463,9 @@ dot_pg_pass_warning(PGconn *conn)
 
 		if (!getPgPassFilename(pgpassfile))
 			return;
-		appendPQExpBufferStr(&conn->errorMessage,
-			libpq_gettext("password retrieved from "));
-		appendPQExpBufferStr(&conn->errorMessage, pgpassfile);
-		appendPQExpBufferChar(&conn->errorMessage, '\n');
+		appendPQExpBuffer(&conn->errorMessage,
+						  libpq_gettext("password retrieved from file \"%s\"\n"),
+						  pgpassfile);
 	}
 }
 
