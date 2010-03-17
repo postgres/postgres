@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.342 2010/02/19 00:15:25 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.343 2010/03/17 17:12:31 petere Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -1744,7 +1744,7 @@ setenv LD_LIBRARY_PATH /usr/local/pgsql/lib
     <filename>/etc/profile</> or <filename>~/.bash_profile</>.  Some
     good information about the caveats associated with this method can
     be found at <ulink
-    url="http://www.visi.com/~barr/ldpath.html"></ulink>.
+    url="http://xahlee.org/UnixResource_dir/_/ldpath.html"></ulink>.
    </para>
 
    <para>
@@ -2789,7 +2789,7 @@ cc-1020 cc: ERROR File = pqcomm.c, Line = 427
      included on the UnixWare 7.1 Skunkware CD.  If you have the
      UnixWare 7.0.0 or 7.0.1 Skunkware CDs, you can install it from
      there.  Otherwise,
-     try <ulink url="ftp://ftp.sco.com/skunkware"></ulink>.
+     try <ulink url="http://www.sco.com/skunkware/"></ulink>.
     </para>
 
     <para>

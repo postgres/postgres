@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/wal.sgml,v 1.64 2010/02/27 20:16:17 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/wal.sgml,v 1.65 2010/03/17 17:12:31 petere Exp $ -->
 
 <chapter id="wal">
  <title>Reliability and the Write-Ahead Log</title>
@@ -68,7 +68,7 @@
    to <literal>Write cache</>; <command>hdparm -W</> to turn off
    write caching.  On <productname>FreeBSD</> use
    <application>atacontrol</>.  (For SCSI disks use <ulink
-   url="http://sg.torque.net/sg/sdparm.html"><application>sdparm</></ulink>
+   url="http://sg.danny.cz/sg/sdparm.html"><application>sdparm</></ulink>
    to turn off <literal>WCE</>.)  On <productname>Solaris</> the disk
    write cache is controlled by <ulink
    url="http://www.sun.com/bigadmin/content/submitted/format_utility.jsp"><literal>format

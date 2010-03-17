@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.133 2010/02/20 21:04:28 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.134 2010/03/17 17:12:31 petere Exp $ -->
 
 <chapter id="client-authentication">
  <title>Client Authentication</title>
@@ -953,7 +953,7 @@ omicron         bryanh                  guest1
     network. A description of the <productname>Kerberos</productname> system
     is beyond the scope of this document; in full generality it can be
     quite complex (yet powerful). The
-    <ulink url="http://www.nrl.navy.mil/CCS/people/kenh/kerberos-faq.html">
+    <ulink url="http://www.cmf.nrl.navy.mil/CCS/people/kenh/kerberos-faq.html">
     Kerberos <acronym>FAQ</></ulink> or
     <ulink url="http://web.mit.edu/kerberos/www/">MIT Kerberos page</ulink>
     can be good starting points for exploration.

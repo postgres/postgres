@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/btree-gist.sgml,v 1.4 2007/12/06 04:12:09 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/btree-gist.sgml,v 1.5 2010/03/17 17:12:31 petere Exp $ -->
 
 <sect1 id="btree-gist">
  <title>btree_gist</title>
@@ -47,7 +47,7 @@ SELECT * FROM test WHERE a &lt; 10;
    Teodor Sigaev (<email>teodor@stack.net</email>) ,
    Oleg Bartunov (<email>oleg@sai.msu.su</email>), and
    Janko Richter (<email>jankorichter@yahoo.de</email>).  See
-   <ulink url="http://www.sai.msu.su/~megera/postgres/gist"></ulink>
+   <ulink url="http://www.sai.msu.su/~megera/postgres/gist/"></ulink>
    for additional information.
   </para>
 

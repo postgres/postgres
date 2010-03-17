@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/intro.sgml,v 1.35 2009/04/27 16:27:36 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/intro.sgml,v 1.36 2010/03/17 17:12:31 petere Exp $ -->
 
 <preface id="preface">
  <title>Preface</title>
@@ -87,7 +87,7 @@
   <para>
    <productname>PostgreSQL</productname> is an object-relational
    database management system (<acronym>ORDBMS</acronym>) based on
-   <ulink url="http://s2k-ftp.CS.Berkeley.EDU:8000/postgres/postgres.html">
+   <ulink url="http://db.cs.berkeley.edu/postgres.html">
    <productname>POSTGRES, Version 4.2</productname></ulink>,
    developed at the University of California at Berkeley Computer Science
    Department.  POSTGRES pioneered many concepts that only became

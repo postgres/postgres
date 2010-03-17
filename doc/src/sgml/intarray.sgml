@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/intarray.sgml,v 1.8 2009/06/07 20:09:34 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/intarray.sgml,v 1.9 2010/03/17 17:12:31 petere Exp $ -->
 
 <sect1 id="intarray">
  <title>intarray</title>
@@ -317,7 +317,7 @@ SELECT message.mid FROM message WHERE message.sections @@ '1&amp;2'::query_int;
   <para>
    All work was done by Teodor Sigaev (<email>teodor@sigaev.ru</email>) and
    Oleg Bartunov (<email>oleg@sai.msu.su</email>). See
-   <ulink url="http://www.sai.msu.su/~megera/postgres/gist"></ulink> for
+   <ulink url="http://www.sai.msu.su/~megera/postgres/gist/"></ulink> for
    additional information. Andrey Oktyabrski did a great work on adding new
    functions and operations.
   </para>

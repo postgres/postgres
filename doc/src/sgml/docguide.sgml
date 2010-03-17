@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/docguide.sgml,v 1.80 2010/01/22 22:50:03 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/docguide.sgml,v 1.81 2010/03/17 17:12:31 petere Exp $ -->
 
 <appendix id="docguide">
  <title>Documentation</title>
@@ -61,7 +61,7 @@
    about presentation details.  A document style defines how that
    content is rendered into one of several final forms.  DocBook is
    maintained by the <ulink url="http://www.oasis-open.org">
-   OASIS group</ulink>.  The <ulink url="http://www.oasis-open.org/docbook">
+   OASIS group</ulink>.  The <ulink url="http://www.oasis-open.org/docbook/">
    official DocBook site</ulink> has good introductory and reference documentation and
    a complete O'Reilly book for your online reading pleasure.  The
    <ulink url="http://newbiedoc.sourceforge.net/metadoc/docbook-guide.html">

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/install-win32.sgml,v 1.56 2010/02/03 17:25:05 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/install-win32.sgml,v 1.57 2010/03/17 17:12:31 petere Exp $ -->
 
 <chapter id="install-win32">
  <title>Installation from Source Code on <productname>Windows</productname></title>
@@ -413,7 +413,7 @@
      <term>OpenJade 1.3.1-2</term>
      <listitem><para>
       Download from
-      <ulink url="http://sourceforge.net/project/downloading.php?groupname=openjade&amp;filename=openjade-1_3_1-2-bin.zip"></>
+      <ulink url="http://sourceforge.net/projects/openjade/files/openjade/1.3.1/openjade-1_3_1-2-bin.zip/download"></>
       and uncompress in the subdirectory <filename>openjade-1.3.1</filename>.
      </para></listitem>
     </varlistentry>
@@ -431,7 +431,7 @@
      <term>DocBook DSSSL 1.79</term>
      <listitem><para>
       Download from
-      <ulink url="http://sourceforge.net/project/downloading.php?groupname=docbook&amp;filename=docbook-dsssl-1.79.zip"></>
+      <ulink url="http://sourceforge.net/projects/docbook/files/docbook-dsssl/1.79/docbook-dsssl-1.79.zip/download"></>
       and uncompress in the subdirectory
       <filename>docbook-dsssl-1.79</filename>.
      </para></listitem>
