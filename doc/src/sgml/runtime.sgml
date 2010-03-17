@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.215.2.11 2010/02/25 23:45:28 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.215.2.12 2010/03/17 18:04:01 mha Exp $
 -->
 
 <Chapter Id="runtime">
@@ -756,7 +756,7 @@ SET ENABLE_SEQSCAN TO OFF;
      </varlistentry>
 
      <varlistentry>
-      <term><varname>ssl_renegotiation_limit</varname> (<type>int</type>)</term>
+      <term><varname>ssl_renegotiation_limit</varname> (<type>integer</type>)</term>
       <indexterm>
        <primary><varname>ssl_renegotiation_limit</> configuration parameter</primary>
       </indexterm>
