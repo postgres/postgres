@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/protocol.sgml,v 1.85 2010/02/24 15:54:31 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/protocol.sgml,v 1.86 2010/03/17 00:28:15 sriggs Exp $ -->
 
 <chapter id="protocol">
  <title>Frontend/Backend Protocol</title>
@@ -4155,7 +4155,7 @@ The commands accepted in walsender mode are:
     <term>IDENTIFY_SYSTEM</term>
     <listitem>
      <para>
-      Requests the server to idenfity itself. Server replies with a result
+      Requests the server to identify itself. Server replies with a result
       set of a single row, and two fields:
 
       systemid: The unique system identifier identifying the cluster. This
