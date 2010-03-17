@@ -1,7 +1,7 @@
 #
 # Autoconf macros for configuring the build of Python extension modules
 #
-# $PostgreSQL: pgsql/config/python.m4,v 1.17 2009/12/15 22:59:53 petere Exp $
+# $PostgreSQL: pgsql/config/python.m4,v 1.18 2010/03/17 22:02:44 petere Exp $
 #
 
 # PGAC_PATH_PYTHON
@@ -72,7 +72,7 @@ else
 	python_libspec="-L${python_libdir} -lpython${python_version}"
 fi
 
-python_additional_libs=`${PYTHON} -c "import distutils.sysconfig,string; print(' '.join(filter(None,distutils.sysconfig.get_config_vars('LIBS','LIBC','LIBM','LOCALMODLIBS','BASEMODLIBS'))))"`
+python_additional_libs=`${PYTHON} -c "import distutils.sysconfig,string; print(' '.join(filter(None,distutils.sysconfig.get_config_vars('LIBS','LIBC','LIBM','BASEMODLIBS'))))"`
 
 AC_MSG_RESULT([${python_libspec} ${python_additional_libs}])
 

@@ -7033,7 +7033,7 @@ else
 	python_libspec="-L${python_libdir} -lpython${python_version}"
 fi
 
-python_additional_libs=`${PYTHON} -c "import distutils.sysconfig,string; print(' '.join(filter(None,distutils.sysconfig.get_config_vars('LIBS','LIBC','LIBM','LOCALMODLIBS','BASEMODLIBS'))))"`
+python_additional_libs=`${PYTHON} -c "import distutils.sysconfig,string; print(' '.join(filter(None,distutils.sysconfig.get_config_vars('LIBS','LIBC','LIBM','BASEMODLIBS'))))"`
 
 { $as_echo "$as_me:$LINENO: result: ${python_libspec} ${python_additional_libs}" >&5
 $as_echo "${python_libspec} ${python_additional_libs}" >&6; }
