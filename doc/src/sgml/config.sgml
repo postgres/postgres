@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.260 2010/03/12 23:21:48 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.261 2010/03/17 18:03:55 mha Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -607,7 +607,7 @@ SET ENABLE_SEQSCAN TO OFF;
      </varlistentry>
 
      <varlistentry id="guc-ssl-renegotiation-limit" xreflabel="ssl_renegotiation_limit">
-      <term><varname>ssl_renegotiation_limit</varname> (<type>int</type>)</term>
+      <term><varname>ssl_renegotiation_limit</varname> (<type>integer</type>)</term>
       <indexterm>
        <primary><varname>ssl_renegotiation_limit</> configuration parameter</primary>
       </indexterm>
