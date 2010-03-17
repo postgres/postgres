@@ -10,5 +10,5 @@ SHOW plperl.on_plperl_init;
 
 DO $$ warn 42 $$ language plperl;
 ERROR:  'eval "string"' trapped by operation mask at line 2.
-CONTEXT:  While executing plperl.on_plperl_init.
+CONTEXT:  while executing plperl.on_plperl_init
 PL/Perl anonymous code block

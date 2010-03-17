@@ -1,7 +1,7 @@
 /**********************************************************************
  * plperl.c - perl as a procedural language for PostgreSQL
  *
- *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.171 2010/03/09 22:34:38 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.172 2010/03/17 21:31:17 petere Exp $
  *
  **********************************************************************/
 
@@ -246,7 +246,7 @@ _PG_init(void)
 							 NULL, NULL);
 
 	DefineCustomStringVariable("plperl.on_init",
-							   gettext_noop("Perl initialization code to execute when a perl interpreter is initialized."),
+							   gettext_noop("Perl initialization code to execute when a Perl interpreter is initialized."),
 							   NULL,
 							   &plperl_on_init,
 							   NULL,
@@ -422,7 +422,7 @@ select_perl_context(bool trusted)
 	if (SvTRUE(ERRSV))
 		ereport(ERROR,
 				(errmsg("%s", strip_trailing_ws(SvPV_nolen(ERRSV))),
-		errdetail("While executing PostgreSQL::InServer::SPI::bootstrap.")));
+		errcontext("while executing PostgreSQL::InServer::SPI::bootstrap")));
 }
 
 /*
@@ -560,12 +560,12 @@ plperl_init_interp(void)
 				   nargs, embedding, NULL) != 0)
 		ereport(ERROR,
 				(errmsg("%s", strip_trailing_ws(SvPV_nolen(ERRSV))),
-				 errcontext("While parsing perl initialization.")));
+				 errcontext("while parsing Perl initialization")));
 
 	if (perl_run(plperl) != 0)
 		ereport(ERROR,
 				(errmsg("%s", strip_trailing_ws(SvPV_nolen(ERRSV))),
-				 errcontext("While running perl initialization.")));
+				 errcontext("while running Perl initialization")));
 
 #ifdef WIN32
 
@@ -703,7 +703,7 @@ plperl_trusted_init(void)
 		if (SvTRUE(ERRSV))
 			ereport(ERROR,
 					(errmsg("%s", strip_trailing_ws(SvPV_nolen(ERRSV))),
-					 errcontext("While executing PLC_SAFE_BAD.")));
+					 errcontext("while executing PLC_SAFE_BAD")));
 	}
 	else
 	{
@@ -711,7 +711,7 @@ plperl_trusted_init(void)
 		if (SvTRUE(ERRSV))
 			ereport(ERROR,
 					(errmsg("%s", strip_trailing_ws(SvPV_nolen(ERRSV))),
-					 errcontext("While executing PLC_SAFE_OK.")));
+					 errcontext("while executing PLC_SAFE_OK")));
 
 		if (GetDatabaseEncoding() == PG_UTF8)
 		{
@@ -724,7 +724,7 @@ plperl_trusted_init(void)
 			if (SvTRUE(ERRSV))
 				ereport(ERROR,
 						(errmsg("%s", strip_trailing_ws(SvPV_nolen(ERRSV))),
-						 errcontext("While executing utf8fix.")));
+						 errcontext("while executing utf8fix")));
 		}
 
 		/* switch to the safe require opcode */
@@ -744,7 +744,7 @@ plperl_trusted_init(void)
 			if (SvTRUE(ERRSV))
 				ereport(ERROR,
 						(errmsg("%s", strip_trailing_ws(SvPV_nolen(ERRSV))),
-					  errcontext("While executing plperl.on_plperl_init.")));
+					  errcontext("while executing plperl.on_plperl_init")));
 		}
 
 	}
@@ -760,7 +760,7 @@ plperl_untrusted_init(void)
 		if (SvTRUE(ERRSV))
 			ereport(ERROR,
 					(errmsg("%s", strip_trailing_ws(SvPV_nolen(ERRSV))),
-					 errcontext("While executing plperl.on_plperlu_init.")));
+					 errcontext("while executing plperl.on_plperlu_init")));
 	}
 }
 
