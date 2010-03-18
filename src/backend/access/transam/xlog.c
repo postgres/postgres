@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.345.2.7 2010/02/19 01:04:39 itagaki Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.345.2.8 2010/03/18 09:18:54 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2711,11 +2711,13 @@ RestoreArchivedFile(char *path, const char *xlogfname,
 	 */
 	if (InRedo)
 	{
+		LWLockAcquire(ControlFileLock, LW_SHARED);
 		XLByteToSeg(ControlFile->checkPointCopy.redo,
 					restartLog, restartSeg);
 		XLogFileName(lastRestartPointFname,
 					 ControlFile->checkPointCopy.ThisTimeLineID,
 					 restartLog, restartSeg);
+		LWLockRelease(ControlFileLock);
 		/* we shouldn't need anything earlier than last restart point */
 		Assert(strcmp(lastRestartPointFname, xlogfname) <= 0);
 	}
@@ -2905,28 +2907,14 @@ ExecuteRecoveryEndCommand(void)
 	 * Calculate the archive file cutoff point for use during log shipping
 	 * replication. All files earlier than this point can be deleted from the
 	 * archive, though there is no requirement to do so.
-	 *
-	 * We initialise this with the filename of an InvalidXLogRecPtr, which
-	 * will prevent the deletion of any WAL files from the archive because of
-	 * the alphabetic sorting property of WAL filenames.
-	 *
-	 * Once we have successfully located the redo pointer of the checkpoint
-	 * from which we start recovery we never request a file prior to the redo
-	 * pointer of the last restartpoint. When redo begins we know that we have
-	 * successfully located it, so there is no need for additional status
-	 * flags to signify the point when we can begin deleting WAL files from
-	 * the archive.
 	 */
-	if (InRedo)
-	{
-		XLByteToSeg(ControlFile->checkPointCopy.redo,
-					restartLog, restartSeg);
-		XLogFileName(lastRestartPointFname,
-					 ControlFile->checkPointCopy.ThisTimeLineID,
-					 restartLog, restartSeg);
-	}
-	else
-		XLogFileName(lastRestartPointFname, 0, 0, 0);
+	LWLockAcquire(ControlFileLock, LW_SHARED);
+	XLByteToSeg(ControlFile->checkPointCopy.redo,
+				restartLog, restartSeg);
+	XLogFileName(lastRestartPointFname,
+				 ControlFile->checkPointCopy.ThisTimeLineID,
+				 restartLog, restartSeg);
+	LWLockRelease(ControlFileLock);
 
 	/*
 	 * construct the command to be executed
