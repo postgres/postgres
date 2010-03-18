@@ -34,6 +34,7 @@ For Major Releases
 	o src/interfaces/*/*/Makefile
 
 * Release notes
+	o search with commit message text to find CVS commit file changes
 	o check completion of items that have been marked as completed at
 	  http://wiki.postgresql.org/wiki/Todo
 	o remove completed TODO items
