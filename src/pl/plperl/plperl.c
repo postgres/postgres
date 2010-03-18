@@ -1,7 +1,7 @@
 /**********************************************************************
  * plperl.c - perl as a procedural language for PostgreSQL
  *
- *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.172 2010/03/17 21:31:17 petere Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.173 2010/03/18 19:02:46 petere Exp $
  *
  **********************************************************************/
 
@@ -1306,7 +1306,7 @@ plperl_create_sub(plperl_proc_desc *prodesc, char *s, Oid fn_oid)
 
 	if (!subref)
 		ereport(ERROR,
-				(errmsg("didn't get a GLOB from compiling %s via %s",
+				(errmsg("did not get a GLOB from compiling function \"%s\" via %s",
 						prodesc->proname, compile_sub)));
 
 	prodesc->reference = newSVsv(subref);
