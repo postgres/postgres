@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.509 2010/03/16 16:03:24 sriggs Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.510 2010/03/18 15:29:44 tgl Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -11512,7 +11512,7 @@ postgres=# select * from unnest2(array[[1,2],[3,4]]);
       <row>
        <entry><literal><function>current_schemas</function>(<type>boolean</type>)</literal></entry>
        <entry><type>name[]</type></entry>
-       <entry>names of schemas in search path optionally including implicit schemas</entry>
+       <entry>names of schemas in search path, optionally including implicit schemas</entry>
       </row>
 
       <row>
@@ -11522,11 +11522,11 @@ postgres=# select * from unnest2(array[[1,2],[3,4]]);
       </row>
 
       <row>
-       <entry><literal><function>current_query</function></literal></entry>
+       <entry><literal><function>current_query</function>()</literal></entry>
        <entry><type>text</type></entry>
        <entry>text of the currently executing query, as submitted
        by the client (might contain more than one statement)</entry>
-      </row>  
+      </row>
 
       <row>
        <!-- See also the entry for this in monitoring.sgml -->
@@ -11612,6 +11612,17 @@ postgres=# select * from unnest2(array[[1,2],[3,4]]);
     </tgroup>
    </table>
 
+   <note>
+    <para>
+     <function>current_catalog</function>, <function>current_schema</function>,
+     <function>current_user</function>, <function>session_user</function>,
+     and <function>user</function> have special syntactic status
+     in <acronym>SQL</acronym>: they must be called without trailing
+     parentheses.  (In PostgreSQL, parentheses can optionally be used with
+     <function>current_schema</function>, but not with the others.)
+    </para>
+   </note>
+
    <indexterm>
     <primary>user</primary>
     <secondary>current</secondary>
@@ -11656,17 +11667,6 @@ postgres=# select * from unnest2(array[[1,2],[3,4]]);
     In Unix parlance, the session user is the <quote>real user</quote> and
     the current user is the <quote>effective user</quote>.
    </para>
-
-   <note>
-    <para>
-     <function>current_catalog</function>, <function>current_schema</function>,
-     <function>current_user</function>, <function>session_user</function>,
-     and <function>user</function> have special syntactic status
-     in <acronym>SQL</acronym>: they must be called without trailing
-     parentheses (optional in PostgreSQL in the case
-     of <function>current_schema</function>).
-    </para>
-   </note>
 
    <para>
     <function>current_schema</function> returns the name of the schema that is
