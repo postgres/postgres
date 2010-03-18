@@ -1,7 +1,7 @@
 /**********************************************************************
  * plpython.c - python as a procedural language for PostgreSQL
  *
- *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.140 2010/03/18 13:23:56 petere Exp $
+ *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.141 2010/03/18 19:43:03 petere Exp $
  *
  *********************************************************************
  */
@@ -2174,6 +2174,7 @@ PLyObject_ToDatum(PLyTypeInfo *info,
 					 errmsg("could not convert Python object into cstring: Python string representation appears to contain null bytes")));
 		else if (slen > plen)
 			elog(ERROR, "could not convert Python object into cstring: Python string longer than reported length");
+		pg_verifymbstr(plrv_sc, slen, false);
 		rv = InputFunctionCall(&arg->typfunc, plrv_sc, arg->typioparam, -1);
 	}
 	PG_CATCH();
@@ -2871,6 +2872,7 @@ PLy_spi_prepare(PyObject *self, PyObject *args)
 			}
 		}
 
+		pg_verifymbstr(query, strlen(query), false);
 		plan->plan = SPI_prepare(query, plan->nargs, plan->types);
 		if (plan->plan == NULL)
 			elog(ERROR, "SPI_prepare failed: %s",
@@ -3078,6 +3080,7 @@ PLy_spi_execute_query(char *query, long limit)
 	oldcontext = CurrentMemoryContext;
 	PG_TRY();
 	{
+		pg_verifymbstr(query, strlen(query), false);
 		rv = SPI_execute(query, PLy_curr_procedure->fn_readonly, limit);
 	}
 	PG_CATCH();
@@ -3353,6 +3356,7 @@ PLy_output(volatile int level, PyObject *self, PyObject *args)
 	oldcontext = CurrentMemoryContext;
 	PG_TRY();
 	{
+		pg_verifymbstr(sv, strlen(sv), false);
 		elog(level, "%s", sv);
 	}
 	PG_CATCH();
