@@ -25,7 +25,7 @@
  *	http://archives.postgresql.org/pgsql-bugs/2010-02/msg00187.php
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.578 2010/03/11 04:36:43 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.579 2010/03/18 20:00:51 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2117,7 +2117,7 @@ dumpBlobs(Archive *AH, void *arg)
 			loFd = lo_open(g_conn, blobOid, INV_READ);
 			if (loFd == -1)
 			{
-				write_msg(NULL, "dumpBlobs(): could not open large object %u: %s",
+				write_msg(NULL, "could not open large object %u: %s",
 						  blobOid, PQerrorMessage(g_conn));
 				exit_nicely();
 			}
@@ -2130,7 +2130,7 @@ dumpBlobs(Archive *AH, void *arg)
 				cnt = lo_read(g_conn, loFd, buf, LOBBUFSIZE);
 				if (cnt < 0)
 				{
-					write_msg(NULL, "dumpBlobs(): error reading large object %u: %s",
+					write_msg(NULL, "error reading large object %u: %s",
 							  blobOid, PQerrorMessage(g_conn));
 					exit_nicely();
 				}

@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.182 2010/02/26 02:01:16 momjian Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.183 2010/03/18 20:00:51 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -935,13 +935,13 @@ StartRestoreBlob(ArchiveHandle *AH, Oid oid, bool drop)
 		{
 			loOid = lo_create(AH->connection, oid);
 			if (loOid == 0 || loOid != oid)
-				die_horribly(AH, modulename, "could not create large object %u\n",
-							 oid);
+				die_horribly(AH, modulename, "could not create large object %u: %s",
+							 oid, PQerrorMessage(AH->connection));
 		}
 		AH->loFd = lo_open(AH->connection, oid, INV_WRITE);
 		if (AH->loFd == -1)
-			die_horribly(AH, modulename, "could not open large object %u\n",
-						 oid);
+			die_horribly(AH, modulename, "could not open large object %u: %s",
+						 oid, PQerrorMessage(AH->connection));
 	}
 	else
 	{
