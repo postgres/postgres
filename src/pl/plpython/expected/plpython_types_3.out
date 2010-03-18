@@ -7,7 +7,7 @@
 CREATE FUNCTION test_type_conversion_bool(x bool) RETURNS bool AS $$
 plpy.info(x, type(x))
 return x
-$$ LANGUAGE plpythonu;
+$$ LANGUAGE plpython3u;
 SELECT * FROM test_type_conversion_bool(true);
 INFO:  (True, <class 'bool'>)
 CONTEXT:  PL/Python function "test_type_conversion_bool"
@@ -51,7 +51,7 @@ elif n == 5:
    ret = [0]
 plpy.info(ret, not not ret)
 return ret
-$$ LANGUAGE plpythonu;
+$$ LANGUAGE plpython3u;
 SELECT * FROM test_type_conversion_bool_other(0);
 INFO:  (0, False)
 CONTEXT:  PL/Python function "test_type_conversion_bool_other"
@@ -103,7 +103,7 @@ CONTEXT:  PL/Python function "test_type_conversion_bool_other"
 CREATE FUNCTION test_type_conversion_char(x char) RETURNS char AS $$
 plpy.info(x, type(x))
 return x
-$$ LANGUAGE plpythonu;
+$$ LANGUAGE plpython3u;
 SELECT * FROM test_type_conversion_char('a');
 INFO:  ('a', <class 'str'>)
 CONTEXT:  PL/Python function "test_type_conversion_char"
@@ -123,7 +123,7 @@ CONTEXT:  PL/Python function "test_type_conversion_char"
 CREATE FUNCTION test_type_conversion_int2(x int2) RETURNS int2 AS $$
 plpy.info(x, type(x))
 return x
-$$ LANGUAGE plpythonu;
+$$ LANGUAGE plpython3u;
 SELECT * FROM test_type_conversion_int2(100::int2);
 INFO:  (100, <class 'int'>)
 CONTEXT:  PL/Python function "test_type_conversion_int2"
@@ -151,7 +151,7 @@ CONTEXT:  PL/Python function "test_type_conversion_int2"
 CREATE FUNCTION test_type_conversion_int4(x int4) RETURNS int4 AS $$
 plpy.info(x, type(x))
 return x
-$$ LANGUAGE plpythonu;
+$$ LANGUAGE plpython3u;
 SELECT * FROM test_type_conversion_int4(100);
 INFO:  (100, <class 'int'>)
 CONTEXT:  PL/Python function "test_type_conversion_int4"
@@ -179,9 +179,9 @@ CONTEXT:  PL/Python function "test_type_conversion_int4"
 CREATE FUNCTION test_type_conversion_int8(x int8) RETURNS int8 AS $$
 plpy.info(x, type(x))
 return x
-$$ LANGUAGE plpythonu;
+$$ LANGUAGE plpython3u;
 SELECT * FROM test_type_conversion_int8(100);
-INFO:  (100L, <type 'long'>)
+INFO:  (100, <class 'int'>)
 CONTEXT:  PL/Python function "test_type_conversion_int8"
  test_type_conversion_int8 
 ---------------------------
@@ -189,7 +189,7 @@ CONTEXT:  PL/Python function "test_type_conversion_int8"
 (1 row)
 
 SELECT * FROM test_type_conversion_int8(-100);
-INFO:  (-100L, <type 'long'>)
+INFO:  (-100, <class 'int'>)
 CONTEXT:  PL/Python function "test_type_conversion_int8"
  test_type_conversion_int8 
 ---------------------------
@@ -197,7 +197,7 @@ CONTEXT:  PL/Python function "test_type_conversion_int8"
 (1 row)
 
 SELECT * FROM test_type_conversion_int8(5000000000);
-INFO:  (5000000000L, <type 'long'>)
+INFO:  (5000000000, <class 'int'>)
 CONTEXT:  PL/Python function "test_type_conversion_int8"
  test_type_conversion_int8 
 ---------------------------
@@ -215,7 +215,7 @@ CONTEXT:  PL/Python function "test_type_conversion_int8"
 CREATE FUNCTION test_type_conversion_numeric(x numeric) RETURNS numeric AS $$
 plpy.info(x, type(x))
 return x
-$$ LANGUAGE plpythonu;
+$$ LANGUAGE plpython3u;
 /* The current implementation converts numeric to float. */
 SELECT * FROM test_type_conversion_numeric(100);
 INFO:  (100.0, <class 'float'>)
@@ -252,7 +252,7 @@ CONTEXT:  PL/Python function "test_type_conversion_numeric"
 CREATE FUNCTION test_type_conversion_float4(x float4) RETURNS float4 AS $$
 plpy.info(x, type(x))
 return x
-$$ LANGUAGE plpythonu;
+$$ LANGUAGE plpython3u;
 SELECT * FROM test_type_conversion_float4(100);
 INFO:  (100.0, <class 'float'>)
 CONTEXT:  PL/Python function "test_type_conversion_float4"
@@ -288,7 +288,7 @@ CONTEXT:  PL/Python function "test_type_conversion_float4"
 CREATE FUNCTION test_type_conversion_float8(x float8) RETURNS float8 AS $$
 plpy.info(x, type(x))
 return x
-$$ LANGUAGE plpythonu;
+$$ LANGUAGE plpython3u;
 SELECT * FROM test_type_conversion_float8(100);
 INFO:  (100.0, <class 'float'>)
 CONTEXT:  PL/Python function "test_type_conversion_float8"
@@ -324,7 +324,7 @@ CONTEXT:  PL/Python function "test_type_conversion_float8"
 CREATE FUNCTION test_type_conversion_text(x text) RETURNS text AS $$
 plpy.info(x, type(x))
 return x
-$$ LANGUAGE plpythonu;
+$$ LANGUAGE plpython3u;
 SELECT * FROM test_type_conversion_text('hello world');
 INFO:  ('hello world', <class 'str'>)
 CONTEXT:  PL/Python function "test_type_conversion_text"
@@ -344,7 +344,7 @@ CONTEXT:  PL/Python function "test_type_conversion_text"
 CREATE FUNCTION test_type_conversion_bytea(x bytea) RETURNS bytea AS $$
 plpy.info(x, type(x))
 return x
-$$ LANGUAGE plpythonu;
+$$ LANGUAGE plpython3u;
 SELECT * FROM test_type_conversion_bytea('hello world');
 INFO:  (b'hello world', <class 'bytes'>)
 CONTEXT:  PL/Python function "test_type_conversion_bytea"
@@ -372,14 +372,14 @@ CONTEXT:  PL/Python function "test_type_conversion_bytea"
 CREATE FUNCTION test_type_marshal() RETURNS bytea AS $$
 import marshal
 return marshal.dumps('hello world')
-$$ LANGUAGE plpythonu;
+$$ LANGUAGE plpython3u;
 CREATE FUNCTION test_type_unmarshal(x bytea) RETURNS text AS $$
 import marshal
 try:
     return marshal.loads(x)
-except ValueError, e:
+except ValueError as e:
     return 'FAILED: ' + str(e)
-$$ LANGUAGE plpythonu;
+$$ LANGUAGE plpython3u;
 SELECT test_type_unmarshal(x) FROM test_type_marshal() x;
  test_type_unmarshal 
 ---------------------
@@ -392,7 +392,7 @@ SELECT test_type_unmarshal(x) FROM test_type_marshal() x;
 CREATE DOMAIN booltrue AS bool CHECK (VALUE IS TRUE OR VALUE IS NULL);
 CREATE FUNCTION test_type_conversion_booltrue(x booltrue, y bool) RETURNS booltrue AS $$
 return y
-$$ LANGUAGE plpythonu;
+$$ LANGUAGE plpython3u;
 SELECT * FROM test_type_conversion_booltrue(true, true);
  test_type_conversion_booltrue 
 -------------------------------
@@ -409,7 +409,7 @@ CREATE DOMAIN uint2 AS int2 CHECK (VALUE >= 0);
 CREATE FUNCTION test_type_conversion_uint2(x uint2, y int) RETURNS uint2 AS $$
 plpy.info(x, type(x))
 return y
-$$ LANGUAGE plpythonu;
+$$ LANGUAGE plpython3u;
 SELECT * FROM test_type_conversion_uint2(100::uint2, 50);
 INFO:  (100, <class 'int'>)
 CONTEXT:  PL/Python function "test_type_conversion_uint2"
@@ -435,7 +435,7 @@ CONTEXT:  PL/Python function "test_type_conversion_uint2"
 CREATE DOMAIN nnint AS int CHECK (VALUE IS NOT NULL);
 CREATE FUNCTION test_type_conversion_nnint(x nnint, y int) RETURNS nnint AS $$
 return y
-$$ LANGUAGE plpythonu;
+$$ LANGUAGE plpython3u;
 SELECT * FROM test_type_conversion_nnint(10, 20);
  test_type_conversion_nnint 
 ----------------------------
@@ -452,7 +452,7 @@ CREATE DOMAIN bytea10 AS bytea CHECK (octet_length(VALUE) = 10 AND VALUE IS NOT 
 CREATE FUNCTION test_type_conversion_bytea10(x bytea10, y bytea) RETURNS bytea10 AS $$
 plpy.info(x, type(x))
 return y
-$$ LANGUAGE plpythonu;
+$$ LANGUAGE plpython3u;
 SELECT * FROM test_type_conversion_bytea10('hello wold', 'hello wold');
 INFO:  (b'hello wold', <class 'bytes'>)
 CONTEXT:  PL/Python function "test_type_conversion_bytea10"
@@ -483,7 +483,7 @@ PL/Python function "test_type_conversion_bytea10"
 CREATE FUNCTION test_type_conversion_array_int4(x int4[]) RETURNS int4[] AS $$
 plpy.info(x, type(x))
 return x
-$$ LANGUAGE plpythonu;
+$$ LANGUAGE plpython3u;
 SELECT * FROM test_type_conversion_array_int4(ARRAY[0, 100]);
 INFO:  ([0, 100], <class 'list'>)
 CONTEXT:  PL/Python function "test_type_conversion_array_int4"
@@ -531,7 +531,7 @@ CONTEXT:  PL/Python function "test_type_conversion_array_int4"
 CREATE FUNCTION test_type_conversion_array_bytea(x bytea[]) RETURNS bytea[] AS $$
 plpy.info(x, type(x))
 return x
-$$ LANGUAGE plpythonu;
+$$ LANGUAGE plpython3u;
 SELECT * FROM test_type_conversion_array_bytea(ARRAY[E'\\xdeadbeef'::bytea, NULL]);
 INFO:  ([b'\xde\xad\xbe\xef', None], <class 'list'>)
 CONTEXT:  PL/Python function "test_type_conversion_array_bytea"
@@ -542,7 +542,7 @@ CONTEXT:  PL/Python function "test_type_conversion_array_bytea"
 
 CREATE FUNCTION test_type_conversion_array_mixed1() RETURNS text[] AS $$
 return [123, 'abc']
-$$ LANGUAGE plpythonu;
+$$ LANGUAGE plpython3u;
 SELECT * FROM test_type_conversion_array_mixed1();
  test_type_conversion_array_mixed1 
 -----------------------------------
@@ -551,20 +551,20 @@ SELECT * FROM test_type_conversion_array_mixed1();
 
 CREATE FUNCTION test_type_conversion_array_mixed2() RETURNS int[] AS $$
 return [123, 'abc']
-$$ LANGUAGE plpythonu;
+$$ LANGUAGE plpython3u;
 SELECT * FROM test_type_conversion_array_mixed2();
 ERROR:  invalid input syntax for integer: "abc"
 CONTEXT:  while creating return value
 PL/Python function "test_type_conversion_array_mixed2"
 CREATE FUNCTION test_type_conversion_array_record() RETURNS type_record[] AS $$
 return [None]
-$$ LANGUAGE plpythonu;
+$$ LANGUAGE plpython3u;
 SELECT * FROM test_type_conversion_array_record();
 ERROR:  PL/Python functions cannot return type type_record[]
 DETAIL:  PL/Python does not support conversion to arrays of row types.
 CREATE FUNCTION test_type_conversion_array_string() RETURNS text[] AS $$
 return 'abc'
-$$ LANGUAGE plpythonu;
+$$ LANGUAGE plpython3u;
 SELECT * FROM test_type_conversion_array_string();
  test_type_conversion_array_string 
 -----------------------------------
@@ -573,7 +573,7 @@ SELECT * FROM test_type_conversion_array_string();
 
 CREATE FUNCTION test_type_conversion_array_tuple() RETURNS text[] AS $$
 return ('abc', 'def')
-$$ LANGUAGE plpythonu;
+$$ LANGUAGE plpython3u;
 SELECT * FROM test_type_conversion_array_tuple();
  test_type_conversion_array_tuple 
 ----------------------------------
@@ -582,8 +582,69 @@ SELECT * FROM test_type_conversion_array_tuple();
 
 CREATE FUNCTION test_type_conversion_array_error() RETURNS int[] AS $$
 return 5
-$$ LANGUAGE plpythonu;
+$$ LANGUAGE plpython3u;
 SELECT * FROM test_type_conversion_array_error();
 ERROR:  PL/Python: return value of function with array return type is not a Python sequence
 CONTEXT:  while creating return value
 PL/Python function "test_type_conversion_array_error"
+--
+-- Prepared statements
+--
+CREATE OR REPLACE FUNCTION test_prep_bool_input() RETURNS int
+LANGUAGE plpython3u
+AS $$
+plan = plpy.prepare("SELECT CASE WHEN $1 THEN 1 ELSE 0 END AS val", ['boolean'])
+rv = plpy.execute(plan, ['fa'], 5) # 'fa' is true in Python
+return rv[0]['val']
+$$;
+SELECT test_prep_bool_input(); -- 1
+ test_prep_bool_input 
+----------------------
+                    1
+(1 row)
+
+CREATE OR REPLACE FUNCTION test_prep_bool_output() RETURNS bool
+LANGUAGE plpython3u
+AS $$
+plan = plpy.prepare("SELECT $1 = 1 AS val", ['int'])
+rv = plpy.execute(plan, [0], 5)
+plpy.info(rv[0])
+return rv[0]['val']
+$$;
+SELECT test_prep_bool_output(); -- false
+INFO:  {'val': False}
+CONTEXT:  PL/Python function "test_prep_bool_output"
+ test_prep_bool_output 
+-----------------------
+ f
+(1 row)
+
+CREATE OR REPLACE FUNCTION test_prep_bytea_input(bb bytea) RETURNS int
+LANGUAGE plpython3u
+AS $$
+plan = plpy.prepare("SELECT octet_length($1) AS val", ['bytea'])
+rv = plpy.execute(plan, [bb], 5)
+return rv[0]['val']
+$$;
+SELECT test_prep_bytea_input(E'a\\000b'); -- 3 (embedded null formerly truncated value)
+ test_prep_bytea_input 
+-----------------------
+                     3
+(1 row)
+
+CREATE OR REPLACE FUNCTION test_prep_bytea_output() RETURNS bytea
+LANGUAGE plpython3u
+AS $$
+plan = plpy.prepare("SELECT decode('aa00bb', 'hex') AS val")
+rv = plpy.execute(plan, [], 5)
+plpy.info(rv[0])
+return rv[0]['val']
+$$;
+SELECT test_prep_bytea_output();
+INFO:  {'val': b'\xaa\x00\xbb'}
+CONTEXT:  PL/Python function "test_prep_bytea_output"
+ test_prep_bytea_output 
+------------------------
+ \xaa00bb
+(1 row)
+

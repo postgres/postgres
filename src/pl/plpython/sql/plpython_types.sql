@@ -269,3 +269,53 @@ return 5
 $$ LANGUAGE plpythonu;
 
 SELECT * FROM test_type_conversion_array_error();
+
+
+--
+-- Prepared statements
+--
+
+CREATE OR REPLACE FUNCTION test_prep_bool_input() RETURNS int
+LANGUAGE plpythonu
+AS $$
+plan = plpy.prepare("SELECT CASE WHEN $1 THEN 1 ELSE 0 END AS val", ['boolean'])
+rv = plpy.execute(plan, ['fa'], 5) # 'fa' is true in Python
+return rv[0]['val']
+$$;
+
+SELECT test_prep_bool_input(); -- 1
+
+
+CREATE OR REPLACE FUNCTION test_prep_bool_output() RETURNS bool
+LANGUAGE plpythonu
+AS $$
+plan = plpy.prepare("SELECT $1 = 1 AS val", ['int'])
+rv = plpy.execute(plan, [0], 5)
+plpy.info(rv[0])
+return rv[0]['val']
+$$;
+
+SELECT test_prep_bool_output(); -- false
+
+
+CREATE OR REPLACE FUNCTION test_prep_bytea_input(bb bytea) RETURNS int
+LANGUAGE plpythonu
+AS $$
+plan = plpy.prepare("SELECT octet_length($1) AS val", ['bytea'])
+rv = plpy.execute(plan, [bb], 5)
+return rv[0]['val']
+$$;
+
+SELECT test_prep_bytea_input(E'a\\000b'); -- 3 (embedded null formerly truncated value)
+
+
+CREATE OR REPLACE FUNCTION test_prep_bytea_output() RETURNS bytea
+LANGUAGE plpythonu
+AS $$
+plan = plpy.prepare("SELECT decode('aa00bb', 'hex') AS val")
+rv = plpy.execute(plan, [], 5)
+plpy.info(rv[0])
+return rv[0]['val']
+$$;
+
+SELECT test_prep_bytea_output();

@@ -1,7 +1,7 @@
 /**********************************************************************
  * plpython.c - python as a procedural language for PostgreSQL
  *
- *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.139 2010/02/26 02:01:36 momjian Exp $
+ *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.140 2010/03/18 13:23:56 petere Exp $
  *
  *********************************************************************
  */
@@ -287,7 +287,6 @@ static void *PLy_malloc0(size_t);
 static char *PLy_strdup(const char *);
 static void PLy_free(void *);
 
-static PyObject *PLyUnicode_Str(PyObject *unicode);
 static PyObject *PLyUnicode_Bytes(PyObject *unicode);
 static char *PLyUnicode_AsString(PyObject *unicode);
 
@@ -2983,38 +2982,24 @@ PLy_spi_execute_plan(PyObject *ob, PyObject *list, long limit)
 
 		for (j = 0; j < nargs; j++)
 		{
-			PyObject   *elem,
-					   *so;
+			PyObject   *elem;
 
 			elem = PySequence_GetItem(list, j);
 			if (elem != Py_None)
 			{
-				if (PyUnicode_Check(elem))
-					so = PLyUnicode_Str(elem);
-				else
-					so = PyObject_Str(elem);
-				if (!so)
-					PLy_elog(ERROR, "could not execute plan");
-				Py_DECREF(elem);
-
 				PG_TRY();
 				{
-					char	   *sv = PyString_AsString(so);
-
 					plan->values[j] =
-						InputFunctionCall(&(plan->args[j].out.d.typfunc),
-										  sv,
-										  plan->args[j].out.d.typioparam,
-										  -1);
+					    plan->args[j].out.d.func(NULL, &(plan->args[j].out.d), elem);
 				}
 				PG_CATCH();
 				{
-					Py_DECREF(so);
+					Py_DECREF(elem);
 					PG_RE_THROW();
 				}
 				PG_END_TRY();
 
-				Py_DECREF(so);
+				Py_DECREF(elem);
 				nulls[j] = ' ';
 			}
 			else
@@ -3635,26 +3620,6 @@ static void
 PLy_free(void *ptr)
 {
 	free(ptr);
-}
-
-/*
- * Convert a Unicode object to a Python string.
- */
-static PyObject *
-PLyUnicode_Str(PyObject *unicode)
-{
-#if PY_MAJOR_VERSION >= 3
-	/* In Python 3, this is a noop. */
-	Py_INCREF(unicode);
-	return unicode;
-#else
-
-	/*
-	 * In Python 2, this means converting the Unicode to bytes in the server
-	 * encoding.
-	 */
-	return PLyUnicode_Bytes(unicode);
-#endif
 }
 
 /*
