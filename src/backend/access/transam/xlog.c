@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.381 2010/03/15 18:49:17 sriggs Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.382 2010/03/18 09:17:18 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -171,6 +171,7 @@ static bool restoredFromArchive = false;
 /* options taken from recovery.conf for archive recovery */
 static char *recoveryRestoreCommand = NULL;
 static char *recoveryEndCommand = NULL;
+static char *restartPointCommand = NULL;
 static bool recoveryTarget = false;
 static bool recoveryTargetExact = false;
 static bool recoveryTargetInclusive = true;
@@ -370,6 +371,11 @@ typedef struct XLogCtlData
 	int			XLogCacheBlck;	/* highest allocated xlog buffer index */
 	TimeLineID	ThisTimeLineID;
 	TimeLineID	RecoveryTargetTLI;
+	/*
+	 * restartPointCommand is read from recovery.conf but needs to be in
+	 * shared memory so that the bgwriter process can access it.
+	 */
+	char		restartPointCommand[MAXPGPATH];
 
 	/*
 	 * SharedRecoveryInProgress indicates if we're still in crash or archive
@@ -520,7 +526,8 @@ static bool XLogPageRead(XLogRecPtr *RecPtr, int emode, bool fetching_ckpt,
 static void XLogFileClose(void);
 static bool RestoreArchivedFile(char *path, const char *xlogfname,
 					const char *recovername, off_t expectedSize);
-static void ExecuteRecoveryEndCommand(void);
+static void ExecuteRecoveryCommand(char *command, char *commandName,
+					   bool failOnerror);
 static void PreallocXlogFiles(XLogRecPtr endptr);
 static void RemoveOldXlogFiles(uint32 log, uint32 seg, XLogRecPtr endptr);
 static void ValidateXLOGDirectoryStructure(void);
@@ -2990,12 +2997,19 @@ not_available:
 }
 
 /*
- * Attempt to execute the recovery_end_command.
+ * Attempt to execute an external shell command during recovery.
+ *
+ * 'command' is the shell command to be executed, 'commandName' is a
+ * human-readable name describing the command emitted in the logs. If
+ * 'failonSignal' is true and the command is killed by a signal, a FATAL
+ * error is thrown. Otherwise a WARNING is emitted.
+ *
+ * This is currently used for restore_end_command and restartpoint_command.
  */
 static void
-ExecuteRecoveryEndCommand(void)
+ExecuteRecoveryCommand(char *command, char *commandName, bool failOnSignal)
 {
-	char		xlogRecoveryEndCmd[MAXPGPATH];
+	char		xlogRecoveryCmd[MAXPGPATH];
 	char		lastRestartPointFname[MAXPGPATH];
 	char	   *dp;
 	char	   *endp;
@@ -3005,43 +3019,29 @@ ExecuteRecoveryEndCommand(void)
 	uint32		restartLog;
 	uint32		restartSeg;
 
-	Assert(recoveryEndCommand);
+	Assert(command && commandName);
 
 	/*
 	 * Calculate the archive file cutoff point for use during log shipping
 	 * replication. All files earlier than this point can be deleted from the
 	 * archive, though there is no requirement to do so.
-	 *
-	 * We initialise this with the filename of an InvalidXLogRecPtr, which
-	 * will prevent the deletion of any WAL files from the archive because of
-	 * the alphabetic sorting property of WAL filenames.
-	 *
-	 * Once we have successfully located the redo pointer of the checkpoint
-	 * from which we start recovery we never request a file prior to the redo
-	 * pointer of the last restartpoint. When redo begins we know that we have
-	 * successfully located it, so there is no need for additional status
-	 * flags to signify the point when we can begin deleting WAL files from
-	 * the archive.
 	 */
-	if (InRedo)
-	{
-		XLByteToSeg(ControlFile->checkPointCopy.redo,
-					restartLog, restartSeg);
-		XLogFileName(lastRestartPointFname,
-					 ControlFile->checkPointCopy.ThisTimeLineID,
-					 restartLog, restartSeg);
-	}
-	else
-		XLogFileName(lastRestartPointFname, 0, 0, 0);
+	LWLockAcquire(ControlFileLock, LW_SHARED);
+	XLByteToSeg(ControlFile->checkPointCopy.redo,
+				restartLog, restartSeg);
+	XLogFileName(lastRestartPointFname,
+				 ControlFile->checkPointCopy.ThisTimeLineID,
+				 restartLog, restartSeg);
+	LWLockRelease(ControlFileLock);
 
 	/*
 	 * construct the command to be executed
 	 */
-	dp = xlogRecoveryEndCmd;
-	endp = xlogRecoveryEndCmd + MAXPGPATH - 1;
+	dp = xlogRecoveryCmd;
+	endp = xlogRecoveryCmd + MAXPGPATH - 1;
 	*endp = '\0';
 
-	for (sp = recoveryEndCommand; *sp; sp++)
+	for (sp = command; *sp; sp++)
 	{
 		if (*sp == '%')
 		{
@@ -3075,13 +3075,12 @@ ExecuteRecoveryEndCommand(void)
 	*dp = '\0';
 
 	ereport(DEBUG3,
-			(errmsg_internal("executing recovery end command \"%s\"",
-							 xlogRecoveryEndCmd)));
+			(errmsg_internal("executing %s \"%s\"", commandName, command)));
 
 	/*
 	 * execute the constructed command
 	 */
-	rc = system(xlogRecoveryEndCmd);
+	rc = system(xlogRecoveryCmd);
 	if (rc != 0)
 	{
 		/*
@@ -3091,9 +3090,13 @@ ExecuteRecoveryEndCommand(void)
 		 */
 		signaled = WIFSIGNALED(rc) || WEXITSTATUS(rc) > 125;
 
-		ereport(signaled ? FATAL : WARNING,
-				(errmsg("recovery_end_command \"%s\": return code %d",
-						xlogRecoveryEndCmd, rc)));
+		/*
+		 * translator: First %s represents a recovery.conf parameter name like
+		 * "recovery_end_command", and the 2nd is the value of that parameter.
+		 */
+		ereport((signaled && failOnSignal) ? FATAL : WARNING,
+				(errmsg("%s \"%s\": return code %d", commandName,
+						command, rc)));
 	}
 }
 
@@ -4936,6 +4939,13 @@ readRecoveryCommandFile(void)
 					(errmsg("recovery_end_command = '%s'",
 							recoveryEndCommand)));
 		}
+		else if (strcmp(tok1, "restartpoint_command") == 0)
+		{
+			restartPointCommand = pstrdup(tok2);
+			ereport(DEBUG2,
+					(errmsg("restartpoint_command = '%s'",
+							restartPointCommand)));
+		}
 		else if (strcmp(tok1, "recovery_target_timeline") == 0)
 		{
 			rtliGiven = true;
@@ -5505,8 +5515,14 @@ StartupXLOG(void)
 						recoveryTargetTLI,
 						ControlFile->checkPointCopy.ThisTimeLineID)));
 
-	/* Save the selected recovery target timeline ID in shared memory */
+	/*
+	 * Save the selected recovery target timeline ID and restartpoint_command
+	 * in shared memory so that other processes can see them
+	 */
 	XLogCtl->RecoveryTargetTLI = recoveryTargetTLI;
+	strncpy(XLogCtl->restartPointCommand,
+			restartPointCommand ? restartPointCommand : "",
+			sizeof(XLogCtl->restartPointCommand));
 
 	if (read_backup_label(&checkPointLoc))
 	{
@@ -6129,7 +6145,9 @@ StartupXLOG(void)
 		 * And finally, execute the recovery_end_command, if any.
 		 */
 		if (recoveryEndCommand)
-			ExecuteRecoveryEndCommand();
+			ExecuteRecoveryCommand(recoveryEndCommand,
+								   "recovery_end_command",
+								   true);
 	}
 
 	/*
@@ -7318,6 +7336,15 @@ CreateRestartPoint(int flags)
 			 timestamptz_to_str(GetLatestXLogTime()))));
 
 	LWLockRelease(CheckpointLock);
+
+	/*
+	 * Finally, execute restartpoint_command, if any.
+	 */
+	if (XLogCtl->restartPointCommand[0])
+		ExecuteRecoveryCommand(XLogCtl->restartPointCommand,
+							   "restartpoint_command",
+							   false);
+
 	return true;
 }
 

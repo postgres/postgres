@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/recovery-config.sgml,v 2.2 2010/02/25 09:32:19 heikki Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/recovery-config.sgml,v 2.3 2010/03/18 09:17:18 heikki Exp $ -->
 
 <chapter Id="recovery-config">
   <title>Recovery Configuration</title>
@@ -59,14 +59,15 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
       </listitem>
      </varlistentry>
 
-     <varlistentry id="recovery-end-command" xreflabel="recovery_end_command">
-      <term><varname>recovery_end_command</varname> (<type>string</type>)</term>
+     <varlistentry id="restartpoint-command" xreflabel="restartpoint_command">
+      <term><varname>restartpoint_command</varname> (<type>string</type>)</term>
       <listitem>
        <para>
-        This parameter specifies a shell command that will be executed once only
-        at the end of recovery. This parameter is optional. The purpose of the
-        <varname>recovery_end_command</> is to provide a mechanism for cleanup
-        following replication or recovery.
+        This parameter specifies a shell command that will be executed at
+        every restartpoint. This parameter is optional. The purpose of the
+        <varname>restartpoint_command</> is to provide a mechanism for cleaning
+        up old archived WAL files that are no longer needed by the standby
+        server.
         Any <literal>%r</> is replaced by the name of the file
         containing the last valid restart point. That is the earliest file that
         must be kept to allow a restore to be restartable, so this information
@@ -76,6 +77,24 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
         (see <xref linkend="warm-standby">).
         Write <literal>%%</> to embed an actual <literal>%</> character
         in the command.
+       </para>
+       <para>
+        If the command returns a non-zero exit status then a WARNING log
+        message will be written.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="recovery-end-command" xreflabel="recovery_end_command">
+      <term><varname>recovery_end_command</varname> (<type>string</type>)</term>
+      <listitem>
+       <para>
+        This parameter specifies a shell command that will be executed once only
+        at the end of recovery. This parameter is optional. The purpose of the
+        <varname>recovery_end_command</> is to provide a mechanism for cleanup
+        following replication or recovery.
+        Any <literal>%r</> is replaced by the name of the file containing the
+        last valid restart point, like in <xref linkend="restartpoint-command">.
        </para>
        <para>
         If the command returns a non-zero exit status then a WARNING log
