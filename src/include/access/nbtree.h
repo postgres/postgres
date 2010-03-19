@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/nbtree.h,v 1.130 2010/02/26 02:01:21 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/access/nbtree.h,v 1.131 2010/03/19 10:41:22 sriggs Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -375,7 +375,7 @@ typedef struct xl_btree_vacuum
  * identifies the tuple removed from the parent page (note that we remove
  * this tuple's downlink and the *following* tuple's key).	Note we do not
  * store any content for the deleted page --- it is just rewritten as empty
- * during recovery.
+ * during recovery, apart from resetting the btpo.xact.
  */
 typedef struct xl_btree_delete_page
 {
@@ -383,6 +383,7 @@ typedef struct xl_btree_delete_page
 	BlockNumber deadblk;		/* child block being deleted */
 	BlockNumber leftblk;		/* child block's left sibling, if any */
 	BlockNumber rightblk;		/* child block's right sibling */
+	TransactionId btpo_xact;	/* value of btpo.xact for use in recovery */
 	/* xl_btree_metadata FOLLOWS IF XLOG_BTREE_DELETE_PAGE_META */
 } xl_btree_delete_page;
 
