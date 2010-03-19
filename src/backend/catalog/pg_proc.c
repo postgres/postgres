@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_proc.c,v 1.172 2010/02/26 02:00:37 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_proc.c,v 1.173 2010/03/19 22:54:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,6 +40,12 @@
 Datum		fmgr_internal_validator(PG_FUNCTION_ARGS);
 Datum		fmgr_c_validator(PG_FUNCTION_ARGS);
 Datum		fmgr_sql_validator(PG_FUNCTION_ARGS);
+
+typedef struct
+{
+	char	   *proname;
+	char	   *prosrc;
+} parse_error_callback_arg;
 
 static void sql_function_parse_error_callback(void *arg);
 static int match_prosrc_to_query(const char *prosrc, const char *queryText,
@@ -733,6 +739,7 @@ fmgr_sql_validator(PG_FUNCTION_ARGS)
 	bool		isnull;
 	Datum		tmp;
 	char	   *prosrc;
+	parse_error_callback_arg callback_arg;
 	ErrorContextCallback sqlerrcontext;
 	bool		haspolyarg;
 	int			i;
@@ -782,8 +789,11 @@ fmgr_sql_validator(PG_FUNCTION_ARGS)
 		/*
 		 * Setup error traceback support for ereport().
 		 */
+		callback_arg.proname = NameStr(proc->proname);
+		callback_arg.prosrc = prosrc;
+
 		sqlerrcontext.callback = sql_function_parse_error_callback;
-		sqlerrcontext.arg = tuple;
+		sqlerrcontext.arg = (void *) &callback_arg;
 		sqlerrcontext.previous = error_context_stack;
 		error_context_stack = &sqlerrcontext;
 
@@ -822,25 +832,14 @@ fmgr_sql_validator(PG_FUNCTION_ARGS)
 static void
 sql_function_parse_error_callback(void *arg)
 {
-	HeapTuple	tuple = (HeapTuple) arg;
-	Form_pg_proc proc = (Form_pg_proc) GETSTRUCT(tuple);
-	bool		isnull;
-	Datum		tmp;
-	char	   *prosrc;
+	parse_error_callback_arg *callback_arg = (parse_error_callback_arg *) arg;
 
 	/* See if it's a syntax error; if so, transpose to CREATE FUNCTION */
-	tmp = SysCacheGetAttr(PROCOID, tuple, Anum_pg_proc_prosrc, &isnull);
-	if (isnull)
-		elog(ERROR, "null prosrc");
-	prosrc = TextDatumGetCString(tmp);
-
-	if (!function_parse_error_transpose(prosrc))
+	if (!function_parse_error_transpose(callback_arg->prosrc))
 	{
 		/* If it's not a syntax error, push info onto context stack */
-		errcontext("SQL function \"%s\"", NameStr(proc->proname));
+		errcontext("SQL function \"%s\"", callback_arg->proname);
 	}
-
-	pfree(prosrc);
 }
 
 /*

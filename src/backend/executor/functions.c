@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/functions.c,v 1.142 2010/02/26 02:00:41 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/functions.c,v 1.143 2010/03/19 22:54:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -74,6 +74,7 @@ typedef struct execution_state
  */
 typedef struct
 {
+	char	   *fname;			/* function name (for error msgs) */
 	char	   *src;			/* function body text (for error msgs) */
 
 	Oid		   *argtypes;		/* resolved types of arguments */
@@ -228,6 +229,7 @@ init_sql_fcache(FmgrInfo *finfo, bool lazyEvalOK)
 	bool		isNull;
 
 	fcache = (SQLFunctionCachePtr) palloc0(sizeof(SQLFunctionCache));
+	finfo->fn_extra = (void *) fcache;
 
 	/*
 	 * get the procedure tuple corresponding to the given function Oid
@@ -236,6 +238,11 @@ init_sql_fcache(FmgrInfo *finfo, bool lazyEvalOK)
 	if (!HeapTupleIsValid(procedureTuple))
 		elog(ERROR, "cache lookup failed for function %u", foid);
 	procedureStruct = (Form_pg_proc) GETSTRUCT(procedureTuple);
+
+	/*
+	 * copy function name immediately for use by error reporting callback
+	 */
+	fcache->fname = pstrdup(NameStr(procedureStruct->proname));
 
 	/*
 	 * get the result type from the procedure tuple, and check for polymorphic
@@ -361,8 +368,6 @@ init_sql_fcache(FmgrInfo *finfo, bool lazyEvalOK)
 											  lazyEvalOK);
 
 	ReleaseSysCache(procedureTuple);
-
-	finfo->fn_extra = (void *) fcache;
 }
 
 /* Start up execution of one execution_state node */
@@ -877,37 +882,24 @@ sql_exec_error_callback(void *arg)
 {
 	FmgrInfo   *flinfo = (FmgrInfo *) arg;
 	SQLFunctionCachePtr fcache = (SQLFunctionCachePtr) flinfo->fn_extra;
-	HeapTuple	func_tuple;
-	Form_pg_proc functup;
-	char	   *fn_name;
 	int			syntaxerrposition;
 
-	/* Need access to function's pg_proc tuple */
-	func_tuple = SearchSysCache1(PROCOID, ObjectIdGetDatum(flinfo->fn_oid));
-	if (!HeapTupleIsValid(func_tuple))
-		return;					/* shouldn't happen */
-	functup = (Form_pg_proc) GETSTRUCT(func_tuple);
-	fn_name = NameStr(functup->proname);
+	/*
+	 * We can do nothing useful if init_sql_fcache() didn't get as far as
+	 * saving the function name
+	 */
+	if (fcache == NULL || fcache->fname == NULL)
+		return;
 
 	/*
 	 * If there is a syntax error position, convert to internal syntax error
 	 */
 	syntaxerrposition = geterrposition();
-	if (syntaxerrposition > 0)
+	if (syntaxerrposition > 0 && fcache->src != NULL)
 	{
-		bool		isnull;
-		Datum		tmp;
-		char	   *prosrc;
-
-		tmp = SysCacheGetAttr(PROCOID, func_tuple, Anum_pg_proc_prosrc,
-							  &isnull);
-		if (isnull)
-			elog(ERROR, "null prosrc");
-		prosrc = TextDatumGetCString(tmp);
 		errposition(0);
 		internalerrposition(syntaxerrposition);
-		internalerrquery(prosrc);
-		pfree(prosrc);
+		internalerrquery(fcache->src);
 	}
 
 	/*
@@ -917,7 +909,7 @@ sql_exec_error_callback(void *arg)
 	 * ExecutorEnd are blamed on the appropriate query; see postquel_start and
 	 * postquel_end.)
 	 */
-	if (fcache)
+	if (fcache->func_state)
 	{
 		execution_state *es;
 		int			query_num;
@@ -929,7 +921,7 @@ sql_exec_error_callback(void *arg)
 			if (es->qd)
 			{
 				errcontext("SQL function \"%s\" statement %d",
-						   fn_name, query_num);
+						   fcache->fname, query_num);
 				break;
 			}
 			es = es->next;
@@ -941,16 +933,18 @@ sql_exec_error_callback(void *arg)
 			 * couldn't identify a running query; might be function entry,
 			 * function exit, or between queries.
 			 */
-			errcontext("SQL function \"%s\"", fn_name);
+			errcontext("SQL function \"%s\"", fcache->fname);
 		}
 	}
 	else
 	{
-		/* must have failed during init_sql_fcache() */
-		errcontext("SQL function \"%s\" during startup", fn_name);
+		/*
+		 * Assume we failed during init_sql_fcache().  (It's possible that
+		 * the function actually has an empty body, but in that case we may
+		 * as well report all errors as being "during startup".)
+		 */
+		errcontext("SQL function \"%s\" during startup", fcache->fname);
 	}
-
-	ReleaseSysCache(func_tuple);
 }
 
 

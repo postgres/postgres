@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.286 2010/02/26 02:00:46 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.287 2010/03/19 22:54:41 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -70,6 +70,12 @@ typedef struct
 	List	   *args;
 	int			sublevels_up;
 } substitute_actual_srf_parameters_context;
+
+typedef struct
+{
+	char	   *proname;
+	char	   *prosrc;
+} inline_error_callback_arg;
 
 static bool contain_agg_clause_walker(Node *node, void *context);
 static bool pull_agg_clause_walker(Node *node, List **context);
@@ -3678,6 +3684,7 @@ inline_function(Oid funcid, Oid result_type, List *args,
 	bool		modifyTargetList;
 	MemoryContext oldcxt;
 	MemoryContext mycxt;
+	inline_error_callback_arg callback_arg;
 	ErrorContextCallback sqlerrcontext;
 	List	   *raw_parsetree_list;
 	Query	   *querytree;
@@ -3706,15 +3713,6 @@ inline_function(Oid funcid, Oid result_type, List *args,
 		return NULL;
 
 	/*
-	 * Setup error traceback support for ereport().  This is so that we can
-	 * finger the function that bad information came from.
-	 */
-	sqlerrcontext.callback = sql_inline_error_callback;
-	sqlerrcontext.arg = func_tuple;
-	sqlerrcontext.previous = error_context_stack;
-	error_context_stack = &sqlerrcontext;
-
-	/*
 	 * Make a temporary memory context, so that we don't leak all the stuff
 	 * that parsing might create.
 	 */
@@ -3724,6 +3722,27 @@ inline_function(Oid funcid, Oid result_type, List *args,
 								  ALLOCSET_DEFAULT_INITSIZE,
 								  ALLOCSET_DEFAULT_MAXSIZE);
 	oldcxt = MemoryContextSwitchTo(mycxt);
+
+	/* Fetch the function body */
+	tmp = SysCacheGetAttr(PROCOID,
+						  func_tuple,
+						  Anum_pg_proc_prosrc,
+						  &isNull);
+	if (isNull)
+		elog(ERROR, "null prosrc for function %u", funcid);
+	src = TextDatumGetCString(tmp);
+
+	/*
+	 * Setup error traceback support for ereport().  This is so that we can
+	 * finger the function that bad information came from.
+	 */
+	callback_arg.proname = NameStr(funcform->proname);
+	callback_arg.prosrc = src;
+
+	sqlerrcontext.callback = sql_inline_error_callback;
+	sqlerrcontext.arg = (void *) &callback_arg;
+	sqlerrcontext.previous = error_context_stack;
+	error_context_stack = &sqlerrcontext;
 
 	/* Check for polymorphic arguments, and substitute actual arg types */
 	argtypes = (Oid *) palloc(funcform->pronargs * sizeof(Oid));
@@ -3736,15 +3755,6 @@ inline_function(Oid funcid, Oid result_type, List *args,
 			argtypes[i] = exprType((Node *) list_nth(args, i));
 		}
 	}
-
-	/* Fetch and parse the function body */
-	tmp = SysCacheGetAttr(PROCOID,
-						  func_tuple,
-						  Anum_pg_proc_prosrc,
-						  &isNull);
-	if (isNull)
-		elog(ERROR, "null prosrc for function %u", funcid);
-	src = TextDatumGetCString(tmp);
 
 	/*
 	 * We just do parsing and parse analysis, not rewriting, because rewriting
@@ -3965,30 +3975,19 @@ substitute_actual_parameters_mutator(Node *node,
 static void
 sql_inline_error_callback(void *arg)
 {
-	HeapTuple	func_tuple = (HeapTuple) arg;
-	Form_pg_proc funcform = (Form_pg_proc) GETSTRUCT(func_tuple);
+	inline_error_callback_arg *callback_arg = (inline_error_callback_arg *) arg;
 	int			syntaxerrposition;
 
 	/* If it's a syntax error, convert to internal syntax error report */
 	syntaxerrposition = geterrposition();
 	if (syntaxerrposition > 0)
 	{
-		bool		isnull;
-		Datum		tmp;
-		char	   *prosrc;
-
-		tmp = SysCacheGetAttr(PROCOID, func_tuple, Anum_pg_proc_prosrc,
-							  &isnull);
-		if (isnull)
-			elog(ERROR, "null prosrc");
-		prosrc = TextDatumGetCString(tmp);
 		errposition(0);
 		internalerrposition(syntaxerrposition);
-		internalerrquery(prosrc);
+		internalerrquery(callback_arg->prosrc);
 	}
 
-	errcontext("SQL function \"%s\" during inlining",
-			   NameStr(funcform->proname));
+	errcontext("SQL function \"%s\" during inlining", callback_arg->proname);
 }
 
 /*
@@ -4096,6 +4095,7 @@ inline_set_returning_function(PlannerInfo *root, RangeTblEntry *rte)
 	bool		modifyTargetList;
 	MemoryContext oldcxt;
 	MemoryContext mycxt;
+	inline_error_callback_arg callback_arg;
 	ErrorContextCallback sqlerrcontext;
 	List	   *raw_parsetree_list;
 	List	   *querytree_list;
@@ -4171,15 +4171,6 @@ inline_set_returning_function(PlannerInfo *root, RangeTblEntry *rte)
 	}
 
 	/*
-	 * Setup error traceback support for ereport().  This is so that we can
-	 * finger the function that bad information came from.
-	 */
-	sqlerrcontext.callback = sql_inline_error_callback;
-	sqlerrcontext.arg = func_tuple;
-	sqlerrcontext.previous = error_context_stack;
-	error_context_stack = &sqlerrcontext;
-
-	/*
 	 * Make a temporary memory context, so that we don't leak all the stuff
 	 * that parsing might create.
 	 */
@@ -4189,6 +4180,27 @@ inline_set_returning_function(PlannerInfo *root, RangeTblEntry *rte)
 								  ALLOCSET_DEFAULT_INITSIZE,
 								  ALLOCSET_DEFAULT_MAXSIZE);
 	oldcxt = MemoryContextSwitchTo(mycxt);
+
+	/* Fetch the function body */
+	tmp = SysCacheGetAttr(PROCOID,
+						  func_tuple,
+						  Anum_pg_proc_prosrc,
+						  &isNull);
+	if (isNull)
+		elog(ERROR, "null prosrc for function %u", func_oid);
+	src = TextDatumGetCString(tmp);
+
+	/*
+	 * Setup error traceback support for ereport().  This is so that we can
+	 * finger the function that bad information came from.
+	 */
+	callback_arg.proname = NameStr(funcform->proname);
+	callback_arg.prosrc = src;
+
+	sqlerrcontext.callback = sql_inline_error_callback;
+	sqlerrcontext.arg = (void *) &callback_arg;
+	sqlerrcontext.previous = error_context_stack;
+	error_context_stack = &sqlerrcontext;
 
 	/*
 	 * Run eval_const_expressions on the function call.  This is necessary to
@@ -4219,15 +4231,6 @@ inline_set_returning_function(PlannerInfo *root, RangeTblEntry *rte)
 			argtypes[i] = exprType((Node *) list_nth(fexpr->args, i));
 		}
 	}
-
-	/* Fetch and parse the function body */
-	tmp = SysCacheGetAttr(PROCOID,
-						  func_tuple,
-						  Anum_pg_proc_prosrc,
-						  &isNull);
-	if (isNull)
-		elog(ERROR, "null prosrc for function %u", func_oid);
-	src = TextDatumGetCString(tmp);
 
 	/*
 	 * Parse, analyze, and rewrite (unlike inline_function(), we can't skip
