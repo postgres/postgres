@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/replication/libpqwalreceiver/libpqwalreceiver.c,v 1.6 2010/03/19 17:51:42 sriggs Exp $
+ *	  $PostgreSQL: pgsql/src/backend/replication/libpqwalreceiver/libpqwalreceiver.c,v 1.7 2010/03/19 19:19:38 sriggs Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -157,6 +157,8 @@ libpqrcv_connect(char *conninfo, XLogRecPtr startpoint)
 	PQclear(res);
 
 	justconnected = true;
+	ereport(LOG,
+			(errmsg("streaming replication successfully connected to primary")));
 
 	return true;
 }
