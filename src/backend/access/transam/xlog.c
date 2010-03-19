@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.382 2010/03/18 09:17:18 heikki Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.383 2010/03/19 11:05:14 sriggs Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -172,8 +172,7 @@ static bool restoredFromArchive = false;
 static char *recoveryRestoreCommand = NULL;
 static char *recoveryEndCommand = NULL;
 static char *restartPointCommand = NULL;
-static bool recoveryTarget = false;
-static bool recoveryTargetExact = false;
+static RecoveryTargetType recoveryTarget = RECOVERY_TARGET_UNSET;
 static bool recoveryTargetInclusive = true;
 static TransactionId recoveryTargetXid;
 static TimestampTz recoveryTargetTime;
@@ -4224,14 +4223,32 @@ writeTimeLineHistory(TimeLineID newTLI, TimeLineID parentTLI,
 	 */
 	XLogFileName(xlogfname, endTLI, endLogId, endLogSeg);
 
-	snprintf(buffer, sizeof(buffer),
-			 "%s%u\t%s\t%s transaction %u at %s\n",
-			 (srcfd < 0) ? "" : "\n",
-			 parentTLI,
-			 xlogfname,
-			 recoveryStopAfter ? "after" : "before",
-			 recoveryStopXid,
-			 timestamptz_to_str(recoveryStopTime));
+	/*
+	 * Write comment to history file to explain why and where timeline changed.
+	 * Comment varies according to the recovery target used.
+	 */
+	if (recoveryTarget == RECOVERY_TARGET_XID)
+		snprintf(buffer, sizeof(buffer),
+				 "%s%u\t%s\t%s transaction %u\n",
+				 (srcfd < 0) ? "" : "\n",
+				 parentTLI,
+				 xlogfname,
+				 recoveryStopAfter ? "after" : "before",
+				 recoveryStopXid);
+	if (recoveryTarget == RECOVERY_TARGET_TIME)
+		snprintf(buffer, sizeof(buffer),
+				 "%s%u\t%s\t%s %s\n",
+				 (srcfd < 0) ? "" : "\n",
+				 parentTLI,
+				 xlogfname,
+				 recoveryStopAfter ? "after" : "before",
+				 timestamptz_to_str(recoveryStopTime));
+	else
+		snprintf(buffer, sizeof(buffer),
+				 "%s%u\t%s\tno recovery target specified\n",
+				 (srcfd < 0) ? "" : "\n",
+				 parentTLI,
+				 xlogfname);
 
 	nbytes = strlen(buffer);
 	errno = 0;
@@ -4978,8 +4995,7 @@ readRecoveryCommandFile(void)
 			ereport(DEBUG2,
 					(errmsg("recovery_target_xid = %u",
 							recoveryTargetXid)));
-			recoveryTarget = true;
-			recoveryTargetExact = true;
+			recoveryTarget = RECOVERY_TARGET_XID;
 		}
 		else if (strcmp(tok1, "recovery_target_time") == 0)
 		{
@@ -4987,10 +5003,9 @@ readRecoveryCommandFile(void)
 			 * if recovery_target_xid specified, then this overrides
 			 * recovery_target_time
 			 */
-			if (recoveryTargetExact)
+			if (recoveryTarget == RECOVERY_TARGET_XID)
 				continue;
-			recoveryTarget = true;
-			recoveryTargetExact = false;
+			recoveryTarget = RECOVERY_TARGET_TIME;
 
 			/*
 			 * Convert the time string given by the user to TimestampTz form.
@@ -5265,13 +5280,13 @@ recoveryStopsHere(XLogRecord *record, bool *includeThis)
 		return false;
 
 	/* Do we have a PITR target at all? */
-	if (!recoveryTarget)
+	if (recoveryTarget == RECOVERY_TARGET_UNSET)
 	{
 		recoveryLastXTime = recordXtime;
 		return false;
 	}
 
-	if (recoveryTargetExact)
+	if (recoveryTarget == RECOVERY_TARGET_XID)
 	{
 		/*
 		 * there can be only one transaction end record with this exact
@@ -5665,17 +5680,14 @@ StartupXLOG(void)
 			if (StandbyMode)
 				ereport(LOG,
 						(errmsg("entering standby mode")));
-			else if (recoveryTarget)
-			{
-				if (recoveryTargetExact)
-					ereport(LOG,
-						 (errmsg("starting point-in-time recovery to XID %u",
-								 recoveryTargetXid)));
-				else
-					ereport(LOG,
-							(errmsg("starting point-in-time recovery to %s",
-									timestamptz_to_str(recoveryTargetTime))));
-			}
+			else if (recoveryTarget == RECOVERY_TARGET_XID)
+				ereport(LOG,
+					 (errmsg("starting point-in-time recovery to XID %u",
+							 recoveryTargetXid)));
+			else if (recoveryTarget == RECOVERY_TARGET_TIME)
+				ereport(LOG,
+						(errmsg("starting point-in-time recovery to %s",
+								timestamptz_to_str(recoveryTargetTime))));
 			else
 				ereport(LOG,
 						(errmsg("starting archive recovery")));
