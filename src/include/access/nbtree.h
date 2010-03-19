@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/nbtree.h,v 1.131 2010/03/19 10:41:22 sriggs Exp $
+ * $PostgreSQL: pgsql/src/include/access/nbtree.h,v 1.132 2010/03/19 20:51:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -387,7 +387,7 @@ typedef struct xl_btree_delete_page
 	/* xl_btree_metadata FOLLOWS IF XLOG_BTREE_DELETE_PAGE_META */
 } xl_btree_delete_page;
 
-#define SizeOfBtreeDeletePage	(offsetof(xl_btree_delete_page, rightblk) + sizeof(BlockNumber))
+#define SizeOfBtreeDeletePage	(offsetof(xl_btree_delete_page, btpo_xact) + sizeof(TransactionId))
 
 /*
  * New root log record.  There are zero tuples if this is to establish an
