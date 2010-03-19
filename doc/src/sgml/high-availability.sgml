@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/high-availability.sgml,v 1.53 2010/03/02 21:18:59 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/high-availability.sgml,v 1.54 2010/03/19 19:31:06 sriggs Exp $ -->
 
 <chapter id="high-availability">
  <title>High Availability, Load Balancing, and Replication</title>
@@ -922,6 +922,11 @@ host    replication     foo             192.168.1.100/32        md5
 # and port 5432 as the user "foo" whose password is "foopass".
 primary_conninfo = 'host=192.168.1.50 port=5432 user=foo password=foopass'
 </programlisting>
+
+      You do not need to specify <literal>database=replication</> in the
+      <varname>primary_conninfo</varname>. The required option will be added
+      automatically. If you mention the database parameter at all within
+      <varname>primary_conninfo</varname> then a FATAL error will be raised.
     </para>
    </sect2>
   </sect1>
