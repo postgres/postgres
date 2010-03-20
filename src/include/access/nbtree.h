@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/nbtree.h,v 1.132 2010/03/19 20:51:30 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/nbtree.h,v 1.133 2010/03/20 07:49:48 sriggs Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -317,7 +317,6 @@ typedef struct xl_btree_delete
 	RelFileNode node;
 	BlockNumber block;
 	TransactionId latestRemovedXid;
-	int			numItems;		/* number of items in the offset array */
 
 	/* TARGET OFFSET NUMBERS FOLLOW AT THE END */
 } xl_btree_delete;
@@ -363,7 +362,6 @@ typedef struct xl_btree_vacuum
 	RelFileNode node;
 	BlockNumber block;
 	BlockNumber lastBlockVacuumed;
-	int			numItems;		/* number of items in the offset array */
 
 	/* TARGET OFFSET NUMBERS FOLLOW */
 } xl_btree_vacuum;
