@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release-9.0.sgml,v 2.3 2010/03/20 03:30:12 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release-9.0.sgml,v 2.4 2010/03/20 14:03:31 momjian Exp $ -->
 
 
  <sect1 id="release-9-0">
@@ -1289,259 +1289,259 @@
 
       </sect4>
 
-      <sect4>
-        <title>Server-Side Languages</title>
+    </sect3>
+
+    <sect3>
+      <title>Server-Side Languages</title>
+
+      <itemizedlist>
+
+        <listitem>
+          <para>
+            Add the <literal>OR REPLACE</> clause to <command>CREATE
+            LANGUAGE</> (Tom)
+          </para>
+
+          <para>
+            This is helpful to optionally install a language if it does not
+            already exist, and is particularly helpful now that PL/pgSQL is
+            installed by default.
+          </para>
+        </listitem>
+
+        </itemizedlist>
+
+        <sect4>
+        <title>PL/PgSQL Server-Side Language</title>
 
         <itemizedlist>
 
           <listitem>
             <para>
-              Add the <literal>OR REPLACE</> clause to <command>CREATE
-              LANGUAGE</> (Tom)
-            </para>
-
-            <para>
-              This is helpful to optionally install a language if it does not
-              already exist, and is particularly helpful now that PL/pgSQL is
-              installed by default.
+              Install server-side language PL/pgSQL by default (Bruce) 
             </para>
           </listitem>
 
-          </itemizedlist>
+          <listitem>
+            <para>
+              Allow PL/pgSQL to handle row types with dropped columns (Pavel Stehule)
+            </para>
+          </listitem>
 
-          <sect5>
-          <title>PL/PgSQL Server-Side Language</title>
+          <listitem>
+            <para>
+              Allow <literal>IN</> parameters to be assigned values within
+              PL/pgSQL functions (Steve Prentice)
+            </para>
+          </listitem>
 
-          <itemizedlist>
+          <listitem>
+            <para>
+              Improve error location reporting in PL/pgSQL (Tom)
+            </para>
+          </listitem>
 
-            <listitem>
-              <para>
-                Install server-side language PL/pgSQL by default (Bruce) 
-              </para>
-            </listitem>
+          <listitem>
+            <para>
+              Have PL/pgSQL use the main lexer, rather than a custom version (Tom)
+            </para>
+          </listitem>
 
-            <listitem>
-              <para>
-                Allow PL/pgSQL to handle row types with dropped columns (Pavel Stehule)
-              </para>
-            </listitem>
+        </itemizedlist>
 
-            <listitem>
-              <para>
-                Allow <literal>IN</> parameters to be assigned values within
-                PL/pgSQL functions (Steve Prentice)
-              </para>
-            </listitem>
+      </sect4>
 
-            <listitem>
-              <para>
-                Improve error location reporting in PL/pgSQL (Tom)
-              </para>
-            </listitem>
+      <sect4>
+        <title>PL/pgSQL Cursors</title>
+        <itemizedlist>
 
-            <listitem>
-              <para>
-                Have PL/pgSQL use the main lexer, rather than a custom version (Tom)
-              </para>
-            </listitem>
+          <listitem>
+            <para>
+              Add count and <literal>ALL</> options to <command>MOVE
+              FORWARD</>/<literal>BACKWARD</> in PL/pgSQL (Pavel Stehule)
+            </para>
+          </listitem>
 
-          </itemizedlist>
+          <listitem>
+            <para>
+              Allow PL/pgSQL's <literal>WHERE CURRENT OF</> to use a cursor
+              variable (Tom)
+            </para>
+          </listitem>
 
-        </sect5>
+          <listitem>
+            <para>
+              Add PL/pgSQL's <command>OPEN cursor FOR EXECUTE</> to use parameters
+              (Pavel Stehule, Itagaki Takahiro)
+            </para>
 
-        <sect5>
-          <title>PL/pgSQL Cursors</title>
-          <itemizedlist>
+            <para>
+              This is accomplished with a new <literal>USING</> clause.
+            </para>
+          </listitem>
 
-            <listitem>
-              <para>
-                Add count and <literal>ALL</> options to <command>MOVE
-                FORWARD</>/<literal>BACKWARD</> in PL/pgSQL (Pavel Stehule)
-              </para>
-            </listitem>
+        </itemizedlist>
 
-            <listitem>
-              <para>
-                Allow PL/pgSQL's <literal>WHERE CURRENT OF</> to use a cursor
-                variable (Tom)
-              </para>
-            </listitem>
+      </sect4>
 
-            <listitem>
-              <para>
-                Add PL/pgSQL's <command>OPEN cursor FOR EXECUTE</> to use parameters
-                (Pavel Stehule, Itagaki Takahiro)
-              </para>
+      <sect4>
+        <title>PL/Perl Server-Side Language</title>
+        <itemizedlist>
 
-              <para>
-                This is accomplished with a new <literal>USING</> clause.
-              </para>
-            </listitem>
+          <listitem>
+            <para>
+              Add new PL/Perl functions:  <function>quote_literal()</>,
+              <function>quote_nullable()</>, <function>quote_ident()</>,
+              <function>encode_bytea()</>, <function>decode_bytea()</>,
+              <function>looks_like_number()</>, <function>encode_array_literal()</>,
+              <function>encode_array_constructor()</> (Tim Bunce)
+            </para>
+          </listitem>
 
-          </itemizedlist>
+          <listitem>
+            <para>
+              Add server variable <varname>plperl.on_init</> to specify a PL/Perl
+              Perl initialization function (Tim Bunce)
+            </para>
 
-        </sect5>
+            <para>
+              <varname>plperl.on_plperl_init</> and <varname>plperl.on_plperlu_init</>
+              are also available for trusted/untrusted-specific initialization.
+            </para>
+          </listitem>
 
-        <sect5>
-          <title>PL/Perl Server-Side Language</title>
-          <itemizedlist>
+          <listitem>
+            <para>
+              Improve error context support in PL/Perl (Alexey Klyukin)
+            </para>
+          </listitem>
 
-            <listitem>
-              <para>
-                Add new PL/Perl functions:  <function>quote_literal()</>,
-                <function>quote_nullable()</>, <function>quote_ident()</>,
-                <function>encode_bytea()</>, <function>decode_bytea()</>,
-                <function>looks_like_number()</>, <function>encode_array_literal()</>,
-                <function>encode_array_constructor()</> (Tim Bunce)
-              </para>
-            </listitem>
+          <listitem>
+            <para>
+              Support <command>END</> blocks in PL/Perl (Tim Bunce)
+            </para>
 
-            <listitem>
-              <para>
-                Add server variable <varname>plperl.on_init</> to specify a PL/Perl
-                Perl initialization function (Tim Bunce)
-              </para>
+            <para>
+              <command>END</> blocks do not currently allow database access.
+            </para>
+          </listitem>
 
-              <para>
-                <varname>plperl.on_plperl_init</> and <varname>plperl.on_plperlu_init</>
-                are also available for trusted/untrusted-specific initialization.
-              </para>
-            </listitem>
+          <listitem>
+            <para>
+              Allow <command>use strict</> in PL/Perl (Tim Bunce)
+            </para>
+          </listitem>
 
-            <listitem>
-              <para>
-                Improve error context support in PL/Perl (Alexey Klyukin)
-              </para>
-            </listitem>
+          <listitem>
+            <para>
+              Allow <command>require</> in PL/Perl (Tim Bunce)
+            </para>
 
-            <listitem>
-              <para>
-                Support <command>END</> blocks in PL/Perl (Tim Bunce)
-              </para>
+            <para>
+              This basically tests to see if the module is loaded, and if not,
+              generates an error.
+            </para>
+          </listitem>
 
-              <para>
-                <command>END</> blocks do not currently allow database access.
-              </para>
-            </listitem>
+          <listitem>
+            <para>
+              Allow <command>use feature</> in PL/Perl if Perl version 5.10 or
+              later is used (Tim Bunce)
+            </para>
+          </listitem>
 
-            <listitem>
-              <para>
-                Allow <command>use strict</> in PL/Perl (Tim Bunce)
-              </para>
-            </listitem>
+          <listitem>
+            <para>
+              Verify that PL/Perl return values are valid in the server encoding
+              (Andrew)
+            </para>
+          </listitem>
 
-            <listitem>
-              <para>
-                Allow <command>require</> in PL/Perl (Tim Bunce)
-              </para>
+          <listitem>
+            <para>
+              Improve PL/Perl code structure (Tim Bunce)
+            </para>
+          </listitem>
 
-              <para>
-                This basically tests to see if the module is loaded, and if not,
-                generates an error.
-              </para>
-            </listitem>
+          <listitem>
+            <para>
+              PL/Perl subroutines are now given names (Tim Bunce)
+            </para>
 
-            <listitem>
-              <para>
-                Allow <command>use feature</> in PL/Perl if Perl version 5.10 or
-                later is used (Tim Bunce)
-              </para>
-            </listitem>
+            <para>
+              This is for the use of profiling and code coverage tools.  DIDN'T
+              THEY HAVE NAMES BEFORE?
+            </para>
+          </listitem>
 
-            <listitem>
-              <para>
-                Verify that PL/Perl return values are valid in the server encoding
-                (Andrew)
-              </para>
-            </listitem>
+          <listitem>
+            <para>
+              PL/Perl no longer allows <application>Safe</> version 2.20 because
+              it is unsafe (Tim Bunce)
+            </para>
+          </listitem>
 
-            <listitem>
-              <para>
-                Improve PL/Perl code structure (Tim Bunce)
-              </para>
-            </listitem>
+        </itemizedlist>
 
-            <listitem>
-              <para>
-                PL/Perl subroutines are now given names (Tim Bunce)
-              </para>
+      </sect4>
 
-              <para>
-                This is for the use of profiling and code coverage tools.  DIDN'T
-                THEY HAVE NAMES BEFORE?
-              </para>
-            </listitem>
+      <sect4>
+        <title>PL/Python Server-Side Language</title>
+        <itemizedlist>
 
-            <listitem>
-              <para>
-                PL/Perl no longer allows <application>Safe</> version 2.20 because
-                it is unsafe (Tim Bunce)
-              </para>
-            </listitem>
+          <listitem>
+            <para>
+              Add Unicode support in PL/Python (Peter)
+            </para>
 
-          </itemizedlist>
+            <para>
+              Strings are automatically converted from/to the server encoding as
+              necessary.
+            </para>
+          </listitem>
 
-        </sect5>
+          <listitem>
+            <para>
+              Improve <type>bytea</> support in PL/Python (Caleb Welton)
+            </para>
 
-        <sect5>
-          <title>PL/Python Server-Side Language</title>
-          <itemizedlist>
+            <para>
+              <type>Bytea</> values passed into PL/Python now are represented as
+              binary, rather than the Postgres <type>bytea</> text format.  Null
+              bytes are now also output properly from PL/Python.  <type>Boolean</>
+              and <type>numeric</> value passing in PL/Python was also improved.
+            </para>
+          </listitem>
 
-            <listitem>
-              <para>
-                Add Unicode support in PL/Python (Peter)
-              </para>
+          <listitem>
+            <para>
+              Add array parameter/return support to PL/Python (Peter) 
+            </para>
+          </listitem>
 
-              <para>
-                Strings are automatically converted from/to the server encoding as
-                necessary.
-              </para>
-            </listitem>
+          <listitem>
+            <para>
+              Improve mapping of domains to Python base types in PL/Python (Peter)
+            </para>
+          </listitem>
 
-            <listitem>
-              <para>
-                Improve <type>bytea</> support in PL/Python (Caleb Welton)
-              </para>
+          <listitem>
+            <para>
+              Add <application>Python</> 3 support to PL/Python (Peter)
+            </para>
 
-              <para>
-                <type>Bytea</> values passed into PL/Python now are represented as
-                binary, rather than the Postgres <type>bytea</> text format.  Null
-                bytes are now also output properly from PL/Python.  <type>Boolean</>
-                and <type>numeric</> value passing in PL/Python was also improved.
-              </para>
-            </listitem>
+            <para>
+              The new server-side language is called <literal>plpython3u</>.
+            </para>
+          </listitem>
 
-            <listitem>
-              <para>
-                Add array parameter/return support to PL/Python (Peter) 
-              </para>
-            </listitem>
+          <listitem>
+            <para>
+              Improve error location and exception reporting in PL/Python (Peter)
+            </para>
+          </listitem>
 
-            <listitem>
-              <para>
-                Improve mapping of domains to Python base types in PL/Python (Peter)
-              </para>
-            </listitem>
-
-            <listitem>
-              <para>
-                Add <application>Python</> 3 support to PL/Python (Peter)
-              </para>
-
-              <para>
-                The new server-side language is called <literal>plpython3u</>.
-              </para>
-            </listitem>
-
-            <listitem>
-              <para>
-                Improve error location and exception reporting in PL/Python (Peter)
-              </para>
-            </listitem>
-
-          </itemizedlist>
-
-        </sect5>
+        </itemizedlist>
 
       </sect4>
 
@@ -1552,9 +1552,9 @@
       <itemizedlist>
 
         <listitem>
-          <para>
-            Add <command>vacuumdb</> <option>--analyze-only</> option to only
-            analyze (Bruce)
+        <para>
+          Add <command>vacuumdb</> <option>--analyze-only</> option to only
+          analyze (Bruce)
           </para>
         </listitem>
 
