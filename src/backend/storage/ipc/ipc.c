@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipc.c,v 1.85 2003/08/04 02:40:03 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipc.c,v 1.85.4.1 2010/03/20 00:58:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,6 +25,7 @@
 
 #include "miscadmin.h"
 #include "storage/ipc.h"
+#include "tcop/tcopprot.h"
 
 
 /*
@@ -91,6 +92,19 @@ proc_exit(int code)
 	ImmediateInterruptOK = false;
 	InterruptHoldoffCount = 1;
 	CritSectionCount = 0;
+
+	/*
+	 * Also clear the error context stack, to prevent error callbacks
+	 * from being invoked by any elog/ereport calls made during proc_exit.
+	 * Whatever context they might want to offer is probably not relevant,
+	 * and in any case they are likely to fail outright after we've done
+	 * things like aborting any open transaction.  (In normal exit scenarios
+	 * the context stack should be empty anyway, but it might not be in the
+	 * case of elog(FATAL) for example.)
+	 */
+	error_context_stack = NULL;
+	/* For the same reason, reset debug_query_string before it's clobbered */
+	debug_query_string = NULL;
 
 	elog(DEBUG3, "proc_exit(%d)", code);
 
