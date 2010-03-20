@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release-9.0.sgml,v 2.4 2010/03/20 14:03:31 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release-9.0.sgml,v 2.5 2010/03/20 16:31:09 momjian Exp $ -->
 
 
  <sect1 id="release-9-0">
@@ -1750,8 +1750,14 @@
 
       </sect4>
 
+    </sect3>
+
+    <sect3>
+      <title><application>Development Tools</></title>
+
       <sect4>
         <title><application>libpq</></title>
+
         <itemizedlist>
 
           <listitem>
