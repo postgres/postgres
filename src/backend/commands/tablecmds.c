@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.328 2010/03/10 19:48:39 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.329 2010/03/20 00:43:42 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1943,6 +1943,7 @@ renameatt(Oid myrelid,
 	HeapTuple	atttup;
 	Form_pg_attribute attform;
 	int			attnum;
+	char		relkind;
 
 	/*
 	 * Grab an exclusive lock on the target table, which we will NOT release
@@ -1954,6 +1955,23 @@ renameatt(Oid myrelid,
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 				 errmsg("cannot rename column of typed table")));
+
+	/*
+	 * Renaming the columns of sequences or toast tables doesn't actually
+	 * break anything from the system's point of view, since internal
+	 * references are by attnum.  But it doesn't seem right to allow users
+	 * to change names that are hardcoded into the system, hence the following
+	 * restriction.
+	 */
+	relkind = RelationGetForm(targetrelation)->relkind;
+	if (relkind != RELKIND_RELATION &&
+		relkind != RELKIND_VIEW &&
+		relkind != RELKIND_COMPOSITE_TYPE &&
+		relkind != RELKIND_INDEX)
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("\"%s\" is not a table, view, composite type or index",
+						RelationGetRelationName(targetrelation))));
 
 	/*
 	 * permissions checking.  only the owner of a class can change its schema.
