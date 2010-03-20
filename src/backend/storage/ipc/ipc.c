@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/ipc.c,v 1.106 2010/01/02 16:57:51 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/ipc.c,v 1.107 2010/03/20 00:58:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,6 +28,7 @@
 #include "postmaster/autovacuum.h"
 #endif
 #include "storage/ipc.h"
+#include "tcop/tcopprot.h"
 
 
 /*
@@ -162,6 +163,19 @@ proc_exit_prepare(int code)
 	ImmediateInterruptOK = false;
 	InterruptHoldoffCount = 1;
 	CritSectionCount = 0;
+
+	/*
+	 * Also clear the error context stack, to prevent error callbacks
+	 * from being invoked by any elog/ereport calls made during proc_exit.
+	 * Whatever context they might want to offer is probably not relevant,
+	 * and in any case they are likely to fail outright after we've done
+	 * things like aborting any open transaction.  (In normal exit scenarios
+	 * the context stack should be empty anyway, but it might not be in the
+	 * case of elog(FATAL) for example.)
+	 */
+	error_context_stack = NULL;
+	/* For the same reason, reset debug_query_string before it's clobbered */
+	debug_query_string = NULL;
 
 	/* do our shared memory exits first */
 	shmem_exit(code);
