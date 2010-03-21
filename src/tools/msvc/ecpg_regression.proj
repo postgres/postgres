@@ -42,6 +42,9 @@
   <CreateProperty Value="-r prepare" Condition="'%(Pgc.FileName)'=='autoprep'">
    <Output TaskParameter="Value" PropertyName="ECPGPARAM" />
   </CreateProperty>
+  <CreateProperty Value="-i" Condition="'%(Pgc.FileName)'=='strings'">
+   <Output TaskParameter="Value" PropertyName="ECPGPARAM" />
+  </CreateProperty>
 
   <!-- Run ECPG and the Visual C++ compiler on the files. Don't bother with dependency check between the steps -->
   <Exec WorkingDirectory="%(Pgc.RelativeDir)" Command="$(OUTDIR)ecpg\ecpg -I ../../include --regression $(ECPGPARAM) -o %(Pgc.Filename).c %(Pgc.Filename).pgc" />
