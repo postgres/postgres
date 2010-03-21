@@ -24,3 +24,5 @@ array_of_struct.c:	array_of_struct.pgc ../regression.h
 autoprep.c:     autoprep.pgc ../regression.h
 	$(ECPG) -r prepare -o $@ -I$(srcdir) $<
 
+strings.c:     strings.pgc strings.h ../regression.h
+	$(ECPG) -i -o $@ -I$(srcdir) $<

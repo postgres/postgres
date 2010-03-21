@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.172 2010/01/26 09:07:31 meskes Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.173 2010/03/21 10:49:51 meskes Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,6 +43,9 @@ static int		literalalloc;			/* current allocated buffer size */
 
 /* Used for detecting global state together with braces_open */
 static int		parenths_open;
+
+/* Used to tell parse_include() whether the command was #include or #include_next */
+static bool		include_next;
 
 #define startlit()	(literalbuf[0] = '\0', literallen = 0)
 static void addlit(char *ytext, int yleng);
@@ -310,11 +313,14 @@ other			.
 
 /* some stuff needed for ecpg */
 exec			[eE][xX][eE][cC]
-sql				[sS][qQ][lL]
+sql			[sS][qQ][lL]
 define			[dD][eE][fF][iI][nN][eE]
 include 		[iI][nN][cC][lL][uU][dD][eE]
+include_next 		[iI][nN][cC][lL][uU][dD][eE]_[nN][eE][xX][tT]
+import	 		[iI][mM][pP][oO][rR][tT]
 undef			[uU][nN][dD][eE][fF]
 
+if			[iI][fF]
 ifdef			[iI][fF][dD][eE][fF]
 ifndef			[iI][fF][nN][dD][eE][fF]
 else			[eE][lL][sS][eE]
@@ -325,13 +331,17 @@ struct			[sS][tT][rR][uU][cC][tT]
 
 exec_sql		{exec}{space}*{sql}{space}*
 ipdigit			({digit}|{digit}{digit}|{digit}{digit}{digit})
-ip				{ipdigit}\.{ipdigit}\.{ipdigit}\.{ipdigit}
+ip			{ipdigit}\.{ipdigit}\.{ipdigit}\.{ipdigit}
 
 /* we might want to parse all cpp include files */
 cppinclude 		{space}*#{include}{space}*
+cppinclude_next		{space}*#{include_next}{space}*
 
-/* Take care of cpp lines, they may also be continuated */
-cppline			{space}*#(.*\\{space})*.*{newline}
+/* take care of cpp lines, they may also be continuated */
+/* first a general line for all commands not starting with "i" */
+/* and then the other commands starting with "i", we have to add these
+ * seperately because the cppline production would match on "include" too */
+cppline			{space}*#([^i][A-Za-z]*|{if}|{ifdef}|{ifndef}|{import})(.*\\{space})*.*{newline}
 
 /*
  * Dollar quoted strings are totally opaque, and no escaping is done on them.
@@ -777,6 +787,19 @@ cppline			{space}*#(.*\\{space})*.*{newline}
 <C>{cppinclude}		{
 						if (system_includes)
 						{
+							include_next = false;
+							BEGIN(incl);
+						}
+						else
+					 	{
+							yylval.str = mm_strdup(yytext);
+							return(CPP_LINE);
+					  	}
+					}
+<C>{cppinclude_next}		{
+						if (system_includes)
+						{
+							include_next = true;
 							BEGIN(incl);
 						}
 						else
@@ -1321,6 +1344,12 @@ parse_include(void)
 					strcat(inc_file, ".h");
 					yyin = fopen( inc_file, "r" );
 				}
+			}
+			/* if the command was "include_next" we have to disregard the first hit */
+			if (yyin && include_next)
+			{
+				yyin = NULL;
+				include_next = false;
 			}
 		}
 	}

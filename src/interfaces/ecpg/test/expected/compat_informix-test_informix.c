@@ -11,7 +11,7 @@
 #line 1 "test_informix.pgc"
 #include "sqltypes.h"
 #include <stdlib.h>
-#
+
 
 #line 1 "regression.h"
 

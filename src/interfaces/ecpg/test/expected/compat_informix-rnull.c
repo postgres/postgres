@@ -11,7 +11,7 @@
 #line 1 "rnull.pgc"
 #include "sqltypes.h"
 #include <stdlib.h>
-#
+
 
 #line 1 "regression.h"
 

@@ -1,6 +1,6 @@
 #include "sqltypes.h"
 #include <stdlib.h>
-#
+
 $include ../regression;
 $define NUMBER 12;
 

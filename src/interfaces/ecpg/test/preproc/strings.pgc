@@ -1,9 +1,7 @@
-#include <stdlib.h>
-
-exec sql include ../regression;
+#include "../regression.h"
 
 exec sql begin declare section;
-char *s1, *s2, *s3, *s4, *s5, *s6;
+#include "strings.h"
 exec sql end declare section;
 
 int main(void)
@@ -25,5 +23,5 @@ int main(void)
   printf("%s %s %s %s %s %s\n", s1, s2, s3, s4, s5, s6);
 
   exec sql disconnect;
-  exit (0);
+  return (0);
 }
