@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.trailer,v 1.22 2010/03/20 18:53:00 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.trailer,v 1.23 2010/03/21 11:56:45 meskes Exp $ */
 
 statements: /*EMPTY*/
                 | statements statement
@@ -966,7 +966,7 @@ execstring: char_variable
  * the exec sql free command to deallocate a previously
  * prepared statement
  */
-ECPGFree:	SQL_FREE name	{ $$ = $2; }
+ECPGFree:	SQL_FREE cursor_name	{ $$ = $2; }
 		| SQL_FREE ALL	{ $$ = make_str("all"); }
 		;
 

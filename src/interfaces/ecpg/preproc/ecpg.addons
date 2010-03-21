@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.addons,v 1.16 2010/01/29 16:28:13 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.addons,v 1.17 2010/03/21 11:56:45 meskes Exp $ */
 ECPG: stmtClosePortalStmt block
 	{
 		if (INFORMIX_MODE)
@@ -106,10 +106,13 @@ ECPG: stmtViewStmt rule
 	| ECPGFree
 	{
 		const char *con = connection ? connection : "NULL";
-		if (strcmp($1, "all"))
-			fprintf(yyout, "{ ECPGdeallocate(__LINE__, %d, %s, \"%s\");", compat, con, $1);
-		else
+
+		if (!strcmp($1, "all"))
 			fprintf(yyout, "{ ECPGdeallocate_all(__LINE__, %d, %s);", compat, con);
+		else if ($1[0] == ':') 
+			fprintf(yyout, "{ ECPGdeallocate(__LINE__, %d, %s, %s);", compat, con, $1+1);
+		else
+			fprintf(yyout, "{ ECPGdeallocate(__LINE__, %d, %s, \"%s\");", compat, con, $1);
 
 		whenever_action(2);
 		free($1);
