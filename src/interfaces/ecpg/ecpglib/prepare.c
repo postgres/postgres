@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/prepare.c,v 1.37 2010/02/26 02:01:30 momjian Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/prepare.c,v 1.38 2010/03/21 11:33:44 meskes Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -142,7 +142,7 @@ prepare_common(int lineno, struct connection * con, const bool questionmarks, co
 		return false;
 	}
 
-	ecpg_log("ECPGprepare on line %d: name %s; query: \"%s\"\n", stmt->lineno, name, stmt->command);
+	ecpg_log("prepare_common on line %d: name %s; query: \"%s\"\n", stmt->lineno, name, stmt->command);
 	PQclear(query);
 	this->prepared = true;
 
@@ -201,7 +201,7 @@ deallocate_one(int lineno, enum COMPAT_MODE c, struct connection * con, struct p
 {
 	bool		r = false;
 
-	ecpg_log("ECPGdeallocate on line %d: name %s\n", lineno, this->name);
+	ecpg_log("deallocate_one on line %d: name %s\n", lineno, this->name);
 
 	/* first deallocate the statement in the backend */
 	if (this->prepared)
