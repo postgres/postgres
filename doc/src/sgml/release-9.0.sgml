@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release-9.0.sgml,v 2.5 2010/03/20 16:31:09 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release-9.0.sgml,v 2.6 2010/03/21 00:43:40 momjian Exp $ -->
 
 
  <sect1 id="release-9-0">
@@ -95,9 +95,10 @@
 
       <listitem>
         <para>
-          Fix <literal>SIMILAR TO</> to match the SQL standard-specified behavior
-          by processing <literal>?</> and <literal>{}</> the same way they are
-          processed in regular expressions (Tom)
+          Fix <link linkend="functions-similarto-regexp"><literal>SIMILAR
+          TO</></link> to match the SQL standard-specified behavior
+          by processing <literal>?</> and <literal>{}</> the same way
+          they are processed in regular expressions (Tom)
         </para>
       </listitem>
 
@@ -178,10 +179,11 @@
           </para>
 
           <para>
-            This behavior can be changed via the server variable
-            <varname>plpgsql.variable_conflict</>, or by the per-function option
-            <literal>#variable_conflict</>. The former behavior was to bind to
-            variable names over column names.
+            This behavior can be changed via the server variable <link
+            linkend="plpgsql-var-subst"><varname>plpgsql.variable_conflict</></link>,
+            or by the per-function option <literal>#variable_conflict</>.
+            The former behavior was to bind to variable names over
+            column names.
           </para>
         </listitem>
 
@@ -191,8 +193,10 @@
           </para>
 
           <para>
-            Instead, use <literal>ALIAS</>, which can now alias any variable,
-            not just dollar sign variables, e.g. <literal>$1</>.
+            Instead, use <link
+            linkend="plpgsql-declaration-parameters"><literal>ALIAS</></link>,
+            which can now alias any variable, not just dollar sign
+            variables, e.g. <literal>$1</>.
           </para>
         </listitem>
 
@@ -229,32 +233,35 @@
 
             <para>
               This feature is called Hot Standby.  There are new
-              <filename>postgresql.conf</> and <filename>recovery.conf</> settings
-              to enable this feature, as well as extensive documentation.
+              <filename>postgresql.conf</> and <filename>recovery.conf</>
+              settings to enable this feature, as well as extensive
+              <link linkend="hot-standby">documentation</link>.
             </para>
           </listitem>
 
           <listitem>
             <para>
               Allow continuous archive (<acronym>WAL</>) files to be streamed to a
-              standby system (Fujii Masao,  Heikki)
+              standby system (Fujii Masao, Heikki)
             </para>
 
             <para>
               Previously <acronym>WAL</> files could be sent to standby systems only
               as 16 megabytes files;  this allows master changes to be sent to the
               slave with very little delay.  There are new <filename>postgresql.conf</>
-              and <filename>recovery.conf</> settings to enable this feature, as
-              well as extensive documentation.
+              and <filename>recovery.conf</> settings to enable this
+              feature, as well as extensive <link
+              linkend="streaming-replication">documentation</link>.
             </para>
           </listitem>
 
           <listitem>
             <para>
-              Add <function>pg_last_xlog_receive_location()</> and
-              <function>pg_last_xlog_replay_location()</>, which can be used to
-              monitor standby server <acronym>WAL</> activity (Fujii Masao,
-              Heikki)
+              Add <link
+              linkend="functions-recovery-info-table"><function>pg_last_xlog_receive_location()</></link>
+              and <function>pg_last_xlog_replay_location()</>, which
+              can be used to monitor standby server <acronym>WAL</>
+              activity (Fujii Masao, Heikki)
             </para>
           </listitem>
 
@@ -339,10 +346,11 @@
             </para>
 
             <para>
-              While the Genetic Query Optimizer (GEQO) still selects random plans,
-              it now selects the same random plans for identical queries.  You
-              can modify <varname>geqo_seed</> to randomize the starting value
-              of the random plan generator.
+              While the Genetic Query Optimizer (GEQO) still selects
+              random plans, it now selects the same random plans for
+              identical queries.  You can modify <xref
+              linkend="guc-geqo-seed"> to
+              randomize the starting value of the random plan generator.
             </para>
           </listitem>
 
@@ -384,7 +392,7 @@
           <listitem>
             <para>
               Improve optimizer statistics for greater/less-than comparisons
-          (Tom)
+              (Tom)
             </para>
 
             <para>
@@ -419,17 +427,19 @@
 
           <listitem>
             <para>
-              Add support for <acronym>RADIUS</> (Remote Authentication Dial In
-              User Service) authentication (Magnus)
+              Add support for <link
+              linkend="auth-radius"><acronym>RADIUS</></link> (Remote
+              Authentication Dial In User Service) authentication
+              (Magnus)
             </para>
           </listitem>
 
 
           <listitem>
             <para>
-              Allow <acronym>LDAP</> (Lightweight Directory Access Protocol)
-              authentication to operate in "search/bind" mode (Robert Fleming,
-              Magnus)
+              Allow <link linkend="auth-ldap"><acronym>LDAP</></link>
+              (Lightweight Directory Access Protocol) authentication
+              to operate in "search/bind" mode (Robert Fleming, Magnus)
             </para>
 
             <para>
@@ -440,7 +450,9 @@
 
           <listitem>
             <para>
-              Add <literal>samehost</> and <literal>samenet</> designations to
+              Add <link
+              linkend="auth-pg-hba-conf"><literal>samehost</></link>
+              and <literal>samenet</> designations to
               <filename>pg_hba.conf</> (Stef Walter)
             </para>
 
@@ -460,14 +472,17 @@
 
           <listitem>
             <para>
-              Add the ability for clients to set an application name, which is
-              displayed in <structname>pg_stat_activity</> (Dave Page)
+              Add the ability for clients to set an <link
+              linkend="libpq-connect-application-name">application
+              name</link>, which is displayed in
+              <structname>pg_stat_activity</> (Dave Page)
             </para>
           </listitem>
 
           <listitem>
             <para>
-              Add an SQL state option (<literal>%e</>) to <varname>log_line_prefix</>
+              Add an SQL state option (<literal>%e</>) to <link
+              linkend="guc-log-line-prefix"><varname>log_line_prefix</></link>
               (Guillaume Smet)
             </para>
           </listitem>
@@ -489,17 +504,20 @@
 
           <listitem>
             <para>
-              Add <function>pg_stat_reset_shared('bgwriter')</> to reset the
-              cluster-wide shared statistics of the bgwriter (Greg Smith)
+              Add <link
+              linkend="monitoring-stats-funcs-table"><function>pg_stat_reset_shared('bgwriter')</></link>
+              to reset the cluster-wide shared statistics of the
+              bgwriter (Greg Smith)
             </para>
           </listitem>
 
           <listitem>
             <para>
-              Add <function>pg_stat_reset_single_table_counters()</> and
-              <function>pg_stat_reset_single_function_counters()</> to allow the
-              reseting of statistics counters for individual tables and indexes
-              (Magnus)
+              Add <link
+              linkend="monitoring-stats-funcs-table"><function>pg_stat_reset_single_table_counters()</></link>
+              and <function>pg_stat_reset_single_function_counters()</>
+              to allow the reseting of statistics counters for individual
+              tables and indexes (Magnus)
             </para>
           </listitem>
 
@@ -513,7 +531,8 @@
 
           <listitem>
             <para>
-              Allow setting of configuration variables based on database/role
+              Allow setting of configuration variables based on <link
+              linkend="sql-alterrole-title">database/role</link>
               combinations (Alvaro)
             </para>
 
@@ -528,9 +547,10 @@
 
           <listitem>
             <para>
-              Add boolean variable <varname>bonjour</>, which controls whether
-              a Bonjour-enabled binary advertises itself via <productname>Bonjour</>
-              (Tom)
+              Add boolean variable <link
+              linkend="guc-bonjour"><varname>bonjour</></link>, which
+              controls whether a Bonjour-enabled binary advertises
+              itself via <productname>Bonjour</> (Tom)
             </para>
 
             <para>
@@ -580,7 +600,8 @@
 
         <listitem>
           <para>
-            Increase the supported frame options in window functions (Hitoshi
+            Increase the supported frame options in <link
+            linkend="SQL-WINDOW">window functions</link> (Hitoshi
             Harada)
           </para>
 
@@ -591,6 +612,17 @@
           </para>
         </listitem>
 
+        <listitem>
+          <para>
+            Have <command>SELECT</> and <command>CREATE TABLE AS</> return
+            row counts to the client
+            (Boszormenyi Zoltan)
+          </para>
+
+          <para>
+            <application>psql</> does not display these counts.
+          </para>
+        </listitem>
 
       </itemizedlist>
 
@@ -600,17 +632,20 @@
 
           <listitem>
             <para>
-              Add Unicode surrogate pair (dual 16-bit) support to <literal>U&amp;</>
+              Add Unicode surrogate pair (dual 16-bit) support to
+              <link
+              linkend="sql-syntax-strings-uescape"><literal>U&amp;</></link>
               strings and identifiers (Peter)
             </para>
           </listitem>
 
           <listitem>
             <para>
-              Allow Unicode escapes in <literal>E'...'</> strings (Marko Kreen)
+              Allow Unicode escapes in <link
+              linkend="sql-syntax-strings-escape"><literal>E'...'</></link>
+              strings (Marko Kreen)
             </para>
           </listitem>
-
 
         </itemizedlist>
 
@@ -667,8 +702,9 @@
 
           <listitem>
             <para>
-              Add <command>ALTER DEFAULT PRIVILEGES</> command to control privileges of
-              all newly-created objects (Petr Jelinek)
+              Add <link linkend="SQL-ALTERDEFAULTPRIVILEGES"><command>ALTER
+              DEFAULT PRIVILEGES</></link> command to control privileges
+              of all newly-created objects (Petr Jelinek)
             </para>
 
             <para>
@@ -702,7 +738,7 @@
       </sect4>
 
       <sect4>
-        <title><command>CREATE TABLE</></title>
+        <title><link linkend="SQL-CREATETABLE"><command>CREATE TABLE</></link></title>
         <itemizedlist>
 
           <listitem>
@@ -730,18 +766,6 @@
               This allows the creation of a table to match an existing composite
               type.  Additional constraints and defaults can be specified in the
               command.
-            </para>
-          </listitem>
-
-          <listitem>
-            <para>
-              Have <command>SELECT</> and <command>CREATE TABLE AS</> return
-              row counts to the client
-              (Boszormenyi Zoltan)
-            </para>
-
-            <para>
-              <application>psql</> does not display these counts.
             </para>
           </listitem>
 
@@ -802,9 +826,10 @@
 
           <listitem>
             <para>
-              Add the ability to make mass permission changes per schema using
-              the new <command>GRANT</>/<command>REVOKE IN SCHEMA</> clause
-              (Petr Jelinek)
+              Add the ability to make mass permission changes per
+              schema using the new <link
+              linkend="SQL-GRANT"><command>GRANT</></link>/<command>REVOKE
+              IN SCHEMA</> clause (Petr Jelinek)
             </para>
           </listitem>
 
@@ -839,8 +864,8 @@
 
         <listitem>
           <para>
-            Allow <command>NOTIFY</> to pass an optional string to listeners
-            (Joachim Wieland)
+            Allow <link linkend="SQL-NOTIFY"><command>NOTIFY</></link>
+            to pass an optional string to listeners (Joachim Wieland)
           </para>
         </listitem>
 
@@ -857,7 +882,7 @@
       </itemizedlist>
 
       <sect4>
-        <title><command>COPY</></title>
+        <title><link linkend="SQL-COPY"><command>COPY</></link></title>
         <itemizedlist>
 
           <listitem>
@@ -888,7 +913,7 @@
       </sect4>
 
       <sect4>
-        <title><command>EXPLAIN</></title>
+        <title><link linkend="SQL-EXPLAIN"><command>EXPLAIN</></link></title>
         <itemizedlist>
 
           <listitem>
@@ -934,7 +959,7 @@
       </sect4>
 
       <sect4>
-        <title><command>VACUUM</></title>
+        <title><link linkend="SQL-VACUUM"><command>VACUUM</></link></title>
         <itemizedlist>
 
           <listitem>
@@ -972,13 +997,14 @@
           <listitem>
             <para>
               Allow an index to be auto-named by not supplying an index name to
-              <command>CREATE INDEX</> (Tom)
+              <link linkend="SQL-CREATEINDEX"><command>CREATE INDEX</></link> (Tom)
             </para>
           </listitem>
 
           <listitem>
             <para>
-              Allow <command>REINDEX</> on system indexes (Tom)
+              Allow <link linkend="SQL-REINDEX"><command>REINDEX</></link>
+              on system indexes (Tom)
             </para>
 
             <para>
@@ -1019,11 +1045,13 @@
 
         <listitem>
           <para>
-            Allow hex values to be specified in <type>bytea</> strings (Peter)
+            Allow hex values to be specified in <link
+            linkend="datatype-binary"><type>bytea</></link> strings
+            (Peter)
           </para>
 
           <para>
-            The variable <varname>bytea_output</> controls if hex (default)
+            The variable <xref linkend="guc-bytea-output"> controls if hex (default)
             or octal escapes are used for <type>bytea</> output.  (SWITCH
             DEFAULT FOR BETA?  PETER)  Libpq's <function>PQescapeByteaConn()</>
             now uses the hex format for <productname>PostgreSQL</> 9.0 servers.
@@ -1032,7 +1060,7 @@
 
         <listitem>
           <para>
-            Allow <varname>extra_float_digits</> to be increased to <literal>3</>
+            Allow <xref linkend="guc-extra-float-digits"> to be increased to <literal>3</>
         (Tom)
           </para>
 
@@ -1083,8 +1111,9 @@
 
         <listitem>
           <para>
-            Allow case-insensitive regular expression matching with <acronym>UTF-8</>
-            server encodings.
+            Allow case-insensitive <link
+            linkend="functions-posix-regexp">regular expression</link>
+            matching with <acronym>UTF-8</> server encodings.
           </para>
 
           <para>
@@ -1110,16 +1139,20 @@
 
         <listitem>
           <para>
-            Add support for <function>to_char()</> scientific notation output
-            (<literal>'EEEE'</>) (Pavel Stehule, Brendan Jurd)
+            Add support for <link
+            linkend="functions-formatting"><function>to_char()</></link>
+            scientific notation output (<link
+            linkend="functions-formatting-numeric-table"><literal>'EEEE'</></link>)
+            (Pavel Stehule, Brendan Jurd)
           </para>
         </listitem>
 
         <listitem>
           <para>
-            Have <function>to_char()</> honor <literal>'FM'</> (fill mode) in
-            <literal>'Y'</>, <literal>'YY'</>, and <literal>'YYY'</> specifications
-            (Bruce)
+            Have <function>to_char()</> honor <link
+            linkend="functions-formatting-datetimemod-table"><literal>'FM'</></link>
+            (fill mode) in <literal>'Y'</>, <literal>'YY'</>, and
+            <literal>'YYY'</> specifications (Bruce)
           </para>
 
           <para>
@@ -1155,8 +1188,10 @@
 
           <listitem>
             <para>
-              Add the <function>string_agg()</> aggregate function which aggregates
-              values into a single string (Pavel Stehule)
+              Add the <link
+              linkend="functions-aggregate-table"><function>string_agg()</></link>
+              aggregate function which aggregates values into a single
+              string (Pavel Stehule)
             </para>
 
             <para>
@@ -1187,16 +1222,20 @@
 
           <listitem>
             <para>
-              Add <function>get_bit()</> and <function>set_bit()</> functions
-              for <type>bit</> strings, mirroring those for <type>bytea</>
-              (Leonardo F)
+              Add <link
+              linkend="functions-binarystring-other"><function>get_bit()</></link>
+              and <function>set_bit()</> functions for <type>bit</>
+              strings, mirroring those for <type>bytea</> (Leonardo
+              F)
             </para>
           </listitem>
 
           <listitem>
             <para>
-              Implement <function>OVERLAY()</> (replace) for <type>bit</> strings
-              and <type>bytea</> (Leonardo F)
+              Implement <link
+              linkend="functions-string-sql"><function>OVERLAY()</></link>
+              (replace) for <type>bit</> strings and <type>bytea</>
+              (Leonardo F)
             </para>
           </listitem>
 
@@ -1210,23 +1249,26 @@
 
           <listitem>
             <para>
-              Add <function>pg_table_size()</> and <function>pg_indexes_size()</>
-              to provide a more user-friendly interface to the
-              <function>pg_relation_size()</> function (Bernd Helmle)
+              Add <link
+              linkend="functions-admin-dbsize"><function>pg_table_size()</></link>
+              and <function>pg_indexes_size()</> to provide a more
+              user-friendly interface to the <function>pg_relation_size()</>
+              function (Bernd Helmle)
             </para>
           </listitem>
 
           <listitem>
             <para>
-              Add <function>has_sequence_privilege()</> for sequence permission
-              checking (Abhijit Menon-Sen)
+              Add <link
+              linkend="functions-info-access-table"><function>has_sequence_privilege()</></link>
+              for sequence permission checking (Abhijit Menon-Sen)
             </para>
           </listitem>
 
           <listitem>
             <para>
               Have information schema properly display date type octet lengths
-          (Peter)
+              (Peter)
             </para>
 
             <para>
@@ -1251,8 +1293,9 @@
 
           <listitem>
             <para>
-              Implement anonymous functions using the <command>DO</> statement
-              (Petr Jelinek, Joshua Tolley, Hannu Valtonen)
+              Implement anonymous functions using the <link
+              linkend="SQL-DO"><command>DO</></link> statement (Petr
+              Jelinek, Joshua Tolley, Hannu Valtonen)
             </para>
 
             <para>
@@ -1263,7 +1306,9 @@
 
           <listitem>
             <para>
-              Allow SQL-compliant per-column triggers (Itagaki Takahiro)
+              Allow SQL-compliant <link
+              linkend="SQL-CREATETRIGGER">per-column triggers</link>
+              (Itagaki Takahiro)
             </para>
 
             <para>
@@ -1275,8 +1320,10 @@
 
           <listitem>
             <para>
-              Add <literal>WHERE</> clause to <command>CREATE TRIGGER</> to
-              allow control over whether a trigger is fired (Takahiro Itagaki)
+              Add <literal>WHERE</> clause to <link
+              linkend="SQL-CREATETRIGGER"><command>CREATE TRIGGER</></link>
+              to allow control over whether a trigger is fired (Takahiro
+              Itagaki)
             </para>
 
             <para>
@@ -1298,8 +1345,9 @@
 
         <listitem>
           <para>
-            Add the <literal>OR REPLACE</> clause to <command>CREATE
-            LANGUAGE</> (Tom)
+            Add the <literal>OR REPLACE</> clause to <link
+            linkend="SQL-CREATELANGUAGE"><command>CREATE LANGUAGE</></link>
+            (Tom)
           </para>
 
           <para>
@@ -1312,7 +1360,8 @@
         </itemizedlist>
 
         <sect4>
-        <title>PL/PgSQL Server-Side Language</title>
+        <title><link linkend="plpgsql">PL/PgSQL</link> Server-Side
+        Language</title>
 
         <itemizedlist>
 
@@ -1352,7 +1401,7 @@
       </sect4>
 
       <sect4>
-        <title>PL/pgSQL Cursors</title>
+        <title><link linkend="plpgsql-cursors">PL/pgSQL Cursors</link></title>
         <itemizedlist>
 
           <listitem>
@@ -1385,7 +1434,7 @@
       </sect4>
 
       <sect4>
-        <title>PL/Perl Server-Side Language</title>
+        <title><link linkend="plperl">PL/Perl</link> Server-Side Language</title>
         <itemizedlist>
 
           <listitem>
@@ -1400,12 +1449,12 @@
 
           <listitem>
             <para>
-              Add server variable <varname>plperl.on_init</> to specify a PL/Perl
+              Add server variable <xref linkend="guc-plperl-on-init"> to specify a PL/Perl
               Perl initialization function (Tim Bunce)
             </para>
 
             <para>
-              <varname>plperl.on_plperl_init</> and <varname>plperl.on_plperlu_init</>
+              <xref linkend="guc-plperl-on-plperl-init"> and <varname>plperl.on_plperlu_init</>
               are also available for trusted/untrusted-specific initialization.
             </para>
           </listitem>
@@ -1486,7 +1535,7 @@
       </sect4>
 
       <sect4>
-        <title>PL/Python Server-Side Language</title>
+        <title><link linkend="plpython">PL/Python</link> Server-Side Language</title>
         <itemizedlist>
 
           <listitem>
@@ -1531,7 +1580,8 @@
             </para>
 
             <para>
-              The new server-side language is called <literal>plpython3u</>.
+              The new server-side language is called <link
+              linkend="plpython-python23"><literal>plpython3u</></link>.
             </para>
           </listitem>
 
@@ -1553,21 +1603,22 @@
 
         <listitem>
         <para>
-          Add <command>vacuumdb</> <option>--analyze-only</> option to only
-          analyze (Bruce)
+          Add <link linkend="APP-VACUUMDB"><command>vacuumdb</></link>
+          <option>--analyze-only</> option to only analyze (Bruce)
           </para>
         </listitem>
 
       </itemizedlist>
 
       <sect4>
-        <title><application>psql</></title>
+        <title><link linkend="APP-PSQL"><application>psql</></link></title>
         <itemizedlist>
 
           <listitem>
             <para>
-              Properly escape <application>psql</> variables and identifiers
-              (Pavel Stehule, Robert Haas)
+              Properly escape <application>psql</> <link
+              linkend="APP-PSQL-variables">variables</link> and
+              identifiers (Pavel Stehule, Robert Haas)
             </para>
 
             <para>
@@ -1638,7 +1689,9 @@
         </sect5>
 
         <sect5>
-          <title><application>psql</> <command>\d</> Commands</title>
+          <title><application>psql</> <link
+          linkend="APP-PSQL-meta-commands"><command>\d</></link>
+          Commands</title>
           <itemizedlist>
 
             <listitem>
@@ -1676,12 +1729,13 @@
       </sect4>
 
       <sect4>
-        <title><application>pg_dump</></title>
+        <title><link linkend="APP-PGDUMP"><application>pg_dump</></link></title>
         <itemizedlist>
 
           <listitem>
             <para>
-              Have <application>pg_dump</>/<application>pg_restore</> <option>--clean</>
+              Have <application>pg_dump</>/<application>pg_restore</>
+              <link linkend="pg-dump-options"><option>--clean</></link>
               also remove large objects (Itagaki Takahiro)
             </para>
           </listitem>
@@ -1707,9 +1761,10 @@
 
           <listitem>
             <para>
-              Have <application>pg_dump</> <option>--verbose</> output the
-              <application>pg_dump</> and server versions in text output mode (Jim
-              Cox, Tom)
+              Have <application>pg_dump</> <link
+              linkend="pg-dump-options"><option>--verbose</></link>
+              output the <application>pg_dump</> and server versions
+              in text output mode (Jim Cox, Tom)
             </para>
 
             <para>
@@ -1722,7 +1777,8 @@
       </sect4>
 
       <sect4>
-        <title><application>pg_ctl</></title>
+        <title><link
+        linkend="app-pg-ctl"><application>pg_ctl</></link></title>
         <itemizedlist>
 
           <listitem>
@@ -1756,15 +1812,17 @@
       <title><application>Development Tools</></title>
 
       <sect4>
-        <title><application>libpq</></title>
+        <title><link linkend="libpq"><application>libpq</></link></title>
 
         <itemizedlist>
 
           <listitem>
             <para>
               Add new <application>libpq</> functions
-              <function>PQconnectdbParams()</> and <function>PQconnectStartParams()</>
-              (Guillaume Lelarge)
+              <link
+              linkend="libpq-connect"><function>PQconnectdbParams()</></link>
+              and <function>PQconnectStartParams()</> (Guillaume
+              Lelarge)
             </para>
 
             <para>
@@ -1777,8 +1835,9 @@
 
           <listitem>
             <para>
-              Add <application>libpq</> functions <function>PQescapeLiteral()</> and
-              <function>PQescapeIdentifier()</> (Robert Haas)
+              Add <application>libpq</> functions <link
+              linkend="libpq-exec-escape-string"><function>PQescapeLiteral()</></link>
+              and <function>PQescapeIdentifier()</> (Robert Haas)
             </para>
 
             <para>
@@ -1790,8 +1849,10 @@
 
           <listitem>
             <para>
-              Add checking for a per-user service file (<filename>.pg_service.conf</>),
-              which is checked before the site-wide service file (Peter)
+              Add checking for a per-user service file (<link
+              linkend="libpq-pgservice"><filename>.pg_service.conf</></link>),
+              which is checked before the site-wide service file
+              (Peter)
             </para>
 
             <para>
@@ -1809,8 +1870,9 @@
 
           <listitem>
             <para>
-              Issue a warning if the <filename>.pgpass</>-retrieved password fails
-              (Bruce)
+              Issue a warning if the <link
+              linkend="libpq-pgpass"><filename>.pgpass</></link>-retrieved
+              password fails (Bruce)
             </para>
           </listitem>
 
@@ -1819,27 +1881,30 @@
       </sect4>
 
       <sect4>
-        <title><application>ecpg</></title>
+        <title><link linkend="ecpg"><application>ecpg</></link></title>
         <itemizedlist>
 
           <listitem>
             <para>
-              Add <acronym>SQLDA</> (SQL Descriptor Area) support to <application>ecpg</>
+              Add <link linkend="ecpg-descriptors"><acronym>SQLDA</></link>
+              (SQL Descriptor Area) support to <application>ecpg</>
               (Boszormenyi Zoltan)
             </para>
           </listitem>
 
           <listitem>
             <para>
-              Add the <command>DESCRIBE</> [<literal>OUTPUT</>] statement to
-              <application>ecpg</> (Boszormenyi Zoltan)
+              Add the <link linkend="ecpg-descriptors"><command>DESCRIBE</>
+              [<literal>OUTPUT</>]</link> statement to <application>ecpg</>
+              (Boszormenyi Zoltan)
             </para>
           </listitem>
 
           <listitem>
             <para>
-              Add an <application>ecpg</> function to return the current transaction
-              status (Bernd Helmle)
+              Add an <application>ecpg</> <link
+              linkend="ecpg-library">function</link> to return the
+              current transaction status (Bernd Helmle)
             </para>
           </listitem>
 
@@ -1918,7 +1983,8 @@
           </para>
 
           <para>
-            Thread-safe builds can be disabled with <application>configure</>
+            Thread-safe builds can be disabled with <link
+            linkend="configure"><application>configure</></link>
             <option>--disable-thread-safety</>.
           </para>
         </listitem>
@@ -1930,12 +1996,14 @@
           </para>
 
           <para>
-            Now that <filename>/proc/self/oom_adj</> allows disabling of the
-            <productname>Linux</> out-of-memory (<acronym>OOM</>) killer for the
-            postmaster and its children, the new compile-time option
-            <literal>-DLINUX_OOM_ADJ=0</> allows the killer to be enabled for
-            <application>postmaster</> children.  <application>pg_config</> shows if
-            this flag was used during compilation.
+            Now that <filename>/proc/self/oom_adj</> allows disabling
+            of the <productname>Linux</> out-of-memory (<acronym>OOM</>)
+            killer for the postmaster and its children, the new
+            compile-time option <link
+            linkend="linux-memory-overcommit"><literal>-DLINUX_OOM_ADJ=0</></link>
+            allows the killer to be enabled for <application>postmaster</>
+            children.  <application>pg_config</> shows if this flag
+            was used during compilation.
           </para>
         </listitem>
 
@@ -1954,8 +2022,10 @@
 
           <listitem>
             <para>
-              New <filename>Makefile</> targets <literal>world</>,
-              <literal>install-world</>, and <literal>installcheck-world</> (Andrew)
+              New <filename>Makefile</> targets <link
+              linkend="build"><literal>world</></link>,
+              <literal>install-world</>, and <literal>installcheck-world</>
+              (Andrew)
             </para>
 
             <para>
@@ -1968,8 +2038,9 @@
 
           <listitem>
             <para>
-              Add data and documentation location control to <acronym>PGXS</>
-              Makefiles (Mark Cave-Ayland)
+              Add data and documentation location control to <link
+              linkend="xfunc-c-pgxs"><acronym>PGXS</></link> Makefiles
+              (Mark Cave-Ayland)
             </para>
           </listitem>
 
@@ -2018,8 +2089,10 @@
 
           <listitem>
             <para>
-              Add support for compiling on 64-bit <productname>Windows</> and running
-              in 64-bit mode (Tsutomu Yamada, Magnus)
+              Add support for compiling on <link
+              linkend="install-win32-full">64-bit
+              <productname>Windows</></link> and running in 64-bit
+              mode (Tsutomu Yamada, Magnus)
             </para>
 
             <para>
@@ -2029,7 +2102,9 @@
 
           <listitem>
             <para>
-              Allow server builds using <productname>Visual Studio 2008</> (Magnus)
+              Allow server builds using <link
+              linkend="install-win32-full"><productname>Visual Studio
+              2008</></link> (Magnus)
             </para>
           </listitem>
 
@@ -2144,6 +2219,13 @@
 
         <listitem>
           <para>
+            Add a new <literal>ERRCODE_INVALID_PASSWORD</> <literal>SQLSTATE</> error
+            code (Bruce)
+          </para>
+        </listitem>
+
+        <listitem>
+          <para>
             Properly remove the few remaining personal source code copyright
             entries (Bruce)
           </para>
@@ -2151,13 +2233,6 @@
           <para>
             The personal copyright notices were insignificant but the community
             occasionally had to answer questions about them.
-          </para>
-        </listitem>
-
-        <listitem>
-          <para>
-            Add a new <literal>ERRCODE_INVALID_PASSWORD</> <literal>SQLSTATE</> error
-            code (Bruce)
           </para>
         </listitem>
 
@@ -2227,9 +2302,10 @@
 
           <listitem>
             <para>
-              Add <function>AggCheckCallContext()</> for use in detecting if a
-              <productname>C</> function is being called as an aggregate (Hitoshi
-              Harada)
+              Add <link
+              linkend="xaggr"><function>AggCheckCallContext()</></link>
+              for use in detecting if a <productname>C</> function is
+              being called as an aggregate (Hitoshi Harada)
             </para>
           </listitem>
 
@@ -2280,8 +2356,9 @@
 
           <listitem>
             <para>
-              Add support for preservation of all <structname>relfilenodes</>, for
-              use during binary upgrades (Bruce)
+              Add support for preservation of all <link
+              linkend="catalog-pg-class"><structname>relfilenodes</></link>,
+              for use during binary upgrades (Bruce)
             </para>
           </listitem>
 
@@ -2320,8 +2397,9 @@
 
         <listitem>
           <para>
-            Add multi-threaded option (<option>-j</>) to
-            <filename>/contrib/pgbench</> (Itagaki Takahiro)
+            Add multi-threaded option (<option>-j</>) to <link
+            linkend="pgbench"><filename>/contrib/pgbench</></link>
+            (Itagaki Takahiro)
           </para>
 
           <para>
@@ -2338,7 +2416,9 @@
 
         <listitem>
           <para>
-            New features for <filename>/contrib/dict_xsyn</> (Sergey Karpov)
+            New features for <link
+            linkend="dict-xsyn"><filename>/contrib/dict_xsyn</></link>
+            (Sergey Karpov)
           </para>
 
           <para>
@@ -2349,7 +2429,9 @@
 
         <listitem>
           <para>
-            Add full text dictionary <filename>/contrib/unaccent</> (Teodor)
+            Add full text dictionary <link
+            linkend="unaccent"><filename>/contrib/unaccent</></link>
+            (Teodor)
           </para>
 
           <para>
@@ -2359,8 +2441,9 @@
 
         <listitem>
           <para>
-            Add <function>dblink_get_notify()</> to <filename>/contrib/dblink</>
-            (Marcus Kempe)
+            Add <link
+            linkend="CONTRIB-DBLINK-GET-NOTIFY"><function>dblink_get_notify()</></link>
+            to <filename>/contrib/dblink</> (Marcus Kempe)
           </para>
 
           <para>
@@ -2370,9 +2453,11 @@
 
         <listitem>
           <para>
-            Greatly increase <filename>/contrib/hstore</>'s length limit and add
-            btree and hash abilities so <literal>GROUP BY</> and
-            <literal>DISTINCT</> operations are possible (Andrew Gierth)
+            Greatly increase <link
+            linkend="hstore"><filename>/contrib/hstore</></link>'s
+            length limit and add btree and hash abilities so <literal>GROUP
+            BY</> and <literal>DISTINCT</> operations are possible
+            (Andrew Gierth)
           </para>
 
           <para>
@@ -2382,8 +2467,10 @@
 
         <listitem>
           <para>
-            Add <filename>/contrib/passwordcheck</> which can check the strength of
-            assigned passwords (Laurenz Albe)
+            Add <link
+            linkend="passwordcheck"><filename>/contrib/passwordcheck</></link>
+            which can check the strength of assigned passwords (Laurenz
+            Albe)
           </para>
 
           <para>
@@ -2394,22 +2481,28 @@
 
         <listitem>
           <para>
-            Add query text to <filename>/contrib/auto_explain</> output (Andrew)
+            Add query text to <link
+            linkend="auto-explain"><filename>/contrib/auto_explain</></link>
+            output (Andrew)
           </para>
         </listitem>
 
         <listitem>
           <para>
-            Add buffer access counters to <filename>/contrib/pg_stat_statements</>
+            Add buffer access counters to <link
+            linkend="pgstatstatements"><filename>/contrib/pg_stat_statements</></link>
             (Itagaki Takahiro)
           </para>
         </listitem>
 
         <listitem>
           <para>
-            Update <filename>/contrib/start-scripts/linux</> to use
-            <filename>/proc/self/oom_adj</> to disable the <productname>Linux</>
-            out-of-memory (<acronym>OOM</>) killer (Alex Hunsaker, Tom)
+            Update <link
+            linkend="server-start"><filename>/contrib/start-scripts/linux</></link>
+            to use <filename>/proc/self/oom_adj</> to disable the
+            <link linkend="linux-memory-overcommit"><productname>Linux</>
+            out-of-memory</link> (<acronym>OOM</>) killer (Alex
+            Hunsaker, Tom)
           </para>
         </listitem>
 

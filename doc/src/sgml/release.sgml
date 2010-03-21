@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.636 2010/03/20 03:12:52 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.637 2010/03/21 00:43:40 momjian Exp $ -->
 <!--
 
 Typical markup:
@@ -6,12 +6,13 @@ Typical markup:
 &<>                             use & escapes
 PostgreSQL                      <productname>
 postgresql.conf, pg_hba.conf    <filename>
-[A-Z][A-Z ]+[A-Z]               <command>, <literal>
+[A-Z][A-Z ]+[A-Z]               <command>, <literal>, <envar>
 [A-Za-z_][A-Za-z0-9_]+()        <function>
 -[-A-Za-z_]+                    <option>
 [A-Za-z_]/[A-Za-z_]+            <filename>
+psql                            <application>
 pg_[A-Za-z0-9_]+                <application>, <structname>
-[A-Z][A-Z][A-Z_ ]*              <type>, <varname>, <envar>, <literal>
+[A-Z][A-Z][A-Z_ ]*              <type>, <varname>
 
 non-ASCII characters            convert to HTML4 entity (&) escapes
 

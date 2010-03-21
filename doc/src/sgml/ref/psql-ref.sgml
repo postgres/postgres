@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.242 2010/03/08 12:38:37 mha Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.243 2010/03/21 00:43:40 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -627,7 +627,7 @@ testdb=&gt;
     </para>
   </refsect2>
 
-  <refsect2>
+  <refsect2 id="APP-PSQL-meta-commands">
     <title>Meta-Commands</title>
 
     <para>
