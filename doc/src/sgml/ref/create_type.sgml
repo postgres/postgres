@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_type.sgml,v 1.80 2009/12/26 16:55:21 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_type.sgml,v 1.81 2010/03/21 02:24:29 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -84,7 +84,7 @@ CREATE TYPE <replaceable class="parameter">name</replaceable>
   </para>
   </refsect2>
 
-  <refsect2>
+  <refsect2 id="SQL-CREATETYPE-enum">
    <title>Enumerated Types</title>
 
    <para>

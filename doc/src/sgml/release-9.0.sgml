@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release-9.0.sgml,v 2.6 2010/03/21 00:43:40 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release-9.0.sgml,v 2.7 2010/03/21 02:24:29 momjian Exp $ -->
 
 
  <sect1 id="release-9-0">
@@ -53,9 +53,10 @@
   
         <listitem>
           <para>
-            Remove server variable <varname>regex_flavor</>, which was defaulted
-            to <literal>advanced</> (e.g. Perl-regex compatible) for many
-            years (Tom)
+            Remove server variable <varname>regex_flavor</>, which
+            was defaulted to <link
+            linkend="posix-syntax-details"><literal>advanced</></link>
+            (e.g. Perl-regex compatible) for many years (Tom)
           </para>
         </listitem>
       
@@ -69,8 +70,9 @@
 
       <listitem>
         <para>
-          When querying a parent table, do not do additional permission
-          checks on child tables returned as part of the query (Peter)
+          When querying a <link linkend="ddl-inherit">parent table</link>,
+          do not do additional permission checks on child tables
+          returned as part of the query (Peter)
         </para>
 
         <para>
@@ -80,8 +82,8 @@
 
       <listitem>
         <para>
-          Have fractional seconds truncate rather than round when using
-          float-based dates/times (Tom)
+          Have fractional seconds conversion truncate rather than
+          round when using float-based dates/times (Tom)
         </para>
       </listitem>
 
@@ -129,8 +131,9 @@
 
       <listitem>
         <para>
-          Do not allow <function>substring()</> to have a negative third
-          length, per the SQL standard (Tom)
+          Do not allow <link
+          linkend="functions-string-sql"><function>substring()</></link>
+          to have a negative third length, per the SQL standard (Tom)
         </para>
       </listitem>
 
@@ -283,15 +286,16 @@
             <para>
               Allow per-tablespace sequential and random page cost variables
               (<varname>seq_page_cost</>/(<varname>random_page_cost</>)) via
-              <command>ALTER TABLESPACE
-              ...  SET/RESET</> (Robert Haas)
+              <link linkend="SQL-ALTERTABLESPACE"><command>ALTER TABLESPACE
+              ...  SET/RESET</></link> (Robert Haas)
             </para>
           </listitem>
 
           <listitem>
             <para>
-              Improve performance of <command>TRUNCATE</> when used in the same
-              transaction as table creation (Tom)
+              Improve performance of <link
+              linkend="SQL-TRUNCATE"><command>TRUNCATE</></link> when
+              used in the same transaction as table creation (Tom)
             </para>
           </listitem>
 
@@ -317,7 +321,8 @@
 
           <listitem>
             <para>
-              Remove unnecessary outer joins (Robert Haas)
+              Remove unnecessary <link linkend="queries-join">outer
+              joins</link> (Robert Haas)
             </para>
 
             <para>
@@ -336,7 +341,7 @@
       </sect4>
 
       <sect4>
-        <title>GEQO</title>
+        <title><link linkend="geqo">GEQO</link></title>
         <itemizedlist>
 
           <listitem>
@@ -374,8 +379,8 @@
 
           <listitem>
             <para>
-              Improve <command>ANALYZE</> to support inheritance-tree statistics
-          (Tom)
+              Improve <link linkend="SQL-ANALYZE"><command>ANALYZE</></link>
+              to support inheritance-tree statistics (Tom)
             </para>
 
             <para>
@@ -385,7 +390,8 @@
 
           <listitem>
             <para>
-              Improve autovacuum detection of when re-analyze is necessary (Tom)
+              Improve <link linkend="routine-vacuuming">autovacuum</link>
+              detection of when re-analyze is necessary (Tom)
             </para>
           </listitem>
 
@@ -406,7 +412,8 @@
 
           <listitem>
             <para>
-              Allow setting of distinct statistics using <command>ALTER TABLE</>
+              Allow setting of distinct statistics using <link
+              linkend="SQL-ALTERTABLE"><command>ALTER TABLE</></link>
               (Robert Haas)
             </para>
 
@@ -577,8 +584,9 @@
 
         <listitem>
           <para>
-            Do <command>SELECT FOR UPDATE</>/<literal>SHARE</> processing
-            after applying <literal>LIMIT</>, so the number of rows returned
+            Do <link linkend="SQL-FOR-UPDATE-SHARE"><command>SELECT
+            FOR UPDATE</>/<literal>SHARE</></link> processing after
+            applying <literal>LIMIT</>, so the number of rows returned
             is always predictable (Tom)
           </para>
 
@@ -593,8 +601,9 @@
 
         <listitem>
           <para>
-            Allow mixing of traditional and SQL-standard
-            <literal>LIMIT</>/<literal>OFFSET</> syntax in the same query (Tom)
+            Allow mixing of traditional and SQL-standard <link
+            linkend="SQL-LIMIT"><literal>LIMIT</>/<literal>OFFSET</></link>
+            syntax in the same query (Tom)
           </para>
         </listitem>
 
@@ -659,22 +668,25 @@
 
         <listitem>
           <para>
-            Speed up <command>CREATE DATABASE</> by deferring flushes to disk
-            (Andres Freund, Greg Stark)
+            Speed up <link linkend="SQL-CREATEDATABASE"><command>CREATE
+            DATABASE</></link> by deferring flushes to disk (Andres
+            Freund, Greg Stark)
           </para>
         </listitem>
 
         <listitem>
           <para>
-            Allow comments only on columns of tables, views, and composite
-            types, not other objects like indexes and <acronym>TOAST</> tables
-            (Tom)
+            Allow <link linkend="SQL-COMMENT">comments</link> only on
+            columns of tables, views, and composite types, not other
+            objects like indexes and <acronym>TOAST</> tables (Tom)
           </para>
         </listitem>
 
         <listitem>
           <para>
-            Allow the creation of enumerate types with no labels (Bruce)
+            Allow the creation of <link
+            linkend="SQL-CREATETYPE-enum">enumerate types</link> with
+            no labels (Bruce)
           </para>
 
           <para>
@@ -685,7 +697,7 @@
         <listitem>
           <para>
             Have columns defined with storage type <literal>MAIN</> remain on
-            main heap page unless it cannot fit (Kevin Grittner)
+            the main heap page unless it cannot fit (Kevin Grittner)
           </para>
 
           <para>
@@ -779,7 +791,8 @@
 
           <listitem>
             <para>
-              Add deferrable unique constraints (Dean Rasheed)
+              Add <link linkend="SQL-CREATETABLE-compatibility">deferrable
+              unique constraints</link> (Dean Rasheed)
             </para>
 
             <para>
@@ -797,10 +810,12 @@
             </para>
 
             <para>
-              This is enabled with the <command>CREATE TABLE CONSTRAINT ...
-              EXCLUDE</> clause.  While uniqueness checks could be specified
-              using this syntax, the real value of this features is in using
-              complex operators that do not have built-in constraints.
+              This is enabled with the <link
+              linkend="SQL-CREATETABLE-description"><command>CREATE
+              TABLE CONSTRAINT ...  EXCLUDE</></link> clause.  While
+              uniqueness checks could be specified using this syntax,
+              the real value of this features is in using complex
+              operators that do not have built-in constraints.
             </para>
           </listitem>
 
@@ -828,15 +843,15 @@
             <para>
               Add the ability to make mass permission changes per
               schema using the new <link
-              linkend="SQL-GRANT"><command>GRANT</></link>/<command>REVOKE
-              IN SCHEMA</> clause (Petr Jelinek)
+              linkend="SQL-GRANT"><command>GRANT</>/<command>REVOKE
+              IN SCHEMA</></link> clause (Petr Jelinek)
             </para>
           </listitem>
 
           <listitem>
             <para>
               Add the ability to control large object permissions with
-              <command>GRANT</>/<command>REVOKE </>(KaiGai Kohei)
+              <command>GRANT</>/<command>REVOKE</>(KaiGai Kohei)
             </para>
           </listitem>
 
@@ -853,8 +868,10 @@
 
         <listitem>
           <para>
-            Have <command>LISTEN</>/<command>NOTIFY</> store events in a memory
-            queue, rather than a system table (Joachim Wieland)
+            Have <link linkend="SQL-LISTEN"><command>LISTEN</></link>/<link
+            linkend="SQL-NOTIFY"><command>NOTIFY</></link> store events
+            in a memory queue, rather than a system table (Joachim
+            Wieland)
           </para>
 
           <para>
@@ -871,7 +888,8 @@
 
         <listitem>
           <para>
-            Allow <command>CLUSTER</> on all system tables (Tom)
+            Allow <link linkend="SQL-CLUSTER"><command>CLUSTER</></link>
+            on all system tables (Tom)
           </para>
 
           <para>
@@ -923,8 +941,9 @@
             </para>
 
             <para>
-              log_*_stats log output, e.g. <varname>log_statement_stats</>, no
-              longer shows this information.
+              log_*_stats log output, e.g. <xref
+              linkend="runtime-config-statistics-monitor">, no longer shows
+              this information.
             </para>
           </listitem>
 
@@ -1072,7 +1091,7 @@
       </itemizedlist>
 
       <sect4>
-        <title>Full Text Search</title>
+        <title><link linkend="textsearch">Full Text Search</link></title>
         <itemizedlist>
 
           <listitem>
@@ -1162,8 +1181,9 @@
 
         <listitem>
           <para>
-            Correct calculations of "overlap" and "contains" operations over
-            polygons (Teodor)
+            Correct calculations of <link
+            linkend="functions-geometry-op-table">"overlap"</link>
+            and "contains" operations over polygons (Teodor)
           </para>
         </listitem>
 
@@ -1267,7 +1287,8 @@
 
           <listitem>
             <para>
-              Have information schema properly display date type octet lengths
+              Have <link linkend="information-schema">information
+              schema</link> properly display date type octet lengths
               (Peter)
             </para>
 
@@ -1439,10 +1460,12 @@
 
           <listitem>
             <para>
-              Add new PL/Perl functions:  <function>quote_literal()</>,
+              Add new PL/Perl functions:  <link
+              linkend="plperl-utility-functions"><function>quote_literal()</></link>,
               <function>quote_nullable()</>, <function>quote_ident()</>,
               <function>encode_bytea()</>, <function>decode_bytea()</>,
-              <function>looks_like_number()</>, <function>encode_array_literal()</>,
+              <function>looks_like_number()</>,
+              <function>encode_array_literal()</>,
               <function>encode_array_constructor()</> (Tim Bunce)
             </para>
           </listitem>
@@ -1478,6 +1501,11 @@
           <listitem>
             <para>
               Allow <command>use strict</> in PL/Perl (Tim Bunce)
+            </para>
+
+            <para>
+              This can be enabled with the server variable <xref
+              linkend="guc-plperl-use-strict">.
             </para>
           </listitem>
 
@@ -1564,7 +1592,8 @@
 
           <listitem>
             <para>
-              Add array parameter/return support to PL/Python (Peter) 
+              Add <link linkend="plpython-arrays">array parameter/return
+              support</link> to PL/Python (Peter)
             </para>
           </listitem>
 
@@ -1640,8 +1669,9 @@
 
           <listitem>
             <para>
-              Fix <command>psql --file -</> to properly honor
-              <option>--single-transaction</> (Bruce)
+              Fix <command>psql --file -</> to properly honor <link
+              linkend="R1-APP-PSQL-3"><option>--single-transaction</></link>
+              (Bruce)
             </para>
           </listitem>
 
@@ -2219,8 +2249,9 @@
 
         <listitem>
           <para>
-            Add a new <literal>ERRCODE_INVALID_PASSWORD</> <literal>SQLSTATE</> error
-            code (Bruce)
+            Add a new <link
+            linkend="errcodes-table"><literal>ERRCODE_INVALID_PASSWORD</></link>
+            <literal>SQLSTATE</> error code (Bruce)
           </para>
         </listitem>
 
@@ -2409,8 +2440,10 @@
 
         <listitem>
           <para>
-            Add <command>\shell</> and <command>\setshell</> meta commands to
-            <filename>/contrib/pgbench</> (Michael Paquier)
+            Add <command>\shell</> and <command>\setshell</> meta
+            commands to <link
+            linkend="pgbench"><filename>/contrib/pgbench</></link>
+            (Michael Paquier)
           </para>
         </listitem>
 
