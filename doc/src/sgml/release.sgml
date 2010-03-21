@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.637 2010/03/21 00:43:40 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.638 2010/03/21 22:12:27 momjian Exp $ -->
 <!--
 
 Typical markup:
@@ -30,7 +30,7 @@ wrap long lines
 
 For new features, add links to the documentation sections.  Use </link>
 not just </> so that generate_history.pl can remove it, so HISTORY.html
-can be created without links to the main documentation.
+can be created without links to the main documentation.  Don't use <xref>.
 
 -->
 

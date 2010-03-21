@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release-9.0.sgml,v 2.7 2010/03/21 02:24:29 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release-9.0.sgml,v 2.8 2010/03/21 22:12:27 momjian Exp $ -->
 
 
  <sect1 id="release-9-0">
@@ -353,9 +353,9 @@
             <para>
               While the Genetic Query Optimizer (GEQO) still selects
               random plans, it now selects the same random plans for
-              identical queries.  You can modify <xref
-              linkend="guc-geqo-seed"> to
-              randomize the starting value of the random plan generator.
+              identical queries.  You can modify <link
+              linkend="guc-geqo-seed">geqo_seed</link> to randomize
+              the starting value of the random plan generator.
             </para>
           </listitem>
 
@@ -941,9 +941,9 @@
             </para>
 
             <para>
-              log_*_stats log output, e.g. <xref
-              linkend="runtime-config-statistics-monitor">, no longer shows
-              this information.
+              log_*_stats log output, e.g. <link
+              linkend="runtime-config-statistics-monitor">log_statement_stats</link>,
+              no longer shows this information.
             </para>
           </listitem>
 
@@ -1070,17 +1070,20 @@
           </para>
 
           <para>
-            The variable <xref linkend="guc-bytea-output"> controls if hex (default)
-            or octal escapes are used for <type>bytea</> output.  (SWITCH
-            DEFAULT FOR BETA?  PETER)  Libpq's <function>PQescapeByteaConn()</>
-            now uses the hex format for <productname>PostgreSQL</> 9.0 servers.
+            The variable <link
+            linkend="guc-bytea-output">bytea_output</link> controls
+            if hex (default) or octal escapes are used for <type>bytea</>
+            output.  (SWITCH DEFAULT FOR BETA?  PETER) Libpq's
+            <function>PQescapeByteaConn()</> now uses the hex format
+            for <productname>PostgreSQL</> 9.0 servers.
           </para>
         </listitem>
 
         <listitem>
           <para>
-            Allow <xref linkend="guc-extra-float-digits"> to be increased to <literal>3</>
-        (Tom)
+            Allow <link
+            linkend="guc-extra-float-digits">extra_float_digits</link>
+            to be increased to <literal>3</> (Tom)
           </para>
 
           <para>
@@ -1472,13 +1475,17 @@
 
           <listitem>
             <para>
-              Add server variable <xref linkend="guc-plperl-on-init"> to specify a PL/Perl
-              Perl initialization function (Tim Bunce)
+              Add server variable <link
+              linkend="guc-plperl-on-init">plperl.on_init</link> to
+              specify a PL/Perl Perl initialization function (Tim
+              Bunce)
             </para>
 
             <para>
-              <xref linkend="guc-plperl-on-plperl-init"> and <varname>plperl.on_plperlu_init</>
-              are also available for trusted/untrusted-specific initialization.
+              <link
+              linkend="guc-plperl-on-plperl-init">plperl.on_plperl_init</link>
+              and <varname>plperl.on_plperlu_init</> are also available
+              for trusted/untrusted-specific initialization.
             </para>
           </listitem>
 
@@ -1504,8 +1511,8 @@
             </para>
 
             <para>
-              This can be enabled with the server variable <xref
-              linkend="guc-plperl-use-strict">.
+              This can be enabled with the server variable <link
+              linkend="guc-plperl-use-strict">plperl.use_strict</link>.
             </para>
           </listitem>
 
