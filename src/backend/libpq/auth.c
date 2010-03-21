@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/auth.c,v 1.196 2010/03/13 14:55:57 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/auth.c,v 1.197 2010/03/21 00:17:58 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2271,7 +2271,7 @@ CheckLDAPAuth(Port *port)
 				*c == '/')
 			{
 				ereport(LOG,
-						(errmsg("invalid character in username for LDAP authentication")));
+						(errmsg("invalid character in user name for LDAP authentication")));
 				return STATUS_ERROR;
 			}
 		}
@@ -2636,7 +2636,7 @@ CheckRADIUSAuth(Port *port)
 	if (!pg_md5_binary(cryptvector, RADIUS_VECTOR_LENGTH + strlen(port->hba->radiussecret), encryptedpassword))
 	{
 		ereport(LOG,
-				(errmsg("could not perform md5 encryption of password")));
+				(errmsg("could not perform MD5 encryption of password")));
 		pfree(cryptvector);
 		return STATUS_ERROR;
 	}
@@ -2825,7 +2825,7 @@ CheckRADIUSAuth(Port *port)
 	else
 	{
 		ereport(LOG,
-				(errmsg("RADIUS response has invalid code (%i) for user '%s'",
+				(errmsg("RADIUS response has invalid code (%i) for user \"%s\"",
 						receivepacket->code, port->user_name)));
 		return STATUS_ERROR;
 	}

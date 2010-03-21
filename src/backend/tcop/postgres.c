@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.591 2010/02/26 02:01:01 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.592 2010/03/21 00:17:58 petere Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -2273,7 +2273,7 @@ errdetail_recovery_conflict(void)
 			errdetail("User was holding a relation lock for too long.");
 			break;
 		case PROCSIG_RECOVERY_CONFLICT_TABLESPACE:
-			errdetail("User was or may have been using tablespace that must be dropped.");
+			errdetail("User was or might have been using tablespace that must be dropped.");
 			break;
 		case PROCSIG_RECOVERY_CONFLICT_SNAPSHOT:
 			errdetail("User query might have needed to see row versions that must be removed.");

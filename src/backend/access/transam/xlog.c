@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.383 2010/03/19 11:05:14 sriggs Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.384 2010/03/21 00:17:58 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3876,22 +3876,22 @@ ValidXLOGHeader(XLogPageHeader hdr, int emode)
 			snprintf(sysident_str, sizeof(sysident_str), UINT64_FORMAT,
 					 ControlFile->system_identifier);
 			ereport(emode,
-					(errmsg("WAL file is from different system"),
-					 errdetail("WAL file SYSID is %s, pg_control SYSID is %s",
+					(errmsg("WAL file is from different database system"),
+					 errdetail("WAL file database system identifier is %s, pg_control database system identifier is %s.",
 							   fhdrident_str, sysident_str)));
 			return false;
 		}
 		if (longhdr->xlp_seg_size != XLogSegSize)
 		{
 			ereport(emode,
-					(errmsg("WAL file is from different system"),
+					(errmsg("WAL file is from different database system"),
 					 errdetail("Incorrect XLOG_SEG_SIZE in page header.")));
 			return false;
 		}
 		if (longhdr->xlp_xlog_blcksz != XLOG_BLCKSZ)
 		{
 			ereport(emode,
-					(errmsg("WAL file is from different system"),
+					(errmsg("WAL file is from different database system"),
 					 errdetail("Incorrect XLOG_BLCKSZ in page header.")));
 			return false;
 		}
@@ -8202,7 +8202,7 @@ pg_stop_backup(PG_FUNCTION_ARGS)
 			ereport(WARNING,
 					(errmsg("pg_stop_backup still waiting for all required WAL segments to be archived (%d seconds elapsed)",
 							waits),
-			errhint("Check that your archive_command is executing properly. "
+			errhint("Check that your archive_command is executing properly.  "
 					"pg_stop_backup can be cancelled safely, "
 					"but the database backup will not be usable without all the WAL segments.")));
 		}

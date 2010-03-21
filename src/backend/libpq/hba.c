@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.202 2010/03/08 09:57:26 mha Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.203 2010/03/21 00:17:58 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1271,7 +1271,7 @@ parse_hba_line(List *line, int line_num, HbaLine *parsedline)
 			{
 				ereport(LOG,
 						(errcode(ERRCODE_CONFIG_FILE_ERROR),
-						 errmsg("cannot use ldapbasedn, ldapbinddn, ldapbindpasswd or ldapsearchattribute together with ldapprefix"),
+						 errmsg("cannot use ldapbasedn, ldapbinddn, ldapbindpasswd, or ldapsearchattribute together with ldapprefix"),
 						 errcontext("line %d of configuration file \"%s\"",
 									line_num, HbaFileName)));
 				return false;
@@ -1281,7 +1281,7 @@ parse_hba_line(List *line, int line_num, HbaLine *parsedline)
 		{
 			ereport(LOG,
 					(errcode(ERRCODE_CONFIG_FILE_ERROR),
-					 errmsg("authentication method \"ldap\" requires argument \"ldapbasedn\", \"ldapprefix\" or \"ldapsuffix\" to be set"),
+					 errmsg("authentication method \"ldap\" requires argument \"ldapbasedn\", \"ldapprefix\", or \"ldapsuffix\" to be set"),
 					 errcontext("line %d of configuration file \"%s\"",
 								line_num, HbaFileName)));
 			return false;
@@ -1747,7 +1747,7 @@ check_usermap(const char *usermap_name,
 				return STATUS_OK;
 		}
 		ereport(LOG,
-				(errmsg("provided username (%s) and authenticated username (%s) don't match",
+				(errmsg("provided user name (%s) and authenticated user name (%s) do not match",
 						auth_user, pg_role)));
 		return STATUS_ERROR;
 	}

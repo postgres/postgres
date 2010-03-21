@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.543 2010/02/26 02:01:14 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.544 2010/03/21 00:17:59 petere Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -1246,7 +1246,7 @@ static struct config_bool ConfigureNamesBool[] =
 
 	{
 		{"lo_compat_privileges", PGC_SUSET, COMPAT_OPTIONS_PREVIOUS,
-			gettext_noop("Enables backward compatibility mode for privilege checks on large objects"),
+			gettext_noop("Enables backward compatibility mode for privilege checks on large objects."),
 			gettext_noop("Skips privilege checks when reading or modifying large objects, "
 				  "for compatibility with PostgreSQL releases prior to 9.0.")
 		},
@@ -1378,7 +1378,7 @@ static struct config_int ConfigureNamesInt[] =
 
 	{
 		{"max_standby_delay", PGC_SIGHUP, WAL_SETTINGS,
-			gettext_noop("Sets the maximum delay to avoid conflict processing on Hot Standby servers."),
+			gettext_noop("Sets the maximum delay to avoid conflict processing on hot standby servers."),
 			NULL
 		},
 		&MaxStandbyDelay,

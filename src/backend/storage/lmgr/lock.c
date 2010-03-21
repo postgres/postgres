@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lock.c,v 1.195 2010/02/26 02:01:00 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lock.c,v 1.196 2010/03/21 00:17:58 petere Exp $
  *
  * NOTES
  *	  A lock table is a shared memory hash table.  When
@@ -516,7 +516,7 @@ LockAcquireExtended(const LOCKTAG *locktag,
 		lockmode > RowExclusiveLock)
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-				 errmsg("cannot acquire lockmode %s on database objects while recovery is in progress",
+				 errmsg("cannot acquire lock mode %s on database objects while recovery is in progress",
 						lockMethodTable->lockModeNames[lockmode]),
 				 errhint("Only RowExclusiveLock or less can be acquired on database objects during recovery.")));
 

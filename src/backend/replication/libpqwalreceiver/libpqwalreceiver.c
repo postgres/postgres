@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/replication/libpqwalreceiver/libpqwalreceiver.c,v 1.7 2010/03/19 19:19:38 sriggs Exp $
+ *	  $PostgreSQL: pgsql/src/backend/replication/libpqwalreceiver/libpqwalreceiver.c,v 1.8 2010/03/21 00:17:58 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -102,7 +102,7 @@ libpqrcv_connect(char *conninfo, XLogRecPtr startpoint)
 	{
 		PQclear(res);
 		ereport(ERROR,
-				(errmsg("could not receive the SYSID and timeline ID from "
+				(errmsg("could not receive database system identifier and timeline ID from "
 						"the primary server: %s",
 						PQerrorMessage(streamConn))));
 	}
@@ -114,7 +114,7 @@ libpqrcv_connect(char *conninfo, XLogRecPtr startpoint)
 		PQclear(res);
 		ereport(ERROR,
 				(errmsg("invalid response from primary server"),
-				 errdetail("expected 1 tuple with 2 fields, got %d tuples with %d fields",
+				 errdetail("Expected 1 tuple with 2 fields, got %d tuples with %d fields.",
 						   ntuples, nfields)));
 	}
 	primary_sysid = PQgetvalue(res, 0, 0);
@@ -129,8 +129,8 @@ libpqrcv_connect(char *conninfo, XLogRecPtr startpoint)
 	{
 		PQclear(res);
 		ereport(ERROR,
-				(errmsg("system differs between the primary and standby"),
-				 errdetail("the primary SYSID is %s, standby SYSID is %s",
+				(errmsg("database system identifier differs between the primary and standby"),
+				 errdetail("The primary's identifier is %s, the standby's identifier is %s.",
 						   primary_sysid, standby_sysid)));
 	}
 
@@ -152,7 +152,7 @@ libpqrcv_connect(char *conninfo, XLogRecPtr startpoint)
 	res = PQexec(streamConn, cmd);
 	if (PQresultStatus(res) != PGRES_COPY_OUT)
 		ereport(ERROR,
-				(errmsg("could not start XLOG streaming: %s",
+				(errmsg("could not start WAL streaming: %s",
 						PQerrorMessage(streamConn))));
 	PQclear(res);
 
@@ -275,7 +275,7 @@ libpqrcv_receive(int timeout, unsigned char *type, char **buffer, int *len)
 
 		if (PQconsumeInput(streamConn) == 0)
 			ereport(ERROR,
-					(errmsg("could not receive data from XLOG stream: %s",
+					(errmsg("could not receive data from WAL stream: %s",
 							PQerrorMessage(streamConn))));
 	}
 	justconnected = false;
@@ -297,12 +297,12 @@ libpqrcv_receive(int timeout, unsigned char *type, char **buffer, int *len)
 		}
 		PQclear(res);
 		ereport(ERROR,
-				(errmsg("could not receive data from XLOG stream: %s",
+				(errmsg("could not receive data from WAL stream: %s",
 						PQerrorMessage(streamConn))));
 	}
 	if (rawlen < -1)
 		ereport(ERROR,
-				(errmsg("could not receive data from XLOG stream: %s",
+				(errmsg("could not receive data from WAL stream: %s",
 						PQerrorMessage(streamConn))));
 
 	/* Return received messages to caller */

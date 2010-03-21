@@ -30,7 +30,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/libpq/pqcomm.c,v 1.208 2010/03/13 16:56:37 momjian Exp $
+ *	$PostgreSQL: pgsql/src/backend/libpq/pqcomm.c,v 1.209 2010/03/21 00:17:58 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -843,7 +843,7 @@ pq_getbyte_if_available(unsigned char *c)
 #else
 	if (!pg_set_noblock(MyProcPort->sock))
 		ereport(ERROR,
-				(errmsg("couldn't put socket to non-blocking mode: %m")));
+				(errmsg("could not set socket to non-blocking mode: %m")));
 #endif
 	MyProcPort->noblock = true;
 	PG_TRY();
@@ -889,7 +889,7 @@ pq_getbyte_if_available(unsigned char *c)
 #else
 		if (!pg_set_block(MyProcPort->sock))
 			ereport(FATAL,
-					(errmsg("couldn't put socket to blocking mode: %m")));
+					(errmsg("could not set socket to blocking mode: %m")));
 #endif
 		MyProcPort->noblock = false;
 		PG_RE_THROW();
@@ -900,7 +900,7 @@ pq_getbyte_if_available(unsigned char *c)
 #else
 	if (!pg_set_block(MyProcPort->sock))
 		ereport(FATAL,
-				(errmsg("couldn't put socket to blocking mode: %m")));
+				(errmsg("could not set socket to blocking mode: %m")));
 #endif
 	MyProcPort->noblock = false;
 
