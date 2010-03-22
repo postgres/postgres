@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/createuser.sgml,v 1.54 2010/02/19 14:36:45 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/createuser.sgml,v 1.55 2010/03/22 14:56:09 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -78,22 +78,12 @@ PostgreSQL documentation
      </varlistentry>  
 
      <varlistentry>
-      <term><option>-s</></term>
-      <term><option>--superuser</></term>
+      <term><option>-c <replaceable class="parameter">number</replaceable></></term>
+      <term><option>--connection-limit <replaceable class="parameter">number</replaceable></></term>
       <listitem>
        <para>
-        The new user will be a superuser.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><option>-S</></term>
-      <term><option>--no-superuser</></term>
-      <listitem>
-       <para>
-        The new user will not be a superuser.
-        This is the default.
+        Set a maximum number of connections for the new user.
+        The default is to set no limit.
        </para>
       </listitem>
      </varlistentry>
@@ -120,23 +110,46 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term><option>-r</></term>
-      <term><option>--createrole</></term>
+      <term><option>-e</></term>
+      <term><option>--echo</></term>
       <listitem>
        <para>
-        The new user will be allowed to create new roles (that is,
-        this user will have <literal>CREATEROLE</> privilege).
+        Echo the commands that <application>createuser</application> generates
+        and sends to the server.
        </para>
       </listitem>
      </varlistentry>
 
      <varlistentry>
-      <term><option>-R</></term>
-      <term><option>--no-createrole</></term>
+      <term><option>-E</></term>
+      <term><option>--encrypted</></term>
       <listitem>
        <para>
-        The new user will not be allowed to create new roles.
+        Encrypts the user's password stored in the database. If not
+        specified, the default password behavior is used.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-i</></term>
+      <term><option>--inherit</></term>
+      <listitem>
+       <para>
+        The new role will automatically inherit privileges of roles
+        it is a member of.
         This is the default.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-I</></term>
+      <term><option>--no-inherit</></term>
+      <listitem>
+       <para>
+        The new role will not automatically inherit privileges of roles
+        it is a member of.
        </para>
       </listitem>
      </varlistentry>
@@ -166,35 +179,12 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term><option>-i</></term>
-      <term><option>--inherit</></term>
+      <term><option>-N</></term>
+      <term><option>--unencrypted</></term>
       <listitem>
        <para>
-        The new role will automatically inherit privileges of roles
-        it is a member of.
-        This is the default.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><option>-I</></term>
-      <term><option>--no-inherit</></term>
-      <listitem>
-       <para>
-        The new role will not automatically inherit privileges of roles
-        it is a member of.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><option>-c <replaceable class="parameter">number</replaceable></></term>
-      <term><option>--connection-limit <replaceable class="parameter">number</replaceable></></term>
-      <listitem>
-       <para>
-        Set a maximum number of connections for the new user.
-        The default is to set no limit.
+        Does not encrypt the user's password stored in the database. If
+        not specified, the default password behavior is used.
        </para>
       </listitem>
      </varlistentry>
@@ -212,34 +202,44 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term><option>-E</></term>
-      <term><option>--encrypted</></term>
+      <term><option>-r</></term>
+      <term><option>--createrole</></term>
       <listitem>
        <para>
-        Encrypts the user's password stored in the database. If not
-        specified, the default password behavior is used.
+        The new user will be allowed to create new roles (that is,
+        this user will have <literal>CREATEROLE</> privilege).
        </para>
       </listitem>
      </varlistentry>
 
      <varlistentry>
-      <term><option>-N</></term>
-      <term><option>--unencrypted</></term>
+      <term><option>-R</></term>
+      <term><option>--no-createrole</></term>
       <listitem>
        <para>
-        Does not encrypt the user's password stored in the database. If
-        not specified, the default password behavior is used.
+        The new user will not be allowed to create new roles.
+        This is the default.
        </para>
       </listitem>
      </varlistentry>
 
      <varlistentry>
-      <term><option>-e</></term>
-      <term><option>--echo</></term>
+      <term><option>-s</></term>
+      <term><option>--superuser</></term>
       <listitem>
        <para>
-        Echo the commands that <application>createuser</application> generates
-        and sends to the server.
+        The new user will be a superuser.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-S</></term>
+      <term><option>--no-superuser</></term>
+      <listitem>
+       <para>
+        The new user will not be a superuser.
+        This is the default.
        </para>
       </listitem>
      </varlistentry>

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/vacuumdb.sgml,v 1.52 2010/02/19 14:36:45 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/vacuumdb.sgml,v 1.53 2010/03/22 14:56:09 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -128,16 +128,6 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term><option>-Z</option></term>
-      <term><option>--analyze-only</option></term>
-      <listitem>
-       <para>
-        Only calculate statistics for use by the optimizer (no vacuum).
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
       <term><option>-q</></term>
       <term><option>--quiet</></term>
       <listitem>
@@ -191,6 +181,16 @@ PostgreSQL documentation
       <listitem>
        <para>
         Also calculate statistics for use by the optimizer.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-Z</option></term>
+      <term><option>--analyze-only</option></term>
+      <listitem>
+       <para>
+        Only calculate statistics for use by the optimizer (no vacuum).
        </para>
       </listitem>
      </varlistentry>
