@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/joinpath.c,v 1.130 2010/02/26 02:00:44 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/joinpath.c,v 1.131 2010/03/22 13:57:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -192,7 +192,9 @@ clause_sides_match_join(RestrictInfo *rinfo, RelOptInfo *outerrel,
  *
  * This is true for a left join for which the join condition cannot match
  * more than one inner-side row.  (There are other possibly interesting
- * cases, but we don't have the infrastructure to prove them.)
+ * cases, but we don't have the infrastructure to prove them.)  We also
+ * have to check that the inner side doesn't generate any variables needed
+ * above the join.
  *
  * Note: there is no need to consider the symmetrical case of duplicating the
  * right input, because add_paths_to_joinrel() will be called with each rel
@@ -242,6 +244,19 @@ join_is_removable(PlannerInfo *root,
 		 attroff--)
 	{
 		if (!bms_is_subset(innerrel->attr_needed[attroff], joinrel->relids))
+			return false;
+	}
+
+	/*
+	 * Similarly check that the inner rel doesn't produce any PlaceHolderVars
+	 * that will be used above the join.
+	 */
+	foreach(l, root->placeholder_list)
+	{
+		PlaceHolderInfo *phinfo = (PlaceHolderInfo *) lfirst(l);
+
+		if (bms_is_subset(phinfo->ph_eval_at, innerrel->relids) &&
+			!bms_is_subset(phinfo->ph_needed, joinrel->relids))
 			return false;
 	}
 

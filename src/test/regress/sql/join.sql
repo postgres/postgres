@@ -567,3 +567,26 @@ group by t1.q2 order by 1;
 --
 select * from int4_tbl a full join int4_tbl b on true;
 select * from int4_tbl a full join int4_tbl b on false;
+
+--
+-- test join removal
+--
+
+create temp table parent (k int primary key, pd int);
+create temp table child (k int unique, cd int);
+insert into parent values (1, 10), (2, 20), (3, 30);
+insert into child values (1, 100), (4, 400);
+
+-- this case is optimizable
+select p.* from parent p left join child c on (p.k = c.k);
+explain (costs off)
+  select p.* from parent p left join child c on (p.k = c.k);
+
+-- this case is not
+select p.*, linked from parent p
+  left join (select c.*, true as linked from child c) as ss
+  on (p.k = ss.k);
+explain (costs off)
+  select p.*, linked from parent p
+    left join (select c.*, true as linked from child c) as ss
+    on (p.k = ss.k);
