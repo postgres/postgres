@@ -1,7 +1,7 @@
-#include "../regression.h"
+#include <../regression.h>
 
 exec sql begin declare section;
-#include "strings.h"
+#include <strings.h>
 exec sql end declare section;
 
 int main(void)
