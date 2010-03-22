@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/indexcmds.c,v 1.194 2010/02/26 02:00:39 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/indexcmds.c,v 1.195 2010/03/22 15:24:11 sriggs Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1391,7 +1391,7 @@ ChooseIndexName(const char *tabname, Oid namespaceId,
 	{
 		indexname = ChooseRelationName(tabname,
 									   ChooseIndexNameAddition(colnames),
-									   "exclusion",
+									   "excl",
 									   namespaceId);
 	}
 	else if (isconstraint)
