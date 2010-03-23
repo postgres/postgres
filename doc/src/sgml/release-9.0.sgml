@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release-9.0.sgml,v 2.9 2010/03/22 22:56:52 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release-9.0.sgml,v 2.10 2010/03/23 02:28:48 momjian Exp $ -->
 
 
  <sect1 id="release-9-0">
@@ -264,7 +264,7 @@
               linkend="functions-recovery-info-table"><function>pg_last_xlog_receive_location()</></link>
               and <function>pg_last_xlog_replay_location()</>, which
               can be used to monitor standby server <acronym>WAL</>
-              activity (Simon)
+              activity (Simon, Fujii Masao, Heikki)
             </para>
           </listitem>
 
