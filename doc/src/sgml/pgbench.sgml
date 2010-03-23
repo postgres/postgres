@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/pgbench.sgml,v 1.12 2009/12/15 15:59:57 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/pgbench.sgml,v 1.13 2010/03/23 01:29:22 itagaki Exp $ -->
 
 <sect1 id="pgbench">
  <title>pgbench</title>
@@ -551,6 +551,16 @@ END;
    taken by each transaction to a logfile.  The logfile will be named
    <filename>pgbench_log.<replaceable>nnn</></filename>, where
    <replaceable>nnn</> is the PID of the pgbench process.
+   If the <literal>-j</> option is 2 or higher, creating multiple worker
+   threads, each will have its own log file. The first worker will use the
+   the same name for its log file as in the standard single worker case.  
+   The additional log files for the other workers will be named
+   <filename>pgbench_log.<replaceable>nnn</>.<replaceable>mmm</></filename>,
+   where <replaceable>mmm</> is a sequential number for each worker starting
+   with 1.
+  </para>
+
+  <para>
    The format of the log is:
 
    <programlisting>

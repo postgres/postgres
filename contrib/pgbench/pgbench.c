@@ -4,7 +4,7 @@
  * A simple benchmark program for PostgreSQL
  * Originally written by Tatsuo Ishii and enhanced by many contributors.
  *
- * $PostgreSQL: pgsql/contrib/pgbench/pgbench.c,v 1.97 2010/02/26 02:00:32 momjian Exp $
+ * $PostgreSQL: pgsql/contrib/pgbench/pgbench.c,v 1.98 2010/03/23 01:29:22 itagaki Exp $
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
  * ALL RIGHTS RESERVED;
  *
@@ -131,11 +131,9 @@ int			fillfactor = 100;
 #define ntellers	10
 #define naccounts	100000
 
-FILE	   *LOGFILE = NULL;
-
 bool		use_log;			/* log transaction latencies to a file */
-
-int			is_connect;			/* establish connection for each transaction */
+bool		is_connect;			/* establish connection for each transaction */
+int			main_pid;			/* main process id used in log filename */
 
 char	   *pghost = "";
 char	   *pgport = "";
@@ -183,6 +181,7 @@ typedef struct
  */
 typedef struct
 {
+	int			tid;			/* thread id */
 	pthread_t	thread;			/* thread handle */
 	CState	   *state;			/* array of CState */
 	int			nstate;			/* length of state[] */
@@ -741,7 +740,7 @@ clientDone(CState *st, bool ok)
 
 /* return false iff client should be disconnected */
 static bool
-doCustom(CState *st, instr_time *conn_time)
+doCustom(CState *st, instr_time *conn_time, FILE *logfile)
 {
 	PGresult   *res;
 	Command   **commands;
@@ -778,7 +777,7 @@ top:
 		/*
 		 * transaction finished: record the time it took in the log
 		 */
-		if (use_log && commands[st->state + 1] == NULL)
+		if (logfile && commands[st->state + 1] == NULL)
 		{
 			instr_time	now;
 			instr_time	diff;
@@ -791,12 +790,12 @@ top:
 
 #ifndef WIN32
 			/* This is more than we really ought to know about instr_time */
-			fprintf(LOGFILE, "%d %d %.0f %d %ld %ld\n",
+			fprintf(logfile, "%d %d %.0f %d %ld %ld\n",
 					st->id, st->cnt, usec, st->use_file,
 					(long) now.tv_sec, (long) now.tv_usec);
 #else
 			/* On Windows, instr_time doesn't provide a timestamp anyway */
-			fprintf(LOGFILE, "%d %d %.0f %d 0 0\n",
+			fprintf(logfile, "%d %d %.0f %d 0 0\n",
 					st->id, st->cnt, usec, st->use_file);
 #endif
 		}
@@ -857,7 +856,7 @@ top:
 		INSTR_TIME_ACCUM_DIFF(*conn_time, end, start);
 	}
 
-	if (use_log && st->state == 0)
+	if (logfile && st->state == 0)
 		INSTR_TIME_SET_CURRENT(st->txn_begin);
 
 	if (commands[st->state]->type == SQL_COMMAND)
@@ -1833,7 +1832,7 @@ main(int argc, char **argv)
 				}
 				break;
 			case 'C':
-				is_connect = 1;
+				is_connect = true;
 				break;
 			case 's':
 				scale_given = true;
@@ -1955,6 +1954,12 @@ main(int argc, char **argv)
 		exit(1);
 	}
 
+	/*
+	 * save main process id in the global variable because process id will be
+	 * changed after fork.
+	 */
+	main_pid = (int) getpid();
+
 	if (nclients > 1)
 	{
 		state = (CState *) realloc(state, sizeof(CState) * nclients);
@@ -1977,20 +1982,6 @@ main(int argc, char **argv)
 				if (!putVariable(&state[i], "startup", state[0].variables[j].name, state[0].variables[j].value))
 					exit(1);
 			}
-		}
-	}
-
-	if (use_log)
-	{
-		char		logpath[64];
-
-		snprintf(logpath, 64, "pgbench_log.%d", (int) getpid());
-		LOGFILE = fopen(logpath, "w");
-
-		if (LOGFILE == NULL)
-		{
-			fprintf(stderr, "Couldn't open logfile \"%s\": %s", logpath, strerror(errno));
-			exit(1);
 		}
 	}
 
@@ -2111,6 +2102,7 @@ main(int argc, char **argv)
 	threads = (TState *) malloc(sizeof(TState) * nthreads);
 	for (i = 0; i < nthreads; i++)
 	{
+		threads[i].tid = i;
 		threads[i].state = &state[nclients / nthreads * i];
 		threads[i].nstate = nclients / nthreads;
 		INSTR_TIME_SET_CURRENT(threads[i].start_time);
@@ -2159,8 +2151,6 @@ main(int argc, char **argv)
 	INSTR_TIME_SET_CURRENT(total_time);
 	INSTR_TIME_SUBTRACT(total_time, start_time);
 	printResults(ttype, total_xacts, nclients, nthreads, total_time, conn_total_time);
-	if (LOGFILE)
-		fclose(LOGFILE);
 
 	return 0;
 }
@@ -2171,6 +2161,7 @@ threadRun(void *arg)
 	TState	   *thread = (TState *) arg;
 	CState	   *state = thread->state;
 	TResult    *result;
+	FILE	   *logfile = NULL;		/* per-thread log file */
 	instr_time	start,
 				end;
 	int			nstate = thread->nstate;
@@ -2180,7 +2171,25 @@ threadRun(void *arg)
 	result = malloc(sizeof(TResult));
 	INSTR_TIME_SET_ZERO(result->conn_time);
 
-	if (is_connect == 0)
+	/* open log file if requested */
+	if (use_log)
+	{
+		char		logpath[64];
+
+		if (thread->tid == 0)
+			snprintf(logpath, sizeof(logpath), "pgbench_log.%d", main_pid);
+		else
+			snprintf(logpath, sizeof(logpath), "pgbench_log.%d.%d", main_pid, thread->tid);
+		logfile = fopen(logpath, "w");
+
+		if (logfile == NULL)
+		{
+			fprintf(stderr, "Couldn't open logfile \"%s\": %s", logpath, strerror(errno));
+			goto done;
+		}
+	}
+
+	if (!is_connect)
 	{
 		/* make connections to the database */
 		for (i = 0; i < nstate; i++)
@@ -2202,7 +2211,7 @@ threadRun(void *arg)
 		int			prev_ecnt = st->ecnt;
 
 		st->use_file = getrand(0, num_files - 1);
-		if (!doCustom(st, &result->conn_time))
+		if (!doCustom(st, &result->conn_time, logfile))
 			remains--;			/* I've aborted */
 
 		if (st->ecnt > prev_ecnt && commands[st->state]->type == META_COMMAND)
@@ -2304,7 +2313,7 @@ threadRun(void *arg)
 			if (st->con && (FD_ISSET(PQsocket(st->con), &input_mask)
 							|| commands[st->state]->type == META_COMMAND))
 			{
-				if (!doCustom(st, &result->conn_time))
+				if (!doCustom(st, &result->conn_time, logfile))
 					remains--;	/* I've aborted */
 			}
 
@@ -2326,6 +2335,8 @@ done:
 		result->xacts += state[i].cnt;
 	INSTR_TIME_SET_CURRENT(end);
 	INSTR_TIME_ACCUM_DIFF(result->conn_time, end, start);
+	if (logfile)
+		fclose(logfile);
 	return result;
 }
 
