@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.addons,v 1.17 2010/03/21 11:56:45 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.addons,v 1.18 2010/03/23 22:12:06 petere Exp $ */
 ECPG: stmtClosePortalStmt block
 	{
 		if (INFORMIX_MODE)
@@ -363,7 +363,7 @@ ECPG: table_refselect_with_parens addon
 ECPG: TypenameSimpleTypenameopt_array_bounds block
 	{	$$ = cat2_str($1, $2.str); }
 ECPG: TypenameSETOFSimpleTypenameopt_array_bounds block
-	{	$$ = $$ = cat_str(3, make_str("setof"), $2, $3.str); }
+	{	$$ = cat_str(3, make_str("setof"), $2, $3.str); }
 ECPG: opt_array_boundsopt_array_bounds'['']' block
 	{
 		$$.index1 = $1.index1;
