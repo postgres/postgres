@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.188.2.4 2010/03/08 09:57:35 mha Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.188.2.5 2010/03/24 17:05:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1640,13 +1640,13 @@ ident_syntax:
 /*
  *	Scan the (pre-parsed) ident usermap file line by line, looking for a match
  *
- *	See if the user with ident username "ident_user" is allowed to act
- *	as Postgres user "pgrole" according to usermap "usermap_name".
+ *	See if the user with ident username "auth_user" is allowed to act
+ *	as Postgres user "pg_role" according to usermap "usermap_name".
  *
  *	Special case: Usermap NULL, equivalent to what was previously called
- *	"sameuser" or "samerole", don't look in the usermap
- *	file.  That's an implied map where "pgrole" must be identical to
- *	"ident_user" in order to be authorized.
+ *	"sameuser" or "samerole", means don't look in the usermap file.
+ *	That's an implied map wherein "pg_role" must be identical to
+ *	"auth_user" in order to be authorized.
  *
  *	Iff authorized, return STATUS_OK, otherwise return STATUS_ERROR.
  */
@@ -1673,7 +1673,7 @@ check_usermap(const char *usermap_name,
 		}
 		ereport(LOG,
 				(errmsg("provided username (%s) and authenticated username (%s) don't match",
-						auth_user, pg_role)));
+						pg_role, auth_user)));
 		return STATUS_ERROR;
 	}
 	else
