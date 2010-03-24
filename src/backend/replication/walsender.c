@@ -30,7 +30,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/replication/walsender.c,v 1.10 2010/03/16 09:09:55 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/replication/walsender.c,v 1.11 2010/03/24 20:11:12 sriggs Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -67,7 +67,7 @@ bool		am_walsender = false;		/* Am I a walsender process ? */
 int			MaxWalSenders = 0;	/* the maximum number of concurrent walsenders */
 int			WalSndDelay = 200;	/* max sleep time between some actions */
 
-#define NAPTIME_PER_CYCLE 100	/* max sleep time between cycles (100ms) */
+#define NAPTIME_PER_CYCLE 100000L	/* max sleep time between cycles (100ms) */
 
 /*
  * These variables are used similarly to openLogFile/Id/Seg/Off,
@@ -396,7 +396,7 @@ WalSndLoop(void)
 		 * sleep into NAPTIME_PER_CYCLE (ms) increments, and check for
 		 * interrupts after each nap.
 		 */
-		remain = WalSndDelay;
+		remain = WalSndDelay * 1000L;
 		while (remain > 0)
 		{
 			if (got_SIGHUP || shutdown_requested || ready_to_stop)
