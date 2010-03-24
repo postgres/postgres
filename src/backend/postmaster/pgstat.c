@@ -13,7 +13,7 @@
  *
  *	Copyright (c) 2001-2010, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.202 2010/03/12 22:19:19 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.203 2010/03/24 16:07:10 tgl Exp $
  * ----------
  */
 #include "postgres.h"
@@ -3288,15 +3288,24 @@ pgstat_write_statsfile(bool permanent)
 		last_statwrite = globalStats.stats_timestamp;
 
 		/*
-		 * It's not entirely clear whether there could be clock skew between
-		 * backends and the collector; but just in case someone manages to
-		 * send us a stats request time that's in the future, reset it.
-		 * This ensures that no inquiry message can cause more than one stats
-		 * file write to occur.
+		 * If there is clock skew between backends and the collector, we
+		 * could receive a stats request time that's in the future.  If so,
+		 * complain and reset last_statrequest.  Resetting ensures that no
+		 * inquiry message can cause more than one stats file write to occur.
 		 */
 		if (last_statrequest > last_statwrite)
 		{
-			elog(LOG, "last_statrequest is in the future, resetting");
+			char	   *reqtime;
+			char	   *mytime;
+
+			/* Copy because timestamptz_to_str returns a static buffer */
+			reqtime = pstrdup(timestamptz_to_str(last_statrequest));
+			mytime = pstrdup(timestamptz_to_str(last_statwrite));
+			elog(LOG, "last_statrequest %s is later than collector's time %s",
+				 reqtime, mytime);
+			pfree(reqtime);
+			pfree(mytime);
+
 			last_statrequest = last_statwrite;
 		}
 	}
