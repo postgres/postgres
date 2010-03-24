@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/backend/replication/README,v 1.2 2010/01/20 09:16:24 heikki Exp $
+$PostgreSQL: pgsql/src/backend/replication/README,v 1.3 2010/03/24 06:25:39 heikki Exp $
 
 Walreceiver - libpqwalreceiver API
 ----------------------------------
@@ -17,11 +17,14 @@ Establish connection to the primary, and starts streaming from 'startpoint'.
 Returns true on success.
 
 
-bool walrcv_receive(int timeout, XLogRecPtr *recptr, char **buffer, int *len)
+bool walrcv_receive(int timeout, unsigned char *type, char **buffer, int *len)
 
-Retrieve any WAL record available through the connection, blocking for
-maximum of 'timeout' ms.
-
+Retrieve any message available through the connection, blocking for
+maximum of 'timeout' ms. If a message was successfully read, returns true,
+otherwise false. On success, a pointer to the message payload is stored in
+*buffer, length in *len, and the type of message received in *type. The
+returned buffer is valid until the next call to walrcv_* functions, the
+caller should not attempt freeing it.
 
 void walrcv_disconnect(void);
 
