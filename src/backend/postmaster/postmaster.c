@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.603 2010/02/26 02:00:56 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.604 2010/03/25 20:40:17 sriggs Exp $
  *
  * NOTES
  *
@@ -3340,10 +3340,17 @@ BackendInitialize(Port *port)
 			 remote_host, remote_port);
 
 	if (Log_connections)
-		ereport(LOG,
-				(errmsg("connection received: host=%s%s%s",
-						remote_host, remote_port[0] ? " port=" : "",
-						remote_port)));
+	{
+		if (remote_port[0])
+			ereport(LOG,
+				(errmsg("connection received: host=%s port=%s",
+					remote_host,
+					remote_port)));
+		else
+			ereport(LOG,
+				(errmsg("connection received: host=%s",
+					remote_host)));
+	}
 
 	/*
 	 * save remote_host and remote_port in port structure
