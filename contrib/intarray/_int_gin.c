@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/intarray/_int_gin.c,v 1.10 2009/06/11 14:48:51 momjian Exp $
+ * $PostgreSQL: pgsql/contrib/intarray/_int_gin.c,v 1.11 2010/03/25 15:50:10 tgl Exp $
  */
 #include "postgres.h"
 
@@ -65,7 +65,7 @@ ginint4_queryextract(PG_FUNCTION_ARGS)
 		}
 	}
 
-	if (nentries == 0)
+	if (*nentries == 0)
 	{
 		switch (strategy)
 		{
