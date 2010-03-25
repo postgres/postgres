@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.124.2.2 2005/03/12 21:12:18 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.124.2.3 2010/03/25 14:46:04 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -721,9 +721,30 @@ AlterDatabaseSet(AlterDatabaseSetStmt *stmt)
 
 	if (strcmp(stmt->variable, "all") == 0 && valuestr == NULL)
 	{
-		/* RESET ALL */
-		repl_null[Anum_pg_database_datconfig - 1] = 'n';
-		repl_val[Anum_pg_database_datconfig - 1] = (Datum) 0;
+		ArrayType  *new = NULL;
+		Datum		datum;
+		bool		isnull;
+
+		/*
+		 * in RESET ALL, request GUC to reset the settings array; if none
+		 * left, we can set datconfig to null; otherwise use the returned
+		 * array
+		 */
+		datum = heap_getattr(tuple, Anum_pg_database_datconfig,
+							 RelationGetDescr(rel), &isnull);
+		if (!isnull)
+			new = GUCArrayReset(DatumGetArrayTypeP(datum));
+		if (new)
+		{
+			repl_val[Anum_pg_database_datconfig - 1] = PointerGetDatum(new);
+			repl_repl[Anum_pg_database_datconfig - 1] = 'r';
+			repl_null[Anum_pg_database_datconfig - 1] = ' ';
+		}
+		else
+		{
+			repl_null[Anum_pg_database_datconfig - 1] = 'n';
+			repl_val[Anum_pg_database_datconfig - 1] = (Datum) 0;
+		}
 	}
 	else
 	{
