@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.223 2010/02/17 04:19:37 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.224 2010/03/25 14:44:33 alvherre Exp $ -->
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
  -->
@@ -1187,12 +1187,6 @@
       <entry><type>timestamptz</type></entry>
       <entry>Password expiry time (only used for password authentication);
        NULL if no expiration</entry>
-     </row>
-
-     <row>
-      <entry><structfield>rolconfig</structfield></entry>
-      <entry><type>text[]</type></entry>
-      <entry>Session defaults for run-time configuration variables</entry>
      </row>
     </tbody>
    </tgroup>

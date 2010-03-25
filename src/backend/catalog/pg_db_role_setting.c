@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/backend/catalog/pg_db_role_setting.c,v 1.3 2010/02/26 02:00:37 momjian Exp $
+ *		$PostgreSQL: pgsql/src/backend/catalog/pg_db_role_setting.c,v 1.4 2010/03/25 14:44:33 alvherre Exp $
  */
 #include "postgres.h"
 
@@ -49,7 +49,8 @@ AlterSetting(Oid databaseid, Oid roleid, VariableSetStmt *setstmt)
 	/*
 	 * There are three cases:
 	 *
-	 * - in RESET ALL, simply delete the pg_db_role_setting tuple (if any)
+	 * - in RESET ALL, request GUC to reset the settings array and update the
+	 * catalog if there's anything left, delete it otherwise
 	 *
 	 * - in other commands, if there's a tuple in pg_db_role_setting, update
 	 * it; if it ends up empty, delete it
@@ -60,7 +61,41 @@ AlterSetting(Oid databaseid, Oid roleid, VariableSetStmt *setstmt)
 	if (setstmt->kind == VAR_RESET_ALL)
 	{
 		if (HeapTupleIsValid(tuple))
-			simple_heap_delete(rel, &tuple->t_self);
+		{
+			ArrayType  *new = NULL;
+			Datum		datum;
+			bool		isnull;
+
+			datum = heap_getattr(tuple, Anum_pg_db_role_setting_setconfig,
+								 RelationGetDescr(rel), &isnull);
+
+			if (!isnull)
+				new = GUCArrayReset(DatumGetArrayTypeP(datum));
+
+			if (new)
+			{
+				Datum		repl_val[Natts_pg_db_role_setting];
+				bool		repl_null[Natts_pg_db_role_setting];
+				bool		repl_repl[Natts_pg_db_role_setting];
+				HeapTuple	newtuple;
+
+				memset(repl_repl, false, sizeof(repl_repl));
+
+				repl_val[Anum_pg_db_role_setting_setconfig - 1] =
+					PointerGetDatum(new);
+				repl_repl[Anum_pg_db_role_setting_setconfig - 1] = true;
+				repl_null[Anum_pg_db_role_setting_setconfig - 1] = false;
+
+				newtuple = heap_modify_tuple(tuple, RelationGetDescr(rel),
+											 repl_val, repl_null, repl_repl);
+				simple_heap_update(rel, &tuple->t_self, newtuple);
+
+				/* Update indexes */
+				CatalogUpdateIndexes(rel, newtuple);
+			}
+			else
+				simple_heap_delete(rel, &tuple->t_self);
+		}
 	}
 	else if (HeapTupleIsValid(tuple))
 	{
