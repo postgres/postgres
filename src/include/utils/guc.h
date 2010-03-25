@@ -7,7 +7,7 @@
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
- * $PostgreSQL: pgsql/src/include/utils/guc.h,v 1.58.4.2 2009/12/09 21:58:56 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/guc.h,v 1.58.4.3 2010/03/25 14:45:51 alvherre Exp $
  *--------------------------------------------------------------------
  */
 #ifndef GUC_H
@@ -206,6 +206,7 @@ extern char *flatten_set_variable_args(const char *name, List *args);
 extern void ProcessGUCArray(ArrayType *array, GucSource source);
 extern ArrayType *GUCArrayAdd(ArrayType *array, const char *name, const char *value);
 extern ArrayType *GUCArrayDelete(ArrayType *array, const char *name);
+extern ArrayType *GUCArrayReset(ArrayType *array);
 
 #ifdef EXEC_BACKEND
 extern void write_nondefault_variables(GucContext context);
