@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/commands/user.c,v 1.174 2006/10/04 00:29:51 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/commands/user.c,v 1.174.2.1 2010/03/25 14:45:21 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -760,8 +760,30 @@ AlterRoleSet(AlterRoleSetStmt *stmt)
 	repl_repl[Anum_pg_authid_rolconfig - 1] = 'r';
 	if (strcmp(stmt->variable, "all") == 0 && valuestr == NULL)
 	{
-		/* RESET ALL */
-		repl_null[Anum_pg_authid_rolconfig - 1] = 'n';
+		ArrayType  *new = NULL;
+		Datum		datum;
+		bool		isnull;
+
+		/*
+		 * in RESET ALL, request GUC to reset the settings array; if none
+		 * left, we can set rolconfig to null; otherwise use the returned
+		 * array
+		 */
+		datum = SysCacheGetAttr(AUTHNAME, oldtuple,
+								Anum_pg_authid_rolconfig, &isnull);
+		if (!isnull)
+			new = GUCArrayReset(DatumGetArrayTypeP(datum));
+		if (new)
+		{
+			repl_val[Anum_pg_authid_rolconfig - 1] = PointerGetDatum(new);
+			repl_repl[Anum_pg_authid_rolconfig - 1] = 'r';
+			repl_null[Anum_pg_authid_rolconfig - 1] = ' ';
+		}
+		else
+		{
+			repl_null[Anum_pg_authid_rolconfig - 1] = 'n';
+			repl_val[Anum_pg_authid_rolconfig - 1] = (Datum) 0;
+		}
 	}
 	else
 	{
