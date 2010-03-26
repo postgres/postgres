@@ -30,7 +30,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/replication/walsender.c,v 1.12 2010/03/24 21:41:57 sriggs Exp $
+ *	  $PostgreSQL: pgsql/src/backend/replication/walsender.c,v 1.13 2010/03/26 12:23:34 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -263,6 +263,7 @@ WalSndHandshake(void)
 						pq_sendbyte(&buf, 0);
 						pq_sendint(&buf, 0, 2);
 						pq_endmessage(&buf);
+						pq_flush();
 
 						/*
 						 * Initialize position to the received one, then the
