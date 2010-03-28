@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/nbtree.h,v 1.133 2010/03/20 07:49:48 sriggs Exp $
+ * $PostgreSQL: pgsql/src/include/access/nbtree.h,v 1.134 2010/03/28 09:27:02 sriggs Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -314,14 +314,15 @@ typedef struct xl_btree_split
  */
 typedef struct xl_btree_delete
 {
-	RelFileNode node;
+	RelFileNode node;		/* RelFileNode of the index */
 	BlockNumber block;
-	TransactionId latestRemovedXid;
+	RelFileNode hnode;		/* RelFileNode of the heap the index currently points at */
+	int			nitems;
 
 	/* TARGET OFFSET NUMBERS FOLLOW AT THE END */
 } xl_btree_delete;
 
-#define SizeOfBtreeDelete	(offsetof(xl_btree_delete, latestRemovedXid) + sizeof(TransactionId))
+#define SizeOfBtreeDelete	(offsetof(xl_btree_delete, nitems) + sizeof(int))
 
 /*
  * This is what we need to know about page reuse within btree.
@@ -349,13 +350,12 @@ typedef struct xl_btree_reuse_page
  * heap tuples.
  *
  * Any changes to any one block are registered on just one WAL record. All
- * blocks that we need to run EnsureBlockUnpinned() before we touch the changed
- * block are also given on this record as a variable length array. The array
- * is compressed by way of storing an array of block ranges, rather than an
- * actual array of blockids.
+ * blocks that we need to run EnsureBlockUnpinned() are listed as a block range
+ * starting from the last block vacuumed through until this one. Individual
+ * block numbers aren't given.
  *
  * Note that the *last* WAL record in any vacuum of an index is allowed to
- * have numItems == 0. All other WAL records must have numItems > 0.
+ * have a zero length array of offsets. Earlier records must have at least one.
  */
 typedef struct xl_btree_vacuum
 {
@@ -588,9 +588,10 @@ extern Buffer _bt_relandgetbuf(Relation rel, Buffer obuf,
 extern void _bt_relbuf(Relation rel, Buffer buf);
 extern void _bt_pageinit(Page page, Size size);
 extern bool _bt_page_recyclable(Page page);
-extern void _bt_delitems(Relation rel, Buffer buf,
-			 OffsetNumber *itemnos, int nitems, bool isVacuum,
-			 BlockNumber lastBlockVacuumed);
+extern void _bt_delitems_delete(Relation rel, Buffer buf,
+			 OffsetNumber *itemnos, int nitems, Relation heapRel);
+extern void _bt_delitems_vacuum(Relation rel, Buffer buf,
+			 OffsetNumber *itemnos, int nitems, BlockNumber lastBlockVacuumed);
 extern int	_bt_pagedel(Relation rel, Buffer buf, BTStack stack);
 
 /*

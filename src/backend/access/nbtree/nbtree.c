@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtree.c,v 1.176 2010/02/26 02:00:34 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtree.c,v 1.177 2010/03/28 09:27:01 sriggs Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -708,7 +708,7 @@ btvacuumscan(IndexVacuumInfo *info, IndexBulkDeleteResult *stats,
 		buf = ReadBufferExtended(rel, MAIN_FORKNUM, num_pages - 1, RBM_NORMAL,
 								 info->strategy);
 		LockBufferForCleanup(buf);
-		_bt_delitems(rel, buf, NULL, 0, true, vstate.lastBlockVacuumed);
+		_bt_delitems_vacuum(rel, buf, NULL, 0, vstate.lastBlockVacuumed);
 		_bt_relbuf(rel, buf);
 	}
 
@@ -889,7 +889,7 @@ restart:
 		{
 			BlockNumber lastBlockVacuumed = BufferGetBlockNumber(buf);
 
-			_bt_delitems(rel, buf, deletable, ndeletable, true, vstate->lastBlockVacuumed);
+			_bt_delitems_vacuum(rel, buf, deletable, ndeletable, vstate->lastBlockVacuumed);
 
 			/*
 			 * Keep track of the block number of the lastBlockVacuumed, so we

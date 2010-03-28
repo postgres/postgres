@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtxlog.c,v 1.63 2010/03/19 10:41:22 sriggs Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtxlog.c,v 1.64 2010/03/28 09:27:01 sriggs Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -553,6 +553,139 @@ btree_xlog_vacuum(XLogRecPtr lsn, XLogRecord *record)
 	UnlockReleaseBuffer(buffer);
 }
 
+/*
+ * Get the latestRemovedXid from the heap pages pointed at by the index
+ * tuples being deleted. This puts the work for calculating latestRemovedXid
+ * into the recovery path rather than the primary path.
+ *
+ * It's possible that this generates a fair amount of I/O, since an index
+ * block may have hundreds of tuples being deleted. Repeat accesses to the
+ * same heap blocks are common, though are not yet optimised.
+ *
+ * XXX optimise later with something like XLogPrefetchBuffer()
+ */
+static TransactionId
+btree_xlog_delete_get_latestRemovedXid(XLogRecord *record)
+{
+	OffsetNumber 	*unused;
+	Buffer			ibuffer, hbuffer;
+	Page			ipage, hpage;
+	ItemId			iitemid, hitemid;
+	IndexTuple		itup;
+	HeapTupleHeader htuphdr;
+	BlockNumber 	hblkno;
+	OffsetNumber 	hoffnum;
+	TransactionId	latestRemovedXid = InvalidTransactionId;
+	TransactionId	htupxid = InvalidTransactionId;
+	int i;
+	int num_unused, num_redirect, num_dead;
+
+	xl_btree_delete *xlrec = (xl_btree_delete *) XLogRecGetData(record);
+
+	/*
+	 * Get index page
+	 */
+	ibuffer = XLogReadBuffer(xlrec->node, xlrec->block, false);
+	if (!BufferIsValid(ibuffer))
+		return InvalidTransactionId;
+	ipage = (Page) BufferGetPage(ibuffer);
+
+	/*
+	 * Loop through the deleted index items to obtain the TransactionId
+	 * from the heap items they point to.
+	 */
+	unused = (OffsetNumber *) ((char *) xlrec + SizeOfBtreeDelete);
+
+	for (i = 0; i < xlrec->nitems; i++)
+	{
+		/*
+		 * Identify the index tuple about to be deleted
+		 */
+		iitemid = PageGetItemId(ipage, unused[i]);
+		itup = (IndexTuple) PageGetItem(ipage, iitemid);
+
+		/*
+		 * Locate the heap page that the index tuple points at
+		 */
+		hblkno = ItemPointerGetBlockNumber(&(itup->t_tid));
+		hbuffer = XLogReadBuffer(xlrec->hnode, hblkno, false);
+		if (!BufferIsValid(hbuffer))
+		{
+			UnlockReleaseBuffer(ibuffer);
+			return InvalidTransactionId;
+		}
+		hpage = (Page) BufferGetPage(hbuffer);
+
+		/*
+		 * Look up the heap tuple header that the index tuple points at
+		 * by using the heap node supplied with the xlrec. We can't use
+		 * heap_fetch, since it uses ReadBuffer rather than XLogReadBuffer.
+		 * Note that we are not looking at tuple data here, just headers.
+		 */
+		hoffnum = ItemPointerGetOffsetNumber(&(itup->t_tid));
+		hitemid = PageGetItemId(hpage, hoffnum);
+
+		/*
+		 * Follow any redirections until we find something useful.
+		 */
+		while (ItemIdIsRedirected(hitemid))
+		{
+			num_redirect++;
+			hoffnum = ItemIdGetRedirect(hitemid);
+			hitemid = PageGetItemId(hpage, hoffnum);
+			CHECK_FOR_INTERRUPTS();
+		}
+
+		/*
+		 * If the heap item has storage, then read the header. Some LP_DEAD
+		 * items may not be accessible, so we ignore them.
+		 */
+		if (ItemIdHasStorage(hitemid))
+		{
+			htuphdr = (HeapTupleHeader) PageGetItem(hpage, hitemid);
+
+			/*
+			 * Get the heap tuple's xmin/xmax and ratchet up the latestRemovedXid.
+			 * No need to consider xvac values here.
+			 */
+			htupxid = HeapTupleHeaderGetXmin(htuphdr);
+			if (TransactionIdFollows(htupxid, latestRemovedXid))
+				latestRemovedXid = htupxid;
+
+			htupxid = HeapTupleHeaderGetXmax(htuphdr);
+			if (TransactionIdFollows(htupxid, latestRemovedXid))
+				latestRemovedXid = htupxid;
+		}
+		else if (ItemIdIsDead(hitemid))
+		{
+			/*
+			 * Conjecture: if hitemid is dead then it had xids before the xids
+			 * marked on LP_NORMAL items. So we just ignore this item and move
+			 * onto the next, for the purposes of calculating latestRemovedxids.
+			 */
+			num_dead++;
+		}
+		else
+		{
+			Assert(!ItemIdIsUsed(hitemid));
+			num_unused++;
+		}
+
+		UnlockReleaseBuffer(hbuffer);
+	}
+
+	UnlockReleaseBuffer(ibuffer);
+
+	Assert(num_unused == 0);
+
+	/*
+	 * Note that if all heap tuples were LP_DEAD then we will be
+	 * returning InvalidTransactionId here. This seems very unlikely
+	 * in practice.
+	 */
+	return latestRemovedXid;
+}
+
 static void
 btree_xlog_delete(XLogRecPtr lsn, XLogRecord *record)
 {
@@ -584,12 +717,10 @@ btree_xlog_delete(XLogRecPtr lsn, XLogRecord *record)
 	if (record->xl_len > SizeOfBtreeDelete)
 	{
 		OffsetNumber *unused;
-		OffsetNumber *unend;
 
 		unused = (OffsetNumber *) ((char *) xlrec + SizeOfBtreeDelete);
-		unend = (OffsetNumber *) ((char *) xlrec + record->xl_len);
 
-		PageIndexMultiDelete(page, unused, unend - unused);
+		PageIndexMultiDelete(page, unused, xlrec->nitems);
 	}
 
 	/*
@@ -830,6 +961,7 @@ btree_redo(XLogRecPtr lsn, XLogRecord *record)
 				 * from individual btree vacuum records on that index.
 				 */
 				{
+					TransactionId latestRemovedXid = btree_xlog_delete_get_latestRemovedXid(record);
 					xl_btree_delete *xlrec = (xl_btree_delete *) XLogRecGetData(record);
 
 					/*
@@ -839,7 +971,7 @@ btree_redo(XLogRecPtr lsn, XLogRecord *record)
 					 * here is worth some thought and possibly some effort to
 					 * improve.
 					 */
-					ResolveRecoveryConflictWithSnapshot(xlrec->latestRemovedXid, xlrec->node);
+					ResolveRecoveryConflictWithSnapshot(latestRemovedXid, xlrec->node);
 				}
 				break;
 
@@ -1012,10 +1144,10 @@ btree_desc(StringInfo buf, uint8 xl_info, char *rec)
 			{
 				xl_btree_delete *xlrec = (xl_btree_delete *) rec;
 
-				appendStringInfo(buf, "delete: rel %u/%u/%u; blk %u, latestRemovedXid %u",
-								 xlrec->node.spcNode, xlrec->node.dbNode,
-								 xlrec->node.relNode, xlrec->block,
-								 xlrec->latestRemovedXid);
+				appendStringInfo(buf, "delete: index %u/%u/%u; iblk %u, heap %u/%u/%u;",
+								 xlrec->node.spcNode, xlrec->node.dbNode, xlrec->node.relNode,
+								 xlrec->block,
+								 xlrec->hnode.spcNode, xlrec->hnode.dbNode, xlrec->hnode.relNode);
 				break;
 			}
 		case XLOG_BTREE_DELETE_PAGE:

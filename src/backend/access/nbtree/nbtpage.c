@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtpage.c,v 1.121 2010/03/19 10:41:21 sriggs Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtpage.c,v 1.122 2010/03/28 09:27:01 sriggs Exp $
  *
  *	NOTES
  *	   Postgres btree pages look like ordinary relation pages.	The opaque
@@ -719,14 +719,11 @@ _bt_page_recyclable(Page page)
  * ensure correct locking.
  */
 void
-_bt_delitems(Relation rel, Buffer buf,
-			 OffsetNumber *itemnos, int nitems, bool isVacuum,
-			 BlockNumber lastBlockVacuumed)
+_bt_delitems_vacuum(Relation rel, Buffer buf,
+			 OffsetNumber *itemnos, int nitems, BlockNumber lastBlockVacuumed)
 {
 	Page		page = BufferGetPage(buf);
 	BTPageOpaque opaque;
-
-	Assert(isVacuum || lastBlockVacuumed == 0);
 
 	/* No ereport(ERROR) until changes are logged */
 	START_CRIT_SECTION();
@@ -759,35 +756,14 @@ _bt_delitems(Relation rel, Buffer buf,
 		XLogRecPtr	recptr;
 		XLogRecData rdata[2];
 
-		if (isVacuum)
-		{
-			xl_btree_vacuum xlrec_vacuum;
+		xl_btree_vacuum xlrec_vacuum;
 
-			xlrec_vacuum.node = rel->rd_node;
-			xlrec_vacuum.block = BufferGetBlockNumber(buf);
+		xlrec_vacuum.node = rel->rd_node;
+		xlrec_vacuum.block = BufferGetBlockNumber(buf);
 
-			xlrec_vacuum.lastBlockVacuumed = lastBlockVacuumed;
-			rdata[0].data = (char *) &xlrec_vacuum;
-			rdata[0].len = SizeOfBtreeVacuum;
-		}
-		else
-		{
-			xl_btree_delete xlrec_delete;
-
-			xlrec_delete.node = rel->rd_node;
-			xlrec_delete.block = BufferGetBlockNumber(buf);
-
-			/*
-			 * XXX: We would like to set an accurate latestRemovedXid, but
-			 * there is no easy way of obtaining a useful value. So we punt
-			 * and store InvalidTransactionId, which forces the standby to
-			 * wait for/cancel all currently running transactions.
-			 */
-			xlrec_delete.latestRemovedXid = InvalidTransactionId;
-			rdata[0].data = (char *) &xlrec_delete;
-			rdata[0].len = SizeOfBtreeDelete;
-		}
-
+		xlrec_vacuum.lastBlockVacuumed = lastBlockVacuumed;
+		rdata[0].data = (char *) &xlrec_vacuum;
+		rdata[0].len = SizeOfBtreeVacuum;
 		rdata[0].buffer = InvalidBuffer;
 		rdata[0].next = &(rdata[1]);
 
@@ -810,10 +786,82 @@ _bt_delitems(Relation rel, Buffer buf,
 		rdata[1].buffer_std = true;
 		rdata[1].next = NULL;
 
-		if (isVacuum)
-			recptr = XLogInsert(RM_BTREE_ID, XLOG_BTREE_VACUUM, rdata);
-		else
-			recptr = XLogInsert(RM_BTREE_ID, XLOG_BTREE_DELETE, rdata);
+		recptr = XLogInsert(RM_BTREE_ID, XLOG_BTREE_VACUUM, rdata);
+
+		PageSetLSN(page, recptr);
+		PageSetTLI(page, ThisTimeLineID);
+	}
+
+	END_CRIT_SECTION();
+}
+
+void
+_bt_delitems_delete(Relation rel, Buffer buf,
+			 OffsetNumber *itemnos, int nitems, Relation heapRel)
+{
+	Page		page = BufferGetPage(buf);
+	BTPageOpaque opaque;
+
+	Assert(nitems > 0);
+
+	/* No ereport(ERROR) until changes are logged */
+	START_CRIT_SECTION();
+
+	/* Fix the page */
+	PageIndexMultiDelete(page, itemnos, nitems);
+
+	/*
+	 * We can clear the vacuum cycle ID since this page has certainly been
+	 * processed by the current vacuum scan.
+	 */
+	opaque = (BTPageOpaque) PageGetSpecialPointer(page);
+	opaque->btpo_cycleid = 0;
+
+	/*
+	 * Mark the page as not containing any LP_DEAD items.  This is not
+	 * certainly true (there might be some that have recently been marked, but
+	 * weren't included in our target-item list), but it will almost always be
+	 * true and it doesn't seem worth an additional page scan to check it.
+	 * Remember that BTP_HAS_GARBAGE is only a hint anyway.
+	 */
+	opaque->btpo_flags &= ~BTP_HAS_GARBAGE;
+
+	MarkBufferDirty(buf);
+
+	/* XLOG stuff */
+	if (!rel->rd_istemp)
+	{
+		XLogRecPtr	recptr;
+		XLogRecData rdata[3];
+
+		xl_btree_delete xlrec_delete;
+
+		xlrec_delete.node = rel->rd_node;
+		xlrec_delete.hnode = heapRel->rd_node;
+		xlrec_delete.block = BufferGetBlockNumber(buf);
+		xlrec_delete.nitems = nitems;
+
+		rdata[0].data = (char *) &xlrec_delete;
+		rdata[0].len = SizeOfBtreeDelete;
+		rdata[0].buffer = InvalidBuffer;
+		rdata[0].next = &(rdata[1]);
+
+		/*
+		 * We need the target-offsets array whether or not we store the
+		 * to allow us to find the latestRemovedXid on a standby server.
+		 */
+		rdata[1].data = (char *) itemnos;
+		rdata[1].len = nitems * sizeof(OffsetNumber);
+		rdata[1].buffer = InvalidBuffer;
+		rdata[1].next = &(rdata[2]);
+
+		rdata[2].data = NULL;
+		rdata[2].len = 0;
+		rdata[2].buffer = buf;
+		rdata[2].buffer_std = true;
+		rdata[2].next = NULL;
+
+		recptr = XLogInsert(RM_BTREE_ID, XLOG_BTREE_DELETE, rdata);
 
 		PageSetLSN(page, recptr);
 		PageSetTLI(page, ThisTimeLineID);

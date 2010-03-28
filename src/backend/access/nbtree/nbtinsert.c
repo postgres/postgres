@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.177 2010/02/26 02:00:34 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.178 2010/03/28 09:27:01 sriggs Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,7 +57,8 @@ static void _bt_findinsertloc(Relation rel,
 				  OffsetNumber *offsetptr,
 				  int keysz,
 				  ScanKey scankey,
-				  IndexTuple newtup);
+				  IndexTuple newtup,
+				  Relation heapRel);
 static void _bt_insertonpg(Relation rel, Buffer buf,
 			   BTStack stack,
 			   IndexTuple itup,
@@ -78,7 +79,7 @@ static void _bt_pgaddtup(Relation rel, Page page,
 			 OffsetNumber itup_off, const char *where);
 static bool _bt_isequal(TupleDesc itupdesc, Page page, OffsetNumber offnum,
 			int keysz, ScanKey scankey);
-static void _bt_vacuum_one_page(Relation rel, Buffer buffer);
+static void _bt_vacuum_one_page(Relation rel, Buffer buffer, Relation heapRel);
 
 
 /*
@@ -175,7 +176,7 @@ top:
 	if (checkUnique != UNIQUE_CHECK_EXISTING)
 	{
 		/* do the insertion */
-		_bt_findinsertloc(rel, &buf, &offset, natts, itup_scankey, itup);
+		_bt_findinsertloc(rel, &buf, &offset, natts, itup_scankey, itup, heapRel);
 		_bt_insertonpg(rel, buf, stack, itup, offset, false);
 	}
 	else
@@ -491,7 +492,8 @@ _bt_findinsertloc(Relation rel,
 				  OffsetNumber *offsetptr,
 				  int keysz,
 				  ScanKey scankey,
-				  IndexTuple newtup)
+				  IndexTuple newtup,
+				  Relation heapRel)
 {
 	Buffer		buf = *bufptr;
 	Page		page = BufferGetPage(buf);
@@ -556,7 +558,7 @@ _bt_findinsertloc(Relation rel,
 		 */
 		if (P_ISLEAF(lpageop) && P_HAS_GARBAGE(lpageop))
 		{
-			_bt_vacuum_one_page(rel, buf);
+			_bt_vacuum_one_page(rel, buf, heapRel);
 
 			/*
 			 * remember that we vacuumed this page, because that makes the
@@ -1998,7 +2000,7 @@ _bt_isequal(TupleDesc itupdesc, Page page, OffsetNumber offnum,
  * super-exclusive "cleanup" lock (see nbtree/README).
  */
 static void
-_bt_vacuum_one_page(Relation rel, Buffer buffer)
+_bt_vacuum_one_page(Relation rel, Buffer buffer, Relation heapRel)
 {
 	OffsetNumber deletable[MaxOffsetNumber];
 	int			ndeletable = 0;
@@ -2025,7 +2027,7 @@ _bt_vacuum_one_page(Relation rel, Buffer buffer)
 	}
 
 	if (ndeletable > 0)
-		_bt_delitems(rel, buffer, deletable, ndeletable, false, 0);
+		_bt_delitems_delete(rel, buffer, deletable, ndeletable, heapRel);
 
 	/*
 	 * Note: if we didn't find any LP_DEAD items, then the page's
