@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/backend/optimizer/README,v 1.52 2009/09/29 01:20:34 tgl Exp $
+$PostgreSQL: pgsql/src/backend/optimizer/README,v 1.53 2010/03/28 22:59:32 tgl Exp $
 
 Optimizer
 =========
@@ -354,7 +354,6 @@ RelOptInfo      - a relation or joined relations
   NestPath      - nested-loop joins
   MergePath     - merge joins
   HashPath      - hash joins
-  NoOpPath      - same as its input path (used when a join is removed)
 
  EquivalenceClass - a data structure representing a set of values known equal
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/joinpath.c,v 1.131 2010/03/22 13:57:15 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/joinpath.c,v 1.132 2010/03/28 22:59:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,11 +22,6 @@
 #include "optimizer/paths.h"
 
 
-static bool join_is_removable(PlannerInfo *root, RelOptInfo *joinrel,
-				  RelOptInfo *outerrel, RelOptInfo *innerrel,
-				  List *restrictlist, JoinType jointype);
-static void generate_outer_only(PlannerInfo *root, RelOptInfo *joinrel,
-					RelOptInfo *outerrel);
 static void sort_inner_and_outer(PlannerInfo *root, RelOptInfo *joinrel,
 					 RelOptInfo *outerrel, RelOptInfo *innerrel,
 					 List *restrictlist, List *mergeclause_list,
@@ -84,26 +79,10 @@ add_paths_to_joinrel(PlannerInfo *root,
 	List	   *mergeclause_list = NIL;
 
 	/*
-	 * 0. Consider join removal.  This is always the most efficient strategy,
-	 * so if it works, there's no need to consider anything further.
-	 */
-	if (join_is_removable(root, joinrel, outerrel, innerrel,
-						  restrictlist, jointype))
-	{
-		generate_outer_only(root, joinrel, outerrel);
-		return;
-	}
-
-	/*
 	 * Find potential mergejoin clauses.  We can skip this if we are not
 	 * interested in doing a mergejoin.  However, mergejoin is currently our
 	 * only way of implementing full outer joins, so override mergejoin
 	 * disable if it's a full join.
-	 *
-	 * Note: do this after join_is_removable(), because this sets the
-	 * outer_is_left flags in the mergejoin clauses, while join_is_removable
-	 * uses those flags for its own purposes.  Currently, they set the flags
-	 * the same way anyway, but let's avoid unnecessary entanglement.
 	 */
 	if (enable_mergejoin || jointype == JOIN_FULL)
 		mergeclause_list = select_mergejoin_clauses(root,
@@ -183,188 +162,6 @@ clause_sides_match_join(RestrictInfo *rinfo, RelOptInfo *outerrel,
 		return true;
 	}
 	return false;				/* no good for these input relations */
-}
-
-/*
- * join_is_removable
- *	  Determine whether we need not perform the join at all, because
- *	  it will just duplicate its left input.
- *
- * This is true for a left join for which the join condition cannot match
- * more than one inner-side row.  (There are other possibly interesting
- * cases, but we don't have the infrastructure to prove them.)  We also
- * have to check that the inner side doesn't generate any variables needed
- * above the join.
- *
- * Note: there is no need to consider the symmetrical case of duplicating the
- * right input, because add_paths_to_joinrel() will be called with each rel
- * on the outer side.
- */
-static bool
-join_is_removable(PlannerInfo *root,
-				  RelOptInfo *joinrel,
-				  RelOptInfo *outerrel,
-				  RelOptInfo *innerrel,
-				  List *restrictlist,
-				  JoinType jointype)
-{
-	List	   *clause_list = NIL;
-	ListCell   *l;
-	int			attroff;
-
-	/*
-	 * Currently, we only know how to remove left joins to a baserel with
-	 * unique indexes.	We can check most of these criteria pretty trivially
-	 * to avoid doing useless extra work.  But checking whether any of the
-	 * indexes are unique would require iterating over the indexlist, so for
-	 * now we just make sure there are indexes of some sort or other.  If none
-	 * of them are unique, join removal will still fail, just slightly later.
-	 */
-	if (jointype != JOIN_LEFT ||
-		innerrel->reloptkind == RELOPT_JOINREL ||
-		innerrel->rtekind != RTE_RELATION ||
-		innerrel->indexlist == NIL)
-		return false;
-
-	/*
-	 * We can't remove the join if any inner-rel attributes are used above the
-	 * join.
-	 *
-	 * Note that this test only detects use of inner-rel attributes in higher
-	 * join conditions and the target list.  There might be such attributes in
-	 * pushed-down conditions at this join, too.  We check that case below.
-	 *
-	 * As a micro-optimization, it seems better to start with max_attr and
-	 * count down rather than starting with min_attr and counting up, on the
-	 * theory that the system attributes are somewhat less likely to be wanted
-	 * and should be tested last.
-	 */
-	for (attroff = innerrel->max_attr - innerrel->min_attr;
-		 attroff >= 0;
-		 attroff--)
-	{
-		if (!bms_is_subset(innerrel->attr_needed[attroff], joinrel->relids))
-			return false;
-	}
-
-	/*
-	 * Similarly check that the inner rel doesn't produce any PlaceHolderVars
-	 * that will be used above the join.
-	 */
-	foreach(l, root->placeholder_list)
-	{
-		PlaceHolderInfo *phinfo = (PlaceHolderInfo *) lfirst(l);
-
-		if (bms_is_subset(phinfo->ph_eval_at, innerrel->relids) &&
-			!bms_is_subset(phinfo->ph_needed, joinrel->relids))
-			return false;
-	}
-
-	/*
-	 * Search for mergejoinable clauses that constrain the inner rel against
-	 * either the outer rel or a pseudoconstant.  If an operator is
-	 * mergejoinable then it behaves like equality for some btree opclass, so
-	 * it's what we want.  The mergejoinability test also eliminates clauses
-	 * containing volatile functions, which we couldn't depend on.
-	 */
-	foreach(l, restrictlist)
-	{
-		RestrictInfo *restrictinfo = (RestrictInfo *) lfirst(l);
-
-		/*
-		 * If we find a pushed-down clause, it must have come from above the
-		 * outer join and it must contain references to the inner rel.	(If it
-		 * had only outer-rel variables, it'd have been pushed down into the
-		 * outer rel.)	Therefore, we can conclude that join removal is unsafe
-		 * without any examination of the clause contents.
-		 */
-		if (restrictinfo->is_pushed_down)
-			return false;
-
-		/* Ignore if it's not a mergejoinable clause */
-		if (!restrictinfo->can_join ||
-			restrictinfo->mergeopfamilies == NIL)
-			continue;			/* not mergejoinable */
-
-		/*
-		 * Check if clause has the form "outer op inner" or "inner op outer".
-		 */
-		if (!clause_sides_match_join(restrictinfo, outerrel, innerrel))
-			continue;			/* no good for these input relations */
-
-		/* OK, add to list */
-		clause_list = lappend(clause_list, restrictinfo);
-	}
-
-	/* Now examine the rel's restriction clauses for var = const clauses */
-	foreach(l, innerrel->baserestrictinfo)
-	{
-		RestrictInfo *restrictinfo = (RestrictInfo *) lfirst(l);
-
-		/*
-		 * Note: can_join won't be set for a restriction clause, but
-		 * mergeopfamilies will be if it has a mergejoinable operator and
-		 * doesn't contain volatile functions.
-		 */
-		if (restrictinfo->mergeopfamilies == NIL)
-			continue;			/* not mergejoinable */
-
-		/*
-		 * The clause certainly doesn't refer to anything but the given rel.
-		 * If either side is pseudoconstant then we can use it.
-		 */
-		if (bms_is_empty(restrictinfo->left_relids))
-		{
-			/* righthand side is inner */
-			restrictinfo->outer_is_left = true;
-		}
-		else if (bms_is_empty(restrictinfo->right_relids))
-		{
-			/* lefthand side is inner */
-			restrictinfo->outer_is_left = false;
-		}
-		else
-			continue;
-
-		/* OK, add to list */
-		clause_list = lappend(clause_list, restrictinfo);
-	}
-
-	/* Now examine the indexes to see if we have a matching unique index */
-	if (relation_has_unique_index_for(root, innerrel, clause_list))
-		return true;
-
-	/*
-	 * Some day it would be nice to check for other methods of establishing
-	 * distinctness.
-	 */
-	return false;
-}
-
-/*
- * generate_outer_only
- *	  Generate "join" paths when we have found the join is removable.
- */
-static void
-generate_outer_only(PlannerInfo *root, RelOptInfo *joinrel,
-					RelOptInfo *outerrel)
-{
-	ListCell   *lc;
-
-	/*
-	 * For the moment, replicate all of the outerrel's paths as join paths.
-	 * Some of them might not really be interesting above the join, if they
-	 * have sort orderings that have no real use except to do a mergejoin for
-	 * the join we've just found we don't need.  But distinguishing that case
-	 * probably isn't worth the extra code it would take.
-	 */
-	foreach(lc, outerrel->pathlist)
-	{
-		Path	   *outerpath = (Path *) lfirst(lc);
-
-		add_path(joinrel, (Path *)
-				 create_noop_path(root, joinrel, outerpath));
-	}
 }
 
 /*

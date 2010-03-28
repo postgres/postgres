@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.184 2010/02/26 02:01:25 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.185 2010/03/28 22:59:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -240,7 +240,9 @@ typedef struct PlannerInfo
  *
  * We also have "other rels", which are like base rels in that they refer to
  * single RT indexes; but they are not part of the join tree, and are given
- * a different RelOptKind to identify them.
+ * a different RelOptKind to identify them.  Lastly, there is a RelOptKind
+ * for "dead" relations, which are base rels that we have proven we don't
+ * need to join after all.
  *
  * Currently the only kind of otherrels are those made for member relations
  * of an "append relation", that is an inheritance set or UNION ALL subquery.
@@ -346,7 +348,8 @@ typedef enum RelOptKind
 {
 	RELOPT_BASEREL,
 	RELOPT_JOINREL,
-	RELOPT_OTHER_MEMBER_REL
+	RELOPT_OTHER_MEMBER_REL,
+	RELOPT_DEADREL
 } RelOptKind;
 
 typedef struct RelOptInfo
@@ -800,22 +803,6 @@ typedef struct UniquePath
 	List	   *uniq_exprs;		/* expressions to be made unique */
 	double		rows;			/* estimated number of result tuples */
 } UniquePath;
-
-/*
- * NoOpPath represents exactly the same plan as its subpath.  This is used
- * when we have determined that a join can be eliminated.  The difference
- * between the NoOpPath and its subpath is just that the NoOpPath's parent
- * is the whole join relation while the subpath is for one of the joined
- * relations (and the other one isn't needed).
- *
- * Note: path.pathtype is always T_Join, but this won't actually give rise
- * to a Join plan node.
- */
-typedef struct NoOpPath
-{
-	Path		path;
-	Path	   *subpath;
-} NoOpPath;
 
 /*
  * All join-type paths share these fields.

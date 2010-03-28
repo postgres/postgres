@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/optimizer/planmain.h,v 1.126 2010/02/26 02:01:26 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/optimizer/planmain.h,v 1.127 2010/03/28 22:59:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -107,6 +107,11 @@ extern RestrictInfo *build_implied_join_equality(Oid opno,
 							Expr *item1,
 							Expr *item2,
 							Relids qualscope);
+
+/*
+ * prototypes for plan/analyzejoins.c
+ */
+extern List *remove_useless_joins(PlannerInfo *root, List *joinlist);
 
 /*
  * prototypes for plan/setrefs.c

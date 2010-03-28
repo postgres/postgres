@@ -2494,6 +2494,38 @@ select * from int4_tbl a full join int4_tbl b on false;
 --
 -- test join removal
 --
+begin;
+CREATE TEMP TABLE a (id int PRIMARY KEY, b_id int);
+NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "a_pkey" for table "a"
+CREATE TEMP TABLE b (id int PRIMARY KEY, c_id int);
+NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "b_pkey" for table "b"
+CREATE TEMP TABLE c (id int PRIMARY KEY);
+NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "c_pkey" for table "c"
+INSERT INTO a VALUES (0, 0), (1, NULL);
+INSERT INTO b VALUES (0, 0), (1, NULL);
+INSERT INTO c VALUES (0), (1);
+-- all three cases should be optimizable into a simple seqscan
+explain (costs off) SELECT a.* FROM a LEFT JOIN b ON a.b_id = b.id;
+  QUERY PLAN   
+---------------
+ Seq Scan on a
+(1 row)
+
+explain (costs off) SELECT b.* FROM b LEFT JOIN c ON b.c_id = c.id;
+  QUERY PLAN   
+---------------
+ Seq Scan on b
+(1 row)
+
+explain (costs off)
+  SELECT a.* FROM a LEFT JOIN (b left join c on b.c_id = c.id)
+  ON (a.b_id = b.id);
+  QUERY PLAN   
+---------------
+ Seq Scan on a
+(1 row)
+
+rollback;
 create temp table parent (k int primary key, pd int);
 NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "parent_pkey" for table "parent"
 create temp table child (k int unique, cd int);
@@ -2540,3 +2572,24 @@ explain (costs off)
          ->  Seq Scan on child c
 (5 rows)
 
+-- bug 5255: this is not optimizable by join removal
+begin;
+CREATE TEMP TABLE a (id int PRIMARY KEY);
+NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "a_pkey" for table "a"
+CREATE TEMP TABLE b (id int PRIMARY KEY, a_id int);
+NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "b_pkey" for table "b"
+INSERT INTO a VALUES (0), (1);
+INSERT INTO b VALUES (0, 0), (1, NULL);
+SELECT * FROM b LEFT JOIN a ON (b.a_id = a.id) WHERE (a.id IS NULL OR a.id > 0);
+ id | a_id | id 
+----+------+----
+  1 |      |   
+(1 row)
+
+SELECT b.* FROM b LEFT JOIN a ON (b.a_id = a.id) WHERE (a.id IS NULL OR a.id > 0);
+ id | a_id 
+----+------
+  1 |     
+(1 row)
+
+rollback;
