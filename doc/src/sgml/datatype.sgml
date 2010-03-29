@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.246 2010/02/26 01:11:46 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.247 2010/03/29 22:01:08 petere Exp $ -->
 
  <chapter id="datatype">
   <title id="datatype-title">Data Types</title>
@@ -3947,6 +3947,8 @@ xml '<foo>bar</foo>'
     against a document type declaration
     (DTD),<indexterm><primary>DTD</primary></indexterm>
     even when the input value specifies a DTD.
+    There is also currently no built-in support for validating against
+    other XML schema languages such as XML Schema.
    </para>
 
    <para>
