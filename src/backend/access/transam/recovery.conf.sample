@@ -35,7 +35,7 @@
 # which is replaced by the absolute path to copy the log file to.
 #
 # This parameter is *required* for an archive recovery, but optional
-# for replication.
+# for streaming replication.
 #
 # It is important that the command return nonzero exit status on failure.
 # The command *will* be asked for log files that are not present in the
@@ -47,6 +47,13 @@
 #restore_command = 'cp /mnt/server/archivedir/%f %p'
 #
 #
+# restartpoint_command
+#
+# specifies an optional shell command to execute at every restartpoint.
+# This can be useful for cleaning up the archive of a standby server.
+#
+#restartpoint_command = ''
+#
 # recovery_end_command
 #
 # specifies an optional shell command to execute at completion of recovery.
@@ -54,9 +61,12 @@
 #
 #recovery_end_command = ''
 #
+#---------------------------------------------------------------------------
+# RECOVERY TARGET PARAMETERS
+#---------------------------------------------------------------------------
 #
 # By default, recovery will rollforward to the end of the WAL log.
-# If you want to stop rollforward before that point, you
+# If you want to stop rollforward at a specific point, you
 # must set a recovery target.
 #
 # You may set a recovery target either by transactionId, or
@@ -77,7 +87,6 @@
 #
 #recovery_target_timeline = '33'		# number or 'latest'
 #
-#
 #---------------------------------------------------------------------------
 # LOG-STREAMING REPLICATION PARAMETERS
 #---------------------------------------------------------------------------
@@ -87,7 +96,7 @@
 # connection settings primary_conninfo, and receives XLOG records
 # continuously.
 #
-#standby_mode = 'false'				# 'true' or 'false'
+#standby_mode = 'off'		# 'on' or 'off'
 #
 #primary_conninfo = 'host=localhost port=5432'
 #
@@ -104,7 +113,6 @@
 # HOT STANDBY PARAMETERS
 #---------------------------------------------------------------------------
 #
-# If you want to enable read-only connections during recovery, enable
-# recovery_connections in postgresql.conf
+# Hot Standby related parameters are listed in postgresql.conf
 #
 #---------------------------------------------------------------------------
