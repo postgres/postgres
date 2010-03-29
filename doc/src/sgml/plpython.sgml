@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/plpython.sgml,v 1.47 2010/03/21 02:24:29 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/plpython.sgml,v 1.48 2010/03/29 21:20:58 petere Exp $ -->
 
 <chapter id="plpython">
  <title>PL/Python - Python Procedural Language</title>
@@ -243,7 +243,7 @@ $$ LANGUAGE plpythonu;
   </para>
  </sect1>
 
- <sect1>
+ <sect1 id="plpython-data">
   <title>Data Values</title>
   <para>
    Generally speaking, the aim of PL/Python is to provide
@@ -364,6 +364,18 @@ $$ LANGUAGE plpythonu;
     return type and the Python data type of the actual return object
     are not flagged; the value will be converted in any case.
    </para>
+
+   <tip>
+    <para>
+     <application>PL/Python</application> functions cannot return
+     either type <type>RECORD</type> or <type>SETOF RECORD</type>.  A
+     workaround is to write a <application>PL/pgSQL</application>
+     function that creates a temporary table, have it call the
+     <application>PL/Python</application> function to fill the table,
+     and then have the <application>PL/pgSQL</application> function
+     return the generic <type>RECORD</type> from the temporary table.
+    </para>
+   </tip>
   </sect2>
 
   <sect2>
@@ -864,6 +876,20 @@ plan = plpy.prepare("SELECT last_name FROM my_users WHERE first_name = $1", [ "t
 rv = plpy.execute(plan, [ "name" ], 5)
 </programlisting>
    The third argument is the limit and is optional.
+  </para>
+
+  <para>
+   Query parameters and result row fields are converted between
+   PostgreSQL and Python data types as described
+   in <xref linkend="plpython-data">.  The exception is that composite
+   types are currently not supported: They will be rejected as query
+   parameters and are converted to strings when appearing in a query
+   result.  As a workaround for the latter problem, the query can
+   sometimes be rewritten so that the composite type result appears as
+   a result row rather than as a field of the result row.
+   Alternatively, the resulting string could be parsed apart by hand,
+   but this approach is not recommended because it is not
+   future-proof.
   </para>
 
   <para>
