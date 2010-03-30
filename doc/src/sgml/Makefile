@@ -2,7 +2,7 @@
 #
 # PostgreSQL documentation makefile
 #
-# $PostgreSQL: pgsql/doc/src/sgml/Makefile,v 1.138 2010/02/05 19:31:18 momjian Exp $
+# $PostgreSQL: pgsql/doc/src/sgml/Makefile,v 1.139 2010/03/30 00:10:46 petere Exp $
 #
 #----------------------------------------------------------------------------
 
@@ -22,7 +22,9 @@ top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
 
 
-distprep: html man
+all: html man
+
+distprep: html distprep-man
 
 
 ifndef COLLATEINDEX
@@ -73,7 +75,7 @@ override SPFLAGS += -wall -wno-unused-param -wno-empty -wfully-tagged
 ## Man pages
 ##
 
-man: man-stamp
+man distprep-man: man-stamp
 
 man-stamp: stylesheet-man.xsl postgres.xml
 	$(XSLTPROC) $(XSLTPROCFLAGS) $(XSLTPROC_MAN_FLAGS) $^
@@ -271,18 +273,13 @@ check: postgres.sgml $(ALMOSTALLSGML) check-tabs
 ## Install
 ##
 
-vpathsearch = $(firstword $(wildcard $(addsuffix /$(1),$(subst :, ,. $(VPATH)))))
+vpathsearch = `for f in $(addsuffix /$(1),$(subst :, ,. $(VPATH))); do test -r $$f && echo $$f && break; done`
 
-found_html = $(wildcard html-stamp $(srcdir)/html-stamp)
+install: install-html
 
-ifneq ($(wildcard man-stamp $(srcdir)/man-stamp),)
-# SCO OpenServer's man system is sufficiently different to not bother.
 ifneq ($(PORTNAME), sco)
-found_man = yes
+install: install-man
 endif
-endif
-
-install: $(if $(found_html),install-html) $(if $(found_man),install-man)
 
 installdirs:
 	$(MKDIR_P) '$(DESTDIR)$(htmldir)'/html $(addprefix '$(DESTDIR)$(mandir)'/man, 1 3 $(sqlmansectnum))
@@ -324,8 +321,7 @@ fixed_sql_manpage_files = $(patsubst $(srcdir)/man7/%.7,fixedman/man$(sqlmansect
 
 fixed_manpage_files = $(fixed_nonsql_manpage_files) $(fixed_sql_manpage_files)
 
-all: all-man
-all-man: $(fixed_manpage_files)
+man: $(fixed_manpage_files)
 
 $(fixed_nonsql_manpage_files): fixedman/%: %
 	@$(MKDIR_P) $(dir $@)
@@ -335,7 +331,7 @@ $(fixed_sql_manpage_files): fixedman/man$(sqlmansectnum)/%.$(sqlmansect): man7/%
 	@$(MKDIR_P) $(dir $@)
 	$(fix_sqlmansectnum) $< >$@
 
-install-man: all-man
+install-man: man
 	cp -R $(sort $(dir $(fixed_manpage_files))) '$(DESTDIR)$(mandir)'
 
 clean: clean-man

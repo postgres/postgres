@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.343 2010/03/17 17:12:31 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.344 2010/03/30 00:10:46 petere Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -1543,8 +1543,9 @@ All of PostgreSQL is successfully made. Ready to install.
    </para>
 
   <para>
-   If you want to build everything that can be built, including the HTML
-   documentation and the Additional Modules, type instead:
+   If you want to build everything that can be built, including the
+   documentation (HTML and man pages), and the additional modules
+   (<filename>contrib</filename>), type instead:
 <screen>
 <userinput>gmake world</userinput>
 </screen>
@@ -1607,10 +1608,18 @@ PostgreSQL, contrib and HTML documentation successfully made. Ready to install.
    </para>
 
    <para>
+    To install the documentation (HTML and man pages), enter:
+<screen>
+<userinput>gmake install-docs</userinput>
+</screen>
+   </para>
+
+   <para>
     If you built the world above, type instead:
 <screen>
 <userinput>gmake install-world</userinput>
 </screen>
+    This also installs the documentation.
    </para>
 
    <para>
