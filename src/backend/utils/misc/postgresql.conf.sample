@@ -247,7 +247,7 @@
 # - Where to Log -
 
 #log_destination = 'stderr'		# Valid values are combinations of
-					# stderr, csvlog, syslog and eventlog,
+					# stderr, csvlog, syslog, and eventlog,
 					# depending on platform.  csvlog
 					# requires logging_collector to be on.
 
