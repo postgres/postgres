@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/auth.c,v 1.197 2010/03/21 00:17:58 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/auth.c,v 1.198 2010/03/30 16:08:22 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2805,7 +2805,7 @@ CheckRADIUSAuth(Port *port)
 					   encryptedpassword))
 	{
 		ereport(LOG,
-			(errmsg("could not perform md5 encryption of received packet")));
+			(errmsg("could not perform MD5 encryption of received packet")));
 		pfree(cryptvector);
 		return STATUS_ERROR;
 	}
