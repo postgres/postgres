@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.266 2010/02/26 02:00:45 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.267 2010/03/30 21:58:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -307,6 +307,7 @@ subquery_planner(PlannerGlobal *glob, Query *parse,
 	root->eq_classes = NIL;
 	root->append_rel_list = NIL;
 	root->rowMarks = NIL;
+	root->hasInheritedTarget = false;
 
 	root->hasRecursion = hasRecursion;
 	if (hasRecursion)
@@ -749,6 +750,7 @@ inheritance_planner(PlannerInfo *root)
 			adjust_appendrel_attrs((Node *) parse,
 								   appinfo);
 		subroot.init_plans = NIL;
+		subroot.hasInheritedTarget = true;
 		/* We needn't modify the child's append_rel_list */
 		/* There shouldn't be any OJ info to translate, as yet */
 		Assert(subroot.join_info_list == NIL);

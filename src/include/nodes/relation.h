@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.185 2010/03/28 22:59:33 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.186 2010/03/30 21:58:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -197,6 +197,8 @@ typedef struct PlannerInfo
 
 	double		tuple_fraction; /* tuple_fraction passed to query_planner */
 
+	bool		hasInheritedTarget;	/* true if parse->resultRelation is an
+									 * inheritance child rel */
 	bool		hasJoinRTEs;	/* true if any RTEs are RTE_JOIN kind */
 	bool		hasHavingQual;	/* true if havingQual was non-null */
 	bool		hasPseudoConstantQuals; /* true if any RestrictInfo has
