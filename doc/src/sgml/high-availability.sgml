@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/high-availability.sgml,v 1.56 2010/03/31 20:35:09 heikki Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/high-availability.sgml,v 1.57 2010/03/31 20:41:50 heikki Exp $ -->
 
 <chapter id="high-availability">
  <title>High Availability, Load Balancing, and Replication</title>
@@ -583,7 +583,7 @@ protocol to make nodes agree on a serializable transactional order.
    <title>Standby Server Operation</title>
 
    <para>
-    In standby mode, the server continously applies WAL received from the
+    In standby mode, the server continuously applies WAL received from the
     master server. The standby server can read WAL from a WAL archive
     (see <varname>restore_command</>) or directly from the master
     over a TCP connection (streaming replication). The standby server will
@@ -625,7 +625,7 @@ protocol to make nodes agree on a serializable transactional order.
     Set up continuous archiving on the primary to an archive directory
     accessible from the standby, as described
     in <xref linkend="continuous-archiving">. The archive location should be
-    accessible from the standby even when the master is down, ie. it should
+    accessible from the standby even when the master is down, i.e. it should
     reside on the standby server itself or another trusted server, not on
     the master server.
    </para>
@@ -920,7 +920,7 @@ primary_conninfo = 'host=192.168.1.50 port=5432 user=foo password=foopass'
    <title>Alternative method for log shipping</title>
 
    <para>
-    An alternative to the built-in standby mode desribed in the previous
+    An alternative to the built-in standby mode described in the previous
     sections is to use a restore_command that polls the archive location.
     This was the only option available in versions 8.4 and below. In this
     setup, set <varname>standby_mode</> off, because you are implementing
