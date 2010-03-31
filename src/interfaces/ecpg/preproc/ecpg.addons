@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.addons,v 1.18 2010/03/23 22:12:06 petere Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.addons,v 1.19 2010/03/31 08:45:18 meskes Exp $ */
 ECPG: stmtClosePortalStmt block
 	{
 		if (INFORMIX_MODE)
@@ -306,7 +306,12 @@ ECPG: DeclareCursorStmtDECLAREcursor_namecursor_optionsCURSORopt_holdFORSelectSt
 		for (ptr = cur; ptr != NULL; ptr = ptr->next)
 		{
 			if (strcmp($2, ptr->name) == 0)
-				mmerror(PARSE_ERROR, ET_ERROR, "cursor \"%s\" is already defined", $2);
+			{
+				if ($2[0] == ':')
+                                        mmerror(PARSE_ERROR, ET_ERROR, "using variable \"%s\" in different declare statements is not supported", $2+1);
+                                else
+					mmerror(PARSE_ERROR, ET_ERROR, "cursor \"%s\" is already defined", $2);
+			}
 		}
 
 		this = (struct cursor *) mm_alloc(sizeof(struct cursor));
