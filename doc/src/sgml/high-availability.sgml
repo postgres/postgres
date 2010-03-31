@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/high-availability.sgml,v 1.55 2010/03/31 19:13:01 heikki Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/high-availability.sgml,v 1.56 2010/03/31 20:35:09 heikki Exp $ -->
 
 <chapter id="high-availability">
  <title>High Availability, Load Balancing, and Replication</title>
@@ -622,7 +622,8 @@ protocol to make nodes agree on a serializable transactional order.
    <title>Preparing Master for Standby Servers</title>
 
    <para>
-    Set up continuous archiving to a WAL archive on the master, as described
+    Set up continuous archiving on the primary to an archive directory
+    accessible from the standby, as described
     in <xref linkend="continuous-archiving">. The archive location should be
     accessible from the standby even when the master is down, ie. it should
     reside on the standby server itself or another trusted server, not on
@@ -646,11 +647,11 @@ protocol to make nodes agree on a serializable transactional order.
 
    <para>
     To set up the standby server, restore the base backup taken from primary
-    server (see <xref linkend="backup-pitr-recovery">). In the recovery command file
-    <filename>recovery.conf</> in the standby's cluster data directory,
-    turn on <varname>standby_mode</>. Set <varname>restore_command</> to
-    a simple command to copy files from the WAL archive. If you want to
-    use streaming replication, set <varname>primary_conninfo</>.
+    server (see <xref linkend="backup-pitr-recovery">). Create a recovery
+    command file <filename>recovery.conf</> in the standby's cluster data
+    directory, and turn on <varname>standby_mode</>. Set
+    <varname>restore_command</> to a simple command to copy files from
+    the WAL archive.
    </para>
 
    <note>
@@ -664,17 +665,38 @@ protocol to make nodes agree on a serializable transactional order.
    </note>
 
    <para>
-    You can use restartpoint_command to prune the archive of files no longer
-    needed by the standby.
+     If you want to use streaming replication, fill in
+     <varname>primary_conninfo</> with a libpq connection string, including
+     the host name (or IP address) and any additional details needed to
+     connect to the primary server. If the primary needs a password for
+     authentication, the password needs to be specified in
+     <varname>primary_conninfo</> as well.
+   </para>
+
+   <para>
+    You can use <varname>restartpoint_command</> to prune the archive of
+    files no longer needed by the standby.
    </para>
 
    <para>
     If you're setting up the standby server for high availability purposes,
     set up WAL archiving, connections and authentication like the primary
     server, because the standby server will work as a primary server after
-    failover. If you're setting up the standby server for reporting
-    purposes, with no plans to fail over to it, configure the standby
-    accordingly.
+    failover. You will also need to set <varname>trigger_file</> to make
+    it possible to fail over.
+    If you're setting up the standby server for reporting
+    purposes, with no plans to fail over to it, <varname>trigger_file</>
+    is not required.
+   </para>
+
+   <para>
+    A simple example of a <filename>recovery.conf</> is:
+<programlisting>
+standby_mode = 'on'
+primary_conninfo = 'host=192.168.1.50 port=5432 user=foo password=foopass'
+restore_command = 'cp /path/to/archive/%f %p'
+trigger_file = '/path/to/trigger_file'
+</programlisting>
    </para>
 
    <para>
@@ -731,7 +753,7 @@ protocol to make nodes agree on a serializable transactional order.
     On systems that support the keepalive socket option, setting
     <xref linkend="guc-tcp-keepalives-idle">,
     <xref linkend="guc-tcp-keepalives-interval"> and
-    <xref linkend="guc-tcp-keepalives-count"> helps the master promptly
+    <xref linkend="guc-tcp-keepalives-count"> helps the primary promptly
     notice a broken connection.
    </para>
 
@@ -798,6 +820,29 @@ primary_conninfo = 'host=192.168.1.50 port=5432 user=foo password=foopass'
       <varname>primary_conninfo</varname> then a FATAL error will be raised.
     </para>
    </sect3>
+
+   <sect3 id="streaming-replication-monitoring">
+    <title>Monitoring</title>
+    <para>
+     The WAL files required for the standby's recovery are not deleted from
+     the <filename>pg_xlog</> directory on the primary while the standby is
+     connected. If the standby lags far behind the primary, many WAL files
+     will accumulate in there, and can fill up the disk. It is therefore
+     important to monitor the lag to ensure the health of the standby and
+     to avoid disk full situations in the primary.
+     You can calculate the lag by comparing the current WAL write
+     location on the primary with the last WAL location received by the
+     standby. They can be retrieved using
+     <function>pg_current_xlog_location</> on the primary and the
+     <function>pg_last_xlog_receive_location</> on the standby,
+     respectively (see <xref linkend="functions-admin-backup-table"> and
+     <xref linkend="functions-recovery-info-table"> for details).
+     The last WAL receive location in the standby is also displayed in the
+     process status of the WAL receiver process, displayed using the
+     <command>ps</> command (see <xref linkend="monitoring-ps"> for details).
+    </para>
+   </sect3>
+
   </sect2>
   </sect1>
 
@@ -1899,15 +1944,63 @@ LOG:  database system is ready to accept read only connections
    </para>
 
    <para>
+    The procedure for taking a file system backup of the standby server's
+    data directory while it's processing logs shipped from the primary is:
+   <orderedlist>
+    <listitem>
+     <para>
+      Perform the backup, without using <function>pg_start_backup</> and
+      <function>pg_stop_backup</>. Note that the <filename>pg_control</>
+      file must be backed up <emphasis>first</>, as in:
+<programlisting>
+cp /var/lib/pgsql/data/global/pg_control /tmp
+cp -r /var/lib/pgsql/data /path/to/backup
+mv /tmp/pg_control /path/to/backup/data/global
+</programlisting>
+      <filename>pg_control</> contains the location where WAL replay will
+      begin after restoring from the backup; backing it up first ensures
+      that it points to the last restartpoint when the backup started, not
+      some later restartpoint that happened while files were copied to the 
+      backup.
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      Make note of the backup ending WAL location by calling the <function>
+      pg_last_xlog_replay_location</> function at the end of the backup,
+      and keep it with the backup.
+<programlisting>
+psql -c "select pg_last_xlog_replay_location();" > /path/to/backup/end_location
+</programlisting>
+      When recovering from the incrementally updated backup, the server
+      can begin accepting connections and complete the recovery successfully
+      before the database has become consistent. To avoid that, you must
+      ensure the database is consistent before users try to connect to the
+      server and when the recovery ends. You can do that by comparing the
+      progress of the recovery with the stored backup ending WAL location:
+      the server is not consistent until recovery has reached the backup end
+      location. The progress of the recovery can also be observed with the
+      <function>pg_last_xlog_replay_location</> function, but that required
+      connecting to the server while it might not be consistent yet, so
+      care should be taken with that method.
+     </para>
+     <para>
+     </para>
+    </listitem>
+   </orderedlist>
+   </para>
+
+   <para>
     Since the standby server is not <quote>live</>, it is not possible to
     use <function>pg_start_backup()</> and <function>pg_stop_backup()</>
     to manage the backup process; it will be up to you to determine how
     far back you need to keep WAL segment files to have a recoverable
-    backup.  You can do this by running <application>pg_controldata</>
-    on the standby server to inspect the control file and determine the
-    current checkpoint WAL location, or by using the
-    <varname>log_checkpoints</> option to print values to the standby's
-    server log.
+    backup. That is determined by the last restartpoint when the backup
+    was taken, any WAL older than that can be deleted from the archive
+    once the backup is complete. You can determine the last restartpoint
+    by running <application>pg_controldata</> on the standby server before
+    taking the backup, or by using the <varname>log_checkpoints</> option
+    to print values to the standby's server log.
    </para>
   </sect1>
 
