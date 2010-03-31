@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.144 2010/02/22 17:15:10 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.145 2010/03/31 23:35:19 momjian Exp $ -->
 
 <chapter id="backup">
  <title>Backup and Restore</title>
@@ -604,11 +604,12 @@ cp -i pg_xlog/00000001000000A900000065 /mnt/server/archivedir/00000001000000A900
     directory).
     It is advisable to test your proposed archive command to ensure that it
     indeed does not overwrite an existing file, <emphasis>and that it returns
-    nonzero status in this case</>.  We have found that <literal>cp -i</> does
-    this correctly on some platforms but not others.  If the chosen command
-    does not itself handle this case correctly, you should add a command
-    to test for existence of the archive file.  For example, something
-    like:
+    nonzero status in this case</>.  On many Unix platforms, <command>cp
+    -i</> causes copy to prompt before overwriting a file, and
+    <literal>&lt; /dev/null</> causes the prompt (and overwriting) to
+    fail.  If your platform does not support this behavior, you should
+    add a command to test for the existence of the archive file.  For
+    example, something like:
 <programlisting>
 archive_command = 'test ! -f .../%f &amp;&amp; cp %p .../%f'
 </programlisting>
