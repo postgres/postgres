@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.134 2010/03/17 17:12:31 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.135 2010/03/31 20:18:10 heikki Exp $ -->
 
 <chapter id="client-authentication">
  <title>Client Authentication</title>
@@ -77,8 +77,11 @@
    a set of records, one per line. Blank lines are ignored, as is any
    text after the <literal>#</literal> comment character. A record is made
    up of a number of fields which are separated by spaces and/or tabs.
-   Fields can contain white space if the field value is quoted. Records
-   cannot be continued across lines.
+   Fields can contain white space if the field value is quoted.
+   Quoting one of the keywords in database or username field (e.g "all"
+   or "replication") makes the name lose its special character, and just
+   match a database or username with that name. Records cannot be
+   continued across lines.
   </para>
 
   <para>
