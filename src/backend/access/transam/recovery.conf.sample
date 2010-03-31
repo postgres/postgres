@@ -20,8 +20,7 @@
 # Comments are introduced with '#'.
 #
 # The complete list of option names and allowed values can be found
-# in the PostgreSQL documentation. The commented-out settings shown below
-# are example values.
+# in the PostgreSQL documentation.
 #
 #---------------------------------------------------------------------------
 # ARCHIVE RECOVERY PARAMETERS
@@ -44,7 +43,7 @@
 # NOTE that the basename of %p will be different from %f; do not
 # expect them to be interchangeable.
 #
-#restore_command = 'cp /mnt/server/archivedir/%f %p'
+#restore_command = ''		# e.g. 'cp /mnt/server/archivedir/%f %p'
 #
 #
 # restartpoint_command
@@ -74,18 +73,18 @@
 # transaction(s) with the recovery target value (ie, stop either
 # just after or just before the given target, respectively).
 #
-#recovery_target_time = '2004-07-14 22:39:00 EST'
+#recovery_target_time = ''	# e.g. '2004-07-14 22:39:00 EST'
 #
-#recovery_target_xid = '1100842'
+#recovery_target_xid = ''
 #
-#recovery_target_inclusive = 'true'		# 'true' or 'false'
+#recovery_target_inclusive = 'true'
 #
 #
 # If you want to recover into a timeline other than the "main line" shown in
 # pg_control, specify the timeline number here, or write 'latest' to get
 # the latest branch for which there's a history file.
 #
-#recovery_target_timeline = '33'		# number or 'latest'
+#recovery_target_timeline = 'latest'
 #
 #---------------------------------------------------------------------------
 # LOG-STREAMING REPLICATION PARAMETERS
@@ -96,9 +95,9 @@
 # connection settings primary_conninfo, and receives XLOG records
 # continuously.
 #
-#standby_mode = 'off'		# 'on' or 'off'
+#standby_mode = 'off'
 #
-#primary_conninfo = 'host=localhost port=5432'
+#primary_conninfo = ''		# e.g. 'host=localhost port=5432'
 #
 #
 # By default, a standby server keeps streaming XLOG records from the
