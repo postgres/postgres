@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/high-availability.sgml,v 1.54 2010/03/19 19:31:06 sriggs Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/high-availability.sgml,v 1.55 2010/03/31 19:13:01 heikki Exp $ -->
 
 <chapter id="high-availability">
  <title>High Availability, Load Balancing, and Replication</title>
@@ -455,32 +455,10 @@ protocol to make nodes agree on a serializable transactional order.
 
  </sect1>
 
+
  <sect1 id="warm-standby">
-  <title>File-based Log Shipping</title>
+ <title>Log-Shipping Standby Servers</title>
 
-  <indexterm zone="high-availability">
-   <primary>warm standby</primary>
-  </indexterm>
-
-  <indexterm zone="high-availability">
-   <primary>PITR standby</primary>
-  </indexterm>
-
-  <indexterm zone="high-availability">
-   <primary>standby server</primary>
-  </indexterm>
-
-  <indexterm zone="high-availability">
-   <primary>log shipping</primary>
-  </indexterm>
-
-  <indexterm zone="high-availability">
-   <primary>witness server</primary>
-  </indexterm>
-
-  <indexterm zone="high-availability">
-   <primary>STONITH</primary>
-  </indexterm>
 
   <para>
    Continuous archiving can be used to create a <firstterm>high
@@ -510,8 +488,8 @@ protocol to make nodes agree on a serializable transactional order.
    adjacent system, another system at the same site, or another system on
    the far side of the globe. The bandwidth required for this technique
    varies according to the transaction rate of the primary server.
-   Record-based log shipping is also possible with custom-developed
-   procedures, as discussed in <xref linkend="warm-standby-record">.
+   Record-based log shipping is also possible with streaming replication
+   (see <xref linkend="streaming-replication">).
   </para>
 
   <para>
@@ -519,26 +497,52 @@ protocol to make nodes agree on a serializable transactional order.
    records are shipped after transaction commit. As a result, there is a
    window for data loss should the primary server suffer a catastrophic
    failure; transactions not yet shipped will be lost.  The size of the
-   data loss window can be limited by use of the
+   data loss window in file-based log shipping can be limited by use of the
    <varname>archive_timeout</varname> parameter, which can be set as low
    as a few seconds.  However such a low setting will
    substantially increase the bandwidth required for file shipping.
    If you need a window of less than a minute or so, consider using
-   <xref linkend="streaming-replication">.
+   streaming replication (see <xref linkend="streaming-replication">).
   </para>
 
   <para>
-   The standby server is not available for access, since it is continually
-   performing recovery processing. Recovery performance is sufficiently
-   good that the standby will typically be only moments away from full
+   Recovery performance is sufficiently good that the standby will
+   typically be only moments away from full
    availability once it has been activated. As a result, this is called
    a warm standby configuration which offers high
    availability. Restoring a server from an archived base backup and
    rollforward will take considerably longer, so that technique only
    offers a solution for disaster recovery, not high availability.
+   A standby server can also be used for read-only queries, in which case
+   it is called a Hot Standby server. See <xref linkend="hot-standby"> for
+   more information.
   </para>
 
-  <sect2 id="warm-standby-planning">
+  <indexterm zone="high-availability">
+   <primary>warm standby</primary>
+  </indexterm>
+
+  <indexterm zone="high-availability">
+   <primary>PITR standby</primary>
+  </indexterm>
+
+  <indexterm zone="high-availability">
+   <primary>standby server</primary>
+  </indexterm>
+
+  <indexterm zone="high-availability">
+   <primary>log shipping</primary>
+  </indexterm>
+
+  <indexterm zone="high-availability">
+   <primary>witness server</primary>
+  </indexterm>
+
+  <indexterm zone="high-availability">
+   <primary>STONITH</primary>
+  </indexterm>
+
+  <sect2 id="standby-planning">
    <title>Planning</title>
 
    <para>
@@ -573,9 +577,325 @@ protocol to make nodes agree on a serializable transactional order.
     versa.
    </para>
 
+  </sect2>
+
+  <sect2 id="standby-server-operation">
+   <title>Standby Server Operation</title>
+
    <para>
-    There is no special mode required to enable a standby server. The
-    operations that occur on both primary and standby servers are
+    In standby mode, the server continously applies WAL received from the
+    master server. The standby server can read WAL from a WAL archive
+    (see <varname>restore_command</>) or directly from the master
+    over a TCP connection (streaming replication). The standby server will
+    also attempt to restore any WAL found in the standby cluster's
+    <filename>pg_xlog</> directory. That typically happens after a server
+    restart, when the standby replays again WAL that was streamed from the
+    master before the restart, but you can also manually copy files to
+    <filename>pg_xlog</> at any time to have them replayed.
+   </para>
+
+   <para>
+    At startup, the standby begins by restoring all WAL available in the
+    archive location, calling <varname>restore_command</>. Once it
+    reaches the end of WAL available there and <varname>restore_command</>
+    fails, it tries to restore any WAL available in the pg_xlog directory.
+    If that fails, and streaming replication has been configured, the
+    standby tries to connect to the primary server and start streaming WAL
+    from the last valid record found in archive or pg_xlog. If that fails
+    or streaming replication is not configured, or if the connection is
+    later disconnected, the standby goes back to step 1 and tries to
+    restore the file from the archive again. This loop of retries from the
+    archive, pg_xlog, and via streaming replication goes on until the server
+    is stopped or failover is triggered by a trigger file.
+   </para>
+
+   <para>
+    Standby mode is exited and the server switches to normal operation,
+    when a trigger file is found (trigger_file). Before failover, it will
+    restore any WAL available in the archive or in pg_xlog, but won't try
+    to connect to the master or wait for files to become available in the
+    archive.
+   </para>
+  </sect2>
+
+  <sect2 id="preparing-master-for-standby">
+   <title>Preparing Master for Standby Servers</title>
+
+   <para>
+    Set up continuous archiving to a WAL archive on the master, as described
+    in <xref linkend="continuous-archiving">. The archive location should be
+    accessible from the standby even when the master is down, ie. it should
+    reside on the standby server itself or another trusted server, not on
+    the master server.
+   </para>
+
+   <para>
+    If you want to use streaming replication, set up authentication to allow
+    streaming replication connections and set <varname>max_wal_senders</> in
+    the configuration file of the primary server.
+   </para>
+
+   <para>
+    Take a base backup as described in <xref linkend="backup-base-backup">
+    to bootstrap the standby server.
+   </para>
+  </sect2>
+
+  <sect2 id="standby-server-setup">
+   <title>Setting up the standby server</title>
+
+   <para>
+    To set up the standby server, restore the base backup taken from primary
+    server (see <xref linkend="backup-pitr-recovery">). In the recovery command file
+    <filename>recovery.conf</> in the standby's cluster data directory,
+    turn on <varname>standby_mode</>. Set <varname>restore_command</> to
+    a simple command to copy files from the WAL archive. If you want to
+    use streaming replication, set <varname>primary_conninfo</>.
+   </para>
+
+   <note>
+     <para>
+     Do not use pg_standby or similar tools with the built-in standby mode
+     described here. <varname>restore_command</> should return immediately
+     if the file does not exist, the server will retry the command again if
+     necessary. See <xref linkend="log-shipping-alternative">
+     for using tools like pg_standby.
+    </para>
+   </note>
+
+   <para>
+    You can use restartpoint_command to prune the archive of files no longer
+    needed by the standby.
+   </para>
+
+   <para>
+    If you're setting up the standby server for high availability purposes,
+    set up WAL archiving, connections and authentication like the primary
+    server, because the standby server will work as a primary server after
+    failover. If you're setting up the standby server for reporting
+    purposes, with no plans to fail over to it, configure the standby
+    accordingly.
+   </para>
+
+   <para>
+    You can have any number of standby servers, but if you use streaming
+    replication, make sure you set <varname>max_wal_senders</> high enough in
+    the primary to allow them to be connected simultaneously.
+   </para>
+  </sect2>
+
+  <sect2 id="streaming-replication">
+   <title>Streaming Replication</title>
+
+   <indexterm zone="high-availability">
+    <primary>Streaming Replication</primary>
+   </indexterm>
+
+   <para>
+    Streaming replication allows a standby server to stay more up-to-date
+    than is possible with file-based log shipping. The standby connects
+    to the primary, which streams WAL records to the standby as they're
+    generated, without waiting for the WAL file to be filled.
+   </para>
+
+   <para>
+    Streaming replication is asynchronous, so there is still a small delay
+    between committing a transaction in the primary and for the changes to
+    become visible in the standby. The delay is however much smaller than with
+    file-based log shipping, typically under one second assuming the standby
+    is powerful enough to keep up with the load. With streaming replication,
+    <varname>archive_timeout</> is not required to reduce the data loss
+    window.
+   </para>
+
+   <para>
+    Streaming replication relies on file-based continuous archiving for
+    making the base backup and for allowing the standby to catch up if it is
+    disconnected from the primary for long enough for the primary to
+    delete old WAL files still required by the standby.
+   </para>
+
+   <para>
+    To use streaming replication, set up a file-based log-shipping standby
+    server as described in <xref linkend="warm-standby">. The step that
+    turns a file-based log-shipping standby into streaming replication
+    standby is setting <varname>primary_conninfo</> setting in the
+    <filename>recovery.conf</> file to point to the primary server. Set
+    <xref linkend="guc-listen-addresses"> and authentication options
+    (see <filename>pg_hba.conf</>) on the primary so that the standby server
+    can connect to the <literal>replication</> pseudo-database on the primary
+    server (see <xref linkend="streaming-replication-authentication">).
+   </para>
+
+   <para>
+    On systems that support the keepalive socket option, setting
+    <xref linkend="guc-tcp-keepalives-idle">,
+    <xref linkend="guc-tcp-keepalives-interval"> and
+    <xref linkend="guc-tcp-keepalives-count"> helps the master promptly
+    notice a broken connection.
+   </para>
+
+   <para>
+    Set the maximum number of concurrent connections from the standby servers
+    (see <xref linkend="guc-max-wal-senders"> for details).
+   </para>
+
+   <para>
+    When the standby is started and <varname>primary_conninfo</> is set
+    correctly, the standby will connect to the primary after replaying all
+    WAL files available in the archive. If the connection is established
+    successfully, you will see a walreceiver process in the standby, and
+    a corresponding walsender process in the primary.
+   </para>
+
+   <sect3 id="streaming-replication-authentication">
+    <title>Authentication</title>
+    <para>
+     It is very important that the access privilege for replication be setup
+     properly so that only trusted users can read the WAL stream, because it is
+     easy to extract privileged information from it.
+    </para>
+    <para>
+     Only the superuser is allowed to connect to the primary as the replication
+     standby. So a role with the <literal>SUPERUSER</> and <literal>LOGIN</>
+     privileges needs to be created in the primary.
+    </para>
+    <para>
+     Client authentication for replication is controlled by the
+     <filename>pg_hba.conf</> record specifying <literal>replication</> in the
+     <replaceable>database</> field. For example, if the standby is running on
+     host IP <literal>192.168.1.100</> and the superuser's name for replication
+     is <literal>foo</>, the administrator can add the following line to the
+     <filename>pg_hba.conf</> file on the primary.
+
+<programlisting>
+# Allow the user "foo" from host 192.168.1.100 to connect to the primary
+# as a replication standby if the user's password is correctly supplied.
+#
+# TYPE  DATABASE        USER            CIDR-ADDRESS            METHOD
+host    replication     foo             192.168.1.100/32        md5
+</programlisting>
+    </para>
+    <para>
+     The host name and port number of the primary, connection user name,
+     and password are specified in the <filename>recovery.conf</> file or
+     the corresponding environment variable on the standby.
+     For example, if the primary is running on host IP <literal>192.168.1.50</>,
+     port <literal>5432</literal>, the superuser's name for replication is
+     <literal>foo</>, and the password is <literal>foopass</>, the administrator
+     can add the following line to the <filename>recovery.conf</> file on the
+     standby.
+
+<programlisting>
+# The standby connects to the primary that is running on host 192.168.1.50
+# and port 5432 as the user "foo" whose password is "foopass".
+primary_conninfo = 'host=192.168.1.50 port=5432 user=foo password=foopass'
+</programlisting>
+
+      You do not need to specify <literal>database=replication</> in the
+      <varname>primary_conninfo</varname>. The required option will be added
+      automatically. If you mention the database parameter at all within
+      <varname>primary_conninfo</varname> then a FATAL error will be raised.
+    </para>
+   </sect3>
+  </sect2>
+  </sect1>
+
+  <sect1 id="warm-standby-failover">
+   <title>Failover</title>
+
+   <para>
+    If the primary server fails then the standby server should begin
+    failover procedures.
+   </para>
+
+   <para>
+    If the standby server fails then no failover need take place. If the
+    standby server can be restarted, even some time later, then the recovery
+    process can also be restarted immediately, taking advantage of
+    restartable recovery. If the standby server cannot be restarted, then a
+    full new standby server instance should be created.
+   </para>
+
+   <para>
+    If the primary server fails and the standby server becomes the
+    new primary, and then the old primary restarts, you must have
+    a mechanism for informing the old primary that it is no longer the primary. This is
+    sometimes known as <acronym>STONITH</> (Shoot The Other Node In The Head), which is
+    necessary to avoid situations where both systems think they are the
+    primary, which will lead to confusion and ultimately data loss.
+   </para>
+
+   <para>
+    Many failover systems use just two systems, the primary and the standby,
+    connected by some kind of heartbeat mechanism to continually verify the
+    connectivity between the two and the viability of the primary. It is
+    also possible to use a third system (called a witness server) to prevent
+    some cases of inappropriate failover, but the additional complexity
+    might not be worthwhile unless it is set up with sufficient care and
+    rigorous testing.
+   </para>
+
+   <para>
+    Once failover to the standby occurs, there is only a
+    single server in operation. This is known as a degenerate state.
+    The former standby is now the primary, but the former primary is down
+    and might stay down.  To return to normal operation, a standby server
+    must be recreated,
+    either on the former primary system when it comes up, or on a third,
+    possibly new, system. Once complete the primary and standby can be
+    considered to have switched roles. Some people choose to use a third
+    server to provide backup for the new primary until the new standby
+    server is recreated,
+    though clearly this complicates the system configuration and
+    operational processes.
+   </para>
+
+   <para>
+    So, switching from primary to standby server can be fast but requires
+    some time to re-prepare the failover cluster. Regular switching from
+    primary to standby is useful, since it allows regular downtime on
+    each system for maintenance. This also serves as a test of the
+    failover mechanism to ensure that it will really work when you need it.
+    Written administration procedures are advised.
+   </para>
+
+   <para>
+    To trigger failover of a log-shipping standby server, create a trigger
+    file with the filename and path specified by the <varname>trigger_file</>
+    setting in <filename>recovery.conf</>. If <varname>trigger_file</> is
+    not given, there is no way to exit recovery in the standby and promote
+    it to a master. That can be useful for e.g reporting servers that are
+    only used to offload read-only queries from the primary, not for high
+    availability purposes.
+   </para>
+  </sect1>
+
+  <sect1 id="log-shipping-alternative">
+   <title>Alternative method for log shipping</title>
+
+   <para>
+    An alternative to the built-in standby mode desribed in the previous
+    sections is to use a restore_command that polls the archive location.
+    This was the only option available in versions 8.4 and below. In this
+    setup, set <varname>standby_mode</> off, because you are implementing
+    the polling required for standby operation yourself. See
+    contrib/pg_standby (<xref linkend="pgstandby">) for a reference
+    implementation of this.
+   </para>
+
+   <para>
+    Note that in this mode, the server will apply WAL one file at a
+    time, so if you use the standby server for queries (see Hot Standby),
+    there is a bigger delay between an action in the master and when the
+    action becomes visible in the standby, corresponding the time it takes
+    to fill up the WAL file. archive_timeout can be used to make that delay
+    shorter. Also note that you can't combine streaming replication with
+    this method.
+   </para>
+
+   <para>
+    The operations that occur on both primary and standby servers are
     normal continuous archiving and recovery tasks. The only point of
     contact between the two database servers is the archive of WAL files
     that both share: primary writing to the archive, standby reading from
@@ -639,7 +959,7 @@ if (!triggered)
     and design. One potential option is the <varname>restore_command</>
     command.  It is executed once for each WAL file, but the process
     running the <varname>restore_command</> is created and dies for
-    each file, so there is no daemon or server process, and 
+    each file, so there is no daemon or server process, and
     signals or a signal handler cannot be used. Therefore, the
     <varname>restore_command</> is not suitable to trigger failover.
     It is possible to use a simple timeout facility, especially if
@@ -658,7 +978,6 @@ if (!triggered)
     files are no longer required, assuming the archive is writable from the
     standby server.
    </para>
-  </sect2>
 
   <sect2 id="warm-standby-config">
    <title>Implementation</title>
@@ -753,243 +1072,6 @@ if (!triggered)
    </para>
   </sect2>
  </sect1>
-
-  <sect1 id="streaming-replication">
-   <title>Streaming Replication</title>
-
-   <indexterm zone="high-availability">
-    <primary>Streaming Replication</primary>
-   </indexterm>
-
-   <para>
-    Streaming replication allows a standby server to stay more up-to-date
-    than is possible with file-based log shipping. The standby connects
-    to the primary, which streams WAL records to the standby as they're
-    generated, without waiting for the WAL file to be filled.
-   </para>
-
-   <para>
-    Streaming replication is asynchronous, so there is still a small delay
-    between committing a transaction in the primary and for the changes to
-    become visible in the standby. The delay is however much smaller than with
-    file-based log shipping, typically under one second assuming the standby
-    is powerful enough to keep up with the load. With streaming replication,
-    <varname>archive_timeout</> is not required to reduce the data loss
-    window.
-   </para>
-
-   <para>
-    Streaming replication relies on file-based continuous archiving for
-    making the base backup and for allowing the standby to catch up if it is
-    disconnected from the primary for long enough for the primary to
-    delete old WAL files still required by the standby.
-   </para>
-
-   <sect2 id="streaming-replication-setup">
-    <title>Setup</title>
-    <para>
-     The short procedure for configuring streaming replication is as follows.
-     For full details of each step, refer to other sections as noted.
-
-     <orderedlist>
-      <listitem>
-       <para>
-        Set up primary and standby systems as near identically as possible,
-        including two identical copies of <productname>PostgreSQL</> at the
-        same release level.
-       </para>
-      </listitem>
-     <listitem>
-      <para>
-       Set up continuous archiving from the primary to a WAL archive located
-       in a directory on the standby server. In particular, set
-       <xref linkend="guc-archive-mode"> and
-       <xref linkend="guc-archive-command">
-       to archive WAL files in a location accessible from the standby
-       (see <xref linkend="backup-archiving-wal">).
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       Set <xref linkend="guc-listen-addresses"> and authentication options
-       (see <filename>pg_hba.conf</>) on the primary so that the standby server can connect to
-       the <literal>replication</> pseudo-database on the primary server (see
-       <xref linkend="streaming-replication-authentication">).
-      </para>
-      <para>
-       On systems that support the keepalive socket option, setting
-       <xref linkend="guc-tcp-keepalives-idle">,
-       <xref linkend="guc-tcp-keepalives-interval"> and
-       <xref linkend="guc-tcp-keepalives-count"> helps the master promptly
-       notice a broken connection.
-      </para>
-     </listitem>
-     <listitem>
-      <para>
-       Set the maximum number of concurrent connections from the standby servers
-       (see <xref linkend="guc-max-wal-senders"> for details).
-      </para>
-     </listitem>
-     <listitem>
-      <para>
-       Start the <productname>PostgreSQL</> server on the primary.
-      </para>
-     </listitem>
-     <listitem>
-      <para>
-       Make a base backup of the primary server (see
-       <xref linkend="backup-base-backup">), and load this data onto the
-       standby. Note that all files present in <filename>pg_xlog</>
-       and <filename>pg_xlog/archive_status</> on the <emphasis>standby</>
-       server should be removed because they might be obsolete.
-      </para>
-     </listitem>
-     <listitem>
-      <para>
-       If you're setting up the standby server for high availability purposes,
-       set up WAL archiving, connections and authentication like the primary
-       server, because the standby server will work as a primary server after
-       failover. If you're setting up the standby server for reporting
-       purposes, with no plans to fail over to it, configure the standby
-       accordingly.
-      </para>
-     </listitem>
-     <listitem>
-      <para>
-       Create a recovery command file <filename>recovery.conf</> in the data
-       directory on the standby server. Set <varname>restore_command</varname>
-       as you would in normal recovery from a continuous archiving backup
-       (see <xref linkend="backup-pitr-recovery">). <literal>pg_standby</> or
-       similar tools that wait for the next WAL file to arrive cannot be used
-       with streaming replication, as the server handles retries and waiting
-       itself. Enable <varname>standby_mode</varname>. Set
-       <varname>primary_conninfo</varname> to point to the primary server.
-      </para>
-
-     </listitem>
-     <listitem>
-      <para>
-       Start the <productname>PostgreSQL</> server on the standby. The standby
-       server will go into recovery mode and proceed to receive WAL records
-       from the primary and apply them continuously.
-      </para>
-     </listitem>
-     </orderedlist>
-    </para>
-   </sect2>
-
-   <sect2 id="streaming-replication-authentication">
-    <title>Authentication</title>
-    <para>
-     It is very important that the access privilege for replication be setup
-     properly so that only trusted users can read the WAL stream, because it is
-     easy to extract privileged information from it.
-    </para>
-    <para>
-     Only the superuser is allowed to connect to the primary as the replication
-     standby. So a role with the <literal>SUPERUSER</> and <literal>LOGIN</>
-     privileges needs to be created in the primary.
-    </para>
-    <para>
-     Client authentication for replication is controlled by the
-     <filename>pg_hba.conf</> record specifying <literal>replication</> in the
-     <replaceable>database</> field. For example, if the standby is running on
-     host IP <literal>192.168.1.100</> and the superuser's name for replication
-     is <literal>foo</>, the administrator can add the following line to the
-     <filename>pg_hba.conf</> file on the primary.
-
-<programlisting>
-# Allow the user "foo" from host 192.168.1.100 to connect to the primary
-# as a replication standby if the user's password is correctly supplied.
-#
-# TYPE  DATABASE        USER            CIDR-ADDRESS            METHOD
-host    replication     foo             192.168.1.100/32        md5
-</programlisting>
-    </para>
-    <para>
-     The host name and port number of the primary, connection user name,
-     and password are specified in the <filename>recovery.conf</> file or
-     the corresponding environment variable on the standby.
-     For example, if the primary is running on host IP <literal>192.168.1.50</>,
-     port <literal>5432</literal>, the superuser's name for replication is
-     <literal>foo</>, and the password is <literal>foopass</>, the administrator
-     can add the following line to the <filename>recovery.conf</> file on the
-     standby.
-
-<programlisting>
-# The standby connects to the primary that is running on host 192.168.1.50
-# and port 5432 as the user "foo" whose password is "foopass".
-primary_conninfo = 'host=192.168.1.50 port=5432 user=foo password=foopass'
-</programlisting>
-
-      You do not need to specify <literal>database=replication</> in the
-      <varname>primary_conninfo</varname>. The required option will be added
-      automatically. If you mention the database parameter at all within
-      <varname>primary_conninfo</varname> then a FATAL error will be raised.
-    </para>
-   </sect2>
-  </sect1>
-
-  <sect1 id="warm-standby-failover">
-   <title>Failover</title>
-
-   <para>
-    If the primary server fails then the standby server should begin
-    failover procedures.
-   </para>
-
-   <para>
-    If the standby server fails then no failover need take place. If the
-    standby server can be restarted, even some time later, then the recovery
-    process can also be restarted immediately, taking advantage of
-    restartable recovery. If the standby server cannot be restarted, then a
-    full new standby server instance should be created.
-   </para>
-
-   <para>
-    If the primary server fails and the standby server becomes the
-    new primary, and then the old primary restarts, you must have
-    a mechanism for informing the old primary that it is no longer the primary. This is
-    sometimes known as <acronym>STONITH</> (Shoot The Other Node In The Head), which is
-    necessary to avoid situations where both systems think they are the
-    primary, which will lead to confusion and ultimately data loss.
-   </para>
-
-   <para>
-    Many failover systems use just two systems, the primary and the standby,
-    connected by some kind of heartbeat mechanism to continually verify the
-    connectivity between the two and the viability of the primary. It is
-    also possible to use a third system (called a witness server) to prevent
-    some cases of inappropriate failover, but the additional complexity
-    might not be worthwhile unless it is set up with sufficient care and
-    rigorous testing.
-   </para>
-
-   <para>
-    Once failover to the standby occurs, there is only a
-    single server in operation. This is known as a degenerate state.
-    The former standby is now the primary, but the former primary is down
-    and might stay down.  To return to normal operation, a standby server
-    must be recreated,
-    either on the former primary system when it comes up, or on a third,
-    possibly new, system. Once complete the primary and standby can be
-    considered to have switched roles. Some people choose to use a third
-    server to provide backup for the new primary until the new standby
-    server is recreated,
-    though clearly this complicates the system configuration and
-    operational processes.
-   </para>
-
-   <para>
-    So, switching from primary to standby server can be fast but requires
-    some time to re-prepare the failover cluster. Regular switching from
-    primary to standby is useful, since it allows regular downtime on
-    each system for maintenance. This also serves as a test of the
-    failover mechanism to ensure that it will really work when you need it.
-    Written administration procedures are advised.
-   </para>
-  </sect1>
 
  <sect1 id="hot-standby">
   <title>Hot Standby</title>
