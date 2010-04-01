@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ddl.sgml,v 1.90 2010/02/24 15:54:31 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ddl.sgml,v 1.91 2010/04/01 01:18:17 momjian Exp $ -->
 
 <chapter id="ddl">
  <title>Data Definition</title>
@@ -843,6 +843,36 @@ CREATE TABLE order_items (
     additional possibilities regarding how null values are matched.
     These are explained in the reference documentation for
     <xref linkend="sql-createtable" endterm="sql-createtable-title">.
+   </para>
+  </sect2>
+
+  <sect2>
+   <title>Exclusion constraints</title>
+
+   <indexterm>
+    <primary>exclusion constraint</primary>
+   </indexterm>
+
+   <indexterm>
+    <primary>constraint</primary>
+    <secondary>exclusion</secondary>
+   </indexterm>
+
+   <para>
+    Exclusion constraints ensure that if any two rows are compared on
+    the specified columns or expressions using the specified operators,
+    at least one of these operator comparisons will be false. The syntax is:
+<programlisting>
+CREATE TABLE circles (
+    c circle,
+    EXCLUDE USING gist (c WITH &amp;&amp;)
+);
+</programlisting>
+   </para>
+
+   <para>
+    See also <link linkend="SQL-CREATETABLE-EXCLUDE"><command>CREATE
+    TABLE ... CONSTRAINT ... EXCLUDE</></link> for details.
    </para>
   </sect2>
  </sect1>
