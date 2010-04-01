@@ -18,7 +18,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/syslogger.c,v 1.29.2.4 2007/09/22 18:19:24 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/syslogger.c,v 1.29.2.5 2010/04/01 20:12:42 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -180,7 +180,7 @@ SysLoggerMain(int argc, char *argv[])
 	 */
 	if (redirection_done)
 	{
-		int			fd = open(NULL_DEV, O_WRONLY, 0);
+		int			fd = open(DEVNULL, O_WRONLY, 0);
 
 		/*
 		 * The closes might look redundant, but they are not: we want to be
@@ -190,9 +190,12 @@ SysLoggerMain(int argc, char *argv[])
 		 */
 		close(fileno(stdout));
 		close(fileno(stderr));
-		dup2(fd, fileno(stdout));
-		dup2(fd, fileno(stderr));
-		close(fd);
+		if (fd != -1)
+		{
+			dup2(fd, fileno(stdout));
+			dup2(fd, fileno(stderr));
+			close(fd);
+		}
 	}
 
 	/* Syslogger's own stderr can't be the syslogPipe, so set it back to
