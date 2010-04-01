@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/type.c,v 1.89 2010/04/01 08:41:01 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/type.c,v 1.90 2010/04/01 10:30:53 meskes Exp $ */
 
 #include "postgres_fe.h"
 
@@ -236,12 +236,11 @@ static void ECPGdump_a_struct(FILE *o, const char *name, const char *ind_name, c
 				  struct ECPGtype * type, struct ECPGtype * ind_type, const char *prefix, const char *ind_prefix);
 
 void
-ECPGdump_a_type(FILE *o, const char *name, struct ECPGtype * type,
-				const char *ind_name, struct ECPGtype * ind_type,
+ECPGdump_a_type(FILE *o, const char *name, struct ECPGtype * type, const int brace_level,
+				const char *ind_name, struct ECPGtype * ind_type, const int ind_brace_level,
 				const char *prefix, const char *ind_prefix,
 				char *arr_str_siz, const char *struct_sizeof,
-				const char *ind_struct_sizeof,
-				const int brace_level, const int ind_brace_level)
+				const char *ind_struct_sizeof)
 {
 	struct variable *var;
 
@@ -251,7 +250,7 @@ ECPGdump_a_type(FILE *o, const char *name, struct ECPGtype * type,
 	{
 		char	   *str;
 
-		str = strdup(name);
+		str = mm_strdup(name);
 		var = find_variable(str);
 		free(str);
 
@@ -259,20 +258,21 @@ ECPGdump_a_type(FILE *o, const char *name, struct ECPGtype * type,
 			(var->type->type_name && !type->type_name) ||
 			(!var->type->type_name && type->type_name) ||
 			(var->type->type_name && type->type_name && strcmp(var->type->type_name, type->type_name)))
-			mmerror(PARSE_ERROR, ET_WARNING, "variable (%s) is hidden by a local variable of a different type", name);
+			mmerror(PARSE_ERROR, ET_FATAL, "variable (%s) is hidden by a local variable of a different type", name);
 		else if (var->brace_level != brace_level)
 			mmerror(PARSE_ERROR, ET_WARNING, "variable (%s) is hidden by a local variable", name);
 
 		if (ind_name && ind_type && ind_type->type != ECPGt_NO_INDICATOR && ind_brace_level >= 0)
 		{
-			str = strdup(ind_name);
+			str = mm_strdup(ind_name);
 			var = find_variable(str);
 			free(str);
+
 			if ((var->type->type != ind_type->type) ||
 				(var->type->type_name && !ind_type->type_name) ||
 				(!var->type->type_name && ind_type->type_name) ||
 				(var->type->type_name && ind_type->type_name && strcmp(var->type->type_name, ind_type->type_name)))
-				mmerror(PARSE_ERROR, ET_WARNING, "indicator variable (%s) is hidden by a local variable of a different type", ind_name);
+				mmerror(PARSE_ERROR, ET_FATAL, "indicator variable (%s) is hidden by a local variable of a different type", ind_name);
 			else if (var->brace_level != ind_brace_level)
 				mmerror(PARSE_ERROR, ET_WARNING, "indicator variable (%s) is hidden by a local variable", ind_name);
 		}
@@ -535,12 +535,12 @@ ECPGdump_a_struct(FILE *o, const char *name, const char *ind_name, char *arrsiz,
 
 	for (p = type->u.members; p; p = p->next)
 	{
-		ECPGdump_a_type(o, p->name, p->type,
+		ECPGdump_a_type(o, p->name, p->type, -1,
 						(ind_p != NULL) ? ind_p->name : NULL,
 						(ind_p != NULL) ? ind_p->type : NULL,
+						-1,
 						prefix, ind_prefix, arrsiz, type->struct_sizeof,
-						(ind_p != NULL) ? ind_type->struct_sizeof : NULL,
-						-1, -1);
+						(ind_p != NULL) ? ind_type->struct_sizeof : NULL);
 		if (ind_p != NULL && ind_p != &struct_no_indicator)
 			ind_p = ind_p->next;
 	}

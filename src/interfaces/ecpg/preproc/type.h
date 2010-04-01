@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/type.h,v 1.55 2010/04/01 08:41:01 meskes Exp $
+ * $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/type.h,v 1.56 2010/04/01 10:30:53 meskes Exp $
  */
 #ifndef _ECPG_PREPROC_TYPE_H
 #define _ECPG_PREPROC_TYPE_H
@@ -55,10 +55,10 @@ void		ECPGfree_type(struct ECPGtype *);
    size is the maxsize in case it is a varchar. Otherwise it is the size of
 	   the variable (required to do array fetches of structs).
  */
-void ECPGdump_a_type(FILE *, const char *, struct ECPGtype *,
-				const char *, struct ECPGtype *, const char *,
-				const char *, char *, const char *, const char *,
-				const int, const int);
+void ECPGdump_a_type(FILE *, const char *, struct ECPGtype *, const int,
+				const char *, struct ECPGtype *, const int,
+				const char *, const char *, char *,
+				const char *, const char *);
 
 /* A simple struct to keep a variable and its type. */
 struct ECPGtemp_type
