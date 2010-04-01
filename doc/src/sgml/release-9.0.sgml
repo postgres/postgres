@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release-9.0.sgml,v 2.11 2010/03/23 22:37:14 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release-9.0.sgml,v 2.12 2010/04/01 00:18:21 momjian Exp $ -->
 
 
  <sect1 id="release-9-0">
@@ -285,7 +285,7 @@
           <listitem>
             <para>
               Allow per-tablespace sequential and random page cost variables
-              (<varname>seq_page_cost</>/(<varname>random_page_cost</>)) via
+              (<varname>seq_page_cost</>/<varname>random_page_cost</>) via
               <link linkend="SQL-ALTERTABLESPACE"><command>ALTER TABLESPACE
               ...  SET/RESET</></link> (Robert Haas)
             </para>
@@ -811,7 +811,7 @@
 
             <para>
               This is enabled with the <link
-              linkend="SQL-CREATETABLE-description"><command>CREATE
+              linkend="SQL-CREATETABLE-EXCLUDE"><command>CREATE
               TABLE CONSTRAINT ...  EXCLUDE</></link> clause.  While
               uniqueness checks could be specified using this syntax,
               the real value of this feature is in using complex
