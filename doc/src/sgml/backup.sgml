@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.148 2010/04/01 00:31:00 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.149 2010/04/01 13:52:56 momjian Exp $ -->
 
 <chapter id="backup">
  <title>Backup and Restore</title>
@@ -611,7 +611,7 @@ cp -i pg_xlog/00000001000000A900000065 /mnt/server/archivedir/00000001000000A900
     add a command to test for the existence of the archive file.  For
     example, something like:
 <programlisting>
-archive_command = 'test ! -e .../%f &amp;&amp; cp %p .../%f'
+archive_command = 'test ! -f .../%f &amp;&amp; cp %p .../%f'
 </programlisting>
     works correctly on most Unix variants.
    </para>
