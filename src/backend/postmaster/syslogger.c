@@ -18,7 +18,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/syslogger.c,v 1.51.2.1 2009/11/19 02:45:40 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/syslogger.c,v 1.51.2.2 2010/04/01 20:12:28 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -194,9 +194,12 @@ SysLoggerMain(int argc, char *argv[])
 		 */
 		close(fileno(stdout));
 		close(fileno(stderr));
-		dup2(fd, fileno(stdout));
-		dup2(fd, fileno(stderr));
-		close(fd);
+		if (fd != -1)
+		{
+			dup2(fd, fileno(stdout));
+			dup2(fd, fileno(stderr));
+			close(fd);
+		}
 	}
 
 	/*
