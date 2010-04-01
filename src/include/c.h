@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/c.h,v 1.222.2.2 2009/03/11 00:08:07 alvherre Exp $
+ * $PostgreSQL: pgsql/src/include/c.h,v 1.222.2.3 2010/04/01 20:12:34 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -762,7 +762,11 @@ typedef NameData *Name;
 #include <unistd.h>
 #endif
 
-/* These are for things that are one way on Unix and another on NT */
+/*
+ * This only works on Unix, not on Windows! This isn't used in PostgreSQL
+ * anymore, use the platform-aware DEVNULL instead. This is kept here just
+ * in case a 3rd party module uses it.
+ */
 #define NULL_DEV		"/dev/null"
 
 /*
