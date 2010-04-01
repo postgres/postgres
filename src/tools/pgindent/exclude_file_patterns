@@ -1,0 +1,7 @@
+#list of file patterns to exclude from pg_indent runs
+/s_lock\.h$
+/ecpg/test/expected/
+/snowball/libstemmer/
+/ecpg/include/(sqlda|sqltypes)\.h$
+/ecpg/include/preproc/struct\.h$
+/pl/plperl/ppport\.h$

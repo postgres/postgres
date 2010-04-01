@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/tools/pgindent/README,v 1.39 2010/02/26 18:00:15 momjian Exp $
+$PostgreSQL: pgsql/src/tools/pgindent/README,v 1.40 2010/04/01 14:44:39 adunstan Exp $
 
 pgindent
 ========
@@ -8,7 +8,7 @@ This can format all PostgreSQL *.c and *.h files, but excludes *.y, and
 
 1) Change directory to the top of the build tree.
 
-2) Download the typedef file from the builfarm:
+2) Download the typedef file from the buildfarm:
 
 	wget -O src/tools/pgindent/typedefs.list http://www.pgbuildfarm.org/cgi-bin/typedefs.pl
 
@@ -18,10 +18,8 @@ This can format all PostgreSQL *.c and *.h files, but excludes *.y, and
 
 4) Run pgindent:
 
-	find . -name '*.[ch]' -type f -print |
-	egrep -v '/s_lock.h|/ecpg/test/expected/|/snowball/libstemmer/' |
-	egrep -v '/ecpg/include/(sqlda|sqltypes)\.h$' |
-	egrep -v '/ecpg/include/preproc/struct\.h$' |
+	find . -name '*.[ch]' -type f -print | \
+	egrep -v -f src/tools/pgindent/exclude_file_patterns | \
 	xargs -n100 pgindent src/tools/pgindent/typedefs.list
 
 5) Remove any files that generate errors.
