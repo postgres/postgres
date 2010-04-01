@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.545 2010/03/25 14:44:33 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.546 2010/04/01 00:43:29 rhaas Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -1705,7 +1705,7 @@ static struct config_int ConfigureNamesInt[] =
 			gettext_noop("Sets the maximum number of simultaneously running WAL sender processes."),
 			NULL
 		},
-		&MaxWalSenders,
+		&max_wal_senders,
 		0, 0, INT_MAX / 4, NULL, NULL
 	},
 

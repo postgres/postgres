@@ -30,7 +30,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/replication/walsender.c,v 1.13 2010/03/26 12:23:34 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/replication/walsender.c,v 1.14 2010/04/01 00:43:29 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -64,7 +64,7 @@ static WalSnd *MyWalSnd = NULL;
 bool		am_walsender = false;		/* Am I a walsender process ? */
 
 /* User-settable parameters for walsender */
-int			MaxWalSenders = 0;	/* the maximum number of concurrent walsenders */
+int			max_wal_senders = 0;	/* the maximum number of concurrent walsenders */
 int			WalSndDelay = 200;	/* max sleep time between some actions */
 
 #define NAPTIME_PER_CYCLE 100000L	/* max sleep time between cycles (100ms) */
@@ -452,7 +452,7 @@ InitWalSnd(void)
 	 * Find a free walsender slot and reserve it. If this fails, we must be
 	 * out of WalSnd structures.
 	 */
-	for (i = 0; i < MaxWalSenders; i++)
+	for (i = 0; i < max_wal_senders; i++)
 	{
 		volatile WalSnd *walsnd = &WalSndCtl->walsnds[i];
 
@@ -476,7 +476,9 @@ InitWalSnd(void)
 	if (MyWalSnd == NULL)
 		ereport(FATAL,
 				(errcode(ERRCODE_TOO_MANY_CONNECTIONS),
-				 errmsg("sorry, too many standbys already")));
+				 errmsg("number of requested standby connections "
+					"exceeds max_wal_senders (currently %d)",
+					max_wal_senders)));
 
 	/* Arrange to clean up at walsender exit */
 	on_shmem_exit(WalSndKill, 0);
@@ -766,7 +768,7 @@ WalSndShmemSize(void)
 	Size		size = 0;
 
 	size = offsetof(WalSndCtlData, walsnds);
-	size = add_size(size, mul_size(MaxWalSenders, sizeof(WalSnd)));
+	size = add_size(size, mul_size(max_wal_senders, sizeof(WalSnd)));
 
 	return size;
 }
@@ -791,7 +793,7 @@ WalSndShmemInit(void)
 	/* Initialize the data structures */
 	MemSet(WalSndCtl, 0, WalSndShmemSize());
 
-	for (i = 0; i < MaxWalSenders; i++)
+	for (i = 0; i < max_wal_senders; i++)
 	{
 		WalSnd	   *walsnd = &WalSndCtl->walsnds[i];
 
@@ -810,7 +812,7 @@ GetOldestWALSendPointer(void)
 	int			i;
 	bool		found = false;
 
-	for (i = 0; i < MaxWalSenders; i++)
+	for (i = 0; i < max_wal_senders; i++)
 	{
 		/* use volatile pointer to prevent code rearrangement */
 		volatile WalSnd *walsnd = &WalSndCtl->walsnds[i];
