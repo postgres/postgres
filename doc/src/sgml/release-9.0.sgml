@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release-9.0.sgml,v 2.12 2010/04/01 00:18:21 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release-9.0.sgml,v 2.13 2010/04/01 00:32:53 momjian Exp $ -->
 
 
  <sect1 id="release-9-0">
@@ -47,7 +47,7 @@
         <listitem>
           <para>
             Remove server variable <varname>add_missing_from</>, which was
-            defaulted to off for many years (Tom)
+            defaulted to off for many years (Tom Lane)
           </para>
         </listitem>
   
@@ -56,7 +56,7 @@
             Remove server variable <varname>regex_flavor</>, which
             was defaulted to <link
             linkend="posix-syntax-details"><literal>advanced</></link>
-            (e.g. Perl-regex compatible) for many years (Tom)
+            (e.g. Perl-regex compatible) for many years (Tom Lane)
           </para>
         </listitem>
       
@@ -72,7 +72,7 @@
         <para>
           When querying a <link linkend="ddl-inherit">parent table</link>,
           do not do additional permission checks on child tables
-          returned as part of the query (Peter)
+          returned as part of the query (Peter Eisentraut)
         </para>
 
         <para>
@@ -83,7 +83,7 @@
       <listitem>
         <para>
           Have fractional seconds conversion truncate rather than
-          round when using float-based dates/times (Tom)
+          round when using float-based dates/times (Tom Lane)
         </para>
       </listitem>
 
@@ -100,14 +100,14 @@
           Fix <link linkend="functions-similarto-regexp"><literal>SIMILAR
           TO</></link> to match the SQL standard-specified behavior
           by processing <literal>?</> and <literal>{}</> the same way
-          they are processed in regular expressions (Tom)
+          they are processed in regular expressions (Tom Lane)
         </para>
       </listitem>
 
       <listitem>
         <para>
           Properly treat <literal>^</> and <literal>$</> as literals in
-          <literal>SIMILAR TO</> patterns, to match the SQL standard (Tom)
+          <literal>SIMILAR TO</> patterns, to match the SQL standard (Tom Lane)
         </para>
 
         <para>
@@ -120,7 +120,7 @@
       <listitem>
         <para>
           Process parentheses as literals in <literal>SIMILAR TO</> expressions;
-          also make character class handling more standards-compliant (Tom)
+          also make character class handling more standards-compliant (Tom Lane)
         </para>
 
         <para>
@@ -133,7 +133,7 @@
         <para>
           Do not allow <link
           linkend="functions-string-sql"><function>substring()</></link>
-          to have a negative third length, per the SQL standard (Tom)
+          to have a negative third length, per the SQL standard (Tom Lane)
         </para>
       </listitem>
 
@@ -155,7 +155,7 @@
         <listitem>
           <para>
             No longer rename index names and index column names when table
-            columns are renamed (Tom)
+            columns are renamed (Tom Lane)
           </para>
 
           <para>
@@ -178,7 +178,7 @@
         <listitem>
           <para>
             Have PL/pgSQL throw an error if a variable name conflicts with a
-            column name used in a query (Tom)
+            column name used in a query (Tom Lane)
           </para>
 
           <para>
@@ -192,7 +192,7 @@
 
         <listitem>
           <para>
-            Remove PL/pgSQL's <literal>RENAME</> declaration option (Tom)
+            Remove PL/pgSQL's <literal>RENAME</> declaration option (Tom Lane)
           </para>
 
           <para>
@@ -206,7 +206,7 @@
         <listitem>
           <para>
             PL/pgSQL no longer allows unquoted variables names that match SQL
-            reserved words (Tom)
+            reserved words (Tom Lane)
           </para>
 
           <para>
@@ -278,7 +278,7 @@
 
           <listitem>
             <para>
-              Improve performance of finding inherited child tables (Tom)
+              Improve performance of finding inherited child tables (Tom Lane)
             </para>
           </listitem>
 
@@ -295,7 +295,7 @@
             <para>
               Improve performance of <link
               linkend="SQL-TRUNCATE"><command>TRUNCATE</></link> when
-              used in the same transaction as table creation (Tom)
+              used in the same transaction as table creation (Tom Lane)
             </para>
           </listitem>
 
@@ -309,7 +309,7 @@
         <itemizedlist>
           <listitem>
             <para>
-              Allow <literal>IS NOT NULL</> restrictions to use indexes (Tom)
+              Allow <literal>IS NOT NULL</> restrictions to use indexes (Tom Lane)
             </para>
 
             <para>
@@ -334,7 +334,7 @@
           <listitem>
             <para>
               Improve optimizer equivalence detection of &lt;&gt; <type>boolean</>
-              tests (Tom)
+              tests (Tom Lane)
             </para>
           </listitem>
         </itemizedlist>
@@ -361,7 +361,7 @@
 
           <listitem>
             <para>
-              Improve GEQO plan selection (Tom).
+              Improve GEQO plan selection (Tom Lane).
             </para>
 
             <para>
@@ -380,7 +380,7 @@
           <listitem>
             <para>
               Improve <link linkend="SQL-ANALYZE"><command>ANALYZE</></link>
-              to support inheritance-tree statistics (Tom)
+              to support inheritance-tree statistics (Tom Lane)
             </para>
 
             <para>
@@ -391,14 +391,14 @@
           <listitem>
             <para>
               Improve <link linkend="routine-vacuuming">autovacuum</link>
-              detection of when re-analyze is necessary (Tom)
+              detection of when re-analyze is necessary (Tom Lane)
             </para>
           </listitem>
 
           <listitem>
             <para>
               Improve optimizer statistics for greater/less-than comparisons
-              (Tom)
+              (Tom Lane)
             </para>
 
             <para>
@@ -437,7 +437,7 @@
               Add support for <link
               linkend="auth-radius"><acronym>RADIUS</></link> (Remote
               Authentication Dial In User Service) authentication
-              (Magnus)
+              (Magnus Hagander)
             </para>
           </listitem>
 
@@ -524,7 +524,7 @@
               linkend="monitoring-stats-funcs-table"><function>pg_stat_reset_single_table_counters()</></link>
               and <function>pg_stat_reset_single_function_counters()</>
               to allow the reseting of statistics counters for individual
-              tables and indexes (Magnus)
+              tables and indexes (Magnus Hagander)
             </para>
           </listitem>
 
@@ -540,7 +540,7 @@
             <para>
               Allow setting of configuration variables based on <link
               linkend="sql-alterrole-title">database/role</link>
-              combinations (Alvaro)
+              combinations (Alvaro Herrera)
             </para>
 
             <para>
@@ -557,7 +557,7 @@
               Add boolean variable <link
               linkend="guc-bonjour"><varname>bonjour</></link>, which
               controls whether a Bonjour-enabled binary advertises
-              itself via <productname>Bonjour</> (Tom)
+              itself via <productname>Bonjour</> (Tom Lane)
             </para>
 
             <para>
@@ -568,7 +568,7 @@
           <listitem>
             <para>
               Log changed parameter values when <filename>postgresql.conf</> is
-              reloaded (Peter)
+              reloaded (Peter Eisentraut)
             </para>
           </listitem>
 
@@ -587,7 +587,7 @@
             Do <link linkend="SQL-FOR-UPDATE-SHARE"><command>SELECT
             FOR UPDATE</>/<literal>SHARE</></link> processing after
             applying <literal>LIMIT</>, so the number of rows returned
-            is always predictable (Tom)
+            is always predictable (Tom Lane)
           </para>
 
           <para>
@@ -603,7 +603,7 @@
           <para>
             Allow mixing of traditional and SQL-standard <link
             linkend="SQL-LIMIT"><literal>LIMIT</>/<literal>OFFSET</></link>
-            syntax in the same query (Tom)
+            syntax in the same query (Tom Lane)
           </para>
         </listitem>
 
@@ -644,7 +644,7 @@
               Add Unicode surrogate pair (dual 16-bit) support to
               <link
               linkend="sql-syntax-strings-uescape"><literal>U&amp;</></link>
-              strings and identifiers (Peter)
+              strings and identifiers (Peter Eisentraut)
             </para>
           </listitem>
 
@@ -678,7 +678,7 @@
           <para>
             Allow <link linkend="SQL-COMMENT">comments</link> only on
             columns of tables, views, and composite types, not other
-            objects like indexes and <acronym>TOAST</> tables (Tom)
+            objects like indexes and <acronym>TOAST</> tables (Tom Lane)
           </para>
         </listitem>
 
@@ -686,7 +686,7 @@
           <para>
             Allow the creation of <link
             linkend="SQL-CREATETYPE-enum">enumerate types</link> with
-            no labels (Bruce)
+            no labels (Bruce Momjian)
           </para>
 
           <para>
@@ -771,7 +771,7 @@
           <listitem>
             <para>
               Add the SQL-standard <command>CREATE TABLE ... OF type</> command
-              (Peter)
+              (Peter Eisentraut)
             </para>
 
             <para>
@@ -889,7 +889,7 @@
         <listitem>
           <para>
             Allow <link linkend="SQL-CLUSTER"><command>CLUSTER</></link>
-            on all system tables (Tom)
+            on all system tables (Tom Lane)
           </para>
 
           <para>
@@ -1016,14 +1016,14 @@
           <listitem>
             <para>
               Allow an index to be auto-named by not supplying an index name to
-              <link linkend="SQL-CREATEINDEX"><command>CREATE INDEX</></link> (Tom)
+              <link linkend="SQL-CREATEINDEX"><command>CREATE INDEX</></link> (Tom Lane)
             </para>
           </listitem>
 
           <listitem>
             <para>
               Allow <link linkend="SQL-REINDEX"><command>REINDEX</></link>
-              on system indexes (Tom)
+              on system indexes (Tom Lane)
             </para>
 
             <para>
@@ -1033,7 +1033,7 @@
 
           <listitem>
             <para>
-              Add <literal>point_ops</> opclass for GiST (Teodor)
+              Add <literal>point_ops</> opclass for GiST (Teodor Sigaev)
             </para>
 
             <para>
@@ -1043,7 +1043,8 @@
 
           <listitem>
             <para>
-              Use red-black trees for <acronym>GIN</> index creation (Teodor)
+              Use red-black trees for <acronym>GIN</> index creation
+             (Teodor Sigaev)
             </para>
 
             <para>
@@ -1066,7 +1067,7 @@
           <para>
             Allow hex values to be specified in <link
             linkend="datatype-binary"><type>bytea</></link> strings
-            (Peter)
+            (Peter Eisentraut)
           </para>
 
           <para>
@@ -1083,7 +1084,7 @@
           <para>
             Allow <link
             linkend="guc-extra-float-digits">extra_float_digits</link>
-            to be increased to <literal>3</> (Tom)
+            to be increased to <literal>3</> (Tom Lane)
           </para>
 
           <para>
@@ -1100,13 +1101,13 @@
           <listitem>
             <para>
               Add prefix support for the full text search synonym dictionary
-          (Teodor)
+              (Teodor Sigaev)
             </para>
           </listitem>
 
           <listitem>
             <para>
-              Add full text search filtering dictionaries (Teodor)
+              Add full text search filtering dictionaries (Teodor Sigaev)
             </para>
 
             <para>
@@ -1117,7 +1118,7 @@
 
           <listitem>
             <para>
-              Allow underscores in full text email addresses (Teodor)
+              Allow underscores in full text email addresses (Teodor Sigaev)
             </para>
           </listitem>
 
@@ -1174,7 +1175,7 @@
             Have <function>to_char()</> honor <link
             linkend="functions-formatting-datetimemod-table"><literal>'FM'</></link>
             (fill mode) in <literal>'Y'</>, <literal>'YY'</>, and
-            <literal>'YYY'</> specifications (Bruce)
+            <literal>'YYY'</> specifications (Bruce Momjian)
           </para>
 
           <para>
@@ -1186,7 +1187,7 @@
           <para>
             Correct calculations of <link
             linkend="functions-geometry-op-table">"overlap"</link>
-            and "contains" operations over polygons (Teodor)
+            and "contains" operations over polygons (Teodor Sigaev)
           </para>
         </listitem>
 
@@ -1292,7 +1293,7 @@
             <para>
               Have <link linkend="information-schema">information
               schema</link> properly display date type octet lengths
-              (Peter)
+              (Peter Eisentraut)
             </para>
 
             <para>
@@ -1371,7 +1372,7 @@
           <para>
             Add the <literal>OR REPLACE</> clause to <link
             linkend="SQL-CREATELANGUAGE"><command>CREATE LANGUAGE</></link>
-            (Tom)
+            (Tom Lane)
           </para>
 
           <para>
@@ -1391,7 +1392,7 @@
 
           <listitem>
             <para>
-              Install server-side language PL/pgSQL by default (Bruce) 
+              Install server-side language PL/pgSQL by default (Bruce Momjian) 
             </para>
           </listitem>
 
@@ -1410,13 +1411,13 @@
 
           <listitem>
             <para>
-              Improve error location reporting in PL/pgSQL (Tom)
+              Improve error location reporting in PL/pgSQL (Tom Lane)
             </para>
           </listitem>
 
           <listitem>
             <para>
-              Have PL/pgSQL use the main lexer, rather than a custom version (Tom)
+              Have PL/pgSQL use the main lexer, rather than a custom version (Tom Lane)
             </para>
           </listitem>
 
@@ -1438,7 +1439,7 @@
           <listitem>
             <para>
               Allow PL/pgSQL's <literal>WHERE CURRENT OF</> to use a cursor
-              variable (Tom)
+              variable (Tom Lane)
             </para>
           </listitem>
 
@@ -1537,7 +1538,7 @@
           <listitem>
             <para>
               Verify that PL/Perl return values are valid in the server encoding
-              (Andrew)
+              (Andrew Dunstan)
             </para>
           </listitem>
 
@@ -1575,7 +1576,7 @@
 
           <listitem>
             <para>
-              Add Unicode support in PL/Python (Peter)
+              Add Unicode support in PL/Python (Peter Eisentraut)
             </para>
 
             <para>
@@ -1600,19 +1601,19 @@
           <listitem>
             <para>
               Add <link linkend="plpython-arrays">array parameter/return
-              support</link> to PL/Python (Peter)
+              support</link> to PL/Python (Peter Eisentraut)
             </para>
           </listitem>
 
           <listitem>
             <para>
-              Improve mapping of domains to Python base types in PL/Python (Peter)
+              Improve mapping of domains to Python base types in PL/Python (Peter Eisentraut)
             </para>
           </listitem>
 
           <listitem>
             <para>
-              Add <application>Python</> 3 support to PL/Python (Peter)
+              Add <application>Python</> 3 support to PL/Python (Peter Eisentraut)
             </para>
 
             <para>
@@ -1623,7 +1624,7 @@
 
           <listitem>
             <para>
-              Improve error location and exception reporting in PL/Python (Peter)
+              Improve error location and exception reporting in PL/Python (Peter Eisentraut)
             </para>
           </listitem>
 
@@ -1640,7 +1641,7 @@
         <listitem>
         <para>
           Add <link linkend="APP-VACUUMDB"><command>vacuumdb</></link>
-          <option>--analyze-only</> option to only analyze (Bruce)
+          <option>--analyze-only</> option to only analyze (Bruce Momjian)
           </para>
         </listitem>
 
@@ -1678,14 +1679,14 @@
             <para>
               Fix <command>psql --file -</> to properly honor <link
               linkend="R1-APP-PSQL-3"><option>--single-transaction</></link>
-              (Bruce)
+              (Bruce Momjian)
             </para>
           </listitem>
 
           <listitem>
             <para>
               Prevent overwriting of <application>psql</>'s command-line history
-              if two <application>psql</> sessions are run simultaneously (Tom)
+              if two <application>psql</> sessions are run simultaneously (Tom Lane)
             </para>
           </listitem>
 
@@ -1756,7 +1757,7 @@
             <listitem>
               <para>
                 In <application>psql</>, show the view definition only with <command>\d+</>,
-                not with <command>\d</> (Peter)
+                not with <command>\d</> (Peter Eisentraut)
               </para>
             </listitem>
 
@@ -1780,7 +1781,7 @@
           <listitem>
             <para>
               Fix <application>pg_dump</> to properly dump large objects if
-              standard_conforming_strings is enabled (Tom)
+              standard_conforming_strings is enabled (Tom Lane)
             </para>
 
             <para>
@@ -1821,7 +1822,7 @@
           <listitem>
             <para>
               Allow <application>pg_ctl</> to be safely used to start the
-              <application>postmaster</> at boot-time (Tom)
+              <application>postmaster</> at boot-time (Tom Lane)
             </para>
 
             <para>
@@ -1889,7 +1890,7 @@
               Add checking for a per-user service file (<link
               linkend="libpq-pgservice"><filename>.pg_service.conf</></link>),
               which is checked before the site-wide service file
-              (Peter)
+              (Peter Eisentraut)
             </para>
 
             <para>
@@ -1901,7 +1902,7 @@
           <listitem>
             <para>
               Properly report an error if the specified <application>libpq</> service
-              cannot be found (Peter)
+              cannot be found (Peter Eisentraut)
             </para>
           </listitem>
 
@@ -1909,7 +1910,7 @@
             <para>
               Issue a warning if the <link
               linkend="libpq-pgpass"><filename>.pgpass</></link>-retrieved
-              password fails (Bruce)
+              password fails (Bruce Momjian)
             </para>
           </listitem>
 
@@ -1955,13 +1956,14 @@
           <listitem>
             <para>
               Allow <application>ecpg</> to use <literal>new</> and <literal>old</>
-              variable names without restriction (Michael)
+              variable names without restriction (Michael Meskes)
             </para>
           </listitem>
 
           <listitem>
             <para>
-              Have <application>ecpg</> return zero for non-SQL3 data types (Michael)
+              Have <application>ecpg</> return zero for non-SQL3 data types
+             (Michael Meskes))
             </para>
 
             <para>
@@ -2016,7 +2018,7 @@
 
         <listitem>
           <para>
-            Enable client thread safety by default (Bruce)
+            Enable client thread safety by default (Bruce Momjian)
           </para>
 
           <para>
@@ -2047,7 +2049,7 @@
         <listitem>
           <para>
             Use <productname>DocBook</> <acronym>XSL</> stylesheets for man page
-            building (Peter)
+            building (Peter Eisentraut)
           </para>
         </listitem>
 
@@ -2062,7 +2064,7 @@
               New <filename>Makefile</> targets <link
               linkend="build"><literal>world</></link>,
               <literal>install-world</>, and <literal>installcheck-world</>
-              (Andrew)
+              (Andrew Dunstan)
             </para>
 
             <para>
@@ -2084,7 +2086,7 @@
           <listitem>
             <para>
               Restructure the <acronym>HTML</> documentation build
-              <filename>Makefile</> rules (Peter)
+              <filename>Makefile</> rules (Peter Eisentraut)
             </para>
           </listitem>
 
@@ -2098,14 +2100,14 @@
 
           <listitem>
             <para>
-              Require <application>Autoconf</> 2.63 for building from source (Peter)
+              Require <application>Autoconf</> 2.63 for building from source (Peter Eisentraut)
             </para>
           </listitem>
 
           <listitem>
             <para>
               Require <application>Flex</> 2.5.31 or later to build from source
-              (Tom)
+              (Tom Lane)
             </para>
           </listitem>
 
@@ -2141,14 +2143,14 @@
             <para>
               Allow server builds using <link
               linkend="install-win32-full"><productname>Visual Studio
-              2008</></link> (Magnus)
+              2008</></link> (Magnus Hagander)
             </para>
           </listitem>
 
           <listitem>
             <para>
               Allow multi-processor compilation using <productname>Microsoft Visual
-              C</> (Magnus)
+              C</> (Magnus Hagander)
             </para>
           </listitem>
 
@@ -2165,7 +2167,7 @@
         <listitem>
           <para>
             Distribute documentation in a proper directory tree, rather than
-            as tar archive files inside the main distribution tarball (Peter)
+            as tar archive files inside the main distribution tarball (Peter Eisentraut)
           </para>
 
           <para>
@@ -2177,7 +2179,7 @@
 
         <listitem>
           <para>
-            Enable the server lexer to be reentrant (Tom)
+            Enable the server lexer to be reentrant (Tom Lane)
           </para>
 
           <para>
@@ -2194,7 +2196,7 @@
         <listitem>
           <para>
             Add system columns to better document the use of indexes for constraint
-            enforcement (Tom)
+            enforcement (Tom Lane)
           </para>
         </listitem>
 
@@ -2232,14 +2234,14 @@
         <listitem>
           <para>
             Improve the ability to translate <application>psql</> strings
-            (Peter)
+            (Peter Eisentraut)
           </para>
         </listitem>
 
         <listitem>
           <para>
             Reduce the length of some file names so file paths are less than
-            100 characters (Tom)
+            100 characters (Tom Lane)
           </para>
 
           <para>
@@ -2258,14 +2260,14 @@
           <para>
             Add a new <link
             linkend="errcodes-table"><literal>ERRCODE_INVALID_PASSWORD</></link>
-            <literal>SQLSTATE</> error code (Bruce)
+            <literal>SQLSTATE</> error code (Bruce Momjian)
           </para>
         </listitem>
 
         <listitem>
           <para>
             Properly remove the few remaining personal source code copyright
-            entries (Bruce)
+            entries (Bruce Momjian)
           </para>
 
           <para>
@@ -2282,7 +2284,7 @@
 
           <listitem>
             <para>
-              Use a more modern <acronym>API</> for <application>Bonjour</> (Tom)
+              Use a more modern <acronym>API</> for <application>Bonjour</> (Tom Lane)
             </para>
 
             <para>
@@ -2307,7 +2309,7 @@
           <listitem>
             <para>
               Remove support for platforms that don't have a working 64-bit
-              integer data types (Tom)
+              integer data types (Tom Lane)
             </para>
 
             <para>
@@ -2366,7 +2368,7 @@
           <listitem>
             <para>
               Add parser hooks to access column and parameter references in
-              queries (Tom)
+              queries (Tom Lane)
             </para>
           </listitem>
 
@@ -2380,7 +2382,7 @@
           <listitem>
             <para>
               Allow the calling of parser hooks from <acronym>SPI</> and cached
-              plans (Tom)
+              plans (Tom Lane)
             </para>
           </listitem>
 
@@ -2396,14 +2398,14 @@
             <para>
               Add support for preservation of all <link
               linkend="catalog-pg-class"><structname>relfilenodes</></link>,
-              for use during binary upgrades (Bruce)
+              for use during binary upgrades (Bruce Momjian)
             </para>
           </listitem>
 
           <listitem>
             <para>
               Add support for binary upgrades to preserve <structname>pg_type</>
-              and <structname>pg_enum</> <type>oids</> (Bruce)
+              and <structname>pg_enum</> <type>oids</> (Bruce Momjian)
             </para>
 
             <para>
@@ -2415,7 +2417,7 @@
           <listitem>
             <para>
               Move tablespace data directories into their own
-              <productname>PostgreSQL</> version-specific subdirectory (Bruce)
+              <productname>PostgreSQL</> version-specific subdirectory (Bruce Momjian)
             </para>
 
             <para>
@@ -2471,7 +2473,7 @@
           <para>
             Add full text dictionary <link
             linkend="unaccent"><filename>/contrib/unaccent</></link>
-            (Teodor)
+            (Teodor Sigaev)
           </para>
 
           <para>
@@ -2523,7 +2525,7 @@
           <para>
             Add query text to <link
             linkend="auto-explain"><filename>/contrib/auto_explain</></link>
-            output (Andrew)
+            output (Andrew Dunstan)
           </para>
         </listitem>
 
