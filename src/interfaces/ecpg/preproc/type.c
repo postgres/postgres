@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/type.c,v 1.88 2010/03/09 11:09:45 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/type.c,v 1.89 2010/04/01 08:41:01 meskes Exp $ */
 
 #include "postgres_fe.h"
 
@@ -54,7 +54,7 @@ ECPGstruct_member_dup(struct ECPGstruct_member * rm)
 				 * if this array does contain a struct again, we have to
 				 * create the struct too
 				 */
-				if (rm->type->u.element->type == ECPGt_struct)
+				if (rm->type->u.element->type == ECPGt_struct || rm->type->u.element->type == ECPGt_union)
 					type = ECPGmake_struct_type(rm->type->u.element->u.members, rm->type->u.element->type, rm->type->u.element->type_name, rm->type->u.element->struct_sizeof);
 				else
 					type = ECPGmake_array_type(ECPGmake_simple_type(rm->type->u.element->type, rm->type->u.element->size, rm->type->u.element->counter), rm->type->size);
@@ -240,8 +240,44 @@ ECPGdump_a_type(FILE *o, const char *name, struct ECPGtype * type,
 				const char *ind_name, struct ECPGtype * ind_type,
 				const char *prefix, const char *ind_prefix,
 				char *arr_str_siz, const char *struct_sizeof,
-				const char *ind_struct_sizeof)
+				const char *ind_struct_sizeof,
+				const int brace_level, const int ind_brace_level)
 {
+	struct variable *var;
+
+	if (type->type != ECPGt_descriptor && type->type != ECPGt_sqlda &&
+		type->type != ECPGt_char_variable &&
+		brace_level >= 0)
+	{
+		char	   *str;
+
+		str = strdup(name);
+		var = find_variable(str);
+		free(str);
+
+		if ((var->type->type != type->type) ||
+			(var->type->type_name && !type->type_name) ||
+			(!var->type->type_name && type->type_name) ||
+			(var->type->type_name && type->type_name && strcmp(var->type->type_name, type->type_name)))
+			mmerror(PARSE_ERROR, ET_WARNING, "variable (%s) is hidden by a local variable of a different type", name);
+		else if (var->brace_level != brace_level)
+			mmerror(PARSE_ERROR, ET_WARNING, "variable (%s) is hidden by a local variable", name);
+
+		if (ind_name && ind_type && ind_type->type != ECPGt_NO_INDICATOR && ind_brace_level >= 0)
+		{
+			str = strdup(ind_name);
+			var = find_variable(str);
+			free(str);
+			if ((var->type->type != ind_type->type) ||
+				(var->type->type_name && !ind_type->type_name) ||
+				(!var->type->type_name && ind_type->type_name) ||
+				(var->type->type_name && ind_type->type_name && strcmp(var->type->type_name, ind_type->type_name)))
+				mmerror(PARSE_ERROR, ET_WARNING, "indicator variable (%s) is hidden by a local variable of a different type", ind_name);
+			else if (var->brace_level != ind_brace_level)
+				mmerror(PARSE_ERROR, ET_WARNING, "indicator variable (%s) is hidden by a local variable", ind_name);
+		}
+	}
+
 	switch (type->type)
 	{
 		case ECPGt_array:
@@ -503,7 +539,8 @@ ECPGdump_a_struct(FILE *o, const char *name, const char *ind_name, char *arrsiz,
 						(ind_p != NULL) ? ind_p->name : NULL,
 						(ind_p != NULL) ? ind_p->type : NULL,
 						prefix, ind_prefix, arrsiz, type->struct_sizeof,
-						(ind_p != NULL) ? ind_type->struct_sizeof : NULL);
+						(ind_p != NULL) ? ind_type->struct_sizeof : NULL,
+						-1, -1);
 		if (ind_p != NULL && ind_p != &struct_no_indicator)
 			ind_p = ind_p->next;
 	}

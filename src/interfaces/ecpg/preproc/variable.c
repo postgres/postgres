@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/variable.c,v 1.54 2010/03/09 11:09:45 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/variable.c,v 1.55 2010/04/01 08:41:01 meskes Exp $ */
 
 #include "postgres_fe.h"
 
@@ -22,7 +22,7 @@ new_variable(const char *name, struct ECPGtype * type, int brace_level)
 }
 
 static struct variable *
-find_struct_member(char *name, char *str, struct ECPGstruct_member * members, int brace_level)
+find_struct_member(const char *name, char *str, struct ECPGstruct_member * members, int brace_level)
 {
 	char	   *next = strpbrk(++str, ".-["),
 			   *end,
@@ -446,7 +446,8 @@ dump_variables(struct arguments * list, int mode)
 	/* Then the current element and its indicator */
 	ECPGdump_a_type(yyout, list->variable->name, list->variable->type,
 					list->indicator->name, list->indicator->type,
-					NULL, NULL, make_str("0"), NULL, NULL);
+					NULL, NULL, make_str("0"), NULL, NULL,
+					list->variable->brace_level, list->indicator->brace_level);
 
 	/* Then release the list element. */
 	if (mode != 0)

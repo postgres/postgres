@@ -1,7 +1,7 @@
 /*
  * functions needed for descriptor handling
  *
- * $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/descriptor.c,v 1.32 2010/03/09 11:09:45 meskes Exp $
+ * $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/descriptor.c,v 1.33 2010/04/01 08:41:01 meskes Exp $
  *
  * since descriptor might be either a string constant or a string var
  * we need to check for a constant if we expect a constant
@@ -188,7 +188,7 @@ output_get_descr(char *desc_name, char *index)
 				break;
 		}
 		fprintf(yyout, "%s,", get_dtype(results->value));
-		ECPGdump_a_type(yyout, v->name, v->type, NULL, NULL, NULL, NULL, make_str("0"), NULL, NULL);
+		ECPGdump_a_type(yyout, v->name, v->type, NULL, NULL, NULL, NULL, make_str("0"), NULL, NULL, v->brace_level, -1);
 	}
 	drop_assignments();
 	fputs("ECPGd_EODT);\n", yyout);
@@ -293,7 +293,7 @@ output_set_descr(char *desc_name, char *index)
 			case ECPGd_length:
 			case ECPGd_type:
 				fprintf(yyout, "%s,", get_dtype(results->value));
-				ECPGdump_a_type(yyout, v->name, v->type, NULL, NULL, NULL, NULL, make_str("0"), NULL, NULL);
+				ECPGdump_a_type(yyout, v->name, v->type, NULL, NULL, NULL, NULL, make_str("0"), NULL, NULL, v->brace_level, -1);
 				break;
 
 			default:

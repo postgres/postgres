@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/type.h,v 1.54 2010/03/09 11:09:45 meskes Exp $
+ * $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/type.h,v 1.55 2010/04/01 08:41:01 meskes Exp $
  */
 #ifndef _ECPG_PREPROC_TYPE_H
 #define _ECPG_PREPROC_TYPE_H
@@ -57,7 +57,8 @@ void		ECPGfree_type(struct ECPGtype *);
  */
 void ECPGdump_a_type(FILE *, const char *, struct ECPGtype *,
 				const char *, struct ECPGtype *, const char *,
-				const char *, char *, const char *, const char *);
+				const char *, char *, const char *, const char *,
+				const int, const int);
 
 /* A simple struct to keep a variable and its type. */
 struct ECPGtemp_type
