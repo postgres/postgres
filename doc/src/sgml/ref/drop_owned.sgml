@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/drop_owned.sgml,v 1.6 2008/11/14 10:22:46 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/drop_owned.sgml,v 1.7 2010/04/02 17:29:22 sriggs Exp $
 PostgreSQL documentation
 -->
 
@@ -91,6 +91,10 @@ DROP OWNED BY <replaceable class="PARAMETER">name</replaceable> [, ...] [ CASCAD
    endterm="sql-reassign-owned-title"> command is an alternative that
    reassigns the ownership of all the database objects owned by one or
    more roles.
+  </para>
+
+  <para>
+   Databases owned by the role(s) will not be removed.
   </para>
  </refsect1>
 

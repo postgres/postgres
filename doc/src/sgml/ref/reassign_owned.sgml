@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/reassign_owned.sgml,v 1.4 2008/11/14 10:22:47 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/reassign_owned.sgml,v 1.5 2010/04/02 17:29:22 sriggs Exp $
 PostgreSQL documentation
 -->
 
@@ -74,9 +74,16 @@ REASSIGN OWNED BY <replaceable class="PARAMETER">old_role</replaceable> [, ...] 
   </para>
 
   <para>
+   <command>REASSIGN OWNED</command> requires privileges on both the
+   source role(s) and the target role.
+  </para>
+
+  <para>
    The <xref linkend="sql-drop-owned"
     endterm="sql-drop-owned-title"> command is an alternative that
-   drops all the database objects owned by one or more roles.
+   drops all the database objects owned by one or more roles. Note
+   also that <command>DROP OWNED</command> requires privileges only
+   on the source role(s).
   </para>
 
   <para>
