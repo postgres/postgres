@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.387 2010/04/02 13:10:56 sriggs Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.388 2010/04/02 21:50:40 sriggs Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -5086,11 +5086,23 @@ readRecoveryCommandFile(void)
 						cmdline),
 			  errhint("Lines should have the format parameter = 'value'.")));
 
-	/* If not in standby mode, restore_command must be supplied */
-	if (!StandbyMode && recoveryRestoreCommand == NULL)
-		ereport(FATAL,
-				(errmsg("recovery command file \"%s\" did not specify restore_command nor standby_mode",
-						RECOVERY_COMMAND_FILE)));
+	/*
+	 * Check for compulsory parameters
+	 */
+	if (StandbyMode)
+	{
+		if (PrimaryConnInfo == NULL && recoveryRestoreCommand == NULL)
+			ereport(FATAL,
+					(errmsg("recovery command file \"%s\" specified neither primary_conninfo nor restore_command",
+							RECOVERY_COMMAND_FILE)));
+	}
+	else
+	{
+		if (recoveryRestoreCommand == NULL)
+			ereport(FATAL,
+					(errmsg("recovery command file \"%s\" did not specify restore_command nor standby_mode",
+							RECOVERY_COMMAND_FILE)));
+	}
 
 	/* Enable fetching from archive recovery area */
 	InArchiveRecovery = true;
