@@ -1,5 +1,5 @@
 /*
- * $Header: /cvsroot/pgsql/contrib/pgstattuple/pgstattuple.c,v 1.12.4.2 2009/03/31 22:56:28 tgl Exp $
+ * $Header: /cvsroot/pgsql/contrib/pgstattuple/pgstattuple.c,v 1.12.4.3 2010/04/02 16:17:31 tgl Exp $
  *
  * Copyright (c) 2001,2002	Tatsuo Ishii
  *
@@ -29,6 +29,7 @@
 #include "access/heapam.h"
 #include "access/transam.h"
 #include "catalog/namespace.h"
+#include "miscadmin.h"
 #include "utils/builtins.h"
 
 
@@ -149,6 +150,8 @@ pgstattuple_real(Relation rel)
 	{
 		uint16		sv_infomask;
 
+		CHECK_FOR_INTERRUPTS();
+
 		sv_infomask = tuple->t_data->t_infomask;
 		if (HeapTupleSatisfiesNow(tuple->t_data))
 		{
@@ -173,6 +176,8 @@ pgstattuple_real(Relation rel)
 
 		while (block <= tupblock)
 		{
+			CHECK_FOR_INTERRUPTS();
+
 			buffer = ReadBuffer(rel, block);
 			free_space += PageGetFreeSpace((Page) BufferGetPage(buffer));
 			ReleaseBuffer(buffer);
@@ -183,6 +188,8 @@ pgstattuple_real(Relation rel)
 
 	while (block < nblocks)
 	{
+		CHECK_FOR_INTERRUPTS();
+
 		buffer = ReadBuffer(rel, block);
 		free_space += PageGetFreeSpace((Page) BufferGetPage(buffer));
 		ReleaseBuffer(buffer);
