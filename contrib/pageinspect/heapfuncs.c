@@ -7,10 +7,10 @@
  * might cause crashes, but at the same time we try to print out as much
  * information as possible, even if it's nonsense. That's because if a
  * page is corrupt, we don't know why and how exactly it is corrupt, so we
- * let the user to judge it.
+ * let the user judge it.
  *
  * These functions are restricted to superusers for the fear of introducing
- * security holes if the input checking isn't as water-tight as it should.
+ * security holes if the input checking isn't as water-tight as it should be.
  * You'd need to be superuser to obtain a raw page image anyway, so
  * there's hardly any use case for using these without superuser-rights
  * anyway.
@@ -18,7 +18,7 @@
  * Copyright (c) 2007-2010, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/contrib/pageinspect/heapfuncs.c,v 1.8 2010/01/02 16:57:32 momjian Exp $
+ *	  $PostgreSQL: pgsql/contrib/pageinspect/heapfuncs.c,v 1.9 2010/04/02 15:19:22 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
