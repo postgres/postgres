@@ -33,7 +33,7 @@
  *
  * $From: sha2.c,v 1.1 2001/11/08 00:01:51 adg Exp adg $
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/sha2.c,v 1.11 2009/06/11 14:48:52 momjian Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/sha2.c,v 1.12 2010/04/02 15:21:20 mha Exp $
  */
 
 #include "postgres.h"
@@ -98,8 +98,8 @@
  *
  *	 NOTE:	The naming of R and S appears backwards here (R is a SHIFT and
  *	 S is a ROTATION) because the SHA-256/384/512 description document
- *	 (see http://csrc.nist.gov/cryptval/shs/sha256-384-512.pdf) uses this
- *	 same "backwards" definition.
+ *	 (see http://www.iwar.org.uk/comsec/resources/cipher/sha256-384-512.pdf) 
+ *	 uses this same "backwards" definition.
  */
 /* Shift-right (used in SHA-256, SHA-384, and SHA-512): */
 #define R(b,x)		((x) >> (b))

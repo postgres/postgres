@@ -2,7 +2,7 @@
 /*
   Name:		imath.c
   Purpose:	Arbitrary precision integer arithmetic routines.
-  Author:	M. J. Fromberger <http://www.dartmouth.edu/~sting/>
+  Author:	M. J. Fromberger <http://spinning-yarns.org/michael/sw/>
   Info:		Id: imath.c 21 2006-04-02 18:58:36Z sting
 
   Copyright (C) 2002 Michael J. Fromberger, All Rights Reserved.
@@ -27,7 +27,7 @@
   CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
   SOFTWARE.
  */
-/* $PostgreSQL: pgsql/contrib/pgcrypto/imath.c,v 1.8 2009/06/11 14:48:52 momjian Exp $ */
+/* $PostgreSQL: pgsql/contrib/pgcrypto/imath.c,v 1.9 2010/04/02 15:21:20 mha Exp $ */
 
 #include "postgres.h"
 #include "px.h"

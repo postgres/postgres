@@ -10,7 +10,7 @@
  *	Win32 (NT4 and newer).
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/dirmod.c,v 1.61 2010/02/26 02:01:38 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/port/dirmod.c,v 1.62 2010/04/02 15:21:20 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -220,7 +220,7 @@ typedef struct
 /*
  *	pgsymlink - uses Win32 junction points
  *
- *	For reference:	http://www.codeproject.com/w2k/junctionpoints.asp
+ *	For reference:	http://www.codeproject.com/KB/winsdk/junctionpoints.aspx
  */
 int
 pgsymlink(const char *oldpath, const char *newpath)

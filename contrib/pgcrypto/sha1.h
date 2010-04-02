@@ -1,4 +1,4 @@
-/*	$PostgreSQL: pgsql/contrib/pgcrypto/sha1.h,v 1.9 2003/11/29 22:39:28 pgsql Exp $ */
+/*	$PostgreSQL: pgsql/contrib/pgcrypto/sha1.h,v 1.10 2010/04/02 15:21:20 mha Exp $ */
 /*	   $KAME: sha1.h,v 1.4 2000/02/22 14:01:18 itojun Exp $    */
 
 /*
@@ -31,7 +31,7 @@
  */
 /*
  * FIPS pub 180-1: Secure Hash Algorithm (SHA-1)
- * based on: http://csrc.nist.gov/fips/fip180-1.txt
+ * based on: http://www.itl.nist.gov/fipspubs/fip180-1.htm
  * implemented by Jun-ichiro itojun Itoh <itojun@itojun.org>
  */
 

@@ -6,7 +6,7 @@
  *
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/tsearch/dicts/spell.h,v 1.8 2010/01/02 16:58:09 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/tsearch/dicts/spell.h,v 1.9 2010/04/02 15:21:20 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,7 +37,7 @@ typedef struct
 
 /*
  * Names of FF_ are correlated with Hunspell options in affix file
- * http://sourceforge.net/docman/display_doc.php?docid=29374&group_id=143754
+ * http://hunspell.sourceforge.net/
  */
 #define FF_COMPOUNDONLY		0x01
 #define FF_COMPOUNDBEGIN	0x02
