@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/type.c,v 1.90 2010/04/01 10:30:53 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/type.c,v 1.91 2010/04/02 10:27:45 meskes Exp $ */
 
 #include "postgres_fe.h"
 
@@ -258,7 +258,7 @@ ECPGdump_a_type(FILE *o, const char *name, struct ECPGtype * type, const int bra
 			(var->type->type_name && !type->type_name) ||
 			(!var->type->type_name && type->type_name) ||
 			(var->type->type_name && type->type_name && strcmp(var->type->type_name, type->type_name)))
-			mmerror(PARSE_ERROR, ET_FATAL, "variable (%s) is hidden by a local variable of a different type", name);
+			mmerror(PARSE_ERROR, ET_ERROR, "variable (%s) is hidden by a local variable of a different type", name);
 		else if (var->brace_level != brace_level)
 			mmerror(PARSE_ERROR, ET_WARNING, "variable (%s) is hidden by a local variable", name);
 
@@ -272,7 +272,7 @@ ECPGdump_a_type(FILE *o, const char *name, struct ECPGtype * type, const int bra
 				(var->type->type_name && !ind_type->type_name) ||
 				(!var->type->type_name && ind_type->type_name) ||
 				(var->type->type_name && ind_type->type_name && strcmp(var->type->type_name, ind_type->type_name)))
-				mmerror(PARSE_ERROR, ET_FATAL, "indicator variable (%s) is hidden by a local variable of a different type", ind_name);
+				mmerror(PARSE_ERROR, ET_ERROR, "indicator variable (%s) is hidden by a local variable of a different type", ind_name);
 			else if (var->brace_level != ind_brace_level)
 				mmerror(PARSE_ERROR, ET_WARNING, "indicator variable (%s) is hidden by a local variable", ind_name);
 		}
