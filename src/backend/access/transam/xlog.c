@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.386 2010/04/01 00:43:29 rhaas Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.387 2010/04/02 13:10:56 sriggs Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -5557,6 +5557,24 @@ StartupXLOG(void)
 			restartPointCommand ? restartPointCommand : "",
 			sizeof(XLogCtl->restartPointCommand));
 
+	if (InArchiveRecovery)
+	{
+		if (StandbyMode)
+			ereport(LOG,
+					(errmsg("entering standby mode")));
+		else if (recoveryTarget == RECOVERY_TARGET_XID)
+			ereport(LOG,
+					 (errmsg("starting point-in-time recovery to XID %u",
+						 recoveryTargetXid)));
+		else if (recoveryTarget == RECOVERY_TARGET_TIME)
+			ereport(LOG,
+					(errmsg("starting point-in-time recovery to %s",
+							timestamptz_to_str(recoveryTargetTime))));
+		else
+			ereport(LOG,
+					(errmsg("starting archive recovery")));
+	}
+
 	if (read_backup_label(&checkPointLoc))
 	{
 		/*
@@ -5694,23 +5712,7 @@ StartupXLOG(void)
 		 * backup history file.
 		 */
 		if (InArchiveRecovery)
-		{
-			if (StandbyMode)
-				ereport(LOG,
-						(errmsg("entering standby mode")));
-			else if (recoveryTarget == RECOVERY_TARGET_XID)
-				ereport(LOG,
-					 (errmsg("starting point-in-time recovery to XID %u",
-							 recoveryTargetXid)));
-			else if (recoveryTarget == RECOVERY_TARGET_TIME)
-				ereport(LOG,
-						(errmsg("starting point-in-time recovery to %s",
-								timestamptz_to_str(recoveryTargetTime))));
-			else
-				ereport(LOG,
-						(errmsg("starting archive recovery")));
 			ControlFile->state = DB_IN_ARCHIVE_RECOVERY;
-		}
 		else
 		{
 			ereport(LOG,
