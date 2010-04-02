@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/pgstattuple/pgstattuple.c,v 1.25.2.2 2009/03/31 22:55:41 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/pgstattuple/pgstattuple.c,v 1.25.2.3 2010/04/02 16:17:12 tgl Exp $
  *
  * Copyright (c) 2001,2002	Tatsuo Ishii
  *
@@ -277,6 +277,8 @@ pgstat_heap(Relation rel, FunctionCallInfo fcinfo)
 	/* scan the relation */
 	while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
 	{
+		CHECK_FOR_INTERRUPTS();
+
 		/* must hold a buffer lock to call HeapTupleSatisfiesNow */
 		LockBuffer(scan->rs_cbuf, BUFFER_LOCK_SHARE);
 
@@ -303,6 +305,8 @@ pgstat_heap(Relation rel, FunctionCallInfo fcinfo)
 
 		while (block <= tupblock)
 		{
+			CHECK_FOR_INTERRUPTS();
+
 			buffer = ReadBuffer(rel, block);
 			LockBuffer(buffer, BUFFER_LOCK_SHARE);
 			stat.free_space += PageGetFreeSpace((Page) BufferGetPage(buffer));
@@ -315,6 +319,8 @@ pgstat_heap(Relation rel, FunctionCallInfo fcinfo)
 
 	while (block < nblocks)
 	{
+		CHECK_FOR_INTERRUPTS();
+
 		buffer = ReadBuffer(rel, block);
 		stat.free_space += PageGetFreeSpace((Page) BufferGetPage(buffer));
 		ReleaseBuffer(buffer);
@@ -469,7 +475,11 @@ pgstat_index(Relation rel, BlockNumber start, pgstat_page pagefn,
 		}
 
 		for (; blkno < nblocks; blkno++)
+		{
+			CHECK_FOR_INTERRUPTS();
+
 			pagefn(&stat, rel, blkno);
+		}
 	}
 
 	relation_close(rel, AccessShareLock);
