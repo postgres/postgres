@@ -1,11 +1,11 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/rollback.sgml,v 1.20 2008/11/14 10:22:47 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/rollback.sgml,v 1.21 2010/04/03 07:23:02 petere Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="SQL-ROLLBACK">
  <refmeta>
-  <refentrytitle id="SQL-ROLLBACK-TITLE">ROLLBACK</refentrytitle>
+  <refentrytitle>ROLLBACK</refentrytitle>
   <manvolnum>7</manvolnum>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
@@ -54,7 +54,7 @@ ROLLBACK [ WORK | TRANSACTION ]
   <title>Notes</title>
 
   <para>
-   Use <xref linkend="SQL-COMMIT" endterm="SQL-COMMIT-TITLE"> to
+   Use <xref linkend="SQL-COMMIT"> to
    successfully terminate a transaction.
   </para>
 
@@ -89,9 +89,9 @@ ROLLBACK;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-begin" endterm="sql-begin-title"></member>
-   <member><xref linkend="sql-commit" endterm="sql-commit-title"></member>
-   <member><xref linkend="sql-rollback-to" endterm="sql-rollback-to-title"></member>
+   <member><xref linkend="sql-begin"></member>
+   <member><xref linkend="sql-commit"></member>
+   <member><xref linkend="sql-rollback-to"></member>
   </simplelist>
  </refsect1>
 </refentry>

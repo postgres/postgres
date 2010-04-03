@@ -1,11 +1,11 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_server.sgml,v 1.6 2009/09/19 10:23:27 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_server.sgml,v 1.7 2010/04/03 07:22:59 petere Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="SQL-CREATESERVER">
  <refmeta>
-  <refentrytitle id="sql-createserver-title">CREATE SERVER</refentrytitle>
+  <refentrytitle>CREATE SERVER</refentrytitle>
   <manvolnum>7</manvolnum>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
@@ -152,10 +152,10 @@ CREATE SERVER myserver FOREIGN DATA WRAPPER pgsql OPTIONS (host 'foo', dbname 'f
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-alterserver" endterm="sql-alterserver-title"></member>
-   <member><xref linkend="sql-dropserver" endterm="sql-dropserver-title"></member>
-   <member><xref linkend="sql-createforeigndatawrapper" endterm="sql-createforeigndatawrapper-title"></member>
-   <member><xref linkend="sql-createusermapping" endterm="sql-createusermapping-title"></member>
+   <member><xref linkend="sql-alterserver"></member>
+   <member><xref linkend="sql-dropserver"></member>
+   <member><xref linkend="sql-createforeigndatawrapper"></member>
+   <member><xref linkend="sql-createusermapping"></member>
   </simplelist>
  </refsect1>
 

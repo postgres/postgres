@@ -1,11 +1,11 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/drop_operator.sgml,v 1.29 2009/09/19 10:23:27 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/drop_operator.sgml,v 1.30 2010/04/03 07:23:00 petere Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="SQL-DROPOPERATOR">
  <refmeta>
-  <refentrytitle id="SQL-DROPOPERATOR-TITLE">DROP OPERATOR</refentrytitle>
+  <refentrytitle>DROP OPERATOR</refentrytitle>
   <manvolnum>7</manvolnum>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
@@ -139,8 +139,8 @@ DROP OPERATOR ! (bigint, none);
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-createoperator" endterm="sql-createoperator-title"></member>
-   <member><xref linkend="sql-alteroperator" endterm="sql-alteroperator-title"></member>
+   <member><xref linkend="sql-createoperator"></member>
+   <member><xref linkend="sql-alteroperator"></member>
   </simplelist>
  </refsect1>
 

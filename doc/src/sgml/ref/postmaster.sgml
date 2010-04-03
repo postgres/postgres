@@ -1,11 +1,11 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/postmaster.sgml,v 1.57 2006/06/18 15:38:36 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/postmaster.sgml,v 1.58 2010/04/03 07:23:01 petere Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="app-postmaster">
  <refmeta>
-  <refentrytitle id="APP-POSTMASTER-TITLE"><application>postmaster</application></refentrytitle>
+  <refentrytitle><application>postmaster</application></refentrytitle>
   <manvolnum>1</manvolnum>
   <refmiscinfo>Application</refmiscinfo>
  </refmeta>

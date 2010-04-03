@@ -1,11 +1,11 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/revoke.sgml,v 1.55 2010/03/17 20:53:19 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/revoke.sgml,v 1.56 2010/04/03 07:23:02 petere Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="SQL-REVOKE">
  <refmeta>
-  <refentrytitle id="sql-revoke-title">REVOKE</refentrytitle>
+  <refentrytitle>REVOKE</refentrytitle>
   <manvolnum>7</manvolnum>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
@@ -110,7 +110,7 @@ REVOKE [ ADMIN OPTION FOR ]
   </para>
 
   <para>
-   See the description of the <xref linkend="sql-grant" endterm="sql-grant-title"> command for
+   See the description of the <xref linkend="sql-grant"> command for
    the meaning of the privilege types.
   </para>
 
@@ -166,7 +166,7 @@ REVOKE [ ADMIN OPTION FOR ]
   <para>
    Use <xref linkend="app-psql">'s <command>\dp</command> command to
    display the privileges granted on existing tables and columns.  See <xref
-   linkend="sql-grant" endterm="sql-grant-title"> for information about the
+   linkend="sql-grant"> for information about the
    format.  For non-table objects there are other <command>\d</> commands
    that can display their privileges.
   </para>
@@ -269,7 +269,7 @@ REVOKE admins FROM joe;
   <title>Compatibility</title>
 
    <para>
-    The compatibility notes of the <xref linkend="sql-grant" endterm="sql-grant-title"> command
+    The compatibility notes of the <xref linkend="sql-grant"> command
     apply analogously to <command>REVOKE</command>.
     The keyword <literal>RESTRICT</literal> or <literal>CASCADE</literal>
     is required according to the standard, but <productname>PostgreSQL</>
@@ -281,7 +281,7 @@ REVOKE admins FROM joe;
   <title>See Also</title>
 
   <simpara>
-   <xref linkend="sql-grant" endterm="sql-grant-title">
+   <xref linkend="sql-grant">
   </simpara>
  </refsect1>
 

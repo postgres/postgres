@@ -1,11 +1,11 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/pg_controldata.sgml,v 1.12 2010/02/19 14:36:45 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/pg_controldata.sgml,v 1.13 2010/04/03 07:23:01 petere Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="APP-PGCONTROLDATA">
  <refmeta>
-  <refentrytitle id="APP-PGCONTROLDATA-TITLE"><application>pg_controldata</application></refentrytitle>
+  <refentrytitle><application>pg_controldata</application></refentrytitle>
   <manvolnum>1</manvolnum>
   <refmiscinfo>Application</refmiscinfo>
  </refmeta>

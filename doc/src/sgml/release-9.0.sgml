@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release-9.0.sgml,v 2.13 2010/04/01 00:32:53 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release-9.0.sgml,v 2.14 2010/04/03 07:22:55 petere Exp $ -->
 
 
  <sect1 id="release-9-0">
@@ -539,7 +539,7 @@
           <listitem>
             <para>
               Allow setting of configuration variables based on <link
-              linkend="sql-alterrole-title">database/role</link>
+              linkend="sql-alterrole">database/role</link>
               combinations (Alvaro Herrera)
             </para>
 

@@ -1,11 +1,11 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_trigger.sgml,v 1.52 2009/11/20 20:38:09 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_trigger.sgml,v 1.53 2010/04/03 07:23:00 petere Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="SQL-CREATETRIGGER">
  <refmeta>
-  <refentrytitle id="SQL-CREATETRIGGER-TITLE">CREATE TRIGGER</refentrytitle>
+  <refentrytitle>CREATE TRIGGER</refentrytitle>
   <manvolnum>7</manvolnum>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
@@ -233,8 +233,7 @@ UPDATE OF <replaceable>column_name1</replaceable> [, <replaceable>column_name2</
   </para>
 
   <para>
-   Use <xref linkend="sql-droptrigger"
-   endterm="sql-droptrigger-title"> to remove a trigger.
+   Use <xref linkend="sql-droptrigger"> to remove a trigger.
   </para>
 
   <para>
@@ -406,9 +405,9 @@ CREATE TRIGGER log_update
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-createfunction" endterm="sql-createfunction-title"></member>
-   <member><xref linkend="sql-altertrigger" endterm="sql-altertrigger-title"></member>
-   <member><xref linkend="sql-droptrigger" endterm="sql-droptrigger-title"></member>
+   <member><xref linkend="sql-createfunction"></member>
+   <member><xref linkend="sql-altertrigger"></member>
+   <member><xref linkend="sql-droptrigger"></member>
   </simplelist>
  </refsect1>
 </refentry>

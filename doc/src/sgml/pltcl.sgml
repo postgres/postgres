@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/pltcl.sgml,v 2.48 2008/03/28 00:21:55 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/pltcl.sgml,v 2.49 2010/04/03 07:22:55 petere Exp $ -->
 
  <chapter id="pltcl">
   <title>PL/Tcl - Tcl Procedural Language</title>
@@ -79,8 +79,7 @@
 
     <para>
      To create a function in the <application>PL/Tcl</> language, use
-     the standard <xref linkend="sql-createfunction"
-     endterm="sql-createfunction-title"> syntax:
+     the standard <xref linkend="sql-createfunction"> syntax:
 
 <programlisting>
 CREATE FUNCTION <replaceable>funcname</replaceable> (<replaceable>argument-types</replaceable>) RETURNS <replaceable>return-type</replaceable> AS $$

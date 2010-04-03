@@ -1,11 +1,11 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_tstemplate.sgml,v 1.2 2008/11/14 10:22:46 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_tstemplate.sgml,v 1.3 2010/04/03 07:23:00 petere Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="SQL-CREATETSTEMPLATE">
  <refmeta>
-  <refentrytitle id="sql-createtstemplate-title">CREATE TEXT SEARCH TEMPLATE</refentrytitle>
+  <refentrytitle>CREATE TEXT SEARCH TEMPLATE</refentrytitle>
   <manvolnum>7</manvolnum>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
@@ -119,8 +119,8 @@ CREATE TEXT SEARCH TEMPLATE <replaceable class="parameter">name</replaceable> (
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-altertstemplate" endterm="sql-altertstemplate-title"></member>
-   <member><xref linkend="sql-droptstemplate" endterm="sql-droptstemplate-title"></member>
+   <member><xref linkend="sql-altertstemplate"></member>
+   <member><xref linkend="sql-droptstemplate"></member>
   </simplelist>
  </refsect1>
 </refentry>

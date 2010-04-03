@@ -1,11 +1,11 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_view.sgml,v 1.42 2009/10/02 18:13:04 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_view.sgml,v 1.43 2010/04/03 07:23:00 petere Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="SQL-CREATEVIEW">
  <refmeta>
-  <refentrytitle id="SQL-CREATEVIEW-TITLE">CREATE VIEW</refentrytitle>
+  <refentrytitle>CREATE VIEW</refentrytitle>
   <manvolnum>7</manvolnum>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
@@ -102,8 +102,8 @@ CREATE [ OR REPLACE ] [ TEMP | TEMPORARY ] VIEW <replaceable class="PARAMETER">n
     <term><replaceable class="parameter">query</replaceable></term>
     <listitem>
      <para>
-      A <xref linkend="sql-select" endterm="sql-select-title"> or
-      <xref linkend="sql-values" endterm="sql-values-title"> command
+      A <xref linkend="sql-select"> or
+      <xref linkend="sql-values"> command
       which will provide the columns and rows of the view.
      </para>
     </listitem>
@@ -119,11 +119,11 @@ CREATE [ OR REPLACE ] [ TEMP | TEMPORARY ] VIEW <replaceable class="PARAMETER">n
     update, or delete on a view.  You can get the effect of an updatable
     view by creating rules that rewrite inserts, etc. on the view into
     appropriate actions on other tables.  For more information see
-    <xref linkend="sql-createrule" endterm="sql-createrule-title">.
+    <xref linkend="sql-createrule">.
    </para>
 
    <para>
-    Use the <xref linkend="sql-dropview" endterm="sql-dropview-title">
+    Use the <xref linkend="sql-dropview">
     statement to drop views.
    </para>
 
@@ -237,8 +237,8 @@ CREATE VIEW <replaceable class="parameter">name</replaceable> [ ( <replaceable c
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-alterview" endterm="sql-alterview-title"></member>
-   <member><xref linkend="sql-dropview" endterm="sql-dropview-title"></member>
+   <member><xref linkend="sql-alterview"></member>
+   <member><xref linkend="sql-dropview"></member>
   </simplelist>
  </refsect1>
 </refentry>

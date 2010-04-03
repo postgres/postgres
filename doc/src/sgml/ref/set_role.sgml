@@ -1,11 +1,11 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/set_role.sgml,v 1.8 2009/09/19 10:23:27 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/set_role.sgml,v 1.9 2010/04/03 07:23:02 petere Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="SQL-SET-ROLE">
  <refmeta>
-  <refentrytitle id="sql-set-role-title">SET ROLE</refentrytitle>
+  <refentrytitle>SET ROLE</refentrytitle>
   <manvolnum>7</manvolnum>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
@@ -48,7 +48,7 @@ RESET ROLE
 
   <para>
    The <literal>SESSION</> and <literal>LOCAL</> modifiers act the same
-   as for the regular <xref linkend="SQL-SET" endterm="SQL-SET-title">
+   as for the regular <xref linkend="SQL-SET">
    command.
   </para>
 
@@ -82,8 +82,7 @@ RESET ROLE
 
   <para>
    <command>SET ROLE</> has effects comparable to
-   <xref linkend="sql-set-session-authorization"
-   endterm="sql-set-session-authorization-title">, but the privilege
+   <xref linkend="sql-set-session-authorization">, but the privilege
    checks involved are quite different.  Also,
    <command>SET SESSION AUTHORIZATION</> determines which roles are
    allowable for later <command>SET ROLE</> commands, whereas changing
@@ -93,8 +92,7 @@ RESET ROLE
 
   <para>
    <command>SET ROLE</> does not process session variables as specified by
-   the role's <xref linkend="sql-alterrole"
-   endterm="sql-alterrole-title"> settings;  this only happens during
+   the role's <xref linkend="sql-alterrole"> settings;  this only happens during
    login.
   </para>
 
@@ -144,7 +142,7 @@ SELECT SESSION_USER, CURRENT_USER;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-set-session-authorization" endterm="sql-set-session-authorization-title"></member>
+   <member><xref linkend="sql-set-session-authorization"></member>
   </simplelist>
  </refsect1>
 </refentry>

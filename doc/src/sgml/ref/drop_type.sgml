@@ -1,11 +1,11 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/drop_type.sgml,v 1.31 2008/11/14 10:22:47 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/drop_type.sgml,v 1.32 2010/04/03 07:23:01 petere Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="SQL-DROPTYPE">
  <refmeta>
-  <refentrytitle id="SQL-DROPTYPE-TITLE">DROP TYPE</refentrytitle>
+  <refentrytitle>DROP TYPE</refentrytitle>
   <manvolnum>7</manvolnum>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
@@ -107,8 +107,8 @@ DROP TYPE box;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-createtype" endterm="sql-createtype-title"></member>
-   <member><xref linkend="sql-altertype" endterm="sql-altertype-title"></member>
+   <member><xref linkend="sql-createtype"></member>
+   <member><xref linkend="sql-altertype"></member>
   </simplelist>
  </refsect1>
 

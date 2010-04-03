@@ -1,11 +1,11 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/values.sgml,v 1.6 2008/11/14 10:22:47 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/values.sgml,v 1.7 2010/04/03 07:23:02 petere Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="SQL-VALUES">
  <refmeta>
-  <refentrytitle id="SQL-VALUES-TITLE">VALUES</refentrytitle>
+  <refentrytitle>VALUES</refentrytitle>
   <manvolnum>7</manvolnum>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
@@ -234,7 +234,7 @@ WHERE ip_address IN (VALUES('192.168.0.1'::inet), ('192.168.0.10'), ('192.168.1.
    <command>VALUES</command> conforms to the SQL standard.
    <literal>LIMIT</literal> and <literal>OFFSET</literal> are
    <productname>PostgreSQL</productname> extensions; see also
-   under <xref linkend="sql-select" endterm="sql-select-title">.
+   under <xref linkend="sql-select">.
   </para>
  </refsect1>
 
@@ -242,8 +242,8 @@ WHERE ip_address IN (VALUES('192.168.0.1'::inet), ('192.168.0.10'), ('192.168.1.
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-insert" endterm="sql-insert-title"></member>
-   <member><xref linkend="sql-select" endterm="sql-select-title"></member>
+   <member><xref linkend="sql-insert"></member>
+   <member><xref linkend="sql-select"></member>
   </simplelist>
  </refsect1>
 </refentry>

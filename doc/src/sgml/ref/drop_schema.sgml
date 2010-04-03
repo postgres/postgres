@@ -1,11 +1,11 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/drop_schema.sgml,v 1.9 2008/11/14 10:22:46 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/drop_schema.sgml,v 1.10 2010/04/03 07:23:01 petere Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="SQL-DROPSCHEMA">
  <refmeta>
-  <refentrytitle id="SQL-DROPSCHEMA-TITLE">DROP SCHEMA</refentrytitle>
+  <refentrytitle>DROP SCHEMA</refentrytitle>
   <manvolnum>7</manvolnum>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
@@ -113,8 +113,8 @@ DROP SCHEMA mystuff CASCADE;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-alterschema" endterm="sql-alterschema-title"></member>
-   <member><xref linkend="sql-createschema" endterm="sql-createschema-title"></member>
+   <member><xref linkend="sql-alterschema"></member>
+   <member><xref linkend="sql-createschema"></member>
   </simplelist>
  </refsect1>
 

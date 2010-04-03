@@ -1,11 +1,11 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_large_object.sgml,v 1.2 2009/12/19 03:29:28 itagaki Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_large_object.sgml,v 1.3 2010/04/03 07:22:57 petere Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="SQL-ALTERLARGEOBJECT">
  <refmeta>
-  <refentrytitle id="SQL-ALTERLARGEOBJECT-title">ALTER LARGE OBJECT</refentrytitle>
+  <refentrytitle>ALTER LARGE OBJECT</refentrytitle>
   <manvolnum>7</manvolnum>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
@@ -73,7 +73,7 @@ ALTER LARGE OBJECT <replaceable class="PARAMETER">large_object_oid</replaceable>
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="largeObjects" endterm="largeObjects-title"></member>
+   <member><xref linkend="largeobjects"></member>
   </simplelist>
  </refsect1>
 

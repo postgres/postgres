@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/protocol.sgml,v 1.86 2010/03/17 00:28:15 sriggs Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/protocol.sgml,v 1.87 2010/04/03 07:22:55 petere Exp $ -->
 
 <chapter id="protocol">
  <title>Frontend/Backend Protocol</title>
@@ -2419,7 +2419,7 @@ CopyInResponse (B)
                 characters, etc).
                 1 indicates the overall copy format is binary (similar
                 to DataRow format).
-                See <xref linkend="sql-copy" endterm="sql-copy-title">
+                See <xref linkend="sql-copy">
                 for more information.
 </para>
 </listitem>
@@ -2493,8 +2493,7 @@ CopyOutResponse (B)
                 is textual (rows separated by newlines, columns
                 separated by separator characters, etc). 1 indicates
                 the overall copy format is binary (similar to DataRow
-                format). See <xref linkend="sql-copy"
-                endterm="sql-copy-title"> for more information.
+                format). See <xref linkend="sql-copy"> for more information.
 </para>
 </listitem>
 </varlistentry>

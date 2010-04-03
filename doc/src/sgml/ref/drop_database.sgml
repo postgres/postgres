@@ -1,11 +1,11 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/drop_database.sgml,v 1.24 2008/11/14 10:22:46 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/drop_database.sgml,v 1.25 2010/04/03 07:23:00 petere Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="SQL-DROPDATABASE">
  <refmeta>
-  <refentrytitle id="SQL-DROPDATABASE-TITLE">DROP DATABASE</refentrytitle>
+  <refentrytitle>DROP DATABASE</refentrytitle>
   <manvolnum>7</manvolnum>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
@@ -78,7 +78,7 @@ DROP DATABASE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable>
   <para>
    This command cannot be executed while connected to the target
    database. Thus, it might be more convenient to use the program
-   <xref linkend="app-dropdb" endterm="app-dropdb-title"> instead,
+   <xref linkend="app-dropdb"> instead,
    which is a wrapper around this command.
   </para>
  </refsect1>
@@ -95,7 +95,7 @@ DROP DATABASE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable>
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-createdatabase" endterm="sql-createdatabase-title"></member>
+   <member><xref linkend="sql-createdatabase"></member>
   </simplelist>
  </refsect1>
 </refentry>

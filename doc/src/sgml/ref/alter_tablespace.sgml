@@ -1,11 +1,11 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_tablespace.sgml,v 1.6 2010/01/05 21:53:58 rhaas Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_tablespace.sgml,v 1.7 2010/04/03 07:22:57 petere Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="SQL-ALTERTABLESPACE">
  <refmeta>
-  <refentrytitle id="SQL-ALTERTABLESPACE-TITLE">ALTER TABLESPACE</refentrytitle>
+  <refentrytitle>ALTER TABLESPACE</refentrytitle>
   <manvolnum>7</manvolnum>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
@@ -128,8 +128,8 @@ ALTER TABLESPACE index_space OWNER TO mary;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-createtablespace" endterm="sql-createtablespace-title"></member>
-   <member><xref linkend="sql-droptablespace" endterm="sql-droptablespace-title"></member>
+   <member><xref linkend="sql-createtablespace"></member>
+   <member><xref linkend="sql-droptablespace"></member>
   </simplelist>
  </refsect1>
 </refentry>

@@ -1,11 +1,11 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/close.sgml,v 1.28 2008/11/14 10:22:45 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/close.sgml,v 1.29 2010/04/03 07:22:57 petere Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="SQL-CLOSE">
  <refmeta>
-  <refentrytitle id="SQL-CLOSE-TITLE">CLOSE</refentrytitle>
+  <refentrytitle>CLOSE</refentrytitle>
   <manvolnum>7</manvolnum>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
@@ -84,7 +84,7 @@ CLOSE { <replaceable class="PARAMETER">name</replaceable> | ALL }
    <productname>PostgreSQL</productname> does not have an explicit
    <command>OPEN</command> cursor statement; a cursor is considered
    open when it is declared.  Use the
-   <xref linkend="sql-declare" endterm="sql-declare-title">
+   <xref linkend="sql-declare">
    statement to declare a cursor.
   </para>
 
@@ -125,9 +125,9 @@ CLOSE liahona;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-declare" endterm="sql-declare-title"></member>
-   <member><xref linkend="sql-fetch" endterm="sql-fetch-title"></member>
-   <member><xref linkend="sql-move" endterm="sql-move-title"></member>
+   <member><xref linkend="sql-declare"></member>
+   <member><xref linkend="sql-fetch"></member>
+   <member><xref linkend="sql-move"></member>
   </simplelist>
  </refsect1>
 </refentry>

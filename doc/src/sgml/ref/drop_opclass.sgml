@@ -1,11 +1,11 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/drop_opclass.sgml,v 1.13 2008/11/14 10:22:46 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/drop_opclass.sgml,v 1.14 2010/04/03 07:23:00 petere Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="SQL-DROPOPCLASS">
  <refmeta>
-  <refentrytitle id="SQL-DROPOPCLASS-TITLE">DROP OPERATOR CLASS</refentrytitle>
+  <refentrytitle>DROP OPERATOR CLASS</refentrytitle>
   <manvolnum>7</manvolnum>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
@@ -138,9 +138,9 @@ DROP OPERATOR CLASS widget_ops USING btree;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-alteropclass" endterm="sql-alteropclass-title"></member>
-   <member><xref linkend="sql-createopclass" endterm="sql-createopclass-title"></member>
-   <member><xref linkend="sql-dropopfamily" endterm="sql-dropopfamily-title"></member>
+   <member><xref linkend="sql-alteropclass"></member>
+   <member><xref linkend="sql-createopclass"></member>
+   <member><xref linkend="sql-dropopfamily"></member>
   </simplelist>
  </refsect1>
 

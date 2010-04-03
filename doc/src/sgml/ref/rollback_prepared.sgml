@@ -1,11 +1,11 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/rollback_prepared.sgml,v 1.4 2008/11/14 10:22:47 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/rollback_prepared.sgml,v 1.5 2010/04/03 07:23:02 petere Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="SQL-ROLLBACK-PREPARED">
  <refmeta>
-  <refentrytitle id="sql-rollback-prepared-title">ROLLBACK PREPARED</refentrytitle>
+  <refentrytitle>ROLLBACK PREPARED</refentrytitle>
   <manvolnum>7</manvolnum>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
@@ -88,8 +88,8 @@ ROLLBACK PREPARED 'foobar';
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-prepare-transaction" endterm="sql-prepare-transaction-title"></member>
-   <member><xref linkend="sql-commit-prepared" endterm="sql-commit-prepared-title"></member>
+   <member><xref linkend="sql-prepare-transaction"></member>
+   <member><xref linkend="sql-commit-prepared"></member>
   </simplelist>
  </refsect1>
 

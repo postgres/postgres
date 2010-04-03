@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/typeconv.sgml,v 1.60 2009/06/17 21:58:49 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/typeconv.sgml,v 1.61 2010/04/03 07:22:56 petere Exp $ -->
 
 <chapter Id="typeconv">
 <title>Type Conversion</title>
@@ -139,7 +139,7 @@ and for the <function>GREATEST</> and <function>LEAST</> functions.
 The system catalogs store information about which conversions, or
 <firstterm>casts</firstterm>, exist between which data types, and how to
 perform those conversions.  Additional casts can be added by the user
-with the <xref linkend="sql-createcast" endterm="sql-createcast-title">
+with the <xref linkend="sql-createcast">
 command.  (This is usually
 done in conjunction with defining new data types.  The set of casts
 between built-in types has been carefully crafted and is best not
@@ -543,7 +543,7 @@ the function call is treated as a form of <literal>CAST</> specification.
     in cases where there is not an actual cast function.  If there is a cast
     function, it is conventionally named after its output type, and so there
     is no need to have a special case.  See
-    <xref linkend="sql-createcast" endterm="sql-createcast-title">
+    <xref linkend="sql-createcast">
     for additional commentary.
    </para>
   </footnote>

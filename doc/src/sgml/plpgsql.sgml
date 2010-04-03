@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.151 2010/02/17 04:19:37 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.152 2010/04/03 07:22:55 petere Exp $ -->
 
 <chapter id="plpgsql">
   <title><application>PL/pgSQL</application> - <acronym>SQL</acronym> Procedural Language</title>
@@ -1124,7 +1124,7 @@ EXECUTE 'SELECT count(*) FROM '
     <para>
      The <application>PL/pgSQL</application>
      <command>EXECUTE</command> statement is not related to the
-     <xref linkend="sql-execute" endterm="sql-execute-title"> SQL
+     <xref linkend="sql-execute"> SQL
      statement supported by the
      <productname>PostgreSQL</productname> server. The server's
      <command>EXECUTE</command> statement cannot be used directly within
@@ -2610,8 +2610,8 @@ FETCH <optional> <replaceable>direction</replaceable> { FROM | IN } </optional> 
 
     <para>
      The <replaceable>direction</replaceable> clause can be any of the
-     variants allowed in the SQL <xref linkend="sql-fetch"
-     endterm="sql-fetch-title"> command except the ones that can fetch
+     variants allowed in the SQL <xref linkend="sql-fetch">
+     command except the ones that can fetch
      more than one row; namely, it can be
      <literal>NEXT</>,
      <literal>PRIOR</>,
@@ -2662,8 +2662,8 @@ MOVE <optional> <replaceable>direction</replaceable> { FROM | IN } </optional> <
 
     <para>
      The <replaceable>direction</replaceable> clause can be any of the
-     variants allowed in the SQL <xref linkend="sql-fetch"
-     endterm="sql-fetch-title"> command, namely
+     variants allowed in the SQL <xref linkend="sql-fetch">
+     command, namely
      <literal>NEXT</>,
      <literal>PRIOR</>,
      <literal>FIRST</>,
@@ -2705,7 +2705,7 @@ DELETE FROM <replaceable>table</replaceable> WHERE CURRENT OF <replaceable>curso
         restrictions on what the cursor's query can be (in particular,
         no grouping) and it's best to use <literal>FOR UPDATE</> in the
         cursor.  For more information see the
-        <xref linkend="sql-declare" endterm="sql-declare-title">
+        <xref linkend="sql-declare">
         reference page.
        </para>
 
@@ -4625,7 +4625,7 @@ $$ LANGUAGE plpgsql;
      the function always returns the same result when given the same
      arguments) and <quote>strictness</quote> (whether the function
      returns null if any argument is null).  Consult the <xref
-     linkend="sql-createfunction" endterm="sql-createfunction-title">
+     linkend="sql-createfunction">
      reference page for details.
     </para>
 

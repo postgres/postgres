@@ -1,11 +1,11 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_schema.sgml,v 1.11 2009/09/19 10:23:26 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_schema.sgml,v 1.12 2010/04/03 07:22:57 petere Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="SQL-ALTERSCHEMA">
  <refmeta>
-  <refentrytitle id="SQL-ALTERSCHEMA-title">ALTER SCHEMA</refentrytitle>
+  <refentrytitle>ALTER SCHEMA</refentrytitle>
   <manvolnum>7</manvolnum>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
@@ -92,8 +92,8 @@ ALTER SCHEMA <replaceable>name</replaceable> OWNER TO <replaceable>new_owner</re
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-createschema" endterm="sql-createschema-title"></member>
-   <member><xref linkend="sql-dropschema" endterm="sql-dropschema-title"></member>
+   <member><xref linkend="sql-createschema"></member>
+   <member><xref linkend="sql-dropschema"></member>
   </simplelist>
  </refsect1>
 

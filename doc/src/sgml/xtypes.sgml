@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/xtypes.sgml,v 1.31 2008/12/07 23:46:39 alvherre Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/xtypes.sgml,v 1.32 2010/04/03 07:22:56 petere Exp $ -->
 
  <sect1 id="xtypes">
   <title>User-Defined Types</title>
@@ -290,6 +290,6 @@ CREATE TYPE complex (
 
  <para>
   For further details see the description of the
-  <xref linkend="sql-createtype" endterm="sql-createtype-title"> command.
+  <xref linkend="sql-createtype"> command.
  </para>
 </sect1>

@@ -1,11 +1,11 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_tstemplate.sgml,v 1.3 2009/09/19 10:23:26 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_tstemplate.sgml,v 1.4 2010/04/03 07:22:57 petere Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="SQL-ALTERTSTEMPLATE">
  <refmeta>
-  <refentrytitle id="SQL-ALTERTSTEMPLATE-TITLE">ALTER TEXT SEARCH TEMPLATE</refentrytitle>
+  <refentrytitle>ALTER TEXT SEARCH TEMPLATE</refentrytitle>
   <manvolnum>7</manvolnum>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
@@ -76,8 +76,8 @@ ALTER TEXT SEARCH TEMPLATE <replaceable>name</replaceable> RENAME TO <replaceabl
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-createtstemplate" endterm="sql-createtstemplate-title"></member>
-   <member><xref linkend="sql-droptstemplate" endterm="sql-droptstemplate-title"></member>
+   <member><xref linkend="sql-createtstemplate"></member>
+   <member><xref linkend="sql-droptstemplate"></member>
   </simplelist>
  </refsect1>
 </refentry>

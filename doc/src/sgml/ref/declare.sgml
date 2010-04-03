@@ -1,11 +1,11 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/declare.sgml,v 1.47 2009/06/10 19:21:37 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/declare.sgml,v 1.48 2010/04/03 07:23:00 petere Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="SQL-DECLARE">
  <refmeta>
-  <refentrytitle id="SQL-DECLARE-TITLE">DECLARE</refentrytitle>
+  <refentrytitle>DECLARE</refentrytitle>
   <manvolnum>7</manvolnum>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
@@ -39,7 +39,7 @@ DECLARE <replaceable class="parameter">name</replaceable> [ BINARY ] [ INSENSITI
    can be used to retrieve
    a small number of rows at a time out of a larger query.
    After the cursor is created, rows are fetched from it using
-   <xref linkend="sql-fetch" endterm="sql-fetch-title">.
+   <xref linkend="sql-fetch">.
   </para>
 
   <note>
@@ -126,8 +126,8 @@ DECLARE <replaceable class="parameter">name</replaceable> [ BINARY ] [ INSENSITI
     <term><replaceable class="parameter">query</replaceable></term>
     <listitem>
      <para>
-      A <xref linkend="sql-select" endterm="sql-select-title"> or
-      <xref linkend="sql-values" endterm="sql-values-title"> command
+      A <xref linkend="sql-select"> or
+      <xref linkend="sql-values"> command
       which will provide the rows to be returned by the cursor.
      </para>
     </listitem>
@@ -185,9 +185,9 @@ DECLARE <replaceable class="parameter">name</replaceable> [ BINARY ] [ INSENSITI
     <productname>PostgreSQL</productname> reports an error if such a
     command is used outside a transaction block.
     Use
-    <xref linkend="sql-begin" endterm="sql-begin-title"> and
-    <xref linkend="sql-commit" endterm="sql-commit-title">
-    (or <xref linkend="sql-rollback" endterm="sql-rollback-title">)
+    <xref linkend="sql-begin"> and
+    <xref linkend="sql-commit">
+    (or <xref linkend="sql-rollback">)
     to define a transaction block.
    </para>
 
@@ -246,7 +246,7 @@ DECLARE <replaceable class="parameter">name</replaceable> [ BINARY ] [ INSENSITI
     If the cursor's query includes <literal>FOR UPDATE</> or <literal>FOR
     SHARE</>, then returned rows are locked at the time they are first
     fetched, in the same way as for a regular
-    <xref linkend="sql-select" endterm="sql-select-title"> command with
+    <xref linkend="sql-select"> command with
     these options.
     In addition, the returned rows will be the most up-to-date versions;
     therefore these options provide the equivalent of what the SQL standard
@@ -311,7 +311,7 @@ DECLARE <replaceable class="parameter">name</replaceable> [ BINARY ] [ INSENSITI
 <programlisting>
 DECLARE liahona CURSOR FOR SELECT * FROM films;
 </programlisting>
-   See <xref linkend="sql-fetch" endterm="sql-fetch-title"> for more
+   See <xref linkend="sql-fetch"> for more
    examples of cursor usage.
   </para>
  </refsect1>
@@ -343,9 +343,9 @@ DECLARE liahona CURSOR FOR SELECT * FROM films;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-close" endterm="sql-close-title"></member>
-   <member><xref linkend="sql-fetch" endterm="sql-fetch-title"></member>
-   <member><xref linkend="sql-move" endterm="sql-move-title"></member>
+   <member><xref linkend="sql-close"></member>
+   <member><xref linkend="sql-fetch"></member>
+   <member><xref linkend="sql-move"></member>
   </simplelist>
  </refsect1>
 </refentry>

@@ -1,10 +1,10 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_function.sgml,v 1.93 2010/03/03 03:23:12 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_function.sgml,v 1.94 2010/04/03 07:22:58 petere Exp $
 -->
 
 <refentry id="SQL-CREATEFUNCTION">
  <refmeta>
-  <refentrytitle id="SQL-CREATEFUNCTION-TITLE">CREATE FUNCTION</refentrytitle>
+  <refentrytitle>CREATE FUNCTION</refentrytitle>
   <manvolnum>7</manvolnum>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
@@ -423,7 +423,7 @@ CREATE [ OR REPLACE ] FUNCTION
       </para>
    
       <para>
-       See <xref linkend="sql-set" endterm="sql-set-title"> and
+       See <xref linkend="sql-set"> and
        <xref linkend="runtime-config">
        for more information about allowed parameter names and values.
       </para>
@@ -702,7 +702,7 @@ $$  LANGUAGE plpgsql
    <para>
     Another point to keep in mind is that by default, execute privilege
     is granted to <literal>PUBLIC</> for newly created functions
-    (see <xref linkend="sql-grant" endterm="sql-grant-title"> for more
+    (see <xref linkend="sql-grant"> for more
     information).  Frequently you will wish to restrict use of a security
     definer function to only some users.  To do that, you must revoke
     the default <literal>PUBLIC</> privileges and then grant execute
@@ -752,12 +752,12 @@ COMMIT;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-alterfunction" endterm="sql-alterfunction-title"></member>
-   <member><xref linkend="sql-dropfunction" endterm="sql-dropfunction-title"></member>
-   <member><xref linkend="sql-grant" endterm="sql-grant-title"></member>
-   <member><xref linkend="sql-load" endterm="sql-load-title"></member>
-   <member><xref linkend="sql-revoke" endterm="sql-revoke-title"></member>
-   <member><xref linkend="app-createlang" endterm="app-createlang-title"></member>
+   <member><xref linkend="sql-alterfunction"></member>
+   <member><xref linkend="sql-dropfunction"></member>
+   <member><xref linkend="sql-grant"></member>
+   <member><xref linkend="sql-load"></member>
+   <member><xref linkend="sql-revoke"></member>
+   <member><xref linkend="app-createlang"></member>
   </simplelist>
  </refsect1>
 

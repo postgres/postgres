@@ -1,11 +1,11 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/drop_tablespace.sgml,v 1.9 2009/09/19 10:23:27 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/drop_tablespace.sgml,v 1.10 2010/04/03 07:23:01 petere Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="SQL-DROPTABLESPACE">
  <refmeta>
-  <refentrytitle id="SQL-DROPTABLESPACE-TITLE">DROP TABLESPACE</refentrytitle>
+  <refentrytitle>DROP TABLESPACE</refentrytitle>
   <manvolnum>7</manvolnum>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
@@ -103,8 +103,8 @@ DROP TABLESPACE mystuff;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-createtablespace" endterm="sql-createtablespace-title"></member>
-   <member><xref linkend="sql-altertablespace" endterm="sql-altertablespace-title"></member>
+   <member><xref linkend="sql-createtablespace"></member>
+   <member><xref linkend="sql-altertablespace"></member>
   </simplelist>
  </refsect1>
 

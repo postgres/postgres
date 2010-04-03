@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/dml.sgml,v 1.21 2009/09/11 12:53:24 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/dml.sgml,v 1.22 2010/04/03 07:22:53 petere Exp $ -->
 
 <chapter id="dml">
  <title>Data Manipulation</title>
@@ -37,8 +37,8 @@
   </para>
 
   <para>
-   To create a new row, use the <xref linkend="sql-insert"
-   endterm="sql-insert-title"> command.  The command requires the
+   To create a new row, use the <xref linkend="sql-insert">
+   command.  The command requires the
    table name and column values.  For
    example, consider the products table from <xref linkend="ddl">:
 <programlisting>
@@ -105,9 +105,9 @@ INSERT INTO products (product_no, name, price) VALUES
   <tip>
    <para>
     When inserting a lot of data at the same time, considering using
-    the <xref linkend="sql-copy" endterm="sql-copy-title"> command.
-    It is not as flexible as the <xref linkend="sql-insert"
-    endterm="sql-insert-title"> command, but is more efficient. Refer
+    the <xref linkend="sql-copy"> command.
+    It is not as flexible as the <xref linkend="sql-insert">
+    command, but is more efficient. Refer
     to <xref linkend="populate"> for more information on improving
     bulk loading performance.
    </para>
@@ -133,8 +133,8 @@ INSERT INTO products (product_no, name, price) VALUES
   </para>
 
   <para>
-   To update existing rows, use the <xref linkend="sql-update"
-   endterm="sql-update-title"> command.  This requires
+   To update existing rows, use the <xref linkend="sql-update">
+   command.  This requires
    three pieces of information:
    <orderedlist spacing="compact">
     <listitem>
@@ -235,7 +235,7 @@ UPDATE mytable SET a = 5, b = 3, c = 1 WHERE a &gt; 0;
   </para>
 
   <para>
-   You use the <xref linkend="sql-delete" endterm="sql-delete-title">
+   You use the <xref linkend="sql-delete">
    command to remove rows; the syntax is very similar to the
    <command>UPDATE</command> command.  For instance, to remove all
    rows from the products table that have a price of 10, use:

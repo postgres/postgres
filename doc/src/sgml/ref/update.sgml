@@ -1,11 +1,11 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/update.sgml,v 1.50 2009/09/19 10:23:27 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/update.sgml,v 1.51 2010/04/03 07:23:02 petere Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="SQL-UPDATE">
  <refmeta>
-  <refentrytitle id="SQL-UPDATE-TITLE">UPDATE</refentrytitle>
+  <refentrytitle>UPDATE</refentrytitle>
   <manvolnum>7</manvolnum>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
@@ -172,7 +172,7 @@ UPDATE [ ONLY ] <replaceable class="PARAMETER">table</replaceable> [ [ AS ] <rep
       query on the <command>UPDATE</>'s target table.
       Note that <literal>WHERE CURRENT OF</> cannot be
       specified together with a Boolean condition.  See
-      <xref linkend="sql-declare" endterm="sql-declare-title">
+      <xref linkend="sql-declare">
       for more information about using cursors with
       <literal>WHERE CURRENT OF</>.
      </para>

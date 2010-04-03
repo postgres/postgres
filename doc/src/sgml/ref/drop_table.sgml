@@ -1,11 +1,11 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/drop_table.sgml,v 1.28 2008/11/14 10:22:46 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/drop_table.sgml,v 1.29 2010/04/03 07:23:01 petere Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="SQL-DROPTABLE">
  <refmeta>
-  <refentrytitle id="SQL-DROPTABLE-TITLE">DROP TABLE</refentrytitle>
+  <refentrytitle>DROP TABLE</refentrytitle>
   <manvolnum>7</manvolnum>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
@@ -31,9 +31,8 @@ DROP TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> [, ..
   <para>
    <command>DROP TABLE</command> removes tables from the database.
    Only its owner can drop a table.  To empty a table of rows
-   without destroying the table, use <xref linkend="sql-delete"
-   endterm="sql-delete-title"> or <xref linkend="sql-truncate"
-   endterm="sql-truncate-title">.
+   without destroying the table, use <xref linkend="sql-delete">
+   or <xref linkend="sql-truncate">.
   </para>
 
   <para>
@@ -120,8 +119,8 @@ DROP TABLE films, distributors;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-altertable" endterm="sql-altertable-title"></member>
-   <member><xref linkend="sql-createtable" endterm="sql-createtable-title"></member>
+   <member><xref linkend="sql-altertable"></member>
+   <member><xref linkend="sql-createtable"></member>
   </simplelist>
  </refsect1>
 

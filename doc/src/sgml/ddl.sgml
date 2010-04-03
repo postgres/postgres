@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ddl.sgml,v 1.91 2010/04/01 01:18:17 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ddl.sgml,v 1.92 2010/04/03 07:22:53 petere Exp $ -->
 
 <chapter id="ddl">
  <title>Data Definition</title>
@@ -78,7 +78,7 @@
 
   <para>
    To create a table, you use the aptly named <xref
-   linkend="sql-createtable" endterm="sql-createtable-title"> command.
+   linkend="sql-createtable"> command.
    In this command you specify at least a name for the new table, the
    names of the columns and the data type of each column.  For
    example:
@@ -138,7 +138,7 @@ CREATE TABLE products (
 
   <para>
    If you no longer need a table, you can remove it using the <xref
-   linkend="sql-droptable" endterm="sql-droptable-title"> command.
+   linkend="sql-droptable"> command.
    For example:
 <programlisting>
 DROP TABLE my_first_table;
@@ -842,7 +842,7 @@ CREATE TABLE order_items (
     If the foreign key references a unique constraint, there are some
     additional possibilities regarding how null values are matched.
     These are explained in the reference documentation for
-    <xref linkend="sql-createtable" endterm="sql-createtable-title">.
+    <xref linkend="sql-createtable">.
    </para>
   </sect2>
 
@@ -1126,7 +1126,7 @@ CREATE TABLE circles (
    </itemizedlist>
 
    All these actions are performed using the
-   <xref linkend="sql-altertable" endterm="sql-altertable-title">
+   <xref linkend="sql-altertable">
    command, whose reference page contains details beyond those given
    here.
   </para>
@@ -1393,7 +1393,7 @@ ALTER TABLE products RENAME TO items;
    object vary depending on the object's type (table, function, etc).
    For complete information on the different types of privileges
    supported by <productname>PostgreSQL</productname>, refer to the
-   <xref linkend="sql-grant" endterm="sql-grant-title"> reference
+   <xref linkend="sql-grant"> reference
    page.  The following sections and chapters will also show you how
    those privileges are used.
   </para>
@@ -1406,7 +1406,7 @@ ALTER TABLE products RENAME TO items;
   <note>
    <para>
     To change the owner of a table, index, sequence, or view, use the
-    <xref linkend="sql-altertable" endterm="sql-altertable-title">
+    <xref linkend="sql-altertable">
     command.  There are corresponding <literal>ALTER</> commands for
     other object types.
    </para>
@@ -1453,9 +1453,8 @@ REVOKE ALL ON accounts FROM PUBLIC;
    the right to grant it in turn to others.  If the grant option is
    subsequently revoked then all who received the privilege from that
    recipient (directly or through a chain of grants) will lose the
-   privilege.  For details see the <xref linkend="sql-grant"
-   endterm="sql-grant-title"> and <xref linkend="sql-revoke"
-   endterm="sql-revoke-title"> reference pages.
+   privilege.  For details see the <xref linkend="sql-grant"> and
+   <xref linkend="sql-revoke"> reference pages.
   </para>
  </sect1>
 
@@ -1536,8 +1535,8 @@ REVOKE ALL ON accounts FROM PUBLIC;
    </indexterm>
 
    <para>
-    To create a schema, use the <xref linkend="sql-createschema"
-    endterm="sql-createschema-title"> command.  Give the schema a name
+    To create a schema, use the <xref linkend="sql-createschema">
+    command.  Give the schema a name
     of your choice.  For example:
 <programlisting>
 CREATE SCHEMA myschema;
@@ -2109,11 +2108,11 @@ VALUES ('New York', NULL, NULL, 'NY');
   <para>
    Table inheritance is typically established when the child table is
    created, using the <literal>INHERITS</> clause of the
-   <xref linkend="sql-createtable" endterm="sql-createtable-title">
+   <xref linkend="sql-createtable">
    statement.
    Alternatively, a table which is already defined in a compatible way can
    have a new parent relationship added, using the <literal>INHERIT</literal>
-   variant of <xref linkend="sql-altertable" endterm="sql-altertable-title">.
+   variant of <xref linkend="sql-altertable">.
    To do this the new child table must already include columns with
    the same names and types as the columns of the parent. It must also include
    check constraints with the same names and check expressions as those of the
@@ -2145,7 +2144,7 @@ VALUES ('New York', NULL, NULL, 'NY');
   </para>
 
   <para>
-   <xref linkend="sql-altertable" endterm="sql-altertable-title"> will
+   <xref linkend="sql-altertable"> will
    propagate any changes in column data definitions and check
    constraints down the inheritance hierarchy.  Again, dropping
    columns that are depended on by other tables is only possible when using

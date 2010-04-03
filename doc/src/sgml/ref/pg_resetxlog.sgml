@@ -1,11 +1,11 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/pg_resetxlog.sgml,v 1.22 2010/02/19 14:36:45 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/pg_resetxlog.sgml,v 1.23 2010/04/03 07:23:01 petere Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="APP-PGRESETXLOG">
  <refmeta>
-  <refentrytitle id="APP-PGRESETXLOG-TITLE"><application>pg_resetxlog</application></refentrytitle>
+  <refentrytitle><application>pg_resetxlog</application></refentrytitle>
   <manvolnum>1</manvolnum>
   <refmiscinfo>Application</refmiscinfo>
  </refmeta>

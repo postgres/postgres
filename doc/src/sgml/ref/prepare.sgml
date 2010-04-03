@@ -1,11 +1,11 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/prepare.sgml,v 1.25 2009/09/19 10:23:27 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/prepare.sgml,v 1.26 2010/04/03 07:23:02 petere Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="SQL-PREPARE">
  <refmeta>
-  <refentrytitle id="sql-prepare-title">PREPARE</refentrytitle>
+  <refentrytitle>PREPARE</refentrytitle>
   <manvolnum>7</manvolnum>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
@@ -55,7 +55,7 @@ PREPARE <replaceable class="PARAMETER">name</replaceable> [ ( <replaceable class
    in which the parameter is used (if possible). When executing the
    statement, specify the actual values for these parameters in the
    <command>EXECUTE</command> statement.  Refer to <xref
-   linkend="sql-execute" endterm="sql-execute-title"> for more
+   linkend="sql-execute"> for more
    information about that.
   </para>
 
@@ -66,8 +66,7 @@ PREPARE <replaceable class="PARAMETER">name</replaceable> [ ( <replaceable class
    also means that a single  prepared statement cannot be used by
    multiple simultaneous database clients; however, each client can create
    their own prepared statement to use.  The prepared statement can be
-   manually cleaned up using the <xref linkend="sql-deallocate"
-   endterm="sql-deallocate-title"> command.
+   manually cleaned up using the <xref linkend="sql-deallocate"> command.
   </para>
 
   <para>
@@ -141,14 +140,13 @@ PREPARE <replaceable class="PARAMETER">name</replaceable> [ ( <replaceable class
    when planning prepared statements with parameters, the chosen plan
    might be suboptimal. To examine the query plan
    <productname>PostgreSQL</productname> has chosen for a prepared
-   statement, use <xref linkend="sql-explain"
-   endterm="sql-explain-title">.
+   statement, use <xref linkend="sql-explain">.
   </para>
 
   <para>
    For more information on query planning and the statistics collected
    by <productname>PostgreSQL</productname> for that purpose, see
-   the <xref linkend="sql-analyze" endterm="sql-analyze-title">
+   the <xref linkend="sql-analyze">
    documentation.
   </para>
 
@@ -200,8 +198,8 @@ EXECUTE usrrptplan(1, current_date);
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-deallocate" endterm="sql-deallocate-title"></member>
-   <member><xref linkend="sql-execute" endterm="sql-execute-title"></member>
+   <member><xref linkend="sql-deallocate"></member>
+   <member><xref linkend="sql-execute"></member>
   </simplelist>
  </refsect1>
 </refentry>

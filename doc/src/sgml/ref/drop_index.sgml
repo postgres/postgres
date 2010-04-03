@@ -1,11 +1,11 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/drop_index.sgml,v 1.24 2008/11/14 10:22:46 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/drop_index.sgml,v 1.25 2010/04/03 07:23:00 petere Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="SQL-DROPINDEX">
  <refmeta>
-  <refentrytitle id="SQL-DROPINDEX-TITLE">DROP INDEX</refentrytitle>
+  <refentrytitle>DROP INDEX</refentrytitle>
   <manvolnum>7</manvolnum>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
@@ -105,7 +105,7 @@ DROP INDEX title_idx;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-createindex" endterm="sql-createindex-title"></member>
+   <member><xref linkend="sql-createindex"></member>
   </simplelist>
  </refsect1>
 

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/dblink.sgml,v 1.10 2010/01/06 19:07:05 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/dblink.sgml,v 1.11 2010/04/03 07:22:53 petere Exp $ -->
 
 <sect1 id="dblink">
  <title>dblink</title>
@@ -51,9 +51,9 @@
     the corresponding foreign-data wrapper.  See the example below, as
     well as the following:
     <simplelist type="inline">
-     <member><xref linkend="sql-createforeigndatawrapper" endterm="sql-createforeigndatawrapper-title"></member>
-     <member><xref linkend="sql-createserver" endterm="sql-createserver-title"></member>
-     <member><xref linkend="sql-createusermapping" endterm="sql-createusermapping-title"></member>
+     <member><xref linkend="sql-createforeigndatawrapper"></member>
+     <member><xref linkend="sql-createserver"></member>
+     <member><xref linkend="sql-createusermapping"></member>
     </simplelist>
    </para>
 

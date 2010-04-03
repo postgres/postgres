@@ -1,11 +1,11 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_operator.sgml,v 1.5 2009/09/19 10:23:26 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_operator.sgml,v 1.6 2010/04/03 07:22:57 petere Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="SQL-ALTEROPERATOR">
  <refmeta>
-  <refentrytitle id="SQL-ALTEROPERATOR-TITLE">ALTER OPERATOR</refentrytitle>
+  <refentrytitle>ALTER OPERATOR</refentrytitle>
   <manvolnum>7</manvolnum>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
@@ -112,8 +112,8 @@ ALTER OPERATOR @@ (text, text) OWNER TO joe;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-createoperator" endterm="sql-createoperator-title"></member>
-   <member><xref linkend="sql-dropoperator" endterm="sql-dropoperator-title"></member>
+   <member><xref linkend="sql-createoperator"></member>
+   <member><xref linkend="sql-dropoperator"></member>
   </simplelist>
  </refsect1>
 </refentry>

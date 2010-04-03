@@ -1,11 +1,11 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_group.sgml,v 1.21 2009/09/19 10:23:26 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_group.sgml,v 1.22 2010/04/03 07:22:58 petere Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="SQL-CREATEGROUP">
  <refmeta>
-  <refentrytitle id="sql-creategroup-title">CREATE GROUP</refentrytitle>
+  <refentrytitle>CREATE GROUP</refentrytitle>
   <manvolnum>7</manvolnum>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
@@ -47,7 +47,7 @@ CREATE GROUP <replaceable class="PARAMETER">name</replaceable> [ [ WITH ] <repla
 
   <para>
    <command>CREATE GROUP</command> is now an alias for
-   <xref linkend="sql-createrole" endterm="sql-createrole-title">.
+   <xref linkend="sql-createrole">.
   </para>
  </refsect1> 
  
@@ -64,7 +64,7 @@ CREATE GROUP <replaceable class="PARAMETER">name</replaceable> [ [ WITH ] <repla
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-createrole" endterm="sql-createrole-title"></member>
+   <member><xref linkend="sql-createrole"></member>
   </simplelist>
  </refsect1>
 </refentry>

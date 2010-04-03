@@ -1,11 +1,11 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_aggregate.sgml,v 1.39 2008/11/14 10:22:45 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_aggregate.sgml,v 1.40 2010/04/03 07:22:58 petere Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="SQL-CREATEAGGREGATE">
  <refmeta>
-  <refentrytitle id="sql-createaggregate-title">CREATE AGGREGATE</refentrytitle>
+  <refentrytitle>CREATE AGGREGATE</refentrytitle>
   <manvolnum>7</manvolnum>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
@@ -304,8 +304,8 @@ SELECT col FROM tab ORDER BY col USING sortop LIMIT 1;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-alteraggregate" endterm="sql-alteraggregate-title"></member>
-   <member><xref linkend="sql-dropaggregate" endterm="sql-dropaggregate-title"></member>
+   <member><xref linkend="sql-alteraggregate"></member>
+   <member><xref linkend="sql-dropaggregate"></member>
   </simplelist>
  </refsect1>
 </refentry>

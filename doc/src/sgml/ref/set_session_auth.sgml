@@ -1,7 +1,7 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/set_session_auth.sgml,v 1.19 2009/09/19 10:23:27 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/set_session_auth.sgml,v 1.20 2010/04/03 07:23:02 petere Exp $ -->
 <refentry id="SQL-SET-SESSION-AUTHORIZATION">
  <refmeta>
-  <refentrytitle id="sql-set-session-authorization-title">SET SESSION AUTHORIZATION</refentrytitle>
+  <refentrytitle>SET SESSION AUTHORIZATION</refentrytitle>
   <manvolnum>7</manvolnum>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
@@ -41,7 +41,7 @@ RESET SESSION AUTHORIZATION
    identifier is normally equal to the session user identifier, but
    might change temporarily in the context of <literal>SECURITY DEFINER</>
    functions and similar mechanisms; it can also be changed by
-   <xref linkend="sql-set-role" endterm="sql-set-role-title">.
+   <xref linkend="sql-set-role">.
    The current user identifier is relevant for permission checking.
   </para>
 
@@ -54,7 +54,7 @@ RESET SESSION AUTHORIZATION
 
   <para>
    The <literal>SESSION</> and <literal>LOCAL</> modifiers act the same
-   as for the regular <xref linkend="SQL-SET" endterm="SQL-SET-title">
+   as for the regular <xref linkend="SQL-SET">
    command.
   </para>
 
@@ -120,7 +120,7 @@ SELECT SESSION_USER, CURRENT_USER;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-set-role" endterm="sql-set-role-title"></member>
+   <member><xref linkend="sql-set-role"></member>
   </simplelist>
  </refsect1>
 </refentry>

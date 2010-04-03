@@ -1,11 +1,11 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/drop_user_mapping.sgml,v 1.4 2009/09/19 10:23:27 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/drop_user_mapping.sgml,v 1.5 2010/04/03 07:23:01 petere Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="SQL-DROPUSERMAPPING">
  <refmeta>
-  <refentrytitle id="sql-dropusermapping-title">DROP USER MAPPING</refentrytitle>
+  <refentrytitle>DROP USER MAPPING</refentrytitle>
   <manvolnum>7</manvolnum>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
@@ -103,8 +103,8 @@ DROP USER MAPPING IF EXISTS FOR bob SERVER foo;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-createusermapping" endterm="sql-createusermapping-title"></member>
-   <member><xref linkend="sql-alterusermapping" endterm="sql-alterusermapping-title"></member>
+   <member><xref linkend="sql-createusermapping"></member>
+   <member><xref linkend="sql-alterusermapping"></member>
   </simplelist>
  </refsect1>
 

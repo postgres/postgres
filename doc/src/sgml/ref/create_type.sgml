@@ -1,11 +1,11 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_type.sgml,v 1.81 2010/03/21 02:24:29 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_type.sgml,v 1.82 2010/04/03 07:23:00 petere Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="SQL-CREATETYPE">
  <refmeta>
-  <refentrytitle id="sql-createtype-title">CREATE TYPE</refentrytitle>
+  <refentrytitle>CREATE TYPE</refentrytitle>
   <manvolnum>7</manvolnum>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
@@ -779,10 +779,10 @@ CREATE TABLE big_objs (
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-createfunction" endterm="sql-createfunction-title"></member>
-   <member><xref linkend="sql-droptype" endterm="sql-droptype-title"></member>
-   <member><xref linkend="sql-altertype" endterm="sql-altertype-title"></member>
-   <member><xref linkend="sql-createdomain" endterm="sql-createdomain-title"></member>
+   <member><xref linkend="sql-createfunction"></member>
+   <member><xref linkend="sql-droptype"></member>
+   <member><xref linkend="sql-altertype"></member>
+   <member><xref linkend="sql-createdomain"></member>
   </simplelist>
  </refsect1>
 

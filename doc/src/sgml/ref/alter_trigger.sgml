@@ -1,11 +1,11 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_trigger.sgml,v 1.12 2009/09/19 10:23:26 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_trigger.sgml,v 1.13 2010/04/03 07:22:57 petere Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="SQL-ALTERTRIGGER">
  <refmeta>
-  <refentrytitle id="sql-altertrigger-title">ALTER TRIGGER</refentrytitle>
+  <refentrytitle>ALTER TRIGGER</refentrytitle>
   <manvolnum>7</manvolnum>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
@@ -78,7 +78,7 @@ ALTER TRIGGER <replaceable class="PARAMETER">name</replaceable> ON <replaceable 
 
    <para>
     The ability to temporarily enable or disable a trigger is provided by
-    <xref linkend="SQL-ALTERTABLE" endterm="SQL-ALTERTABLE-TITLE">, not by
+    <xref linkend="SQL-ALTERTABLE">, not by
     <command>ALTER TRIGGER</>, because <command>ALTER TRIGGER</> has no
     convenient way to express the option of enabling or disabling all of
     a table's triggers at once.
@@ -109,7 +109,7 @@ ALTER TRIGGER emp_stamp ON emp RENAME TO emp_track_chgs;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-altertable" endterm="sql-altertable-title"></member>
+   <member><xref linkend="sql-altertable"></member>
   </simplelist>
  </refsect1>
 </refentry>

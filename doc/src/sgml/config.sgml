@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.261 2010/03/17 18:03:55 mha Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.262 2010/04/03 07:22:53 petere Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -135,8 +135,8 @@ env PGOPTIONS='-c geqo=off' psql
     Furthermore, it is possible to assign a set of parameter settings to
     a user or a database.  Whenever a session is started, the default
     settings for the user and database involved are loaded.  The
-    commands <xref linkend="sql-alteruser" endterm="sql-alteruser-title">
-    and <xref linkend="sql-alterdatabase" endterm="sql-alterdatabase-title">,
+    commands <xref linkend="sql-alteruser">
+    and <xref linkend="sql-alterdatabase">,
     respectively, are used to configure these settings.  Per-database
     settings override anything received from the
     <command>postgres</command> command-line or the configuration
@@ -146,7 +146,7 @@ env PGOPTIONS='-c geqo=off' psql
 
    <para>
     Some parameters can be changed in individual <acronym>SQL</acronym>
-    sessions with the <xref linkend="SQL-SET" endterm="SQL-SET-title">
+    sessions with the <xref linkend="SQL-SET">
     command, for example:
 <screen>
 SET ENABLE_SEQSCAN TO OFF;
@@ -161,7 +161,7 @@ SET ENABLE_SEQSCAN TO OFF;
    </para>
 
    <para>
-    The <xref linkend="SQL-SHOW" endterm="SQL-SHOW-title">
+    The <xref linkend="SQL-SHOW">
     command allows inspection of the current values of all parameters.
    </para>
 
@@ -654,8 +654,8 @@ SET ENABLE_SEQSCAN TO OFF;
       <listitem>
        <para>
         When a password is specified in <xref
-        linkend="sql-createuser" endterm="sql-createuser-title"> or
-        <xref linkend="sql-alteruser" endterm="sql-alteruser-title">
+        linkend="sql-createuser"> or
+        <xref linkend="sql-alteruser">
         without writing either <literal>ENCRYPTED</> or
         <literal>UNENCRYPTED</>, this parameter determines whether the
         password is to be encrypted. The default is <literal>on</>
@@ -836,8 +836,7 @@ SET ENABLE_SEQSCAN TO OFF;
        <para>
         Sets the maximum number of transactions that can be in the
         <quote>prepared</> state simultaneously (see <xref
-        linkend="sql-prepare-transaction"
-        endterm="sql-prepare-transaction-title">).
+        linkend="sql-prepare-transaction">).
         Setting this parameter to zero (which is the default)
         disables the prepared-transaction feature.
         This parameter can only be set at server start.
@@ -1039,14 +1038,12 @@ SET ENABLE_SEQSCAN TO OFF;
     </sect2>
 
     <sect2 id="runtime-config-resource-vacuum-cost">
-     <title id="runtime-config-resource-vacuum-cost-title">
-       Cost-Based Vacuum Delay
-     </title>
+     <title>Cost-Based Vacuum Delay</title>
 
      <para>
-      During the execution of <xref linkend="sql-vacuum"
-      endterm="sql-vacuum-title"> and <xref linkend="sql-analyze"
-      endterm="sql-analyze-title"> commands, the system maintains an
+      During the execution of <xref linkend="sql-vacuum">
+      and <xref linkend="sql-analyze">
+      commands, the system maintains an
       internal counter that keeps track of the estimated cost of the
       various I/O operations that are performed.  When the accumulated
       cost reaches a limit (specified by
@@ -1908,10 +1905,9 @@ archive_command = 'copy "%p" "C:\\server\\archivedir\\%f"'  # Windows
        of these configuration parameters to force the optimizer to
        choose a different plan.
        Better ways to improve the quality of the
-       plans chosen by the optimizer include adjusting the <xref
-       linkend="runtime-config-query-constants"
-       endterm="runtime-config-query-constants-title">,  running <xref
-       linkend="sql-analyze" endterm="sql-analyze-title"> manually, increasing
+       plans chosen by the optimizer include adjusting the planer cost
+       constants (see <xref linkend="runtime-config-query-constants">),
+       running <xref linkend="sql-analyze"> manually, increasing
        the value of the <xref
        linkend="guc-default-statistics-target"> configuration parameter,
        and increasing the amount of statistics collected for
@@ -2058,9 +2054,7 @@ archive_command = 'copy "%p" "C:\\server\\archivedir\\%f"'  # Windows
      </variablelist>
      </sect2>
      <sect2 id="runtime-config-query-constants">
-     <title id="runtime-config-query-constants-title">
-      Planner Cost Constants
-     </title>
+     <title>Planner Cost Constants</title>
 
     <para>
      The <firstterm>cost</> variables described in this section are measured
@@ -4182,8 +4176,7 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
        <para>
         This parameter is normally on. When set to <literal>off</>, it
         disables validation of the function body string during <xref
-        linkend="sql-createfunction"
-        endterm="sql-createfunction-title">. Disabling validation is
+        linkend="sql-createfunction">. Disabling validation is
         occasionally useful to avoid problems such as forward references
         when restoring function definitions from a dump.
        </para>
@@ -4210,8 +4203,7 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
 
        <para>
         Consult <xref linkend="mvcc"> and <xref
-        linkend="sql-set-transaction"
-        endterm="sql-set-transaction-title"> for more information.
+        linkend="sql-set-transaction"> for more information.
        </para>
       </listitem>
      </varlistentry>
@@ -4233,8 +4225,7 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
        </para>
 
        <para>
-        Consult <xref linkend="sql-set-transaction"
-        endterm="sql-set-transaction-title"> for more information.
+        Consult <xref linkend="sql-set-transaction"> for more information.
        </para>
       </listitem>
      </varlistentry>
@@ -4251,7 +4242,7 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
         superuser privilege and results in discarding any previously cached
         query plans.  Possible values are <literal>origin</> (the default),
         <literal>replica</> and <literal>local</>.
-        See <xref linkend="sql-altertable" endterm="sql-altertable-title"> for
+        See <xref linkend="sql-altertable"> for
         more information.
        </para>
       </listitem>

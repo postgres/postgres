@@ -1,11 +1,11 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_table_as.sgml,v 1.40 2008/11/20 14:04:45 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_table_as.sgml,v 1.41 2010/04/03 07:23:00 petere Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="SQL-CREATETABLEAS">
  <refmeta>
-  <refentrytitle id="sql-createtableas-title">CREATE TABLE AS</refentrytitle>
+  <refentrytitle>CREATE TABLE AS</refentrytitle>
   <manvolnum>7</manvolnum>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
@@ -63,7 +63,7 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE <replaceable>table_name
     <listitem>
      <para>
       Ignored for compatibility. Refer to <xref
-      linkend="sql-createtable" endterm="sql-createtable-title"> for
+      linkend="sql-createtable"> for
       details.
      </para>
     </listitem>
@@ -76,7 +76,7 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE <replaceable>table_name
     <listitem>
      <para>
       If specified, the table is created as a temporary table.
-      Refer to <xref linkend="sql-createtable" endterm="sql-createtable-title"> for details.
+      Refer to <xref linkend="sql-createtable"> for details.
      </para>
     </listitem>
    </varlistentry>
@@ -115,8 +115,7 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE <replaceable>table_name
       to specify that rows of the new table
       should have OIDs (object identifiers) assigned to them, or
       <literal>OIDS=FALSE</> to specify that the rows should not have OIDs.
-      See <xref linkend="sql-createtable"
-      endterm="sql-createtable-title"> for more information.
+      See <xref linkend="sql-createtable"> for more information.
      </para>
     </listitem>
    </varlistentry>
@@ -159,7 +158,7 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE <replaceable>table_name
          <para>
           All rows in the temporary table will be deleted at the end
           of each transaction block.  Essentially, an automatic <xref
-          linkend="sql-truncate" endterm="sql-truncate-title"> is done
+          linkend="sql-truncate"> is done
           at each commit.
          </para>
         </listitem>
@@ -197,10 +196,10 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE <replaceable>table_name
     <listitem>
      <para>
       A <xref linkend="sql-select"
-      endterm="sql-select-title">, <link linkend="sql-table">TABLE</link>,
+     >, <link linkend="sql-table">TABLE</link>,
       or
-      <xref linkend="sql-values" endterm="sql-values-title"> command,
-      or an <xref linkend="sql-execute" endterm="sql-execute-title"> command
+      <xref linkend="sql-values"> command,
+      or an <xref linkend="sql-execute"> command
       that runs a prepared <command>SELECT</>, <command>TABLE</>, or <command>VALUES</> query.
      </para>
     </listitem>
@@ -225,7 +224,7 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE <replaceable>table_name
 
   <para>
    This command is functionally similar to <xref
-   linkend="sql-selectinto" endterm="sql-selectinto-title">, but it is
+   linkend="sql-selectinto">, but it is
    preferred since it is less likely to be confused with other uses of
    the <command>SELECT INTO</> syntax. Furthermore, <command>CREATE
    TABLE AS</command> offers a superset of the functionality offered
@@ -313,7 +312,7 @@ CREATE TEMP TABLE films_recent WITH (OIDS) ON COMMIT DROP AS
      <para>
       <productname>PostgreSQL</> handles temporary tables in a way
       rather different from the standard; see
-      <xref linkend="sql-createtable" endterm="sql-createtable-title">
+      <xref linkend="sql-createtable">
       for details.
      </para>
     </listitem>
@@ -340,11 +339,11 @@ CREATE TEMP TABLE films_recent WITH (OIDS) ON COMMIT DROP AS
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-createtable" endterm="sql-createtable-title"></member>
-   <member><xref linkend="sql-execute" endterm="sql-execute-title"></member>
-   <member><xref linkend="sql-select" endterm="sql-select-title"></member>
-   <member><xref linkend="sql-selectinto" endterm="sql-selectinto-title"></member>
-   <member><xref linkend="sql-values" endterm="sql-values-title"></member>
+   <member><xref linkend="sql-createtable"></member>
+   <member><xref linkend="sql-execute"></member>
+   <member><xref linkend="sql-select"></member>
+   <member><xref linkend="sql-selectinto"></member>
+   <member><xref linkend="sql-values"></member>
   </simplelist>
  </refsect1>
  

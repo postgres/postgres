@@ -1,11 +1,11 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/drop_tsparser.sgml,v 1.2 2008/11/14 10:22:47 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/drop_tsparser.sgml,v 1.3 2010/04/03 07:23:01 petere Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="SQL-DROPTSPARSER">
  <refmeta>
-  <refentrytitle id="SQL-DROPTSPARSER-TITLE">DROP TEXT SEARCH PARSER</refentrytitle>
+  <refentrytitle>DROP TEXT SEARCH PARSER</refentrytitle>
   <manvolnum>7</manvolnum>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
@@ -108,8 +108,8 @@ DROP TEXT SEARCH PARSER my_parser;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-altertsparser" endterm="sql-altertsparser-title"></member>
-   <member><xref linkend="sql-createtsparser" endterm="sql-createtsparser-title"></member>
+   <member><xref linkend="sql-altertsparser"></member>
+   <member><xref linkend="sql-createtsparser"></member>
   </simplelist>
  </refsect1>
 

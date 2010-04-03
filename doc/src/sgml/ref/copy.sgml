@@ -1,12 +1,12 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/copy.sgml,v 1.95 2010/02/23 21:38:35 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/copy.sgml,v 1.96 2010/04/03 07:22:58 petere Exp $
 PostgreSQL documentation
 -->
 
 
 <refentry id="SQL-COPY">
  <refmeta>
-  <refentrytitle id="sql-copy-title">COPY</refentrytitle>
+  <refentrytitle>COPY</refentrytitle>
   <manvolnum>7</manvolnum>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
@@ -103,8 +103,8 @@ COPY { <replaceable class="parameter">table_name</replaceable> [ ( <replaceable 
     <term><replaceable class="parameter">query</replaceable></term>
     <listitem>
      <para>
-      A <xref linkend="sql-select" endterm="sql-select-title"> or
-      <xref linkend="sql-values" endterm="sql-values-title"> command
+      A <xref linkend="sql-select"> or
+      <xref linkend="sql-values"> command
       whose results are to be copied.
       Note that parentheses are required around the query.
      </para>

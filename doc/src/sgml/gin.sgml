@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/gin.sgml,v 2.19 2009/04/09 19:07:44 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/gin.sgml,v 2.20 2010/04/03 07:22:54 petere Exp $ -->
 
 <chapter id="GIN">
 <title>GIN Indexes</title>
@@ -241,8 +241,8 @@
    If consistent response time is more important than update speed,
    use of pending entries can be disabled by turning off the
    <literal>FASTUPDATE</literal> storage parameter for a
-   <acronym>GIN</acronym> index.  See <xref linkend="sql-createindex"
-   endterm="sql-createindex-title"> for details.
+   <acronym>GIN</acronym> index.  See <xref linkend="sql-createindex">
+   for details.
   </para>
  </sect2>
 

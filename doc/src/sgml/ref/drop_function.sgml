@@ -1,11 +1,11 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/drop_function.sgml,v 1.35 2008/11/14 10:22:46 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/drop_function.sgml,v 1.36 2010/04/03 07:23:00 petere Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="SQL-DROPFUNCTION">
  <refmeta>
-  <refentrytitle id="SQL-DROPFUNCTION-TITLE">DROP FUNCTION</refentrytitle>
+  <refentrytitle>DROP FUNCTION</refentrytitle>
   <manvolnum>7</manvolnum>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
@@ -149,8 +149,8 @@ DROP FUNCTION sqrt(integer);
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-createfunction" endterm="sql-createfunction-title"></member>
-   <member><xref linkend="sql-alterfunction" endterm="sql-alterfunction-title"></member>
+   <member><xref linkend="sql-createfunction"></member>
+   <member><xref linkend="sql-alterfunction"></member>
   </simplelist>
  </refsect1>
 

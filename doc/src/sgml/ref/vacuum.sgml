@@ -1,11 +1,11 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/vacuum.sgml,v 1.59 2010/02/17 04:19:39 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/vacuum.sgml,v 1.60 2010/04/03 07:23:02 petere Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="SQL-VACUUM">
  <refmeta>
-  <refentrytitle id="sql-vacuum-title">VACUUM</refentrytitle>
+  <refentrytitle>VACUUM</refentrytitle>
   <manvolnum>7</manvolnum>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
@@ -49,7 +49,7 @@ VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] ANALYZE [ <replaceable class="PARAMETER">
    <command>VACUUM ANALYZE</command> performs a <command>VACUUM</command>
    and then an <command>ANALYZE</command> for each selected table.  This
    is a handy combination form for routine maintenance scripts.  See
-   <xref linkend="sql-analyze" endterm="sql-analyze-title">
+   <xref linkend="sql-analyze">
    for more details about its processing.
   </para>
 
@@ -271,9 +271,9 @@ VACUUM
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="app-vacuumdb" endterm="app-vacuumdb-title"></member>
-   <member><xref linkend="runtime-config-resource-vacuum-cost" endterm="runtime-config-resource-vacuum-cost-title"></member>
-   <member><xref linkend="autovacuum" endterm="autovacuum-title"></member>
+   <member><xref linkend="app-vacuumdb"></member>
+   <member><xref linkend="runtime-config-resource-vacuum-cost"></member>
+   <member><xref linkend="autovacuum"></member>
   </simplelist>
  </refsect1>
 </refentry>

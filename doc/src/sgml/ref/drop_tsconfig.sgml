@@ -1,11 +1,11 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/drop_tsconfig.sgml,v 1.2 2008/11/14 10:22:47 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/drop_tsconfig.sgml,v 1.3 2010/04/03 07:23:01 petere Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="SQL-DROPTSCONFIG">
  <refmeta>
-  <refentrytitle id="SQL-DROPTSCONFIG-TITLE">DROP TEXT SEARCH CONFIGURATION</refentrytitle>
+  <refentrytitle>DROP TEXT SEARCH CONFIGURATION</refentrytitle>
   <manvolnum>7</manvolnum>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
@@ -111,8 +111,8 @@ DROP TEXT SEARCH CONFIGURATION my_english;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-altertsconfig" endterm="sql-altertsconfig-title"></member>
-   <member><xref linkend="sql-createtsconfig" endterm="sql-createtsconfig-title"></member>
+   <member><xref linkend="sql-altertsconfig"></member>
+   <member><xref linkend="sql-createtsconfig"></member>
   </simplelist>
  </refsect1>
 

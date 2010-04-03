@@ -1,11 +1,11 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_index.sgml,v 1.73 2010/03/17 15:55:50 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_index.sgml,v 1.74 2010/04/03 07:22:58 petere Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="SQL-CREATEINDEX">
  <refmeta>
-  <refentrytitle id="sql-createindex-title">CREATE INDEX</refentrytitle>
+  <refentrytitle>CREATE INDEX</refentrytitle>
   <manvolnum>7</manvolnum>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
@@ -488,7 +488,7 @@ Indexes:
   </para>
 
   <para>
-   Use <xref linkend="sql-dropindex" endterm="sql-dropindex-title">
+   Use <xref linkend="sql-dropindex">
    to remove an index.
   </para>
 
@@ -588,8 +588,8 @@ CREATE INDEX CONCURRENTLY sales_quantity_index ON sales_table (quantity);
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-alterindex" endterm="sql-alterindex-title"></member>
-   <member><xref linkend="sql-dropindex" endterm="sql-dropindex-title"></member>
+   <member><xref linkend="sql-alterindex"></member>
+   <member><xref linkend="sql-dropindex"></member>
   </simplelist>
  </refsect1>
 </refentry>

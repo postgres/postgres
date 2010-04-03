@@ -1,11 +1,11 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_foreign_data_wrapper.sgml,v 1.3 2009/06/19 15:28:25 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_foreign_data_wrapper.sgml,v 1.4 2010/04/03 07:22:56 petere Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="SQL-ALTERFOREIGNDATAWRAPPER">
  <refmeta>
-  <refentrytitle id="sql-alterforeigndatawrapper-title">ALTER FOREIGN DATA WRAPPER</refentrytitle>
+  <refentrytitle>ALTER FOREIGN DATA WRAPPER</refentrytitle>
   <manvolnum>7</manvolnum>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
@@ -136,8 +136,8 @@ ALTER FOREIGN DATA WRAPPER dbi VALIDATOR bob.myvalidator;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-createforeigndatawrapper" endterm="sql-createforeigndatawrapper-title"></member>
-   <member><xref linkend="sql-dropforeigndatawrapper" endterm="sql-dropforeigndatawrapper-title"></member>
+   <member><xref linkend="sql-createforeigndatawrapper"></member>
+   <member><xref linkend="sql-dropforeigndatawrapper"></member>
   </simplelist>
  </refsect1>
 

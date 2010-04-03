@@ -1,11 +1,11 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/reassign_owned.sgml,v 1.5 2010/04/02 17:29:22 sriggs Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/reassign_owned.sgml,v 1.6 2010/04/03 07:23:02 petere Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="SQL-REASSIGN-OWNED">
  <refmeta>
-  <refentrytitle id="SQL-REASSIGN-OWNED-TITLE">REASSIGN OWNED</refentrytitle>
+  <refentrytitle>REASSIGN OWNED</refentrytitle>
   <manvolnum>7</manvolnum>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
@@ -79,8 +79,7 @@ REASSIGN OWNED BY <replaceable class="PARAMETER">old_role</replaceable> [, ...] 
   </para>
 
   <para>
-   The <xref linkend="sql-drop-owned"
-    endterm="sql-drop-owned-title"> command is an alternative that
+   The <xref linkend="sql-drop-owned"> command is an alternative that
    drops all the database objects owned by one or more roles. Note
    also that <command>DROP OWNED</command> requires privileges only
    on the source role(s).
@@ -108,8 +107,8 @@ REASSIGN OWNED BY <replaceable class="PARAMETER">old_role</replaceable> [, ...] 
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-drop-owned" endterm="sql-drop-owned-title"></member>
-   <member><xref linkend="sql-droprole" endterm="sql-droprole-title"></member>
+   <member><xref linkend="sql-drop-owned"></member>
+   <member><xref linkend="sql-droprole"></member>
   </simplelist>
  </refsect1>
 

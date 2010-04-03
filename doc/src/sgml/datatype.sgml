@@ -1,7 +1,7 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.247 2010/03/29 22:01:08 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.248 2010/04/03 07:22:53 petere Exp $ -->
 
  <chapter id="datatype">
-  <title id="datatype-title">Data Types</title>
+  <title>Data Types</title>
 
   <indexterm zone="datatype">
    <primary>data type</primary>
@@ -16,7 +16,7 @@
    <productname>PostgreSQL</productname> has a rich set of native data
    types available to users.  Users can add new types to
    <productname>PostgreSQL</productname> using the <xref
-   linkend="sql-createtype" endterm="sql-createtype-title"> command.
+   linkend="sql-createtype"> command.
   </para>
 
   <para>
@@ -2843,7 +2843,7 @@ SELECT * FROM test1 WHERE a;
 
     <para>
      Enum types are created using the <xref
-     linkend="sql-createtype" endterm="sql-createtype-title"> command,
+     linkend="sql-createtype"> command,
      for example:
 
 <programlisting>

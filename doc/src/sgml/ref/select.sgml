@@ -1,11 +1,11 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/select.sgml,v 1.129 2010/02/12 17:33:19 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/select.sgml,v 1.130 2010/04/03 07:23:02 petere Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="SQL-SELECT">
  <refmeta>
-  <refentrytitle id="sql-select-title">SELECT</refentrytitle>
+  <refentrytitle>SELECT</refentrytitle>
   <manvolnum>7</manvolnum>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
@@ -305,7 +305,7 @@ TABLE { [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ] |
         sub-<command>SELECT</command> must be surrounded by
         parentheses, and an alias <emphasis>must</emphasis> be
         provided for it.  A
-        <xref linkend="sql-values" endterm="sql-values-title"> command
+        <xref linkend="sql-values"> command
         can also be used here.
        </para>
       </listitem>
@@ -1154,7 +1154,7 @@ FOR SHARE [ OF <replaceable class="parameter">table_name</replaceable> [, ...] ]
     to the row-level lock(s) &mdash; the required <literal>ROW SHARE</literal>
     table-level lock is still taken in the ordinary way (see
     <xref linkend="mvcc">).  You can use
-    <xref linkend="sql-lock" endterm="sql-lock-title">
+    <xref linkend="sql-lock">
     with the <literal>NOWAIT</> option first,
     if you need to acquire the table-level lock without waiting.
    </para>

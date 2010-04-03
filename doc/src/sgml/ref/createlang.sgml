@@ -1,11 +1,11 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/createlang.sgml,v 1.45 2010/02/19 14:36:45 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/createlang.sgml,v 1.46 2010/04/03 07:23:00 petere Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="APP-CREATELANG">
  <refmeta>
-  <refentrytitle id="APP-CREATELANG-TITLE"><application>createlang</application></refentrytitle>
+  <refentrytitle><application>createlang</application></refentrytitle>
   <manvolnum>1</manvolnum>
   <refmiscinfo>Application</refmiscinfo>
  </refmeta>
@@ -41,7 +41,7 @@ PostgreSQL documentation
    <application>createlang</application> is a utility for adding a new 
    programming language to a <productname>PostgreSQL</productname> database.
    <application>createlang</application> is just a wrapper around the
-   <xref linkend="sql-createlanguage" endterm="sql-createlanguage-title">
+   <xref linkend="sql-createlanguage">
    command.
   </para>
  </refsect1>
@@ -271,7 +271,7 @@ PostgreSQL documentation
 
   <simplelist type="inline">
    <member><xref linkend="app-droplang"></member>
-   <member><xref linkend="sql-createlanguage" endterm="sql-createlanguage-title"></member>
+   <member><xref linkend="sql-createlanguage"></member>
   </simplelist>
  </refsect1>
 

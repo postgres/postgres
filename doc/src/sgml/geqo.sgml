@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/geqo.sgml,v 1.42 2009/08/10 22:41:38 alvherre Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/geqo.sgml,v 1.43 2010/04/03 07:22:54 petere Exp $ -->
 
  <chapter id="geqo">
   <chapterinfo>
@@ -25,7 +25,7 @@
    <date>1997-10-02</date>
   </chapterinfo>
 
-  <title id="geqo-title">Genetic Query Optimizer</title>
+  <title>Genetic Query Optimizer</title>
 
   <para>
    <note>

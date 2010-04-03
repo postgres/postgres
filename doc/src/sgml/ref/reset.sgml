@@ -1,11 +1,11 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/reset.sgml,v 1.37 2008/11/14 10:22:47 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/reset.sgml,v 1.38 2010/04/03 07:23:02 petere Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="SQL-RESET">
  <refmeta>
-  <refentrytitle id="SQL-RESET-TITLE">RESET</refentrytitle>
+  <refentrytitle>RESET</refentrytitle>
   <manvolnum>7</manvolnum>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
@@ -36,7 +36,7 @@ RESET ALL
 <synopsis>
 SET <replaceable class="parameter">configuration_parameter</replaceable> TO DEFAULT
 </synopsis>
-   Refer to <xref linkend="sql-set" endterm="sql-set-title"> for
+   Refer to <xref linkend="sql-set"> for
    details.
   </para>
 
@@ -68,7 +68,7 @@ SET <replaceable class="parameter">configuration_parameter</replaceable> TO DEFA
      <para>
       Name of a settable run-time parameter.  Available parameters are
       documented in <xref linkend="runtime-config"> and on the
-      <xref linkend="sql-set" endterm="sql-set-title"> reference page.
+      <xref linkend="sql-set"> reference page.
      </para>
     </listitem>
    </varlistentry>
@@ -107,8 +107,8 @@ RESET timezone;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="SQL-SET" endterm="SQL-SET-title"></member>
-   <member><xref linkend="SQL-SHOW" endterm="SQL-SHOW-title"></member>
+   <member><xref linkend="SQL-SET"></member>
+   <member><xref linkend="SQL-SHOW"></member>
   </simplelist>
  </refsect1>
 </refentry>

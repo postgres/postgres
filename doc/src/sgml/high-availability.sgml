@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/high-availability.sgml,v 1.57 2010/03/31 20:41:50 heikki Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/high-availability.sgml,v 1.58 2010/04/03 07:22:54 petere Exp $ -->
 
 <chapter id="high-availability">
  <title>High Availability, Load Balancing, and Replication</title>
@@ -201,9 +201,8 @@ protocol to make nodes agree on a serializable transactional order.
      must query such values from a single server and then use those
      values in write queries.  Also, care must be taken that all
      transactions either commit or abort on all servers, perhaps
-     using two-phase commit (<xref linkend="sql-prepare-transaction"
-     endterm="sql-prepare-transaction-title"> and <xref
-     linkend="sql-commit-prepared" endterm="sql-commit-prepared-title">.
+     using two-phase commit (<xref linkend="sql-prepare-transaction">
+     and <xref linkend="sql-commit-prepared">.
      <productname>Pgpool-II</> and <productname>Sequoia</> are examples of
      this type of replication.
     </para>
@@ -250,9 +249,8 @@ protocol to make nodes agree on a serializable transactional order.
     <para>
      <productname>PostgreSQL</> does not offer this type of replication,
      though <productname>PostgreSQL</> two-phase commit (<xref
-     linkend="sql-prepare-transaction"
-     endterm="sql-prepare-transaction-title"> and <xref
-     linkend="sql-commit-prepared" endterm="sql-commit-prepared-title">)
+     linkend="sql-prepare-transaction"> and <xref
+     linkend="sql-commit-prepared">)
      can be used to implement this in application code or middleware.
     </para>
    </listitem>
@@ -552,7 +550,7 @@ protocol to make nodes agree on a serializable transactional order.
     associated with tablespaces will be passed across unmodified, so both
     primary and standby servers must have the same mount paths for
     tablespaces if that feature is used.  Keep in mind that if
-    <xref linkend="sql-createtablespace" endterm="sql-createtablespace-title">
+    <xref linkend="sql-createtablespace">
     is executed on the primary, any new mount point needed for it must
     be created on the primary and all standby servers before the command
     is executed. Hardware need not be exactly the same, but experience shows

@@ -1,11 +1,11 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_index.sgml,v 1.14 2008/11/14 10:22:45 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_index.sgml,v 1.15 2010/04/03 07:22:56 petere Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="SQL-ALTERINDEX">
  <refmeta>
-  <refentrytitle id="sql-alterindex-title">ALTER INDEX</refentrytitle>
+  <refentrytitle>ALTER INDEX</refentrytitle>
   <manvolnum>7</manvolnum>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
@@ -54,7 +54,7 @@ ALTER INDEX <replaceable class="PARAMETER">name</replaceable> RESET ( <replaceab
       This form changes the index's tablespace to the specified tablespace and
       moves the data file(s) associated with the index to the new tablespace.
       See also 
-      <xref linkend="SQL-CREATETABLESPACE" endterm="sql-createtablespace-title">.
+      <xref linkend="SQL-CREATETABLESPACE">.
      </para>
     </listitem>
    </varlistentry>
@@ -65,11 +65,11 @@ ALTER INDEX <replaceable class="PARAMETER">name</replaceable> RESET ( <replaceab
      <para>
       This form changes one or more index-method-specific storage parameters
       for the index.  See
-      <xref linkend="SQL-CREATEINDEX" endterm="sql-createindex-title">
+      <xref linkend="SQL-CREATEINDEX">
       for details on the available parameters.  Note that the index contents
       will not be modified immediately by this command; depending on the
       parameter you might need to rebuild the index with
-      <xref linkend="SQL-REINDEX" endterm="sql-reindex-title">
+      <xref linkend="SQL-REINDEX">
       to get the desired effects.
      </para>
     </listitem>
@@ -151,7 +151,7 @@ ALTER INDEX <replaceable class="PARAMETER">name</replaceable> RESET ( <replaceab
 
    <para>
     These operations are also possible using
-    <xref linkend="SQL-ALTERTABLE" endterm="SQL-ALTERTABLE-TITLE">.
+    <xref linkend="SQL-ALTERTABLE">.
     <command>ALTER INDEX</> is in fact just an alias for the forms
     of <command>ALTER TABLE</> that apply to indexes.
    </para>
@@ -209,8 +209,8 @@ REINDEX INDEX distributors;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-createindex" endterm="sql-createindex-title"></member>
-   <member><xref linkend="sql-reindex" endterm="sql-reindex-title"></member>
+   <member><xref linkend="sql-createindex"></member>
+   <member><xref linkend="sql-reindex"></member>
   </simplelist>
  </refsect1>
 </refentry>

@@ -1,11 +1,11 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_domain.sgml,v 1.24 2008/11/14 10:22:45 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_domain.sgml,v 1.25 2010/04/03 07:22:56 petere Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="SQL-ALTERDOMAIN">
  <refmeta>
-  <refentrytitle id="sql-alterdomain-title">ALTER DOMAIN</refentrytitle>
+  <refentrytitle>ALTER DOMAIN</refentrytitle>
   <manvolnum>7</manvolnum>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
@@ -74,7 +74,7 @@ ALTER DOMAIN <replaceable class="PARAMETER">name</replaceable>
     <listitem>
      <para>
       This form adds a new constraint to a domain using the same syntax as
-      <xref linkend="SQL-CREATEDOMAIN" endterm="SQL-CREATEDOMAIN-TITLE">.
+      <xref linkend="SQL-CREATEDOMAIN">.
       This will only succeed if all columns using the domain satisfy the
       new constraint.
      </para>
@@ -260,8 +260,8 @@ ALTER DOMAIN zipcode SET SCHEMA customers;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-createdomain" endterm="sql-createdomain-title"></member>
-   <member><xref linkend="sql-dropdomain" endterm="sql-dropdomain-title"></member>
+   <member><xref linkend="sql-createdomain"></member>
+   <member><xref linkend="sql-dropdomain"></member>
   </simplelist>
  </refsect1>
 

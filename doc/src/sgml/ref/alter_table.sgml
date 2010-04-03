@@ -1,11 +1,11 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.111 2010/01/22 17:30:24 rhaas Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.112 2010/04/03 07:22:57 petere Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="SQL-ALTERTABLE">
  <refmeta>
-  <refentrytitle id="sql-altertable-title">ALTER TABLE</refentrytitle>
+  <refentrytitle>ALTER TABLE</refentrytitle>
   <manvolnum>7</manvolnum>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
@@ -78,7 +78,7 @@ ALTER TABLE <replaceable class="PARAMETER">name</replaceable>
     <listitem>
      <para>
       This form adds a new column to the table, using the same syntax as
-      <xref linkend="SQL-CREATETABLE" endterm="SQL-CREATETABLE-TITLE">.
+      <xref linkend="SQL-CREATETABLE">.
      </para>
     </listitem>
    </varlistentry>
@@ -147,7 +147,7 @@ ALTER TABLE <replaceable class="PARAMETER">name</replaceable>
      <para>
       This form
       sets the per-column statistics-gathering target for subsequent
-      <xref linkend="sql-analyze" endterm="sql-analyze-title"> operations.
+      <xref linkend="sql-analyze"> operations.
       The target can be set in the range 0 to 10000; alternatively, set it
       to -1 to revert to using the system default statistics
       target (<xref linkend="guc-default-statistics-target">).
@@ -167,7 +167,7 @@ ALTER TABLE <replaceable class="PARAMETER">name</replaceable>
       define attribute-level options are <literal>n_distinct</> and
       <literal>n_distinct_inherited</>, which override the
       number-of-distinct-values estimate made by subsequent
-      <xref linkend="sql-analyze" endterm="sql-analyze-title">
+      <xref linkend="sql-analyze">
       operations.  <literal>n_distinct</> affects the statistics for the table
       itself, while <literal>n_distinct_inherited</> affects the statistics
       gathered for the table and its inheritance children.  When set to a
@@ -223,7 +223,7 @@ ALTER TABLE <replaceable class="PARAMETER">name</replaceable>
     <listitem>
      <para>
       This form adds a new constraint to a table using the same syntax as
-      <xref linkend="SQL-CREATETABLE" endterm="SQL-CREATETABLE-TITLE">.
+      <xref linkend="SQL-CREATETABLE">.
      </para>
     </listitem>
    </varlistentry>
@@ -284,7 +284,7 @@ ALTER TABLE <replaceable class="PARAMETER">name</replaceable>
     <listitem>
      <para>
       This form selects the default index for future
-      <xref linkend="SQL-CLUSTER" endterm="sql-cluster-title">
+      <xref linkend="SQL-CLUSTER">
       operations.  It does not actually re-cluster the table.
      </para>
     </listitem>
@@ -295,7 +295,7 @@ ALTER TABLE <replaceable class="PARAMETER">name</replaceable>
     <listitem>
      <para>
       This form removes the most recently used
-      <xref linkend="SQL-CLUSTER" endterm="sql-cluster-title">
+      <xref linkend="SQL-CLUSTER">
       index specification from the table.  This affects
       future cluster operations that don't specify an index.
      </para>
@@ -338,12 +338,12 @@ ALTER TABLE <replaceable class="PARAMETER">name</replaceable>
      <para>
       This form changes one or more storage parameters for the table.  See
       <xref linkend="SQL-CREATETABLE-storage-parameters"
-      endterm="sql-createtable-storage-parameters-title">
+      endterm="SQL-CREATETABLE-storage-parameters-title">
       for details on the available parameters.  Note that the table contents
       will not be modified immediately by this command; depending on the
       parameter you might need to rewrite the table to get the desired effects.
-      That can be done with <xref linkend="SQL-CLUSTER"
-      endterm="sql-cluster-title"> or one of the forms of <command>ALTER
+      That can be done with <xref linkend="SQL-CLUSTER">
+      or one of the forms of <command>ALTER
       TABLE</> that forces a table rewrite.
      </para>
 
@@ -426,7 +426,7 @@ ALTER TABLE <replaceable class="PARAMETER">name</replaceable>
       Indexes on the table, if any, are not moved; but they can be moved
       separately with additional <literal>SET TABLESPACE</literal> commands.
       See also
-      <xref linkend="SQL-CREATETABLESPACE" endterm="sql-createtablespace-title">.
+      <xref linkend="SQL-CREATETABLESPACE">.
      </para>
     </listitem>
    </varlistentry>
@@ -774,8 +774,7 @@ ALTER TABLE table ALTER COLUMN anycol TYPE anytype;
    </para>
 
    <para>
-    Refer to <xref linkend="sql-createtable"
-    endterm="sql-createtable-title"> for a further description of valid
+    Refer to <xref linkend="sql-createtable"> for a further description of valid
     parameters. <xref linkend="ddl"> has further information on
     inheritance.
    </para>

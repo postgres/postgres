@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.149 2010/04/01 13:52:56 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.150 2010/04/03 07:22:52 petere Exp $ -->
 
 <chapter id="backup">
  <title>Backup and Restore</title>
@@ -166,10 +166,10 @@ pg_dump -h <replaceable>host1</> <replaceable>dbname</> | psql -h <replaceable>h
 
    <para>
     After restoring a backup, it is wise to run <xref
-    linkend="sql-analyze" endterm="sql-analyze-title"> on each
+    linkend="sql-analyze"> on each
     database so the query optimizer has useful statistics;
-    see <xref linkend="vacuum-for-statistics" endterm="vacuum-for-statistics-title">
-    and <xref linkend="autovacuum" endterm="autovacuum-title"> for more information.
+    see <xref linkend="vacuum-for-statistics">
+    and <xref linkend="autovacuum"> for more information.
     For more advice on how to load large amounts of data
     into <productname>PostgreSQL</> efficiently, refer to <xref
     linkend="populate">.
@@ -1293,14 +1293,14 @@ archive_command = 'local_backup_script.sh'
      deleted rows will still retain pointers. In other words, if you modify a
      table with a hash index on it then you will get incorrect query results
      on a standby server.  When recovery completes it is recommended that you
-     manually <xref linkend="sql-reindex" endterm="sql-reindex-title">
+     manually <xref linkend="sql-reindex">
      each such index after completing a recovery operation.
     </para>
    </listitem>
 
    <listitem>
     <para>
-     If a <xref linkend="sql-createdatabase" endterm="sql-createdatabase-title">
+     If a <xref linkend="sql-createdatabase">
      command is executed while a base backup is being taken, and then
      the template database that the <command>CREATE DATABASE</> copied
      is modified while the base backup is still in progress, it is
@@ -1313,7 +1313,7 @@ archive_command = 'local_backup_script.sh'
 
    <listitem>
     <para>
-     <xref linkend="sql-createtablespace" endterm="sql-createtablespace-title">
+     <xref linkend="sql-createtablespace">
      commands are WAL-logged with the literal absolute path, and will
      therefore be replayed as tablespace creations with the same
      absolute path.  This might be undesirable if the log is being

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.224 2010/03/25 14:44:33 alvherre Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.225 2010/04/03 07:22:52 petere Exp $ -->
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
  -->
@@ -354,7 +354,7 @@
 
   <para>
    New aggregate functions are registered with the <xref
-   linkend="sql-createaggregate" endterm="sql-createaggregate-title">
+   linkend="sql-createaggregate">
    command.  See <xref linkend="xaggr"> for more information about
    writing aggregate functions and the meaning of the transition
    functions, etc.
@@ -886,7 +886,7 @@
       <entry>
        <structfield>attstattarget</structfield> controls the level of detail
        of statistics accumulated for this column by
-       <xref linkend="sql-analyze" endterm="sql-analyze-title">.
+       <xref linkend="sql-analyze">.
        A zero value indicates that no statistics should be collected.
        A negative value says to use the system default statistics target.
        The exact meaning of positive values is data type-dependent.
@@ -1274,7 +1274,7 @@
   <para>
    The catalog <structname>pg_cast</structname> stores data type conversion
    paths, both built-in paths and those defined with
-   <xref linkend="sql-createcast" endterm="sql-createcast-title">.
+   <xref linkend="sql-createcast">.
   </para>
 
   <para>
@@ -1662,8 +1662,8 @@
       <entry></entry>
       <entry>
        Access privileges; see
-       <xref linkend="sql-grant" endterm="sql-grant-title"> and
-       <xref linkend="sql-revoke" endterm="sql-revoke-title">
+       <xref linkend="sql-grant"> and
+       <xref linkend="sql-revoke">
        for details
       </entry>
      </row>
@@ -1962,7 +1962,7 @@
   <para>
    The catalog <structname>pg_conversion</structname> describes the
    available encoding conversion procedures.  See
-   <xref linkend="sql-createconversion" endterm="sql-createconversion-title">
+   <xref linkend="sql-createconversion">
    for more information.
   </para>
 
@@ -2047,7 +2047,7 @@
   <para>
    The catalog <structname>pg_database</structname> stores information about
    the available databases.  Databases are created with the <xref
-   linkend="sql-createdatabase" endterm="sql-createdatabase-title"> command.
+   linkend="sql-createdatabase"> command.
    Consult <xref linkend="managing-databases"> for details about the meaning
    of some of the parameters.
   </para>
@@ -2185,8 +2185,8 @@
       <entry></entry>
       <entry>
        Access privileges; see
-       <xref linkend="sql-grant" endterm="sql-grant-title"> and
-       <xref linkend="sql-revoke" endterm="sql-revoke-title">
+       <xref linkend="sql-grant"> and
+       <xref linkend="sql-revoke">
        for details
       </entry>
      </row>
@@ -2467,7 +2467,7 @@
   <para>
    The catalog <structname>pg_description</> stores optional descriptions
    (comments) for each database object.  Descriptions can be manipulated
-   with the <xref linkend="sql-comment" endterm="sql-comment-title"> command and viewed with
+   with the <xref linkend="sql-comment"> command and viewed with
    <application>psql</application>'s <literal>\d</literal> commands.
    Descriptions of many built-in system objects are provided in the initial
    contents of <structname>pg_description</structname>.
@@ -2643,8 +2643,8 @@
       <entry></entry>
       <entry>
        Access privileges; see
-       <xref linkend="sql-grant" endterm="sql-grant-title"> and
-       <xref linkend="sql-revoke" endterm="sql-revoke-title">
+       <xref linkend="sql-grant"> and
+       <xref linkend="sql-revoke">
        for details
       </entry>
      </row>
@@ -2732,8 +2732,8 @@
       <entry></entry>
       <entry>
        Access privileges; see
-       <xref linkend="sql-grant" endterm="sql-grant-title"> and
-       <xref linkend="sql-revoke" endterm="sql-revoke-title">
+       <xref linkend="sql-grant"> and
+       <xref linkend="sql-revoke">
        for details
       </entry>
      </row>
@@ -3000,7 +3000,7 @@
   <para>
    The catalog <structname>pg_language</structname> registers
    languages in which you can write functions or stored procedures.
-   See <xref linkend="sql-createlanguage" endterm="sql-createlanguage-title">
+   See <xref linkend="sql-createlanguage">
    and <xref linkend="xplang"> for more information about language handlers.
   </para>
 
@@ -3076,7 +3076,7 @@
       <entry>
        This references a function that is responsible for executing
        <quote>inline</> anonymous code blocks
-       (<xref linkend="sql-do" endterm="sql-do-title"> blocks).
+       (<xref linkend="sql-do"> blocks).
        Zero if inline blocks are not supported
       </entry>
      </row>
@@ -3098,8 +3098,8 @@
       <entry></entry>
       <entry>
        Access privileges; see
-       <xref linkend="sql-grant" endterm="sql-grant-title"> and
-       <xref linkend="sql-revoke" endterm="sql-revoke-title">
+       <xref linkend="sql-grant"> and
+       <xref linkend="sql-revoke">
        for details
       </entry>
      </row>
@@ -3231,8 +3231,8 @@
       <entry></entry>
       <entry>
        Access privileges; see
-       <xref linkend="sql-grant" endterm="sql-grant-title"> and
-       <xref linkend="sql-revoke" endterm="sql-revoke-title">
+       <xref linkend="sql-grant"> and
+       <xref linkend="sql-revoke">
        for details
       </entry>
      </row>
@@ -3290,8 +3290,8 @@
       <entry></entry>
       <entry>
        Access privileges; see
-       <xref linkend="sql-grant" endterm="sql-grant-title"> and
-       <xref linkend="sql-revoke" endterm="sql-revoke-title">
+       <xref linkend="sql-grant"> and
+       <xref linkend="sql-revoke">
        for details
       </entry>
      </row>
@@ -3418,7 +3418,7 @@
 
   <para>
    The catalog <structname>pg_operator</> stores information about operators.
-   See <xref linkend="sql-createoperator" endterm="sql-createoperator-title">
+   See <xref linkend="sql-createoperator">
    and <xref linkend="xoper"> for more information.
   </para>
 
@@ -3745,7 +3745,7 @@
 
   <para>
    The catalog <structname>pg_proc</> stores information about functions (or procedures).
-   See <xref linkend="sql-createfunction" endterm="sql-createfunction-title">
+   See <xref linkend="sql-createfunction">
    and <xref linkend="xfunc"> for more information.
   </para>
 
@@ -4011,8 +4011,8 @@
       <entry></entry>
       <entry>
        Access privileges; see
-       <xref linkend="sql-grant" endterm="sql-grant-title"> and
-       <xref linkend="sql-revoke" endterm="sql-revoke-title">
+       <xref linkend="sql-grant"> and
+       <xref linkend="sql-revoke">
        for details
       </entry>
      </row>
@@ -4368,8 +4368,7 @@
   <para>
    The catalog <structname>pg_shdescription</structname> stores optional
    descriptions (comments) for shared database objects.  Descriptions can be
-   manipulated with the <xref linkend="sql-comment"
-   endterm="sql-comment-title"> command and viewed with
+   manipulated with the <xref linkend="sql-comment"> command and viewed with
    <application>psql</application>'s <literal>\d</literal> commands.
   </para>
 
@@ -4437,7 +4436,7 @@
   <para>
    The catalog <structname>pg_statistic</structname> stores
    statistical data about the contents of the database.  Entries are
-   created by <xref linkend="sql-analyze" endterm="sql-analyze-title">
+   created by <xref linkend="sql-analyze">
    and subsequently used by the query planner.  Note that all the
    statistical data is inherently approximate, even assuming that it
    is up-to-date.
@@ -4668,8 +4667,8 @@
       <entry></entry>
       <entry>
        Access privileges; see
-       <xref linkend="sql-grant" endterm="sql-grant-title"> and
-       <xref linkend="sql-revoke" endterm="sql-revoke-title">
+       <xref linkend="sql-grant"> and
+       <xref linkend="sql-revoke">
        for details
       </entry>
      </row>
@@ -4697,7 +4696,7 @@
 
   <para>
    The catalog <structname>pg_trigger</structname> stores triggers on tables.
-   See <xref linkend="sql-createtrigger" endterm="sql-createtrigger-title">
+   See <xref linkend="sql-createtrigger">
    for more information.
   </para>
 
@@ -5250,9 +5249,9 @@
   <para>
    The catalog <structname>pg_type</structname> stores information about data
    types.  Base types and enum types (scalar types) are created with
-   <xref linkend="sql-createtype" endterm="sql-createtype-title">, and
+   <xref linkend="sql-createtype">, and
    domains with
-   <xref linkend="sql-createdomain" endterm="sql-createdomain-title">.
+   <xref linkend="sql-createdomain">.
    A composite type is automatically created for each table in the database, to
    represent the row structure of the table.  It is also possible to create
    composite types with <command>CREATE TYPE AS</command>.
@@ -5917,7 +5916,7 @@
    <itemizedlist>
     <listitem>
      <para>
-      via the <xref linkend="sql-declare" endterm="sql-declare-title">
+      via the <xref linkend="sql-declare">
       statement in SQL
      </para>
     </listitem>
@@ -6414,8 +6413,7 @@
   <para>
    The <structname>pg_prepared_statements</structname> view displays
    all the prepared statements that are available in the current
-   session. See <xref linkend="sql-prepare"
-   endterm="sql-prepare-title"> for more information about prepared
+   session. See <xref linkend="sql-prepare"> for more information about prepared
    statements.
   </para>
 
@@ -6423,8 +6421,7 @@
    <structname>pg_prepared_statements</structname> contains one row
    for each prepared statement. Rows are added to the view when a new
    prepared statement is created and removed when a prepared statement
-   is released (for example, via the <xref linkend="sql-deallocate"
-   endterm="sql-deallocate-title"> command).
+   is released (for example, via the <xref linkend="sql-deallocate"> command).
   </para>
 
   <table>
@@ -6504,8 +6501,7 @@
   <para>
    The view <structname>pg_prepared_xacts</structname> displays
    information about transactions that are currently prepared for two-phase
-   commit (see <xref linkend="sql-prepare-transaction"
-   endterm="sql-prepare-transaction-title"> for details).
+   commit (see <xref linkend="sql-prepare-transaction"> for details).
   </para>
 
   <para>
@@ -6780,8 +6776,8 @@
   <para>
    The view <structname>pg_settings</structname> provides access to
    run-time parameters of the server.  It is essentially an alternative
-   interface to the <xref linkend="sql-show" endterm="sql-show-title">
-   and <xref linkend="sql-set" endterm="sql-set-title"> commands.
+   interface to the <xref linkend="sql-show">
+   and <xref linkend="sql-set"> commands.
    It also provides access to some facts about each parameter that are
    not directly available from <command>SHOW</>, such as minimum and
    maximum values.
@@ -6900,7 +6896,7 @@
    The <structname>pg_settings</structname> view cannot be inserted into or
    deleted from, but it can be updated.  An <command>UPDATE</command> applied
    to a row of <structname>pg_settings</structname> is equivalent to executing
-   the <xref linkend="sql-set" endterm="sql-set-title"> command on that named
+   the <xref linkend="sql-set"> command on that named
    parameter. The change only affects the value used by the current
    session. If an <command>UPDATE</command> is issued within a transaction
    that is later aborted, the effects of the <command>UPDATE</command> command

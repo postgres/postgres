@@ -1,11 +1,11 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_group.sgml,v 1.19 2009/09/19 10:23:26 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_group.sgml,v 1.20 2010/04/03 07:22:56 petere Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="SQL-ALTERGROUP">
  <refmeta>
-  <refentrytitle id="SQL-ALTERGROUP-title">ALTER GROUP</refentrytitle>
+  <refentrytitle>ALTER GROUP</refentrytitle>
   <manvolnum>7</manvolnum>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
@@ -44,14 +44,14 @@ ALTER GROUP <replaceable class="PARAMETER">group_name</replaceable> RENAME TO <r
    <quote>group</> for this purpose.)  These variants are effectively
    equivalent to granting or revoking membership in the role named as the
    <quote>group</>; so the preferred way to do this is to use
-   <xref linkend="SQL-GRANT" endterm="SQL-GRANT-title"> or
-   <xref linkend="SQL-REVOKE" endterm="SQL-REVOKE-title">.
+   <xref linkend="SQL-GRANT"> or
+   <xref linkend="SQL-REVOKE">.
   </para>
 
   <para>
    The third variant changes the name of the group.  This is exactly
    equivalent to renaming the role with 
-   <xref linkend="sql-alterrole" endterm="sql-alterrole-title">.
+   <xref linkend="sql-alterrole">.
   </para>
  </refsect1>
 
@@ -121,9 +121,9 @@ ALTER GROUP workers DROP USER beth;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-grant" endterm="sql-grant-title"></member>
-   <member><xref linkend="sql-revoke" endterm="sql-revoke-title"></member>
-   <member><xref linkend="sql-alterrole" endterm="sql-alterrole-title"></member>
+   <member><xref linkend="sql-grant"></member>
+   <member><xref linkend="sql-revoke"></member>
+   <member><xref linkend="sql-alterrole"></member>
   </simplelist>
  </refsect1>
 

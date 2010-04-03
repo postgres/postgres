@@ -1,11 +1,11 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/deallocate.sgml,v 1.11 2008/11/14 10:22:46 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/deallocate.sgml,v 1.12 2010/04/03 07:23:00 petere Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="SQL-DEALLOCATE">
  <refmeta>
-  <refentrytitle id="sql-deallocate-title">DEALLOCATE</refentrytitle>
+  <refentrytitle>DEALLOCATE</refentrytitle>
   <manvolnum>7</manvolnum>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
@@ -41,7 +41,7 @@ DEALLOCATE [ PREPARE ] { <replaceable class="parameter">name</replaceable> | ALL
 
   <para>
    For more information on prepared statements, see <xref
-   linkend="sql-prepare" endterm="sql-prepare-title">.
+   linkend="sql-prepare">.
   </para>
  </refsect1>
 
@@ -91,8 +91,8 @@ DEALLOCATE [ PREPARE ] { <replaceable class="parameter">name</replaceable> | ALL
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-execute" endterm="sql-execute-title"></member>
-   <member><xref linkend="sql-prepare" endterm="sql-prepare-title"></member>
+   <member><xref linkend="sql-execute"></member>
+   <member><xref linkend="sql-prepare"></member>
   </simplelist>
  </refsect1>
 </refentry>

@@ -1,11 +1,11 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/dropuser.sgml,v 1.42 2010/02/19 14:36:45 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/dropuser.sgml,v 1.43 2010/04/03 07:23:01 petere Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="APP-DROPUSER">
  <refmeta>
-  <refentrytitle id="APP-DROPUSER-TITLE"><application>dropuser</application></refentrytitle>
+  <refentrytitle><application>dropuser</application></refentrytitle>
   <manvolnum>1</manvolnum>
   <refmiscinfo>Application</refmiscinfo>
  </refmeta>
@@ -42,8 +42,7 @@ PostgreSQL documentation
 
   <para>
    <application>dropuser</application> is a wrapper around the
-   <acronym>SQL</acronym> command <xref linkend="SQL-DROPROLE"
-   endterm="SQL-DROPROLE-title">.
+   <acronym>SQL</acronym> command <xref linkend="SQL-DROPROLE">.
    There is no effective difference between dropping users via
    this utility and via other methods for accessing the server.
   </para>
@@ -223,8 +222,8 @@ PostgreSQL documentation
   <title>Diagnostics</title>
 
   <para>
-   In case of difficulty, see <xref linkend="SQL-DROPROLE"
-   endterm="sql-droprole-title"> and <xref linkend="APP-PSQL"> for
+   In case of difficulty, see <xref linkend="SQL-DROPROLE">
+   and <xref linkend="APP-PSQL"> for
    discussions of potential problems and error messages.
    The database server must be running at the
    targeted host.  Also, any default connection settings and environment
@@ -265,7 +264,7 @@ Are you sure? (y/n) </computeroutput><userinput>y</userinput>
 
   <simplelist type="inline">
    <member><xref linkend="app-createuser"></member>
-   <member><xref linkend="sql-droprole" endterm="sql-droprole-title"></member>
+   <member><xref linkend="sql-droprole"></member>
   </simplelist>
  </refsect1>
 

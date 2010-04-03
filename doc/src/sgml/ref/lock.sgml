@@ -1,11 +1,11 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/lock.sgml,v 1.53 2009/09/18 05:00:42 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/lock.sgml,v 1.54 2010/04/03 07:23:01 petere Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="SQL-LOCK">
  <refmeta>
-  <refentrytitle id="sql-lock-title">LOCK</refentrytitle>
+  <refentrytitle>LOCK</refentrytitle>
   <manvolnum>7</manvolnum>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
@@ -168,9 +168,9 @@ LOCK [ TABLE ] [ ONLY ] <replaceable class="PARAMETER">name</replaceable> [, ...
     <productname>PostgreSQL</productname> reports an error if <command>LOCK</>
     is used outside a transaction block.
     Use
-    <xref linkend="sql-begin" endterm="sql-begin-title"> and
-    <xref linkend="sql-commit" endterm="sql-commit-title">
-    (or <xref linkend="sql-rollback" endterm="sql-rollback-title">)
+    <xref linkend="sql-begin"> and
+    <xref linkend="sql-commit">
+    (or <xref linkend="sql-rollback">)
     to define a transaction block.
    </para>
 
@@ -231,8 +231,7 @@ COMMIT WORK;
    There is no <command>LOCK TABLE</command> in the SQL standard,
    which instead uses <command>SET TRANSACTION</command> to specify
    concurrency levels on transactions.  <productname>PostgreSQL</productname> supports that too;
-   see <xref linkend="SQL-SET-TRANSACTION"
-   endterm="SQL-SET-TRANSACTION-TITLE"> for details.
+   see <xref linkend="SQL-SET-TRANSACTION"> for details.
   </para>
 
   <para>

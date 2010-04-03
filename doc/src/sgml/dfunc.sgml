@@ -1,7 +1,7 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/dfunc.sgml,v 1.35 2007/02/01 00:28:16 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/dfunc.sgml,v 1.36 2010/04/03 07:22:53 petere Exp $ -->
 
 <sect2 id="dfunc">
- <title id="dfunc-title">Compiling and Linking Dynamically-Loaded Functions</title>
+ <title>Compiling and Linking Dynamically-Loaded Functions</title>
 
  <para>
   Before you are able to use your

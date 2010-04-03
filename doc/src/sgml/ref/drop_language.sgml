@@ -1,11 +1,11 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/drop_language.sgml,v 1.27 2008/11/14 10:22:46 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/drop_language.sgml,v 1.28 2010/04/03 07:23:00 petere Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="SQL-DROPLANGUAGE">
  <refmeta>
-  <refentrytitle id="SQL-DROPLANGUAGE-TITLE">DROP LANGUAGE</refentrytitle>
+  <refentrytitle>DROP LANGUAGE</refentrytitle>
   <manvolnum>7</manvolnum>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
@@ -108,8 +108,8 @@ DROP LANGUAGE plsample;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-alterlanguage" endterm="sql-alterlanguage-title"></member>
-   <member><xref linkend="sql-createlanguage" endterm="sql-createlanguage-title"></member>
+   <member><xref linkend="sql-alterlanguage"></member>
+   <member><xref linkend="sql-createlanguage"></member>
    <member><xref linkend="app-droplang"></member>
   </simplelist>
  </refsect1>

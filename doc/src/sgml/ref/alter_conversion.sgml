@@ -1,11 +1,11 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_conversion.sgml,v 1.10 2009/09/19 10:23:26 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_conversion.sgml,v 1.11 2010/04/03 07:22:56 petere Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="SQL-ALTERCONVERSION">
  <refmeta>
-  <refentrytitle id="SQL-ALTERCONVERSION-TITLE">ALTER CONVERSION</refentrytitle>
+  <refentrytitle>ALTER CONVERSION</refentrytitle>
   <manvolnum>7</manvolnum>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
@@ -111,8 +111,8 @@ ALTER CONVERSION iso_8859_1_to_utf8 OWNER TO joe;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-createconversion" endterm="sql-createconversion-title"></member>
-   <member><xref linkend="sql-dropconversion" endterm="sql-dropconversion-title"></member>
+   <member><xref linkend="sql-createconversion"></member>
+   <member><xref linkend="sql-dropconversion"></member>
   </simplelist>
  </refsect1>
 </refentry>

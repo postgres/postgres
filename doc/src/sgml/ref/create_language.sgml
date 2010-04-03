@@ -1,11 +1,11 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_language.sgml,v 1.49 2010/02/23 22:51:42 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_language.sgml,v 1.50 2010/04/03 07:22:58 petere Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="SQL-CREATELANGUAGE">
  <refmeta>
-  <refentrytitle id="sql-createlanguage-title">CREATE LANGUAGE</refentrytitle>
+  <refentrytitle>CREATE LANGUAGE</refentrytitle>
   <manvolnum>7</manvolnum>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
@@ -168,7 +168,7 @@ CREATE [ OR REPLACE ] [ TRUSTED ] [ PROCEDURAL ] LANGUAGE <replaceable class="pa
        <replaceable class="parameter">inline_handler</replaceable> is the
        name of a previously registered function that will be called
        to execute an anonymous code block
-       (<xref linkend="sql-do" endterm="sql-do-title"> command)
+       (<xref linkend="sql-do"> command)
        in this language.
        If no <replaceable class="parameter">inline_handler</replaceable>
        function is specified, the language does not support anonymous code
@@ -227,7 +227,7 @@ CREATE [ OR REPLACE ] [ TRUSTED ] [ PROCEDURAL ] LANGUAGE <replaceable class="pa
   </para>
 
   <para>
-   Use <xref linkend="sql-droplanguage" endterm="sql-droplanguage-title">, or better yet the <xref
+   Use <xref linkend="sql-droplanguage">, or better yet the <xref
    linkend="app-droplang"> program, to drop procedural languages.
   </para>
 
@@ -312,13 +312,13 @@ CREATE LANGUAGE plsample
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-alterlanguage" endterm="sql-alterlanguage-title"></member>
-   <member><xref linkend="sql-createfunction" endterm="sql-createfunction-title"></member>
-   <member><xref linkend="sql-droplanguage" endterm="sql-droplanguage-title"></member>
-   <member><xref linkend="sql-grant" endterm="sql-grant-title"></member>
-   <member><xref linkend="sql-revoke" endterm="sql-revoke-title"></member>
-   <member><xref linkend="app-createlang" endterm="app-createlang-title"></member>
-   <member><xref linkend="app-droplang" endterm="app-droplang-title"></member>
+   <member><xref linkend="sql-alterlanguage"></member>
+   <member><xref linkend="sql-createfunction"></member>
+   <member><xref linkend="sql-droplanguage"></member>
+   <member><xref linkend="sql-grant"></member>
+   <member><xref linkend="sql-revoke"></member>
+   <member><xref linkend="app-createlang"></member>
+   <member><xref linkend="app-droplang"></member>
   </simplelist>
  </refsect1>
 </refentry>

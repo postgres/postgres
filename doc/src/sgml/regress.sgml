@@ -1,7 +1,7 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/regress.sgml,v 1.65 2010/02/03 17:25:06 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/regress.sgml,v 1.66 2010/04/03 07:22:55 petere Exp $ -->
 
  <chapter id="regress">
-  <title id="regress-title">Regression Tests</title>
+  <title>Regression Tests</title>
 
   <indexterm zone="regress">
    <primary>regression tests</primary>

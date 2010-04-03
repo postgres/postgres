@@ -1,11 +1,11 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/abort.sgml,v 1.18 2008/11/14 10:22:45 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/abort.sgml,v 1.19 2010/04/03 07:22:56 petere Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="SQL-ABORT">
  <refmeta>
-  <refentrytitle id="sql-abort-title">ABORT</refentrytitle>
+  <refentrytitle>ABORT</refentrytitle>
   <manvolnum>7</manvolnum>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
@@ -33,7 +33,7 @@ ABORT [ WORK | TRANSACTION ]
    all the updates made by the transaction to be discarded. 
    This command is identical
    in behavior to the standard <acronym>SQL</acronym> command
-   <xref linkend="SQL-ROLLBACK" endterm="SQL-ROLLBACK-TITLE">,
+   <xref linkend="SQL-ROLLBACK">,
    and is present only for historical reasons.
   </para>
  </refsect1>
@@ -58,7 +58,7 @@ ABORT [ WORK | TRANSACTION ]
   <title>Notes</title>
 
   <para>
-   Use <xref linkend="SQL-COMMIT" endterm="SQL-COMMIT-TITLE"> to
+   Use <xref linkend="SQL-COMMIT"> to
    successfully terminate a transaction.
   </para>
 
@@ -93,9 +93,9 @@ ABORT;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-begin" endterm="sql-begin-title"></member>
-   <member><xref linkend="sql-commit" endterm="sql-commit-title"></member>
-   <member><xref linkend="sql-rollback" endterm="sql-rollback-title"></member>
+   <member><xref linkend="sql-begin"></member>
+   <member><xref linkend="sql-commit"></member>
+   <member><xref linkend="sql-rollback"></member>
   </simplelist>
  </refsect1>
 </refentry>

@@ -1,11 +1,11 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/drop_domain.sgml,v 1.19 2008/11/14 10:22:46 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/drop_domain.sgml,v 1.20 2010/04/03 07:23:00 petere Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="SQL-DROPDOMAIN">
  <refmeta>
-  <refentrytitle id="SQL-DROPDOMAIN-TITLE">DROP DOMAIN</refentrytitle>
+  <refentrytitle>DROP DOMAIN</refentrytitle>
   <manvolnum>7</manvolnum>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
@@ -105,8 +105,8 @@ DROP DOMAIN box;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-createdomain" endterm="sql-createdomain-title"></member>
-   <member><xref linkend="sql-alterdomain" endterm="sql-alterdomain-title"></member>
+   <member><xref linkend="sql-createdomain"></member>
+   <member><xref linkend="sql-alterdomain"></member>
   </simplelist>
  </refsect1>
 

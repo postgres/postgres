@@ -1,11 +1,11 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/do.sgml,v 1.5 2010/02/16 00:49:42 itagaki Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/do.sgml,v 1.6 2010/04/03 07:23:00 petere Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="SQL-DO">
  <refmeta>
-  <refentrytitle id="sql-do-title">DO</refentrytitle>
+  <refentrytitle>DO</refentrytitle>
   <manvolnum>7</manvolnum>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
@@ -122,7 +122,7 @@ END$$;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-createlanguage" endterm="sql-createlanguage-title"></member>
+   <member><xref linkend="sql-createlanguage"></member>
   </simplelist>
  </refsect1>
 </refentry>

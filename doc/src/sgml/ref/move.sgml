@@ -1,11 +1,11 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/move.sgml,v 1.34 2009/11/11 20:07:57 alvherre Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/move.sgml,v 1.35 2010/04/03 07:23:01 petere Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="SQL-MOVE">
  <refmeta>
-  <refentrytitle id="SQL-MOVE-TITLE">MOVE</refentrytitle>
+  <refentrytitle>MOVE</refentrytitle>
   <manvolnum>7</manvolnum>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
@@ -42,7 +42,7 @@ MOVE [ <replaceable class="PARAMETER">direction</replaceable> [ FROM | IN ] ] <r
   <para>
    The parameters for the <command>MOVE</command> command are identical to 
    those of the <command>FETCH</command> command; refer to
-   <xref linkend="sql-fetch" endterm="sql-fetch-title">
+   <xref linkend="sql-fetch">
    for details on syntax and usage.
   </para>
  </refsect1>
@@ -98,9 +98,9 @@ COMMIT WORK;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-close" endterm="sql-close-title"></member>
-   <member><xref linkend="sql-declare" endterm="sql-declare-title"></member>
-   <member><xref linkend="sql-fetch" endterm="sql-fetch-title"></member>
+   <member><xref linkend="sql-close"></member>
+   <member><xref linkend="sql-declare"></member>
+   <member><xref linkend="sql-fetch"></member>
   </simplelist>
  </refsect1>
 </refentry>

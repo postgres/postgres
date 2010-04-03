@@ -1,11 +1,11 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/insert.sgml,v 1.38 2009/01/22 20:15:59 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/insert.sgml,v 1.39 2010/04/03 07:23:01 petere Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="SQL-INSERT">
  <refmeta>
-  <refentrytitle id="SQL-INSERT-TITLE">INSERT</refentrytitle>
+  <refentrytitle>INSERT</refentrytitle>
   <manvolnum>7</manvolnum>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
@@ -140,7 +140,7 @@ INSERT INTO <replaceable class="PARAMETER">table</replaceable> [ ( <replaceable 
      <para>
       A query (<command>SELECT</command> statement) that supplies the
       rows to be inserted.  Refer to the
-      <xref linkend="sql-select" endterm="sql-select-title">
+      <xref linkend="sql-select">
       statement for a description of the syntax.
      </para>
     </listitem>
@@ -296,7 +296,7 @@ INSERT INTO distributors (did, dname) VALUES (DEFAULT, 'XYZ Widgets')
   <para>
    Possible limitations of the <replaceable
    class="PARAMETER">query</replaceable> clause are documented under
-   <xref linkend="sql-select" endterm="sql-select-title">.
+   <xref linkend="sql-select">.
   </para>
  </refsect1>
 </refentry>

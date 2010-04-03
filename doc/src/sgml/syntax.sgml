@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/syntax.sgml,v 1.142 2010/02/12 17:33:19 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/syntax.sgml,v 1.143 2010/04/03 07:22:56 petere Exp $ -->
 
 <chapter id="sql-syntax">
  <title>SQL Syntax</title>
@@ -1698,7 +1698,7 @@ UNBOUNDED FOLLOWING
     window must lack these clauses, if they are supplied here).
     This latter syntax follows the same rules as modifying an existing
     window name within the <literal>WINDOW</literal> clause; see the
-    <xref linkend="sql-select" endterm="sql-select-title"> reference
+    <xref linkend="sql-select"> reference
     page for details.
    </para>
 
@@ -1840,7 +1840,7 @@ CAST ( <replaceable>expression</replaceable> AS <replaceable>type</replaceable> 
      syntax</> is nothing more than a direct invocation of the underlying
      conversion function.  Obviously, this is not something that a portable
      application should rely on.  For further details see
-     <xref linkend="sql-createcast" endterm="sql-createcast-title">.
+     <xref linkend="sql-createcast">.
     </para>
    </note>
   </sect2>

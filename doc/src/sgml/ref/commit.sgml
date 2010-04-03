@@ -1,11 +1,11 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/commit.sgml,v 1.21 2008/11/14 10:22:45 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/commit.sgml,v 1.22 2010/04/03 07:22:58 petere Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="SQL-COMMIT">
  <refmeta>
-  <refentrytitle id="SQL-COMMIT-TITLE">COMMIT</refentrytitle>
+  <refentrytitle>COMMIT</refentrytitle>
   <manvolnum>7</manvolnum>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
@@ -55,7 +55,7 @@ COMMIT [ WORK | TRANSACTION ]
   <title>Notes</title>
 
   <para>
-   Use <xref linkend="SQL-ROLLBACK" endterm="SQL-ROLLBACK-TITLE"> to
+   Use <xref linkend="SQL-ROLLBACK"> to
    abort a transaction.
   </para>
 
@@ -90,8 +90,8 @@ COMMIT;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-begin" endterm="sql-begin-title"></member>
-   <member><xref linkend="sql-rollback" endterm="sql-rollback-title"></member>
+   <member><xref linkend="sql-begin"></member>
+   <member><xref linkend="sql-rollback"></member>
   </simplelist>
  </refsect1>
 </refentry>

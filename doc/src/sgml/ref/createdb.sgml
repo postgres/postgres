@@ -1,11 +1,11 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/createdb.sgml,v 1.51 2010/02/19 14:36:45 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/createdb.sgml,v 1.52 2010/04/03 07:23:00 petere Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="APP-CREATEDB">
  <refmeta>
-  <refentrytitle id="APP-CREATEDB-TITLE"><application>createdb</application></refentrytitle>
+  <refentrytitle><application>createdb</application></refentrytitle>
   <manvolnum>1</manvolnum>
   <refmiscinfo>Application</refmiscinfo>
  </refmeta>
@@ -48,8 +48,7 @@ PostgreSQL documentation
 
   <para>
    <application>createdb</application> is a wrapper around the
-   <acronym>SQL</acronym> command <xref linkend="SQL-CREATEDATABASE"
-   endterm="SQL-CREATEDATABASE-title">.
+   <acronym>SQL</acronym> command <xref linkend="SQL-CREATEDATABASE">.
    There is no effective difference between creating databases via
    this utility and via other methods for accessing the server.
   </para>
@@ -197,8 +196,7 @@ PostgreSQL documentation
     The options <option>-D</option>, <option>-l</option>, <option>-E</option>, 
     <option>-O</option>, and
     <option>-T</option> correspond to options of the underlying
-    SQL command <xref linkend="SQL-CREATEDATABASE"
-    endterm="SQL-CREATEDATABASE-title">; see there for more information
+    SQL command <xref linkend="SQL-CREATEDATABASE">; see there for more information
     about them.
    </para>
 
@@ -323,8 +321,8 @@ PostgreSQL documentation
   <title>Diagnostics</title>
 
   <para>
-   In case of difficulty, see <xref linkend="SQL-CREATEDATABASE"
-   endterm="sql-createdatabase-title"> and <xref linkend="APP-PSQL"> for
+   In case of difficulty, see <xref linkend="SQL-CREATEDATABASE">
+   and <xref linkend="APP-PSQL"> for
    discussions of potential problems and error messages.
    The database server must be running at the
    targeted host.  Also, any default connection settings and environment
@@ -364,7 +362,7 @@ PostgreSQL documentation
 
   <simplelist type="inline">
    <member><xref linkend="app-dropdb"></member>
-   <member><xref linkend="sql-createdatabase" endterm="sql-createdatabase-title"></member>
+   <member><xref linkend="sql-createdatabase"></member>
   </simplelist>
  </refsect1>
 

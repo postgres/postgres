@@ -1,11 +1,11 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/vacuumdb.sgml,v 1.53 2010/03/22 14:56:09 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/vacuumdb.sgml,v 1.54 2010/04/03 07:23:02 petere Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="APP-VACUUMDB">
  <refmeta>
-  <refentrytitle id="APP-VACUUMDB-TITLE"><application>vacuumdb</application></refentrytitle>
+  <refentrytitle><application>vacuumdb</application></refentrytitle>
   <manvolnum>1</manvolnum>
   <refmiscinfo>Application</refmiscinfo>
  </refmeta>
@@ -56,7 +56,7 @@ PostgreSQL documentation
 
   <para>
    <application>vacuumdb</application> is a wrapper around the SQL
-   command <xref linkend="SQL-VACUUM" endterm="SQL-VACUUM-title">.
+   command <xref linkend="SQL-VACUUM">.
    There is no effective difference between vacuuming and analyzing
    databases via this utility and via other methods for accessing the
    server.
@@ -318,8 +318,8 @@ PostgreSQL documentation
   <title>Diagnostics</title>
 
   <para>
-   In case of difficulty, see <xref linkend="SQL-VACUUM"
-   endterm="sql-vacuum-title"> and <xref linkend="APP-PSQL"> for
+   In case of difficulty, see <xref linkend="SQL-VACUUM">
+   and <xref linkend="APP-PSQL"> for
    discussions of potential problems and error messages.
    The database server must be running at the
    targeted host.  Also, any default connection settings and environment
@@ -376,7 +376,7 @@ PostgreSQL documentation
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-vacuum" endterm="sql-vacuum-title"></member>
+   <member><xref linkend="sql-vacuum"></member>
   </simplelist>
  </refsect1>
 

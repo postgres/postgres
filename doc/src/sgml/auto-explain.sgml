@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/auto-explain.sgml,v 1.7 2010/02/20 22:24:29 adunstan Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/auto-explain.sgml,v 1.8 2010/04/03 07:22:52 petere Exp $ -->
 
 <sect1 id="auto-explain">
  <title>auto_explain</title>
@@ -10,7 +10,7 @@
  <para>
   The <filename>auto_explain</filename> module provides a means for
   logging execution plans of slow statements automatically, without
-  having to run <xref linkend="sql-explain" endterm="sql-explain-title">
+  having to run <xref linkend="sql-explain">
   by hand.  This is especially helpful for tracking down un-optimized queries
   in large applications.
  </para>

@@ -1,11 +1,11 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/release_savepoint.sgml,v 1.8 2008/11/14 10:22:47 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/release_savepoint.sgml,v 1.9 2010/04/03 07:23:02 petere Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="SQL-RELEASE-SAVEPOINT">
  <refmeta>
-  <refentrytitle id="SQL-RELEASE-SAVEPOINT-TITLE">RELEASE SAVEPOINT</refentrytitle>
+  <refentrytitle>RELEASE SAVEPOINT</refentrytitle>
   <manvolnum>7</manvolnum>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
@@ -42,8 +42,8 @@ RELEASE [ SAVEPOINT ] <replaceable>savepoint_name</replaceable>
    Destroying a savepoint makes it unavailable as a rollback point,
    but it has no other user visible behavior.  It does not undo the
    effects of commands executed after the savepoint was established.
-   (To do that, see <xref linkend="sql-rollback-to"
-   endterm="sql-rollback-to-title">.)  Destroying a savepoint when
+   (To do that, see <xref linkend="sql-rollback-to">.)
+   Destroying a savepoint when
    it is no longer needed allows the system to reclaim some resources
    earlier than transaction end.
   </para>
@@ -120,11 +120,11 @@ COMMIT;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-begin" endterm="sql-begin-title"></member>
-   <member><xref linkend="sql-commit" endterm="sql-commit-title"></member>
-   <member><xref linkend="sql-rollback" endterm="sql-rollback-title"></member>
-   <member><xref linkend="sql-rollback-to" endterm="sql-rollback-to-title"></member>
-   <member><xref linkend="sql-savepoint" endterm="sql-savepoint-title"></member>
+   <member><xref linkend="sql-begin"></member>
+   <member><xref linkend="sql-commit"></member>
+   <member><xref linkend="sql-rollback"></member>
+   <member><xref linkend="sql-rollback-to"></member>
+   <member><xref linkend="sql-savepoint"></member>
   </simplelist>
  </refsect1>
 </refentry>

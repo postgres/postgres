@@ -1,11 +1,11 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/select_into.sgml,v 1.44 2008/12/28 18:53:54 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/select_into.sgml,v 1.45 2010/04/03 07:23:02 petere Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="SQL-SELECTINTO">
  <refmeta>
-  <refentrytitle id="SQL-SELECTINTO-TITLE">SELECT INTO</refentrytitle>
+  <refentrytitle>SELECT INTO</refentrytitle>
   <manvolnum>7</manvolnum>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
@@ -60,8 +60,7 @@ SELECT [ ALL | DISTINCT [ ON ( <replaceable class="parameter">expression</replac
    <listitem>
     <para>
      If specified, the table is created as a temporary table.  Refer
-     to <xref linkend="sql-createtable"
-     endterm="sql-createtable-title"> for details.
+     to <xref linkend="sql-createtable"> for details.
     </para>
    </listitem>
   </varlistentry>
@@ -78,7 +77,7 @@ SELECT [ ALL | DISTINCT [ ON ( <replaceable class="parameter">expression</replac
 
   <para>
    All other parameters are described in detail under <xref
-   linkend="sql-select" endterm="sql-select-title">.
+   linkend="sql-select">.
   </para>
  </refsect1>
 
@@ -86,8 +85,7 @@ SELECT [ ALL | DISTINCT [ ON ( <replaceable class="parameter">expression</replac
   <title>Notes</title>
 
   <para>
-   <xref linkend="sql-createtableas"
-   endterm="sql-createtableas-title"> is functionally similar to
+   <xref linkend="sql-createtableas"> is functionally similar to
    <command>SELECT INTO</command>.  <command>CREATE TABLE AS</command>
    is the recommended syntax, since this form of <command>SELECT
    INTO</command> is not available in <application>ECPG</application>
@@ -141,7 +139,7 @@ SELECT * INTO films_recent FROM films WHERE date_prod &gt;= '2002-01-01';
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-createtableas" endterm="sql-createtableas-title"></member>
+   <member><xref linkend="sql-createtableas"></member>
   </simplelist>
  </refsect1>
 </refentry>

@@ -1,7 +1,7 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/indices.sgml,v 1.80 2010/01/01 21:53:49 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/indices.sgml,v 1.81 2010/04/03 07:22:54 petere Exp $ -->
 
 <chapter id="indexes">
- <title id="indexes-title">Indexes</title>
+ <title>Indexes</title>
 
  <indexterm zone="indexes">
   <primary>index</primary>
@@ -997,7 +997,7 @@ SELECT am.amname AS index_method,
    maintenance or tuning, it is still important to check
    which indexes are actually used by the real-life query workload.
    Examining index usage for an individual query is done with the
-   <xref linkend="sql-explain" endterm="sql-explain-title">
+   <xref linkend="sql-explain">
    command; its application for this purpose is
    illustrated in <xref linkend="using-explain">.
    It is also possible to gather overall statistics about index usage
@@ -1015,7 +1015,7 @@ SELECT am.amname AS index_method,
   <itemizedlist>
    <listitem>
     <para>
-     Always run <xref linkend="sql-analyze" endterm="sql-analyze-title">
+     Always run <xref linkend="sql-analyze">
      first.  This command
      collects statistics about the distribution of the values in the
      table.  This information is required to estimate the number of rows
@@ -1025,8 +1025,8 @@ SELECT am.amname AS index_method,
      almost certain to be inaccurate.  Examining an application's
      index usage without having run <command>ANALYZE</command> is
      therefore a lost cause.
-     See <xref linkend="vacuum-for-statistics" endterm="vacuum-for-statistics-title">
-     and <xref linkend="autovacuum" endterm="autovacuum-title"> for more information.
+     See <xref linkend="vacuum-for-statistics">
+     and <xref linkend="autovacuum"> for more information.
     </para>
    </listitem>
 
@@ -1093,7 +1093,7 @@ SELECT am.amname AS index_method,
      An inaccurate selectivity estimate is due to
      insufficient statistics.  It might be possible to improve this by
      tuning the statistics-gathering parameters (see
-     <xref linkend="sql-altertable" endterm="sql-altertable-title">).
+     <xref linkend="sql-altertable">).
     </para>
 
     <para>

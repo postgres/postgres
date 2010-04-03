@@ -1,11 +1,11 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_user_mapping.sgml,v 1.4 2009/09/19 10:23:26 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_user_mapping.sgml,v 1.5 2010/04/03 07:22:57 petere Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="SQL-ALTERUSERMAPPING">
  <refmeta>
-  <refentrytitle id="sql-alterusermapping-title">ALTER USER MAPPING</refentrytitle>
+  <refentrytitle>ALTER USER MAPPING</refentrytitle>
   <manvolnum>7</manvolnum>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
@@ -117,8 +117,8 @@ ALTER USER MAPPING FOR bob SERVER foo OPTIONS (user 'bob', password 'public');
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-createusermapping" endterm="sql-createusermapping-title"></member>
-   <member><xref linkend="sql-dropusermapping" endterm="sql-dropusermapping-title"></member>
+   <member><xref linkend="sql-createusermapping"></member>
+   <member><xref linkend="sql-dropusermapping"></member>
   </simplelist>
  </refsect1>
 

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/trigger.sgml,v 1.62 2010/01/17 22:56:21 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/trigger.sgml,v 1.63 2010/04/03 07:22:56 petere Exp $ -->
 
  <chapter id="triggers">
   <title>Triggers</title>
@@ -57,7 +57,7 @@
    <para>
     Once a suitable trigger function has been created, the trigger is
     established with
-    <xref linkend="sql-createtrigger" endterm="sql-createtrigger-title">.
+    <xref linkend="sql-createtrigger">.
     The same trigger function can be used for multiple triggers.
    </para>
 

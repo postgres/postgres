@@ -1,11 +1,11 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/droplang.sgml,v 1.33 2010/02/19 14:36:45 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/droplang.sgml,v 1.34 2010/04/03 07:23:01 petere Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="APP-DROPLANG">
  <refmeta>
-  <refentrytitle id="APP-DROPLANG-TITLE"><application>droplang</application></refentrytitle>
+  <refentrytitle><application>droplang</application></refentrytitle>
   <manvolnum>1</manvolnum>
   <refmiscinfo>Application</refmiscinfo>
  </refmeta>
@@ -50,7 +50,7 @@ PostgreSQL documentation
    several <acronym>SQL</acronym> commands, it is recommended to use
    <application>droplang</application> because it performs a number
    of checks and is much easier to use. See
-   <xref linkend="sql-droplanguage" endterm="sql-droplanguage-title">
+   <xref linkend="sql-droplanguage">
    for more.
   </para>
  </refsect1>
@@ -275,7 +275,7 @@ PostgreSQL documentation
 
   <simplelist type="inline">
    <member><xref linkend="app-createlang"></member>
-   <member><xref linkend="sql-droplanguage" endterm="sql-droplanguage-title"></member>
+   <member><xref linkend="sql-droplanguage"></member>
   </simplelist>
  </refsect1>
 

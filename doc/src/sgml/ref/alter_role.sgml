@@ -1,11 +1,11 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_role.sgml,v 1.15 2009/10/07 22:14:16 alvherre Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_role.sgml,v 1.16 2010/04/03 07:22:57 petere Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="SQL-ALTERROLE">
  <refmeta>
-  <refentrytitle id="sql-alterrole-title">ALTER ROLE</refentrytitle>
+  <refentrytitle>ALTER ROLE</refentrytitle>
   <manvolnum>7</manvolnum>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
@@ -55,11 +55,11 @@ ALTER ROLE <replaceable class="PARAMETER">name</replaceable> [ IN DATABASE <repl
   <para>
    The first variant of this command listed in the synopsis can change
    many of the role attributes that can be specified in 
-   <xref linkend="sql-createrole" endterm="sql-createrole-title">.
+   <xref linkend="sql-createrole">.
    (All the possible attributes are covered,
    except that there are no options for adding or removing memberships; use
-   <xref linkend="SQL-GRANT" endterm="SQL-GRANT-title"> and
-   <xref linkend="SQL-REVOKE" endterm="SQL-REVOKE-title"> for that.)
+   <xref linkend="SQL-GRANT"> and
+   <xref linkend="SQL-REVOKE"> for that.)
    Attributes not mentioned in the command retain their previous settings.
    Database superusers can change any of these settings for any role.
    Roles having <literal>CREATEROLE</> privilege can change any of these
@@ -88,7 +88,7 @@ ALTER ROLE <replaceable class="PARAMETER">name</replaceable> [ IN DATABASE <repl
    <filename>postgresql.conf</> or has been received from the postgres
    command line. This only happens at login time, so configuration
    settings associated with a role to which you've <xref
-   linkend="sql-set-role" endterm="sql-set-role-title"> will be ignored. Settings set to
+   linkend="sql-set-role"> will be ignored. Settings set to
    a role directly are overridden by any database specific settings attached to a role.
    Superusers can change anyone's session defaults. Roles having
    <literal>CREATEROLE</> privilege can change defaults for non-superuser
@@ -131,8 +131,7 @@ ALTER ROLE <replaceable class="PARAMETER">name</replaceable> [ IN DATABASE <repl
       <listitem>
        <para>
         These clauses alter attributes originally set by
-        <xref linkend="SQL-CREATEROLE"
-        endterm="SQL-CREATEROLE-title">. For more information, see the
+        <xref linkend="SQL-CREATEROLE">. For more information, see the
         <command>CREATE ROLE</command> reference page.
        </para>
       </listitem>
@@ -176,12 +175,12 @@ ALTER ROLE <replaceable class="PARAMETER">name</replaceable> [ IN DATABASE <repl
 
        <para>
         Role-specific variable setting take effect only at login;
-        <xref linkend="sql-set-role" endterm="sql-set-role-title">
+        <xref linkend="sql-set-role">
         does not process role-specific variable settings.
        </para>
 
        <para>
-        See <xref linkend="sql-set" endterm="sql-set-title"> and <xref
+        See <xref linkend="sql-set"> and <xref
         linkend="runtime-config"> for more information about allowed
         parameter names and values.
        </para>
@@ -194,15 +193,14 @@ ALTER ROLE <replaceable class="PARAMETER">name</replaceable> [ IN DATABASE <repl
   <title>Notes</title>
 
   <para>
-   Use <xref linkend="SQL-CREATEROLE" endterm="SQL-CREATEROLE-title">
-   to add new roles, and <xref linkend="SQL-DROPROLE"
-   endterm="SQL-DROPROLE-title"> to remove a role.
+   Use <xref linkend="SQL-CREATEROLE">
+   to add new roles, and <xref linkend="SQL-DROPROLE"> to remove a role.
   </para>
 
   <para>
    <command>ALTER ROLE</command> cannot change a role's memberships.
-   Use <xref linkend="SQL-GRANT" endterm="SQL-GRANT-title"> and
-   <xref linkend="SQL-REVOKE" endterm="SQL-REVOKE-title">
+   Use <xref linkend="SQL-GRANT"> and
+   <xref linkend="SQL-REVOKE">
    to do that.
   </para>
 
@@ -210,8 +208,8 @@ ALTER ROLE <replaceable class="PARAMETER">name</replaceable> [ IN DATABASE <repl
    Caution must be exercised when specifying an unencrypted password
    with this command.  The password will be transmitted to the server
    in cleartext, and it might also be logged in the client's command
-   history or the server log.  <xref linkend="app-psql"
-   endterm="app-psql-title"> contains a command
+   history or the server log.  <xref linkend="app-psql">
+   contains a command
    <command>\password</command> that can be used to safely change a
    role's password.
   </para>
@@ -219,7 +217,7 @@ ALTER ROLE <replaceable class="PARAMETER">name</replaceable> [ IN DATABASE <repl
   <para>
    It is also possible to tie a
    session default to a specific database rather than to a role; see
-   <xref linkend="sql-alterdatabase" endterm="sql-alterdatabase-title">.
+   <xref linkend="sql-alterdatabase">.
    If there is a conflict, database-role-specific settings override role-specific
    ones, which in turn override database-specific ones.
   </para>
@@ -300,9 +298,9 @@ ALTER ROLE fred IN DATABASE devel SET client_min_messages = DEBUG;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-createrole" endterm="sql-createrole-title"></member>
-   <member><xref linkend="sql-droprole" endterm="sql-droprole-title"></member>
-   <member><xref linkend="sql-set" endterm="sql-set-title"></member>
+   <member><xref linkend="sql-createrole"></member>
+   <member><xref linkend="sql-droprole"></member>
+   <member><xref linkend="sql-set"></member>
   </simplelist>
  </refsect1>
 </refentry>

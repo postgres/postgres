@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/monitoring.sgml,v 1.76 2010/02/03 17:25:05 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/monitoring.sgml,v 1.77 2010/04/03 07:22:55 petere Exp $ -->
 
 <chapter id="monitoring">
  <title>Monitoring Database Activity</title>
@@ -27,8 +27,7 @@
    <command>ps</>, <command>top</>, <command>iostat</>, and <command>vmstat</>.
    Also, once one has identified a
    poorly-performing query, further investigation might be needed using
-   <productname>PostgreSQL</productname>'s <xref linkend="sql-explain"
-   endterm="sql-explain-title"> command.
+   <productname>PostgreSQL</productname>'s <xref linkend="sql-explain"> command.
    <xref linkend="using-explain"> discusses <command>EXPLAIN</>
    and other methods for understanding the behavior of an individual
    query.
@@ -159,7 +158,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
    Normally these parameters are set in <filename>postgresql.conf</> so
    that they apply to all server processes, but it is possible to turn
    them on or off in individual sessions using the <xref
-   linkend="sql-set" endterm="sql-set-title"> command. (To prevent
+   linkend="sql-set"> command. (To prevent
    ordinary users from hiding their activity from the administrator,
    only superusers are allowed to change these parameters with
    <command>SET</>.)

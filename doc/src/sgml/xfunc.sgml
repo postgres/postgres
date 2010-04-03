@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.144 2010/01/04 16:34:11 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.145 2010/04/03 07:22:56 petere Exp $ -->
 
  <sect1 id="xfunc">
   <title>User-Defined Functions</title>
@@ -63,8 +63,7 @@
 
   <para>
    Throughout this chapter, it can be useful to look at the reference
-   page of the <xref linkend="sql-createfunction"
-   endterm="sql-createfunction-title"> command to
+   page of the <xref linkend="sql-createfunction"> command to
    understand the examples better.  Some examples from this chapter
    can be found in <filename>funcs.sql</filename> and
    <filename>funcs.c</filename> in the <filename>src/tutorial</>
@@ -1179,7 +1178,7 @@ CREATE FUNCTION test(int, int) RETURNS int
     Every function has a <firstterm>volatility</> classification, with
     the possibilities being <literal>VOLATILE</>, <literal>STABLE</>, or
     <literal>IMMUTABLE</>.  <literal>VOLATILE</> is the default if the
-    <xref linkend="sql-createfunction" endterm="sql-createfunction-title">
+    <xref linkend="sql-createfunction">
     command does not specify a category.  The volatility category is a
     promise to the optimizer about the behavior of the function:
 

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/spi.sgml,v 1.66 2009/11/04 22:26:04 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/spi.sgml,v 1.67 2010/04/03 07:22:55 petere Exp $ -->
 
 <chapter id="spi">
  <title>Server Programming Interface</title>
@@ -2341,7 +2341,7 @@ void SPI_scroll_cursor_fetch(Portal <parameter>portal</parameter>, FetchDirectio
   <title>Notes</title>
 
   <para>
-   See the SQL <xref linkend="sql-fetch" endterm="sql-fetch-title"> command
+   See the SQL <xref linkend="sql-fetch"> command
    for details of the interpretation of the
    <parameter>direction</parameter> and
    <parameter>count</parameter> parameters.
@@ -2442,7 +2442,7 @@ void SPI_scroll_cursor_move(Portal <parameter>portal</parameter>, FetchDirection
   <title>Notes</title>
 
   <para>
-   See the SQL <xref linkend="sql-fetch" endterm="sql-fetch-title"> command
+   See the SQL <xref linkend="sql-fetch"> command
    for details of the interpretation of the
    <parameter>direction</parameter> and
    <parameter>count</parameter> parameters.

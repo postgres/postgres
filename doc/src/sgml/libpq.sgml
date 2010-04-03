@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.303 2010/02/27 03:41:34 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.304 2010/04/03 07:22:54 petere Exp $ -->
 
 <chapter id="libpq">
  <title><application>libpq</application> - C Library</title>
@@ -1804,12 +1804,12 @@ PGresult *PQprepare(PGconn *conn,
     </variablelist>
 
     Prepared statements for use with <function>PQexecPrepared</> can also
-    be created by executing SQL <xref linkend="sql-prepare"
-    endterm="sql-prepare-title"> statements.  (But <function>PQprepare</>
+    be created by executing SQL <xref linkend="sql-prepare">
+    statements.  (But <function>PQprepare</>
     is more flexible since it does not require parameter types to be
     pre-specified.)  Also, although there is no <application>libpq</>
     function for deleting a prepared statement, the SQL <xref
-    linkend="sql-deallocate" endterm="sql-deallocate-title"> statement
+    linkend="sql-deallocate"> statement
     can be used for that purpose.
    </para>
 
@@ -4279,7 +4279,7 @@ typedef struct {
        0 indicates the overall copy format is textual (rows separated by
        newlines, columns separated by separator characters, etc).  1
        indicates the overall copy format is binary.  See <xref
-       linkend="sql-copy" endterm="sql-copy-title"> for more information.
+       linkend="sql-copy"> for more information.
       </para>
      </listitem>
     </varlistentry>
@@ -4359,8 +4359,7 @@ typedef struct {
        into buffer loads of any convenient size.  Buffer-load boundaries
        have no semantic significance when sending.  The contents of the
        data stream must match the data format expected by the
-       <command>COPY</> command; see <xref linkend="sql-copy"
-       endterm="sql-copy-title"> for details.
+       <command>COPY</> command; see <xref linkend="sql-copy"> for details.
       </para>
      </listitem>
     </varlistentry>
@@ -6102,8 +6101,8 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
   <para>
    The following environment variables can be used to specify default
    behavior for each <productname>PostgreSQL</productname> session.  (See
-   also the <xref linkend="sql-alteruser" endterm="sql-alteruser-title">
-   and <xref linkend="sql-alterdatabase" endterm="sql-alterdatabase-title">
+   also the <xref linkend="sql-alteruser">
+   and <xref linkend="sql-alterdatabase">
    commands for ways to set default behavior on a per-user or per-database
    basis.)
 
@@ -6151,8 +6150,8 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
     </listitem>
    </itemizedlist>
 
-   Refer to the <acronym>SQL</acronym> command <xref linkend="sql-set"
-   endterm="sql-set-title"> for information on correct values for these
+   Refer to the <acronym>SQL</acronym> command <xref linkend="sql-set">
+   for information on correct values for these
    environment variables.
   </para>
 

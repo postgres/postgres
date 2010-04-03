@@ -1,11 +1,11 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/set.sgml,v 1.94 2008/11/14 10:22:47 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/set.sgml,v 1.95 2010/04/03 07:23:02 petere Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="SQL-SET">
  <refmeta>
-  <refentrytitle id="SQL-SET-TITLE">SET</refentrytitle>
+  <refentrytitle>SET</refentrytitle>
   <manvolnum>7</manvolnum>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
@@ -67,7 +67,7 @@ SET [ SESSION | LOCAL ] TIME ZONE { <replaceable class="PARAMETER">timezone</rep
   <para>
    If <command>SET LOCAL</command> is used within a function that has a
    <literal>SET</> option for the same variable (see
-   <xref linkend="sql-createfunction" endterm="sql-createfunction-title">),
+   <xref linkend="sql-createfunction">),
    the effects of the <command>SET LOCAL</command> command disappear at
    function exit; that is, the value in effect when the function was called is
    restored anyway.  This allows <command>SET LOCAL</command> to be used for
@@ -322,8 +322,8 @@ SET TIME ZONE 'Europe/Rome';
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="SQL-RESET" endterm="SQL-RESET-title"></member>
-   <member><xref linkend="SQL-SHOW" endterm="SQL-SHOW-title"></member>
+   <member><xref linkend="SQL-RESET"></member>
+   <member><xref linkend="SQL-SHOW"></member>
   </simplelist>
  </refsect1>
 </refentry>

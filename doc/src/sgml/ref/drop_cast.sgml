@@ -1,8 +1,8 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/drop_cast.sgml,v 1.10 2009/09/19 10:23:27 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/drop_cast.sgml,v 1.11 2010/04/03 07:23:00 petere Exp $ -->
 
 <refentry id="SQL-DROPCAST">
  <refmeta>
-  <refentrytitle id="SQL-DROPCAST-TITLE">DROP CAST</refentrytitle>
+  <refentrytitle>DROP CAST</refentrytitle>
   <manvolnum>7</manvolnum>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
@@ -108,7 +108,7 @@ DROP CAST (text AS int);
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-createcast" endterm="sql-createcast-title"></member>
+   <member><xref linkend="sql-createcast"></member>
   </simplelist>
  </refsect1>
 

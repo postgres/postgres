@@ -1,11 +1,11 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_database.sgml,v 1.24 2009/09/19 10:23:26 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_database.sgml,v 1.25 2010/04/03 07:22:56 petere Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="SQL-ALTERDATABASE">
  <refmeta>
-  <refentrytitle id="sql-alterdatabase-title">ALTER DATABASE</refentrytitle>
+  <refentrytitle>ALTER DATABASE</refentrytitle>
   <manvolnum>7</manvolnum>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
@@ -160,7 +160,7 @@ ALTER DATABASE <replaceable class="PARAMETER">name</replaceable> RESET ALL
        </para>
 
        <para>
-        See <xref linkend="sql-set" endterm="sql-set-title"> and <xref linkend="runtime-config">
+        See <xref linkend="sql-set"> and <xref linkend="runtime-config">
         for more information about allowed parameter names
         and values.
        </para>
@@ -175,7 +175,7 @@ ALTER DATABASE <replaceable class="PARAMETER">name</replaceable> RESET ALL
   <para>
    It is also possible to tie a session default to a specific role
    rather than to a database; see
-   <xref linkend="sql-alterrole" endterm="sql-alterrole-title">.
+   <xref linkend="sql-alterrole">.
    Role-specific settings override database-specific
    ones if there is a conflict.
   </para>
@@ -207,10 +207,10 @@ ALTER DATABASE test SET enable_indexscan TO off;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-createdatabase" endterm="sql-createdatabase-title"></member>
-   <member><xref linkend="sql-dropdatabase" endterm="sql-dropdatabase-title"></member>
-   <member><xref linkend="sql-set" endterm="sql-set-title"></member>
-   <member><xref linkend="sql-createtablespace" endterm="sql-createtablespace-title"></member>
+   <member><xref linkend="sql-createdatabase"></member>
+   <member><xref linkend="sql-dropdatabase"></member>
+   <member><xref linkend="sql-set"></member>
+   <member><xref linkend="sql-createtablespace"></member>
   </simplelist>
  </refsect1>
 </refentry>

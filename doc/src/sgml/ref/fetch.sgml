@@ -1,11 +1,11 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/fetch.sgml,v 1.46 2009/11/11 20:07:57 alvherre Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/fetch.sgml,v 1.47 2010/04/03 07:23:01 petere Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="SQL-FETCH">
  <refmeta>
-  <refentrytitle id="SQL-FETCH-TITLE">FETCH</refentrytitle>
+  <refentrytitle>FETCH</refentrytitle>
   <manvolnum>7</manvolnum>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
@@ -337,9 +337,9 @@ FETCH <replaceable class="parameter">count</replaceable>
   </para>
 
   <para>
-   <xref linkend="sql-declare" endterm="sql-declare-title">
+   <xref linkend="sql-declare">
    is used to define a cursor.  Use
-   <xref linkend="sql-move" endterm="sql-move-title">
+   <xref linkend="sql-move">
    to change cursor position without retrieving data.
   </para>
  </refsect1>
@@ -413,9 +413,9 @@ COMMIT WORK;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-close" endterm="sql-close-title"></member>
-   <member><xref linkend="sql-declare" endterm="sql-declare-title"></member>
-   <member><xref linkend="sql-move" endterm="sql-move-title"></member>
+   <member><xref linkend="sql-close"></member>
+   <member><xref linkend="sql-declare"></member>
+   <member><xref linkend="sql-move"></member>
   </simplelist>
  </refsect1>
 </refentry>

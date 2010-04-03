@@ -1,11 +1,11 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/createuser.sgml,v 1.55 2010/03/22 14:56:09 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/createuser.sgml,v 1.56 2010/04/03 07:23:00 petere Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="APP-CREATEUSER">
  <refmeta>
-  <refentrytitle id="APP-CREATEUSER-TITLE"><application>createuser</application></refentrytitle>
+  <refentrytitle><application>createuser</application></refentrytitle>
   <manvolnum>1</manvolnum>
   <refmiscinfo>Application</refmiscinfo>
  </refmeta>
@@ -49,8 +49,7 @@ PostgreSQL documentation
 
   <para>
    <application>createuser</application> is a wrapper around the
-   <acronym>SQL</acronym> command <xref linkend="SQL-CREATEROLE"
-   endterm="SQL-CREATEROLE-title">.
+   <acronym>SQL</acronym> command <xref linkend="SQL-CREATEROLE">.
    There is no effective difference between creating users via
    this utility and via other methods for accessing the server.
   </para>
@@ -384,8 +383,8 @@ PostgreSQL documentation
   <title>Diagnostics</title>
 
   <para>
-   In case of difficulty, see <xref linkend="SQL-CREATEROLE"
-   endterm="sql-createrole-title"> and <xref linkend="APP-PSQL"> for
+   In case of difficulty, see <xref linkend="SQL-CREATEROLE">
+   and <xref linkend="APP-PSQL"> for
    discussions of potential problems and error messages.
    The database server must be running at the
    targeted host.  Also, any default connection settings and environment
@@ -445,7 +444,7 @@ PostgreSQL documentation
 
   <simplelist type="inline">
    <member><xref linkend="app-dropuser"></member>
-   <member><xref linkend="sql-createrole" endterm="sql-createrole-title"></member>
+   <member><xref linkend="sql-createrole"></member>
   </simplelist>
  </refsect1>
 

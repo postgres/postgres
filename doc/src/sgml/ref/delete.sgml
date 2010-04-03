@@ -1,11 +1,11 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/delete.sgml,v 1.36 2009/09/19 10:23:27 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/delete.sgml,v 1.37 2010/04/03 07:23:00 petere Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="SQL-DELETE">
  <refmeta>
-  <refentrytitle id="SQL-DELETE-TITLE">DELETE</refentrytitle>
+  <refentrytitle>DELETE</refentrytitle>
   <manvolnum>7</manvolnum>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
@@ -40,7 +40,7 @@ DELETE FROM [ ONLY ] <replaceable class="PARAMETER">table</replaceable> [ [ AS ]
 
    <tip>
     <para>
-     <xref linkend="sql-truncate" endterm="sql-truncate-title"> is a
+     <xref linkend="sql-truncate"> is a
      <productname>PostgreSQL</productname> extension that provides a
      faster mechanism to remove all rows from a table.
     </para>
@@ -152,7 +152,7 @@ DELETE FROM [ ONLY ] <replaceable class="PARAMETER">table</replaceable> [ [ AS ]
       query on the <command>DELETE</>'s target table.
       Note that <literal>WHERE CURRENT OF</> cannot be
       specified together with a Boolean condition.  See
-      <xref linkend="sql-declare" endterm="sql-declare-title">
+      <xref linkend="sql-declare">
       for more information about using cursors with
       <literal>WHERE CURRENT OF</>.
      </para>

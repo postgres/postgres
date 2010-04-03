@@ -1,11 +1,11 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/drop_rule.sgml,v 1.24 2009/09/19 10:23:27 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/drop_rule.sgml,v 1.25 2010/04/03 07:23:01 petere Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="SQL-DROPRULE">
  <refmeta>
-  <refentrytitle id="SQL-DROPRULE-TITLE">DROP RULE</refentrytitle>
+  <refentrytitle>DROP RULE</refentrytitle>
   <manvolnum>7</manvolnum>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
@@ -112,7 +112,7 @@ DROP RULE newrule ON mytable;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-createrule" endterm="sql-createrule-title"></member>
+   <member><xref linkend="sql-createrule"></member>
   </simplelist>
  </refsect1>
 

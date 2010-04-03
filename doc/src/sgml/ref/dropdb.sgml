@@ -1,11 +1,11 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/dropdb.sgml,v 1.37 2010/02/19 14:36:45 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/dropdb.sgml,v 1.38 2010/04/03 07:23:01 petere Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="APP-DROPDB">
  <refmeta>
-  <refentrytitle id="APP-DROPDB-TITLE"><application>dropdb</application></refentrytitle>
+  <refentrytitle><application>dropdb</application></refentrytitle>
   <manvolnum>1</manvolnum>
   <refmiscinfo>Application</refmiscinfo>
  </refmeta>
@@ -41,8 +41,7 @@ PostgreSQL documentation
 
   <para>
    <application>dropdb</application> is a wrapper around the
-   <acronym>SQL</acronym> command <xref linkend="SQL-DROPDATABASE"
-   endterm="SQL-DROPDATABASE-title">.
+   <acronym>SQL</acronym> command <xref linkend="SQL-DROPDATABASE">.
    There is no effective difference between dropping databases via
    this utility and via other methods for accessing the server.
   </para>
@@ -222,8 +221,8 @@ PostgreSQL documentation
   <title>Diagnostics</title>
 
   <para>
-   In case of difficulty, see <xref linkend="SQL-DROPDATABASE"
-   endterm="sql-dropdatabase-title"> and <xref linkend="APP-PSQL"> for
+   In case of difficulty, see <xref linkend="SQL-DROPDATABASE">
+   and <xref linkend="APP-PSQL"> for
    discussions of potential problems and error messages.
    The database server must be running at the
    targeted host.  Also, any default connection settings and environment
@@ -264,7 +263,7 @@ Are you sure? (y/n) </computeroutput><userinput>y</userinput>
 
   <simplelist type="inline">
    <member><xref linkend="app-createdb"></member>
-   <member><xref linkend="sql-dropdatabase" endterm="sql-dropdatabase-title"></member>
+   <member><xref linkend="sql-dropdatabase"></member>
   </simplelist>
  </refsect1>
 

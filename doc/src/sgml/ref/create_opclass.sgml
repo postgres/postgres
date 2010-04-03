@@ -1,11 +1,11 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_opclass.sgml,v 1.24 2009/09/19 10:23:26 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_opclass.sgml,v 1.25 2010/04/03 07:22:58 petere Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="SQL-CREATEOPCLASS">
  <refmeta>
-  <refentrytitle id="sql-createopclass-title">CREATE OPERATOR CLASS</refentrytitle>
+  <refentrytitle>CREATE OPERATOR CLASS</refentrytitle>
   <manvolnum>7</manvolnum>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
@@ -297,10 +297,10 @@ CREATE OPERATOR CLASS gist__int_ops
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-alteropclass" endterm="sql-alteropclass-title"></member>
-   <member><xref linkend="sql-dropopclass" endterm="sql-dropopclass-title"></member>
-   <member><xref linkend="sql-createopfamily" endterm="sql-createopfamily-title"></member>
-   <member><xref linkend="sql-alteropfamily" endterm="sql-alteropfamily-title"></member>
+   <member><xref linkend="sql-alteropclass"></member>
+   <member><xref linkend="sql-dropopclass"></member>
+   <member><xref linkend="sql-createopfamily"></member>
+   <member><xref linkend="sql-alteropfamily"></member>
   </simplelist>
  </refsect1>
 </refentry>

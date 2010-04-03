@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.510 2010/03/18 15:29:44 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.511 2010/04/03 07:22:54 petere Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -8877,7 +8877,7 @@ table2-mapping
    functions for operating on <firstterm>sequence objects</firstterm>.
    Sequence objects (also called sequence generators or just
    sequences) are special single-row tables created with <xref
-   linkend="sql-createsequence" endterm="sql-createsequence-title">.
+   linkend="sql-createsequence">.
    A sequence object is usually used to generate unique identifiers
    for rows of a table.  The sequence functions, listed in <xref
    linkend="functions-sequence-table">, provide simple, multiuser-safe
@@ -9070,7 +9070,7 @@ SELECT setval('foo', 42, false);    <lineannotation>Next <function>nextval</> wi
    If a sequence object has been created with default parameters,
    successive <function>nextval</function> calls will return successive values
    beginning with 1.  Other behaviors can be obtained by using
-   special parameters in the <xref linkend="sql-createsequence" endterm="sql-createsequence-title"> command;
+   special parameters in the <xref linkend="sql-createsequence"> command;
    see its command reference page for more information.
   </para>
 
@@ -11657,11 +11657,11 @@ postgres=# select * from unnest2(array[[1,2],[3,4]]);
    <para>
     The <function>session_user</function> is normally the user who initiated
     the current database connection; but superusers can change this setting
-    with <xref linkend="sql-set-session-authorization" endterm="sql-set-session-authorization-title">.
+    with <xref linkend="sql-set-session-authorization">.
     The <function>current_user</function> is the user identifier
     that is applicable for permission checking. Normally it is equal
     to the session user, but it can be changed with
-    <xref linkend="sql-set-role" endterm="sql-set-role-title">.
+    <xref linkend="sql-set-role">.
     It also changes during the execution of
     functions with the attribute <literal>SECURITY DEFINER</literal>.
     In Unix parlance, the session user is the <quote>real user</quote> and
@@ -11695,7 +11695,7 @@ SET search_path TO <replaceable>schema</> <optional>, <replaceable>schema</>, ..
    <para>
     <function>pg_listening_channels</function> returns a set of names of
     channels that the current session is listening to.  See <xref
-    linkend="sql-listen" endterm="sql-listen-title"> for more information.
+    linkend="sql-listen"> for more information.
    </para>
 
    <indexterm>
@@ -12653,8 +12653,8 @@ SELECT typlen FROM pg_type WHERE oid = pg_typeof(33);
 
    <para>
     The functions shown in <xref linkend="functions-info-comment-table">
-    extract comments previously stored with the <xref linkend="sql-comment"
-    endterm="sql-comment-title"> command.  A null value is returned if no
+    extract comments previously stored with the <xref linkend="sql-comment">
+    command.  A null value is returned if no
     comment could be found for the specified parameters.
    </para>
 

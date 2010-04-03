@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/xaggr.sgml,v 1.39 2010/02/08 20:39:51 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/xaggr.sgml,v 1.40 2010/04/03 07:22:56 petere Exp $ -->
 
  <sect1 id="xaggr">
   <title>User-Defined Aggregates</title>
@@ -184,7 +184,7 @@ SELECT attrelid::regclass, array_accum(atttypid::regtype)
 
   <para>
    For further details see the
-   <xref linkend="sql-createaggregate" endterm="sql-createaggregate-title">
+   <xref linkend="sql-createaggregate">
    command.
   </para>
  </sect1>

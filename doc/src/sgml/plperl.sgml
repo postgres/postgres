@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/plperl.sgml,v 2.82 2010/02/25 10:02:30 mha Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/plperl.sgml,v 2.83 2010/04/03 07:22:55 petere Exp $ -->
 
  <chapter id="plperl">
   <title>PL/Perl - Perl Procedural Language</title>
@@ -51,7 +51,7 @@
 
   <para>
    To create a function in the PL/Perl language, use the standard
-   <xref linkend="sql-createfunction" endterm="sql-createfunction-title">
+   <xref linkend="sql-createfunction">
    syntax:
 
 <programlisting>
@@ -69,7 +69,7 @@ $$ LANGUAGE plperl;
 
   <para>
    PL/Perl also supports anonymous code blocks called with the
-   <xref linkend="sql-do" endterm="sql-do-title"> statement:
+   <xref linkend="sql-do"> statement:
 
 <programlisting>
 DO $$

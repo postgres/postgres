@@ -1,11 +1,11 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/unlisten.sgml,v 1.31 2010/02/16 22:34:43 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/unlisten.sgml,v 1.32 2010/04/03 07:23:02 petere Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="SQL-UNLISTEN">
  <refmeta>
-  <refentrytitle id="SQL-UNLISTEN-TITLE">UNLISTEN</refentrytitle>
+  <refentrytitle>UNLISTEN</refentrytitle>
   <manvolnum>7</manvolnum>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
@@ -40,7 +40,7 @@ UNLISTEN { <replaceable class="PARAMETER">channel</replaceable> | * }
   </para>
 
   <para>
-   <xref endterm="sql-notify-title" linkend="sql-notify">
+   <xref linkend="sql-notify">
    contains a more extensive
    discussion of the use of <command>LISTEN</command> and
    <command>NOTIFY</command>.
@@ -127,8 +127,8 @@ NOTIFY virtual;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-listen" endterm="sql-listen-title"></member>
-   <member><xref linkend="sql-notify" endterm="sql-notify-title"></member>
+   <member><xref linkend="sql-listen"></member>
+   <member><xref linkend="sql-notify"></member>
   </simplelist>
  </refsect1>
 </refentry>

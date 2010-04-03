@@ -1,11 +1,11 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_user.sgml,v 1.43 2009/09/19 10:23:27 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_user.sgml,v 1.44 2010/04/03 07:23:00 petere Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="SQL-CREATEUSER">
  <refmeta>
-  <refentrytitle id="sql-createuser-title">CREATE USER</refentrytitle>
+  <refentrytitle>CREATE USER</refentrytitle>
   <manvolnum>7</manvolnum>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
@@ -48,7 +48,7 @@ CREATE USER <replaceable class="PARAMETER">name</replaceable> [ [ WITH ] <replac
 
   <para>
    <command>CREATE USER</command> is now an alias for
-   <xref linkend="sql-createrole" endterm="sql-createrole-title">.
+   <xref linkend="sql-createrole">.
    The only difference is that when the command is spelled
    <command>CREATE USER</command>, <literal>LOGIN</> is assumed
    by default, whereas <literal>NOLOGIN</> is assumed when
@@ -71,7 +71,7 @@ CREATE USER <replaceable class="PARAMETER">name</replaceable> [ [ WITH ] <replac
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-createrole" endterm="sql-createrole-title"></member>
+   <member><xref linkend="sql-createrole"></member>
   </simplelist>
  </refsect1>
 </refentry>

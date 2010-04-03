@@ -1,11 +1,11 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_opfamily.sgml,v 1.6 2009/09/19 10:23:26 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_opfamily.sgml,v 1.7 2010/04/03 07:22:57 petere Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="SQL-ALTEROPFAMILY">
  <refmeta>
-  <refentrytitle id="SQL-ALTEROPFAMILY-TITLE">ALTER OPERATOR FAMILY</refentrytitle>
+  <refentrytitle>ALTER OPERATOR FAMILY</refentrytitle>
   <manvolnum>7</manvolnum>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
@@ -52,8 +52,7 @@ ALTER OPERATOR FAMILY <replaceable>name</replaceable> USING <replaceable class="
    are compatible with the family's semantics, but are not required for
    correct functioning of any specific index.  (Operators and functions
    that are so required should be declared as part of an operator class,
-   instead; see <xref linkend="sql-createopclass"
-   endterm="sql-createopclass-title">.)
+   instead; see <xref linkend="sql-createopclass">.)
    <productname>PostgreSQL</productname> will allow loose members of a
    family to be dropped from the family at any time, but members of an
    operator class cannot be dropped without dropping the whole class and
@@ -313,11 +312,11 @@ ALTER OPERATOR FAMILY integer_ops USING btree DROP
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-createopfamily" endterm="sql-createopfamily-title"></member>
-   <member><xref linkend="sql-dropopfamily" endterm="sql-dropopfamily-title"></member>
-   <member><xref linkend="sql-createopclass" endterm="sql-createopclass-title"></member>
-   <member><xref linkend="sql-alteropclass" endterm="sql-alteropclass-title"></member>
-   <member><xref linkend="sql-dropopclass" endterm="sql-dropopclass-title"></member>
+   <member><xref linkend="sql-createopfamily"></member>
+   <member><xref linkend="sql-dropopfamily"></member>
+   <member><xref linkend="sql-createopclass"></member>
+   <member><xref linkend="sql-alteropclass"></member>
+   <member><xref linkend="sql-dropopclass"></member>
   </simplelist>
  </refsect1>
 </refentry>

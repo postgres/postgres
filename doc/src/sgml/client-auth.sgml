@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.135 2010/03/31 20:18:10 heikki Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.136 2010/04/03 07:22:53 petere Exp $ -->
 
 <chapter id="client-authentication">
  <title>Client Authentication</title>
@@ -785,8 +785,8 @@ omicron         bryanh                  guest1
     separate from operating system user passwords. The password for
     each database user is stored in the <literal>pg_authid</> system
     catalog. Passwords can be managed with the SQL commands
-    <xref linkend="sql-createuser" endterm="sql-createuser-title"> and
-    <xref linkend="sql-alteruser" endterm="sql-alteruser-title">,
+    <xref linkend="sql-createuser"> and
+    <xref linkend="sql-alteruser">,
     e.g., <userinput>CREATE USER foo WITH PASSWORD 'secret'</userinput>.
     If no password has been set up for a user, the stored password
     is null and password authentication will always fail for that user.

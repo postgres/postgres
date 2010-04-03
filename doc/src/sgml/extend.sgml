@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/extend.sgml,v 1.37 2008/07/16 01:30:21 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/extend.sgml,v 1.38 2010/04/03 07:22:53 petere Exp $ -->
 
  <chapter id="extend">
   <title>Extending <acronym>SQL</acronym></title>
@@ -130,7 +130,7 @@
     <para>
      Composite types, or row types, are created whenever the user
      creates a table. It is also possible to use <xref
-     linkend="sql-createtype" endterm="sql-createtype-title"> to
+     linkend="sql-createtype"> to
      define a <quote>stand-alone</> composite type with no associated
      table.  A composite type is simply a list of types with
      associated field names.  A value of a composite type is a row or
@@ -152,7 +152,7 @@
 
     <para>
      Domains can be created using the <acronym>SQL</> command
-     <xref linkend="sql-createdomain" endterm="sql-createdomain-title">.
+     <xref linkend="sql-createdomain">.
      Their creation and use is not discussed in this chapter.
     </para>
    </sect2>

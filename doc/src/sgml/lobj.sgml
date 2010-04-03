@@ -1,7 +1,7 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/lobj.sgml,v 1.52 2010/02/17 04:19:37 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/lobj.sgml,v 1.53 2010/04/03 07:22:55 petere Exp $ -->
 
  <chapter id="largeObjects">
-  <title id="largeObjects-title">Large Objects</title>
+  <title>Large Objects</title>
 
   <indexterm zone="largeobjects"><primary>large object</></>
   <indexterm><primary>BLOB</><see>large object</></>
@@ -63,8 +63,8 @@
    <para>
     As of <productname>PostgreSQL</> 9.0, large objects have an owner
     and a set of access permissions, which can be managed using
-    <xref linkend="sql-grant" endterm="sql-grant-title"> and
-    <xref linkend="sql-revoke" endterm="sql-revoke-title">.  
+    <xref linkend="sql-grant"> and
+    <xref linkend="sql-revoke">.  
     For compatibility with prior releases, see
     <xref linkend="guc-lo-compat-privileges">.
     <literal>SELECT</literal> privileges are required to read a large

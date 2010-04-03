@@ -1,11 +1,11 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/drop_server.sgml,v 1.3 2009/09/19 10:23:27 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/drop_server.sgml,v 1.4 2010/04/03 07:23:01 petere Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="SQL-DROPSERVER">
  <refmeta>
-  <refentrytitle id="sql-dropserver-title">DROP SERVER</refentrytitle>
+  <refentrytitle>DROP SERVER</refentrytitle>
   <manvolnum>7</manvolnum>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
@@ -105,8 +105,8 @@ DROP SERVER IF EXISTS foo;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-createserver" endterm="sql-createserver-title"></member>
-   <member><xref linkend="sql-alterserver" endterm="sql-alterserver-title"></member>
+   <member><xref linkend="sql-createserver"></member>
+   <member><xref linkend="sql-alterserver"></member>
   </simplelist>
  </refsect1>
 

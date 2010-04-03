@@ -1,11 +1,11 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_rule.sgml,v 1.53 2008/11/14 10:22:46 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_rule.sgml,v 1.54 2010/04/03 07:22:59 petere Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="SQL-CREATERULE">
  <refmeta>
-  <refentrytitle id="sql-createrule-title">CREATE RULE</refentrytitle>
+  <refentrytitle>CREATE RULE</refentrytitle>
   <manvolnum>7</manvolnum>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>

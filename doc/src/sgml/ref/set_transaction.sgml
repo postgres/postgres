@@ -1,7 +1,7 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/set_transaction.sgml,v 1.27 2009/09/18 05:00:42 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/set_transaction.sgml,v 1.28 2010/04/03 07:23:02 petere Exp $ -->
 <refentry id="SQL-SET-TRANSACTION">
  <refmeta>
-  <refentrytitle id="SQL-SET-TRANSACTION-TITLE">SET TRANSACTION</refentrytitle>
+  <refentrytitle>SET TRANSACTION</refentrytitle>
   <manvolnum>7</manvolnum>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>

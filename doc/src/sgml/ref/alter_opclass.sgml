@@ -1,11 +1,11 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_opclass.sgml,v 1.10 2009/09/19 10:23:26 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_opclass.sgml,v 1.11 2010/04/03 07:22:57 petere Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="SQL-ALTEROPCLASS">
  <refmeta>
-  <refentrytitle id="SQL-ALTEROPCLASS-TITLE">ALTER OPERATOR CLASS</refentrytitle>
+  <refentrytitle>ALTER OPERATOR CLASS</refentrytitle>
   <manvolnum>7</manvolnum>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
@@ -101,9 +101,9 @@ ALTER OPERATOR CLASS <replaceable>name</replaceable> USING <replaceable class="p
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-createopclass" endterm="sql-createopclass-title"></member>
-   <member><xref linkend="sql-dropopclass" endterm="sql-dropopclass-title"></member>
-   <member><xref linkend="sql-alteropfamily" endterm="sql-alteropfamily-title"></member>
+   <member><xref linkend="sql-createopclass"></member>
+   <member><xref linkend="sql-dropopclass"></member>
+   <member><xref linkend="sql-alteropfamily"></member>
   </simplelist>
  </refsect1>
 </refentry>

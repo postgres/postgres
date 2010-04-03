@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/user-manag.sgml,v 1.42 2010/02/03 17:25:06 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/user-manag.sgml,v 1.43 2010/04/03 07:22:56 petere Exp $ -->
 
 <chapter id="user-manag">
  <title>Database Roles and Privileges</title>
@@ -53,7 +53,7 @@
    maintain a correspondence, but this is not required. Database roles
    are global across a database cluster installation (and not
    per individual database). To create a role use the <xref
-   linkend="sql-createrole" endterm="sql-createrole-title"> SQL command:
+   linkend="sql-createrole"> SQL command:
 <synopsis>
 CREATE ROLE <replaceable>name</replaceable>;
 </synopsis>
@@ -62,7 +62,7 @@ CREATE ROLE <replaceable>name</replaceable>;
    double-quoted.  (In practice, you will usually want to add additional
    options, such as <literal>LOGIN</>, to the command.  More details appear
    below.)  To remove an existing role, use the analogous
-   <xref linkend="sql-droprole" endterm="sql-droprole-title"> command:
+   <xref linkend="sql-droprole"> command:
 <synopsis>
 DROP ROLE <replaceable>name</replaceable>;
 </synopsis>
@@ -228,8 +228,8 @@ CREATE USER <replaceable>name</replaceable>;
     A role's attributes can be modified after creation with
     <command>ALTER ROLE</command>.<indexterm><primary>ALTER ROLE</></>
     See the reference pages for the <xref linkend="sql-createrole"
-    endterm="sql-createrole-title"> and <xref linkend="sql-alterrole"
-    endterm="sql-alterrole-title"> commands for details.
+   > and <xref linkend="sql-alterrole"
+   > commands for details.
    </para>
 
   <tip>
@@ -297,7 +297,7 @@ ALTER ROLE myname SET statement_timeout = '5min';
    <literal>EXECUTE</>, and <literal>USAGE</>.
    For more information on the different types of privileges supported by
    <productname>PostgreSQL</productname>, see the
-   <xref linkend="sql-grant" endterm="sql-grant-title"> reference page.
+   <xref linkend="sql-grant"> reference page.
   </para>
 
   <para>
@@ -316,7 +316,7 @@ GRANT UPDATE ON accounts TO joe;
 
   <para>
    To revoke a privilege, use the fittingly named
-   <xref linkend="sql-revoke" endterm="sql-revoke-title"> command:
+   <xref linkend="sql-revoke"> command:
 <programlisting>
 REVOKE ALL ON accounts FROM PUBLIC;
 </programlisting>
@@ -366,8 +366,8 @@ CREATE ROLE <replaceable>name</replaceable>;
 
   <para>
    Once the group role exists, you can add and remove members using the
-   <xref linkend="sql-grant" endterm="sql-grant-title"> and
-   <xref linkend="sql-revoke" endterm="sql-revoke-title"> commands:
+   <xref linkend="sql-grant"> and
+   <xref linkend="sql-revoke"> commands:
 <synopsis>
 GRANT <replaceable>group_role</replaceable> TO <replaceable>role1</replaceable>, ... ;
 REVOKE <replaceable>group_role</replaceable> FROM <replaceable>role1</replaceable>, ... ;
@@ -382,7 +382,7 @@ REVOKE <replaceable>group_role</replaceable> FROM <replaceable>role1</replaceabl
   <para>
    The members of a group role can use the privileges of the role in two
    ways.  First, every member of a group can explicitly do
-   <xref linkend="sql-set-role" endterm="sql-set-role-title"> to
+   <xref linkend="sql-set-role"> to
    temporarily <quote>become</> the group role.  In this state, the
    database session has access to the privileges of the group role rather
    than the original login role, and any database objects created are
@@ -466,7 +466,7 @@ RESET ROLE;
 
   <para>
    To destroy a group role, use <xref
-   linkend="sql-droprole" endterm="sql-droprole-title">:
+   linkend="sql-droprole">:
 <synopsis>
 DROP ROLE <replaceable>name</replaceable>;
 </synopsis>

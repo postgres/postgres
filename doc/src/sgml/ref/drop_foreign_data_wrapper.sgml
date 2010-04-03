@@ -1,11 +1,11 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/drop_foreign_data_wrapper.sgml,v 1.2 2009/06/19 15:28:25 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/drop_foreign_data_wrapper.sgml,v 1.3 2010/04/03 07:23:00 petere Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="SQL-DROPFOREIGNDATAWRAPPER">
  <refmeta>
-  <refentrytitle id="sql-dropforeigndatawrapper-title">DROP FOREIGN DATA WRAPPER</refentrytitle>
+  <refentrytitle>DROP FOREIGN DATA WRAPPER</refentrytitle>
   <manvolnum>7</manvolnum>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
@@ -105,8 +105,8 @@ DROP FOREIGN DATA WRAPPER dbi;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-createforeigndatawrapper" endterm="sql-createforeigndatawrapper-title"></member>
-   <member><xref linkend="sql-alterforeigndatawrapper" endterm="sql-alterforeigndatawrapper-title"></member>
+   <member><xref linkend="sql-createforeigndatawrapper"></member>
+   <member><xref linkend="sql-alterforeigndatawrapper"></member>
   </simplelist>
  </refsect1>
 

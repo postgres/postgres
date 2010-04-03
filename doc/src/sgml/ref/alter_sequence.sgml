@@ -1,11 +1,11 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_sequence.sgml,v 1.24 2008/11/14 10:22:45 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_sequence.sgml,v 1.25 2010/04/03 07:22:57 petere Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="SQL-ALTERSEQUENCE">
  <refmeta>
-  <refentrytitle id="SQL-ALTERSEQUENCE-TITLE">ALTER SEQUENCE</refentrytitle>
+  <refentrytitle>ALTER SEQUENCE</refentrytitle>
   <manvolnum>7</manvolnum>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
@@ -302,8 +302,8 @@ ALTER SEQUENCE serial RESTART WITH 105;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-createsequence" endterm="sql-createsequence-title"></member>
-   <member><xref linkend="sql-dropsequence" endterm="sql-dropsequence-title"></member>
+   <member><xref linkend="sql-createsequence"></member>
+   <member><xref linkend="sql-dropsequence"></member>
   </simplelist>
  </refsect1>
 

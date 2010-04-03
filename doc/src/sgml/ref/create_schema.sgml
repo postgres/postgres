@@ -1,11 +1,11 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_schema.sgml,v 1.21 2009/09/19 10:23:27 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_schema.sgml,v 1.22 2010/04/03 07:22:59 petere Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="SQL-CREATESCHEMA">
  <refmeta>
-  <refentrytitle id="sql-createschema-title">CREATE SCHEMA</refentrytitle>
+  <refentrytitle>CREATE SCHEMA</refentrytitle>
   <manvolnum>7</manvolnum>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
@@ -184,8 +184,8 @@ CREATE VIEW hollywood.winners AS
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-alterschema" endterm="sql-alterschema-title"></member>
-   <member><xref linkend="sql-dropschema" endterm="sql-dropschema-title"></member>
+   <member><xref linkend="sql-alterschema"></member>
+   <member><xref linkend="sql-dropschema"></member>
  </simplelist>
  </refsect1>
 

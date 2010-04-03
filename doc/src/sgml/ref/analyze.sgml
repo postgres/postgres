@@ -1,11 +1,11 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/analyze.sgml,v 1.28 2010/01/22 16:40:18 rhaas Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/analyze.sgml,v 1.29 2010/04/03 07:22:57 petere Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="SQL-ANALYZE">
  <refmeta>
-  <refentrytitle id="sql-analyze-title">ANALYZE</refentrytitle>
+  <refentrytitle>ANALYZE</refentrytitle>
   <manvolnum>7</manvolnum>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
@@ -102,7 +102,7 @@ ANALYZE [ VERBOSE ] [ <replaceable class="PARAMETER">table</replaceable> [ ( <re
    just after making major changes in the contents of a table.  Accurate
    statistics will help the planner to choose the most appropriate query
    plan, and thereby improve the speed of query processing.  A common
-   strategy is to run <xref linkend="sql-vacuum" endterm="sql-vacuum-title">
+   strategy is to run <xref linkend="sql-vacuum">
    and <command>ANALYZE</command> once a day during a low-usage time of day.
   </para>
 
@@ -132,7 +132,7 @@ ANALYZE [ VERBOSE ] [ <replaceable class="PARAMETER">table</replaceable> [ ( <re
    will change slightly each time <command>ANALYZE</command> is run,
    even if the actual table contents did not change.  This might result
    in small changes in the planner's estimated costs shown by
-   <xref linkend="sql-explain" endterm="sql-explain-title">.
+   <xref linkend="sql-explain">.
    In rare situations, this non-determinism will cause the planner's
    choices of query plans to change after <command>ANALYZE</command> is run.
    To avoid this, raise the amount of statistics collected by
@@ -144,8 +144,8 @@ ANALYZE [ VERBOSE ] [ <replaceable class="PARAMETER">table</replaceable> [ ( <re
    <xref linkend="guc-default-statistics-target"> configuration variable, or
    on a column-by-column basis by setting the per-column statistics
    target with <command>ALTER TABLE ... ALTER COLUMN ... SET
-   STATISTICS</command> (see <xref linkend="sql-altertable"
-   endterm="sql-altertable-title">).  The target value sets the
+   STATISTICS</command> (see <xref linkend="sql-altertable">).
+   The target value sets the
    maximum number of entries in the most-common-value list and the
    maximum number of bins in the histogram.  The default target value
    is 100, but this can be adjusted up or down to trade off accuracy of
@@ -174,7 +174,7 @@ ANALYZE [ VERBOSE ] [ <replaceable class="PARAMETER">table</replaceable> [ ( <re
    bad query plans, a more accurate value can be determined manually and then
    installed with
    <command>ALTER TABLE ... ALTER COLUMN ... SET (n_distinct = ...)</>
-   (see <xref linkend="sql-altertable" endterm="sql-altertable-title">).
+   (see <xref linkend="sql-altertable">).
   </para>
  </refsect1>
 
@@ -190,10 +190,10 @@ ANALYZE [ VERBOSE ] [ <replaceable class="PARAMETER">table</replaceable> [ ( <re
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-vacuum" endterm="sql-vacuum-title"></member>
-   <member><xref linkend="app-vacuumdb" endterm="app-vacuumdb-title"></member>
-   <member><xref linkend="runtime-config-resource-vacuum-cost" endterm="runtime-config-resource-vacuum-cost-title"></member>
-   <member><xref linkend="autovacuum" endterm="autovacuum-title"></member>
+   <member><xref linkend="sql-vacuum"></member>
+   <member><xref linkend="app-vacuumdb"></member>
+   <member><xref linkend="runtime-config-resource-vacuum-cost"></member>
+   <member><xref linkend="autovacuum"></member>
   </simplelist>
  </refsect1>
 </refentry>

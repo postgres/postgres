@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/arch-dev.sgml,v 2.33 2009/10/10 01:43:45 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/arch-dev.sgml,v 2.34 2010/04/03 07:22:52 petere Exp $ -->
 
  <chapter id="overview">
   <title>Overview of PostgreSQL Internals</title>
@@ -346,8 +346,8 @@
      space. In particular, this occurs when executing queries
      involving large numbers of join operations. In order to determine
      a reasonable (not necessarily optimal) query plan in a reasonable amount
-     of time, <productname>PostgreSQL</productname> uses a <xref
-     linkend="geqo" endterm="geqo-title"> when the number of joins
+     of time, <productname>PostgreSQL</productname> uses a <firstterm>Genetic
+     Query Optimizer</firstterm> (see <xref linkend="geqo">) when the number of joins
      exceeds a threshold (see <xref linkend="guc-geqo-threshold">).
     </para>
    </note>

@@ -1,8 +1,8 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/pg_config-ref.sgml,v 1.28 2008/02/18 14:51:48 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/pg_config-ref.sgml,v 1.29 2010/04/03 07:23:01 petere Exp $ -->
 
 <refentry id="app-pgconfig">
  <refmeta>
-  <refentrytitle id="app-pgconfig-title">pg_config</refentrytitle>
+  <refentrytitle>pg_config</refentrytitle>
   <manvolnum>1</manvolnum>
   <refmiscinfo>Application</refmiscinfo>
  </refmeta>

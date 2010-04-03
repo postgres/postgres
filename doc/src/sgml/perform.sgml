@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/perform.sgml,v 1.74 2010/02/26 02:31:52 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/perform.sgml,v 1.75 2010/04/03 07:22:55 petere Exp $ -->
 
  <chapter id="performance-tips">
   <title>Performance Tips</title>
@@ -32,7 +32,7 @@
     is absolutely critical for good performance, so the system includes
     a complex <firstterm>planner</> that tries to choose good plans.
     You can use the
-    <xref linkend="sql-explain" endterm="sql-explain-title"> command
+    <xref linkend="sql-explain"> command
     to see what query plan the planner creates for any query.
     Plan-reading is an art that deserves an extensive tutorial, which
     this is not; but here is some basic information.
@@ -801,7 +801,7 @@ SELECT * FROM x, y, a, b, c WHERE something AND somethingelse;
    <title>Use <command>COPY</command></title>
 
    <para>
-    Use <xref linkend="sql-copy" endterm="sql-copy-title"> to load
+    Use <xref linkend="sql-copy"> to load
     all the rows in one command, instead of using a series of
     <command>INSERT</command> commands.  The <command>COPY</command>
     command is optimized for loading large numbers of rows; it is less
@@ -813,7 +813,7 @@ SELECT * FROM x, y, a, b, c WHERE something AND somethingelse;
 
    <para>
     If you cannot use <command>COPY</command>, it might help to use <xref
-    linkend="sql-prepare" endterm="sql-prepare-title"> to create a
+    linkend="sql-prepare"> to create a
     prepared <command>INSERT</command> statement, and then use
     <command>EXECUTE</command> as many times as required.  This avoids
     some of the overhead of repeatedly parsing and planning
@@ -967,8 +967,7 @@ SELECT * FROM x, y, a, b, c WHERE something AND somethingelse;
 
    <para>
     Whenever you have significantly altered the distribution of data
-    within a table, running <xref linkend="sql-analyze"
-    endterm="sql-analyze-title"> is strongly recommended. This
+    within a table, running <xref linkend="sql-analyze"> is strongly recommended. This
     includes bulk loading large amounts of data into the table.  Running
     <command>ANALYZE</command> (or <command>VACUUM ANALYZE</command>)
     ensures that the planner has up-to-date statistics about the
@@ -977,8 +976,8 @@ SELECT * FROM x, y, a, b, c WHERE something AND somethingelse;
     performance on any tables with inaccurate or nonexistent
     statistics.  Note that if the autovacuum daemon is enabled, it might
     run <command>ANALYZE</command> automatically; see
-    <xref linkend="vacuum-for-statistics" endterm="vacuum-for-statistics-title">
-    and <xref linkend="autovacuum" endterm="autovacuum-title"> for more information.
+    <xref linkend="vacuum-for-statistics">
+    and <xref linkend="autovacuum"> for more information.
    </para>
   </sect2>
 
@@ -1062,8 +1061,8 @@ SELECT * FROM x, y, a, b, c WHERE something AND somethingelse;
     <varname>maintenance_work_mem</varname>; rather, you'd do that while
     manually recreating indexes and foreign keys afterwards.
     And don't forget to <command>ANALYZE</> when you're done; see
-    <xref linkend="vacuum-for-statistics" endterm="vacuum-for-statistics-title">
-    and <xref linkend="autovacuum" endterm="autovacuum-title"> for more information.
+    <xref linkend="vacuum-for-statistics">
+    and <xref linkend="autovacuum"> for more information.
    </para>
   </sect2>
   </sect1>

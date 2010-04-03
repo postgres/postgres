@@ -1,11 +1,11 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_domain.sgml,v 1.33 2009/09/18 05:00:41 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_domain.sgml,v 1.34 2010/04/03 07:22:58 petere Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="SQL-CREATEDOMAIN">
  <refmeta>
-  <refentrytitle id="sql-createdomain-title">CREATE DOMAIN</refentrytitle>
+  <refentrytitle>CREATE DOMAIN</refentrytitle>
   <manvolnum>7</manvolnum>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
@@ -201,8 +201,8 @@ CREATE TABLE us_snail_addy (
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-alterdomain" endterm="sql-alterdomain-title"></member>
-   <member><xref linkend="sql-dropdomain" endterm="sql-dropdomain-title"></member>
+   <member><xref linkend="sql-alterdomain"></member>
+   <member><xref linkend="sql-dropdomain"></member>
   </simplelist>
  </refsect1>
 

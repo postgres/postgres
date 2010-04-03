@@ -1,11 +1,11 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/end.sgml,v 1.15 2008/11/14 10:22:47 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/end.sgml,v 1.16 2010/04/03 07:23:01 petere Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="SQL-END">
  <refmeta>
-  <refentrytitle id="SQL-END-TITLE">END</refentrytitle>
+  <refentrytitle>END</refentrytitle>
   <manvolnum>7</manvolnum>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
@@ -33,8 +33,7 @@ END [ WORK | TRANSACTION ]
    made by the transaction become visible to others and are guaranteed
    to be durable if a crash occurs.  This command is a
    <productname>PostgreSQL</productname> extension
-   that is equivalent to <xref linkend="sql-commit"
-   endterm="sql-commit-title">.
+   that is equivalent to <xref linkend="sql-commit">.
   </para>
  </refsect1>
   
@@ -58,7 +57,7 @@ END [ WORK | TRANSACTION ]
   <title>Notes</title>
 
   <para>
-   Use <xref linkend="SQL-ROLLBACK" endterm="SQL-ROLLBACK-TITLE"> to
+   Use <xref linkend="SQL-ROLLBACK"> to
    abort a transaction.
   </para>
 
@@ -85,7 +84,7 @@ END;
   <para>
    <command>END</command> is a <productname>PostgreSQL</productname>
    extension that provides functionality equivalent to <xref
-   linkend="sql-commit" endterm="sql-commit-title">, which is
+   linkend="sql-commit">, which is
    specified in the SQL standard.
   </para>
  </refsect1>
@@ -94,9 +93,9 @@ END;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-begin" endterm="sql-begin-title"></member>
-   <member><xref linkend="sql-commit" endterm="sql-commit-title"></member>
-   <member><xref linkend="sql-rollback" endterm="sql-rollback-title"></member>
+   <member><xref linkend="sql-begin"></member>
+   <member><xref linkend="sql-commit"></member>
+   <member><xref linkend="sql-rollback"></member>
   </simplelist>
  </refsect1>
 </refentry>

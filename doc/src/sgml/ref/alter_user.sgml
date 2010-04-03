@@ -1,11 +1,11 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_user.sgml,v 1.47 2009/09/19 10:23:26 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_user.sgml,v 1.48 2010/04/03 07:22:57 petere Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="SQL-ALTERUSER">
  <refmeta>
-  <refentrytitle id="sql-alteruser-title">ALTER USER</refentrytitle>
+  <refentrytitle>ALTER USER</refentrytitle>
   <manvolnum>7</manvolnum>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
@@ -49,7 +49,7 @@ ALTER USER <replaceable class="PARAMETER">name</replaceable> RESET ALL
 
   <para>
    <command>ALTER USER</command> is now an alias for
-   <xref linkend="sql-alterrole" endterm="sql-alterrole-title">.
+   <xref linkend="sql-alterrole">.
   </para>
  </refsect1>
 
@@ -67,7 +67,7 @@ ALTER USER <replaceable class="PARAMETER">name</replaceable> RESET ALL
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-alterrole" endterm="sql-alterrole-title"></member>
+   <member><xref linkend="sql-alterrole"></member>
   </simplelist>
  </refsect1>
 </refentry>

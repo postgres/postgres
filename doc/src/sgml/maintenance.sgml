@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.101 2010/03/17 17:12:31 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.102 2010/04/03 07:22:55 petere Exp $ -->
 
 <chapter id="maintenance">
  <title>Routine Database Maintenance Tasks</title>
@@ -87,7 +87,7 @@
 
    <para>
     <productname>PostgreSQL</productname>'s
-    <xref linkend="sql-vacuum" endterm="sql-vacuum-title"> command has to
+    <xref linkend="sql-vacuum"> command has to
     process each table on a regular basis for several reasons:
 
     <orderedlist>
@@ -210,7 +210,7 @@
     their busiest tables as often as once every few minutes.) If you have
     multiple databases in a cluster, don't forget to
     <command>VACUUM</command> each one; the program <xref
-    linkend="app-vacuumdb" endterm="app-vacuumdb-title"> might be helpful.
+    linkend="app-vacuumdb"> might be helpful.
    </para>
 
    <tip>
@@ -220,9 +220,9 @@
     massive update or delete activity.  If you have such a table and
     you need to reclaim the excess disk space it occupies, you will need
     to use <command>VACUUM FULL</>, or alternatively
-    <xref linkend="sql-cluster" endterm="sql-cluster-title">
+    <xref linkend="sql-cluster">
     or one of the table-rewriting variants of
-    <xref linkend="sql-altertable" endterm="sql-altertable-title">.
+    <xref linkend="sql-altertable">.
     These commands rewrite an entire new copy of the table and build
     new indexes for it.  All these options require exclusive lock.  Note that
     they also temporarily use extra disk space approximately equal to the size
@@ -235,7 +235,7 @@
    <para>
     If you have a table whose entire contents are deleted on a periodic
     basis, consider doing it with
-    <xref linkend="sql-truncate" endterm="sql-truncate-title"> rather
+    <xref linkend="sql-truncate"> rather
     than using <command>DELETE</command> followed by
     <command>VACUUM</command>. <command>TRUNCATE</command> removes the
     entire content of the table immediately, without requiring a
@@ -247,7 +247,7 @@
   </sect2>
 
   <sect2 id="vacuum-for-statistics">
-   <title id="vacuum-for-statistics-title">Updating Planner Statistics</title>
+   <title>Updating Planner Statistics</title>
 
    <indexterm zone="vacuum-for-statistics">
     <primary>statistics</primary>
@@ -262,7 +262,7 @@
     The <productname>PostgreSQL</productname> query planner relies on
     statistical information about the contents of tables in order to
     generate good plans for queries.  These statistics are gathered by
-    the <xref linkend="sql-analyze" endterm="sql-analyze-title"> command,
+    the <xref linkend="sql-analyze"> command,
     which can be invoked by itself or
     as an optional step in <command>VACUUM</>.  It is important to have
     reasonably accurate statistics, otherwise poor choices of plans might
@@ -555,7 +555,7 @@ HINT:  Stop the postmaster and use a standalone backend to VACUUM in "mydb".
   </sect2>
 
   <sect2 id="autovacuum">
-   <title id="autovacuum-title">The Autovacuum Daemon</title>
+   <title>The Autovacuum Daemon</title>
 
    <indexterm>
     <primary>autovacuum</primary>
@@ -666,10 +666,8 @@ analyze threshold = analyze base threshold + analyze scale factor * number of tu
     Another two parameters,
     <literal>autovacuum_vacuum_cost_delay</literal> and
     <literal>autovacuum_vacuum_cost_limit</literal>, are used to set
-    table-specific values for the
-    <xref linkend="runtime-config-resource-vacuum-cost"
-    endterm="runtime-config-resource-vacuum-cost-title">
-    feature.
+    table-specific values for the cost-based vacuum delay feature
+    (see <xref linkend="runtime-config-resource-vacuum-cost">).
     <literal>autovacuum_freeze_min_age</literal>,
     <literal>autovacuum_freeze_max_age</literal> and
     <literal>autovacuum_freeze_table_age</literal> are used to set
@@ -697,7 +695,7 @@ analyze threshold = analyze base threshold + analyze scale factor * number of tu
 
   <para>
    In some situations it is worthwhile to rebuild indexes periodically
-   with the <xref linkend="sql-reindex" endterm="sql-reindex-title">
+   with the <xref linkend="sql-reindex">
    command.
   </para>
 

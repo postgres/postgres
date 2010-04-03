@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/plhandler.sgml,v 1.9 2009/11/23 21:41:20 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/plhandler.sgml,v 1.10 2010/04/03 07:22:55 petere Exp $ -->
 
  <chapter id="plhandler">
    <title>Writing A Procedural Language Handler</title>
@@ -162,10 +162,10 @@ CREATE LANGUAGE plsample
     are a <firstterm>validator</firstterm> and an
     <firstterm>inline handler</firstterm>.  A validator can be provided
     to allow language-specific checking to be done during
-    <xref linkend="sql-createfunction" endterm="sql-createfunction-title">.
+    <xref linkend="sql-createfunction">.
     An inline handler can be provided to allow the language to support
     anonymous code blocks executed via the <xref linkend="sql-do"
-    endterm="sql-do-title"> command.
+   > command.
    </para>
 
    <para>
@@ -218,7 +218,7 @@ CREATE LANGUAGE plsample
     The procedural languages included in the standard distribution
     are good references when trying to write your own language handler.
     Look into the <filename>src/pl</> subdirectory of the source tree.
-    The <xref linkend="sql-createlanguage" endterm="sql-createlanguage-title">
+    The <xref linkend="sql-createlanguage">
     reference page also has some useful details.
    </para>
 

@@ -1,11 +1,11 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_table.sgml,v 1.124 2010/04/01 00:18:21 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_table.sgml,v 1.125 2010/04/03 07:23:00 petere Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="SQL-CREATETABLE">
  <refmeta>
-  <refentrytitle id="sql-createtable-title">CREATE TABLE</refentrytitle>
+  <refentrytitle>CREATE TABLE</refentrytitle>
   <manvolnum>7</manvolnum>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
@@ -484,7 +484,7 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE <replaceable class="PAR
       Each <replaceable class="parameter">exclude_element</replaceable>
       can optionally specify an operator class and/or ordering options;
       these are described fully under
-      <xref linkend="sql-createindex" endterm="sql-createindex-title">.
+      <xref linkend="sql-createindex">.
      </para>
 
      <para>
@@ -630,7 +630,7 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE <replaceable class="PAR
       constraint that is not deferrable will be checked immediately
       after every command.  Checking of constraints that are
       deferrable can be postponed until the end of the transaction
-      (using the <xref linkend="sql-set-constraints" endterm="sql-set-constraints-title"> command).
+      (using the <xref linkend="sql-set-constraints"> command).
       <literal>NOT DEFERRABLE</literal> is the default.
       Currently, only <literal>UNIQUE</>, <literal>PRIMARY KEY</>,
       <literal>EXCLUDE</>, and
@@ -652,7 +652,7 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE <replaceable class="PAR
       statement. This is the default.  If the constraint is
       <literal>INITIALLY DEFERRED</literal>, it is checked only at the
       end of the transaction.  The constraint check time can be
-      altered with the <xref linkend="sql-set-constraints" endterm="sql-set-constraints-title"> command.
+      altered with the <xref linkend="sql-set-constraints"> command.
      </para>
     </listitem>
    </varlistentry>
@@ -690,7 +690,7 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE <replaceable class="PAR
 
      <para>
       To remove OIDs from a table after it has been created, use <xref
-      linkend="sql-altertable" endterm="sql-altertable-title">.
+      linkend="sql-altertable">.
      </para>
     </listitem>
    </varlistentry>
@@ -733,7 +733,7 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE <replaceable class="PAR
          <para>
           All rows in the temporary table will be deleted at the end
           of each transaction block.  Essentially, an automatic <xref
-          linkend="sql-truncate" endterm="sql-truncate-title"> is done
+          linkend="sql-truncate"> is done
           at each commit.
          </para>
         </listitem>
@@ -794,8 +794,7 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE <replaceable class="PAR
     for tables, and for indexes associated with a <literal>UNIQUE</literal>,
     <literal>PRIMARY KEY</literal>, or <literal>EXCLUDE</> constraint.
     Storage parameters for
-    indexes are documented in <xref linkend="SQL-CREATEINDEX"
-    endterm="sql-createindex-title">.  The storage parameters currently
+    indexes are documented in <xref linkend="SQL-CREATEINDEX">.  The storage parameters currently
     available for tables are listed below.  For each parameter, unless noted,
     there is an additional, identically named parameter, prefixed with
     <literal>toast.</literal> which can be used to control the behavior of the
@@ -978,7 +977,7 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE <replaceable class="PAR
      index for each unique constraint and primary key constraint to
      enforce uniqueness.  Thus, it is not necessary to create an
      index explicitly for primary key columns.  (See <xref
-     linkend="sql-createindex" endterm="sql-createindex-title"> for more information.)
+     linkend="sql-createindex"> for more information.)
     </para>
 
     <para>
@@ -1380,10 +1379,10 @@ CREATE TABLE employees OF employee_type (
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-altertable" endterm="sql-altertable-title"></member>
-   <member><xref linkend="sql-droptable" endterm="sql-droptable-title"></member>
-   <member><xref linkend="sql-createtablespace" endterm="sql-createtablespace-title"></member>
-   <member><xref linkend="sql-createtype" endterm="sql-createtype-title"></member>
+   <member><xref linkend="sql-altertable"></member>
+   <member><xref linkend="sql-droptable"></member>
+   <member><xref linkend="sql-createtablespace"></member>
+   <member><xref linkend="sql-createtype"></member>
   </simplelist>
  </refsect1>
 </refentry>
