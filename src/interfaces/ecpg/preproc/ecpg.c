@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.c,v 1.114 2010/02/26 02:01:31 momjian Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.c,v 1.115 2010/04/03 19:30:49 meskes Exp $ */
 
 /* Main for ecpg, the PostgreSQL embedded SQL precompiler. */
 /* Copyright (c) 1996-2010, PostgreSQL Global Development Group */
@@ -469,6 +469,14 @@ main(int argc, char *const argv[])
 					fclose(yyin);
 				if (out_option == 0 && yyout != stdout)
 					fclose(yyout);
+				/*
+				 * If there was an error, delete the output file.
+				 */
+				if (ret_value != 0)
+				{
+					if (strcmp(output_filename, "-") != 0 && unlink(output_filename) != 0)
+						fprintf(stderr, _("could not remove output file \"%s\"\n"), output_filename);
+				}
 			}
 
 			if (output_filename && out_option == 0)
