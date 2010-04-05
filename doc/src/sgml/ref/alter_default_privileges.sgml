@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_default_privileges.sgml,v 1.4 2010/04/03 21:46:59 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_default_privileges.sgml,v 1.5 2010/04/05 01:58:03 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -150,9 +150,10 @@ REVOKE [ GRANT OPTION FOR ]
   </para>
 
   <para>
-   If you wish to drop a role for which the default privileges have ever been
-   altered, it is necessary to use <command>DROP OWNED BY</> first,
-   to get rid of the default privileges entry for the role.
+   If you wish to drop a role for which the default privileges have been
+   altered, it is necessary to reverse the changes in its default privileges
+   or use <command>DROP OWNED BY</> to get rid of the default privileges entry
+   for the role.
   </para>
  </refsect1>
 

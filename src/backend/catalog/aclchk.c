@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/aclchk.c,v 1.165 2010/04/05 01:09:52 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/aclchk.c,v 1.166 2010/04/05 01:58:03 tgl Exp $
  *
  * NOTES
  *	  See acl.h.
@@ -1072,6 +1072,7 @@ SetDefaultACL(InternalDefaultACL *iacls)
 	Relation	rel;
 	HeapTuple	tuple;
 	bool		isNew;
+	Acl		   *def_acl;
 	Acl		   *old_acl;
 	Acl		   *new_acl;
 	HeapTuple	newtuple;
@@ -1084,6 +1085,17 @@ SetDefaultACL(InternalDefaultACL *iacls)
 	Oid		   *newmembers;
 
 	rel = heap_open(DefaultAclRelationId, RowExclusiveLock);
+
+	/*
+	 * The default for a global entry is the hard-wired default ACL for the
+	 * particular object type.  The default for non-global entries is an empty
+	 * ACL.  This must be so because global entries replace the hard-wired
+	 * defaults, while others are added on.
+	 */
+	if (!OidIsValid(iacls->nspid))
+		def_acl = acldefault(iacls->objtype, iacls->roleid);
+	else
+		def_acl = make_empty_acl();
 
 	/*
 	 * Convert ACL object type to pg_default_acl object type and handle
@@ -1133,7 +1145,7 @@ SetDefaultACL(InternalDefaultACL *iacls)
 		if (!isNull)
 			old_acl = DatumGetAclPCopy(aclDatum);
 		else
-			old_acl = NULL;
+			old_acl = NULL;		/* this case shouldn't happen, probably */
 		isNew = false;
 	}
 	else
@@ -1153,17 +1165,8 @@ SetDefaultACL(InternalDefaultACL *iacls)
 	}
 	else
 	{
-		/*
-		 * If we are creating a global entry, start with the hard-wired
-		 * defaults and modify as per command.	Otherwise, start with an empty
-		 * ACL and modify that.  This is needed because global entries replace
-		 * the hard-wired defaults, while others do not.
-		 */
-		if (!OidIsValid(iacls->nspid))
-			old_acl = acldefault(iacls->objtype, iacls->roleid);
-		else
-			old_acl = make_empty_acl();
-
+		/* If no or null entry, start with the default ACL value */
+		old_acl = aclcopy(def_acl);
 		/* There are no old member roles according to the catalogs */
 		noldmembers = 0;
 		oldmembers = NULL;
@@ -1182,71 +1185,101 @@ SetDefaultACL(InternalDefaultACL *iacls)
 								   iacls->roleid,
 								   iacls->roleid);
 
-	/* finished building new ACL value, now insert it */
-	MemSet(values, 0, sizeof(values));
-	MemSet(nulls, false, sizeof(nulls));
-	MemSet(replaces, false, sizeof(replaces));
-
-	if (isNew)
+	/*
+	 * If the result is the same as the default value, we do not need an
+	 * explicit pg_default_acl entry, and should in fact remove the entry
+	 * if it exists.  Must sort both arrays to compare properly.
+	 */
+	aclitemsort(new_acl);
+	aclitemsort(def_acl);
+	if (aclequal(new_acl, def_acl))
 	{
-		values[Anum_pg_default_acl_defaclrole - 1] = ObjectIdGetDatum(iacls->roleid);
-		values[Anum_pg_default_acl_defaclnamespace - 1] = ObjectIdGetDatum(iacls->nspid);
-		values[Anum_pg_default_acl_defaclobjtype - 1] = CharGetDatum(objtype);
-		values[Anum_pg_default_acl_defaclacl - 1] = PointerGetDatum(new_acl);
+		/* delete old entry, if indeed there is one */
+		if (!isNew)
+		{
+			ObjectAddress myself;
 
-		newtuple = heap_form_tuple(RelationGetDescr(rel), values, nulls);
-		simple_heap_insert(rel, newtuple);
+			/*
+			 * The dependency machinery will take care of removing all
+			 * associated dependency entries.  We use DROP_RESTRICT since
+			 * there shouldn't be anything depending on this entry.
+			 */
+			myself.classId = DefaultAclRelationId;
+			myself.objectId = HeapTupleGetOid(tuple);
+			myself.objectSubId = 0;
+
+			performDeletion(&myself, DROP_RESTRICT);
+		}
 	}
 	else
 	{
-		values[Anum_pg_default_acl_defaclacl - 1] = PointerGetDatum(new_acl);
-		replaces[Anum_pg_default_acl_defaclacl - 1] = true;
+		/* Prepare to insert or update pg_default_acl entry */
+		MemSet(values, 0, sizeof(values));
+		MemSet(nulls, false, sizeof(nulls));
+		MemSet(replaces, false, sizeof(replaces));
 
-		newtuple = heap_modify_tuple(tuple, RelationGetDescr(rel),
-									 values, nulls, replaces);
-		simple_heap_update(rel, &newtuple->t_self, newtuple);
-	}
-
-	/* keep the catalog indexes up to date */
-	CatalogUpdateIndexes(rel, newtuple);
-
-	/* these dependencies don't change in an update */
-	if (isNew)
-	{
-		/* dependency on role */
-		recordDependencyOnOwner(DefaultAclRelationId,
-								HeapTupleGetOid(newtuple),
-								iacls->roleid);
-
-		/* dependency on namespace */
-		if (OidIsValid(iacls->nspid))
+		if (isNew)
 		{
-			ObjectAddress myself,
-						referenced;
+			/* insert new entry */
+			values[Anum_pg_default_acl_defaclrole - 1] = ObjectIdGetDatum(iacls->roleid);
+			values[Anum_pg_default_acl_defaclnamespace - 1] = ObjectIdGetDatum(iacls->nspid);
+			values[Anum_pg_default_acl_defaclobjtype - 1] = CharGetDatum(objtype);
+			values[Anum_pg_default_acl_defaclacl - 1] = PointerGetDatum(new_acl);
 
-			myself.classId = DefaultAclRelationId;
-			myself.objectId = HeapTupleGetOid(newtuple);
-			myself.objectSubId = 0;
-
-			referenced.classId = NamespaceRelationId;
-			referenced.objectId = iacls->nspid;
-			referenced.objectSubId = 0;
-
-			recordDependencyOn(&myself, &referenced, DEPENDENCY_AUTO);
+			newtuple = heap_form_tuple(RelationGetDescr(rel), values, nulls);
+			simple_heap_insert(rel, newtuple);
 		}
+		else
+		{
+			/* update existing entry */
+			values[Anum_pg_default_acl_defaclacl - 1] = PointerGetDatum(new_acl);
+			replaces[Anum_pg_default_acl_defaclacl - 1] = true;
+
+			newtuple = heap_modify_tuple(tuple, RelationGetDescr(rel),
+										 values, nulls, replaces);
+			simple_heap_update(rel, &newtuple->t_self, newtuple);
+		}
+
+		/* keep the catalog indexes up to date */
+		CatalogUpdateIndexes(rel, newtuple);
+
+		/* these dependencies don't change in an update */
+		if (isNew)
+		{
+			/* dependency on role */
+			recordDependencyOnOwner(DefaultAclRelationId,
+									HeapTupleGetOid(newtuple),
+									iacls->roleid);
+
+			/* dependency on namespace */
+			if (OidIsValid(iacls->nspid))
+			{
+				ObjectAddress myself,
+					referenced;
+
+				myself.classId = DefaultAclRelationId;
+				myself.objectId = HeapTupleGetOid(newtuple);
+				myself.objectSubId = 0;
+
+				referenced.classId = NamespaceRelationId;
+				referenced.objectId = iacls->nspid;
+				referenced.objectSubId = 0;
+
+				recordDependencyOn(&myself, &referenced, DEPENDENCY_AUTO);
+			}
+		}
+
+		/*
+		 * Update the shared dependency ACL info
+		 */
+		nnewmembers = aclmembers(new_acl, &newmembers);
+
+		updateAclDependencies(DefaultAclRelationId,
+							  HeapTupleGetOid(newtuple), 0,
+							  iacls->roleid,
+							  noldmembers, oldmembers,
+							  nnewmembers, newmembers);
 	}
-
-	/*
-	 * Update the shared dependency ACL info
-	 */
-	nnewmembers = aclmembers(new_acl, &newmembers);
-
-	updateAclDependencies(DefaultAclRelationId, HeapTupleGetOid(newtuple), 0,
-						  iacls->roleid,
-						  noldmembers, oldmembers,
-						  nnewmembers, newmembers);
-
-	pfree(new_acl);
 
 	if (HeapTupleIsValid(tuple))
 		ReleaseSysCache(tuple);
