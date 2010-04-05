@@ -4,7 +4,7 @@
  *
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.120 2010/02/26 02:01:16 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.121 2010/04/05 02:25:56 itagaki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1080,7 +1080,7 @@ pgwin32_CommandLine(bool registration)
 
 #ifdef __CYGWIN__
 	/* need to convert to windows path */
-	cygwin_conv_to_full_win32_path(cmdLine, buf);
+	cygwin_conv_path(CCP_POSIX_TO_WIN_A, cmdLine, buf, sizeof(buf));
 	strcpy(cmdLine, buf);
 #endif
 
