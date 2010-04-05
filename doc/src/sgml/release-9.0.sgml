@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release-9.0.sgml,v 2.14 2010/04/03 07:22:55 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release-9.0.sgml,v 2.15 2010/04/05 02:46:42 tgl Exp $ -->
 
 
  <sect1 id="release-9-0">
@@ -50,7 +50,7 @@
             defaulted to off for many years (Tom Lane)
           </para>
         </listitem>
-  
+
         <listitem>
           <para>
             Remove server variable <varname>regex_flavor</>, which
@@ -59,9 +59,9 @@
             (e.g. Perl-regex compatible) for many years (Tom Lane)
           </para>
         </listitem>
-      
+
       </itemizedlist>
-      
+
     </sect3>
 
     <sect3>
@@ -97,43 +97,30 @@
 
       <listitem>
         <para>
-          Fix <link linkend="functions-similarto-regexp"><literal>SIMILAR
-          TO</></link> to match the SQL standard-specified behavior
-          by processing <literal>?</> and <literal>{}</> the same way
-          they are processed in regular expressions (Tom Lane)
+          Improve standards compliance of <link
+          linkend="functions-similarto-regexp"><literal>SIMILAR TO</></link>
+          patterns and SQL-style <function>substring()</> patterns (Tom Lane)
+        </para>
+
+        <para>
+          This includes treating <literal>?</> and <literal>{...}</> as
+          pattern metacharacters, while they were simple literal characters
+          before; that corresponds to new features added in SQL:2008.
+          Also, <literal>^</> and <literal>$</> are now treated as simple
+          literal characters; formerly they were treated as metacharacters,
+          as if the pattern were following POSIX rather than SQL rules.
+          Also, in SQL-standard <function>substring()</>, use of parentheses
+          for nesting no longer interferes with capturing of a substring.
+          Also, processing of bracket expressions (character classes) is
+          now more standards-compliant.
         </para>
       </listitem>
 
       <listitem>
         <para>
-          Properly treat <literal>^</> and <literal>$</> as literals in
-          <literal>SIMILAR TO</> patterns, to match the SQL standard (Tom Lane)
-        </para>
-
-        <para>
-          Previously these were treated using regular expression syntax.  This
-          change breaks backward compatibility.  This also affects
-          <function>substring()</>'s interpretation of regular expressions.
-        </para>
-      </listitem>
-
-      <listitem>
-        <para>
-          Process parentheses as literals in <literal>SIMILAR TO</> expressions;
-          also make character class handling more standards-compliant (Tom Lane)
-        </para>
-
-        <para>
-          This also affects <function>substring()</>'s handling of regular
-          expressions.
-        </para>
-      </listitem>
-
-      <listitem>
-        <para>
-          Do not allow <link
-          linkend="functions-string-sql"><function>substring()</></link>
-          to have a negative third length, per the SQL standard (Tom Lane)
+         Reject negative length values in 3-parameter <link
+         linkend="functions-string-sql"><function>substring()</></link>
+         for bit strings, per the SQL standard (Tom Lane)
         </para>
       </listitem>
 
@@ -1392,7 +1379,7 @@
 
           <listitem>
             <para>
-              Install server-side language PL/pgSQL by default (Bruce Momjian) 
+              Install server-side language PL/pgSQL by default (Bruce Momjian)
             </para>
           </listitem>
 
