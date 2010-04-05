@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.196 2010/02/26 02:01:20 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.197 2010/04/05 05:33:24 itagaki Exp $
  */
 
 /*----------------------------------------------------------------------
@@ -507,6 +507,11 @@ static const SchemaQuery Query_for_list_of_views = {
 "   FROM pg_catalog.pg_am "\
 "  WHERE substring(pg_catalog.quote_ident(amname),1,%d)='%s'"
 
+#define Query_for_list_of_arguments \
+" SELECT pg_catalog.oidvectortypes(proargtypes)||')' "\
+"   FROM pg_catalog.pg_proc "\
+"  WHERE proname='%s'"
+
 /*
  * This is a list of all "things" in Pgsql, which can show up after CREATE or
  * DROP; and there is also a query to get a list of them.
@@ -705,11 +710,27 @@ psql_completion(char *text, int start, int end)
 	else if (pg_strcasecmp(prev3_wd, "ALTER") == 0 &&
 			 (pg_strcasecmp(prev2_wd, "AGGREGATE") == 0 ||
 			  pg_strcasecmp(prev2_wd, "FUNCTION") == 0))
+			COMPLETE_WITH_CONST("(");
+	/* ALTER AGGREGATE,FUNCTION <name> (...) */
+	else if (pg_strcasecmp(prev4_wd, "ALTER") == 0 &&
+			 (pg_strcasecmp(prev3_wd, "AGGREGATE") == 0 ||
+			  pg_strcasecmp(prev3_wd, "FUNCTION") == 0))
 	{
-		static const char *const list_ALTERAGG[] =
-		{"OWNER TO", "RENAME TO", "SET SCHEMA", NULL};
+		if (prev_wd[strlen(prev_wd) - 1] == ')')
+		{
+			static const char *const list_ALTERAGG[] =
+			{"OWNER TO", "RENAME TO", "SET SCHEMA", NULL};
 
-		COMPLETE_WITH_LIST(list_ALTERAGG);
+			COMPLETE_WITH_LIST(list_ALTERAGG);
+		}
+		else
+		{
+			char	   *tmp_buf = malloc(strlen(Query_for_list_of_arguments) + strlen(prev2_wd));
+
+			sprintf(tmp_buf, Query_for_list_of_arguments, prev2_wd);
+			COMPLETE_WITH_QUERY(tmp_buf);
+			free(tmp_buf);
+		}
 	}
 
 	/* ALTER CONVERSION,SCHEMA <name> */
@@ -860,7 +881,7 @@ psql_completion(char *text, int start, int end)
 	{
 		static const char *const list_ALTERSEQUENCE[] =
 		{"INCREMENT", "MINVALUE", "MAXVALUE", "RESTART", "NO", "CACHE", "CYCLE",
-		"SET SCHEMA", "OWNED BY", "RENAME TO", NULL};
+		"SET SCHEMA", "OWNED BY", "OWNER TO", "RENAME TO", NULL};
 
 		COMPLETE_WITH_LIST(list_ALTERSEQUENCE);
 	}
@@ -887,7 +908,8 @@ psql_completion(char *text, int start, int end)
 	else if (pg_strcasecmp(prev3_wd, "ALTER") == 0 &&
 			 pg_strcasecmp(prev2_wd, "VIEW") == 0)
 	{
-		static const char *const list_ALTERVIEW[] = {"RENAME TO", NULL};
+		static const char *const list_ALTERVIEW[] =
+		{"ALTER COLUMN", "OWNER TO", "RENAME TO", "SET SCHEMA", NULL};
 
 		COMPLETE_WITH_LIST(list_ALTERVIEW);
 	}
@@ -1206,7 +1228,7 @@ psql_completion(char *text, int start, int end)
 			 pg_strcasecmp(prev2_wd, "TYPE") == 0)
 	{
 		static const char *const list_ALTERTYPE[] =
-		{"OWNER TO", "SET SCHEMA", NULL};
+		{"OWNER TO", "RENAME TO", "SET SCHEMA", NULL};
 
 		COMPLETE_WITH_LIST(list_ALTERTYPE);
 	}
@@ -1761,10 +1783,9 @@ psql_completion(char *text, int start, int end)
 			  pg_strcasecmp(prev3_wd, "FUNCTION") == 0) &&
 			 pg_strcasecmp(prev_wd, "(") == 0)
 	{
-		static const char func_args_query[] = "select pg_catalog.oidvectortypes(proargtypes)||')' from pg_proc where proname='%s'";
-		char	   *tmp_buf = malloc(strlen(func_args_query) + strlen(prev2_wd));
+		char	   *tmp_buf = malloc(strlen(Query_for_list_of_arguments) + strlen(prev2_wd));
 
-		sprintf(tmp_buf, func_args_query, prev2_wd);
+		sprintf(tmp_buf, Query_for_list_of_arguments, prev2_wd);
 		COMPLETE_WITH_QUERY(tmp_buf);
 		free(tmp_buf);
 	}
@@ -2230,6 +2251,7 @@ psql_completion(char *text, int start, int end)
 	else if (pg_strcasecmp(prev2_wd, "SET") == 0 &&
 			 pg_strcasecmp(prev4_wd, "UPDATE") != 0 &&
 			 pg_strcasecmp(prev_wd, "TABLESPACE") != 0 &&
+			 pg_strcasecmp(prev_wd, "SCHEMA") != 0 &&
 			 prev_wd[strlen(prev_wd) - 1] != ')' &&
 			 pg_strcasecmp(prev4_wd, "DOMAIN") != 0)
 		COMPLETE_WITH_CONST("TO");
