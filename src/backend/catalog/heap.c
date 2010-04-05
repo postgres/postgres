@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.372 2010/02/26 02:00:36 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.373 2010/04/05 01:09:52 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1160,7 +1160,7 @@ heap_create_with_catalog(const char *relname,
 
 			nnewmembers = aclmembers(relacl, &newmembers);
 			updateAclDependencies(RelationRelationId, relid, 0,
-								  ownerid, true,
+								  ownerid,
 								  0, NULL,
 								  nnewmembers, newmembers);
 		}

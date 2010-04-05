@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/dependency.h,v 1.44 2010/01/02 16:58:01 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/dependency.h,v 1.45 2010/04/05 01:09:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -232,7 +232,7 @@ extern void changeDependencyOnOwner(Oid classId, Oid objectId,
 						Oid newOwnerId);
 
 extern void updateAclDependencies(Oid classId, Oid objectId, int32 objectSubId,
-					  Oid ownerId, bool isGrant,
+					  Oid ownerId,
 					  int noldmembers, Oid *oldmembers,
 					  int nnewmembers, Oid *newmembers);
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/aclchk.c,v 1.164 2010/03/06 23:10:42 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/aclchk.c,v 1.165 2010/04/05 01:09:52 tgl Exp $
  *
  * NOTES
  *	  See acl.h.
@@ -1142,7 +1142,16 @@ SetDefaultACL(InternalDefaultACL *iacls)
 		isNew = true;
 	}
 
-	if (old_acl == NULL)
+	if (old_acl != NULL)
+	{
+		/*
+		 * We need the members of both old and new ACLs so we can correct the
+		 * shared dependency information.  Collect data before
+		 * merge_acl_with_grant throws away old_acl.
+		 */
+		noldmembers = aclmembers(old_acl, &oldmembers);
+	}
+	else
 	{
 		/*
 		 * If we are creating a global entry, start with the hard-wired
@@ -1154,14 +1163,11 @@ SetDefaultACL(InternalDefaultACL *iacls)
 			old_acl = acldefault(iacls->objtype, iacls->roleid);
 		else
 			old_acl = make_empty_acl();
-	}
 
-	/*
-	 * We need the members of both old and new ACLs so we can correct the
-	 * shared dependency information.  Collect data before
-	 * merge_acl_with_grant throws away old_acl.
-	 */
-	noldmembers = aclmembers(old_acl, &oldmembers);
+		/* There are no old member roles according to the catalogs */
+		noldmembers = 0;
+		oldmembers = NULL;
+	}
 
 	/*
 	 * Generate new ACL.  Grantor of rights is always the same as the target
@@ -1236,7 +1242,7 @@ SetDefaultACL(InternalDefaultACL *iacls)
 	nnewmembers = aclmembers(new_acl, &newmembers);
 
 	updateAclDependencies(DefaultAclRelationId, HeapTupleGetOid(newtuple), 0,
-						  iacls->roleid, iacls->is_grant,
+						  iacls->roleid,
 						  noldmembers, oldmembers,
 						  nnewmembers, newmembers);
 
@@ -1526,9 +1532,18 @@ ExecGrant_Attribute(InternalGrant *istmt, Oid relOid, const char *relname,
 	aclDatum = SysCacheGetAttr(ATTNUM, attr_tuple, Anum_pg_attribute_attacl,
 							   &isNull);
 	if (isNull)
+	{
 		old_acl = acldefault(ACL_OBJECT_COLUMN, ownerId);
+		/* There are no old member roles according to the catalogs */
+		noldmembers = 0;
+		oldmembers = NULL;
+	}
 	else
+	{
 		old_acl = DatumGetAclPCopy(aclDatum);
+		/* Get the roles mentioned in the existing ACL */
+		noldmembers = aclmembers(old_acl, &oldmembers);
+	}
 
 	/*
 	 * In select_best_grantor we should consider existing table-level ACL bits
@@ -1563,18 +1578,17 @@ ExecGrant_Attribute(InternalGrant *istmt, Oid relOid, const char *relname,
 
 	/*
 	 * Generate new ACL.
-	 *
-	 * We need the members of both old and new ACLs so we can correct the
-	 * shared dependency information.
 	 */
-	noldmembers = aclmembers(old_acl, &oldmembers);
-
 	new_acl = merge_acl_with_grant(old_acl, istmt->is_grant,
 								   istmt->grant_option,
 								   istmt->behavior, istmt->grantees,
 								   col_privileges, grantorId,
 								   ownerId);
 
+	/*
+	 * We need the members of both old and new ACLs so we can correct the
+	 * shared dependency information.
+	 */
 	nnewmembers = aclmembers(new_acl, &newmembers);
 
 	/* finished building new ACL value, now insert it */
@@ -1613,7 +1627,7 @@ ExecGrant_Attribute(InternalGrant *istmt, Oid relOid, const char *relname,
 
 		/* Update the shared dependency ACL info */
 		updateAclDependencies(RelationRelationId, relOid, attnum,
-							  ownerId, istmt->is_grant,
+							  ownerId,
 							  noldmembers, oldmembers,
 							  nnewmembers, newmembers);
 	}
@@ -1648,6 +1662,8 @@ ExecGrant_Relation(InternalGrant *istmt)
 		bool		have_col_privileges;
 		Acl		   *old_acl;
 		Acl		   *old_rel_acl;
+		int			noldmembers;
+		Oid		   *oldmembers;
 		Oid			ownerId;
 		HeapTuple	tuple;
 		ListCell   *cell_colprivs;
@@ -1770,11 +1786,20 @@ ExecGrant_Relation(InternalGrant *istmt)
 		aclDatum = SysCacheGetAttr(RELOID, tuple, Anum_pg_class_relacl,
 								   &isNull);
 		if (isNull)
+		{
 			old_acl = acldefault(pg_class_tuple->relkind == RELKIND_SEQUENCE ?
 								 ACL_OBJECT_SEQUENCE : ACL_OBJECT_RELATION,
 								 ownerId);
+			/* There are no old member roles according to the catalogs */
+			noldmembers = 0;
+			oldmembers = NULL;
+		}
 		else
+		{
 			old_acl = DatumGetAclPCopy(aclDatum);
+			/* Get the roles mentioned in the existing ACL */
+			noldmembers = aclmembers(old_acl, &oldmembers);
+		}
 
 		/* Need an extra copy of original rel ACL for column handling */
 		old_rel_acl = aclcopy(old_acl);
@@ -1791,9 +1816,7 @@ ExecGrant_Relation(InternalGrant *istmt)
 			Datum		values[Natts_pg_class];
 			bool		nulls[Natts_pg_class];
 			bool		replaces[Natts_pg_class];
-			int			noldmembers;
 			int			nnewmembers;
-			Oid		   *oldmembers;
 			Oid		   *newmembers;
 
 			/* Determine ID to do the grant as, and available grant options */
@@ -1816,12 +1839,7 @@ ExecGrant_Relation(InternalGrant *istmt)
 
 			/*
 			 * Generate new ACL.
-			 *
-			 * We need the members of both old and new ACLs so we can correct
-			 * the shared dependency information.
 			 */
-			noldmembers = aclmembers(old_acl, &oldmembers);
-
 			new_acl = merge_acl_with_grant(old_acl,
 										   istmt->is_grant,
 										   istmt->grant_option,
@@ -1831,6 +1849,10 @@ ExecGrant_Relation(InternalGrant *istmt)
 										   grantorId,
 										   ownerId);
 
+			/*
+			 * We need the members of both old and new ACLs so we can correct
+			 * the shared dependency information.
+			 */
 			nnewmembers = aclmembers(new_acl, &newmembers);
 
 			/* finished building new ACL value, now insert it */
@@ -1851,7 +1873,7 @@ ExecGrant_Relation(InternalGrant *istmt)
 
 			/* Update the shared dependency ACL info */
 			updateAclDependencies(RelationRelationId, relOid, 0,
-								  ownerId, istmt->is_grant,
+								  ownerId,
 								  noldmembers, oldmembers,
 								  nnewmembers, newmembers);
 
@@ -1980,9 +2002,18 @@ ExecGrant_Database(InternalGrant *istmt)
 		aclDatum = heap_getattr(tuple, Anum_pg_database_datacl,
 								RelationGetDescr(relation), &isNull);
 		if (isNull)
+		{
 			old_acl = acldefault(ACL_OBJECT_DATABASE, ownerId);
+			/* There are no old member roles according to the catalogs */
+			noldmembers = 0;
+			oldmembers = NULL;
+		}
 		else
+		{
 			old_acl = DatumGetAclPCopy(aclDatum);
+			/* Get the roles mentioned in the existing ACL */
+			noldmembers = aclmembers(old_acl, &oldmembers);
+		}
 
 		/* Determine ID to do the grant as, and available grant options */
 		select_best_grantor(GetUserId(), istmt->privileges,
@@ -2002,17 +2033,16 @@ ExecGrant_Database(InternalGrant *istmt)
 
 		/*
 		 * Generate new ACL.
-		 *
-		 * We need the members of both old and new ACLs so we can correct the
-		 * shared dependency information.
 		 */
-		noldmembers = aclmembers(old_acl, &oldmembers);
-
 		new_acl = merge_acl_with_grant(old_acl, istmt->is_grant,
 									   istmt->grant_option, istmt->behavior,
 									   istmt->grantees, this_privileges,
 									   grantorId, ownerId);
 
+		/*
+		 * We need the members of both old and new ACLs so we can correct the
+		 * shared dependency information.
+		 */
 		nnewmembers = aclmembers(new_acl, &newmembers);
 
 		/* finished building new ACL value, now insert it */
@@ -2033,7 +2063,7 @@ ExecGrant_Database(InternalGrant *istmt)
 
 		/* Update the shared dependency ACL info */
 		updateAclDependencies(DatabaseRelationId, HeapTupleGetOid(tuple), 0,
-							  ownerId, istmt->is_grant,
+							  ownerId,
 							  noldmembers, oldmembers,
 							  nnewmembers, newmembers);
 
@@ -2097,9 +2127,18 @@ ExecGrant_Fdw(InternalGrant *istmt)
 								   Anum_pg_foreign_data_wrapper_fdwacl,
 								   &isNull);
 		if (isNull)
+		{
 			old_acl = acldefault(ACL_OBJECT_FDW, ownerId);
+			/* There are no old member roles according to the catalogs */
+			noldmembers = 0;
+			oldmembers = NULL;
+		}
 		else
+		{
 			old_acl = DatumGetAclPCopy(aclDatum);
+			/* Get the roles mentioned in the existing ACL */
+			noldmembers = aclmembers(old_acl, &oldmembers);
+		}
 
 		/* Determine ID to do the grant as, and available grant options */
 		select_best_grantor(GetUserId(), istmt->privileges,
@@ -2119,17 +2158,16 @@ ExecGrant_Fdw(InternalGrant *istmt)
 
 		/*
 		 * Generate new ACL.
-		 *
-		 * We need the members of both old and new ACLs so we can correct the
-		 * shared dependency information.
 		 */
-		noldmembers = aclmembers(old_acl, &oldmembers);
-
 		new_acl = merge_acl_with_grant(old_acl, istmt->is_grant,
 									   istmt->grant_option, istmt->behavior,
 									   istmt->grantees, this_privileges,
 									   grantorId, ownerId);
 
+		/*
+		 * We need the members of both old and new ACLs so we can correct the
+		 * shared dependency information.
+		 */
 		nnewmembers = aclmembers(new_acl, &newmembers);
 
 		/* finished building new ACL value, now insert it */
@@ -2151,7 +2189,7 @@ ExecGrant_Fdw(InternalGrant *istmt)
 		/* Update the shared dependency ACL info */
 		updateAclDependencies(ForeignDataWrapperRelationId,
 							  HeapTupleGetOid(tuple), 0,
-							  ownerId, istmt->is_grant,
+							  ownerId,
 							  noldmembers, oldmembers,
 							  nnewmembers, newmembers);
 
@@ -2214,9 +2252,18 @@ ExecGrant_ForeignServer(InternalGrant *istmt)
 								   Anum_pg_foreign_server_srvacl,
 								   &isNull);
 		if (isNull)
+		{
 			old_acl = acldefault(ACL_OBJECT_FOREIGN_SERVER, ownerId);
+			/* There are no old member roles according to the catalogs */
+			noldmembers = 0;
+			oldmembers = NULL;
+		}
 		else
+		{
 			old_acl = DatumGetAclPCopy(aclDatum);
+			/* Get the roles mentioned in the existing ACL */
+			noldmembers = aclmembers(old_acl, &oldmembers);
+		}
 
 		/* Determine ID to do the grant as, and available grant options */
 		select_best_grantor(GetUserId(), istmt->privileges,
@@ -2236,17 +2283,16 @@ ExecGrant_ForeignServer(InternalGrant *istmt)
 
 		/*
 		 * Generate new ACL.
-		 *
-		 * We need the members of both old and new ACLs so we can correct the
-		 * shared dependency information.
 		 */
-		noldmembers = aclmembers(old_acl, &oldmembers);
-
 		new_acl = merge_acl_with_grant(old_acl, istmt->is_grant,
 									   istmt->grant_option, istmt->behavior,
 									   istmt->grantees, this_privileges,
 									   grantorId, ownerId);
 
+		/*
+		 * We need the members of both old and new ACLs so we can correct the
+		 * shared dependency information.
+		 */
 		nnewmembers = aclmembers(new_acl, &newmembers);
 
 		/* finished building new ACL value, now insert it */
@@ -2268,7 +2314,7 @@ ExecGrant_ForeignServer(InternalGrant *istmt)
 		/* Update the shared dependency ACL info */
 		updateAclDependencies(ForeignServerRelationId,
 							  HeapTupleGetOid(tuple), 0,
-							  ownerId, istmt->is_grant,
+							  ownerId,
 							  noldmembers, oldmembers,
 							  nnewmembers, newmembers);
 
@@ -2330,9 +2376,18 @@ ExecGrant_Function(InternalGrant *istmt)
 		aclDatum = SysCacheGetAttr(PROCOID, tuple, Anum_pg_proc_proacl,
 								   &isNull);
 		if (isNull)
+		{
 			old_acl = acldefault(ACL_OBJECT_FUNCTION, ownerId);
+			/* There are no old member roles according to the catalogs */
+			noldmembers = 0;
+			oldmembers = NULL;
+		}
 		else
+		{
 			old_acl = DatumGetAclPCopy(aclDatum);
+			/* Get the roles mentioned in the existing ACL */
+			noldmembers = aclmembers(old_acl, &oldmembers);
+		}
 
 		/* Determine ID to do the grant as, and available grant options */
 		select_best_grantor(GetUserId(), istmt->privileges,
@@ -2352,17 +2407,16 @@ ExecGrant_Function(InternalGrant *istmt)
 
 		/*
 		 * Generate new ACL.
-		 *
-		 * We need the members of both old and new ACLs so we can correct the
-		 * shared dependency information.
 		 */
-		noldmembers = aclmembers(old_acl, &oldmembers);
-
 		new_acl = merge_acl_with_grant(old_acl, istmt->is_grant,
 									   istmt->grant_option, istmt->behavior,
 									   istmt->grantees, this_privileges,
 									   grantorId, ownerId);
 
+		/*
+		 * We need the members of both old and new ACLs so we can correct the
+		 * shared dependency information.
+		 */
 		nnewmembers = aclmembers(new_acl, &newmembers);
 
 		/* finished building new ACL value, now insert it */
@@ -2383,7 +2437,7 @@ ExecGrant_Function(InternalGrant *istmt)
 
 		/* Update the shared dependency ACL info */
 		updateAclDependencies(ProcedureRelationId, funcId, 0,
-							  ownerId, istmt->is_grant,
+							  ownerId,
 							  noldmembers, oldmembers,
 							  nnewmembers, newmembers);
 
@@ -2452,9 +2506,18 @@ ExecGrant_Language(InternalGrant *istmt)
 		aclDatum = SysCacheGetAttr(LANGNAME, tuple, Anum_pg_language_lanacl,
 								   &isNull);
 		if (isNull)
+		{
 			old_acl = acldefault(ACL_OBJECT_LANGUAGE, ownerId);
+			/* There are no old member roles according to the catalogs */
+			noldmembers = 0;
+			oldmembers = NULL;
+		}
 		else
+		{
 			old_acl = DatumGetAclPCopy(aclDatum);
+			/* Get the roles mentioned in the existing ACL */
+			noldmembers = aclmembers(old_acl, &oldmembers);
+		}
 
 		/* Determine ID to do the grant as, and available grant options */
 		select_best_grantor(GetUserId(), istmt->privileges,
@@ -2474,17 +2537,16 @@ ExecGrant_Language(InternalGrant *istmt)
 
 		/*
 		 * Generate new ACL.
-		 *
-		 * We need the members of both old and new ACLs so we can correct the
-		 * shared dependency information.
 		 */
-		noldmembers = aclmembers(old_acl, &oldmembers);
-
 		new_acl = merge_acl_with_grant(old_acl, istmt->is_grant,
 									   istmt->grant_option, istmt->behavior,
 									   istmt->grantees, this_privileges,
 									   grantorId, ownerId);
 
+		/*
+		 * We need the members of both old and new ACLs so we can correct the
+		 * shared dependency information.
+		 */
 		nnewmembers = aclmembers(new_acl, &newmembers);
 
 		/* finished building new ACL value, now insert it */
@@ -2505,7 +2567,7 @@ ExecGrant_Language(InternalGrant *istmt)
 
 		/* Update the shared dependency ACL info */
 		updateAclDependencies(LanguageRelationId, HeapTupleGetOid(tuple), 0,
-							  ownerId, istmt->is_grant,
+							  ownerId,
 							  noldmembers, oldmembers,
 							  nnewmembers, newmembers);
 
@@ -2582,9 +2644,18 @@ ExecGrant_Largeobject(InternalGrant *istmt)
 								Anum_pg_largeobject_metadata_lomacl,
 								RelationGetDescr(relation), &isNull);
 		if (isNull)
+		{
 			old_acl = acldefault(ACL_OBJECT_LARGEOBJECT, ownerId);
+			/* There are no old member roles according to the catalogs */
+			noldmembers = 0;
+			oldmembers = NULL;
+		}
 		else
+		{
 			old_acl = DatumGetAclPCopy(aclDatum);
+			/* Get the roles mentioned in the existing ACL */
+			noldmembers = aclmembers(old_acl, &oldmembers);
+		}
 
 		/* Determine ID to do the grant as, and available grant options */
 		select_best_grantor(GetUserId(), istmt->privileges,
@@ -2604,17 +2675,16 @@ ExecGrant_Largeobject(InternalGrant *istmt)
 
 		/*
 		 * Generate new ACL.
-		 *
-		 * We need the members of both old and new ACLs so we can correct the
-		 * shared dependency information.
 		 */
-		noldmembers = aclmembers(old_acl, &oldmembers);
-
 		new_acl = merge_acl_with_grant(old_acl, istmt->is_grant,
 									   istmt->grant_option, istmt->behavior,
 									   istmt->grantees, this_privileges,
 									   grantorId, ownerId);
 
+		/*
+		 * We need the members of both old and new ACLs so we can correct the
+		 * shared dependency information.
+		 */
 		nnewmembers = aclmembers(new_acl, &newmembers);
 
 		/* finished building new ACL value, now insert it */
@@ -2637,7 +2707,7 @@ ExecGrant_Largeobject(InternalGrant *istmt)
 		/* Update the shared dependency ACL info */
 		updateAclDependencies(LargeObjectRelationId,
 							  HeapTupleGetOid(tuple), 0,
-							  ownerId, istmt->is_grant,
+							  ownerId,
 							  noldmembers, oldmembers,
 							  nnewmembers, newmembers);
 
@@ -2700,9 +2770,18 @@ ExecGrant_Namespace(InternalGrant *istmt)
 								   Anum_pg_namespace_nspacl,
 								   &isNull);
 		if (isNull)
+		{
 			old_acl = acldefault(ACL_OBJECT_NAMESPACE, ownerId);
+			/* There are no old member roles according to the catalogs */
+			noldmembers = 0;
+			oldmembers = NULL;
+		}
 		else
+		{
 			old_acl = DatumGetAclPCopy(aclDatum);
+			/* Get the roles mentioned in the existing ACL */
+			noldmembers = aclmembers(old_acl, &oldmembers);
+		}
 
 		/* Determine ID to do the grant as, and available grant options */
 		select_best_grantor(GetUserId(), istmt->privileges,
@@ -2722,17 +2801,16 @@ ExecGrant_Namespace(InternalGrant *istmt)
 
 		/*
 		 * Generate new ACL.
-		 *
-		 * We need the members of both old and new ACLs so we can correct the
-		 * shared dependency information.
 		 */
-		noldmembers = aclmembers(old_acl, &oldmembers);
-
 		new_acl = merge_acl_with_grant(old_acl, istmt->is_grant,
 									   istmt->grant_option, istmt->behavior,
 									   istmt->grantees, this_privileges,
 									   grantorId, ownerId);
 
+		/*
+		 * We need the members of both old and new ACLs so we can correct the
+		 * shared dependency information.
+		 */
 		nnewmembers = aclmembers(new_acl, &newmembers);
 
 		/* finished building new ACL value, now insert it */
@@ -2753,7 +2831,7 @@ ExecGrant_Namespace(InternalGrant *istmt)
 
 		/* Update the shared dependency ACL info */
 		updateAclDependencies(NamespaceRelationId, HeapTupleGetOid(tuple), 0,
-							  ownerId, istmt->is_grant,
+							  ownerId,
 							  noldmembers, oldmembers,
 							  nnewmembers, newmembers);
 
@@ -2816,9 +2894,18 @@ ExecGrant_Tablespace(InternalGrant *istmt)
 		aclDatum = heap_getattr(tuple, Anum_pg_tablespace_spcacl,
 								RelationGetDescr(relation), &isNull);
 		if (isNull)
+		{
 			old_acl = acldefault(ACL_OBJECT_TABLESPACE, ownerId);
+			/* There are no old member roles according to the catalogs */
+			noldmembers = 0;
+			oldmembers = NULL;
+		}
 		else
+		{
 			old_acl = DatumGetAclPCopy(aclDatum);
+			/* Get the roles mentioned in the existing ACL */
+			noldmembers = aclmembers(old_acl, &oldmembers);
+		}
 
 		/* Determine ID to do the grant as, and available grant options */
 		select_best_grantor(GetUserId(), istmt->privileges,
@@ -2838,17 +2925,16 @@ ExecGrant_Tablespace(InternalGrant *istmt)
 
 		/*
 		 * Generate new ACL.
-		 *
-		 * We need the members of both old and new ACLs so we can correct the
-		 * shared dependency information.
 		 */
-		noldmembers = aclmembers(old_acl, &oldmembers);
-
 		new_acl = merge_acl_with_grant(old_acl, istmt->is_grant,
 									   istmt->grant_option, istmt->behavior,
 									   istmt->grantees, this_privileges,
 									   grantorId, ownerId);
 
+		/*
+		 * We need the members of both old and new ACLs so we can correct the
+		 * shared dependency information.
+		 */
 		nnewmembers = aclmembers(new_acl, &newmembers);
 
 		/* finished building new ACL value, now insert it */
@@ -2869,7 +2955,7 @@ ExecGrant_Tablespace(InternalGrant *istmt)
 
 		/* Update the shared dependency ACL info */
 		updateAclDependencies(TableSpaceRelationId, tblId, 0,
-							  ownerId, istmt->is_grant,
+							  ownerId,
 							  noldmembers, oldmembers,
 							  nnewmembers, newmembers);
 

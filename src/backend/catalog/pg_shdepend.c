@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_shdepend.c,v 1.40 2010/02/26 02:00:37 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_shdepend.c,v 1.41 2010/04/05 01:09:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,8 +54,7 @@ typedef enum
 	REMOTE_OBJECT
 } objectType;
 
-static int getOidListDiff(Oid *list1, int nlist1, Oid *list2, int nlist2,
-			   Oid **diff);
+static void getOidListDiff(Oid *list1, int *nlist1, Oid *list2, int *nlist2);
 static Oid	classIdGetDbId(Oid classId);
 static void shdepChangeDep(Relation sdepRel,
 			   Oid classid, Oid objid, int32 objsubid,
@@ -328,57 +327,53 @@ changeDependencyOnOwner(Oid classId, Oid objectId, Oid newOwnerId)
  * getOidListDiff
  *		Helper for updateAclDependencies.
  *
- * Takes two Oid arrays and returns elements from the first not found in the
- * second.	We assume both arrays are sorted and de-duped, and that the
- * second array does not contain any values not found in the first.
- *
- * NOTE: Both input arrays are pfreed.
+ * Takes two Oid arrays and removes elements that are common to both arrays,
+ * leaving just those that are in one input but not the other.
+ * We assume both arrays have been sorted and de-duped.
  */
-static int
-getOidListDiff(Oid *list1, int nlist1, Oid *list2, int nlist2, Oid **diff)
+static void
+getOidListDiff(Oid *list1, int *nlist1, Oid *list2, int *nlist2)
 {
-	Oid		   *result;
-	int			i,
-				j,
-				k = 0;
+	int			in1,
+				in2,
+				out1,
+				out2;
 
-	AssertArg(nlist1 >= nlist2 && nlist2 >= 0);
-
-	result = palloc(sizeof(Oid) * (nlist1 - nlist2));
-	*diff = result;
-
-	for (i = 0, j = 0; i < nlist1 && j < nlist2;)
+	in1 = in2 = out1 = out2 = 0;
+	while (in1 < *nlist1 && in2 < *nlist2)
 	{
-		if (list1[i] == list2[j])
+		if (list1[in1] == list2[in2])
 		{
-			i++;
-			j++;
+			/* skip over duplicates */
+			in1++;
+			in2++;
 		}
-		else if (list1[i] < list2[j])
+		else if (list1[in1] < list2[in2])
 		{
-			result[k++] = list1[i];
-			i++;
+			/* list1[in1] is not in list2 */
+			list1[out1++] = list1[in1++];
 		}
 		else
 		{
-			/* can't happen */
-			elog(WARNING, "invalid element %u in shorter list", list2[j]);
-			j++;
+			/* list2[in2] is not in list1 */
+			list2[out2++] = list2[in2++];
 		}
 	}
 
-	for (; i < nlist1; i++)
-		result[k++] = list1[i];
+	/* any remaining list1 entries are not in list2 */
+	while (in1 < *nlist1)
+	{
+		list1[out1++] = list1[in1++];
+	}
 
-	/* We should have copied the exact number of elements */
-	AssertState(k == (nlist1 - nlist2));
+	/* any remaining list2 entries are not in list1 */
+	while (in2 < *nlist2)
+	{
+		list2[out2++] = list2[in2++];
+	}
 
-	if (list1)
-		pfree(list1);
-	if (list2)
-		pfree(list2);
-
-	return k;
+	*nlist1 = out1;
+	*nlist2 = out2;
 }
 
 /*
@@ -387,52 +382,50 @@ getOidListDiff(Oid *list1, int nlist1, Oid *list2, int nlist2, Oid **diff)
  *
  * classId, objectId, objsubId: identify the object whose ACL this is
  * ownerId: role owning the object
- * isGrant: are we adding or removing ACL entries?
  * noldmembers, oldmembers: array of roleids appearing in old ACL
  * nnewmembers, newmembers: array of roleids appearing in new ACL
  *
- * We calculate the difference between the new and old lists of roles,
- * and then insert (if it's a grant) or delete (if it's a revoke) from
- * pg_shdepend as appropiate.
+ * We calculate the differences between the new and old lists of roles,
+ * and then insert or delete from pg_shdepend as appropiate.
  *
- * Note that we can't insert blindly at grant, because we would end up with
- * duplicate registered dependencies.  We could check for existence of the
- * tuple before inserting, but that seems to be more expensive than what we are
- * doing now.  On the other hand, we can't just delete the tuples blindly at
- * revoke, because the user may still have other privileges.
+ * Note that we can't just insert all referenced roles blindly during GRANT,
+ * because we would end up with duplicate registered dependencies.  We could
+ * check for existence of the tuples before inserting, but that seems to be
+ * more expensive than what we are doing here.  Likewise we can't just delete
+ * blindly during REVOKE, because the user may still have other privileges.
+ * It is also possible that REVOKE actually adds dependencies, due to
+ * instantiation of a formerly implicit default ACL (although at present,
+ * all such dependencies should be for the owning role, which we ignore here).
  *
- * NOTE: Both input arrays must be sorted and de-duped.  They are pfreed
- * before return.
+ * NOTE: Both input arrays must be sorted and de-duped.  (Typically they
+ * are extracted from an ACL array by aclmembers(), which takes care of
+ * both requirements.)  The arrays are pfreed before return.
  */
 void
 updateAclDependencies(Oid classId, Oid objectId, int32 objsubId,
-					  Oid ownerId, bool isGrant,
+					  Oid ownerId,
 					  int noldmembers, Oid *oldmembers,
 					  int nnewmembers, Oid *newmembers)
 {
 	Relation	sdepRel;
-	Oid		   *diff;
-	int			ndiff,
-				i;
+	int			i;
 
 	/*
-	 * Calculate the differences between the old and new lists.
+	 * Remove entries that are common to both lists; those represent
+	 * existing dependencies we don't need to change.
+	 *
+	 * OK to overwrite the inputs since we'll pfree them anyway.
 	 */
-	if (isGrant)
-		ndiff = getOidListDiff(newmembers, nnewmembers,
-							   oldmembers, noldmembers, &diff);
-	else
-		ndiff = getOidListDiff(oldmembers, noldmembers,
-							   newmembers, nnewmembers, &diff);
+	getOidListDiff(oldmembers, &noldmembers, newmembers, &nnewmembers);
 
-	if (ndiff > 0)
+	if (noldmembers > 0 || nnewmembers > 0)
 	{
 		sdepRel = heap_open(SharedDependRelationId, RowExclusiveLock);
 
-		/* Add or drop the respective dependency */
-		for (i = 0; i < ndiff; i++)
+		/* Add new dependencies that weren't already present */
+		for (i = 0; i < nnewmembers; i++)
 		{
-			Oid			roleid = diff[i];
+			Oid			roleid = newmembers[i];
 
 			/*
 			 * Skip the owner: he has an OWNER shdep entry instead. (This is
@@ -442,25 +435,41 @@ updateAclDependencies(Oid classId, Oid objectId, int32 objsubId,
 			if (roleid == ownerId)
 				continue;
 
+			/* Skip pinned roles; they don't need dependency entries */
+			if (isSharedObjectPinned(AuthIdRelationId, roleid, sdepRel))
+				continue;
+
+			shdepAddDependency(sdepRel, classId, objectId, objsubId,
+							   AuthIdRelationId, roleid,
+							   SHARED_DEPENDENCY_ACL);
+		}
+
+		/* Drop no-longer-used old dependencies */
+		for (i = 0; i < noldmembers; i++)
+		{
+			Oid			roleid = oldmembers[i];
+
+			/* Skip the owner, same as above */
+			if (roleid == ownerId)
+				continue;
+
 			/* Skip pinned roles */
 			if (isSharedObjectPinned(AuthIdRelationId, roleid, sdepRel))
 				continue;
 
-			if (isGrant)
-				shdepAddDependency(sdepRel, classId, objectId, objsubId,
-								   AuthIdRelationId, roleid,
-								   SHARED_DEPENDENCY_ACL);
-			else
-				shdepDropDependency(sdepRel, classId, objectId, objsubId,
-									false,		/* exact match on objsubId */
-									AuthIdRelationId, roleid,
-									SHARED_DEPENDENCY_ACL);
+			shdepDropDependency(sdepRel, classId, objectId, objsubId,
+								false,		/* exact match on objsubId */
+								AuthIdRelationId, roleid,
+								SHARED_DEPENDENCY_ACL);
 		}
 
 		heap_close(sdepRel, RowExclusiveLock);
 	}
 
-	pfree(diff);
+	if (oldmembers)
+		pfree(oldmembers);
+	if (newmembers)
+		pfree(newmembers);
 }
 
 /*

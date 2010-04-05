@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_proc.c,v 1.173 2010/03/19 22:54:40 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_proc.c,v 1.174 2010/04/05 01:09:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -609,7 +609,7 @@ ProcedureCreate(const char *procedureName,
 
 		nnewmembers = aclmembers(proacl, &newmembers);
 		updateAclDependencies(ProcedureRelationId, retval, 0,
-							  proowner, true,
+							  proowner,
 							  0, NULL,
 							  nnewmembers, newmembers);
 	}
