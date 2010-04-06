@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/timezone/pgtz.c,v 1.67 2010/03/12 21:40:36 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/timezone/pgtz.c,v 1.68 2010/04/06 20:35:11 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1091,7 +1091,8 @@ identify_system_timezone(void)
 		if ((r = RegQueryValueEx(key, "Std", NULL, NULL, zonename, &namesize)) != ERROR_SUCCESS)
 		{
 			ereport(WARNING,
-					(errmsg_internal("could not query value for 'std' to identify Windows timezone: %i", (int) r)));
+					(errmsg_internal("could not query value for 'std' to identify Windows timezone \"%s\": %i",
+									 keyname, (int) r)));
 			RegCloseKey(key);
 			break;
 		}
@@ -1107,7 +1108,8 @@ identify_system_timezone(void)
 		if ((r = RegQueryValueEx(key, "Dlt", NULL, NULL, zonename, &namesize)) != ERROR_SUCCESS)
 		{
 			ereport(WARNING,
-					(errmsg_internal("could not query value for 'dlt' to identify Windows timezone: %i", (int) r)));
+					(errmsg_internal("could not query value for 'dlt' to identify Windows timezone \"%s\": %i",
+									 keyname, (int) r)));
 			RegCloseKey(key);
 			break;
 		}
