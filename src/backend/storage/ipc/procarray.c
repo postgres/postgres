@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/procarray.c,v 1.61 2010/03/11 09:26:59 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/procarray.c,v 1.62 2010/04/06 10:50:57 sriggs Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2220,9 +2220,8 @@ RecordKnownAssignedTransactionIds(TransactionId xid)
 	if (TransactionIdPrecedes(xid, snapshotOldestActiveXid))
 		return;
 
-	ereport(trace_recovery(DEBUG4),
-			(errmsg("record known xact %u latestObservedXid %u",
-					xid, latestObservedXid)));
+	elog(trace_recovery(DEBUG4), "record known xact %u latestObservedXid %u",
+					xid, latestObservedXid);
 
 	/*
 	 * When a newly observed xid arrives, it is frequently the case that it is
@@ -2253,9 +2252,9 @@ RecordKnownAssignedTransactionIds(TransactionId xid)
 		while (TransactionIdPrecedesOrEquals(next_expected_xid, xid))
 		{
 			if (TransactionIdPrecedes(next_expected_xid, xid))
-				ereport(trace_recovery(DEBUG4),
-				(errmsg("recording unobserved xid %u (latestObservedXid %u)",
-						next_expected_xid, latestObservedXid)));
+				elog(trace_recovery(DEBUG4),
+					 "recording unobserved xid %u (latestObservedXid %u)",
+						next_expected_xid, latestObservedXid);
 			KnownAssignedXidsAdd(&next_expected_xid, 1);
 
 			/*
@@ -2374,9 +2373,7 @@ KnownAssignedXidsAdd(TransactionId *xids, int nxids)
 		{
 			KnownAssignedXidsDisplay(LOG);
 			LWLockRelease(ProcArrayLock);
-			ereport(ERROR,
-					(errcode(ERRCODE_OUT_OF_MEMORY),
-					 errmsg("too many KnownAssignedXids")));
+			elog(ERROR, "too many KnownAssignedXids (%u)", procArray->maxKnownAssignedXids);
 		}
 
 		result = (TransactionId *) hash_search(KnownAssignedXidsHash, &xids[i], HASH_ENTER,
