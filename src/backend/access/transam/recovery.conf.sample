@@ -87,7 +87,7 @@
 #recovery_target_timeline = 'latest'
 #
 #---------------------------------------------------------------------------
-# LOG-STREAMING REPLICATION PARAMETERS
+# STANDBY SERVER PARAMETERS
 #---------------------------------------------------------------------------
 #
 # When standby_mode is enabled, the PostgreSQL server will work as
