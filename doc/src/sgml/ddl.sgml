@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ddl.sgml,v 1.92 2010/04/03 07:22:53 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ddl.sgml,v 1.93 2010/04/06 02:18:04 momjian Exp $ -->
 
 <chapter id="ddl">
  <title>Data Definition</title>
@@ -861,7 +861,8 @@ CREATE TABLE order_items (
    <para>
     Exclusion constraints ensure that if any two rows are compared on
     the specified columns or expressions using the specified operators,
-    at least one of these operator comparisons will be false. The syntax is:
+    at least one of these operator comparisons will return false or null.
+    The syntax is:
 <programlisting>
 CREATE TABLE circles (
     c circle,
