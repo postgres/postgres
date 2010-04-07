@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.197 2010/04/05 05:33:24 itagaki Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.198 2010/04/07 03:51:19 itagaki Exp $
  */
 
 /*----------------------------------------------------------------------
@@ -700,7 +700,7 @@ psql_completion(char *text, int start, int end)
 			 pg_strcasecmp(prev3_wd, "TABLE") != 0)
 	{
 		static const char *const list_ALTER[] =
-		{"AGGREGATE", "CONVERSION", "DATABASE", "DOMAIN", "FOREIGN DATA WRAPPER", "FUNCTION",
+		{"AGGREGATE", "CONVERSION", "DATABASE", "DEFAULT PRIVILEGES", "DOMAIN", "FOREIGN DATA WRAPPER", "FUNCTION",
 			"GROUP", "INDEX", "LANGUAGE", "LARGE OBJECT", "OPERATOR", "ROLE", "SCHEMA", "SERVER", "SEQUENCE", "TABLE",
 		"TABLESPACE", "TEXT SEARCH", "TRIGGER", "TYPE", "USER", "USER MAPPING FOR", "VIEW", NULL};
 
@@ -845,6 +845,38 @@ psql_completion(char *text, int start, int end)
 			 (pg_strcasecmp(prev_wd, "ENCRYPTED") == 0 || pg_strcasecmp(prev_wd, "UNENCRYPTED") == 0))
 	{
 		COMPLETE_WITH_CONST("PASSWORD");
+	}
+	/* ALTER DEFAULT PRIVILEGES */
+	else if (pg_strcasecmp(prev3_wd, "ALTER") == 0 &&
+			 pg_strcasecmp(prev2_wd, "DEFAULT") == 0 &&
+			 pg_strcasecmp(prev_wd, "PRIVILEGES") == 0)
+	{
+		static const char *const list_ALTER_DEFAULT_PRIVILEGES[] =
+		{"FOR ROLE", "FOR USER", "IN SCHEMA", NULL};
+
+		COMPLETE_WITH_LIST(list_ALTER_DEFAULT_PRIVILEGES);
+	}
+	/* ALTER DEFAULT PRIVILEGES FOR */
+	else if (pg_strcasecmp(prev4_wd, "ALTER") == 0 &&
+			 pg_strcasecmp(prev3_wd, "DEFAULT") == 0 &&
+			 pg_strcasecmp(prev2_wd, "PRIVILEGES") == 0 &&
+			 pg_strcasecmp(prev_wd, "FOR") == 0)
+	{
+		static const char *const list_ALTER_DEFAULT_PRIVILEGES_FOR[] =
+		{"ROLE", "USER", NULL};
+
+		COMPLETE_WITH_LIST(list_ALTER_DEFAULT_PRIVILEGES_FOR);
+	}
+	/* ALTER DEFAULT PRIVILEGES { FOR ROLE ... | IN SCHEMA ... } */
+	else if (pg_strcasecmp(prev5_wd, "DEFAULT") == 0 &&
+			 pg_strcasecmp(prev4_wd, "PRIVILEGES") == 0 &&
+			 (pg_strcasecmp(prev3_wd, "FOR") == 0 ||
+			  pg_strcasecmp(prev3_wd, "IN") == 0))
+	{
+		static const char *const list_ALTER_DEFAULT_PRIVILEGES_REST[] =
+		{"GRANT", "REVOKE", NULL};
+
+		COMPLETE_WITH_LIST(list_ALTER_DEFAULT_PRIVILEGES_REST);
 	}
 	/* ALTER DOMAIN <name> */
 	else if (pg_strcasecmp(prev3_wd, "ALTER") == 0 &&
@@ -2336,7 +2368,10 @@ psql_completion(char *text, int start, int end)
 			 pg_strcasecmp(prev3_wd, "USER") == 0 &&
 			 pg_strcasecmp(prev2_wd, "MAPPING") == 0 &&
 			 pg_strcasecmp(prev_wd, "FOR") == 0)
-		COMPLETE_WITH_QUERY(Query_for_list_of_roles);
+		COMPLETE_WITH_QUERY(Query_for_list_of_roles
+							" UNION SELECT 'CURRENT_USER'"
+							" UNION SELECT 'PUBLIC'"
+							" UNION SELECT 'USER'");
 	else if ((pg_strcasecmp(prev4_wd, "ALTER") == 0 ||
 			  pg_strcasecmp(prev4_wd, "DROP") == 0) &&
 			 pg_strcasecmp(prev3_wd, "USER") == 0 &&
