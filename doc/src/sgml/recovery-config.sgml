@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/recovery-config.sgml,v 2.3 2010/03/18 09:17:18 heikki Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/recovery-config.sgml,v 2.4 2010/04/07 10:58:49 heikki Exp $ -->
 
 <chapter Id="recovery-config">
   <title>Recovery Configuration</title>
@@ -16,6 +16,14 @@
       exists in the installation's <filename>share/</> directory.)  They must
       be reset for any subsequent recovery you wish to perform. They cannot
       be changed once recovery has begun.
+   </para>
+
+   <para>
+     Settings in <filename>recovery.conf</> are specified in the format
+     <literal>name = 'value'</>. One parameter is specified per line.
+     Hash marks (<literal>#</literal>) designate the rest of the
+     line as a comment.  To embed a single quote in a parameter
+     value, write two quotes (<literal>''</>).
    </para>
 
   <sect1 id="archive-recovery-settings">
