@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.389 2010/04/06 17:51:58 sriggs Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.390 2010/04/07 06:12:52 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -8410,6 +8410,12 @@ pg_xlogfile_name_offset(PG_FUNCTION_ARGS)
 	HeapTuple	resultHeapTuple;
 	Datum		result;
 
+	if (RecoveryInProgress())
+		ereport(ERROR,
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("recovery is in progress"),
+				 errhint("pg_xlogfile_name_offset() cannot be executed during recovery.")));
+
 	/*
 	 * Read input and parse
 	 */
@@ -8478,6 +8484,12 @@ pg_xlogfile_name(PG_FUNCTION_ARGS)
 	uint32		xlogseg;
 	XLogRecPtr	locationpoint;
 	char		xlogfilename[MAXFNAMELEN];
+
+	if (RecoveryInProgress())
+		ereport(ERROR,
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("recovery is in progress"),
+				 errhint("pg_xlogfile_name() cannot be executed during recovery.")));
 
 	locationstr = text_to_cstring(location);
 

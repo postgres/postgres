@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.512 2010/04/03 07:53:02 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.513 2010/04/07 06:12:52 heikki Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -13064,8 +13064,8 @@ SELECT set_config('log_statement_stats', 'off', false);
    <para>
     The functions shown in <xref
     linkend="functions-admin-backup-table"> assist in making on-line backups.
-    Use of the first three functions is restricted to superusers. The first
-    five functions cannot be executed during recovery.
+    These functions cannot be executed during recovery.
+    Use of the first three functions is restricted to superusers.
    </para>
 
    <table id="functions-admin-backup-table">
