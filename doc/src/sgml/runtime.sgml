@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.433 2010/03/21 00:43:40 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.434 2010/04/08 01:39:37 rhaas Exp $ -->
 
 <chapter Id="runtime">
  <title>Server Setup and Operation</title>
@@ -1338,7 +1338,9 @@ echo -17 > /proc/self/oom_adj
        until online backup mode is no longer active.  While backup mode is
        active, new connections will still be allowed, but only to superusers
        (this exception allows a superuser to connect to terminate
-       online backup mode).
+       online backup mode).  If the server is in recovery when a smart
+       shutdown is requested, recovery and streaming replication will be
+       stopped only after all regular sessions have terminated.
       </para>
      </listitem>
     </varlistentry>

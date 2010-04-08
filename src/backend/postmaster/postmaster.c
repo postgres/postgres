@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.604 2010/03/25 20:40:17 sriggs Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.605 2010/04/08 01:39:37 rhaas Exp $
  *
  * NOTES
  *
@@ -278,6 +278,7 @@ typedef enum
 	PM_RECOVERY_CONSISTENT,		/* consistent recovery mode */
 	PM_RUN,						/* normal "database is alive" state */
 	PM_WAIT_BACKUP,				/* waiting for online backup mode to end */
+	PM_WAIT_READONLY,			/* waiting for read only backends to exit */
 	PM_WAIT_BACKENDS,			/* waiting for live backends to exit */
 	PM_SHUTDOWN,				/* waiting for bgwriter to do shutdown ckpt */
 	PM_SHUTDOWN_2,				/* waiting for archiver and walsenders to
@@ -2173,7 +2174,17 @@ pmdie(SIGNAL_ARGS)
 				/* and the walwriter too */
 				if (WalWriterPID != 0)
 					signal_child(WalWriterPID, SIGTERM);
-				pmState = PM_WAIT_BACKUP;
+				/*
+				 * If we're in recovery, we can't kill the startup process
+				 * right away, because at present doing so does not release
+				 * its locks.  We might want to change this in a future
+				 * release.  For the time being, the PM_WAIT_READONLY state
+				 * indicates that we're waiting for the regular (read only)
+				 * backends to die off; once they do, we'll kill the startup
+				 * and walreceiver processes.
+				 */
+				pmState = (pmState == PM_RUN) ?
+					PM_WAIT_BACKUP : PM_WAIT_READONLY;
 			}
 
 			/*
@@ -2209,6 +2220,7 @@ pmdie(SIGNAL_ARGS)
 			}
 			if (pmState == PM_RUN ||
 				pmState == PM_WAIT_BACKUP ||
+				pmState == PM_WAIT_READONLY ||
 				pmState == PM_WAIT_BACKENDS ||
 				pmState == PM_RECOVERY_CONSISTENT)
 			{
@@ -2771,6 +2783,7 @@ HandleChildCrash(int pid, int exitstatus, const char *procname)
 		pmState == PM_RECOVERY_CONSISTENT ||
 		pmState == PM_RUN ||
 		pmState == PM_WAIT_BACKUP ||
+		pmState == PM_WAIT_READONLY ||
 		pmState == PM_SHUTDOWN)
 		pmState = PM_WAIT_BACKENDS;
 }
@@ -2844,6 +2857,26 @@ PostmasterStateMachine(void)
 		 */
 		if (!BackupInProgress())
 			pmState = PM_WAIT_BACKENDS;
+	}
+
+	if (pmState == PM_WAIT_READONLY)
+	{
+		/*
+		 * PM_WAIT_READONLY state ends when we have no regular backends that
+		 * have been started during recovery.  We kill the startup and
+		 * walreceiver processes and transition to PM_WAIT_BACKENDS.  Ideally,
+		 * we might like to kill these processes first and then wait for
+		 * backends to die off, but that doesn't work at present because
+		 * killing the startup process doesn't release its locks.
+		 */
+		if (CountChildren(BACKEND_TYPE_NORMAL) == 0)
+		{
+			if (StartupPID != 0)
+				signal_child(StartupPID, SIGTERM);
+			if (WalReceiverPID != 0)
+				signal_child(WalReceiverPID, SIGTERM);
+			pmState = PM_WAIT_BACKENDS;
+		}
 	}
 
 	/*
