@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/timezone/pgtz.c,v 1.48.2.4 2010/04/08 11:26:00 mha Exp $
+ *	  $PostgreSQL: pgsql/src/timezone/pgtz.c,v 1.48.2.5 2010/04/09 11:46:08 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -626,7 +626,7 @@ static const struct
 	/*
 	 * This list was built from the contents of the registry at
 	 * HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Time
-	 * Zones on Windows XP Professional SP2
+	 * Zones on Windows 2003 R2.
 	 *
 	 * The zones have been matched to zic timezones by looking at the cities
 	 * listed in the win32 display name (in the comment here) in most cases.
@@ -652,6 +652,10 @@ static const struct
 		"Asia/Baghdad"
 	},							/* (GMT+03:00) Baghdad */
 	{
+		"Argentina Standard Time", "Argentina Daylight Time",
+		"America/Buenos_Aires"
+	},							/* (GMT-03:00) Buenos Aires */
+	{
 		"Armenian Standard Time", "Armenian Daylight Time",
 		"Asia/Yerevan"
 	},							/* (GMT+04:00) Yerevan */
@@ -668,9 +672,17 @@ static const struct
 		"Australia/Canberra"
 	},							/* (GMT+10:00) Canberra, Melbourne, Sydney */
 	{
+		"Azerbaijan Standard Time", "Azerbaijan Daylight Time",
+		"Asia/Baku"
+	},							/* (GMT+04:00) Baku */
+	{
 		"Azores Standard Time", "Azores Daylight Time",
 		"Atlantic/Azores"
 	},							/* (GMT-01:00) Azores */
+	{
+		"Bangladesh Standard Time", "Bangladesh Daylight Time",
+		"Asia/Dhaka",
+	},							/* (GMT+06:00) Dhaka */
 	{
 		"Canada Central Standard Time", "Canada Central Daylight Time",
 		"Canada/Saskatchewan"
@@ -695,6 +707,10 @@ static const struct
 		"Central Asia Standard Time", "Central Asia Daylight Time",
 		"Asia/Dhaka"
 	},							/* (GMT+06:00) Astana, Dhaka */
+	{
+		"Central Brazilian Standard Time", "Central Brazilian Daylight Time",
+		"America/Cuiaba",
+	},							/* (GMT-04:00) Cuiaba */
 	{
 		"Central Europe Standard Time", "Central Europe Daylight Time",
 		"Europe/Belgrade"
@@ -808,9 +824,17 @@ static const struct
 		"Asia/Amman"
 	},							/* (GMT+02:00) Amman */
 	{
+		"Kamchatka Standard Time", "Kamchatka Daylight Time",
+		"Asia/Kamchatka",
+	},							/* (GMT+12:00) Petropavlovsk-Kamchatsky */
+	{
 		"Korea Standard Time", "Korea Daylight Time",
 		"Asia/Seoul"
 	},							/* (GMT+09:00) Seoul */
+	{
+		"Mauritius Standard Time", "Mauritius Daylight Time",
+		"Indian/Mauritius",
+	},							/* (GMT+04:00) Port Louis */
 	{
 		"Mexico Standard Time", "Mexico Daylight Time",
 		"America/Mexico_City"
@@ -832,6 +856,10 @@ static const struct
 		"Montevideo Standard Time", "Montevideo Daylight Time",
 		"America/Montevideo"
 	},							/* (GMT-03:00) Montevideo */
+	{
+		"Morocco Standard Time", "Morocco Daylight Time",
+		"Africa/Casablanca",
+	},							/* (GMT) Casablanca */
 	{
 		"Mountain Standard Time", "Mountain Daylight Time",
 		"US/Mountain"
@@ -886,6 +914,14 @@ static const struct
 		"Pacific Standard Time (Mexico)", "Pacific Daylight Time (Mexico)",
 		"America/Tijuana"
 	},							/* (GMT-08:00) Tijuana, Baja California */
+	{
+		"Pakistan Standard Time", "Pakistan Daylight Time",
+		"Asia/Karachi",
+	},							/* (GMT+05:00) Islamabad, Karachi */
+	{
+		"Paraguay Standard Time", "Paraguay Daylight Time",
+		"America/Asuncion",
+	},							/* (GMT-04:00) Asuncion */
 	{
 		"Romance Standard Time", "Romance Daylight Time",
 		"Europe/Brussels"
@@ -945,6 +981,10 @@ static const struct
 		"Pacific/Tongatapu"
 	},							/* (GMT+13:00) Nuku'alofa */
 	{
+		"Ulaanbaatar Standard Time", "Ulaanbaatar Daylight Time",
+		"Asia/Ulaanbaatar",
+	},							/* (GMT+08:00) Ulaanbaatar */
+	{
 		"US Eastern Standard Time", "US Eastern Daylight Time",
 		"US/Eastern"
 	},							/* (GMT-05:00) Indiana (East) */
@@ -952,6 +992,26 @@ static const struct
 		"US Mountain Standard Time", "US Mountain Daylight Time",
 		"US/Arizona"
 	},							/* (GMT-07:00) Arizona */
+	{
+		"Coordinated Universal Time", "Coordinated Universal Time",
+		"UTC"
+	},							/* (GMT) Coordinated Universal Time */
+	{
+		"UTC+12", "UTC+12",
+		"Etc/GMT+12"
+	},							/* (GMT+12:00) Coordinated Universal Time+12 */
+	{
+		"UTC-02", "UTC-02",
+		"Etc/GMT-02"
+	},							/* (GMT-02:00) Coordinated Universal Time-02 */
+	{
+		"UTC-11", "UTC-11",
+		"Etc/GMT-11"
+	},							/* (GMT-11:00) Coordinated Universal Time-11 */
+	{
+		"Venezuela Standard Time", "Venezuela Daylight Time",
+		"America/Caracas",
+	},							/* (GMT-04:30) Caracas */
 	{
 		"Vladivostok Standard Time", "Vladivostok Daylight Time",
 		"Asia/Vladivostok"
