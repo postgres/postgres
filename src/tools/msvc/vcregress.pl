@@ -1,7 +1,7 @@
 
 # -*-perl-*- hey - emacs - this is a perl file
 
-# $PostgreSQL: pgsql/src/tools/msvc/vcregress.pl,v 1.14 2010/03/02 17:06:51 adunstan Exp $
+# $PostgreSQL: pgsql/src/tools/msvc/vcregress.pl,v 1.15 2010/04/09 13:05:58 mha Exp $
 
 use strict;
 
@@ -47,8 +47,8 @@ $ENV{PATH} = "../../../$Config/libpq;../../$Config/libpq;$ENV{PATH}";
 my $schedule = shift;
 unless ($schedule)
 {
-	$schedule = "serial";
-	$schedule = "parallel" if ($what eq 'CHECK' || $what =~ /PARALLEL/);
+    $schedule = "serial";
+    $schedule = "parallel" if ($what eq 'CHECK' || $what =~ /PARALLEL/);
 }
 
 my $topdir = getcwd();
@@ -61,7 +61,7 @@ $maxconn = "--max_connections=$ENV{MAX_CONNECTIONS}"
 
 my $temp_config = "";
 $temp_config = "--temp-config=\"$ENV{TEMP_CONFIG}\""
-	if $ENV{TEMP_CONFIG};
+  if $ENV{TEMP_CONFIG};
 
 chdir "src/test/regress";
 
@@ -86,12 +86,9 @@ exit 0;
 sub installcheck
 {
     my @args = (
-        "../../../$Config/pg_regress/pg_regress",
-        "--dlpath=.",
-        "--psqldir=../../../$Config/psql",
-        "--schedule=${schedule}_schedule",
-        "--multibyte=SQL_ASCII",
-        "--no-locale"
+        "../../../$Config/pg_regress/pg_regress","--dlpath=.",
+        "--psqldir=../../../$Config/psql","--schedule=${schedule}_schedule",
+        "--multibyte=SQL_ASCII","--no-locale"
     );
     push(@args,$maxconn) if $maxconn;
     system(@args);
@@ -102,17 +99,13 @@ sub installcheck
 sub check
 {
     my @args = (
-        "../../../$Config/pg_regress/pg_regress",
-        "--dlpath=.",
-        "--psqldir=../../../$Config/psql",
-        "--schedule=${schedule}_schedule",
-        "--multibyte=SQL_ASCII",
-        "--no-locale",
-        "--temp-install=./tmp_check",
-        "--top-builddir=\"$topdir\""
+        "../../../$Config/pg_regress/pg_regress","--dlpath=.",
+        "--psqldir=../../../$Config/psql","--schedule=${schedule}_schedule",
+        "--multibyte=SQL_ASCII","--no-locale",
+        "--temp-install=./tmp_check","--top-builddir=\"$topdir\""
     );
     push(@args,$maxconn) if $maxconn;
-	push(@args,$temp_config) if $temp_config;
+    push(@args,$temp_config) if $temp_config;
     system(@args);
     my $status = $? >>8;
     exit $status if $status;
@@ -153,24 +146,25 @@ sub plcheck
         my $lang = $pl eq 'tcl' ? 'pltcl' : $pl;
         next unless -d "../../$Config/$lang";
         $lang = 'plpythonu' if $lang eq 'plpython';
-		my @lang_args = ( "--load-language=$lang" );
+        my @lang_args = ("--load-language=$lang");
         chdir $pl;
         my @tests = fetchTests();
-		if ($lang eq 'plperl')
-		{
-			# run both trusted and untrusted perl tests
-			push (@lang_args, "--load-language=plperlu");
+        if ($lang eq 'plperl')
+        {
 
-			# assume we're using this perl to built postgres
-			# test if we can run two interpreters in one backend, and if so
-			# run the trusted/untrusted interaction tests
-			use Config;
-			if ($Config{usemultiplicity} eq 'define')
-			{
-				push(@tests,'plperl_plperlu');
-			}
-		}
-		print "============================================================\n";
+            # run both trusted and untrusted perl tests
+            push(@lang_args, "--load-language=plperlu");
+
+            # assume we're using this perl to built postgres
+            # test if we can run two interpreters in one backend, and if so
+            # run the trusted/untrusted interaction tests
+            use Config;
+            if ($Config{usemultiplicity} eq 'define')
+            {
+                push(@tests,'plperl_plperlu');
+            }
+        }
+        print "============================================================\n";
         print "Checking $lang\n";
         my @args = (
             "../../../$Config/pg_regress/pg_regress",
@@ -192,15 +186,16 @@ sub contribcheck
     my $mstat = 0;
     foreach my $module (glob("*"))
     {
-		next if ($module eq 'xml2' && ! $config->{xml});
-        next unless -d "$module/sql" && 
-			-d "$module/expected" && 
-			(-f "$module/GNUmakefile" || -f "$module/Makefile");
+        next if ($module eq 'xml2' && !$config->{xml});
+        next
+          unless -d "$module/sql"
+              &&-d "$module/expected"
+              &&(-f "$module/GNUmakefile" || -f "$module/Makefile");
         chdir $module;
-		print "============================================================\n";
+        print "============================================================\n";
         print "Checking $module\n";
         my @tests = fetchTests();
-		my @opts = fetchRegressOpts();
+        my @opts = fetchRegressOpts();
         my @args = (
             "../../$Config/pg_regress/pg_regress",
             "--psqldir=../../$Config/psql",
@@ -223,14 +218,15 @@ sub fetchRegressOpts
     local($/) = undef;
     my $m = <$handle>;
     close($handle);
-	my @opts;
-	if ($m =~ /^\s*REGRESS_OPTS\s*=(.*)/m)
-	{
-		# ignore options that use makefile variables - can't handle those
-		# ignore anything that isn't an option staring with --
-		@opts = grep { $_ !~ /\$\(/ && $_ =~ /^--/ } split(/\s+/,$1);
-	}
-	return @opts;
+    my @opts;
+    if ($m =~ /^\s*REGRESS_OPTS\s*=(.*)/m)
+    {
+
+        # ignore options that use makefile variables - can't handle those
+        # ignore anything that isn't an option staring with --
+        @opts = grep { $_ !~ /\$\(/ && $_ =~ /^--/ } split(/\s+/,$1);
+    }
+    return @opts;
 }
 
 sub fetchTests
@@ -287,7 +283,7 @@ sub GetTests
 sub usage
 {
     print STDERR
-		"Usage: vcregress.pl ",
-		"<check|installcheck|plcheck|contribcheck|ecpgcheck> [schedule]\n" ;
-	exit(1);
+      "Usage: vcregress.pl ",
+      "<check|installcheck|plcheck|contribcheck|ecpgcheck> [schedule]\n";
+    exit(1);
 }

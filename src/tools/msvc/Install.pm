@@ -3,7 +3,7 @@ package Install;
 #
 # Package that provides 'make install' functionality for msvc builds
 #
-# $PostgreSQL: pgsql/src/tools/msvc/Install.pm,v 1.34 2010/01/05 13:31:58 mha Exp $
+# $PostgreSQL: pgsql/src/tools/msvc/Install.pm,v 1.35 2010/04/09 13:05:58 mha Exp $
 #
 use strict;
 use warnings;
@@ -19,16 +19,16 @@ our (@ISA,@EXPORT_OK);
 
 sub lcopy
 {
-	my $src = shift;
-	my $target = shift;
+    my $src = shift;
+    my $target = shift;
 
-        if (-f $target)
-        {
-           unlink $target || confess "Could not delete $target\n";
-        }
+    if (-f $target)
+    {
+        unlink $target || confess "Could not delete $target\n";
+    }
 
-	copy($src,$target)
-          || confess "Could not copy $src to $target\n";
+    copy($src,$target)
+      || confess "Could not copy $src to $target\n";
 
 }
 
@@ -61,31 +61,35 @@ sub Install
 
     CopySolutionOutput($conf, $target);
     lcopy($target . '/lib/libpq.dll', $target . '/bin/libpq.dll');
-	my $sample_files = [];
-	File::Find::find({wanted => 
-						  sub { /^.*\.sample\z/s && 
-									push(@$sample_files, $File::Find::name); 
-							} 
-				  }, 
-					 "src" );
-    CopySetOfFiles('config files', $sample_files , $target . '/share/');
+    my $sample_files = [];
+    File::Find::find(
+        {
+            wanted =>sub {
+                /^.*\.sample\z/s
+                  &&push(@$sample_files, $File::Find::name);
+              }
+        },
+        "src"
+    );
+    CopySetOfFiles('config files', $sample_files, $target . '/share/');
     CopyFiles(
         'Import libraries',
         $target .'/lib/',
-        "$conf\\", "postgres\\postgres.lib","libpq\\libpq.lib", "libecpg\\libecpg.lib", "libpgport\\libpgport.lib"
+        "$conf\\", "postgres\\postgres.lib","libpq\\libpq.lib", "libecpg\\libecpg.lib",
+        "libpgport\\libpgport.lib"
     );
-    CopySetOfFiles('timezone names', 
-				   [ glob('src\timezone\tznames\*.txt') ] ,
-				   $target . '/share/timezonesets/');
+    CopySetOfFiles(
+        'timezone names',
+        [ glob('src\timezone\tznames\*.txt') ],
+        $target . '/share/timezonesets/'
+    );
     CopyFiles(
         'timezone sets',
         $target . '/share/timezonesets/',
         'src/timezone/tznames/', 'Default','Australia','India'
     );
-    CopySetOfFiles('BKI files', [ glob("src\\backend\\catalog\\postgres.*") ], 
-				   $target .'/share/');
-    CopySetOfFiles('SQL files', [ glob("src\\backend\\catalog\\*.sql") ], 
-				   $target . '/share/');
+    CopySetOfFiles('BKI files', [ glob("src\\backend\\catalog\\postgres.*") ],$target .'/share/');
+    CopySetOfFiles('SQL files', [ glob("src\\backend\\catalog\\*.sql") ],$target . '/share/');
     CopyFiles(
         'Information schema data',
         $target . '/share/',
@@ -94,12 +98,16 @@ sub Install
     GenerateConversionScript($target);
     GenerateTimezoneFiles($target,$conf);
     GenerateTsearchFiles($target);
-    CopySetOfFiles('Stopword files', 
-				   [ glob ("src\\backend\\snowball\\stopwords\\*.stop") ], 
-				   $target . '/share/tsearch_data/');
-    CopySetOfFiles('Dictionaries sample files', 
-				   [ glob ("src\\backend\\tsearch\\*_sample.*" ) ], 
-				   $target . '/share/tsearch_data/');
+    CopySetOfFiles(
+        'Stopword files',
+        [ glob("src\\backend\\snowball\\stopwords\\*.stop") ],
+        $target . '/share/tsearch_data/'
+    );
+    CopySetOfFiles(
+        'Dictionaries sample files',
+        [ glob("src\\backend\\tsearch\\*_sample.*") ],
+        $target . '/share/tsearch_data/'
+    );
     CopyContribFiles($config,$target);
     CopyIncludeFiles($target);
 
@@ -189,8 +197,10 @@ sub CopySolutionOutput
             # Static lib, such as libpgport, only used internally during build, don't install
             next;
         }
-        lcopy("$conf\\$pf\\$pf.$ext","$target\\$dir\\$pf.$ext") || croak "Could not copy $pf.$ext\n";
-        lcopy("$conf\\$pf\\$pf.pdb","$target\\symbols\\$pf.pdb") || croak "Could not copy $pf.pdb\n";
+        lcopy("$conf\\$pf\\$pf.$ext","$target\\$dir\\$pf.$ext")
+          || croak "Could not copy $pf.$ext\n";
+        lcopy("$conf\\$pf\\$pf.pdb","$target\\symbols\\$pf.pdb")
+          || croak "Could not copy $pf.pdb\n";
         print ".";
     }
     print "\n";
@@ -241,7 +251,8 @@ sub GenerateTimezoneFiles
     my @tzfiles = split /\s+/,$1;
     unshift @tzfiles,'';
     print "Generating timezone files...";
-    system("$conf\\zic\\zic -d \"$target/share/timezone\" " . join(" src/timezone/data/", @tzfiles));
+    system(
+        "$conf\\zic\\zic -d \"$target/share/timezone\" " . join(" src/timezone/data/", @tzfiles));
     print "\n";
 }
 
@@ -260,6 +271,7 @@ sub GenerateTsearchFiles
     open($F,">$target/share/snowball_create.sql")
       || die "Could not write snowball_create.sql";
     print $F read_file('src/backend/snowball/snowball_func.sql.in');
+
     while ($#pieces > 0)
     {
         my $lang = shift @pieces || last;
@@ -267,7 +279,8 @@ sub GenerateTsearchFiles
         my $txt = $tmpl;
         my $stop = '';
 
-        if (-s "src/backend/snowball/stopwords/$lang.stop") {
+        if (-s "src/backend/snowball/stopwords/$lang.stop")
+        {
             $stop = ", StopWords=$lang";
         }
 
@@ -383,9 +396,8 @@ sub CopyIncludeFiles
 {
     my $target = shift;
 
-    EnsureDirectories($target, 'include', 'include/libpq',
-        'include/internal', 'include/internal/libpq',
-        'include/server');
+    EnsureDirectories($target, 'include', 'include/libpq','include/internal',
+        'include/internal/libpq','include/server');
 
     CopyFiles(
         'Public headers',
@@ -395,9 +407,11 @@ sub CopyIncludeFiles
     lcopy('src/include/libpq/libpq-fs.h', $target . '/include/libpq/')
       || croak 'Could not copy libpq-fs.h';
 
-    CopyFiles('Libpq headers',
-	      $target . '/include/', 'src/interfaces/libpq/',
-	      'libpq-fe.h', 'libpq-events.h');
+    CopyFiles(
+        'Libpq headers',
+        $target . '/include/',
+        'src/interfaces/libpq/','libpq-fe.h', 'libpq-events.h'
+    );
     CopyFiles(
         'Libpq internal headers',
         $target .'/include/internal/',
@@ -417,9 +431,7 @@ sub CopyIncludeFiles
         $target . '/include/server/',
         'src/include/', 'pg_config.h', 'pg_config_os.h'
     );
-    CopySetOfFiles('', 
-				   [ glob( "src\\include\\*.h" ) ], 
-				   $target . '/include/server/');
+    CopySetOfFiles('',[ glob("src\\include\\*.h") ],$target . '/include/server/');
     my $D;
     opendir($D, 'src/include') || croak "Could not opendir on src/include!\n";
 
@@ -430,8 +442,7 @@ sub CopyIncludeFiles
         next unless (-d 'src/include/' . $d);
 
         EnsureDirectories($target . '/include/server', $d);
-        system(
-            "xcopy /s /i /q /r /y src\\include\\$d\\*.h \"$target\\include\\server\\$d\\\"")
+        system("xcopy /s /i /q /r /y src\\include\\$d\\*.h \"$target\\include\\server\\$d\\\"")
           && croak("Failed to copy include directory $d\n");
     }
     closedir($D);
@@ -463,12 +474,16 @@ sub GenerateNLSFiles
 
     print "Installing NLS files...";
     EnsureDirectories($target, "share/locale");
-	my @flist;
-	File::Find::find({wanted =>
-						  sub { /^nls\.mk\z/s &&
-									!push(@flist, $File::Find::name);
-							}
-				  }, "src");
+    my @flist;
+    File::Find::find(
+        {
+            wanted =>sub {
+                /^nls\.mk\z/s
+                  &&!push(@flist, $File::Find::name);
+              }
+        },
+        "src"
+    );
     foreach (@flist)
     {
         my $prgm = DetermineCatalogName($_);
@@ -484,8 +499,7 @@ sub GenerateNLSFiles
             EnsureDirectories($target, "share/locale/$lang", "share/locale/$lang/LC_MESSAGES");
             system(
 "\"$nlspath\\bin\\msgfmt\" -o \"$target\\share\\locale\\$lang\\LC_MESSAGES\\$prgm-$majorver.mo\" $_"
-              )
-              && croak("Could not run msgfmt on $dir\\$_");
+            )&& croak("Could not run msgfmt on $dir\\$_");
             print ".";
         }
     }

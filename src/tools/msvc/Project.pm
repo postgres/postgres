@@ -3,7 +3,7 @@ package Project;
 #
 # Package that encapsulates a Visual C++ project file generation
 #
-# $PostgreSQL: pgsql/src/tools/msvc/Project.pm,v 1.25 2010/01/05 11:12:50 mha Exp $
+# $PostgreSQL: pgsql/src/tools/msvc/Project.pm,v 1.26 2010/04/09 13:05:58 mha Exp $
 #
 use Carp;
 use strict;
@@ -102,11 +102,13 @@ sub RemoveFile
 sub RelocateFiles
 {
     my ($self, $targetdir, $proc) = @_;
-    foreach my $f (keys %{$self->{files}}) {
+    foreach my $f (keys %{$self->{files}})
+    {
         my $r = &$proc($f);
-        if ($r) {
-           $self->RemoveFile($f);
-           $self->AddFile($targetdir . '\\' . basename($f));
+        if ($r)
+        {
+            $self->RemoveFile($f);
+            $self->AddFile($targetdir . '\\' . basename($f));
         }
     }
 }
@@ -125,10 +127,10 @@ sub AddReference
 sub AddLibrary
 {
     my ($self, $lib, $dbgsuffix) = @_;
-    
+
     if ($lib =~ m/\s/)
     {
-    	$lib = '&quot;' . $lib . "&quot;";
+        $lib = '&quot;' . $lib . "&quot;";
     }
 
     push @{$self->{libraries}}, $lib;
@@ -348,9 +350,9 @@ sub Save
         $self->FullExportDLL($self->{name} . ".lib");
     }
 
-	# Warning 4197 is about double exporting, disable this per
-	# http://connect.microsoft.com/VisualStudio/feedback/ViewFeedback.aspx?FeedbackID=99193
-	$self->DisableLinkerWarnings('4197') if ($self->{platform} eq 'x64');
+    # Warning 4197 is about double exporting, disable this per
+    # http://connect.microsoft.com/VisualStudio/feedback/ViewFeedback.aspx?FeedbackID=99193
+    $self->DisableLinkerWarnings('4197') if ($self->{platform} eq 'x64');
 
     # Dump the project
     open(F, ">$self->{name}.vcproj") || croak("Could not write to $self->{name}.vcproj\n");
@@ -405,7 +407,8 @@ EOF
             my $of = $f;
             $of =~ s/\.l$/.c/;
             print F '>'
-              . $self->GenerateCustomTool('Running flex on ' . $f, 'src\tools\msvc\pgflex.bat ' . $f,$of)
+              . $self->GenerateCustomTool('Running flex on ' . $f,
+                'src\tools\msvc\pgflex.bat ' . $f,$of)
               . '</File>' . "\n";
         }
         elsif (defined($uniquefiles{$file}))
@@ -439,8 +442,8 @@ sub GenerateCustomTool
     my ($self, $desc, $tool, $output, $cfg) = @_;
     if (!defined($cfg))
     {
-        return $self->GenerateCustomTool($desc, $tool, $output, 'Debug') .
-          $self->GenerateCustomTool($desc, $tool, $output, 'Release');
+        return $self->GenerateCustomTool($desc, $tool, $output, 'Debug')
+          .$self->GenerateCustomTool($desc, $tool, $output, 'Release');
     }
     return
 "<FileConfiguration Name=\"$cfg|$self->{platform}\"><Tool Name=\"VCCustomBuildTool\" Description=\"$desc\" CommandLine=\"$tool\" AdditionalDependencies=\"\" Outputs=\"$output\" /></FileConfiguration>";

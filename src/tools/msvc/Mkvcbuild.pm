@@ -3,7 +3,7 @@ package Mkvcbuild;
 #
 # Package that generates build files for msvc build
 #
-# $PostgreSQL: pgsql/src/tools/msvc/Mkvcbuild.pm,v 1.53 2010/02/15 17:10:50 mha Exp $
+# $PostgreSQL: pgsql/src/tools/msvc/Mkvcbuild.pm,v 1.54 2010/04/09 13:05:58 mha Exp $
 #
 use Carp;
 use Win32;
@@ -75,9 +75,12 @@ sub mkvcbuild
     $postgres->FullExportDLL('postgres.lib');
 
     my $snowball = $solution->AddProject('dict_snowball','dll','','src\backend\snowball');
-    $snowball->RelocateFiles('src\backend\snowball\libstemmer', sub {
-        return shift !~ /dict_snowball.c$/;
-    });
+    $snowball->RelocateFiles(
+        'src\backend\snowball\libstemmer',
+        sub {
+            return shift !~ /dict_snowball.c$/;
+        }
+    );
     $snowball->AddIncludeDir('src\include\snowball');
     $snowball->AddReference($postgres);
 
@@ -87,31 +90,31 @@ sub mkvcbuild
 
     if ($solution->{options}->{perl})
     {
-		my $plperlsrc = "src\\pl\\plperl\\";
+        my $plperlsrc = "src\\pl\\plperl\\";
         my $plperl = $solution->AddProject('plperl','dll','PLs','src\pl\plperl');
         $plperl->AddIncludeDir($solution->{options}->{perl} . '/lib/CORE');
         $plperl->AddDefine('PLPERL_HAVE_UID_GID');
-		foreach my $xs ('SPI.xs', 'Util.xs')
-		{
-			(my $xsc = $xs) =~ s/\.xs/.c/;
-			if (Solution::IsNewer("$plperlsrc$xsc","$plperlsrc$xs"))
-			{
-				print "Building $plperlsrc$xsc...\n";
-				system( $solution->{options}->{perl}
-						. '/bin/perl '
-						. $solution->{options}->{perl}
-						. '/lib/ExtUtils/xsubpp -typemap '
-						. $solution->{options}->{perl}
-						. '/lib/ExtUtils/typemap ' 
-						. "$plperlsrc$xs " 
-						. ">$plperlsrc$xsc");
-				if ((!(-f "$plperlsrc$xsc")) || -z "$plperlsrc$xsc")
-				{
-					unlink("$plperlsrc$xsc"); # if zero size
-					die "Failed to create $xsc.\n";
-				}
-			}
-		}
+        foreach my $xs ('SPI.xs', 'Util.xs')
+        {
+            (my $xsc = $xs) =~ s/\.xs/.c/;
+            if (Solution::IsNewer("$plperlsrc$xsc","$plperlsrc$xs"))
+            {
+                print "Building $plperlsrc$xsc...\n";
+                system( $solution->{options}->{perl}
+                      . '/bin/perl '
+                      . $solution->{options}->{perl}
+                      . '/lib/ExtUtils/xsubpp -typemap '
+                      . $solution->{options}->{perl}
+                      . '/lib/ExtUtils/typemap '
+                      . "$plperlsrc$xs "
+                      . ">$plperlsrc$xsc");
+                if ((!(-f "$plperlsrc$xsc")) || -z "$plperlsrc$xsc")
+                {
+                    unlink("$plperlsrc$xsc"); # if zero size
+                    die "Failed to create $xsc.\n";
+                }
+            }
+        }
         if (  Solution::IsNewer('src\pl\plperl\perlchunks.h','src\pl\plperl\plc_perlboot.pl')
             ||Solution::IsNewer('src\pl\plperl\perlchunks.h','src\pl\plperl\plc_safe_bad.pl')
             ||Solution::IsNewer('src\pl\plperl\perlchunks.h','src\pl\plperl\plc_safe_ok.pl'))
@@ -133,28 +136,35 @@ sub mkvcbuild
             }
         }
         $plperl->AddReference($postgres);
-		my @perl_libs = grep {/perl\d+.lib$/ }
-			glob($solution->{options}->{perl} . '\lib\CORE\perl*.lib');
+        my @perl_libs =
+          grep {/perl\d+.lib$/ }glob($solution->{options}->{perl} . '\lib\CORE\perl*.lib');
         if (@perl_libs == 1)
         {
             $plperl->AddLibrary($perl_libs[0]);
         }
-		else
-		{
-			die "could not identify perl library version";
-		}
+        else
+        {
+            die "could not identify perl library version";
+        }
     }
 
     if ($solution->{options}->{python})
     {
+
         # Attempt to get python version and location. Assume python.exe in specified dir.
-        open(P, $solution->{options}->{python} . "\\python -c \"import sys;print(sys.prefix);print(str(sys.version_info[0])+str(sys.version_info[1]))\" |") || die "Could not query for python version!\n";
-        my $pyprefix = <P>;chomp($pyprefix);
-        my $pyver = <P>;chomp($pyver);
+        open(P,
+            $solution->{options}->{python}
+              . "\\python -c \"import sys;print(sys.prefix);print(str(sys.version_info[0])+str(sys.version_info[1]))\" |"
+        ) || die "Could not query for python version!\n";
+        my $pyprefix = <P>;
+        chomp($pyprefix);
+        my $pyver = <P>;
+        chomp($pyver);
         close(P);
 
-        # Sometimes (always?) if python is not present, the execution actually works, but gives no data...
-        die "Failed to query python for version information\n" if (!(defined($pyprefix) && defined($pyver)));
+  # Sometimes (always?) if python is not present, the execution actually works, but gives no data...
+        die "Failed to query python for version information\n"
+          if (!(defined($pyprefix) && defined($pyver)));
 
         my $plpython = $solution->AddProject('plpython','dll','PLs','src\pl\plpython');
         $plpython->AddIncludeDir($pyprefix . '\include');
@@ -179,7 +189,7 @@ sub mkvcbuild
 
     $libpq = $solution->AddProject('libpq','dll','interfaces','src\interfaces\libpq');
     $libpq->AddDefine('FRONTEND');
-	$libpq->AddDefine('UNSAFE_STAT_OK');
+    $libpq->AddDefine('UNSAFE_STAT_OK');
     $libpq->AddIncludeDir('src\port');
     $libpq->AddLibrary('wsock32.lib');
     $libpq->AddLibrary('secur32.lib');
@@ -189,7 +199,8 @@ sub mkvcbuild
     $libpq->ReplaceFile('src\interfaces\libpq\libpqrc.c','src\interfaces\libpq\libpq.rc');
     $libpq->AddReference($libpgport);
 
-    my $libpqwalreceiver = $solution->AddProject('libpqwalreceiver', 'dll', '', 'src\backend\replication\libpqwalreceiver');
+    my $libpqwalreceiver = $solution->AddProject('libpqwalreceiver', 'dll', '',
+        'src\backend\replication\libpqwalreceiver');
     $libpqwalreceiver->AddIncludeDir('src\interfaces\libpq');
     $libpqwalreceiver->AddReference($postgres,$libpq);
 
@@ -314,12 +325,12 @@ sub mkvcbuild
 
     if ($solution->{options}->{uuid})
     {
-       $contrib_extraincludes->{'uuid-ossp'} = [ $solution->{options}->{uuid} . '\include' ];
-       $contrib_extralibs->{'uuid-ossp'} = [ $solution->{options}->{uuid} . '\lib\uuid.lib' ];
+        $contrib_extraincludes->{'uuid-ossp'} = [ $solution->{options}->{uuid} . '\include' ];
+        $contrib_extralibs->{'uuid-ossp'} = [ $solution->{options}->{uuid} . '\lib\uuid.lib' ];
     }
-	 else
+    else
     {
-       push @contrib_excludes,'uuid-ossp';
+        push @contrib_excludes,'uuid-ossp';
     }
 
     # Pgcrypto makefile too complex to parse....
@@ -462,10 +473,10 @@ sub AddContrib
         $mf =~ s{\\\s*[\r\n]+}{}mg;
         my $proj = $solution->AddProject($dn, 'dll', 'contrib');
         $mf =~ /^OBJS\s*=\s*(.*)$/gm || croak "Could not find objects in MODULE_big for $n\n";
-		my $objs = $1;
+        my $objs = $1;
         while ($objs =~ /\b([\w-]+\.o)\b/g)
         {
-			my $o = $1;
+            my $o = $1;
             $o =~ s/\.o$/.c/;
             $proj->AddFile('contrib\\' . $n . '\\' . $o);
         }
@@ -479,9 +490,9 @@ sub AddContrib
                 $mf2 =~ /^SUBOBJS\s*=\s*(.*)$/gm
                   || croak "Could not find objects in MODULE_big for $n, subdir $d\n";
                 $objs = $1;
-				while ($objs =~ /\b([\w-]+\.o)\b/g)
-				{
-					my $o = $1;
+                while ($objs =~ /\b([\w-]+\.o)\b/g)
+                {
+                    my $o = $1;
                     $o =~ s/\.o$/.c/;
                     $proj->AddFile('contrib\\' . $n . '\\' . $d . '\\' . $o);
                 }
@@ -506,7 +517,7 @@ sub AddContrib
         my $objs = $1;
         while ($objs =~ /\b([\w-]+\.o)\b/g)
         {
-			my $o = $1;
+            my $o = $1;
             $o =~ s/\.o$/.c/;
             $proj->AddFile('contrib\\' . $n . '\\' . $o);
         }
