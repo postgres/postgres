@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/timezone/pgtz.c,v 1.48.2.5 2010/04/09 11:46:08 mha Exp $
+ *	  $PostgreSQL: pgsql/src/timezone/pgtz.c,v 1.48.2.6 2010/04/09 11:49:56 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -681,7 +681,7 @@ static const struct
 	},							/* (GMT-01:00) Azores */
 	{
 		"Bangladesh Standard Time", "Bangladesh Daylight Time",
-		"Asia/Dhaka",
+		"Asia/Dhaka"
 	},							/* (GMT+06:00) Dhaka */
 	{
 		"Canada Central Standard Time", "Canada Central Daylight Time",
@@ -709,7 +709,7 @@ static const struct
 	},							/* (GMT+06:00) Astana, Dhaka */
 	{
 		"Central Brazilian Standard Time", "Central Brazilian Daylight Time",
-		"America/Cuiaba",
+		"America/Cuiaba"
 	},							/* (GMT-04:00) Cuiaba */
 	{
 		"Central Europe Standard Time", "Central Europe Daylight Time",
@@ -825,7 +825,7 @@ static const struct
 	},							/* (GMT+02:00) Amman */
 	{
 		"Kamchatka Standard Time", "Kamchatka Daylight Time",
-		"Asia/Kamchatka",
+		"Asia/Kamchatka"
 	},							/* (GMT+12:00) Petropavlovsk-Kamchatsky */
 	{
 		"Korea Standard Time", "Korea Daylight Time",
@@ -833,7 +833,7 @@ static const struct
 	},							/* (GMT+09:00) Seoul */
 	{
 		"Mauritius Standard Time", "Mauritius Daylight Time",
-		"Indian/Mauritius",
+		"Indian/Mauritius"
 	},							/* (GMT+04:00) Port Louis */
 	{
 		"Mexico Standard Time", "Mexico Daylight Time",
@@ -858,7 +858,7 @@ static const struct
 	},							/* (GMT-03:00) Montevideo */
 	{
 		"Morocco Standard Time", "Morocco Daylight Time",
-		"Africa/Casablanca",
+		"Africa/Casablanca"
 	},							/* (GMT) Casablanca */
 	{
 		"Mountain Standard Time", "Mountain Daylight Time",
@@ -916,11 +916,11 @@ static const struct
 	},							/* (GMT-08:00) Tijuana, Baja California */
 	{
 		"Pakistan Standard Time", "Pakistan Daylight Time",
-		"Asia/Karachi",
+		"Asia/Karachi"
 	},							/* (GMT+05:00) Islamabad, Karachi */
 	{
 		"Paraguay Standard Time", "Paraguay Daylight Time",
-		"America/Asuncion",
+		"America/Asuncion"
 	},							/* (GMT-04:00) Asuncion */
 	{
 		"Romance Standard Time", "Romance Daylight Time",
