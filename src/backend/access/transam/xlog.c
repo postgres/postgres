@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.392 2010/04/12 09:52:29 heikki Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.393 2010/04/12 10:40:42 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -546,6 +546,7 @@ static void ExecuteRecoveryCommand(char *command, char *commandName,
 					   bool failOnerror);
 static void PreallocXlogFiles(XLogRecPtr endptr);
 static void RemoveOldXlogFiles(uint32 log, uint32 seg, XLogRecPtr endptr);
+static void UpdateLastRemovedPtr(char *filename);
 static void ValidateXLOGDirectoryStructure(void);
 static void CleanupBackupHistory(void);
 static void UpdateMinRecoveryPoint(XLogRecPtr lsn, bool force);
@@ -3169,6 +3170,31 @@ XLogGetLastRemoved(uint32 *log, uint32 *seg)
 }
 
 /*
+ * Update the last removed log/seg pointer in shared memory, to reflect
+ * that the given XLOG file has been removed.
+ */
+static void
+UpdateLastRemovedPtr(char *filename)
+{
+	/* use volatile pointer to prevent code rearrangement */
+	volatile XLogCtlData *xlogctl = XLogCtl;
+	uint32		tli,
+				log,
+				seg;
+
+	XLogFromFileName(filename, &tli, &log, &seg);
+
+	SpinLockAcquire(&xlogctl->info_lck);
+	if (log > xlogctl->lastRemovedLog ||
+		(log == xlogctl->lastRemovedLog && seg > xlogctl->lastRemovedSeg))
+	{
+		xlogctl->lastRemovedLog = log;
+		xlogctl->lastRemovedSeg = seg;
+	}
+	SpinLockRelease(&xlogctl->info_lck);
+}
+
+/*
  * Recycle or remove all log files older or equal to passed log/seg#
  *
  * endptr is current (or recent) end of xlog; this is used to determine
@@ -3189,20 +3215,8 @@ RemoveOldXlogFiles(uint32 log, uint32 seg, XLogRecPtr endptr)
 	char		newpath[MAXPGPATH];
 #endif
 	struct stat statbuf;
-	/* use volatile pointer to prevent code rearrangement */
-	volatile XLogCtlData *xlogctl = XLogCtl;
 
-	/* Update the last removed location in shared memory first */
-	SpinLockAcquire(&xlogctl->info_lck);
-	if (log > xlogctl->lastRemovedLog ||
-		(log == xlogctl->lastRemovedLog && seg > xlogctl->lastRemovedSeg))
-	{
-		xlogctl->lastRemovedLog = log;
-		xlogctl->lastRemovedSeg = seg;
-	}
-	SpinLockRelease(&xlogctl->info_lck);
-
-	elog(DEBUG1, "removing WAL segments older than %X/%X", log, seg);
+	elog(DEBUG2, "removing WAL segments older than %X/%X", log, seg);
 
 	/*
 	 * Initialize info about where to try to recycle to.  We allow recycling
@@ -3251,6 +3265,9 @@ RemoveOldXlogFiles(uint32 log, uint32 seg, XLogRecPtr endptr)
 			if (WalRcvInProgress() || XLogArchiveCheckDone(xlde->d_name))
 			{
 				snprintf(path, MAXPGPATH, XLOGDIR "/%s", xlde->d_name);
+
+				/* Update the last removed location in shared memory first */
+				UpdateLastRemovedPtr(xlde->d_name);
 
 				/*
 				 * Before deleting the file, see if it can be recycled as a
