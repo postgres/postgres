@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.263 2010/04/12 09:52:29 heikki Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.264 2010/04/12 22:09:58 momjian Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -1721,8 +1721,11 @@ SET ENABLE_SEQSCAN TO OFF;
         (The path name is relative to the working directory of the server,
         i.e., the cluster's data directory.)
         Use <literal>%%</> to embed an actual <literal>%</> character in the
-        command. For more information see <xref
-        linkend="backup-archiving-wal">.
+        command.  It is important for the command to return a zero
+        exit status only if it succeeds. For more information see
+        <xref linkend="backup-archiving-wal">.
+       </para>
+       <para>
         This parameter can only be set in the <filename>postgresql.conf</>
         file or on the server command line.  It is ignored unless
         <varname>archive_mode</> was enabled at server start.
@@ -1734,14 +1737,6 @@ SET ENABLE_SEQSCAN TO OFF;
         return true, e.g. <literal>/bin/true</>, effectively disables
         archiving, but also breaks the chain of WAL files needed for
         archive recovery, so it should only be used in unusual circumstances.
-       </para>
-       <para>
-        It is important for the command to return a zero exit status if
-        and only if it succeeds.  Examples:
-<programlisting>
-archive_command = 'cp "%p" /mnt/server/archivedir/"%f"'
-archive_command = 'copy "%p" "C:\\server\\archivedir\\%f"'  # Windows
-</programlisting>
        </para>
       </listitem>
      </varlistentry>
