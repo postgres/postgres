@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.546 2010/04/01 00:43:29 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.547 2010/04/12 09:52:29 heikki Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -1645,6 +1645,15 @@ static struct config_int ConfigureNamesInt[] =
 		},
 		&PreAuthDelay,
 		0, 0, 60, NULL, NULL
+	},
+
+	{
+		{"standby_keep_segments", PGC_SIGHUP, WAL_CHECKPOINTS,
+			gettext_noop("Sets the number of WAL files held for standby servers"),
+			NULL
+		},
+		&StandbySegments,
+		0, 0, INT_MAX, NULL, NULL
 	},
 
 	{

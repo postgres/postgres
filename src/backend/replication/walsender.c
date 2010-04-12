@@ -30,7 +30,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/replication/walsender.c,v 1.14 2010/04/01 00:43:29 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/replication/walsender.c,v 1.15 2010/04/12 09:52:29 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -508,6 +508,10 @@ XLogRead(char *buf, XLogRecPtr recptr, Size nbytes)
 {
 	char		path[MAXPGPATH];
 	uint32		startoff;
+	uint32		lastRemovedLog;
+	uint32		lastRemovedSeg;
+	uint32		log;
+	uint32		seg;
 
 	while (nbytes > 0)
 	{
@@ -527,10 +531,27 @@ XLogRead(char *buf, XLogRecPtr recptr, Size nbytes)
 
 			sendFile = BasicOpenFile(path, O_RDONLY | PG_BINARY, 0);
 			if (sendFile < 0)
-				ereport(FATAL,	/* XXX: Why FATAL? */
-						(errcode_for_file_access(),
-						 errmsg("could not open file \"%s\" (log file %u, segment %u): %m",
-								path, sendId, sendSeg)));
+			{
+				/*
+				 * If the file is not found, assume it's because the
+				 * standby asked for a too old WAL segment that has already
+				 * been removed or recycled.
+				 */
+				if (errno == ENOENT)
+				{
+					char filename[MAXFNAMELEN];
+					XLogFileName(filename, ThisTimeLineID, sendId, sendSeg);
+					ereport(ERROR,
+							(errcode_for_file_access(),
+							 errmsg("requested WAL segment %s has already been removed",
+									filename)));
+				}
+				else
+					ereport(ERROR,
+							(errcode_for_file_access(),
+							 errmsg("could not open file \"%s\" (log file %u, segment %u): %m",
+									path, sendId, sendSeg)));
+			}
 			sendOff = 0;
 		}
 
@@ -538,7 +559,7 @@ XLogRead(char *buf, XLogRecPtr recptr, Size nbytes)
 		if (sendOff != startoff)
 		{
 			if (lseek(sendFile, (off_t) startoff, SEEK_SET) < 0)
-				ereport(FATAL,
+				ereport(ERROR,
 						(errcode_for_file_access(),
 						 errmsg("could not seek in log file %u, segment %u to offset %u: %m",
 								sendId, sendSeg, startoff)));
@@ -553,7 +574,7 @@ XLogRead(char *buf, XLogRecPtr recptr, Size nbytes)
 
 		readbytes = read(sendFile, buf, segbytes);
 		if (readbytes <= 0)
-			ereport(FATAL,
+			ereport(ERROR,
 					(errcode_for_file_access(),
 			errmsg("could not read from log file %u, segment %u, offset %u, "
 				   "length %lu: %m",
@@ -565,6 +586,26 @@ XLogRead(char *buf, XLogRecPtr recptr, Size nbytes)
 		sendOff += readbytes;
 		nbytes -= readbytes;
 		buf += readbytes;
+	}
+
+	/*
+	 * After reading into the buffer, check that what we read was valid.
+	 * We do this after reading, because even though the segment was present
+	 * when we opened it, it might get recycled or removed while we read it.
+	 * The read() succeeds in that case, but the data we tried to read might
+	 * already have been overwritten with new WAL records.
+	 */
+	XLogGetLastRemoved(&lastRemovedLog, &lastRemovedSeg);
+	XLByteToPrevSeg(recptr, log, seg);
+	if (log < lastRemovedLog ||
+		(log == lastRemovedLog && seg <= lastRemovedSeg))
+	{
+		char filename[MAXFNAMELEN];
+		XLogFileName(filename, ThisTimeLineID, log, seg);
+		ereport(ERROR,
+				(errcode_for_file_access(),
+				 errmsg("requested WAL segment %s has already been removed",
+						filename)));
 	}
 }
 
@@ -802,6 +843,12 @@ WalSndShmemInit(void)
 }
 
 /*
+ * This isn't currently used for anything. Monitoring tools might be
+ * interested in the future, and we'll need something like this in the
+ * future for synchronous replication.
+ */
+#ifdef NOT_USED
+/*
  * Returns the oldest Send position among walsenders. Or InvalidXLogRecPtr
  * if none.
  */
@@ -834,3 +881,4 @@ GetOldestWALSendPointer(void)
 	}
 	return oldest;
 }
+#endif

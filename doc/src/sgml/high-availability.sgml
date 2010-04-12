@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/high-availability.sgml,v 1.58 2010/04/03 07:22:54 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/high-availability.sgml,v 1.59 2010/04/12 09:52:29 heikki Exp $ -->
 
 <chapter id="high-availability">
  <title>High Availability, Load Balancing, and Replication</title>
@@ -732,7 +732,12 @@ trigger_file = '/path/to/trigger_file'
     Streaming replication relies on file-based continuous archiving for
     making the base backup and for allowing the standby to catch up if it is
     disconnected from the primary for long enough for the primary to
-    delete old WAL files still required by the standby.
+    delete old WAL files still required by the standby. It is possible
+    to use streaming replication without WAL archiving, but if a standby
+    falls behind too much, the primary will delete old WAL files still
+    needed by the standby, and the standby will have to be manually restored
+    from a base backup. You can control how long the primary retains old WAL
+    segments using the <varname>standby_keep_segments</> setting.
    </para>
 
    <para>

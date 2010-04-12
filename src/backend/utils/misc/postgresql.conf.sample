@@ -193,6 +193,7 @@
 
 #max_wal_senders = 0		# max number of walsender processes
 #wal_sender_delay = 200ms	# 1-10000 milliseconds
+#standby_keep_segments = 0	# in logfile segments, 16MB each; 0 disables
 
 
 #------------------------------------------------------------------------------

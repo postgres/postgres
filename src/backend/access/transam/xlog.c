@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.391 2010/04/07 10:58:49 heikki Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.392 2010/04/12 09:52:29 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -66,6 +66,7 @@
 
 /* User-settable parameters */
 int			CheckPointSegments = 3;
+int			StandbySegments = 0;
 int			XLOGbuffers = 8;
 int			XLogArchiveTimeout = 0;
 bool		XLogArchiveMode = false;
@@ -356,6 +357,8 @@ typedef struct XLogCtlData
 	uint32		ckptXidEpoch;	/* nextXID & epoch of latest checkpoint */
 	TransactionId ckptXid;
 	XLogRecPtr	asyncCommitLSN; /* LSN of newest async commit */
+	uint32		lastRemovedLog;	/* latest removed/recycled XLOG segment */
+	uint32		lastRemovedSeg;
 
 	/* Protected by WALWriteLock: */
 	XLogCtlWrite Write;
@@ -3150,6 +3153,22 @@ PreallocXlogFiles(XLogRecPtr endptr)
 }
 
 /*
+ * Get the log/seg of the latest removed or recycled WAL segment.
+ * Returns 0 if no WAL segments have been removed since startup.
+ */
+void
+XLogGetLastRemoved(uint32 *log, uint32 *seg)
+{
+	/* use volatile pointer to prevent code rearrangement */
+	volatile XLogCtlData *xlogctl = XLogCtl;
+
+	SpinLockAcquire(&xlogctl->info_lck);
+	*log = xlogctl->lastRemovedLog;
+	*seg = xlogctl->lastRemovedSeg;
+	SpinLockRelease(&xlogctl->info_lck);
+}
+
+/*
  * Recycle or remove all log files older or equal to passed log/seg#
  *
  * endptr is current (or recent) end of xlog; this is used to determine
@@ -3170,6 +3189,20 @@ RemoveOldXlogFiles(uint32 log, uint32 seg, XLogRecPtr endptr)
 	char		newpath[MAXPGPATH];
 #endif
 	struct stat statbuf;
+	/* use volatile pointer to prevent code rearrangement */
+	volatile XLogCtlData *xlogctl = XLogCtl;
+
+	/* Update the last removed location in shared memory first */
+	SpinLockAcquire(&xlogctl->info_lck);
+	if (log > xlogctl->lastRemovedLog ||
+		(log == xlogctl->lastRemovedLog && seg > xlogctl->lastRemovedSeg))
+	{
+		xlogctl->lastRemovedLog = log;
+		xlogctl->lastRemovedSeg = seg;
+	}
+	SpinLockRelease(&xlogctl->info_lck);
+
+	elog(DEBUG1, "removing WAL segments older than %X/%X", log, seg);
 
 	/*
 	 * Initialize info about where to try to recycle to.  We allow recycling
@@ -7172,36 +7205,51 @@ CreateCheckPoint(int flags)
 	smgrpostckpt();
 
 	/*
-	 * If there's connected standby servers doing XLOG streaming, don't delete
-	 * XLOG files that have not been streamed to all of them yet. This does
-	 * nothing to prevent them from being deleted when the standby is
-	 * disconnected (e.g because of network problems), but at least it avoids
-	 * an open replication connection from failing because of that.
+	 * Delete old log files (those no longer needed even for previous
+	 * checkpoint or the standbys in XLOG streaming).
 	 */
-	if ((_logId || _logSeg) && max_wal_senders > 0)
+	if (_logId || _logSeg)
 	{
-		XLogRecPtr	oldest;
-		uint32		log;
-		uint32		seg;
-
-		oldest = GetOldestWALSendPointer();
-		if (oldest.xlogid != 0 || oldest.xrecoff != 0)
+		/*
+		 * Calculate the last segment that we need to retain because of
+		 * standby_keep_segments, by subtracting StandbySegments from the
+		 * new checkpoint location.
+		 */
+		if (StandbySegments > 0)
 		{
-			XLByteToSeg(oldest, log, seg);
+			uint32		log;
+			uint32		seg;
+			int			d_log;
+			int			d_seg;
+
+			XLByteToSeg(recptr, log, seg);
+
+			d_seg = StandbySegments % XLogSegsPerFile;
+			d_log = StandbySegments / XLogSegsPerFile;
+			if (seg < d_seg)
+			{
+				d_log += 1;
+				seg = seg - d_seg + XLogSegsPerFile;
+			}
+			else
+				seg = seg - d_seg;
+			/* avoid underflow, don't go below (0,1) */
+			if (log < d_log || (log == d_log && seg == 0))
+			{
+				log = 0;
+				seg = 1;
+			}
+			else
+				log = log - d_log;
+
+			/* don't delete WAL segments newer than the calculated segment */
 			if (log < _logId || (log == _logId && seg < _logSeg))
 			{
 				_logId = log;
 				_logSeg = seg;
 			}
 		}
-	}
 
-	/*
-	 * Delete old log files (those no longer needed even for previous
-	 * checkpoint or the standbys in XLOG streaming).
-	 */
-	if (_logId || _logSeg)
-	{
 		PrevLogSeg(_logId, _logSeg);
 		RemoveOldXlogFiles(_logId, _logSeg, recptr);
 	}

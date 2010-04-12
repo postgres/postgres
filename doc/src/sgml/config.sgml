@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.262 2010/04/03 07:22:53 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.263 2010/04/12 09:52:29 heikki Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -1820,6 +1820,34 @@ archive_command = 'copy "%p" "C:\\server\\archivedir\\%f"'  # Windows
         is not a multiple of 10 might have the same results as setting it to
         the next higher multiple of 10. This parameter can only be set in the
         <filename>postgresql.conf</> file or on the server command line.
+       </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry id="guc-standby-keep-segments" xreflabel="standby_keep_segments">
+       <term><varname>standby_keep_segments</varname> (<type>integer</type>)</term>
+       <indexterm>
+        <primary><varname>standby_keep_segments</> configuration parameter</primary>
+       </indexterm>
+       <listitem>
+       <para>
+        Specifies the number of log file segments kept in <filename>pg_xlog</>
+        directory, in case a standby server needs to fetch them via streaming
+        replciation. Each segment is normally 16 megabytes. If a standby
+        server connected to the primary falls behind more than
+        <varname>standby_keep_segments</> segments, the primary might remove
+        a WAL segment still needed by the standby and the replication
+        connection will be terminated.
+
+        This sets only the minimum number of segments retained for standby
+        purposes, the system might need to retain more segments for WAL
+        archival or to recover from a checkpoint. If <varname>standby_keep_segments</>
+        is zero (the default), the system doesn't keep any extra segments
+        for standby purposes, and the number of old WAL segments available
+        for standbys is determined based only on the location of the previous
+        checkpoint and status of WAL archival.
+        This parameter can only be set in the <filename>postgresql.conf</>
+        file or on the server command line.
        </para>
        </listitem>
       </varlistentry>
