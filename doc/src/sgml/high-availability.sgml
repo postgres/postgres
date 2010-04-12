@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/high-availability.sgml,v 1.59 2010/04/12 09:52:29 heikki Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/high-availability.sgml,v 1.60 2010/04/12 10:01:04 heikki Exp $ -->
 
 <chapter id="high-availability">
  <title>High Availability, Load Balancing, and Replication</title>
@@ -827,13 +827,9 @@ primary_conninfo = 'host=192.168.1.50 port=5432 user=foo password=foopass'
    <sect3 id="streaming-replication-monitoring">
     <title>Monitoring</title>
     <para>
-     The WAL files required for the standby's recovery are not deleted from
-     the <filename>pg_xlog</> directory on the primary while the standby is
-     connected. If the standby lags far behind the primary, many WAL files
-     will accumulate in there, and can fill up the disk. It is therefore
-     important to monitor the lag to ensure the health of the standby and
-     to avoid disk full situations in the primary.
-     You can calculate the lag by comparing the current WAL write
+     An important health indicator of streaming replication is the amount
+     of WAL records generated in the primary, but not yet applied in the
+     standby. You can calculate this lag by comparing the current WAL write
      location on the primary with the last WAL location received by the
      standby. They can be retrieved using
      <function>pg_current_xlog_location</> on the primary and the
