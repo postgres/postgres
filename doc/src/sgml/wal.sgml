@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/wal.sgml,v 1.65 2010/03/17 17:12:31 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/wal.sgml,v 1.66 2010/04/13 14:15:25 momjian Exp $ -->
 
 <chapter id="wal">
  <title>Reliability and the Write-Ahead Log</title>
@@ -61,7 +61,7 @@
    particularly likely to have write-back caches that will not survive a
    power failure, though <acronym>ATAPI-6</> introduced a drive cache
    flush command (FLUSH CACHE EXT) that some file systems use, e.g. <acronym>ZFS</>.
-   Many solid-state drives also have volatile write-back
+   Many solid-state drives (SSD) also have volatile write-back
    caches, and many do not honor cache flush commands by default.
    To check write caching on <productname>Linux</> use
    <command>hdparm -I</>;  it is enabled if there is a <literal>*</> next
