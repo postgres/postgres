@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.393 2010/04/12 10:40:42 heikki Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.394 2010/04/13 14:17:46 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -496,6 +496,7 @@ static TimeLineID lastPageTLI = 0;
 static XLogRecPtr minRecoveryPoint;		/* local copy of
 										 * ControlFile->minRecoveryPoint */
 static bool updateMinRecoveryPoint = true;
+static bool reachedMinRecoveryPoint = false;
 
 static bool InRedo = false;
 
@@ -551,6 +552,7 @@ static void ValidateXLOGDirectoryStructure(void);
 static void CleanupBackupHistory(void);
 static void UpdateMinRecoveryPoint(XLogRecPtr lsn, bool force);
 static XLogRecord *ReadRecord(XLogRecPtr *RecPtr, int emode, bool fetching_ckpt);
+static void CheckRecoveryConsistency(void);
 static bool ValidXLOGHeader(XLogPageHeader hdr, int emode);
 static XLogRecord *ReadCheckpointRecord(XLogRecPtr RecPtr, int whichChkpt);
 static List *readTimeLineHistory(TimeLineID targetTLI);
@@ -5591,7 +5593,6 @@ StartupXLOG(void)
 	uint32		freespace;
 	TransactionId oldestActiveXID;
 	bool		bgwriterLaunched = false;
-	bool		backendsAllowed = false;
 
 	/*
 	 * Read control file and check XLOG status looks valid.
@@ -5838,6 +5839,8 @@ StartupXLOG(void)
 	if (InRecovery)
 	{
 		int			rmid;
+		/* use volatile pointer to prevent code rearrangement */
+		volatile XLogCtlData *xlogctl = XLogCtl;
 
 		/*
 		 * Update pg_control to show that we are recovering and to show the
@@ -5930,6 +5933,33 @@ StartupXLOG(void)
 			StartupMultiXact();
 
 			ProcArrayInitRecoveryInfo(oldestActiveXID);
+
+			/*
+			 * If we're beginning at a shutdown checkpoint, we know that
+			 * nothing was running on the master at this point. So fake-up
+			 * an empty running-xacts record and use that here and now.
+			 * Recover additional standby state for prepared transactions.
+			 */
+			if (wasShutdown)
+			{
+				RunningTransactionsData running;
+
+				/*
+				 * Construct a RunningTransactions snapshot representing a shut
+				 * down server, with only prepared transactions still alive.
+				 * We're never overflowed at this point because all subxids
+				 * are listed with their parent prepared transactions.
+				 */
+				running.xcnt = nxids;
+				running.subxid_overflow = false;
+				running.nextXid = checkPoint.nextXid;
+				running.oldestRunningXid = oldestActiveXID;
+				running.xids = xids;
+
+				ProcArrayApplyRecoveryInfo(&running);
+
+				StandbyRecoverPreparedTransactions(false);
+			}
 		}
 
 		/* Initialize resource managers */
@@ -5938,6 +5968,46 @@ StartupXLOG(void)
 			if (RmgrTable[rmid].rm_startup != NULL)
 				RmgrTable[rmid].rm_startup();
 		}
+
+		/*
+		 * Initialize shared replayEndRecPtr and recoveryLastRecPtr.
+		 *
+		 * This is slightly confusing if we're starting from an online
+		 * checkpoint; we've just read and replayed the chekpoint record,
+		 * but we're going to start replay from its redo pointer, which
+		 * precedes the location of the checkpoint record itself. So even
+		 * though the last record we've replayed is indeed ReadRecPtr, we
+		 * haven't replayed all the preceding records yet. That's OK for
+		 * the current use of these variables.
+		 */
+		SpinLockAcquire(&xlogctl->info_lck);
+		xlogctl->replayEndRecPtr = ReadRecPtr;
+		xlogctl->recoveryLastRecPtr = ReadRecPtr;
+		SpinLockRelease(&xlogctl->info_lck);
+
+		/*
+		 * Let postmaster know we've started redo now, so that it can
+		 * launch bgwriter to perform restartpoints.  We don't bother
+		 * during crash recovery as restartpoints can only be performed
+		 * during archive recovery.  And we'd like to keep crash recovery
+		 * simple, to avoid introducing bugs that could you from
+		 * recovering after crash.
+		 *
+		 * After this point, we can no longer assume that we're the only
+		 * process in addition to postmaster!  Also, fsync requests are
+		 * subsequently to be handled by the bgwriter, not locally.
+		 */
+		if (InArchiveRecovery && IsUnderPostmaster)
+		{
+			SetForwardFsyncRequests();
+			SendPostmasterSignal(PMSIGNAL_RECOVERY_STARTED);
+			bgwriterLaunched = true;
+		}
+
+		/*
+		 * Allow read-only connections immediately if we're consistent already.
+		 */
+		CheckRecoveryConsistency();
 
 		/*
 		 * Find the first record that logically follows the checkpoint --- it
@@ -5958,42 +6028,13 @@ StartupXLOG(void)
 		{
 			bool		recoveryContinue = true;
 			bool		recoveryApply = true;
-			bool		reachedMinRecoveryPoint = false;
 			ErrorContextCallback errcontext;
-
-			/* use volatile pointer to prevent code rearrangement */
-			volatile XLogCtlData *xlogctl = XLogCtl;
-
-			/* initialize shared replayEndRecPtr and recoveryLastRecPtr */
-			SpinLockAcquire(&xlogctl->info_lck);
-			xlogctl->replayEndRecPtr = ReadRecPtr;
-			xlogctl->recoveryLastRecPtr = ReadRecPtr;
-			SpinLockRelease(&xlogctl->info_lck);
 
 			InRedo = true;
 
 			ereport(LOG,
 					(errmsg("redo starts at %X/%X",
 							ReadRecPtr.xlogid, ReadRecPtr.xrecoff)));
-
-			/*
-			 * Let postmaster know we've started redo now, so that it can
-			 * launch bgwriter to perform restartpoints.  We don't bother
-			 * during crash recovery as restartpoints can only be performed
-			 * during archive recovery.  And we'd like to keep crash recovery
-			 * simple, to avoid introducing bugs that could you from
-			 * recovering after crash.
-			 *
-			 * After this point, we can no longer assume that we're the only
-			 * process in addition to postmaster!  Also, fsync requests are
-			 * subsequently to be handled by the bgwriter, not locally.
-			 */
-			if (InArchiveRecovery && IsUnderPostmaster)
-			{
-				SetForwardFsyncRequests();
-				SendPostmasterSignal(PMSIGNAL_RECOVERY_STARTED);
-				bgwriterLaunched = true;
-			}
 
 			/*
 			 * main redo apply loop
@@ -6024,32 +6065,8 @@ StartupXLOG(void)
 				/* Handle interrupt signals of startup process */
 				HandleStartupProcInterrupts();
 
-				/*
-				 * Have we passed our safe starting point?
-				 */
-				if (!reachedMinRecoveryPoint &&
-					XLByteLE(minRecoveryPoint, EndRecPtr) &&
-					XLogRecPtrIsInvalid(ControlFile->backupStartPoint))
-				{
-					reachedMinRecoveryPoint = true;
-					ereport(LOG,
-						(errmsg("consistent recovery state reached at %X/%X",
-								EndRecPtr.xlogid, EndRecPtr.xrecoff)));
-				}
-
-				/*
-				 * Have we got a valid starting snapshot that will allow
-				 * queries to be run? If so, we can tell postmaster that the
-				 * database is consistent now, enabling connections.
-				 */
-				if (standbyState == STANDBY_SNAPSHOT_READY &&
-					!backendsAllowed &&
-					reachedMinRecoveryPoint &&
-					IsUnderPostmaster)
-				{
-					backendsAllowed = true;
-					SendPostmasterSignal(PMSIGNAL_RECOVERY_CONSISTENT);
-				}
+				/* Allow read-only connections if we're consistent now */
+				CheckRecoveryConsistency();
 
 				/*
 				 * Have we reached our recovery target?
@@ -6395,6 +6412,44 @@ StartupXLOG(void)
 		SpinLockAcquire(&xlogctl->info_lck);
 		xlogctl->SharedRecoveryInProgress = false;
 		SpinLockRelease(&xlogctl->info_lck);
+	}
+}
+
+/*
+ * Checks if recovery has reached a consistent state. When consistency is
+ * reached and we have a valid starting standby snapshot, tell postmaster
+ * that it can start accepting read-only connections.
+ */
+static void
+CheckRecoveryConsistency(void)
+{
+	static bool		backendsAllowed = false;
+
+	/*
+	 * Have we passed our safe starting point?
+	 */
+	if (!reachedMinRecoveryPoint &&
+		XLByteLE(minRecoveryPoint, EndRecPtr) &&
+		XLogRecPtrIsInvalid(ControlFile->backupStartPoint))
+	{
+		reachedMinRecoveryPoint = true;
+		ereport(LOG,
+				(errmsg("consistent recovery state reached at %X/%X",
+						EndRecPtr.xlogid, EndRecPtr.xrecoff)));
+	}
+
+	/*
+	 * Have we got a valid starting snapshot that will allow
+	 * queries to be run? If so, we can tell postmaster that the
+	 * database is consistent now, enabling connections.
+	 */
+	if (standbyState == STANDBY_SNAPSHOT_READY &&
+		!backendsAllowed &&
+		reachedMinRecoveryPoint &&
+		IsUnderPostmaster)
+	{
+		backendsAllowed = true;
+		SendPostmasterSignal(PMSIGNAL_RECOVERY_CONSISTENT);
 	}
 }
 
@@ -7657,13 +7712,36 @@ xlog_redo(XLogRecPtr lsn, XLogRecord *record)
 		if (standbyState != STANDBY_DISABLED)
 			CheckRequiredParameterValues(checkPoint);
 
+		/*
+		 * If we see a shutdown checkpoint, we know that nothing was
+		 * running on the master at this point. So fake-up an empty
+		 * running-xacts record and use that here and now. Recover
+		 * additional standby state for prepared transactions.
+		 */
 		if (standbyState >= STANDBY_INITIALIZED)
 		{
+			TransactionId *xids;
+			int			nxids;
+			TransactionId oldestActiveXID;
+			RunningTransactionsData running;
+
+			oldestActiveXID = PrescanPreparedTransactions(&xids, &nxids);
+
 			/*
-			 * Remove stale transactions, if any.
+			 * Construct a RunningTransactions snapshot representing a shut
+			 * down server, with only prepared transactions still alive.
+			 * We're never overflowed at this point because all subxids
+			 * are listed with their parent prepared transactions.
 			 */
-			ExpireOldKnownAssignedTransactionIds(checkPoint.nextXid);
-			StandbyReleaseOldLocks(checkPoint.nextXid);
+			running.xcnt = nxids;
+			running.subxid_overflow = false;
+			running.nextXid = checkPoint.nextXid;
+			running.oldestRunningXid = oldestActiveXID;
+			running.xids = xids;
+
+			ProcArrayApplyRecoveryInfo(&running);
+
+			StandbyRecoverPreparedTransactions(true);
 		}
 
 		/* ControlFile->checkPointCopy always tracks the latest ckpt XID */

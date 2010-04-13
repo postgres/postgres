@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/backend/access/transam/twophase.c,v 1.59 2010/02/26 02:00:34 momjian Exp $
+ *		$PostgreSQL: pgsql/src/backend/access/transam/twophase.c,v 1.60 2010/04/13 14:17:46 heikki Exp $
  *
  * NOTES
  *		Each global transaction is associated with a global transaction
@@ -1716,6 +1716,89 @@ PrescanPreparedTransactions(TransactionId **xids_p, int *nxids_p)
 	}
 
 	return result;
+}
+
+/*
+ * StandbyRecoverPreparedTransactions
+ *
+ * Scan the pg_twophase directory and setup all the required information to
+ * allow standby queries to treat prepared transactions as still active.
+ * This is never called at the end of recovery - we use
+ * RecoverPreparedTransactions() at that point.
+ *
+ * Currently we simply call SubTransSetParent() for any subxids of prepared
+ * transactions. If overwriteOK is true, it's OK if some XIDs have already
+ * been marked in pg_subtrans.
+ */
+void
+StandbyRecoverPreparedTransactions(bool overwriteOK)
+{
+	DIR		   *cldir;
+	struct dirent *clde;
+
+	cldir = AllocateDir(TWOPHASE_DIR);
+	while ((clde = ReadDir(cldir, TWOPHASE_DIR)) != NULL)
+	{
+		if (strlen(clde->d_name) == 8 &&
+			strspn(clde->d_name, "0123456789ABCDEF") == 8)
+		{
+			TransactionId xid;
+			char	   *buf;
+			TwoPhaseFileHeader *hdr;
+			TransactionId *subxids;
+			int			i;
+
+			xid = (TransactionId) strtoul(clde->d_name, NULL, 16);
+
+			/* Already processed? */
+			if (TransactionIdDidCommit(xid) || TransactionIdDidAbort(xid))
+			{
+				ereport(WARNING,
+						(errmsg("removing stale two-phase state file \"%s\"",
+								clde->d_name)));
+				RemoveTwoPhaseFile(xid, true);
+				continue;
+			}
+
+			/* Read and validate file */
+			buf = ReadTwoPhaseFile(xid, true);
+			if (buf == NULL)
+			{
+				ereport(WARNING,
+					  (errmsg("removing corrupt two-phase state file \"%s\"",
+							  clde->d_name)));
+				RemoveTwoPhaseFile(xid, true);
+				continue;
+			}
+
+			/* Deconstruct header */
+			hdr = (TwoPhaseFileHeader *) buf;
+			if (!TransactionIdEquals(hdr->xid, xid))
+			{
+				ereport(WARNING,
+					  (errmsg("removing corrupt two-phase state file \"%s\"",
+							  clde->d_name)));
+				RemoveTwoPhaseFile(xid, true);
+				pfree(buf);
+				continue;
+			}
+
+			/*
+			 * Examine subtransaction XIDs ... they should all follow main
+			 * XID.
+			 */
+			subxids = (TransactionId *)
+				(buf + MAXALIGN(sizeof(TwoPhaseFileHeader)));
+			for (i = 0; i < hdr->nsubxacts; i++)
+			{
+				TransactionId subxid = subxids[i];
+
+				Assert(TransactionIdFollows(subxid, xid));
+				SubTransSetParent(xid, subxid, overwriteOK);
+			}
+		}
+	}
+	FreeDir(cldir);
 }
 
 /*
