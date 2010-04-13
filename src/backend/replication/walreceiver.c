@@ -29,7 +29,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/replication/walreceiver.c,v 1.7 2010/03/21 00:17:58 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/replication/walreceiver.c,v 1.8 2010/04/13 08:16:09 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -330,7 +330,8 @@ WalRcvDie(int code, Datum arg)
 	SpinLockRelease(&walrcv->mutex);
 
 	/* Terminate the connection gracefully. */
-	walrcv_disconnect();
+	if (walrcv_disconnect != NULL)
+		walrcv_disconnect();
 }
 
 /* SIGHUP: set flag to re-read config file at next convenient time */
