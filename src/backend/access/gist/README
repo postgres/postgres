@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/backend/access/gist/README,v 1.4 2008/03/20 17:55:14 momjian Exp $
+$PostgreSQL: pgsql/src/backend/access/gist/README,v 1.5 2010/04/14 20:17:26 rhaas Exp $
 
 GiST Indexing
 =============
@@ -110,7 +110,7 @@ particularly, it is now a single-pass algorithm.
 Function findLeaf is used to identify subtree for insertion. Page, in which 
 insertion is proceeded, is locked as well as its parent page. Functions 
 findParent and findPath are used to find parent pages, which could be changed 
-because of concurrent access. Function pageSplit is reccurrent and could split 
+because of concurrent access. Function pageSplit is recurrent and could split 
 page by more than 2 pages, which could be necessary if keys have different 
 lengths or more than one key are inserted (in such situation, user defined 
 function pickSplit cannot guarantee free space on page).
