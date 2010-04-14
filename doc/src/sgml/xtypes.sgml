@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/xtypes.sgml,v 1.32 2010/04/03 07:22:56 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/xtypes.sgml,v 1.33 2010/04/14 02:36:04 momjian Exp $ -->
 
  <sect1 id="xtypes">
   <title>User-Defined Types</title>
@@ -265,7 +265,7 @@ CREATE TYPE complex (
 
  <para>
   If the alignment is unimportant (either just for a specific function or
-  because the data type specifies byte alignment anyways) then it's possible
+  because the data type specifies byte alignment anyway) then it's possible
   to avoid some of the overhead of <function>PG_DETOAST_DATUM</>. You can use
   <function>PG_DETOAST_DATUM_PACKED</> instead (customarily hidden by
   defining a <function>GETARG_DATATYPE_PP</> macro) and using the macros
