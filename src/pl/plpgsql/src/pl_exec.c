@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.244.2.3 2010/02/12 19:37:43 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.244.2.4 2010/04/14 23:52:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -4082,22 +4082,8 @@ exec_eval_expr(PLpgSQL_execstate *estate,
 				 errmsg("query \"%s\" did not return data", expr->query)));
 
 	/*
-	 * If there are no rows selected, the result is NULL.
+	 * Check that the expression returns exactly one column...
 	 */
-	if (estate->eval_processed == 0)
-	{
-		*isNull = true;
-		return (Datum) 0;
-	}
-
-	/*
-	 * Check that the expression returned one single Datum
-	 */
-	if (estate->eval_processed > 1)
-		ereport(ERROR,
-				(errcode(ERRCODE_CARDINALITY_VIOLATION),
-				 errmsg("query \"%s\" returned more than one row",
-						expr->query)));
 	if (estate->eval_tuptable->tupdesc->natts != 1)
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
@@ -4108,9 +4094,31 @@ exec_eval_expr(PLpgSQL_execstate *estate,
 							   estate->eval_tuptable->tupdesc->natts)));
 
 	/*
-	 * Return the result and its type
+	 * ... and get the column's datatype.
 	 */
 	*rettype = SPI_gettypeid(estate->eval_tuptable->tupdesc, 1);
+
+	/*
+	 * If there are no rows selected, the result is a NULL of that type.
+	 */
+	if (estate->eval_processed == 0)
+	{
+		*isNull = true;
+		return (Datum) 0;
+	}
+
+	/*
+	 * Check that the expression returned no more than one row.
+	 */
+	if (estate->eval_processed != 1)
+		ereport(ERROR,
+				(errcode(ERRCODE_CARDINALITY_VIOLATION),
+				 errmsg("query \"%s\" returned more than one row",
+						expr->query)));
+
+	/*
+	 * Return the single result Datum.
+	 */
 	return SPI_getbinval(estate->eval_tuptable->vals[0],
 						 estate->eval_tuptable->tupdesc, 1, isNull);
 }
