@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.308 2010/02/26 02:01:11 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.309 2010/04/14 21:31:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1823,17 +1823,32 @@ RelationDestroyRelation(Relation relation)
  *
  *	 Physically blow away a relation cache entry, or reset it and rebuild
  *	 it from scratch (that is, from catalog entries).  The latter path is
- *	 usually used when we are notified of a change to an open relation
- *	 (one with refcount > 0).  However, this routine just does whichever
- *	 it's told to do; callers must determine which they want.
+ *	 used when we are notified of a change to an open relation (one with
+ *	 refcount > 0).
  *
- *	 NB: when rebuilding, we'd better hold some lock on the relation.
- *	 In current usages this is presumed true because it has refcnt > 0.
+ *	 NB: when rebuilding, we'd better hold some lock on the relation,
+ *	 else the catalog data we need to read could be changing under us.
+ *	 Also, a rel to be rebuilt had better have refcnt > 0.  This is because
+ *	 an sinval reset could happen while we're accessing the catalogs, and
+ *	 the rel would get blown away underneath us by RelationCacheInvalidate
+ *	 if it has zero refcnt.
+ *
+ *	 The "rebuild" parameter is redundant in current usage because it has
+ *	 to match the relation's refcnt status, but we keep it as a crosscheck
+ *	 that we're doing what the caller expects.
  */
 static void
 RelationClearRelation(Relation relation, bool rebuild)
 {
 	Oid			old_reltype = relation->rd_rel->reltype;
+
+	/*
+	 * As per notes above, a rel to be rebuilt MUST have refcnt > 0; while
+	 * of course it would be a bad idea to blow away one with nonzero refcnt.
+	 */
+	Assert(rebuild ?
+		   !RelationHasReferenceCountZero(relation) :
+		   RelationHasReferenceCountZero(relation));
 
 	/*
 	 * Make sure smgr and lower levels close the relation's files, if they
@@ -2024,8 +2039,6 @@ RelationClearRelation(Relation relation, bool rebuild)
 static void
 RelationFlushRelation(Relation relation)
 {
-	bool		rebuild;
-
 	if (relation->rd_createSubid != InvalidSubTransactionId ||
 		relation->rd_newRelfilenodeSubid != InvalidSubTransactionId)
 	{
@@ -2033,18 +2046,24 @@ RelationFlushRelation(Relation relation)
 		 * New relcache entries are always rebuilt, not flushed; else we'd
 		 * forget the "new" status of the relation, which is a useful
 		 * optimization to have.  Ditto for the new-relfilenode status.
+		 *
+		 * The rel could have zero refcnt here, so temporarily increment
+		 * the refcnt to ensure it's safe to rebuild it.  We can assume that
+		 * the current transaction has some lock on the rel already.
 		 */
-		rebuild = true;
+		RelationIncrementReferenceCount(relation);
+		RelationClearRelation(relation, true);
+		RelationDecrementReferenceCount(relation);
 	}
 	else
 	{
 		/*
 		 * Pre-existing rels can be dropped from the relcache if not open.
 		 */
-		rebuild = !RelationHasReferenceCountZero(relation);
-	}
+		bool	rebuild = !RelationHasReferenceCountZero(relation);
 
-	RelationClearRelation(relation, rebuild);
+		RelationClearRelation(relation, rebuild);
+	}
 }
 
 /*
@@ -2373,7 +2392,6 @@ AtEOSubXact_RelationCache(bool isCommit, SubTransactionId mySubid,
 				relation->rd_createSubid = parentSubid;
 			else
 			{
-				Assert(RelationHasReferenceCountZero(relation));
 				RelationClearRelation(relation, false);
 				continue;
 			}
