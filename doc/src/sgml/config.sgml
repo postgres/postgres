@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.265 2010/04/13 08:19:12 mha Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.266 2010/04/15 16:25:13 heikki Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -1828,7 +1828,7 @@ SET ENABLE_SEQSCAN TO OFF;
        <para>
         Specifies the number of log file segments kept in <filename>pg_xlog</>
         directory, in case a standby server needs to fetch them via streaming
-        replciation. Each segment is normally 16 megabytes. If a standby
+        replication. Each segment is normally 16 megabytes. If a standby
         server connected to the primary falls behind more than
         <varname>standby_keep_segments</> segments, the primary might remove
         a WAL segment still needed by the standby and the replication
