@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/monitoring.sgml,v 1.78 2010/04/15 20:48:22 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/monitoring.sgml,v 1.79 2010/04/15 20:56:13 petere Exp $ -->
 
 <chapter id="monitoring">
  <title>Monitoring Database Activity</title>
@@ -487,7 +487,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
       <entry><literal><function>pg_stat_get_db_xact_commit</function>(<type>oid</type>)</literal></entry>
       <entry><type>bigint</type></entry>
       <entry>
-       Transactions committed in database
+       Number of transactions committed in database
       </entry>
      </row>
 
@@ -495,7 +495,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
       <entry><literal><function>pg_stat_get_db_xact_rollback</function>(<type>oid</type>)</literal></entry>
       <entry><type>bigint</type></entry>
       <entry>
-       Transactions rolled back in database
+       Number of transactions rolled back in database
       </entry>
      </row>
 
@@ -696,7 +696,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
        Returns a record of information about the backend with the specified pid, or
        one record for each active backend in the system if <symbol>NULL</symbol> is
        specified. The fields returned are the same as in the 
-       <structname>pg_stat_activity</structname> view
+       <structname>pg_stat_activity</structname> view.
       </entry>
      </row>
 
@@ -704,7 +704,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
       <entry><literal><function>pg_stat_get_function_calls</function>(<type>oid</type>)</literal></entry>
       <entry><type>bigint</type></entry>
       <entry>
-       Number of times the function has been called.
+       Number of times the function has been called
       </entry>
      </row>
 
@@ -731,7 +731,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
       <entry><type>setof integer</type></entry>
       <entry>
        Set of currently active server process numbers (from 1 to the
-       number of active server processes).  See usage example in the text
+       number of active server processes).  See usage example in the text.
       </entry>
      </row>
 
@@ -820,8 +820,8 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
       <entry><type>inet</type></entry>
       <entry>
        The IP address of the client connected to the given
-       server process. Null if the connection is over a Unix domain
-       socket. Also null if the current user is not a superuser nor
+       server process; null if the connection is over a Unix domain
+       socket, also null if the current user is not a superuser nor
        the same user as that of the session being queried
       </entry>
      </row>
@@ -831,8 +831,8 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
       <entry><type>integer</type></entry>
       <entry>
        The TCP port number of the client connected to the given
-       server process.  -1 if the connection is over a Unix domain
-       socket. Null if the current user is not a superuser nor the
+       server process; -1 if the connection is over a Unix domain
+       socket, null if the current user is not a superuser nor the
        same user as that of the session being queried
       </entry>
      </row>
@@ -841,7 +841,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
       <entry><literal><function>pg_stat_get_bgwriter_timed_checkpoints</function>()</literal></entry>
        <entry><type>bigint</type></entry>
        <entry>
-        The number of times the background writer has started timed checkpoints
+        Number of times the background writer has started timed checkpoints
         (because the <varname>checkpoint_timeout</varname> time has expired)
        </entry>
      </row>
@@ -850,7 +850,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
       <entry><literal><function>pg_stat_get_bgwriter_requested_checkpoints</function>()</literal></entry>
       <entry><type>bigint</type></entry>
       <entry>
-       The number of times the background writer has started checkpoints based
+       Number of times the background writer has started checkpoints based
        on requests from backends because the <varname>checkpoint_segments</varname>
        has been exceeded or because the <command>CHECKPOINT</command>
        command has been issued
@@ -861,7 +861,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
       <entry><literal><function>pg_stat_get_bgwriter_buf_written_checkpoints</function>()</literal></entry>
       <entry><type>bigint</type></entry>
       <entry>
-       The number of buffers written by the background writer during checkpoints
+       Number of buffers written by the background writer during checkpoints
       </entry>
      </row>
 
@@ -869,7 +869,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
       <entry><literal><function>pg_stat_get_bgwriter_buf_written_clean</function>()</literal></entry>
       <entry><type>bigint</type></entry>
       <entry>
-       The number of buffers written by the background writer for routine cleaning of
+       Number of buffers written by the background writer for routine cleaning of
        dirty pages
       </entry>
      </row>
@@ -878,7 +878,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
       <entry><literal><function>pg_stat_get_bgwriter_maxwritten_clean</function>()</literal></entry>
       <entry><type>bigint</type></entry>
       <entry>
-       The number of times the background writer has stopped its cleaning scan because
+       Number of times the background writer has stopped its cleaning scan because
        it has written more buffers than specified in the
        <varname>bgwriter_lru_maxpages</varname> parameter
       </entry>
@@ -888,7 +888,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
       <entry><literal><function>pg_stat_get_buf_written_backend</function>()</literal></entry>
       <entry><type>bigint</type></entry>
       <entry>
-       The number of buffers written by backends because they needed
+       Number of buffers written by backends because they needed
        to allocate a new buffer
       </entry>
      </row>
@@ -897,7 +897,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
       <entry><literal><function>pg_stat_get_buf_alloc</function>()</literal></entry>
       <entry><type>bigint</type></entry>
       <entry>
-       The total number of buffer allocations
+       Total number of buffer allocations
       </entry>
      </row>
 
@@ -1101,19 +1101,19 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS procpid,
      <entry>transaction-start</entry>
      <entry>(LocalTransactionId)</entry>
      <entry>Probe that fires at the start of a new transaction.
-      arg0 is the transaction id.</entry>
+      arg0 is the transaction ID.</entry>
     </row>
     <row>
      <entry>transaction-commit</entry>
      <entry>(LocalTransactionId)</entry>
      <entry>Probe that fires when a transaction completes successfully.
-      arg0 is the transaction id.</entry>
+      arg0 is the transaction ID.</entry>
     </row>
     <row>
      <entry>transaction-abort</entry>
      <entry>(LocalTransactionId)</entry>
      <entry>Probe that fires when a transaction completes unsuccessfully.
-      arg0 is the transaction id.</entry>
+      arg0 is the transaction ID.</entry>
     </row>
     <row>
      <entry>query-start</entry>
