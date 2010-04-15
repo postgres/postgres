@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/timezone/README,v 1.8 2010/03/11 18:43:24 tgl Exp $
+$PostgreSQL: pgsql/src/timezone/README,v 1.9 2010/04/15 11:00:45 mha Exp $
 
 Timezone
 ========
@@ -24,3 +24,10 @@ Just search for the current or previous year and see what has changed.
 Sometimes a country changes its time zone offsets, for example Georgia
 in 2004.  Just grepping in the zic database files for 2004 is enough to
 spot such a change.  Then the files under tznames/ should be updated.
+
+When there has been a new release of Windows (probably including Service
+Packs), the list of matching timezones need to be updated. Run the
+script in src/tools/win32tzlist.pl on a Windows machine running this new
+release and apply any new timezones that it detects. Never remove any
+mappings in case they are removed in Windows, since we still need to
+match properly on the old version.
