@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2009, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/copy.c,v 1.80.2.1 2009/08/07 20:16:16 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/copy.c,v 1.80.2.2 2010/04/15 21:05:11 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "copy.h"
@@ -146,7 +146,7 @@ parse_slash_copy(const char *args)
 
 		while (parens > 0)
 		{
-			token = strtokx(NULL, whitespace, ".,()", "\"'",
+			token = strtokx(NULL, whitespace, "()", "\"'",
 							nonstd_backslash, true, false, pset.encoding);
 			if (!token)
 				goto error;
