@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/monitoring.sgml,v 1.77 2010/04/03 07:22:55 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/monitoring.sgml,v 1.78 2010/04/15 20:48:22 petere Exp $ -->
 
 <chapter id="monitoring">
  <title>Monitoring Database Activity</title>
@@ -830,7 +830,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
       <entry><literal><function>pg_stat_get_backend_client_port</function>(<type>integer</type>)</literal></entry>
       <entry><type>integer</type></entry>
       <entry>
-       The IP port number of the client connected to the given
+       The TCP port number of the client connected to the given
        server process.  -1 if the connection is over a Unix domain
        socket. Null if the current user is not a superuser nor the
        same user as that of the session being queried
