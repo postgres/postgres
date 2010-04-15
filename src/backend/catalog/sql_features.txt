@@ -529,7 +529,7 @@ X035	XMLAgg: ORDER BY option			YES
 X036	XMLComment			YES	
 X037	XMLPI			YES	
 X038	XMLText			NO	
-X040	Basic table mapping			NO	
+X040	Basic table mapping			YES	
 X041	Basic table mapping: nulls absent			YES	
 X042	Basic table mapping: null as nil			YES	
 X043	Basic table mapping: table as forest			YES	
@@ -539,6 +539,7 @@ X046	Basic table mapping: data mapping			YES
 X047	Basic table mapping: metadata mapping			YES	
 X048	Basic table mapping: base64 encoding of binary strings			YES	
 X049	Basic table mapping: hex encoding of binary strings			YES	
+X050	Advanced table mapping			YES	
 X051	Advanced table mapping: nulls absent			YES	
 X052	Advanced table mapping: null as nil			YES	
 X053	Advanced table mapping: table as forest			YES	
