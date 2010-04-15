@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/timezone/pgtz.c,v 1.71 2010/04/09 11:49:51 mha Exp $
+ *	  $PostgreSQL: pgsql/src/timezone/pgtz.c,v 1.72 2010/04/15 18:46:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -498,8 +498,10 @@ identify_system_timezone(void)
 	if (std_zone_name[0] == '\0')
 	{
 		ereport(LOG,
-				(errmsg("could not determine system time zone, defaulting to \"%s\"", "GMT"),
-		errhint("You can specify the correct timezone in postgresql.conf.")));
+				(errmsg("could not determine system time zone"),
+				 errdetail("The PostgreSQL time zone will be set to \"%s\".",
+						   "GMT"),
+				 errhint("You can specify the correct timezone in postgresql.conf.")));
 		return NULL;			/* go to GMT */
 	}
 
@@ -533,9 +535,10 @@ identify_system_timezone(void)
 			 (-std_ofs > 0) ? "+" : "", -std_ofs / 3600);
 
 	ereport(LOG,
-		 (errmsg("could not recognize system timezone, defaulting to \"%s\"",
-				 resultbuf),
-	   errhint("You can specify the correct timezone in postgresql.conf.")));
+			(errmsg("could not recognize system time zone"),
+			 errdetail("The PostgreSQL time zone will be set to \"%s\".",
+					   resultbuf),
+			 errhint("You can specify the correct timezone in postgresql.conf.")));
 	return resultbuf;
 }
 
@@ -1076,9 +1079,12 @@ identify_system_timezone(void)
 
 	if (!tm)
 	{
-		ereport(WARNING,
-				(errmsg_internal("could not determine current date/time: localtime failed")));
-		return NULL;
+		ereport(LOG,
+				(errmsg("could not identify system time zone: localtime() failed"),
+				 errdetail("The PostgreSQL time zone will be set to \"%s\".",
+						   "GMT"),
+				 errhint("You can specify the correct timezone in postgresql.conf.")));
+		return NULL;			/* go to GMT */
 	}
 
 	memset(tzname, 0, sizeof(tzname));
@@ -1089,7 +1095,7 @@ identify_system_timezone(void)
 		if (strcmp(tzname, win32_tzmap[i].stdname) == 0 ||
 			strcmp(tzname, win32_tzmap[i].dstname) == 0)
 		{
-			elog(DEBUG4, "TZ \"%s\" matches Windows timezone \"%s\"",
+			elog(DEBUG4, "TZ \"%s\" matches system time zone \"%s\"",
 				 win32_tzmap[i].pgtzname, tzname);
 			return win32_tzmap[i].pgtzname;
 		}
@@ -1107,9 +1113,13 @@ identify_system_timezone(void)
 					 KEY_READ,
 					 &rootKey) != ERROR_SUCCESS)
 	{
-		ereport(WARNING,
-				(errmsg_internal("could not open registry key to identify Windows timezone: %i", (int) GetLastError())));
-		return NULL;
+		ereport(LOG,
+				(errmsg("could not open registry key to identify system time zone: %i",
+						(int) GetLastError()),
+				 errdetail("The PostgreSQL time zone will be set to \"%s\".",
+						   "GMT"),
+				 errhint("You can specify the correct timezone in postgresql.conf.")));
+		return NULL;			/* go to GMT */
 	}
 
 	for (idx = 0;; idx++)
@@ -1134,15 +1144,15 @@ identify_system_timezone(void)
 		{
 			if (r == ERROR_NO_MORE_ITEMS)
 				break;
-			ereport(WARNING,
-					(errmsg_internal("could not enumerate registry subkeys to identify Windows timezone: %i", (int) r)));
+			ereport(LOG,
+					(errmsg_internal("could not enumerate registry subkeys to identify system time zone: %i", (int) r)));
 			break;
 		}
 
 		if ((r = RegOpenKeyEx(rootKey, keyname, 0, KEY_READ, &key)) != ERROR_SUCCESS)
 		{
-			ereport(WARNING,
-					(errmsg_internal("could not open registry subkey to identify Windows timezone: %i", (int) r)));
+			ereport(LOG,
+					(errmsg_internal("could not open registry subkey to identify system time zone: %i", (int) r)));
 			break;
 		}
 
@@ -1150,8 +1160,8 @@ identify_system_timezone(void)
 		namesize = sizeof(zonename);
 		if ((r = RegQueryValueEx(key, "Std", NULL, NULL, zonename, &namesize)) != ERROR_SUCCESS)
 		{
-			ereport(WARNING,
-					(errmsg_internal("could not query value for 'std' to identify Windows timezone \"%s\": %i",
+			ereport(LOG,
+					(errmsg_internal("could not query value for key \"std\" to identify system time zone \"%s\": %i",
 									 keyname, (int) r)));
 			RegCloseKey(key);
 			continue; /* Proceed to look at the next timezone */
@@ -1167,8 +1177,8 @@ identify_system_timezone(void)
 		namesize = sizeof(zonename);
 		if ((r = RegQueryValueEx(key, "Dlt", NULL, NULL, zonename, &namesize)) != ERROR_SUCCESS)
 		{
-			ereport(WARNING,
-					(errmsg_internal("could not query value for 'dlt' to identify Windows timezone \"%s\": %i",
+			ereport(LOG,
+					(errmsg_internal("could not query value for key \"dlt\" to identify system time zone \"%s\": %i",
 									 keyname, (int) r)));
 			RegCloseKey(key);
 			continue; /* Proceed to look at the next timezone */
@@ -1194,17 +1204,20 @@ identify_system_timezone(void)
 			if (strcmp(localtzname, win32_tzmap[i].stdname) == 0 ||
 				strcmp(localtzname, win32_tzmap[i].dstname) == 0)
 			{
-				elog(DEBUG4, "TZ \"%s\" matches localized Windows timezone \"%s\" (\"%s\")",
+				elog(DEBUG4, "TZ \"%s\" matches localized system time zone \"%s\" (\"%s\")",
 					 win32_tzmap[i].pgtzname, tzname, localtzname);
 				return win32_tzmap[i].pgtzname;
 			}
 		}
 	}
 
-	ereport(WARNING,
-			(errmsg("could not find a match for Windows timezone \"%s\"",
-					tzname)));
-	return NULL;
+	ereport(LOG,
+			(errmsg("could not find a match for system time zone \"%s\"",
+					tzname),
+			 errdetail("The PostgreSQL time zone will be set to \"%s\".",
+					   "GMT"),
+			 errhint("You can specify the correct timezone in postgresql.conf.")));
+	return NULL;			/* go to GMT */
 }
 #endif   /* WIN32 */
 
@@ -1390,7 +1403,7 @@ select_default_timezone(void)
 		return def_tz;
 
 	ereport(FATAL,
-			(errmsg("could not select a suitable default timezone"),
+			(errmsg("could not select a suitable default time zone"),
 			 errdetail("It appears that your GMT time zone uses leap seconds. PostgreSQL does not support leap seconds.")));
 	return NULL;				/* keep compiler quiet */
 }
@@ -1414,7 +1427,7 @@ pg_timezone_pre_initialize(void)
 	 * seems OK to just use the "lastditch" case provided by tzparse().
 	 */
 	if (tzparse("GMT", &gmt_timezone_data.state, TRUE) != 0)
-		elog(FATAL, "could not initialize GMT timezone");
+		elog(FATAL, "could not initialize GMT time zone");
 	strcpy(gmt_timezone_data.TZname, "GMT");
 	gmt_timezone = &gmt_timezone_data;
 }
@@ -1541,7 +1554,7 @@ pg_tzenumerate_next(pg_tzenum *dir)
 			/* Step into the subdirectory */
 			if (dir->depth >= MAX_TZDIR_DEPTH - 1)
 				ereport(ERROR,
-						(errmsg("timezone directory stack overflow")));
+						(errmsg_internal("timezone directory stack overflow")));
 			dir->depth++;
 			dir->dirname[dir->depth] = pstrdup(fullname);
 			dir->dirdesc[dir->depth] = AllocateDir(fullname);
