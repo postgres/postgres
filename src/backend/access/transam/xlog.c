@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.395 2010/04/14 10:29:07 sriggs Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.396 2010/04/15 03:05:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -5990,7 +5990,7 @@ StartupXLOG(void)
 		 * launch bgwriter to perform restartpoints.  We don't bother
 		 * during crash recovery as restartpoints can only be performed
 		 * during archive recovery.  And we'd like to keep crash recovery
-		 * simple, to avoid introducing bugs that could effect you when
+		 * simple, to avoid introducing bugs that could affect you when
 		 * recovering after crash.
 		 *
 		 * After this point, we can no longer assume that we're the only
