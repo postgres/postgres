@@ -18,7 +18,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/syslogger.c,v 1.29.2.5 2010/04/01 20:12:42 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/syslogger.c,v 1.29.2.6 2010/04/16 09:52:15 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -115,7 +115,7 @@ HANDLE		syslogPipe[2] = {0, 0};
 
 #ifdef WIN32
 static HANDLE threadHandle = 0;
-static CRITICAL_SECTION sysfileSection;
+static CRITICAL_SECTION sysloggerSection;
 #endif
 static void process_pipe_input(char *logbuffer, int *bytes_in_logbuffer);
 static void flush_pipe_input(char *logbuffer, int *bytes_in_logbuffer);
@@ -263,7 +263,8 @@ SysLoggerMain(int argc, char *argv[])
 
 #ifdef WIN32
 	/* Fire up separate data transfer thread */
-	InitializeCriticalSection(&sysfileSection);
+	InitializeCriticalSection(&sysloggerSection);
+	EnterCriticalSection(&sysloggerSection);
 
 	{
 		unsigned int tid;
@@ -401,8 +402,16 @@ SysLoggerMain(int argc, char *argv[])
 		 * On Windows we leave it to a separate thread to transfer data and
 		 * detect pipe EOF.  The main thread just wakes up once a second to
 		 * check for SIGHUP and rotation conditions.
+		 *
+		 * Server code isn't generally thread-safe, so we ensure that only
+		 * one of the threads is active at a time by entering the critical
+		 * section whenever we're not sleeping.
 		 */
+		LeaveCriticalSection(&sysloggerSection);
+
 		pg_usleep(1000000L);
+
+		EnterCriticalSection(&sysloggerSection);
 #endif   /* WIN32 */
 
 		if (pipe_eof_seen)
@@ -913,13 +922,7 @@ write_syslogger_file_binary(const char *buffer, int count)
 {
 	int			rc;
 
-#ifndef WIN32
 	rc = fwrite(buffer, 1, count, syslogFile);
-#else
-	EnterCriticalSection(&sysfileSection);
-	rc = fwrite(buffer, 1, count, syslogFile);
-	LeaveCriticalSection(&sysfileSection);
-#endif
 
 	/* can't use ereport here because of possible recursion */
 	if (rc != count)
@@ -944,11 +947,21 @@ pipeThread(void *arg)
 	for (;;)
 	{
 		DWORD		bytesRead;
+		BOOL		result;
 
-		if (!ReadFile(syslogPipe[0],
-					  logbuffer + bytes_in_logbuffer,
-					  sizeof(logbuffer) - bytes_in_logbuffer,
-					  &bytesRead, 0))
+		result = ReadFile(syslogPipe[0],
+						  logbuffer + bytes_in_logbuffer,
+						  sizeof(logbuffer) - bytes_in_logbuffer,
+						  &bytesRead, 0);
+
+		/*
+		 * Enter critical section before doing anything that might touch
+		 * global state shared by the main thread. Anything that uses
+		 * palloc()/pfree() in particular are not safe outside the critical
+		 * section.
+		 */
+		EnterCriticalSection(&sysloggerSection);
+		if (!result)
 		{
 			DWORD		error = GetLastError();
 
@@ -965,6 +978,7 @@ pipeThread(void *arg)
 			bytes_in_logbuffer += bytesRead;
 			process_pipe_input(logbuffer, &bytes_in_logbuffer);
 		}
+		LeaveCriticalSection(&sysloggerSection);
 	}
 
 	/* We exit the above loop only upon detecting pipe EOF */
@@ -973,6 +987,7 @@ pipeThread(void *arg)
 	/* if there's any data left then force it out now */
 	flush_pipe_input(logbuffer, &bytes_in_logbuffer);
 	
+	LeaveCriticalSection(&sysloggerSection);
 	_endthread();
 	return 0;
 }
@@ -1049,15 +1064,8 @@ logfile_rotate(bool time_based_rotation)
 	_setmode(_fileno(fh), _O_TEXT); /* use CRLF line endings on Windows */
 #endif
 
-	/* On Windows, need to interlock against data-transfer thread */
-#ifdef WIN32
-	EnterCriticalSection(&sysfileSection);
-#endif
 	fclose(syslogFile);
 	syslogFile = fh;
-#ifdef WIN32
-	LeaveCriticalSection(&sysfileSection);
-#endif
 
 	set_next_rotation_time();
 
