@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.396 2010/04/15 03:05:59 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.397 2010/04/16 08:58:16 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -539,7 +539,7 @@ static int XLogFileReadAnyTLI(uint32 log, uint32 seg, int emode,
 				   int sources);
 static bool XLogPageRead(XLogRecPtr *RecPtr, int emode, bool fetching_ckpt,
 			 bool randAccess);
-static int emode_for_corrupt_record(int emode);
+static int emode_for_corrupt_record(int emode, XLogRecPtr RecPtr);
 static void XLogFileClose(void);
 static bool RestoreArchivedFile(char *path, const char *xlogfname,
 					const char *recovername, off_t expectedSize);
@@ -3543,7 +3543,7 @@ RecordIsValid(XLogRecord *record, XLogRecPtr recptr, int emode)
 		memcpy(&bkpb, blk, sizeof(BkpBlock));
 		if (bkpb.hole_offset + bkpb.hole_length > BLCKSZ)
 		{
-			ereport(emode,
+			ereport(emode_for_corrupt_record(emode, recptr),
 					(errmsg("incorrect hole size in record at %X/%X",
 							recptr.xlogid, recptr.xrecoff)));
 			return false;
@@ -3556,7 +3556,7 @@ RecordIsValid(XLogRecord *record, XLogRecPtr recptr, int emode)
 	/* Check that xl_tot_len agrees with our calculation */
 	if (blk != (char *) record + record->xl_tot_len)
 	{
-		ereport(emode,
+		ereport(emode_for_corrupt_record(emode, recptr),
 				(errmsg("incorrect total length in record at %X/%X",
 						recptr.xlogid, recptr.xrecoff)));
 		return false;
@@ -3569,7 +3569,7 @@ RecordIsValid(XLogRecord *record, XLogRecPtr recptr, int emode)
 
 	if (!EQ_CRC32(record->xl_crc, crc))
 	{
-		ereport(emode,
+		ereport(emode_for_corrupt_record(emode, recptr),
 		(errmsg("incorrect resource manager data checksum in record at %X/%X",
 				recptr.xlogid, recptr.xrecoff)));
 		return false;
@@ -3674,7 +3674,7 @@ retry:
 	}
 	else if (targetRecOff < pageHeaderSize)
 	{
-		ereport(emode_for_corrupt_record(emode),
+		ereport(emode_for_corrupt_record(emode, *RecPtr),
 				(errmsg("invalid record offset at %X/%X",
 						RecPtr->xlogid, RecPtr->xrecoff)));
 		goto next_record_is_invalid;
@@ -3682,7 +3682,7 @@ retry:
 	if ((((XLogPageHeader) readBuf)->xlp_info & XLP_FIRST_IS_CONTRECORD) &&
 		targetRecOff == pageHeaderSize)
 	{
-		ereport(emode_for_corrupt_record(emode),
+		ereport(emode_for_corrupt_record(emode, *RecPtr),
 				(errmsg("contrecord is requested by %X/%X",
 						RecPtr->xlogid, RecPtr->xrecoff)));
 		goto next_record_is_invalid;
@@ -3697,7 +3697,7 @@ retry:
 	{
 		if (record->xl_len != 0)
 		{
-			ereport(emode_for_corrupt_record(emode),
+			ereport(emode_for_corrupt_record(emode, *RecPtr),
 					(errmsg("invalid xlog switch record at %X/%X",
 							RecPtr->xlogid, RecPtr->xrecoff)));
 			goto next_record_is_invalid;
@@ -3705,7 +3705,7 @@ retry:
 	}
 	else if (record->xl_len == 0)
 	{
-		ereport(emode_for_corrupt_record(emode),
+		ereport(emode_for_corrupt_record(emode, *RecPtr),
 				(errmsg("record with zero length at %X/%X",
 						RecPtr->xlogid, RecPtr->xrecoff)));
 		goto next_record_is_invalid;
@@ -3714,14 +3714,14 @@ retry:
 		record->xl_tot_len > SizeOfXLogRecord + record->xl_len +
 		XLR_MAX_BKP_BLOCKS * (sizeof(BkpBlock) + BLCKSZ))
 	{
-		ereport(emode_for_corrupt_record(emode),
+		ereport(emode_for_corrupt_record(emode, *RecPtr),
 				(errmsg("invalid record length at %X/%X",
 						RecPtr->xlogid, RecPtr->xrecoff)));
 		goto next_record_is_invalid;
 	}
 	if (record->xl_rmid > RM_MAX_ID)
 	{
-		ereport(emode_for_corrupt_record(emode),
+		ereport(emode_for_corrupt_record(emode, *RecPtr),
 				(errmsg("invalid resource manager ID %u at %X/%X",
 						record->xl_rmid, RecPtr->xlogid, RecPtr->xrecoff)));
 		goto next_record_is_invalid;
@@ -3734,7 +3734,7 @@ retry:
 		 */
 		if (!XLByteLT(record->xl_prev, *RecPtr))
 		{
-			ereport(emode_for_corrupt_record(emode),
+			ereport(emode_for_corrupt_record(emode, *RecPtr),
 					(errmsg("record with incorrect prev-link %X/%X at %X/%X",
 							record->xl_prev.xlogid, record->xl_prev.xrecoff,
 							RecPtr->xlogid, RecPtr->xrecoff)));
@@ -3750,7 +3750,7 @@ retry:
 		 */
 		if (!XLByteEQ(record->xl_prev, ReadRecPtr))
 		{
-			ereport(emode_for_corrupt_record(emode),
+			ereport(emode_for_corrupt_record(emode, *RecPtr),
 					(errmsg("record with incorrect prev-link %X/%X at %X/%X",
 							record->xl_prev.xlogid, record->xl_prev.xrecoff,
 							RecPtr->xlogid, RecPtr->xrecoff)));
@@ -3779,7 +3779,7 @@ retry:
 		{
 			readRecordBufSize = 0;
 			/* We treat this as a "bogus data" condition */
-			ereport(emode_for_corrupt_record(emode),
+			ereport(emode_for_corrupt_record(emode, *RecPtr),
 					(errmsg("record length %u at %X/%X too long",
 							total_len, RecPtr->xlogid, RecPtr->xrecoff)));
 			goto next_record_is_invalid;
@@ -3819,7 +3819,7 @@ retry:
 			/* Check that the continuation record looks valid */
 			if (!(((XLogPageHeader) readBuf)->xlp_info & XLP_FIRST_IS_CONTRECORD))
 			{
-				ereport(emode_for_corrupt_record(emode),
+				ereport(emode_for_corrupt_record(emode, *RecPtr),
 						(errmsg("there is no contrecord flag in log file %u, segment %u, offset %u",
 								readId, readSeg, readOff)));
 				goto next_record_is_invalid;
@@ -3829,7 +3829,7 @@ retry:
 			if (contrecord->xl_rem_len == 0 ||
 				total_len != (contrecord->xl_rem_len + gotlen))
 			{
-				ereport(emode_for_corrupt_record(emode),
+				ereport(emode_for_corrupt_record(emode, *RecPtr),
 						(errmsg("invalid contrecord length %u in log file %u, segment %u, offset %u",
 								contrecord->xl_rem_len,
 								readId, readSeg, readOff)));
@@ -3847,7 +3847,7 @@ retry:
 				   contrecord->xl_rem_len);
 			break;
 		}
-		if (!RecordIsValid(record, *RecPtr, emode_for_corrupt_record(emode)))
+		if (!RecordIsValid(record, *RecPtr, emode))
 			goto next_record_is_invalid;
 		pageHeaderSize = XLogPageHeaderSize((XLogPageHeader) readBuf);
 		EndRecPtr.xlogid = readId;
@@ -3861,7 +3861,7 @@ retry:
 	}
 
 	/* Record does not cross a page boundary */
-	if (!RecordIsValid(record, *RecPtr, emode_for_corrupt_record(emode)))
+	if (!RecordIsValid(record, *RecPtr, emode))
 		goto next_record_is_invalid;
 	EndRecPtr.xlogid = RecPtr->xlogid;
 	EndRecPtr.xrecoff = RecPtr->xrecoff + MAXALIGN(total_len);
@@ -3914,16 +3914,19 @@ ValidXLOGHeader(XLogPageHeader hdr, int emode)
 {
 	XLogRecPtr	recaddr;
 
+	recaddr.xlogid = readId;
+	recaddr.xrecoff = readSeg * XLogSegSize + readOff;
+
 	if (hdr->xlp_magic != XLOG_PAGE_MAGIC)
 	{
-		ereport(emode,
+		ereport(emode_for_corrupt_record(emode, recaddr),
 				(errmsg("invalid magic number %04X in log file %u, segment %u, offset %u",
 						hdr->xlp_magic, readId, readSeg, readOff)));
 		return false;
 	}
 	if ((hdr->xlp_info & ~XLP_ALL_FLAGS) != 0)
 	{
-		ereport(emode,
+		ereport(emode_for_corrupt_record(emode, recaddr),
 				(errmsg("invalid info bits %04X in log file %u, segment %u, offset %u",
 						hdr->xlp_info, readId, readSeg, readOff)));
 		return false;
@@ -3945,7 +3948,7 @@ ValidXLOGHeader(XLogPageHeader hdr, int emode)
 					 longhdr->xlp_sysid);
 			snprintf(sysident_str, sizeof(sysident_str), UINT64_FORMAT,
 					 ControlFile->system_identifier);
-			ereport(emode,
+			ereport(emode_for_corrupt_record(emode, recaddr),
 					(errmsg("WAL file is from different database system"),
 					 errdetail("WAL file database system identifier is %s, pg_control database system identifier is %s.",
 							   fhdrident_str, sysident_str)));
@@ -3953,14 +3956,14 @@ ValidXLOGHeader(XLogPageHeader hdr, int emode)
 		}
 		if (longhdr->xlp_seg_size != XLogSegSize)
 		{
-			ereport(emode,
+			ereport(emode_for_corrupt_record(emode, recaddr),
 					(errmsg("WAL file is from different database system"),
 					 errdetail("Incorrect XLOG_SEG_SIZE in page header.")));
 			return false;
 		}
 		if (longhdr->xlp_xlog_blcksz != XLOG_BLCKSZ)
 		{
-			ereport(emode,
+			ereport(emode_for_corrupt_record(emode, recaddr),
 					(errmsg("WAL file is from different database system"),
 					 errdetail("Incorrect XLOG_BLCKSZ in page header.")));
 			return false;
@@ -3969,17 +3972,15 @@ ValidXLOGHeader(XLogPageHeader hdr, int emode)
 	else if (readOff == 0)
 	{
 		/* hmm, first page of file doesn't have a long header? */
-		ereport(emode,
+		ereport(emode_for_corrupt_record(emode, recaddr),
 				(errmsg("invalid info bits %04X in log file %u, segment %u, offset %u",
 						hdr->xlp_info, readId, readSeg, readOff)));
 		return false;
 	}
 
-	recaddr.xlogid = readId;
-	recaddr.xrecoff = readSeg * XLogSegSize + readOff;
 	if (!XLByteEQ(hdr->xlp_pageaddr, recaddr))
 	{
-		ereport(emode,
+		ereport(emode_for_corrupt_record(emode, recaddr),
 				(errmsg("unexpected pageaddr %X/%X in log file %u, segment %u, offset %u",
 						hdr->xlp_pageaddr.xlogid, hdr->xlp_pageaddr.xrecoff,
 						readId, readSeg, readOff)));
@@ -3991,7 +3992,7 @@ ValidXLOGHeader(XLogPageHeader hdr, int emode)
 	 */
 	if (!list_member_int(expectedTLIs, (int) hdr->xlp_tli))
 	{
-		ereport(emode,
+		ereport(emode_for_corrupt_record(emode, recaddr),
 				(errmsg("unexpected timeline ID %u in log file %u, segment %u, offset %u",
 						hdr->xlp_tli,
 						readId, readSeg, readOff)));
@@ -4009,7 +4010,7 @@ ValidXLOGHeader(XLogPageHeader hdr, int emode)
 	 */
 	if (hdr->xlp_tli < lastPageTLI)
 	{
-		ereport(emode,
+		ereport(emode_for_corrupt_record(emode, recaddr),
 				(errmsg("out-of-sequence timeline ID %u (after %u) in log file %u, segment %u, offset %u",
 						hdr->xlp_tli, lastPageTLI,
 						readId, readSeg, readOff)));
@@ -9245,14 +9246,13 @@ retry:
 		readOff = 0;
 		if (read(readFile, readBuf, XLOG_BLCKSZ) != XLOG_BLCKSZ)
 		{
-			ereport(emode_for_corrupt_record(emode),
+			ereport(emode_for_corrupt_record(emode, *RecPtr),
 					(errcode_for_file_access(),
 					 errmsg("could not read from log file %u, segment %u, offset %u: %m",
 							readId, readSeg, readOff)));
 			goto next_record_is_invalid;
 		}
-		if (!ValidXLOGHeader((XLogPageHeader) readBuf,
-							 emode_for_corrupt_record(emode)))
+		if (!ValidXLOGHeader((XLogPageHeader) readBuf, emode))
 			goto next_record_is_invalid;
 	}
 
@@ -9260,7 +9260,7 @@ retry:
 	readOff = targetPageOff;
 	if (lseek(readFile, (off_t) readOff, SEEK_SET) < 0)
 	{
-		ereport(emode_for_corrupt_record(emode),
+		ereport(emode_for_corrupt_record(emode, *RecPtr),
 				(errcode_for_file_access(),
 		 errmsg("could not seek in log file %u, segment %u to offset %u: %m",
 				readId, readSeg, readOff)));
@@ -9268,13 +9268,13 @@ retry:
 	}
 	if (read(readFile, readBuf, XLOG_BLCKSZ) != XLOG_BLCKSZ)
 	{
-		ereport(emode_for_corrupt_record(emode),
+		ereport(emode_for_corrupt_record(emode, *RecPtr),
 				(errcode_for_file_access(),
 		 errmsg("could not read from log file %u, segment %u, offset %u: %m",
 				readId, readSeg, readOff)));
 		goto next_record_is_invalid;
 	}
-	if (!ValidXLOGHeader((XLogPageHeader) readBuf, emode_for_corrupt_record(emode)))
+	if (!ValidXLOGHeader((XLogPageHeader) readBuf, emode))
 		goto next_record_is_invalid;
 
 	Assert(targetId == readId);
@@ -9316,10 +9316,17 @@ triggered:
  * 'emode' is the error mode that would be used to report a file-not-found
  * or legitimate end-of-WAL situation. It is upgraded to WARNING or PANIC
  * if a corrupt record is not expected at this point.
+ *
+ * NOTE: This function remembers the RecPtr value it was last called with,
+ * to suppress repeated messages about the same record. Only call this when
+ * you are about to ereport(), or you might cause a later message to be
+ * erroneously suppressed.
  */
 static int
-emode_for_corrupt_record(int emode)
+emode_for_corrupt_record(int emode, XLogRecPtr RecPtr)
 {
+	static XLogRecPtr lastComplaint = {0, 0};
+
 	/*
 	 * We don't expect any invalid records in archive or in records streamed
 	 * from master. Files in the archive should be complete, and we should
@@ -9339,6 +9346,17 @@ emode_for_corrupt_record(int emode)
 	{
 		if (emode < WARNING)
 			emode = WARNING;
+	}
+	/*
+	 * If we retry reading a record in pg_xlog, only complain on the first
+	 * time to keep the noise down.
+	 */
+	else if (emode == LOG)
+	{
+		if (XLByteEQ(RecPtr, lastComplaint))
+			emode = DEBUG1;
+		else
+			lastComplaint = RecPtr;
 	}
 	return emode;
 }
