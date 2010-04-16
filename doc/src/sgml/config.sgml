@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.266 2010/04/15 16:25:13 heikki Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.267 2010/04/16 21:46:07 rhaas Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -784,9 +784,32 @@ SET ENABLE_SEQSCAN TO OFF;
         This setting must be at least 128 kilobytes.  (Non-default
         values of <symbol>BLCKSZ</symbol> change the minimum.)  However,
         settings significantly higher than the minimum are usually needed
-        for good performance.  Several tens of megabytes are recommended
-        for production installations.  This parameter can only be set at
-        server start.
+        for good performance.  This parameter can only be set at server start.
+       </para>
+
+       <para>
+        If you have a dedicated database server with 1GB or more of RAM, a
+        reasonable starting value for <varname>shared_buffers</varname> is 25%
+        of the memory in your system.  There are some workloads where even
+        large settings for <varname>shared_buffers</varname> are effective, but
+        because <productname>PostgreSQL</productname> also relies on the
+        operating system cache, it is unlikely that an allocation of more than
+        40% of RAM to <varname>shared_buffers</varname> will work better than a
+        smaller amount.  Larger settings for <varname>shared_buffers</varname>
+        usually require a corresponding increase in
+        <varname>checkpoint_segments</varname>, in order to spread out the
+        process of writing large quantities of new or changed data over a
+        longer period of time.
+       </para>
+
+       <para>
+        On systems with less than 1GB of RAM, a smaller percentage of RAM is
+        appropriate, so as to leave adequate space for the operating system.
+        Also, on Windows, large values for <varname>shared_buffers</varname>
+        aren't as effective.  You may find better results keeping the setting
+        relatively low and using the operating system cache more instead.  The
+        useful range for <varname>shared_buffers</varname> on Windows systems
+        is generally from 64MB to 512MB.
        </para>
 
        <para>
