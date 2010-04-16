@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.102 2010/04/03 07:22:55 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.103 2010/04/16 02:22:33 momjian Exp $ -->
 
 <chapter id="maintenance">
  <title>Routine Database Maintenance Tasks</title>
@@ -640,6 +640,12 @@ analyze threshold = analyze base threshold + analyze scale factor * number of tu
 </programlisting>
     is compared to the total number of tuples inserted or updated
     since the last <command>ANALYZE</command>.
+   </para>
+
+   <para>
+    Temporary tables cannot be accessed by autovacuum.  Therefore,
+    appropriate vacuum and analyze operations should be performed via
+    session SQL commands.
    </para>
 
    <para>
