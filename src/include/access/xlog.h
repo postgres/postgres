@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/xlog.h,v 1.106 2010/04/12 09:52:29 heikki Exp $
+ * $PostgreSQL: pgsql/src/include/access/xlog.h,v 1.107 2010/04/18 18:06:07 sriggs Exp $
  */
 #ifndef XLOG_H
 #define XLOG_H
@@ -278,6 +278,7 @@ extern void xlog_desc(StringInfo buf, uint8 xl_info, char *rec);
 
 extern void issue_xlog_fsync(int fd, uint32 log, uint32 seg);
 
+extern bool XLogConsistentState(void);
 extern bool RecoveryInProgress(void);
 extern bool XLogInsertAllowed(void);
 extern TimestampTz GetLatestXLogTime(void);

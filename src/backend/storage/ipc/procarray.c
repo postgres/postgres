@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/procarray.c,v 1.62 2010/04/06 10:50:57 sriggs Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/procarray.c,v 1.63 2010/04/18 18:05:55 sriggs Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1091,89 +1091,90 @@ GetSnapshotData(Snapshot snapshot)
 	globalxmin = xmin = xmax;
 
 	/*
-	 * Spin over procArray checking xid, xmin, and subxids.  The goal is to
-	 * gather all active xids, find the lowest xmin, and try to record
-	 * subxids.
+	 * If in recovery get any known assigned xids.
 	 */
-	for (index = 0; index < arrayP->numProcs; index++)
+	if (!snapshot->takenDuringRecovery)
 	{
-		volatile PGPROC *proc = arrayP->procs[index];
-		TransactionId xid;
-
-		/* Ignore procs running LAZY VACUUM */
-		if (proc->vacuumFlags & PROC_IN_VACUUM)
-			continue;
-
-		/* Update globalxmin to be the smallest valid xmin */
-		xid = proc->xmin;		/* fetch just once */
-		if (TransactionIdIsNormal(xid) &&
-			TransactionIdPrecedes(xid, globalxmin))
-			globalxmin = xid;
-
-		/* Fetch xid just once - see GetNewTransactionId */
-		xid = proc->xid;
-
 		/*
-		 * If the transaction has been assigned an xid < xmax we add it to the
-		 * snapshot, and update xmin if necessary.	There's no need to store
-		 * XIDs >= xmax, since we'll treat them as running anyway.  We don't
-		 * bother to examine their subxids either.
-		 *
-		 * We don't include our own XID (if any) in the snapshot, but we must
-		 * include it into xmin.
+		 * Spin over procArray checking xid, xmin, and subxids.  The goal is to
+		 * gather all active xids, find the lowest xmin, and try to record
+		 * subxids. During recovery no xids will be assigned, so all normal
+		 * backends can be ignored, nor are there any VACUUMs running. All
+		 * prepared transaction xids are held in KnownAssignedXids, so these
+		 * will be seen without needing to loop through procs here.
 		 */
-		if (TransactionIdIsNormal(xid))
+		for (index = 0; index < arrayP->numProcs; index++)
 		{
-			Assert(!snapshot->takenDuringRecovery);
-			if (TransactionIdFollowsOrEquals(xid, xmax))
+			volatile PGPROC *proc = arrayP->procs[index];
+			TransactionId xid;
+
+			/* Ignore procs running LAZY VACUUM */
+			if (proc->vacuumFlags & PROC_IN_VACUUM)
 				continue;
-			if (proc != MyProc)
-				snapshot->xip[count++] = xid;
-			if (TransactionIdPrecedes(xid, xmin))
-				xmin = xid;
-		}
 
-		/*
-		 * Save subtransaction XIDs if possible (if we've already overflowed,
-		 * there's no point).  Note that the subxact XIDs must be later than
-		 * their parent, so no need to check them against xmin.  We could
-		 * filter against xmax, but it seems better not to do that much work
-		 * while holding the ProcArrayLock.
-		 *
-		 * The other backend can add more subxids concurrently, but cannot
-		 * remove any.	Hence it's important to fetch nxids just once. Should
-		 * be safe to use memcpy, though.  (We needn't worry about missing any
-		 * xids added concurrently, because they must postdate xmax.)
-		 *
-		 * Again, our own XIDs are not included in the snapshot.
-		 */
-		if (!suboverflowed && proc != MyProc)
-		{
-			if (proc->subxids.overflowed)
-				suboverflowed = true;
-			else
+			/* Update globalxmin to be the smallest valid xmin */
+			xid = proc->xmin;		/* fetch just once */
+			if (TransactionIdIsNormal(xid) &&
+				TransactionIdPrecedes(xid, globalxmin))
+				globalxmin = xid;
+
+			/* Fetch xid just once - see GetNewTransactionId */
+			xid = proc->xid;
+
+			/*
+			 * If the transaction has been assigned an xid < xmax we add it to the
+			 * snapshot, and update xmin if necessary.	There's no need to store
+			 * XIDs >= xmax, since we'll treat them as running anyway.  We don't
+			 * bother to examine their subxids either.
+			 *
+			 * We don't include our own XID (if any) in the snapshot, but we must
+			 * include it into xmin.
+			 */
+			if (TransactionIdIsNormal(xid))
 			{
-				int			nxids = proc->subxids.nxids;
+				if (TransactionIdFollowsOrEquals(xid, xmax))
+					continue;
+				if (proc != MyProc)
+					snapshot->xip[count++] = xid;
+				if (TransactionIdPrecedes(xid, xmin))
+					xmin = xid;
+			}
 
-				if (nxids > 0)
+			/*
+			 * Save subtransaction XIDs if possible (if we've already overflowed,
+			 * there's no point).  Note that the subxact XIDs must be later than
+			 * their parent, so no need to check them against xmin.  We could
+			 * filter against xmax, but it seems better not to do that much work
+			 * while holding the ProcArrayLock.
+			 *
+			 * The other backend can add more subxids concurrently, but cannot
+			 * remove any.	Hence it's important to fetch nxids just once. Should
+			 * be safe to use memcpy, though.  (We needn't worry about missing any
+			 * xids added concurrently, because they must postdate xmax.)
+			 *
+			 * Again, our own XIDs are not included in the snapshot.
+			 */
+			if (!suboverflowed && proc != MyProc)
+			{
+				if (proc->subxids.overflowed)
+					suboverflowed = true;
+				else
 				{
-					Assert(!snapshot->takenDuringRecovery);
-					memcpy(snapshot->subxip + subcount,
-						   (void *) proc->subxids.xids,
-						   nxids * sizeof(TransactionId));
-					subcount += nxids;
+					int			nxids = proc->subxids.nxids;
+
+					if (nxids > 0)
+					{
+						memcpy(snapshot->subxip + subcount,
+							   (void *) proc->subxids.xids,
+							   nxids * sizeof(TransactionId));
+						subcount += nxids;
+					}
 				}
 			}
 		}
 	}
-
-	/*
-	 * If in recovery get any known assigned xids.
-	 */
-	if (snapshot->takenDuringRecovery)
+	else
 	{
-		Assert(count == 0);
-
 		/*
 		 * We store all xids directly into subxip[]. Here's why:
 		 *
