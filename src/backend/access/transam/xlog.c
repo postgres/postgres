@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.399 2010/04/18 18:17:12 sriggs Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.400 2010/04/18 18:44:53 sriggs Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -8290,6 +8290,7 @@ pg_stop_backup(PG_FUNCTION_ARGS)
 	int			ich;
 	int			seconds_before_warning;
 	int			waits = 0;
+	bool		reported_waiting = false;
 
 	if (!superuser())
 		ereport(ERROR,
@@ -8431,9 +8432,6 @@ pg_stop_backup(PG_FUNCTION_ARGS)
 	BackupHistoryFileName(histfilename, ThisTimeLineID, _logId, _logSeg,
 						  startpoint.xrecoff % XLogSegSize);
 
-	ereport(NOTICE,
-			(errmsg("pg_stop_backup cleanup done, waiting for required WAL segments to be archived")));
-
 	seconds_before_warning = 60;
 	waits = 0;
 
@@ -8441,6 +8439,13 @@ pg_stop_backup(PG_FUNCTION_ARGS)
 		   XLogArchiveIsBusy(histfilename))
 	{
 		CHECK_FOR_INTERRUPTS();
+
+		if (!reported_waiting && waits > 5)
+		{
+			ereport(NOTICE,
+				(errmsg("pg_stop_backup cleanup done, waiting for required WAL segments to be archived")));
+			reported_waiting = true;
+		}
 
 		pg_usleep(1000000L);
 
@@ -8455,6 +8460,9 @@ pg_stop_backup(PG_FUNCTION_ARGS)
 					"but the database backup will not be usable without all the WAL segments.")));
 		}
 	}
+
+	ereport(NOTICE,
+			(errmsg("pg_stop_backup complete, all required WAL segments have been archived")));
 
 	/*
 	 * We're done.  As a convenience, return the ending WAL location.
