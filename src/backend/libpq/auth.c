@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/auth.c,v 1.198 2010/03/30 16:08:22 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/auth.c,v 1.199 2010/04/19 19:02:18 sriggs Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -363,11 +363,42 @@ ClientAuthentication(Port *port)
 		case uaReject:
 
 			/*
-			 * This could have come from an explicit "reject" entry in
-			 * pg_hba.conf, but more likely it means there was no matching
-			 * entry.  Take pity on the poor user and issue a helpful error
-			 * message.  NOTE: this is not a security breach, because all the
-			 * info reported here is known at the frontend and must be assumed
+			 * An explicit "reject" entry in pg_hba.conf. Take pity on the poor
+			 * user and issue a helpful error message.
+			 * NOTE: this is not a security breach, because all the info
+			 * reported here is known at the frontend and must be assumed
+			 * known to bad guys. We're merely helping out the less clueful
+			 * good guys.
+			 */
+			{
+				char		hostinfo[NI_MAXHOST];
+
+				pg_getnameinfo_all(&port->raddr.addr, port->raddr.salen,
+								   hostinfo, sizeof(hostinfo),
+								   NULL, 0,
+								   NI_NUMERICHOST);
+
+#ifdef USE_SSL
+				ereport(FATAL,
+						(errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
+						 errmsg("pg_hba.conf rejects host \"%s\", user \"%s\", database \"%s\", %s",
+							  hostinfo, port->user_name, port->database_name,
+								port->ssl ? _("SSL on") : _("SSL off"))));
+#else
+				ereport(FATAL,
+						(errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
+						 errmsg("pg_hba.conf rejects host \"%s\", user \"%s\", database \"%s\"",
+						   hostinfo, port->user_name, port->database_name)));
+#endif
+				break;
+			}
+
+		case uaImplicitReject:
+
+			/*
+			 * No matching entry so tell the user we fell through.
+			 * NOTE: this is not a security breach, because all the info
+			 * reported here is known at the frontend and must be assumed
 			 * known to bad guys. We're merely helping out the less clueful
 			 * good guys.
 			 */

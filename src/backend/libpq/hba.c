@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.204 2010/03/24 17:05:45 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.205 2010/04/19 19:02:18 sriggs Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1389,9 +1389,9 @@ check_hba(hbaPort *port)
 		return true;
 	}
 
-	/* If no matching entry was found, synthesize 'reject' entry. */
+	/* If no matching entry was found, then implicitly reject. */
 	hba = palloc0(sizeof(HbaLine));
-	hba->auth_method = uaReject;
+	hba->auth_method = uaImplicitReject;
 	port->hba = hba;
 	return true;
 
