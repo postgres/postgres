@@ -206,6 +206,7 @@
 #enable_hashagg = on
 #enable_hashjoin = on
 #enable_indexscan = on
+#enable_material = on
 #enable_mergejoin = on
 #enable_nestloop = on
 #enable_seqscan = on

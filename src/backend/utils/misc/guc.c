@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.547 2010/04/12 09:52:29 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.548 2010/04/19 00:55:25 rhaas Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -641,6 +641,14 @@ static struct config_bool ConfigureNamesBool[] =
 			NULL
 		},
 		&enable_hashagg,
+		true, NULL, NULL
+	},
+	{
+		{"enable_material", PGC_USERSET, QUERY_TUNING_METHOD,
+			gettext_noop("Enables the planner's use of materialization."),
+			NULL
+		},
+		&enable_material,
 		true, NULL, NULL
 	},
 	{

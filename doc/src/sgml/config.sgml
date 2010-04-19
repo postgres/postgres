@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.267 2010/04/16 21:46:07 rhaas Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.268 2010/04/19 00:55:25 rhaas Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -2016,6 +2016,22 @@ SET ENABLE_SEQSCAN TO OFF;
        <para>
         Enables or disables the query planner's use of index-scan plan
         types. The default is <literal>on</>.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-enable-material" xreflabel="enable_material">
+      <term><varname>enable_material</varname> (<type>boolean</type>)</term>
+      <indexterm>
+       <primary><varname>enable_material</> configuration parameter</primary>
+      </indexterm>
+      <listitem>
+       <para>
+        Enables or disables the query planner's use of materialization.
+        It is impossible to suppress materialization entirely,
+        but turning this variable off prevents the planner from inserting
+        materialize nodes except in cases where it is required for correctness.
+        The default is <literal>on</>.
        </para>
       </listitem>
      </varlistentry>

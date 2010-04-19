@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/joinpath.c,v 1.132 2010/03/28 22:59:32 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/joinpath.c,v 1.133 2010/04/19 00:55:25 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -437,10 +437,12 @@ match_unsorted_outer(PlannerInfo *root,
 	else if (nestjoinOK)
 	{
 		/*
-		 * Consider materializing the cheapest inner path, unless it is one
-		 * that materializes its output anyway.
+		 * Consider materializing the cheapest inner path, unless
+		 * enable_material is off or the path in question materializes its
+		 * output anyway.
 		 */
-		if (!ExecMaterializesOutput(inner_cheapest_total->pathtype))
+		if (enable_material &&
+			!ExecMaterializesOutput(inner_cheapest_total->pathtype))
 			matpath = (Path *)
 				create_material_path(innerrel, inner_cheapest_total);
 

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/optimizer/cost.h,v 1.100 2010/01/02 16:58:07 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/optimizer/cost.h,v 1.101 2010/04/19 00:55:26 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,6 +57,7 @@ extern bool enable_tidscan;
 extern bool enable_sort;
 extern bool enable_hashagg;
 extern bool enable_nestloop;
+extern bool enable_material;
 extern bool enable_mergejoin;
 extern bool enable_hashjoin;
 extern int	constraint_exclusion;

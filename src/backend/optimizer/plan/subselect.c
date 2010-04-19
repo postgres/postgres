@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/subselect.c,v 1.161 2010/02/26 02:00:46 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/subselect.c,v 1.162 2010/04/19 00:55:25 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -578,9 +578,11 @@ build_subplan(PlannerInfo *root, Plan *plan, List *rtable, List *rowmarks,
 		 * is pointless for a direct-correlated subplan, since we'd have to
 		 * recompute its results each time anyway.	For uncorrelated/undirect
 		 * correlated subplans, we add Material unless the subplan's top plan
-		 * node would materialize its output anyway.
+		 * node would materialize its output anyway.  Also, if enable_material
+		 * is false, then the user does not want us to materialize anything
+		 * unnecessarily, so we don't.
 		 */
-		else if (splan->parParam == NIL &&
+		else if (splan->parParam == NIL && enable_material &&
 				 !ExecMaterializesOutput(nodeTag(plan)))
 			plan = materialize_finished_plan(plan);
 
