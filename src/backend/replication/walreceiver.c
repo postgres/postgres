@@ -29,7 +29,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/replication/walreceiver.c,v 1.8 2010/04/13 08:16:09 mha Exp $
+ *	  $PostgreSQL: pgsql/src/backend/replication/walreceiver.c,v 1.9 2010/04/19 14:10:45 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -86,8 +86,8 @@ static void DisableWalRcvImmediateExit(void);
  * We can't just exit(1) within SIGTERM signal handler, because the signal
  * might arrive in the middle of some critical operation, like while we're
  * holding a spinlock. We also can't just set a flag in signal handler and
- * check it in the main loop, because we perform some blocking libpq
- * operations like PQexec(), which can take a long time to finish.
+ * check it in the main loop, because we perform some blocking operations
+ * like libpqrcv_PQexec(), which can take a long time to finish.
  *
  * We use a combined approach: When WalRcvImmediateInterruptOK is true, it's
  * safe for the signal handler to elog(FATAL) immediately. Otherwise it just
