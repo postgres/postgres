@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/procarray.c,v 1.63 2010/04/18 18:05:55 sriggs Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/procarray.c,v 1.64 2010/04/19 18:03:38 sriggs Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1074,8 +1074,6 @@ GetSnapshotData(Snapshot snapshot)
 					 errmsg("out of memory")));
 	}
 
-	snapshot->takenDuringRecovery = RecoveryInProgress();
-
 	/*
 	 * It is sufficient to get shared lock on ProcArrayLock, even if we are
 	 * going to set MyProc->xmin.
@@ -1091,8 +1089,15 @@ GetSnapshotData(Snapshot snapshot)
 	globalxmin = xmin = xmax;
 
 	/*
-	 * If in recovery get any known assigned xids.
+	 * If we're in recovery then snapshot data comes from a different place,
+	 * so decide which route we take before grab the lock. It is possible
+	 * for recovery to end before we finish taking snapshot, and for newly
+	 * assigned transaction ids to be added to the procarray. Xmax cannot
+	 * change while we hold ProcArrayLock, so those newly added transaction
+	 * ids would be filtered away, so we need not be concerned about them.
 	 */
+	snapshot->takenDuringRecovery = RecoveryInProgress();
+
 	if (!snapshot->takenDuringRecovery)
 	{
 		/*
