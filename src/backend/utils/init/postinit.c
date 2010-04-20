@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/init/postinit.c,v 1.209 2010/04/20 01:38:52 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/init/postinit.c,v 1.210 2010/04/20 23:48:47 tgl Exp $
  *
  *
  *-------------------------------------------------------------------------
@@ -552,7 +552,7 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 
 	/*
 	 * Load relcache entries for the shared system catalogs.  This must create
-	 * at least an entry for pg_database.
+	 * at least entries for pg_database and catalogs used for authentication.
 	 */
 	RelationCacheInitializePhase2();
 
@@ -586,13 +586,59 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 	}
 
 	/*
+	 * Perform client authentication if necessary, then figure out our
+	 * postgres user ID, and see if we are a superuser.
+	 *
+	 * In standalone mode and in autovacuum worker processes, we use a fixed
+	 * ID, otherwise we figure it out from the authenticated user name.
+	 */
+	if (bootstrap || IsAutoVacuumWorkerProcess())
+	{
+		InitializeSessionUserIdStandalone();
+		am_superuser = true;
+	}
+	else if (!IsUnderPostmaster)
+	{
+		InitializeSessionUserIdStandalone();
+		am_superuser = true;
+		if (!ThereIsAtLeastOneRole())
+			ereport(WARNING,
+					(errcode(ERRCODE_UNDEFINED_OBJECT),
+					 errmsg("no roles are defined in this database system"),
+					 errhint("You should immediately run CREATE USER \"%s\" SUPERUSER;.",
+							 username)));
+	}
+	else
+	{
+		/* normal multiuser case */
+		Assert(MyProcPort != NULL);
+		PerformAuthentication(MyProcPort);
+		InitializeSessionUserId(username);
+		am_superuser = superuser();
+	}
+
+	/*
+	 * If walsender, we're done here --- we don't want to connect to any
+	 * particular database.
+	 */
+	if (am_walsender)
+	{
+		Assert(!bootstrap);
+		/* report this backend in the PgBackendStatus array */
+		pgstat_bestart();
+		/* close the transaction we started above */
+		CommitTransactionCommand();
+		return;
+	}
+
+	/*
 	 * Set up the global variables holding database id and default tablespace.
 	 * But note we won't actually try to touch the database just yet.
 	 *
-	 * We take a shortcut in the bootstrap and walsender case, otherwise we
-	 * have to look up the db's entry in pg_database.
+	 * We take a shortcut in the bootstrap case, otherwise we have to look up
+	 * the db's entry in pg_database.
 	 */
-	if (bootstrap || am_walsender)
+	if (bootstrap)
 	{
 		MyDatabaseId = TemplateDbOid;
 		MyDatabaseTableSpace = DEFAULTTABLESPACE_OID;
@@ -655,7 +701,7 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 	 * AccessShareLock for such sessions and thereby not conflict against
 	 * CREATE DATABASE.
 	 */
-	if (!bootstrap && !am_walsender)
+	if (!bootstrap)
 		LockSharedObject(DatabaseRelationId, MyDatabaseId, 0,
 						 RowExclusiveLock);
 
@@ -664,7 +710,7 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 	 * If there was a concurrent DROP DATABASE, this ensures we will die
 	 * cleanly without creating a mess.
 	 */
-	if (!bootstrap && !am_walsender)
+	if (!bootstrap)
 	{
 		HeapTuple	tuple;
 
@@ -684,7 +730,7 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 	 */
 	fullpath = GetDatabasePath(MyDatabaseId, MyDatabaseTableSpace);
 
-	if (!bootstrap && !am_walsender)
+	if (!bootstrap)
 	{
 		if (access(fullpath, F_OK) == -1)
 		{
@@ -715,43 +761,8 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 	 */
 	RelationCacheInitializePhase3();
 
-	/*
-	 * Perform client authentication if necessary, then figure out our
-	 * postgres user ID, and see if we are a superuser.
-	 *
-	 * In standalone mode and in autovacuum worker processes, we use a fixed
-	 * ID, otherwise we figure it out from the authenticated user name.
-	 */
-	if (bootstrap || IsAutoVacuumWorkerProcess())
-	{
-		InitializeSessionUserIdStandalone();
-		am_superuser = true;
-	}
-	else if (!IsUnderPostmaster)
-	{
-		InitializeSessionUserIdStandalone();
-		am_superuser = true;
-		if (!ThereIsAtLeastOneRole())
-			ereport(WARNING,
-					(errcode(ERRCODE_UNDEFINED_OBJECT),
-					 errmsg("no roles are defined in this database system"),
-					 errhint("You should immediately run CREATE USER \"%s\" SUPERUSER;.",
-							 username)));
-	}
-	else
-	{
-		/* normal multiuser case */
-		Assert(MyProcPort != NULL);
-		PerformAuthentication(MyProcPort);
-		InitializeSessionUserId(username);
-		am_superuser = superuser();
-	}
-
 	/* set up ACL framework (so CheckMyDatabase can check permissions) */
 	initialize_acl();
-
-	/* Process pg_db_role_setting options */
-	process_settings(MyDatabaseId, GetSessionUserId());
 
 	/*
 	 * Re-read the pg_database row for our database, check permissions and set
@@ -759,7 +770,7 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 	 * database-access infrastructure is up.  (Also, it wants to know if the
 	 * user is a superuser, so the above stuff has to happen first.)
 	 */
-	if (!bootstrap && !am_walsender)
+	if (!bootstrap)
 		CheckMyDatabase(dbname, am_superuser);
 
 	/*
@@ -841,6 +852,9 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 		}
 	}
 
+	/* Process pg_db_role_setting options */
+	process_settings(MyDatabaseId, GetSessionUserId());
+
 	/* Apply PostAuthDelay as soon as we've read all options */
 	if (PostAuthDelay > 0)
 		pg_usleep(PostAuthDelay * 1000000L);
@@ -855,10 +869,6 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 
 	/* initialize client encoding */
 	InitializeClientEncoding();
-
-	/* reset the database for walsender */
-	if (am_walsender)
-		MyProc->databaseId = MyDatabaseId = InvalidOid;
 
 	/* report this backend in the PgBackendStatus array */
 	if (!bootstrap)

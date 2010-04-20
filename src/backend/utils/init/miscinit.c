@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/init/miscinit.c,v 1.183 2010/02/26 02:01:13 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/init/miscinit.c,v 1.184 2010/04/20 23:48:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -429,10 +429,8 @@ InitializeSessionUserId(const char *rolename)
 	 * These next checks are not enforced when in standalone mode, so that
 	 * there is a way to recover from sillinesses like "UPDATE pg_authid SET
 	 * rolcanlogin = false;".
-	 *
-	 * We do not enforce them for the autovacuum process either.
 	 */
-	if (IsUnderPostmaster && !IsAutoVacuumWorkerProcess())
+	if (IsUnderPostmaster)
 	{
 		/*
 		 * Is role allowed to login at all?
@@ -479,7 +477,10 @@ InitializeSessionUserId(const char *rolename)
 void
 InitializeSessionUserIdStandalone(void)
 {
-	/* This function should only be called in a single-user backend. */
+	/*
+	 * This function should only be called in single-user mode and in
+	 * autovacuum workers.
+	 */
 	AssertState(!IsUnderPostmaster || IsAutoVacuumWorkerProcess());
 
 	/* call only once */

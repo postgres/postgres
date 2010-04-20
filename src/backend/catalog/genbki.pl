@@ -10,7 +10,7 @@
 # Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/backend/catalog/genbki.pl,v 1.7 2010/01/22 16:40:18 rhaas Exp $
+# $PostgreSQL: pgsql/src/backend/catalog/genbki.pl,v 1.8 2010/04/20 23:48:47 tgl Exp $
 #
 #----------------------------------------------------------------------
 
@@ -183,13 +183,15 @@ foreach my $catname ( @{ $catalogs->{names} } )
 
             # Generate entries for user attributes.
             my $attnum = 0;
+            my $priornotnull = 1;
             my @user_attrs = @{ $table->{columns} };
             foreach my $attr (@user_attrs)
             {
                 $attnum++;
-                my $row = emit_pgattr_row($table_name, $attr);
+                my $row = emit_pgattr_row($table_name, $attr, $priornotnull);
                 $row->{attnum} = $attnum;
                 $row->{attstattarget} = '-1';
+                $priornotnull &= ($row->{attnotnull} eq 't');
 
                 # If it's bootstrapped, put an entry in postgres.bki.
                 if ($is_bootstrap eq ' bootstrap')
@@ -221,7 +223,7 @@ foreach my $catname ( @{ $catalogs->{names} } )
                 foreach my $attr (@SYS_ATTRS)
                 {
                     $attnum--;
-                    my $row = emit_pgattr_row($table_name, $attr);
+                    my $row = emit_pgattr_row($table_name, $attr, 1);
                     $row->{attnum} = $attnum;
                     $row->{attstattarget} = '0';
 
@@ -308,10 +310,11 @@ exit 0;
 
 # Given a system catalog name and a reference to a key-value pair corresponding
 # to the name and type of a column, generate a reference to a hash that
-# represents a pg_attribute entry
+# represents a pg_attribute entry.  We must also be told whether preceding
+# columns were all not-null.
 sub emit_pgattr_row
 {
-    my ($table_name, $attr) = @_;
+    my ($table_name, $attr, $priornotnull) = @_;
     my ($attname, $atttype) = %$attr;
     my %row;
 
@@ -337,15 +340,21 @@ sub emit_pgattr_row
             $row{attalign}    = $type->{typalign};
             # set attndims if it's an array type
             $row{attndims}    = $type->{typcategory} eq 'A' ? '1' : '0';
-            # This approach to attnotnull is not really good enough;
-            # we need to know about prior column types too.  Look at
-            # DefineAttr in bootstrap.c.  For the moment it's okay for
-            # the column orders appearing in bootstrapped catalogs.
-            $row{attnotnull}  =
-                $type->{typname} eq 'oidvector' ? 't'
-              : $type->{typname} eq 'int2vector' ? 't'
-              : $type->{typlen} eq 'NAMEDATALEN' ? 't'
-              : $type->{typlen} > 0 ? 't' : 'f';
+            # attnotnull must be set true if the type is fixed-width and
+            # prior columns are too --- compare DefineAttr in bootstrap.c.
+            # oidvector and int2vector are also treated as not-nullable.
+            if ($priornotnull)
+            {
+                $row{attnotnull} =
+                    $type->{typname} eq 'oidvector' ? 't'
+                    : $type->{typname} eq 'int2vector' ? 't'
+                    : $type->{typlen} eq 'NAMEDATALEN' ? 't'
+                    : $type->{typlen} > 0 ? 't' : 'f';
+            }
+            else
+            {
+                $row{attnotnull} = 'f';
+            }
             last;
         }
     }

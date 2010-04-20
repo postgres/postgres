@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_authid.h,v 1.12 2010/01/05 01:06:56 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_authid.h,v 1.13 2010/04/20 23:48:47 tgl Exp $
  *
  * NOTES
  *	  the genbki.pl script reads this file and generates .bki
@@ -40,8 +40,9 @@
  * ----------------
  */
 #define AuthIdRelationId	1260
+#define AuthIdRelation_Rowtype_Id	2842
 
-CATALOG(pg_authid,1260) BKI_SHARED_RELATION
+CATALOG(pg_authid,1260) BKI_SHARED_RELATION BKI_ROWTYPE_OID(2842) BKI_SCHEMA_MACRO
 {
 	NameData	rolname;		/* name of role */
 	bool		rolsuper;		/* read this field via superuser() only! */
@@ -71,7 +72,7 @@ typedef FormData_pg_authid *Form_pg_authid;
  *		compiler constants for pg_authid
  * ----------------
  */
-#define Natts_pg_authid					11
+#define Natts_pg_authid					10
 #define Anum_pg_authid_rolname			1
 #define Anum_pg_authid_rolsuper			2
 #define Anum_pg_authid_rolinherit		3

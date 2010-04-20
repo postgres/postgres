@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/catcache.c,v 1.151 2010/02/14 18:42:17 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/catcache.c,v 1.152 2010/04/20 23:48:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -981,34 +981,52 @@ InitCatCachePhase2(CatCache *cache, bool touch_index)
  *		certain system indexes that support critical syscaches.
  *		We can't use an indexscan to fetch these, else we'll get into
  *		infinite recursion.  A plain heap scan will work, however.
- *
  *		Once we have completed relcache initialization (signaled by
  *		criticalRelcachesBuilt), we don't have to worry anymore.
+ *
+ *		Similarly, during backend startup we have to be able to use the
+ *		pg_authid and pg_auth_members syscaches for authentication even if
+ *		we don't yet have relcache entries for those catalogs' indexes.
  */
 static bool
 IndexScanOK(CatCache *cache, ScanKey cur_skey)
 {
-	if (cache->id == INDEXRELID)
+	switch (cache->id)
 	{
-		/*
-		 * Rather than tracking exactly which indexes have to be loaded before
-		 * we can use indexscans (which changes from time to time), just force
-		 * all pg_index searches to be heap scans until we've built the
-		 * critical relcaches.
-		 */
-		if (!criticalRelcachesBuilt)
+		case INDEXRELID:
+			/*
+			 * Rather than tracking exactly which indexes have to be loaded
+			 * before we can use indexscans (which changes from time to time),
+			 * just force all pg_index searches to be heap scans until we've
+			 * built the critical relcaches.
+			 */
+			if (!criticalRelcachesBuilt)
+				return false;
+			break;
+
+		case AMOID:
+		case AMNAME:
+			/*
+			 * Always do heap scans in pg_am, because it's so small there's
+			 * not much point in an indexscan anyway.  We *must* do this when
+			 * initially building critical relcache entries, but we might as
+			 * well just always do it.
+			 */
 			return false;
-	}
-	else if (cache->id == AMOID ||
-			 cache->id == AMNAME)
-	{
-		/*
-		 * Always do heap scans in pg_am, because it's so small there's not
-		 * much point in an indexscan anyway.  We *must* do this when
-		 * initially building critical relcache entries, but we might as well
-		 * just always do it.
-		 */
-		return false;
+
+		case AUTHNAME:
+		case AUTHOID:
+		case AUTHMEMMEMROLE:
+			/*
+			 * Protect authentication lookups occurring before relcache has
+			 * collected entries for shared indexes.
+			 */
+			if (!criticalSharedRelcachesBuilt)
+				return false;
+			break;
+
+		default:
+			break;
 	}
 
 	/* Normal case, allow index scan */
@@ -1397,7 +1415,7 @@ SearchCatCacheList(CatCache *cache,
 
 		scandesc = systable_beginscan(relation,
 									  cache->cc_indexoid,
-									  true,
+									  IndexScanOK(cache, cur_skey),
 									  SnapshotNow,
 									  nkeys,
 									  cur_skey);
