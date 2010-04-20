@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/perform.sgml,v 1.75 2010/04/03 07:22:55 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/perform.sgml,v 1.76 2010/04/20 00:26:06 rhaas Exp $ -->
 
  <chapter id="performance-tips">
   <title>Performance Tips</title>
@@ -910,24 +910,28 @@ SELECT * FROM x, y, a, b, c WHERE something AND somethingelse;
   </sect2>
 
   <sect2 id="populate-pitr">
-   <title>Turn off <varname>archive_mode</varname></title>
+   <title>Turn off <varname>archive_mode</varname> and streaming replication</title>
 
    <para>
     When loading large amounts of data into an installation that uses
-    WAL archiving, you might want to disable archiving (turn off the
-    <xref linkend="guc-archive-mode"> configuration variable)
+    WAL archiving or streaming replication, you might want to disable
+    archiving (turn off the <xref linkend="guc-archive-mode">
+    configuration variable) and replication (zero the
+    <xref linkend="guc-max-wal-senders"> configuration variable)
     while loading.  It might be
     faster to take a new base backup after the load has completed
     than to process a large amount of incremental WAL data.
-    But note that turning <varname>archive_mode</varname> on or off
-    requires a server restart.
+    But note that changing either of these variables requires
+    a server restart.
    </para>
 
    <para>
-    Aside from avoiding the time for the archiver to process the WAL data,
+    Aside from avoiding the time for the archiver or WAL sender to
+    process the WAL data,
     doing this will actually make certain commands faster, because they
     are designed not to write WAL at all if <varname>archive_mode</varname>
-    is off.  (They can guarantee crash safety more cheaply by doing an
+    is off and <varname>max_wal_senders</varname> is zero.  (They can
+    guarantee crash safety more cheaply by doing an
     <function>fsync</> at the end than by writing WAL.)
     This applies to the following commands:
     <itemizedlist>

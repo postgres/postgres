@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.151 2010/04/12 19:08:28 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.152 2010/04/20 00:26:06 rhaas Exp $ -->
 
 <chapter id="backup">
  <title>Backup and Restore</title>
@@ -689,13 +689,14 @@ archive_command = 'test ! -f /mnt/server/archivedir/%f &amp;&amp; cp %p /mnt/ser
    </para>
 
    <para>
-    When <varname>archive_mode</> is <literal>off</> some SQL commands
+    When <varname>archive_mode</> is <literal>off</> and <xref
+    linkend="guc-max-wal-senders"> is zero some SQL commands
     are optimized to avoid WAL logging, as described in <xref
-    linkend="populate-pitr">. If archiving were turned on during execution
-    of one of these statements, WAL would not contain enough information
-    for archive recovery.  (Crash recovery is unaffected.)  For
-    this reason, <varname>archive_mode</> can only be changed at server
-    start.  However, <varname>archive_command</> can be changed with a
+    linkend="populate-pitr">.  If archiving or streaming replication were
+    turned on during execution of one of these statements, WAL would not
+    contain enough information for archive recovery.  (Crash recovery is
+    unaffected.)  For this reason, these parameters can only be changed at
+    server start.  However, <varname>archive_command</> can be changed with a
     configuration file reload.  If you wish to temporarily stop archiving,
     one way to do it is to set <varname>archive_command</> to the empty
     string (<literal>''</>).
