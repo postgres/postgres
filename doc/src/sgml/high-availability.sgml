@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/high-availability.sgml,v 1.60 2010/04/12 10:01:04 heikki Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/high-availability.sgml,v 1.61 2010/04/20 11:15:06 rhaas Exp $ -->
 
 <chapter id="high-availability">
  <title>High Availability, Load Balancing, and Replication</title>
@@ -737,7 +737,7 @@ trigger_file = '/path/to/trigger_file'
     falls behind too much, the primary will delete old WAL files still
     needed by the standby, and the standby will have to be manually restored
     from a base backup. You can control how long the primary retains old WAL
-    segments using the <varname>standby_keep_segments</> setting.
+    segments using the <varname>wal_keep_segments</> setting.
    </para>
 
    <para>

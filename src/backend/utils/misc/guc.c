@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.548 2010/04/19 00:55:25 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.549 2010/04/20 11:15:06 rhaas Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -1656,11 +1656,11 @@ static struct config_int ConfigureNamesInt[] =
 	},
 
 	{
-		{"standby_keep_segments", PGC_SIGHUP, WAL_CHECKPOINTS,
+		{"wal_keep_segments", PGC_SIGHUP, WAL_CHECKPOINTS,
 			gettext_noop("Sets the number of WAL files held for standby servers"),
 			NULL
 		},
-		&StandbySegments,
+		&wal_keep_segments,
 		0, 0, INT_MAX, NULL, NULL
 	},
 

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.268 2010/04/19 00:55:25 rhaas Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.269 2010/04/20 11:15:06 rhaas Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -1842,10 +1842,10 @@ SET ENABLE_SEQSCAN TO OFF;
        </listitem>
       </varlistentry>
 
-      <varlistentry id="guc-standby-keep-segments" xreflabel="standby_keep_segments">
-       <term><varname>standby_keep_segments</varname> (<type>integer</type>)</term>
+      <varlistentry id="guc-wal-keep-segments" xreflabel="wal_keep_segments">
+       <term><varname>wal_keep_segments</varname> (<type>integer</type>)</term>
        <indexterm>
-        <primary><varname>standby_keep_segments</> configuration parameter</primary>
+        <primary><varname>wal_keep_segments</> configuration parameter</primary>
        </indexterm>
        <listitem>
        <para>
@@ -1853,17 +1853,17 @@ SET ENABLE_SEQSCAN TO OFF;
         directory, in case a standby server needs to fetch them via streaming
         replication. Each segment is normally 16 megabytes. If a standby
         server connected to the primary falls behind more than
-        <varname>standby_keep_segments</> segments, the primary might remove
+        <varname>wal_keep_segments</> segments, the primary might remove
         a WAL segment still needed by the standby and the replication
         connection will be terminated.
 
         This sets only the minimum number of segments retained for standby
-        purposes, the system might need to retain more segments for WAL
-        archival or to recover from a checkpoint. If <varname>standby_keep_segments</>
+        purposes; the system might need to retain more segments for WAL
+        archival or to recover from a checkpoint. If <varname>wal_keep_segments</>
         is zero (the default), the system doesn't keep any extra segments
         for standby purposes, and the number of old WAL segments available
         for standbys is determined based only on the location of the previous
-        checkpoint and status of WAL archival.
+        checkpoint and status of WAL archiving.
         This parameter can only be set in the <filename>postgresql.conf</>
         file or on the server command line.
        </para>
