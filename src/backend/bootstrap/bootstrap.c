@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootstrap.c,v 1.260 2010/02/26 02:00:35 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootstrap.c,v 1.261 2010/04/20 01:38:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -397,14 +397,13 @@ AuxiliaryProcessMain(int argc, char *argv[])
 	switch (auxType)
 	{
 		case CheckerProcess:
-			bootstrap_signals();
+			/* don't set signals, they're useless here */
 			CheckerModeMain();
 			proc_exit(1);		/* should never return */
 
 		case BootstrapProcess:
 			bootstrap_signals();
 			BootStrapXLOG();
-			StartupXLOG();
 			BootstrapModeMain();
 			proc_exit(1);		/* should never return */
 
@@ -438,23 +437,12 @@ AuxiliaryProcessMain(int argc, char *argv[])
 /*
  * In shared memory checker mode, all we really want to do is create shared
  * memory and semaphores (just to prove we can do it with the current GUC
- * settings).
+ * settings).  Since, in fact, that was already done by BaseInit(),
+ * we have nothing more to do here.
  */
 static void
 CheckerModeMain(void)
 {
-	/*
-	 * We must be getting invoked for bootstrap mode
-	 */
-	Assert(!IsUnderPostmaster);
-
-	SetProcessingMode(BootstrapProcessing);
-
-	/*
-	 * Do backend-like initialization for bootstrap mode
-	 */
-	InitProcess();
-	InitPostgres(NULL, InvalidOid, NULL, NULL);
 	proc_exit(0);
 }
 
@@ -478,6 +466,7 @@ BootstrapModeMain(void)
 	 * Do backend-like initialization for bootstrap mode
 	 */
 	InitProcess();
+
 	InitPostgres(NULL, InvalidOid, NULL, NULL);
 
 	/* Initialize stuff for bootstrap-file processing */
@@ -497,10 +486,6 @@ BootstrapModeMain(void)
 	 * out the initial relation mapping files.
 	 */
 	RelationMapFinishBootstrap();
-
-	/* Perform a checkpoint to ensure everything's down to disk */
-	SetProcessingMode(NormalProcessing);
-	CreateCheckPoint(CHECKPOINT_IS_SHUTDOWN | CHECKPOINT_IMMEDIATE);
 
 	/* Clean up and exit */
 	cleanup();

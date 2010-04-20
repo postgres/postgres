@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/init/postinit.c,v 1.208 2010/03/25 20:40:17 sriggs Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/init/postinit.c,v 1.209 2010/04/20 01:38:52 tgl Exp $
  *
  *
  *-------------------------------------------------------------------------
@@ -427,11 +427,9 @@ pg_split_opts(char **argv, int *argcp, char *optstr)
  * Early initialization of a backend (either standalone or under postmaster).
  * This happens even before InitPostgres.
  *
- * If you're wondering why this is separate from InitPostgres at all:
- * the critical distinction is that this stuff has to happen before we can
- * run XLOG-related initialization, which is done before InitPostgres --- in
- * fact, for cases such as the background writer process, InitPostgres may
- * never be done at all.
+ * This is separate from InitPostgres because it is also called by auxiliary
+ * processes, such as the background writer process, which may not call
+ * InitPostgres at all.
  */
 void
 BaseInit(void)
@@ -512,11 +510,28 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 	InitBufferPoolBackend();
 
 	/*
-	 * Initialize local process's access to XLOG, if appropriate.  In
-	 * bootstrap case we skip this since StartupXLOG() was run instead.
+	 * Initialize local process's access to XLOG.
 	 */
-	if (!bootstrap)
+	if (IsUnderPostmaster)
+	{
+		/*
+		 * The postmaster already started the XLOG machinery, but we need
+		 * to call InitXLOGAccess(), if the system isn't in hot-standby mode.
+		 * This is handled by calling RecoveryInProgress and ignoring the
+		 * result.
+		 */
 		(void) RecoveryInProgress();
+	}
+	else
+	{
+		/*
+		 * We are either a bootstrap process or a standalone backend.
+		 * Either way, start up the XLOG machinery, and register to have it
+		 * closed down at exit.
+		 */
+		StartupXLOG();
+		on_shmem_exit(ShutdownXLOG, 0);
+	}
 
 	/*
 	 * Initialize the relation cache and the system catalog caches.  Note that

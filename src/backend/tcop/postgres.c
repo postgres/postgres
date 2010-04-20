@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.592 2010/03/21 00:17:58 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.593 2010/04/20 01:38:52 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -3531,11 +3531,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 
 	PG_SETMASK(&BlockSig);		/* block everything except SIGQUIT */
 
-	if (IsUnderPostmaster)
-	{
-		BaseInit();
-	}
-	else
+	if (!IsUnderPostmaster)
 	{
 		/*
 		 * Validate we have been given a reasonable-looking DataDir (if under
@@ -3551,16 +3547,10 @@ PostgresMain(int argc, char *argv[], const char *username)
 		 * Create lockfile for data directory.
 		 */
 		CreateDataDirLockFile(false);
-
-		BaseInit();
-
-		/*
-		 * Start up xlog for standalone backend, and register to have it
-		 * closed down at exit.
-		 */
-		StartupXLOG();
-		on_shmem_exit(ShutdownXLOG, 0);
 	}
+
+	/* Early initialization */
+	BaseInit();
 
 	/*
 	 * Create a per-backend PGPROC struct in shared memory, except in the
