@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/standby.c,v 1.16 2010/04/06 10:50:57 sriggs Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/standby.c,v 1.17 2010/04/21 19:08:14 sriggs Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -245,6 +245,24 @@ void
 ResolveRecoveryConflictWithSnapshot(TransactionId latestRemovedXid, RelFileNode node)
 {
 	VirtualTransactionId *backends;
+
+	/*
+	 * If we get passed InvalidTransactionId then we are a little surprised,
+	 * but it is theoretically possible, so spit out a LOG message, but not
+	 * one that needs translating.
+	 *
+	 * We grab latestCompletedXid instead because this is the very latest
+	 * value it could ever be.
+	 */
+	if (!TransactionIdIsValid(latestRemovedXid))
+	{
+		elog(LOG, "Invalid latestRemovedXid reported, using latestCompletedXid instead");
+
+		LWLockAcquire(ProcArrayLock, LW_SHARED);
+		latestRemovedXid = ShmemVariableCache->latestCompletedXid;
+		LWLockRelease(ProcArrayLock);
+	}
+	Assert(TransactionIdIsValid(latestRemovedXid));
 
 	backends = GetConflictingVirtualXIDs(latestRemovedXid,
 										 node.dbNode);

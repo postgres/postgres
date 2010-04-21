@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/procarray.c,v 1.64 2010/04/19 18:03:38 sriggs Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/procarray.c,v 1.65 2010/04/21 19:08:14 sriggs Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1638,58 +1638,23 @@ GetCurrentVirtualXIDs(TransactionId limitXmin, bool excludeXmin0,
  * limitXmin is supplied as either latestRemovedXid, or InvalidTransactionId
  * in cases where we cannot accurately determine a value for latestRemovedXid.
  *
- * If limitXmin is InvalidTransactionId then we are forced to assume that
- * latest xid that might have caused a cleanup record will be
- * latestCompletedXid, so we set limitXmin to be latestCompletedXid instead.
- * We then skip any backends with xmin > limitXmin. This means that
- * cleanup records don't conflict with some recent snapshots.
+ * If limitXmin is InvalidTransactionId then we want to kill everybody,
+ * so we're not worried if they have a snapshot or not, nor does it really
+ * matter what type of lock we hold.
  *
- * The reason for using latestCompletedxid is that we aren't certain which
- * of the xids in KnownAssignedXids are actually FATAL errors that did
- * not write abort records. In almost every case they won't be, but we
- * don't know that for certain. So we need to conflict with all current
- * snapshots whose xmin is less than latestCompletedXid to be safe. This
- * causes false positives in our assessment of which vxids conflict.
- *
- * By using exclusive lock we prevent new snapshots from being taken while
- * we work out which snapshots to conflict with. This protects those new
- * snapshots from also being included in our conflict list.
- *
- * After the lock is released, we allow snapshots again. It is possible
- * that we arrive at a snapshot that is identical to one that we just
- * decided we should conflict with. This a case of false positives, not an
- * actual problem.
- *
- * There are two cases: (1) if we were correct in using latestCompletedXid
- * then that means that all xids in the snapshot lower than that are FATAL
- * errors, so not xids that ever commit. We can make no visibility errors
- * if we allow such xids into the snapshot. (2) if we erred on the side of
- * caution and in fact the latestRemovedXid should have been earlier than
- * latestCompletedXid then we conflicted with a snapshot needlessly. Taking
- * another identical snapshot is OK, because the earlier conflicted
- * snapshot was a false positive.
- *
- * In either case, a snapshot taken after conflict assessment will still be
- * valid and non-conflicting even if an identical snapshot that existed
- * before conflict assessment was assessed as conflicting.
- *
- * If we allowed concurrent snapshots while we were deciding who to
- * conflict with we would need to include all concurrent snapshotters in
- * the conflict list as well. We'd have difficulty in working out exactly
- * who that was, so it is happier for all concerned if we take an exclusive
- * lock. Notice that we only hold that lock for as long as it takes to
- * make the conflict list, not for the whole duration of the conflict
- * resolution.
- *
- * It also means that users waiting for a snapshot is a good thing, since
- * it is more likely that they will live longer after having waited. So it
- * is a benefit, not an oversight that we use exclusive lock here.
- *
- * We replace InvalidTransactionId with latestCompletedXid here because
- * this is the most convenient place to do that, while we hold ProcArrayLock.
- * The originator of the cleanup record wanted to avoid checking the value of
- * latestCompletedXid since doing so would be a performance issue during
- * normal running, so we check it essentially for free on the standby.
+ * All callers that are checking xmins always now supply a valid and useful
+ * value for limitXmin. The limitXmin is always lower than the lowest
+ * numbered KnownAssignedXid that is not already a FATAL error. This is
+ * because we only care about cleanup records that are cleaning up tuple
+ * versions from committed transactions. In that case they will only occur
+ * at the point where the record is less than the lowest running xid. That
+ * allows us to say that if any backend takes a snapshot concurrently with
+ * us then the conflict assessment made here would never include the snapshot
+ * that is being derived. So we take LW_SHARED on the ProcArray and allow
+ * concurrent snapshots when limitXmin is valid. We might think about adding
+ *   Assert(limitXmin < lowest(KnownAssignedXids))
+ * but that would not be true in the case of FATAL errors lagging in array,
+ * but we already know those are bogus anyway, so we skip that test.
  *
  * If dbOid is valid we skip backends attached to other databases.
  *
@@ -1719,14 +1684,7 @@ GetConflictingVirtualXIDs(TransactionId limitXmin, Oid dbOid)
 					 errmsg("out of memory")));
 	}
 
-	LWLockAcquire(ProcArrayLock, LW_EXCLUSIVE);
-
-	/*
-	 * If we don't know the TransactionId that created the conflict, set it to
-	 * latestCompletedXid which is the latest possible value.
-	 */
-	if (!TransactionIdIsValid(limitXmin))
-		limitXmin = ShmemVariableCache->latestCompletedXid;
+	LWLockAcquire(ProcArrayLock, LW_SHARED);
 
 	for (index = 0; index < arrayP->numProcs; index++)
 	{
@@ -1747,7 +1705,8 @@ GetConflictingVirtualXIDs(TransactionId limitXmin, Oid dbOid)
 			 * no snapshot and cannot get another one while we hold exclusive
 			 * lock.
 			 */
-			if (TransactionIdIsValid(pxmin) && !TransactionIdFollows(pxmin, limitXmin))
+			if (!TransactionIdIsValid(limitXmin) ||
+				(TransactionIdIsValid(pxmin) && !TransactionIdFollows(pxmin, limitXmin)))
 			{
 				VirtualTransactionId vxid;
 
