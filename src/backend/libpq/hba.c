@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.205 2010/04/19 19:02:18 sriggs Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.206 2010/04/21 03:32:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -513,7 +513,13 @@ check_db(const char *dbname, const char *role, Oid roleid, char *param_str)
 		 tok != NULL;
 		 tok = strtok(NULL, MULTI_VALUE_SEP))
 	{
-		if (strcmp(tok, "all\n") == 0)
+		if (am_walsender)
+		{
+			/* walsender connections can only match replication keyword */
+			if (strcmp(tok, "replication\n") == 0)
+				return true;
+		}
+		else if (strcmp(tok, "all\n") == 0)
 			return true;
 		else if (strcmp(tok, "sameuser\n") == 0)
 		{
@@ -526,9 +532,8 @@ check_db(const char *dbname, const char *role, Oid roleid, char *param_str)
 			if (is_member(roleid, dbname))
 				return true;
 		}
-		else if (strcmp(tok, "replication\n") == 0 &&
-				 am_walsender)
-			return true;
+		else if (strcmp(tok, "replication\n") == 0)
+			continue;			/* never match this if not walsender */
 		else if (strcmp(tok, dbname) == 0)
 			return true;
 	}
@@ -1812,7 +1817,7 @@ load_ident(void)
  *
  *	Note that STATUS_ERROR indicates a problem with the hba config file.
  *	If the file is OK but does not contain any entry matching the request,
- *	we return STATUS_OK and method = uaReject.
+ *	we return STATUS_OK and method = uaImplicitReject.
  */
 int
 hba_getauthmethod(hbaPort *port)

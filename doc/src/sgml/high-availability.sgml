@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/high-availability.sgml,v 1.61 2010/04/20 11:15:06 rhaas Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/high-availability.sgml,v 1.62 2010/04/21 03:32:53 tgl Exp $ -->
 
 <chapter id="high-availability">
  <title>High Availability, Load Balancing, and Replication</title>
@@ -617,7 +617,7 @@ protocol to make nodes agree on a serializable transactional order.
   </sect2>
 
   <sect2 id="preparing-master-for-standby">
-   <title>Preparing Master for Standby Servers</title>
+   <title>Preparing the Master for Standby Servers</title>
 
    <para>
     Set up continuous archiving on the primary to an archive directory
@@ -629,9 +629,13 @@ protocol to make nodes agree on a serializable transactional order.
    </para>
 
    <para>
-    If you want to use streaming replication, set up authentication to allow
-    streaming replication connections and set <varname>max_wal_senders</> in
-    the configuration file of the primary server.
+    If you want to use streaming replication, set up authentication on the
+    primary server to allow replication connections from the standby
+    server(s); that is, provide a suitable entry or entries in
+    <filename>pg_hba.conf</> with the database field set to
+    <literal>replication</>.  Also ensure <varname>max_wal_senders</> is set
+    to a sufficiently large value in the configuration file of the primary
+    server.
    </para>
 
    <para>
@@ -641,7 +645,7 @@ protocol to make nodes agree on a serializable transactional order.
   </sect2>
 
   <sect2 id="standby-server-setup">
-   <title>Setting up the standby server</title>
+   <title>Setting Up a Standby Server</title>
 
    <para>
     To set up the standby server, restore the base backup taken from primary
@@ -656,7 +660,7 @@ protocol to make nodes agree on a serializable transactional order.
      <para>
      Do not use pg_standby or similar tools with the built-in standby mode
      described here. <varname>restore_command</> should return immediately
-     if the file does not exist, the server will retry the command again if
+     if the file does not exist; the server will retry the command again if
      necessary. See <xref linkend="log-shipping-alternative">
      for using tools like pg_standby.
     </para>
@@ -776,22 +780,20 @@ trigger_file = '/path/to/trigger_file'
    <sect3 id="streaming-replication-authentication">
     <title>Authentication</title>
     <para>
-     It is very important that the access privilege for replication be setup
-     properly so that only trusted users can read the WAL stream, because it is
-     easy to extract privileged information from it.
+     It is very important that the access privileges for replication be set up
+     so that only trusted users can read the WAL stream, because it is
+     easy to extract privileged information from it.  Standby servers must
+     authenticate to the primary as a superuser account.
+     So a role with the <literal>SUPERUSER</> and <literal>LOGIN</>
+     privileges needs to be created on the primary.
     </para>
     <para>
-     Only the superuser is allowed to connect to the primary as the replication
-     standby. So a role with the <literal>SUPERUSER</> and <literal>LOGIN</>
-     privileges needs to be created in the primary.
-    </para>
-    <para>
-     Client authentication for replication is controlled by the
+     Client authentication for replication is controlled by a
      <filename>pg_hba.conf</> record specifying <literal>replication</> in the
      <replaceable>database</> field. For example, if the standby is running on
      host IP <literal>192.168.1.100</> and the superuser's name for replication
      is <literal>foo</>, the administrator can add the following line to the
-     <filename>pg_hba.conf</> file on the primary.
+     <filename>pg_hba.conf</> file on the primary:
 
 <programlisting>
 # Allow the user "foo" from host 192.168.1.100 to connect to the primary
@@ -809,18 +811,13 @@ host    replication     foo             192.168.1.100/32        md5
      port <literal>5432</literal>, the superuser's name for replication is
      <literal>foo</>, and the password is <literal>foopass</>, the administrator
      can add the following line to the <filename>recovery.conf</> file on the
-     standby.
+     standby:
 
 <programlisting>
 # The standby connects to the primary that is running on host 192.168.1.50
 # and port 5432 as the user "foo" whose password is "foopass".
 primary_conninfo = 'host=192.168.1.50 port=5432 user=foo password=foopass'
 </programlisting>
-
-      You do not need to specify <literal>database=replication</> in the
-      <varname>primary_conninfo</varname>. The required option will be added
-      automatically. If you mention the database parameter at all within
-      <varname>primary_conninfo</varname> then a FATAL error will be raised.
     </para>
    </sect3>
 
@@ -1959,7 +1956,7 @@ mv /tmp/pg_control /path/to/backup/data/global
       <filename>pg_control</> contains the location where WAL replay will
       begin after restoring from the backup; backing it up first ensures
       that it points to the last restartpoint when the backup started, not
-      some later restartpoint that happened while files were copied to the 
+      some later restartpoint that happened while files were copied to the
       backup.
      </para>
     </listitem>

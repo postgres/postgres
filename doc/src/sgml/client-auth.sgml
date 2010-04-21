@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.136 2010/04/03 07:22:53 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.137 2010/04/21 03:32:53 tgl Exp $ -->
 
 <chapter id="client-authentication">
  <title>Client Authentication</title>
@@ -75,13 +75,14 @@
   <para>
    The general format of the <filename>pg_hba.conf</filename> file is
    a set of records, one per line. Blank lines are ignored, as is any
-   text after the <literal>#</literal> comment character. A record is made
+   text after the <literal>#</literal> comment character.
+   Records cannot be continued across lines.
+   A record is made
    up of a number of fields which are separated by spaces and/or tabs.
    Fields can contain white space if the field value is quoted.
-   Quoting one of the keywords in database or username field (e.g "all"
-   or "replication") makes the name lose its special character, and just
-   match a database or username with that name. Records cannot be
-   continued across lines.
+   Quoting one of the keywords in a database or username field (e.g.,
+   <literal>all</> or <literal>replication</>) makes the word lose its special
+   character, and just match a database or user with that name.
   </para>
 
   <para>
@@ -185,7 +186,8 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
        name as the requested database.  (<literal>samegroup</> is an
        obsolete but still accepted spelling of <literal>samerole</>.)
        The value <literal>replication</> specifies that the record
-       matches if streaming replication is requested.
+       matches if a replication connection is requested (note that
+       replication connections do not specify any particular database).
        Otherwise, this is the name of
        a specific <productname>PostgreSQL</productname> database.
        Multiple database names can be supplied by separating them with
@@ -241,7 +243,7 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
        Typical examples of a <replaceable>CIDR-address</replaceable> are
        <literal>172.20.143.89/32</literal> for a single host, or
        <literal>172.20.143.0/24</literal> for a small network, or
-       <literal>10.6.0.0/16</literal> for a larger one.  
+       <literal>10.6.0.0/16</literal> for a larger one.
        <literal>0.0.0.0/0</literal> (<quote>all balls</>) represents all addresses.
        To specify a single host, use a CIDR mask of 32 for IPv4 or
        128 for IPv6.  In a network address, do not omit trailing zeroes.

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/recovery-config.sgml,v 2.4 2010/04/07 10:58:49 heikki Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/recovery-config.sgml,v 2.5 2010/04/21 03:32:53 tgl Exp $ -->
 
 <chapter Id="recovery-config">
   <title>Recovery Configuration</title>
@@ -10,12 +10,10 @@
   </indexterm>
 
    <para>
-      This chapter describes the settings available in
-      <filename>recovery.conf</> file. They apply only for the duration of
-      the recovery.  (A sample file, <filename>share/recovery.conf.sample</>,
-      exists in the installation's <filename>share/</> directory.)  They must
-      be reset for any subsequent recovery you wish to perform. They cannot
-      be changed once recovery has begun.
+    This chapter describes the settings available in the
+    <filename>recovery.conf</> file. They apply only for the duration of the
+    recovery.  They must be reset for any subsequent recovery you wish to
+    perform.  They cannot be changed once recovery has begun.
    </para>
 
    <para>
@@ -24,6 +22,11 @@
      Hash marks (<literal>#</literal>) designate the rest of the
      line as a comment.  To embed a single quote in a parameter
      value, write two quotes (<literal>''</>).
+   </para>
+
+   <para>
+    A sample file, <filename>share/recovery.conf.sample</>,
+    is provided in the installation's <filename>share/</> directory.
    </para>
 
   <sect1 id="archive-recovery-settings">
@@ -208,9 +211,10 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
          <para>
           Specifies whether to start the <productname>PostgreSQL</> server as
           a standby. If this parameter is <literal>on</>, the server will
-          not end recovery when the end of archived WAL is reached, but
-          will keep trying to continue recovery using <varname>restore_command</>
-          and by connecting to the primary server as specified by the
+          not stop recovery when the end of archived WAL is reached, but
+          will keep trying to continue recovery by fetching new WAL segments
+          using <varname>restore_command</>
+          and/or by connecting to the primary server as specified by the
           <varname>primary_conninfo</> setting.
          </para>
         </listitem>
@@ -229,14 +233,19 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
           defaults are used.
          </para>
          <para>
-          The built-in replication requires that a host name (or host address)
-          or port number which the primary server listens on be
-          specified in this string. Also ensure that a role with
-          the <literal>SUPERUSER</> and <literal>LOGIN</> privileges on the
-          primary is set (see
-          <xref linkend="streaming-replication-authentication">). Note that
-          the password needs to be set if the primary demands password
-          authentication.
+          The connection string should specify the host name (or address)
+          of the primary server, as well as the port number if it is not
+          the same as the standby server's default.
+          Also specify a user name corresponding to a role that has the
+          <literal>SUPERUSER</> and <literal>LOGIN</> privileges on the
+          primary (see
+          <xref linkend="streaming-replication-authentication">).
+          A password needs to be provided too, if the primary demands password
+          authentication.  (The password can be provided either in
+          the <varname>primary_conninfo</varname> string or in a separate
+          <filename>~/.pgpass</> file on the standby server.)
+          Do not specify a database name in the
+          <varname>primary_conninfo</varname> string.
          </para>
          <para>
           This setting has no effect if <varname>standby_mode</> is <literal>off</>.

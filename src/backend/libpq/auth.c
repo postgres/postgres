@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/auth.c,v 1.199 2010/04/19 19:02:18 sriggs Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/auth.c,v 1.200 2010/04/21 03:32:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,6 +36,7 @@
 #include "libpq/pqformat.h"
 #include "libpq/md5.h"
 #include "miscadmin.h"
+#include "replication/walsender.h"
 #include "storage/ipc.h"
 
 
@@ -250,6 +251,7 @@ auth_failed(Port *port, int status)
 	switch (port->hba->auth_method)
 	{
 		case uaReject:
+		case uaImplicitReject:
 			errstr = gettext_noop("authentication failed for user \"%s\": host rejected");
 			break;
 		case uaKrb5:
@@ -363,12 +365,14 @@ ClientAuthentication(Port *port)
 		case uaReject:
 
 			/*
-			 * An explicit "reject" entry in pg_hba.conf. Take pity on the poor
-			 * user and issue a helpful error message.
-			 * NOTE: this is not a security breach, because all the info
-			 * reported here is known at the frontend and must be assumed
-			 * known to bad guys. We're merely helping out the less clueful
-			 * good guys.
+			 * An explicit "reject" entry in pg_hba.conf.  This report exposes
+			 * the fact that there's an explicit reject entry, which is perhaps
+			 * not so desirable from a security standpoint; but the message
+			 * for an implicit reject could confuse the DBA a lot when the
+			 * true situation is a match to an explicit reject.  And we don't
+			 * want to change the message for an implicit reject.  As noted
+			 * below, the additional information shown here doesn't expose
+			 * anything not known to an attacker.
 			 */
 			{
 				char		hostinfo[NI_MAXHOST];
@@ -378,29 +382,50 @@ ClientAuthentication(Port *port)
 								   NULL, 0,
 								   NI_NUMERICHOST);
 
+				if (am_walsender)
+				{
 #ifdef USE_SSL
-				ereport(FATAL,
-						(errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
-						 errmsg("pg_hba.conf rejects host \"%s\", user \"%s\", database \"%s\", %s",
-							  hostinfo, port->user_name, port->database_name,
-								port->ssl ? _("SSL on") : _("SSL off"))));
+					ereport(FATAL,
+							(errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
+							 errmsg("pg_hba.conf rejects replication connection for host \"%s\", user \"%s\", %s",
+									hostinfo, port->user_name,
+									port->ssl ? _("SSL on") : _("SSL off"))));
 #else
-				ereport(FATAL,
-						(errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
-						 errmsg("pg_hba.conf rejects host \"%s\", user \"%s\", database \"%s\"",
-						   hostinfo, port->user_name, port->database_name)));
+					ereport(FATAL,
+							(errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
+							 errmsg("pg_hba.conf rejects replication connection for host \"%s\", user \"%s\"",
+									hostinfo, port->user_name)));
 #endif
+				}
+				else
+				{
+#ifdef USE_SSL
+					ereport(FATAL,
+							(errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
+							 errmsg("pg_hba.conf rejects connection for host \"%s\", user \"%s\", database \"%s\", %s",
+									hostinfo, port->user_name,
+									port->database_name,
+									port->ssl ? _("SSL on") : _("SSL off"))));
+#else
+					ereport(FATAL,
+							(errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
+							 errmsg("pg_hba.conf rejects connection for host \"%s\", user \"%s\", database \"%s\"",
+									hostinfo, port->user_name,
+									port->database_name)));
+#endif
+				}
 				break;
 			}
 
 		case uaImplicitReject:
 
 			/*
-			 * No matching entry so tell the user we fell through.
-			 * NOTE: this is not a security breach, because all the info
-			 * reported here is known at the frontend and must be assumed
-			 * known to bad guys. We're merely helping out the less clueful
-			 * good guys.
+			 * No matching entry, so tell the user we fell through.
+			 *
+			 * NOTE: the extra info reported here is not a security breach,
+			 * because all that info is known at the frontend and must be
+			 * assumed known to bad guys.  We're merely helping out the less
+			 * clueful good guys.
 			 */
 			{
 				char		hostinfo[NI_MAXHOST];
@@ -410,18 +435,38 @@ ClientAuthentication(Port *port)
 								   NULL, 0,
 								   NI_NUMERICHOST);
 
+				if (am_walsender)
+				{
 #ifdef USE_SSL
-				ereport(FATAL,
-						(errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
-						 errmsg("no pg_hba.conf entry for host \"%s\", user \"%s\", database \"%s\", %s",
-							  hostinfo, port->user_name, port->database_name,
-								port->ssl ? _("SSL on") : _("SSL off"))));
+					ereport(FATAL,
+							(errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
+							 errmsg("no pg_hba.conf entry for replication connection from host \"%s\", user \"%s\", %s",
+									hostinfo, port->user_name,
+									port->ssl ? _("SSL on") : _("SSL off"))));
 #else
-				ereport(FATAL,
-						(errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
-						 errmsg("no pg_hba.conf entry for host \"%s\", user \"%s\", database \"%s\"",
-						   hostinfo, port->user_name, port->database_name)));
+					ereport(FATAL,
+							(errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
+							 errmsg("no pg_hba.conf entry for replication connection from host \"%s\", user \"%s\"",
+									hostinfo, port->user_name)));
 #endif
+				}
+				else
+				{
+#ifdef USE_SSL
+					ereport(FATAL,
+							(errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
+							 errmsg("no pg_hba.conf entry for host \"%s\", user \"%s\", database \"%s\", %s",
+									hostinfo, port->user_name,
+									port->database_name,
+									port->ssl ? _("SSL on") : _("SSL off"))));
+#else
+					ereport(FATAL,
+							(errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
+							 errmsg("no pg_hba.conf entry for host \"%s\", user \"%s\", database \"%s\"",
+									hostinfo, port->user_name,
+									port->database_name)));
+#endif
+				}
 				break;
 			}
 

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/replication/libpqwalreceiver/libpqwalreceiver.c,v 1.9 2010/04/19 14:10:45 mha Exp $
+ *	  $PostgreSQL: pgsql/src/backend/replication/libpqwalreceiver/libpqwalreceiver.c,v 1.10 2010/04/21 03:32:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -91,7 +91,7 @@ libpqrcv_connect(char *conninfo, XLogRecPtr startpoint)
 	streamConn = PQconnectdb(conninfo_repl);
 	if (PQstatus(streamConn) != CONNECTION_OK)
 		ereport(ERROR,
-				(errmsg("could not connect to the primary server : %s",
+				(errmsg("could not connect to the primary server: %s",
 						PQerrorMessage(streamConn))));
 
 	/*
