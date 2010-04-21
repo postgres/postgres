@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.549 2010/04/20 11:15:06 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.550 2010/04/21 20:54:19 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -2864,6 +2864,8 @@ static void ShowGUCConfigOption(const char *name, DestReceiver *dest);
 static void ShowAllGUCConfig(DestReceiver *dest);
 static char *_ShowOption(struct config_generic * record, bool use_units);
 static bool is_newvalue_equal(struct config_generic * record, const char *newvalue);
+static bool validate_option_array_item(const char *name, const char *value,
+									   bool skipIfNoPermissions);
 
 
 /*
@@ -5474,14 +5476,15 @@ flatten_set_variable_args(const char *name, List *args)
 	if (args == NIL)
 		return NULL;
 
-	/* Else get flags for the variable */
-	record = find_option(name, true, ERROR);
-	if (record == NULL)
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-			   errmsg("unrecognized configuration parameter \"%s\"", name)));
-
-	flags = record->flags;
+	/*
+	 * Get flags for the variable; if it's not known, use default flags.
+	 * (Caller might throw error later, but not our business to do so here.)
+	 */
+	record = find_option(name, false, WARNING);
+	if (record)
+		flags = record->flags;
+	else
+		flags = 0;
 
 	/* Complain if list input and non-list variable */
 	if ((flags & GUC_LIST_INPUT) == 0 &&
@@ -5870,12 +5873,27 @@ define_custom_variable(struct config_generic * variable)
 			else
 				phcontext = PGC_SIGHUP;
 			break;
+
 		case PGC_S_DATABASE:
 		case PGC_S_USER:
 		case PGC_S_DATABASE_USER:
+			/*
+			 * The existing value came from an ALTER ROLE/DATABASE SET command.
+			 * We can assume that at the time the command was issued, we
+			 * checked that the issuing user was superuser if the variable
+			 * requires superuser privileges to set.  So it's safe to
+			 * use SUSET context here.
+			 */
+			phcontext = PGC_SUSET;
+			break;
+
 		case PGC_S_CLIENT:
 		case PGC_S_SESSION:
 		default:
+			/*
+			 * We must assume that the value came from an untrusted user,
+			 * even if the current_user is a superuser.
+			 */
 			phcontext = PGC_USERSET;
 			break;
 	}
@@ -7180,7 +7198,7 @@ ProcessGUCArray(ArrayType *array,
 ArrayType *
 GUCArrayAdd(ArrayType *array, const char *name, const char *value)
 {
-	const char *varname;
+	struct config_generic *record;
 	Datum		datum;
 	char	   *newval;
 	ArrayType  *a;
@@ -7188,15 +7206,15 @@ GUCArrayAdd(ArrayType *array, const char *name, const char *value)
 	Assert(name);
 	Assert(value);
 
-	/* test if the option is valid */
-	set_config_option(name, value,
-					  superuser() ? PGC_SUSET : PGC_USERSET,
-					  PGC_S_TEST, GUC_ACTION_SET, false);
+	/* test if the option is valid and we're allowed to set it */
+	(void) validate_option_array_item(name, value, false);
 
-	/* convert name to canonical spelling, so we can use plain strcmp */
-	(void) GetConfigOptionByName(name, &varname);
-	name = varname;
+	/* normalize name (converts obsolete GUC names to modern spellings) */
+	record = find_option(name, false, WARNING);
+	if (record)
+		name = record->name;
 
+	/* build new item for array */
 	newval = palloc(strlen(name) + 1 + strlen(value) + 1);
 	sprintf(newval, "%s=%s", name, value);
 	datum = CStringGetTextDatum(newval);
@@ -7227,6 +7245,8 @@ GUCArrayAdd(ArrayType *array, const char *name, const char *value)
 			if (isnull)
 				continue;
 			current = TextDatumGetCString(d);
+
+			/* check for match up through and including '=' */
 			if (strncmp(current, newval, strlen(name) + 1) == 0)
 			{
 				index = i;
@@ -7259,21 +7279,20 @@ GUCArrayAdd(ArrayType *array, const char *name, const char *value)
 ArrayType *
 GUCArrayDelete(ArrayType *array, const char *name)
 {
-	const char *varname;
+	struct config_generic *record;
 	ArrayType  *newarray;
 	int			i;
 	int			index;
 
 	Assert(name);
 
-	/* test if the option is valid */
-	set_config_option(name, NULL,
-					  superuser() ? PGC_SUSET : PGC_USERSET,
-					  PGC_S_TEST, GUC_ACTION_SET, false);
+	/* test if the option is valid and we're allowed to set it */
+	(void) validate_option_array_item(name, NULL, false);
 
-	/* convert name to canonical spelling, so we can use plain strcmp */
-	(void) GetConfigOptionByName(name, &varname);
-	name = varname;
+	/* normalize name (converts obsolete GUC names to modern spellings) */
+	record = find_option(name, false, WARNING);
+	if (record)
+		name = record->name;
 
 	/* if array is currently null, then surely nothing to delete */
 	if (!array)
@@ -7303,10 +7322,8 @@ GUCArrayDelete(ArrayType *array, const char *name)
 			&& val[strlen(name)] == '=')
 			continue;
 
-
 		/* else add it to the output array */
 		if (newarray)
-		{
 			newarray = array_set(newarray, 1, &index,
 								 d,
 								 false,
@@ -7314,7 +7331,6 @@ GUCArrayDelete(ArrayType *array, const char *name)
 								 -1 /* TEXT's typlen */ ,
 								 false /* TEXT's typbyval */ ,
 								 'i' /* TEXT's typalign */ );
-		}
 		else
 			newarray = construct_array(&d, 1,
 									   TEXTOID,
@@ -7325,6 +7341,7 @@ GUCArrayDelete(ArrayType *array, const char *name)
 
 	return newarray;
 }
+
 
 /*
  * Given a GUC array, delete all settings from it that our permission
@@ -7342,7 +7359,7 @@ GUCArrayReset(ArrayType *array)
 	if (!array)
 		return NULL;
 
-	/* if we're superuser, we can delete everything */
+	/* if we're superuser, we can delete everything, so just do it */
 	if (superuser())
 		return NULL;
 
@@ -7355,7 +7372,6 @@ GUCArrayReset(ArrayType *array)
 		char	   *val;
 		char	   *eqsgn;
 		bool		isnull;
-		struct config_generic *gconf;
 
 		d = array_ref(array, 1, &i,
 					  -1 /* varlenarray */ ,
@@ -7363,7 +7379,6 @@ GUCArrayReset(ArrayType *array)
 					  false /* TEXT's typbyval */ ,
 					  'i' /* TEXT's typalign */ ,
 					  &isnull);
-
 		if (isnull)
 			continue;
 		val = TextDatumGetCString(d);
@@ -7371,20 +7386,12 @@ GUCArrayReset(ArrayType *array)
 		eqsgn = strchr(val, '=');
 		*eqsgn = '\0';
 
-		gconf = find_option(val, false, WARNING);
-		if (!gconf)
+		/* skip if we have permission to delete it */
+		if (validate_option_array_item(val, NULL, true))
 			continue;
-
-		/* note: superuser-ness was already checked above */
-		/* skip entry if OK to delete */
-		if (gconf->context == PGC_USERSET)
-			continue;
-
-		/* XXX do we need to worry about database owner? */
 
 		/* else add it to the output array */
 		if (newarray)
-		{
 			newarray = array_set(newarray, 1, &index,
 								 d,
 								 false,
@@ -7392,7 +7399,6 @@ GUCArrayReset(ArrayType *array)
 								 -1 /* TEXT's typlen */ ,
 								 false /* TEXT's typbyval */ ,
 								 'i' /* TEXT's typalign */ );
-		}
 		else
 			newarray = construct_array(&d, 1,
 									   TEXTOID,
@@ -7403,6 +7409,89 @@ GUCArrayReset(ArrayType *array)
 	}
 
 	return newarray;
+}
+
+/*
+ * Validate a proposed option setting for GUCArrayAdd/Delete/Reset.
+ *
+ * name is the option name.  value is the proposed value for the Add case,
+ * or NULL for the Delete/Reset cases.  If skipIfNoPermissions is true, it's
+ * not an error to have no permissions to set the option.
+ *
+ * Returns TRUE if OK, FALSE if skipIfNoPermissions is true and user does not
+ * have permission to change this option (all other error cases result in an
+ * error being thrown).
+ */
+static bool
+validate_option_array_item(const char *name, const char *value,
+						   bool skipIfNoPermissions)
+
+{
+	struct config_generic *gconf;
+
+	/*
+	 * There are three cases to consider:
+	 *
+	 * name is a known GUC variable.  Check the value normally, check
+	 * permissions normally (ie, allow if variable is USERSET, or if it's
+	 * SUSET and user is superuser).
+	 *
+	 * name is not known, but exists or can be created as a placeholder
+	 * (implying it has a prefix listed in custom_variable_classes).
+	 * We allow this case if you're a superuser, otherwise not.  Superusers
+	 * are assumed to know what they're doing.  We can't allow it for other
+	 * users, because when the placeholder is resolved it might turn out to
+	 * be a SUSET variable; define_custom_variable assumes we checked that.
+	 *
+	 * name is not known and can't be created as a placeholder.  Throw error,
+	 * unless skipIfNoPermissions is true, in which case return FALSE.
+	 * (It's tempting to allow this case to superusers, if the name is
+	 * qualified but not listed in custom_variable_classes.  That would
+	 * ease restoring of dumps containing ALTER ROLE/DATABASE SET.  However,
+	 * it's not clear that this usage justifies such a loss of error checking.
+	 * You can always fix custom_variable_classes before you restore.)
+	 */
+	gconf = find_option(name, true, WARNING);
+	if (!gconf)
+	{
+		/* not known, failed to make a placeholder */
+		if (skipIfNoPermissions)
+			return false;
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("unrecognized configuration parameter \"%s\"", name)));
+	}
+
+	if (gconf->flags & GUC_CUSTOM_PLACEHOLDER)
+	{
+		/*
+		 * We cannot do any meaningful check on the value, so only permissions
+		 * are useful to check.
+		 */
+		if (superuser())
+			return true;
+		if (skipIfNoPermissions)
+			return false;
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("permission denied to set parameter \"%s\"", name)));
+	}
+
+	/* manual permissions check so we can avoid an error being thrown */
+	if (gconf->context == PGC_USERSET)
+		/* ok */ ;
+	else if (gconf->context == PGC_SUSET && superuser())
+		/* ok */ ;
+	else if (skipIfNoPermissions)
+		return false;
+	/* if a permissions error should be thrown, let set_config_option do it */
+
+	/* test for permissions and valid option value */
+	set_config_option(name, value,
+					  superuser() ? PGC_SUSET : PGC_USERSET,
+					  PGC_S_TEST, GUC_ACTION_SET, false);
+
+	return true;
 }
 
 
