@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/pruneheap.c,v 1.22 2010/02/26 02:00:33 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/pruneheap.c,v 1.23 2010/04/21 17:20:56 sriggs Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -122,8 +122,10 @@ heap_page_prune_opt(Relation relation, Buffer buffer, TransactionId OldestXmin)
 		 */
 		if (PageIsFull(page) || PageGetHeapFreeSpace(page) < minfree)
 		{
+			TransactionId ignore = InvalidTransactionId;	/* return value not needed */
+
 			/* OK to prune */
-			(void) heap_page_prune(relation, buffer, OldestXmin, true);
+			(void) heap_page_prune(relation, buffer, OldestXmin, true, &ignore);
 		}
 
 		/* And release buffer lock */
@@ -145,11 +147,12 @@ heap_page_prune_opt(Relation relation, Buffer buffer, TransactionId OldestXmin)
  * send its own new total to pgstats, and we don't want this delta applied
  * on top of that.)
  *
- * Returns the number of tuples deleted from the page.
+ * Returns the number of tuples deleted from the page and sets
+ * latestRemovedXid.
  */
 int
 heap_page_prune(Relation relation, Buffer buffer, TransactionId OldestXmin,
-				bool report_stats)
+				bool report_stats, TransactionId *latestRemovedXid)
 {
 	int			ndeleted = 0;
 	Page		page = BufferGetPage(buffer);
@@ -272,6 +275,8 @@ heap_page_prune(Relation relation, Buffer buffer, TransactionId OldestXmin,
 	 */
 	if (report_stats && ndeleted > prstate.ndead)
 		pgstat_update_heap_dead_tuples(relation, ndeleted - prstate.ndead);
+
+	*latestRemovedXid = prstate.latestRemovedXid;
 
 	/*
 	 * XXX Should we update the FSM information of this page ?

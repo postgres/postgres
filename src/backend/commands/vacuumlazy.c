@@ -29,7 +29,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuumlazy.c,v 1.132 2010/02/26 02:00:40 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuumlazy.c,v 1.133 2010/04/21 17:20:56 sriggs Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -274,6 +274,8 @@ vacuum_log_cleanup_info(Relation rel, LVRelStats *vacrelstats)
 	if (rel->rd_istemp || !XLogIsNeeded())
 		return;
 
+	Assert(TransactionIdIsValid(vacrelstats->latestRemovedXid));
+
 	(void) log_heap_cleanup_info(rel->rd_node, vacrelstats->latestRemovedXid);
 }
 
@@ -395,9 +397,11 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 								  vacrelstats);
 			/* Remove tuples from heap */
 			lazy_vacuum_heap(onerel, vacrelstats);
-			/* Forget the now-vacuumed tuples, and press on */
+			/*
+			 * Forget the now-vacuumed tuples, and press on, but be careful
+			 * not to reset latestRemovedXid since we want that value to be valid.
+			 */
 			vacrelstats->num_dead_tuples = 0;
-			vacrelstats->latestRemovedXid = InvalidTransactionId;
 			vacrelstats->num_index_scans++;
 		}
 
@@ -484,8 +488,8 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 		 *
 		 * We count tuples removed by the pruning step as removed by VACUUM.
 		 */
-		tups_vacuumed += heap_page_prune(onerel, buf, OldestXmin, false);
-
+		tups_vacuumed += heap_page_prune(onerel, buf, OldestXmin, false,
+													&vacrelstats->latestRemovedXid);
 		/*
 		 * Now scan the page to collect vacuumable items and check for tuples
 		 * requiring freezing.
@@ -676,9 +680,12 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 		{
 			/* Remove tuples from heap */
 			lazy_vacuum_page(onerel, blkno, buf, 0, vacrelstats);
-			/* Forget the now-vacuumed tuples, and press on */
+			/*
+			 * Forget the now-vacuumed tuples, and press on, but be careful
+			 * not to reset latestRemovedXid since we want that value to be valid.
+			 */
+			Assert(TransactionIdIsValid(vacrelstats->latestRemovedXid));
 			vacrelstats->num_dead_tuples = 0;
-			vacrelstats->latestRemovedXid = InvalidTransactionId;
 			vacuumed_pages++;
 		}
 

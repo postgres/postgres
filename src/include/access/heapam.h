@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/heapam.h,v 1.148 2010/02/26 02:01:20 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/access/heapam.h,v 1.149 2010/04/21 17:20:56 sriggs Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -144,7 +144,7 @@ extern void heap_page_prune_opt(Relation relation, Buffer buffer,
 					TransactionId OldestXmin);
 extern int heap_page_prune(Relation relation, Buffer buffer,
 				TransactionId OldestXmin,
-				bool report_stats);
+				bool report_stats, TransactionId *latestRemovedXid);
 extern void heap_page_prune_execute(Buffer buffer,
 						OffsetNumber *redirected, int nredirected,
 						OffsetNumber *nowdead, int ndead,
