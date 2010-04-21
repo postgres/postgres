@@ -29,7 +29,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuumlazy.c,v 1.133 2010/04/21 17:20:56 sriggs Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuumlazy.c,v 1.134 2010/04/21 19:53:24 sriggs Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -274,9 +274,12 @@ vacuum_log_cleanup_info(Relation rel, LVRelStats *vacrelstats)
 	if (rel->rd_istemp || !XLogIsNeeded())
 		return;
 
-	Assert(TransactionIdIsValid(vacrelstats->latestRemovedXid));
+	if (vacrelstats->tuples_deleted > 0)
+	{
+		Assert(TransactionIdIsValid(vacrelstats->latestRemovedXid));
 
-	(void) log_heap_cleanup_info(rel->rd_node, vacrelstats->latestRemovedXid);
+		(void) log_heap_cleanup_info(rel->rd_node, vacrelstats->latestRemovedXid);
+	}
 }
 
 /*
