@@ -30,7 +30,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/replication/walsender.c,v 1.16 2010/04/12 10:18:50 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/replication/walsender.c,v 1.17 2010/04/21 00:51:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,12 +47,12 @@
 #include "replication/walsender.h"
 #include "storage/fd.h"
 #include "storage/ipc.h"
-#include "storage/lock.h"
 #include "storage/pmsignal.h"
 #include "tcop/tcopprot.h"
 #include "utils/guc.h"
 #include "utils/memutils.h"
 #include "utils/ps_status.h"
+
 
 /* Array of WalSnds in shared memory */
 WalSndCtlData *WalSndCtl = NULL;
@@ -113,11 +113,6 @@ int
 WalSenderMain(void)
 {
 	MemoryContext walsnd_context;
-
-	if (!superuser())
-		ereport(FATAL,
-				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("must be superuser to start walsender")));
 
 	if (RecoveryInProgress())
 		ereport(FATAL,
