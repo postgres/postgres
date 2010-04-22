@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.288 2010/02/26 02:00:33 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.289 2010/04/22 02:15:45 sriggs Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -4106,7 +4106,7 @@ heap_xlog_cleanup_info(XLogRecPtr lsn, XLogRecord *record)
 }
 
 /*
- * Handles HEAP_CLEAN record type
+ * Handles HEAP2_CLEAN record type
  */
 static void
 heap_xlog_clean(XLogRecPtr lsn, XLogRecord *record)
@@ -4126,8 +4126,12 @@ heap_xlog_clean(XLogRecPtr lsn, XLogRecord *record)
 	/*
 	 * We're about to remove tuples. In Hot Standby mode, ensure that there's
 	 * no queries running for which the removed tuples are still visible.
+	 * 
+	 * Not all HEAP2_CLEAN records remove tuples with xids, so we only want
+	 * to conflict on the records that cause MVCC failures for user queries.
+	 * If latestRemovedXid is invalid, skip conflict processing.
 	 */
-	if (InHotStandby)
+	if (InHotStandby && TransactionIdIsValid(xlrec->latestRemovedXid))
 		ResolveRecoveryConflictWithSnapshot(xlrec->latestRemovedXid,
 											xlrec->node);
 
