@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/procarray.c,v 1.65 2010/04/21 19:08:14 sriggs Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/procarray.c,v 1.66 2010/04/22 08:04:25 sriggs Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1839,7 +1839,8 @@ CountDBBackends(Oid databaseid)
 
 		if (proc->pid == 0)
 			continue;			/* do not count prepared xacts */
-		if (proc->databaseId == databaseid)
+		if (!OidIsValid(databaseid) ||
+			proc->databaseId == databaseid)
 			count++;
 	}
 

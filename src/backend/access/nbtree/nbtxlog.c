@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtxlog.c,v 1.66 2010/04/19 17:54:48 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtxlog.c,v 1.67 2010/04/22 08:04:24 sriggs Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -578,8 +578,16 @@ btree_xlog_delete_get_latestRemovedXid(XLogRecord *record)
 	OffsetNumber 	hoffnum;
 	TransactionId	latestRemovedXid = InvalidTransactionId;
 	TransactionId	htupxid = InvalidTransactionId;
-	int num_unused = 0, num_redirect = 0, num_dead = 0;
 	int i;
+
+	/*
+	 * If there's nothing running on the standby we don't need to derive
+	 * a full latestRemovedXid value, so use a fast path out of here.
+	 * That returns InvalidTransactionId, and so will conflict with
+	 * users, but since we just worked out that's zero people, its OK.
+	 */
+	if (CountDBBackends(InvalidOid) == 0)
+		return latestRemovedXid;
 
 	/*
 	 * Get index page
@@ -629,7 +637,6 @@ btree_xlog_delete_get_latestRemovedXid(XLogRecord *record)
 		 */
 		while (ItemIdIsRedirected(hitemid))
 		{
-			num_redirect++;
 			hoffnum = ItemIdGetRedirect(hitemid);
 			hitemid = PageGetItemId(hpage, hoffnum);
 			CHECK_FOR_INTERRUPTS();
@@ -662,25 +669,23 @@ btree_xlog_delete_get_latestRemovedXid(XLogRecord *record)
 			 * marked on LP_NORMAL items. So we just ignore this item and move
 			 * onto the next, for the purposes of calculating latestRemovedxids.
 			 */
-			num_dead++;
 		}
 		else
-		{
 			Assert(!ItemIdIsUsed(hitemid));
-			num_unused++;
-		}
 
 		UnlockReleaseBuffer(hbuffer);
 	}
 
 	UnlockReleaseBuffer(ibuffer);
 
-	Assert(num_unused == 0);
-
 	/*
 	 * Note that if all heap tuples were LP_DEAD then we will be
-	 * returning InvalidTransactionId here. This seems very unlikely
-	 * in practice.
+	 * returning InvalidTransactionId here. That can happen if we are
+	 * re-replaying this record type, though that will be before the
+	 * consistency point and will not cause problems. It should
+	 * happen very rarely after the consistency point, though note
+	 * that we can't tell the difference between this and the fast
+	 * path exit above. May need to change that in future.
 	 */
 	return latestRemovedXid;
 }
@@ -963,13 +968,6 @@ btree_redo(XLogRecPtr lsn, XLogRecord *record)
 					TransactionId latestRemovedXid = btree_xlog_delete_get_latestRemovedXid(record);
 					xl_btree_delete *xlrec = (xl_btree_delete *) XLogRecGetData(record);
 
-					/*
-					 * XXX Currently we put everybody on death row, because
-					 * currently _bt_delitems() supplies InvalidTransactionId.
-					 * This can be fairly painful, so providing a better value
-					 * here is worth some thought and possibly some effort to
-					 * improve.
-					 */
 					ResolveRecoveryConflictWithSnapshot(latestRemovedXid, xlrec->node);
 				}
 				break;
