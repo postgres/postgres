@@ -4,7 +4,7 @@
  *
  * Portions Copyright (c) 2002-2010, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/pg_locale.c,v 1.53 2010/02/27 20:20:44 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/pg_locale.c,v 1.54 2010/04/22 01:55:52 itagaki Exp $
  *
  *-----------------------------------------------------------------------
  */
@@ -388,6 +388,28 @@ free_struct_lconv(struct lconv * s)
 
 
 /*
+ * Return a strdup'ed string converted from the specified encoding to the
+ * database encoding.
+ */
+static char *
+db_encoding_strdup(int encoding, const char *str)
+{
+	char   *pstr;
+	char   *mstr;
+
+	/* convert the string to the database encoding */
+	pstr = (char *) pg_do_encoding_conversion(
+						(unsigned char *) str, strlen(str),
+						encoding, GetDatabaseEncoding());
+	mstr = strdup(pstr);
+	if (pstr != str)
+		pfree(pstr);
+
+	return mstr;
+}
+
+
+/*
  * Return the POSIX lconv struct (contains number/money formatting
  * information) with locale information for all categories.
  */
@@ -398,6 +420,14 @@ PGLC_localeconv(void)
 	struct lconv *extlconv;
 	char	   *save_lc_monetary;
 	char	   *save_lc_numeric;
+	char	   *decimal_point;
+	char	   *grouping;
+	char	   *thousands_sep;
+	int			encoding;
+
+#ifdef WIN32
+	char	   *save_lc_ctype;
+#endif
 
 	/* Did we do it already? */
 	if (CurrentLocaleConvValid)
@@ -413,28 +443,48 @@ PGLC_localeconv(void)
 	if (save_lc_numeric)
 		save_lc_numeric = pstrdup(save_lc_numeric);
 
-	setlocale(LC_MONETARY, locale_monetary);
-	setlocale(LC_NUMERIC, locale_numeric);
+#ifdef WIN32
+	/* set user's value of ctype locale */
+	save_lc_ctype = setlocale(LC_CTYPE, NULL);
+	if (save_lc_ctype)
+		save_lc_ctype = pstrdup(save_lc_ctype);
+#endif
 
-	/* Get formatting information */
+	/* Get formatting information for numeric */
+#ifdef WIN32
+	setlocale(LC_CTYPE, locale_numeric);
+#endif
+	setlocale(LC_NUMERIC, locale_numeric);
 	extlconv = localeconv();
+	encoding = pg_get_encoding_from_locale(locale_numeric);
+
+	decimal_point = db_encoding_strdup(encoding, extlconv->decimal_point);
+	thousands_sep = db_encoding_strdup(encoding, extlconv->thousands_sep);
+	grouping = strdup(extlconv->grouping);
+
+	/* Get formatting information for monetary */
+#ifdef WIN32
+	setlocale(LC_CTYPE, locale_monetary);
+#endif
+	setlocale(LC_MONETARY, locale_monetary);
+	extlconv = localeconv();
+	encoding = pg_get_encoding_from_locale(locale_monetary);
 
 	/*
 	 * Must copy all values since restoring internal settings may overwrite
 	 * localeconv()'s results.
 	 */
 	CurrentLocaleConv = *extlconv;
-	CurrentLocaleConv.currency_symbol = strdup(extlconv->currency_symbol);
-	CurrentLocaleConv.decimal_point = strdup(extlconv->decimal_point);
-	CurrentLocaleConv.grouping = strdup(extlconv->grouping);
-	CurrentLocaleConv.thousands_sep = strdup(extlconv->thousands_sep);
-	CurrentLocaleConv.int_curr_symbol = strdup(extlconv->int_curr_symbol);
-	CurrentLocaleConv.mon_decimal_point = strdup(extlconv->mon_decimal_point);
+	CurrentLocaleConv.decimal_point = decimal_point;
+	CurrentLocaleConv.grouping = grouping;
+	CurrentLocaleConv.thousands_sep = thousands_sep;
+	CurrentLocaleConv.int_curr_symbol = db_encoding_strdup(encoding, extlconv->int_curr_symbol);
+	CurrentLocaleConv.currency_symbol = db_encoding_strdup(encoding, extlconv->currency_symbol);
+	CurrentLocaleConv.mon_decimal_point = db_encoding_strdup(encoding, extlconv->mon_decimal_point);
 	CurrentLocaleConv.mon_grouping = strdup(extlconv->mon_grouping);
-	CurrentLocaleConv.mon_thousands_sep = strdup(extlconv->mon_thousands_sep);
-	CurrentLocaleConv.negative_sign = strdup(extlconv->negative_sign);
-	CurrentLocaleConv.positive_sign = strdup(extlconv->positive_sign);
-	CurrentLocaleConv.n_sign_posn = extlconv->n_sign_posn;
+	CurrentLocaleConv.mon_thousands_sep = db_encoding_strdup(encoding, extlconv->mon_thousands_sep);
+	CurrentLocaleConv.negative_sign = db_encoding_strdup(encoding, extlconv->negative_sign);
+	CurrentLocaleConv.positive_sign = db_encoding_strdup(encoding, extlconv->positive_sign);
 
 	/* Try to restore internal settings */
 	if (save_lc_monetary)
@@ -448,6 +498,15 @@ PGLC_localeconv(void)
 		setlocale(LC_NUMERIC, save_lc_numeric);
 		pfree(save_lc_numeric);
 	}
+
+#ifdef WIN32
+	/* try to restore internal ctype settings */
+	if (save_lc_ctype)
+	{
+		setlocale(LC_CTYPE, save_lc_ctype);
+		pfree(save_lc_ctype);
+	}
+#endif
 
 	CurrentLocaleConvValid = true;
 	return &CurrentLocaleConv;
