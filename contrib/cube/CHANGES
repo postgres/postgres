@@ -89,7 +89,7 @@ cube_enlarge
 cube takes text input and returns a cube. This is useful for making cubes
 from computed strings.
 
-cube_dim returns the number of dimensions stored in the the data structure
+cube_dim returns the number of dimensions stored in the data structure
 for a cube. This is useful for constraints on the dimensions of a cube.
 
 cube_ll_coord returns the nth coordinate value for the lower left corner

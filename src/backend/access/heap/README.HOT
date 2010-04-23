@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/backend/access/heap/README.HOT,v 1.5 2010/02/08 04:33:52 tgl Exp $
+$PostgreSQL: pgsql/src/backend/access/heap/README.HOT,v 1.6 2010/04/23 23:21:44 rhaas Exp $
 
 Heap Only Tuples (HOT)
 ======================
@@ -281,7 +281,7 @@ a "broken" chain that can't be indexed properly.
 
 To address this issue, regular (non-concurrent) CREATE INDEX makes the
 new index usable only by new transactions and transactions that don't
-have snapshots older than the the CREATE INDEX command.  This prevents
+have snapshots older than the CREATE INDEX command.  This prevents
 queries that can see the inconsistent HOT chains from trying to use the
 new index and getting incorrect results.  Queries that can see the index
 can only see the rows that were visible after the index was created,

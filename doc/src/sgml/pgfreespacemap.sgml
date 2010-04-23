@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/pgfreespacemap.sgml,v 2.5 2008/10/02 12:20:50 heikki Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/pgfreespacemap.sgml,v 2.6 2010/04/23 23:21:43 rhaas Exp $ -->
 
 <sect1 id="pgfreespacemap">
  <title>pg_freespacemap</title>
@@ -46,7 +46,7 @@
 
     <listitem>
      <para>
-      Displays the the amount of free space on each page of the relation,
+      Displays the amount of free space on each page of the relation,
       according to the FSM. A set of <literal>(blkno bigint, avail int2)</>
       tuples is returned, one tuple for each page in the relation.
      </para>

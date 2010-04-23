@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/standby.c,v 1.18 2010/04/22 08:04:25 sriggs Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/standby.c,v 1.19 2010/04/23 23:21:44 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -382,7 +382,7 @@ ResolveRecoveryConflictWithLock(Oid dbOid, Oid relOid)
  * be cleared if the Startup process replays a transaction completion record.
  * If Startup process is also waiting then that is a deadlock. The deadlock
  * can occur if the query is waiting and then the Startup sleeps, or if
- * Startup is sleeping and the the query waits on a lock. We protect against
+ * Startup is sleeping and the query waits on a lock. We protect against
  * only the former sequence here, the latter sequence is checked prior to
  * the query sleeping, in CheckRecoveryConflictDeadlock().
  */
