@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/lsyscache.c,v 1.169 2010/04/23 22:23:39 sriggs Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/lsyscache.c,v 1.170 2010/04/24 16:20:32 sriggs Exp $
  *
  * NOTES
  *	  Eventually, the index information should go through here, too.
@@ -38,9 +38,6 @@
 /* Hook for plugins to get control in get_attavgwidth() */
 get_attavgwidth_hook_type get_attavgwidth_hook = NULL;
 
-/* Hook for plugins to get control in get_func_cost and get_func_rows */
-get_func_cost_hook_type get_func_cost_hook = NULL;
-get_func_rows_hook_type get_func_rows_hook = NULL;
 
 /*				---------- AMOP CACHES ----------						 */
 
@@ -1412,12 +1409,6 @@ get_func_cost(Oid funcid)
 	HeapTuple	tp;
 	float4		result;
 
-	if (get_func_cost_hook)
-	{
-		result = (*get_func_cost_hook) (funcid);
-		if (result > (float4) 0)
-			return result;
-	}
 	tp = SearchSysCache1(PROCOID, ObjectIdGetDatum(funcid));
 	if (!HeapTupleIsValid(tp))
 		elog(ERROR, "cache lookup failed for function %u", funcid);
@@ -1437,12 +1428,6 @@ get_func_rows(Oid funcid)
 	HeapTuple	tp;
 	float4		result;
 
-	if (get_func_rows_hook)
-	{
-		result = (*get_func_rows_hook) (funcid);
-		if (result > (float4) 0)
-			return result;
-	}
 	tp = SearchSysCache1(PROCOID, ObjectIdGetDatum(funcid));
 	if (!HeapTupleIsValid(tp))
 		elog(ERROR, "cache lookup failed for function %u", funcid);

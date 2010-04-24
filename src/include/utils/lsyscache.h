@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/lsyscache.h,v 1.132 2010/04/23 22:23:39 sriggs Exp $
+ * $PostgreSQL: pgsql/src/include/utils/lsyscache.h,v 1.133 2010/04/24 16:20:32 sriggs Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,12 +29,6 @@ typedef enum IOFuncSelector
 /* Hook for plugins to get control in get_attavgwidth() */
 typedef int32 (*get_attavgwidth_hook_type) (Oid relid, AttrNumber attnum);
 extern PGDLLIMPORT get_attavgwidth_hook_type get_attavgwidth_hook;
-
-/* Hook for plugins to get control in get_func_cost and get_func_rows */
-typedef float4 (*get_func_cost_hook_type) (Oid funcid);
-extern PGDLLIMPORT get_func_cost_hook_type get_func_cost_hook;
-typedef float4 (*get_func_rows_hook_type) (Oid funcid);
-extern PGDLLIMPORT get_func_rows_hook_type get_func_rows_hook;
 
 extern bool op_in_opfamily(Oid opno, Oid opfamily);
 extern int	get_op_opfamily_strategy(Oid opno, Oid opfamily);
