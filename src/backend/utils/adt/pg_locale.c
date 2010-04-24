@@ -4,7 +4,7 @@
  *
  * Portions Copyright (c) 2002-2010, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/pg_locale.c,v 1.54 2010/04/22 01:55:52 itagaki Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/pg_locale.c,v 1.55 2010/04/24 22:54:56 momjian Exp $
  *
  *-----------------------------------------------------------------------
  */
@@ -41,6 +41,10 @@
  * DOES NOT WORK RELIABLY: on some platforms the second setlocale() call
  * will change the memory save is pointing at.	To do this sort of thing
  * safely, you *must* pstrdup what setlocale returns the first time.
+ *
+ * FYI, The Open Group locale standard is defined here:
+ *
+ *  http://www.opengroup.org/onlinepubs/009695399/basedefs/xbd_chap07.html
  *----------
  */
 
@@ -424,7 +428,6 @@ PGLC_localeconv(void)
 	char	   *grouping;
 	char	   *thousands_sep;
 	int			encoding;
-
 #ifdef WIN32
 	char	   *save_lc_ctype;
 #endif
@@ -435,25 +438,48 @@ PGLC_localeconv(void)
 
 	free_struct_lconv(&CurrentLocaleConv);
 
-	/* Set user's values of monetary and numeric locales */
+	/* Save user's values of monetary and numeric locales */
 	save_lc_monetary = setlocale(LC_MONETARY, NULL);
 	if (save_lc_monetary)
 		save_lc_monetary = pstrdup(save_lc_monetary);
+
 	save_lc_numeric = setlocale(LC_NUMERIC, NULL);
 	if (save_lc_numeric)
 		save_lc_numeric = pstrdup(save_lc_numeric);
 
 #ifdef WIN32
-	/* set user's value of ctype locale */
+   /*
+	*  Ideally, monetary and numeric local symbols could be returned in
+	*  any server encoding.  Unfortunately, the WIN32 API does not allow
+	*  setlocale() to return values in a codepage/CTYPE that uses more
+	*  than two bytes per character, like UTF-8:
+	*
+	*      http://msdn.microsoft.com/en-us/library/x99tb11d.aspx
+	*
+	*  Evidently, LC_CTYPE allows us to control the encoding used
+	*  for strings returned by localeconv().  The Open Group
+	*  standard, mentioned at the top of this C file, doesn't
+	*  explicitly state this.
+	*
+	*  Therefore, we set LC_CTYPE to match LC_NUMERIC or LC_MONETARY
+	*  (which cannot be UTF8), call localeconv(), and then convert from
+	*  the numeric/monitary LC_CTYPE to the server encoding.  One
+	*  example use of this is for the Euro symbol.
+	*
+	*  Perhaps someday we will use GetLocaleInfoW() which returns values
+	*  in UTF16 and convert from that.
+	*/
+
+	/* save user's value of ctype locale */
 	save_lc_ctype = setlocale(LC_CTYPE, NULL);
 	if (save_lc_ctype)
 		save_lc_ctype = pstrdup(save_lc_ctype);
+
+	/* use numeric to set the ctype */
+	setlocale(LC_CTYPE, locale_numeric);
 #endif
 
 	/* Get formatting information for numeric */
-#ifdef WIN32
-	setlocale(LC_CTYPE, locale_numeric);
-#endif
 	setlocale(LC_NUMERIC, locale_numeric);
 	extlconv = localeconv();
 	encoding = pg_get_encoding_from_locale(locale_numeric);
@@ -462,10 +488,12 @@ PGLC_localeconv(void)
 	thousands_sep = db_encoding_strdup(encoding, extlconv->thousands_sep);
 	grouping = strdup(extlconv->grouping);
 
-	/* Get formatting information for monetary */
 #ifdef WIN32
+	/* use monetary to set the ctype */
 	setlocale(LC_CTYPE, locale_monetary);
 #endif
+
+	/* Get formatting information for monetary */
 	setlocale(LC_MONETARY, locale_monetary);
 	extlconv = localeconv();
 	encoding = pg_get_encoding_from_locale(locale_monetary);
@@ -500,7 +528,7 @@ PGLC_localeconv(void)
 	}
 
 #ifdef WIN32
-	/* try to restore internal ctype settings */
+	/* Try to restore internal ctype settings */
 	if (save_lc_ctype)
 	{
 		setlocale(LC_CTYPE, save_lc_ctype);
@@ -514,13 +542,15 @@ PGLC_localeconv(void)
 
 #ifdef WIN32
 /*
- * On win32, strftime() returns the encoding in CP_ACP, which is likely
- * different from SERVER_ENCODING. This is especially important in Japanese
- * versions of Windows which will use SJIS encoding, which we don't support
- * as a server encoding.
+ * On WIN32, strftime() returns the encoding in CP_ACP (the default
+ * operating system codpage for that computer), which is likely different
+ * from SERVER_ENCODING.  This is especially important in Japanese versions
+ * of Windows which will use SJIS encoding, which we don't support as a
+ * server encoding.
  *
- * Replace strftime() with a version that gets the string in UTF16 and then
- * converts it to the appropriate encoding as necessary.
+ * So, instead of using strftime(), use wcsftime() to return the value in
+ * wide characters (internally UTF16) and then convert it to the appropriate
+ * database encoding.
  *
  * Note that this only affects the calls to strftime() in this file, which are
  * used to get the locale-aware strings. Other parts of the backend use
@@ -537,7 +567,6 @@ strftime_win32(char *dst, size_t dstlen, const wchar_t *format, const struct tm 
 
 	len = wcsftime(wbuf, MAX_L10N_DATA, format, tm);
 	if (len == 0)
-
 		/*
 		 * strftime call failed - return 0 with the contents of dst
 		 * unspecified
@@ -564,7 +593,9 @@ strftime_win32(char *dst, size_t dstlen, const wchar_t *format, const struct tm 
 	return len;
 }
 
+/* redefine strftime() */
 #define strftime(a,b,c,d) strftime_win32(a,b,L##c,d)
+
 #endif   /* WIN32 */
 
 
@@ -580,7 +611,6 @@ cache_locale_time(void)
 	char		buf[MAX_L10N_DATA];
 	char	   *ptr;
 	int			i;
-
 #ifdef WIN32
 	char	   *save_lc_ctype;
 #endif
@@ -591,19 +621,21 @@ cache_locale_time(void)
 
 	elog(DEBUG3, "cache_locale_time() executed; locale: \"%s\"", locale_time);
 
+	/* save user's value of time locale */
+	save_lc_time = setlocale(LC_TIME, NULL);
+	if (save_lc_time)
+		save_lc_time = pstrdup(save_lc_time);
+
 #ifdef WIN32
-	/* set user's value of ctype locale */
+	/* See the WIN32 comment near the top of PGLC_localeconv() */
+	/* save user's value of ctype locale */
 	save_lc_ctype = setlocale(LC_CTYPE, NULL);
 	if (save_lc_ctype)
 		save_lc_ctype = pstrdup(save_lc_ctype);
 
+	/* use lc_time to set the ctype */
 	setlocale(LC_CTYPE, locale_time);
 #endif
-
-	/* set user's value of time locale */
-	save_lc_time = setlocale(LC_TIME, NULL);
-	if (save_lc_time)
-		save_lc_time = pstrdup(save_lc_time);
 
 	setlocale(LC_TIME, locale_time);
 
