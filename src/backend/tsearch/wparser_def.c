@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tsearch/wparser_def.c,v 1.28 2010/03/13 00:41:58 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tsearch/wparser_def.c,v 1.29 2010/04/26 17:10:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -387,7 +387,7 @@ TParserClose(TParser *prs)
 #endif
 
 #ifdef WPARSER_TRACE
-	fprintf(stderr, "closing parser");
+	fprintf(stderr, "closing parser\n");
 #endif
 	pfree(prs);
 }
@@ -407,7 +407,7 @@ TParserCopyClose(TParser *prs)
 	}
 
 #ifdef WPARSER_TRACE
-	fprintf(stderr, "closing parser copy");
+	fprintf(stderr, "closing parser copy\n");
 #endif
 	pfree(prs);
 }
