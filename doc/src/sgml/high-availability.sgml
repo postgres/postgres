@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/high-availability.sgml,v 1.62 2010/04/21 03:32:53 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/high-availability.sgml,v 1.63 2010/04/26 19:09:25 momjian Exp $ -->
 
 <chapter id="high-availability">
  <title>High Availability, Load Balancing, and Replication</title>
@@ -199,7 +199,11 @@ protocol to make nodes agree on a serializable transactional order.
      SQL queries are broadcast (and not actual modified rows).  If
      this is unacceptable, either the middleware or the application
      must query such values from a single server and then use those
-     values in write queries.  Also, care must be taken that all
+     values in write queries.  Another option is to use this replication
+     option with a traditional master-slave setup, i.e. data modification
+     queries are sent only to the master and are propogated to the
+     slaves via master-slave replication, not by the replication
+     middleware.  Care must also be taken that all
      transactions either commit or abort on all servers, perhaps
      using two-phase commit (<xref linkend="sql-prepare-transaction">
      and <xref linkend="sql-commit-prepared">.
