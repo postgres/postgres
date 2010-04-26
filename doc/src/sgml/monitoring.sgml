@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/monitoring.sgml,v 1.79 2010/04/15 20:56:13 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/monitoring.sgml,v 1.80 2010/04/26 19:56:55 tgl Exp $ -->
 
 <chapter id="monitoring">
  <title>Monitoring Database Activity</title>
@@ -50,7 +50,7 @@
 $ ps auxww | grep ^postgres
 postgres   960  0.0  1.1  6104 1480 pts/1    SN   13:17   0:00 postgres -i
 postgres   963  0.0  1.1  7084 1472 pts/1    SN   13:17   0:00 postgres: writer process
-postgres   965  0.0  1.1  6152 1512 pts/1    SN   13:17   0:00 postgres: stats collector process   
+postgres   965  0.0  1.1  6152 1512 pts/1    SN   13:17   0:00 postgres: stats collector process
 postgres   998  0.0  2.3  6532 2992 pts/1    SN   13:18   0:00 postgres: tgl runbug 127.0.0.1 idle
 postgres  1003  0.0  2.4  6532 3128 pts/1    SN   13:19   0:00 postgres: tgl regression [local] SELECT waiting
 postgres  1016  0.1  2.4  6532 3080 pts/1    SN   13:19   0:00 postgres: tgl regression [local] idle in transaction
@@ -165,7 +165,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
   </para>
 
   <para>
-   The statistics collector communicates with the backends needing 
+   The statistics collector communicates with the backends needing
    information (including autovacuum) through temporary files.
    These files are stored in the <filename>pg_stat_tmp</filename> subdirectory.
    When the postmaster shuts down, a permanent copy of the statistics
@@ -235,9 +235,9 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
       <entry><structname>pg_stat_activity</></entry>
       <entry>One row per server process, showing database OID, database
       name, process <acronym>ID</>, user OID, user name, application name,
-      current query, query's waiting status, time at which the current
-      transaction and current query began execution, time at which the
-      process was started, and client's address and port number.
+      client's address and port number, times at which the server process,
+      current transaction, and current query began execution, process's waiting
+      status, and text of the current query.
       The columns that report data on the current query are available unless
       the parameter <varname>track_activities</varname> has been turned off.
       Furthermore, these columns are only visible if the user examining
@@ -408,7 +408,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
    Beginning in <productname>PostgreSQL</productname> 8.1, indexes can be
    used either directly or via <quote>bitmap scans</>.  In a bitmap scan
    the output of several indexes can be combined via AND or OR rules;
-   so it is difficult to associate individual heap row fetches 
+   so it is difficult to associate individual heap row fetches
    with specific indexes when a bitmap scan is used.  Therefore, a bitmap
    scan increments the
    <structname>pg_stat_all_indexes</>.<structfield>idx_tup_read</>
@@ -695,7 +695,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
       <entry>
        Returns a record of information about the backend with the specified pid, or
        one record for each active backend in the system if <symbol>NULL</symbol> is
-       specified. The fields returned are the same as in the 
+       specified. The fields returned are a subset of those in the
        <structname>pg_stat_activity</structname> view.
       </entry>
      </row>
