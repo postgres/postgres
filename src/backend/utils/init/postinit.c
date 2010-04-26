@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/init/postinit.c,v 1.211 2010/04/21 00:51:57 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/init/postinit.c,v 1.212 2010/04/26 10:52:00 rhaas Exp $
  *
  *
  *-------------------------------------------------------------------------
@@ -618,6 +618,37 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 	}
 
 	/*
+	 * If we're trying to shut down, only superusers can connect, and
+	 * new replication connections are not allowed.
+	 */
+	if ((!am_superuser || am_walsender) &&
+		MyProcPort != NULL &&
+		MyProcPort->canAcceptConnections == CAC_WAITBACKUP)
+	{
+		if (am_walsender)
+			ereport(FATAL,
+					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+		     	errmsg("new replication connections are not allowed during database shutdown")));
+		else
+			ereport(FATAL,
+					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				errmsg("must be superuser to connect during database shutdown")));
+	}
+
+	/*
+	 * The last few connections slots are reserved for superusers.
+	 * Although replication connections currently require superuser
+	 * privileges, we don't allow them to consume the reserved slots,
+	 * which are intended for interactive use.
+	 */
+	if ((!am_superuser || am_walsender) &&
+		ReservedBackends > 0 &&
+		!HaveNFreeProcs(ReservedBackends))
+		ereport(FATAL,
+				(errcode(ERRCODE_TOO_MANY_CONNECTIONS),
+				 errmsg("remaining connection slots are reserved for non-replication superuser connections")));
+
+	/*
 	 * If walsender, we're done here --- we don't want to connect to any
 	 * particular database.
 	 */
@@ -777,26 +808,6 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 	 */
 	if (!bootstrap)
 		CheckMyDatabase(dbname, am_superuser);
-
-	/*
-	 * If we're trying to shut down, only superusers can connect.
-	 */
-	if (!am_superuser &&
-		MyProcPort != NULL &&
-		MyProcPort->canAcceptConnections == CAC_WAITBACKUP)
-		ereport(FATAL,
-				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-		   errmsg("must be superuser to connect during database shutdown")));
-
-	/*
-	 * Check a normal user hasn't connected to a superuser reserved slot.
-	 */
-	if (!am_superuser &&
-		ReservedBackends > 0 &&
-		!HaveNFreeProcs(ReservedBackends))
-		ereport(FATAL,
-				(errcode(ERRCODE_TOO_MANY_CONNECTIONS),
-				 errmsg("connection limit exceeded for non-superusers")));
 
 	/*
 	 * Now process any command-line switches that were included in the startup

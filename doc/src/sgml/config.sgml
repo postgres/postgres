@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.269 2010/04/20 11:15:06 rhaas Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.270 2010/04/26 10:51:59 rhaas Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -401,7 +401,8 @@ SET ENABLE_SEQSCAN TO OFF;
         number of active concurrent connections is at least
         <varname>max_connections</> minus
         <varname>superuser_reserved_connections</varname>, new
-        connections will be accepted only for superusers.
+        connections will be accepted only for superusers, and no
+        new replication connections will be accepted.
        </para>
 
        <para>
