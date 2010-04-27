@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.152 2010/04/03 07:22:55 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.153 2010/04/27 14:32:40 alvherre Exp $ -->
 
 <chapter id="plpgsql">
   <title><application>PL/pgSQL</application> - <acronym>SQL</acronym> Procedural Language</title>
@@ -481,9 +481,11 @@ $$ LANGUAGE plpgsql;
       is with <literal>RETURNS TABLE</>, for example:
 
 <programlisting>
-CREATE FUNCTION extended_sales(p_itemno int) RETURNS TABLE(quantity int, total numeric) AS $$
+CREATE FUNCTION extended_sales(p_itemno int)
+RETURNS TABLE(quantity int, total numeric) AS $$
 BEGIN
-    RETURN QUERY SELECT quantity, quantity * price FROM sales WHERE itemno = p_itemno;
+    RETURN QUERY SELECT quantity, quantity * price FROM sales
+                 WHERE itemno = p_itemno;
 END;
 $$ LANGUAGE plpgsql;
 </programlisting>
@@ -2154,9 +2156,12 @@ BEGIN
 
         -- Now "mviews" has one record from cs_materialized_views
 
-        PERFORM cs_log('Refreshing materialized view ' || quote_ident(mviews.mv_name) || ' ...');
+        PERFORM cs_log('Refreshing materialized view '
+                   || quote_ident(mviews.mv_name) || ' ...');
         EXECUTE 'TRUNCATE TABLE ' || quote_ident(mviews.mv_name);
-        EXECUTE 'INSERT INTO ' || quote_ident(mviews.mv_name) || ' ' || mviews.mv_query;
+        EXECUTE 'INSERT INTO '
+                   || quote_ident(mviews.mv_name) || ' ' 
+                   || mviews.mv_query;
     END LOOP;
 
     PERFORM cs_log('Done refreshing materialized views.');
@@ -2495,7 +2500,8 @@ OPEN curs1 FOR SELECT * FROM foo WHERE key = mykey;
      <title><command>OPEN FOR EXECUTE</command></title>
 
 <synopsis>
-OPEN <replaceable>unbound_cursorvar</replaceable> <optional> <optional> NO </optional> SCROLL </optional> FOR EXECUTE <replaceable class="command">query_string</replaceable> <optional> USING <replaceable>expression</replaceable> <optional>, ... </optional> </optional>;
+OPEN <replaceable>unbound_cursorvar</replaceable> <optional> <optional> NO </optional> SCROLL </optional> FOR EXECUTE <replaceable class="command">query_string</replaceable>
+                                     <optional> USING <replaceable>expression</replaceable> <optional>, ... </optional> </optional>;
 </synopsis>
 
          <para>
@@ -2517,7 +2523,8 @@ OPEN <replaceable>unbound_cursorvar</replaceable> <optional> <optional> NO </opt
        <para>
         An example:
 <programlisting>
-OPEN curs1 FOR EXECUTE 'SELECT * FROM ' || quote_ident(tabname) ' WHERE col1 = $1' USING keyvalue;
+OPEN curs1 FOR EXECUTE 'SELECT * FROM ' || quote_ident(tabname) 
+                                        || ' WHERE col1 = $1' USING keyvalue;
 </programlisting>
         In this example, the table name is inserted into the query textually,
         so use of <function>quote_ident()</> is recommended to guard against
@@ -2810,6 +2817,7 @@ BEGIN
 END;
 ' LANGUAGE plpgsql;
 
+-- need to be in a transaction to use cursors.
 BEGIN;
 SELECT reffunc2();
 
@@ -2966,7 +2974,8 @@ RAISE NOTICE 'Calling cs_create_job(%)', v_job_id;
     This example will abort the transaction with the given error message
     and hint:
 <programlisting>
-RAISE EXCEPTION 'Nonexistent ID --> %', user_id USING HINT = 'Please check your user id';
+RAISE EXCEPTION 'Nonexistent ID --> %', user_id
+      USING HINT = 'Please check your user id';
 </programlisting>
    </para>
 
@@ -3394,7 +3403,8 @@ CREATE UNIQUE INDEX sales_summary_bytime_key ON sales_summary_bytime(time_key);
 --
 -- Function and trigger to amend summarized column(s) on UPDATE, INSERT, DELETE.
 --
-CREATE OR REPLACE FUNCTION maint_sales_summary_bytime() RETURNS TRIGGER AS $maint_sales_summary_bytime$
+CREATE OR REPLACE FUNCTION maint_sales_summary_bytime() RETURNS TRIGGER
+AS $maint_sales_summary_bytime$
     DECLARE
         delta_time_key          integer;
         delta_amount_sold       numeric(15,2);
@@ -3416,7 +3426,8 @@ CREATE OR REPLACE FUNCTION maint_sales_summary_bytime() RETURNS TRIGGER AS $main
             -- (probably not too onerous, as DELETE + INSERT is how most
             -- changes will be made).
             IF ( OLD.time_key != NEW.time_key) THEN
-                RAISE EXCEPTION 'Update of time_key : % -&gt; % not allowed', OLD.time_key, NEW.time_key;
+                RAISE EXCEPTION 'Update of time_key : % -&gt; % not allowed',
+                                                      OLD.time_key, NEW.time_key;
             END IF;
 
             delta_time_key = OLD.time_key;
@@ -3867,7 +3878,7 @@ $$ LANGUAGE plpgsql;
    <para>
     Another good way to develop in <application>PL/pgSQL</> is with a
     GUI database access tool that facilitates development in a
-    procedural language. One example of such as a tool is
+    procedural language. One example of such a tool is
     <application>pgAdmin</>, although others exist. These tools often
     provide convenient features such as escaping single quotes and
     making it easier to recreate and debug functions.
@@ -4450,7 +4461,8 @@ BEGIN
 
     IF a_running_job_count &gt; 0 THEN
         COMMIT; -- free lock<co id="co.plpgsql-porting-commit">
-        raise_application_error(-20000, 'Unable to create a new job: a job is currently running.');
+        raise_application_error(-20000,
+                 'Unable to create a new job: a job is currently running.');
     END IF;
 
     DELETE FROM cs_active_job;
