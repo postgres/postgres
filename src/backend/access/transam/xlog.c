@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.403 2010/04/23 20:21:31 sriggs Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.404 2010/04/27 09:25:18 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -7712,6 +7712,16 @@ xlog_redo(XLogRecPtr lsn, XLogRecord *record)
 		/* Check to see if any changes to max_connections give problems */
 		if (standbyState != STANDBY_DISABLED)
 			CheckRequiredParameterValues(checkPoint);
+
+		/*
+		 * If we see a shutdown checkpoint while waiting for an
+		 * end-of-backup record, the backup was cancelled and the
+		 * end-of-backup record will never arrive.
+		 */
+		if (InArchiveRecovery &&
+			!XLogRecPtrIsInvalid(ControlFile->backupStartPoint))
+			ereport(ERROR,
+					(errmsg("online backup was cancelled, recovery cannot continue")));
 
 		/*
 		 * If we see a shutdown checkpoint, we know that nothing was
