@@ -96,7 +96,7 @@
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/rewriteheap.c,v 1.21 2010/02/26 02:00:33 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/rewriteheap.c,v 1.22 2010/04/28 16:10:40 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -276,16 +276,6 @@ end_heap_rewrite(RewriteState state)
 		RelationOpenSmgr(state->rs_new_rel);
 		smgrextend(state->rs_new_rel->rd_smgr, MAIN_FORKNUM, state->rs_blockno,
 				   (char *) state->rs_buffer, true);
-	}
-
-	/* Write an XLOG UNLOGGED record if WAL-logging was skipped */
-	if (!state->rs_use_wal && !state->rs_new_rel->rd_istemp)
-	{
-		char		reason[NAMEDATALEN + 30];
-
-		snprintf(reason, sizeof(reason), "heap rewrite on \"%s\"",
-				 RelationGetRelationName(state->rs_new_rel));
-		XLogReportUnloggedStatement(reason);
 	}
 
 	/*

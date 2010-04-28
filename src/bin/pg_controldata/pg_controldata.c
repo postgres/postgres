@@ -6,15 +6,16 @@
  * copyright (c) Oliver Elphick <olly@lfix.co.uk>, 2001;
  * licence: BSD
  *
- * $PostgreSQL: pgsql/src/bin/pg_controldata/pg_controldata.c,v 1.46 2010/01/04 12:50:49 heikki Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_controldata/pg_controldata.c,v 1.47 2010/04/28 16:10:43 heikki Exp $
  */
-#include "postgres_fe.h"
+#include "postgres.h"
 
 #include <unistd.h>
 #include <time.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 
+#include "access/xlog.h"
 #include "catalog/pg_control.h"
 
 
@@ -58,6 +59,21 @@ dbState(DBState state)
 			return _("in production");
 	}
 	return _("unrecognized status code");
+}
+
+static const char *
+wal_level_str(WalLevel wal_level)
+{
+	switch (wal_level)
+	{
+		case WAL_LEVEL_MINIMAL:
+			return "minimal";
+		case WAL_LEVEL_ARCHIVE:
+			return "archive";
+		case WAL_LEVEL_HOT_STANDBY:
+			return "hot_standby";
+	}
+	return _("unrecognized wal_level");
 }
 
 
@@ -206,6 +222,14 @@ main(int argc, char *argv[])
 	printf(_("Backup start location:                %X/%X\n"),
 		   ControlFile.backupStartPoint.xlogid,
 		   ControlFile.backupStartPoint.xrecoff);
+	printf(_("Last wal_level setting:               %s\n"),
+		   wal_level_str(ControlFile.wal_level));
+	printf(_("Last max_connections setting:         %d\n"),
+		   ControlFile.MaxConnections);
+	printf(_("Last max_prepared_xacts setting:      %d\n"),
+		   ControlFile.max_prepared_xacts);
+	printf(_("Last max_locks_per_xact setting:      %d\n"),
+		   ControlFile.max_locks_per_xact);
 	printf(_("Maximum data alignment:               %u\n"),
 		   ControlFile.maxAlign);
 	/* we don't print floatFormat since can't say much useful about it */

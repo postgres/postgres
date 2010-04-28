@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/xlog.h,v 1.109 2010/04/20 11:15:06 rhaas Exp $
+ * $PostgreSQL: pgsql/src/include/access/xlog.h,v 1.110 2010/04/28 16:10:43 heikki Exp $
  */
 #ifndef XLOG_H
 #define XLOG_H
@@ -195,24 +195,26 @@ extern int	XLogArchiveTimeout;
 extern bool log_checkpoints;
 extern bool XLogRequestRecoveryConnections;
 extern int	MaxStandbyDelay;
+/* WAL levels */
+typedef enum WalLevel
+{
+	WAL_LEVEL_MINIMAL = 0,
+	WAL_LEVEL_ARCHIVE,
+	WAL_LEVEL_HOT_STANDBY
+} WalLevel;
+extern int	wal_level;
 
-#define XLogArchivingActive()	(XLogArchiveMode)
+#define XLogArchivingActive()	(XLogArchiveMode && wal_level >= WAL_LEVEL_ARCHIVE)
 #define XLogArchiveCommandSet() (XLogArchiveCommand[0] != '\0')
 
 /*
- * This is in walsender.c, but declared here so that we don't need to include
- * walsender.h in all files that check XLogIsNeeded()
+ * Is WAL-logging necessary for archival or log-shipping, or can we skip
+ * WAL-logging if we fsync() the data before committing instead?
  */
-extern int	max_wal_senders;
-
-/*
- * Is WAL-logging necessary? We need to log an XLOG record iff either
- * WAL archiving is enabled or XLOG streaming is allowed.
- */
-#define XLogIsNeeded() (XLogArchivingActive() || (max_wal_senders > 0))
+#define XLogIsNeeded() (wal_level >= WAL_LEVEL_ARCHIVE)
 
 /* Do we need to WAL-log information required only for Hot Standby? */
-#define XLogStandbyInfoActive() (XLogRequestRecoveryConnections && XLogIsNeeded())
+#define XLogStandbyInfoActive() (wal_level >= WAL_LEVEL_HOT_STANDBY)
 
 #ifdef WAL_DEBUG
 extern bool XLOG_DEBUG;
@@ -293,7 +295,6 @@ extern void InitXLOGAccess(void);
 extern void CreateCheckPoint(int flags);
 extern bool CreateRestartPoint(int flags);
 extern void XLogPutNextOid(Oid nextOid);
-extern void XLogReportUnloggedStatement(char *reason);
 extern XLogRecPtr GetRedoRecPtr(void);
 extern XLogRecPtr GetInsertRecPtr(void);
 extern XLogRecPtr GetWriteRecPtr(void);

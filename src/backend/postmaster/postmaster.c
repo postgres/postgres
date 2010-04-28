@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.605 2010/04/08 01:39:37 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.606 2010/04/28 16:10:42 heikki Exp $
  *
  * NOTES
  *
@@ -728,6 +728,12 @@ PostmasterMain(int argc, char *argv[])
 		write_stderr("%s: superuser_reserved_connections must be less than max_connections\n", progname);
 		ExitPostmaster(1);
 	}
+	if (XLogArchiveMode && wal_level == WAL_LEVEL_MINIMAL)
+		ereport(ERROR,
+				(errmsg("WAL archival (archive_mode='on') requires wal_level 'archive' or 'hot_standby'")));
+	if (max_wal_senders > 0 && wal_level == WAL_LEVEL_MINIMAL)
+		ereport(ERROR,
+				(errmsg("WAL streaming (max_wal_senders > 0) requires wal_level 'archive' or 'hot_standby")));
 
 	/*
 	 * Other one-time internal sanity checks can go here, if they are fast.

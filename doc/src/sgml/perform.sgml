@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/perform.sgml,v 1.76 2010/04/20 00:26:06 rhaas Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/perform.sgml,v 1.77 2010/04/28 16:10:40 heikki Exp $ -->
 
  <chapter id="performance-tips">
   <title>Performance Tips</title>
@@ -835,10 +835,9 @@ SELECT * FROM x, y, a, b, c WHERE something AND somethingelse;
     <command>TRUNCATE</command> command. In such cases no WAL
     needs to be written, because in case of an error, the files
     containing the newly loaded data will be removed anyway.
-    However, this consideration does not apply when
-    <xref linkend="guc-archive-mode"> is on or streaming replication
-    is allowed (i.e., <xref linkend="guc-max-wal-senders"> is more
-    than or equal to one), as all commands must write WAL in that case.
+    However, this consideration only applies when
+    <xref linkend="guc-wal-level"> is <literal>minimal</> as all commands
+    must write WAL otherwise.
    </para>
 
   </sect2>
@@ -910,29 +909,27 @@ SELECT * FROM x, y, a, b, c WHERE something AND somethingelse;
   </sect2>
 
   <sect2 id="populate-pitr">
-   <title>Turn off <varname>archive_mode</varname> and streaming replication</title>
+   <title>Disable WAL archival and streaming replication</title>
 
    <para>
     When loading large amounts of data into an installation that uses
-    WAL archiving or streaming replication, you might want to disable
-    archiving (turn off the <xref linkend="guc-archive-mode">
-    configuration variable) and replication (zero the
-    <xref linkend="guc-max-wal-senders"> configuration variable)
-    while loading.  It might be
-    faster to take a new base backup after the load has completed
-    than to process a large amount of incremental WAL data.
-    But note that changing either of these variables requires
-    a server restart.
+    WAL archiving or streaming replication, it might be faster to take a
+    new base backup after the load has completed than to process a large
+    amount of incremental WAL data. You might want to disable archiving
+    and streaming replication while loading, by setting
+    <xref linkend="guc-wal-level"> to <literal>minimal</>,
+    <xref linkend="guc-archive-mode"> <literal>off</>, and
+    <xref linkend="guc-max-wal-senders"> to zero).
+    But note that changing these settings requires a server restart.
    </para>
 
    <para>
     Aside from avoiding the time for the archiver or WAL sender to
     process the WAL data,
     doing this will actually make certain commands faster, because they
-    are designed not to write WAL at all if <varname>archive_mode</varname>
-    is off and <varname>max_wal_senders</varname> is zero.  (They can
-    guarantee crash safety more cheaply by doing an
-    <function>fsync</> at the end than by writing WAL.)
+    are designed not to write WAL at all if <varname>wal_level</varname>
+    is <literal>minimal</>.  (They can guarantee crash safety more cheaply
+    by doing an <function>fsync</> at the end than by writing WAL.)
     This applies to the following commands:
     <itemizedlist>
      <listitem>
@@ -1014,10 +1011,12 @@ SELECT * FROM x, y, a, b, c WHERE something AND somethingelse;
      </listitem>
      <listitem>
       <para>
-       If using WAL archiving, consider disabling it during the restore.
-       To do that, turn off <varname>archive_mode</varname> before loading the
-       dump script, and afterwards turn it back on
-       and take a fresh base backup.
+       If using WAL archiving or streaming replication, consider disabling
+       them during the restore. To do that, set <varname>arcive_mode</> off,
+       <varname>wal_level</varname> to <literal>minimal</>, and
+       <varname>max_wal_senders</> zero before loading the dump script,
+       and afterwards set them back to the right values and take a fresh
+       base backup.
       </para>
      </listitem>
      <listitem>

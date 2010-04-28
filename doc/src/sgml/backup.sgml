@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.152 2010/04/20 00:26:06 rhaas Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.153 2010/04/28 16:10:39 heikki Exp $ -->
 
 <chapter id="backup">
  <title>Backup and Restore</title>
@@ -689,8 +689,7 @@ archive_command = 'test ! -f /mnt/server/archivedir/%f &amp;&amp; cp %p /mnt/ser
    </para>
 
    <para>
-    When <varname>archive_mode</> is <literal>off</> and <xref
-    linkend="guc-max-wal-senders"> is zero some SQL commands
+    When <varname>wal_level</> is <literal>minimal</> some SQL commands
     are optimized to avoid WAL logging, as described in <xref
     linkend="populate-pitr">.  If archiving or streaming replication were
     turned on during execution of one of these statements, WAL would not

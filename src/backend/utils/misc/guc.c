@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.551 2010/04/22 19:40:03 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.552 2010/04/28 16:10:42 heikki Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -340,6 +340,7 @@ static const struct config_enum_entry constraint_exclusion_options[] = {
 /*
  * Options for enum values stored in other modules
  */
+extern const struct config_enum_entry wal_level_options[];
 extern const struct config_enum_entry sync_method_options[];
 
 /*
@@ -2782,6 +2783,15 @@ static struct config_enum ConfigureNamesEnum[] =
 		},
 		&pgstat_track_functions,
 		TRACK_FUNC_OFF, track_function_options, NULL, NULL
+	},
+
+	{
+		{"wal_level", PGC_POSTMASTER, WAL_SETTINGS,
+			gettext_noop("Set the level of information written to the WAL."),
+			NULL
+		},
+		&wal_level,
+		WAL_LEVEL_MINIMAL, wal_level_options, NULL
 	},
 
 	{
@@ -7862,7 +7872,7 @@ pg_timezone_abbrev_initialize(void)
 static const char *
 show_archive_command(void)
 {
-	if (XLogArchiveMode)
+	if (XLogArchivingActive())
 		return XLogArchiveCommand;
 	else
 		return "(disabled)";

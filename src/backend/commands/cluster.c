@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/cluster.c,v 1.202 2010/02/26 02:00:37 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/cluster.c,v 1.203 2010/04/28 16:10:41 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -786,23 +786,6 @@ copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex,
 	 * enabled AND it's not a temp rel.
 	 */
 	use_wal = XLogIsNeeded() && !NewHeap->rd_istemp;
-
-	/*
-	 * Write an XLOG UNLOGGED record if WAL-logging was skipped because WAL
-	 * archiving is not enabled.
-	 */
-	if (!use_wal && !NewHeap->rd_istemp)
-	{
-		char		reason[NAMEDATALEN + 32];
-
-		if (OldIndex != NULL)
-			snprintf(reason, sizeof(reason), "CLUSTER on \"%s\"",
-					 RelationGetRelationName(NewHeap));
-		else
-			snprintf(reason, sizeof(reason), "VACUUM FULL on \"%s\"",
-					 RelationGetRelationName(NewHeap));
-		XLogReportUnloggedStatement(reason);
-	}
 
 	/* use_wal off requires smgr_targblock be initially invalid */
 	Assert(RelationGetTargetBlock(NewHeap) == InvalidBlockNumber);

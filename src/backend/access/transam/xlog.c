@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.404 2010/04/27 09:25:18 heikki Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.405 2010/04/28 16:10:40 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -76,6 +76,7 @@ int			MaxStandbyDelay = 30;
 bool		fullPageWrites = true;
 bool		log_checkpoints = false;
 int			sync_method = DEFAULT_SYNC_METHOD;
+int			wal_level = WAL_LEVEL_MINIMAL;
 
 #ifdef WAL_DEBUG
 bool		XLOG_DEBUG = false;
@@ -97,6 +98,13 @@ bool		XLOG_DEBUG = false;
 /*
  * GUC support
  */
+const struct config_enum_entry wal_level_options[] = {
+	{"minimal", WAL_LEVEL_MINIMAL, false},
+	{"archive", WAL_LEVEL_ARCHIVE, false},
+	{"hot_standby", WAL_LEVEL_HOT_STANDBY, false},
+	{NULL, 0, false}
+};
+
 const struct config_enum_entry sync_method_options[] = {
 	{"fsync", SYNC_METHOD_FSYNC, false},
 #ifdef HAVE_FSYNC_WRITETHROUGH
@@ -501,6 +509,18 @@ static bool reachedMinRecoveryPoint = false;
 static bool InRedo = false;
 
 /*
+ * Information logged when we detect a change in one of the parameters
+ * important for Hot Standby.
+ */
+typedef struct xl_parameter_change
+{
+	int			MaxConnections;
+	int			max_prepared_xacts;
+	int			max_locks_per_xact;
+	int			wal_level;
+} xl_parameter_change;
+
+/*
  * Flags set by interrupt handlers for later service in the redo loop.
  */
 static volatile sig_atomic_t got_SIGHUP = false;
@@ -522,7 +542,8 @@ static void readRecoveryCommandFile(void);
 static void exitArchiveRecovery(TimeLineID endTLI,
 					uint32 endLogId, uint32 endLogSeg);
 static bool recoveryStopsHere(XLogRecord *record, bool *includeThis);
-static void CheckRequiredParameterValues(CheckPoint checkPoint);
+static void CheckRequiredParameterValues(void);
+static void XLogReportParameters(void);
 static void LocalSetXLogInsertAllowed(void);
 static void CheckPointGuts(XLogRecPtr checkPointRedo, int flags);
 
@@ -4922,6 +4943,13 @@ BootStrapXLOG(void)
 	ControlFile->time = checkPoint.time;
 	ControlFile->checkPoint = checkPoint.redo;
 	ControlFile->checkPointCopy = checkPoint;
+
+	/* Set important parameter values for use when replaying WAL */
+	ControlFile->MaxConnections = MaxConnections;
+	ControlFile->max_prepared_xacts = max_prepared_xacts;
+	ControlFile->max_locks_per_xact = max_locks_per_xact;
+	ControlFile->wal_level = wal_level;
+
 	/* some additional ControlFile fields are set in WriteControlFile() */
 
 	WriteControlFile();
@@ -5539,17 +5567,18 @@ GetLatestXLogTime(void)
 }
 
 /*
- * Note that text field supplied is a parameter name and does not require translation
+ * Note that text field supplied is a parameter name and does not require
+ * translation
  */
-#define RecoveryRequiresIntParameter(param_name, currValue, checkpointValue) \
+#define RecoveryRequiresIntParameter(param_name, currValue, minValue) \
 { \
-	if (currValue < checkpointValue) \
+	if (currValue < minValue) \
 		ereport(ERROR, \
 			(errmsg("recovery connections cannot continue because " \
 					"%s = %u is a lower setting than on WAL source server (value was %u)", \
 					param_name, \
 					currValue, \
-					checkpointValue))); \
+					minValue))); \
 }
 
 /*
@@ -5557,21 +5586,37 @@ GetLatestXLogTime(void)
  * for various aspects of recovery operation.
  */
 static void
-CheckRequiredParameterValues(CheckPoint checkPoint)
+CheckRequiredParameterValues(void)
 {
-	/* We ignore autovacuum_max_workers when we make this test. */
-	RecoveryRequiresIntParameter("max_connections",
-								 MaxConnections, checkPoint.MaxConnections);
+	/*
+	 * For archive recovery, the WAL must be generated with at least
+	 * 'archive' wal_level.
+	 */
+	if (InArchiveRecovery && ControlFile->wal_level == WAL_LEVEL_MINIMAL)
+	{
+		ereport(WARNING,
+				(errmsg("WAL was generated with wal_level='minimal', data may be missing"),
+				 errhint("This happens if you temporarily set wal_level='minimal' without taking a new base backup.")));
+	}
 
-	RecoveryRequiresIntParameter("max_prepared_xacts",
-						  max_prepared_xacts, checkPoint.max_prepared_xacts);
-	RecoveryRequiresIntParameter("max_locks_per_xact",
-						  max_locks_per_xact, checkPoint.max_locks_per_xact);
+	/*
+	 * For Hot Standby, the WAL must be generated with 'hot_standby' mode,
+	 * and we must have at least as many backend slots as the primary.
+	 */
+	if (InArchiveRecovery && XLogRequestRecoveryConnections)
+	{
+		if (ControlFile->wal_level < WAL_LEVEL_HOT_STANDBY)
+			ereport(ERROR,
+					(errmsg("recovery connections cannot start because wal_level was not set to 'hot_standby' on the WAL source server")));
 
-	if (!checkPoint.XLogStandbyInfoMode)
-		ereport(ERROR,
-				(errmsg("recovery connections cannot start because the recovery_connections "
-						"parameter is disabled on the WAL source server")));
+		/* We ignore autovacuum_max_workers when we make this test. */
+		RecoveryRequiresIntParameter("max_connections",
+									 MaxConnections, ControlFile->MaxConnections);
+		RecoveryRequiresIntParameter("max_prepared_xacts",
+									 max_prepared_xacts, ControlFile->max_prepared_xacts);
+		RecoveryRequiresIntParameter("max_locks_per_xact",
+									 max_locks_per_xact, ControlFile->max_locks_per_xact);
+	}
 }
 
 /*
@@ -5904,6 +5949,9 @@ StartupXLOG(void)
 								BACKUP_LABEL_FILE, BACKUP_LABEL_OLD)));
 		}
 
+		/* Check that the GUCs used to generate the WAL allow recovery */
+		CheckRequiredParameterValues();
+
 		/*
 		 * Initialize recovery connections, if enabled. We won't let backends
 		 * in yet, not until we've reached the min recovery point specified in
@@ -5914,8 +5962,6 @@ StartupXLOG(void)
 		{
 			TransactionId *xids;
 			int			nxids;
-
-			CheckRequiredParameterValues(checkPoint);
 
 			ereport(DEBUG1,
 					(errmsg("initializing recovery connections")));
@@ -6399,6 +6445,13 @@ StartupXLOG(void)
 		readRecordBuf = NULL;
 		readRecordBufSize = 0;
 	}
+
+	/*
+	 * If any of the critical GUCs have changed, log them before we allow
+	 * backends to write WAL.
+	 */
+	LocalSetXLogInsertAllowed();
+	XLogReportParameters();
 
 	/*
 	 * All done.  Allow backends to write WAL.	(Although the bool flag is
@@ -6997,12 +7050,6 @@ CreateCheckPoint(int flags)
 	/* Begin filling in the checkpoint WAL record */
 	MemSet(&checkPoint, 0, sizeof(checkPoint));
 	checkPoint.time = (pg_time_t) time(NULL);
-
-	/* Set important parameter values for use when replaying WAL */
-	checkPoint.MaxConnections = MaxConnections;
-	checkPoint.max_prepared_xacts = max_prepared_xacts;
-	checkPoint.max_locks_per_xact = max_locks_per_xact;
-	checkPoint.XLogStandbyInfoMode = XLogStandbyInfoActive();
 
 	/*
 	 * We must hold WALInsertLock while examining insert state to determine
@@ -7647,28 +7694,49 @@ RequestXLogSwitch(void)
 }
 
 /*
- * Write an XLOG UNLOGGED record, indicating that some operation was
- * performed on data that we fsync()'d directly to disk, skipping
- * WAL-logging.
- *
- * Such operations screw up archive recovery, so we complain if we see
- * these records during archive recovery. That shouldn't happen in a
- * correctly configured server, but you can induce it by temporarily
- * disabling archiving and restarting, so it's good to at least get a
- * warning of silent data loss in such cases. These records serve no
- * other purpose and are simply ignored during crash recovery.
+ * Check if any of the GUC parameters that are critical for hot standby
+ * have changed, and update the value in pg_control file if necessary.
  */
-void
-XLogReportUnloggedStatement(char *reason)
+static void
+XLogReportParameters(void)
 {
-	XLogRecData rdata;
+	if (wal_level != ControlFile->wal_level ||
+		MaxConnections != ControlFile->MaxConnections ||
+		max_prepared_xacts != ControlFile->max_prepared_xacts ||
+		max_locks_per_xact != max_locks_per_xact)
+	{
+		/*
+		 * The change in number of backend slots doesn't need to be
+		 * WAL-logged if archiving is not enabled, as you can't start
+		 * archive recovery with wal_level='minimal' anyway. We don't
+		 * really care about the values in pg_control either if
+		 * wal_level='minimal', but seems better to keep them up-to-date
+		 * to avoid confusion.
+		 */
+		if (wal_level != ControlFile->wal_level || XLogIsNeeded())
+		{
+			XLogRecData rdata;
+			xl_parameter_change xlrec;
 
-	rdata.buffer = InvalidBuffer;
-	rdata.data = reason;
-	rdata.len = strlen(reason) + 1;
-	rdata.next = NULL;
+			xlrec.MaxConnections = MaxConnections;
+			xlrec.max_prepared_xacts = max_prepared_xacts;
+			xlrec.max_locks_per_xact = max_locks_per_xact;
+			xlrec.wal_level = wal_level;
 
-	XLogInsert(RM_XLOG_ID, XLOG_UNLOGGED, &rdata);
+			rdata.buffer = InvalidBuffer;
+			rdata.data = (char *) &xlrec;
+			rdata.len = sizeof(xlrec);
+			rdata.next = NULL;
+
+			XLogInsert(RM_XLOG_ID, XLOG_PARAMETER_CHANGE, &rdata);
+		}
+
+		ControlFile->MaxConnections = MaxConnections;
+		ControlFile->max_prepared_xacts = max_prepared_xacts;
+		ControlFile->max_locks_per_xact = max_locks_per_xact;
+		ControlFile->wal_level = wal_level;
+		UpdateControlFile();
+	}
 }
 
 /*
@@ -7708,10 +7776,6 @@ xlog_redo(XLogRecPtr lsn, XLogRecord *record)
 		MultiXactSetNextMXact(checkPoint.nextMulti,
 							  checkPoint.nextMultiOffset);
 		SetTransactionIdLimit(checkPoint.oldestXid, checkPoint.oldestXidDB);
-
-		/* Check to see if any changes to max_connections give problems */
-		if (standbyState != STANDBY_DISABLED)
-			CheckRequiredParameterValues(checkPoint);
 
 		/*
 		 * If we see a shutdown checkpoint while waiting for an
@@ -7844,18 +7908,21 @@ xlog_redo(XLogRecPtr lsn, XLogRecord *record)
 			LWLockRelease(ControlFileLock);
 		}
 	}
-	else if (info == XLOG_UNLOGGED)
+	else if (info == XLOG_PARAMETER_CHANGE)
 	{
-		if (InArchiveRecovery)
-		{
-			/*
-			 * Note: We don't print the reason string from the record, because
-			 * that gets added as a line using xlog_desc()
-			 */
-			ereport(WARNING,
-				(errmsg("unlogged operation performed, data may be missing"),
-				 errhint("This can happen if you temporarily disable archive_mode without taking a new base backup.")));
-		}
+		xl_parameter_change xlrec;
+
+		/* Update our copy of the parameters in pg_control */
+		memcpy(&xlrec, XLogRecGetData(record), sizeof(xl_parameter_change));
+
+		ControlFile->MaxConnections = xlrec.MaxConnections;
+		ControlFile->max_prepared_xacts = xlrec.max_prepared_xacts;
+		ControlFile->max_locks_per_xact = xlrec.max_locks_per_xact;
+		ControlFile->wal_level = xlrec.wal_level;
+		UpdateControlFile();
+
+		/* Check to see if any changes to max_connections give problems */
+		CheckRequiredParameterValues();
 	}
 }
 
@@ -7906,11 +7973,30 @@ xlog_desc(StringInfo buf, uint8 xl_info, char *rec)
 		appendStringInfo(buf, "backup end: %X/%X",
 						 startpoint.xlogid, startpoint.xrecoff);
 	}
-	else if (info == XLOG_UNLOGGED)
+	else if (info == XLOG_PARAMETER_CHANGE)
 	{
-		char	   *reason = rec;
+		xl_parameter_change xlrec;
+		const char *wal_level_str;
+		const struct config_enum_entry *entry;
 
-		appendStringInfo(buf, "unlogged operation: %s", reason);
+		memcpy(&xlrec, rec, sizeof(xl_parameter_change));
+
+		/* Find a string representation for wal_level */
+		wal_level_str = "?";
+		for (entry = wal_level_options; entry->name; entry++)
+		{
+			if (entry->val == xlrec.wal_level)
+			{
+				wal_level_str = entry->name;
+				break;
+			}
+		}
+
+		appendStringInfo(buf, "parameter change: max_connections=%d max_prepared_xacts=%d max_locks_per_xact=%d wal_level=%s",
+						 xlrec.MaxConnections,
+						 xlrec.max_prepared_xacts,
+						 xlrec.max_locks_per_xact,
+						 wal_level_str);
 	}
 	else
 		appendStringInfo(buf, "UNKNOWN");

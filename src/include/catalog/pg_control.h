@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_control.h,v 1.53 2010/04/23 20:21:31 sriggs Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_control.h,v 1.54 2010/04/28 16:10:43 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,7 +21,7 @@
 
 
 /* Version identifier for this pg_control format */
-#define PG_CONTROL_VERSION	901
+#define PG_CONTROL_VERSION	902
 
 /*
  * Body of CheckPoint XLOG records.  This is declared here because we keep
@@ -41,12 +41,6 @@ typedef struct CheckPoint
 	Oid			oldestXidDB;	/* database with minimum datfrozenxid */
 	pg_time_t	time;			/* time stamp of checkpoint */
 
-	/* Important parameter settings at time of shutdown checkpoints */
-	int			MaxConnections;
-	int			max_prepared_xacts;
-	int			max_locks_per_xact;
-	bool		XLogStandbyInfoMode;
-
 	/*
 	 * Oldest XID still running. This is only needed to initialize hot standby
 	 * mode from an online checkpoint, so we only bother calculating this for
@@ -63,7 +57,7 @@ typedef struct CheckPoint
 #define XLOG_NEXTOID					0x30
 #define XLOG_SWITCH						0x40
 #define XLOG_BACKUP_END					0x50
-#define XLOG_UNLOGGED					0x60
+#define XLOG_PARAMETER_CHANGE			0x60
 
 
 /* System status indicator */
@@ -140,6 +134,15 @@ typedef struct ControlFileData
 	 */
 	XLogRecPtr	minRecoveryPoint;
 	XLogRecPtr	backupStartPoint;
+
+	/*
+	 * Parameter settings that determine if the WAL can be used for archival
+	 * or hot standby.
+	 */
+	int			wal_level;
+	int			MaxConnections;
+	int			max_prepared_xacts;
+	int			max_locks_per_xact;
 
 	/*
 	 * This data is used to check for hardware-architecture compatibility of

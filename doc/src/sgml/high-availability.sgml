@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/high-availability.sgml,v 1.63 2010/04/26 19:09:25 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/high-availability.sgml,v 1.64 2010/04/28 16:10:40 heikki Exp $ -->
 
 <chapter id="high-availability">
  <title>High Availability, Load Balancing, and Replication</title>
@@ -1593,9 +1593,9 @@ LOG:  database system is ready to accept read only connections
 </programlisting>
 
     Consistency information is recorded once per checkpoint on the primary, as long
-    as <varname>recovery_connections</> is enabled on the primary.  It is not possible
+    as <varname>wal_level</> is set to <literal>hot_standby</> on the primary.  It is not possible
     to enable recovery connections on the standby when reading WAL written during the
-    period that <varname>recovery_connections</> was disabled on the primary.
+    period that <varname>wal_level</> was not set to <literal>hot_standby</> on the primary.
     Reaching a consistent state can also be delayed in the presence
     of both of these conditions:
 
@@ -1842,7 +1842,7 @@ LOG:  database system is ready to accept read only connections
    </para>
 
    <para>
-    On the primary, parameters <varname>recovery_connections</> and
+    On the primary, parameters <varname>wal_level</> and
     <varname>vacuum_defer_cleanup_age</> can be used.
     <varname>max_standby_delay</> has no effect if set on the primary.
    </para>

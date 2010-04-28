@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/standby.c,v 1.19 2010/04/23 23:21:44 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/standby.c,v 1.20 2010/04/28 16:10:42 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -256,7 +256,7 @@ ResolveRecoveryConflictWithSnapshot(TransactionId latestRemovedXid, RelFileNode 
 	 */
 	if (!TransactionIdIsValid(latestRemovedXid))
 	{
-		elog(DEBUG1, "Invalid latestremovexXid reported, using latestcompletedxid instead");
+		elog(DEBUG1, "invalid latestremovexXid reported, using latestcompletedxid instead");
 
 		LWLockAcquire(ProcArrayLock, LW_SHARED);
 		latestRemovedXid = ShmemVariableCache->latestCompletedXid;
