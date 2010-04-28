@@ -105,6 +105,12 @@ SELECT length(to_tsvector('english', '345 qwe@efd.r '' http://www.com/ http://ae
 
 SELECT * from ts_debug('english', '<myns:foo-bar_baz.blurfl>abc&nm1;def&#xa9;ghi&#245;jkl</myns:foo-bar_baz.blurfl>');
 
+-- check parsing of URLs
+SELECT * from ts_debug('english', 'http://www.harewoodsolutions.co.uk/press.aspx</span>');
+SELECT * from ts_debug('english', 'http://aew.wer0c.ewr/id?ad=qwe&dw<span>');
+SELECT * from ts_debug('english', 'http://5aew.werc.ewr:8100/?');
+SELECT * from ts_debug('english', '5aew.werc.ewr:8100/?xx');
+
 -- to_tsquery
 
 SELECT to_tsquery('english', 'qwe & sKies ');

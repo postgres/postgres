@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tsearch/wparser_def.c,v 1.29 2010/04/26 17:10:18 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tsearch/wparser_def.c,v 1.30 2010/04/28 02:04:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -583,6 +583,35 @@ p_isasclet(TParser *prs)
 	return (p_isascii(prs) && p_isalpha(prs)) ? 1 : 0;
 }
 
+static int
+p_isurlchar(TParser *prs)
+{
+	char		ch;
+
+	/* no non-ASCII need apply */
+	if (prs->state->charlen != 1)
+		return 0;
+	ch = *(prs->str + prs->state->posbyte);
+	/* no spaces or control characters */
+	if (ch <= 0x20 || ch >= 0x7F)
+		return 0;
+	/* reject characters disallowed by RFC 3986 */
+	switch (ch)
+	{
+		case '"':
+		case '<':
+		case '>':
+		case '\\':
+		case '^':
+		case '`':
+		case '{':
+		case '|':
+		case '}':
+			return 0;
+	}
+	return 1;
+}
+
 
 /* deliberately suppress unused-function complaints for the above */
 void		_make_compiler_happy(void);
@@ -707,9 +736,9 @@ p_isURLPath(TParser *prs)
 	int			res = 0;
 
 	tmpprs->state = newTParserPosition(tmpprs->state);
-	tmpprs->state->state = TPS_InFileFirst;
+	tmpprs->state->state = TPS_InURLPathFirst;
 
-	if (TParserGet(tmpprs) && (tmpprs->type == URLPATH || tmpprs->type == FILEPATH))
+	if (TParserGet(tmpprs) && tmpprs->type == URLPATH)
 	{
 		prs->state->posbyte += tmpprs->lenbytetoken;
 		prs->state->poschar += tmpprs->lenchartoken;
@@ -1441,7 +1470,6 @@ static const TParserStateActionItem actionTPS_InFileFirst[] = {
 	{p_isdigit, 0, A_NEXT, TPS_InFile, 0, NULL},
 	{p_iseqC, '.', A_NEXT, TPS_InPathFirst, 0, NULL},
 	{p_iseqC, '_', A_NEXT, TPS_InFile, 0, NULL},
-	{p_iseqC, '?', A_PUSH, TPS_InURLPathFirst, 0, NULL},
 	{p_iseqC, '~', A_PUSH, TPS_InFileTwiddle, 0, NULL},
 	{NULL, 0, A_POP, TPS_Null, 0, NULL}
 };
@@ -1488,7 +1516,6 @@ static const TParserStateActionItem actionTPS_InFile[] = {
 	{p_iseqC, '_', A_NEXT, TPS_InFile, 0, NULL},
 	{p_iseqC, '-', A_NEXT, TPS_InFile, 0, NULL},
 	{p_iseqC, '/', A_PUSH, TPS_InFileFirst, 0, NULL},
-	{p_iseqC, '?', A_PUSH, TPS_InURLPathFirst, 0, NULL},
 	{NULL, 0, A_BINGO, TPS_Base, FILEPATH, NULL}
 };
 
@@ -1502,9 +1529,7 @@ static const TParserStateActionItem actionTPS_InFileNext[] = {
 
 static const TParserStateActionItem actionTPS_InURLPathFirst[] = {
 	{p_isEOF, 0, A_POP, TPS_Null, 0, NULL},
-	{p_iseqC, '"', A_POP, TPS_Null, 0, NULL},
-	{p_iseqC, '\'', A_POP, TPS_Null, 0, NULL},
-	{p_isnotspace, 0, A_CLEAR, TPS_InURLPath, 0, NULL},
+	{p_isurlchar, 0, A_NEXT, TPS_InURLPath, 0, NULL},
 	{NULL, 0, A_POP, TPS_Null, 0, NULL},
 };
 
@@ -1514,9 +1539,7 @@ static const TParserStateActionItem actionTPS_InURLPathStart[] = {
 
 static const TParserStateActionItem actionTPS_InURLPath[] = {
 	{p_isEOF, 0, A_BINGO, TPS_Base, URLPATH, NULL},
-	{p_iseqC, '"', A_BINGO, TPS_Base, URLPATH, NULL},
-	{p_iseqC, '\'', A_BINGO, TPS_Base, URLPATH, NULL},
-	{p_isnotspace, 0, A_NEXT, TPS_InURLPath, 0, NULL},
+	{p_isurlchar, 0, A_NEXT, TPS_InURLPath, 0, NULL},
 	{NULL, 0, A_BINGO, TPS_Base, URLPATH, NULL}
 };
 
