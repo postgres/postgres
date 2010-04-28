@@ -23,7 +23,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/pg_resetxlog/pg_resetxlog.c,v 1.79 2010/04/28 16:10:43 heikki Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_resetxlog/pg_resetxlog.c,v 1.80 2010/04/28 19:38:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -497,10 +497,18 @@ GuessControlValues(void)
 	ControlFile.checkPointCopy.oldestXid = FirstNormalTransactionId;
 	ControlFile.checkPointCopy.oldestXidDB = InvalidOid;
 	ControlFile.checkPointCopy.time = (pg_time_t) time(NULL);
+	ControlFile.checkPointCopy.oldestActiveXid = InvalidTransactionId;
 
 	ControlFile.state = DB_SHUTDOWNED;
 	ControlFile.time = (pg_time_t) time(NULL);
 	ControlFile.checkPoint = ControlFile.checkPointCopy.redo;
+
+	/* minRecoveryPoint and backupStartPoint can be left zero */
+
+	ControlFile.wal_level = WAL_LEVEL_MINIMAL;
+	ControlFile.MaxConnections = 100;
+	ControlFile.max_prepared_xacts = 0;
+	ControlFile.max_locks_per_xact = 64;
 
 	ControlFile.maxAlign = MAXIMUM_ALIGNOF;
 	ControlFile.floatFormat = FLOATFORMAT_VALUE;
@@ -574,6 +582,8 @@ PrintControlValues(bool guessed)
 		   ControlFile.checkPointCopy.oldestXid);
 	printf(_("Latest checkpoint's oldestXID's DB:   %u\n"),
 		   ControlFile.checkPointCopy.oldestXidDB);
+	printf(_("Latest checkpoint's oldestActiveXID:  %u\n"),
+		   ControlFile.checkPointCopy.oldestActiveXid);
 	printf(_("Maximum data alignment:               %u\n"),
 		   ControlFile.maxAlign);
 	/* we don't print floatFormat since can't say much useful about it */
@@ -629,13 +639,14 @@ RewriteControlFile(void)
 	ControlFile.backupStartPoint.xrecoff = 0;
 
 	/*
-	 * Use the defaults for max_* settings. The values don't matter
-	 * as long as wal_level='minimal'.
+	 * Force the defaults for max_* settings. The values don't really matter
+	 * as long as wal_level='minimal'; the postmaster will reset these fields
+	 * anyway at startup.
 	 */
+	ControlFile.wal_level = WAL_LEVEL_MINIMAL;
 	ControlFile.MaxConnections = 100;
 	ControlFile.max_prepared_xacts = 0;
 	ControlFile.max_locks_per_xact = 64;
-	ControlFile.wal_level = WAL_LEVEL_MINIMAL;
 
 	/* Now we can force the recorded xlog seg size to the right thing. */
 	ControlFile.xlog_seg_size = XLogSegSize;
