@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/perform.sgml,v 1.77 2010/04/28 16:10:40 heikki Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/perform.sgml,v 1.78 2010/04/28 16:48:21 alvherre Exp $ -->
 
  <chapter id="performance-tips">
   <title>Performance Tips</title>
@@ -554,16 +554,31 @@ WHERE relname LIKE 'tenk1%';
    For example, we might do:
 
 <screen>
-SELECT attname, n_distinct, most_common_vals
+SELECT attname, inherited, n_distinct,
+       array_to_string(most_common_vals, E'\n') as most_common_vals
 FROM pg_stats
 WHERE tablename = 'road';
 
- attname | n_distinct |                                                                                                                                                                                  most_common_vals                                                                                                                                                                                   
----------+------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
- name    |  -0.467008 | {"I- 580                        Ramp","I- 880                        Ramp","Sp Railroad                       ","I- 580                            ","I- 680                        Ramp","I- 80                         Ramp","14th                          St  ","5th                           St  ","Mission                       Blvd","I- 880                            "}
- thepath |         20 | {"[(-122.089,37.71),(-122.0886,37.711)]"}
+ attname | inherited | n_distinct |          most_common_vals          
+---------+-----------+------------+------------------------------------
+ name    | f         |  -0.363388 | I- 580                        Ramp+
+         |           |            | I- 880                        Ramp+
+         |           |            | Sp Railroad                       +
+         |           |            | I- 580                            +
+         |           |            | I- 680                        Ramp
+ name    | t         |  -0.284859 | I- 880                        Ramp+
+         |           |            | I- 580                        Ramp+
+         |           |            | I- 680                        Ramp+
+         |           |            | I- 580                            +
+         |           |            | State Hwy 13                  Ramp
 (2 rows)
 </screen>
+
+   Note that two rows are displayed for the same column, one corresponding
+   to the complete inheritance hierarchy starting at the
+   <literal>road</literal> table (<literal>inherited</>=<literal>t</>),
+   and another one including only the <literal>road</literal> table itself
+   (<literal>inherited</>=<literal>f</>).
   </para>
 
   <para>
