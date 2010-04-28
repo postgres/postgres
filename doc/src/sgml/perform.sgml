@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/perform.sgml,v 1.78 2010/04/28 16:48:21 alvherre Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/perform.sgml,v 1.79 2010/04/28 21:23:29 tgl Exp $ -->
 
  <chapter id="performance-tips">
   <title>Performance Tips</title>
@@ -1027,7 +1027,7 @@ SELECT * FROM x, y, a, b, c WHERE something AND somethingelse;
      <listitem>
       <para>
        If using WAL archiving or streaming replication, consider disabling
-       them during the restore. To do that, set <varname>arcive_mode</> off,
+       them during the restore. To do that, set <varname>archive_mode</> off,
        <varname>wal_level</varname> to <literal>minimal</>, and
        <varname>max_wal_senders</> zero before loading the dump script,
        and afterwards set them back to the right values and take a fresh
