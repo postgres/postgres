@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2003-2010, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/catalog/information_schema.sql,v 1.65 2010/01/28 23:21:11 petere Exp $
+ * $PostgreSQL: pgsql/src/backend/catalog/information_schema.sql,v 1.66 2010/04/28 21:18:07 tgl Exp $
  */
 
 /*
@@ -24,7 +24,7 @@
 
 CREATE SCHEMA information_schema;
 GRANT USAGE ON SCHEMA information_schema TO PUBLIC;
-SET search_path TO information_schema, public;
+SET search_path TO information_schema;
 
 
 /*
@@ -42,7 +42,7 @@ CREATE FUNCTION _pg_expandarray(IN anyarray, OUT x anyelement, OUT n int)
 
 CREATE FUNCTION _pg_keysequal(smallint[], smallint[]) RETURNS boolean
     LANGUAGE sql IMMUTABLE  -- intentionally not STRICT, to allow inlining
-    AS 'select $1 <@ $2 and $2 <@ $1';
+    AS 'select $1 operator(pg_catalog.<@) $2 and $2 operator(pg_catalog.<@) $1';
 
 /* Given an index's OID and an underlying-table column number, return the
  * column's position in the index (NULL if not there) */
