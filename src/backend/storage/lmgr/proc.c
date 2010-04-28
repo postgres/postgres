@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/proc.c,v 1.217 2010/02/26 02:01:01 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/proc.c,v 1.218 2010/04/28 16:54:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -756,21 +756,22 @@ AuxiliaryProcKill(int code, Datum arg)
 /*
  * ProcQueueAlloc -- alloc/attach to a shared memory process queue
  *
- * Returns: a pointer to the queue or NULL
- * Side Effects: Initializes the queue if we allocated one
+ * Returns: a pointer to the queue
+ * Side Effects: Initializes the queue if it wasn't there before
  */
 #ifdef NOT_USED
 PROC_QUEUE *
-ProcQueueAlloc(char *name)
+ProcQueueAlloc(const char *name)
 {
+	PROC_QUEUE *queue;
 	bool		found;
-	PROC_QUEUE *queue = (PROC_QUEUE *)
-	ShmemInitStruct(name, sizeof(PROC_QUEUE), &found);
 
-	if (!queue)
-		return NULL;
+	queue = (PROC_QUEUE *)
+		ShmemInitStruct(name, sizeof(PROC_QUEUE), &found);
+
 	if (!found)
 		ProcQueueInit(queue);
+
 	return queue;
 }
 #endif

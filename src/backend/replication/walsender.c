@@ -30,7 +30,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/replication/walsender.c,v 1.18 2010/04/28 16:10:42 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/replication/walsender.c,v 1.19 2010/04/28 16:54:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -268,8 +268,7 @@ WalSndHandshake(void)
 						if (wal_level == WAL_LEVEL_MINIMAL)
 							ereport(FATAL,
 									(errcode(ERRCODE_CANNOT_CONNECT_NOW),
-									 errmsg("standby connections not allowed because wal_level='minimal'")));
-
+									 errmsg("standby connections not allowed because wal_level=\"minimal\"")));
 
 						/* Send a CopyOutResponse message, and start streaming */
 						pq_beginmessage(&buf, 'H');
@@ -838,21 +837,17 @@ WalSndShmemInit(void)
 	WalSndCtl = (WalSndCtlData *)
 		ShmemInitStruct("Wal Sender Ctl", WalSndShmemSize(), &found);
 
-	if (WalSndCtl == NULL)
-		ereport(FATAL,
-				(errcode(ERRCODE_OUT_OF_MEMORY),
-				 errmsg("not enough shared memory for walsender")));
-	if (found)
-		return;					/* already initialized */
-
-	/* Initialize the data structures */
-	MemSet(WalSndCtl, 0, WalSndShmemSize());
-
-	for (i = 0; i < max_wal_senders; i++)
+	if (!found)
 	{
-		WalSnd	   *walsnd = &WalSndCtl->walsnds[i];
+		/* First time through, so initialize */
+		MemSet(WalSndCtl, 0, WalSndShmemSize());
 
-		SpinLockInit(&walsnd->mutex);
+		for (i = 0; i < max_wal_senders; i++)
+		{
+			WalSnd	   *walsnd = &WalSndCtl->walsnds[i];
+
+			SpinLockInit(&walsnd->mutex);
+		}
 	}
 }
 

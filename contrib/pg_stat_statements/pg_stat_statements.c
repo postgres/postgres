@@ -14,7 +14,7 @@
  * Copyright (c) 2008-2010, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/contrib/pg_stat_statements/pg_stat_statements.c,v 1.13 2010/02/26 02:00:32 momjian Exp $
+ *	  $PostgreSQL: pgsql/contrib/pg_stat_statements/pg_stat_statements.c,v 1.14 2010/04/28 16:54:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -321,8 +321,6 @@ pgss_shmem_startup(void)
 	pgss = ShmemInitStruct("pg_stat_statements",
 						   sizeof(pgssSharedState),
 						   &found);
-	if (!pgss)
-		elog(ERROR, "out of shared memory");
 
 	if (!found)
 	{
@@ -343,8 +341,6 @@ pgss_shmem_startup(void)
 							  pgss_max, pgss_max,
 							  &info,
 							  HASH_ELEM | HASH_FUNCTION | HASH_COMPARE);
-	if (!pgss_hash)
-		elog(ERROR, "out of shared memory");
 
 	LWLockRelease(AddinShmemInitLock);
 

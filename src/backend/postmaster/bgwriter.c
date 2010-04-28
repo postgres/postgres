@@ -38,7 +38,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/bgwriter.c,v 1.67 2010/02/05 23:37:43 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/bgwriter.c,v 1.68 2010/04/28 16:54:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -890,16 +890,14 @@ BgWriterShmemInit(void)
 		ShmemInitStruct("Background Writer Data",
 						BgWriterShmemSize(),
 						&found);
-	if (BgWriterShmem == NULL)
-		ereport(FATAL,
-				(errcode(ERRCODE_OUT_OF_MEMORY),
-				 errmsg("not enough shared memory for background writer")));
-	if (found)
-		return;					/* already initialized */
 
-	MemSet(BgWriterShmem, 0, sizeof(BgWriterShmemStruct));
-	SpinLockInit(&BgWriterShmem->ckpt_lck);
-	BgWriterShmem->max_requests = NBuffers;
+	if (!found)
+	{
+		/* First time through, so initialize */
+		MemSet(BgWriterShmem, 0, sizeof(BgWriterShmemStruct));
+		SpinLockInit(&BgWriterShmem->ckpt_lck);
+		BgWriterShmem->max_requests = NBuffers;
+	}
 }
 
 /*

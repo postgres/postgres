@@ -55,7 +55,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.109 2010/02/26 02:00:55 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.110 2010/04/28 16:54:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2771,10 +2771,6 @@ AutoVacuumShmemInit(void)
 		ShmemInitStruct("AutoVacuum Data",
 						AutoVacuumShmemSize(),
 						&found);
-	if (AutoVacuumShmem == NULL)
-		ereport(FATAL,
-				(errcode(ERRCODE_OUT_OF_MEMORY),
-				 errmsg("not enough shared memory for autovacuum")));
 
 	if (!IsUnderPostmaster)
 	{
