@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/recovery-config.sgml,v 2.5 2010/04/21 03:32:53 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/recovery-config.sgml,v 2.6 2010/04/28 07:34:11 heikki Exp $ -->
 
 <chapter Id="recovery-config">
   <title>Recovery Configuration</title>
@@ -36,6 +36,9 @@
 
      <varlistentry id="restore-command" xreflabel="restore_command">
       <term><varname>restore_command</varname> (<type>string</type>)</term>
+      <indexterm>
+        <primary><varname>restore_command</> recovery parameter</primary>
+      </indexterm>
       <listitem>
        <para>
         The shell command to execute to retrieve an archived segment of
@@ -72,6 +75,9 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
 
      <varlistentry id="restartpoint-command" xreflabel="restartpoint_command">
       <term><varname>restartpoint_command</varname> (<type>string</type>)</term>
+      <indexterm>
+        <primary><varname>restartpoint_command</> recovery parameter</primary>
+      </indexterm>
       <listitem>
        <para>
         This parameter specifies a shell command that will be executed at
@@ -98,6 +104,9 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
 
      <varlistentry id="recovery-end-command" xreflabel="recovery_end_command">
       <term><varname>recovery_end_command</varname> (<type>string</type>)</term>
+      <indexterm>
+        <primary><varname>recovery_end_command</> recovery parameter</primary>
+      </indexterm>
       <listitem>
        <para>
         This parameter specifies a shell command that will be executed once only
@@ -129,6 +138,9 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
       <term><varname>recovery_target_time</varname>
            (<type>timestamp</type>)
       </term>
+      <indexterm>
+        <primary><varname>recovery_target_time</> recovery parameter</primary>
+      </indexterm>
       <listitem>
        <para>
         This parameter specifies the time stamp up to which recovery
@@ -144,6 +156,9 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
 
      <varlistentry id="recovery-target-xid" xreflabel="recovery_target_xid">
       <term><varname>recovery_target_xid</varname> (<type>string</type>)</term>
+      <indexterm>
+        <primary><varname>recovery_target_xid</> recovery parameter</primary>
+      </indexterm>
       <listitem>
        <para>
         This parameter specifies the transaction ID up to which recovery
@@ -166,6 +181,9 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
       <term><varname>recovery_target_inclusive</varname>
         (<type>boolean</type>)
       </term>
+      <indexterm>
+        <primary><varname>recovery_target_inclusive</> recovery parameter</primary>
+      </indexterm>
       <listitem>
        <para>
         Specifies whether we stop just after the specified recovery target
@@ -185,6 +203,9 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
       <term><varname>recovery_target_timeline</varname>
         (<type>string</type>)
       </term>
+      <indexterm>
+        <primary><varname>recovery_target_timeline</> recovery parameter</primary>
+      </indexterm>
       <listitem>
        <para>
         Specifies recovering into a particular timeline.  The default is
@@ -207,6 +228,9 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
 
        <varlistentry id="standby-mode" xreflabel="standby_mode">
         <term><varname>standby_mode</varname> (<type>boolean</type>)</term>
+        <indexterm>
+          <primary><varname>standby_mode</> recovery parameter</primary>
+        </indexterm>
         <listitem>
          <para>
           Specifies whether to start the <productname>PostgreSQL</> server as
@@ -221,6 +245,9 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
        </varlistentry>
        <varlistentry id="primary-conninfo" xreflabel="primary_conninfo">
         <term><varname>primary_conninfo</varname> (<type>string</type>)</term>
+        <indexterm>
+          <primary><varname>primary_conninfo</> recovery parameter</primary>
+        </indexterm>
         <listitem>
          <para>
           Specifies a connection string to be used for the standby server
@@ -254,6 +281,9 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
        </varlistentry>
        <varlistentry id="trigger-file" xreflabel="trigger_file">
         <term><varname>trigger_file</varname> (<type>string</type>)</term>
+        <indexterm>
+          <primary><varname>trigger_file</> recovery parameter</primary>
+        </indexterm>
         <listitem>
          <para>
           Specifies a trigger file whose presence ends recovery in the
