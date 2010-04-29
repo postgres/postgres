@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release-9.0.sgml,v 2.17 2010/04/29 20:54:28 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release-9.0.sgml,v 2.18 2010/04/29 21:02:50 momjian Exp $ -->
 
  <sect1 id="release-9-0">
   <title>Release 9.0</title>
@@ -157,13 +157,11 @@
      </para>
     </listitem>
 
-    <listitem>
-     <para>
-      The above items are explained in more detail in the sections below.
-     </para>
-    </listitem>
-
    </itemizedlist>
+
+   <para>
+    The above items are explained in more detail in the sections below.
+   </para>
 
   </sect2>
 
