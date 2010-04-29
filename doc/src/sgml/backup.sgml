@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.153 2010/04/28 16:10:39 heikki Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.154 2010/04/29 21:49:03 tgl Exp $ -->
 
 <chapter id="backup">
  <title>Backup and Restore</title>
@@ -779,6 +779,7 @@ SELECT pg_stop_backup();
      Once the WAL segment files active during the backup are archived, you are
      done.  The file identified by <function>pg_stop_backup</>'s result is
      the last segment that is required to form a complete set of backup files.
+     If <varname>archive_mode</> is enabled,
      <function>pg_stop_backup</> does not return until the last segment has
      been archived.
      Archiving of these files happens automatically since you have
