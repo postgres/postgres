@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/high-availability.sgml,v 1.64 2010/04/28 16:10:40 heikki Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/high-availability.sgml,v 1.65 2010/04/29 21:36:18 tgl Exp $ -->
 
 <chapter id="high-availability">
  <title>High Availability, Load Balancing, and Replication</title>
@@ -1127,7 +1127,8 @@ if (!triggered)
 
    <para>
     Hot Standby is the term used to describe the ability to connect to
-    the server and run queries while the server is in archive recovery. This
+    the server and run read-only queries while the server is in archive
+    recovery. This
     is useful for both log shipping replication and for restoring a backup
     to an exact state with great precision.
     The term Hot Standby also refers to the ability of the server to move
@@ -1137,7 +1138,7 @@ if (!triggered)
 
    <para>
     Running queries in recovery mode is similar to normal query operation,
-    though there are a several usage and administrative differences
+    though there are several usage and administrative differences
     noted below.
    </para>
 
@@ -1573,14 +1574,15 @@ if (!triggered)
    <title>Administrator's Overview</title>
 
    <para>
-    If there is a <filename>recovery.conf</> file present, the server will start
-    in Hot Standby mode by default, though <varname>recovery_connections</> can
-    be disabled via <filename>postgresql.conf</>. The server might take
-    some time to enable recovery connections since the server must first complete
+    If <varname>hot_standby</> is turned <literal>on</> in
+    <filename>postgresql.conf</> and there is a <filename>recovery.conf</>
+    file present, the server will run in Hot Standby mode.
+    However, it may take some time for Hot Standby connections to be allowed,
+    because the server will not accept connections until it has completed
     sufficient recovery to provide a consistent state against which queries
-    can run before enabling read only connections.  During this period,
+    can run.  During this period,
     clients that attempt to connect will be refused with an error message.
-    To confirm the server has come up, either loop retrying to connect from
+    To confirm the server has come up, either loop trying to connect from
     the application, or look for these messages in the server logs:
 
 <programlisting>
@@ -1592,12 +1594,11 @@ LOG:  consistent recovery state reached
 LOG:  database system is ready to accept read only connections
 </programlisting>
 
-    Consistency information is recorded once per checkpoint on the primary, as long
-    as <varname>wal_level</> is set to <literal>hot_standby</> on the primary.  It is not possible
-    to enable recovery connections on the standby when reading WAL written during the
-    period that <varname>wal_level</> was not set to <literal>hot_standby</> on the primary.
-    Reaching a consistent state can also be delayed in the presence
-    of both of these conditions:
+    Consistency information is recorded once per checkpoint on the primary.
+    It is not possible to enable hot standby when reading WAL
+    written during a period when <varname>wal_level</> was not set to
+    <literal>hot_standby</> on the primary.  Reaching a consistent state can
+    also be delayed in the presence of both of these conditions:
 
       <itemizedlist>
        <listitem>
@@ -1622,10 +1623,9 @@ LOG:  database system is ready to accept read only connections
     if they have been changed on the primary. For these parameters,
     the value on the standby must
     be equal to or greater than the value on the primary. If these parameters
-    are not set high enough then the standby will not be able to process
-    recovering transactions properly. If these values are set too low
-    the server will halt. Higher values can then be supplied and the server
-    restarted to begin recovery again.  The parameters are:
+    are not set high enough then the standby will refuse to start.
+    Higher values can then be supplied and the server
+    restarted to begin recovery again.  These parameters are:
 
       <itemizedlist>
        <listitem>
@@ -1648,7 +1648,8 @@ LOG:  database system is ready to accept read only connections
 
    <para>
     It is important that the administrator consider the appropriate setting
-    of <varname>max_standby_delay</>, set in <filename>postgresql.conf</>.
+    of <varname>max_standby_delay</>,
+    which can be set in <filename>postgresql.conf</>.
     There is no optimal setting, so it should be set according to business
     priorities. For example if the server is primarily tasked as a High
     Availability server, then you may wish to lower
@@ -1657,7 +1658,7 @@ LOG:  database system is ready to accept read only connections
     server for decision support queries then it might be acceptable to set this
     to a value of many hours (in seconds).  It is also possible to set
     <varname>max_standby_delay</> to -1 which means wait forever for queries
-    to complete, if there are conflicts; this will be useful when performing
+    to complete; this will be useful when performing
     an archive recovery from a backup.
    </para>
 
@@ -1668,10 +1669,8 @@ LOG:  database system is ready to accept read only connections
     all users are read-only; no changes occur to the data values
     themselves.  Users will still write large sort temporary files and
     re-generate relcache info files, so no part of the database
-    is truly read-only during hot standby mode. There is no restriction
-    on the use of set returning functions, or other users of
-    <function>tuplestore</>/<function>tuplesort</>
-    code. Note also that writes to remote databases will still be possible,
+    is truly read-only during hot standby mode.
+    Note also that writes to remote databases will still be possible,
     even though the transaction is read-only locally.
    </para>
 
@@ -1837,20 +1836,22 @@ LOG:  database system is ready to accept read only connections
    <title>Hot Standby Parameter Reference</title>
 
    <para>
-    Various parameters have been mentioned above in <xref linkend="hot-standby-admin">
+    Various parameters have been mentioned above in
+    <xref linkend="hot-standby-admin">
     and <xref linkend="hot-standby-conflict">.
    </para>
 
    <para>
-    On the primary, parameters <varname>wal_level</> and
-    <varname>vacuum_defer_cleanup_age</> can be used.
-    <varname>max_standby_delay</> has no effect if set on the primary.
+    On the primary, parameters <xref linkend="guc-wal-level"> and
+    <xref linkend="guc-vacuum-defer-cleanup-age"> can be used.
+    <xref linkend="guc-max-standby-delay"> has no effect if set on the primary.
    </para>
 
    <para>
-    On the standby, parameters <varname>recovery_connections</> and
-    <varname>max_standby_delay</> can be used.
-    <varname>vacuum_defer_cleanup_age</> has no effect during recovery.
+    On the standby, parameters <xref linkend="guc-hot-standby"> and
+    <xref linkend="guc-max-standby-delay"> can be used.
+    <xref linkend="guc-vacuum-defer-cleanup-age"> has no effect during
+    recovery.
    </para>
   </sect2>
 
@@ -1880,7 +1881,7 @@ LOG:  database system is ready to accept read only connections
    </listitem>
    <listitem>
     <para>
-     Valid starting points for recovery connections are generated at each
+     Valid starting points for standby queries are generated at each
      checkpoint on the master. If the standby is shut down while the master
      is in a shutdown state, it might not be possible to re-enter Hot Standby
      until the primary is started up, so that it generates further starting
@@ -1901,7 +1902,7 @@ LOG:  database system is ready to accept read only connections
      that normally take <literal>AccessExclusiveLocks</>, or you plan on having one
      large transaction that takes many <literal>AccessExclusiveLocks</>, you are
      advised to select a larger value of <varname>max_locks_per_transaction</>,
-     up to, but never more than twice the value of the parameter setting on
+     perhaps as much as twice the value of the parameter on
      the primary server. You need not consider this at all if
      your setting of <varname>max_prepared_transactions</> is <literal>0</>.
     </para>

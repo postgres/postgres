@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.552 2010/04/28 16:10:42 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.553 2010/04/29 21:36:19 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -1222,14 +1222,12 @@ static struct config_bool ConfigureNamesBool[] =
 	},
 
 	{
-		{"recovery_connections", PGC_POSTMASTER, WAL_SETTINGS,
-			gettext_noop("During recovery, allows connections and queries. "
-			   " During normal running, causes additional info to be written"
-				 " to WAL to enable hot standby mode on WAL standby nodes."),
+		{"hot_standby", PGC_POSTMASTER, WAL_SETTINGS,
+			gettext_noop("Allows connections and queries during recovery."),
 			NULL
 		},
-		&XLogRequestRecoveryConnections,
-		true, NULL, NULL
+		&EnableHotStandby,
+		false, NULL, NULL
 	},
 
 	{

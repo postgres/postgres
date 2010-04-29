@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.271 2010/04/28 16:10:39 heikki Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.272 2010/04/29 21:36:18 tgl Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -1352,7 +1352,7 @@ SET ENABLE_SEQSCAN TO OFF;
     <sect2 id="runtime-config-wal-settings">
      <title>Settings</title>
      <variablelist>
-     
+
      <varlistentry id="guc-wal-level" xreflabel="wal_level">
       <term><varname>wal_level</varname> (<type>enum</type>)</term>
       <indexterm>
@@ -1362,7 +1362,7 @@ SET ENABLE_SEQSCAN TO OFF;
        <para>
         <varname>wal_level</> determines how much information is written
         to the WAL. The default value is <literal>minimal</>, which writes
-        only minimal information needed to recover from a crash or immediate
+        only the information needed to recover from a crash or immediate
         shutdown. <literal>archive</> adds logging required for WAL archiving,
         and <literal>hot_standby</> further adds information required to run
         read-only queries on a standby server.
@@ -1385,8 +1385,8 @@ SET ENABLE_SEQSCAN TO OFF;
         the status of running transactions from the WAL. To enable read-only
         queries on a standby server, <varname>wal_level</> must be set to
         <literal>hot_standby</> on the primary. It is thought that there is
-        little measurable difference in performance from using
-        <literal>hot_standby</> level over <literal>archive</>, so feedback
+        little measurable difference in performance between using
+        <literal>hot_standby</> and <literal>archive</> levels, so feedback
         is welcome if any production impacts are noticeable.
        </para>
       </listitem>
@@ -1836,7 +1836,7 @@ SET ENABLE_SEQSCAN TO OFF;
        </para>
       </listitem>
      </varlistentry>
-     
+
      </variablelist>
     </sect2>
 
@@ -1860,8 +1860,7 @@ SET ENABLE_SEQSCAN TO OFF;
         servers (i.e., the maximum number of simultaneously running WAL sender
         processes). The default is zero. This parameter can only be set at
         server start. <varname>wal_level</> must be set to <literal>archive</>
-        or <literal>hot_standby</> to allow connections from standby
-        connections.
+        or <literal>hot_standby</> to allow connections from standby servers.
        </para>
        </listitem>
       </varlistentry>
@@ -1873,7 +1872,7 @@ SET ENABLE_SEQSCAN TO OFF;
        <listitem>
        <para>
         Specifies the delay between activity rounds for the WAL sender.
-        In each round the WAL sender sends any WAL accumulated since last
+        In each round the WAL sender sends any WAL accumulated since the last
         round to the standby server. It then sleeps for
         <varname>wal_sender_delay</> milliseconds, and repeats. The default
         value is 200 milliseconds (<literal>200ms</>).
@@ -1893,14 +1892,17 @@ SET ENABLE_SEQSCAN TO OFF;
        </indexterm>
        <listitem>
        <para>
-        Specifies the number of log file segments kept in <filename>pg_xlog</>
-        directory, in case a standby server needs to fetch them via streaming
+        Specifies the number of past log file segments kept in the
+        <filename>pg_xlog</>
+        directory, in case a standby server needs to fetch them for streaming
         replication. Each segment is normally 16 megabytes. If a standby
-        server connected to the primary falls behind more than
+        server connected to the primary falls behind by more than
         <varname>wal_keep_segments</> segments, the primary might remove
-        a WAL segment still needed by the standby and the replication
-        connection will be terminated.
+        a WAL segment still needed by the standby, in which case the
+        replication connection will be terminated.
+       </para>
 
+       <para>
         This sets only the minimum number of segments retained for standby
         purposes; the system might need to retain more segments for WAL
         archival or to recover from a checkpoint. If <varname>wal_keep_segments</>
@@ -1920,43 +1922,44 @@ SET ENABLE_SEQSCAN TO OFF;
 
     <variablelist>
 
-     <varlistentry id="recovery-connections" xreflabel="recovery_connections">
-      <term><varname>recovery_connections</varname> (<type>boolean</type>)</term>
+     <varlistentry id="guc-hot-standby" xreflabel="hot_standby">
+      <term><varname>hot_standby</varname> (<type>boolean</type>)</term>
       <indexterm>
-       <primary><varname>recovery_connections</> configuration parameter</primary>
+       <primary><varname>hot_standby</> configuration parameter</primary>
       </indexterm>
       <listitem>
        <para>
         Specifies whether or not you can connect and run queries during
-        recovery, for <xref linkend="hot-standby">. The default value is
-        <literal>on</literal>.
+        recovery, as described in <xref linkend="hot-standby">.
+        The default value is <literal>off</literal>.
         This parameter can only be set at server start. It only has effect
         during archive recovery or in standby mode.
        </para>
       </listitem>
      </varlistentry>
 
-     <varlistentry id="max-standby-delay" xreflabel="max_standby_delay">
-      <term><varname>max_standby_delay</varname> (<type>string</type>)</term>
+     <varlistentry id="guc-max-standby-delay" xreflabel="max_standby_delay">
+      <term><varname>max_standby_delay</varname> (<type>integer</type>)</term>
       <indexterm>
        <primary><varname>max_standby_delay</> configuration parameter</primary>
       </indexterm>
       <listitem>
        <para>
-        When server acts as a standby, this parameter specifies a wait policy
+        When Hot Standby is active, this parameter specifies a wait policy
         for applying WAL entries that conflict with active queries.
         If a conflict should occur the server will delay up to this number
         of seconds before it cancels conflicting queries, as
         described in <xref linkend="hot-standby-conflict">.
         Typically, this parameter is used only during replication.
+        The value is specified in seconds, and -1 causes the standby to wait
+        forever for a conflicting query to complete.
         The default is 30 seconds.
         This parameter can only be set in the <filename>postgresql.conf</>
         file or on the server command line.
        </para>
        <para>
-        A high value makes query cancel less likely, and -1
-        causes the standby to wait forever for a conflicting query to
-        complete.  Increasing this parameter might delay master server
+        A high value makes query cancel less likely.
+        Increasing this parameter or setting it to -1 might delay master server
         changes from appearing on the standby.
       </para>
       <para>
@@ -1966,7 +1969,7 @@ SET ENABLE_SEQSCAN TO OFF;
        query ends, there is a finite time required to apply backlogged
        WAL logs.  If a second long-running query appears before the
        WAL has caught up, the snapshot taken by the second query will
-       allow significantly less than <varname>max_standby_delay</>
+       allow significantly less than <varname>max_standby_delay</> seconds
        before query cancellation is possible.
       </para>
       </listitem>

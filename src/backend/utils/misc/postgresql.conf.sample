@@ -185,10 +185,10 @@
 
 # - Hot Standby -
 
-#recovery_connections = on	# allows connections during recovery
-#max_standby_delay = 30s	# max acceptable standby lag (s) to allow queries
-				# to complete without conflict; -1 disables
-#vacuum_defer_cleanup_age = 0 # num transactions by which cleanup is deferred
+#hot_standby = off		# allows queries during recovery
+#max_standby_delay = 30s	# max acceptable lag (s) to allow queries to
+				# complete without conflict; -1 means forever
+#vacuum_defer_cleanup_age = 0	# num transactions by which cleanup is deferred
 
 # - Replication -
 

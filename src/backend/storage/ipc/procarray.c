@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/procarray.c,v 1.67 2010/04/28 00:09:05 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/procarray.c,v 1.68 2010/04/29 21:36:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -179,18 +179,22 @@ ProcArrayShmemSize(void)
 	size = add_size(size, mul_size(sizeof(PGPROC *), PROCARRAY_MAXPROCS));
 
 	/*
-	 * During recovery processing we have a data structure called
+	 * During Hot Standby processing we have a data structure called
 	 * KnownAssignedXids, created in shared memory. Local data structures are
 	 * also created in various backends during GetSnapshotData(),
 	 * TransactionIdIsInProgress() and GetRunningTransactionData(). All of the
 	 * main structures created in those functions must be identically sized,
 	 * since we may at times copy the whole of the data structures around. We
 	 * refer to this size as TOTAL_MAX_CACHED_SUBXIDS.
+	 *
+	 * Ideally we'd only create this structure if we were actually doing
+	 * hot standby in the current run, but we don't know that yet at the
+	 * time shared memory is being set up.
 	 */
 #define TOTAL_MAX_CACHED_SUBXIDS \
 	((PGPROC_MAX_CACHED_SUBXIDS + 1) * PROCARRAY_MAXPROCS)
 
-	if (XLogRequestRecoveryConnections)
+	if (EnableHotStandby)
 	{
 		size = add_size(size,
 						mul_size(sizeof(TransactionId),
@@ -234,7 +238,7 @@ CreateSharedProcArray(void)
 	}
 
 	/* Create or attach to the KnownAssignedXids arrays too, if needed */
-	if (XLogRequestRecoveryConnections)
+	if (EnableHotStandby)
 	{
 		KnownAssignedXids = (TransactionId *)
 			ShmemInitStruct("KnownAssignedXids",

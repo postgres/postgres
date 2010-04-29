@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.405 2010/04/28 16:10:40 heikki Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.406 2010/04/29 21:36:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -71,7 +71,7 @@ int			XLOGbuffers = 8;
 int			XLogArchiveTimeout = 0;
 bool		XLogArchiveMode = false;
 char	   *XLogArchiveCommand = NULL;
-bool		XLogRequestRecoveryConnections = true;
+bool		EnableHotStandby = false;
 int			MaxStandbyDelay = 30;
 bool		fullPageWrites = true;
 bool		log_checkpoints = false;
@@ -5571,15 +5571,16 @@ GetLatestXLogTime(void)
  * translation
  */
 #define RecoveryRequiresIntParameter(param_name, currValue, minValue) \
-{ \
+do { \
 	if (currValue < minValue) \
 		ereport(ERROR, \
-			(errmsg("recovery connections cannot continue because " \
-					"%s = %u is a lower setting than on WAL source server (value was %u)", \
-					param_name, \
-					currValue, \
-					minValue))); \
-}
+				(errmsg("hot standby is not possible because " \
+						"%s = %d is a lower setting than on the master server " \
+						"(its value was %d)", \
+						param_name, \
+						currValue, \
+						minValue))); \
+} while(0)
 
 /*
  * Check to see if required parameters are set high enough on this server
@@ -5595,27 +5596,31 @@ CheckRequiredParameterValues(void)
 	if (InArchiveRecovery && ControlFile->wal_level == WAL_LEVEL_MINIMAL)
 	{
 		ereport(WARNING,
-				(errmsg("WAL was generated with wal_level='minimal', data may be missing"),
-				 errhint("This happens if you temporarily set wal_level='minimal' without taking a new base backup.")));
+				(errmsg("WAL was generated with wal_level=\"minimal\", data may be missing"),
+				 errhint("This happens if you temporarily set wal_level=\"minimal\" without taking a new base backup.")));
 	}
 
 	/*
 	 * For Hot Standby, the WAL must be generated with 'hot_standby' mode,
 	 * and we must have at least as many backend slots as the primary.
 	 */
-	if (InArchiveRecovery && XLogRequestRecoveryConnections)
+	if (InArchiveRecovery && EnableHotStandby)
 	{
 		if (ControlFile->wal_level < WAL_LEVEL_HOT_STANDBY)
 			ereport(ERROR,
-					(errmsg("recovery connections cannot start because wal_level was not set to 'hot_standby' on the WAL source server")));
+					(errmsg("hot standby is not possible because wal_level was not set to \"hot_standby\" on the master server"),
+					 errhint("Either set wal_level to \"hot_standby\" on the master, or turn off hot_standby here.")));
 
 		/* We ignore autovacuum_max_workers when we make this test. */
 		RecoveryRequiresIntParameter("max_connections",
-									 MaxConnections, ControlFile->MaxConnections);
+									 MaxConnections,
+									 ControlFile->MaxConnections);
 		RecoveryRequiresIntParameter("max_prepared_xacts",
-									 max_prepared_xacts, ControlFile->max_prepared_xacts);
+									 max_prepared_xacts,
+									 ControlFile->max_prepared_xacts);
 		RecoveryRequiresIntParameter("max_locks_per_xact",
-									 max_locks_per_xact, ControlFile->max_locks_per_xact);
+									 max_locks_per_xact,
+									 ControlFile->max_locks_per_xact);
 	}
 }
 
@@ -5953,18 +5958,18 @@ StartupXLOG(void)
 		CheckRequiredParameterValues();
 
 		/*
-		 * Initialize recovery connections, if enabled. We won't let backends
+		 * Initialize for Hot Standby, if enabled. We won't let backends
 		 * in yet, not until we've reached the min recovery point specified in
 		 * control file and we've established a recovery snapshot from a
 		 * running-xacts WAL record.
 		 */
-		if (InArchiveRecovery && XLogRequestRecoveryConnections)
+		if (InArchiveRecovery && EnableHotStandby)
 		{
 			TransactionId *xids;
 			int			nxids;
 
 			ereport(DEBUG1,
-					(errmsg("initializing recovery connections")));
+					(errmsg("initializing for hot standby")));
 
 			InitRecoveryTransactionEnvironment();
 
@@ -9055,13 +9060,17 @@ StartupProcessMain(void)
 #endif
 
 	/*
-	 * Properly accept or ignore signals the postmaster might send us
+	 * Properly accept or ignore signals the postmaster might send us.
+	 *
+	 * Note: ideally we'd not enable handle_standby_sig_alarm unless actually
+	 * doing hot standby, but we don't know that yet.  Rely on it to not do
+	 * anything if it shouldn't.
 	 */
 	pqsignal(SIGHUP, StartupProcSigHupHandler); /* reload config file */
 	pqsignal(SIGINT, SIG_IGN);	/* ignore query cancel */
 	pqsignal(SIGTERM, StartupProcShutdownHandler);		/* request shutdown */
 	pqsignal(SIGQUIT, startupproc_quickdie);	/* hard crash time */
-	if (XLogRequestRecoveryConnections)
+	if (EnableHotStandby)
 		pqsignal(SIGALRM, handle_standby_sig_alarm);	/* ignored unless
 														 * InHotStandby */
 	else
