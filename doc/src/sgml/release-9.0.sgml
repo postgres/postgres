@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release-9.0.sgml,v 2.18 2010/04/29 21:02:50 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release-9.0.sgml,v 2.19 2010/04/29 22:03:41 momjian Exp $ -->
 
  <sect1 id="release-9-0">
   <title>Release 9.0</title>
@@ -1523,7 +1523,7 @@
 
      <listitem>
       <para>
-       Add <literal>WHERE</> clause to <link
+       Add <literal>WHEN</> clause to <link
        linkend="SQL-CREATETRIGGER"><command>CREATE TRIGGER</></link>
        to allow control over whether a trigger is fired (Takahiro
        Itagaki)
