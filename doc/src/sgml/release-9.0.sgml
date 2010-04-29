@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release-9.0.sgml,v 2.15 2010/04/05 02:46:42 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release-9.0.sgml,v 2.16 2010/04/29 20:43:22 momjian Exp $ -->
 
 
  <sect1 id="release-9-0">
@@ -13,21 +13,165 @@
     <title>Overview</title>
 
     <para>
-    ADD HERE
+      Based on overwhelming user demand, this release of
+      <productname>PostgreSQL</> adds features that have been requested
+      for years, like easy-to-use replication, a mass permission
+      facility, and anonymous blocks.  While past major releases have
+      been quite conservative in their scope, this release shows a
+      bold new desire to provide facilities that every new and existing
+      user of <productname>PostgreSQL</> will embrace.  This has all
+      been done with few incompatibilities.  The major areas of
+      enhancement are:
     </para>
 
-    <!-- This list duplicates items below, but without authors or details-->
+    <itemizedlist>
 
-    <para>
-      The above items are explained in more detail in the sections below.
-    </para>
+      <!-- This list duplicates items below, but without authors or details-->
+
+      <listitem>
+        <para>
+          Allow continuous archive standby systems to accept read-only queries
+        </para>
+      </listitem>
+
+      <listitem>
+        <para>
+          Allow continuous archive (<acronym>WAL</>) files to be streamed to a
+          standby system
+        </para>
+      </listitem>
+
+      <listitem>
+        <para>
+          Add the ability to make mass permission changes per
+           schema using the new <link
+           linkend="SQL-GRANT"><command>GRANT</>/<command>REVOKE
+           IN SCHEMA</></link> clause
+        </para>
+      </listitem>
+
+      <listitem>
+        <para>
+          Add the ability to control large object permissions with
+          <command>GRANT</>/<command>REVOKE</>
+        </para>
+      </listitem>
+
+      <listitem>
+        <para>
+          Implement anonymous functions using the <link
+          linkend="SQL-DO"><command>DO</></link> statement
+        </para>
+      </listitem>
+
+      <listitem>
+        <para>
+          Allow function calls to supply parameter names and match them to named
+          parameters in the function definition (Pavel Stehule)
+        </para>
+      </listitem>
+
+      <listitem>
+        <para>
+          Install server-side language PL/pgSQL by default
+        </para>
+      </listitem>
+
+      <listitem>
+        <para>
+          Major PL/Perl enhancements
+        </para>
+      </listitem>
+
+      <listitem>
+        <para>
+          Allow SQL-compliant <link
+          linkend="SQL-CREATETRIGGER">per-column triggers</link>
+        </para>
+      </listitem>
+
+      <listitem>
+        <para>
+          Add <link linkend="SQL-CREATETABLE-compatibility">deferrable
+          unique constraints</link>
+        </para>
+      </listitem>
+
+      <listitem>
+        <para>
+          Have <link linkend="SQL-LISTEN"><command>LISTEN</></link>/<link
+          linkend="SQL-NOTIFY"><command>NOTIFY</></link> store events
+          in a memory queue, rather than a system table
+        </para>
+      </listitem>
+
+      <listitem>
+        <para>
+          Allow <link linkend="SQL-NOTIFY"><command>NOTIFY</></link>
+          to pass an optional string to listeners
+        </para>
+      </listitem>
+
+      <listitem>
+        <para>
+          Change <command>VACUUM FULL</> to rewrite the entire table and
+          indexes, rather than moving around single rows to compact space
+        </para>
+      </listitem>
+
+      <listitem>
+        <para>
+          Add prefix support for the full text search synonym dictionary
+        </para>
+      </listitem>
+
+      <listitem>
+        <para>
+          Use red-black trees for <acronym>GIN</> index creation
+        </para>
+      </listitem>
+
+      <listitem>
+        <para>
+          Add <link
+          linkend="functions-binarystring-other"><function>get_bit()</></link>
+          and <function>set_bit()</> functions for <type>bit</>
+          strings, mirroring those for <type>bytea</>
+        </para>
+      </listitem>
+
+      <listitem>
+        <para>
+          Add the ability for clients to set an <link
+          linkend="libpq-connect-application-name">application
+          name</link>, which is displayed in
+          <structname>pg_stat_activity</>
+        </para>
+      </listitem>
+
+      <listitem>
+        <para>
+          Add support for compiling on <link
+          linkend="install-win32-full">64-bit
+          <productname>Windows</></link> and running in 64-bit
+          mode
+        </para>
+      </listitem>
+
+      <listitem>
+        <para>
+          The above items are explained in more detail in the sections below.
+        </para>
+      </listitem>
+
+    </itemizedlist>
 
   </sect2>
 
   <sect2>
 
     <title>Migration to Version 9.0</title>
-    <para>CURRENT AS OF 2010-03-15</para>
+    <para>CURRENT AS OF 2010-04-29</para>
 
     <para>
       A dump/restore using <application>pg_dump</application> is
@@ -57,6 +201,15 @@
             was defaulted to <link
             linkend="posix-syntax-details"><literal>advanced</></link>
             (e.g. Perl-regex compatible) for many years (Tom Lane)
+          </para>
+        </listitem>
+
+        <listitem>
+          <para>
+            It is now necessary to set <link
+            linkend="guc-wal-level"><varname>wal_level</></link> to
+            <literal>archive</> to do continuous archiving.
+            (Heikki Linnakangas)
           </para>
         </listitem>
 
@@ -152,7 +305,6 @@
           </para>
         </listitem>
 
-
       </itemizedlist>
 
     </sect3>
@@ -218,7 +370,7 @@
           <listitem>
             <para>
               Allow continuous archive standby systems to accept read-only queries
-              (Simon, Heikki)
+              (Simon Riggs, Heikki Linnakangas)
             </para>
 
             <para>
@@ -232,7 +384,7 @@
           <listitem>
             <para>
               Allow continuous archive (<acronym>WAL</>) files to be streamed to a
-              standby system (Fujii Masao, Heikki)
+              standby system (Fujii Masao, Heikki Linnakangas)
             </para>
 
             <para>
@@ -251,7 +403,7 @@
               linkend="functions-recovery-info-table"><function>pg_last_xlog_receive_location()</></link>
               and <function>pg_last_xlog_replay_location()</>, which
               can be used to monitor standby server <acronym>WAL</>
-              activity (Simon, Fujii Masao, Heikki)
+              activity (Simon Riggs, Fujii Masao, Heikki Linnakangas)
             </para>
           </listitem>
 
@@ -554,8 +706,35 @@
 
           <listitem>
             <para>
+              Add boolean variable <link
+              linkend="guc-enable-material"><varname>enable_material</></link>, which
+              controls the use of materialize nodes in the optimizer
+              (Robert Haas)
+            </para>
+
+            <para>
+              The default is on.
+            </para>
+          </listitem>
+
+          <listitem>
+            <para>
               Log changed parameter values when <filename>postgresql.conf</> is
               reloaded (Peter Eisentraut)
+            </para>
+          </listitem>
+
+          <listitem>
+            <para>
+              Add proper permissions for custom variables (Tom Lane)
+            </para>
+
+            <para>
+              Custom variables can now only be created by super-users,
+              but can be modified by ordinary users if variable
+              permissions allow it.  This makes custom variables
+              appropriate for security settings.  Previously, any user
+              could create or modify custom variables.
             </para>
           </listitem>
 
@@ -838,7 +1017,7 @@
           <listitem>
             <para>
               Add the ability to control large object permissions with
-              <command>GRANT</>/<command>REVOKE</>(KaiGai Kohei)
+              <command>GRANT</>/<command>REVOKE</> (KaiGai Kohei)
             </para>
           </listitem>
 
@@ -972,7 +1151,7 @@
             <para>
               Change <command>VACUUM FULL</> to rewrite the entire table and
               indexes, rather than moving around single rows to compact space
-              (Itagaki Takahiro, Tom)
+              (Itagaki Takahiro, Tom Lane)
             </para>
 
             <para>
@@ -1109,6 +1288,13 @@
             </para>
           </listitem>
 
+          <listitem>
+            <para>
+              Use more standards-compliant rules for <acronym>URL</>
+              parsing (Tom Lane)
+            </para>
+          </listitem>
+
         </itemizedlist>
 
       </sect4>
@@ -1162,11 +1348,19 @@
             Have <function>to_char()</> honor <link
             linkend="functions-formatting-datetimemod-table"><literal>'FM'</></link>
             (fill mode) in <literal>'Y'</>, <literal>'YY'</>, and
-            <literal>'YYY'</> specifications (Bruce Momjian)
+            <literal>'YYY'</> specifications (Bruce Momjian, Tom Lane)
           </para>
 
           <para>
             It was already honored by <literal>'YYYY'</>.
+          </para>
+        </listitem>
+
+        <listitem>
+          <para>
+            Fix <function>to_char()</> to output the proper localized
+            numeric and monetary characters on <productname>Windows</>
+            (Hiroshi Inoue, Itagaki Takahir, Bruce Momjian)
           </para>
         </listitem>
 
@@ -1789,7 +1983,7 @@
               Have <application>pg_dump</> <link
               linkend="pg-dump-options"><option>--verbose</></link>
               output the <application>pg_dump</> and server versions
-              in text output mode (Jim Cox, Tom)
+              in text output mode (Jim Cox, Tom Lane)
             </para>
 
             <para>
@@ -1949,6 +2143,13 @@
 
           <listitem>
             <para>
+              Allow <application>ecpg</> to use variable names in
+              <function>free()</>(Michael Meskes)
+            </para>
+          </listitem>
+
+          <listitem>
+            <para>
               Have <application>ecpg</> return zero for non-SQL3 data types
              (Michael Meskes))
             </para>
@@ -2018,7 +2219,7 @@
         <listitem>
           <para>
             Add a compile-time option to allow the Linux out-of-memory killer
-            to kill backends (Alex Hunsaker, Tom)
+            to kill backends (Alex Hunsaker, Tom Lane)
           </para>
 
           <para>
@@ -2176,7 +2377,7 @@
 
         <listitem>
           <para>
-            Improve speed of memory allocation (Tom, Greg Stark)
+            Improve speed of memory allocation (Tom Lane, Greg Stark)
           </para>
         </listitem>
 
@@ -2202,14 +2403,14 @@
         <listitem>
           <para>
             Improve source code test coverage, including /contrib, PL/Python,
-            and PL/Perl (Peter, Andrew)
+            and PL/Perl (Peter Eisentraut, Andrew Dustan)
           </para>
         </listitem>
 
         <listitem>
           <para>
-            Remove the use of flat files for system table bootstrapping (Tom,
-            Alvaro)
+            Remove the use of flat files for system table bootstrapping
+           (Tom Lane, Alvaro Herrera)
           </para>
 
           <para>
@@ -2317,7 +2518,7 @@
           <listitem>
             <para>
               Allow use of <productname>C++</> functions in backend code  (Kurt
-              Harriman, Peter)
+              Harriman, Peter Eisentraut)
             </para>
 
             <para>
@@ -2531,7 +2732,7 @@
             to use <filename>/proc/self/oom_adj</> to disable the
             <link linkend="linux-memory-overcommit"><productname>Linux</>
             out-of-memory</link> (<acronym>OOM</>) killer (Alex
-            Hunsaker, Tom)
+            Hunsaker, Tom Lane)
           </para>
         </listitem>
 
