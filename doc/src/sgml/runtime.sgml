@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.434 2010/04/08 01:39:37 rhaas Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.435 2010/04/30 22:24:50 tgl Exp $ -->
 
 <chapter Id="runtime">
  <title>Server Setup and Operation</title>
@@ -942,29 +942,8 @@ options        SEMMAP=256
       <indexterm><primary>MacOS X</><secondary>IPC configuration</></>
       <listitem>
        <para>
-        In OS X 10.2 and earlier, edit the file
-        <filename>/System/Library/StartupItems/SystemTuning/SystemTuning</>
-        and change the values in the following commands:
-<programlisting>
-sysctl -w kern.sysv.shmmax
-sysctl -w kern.sysv.shmmin
-sysctl -w kern.sysv.shmmni
-sysctl -w kern.sysv.shmseg
-sysctl -w kern.sysv.shmall
-</programlisting>
-       </para>
-
-       <para>
-        In OS X 10.3 and later, these commands have been moved to
-        <filename>/etc/rc</> and must be edited there.  Note that
-        <filename>/etc/rc</> is usually overwritten by OS X updates (such as
-        10.3.6 to 10.3.7) so you should expect to have to redo your edits
-        after each update.
-       </para>
-
-       <para>
-        In OS X 10.3.9 and later, instead of editing <filename>/etc/rc</>
-        you can create a file named <filename>/etc/sysctl.conf</>,
+        The recommended method for configuring shared memory in OS X
+        is to create a file named <filename>/etc/sysctl.conf</>,
         containing variable assignments such as:
 <programlisting>
 kern.sysv.shmmax=4194304
@@ -973,8 +952,7 @@ kern.sysv.shmmni=32
 kern.sysv.shmseg=8
 kern.sysv.shmall=1024
 </programlisting>
-        This method is better than editing <filename>/etc/rc</> because
-        your changes will be preserved across system updates.  Note that
+        Note that in some OS X versions,
         <emphasis>all five</> shared-memory parameters must be set in
         <filename>/etc/sysctl.conf</>, else the values will be ignored.
        </para>
@@ -989,8 +967,34 @@ kern.sysv.shmall=1024
        </para>
 
        <para>
-        In all OS X versions, you will need to reboot to have changes in the
-        shared memory parameters take effect.  
+        In older OS X versions, you will need to reboot to have changes in the
+        shared memory parameters take effect.  As of 10.5 it is possible to
+        change all but <varname>SHMMNI</> on the fly, using
+        <application>sysctl</>.  But it's still best to set up your preferred
+        values via <filename>/etc/sysctl.conf</>, so that the values will be
+        kept across reboots.
+       </para>
+
+       <para>
+        The file <filename>/etc/sysctl.conf</> is only honored in OS X
+        10.3.9 and later.  If you are running a previous 10.3.x release,
+        you must edit the file <filename>/etc/rc</>
+        and change the values in the following commands:
+<programlisting>
+sysctl -w kern.sysv.shmmax
+sysctl -w kern.sysv.shmmin
+sysctl -w kern.sysv.shmmni
+sysctl -w kern.sysv.shmseg
+sysctl -w kern.sysv.shmall
+</programlisting>
+        Note that
+        <filename>/etc/rc</> is usually overwritten by OS X system updates,
+        so you should expect to have to redo these edits after each update.
+       </para>
+
+       <para>
+        In OS X 10.2 and earlier, instead edit these commands in the file
+        <filename>/System/Library/StartupItems/SystemTuning/SystemTuning</>.
        </para>
       </listitem>
      </varlistentry>
