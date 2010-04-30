@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/copy.sgml,v 1.97 2010/04/23 23:21:43 rhaas Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/copy.sgml,v 1.98 2010/04/30 19:49:06 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -306,6 +306,16 @@ COPY <replaceable class="parameter">count</replaceable>
     <command>COPY</command> can only be used with plain tables, not
     with views.  However, you can write <literal>COPY (SELECT * FROM
     <replaceable class="parameter">viewname</replaceable>) TO ...</literal>.
+   </para>
+
+   <para>
+    <command>COPY</command> only deals with the specific table named;
+    it does not copy data to or from child tables.  Thus for example
+    <literal>COPY <replaceable class="parameter">table</> TO</literal>
+    shows the same data as <literal>SELECT * FROM ONLY <replaceable
+    class="parameter">table</></literal>.  But <literal>COPY
+    (SELECT * FROM <replaceable class="parameter">table</>) TO ...</literal>
+    can be used to dump all of the data in an inheritance hierarchy.
    </para>
 
    <para>
