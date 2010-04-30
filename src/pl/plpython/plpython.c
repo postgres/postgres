@@ -29,7 +29,7 @@
  * MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.58.4.10 2010/02/18 23:50:41 tgl Exp $
+ *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.58.4.11 2010/04/30 19:16:19 tgl Exp $
  *
  *********************************************************************
  */
@@ -2209,9 +2209,9 @@ PLy_spi_execute_fetch_result(SPITupleTable *tuptable, int rows, int status)
 		PLyTypeInfo args;
 		int			i;
 
-		PLy_typeinfo_init(&args);
 		Py_DECREF(result->nrows);
 		result->nrows = PyInt_FromLong(rows);
+		PLy_typeinfo_init(&args);
 
 		oldcontext = CurrentMemoryContext;
 		PG_TRY();
@@ -2229,9 +2229,6 @@ PLy_spi_execute_fetch_result(SPITupleTable *tuptable, int rows, int status)
 
 					PyList_SetItem(result->rows, i, row);
 				}
-				PLy_typeinfo_dealloc(&args);
-
-				SPI_freetuptable(tuptable);
 			}
 		}
 		PG_CATCH();
@@ -2242,11 +2239,15 @@ PLy_spi_execute_fetch_result(SPITupleTable *tuptable, int rows, int status)
 			if (!PyErr_Occurred())
 				PyErr_SetString(PLy_exc_error,
 						"Unknown error in PLy_spi_execute_fetch_result");
-			Py_DECREF(result);
 			PLy_typeinfo_dealloc(&args);
+			SPI_freetuptable(tuptable);
+			Py_DECREF(result);
 			return NULL;
 		}
 		PG_END_TRY();
+
+		PLy_typeinfo_dealloc(&args);
+		SPI_freetuptable(tuptable);
 	}
 
 	return (PyObject *) result;
