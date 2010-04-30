@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.391 2010/03/17 20:58:38 petere Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.392 2010/04/30 17:09:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -4400,7 +4400,8 @@ PasswordFromFile(char *hostname, char *port, char *dbname, char *username)
 				   *ret;
 		int			len;
 
-		fgets(buf, sizeof(buf), fp);
+		if (fgets(buf, sizeof(buf), fp) == NULL)
+			break;
 
 		len = strlen(buf);
 		if (len == 0)
