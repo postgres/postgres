@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtxlog.c,v 1.67 2010/04/22 08:04:24 sriggs Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtxlog.c,v 1.68 2010/04/30 06:34:29 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -954,7 +954,6 @@ btree_redo(XLogRecPtr lsn, XLogRecord *record)
 		switch (info)
 		{
 			case XLOG_BTREE_DELETE:
-
 				/*
 				 * Btree delete records can conflict with standby queries. You
 				 * might think that vacuum records would conflict as well, but
@@ -973,7 +972,6 @@ btree_redo(XLogRecPtr lsn, XLogRecord *record)
 				break;
 
 			case XLOG_BTREE_REUSE_PAGE:
-
 				/*
 				 * Btree reuse page records exist to provide a conflict point
 				 * when we reuse pages in the index via the FSM. That's all it
@@ -1033,6 +1031,9 @@ btree_redo(XLogRecPtr lsn, XLogRecord *record)
 			break;
 		case XLOG_BTREE_NEWROOT:
 			btree_xlog_newroot(lsn, record);
+			break;
+		case XLOG_BTREE_REUSE_PAGE:
+			/* Handled above before restoring bkp block */
 			break;
 		default:
 			elog(PANIC, "btree_redo: unknown op code %u", info);
@@ -1167,6 +1168,15 @@ btree_desc(StringInfo buf, uint8 xl_info, char *rec)
 								 xlrec->node.spcNode, xlrec->node.dbNode,
 								 xlrec->node.relNode,
 								 xlrec->rootblk, xlrec->level);
+				break;
+			}
+		case XLOG_BTREE_REUSE_PAGE:
+			{
+				xl_btree_reuse_page *xlrec = (xl_btree_reuse_page *) rec;
+
+				appendStringInfo(buf, "reuse_page: rel %u/%u/%u; latestRemovedXid %u",
+								 xlrec->node.spcNode, xlrec->node.dbNode,
+								 xlrec->node.relNode, xlrec->latestRemovedXid);
 				break;
 			}
 		default:
