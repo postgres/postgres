@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/port/sysv_shmem.c,v 1.55 2010/01/02 16:57:50 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/port/sysv_shmem.c,v 1.56 2010/05/01 22:46:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -91,6 +91,48 @@ InternalIpcMemoryCreate(IpcMemoryKey memKey, Size size)
 #endif
 			)
 			return NULL;
+
+		/*
+		 * Some BSD-derived kernels are known to return EINVAL, not EEXIST,
+		 * if there is an existing segment but it's smaller than "size"
+		 * (this is a result of poorly-thought-out ordering of error tests).
+		 * To distinguish between collision and invalid size in such cases,
+		 * we make a second try with size = 0.  These kernels do not test
+		 * size against SHMMIN in the preexisting-segment case, so we will
+		 * not get EINVAL a second time if there is such a segment.
+		 */
+		if (errno == EINVAL)
+		{
+			int		save_errno = errno;
+
+			shmid = shmget(memKey, 0, IPC_CREAT | IPC_EXCL | IPCProtection);
+
+			if (shmid < 0)
+			{
+				/* As above, fail quietly if we verify a collision */
+				if (errno == EEXIST || errno == EACCES
+#ifdef EIDRM
+					|| errno == EIDRM
+#endif
+					)
+					return NULL;
+				/* Otherwise, fall through to report the original error */
+			}
+			else
+			{
+				/*
+				 * On most platforms we cannot get here because SHMMIN is
+				 * greater than zero.  However, if we do succeed in creating
+				 * a zero-size segment, free it and then fall through to
+				 * report the original error.
+				 */
+				if (shmctl(shmid, IPC_RMID, NULL) < 0)
+					elog(LOG, "shmctl(%d, %d, 0) failed: %m",
+						 (int) shmid, IPC_RMID);
+			}
+
+			errno = save_errno;
+		}
 
 		/*
 		 * Else complain and abort
