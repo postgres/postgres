@@ -1,7 +1,7 @@
 /**********************************************************************
  * plpython.c - python as a procedural language for PostgreSQL
  *
- *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.142 2010/04/30 19:15:45 tgl Exp $
+ *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.143 2010/05/01 17:04:38 tgl Exp $
  *
  *********************************************************************
  */
@@ -541,11 +541,14 @@ plpython_inline_handler(PG_FUNCTION_ARGS)
 	}
 	PG_CATCH();
 	{
+		PLy_procedure_delete(proc);
 		PLy_curr_procedure = save_curr_proc;
 		PyErr_Clear();
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
+
+	PLy_procedure_delete(proc);
 
 	/* Pop the error context stack */
 	error_context_stack = plerrcontext.previous;
@@ -1664,6 +1667,7 @@ PLy_procedure_delete(PLyProcedure *proc)
 	}
 	if (proc->argnames)
 		PLy_free(proc->argnames);
+	PLy_free(proc);
 }
 
 /*
