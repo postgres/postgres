@@ -2,7 +2,7 @@
 #
 # PostgreSQL documentation makefile
 #
-# $PostgreSQL: pgsql/doc/src/sgml/Makefile,v 1.141 2010/05/01 18:15:07 tgl Exp $
+# $PostgreSQL: pgsql/doc/src/sgml/Makefile,v 1.142 2010/05/01 21:31:17 tgl Exp $
 #
 #----------------------------------------------------------------------------
 
@@ -222,7 +222,10 @@ regress_README.html: regress.sgml
 ## XSLT processing
 ##
 
-postgres.xml: postgres.sgml $(ALMOSTALLSGML)
+# For obscure reasons, gmake 3.81 complains about circular dependencies
+# if we try to do "make all" in a VPATH build without the explicit
+# $(srcdir) on the postgres.sgml dependency in this rule.  gmake bug?
+postgres.xml: $(srcdir)/postgres.sgml $(ALMOSTALLSGML)
 	$(OSX) -D. -x lower $< >postgres.xmltmp
 	$(PERL) -p -e 's/\[(amp|copy|egrave|gt|lt|mdash|nbsp|ouml|pi|quot|uuml) *\]/\&\1;/g;' \
 	           -e '$$_ .= qq{<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">\n} if $$. == 1;' \
