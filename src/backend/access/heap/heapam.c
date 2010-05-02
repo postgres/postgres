@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.290 2010/05/02 22:28:05 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.291 2010/05/02 22:37:43 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -4897,9 +4897,10 @@ heap_desc(StringInfo buf, uint8 xl_info, char *rec)
 	{
 		xl_heap_newpage *xlrec = (xl_heap_newpage *) rec;
 
-		appendStringInfo(buf, "newpage: rel %u/%u/%u; blk %u",
+		appendStringInfo(buf, "newpage: rel %u/%u/%u; fork %u, blk %u",
 						 xlrec->node.spcNode, xlrec->node.dbNode,
-						 xlrec->node.relNode, xlrec->blkno);
+						 xlrec->node.relNode, xlrec->forknum,
+						 xlrec->blkno);
 	}
 	else if (info == XLOG_HEAP_LOCK)
 	{
