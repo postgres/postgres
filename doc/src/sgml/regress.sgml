@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/regress.sgml,v 1.66 2010/04/03 07:22:55 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/regress.sgml,v 1.67 2010/05/02 12:22:40 sriggs Exp $ -->
 
  <chapter id="regress">
   <title>Regression Tests</title>
@@ -141,6 +141,46 @@ gmake installcheck
    The <filename>contrib</> modules must have been built and installed first.
    You can also do this in a subdirectory of <filename>contrib</> to run
    the tests for just one module.
+  </para>
+
+  <para>
+   The source distribution also contains regression tests of the static
+   behaviour of Hot Standby. These tests require a running primary server
+   and a running standby server that is accepting new WAL changes from the
+   primary using either file-based log shipping or streaming replication.
+   Those servers are not automatically created for you, nor is the setup
+   documented here. Please check the various sections of the docs already
+   devoted to the required commands and related issues.
+  </para>
+
+  <para>
+   First create a database called "regression" on the primary.
+<screen>
+psql -h primary -c "CREATE DATABASE regression"
+</screen>
+   Next, run a preparatory script on the primary in the regression database:
+   <filename>src/test/regress/sql/hs_primary_setup.sql</filename>, and
+   allow for the changes to propagate to the standby, for example
+<screen>
+psql -h primary -f src/test/regress/sql/hs_primary_setup.sql regression
+</screen>
+   Now confirm that the default connection for the tester is the standby
+   server under test and then run standbycheck from the regression
+   directory.
+<screen>
+cd src/test/regress
+gmake standbycheck
+</screen>
+  </para>
+
+  <para>
+   Some extreme behaviours can also be generated on the primary using the 
+   script: <filename>src/test/regress/sql/hs_primary_extremes.sql</filename>
+   to allow the behaviour of the standby to be tested.
+  </para>
+
+  <para>
+   Additional automated testing may be available in later releases.
   </para>
   </sect1>
 
