@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/standby.c,v 1.20 2010/04/28 16:10:42 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/standby.c,v 1.21 2010/05/02 02:10:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -124,31 +124,24 @@ static int	standbyWait_us = STANDBY_INITIAL_WAIT_US;
 static bool
 WaitExceedsMaxStandbyDelay(void)
 {
-	long		delay_secs;
-	int			delay_usecs;
-
-	if (MaxStandbyDelay == -1)
-		return false;
-
 	/* Are we past max_standby_delay? */
-	TimestampDifference(GetLatestXLogTime(), GetCurrentTimestamp(),
-						&delay_secs, &delay_usecs);
-	if (delay_secs > MaxStandbyDelay)
+	if (MaxStandbyDelay >= 0 &&
+		TimestampDifferenceExceeds(GetLatestXLogTime(), GetCurrentTimestamp(),
+								   MaxStandbyDelay))
 		return true;
 
 	/*
-	 * Sleep, then do bookkeeping.
+	 * Sleep a bit (this is essential to avoid busy-waiting).
 	 */
 	pg_usleep(standbyWait_us);
 
 	/*
-	 * Progressively increase the sleep times.
+	 * Progressively increase the sleep times, but not to more than 1s,
+	 * since pg_usleep isn't interruptable on some platforms.
 	 */
 	standbyWait_us *= 2;
 	if (standbyWait_us > 1000000)
 		standbyWait_us = 1000000;
-	if (standbyWait_us > MaxStandbyDelay * 1000000 / 4)
-		standbyWait_us = MaxStandbyDelay * 1000000 / 4;
 
 	return false;
 }
@@ -163,50 +156,41 @@ static void
 ResolveRecoveryConflictWithVirtualXIDs(VirtualTransactionId *waitlist,
 									   ProcSignalReason reason)
 {
-	char		waitactivitymsg[100];
-	char		oldactivitymsg[101];
-
 	while (VirtualTransactionIdIsValid(*waitlist))
 	{
-		long		wait_s;
-		int			wait_us;	/* wait in microseconds (us) */
 		TimestampTz waitStart;
-		bool		logged;
+		char	   *new_status;
+
+		pgstat_report_waiting(true);
 
 		waitStart = GetCurrentTimestamp();
+		new_status = NULL;		/* we haven't changed the ps display */
+
+		/* reset standbyWait_us for each xact we wait for */
 		standbyWait_us = STANDBY_INITIAL_WAIT_US;
-		logged = false;
 
 		/* wait until the virtual xid is gone */
 		while (!ConditionalVirtualXactLockTableWait(*waitlist))
 		{
 			/*
-			 * Report if we have been waiting for a while now...
+			 * Report via ps if we have been waiting for more than 500 msec
+			 * (should that be configurable?)
 			 */
-			TimestampTz now = GetCurrentTimestamp();
-
-			TimestampDifference(waitStart, now, &wait_s, &wait_us);
-			if (!logged && (wait_s > 0 || wait_us > 500000))
+			if (update_process_title && new_status == NULL &&
+				TimestampDifferenceExceeds(waitStart, GetCurrentTimestamp(),
+										   500))
 			{
-				const char *oldactivitymsgp;
+				const char *old_status;
 				int			len;
 
-				oldactivitymsgp = get_ps_display(&len);
-
-				if (len > 100)
-					len = 100;
-
-				memcpy(oldactivitymsg, oldactivitymsgp, len);
-				oldactivitymsg[len] = 0;
-
-				snprintf(waitactivitymsg, sizeof(waitactivitymsg),
-						 "waiting for max_standby_delay (%u s)",
+				old_status = get_ps_display(&len);
+				new_status = (char *) palloc(len + 50);
+				memcpy(new_status, old_status, len);
+				snprintf(new_status + len, 50,
+						 " waiting for max_standby_delay (%d ms)",
 						 MaxStandbyDelay);
-				set_ps_display(waitactivitymsg, false);
-
-				pgstat_report_waiting(true);
-
-				logged = true;
+				set_ps_display(new_status, false);
+				new_status[len] = '\0'; /* truncate off " waiting" */
 			}
 
 			/* Is it time to kill it? */
@@ -225,16 +209,17 @@ ResolveRecoveryConflictWithVirtualXIDs(VirtualTransactionId *waitlist,
 				 * unresponsive backend when system is heavily loaded.
 				 */
 				if (pid != 0)
-					pg_usleep(5000);
+					pg_usleep(5000L);
 			}
 		}
 
-		/* Reset ps display */
-		if (logged)
+		/* Reset ps display if we changed it */
+		if (new_status)
 		{
-			set_ps_display(oldactivitymsg, false);
-			pgstat_report_waiting(false);
+			set_ps_display(new_status, false);
+			pfree(new_status);
 		}
+		pgstat_report_waiting(false);
 
 		/* The virtual transaction is gone now, wait for the next one */
 		waitlist++;
@@ -401,7 +386,7 @@ ResolveRecoveryConflictWithBufferPin(void)
 		 */
 		SendRecoveryConflictWithBufferPin(PROCSIG_RECOVERY_CONFLICT_BUFFERPIN);
 	}
-	else if (MaxStandbyDelay == -1)
+	else if (MaxStandbyDelay < 0)
 	{
 		/*
 		 * Send out a request to check for buffer pin deadlocks before we
@@ -412,17 +397,11 @@ ResolveRecoveryConflictWithBufferPin(void)
 	}
 	else
 	{
-		TimestampTz now;
-		long		standby_delay_secs; /* How far Startup process is lagging */
-		int			standby_delay_usecs;
-
-		now = GetCurrentTimestamp();
+		TimestampTz then = GetLatestXLogTime();
+		TimestampTz now = GetCurrentTimestamp();
 
 		/* Are we past max_standby_delay? */
-		TimestampDifference(GetLatestXLogTime(), now,
-							&standby_delay_secs, &standby_delay_usecs);
-
-		if (standby_delay_secs >= MaxStandbyDelay)
+		if (TimestampDifferenceExceeds(then, now, MaxStandbyDelay))
 		{
 			/*
 			 * We're already behind, so clear a path as quickly as possible.
@@ -434,7 +413,7 @@ ResolveRecoveryConflictWithBufferPin(void)
 			TimestampTz fin_time;		/* Expected wake-up time by timer */
 			long		timer_delay_secs;		/* Amount of time we set timer
 												 * for */
-			int			timer_delay_usecs = 0;
+			int			timer_delay_usecs;
 
 			/*
 			 * Send out a request to check for buffer pin deadlocks before we
@@ -446,12 +425,10 @@ ResolveRecoveryConflictWithBufferPin(void)
 			/*
 			 * How much longer we should wait?
 			 */
-			timer_delay_secs = MaxStandbyDelay - standby_delay_secs;
-			if (standby_delay_usecs > 0)
-			{
-				timer_delay_secs -= 1;
-				timer_delay_usecs = 1000000 - standby_delay_usecs;
-			}
+			fin_time = TimestampTzPlusMilliseconds(then, MaxStandbyDelay);
+
+			TimestampDifference(now, fin_time,
+								&timer_delay_secs, &timer_delay_usecs);
 
 			/*
 			 * It's possible that the difference is less than a microsecond;
@@ -459,13 +436,6 @@ ResolveRecoveryConflictWithBufferPin(void)
 			 */
 			if (timer_delay_secs == 0 && timer_delay_usecs == 0)
 				timer_delay_usecs = 1;
-
-			/*
-			 * When is the finish time? We recheck this if we are woken early.
-			 */
-			fin_time = TimestampTzPlusMilliseconds(now,
-												   (timer_delay_secs * 1000) +
-												 (timer_delay_usecs / 1000));
 
 			if (enable_standby_sig_alarm(timer_delay_secs, timer_delay_usecs, fin_time))
 				sig_alarm_enabled = true;

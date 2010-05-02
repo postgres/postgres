@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/high-availability.sgml,v 1.65 2010/04/29 21:36:18 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/high-availability.sgml,v 1.66 2010/05/02 02:10:32 tgl Exp $ -->
 
 <chapter id="high-availability">
  <title>High Availability, Load Balancing, and Replication</title>
@@ -1480,7 +1480,8 @@ if (!triggered)
     There are a number of choices for resolving query conflicts.  The default
     is to wait and hope the query finishes. The server will wait
     automatically until the lag between primary and standby is at most
-    <varname>max_standby_delay</> seconds. Once that grace period expires,
+    <xref linkend="guc-max-standby-delay"> (30 seconds by default).
+    Once that grace period expires,
     one of the following actions is taken:
 
       <itemizedlist>
@@ -1514,14 +1515,27 @@ if (!triggered)
    </para>
 
    <para>
-    <varname>max_standby_delay</> is set in <filename>postgresql.conf</>.
-    The parameter applies to the server as a whole, so if the delay is consumed
-    by a single query then there may be little or no waiting for queries that
-    follow, though they will have benefited equally from the initial
-    waiting period. The server may take time to catch up again before the grace
-    period is available again, though if there is a heavy and constant stream
-    of conflicts it may seldom catch up fully.
+    Keep in mind that <varname>max_standby_delay</> is compared to the
+    difference between the standby server's clock and the transaction
+    commit timestamps read from the WAL log.  Thus, the grace period
+    allowed to any one query on the standby is never more than
+    <varname>max_standby_delay</>, and could be considerably less if the
+    standby has already fallen behind as a result of waiting for previous
+    queries to complete, or as a result of being unable to keep up with a
+    heavy update load.
    </para>
+
+   <caution>
+    <para>
+     Be sure that the primary and standby servers' clocks are kept in sync;
+     otherwise the values compared to <varname>max_standby_delay</> will be
+     erroneous, possibly leading to undesirable query cancellations.
+     If the clocks are intentionally not in sync, or if there is a large
+     propagation delay from primary to standby, it is advisable to set
+     <varname>max_standby_delay</> to -1.  In any case the value should be
+     larger than the largest expected clock skew between primary and standby.
+    </para>
+   </caution>
 
    <para>
     Users should be clear that tables that are regularly and heavily updated on the
@@ -1656,7 +1670,7 @@ LOG:  database system is ready to accept read only connections
     <varname>max_standby_delay</> or even set it to zero, though that is a
     very aggressive setting. If the standby server is tasked as an additional
     server for decision support queries then it might be acceptable to set this
-    to a value of many hours (in seconds).  It is also possible to set
+    to a value of many hours.  It is also possible to set
     <varname>max_standby_delay</> to -1 which means wait forever for queries
     to complete; this will be useful when performing
     an archive recovery from a backup.

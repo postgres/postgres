@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.272 2010/04/29 21:36:18 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.273 2010/05/02 02:10:32 tgl Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -1947,13 +1947,12 @@ SET ENABLE_SEQSCAN TO OFF;
        <para>
         When Hot Standby is active, this parameter specifies a wait policy
         for applying WAL entries that conflict with active queries.
-        If a conflict should occur the server will delay up to this number
-        of seconds before it cancels conflicting queries, as
+        If a conflict should occur the server will delay up to this long
+        before it cancels conflicting queries, as
         described in <xref linkend="hot-standby-conflict">.
-        Typically, this parameter is used only during replication.
-        The value is specified in seconds, and -1 causes the standby to wait
-        forever for a conflicting query to complete.
         The default is 30 seconds.
+        A value of -1 causes the standby to wait forever for a conflicting
+        query to complete.
         This parameter can only be set in the <filename>postgresql.conf</>
         file or on the server command line.
        </para>
@@ -1964,7 +1963,7 @@ SET ENABLE_SEQSCAN TO OFF;
       </para>
       <para>
        While it is tempting to believe that <varname>max_standby_delay</>
-       is the maximum number of seconds a query can run before
+       is the maximum length of time a query can run before
        cancellation is possible, this is not true.  When a long-running
        query ends, there is a finite time required to apply backlogged
        WAL logs.  If a second long-running query appears before the
