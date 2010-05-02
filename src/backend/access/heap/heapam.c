@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.277.2.1 2009/08/24 02:18:40 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.277.2.2 2010/05/02 22:28:11 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -4195,8 +4195,10 @@ heap_xlog_newpage(XLogRecPtr lsn, XLogRecord *record)
 	 * Note: the NEWPAGE log record is used for both heaps and indexes, so do
 	 * not do anything that assumes we are touching a heap.
 	 */
-	buffer = XLogReadBuffer(xlrec->node, xlrec->blkno, true);
+	buffer = XLogReadBufferExtended(xlrec->node, xlrec->forknum, xlrec->blkno,
+									RBM_ZERO);
 	Assert(BufferIsValid(buffer));
+	LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
 	page = (Page) BufferGetPage(buffer);
 
 	Assert(record->xl_len == SizeOfHeapNewpage + BLCKSZ);
