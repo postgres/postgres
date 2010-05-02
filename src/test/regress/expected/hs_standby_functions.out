@@ -5,7 +5,7 @@
 --
 -- should fail
 select txid_current();
-ERROR:  cannot be executed during recovery
+ERROR:  cannot execute txid_current() during recovery
 select length(txid_current_snapshot()::text) >= 4;
  ?column? 
 ----------

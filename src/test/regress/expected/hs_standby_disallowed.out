@@ -11,40 +11,40 @@ commit;
 WARNING:  there is no transaction in progress
 -- SELECT
 select * from hs1 FOR SHARE;
-ERROR:  transaction is read-only
+ERROR:  cannot execute SELECT FOR SHARE in a read-only transaction
 select * from hs1 FOR UPDATE;
-ERROR:  transaction is read-only
+ERROR:  cannot execute SELECT FOR UPDATE in a read-only transaction
 -- DML
 BEGIN;
 insert into hs1 values (37);
-ERROR:  transaction is read-only
+ERROR:  cannot execute INSERT in a read-only transaction
 ROLLBACK;
 BEGIN;
 delete from hs1 where col1 = 1;
-ERROR:  transaction is read-only
+ERROR:  cannot execute DELETE in a read-only transaction
 ROLLBACK;
 BEGIN;
 update hs1 set col1 = NULL where col1 > 0;
-ERROR:  transaction is read-only
+ERROR:  cannot execute UPDATE in a read-only transaction
 ROLLBACK;
 BEGIN;
 truncate hs3;
-ERROR:  transaction is read-only
+ERROR:  cannot execute TRUNCATE TABLE in a read-only transaction
 ROLLBACK;
 -- DDL
 create temporary table hstemp1 (col1 integer);
-ERROR:  transaction is read-only
+ERROR:  cannot execute CREATE TABLE in a read-only transaction
 BEGIN;
 drop table hs2;
-ERROR:  transaction is read-only
+ERROR:  cannot execute DROP TABLE in a read-only transaction
 ROLLBACK;
 BEGIN;
 create table hs4 (col1 integer);
-ERROR:  transaction is read-only
+ERROR:  cannot execute CREATE TABLE in a read-only transaction
 ROLLBACK;
 -- Sequences
 SELECT nextval('hsseq');
-ERROR:  cannot be executed during recovery
+ERROR:  cannot execute nextval() in a read-only transaction
 -- Two-phase commit transaction stuff
 BEGIN;
 SELECT count(*) FROM hs1;
@@ -54,7 +54,7 @@ SELECT count(*) FROM hs1;
 (1 row)
 
 PREPARE TRANSACTION 'foobar';
-ERROR:  cannot be executed during recovery
+ERROR:  cannot execute PREPARE TRANSACTION during recovery
 ROLLBACK;
 BEGIN;
 SELECT count(*) FROM hs1;
@@ -64,7 +64,7 @@ SELECT count(*) FROM hs1;
 (1 row)
 
 COMMIT PREPARED 'foobar';
-ERROR:  cannot be executed during recovery
+ERROR:  COMMIT PREPARED cannot run inside a transaction block
 ROLLBACK;
 BEGIN;
 SELECT count(*) FROM hs1;
@@ -74,7 +74,7 @@ SELECT count(*) FROM hs1;
 (1 row)
 
 PREPARE TRANSACTION 'foobar';
-ERROR:  cannot be executed during recovery
+ERROR:  cannot execute PREPARE TRANSACTION during recovery
 ROLLBACK PREPARED 'foobar';
 ERROR:  current transaction is aborted, commands ignored until end of transaction block
 ROLLBACK;
@@ -86,52 +86,52 @@ SELECT count(*) FROM hs1;
 (1 row)
 
 ROLLBACK PREPARED 'foobar';
-ERROR:  cannot be executed during recovery
+ERROR:  ROLLBACK PREPARED cannot run inside a transaction block
 ROLLBACK;
 -- Locks
 BEGIN;
 LOCK hs1;
-ERROR:  cannot be executed during recovery
+ERROR:  cannot execute LOCK TABLE during recovery
 COMMIT;
 BEGIN;
 LOCK hs1 IN SHARE UPDATE EXCLUSIVE MODE;
-ERROR:  cannot be executed during recovery
+ERROR:  cannot execute LOCK TABLE during recovery
 COMMIT;
 BEGIN;
 LOCK hs1 IN SHARE MODE;
-ERROR:  cannot be executed during recovery
+ERROR:  cannot execute LOCK TABLE during recovery
 COMMIT;
 BEGIN;
 LOCK hs1 IN SHARE ROW EXCLUSIVE MODE;
-ERROR:  cannot be executed during recovery
+ERROR:  cannot execute LOCK TABLE during recovery
 COMMIT;
 BEGIN;
 LOCK hs1 IN EXCLUSIVE MODE;
-ERROR:  cannot be executed during recovery
+ERROR:  cannot execute LOCK TABLE during recovery
 COMMIT;
 BEGIN;
 LOCK hs1 IN ACCESS EXCLUSIVE MODE;
-ERROR:  cannot be executed during recovery
+ERROR:  cannot execute LOCK TABLE during recovery
 COMMIT;
 -- Listen
 listen a;
-ERROR:  cannot be executed during recovery
+ERROR:  cannot execute LISTEN during recovery
 notify a;
-ERROR:  cannot be executed during recovery
+ERROR:  cannot execute NOTIFY during recovery
 unlisten a;
-ERROR:  cannot be executed during recovery
+ERROR:  cannot execute UNLISTEN during recovery
 unlisten *;
-ERROR:  cannot be executed during recovery
+ERROR:  cannot execute UNLISTEN during recovery
 -- disallowed commands
 ANALYZE hs1;
-ERROR:  cannot be executed during recovery
+ERROR:  cannot execute VACUUM during recovery
 VACUUM hs2;
-ERROR:  cannot be executed during recovery
+ERROR:  cannot execute VACUUM during recovery
 CLUSTER hs2 using hs1_pkey;
-ERROR:  cannot be executed during recovery
+ERROR:  cannot execute CLUSTER during recovery
 REINDEX TABLE hs2;
-ERROR:  cannot be executed during recovery
+ERROR:  cannot execute REINDEX during recovery
 REVOKE SELECT ON hs1 FROM PUBLIC;
-ERROR:  transaction is read-only
+ERROR:  cannot execute REVOKE in a read-only transaction
 GRANT SELECT ON hs1 TO PUBLIC;
-ERROR:  transaction is read-only
+ERROR:  cannot execute GRANT in a read-only transaction
