@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.273 2010/05/02 02:10:32 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.274 2010/05/02 11:32:53 sriggs Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -1950,7 +1950,7 @@ SET ENABLE_SEQSCAN TO OFF;
         If a conflict should occur the server will delay up to this long
         before it cancels conflicting queries, as
         described in <xref linkend="hot-standby-conflict">.
-        The default is 30 seconds.
+        The default is 30 seconds (30 s). Units are milliseconds.
         A value of -1 causes the standby to wait forever for a conflicting
         query to complete.
         This parameter can only be set in the <filename>postgresql.conf</>
