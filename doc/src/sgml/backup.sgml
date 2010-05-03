@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.154 2010/04/29 21:49:03 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.155 2010/05/03 09:14:16 heikki Exp $ -->
 
 <chapter id="backup">
  <title>Backup and Restore</title>
@@ -550,8 +550,9 @@ tar -cf backup.tar /usr/local/pgsql/data
    </para>
 
    <para>
-    To enable WAL archiving, set the <xref
-    linkend="guc-archive-mode"> configuration parameter to <literal>on</>,
+    To enable WAL archiving, set the <xref linkend="guc-wal-level">
+    configuration parameter to <literal>archive</> (or <literal>hot_standby</>),
+    <xref linkend="guc-archive-mode"> to <literal>on</>,
     and specify the shell command to use in the <xref
     linkend="guc-archive-command"> configuration parameter.  In practice
     these settings will always be placed in the
@@ -694,7 +695,7 @@ archive_command = 'test ! -f /mnt/server/archivedir/%f &amp;&amp; cp %p /mnt/ser
     linkend="populate-pitr">.  If archiving or streaming replication were
     turned on during execution of one of these statements, WAL would not
     contain enough information for archive recovery.  (Crash recovery is
-    unaffected.)  For this reason, these parameters can only be changed at
+    unaffected.)  For this reason, <varname>wal_level</> can only be changed at
     server start.  However, <varname>archive_command</> can be changed with a
     configuration file reload.  If you wish to temporarily stop archiving,
     one way to do it is to set <varname>archive_command</> to the empty
@@ -1180,7 +1181,8 @@ restore_command = 'cp /mnt/server/archivedir/%f %p'
      </para>
 
      <para>
-      To prepare for standalone hot backups, set <varname>archive_mode</> to
+      To prepare for standalone hot backups, set <varname>wal_level</> to
+      <literal>archive</> (or <literal>hot_standby</>), <varname>archive_mode</> to
       <literal>on</>, and set up an <varname>archive_command</> that performs
       archiving only when a <emphasis>switch file</> exists.  For example:
 <programlisting>
