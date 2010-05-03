@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/high-availability.sgml,v 1.66 2010/05/02 02:10:32 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/high-availability.sgml,v 1.67 2010/05/03 09:15:17 heikki Exp $ -->
 
 <chapter id="high-availability">
  <title>High Availability, Load Balancing, and Replication</title>
@@ -1156,7 +1156,7 @@ if (!triggered)
     so there will be a measurable delay between primary and standby. Running the
     same query nearly simultaneously on both primary and standby might therefore
     return differing results. We say that data on the standby is
-    <literal>eventually consistent</literal> with the primary.
+    <firstterm>eventually consistent</firstterm> with the primary.
     Queries executed on the standby will be correct with regard to the transactions
     that had been recovered at the start of the query, or start of first statement
     in the case of serializable transactions. In comparison with the primary,
