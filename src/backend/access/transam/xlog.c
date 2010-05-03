@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.408 2010/05/02 02:10:33 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.409 2010/05/03 11:17:52 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -7920,11 +7920,28 @@ xlog_redo(XLogRecPtr lsn, XLogRecord *record)
 		/* Update our copy of the parameters in pg_control */
 		memcpy(&xlrec, XLogRecGetData(record), sizeof(xl_parameter_change));
 
+		LWLockAcquire(ControlFileLock, LW_EXCLUSIVE);
 		ControlFile->MaxConnections = xlrec.MaxConnections;
 		ControlFile->max_prepared_xacts = xlrec.max_prepared_xacts;
 		ControlFile->max_locks_per_xact = xlrec.max_locks_per_xact;
 		ControlFile->wal_level = xlrec.wal_level;
+		/*
+		 * Update minRecoveryPoint to ensure that if recovery is aborted,
+		 * we recover back up to this point before allowing hot standby
+		 * again. This is particularly important if wal_level was set to
+		 * 'archive' before, and is now 'hot_standby', to ensure you don't
+		 * run queries against the WAL preceding the wal_level change.
+		 * Same applies to decreasing max_* settings.
+		 */
+		minRecoveryPoint = ControlFile->minRecoveryPoint;
+		if ((minRecoveryPoint.xlogid != 0 || minRecoveryPoint.xrecoff != 0)
+			&& XLByteLT(minRecoveryPoint, lsn))
+		{
+			ControlFile->minRecoveryPoint = lsn;
+		}
+
 		UpdateControlFile();
+		LWLockRelease(ControlFileLock);
 
 		/* Check to see if any changes to max_connections give problems */
 		CheckRequiredParameterValues();
