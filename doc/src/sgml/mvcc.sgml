@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/mvcc.sgml,v 2.74 2010/04/03 07:22:55 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/mvcc.sgml,v 2.75 2010/05/03 15:35:30 alvherre Exp $ -->
 
  <chapter id="mvcc">
   <title>Concurrency Control</title>
@@ -565,7 +565,7 @@ SELECT SUM(value) FROM mytab WHERE class = 2;
     mode &mdash; but the semantics are all the same.  The only real difference
     between one lock mode and another is the set of lock modes with
     which each conflicts (see <xref linkend="table-lock-compatibility">).
- .  Two transactions cannot hold locks of conflicting
+    Two transactions cannot hold locks of conflicting
     modes on the same table at the same time.  (However, a transaction
     never conflicts with itself.  For example, it might acquire
     <literal>ACCESS EXCLUSIVE</literal> lock and later acquire
