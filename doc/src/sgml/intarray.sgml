@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/intarray.sgml,v 1.9 2010/03/17 17:12:31 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/intarray.sgml,v 1.10 2010/05/05 15:10:25 heikki Exp $ -->
 
 <sect1 id="intarray">
  <title>intarray</title>
@@ -90,7 +90,7 @@
      <row>
       <entry><function>subarray(int[], int start, int len)</function></entry>
       <entry><type>int[]</type></entry>
-      <entry>portion of array starting at position <parameter>start</>, len <parameter>elements</></entry>
+      <entry>portion of array starting at position <parameter>start</>, <parameter>len</> elements</entry>
       <entry><literal>subarray('{1,2,3,2,1}'::int[], 2, 3)</literal></entry>
       <entry><literal>{2,3,2}</literal></entry>
      </row>
