@@ -33,7 +33,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/psql/psqlscan.l,v 1.32 2010/01/29 17:44:12 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/bin/psql/psqlscan.l,v 1.33 2010/05/05 22:18:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -59,6 +59,7 @@ typedef struct StackElem
 	YY_BUFFER_STATE buf;		/* flex input control structure */
 	char	   *bufstring;		/* data actually being scanned by flex */
 	char	   *origstring;		/* copy of original data, if needed */
+	char	   *varname;		/* name of variable providing data, or NULL */
 	struct StackElem *next;
 } StackElem;
 
@@ -113,7 +114,9 @@ static char *option_quote;
 
 int	yylex(void);
 
-static void push_new_buffer(const char *newstr);
+static void push_new_buffer(const char *newstr, const char *varname);
+static void pop_buffer_stack(PsqlScanState state);
+static bool var_is_current_source(PsqlScanState state, const char *varname);
 static YY_BUFFER_STATE prepare_buffer(const char *txt, int len,
 									  char **txtcopy);
 static void emit(const char *txt, int len);
@@ -688,15 +691,28 @@ other			.
 
 :[A-Za-z0-9_]+	{
 					/* Possible psql variable substitution */
+					const char *varname = yytext + 1;
 					const char *value;
 
-					value = GetVariable(pset.vars, yytext + 1);
+					value = GetVariable(pset.vars, varname);
 
 					if (value)
 					{
-						/* It is a variable, perform substitution */
-						push_new_buffer(value);
-						/* yy_scan_string already made buffer active */
+						/* It is a variable, check for recursion */
+						if (var_is_current_source(cur_state, varname))
+						{
+							/* Recursive expansion --- don't go there */
+							psql_error("skipping recursive expansion of variable \"%s\"\n",
+									   varname);
+							/* Instead copy the string as is */
+							ECHO;
+						}
+						else
+						{
+							/* OK, perform substitution */
+							push_new_buffer(value, varname);
+							/* yy_scan_string already made buffer active */
+						}
 					}
 					else
 					{
@@ -836,12 +852,7 @@ other			.
 					 * We were expanding a variable, so pop the inclusion
 					 * stack and keep lexing
 					 */
-					cur_state->buffer_stack = stackelem->next;
-					yy_delete_buffer(stackelem->buf);
-					free(stackelem->bufstring);
-					if (stackelem->origstring)
-						free(stackelem->origstring);
-					free(stackelem);
+					pop_buffer_stack(cur_state);
 
 					stackelem = cur_state->buffer_stack;
 					if (stackelem != NULL)
@@ -926,6 +937,7 @@ other			.
 						 * further examination.  This is consistent with the
 						 * pre-8.0 code behavior, if not with the way that
 						 * variables are handled outside backslash commands.
+						 * Note that we needn't guard against recursion here.
 						 */
 						if (value)
 							appendPQExpBufferStr(output_buf, value);
@@ -1315,16 +1327,7 @@ psql_scan_finish(PsqlScanState state)
 {
 	/* Drop any incomplete variable expansions. */
 	while (state->buffer_stack != NULL)
-	{
-		StackElem  *stackelem = state->buffer_stack;
-
-		state->buffer_stack = stackelem->next;
-		yy_delete_buffer(stackelem->buf);
-		free(stackelem->bufstring);
-		if (stackelem->origstring)
-			free(stackelem->origstring);
-		free(stackelem);
-	}
+		pop_buffer_stack(state);
 
 	/* Done with the outer scan buffer, too */
 	if (state->scanbufhandle)
@@ -1670,11 +1673,19 @@ psql_scan_slash_command_end(PsqlScanState state)
  * NOTE SIDE EFFECT: the new buffer is made the active flex input buffer.
  */
 static void
-push_new_buffer(const char *newstr)
+push_new_buffer(const char *newstr, const char *varname)
 {
 	StackElem  *stackelem;
 
 	stackelem = (StackElem *) pg_malloc(sizeof(StackElem));
+
+	/*
+	 * In current usage, the passed varname points at the current flex
+	 * input buffer; we must copy it before calling prepare_buffer()
+	 * because that will change the buffer state.
+	 */
+	stackelem->varname = varname ? pg_strdup(varname) : NULL;
+
 	stackelem->buf = prepare_buffer(newstr, strlen(newstr),
 									&stackelem->bufstring);
 	cur_state->curline = stackelem->bufstring;
@@ -1690,6 +1701,46 @@ push_new_buffer(const char *newstr)
 	}
 	stackelem->next = cur_state->buffer_stack;
 	cur_state->buffer_stack = stackelem;
+}
+
+/*
+ * Pop the topmost buffer stack item (there must be one!)
+ *
+ * NB: after this, the flex input state is unspecified; caller must
+ * switch to an appropriate buffer to continue lexing.
+ */
+static void
+pop_buffer_stack(PsqlScanState state)
+{
+	StackElem  *stackelem = state->buffer_stack;
+
+	state->buffer_stack = stackelem->next;
+	yy_delete_buffer(stackelem->buf);
+	free(stackelem->bufstring);
+	if (stackelem->origstring)
+		free(stackelem->origstring);
+	if (stackelem->varname)
+		free(stackelem->varname);
+	free(stackelem);
+}
+
+/*
+ * Check if specified variable name is the source for any string
+ * currently being scanned
+ */
+static bool
+var_is_current_source(PsqlScanState state, const char *varname)
+{
+	StackElem  *stackelem;
+
+	for (stackelem = state->buffer_stack;
+		 stackelem != NULL;
+		 stackelem = stackelem->next)
+	{
+		if (stackelem->varname && strcmp(stackelem->varname, varname) == 0)
+			return true;
+	}
+	return false;
 }
 
 /*
