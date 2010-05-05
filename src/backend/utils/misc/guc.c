@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.252.4.10 2010/03/25 14:45:51 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.252.4.11 2010/05/05 02:55:11 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -5327,13 +5327,14 @@ GUCArrayDelete(ArrayType *array, const char *name)
 		/* else add it to the output array */
 		if (newarray)
 		{
+			isnull = false;
 			newarray = array_set(newarray, 1, &index,
 								 d,
-								 false,
 								 -1 /* varlenarray */ ,
 								 -1 /* TEXT's typlen */ ,
 								 false /* TEXT's typbyval */ ,
-								 'i' /* TEXT's typalign */ );
+								 'i' /* TEXT's typalign */ ,
+								 &isnull);
 		}
 		else
 			newarray = construct_array(&d, 1,
