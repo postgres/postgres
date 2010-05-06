@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/chklocale.c,v 1.16 2010/04/28 00:29:16 itagaki Exp $
+ *	  $PostgreSQL: pgsql/src/port/chklocale.c,v 1.17 2010/05/06 02:12:38 itagaki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -62,7 +62,7 @@ static const struct encoding_match encoding_match_list[] = {
 	{PG_EUC_KR, "IBM-eucKR"},
 	{PG_EUC_KR, "deckorean"},
 	{PG_EUC_KR, "5601"},
-	{PG_EUC_KR, "CP51949"},		/* or 20949 ? */
+	{PG_EUC_KR, "CP51949"},
 
 	{PG_EUC_TW, "EUC-TW"},
 	{PG_EUC_TW, "eucTW"},
