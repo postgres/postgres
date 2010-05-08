@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2009, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/print.c,v 1.116.2.3 2010/03/01 21:27:32 heikki Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/print.c,v 1.116.2.4 2010/05/08 16:40:03 tgl Exp $
  */
 #include "postgres_fe.h"
 
@@ -171,6 +171,20 @@ format_numeric_locale(const char *my_str)
 
 	return new_str;
 }
+
+/*
+ * fputnbytes: print exactly N bytes to a file
+ *
+ * Think not to use fprintf with a %.*s format for this.  Some machines
+ * believe %s's precision is measured in characters, others in bytes.
+ */
+static void
+fputnbytes(FILE *f, const char *str, size_t n)
+{
+	while (n-- > 0)
+		fputc(*str++, f);
+}
+
 
 /*************************/
 /* Unaligned text		 */
@@ -813,14 +827,16 @@ print_aligned_text(const printTableContent *cont, FILE *fout)
 					{
 						/* spaces first */
 						fprintf(fout, "%*s", width_wrap[j] - chars_to_output, "");
-						fprintf(fout, "%.*s", bytes_to_output,
-								this_line->ptr + bytes_output[j]);
+						fputnbytes(fout,
+								   this_line->ptr + bytes_output[j],
+								   bytes_to_output);
 					}
 					else	/* Left aligned cell */
 					{
 						/* spaces second */
-						fprintf(fout, "%.*s", bytes_to_output,
-								this_line->ptr + bytes_output[j]);
+						fputnbytes(fout,
+								   this_line->ptr + bytes_output[j],
+								   bytes_to_output);
 						if (finalspaces)
 							fprintf(fout, "%*s", width_wrap[j] - chars_to_output, "");
 					}
@@ -1030,7 +1046,10 @@ print_aligned_vertical(const printTableContent *cont, FILE *fout)
 				record_str_len = strlen(record_str);
 
 				if (record_str_len + opt_border > strlen(divider))
+				{
+					/* %.*s OK here because divider is all ASCII */
 					fprintf(fout, "%.*s%s\n", opt_border, divider, record_str);
+				}
 				else
 				{
 					char	   *div_copy = pg_strdup(divider);

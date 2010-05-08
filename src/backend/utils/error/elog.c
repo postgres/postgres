@@ -42,7 +42,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.216 2009/06/25 23:07:15 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.216.2.1 2010/05/08 16:40:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1782,7 +1782,7 @@ log_line_prefix(StringInfo buf)
 					int			displen;
 
 					psdisp = get_ps_display(&displen);
-					appendStringInfo(buf, "%.*s", displen, psdisp);
+					appendBinaryStringInfo(buf, psdisp, displen);
 				}
 				break;
 			case 'r':
@@ -1937,7 +1937,7 @@ write_csvlog(ErrorData *edata)
 		initStringInfo(&msgbuf);
 
 		psdisp = get_ps_display(&displen);
-		appendStringInfo(&msgbuf, "%.*s", displen, psdisp);
+		appendBinaryStringInfo(&msgbuf, psdisp, displen);
 		appendCSVLiteral(&buf, msgbuf.data);
 
 		pfree(msgbuf.data);
