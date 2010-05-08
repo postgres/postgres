@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/dt_common.c,v 1.51 2009/06/11 14:49:13 momjian Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/dt_common.c,v 1.52 2010/05/08 16:39:52 tgl Exp $ */
 
 #include "postgres_fe.h"
 
@@ -854,6 +854,14 @@ EncodeDateTime(struct tm * tm, fsec_t fsec, int *tzp, char **tzn, int style, cha
 
 			if (tm->tm_year <= 0)
 				sprintf(str + strlen(str), " BC");
+
+			/*
+			 * Note: the uses of %.*s in this function would be unportable
+			 * if the timezone names ever contain non-ASCII characters,
+			 * since some platforms think the string length is measured
+			 * in characters not bytes.  However, all TZ abbreviations in
+			 * the Olson database are plain ASCII.
+			 */
 
 			if (tzp != NULL && tm->tm_isdst >= 0)
 			{

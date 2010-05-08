@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tsearch/wparser_def.c,v 1.30 2010/04/28 02:04:16 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tsearch/wparser_def.c,v 1.31 2010/05/08 16:39:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -322,6 +322,12 @@ TParserInit(char *str, int len)
 	prs->state->state = TPS_Base;
 
 #ifdef WPARSER_TRACE
+	/*
+	 * Use of %.*s here is not portable when the string contains multibyte
+	 * characters: some machines interpret the length in characters, others
+	 * in bytes.  Since it's only a debugging aid, we haven't bothered to
+	 * fix this.
+	 */
 	fprintf(stderr, "parsing \"%.*s\"\n", len, str);
 #endif
 
@@ -361,6 +367,7 @@ TParserCopyInit(const TParser *orig)
 	prs->state->state = TPS_Base;
 
 #ifdef WPARSER_TRACE
+	/* See note above about %.*s */
 	fprintf(stderr, "parsing copy of \"%.*s\"\n", prs->lenstr, prs->str);
 #endif
 

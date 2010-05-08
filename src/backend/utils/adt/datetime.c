@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/datetime.c,v 1.210 2010/01/02 16:57:53 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/datetime.c,v 1.211 2010/05/08 16:39:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3740,6 +3740,14 @@ EncodeDateTime(struct pg_tm * tm, fsec_t fsec, int *tzp, char **tzn, int style, 
 
 			AppendTimestampSeconds(str + strlen(str), tm, fsec);
 
+			/*
+			 * Note: the uses of %.*s in this function would be unportable
+			 * if the timezone names ever contain non-ASCII characters,
+			 * since some platforms think the string length is measured
+			 * in characters not bytes.  However, all TZ abbreviations in
+			 * the Olson database are plain ASCII.
+			 */
+
 			if (tzp != NULL && tm->tm_isdst >= 0)
 			{
 				if (*tzn != NULL)
@@ -4091,6 +4099,7 @@ CheckDateTokenTable(const char *tablename, const datetkn *base, int nel)
 	{
 		if (strncmp(base[i - 1].token, base[i].token, TOKMAXLEN) >= 0)
 		{
+			/* %.*s is safe since all our tokens are ASCII */
 			elog(LOG, "ordering error in %s table: \"%.*s\" >= \"%.*s\"",
 				 tablename,
 				 TOKMAXLEN, base[i - 1].token,
