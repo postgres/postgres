@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/scansup.c,v 1.34 2006/09/22 21:39:57 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/scansup.c,v 1.34.2.1 2010/05/08 16:40:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -176,10 +176,20 @@ truncate_identifier(char *ident, int len, bool warn)
 	{
 		len = pg_mbcliplen(ident, len, NAMEDATALEN - 1);
 		if (warn)
+		{
+			/*
+			 * Cannot use %.*s here because some machines interpret %s's
+			 * precision in characters, others in bytes.
+			 */
+			char	buf[NAMEDATALEN];
+
+			memcpy(buf, ident, len);
+			buf[len] = '\0';
 			ereport(NOTICE,
 					(errcode(ERRCODE_NAME_TOO_LONG),
-					 errmsg("identifier \"%s\" will be truncated to \"%.*s\"",
-							ident, len, ident)));
+					 errmsg("identifier \"%s\" will be truncated to \"%s\"",
+							ident, buf)));
+		}
 		ident[len] = '\0';
 	}
 }
