@@ -42,7 +42,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.155.4.11 2009/03/03 00:17:36 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.155.4.12 2010/05/08 16:40:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1524,7 +1524,7 @@ log_line_prefix(StringInfo buf)
 					int		displen;
 
 					psdisp = get_ps_display(&displen);
-					appendStringInfo(buf, "%.*s", displen, psdisp);
+					appendBinaryStringInfo(buf, psdisp, displen);
 				}
 				break;
 			case 'r':
