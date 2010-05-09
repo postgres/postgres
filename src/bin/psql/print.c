@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/print.c,v 1.126 2010/05/09 02:15:59 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/print.c,v 1.127 2010/05/09 18:17:47 tgl Exp $
  */
 #include "postgres_fe.h"
 
@@ -928,14 +928,14 @@ print_aligned_text(const printTableContent *cont, FILE *fout)
 						/* spaces first */
 						fprintf(fout, "%*s", width_wrap[j] - chars_to_output, "");
 						fputnbytes(fout,
-								   this_line->ptr + bytes_output[j],
+								   (char *) (this_line->ptr + bytes_output[j]),
 								   bytes_to_output);
 					}
 					else	/* Left aligned cell */
 					{
 						/* spaces second */
 						fputnbytes(fout,
-								   this_line->ptr + bytes_output[j],
+								   (char *) (this_line->ptr + bytes_output[j]),
 								   bytes_to_output);
 					}
 
