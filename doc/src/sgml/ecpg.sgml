@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ecpg.sgml,v 1.98 2010/02/27 04:29:44 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ecpg.sgml,v 1.99 2010/05/09 16:30:31 tgl Exp $ -->
 
 <chapter id="ecpg">
  <title><application>ECPG</application> - Embedded <acronym>SQL</acronym> in C</title>
@@ -2256,7 +2256,7 @@ void PGTYPESdecimal_free(decimal *var);
      </varlistentry>
 
      <varlistentry>
-      <term><literal>PGTYPES_NUM_OVERFLOW</literal></term>
+      <term><literal>PGTYPES_NUM_UNDERFLOW</literal></term>
       <listitem>
        <para>
         An underflow occurred. Since the numeric type can deal with almost
