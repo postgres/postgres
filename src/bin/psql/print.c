@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/print.c,v 1.125 2010/05/08 16:39:52 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/print.c,v 1.126 2010/05/09 02:15:59 tgl Exp $
  */
 #include "postgres_fe.h"
 
@@ -255,8 +255,8 @@ format_numeric_locale(const char *my_str)
 /*
  * fputnbytes: print exactly N bytes to a file
  *
- * Think not to use fprintf with a %.*s format for this.  Some machines
- * believe %s's precision is measured in characters, others in bytes.
+ * We avoid using %.*s here because it can misbehave if the data
+ * is not valid in what libc thinks is the prevailing encoding.
  */
 static void
 fputnbytes(FILE *f, const char *str, size_t n)

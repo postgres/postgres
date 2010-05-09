@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tsearch/wparser_def.c,v 1.31 2010/05/08 16:39:49 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tsearch/wparser_def.c,v 1.32 2010/05/09 02:15:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -323,10 +323,9 @@ TParserInit(char *str, int len)
 
 #ifdef WPARSER_TRACE
 	/*
-	 * Use of %.*s here is not portable when the string contains multibyte
-	 * characters: some machines interpret the length in characters, others
-	 * in bytes.  Since it's only a debugging aid, we haven't bothered to
-	 * fix this.
+	 * Use of %.*s here is a bit risky since it can misbehave if the data
+	 * is not in what libc thinks is the prevailing encoding.  However,
+	 * since this is just a debugging aid, we choose to live with that.
 	 */
 	fprintf(stderr, "parsing \"%.*s\"\n", len, str);
 #endif
