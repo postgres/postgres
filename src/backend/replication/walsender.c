@@ -30,7 +30,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/replication/walsender.c,v 1.19 2010/04/28 16:54:15 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/replication/walsender.c,v 1.20 2010/05/09 18:11:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -515,7 +515,7 @@ WalSndKill(int code, Datum arg)
 /*
  * Read 'nbytes' bytes from WAL into 'buf', starting at location 'recptr'
  */
-void
+static void
 XLogRead(char *buf, XLogRecPtr recptr, Size nbytes)
 {
 	XLogRecPtr	startRecPtr = recptr;
