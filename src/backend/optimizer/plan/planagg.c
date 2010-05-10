@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planagg.c,v 1.51 2010/02/14 18:42:15 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planagg.c,v 1.52 2010/05/10 16:25:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,6 +50,7 @@ static bool build_minmax_path(PlannerInfo *root, RelOptInfo *rel,
 static ScanDirection match_agg_to_index_col(MinMaxAggInfo *info,
 					   IndexOptInfo *index, int indexcol);
 static void make_agg_subplan(PlannerInfo *root, MinMaxAggInfo *info);
+static void attach_notnull_index_qual(MinMaxAggInfo *info, IndexScan *iplan);
 static Node *replace_aggs_with_params_mutator(Node *node, List **context);
 static Oid	fetch_agg_sort_op(Oid aggfnoid);
 
@@ -537,9 +538,6 @@ make_agg_subplan(PlannerInfo *root, MinMaxAggInfo *info)
 	 * The NOT NULL qual has to go on the actual indexscan; create_plan might
 	 * have stuck a gating Result atop that, if there were any pseudoconstant
 	 * quals.
-	 *
-	 * We can skip adding the NOT NULL qual if it duplicates either an
-	 * already-given WHERE condition, or a clause of the index predicate.
 	 */
 	plan = create_plan(&subroot, (Path *) info->path);
 
@@ -552,21 +550,7 @@ make_agg_subplan(PlannerInfo *root, MinMaxAggInfo *info)
 	if (!IsA(iplan, IndexScan))
 		elog(ERROR, "result of create_plan(IndexPath) isn't an IndexScan");
 
-	if (!list_member(iplan->indexqualorig, info->notnulltest) &&
-		!list_member(info->path->indexinfo->indpred, info->notnulltest))
-	{
-		NullTest   *ntest;
-
-		/* Need a "fixed" copy as well as the original */
-		ntest = copyObject(info->notnulltest);
-		ntest->arg = (Expr *) fix_indexqual_operand((Node *) ntest->arg,
-													info->path->indexinfo);
-
-		iplan->indexqual = lappend(iplan->indexqual,
-								   ntest);
-		iplan->indexqualorig = lappend(iplan->indexqualorig,
-									   info->notnulltest);
-	}
+	attach_notnull_index_qual(info, iplan);
 
 	plan = (Plan *) make_limit(plan,
 							   subparse->limitOffset,
@@ -584,6 +568,169 @@ make_agg_subplan(PlannerInfo *root, MinMaxAggInfo *info)
 	 * Put the updated list of InitPlans back into the outer PlannerInfo.
 	 */
 	root->init_plans = subroot.init_plans;
+}
+
+/*
+ * Add "target IS NOT NULL" to the quals of the given indexscan.
+ *
+ * This is trickier than it sounds because the new qual has to be added at an
+ * appropriate place in the qual list, to preserve the list's ordering by
+ * index column position.
+ */
+static void
+attach_notnull_index_qual(MinMaxAggInfo *info, IndexScan *iplan)
+{
+	NullTest   *ntest;
+	List	   *newindexqual;
+	List	   *newindexqualorig;
+	bool		done;
+	ListCell   *lc1;
+	ListCell   *lc2;
+	Expr	   *leftop;
+	AttrNumber	targetattno;
+
+	/*
+	 * We can skip adding the NOT NULL qual if it duplicates either an
+	 * already-given WHERE condition, or a clause of the index predicate.
+	 */
+	if (list_member(iplan->indexqualorig, info->notnulltest) ||
+		list_member(info->path->indexinfo->indpred, info->notnulltest))
+		return;
+
+	/* Need a "fixed" copy as well as the original */
+	ntest = copyObject(info->notnulltest);
+	ntest->arg = (Expr *) fix_indexqual_operand((Node *) ntest->arg,
+												info->path->indexinfo);
+
+	/* Identify the target index column from the "fixed" copy */
+	leftop = ntest->arg;
+
+	if (leftop && IsA(leftop, RelabelType))
+		leftop = ((RelabelType *) leftop)->arg;
+
+	Assert(leftop != NULL);
+
+	if (!IsA(leftop, Var))
+		elog(ERROR, "NullTest indexqual has wrong key");
+
+	targetattno = ((Var *) leftop)->varattno;
+
+	/*
+	 * list.c doesn't expose a primitive to insert a list cell at an arbitrary
+	 * position, so our strategy is to copy the lists and insert the null test
+	 * when we reach an appropriate spot.
+	 */
+	newindexqual = newindexqualorig = NIL;
+	done = false;
+
+	forboth(lc1, iplan->indexqual, lc2, iplan->indexqualorig)
+	{
+		Expr	   *qual = (Expr *) lfirst(lc1);
+		Expr	   *qualorig = (Expr *) lfirst(lc2);
+		AttrNumber	varattno;
+
+		/*
+		 * Identify which index column this qual is for.  This code should
+		 * match the qual disassembly code in ExecIndexBuildScanKeys.
+		 */
+		if (IsA(qual, OpExpr))
+		{
+			/* indexkey op expression */
+			leftop = (Expr *) get_leftop(qual);
+
+			if (leftop && IsA(leftop, RelabelType))
+				leftop = ((RelabelType *) leftop)->arg;
+
+			Assert(leftop != NULL);
+
+			if (!IsA(leftop, Var))
+				elog(ERROR, "indexqual doesn't have key on left side");
+
+			varattno = ((Var *) leftop)->varattno;
+		}
+		else if (IsA(qual, RowCompareExpr))
+		{
+			/* (indexkey, indexkey, ...) op (expression, expression, ...) */
+			RowCompareExpr *rc = (RowCompareExpr *) qual;
+
+			/*
+			 * Examine just the first column of the rowcompare, which is
+			 * what determines its placement in the overall qual list.
+			 */
+			leftop = (Expr *) linitial(rc->largs);
+
+			if (leftop && IsA(leftop, RelabelType))
+				leftop = ((RelabelType *) leftop)->arg;
+
+			Assert(leftop != NULL);
+
+			if (!IsA(leftop, Var))
+				elog(ERROR, "indexqual doesn't have key on left side");
+
+			varattno = ((Var *) leftop)->varattno;
+		}
+		else if (IsA(qual, ScalarArrayOpExpr))
+		{
+			/* indexkey op ANY (array-expression) */
+			ScalarArrayOpExpr *saop = (ScalarArrayOpExpr *) qual;
+
+			leftop = (Expr *) linitial(saop->args);
+
+			if (leftop && IsA(leftop, RelabelType))
+				leftop = ((RelabelType *) leftop)->arg;
+
+			Assert(leftop != NULL);
+
+			if (!IsA(leftop, Var))
+				elog(ERROR, "indexqual doesn't have key on left side");
+
+			varattno = ((Var *) leftop)->varattno;
+		}
+		else if (IsA(qual, NullTest))
+		{
+			/* indexkey IS NULL or indexkey IS NOT NULL */
+			NullTest   *ntest = (NullTest *) qual;
+
+			leftop = ntest->arg;
+
+			if (leftop && IsA(leftop, RelabelType))
+				leftop = ((RelabelType *) leftop)->arg;
+
+			Assert(leftop != NULL);
+
+			if (!IsA(leftop, Var))
+				elog(ERROR, "NullTest indexqual has wrong key");
+
+			varattno = ((Var *) leftop)->varattno;
+		}
+		else
+		{
+			elog(ERROR, "unsupported indexqual type: %d",
+				 (int) nodeTag(qual));
+			varattno = 0;		/* keep compiler quiet */
+		}
+
+		/* Insert the null test at the first place it can legally go */
+		if (!done && targetattno <= varattno)
+		{
+			newindexqual = lappend(newindexqual, ntest);
+			newindexqualorig = lappend(newindexqualorig, info->notnulltest);
+			done = true;
+		}
+
+		newindexqual = lappend(newindexqual, qual);
+		newindexqualorig = lappend(newindexqualorig, qualorig);
+	}
+
+	/* Add the null test at the end if it must follow all existing quals */
+	if (!done)
+	{
+		newindexqual = lappend(newindexqual, ntest);
+		newindexqualorig = lappend(newindexqualorig, info->notnulltest);
+	}
+
+	iplan->indexqual = newindexqual;
+	iplan->indexqualorig = newindexqualorig;
 }
 
 /*
