@@ -1,5 +1,5 @@
 # <pre>
-# @(#)northamerica	8.30
+# @(#)northamerica	8.31
 # This file is in the public domain, so clarified as of
 # 2009-05-17 by Arthur David Olson.
 
@@ -2089,7 +2089,44 @@ Zone America/Hermosillo	-7:23:52 -	LMT	1921 Dec 31 23:36:08
 			-8:00	-	PST	1970
 			-7:00	Mexico	M%sT	1999
 			-7:00	-	MST
+
+# From Alexander Krivenyshev (2010-04-21):
+# According to news, Bah&iacute;a de Banderas (Mexican state of Nayarit)
+# changed time zone UTC-7 to new time zone UTC-6 on April 4, 2010 (to
+# share the same time zone as nearby city Puerto Vallarta, Jalisco).
+#
+# (Spanish)
+# Bah&iacute;a de Banderas homologa su horario al del centro del
+# pa&iacute;s, a partir de este domingo
+# <a href="http://www.nayarit.gob.mx/notes.asp?id=20748">
+# http://www.nayarit.gob.mx/notes.asp?id=20748
+# </a>
+#
+# Bah&iacute;a de Banderas homologa su horario con el del Centro del
+# Pa&iacute;s
+# <a href="http://www.bahiadebanderas.gob.mx/principal/index.php?option=com_content&view=article&id=261:bahia-de-banderas-homologa-su-horario-con-el-del-centro-del-pais&catid=42:comunicacion-social&Itemid=50">
+# http://www.bahiadebanderas.gob.mx/principal/index.php?option=com_content&view=article&id=261:bahia-de-banderas-homologa-su-horario-con-el-del-centro-del-pais&catid=42:comunicacion-social&Itemid=50"
+# </a>
+#
+# (English)
+# Puerto Vallarta and Bah&iacute;a de Banderas: One Time Zone
+# <a href="http://virtualvallarta.com/puertovallarta/puertovallarta/localnews/2009-12-03-Puerto-Vallarta-and-Bahia-de-Banderas-One-Time-Zone.shtml">
+# http://virtualvallarta.com/puertovallarta/puertovallarta/localnews/2009-12-03-Puerto-Vallarta-and-Bahia-de-Banderas-One-Time-Zone.shtml
+# </a>
+#
+# or
+# <a href="http://www.worldtimezone.com/dst_news/dst_news_mexico08.html">
+# http://www.worldtimezone.com/dst_news/dst_news_mexico08.html
+# </a>
+#
+# "Mexico's Senate approved the amendments to the Mexican Schedule System that
+# will allow Bah&iacute;a de Banderas and Puerto Vallarta to share the same time
+# zone ..."
 # Baja California Sur, Nayarit, Sinaloa
+
+# From Arthur David Olson (2010-05-01):
+# Use "Bahia_Banderas" to keep the name to fourteen characters.
+
 Zone America/Mazatlan	-7:05:40 -	LMT	1921 Dec 31 23:54:20
 			-7:00	-	MST	1927 Jun 10 23:00
 			-6:00	-	CST	1930 Nov 15
@@ -2100,6 +2137,19 @@ Zone America/Mazatlan	-7:05:40 -	LMT	1921 Dec 31 23:54:20
 			-7:00	-	MST	1949 Jan 14
 			-8:00	-	PST	1970
 			-7:00	Mexico	M%sT
+
+Zone America/Bahia_Banderas	-7:01:00 -	LMT	1921 Dec 31 23:59:00
+			-7:00	-	MST	1927 Jun 10 23:00
+			-6:00	-	CST	1930 Nov 15
+			-7:00	-	MST	1931 May  1 23:00
+			-6:00	-	CST	1931 Oct
+			-7:00	-	MST	1932 Apr  1
+			-6:00	-	CST	1942 Apr 24
+			-7:00	-	MST	1949 Jan 14
+			-8:00	-	PST	1970
+			-7:00	Mexico	M%sT	2010 Apr 4
+			-6:00	Mexico	C%sT
+
 # Baja California (near US border)
 Zone America/Tijuana	-7:48:04 -	LMT	1922 Jan  1  0:11:56
 			-7:00	-	MST	1924
