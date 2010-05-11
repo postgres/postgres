@@ -19,7 +19,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/pgarch.c,v 1.41 2010/01/02 16:57:50 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/pgarch.c,v 1.42 2010/05/11 16:42:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -410,14 +410,6 @@ pgarch_ArchiverCopyLoop(void)
 {
 	char		xlog[MAX_XFN_CHARS + 1];
 
-	if (!XLogArchiveCommandSet())
-	{
-		ereport(WARNING,
-		   (errmsg("archive_mode enabled, yet archive_command is not set")));
-		/* can't do anything if no command ... */
-		return;
-	}
-
 	/*
 	 * loop through all xlogs with archive_status of .ready and archive
 	 * them...mostly we expect this to be a single file, though it is possible
@@ -439,6 +431,25 @@ pgarch_ArchiverCopyLoop(void)
 			 */
 			if (got_SIGTERM || !PostmasterIsAlive(true))
 				return;
+
+			/*
+			 * Check for config update.  This is so that we'll adopt a new
+			 * setting for archive_command as soon as possible, even if there
+			 * is a backlog of files to be archived.
+			 */
+			if (got_SIGHUP)
+			{
+				got_SIGHUP = false;
+				ProcessConfigFile(PGC_SIGHUP);
+			}
+
+			/* can't do anything if no command ... */
+			if (!XLogArchiveCommandSet())
+			{
+				ereport(WARNING,
+						(errmsg("archive_mode enabled, yet archive_command is not set")));
+				return;
+			}
 
 			if (pgarch_archiveXlog(xlog))
 			{
