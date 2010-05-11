@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/cluster.sgml,v 1.49 2010/04/03 07:22:57 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/cluster.sgml,v 1.50 2010/05/11 16:07:42 rhaas Exp $
 PostgreSQL documentation
 -->
 
@@ -55,7 +55,10 @@ CLUSTER [VERBOSE]
    When a table is clustered, <productname>PostgreSQL</productname>
    remembers which index it was clustered by.  The form
    <command>CLUSTER <replaceable class="parameter">table_name</replaceable></command>
-   reclusters the table using the same index as before.
+   reclusters the table using the same index as before.  You can also
+   use the <literal>CLUSTER</literal> or <literal>SET WITHOUT CLUSTER</literal>
+   forms of <xref linkend="SQL-ALTERTABLE"> to set the index to be used for
+   future cluster operations, or to clear any previous setting.
   </para>
 
   <para>
