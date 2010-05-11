@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepunion.c,v 1.181 2010/02/26 02:00:46 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepunion.c,v 1.182 2010/05/11 15:31:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1239,13 +1239,13 @@ expand_inherited_rtentry(PlannerInfo *root, RangeTblEntry *rte, Index rti)
 		/*
 		 * Build an RTE for the child, and attach to query's rangetable list.
 		 * We copy most fields of the parent's RTE, but replace relation OID,
-		 * and set inh = false.
+		 * and set inh = false.  Also, set requiredPerms to zero since all
+		 * required permissions checks are done on the original RTE.
 		 */
 		childrte = copyObject(rte);
 		childrte->relid = childOID;
 		childrte->inh = false;
-		childrte->requiredPerms = 0;	/* do not require permissions on child
-										 * tables */
+		childrte->requiredPerms = 0;
 		parse->rtable = lappend(parse->rtable, childrte);
 		childRTindex = list_length(parse->rtable);
 
@@ -1266,6 +1266,10 @@ expand_inherited_rtentry(PlannerInfo *root, RangeTblEntry *rte, Index rti)
 		 * Translate the column permissions bitmaps to the child's attnums (we
 		 * have to build the translated_vars list before we can do this). But
 		 * if this is the parent table, leave copyObject's result alone.
+		 *
+		 * Note: we need to do this even though the executor won't run any
+		 * permissions checks on the child RTE.  The modifiedCols bitmap
+		 * may be examined for trigger-firing purposes.
 		 */
 		if (childOID != parentOID)
 		{
@@ -1316,13 +1320,6 @@ expand_inherited_rtentry(PlannerInfo *root, RangeTblEntry *rte, Index rti)
 
 	/* Otherwise, OK to add to root->append_rel_list */
 	root->append_rel_list = list_concat(root->append_rel_list, appinfos);
-
-	/*
-	 * The executor will check the parent table's access permissions when it
-	 * examines the parent's added RTE entry.  There's no need to check twice,
-	 * so turn off access check bits in the original RTE.
-	 */
-	rte->requiredPerms = 0;
 }
 
 /*
