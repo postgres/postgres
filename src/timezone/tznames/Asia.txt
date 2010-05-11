@@ -4,7 +4,7 @@
 #   a template for timezones you could need.  See the `Date/Time Support'
 #   appendix in the PostgreSQL documentation for more information.
 #
-# $PostgreSQL: pgsql/src/timezone/tznames/Asia.txt,v 1.4 2009/09/06 15:25:23 tgl Exp $
+# $PostgreSQL: pgsql/src/timezone/tznames/Asia.txt,v 1.5 2010/05/11 22:36:52 tgl Exp $
 #
 
 # CONFLICT! ADT is not unique
@@ -201,7 +201,10 @@ PETST   46800 D  # Petropavlovsk-Kamchatski Summer Time
 PETT    43200    # Petropavlovsk-Kamchatski Time
                  #     (Asia/Kamchatka)
 PHT     28800    # Phillipine Time (not in zic)
-PKT     18000    # Pakistan Time (not in zic)
+PKT     18000    # Pakistan Time
+                 #     (Asia/Karachi)
+PKST    21600 D  # Pakistan Summer Time
+                 #     (Asia/Karachi)
 QYZT    21600    # Kizilorda Time
                  #     (Asia/Qyzylorda)
 SAKST   39600 D  # Sakhalin Summer Time
