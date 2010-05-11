@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_proc.c,v 1.174 2010/04/05 01:09:52 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_proc.c,v 1.175 2010/05/11 04:52:28 itagaki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -621,9 +621,29 @@ ProcedureCreate(const char *procedureName,
 	/* Verify function body */
 	if (OidIsValid(languageValidator))
 	{
+		ArrayType  *set_items;
+		int			save_nestlevel;
+
 		/* Advance command counter so new tuple can be seen by validator */
 		CommandCounterIncrement();
+
+		/* Set per-function configuration parameters */
+		set_items = (ArrayType *) DatumGetPointer(proconfig);
+		if (set_items)		/* Need a new GUC nesting level */
+		{
+			save_nestlevel = NewGUCNestLevel();
+			ProcessGUCArray(set_items,
+							(superuser() ? PGC_SUSET : PGC_USERSET),
+							PGC_S_SESSION,
+							GUC_ACTION_SAVE);
+		}
+		else
+			save_nestlevel = 0;		/* keep compiler quiet */
+
 		OidFunctionCall1(languageValidator, ObjectIdGetDatum(retval));
+
+		if (set_items)
+			AtEOXact_GUC(true, save_nestlevel);
 	}
 
 	return retval;
