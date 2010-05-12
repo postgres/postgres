@@ -330,8 +330,8 @@ typedef void *pageCnvCtx;
 
 int			dir_matching_filenames(const struct dirent *scan_ent);
 int			pg_scandir(migratorContext *ctx, const char *dirname,
-				struct dirent ***namelist, int (*selector) (const struct dirent *),
-				int (*cmp) (const void *, const void *));
+					   struct dirent ***namelist,
+					   int (*selector) (const struct dirent *));
 const char *copyAndUpdateFile(migratorContext *ctx,
 				  pageCnvCtx *pageConverter, const char *src,
 				  const char *dst, bool force);

@@ -239,8 +239,8 @@ copy_file(const char *srcfile, const char *dstfile, bool force)
  */
 int
 pg_scandir(migratorContext *ctx, const char *dirname,
-		 struct dirent *** namelist, int (*selector) (const struct dirent *),
-		   int (*cmp) (const void *, const void *))
+		   struct dirent ***namelist,
+		   int (*selector) (const struct dirent *))
 {
 #if defined(sun) || defined(WIN32)
 	return pg_scandir_internal(ctx, dirname, namelist, selector);
@@ -258,10 +258,10 @@ pg_scandir(migratorContext *ctx, const char *dirname,
 	 */
 #elif defined(freebsd) || defined(bsdi) || defined(darwin) || defined(openbsd)
 	/* no const */
-	return scandir(dirname, namelist, (int (*) (struct dirent *)) selector, cmp);
+	return scandir(dirname, namelist, (int (*) (struct dirent *)) selector, NULL);
 #else
 	/* use const */
-	return scandir(dirname, namelist, selector, cmp);
+	return scandir(dirname, namelist, selector, NULL);
 #endif
 }
 

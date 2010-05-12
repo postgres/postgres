@@ -140,7 +140,7 @@ transfer_single_new_db(migratorContext *ctx, pageCnvCtx *pageConverter,
 			 * Now copy/link any fsm and vm files, if they exist
 			 */
 			snprintf(scandir_file_pattern, sizeof(scandir_file_pattern), "%u_", maps[mapnum].old);
-			numFiles = pg_scandir(ctx, maps[mapnum].old_file, &namelist, dir_matching_filenames, NULL);
+			numFiles = pg_scandir(ctx, maps[mapnum].old_file, &namelist, dir_matching_filenames);
 
 			while (numFiles--)
 			{
@@ -168,7 +168,7 @@ transfer_single_new_db(migratorContext *ctx, pageCnvCtx *pageConverter,
 		 * copied.
 		 */
 		snprintf(scandir_file_pattern, sizeof(scandir_file_pattern), "%u.", maps[mapnum].old);
-		numFiles = pg_scandir(ctx, maps[mapnum].old_file, &namelist, dir_matching_filenames, NULL);
+		numFiles = pg_scandir(ctx, maps[mapnum].old_file, &namelist, dir_matching_filenames);
 
 		while (numFiles--)
 		{
