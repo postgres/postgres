@@ -129,6 +129,10 @@ pg_trgm -
 	matching.
 	by Oleg Bartunov <oleg@sai.msu.su> and Teodor Sigaev <teodor@sigaev.ru>
 
+pg_upgrade -
+	Support for in-place upgrade between major releases of PostgreSQL
+	Bruce Momjian <bruce@momjian.us> and others
+
 pgbench -
 	TPC-B like benchmarking tool
 	by Tatsuo Ishii <ishii@sraoss.co.jp>
