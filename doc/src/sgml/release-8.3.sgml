@@ -1,5 +1,194 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release-8.3.sgml,v 1.5 2010/03/10 01:58:11 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release-8.3.sgml,v 1.6 2010/05/12 23:20:49 tgl Exp $ -->
 <!-- See header comment in release.sgml about typical markup -->
+
+ <sect1 id="release-8-3-11">
+  <title>Release 8.3.11</title>
+
+  <note>
+  <title>Release date</title>
+  <simpara>2010-05-17</simpara>
+  </note>
+
+  <para>
+   This release contains a variety of fixes from 8.3.10.
+   For information about new features in the 8.3 major release, see
+   <xref linkend="release-8-3">.
+  </para>
+
+  <sect2>
+   <title>Migration to Version 8.3.11</title>
+
+   <para>
+    A dump/restore is not required for those running 8.3.X.
+    However, if you are upgrading from a version earlier than 8.3.8,
+    see the release notes for 8.3.8.
+   </para>
+
+  </sect2>
+
+  <sect2>
+   <title>Changes</title>
+
+   <itemizedlist>
+
+    <listitem>
+     <para>
+      Fix possible crash if a cache reset message is received during
+      rebuild of a relcache entry (Heikki)
+     </para>
+
+     <para>
+      This error was introduced in 8.3.10 while fixing a related failure.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Apply per-function GUC settings while running the language validator
+      for the function (Itagaki Takahiro)
+     </para>
+
+     <para>
+      This avoids failures if the function's code is invalid without the
+      setting; an example is that SQL functions may not parse if the
+      <varname>search_path</> is not correct.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Do not allow an unprivileged user to reset superuser-only parameter
+      settings (Alvaro)
+     </para>
+
+     <para>
+      Previously, if an unprivileged user ran <literal>ALTER USER ... RESET
+      ALL</> for himself, or <literal>ALTER DATABASE ... RESET ALL</> for
+      a database he owns, this would remove all special parameter settings
+      for the user or database, even ones that are only supposed to be
+      changeable by a superuser.  Now, the <command>ALTER</> will only
+      remove the parameters that the user has permission to change.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Avoid possible crash during backend shutdown if shutdown occurs
+      when a <literal>CONTEXT</> addition would be made to log entries (Tom)
+     </para>
+
+     <para>
+      In some cases the context-printing function would fail because the
+      current transaction had already been rolled back when it came time
+      to print a log message.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Ensure the archiver process responds to changes in
+      <varname>archive_command</> as soon as possible (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Update pl/perl's <filename>ppport.h</> for modern Perl versions
+      (Andrew)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix assorted memory leaks in pl/python (Andreas Freund, Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Prevent infinite recursion in <application>psql</> when expanding
+      a variable that refers to itself (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <application>psql</>'s <literal>\copy</> to not add spaces around
+      a dot within <literal>\copy (select ...)</> (Tom)
+     </para>
+
+     <para>
+      Addition of spaces around the decimal point in a numeric literal would
+      result in a syntax error.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix unnecessary <quote>GIN indexes do not support whole-index scans</>
+      errors for unsatisfiable queries using <filename>contrib/intarray</>
+      operators (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Ensure that <filename>contrib/pgstattuple</> functions respond to cancel
+      interrupts promptly (Tatsuhito Kasahara)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Make server startup deal properly with the case that
+      <function>shmget()</> returns <literal>EINVAL</> for an existing
+      shared memory segment (Tom)
+     </para>
+
+     <para>
+      This behavior has been observed on BSD-derived kernels including OS X.
+      It resulted in an entirely-misleading startup failure complaining that
+      the shared memory request size was too large.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Avoid possible crashes in syslogger process on Windows (Heikki)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Deal more robustly with incomplete time zone information in the
+      Windows registry (Magnus)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Update the set of known Windows time zone names (Magnus)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Update time zone data files to <application>tzdata</> release 2010j
+      for DST law changes in Argentina, Australian Antarctic, Bangladesh,
+      Mexico, Morocco, Pakistan, Palestine, Russia, Syria, Tunisia;
+      also historical corrections for Taiwan.
+     </para>
+
+     <para>
+      Also, add <literal>PKST</> (Pakistan Summer Time) to the default set of
+      timezone abbreviations.
+     </para>
+    </listitem>
+
+   </itemizedlist>
+
+  </sect2>
+ </sect1>
 
  <sect1 id="release-8-3-10">
   <title>Release 8.3.10</title>
