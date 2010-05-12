@@ -5,12 +5,13 @@
 # Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/backend/Makefile,v 1.142 2010/05/12 11:33:09 momjian Exp $
+# $PostgreSQL: pgsql/src/backend/Makefile,v 1.143 2010/05/12 21:42:21 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
 PGFILEDESC = "PostgreSQL Server"
-PGAPPICON=win32
+# it is unclear that this should be labeled as an executable
+#PGAPPICON=win32
 
 subdir = src/backend
 top_builddir = ../..
