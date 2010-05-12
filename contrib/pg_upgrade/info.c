@@ -292,7 +292,7 @@ get_rel_infos(migratorContext *ctx, const DbInfo *dbinfo,
 {
 	PGconn	   *conn = connectToServer(ctx, dbinfo->db_name, whichCluster);
 	bool		is_edb_as = (whichCluster == CLUSTER_OLD) ?
-	ctx->old.is_edb_as : ctx->new.is_edb_as;
+					ctx->old.is_edb_as : ctx->new.is_edb_as;
 	PGresult   *res;
 	RelInfo    *relinfos;
 	int			ntups;
