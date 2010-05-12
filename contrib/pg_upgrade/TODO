@@ -1,0 +1,6 @@
+o  remove copy_dir code, or use it
+o  handle large object comments;  this is difficult to do because the large object
+   doesn't exist when --schema-only is loaded
+o  consider using pg_depend for checking object usage in version.c
+o  if reindex is necessary, allow it to be done in parallel with pg_dump custom format
+o  migrate pg_statistic by dumping it out as a flat file, so analyze is not necessary
