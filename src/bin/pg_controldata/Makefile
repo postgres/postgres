@@ -4,11 +4,13 @@
 #
 # Copyright (c) 1998-2010, PostgreSQL Global Development Group
 #
-# $PostgreSQL: pgsql/src/bin/pg_controldata/Makefile,v 1.20 2010/01/02 16:57:58 momjian Exp $
+# $PostgreSQL: pgsql/src/bin/pg_controldata/Makefile,v 1.21 2010/05/12 11:33:09 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
 PGFILEDESC = "pg_controldata - reads the data from pg_control"
+PGAPPICON=win32
+
 subdir = src/bin/pg_controldata
 top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global

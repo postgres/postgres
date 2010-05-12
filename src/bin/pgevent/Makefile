@@ -7,6 +7,8 @@
 #-------------------------------------------------------------------------
 
 PGFILEDESC = "Eventlog message formatter"
+PGAPPICON=win32
+
 PGFILESHLIB = 1
 subdir = src/bin/pgevent
 top_builddir = ../../..

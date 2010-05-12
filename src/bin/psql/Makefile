@@ -5,12 +5,13 @@
 # Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/bin/psql/Makefile,v 1.68 2010/01/02 16:57:59 momjian Exp $
+# $PostgreSQL: pgsql/src/bin/psql/Makefile,v 1.69 2010/05/12 11:33:10 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
 PGFILEDESC = "psql - the PostgreSQL interactive terminal"
 PGAPPICON=win32
+
 subdir = src/bin/psql
 top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global

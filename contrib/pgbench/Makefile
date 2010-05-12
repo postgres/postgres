@@ -1,4 +1,7 @@
-# $PostgreSQL: pgsql/contrib/pgbench/Makefile,v 1.17 2009/08/03 18:30:55 tgl Exp $
+# $PostgreSQL: pgsql/contrib/pgbench/Makefile,v 1.18 2010/05/12 11:33:08 momjian Exp $
+
+PGFILEDESC = "pgbench - a simple program for running benchmark tests"
+PGAPPICON=win32
 
 PROGRAM = pgbench
 OBJS	= pgbench.o

@@ -1,4 +1,7 @@
-# $PostgreSQL: pgsql/contrib/pg_standby/Makefile,v 1.5 2009/07/16 09:59:46 heikki Exp $
+# $PostgreSQL: pgsql/contrib/pg_standby/Makefile,v 1.6 2010/05/12 11:33:07 momjian Exp $
+
+PGFILEDESC = "pg_standby - supports creation of a warm standby"
+PGAPPICON=win32
 
 PROGRAM = pg_standby
 OBJS	= pg_standby.o

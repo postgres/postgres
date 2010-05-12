@@ -1,4 +1,7 @@
-# $PostgreSQL: pgsql/contrib/oid2name/Makefile,v 1.10 2007/11/10 23:59:51 momjian Exp $
+# $PostgreSQL: pgsql/contrib/oid2name/Makefile,v 1.11 2010/05/12 11:33:07 momjian Exp $
+
+PGFILEDESC = "oid2name - examine the file structure"
+PGAPPICON=win32
 
 PROGRAM = oid2name
 OBJS	= oid2name.o

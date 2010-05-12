@@ -4,11 +4,13 @@
 #
 # Copyright (c) 1998-2010, PostgreSQL Global Development Group
 #
-# $PostgreSQL: pgsql/src/bin/pg_resetxlog/Makefile,v 1.22 2010/01/02 16:57:59 momjian Exp $
+# $PostgreSQL: pgsql/src/bin/pg_resetxlog/Makefile,v 1.23 2010/05/12 11:33:10 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
 PGFILEDESC = "pg_resetxlog - reset PostgreSQL WAL log"
+PGAPPICON=win32
+
 subdir = src/bin/pg_resetxlog
 top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
