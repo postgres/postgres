@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.593 2010/04/20 01:38:52 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.594 2010/05/12 19:45:02 sriggs Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -174,6 +174,7 @@ static int	UseNewLine = 0;		/* Use EOF as query delimiters */
 
 /* whether or not, and why, we were cancelled by conflict with recovery */
 static bool RecoveryConflictPending = false;
+static bool RecoveryConflictRetryable = true;
 static ProcSignalReason RecoveryConflictReason;
 
 /* ----------------------------------------------------------------
@@ -2837,6 +2838,15 @@ RecoveryConflictInterrupt(ProcSignalReason reason)
 		Assert(RecoveryConflictPending && (QueryCancelPending || ProcDiePending));
 
 		/*
+		 * All conflicts apart from database cause dynamic errors where the
+		 * command or transaction can be retried at a later point with some
+		 * potential for success. No need to reset this, since
+		 * non-retryable conflict errors are currently FATAL.
+		 */
+		if (reason == PROCSIG_RECOVERY_CONFLICT_DATABASE)
+			RecoveryConflictRetryable = false;
+
+		/*
 		 * If it's safe to interrupt, and we're waiting for input or a lock,
 		 * service the interrupt immediately
 		 */
@@ -2885,6 +2895,11 @@ ProcessInterrupts(void)
 			ereport(FATAL,
 					(errcode(ERRCODE_ADMIN_SHUTDOWN),
 					 errmsg("terminating autovacuum process due to administrator command")));
+		else if (RecoveryConflictPending && RecoveryConflictRetryable)
+			ereport(FATAL,
+					(errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
+			  errmsg("terminating connection due to conflict with recovery"),
+					 errdetail_recovery_conflict()));
 		else if (RecoveryConflictPending)
 			ereport(FATAL,
 					(errcode(ERRCODE_ADMIN_SHUTDOWN),
@@ -2936,14 +2951,14 @@ ProcessInterrupts(void)
 			DisableCatchupInterrupt();
 			if (DoingCommandRead)
 				ereport(FATAL,
-						(errcode(ERRCODE_ADMIN_SHUTDOWN),
+						(errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
 						 errmsg("terminating connection due to conflict with recovery"),
 						 errdetail_recovery_conflict(),
 				 errhint("In a moment you should be able to reconnect to the"
 						 " database and repeat your command.")));
 			else
 				ereport(ERROR,
-						(errcode(ERRCODE_QUERY_CANCELED),
+						(errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
 				 errmsg("canceling statement due to conflict with recovery"),
 						 errdetail_recovery_conflict()));
 		}
