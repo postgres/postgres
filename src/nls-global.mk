@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/src/nls-global.mk,v 1.21 2009/08/26 22:24:42 petere Exp $
+# $PostgreSQL: pgsql/src/nls-global.mk,v 1.22 2010/05/13 14:35:28 petere Exp $
 
 # Common rules for Native Language Support (NLS)
 #
@@ -72,10 +72,10 @@ ifneq (,$(LANGUAGES))
 endif
 
 installdirs-po:
-	$(MKDIR_P) $(foreach lang, $(LANGUAGES), '$(DESTDIR)$(localedir)'/$(lang)/LC_MESSAGES)
+	$(if $(LANGUAGES),$(MKDIR_P) $(foreach lang, $(LANGUAGES), '$(DESTDIR)$(localedir)'/$(lang)/LC_MESSAGES),:)
 
 uninstall-po:
-	rm -f $(foreach lang, $(LANGUAGES), '$(DESTDIR)$(localedir)'/$(lang)/LC_MESSAGES/$(CATALOG_NAME)$(SO_MAJOR_VERSION)-$(MAJORVERSION).mo)
+	$(if $(LANGUAGES),rm -f $(foreach lang, $(LANGUAGES), '$(DESTDIR)$(localedir)'/$(lang)/LC_MESSAGES/$(CATALOG_NAME)$(SO_MAJOR_VERSION)-$(MAJORVERSION).mo),:)
 
 
 clean-po:
@@ -130,4 +130,3 @@ maintainer-check: maintainer-check-po
 
 .PHONY: all-po install-po installdirs-po uninstall-po clean-po \
         maintainer-check-po init-po update-po
-.SILENT: installdirs-po
