@@ -1,15 +1,20 @@
 # Spanish message translation file for plperl
-# This file is put in the public domain.
+#
+# Copyright (C) 2008-2010 PostgreSQL Global Development Group
+# This file is distributed under the same license as the PostgreSQL package.
+#
 # Emanuel Calvo Franco <postgres.arg@gmail.com>, 2008.
 # Alvaro Herrera <alvherre@alvh.no-ip.org>, 2009
 #
+# pgtranslation Id$
+# $PostgreSQL: pgsql/src/pl/plperl/po/es.po,v 1.2.2.1 2010/05/13 10:50:17 petere Exp $
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: 8.4\n"
+"Project-Id-Version: plperl (PostgreSQL 8.4)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2009-04-09 19:21+0000\n"
-"PO-Revision-Date: 2009-04-09 17:25-0400\n"
+"PO-Revision-Date: 2010-02-02 15:55-0300\n"
 "Last-Translator: Álvaro Herrera <alvherre@alvh.no-ip.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@postgresql.org>\n"
 "MIME-Version: 1.0\n"

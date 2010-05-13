@@ -11,7 +11,7 @@
 # Revisori:
 #  * Emanuele Zamprogno <emanuele.zamprogno@itpug.org>
 #
-# Copyright (c) 2009, Associazione Culturale ITPUG
+# Copyright (c) 2010, Associazione Culturale ITPUG
 # Distributed under the same license of the PostgreSQL project
 #
 # LANGUAGE message translation file for pg_ctl
@@ -23,9 +23,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.4\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2009-07-11 05:56+0000\n"
-"PO-Revision-Date: 2009-07-23 23:17:10+0200\n"
-"Last-Translator: Emanuele Zamprogno <ez@medicinaopen.info>\n"
+"POT-Creation-Date: 2010-03-27 09:15+0000\n"
+"PO-Revision-Date: 2010-03-27 11:56:34+0100\n"
+"Last-Translator: Gabriele Bartolini <gabriele.bartolini@2ndquadrant.it>\n"
 "Language-Team: Gruppo traduzioni ITPUG <traduzioni@itpug.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -36,7 +36,7 @@ msgstr ""
 
 #: pg_ctl.c:223
 #: pg_ctl.c:238
-#: pg_ctl.c:1777
+#: pg_ctl.c:1778
 #, c-format
 msgid "%s: out of memory\n"
 msgstr "%s: memoria esaurita\n"
@@ -303,12 +303,12 @@ msgstr "Il server è avviato e accetta connessioni\n"
 msgid "%s: could not start service \"%s\": error code %d\n"
 msgstr "%s: non è possibile avviare il servizio \"%s\": codice errore %d\n"
 
-#: pg_ctl.c:1512
+#: pg_ctl.c:1513
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "Prova \"%s --help\" per avere più informazioni.\n"
 
-#: pg_ctl.c:1520
+#: pg_ctl.c:1521
 #, c-format
 msgid ""
 "%s is a utility to start, stop, restart, reload configuration files,\n"
@@ -319,22 +319,22 @@ msgstr ""
 "dare un rapporto sullo stato di PostgreSQL server, o segnalare un processo di PostgreSQL.\n"
 "\n"
 
-#: pg_ctl.c:1522
+#: pg_ctl.c:1523
 #, c-format
 msgid "Usage:\n"
 msgstr "Utilizzo:\n"
 
-#: pg_ctl.c:1523
+#: pg_ctl.c:1524
 #, c-format
 msgid "  %s start   [-w] [-t SECS] [-D DATADIR] [-s] [-l FILENAME] [-o \"OPTIONS\"]\n"
 msgstr "  %s start   [-w] [-t SECS] [-D DATADIR] [-s] [-l FILENAME] [-o \"OPTIONS\"]\n"
 
-#: pg_ctl.c:1524
+#: pg_ctl.c:1525
 #, c-format
 msgid "  %s stop    [-W] [-t SECS] [-D DATADIR] [-s] [-m SHUTDOWN-MODE]\n"
 msgstr "  %s stop    [-W] [-t SECS] [-D DATADIR] [-s] [-m SHUTDOWN-MODE]\n"
 
-#: pg_ctl.c:1525
+#: pg_ctl.c:1526
 #, c-format
 msgid ""
 "  %s restart [-w] [-t SECS] [-D DATADIR] [-s] [-m SHUTDOWN-MODE]\n"
@@ -343,22 +343,22 @@ msgstr ""
 "  %s restart [-w] [-t SECS] [-D DATADIR] [-s] [-m SHUTDOWN-MODE]\n"
 "                 [-o \"OPTIONS\"]\n"
 
-#: pg_ctl.c:1527
+#: pg_ctl.c:1528
 #, c-format
 msgid "  %s reload  [-D DATADIR] [-s]\n"
 msgstr "  %s reload  [-D DATADIR] [-s]\n"
 
-#: pg_ctl.c:1528
+#: pg_ctl.c:1529
 #, c-format
 msgid "  %s status  [-D DATADIR]\n"
 msgstr "  %s status  [-D DATADIR]\n"
 
-#: pg_ctl.c:1529
+#: pg_ctl.c:1530
 #, c-format
 msgid "  %s kill    SIGNALNAME PID\n"
 msgstr "  %s kill    SIGNALNAME PID\n"
 
-#: pg_ctl.c:1531
+#: pg_ctl.c:1532
 #, c-format
 msgid ""
 "  %s register   [-N SERVICENAME] [-U USERNAME] [-P PASSWORD] [-D DATADIR]\n"
@@ -367,12 +367,12 @@ msgstr ""
 "  %s register   [-N SERVICENAME] [-U USERNAME] [-P PASSWORD] [-D DATADIR]\n"
 "                    [-w] [-t SECS] [-o \"OPTIONS\"]\n"
 
-#: pg_ctl.c:1533
+#: pg_ctl.c:1534
 #, c-format
 msgid "  %s unregister [-N SERVICENAME]\n"
 msgstr "  %s unregister [-N SERVICENAME]\n"
 
-#: pg_ctl.c:1536
+#: pg_ctl.c:1537
 #, c-format
 msgid ""
 "\n"
@@ -381,42 +381,42 @@ msgstr ""
 "\n"
 "Opzioni comuni:\n"
 
-#: pg_ctl.c:1537
+#: pg_ctl.c:1538
 #, c-format
 msgid "  -D, --pgdata DATADIR   location of the database storage area\n"
 msgstr "  -D, --pgdata DATADIR   locazione dell' area di archiviazione del database \n"
 
-#: pg_ctl.c:1538
+#: pg_ctl.c:1539
 #, c-format
 msgid "  -s, --silent           only print errors, no informational messages\n"
 msgstr "  -s, --silent           mostra solo gli errori, non i messaggi di informazione\n"
 
-#: pg_ctl.c:1539
+#: pg_ctl.c:1540
 #, c-format
 msgid "  -t SECS                seconds to wait when using -w option\n"
 msgstr "  -t SECS                secondi da aspettare quando si usa l'opzione -w\n"
 
-#: pg_ctl.c:1540
+#: pg_ctl.c:1541
 #, c-format
 msgid "  -w                     wait until operation completes\n"
 msgstr "  -w                     aspetta finchè l'opeazione non sia stata completata\n"
 
-#: pg_ctl.c:1541
+#: pg_ctl.c:1542
 #, c-format
 msgid "  -W                     do not wait until operation completes\n"
 msgstr "  -W                     non aspettare finchè l'operazione non è terminata\n"
 
-#: pg_ctl.c:1542
+#: pg_ctl.c:1543
 #, c-format
 msgid "  --help                 show this help, then exit\n"
 msgstr "  --help                 mostra l'help e poi esci\n"
 
-#: pg_ctl.c:1543
+#: pg_ctl.c:1544
 #, c-format
 msgid "  --version              output version information, then exit\n"
 msgstr "  --version              mostra le informazioni della versione, poi esci\n"
 
-#: pg_ctl.c:1544
+#: pg_ctl.c:1545
 #, c-format
 msgid ""
 "(The default is to wait for shutdown, but not for start or restart.)\n"
@@ -425,12 +425,12 @@ msgstr ""
 "(Il comportameeto di default è di aspettare lo spegnimento, ma non nel caso di avvio o riavvio.)\n"
 "\n"
 
-#: pg_ctl.c:1545
+#: pg_ctl.c:1546
 #, c-format
 msgid "If the -D option is omitted, the environment variable PGDATA is used.\n"
 msgstr "se l'opzione -D è omessa, la variabile d'ambiente PGDATA viene usata.\n"
 
-#: pg_ctl.c:1547
+#: pg_ctl.c:1548
 #, c-format
 msgid ""
 "\n"
@@ -439,22 +439,22 @@ msgstr ""
 "\n"
 "Opzioni per l'avvio od il riavvio:\n"
 
-#: pg_ctl.c:1549
+#: pg_ctl.c:1550
 #, c-format
 msgid "  -c, --core-files       allow postgres to produce core files\n"
 msgstr "  -c, --core-files       permette a postgres di produrre core files\n"
 
-#: pg_ctl.c:1551
+#: pg_ctl.c:1552
 #, c-format
 msgid "  -c, --core-files       not applicable on this platform\n"
 msgstr "  -c, --core-files       non applicabile su questa piattaforma\n"
 
-#: pg_ctl.c:1553
+#: pg_ctl.c:1554
 #, c-format
 msgid "  -l, --log FILENAME     write (or append) server log to FILENAME\n"
 msgstr "  -l, --log FILENAME     scrivi (o aggiungi) il log del server nel FILENAME\n"
 
-#: pg_ctl.c:1554
+#: pg_ctl.c:1555
 #, c-format
 msgid ""
 "  -o OPTIONS             command line options to pass to postgres\n"
@@ -463,12 +463,12 @@ msgstr ""
 "  -o OPTIONS             opzioni da linea di comando da passare a postgres\n"
 "                         (server PostgreSQL eseguibile)\n"
 
-#: pg_ctl.c:1556
+#: pg_ctl.c:1557
 #, c-format
 msgid "  -p PATH-TO-POSTGRES    normally not necessary\n"
 msgstr "  -p PATH-TO-POSTGRES    normalmente non necessario\n"
 
-#: pg_ctl.c:1557
+#: pg_ctl.c:1558
 #, c-format
 msgid ""
 "\n"
@@ -477,12 +477,12 @@ msgstr ""
 "\n"
 "Opzioni per lo spegnimento od il riavvio:\n"
 
-#: pg_ctl.c:1558
+#: pg_ctl.c:1559
 #, c-format
 msgid "  -m SHUTDOWN-MODE   can be \"smart\", \"fast\", or \"immediate\"\n"
 msgstr "  -m SHUTDOWN-MODE   può essere \"smart\", \"fast\", o  \"immediate\"\n"
 
-#: pg_ctl.c:1560
+#: pg_ctl.c:1561
 #, c-format
 msgid ""
 "\n"
@@ -491,22 +491,22 @@ msgstr ""
 "\n"
 "I modi di spegnimento sono:\n"
 
-#: pg_ctl.c:1561
+#: pg_ctl.c:1562
 #, c-format
 msgid "  smart       quit after all clients have disconnected\n"
 msgstr "  smart       chiudere dopo che tutti i clients si sono disconessi\n"
 
-#: pg_ctl.c:1562
+#: pg_ctl.c:1563
 #, c-format
 msgid "  fast        quit directly, with proper shutdown\n"
 msgstr "  fast        spegni direttamente, con una corretta procedura di arresto\n"
 
-#: pg_ctl.c:1563
+#: pg_ctl.c:1564
 #, c-format
 msgid "  immediate   quit without complete shutdown; will lead to recovery on restart\n"
 msgstr "  immediate   chiudere senza terminare il server: ciò porterà ad un recupero dei dati al riavvio\n"
 
-#: pg_ctl.c:1565
+#: pg_ctl.c:1566
 #, c-format
 msgid ""
 "\n"
@@ -515,7 +515,7 @@ msgstr ""
 "\n"
 "Nomi permessi ai segnali per kill:\n"
 
-#: pg_ctl.c:1569
+#: pg_ctl.c:1570
 #, c-format
 msgid ""
 "\n"
@@ -524,22 +524,22 @@ msgstr ""
 "\n"
 "Opzioni per register e unregister:\n"
 
-#: pg_ctl.c:1570
+#: pg_ctl.c:1571
 #, c-format
 msgid "  -N SERVICENAME  service name with which to register PostgreSQL server\n"
 msgstr "  -N SERVICENAME  nome del servizio con cui ci si registra sul server PostgreSQL\n"
 
-#: pg_ctl.c:1571
+#: pg_ctl.c:1572
 #, c-format
 msgid "  -P PASSWORD     password of account to register PostgreSQL server\n"
 msgstr "  -P PASSWORD     password per l'account con cui ci si registra sul server PostgreSQL\n"
 
-#: pg_ctl.c:1572
+#: pg_ctl.c:1573
 #, c-format
 msgid "  -U USERNAME     user name of account to register PostgreSQL server\n"
 msgstr "  -U USERNAME     user name dell'account con cui ci si registra sul server PostgreSQL\n"
 
-#: pg_ctl.c:1575
+#: pg_ctl.c:1576
 #, c-format
 msgid ""
 "\n"
@@ -548,17 +548,17 @@ msgstr ""
 "\n"
 "Segnalare bachi a <pgsql-bugs@postgresql.org>.\n"
 
-#: pg_ctl.c:1600
+#: pg_ctl.c:1601
 #, c-format
 msgid "%s: unrecognized shutdown mode \"%s\"\n"
 msgstr "%s: modalità di spegnimento non riconosciuta \"%s\"\n"
 
-#: pg_ctl.c:1633
+#: pg_ctl.c:1634
 #, c-format
 msgid "%s: unrecognized signal name \"%s\"\n"
 msgstr "%s: nome del segnale non riconosciuto \"%s\"\n"
 
-#: pg_ctl.c:1698
+#: pg_ctl.c:1699
 #, c-format
 msgid ""
 "%s: cannot be run as root\n"
@@ -569,27 +569,27 @@ msgstr ""
 "Effettuate il log in (usando per esempio \"su\") con l'utente\n"
 "(non privilegiato) che controllera' il processo server.\n"
 
-#: pg_ctl.c:1807
+#: pg_ctl.c:1808
 #, c-format
 msgid "%s: too many command-line arguments (first is \"%s\")\n"
 msgstr "%s: troppi parametri dalla riga di comando (il primo è \"%s\")\n"
 
-#: pg_ctl.c:1826
+#: pg_ctl.c:1827
 #, c-format
 msgid "%s: missing arguments for kill mode\n"
 msgstr "%s: mancano argomenti per la modalità di kill\n"
 
-#: pg_ctl.c:1844
+#: pg_ctl.c:1845
 #, c-format
 msgid "%s: unrecognized operation mode \"%s\"\n"
 msgstr "%s: modalità di operazione sconosciuta \"%s\"\n"
 
-#: pg_ctl.c:1854
+#: pg_ctl.c:1855
 #, c-format
 msgid "%s: no operation specified\n"
 msgstr "%s: nessuna operazione specificata\n"
 
-#: pg_ctl.c:1870
+#: pg_ctl.c:1871
 #, c-format
 msgid "%s: no database directory specified and environment variable PGDATA unset\n"
 msgstr "%s: nessuna directory del database è stata specificata e la variabile d'ambiente PGDATA non è configurata\n"

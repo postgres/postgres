@@ -11,15 +11,15 @@
 # Revisori:
 #  * Gabriele Bartolini <gabriele.bartolini@2ndQuadrant.it>
 #
-# Copyright (c) 2009, Associazione Culturale ITPUG
+# Copyright (c) 2010, Associazione Culturale ITPUG
 # Distributed under the same license of the PostgreSQL project
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: plpython-it\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2009-07-11 05:48+0000\n"
-"PO-Revision-Date: 2009-07-17 00:38:50+0200\n"
+"POT-Creation-Date: 2010-03-27 09:07+0000\n"
+"PO-Revision-Date: 2010-03-27 11:56:34+0100\n"
 "Last-Translator: Gabriele Bartolini <gabriele.bartolini@2ndquadrant.it>\n"
 "Language-Team: Gruppo traduzioni ITPUG <traduzioni@itpug.org>\n"
 "MIME-Version: 1.0\n"
@@ -267,17 +267,17 @@ msgstr "impossibile inizializzare le variabili globali"
 msgid "could not parse error message in plpy.elog"
 msgstr "impossibile interpretare il messaggio di errore in plpy.elog"
 
-#: plpython.c:3020
+#: plpython.c:3023
 #, c-format
 msgid "PL/Python: %s"
 msgstr "PL/Python: %s"
 
-#: plpython.c:3021
+#: plpython.c:3024
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: plpython.c:3111
+#: plpython.c:3114
 msgid "out of memory"
 msgstr "memoria esaurita"
 

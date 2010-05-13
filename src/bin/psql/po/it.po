@@ -14,15 +14,15 @@
 # Traduttori precedenti:
 #  * Mirko Tebaldi      <mirkotebaldi@yahoo.it>
 #
-# Copyright (c) 2009, Associazione Culturale ITPUG
+# Copyright (c) 2010, Associazione Culturale ITPUG
 # Distributed under the same license of the PostgreSQL project
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.4\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2009-09-14 01:09+0000\n"
-"PO-Revision-Date: 2009-09-14 19:12:57+0200\n"
+"POT-Creation-Date: 2010-03-27 09:08+0000\n"
+"PO-Revision-Date: 2010-03-27 11:56:34+0100\n"
 "Last-Translator: Gabriele Bartolini <gabriele.bartolini@2ndquadrant.it>\n"
 "Language-Team: Gruppo traduzioni ITPUG <traduzioni@itpug.org>\n"
 "MIME-Version: 1.0\n"
@@ -179,7 +179,7 @@ msgid "Password for user %s: "
 msgstr "Inserisci la password per l'utente %s:"
 
 #: command.c:1270
-#: command.c:2113
+#: command.c:2131
 #: common.c:183
 #: common.c:460
 #: common.c:525
@@ -276,117 +276,117 @@ msgstr "impossibile aprire il file temporaneo: %s"
 msgid "could not open temporary file \"%s\": %s\n"
 msgstr "impossibile aprire il file temporaneo \"%s\": %s\n"
 
-#: command.c:1767
+#: command.c:1785
 msgid "\\pset: allowed formats are unaligned, aligned, wrapped, html, latex, troff-ms\n"
 msgstr "\\pset: i formati disponibili sono allineato, disallineato, wrapped, html, latex, troff-ms\n"
 
-#: command.c:1772
+#: command.c:1790
 #, c-format
 msgid "Output format is %s.\n"
 msgstr "Il formato output è %s.\n"
 
-#: command.c:1782
+#: command.c:1800
 #, c-format
 msgid "Border style is %d.\n"
 msgstr "Lo sitle bordo %d.\n"
 
-#: command.c:1794
+#: command.c:1812
 #, c-format
 msgid "Expanded display is on.\n"
 msgstr "Visualizzazione espansa attivata.\n"
 
-#: command.c:1795
+#: command.c:1813
 #, c-format
 msgid "Expanded display is off.\n"
 msgstr "Visualizzazione espansa disattivata.\n"
 
-#: command.c:1808
+#: command.c:1826
 msgid "Showing locale-adjusted numeric output."
 msgstr "Visualizzazione uscita numerica locale-adjustes."
 
-#: command.c:1810
+#: command.c:1828
 msgid "Locale-adjusted numeric output is off."
 msgstr "L'uscita numerica locale-adjusted è off."
 
-#: command.c:1823
+#: command.c:1841
 #, c-format
 msgid "Null display is \"%s\".\n"
 msgstr "Null display is \"%s\".\n"
 
-#: command.c:1835
+#: command.c:1853
 #, c-format
 msgid "Field separator is \"%s\".\n"
 msgstr "Il separatore di campi è \"%s\".\n"
 
-#: command.c:1849
+#: command.c:1867
 #, c-format
 msgid "Record separator is <newline>."
 msgstr "Il separatore di record è <newline>."
 
-#: command.c:1851
+#: command.c:1869
 #, c-format
 msgid "Record separator is \"%s\".\n"
 msgstr "Il separatore di record è \"%s\".\n"
 
-#: command.c:1865
+#: command.c:1883
 msgid "Showing only tuples."
 msgstr "Visualizzazione esclusiva dati attivata"
 
-#: command.c:1867
+#: command.c:1885
 msgid "Tuples only is off."
 msgstr "Visualizzazione esclusiva dati disativata."
 
-#: command.c:1883
+#: command.c:1901
 #, c-format
 msgid "Title is \"%s\".\n"
 msgstr "Il titolo è \"%s\".\n"
 
-#: command.c:1885
+#: command.c:1903
 #, c-format
 msgid "Title is unset.\n"
 msgstr "Titolo non assegnato.\n"
 
-#: command.c:1901
+#: command.c:1919
 #, c-format
 msgid "Table attribute is \"%s\".\n"
 msgstr "L'attributo tabella è \"%s\".\n"
 
-#: command.c:1903
+#: command.c:1921
 #, c-format
 msgid "Table attributes unset.\n"
 msgstr "Attributi tabelle non specificati.\n"
 
-#: command.c:1924
+#: command.c:1942
 msgid "Pager is used for long output."
 msgstr "Il pager è utilizzato per risultati estesi."
 
-#: command.c:1926
+#: command.c:1944
 msgid "Pager is always used."
 msgstr "Il pager è sempre utilizzato."
 
-#: command.c:1928
+#: command.c:1946
 msgid "Pager usage is off."
 msgstr "Pager usage is off.L'utilizzo del pager è disattivato."
 
-#: command.c:1942
+#: command.c:1960
 msgid "Default footer is on."
 msgstr "Piè di pagina attivato."
 
-#: command.c:1944
+#: command.c:1962
 msgid "Default footer is off."
 msgstr "Piè di pagina disattivato."
 
-#: command.c:1955
+#: command.c:1973
 #, c-format
 msgid "Target width for \"wrapped\" format is %d.\n"
 msgstr "La dimensione per il formato \"wrapped\" è %d.\n"
 
-#: command.c:1960
+#: command.c:1978
 #, c-format
 msgid "\\pset: unknown option: %s\n"
 msgstr "\\pset: opzione sconosciuta: %s\n"
 
-#: command.c:2014
+#: command.c:2032
 msgid "\\!: failed\n"
 msgstr "\\!: fallita\n"
 
@@ -1268,32 +1268,32 @@ msgstr ""
 "       \\g o terminare con punto e virgola per eseguire la query\n"
 "       \\q per uscire\n"
 
-#: print.c:974
+#: print.c:939
 #, c-format
 msgid "(No rows)\n"
 msgstr "(Nessuna riga)\n"
 
-#: print.c:1961
+#: print.c:1853
 #, c-format
 msgid "Interrupted\n"
 msgstr "Interrotto\n"
 
-#: print.c:2028
+#: print.c:1922
 #, c-format
 msgid "Cannot add header to table content: column count of %d exceeded.\n"
 msgstr "Non è possibile aggiungere l'header al contenuto della tabella: il conteggio delle colonna di %d è stato superato.\n"
 
-#: print.c:2065
+#: print.c:1962
 #, c-format
 msgid "Cannot add cell to table content: total cell count of %d exceeded.\n"
 msgstr "Non è possibile aggiungere celle al contenuto della tabella: il conteggio totale delle celle di  %d è stato superato.\n"
 
-#: print.c:2264
+#: print.c:2182
 #, c-format
 msgid "invalid output format (internal error): %d"
 msgstr "il formato di output non è valido (errore interno): %d"
 
-#: print.c:2353
+#: print.c:2279
 #, c-format
 msgid "(%lu row)"
 msgid_plural "(%lu rows)"
@@ -4744,107 +4744,149 @@ msgstr "il processo figlio è uscito con lo stato non riconosciuto %d"
 
 #~ msgid "Warning: This syntax is deprecated.\n"
 #~ msgstr "Attenzione: Questa sintassi è stata accantonata.\n"
+
 #~ msgid "You are now connected as new user \"%s\".\n"
 #~ msgstr "Sei collegato come nuovo utente \"%s\".\n"
+
 #~ msgid "You are now connected to database \"%s\" as user \"%s\".\n"
 #~ msgstr "Sei collegato al database \"%s\" con nome utente \"%s\".\n"
+
 #~ msgid "INTERNAL ERROR: unexpected statement position \"%s\"\n"
 #~ msgstr "ERRORE INTERNO: inaspettata posizione query \"%s\"\n"
+
 #~ msgid "LINE %d: "
 #~ msgstr "RIGA %d: "
+
 #~ msgid "%s\n"
 #~ msgstr "%s\n"
+
 #~ msgid "Usage:"
 #~ msgstr "Utilizzo:"
+
 #~ msgid "  --help          show this help, then exit"
 #~ msgstr "  --help          mostra questa finestra di aiuto e termina"
+
 #~ msgid "  --version       output version information, then exit"
 #~ msgstr "  --version       mostra informazioni sulla versione e termina"
+
 #~ msgid ""
 #~ "\n"
 #~ "Connection options:"
 #~ msgstr ""
 #~ "\n"
 #~ "Opzioni di connessione:"
+
 #~ msgid "  -W              prompt for password (should happen automatically)"
 #~ msgstr "  -W              richiedi una password (automatico)"
+
 #~ msgid ""
 #~ "  \\d{t|i|s|v|S} [PATTERN] (add \"+\" for more detail)\n"
 #~ "                 list tables/indexes/sequences/views/system tables\n"
 #~ msgstr ""
 #~ "  \\d{t|i|s|v|S} [OGGETTO] (aggiungere \"+\" per maggiori informazioni)\n"
 #~ "                 mostra tabelle/indici/sequenze/viste/tabelle di sistema\n"
+
 #~ msgid "  \\db [PATTERN]  list tablespaces (add \"+\" for more detail)\n"
 #~ msgstr ""
 #~ "  \\db [PATTERN]  elenca i tablespace (usa \"+\" per più dettagli)\n"
+
 #~ msgid "  \\df [PATTERN]  list functions (add \"+\" for more detail)\n"
 #~ msgstr ""
 #~ "  \\df [FUNZIONE (anche parziale)]  mostra le funzioni (aggiungere \"+\" "
 #~ "per aumentare i dettagli)\n"
+
 #~ msgid "  \\dn [PATTERN]  list schemas (add \"+\" for more detail)\n"
 #~ msgstr "  \\dn [PATTERN]  elenca gli schemi (usa \"+\" per più dettagli)\n"
+
 #~ msgid "  \\dT [PATTERN]  list data types (add \"+\" for more detail)\n"
 #~ msgstr ""
 #~ "  \\dT [TIPO DATO (anche parziale)]  mostra i tipi di dato (aggiungere \"+"
 #~ "\" per maggiori informazioni)\n"
+
 #~ msgid "  \\l             list all databases (add \"+\" for more detail)\n"
 #~ msgstr ""
 #~ "  \\l             mostra tutti i database (aggiungere \"+\" per maggiori "
 #~ "dettaglil)\n"
+
 #~ msgid ""
 #~ "  \\z [PATTERN]   list table, view and sequence access privileges (same "
 #~ "as \\dp)\n"
 #~ msgstr ""
 #~ "  \\z [TABELLA]   mostra i privilegi di accesso per la tabella, vista e "
 #~ "sequenza (identico a \\dp)\n"
+
 #~ msgid "Copy, Large Object\n"
 #~ msgstr "Copia, Large Object\n"
+
 #~ msgid "(1 row)"
 #~ msgstr "(1 riga)"
+
 #~ msgid "%s: out of memory\n"
 #~ msgstr "%s: memoria esaurita\n"
+
 #~ msgid "User name: "
 #~ msgstr "Nome utente: "
+
 #~ msgid "%s: Warning: The -u option is deprecated. Use -U.\n"
 #~ msgstr "%s: Attenzione: L'opzione -u è stata abbandonata. Utilizzate -U.\n"
+
 #~ msgid "(all types)"
 #~ msgstr "(tutti i tipi)"
+
 #~ msgid "Data type"
 #~ msgstr "Tipo di dato"
+
 #~ msgid "Access privileges for database \"%s\""
 #~ msgstr "Privilegi di accesso per il database \"%s\""
+
 #~ msgid "?%c? \"%s.%s\""
 #~ msgstr "?%c? \"%s.%s\""
+
 #~ msgid "PRIMARY KEY, "
 #~ msgstr "PRIMARY KEY, "
+
 #~ msgid "UNIQUE, "
 #~ msgstr "UNIQUE, "
+
 #~ msgid ", CLUSTER"
 #~ msgstr ", CLUSTER"
+
 #~ msgid " PRIMARY KEY,"
 #~ msgstr " PRIMARY KEY,"
+
 #~ msgid " UNIQUE,"
 #~ msgstr " UNIQUE,"
+
 #~ msgid " CLUSTER"
 #~ msgstr " CLUSTER"
+
 #~ msgid "    \"%s\" %s"
 #~ msgstr "    \"%s\" %s"
+
 #~ msgid "User ID"
 #~ msgstr "ID Utente"
+
 #~ msgid "superuser, create database"
 #~ msgstr "superuser, crea database"
+
 #~ msgid "create database"
 #~ msgstr "crea database"
+
 #~ msgid "Groups"
 #~ msgstr "Gruppi"
+
 #~ msgid "Group name"
 #~ msgstr "Nome gruppo"
+
 #~ msgid "Group ID"
 #~ msgstr "ID Gruppo"
+
 #~ msgid "List of database groups"
 #~ msgstr "Lista dei gruppi di database"
+
 #~ msgid "(binary compatible)"
 #~ msgstr "(compatibile binario)"
+
 #~ msgid ""
 #~ "ALTER DATABASE name SET parameter { TO | = } { value | DEFAULT }\n"
 #~ "ALTER DATABASE name RESET parameter\n"
@@ -4859,14 +4901,17 @@ msgstr "il processo figlio è uscito con lo stato non riconosciuto %d"
 #~ "ALTER DATABASE nome_db RENAME TO nuovo_nome\n"
 #~ "\n"
 #~ "ALTER DATABASE nome_db OWNER TO nuovo_propietario"
+
 #~ msgid ""
 #~ "ALTER FUNCTION name ( [ type [, ...] ] ) RENAME TO newname\n"
 #~ "ALTER FUNCTION name ( [ type [, ...] ] ) OWNER TO newowner"
 #~ msgstr ""
 #~ "ALTER FUNCTION nome ( [ tipo [, ...] ] ) RENAME TO nuovo_nome\n"
 #~ "ALTER FUNCTION nome ( [ tipo [, ...] ] ) OWNER TO nuovo_propietario"
+
 #~ msgid "change a user group"
 #~ msgstr "cambia un gruppo utenti"
+
 #~ msgid ""
 #~ "ALTER INDEX name \n"
 #~ "    action [, ... ]\n"
@@ -4887,12 +4932,16 @@ msgstr "il processo figlio è uscito con lo stato non riconosciuto %d"
 #~ "\n"
 #~ "    OWNER TO nuovo_proprietario\n"
 #~ "    SET TABLESPACE nome_indexspace"
+
 #~ msgid "ALTER TYPE name OWNER TO new_owner"
 #~ msgstr "ALTER TYPE nome OWNER TO nuovo_nome"
+
 #~ msgid "change a database user account"
 #~ msgstr "cambia l'account si un utente del database"
+
 #~ msgid "CLOSE name"
 #~ msgstr "CLOSE nome"
+
 #~ msgid ""
 #~ "CLUSTER indexname ON tablename\n"
 #~ "CLUSTER tablename\n"
@@ -4901,6 +4950,7 @@ msgstr "il processo figlio è uscito con lo stato non riconosciuto %d"
 #~ "CLUSTER nome_indice ON nome_tabella\n"
 #~ "CLUSTER nome_tabella\n"
 #~ "CLUSTER"
+
 #~ msgid ""
 #~ "CREATE AGGREGATE name (\n"
 #~ "    BASETYPE = input_data_type,\n"
@@ -4917,6 +4967,7 @@ msgstr "il processo figlio è uscito con lo stato non riconosciuto %d"
 #~ "    [ , FINALFUNC = funzione_finale ]\n"
 #~ "    [ , INITCOND = condizione_iniziale ]\n"
 #~ ")"
+
 #~ msgid ""
 #~ "CREATE CONSTRAINT TRIGGER name\n"
 #~ "    AFTER events ON\n"
@@ -4927,8 +4978,10 @@ msgstr "il processo figlio è uscito con lo stato non riconosciuto %d"
 #~ "    AFTER eventi ON\n"
 #~ "    nome_tabella vincoli attributi\n"
 #~ "    FOR EACH ROW EXECUTE PROCEDURE nome_funzione ( argomenti )"
+
 #~ msgid "define a new user group"
 #~ msgstr "crea un nuovo gruppo utenti"
+
 #~ msgid ""
 #~ "CREATE GROUP name [ [ WITH ] option [ ... ] ]\n"
 #~ "\n"
@@ -4943,20 +4996,28 @@ msgstr "il processo figlio è uscito con lo stato non riconosciuto %d"
 #~ "\n"
 #~ "     SYSID gid\n"
 #~ "   | USER  nome_utente [, ...]"
+
 #~ msgid "define a new database user account"
 #~ msgstr "definisci un nuovo account per un utente database"
+
 #~ msgid "DELETE FROM [ ONLY ] table [ WHERE condition ]"
 #~ msgstr "DELETE FROM [ ONLY ] tabella [ WHERE conidizione ]"
+
 #~ msgid "remove a user group"
 #~ msgstr "elimina un gruppo utenti"
+
 #~ msgid "DROP GROUP name"
 #~ msgstr "DROP GROUP nome"
+
 #~ msgid "DROP USER name"
 #~ msgstr "DROP USER nome"
+
 #~ msgid "empty a table"
 #~ msgstr "svuota una tabella"
+
 #~ msgid "TRUNCATE [ TABLE ] name"
 #~ msgstr "TRUNCATE [ TABLE ] nome"
+
 #~ msgid ""
 #~ "UPDATE [ ONLY ] table SET column = { expression | DEFAULT } [, ...]\n"
 #~ "    [ FROM fromlist ]\n"
@@ -4965,4 +5026,3 @@ msgstr "il processo figlio è uscito con lo stato non riconosciuto %d"
 #~ "UPDATE [ ONLY ] tabella SET colonna = { espressione | DEFAULT } [, ...]\n"
 #~ "    [ FROM lista_da ]\n"
 #~ "    [ WHERE condizione ]"
-

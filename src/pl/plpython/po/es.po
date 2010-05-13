@@ -1,15 +1,20 @@
 # Spanish message translation file for plpython
-# Copyright (C) 2009 PostgreSQL Global Development Group
+#
+# Copyright (C) 2009-2010 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
+#
 # Emanuel Calvo Franco <postgres.arg@gmail.com>, 2009.
 # Alvaro Herrera <alvherre@alvh.no-ip.org>, 2009
 #
+# pgtranslation Id$
+# $PostgreSQL: pgsql/src/pl/plpython/po/es.po,v 1.2.2.1 2010/05/13 10:50:20 petere Exp $
+#
 msgid ""
 msgstr ""
-"Project-Id-Version: PostgreSQL 8.4\n"
+"Project-Id-Version: plpython (PostgreSQL 8.4)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2009-04-11 19:22+0000\n"
-"PO-Revision-Date: 2009-04-11 16:28-0400\n"
+"PO-Revision-Date: 2010-02-02 15:56-0300\n"
 "Last-Translator: Emanuel Calvo Franco <postgres.arg@gmail.com>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@postgresql.org>\n"
 "MIME-Version: 1.0\n"

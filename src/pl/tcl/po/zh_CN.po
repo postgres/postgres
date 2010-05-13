@@ -1,0 +1,53 @@
+# LANGUAGE message translation file for pltcl
+# Copyright (C) 2010 PostgreSQL Global Development Group
+# This file is distributed under the same license as the PostgreSQL package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2010.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PostgreSQL 8.4\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
+"POT-Creation-Date: 2010-02-19 01:52+0000\n"
+"PO-Revision-Date: 2010-03-30 14:49+0800\n"
+"Last-Translator: Weibin <ssmei_2000@yahoo.com>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: pltcl.c:1030
+#, c-format
+msgid "%s"
+msgstr "%s"
+
+#: pltcl.c:1031
+#, c-format
+msgid ""
+"%s\n"
+"in PL/Tcl function \"%s\""
+msgstr ""
+"%s\n"
+"在PL/Tcl函数\"%s\"中"
+
+#: pltcl.c:1130
+msgid "out of memory"
+msgstr "内存用尽"
+
+#: pltcl.c:1195
+msgid "trigger functions can only be called as triggers"
+msgstr "触发器函数只能以触发器的形式调用"
+
+#: pltcl.c:1204
+#, c-format
+msgid "PL/Tcl functions cannot return type %s"
+msgstr "PL/Tcl函数不能返回类型%s"
+
+#: pltcl.c:1216
+msgid "PL/Tcl functions cannot return composite types"
+msgstr "PL/Tcl 函数不能返回组合类型"
+
+#: pltcl.c:1256
+#, c-format
+msgid "PL/Tcl functions cannot accept type %s"
+msgstr "PL/Tcl行数不能使用类型 %s"
+

@@ -15,19 +15,19 @@
 # Traduttori precedenti:
 #  * Mirko Tebaldi <mirko.tebaldi@libero.it>, 2004.
 #
-# Copyright (c) 2009, Associazione Culturale ITPUG
+# Copyright (c) 2010, Associazione Culturale ITPUG
 # Distributed under the same license of the PostgreSQL project
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.4\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2009-07-11 05:55+0000\n"
-"PO-Revision-Date: 2009-07-18 03:26:28+0200\n"
+"POT-Creation-Date: 2010-03-27 09:13+0000\n"
+"PO-Revision-Date: 2010-03-27 11:56:34+0100\n"
 "Last-Translator: Gabriele Bartolini <gabriele.bartolini@2ndquadrant.it>\n"
 "Language-Team: Gruppo traduzioni ITPUG <traduzioni@itpug.org>\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=utf-8\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "X-Poedit-Language: Italian\n"
 "X-Poedit-Country: ITALY\n"
@@ -301,12 +301,15 @@ msgstr "Passaggio di argomento Float8:         %s\n"
 
 #~ msgid "Current log file ID:                  %u\n"
 #~ msgstr "Id corrente file di log:              %u\n"
+
 #~ msgid "Latest checkpoint's UNDO location:    %X/%X\n"
 #~ msgstr "Ultima posizione UNDO checkpoint:     %X/%X\n"
+
 #~ msgid "Maximum number of function arguments: %u\n"
 #~ msgstr "N° massimo di argomenti per funzione: %u\n"
+
 #~ msgid "LC_COLLATE:                           %s\n"
 #~ msgstr "LC_COLLATE:                           %s\n"
+
 #~ msgid "LC_CTYPE:                             %s\n"
 #~ msgstr "LC_CTYPE:                             %s\n"
-

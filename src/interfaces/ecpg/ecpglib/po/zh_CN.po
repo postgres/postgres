@@ -1,0 +1,170 @@
+# LANGUAGE message translation file for ecpglib
+# Copyright (C) 2010 PostgreSQL Global Development Group
+# This file is distributed under the same license as the PostgreSQL package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2010.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PostgreSQL 8.4\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
+"POT-Creation-Date: 2010-02-19 02:00+0000\n"
+"PO-Revision-Date: 2010-03-30 13:34+0800\n"
+"Last-Translator: Weibin <ssmei_2000@yahoo.com>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: connect.c:226
+msgid "empty message text"
+msgstr "消息文本为空"
+
+#: connect.c:381
+#: connect.c:407
+#: connect.c:520
+msgid "<DEFAULT>"
+msgstr "<DEFAULT>"
+
+#: error.c:29
+#, c-format
+msgid "no data found on line %d"
+msgstr "在第%d行上没有找到数据"
+
+#: error.c:39
+#, c-format
+msgid "out of memory on line %d"
+msgstr "在第%d行上内存用尽"
+
+#: error.c:49
+#, c-format
+msgid "unsupported type \"%s\" on line %d"
+msgstr "在第%2$d上出现不支持的类型\"%1$s\""
+
+#: error.c:59
+#, c-format
+msgid "too many arguments on line %d"
+msgstr "在第%d行上的参数多于指定的数量"
+
+#: error.c:69
+#, c-format
+msgid "too few arguments on line %d"
+msgstr "在第%d行上的参数少于指定的数量"
+
+#: error.c:79
+#, c-format
+msgid "invalid input syntax for type int: \"%s\", on line %d"
+msgstr "对于整数类型的输入语法无效: \"%s\" ,在第%d行"
+
+#: error.c:89
+#, c-format
+msgid "invalid input syntax for type unsigned int: \"%s\", on line %d"
+msgstr "对于无符号整数类型的输入语法无效: \"%s\" 在第%d行"
+
+#: error.c:99
+#, c-format
+msgid "invalid input syntax for floating-point type: \"%s\", on line %d"
+msgstr "对于浮点类型的输入语法无效: \"%s\"，在第%d行"
+
+#: error.c:110
+#, c-format
+msgid "invalid syntax for type boolean: \"%s\", on line %d"
+msgstr "对于布尔类型语法无效: \"%s\"，在第%d行上"
+
+#: error.c:118
+#, c-format
+msgid "could not convert boolean value: size mismatch, on line %d"
+msgstr "在第%d行上无法转换布尔类型值: 大小不匹配"
+
+#: error.c:128
+#, c-format
+msgid "empty query on line %d"
+msgstr "在第%d行上查询是空的"
+
+#: error.c:138
+#, c-format
+msgid "null value without indicator on line %d"
+msgstr "在第%d行上的空值没有标志"
+
+#: error.c:148
+#, c-format
+msgid "variable does not have an array type on line %d"
+msgstr "在第%d行上的变量没有数组类型"
+
+#: error.c:158
+#, c-format
+msgid "data read from server is not an array on line %d"
+msgstr "在第%d行上从服务器读取的数据不是数组"
+
+#: error.c:168
+#, c-format
+msgid "inserting an array of variables is not supported on line %d"
+msgstr "在第%d行上不支持正在插入一个的变量数组"
+
+#: error.c:178
+#, c-format
+msgid "connection \"%s\" does not exist on line %d"
+msgstr "在第%2$d行上连接\"%1$s\"不存在"
+
+#: error.c:188
+#, c-format
+msgid "not connected to connection \"%s\" on line %d"
+msgstr "在第%2$d行上没有连接到\"%1$s\"连接"
+
+#: error.c:198
+#, c-format
+msgid "invalid statement name \"%s\" on line %d"
+msgstr "在第%2$d行上的语句名称\"%1$s\"无效"
+
+#: error.c:208
+#, c-format
+msgid "descriptor \"%s\" not found on line %d"
+msgstr "在第%2$d行上没有找到描述符\"%1$s\""
+
+#: error.c:218
+#, c-format
+msgid "descriptor index out of range on line %d"
+msgstr "在第%d行上的描述符索引超出范围"
+
+#: error.c:228
+#, c-format
+msgid "unrecognized descriptor item \"%s\" on line %d"
+msgstr "在第%2$d行上出现无法识别的描述符成员\"%1$s\""
+
+#: error.c:238
+#, c-format
+msgid "variable does not have a numeric type on line %d"
+msgstr "在第%d上的变量没有数值类型"
+
+#: error.c:248
+#, c-format
+msgid "variable does not have a character type on line %d"
+msgstr "在第%d行上的变量没有字符类型"
+
+#: error.c:258
+#, c-format
+msgid "error in transaction processing on line %d"
+msgstr "在第%d行上的事务处理中发生错误"
+
+#: error.c:268
+#, c-format
+msgid "could not connect to database \"%s\" on line %d"
+msgstr "在第%2$d行上无法连接数据库\"%1$s\""
+
+#: error.c:278
+#, c-format
+msgid "SQL error %d on line %d"
+msgstr "在第%2$d行上的SQL命令发生错误 代码%1$d"
+
+#: error.c:391
+#, c-format
+msgid "SQL error: %s\n"
+msgstr "SQL语句错误: %s\n"
+
+#: execute.c:1639
+msgid "<empty>"
+msgstr "<空>"
+
+#: misc.c:113
+msgid "NULL"
+msgstr "NULL"
+

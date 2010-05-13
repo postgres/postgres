@@ -1,0 +1,894 @@
+# simplified Chinese translation file for libpq
+# Bao Wei <weibao@forevertek.com>, 2002
+#
+# $PostgreSQL: pgsql/src/interfaces/libpq/po/zh_CN.po,v 1.10.2.1 2010/05/13 10:50:17 petere Exp $
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PostgreSQL 8.0\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
+"POT-Creation-Date: 2010-02-19 02:00+0000\n"
+"PO-Revision-Date: 2010-03-30 13:51+0800\n"
+"Last-Translator: Weibin <ssmei_2000@yahoo.com>\n"
+"Language-Team: Weiping He <laser@zhengmai.com.cn>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=GB2312\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+# fe-auth.c:395
+#: fe-auth.c:242
+#, c-format
+msgid "could not set socket to blocking mode: %s\n"
+msgstr "无法将套接字设置为阻塞模式: %s\n"
+
+# fe-auth.c:412 fe-auth.c:416
+#: fe-auth.c:260
+#: fe-auth.c:264
+#, c-format
+msgid "Kerberos 5 authentication rejected: %*s\n"
+msgstr "kerberos 5 认证拒绝: %*s\n"
+
+# fe-auth.c:440
+#: fe-auth.c:290
+#, c-format
+msgid "could not restore non-blocking mode on socket: %s\n"
+msgstr "无法在套接字: %s 上恢复非阻塞模式\n"
+
+#: fe-auth.c:403
+msgid "GSSAPI continuation error"
+msgstr "GSSAPI连续出现错误"
+
+#: fe-auth.c:432
+msgid "duplicate GSS authentication request\n"
+msgstr "重复的GSS认证请求\n"
+
+#: fe-auth.c:452
+msgid "GSSAPI name import error"
+msgstr "GSSAPI名称导入错误"
+
+#: fe-auth.c:538
+msgid "SSPI continuation error"
+msgstr "SSPI连续出现错误"
+
+# fe-connect.c:2427 fe-connect.c:2436 fe-connect.c:2933 fe-exec.c:1284
+# fe-lobj.c:536
+#: fe-auth.c:549
+#: fe-auth.c:623
+#: fe-auth.c:657
+#: fe-auth.c:754
+#: fe-connect.c:1342
+#: fe-connect.c:2625
+#: fe-connect.c:2842
+#: fe-connect.c:3208
+#: fe-connect.c:3217
+#: fe-connect.c:3354
+#: fe-connect.c:3400
+#: fe-connect.c:3418
+#: fe-exec.c:3110
+#: fe-lobj.c:696
+#: fe-protocol2.c:1027
+#: fe-protocol3.c:1421
+msgid "out of memory\n"
+msgstr "内存用尽\n"
+
+#: fe-auth.c:638
+msgid "could not acquire SSPI credentials"
+msgstr "无法获得SSPI证书"
+
+#: fe-auth.c:651
+msgid "host name must be specified\n"
+msgstr "必须指定主机名\n"
+
+# fe-auth.c:503
+#: fe-auth.c:730
+msgid "SCM_CRED authentication method not supported\n"
+msgstr "不支持 SCM_CRED 认证方式\n"
+
+# fe-auth.c:595
+#: fe-auth.c:804
+msgid "Kerberos 4 authentication not supported\n"
+msgstr "不支持 Kerberos 4 认证\n"
+
+# fe-auth.c:612
+#: fe-auth.c:820
+msgid "Kerberos 5 authentication not supported\n"
+msgstr "不支持 Kerberos 5 认证\n"
+
+# fe-auth.c:595
+#: fe-auth.c:887
+msgid "GSSAPI authentication not supported\n"
+msgstr "不支持GSSAPI认证\n"
+
+# fe-auth.c:595
+#: fe-auth.c:911
+msgid "SSPI authentication not supported\n"
+msgstr "不支持SSPI认证\n"
+
+# fe-auth.c:595
+#: fe-auth.c:918
+msgid "Crypt authentication not supported\n"
+msgstr "不支持Crypt认证\n"
+
+# fe-auth.c:640
+#: fe-auth.c:945
+#, c-format
+msgid "authentication method %u not supported\n"
+msgstr "不支持 %u 认证方式\n"
+
+#: fe-connect.c:524
+#, c-format
+msgid "invalid sslmode value: \"%s\"\n"
+msgstr "无效的 sslmode 值: \"%s\"\n"
+
+#: fe-connect.c:545
+#, c-format
+msgid "sslmode value \"%s\" invalid when SSL support is not compiled in\n"
+msgstr "无效的 sslmode 值 \"%s\" 当没有把 SSL 支持编译进来时\n"
+
+# fe-connect.c:732
+#: fe-connect.c:728
+#, c-format
+msgid "could not set socket to TCP no delay mode: %s\n"
+msgstr "无法将套接字设置为 TCP 无延迟模式: %s\n"
+
+# fe-connect.c:752
+#: fe-connect.c:758
+#, c-format
+msgid ""
+"could not connect to server: %s\n"
+"\tIs the server running locally and accepting\n"
+"\tconnections on Unix domain socket \"%s\"?\n"
+msgstr ""
+"无法联接到服务器: %s\n"
+"\t服务器是否在本地运行并且在 Unix 域套接字\n"
+"\t\"%s\"上准备接受联接?\n"
+
+# fe-connect.c:761
+#: fe-connect.c:768
+#, c-format
+msgid ""
+"could not connect to server: %s\n"
+"\tIs the server running on host \"%s\" and accepting\n"
+"\tTCP/IP connections on port %s?\n"
+msgstr ""
+"无法联接到服务器: %s\n"
+"\t服务器是否在主机 \"%s\" 上运行并且准备接受在端口\n"
+"%s 上的 TCP/IP 联接?\n"
+
+# fe-misc.c:702
+#: fe-connect.c:858
+#, c-format
+msgid "could not translate host name \"%s\" to address: %s\n"
+msgstr "无法解释主机名 \"%s\" 到地址: %s\n"
+
+# fe-misc.c:702
+#: fe-connect.c:862
+#, c-format
+msgid "could not translate Unix-domain socket path \"%s\" to address: %s\n"
+msgstr "无法解释 Unix-domian 套接字路径 \"%s\" 到地址: %s\n"
+
+# fe-connect.c:1232
+#: fe-connect.c:1069
+msgid "invalid connection state, probably indicative of memory corruption\n"
+msgstr "无效的联接状态, 可能是存储器数据被破坏的标志\n"
+
+# fe-connect.c:891
+#: fe-connect.c:1112
+#, c-format
+msgid "could not create socket: %s\n"
+msgstr "无法创建套接字: %s\n"
+
+# fe-connect.c:708
+#: fe-connect.c:1135
+#, c-format
+msgid "could not set socket to non-blocking mode: %s\n"
+msgstr "无法将套接字设置为非阻塞模式: %s\n"
+
+# fe-auth.c:395
+#: fe-connect.c:1147
+#, c-format
+msgid "could not set socket to close-on-exec mode: %s\n"
+msgstr "无法将套接字设置为执行时关闭 (close-on-exec) 模式: %s\n"
+
+# fe-connect.c:1263
+#: fe-connect.c:1234
+#, c-format
+msgid "could not get socket error status: %s\n"
+msgstr "无法获取套接字错误状态: %s\n"
+
+# fe-connect.c:1283
+#: fe-connect.c:1272
+#, c-format
+msgid "could not get client address from socket: %s\n"
+msgstr "无法从套接字获取客户端地址: %s\n"
+
+# fe-connect.c:959
+#: fe-connect.c:1316
+#, c-format
+msgid "could not send SSL negotiation packet: %s\n"
+msgstr "无法发送 SSL 握手包: %s\n"
+
+# fe-connect.c:1322
+#: fe-connect.c:1355
+#, c-format
+msgid "could not send startup packet: %s\n"
+msgstr "无法发送启动包: %s\n"
+
+# fe-connect.c:1010
+#: fe-connect.c:1422
+#: fe-connect.c:1441
+msgid "server does not support SSL, but SSL was required\n"
+msgstr "服务器不支持 SSL, 但是要求使用 SSL\n"
+
+# fe-connect.c:1001
+#: fe-connect.c:1457
+#, c-format
+msgid "received invalid response to SSL negotiation: %c\n"
+msgstr "收到对 SSL 握手的无效响应: %c\n"
+
+# fe-connect.c:1378
+#: fe-connect.c:1533
+#: fe-connect.c:1566
+#, c-format
+msgid "expected authentication request from server, but received %c\n"
+msgstr "期待来自服务器的认证请求, 却收到 %c\n"
+
+#: fe-connect.c:1737
+#, c-format
+msgid "out of memory allocating GSSAPI buffer (%i)"
+msgstr "在分配GSSAPI缓冲区(%i)时内存用尽"
+
+# fe-connect.c:1490
+#: fe-connect.c:1822
+msgid "unexpected message from server during startup\n"
+msgstr "启动过程中收到来自服务器的非预期信息\n"
+
+# fe-connect.c:1549
+#: fe-connect.c:1890
+#, c-format
+msgid "invalid connection state %c, probably indicative of memory corruption\n"
+msgstr "无效的联接状态 %c, 可能是存储器数据被破坏的标志\n"
+
+#: fe-connect.c:2233
+#: fe-connect.c:2293
+#, c-format
+msgid "PGEventProc \"%s\" failed during PGEVT_CONNRESET event\n"
+msgstr "在PGEVT_CONNRESET事件触发期间执行PGEventProc \"%s\"错误\n"
+
+#: fe-connect.c:2638
+#, c-format
+msgid "invalid LDAP URL \"%s\": scheme must be ldap://\n"
+msgstr "无效LDAP URL\"%s\": 模式必须是ldap://\n"
+
+#: fe-connect.c:2653
+#, c-format
+msgid "invalid LDAP URL \"%s\": missing distinguished name\n"
+msgstr "无效LDAP URL \"%s\": 丢失可区分的名称\n"
+
+#: fe-connect.c:2664
+#: fe-connect.c:2717
+#, c-format
+msgid "invalid LDAP URL \"%s\": must have exactly one attribute\n"
+msgstr "无效LDAP URL \"%s\": 只能有一个属性\n"
+
+#: fe-connect.c:2674
+#: fe-connect.c:2731
+#, c-format
+msgid "invalid LDAP URL \"%s\": must have search scope (base/one/sub)\n"
+msgstr "无效LDAP URL \"%s\": 必须有搜索范围(base/one/sub)\n"
+
+#: fe-connect.c:2685
+#, c-format
+msgid "invalid LDAP URL \"%s\": no filter\n"
+msgstr "无效的 LDAP URL \"%s\": 没有过滤器\n"
+
+#: fe-connect.c:2706
+#, c-format
+msgid "invalid LDAP URL \"%s\": invalid port number\n"
+msgstr "无效LDAP URL \"%s\": 无效端口号\n"
+
+#: fe-connect.c:2740
+msgid "could not create LDAP structure\n"
+msgstr "无法创建LDAP结构: %s\n"
+
+#: fe-connect.c:2782
+#, c-format
+msgid "lookup on LDAP server failed: %s\n"
+msgstr "在LDAP服务器上的查找失败: %s\n"
+
+#: fe-connect.c:2793
+msgid "more than one entry found on LDAP lookup\n"
+msgstr "在LDAP搜索上找到多个入口\n"
+
+#: fe-connect.c:2794
+#: fe-connect.c:2806
+msgid "no entry found on LDAP lookup\n"
+msgstr "在LDAP查找上没有发现入口\n"
+
+#: fe-connect.c:2817
+#: fe-connect.c:2830
+msgid "attribute has no values on LDAP lookup\n"
+msgstr "在LDAP查找上的属性没有值\n"
+
+# fe-connect.c:2475
+#: fe-connect.c:2881
+#: fe-connect.c:2899
+#: fe-connect.c:3256
+#, c-format
+msgid "missing \"=\" after \"%s\" in connection info string\n"
+msgstr "在联接信息字串里的 \"%s\" 后面缺少 \"=\"\n"
+
+# fe-connect.c:2558
+#: fe-connect.c:2962
+#: fe-connect.c:3338
+#, c-format
+msgid "invalid connection option \"%s\"\n"
+msgstr "非法联接选项 \"%s\"\n"
+
+# fe-connect.c:2524
+#: fe-connect.c:2975
+#: fe-connect.c:3305
+msgid "unterminated quoted string in connection info string\n"
+msgstr "联接信息字串中未结束的引号字串\n"
+
+#: fe-connect.c:3018
+#, c-format
+msgid "ERROR: service file \"%s\" not found\n"
+msgstr "错误：没有找到服务文件\"%s\"\n"
+
+#: fe-connect.c:3031
+#, c-format
+msgid "ERROR: line %d too long in service file \"%s\"\n"
+msgstr "错误: 在服务文件\"%2$s\"中的第%1$d行太长\n"
+
+#: fe-connect.c:3103
+#: fe-connect.c:3130
+#, c-format
+msgid "ERROR: syntax error in service file \"%s\", line %d\n"
+msgstr "错误: 在服务文件\"%s\"的第%d行出现语法错误\n"
+
+# fe-connect.c:2744
+#: fe-connect.c:3586
+msgid "connection pointer is NULL\n"
+msgstr "联接指针是 NULL\n"
+
+#: fe-connect.c:3869
+#, c-format
+msgid "WARNING: password file \"%s\" is not a plain file\n"
+msgstr "警告: 口令文件\"%s\"不是普通文本文件\n"
+
+# fe-connect.c:2953
+#: fe-connect.c:3878
+#, c-format
+msgid "WARNING: password file \"%s\" has group or world access; permissions should be u=rw (0600) or less\n"
+msgstr "警告: 口令文件\"%s\"的访问权限过大; 权限应设置 为 u=rw (0600)或更少\n"
+
+#: fe-exec.c:827
+msgid "NOTICE"
+msgstr "注意"
+
+# fe-exec.c:737
+#: fe-exec.c:1014
+#: fe-exec.c:1071
+#: fe-exec.c:1111
+msgid "command string is a null pointer\n"
+msgstr "命令字串是一个空指针\n"
+
+# fe-exec.c:737
+#: fe-exec.c:1104
+#: fe-exec.c:1199
+msgid "statement name is a null pointer\n"
+msgstr "声明名字是一个空指针\n"
+
+#: fe-exec.c:1119
+#: fe-exec.c:1273
+#: fe-exec.c:1928
+#: fe-exec.c:2125
+msgid "function requires at least protocol version 3.0\n"
+msgstr "函数至少需要 3.0 版本的协议\n"
+
+# fe-exec.c:745
+#: fe-exec.c:1230
+msgid "no connection to the server\n"
+msgstr "没有到服务器的联接\n"
+
+# fe-exec.c:752
+#: fe-exec.c:1237
+msgid "another command is already in progress\n"
+msgstr "已经有另外一条命令在处理\n"
+
+#: fe-exec.c:1349
+msgid "length must be given for binary parameter\n"
+msgstr "对于2进制参数必须指定长度\n"
+
+# fe-exec.c:1371
+#: fe-exec.c:1596
+#, c-format
+msgid "unexpected asyncStatus: %d\n"
+msgstr "意外的 asyncStatus(异步状态): %d\n"
+
+#: fe-exec.c:1616
+#, c-format
+msgid "PGEventProc \"%s\" failed during PGEVT_RESULTCREATE event\n"
+msgstr "在PGEVT_CONNRESET事件触发期间执行PGEventProc \"%s\"错误\n"
+
+#: fe-exec.c:1746
+msgid "COPY terminated by new PQexec"
+msgstr "COPY 被一个新的 PQexec 终止"
+
+# fe-exec.c:1421
+#: fe-exec.c:1754
+msgid "COPY IN state must be terminated first\n"
+msgstr "COPY IN 状态必须先结束\n"
+
+# fe-exec.c:1421
+#: fe-exec.c:1774
+msgid "COPY OUT state must be terminated first\n"
+msgstr "COPY OUT 状态必须先结束\n"
+
+# fe-exec.c:1780
+#: fe-exec.c:2016
+#: fe-exec.c:2082
+#: fe-exec.c:2167
+#: fe-protocol2.c:1172
+#: fe-protocol3.c:1557
+msgid "no COPY in progress\n"
+msgstr "没有正在处理的 COPY\n"
+
+# fe-exec.c:1884
+#: fe-exec.c:2359
+msgid "connection in wrong state\n"
+msgstr "联接处于错误状态\n"
+
+# fe-exec.c:2055
+#: fe-exec.c:2390
+msgid "invalid ExecStatusType code"
+msgstr "非法 ExecStatusType 代码"
+
+# fe-exec.c:2108 fe-exec.c:2141
+#: fe-exec.c:2454
+#: fe-exec.c:2477
+#, c-format
+msgid "column number %d is out of range 0..%d"
+msgstr "列号码 %d 超出了范围 0..%d"
+
+# fe-exec.c:2130
+#: fe-exec.c:2470
+#, c-format
+msgid "row number %d is out of range 0..%d"
+msgstr "行号码 %d 超出了范围 0..%d"
+
+# fe-exec.c:2130
+#: fe-exec.c:2492
+#, c-format
+msgid "parameter number %d is out of range 0..%d"
+msgstr "参数号%d超出了范围 0..%d"
+
+# fe-exec.c:2325
+#: fe-exec.c:2779
+#, c-format
+msgid "could not interpret result from server: %s"
+msgstr "无法解释来自服务器的结果: %s"
+
+#: fe-exec.c:3018
+msgid "incomplete multibyte character\n"
+msgstr "无效的多字节字符\n"
+
+# fe-lobj.c:616
+#: fe-lobj.c:152
+msgid "cannot determine OID of function lo_truncate\n"
+msgstr "无法确定函数 lo_creat 的 OID\n"
+
+# fe-lobj.c:616
+#: fe-lobj.c:380
+msgid "cannot determine OID of function lo_create\n"
+msgstr "无法确定函数 lo_creat 的 OID\n"
+
+# fe-lobj.c:400 fe-lobj.c:483
+#: fe-lobj.c:525
+#: fe-lobj.c:624
+#, c-format
+msgid "could not open file \"%s\": %s\n"
+msgstr "无法打开文件 \"%s\": %s\n"
+
+#: fe-lobj.c:575
+#, c-format
+msgid "could not read from file \"%s\": %s\n"
+msgstr "无法读取文件 \"%s\": %s\n"
+
+#: fe-lobj.c:639
+#: fe-lobj.c:663
+#, c-format
+msgid "could not write to file \"%s\": %s\n"
+msgstr "无法写入文件 \"%s\": %s\n"
+
+# fe-lobj.c:564
+#: fe-lobj.c:744
+msgid "query to initialize large object functions did not return data\n"
+msgstr "初始化大对象函数的查询没有返回数据\n"
+
+# fe-lobj.c:602
+#: fe-lobj.c:785
+msgid "cannot determine OID of function lo_open\n"
+msgstr "无法判断函数 lo_open 的 OID\n"
+
+# fe-lobj.c:609
+#: fe-lobj.c:792
+msgid "cannot determine OID of function lo_close\n"
+msgstr "无法判断函数 lo_close 的 OID\n"
+
+# fe-lobj.c:616
+#: fe-lobj.c:799
+msgid "cannot determine OID of function lo_creat\n"
+msgstr "无法判断函数 lo_creat 的 OID\n"
+
+# fe-lobj.c:623
+#: fe-lobj.c:806
+msgid "cannot determine OID of function lo_unlink\n"
+msgstr "无法判断函数 lo_unlink 的 OID\n"
+
+# fe-lobj.c:630
+#: fe-lobj.c:813
+msgid "cannot determine OID of function lo_lseek\n"
+msgstr "无法判断函数 lo_lseek 的 OID\n"
+
+# fe-lobj.c:637
+#: fe-lobj.c:820
+msgid "cannot determine OID of function lo_tell\n"
+msgstr "无法判断函数 lo_tell 的 OID\n"
+
+# fe-lobj.c:644
+#: fe-lobj.c:827
+msgid "cannot determine OID of function loread\n"
+msgstr "无法判断函数 loread 的 OID\n"
+
+# fe-lobj.c:651
+#: fe-lobj.c:834
+msgid "cannot determine OID of function lowrite\n"
+msgstr "无法判断函数 lowrite 的 OID\n"
+
+# fe-misc.c:303
+#: fe-misc.c:241
+#, c-format
+msgid "integer of size %lu not supported by pqGetInt"
+msgstr "pgGetInt 不支持大小为 %lu 的整数"
+
+# fe-misc.c:341
+#: fe-misc.c:277
+#, c-format
+msgid "integer of size %lu not supported by pqPutInt"
+msgstr "pgPutInt 不支持大小为 %lu 的整数"
+
+# fe-misc.c:450 fe-misc.c:642 fe-misc.c:798
+#: fe-misc.c:557
+#: fe-misc.c:759
+msgid "connection not open\n"
+msgstr "联接未打开\n"
+
+# fe-misc.c:515 fe-misc.c:595
+#: fe-misc.c:622
+#: fe-misc.c:712
+#, c-format
+msgid "could not receive data from server: %s\n"
+msgstr "无法从服务器接收数据: %s\n"
+
+# fe-misc.c:612 fe-misc.c:686
+#: fe-misc.c:729
+#: fe-misc.c:807
+msgid ""
+"server closed the connection unexpectedly\n"
+"\tThis probably means the server terminated abnormally\n"
+"\tbefore or while processing the request.\n"
+msgstr ""
+"服务器意外地关闭了联接\n"
+"\t这种现象通常意味着服务器在处理请求之前\n"
+"或者正在处理请求的时候意外中止\n"
+
+# fe-misc.c:702
+#: fe-misc.c:824
+#, c-format
+msgid "could not send data to server: %s\n"
+msgstr "无法向服务器发送数据: %s\n"
+
+#: fe-misc.c:943
+msgid "timeout expired\n"
+msgstr "超时满\n"
+
+# fe-misc.c:450 fe-misc.c:642 fe-misc.c:798
+#: fe-misc.c:988
+msgid "socket not open\n"
+msgstr "套接字未打开\n"
+
+# fe-misc.c:389 fe-misc.c:423 fe-misc.c:838
+#: fe-misc.c:1011
+#, c-format
+msgid "select() failed: %s\n"
+msgstr "select() 失败: %s\n"
+
+# fe-connect.c:1549
+#: fe-protocol2.c:89
+#, c-format
+msgid "invalid setenv state %c, probably indicative of memory corruption\n"
+msgstr "无效的 setenv 状态 %c, 可能是内存被破坏\n"
+
+# fe-connect.c:1549
+#: fe-protocol2.c:330
+#, c-format
+msgid "invalid state %c, probably indicative of memory corruption\n"
+msgstr "无效状态 %c, 可能是内存被破坏\n"
+
+#: fe-protocol2.c:419
+#: fe-protocol3.c:186
+#, c-format
+msgid "message type 0x%02x arrived from server while idle"
+msgstr "当空闲时收到服务起发送过来的消息类型 0x%02x"
+
+#: fe-protocol2.c:462
+#, c-format
+msgid "unexpected character %c following empty query response (\"I\" message)"
+msgstr "unexpected character %c following empty query response (\"I\" message)"
+
+#: fe-protocol2.c:516
+msgid "server sent data (\"D\" message) without prior row description (\"T\" message)"
+msgstr "server sent data (\"D\" message) without prior row description (\"T\" message)"
+
+#: fe-protocol2.c:532
+msgid "server sent binary data (\"B\" message) without prior row description (\"T\" message)"
+msgstr "server sent binary data (\"B\" message) without prior row description (\"T\" message)"
+
+# fe-connect.c:1378
+#: fe-protocol2.c:547
+#: fe-protocol3.c:382
+#, c-format
+msgid "unexpected response from server; first received character was \"%c\"\n"
+msgstr "来自服务器意外的回执, 第一个收到的字符是 \"%c\"\n"
+
+# fe-connect.c:2427 fe-connect.c:2436 fe-connect.c:2933 fe-exec.c:1284
+# fe-lobj.c:536
+#: fe-protocol2.c:768
+#: fe-protocol3.c:701
+msgid "out of memory for query result\n"
+msgstr "为查询结果内存用尽\n"
+
+#: fe-protocol2.c:1215
+#: fe-protocol3.c:1625
+#, c-format
+msgid "%s"
+msgstr "%s"
+
+#: fe-protocol2.c:1227
+msgid "lost synchronization with server, resetting connection"
+msgstr "失去与服务器同步, 重置连接"
+
+#: fe-protocol2.c:1361
+#: fe-protocol2.c:1393
+#: fe-protocol3.c:1828
+#, c-format
+msgid "protocol error: id=0x%x\n"
+msgstr "协议错误: id=0x%x\n"
+
+#: fe-protocol3.c:344
+msgid "server sent data (\"D\" message) without prior row description (\"T\" message)\n"
+msgstr "server sent data (\"D\" message) without prior row description (\"T\" message)\n"
+
+#: fe-protocol3.c:403
+#, c-format
+msgid "message contents do not agree with length in message type \"%c\"\n"
+msgstr "在消息类型 \"%c\" 中, 消息内容与长度不匹配\n"
+
+#: fe-protocol3.c:424
+#, c-format
+msgid "lost synchronization with server: got message type \"%c\", length %d\n"
+msgstr "失去与服务器同步: 获取到消息类型 \"%c\", 长度 %d\n"
+
+#: fe-protocol3.c:646
+msgid "unexpected field count in \"D\" message\n"
+msgstr "在 \"D\" 消息中, 意外的字段数\n"
+
+#. translator: %s represents a digit string
+#: fe-protocol3.c:788
+#: fe-protocol3.c:807
+#, c-format
+msgid " at character %s"
+msgstr " 在字符 %s"
+
+#: fe-protocol3.c:820
+#, c-format
+msgid "DETAIL:  %s\n"
+msgstr "描述:  %s\n"
+
+#: fe-protocol3.c:823
+#, c-format
+msgid "HINT:  %s\n"
+msgstr "提示:  %s\n"
+
+#: fe-protocol3.c:826
+#, c-format
+msgid "QUERY:  %s\n"
+msgstr "查询:  %s\n"
+
+#: fe-protocol3.c:829
+#, c-format
+msgid "CONTEXT:  %s\n"
+msgstr "背景:  %s\n"
+
+#: fe-protocol3.c:841
+msgid "LOCATION:  "
+msgstr "位置:  "
+
+#: fe-protocol3.c:843
+#, c-format
+msgid "%s, "
+msgstr "%s, "
+
+#: fe-protocol3.c:845
+#, c-format
+msgid "%s:%s"
+msgstr "%s:%s"
+
+#: fe-protocol3.c:1069
+#, c-format
+msgid "LINE %d: "
+msgstr "第%d行"
+
+#: fe-protocol3.c:1453
+msgid "PQgetline: not doing text COPY OUT\n"
+msgstr "PQgetline: not doing text COPY OUT\n"
+
+#: fe-secure.c:241
+#, c-format
+msgid "could not establish SSL connection: %s\n"
+msgstr "无法建立 SSL 联接: %s\n"
+
+#: fe-secure.c:318
+#: fe-secure.c:403
+#: fe-secure.c:1140
+#, c-format
+msgid "SSL SYSCALL error: %s\n"
+msgstr "SSL SYSCALL 错误: %s\n"
+
+#: fe-secure.c:324
+#: fe-secure.c:409
+#: fe-secure.c:1144
+msgid "SSL SYSCALL error: EOF detected\n"
+msgstr "SSL SYSCALL 错误: 发现结束符\n"
+
+# fe-auth.c:232
+#: fe-secure.c:336
+#: fe-secure.c:420
+#: fe-secure.c:1163
+#, c-format
+msgid "SSL error: %s\n"
+msgstr "SSL 错误: %s\n"
+
+#: fe-secure.c:346
+#: fe-secure.c:430
+#: fe-secure.c:1173
+#, c-format
+msgid "unrecognized SSL error code: %d\n"
+msgstr "未知的 SSL 错误码: %d\n"
+
+#: fe-secure.c:539
+msgid "verified SSL connections are only supported when connecting to a host name"
+msgstr "只有当正在连接一个主机时才支持检查的SSL连接"
+
+#: fe-secure.c:558
+#, c-format
+msgid "server common name \"%s\" does not match host name \"%s\""
+msgstr "服务器名字 \"%s\"与主机名不匹配\"%s\""
+
+#: fe-secure.c:600
+msgid "could not get home directory to locate client certificate files"
+msgstr "无法进入home目录来定位客户端认证文件"
+
+# fe-lobj.c:400 fe-lobj.c:483
+#: fe-secure.c:624
+#: fe-secure.c:638
+#, c-format
+msgid "could not open certificate file \"%s\": %s\n"
+msgstr "无法打开证书文件 \"%s\": %s\n"
+
+# fe-lobj.c:400 fe-lobj.c:483
+#: fe-secure.c:649
+#, c-format
+msgid "could not read certificate file \"%s\": %s\n"
+msgstr "无法读取证书文件 \"%s\": %s\n"
+
+# fe-lobj.c:400 fe-lobj.c:483
+#: fe-secure.c:687
+#, c-format
+msgid "could not load SSL engine \"%s\": %s\n"
+msgstr "无法加载SSL引擎 \"%s\": %s\n"
+
+#: fe-secure.c:700
+#, c-format
+msgid "could not initialize SSL engine \"%s\": %s\n"
+msgstr "无法初始化SSL引擎\"%s\": %s\n"
+
+# fe-connect.c:891
+#: fe-secure.c:717
+#, c-format
+msgid "could not read private SSL key \"%s\" from engine \"%s\": %s\n"
+msgstr "无法从引擎\"%2$s\"读取私有SSL钥\"%1$s\": %3$s\n"
+
+#: fe-secure.c:752
+#, c-format
+msgid "certificate present, but not private key file \"%s\"\n"
+msgstr "有证书, 但不是私钥文件 \"%s\"\n"
+
+# fe-connect.c:2953
+#: fe-secure.c:761
+#, c-format
+msgid "private key file \"%s\" has group or world access; permissions should be u=rw (0600) or less\n"
+msgstr "警告: 私钥文件 \"%s\"的访问权限过大; 权限应设置 为 u=rw (0600)或更小\n"
+
+# fe-lobj.c:400 fe-lobj.c:483
+#: fe-secure.c:771
+#, c-format
+msgid "could not open private key file \"%s\": %s\n"
+msgstr "无法打开私钥文件 \"%s\": %s\n"
+
+#: fe-secure.c:782
+#, c-format
+msgid "private key file \"%s\" changed during execution\n"
+msgstr "在执行过程中私钥文件 \"%s\" 改变了\n"
+
+# fe-connect.c:891
+#: fe-secure.c:793
+#, c-format
+msgid "could not read private key file \"%s\": %s\n"
+msgstr "无法读取私钥文件 \"%s\": %s\n"
+
+#: fe-secure.c:811
+#, c-format
+msgid "certificate does not match private key file \"%s\": %s\n"
+msgstr "证书不匹配私钥文件 \"%s\": %s\n"
+
+#: fe-secure.c:942
+#, c-format
+msgid "could not create SSL context: %s\n"
+msgstr "无法创建 SSL 环境: %s\n"
+
+#: fe-secure.c:1030
+msgid "could not get home directory to locate root certificate file"
+msgstr "无法进入home目录来定位根认证文件"
+
+# fe-connect.c:891
+#: fe-secure.c:1054
+#, c-format
+msgid "could not read root certificate file \"%s\": %s\n"
+msgstr "无法读取根证书文件 \"%s\": %s\n"
+
+# fe-lobj.c:400 fe-lobj.c:483
+#: fe-secure.c:1079
+#, c-format
+msgid "SSL library does not support CRL certificates (file \"%s\")\n"
+msgstr "SSL库不支持CRL认证(文件 \"%s\")\n"
+
+#: fe-secure.c:1095
+#, c-format
+msgid ""
+"root certificate file \"%s\" does not exist\n"
+"Either provide the file or change sslmode to disable server certificate verification.\n"
+msgstr ""
+"根认证文件\"%s\"不存在\n"
+"可以提供这个文件或者将sslmode改为禁用服务器认证检验.\n"
+
+#: fe-secure.c:1192
+#, c-format
+msgid "certificate could not be obtained: %s\n"
+msgstr "无法获得证书: %s\n"
+
+#: fe-secure.c:1220
+msgid "SSL certificate's common name contains embedded null\n"
+msgstr "SSL认证的普通名称包含了嵌入的空值\n"
+
+#: fe-secure.c:1294
+msgid "no SSL error reported"
+msgstr "没有报告SSL错误"
+
+#: fe-secure.c:1303
+#, c-format
+msgid "SSL error code %lu"
+msgstr "SSL 错误代码 %lu"
+

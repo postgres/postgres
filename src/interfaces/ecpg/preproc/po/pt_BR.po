@@ -7,10 +7,10 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.4\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2009-06-12 21:16+0000\n"
+"POT-Creation-Date: 2010-05-09 11:08-0300\n"
 "PO-Revision-Date: 2009-02-09 12:59-0200\n"
 "Last-Translator: Fernando Ike de Oliveira <fike@midstorm.org>\n"
-"Language-Team: Brazilian Portuguese <pgbr-dev@postgresql.org.br>\n"
+"Language-Team: Brazilian Portuguese <pgbr-dev@listas.postgresql.org.br>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -289,13 +289,13 @@ msgstr ""
 "erro interno: estado inacessível; por favor relato isso a <psql-"
 "bugs@postgresql.org>"
 
-#: pgc.l:1297
+#: pgc.l:1298
 #, c-format
 msgid "Error: include path \"%s/%s\" is too long on line %d, skipping\n"
 msgstr ""
 "Erro: caminho de inclusão \"%s/%s\" é muito longo na linha %d, ignorando\n"
 
-#: pgc.l:1313
+#: pgc.l:1314
 #, c-format
 msgid "could not open include file \"%s\" on line %d"
 msgstr "não pôde abrir arquivo de inclusão \"%s\" na linha %d"
@@ -319,84 +319,84 @@ msgstr "ERRO: "
 msgid "could not remove output file \"%s\"\n"
 msgstr "não pôde remover arquivo de saída \"%s\"\n"
 
-#: preproc.y:318
+#: preproc.y:314
 #, c-format
 msgid "cursor \"%s\" does not exist"
 msgstr "cursor \"%s\" não existe"
 
-#: preproc.y:346
+#: preproc.y:342
 msgid "initializer not allowed in type definition"
 msgstr "inicializador não é permitido na definição do tipo"
 
-#: preproc.y:353 preproc.y:10620
+#: preproc.y:349 preproc.y:11533
 #, c-format
 msgid "type \"%s\" is already defined"
 msgstr "tipo \"%s\" já está definido"
 
-#: preproc.y:376 preproc.y:11219 preproc.y:11734 variable.c:584
+#: preproc.y:372 preproc.y:12132 preproc.y:12442 variable.c:584
 msgid "multidimensional arrays for simple data types are not supported"
 msgstr ""
 "matrizes multidimensionais para tipo de dados simples não são suportadas"
 
-#: preproc.y:1243
+#: preproc.y:1238
 msgid "AT option not allowed in CLOSE DATABASE statement"
 msgstr "opção AT não é permitida no comando CLOSE DATABASE"
 
-#: preproc.y:1309 preproc.y:1449
+#: preproc.y:1304 preproc.y:1444
 msgid "AT option not allowed in DEALLOCATE statement"
 msgstr "opção AT não é permitida no comando DEALLOCATE"
 
-#: preproc.y:1435
+#: preproc.y:1430
 msgid "AT option not allowed in CONNECT statement"
 msgstr "opção AT não é permitida no comando CONNECT"
 
-#: preproc.y:1471
+#: preproc.y:1466
 msgid "AT option not allowed in DISCONNECT statement"
 msgstr "opção AT não é permitida no comando DISCONNECT"
 
-#: preproc.y:1523
+#: preproc.y:1518
 msgid "AT option not allowed in SET CONNECTION statement"
 msgstr "opção AT não é permitida no comando SET CONNECTION"
 
-#: preproc.y:1545
+#: preproc.y:1540
 msgid "AT option not allowed in TYPE statement"
 msgstr "opção AT não é permitida no comando TYPE"
 
-#: preproc.y:1554
+#: preproc.y:1549
 msgid "AT option not allowed in VAR statement"
 msgstr "opção AT não é permitida no comando VAR"
 
-#: preproc.y:1561
+#: preproc.y:1556
 msgid "AT option not allowed in WHENEVER statement"
 msgstr "opção AT não é permitida no comando WHENEVER"
 
-#: preproc.y:1917 preproc.y:2913 preproc.y:3811 preproc.y:3820 preproc.y:4051
-#: preproc.y:5860 preproc.y:5865 preproc.y:5870 preproc.y:8035 preproc.y:8565
+#: preproc.y:1912 preproc.y:2908 preproc.y:3802 preproc.y:3811 preproc.y:4042
+#: preproc.y:5851 preproc.y:5856 preproc.y:5861 preproc.y:8035 preproc.y:8565
 #: preproc.y:8570
 msgid "unsupported feature will be passed to server"
 msgstr "funcionalidade não suportada será enviada ao servidor"
 
-#: preproc.y:2147
+#: preproc.y:2142
 msgid "SHOW ALL is not implemented"
 msgstr "SHOW ALL não está implementado"
 
-#: preproc.y:2482 preproc.y:2493
+#: preproc.y:2477 preproc.y:2488
 msgid "COPY TO STDIN is not possible"
 msgstr "COPY TO STDIN não é possível"
 
-#: preproc.y:2484
+#: preproc.y:2479
 msgid "COPY FROM STDOUT is not possible"
 msgstr "COPY FROM STDOUT não é possível"
 
-#: preproc.y:2486
+#: preproc.y:2481
 msgid "COPY FROM STDIN is not implemented"
 msgstr "COPY FROM STDIN não está implementado"
 
-#: preproc.y:3751 preproc.y:3762
+#: preproc.y:3742 preproc.y:3753
 msgid "constraint declared INITIALLY DEFERRED must be DEFERRABLE"
 msgstr "restrição declarada INITIALLY DEFERRED deve ser DEFERRABLE"
 
-#: preproc.y:6569 preproc.y:10236
+#: preproc.y:6561 preproc.y:11149
 #, c-format
 msgid "cursor \"%s\" is already defined"
 msgstr "cursor \"%s\" já está definido"
@@ -409,24 +409,24 @@ msgstr "sintaxe LIMIT #,# que não é suportada foi enviada ao servidor"
 msgid "subquery in FROM must have an alias"
 msgstr "subconsulta no FROM deve ter um aliás"
 
-#: preproc.y:9925
+#: preproc.y:10838
 msgid "OLD used in query that is not in a rule"
 msgstr "OLD utilizado em consulta que não é uma regra"
 
-#: preproc.y:9932
+#: preproc.y:10845
 msgid "NEW used in query that is not in a rule"
 msgstr "NEW utilizado em consulta que não é uma regra"
 
-#: preproc.y:9964
+#: preproc.y:10877
 msgid "CREATE TABLE AS cannot specify INTO"
 msgstr "CREATE TABLE AS não pode especificar INTO"
 
-#: preproc.y:10011
+#: preproc.y:10924
 #, c-format
 msgid "expected \"@\", found \"%s\""
 msgstr "esperado \"@\", encontrado \"%s\""
 
-#: preproc.y:10023
+#: preproc.y:10936
 msgid ""
 "only protocols \"tcp\" and \"unix\" and database type \"postgresql\" are "
 "supported"
@@ -434,77 +434,77 @@ msgstr ""
 "somente os protocolos \"tcp\" e \"unix\" e tipo banco de dados \"postgressql"
 "\" sãosuportados"
 
-#: preproc.y:10026
+#: preproc.y:10939
 #, c-format
 msgid "expected \"://\", found \"%s\""
 msgstr "esperado \"://\", encontrado \"%s\""
 
-#: preproc.y:10031
+#: preproc.y:10944
 #, c-format
 msgid "Unix-domain sockets only work on \"localhost\" but not on \"%s\""
 msgstr ""
 "Soquetes de domínio Unix trabalham somente com \"localhost\" e não com \"%s\""
 
-#: preproc.y:10057
+#: preproc.y:10970
 #, c-format
 msgid "expected \"postgresql\", found \"%s\""
 msgstr "esperado \"postgresql\", encontrado \"%s\""
 
-#: preproc.y:10060
+#: preproc.y:10973
 #, c-format
 msgid "invalid connection type: %s"
 msgstr "tipo de conexão inválido: %s"
 
-#: preproc.y:10069
+#: preproc.y:10982
 #, c-format
 msgid "expected \"@\" or \"://\", found \"%s\""
 msgstr "esperado \"@\" ou \"://\", encontrado \"%s\""
 
-#: preproc.y:10144 preproc.y:10161
+#: preproc.y:11057 preproc.y:11074
 msgid "invalid data type"
 msgstr "tipo de dado inválido"
 
-#: preproc.y:10172 preproc.y:10187
+#: preproc.y:11085 preproc.y:11100
 msgid "incomplete statement"
 msgstr "comando incompleto"
 
-#: preproc.y:10175 preproc.y:10190
+#: preproc.y:11088 preproc.y:11103
 #, c-format
 msgid "unrecognized token \"%s\""
 msgstr "informação desconhecida \"%s\""
 
-#: preproc.y:10439
+#: preproc.y:11352
 msgid "only data types numeric and decimal have precision/scale argument"
 msgstr ""
 "somente os tipos de dados numeric e decimal possuem argumento de precisão/"
 "escala"
 
-#: preproc.y:10451
+#: preproc.y:11364
 msgid "interval specification not allowed here"
 msgstr "especificação de intervalo não é permitida aqui"
 
-#: preproc.y:10595 preproc.y:10647
+#: preproc.y:11508 preproc.y:11560
 msgid "too many levels in nested structure/union definition"
 msgstr "muitos níveis em definição aninhada de estrutura/união"
 
-#: preproc.y:10778
+#: preproc.y:11691
 msgid "pointers to varchar are not implemented"
 msgstr "ponteiros para varchar não estão implentados"
 
-#: preproc.y:10942 preproc.y:10949 preproc.y:10956
+#: preproc.y:11855 preproc.y:11862 preproc.y:11869
 msgid "using unsupported DESCRIBE statement"
 msgstr "utilizando comando DESCRIBE que não é suportado"
 
-#: preproc.y:11187
+#: preproc.y:12100
 msgid "initializer not allowed in EXEC SQL VAR command"
 msgstr "inicilização não é permitido no comando EXEC SQL VAR"
 
-#: preproc.y:11703
+#: preproc.y:12411
 msgid "arrays of indicators are not allowed on input"
 msgstr "matrizes do indicadores não são permitidas na entrada"
 
 #. translator: %s is typically the translation of "syntax error"
-#: preproc.y:11930
+#: preproc.y:12638
 #, c-format
 msgid "%s at or near \"%s\""
 msgstr "%s em ou próximo a \"%s\""

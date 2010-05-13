@@ -12,7 +12,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 8.4\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2009-06-14 01:07+0000\n"
-"PO-Revision-Date: 2009-06-18 12:18+0300\n"
+"PO-Revision-Date: 2010-03-21 01:34+0200\n"
 "Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language-Team: German <peter_e@gmx.net>\n"
 "MIME-Version: 1.0\n"
@@ -401,7 +401,7 @@ msgstr "Arrayindex in Zuweisung darf nicht NULL sein"
 #: pl_exec.c:3862 pl_exec.c:3887 pl_exec.c:3924
 #, c-format
 msgid "type of \"%s\" does not match that when preparing the plan"
-msgstr "Typ von »%s« stimt nicht mit dem überein, als der Plan vorbereitet worden ist"
+msgstr "Typ von »%s« stimmt nicht mit dem überein, als der Plan vorbereitet worden ist"
 
 #: pl_exec.c:3953
 #, c-format

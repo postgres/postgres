@@ -1,14 +1,19 @@
 # Spanish message translation file for ecpglib
+#
 # Copyright (C) 2009 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
+#
 # Emanuel Calvo Franco <postgres.arg@gmail.com>, 2009.
+#
+# pgtranslation Id$
+# $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/po/es.po,v 1.2.2.1 2010/05/13 10:50:06 petere Exp $
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.4\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2009-04-13 15:21+0000\n"
-"PO-Revision-Date: 2009-04-13 17:14-0400\n"
+"PO-Revision-Date: 2010-02-02 15:38-0300\n"
 "Last-Translator: Emanuel Calvo Franco <postgres-arg@gmail.com>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@postgresql.org>\n"
 "MIME-Version: 1.0\n"

@@ -1,7 +1,7 @@
 # translation of libpq.po to fr_fr
 # french message translation file for libpq
 #
-# $PostgreSQL: pgsql/src/interfaces/libpq/po/fr.po,v 1.21 2009/06/26 19:33:52 petere Exp $
+# $PostgreSQL: pgsql/src/interfaces/libpq/po/fr.po,v 1.21.2.1 2010/05/13 10:50:17 petere Exp $
 #
 # Use these quotes: « %s »
 #
@@ -11,8 +11,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.4\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2009-06-24 01:16+0000\n"
-"PO-Revision-Date: 2009-06-24 07:55+0100\n"
+"POT-Creation-Date: 2009-12-16 23:57+0000\n"
+"PO-Revision-Date: 2009-12-18 00:09+0100\n"
 "Last-Translator: Guillaume Lelarge <guillaume@lelarge.info>\n"
 "Language-Team: PostgreSQLfr <pgsql-fr-generale@postgresql.org>\n"
 "MIME-Version: 1.0\n"
@@ -830,11 +830,15 @@ msgstr ""
 msgid "certificate could not be obtained: %s\n"
 msgstr "le certificat n'a pas pu être obtenu : %s\n"
 
-#: fe-secure.c:1273
+#: fe-secure.c:1218
+msgid "SSL certificate's common name contains embedded null\n"
+msgstr "le nom commun du certificat SSL contient un NULL imbriqué\n"
+
+#: fe-secure.c:1292
 msgid "no SSL error reported"
 msgstr "aucune erreur SSL reportée"
 
-#: fe-secure.c:1282
+#: fe-secure.c:1301
 #, c-format
 msgid "SSL error code %lu"
 msgstr "erreur SSL %lu"

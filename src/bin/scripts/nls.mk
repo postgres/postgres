@@ -1,6 +1,6 @@
-# $PostgreSQL: pgsql/src/bin/scripts/nls.mk,v 1.23.2.1 2009/09/03 21:01:11 petere Exp $
+# $PostgreSQL: pgsql/src/bin/scripts/nls.mk,v 1.23.2.2 2010/05/13 10:50:06 petere Exp $
 CATALOG_NAME    := pgscripts
-AVAIL_LANGUAGES := cs de es fr it ja ko pt_BR ro sv ta tr
+AVAIL_LANGUAGES := cs de es fr it ja ko pt_BR ro sv ta tr zh_CN
 GETTEXT_FILES   := createdb.c createlang.c createuser.c \
                    dropdb.c droplang.c dropuser.c \
                    clusterdb.c vacuumdb.c reindexdb.c \
