@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.304 2010/04/03 07:22:54 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.305 2010/05/13 14:16:41 mha Exp $ -->
 
 <chapter id="libpq">
  <title><application>libpq</application> - C Library</title>
@@ -6635,7 +6635,7 @@ user=admin
    The default value for <literal>sslmode</> is <literal>prefer</>. As is shown
    in the table, this makes no sense from a security point of view, and it only
    promises performance overhead if possible. It is only provided as the default
-   for backwards compatiblity, and not recommended in secure deployments.
+   for backwards compatibility, and not recommended in secure deployments.
   </para>
 
  </sect2>
