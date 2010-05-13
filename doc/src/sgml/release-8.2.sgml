@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release-8.2.sgml,v 1.6 2010/05/12 23:20:49 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release-8.2.sgml,v 1.7 2010/05/13 21:26:59 tgl Exp $ -->
 <!-- See header comment in release.sgml about typical markup -->
 
  <sect1 id="release-8-2-17">
@@ -30,6 +30,46 @@
    <title>Changes</title>
 
    <itemizedlist>
+
+    <listitem>
+     <para>
+      Enforce restrictions in <literal>plperl</> using an opmask applied to
+      the whole interpreter, instead of using <filename>Safe.pm</>
+      (Tim Bunce, Andrew Dunstan)
+     </para>
+
+     <para>
+      Recent developments have convinced us that <filename>Safe.pm</> is too
+      insecure to rely on for making <literal>plperl</> trustable.  This
+      change removes use of <filename>Safe.pm</> altogether, in favor of using
+      a separate interpreter with an opcode mask that is always applied.
+      Pleasant side effects of the change include that it is now possible to
+      use Perl's <literal>strict</> pragma in a natural way in
+      <literal>plperl</>, and that Perl's <literal>$a</> and <literal>$b</>
+      variables work as expected in sort routines, and that function
+      compilation is significantly faster.  (CVE-2010-1169)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Prevent PL/Tcl from executing untrustworthy code from
+      <structname>pltcl_modules</> (Tom)
+     </para>
+
+     <para>
+      PL/Tcl's feature for autoloading Tcl code from a database table
+      could be exploited for trojan-horse attacks, because there was no
+      restriction on who could create or insert into that table.  This change
+      disables the feature unless <structname>pltcl_modules</> is owned by a
+      superuser.  (However, the permissions on the table are not checked, so
+      installations that really need a less-than-secure modules table can
+      still grant suitable privileges to trusted non-superusers.)  Also,
+      prevent loading code into the unrestricted <quote>normal</> Tcl
+      interpreter unless we are really going to execute a <literal>pltclu</>
+      function.  (CVE-2010-1170)
+     </para>
+    </listitem>
 
     <listitem>
      <para>
