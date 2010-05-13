@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.289 2010/02/26 02:00:34 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.290 2010/05/13 11:15:38 sriggs Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -4378,7 +4378,7 @@ xact_redo_commit(xl_xact_commit *xlrec, TransactionId xid, XLogRecPtr lsn)
 		LWLockRelease(XidGenLock);
 	}
 
-	if (!InHotStandby)
+	if (standbyState == STANDBY_DISABLED)
 	{
 		/*
 		 * Mark the transaction committed in pg_clog.
@@ -4412,12 +4412,12 @@ xact_redo_commit(xl_xact_commit *xlrec, TransactionId xid, XLogRecPtr lsn)
 		/*
 		 * We must mark clog before we update the ProcArray.
 		 */
-		ExpireTreeKnownAssignedTransactionIds(xid, xlrec->nsubxacts, sub_xids);
+		ExpireTreeKnownAssignedTransactionIds(xid, xlrec->nsubxacts, sub_xids, max_xid);
 
 		/*
 		 * Send any cache invalidations attached to the commit. We must
 		 * maintain the same order of invalidation then release locks as
-		 * occurs in	 .
+		 * occurs in CommitTransaction().
 		 */
 		ProcessCommittedInvalidationMessages(inval_msgs, xlrec->nmsgs,
 								  XactCompletionRelcacheInitFileInval(xlrec),
@@ -4499,7 +4499,12 @@ xact_redo_abort(xl_xact_abort *xlrec, TransactionId xid)
 		LWLockRelease(XidGenLock);
 	}
 
-	if (InHotStandby)
+	if (standbyState == STANDBY_DISABLED)
+	{
+		/* Mark the transaction aborted in pg_clog, no need for async stuff */
+		TransactionIdAbortTree(xid, xlrec->nsubxacts, sub_xids);
+	}
+	else
 	{
 		/*
 		 * If a transaction completion record arrives that has as-yet
@@ -4511,17 +4516,14 @@ xact_redo_abort(xl_xact_abort *xlrec, TransactionId xid)
 		 * already. Leave it in.
 		 */
 		RecordKnownAssignedTransactionIds(max_xid);
-	}
 
-	/* Mark the transaction aborted in pg_clog, no need for async stuff */
-	TransactionIdAbortTree(xid, xlrec->nsubxacts, sub_xids);
+		/* Mark the transaction aborted in pg_clog, no need for async stuff */
+		TransactionIdAbortTree(xid, xlrec->nsubxacts, sub_xids);
 
-	if (InHotStandby)
-	{
 		/*
-		 * We must mark clog before we update the ProcArray.
+		 * We must update the ProcArray after we have marked clog.
 		 */
-		ExpireTreeKnownAssignedTransactionIds(xid, xlrec->nsubxacts, sub_xids);
+		ExpireTreeKnownAssignedTransactionIds(xid, xlrec->nsubxacts, sub_xids, max_xid);
 
 		/*
 		 * There are no flat files that need updating, nor invalidation
@@ -4596,7 +4598,7 @@ xact_redo(XLogRecPtr lsn, XLogRecord *record)
 	{
 		xl_xact_assignment *xlrec = (xl_xact_assignment *) XLogRecGetData(record);
 
-		if (InHotStandby)
+		if (standbyState >= STANDBY_INITIALIZED)
 			ProcArrayApplyXidAssignment(xlrec->xtop,
 										xlrec->nsubxacts, xlrec->xsub);
 	}

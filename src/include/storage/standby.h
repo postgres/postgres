@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/standby.h,v 1.9 2010/02/26 02:01:28 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/storage/standby.h,v 1.10 2010/05/13 11:15:38 sriggs Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -68,6 +68,7 @@ typedef struct xl_running_xacts
 	bool		subxid_overflow;	/* snapshot overflowed, subxids missing */
 	TransactionId nextXid;		/* copy of ShmemVariableCache->nextXid */
 	TransactionId oldestRunningXid;		/* *not* oldestXmin */
+	TransactionId latestCompletedXid;	/* so we can set xmax */
 
 	TransactionId xids[1];		/* VARIABLE LENGTH ARRAY */
 } xl_running_xacts;
@@ -97,6 +98,7 @@ typedef struct RunningTransactionsData
 	bool		subxid_overflow;	/* snapshot overflowed, subxids missing */
 	TransactionId nextXid;		/* copy of ShmemVariableCache->nextXid */
 	TransactionId oldestRunningXid;		/* *not* oldestXmin */
+	TransactionId latestCompletedXid;	/* so we can set xmax */
 
 	TransactionId *xids;		/* array of (sub)xids still running */
 } RunningTransactionsData;

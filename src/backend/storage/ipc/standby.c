@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/standby.c,v 1.21 2010/05/02 02:10:33 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/standby.c,v 1.22 2010/05/13 11:15:38 sriggs Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -776,6 +776,51 @@ standby_desc(StringInfo buf, uint8 xl_info, char *rec)
 /*
  * Log details of the current snapshot to WAL. This allows the snapshot state
  * to be reconstructed on the standby.
+ *
+ * We can move directly to STANDBY_SNAPSHOT_READY at startup if we
+ * start from a shutdown checkpoint because we know nothing was running
+ * at that time and our recovery snapshot is known empty. In the more
+ * typical case of an online checkpoint we need to jump through a few
+ * hoops to get a correct recovery snapshot and this requires a two or
+ * sometimes a three stage process.
+ *
+ * The initial snapshot must contain all running xids and all current
+ * AccessExclusiveLocks at a point in time on the standby. Assembling
+ * that information while the server is running requires many and
+ * various LWLocks, so we choose to derive that information piece by
+ * piece and then re-assemble that info on the standby. When that
+ * information is fully assembled we move to STANDBY_SNAPSHOT_READY.
+ *
+ * Since locking on the primary when we derive the information is not
+ * strict, we note that there is a time window between the derivation and
+ * writing to WAL of the derived information. That allows race conditions
+ * that we must resolve, since xids and locks may enter or leave the
+ * snapshot during that window. This creates the issue that an xid or
+ * lock may start *after* the snapshot has been derived yet *before* the
+ * snapshot is logged in the running xacts WAL record. We resolve this by
+ * starting to accumulate changes at a point just prior to when we derive
+ * the snapshot on the primary, then ignore duplicates when we later apply
+ * the snapshot from the running xacts record. This is implemented during
+ * CreateCheckpoint() where we use the logical checkpoint location as
+ * our starting point and then write the running xacts record immediately
+ * before writing the main checkpoint WAL record. Since we always start
+ * up from a checkpoint and are immediately at our starting point, we
+ * unconditionally move to STANDBY_INITIALIZED. After this point we
+ * must do 4 things:
+ *  * move shared nextXid forwards as we see new xids
+ *  * extend the clog and subtrans with each new xid
+ *  * keep track of uncommitted known assigned xids
+ *  * keep track of uncommitted AccessExclusiveLocks
+ *
+ * When we see a commit/abort we must remove known assigned xids and locks
+ * from the completing transaction. Attempted removals that cannot locate
+ * an entry are expected and must not cause an error when we are in state
+ * STANDBY_INITIALIZED. This is implemented in StandbyReleaseLocks() and
+ * KnownAssignedXidsRemove().
+ *
+ * Later, when we apply the running xact data we must be careful to ignore
+ * transactions already committed, since those commits raced ahead when
+ * making WAL entries.
  */
 void
 LogStandbySnapshot(TransactionId *oldestActiveXid, TransactionId *nextXid)
@@ -788,6 +833,12 @@ LogStandbySnapshot(TransactionId *oldestActiveXid, TransactionId *nextXid)
 
 	/*
 	 * Get details of any AccessExclusiveLocks being held at the moment.
+	 *
+	 * XXX GetRunningTransactionLocks() currently holds a lock on all partitions
+	 * though it is possible to further optimise the locking. By reference
+	 * counting locks and storing the value on the ProcArray entry for each backend
+	 * we can easily tell if any locks need recording without trying to acquire
+	 * the partition locks and scanning the lock table.
 	 */
 	locks = GetRunningTransactionLocks(&nlocks);
 	if (nlocks > 0)
@@ -798,6 +849,11 @@ LogStandbySnapshot(TransactionId *oldestActiveXid, TransactionId *nextXid)
 	 * record we write, because standby will open up when it sees this.
 	 */
 	running = GetRunningTransactionData();
+	/*
+	 * The gap between GetRunningTransactionData() and LogCurrentRunningXacts()
+	 * is what most of the fuss is about here, so artifically extending this
+	 * interval is a great way to test the little used parts of the code.
+	 */
 	LogCurrentRunningXacts(running);
 
 	*oldestActiveXid = running->oldestRunningXid;

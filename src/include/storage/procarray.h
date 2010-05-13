@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/procarray.h,v 1.31 2010/01/23 16:37:12 sriggs Exp $
+ * $PostgreSQL: pgsql/src/include/storage/procarray.h,v 1.32 2010/05/13 11:15:38 sriggs Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,7 +35,8 @@ extern void ProcArrayApplyXidAssignment(TransactionId topxid,
 
 extern void RecordKnownAssignedTransactionIds(TransactionId xid);
 extern void ExpireTreeKnownAssignedTransactionIds(TransactionId xid,
-									  int nsubxids, TransactionId *subxids);
+							int nsubxids, TransactionId *subxids,
+							TransactionId max_xid);
 extern void ExpireAllKnownAssignedTransactionIds(void);
 extern void ExpireOldKnownAssignedTransactionIds(TransactionId xid);
 
