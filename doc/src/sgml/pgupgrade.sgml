@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/pgupgrade.sgml,v 1.1 2010/05/12 02:19:11 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/pgupgrade.sgml,v 1.2 2010/05/13 01:03:01 momjian Exp $ -->
 
 <sect1 id="pgupgrade">
  <title>pg_upgrade</title>
@@ -99,6 +99,13 @@ gmake prefix=/usr/local/pgsql.new install
  
    <listitem>
     <para>
+     Install <application>pg_upgrade</> and
+     <application>pg_upgrade_support</> in the new PostgreSQL cluster
+    </para>
+   </listitem>
+ 
+   <listitem>
+    <para>
      Initialize the new PostgreSQL cluster
     </para>
  
@@ -121,12 +128,6 @@ gmake prefix=/usr/local/pgsql.new install
       <listitem>
        <para>
         delete the empty <literal>edb</> schema in the <literal>enterprisedb</> database
-       </para>
-      </listitem>
-      <listitem>
-       <para>
-        copy dbserver/lib/pgmemcache.so from the old server
-        to the new server (AS8.3 to AS8.3R2 migrations only)
        </para>
       </listitem>
      </itemizedlist>

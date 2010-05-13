@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/contrib/Makefile,v 1.91 2010/05/12 16:50:58 tgl Exp $
+# $PostgreSQL: pgsql/contrib/Makefile,v 1.92 2010/05/13 01:03:00 momjian Exp $
 
 subdir = contrib
 top_builddir = ..
@@ -32,6 +32,7 @@ SUBDIRS = \
 		pg_stat_statements \
 		pg_trgm		\
 		pg_upgrade	\
+		pg_upgrade_support \
 		pgbench		\
 		pgcrypto	\
 		pgrowlocks	\

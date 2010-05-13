@@ -42,43 +42,43 @@ install_support_functions(migratorContext *ctx)
 								  "CREATE OR REPLACE FUNCTION "
 					 "		binary_upgrade.set_next_pg_type_oid(OID) "
 								  "RETURNS VOID "
-								  "AS '$libdir/pg_upgrade_sysoids' "
+								  "AS '$libdir/pg_upgrade_support' "
 								  "LANGUAGE C STRICT;"));
 		PQclear(executeQueryOrDie(ctx, conn,
 								  "CREATE OR REPLACE FUNCTION "
 			   "		binary_upgrade.set_next_pg_type_array_oid(OID) "
 								  "RETURNS VOID "
-								  "AS '$libdir/pg_upgrade_sysoids' "
+								  "AS '$libdir/pg_upgrade_support' "
 								  "LANGUAGE C STRICT;"));
 		PQclear(executeQueryOrDie(ctx, conn,
 								  "CREATE OR REPLACE FUNCTION "
 			   "		binary_upgrade.set_next_pg_type_toast_oid(OID) "
 								  "RETURNS VOID "
-								  "AS '$libdir/pg_upgrade_sysoids' "
+								  "AS '$libdir/pg_upgrade_support' "
 								  "LANGUAGE C STRICT;"));
 		PQclear(executeQueryOrDie(ctx, conn,
 								  "CREATE OR REPLACE FUNCTION "
 				"		binary_upgrade.set_next_heap_relfilenode(OID) "
 								  "RETURNS VOID "
-								  "AS '$libdir/pg_upgrade_sysoids' "
+								  "AS '$libdir/pg_upgrade_support' "
 								  "LANGUAGE C STRICT;"));
 		PQclear(executeQueryOrDie(ctx, conn,
 								  "CREATE OR REPLACE FUNCTION "
 			   "		binary_upgrade.set_next_toast_relfilenode(OID) "
 								  "RETURNS VOID "
-								  "AS '$libdir/pg_upgrade_sysoids' "
+								  "AS '$libdir/pg_upgrade_support' "
 								  "LANGUAGE C STRICT;"));
 		PQclear(executeQueryOrDie(ctx, conn,
 								  "CREATE OR REPLACE FUNCTION "
 			   "		binary_upgrade.set_next_index_relfilenode(OID) "
 								  "RETURNS VOID "
-								  "AS '$libdir/pg_upgrade_sysoids' "
+								  "AS '$libdir/pg_upgrade_support' "
 								  "LANGUAGE C STRICT;"));
 		PQclear(executeQueryOrDie(ctx, conn,
 								  "CREATE OR REPLACE FUNCTION "
 			 "		binary_upgrade.add_pg_enum_label(OID, OID, NAME) "
 								  "RETURNS VOID "
-								  "AS '$libdir/pg_upgrade_sysoids' "
+								  "AS '$libdir/pg_upgrade_support' "
 								  "LANGUAGE C STRICT;"));
 		PQfinish(conn);
 	}

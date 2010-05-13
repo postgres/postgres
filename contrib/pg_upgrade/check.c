@@ -232,15 +232,15 @@ check_cluster_compatibility(migratorContext *ctx, bool live_check)
 	FILE	   *lib_test;
 
 	/*
-	 * Test pg_upgrade_sysoids.so is in the proper place.	 We cannot copy it
+	 * Test pg_upgrade_support.so is in the proper place.	 We cannot copy it
 	 * ourselves because install directories are typically root-owned.
 	 */
-	snprintf(libfile, sizeof(libfile), "%s/pg_upgrade_sysoids%s", ctx->new.libpath,
+	snprintf(libfile, sizeof(libfile), "%s/pg_upgrade_support%s", ctx->new.libpath,
 			 DLSUFFIX);
 
 	if ((lib_test = fopen(libfile, "r")) == NULL)
 		pg_log(ctx, PG_FATAL,
-			   "\npg_upgrade%s must be created and installed in %s\n", DLSUFFIX, libfile);
+			   "\npg_upgrade_support%s must be created and installed in %s\n", DLSUFFIX, libfile);
 	else
 		fclose(lib_test);
 
