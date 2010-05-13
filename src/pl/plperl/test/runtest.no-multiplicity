@@ -29,16 +29,3 @@ else
     echo "    test.expected and test.out"
 fi
 
-echo "**** Running plperlu_plperl tests ****"
-psql -q -n -e $DBNAME <plperlu_plperl.sql > plperlu_plperl.out 2>&1
-if diff plperlu_plperl.expected plperlu_plperl.out >/dev/null 2>&1 || \
-	diff plperlu_plperl.expected_alt plperlu_plperl.out >/dev/null 2>&1
-then
-    echo "    Tests passed O.K."
-    rm plperlu_plperl.out
-else
-    echo "    Tests failed - look at diffs between"
-    echo "    plperlu_plperl.expected{_alt} and plperlu_plperl.out"
-fi
-
-

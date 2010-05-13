@@ -1,0 +1,71 @@
+CREATE OR REPLACE FUNCTION recurse_plperl(i int) RETURNS SETOF TEXT LANGUAGE plperl
+AS $$
+	my $i = shift;
+	my $res = [];
+	return $res unless $i > 0;
+	push @$res, "plperl  $i entry: ".((eval "stat;1") ? "ok" : $@);
+	push @$res, $_
+		for map { $_->{recurse_plperlu} }
+			@{spi_exec_query("select * from recurse_plperlu($i-1)")->{rows}};
+	return $res;
+$$;
+CREATE OR REPLACE FUNCTION recurse_plperlu(i int) RETURNS SETOF TEXT LANGUAGE plperlu
+AS $$
+	my $i = shift;
+        my $res = [];
+        return $res unless $i > 0;
+	push @$res, "plperlu $i entry: ".((eval "stat;1") ? "ok" : $@);
+	push @$res, $_
+		for map { $_->{recurse_plperl} }
+			@{spi_exec_query("select * from recurse_plperl($i-1)")->{rows}};
+	return $res;
+$$;
+SELECT * FROM recurse_plperl(5);
+                             recurse_plperl                             
+------------------------------------------------------------------------
+ plperl  5 entry: 'stat' trapped by operation mask at (eval 4) line 1.
+
+ plperlu 4 entry: ok
+ plperl  3 entry: 'stat' trapped by operation mask at (eval 5) line 1.
+
+ plperlu 2 entry: ok
+ plperl  1 entry: 'stat' trapped by operation mask at (eval 6) line 1.
+
+(5 rows)
+
+SELECT * FROM recurse_plperlu(5);
+                            recurse_plperlu                             
+------------------------------------------------------------------------
+ plperlu 5 entry: ok
+ plperl  4 entry: 'stat' trapped by operation mask at (eval 7) line 1.
+
+ plperlu 3 entry: ok
+ plperl  2 entry: 'stat' trapped by operation mask at (eval 8) line 1.
+
+ plperlu 1 entry: ok
+(5 rows)
+
+CREATE OR REPLACE FUNCTION use_plperlu() RETURNS void LANGUAGE plperlu
+AS $$
+use Errno;
+$$;
+CREATE OR REPLACE FUNCTION use_plperl() RETURNS void LANGUAGE plperl
+AS $$
+use Errno;
+$$;
+select use_plperl();
+ERROR:  creation of Perl function failed: Unable to load Errno.pm into plperl at (eval 9) line 2.
+BEGIN failed--compilation aborted at (eval 9) line 2.
+select use_plperlu();
+ use_plperlu 
+-------------
+ 
+(1 row)
+
+CREATE OR REPLACE FUNCTION use_plperl() RETURNS void LANGUAGE plperl
+AS $$
+use Errno;
+$$;
+select use_plperl();
+ERROR:  creation of Perl function failed: Unable to load Errno.pm into plperl at (eval 10) line 2.
+BEGIN failed--compilation aborted at (eval 10) line 2.

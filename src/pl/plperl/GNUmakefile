@@ -1,5 +1,5 @@
 # Makefile for PL/Perl
-# $PostgreSQL: pgsql/src/pl/plperl/GNUmakefile,v 1.18.4.1 2005/07/17 04:05:49 tgl Exp $
+# $PostgreSQL: pgsql/src/pl/plperl/GNUmakefile,v 1.18.4.2 2010/05/13 16:44:03 adunstan Exp $
 
 subdir = src/pl/plperl
 top_builddir = ../../..
@@ -23,7 +23,7 @@ perl_embed_ldflags := -L$(perl_archlibexp)/CORE -lperl58
 override CPPFLAGS += -DPLPERL_HAVE_UID_GID
 endif
 
-override CPPFLAGS := -I$(srcdir) $(CPPFLAGS) -I$(perl_archlibexp)/CORE
+override CPPFLAGS := -I. -I$(srcdir) $(CPPFLAGS) -I$(perl_archlibexp)/CORE
 
 rpathdir = $(perl_archlibexp)/CORE
 
@@ -40,6 +40,13 @@ include $(top_srcdir)/src/Makefile.shlib
 
 
 all: all-lib
+
+plperl.o: plperl_opmask.h
+
+plperl_opmask.h: plperl_opmask.pl
+	$(PERL) $< $@
+
+
 
 SPI.c: SPI.xs
 	$(PERL) $(perl_privlibexp)/ExtUtils/xsubpp -typemap $(perl_privlibexp)/ExtUtils/typemap $< >$@
@@ -60,7 +67,7 @@ uninstall:
 	rm -f $(DESTDIR)$(pkglibdir)/plperl$(DLSUFFIX)
 
 clean distclean maintainer-clean: clean-lib
-	rm -f SPI.c $(OBJS)
+	rm -f SPI.c $(OBJS) plperl_opmask.h
 
 else # can't build
 

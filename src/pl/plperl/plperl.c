@@ -33,7 +33,7 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.67.4.11 2010/03/09 22:35:25 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.67.4.12 2010/05/13 16:44:03 adunstan Exp $
  *
  **********************************************************************/
 
@@ -49,15 +49,17 @@
 #include "commands/trigger.h"
 #include "executor/spi.h"
 #include "funcapi.h"
+#include "mb/pg_wchar.h"
 #include "utils/lsyscache.h"
 #include "utils/typcache.h"
+#include "utils/hsearch.h"
 
 /* perl stuff */
 
 /* stop perl from hijacking stdio and other stuff */
 #ifdef WIN32
 #define WIN32IO_IS_STDIO
-#endif 
+#endif
 
 #include "EXTERN.h"
 #include "perl.h"
@@ -75,6 +77,9 @@
 #undef bool
 #endif
 
+/* defines PLPERL_SET_OPMASK */
+#include "plperl_opmask.h"
+
 
 /**********************************************************************
  * The information we cache about loaded procedures
@@ -89,7 +94,7 @@ typedef struct plperl_proc_desc
 	bool		fn_retistuple;	/* true, if function returns tuple */
 	bool		fn_retisset;	/* true, if function returns set */
 	Oid			result_oid;		/* Oid of result type */
-	FmgrInfo	result_in_func;	/* I/O function and arg for result type */
+	FmgrInfo	result_in_func; /* I/O function and arg for result type */
 	Oid			result_typioparam;
 	int			nargs;
 	FmgrInfo	arg_out_func[FUNC_MAX_ARGS];
@@ -98,14 +103,33 @@ typedef struct plperl_proc_desc
 	SV		   *reference;
 } plperl_proc_desc;
 
-
 /**********************************************************************
  * Global data
  **********************************************************************/
+
+typedef enum
+{
+	INTERP_NONE,
+	INTERP_HELD,
+	INTERP_TRUSTED,
+	INTERP_UNTRUSTED,
+	INTERP_BOTH
+} InterpState;
+
+static InterpState interp_state = INTERP_NONE;
+static bool can_run_two = false;
+
 static int	plperl_firstcall = 1;
 static bool plperl_safe_init_done = false;
-static PerlInterpreter *plperl_interp = NULL;
-static HV  *plperl_proc_hash = NULL;
+static PerlInterpreter *plperl_trusted_interp = NULL;
+static PerlInterpreter *plperl_untrusted_interp = NULL;
+static PerlInterpreter *plperl_held_interp = NULL;
+static OP  *(*pp_require_orig) (pTHX) = NULL;
+static OP  *pp_require_safe(pTHX);
+static bool trusted_context;
+static HTAB *plperl_proc_hash = NULL;
+static char plperl_opmask[MAXO];
+static void set_interp_require(void);
 
 /* this is saved and restored by plperl_call_handler */
 static plperl_proc_desc *plperl_current_prodesc = NULL;
@@ -129,7 +153,21 @@ static plperl_proc_desc *compile_plperl_function(Oid fn_oid, bool is_trigger);
 static SV  *plperl_hash_from_tuple(HeapTuple tuple, TupleDesc tupdesc);
 static void plperl_init_shared_libs(pTHX);
 static HV  *plperl_spi_execute_fetch_result(SPITupleTable *, int, int);
+static void check_interp(bool trusted);
+static char *strip_trailing_ws(const char *msg);
 
+#ifdef WIN32
+static char *setlocale_perl(int category, char *locale);
+#endif
+
+
+/* hash table entry for proc desc  */
+
+typedef struct plperl_proc_entry
+{
+	char		proc_name[NAMEDATALEN];
+	plperl_proc_desc *proc_data;
+} plperl_proc_entry;
 
 /*
  * This routine is a crock, and so is everyplace that calls it.  The problem
@@ -158,15 +196,29 @@ perm_fmgr_info(Oid functionId, FmgrInfo *finfo)
 void
 plperl_init(void)
 {
+	HASHCTL		hash_ctl;
+
 	/************************************************************
 	 * Do initialization only once
 	 ************************************************************/
 	if (!plperl_firstcall)
 		return;
 
+	MemSet(&hash_ctl, 0, sizeof(hash_ctl));
+
+	hash_ctl.keysize = NAMEDATALEN;
+	hash_ctl.entrysize = sizeof(plperl_proc_entry);
+
+	plperl_proc_hash = hash_create("PLPerl Procedures",
+								   32,
+								   &hash_ctl,
+								   HASH_ELEM);
+
 	/************************************************************
 	 * Create the Perl interpreter
 	 ************************************************************/
+	PLPERL_SET_OPMASK(plperl_opmask);
+
 	plperl_init_interp();
 
 	plperl_firstcall = 0;
@@ -192,6 +244,113 @@ plperl_init_all(void)
 
 }
 
+#define PLC_TRUSTED \
+	"require strict; "
+
+#define TEST_FOR_MULTI \
+	"use Config; " \
+	"$Config{usemultiplicity} eq 'define' or "	\
+	"($Config{usethreads} eq 'define' " \
+	" and $Config{useithreads} eq 'define')"
+
+
+static void
+set_interp_require(void)
+{
+	if (trusted_context)
+	{
+		PL_ppaddr[OP_REQUIRE] = pp_require_safe;
+		PL_ppaddr[OP_DOFILE] = pp_require_safe;
+	}
+	else
+	{
+		PL_ppaddr[OP_REQUIRE] = pp_require_orig;
+		PL_ppaddr[OP_DOFILE] = pp_require_orig;
+	}
+}
+
+/********************************************************************
+ *
+ * We start out by creating a "held" interpreter that we can use in
+ * trusted or untrusted mode (but not both) as the need arises. Later, we
+ * assign that interpreter if it is available to either the trusted or
+ * untrusted interpreter. If it has already been assigned, and we need to
+ * create the other interpreter, we do that if we can, or error out.
+ * We detect if it is safe to run two interpreters during the setup of the
+ * dummy interpreter.
+ */
+
+
+static void
+check_interp(bool trusted)
+{
+	if (interp_state == INTERP_HELD)
+	{
+		if (trusted)
+		{
+			plperl_trusted_interp = plperl_held_interp;
+			interp_state = INTERP_TRUSTED;
+		}
+		else
+		{
+			plperl_untrusted_interp = plperl_held_interp;
+			interp_state = INTERP_UNTRUSTED;
+		}
+		plperl_held_interp = NULL;
+		trusted_context = trusted;
+		set_interp_require();
+	}
+	else if (interp_state == INTERP_BOTH ||
+			 (trusted && interp_state == INTERP_TRUSTED) ||
+			 (!trusted && interp_state == INTERP_UNTRUSTED))
+	{
+		if (trusted_context != trusted)
+		{
+			if (trusted)
+				PERL_SET_CONTEXT(plperl_trusted_interp);
+			else
+				PERL_SET_CONTEXT(plperl_untrusted_interp);
+			trusted_context = trusted;
+			set_interp_require();
+		}
+	}
+	else if (can_run_two)
+	{
+		PERL_SET_CONTEXT(plperl_held_interp);
+		plperl_init_interp();
+		if (trusted)
+			plperl_trusted_interp = plperl_held_interp;
+		else
+			plperl_untrusted_interp = plperl_held_interp;
+		interp_state = INTERP_BOTH;
+		plperl_held_interp = NULL;
+		trusted_context = trusted;
+		set_interp_require();
+	}
+	else
+	{
+		elog(ERROR,
+			 "can not allocate second Perl interpreter on this platform");
+
+	}
+
+}
+
+
+static void
+restore_context(bool old_context)
+{
+	if (trusted_context != old_context)
+	{
+		if (old_context)
+			PERL_SET_CONTEXT(plperl_trusted_interp);
+		else
+			PERL_SET_CONTEXT(plperl_untrusted_interp);
+
+		trusted_context = old_context;
+		set_interp_require();
+	}
+}
 
 /**********************************************************************
  * plperl_init_interp() - Create the Perl interpreter
@@ -199,30 +358,26 @@ plperl_init_all(void)
 static void
 plperl_init_interp(void)
 {
-	static char	   *embedding[3] = {
+	static char *embedding[3] = {
 		"", "-e",
 
 		/*
-		 * no commas between the next lines please. They are supposed to
-		 * be one string
+		 * no commas between the next lines please. They are supposed to be
+		 * one string
 		 */
 		"SPI::bootstrap(); use vars qw(%_SHARED);"
-		"sub ::mkunsafefunc {return eval(qq[ sub { $_[0] $_[1] } ]); }"
+		"sub ::mkfunc {return eval(qq[ sub { $_[0] $_[1] } ]); }"
 	};
-
-	int nargs = 3;
-
-	char *dummy_perl_env[1] = { NULL }; 
 
 #ifdef WIN32
 
-	/* 
+	/*
 	 * The perl library on startup does horrible things like call
-	 * setlocale(LC_ALL,""). We have protected against that on most
-	 * platforms by setting the environment appropriately. However, on
-	 * Windows, setlocale() does not consult the environment, so we need
-	 * to save the excisting locale settings before perl has a chance to 
-	 * mangle them and restore them after its dirty deeds are done.
+	 * setlocale(LC_ALL,""). We have protected against that on most platforms
+	 * by setting the environment appropriately. However, on Windows,
+	 * setlocale() does not consult the environment, so we need to save the
+	 * excisting locale settings before perl has a chance to mangle them and
+	 * restore them after its dirty deeds are done.
 	 *
 	 * MSDN ref:
 	 * http://msdn.microsoft.com/library/en-us/vclib/html/_crt_locale.asp
@@ -231,26 +386,33 @@ plperl_init_interp(void)
 	 * subsequent calls to the interpreter don't mess with the locale
 	 * settings.
 	 *
-	 * We restore them using Perl's POSIX::setlocale() function so that
-	 * Perl doesn't have a different idea of the locale from Postgres.
+	 * We restore them using Perl's perl_setlocale() function so that Perl
+	 * doesn't have a different idea of the locale from Postgres.
 	 *
 	 */
 
-	char *loc;
-	char *save_collate, *save_ctype, *save_monetary, *save_numeric, *save_time;
-	char buf[1024];
+	char	   *loc;
+	char	   *save_collate,
+			   *save_ctype,
+			   *save_monetary,
+			   *save_numeric,
+			   *save_time;
 
-	loc = setlocale(LC_COLLATE,NULL);
+	loc = setlocale(LC_COLLATE, NULL);
 	save_collate = loc ? pstrdup(loc) : NULL;
-	loc = setlocale(LC_CTYPE,NULL);
+	loc = setlocale(LC_CTYPE, NULL);
 	save_ctype = loc ? pstrdup(loc) : NULL;
-	loc = setlocale(LC_MONETARY,NULL);
+	loc = setlocale(LC_MONETARY, NULL);
 	save_monetary = loc ? pstrdup(loc) : NULL;
-	loc = setlocale(LC_NUMERIC,NULL);
+	loc = setlocale(LC_NUMERIC, NULL);
 	save_numeric = loc ? pstrdup(loc) : NULL;
-	loc = setlocale(LC_TIME,NULL);
+	loc = setlocale(LC_TIME, NULL);
 	save_time = loc ? pstrdup(loc) : NULL;
 
+#define PLPERL_RESTORE_LOCALE(name, saved) \
+	  STMT_START { \
+			  if (saved != NULL) { setlocale_perl(name, saved); pfree(saved); } \
+	  } STMT_END
 #endif
 
 	/****
@@ -263,108 +425,159 @@ plperl_init_interp(void)
 	 * true when MYMALLOC is set.
 	 */
 #if defined(PERL_SYS_INIT3) && !defined(MYMALLOC)
-	PERL_SYS_INIT3(&nargs, (char ***)&embedding, (char***)&dummy_perl_env);
+	if (interp_state == INTERP_NONE)
+	{
+		int			nargs;
+		char	   *dummy_perl_env[1];
+
+		/* initialize this way to silence silly compiler warnings */
+		nargs = 3;
+		dummy_perl_env[0] = NULL;
+		PERL_SYS_INIT3(&nargs, (char ***) &embedding, (char ***) &dummy_perl_env);
+	}
 #endif
 
-	plperl_interp = perl_alloc();
-	if (!plperl_interp)
+	plperl_held_interp = perl_alloc();
+	if (!plperl_held_interp)
 		elog(ERROR, "could not allocate Perl interpreter");
 
-	perl_construct(plperl_interp);
-	perl_parse(plperl_interp, plperl_init_shared_libs, nargs, embedding, NULL);
-	perl_run(plperl_interp);
+	perl_construct(plperl_held_interp);
 
-	/************************************************************
-	 * Initialize the procedure hash table
-	 ************************************************************/
-	plperl_proc_hash = newHV();
-
-#ifdef WIN32
-
-	eval_pv("use POSIX qw(locale_h);", TRUE); /* croak on failure */
-
-	if (save_collate != NULL)
+	/*
+	 * Record the original function for the 'require' and 'dofile' opcodes.
+	 * (They share the same implementation.) Ensure it's used for new
+	 * interpreters.
+	 */
+	if (!pp_require_orig)
 	{
-		snprintf(buf, sizeof(buf),"setlocale(%s,'%s');",
-				 "LC_COLLATE",save_collate);
-		eval_pv(buf,TRUE);
-		pfree(save_collate);
+		pp_require_orig = PL_ppaddr[OP_REQUIRE];
 	}
-	if (save_ctype != NULL)
+	else
 	{
-		snprintf(buf, sizeof(buf),"setlocale(%s,'%s');",
-				 "LC_CTYPE",save_ctype);
-		eval_pv(buf,TRUE);
-		pfree(save_ctype);
-	}
-	if (save_monetary != NULL)
-	{
-		snprintf(buf, sizeof(buf),"setlocale(%s,'%s');",
-				 "LC_MONETARY",save_monetary);
-		eval_pv(buf,TRUE);
-		pfree(save_monetary);
-	}
-	if (save_numeric != NULL)
-	{
-		snprintf(buf, sizeof(buf),"setlocale(%s,'%s');",
-				 "LC_NUMERIC",save_numeric);
-		eval_pv(buf,TRUE);
-		pfree(save_numeric);
-	}
-	if (save_time != NULL)
-	{
-		snprintf(buf, sizeof(buf),"setlocale(%s,'%s');",
-				 "LC_TIME",save_time);
-		eval_pv(buf,TRUE);
-		pfree(save_time);
+		PL_ppaddr[OP_REQUIRE] = pp_require_orig;
+		PL_ppaddr[OP_DOFILE] = pp_require_orig;
 	}
 
+	perl_parse(plperl_held_interp, plperl_init_shared_libs,
+			   3, embedding, NULL);
+	perl_run(plperl_held_interp);
+
+	if (interp_state == INTERP_NONE)
+	{
+		SV		   *res;
+
+		res = eval_pv(TEST_FOR_MULTI, TRUE);
+		can_run_two = SvIV(res);
+		interp_state = INTERP_HELD;
+	}
+
+#ifdef PLPERL_RESTORE_LOCALE
+	PLPERL_RESTORE_LOCALE(LC_COLLATE, save_collate);
+	PLPERL_RESTORE_LOCALE(LC_CTYPE, save_ctype);
+	PLPERL_RESTORE_LOCALE(LC_MONETARY, save_monetary);
+	PLPERL_RESTORE_LOCALE(LC_NUMERIC, save_numeric);
+	PLPERL_RESTORE_LOCALE(LC_TIME, save_time);
 #endif
 
-
 }
+
+/*
+ * Our safe implementation of the require opcode.
+ * This is safe because it's completely unable to load any code.
+ * If the requested file/module has already been loaded it'll return true.
+ * If not, it'll die.
+ * So now "use Foo;" will work iff Foo has already been loaded.
+ */
+static OP  *
+pp_require_safe(pTHX)
+{
+	dVAR;
+	dSP;
+	SV		   *sv,
+			  **svp;
+	char	   *name;
+	STRLEN		len;
+
+	sv = POPs;
+	name = SvPV(sv, len);
+	if (!(name && len > 0 && *name))
+		RETPUSHNO;
+
+	svp = hv_fetch(GvHVn(PL_incgv), name, len, 0);
+	if (svp && *svp != &PL_sv_undef)
+		RETPUSHYES;
+
+	DIE(aTHX_ "Unable to load %s into plperl", name);
+}
+
 
 static void
 plperl_safe_init(void)
 {
-	static char *safe_module =
-	"require Safe; $Safe::VERSION";
+	HV		   *stash;
+	SV		   *sv;
+	char	   *key;
+	I32			klen;
 
-	static char *safe_ok =
-	"use vars qw($PLContainer); $PLContainer = new Safe('PLPerl');"
-	"$PLContainer->permit_only(':default');"
-	"$PLContainer->permit(qw[:base_math !:base_io sort time]);"
-	"$PLContainer->share(qw[&elog &spi_exec_query &DEBUG &LOG "
-    "&INFO &NOTICE &WARNING &ERROR %_SHARED ]);"
-	"sub ::mksafefunc { return $PLContainer->reval(qq[sub { $_[0] $_[1]}]); }"
-			   ;
+	/* use original require while we set up */
+	PL_ppaddr[OP_REQUIRE] = pp_require_orig;
+	PL_ppaddr[OP_DOFILE] = pp_require_orig;
 
-	static char *safe_bad =
-	"use vars qw($PLContainer); $PLContainer = new Safe('PLPerl');"
-	"$PLContainer->permit_only(':default');"
-	"$PLContainer->share(qw[&elog &ERROR ]);"
-	"sub ::mksafefunc { return $PLContainer->reval(qq[sub { "
-	"elog(ERROR,'trusted Perl functions disabled - "
-    "please upgrade Perl Safe module to version 2.09 or later');}]); }"
-			   ;
+	eval_pv(PLC_TRUSTED, FALSE);
+	if (SvTRUE(ERRSV))
+		ereport(ERROR,
+				(errmsg("%s", strip_trailing_ws(SvPV_nolen(ERRSV))),
+				 errcontext("While executing PLC_TRUSTED.")));
 
-	SV		   *res;
-	double		safe_version;
+	if (GetDatabaseEncoding() == PG_UTF8)
+	{
+		/*
+		 * Force loading of utf8 module now to prevent errors that can arise
+		 * from the regex code later trying to load utf8 modules. See
+		 * http://rt.perl.org/rt3/Ticket/Display.html?id=47576
+		 */
+		eval_pv("my $a=chr(0x100); return $a =~ /\\xa9/i", FALSE);
+		if (SvTRUE(ERRSV))
+			ereport(ERROR,
+					(errmsg("%s", strip_trailing_ws(SvPV_nolen(ERRSV))),
+					 errcontext("While executing utf8fix.")));
 
-	res = eval_pv(safe_module, FALSE);	/* TRUE = croak if failure */
-
-	safe_version = SvNV(res);
+	}
 
 	/*
-	 * We actually want to reject safe_version < 2.09, but it's risky to
-	 * assume that floating-point comparisons are exact, so use a slightly
-	 * smaller comparison value.
+	 * Lock down the interpreter
 	 */
-	eval_pv((safe_version < 2.0899 ? safe_bad : safe_ok), FALSE);
+
+	/* switch to the safe require/dofile opcode for future code */
+	PL_ppaddr[OP_REQUIRE] = pp_require_safe;
+	PL_ppaddr[OP_DOFILE] = pp_require_safe;
+
+	/* 
+	 * prevent (any more) unsafe opcodes being compiled 
+	 * PL_op_mask is per interpreter, so this only needs to be set once 
+	 */
+	PL_op_mask = plperl_opmask;
+
+	/* delete the DynaLoader:: namespace so extensions can't be loaded */
+	stash = gv_stashpv("DynaLoader", GV_ADDWARN);
+	hv_iterinit(stash);
+	while ((sv = hv_iternextsv(stash, &key, &klen)))
+	{
+		if (!isGV_with_GP(sv) || !GvCV(sv))
+			continue;
+		SvREFCNT_dec(GvCV(sv)); /* free the CV */
+		GvCV(sv) = NULL;		/* prevent call via GV */
+	}
+
+	hv_clear(stash);
+	/* invalidate assorted caches */
+	++PL_sub_generation;
+#ifdef PL_stashcache
+	hv_clear(PL_stashcache);
+#endif
 
 	plperl_safe_init_done = true;
 }
-
 
 /*
  * Perl likes to put a newline after its error messages; clean up such
@@ -372,10 +585,10 @@ plperl_safe_init(void)
 static char *
 strip_trailing_ws(const char *msg)
 {
-	char   *res = pstrdup(msg);
-	int		len = strlen(res);
+	char	   *res = pstrdup(msg);
+	int			len = strlen(res);
 
-	while (len > 0 && isspace((unsigned char) res[len-1]))
+	while (len > 0 && isspace((unsigned char) res[len - 1]))
 		res[--len] = '\0';
 	return res;
 }
@@ -438,59 +651,60 @@ plperl_trigger_build_args(FunctionCallInfo fcinfo)
 	tupdesc = tdata->tg_relation->rd_att;
 
 	relid = DatumGetCString(
-				DirectFunctionCall1(oidout,
-									ObjectIdGetDatum(tdata->tg_relation->rd_id)
-				)
-			);
+							DirectFunctionCall1(oidout,
+								  ObjectIdGetDatum(tdata->tg_relation->rd_id)
+												)
+		);
 
-	hv_store(hv, "name", 4, newSVpv(tdata->tg_trigger->tgname, 0), 0);
-	hv_store(hv, "relid", 5, newSVpv(relid, 0), 0);
+	(void) hv_store(hv, "name", 4, newSVpv(tdata->tg_trigger->tgname, 0), 0);
+	(void) hv_store(hv, "relid", 5, newSVpv(relid, 0), 0);
 
 	if (TRIGGER_FIRED_BY_INSERT(tdata->tg_event))
 	{
 		event = "INSERT";
 		if (TRIGGER_FIRED_FOR_ROW(tdata->tg_event))
-			hv_store(hv, "new", 3,
-					 plperl_hash_from_tuple(tdata->tg_trigtuple, tupdesc),
-					 0);
+			(void) hv_store(hv, "new", 3,
+						plperl_hash_from_tuple(tdata->tg_trigtuple, tupdesc),
+							0);
 	}
 	else if (TRIGGER_FIRED_BY_DELETE(tdata->tg_event))
 	{
 		event = "DELETE";
 		if (TRIGGER_FIRED_FOR_ROW(tdata->tg_event))
-			hv_store(hv, "old", 3,
-					 plperl_hash_from_tuple(tdata->tg_trigtuple, tupdesc),
-					 0);
+			(void) hv_store(hv, "old", 3,
+						plperl_hash_from_tuple(tdata->tg_trigtuple, tupdesc),
+							0);
 	}
 	else if (TRIGGER_FIRED_BY_UPDATE(tdata->tg_event))
 	{
 		event = "UPDATE";
 		if (TRIGGER_FIRED_FOR_ROW(tdata->tg_event))
 		{
-			hv_store(hv, "old", 3,
-					 plperl_hash_from_tuple(tdata->tg_trigtuple, tupdesc),
-					 0);
-			hv_store(hv, "new", 3,
-					 plperl_hash_from_tuple(tdata->tg_newtuple, tupdesc),
-					 0);
+			(void) hv_store(hv, "old", 3,
+						plperl_hash_from_tuple(tdata->tg_trigtuple, tupdesc),
+							0);
+			(void) hv_store(hv, "new", 3,
+						 plperl_hash_from_tuple(tdata->tg_newtuple, tupdesc),
+							0);
 		}
 	}
 	else
 		event = "UNKNOWN";
 
-	hv_store(hv, "event", 5, newSVpv(event, 0), 0);
-	hv_store(hv, "argc", 4, newSViv(tdata->tg_trigger->tgnargs), 0);
+	(void) hv_store(hv, "event", 5, newSVpv(event, 0), 0);
+	(void) hv_store(hv, "argc", 4, newSViv(tdata->tg_trigger->tgnargs), 0);
 
 	if (tdata->tg_trigger->tgnargs > 0)
 	{
-		AV *av = newAV();
-		for (i=0; i < tdata->tg_trigger->tgnargs; i++)
+		AV		   *av = newAV();
+
+		for (i = 0; i < tdata->tg_trigger->tgnargs; i++)
 			av_push(av, newSVpv(tdata->tg_trigger->tgargs[i], 0));
-		hv_store(hv, "args", 4, newRV_noinc((SV *)av), 0);
+		(void) hv_store(hv, "args", 4, newRV_noinc((SV *) av), 0);
 	}
 
-	hv_store(hv, "relname", 7,
-			 newSVpv(SPI_getrelname(tdata->tg_relation), 0), 0);
+	(void) hv_store(hv, "relname", 7,
+					newSVpv(SPI_getrelname(tdata->tg_relation), 0), 0);
 
 	if (TRIGGER_FIRED_BEFORE(tdata->tg_event))
 		when = "BEFORE";
@@ -498,7 +712,7 @@ plperl_trigger_build_args(FunctionCallInfo fcinfo)
 		when = "AFTER";
 	else
 		when = "UNKNOWN";
-	hv_store(hv, "when", 4, newSVpv(when, 0), 0);
+	(void) hv_store(hv, "when", 4, newSVpv(when, 0), 0);
 
 	if (TRIGGER_FIRED_FOR_ROW(tdata->tg_event))
 		level = "ROW";
@@ -506,9 +720,9 @@ plperl_trigger_build_args(FunctionCallInfo fcinfo)
 		level = "STATEMENT";
 	else
 		level = "UNKNOWN";
-	hv_store(hv, "level", 5, newSVpv(level, 0), 0);
+	(void) hv_store(hv, "level", 5, newSVpv(level, 0), 0);
 
-	return newRV_noinc((SV*)hv);
+	return newRV_noinc((SV *) hv);
 }
 
 
@@ -531,7 +745,7 @@ get_function_tupdesc(Oid result_type, ReturnSetInfo *rsinfo)
 							"that cannot accept type record")));
 		return rsinfo->expectedDesc;
 	}
-	else				/* ordinary composite type */
+	else	/* ordinary composite type */
 		return lookup_rowtype_tupdesc(result_type, -1);
 }
 
@@ -593,8 +807,8 @@ plperl_modify_tuple(HV *hvTD, TriggerData *tdata, HeapTuple otup)
 							 &typinput, &typioparam);
 			fmgr_info(typinput, &finfo);
 			modvalues[slotsused] = FunctionCall3(&finfo,
-										 CStringGetDatum(SvPV(val, PL_na)),
-										 ObjectIdGetDatum(typioparam),
+										   CStringGetDatum(SvPV(val, PL_na)),
+												 ObjectIdGetDatum(typioparam),
 						 Int32GetDatum(tupdesc->attrs[attn - 1]->atttypmod));
 			modnulls[slotsused] = ' ';
 		}
@@ -637,6 +851,7 @@ plperl_call_handler(PG_FUNCTION_ARGS)
 {
 	Datum		retval;
 	plperl_proc_desc *save_prodesc;
+	bool		oldcontext = trusted_context;
 
 	/*
 	 * Initialize interpreter if first time through
@@ -651,8 +866,8 @@ plperl_call_handler(PG_FUNCTION_ARGS)
 	PG_TRY();
 	{
 		/*
-		 * Determine if called as function or trigger and
-		 * call appropriate subhandler
+		 * Determine if called as function or trigger and call appropriate
+		 * subhandler
 		 */
 		if (CALLED_AS_TRIGGER(fcinfo))
 			retval = PointerGetDatum(plperl_trigger_handler(fcinfo));
@@ -662,12 +877,13 @@ plperl_call_handler(PG_FUNCTION_ARGS)
 	PG_CATCH();
 	{
 		plperl_current_prodesc = save_prodesc;
+		restore_context(oldcontext);
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
 
 	plperl_current_prodesc = save_prodesc;
-
+	restore_context(oldcontext);
 	return retval;
 }
 
@@ -699,11 +915,10 @@ plperl_create_sub(char *s, bool trusted)
 
 	/*
 	 * G_KEEPERR seems to be needed here, else we don't recognize compile
-	 * errors properly.  Perhaps it's because there's another level of
-	 * eval inside mksafefunc?
+	 * errors properly.  Perhaps it's because there's another level of eval
+	 * inside mkfunc?
 	 */
-	count = perl_call_pv((trusted ? "::mksafefunc" : "::mkunsafefunc"),
-						 G_SCALAR | G_EVAL | G_KEEPERR);
+	count = perl_call_pv("::mkfunc", G_SCALAR | G_EVAL | G_KEEPERR);
 	SPAGAIN;
 
 	if (count != 1)
@@ -711,7 +926,7 @@ plperl_create_sub(char *s, bool trusted)
 		PUTBACK;
 		FREETMPS;
 		LEAVE;
-		elog(ERROR, "didn't get a return item from mksafefunc");
+		elog(ERROR, "didn't get a return item from mkfunc");
 	}
 
 	if (SvTRUE(ERRSV))
@@ -756,7 +971,7 @@ plperl_create_sub(char *s, bool trusted)
  * plperl_init_shared_libs()		-
  *
  * We cannot use the DynaLoader directly to get at the Opcode
- * module (used by Safe.pm). So, we link Opcode into ourselves
+ * module. So, we link Opcode into ourselves
  * and do the initialization behind perl's back.
  *
  **********************************************************************/
@@ -790,7 +1005,7 @@ plperl_call_perl_func(plperl_proc_desc *desc, FunctionCallInfo fcinfo)
 
 	PUSHMARK(SP);
 
-	XPUSHs(sv_2mortal(newSVpv("undef", 0))); /* no trigger data */
+	XPUSHs(sv_2mortal(newSVpv("undef", 0)));	/* no trigger data */
 
 	for (i = 0; i < desc->nargs; i++)
 	{
@@ -825,7 +1040,7 @@ plperl_call_perl_func(plperl_proc_desc *desc, FunctionCallInfo fcinfo)
 
 			tmp = DatumGetCString(FunctionCall3(&(desc->arg_out_func[i]),
 												fcinfo->arg[i],
-									ObjectIdGetDatum(desc->arg_typioparam[i]),
+								   ObjectIdGetDatum(desc->arg_typioparam[i]),
 												Int32GetDatum(-1)));
 			XPUSHs(sv_2mortal(newSVpv(tmp, 0)));
 			pfree(tmp);
@@ -946,6 +1161,8 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 
 	plperl_current_prodesc = prodesc;
 
+	check_interp(prodesc->lanpltrusted);
+
 	/************************************************************
 	 * Call the Perl function if not returning set
 	 ************************************************************/
@@ -1009,7 +1226,7 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 			/* Cache a copy of the result's tupdesc and attinmeta */
 			oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 			tupdesc = get_function_tupdesc(prodesc->result_oid,
-										(ReturnSetInfo *) fcinfo->resultinfo);
+									   (ReturnSetInfo *) fcinfo->resultinfo);
 			tupdesc = CreateTupleDescCopy(tupdesc);
 			funcctx->attinmeta = TupleDescGetAttInMetadata(tupdesc);
 			MemoryContextSwitchTo(oldcontext);
@@ -1081,7 +1298,7 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 				fcinfo->isnull = false;
 				retval = FunctionCall3(&prodesc->result_in_func,
 									   PointerGetDatum(val),
-							ObjectIdGetDatum(prodesc->result_typioparam),
+								ObjectIdGetDatum(prodesc->result_typioparam),
 									   Int32GetDatum(-1));
 			}
 			else
@@ -1134,6 +1351,7 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 	}
 
 	SvREFCNT_dec(perlret);
+
 	return retval;
 }
 
@@ -1161,6 +1379,8 @@ plperl_trigger_handler(PG_FUNCTION_ARGS)
 	/************************************************************
 	* Call the Perl function
 	************************************************************/
+
+	check_interp(prodesc->lanpltrusted);
 
 	/*
 	 * call perl trigger function and build TD hash
@@ -1192,7 +1412,7 @@ plperl_trigger_handler(PG_FUNCTION_ARGS)
 		else if (TRIGGER_FIRED_BY_DELETE(trigdata->tg_event))
 			retval = (Datum) trigdata->tg_trigtuple;
 		else
-			retval = (Datum) 0;	/* can this happen? */
+			retval = (Datum) 0; /* can this happen? */
 	}
 	else
 	{
@@ -1217,7 +1437,7 @@ plperl_trigger_handler(PG_FUNCTION_ARGS)
 			{
 				ereport(WARNING,
 						(errcode(ERRCODE_E_R_I_E_TRIGGER_PROTOCOL_VIOLATED),
-						 errmsg("ignoring modified tuple in DELETE trigger")));
+					   errmsg("ignoring modified tuple in DELETE trigger")));
 				trv = NULL;
 			}
 		}
@@ -1250,7 +1470,9 @@ compile_plperl_function(Oid fn_oid, bool is_trigger)
 	int			proname_len;
 	plperl_proc_desc *prodesc = NULL;
 	int			i;
-	SV			**svp;
+	plperl_proc_entry *hash_entry;
+	bool		found;
+	bool		oldcontext = trusted_context;
 
 	/* We'll need the pg_proc tuple in any case... */
 	procTup = SearchSysCache(PROCOID,
@@ -1273,12 +1495,14 @@ compile_plperl_function(Oid fn_oid, bool is_trigger)
 	/************************************************************
 	 * Lookup the internal proc name in the hashtable
 	 ************************************************************/
-	svp = hv_fetch(plperl_proc_hash, internal_proname, proname_len, FALSE);
-	if (svp)
+	hash_entry = hash_search(plperl_proc_hash, internal_proname,
+							 HASH_FIND, NULL);
+
+	if (hash_entry)
 	{
 		bool		uptodate;
 
-		prodesc = (plperl_proc_desc *) SvIV(*svp);
+		prodesc = hash_entry->proc_data;
 
 		/************************************************************
 		 * If it's present, must check whether it's still up to date.
@@ -1286,11 +1510,20 @@ compile_plperl_function(Oid fn_oid, bool is_trigger)
 		 * function's pg_proc entry without changing its OID.
 		 ************************************************************/
 		uptodate = (prodesc->fn_xmin == HeapTupleHeaderGetXmin(procTup->t_data) &&
-			prodesc->fn_cmin == HeapTupleHeaderGetCmin(procTup->t_data));
+				prodesc->fn_cmin == HeapTupleHeaderGetCmin(procTup->t_data));
 
 		if (!uptodate)
 		{
-			/* need we delete old entry? */
+			hash_search(plperl_proc_hash, internal_proname,
+						HASH_REMOVE, NULL);
+			if (prodesc->reference)
+			{
+				check_interp(prodesc->lanpltrusted);
+				SvREFCNT_dec(prodesc->reference);
+				restore_context(oldcontext);
+			}
+			free(prodesc->proname);
+			free(prodesc);
 			prodesc = NULL;
 		}
 	}
@@ -1354,7 +1587,7 @@ compile_plperl_function(Oid fn_oid, bool is_trigger)
 		if (!is_trigger)
 		{
 			typeTup = SearchSysCache(TYPEOID,
-								ObjectIdGetDatum(procStruct->prorettype),
+									 ObjectIdGetDatum(procStruct->prorettype),
 									 0, 0, 0);
 			if (!HeapTupleIsValid(typeTup))
 			{
@@ -1385,8 +1618,8 @@ compile_plperl_function(Oid fn_oid, bool is_trigger)
 					free(prodesc);
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("plperl functions cannot return type %s",
-								format_type_be(procStruct->prorettype))));
+							 errmsg("plperl functions cannot return type %s",
+									format_type_be(procStruct->prorettype))));
 				}
 			}
 
@@ -1411,7 +1644,7 @@ compile_plperl_function(Oid fn_oid, bool is_trigger)
 			for (i = 0; i < prodesc->nargs; i++)
 			{
 				typeTup = SearchSysCache(TYPEOID,
-							ObjectIdGetDatum(procStruct->proargtypes[i]),
+								ObjectIdGetDatum(procStruct->proargtypes[i]),
 										 0, 0, 0);
 				if (!HeapTupleIsValid(typeTup))
 				{
@@ -1429,8 +1662,8 @@ compile_plperl_function(Oid fn_oid, bool is_trigger)
 					free(prodesc);
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						   errmsg("plperl functions cannot take type %s",
-						   format_type_be(procStruct->proargtypes[i]))));
+							 errmsg("plperl functions cannot take type %s",
+							   format_type_be(procStruct->proargtypes[i]))));
 				}
 
 				if (typeStruct->typtype == 'c')
@@ -1462,9 +1695,15 @@ compile_plperl_function(Oid fn_oid, bool is_trigger)
 		/************************************************************
 		 * Create the procedure in the interpreter
 		 ************************************************************/
+
+		check_interp(prodesc->lanpltrusted);
+
 		prodesc->reference = plperl_create_sub(proc_source, prodesc->lanpltrusted);
+
+		restore_context(oldcontext);
+
 		pfree(proc_source);
-		if (!prodesc->reference) /* can this happen? */
+		if (!prodesc->reference)	/* can this happen? */
 		{
 			free(prodesc->proname);
 			free(prodesc);
@@ -1475,8 +1714,9 @@ compile_plperl_function(Oid fn_oid, bool is_trigger)
 		/************************************************************
 		 * Add the proc description block to the hashtable
 		 ************************************************************/
-		hv_store(plperl_proc_hash, internal_proname, proname_len,
-				 newSViv((IV) prodesc), 0);
+		hash_entry = hash_search(plperl_proc_hash, internal_proname,
+								 HASH_ENTER, &found);
+		hash_entry->proc_data = prodesc;
 	}
 
 	ReleaseSysCache(procTup);
@@ -1515,9 +1755,10 @@ plperl_hash_from_tuple(HeapTuple tuple, TupleDesc tupdesc)
 		namelen = strlen(attname);
 		attr = heap_getattr(tuple, i + 1, tupdesc, &isnull);
 
-		if (isnull) {
+		if (isnull)
+		{
 			/* Store (attname => undef) and move on. */
-			hv_store(hv, attname, namelen, newSV(0), 0);
+			(void) hv_store(hv, attname, namelen, newSV(0), 0);
 			continue;
 		}
 
@@ -1528,10 +1769,10 @@ plperl_hash_from_tuple(HeapTuple tuple, TupleDesc tupdesc)
 
 		outputstr = DatumGetCString(OidFunctionCall3(typoutput,
 													 attr,
-											ObjectIdGetDatum(typioparam),
-						   Int32GetDatum(tupdesc->attrs[i]->atttypmod)));
+												ObjectIdGetDatum(typioparam),
+							   Int32GetDatum(tupdesc->attrs[i]->atttypmod)));
 
-		hv_store(hv, attname, namelen, newSVpv(outputstr, 0), 0);
+		(void) hv_store(hv, attname, namelen, newSVpv(outputstr, 0), 0);
 
 		pfree(outputstr);
 	}
@@ -1549,8 +1790,8 @@ plperl_spi_exec(char *query, int limit)
 	HV		   *ret_hv;
 
 	/*
-	 * Execute the query inside a sub-transaction, so we can cope with
-	 * errors sanely
+	 * Execute the query inside a sub-transaction, so we can cope with errors
+	 * sanely
 	 */
 	MemoryContext oldcontext = CurrentMemoryContext;
 	ResourceOwner oldowner = CurrentResourceOwner;
@@ -1572,9 +1813,10 @@ plperl_spi_exec(char *query, int limit)
 		ReleaseCurrentSubTransaction();
 		MemoryContextSwitchTo(oldcontext);
 		CurrentResourceOwner = oldowner;
+
 		/*
-		 * AtEOSubXact_SPI() should not have popped any SPI context,
-		 * but just in case it did, make sure we remain connected.
+		 * AtEOSubXact_SPI() should not have popped any SPI context, but just
+		 * in case it did, make sure we remain connected.
 		 */
 		SPI_restore_connection();
 	}
@@ -1593,9 +1835,9 @@ plperl_spi_exec(char *query, int limit)
 		CurrentResourceOwner = oldowner;
 
 		/*
-		 * If AtEOSubXact_SPI() popped any SPI context of the subxact,
-		 * it will have left us in a disconnected state.  We need this
-		 * hack to return to connected state.
+		 * If AtEOSubXact_SPI() popped any SPI context of the subxact, it will
+		 * have left us in a disconnected state.  We need this hack to return
+		 * to connected state.
 		 */
 		SPI_restore_connection();
 
@@ -1618,10 +1860,10 @@ plperl_spi_execute_fetch_result(SPITupleTable *tuptable, int processed,
 
 	result = newHV();
 
-	hv_store(result, "status", strlen("status"),
-			 newSVpv((char *) SPI_result_code_string(status), 0), 0);
-	hv_store(result, "processed", strlen("processed"),
-			 newSViv(processed), 0);
+	(void) hv_store(result, "status", strlen("status"),
+					newSVpv((char *) SPI_result_code_string(status), 0), 0);
+	(void) hv_store(result, "processed", strlen("processed"),
+					newSViv(processed), 0);
 
 	if (status == SPI_OK_SELECT)
 	{
@@ -1635,11 +1877,87 @@ plperl_spi_execute_fetch_result(SPITupleTable *tuptable, int processed,
 			row = plperl_hash_from_tuple(tuptable->vals[i], tuptable->tupdesc);
 			av_push(rows, row);
 		}
-		hv_store(result, "rows", strlen("rows"),
-				 newRV_noinc((SV *) rows), 0);
+		(void) hv_store(result, "rows", strlen("rows"),
+						newRV_noinc((SV *) rows), 0);
 	}
 
 	SPI_freetuptable(tuptable);
 
 	return result;
 }
+
+
+/*
+ * Perl's own setlocal() copied from POSIX.xs
+ * (needed because of the calls to new_*())
+ */
+#ifdef WIN32
+static char *
+setlocale_perl(int category, char *locale)
+{
+	char	   *RETVAL = setlocale(category, locale);
+
+	if (RETVAL)
+	{
+#ifdef USE_LOCALE_CTYPE
+		if (category == LC_CTYPE
+#ifdef LC_ALL
+			|| category == LC_ALL
+#endif
+			)
+		{
+			char	   *newctype;
+
+#ifdef LC_ALL
+			if (category == LC_ALL)
+				newctype = setlocale(LC_CTYPE, NULL);
+			else
+#endif
+				newctype = RETVAL;
+			new_ctype(newctype);
+		}
+#endif   /* USE_LOCALE_CTYPE */
+#ifdef USE_LOCALE_COLLATE
+		if (category == LC_COLLATE
+#ifdef LC_ALL
+			|| category == LC_ALL
+#endif
+			)
+		{
+			char	   *newcoll;
+
+#ifdef LC_ALL
+			if (category == LC_ALL)
+				newcoll = setlocale(LC_COLLATE, NULL);
+			else
+#endif
+				newcoll = RETVAL;
+			new_collate(newcoll);
+		}
+#endif   /* USE_LOCALE_COLLATE */
+
+
+#ifdef USE_LOCALE_NUMERIC
+		if (category == LC_NUMERIC
+#ifdef LC_ALL
+			|| category == LC_ALL
+#endif
+			)
+		{
+			char	   *newnum;
+
+#ifdef LC_ALL
+			if (category == LC_ALL)
+				newnum = setlocale(LC_NUMERIC, NULL);
+			else
+#endif
+				newnum = RETVAL;
+			new_numeric(newnum);
+		}
+#endif   /* USE_LOCALE_NUMERIC */
+	}
+
+	return RETVAL;
+}
+
+#endif

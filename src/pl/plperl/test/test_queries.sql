@@ -211,3 +211,11 @@ $$ LANGUAGE plperl;
 SELECT perl_get_field((11,12), 'x');
 SELECT perl_get_field((11,12), 'y');
 SELECT perl_get_field((11,12), 'z');
+
+--
+-- Test detection of unsafe operations
+CREATE OR REPLACE FUNCTION perl_unsafe1() RETURNS void AS $$
+      my $fd = fileno STDERR;
+$$ LANGUAGE plperl;
+select perl_unsafe1();
+
