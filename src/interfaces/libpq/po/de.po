@@ -1,7 +1,7 @@
 # German message translation file for libpq
 # Peter Eisentraut <peter_e@gmx.net>, 2001, 2002, 2003, 2004.
 #
-# $PostgreSQL: pgsql/src/interfaces/libpq/po/de.po,v 1.8.4.2 2008/10/30 19:21:26 petere Exp $
+# $PostgreSQL: pgsql/src/interfaces/libpq/po/de.po,v 1.8.4.3 2010/05/13 07:11:54 petere Exp $
 #
 # Use these quotes: »%s«
 #
@@ -9,8 +9,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2007-01-06 03:23-0400\n"
-"PO-Revision-Date: 2007-01-06 18:42+0100\n"
+"POT-Creation-Date: 2009-12-18 00:36+0000\n"
+"PO-Revision-Date: 2009-12-19 10:13+0200\n"
 "Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language-Team: German <peter_e@gmx.net>\n"
 "MIME-Version: 1.0\n"
@@ -44,7 +44,7 @@ msgid "SCM_CRED authentication method not supported\n"
 msgstr "SCM_CRED-Authentifizierungsmethode nicht unterstützt\n"
 
 #: fe-auth.c:538 fe-connect.c:1427 fe-connect.c:2671 fe-connect.c:2680
-#: fe-exec.c:2514 fe-lobj.c:556 fe-protocol2.c:1007 fe-protocol3.c:958
+#: fe-exec.c:2514 fe-lobj.c:556 fe-protocol2.c:1007 fe-protocol3.c:1027
 msgid "out of memory\n"
 msgstr "Speicher aufgebraucht\n"
 
@@ -255,7 +255,7 @@ msgid "COPY OUT state must be terminated first\n"
 msgstr "COPY-OUT-Zustand muss erst beendet werden\n"
 
 #: fe-exec.c:1481 fe-exec.c:1546 fe-exec.c:1631 fe-protocol2.c:1153
-#: fe-protocol3.c:1115
+#: fe-protocol3.c:1163
 msgid "no COPY in progress\n"
 msgstr "keine COPY in Ausführung\n"
 
@@ -429,8 +429,8 @@ msgid ""
 "server sent binary data (\"B\" message) without prior row description (\"T\" "
 "message)"
 msgstr ""
-"Server sendete binäre Daten (»B«-Nachricht) ohne vorherige "
-"Zeilenbeschreibung (»T«-Nachricht)"
+"Server sendete binäre Daten (»B«-Nachricht) ohne vorherige Zeilenbeschreibung "
+"(»T«-Nachricht)"
 
 #: fe-protocol2.c:548 fe-protocol3.c:344
 #, c-format
@@ -441,7 +441,7 @@ msgstr "unerwartete Antwort vom Server; erstes empfangenes Zeichen war »%c«\n"
 msgid "out of memory for query result\n"
 msgstr "Speicher für Anfrageergebnis aufgebraucht\n"
 
-#: fe-protocol2.c:1196 fe-protocol3.c:1184
+#: fe-protocol2.c:1196 fe-protocol3.c:1232
 #, c-format
 msgid "%s"
 msgstr "%s"
@@ -450,7 +450,7 @@ msgstr "%s"
 msgid "lost synchronization with server, resetting connection"
 msgstr "Synchronisation mit Server verloren, Verbindung wird zurückgesetzt"
 
-#: fe-protocol2.c:1343 fe-protocol2.c:1375 fe-protocol3.c:1387
+#: fe-protocol2.c:1343 fe-protocol2.c:1375 fe-protocol3.c:1435
 #, c-format
 msgid "protocol error: id=0x%x\n"
 msgstr "Protokollfehler: id=0x%x\n"
@@ -519,7 +519,7 @@ msgstr "%s, "
 msgid "%s:%s"
 msgstr "%s:%s"
 
-#: fe-protocol3.c:1000
+#: fe-protocol3.c:1059
 msgid "PQgetline: not doing text COPY OUT\n"
 msgstr "PQgetline: Text COPY OUT nicht ausgeführt\n"
 
@@ -634,3 +634,7 @@ msgstr "Zertifikat konnte nicht validiert werden: %s\n"
 #, c-format
 msgid "certificate could not be obtained: %s\n"
 msgstr "Zertifikat konnte nicht ermittelt werden: %s\n"
+
+#: fe-secure.c:1141
+msgid "SSL certificate's common name contains embedded null\n"
+msgstr "Common-Name im SSL-Zertifikat enthält Null-Byte\n"
