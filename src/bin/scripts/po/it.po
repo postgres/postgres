@@ -15,7 +15,7 @@
 #  * Primo traduttore: Fabrizio Mazzoni <veramente@libero.it>, 2003.
 #  * Secondo traduttore: Mirko Tebaldi <mirko.tebaldi@libero.it>, 2004.
 #
-# Copyright (c) 2009, Associazione Culturale ITPUG
+# Copyright (c) 2010, Associazione Culturale ITPUG
 # Distributed under the same license of the PostgreSQL project
 #
 # Italian message translation file for pgscripts
@@ -26,8 +26,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.4\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2009-07-17 03:08+0000\n"
-"PO-Revision-Date: 2009-07-17 10:15:44+0200\n"
+"POT-Creation-Date: 2010-03-26 13:16+0000\n"
+"PO-Revision-Date: 2010-03-27 12:44:19+0100\n"
 "Last-Translator: Gabriele Bartolini <gabriele.bartolini@2ndquadrant.it>\n"
 "Language-Team: Gruppo traduzioni ITPUG <traduzioni@itpug.org>\n"
 "MIME-Version: 1.0\n"
@@ -54,8 +54,8 @@ msgstr ""
 #: dropuser.c:98
 #: clusterdb.c:104
 #: clusterdb.c:119
-#: vacuumdb.c:121
-#: vacuumdb.c:136
+#: vacuumdb.c:127
+#: vacuumdb.c:142
 #: reindexdb.c:114
 #: reindexdb.c:128
 #, c-format
@@ -69,7 +69,7 @@ msgstr "Prova \"%s --help\" per avere più informazioni.\n"
 #: droplang.c:119
 #: dropuser.c:96
 #: clusterdb.c:117
-#: vacuumdb.c:134
+#: vacuumdb.c:140
 #: reindexdb.c:127
 #, c-format
 msgid "%s: too many command-line arguments (first is \"%s\")\n"
@@ -113,10 +113,10 @@ msgstr ""
 #: createlang.c:215
 #: createuser.c:300
 #: dropdb.c:140
-#: droplang.c:332
+#: droplang.c:374
 #: dropuser.c:139
 #: clusterdb.c:236
-#: vacuumdb.c:262
+#: vacuumdb.c:328
 #: reindexdb.c:313
 #, c-format
 msgid "Usage:\n"
@@ -131,10 +131,10 @@ msgstr "  %s [OPZIONE]... [NOME_DB] [DESCRIZIONE]\n"
 #: createlang.c:217
 #: createuser.c:302
 #: dropdb.c:142
-#: droplang.c:334
+#: droplang.c:376
 #: dropuser.c:141
 #: clusterdb.c:238
-#: vacuumdb.c:264
+#: vacuumdb.c:330
 #: reindexdb.c:315
 #, c-format
 msgid ""
@@ -198,10 +198,10 @@ msgstr "  --version                       mostra informazioni sulla versione e p
 #: createlang.c:223
 #: createuser.c:321
 #: dropdb.c:147
-#: droplang.c:340
+#: droplang.c:382
 #: dropuser.c:146
 #: clusterdb.c:247
-#: vacuumdb.c:276
+#: vacuumdb.c:343
 #: reindexdb.c:325
 #, c-format
 msgid ""
@@ -249,10 +249,10 @@ msgstr ""
 #: createlang.c:229
 #: createuser.c:329
 #: dropdb.c:153
-#: droplang.c:346
+#: droplang.c:388
 #: dropuser.c:152
 #: clusterdb.c:254
-#: vacuumdb.c:283
+#: vacuumdb.c:350
 #: reindexdb.c:332
 #, c-format
 msgid ""
@@ -313,7 +313,7 @@ msgstr ""
 "\n"
 
 #: createlang.c:216
-#: droplang.c:333
+#: droplang.c:375
 #, c-format
 msgid "  %s [OPTION]... LANGNAME [DBNAME]\n"
 msgstr "  %s [OPZIONE]... NOME_LINGUAGGIO [NOME_DB]\n"
@@ -326,7 +326,7 @@ msgstr "  -d, --dbname=NOME_DB      database in cui installare il linguaggio\n"
 #: createlang.c:219
 #: createuser.c:306
 #: dropdb.c:143
-#: droplang.c:336
+#: droplang.c:378
 #: dropuser.c:142
 #: clusterdb.c:241
 #: reindexdb.c:318
@@ -335,7 +335,7 @@ msgid "  -e, --echo                show the commands being sent to the server\n"
 msgstr "  -e, --echo                mostra i comandi inviati al server\n"
 
 #: createlang.c:220
-#: droplang.c:337
+#: droplang.c:379
 #, c-format
 msgid "  -l, --list                show a list of currently installed languages\n"
 msgstr "  -l, --list                mostra la lista dei linguaggi attualmente installati\n"
@@ -343,7 +343,7 @@ msgstr "  -l, --list                mostra la lista dei linguaggi attualmente in
 #: createlang.c:221
 #: createuser.c:319
 #: dropdb.c:145
-#: droplang.c:338
+#: droplang.c:380
 #: dropuser.c:144
 #: clusterdb.c:245
 #: reindexdb.c:323
@@ -354,7 +354,7 @@ msgstr "  --help                    mostra questo aiuto e poi esci\n"
 #: createlang.c:222
 #: createuser.c:320
 #: dropdb.c:146
-#: droplang.c:339
+#: droplang.c:381
 #: dropuser.c:145
 #: clusterdb.c:246
 #: reindexdb.c:324
@@ -365,10 +365,10 @@ msgstr "  --version                 mostra informazioni sulla versione, poi esci
 #: createlang.c:224
 #: createuser.c:322
 #: dropdb.c:148
-#: droplang.c:341
+#: droplang.c:383
 #: dropuser.c:147
 #: clusterdb.c:248
-#: vacuumdb.c:277
+#: vacuumdb.c:344
 #: reindexdb.c:326
 #, c-format
 msgid "  -h, --host=HOSTNAME       database server host or socket directory\n"
@@ -377,10 +377,10 @@ msgstr "  -h, --host=NOME_HOST      indirizzo database o directory socket\n"
 #: createlang.c:225
 #: createuser.c:323
 #: dropdb.c:149
-#: droplang.c:342
+#: droplang.c:384
 #: dropuser.c:148
 #: clusterdb.c:249
-#: vacuumdb.c:278
+#: vacuumdb.c:345
 #: reindexdb.c:327
 #, c-format
 msgid "  -p, --port=PORT           database server port\n"
@@ -388,9 +388,9 @@ msgstr "  -p, --port=PORTA          porta del server database\n"
 
 #: createlang.c:226
 #: dropdb.c:150
-#: droplang.c:343
+#: droplang.c:385
 #: clusterdb.c:250
-#: vacuumdb.c:279
+#: vacuumdb.c:346
 #: reindexdb.c:328
 #, c-format
 msgid "  -U, --username=USERNAME   user name to connect as\n"
@@ -399,10 +399,10 @@ msgstr "  -U, --username=UTENTE     nome utente da utilizzare per la connessione
 #: createlang.c:227
 #: createuser.c:325
 #: dropdb.c:151
-#: droplang.c:344
+#: droplang.c:386
 #: dropuser.c:150
 #: clusterdb.c:251
-#: vacuumdb.c:280
+#: vacuumdb.c:347
 #: reindexdb.c:329
 #, c-format
 msgid "  -w, --no-password         never prompt for password\n"
@@ -411,10 +411,10 @@ msgstr "  -w, --no-password         non richiedere mai una password\n"
 #: createlang.c:228
 #: createuser.c:326
 #: dropdb.c:152
-#: droplang.c:345
+#: droplang.c:387
 #: dropuser.c:151
 #: clusterdb.c:252
-#: vacuumdb.c:281
+#: vacuumdb.c:348
 #: reindexdb.c:330
 #, c-format
 msgid "  -W, --password            force password prompt\n"
@@ -608,17 +608,17 @@ msgstr "  -i, --interactive         chiedi conferma prima di eseguire un operazi
 msgid "%s: language \"%s\" is not installed in database \"%s\"\n"
 msgstr "%s: linguaggio \"%s\" non installato nel database \"%s\"\n"
 
-#: droplang.c:223
+#: droplang.c:224
 #, c-format
 msgid "%s: still %s functions declared in language \"%s\"; language not removed\n"
 msgstr "%s: ancora %s funzioni dichiarate nel linguaggio \"%s\"; linguaggio non eliminato\n"
 
-#: droplang.c:316
+#: droplang.c:358
 #, c-format
 msgid "%s: language removal failed: %s"
 msgstr "%s: eliminazione linguaggio fallita: %s"
 
-#: droplang.c:331
+#: droplang.c:373
 #, c-format
 msgid ""
 "%s removes a procedural language from a database.\n"
@@ -627,7 +627,7 @@ msgstr ""
 "%s elimina un linguaggio procedurale da un database.\n"
 "\n"
 
-#: droplang.c:335
+#: droplang.c:377
 #, c-format
 msgid "  -d, --dbname=DBNAME       database from which to remove the language\n"
 msgstr "  -d, --dbname=NOME_DB      database dal quale eliminare il linguaggio\n"
@@ -695,7 +695,7 @@ msgstr ""
 "\n"
 
 #: clusterdb.c:237
-#: vacuumdb.c:263
+#: vacuumdb.c:329
 #: reindexdb.c:314
 #, c-format
 msgid "  %s [OPTION]... [DBNAME]\n"
@@ -736,32 +736,42 @@ msgstr ""
 "\n"
 "Consulta la descrizione del comando SQL CLUSTER per maggiori informazioni.\n"
 
-#: vacuumdb.c:146
+#: vacuumdb.c:150
+#, c-format
+msgid "%s: cannot use the \"full\" option when performing only analyze\n"
+msgstr ""
+
+#: vacuumdb.c:156
+#, c-format
+msgid "%s: cannot use the \"freeze\" option when performing only analyze\n"
+msgstr ""
+
+#: vacuumdb.c:169
 #, c-format
 msgid "%s: cannot vacuum all databases and a specific one at the same time\n"
 msgstr "%s: impossibile effettuare la pulizia di tutti i database e di uno in particolare nello stesso momento\n"
 
-#: vacuumdb.c:152
+#: vacuumdb.c:175
 #, c-format
 msgid "%s: cannot vacuum a specific table in all databases\n"
 msgstr "%s: impossibile effettuare la pulizia di una tabella specifica in tutti i database\n"
 
-#: vacuumdb.c:212
+#: vacuumdb.c:278
 #, c-format
 msgid "%s: vacuuming of table \"%s\" in database \"%s\" failed: %s"
 msgstr "%s: la pulizia della tabella \"%s\" nel database \"%s\" è fallito: %s"
 
-#: vacuumdb.c:215
+#: vacuumdb.c:281
 #, c-format
 msgid "%s: vacuuming of database \"%s\" failed: %s"
 msgstr "%s: la pulizia del database \"%s\" è fallito: %s"
 
-#: vacuumdb.c:245
+#: vacuumdb.c:311
 #, c-format
 msgid "%s: vacuuming database \"%s\"\n"
 msgstr "%s: pulizia del database \"%s\"\n"
 
-#: vacuumdb.c:261
+#: vacuumdb.c:327
 #, c-format
 msgid ""
 "%s cleans and analyzes a PostgreSQL database.\n"
@@ -770,62 +780,67 @@ msgstr ""
 "%s pulisce ed analizza un database PostgreSQL.\n"
 "\n"
 
-#: vacuumdb.c:265
+#: vacuumdb.c:331
 #, c-format
 msgid "  -a, --all                       vacuum all databases\n"
 msgstr "  -a, --all                       pulisci tutti i database\n"
 
-#: vacuumdb.c:266
+#: vacuumdb.c:332
 #, c-format
 msgid "  -d, --dbname=DBNAME             database to vacuum\n"
 msgstr "  -d, --dbname=NOME_DB             database da pulire\n"
 
-#: vacuumdb.c:267
+#: vacuumdb.c:333
 #, c-format
 msgid "  -e, --echo                      show the commands being sent to the server\n"
 msgstr "  -e, --echo                      mostra i comandi inviati al server\n"
 
-#: vacuumdb.c:268
+#: vacuumdb.c:334
 #, c-format
 msgid "  -f, --full                      do full vacuuming\n"
 msgstr "  -f, --full                      esegui una pulizia completa\n"
 
-#: vacuumdb.c:269
+#: vacuumdb.c:335
 #, c-format
 msgid "  -F, --freeze                    freeze row transaction information\n"
 msgstr "  -F, --freeze                    congela le informazioni per la transazione sulla riga\n"
 
-#: vacuumdb.c:270
+#: vacuumdb.c:336
 #, c-format
 msgid "  -q, --quiet                     don't write any messages\n"
 msgstr "  -q, --quiet                     non stampare alcun messaggio\n"
 
-#: vacuumdb.c:271
+#: vacuumdb.c:337
 #, c-format
 msgid "  -t, --table='TABLE[(COLUMNS)]'  vacuum specific table only\n"
 msgstr "  -t, --table='TABELLA[(COLONNE)]'  pulisci solamente una tabella specifica\n"
 
-#: vacuumdb.c:272
+#: vacuumdb.c:338
 #, c-format
 msgid "  -v, --verbose                   write a lot of output\n"
 msgstr "  -v, --verbose                   mostra molti messaggi\n"
 
-#: vacuumdb.c:273
+#: vacuumdb.c:339
 #, c-format
-msgid "  -z, --analyze                   update optimizer hints\n"
-msgstr "  -z, --analyze                   aggiorna i suggerimenti per l'ottimizzazione\n"
+msgid "  -z, --analyze                   update optimizer statistics\n"
+msgstr "  -z, --analyze                   aggiorna le statistiche per l'ottimizzatore\n"
 
-#: vacuumdb.c:274
+#: vacuumdb.c:340
+#, c-format
+msgid "  -Z, --analyze-only              only update optimizer statistics\n"
+msgstr "  -z, --analyze-only              aggiorna soltanto le statistiche per l'ottimizzatore\n"
+
+#: vacuumdb.c:341
 #, c-format
 msgid "  --help                          show this help, then exit\n"
 msgstr "  --help                          mostra questi aiuti ed esci\n"
 
-#: vacuumdb.c:275
+#: vacuumdb.c:342
 #, c-format
 msgid "  --version                       output version information, then exit\n"
 msgstr "  --version                       mostra informazioni sulla versione e poi esci\n"
 
-#: vacuumdb.c:282
+#: vacuumdb.c:349
 #, c-format
 msgid ""
 "\n"
@@ -943,70 +958,75 @@ msgid "%s: could not get current user name: %s\n"
 msgstr "%s: impossibile determinare il nome utente: %s\n"
 
 #: common.c:103
-#: common.c:127
+#: common.c:155
 msgid "Password: "
 msgstr "Password: "
 
-#: common.c:116
+#: common.c:117
+#, c-format
+msgid "%s: out of memory\n"
+msgstr "%s: memoria esaurita\n"
+
+#: common.c:144
 #, c-format
 msgid "%s: could not connect to database %s\n"
 msgstr "%s: impossibile connettersi al database %s\n"
 
-#: common.c:138
+#: common.c:166
 #, c-format
 msgid "%s: could not connect to database %s: %s"
 msgstr "%s: impossibile connettersi al database %s: %s"
 
-#: common.c:162
 #: common.c:190
+#: common.c:218
 #, c-format
 msgid "%s: query failed: %s"
 msgstr "%s: query fallita: %s"
 
-#: common.c:164
 #: common.c:192
+#: common.c:220
 #, c-format
 msgid "%s: query was: %s\n"
 msgstr "%s: query eseguita: %s\n"
 
-#: common.c:238
+#: common.c:266
 #, c-format
 msgid "pg_strdup: cannot duplicate null pointer (internal error)\n"
 msgstr "pg_strdup: impossibile duplicare un  puntatore nullo (errore interno)\n"
 
-#: common.c:244
+#: common.c:272
 #, c-format
 msgid "out of memory\n"
 msgstr "memoria esaurita\n"
 
 #. translator: abbreviation for "yes"
-#: common.c:255
+#: common.c:283
 msgid "y"
 msgstr "s"
 
 #. translator: abbreviation for "no"
-#: common.c:257
+#: common.c:285
 msgid "n"
 msgstr "n"
 
-#: common.c:268
+#: common.c:296
 #, c-format
 msgid "%s (%s/%s) "
 msgstr "%s (%s/%s) "
 
-#: common.c:289
+#: common.c:317
 #, c-format
 msgid "Please answer \"%s\" or \"%s\".\n"
 msgstr "Prego rispondere \"%s\" o \"%s\".\n"
 
-#: common.c:367
-#: common.c:400
+#: common.c:395
+#: common.c:428
 #, c-format
 msgid "Cancel request sent\n"
 msgstr "Cancella la richiesta spedita\n"
 
-#: common.c:369
-#: common.c:402
+#: common.c:397
+#: common.c:430
 #, c-format
 msgid "Could not send cancel request: %s"
 msgstr "Impossibile mandare la richiesta di cancellazione: %s"

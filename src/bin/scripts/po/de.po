@@ -1,7 +1,7 @@
 # German message translation file for "scripts".
 # Peter Eisentraut <peter_e@gmx.net>, 2003 - 2010.
 #
-# pgtranslation Id: pgscripts.po,v 1.10 2010/02/18 19:01:40 petere Exp $
+# pgtranslation Id: pgscripts.po,v 1.11 2010/03/17 21:33:45 petere Exp $
 #
 # Use these quotes: »%s«
 #
@@ -9,8 +9,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9.0\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2010-02-18 13:15+0000\n"
-"PO-Revision-Date: 2010-02-18 18:05+0200\n"
+"POT-Creation-Date: 2010-03-17 19:16+0000\n"
+"PO-Revision-Date: 2010-03-17 23:33+0200\n"
 "Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language-Team: German <peter_e@gmx.net>\n"
 "MIME-Version: 1.0\n"
@@ -657,12 +657,14 @@ msgstr ""
 #: vacuumdb.c:150
 #, c-format
 msgid "%s: cannot use the \"full\" option when performing only analyze\n"
-msgstr "%s: kann Option »full« nicht verwenden, wenn nur Analyze durchgeführt wird\n"
+msgstr ""
+"%s: kann Option »full« nicht verwenden, wenn nur Analyze durchgeführt wird\n"
 
 #: vacuumdb.c:156
 #, c-format
 msgid "%s: cannot use the \"freeze\" option when performing only analyze\n"
-msgstr "%s: kann Option »freeze« nicht verwenden, wenn nur Analyze durchgeführt wird\n"
+msgstr ""
+"%s: kann Option »freeze« nicht verwenden, wenn nur Analyze durchgeführt wird\n"
 
 #: vacuumdb.c:169
 #, c-format
@@ -751,14 +753,13 @@ msgstr "  -v, --verbose                   erzeuge viele Meldungen\n"
 
 #: vacuumdb.c:339
 #, c-format
-msgid "  -z, --analyze                   update optimizer hints\n"
-msgstr ""
-"  -z, --analyze                   aktualisiere Hinweise für den Optimierer\n"
+msgid "  -z, --analyze                   update optimizer statistics\n"
+msgstr "  -z, --analyze                   aktualisiere Statistiken für den Optimierer\n"
 
 #: vacuumdb.c:340
 #, c-format
-msgid "  -Z, --analyze-only              only update optimizer hints\n"
-msgstr "  -Z, --analyze-only              aktualisiere nur Hinweise für den Optimierer\n"
+msgid "  -Z, --analyze-only              only update optimizer statistics\n"
+msgstr "  -Z, --analyze-only              aktualisiere nur Statistiken für den Optimierer\n"
 
 #: vacuumdb.c:341
 #, c-format

@@ -15,19 +15,19 @@
 # Traduttori precedenti:
 #  * Mirko Tebaldi <mirko.tebaldi@libero.it>, 2004.
 #
-# Copyright (c) 2009, Associazione Culturale ITPUG
+# Copyright (c) 2010, Associazione Culturale ITPUG
 # Distributed under the same license of the PostgreSQL project
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.4\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2009-07-11 05:55+0000\n"
-"PO-Revision-Date: 2009-07-18 03:26:28+0200\n"
+"POT-Creation-Date: 2010-03-26 13:16+0000\n"
+"PO-Revision-Date: 2010-03-27 12:44:19+0100\n"
 "Last-Translator: Gabriele Bartolini <gabriele.bartolini@2ndquadrant.it>\n"
 "Language-Team: Gruppo traduzioni ITPUG <traduzioni@itpug.org>\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=utf-8\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "X-Poedit-Language: Italian\n"
 "X-Poedit-Country: ITALY\n"
@@ -218,95 +218,118 @@ msgstr "Ultimo NextMultiOffset checkpoint:  %u\n"
 
 #: pg_controldata.c:195
 #, c-format
+msgid "Latest checkpoint's oldestXID:        %u\n"
+msgstr "oldestXID dell'ultimo checkpoint:            %u\n"
+
+#: pg_controldata.c:197
+#, c-format
+msgid "Latest checkpoint's oldestXID's DB:   %u\n"
+msgstr "Database di oldestXID dell'ultimo checkpoint:            %u\n"
+
+#: pg_controldata.c:199
+#, c-format
+msgid "Latest checkpoint's oldestActiveXID:  %u\n"
+msgstr "oldestActiveXID dell'ultimo checkpoint:  %u\n"
+
+#: pg_controldata.c:201
+#, c-format
 msgid "Time of latest checkpoint:            %s\n"
 msgstr "Orario ultimo checkpoint:             %s\n"
 
-#: pg_controldata.c:197
+#: pg_controldata.c:203
 #, c-format
 msgid "Minimum recovery ending location:     %X/%X\n"
 msgstr "locazione del minimum recovery ending:      %X/%X\n"
 
-#: pg_controldata.c:200
+#: pg_controldata.c:206
+#, c-format
+msgid "Backup start location:                %X/%X\n"
+msgstr "Locazione dell'inizio del backup: %X/%X\n"
+
+#: pg_controldata.c:209
 #, c-format
 msgid "Maximum data alignment:               %u\n"
 msgstr "Massimo allineamento per i dati:         %u\n"
 
-#: pg_controldata.c:203
+#: pg_controldata.c:212
 #, c-format
 msgid "Database block size:                  %u\n"
 msgstr "Dimensione blocco database:           %u\n"
 
-#: pg_controldata.c:205
+#: pg_controldata.c:214
 #, c-format
 msgid "Blocks per segment of large relation: %u\n"
 msgstr "Blocchi per segmento grandi relaz.:   %u\n"
 
-#: pg_controldata.c:207
+#: pg_controldata.c:216
 #, c-format
 msgid "WAL block size:                       %u\n"
 msgstr "Dimensione blocco WAL:           %u\n"
 
-#: pg_controldata.c:209
+#: pg_controldata.c:218
 #, c-format
 msgid "Bytes per WAL segment:                %u\n"
 msgstr "Byte per segmento WAL:                %u\n"
 
-#: pg_controldata.c:211
+#: pg_controldata.c:220
 #, c-format
 msgid "Maximum length of identifiers:        %u\n"
 msgstr "Massima lunghezza identificatori:     %u\n"
 
-#: pg_controldata.c:213
+#: pg_controldata.c:222
 #, c-format
 msgid "Maximum columns in an index:          %u\n"
 msgstr "Massimo numero di colonne in un indice:   %u\n"
 
-#: pg_controldata.c:215
+#: pg_controldata.c:224
 #, c-format
 msgid "Maximum size of a TOAST chunk:        %u\n"
 msgstr "Massima dimensione di un segmento TOAST:   %u\n"
 
-#: pg_controldata.c:217
+#: pg_controldata.c:226
 #, c-format
 msgid "Date/time type storage:               %s\n"
 msgstr "Memorizzazione tipi Data/ora:         %s\n"
 
-#: pg_controldata.c:218
+#: pg_controldata.c:227
 msgid "64-bit integers"
 msgstr "Interi a 64-bit"
 
-#: pg_controldata.c:218
+#: pg_controldata.c:227
 msgid "floating-point numbers"
 msgstr "numeri in virgola mobile"
 
-#: pg_controldata.c:219
+#: pg_controldata.c:228
 #, c-format
 msgid "Float4 argument passing:              %s\n"
 msgstr "Passaggio di argomento Float4:         %s\n"
 
-#: pg_controldata.c:220
-#: pg_controldata.c:222
+#: pg_controldata.c:229
+#: pg_controldata.c:231
 msgid "by value"
 msgstr "per valore"
 
-#: pg_controldata.c:220
-#: pg_controldata.c:222
+#: pg_controldata.c:229
+#: pg_controldata.c:231
 msgid "by reference"
 msgstr "per riferimento"
 
-#: pg_controldata.c:221
+#: pg_controldata.c:230
 #, c-format
 msgid "Float8 argument passing:              %s\n"
 msgstr "Passaggio di argomento Float8:         %s\n"
 
 #~ msgid "Current log file ID:                  %u\n"
 #~ msgstr "Id corrente file di log:              %u\n"
+
 #~ msgid "Latest checkpoint's UNDO location:    %X/%X\n"
 #~ msgstr "Ultima posizione UNDO checkpoint:     %X/%X\n"
+
 #~ msgid "Maximum number of function arguments: %u\n"
 #~ msgstr "N° massimo di argomenti per funzione: %u\n"
+
 #~ msgid "LC_COLLATE:                           %s\n"
 #~ msgstr "LC_COLLATE:                           %s\n"
+
 #~ msgid "LC_CTYPE:                             %s\n"
 #~ msgstr "LC_CTYPE:                             %s\n"
-

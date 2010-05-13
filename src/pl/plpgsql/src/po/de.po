@@ -11,8 +11,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9.0\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2010-02-18 13:14+0000\n"
-"PO-Revision-Date: 2010-02-18 20:59+0200\n"
+"POT-Creation-Date: 2010-03-17 19:15+0000\n"
+"PO-Revision-Date: 2010-03-17 23:22+0200\n"
 "Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language-Team: German <peter_e@gmx.net>\n"
 "MIME-Version: 1.0\n"
@@ -65,7 +65,9 @@ msgstr "Spaltenverweis »%s« ist nicht eindeutig"
 
 #: pl_comp.c:980
 msgid "It could refer to either a PL/pgSQL variable or a table column."
-msgstr "Er könnte sich entweder auf eine PL/pgSQL-Variable oder eine Tabellenspalte beziehen."
+msgstr ""
+"Er könnte sich entweder auf eine PL/pgSQL-Variable oder eine Tabellenspalte "
+"beziehen."
 
 #: pl_comp.c:1690
 #, c-format
@@ -246,7 +248,7 @@ msgstr "einem Cursor ohne Argumente wurden Argumente übergeben"
 msgid "arguments required for cursor"
 msgstr "Cursor benötigt Argumente"
 
-#: pl_exec.c:2182 gram.y:2725
+#: pl_exec.c:2182 gram.y:2729
 msgid "cannot use RETURN NEXT in a non-SETOF function"
 msgstr ""
 "RETURN NEXT kann nur in einer Funktion mit SETOF-Rückgabetyp verwendet werden"
@@ -274,7 +276,7 @@ msgstr "falscher Record-Typ angegeben in RETURN NEXT"
 msgid "RETURN NEXT must have a parameter"
 msgstr "RETURN NEXT muss einen Parameter haben"
 
-#: pl_exec.c:2326 gram.y:2784
+#: pl_exec.c:2326 gram.y:2788
 msgid "cannot use RETURN QUERY in a non-SETOF function"
 msgstr ""
 "RETURN QUERY kann nur in einer Funktion mit SETOF-Rückgabetyp verwendet "
@@ -341,7 +343,7 @@ msgstr ""
 "Wenn Sie die Ergebnisse eines SELECT verwerfen wollen, verwenden Sie "
 "stattdessen PERFORM."
 
-#: pl_exec.c:2971 pl_exec.c:5527
+#: pl_exec.c:2971 pl_exec.c:5528
 msgid "query string argument of EXECUTE is null"
 msgstr "Anfrageargument von EXECUTE ist NULL"
 
@@ -422,38 +424,42 @@ msgstr[1] "Anfrage »%s« hat %d Spalten zurückgegeben"
 msgid "query \"%s\" is not a SELECT"
 msgstr "Anfrage »%s« ist kein SELECT"
 
-#: gram.y:437
+#: gram.y:423
+msgid "block label must be placed before DECLARE, not after"
+msgstr "Blocklabel muss vor DECLARE stehen, nicht danach"
+
+#: gram.y:441
 msgid "row or record variable cannot be CONSTANT"
 msgstr "Zeilen- oder Record-Variable kann nicht CONSTANT sein"
 
-#: gram.y:447
+#: gram.y:451
 msgid "row or record variable cannot be NOT NULL"
 msgstr "Zeilen- oder Record-Variable kann nicht NOT NULL sein"
 
-#: gram.y:458
+#: gram.y:462
 msgid "default value for row or record variable is not supported"
 msgstr ""
 "Vorgabewerte werden für Zeilen- oder Record-Variablen nicht unterstützt"
 
-#: gram.y:602 gram.y:628
+#: gram.y:606 gram.y:632
 #, c-format
 msgid "variable \"%s\" does not exist"
 msgstr "Variable »%s« existiert nicht"
 
-#: gram.y:646 gram.y:659
+#: gram.y:650 gram.y:663
 msgid "duplicate declaration"
 msgstr "doppelte Deklaration"
 
-#: gram.y:837
+#: gram.y:841
 msgid "unrecognized GET DIAGNOSTICS item"
 msgstr "unbekanntes Element in GET DIAGNOSTICS"
 
-#: gram.y:848 gram.y:2950
+#: gram.y:852 gram.y:2975
 #, c-format
 msgid "\"%s\" is not a scalar variable"
 msgstr "»%s« ist keine skalare Variable"
 
-#: gram.y:1110 gram.y:1302
+#: gram.y:1114 gram.y:1306
 msgid ""
 "loop variable of loop over rows must be a record or row variable or list of "
 "scalar variables"
@@ -461,171 +467,176 @@ msgstr ""
 "Schleifenvariable einer Schleife über Zeilen muss eine Record-Variable oder "
 "Zeilenvariable oder eine Liste von skalaren Variablen sein"
 
-#: gram.y:1144
+#: gram.y:1148
 msgid "cursor FOR loop must have only one target variable"
 msgstr "Cursor-FOR-Schleife darf nur eine Zielvariable haben"
 
-#: gram.y:1151
+#: gram.y:1155
 msgid "cursor FOR loop must use a bound cursor variable"
 msgstr "Cursor-FOR-Schleife muss eine gebundene Cursor-Variable verwenden"
 
-#: gram.y:1234
+#: gram.y:1238
 msgid "integer FOR loop must have only one target variable"
 msgstr "ganzzahlige FOR-Schleife darf nur eine Zielvariable haben"
 
-#: gram.y:1269
+#: gram.y:1273
 msgid "cannot specify REVERSE in query FOR loop"
 msgstr "REVERSE kann nicht in einer Anfrage-FOR-Schleife verwendet werden"
 
-#: gram.y:1416 gram.y:1453 gram.y:1501 gram.y:2421 gram.y:2502 gram.y:2613
-#: gram.y:3224
+#: gram.y:1420 gram.y:1457 gram.y:1505 gram.y:2425 gram.y:2506 gram.y:2617
+#: gram.y:3249
 msgid "unexpected end of function definition"
 msgstr "unerwartetes Ende der Funktionsdefinition"
 
-#: gram.y:1521 gram.y:1545 gram.y:1557 gram.y:1564 gram.y:1648 gram.y:1755
-#: gram.y:1932 gram.y:2011 gram.y:2124 gram.y:2702 gram.y:2766 gram.y:3184
-#: gram.y:3205
+#: gram.y:1525 gram.y:1549 gram.y:1561 gram.y:1568 gram.y:1652 gram.y:1759
+#: gram.y:1936 gram.y:2015 gram.y:2128 gram.y:2706 gram.y:2770 gram.y:3209
+#: gram.y:3230
 msgid "syntax error"
 msgstr "Syntaxfehler"
 
-#: gram.y:1549 gram.y:1551 gram.y:1936 gram.y:1938
+#: gram.y:1553 gram.y:1555 gram.y:1940 gram.y:1942
 msgid "invalid SQLSTATE code"
 msgstr "ungültiger SQLSTATE-Code"
 
-#: gram.y:1702
+#: gram.y:1706
 msgid "syntax error, expected \"FOR\""
 msgstr "Syntaxfehler, »FOR« erwartet"
 
-#: gram.y:1764
+#: gram.y:1768
 msgid "FETCH statement cannot return multiple rows"
 msgstr "FETCH-Anweisung kann nicht mehrere Zeilen zurückgeben"
 
-#: gram.y:1820
+#: gram.y:1824
 msgid "cursor variable must be a simple variable"
 msgstr "Cursor-Variable muss eine einfache Variable sein"
 
-#: gram.y:1826
+#: gram.y:1830
 #, c-format
 msgid "variable \"%s\" must be of type cursor or refcursor"
 msgstr "Variable »%s« muss Typ cursor oder refcursor haben"
 
-#: gram.y:1990
+#: gram.y:1994
 msgid "label does not exist"
 msgstr "Label existiert nicht"
 
-#: gram.y:2095 gram.y:2106
+#: gram.y:2099 gram.y:2110
 #, c-format
 msgid "\"%s\" is not a known variable"
 msgstr "»%s« ist keine bekannte Variable"
 
-#: gram.y:2208 gram.y:2218 gram.y:2346
+#: gram.y:2212 gram.y:2222 gram.y:2350
 msgid "mismatched parentheses"
 msgstr "Klammern passen nicht"
 
-#: gram.y:2222
+#: gram.y:2226
 #, c-format
 msgid "missing \"%s\" at end of SQL expression"
 msgstr "»%s« fehlt am Ende des SQL-Ausdrucks"
 
-#: gram.y:2228
+#: gram.y:2232
 #, c-format
 msgid "missing \"%s\" at end of SQL statement"
 msgstr "»%s« fehlt am Ende der SQL-Anweisung"
 
-#: gram.y:2245
+#: gram.y:2249
 msgid "missing expression"
 msgstr "Ausdruck fehlt"
 
-#: gram.y:2247
+#: gram.y:2251
 msgid "missing SQL statement"
 msgstr "SQL-Anweisung fehlt"
 
-#: gram.y:2348
+#: gram.y:2352
 msgid "incomplete data type declaration"
 msgstr "unvollständige Datentypdeklaration"
 
-#: gram.y:2370
+#: gram.y:2374
 msgid "missing data type declaration"
 msgstr "fehlende Datentypdeklaration"
 
-#: gram.y:2426
+#: gram.y:2430
 msgid "INTO specified more than once"
 msgstr "INTO mehr als einmal angegeben"
 
-#: gram.y:2594
+#: gram.y:2598
 msgid "expected FROM or IN"
 msgstr "FROM oder IN erwartet"
 
-#: gram.y:2654
+#: gram.y:2658
 msgid "RETURN cannot have a parameter in function returning set"
-msgstr "RETURN kann keinen Parameter haben in einer Funktion mit Mengenergebnis"
+msgstr ""
+"RETURN kann keinen Parameter haben in einer Funktion mit Mengenergebnis"
 
-#: gram.y:2655
+#: gram.y:2659
 msgid "Use RETURN NEXT or RETURN QUERY."
 msgstr "Verwenden Sie RETURN NEXT oder RETURN QUERY."
 
-#: gram.y:2663
+#: gram.y:2667
 msgid "RETURN cannot have a parameter in function with OUT parameters"
 msgstr ""
 "RETURN kann keinen Parameter haben in einer Funktion mit OUT-Parametern"
 
-#: gram.y:2672
+#: gram.y:2676
 msgid "RETURN cannot have a parameter in function returning void"
 msgstr ""
 "RETURN kann keinen Parameter haben in einer Funktion, die »void« zurückgibt"
 
-#: gram.y:2690 gram.y:2697
+#: gram.y:2694 gram.y:2701
 msgid "RETURN must specify a record or row variable in function returning row"
 msgstr ""
 "RETURN muss eine Record- oder Zeilenvariable angegeben in einer Funktion, "
 "die eine Zeile zurückgibt"
 
-#: gram.y:2739
+#: gram.y:2743
 msgid "RETURN NEXT cannot have a parameter in function with OUT parameters"
 msgstr ""
 "RETURN NEXT kann keinen Parameter haben in einer Funktion mit OUT-Parametern"
 
-#: gram.y:2754 gram.y:2761
+#: gram.y:2758 gram.y:2765
 msgid ""
 "RETURN NEXT must specify a record or row variable in function returning row"
 msgstr ""
 "RETURN NEXT muss eine Record- oder Zeilenvariable angegeben in einer "
 "Funktion, die eine Zeile zurückgibt"
 
-#: gram.y:2840
+#: gram.y:2844
 #, c-format
 msgid "\"%s\" is declared CONSTANT"
 msgstr "»%s« wurde als CONSTANT deklariert"
 
-#: gram.y:2938
+#: gram.y:2906 gram.y:2918
+msgid "record or row variable cannot be part of multiple-item INTO list"
+msgstr "Record- oder Zeilenvariable kann nicht Teil einer INTO-Liste mit mehreren Elementen sein"
+
+#: gram.y:2963
 msgid "too many INTO variables specified"
 msgstr "zu viele INTO-Variablen angegeben"
 
-#: gram.y:3145
+#: gram.y:3170
 #, c-format
 msgid "end label \"%s\" specified for unlabelled block"
 msgstr "Endlabel »%s« für ungelabelten Block angegeben"
 
-#: gram.y:3152
+#: gram.y:3177
 #, c-format
 msgid "end label \"%s\" differs from block's label \"%s\""
 msgstr "Endlabel »%s« unterscheidet sich vom Label des Blocks »%s«"
 
-#: gram.y:3179
+#: gram.y:3204
 #, c-format
 msgid "cursor \"%s\" has no arguments"
 msgstr "Cursor »%s« hat keine Argumente"
 
-#: gram.y:3193
+#: gram.y:3218
 #, c-format
 msgid "cursor \"%s\" has arguments"
 msgstr "Cursor »%s« hat Argumente"
 
-#: gram.y:3241
+#: gram.y:3266
 msgid "unrecognized RAISE statement option"
 msgstr "unbekannte Option für RAISE-Anweisung"
 
-#: gram.y:3245
+#: gram.y:3270
 msgid "syntax error, expected \"=\""
 msgstr "Syntaxfehler, »=« erwartet"
 
@@ -665,7 +676,9 @@ msgstr "FOR-über-EXECUTE-Anweisung"
 msgid ""
 "Sets handling of conflicts between PL/pgSQL variable names and table column "
 "names."
-msgstr "Bestimmt die Verarbeitung von Konflikten zwischen PL/pgSQL-Variablennamen und Tabellenspaltennamen."
+msgstr ""
+"Bestimmt die Verarbeitung von Konflikten zwischen PL/pgSQL-Variablennamen "
+"und Tabellenspaltennamen."
 
 #. translator: %s is typically the translation of "syntax error"
 #: pl_scanner.c:463

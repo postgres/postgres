@@ -4,9 +4,9 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: PostgreSQL 8.4beta1\n"
+"Project-Id-Version: PostgreSQL 8.5alpha3\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2009-04-11 10:30+0900\n"
+"POT-Creation-Date: 2010-02-21 21:48+0900\n"
 "PO-Revision-Date: 2009-04-11 10:31+0900\n"
 "Last-Translator: HOTTA Michihide <hotta@net-newbie.com>\n"
 "Language-Team: Japan PostgreSQL Users Group <jpug-doc@ml.postgresql.jp>\n"
@@ -15,168 +15,176 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#: plpython.c:420 plpython.c:445
+#: plpython.c:418
+msgid "PL/Python function \"%s\""
+msgstr "PL/Python 関数 \"%s\""
+
+#: plpython.c:425
+msgid "while modifying trigger row"
+msgstr "トリガー行の変更中に"
+
+#: plpython.c:432
+msgid "while creating return value"
+msgstr "戻り値の作成中に"
+
+#: plpython.c:544 plpython.c:570
 msgid "unexpected return value from trigger procedure"
 msgstr "トリガー手続きから期待しない戻り値が返されました"
 
-#: plpython.c:421
+#: plpython.c:545
 msgid "Expected None or a string."
 msgstr "None もしくは文字列を期待していました。"
 
-#: plpython.c:435
+#: plpython.c:560
 msgid ""
 "PL/Python trigger function returned \"MODIFY\" in a DELETE trigger -- ignored"
 msgstr ""
-"PL/Python トリガー関数が、DELETE トリガーで \"MODIFY\" を返しました"
-"-- 無視しました"
+"PL/Python トリガー関数が、DELETE トリガーで \"MODIFY\" を返しました-- 無視し"
+"ました"
 
-#: plpython.c:446
+#: plpython.c:571
 msgid "Expected None, \"OK\", \"SKIP\", or \"MODIFY\"."
 msgstr "None, \"OK\", \"SKIP\", \"MODIFY\" のいずれかを期待していました"
 
-#: plpython.c:493
+#: plpython.c:623
 msgid "TD[\"new\"] deleted, cannot modify row"
 msgstr "TD[\"new\"] は削除されました。今となっては変更できません。"
 
-#: plpython.c:496
+#: plpython.c:626
 msgid "TD[\"new\"] is not a dictionary"
 msgstr "TD[\"new\"] は辞書ではありません"
 
-#: plpython.c:515
-#, c-format
-msgid "name of TD[\"new\"] attribute at ordinal position %d is not a string"
+#: plpython.c:650
+msgid "TD[\"new\"] dictionary key at ordinal position %d is not a string"
 msgstr "%d 番目の TD[\"new\"] 属性の名前が文字列ではありません"
 
-#: plpython.c:519
-#, c-format
+#: plpython.c:656
 msgid ""
 "key \"%s\" found in TD[\"new\"] does not exist as a column in the triggering "
 "row"
 msgstr ""
-"TD[\"new\"] で見つかったキー \"%s\" は、行レベルトリガーにおけるカラムとしては"
-"存在しません"
+"TD[\"new\"] で見つかったキー \"%s\" は、行レベルトリガーにおけるカラムとして"
+"は存在しません"
 
-#: plpython.c:540
-#, c-format
-msgid ""
-"could not compute string representation of Python object in PL/Python "
-"function \"%s\" while modifying trigger row"
-msgstr ""
-"PL/Python 関数 \"%s\" でトリガー処理中に、Python オブジェクトの文字列表現を"
-"導出できませんでした"
-
-#: plpython.c:622
+#: plpython.c:749
 msgid "could not create new dictionary while building trigger arguments"
 msgstr "トリガーの引数を構成中に、新しい辞書を生成できませんでした"
 
-#: plpython.c:830
+#: plpython.c:956
 msgid "unsupported set function return mode"
 msgstr "未サポートの集合関数リターンモードです"
 
-#: plpython.c:831
+#: plpython.c:957
 msgid ""
 "PL/Python set-returning functions only support returning only value per call."
 msgstr ""
-"PL/Python の集合を返す関数では、１回のコールのたびに値だけを返すことが"
-"サポートされています"
+"PL/Python の集合を返す関数では、コールのたびに値だけを返すことしかできません"
 
-#: plpython.c:843
+#: plpython.c:969
 msgid "returned object cannot be iterated"
 msgstr "返されたオブジェクトは反復適用できません"
 
-#: plpython.c:844
+#: plpython.c:970
 msgid "PL/Python set-returning functions must return an iterable object."
-msgstr "PL/Python の集合を返す関数では、イテレータ（反復子）オブジェクトを"
+msgstr ""
+"PL/Python の集合を返す関数では、反復可能オブジェクトを"
 "返さなければなりません"
 
-#: plpython.c:872
+#: plpython.c:997
 msgid "error fetching next item from iterator"
 msgstr "イテレータ（反復子）から次の項目をフェッチ（取り出し）できません"
 
-#: plpython.c:890
+#: plpython.c:1019
 msgid "PL/Python function with return type \"void\" did not return None"
 msgstr "\"void\" 型を返す PL/Python 関数は None 型を返しません"
 
-#: plpython.c:937
-#, c-format
-msgid ""
-"could not create string representation of Python object in PL/Python "
-"function \"%s\" while creating return value"
-msgstr ""
-"PL/Python 関数 \"%s\" で戻り値を生成する際に、Python オブジェクトの"
-"文字列表現を生成できませんでした"
-
-#: plpython.c:986
-#, c-format
+#: plpython.c:1110
 msgid "PL/Python function \"%s\" failed"
 msgstr "PL/Python 関数 \"%s\" が実行に失敗しました"
 
-#: plpython.c:1056
-#, c-format
-msgid ""
-"PyList_SetItem() failed for PL/Python function \"%s\" while setting up "
-"arguments"
-msgstr ""
-"PL/Python 関数 \"%s\" で引数を設定する際に、PyList_SetItem() に失敗しました"
+#: plpython.c:1176
+msgid "PyList_SetItem() failed, while setting up arguments"
+msgstr "引数を設定する際に、PyList_SetItem() に失敗しました"
 
-#: plpython.c:1060
-#, c-format
-msgid ""
-"PyDict_SetItemString() failed for PL/Python function \"%s\" while setting up "
-"arguments"
-msgstr ""
-"PL/Python 関数 \"%s\" で引数を設定する際に、PyDict_SetItemString() に失敗しました"
+#: plpython.c:1180
+msgid "PyDict_SetItemString() failed, while setting up arguments"
+msgstr "引数を設定する際に、PyDict_SetItemString() に失敗しました"
 
-#: plpython.c:1238
+#: plpython.c:1358
 msgid "trigger functions can only be called as triggers"
 msgstr "トリガー関数はトリガーとしてのみコールできます"
 
-#: plpython.c:1242
-#, c-format
+#: plpython.c:1362 plpython.c:1746
 msgid "PL/Python functions cannot return type %s"
 msgstr "PL/Python 関数は %s 型を返せません"
 
-#: plpython.c:1321
-#, c-format
+#: plpython.c:1441
 msgid "PL/Python functions cannot accept type %s"
 msgstr "PL/Python 関数は %s 型を受け付けません"
 
-#: plpython.c:1415
-#, c-format
+#: plpython.c:1535
 msgid "could not compile PL/Python function \"%s\""
-msgstr "PL/Python 関数 \"%s\" をコンパイルできません"
+msgstr "PL/Python 関数 \"%s\" をコンパイルできませんでした"
 
-#: plpython.c:1727
+#: plpython.c:1748
+msgid "PL/Python does not support conversion to arrays of row types."
+msgstr "PL/Python は行タイプが配列の場合の変換をサポートしていません"
+
+#: plpython.c:1941
+msgid "cannot convert multidimensional array to Python list"
+msgstr "多次元配列を Python のリストに変換できません"
+
+#: plpython.c:1942
+msgid "PL/Python only supports one-dimensional arrays."
+msgstr "PL/Python は一次元配列だけをサポートしています"
+
+#: plpython.c:1976
 msgid "could not create new dictionary"
-msgstr "新しいディレクトリを作れません"
+msgstr "新しいディレクトリを作れませんでした"
 
-#: plpython.c:1814 plpython.c:1903 plpython.c:1974
-msgid "could not compute string representation of Python object"
+#: plpython.c:2052
+msgid "could not create bytes representation of Python object"
+msgstr "Python オブジェクトのバイト表現を生成できませんでした"
+
+#: plpython.c:2107
+msgid "could not create string representation of Python object"
 msgstr "Python オブジェクトの文字列表現を生成できませんでした"
 
-#: plpython.c:1828
-#, c-format
+#: plpython.c:2118
+msgid ""
+"could not convert Python object into cstring: Python string representation "
+"appears to contain null bytes"
+msgstr ""
+"Python オブジェクトを ctring に変換できませんでした："
+"Python の文字列表現に null バイトが含まれているようです"
+
+#: plpython.c:2150
+msgid ""
+"return value of function with array return type is not a Python sequence"
+msgstr ""
+"配列の戻り値を持つ関数の戻り値は Python のシーケンスではありません"
+
+#: plpython.c:2222
 msgid "key \"%s\" not found in mapping"
 msgstr "マッピング上にキー \"%s\" が見つかりません"
 
-#: plpython.c:1829
+#: plpython.c:2223
 msgid ""
 "To return null in a column, add the value None to the mapping with the key "
 "named after the column."
 msgstr ""
-"カラムに null を入れて返すには、カラムの後につけた名前をキーとして、"
+"カラムに null を入れて返すには、そのカラムの後につけた名前をキーとして"
 "マッピングに None 値を追加してください"
 
-#: plpython.c:1873
+#: plpython.c:2266
 msgid "length of returned sequence did not match number of columns in row"
 msgstr "返されたシーケンスの長さが、その行のカラム数と異なります"
 
-#: plpython.c:1987
-#, c-format
+#: plpython.c:2359
 msgid "attribute \"%s\" does not exist in Python object"
 msgstr "属性 \"%s\" が Python オブジェクト中に存在しません"
 
-#: plpython.c:1988
+#: plpython.c:2360
 msgid ""
 "To return null in a column, let the returned object have an attribute named "
 "after column with value None."
@@ -184,111 +192,104 @@ msgstr ""
 "カラムに null を入れて返す場合は、そのカラムの後につけた名前で表される属性が"
 "値として None を持ち、返されるオブジェクトがその属性を含むようにしてください"
 
-#: plpython.c:2210
+#: plpython.c:2594
 msgid "plan.status takes no arguments"
 msgstr "plan.status は引数を取りません"
 
-#: plpython.c:2340 plpython.c:2479
+#: plpython.c:2718 plpython.c:2861
 msgid "transaction aborted"
 msgstr "トランザクションがアボートしました"
 
-#: plpython.c:2347
+#: plpython.c:2725
 msgid "invalid arguments for plpy.prepare"
 msgstr "plpy.prepare の引数が不正です"
 
-#: plpython.c:2354
+#: plpython.c:2732
 msgid "second argument of plpy.prepare must be a sequence"
 msgstr "plpy.prepare の第二引数はシーケンスでなければなりません"
 
-#: plpython.c:2399
-#, c-format
+#: plpython.c:2782
 msgid "plpy.prepare: type name at ordinal position %d is not a string"
 msgstr "plpy.prepare: %d 番目の型名が文字列ではありません"
 
-#: plpython.c:2426
+#: plpython.c:2810
 msgid "plpy.prepare does not support composite types"
 msgstr "plpy.prepare は複合型をサポートしていません"
 
-#: plpython.c:2454
+#: plpython.c:2838
 msgid "unrecognized error in PLy_spi_prepare"
 msgstr "PLy_spi_prepare で認識できないエラーを検出しました"
 
-#: plpython.c:2456 plpython.c:2618 plpython.c:2665
-#, c-format
-msgid "in PL/Python function \"%s\""
-msgstr "PL/Python 関数 \"%s\" で"
-
-#: plpython.c:2492
+#: plpython.c:2874
 msgid "plpy.execute expected a query or a plan"
 msgstr "plpy.execute はクエリーもしくは実行計画を期待していました"
 
-#: plpython.c:2509
+#: plpython.c:2891
 msgid "plpy.execute takes a sequence as its second argument"
 msgstr "plpy.execute は第二引数としてシーケンスを取ります"
 
-#: plpython.c:2525 plpython.c:2552
-#, c-format
-msgid "PL/Python function \"%s\" could not execute plan"
-msgstr "PL/Python 関数 \"%s\" は計画を実行できませんでした"
+#: plpython.c:2907 plpython.c:2938
+msgid "could not execute plan"
+msgstr "プランを実行できませんでした"
 
-#: plpython.c:2529
-#, c-format
+#: plpython.c:2910
 msgid "Expected sequence of %d argument, got %d: %s"
 msgid_plural "Expected sequence of %d arguments, got %d: %s"
 msgstr[0] "%d 番目の引数はシーケンスを期待していましたが、%d が現れました：%s"
 
-#: plpython.c:2616
+#: plpython.c:3001
 msgid "unrecognized error in PLy_spi_execute_plan"
 msgstr "PLy_spi_execute_plan で認識できないエラーを検出しました"
 
-#: plpython.c:2637
-#, c-format
+#: plpython.c:3020
 msgid "SPI_execute_plan failed: %s"
 msgstr "SPI_execute_plan が失敗しました：%s"
 
-#: plpython.c:2663
+#: plpython.c:3046
 msgid "unrecognized error in PLy_spi_execute_query"
 msgstr "PLy_spi_execute_query で認識できないエラーを検出しました"
 
-#: plpython.c:2674
-#, c-format
+#: plpython.c:3055
 msgid "SPI_execute failed: %s"
 msgstr "SPI_execute が失敗しました：%s"
 
-#: plpython.c:2734
+#: plpython.c:3115
 msgid "unrecognized error in PLy_spi_execute_fetch_result"
 msgstr "PLy_spi_execute_fetch_result で認識できないエラーを検出しました"
 
-#: plpython.c:2770
+#: plpython.c:3166
 msgid "untrapped error in initialization"
 msgstr "初期化中に捕獲できないエラーがありました"
 
-#: plpython.c:2773
+#: plpython.c:3169
 msgid "could not create procedure cache"
 msgstr "手続き用キャッシュ(procedure cache)を生成できませんでした"
 
-#: plpython.c:2785
+#: plpython.c:3181
 msgid "could not import \"__main__\" module"
 msgstr "\"__main__\" モジュールをインポートできませんでした"
 
-#: plpython.c:2792
+#: plpython.c:3188
 msgid "could not initialize globals"
 msgstr "グローバル変数(globals)を初期化できませんでした"
 
-#: plpython.c:2894
+#: plpython.c:3303
 msgid "could not parse error message in plpy.elog"
 msgstr "plpy.elog でエラーメッセージをパースできませんでした"
 
-#: plpython.c:2990
-#, c-format
+#: plpython.c:3428 plpython.c:3432
 msgid "PL/Python: %s"
 msgstr "PL/Python: %s"
 
-#: plpython.c:2991
-#, c-format
+#: plpython.c:3429
 msgid "%s"
 msgstr "%s"
 
-#: plpython.c:3081
+#: plpython.c:3524
 msgid "out of memory"
 msgstr "メモリ不足です"
+
+#: plpython.c:3595
+msgid "could not convert Python Unicode object to PostgreSQL server encoding"
+msgstr "Python のユニコードオブジェクトを PostgreSQL サーバーの"
+"エンコーディングに変換できませんでした"

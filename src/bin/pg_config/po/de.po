@@ -1,20 +1,20 @@
 # German message translation file for pg_config
-# Peter Eisentraut <peter_e@gmx.net>, 2004 - 2009.
+# Peter Eisentraut <peter_e@gmx.net>, 2004 - 2010.
 #
-# pgtranslation Id: pg_config.po,v 1.11 2009/03/02 09:41:27 petere Exp $
+# pgtranslation Id: pg_config.po,v 1.12 2010/03/19 16:39:43 petere Exp $
 #
-# Use these quotes: »%s«
+# Use these quotes: Â»%sÂ«
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: PostgreSQL 8.4\n"
+"Project-Id-Version: PostgreSQL 9.0\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2009-03-01 07:12+0000\n"
-"PO-Revision-Date: 2009-03-02 11:11+0200\n"
+"POT-Creation-Date: 2010-03-19 01:16+0000\n"
+"PO-Revision-Date: 2010-03-19 11:22+0200\n"
 "Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language-Team: Peter Eisentraut <peter_e@gmx.net>\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=iso-8859-1\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
 #: pg_config.c:243 pg_config.c:259 pg_config.c:275 pg_config.c:291
@@ -31,7 +31,7 @@ msgid ""
 "\n"
 msgstr ""
 "\n"
-"%s gibt Informationen über die installierte Version von PostgreSQL.\n"
+"%s gibt Informationen Ã¼ber die installierte Version von PostgreSQL.\n"
 "\n"
 
 #: pg_config.c:412
@@ -44,7 +44,9 @@ msgstr "Aufruf:\n"
 msgid ""
 "  %s [OPTION]...\n"
 "\n"
-msgstr "  %s [OPTION]...\n\n"
+msgstr ""
+"  %s [OPTION]...\n"
+"\n"
 
 #: pg_config.c:414
 #, c-format
@@ -129,7 +131,7 @@ msgid ""
 "files\n"
 msgstr ""
 "  --sharedir            zeige Installationsverzeichnis der architektur-\n"
-"                        unabhängigen Datendateien\n"
+"                        unabhÃ¤ngigen Datendateien\n"
 
 #: pg_config.c:427
 #, c-format
@@ -150,7 +152,7 @@ msgid ""
 "  --configure           show options given to \"configure\" script when\n"
 "                        PostgreSQL was built\n"
 msgstr ""
-"  --configure           zeige Optionen des »configure«-Skriptes beim Bauen\n"
+"  --configure           zeige Optionen des Â»configureÂ«-Skriptes beim Bauen\n"
 "                        von PostgreSQL\n"
 
 #: pg_config.c:431
@@ -234,7 +236,7 @@ msgstr "Berichten Sie Fehler an <pgsql-bugs@postgresql.org>.\n"
 #: pg_config.c:447
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
-msgstr "Versuchen Sie »%s --help« für weitere Informationen.\n"
+msgstr "Versuchen Sie Â»%s --helpÂ« fÃ¼r weitere Informationen.\n"
 
 #: pg_config.c:486
 #, c-format
@@ -244,66 +246,59 @@ msgstr "%s: konnte eigene Programmdatei nicht finden\n"
 #: pg_config.c:509
 #, c-format
 msgid "%s: invalid argument: %s\n"
-msgstr "%s: ungültiges Argument: %s\n"
+msgstr "%s: ungÃ¼ltiges Argument: %s\n"
 
-#: ../../port/exec.c:195 ../../port/exec.c:309 ../../port/exec.c:352
+#: ../../port/exec.c:125 ../../port/exec.c:239 ../../port/exec.c:282
 #, c-format
 msgid "could not identify current directory: %s"
 msgstr "konnte aktuelles Verzeichnis nicht ermitteln: %s"
 
-#: ../../port/exec.c:214
+#: ../../port/exec.c:144
 #, c-format
 msgid "invalid binary \"%s\""
-msgstr "ungültige Programmdatei »%s«"
+msgstr "ungÃ¼ltige Programmdatei Â»%sÂ«"
 
-#: ../../port/exec.c:263
+#: ../../port/exec.c:193
 #, c-format
 msgid "could not read binary \"%s\""
-msgstr "konnte Programmdatei »%s« nicht lesen"
+msgstr "konnte Programmdatei Â»%sÂ« nicht lesen"
+
+#: ../../port/exec.c:200
+#, c-format
+msgid "could not find a \"%s\" to execute"
+msgstr "konnte kein Â»%sÂ« zum AusfÃ¼hren finden"
+
+#: ../../port/exec.c:255 ../../port/exec.c:291
+#, c-format
+msgid "could not change directory to \"%s\""
+msgstr "konnte nicht in Verzeichnis Â»%sÂ« wechseln"
 
 #: ../../port/exec.c:270
 #, c-format
-msgid "could not find a \"%s\" to execute"
-msgstr "konnte kein »%s« zum Ausführen finden"
-
-#: ../../port/exec.c:325 ../../port/exec.c:361
-#, c-format
-msgid "could not change directory to \"%s\""
-msgstr "konnte nicht in Verzeichnis »%s« wechseln"
-
-#: ../../port/exec.c:340
-#, c-format
 msgid "could not read symbolic link \"%s\""
-msgstr "konnte symbolische Verknüpfung »%s« nicht lesen"
+msgstr "konnte symbolische VerknÃ¼pfung Â»%sÂ« nicht lesen"
 
-#: ../../port/exec.c:586
+#: ../../port/exec.c:516
 #, c-format
 msgid "child process exited with exit code %d"
 msgstr "Kindprozess hat mit Code %d beendet"
 
-#: ../../port/exec.c:590
+#: ../../port/exec.c:520
 #, c-format
 msgid "child process was terminated by exception 0x%X"
 msgstr "Kindprozess wurde durch Ausnahme 0x%X beendet"
 
-#: ../../port/exec.c:599
+#: ../../port/exec.c:529
 #, c-format
 msgid "child process was terminated by signal %s"
 msgstr "Kindprozess wurde von Signal %s beendet"
 
-#: ../../port/exec.c:602
+#: ../../port/exec.c:532
 #, c-format
 msgid "child process was terminated by signal %d"
 msgstr "Kindprozess wurde von Signal %d beendet"
 
-#: ../../port/exec.c:606
+#: ../../port/exec.c:536
 #, c-format
 msgid "child process exited with unrecognized status %d"
 msgstr "Kindprozess hat mit unbekanntem Status %d beendet"
-
-#~ msgid ""
-#~ "  %s [ OPTION ... ]\n"
-#~ "\n"
-#~ msgstr ""
-#~ "  %s [ OPTION ... ]\n"
-#~ "\n"

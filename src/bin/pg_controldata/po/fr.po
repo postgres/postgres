@@ -1,7 +1,7 @@
 # translation of pg_controldata.po to fr_fr
 # french message translation file for pg_controldata
 #
-# $PostgreSQL: pgsql/src/bin/pg_controldata/po/fr.po,v 1.19 2010/02/19 00:40:04 petere Exp $
+# $PostgreSQL: pgsql/src/bin/pg_controldata/po/fr.po,v 1.20 2010/05/13 15:56:37 petere Exp $
 #
 # Use these quotes: « %s »
 #
@@ -12,15 +12,15 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.4\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2010-02-15 19:20+0000\n"
-"PO-Revision-Date: 2010-02-15 21:23+0100\n"
+"POT-Creation-Date: 2010-04-28 23:15+0000\n"
+"PO-Revision-Date: 2010-04-29 16:37+0100\n"
 "Last-Translator: Guillaume Lelarge <guillaume@lelarge.info>\n"
 "Language-Team: PostgreSQLfr <pgsql-fr-generale@postgresql.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=ISO-8859-15\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: pg_controldata.c:24
+#: pg_controldata.c:33
 #, c-format
 msgid ""
 "%s displays control information of a PostgreSQL database cluster.\n"
@@ -30,7 +30,7 @@ msgstr ""
 "PostgreSQL.\n"
 "\n"
 
-#: pg_controldata.c:28
+#: pg_controldata.c:37
 #, c-format
 msgid ""
 "Usage:\n"
@@ -47,7 +47,7 @@ msgstr ""
 "  --help         affiche cette aide et quitte\n"
 "  --version      affiche les informations de version et quitte\n"
 
-#: pg_controldata.c:36
+#: pg_controldata.c:45
 #, c-format
 msgid ""
 "\n"
@@ -60,60 +60,64 @@ msgstr ""
 "d'environnement PGDATA est utilisée.\n"
 "\n"
 
-#: pg_controldata.c:38
+#: pg_controldata.c:47
 #, c-format
 msgid "Report bugs to <pgsql-bugs@postgresql.org>.\n"
 msgstr "Rapporter les bogues à <pgsql-bugs@postgresql.org>.\n"
 
-#: pg_controldata.c:48
+#: pg_controldata.c:57
 msgid "starting up"
 msgstr "démarrage en cours"
 
-#: pg_controldata.c:50
+#: pg_controldata.c:59
 msgid "shut down"
 msgstr "arrêt"
 
-#: pg_controldata.c:52
+#: pg_controldata.c:61
 msgid "shutting down"
 msgstr "arrêt en cours"
 
-#: pg_controldata.c:54
+#: pg_controldata.c:63
 msgid "in crash recovery"
 msgstr "restauration en cours (suite à un arrêt brutal)"
 
-#: pg_controldata.c:56
+#: pg_controldata.c:65
 msgid "in archive recovery"
 msgstr "restauration en cours (à partir des archives)"
 
-#: pg_controldata.c:58
+#: pg_controldata.c:67
 msgid "in production"
 msgstr "en production"
 
-#: pg_controldata.c:60
+#: pg_controldata.c:69
 msgid "unrecognized status code"
 msgstr "code de statut inconnu"
 
-#: pg_controldata.c:103
+#: pg_controldata.c:84
+msgid "unrecognized wal_level"
+msgstr "wal_level non reconnu"
+
+#: pg_controldata.c:127
 #, c-format
 msgid "%s: no data directory specified\n"
 msgstr "%s : aucun répertoire de données indiqué\n"
 
-#: pg_controldata.c:104
+#: pg_controldata.c:128
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "Essayer « %s --help » pour plus d'informations.\n"
 
-#: pg_controldata.c:112
+#: pg_controldata.c:136
 #, c-format
 msgid "%s: could not open file \"%s\" for reading: %s\n"
 msgstr "%s : n'a pas pu ouvrir le fichier « %s » en lecture : %s\n"
 
-#: pg_controldata.c:119
+#: pg_controldata.c:143
 #, c-format
 msgid "%s: could not read file \"%s\": %s\n"
 msgstr "%s : n'a pas pu lire le fichier « %s » : %s\n"
 
-#: pg_controldata.c:133
+#: pg_controldata.c:157
 #, c-format
 msgid ""
 "WARNING: Calculated CRC checksum does not match value stored in file.\n"
@@ -128,12 +132,12 @@ msgstr ""
 "Les résultats ci-dessous ne sont pas dignes de confiance.\n"
 "\n"
 
-#: pg_controldata.c:160
+#: pg_controldata.c:184
 #, c-format
 msgid "pg_control version number:            %u\n"
 msgstr "Numéro de version de pg_control :                       %u\n"
 
-#: pg_controldata.c:163
+#: pg_controldata.c:187
 #, c-format
 msgid ""
 "WARNING: possible byte ordering mismatch\n"
@@ -147,165 +151,185 @@ msgstr ""
 "résultats ci-dessous sont incorrects, et l'installation PostgreSQL\n"
 "incompatible avec ce répertoire des données.\n"
 
-#: pg_controldata.c:167
+#: pg_controldata.c:191
 #, c-format
 msgid "Catalog version number:               %u\n"
 msgstr "Numéro de version du catalogue :                        %u\n"
 
-#: pg_controldata.c:169
+#: pg_controldata.c:193
 #, c-format
 msgid "Database system identifier:           %s\n"
 msgstr "Identifiant du système de base de données :             %s\n"
 
-#: pg_controldata.c:171
+#: pg_controldata.c:195
 #, c-format
 msgid "Database cluster state:               %s\n"
 msgstr "État du cluster de base de données :                    %s\n"
 
-#: pg_controldata.c:173
+#: pg_controldata.c:197
 #, c-format
 msgid "pg_control last modified:             %s\n"
 msgstr "Dernière modification de pg_control :                   %s\n"
 
-#: pg_controldata.c:175
+#: pg_controldata.c:199
 #, c-format
 msgid "Latest checkpoint location:           %X/%X\n"
 msgstr "Dernier point de contrôle :                             %X/%X\n"
 
-#: pg_controldata.c:178
+#: pg_controldata.c:202
 #, c-format
 msgid "Prior checkpoint location:            %X/%X\n"
 msgstr "Point de contrôle précédent :                           %X/%X\n"
 
-#: pg_controldata.c:181
+#: pg_controldata.c:205
 #, c-format
 msgid "Latest checkpoint's REDO location:    %X/%X\n"
 msgstr "Dernier REDO (reprise) du point de contrôle :           %X/%X\n"
 
-#: pg_controldata.c:184
+#: pg_controldata.c:208
 #, c-format
 msgid "Latest checkpoint's TimeLineID:       %u\n"
 msgstr "Dernier TimeLineID du point de contrôle :               %u\n"
 
-#: pg_controldata.c:186
+#: pg_controldata.c:210
 #, c-format
 msgid "Latest checkpoint's NextXID:          %u/%u\n"
 msgstr "Dernier NextXID du point de contrôle :                  %u/%u\n"
 
-#: pg_controldata.c:189
+#: pg_controldata.c:213
 #, c-format
 msgid "Latest checkpoint's NextOID:          %u\n"
 msgstr "Dernier NextOID du point de contrôle :                  %u\n"
 
-#: pg_controldata.c:191
+#: pg_controldata.c:215
 #, c-format
 msgid "Latest checkpoint's NextMultiXactId:  %u\n"
 msgstr "Dernier NextMultiXactId du point de contrôle :          %u\n"
 
-#: pg_controldata.c:193
+#: pg_controldata.c:217
 #, c-format
 msgid "Latest checkpoint's NextMultiOffset:  %u\n"
 msgstr "Dernier NextMultiOffset du point de contrôle :          %u\n"
 
-#: pg_controldata.c:195
+#: pg_controldata.c:219
 #, c-format
 msgid "Latest checkpoint's oldestXID:        %u\n"
 msgstr "Dernier oldestXID du point de contrôle :                %u\n"
 
-#: pg_controldata.c:197
+#: pg_controldata.c:221
 #, c-format
 msgid "Latest checkpoint's oldestXID's DB:   %u\n"
 msgstr "Dernier oldestXID du point de contrôle de la base :     %u\n"
 
-#: pg_controldata.c:199
+#: pg_controldata.c:223
 #, c-format
 msgid "Latest checkpoint's oldestActiveXID:  %u\n"
 msgstr "Dernier oldestActiveXID du point de contrôle :          %u\n"
 
-#: pg_controldata.c:201
+#: pg_controldata.c:225
 #, c-format
 msgid "Time of latest checkpoint:            %s\n"
 msgstr "Heure du dernier point de contrôle :                    %s\n"
 
-#: pg_controldata.c:203
+#: pg_controldata.c:227
 #, c-format
 msgid "Minimum recovery ending location:     %X/%X\n"
 msgstr "Emplacement de fin de la récupération minimale :        %X/%X\n"
 
-#: pg_controldata.c:206
+#: pg_controldata.c:230
 #, c-format
 msgid "Backup start location:                %X/%X\n"
 msgstr "Début de la sauvegarde :                                %X/%X\n"
 
-#: pg_controldata.c:209
+#: pg_controldata.c:233
+#, c-format
+msgid "Current wal_level setting:            %s\n"
+msgstr "Paramètrage actuel de wal_level :                       %s\n"
+
+#: pg_controldata.c:235
+#, c-format
+msgid "Current max_connections setting:      %d\n"
+msgstr "Paramètrage actuel de max_connections :                 %d\n"
+
+#: pg_controldata.c:237
+#, c-format
+msgid "Current max_prepared_xacts setting:   %d\n"
+msgstr "Paramètrage actuel de max_prepared_xacts :              %d\n"
+
+#: pg_controldata.c:239
+#, c-format
+msgid "Current max_locks_per_xact setting:   %d\n"
+msgstr "Paramètrage actuel de max_locks_per_xact :              %d\n"
+
+#: pg_controldata.c:241
 #, c-format
 msgid "Maximum data alignment:               %u\n"
 msgstr "Alignement maximal des données :                        %u\n"
 
-#: pg_controldata.c:212
+#: pg_controldata.c:244
 #, c-format
 msgid "Database block size:                  %u\n"
 msgstr "Taille du bloc de la base de données :                  %u\n"
 
-#: pg_controldata.c:214
+#: pg_controldata.c:246
 #, c-format
 msgid "Blocks per segment of large relation: %u\n"
 msgstr "Blocs par segment des relations volumineuses :          %u\n"
 
-#: pg_controldata.c:216
+#: pg_controldata.c:248
 #, c-format
 msgid "WAL block size:                       %u\n"
 msgstr "Taille de bloc du journal de transaction :              %u\n"
 
-#: pg_controldata.c:218
+#: pg_controldata.c:250
 #, c-format
 msgid "Bytes per WAL segment:                %u\n"
 msgstr "Octets par segment du journal de transaction :          %u\n"
 
-#: pg_controldata.c:220
+#: pg_controldata.c:252
 #, c-format
 msgid "Maximum length of identifiers:        %u\n"
 msgstr "Longueur maximale des identifiants :                    %u\n"
 
-#: pg_controldata.c:222
+#: pg_controldata.c:254
 #, c-format
 msgid "Maximum columns in an index:          %u\n"
 msgstr "Nombre maximum de colonnes d'un index:                  %u\n"
 
-#: pg_controldata.c:224
+#: pg_controldata.c:256
 #, c-format
 msgid "Maximum size of a TOAST chunk:        %u\n"
 msgstr "Longueur maximale d'un morceau TOAST :                  %u\n"
 
-#: pg_controldata.c:226
+#: pg_controldata.c:258
 #, c-format
 msgid "Date/time type storage:               %s\n"
 msgstr "Stockage du type date/heure :                           %s\n"
 
-#: pg_controldata.c:227
+#: pg_controldata.c:259
 msgid "64-bit integers"
 msgstr "entiers 64-bits"
 
-#: pg_controldata.c:227
+#: pg_controldata.c:259
 msgid "floating-point numbers"
 msgstr "nombres à virgule flottante"
 
-#: pg_controldata.c:228
+#: pg_controldata.c:260
 #, c-format
 msgid "Float4 argument passing:              %s\n"
 msgstr "Passage d'argument float4 :                             %s\n"
 
-#: pg_controldata.c:229
-#: pg_controldata.c:231
+#: pg_controldata.c:261
+#: pg_controldata.c:263
 msgid "by value"
 msgstr "par valeur"
 
-#: pg_controldata.c:229
-#: pg_controldata.c:231
+#: pg_controldata.c:261
+#: pg_controldata.c:263
 msgid "by reference"
 msgstr "par référence"
 
-#: pg_controldata.c:230
+#: pg_controldata.c:262
 #, c-format
 msgid "Float8 argument passing:              %s\n"
 msgstr "Passage d'argument float8 :                             %s\n"

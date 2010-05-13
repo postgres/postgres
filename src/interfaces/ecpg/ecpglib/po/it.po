@@ -11,15 +11,15 @@
 # Revisori:
 #  * Gabriele Bartolini <gabriele.bartolini@2ndQuadrant.it>
 #
-# Copyright (c) 2009, Associazione Culturale ITPUG
+# Copyright (c) 2010, Associazione Culturale ITPUG
 # Distributed under the same license of the PostgreSQL project
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.4\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2009-07-08 19:56+0000\n"
-"PO-Revision-Date: 2009-07-16 00:30:13+0200\n"
+"POT-Creation-Date: 2010-03-26 13:23+0000\n"
+"PO-Revision-Date: 2010-03-27 12:44:19+0100\n"
 "Last-Translator: Gabriele Bartolini <gabriele.bartolini@2ndquadrant.it>\n"
 "Language-Team: Gruppo traduzioni ITPUG <traduzioni@itpug.org>\n"
 "MIME-Version: 1.0\n"
@@ -176,12 +176,16 @@ msgstr "connessione fallita al database \"%s\" alla linea %d"
 msgid "SQL error %d on line %d"
 msgstr "errore SQL %d alla linea %d"
 
-#: error.c:391
+#: error.c:316
+msgid "the connection to the server was lost"
+msgstr "la connessione con il server è andata persa"
+
+#: error.c:402
 #, c-format
 msgid "SQL error: %s\n"
 msgstr "errore SQL: %s\n"
 
-#: execute.c:1639
+#: execute.c:1912
 msgid "<empty>"
 msgstr "<empty>"
 
