@@ -291,8 +291,6 @@ get_rel_infos(migratorContext *ctx, const DbInfo *dbinfo,
 			  RelInfoArr *relarr, Cluster whichCluster)
 {
 	PGconn	   *conn = connectToServer(ctx, dbinfo->db_name, whichCluster);
-	bool		is_edb_as = (whichCluster == CLUSTER_OLD) ?
-					ctx->old.is_edb_as : ctx->new.is_edb_as;
 	PGresult   *res;
 	RelInfo    *relinfos;
 	int			ntups;
@@ -341,38 +339,7 @@ get_rel_infos(migratorContext *ctx, const DbInfo *dbinfo,
 			 FirstNormalObjectId,
 	/* see the comment at the top of v8_3_create_sequence_script() */
 			 (GET_MAJOR_VERSION(ctx->old.major_version) <= 803) ?
-			 "" : " OR relkind = 'S'",
-
-	/*
-	 * EDB AS installs pgagent by default via initdb. We have to ignore it,
-	 * and not migrate any old table contents.
-	 */
-			 (is_edb_as && strcmp(dbinfo->db_name, "edb") == 0) ?
-			 " 	AND "
-			 "	n.nspname != 'pgagent' AND "
-	/* skip pgagent TOAST tables */
-			 "	c.oid NOT IN "
-			 "	( "
-			 "		SELECT c2.reltoastrelid "
-			 "		FROM pg_catalog.pg_class c2 JOIN "
-			 "				pg_catalog.pg_namespace n2 "
-			 "			ON c2.relnamespace = n2.oid "
-			 "		WHERE n2.nspname = 'pgagent' AND "
-			 "			  c2.reltoastrelid != 0 "
-			 "	) AND "
-	/* skip pgagent TOAST table indexes */
-			 "	c.oid NOT IN "
-			 "	( "
-			 "		SELECT c3.reltoastidxid "
-			 "		FROM pg_catalog.pg_class c2 JOIN "
-			 "				pg_catalog.pg_namespace n2 "
-			 "			ON c2.relnamespace = n2.oid JOIN "
-			 "				pg_catalog.pg_class c3 "
-			 "			ON c2.reltoastrelid = c3.oid "
-			 "		WHERE n2.nspname = 'pgagent' AND "
-			 "			  c2.reltoastrelid != 0 AND "
-			 "			  c3.reltoastidxid != 0 "
-			 "	) " : "");
+			 "" : " OR relkind = 'S'");
 
 	res = executeQueryOrDie(ctx, conn, query);
 

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/pgupgrade.sgml,v 1.3 2010/05/13 15:03:24 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/pgupgrade.sgml,v 1.4 2010/05/13 22:51:00 momjian Exp $ -->
 
 <sect1 id="pgupgrade">
  <title>pg_upgrade</title>
@@ -22,11 +22,6 @@
   <para>
    pg_upgrade supports upgrades from 8.3.X and later to the current
    major release of Postgres, including snapshot and alpha releases.
-
-<!--
-   pg_upgrade also supports upgrades from EnterpriseDB's Postgres Plus
-   Advanced Server.
--->
 
   </para>
 
@@ -120,25 +115,6 @@ gmake prefix=/usr/local/pgsql.new install
      start the new cluster.
     </para>
  
-<!--
-    <para>
-     If migrating EnterpriseDB's Postgres Plus Advanced Server, you must:
-     <itemizedlist>
-      <listitem>
-       <para>
-        <emphasis>not</> install <literal>sample tables and procedures/functions</>
-        in the new server
-       </para>
-      </listitem>
-      <listitem>
-       <para>
-        delete the empty <literal>edb</> schema in the <literal>enterprisedb</> database
-       </para>
-      </listitem>
-     </itemizedlist>
-    </para>
--->
-
    </listitem>
  
    <listitem>

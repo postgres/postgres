@@ -200,15 +200,11 @@ typedef struct
 	DbInfoArr	dbarr;		/* dbinfos array */
 	char	   *pgdata;		/* pathname for cluster's $PGDATA directory */
 	char	   *bindir;		/* pathname for cluster's executable directory */
-	const char *psql_exe;	/* name of the psql command to execute
-							 * in the cluster */
 	unsigned short port;	/* port number where postmaster is waiting */
 	uint32		major_version;		/* PG_VERSION of cluster */
 	char	   *major_version_str;	/* string PG_VERSION of cluster */
 	Oid			pg_database_oid;		/* OID of pg_database relation */
 	char	   *libpath;	/* pathname for cluster's pkglibdir */
-	/* EDB AS is PG 8.2 with 8.3 enhancements backpatched. */
-	bool		is_edb_as;	/* EnterpriseDB's Postgres Plus Advanced Server? */
 	char	   *tablespace_suffix;	/* directory specification */
 } ClusterInfo;
 

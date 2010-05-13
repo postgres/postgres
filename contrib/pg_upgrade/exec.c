@@ -11,8 +11,7 @@
 
 
 static void checkBinDir(migratorContext *ctx, ClusterInfo *cluster);
-static int check_exec(migratorContext *ctx, const char *dir, const char *cmdName,
-		   const char *alternative);
+static int check_exec(migratorContext *ctx, const char *dir, const char *cmdName);
 static const char *validate_exec(const char *path);
 static int	check_data_dir(migratorContext *ctx, const char *pg_data);
 
@@ -89,22 +88,10 @@ verify_directories(migratorContext *ctx)
 static void
 checkBinDir(migratorContext *ctx, ClusterInfo *cluster)
 {
-	check_exec(ctx, cluster->bindir, "postgres", "edb-postgres");
-	check_exec(ctx, cluster->bindir, "pg_ctl", NULL);
-	check_exec(ctx, cluster->bindir, "pg_dumpall", NULL);
-
-#ifdef EDB_NATIVE_LANG
-	/* check for edb-psql first because we need to detect EDB AS */
-	if (check_exec(ctx, cluster->bindir, "edb-psql", "psql") == 1)
-	{
-		cluster->psql_exe = "edb-psql";
-		cluster->is_edb_as = true;
-	}
-	else
-#else
-	if (check_exec(ctx, cluster->bindir, "psql", NULL) == 1)
-#endif
-		cluster->psql_exe = "psql";
+	check_exec(ctx, cluster->bindir, "postgres");
+	check_exec(ctx, cluster->bindir, "psql");
+	check_exec(ctx, cluster->bindir, "pg_ctl");
+	check_exec(ctx, cluster->bindir, "pg_dumpall");
 }
 
 
@@ -146,8 +133,7 @@ is_server_running(migratorContext *ctx, const char *datadir)
  *	a valid executable, this function returns 0 to indicated failure.
  */
 static int
-check_exec(migratorContext *ctx, const char *dir, const char *cmdName,
-		   const char *alternative)
+check_exec(migratorContext *ctx, const char *dir, const char *cmdName)
 {
 	char		path[MAXPGPATH];
 	const char *errMsg;
@@ -155,21 +141,9 @@ check_exec(migratorContext *ctx, const char *dir, const char *cmdName,
 	snprintf(path, sizeof(path), "%s%c%s", dir, pathSeparator, cmdName);
 
 	if ((errMsg = validate_exec(path)) == NULL)
-	{
 		return 1;				/* 1 -> first alternative OK */
-	}
 	else
-	{
-		if (alternative)
-		{
-			report_status(ctx, PG_WARNING, "check for %s warning:  %s",
-						  cmdName, errMsg);
-			if (check_exec(ctx, dir, alternative, NULL) == 1)
-				return 2;		/* 2 -> second alternative OK */
-		}
-		else
-			pg_log(ctx, PG_FATAL, "check for %s failed - %s\n", cmdName, errMsg);
-	}
+		pg_log(ctx, PG_FATAL, "check for %s failed - %s\n", cmdName, errMsg);
 
 	return 0;					/* 0 -> neither alternative is acceptable */
 }

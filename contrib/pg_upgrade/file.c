@@ -9,10 +9,6 @@
 #include <sys/types.h>
 #include <fcntl.h>
 
-#ifdef EDB_NATIVE_LANG
-#include <fcntl.h>
-#endif
-
 #ifdef WIN32
 #include <windows.h>
 #endif

@@ -6,10 +6,6 @@
 
 #include "pg_upgrade.h"
 
-#ifdef EDB_NATIVE_LANG
-#include <fcntl.h>
-#endif
-
 #include "catalog/pg_class.h"
 #include "access/transam.h"
 

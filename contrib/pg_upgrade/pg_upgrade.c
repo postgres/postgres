@@ -196,10 +196,10 @@ prepare_new_databases(migratorContext *ctx)
 	 */
 	prep_status(ctx, "Creating databases in the new cluster");
 	exec_prog(ctx, true,
-			  SYSTEMQUOTE "\"%s/%s\" --set ON_ERROR_STOP=on --port %d "
+			  SYSTEMQUOTE "\"%s/psql\" --set ON_ERROR_STOP=on --port %d "
 			  "-f \"%s/%s\" --dbname template1 >> \"%s\"" SYSTEMQUOTE,
-			  ctx->new.bindir, ctx->new.psql_exe, ctx->new.port,
-			  ctx->output_dir, GLOBALS_DUMP_FILE, ctx->logfile);
+			  ctx->new.bindir, ctx->new.port, ctx->output_dir,
+			  GLOBALS_DUMP_FILE, ctx->logfile);
 	check_ok(ctx);
 
 	get_db_and_rel_infos(ctx, &ctx->new.dbarr, CLUSTER_NEW);
@@ -218,10 +218,10 @@ create_new_objects(migratorContext *ctx)
 
 	prep_status(ctx, "Restoring database schema to new cluster");
 	exec_prog(ctx, true,
-			  SYSTEMQUOTE "\"%s/%s\" --set ON_ERROR_STOP=on --port %d "
+			  SYSTEMQUOTE "\"%s/psql\" --set ON_ERROR_STOP=on --port %d "
 			  "-f \"%s/%s\" --dbname template1 >> \"%s\"" SYSTEMQUOTE,
-			  ctx->new.bindir, ctx->new.psql_exe, ctx->new.port,
-			  ctx->output_dir, DB_DUMP_FILE, ctx->logfile);
+			  ctx->new.bindir, ctx->new.port, ctx->output_dir,
+			  DB_DUMP_FILE, ctx->logfile);
 	check_ok(ctx);
 
 	/* regenerate now that we have db schemas */
