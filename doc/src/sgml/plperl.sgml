@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/plperl.sgml,v 2.67 2008/01/25 15:28:35 adunstan Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/plperl.sgml,v 2.67.2.1 2010/05/13 16:42:51 adunstan Exp $ -->
 
  <chapter id="plperl">
   <title>PL/Perl - Perl Procedural Language</title>
@@ -293,12 +293,7 @@ SELECT * FROM perl_set();
 <programlisting>
 use strict;
 </programlisting>
-   in the function body.  But this only works in <application>PL/PerlU</>
-   functions, since <literal>use</> is not a trusted operation.  In
-   <application>PL/Perl</> functions you can instead do:
-<programlisting>
-BEGIN { strict->import(); }
-</programlisting>
+   in the function body.
   </para>
  </sect1>
 
