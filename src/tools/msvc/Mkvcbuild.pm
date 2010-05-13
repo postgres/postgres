@@ -3,7 +3,7 @@ package Mkvcbuild;
 #
 # Package that generates build files for msvc build
 #
-# $PostgreSQL: pgsql/src/tools/msvc/Mkvcbuild.pm,v 1.40 2009/06/05 18:29:56 adunstan Exp $
+# $PostgreSQL: pgsql/src/tools/msvc/Mkvcbuild.pm,v 1.40.2.1 2010/05/13 21:33:55 adunstan Exp $
 #
 use Carp;
 use Win32;
@@ -11,6 +11,7 @@ use strict;
 use warnings;
 use Project;
 use Solution;
+use Cwd;
 
 use Exporter;
 our (@ISA, @EXPORT_OK);
@@ -101,6 +102,22 @@ sub mkvcbuild
             {
                 unlink('src\pl\plperl\SPI.c'); # if zero size
                 die 'Failed to create SPI.c' . "\n";
+            }
+        }
+        if (  Solution::IsNewer('src\pl\plperl\plperl_opmask.h','src\pl\plperl\plperl_opmask.pl'))
+        {
+            print 'Building src\pl\plperl\plperl_opmask.h ...' . "\n";
+            my $basedir = getcwd;
+            chdir 'src\pl\plperl';
+            system( $solution->{options}->{perl}
+                  . '/bin/perl '
+                  . 'plperl_opmask.pl '
+                  .	'plperl_opmask.h');
+            chdir $basedir;
+            if ((!(-f 'src\pl\plperl\plperl_opmask.h')) || -z 'src\pl\plperl\plperl_opmask.h')
+            {
+                unlink('src\pl\plperl\plperl_opmask.h'); # if zero size
+                die 'Failed to create plperl_opmask.h' . "\n";
             }
         }
         $plperl->AddReference($postgres);
