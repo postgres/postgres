@@ -337,3 +337,8 @@ CREATE OR REPLACE FUNCTION perl_spi_prepared_set(INTEGER, INTEGER) RETURNS SETOF
 $$ LANGUAGE plperl;
 SELECT * from perl_spi_prepared_set(1,2);
 
+--
+-- Test detection of unsafe operations
+CREATE OR REPLACE FUNCTION perl_unsafe1() RETURNS void AS $$
+	my $fd = fileno STDERR;
+$$ LANGUAGE plperl;

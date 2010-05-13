@@ -428,7 +428,7 @@ CREATE OR REPLACE FUNCTION  array_of_text() RETURNS TEXT[][]
 LANGUAGE plperl as $$ 
     return [['a"b',undef,'c,d'],['e\\f',undef,'g']]; 
 $$;
-SELECT array_of_text(); 
+SELECT array_of_text();
              array_of_text             
 ---------------------------------------
  {{"a\"b",NULL,"c,d"},{"e\\f",NULL,g}}
@@ -468,3 +468,9 @@ SELECT * from perl_spi_prepared_set(1,2);
                      4
 (2 rows)
 
+--
+-- Test detection of unsafe operations
+CREATE OR REPLACE FUNCTION perl_unsafe1() RETURNS void AS $$
+	my $fd = fileno STDERR;
+$$ LANGUAGE plperl;
+ERROR:  creation of Perl function failed: 'fileno' trapped by operation mask at line 2.

@@ -1,7 +1,7 @@
 /**********************************************************************
  * plperl.c - perl as a procedural language for PostgreSQL
  *
- *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.123.2.12 2010/03/09 22:35:07 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.123.2.13 2010/05/13 16:43:14 adunstan Exp $
  *
  **********************************************************************/
 
@@ -32,6 +32,8 @@
 
 /* perl stuff */
 #include "plperl.h"
+/* defines PLPERL_SET_OPMASK */
+#include "plperl_opmask.h"
 
 PG_MODULE_MAGIC;
 
@@ -61,7 +63,7 @@ typedef struct plperl_proc_desc
 
 typedef struct plperl_proc_entry
 {
-	char proc_name[NAMEDATALEN];
+	char		proc_name[NAMEDATALEN];
 	plperl_proc_desc *proc_data;
 } plperl_proc_entry;
 
@@ -92,11 +94,11 @@ typedef struct plperl_query_desc
 	Oid		   *argtypioparams;
 } plperl_query_desc;
 
-/* hash table entry for query desc  */
+/* hash table entry for query desc	*/
 
 typedef struct plperl_query_entry
 {
-	char query_name[NAMEDATALEN];
+	char		query_name[NAMEDATALEN];
 	plperl_query_desc *query_data;
 } plperl_query_entry;
 
@@ -120,9 +122,13 @@ static bool plperl_safe_init_done = false;
 static PerlInterpreter *plperl_trusted_interp = NULL;
 static PerlInterpreter *plperl_untrusted_interp = NULL;
 static PerlInterpreter *plperl_held_interp = NULL;
+static OP  *(*pp_require_orig) (pTHX) = NULL;
+static OP  *pp_require_safe(pTHX);
 static bool trusted_context;
-static HTAB  *plperl_proc_hash = NULL;
-static HTAB  *plperl_query_hash = NULL;
+static HTAB *plperl_proc_hash = NULL;
+static HTAB *plperl_query_hash = NULL;
+static char plperl_opmask[MAXO];
+static void set_interp_require(void);
 
 static bool plperl_use_strict = false;
 
@@ -151,6 +157,11 @@ static SV **hv_store_string(HV *hv, const char *key, SV *val);
 static SV **hv_fetch_string(HV *hv, const char *key);
 static SV  *plperl_create_sub(char *s, bool trusted);
 static SV  *plperl_call_perl_func(plperl_proc_desc *desc, FunctionCallInfo fcinfo);
+static char *strip_trailing_ws(const char *msg);
+
+#ifdef WIN32
+static char *setlocale_perl(int category, char *locale);
+#endif
 
 /*
  * This routine is a crock, and so is everyplace that calls it.  The problem
@@ -180,7 +191,7 @@ _PG_init(void)
 {
 	/* Be sure we do initialization only once (should be redundant now) */
 	static bool inited = false;
-    HASHCTL     hash_ctl;
+	HASHCTL		hash_ctl;
 
 	if (inited)
 		return;
@@ -210,6 +221,8 @@ _PG_init(void)
 									&hash_ctl,
 									HASH_ELEM);
 
+	PLPERL_SET_OPMASK(plperl_opmask);
+
 	plperl_init_interp();
 
 	inited = true;
@@ -225,11 +238,11 @@ _PG_init(void)
 	"sub ::plperl_die { my $msg = shift; " \
 	"       $msg =~ s/\\(eval \\d+\\) //g; die $msg; } " \
 	"$SIG{__DIE__} = \\&::plperl_die; " \
-	"sub ::mkunsafefunc {" \
+	"sub ::mkfunc {" \
 	"      my $ret = eval(qq[ sub { $_[0] $_[1] } ]); " \
 	"      $@ =~ s/\\(eval \\d+\\) //g if $@; return $ret; }" \
 	"use strict; " \
-	"sub ::mk_strict_unsafefunc {" \
+	"sub ::mk_strict_func {" \
 	"      my $ret = eval(qq[ sub { use strict; $_[0] $_[1] } ]); " \
 	"      $@ =~ s/\\(eval \\d+\\) //g if $@; return $ret; } " \
 	"sub ::_plperl_to_pg_array {" \
@@ -256,50 +269,37 @@ _PG_init(void)
 	"  return qq({$res}); " \
 	"} "
 
-#define SAFE_MODULE \
-	"require Safe; $Safe::VERSION"
 
-#define SAFE_OK \
-	"use vars qw($PLContainer); $PLContainer = new Safe('PLPerl');" \
-	"$PLContainer->permit_only(':default');" \
-	"$PLContainer->permit(qw[:base_math !:base_io sort time]);" \
-	"$PLContainer->share(qw[&elog &spi_exec_query &return_next " \
-	"&spi_query &spi_fetchrow &spi_cursor_close " \
-	"&spi_prepare &spi_exec_prepared &spi_query_prepared &spi_freeplan " \
-	"&_plperl_to_pg_array " \
-	"&DEBUG &LOG &INFO &NOTICE &WARNING &ERROR %_SHARED ]);" \
-	"sub ::mksafefunc {" \
-	"      my $ret = $PLContainer->reval(qq[sub { $_[0] $_[1] }]); " \
-	"      $@ =~ s/\\(eval \\d+\\) //g if $@; return $ret; }" \
-	"$PLContainer->permit(qw[require caller]); $PLContainer->reval('use strict;');" \
-	"$PLContainer->deny(qw[require caller]); " \
-	"sub ::mk_strict_safefunc {" \
-	"      my $ret = $PLContainer->reval(qq[sub { BEGIN { strict->import(); } $_[0] $_[1] }]); " \
-	"      $@ =~ s/\\(eval \\d+\\) //g if $@; return $ret; }"
-
-#define SAFE_BAD \
-	"use vars qw($PLContainer); $PLContainer = new Safe('PLPerl');" \
-	"$PLContainer->permit_only(':default');" \
-	"$PLContainer->share(qw[&elog &ERROR ]);" \
-	"sub ::mksafefunc { return $PLContainer->reval(qq[sub { " \
-	"      elog(ERROR,'trusted Perl functions disabled - " \
-	"      please upgrade Perl Safe module to version 2.09 or later');}]); }" \
-	"sub ::mk_strict_safefunc { return $PLContainer->reval(qq[sub { " \
-	"      elog(ERROR,'trusted Perl functions disabled - " \
-	"      please upgrade Perl Safe module to version 2.09 or later');}]); }"
+#define PLC_TRUSTED \
+	"require strict; "
 
 #define TEST_FOR_MULTI \
 	"use Config; " \
-	"$Config{usemultiplicity} eq 'define' or "  \
-    "($Config{usethreads} eq 'define' " \
+	"$Config{usemultiplicity} eq 'define' or "	\
+	"($Config{usethreads} eq 'define' " \
 	" and $Config{useithreads} eq 'define')"
 
+
+static void
+set_interp_require(void)
+{
+	if (trusted_context)
+	{
+		PL_ppaddr[OP_REQUIRE] = pp_require_safe;
+		PL_ppaddr[OP_DOFILE] = pp_require_safe;
+	}
+	else
+	{
+		PL_ppaddr[OP_REQUIRE] = pp_require_orig;
+		PL_ppaddr[OP_DOFILE] = pp_require_orig;
+	}
+}
 
 /********************************************************************
  *
  * We start out by creating a "held" interpreter that we can use in
  * trusted or untrusted mode (but not both) as the need arises. Later, we
- * assign that interpreter if it is available to either the trusted or 
+ * assign that interpreter if it is available to either the trusted or
  * untrusted interpreter. If it has already been assigned, and we need to
  * create the other interpreter, we do that if we can, or error out.
  * We detect if it is safe to run two interpreters during the setup of the
@@ -307,7 +307,7 @@ _PG_init(void)
  */
 
 
-static void 
+static void
 check_interp(bool trusted)
 {
 	if (interp_state == INTERP_HELD)
@@ -324,8 +324,9 @@ check_interp(bool trusted)
 		}
 		plperl_held_interp = NULL;
 		trusted_context = trusted;
+		set_interp_require();
 	}
-	else if (interp_state == INTERP_BOTH || 
+	else if (interp_state == INTERP_BOTH ||
 			 (trusted && interp_state == INTERP_TRUSTED) ||
 			 (!trusted && interp_state == INTERP_UNTRUSTED))
 	{
@@ -336,6 +337,7 @@ check_interp(bool trusted)
 			else
 				PERL_SET_CONTEXT(plperl_untrusted_interp);
 			trusted_context = trusted;
+			set_interp_require();
 		}
 	}
 	else if (can_run_two)
@@ -349,14 +351,15 @@ check_interp(bool trusted)
 		interp_state = INTERP_BOTH;
 		plperl_held_interp = NULL;
 		trusted_context = trusted;
+		set_interp_require();
 	}
 	else
 	{
-		elog(ERROR, 
+		elog(ERROR,
 			 "can not allocate second Perl interpreter on this platform");
 
 	}
-	
+
 }
 
 /*
@@ -371,7 +374,9 @@ restore_context(bool old_context)
 			PERL_SET_CONTEXT(plperl_trusted_interp);
 		else
 			PERL_SET_CONTEXT(plperl_untrusted_interp);
+
 		trusted_context = old_context;
+		set_interp_require();
 	}
 }
 
@@ -382,9 +387,9 @@ plperl_init_interp(void)
 		"", "-e", PERLBOOT
 	};
 
-	int nargs = 3;
+	int			nargs = 3;
 
-	char *dummy_perl_env[1] = { NULL }; 
+	char	   *dummy_perl_env[1] = {NULL};
 
 #ifdef WIN32
 
@@ -403,7 +408,7 @@ plperl_init_interp(void)
 	 * subsequent calls to the interpreter don't mess with the locale
 	 * settings.
 	 *
-	 * We restore them using Perl's POSIX::setlocale() function so that Perl
+	 * We restore them using Perl's perl_setlocale() function so that Perl
 	 * doesn't have a different idea of the locale from Postgres.
 	 *
 	 */
@@ -414,7 +419,6 @@ plperl_init_interp(void)
 			   *save_monetary,
 			   *save_numeric,
 			   *save_time;
-	char		buf[1024];
 
 	loc = setlocale(LC_COLLATE, NULL);
 	save_collate = loc ? pstrdup(loc) : NULL;
@@ -426,6 +430,11 @@ plperl_init_interp(void)
 	save_numeric = loc ? pstrdup(loc) : NULL;
 	loc = setlocale(LC_TIME, NULL);
 	save_time = loc ? pstrdup(loc) : NULL;
+
+#define PLPERL_RESTORE_LOCALE(name, saved) \
+	  STMT_START { \
+			  if (saved != NULL) { setlocale_perl(name, saved); pfree(saved); } \
+	  } STMT_END
 #endif
 
 	/****
@@ -440,7 +449,7 @@ plperl_init_interp(void)
 #if defined(PERL_SYS_INIT3) && !defined(MYMALLOC)
 	/* only call this the first time through, as per perlembed man page */
 	if (interp_state == INTERP_NONE)
-		PERL_SYS_INIT3(&nargs, (char ***)&embedding, (char***)&dummy_perl_env);
+		PERL_SYS_INIT3(&nargs, (char ***) &embedding, (char ***) &dummy_perl_env);
 #endif
 
 	plperl_held_interp = perl_alloc();
@@ -448,121 +457,137 @@ plperl_init_interp(void)
 		elog(ERROR, "could not allocate Perl interpreter");
 
 	perl_construct(plperl_held_interp);
-	perl_parse(plperl_held_interp, plperl_init_shared_libs, 
+
+	/*
+	 * Record the original function for the 'require' and 'dofile' opcodes.
+	 * (They share the same implementation.) Ensure it's used for new
+	 * interpreters.
+	 */
+	if (!pp_require_orig)
+	{
+		pp_require_orig = PL_ppaddr[OP_REQUIRE];
+	}
+	else
+	{
+		PL_ppaddr[OP_REQUIRE] = pp_require_orig;
+		PL_ppaddr[OP_DOFILE] = pp_require_orig;
+	}
+
+	perl_parse(plperl_held_interp, plperl_init_shared_libs,
 			   nargs, embedding, NULL);
 	perl_run(plperl_held_interp);
 
 	if (interp_state == INTERP_NONE)
 	{
-		SV *res;
+		SV		   *res;
 
-		res = eval_pv(TEST_FOR_MULTI,TRUE);
-		can_run_two = SvIV(res); 
+		res = eval_pv(TEST_FOR_MULTI, TRUE);
+		can_run_two = SvIV(res);
 		interp_state = INTERP_HELD;
 	}
 
-#ifdef WIN32
-
-	eval_pv("use POSIX qw(locale_h);", TRUE);	/* croak on failure */
-
-	if (save_collate != NULL)
-	{
-		snprintf(buf, sizeof(buf), "setlocale(%s,'%s');",
-				 "LC_COLLATE", save_collate);
-		eval_pv(buf, TRUE);
-		pfree(save_collate);
-	}
-	if (save_ctype != NULL)
-	{
-		snprintf(buf, sizeof(buf), "setlocale(%s,'%s');",
-				 "LC_CTYPE", save_ctype);
-		eval_pv(buf, TRUE);
-		pfree(save_ctype);
-	}
-	if (save_monetary != NULL)
-	{
-		snprintf(buf, sizeof(buf), "setlocale(%s,'%s');",
-				 "LC_MONETARY", save_monetary);
-		eval_pv(buf, TRUE);
-		pfree(save_monetary);
-	}
-	if (save_numeric != NULL)
-	{
-		snprintf(buf, sizeof(buf), "setlocale(%s,'%s');",
-				 "LC_NUMERIC", save_numeric);
-		eval_pv(buf, TRUE);
-		pfree(save_numeric);
-	}
-	if (save_time != NULL)
-	{
-		snprintf(buf, sizeof(buf), "setlocale(%s,'%s');",
-				 "LC_TIME", save_time);
-		eval_pv(buf, TRUE);
-		pfree(save_time);
-	}
+#ifdef PLPERL_RESTORE_LOCALE
+	PLPERL_RESTORE_LOCALE(LC_COLLATE, save_collate);
+	PLPERL_RESTORE_LOCALE(LC_CTYPE, save_ctype);
+	PLPERL_RESTORE_LOCALE(LC_MONETARY, save_monetary);
+	PLPERL_RESTORE_LOCALE(LC_NUMERIC, save_numeric);
+	PLPERL_RESTORE_LOCALE(LC_TIME, save_time);
 #endif
 
+}
+
+/*
+ * Our safe implementation of the require opcode.
+ * This is safe because it's completely unable to load any code.
+ * If the requested file/module has already been loaded it'll return true.
+ * If not, it'll die.
+ * So now "use Foo;" will work iff Foo has already been loaded.
+ */
+static OP  *
+pp_require_safe(pTHX)
+{
+	dVAR;
+	dSP;
+	SV		   *sv,
+			  **svp;
+	char	   *name;
+	STRLEN		len;
+
+	sv = POPs;
+	name = SvPV(sv, len);
+	if (!(name && len > 0 && *name))
+		RETPUSHNO;
+
+	svp = hv_fetch(GvHVn(PL_incgv), name, len, 0);
+	if (svp && *svp != &PL_sv_undef)
+		RETPUSHYES;
+
+	DIE(aTHX_ "Unable to load %s into plperl", name);
 }
 
 
 static void
 plperl_safe_init(void)
 {
-	SV		   *res;
-	double		safe_version;
+	HV		   *stash;
+	SV		   *sv;
+	char	   *key;
+	I32			klen;
 
-	res = eval_pv(SAFE_MODULE, FALSE);	/* TRUE = croak if failure */
+	/* use original require while we set up */
+	PL_ppaddr[OP_REQUIRE] = pp_require_orig;
+	PL_ppaddr[OP_DOFILE] = pp_require_orig;
 
-	safe_version = SvNV(res);
+	eval_pv(PLC_TRUSTED, FALSE);
+	if (SvTRUE(ERRSV))
+		ereport(ERROR,
+				(errmsg("%s", strip_trailing_ws(SvPV_nolen(ERRSV))),
+				 errcontext("While executing PLC_TRUSTED.")));
+
+	if (GetDatabaseEncoding() == PG_UTF8)
+	{
+		/*
+		 * Force loading of utf8 module now to prevent errors that can arise
+		 * from the regex code later trying to load utf8 modules. See
+		 * http://rt.perl.org/rt3/Ticket/Display.html?id=47576
+		 */
+		eval_pv("my $a=chr(0x100); return $a =~ /\\xa9/i", FALSE);
+		if (SvTRUE(ERRSV))
+			ereport(ERROR,
+					(errmsg("%s", strip_trailing_ws(SvPV_nolen(ERRSV))),
+					 errcontext("While executing utf8fix.")));
+	}
 
 	/*
-	 * We actually want to reject safe_version < 2.09, but it's risky to
-	 * assume that floating-point comparisons are exact, so use a slightly
-	 * smaller comparison value.
+	 * Lock down the interpreter
 	 */
-	if (safe_version < 2.0899)
+
+	/* switch to the safe require/dofile opcode for future code */
+	PL_ppaddr[OP_REQUIRE] = pp_require_safe;
+	PL_ppaddr[OP_DOFILE] = pp_require_safe;
+
+	/* 
+	 * prevent (any more) unsafe opcodes being compiled 
+	 * PL_op_mask is per interpreter, so this only needs to be set once 
+	 */
+	PL_op_mask = plperl_opmask;
+
+	/* delete the DynaLoader:: namespace so extensions can't be loaded */
+	stash = gv_stashpv("DynaLoader", GV_ADDWARN);
+	hv_iterinit(stash);
+	while ((sv = hv_iternextsv(stash, &key, &klen)))
 	{
-		/* not safe, so disallow all trusted funcs */
-		eval_pv(SAFE_BAD, FALSE);
+		if (!isGV_with_GP(sv) || !GvCV(sv))
+			continue;
+		SvREFCNT_dec(GvCV(sv)); /* free the CV */
+		GvCV(sv) = NULL;		/* prevent call via GV */
 	}
-	else
-	{
-		eval_pv(SAFE_OK, FALSE);
-		if (GetDatabaseEncoding() == PG_UTF8)
-		{
-			/* 
-			 * Fill in just enough information to set up this perl
-			 * function in the safe container and call it.
-			 * For some reason not entirely clear, it prevents errors that
-			 * can arise from the regex code later trying to load
-			 * utf8 modules.
-			 */
-			plperl_proc_desc desc;			
-			FunctionCallInfoData fcinfo;
-			SV *ret;
-			SV *func;
-
-			/* make sure we don't call ourselves recursively */
-			plperl_safe_init_done = true;
-
-			/* compile the function */
-			func = plperl_create_sub(
-				"return shift =~ /\\xa9/i ? 'true' : 'false' ;",
-				true);
-
-			/* set up to call the function with a single text argument 'a' */
-			desc.reference = func;
-			desc.nargs = 1;
-			desc.arg_is_rowtype[0] = false;
-			fmgr_info(F_TEXTOUT, &(desc.arg_out_func[0]));
-
-			fcinfo.arg[0] = DirectFunctionCall1(textin, CStringGetDatum("a"));
-			fcinfo.argnull[0] = false;
-			
-			/* and make the call */
-			ret = plperl_call_perl_func(&desc, &fcinfo);
-		}
-	}
+	hv_clear(stash);
+	/* invalidate assorted caches */
+	++PL_sub_generation;
+#ifdef PL_stashcache
+	hv_clear(PL_stashcache);
+#endif
 
 	plperl_safe_init_done = true;
 }
@@ -944,7 +969,7 @@ plperl_validator(PG_FUNCTION_ARGS)
 
 
 /*
- * Uses mksafefunc/mkunsafefunc to create an anonymous sub whose text is
+ * Uses mkfunc to create an anonymous sub whose text is
  * supplied in s, and returns a reference to the closure.
  */
 static SV  *
@@ -974,14 +999,10 @@ plperl_create_sub(char *s, bool trusted)
 	 * inside mksafefunc?
 	 */
 
-	if (trusted && plperl_use_strict)
-		compile_sub = "::mk_strict_safefunc";
-	else if (plperl_use_strict)
-		compile_sub = "::mk_strict_unsafefunc";
-	else if (trusted)
-		compile_sub = "::mksafefunc";
+	if (plperl_use_strict)
+		compile_sub = "::mk_strict_func";
 	else
-		compile_sub = "::mkunsafefunc";
+		compile_sub = "::mkfunc";
 
 	count = perl_call_pv(compile_sub, G_SCALAR | G_EVAL | G_KEEPERR);
 	SPAGAIN;
@@ -1037,7 +1058,7 @@ plperl_create_sub(char *s, bool trusted)
  * plperl_init_shared_libs()		-
  *
  * We cannot use the DynaLoader directly to get at the Opcode
- * module (used by Safe.pm). So, we link Opcode into ourselves
+ * module. So, we link Opcode into ourselves
  * and do the initialization behind perl's back.
  *
  **********************************************************************/
@@ -1461,8 +1482,8 @@ compile_plperl_function(Oid fn_oid, bool is_trigger)
 	plperl_proc_desc *prodesc = NULL;
 	int			i;
 	plperl_proc_entry *hash_entry;
-	bool found;
-	bool oldcontext = trusted_context;
+	bool		found;
+	bool		oldcontext = trusted_context;
 
 	/* We'll need the pg_proc tuple in any case... */
 	procTup = SearchSysCache(PROCOID,
@@ -1483,7 +1504,7 @@ compile_plperl_function(Oid fn_oid, bool is_trigger)
 	/************************************************************
 	 * Lookup the internal proc name in the hashtable
 	 ************************************************************/
-	hash_entry = hash_search(plperl_proc_hash, internal_proname, 
+	hash_entry = hash_search(plperl_proc_hash, internal_proname,
 							 HASH_FIND, NULL);
 
 	if (hash_entry)
@@ -1504,7 +1525,8 @@ compile_plperl_function(Oid fn_oid, bool is_trigger)
 		{
 			hash_search(plperl_proc_hash, internal_proname,
 						HASH_REMOVE, NULL);
-			if (prodesc->reference) {
+			if (prodesc->reference)
+			{
 				check_interp(prodesc->lanpltrusted);
 				SvREFCNT_dec(prodesc->reference);
 				restore_context(oldcontext);
@@ -2169,7 +2191,7 @@ plperl_spi_prepare(char *query, int argc, SV **argv)
 {
 	plperl_query_desc *qdesc;
 	plperl_query_entry *hash_entry;
-	bool        found;
+	bool		found;
 	void	   *plan;
 	int			i;
 
@@ -2284,7 +2306,7 @@ plperl_spi_prepare(char *query, int argc, SV **argv)
 	 ************************************************************/
 
 	hash_entry = hash_search(plperl_query_hash, qdesc->qname,
-							 HASH_ENTER,&found);
+							 HASH_ENTER, &found);
 	hash_entry->query_data = qdesc;
 
 	return newSVstring(qdesc->qname);
@@ -2321,7 +2343,7 @@ plperl_spi_exec_prepared(char *query, HV *attr, int argc, SV **argv)
 		 ************************************************************/
 
 		hash_entry = hash_search(plperl_query_hash, query,
-										 HASH_FIND,NULL);
+								 HASH_FIND, NULL);
 		if (hash_entry == NULL)
 			elog(ERROR, "spi_exec_prepared: Invalid prepared query passed");
 
@@ -2462,7 +2484,7 @@ plperl_spi_query_prepared(char *query, int argc, SV **argv)
 		 * Fetch the saved plan descriptor, see if it's o.k.
 		 ************************************************************/
 		hash_entry = hash_search(plperl_query_hash, query,
-										 HASH_FIND,NULL);
+								 HASH_FIND, NULL);
 		if (hash_entry == NULL)
 			elog(ERROR, "spi_exec_prepared: Invalid prepared query passed");
 
@@ -2576,7 +2598,7 @@ plperl_spi_freeplan(char *query)
 	plperl_query_entry *hash_entry;
 
 	hash_entry = hash_search(plperl_query_hash, query,
-										 HASH_FIND,NULL);
+							 HASH_FIND, NULL);
 	if (hash_entry == NULL)
 		elog(ERROR, "spi_exec_prepared: Invalid prepared query passed");
 
@@ -2589,8 +2611,8 @@ plperl_spi_freeplan(char *query)
 	 * free all memory before SPI_freeplan, so if it dies, nothing will be
 	 * left over
 	 */
-	hash_search(plperl_query_hash, query, 
-				HASH_REMOVE,NULL);
+	hash_search(plperl_query_hash, query,
+				HASH_REMOVE, NULL);
 
 	plan = qdesc->plan;
 	free(qdesc->argtypes);
@@ -2605,7 +2627,7 @@ plperl_spi_freeplan(char *query)
  * Create a new SV from a string assumed to be in the current database's
  * encoding.
  */
-static SV *
+static SV  *
 newSVstring(const char *str)
 {
 	SV		   *sv;
@@ -2625,13 +2647,13 @@ newSVstring(const char *str)
 static SV **
 hv_store_string(HV *hv, const char *key, SV *val)
 {
-	int32	klen = strlen(key);
+	int32		klen = strlen(key);
 
 	/*
-	 * This seems nowhere documented, but under Perl 5.8.0 and up,
-	 * hv_store() recognizes a negative klen parameter as meaning
-	 * a UTF-8 encoded key.  It does not appear that hashes track
-	 * UTF-8-ness of keys at all in Perl 5.6.
+	 * This seems nowhere documented, but under Perl 5.8.0 and up, hv_store()
+	 * recognizes a negative klen parameter as meaning a UTF-8 encoded key.
+	 * It does not appear that hashes track UTF-8-ness of keys at all in Perl
+	 * 5.6.
 	 */
 #if PERL_BCDVERSION >= 0x5008000L
 	if (GetDatabaseEncoding() == PG_UTF8)
@@ -2647,7 +2669,7 @@ hv_store_string(HV *hv, const char *key, SV *val)
 static SV **
 hv_fetch_string(HV *hv, const char *key)
 {
-	int32	klen = strlen(key);
+	int32		klen = strlen(key);
 
 	/* See notes in hv_store_string */
 #if PERL_BCDVERSION >= 0x5008000L
@@ -2656,3 +2678,79 @@ hv_fetch_string(HV *hv, const char *key)
 #endif
 	return hv_fetch(hv, key, klen, 0);
 }
+
+
+/*
+ * Perl's own setlocal() copied from POSIX.xs
+ * (needed because of the calls to new_*())
+ */
+#ifdef WIN32
+static char *
+setlocale_perl(int category, char *locale)
+{
+	char	   *RETVAL = setlocale(category, locale);
+
+	if (RETVAL)
+	{
+#ifdef USE_LOCALE_CTYPE
+		if (category == LC_CTYPE
+#ifdef LC_ALL
+			|| category == LC_ALL
+#endif
+			)
+		{
+			char	   *newctype;
+
+#ifdef LC_ALL
+			if (category == LC_ALL)
+				newctype = setlocale(LC_CTYPE, NULL);
+			else
+#endif
+				newctype = RETVAL;
+			new_ctype(newctype);
+		}
+#endif   /* USE_LOCALE_CTYPE */
+#ifdef USE_LOCALE_COLLATE
+		if (category == LC_COLLATE
+#ifdef LC_ALL
+			|| category == LC_ALL
+#endif
+			)
+		{
+			char	   *newcoll;
+
+#ifdef LC_ALL
+			if (category == LC_ALL)
+				newcoll = setlocale(LC_COLLATE, NULL);
+			else
+#endif
+				newcoll = RETVAL;
+			new_collate(newcoll);
+		}
+#endif   /* USE_LOCALE_COLLATE */
+
+
+#ifdef USE_LOCALE_NUMERIC
+		if (category == LC_NUMERIC
+#ifdef LC_ALL
+			|| category == LC_ALL
+#endif
+			)
+		{
+			char	   *newnum;
+
+#ifdef LC_ALL
+			if (category == LC_ALL)
+				newnum = setlocale(LC_NUMERIC, NULL);
+			else
+#endif
+				newnum = RETVAL;
+			new_numeric(newnum);
+		}
+#endif   /* USE_LOCALE_NUMERIC */
+	}
+
+	return RETVAL;
+}
+
+#endif
