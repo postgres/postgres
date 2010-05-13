@@ -2,7 +2,7 @@
 # Makefile for pg_upgrade_support
 #
 
-PGFILEDESC = "pg_upgrade_support - shared library functions for pg_upgrade"
+PGFILEDESC = "pg_upgrade_support - server-side functions for pg_upgrade"
 
 MODULES = pg_upgrade_support
 
@@ -11,7 +11,7 @@ PG_CONFIG = pg_config
 PGXS := $(shell $(PG_CONFIG) --pgxs)
 include $(PGXS)
 else
-subdir = contrib/pg_upgrade
+subdir = contrib/pg_upgrade_support
 top_builddir = ../..
 include $(top_builddir)/src/Makefile.global
 include $(top_srcdir)/contrib/contrib-global.mk
