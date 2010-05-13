@@ -1,7 +1,7 @@
 # translation of libpq-fr.po to FR_fr
 # French message translation file for libpq
 #
-# $PostgreSQL: pgsql/src/interfaces/libpq/po/fr.po,v 1.17.2.1 2008/06/05 23:36:45 tgl Exp $
+# $PostgreSQL: pgsql/src/interfaces/libpq/po/fr.po,v 1.17.2.2 2010/05/13 07:37:42 petere Exp $
 #
 # Use these quotes: « %s »
 # Peter Eisentraut <peter_e@gmx.net>, 2001.
@@ -12,8 +12,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: libpq-83-fr\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-03-14 17:20-0300\n"
-"PO-Revision-Date: 2008-03-28 22:30+0100\n"
+"POT-Creation-Date: 2009-12-12 22:08+0000\n"
+"PO-Revision-Date: 2009-12-18 00:07+0100\n"
 "Last-Translator: Guillaume Lelarge <guillaume@lelarge.info>\n"
 "Language-Team:  <pgsql-fr-generale@postgresql.org>\n"
 "MIME-Version: 1.0\n"
@@ -58,13 +58,13 @@ msgstr "erreur de continuation SSPI"
 #: fe-auth.c:674
 #: fe-auth.c:771
 #: fe-connect.c:1307
-#: fe-connect.c:2516
-#: fe-connect.c:2733
-#: fe-connect.c:3067
-#: fe-connect.c:3076
-#: fe-connect.c:3213
-#: fe-connect.c:3259
-#: fe-connect.c:3277
+#: fe-connect.c:2520
+#: fe-connect.c:2737
+#: fe-connect.c:3071
+#: fe-connect.c:3080
+#: fe-connect.c:3217
+#: fe-connect.c:3263
+#: fe-connect.c:3281
 #: fe-exec.c:2754
 #: fe-lobj.c:669
 #: fe-protocol2.c:1027
@@ -223,105 +223,105 @@ msgstr ""
 "état de connexion invalide (%c), indique probablement une corruption de\n"
 " mémoire\n"
 
-#: fe-connect.c:2529
+#: fe-connect.c:2533
 #, c-format
 msgid "invalid LDAP URL \"%s\": scheme must be ldap://\n"
 msgstr "URL LDAP « %s » invalide : le schéma doit être ldap://\n"
 
-#: fe-connect.c:2544
+#: fe-connect.c:2548
 #, c-format
 msgid "invalid LDAP URL \"%s\": missing distinguished name\n"
 msgstr "URL LDAP « %s » invalide : le « distinguished name » manque\n"
 
-#: fe-connect.c:2555
-#: fe-connect.c:2608
+#: fe-connect.c:2559
+#: fe-connect.c:2612
 #, c-format
 msgid "invalid LDAP URL \"%s\": must have exactly one attribute\n"
 msgstr "URL LDAP « %s » invalide : doit avoir exactement un attribut\n"
 
-#: fe-connect.c:2565
-#: fe-connect.c:2622
+#: fe-connect.c:2569
+#: fe-connect.c:2626
 #, c-format
 msgid "invalid LDAP URL \"%s\": must have search scope (base/one/sub)\n"
 msgstr "URL LDAP « %s » invalide : doit avoir une échelle de recherche (base/un/sous)\n"
 
-#: fe-connect.c:2576
+#: fe-connect.c:2580
 #, c-format
 msgid "invalid LDAP URL \"%s\": no filter\n"
 msgstr "URL LDAP « %s » invalide : aucun filtre\n"
 
-#: fe-connect.c:2597
+#: fe-connect.c:2601
 #, c-format
 msgid "invalid LDAP URL \"%s\": invalid port number\n"
 msgstr "URL LDAP « %s » invalide : numéro de port invalide\n"
 
-#: fe-connect.c:2631
+#: fe-connect.c:2635
 msgid "could not create LDAP structure\n"
 msgstr "n'a pas pu créer la structure LDAP\n"
 
-#: fe-connect.c:2673
+#: fe-connect.c:2677
 #, c-format
 msgid "lookup on LDAP server failed: %s\n"
 msgstr "échec de la recherche sur le serveur LDAP : %s\n"
 
-#: fe-connect.c:2684
+#: fe-connect.c:2688
 msgid "more than one entry found on LDAP lookup\n"
 msgstr "plus d'une entrée trouvée pendant la recherche LDAP\n"
 
-#: fe-connect.c:2685
-#: fe-connect.c:2697
+#: fe-connect.c:2689
+#: fe-connect.c:2701
 msgid "no entry found on LDAP lookup\n"
 msgstr "aucune entrée trouvée pendant la recherche LDAP\n"
 
-#: fe-connect.c:2708
-#: fe-connect.c:2721
+#: fe-connect.c:2712
+#: fe-connect.c:2725
 msgid "attribute has no values on LDAP lookup\n"
 msgstr "l'attribut n'a pas de valeurs après la recherche LDAP\n"
 
-#: fe-connect.c:2772
-#: fe-connect.c:2790
-#: fe-connect.c:3115
+#: fe-connect.c:2776
+#: fe-connect.c:2794
+#: fe-connect.c:3119
 #, c-format
 msgid "missing \"=\" after \"%s\" in connection info string\n"
 msgstr "« = » manquant après « %s » dans la chaîne des paramètres de connexion\n"
 
-#: fe-connect.c:2853
-#: fe-connect.c:3197
+#: fe-connect.c:2857
+#: fe-connect.c:3201
 #, c-format
 msgid "invalid connection option \"%s\"\n"
 msgstr "option de connexion « %s » invalide\n"
 
-#: fe-connect.c:2866
-#: fe-connect.c:3164
+#: fe-connect.c:2870
+#: fe-connect.c:3168
 msgid "unterminated quoted string in connection info string\n"
 msgstr "guillemets non refermés dans la chaîne des paramètres de connexion\n"
 
-#: fe-connect.c:2909
+#: fe-connect.c:2913
 #, c-format
 msgid "ERROR: service file \"%s\" not found\n"
 msgstr "ERREUR : fichier de service « %s » introuvable\n"
 
-#: fe-connect.c:2922
+#: fe-connect.c:2926
 #, c-format
 msgid "ERROR: line %d too long in service file \"%s\"\n"
 msgstr "ERREUR : ligne %d trop longue dans le fichier service « %s »\n"
 
-#: fe-connect.c:2994
-#: fe-connect.c:3021
+#: fe-connect.c:2998
+#: fe-connect.c:3025
 #, c-format
 msgid "ERROR: syntax error in service file \"%s\", line %d\n"
 msgstr "ERREUR : erreur de syntaxe dans le fichier service « %s », ligne %d\n"
 
-#: fe-connect.c:3445
+#: fe-connect.c:3449
 msgid "connection pointer is NULL\n"
 msgstr "le pointeur de connexion est NULL\n"
 
-#: fe-connect.c:3729
+#: fe-connect.c:3733
 #, c-format
 msgid "WARNING: password file \"%s\" is not a plain file\n"
 msgstr "ATTENTION : le fichier de mots de passe « %s » n'est pas un fichier texte\n"
 
-#: fe-connect.c:3738
+#: fe-connect.c:3742
 #, c-format
 msgid "WARNING: password file \"%s\" has world or group read access; permission should be u=rw (0600)\n"
 msgstr ""
@@ -505,7 +505,7 @@ msgid "could not receive data from server: %s\n"
 msgstr "n'a pas pu recevoir des données depuis le serveur : %s\n"
 
 #: fe-misc.c:715
-#: fe-misc.c:783
+#: fe-misc.c:792
 msgid ""
 "server closed the connection unexpectedly\n"
 "\tThis probably means the server terminated abnormally\n"
@@ -515,20 +515,20 @@ msgstr ""
 "\tLe serveur s'est peut-être arrêté anormalement avant ou durant le\n"
 "\ttraitement de la requête.\n"
 
-#: fe-misc.c:800
+#: fe-misc.c:809
 #, c-format
 msgid "could not send data to server: %s\n"
 msgstr "n'a pas pu transmettre les données au serveur : %s\n"
 
-#: fe-misc.c:919
+#: fe-misc.c:928
 msgid "timeout expired\n"
 msgstr "le délai est dépassé\n"
 
-#: fe-misc.c:964
+#: fe-misc.c:973
 msgid "socket not open\n"
 msgstr "socket non ouvert\n"
 
-#: fe-misc.c:987
+#: fe-misc.c:996
 #, c-format
 msgid "select() failed: %s\n"
 msgstr "échec de select() : %s\n"
@@ -812,11 +812,15 @@ msgstr "le certificat n'a pas pu être validé : %s\n"
 msgid "certificate could not be obtained: %s\n"
 msgstr "le certificat n'a pas pu être obtenu : %s\n"
 
-#: fe-secure.c:1163
+#: fe-secure.c:1107
+msgid "SSL certificate's common name contains embedded null\n"
+msgstr "le nom commun du certificat SSL contient un NULL imbriqué\n"
+
+#: fe-secure.c:1182
 msgid "no SSL error reported"
 msgstr "aucune erreur SSL reportée"
 
-#: fe-secure.c:1172
+#: fe-secure.c:1191
 #, c-format
 msgid "SSL error code %lu"
 msgstr "erreur SSL %lu"
