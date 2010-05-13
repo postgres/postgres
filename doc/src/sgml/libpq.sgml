@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.289 2009/05/28 20:02:10 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.289.2.1 2010/05/13 14:16:58 mha Exp $ -->
 
 <chapter id="libpq">
  <title><application>libpq</application> - C Library</title>
@@ -6388,7 +6388,7 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
    The default value for <literal>sslmode</> is <literal>prefer</>. As is shown
    in the table, this makes no sense from a security point of view, and it only
    promises performance overhead if possible. It is only provided as the default
-   for backwards compatiblity, and not recommended in secure deployments.
+   for backwards compatibility, and not recommended in secure deployments.
   </para>
 
  </sect2>
