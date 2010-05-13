@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/rules.sgml,v 1.37.4.4 2005/01/29 23:45:53 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/rules.sgml,v 1.37.4.5 2010/05/13 19:16:45 tgl Exp $ -->
 
 <chapter id="rules">
 <title>The Rule System</title>
@@ -1646,7 +1646,7 @@ DELETE FROM shoelace WHERE EXISTS
              WHERE sl_name = shoelace.sl_name);
 </programlisting>
 
-    <foreignphrase>Voilà</foreignphrase>:
+    <foreignphrase>Voil&agrave;</foreignphrase>:
 
 <programlisting>
 SELECT * FROM shoelace;
