@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.112 2010/04/03 07:22:57 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.113 2010/05/13 18:54:18 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -200,7 +200,8 @@ ALTER TABLE <replaceable class="PARAMETER">name</replaceable>
     <listitem>
      <para>
       This form sets the storage mode for a column. This controls whether this
-      column is held inline or in a supplementary table, and whether the data
+      column is held inline or in a secondary <acronym>TOAST</> table, and
+      whether the data
       should be compressed or not. <literal>PLAIN</literal> must be used
       for fixed-length values such as <type>integer</type> and is
       inline, uncompressed. <literal>MAIN</literal> is for inline,
@@ -208,9 +209,9 @@ ALTER TABLE <replaceable class="PARAMETER">name</replaceable>
       uncompressed data, and <literal>EXTENDED</literal> is for external,
       compressed data.  <literal>EXTENDED</literal> is the default for most
       data types that support non-<literal>PLAIN</literal> storage.
-      Use of <literal>EXTERNAL</literal> will
-      make substring operations on <type>text</type> and <type>bytea</type>
-      columns faster, at the penalty of increased storage space.  Note that
+      Use of <literal>EXTERNAL</literal> will make substring operations on
+      very large <type>text</type> and <type>bytea</type> values run faster,
+      at the penalty of increased storage space.  Note that
       <literal>SET STORAGE</> doesn't itself change anything in the table,
       it just sets the strategy to be pursued during future table updates.
       See <xref linkend="storage-toast"> for more information.

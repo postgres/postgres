@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_table.sgml,v 1.126 2010/04/16 02:22:33 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_table.sgml,v 1.127 2010/05/13 18:54:18 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -152,7 +152,7 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE <replaceable class="PAR
       table is going to be used in complex queries, it is wise to run
       <command>ANALYZE</> on the temporary table after it is populated.
      </para>
-      
+
      <para>
       Optionally, <literal>GLOBAL</literal> or <literal>LOCAL</literal>
       can be written before <literal>TEMPORARY</> or <literal>TEMP</>.
@@ -803,13 +803,15 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE <replaceable class="PAR
     for tables, and for indexes associated with a <literal>UNIQUE</literal>,
     <literal>PRIMARY KEY</literal>, or <literal>EXCLUDE</> constraint.
     Storage parameters for
-    indexes are documented in <xref linkend="SQL-CREATEINDEX">.  The storage parameters currently
+    indexes are documented in <xref linkend="SQL-CREATEINDEX">.
+    The storage parameters currently
     available for tables are listed below.  For each parameter, unless noted,
-    there is an additional, identically named parameter, prefixed with
-    <literal>toast.</literal> which can be used to control the behavior of the
-    supplementary storage table, if any; see <xref linkend="storage-toast">.
-    Note that the supplementary storage table inherits the
-    <literal>autovacuum</literal> values from its parent table, if there are
+    there is an additional parameter with the same name prefixed with
+    <literal>toast.</literal>, which can be used to control the behavior of the
+    table's secondary <acronym>TOAST</> table, if any
+    (see <xref linkend="storage-toast"> for more information about TOAST).
+    Note that the TOAST table inherits the
+    <literal>autovacuum_*</literal> values from its parent table, if there are
     no <literal>toast.autovacuum_*</literal> settings set.
    </para>
 
@@ -828,8 +830,7 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE <replaceable class="PAR
       original, which is more efficient than placing it on a different page.
       For a table whose entries are never updated, complete packing is the
       best choice, but in heavily updated tables smaller fillfactors are
-      appropriate.  This parameter cannot be set for the supplementary
-      storage table.
+      appropriate.  This parameter cannot be set for TOAST tables.
      </para>
     </listitem>
    </varlistentry>
