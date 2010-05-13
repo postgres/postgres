@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release-9.0.sgml,v 2.19 2010/04/29 22:03:41 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release-9.0.sgml,v 2.20 2010/05/13 01:57:01 momjian Exp $ -->
 
  <sect1 id="release-9-0">
   <title>Release 9.0</title>
@@ -7,6 +7,10 @@
    <title>Release date</title>
    <simpara>2010-??-??</simpara>
   </note>
+
+<!-- beta2 notes
+recovery_connections -> hot_standby
+-->
 
   <sect2>
    <title>Overview</title>
@@ -157,6 +161,13 @@
      </para>
     </listitem>
 
+    <listitem>
+     <para>
+      Add <link linkend="pgupgrade"><filename>/contrib/pg_upgrade</></>
+      to support in-place upgrades
+     </para>
+    </listitem>
+
    </itemizedlist>
 
    <para>
@@ -168,7 +179,7 @@
   <sect2>
 
   <title>Migration to Version 9.0</title>
-  <para>CURRENT AS OF 2010-04-29</para>
+  <para>CURRENT AS OF 2010-05-12</para>
 
   <para>
    A dump/restore using <application>pg_dump</application> is
@@ -2619,6 +2630,19 @@
   <sect3>
    <title>Contrib</title>
    <itemizedlist>
+
+    <listitem>
+     <para>
+      Add <link linkend="pgupgrade"><filename>/contrib/pg_upgrade</></>
+      to support in-place upgrades (Bruce)
+     </para>
+
+     <para>
+      This avoids the requirement of dumping/reloading the database when
+      upgrading to a new major release of PostgreSQL.  It supports upgrades
+      from PostgreSQL 8.3 and 8.4.
+     </para>
+    </listitem>
 
     <listitem>
      <para>
