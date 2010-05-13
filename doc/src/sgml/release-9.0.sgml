@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release-9.0.sgml,v 2.20 2010/05/13 01:57:01 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release-9.0.sgml,v 2.21 2010/05/13 12:47:50 momjian Exp $ -->
 
  <sect1 id="release-9-0">
   <title>Release 9.0</title>
@@ -163,7 +163,7 @@ recovery_connections -> hot_standby
 
     <listitem>
      <para>
-      Add <link linkend="pgupgrade"><filename>/contrib/pg_upgrade</></>
+      Add <link linkend="pgupgrade"><filename>/contrib/pg_upgrade</></link>
       to support in-place upgrades
      </para>
     </listitem>
@@ -2633,7 +2633,7 @@ recovery_connections -> hot_standby
 
     <listitem>
      <para>
-      Add <link linkend="pgupgrade"><filename>/contrib/pg_upgrade</></>
+      Add <link linkend="pgupgrade"><filename>/contrib/pg_upgrade</></link>
       to support in-place upgrades (Bruce)
      </para>
 
