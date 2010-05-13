@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/plperl.sgml,v 2.49.2.1 2006/05/30 12:32:37 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/plperl.sgml,v 2.49.2.2 2010/05/13 16:43:40 adunstan Exp $
 -->
 
  <chapter id="plperl">
@@ -275,12 +275,7 @@ SELECT * FROM perl_set();
 <programlisting>
 use strict;
 </programlisting>
-   in the function body.  But this only works in <application>PL/PerlU</>
-   functions, since <literal>use</> is not a trusted operation.  In
-   <application>PL/Perl</> functions you can instead do
-<programlisting>
-BEGIN { strict->import(); }
-</programlisting>
+   in the function body.
   </para>
  </sect1>
 
@@ -596,6 +591,25 @@ $$ LANGUAGE plperl;
    If the above function was created by a superuser using the language
    <literal>plperlu</>, execution would succeed.
   </para>
+
+  <note>
+    <para>
+          For security reasons, to stop a leak of privileged operations from
+      <application>PL/PerlU</> to <application>PL/Perl</>, these two languages
+          have to run in separate instances of the Perl interpreter. If your
+          Perl installation has been appropriately compiled, this is not a problem.
+          However, not all installations are compiled with the requisite flags.
+          If <productname>PostgreSQL</> detects that this is the case then it will
+          not start a second interpreter, but instead create an error. In
+          consequence, in such an installation, you cannot use both 
+          <application>PL/PerlU</> and <application>PL/Perl</> in the same backend
+          process. The remedy for this is to obtain a Perl installation created
+          with the appropriate flags, namely either <literal>usemultiplicity</> or
+          both <literal>usethreads</> and <literal>useithreads</>. 
+          For more details,see the <literal>perlembed</> manual page.
+    </para>
+  </note>
+  
  </sect1>
 
  <sect1 id="plperl-triggers">

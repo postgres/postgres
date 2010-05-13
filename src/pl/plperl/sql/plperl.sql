@@ -301,3 +301,9 @@ LANGUAGE plperl as $$
 $$;
 
 SELECT array_of_text(); 
+
+--
+-- Test detection of unsafe operations
+CREATE OR REPLACE FUNCTION perl_unsafe1() RETURNS void AS $$
+       my $fd = fileno STDERR;
+$$ LANGUAGE plperl;

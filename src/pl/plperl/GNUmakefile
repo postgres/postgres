@@ -1,5 +1,5 @@
 # Makefile for PL/Perl
-# $PostgreSQL: pgsql/src/pl/plperl/GNUmakefile,v 1.25 2005/07/13 17:12:56 tgl Exp $
+# $PostgreSQL: pgsql/src/pl/plperl/GNUmakefile,v 1.25.2.1 2010/05/13 16:43:40 adunstan Exp $
 
 subdir = src/pl/plperl
 top_builddir = ../../..
@@ -23,7 +23,7 @@ perl_embed_ldflags := -L$(perl_archlibexp)/CORE -lperl58
 override CPPFLAGS += -DPLPERL_HAVE_UID_GID
 endif
 
-override CPPFLAGS := -I$(srcdir) $(CPPFLAGS) -I$(perl_archlibexp)/CORE
+override CPPFLAGS := -I. -I$(srcdir) $(CPPFLAGS) -I$(perl_archlibexp)/CORE
 
 rpathdir = $(perl_archlibexp)/CORE
 
@@ -36,13 +36,26 @@ OBJS = plperl.o spi_internal.o SPI.o
 
 SHLIB_LINK = $(perl_embed_ldflags) $(BE_DLLLIBS)
 
-REGRESS_OPTS = --dbname=$(PL_TESTDB) --load-language=plperl
+REGRESS_OPTS = --dbname=$(PL_TESTDB) --load-language=plperl --load-language=plperlu
 REGRESS = plperl plperl_trigger plperl_shared plperl_elog
+# if Perl can support two interpreters in one backend, 
+# test plperl-and-plperlu cases
+ifneq ($(PERL),)
+ifeq ($(shell $(PERL) -V:usemultiplicity), usemultiplicity='define';)
+       REGRESS += plperlu_plperl
+endif
+endif
 
 include $(top_srcdir)/src/Makefile.shlib
 
 
 all: all-lib
+
+plperl.o: plperl_opmask.h
+
+plperl_opmask.h: plperl_opmask.pl
+	$(PERL) $< $@
+
 
 SPI.c: SPI.xs
 	$(PERL) $(perl_privlibexp)/ExtUtils/xsubpp -typemap $(perl_privlibexp)/ExtUtils/typemap $< >$@
@@ -91,7 +104,7 @@ submake:
 	$(MAKE) -C $(top_builddir)/src/test/regress pg_regress
 
 clean distclean maintainer-clean: clean-lib
-	rm -f SPI.c $(OBJS)
+	rm -f SPI.c $(OBJS) plperl_opmask.h
 	rm -rf results
 	rm -f regression.diffs regression.out
 
