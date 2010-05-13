@@ -35,3 +35,24 @@ select bar('hey');
 create or replace function bar(text) returns text language plperlu as 'shift';
 select bar('hey');
 
+--
+-- Make sure we can't use/require things in plperl
+--
+
+CREATE OR REPLACE FUNCTION use_plperlu() RETURNS void LANGUAGE plperlu
+AS $$
+use Errno;
+$$;
+
+CREATE OR REPLACE FUNCTION use_plperl() RETURNS void LANGUAGE plperl
+AS $$
+use Errno;
+$$;
+
+-- make sure our overloaded require op gets restored/set correctly
+select use_plperlu();
+
+CREATE OR REPLACE FUNCTION use_plperl() RETURNS void LANGUAGE plperl
+AS $$
+use Errno;
+$$;

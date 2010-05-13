@@ -368,7 +368,16 @@ DO $$
 $$ LANGUAGE plperl;
 
 -- check that restricted operations are rejected in a plperl DO block
-DO $$ eval "1+1"; $$ LANGUAGE plperl;
+DO $$ system("/nonesuch"); $$ LANGUAGE plperl;
+DO $$ qx("/nonesuch"); $$ LANGUAGE plperl;
+DO $$ open my $fh, "</nonesuch"; $$ LANGUAGE plperl;
+
+-- check that eval is allowed and eval'd restricted ops are caught
+DO $$ eval q{chdir '.'}; warn "Caught: $@"; $$ LANGUAGE plperl;
+
+-- check that compiling do (dofile opcode) is allowed
+-- but that executing it for a file not already loaded (via require) dies
+DO $$ warn do "/dev/null"; $$ LANGUAGE plperl;
 
 -- check that we can't "use" a module that's not been loaded already
 -- compile-time error: "Unable to load blib.pm into plperl"

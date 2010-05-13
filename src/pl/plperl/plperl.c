@@ -1,7 +1,7 @@
 /**********************************************************************
  * plperl.c - perl as a procedural language for PostgreSQL
  *
- *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.174 2010/04/18 19:16:06 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.175 2010/05/13 16:39:43 adunstan Exp $
  *
  **********************************************************************/
 
@@ -46,6 +46,8 @@
 
 /* string literal macros defining chunks of perl code */
 #include "perlchunks.h"
+/* defines PLPERL_SET_OPMASK */
+#include "plperl_opmask.h"
 
 PG_MODULE_MAGIC;
 
@@ -134,6 +136,7 @@ static PerlInterpreter *plperl_trusted_interp = NULL;
 static PerlInterpreter *plperl_untrusted_interp = NULL;
 static PerlInterpreter *plperl_held_interp = NULL;
 static OP  *(*pp_require_orig) (pTHX) = NULL;
+static OP  *pp_require_safe(pTHX);
 static bool trusted_context;
 static HTAB *plperl_proc_hash = NULL;
 static HTAB *plperl_query_hash = NULL;
@@ -143,6 +146,8 @@ static char *plperl_on_init = NULL;
 static char *plperl_on_plperl_init = NULL;
 static char *plperl_on_plperlu_init = NULL;
 static bool plperl_ending = false;
+static char plperl_opmask[MAXO];
+static void set_interp_require(void);
 
 /* this is saved and restored by plperl_call_handler */
 static plperl_call_data *current_call_data = NULL;
@@ -180,6 +185,9 @@ static void plperl_inline_callback(void *arg);
 static char *strip_trailing_ws(const char *msg);
 static OP  *pp_require_safe(pTHX);
 static int	restore_context(bool);
+#ifdef WIN32
+static char *setlocale_perl(int category, char *locale);
+#endif
 
 /*
  * Convert an SV to char * and verify the encoding via pg_verifymbstr()
@@ -228,7 +236,13 @@ perm_fmgr_info(Oid functionId, FmgrInfo *finfo)
 void
 _PG_init(void)
 {
-	/* Be sure we do initialization only once (should be redundant now) */
+	/*
+	 * Be sure we do initialization only once.
+	 *
+	 * If initialization fails due to, e.g., plperl_init_interp() throwing an
+	 * exception, then we'll return here on the next usage and the user will
+	 * get a rather cryptic: ERROR:  attempt to redefine parameter "plperl.use_strict"
+	 */
 	static bool inited = false;
 	HASHCTL		hash_ctl;
 
@@ -296,12 +310,29 @@ _PG_init(void)
 									&hash_ctl,
 									HASH_ELEM);
 
+	PLPERL_SET_OPMASK(plperl_opmask);
+
 	plperl_held_interp = plperl_init_interp();
 	interp_state = INTERP_HELD;
 
 	inited = true;
 }
 
+
+static void
+set_interp_require(void)
+{
+	if (trusted_context)
+	{
+		PL_ppaddr[OP_REQUIRE] = pp_require_safe;
+		PL_ppaddr[OP_DOFILE] = pp_require_safe;
+	}
+	else
+	{
+		PL_ppaddr[OP_REQUIRE] = pp_require_orig;
+		PL_ppaddr[OP_DOFILE] = pp_require_orig;
+	}
+}
 
 /*
  * Cleanup perl interpreters, including running END blocks.
@@ -334,9 +365,6 @@ plperl_fini(int code, Datum arg)
 	elog(DEBUG3, "plperl_fini: done");
 }
 
-
-#define SAFE_MODULE \
-	"require Safe; $Safe::VERSION"
 
 /********************************************************************
  *
@@ -406,6 +434,7 @@ select_perl_context(bool trusted)
 	}
 	plperl_held_interp = NULL;
 	trusted_context = trusted;
+	set_interp_require();
 
 	/*
 	 * Since the timing of first use of PL/Perl can't be predicted, any
@@ -438,16 +467,12 @@ restore_context(bool trusted)
 		if (trusted_context != trusted)
 		{
 			if (trusted)
-			{
 				PERL_SET_CONTEXT(plperl_trusted_interp);
-				PL_ppaddr[OP_REQUIRE] = pp_require_safe;
-			}
 			else
-			{
 				PERL_SET_CONTEXT(plperl_untrusted_interp);
-				PL_ppaddr[OP_REQUIRE] = pp_require_orig;
-			}
+
 			trusted_context = trusted;
+			set_interp_require();
 		}
 		return 1;				/* context restored */
 	}
@@ -484,7 +509,7 @@ plperl_init_interp(void)
 	 * subsequent calls to the interpreter don't mess with the locale
 	 * settings.
 	 *
-	 * We restore them using Perl's POSIX::setlocale() function so that Perl
+	 * We restore them using setlocale_perl(), defined below, so that Perl
 	 * doesn't have a different idea of the locale from Postgres.
 	 *
 	 */
@@ -495,7 +520,6 @@ plperl_init_interp(void)
 			   *save_monetary,
 			   *save_numeric,
 			   *save_time;
-	char		buf[1024];
 
 	loc = setlocale(LC_COLLATE, NULL);
 	save_collate = loc ? pstrdup(loc) : NULL;
@@ -507,6 +531,12 @@ plperl_init_interp(void)
 	save_numeric = loc ? pstrdup(loc) : NULL;
 	loc = setlocale(LC_TIME, NULL);
 	save_time = loc ? pstrdup(loc) : NULL;
+
+#define PLPERL_RESTORE_LOCALE(name, saved) \
+	STMT_START { \
+		if (saved != NULL) { setlocale_perl(name, saved); pfree(saved); } \
+	} STMT_END
+
 #endif
 
 	if (plperl_on_init)
@@ -548,13 +578,26 @@ plperl_init_interp(void)
 	PL_exit_flags |= PERL_EXIT_DESTRUCT_END;
 
 	/*
-	 * Record the original function for the 'require' opcode. Ensure it's used
-	 * for new interpreters.
+	 * Record the original function for the 'require' and 'dofile' opcodes.
+	 * (They share the same implementation.) Ensure it's used for new interpreters.
 	 */
 	if (!pp_require_orig)
 		pp_require_orig = PL_ppaddr[OP_REQUIRE];
-	else
+	else 
+	{
 		PL_ppaddr[OP_REQUIRE] = pp_require_orig;
+		PL_ppaddr[OP_DOFILE]  = pp_require_orig;
+	}
+
+#ifdef PLPERL_ENABLE_OPMASK_EARLY
+	/*
+	 * For regression testing to prove that the PLC_PERLBOOT and PLC_TRUSTED
+	 * code doesn't even compile any unsafe ops. In future there may be a
+	 * valid need for them to do so, in which case this could be softened
+	 * (perhaps moved to plperl_trusted_init()) or removed.
+	 */
+	PL_op_mask = plperl_opmask;
+#endif
 
 	if (perl_parse(plperl, plperl_init_shared_libs,
 				   nargs, embedding, NULL) != 0)
@@ -567,45 +610,12 @@ plperl_init_interp(void)
 				(errmsg("%s", strip_trailing_ws(SvPV_nolen(ERRSV))),
 				 errcontext("while running Perl initialization")));
 
-#ifdef WIN32
-
-	eval_pv("use POSIX qw(locale_h);", TRUE);	/* croak on failure */
-
-	if (save_collate != NULL)
-	{
-		snprintf(buf, sizeof(buf), "setlocale(%s,'%s');",
-				 "LC_COLLATE", save_collate);
-		eval_pv(buf, TRUE);
-		pfree(save_collate);
-	}
-	if (save_ctype != NULL)
-	{
-		snprintf(buf, sizeof(buf), "setlocale(%s,'%s');",
-				 "LC_CTYPE", save_ctype);
-		eval_pv(buf, TRUE);
-		pfree(save_ctype);
-	}
-	if (save_monetary != NULL)
-	{
-		snprintf(buf, sizeof(buf), "setlocale(%s,'%s');",
-				 "LC_MONETARY", save_monetary);
-		eval_pv(buf, TRUE);
-		pfree(save_monetary);
-	}
-	if (save_numeric != NULL)
-	{
-		snprintf(buf, sizeof(buf), "setlocale(%s,'%s');",
-				 "LC_NUMERIC", save_numeric);
-		eval_pv(buf, TRUE);
-		pfree(save_numeric);
-	}
-	if (save_time != NULL)
-	{
-		snprintf(buf, sizeof(buf), "setlocale(%s,'%s');",
-				 "LC_TIME", save_time);
-		eval_pv(buf, TRUE);
-		pfree(save_time);
-	}
+#ifdef PLPERL_RESTORE_LOCALE
+	PLPERL_RESTORE_LOCALE(LC_COLLATE,  save_collate);
+	PLPERL_RESTORE_LOCALE(LC_CTYPE,    save_ctype);
+	PLPERL_RESTORE_LOCALE(LC_MONETARY, save_monetary);
+	PLPERL_RESTORE_LOCALE(LC_NUMERIC,  save_numeric);
+	PLPERL_RESTORE_LOCALE(LC_TIME,     save_time);
 #endif
 
 	return plperl;
@@ -683,70 +693,76 @@ plperl_destroy_interp(PerlInterpreter **interp)
 static void
 plperl_trusted_init(void)
 {
-	SV		   *safe_version_sv;
-	IV			safe_version_x100;
-
-	safe_version_sv = eval_pv(SAFE_MODULE, FALSE);		/* TRUE = croak if
-														 * failure */
-	safe_version_x100 = (int) (SvNV(safe_version_sv) * 100);
-
-	/*
-	 * Reject too-old versions of Safe and some others: 2.20:
-	 * http://rt.perl.org/rt3/Ticket/Display.html?id=72068 2.21:
-	 * http://rt.perl.org/rt3/Ticket/Display.html?id=72700
-	 */
-	if (safe_version_x100 < 209 || safe_version_x100 == 220 ||
-		safe_version_x100 == 221)
+	HV         *stash;
+	SV         *sv;
+	char       *key;
+	I32         klen;
+	
+	/* use original require while we set up */
+	PL_ppaddr[OP_REQUIRE] = pp_require_orig;
+	PL_ppaddr[OP_DOFILE] = pp_require_orig;
+ 
+	eval_pv(PLC_TRUSTED, FALSE);
+	if (SvTRUE(ERRSV))
+		ereport(ERROR,
+				(errmsg("%s", strip_trailing_ws(SvPV_nolen(ERRSV))),
+				 errcontext("While executing PLC_TRUSTED.")));
+	
+	if (GetDatabaseEncoding() == PG_UTF8)
 	{
-		/* not safe, so disallow all trusted funcs */
-		eval_pv(PLC_SAFE_BAD, FALSE);
+		/*
+		 * Force loading of utf8 module now to prevent errors that can
+		 * arise from the regex code later trying to load utf8 modules.
+		 * See http://rt.perl.org/rt3/Ticket/Display.html?id=47576
+		 */
+		eval_pv("my $a=chr(0x100); return $a =~ /\\xa9/i", FALSE);
 		if (SvTRUE(ERRSV))
 			ereport(ERROR,
 					(errmsg("%s", strip_trailing_ws(SvPV_nolen(ERRSV))),
-					 errcontext("while executing PLC_SAFE_BAD")));
+					 errcontext("While executing utf8fix.")));
 	}
-	else
+	
+	/*
+	 * Lock down the interpreter
+	 */
+	
+	/* switch to the safe require/dofile opcode for future code */
+	PL_ppaddr[OP_REQUIRE] = pp_require_safe;
+	PL_ppaddr[OP_DOFILE]  = pp_require_safe;
+	
+	/* 
+	 * prevent (any more) unsafe opcodes being compiled 
+	 * PL_op_mask is per interpreter, so this only needs to be set once 
+	 */
+	PL_op_mask = plperl_opmask;
+	
+	/* delete the DynaLoader:: namespace so extensions can't be loaded */
+	stash = gv_stashpv("DynaLoader", GV_ADDWARN);
+	hv_iterinit(stash);
+	while ((sv = hv_iternextsv(stash, &key, &klen))) 
 	{
-		eval_pv(PLC_SAFE_OK, FALSE);
+		if (!isGV_with_GP(sv) || !GvCV(sv))
+			continue;
+		SvREFCNT_dec(GvCV(sv)); /* free the CV */
+		GvCV(sv) = NULL;        /* prevent call via GV */
+	}
+	hv_clear(stash);
+	
+	/* invalidate assorted caches */
+	++PL_sub_generation;
+	hv_clear(PL_stashcache);
+	
+	/*
+	 * Execute plperl.on_plperl_init in the locked-down interpreter
+	 */
+	if (plperl_on_plperl_init && *plperl_on_plperl_init)
+	{
+		eval_pv(plperl_on_plperl_init, FALSE);
 		if (SvTRUE(ERRSV))
 			ereport(ERROR,
 					(errmsg("%s", strip_trailing_ws(SvPV_nolen(ERRSV))),
-					 errcontext("while executing PLC_SAFE_OK")));
-
-		if (GetDatabaseEncoding() == PG_UTF8)
-		{
-			/*
-			 * Force loading of utf8 module now to prevent errors that can
-			 * arise from the regex code later trying to load utf8 modules.
-			 * See http://rt.perl.org/rt3/Ticket/Display.html?id=47576
-			 */
-			eval_pv("my $a=chr(0x100); return $a =~ /\\xa9/i", FALSE);
-			if (SvTRUE(ERRSV))
-				ereport(ERROR,
-						(errmsg("%s", strip_trailing_ws(SvPV_nolen(ERRSV))),
-						 errcontext("while executing utf8fix")));
-		}
-
-		/* switch to the safe require opcode */
-		PL_ppaddr[OP_REQUIRE] = pp_require_safe;
-
-		if (plperl_on_plperl_init && *plperl_on_plperl_init)
-		{
-			dSP;
-
-			PUSHMARK(SP);
-			XPUSHs(sv_2mortal(newSVstring(plperl_on_plperl_init)));
-			PUTBACK;
-
-			call_pv("PostgreSQL::InServer::safe::safe_eval", G_VOID);
-			SPAGAIN;
-
-			if (SvTRUE(ERRSV))
-				ereport(ERROR,
-						(errmsg("%s", strip_trailing_ws(SvPV_nolen(ERRSV))),
-					  errcontext("while executing plperl.on_plperl_init")));
-		}
-
+					 errcontext("While executing plperl.on_plperl_init.")));
+		
 	}
 }
 
@@ -1250,12 +1266,10 @@ static void
 plperl_create_sub(plperl_proc_desc *prodesc, char *s, Oid fn_oid)
 {
 	dSP;
-	bool		trusted = prodesc->lanpltrusted;
 	char		subname[NAMEDATALEN + 40];
 	HV		   *pragma_hv = newHV();
 	SV		   *subref = NULL;
 	int			count;
-	char	   *compile_sub;
 
 	sprintf(subname, "%s__%u", prodesc->proname, fn_oid);
 
@@ -1277,22 +1291,17 @@ plperl_create_sub(plperl_proc_desc *prodesc, char *s, Oid fn_oid)
 	 * errors properly.  Perhaps it's because there's another level of eval
 	 * inside mksafefunc?
 	 */
-	compile_sub = (trusted)
-		? "PostgreSQL::InServer::safe::mksafefunc"
-		: "PostgreSQL::InServer::mkunsafefunc";
-	count = perl_call_pv(compile_sub, G_SCALAR | G_EVAL | G_KEEPERR);
+	count = perl_call_pv("PostgreSQL::InServer::mkfunc",
+						 G_SCALAR | G_EVAL | G_KEEPERR);
 	SPAGAIN;
 
 	if (count == 1)
 	{
-		GV		   *sub_glob = (GV *) POPs;
+		SV		   *sub_rv = (SV *) POPs;
 
-		if (sub_glob && SvTYPE(sub_glob) == SVt_PVGV)
+		if (sub_rv && SvROK(sub_rv) && SvTYPE(SvRV(sub_rv)) == SVt_PVCV)
 		{
-			SV		   *sv = (SV *) GvCVu((GV *) sub_glob);
-
-			if (sv)
-				subref = newRV_inc(sv);
+			subref = newRV_inc(SvRV(sub_rv));
 		}
 	}
 
@@ -1307,22 +1316,21 @@ plperl_create_sub(plperl_proc_desc *prodesc, char *s, Oid fn_oid)
 
 	if (!subref)
 		ereport(ERROR,
-				(errmsg("did not get a GLOB from compiling function \"%s\" via %s",
-						prodesc->proname, compile_sub)));
-
-	prodesc->reference = newSVsv(subref);
-
+				(errmsg("didn't get a CODE ref from compiling %s",
+						prodesc->proname)));
+	
+	/* give the subroutine a proper name in the main:: symbol table */
+	CvGV(SvRV(subref)) = (GV *) newSV(0);
+	gv_init(CvGV(SvRV(subref)), PL_defstash, subname, strlen(subname), TRUE);
+	
+	prodesc->reference = subref;
+	
 	return;
 }
 
 
 /**********************************************************************
  * plperl_init_shared_libs()		-
- *
- * We cannot use the DynaLoader directly to get at the Opcode
- * module (used by Safe.pm). So, we link Opcode into ourselves
- * and do the initialization behind perl's back.
- *
  **********************************************************************/
 
 static void
@@ -3041,3 +3049,72 @@ plperl_inline_callback(void *arg)
 {
 	errcontext("PL/Perl anonymous code block");
 }
+
+
+/*
+ * Perl's own setlocal() copied from POSIX.xs
+ * (needed because of the calls to new_*())
+ */
+#ifdef WIN32
+static char *
+setlocale_perl(int category, char *locale)
+{
+    char *RETVAL = setlocale(category, locale);
+    if (RETVAL) {
+#ifdef USE_LOCALE_CTYPE
+        if (category == LC_CTYPE
+#ifdef LC_ALL
+            || category == LC_ALL
+#endif
+            )
+        {
+            char *newctype;
+#ifdef LC_ALL
+            if (category == LC_ALL)
+                newctype = setlocale(LC_CTYPE, NULL);
+            else
+#endif
+                newctype = RETVAL;
+            new_ctype(newctype);
+        }
+#endif /* USE_LOCALE_CTYPE */
+#ifdef USE_LOCALE_COLLATE
+        if (category == LC_COLLATE
+#ifdef LC_ALL
+            || category == LC_ALL
+#endif
+            )
+        {
+            char *newcoll;
+#ifdef LC_ALL
+            if (category == LC_ALL)
+                newcoll = setlocale(LC_COLLATE, NULL);
+            else
+#endif
+                newcoll = RETVAL;
+            new_collate(newcoll);
+        }
+#endif /* USE_LOCALE_COLLATE */
+
+#ifdef USE_LOCALE_NUMERIC
+        if (category == LC_NUMERIC
+#ifdef LC_ALL
+            || category == LC_ALL
+#endif
+            )
+        {
+            char *newnum;
+#ifdef LC_ALL
+            if (category == LC_ALL)
+                newnum = setlocale(LC_NUMERIC, NULL);
+            else
+#endif
+                newnum = RETVAL;
+            new_numeric(newnum);
+        }
+#endif /* USE_LOCALE_NUMERIC */
+    }
+
+    return RETVAL;
+}
+#endif

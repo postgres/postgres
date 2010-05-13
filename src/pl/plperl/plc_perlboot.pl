@@ -1,5 +1,5 @@
 
-#  $PostgreSQL: pgsql/src/pl/plperl/plc_perlboot.pl,v 1.5 2010/02/16 21:39:52 adunstan Exp $
+#  $PostgreSQL: pgsql/src/pl/plperl/plc_perlboot.pl,v 1.6 2010/05/13 16:39:43 adunstan Exp $
 
 use 5.008001;
 
@@ -33,15 +33,12 @@ sub mkfuncsrc {
 	} sort keys %$imports;
 	$BEGIN &&= "BEGIN { $BEGIN }";
 
-	$name =~ s/\\/\\\\/g;
-	$name =~ s/::|'/_/g; # avoid package delimiters
-
-	return qq[ package main; undef *{'$name'}; *{'$name'} = sub { $BEGIN $prolog $src } ];
+	return qq[ package main; sub { $BEGIN $prolog $src } ];
 }
 
-# see also mksafefunc() in plc_safe_ok.pl
-sub mkunsafefunc {
-	no strict; # default to no strict for the eval
+sub mkfunc {
+	no strict;   # default to no strict for the eval
+	no warnings; # default to no warnings for the eval
 	my $ret = eval(mkfuncsrc(@_));
 	$@ =~ s/\(eval \d+\) //g if $@;
 	return $ret;

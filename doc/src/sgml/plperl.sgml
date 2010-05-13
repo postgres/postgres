@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/plperl.sgml,v 2.83 2010/04/03 07:22:55 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/plperl.sgml,v 2.84 2010/05/13 16:39:43 adunstan Exp $ -->
 
  <chapter id="plperl">
   <title>PL/Perl - Perl Procedural Language</title>
@@ -1154,8 +1154,16 @@ CREATE TRIGGER test_valid_id_trig
        into a module and loaded by the <literal>on_init</> string.
        Examples:
 <programlisting>
-plperl.on_init = '$ENV{NYTPROF}="start=no"; require Devel::NYTProf::PgPLPerl'
+plperl.on_init = 'require "plperlinit.pl"'
 plperl.on_init = 'use lib "/my/app"; use MyApp::PgInit;'
+</programlisting>
+       </para>
+       <para>
+       Any modules loaded by <literal>plperl.on_init</>, either directly or
+       indirectly, will be available for use by <literal>plperl</>.  This may
+       create a security risk. To see what modules have been loaded you can use:
+<programlisting>
+DO 'elog(WARNING, join ", ", sort keys %INC)' language plperl;
 </programlisting>
        </para>
        <para>

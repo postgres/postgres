@@ -3,7 +3,7 @@
 -- Avoid need for custom_variable_classes = 'plperl'
 LOAD 'plperl';
 
-SET SESSION plperl.on_plperl_init = ' eval "1+1" ';
+SET SESSION plperl.on_plperl_init = ' system("/nonesuch") ';
 
 SHOW plperl.on_plperl_init;
 

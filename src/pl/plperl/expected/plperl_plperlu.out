@@ -63,3 +63,31 @@ select bar('hey');
  hey
 (1 row)
 
+--
+-- Make sure we can't use/require things in plperl
+--
+CREATE OR REPLACE FUNCTION use_plperlu() RETURNS void LANGUAGE plperlu
+AS $$
+use Errno;
+$$;
+CREATE OR REPLACE FUNCTION use_plperl() RETURNS void LANGUAGE plperl
+AS $$
+use Errno;
+$$;
+ERROR:  Unable to load Errno.pm into plperl at line 2.
+BEGIN failed--compilation aborted at line 2.
+CONTEXT:  compilation of PL/Perl function "use_plperl"
+-- make sure our overloaded require op gets restored/set correctly
+select use_plperlu();
+ use_plperlu 
+-------------
+ 
+(1 row)
+
+CREATE OR REPLACE FUNCTION use_plperl() RETURNS void LANGUAGE plperl
+AS $$
+use Errno;
+$$;
+ERROR:  Unable to load Errno.pm into plperl at line 2.
+BEGIN failed--compilation aborted at line 2.
+CONTEXT:  compilation of PL/Perl function "use_plperl"
