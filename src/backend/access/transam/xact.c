@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.290 2010/05/13 11:15:38 sriggs Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.291 2010/05/13 11:39:30 sriggs Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1346,6 +1346,18 @@ RecordTransactionAbort(bool isSubXact)
 	rdata[lastrdata].next = NULL;
 
 	(void) XLogInsert(RM_XACT_ID, XLOG_XACT_ABORT, rdata);
+
+	/*
+	 * Report the latest async abort LSN, so that the WAL writer knows to
+	 * flush this abort. There's nothing to be gained by delaying this,
+	 * since WALWriter may as well do this when it can. This is important
+	 * with streaming replication because if we don't flush WAL regularly
+	 * we will find that large aborts leave us with a long backlog for
+	 * when commits occur after the abort, increasing our window of data
+	 * loss should problems occur at that point.
+	 */
+	if (!isSubXact)
+		XLogSetAsyncCommitLSN(XactLastRecEnd);
 
 	/*
 	 * Mark the transaction aborted in clog.  This is not absolutely necessary
