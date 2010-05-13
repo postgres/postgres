@@ -33,7 +33,7 @@ static int	win32_pghardlink(const char *src, const char *dst);
 static int	copy_dir(const char *from, const char *to, bool force);
 #endif
 
-#if defined(sun) || defined(WIN32)
+#ifndef HAVE_SCANDIR
 static int pg_scandir_internal(migratorContext *ctx, const char *dirname,
 					struct dirent *** namelist,
 					int (*selector) (const struct dirent *));
@@ -235,26 +235,25 @@ copy_file(const char *srcfile, const char *dstfile, bool force)
  * pg_scandir()
  *
  * Wrapper for portable scandir functionality
- *
  */
 int
 pg_scandir(migratorContext *ctx, const char *dirname,
 		   struct dirent ***namelist,
 		   int (*selector) (const struct dirent *))
 {
-#if defined(sun) || defined(WIN32)
+#ifndef HAVE_SCANDIR
 	return pg_scandir_internal(ctx, dirname, namelist, selector);
 
 	/*
+	 * scandir() is originally from BSD 4.3, which had the third argument as
+	 * non-const. Linux and other C libraries have updated it to use a const.
+	 * http://unix.derkeiler.com/Mailing-Lists/FreeBSD/questions/2005-12/msg00214.html
+	 *
 	 * Here we try to guess which libc's need const, and which don't. The net
-	 * goal here is to try to supress a compiler warning due to a prototype
+	 * goal here is to try to suppress a compiler warning due to a prototype
 	 * mismatch of const usage. Ideally we would do this via autoconf, but
-	 * Postgres's autoconf doesn't test for this and it is overkill to add
-	 * autoconf just for this. scandir() is from BSD 4.3, which had the third
-	 * argument as non-const. Linux and other C libraries have updated it to
-	 * use a const.
-	 * http://unix.derkeiler.com/Mailing-Lists/FreeBSD/questions/2005-12/msg002
-	 * 14.html
+	 * autoconf doesn't have a suitable builtin test and it seems overkill
+	 * to add one just to avoid a warning.
 	 */
 #elif defined(freebsd) || defined(bsdi) || defined(darwin) || defined(openbsd)
 	/* no const */
@@ -266,19 +265,18 @@ pg_scandir(migratorContext *ctx, const char *dirname,
 }
 
 
-#if defined(sun) || defined(WIN32)
+#ifndef HAVE_SCANDIR
 /*
  * pg_scandir_internal()
  *
- * We'll provide our own scandir function for sun, since it is not
- * part of the standard system library.
+ * Implement our own scandir() on platforms that don't have it.
  *
  * Returns count of files that meet the selection criteria coded in
  * the function pointed to by selector.  Creates an array of pointers
  * to dirent structures.  Address of array returned in namelist.
  *
  * Note that the number of dirent structures needed is dynamically
- * allocated using realloc.  Realloc can be inneficient if invoked a
+ * allocated using realloc.  Realloc can be inefficient if invoked a
  * large number of times.  Its use in pg_upgrade is to find filesystem
  * filenames that have extended beyond the initial segment (file.1,
  * .2, etc.) and should therefore be invoked a small number of times.
