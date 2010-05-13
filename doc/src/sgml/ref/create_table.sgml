@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_table.sgml,v 1.114.2.1 2009/10/27 14:00:15 alvherre Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_table.sgml,v 1.114.2.2 2010/05/13 18:54:23 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -696,11 +696,12 @@ and <replaceable class="PARAMETER">table_constraint</replaceable> is:
     indexes are documented in <xref linkend="SQL-CREATEINDEX"
     endterm="sql-createindex-title">.  The storage parameters currently
     available for tables are listed below.  For each parameter, unless noted,
-    there is an additional, identically named parameter, prefixed with
-    <literal>toast.</literal> which can be used to control the behavior of the
-    supplementary storage table, if any; see <xref linkend="storage-toast">.
-    Note that the supplementary storage table inherits the
-    <literal>autovacuum</literal> values from its parent table, if there are
+    there is an additional parameter with the same name prefixed with
+    <literal>toast.</literal>, which can be used to control the behavior of the
+    table's secondary <acronym>TOAST</> table, if any
+    (see <xref linkend="storage-toast"> for more information about TOAST).
+    Note that the TOAST table inherits the
+    <literal>autovacuum_*</literal> values from its parent table, if there are
     no <literal>toast.autovacuum_*</literal> settings set.
    </para>
 
@@ -719,8 +720,7 @@ and <replaceable class="PARAMETER">table_constraint</replaceable> is:
       original, which is more efficient than placing it on a different page.
       For a table whose entries are never updated, complete packing is the
       best choice, but in heavily updated tables smaller fillfactors are
-      appropriate.  This parameter cannot be set for the supplementary
-      storage table.
+      appropriate.  This parameter cannot be set for TOAST tables.
      </para>
     </listitem>
    </varlistentry>
