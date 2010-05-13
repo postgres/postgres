@@ -1,7 +1,7 @@
 # translation of libpq-fr.po to FR_fr
 # French message translation file for libpq
 #
-# $PostgreSQL: pgsql/src/interfaces/libpq/po/fr.po,v 1.5.2.4 2008/06/05 23:38:03 tgl Exp $
+# $PostgreSQL: pgsql/src/interfaces/libpq/po/fr.po,v 1.5.2.5 2010/05/13 07:05:04 petere Exp $
 #
 # Use these quotes: « %s »
 # Peter Eisentraut <peter_e@gmx.net>, 2001.
@@ -12,8 +12,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: libpq-74-fr\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-03-14 17:20-0300\n"
-"PO-Revision-Date: 2008-03-28 22:30+0100\n"
+"POT-Creation-Date: 2009-12-10 04:37+0000\n"
+"PO-Revision-Date: 2009-12-17 23:57+0100\n"
 "Last-Translator: Guillaume Lelarge <guillaume@lelarge.info>\n"
 "Language-Team:  <pgsql-fr-generale@postgresql.org>\n"
 "MIME-Version: 1.0\n"
@@ -31,7 +31,8 @@ msgstr "erreur Kerberos 4 : %s\n"
 msgid "could not set socket to blocking mode: %s\n"
 msgstr "n'a pas pu activer le mode bloquant pour la socket : %s\n"
 
-#: fe-auth.c:411 fe-auth.c:415
+#: fe-auth.c:411
+#: fe-auth.c:415
 #, c-format
 msgid "Kerberos 5 authentication rejected: %*s\n"
 msgstr "authentification Kerberos 5 rejetée : %*s\n"
@@ -154,8 +155,12 @@ msgstr "n'a pas pu obtenir l'adresse du client depuis la socket : %s\n"
 msgid "could not send SSL negotiation packet: %s\n"
 msgstr "n'a pas pu transmettre le paquet de négociation SSL : %s\n"
 
-#: fe-connect.c:1404 fe-connect.c:2550 fe-connect.c:2559 fe-connect.c:3132
-#: fe-exec.c:2410 fe-lobj.c:541
+#: fe-connect.c:1404
+#: fe-connect.c:2550
+#: fe-connect.c:2559
+#: fe-connect.c:3132
+#: fe-exec.c:2410
+#: fe-lobj.c:541
 msgid "out of memory\n"
 msgstr "mémoire épuisée\n"
 
@@ -169,7 +174,8 @@ msgstr "n'a pas pu transmettre le paquet de démarrage : %s\n"
 msgid "could not receive server response to SSL negotiation packet: %s\n"
 msgstr "n'a pas pu reveoir la réponse du serveur au paquet de négociation SSL : %s\n"
 
-#: fe-connect.c:1476 fe-connect.c:1493
+#: fe-connect.c:1476
+#: fe-connect.c:1493
 msgid "server does not support SSL, but SSL was required\n"
 msgstr "le serveur ne supporte pas SSL alors que SSL était réclamé\n"
 
@@ -178,7 +184,8 @@ msgstr "le serveur ne supporte pas SSL alors que SSL était réclamé\n"
 msgid "received invalid response to SSL negotiation: %c\n"
 msgstr "a reçu une réponse invalide à la négociation SSL : %c\n"
 
-#: fe-connect.c:1566 fe-connect.c:1598
+#: fe-connect.c:1566
+#: fe-connect.c:1598
 #, c-format
 msgid "expected authentication request from server, but received %c\n"
 msgstr ""
@@ -225,7 +232,8 @@ msgstr ""
 msgid "NOTICE"
 msgstr "NOTICE"
 
-#: fe-exec.c:670 fe-exec.c:722
+#: fe-exec.c:670
+#: fe-exec.c:722
 msgid "command string is a null pointer\n"
 msgstr "la chaîne de commande est un pointeur nul\n"
 
@@ -241,7 +249,8 @@ msgstr "aucune connexion au serveur\n"
 msgid "another command is already in progress\n"
 msgstr "une autre commande est déjà en cours\n"
 
-#: fe-exec.c:831 fe-exec.c:1482
+#: fe-exec.c:831
+#: fe-exec.c:1482
 msgid "function requires at least protocol version 3.0\n"
 msgstr "la fonction nécessite au minimum le protocole 3.0\n"
 
@@ -262,7 +271,9 @@ msgstr "l'état COPY IN doit d'abord être terminé\n"
 msgid "COPY OUT state must be terminated first\n"
 msgstr "l'état COPY OUT doit d'abord être terminé\n"
 
-#: fe-exec.c:1375 fe-exec.c:1440 fe-exec.c:1524
+#: fe-exec.c:1375
+#: fe-exec.c:1440
+#: fe-exec.c:1524
 msgid "no COPY in progress\n"
 msgstr "aucun COPY en cours\n"
 
@@ -274,7 +285,8 @@ msgstr "connexion dans un état erroné\n"
 msgid "invalid ExecStatusType code"
 msgstr "code ExecStatusType invalide"
 
-#: fe-exec.c:1811 fe-exec.c:1834
+#: fe-exec.c:1811
+#: fe-exec.c:1834
 #, c-format
 msgid "column number %d is out of range 0..%d"
 msgstr "le numéro de colonne %d est en dehors des limites 0..%d"
@@ -293,7 +305,8 @@ msgstr "n'a pas pu interpréter la réponse du serveur : %s"
 msgid "incomplete multibyte character\n"
 msgstr "caractère multi-octet incomplet\n"
 
-#: fe-lobj.c:402 fe-lobj.c:487
+#: fe-lobj.c:402
+#: fe-lobj.c:487
 #, c-format
 msgid "could not open file \"%s\": %s\n"
 msgstr "n'a pas pu ouvrir le fichier « %s » : %s\n"
@@ -303,7 +316,8 @@ msgstr "n'a pas pu ouvrir le fichier « %s » : %s\n"
 msgid "could not create large object for file \"%s\"\n"
 msgstr "n'a pas pu créer le « Large Object » pour le fichier « %s »\n"
 
-#: fe-lobj.c:424 fe-lobj.c:474
+#: fe-lobj.c:424
+#: fe-lobj.c:474
 #, c-format
 msgid "could not open large object %u\n"
 msgstr "n'a pas pu ouvrir le « Large Object » %u\n"
@@ -366,16 +380,19 @@ msgstr "entier de taille %lu non supporté par pqGetInt"
 msgid "integer of size %lu not supported by pqPutInt"
 msgstr "entier de taille %lu non supporté par pqPutInt"
 
-#: fe-misc.c:544 fe-misc.c:748
+#: fe-misc.c:544
+#: fe-misc.c:748
 msgid "connection not open\n"
 msgstr "la connexion n'est pas active\n"
 
-#: fe-misc.c:610 fe-misc.c:701
+#: fe-misc.c:610
+#: fe-misc.c:701
 #, c-format
 msgid "could not receive data from server: %s\n"
 msgstr "n'a pas pu recevoir des données depuis le serveur : %s\n"
 
-#: fe-misc.c:718 fe-misc.c:786
+#: fe-misc.c:718
+#: fe-misc.c:786
 msgid ""
 "server closed the connection unexpectedly\n"
 "\tThis probably means the server terminated abnormally\n"
@@ -408,21 +425,29 @@ msgstr "échec de select() : %s\n"
 msgid "could not establish SSL connection: %s\n"
 msgstr "n'a pas pu établir la connexion SSL : %s\n"
 
-#: fe-secure.c:308 fe-secure.c:380 fe-secure.c:913
+#: fe-secure.c:308
+#: fe-secure.c:380
+#: fe-secure.c:913
 #, c-format
 msgid "SSL SYSCALL error: %s\n"
 msgstr "erreur SYSCALL SSL : %s\n"
 
-#: fe-secure.c:313 fe-secure.c:385 fe-secure.c:917
+#: fe-secure.c:313
+#: fe-secure.c:385
+#: fe-secure.c:917
 msgid "SSL SYSCALL error: EOF detected\n"
 msgstr "erreur SYSCALL SSL : EOF détecté\n"
 
-#: fe-secure.c:322 fe-secure.c:393 fe-secure.c:923
+#: fe-secure.c:322
+#: fe-secure.c:393
+#: fe-secure.c:923
 #, c-format
 msgid "SSL error: %s\n"
 msgstr "erreur SSL : %s\n"
 
-#: fe-secure.c:330 fe-secure.c:401 fe-secure.c:929
+#: fe-secure.c:330
+#: fe-secure.c:401
+#: fe-secure.c:929
 msgid "unrecognized SSL error code\n"
 msgstr "code d'erreur SSL inconnu\n"
 
@@ -501,7 +526,8 @@ msgstr "le certificat et la clé privée ne correspondent pas (%s) : %s\n"
 msgid "could not create SSL context: %s\n"
 msgstr "n'a pas pu créer le contexte SSL : %s\n"
 
-#: fe-secure.c:846 fe-secure.c:854
+#: fe-secure.c:846
+#: fe-secure.c:854
 #, c-format
 msgid "could not read root certificate list (%s): %s\n"
 msgstr "n'a pas pu lire la liste de certificat racine (%s) : %s\n"
@@ -515,3 +541,8 @@ msgstr "le certificat n'a pas pu être validé : %s\n"
 #, c-format
 msgid "certificate could not be obtained: %s\n"
 msgstr "le certificat n'a pas pu être obtenu : %s\n"
+
+#: fe-secure.c:987
+msgid "SSL certificate's common name contains embedded null\n"
+msgstr "le nom commun du certificat SSL contient un NULL imbriqué\n"
+

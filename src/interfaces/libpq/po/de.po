@@ -1,7 +1,7 @@
 # German message translation file for libpq
 # Peter Eisentraut <peter_e@gmx.net>, 2001, 2002, 2003.
 #
-# $Header: /cvsroot/pgsql/src/interfaces/libpq/po/de.po,v 1.5.2.2 2008/10/30 19:19:35 petere Exp $
+# $Header: /cvsroot/pgsql/src/interfaces/libpq/po/de.po,v 1.5.2.3 2010/05/13 07:05:03 petere Exp $
 #
 # Use these quotes: »%s«
 #
@@ -9,8 +9,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 7.4\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2007-01-08 11:29-0400\n"
-"PO-Revision-Date: 2007-01-10 10:53+0100\n"
+"POT-Creation-Date: 2009-12-18 00:41+0000\n"
+"PO-Revision-Date: 2009-12-19 10:08+0200\n"
 "Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language-Team: German <peter_e@gmx.net>\n"
 "MIME-Version: 1.0\n"
@@ -512,3 +512,7 @@ msgstr "Zertifikat konnte nicht validiert werden: %s\n"
 #, c-format
 msgid "certificate could not be obtained: %s\n"
 msgstr "Zertifikat konnte nicht ermittelt werden: %s\n"
+
+#: fe-secure.c:987
+msgid "SSL certificate's common name contains embedded null\n"
+msgstr "Common-Name im SSL-Zertifikat enthält Null-Byte\n"
