@@ -4,6 +4,7 @@ use strict;
 use warnings;
 use Project;
 use Solution;
+use Cwd;
 
 chdir('..\..\..') if (-d '..\msvc' && -d '..\..\..\src');
 die 'Must run from root or msvc directory' unless (-d 'src\tools\msvc' && -d 'src');
@@ -58,6 +59,26 @@ if ($solution->{options}->{perl}) {
 			die 'Failed to create SPI.c' . "\n";
 		}
 	}
+	if (  Solution::IsNewer('src\pl\plperl\plperl_opmask.h','src\pl\plperl\plperl_opmask.pl'))
+	{
+		print 'Building src\pl\plperl\plperl_opmask.h ...' . "\n";
+		
+		my $basedir = getcwd;
+		chdir 'src\pl\plperl';
+		system( $solution->{options}->{perl}
+				. '/bin/perl '
+				. 'plperl_opmask.pl '
+				.	'plperl_opmask.h');
+		chdir $basedir;
+		if ((!(-f 'src\pl\plperl\plperl_opmask.h')) || -z 'src\pl\plperl\plperl_opmask.h')
+		{
+			unlink('src\pl\plperl\plperl_opmask.h'); # if zero size
+			die 'Failed to create plperl_opmask.h' . "\n";
+		}
+	}
+	$plperl->AddReference($postgres);
+	my @perl_libs = grep {/perl\d+.lib$/ }
+	  glob($solution->{options}->{perl} . '\lib\CORE\perl*.lib');
 	$plperl->AddReference($postgres);
 	$plperl->AddLibrary($solution->{options}->{perl} . '\lib\CORE\perl58.lib');
 }
