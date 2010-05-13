@@ -1,7 +1,7 @@
 # German message translation file for libpq
 # Peter Eisentraut <peter_e@gmx.net>, 2001, 2002, 2003, 2004.
 #
-# $PostgreSQL: pgsql/src/interfaces/libpq/po/de.po,v 1.11.2.2 2008/10/30 19:23:08 petere Exp $
+# $PostgreSQL: pgsql/src/interfaces/libpq/po/de.po,v 1.11.2.3 2010/05/13 07:22:03 petere Exp $
 #
 # Use these quotes: »%s«
 #
@@ -9,8 +9,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-12-01 19:22-0400\n"
-"PO-Revision-Date: 2006-12-06 21:32+0100\n"
+"POT-Creation-Date: 2009-12-18 00:32+0000\n"
+"PO-Revision-Date: 2009-12-19 10:16+0200\n"
 "Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language-Team: German <peter_e@gmx.net>\n"
 "MIME-Version: 1.0\n"
@@ -40,7 +40,7 @@ msgstr "SCM_CRED-Authentifizierungsmethode nicht unterstützt\n"
 
 #: fe-auth.c:397 fe-connect.c:1259 fe-connect.c:2505 fe-connect.c:2514
 #: fe-connect.c:2651 fe-connect.c:2691 fe-connect.c:2709 fe-exec.c:2522
-#: fe-lobj.c:602 fe-protocol2.c:1029 fe-protocol3.c:977
+#: fe-lobj.c:602 fe-protocol2.c:1029 fe-protocol3.c:1046
 msgid "out of memory\n"
 msgstr "Speicher aufgebraucht\n"
 
@@ -210,7 +210,7 @@ msgstr "Verbindung ist ein NULL-Zeiger\n"
 msgid "WARNING: password file \"%s\" is not a plain file\n"
 msgstr "WARNUNG: Passwortdatei »%s« ist keine normale Datei\n"
 
-#: fe-connect.c:3140
+#: fe-connect.c:3139
 #, c-format
 msgid ""
 "WARNING: password file \"%s\" has world or group read access; permission "
@@ -265,7 +265,7 @@ msgid "COPY OUT state must be terminated first\n"
 msgstr "COPY-OUT-Zustand muss erst beendet werden\n"
 
 #: fe-exec.c:1491 fe-exec.c:1556 fe-exec.c:1641 fe-protocol2.c:1174
-#: fe-protocol3.c:1133
+#: fe-protocol3.c:1182
 msgid "no COPY in progress\n"
 msgstr "keine COPY in Ausführung\n"
 
@@ -443,8 +443,8 @@ msgid ""
 "server sent binary data (\"B\" message) without prior row description (\"T\" "
 "message)"
 msgstr ""
-"Server sendete binäre Daten (»B«-Nachricht) ohne vorherige "
-"Zeilenbeschreibung (»T«-Nachricht)"
+"Server sendete binäre Daten (»B«-Nachricht) ohne vorherige Zeilenbeschreibung "
+"(»T«-Nachricht)"
 
 #: fe-protocol2.c:549 fe-protocol3.c:355
 #, c-format
@@ -455,7 +455,7 @@ msgstr "unerwartete Antwort vom Server; erstes empfangenes Zeichen war »%c«\n"
 msgid "out of memory for query result\n"
 msgstr "Speicher für Anfrageergebnis aufgebraucht\n"
 
-#: fe-protocol2.c:1217 fe-protocol3.c:1201
+#: fe-protocol2.c:1217 fe-protocol3.c:1250
 #, c-format
 msgid "%s"
 msgstr "%s"
@@ -464,7 +464,7 @@ msgstr "%s"
 msgid "lost synchronization with server, resetting connection"
 msgstr "Synchronisation mit Server verloren, Verbindung wird zurückgesetzt"
 
-#: fe-protocol2.c:1363 fe-protocol2.c:1395 fe-protocol3.c:1403
+#: fe-protocol2.c:1363 fe-protocol2.c:1395 fe-protocol3.c:1452
 #, c-format
 msgid "protocol error: id=0x%x\n"
 msgstr "Protokollfehler: id=0x%x\n"
@@ -533,7 +533,7 @@ msgstr "%s, "
 msgid "%s:%s"
 msgstr "%s:%s"
 
-#: fe-protocol3.c:1019
+#: fe-protocol3.c:1078
 msgid "PQgetline: not doing text COPY OUT\n"
 msgstr "PQgetline: Text COPY OUT nicht ausgeführt\n"
 
@@ -648,3 +648,7 @@ msgstr "Zertifikat konnte nicht validiert werden: %s\n"
 #, c-format
 msgid "certificate could not be obtained: %s\n"
 msgstr "Zertifikat konnte nicht ermittelt werden: %s\n"
+
+#: fe-secure.c:1149
+msgid "SSL certificate's common name contains embedded null\n"
+msgstr "Common-Name im SSL-Zertifikat enthält Null-Byte\n"
