@@ -122,7 +122,7 @@ is_server_running(migratorContext *ctx, const char *datadir)
 
 	snprintf(path, sizeof(path), "%s/postmaster.pid", datadir);
 
-	if ((fd = open(path, O_RDONLY)) < 0)
+	if ((fd = open(path, O_RDONLY, 0)) < 0)
 	{
 		if (errno != ENOENT)
 			pg_log(ctx, PG_FATAL, "\ncould not open file \"%s\" for reading\n",

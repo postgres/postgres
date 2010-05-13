@@ -427,9 +427,11 @@ create_script_for_old_cluster_deletion(migratorContext *ctx,
 
 	fclose(script);
 
+#ifndef WIN32
 	if (chmod(*deletion_script_file_name, S_IRWXU) != 0)
 		pg_log(ctx, PG_FATAL, "Could not add execute permission to file:  %s\n",
 				*deletion_script_file_name);
+#endif
 
 	check_ok(ctx);
 }

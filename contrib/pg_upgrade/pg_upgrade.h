@@ -12,9 +12,6 @@
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <sys/types.h>
-#ifdef WIN32
-#include <shlobj.h>
-#endif
 
 #include "libpq-fe.h"
 

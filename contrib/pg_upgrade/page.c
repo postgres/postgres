@@ -6,7 +6,6 @@
 
 #include "pg_upgrade.h"
 
-#include "dynloader.h"
 #include "storage/bufpage.h"
 
 
