@@ -361,3 +361,8 @@ CREATE OR REPLACE FUNCTION perl_spi_prepared_bad(double precision) RETURNS doubl
 $$ LANGUAGE plperl;
 SELECT perl_spi_prepared_bad(4.35) as "double precision";
 
+--
+-- Test detection of unsafe operations
+CREATE OR REPLACE FUNCTION perl_unsafe1() RETURNS void AS $$
+	my $fd = fileno STDERR;
+$$ LANGUAGE plperl;
