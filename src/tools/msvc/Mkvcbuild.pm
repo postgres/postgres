@@ -3,7 +3,7 @@ package Mkvcbuild;
 #
 # Package that generates build files for msvc build
 #
-# $PostgreSQL: pgsql/src/tools/msvc/Mkvcbuild.pm,v 1.56 2010/05/13 15:56:22 mha Exp $
+# $PostgreSQL: pgsql/src/tools/msvc/Mkvcbuild.pm,v 1.57 2010/05/13 21:33:00 adunstan Exp $
 #
 use Carp;
 use Win32;
@@ -118,8 +118,7 @@ sub mkvcbuild
             }
         }
         if (  Solution::IsNewer('src\pl\plperl\perlchunks.h','src\pl\plperl\plc_perlboot.pl')
-            ||Solution::IsNewer('src\pl\plperl\perlchunks.h','src\pl\plperl\plc_safe_bad.pl')
-            ||Solution::IsNewer('src\pl\plperl\perlchunks.h','src\pl\plperl\plc_safe_ok.pl'))
+            ||Solution::IsNewer('src\pl\plperl\perlchunks.h','src\pl\plperl\plc_trusted.pl'))
         {
             print 'Building src\pl\plperl\perlchunks.h ...' . "\n";
             my $basedir = getcwd;
@@ -128,13 +127,29 @@ sub mkvcbuild
                   . '/bin/perl '
                   . 'text2macro.pl '
                   . '--strip="^(\#.*|\s*)$$" '
-                  . 'plc_perlboot.pl plc_safe_bad.pl plc_safe_ok.pl '
+                  . 'plc_perlboot.pl plc_trusted.pl '
                   .	'>perlchunks.h');
             chdir $basedir;
             if ((!(-f 'src\pl\plperl\perlchunks.h')) || -z 'src\pl\plperl\perlchunks.h')
             {
                 unlink('src\pl\plperl\perlchunks.h'); # if zero size
                 die 'Failed to create perlchunks.h' . "\n";
+            }
+        }
+        if (  Solution::IsNewer('src\pl\plperl\plperl_opmask.h','src\pl\plperl\plperl_opmask.pl'))
+        {
+            print 'Building src\pl\plperl\plperl_opmask.h ...' . "\n";
+            my $basedir = getcwd;
+            chdir 'src\pl\plperl';
+            system( $solution->{options}->{perl}
+                  . '/bin/perl '
+                  . 'plperl_opmask.pl '
+                  .	'plperl_opmask.h');
+            chdir $basedir;
+            if ((!(-f 'src\pl\plperl\plperl_opmask.h')) || -z 'src\pl\plperl\plperl_opmask.h')
+            {
+                unlink('src\pl\plperl\plperl_opmask.h'); # if zero size
+                die 'Failed to create plperl_opmask.h' . "\n";
             }
         }
         $plperl->AddReference($postgres);
