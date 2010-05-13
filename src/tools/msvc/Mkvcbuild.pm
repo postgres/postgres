@@ -3,7 +3,7 @@ package Mkvcbuild;
 #
 # Package that generates build files for msvc build
 #
-# $PostgreSQL: pgsql/src/tools/msvc/Mkvcbuild.pm,v 1.55 2010/05/13 13:40:03 adunstan Exp $
+# $PostgreSQL: pgsql/src/tools/msvc/Mkvcbuild.pm,v 1.56 2010/05/13 15:56:22 mha Exp $
 #
 use Carp;
 use Win32;
@@ -515,7 +515,8 @@ sub AddContrib
     elsif ($mf =~ /^PROGRAM\s*=\s*(.*)$/mg)
     {
         my $proj = $solution->AddProject($1, 'exe', 'contrib');
-        $mf =~ /^OBJS\s*=\s*(.*)$/gm || croak "Could not find objects in MODULE_big for $n\n";
+        $mf =~ s{\\\s*[\r\n]+}{}mg;
+        $mf =~ /^OBJS\s*=\s*(.*)$/gm || croak "Could not find objects in PROGRAM for $n\n";
         my $objs = $1;
         while ($objs =~ /\b([\w-]+\.o)\b/g)
         {
