@@ -2,7 +2,7 @@
 #
 # Makefile for backend/catalog
 #
-# $PostgreSQL: pgsql/src/backend/catalog/Makefile,v 1.77 2010/02/16 22:34:43 tgl Exp $
+# $PostgreSQL: pgsql/src/backend/catalog/Makefile,v 1.78 2010/05/13 11:49:48 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -59,9 +59,9 @@ postgres.bki: genbki.pl Catalog.pm $(POSTGRES_BKI_SRCS)
 
 .PHONY: install-data
 install-data: $(BKIFILES) installdirs
-	$(INSTALL_DATA) postgres.bki         '$(DESTDIR)$(datadir)/postgres.bki'
-	$(INSTALL_DATA) postgres.description '$(DESTDIR)$(datadir)/postgres.description'
-	$(INSTALL_DATA) postgres.shdescription '$(DESTDIR)$(datadir)/postgres.shdescription'
+	$(INSTALL_DATA) $(call vpathsearch,postgres.bki) '$(DESTDIR)$(datadir)/postgres.bki'
+	$(INSTALL_DATA) $(call vpathsearch,postgres.description) '$(DESTDIR)$(datadir)/postgres.description'
+	$(INSTALL_DATA) $(call vpathsearch,postgres.shdescription) '$(DESTDIR)$(datadir)/postgres.shdescription'
 	$(INSTALL_DATA) $(srcdir)/system_views.sql '$(DESTDIR)$(datadir)/system_views.sql'
 	$(INSTALL_DATA) $(srcdir)/information_schema.sql '$(DESTDIR)$(datadir)/information_schema.sql'
 	$(INSTALL_DATA) $(srcdir)/sql_features.txt '$(DESTDIR)$(datadir)/sql_features.txt'

@@ -1,5 +1,5 @@
 # -*-makefile-*-
-# $PostgreSQL: pgsql/src/Makefile.global.in,v 1.261 2010/03/24 13:14:02 adunstan Exp $
+# $PostgreSQL: pgsql/src/Makefile.global.in,v 1.262 2010/05/13 11:49:47 petere Exp $
 
 #------------------------------------------------------------------------------
 # All PostgreSQL makefiles include this file and use the variables it sets,
@@ -43,6 +43,8 @@ top_srcdir = $(abs_top_srcdir)
 srcdir = $(top_srcdir)/$(subdir)
 VPATH = $(srcdir)
 endif
+
+vpathsearch = `for f in $(addsuffix /$(1),$(subst :, ,. $(VPATH))); do test -r $$f && echo $$f && break; done`
 
 # Saved arguments from configure
 configure_args = @configure_args@

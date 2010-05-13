@@ -2,7 +2,7 @@
 #
 # PostgreSQL documentation makefile
 #
-# $PostgreSQL: pgsql/doc/src/sgml/Makefile,v 1.142 2010/05/01 21:31:17 tgl Exp $
+# $PostgreSQL: pgsql/doc/src/sgml/Makefile,v 1.143 2010/05/13 11:49:47 petere Exp $
 #
 #----------------------------------------------------------------------------
 
@@ -276,8 +276,6 @@ check: postgres.sgml $(ALMOSTALLSGML) check-tabs
 ##
 ## Install
 ##
-
-vpathsearch = `for f in $(addsuffix /$(1),$(subst :, ,. $(VPATH))); do test -r $$f && echo $$f && break; done`
 
 install: install-html
 
