@@ -362,10 +362,10 @@ get_rel_infos(migratorContext *ctx, const DbInfo *dbinfo,
 		curr->reloid = atol(PQgetvalue(res, relnum, i_oid));
 
 		nspname = PQgetvalue(res, relnum, i_nspname);
-		snprintf(curr->nspname, sizeof(curr->nspname), nspname);
+		strlcpy(curr->nspname, nspname, sizeof(curr->nspname));
 
 		relname = PQgetvalue(res, relnum, i_relname);
-		snprintf(curr->relname, sizeof(curr->relname), relname);
+		strlcpy(curr->relname, relname, sizeof(curr->relname));
 
 		curr->relfilenode = atol(PQgetvalue(res, relnum, i_relfilenode));
 		curr->toastrelid = atol(PQgetvalue(res, relnum, i_reltoastrelid));
@@ -374,7 +374,7 @@ get_rel_infos(migratorContext *ctx, const DbInfo *dbinfo,
 		/* if no table tablespace, use the database tablespace */
 		if (strlen(tblspace) == 0)
 			tblspace = dbinfo->db_tblspace;
-		snprintf(curr->tablespace, sizeof(curr->tablespace), "%s", tblspace);
+		strlcpy(curr->tablespace, tblspace, sizeof(curr->tablespace));
 	}
 	PQclear(res);
 

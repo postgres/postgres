@@ -178,10 +178,11 @@ start_postmaster(migratorContext *ctx, Cluster whichCluster, bool quiet)
 	}
 
 	/* use -l for Win32 */
-	sprintf(cmd, SYSTEMQUOTE "\"%s/pg_ctl\" -l \"%s\" -D \"%s\" "
-	"-o \"-p %d -c autovacuum=off -c autovacuum_freeze_max_age=2000000000\" "
-			"start >> \"%s\" 2>&1" SYSTEMQUOTE,
-			bindir, ctx->logfile, datadir, port, ctx->logfile);
+	snprintf(cmd, sizeof(cmd),
+			 SYSTEMQUOTE "\"%s/pg_ctl\" -l \"%s\" -D \"%s\" "
+			 "-o \"-p %d -c autovacuum=off -c autovacuum_freeze_max_age=2000000000\" "
+			 "start >> \"%s\" 2>&1" SYSTEMQUOTE,
+			 bindir, ctx->logfile, datadir, port, ctx->logfile);
 	exec_prog(ctx, true, "%s", cmd);
 
 	/* wait for the server to start properly */

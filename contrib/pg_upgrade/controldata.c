@@ -62,10 +62,10 @@ get_control_data(migratorContext *ctx, ClusterInfo *cluster, bool live_check)
 #else
 	SetEnvironmentVariableA("LANG", "C");
 #endif
-	sprintf(cmd, SYSTEMQUOTE "\"%s/%s \"%s\"" SYSTEMQUOTE,
-			cluster->bindir,
-			live_check ? "pg_controldata\"" : "pg_resetxlog\" -n",
-			cluster->pgdata);
+	snprintf(cmd, sizeof(cmd), SYSTEMQUOTE "\"%s/%s \"%s\"" SYSTEMQUOTE,
+			 cluster->bindir,
+			 live_check ? "pg_controldata\"" : "pg_resetxlog\" -n",
+			 cluster->pgdata);
 	fflush(stdout);
 	fflush(stderr);
 
