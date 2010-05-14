@@ -331,13 +331,13 @@ get_rel_infos(migratorContext *ctx, const DbInfo *dbinfo,
 			 "		 relname = 'pg_largeobject_loid_pn_index') )) "
 			 "	AND "
 			 "	(relkind = 'r' OR relkind = 't' OR "
-			 "	 relkind = 'i'%s)%s"
+			 "	 relkind = 'i'%s)"
 			 "GROUP BY  c.oid, n.nspname, c.relname, c.relfilenode,"
 			 "			c.reltoastrelid, t.spclocation, "
 			 "			n.nspname "
 			 "ORDER BY n.nspname, c.relname;",
 			 FirstNormalObjectId,
-	/* see the comment at the top of v8_3_create_sequence_script() */
+	/* see the comment at the top of old_8_3_create_sequence_script() */
 			 (GET_MAJOR_VERSION(ctx->old.major_version) <= 803) ?
 			 "" : " OR relkind = 'S'");
 
