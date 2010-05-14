@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/standby.c,v 1.22 2010/05/13 11:15:38 sriggs Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/standby.c,v 1.23 2010/05/14 07:11:49 sriggs Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -717,6 +717,7 @@ standby_redo(XLogRecPtr lsn, XLogRecord *record)
 		running.xcnt = xlrec->xcnt;
 		running.subxid_overflow = xlrec->subxid_overflow;
 		running.nextXid = xlrec->nextXid;
+		running.latestCompletedXid = xlrec->latestCompletedXid;
 		running.oldestRunningXid = xlrec->oldestRunningXid;
 		running.xids = xlrec->xids;
 
@@ -731,8 +732,9 @@ standby_desc_running_xacts(StringInfo buf, xl_running_xacts *xlrec)
 {
 	int			i;
 
-	appendStringInfo(buf, " nextXid %u oldestRunningXid %u",
+	appendStringInfo(buf, " nextXid %u latestCompletedXid %u oldestRunningXid %u",
 					 xlrec->nextXid,
+					 xlrec->latestCompletedXid,
 					 xlrec->oldestRunningXid);
 	if (xlrec->xcnt > 0)
 	{
@@ -880,6 +882,7 @@ LogCurrentRunningXacts(RunningTransactions CurrRunningXacts)
 	xlrec.subxid_overflow = CurrRunningXacts->subxid_overflow;
 	xlrec.nextXid = CurrRunningXacts->nextXid;
 	xlrec.oldestRunningXid = CurrRunningXacts->oldestRunningXid;
+	xlrec.latestCompletedXid = CurrRunningXacts->latestCompletedXid;
 
 	/* Header */
 	rdata[0].data = (char *) (&xlrec);
@@ -902,19 +905,20 @@ LogCurrentRunningXacts(RunningTransactions CurrRunningXacts)
 
 	if (CurrRunningXacts->subxid_overflow)
 		elog(trace_recovery(DEBUG2),
-						"snapshot of %u running transactions overflowed (lsn %X/%X oldest xid %u next xid %u)",
+						"snapshot of %u running transactions overflowed (lsn %X/%X oldest xid %u latest complete %u next xid %u)",
 						CurrRunningXacts->xcnt,
 						recptr.xlogid, recptr.xrecoff,
 						CurrRunningXacts->oldestRunningXid,
+						CurrRunningXacts->latestCompletedXid,
 						CurrRunningXacts->nextXid);
 	else
 		elog(trace_recovery(DEBUG2),
-						"snapshot of %u running transaction ids (lsn %X/%X oldest xid %u next xid %u)",
+						"snapshot of %u running transaction ids (lsn %X/%X oldest xid %u latest complete %u next xid %u)",
 						CurrRunningXacts->xcnt,
 						recptr.xlogid, recptr.xrecoff,
 						CurrRunningXacts->oldestRunningXid,
+						CurrRunningXacts->latestCompletedXid,
 						CurrRunningXacts->nextXid);
-
 }
 
 /*
