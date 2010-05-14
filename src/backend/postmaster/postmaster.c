@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.606 2010/04/28 16:10:42 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.607 2010/05/14 18:08:33 rhaas Exp $
  *
  * NOTES
  *
@@ -238,14 +238,12 @@ static bool RecoveryError = false;		/* T if WAL recovery failed */
  *
  * When the startup process is ready to start archive recovery, it signals the
  * postmaster, and we switch to PM_RECOVERY state. The background writer is
- * launched, while the startup process continues applying WAL.
- * After reaching a consistent point in WAL redo, startup process signals
- * us again, and we switch to PM_RECOVERY_CONSISTENT state. There's currently
- * no difference between PM_RECOVERY and PM_RECOVERY_CONSISTENT, but we
- * could start accepting connections to perform read-only queries at this
- * point, if we had the infrastructure to do that.
- * When archive recovery is finished, the startup process exits with exit
- * code 0 and we switch to PM_RUN state.
+ * launched, while the startup process continues applying WAL.  If Hot Standby
+ * is enabled, then, after reaching a consistent point in WAL redo, startup
+ * process signals us again, and we switch to PM_RECOVERY_CONSISTENT state and
+ * begin accepting connections to perform read-only queries.  When archive
+ * recovery is finished, the startup process exits with exit code 0 and we
+ * switch to PM_RUN state.
  *
  * Normal child backends can only be launched when we are in PM_RUN or
  * PM_RECOVERY_CONSISTENT state.  (We also allow launch of normal
