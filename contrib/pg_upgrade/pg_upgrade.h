@@ -16,8 +16,6 @@
 #include "libpq-fe.h"
 
 /* Allocate for null byte */
-#define NAMEDATASIZE		(NAMEDATALEN + 1)
-
 #define USER_NAME_SIZE		128
 
 #define MAX_STRING			1024
@@ -73,15 +71,13 @@ extern int  pgunlink(const char *path);
 extern void copydir(char *fromdir, char *todir, bool recurse);
 extern bool rmtree(const char *path, bool rmtopdir);
 
-extern char pathSeparator;
-
 /*
  * Each relation is represented by a relinfo structure.
  */
 typedef struct
 {
-	char		nspname[NAMEDATASIZE];		/* namespace name */
-	char		relname[NAMEDATASIZE];		/* relation name */
+	char		nspname[NAMEDATALEN];		/* namespace name */
+	char		relname[NAMEDATALEN];		/* relation name */
 	Oid			reloid;			/* relation oid				 */
 	Oid			relfilenode;	/* relation relfile node	 */
 	Oid			toastrelid;		/* oid of the toast relation */
@@ -103,10 +99,10 @@ typedef struct
 	Oid			new;			/* Relfilenode of the new relation */
 	char		old_file[MAXPGPATH];
 	char		new_file[MAXPGPATH];
-	char		old_nspname[NAMEDATASIZE];	/* old name of the namespace */
-	char		old_relname[NAMEDATASIZE];	/* old name of the relation */
-	char		new_nspname[NAMEDATASIZE];	/* new name of the namespace */
-	char		new_relname[NAMEDATASIZE];	/* new name of the relation */
+	char		old_nspname[NAMEDATALEN];	/* old name of the namespace */
+	char		old_relname[NAMEDATALEN];	/* old name of the relation */
+	char		new_nspname[NAMEDATALEN];	/* new name of the namespace */
+	char		new_relname[NAMEDATALEN];	/* new name of the relation */
 } FileNameMap;
 
 /*
@@ -115,7 +111,7 @@ typedef struct
 typedef struct
 {
 	Oid			db_oid;			/* oid of the database */
-	char		db_name[NAMEDATASIZE];	/* database name */
+	char		db_name[NAMEDATALEN];	/* database name */
 	char		db_tblspace[MAXPGPATH]; /* database default tablespace path */
 	RelInfoArr	rel_arr;		/* array of all user relinfos */
 } DbInfo;

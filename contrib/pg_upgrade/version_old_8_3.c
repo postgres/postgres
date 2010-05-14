@@ -318,8 +318,8 @@ old_8_3_rebuild_tsvector_tables(migratorContext *ctx, bool check_mode,
 	{
 		PGresult   *res;
 		bool		db_used = false;
-		char		old_nspname[NAMEDATASIZE] = "",
-					old_relname[NAMEDATASIZE] = "";
+		char		old_nspname[NAMEDATALEN] = "",
+					old_relname[NAMEDATALEN] = "";
 		int			ntups;
 		int			rowno;
 		int			i_nspname,

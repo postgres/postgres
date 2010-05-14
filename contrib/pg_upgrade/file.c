@@ -13,12 +13,6 @@
 #include <windows.h>
 #endif
 
-#ifndef WIN32
-char		pathSeparator = '/';
-#else
-char		pathSeparator = '\\';
-#endif
-
 
 static int	copy_file(const char *fromfile, const char *tofile, bool force);
 

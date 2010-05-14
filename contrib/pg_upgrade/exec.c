@@ -138,7 +138,7 @@ check_exec(migratorContext *ctx, const char *dir, const char *cmdName)
 	char		path[MAXPGPATH];
 	const char *errMsg;
 
-	snprintf(path, sizeof(path), "%s%c%s", dir, pathSeparator, cmdName);
+	snprintf(path, sizeof(path), "%s/%s", dir, cmdName);
 
 	if ((errMsg = validate_exec(path)) == NULL)
 		return 1;				/* 1 -> first alternative OK */
@@ -286,8 +286,8 @@ check_data_dir(migratorContext *ctx, const char *pg_data)
 	{
 		struct stat statBuf;
 
-		snprintf(subDirName, sizeof(subDirName), "%s%c%s", pg_data,
-				 pathSeparator, requiredSubdirs[subdirnum]);
+		snprintf(subDirName, sizeof(subDirName), "%s/%s", pg_data,
+				 requiredSubdirs[subdirnum]);
 
 		if ((stat(subDirName, &statBuf)) != 0)
 		{

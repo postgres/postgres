@@ -308,9 +308,13 @@ validateDirectoryOption(migratorContext *ctx, char **dirpath,
 	/*
 	 * Trim off any trailing path separators
 	 */
-	if ((*dirpath)[strlen(*dirpath) - 1] == pathSeparator)
+#ifndef WIN32
+	if ((*dirpath)[strlen(*dirpath) - 1] == '/')
+#else
+	if ((*dirpath)[strlen(*dirpath) - 1] == '/' ||
+	    (*dirpath)[strlen(*dirpath) - 1] == '\\')
+#endif
 		(*dirpath)[strlen(*dirpath) - 1] = 0;
-
 }
 
 
