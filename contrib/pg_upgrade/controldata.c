@@ -88,7 +88,7 @@ get_control_data(migratorContext *ctx, ClusterInfo *cluster, bool live_check)
 	while (fgets(bufin, sizeof(bufin), output))
 	{
 		if (ctx->debug)
-			fprintf(ctx->debug_fd, bufin);
+			fputs(bufin, ctx->debug_fd);
 
 #ifdef WIN32
 		/*
