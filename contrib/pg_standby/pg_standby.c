@@ -140,7 +140,7 @@ CustomizableInitialize(void)
 	/*
 	 * This code assumes that archiveLocation is a directory You may wish to
 	 * add code to check for tape libraries, etc.. So, since it is a
-	 * directory, we use stat to test if its accessible
+	 * directory, we use stat to test if it's accessible
 	 */
 	if (stat(archiveLocation, &stat_buf) != 0)
 	{
@@ -161,8 +161,8 @@ CustomizableNextWALFileReady()
 	if (stat(WALFilePath, &stat_buf) == 0)
 	{
 		/*
-		 * If its a backup file, return immediately If its a regular file
-		 * return only if its the right size already
+		 * If it's a backup file, return immediately. If it's a regular file
+		 * return only if it's the right size already.
 		 */
 		if (strlen(nextWALFileName) > 24 &&
 			strspn(nextWALFileName, "0123456789ABCDEF") == 24 &&
@@ -221,7 +221,7 @@ CustomizableCleanupPriorWALFiles(void)
 		struct dirent *xlde;
 
 		/*
-		 * Assume its OK to keep failing. The failure situation may change
+		 * Assume it's OK to keep failing. The failure situation may change
 		 * over time, so we'd rather keep going on the main processing than
 		 * fail because we couldnt clean up yet.
 		 */
