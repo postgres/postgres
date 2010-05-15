@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/pg_restore.sgml,v 1.86 2010/02/24 16:27:40 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/pg_restore.sgml,v 1.87 2010/05/15 18:11:07 tgl Exp $ -->
 
 <refentry id="APP-PGRESTORE">
  <refmeta>
@@ -47,10 +47,11 @@
 
   <para>
    <application>pg_restore</application> can operate in two modes.
-   If a database name is specified, the archive is restored directly into
+   If a database name is specified, <application>pg_restore</application>
+   connects to that database and restores archive contents directly into
    the database.  Otherwise, a script containing the SQL
    commands necessary to rebuild the database is created and written
-   to a file or standard output.  The script output is equivalent to
+   to a file or standard output.  This script output is equivalent to
    the plain text output format of <application>pg_dump</application>.
    Some of the options controlling the output are therefore analogous to
    <application>pg_dump</application> options.
@@ -170,10 +171,7 @@
          <term><literal>tar</></term>
          <listitem>
           <para>
-           The archive is a <command>tar</command> archive. Using this
-           archive format allows reordering and/or exclusion of schema
-           elements at the time the database is restored. It is also
-           possible to limit which data is reloaded at restore time.
+           The archive is a <command>tar</command> archive.
           </para>
          </listitem>
         </varlistentry>
@@ -184,10 +182,7 @@
          <listitem>
           <para>
            The archive is in the custom format of
-           <application>pg_dump</application>. This is the most
-           flexible format in that it allows reordering of data load
-           as well as schema elements.  This format is also compressed
-           by default.
+           <application>pg_dump</application>.
           </para>
          </listitem>
         </varlistentry>
@@ -262,8 +257,9 @@
       <listitem>
        <para>
         List the contents of the archive. The output of this operation
-        can be used with the <option>-L</option> option to restrict
-        and reorder the items that are restored.
+        can be used as input to the <option>-L</option> option.  Note that
+        if filtering switches such as <option>-n</> or <option>-t</> are
+        used with <option>-l</>, they will restrict the items listed.
        </para>
       </listitem>
      </varlistentry>
@@ -273,11 +269,18 @@
       <term><option>--use-list=<replaceable class="parameter">list-file</replaceable></option></term>
       <listitem>
        <para>
-        Restore elements in <replaceable class="PARAMETER">
-        list-file</replaceable> only, and in the
-        order they appear in the file. Lines can be moved and can also
-        be commented out by placing a <literal>;</literal> at the
-        start of the line.  (See below for examples.)
+        Restore only those archive elements that are listed in <replaceable
+        class="PARAMETER">list-file</replaceable>, and restore them in the
+        order they appear in the file.  Note that
+        if filtering switches such as <option>-n</> or <option>-t</> are
+        used with <option>-L</>, they will further restrict the items restored.
+       </para>
+       <para>
+        <replaceable class="PARAMETER">list-file</> is normally created by
+        editing the output of a previous <option>-l</> operation.
+        Lines can be moved or removed, and can also
+        be commented out by placing a semicolon (<literal>;</literal>) at the
+        start of the line.  See below for examples.
        </para>
       </listitem>
      </varlistentry>
