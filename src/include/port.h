@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/port.h,v 1.132 2010/04/23 23:21:44 rhaas Exp $
+ * $PostgreSQL: pgsql/src/include/port.h,v 1.133 2010/05/15 10:14:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -352,7 +352,7 @@ extern char *crypt(const char *key, const char *setting);
 /* WIN32 handled in port/win32.h */
 #ifndef WIN32
 #define pgoff_t off_t
-#if defined(bsdi) || defined(netbsd)
+#if defined(__bsdi__) || defined(netbsd)
 extern int	fseeko(FILE *stream, off_t offset, int whence);
 extern off_t ftello(FILE *stream);
 #endif
