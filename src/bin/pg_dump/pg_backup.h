@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup.h,v 1.52 2009/06/11 14:49:07 momjian Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup.h,v 1.53 2010/05/15 21:41:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -96,7 +96,7 @@ typedef int (*DataDumperPtr) (Archive *AH, void *userArg);
 
 typedef struct _restoreOptions
 {
-	int			create;			/* Issue commands to create the database */
+	int			createDB;		/* Issue commands to create the database */
 	int			noOwner;		/* Don't try to match original object owner */
 	int			noTablespace;	/* Don't issue tablespace-related commands */
 	int			disable_triggers;		/* disable triggers during data-only

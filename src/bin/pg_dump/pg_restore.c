@@ -34,7 +34,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_restore.c,v 1.101 2009/11/19 22:05:48 petere Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_restore.c,v 1.102 2010/05/15 21:41:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -154,7 +154,7 @@ main(int argc, char **argv)
 				opts->dropSchema = 1;
 				break;
 			case 'C':
-				opts->create = 1;
+				opts->createDB = 1;
 				break;
 			case 'd':
 				opts->dbname = strdup(optarg);

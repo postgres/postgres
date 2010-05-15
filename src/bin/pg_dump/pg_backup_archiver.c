@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.184 2010/04/23 23:21:44 rhaas Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.185 2010/05/15 21:41:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -211,19 +211,19 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 	/*
 	 * Check for nonsensical option combinations.
 	 *
-	 * NB: create+dropSchema is useless because if you're creating the DB,
+	 * NB: createDB+dropSchema is useless because if you're creating the DB,
 	 * there's no need to drop individual items in it.  Moreover, if we tried
 	 * to do that then we'd issue the drops in the database initially
 	 * connected to, not the one we will create, which is very bad...
 	 */
-	if (ropt->create && ropt->dropSchema)
+	if (ropt->createDB && ropt->dropSchema)
 		die_horribly(AH, modulename, "-C and -c are incompatible options\n");
 
 	/*
-	 * -1 is not compatible with -C, because we can't create a database inside
+	 * -C is not compatible with -1, because we can't create a database inside
 	 * a transaction block.
 	 */
-	if (ropt->create && ropt->single_txn)
+	if (ropt->createDB && ropt->single_txn)
 		die_horribly(AH, modulename, "-C and -1 are incompatible options\n");
 
 	/*
@@ -814,6 +814,9 @@ PrintTOCSummary(Archive *AHX, RestoreOptions *ropt)
 				 AH->archiveDumpVersion);
 
 	ahprintf(AH, ";\n;\n; Selected TOC Entries:\n;\n");
+
+	/* We should print DATABASE entries whether or not -C was specified */
+	ropt->createDB = 1;
 
 	for (te = AH->toc->next; te != AH->toc; te = te->next)
 	{
@@ -2257,7 +2260,7 @@ _tocEntryRequired(TocEntry *te, RestoreOptions *ropt, bool include_acls)
 		return 0;
 
 	/* Ignore DATABASE entry unless we should create it */
-	if (!ropt->create && strcmp(te->desc, "DATABASE") == 0)
+	if (!ropt->createDB && strcmp(te->desc, "DATABASE") == 0)
 		return 0;
 
 	/* Check options for selective dump/restore */
