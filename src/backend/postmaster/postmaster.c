@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.607 2010/05/14 18:08:33 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.608 2010/05/15 20:01:32 rhaas Exp $
  *
  * NOTES
  *
@@ -240,13 +240,13 @@ static bool RecoveryError = false;		/* T if WAL recovery failed */
  * postmaster, and we switch to PM_RECOVERY state. The background writer is
  * launched, while the startup process continues applying WAL.  If Hot Standby
  * is enabled, then, after reaching a consistent point in WAL redo, startup
- * process signals us again, and we switch to PM_RECOVERY_CONSISTENT state and
+ * process signals us again, and we switch to PM_HOT_STANDBY state and
  * begin accepting connections to perform read-only queries.  When archive
  * recovery is finished, the startup process exits with exit code 0 and we
  * switch to PM_RUN state.
  *
  * Normal child backends can only be launched when we are in PM_RUN or
- * PM_RECOVERY_CONSISTENT state.  (We also allow launch of normal
+ * PM_HOT_STANDBY state.  (We also allow launch of normal
  * child backends in PM_WAIT_BACKUP state, but only for superusers.)
  * In other states we handle connection requests by launching "dead_end"
  * child processes, which will simply send the client an error message and
@@ -273,7 +273,7 @@ typedef enum
 	PM_INIT,					/* postmaster starting */
 	PM_STARTUP,					/* waiting for startup subprocess */
 	PM_RECOVERY,				/* in archive recovery mode */
-	PM_RECOVERY_CONSISTENT,		/* consistent recovery mode */
+	PM_HOT_STANDBY,				/* in hot standby mode */
 	PM_RUN,						/* normal "database is alive" state */
 	PM_WAIT_BACKUP,				/* waiting for online backup mode to end */
 	PM_WAIT_READONLY,			/* waiting for read only backends to exit */
@@ -1450,7 +1450,7 @@ ServerLoop(void)
 		 */
 		if (BgWriterPID == 0 &&
 			(pmState == PM_RUN || pmState == PM_RECOVERY ||
-			 pmState == PM_RECOVERY_CONSISTENT))
+			 pmState == PM_HOT_STANDBY))
 			BgWriterPID = StartBackgroundWriter();
 
 		/*
@@ -1927,8 +1927,8 @@ canAcceptConnections(void)
 			 pmState == PM_RECOVERY))
 			return CAC_STARTUP; /* normal startup */
 		if (!FatalError &&
-			pmState == PM_RECOVERY_CONSISTENT)
-			return CAC_OK;		/* connection OK during recovery */
+			pmState == PM_HOT_STANDBY)
+			return CAC_OK;		/* connection OK during hot standby */
 		return CAC_RECOVERY;	/* else must be crash recovery */
 	}
 
@@ -2168,7 +2168,7 @@ pmdie(SIGNAL_ARGS)
 					(errmsg("received smart shutdown request")));
 
 			if (pmState == PM_RUN || pmState == PM_RECOVERY ||
-				pmState == PM_RECOVERY_CONSISTENT)
+				pmState == PM_HOT_STANDBY)
 			{
 				/* autovacuum workers are told to shut down immediately */
 				SignalAutovacWorkers(SIGTERM);
@@ -2226,7 +2226,7 @@ pmdie(SIGNAL_ARGS)
 				pmState == PM_WAIT_BACKUP ||
 				pmState == PM_WAIT_READONLY ||
 				pmState == PM_WAIT_BACKENDS ||
-				pmState == PM_RECOVERY_CONSISTENT)
+				pmState == PM_HOT_STANDBY)
 			{
 				ereport(LOG,
 						(errmsg("aborting any active transactions")));
@@ -2784,7 +2784,7 @@ HandleChildCrash(int pid, int exitstatus, const char *procname)
 	FatalError = true;
 	/* We now transit into a state of waiting for children to die */
 	if (pmState == PM_RECOVERY ||
-		pmState == PM_RECOVERY_CONSISTENT ||
+		pmState == PM_HOT_STANDBY ||
 		pmState == PM_RUN ||
 		pmState == PM_WAIT_BACKUP ||
 		pmState == PM_WAIT_READONLY ||
@@ -4135,7 +4135,7 @@ sigusr1_handler(SIGNAL_ARGS)
 	PG_SETMASK(&BlockSig);
 
 	/*
-	 * RECOVERY_STARTED and RECOVERY_CONSISTENT signals are ignored in
+	 * RECOVERY_STARTED and BEGIN_HOT_STANDBY signals are ignored in
 	 * unexpected states. If the startup process quickly starts up, completes
 	 * recovery, exits, we might process the death of the startup process
 	 * first. We don't want to go back to recovery in that case.
@@ -4155,7 +4155,7 @@ sigusr1_handler(SIGNAL_ARGS)
 
 		pmState = PM_RECOVERY;
 	}
-	if (CheckPostmasterSignal(PMSIGNAL_RECOVERY_CONSISTENT) &&
+	if (CheckPostmasterSignal(PMSIGNAL_BEGIN_HOT_STANDBY) &&
 		pmState == PM_RECOVERY)
 	{
 		/*
@@ -4167,7 +4167,7 @@ sigusr1_handler(SIGNAL_ARGS)
 		ereport(LOG,
 		(errmsg("database system is ready to accept read only connections")));
 
-		pmState = PM_RECOVERY_CONSISTENT;
+		pmState = PM_HOT_STANDBY;
 	}
 
 	if (CheckPostmasterSignal(PMSIGNAL_WAKEN_ARCHIVER) &&
