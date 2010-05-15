@@ -245,7 +245,7 @@ pg_scandir(migratorContext *ctx, const char *dirname,
 	 * autoconf doesn't have a suitable builtin test and it seems overkill
 	 * to add one just to avoid a warning.
 	 */
-#elif defined(freebsd) || defined(__bsdi__) || defined(__darwin__) || defined(openbsd)
+#elif defined(__FreeBSD__) || defined(__bsdi__) || defined(__darwin__) || defined(__OpenBSD__)
 	/* no const */
 	return scandir(dirname, namelist, (int (*) (struct dirent *)) selector, NULL);
 #else
