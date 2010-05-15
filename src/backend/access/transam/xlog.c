@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.411 2010/05/14 07:11:48 sriggs Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.412 2010/05/15 07:14:43 sriggs Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -5450,7 +5450,7 @@ recoveryStopsHere(XLogRecord *record, bool *includeThis)
 			CheckPoint	checkPoint;
 
 			memcpy(&checkPoint, XLogRecGetData(record), sizeof(CheckPoint));
-			recoveryLastXTime = checkPoint.time;
+			recoveryLastXTime = time_t_to_timestamptz(checkPoint.time);
 		}
 
 		/*
