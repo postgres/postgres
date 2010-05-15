@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_restore.sgml,v 1.43 2003/09/23 22:48:53 tgl Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_restore.sgml,v 1.43.2.1 2010/05/15 18:11:41 tgl Exp $ -->
 
 <refentry id="APP-PGRESTORE">
  <refmeta>
@@ -156,10 +156,7 @@
          <term><literal>t</></term>
          <listitem>
           <para>
-           The archive is a <command>tar</command> archive. Using this
-           archive format allows reordering and/or exclusion of schema
-           elements at the time the database is restored. It is also
-           possible to limit which data is reloaded at restore time.
+           The archive is a <command>tar</command> archive.
           </para>
          </listitem>
         </varlistentry>
@@ -169,10 +166,7 @@
          <listitem>
           <para>
            The archive is in the custom format of
-           <application>pg_dump</application>. This is the most
-           flexible format in that it allows reordering of data load
-           as well as schema elements.  This format is also compressed
-           by default.
+           <application>pg_dump</application>.
           </para>
          </listitem>
         </varlistentry>
@@ -207,8 +201,9 @@
       <listitem>
        <para>
         List the contents of the archive. The output of this operation
-        can be used with the <option>-L</option> option to restrict
-        and reorder the items that are restored.
+        can be used as input to the <option>-L</option> option.  Note that
+        if filtering switches such as <option>-n</> or <option>-t</> are
+        used with <option>-l</>, they will restrict the items listed.
        </para>
       </listitem>
      </varlistentry>
@@ -218,11 +213,18 @@
       <term><option>--use-list=<replaceable class="parameter">list-file</replaceable></option></term>
       <listitem>
        <para>
-        Restore elements in <REPLACEABLE
-        CLASS="PARAMETER">list-file</REPLACEABLE> only, and in the
-        order they appear in the file. Lines can be moved and may also
-        be commented out by placing a <literal>;</literal> at the
-        start of the line.  (See below for examples.)
+        Restore only those archive elements that are listed in <replaceable
+        class="PARAMETER">list-file</replaceable>, and restore them in the
+        order they appear in the file.  Note that
+        if filtering switches such as <option>-n</> or <option>-t</> are
+        used with <option>-L</>, they will further restrict the items restored.
+       </para>
+       <para>
+        <replaceable class="PARAMETER">list-file</> is normally created by
+        editing the output of a previous <option>-l</> operation.
+        Lines can be moved or removed, and can also
+        be commented out by placing a semicolon (<literal>;</literal>) at the
+        start of the line.  See below for examples.
        </para>
       </listitem>
      </varlistentry>
