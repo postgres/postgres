@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.146 2010/04/28 16:54:15 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.147 2010/05/16 03:55:41 rhaas Exp $ -->
 
  <sect1 id="xfunc">
   <title>User-Defined Functions</title>
@@ -2075,7 +2075,7 @@ Datum funcname(PG_FUNCTION_ARGS)
 <programlisting>
 PG_FUNCTION_INFO_V1(funcname);
 </programlisting>
-     must appear in the same source file.  (Conventionally. it's
+     must appear in the same source file.  (Conventionally, it's
      written just before the function itself.)  This macro call is not
      needed for <literal>internal</>-language functions, since
      <productname>PostgreSQL</> assumes that all internal functions
