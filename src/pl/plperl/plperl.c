@@ -1,7 +1,7 @@
 /**********************************************************************
  * plperl.c - perl as a procedural language for PostgreSQL
  *
- *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.175 2010/05/13 16:39:43 adunstan Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.176 2010/05/17 19:43:04 adunstan Exp $
  *
  **********************************************************************/
 
@@ -706,7 +706,7 @@ plperl_trusted_init(void)
 	if (SvTRUE(ERRSV))
 		ereport(ERROR,
 				(errmsg("%s", strip_trailing_ws(SvPV_nolen(ERRSV))),
-				 errcontext("While executing PLC_TRUSTED.")));
+				 errcontext("while executing PLC_TRUSTED")));
 	
 	if (GetDatabaseEncoding() == PG_UTF8)
 	{
@@ -719,7 +719,7 @@ plperl_trusted_init(void)
 		if (SvTRUE(ERRSV))
 			ereport(ERROR,
 					(errmsg("%s", strip_trailing_ws(SvPV_nolen(ERRSV))),
-					 errcontext("While executing utf8fix.")));
+					 errcontext("while executing utf8fix")));
 	}
 	
 	/*
@@ -761,7 +761,7 @@ plperl_trusted_init(void)
 		if (SvTRUE(ERRSV))
 			ereport(ERROR,
 					(errmsg("%s", strip_trailing_ws(SvPV_nolen(ERRSV))),
-					 errcontext("While executing plperl.on_plperl_init.")));
+					 errcontext("while executing plperl.on_plperl_init")));
 		
 	}
 }
