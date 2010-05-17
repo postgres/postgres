@@ -33,7 +33,7 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plperl/plperl.c,v 1.40.2.4 2010/05/13 16:44:35 adunstan Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plperl/plperl.c,v 1.40.2.5 2010/05/17 20:46:03 adunstan Exp $
  *
  **********************************************************************/
 
@@ -592,7 +592,7 @@ plperl_safe_init(void)
 	if (SvTRUE(ERRSV))
 		ereport(ERROR,
 				(errmsg("%s", strip_trailing_ws(SvPV_nolen(ERRSV))),
-				 errcontext("While executing PLC_TRUSTED.")));
+				 errcontext("while executing PLC_TRUSTED")));
 
 	if (GetDatabaseEncoding() == PG_UTF8)
 	{
@@ -605,7 +605,7 @@ plperl_safe_init(void)
 		if (SvTRUE(ERRSV))
 			ereport(ERROR,
 					(errmsg("%s", strip_trailing_ws(SvPV_nolen(ERRSV))),
-					 errcontext("While executing utf8fix.")));
+					 errcontext("while executing utf8fix")));
 
 	}
 
