@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release-9.0.sgml,v 2.21 2010/05/13 12:47:50 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release-9.0.sgml,v 2.22 2010/05/17 17:46:13 adunstan Exp $ -->
 
  <sect1 id="release-9-0">
   <title>Release 9.0</title>
@@ -1739,19 +1739,13 @@ recovery_connections -> hot_standby
 
      <listitem>
       <para>
-       PL/Perl subroutines are now given names (Tim Bunce)
+       PL/Perl subroutines are now given perl-visible names (Tim Bunce)
       </para>
 
       <para>
-       This is for the use of profiling and code coverage tools. DIDN'T
-       THEY HAVE NAMES BEFORE?
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       PL/Perl no longer allows <application>Safe</> version 2.20 because
-       it is unsafe (Tim Bunce)
+       PL/Perl subroutines are anonymous subrefs; this change adds entries 
+       to the Perl symbol table for them, making profiling and code coverage 
+       tools much more usable.
       </para>
      </listitem>
 
