@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/notify.sgml,v 1.34 2010/04/03 07:23:01 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/notify.sgml,v 1.35 2010/05/18 02:28:53 rhaas Exp $
 PostgreSQL documentation
 -->
 
@@ -152,18 +152,6 @@ NOTIFY <replaceable class="PARAMETER">channel</replaceable> [ , <replaceable cla
  <refsect1>
   <title>Notes</title>
 
-  <indexterm>
-   <primary>pg_notify</primary>
-  </indexterm>
-
-  <para>
-   To send a notification you can also use the function
-   <literal><function>pg_notify</function>(<type>text</type>,
-   <type>text</type>)</literal>. The function takes the channel name as the
-   first argument and the payload as the second. The function is much easier
-   to use than the <command>NOTIFY</command> command if you need to work with
-   non-constant channel names and payloads.
-  </para>
   <para>
    There is a queue that holds notifications that have been sent but not
    yet processed by all listening sessions.  If this queue becomes full,
@@ -180,6 +168,23 @@ NOTIFY <replaceable class="PARAMETER">channel</replaceable> [ , <replaceable cla
    A transaction that has executed <command>NOTIFY</command> cannot be
    prepared for two-phase commit.
   </para>
+
+  <refsect2>
+   <title>pg_notify</title>
+
+   <indexterm>
+    <primary>pg_notify</primary>
+   </indexterm>
+
+   <para>
+    To send a notification you can also use the function
+    <literal><function>pg_notify</function>(<type>text</type>,
+    <type>text</type>)</literal>. The function takes the channel name as the
+    first argument and the payload as the second. The function is much easier
+    to use than the <command>NOTIFY</command> command if you need to work with
+    non-constant channel names and payloads.
+   </para>
+  </refsect2>
  </refsect1>
 
  <refsect1>
