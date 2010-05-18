@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/pgupgrade.sgml,v 1.4 2010/05/13 22:51:00 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/pgupgrade.sgml,v 1.5 2010/05/18 15:41:36 mha Exp $ -->
 
 <sect1 id="pgupgrade">
  <title>pg_upgrade</title>
@@ -154,7 +154,7 @@ gmake prefix=/usr/local/pgsql.new install
  
 <programlisting>
 pg_ctl --pgdata /opt/PostgreSQL/8.4 stop
-pg_ctl --pgdata /opt/PostgreSQL/8.5 stop
+pg_ctl --pgdata /opt/PostgreSQL/9.0 stop
 </programlisting>
  
      or on Windows
@@ -175,7 +175,9 @@ NET STOP pgsql-8.3  (different service name)
    <listitem>
     <para>
      Run pg_upgrade
+    </para>
  
+    <para>
      Always run the pg_upgrade binary in the new server, not the old one.
      pg_upgrade requires the specification of the old and new cluster's
      PGDATA and executable (/bin) directories. You can also specify separate
@@ -192,7 +194,7 @@ NET STOP pgsql-8.3  (different service name)
  
 <programlisting>
 RUNAS /USER:postgres "CMD.EXE"
-SET PATH=%PATH%;C:\Program Files\PostgreSQL\8.5\bin;
+SET PATH=%PATH%;C:\Program Files\PostgreSQL\9.0\bin;
 </programlisting>
  
      and then run pg_upgrade with quoted directories, e.g.:
@@ -200,9 +202,9 @@ SET PATH=%PATH%;C:\Program Files\PostgreSQL\8.5\bin;
 <programlisting>
 pg_upgrade.exe
         --old-datadir "C:/Program Files/PostgreSQL/8.4/data"
-        --new-datadir "C:/Program Files/PostgreSQL/8.5/data"
+        --new-datadir "C:/Program Files/PostgreSQL/9.0/data"
         --old-bindir "C:/Program Files/PostgreSQL/8.4/bin"
-        --new-bindir "C:/Program Files/PostgreSQL/8.5/bin"
+        --new-bindir "C:/Program Files/PostgreSQL/9.0/bin"
 </programlisting>
  
      Once started, pg_upgrade will verify the two clusters are compatible
