@@ -1,0 +1,67 @@
+The most effective way to test pg_upgrade, aside from testing on user
+data, is by upgrading the PostgreSQL regression database.
+
+This testing process first requires the creation of a valid regression
+database dump.  Such files contain most database features and are
+specific to each major version of Postgres.
+
+Here are the steps needed to create a regression database dump file:
+
+1)  Create and populate the regression database in the old cluster
+    This database can be created by running 'gmake installcheck' from
+    src/test/regression.
+
+2)  Use pg_dump to dump out the regression database
+    Use the new cluster's pg_dump on the old database to minimize
+    whitespace differences in the diff.
+
+3)  Adjust the regression database dump file
+
+    a)  Change CREATE FUNCTION shared object paths to use '$libdir'
+        The old and new cluster will have different shared object paths.
+
+    b)  Remove 'regex_flavor' (not supported in Postgres 9.0)
+
+    c)  Change CREATE OR REPLACE LANGUAGE to CREATE LANGUAGE
+        The former syntax is only supported in Postgres 9.0.
+
+    d)  Perform the load/dump twice
+        This fixes problems with the ordering of COPY columns for
+        inherited tables.
+
+    e)  Fix any wrapping format differences
+        Commands like CREATE TRIGGER and ALTER TABLE sometimes have
+        differences.
+
+    f)  Adjust extra_float_digits
+	Postgres 9.0 pg_dump uses extra_float_digits=-2 for pre-9.0
+	databases, and extra_float_digits=-3 for >= 9.0 databases.
+	It is necessary to modify 9.0 pg_dump to always use -3, and
+	modify the pre-9.0 old server to accept extra_float_digits=-3.
+
+Once the dump is created, it can be repeatedly loaded into the old
+database, upgraded, and dumped out of the new database, and then
+compared to the original version. To test the dump file, perform these
+steps:
+
+1)  Create the old and new clusters in different directories.
+
+2)  Copy the regression shared object files into the appropriate /lib
+    directory for old and new clusters.
+
+3)  Create the regression database in the old server.
+
+4)  Load the dump file created above into the regression database; 
+    check for errors while loading.
+
+5)  Upgrade the old database to the new major version, as outlined in
+    the pg_upgrade manual section.
+
+6)  Use pg_dump to dump out the regression database in the new cluster.
+
+7)  Diff the regression database dump file with the regression dump
+    file loaded into the old server.
+
+
+
+
