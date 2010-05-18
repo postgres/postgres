@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.276 2010/05/03 10:31:29 heikki Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.277 2010/05/18 19:05:17 mha Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -243,7 +243,7 @@ SET ENABLE_SEQSCAN TO OFF;
       <listitem>
        <para>
          Specifies the configuration file for
-         <application>ident</> authentication
+         <xref linkend="auth-username-maps"> username mapping
          (customarily called <filename>pg_ident.conf</>).
          This parameter can only be set at server start.
        </para>
