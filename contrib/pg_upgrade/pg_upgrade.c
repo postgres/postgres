@@ -304,15 +304,14 @@ set_frozenxids(migratorContext *ctx)
 	PQclear(executeQueryOrDie(ctx, conn,
 							  "UPDATE pg_catalog.pg_database "
 							  "SET	datfrozenxid = '%u' "
-	/* cannot connect to 'template0', so ignore */
-							  "WHERE	datname != 'template0'",
+							  "WHERE datallowconn = true",
 							  ctx->old.controldata.chkpnt_nxtxid));
 
 	/* get database names */
 	dbres = executeQueryOrDie(ctx, conn,
 							  "SELECT	datname "
 							  "FROM	pg_catalog.pg_database "
-							  "WHERE	datname != 'template0'");
+							  "WHERE datallowconn = true");
 
 	/* free dbres below */
 	PQfinish(conn);
