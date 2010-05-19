@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/oid2name.sgml,v 1.5 2010/05/19 20:20:38 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/oid2name.sgml,v 1.6 2010/05/19 20:22:05 momjian Exp $ -->
 
 <sect1 id="oid2name">
  <title>oid2name</title>
@@ -109,6 +109,12 @@
      <row>
       <entry><literal>-U</literal> <replaceable>username</></entry>
       <entry>username to connect as</entry>
+     </row>
+
+     <row>
+      <entry><literal>-P</literal> <replaceable>password</></entry>
+      <entry>password (deprecated &mdash; putting this on the command line
+       is a security hazard)</entry>
      </row>
     </tbody>
    </tgroup>
