@@ -327,11 +327,9 @@ get_rel_infos(migratorContext *ctx, const DbInfo *dbinfo,
 			 "	AND c.oid >= %u "
 			 "	) OR ( "
 			 "	n.nspname = 'pg_catalog' "
-			 "	AND (relname = 'pg_largeobject' OR "
-			 "		 relname = 'pg_largeobject_loid_pn_index') )) "
-			 "	AND "
-			 "	(relkind = 'r' OR relkind = 't' OR "
-			 "	 relkind = 'i'%s)"
+			 "	AND relname IN "
+			 "        ('pg_largeobject', 'pg_largeobject_loid_pn_index') )) "
+			 "	AND relkind IN ('r','t', 'i'%s)"
 			 "GROUP BY  c.oid, n.nspname, c.relname, c.relfilenode,"
 			 "			c.reltoastrelid, t.spclocation, "
 			 "			n.nspname "
@@ -339,7 +337,7 @@ get_rel_infos(migratorContext *ctx, const DbInfo *dbinfo,
 			 FirstNormalObjectId,
 	/* see the comment at the top of old_8_3_create_sequence_script() */
 			 (GET_MAJOR_VERSION(ctx->old.major_version) <= 803) ?
-			 "" : " OR relkind = 'S'");
+			 "" : ", 'S'");
 
 	res = executeQueryOrDie(ctx, conn, query);
 
