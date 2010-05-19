@@ -164,7 +164,10 @@ prepare_new_cluster(migratorContext *ctx)
 	check_ok(ctx);
 
 	/*
-	 * We do freeze after analyze so pg_statistic is also frozen
+	 * We do freeze after analyze so pg_statistic is also frozen.
+	 * template0 is not frozen here, but data rows were frozen by initdb,
+	 * and we set its datfrozenxid and relfrozenxids later to match the
+	 * new xid counter later.
 	 */
 	prep_status(ctx, "Freezing all rows on the new cluster");
 	exec_prog(ctx, true,
@@ -292,47 +295,71 @@ void
 set_frozenxids(migratorContext *ctx)
 {
 	int			dbnum;
-	PGconn	   *conn;
+	PGconn	   *conn, *conn_template1;
 	PGresult   *dbres;
 	int			ntups;
+	int			i_datname;
+	int			i_datallowconn;
 
 	prep_status(ctx, "Setting frozenxid counters in new cluster");
 
-	conn = connectToServer(ctx, "template1", CLUSTER_NEW);
+	conn_template1 = connectToServer(ctx, "template1", CLUSTER_NEW);
 
 	/* set pg_database.datfrozenxid */
-	PQclear(executeQueryOrDie(ctx, conn,
+	PQclear(executeQueryOrDie(ctx, conn_template1,
 							  "UPDATE pg_catalog.pg_database "
-							  "SET	datfrozenxid = '%u' "
-							  "WHERE datallowconn = true",
+							  "SET	datfrozenxid = '%u'",
 							  ctx->old.controldata.chkpnt_nxtxid));
 
 	/* get database names */
-	dbres = executeQueryOrDie(ctx, conn,
-							  "SELECT	datname "
-							  "FROM	pg_catalog.pg_database "
-							  "WHERE datallowconn = true");
+	dbres = executeQueryOrDie(ctx, conn_template1,
+							  "SELECT	datname, datallowconn "
+							  "FROM	pg_catalog.pg_database");
 
-	/* free dbres below */
-	PQfinish(conn);
+	i_datname = PQfnumber(dbres, "datname");
+	i_datallowconn = PQfnumber(dbres, "datallowconn");
 
 	ntups = PQntuples(dbres);
 	for (dbnum = 0; dbnum < ntups; dbnum++)
 	{
-		conn = connectToServer(ctx, PQgetvalue(dbres, dbnum, 0), CLUSTER_NEW);
+		char *datname = PQgetvalue(dbres, dbnum, i_datname);
+		char *datallowconn= PQgetvalue(dbres, dbnum, i_datallowconn);
+
+		/*
+		 *	We must update databases where datallowconn = false, e.g.
+		 *	template0, because autovacuum increments their datfrozenxids and
+		 *	relfrozenxids even if autovacuum is turned off, and even though
+		 *	all the data rows are already frozen  To enable this, we
+		 *	temporarily change datallowconn.
+		 */
+		if (strcmp(datallowconn, "f") == 0)
+			PQclear(executeQueryOrDie(ctx, conn_template1,
+								  "UPDATE pg_catalog.pg_database "
+								  "SET	datallowconn = true "
+								  "WHERE datname = '%s'", datname));
+
+		conn = connectToServer(ctx, datname, CLUSTER_NEW);
 
 		/* set pg_class.relfrozenxid */
 		PQclear(executeQueryOrDie(ctx, conn,
 								  "UPDATE	pg_catalog.pg_class "
 								  "SET	relfrozenxid = '%u' "
 		/* only heap and TOAST are vacuumed */
-								  "WHERE	relkind = 'r' OR "
-								  "		relkind = 't'",
+								  "WHERE	relkind IN ('r', 't')",
 								  ctx->old.controldata.chkpnt_nxtxid));
 		PQfinish(conn);
+
+		/* Reset datallowconn flag */
+		if (strcmp(datallowconn, "f") == 0)
+			PQclear(executeQueryOrDie(ctx, conn_template1,
+								  "UPDATE pg_catalog.pg_database "
+								  "SET	datallowconn = false "
+								  "WHERE datname = '%s'", datname));
 	}
 
 	PQclear(dbres);
+
+	PQfinish(conn_template1);
 
 	check_ok(ctx);
 }
