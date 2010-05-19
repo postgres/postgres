@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/pgupgrade.sgml,v 1.7 2010/05/19 20:37:03 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/pgupgrade.sgml,v 1.8 2010/05/19 20:40:33 momjian Exp $ -->
 
 <sect1 id="pgupgrade">
  <title>pg_upgrade</title>
@@ -159,11 +159,6 @@ mv /usr/local/pgsql /usr/local/pgsql.old
      to rename the directory.
     </para>
  
-    <para>
-     If you are using tablespaces and migrating to 8.4 or earlier, there must
-     be sufficient directory permissions to allow <application>pg_upgrade</> to rename each
-     tablespace directory to add a ".old" suffix.
-    </para>
    </listitem>
  
    <listitem>
