@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/oid2name.sgml,v 1.4 2007/12/11 02:31:49 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/oid2name.sgml,v 1.5 2010/05/19 20:20:38 momjian Exp $ -->
 
 <sect1 id="oid2name">
  <title>oid2name</title>
@@ -31,16 +31,16 @@
    <application>oid2name</application> connects to a target database and
    extracts OID, filenode, and/or table name information.  You can also have
    it show database OIDs or tablespace OIDs.  The program is controlled by
-   a large number of command-line switches, as shown in
-   <xref linkend="oid2name-switches">.
+   a large number of command-line options, as shown in
+   <xref linkend="oid2name-options">.
   </para>
 
-  <table id="oid2name-switches">
-   <title><application>oid2name</> switches</title>
+  <table id="oid2name-options">
+   <title><application>oid2name</> options</title>
    <tgroup cols="2">
     <thead>
      <row>
-      <entry>Switch</entry>
+      <entry>Option</entry>
       <entry>Description</entry>
      </row>
     </thead>
@@ -122,8 +122,8 @@
    and <literal>-t</> takes a tablename (actually, it's a LIKE
    pattern, so you can use things like <literal>foo%</>).
    You can use as many
-   of these switches as you like, and the listing will include all objects
-   matched by any of the switches.  But note that these switches can only
+   of these options as you like, and the listing will include all objects
+   matched by any of the options.  But note that these options can only
    show objects in the database given by <literal>-d</>.
   </para>
 
@@ -131,7 +131,7 @@
    If you don't give any of <literal>-o</>, <literal>-f</> or <literal>-t</>,
    but do give <literal>-d</>, it will list all tables in the database
    named by <literal>-d</>.  In this mode, the <literal>-S</> and
-   <literal>-i</> switches control what gets listed.
+   <literal>-i</> options control what gets listed.
   </para>
 
   <para>
