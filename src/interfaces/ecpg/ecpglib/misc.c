@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/misc.c,v 1.56 2010/02/26 02:01:30 momjian Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/misc.c,v 1.57 2010/05/20 22:10:46 meskes Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -17,7 +17,7 @@
 #include "pgtypes_interval.h"
 #include "pg_config_paths.h"
 
-#ifdef HAVE_LONG_LONG_INT_64
+#ifdef HAVE_LONG_LONG
 #ifndef LONG_LONG_MIN
 #ifdef LLONG_MIN
 #define LONG_LONG_MIN LLONG_MIN
@@ -327,12 +327,12 @@ ECPGset_noind_null(enum ECPGttype type, void *ptr)
 		case ECPGt_date:
 			*((long *) ptr) = LONG_MIN;
 			break;
-#ifdef HAVE_LONG_LONG_INT_64
+#ifdef HAVE_LONG_LONG
 		case ECPGt_long_long:
 		case ECPGt_unsigned_long_long:
 			*((long long *) ptr) = LONG_LONG_MIN;
 			break;
-#endif   /* HAVE_LONG_LONG_INT_64 */
+#endif   /* HAVE_LONG_LONG */
 		case ECPGt_float:
 			memset((char *) ptr, 0xff, sizeof(float));
 			break;
@@ -399,13 +399,13 @@ ECPGis_noind_null(enum ECPGttype type, void *ptr)
 			if (*((long *) ptr) == LONG_MIN)
 				return true;
 			break;
-#ifdef HAVE_LONG_LONG_INT_64
+#ifdef HAVE_LONG_LONG
 		case ECPGt_long_long:
 		case ECPGt_unsigned_long_long:
 			if (*((long long *) ptr) == LONG_LONG_MIN)
 				return true;
 			break;
-#endif   /* HAVE_LONG_LONG_INT_64 */
+#endif   /* HAVE_LONG_LONG */
 		case ECPGt_float:
 			return (_check(ptr, sizeof(float)));
 			break;

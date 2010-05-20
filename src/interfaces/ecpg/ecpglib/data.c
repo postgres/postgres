@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/data.c,v 1.51 2010/02/27 21:53:21 tgl Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/data.c,v 1.52 2010/05/20 22:10:45 meskes Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -177,12 +177,12 @@ ecpg_get_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 		case ECPGt_unsigned_long:
 			*((long *) (ind + ind_offset * act_tuple)) = value_for_indicator;
 			break;
-#ifdef HAVE_LONG_LONG_INT_64
+#ifdef HAVE_LONG_LONG
 		case ECPGt_long_long:
 		case ECPGt_unsigned_long_long:
 			*((long long int *) (ind + ind_offset * act_tuple)) = value_for_indicator;
 			break;
-#endif   /* HAVE_LONG_LONG_INT_64 */
+#endif   /* HAVE_LONG_LONG */
 		case ECPGt_NO_INDICATOR:
 			if (value_for_indicator == -1)
 			{
@@ -265,12 +265,12 @@ ecpg_get_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 						case ECPGt_unsigned_long:
 							*((long *) (ind + ind_offset * act_tuple)) = size;
 							break;
-#ifdef HAVE_LONG_LONG_INT_64
+#ifdef HAVE_LONG_LONG
 						case ECPGt_long_long:
 						case ECPGt_unsigned_long_long:
 							*((long long int *) (ind + ind_offset * act_tuple)) = size;
 							break;
-#endif   /* HAVE_LONG_LONG_INT_64 */
+#endif   /* HAVE_LONG_LONG */
 						default:
 							break;
 					}
@@ -350,7 +350,7 @@ ecpg_get_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 					}
 					break;
 
-#ifdef HAVE_LONG_LONG_INT_64
+#ifdef HAVE_LONG_LONG
 #ifdef HAVE_STRTOLL
 				case ECPGt_long_long:
 					*((long long int *) (var + offset * act_tuple)) = strtoll(pval, &scan_length, 10);
@@ -376,7 +376,7 @@ ecpg_get_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 
 					break;
 #endif   /* HAVE_STRTOULL */
-#endif   /* HAVE_LONG_LONG_INT_64 */
+#endif   /* HAVE_LONG_LONG */
 
 				case ECPGt_float:
 				case ECPGt_double:
@@ -489,12 +489,12 @@ ecpg_get_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 									case ECPGt_unsigned_long:
 										*((long *) (ind + ind_offset * act_tuple)) = size;
 										break;
-#ifdef HAVE_LONG_LONG_INT_64
+#ifdef HAVE_LONG_LONG
 									case ECPGt_long_long:
 									case ECPGt_unsigned_long_long:
 										*((long long int *) (ind + ind_offset * act_tuple)) = size;
 										break;
-#endif   /* HAVE_LONG_LONG_INT_64 */
+#endif   /* HAVE_LONG_LONG */
 									default:
 										break;
 								}
@@ -534,12 +534,12 @@ ecpg_get_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 									case ECPGt_unsigned_long:
 										*((long *) (ind + offset * act_tuple)) = variable->len;
 										break;
-#ifdef HAVE_LONG_LONG_INT_64
+#ifdef HAVE_LONG_LONG
 									case ECPGt_long_long:
 									case ECPGt_unsigned_long_long:
 										*((long long int *) (ind + ind_offset * act_tuple)) = variable->len;
 										break;
-#endif   /* HAVE_LONG_LONG_INT_64 */
+#endif   /* HAVE_LONG_LONG */
 									default:
 										break;
 								}

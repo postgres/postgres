@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.95 2010/02/26 02:01:30 momjian Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.96 2010/05/20 22:10:45 meskes Exp $ */
 
 /*
  * The aim is to get a simpler inteface to the database routines.
@@ -541,13 +541,13 @@ ecpg_store_input(const int lineno, const bool force_indicator, const struct vari
 			if (*(long *) var->ind_value < 0L)
 				*tobeinserted_p = NULL;
 			break;
-#ifdef HAVE_LONG_LONG_INT_64
+#ifdef HAVE_LONG_LONG
 		case ECPGt_long_long:
 		case ECPGt_unsigned_long_long:
 			if (*(long long int *) var->ind_value < (long long) 0)
 				*tobeinserted_p = NULL;
 			break;
-#endif   /* HAVE_LONG_LONG_INT_64 */
+#endif   /* HAVE_LONG_LONG */
 		case ECPGt_NO_INDICATOR:
 			if (force_indicator == false)
 			{
@@ -679,7 +679,7 @@ ecpg_store_input(const int lineno, const bool force_indicator, const struct vari
 
 				*tobeinserted_p = mallocedval;
 				break;
-#ifdef HAVE_LONG_LONG_INT_64
+#ifdef HAVE_LONG_LONG
 			case ECPGt_long_long:
 				if (!(mallocedval = ecpg_alloc(asize * 30, lineno)))
 					return false;
@@ -717,7 +717,7 @@ ecpg_store_input(const int lineno, const bool force_indicator, const struct vari
 
 				*tobeinserted_p = mallocedval;
 				break;
-#endif   /* HAVE_LONG_LONG_INT_64 */
+#endif   /* HAVE_LONG_LONG */
 			case ECPGt_float:
 				if (!(mallocedval = ecpg_alloc(asize * 25, lineno)))
 					return false;

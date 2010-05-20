@@ -1,6 +1,6 @@
 /* dynamic SQL support routines
  *
- * $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/descriptor.c,v 1.36 2010/02/26 02:01:30 momjian Exp $
+ * $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/descriptor.c,v 1.37 2010/05/20 22:10:45 meskes Exp $
  */
 
 #define POSTGRES_ECPG_INTERNAL
@@ -127,14 +127,14 @@ get_int_item(int lineno, void *var, enum ECPGttype vartype, int value)
 		case ECPGt_unsigned_long:
 			*(unsigned long *) var = (unsigned long) value;
 			break;
-#ifdef HAVE_LONG_LONG_INT_64
+#ifdef HAVE_LONG_LONG
 		case ECPGt_long_long:
 			*(long long int *) var = (long long int) value;
 			break;
 		case ECPGt_unsigned_long_long:
 			*(unsigned long long int *) var = (unsigned long long int) value;
 			break;
-#endif   /* HAVE_LONG_LONG_INT_64 */
+#endif   /* HAVE_LONG_LONG */
 		case ECPGt_float:
 			*(float *) var = (float) value;
 			break;
@@ -172,14 +172,14 @@ set_int_item(int lineno, int *target, const void *var, enum ECPGttype vartype)
 		case ECPGt_unsigned_long:
 			*target = *(unsigned long *) var;
 			break;
-#ifdef HAVE_LONG_LONG_INT_64
+#ifdef HAVE_LONG_LONG
 		case ECPGt_long_long:
 			*target = *(long long int *) var;
 			break;
 		case ECPGt_unsigned_long_long:
 			*target = *(unsigned long long int *) var;
 			break;
-#endif   /* HAVE_LONG_LONG_INT_64 */
+#endif   /* HAVE_LONG_LONG */
 		case ECPGt_float:
 			*target = *(float *) var;
 			break;

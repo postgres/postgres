@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.trailer,v 1.24 2010/03/31 08:45:18 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.trailer,v 1.25 2010/05/20 22:10:46 meskes Exp $ */
 
 statements: /*EMPTY*/
                 | statements statement
@@ -781,7 +781,7 @@ unsigned_type: SQL_UNSIGNED SQL_SHORT		{ $$ = ECPGt_unsigned_short; }
 		| SQL_UNSIGNED SQL_LONG INT_P		{ $$ = ECPGt_unsigned_long; }
 		| SQL_UNSIGNED SQL_LONG SQL_LONG
 		{
-#ifdef HAVE_LONG_LONG_INT_64
+#ifdef HAVE_LONG_LONG
 			$$ = ECPGt_unsigned_long_long;
 #else
 			$$ = ECPGt_unsigned_long;
@@ -789,7 +789,7 @@ unsigned_type: SQL_UNSIGNED SQL_SHORT		{ $$ = ECPGt_unsigned_short; }
 		}
 		| SQL_UNSIGNED SQL_LONG SQL_LONG INT_P
 		{
-#ifdef HAVE_LONG_LONG_INT_64
+#ifdef HAVE_LONG_LONG
 			$$ = ECPGt_unsigned_long_long;
 #else
 			$$ = ECPGt_unsigned_long;
@@ -805,7 +805,7 @@ signed_type: SQL_SHORT				{ $$ = ECPGt_short; }
 		| SQL_LONG INT_P			{ $$ = ECPGt_long; }
 		| SQL_LONG SQL_LONG
 		{
-#ifdef HAVE_LONG_LONG_INT_64
+#ifdef HAVE_LONG_LONG
 			$$ = ECPGt_long_long;
 #else
 			$$ = ECPGt_long;
@@ -813,7 +813,7 @@ signed_type: SQL_SHORT				{ $$ = ECPGt_short; }
 		}
 		| SQL_LONG SQL_LONG INT_P
 		{
-#ifdef HAVE_LONG_LONG_INT_64
+#ifdef HAVE_LONG_LONG
 			$$ = ECPGt_long_long;
 #else
 			$$ = ECPGt_long;
