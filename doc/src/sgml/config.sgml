@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.277 2010/05/18 19:05:17 mha Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.278 2010/05/20 20:32:27 tgl Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -5107,9 +5107,7 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
      <varlistentry id="guc-lo-compat-privileges" xreflabel="lo_compat_privileges">
       <term><varname>lo_compat_privileges</varname> (<type>boolean</type>)</term>
       <indexterm>
-       <primary>
-        <varname>lo_compat_privileges</varname> configuration parameter
-       </primary>
+       <primary><varname>lo_compat_privileges</> configuration parameter</primary>
       </indexterm>
       <listitem>
        <para>
@@ -5120,7 +5118,7 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
         releases.  The default is <literal>off</>.
        </para>
        <para>
-        Setting this variable does not disable all security checks for
+        Setting this variable does not disable all security checks related to
         large objects &mdash; only those for which the default behavior has
         changed in <productname>PostgreSQL</> 9.0.
         For example, <literal>lo_import()</literal> and
