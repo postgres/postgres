@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/oid2name.sgml,v 1.6 2010/05/19 20:22:05 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/oid2name.sgml,v 1.7 2010/05/20 03:45:38 momjian Exp $ -->
 
 <sect1 id="oid2name">
  <title>oid2name</title>
@@ -30,119 +30,116 @@
   <para>
    <application>oid2name</application> connects to a target database and
    extracts OID, filenode, and/or table name information.  You can also have
-   it show database OIDs or tablespace OIDs.  The program is controlled by
-   a large number of command-line options, as shown in
-   <xref linkend="oid2name-options">.
+   it show database OIDs or tablespace OIDs.
   </para>
 
-  <table id="oid2name-options">
-   <title><application>oid2name</> options</title>
-   <tgroup cols="2">
-    <thead>
-     <row>
-      <entry>Option</entry>
-      <entry>Description</entry>
-     </row>
-    </thead>
+ </sect2>
 
-    <tbody>
-     <row>
-      <entry><literal>-o</literal> <replaceable>oid</></entry>
-      <entry>show info for table with OID <replaceable>oid</></entry>
-     </row>
+ <sect2>
+  <title><application>oid2name</> options</title>
 
-     <row>
-      <entry><literal>-f</literal> <replaceable>filenode</></entry>
-      <entry>show info for table with filenode <replaceable>filenode</></entry>
-     </row>
+  <para>
+   <application>oid2name</application> accepts the following command-line arguments:
 
-     <row>
-      <entry><literal>-t</literal> <replaceable>tablename_pattern</></entry>
-      <entry>show info for table(s) matching <replaceable>tablename_pattern</></entry>
-     </row>
+   <variablelist>
 
-     <row>
-      <entry><literal>-s</literal></entry>
-      <entry>show tablespace OIDs</entry>
-     </row>
+    <varlistentry>
+     <term><option>-o</option> <replaceable>oid</></term>
+     <listitem><para>show info for table with OID <replaceable>oid</></para></listitem>
+    </varlistentry>
 
-     <row>
-      <entry><literal>-S</literal></entry>
-      <entry>include system objects (those in
-       <literal>information_schema</literal>, <literal>pg_toast</literal>
-       and <literal>pg_catalog</literal> schemas)
-      </entry>
-     </row>
+    <varlistentry>
+     <term><option>-f</option> <replaceable>filenode</></term>
+     <listitem><para>show info for table with filenode <replaceable>filenode</></para></listitem>
+    </varlistentry>
 
-     <row>
-      <entry><literal>-i</literal></entry>
-      <entry>include indexes and sequences in the listing</entry>
-     </row>
+    <varlistentry>
+     <term><option>-t</option> <replaceable>tablename_pattern</></term>
+     <listitem><para>show info for table(s) matching <replaceable>tablename_pattern</></para></listitem>
+    </varlistentry>
 
-     <row>
-      <entry><literal>-x</literal></entry>
-      <entry>display more information about each object shown: tablespace name,
-       schema name, and OID
-      </entry>
-     </row>
+    <varlistentry>
+     <term><option>-s</option></term>
+     <listitem><para>show tablespace OIDs</para></listitem>
+    </varlistentry>
 
-     <row>
-      <entry><literal>-q</literal></entry>
-      <entry>omit headers (useful for scripting)</entry>
-     </row>
+    <varlistentry>
+     <term><option>-S</option></term>
+     <listitem><para>include system objects (those in
+      <option>information_schema</option>, <option>pg_toast</option>
+      and <option>pg_catalog</option> schemas)
+     </para></listitem>
+    </varlistentry>
 
-     <row>
-      <entry><literal>-d</literal> <replaceable>database</></entry>
-      <entry>database to connect to</entry>
-     </row>
+    <varlistentry>
+     <term><option>-i</option></term>
+     <listitem><para>include indexes and sequences in the listing</para></listitem>
+    </varlistentry>
 
-     <row>
-      <entry><literal>-H</literal> <replaceable>host</></entry>
-      <entry>database server's host</entry>
-     </row>
+    <varlistentry>
+     <term><option>-x</option></term>
+     <listitem><para>display more information about each object shown: tablespace name,
+      schema name, and OID
+     </para></listitem>
+    </varlistentry>
 
-     <row>
-      <entry><literal>-p</literal> <replaceable>port</></entry>
-      <entry>database server's port</entry>
-     </row>
+    <varlistentry>
+     <term><option>-q</option></term>
+     <listitem><para>omit headers (useful for scripting)</para></listitem>
+    </varlistentry>
 
-     <row>
-      <entry><literal>-U</literal> <replaceable>username</></entry>
-      <entry>username to connect as</entry>
-     </row>
+    <varlistentry>
+     <term><option>-d</option> <replaceable>database</></term>
+     <listitem><para>database to connect to</para></listitem>
+    </varlistentry>
 
-     <row>
-      <entry><literal>-P</literal> <replaceable>password</></entry>
-      <entry>password (deprecated &mdash; putting this on the command line
-       is a security hazard)</entry>
-     </row>
-    </tbody>
-   </tgroup>
-  </table>
+    <varlistentry>
+     <term><option>-H</option> <replaceable>host</></term>
+     <listitem><para>database server's host</para></listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><option>-p</option> <replaceable>port</></term>
+     <listitem><para>database server's port</para></listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><option>-U</option> <replaceable>username</></term>
+     <listitem><para>username to connect as</para></listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><option>-P</option> <replaceable>password</></term>
+     <listitem><para>password (deprecated &mdash; putting this on the command line
+      is a security hazard)</para></listitem>
+    </varlistentry>
+
+   </variablelist>
+  </para>
 
   <para>
    To display specific tables, select which tables to show by
-   using <literal>-o</>, <literal>-f</> and/or <literal>-t</>.
-   <literal>-o</> takes an OID,
-   <literal>-f</> takes a filenode,
-   and <literal>-t</> takes a tablename (actually, it's a LIKE
-   pattern, so you can use things like <literal>foo%</>).
+   using <option>-o</>, <option>-f</> and/or <option>-t</>.
+   <option>-o</> takes an OID,
+   <option>-f</> takes a filenode,
+   and <option>-t</> takes a tablename (actually, it's a LIKE
+   pattern, so you can use things like <option>foo%</>).
    You can use as many
    of these options as you like, and the listing will include all objects
    matched by any of the options.  But note that these options can only
-   show objects in the database given by <literal>-d</>.
+   show objects in the database given by <option>-d</>.
   </para>
 
   <para>
-   If you don't give any of <literal>-o</>, <literal>-f</> or <literal>-t</>,
-   but do give <literal>-d</>, it will list all tables in the database
-   named by <literal>-d</>.  In this mode, the <literal>-S</> and
-   <literal>-i</> options control what gets listed.
+   If you don't give any of <option>-o</>, <option>-f</> or <option>-t</>,
+   but do give <option>-d</>, it will list all tables in the database
+   named by <option>-d</>.  In this mode, the <option>-S</> and
+   <option>-i</> options control what gets listed.
   </para>
 
   <para>
-   If you don't give <literal>-d</> either, it will show a listing of database
-   OIDs.  Alternatively you can give <literal>-s</> to get a tablespace
+   If you don't give <option>-d</> either, it will show a listing of database
+   OIDs.  Alternatively you can give <option>-s</> to get a tablespace
    listing.
   </para>
  </sect2>
