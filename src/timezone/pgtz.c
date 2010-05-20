@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/timezone/pgtz.c,v 1.63.2.4 2010/04/09 11:50:03 mha Exp $
+ *	  $PostgreSQL: pgsql/src/timezone/pgtz.c,v 1.63.2.5 2010/05/20 14:13:23 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -889,8 +889,8 @@ static const struct
 	},							/* (GMT+06:30) Rangoon */
 	{
 		"N. Central Asia Standard Time", "N. Central Asia Daylight Time",
-		"Asia/Almaty"
-	},							/* (GMT+06:00) Almaty, Novosibirsk */
+		"Asia/Novosibirsk"
+	},							/* (GMT+06:00) Novosibirsk */
 	{
 		"Namibia Standard Time", "Namibia Daylight Time",
 		"Africa/Windhoek"
