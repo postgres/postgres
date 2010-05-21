@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.219 2010/05/08 16:39:51 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.220 2010/05/21 17:37:44 rhaas Exp $
  */
 #include "postgres_fe.h"
 #include "command.h"
@@ -654,10 +654,14 @@ exec_command(const char *cmd,
 		size_t		len;
 
 		/* strip any trailing spaces and semicolons */
-		len = strlen(opt);
-		while (len > 0 &&
-			   (isspace((unsigned char) opt[len - 1]) || opt[len - 1] == ';'))
-			opt[--len] = '\0';
+		if (opt)
+		{
+			len = strlen(opt);
+			while (len > 0 &&
+				   (isspace((unsigned char) opt[len - 1])
+						|| opt[len - 1] == ';'))
+				opt[--len] = '\0';
+		}
 
 		helpSQL(opt, pset.popt.topt.pager);
 		free(opt);
