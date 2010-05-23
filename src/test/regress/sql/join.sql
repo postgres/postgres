@@ -588,6 +588,12 @@ explain (costs off)
   SELECT a.* FROM a LEFT JOIN (b left join c on b.c_id = c.id)
   ON (a.b_id = b.id);
 
+-- check optimization of outer join within another special join
+explain (costs off)
+select id from a where id in (
+	select b.id from b left join c on b.id = c.id
+);
+
 rollback;
 
 create temp table parent (k int primary key, pd int);

@@ -16,7 +16,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/analyzejoins.c,v 1.1 2010/03/28 22:59:32 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/analyzejoins.c,v 1.2 2010/05/23 16:34:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -341,6 +341,24 @@ remove_rel_from_query(PlannerInfo *root, int relid)
 			otherrel->attr_needed[attroff] =
 				bms_del_member(otherrel->attr_needed[attroff], relid);
 		}
+	}
+
+	/*
+	 * Likewise remove references from SpecialJoinInfo data structures.
+	 *
+	 * This is relevant in case the outer join we're deleting is nested
+	 * inside other outer joins: the upper joins' relid sets have to be
+	 * adjusted.  The RHS of the target outer join will be made empty here,
+	 * but that's OK since caller will delete that SpecialJoinInfo entirely.
+	 */
+	foreach(l, root->join_info_list)
+	{
+		SpecialJoinInfo *sjinfo = (SpecialJoinInfo *) lfirst(l);
+
+		sjinfo->min_lefthand = bms_del_member(sjinfo->min_lefthand, relid);
+		sjinfo->min_righthand = bms_del_member(sjinfo->min_righthand, relid);
+		sjinfo->syn_lefthand = bms_del_member(sjinfo->syn_lefthand, relid);
+		sjinfo->syn_righthand = bms_del_member(sjinfo->syn_righthand, relid);
 	}
 
 	/*
