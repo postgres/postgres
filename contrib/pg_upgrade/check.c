@@ -154,7 +154,6 @@ issue_warnings(migratorContext *ctx, char *sequence_script_file_name)
 					  ctx->new.bindir, ctx->new.port, sequence_script_file_name,
 					  ctx->logfile);
 			unlink(sequence_script_file_name);
-			pg_free(sequence_script_file_name);
 			check_ok(ctx);
 		}
 
