@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/pgupgrade.sgml,v 1.9 2010/05/19 20:47:18 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/pgupgrade.sgml,v 1.10 2010/05/24 17:43:39 momjian Exp $ -->
 
 <sect1 id="pgupgrade">
  <title>pg_upgrade</title>
@@ -36,18 +36,6 @@
     <variablelist>
 
      <varlistentry>
-      <term><option>-d</option> <replaceable>OLDDATADIR</></term>
-      <term><option>--old-datadir</option> <replaceable>OLDDATADIR</></term>
-      <listitem><para>specify the old cluster data directory</para></listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><option>-D</option> <replaceable>NEWDATADIR</></term>
-      <term><option>--new-datadir</option> <replaceable>NEWDATADIR</></term>
-      <listitem><para>specify the new cluster data directory</para></listitem>
-     </varlistentry>
-
-     <varlistentry>
       <term><option>-b</option> <replaceable>OLDBINDIR</></term>
       <term><option>--old-bindir</option> <replaceable>OLDBINDIR</></term>
       <listitem><para>specify the old cluster executable directory</para></listitem>
@@ -60,31 +48,25 @@
      </varlistentry>
 
      <varlistentry>
-      <term><option>-p</option> <replaceable>portnum</></term>
-      <term><option>--old-port</option> <replaceable>portnum</></term>
-      <listitem><para>specify the old cluster port number</para></listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><option>-P</option> <replaceable>portnum</></term>
-      <term><option>--new-port</option> <replaceable>portnum</></term>
-      <listitem><para>specify the new cluster port number</para></listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><option>-u</option> <replaceable>username</></term>
-      <term><option>--user</option> <replaceable>username</></term>
-      <listitem><para>clusters superuser</para></listitem>
-     </varlistentry>
-
-     <varlistentry>
       <term><option>-c</option></term>
       <term><option>--check</option></term>
       <listitem><para>check clusters only, don't change any data</para></listitem>
      </varlistentry>
 
      <varlistentry>
-      <term><option>-d</option></term>
+      <term><option>-d</option> <replaceable>OLDDATADIR</></term>
+      <term><option>--old-datadir</option> <replaceable>OLDDATADIR</></term>
+      <listitem><para>specify the old cluster data directory</para></listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-D</option> <replaceable>NEWDATADIR</></term>
+      <term><option>--new-datadir</option> <replaceable>NEWDATADIR</></term>
+      <listitem><para>specify the new cluster data directory</para></listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-g</option></term>
       <term><option>--debug</option></term>
       <listitem><para>enable debugging</para></listitem>
      </varlistentry>
@@ -108,6 +90,24 @@
      </varlistentry>
 
      <varlistentry>
+      <term><option>-p</option> <replaceable>portnum</></term>
+      <term><option>--old-port</option> <replaceable>portnum</></term>
+      <listitem><para>specify the old cluster port number</para></listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-P</option> <replaceable>portnum</></term>
+      <term><option>--new-port</option> <replaceable>portnum</></term>
+      <listitem><para>specify the new cluster port number</para></listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-u</option> <replaceable>username</></term>
+      <term><option>--user</option> <replaceable>username</></term>
+      <listitem><para>clusters superuser</para></listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>-v</option></term>
       <term><option>--verbose</option></term>
       <listitem><para>enable verbose output</para></listitem>
@@ -120,6 +120,7 @@
      </varlistentry>
 
      <varlistentry>
+      <term><option>-?</option></term>
       <term><option>-h</option></term>
       <term><option>--help</option></term>
       <listitem><para>show help, then exit</para></listitem>
@@ -441,6 +442,8 @@ psql --username postgres --file script.sql postgres
  
  
   <para>
+   Upgrading from PostgreSQL 8.3 has additional restrictions not present
+   when upgrading from later PostgreSQL releases.  For example,
    pg_upgrade will not work for a migration from 8.3 if a user column
    is defined as:
    <itemizedlist>
