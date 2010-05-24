@@ -48,7 +48,8 @@ parseCommandLine(migratorContext *ctx, int argc, char *argv[])
 	};
 	char		option;			/* Command line option */
 	int			optindex = 0;	/* used by getopt_long */
-
+	int			user_id;
+	
 	if (getenv("PGUSER"))
 	{
 		pg_free(ctx->user);
@@ -62,6 +63,9 @@ parseCommandLine(migratorContext *ctx, int argc, char *argv[])
 
 	ctx->transfer_mode = TRANSFER_MODE_COPY;
 
+	/* user lookup and 'root' test must be split because of usage() */
+	user_id = get_user_info(ctx, &ctx->user);
+	
 	if (argc > 1)
 	{
 		if (strcmp(argv[1], "--help") == 0 || strcmp(argv[1], "-h") == 0 ||
@@ -77,7 +81,7 @@ parseCommandLine(migratorContext *ctx, int argc, char *argv[])
 		}
 	}
 
-	if ((get_user_info(ctx, &ctx->user)) == 0)
+	if (user_id == 0)
 		pg_log(ctx, PG_FATAL, "%s: cannot be run as root\n", ctx->progname);
 
 #ifndef WIN32
