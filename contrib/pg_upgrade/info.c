@@ -228,7 +228,7 @@ get_db_infos(migratorContext *ctx, DbInfoArr *dbinfs_arr, Cluster whichCluster)
 				  "FROM pg_catalog.pg_database d "
 				  " LEFT OUTER JOIN pg_catalog.pg_tablespace t "
 				  " ON d.dattablespace = t.oid "
-				  "WHERE d.datname != 'template0'");
+				  "WHERE d.datallowconn = true");
 				  
 	i_datname = PQfnumber(res, "datname");
 	i_oid = PQfnumber(res, "oid");
