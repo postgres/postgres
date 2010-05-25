@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/pgupgrade.sgml,v 1.10 2010/05/24 17:43:39 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/pgupgrade.sgml,v 1.11 2010/05/25 14:50:56 momjian Exp $ -->
 
 <sect1 id="pgupgrade">
  <title>pg_upgrade</title>
@@ -14,6 +14,16 @@
   major version upgrades, e.g. from 8.4.7 to the current major release
   of <productname>PostgreSQL</>.  It is not required for minor version upgrades, e.g
   9.0.1 -> 9.0.4.
+ </para>
+
+ <para>
+  <application>pg_upgrade</> works because, though new features are
+  regularly added to Postgres major releases, the internal data storage
+  format rarely changes.  <application>pg_upgrade</> does its best to
+  make sure the old and new clusters are binary-compatible, e.g.  by
+  checking for compatible compile-time settings.  It is important that
+  any external modules are also binary compatibile, though this cannot
+  be checked by <application>pg_upgrade</>.
  </para>
 
  <sect2>
@@ -440,7 +450,6 @@ psql --username postgres --file script.sql postgres
   <sect2>
   <title>Limitations in migrating <emphasis>from</> PostgreSQL 8.3</title>
  
- 
   <para>
    Upgrading from PostgreSQL 8.3 has additional restrictions not present
    when upgrading from later PostgreSQL releases.  For example,
@@ -502,8 +511,8 @@ psql --username postgres --file script.sql postgres
    For Windows users, note that due to different integer datetimes settings
    used by the one-click installer and the MSI installer, it is only
    possible to upgrade from version 8.3 of the one-click distribution to
-   version 8.4 of the one-click distribution. It is not possible to upgrade
-   from the MSI installer to the one-click installer.
+   version 8.4 or later of the one-click distribution. It is not
+   possible to upgrade from the MSI installer to the one-click installer.
   </para>
  
   <para>  
