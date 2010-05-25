@@ -1,5 +1,5 @@
 ------------------------------------------------------------------------------
-PG_MIGRATOR: IN-PLACE UPGRADES FOR POSTGRESQL 
+PG_UPGRADE: IN-PLACE UPGRADES FOR POSTGRESQL
 ------------------------------------------------------------------------------
 
 Upgrading a PostgreSQL database from one major release to another can be
@@ -10,22 +10,22 @@ new release, run initdb to create a new cluster, and then import your
 old data. If you have a lot of data, that can take a considerable amount
 of time. If you have too much data, you may have to buy more storage
 since you need enough room to hold the original data plus the exported
-data.  pg_migrator can reduce the amount of time and disk space required
+data.  pg_upgrade can reduce the amount of time and disk space required
 for many upgrades.  
 
-The URL http://momjian.us/main/writings/pgsql/pg_migrator.pdf contains a
-presentation about pg_migrator internals that mirrors the text
+The URL http://momjian.us/main/writings/pgsql/pg_upgrade.pdf contains a
+presentation about pg_upgrade internals that mirrors the text
 description below.
 
 ------------------------------------------------------------------------------
 WHAT IT DOES
 ------------------------------------------------------------------------------
 
-pg_migrator is a tool that performs an in-place upgrade of existing
+pg_upgrade is a tool that performs an in-place upgrade of existing
 data. Some upgrades change the on-disk representation of data;
-pg_migrator cannot help in those upgrades.  However, many upgrades do
+pg_upgrade cannot help in those upgrades.  However, many upgrades do
 not change the on-disk representation of a user-defined table.  In those
-cases, pg_migrator can move existing user-defined tables from the old
+cases, pg_upgrade can move existing user-defined tables from the old
 database cluster into the new cluster.
 
 There are two factors that determine whether an in-place upgrade is
@@ -34,7 +34,7 @@ practical.
 Every table in a cluster shares the same on-disk representation of the
 table headers and trailers and the on-disk representation of tuple
 headers. If this changes between the old version of PostgreSQL and the
-new version, pg_migrator cannot move existing tables to the new cluster;
+new version, pg_upgrade cannot move existing tables to the new cluster;
 you will have to pg_dump the old data and then import that data into the
 new cluster.
 
@@ -45,18 +45,18 @@ between the two major PostgreSQL versions.
 HOW IT WORKS
 ------------------------------------------------------------------------------
 
-To use pg_migrator during an upgrade, start by installing a fresh
+To use pg_upgrade during an upgrade, start by installing a fresh
 cluster using the newest version in a new directory. When you've
 finished installation, the new cluster will contain the new executables
 and the usual template0, template1, and postgres, but no user-defined
 tables. At this point, you can shut down the old and new postmasters and
-invoke pg_migrator.
+invoke pg_upgrade.
 
-When pg_migrator starts, it ensures that all required executables are
+When pg_upgrade starts, it ensures that all required executables are
 present and contain the expected version numbers. The verification
 process also checks the old and new $PGDATA directories to ensure that
 the expected files and subdirectories are in place.  If the verification
-process succeeds, pg_migrator starts the old postmaster and runs
+process succeeds, pg_upgrade starts the old postmaster and runs
 pg_dumpall --schema-only to capture the metadata contained in the old
 cluster. The script produced by pg_dumpall will be used in a later step
 to recreate all user-defined objects in the new cluster.
@@ -66,56 +66,33 @@ user-defined objects, not system-defined objects.  The new cluster will
 contain the system-defined objects created by the latest version of
 PostgreSQL.
 
-Once pg_migrator has extracted the metadata from the old cluster, it
+Once pg_upgrade has extracted the metadata from the old cluster, it
 performs a number of bookkeeping tasks required to 'sync up' the new
 cluster with the existing data.
 
-First, pg_migrator renames any tablespace directories in the old cluster
---- the new cluster will need to use the same tablespace directories and
-will complain if those directories exist when pg_migrator imports the
-metadata in a later step.  It then freeze all transaction information
-stored in old server rows.
-
-Next, pg_migrator copies the commit status information and 'next
+First, pg_upgrade copies the commit status information and 'next
 transaction ID' from the old cluster to the new cluster. This is the
 steps ensures that the proper tuples are visible from the new cluster.
-Remember, pg_migrator does not export/import the content of user-defined
+Remember, pg_upgrade does not export/import the content of user-defined
 tables so the transaction IDs in the new cluster must match the
-transaction IDs in the old data. pg_migrator also copies the starting
+transaction IDs in the old data. pg_upgrade also copies the starting
 address for write-ahead logs from the old cluster to the new cluster.
 
-Now pg_migrator begins reconstructing the metadata obtained from the old
-cluster using the first part of the pg_dumpall output.  Once all of the
-databases have been created in the new cluster, pg_migrator tackles the
-problem of naming toast relations. Toast tables are used to store
-oversized data out-of-line, i.e., in a separate file. When the server
-decides to move a datum out of a tuple and into a toast table, it stores
-a pointer in the original slot in the tuple. That pointer contains the
-relfilenode (i.e. filename) of the toast table. That means that any
-table which contains toasted data will contain the filename of the toast
-table in each toast pointer. Therefore, it is very important that toast
-tables retain their old names when they are created in the new cluster.
-CREATE TABLE does not offer any explicit support for naming toast
-tables.  To ensure that the toast table names retain their old names,
-pg_migrator reserves the name of each toast table before importing the
-metadata from the old cluster. To reserve a filename, pg_migrator simply
-creates an empty file with the appropriate name and the server avoids
-that name when it detects a collision.
+Now pg_upgrade begins reconstructing the metadata obtained from the old
+cluster using the first part of the pg_dumpall output.
 
-Next, pg_migrator executes the remainder of the script produced earlier
+Next, pg_upgrade executes the remainder of the script produced earlier
 by pg_dumpall --- this script effectively creates the complete
-user-defined metadata from the old cluster to the new cluster. When that
-script completes, pg_migrator, after shutting down the new postmaster,
-deletes the placeholder toast tables and sets the proper toast tuple
-names into the new cluster.
+user-defined metadata from the old cluster to the new cluster.  It
+preserves the relfilenode numbers so TOAST and other references
+to relfilenodes in user data is preserved.  (See binary-upgrade usage
+in pg_dump).
 
-Finally, pg_migrator links or copies each user-defined table and its
+Finally, pg_upgrade links or copies each user-defined table and its
 supporting indexes and toast tables from the old cluster to the new
-cluster.  In this last step, pg_migrator assigns a new name to each
-relation so it matches the pg_class.relfilenode in the new
-cluster.  Toast file names are preserved, as outlined above.
+cluster.
 
-An important feature of the pg_migrator design is that it leaves the
+An important feature of the pg_upgrade design is that it leaves the
 original cluster intact --- if a problem occurs during the upgrade, you
 can still run the previous version, after renaming the tablespaces back
 to the original names.
