@@ -4,6 +4,9 @@
 /* Define to 1 if `long int' works and is 64 bits. */
 #undef HAVE_LONG_INT_64
 
+/* Define to 1 if the system has the type `long long int'. */
+#undef HAVE_LONG_LONG_INT
+
 /* Define to 1 if `long long int' works and is 64 bits. */
 #undef HAVE_LONG_LONG_INT_64
 
@@ -14,7 +17,4 @@
 /* Define to 1 to build client libraries as thread-safe code.
  *    (--enable-thread-safety) */
 #undef ENABLE_THREAD_SAFETY
-
-/* Define to 1 if the C compiler does understand long long type. */
-#undef HAVE_LONG_LONG
 
