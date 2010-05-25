@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.274 2010/03/28 22:59:32 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.275 2010/05/25 17:44:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -784,6 +784,7 @@ create_unique_plan(PlannerInfo *root, UniquePath *best_path)
 		{
 			Oid			in_oper = lfirst_oid(l);
 			Oid			sortop;
+			Oid			eqop;
 			TargetEntry *tle;
 			SortGroupClause *sortcl;
 
@@ -791,13 +792,26 @@ create_unique_plan(PlannerInfo *root, UniquePath *best_path)
 			if (!OidIsValid(sortop))	/* shouldn't happen */
 				elog(ERROR, "could not find ordering operator for equality operator %u",
 					 in_oper);
+
+			/*
+			 * The Unique node will need equality operators.  Normally these
+			 * are the same as the IN clause operators, but if those are
+			 * cross-type operators then the equality operators are the ones
+			 * for the IN clause operators' RHS datatype.
+			 */
+			eqop = get_equality_op_for_ordering_op(sortop, NULL);
+			if (!OidIsValid(eqop))		/* shouldn't happen */
+				elog(ERROR, "could not find equality operator for ordering operator %u",
+					 sortop);
+
 			tle = get_tle_by_resno(subplan->targetlist,
 								   groupColIdx[groupColPos]);
 			Assert(tle != NULL);
+
 			sortcl = makeNode(SortGroupClause);
 			sortcl->tleSortGroupRef = assignSortGroupRef(tle,
 														 subplan->targetlist);
-			sortcl->eqop = in_oper;
+			sortcl->eqop = eqop;
 			sortcl->sortop = sortop;
 			sortcl->nulls_first = false;
 			sortList = lappend(sortList, sortcl);
