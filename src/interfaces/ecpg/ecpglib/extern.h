@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/extern.h,v 1.40 2010/05/20 22:10:45 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/extern.h,v 1.41 2010/05/25 14:32:55 meskes Exp $ */
 
 #ifndef _ECPG_LIB_EXTERN_H
 #define _ECPG_LIB_EXTERN_H
@@ -11,11 +11,6 @@
 #include "ecpg_config.h"
 #ifndef CHAR_BIT
 #include <limits.h>
-#endif
-
-/* Do we know the C99 data type "long long"? */
-#if defined(LLONG_MIN) || defined(LONGLONG_MIN) || defined(HAVE_LONG_LONG_INT_64)
-#define HAVE_LONG_LONG 1
 #endif
 
 enum COMPAT_MODE

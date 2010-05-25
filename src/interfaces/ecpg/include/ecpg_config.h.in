@@ -15,3 +15,6 @@
  *    (--enable-thread-safety) */
 #undef ENABLE_THREAD_SAFETY
 
+/* Define to 1 if the C compiler does understand long long type. */
+#undef HAVE_LONG_LONG
+

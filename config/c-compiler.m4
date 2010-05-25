@@ -1,5 +1,5 @@
 # Macros to detect C compiler features
-# $PostgreSQL: pgsql/config/c-compiler.m4,v 1.20 2010/02/13 02:34:08 tgl Exp $
+# $PostgreSQL: pgsql/config/c-compiler.m4,v 1.21 2010/05/25 14:32:55 meskes Exp $
 
 
 # PGAC_C_SIGNED
@@ -155,3 +155,19 @@ AC_RUN_IFELSE([AC_LANG_PROGRAM([extern void $2 (); void (*fptr) () = $2;],[])],
               [LDFLAGS="$pgac_save_LDFLAGS"
                AC_MSG_RESULT(assuming no)])
 ])# PGAC_PROG_CC_LDFLAGS_OPT
+
+
+
+# PGAC_C_LONG_LONG
+# ----------------
+# Check if the C compiler understands long long type.
+AC_DEFUN([PGAC_C_LONG_LONG],
+[AC_CACHE_CHECK(for long long type, pgac_cv_c_long_long,
+[AC_TRY_COMPILE([],
+[long long l;],
+[pgac_cv_c_long_long=yes],
+[pgac_cv_c_long_long=no])])
+if test x"$pgac_cv_c_long_long" = xyes ; then
+  AC_DEFINE(HAVE_LONG_LONG, 1, [Define to 1 if the C compiler does understand long long type.])
+fi])# PGAC_C_LONG_LONG
+
