@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/oid2name.sgml,v 1.7 2010/05/20 03:45:38 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/oid2name.sgml,v 1.8 2010/05/25 15:55:28 momjian Exp $ -->
 
 <sect1 id="oid2name">
  <title>oid2name</title>
@@ -36,7 +36,7 @@
  </sect2>
 
  <sect2>
-  <title><application>oid2name</> options</title>
+  <title><application>oid2name</> Options</title>
 
   <para>
    <application>oid2name</application> accepts the following command-line arguments:

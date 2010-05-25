@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/pgstandby.sgml,v 2.10 2009/06/25 12:03:11 heikki Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/pgstandby.sgml,v 2.11 2010/05/25 15:55:28 momjian Exp $ -->
 
 <sect1 id="pgstandby">
  <title>pg_standby</title>
@@ -122,99 +122,114 @@ pg_standby <optional> <replaceable>option</> ... </optional> <replaceable>archiv
    </variablelist>
   </para>
 
-  <table>
-   <title><application>pg_standby</> options</title>
-   <tgroup cols="3">
-     <thead>
-     <row>
-      <entry>Option</entry>
-      <entry>Default</entry>
-      <entry>Description</entry>
-     </row>
-    </thead>
-    <tbody>
-     <row>
-      <entry><literal>-c</></entry>
-      <entry>yes</entry>
-      <entry>
-       Use <literal>cp</> or <literal>copy</> command to restore WAL files
-       from archive.
-      </entry>
-     </row>
-     <row>
-      <entry><literal>-d</></entry>
-      <entry>no</entry>
-      <entry>Print lots of debug logging output on <filename>stderr</>.</entry>
-     </row>
-     <row>
-      <entry><literal>-k</> <replaceable>numfiles</></entry>
-      <entry>0</entry>
-      <entry>
-       Remove files from <replaceable>archivelocation</replaceable> so that
-       no more than this many WAL files before the current one are kept in the
-       archive.  Zero (the default) means not to remove any files from
-       <replaceable>archivelocation</replaceable>.
-       This parameter will be silently ignored if
-       <replaceable>restartwalfile</replaceable> is specified, since that
-       specification method is more accurate in determining the correct
-       archive cut-off point.
-       Use of this parameter is <emphasis>deprecated</> as of
-       <productname>PostgreSQL</> 8.3; it is safer and more efficient to
-       specify a <replaceable>restartwalfile</replaceable> parameter.  A too
-       small setting could result in removal of files that are still needed
-       for a restart of the standby server, while a too large setting wastes
-       archive space.
-      </entry>
-     </row>
-     <row>
-      <entry><literal>-r</> <replaceable>maxretries</></entry>
-      <entry>3</entry>
-      <entry>
-        Set the maximum number of times to retry the copy command if it
-        fails. After each failure, we wait for <replaceable>sleeptime</> *
-        <replaceable>num_retries</>
+ </sect2>
+
+ <sect2>
+  <title><application>pg_standby</> Options</title>
+
+   <para>
+    <application>pg_standby</application> accepts the following command-line arguments:
+
+    <variablelist>
+
+     <varlistentry>
+      <term><option>-c</option></term>
+      <listitem>
+       <para>
+        Use <literal>cp</> or <literal>copy</> command to restore WAL files
+        from archive.  This is the only supported behavior so this option is useless.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-d</option></term>
+      <listitem>
+       <para>
+        Print lots of debug logging output on <filename>stderr</>.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-k</option></term>
+      <listitem>
+       <para>
+        Remove files from <replaceable>archivelocation</replaceable> so that
+        no more than this many WAL files before the current one are kept in the
+        archive.  Zero (the default) means not to remove any files from
+        <replaceable>archivelocation</replaceable>.
+        This parameter will be silently ignored if
+        <replaceable>restartwalfile</replaceable> is specified, since that
+        specification method is more accurate in determining the correct
+        archive cut-off point.
+        Use of this parameter is <emphasis>deprecated</> as of
+        <productname>PostgreSQL</> 8.3; it is safer and more efficient to
+        specify a <replaceable>restartwalfile</replaceable> parameter.  A too
+        small setting could result in removal of files that are still needed
+        for a restart of the standby server, while a too large setting wastes
+        archive space.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-r</option> <replaceable>maxretries</></term>
+      <listitem>
+       <para>
+        Set the maximum number of times to retry the copy command if
+        it fails (default 3). After each failure, we wait for
+        <replaceable>sleeptime</> * <replaceable>num_retries</>
         so that the wait time increases progressively.  So by default,
         we will wait 5 secs, 10 secs, then 15 secs before reporting
         the failure back to the standby server. This will be
         interpreted as end of recovery and the standby will come
         up fully as a result.
-      </entry>
-     </row>
-     <row>
-      <entry><literal>-s</> <replaceable>sleeptime</></entry>
-      <entry>5</entry>
-      <entry>
-       Set the number of seconds (up to 60) to sleep between tests to see
-       if the WAL file to be restored is available in the archive yet.
-       The default setting is not necessarily recommended;
-       consult <xref linkend="warm-standby"> for discussion.
-      </entry>
-     </row>
-     <row>
-      <entry><literal>-t</> <replaceable>triggerfile</></entry>
-      <entry>none</entry>
-      <entry>
-       Specify a trigger file whose presence should cause failover.
-       It is recommended that you use a structured filename to
-       avoid confusion as to which server is being triggered
-       when multiple servers exist on the same system; for example
-       <filename>/tmp/pgsql.trigger.5432</>.
-      </entry>
-     </row>
-     <row>
-      <entry><literal>-w</> <replaceable>maxwaittime</></entry>
-      <entry>0</entry>
-      <entry>
-       Set the maximum number of seconds to wait for the next WAL file,
-       after which a fast failover will be performed.
-       A setting of zero (the default) means wait forever.
-       The default setting is not necessarily recommended;
-       consult <xref linkend="warm-standby"> for discussion.
-      </entry>
-     </row>
-    </tbody>
-   </tgroup>
-  </table>
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-s</option> <replaceable>sleeptime</></term>
+      <listitem>
+       <para>
+        Set the number of seconds (up to 60, default 5) to sleep between
+        tests to see if the WAL file to be restored is available in
+        the archive yet.  The default setting is not necessarily
+        recommended; consult <xref linkend="warm-standby"> for discussion.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-t</option> <replaceable>triggerfile</></term>
+      <listitem>
+       <para>
+        Specify a trigger file whose presence should cause failover.
+        It is recommended that you use a structured filename to
+        avoid confusion as to which server is being triggered
+        when multiple servers exist on the same system; for example
+        <filename>/tmp/pgsql.trigger.5432</>.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-w</option> <replaceable>maxwaittime</></term>
+      <listitem>
+       <para>
+        Set the maximum number of seconds to wait for the next WAL file,
+        after which a fast failover will be performed.
+        A setting of zero (the default) means wait forever.
+        The default setting is not necessarily recommended;
+        consult <xref linkend="warm-standby"> for discussion.
+       </para>
+      </listitem>
+     </varlistentry>
+
+    </variablelist>
+   </para>
+
  </sect2>
 
  <sect2>

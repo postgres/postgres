@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/pgupgrade.sgml,v 1.11 2010/05/25 14:50:56 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/pgupgrade.sgml,v 1.12 2010/05/25 15:55:28 momjian Exp $ -->
 
 <sect1 id="pgupgrade">
  <title>pg_upgrade</title>
@@ -38,7 +38,7 @@
  </sect2>
 
  <sect2>
-  <title><application>pg_upgrade</> options</title>
+  <title><application>pg_upgrade</> Options</title>
 
    <para>
     <application>pg_upgrade</application> accepts the following command-line arguments:
@@ -46,13 +46,13 @@
     <variablelist>
 
      <varlistentry>
-      <term><option>-b</option> <replaceable>OLDBINDIR</></term>
+      <term><option>-b</option> <replaceable>old_bindir</></term>
       <term><option>--old-bindir</option> <replaceable>OLDBINDIR</></term>
       <listitem><para>specify the old cluster executable directory</para></listitem>
      </varlistentry>
 
      <varlistentry>
-      <term><option>-B</option> <replaceable>NEWBINDIR</></term>
+      <term><option>-B</option> <replaceable>new_bindir</></term>
       <term><option>--new-bindir</option> <replaceable>NEWBINDIR</></term>
       <listitem><para>specify the new cluster executable directory</para></listitem>
      </varlistentry>
@@ -64,13 +64,13 @@
      </varlistentry>
 
      <varlistentry>
-      <term><option>-d</option> <replaceable>OLDDATADIR</></term>
+      <term><option>-d</option> <replaceable>old_datadir</></term>
       <term><option>--old-datadir</option> <replaceable>OLDDATADIR</></term>
       <listitem><para>specify the old cluster data directory</para></listitem>
      </varlistentry>
 
      <varlistentry>
-      <term><option>-D</option> <replaceable>NEWDATADIR</></term>
+      <term><option>-D</option> <replaceable>new_datadir</></term>
       <term><option>--new-datadir</option> <replaceable>NEWDATADIR</></term>
       <listitem><para>specify the new cluster data directory</para></listitem>
      </varlistentry>
@@ -82,7 +82,7 @@
      </varlistentry>
 
      <varlistentry>
-      <term><option>-G</option> <replaceable>DEBUGFILENAME</></term>
+      <term><option>-G</option> <replaceable>debug_filename</></term>
       <term><option>--debugfile</option> <replaceable>DEBUGFILENAME</></term>
       <listitem><para>output debugging activity to file</para></listitem>
      </varlistentry>
@@ -94,19 +94,19 @@
      </varlistentry>
 
      <varlistentry>
-      <term><option>-l</option> <replaceable>LOGFILENAME</></term>
+      <term><option>-l</option> <replaceable>log_filename</></term>
       <term><option>--logfile</option> <replaceable>LOGFILENAME</></term>
       <listitem><para>log session activity to file</para></listitem>
      </varlistentry>
 
      <varlistentry>
-      <term><option>-p</option> <replaceable>portnum</></term>
+      <term><option>-p</option> <replaceable>old_portnum</></term>
       <term><option>--old-port</option> <replaceable>portnum</></term>
       <listitem><para>specify the old cluster port number</para></listitem>
      </varlistentry>
 
      <varlistentry>
-      <term><option>-P</option> <replaceable>portnum</></term>
+      <term><option>-P</option> <replaceable>new_portnum</></term>
       <term><option>--new-port</option> <replaceable>portnum</></term>
       <listitem><para>specify the new cluster port number</para></listitem>
      </varlistentry>
