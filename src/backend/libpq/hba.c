@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.206 2010/04/21 03:32:53 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.207 2010/05/26 16:43:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -711,7 +711,7 @@ parse_hba_line(List *line, int line_num, HbaLine *parsedline)
 			ereport(LOG,
 					(errcode(ERRCODE_CONFIG_FILE_ERROR),
 					 errmsg("hostssl not supported on this platform"),
-				 errhint("compile with --enable-ssl to use SSL connections"),
+				 errhint("Compile with --enable-ssl to use SSL connections."),
 					 errcontext("line %d of configuration file \"%s\"",
 								line_num, HbaFileName)));
 			return false;
@@ -890,8 +890,9 @@ parse_hba_line(List *line, int line_num, HbaLine *parsedline)
 				{
 					ereport(LOG,
 							(errcode(ERRCODE_CONFIG_FILE_ERROR),
-							 errmsg("IP address and mask do not match in file \"%s\" line %d",
-									HbaFileName, line_num)));
+							 errmsg("IP address and mask do not match"),
+							 errcontext("line %d of configuration file \"%s\"",
+										line_num, HbaFileName)));
 					return false;
 				}
 			}
@@ -944,7 +945,9 @@ parse_hba_line(List *line, int line_num, HbaLine *parsedline)
 		{
 			ereport(LOG,
 					(errcode(ERRCODE_CONFIG_FILE_ERROR),
-					 errmsg("MD5 authentication is not supported when \"db_user_namespace\" is enabled")));
+					 errmsg("MD5 authentication is not supported when \"db_user_namespace\" is enabled"),
+					 errcontext("line %d of configuration file \"%s\"",
+								line_num, HbaFileName)));
 			return false;
 		}
 		parsedline->auth_method = uaMD5;
@@ -1086,7 +1089,7 @@ parse_hba_line(List *line, int line_num, HbaLine *parsedline)
 						ereport(LOG,
 								(errcode(ERRCODE_CONFIG_FILE_ERROR),
 								 errmsg("client certificates can only be checked if a root certificate store is available"),
-								 errdetail("make sure the root certificate store is present and readable"),
+								 errhint("Make sure the root.crt file is present and readable."),
 						   errcontext("line %d of configuration file \"%s\"",
 									  line_num, HbaFileName)));
 						return false;
@@ -1245,7 +1248,8 @@ parse_hba_line(List *line, int line_num, HbaLine *parsedline)
 			{
 				ereport(LOG,
 						(errcode(ERRCODE_CONFIG_FILE_ERROR),
-				 errmsg("unknown authentication option name: \"%s\"", token),
+						 errmsg("unrecognized authentication option name: \"%s\"",
+								token),
 						 errcontext("line %d of configuration file \"%s\"",
 									line_num, HbaFileName)));
 				return false;
@@ -1606,7 +1610,8 @@ parse_ident_usermap(List *line, int line_number, const char *usermap_name,
 			pg_regerror(r, &re, errstr, sizeof(errstr));
 			ereport(LOG,
 					(errcode(ERRCODE_INVALID_REGULAR_EXPRESSION),
-					 errmsg("invalid regular expression \"%s\": %s", file_ident_user + 1, errstr)));
+					 errmsg("invalid regular expression \"%s\": %s",
+							file_ident_user + 1, errstr)));
 
 			pfree(wstr);
 			*error_p = true;
@@ -1628,7 +1633,8 @@ parse_ident_usermap(List *line, int line_number, const char *usermap_name,
 				pg_regerror(r, &re, errstr, sizeof(errstr));
 				ereport(LOG,
 						(errcode(ERRCODE_INVALID_REGULAR_EXPRESSION),
-						 errmsg("regular expression match for \"%s\" failed: %s", file_ident_user + 1, errstr)));
+						 errmsg("regular expression match for \"%s\" failed: %s",
+								file_ident_user + 1, errstr)));
 				*error_p = true;
 			}
 
@@ -1773,9 +1779,8 @@ check_usermap(const char *usermap_name,
 	if (!found_entry && !error)
 	{
 		ereport(LOG,
-		(errmsg("no match in usermap for user \"%s\" authenticated as \"%s\"",
-				pg_role, auth_user),
-		 errcontext("usermap \"%s\"", usermap_name)));
+				(errmsg("no match in usermap \"%s\" for user \"%s\" authenticated as \"%s\"",
+						usermap_name, pg_role, auth_user)));
 	}
 	return found_entry ? STATUS_OK : STATUS_ERROR;
 }
@@ -1798,7 +1803,7 @@ load_ident(void)
 		/* not fatal ... we just won't do any special ident maps */
 		ereport(LOG,
 				(errcode_for_file_access(),
-				 errmsg("could not open Ident usermap file \"%s\": %m",
+				 errmsg("could not open usermap file \"%s\": %m",
 						IdentFileName)));
 	}
 	else
