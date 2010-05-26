@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.435 2010/04/30 22:24:50 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.436 2010/05/26 23:49:19 tgl Exp $ -->
 
 <chapter Id="runtime">
  <title>Server Setup and Operation</title>
@@ -731,7 +731,7 @@ psql: could not connect to server: No such file or directory
        files (<varname>nofiles</varname>) might be too low.
        </para>
       </listitem>
-     </varlistentry>      
+     </varlistentry>
 
      <varlistentry>
       <term><systemitem class="osname">BSD/OS</></term>
@@ -1438,28 +1438,30 @@ $ <userinput>kill -INT `head -1 /usr/local/pgsql/data/postmaster.pid`</userinput
   </para>
 
   <para>
-   The simplest way to prevent invalid servers for <literal>local</>
+   The simplest way to prevent spoofing for <literal>local</>
    connections is to use a Unix domain socket directory (<xref
    linkend="guc-unix-socket-directory">) that has write permission only
    for a trusted local user.  This prevents a malicious user from creating
    their own socket file in that directory.  If you are concerned that
    some applications might still reference <filename>/tmp</> for the
    socket file and hence be vulnerable to spoofing, during operating system
-   startup create symbolic link <filename>/tmp/.s.PGSQL.5432</> that points
+   startup create a symbolic link <filename>/tmp/.s.PGSQL.5432</> that points
    to the relocated socket file.  You also might need to modify your
-   <filename>/tmp</> cleanup script to preserve the symbolic link.
+   <filename>/tmp</> cleanup script to prevent removal of the symbolic link.
   </para>
 
   <para>
-   For TCP connections the server
-   must accept only <literal>hostssl</> connections (<xref
+   To prevent spoofing on TCP connections, the best solution is to use
+   SSL certificates and make sure that clients check the server's certificate.
+   To do that, the server
+   must be configured to accept only <literal>hostssl</> connections (<xref
    linkend="auth-pg-hba-conf">) and have SSL
    <filename>server.key</filename> (key) and
    <filename>server.crt</filename> (certificate) files (<xref
    linkend="ssl-tcp">). The TCP client must connect using
-   <literal>sslmode='verify-ca'</> or
-   <literal>'verify-full'</> and have the required certificate
-   files present (<xref linkend="libpq-connect">).
+   <literal>sslmode=verify-ca</> or
+   <literal>verify-full</> and have the appropriate root certificate
+   file installed (<xref linkend="libpq-connect">).
   </para>
  </sect1>
   
@@ -1583,13 +1585,13 @@ $ <userinput>kill -INT `head -1 /usr/local/pgsql/data/postmaster.pid`</userinput
    <term>SSL Host Authentication</term>
 
    <listitem>
-    <para> 
+    <para>
      It is possible for both the client and server to provide SSL
      certificates to each other. It takes some extra configuration
      on each side, but this provides stronger verification of identity
      than the mere use of passwords. It prevents a computer from
      pretending to be the server just long enough to read the password
-     send by the client. It also helps prevent "man in the middle"
+     sent by the client. It also helps prevent <quote>man in the middle</>
      attacks where a computer between the client and server pretends to
      be the server and reads and passes all data between the client and
      server.
@@ -1602,7 +1604,8 @@ $ <userinput>kill -INT `head -1 /usr/local/pgsql/data/postmaster.pid`</userinput
 
    <listitem>
     <para>
-     If the system administrator cannot be trusted, it is necessary
+     If the system administrator for the server's machine cannot be trusted,
+     it is necessary
      for the client to encrypt the data; this way, unencrypted data
      never appears on the database server. Data is encrypted on the
      client before being sent to the server, and database results have
@@ -1680,20 +1683,33 @@ $ <userinput>kill -INT `head -1 /usr/local/pgsql/data/postmaster.pid`</userinput
    respectively.
    On Unix systems, the permissions on <filename>server.key</filename> must
    disallow any access to world or group; achieve this by the command
-   <command>chmod 0600 server.key</command>.  
+   <command>chmod 0600 server.key</command>.
    If the private key is protected with a passphrase, the
    server will prompt for the passphrase and will not start until it has
    been entered.
   </para>
 
+  <para>
+   In some cases, the server certificate might be signed by an
+   <quote>intermediate</> certificate authority, rather than one that is
+   directly trusted by clients.  To use such a certificate, append the
+   certificate of the signing authority to the <filename>server.crt</> file,
+   then its parent authority's certificate, and so on up to a <quote>root</>
+   authority that is trusted by the clients.  The root certificate should
+   be included in every case where <filename>server.crt</> contains more than
+   one certificate.
+  </para>
+
   <sect2 id="ssl-client-certificates">
    <title>Using client certificates</title>
+
    <para>
    To require the client to supply a trusted certificate, place
-   certificates of the certificate authorities (<acronym>CA</acronym>)
+   certificates of the certificate authorities (<acronym>CA</acronym>s)
    you trust in the file <filename>root.crt</filename> in the data
    directory, and set the <literal>clientcert</literal> parameter
-   to <literal>1</literal> on the appropriate line(s) in pg_hba.conf.
+   to <literal>1</literal> on the appropriate <literal>hostssl</> line(s) in
+   <filename>pg_hba.conf</>.
    A certificate will then be requested from the client during
    SSL connection startup.  (See <xref linkend="libpq-ssl"> for a
    description of how to set up certificates on the client.)  The server will
@@ -1707,16 +1723,26 @@ $ <userinput>kill -INT `head -1 /usr/local/pgsql/data/postmaster.pid`</userinput
   </para>
 
   <para>
-   The <literal>clientcert</literal> option in <filename>pg_hba.conf</>
-   is available for all authentication methods, but only for rows
-   specified as <literal>hostssl</>. Unless specified, the default is
-   not to verify the client certificate.
+   The <literal>clientcert</literal> option in <filename>pg_hba.conf</> is
+   available for all authentication methods, but only for rows specified as
+   <literal>hostssl</>.  When <literal>clientcert</literal> is not specified
+   or is set to <literal>0</>, the server will still verify presented client
+   certificates against <filename>root.crt</filename> if that file exists
+   &mdash; but it will not insist that a client certificate be presented.
   </para>
 
   <para>
-   You can use the authentication method <literal>cert</> to use the
-   client certificate for authenticating users. See
-   <xref linkend="auth-cert"> for details.
+   Note that <filename>root.crt</filename> lists the top-level CAs that are
+   considered trusted for signing client certificates.  In principle it need
+   not list the CA that signed the server's certificate, though in most cases
+   that CA would also be trusted for client certificates.
+  </para>
+
+  <para>
+   If you are setting up client certificates, you may wish to use
+   the <literal>cert</> authentication method, so that the certificates
+   control user authentication as well as providing connection security.
+   See <xref linkend="auth-cert"> for details.
   </para>
   </sect2>
 
@@ -1725,7 +1751,7 @@ $ <userinput>kill -INT `head -1 /usr/local/pgsql/data/postmaster.pid`</userinput
   <para>
    The files <filename>server.key</>, <filename>server.crt</>,
    <filename>root.crt</filename>, and <filename>root.crl</filename>
-   are only examined during server start; so you must restart 
+   are only examined during server start; so you must restart
    the server for changes in them to take effect.
   </para>
 
@@ -1745,13 +1771,13 @@ $ <userinput>kill -INT `head -1 /usr/local/pgsql/data/postmaster.pid`</userinput
      <row>
       <entry><filename>server.crt</></entry>
       <entry>server certificate</entry>
-      <entry>requested by client</entry>
+      <entry>sent to client to indicate server's identity</entry>
      </row>
 
      <row>
       <entry><filename>server.key</></entry>
       <entry>server private key</entry>
-      <entry>proves server certificate was sent by the owner; it does not indicate
+      <entry>proves server certificate was sent by the owner; does not indicate
       certificate owner is trustworthy</entry>
      </row>
 
@@ -1812,7 +1838,7 @@ chmod og-rwx server.key
     A self-signed certificate can be used for testing, but a certificate
     signed by a certificate authority (<acronym>CA</>) (either one of the
     global <acronym>CAs</> or a local one) should be used in production
-    so the client can verify the server's identity. If all the clients
+    so that clients can verify the server's identity. If all the clients
     are local to the organization, using a local <acronym>CA</> is
     recommended.
    </para>

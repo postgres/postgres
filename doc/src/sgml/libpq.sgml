@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.305 2010/05/13 14:16:41 mha Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.306 2010/05/26 23:49:18 tgl Exp $ -->
 
 <chapter id="libpq">
  <title><application>libpq</application> - C Library</title>
@@ -293,7 +293,7 @@
          <term><literal>sslmode</literal></term>
          <listitem>
           <para>
-           This option determines whether or with what priority a
+           This option determines whether or with what priority a secure
            <acronym>SSL</> TCP/IP connection will be negotiated with the
            server. There are six modes:
           </para>
@@ -337,7 +337,7 @@
              <row>
               <entry><literal>verify-ca</></entry>
               <entry>only try an <acronym>SSL</> connection, and verify that
-              the server certificate is issued by a trusted <acronym>CA</>.
+              the server certificate is issued by a trusted <acronym>CA</>
               </entry>
              </row>
 
@@ -345,7 +345,7 @@
               <entry><literal>verify-full</></entry>
               <entry>only try an <acronym>SSL</> connection, verify that
               the server certificate is issued by a trusted <acronym>CA</> and
-              that the server hostname matches that in the certificate.</entry>
+              that the server hostname matches that in the certificate</entry>
              </row>
 
             </tbody>
@@ -361,7 +361,8 @@
            <literal>sslmode</> is ignored for Unix domain socket
            communication.
            If <productname>PostgreSQL</> is compiled without SSL support,
-           using option <literal>require</> will cause an error, while
+           using options <literal>require</>, <literal>verify-ca</>, or
+           <literal>verify-full</> will cause an error, while
            options <literal>allow</> and <literal>prefer</> will be
            accepted but <application>libpq</> will not actually attempt
            an <acronym>SSL</>
@@ -398,7 +399,9 @@
          <listitem>
           <para>
            This parameter specifies the file name of the client SSL
-           certificate.
+           certificate, replacing the default
+           <filename>~/.postgresql/postgresql.crt</>.
+           This parameter is ignored if an SSL connection is not made. 
           </para>
          </listitem>
         </varlistentry>
@@ -407,13 +410,15 @@
          <term><literal>sslkey</literal></term>
          <listitem>
           <para>
-           This parameter specifies the location for the secret key
-           used for the client certificate. It can either specify a filename
-           that will be used instead of the default
-           <filename>~/.postgresql/postgresql.key</>, or can specify an external
-           engine (engines are <productname>OpenSSL</> loadable modules). The
-           external engine specification should consist of a colon-separated
-           engine name and an engine-specific key identifier.
+           This parameter specifies the location for the secret key used for
+           the client certificate. It can either specify a filename that will
+           be used instead of the default
+           <filename>~/.postgresql/postgresql.key</>, or it can specify a key
+           obtained from an external <quote>engine</> (engines are
+           <productname>OpenSSL</> loadable modules).  An external engine
+           specification should consist of a colon-separated engine name and
+           an engine-specific key identifier.  This parameter is ignored if an
+           SSL connection is not made.
           </para>
          </listitem>
         </varlistentry>
@@ -422,7 +427,11 @@
          <term><literal>sslrootcert</literal></term>
          <listitem>
           <para>
-           This parameter specifies the file name of the root SSL certificate.
+           This parameter specifies the name of a file containing SSL
+           certificate authority (<acronym>CA</>) certificate(s).
+           If the file exists, the server's certificate will be verified
+           to be signed by one of these authorities.  The default is
+           <filename>~/.postgresql/root.crt</>.
           </para>
          </listitem>
         </varlistentry>
@@ -432,7 +441,10 @@
          <listitem>
           <para>
            This parameter specifies the file name of the SSL certificate
-           revocation list (CRL).
+           revocation list (CRL).  Certificates listed in this file, if it
+           exists, will be rejected while attempting to authenticate the
+           server's certificate.  The default is
+           <filename>~/.postgresql/root.crl</>.
           </para>
          </listitem>
         </varlistentry>
@@ -1482,8 +1494,9 @@ PQconninfoOption *PQconninfoParse(const char *conninfo, char **errmsg);
 
       <para>
        You must define <symbol>USE_SSL</symbol> in order to get the
-       correct prototype for this function. Doing this will also
-       automatically include <filename>ssl.h</filename> from <productname>OpenSSL</productname>.
+       correct prototype for this function. Doing so will also
+       automatically include <filename>ssl.h</filename> from
+       <productname>OpenSSL</productname>.
       </para>
      </listitem>
     </varlistentry>
@@ -6398,23 +6411,24 @@ user=admin
    By default, <productname>PostgreSQL</> will not perform any verification of
    the server certificate. This means that it is possible to spoof the server
    identity (for example by modifying a DNS record or by taking over the server
-   IP address) without the client knowing. In order to prevent this,
+   IP address) without the client knowing. In order to prevent spoofing,
    <acronym>SSL</> certificate verification must be used.
   </para>
 
   <para>
-   If the parameter <literal>sslmode</> is set to <literal>verify-ca</>
-   libpq will verify that the server is trustworthy by checking the certificate
-   chain up to a trusted <acronym>CA</>. If <literal>sslmode</> is set to
-   <literal>verify-full</>, libpq will <emphasis>also</> verify that the server
-   hostname matches that of the certificate. The SSL connection will fail if
-   the server certificate cannot be verified. <literal>verify-full</> is
-   recommended in most security sensitive environments.
+   If the parameter <literal>sslmode</> is set to <literal>verify-ca</>,
+   libpq will verify that the server is trustworthy by checking the
+   certificate chain up to a trusted certificate authority
+   (<acronym>CA</>). If <literal>sslmode</> is set to <literal>verify-full</>,
+   libpq will <emphasis>also</> verify that the server hostname matches its
+   certificate. The SSL connection will fail if the server certificate cannot
+   be verified. <literal>verify-full</> is recommended in most
+   security-sensitive environments.
   </para>
 
   <para>
-   In <literal>verify-full</> mode, the <literal>cn</> attribute of the
-   certificate is matched against the hostname. If the <literal>cn</>
+   In <literal>verify-full</> mode, the <literal>cn</> (Common Name) attribute
+   of the certificate is matched against the hostname. If the <literal>cn</>
    attribute starts with an asterisk (<literal>*</>), it will be treated as
    a wildcard, and will match all characters <emphasis>except</> a dot
    (<literal>.</>). This means the certificate will not match subdomains.
@@ -6423,7 +6437,8 @@ user=admin
   </para>
 
   <para>
-   To allow verification, the certificate of a trusted <acronym>CA</> must be
+   To allow server certificate verification, the certificate(s) of one or more
+   trusted <acronym>CA</>s must be
    placed in the file <filename>~/.postgresql/root.crt</> in the user's home
    directory. (On Microsoft Windows the file is named
    <filename>%APPDATA%\postgresql\root.crt</filename>.)
@@ -6437,8 +6452,9 @@ user=admin
   </para>
 
   <para>
-   The location of the root certificate store and the CRL can be overridden
-   by the connection parameters <literal>sslrootcert</> and <literal>sslcrl</>
+   The location of the root certificate file and the CRL can be changed by
+   setting
+   the connection parameters <literal>sslrootcert</> and <literal>sslcrl</>
    or the environment variables <envar>PGSSLROOTCERT</> and <envar>PGSSLCRL</>.
   </para>
  </sect2>
@@ -6465,6 +6481,24 @@ user=admin
    environment variables <envar>PGSSLCERT</> and <envar>PGSSLKEY</>.
   </para>
 
+  <para>
+   In some cases, the client certificate might be signed by an
+   <quote>intermediate</> certificate authority, rather than one that is
+   directly trusted by the server.  To use such a certificate, append the
+   certificate of the signing authority to the <filename>postgresql.crt</>
+   file, then its parent authority's certificate, and so on up to a
+   <quote>root</> authority that is trusted by the server.  The root
+   certificate should be included in every case where
+   <filename>postgresql.crt</> contains more than one certificate.
+  </para>
+
+  <para>
+   Note that <filename>root.crt</filename> lists the top-level CAs that are
+   considered trusted for signing server certificates.  In principle it need
+   not list the CA that signed the client's certificate, though in most cases
+   that CA would also be trusted for server certificates.
+  </para>
+
  </sect2>
 
  <sect2 id="libpq-ssl-protection">
@@ -6472,8 +6506,8 @@ user=admin
 
   <para>
    The different values for the <literal>sslmode</> parameter provide different
-   levels of protection, in different environments. SSL itself provides
-   protection against three different types of attacks:
+   levels of protection. SSL can provide
+   protection against three types of attacks:
   </para>
   <table id="libpq-ssl-protect-attacks">
    <title>SSL attacks</title>
@@ -6488,7 +6522,7 @@ user=admin
     <tbody>
      <row>
       <entry>Eavesdropping</entry>
-      <entry>If a third party can listen to the network traffic between the
+      <entry>If a third party can examine the network traffic between the
        client and the server, it can read both connection information (including
        the username and password) and the data that is passed. <acronym>SSL</>
        uses encryption to prevent this.
@@ -6523,27 +6557,28 @@ user=admin
   </table>
 
   <para>
-   For a connection to be known secure, the two first of these have to be
-   set up on <emphasis>both the client and the server</> before the connection
+   For a connection to be known secure, SSL usage must be configured
+   on <emphasis>both the client and the server</> before the connection
    is made. If it is only configured on the server, the client may end up
    sending sensitive information (e.g. passwords) before
-   it knows that the server requires high security. In libpq, this is controlled
+   it knows that the server requires high security. In libpq, secure
+   connections can be ensured
    by setting the <literal>sslmode</> parameter to <literal>verify-full</> or
    <literal>verify-ca</>, and providing the system with a root certificate to
-   verify against. This is analogous to using a <literal>https</>
+   verify against. This is analogous to using an <literal>https</>
    <acronym>URL</> for encrypted web browsing.
   </para>
 
   <para>
    Once the server has been authenticated, the client can pass sensitive data.
    This means that up until this point, the client does not need to know if
-   certificates will be used for authentication, making it safe to specify this
+   certificates will be used for authentication, making it safe to specify that
    only in the server configuration.
   </para>
 
   <para>
    All <acronym>SSL</> options carry overhead in the form of encryption and
-   key-exchange, and it is a tradeoff that has to be made between performance
+   key-exchange, so there is a tradeoff that has to be made between performance
    and security. The following table illustrates the risks the different
    <literal>sslmode</> values protect against, and what statement they make
    about security and overhead:
@@ -6625,8 +6660,8 @@ user=admin
    The difference between <literal>verify-ca</> and <literal>verify-full</>
    depends on the policy of the root <acronym>CA</>. If a public
    <acronym>CA</> is used, <literal>verify-ca</> allows connections to a server
-   that <emphasis>somebody else</> may have registered with the <acronym>CA</>
-   to succeed. In this case, <literal>verify-full</> should always be used. If
+   that <emphasis>somebody else</> may have registered with the <acronym>CA</>.
+   In this case, <literal>verify-full</> should always be used. If
    a local <acronym>CA</> is used, or even a self-signed certificate, using
    <literal>verify-ca</> often provides enough protection.
   </para>
@@ -6635,7 +6670,7 @@ user=admin
    The default value for <literal>sslmode</> is <literal>prefer</>. As is shown
    in the table, this makes no sense from a security point of view, and it only
    promises performance overhead if possible. It is only provided as the default
-   for backwards compatibility, and not recommended in secure deployments.
+   for backwards compatibility, and is not recommended in secure deployments.
   </para>
 
  </sect2>
@@ -6671,7 +6706,7 @@ user=admin
      <row>
       <entry><filename>~/.postgresql/root.crt</></entry>
       <entry>trusted certificate authorities</entry>
-      <entry>checks server certificate is signed by a trusted certificate
+      <entry>checks that server certificate is signed by a trusted certificate
       authority</entry>
      </row>
 
