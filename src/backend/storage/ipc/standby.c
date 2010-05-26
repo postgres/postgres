@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/standby.c,v 1.23 2010/05/14 07:11:49 sriggs Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/standby.c,v 1.24 2010/05/26 19:52:52 sriggs Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -388,12 +388,15 @@ ResolveRecoveryConflictWithBufferPin(void)
 	}
 	else if (MaxStandbyDelay < 0)
 	{
+		TimestampTz now = GetCurrentTimestamp();
+
 		/*
-		 * Send out a request to check for buffer pin deadlocks before we
-		 * wait. This is fairly cheap, so no need to wait for deadlock timeout
-		 * before trying to send it out.
+		 * Set timeout for deadlock check (only)
 		 */
-		SendRecoveryConflictWithBufferPin(PROCSIG_RECOVERY_CONFLICT_STARTUP_DEADLOCK);
+		if (enable_standby_sig_alarm(now, now, true))
+			sig_alarm_enabled = true;
+		else
+			elog(FATAL, "could not set timer for process wakeup");
 	}
 	else
 	{
@@ -410,34 +413,19 @@ ResolveRecoveryConflictWithBufferPin(void)
 		}
 		else
 		{
-			TimestampTz fin_time;		/* Expected wake-up time by timer */
-			long		timer_delay_secs;		/* Amount of time we set timer
-												 * for */
-			int			timer_delay_usecs;
+			TimestampTz max_standby_time;
 
 			/*
-			 * Send out a request to check for buffer pin deadlocks before we
-			 * wait. This is fairly cheap, so no need to wait for deadlock
-			 * timeout before trying to send it out.
+			 * At what point in the future do we hit MaxStandbyDelay?
 			 */
-			SendRecoveryConflictWithBufferPin(PROCSIG_RECOVERY_CONFLICT_STARTUP_DEADLOCK);
+			max_standby_time = TimestampTzPlusMilliseconds(then, MaxStandbyDelay);
+			Assert(max_standby_time > now);
 
 			/*
-			 * How much longer we should wait?
+			 * Wake up at MaxStandby delay, and check for deadlocks as well
+			 * if we will be waiting longer than deadlock_timeout
 			 */
-			fin_time = TimestampTzPlusMilliseconds(then, MaxStandbyDelay);
-
-			TimestampDifference(now, fin_time,
-								&timer_delay_secs, &timer_delay_usecs);
-
-			/*
-			 * It's possible that the difference is less than a microsecond;
-			 * ensure we don't cancel, rather than set, the interrupt.
-			 */
-			if (timer_delay_secs == 0 && timer_delay_usecs == 0)
-				timer_delay_usecs = 1;
-
-			if (enable_standby_sig_alarm(timer_delay_secs, timer_delay_usecs, fin_time))
+			if (enable_standby_sig_alarm(now, max_standby_time, false))
 				sig_alarm_enabled = true;
 			else
 				elog(FATAL, "could not set timer for process wakeup");

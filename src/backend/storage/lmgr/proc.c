@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/proc.c,v 1.218 2010/04/28 16:54:16 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/proc.c,v 1.219 2010/05/26 19:52:52 sriggs Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -85,6 +85,7 @@ static TimestampTz timeout_start_time;
 
 /* statement_fin_time is valid only if statement_timeout_active is true */
 static TimestampTz statement_fin_time;
+static TimestampTz statement_fin_time2; /* valid only in recovery */
 
 
 static void RemoveProcFromArray(int code, Datum arg);
@@ -1619,23 +1620,61 @@ handle_sig_alarm(SIGNAL_ARGS)
  * To avoid various edge cases, we must be careful to do nothing
  * when there is nothing to be done.  We also need to be able to
  * reschedule the timer interrupt if called before end of statement.
+ *
+ * We set either deadlock_timeout_active or statement_timeout_active
+ * or both. Interrupts are enabled if standby_timeout_active.
  */
 bool
-enable_standby_sig_alarm(long delay_s, int delay_us, TimestampTz fin_time)
+enable_standby_sig_alarm(TimestampTz now, TimestampTz fin_time, bool deadlock_only)
 {
-	struct itimerval timeval;
+	TimestampTz deadlock_time = TimestampTzPlusMilliseconds(now, DeadlockTimeout);
 
-	Assert(delay_s >= 0 && delay_us >= 0);
+	if (deadlock_only)
+	{
+		/*
+		 * Wake up at DeadlockTimeout only, then wait forever
+		 */
+		statement_fin_time = deadlock_time;
+		deadlock_timeout_active = true;
+		statement_timeout_active = false;
+	}
+	else if (fin_time > deadlock_time)
+	{
+		/*
+		 * Wake up at DeadlockTimeout, then again at MaxStandbyDelay
+		 */
+		statement_fin_time = deadlock_time;
+		statement_fin_time2 = fin_time;
+		deadlock_timeout_active = true;
+		statement_timeout_active = true;
+	}
+	else
+	{
+		/*
+		 * Wake only at MaxStandbyDelay because its fairly soon
+		 */
+		statement_fin_time = fin_time;
+		deadlock_timeout_active = false;
+		statement_timeout_active = true;
+	}
 
-	statement_fin_time = fin_time;
+	if (deadlock_timeout_active || statement_timeout_active)
+	{
+		long		secs;
+		int			usecs;
+		struct itimerval timeval;
+		TimestampDifference(now, statement_fin_time,
+							&secs, &usecs);
+		if (secs == 0 && usecs == 0)
+			usecs = 1;
+		MemSet(&timeval, 0, sizeof(struct itimerval));
+		timeval.it_value.tv_sec = secs;
+		timeval.it_value.tv_usec = usecs;
+		if (setitimer(ITIMER_REAL, &timeval, NULL))
+			return false;
+		standby_timeout_active = true;
+	}
 
-	standby_timeout_active = true;
-
-	MemSet(&timeval, 0, sizeof(struct itimerval));
-	timeval.it_value.tv_sec = delay_s;
-	timeval.it_value.tv_usec = delay_us;
-	if (setitimer(ITIMER_REAL, &timeval, NULL))
-		return false;
 	return true;
 }
 
@@ -1675,37 +1714,64 @@ static bool
 CheckStandbyTimeout(void)
 {
 	TimestampTz now;
+	bool reschedule = false;
 
 	standby_timeout_active = false;
 
 	now = GetCurrentTimestamp();
 
+	/*
+	 * Reschedule the timer if its not time to wake yet, or if we
+	 * have both timers set and the first one has just been reached.
+	 */
 	if (now >= statement_fin_time)
-		SendRecoveryConflictWithBufferPin(PROCSIG_RECOVERY_CONFLICT_BUFFERPIN);
-	else
 	{
-		/* Not time yet, so (re)schedule the interrupt */
+		if (deadlock_timeout_active)
+		{
+			/*
+			 * We're still waiting when we reach DeadlockTimeout, so send out a request
+			 * to have other backends check themselves for deadlock. Then continue
+			 * waiting until MaxStandbyDelay.
+			 */
+			SendRecoveryConflictWithBufferPin(PROCSIG_RECOVERY_CONFLICT_STARTUP_DEADLOCK);
+			deadlock_timeout_active = false;
+
+			/*
+			 * Begin second waiting period to MaxStandbyDelay if required.
+			 */
+			if (statement_timeout_active)
+			{
+				reschedule = true;
+				statement_fin_time = statement_fin_time2;
+			}
+		}
+		else
+		{
+			/*
+			 * We've now reached MaxStandbyDelay, so ask all conflicts to leave, cos
+			 * its time for us to press ahead with applying changes in recovery.
+			 */
+			SendRecoveryConflictWithBufferPin(PROCSIG_RECOVERY_CONFLICT_BUFFERPIN);
+		}
+	}
+	else
+		reschedule = true;
+
+	if (reschedule)
+	{
 		long		secs;
 		int			usecs;
 		struct itimerval timeval;
-
 		TimestampDifference(now, statement_fin_time,
 							&secs, &usecs);
-
-		/*
-		 * It's possible that the difference is less than a microsecond;
-		 * ensure we don't cancel, rather than set, the interrupt.
-		 */
 		if (secs == 0 && usecs == 0)
 			usecs = 1;
-
-		standby_timeout_active = true;
-
 		MemSet(&timeval, 0, sizeof(struct itimerval));
 		timeval.it_value.tv_sec = secs;
 		timeval.it_value.tv_usec = usecs;
 		if (setitimer(ITIMER_REAL, &timeval, NULL))
 			return false;
+		standby_timeout_active = true;
 	}
 
 	return true;
