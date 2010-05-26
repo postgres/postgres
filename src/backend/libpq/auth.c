@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/auth.c,v 1.200 2010/04/21 03:32:53 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/auth.c,v 1.201 2010/05/26 20:47:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -257,29 +257,32 @@ auth_failed(Port *port, int status)
 		case uaKrb5:
 			errstr = gettext_noop("Kerberos 5 authentication failed for user \"%s\"");
 			break;
-		case uaGSS:
-			errstr = gettext_noop("GSSAPI authentication failed for user \"%s\"");
-			break;
-		case uaSSPI:
-			errstr = gettext_noop("SSPI authentication failed for user \"%s\"");
-			break;
 		case uaTrust:
 			errstr = gettext_noop("\"trust\" authentication failed for user \"%s\"");
 			break;
 		case uaIdent:
 			errstr = gettext_noop("Ident authentication failed for user \"%s\"");
 			break;
-		case uaMD5:
 		case uaPassword:
+		case uaMD5:
 			errstr = gettext_noop("password authentication failed for user \"%s\"");
 			/* We use it to indicate if a .pgpass password failed. */
 			errcode_return = ERRCODE_INVALID_PASSWORD;
+			break;
+		case uaGSS:
+			errstr = gettext_noop("GSSAPI authentication failed for user \"%s\"");
+			break;
+		case uaSSPI:
+			errstr = gettext_noop("SSPI authentication failed for user \"%s\"");
 			break;
 		case uaPAM:
 			errstr = gettext_noop("PAM authentication failed for user \"%s\"");
 			break;
 		case uaLDAP:
 			errstr = gettext_noop("LDAP authentication failed for user \"%s\"");
+			break;
+		case uaCert:
+			errstr = gettext_noop("certificate authentication failed for user \"%s\"");
 			break;
 		case uaRADIUS:
 			errstr = gettext_noop("RADIUS authentication failed for user \"%s\"");
@@ -2503,7 +2506,7 @@ CheckCertAuth(Port *port)
 		strlen(port->peer_cn) <= 0)
 	{
 		ereport(LOG,
-				(errmsg("Certificate login failed for user \"%s\": client certificate contains no username",
+				(errmsg("certificate authentication failed for user \"%s\": client certificate contains no username",
 						port->user_name)));
 		return STATUS_ERROR;
 	}
