@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/be-secure.c,v 1.99 2010/02/26 02:00:42 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/be-secure.c,v 1.100 2010/05/26 15:52:37 tgl Exp $
  *
  *	  Since the server static private key ($DataDir/server.key)
  *	  will normally be stored unencrypted so that the database
@@ -721,6 +721,7 @@ static void
 initialize_SSL(void)
 {
 	struct stat buf;
+	STACK_OF(X509_NAME) *root_cert_list = NULL;
 
 	if (!SSL_context)
 	{
@@ -810,7 +811,8 @@ initialize_SSL(void)
 						 ROOT_CERT_FILE)));
 		}
 	}
-	else if (SSL_CTX_load_verify_locations(SSL_context, ROOT_CERT_FILE, NULL) != 1)
+	else if (SSL_CTX_load_verify_locations(SSL_context, ROOT_CERT_FILE, NULL) != 1 ||
+			 (root_cert_list = SSL_load_client_CA_file(ROOT_CERT_FILE)) == NULL)
 	{
 		/*
 		 * File was there, but we could not load it. This means the file is
@@ -866,6 +868,13 @@ initialize_SSL(void)
 
 			ssl_loaded_verify_locations = true;
 		}
+
+		/* 
+		 * Tell OpenSSL to send the list of root certs we trust to clients in
+		 * CertificateRequests.  This lets a client with a keystore select the
+		 * appropriate client certificate to send to us.
+		 */
+		SSL_CTX_set_client_CA_list(SSL_context, root_cert_list);
 	}
 }
 
