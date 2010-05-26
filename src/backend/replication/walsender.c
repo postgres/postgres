@@ -30,7 +30,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/replication/walsender.c,v 1.21 2010/05/26 22:21:33 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/replication/walsender.c,v 1.22 2010/05/26 22:34:49 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -109,10 +109,10 @@ static void CheckClosedConnection(void);
  * We don't have a good idea of what a good value would be; there's some
  * overhead per message in both walsender and walreceiver, but on the other
  * hand sending large batches makes walsender less responsive to signals
- * because signals are checked only between messages. 128kB seems like
- * a reasonable guess for now.
+ * because signals are checked only between messages. 128kB (with
+ * default 8k blocks) seems like a reasonable guess for now.
  */
-#define MAX_SEND_SIZE (128 * 1024)
+#define MAX_SEND_SIZE (XLOG_BLCKSZ * 16)
 
 /* Main entry point for walsender process */
 int
