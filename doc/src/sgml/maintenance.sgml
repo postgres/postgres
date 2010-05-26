@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.104 2010/05/26 23:29:45 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.105 2010/05/26 23:55:51 momjian Exp $ -->
 
 <chapter id="maintenance">
  <title>Routine Database Maintenance Tasks</title>
@@ -826,7 +826,7 @@ pg_ctl start | rotatelogs /var/log/pgsql_log 86400
    <ulink url="http://pgfouine.projects.postgresql.org/">pgFouine</ulink>
    is an external project that does sophisticated log file analysis.
    <ulink
-   href="http://bucardo.org/wiki/Check_postgres">check_postgres</ulink>
+   url="http://bucardo.org/wiki/Check_postgres">check_postgres</ulink>
    provides Nagios alerts when important messages appear in the log
    files, as well as detection of many other extraordinary conditions.
   </para>
