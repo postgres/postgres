@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.608 2010/05/15 20:01:32 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.609 2010/05/26 12:32:41 rhaas Exp $
  *
  * NOTES
  *
@@ -286,6 +286,8 @@ typedef enum
 } PMState;
 
 static PMState pmState = PM_INIT;
+
+static bool ReachedNormalRunning = false;	/* T if we've reached PM_RUN */
 
 bool		ClientAuthInProgress = false;		/* T during new-client
 												 * authentication */
@@ -2168,7 +2170,7 @@ pmdie(SIGNAL_ARGS)
 					(errmsg("received smart shutdown request")));
 
 			if (pmState == PM_RUN || pmState == PM_RECOVERY ||
-				pmState == PM_HOT_STANDBY)
+				pmState == PM_HOT_STANDBY || pmState == PM_STARTUP)
 			{
 				/* autovacuum workers are told to shut down immediately */
 				SignalAutovacWorkers(SIGTERM);
@@ -2370,6 +2372,7 @@ reaper(SIGNAL_ARGS)
 			 * Startup succeeded, commence normal operations
 			 */
 			FatalError = false;
+			ReachedNormalRunning = true;
 			pmState = PM_RUN;
 
 			/*
@@ -3028,9 +3031,15 @@ PostmasterStateMachine(void)
 		{
 			/*
 			 * Terminate backup mode to avoid recovery after a clean fast
-			 * shutdown.
+			 * shutdown.  Since a backup can only be taken during normal
+			 * running (and not, for example, while running under Hot Standby)
+			 * it only makes sense to do this if we reached normal running.
+			 * If we're still in recovery, the backup file is one we're
+			 * recovering *from*, and we must keep it around so that recovery
+			 * restarts from the right place.
 			 */
-			CancelBackup();
+			if (ReachedNormalRunning)
+				CancelBackup();
 
 			/* Normal exit from the postmaster is here */
 			ExitPostmaster(0);
