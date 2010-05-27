@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.609 2010/05/26 12:32:41 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.610 2010/05/27 02:01:37 rhaas Exp $
  *
  * NOTES
  *
@@ -4217,7 +4217,9 @@ sigusr1_handler(SIGNAL_ARGS)
 	}
 
 	if (CheckPostmasterSignal(PMSIGNAL_START_WALRECEIVER) &&
-		WalReceiverPID == 0)
+		WalReceiverPID == 0 &&
+		(pmState == PM_STARTUP || pmState == PM_RECOVERY ||
+		 pmState == PM_HOT_STANDBY || pmState == PM_WAIT_READONLY))
 	{
 		/* Startup Process wants us to start the walreceiver process. */
 		WalReceiverPID = StartWalReceiver();
