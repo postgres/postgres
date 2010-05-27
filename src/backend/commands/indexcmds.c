@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/indexcmds.c,v 1.195 2010/03/22 15:24:11 sriggs Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/indexcmds.c,v 1.196 2010/05/27 15:59:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,6 +35,7 @@
 #include "miscadmin.h"
 #include "nodes/nodeFuncs.h"
 #include "optimizer/clauses.h"
+#include "optimizer/planner.h"
 #include "parser/parse_coerce.h"
 #include "parser/parse_func.h"
 #include "parser/parse_oper.h"
@@ -776,6 +777,33 @@ DefineIndex(RangeVar *heapRelation,
 
 
 /*
+ * CheckMutability
+ *		Test whether given expression is mutable
+ */
+static bool
+CheckMutability(Expr *expr)
+{
+	/*
+	 * First run the expression through the planner.  This has a couple of
+	 * important consequences.  First, function default arguments will get
+	 * inserted, which may affect volatility (consider "default now()").
+	 * Second, inline-able functions will get inlined, which may allow us to
+	 * conclude that the function is really less volatile than it's marked.
+	 * As an example, polymorphic functions must be marked with the most
+	 * volatile behavior that they have for any input type, but once we
+	 * inline the function we may be able to conclude that it's not so
+	 * volatile for the particular input type we're dealing with.
+	 *
+	 * We assume here that expression_planner() won't scribble on its input.
+	 */
+	expr = expression_planner(expr);
+
+	/* Now we can search for non-immutable functions */
+	return contain_mutable_functions((Node *) expr);
+}
+
+
+/*
  * CheckPredicate
  *		Checks that the given partial-index predicate is valid.
  *
@@ -806,7 +834,7 @@ CheckPredicate(Expr *predicate)
 	 * A predicate using mutable functions is probably wrong, for the same
 	 * reasons that we don't allow an index expression to use one.
 	 */
-	if (contain_mutable_functions((Node *) predicate))
+	if (CheckMutability(predicate))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
 		   errmsg("functions in index predicate must be marked IMMUTABLE")));
@@ -922,7 +950,7 @@ ComputeIndexAttrs(IndexInfo *indexInfo,
 			 * if you aren't going to get the same result for the same data
 			 * every time, it's not clear what the index entries mean at all.
 			 */
-			if (contain_mutable_functions(attribute->expr))
+			if (CheckMutability((Expr *) attribute->expr))
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
 						 errmsg("functions in index expression must be marked IMMUTABLE")));
