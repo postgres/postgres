@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/syntax.sgml,v 1.143 2010/04/03 07:22:56 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/syntax.sgml,v 1.144 2010/05/27 18:23:47 petere Exp $ -->
 
 <chapter id="sql-syntax">
  <title>SQL Syntax</title>
@@ -240,7 +240,7 @@ U&amp;"d!0061t!+000061" UESCAPE '!'
     the ASCII range (up to <literal>\007F</literal>) can be specified.
     Both the 4-digit and the 6-digit form can be used to specify
     UTF-16 surrogate pairs to compose characters with code points
-    larger than <literal>\FFFF</literal> (although the availability of
+    larger than U+FFFF (although the availability of
     the 6-digit form technically makes this unnecessary).
    </para>
 
@@ -435,7 +435,7 @@ SELECT 'foo'      'bar';
      code points in the ASCII range (up to <literal>\u007F</>) can be
      specified.  Both the 4-digit and the 8-digit form can be used to
      specify UTF-16 surrogate pairs to compose characters with code
-     points larger than <literal>\FFFF</literal> (although the
+     points larger than U+FFFF (although the
      availability of the 8-digit form technically makes this
      unnecessary).
     </para>
@@ -523,7 +523,7 @@ U&amp;'d!0061t!+000061' UESCAPE '!'
      specified.
      Both the 4-digit and the 6-digit form can be used to specify
      UTF-16 surrogate pairs to compose characters with code points
-     larger than <literal>\FFFF</literal> (although the availability
+     larger than U+FFFF (although the availability
      of the 6-digit form technically makes this unnecessary).
     </para>
 
