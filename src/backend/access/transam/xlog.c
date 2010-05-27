@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.413 2010/05/15 20:01:32 rhaas Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.414 2010/05/27 00:38:39 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -7531,7 +7531,7 @@ CreateRestartPoint(int flags)
 	 * restartpoint, we can't perform a new restart point. We still update
 	 * minRecoveryPoint in that case, so that if this is a shutdown restart
 	 * point, we won't start up earlier than before. That's not strictly
-	 * necessary, but when we get hot standby capability, it would be rather
+	 * necessary, but when hot standby is enabled, it would be rather
 	 * weird if the database opened up for read-only connections at a
 	 * point-in-time before the last shutdown. Such time travel is still
 	 * possible in case of immediate shutdown, though.
