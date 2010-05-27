@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/savepoint.sgml,v 1.7 2010/04/03 07:23:02 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/savepoint.sgml,v 1.8 2010/05/27 06:25:32 heikki Exp $
 PostgreSQL documentation
 -->
 
@@ -116,9 +116,10 @@ COMMIT;
    savepoint with the same name is established.  In
    <productname>PostgreSQL</>, the old savepoint is kept, though only the more
    recent one will be used when rolling back or releasing.  (Releasing the
-   newer savepoint will cause the older one to again become accessible to
-   <command>ROLLBACK TO SAVEPOINT</> and <command>RELEASE SAVEPOINT</>.)
-   Otherwise, <command>SAVEPOINT</command> is fully SQL conforming.
+   newer savepoint with <command>RELEASE SAVEPOINT</> will cause the older one
+   to again become accessible to <command>ROLLBACK TO SAVEPOINT</> and
+   <command>RELEASE SAVEPOINT</>.) Otherwise, <command>SAVEPOINT</command> is
+   fully SQL conforming.
   </para>
  </refsect1>
 
