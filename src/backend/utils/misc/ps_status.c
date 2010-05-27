@@ -5,7 +5,7 @@
  * to contain some useful information. Mechanism differs wildly across
  * platforms.
  *
- * $PostgreSQL: pgsql/src/backend/utils/misc/ps_status.c,v 1.23.4.1 2005/11/05 03:05:05 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/misc/ps_status.c,v 1.23.4.2 2010/05/27 19:20:16 tgl Exp $
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  * various details abducted from various places
@@ -89,7 +89,10 @@ static const size_t ps_buffer_size = PS_BUFFER_SIZE;
 #else							/* PS_USE_CLOBBER_ARGV */
 static char *ps_buffer;			/* will point to argv area */
 static size_t ps_buffer_size;	/* space determined at run time */
+static size_t last_status_len;	/* use to minimize length of clobber */
 #endif   /* PS_USE_CLOBBER_ARGV */
+
+static size_t ps_buffer_cur_len;		/* nominal strlen(ps_buffer) */
 
 static size_t ps_buffer_fixed_size;		/* size of the constant prefix */
 
@@ -173,7 +176,7 @@ save_ps_display_args(int argc, char **argv)
 		}
 
 		ps_buffer = argv[0];
-		ps_buffer_size = end_of_area - argv[0];
+		last_status_len = ps_buffer_size = end_of_area - argv[0];
 
 		/*
 		 * move the environment out of the way
@@ -290,7 +293,7 @@ init_ps_display(const char *username, const char *dbname,
 			 username, dbname, host_info);
 #endif
 
-	ps_buffer_fixed_size = strlen(ps_buffer);
+	ps_buffer_cur_len = ps_buffer_fixed_size = strlen(ps_buffer);
 
 #ifdef WIN32
 	pgwin32_update_ident(ps_buffer);
@@ -322,6 +325,7 @@ set_ps_display(const char *activity)
 	/* Update ps_buffer to contain both fixed part and activity */
 	StrNCpy(ps_buffer + ps_buffer_fixed_size, activity,
 			ps_buffer_size - ps_buffer_fixed_size);
+	ps_buffer_cur_len = strlen(ps_buffer);
 
 	/* Transmit new setting to kernel, if necessary */
 
@@ -334,7 +338,7 @@ set_ps_display(const char *activity)
 		union pstun pst;
 
 		pst.pst_command = ps_buffer;
-		pstat(PSTAT_SETCMD, pst, strlen(ps_buffer), 0, 0);
+		pstat(PSTAT_SETCMD, pst, ps_buffer_cur_len, 0, 0);
 	}
 #endif   /* PS_USE_PSTAT */
 
@@ -344,13 +348,11 @@ set_ps_display(const char *activity)
 #endif   /* PS_USE_PS_STRINGS */
 
 #ifdef PS_USE_CLOBBER_ARGV
-	{
-		int			buflen;
-
-		/* pad unused memory */
-		buflen = strlen(ps_buffer);
-		MemSet(ps_buffer + buflen, PS_PADDING, ps_buffer_size - buflen);
-	}
+	/* pad unused memory; need only clobber remainder of old status string */
+	if (last_status_len > ps_buffer_cur_len)
+		MemSet(ps_buffer + ps_buffer_cur_len, PS_PADDING,
+			   last_status_len - ps_buffer_cur_len);
+	last_status_len = ps_buffer_cur_len;
 #endif   /* PS_USE_CLOBBER_ARGV */
 
 #ifdef WIN32
@@ -371,24 +373,15 @@ const char *
 get_ps_display(int *displen)
 {
 #ifdef PS_USE_CLOBBER_ARGV
-	size_t		offset;
-
 	/* If ps_buffer is a pointer, it might still be null */
 	if (!ps_buffer)
 	{
 		*displen = 0;
 		return "";
 	}
-
-	/* Remove any trailing spaces to offset the effect of PS_PADDING */
-	offset = ps_buffer_size;
-	while (offset > ps_buffer_fixed_size && ps_buffer[offset-1] == PS_PADDING)
-		offset--;
-
-	*displen = offset - ps_buffer_fixed_size;
-#else
-	*displen = strlen(ps_buffer + ps_buffer_fixed_size);
 #endif
+
+	*displen = (int) (ps_buffer_cur_len - ps_buffer_fixed_size);
 
 	return ps_buffer + ps_buffer_fixed_size;
 }
