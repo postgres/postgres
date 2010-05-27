@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.570 2010/02/26 02:01:21 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.571 2010/05/27 16:20:11 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.pl reads this file and generates .bki
@@ -3137,9 +3137,9 @@ DESCR("adjust time precision");
 DATA(insert OID = 1969 (  timetz		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 1266 "1266 23" _null_ _null_ _null_ _null_ timetz_scale _null_ _null_ _null_ ));
 DESCR("adjust time with time zone precision");
 
-DATA(insert OID = 2003 (  textanycat	   PGNSP PGUID 14 1 0 0 f f f t f i 2 0 25 "25 2776" _null_ _null_ _null_ _null_ "select $1 || $2::pg_catalog.text" _null_ _null_ _null_ ));
+DATA(insert OID = 2003 (  textanycat	   PGNSP PGUID 14 1 0 0 f f f t f v 2 0 25 "25 2776" _null_ _null_ _null_ _null_ "select $1 || $2::pg_catalog.text" _null_ _null_ _null_ ));
 DESCR("concatenate");
-DATA(insert OID = 2004 (  anytextcat	   PGNSP PGUID 14 1 0 0 f f f t f i 2 0 25 "2776 25" _null_ _null_ _null_ _null_ "select $1::pg_catalog.text || $2" _null_ _null_ _null_ ));
+DATA(insert OID = 2004 (  anytextcat	   PGNSP PGUID 14 1 0 0 f f f t f v 2 0 25 "2776 25" _null_ _null_ _null_ _null_ "select $1::pg_catalog.text || $2" _null_ _null_ _null_ ));
 DESCR("concatenate");
 
 DATA(insert OID = 2005 (  bytealike		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "17 17" _null_ _null_ _null_ _null_ bytealike _null_ _null_ _null_ ));
