@@ -5,7 +5,7 @@
  * to contain some useful information. Mechanism differs wildly across
  * platforms.
  *
- * $PostgreSQL: pgsql/src/backend/utils/misc/ps_status.c,v 1.33.2.1 2008/01/31 09:21:22 mha Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/misc/ps_status.c,v 1.33.2.2 2010/05/27 19:19:58 tgl Exp $
  *
  * Copyright (c) 2000-2006, PostgreSQL Global Development Group
  * various details abducted from various places
@@ -51,7 +51,7 @@ bool		update_process_title = true;
  *	   (some other BSD systems)
  * PS_USE_CLOBBER_ARGV
  *	   write over the argv and environment area
- *	   (most SysV-like systems)
+ *	   (Linux and most SysV-like systems)
  * PS_USE_WIN32
  *	   push the string out as the name of a Windows event
  * PS_USE_NONE
@@ -84,14 +84,17 @@ bool		update_process_title = true;
 
 
 #ifndef PS_USE_CLOBBER_ARGV
-/* all but one options need a buffer to write their ps line in */
+/* all but one option need a buffer to write their ps line in */
 #define PS_BUFFER_SIZE 256
 static char ps_buffer[PS_BUFFER_SIZE];
 static const size_t ps_buffer_size = PS_BUFFER_SIZE;
 #else							/* PS_USE_CLOBBER_ARGV */
 static char *ps_buffer;			/* will point to argv area */
 static size_t ps_buffer_size;	/* space determined at run time */
+static size_t last_status_len;	/* use to minimize length of clobber */
 #endif   /* PS_USE_CLOBBER_ARGV */
+
+static size_t ps_buffer_cur_len;		/* nominal strlen(ps_buffer) */
 
 static size_t ps_buffer_fixed_size;		/* size of the constant prefix */
 
@@ -153,7 +156,7 @@ save_ps_display_args(int argc, char **argv)
 		}
 
 		ps_buffer = argv[0];
-		ps_buffer_size = end_of_area - argv[0];
+		last_status_len = ps_buffer_size = end_of_area - argv[0];
 
 		/*
 		 * move the environment out of the way
@@ -225,6 +228,7 @@ init_ps_display(const char *username, const char *dbname,
 	/* no ps display if you didn't call save_ps_display_args() */
 	if (!save_argv)
 		return;
+
 #ifdef PS_USE_CLOBBER_ARGV
 	/* If ps_buffer is a pointer, it might still be null */
 	if (!ps_buffer)
@@ -269,7 +273,7 @@ init_ps_display(const char *username, const char *dbname,
 			 username, dbname, host_info);
 #endif
 
-	ps_buffer_fixed_size = strlen(ps_buffer);
+	ps_buffer_cur_len = ps_buffer_fixed_size = strlen(ps_buffer);
 
 	set_ps_display(initial_str, true);
 #endif   /* not PS_USE_NONE */
@@ -284,11 +288,11 @@ init_ps_display(const char *username, const char *dbname,
 void
 set_ps_display(const char *activity, bool force)
 {
-
+#ifndef PS_USE_NONE
+	/* update_process_title=off disables updates, unless force = true */
 	if (!force && !update_process_title)
 		return;
 
-#ifndef PS_USE_NONE
 	/* no ps display for stand-alone backend */
 	if (!IsUnderPostmaster)
 		return;
@@ -302,6 +306,7 @@ set_ps_display(const char *activity, bool force)
 	/* Update ps_buffer to contain both fixed part and activity */
 	strlcpy(ps_buffer + ps_buffer_fixed_size, activity,
 			ps_buffer_size - ps_buffer_fixed_size);
+	ps_buffer_cur_len = strlen(ps_buffer);
 
 	/* Transmit new setting to kernel, if necessary */
 
@@ -314,7 +319,7 @@ set_ps_display(const char *activity, bool force)
 		union pstun pst;
 
 		pst.pst_command = ps_buffer;
-		pstat(PSTAT_SETCMD, pst, strlen(ps_buffer), 0, 0);
+		pstat(PSTAT_SETCMD, pst, ps_buffer_cur_len, 0, 0);
 	}
 #endif   /* PS_USE_PSTAT */
 
@@ -324,13 +329,11 @@ set_ps_display(const char *activity, bool force)
 #endif   /* PS_USE_PS_STRINGS */
 
 #ifdef PS_USE_CLOBBER_ARGV
-	{
-		int			buflen;
-
-		/* pad unused memory */
-		buflen = strlen(ps_buffer);
-		MemSet(ps_buffer + buflen, PS_PADDING, ps_buffer_size - buflen);
-	}
+	/* pad unused memory; need only clobber remainder of old status string */
+	if (last_status_len > ps_buffer_cur_len)
+		MemSet(ps_buffer + ps_buffer_cur_len, PS_PADDING,
+			   last_status_len - ps_buffer_cur_len);
+	last_status_len = ps_buffer_cur_len;
 #endif   /* PS_USE_CLOBBER_ARGV */
 
 #ifdef PS_USE_WIN32
@@ -365,24 +368,15 @@ const char *
 get_ps_display(int *displen)
 {
 #ifdef PS_USE_CLOBBER_ARGV
-	size_t		offset;
-
 	/* If ps_buffer is a pointer, it might still be null */
 	if (!ps_buffer)
 	{
 		*displen = 0;
 		return "";
 	}
-
-	/* Remove any trailing spaces to offset the effect of PS_PADDING */
-	offset = ps_buffer_size;
-	while (offset > ps_buffer_fixed_size && ps_buffer[offset - 1] == PS_PADDING)
-		offset--;
-
-	*displen = offset - ps_buffer_fixed_size;
-#else
-	*displen = strlen(ps_buffer + ps_buffer_fixed_size);
 #endif
+
+	*displen = (int) (ps_buffer_cur_len - ps_buffer_fixed_size);
 
 	return ps_buffer + ps_buffer_fixed_size;
 }
