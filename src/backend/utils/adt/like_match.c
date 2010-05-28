@@ -19,7 +19,7 @@
  * Copyright (c) 1996-2010, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	$PostgreSQL: pgsql/src/backend/utils/adt/like_match.c,v 1.28 2010/05/28 17:35:23 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/utils/adt/like_match.c,v 1.29 2010/05/28 18:18:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -158,7 +158,9 @@ MatchText(char *t, int tlen, char *p, int plen)
 			if (*p == '\\')
 			{
 				if (plen < 2)
-					return LIKE_FALSE; /* XXX should throw error */
+					ereport(ERROR,
+							(errcode(ERRCODE_INVALID_ESCAPE_SEQUENCE),
+							 errmsg("LIKE pattern must not end with escape character")));
 				firstpat = GETCHAR(p[1]);
 			}
 			else
