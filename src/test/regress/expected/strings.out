@@ -996,7 +996,7 @@ SELECT 'Hawkeye' NOT ILIKE 'h%' AS "false";
 (1 row)
 
 --
--- test %/_ combination cases, cf bug #4821
+-- test %/_ combination cases, cf bugs #4821 and #5478
 --
 SELECT 'foo' LIKE '_%' as t, 'f' LIKE '_%' as t, '' LIKE '_%' as f;
  t | t | f 
@@ -1020,6 +1020,12 @@ SELECT 'foo' LIKE '%__' as t, 'foo' LIKE '%___' as t, 'foo' LIKE '%____' as f;
  t | t | f 
 ---+---+---
  t | t | f
+(1 row)
+
+SELECT 'jack' LIKE '%____%' AS t;
+ t 
+---
+ t
 (1 row)
 
 --

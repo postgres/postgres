@@ -14,12 +14,12 @@
  * NextChar
  * MatchText - to name of function wanted
  * do_like_escape - name of function if wanted - needs CHAREQ and CopyAdvChar
- * MATCH_LOWER - define iff using to_lower on text chars
+ * MATCH_LOWER - define for case (4), using to_lower on single-byte chars
  *
  * Copyright (c) 1996-2010, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	$PostgreSQL: pgsql/src/backend/utils/adt/like_match.c,v 1.27 2010/01/02 16:57:54 momjian Exp $
+ *	$PostgreSQL: pgsql/src/backend/utils/adt/like_match.c,v 1.28 2010/05/28 17:35:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -70,9 +70,9 @@
  */
 
 #ifdef MATCH_LOWER
-#define TCHAR(t) ((char) tolower((unsigned char) (t)))
+#define GETCHAR(t) ((char) tolower((unsigned char) (t)))
 #else
-#define TCHAR(t) (t)
+#define GETCHAR(t) (t)
 #endif
 
 static int
@@ -101,85 +101,80 @@ MatchText(char *t, int tlen, char *p, int plen)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_ESCAPE_SEQUENCE),
 				 errmsg("LIKE pattern must not end with escape character")));
-			if (TCHAR (*p) != TCHAR (*t))
+			if (GETCHAR(*p) != GETCHAR(*t))
 				return LIKE_FALSE;
 		}
 		else if (*p == '%')
 		{
-			/*
-			 * % processing is essentially a search for a match for what
-			 * follows the %, plus a recursive match of the remainder. We
-			 * succeed if and only if both conditions are met.
-			 */
+			char		firstpat;
 
-			/* %% is the same as % according to the SQL standard */
-			/* Advance past all %'s */
-			while (plen > 0 && *p == '%')
-				NextByte(p, plen);
-			/* Trailing percent matches everything. */
+			/*
+			 * % processing is essentially a search for a text position at
+			 * which the remainder of the text matches the remainder of the
+			 * pattern, using a recursive call to check each potential match.
+			 *
+			 * If there are wildcards immediately following the %, we can skip
+			 * over them first, using the idea that any sequence of N _'s and
+			 * one or more %'s is equivalent to N _'s and one % (ie, it will
+			 * match any sequence of at least N text characters).  In this
+			 * way we will always run the recursive search loop using a
+			 * pattern fragment that begins with a literal character-to-match,
+			 * thereby not recursing more than we have to.
+			 */
+			NextByte(p, plen);
+
+			while (plen > 0)
+			{
+				if (*p == '%')
+					NextByte(p, plen);
+				else if (*p == '_')
+				{
+					/* If not enough text left to match the pattern, ABORT */
+					if (tlen <= 0)
+						return LIKE_ABORT;
+					NextChar(t, tlen);
+					NextByte(p, plen);
+				}
+				else
+					break;		/* Reached a non-wildcard pattern char */
+			}
+
+			/*
+			 * If we're at end of pattern, match: we have a trailing % which
+			 * matches any remaining text string.
+			 */
 			if (plen <= 0)
 				return LIKE_TRUE;
 
 			/*
 			 * Otherwise, scan for a text position at which we can match the
-			 * rest of the pattern.
+			 * rest of the pattern.  The first remaining pattern char is known
+			 * to be a regular or escaped literal character, so we can compare
+			 * the first pattern byte to each text byte to avoid recursing
+			 * more than we have to.  This fact also guarantees that we don't
+			 * have to consider a match to the zero-length substring at the
+			 * end of the text.
 			 */
-			if (*p == '_')
+			if (*p == '\\')
 			{
-				/* %_ is the same as _% - avoid matching _ repeatedly */
+				if (plen < 2)
+					return LIKE_FALSE; /* XXX should throw error */
+				firstpat = GETCHAR(p[1]);
+			}
+			else
+				firstpat = GETCHAR(*p);
 
-				do
-				{
-					NextChar(t, tlen);
-					NextByte(p, plen);
-				} while (tlen > 0 && plen > 0 && *p == '_');
-
-				/*
-				 * If we are at the end of the pattern, succeed: % followed by
-				 * n _'s matches any string of at least n characters, and we
-				 * have now found there are at least n characters.
-				 */
-				if (plen <= 0)
-					return LIKE_TRUE;
-
-				/* Look for a place that matches the rest of the pattern */
-				while (tlen > 0)
+			while (tlen > 0)
+			{
+				if (GETCHAR(*t) == firstpat)
 				{
 					int			matched = MatchText(t, tlen, p, plen);
 
 					if (matched != LIKE_FALSE)
-						return matched; /* TRUE or ABORT */
-
-					NextChar(t, tlen);
-				}
-			}
-			else
-			{
-				char		firstpat = TCHAR (*p);
-
-				if (*p == '\\')
-				{
-					if (plen < 2)
-						return LIKE_FALSE;
-					firstpat = TCHAR (p[1]);
+						return matched;		/* TRUE or ABORT */
 				}
 
-				while (tlen > 0)
-				{
-					/*
-					 * Optimization to prevent most recursion: don't recurse
-					 * unless first pattern byte matches first text byte.
-					 */
-					if (TCHAR (*t) == firstpat)
-					{
-						int			matched = MatchText(t, tlen, p, plen);
-
-						if (matched != LIKE_FALSE)
-							return matched;		/* TRUE or ABORT */
-					}
-
-					NextChar(t, tlen);
-				}
+				NextChar(t, tlen);
 			}
 
 			/*
@@ -195,7 +190,7 @@ MatchText(char *t, int tlen, char *p, int plen)
 			NextByte(p, plen);
 			continue;
 		}
-		else if (TCHAR (*p) != TCHAR (*t))
+		else if (GETCHAR(*p) != GETCHAR(*t))
 		{
 			/* non-wildcard pattern char fails to match text char */
 			return LIKE_FALSE;
@@ -220,11 +215,12 @@ MatchText(char *t, int tlen, char *p, int plen)
 	if (tlen > 0)
 		return LIKE_FALSE;		/* end of pattern, but not of text */
 
-	/* End of text string.	Do we have matching pattern remaining? */
-	while (plen > 0 && *p == '%')		/* allow multiple %'s at end of
-										 * pattern */
+	/*
+	 * End of text, but perhaps not of pattern.  Match iff the remaining
+	 * pattern can match a zero-length string, ie, it's zero or more %'s.
+	 */
+	while (plen > 0 && *p == '%')
 		NextByte(p, plen);
-
 	if (plen <= 0)
 		return LIKE_TRUE;
 
@@ -348,7 +344,7 @@ do_like_escape(text *pat, text *esc)
 #undef do_like_escape
 #endif
 
-#undef TCHAR
+#undef GETCHAR
 
 #ifdef MATCH_LOWER
 #undef MATCH_LOWER
