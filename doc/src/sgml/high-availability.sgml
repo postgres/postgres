@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/high-availability.sgml,v 1.68 2010/05/13 14:16:41 mha Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/high-availability.sgml,v 1.69 2010/05/28 14:03:31 heikki Exp $ -->
 
 <chapter id="high-availability">
  <title>High Availability, Load Balancing, and Replication</title>
@@ -38,10 +38,12 @@
  <para>
   Some solutions deal with synchronization by allowing only one
   server to modify the data.  Servers that can modify data are
-  called read/write or "master" servers.  Servers that can reply
-  to read-only queries are called "slave" servers.  Servers that
-  cannot be accessed until they are changed to master servers are
-  called "standby" servers.
+  called read/write, <firstterm>master</> or <firstterm>primary</> servers.
+  Servers that track changes in the master are called <firstterm>standby</>
+  or <firstterm>slave</> servers. A standby server that cannot be connected
+  to until it is promoted to a master server is called a <firstterm>warm
+  standby</> server, and one that can accept connections and serves read-only
+  queries is called a <firstterm>hot standby</> server.
  </para>
 
  <para>
@@ -144,16 +146,16 @@ protocol to make nodes agree on a serializable transactional order.
     <para>
      Warm and hot standby servers can be kept current by reading a
      stream of write-ahead log (<acronym>WAL</>)
-     records.  If the main server fails, the warm standby contains
+     records.  If the main server fails, the standby contains
      almost all of the data of the main server, and can be quickly
      made the new master database server.  This is asynchronous and
      can only be done for the entire database server.
     </para>
     <para>
-     A PITR standby server can be kept more up-to-date using streaming
-     replication.;  see <xref linkend="streaming-replication">.  For
-     warm standby information, see <xref linkend="warm-standby">, and
-     for hot standby, see <xref linkend="hot-standby">.
+     A PITR standby server can be implemented using file-based log shipping
+     (<xref linkend="warm-standby">) or streaming replication (see
+     <xref linkend="streaming-replication">), or a combination of both. For
+     information on hot standby, see <xref linkend="hot-standby">.
     </para>
    </listitem>
   </varlistentry>
@@ -613,10 +615,9 @@ protocol to make nodes agree on a serializable transactional order.
 
    <para>
     Standby mode is exited and the server switches to normal operation,
-    when a trigger file is found (trigger_file). Before failover, it will
-    restore any WAL available in the archive or in pg_xlog, but won't try
-    to connect to the master or wait for files to become available in the
-    archive.
+    when a trigger file is found (<varname>trigger_file</>). Before failover,
+    any WAL immediately available in the archive or in pg_xlog will be
+    restored, but no attempt is made to connect to the master.
    </para>
   </sect2>
 
@@ -710,6 +711,15 @@ trigger_file = '/path/to/trigger_file'
     replication, make sure you set <varname>max_wal_senders</> high enough in
     the primary to allow them to be connected simultaneously.
    </para>
+
+   <para>
+    If you're using a WAL archive, its size can be minimized using
+    the <varname>restartpoint_command</> option to remove files that are no
+    no longer required by the standby server. Note however, that if you're
+    using the archive for backup purposes, you need to retain files needed
+    to recover from at least the latest base backup, even if they're no
+    longer needed by the standby.
+   </para>
   </sect2>
 
   <sect2 id="streaming-replication">
@@ -737,15 +747,14 @@ trigger_file = '/path/to/trigger_file'
    </para>
 
    <para>
-    Streaming replication relies on file-based continuous archiving for
-    making the base backup and for allowing the standby to catch up if it is
-    disconnected from the primary for long enough for the primary to
-    delete old WAL files still required by the standby. It is possible
-    to use streaming replication without WAL archiving, but if a standby
-    falls behind too much, the primary will delete old WAL files still
-    needed by the standby, and the standby will have to be manually restored
-    from a base backup. You can control how long the primary retains old WAL
-    segments using the <varname>wal_keep_segments</> setting.
+    If you use streaming replication without file-based continuous
+    archiving, you have to set <varname>wal_keep_segments</> in the master
+    to a value high enough to ensure that old WAL segments are not recycled
+    too early, while the standby might still need them to catch up. If the
+    standby falls behind too much, it needs to be reinitialized from a new
+    base backup. If you set up a WAL archive that's accessible from the
+    standby, wal_keep_segments is not required as the standby can always
+    use the archive to catch up.
    </para>
 
    <para>
@@ -882,6 +891,14 @@ primary_conninfo = 'host=192.168.1.50 port=5432 user=foo password=foopass'
    </para>
 
    <para>
+    <productname>PostgreSQL</productname> does not provide the system
+    software required to identify a failure on the primary and notify
+    the standby database server.  Many such tools exist and are well
+    integrated with the operating system facilities required for
+    successful failover, such as IP address migration.
+   </para>
+
+   <para>
     Once failover to the standby occurs, there is only a
     single server in operation. This is known as a degenerate state.
     The former standby is now the primary, but the former primary is down
@@ -921,7 +938,7 @@ primary_conninfo = 'host=192.168.1.50 port=5432 user=foo password=foopass'
 
    <para>
     An alternative to the built-in standby mode described in the previous
-    sections is to use a restore_command that polls the archive location.
+    sections is to use a <varname>restore_command</> that polls the archive location.
     This was the only option available in versions 8.4 and below. In this
     setup, set <varname>standby_mode</> off, because you are implementing
     the polling required for standby operation yourself. See
@@ -932,9 +949,9 @@ primary_conninfo = 'host=192.168.1.50 port=5432 user=foo password=foopass'
    <para>
     Note that in this mode, the server will apply WAL one file at a
     time, so if you use the standby server for queries (see Hot Standby),
-    there is a bigger delay between an action in the master and when the
+    there is a delay between an action in the master and when the
     action becomes visible in the standby, corresponding the time it takes
-    to fill up the WAL file. archive_timeout can be used to make that delay
+    to fill up the WAL file. <varname>archive_timeout</> can be used to make that delay
     shorter. Also note that you can't combine streaming replication with
     this method.
    </para>
@@ -992,14 +1009,6 @@ if (!triggered)
    </para>
 
    <para>
-    <productname>PostgreSQL</productname> does not provide the system
-    software required to identify a failure on the primary and notify
-    the standby database server.  Many such tools exist and are well
-    integrated with the operating system facilities required for
-    successful failover, such as IP address migration.
-   </para>
-
-   <para>
     The method for triggering failover is an important part of planning
     and design. One potential option is the <varname>restore_command</>
     command.  It is executed once for each WAL file, but the process
@@ -1015,20 +1024,12 @@ if (!triggered)
     creation of a trigger file is ideal, if this can be arranged.
    </para>
 
-   <para>
-    The size of the WAL archive can be minimized by using the <literal>%r</>
-    option of the <varname>restore_command</>. This option specifies the
-    last archive file name that needs to be kept to allow the recovery to
-    restart correctly. This can be used to truncate the archive once
-    files are no longer required, assuming the archive is writable from the
-    standby server.
-   </para>
-
   <sect2 id="warm-standby-config">
    <title>Implementation</title>
 
    <para>
-    The short procedure for configuring a standby server is as follows. For
+    The short procedure for configuring a standby server using this alternative
+    method is as follows. For
     full details of each step, refer to previous sections as noted.
     <orderedlist>
      <listitem>
@@ -1086,9 +1087,10 @@ if (!triggered)
    <title>Record-based Log Shipping</title>
 
    <para>
-    <productname>PostgreSQL</productname> directly supports file-based
-    log shipping as described above. It is also possible to implement
-    record-based log shipping, though this requires custom development.
+    It is also possible to implement record-based log shipping using this
+    alternative method, though this requires custom development, and changes
+    will still only becomes visible to hot standby queries after a full WAL
+    file has been shipped.
    </para>
 
    <para>
@@ -1573,9 +1575,9 @@ if (!triggered)
    <para>
     Three-way deadlocks are possible between <literal>AccessExclusiveLocks</> arriving from
     the primary, cleanup WAL records that require buffer cleanup locks, and
-    user requests that are waiting behind replayed <literal>AccessExclusiveLocks</>. Deadlocks
-    are resolved immediately, should they occur, though they are thought to be
-    rare in practice.
+    user requests that are waiting behind replayed <literal>AccessExclusiveLocks</>.
+    Deadlocks are resolved automatically after <varname>deadlock_timeout</>
+    seconds, though they are thought to be rare in practice.
    </para>
 
    <para>
@@ -1684,8 +1686,10 @@ LOG:  database system is ready to accept read only connections
     themselves.  Users will still write large sort temporary files and
     re-generate relcache info files, so no part of the database
     is truly read-only during hot standby mode.
-    Note also that writes to remote databases will still be possible,
-    even though the transaction is read-only locally.
+    Note also that writes to remote databases using
+    <application>dblink</application> module, and other operations outside the
+    database using PL functions will still be possible, even though the
+    transaction is read-only locally.
    </para>
 
    <para>
@@ -1940,7 +1944,7 @@ LOG:  database system is ready to accept read only connections
   </indexterm>
 
    <para>
-    In a warm standby configuration, it is possible to offload the expense of
+    In a standby configuration, it is possible to offload the expense of
     taking periodic base backups from the primary server; instead base backups
     can be made by backing
     up a standby server's files.  This concept is generally known as
