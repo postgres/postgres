@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.344 2010/03/30 00:10:46 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.345 2010/05/28 18:04:36 momjian Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -542,9 +542,18 @@ su - postgres
     This script will run a number of tests to determine values for various
     system dependent variables and detect any quirks of your
     operating system, and finally will create several files in the
-    build tree to record what it found.  (You can also run
+    build tree to record what it found.  You can also run
     <filename>configure</filename> in a directory outside the source
-    tree if you want to keep the build directory separate.)
+    tree, if you want to keep the build directory separate.  This
+    procedure is also called a
+    <indexterm><primary>VPATH</primary></indexterm><firstterm>VPATH</firstterm>
+    build.  Here's how:
+<screen>
+<userinput>mkdir build_dir</userinput>
+<userinput>cd build_dir</userinput>
+<userinput>/path/to/source/tree/configure [options go here]</userinput>
+<userinput>gmake</userinput>
+</screen>
    </para>
 
    <para>
