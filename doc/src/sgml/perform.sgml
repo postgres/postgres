@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/perform.sgml,v 1.79 2010/04/28 21:23:29 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/perform.sgml,v 1.80 2010/05/29 21:08:04 tgl Exp $ -->
 
  <chapter id="performance-tips">
   <title>Performance Tips</title>
@@ -870,11 +870,11 @@ SELECT * FROM x, y, a, b, c WHERE something AND somethingelse;
 
    <para>
     If you are adding large amounts of data to an existing table,
-    it might be a win to drop the index,
-    load the table, and then recreate the index.  Of course, the
+    it might be a win to drop the indexes,
+    load the table, and then recreate the indexes.  Of course, the
     database performance for other users might suffer
-    during the time the index is missing.  One should also think
-    twice before dropping unique indexes, since the error checking
+    during the time the indexes are missing.  One should also think
+    twice before dropping a unique index, since the error checking
     afforded by the unique constraint will be lost while the index is
     missing.
    </para>
@@ -889,6 +889,19 @@ SELECT * FROM x, y, a, b, c WHERE something AND somethingelse;
     useful to drop foreign key constraints, load data, and re-create
     the constraints.  Again, there is a trade-off between data load
     speed and loss of error checking while the constraint is missing.
+   </para>
+
+   <para>
+    What's more, when you load data into a table with existing foreign key
+    constraints, each new row requires an entry in the server's list of
+    pending trigger events (since it is the firing of a trigger that checks
+    the row's foreign key constraint).  Loading many millions of rows can
+    cause the trigger event queue to overflow available memory, leading to
+    intolerable swapping or even outright failure of the command.  Therefore
+    it may be <emphasis>necessary</>, not just desirable, to drop and re-apply
+    foreign keys when loading large amounts of data.  If temporarily removing
+    the constraint isn't acceptable, the only other recourse may be to split
+    up the load operation into smaller transactions.
    </para>
   </sect2>
 
@@ -930,11 +943,11 @@ SELECT * FROM x, y, a, b, c WHERE something AND somethingelse;
     When loading large amounts of data into an installation that uses
     WAL archiving or streaming replication, it might be faster to take a
     new base backup after the load has completed than to process a large
-    amount of incremental WAL data. You might want to disable archiving
-    and streaming replication while loading, by setting
+    amount of incremental WAL data.  To prevent incremental WAL logging
+    while loading, disable archiving and streaming replication, by setting
     <xref linkend="guc-wal-level"> to <literal>minimal</>,
-    <xref linkend="guc-archive-mode"> <literal>off</>, and
-    <xref linkend="guc-max-wal-senders"> to zero).
+    <xref linkend="guc-archive-mode"> to <literal>off</>, and
+    <xref linkend="guc-max-wal-senders"> to zero.
     But note that changing these settings requires a server restart.
    </para>
 
@@ -1006,7 +1019,8 @@ SELECT * FROM x, y, a, b, c WHERE something AND somethingelse;
     <application>pg_dump</> dump as quickly as possible, you need to
     do a few extra things manually.  (Note that these points apply while
     <emphasis>restoring</> a dump, not while <emphasis>creating</> it.
-    The same points apply when using <application>pg_restore</> to load
+    The same points apply whether loading a text dump with
+    <application>psql</> or using <application>pg_restore</> to load
     from a <application>pg_dump</> archive file.)
    </para>
 
@@ -1027,10 +1041,11 @@ SELECT * FROM x, y, a, b, c WHERE something AND somethingelse;
      <listitem>
       <para>
        If using WAL archiving or streaming replication, consider disabling
-       them during the restore. To do that, set <varname>archive_mode</> off,
+       them during the restore. To do that, set <varname>archive_mode</>
+       to <literal>off</>,
        <varname>wal_level</varname> to <literal>minimal</>, and
-       <varname>max_wal_senders</> zero before loading the dump script,
-       and afterwards set them back to the right values and take a fresh
+       <varname>max_wal_senders</> to zero before loading the dump.
+       Afterwards, set them back to the right values and take a fresh
        base backup.
       </para>
      </listitem>
@@ -1044,10 +1059,14 @@ SELECT * FROM x, y, a, b, c WHERE something AND somethingelse;
        possibly discarding many hours of processing.  Depending on how
        interrelated the data is, that might seem preferable to manual cleanup,
        or not.  <command>COPY</> commands will run fastest if you use a single
-       transaction and have WAL archiving turned off. 
-       <application>pg_restore</> also has a <option>--jobs</> option
-       which allows concurrent data loading and index creation, and has
-       the performance advantages of doing COPY in a single transaction.
+       transaction and have WAL archiving turned off.
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       If multiple CPUs are available in the database server, consider using
+       <application>pg_restore</>'s <option>--jobs</> option.  This
+       allows concurrent data loading and index creation.
       </para>
      </listitem>
      <listitem>
