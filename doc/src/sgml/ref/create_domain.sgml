@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_domain.sgml,v 1.34 2010/04/03 07:22:58 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_domain.sgml,v 1.35 2010/05/29 19:06:16 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -121,7 +121,12 @@ CREATE DOMAIN <replaceable class="parameter">name</replaceable> [ AS ] <replacea
       <term><literal>NOT NULL</></term>
       <listitem>
        <para>
-        Values of this domain are not allowed to be null.
+        Values of this domain are normally prevented from being null.
+        However, it is still possible for a domain with this constraint
+        to take a null value if it is assigned a matching domain type
+        that has become null, e.g. via a LEFT OUTER JOIN, or
+        <command>INSERT INTO tab (domcol) VALUES ((SELECT domcol FROM
+        tab WHERE false))</command>.
        </para>
       </listitem>
      </varlistentry>
