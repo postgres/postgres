@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/high-availability.sgml,v 1.69 2010/05/28 14:03:31 heikki Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/high-availability.sgml,v 1.70 2010/05/29 09:01:10 heikki Exp $ -->
 
 <chapter id="high-availability">
  <title>High Availability, Load Balancing, and Replication</title>
@@ -714,7 +714,7 @@ trigger_file = '/path/to/trigger_file'
 
    <para>
     If you're using a WAL archive, its size can be minimized using
-    the <varname>restartpoint_command</> option to remove files that are no
+    the <varname>restartpoint_command</> option to remove files that are
     no longer required by the standby server. Note however, that if you're
     using the archive for backup purposes, you need to retain files needed
     to recover from at least the latest base backup, even if they're no
@@ -1089,7 +1089,7 @@ if (!triggered)
    <para>
     It is also possible to implement record-based log shipping using this
     alternative method, though this requires custom development, and changes
-    will still only becomes visible to hot standby queries after a full WAL
+    will still only become visible to hot standby queries after a full WAL
     file has been shipped.
    </para>
 
