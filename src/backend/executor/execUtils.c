@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execUtils.c,v 1.171 2010/02/26 02:00:41 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execUtils.c,v 1.172 2010/05/29 02:32:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1310,7 +1310,8 @@ retry:
 
 	/*
 	 * We should have found our tuple in the index, unless we exited the loop
-	 * early because of conflict.  Complain if not.
+	 * early because of conflict.  Complain if not.  If we ever implement
+     * '<>' index opclasses, this check will fail and will have to be removed.
 	 */
 	if (!found_self && !conflict)
 		ereport(ERROR,
