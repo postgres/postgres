@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/xplang.sgml,v 1.37 2010/04/03 07:22:56 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/xplang.sgml,v 1.38 2010/05/30 02:23:09 momjian Exp $ -->
 
  <chapter id="xplang">
   <title>Procedural Languages</title>
@@ -151,8 +151,10 @@ CREATE <optional>TRUSTED</optional> <optional>PROCEDURAL</optional> LANGUAGE <re
     <optional>VALIDATOR <replaceable>validator_function_name</replaceable></optional> ;
 </synopsis>
       The optional key word <literal>TRUSTED</literal> specifies that
-      ordinary database users that have no superuser privileges should
-      be allowed to use this language to create functions and trigger
+      the language does not grant access to data that the user would
+      not otherwise have.  Trusted languages are designed for ordinary
+      database users (those without superuser privilege) and allows them
+      to safely create of functions and trigger
       procedures. Since PL functions are executed inside the database
       server, the <literal>TRUSTED</literal> flag should only be given
       for languages that do not allow access to database server

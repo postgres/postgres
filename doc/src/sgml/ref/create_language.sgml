@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_language.sgml,v 1.50 2010/04/03 07:22:58 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_language.sgml,v 1.51 2010/05/30 02:23:09 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -104,11 +104,10 @@ CREATE [ OR REPLACE ] [ TRUSTED ] [ PROCEDURAL ] LANGUAGE <replaceable class="pa
 
      <listitem>
       <para>
-       <literal>TRUSTED</literal> specifies that
-       the language is safe, that is, it does not offer an
-       unprivileged user any functionality to bypass access
-       restrictions. If this key word is omitted when registering the
-       language, only users with the
+       <literal>TRUSTED</literal> specifies that the language does
+       not grant access to data that the user would not otherwise
+       have.  If this key word is omitted
+       when registering the language, only users with the
        <productname>PostgreSQL</productname> superuser privilege can
        use this language to create new functions.
       </para>
