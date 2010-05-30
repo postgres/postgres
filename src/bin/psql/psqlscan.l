@@ -33,7 +33,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/psql/psqlscan.l,v 1.33 2010/05/05 22:18:56 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/bin/psql/psqlscan.l,v 1.34 2010/05/30 18:10:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -345,8 +345,6 @@ ident_cont		[A-Za-z\200-\377_0-9\$]
 identifier		{ident_start}{ident_cont}*
 
 typecast		"::"
-
-/* these two token types are used by PL/pgsql, though not in core SQL */
 dot_dot			\.\.
 colon_equals	":="
 

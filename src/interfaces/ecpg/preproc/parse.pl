@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/parse.pl,v 1.7 2010/01/02 16:58:11 momjian Exp $
+# $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/parse.pl,v 1.8 2010/05/30 18:10:41 tgl Exp $
 # parser generater for ecpg
 # call with backend parser as stdin
 #
@@ -41,6 +41,8 @@ $replace_string{'WITH_TIME'} = 'with time';
 $replace_string{'NULLS_FIRST'} = 'nulls first';
 $replace_string{'NULLS_LAST'} = 'nulls last';
 $replace_string{'TYPECAST'} = '::';
+$replace_string{'DOT_DOT'} = '..';
+$replace_string{'COLON_EQUALS'} = ':=';
 
 # specific replace_types for specific non-terminals - never include the ':'
 # ECPG-only replace_types are defined in ecpg-replace_types

@@ -636,19 +636,19 @@ create function dfunc(a int, b int, c int = 0, d int = 0)
 $$ language sql;
 
 select (dfunc(10,20,30)).*;
-select (dfunc(10 as a, 20 as b, 30 as c)).*;
-select * from dfunc(10 as a, 20 as b);
-select * from dfunc(10 as b, 20 as a);
+select (dfunc(a := 10, b := 20, c := 30)).*;
+select * from dfunc(a := 10, b := 20);
+select * from dfunc(b := 10, a := 20);
 select * from dfunc(0);  -- fail
 select * from dfunc(1,2);
-select * from dfunc(1,2,3 as c);
-select * from dfunc(1,2,3 as d);
+select * from dfunc(1,2,c := 3);
+select * from dfunc(1,2,d := 3);
 
-select * from dfunc(10 as x, 20 as b, 30 as x);  -- fail, duplicate name
-select * from dfunc(10, 20 as b, 30);  -- fail, named args must be last
-select * from dfunc(10 as x, 20 as b, 30 as c);  -- fail, unknown param
-select * from dfunc(10, 10, 20 as a);  -- fail, a overlaps positional parameter
-select * from dfunc(1,2 as c,3 as d); -- fail, no value for b
+select * from dfunc(x := 20, b := 10, x := 30);  -- fail, duplicate name
+select * from dfunc(10, b := 20, 30);  -- fail, named args must be last
+select * from dfunc(x := 10, b := 20, c := 30);  -- fail, unknown param
+select * from dfunc(10, 10, a := 20);  -- fail, a overlaps positional parameter
+select * from dfunc(1,c := 2,d := 3); -- fail, no value for b
 
 drop function dfunc(int, int, int, int);
 
@@ -660,10 +660,10 @@ $$ language sql;
 
 select (dfunc('Hello World', 20, '2009-07-25'::date)).*;
 select * from dfunc('Hello World', 20, '2009-07-25'::date);
-select * from dfunc('2009-07-25'::date as c, 'Hello World' as a, 20 as b);
-select * from dfunc('Hello World', 20 as b, '2009-07-25'::date as c);
-select * from dfunc('Hello World', '2009-07-25'::date as c, 20 as b);
-select * from dfunc('Hello World', 20 as c, '2009-07-25'::date as b);  -- fail
+select * from dfunc(c := '2009-07-25'::date, a := 'Hello World', b := 20);
+select * from dfunc('Hello World', b := 20, c := '2009-07-25'::date);
+select * from dfunc('Hello World', c := '2009-07-25'::date, b := 20);
+select * from dfunc('Hello World', c := 20, b := '2009-07-25'::date);  -- fail
 
 drop function dfunc(varchar, numeric, date);
 
@@ -676,11 +676,11 @@ $$ language sql;
 select (dfunc()).*;
 select * from dfunc();
 select * from dfunc('Hello', 100);
-select * from dfunc('Hello' as a, 100 as c);
-select * from dfunc(100 as c, 'Hello' as a);
+select * from dfunc(a := 'Hello', c := 100);
+select * from dfunc(c := 100, a := 'Hello');
 select * from dfunc('Hello');
-select * from dfunc('Hello', 100 as c);
-select * from dfunc(100 as c);
+select * from dfunc('Hello', c := 100);
+select * from dfunc(c := 100);
 
 -- fail, can no longer change an input parameter's name
 create or replace function dfunc(a varchar = 'def a', out _a varchar, x numeric = NULL, out _c numeric)
@@ -718,25 +718,25 @@ $$ language sql;
 select dfunc(1,2);
 select dfunc('a'::text, 'b'); -- positional notation with default
 
-select dfunc(1 as a, 2 as b);
-select dfunc('a'::text as a, 'b' as b);
-select dfunc('a'::text as a, 'b' as b, false as flag); -- named notation
+select dfunc(a := 1, b := 2);
+select dfunc(a := 'a'::text, b := 'b');
+select dfunc(a := 'a'::text, b := 'b', flag := false); -- named notation
 
-select dfunc('b'::text as b, 'a' as a); -- named notation with default
-select dfunc('a'::text as a, true as flag); -- named notation with default
-select dfunc('a'::text as a, false as flag); -- named notation with default
-select dfunc('b'::text as b, 'a' as a, true as flag); -- named notation
+select dfunc(b := 'b'::text, a := 'a'); -- named notation with default
+select dfunc(a := 'a'::text, flag := true); -- named notation with default
+select dfunc(a := 'a'::text, flag := false); -- named notation with default
+select dfunc(b := 'b'::text, a := 'a', flag := true); -- named notation
 
 select dfunc('a'::text, 'b', false); -- full positional notation
-select dfunc('a'::text, 'b', false as flag); -- mixed notation
+select dfunc('a'::text, 'b', flag := false); -- mixed notation
 select dfunc('a'::text, 'b', true); -- full positional notation
-select dfunc('a'::text, 'b', true as flag); -- mixed notation
+select dfunc('a'::text, 'b', flag := true); -- mixed notation
 
 -- check reverse-listing of named-arg calls
 CREATE VIEW dfview AS
    SELECT q1, q2,
-     dfunc(q1,q2, q1>q2 as flag) as c3,
-     dfunc(q1, q1<q2 as flag, q2 AS b) as c4
+     dfunc(q1,q2, flag := q1>q2) as c3,
+     dfunc(q1, flag := q1<q2, b := q2) as c4
      FROM int8_tbl;
 
 select * from dfview;

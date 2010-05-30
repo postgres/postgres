@@ -1052,19 +1052,19 @@ select (dfunc(10,20,30)).*;
  10 | 20 | 30 | 0
 (1 row)
 
-select (dfunc(10 as a, 20 as b, 30 as c)).*;
+select (dfunc(a := 10, b := 20, c := 30)).*;
  a  | b  | c  | d 
 ----+----+----+---
  10 | 20 | 30 | 0
 (1 row)
 
-select * from dfunc(10 as a, 20 as b);
+select * from dfunc(a := 10, b := 20);
  a  | b  | c | d 
 ----+----+---+---
  10 | 20 | 0 | 0
 (1 row)
 
-select * from dfunc(10 as b, 20 as a);
+select * from dfunc(b := 10, a := 20);
  a  | b  | c | d 
 ----+----+---+---
  20 | 10 | 0 | 0
@@ -1081,39 +1081,39 @@ select * from dfunc(1,2);
  1 | 2 | 0 | 0
 (1 row)
 
-select * from dfunc(1,2,3 as c);
+select * from dfunc(1,2,c := 3);
  a | b | c | d 
 ---+---+---+---
  1 | 2 | 3 | 0
 (1 row)
 
-select * from dfunc(1,2,3 as d);
+select * from dfunc(1,2,d := 3);
  a | b | c | d 
 ---+---+---+---
  1 | 2 | 0 | 3
 (1 row)
 
-select * from dfunc(10 as x, 20 as b, 30 as x);  -- fail, duplicate name
+select * from dfunc(x := 20, b := 10, x := 30);  -- fail, duplicate name
 ERROR:  argument name "x" used more than once
-LINE 1: select * from dfunc(10 as x, 20 as b, 30 as x);
-                                                    ^
-select * from dfunc(10, 20 as b, 30);  -- fail, named args must be last
+LINE 1: select * from dfunc(x := 20, b := 10, x := 30);
+                                              ^
+select * from dfunc(10, b := 20, 30);  -- fail, named args must be last
 ERROR:  positional argument cannot follow named argument
-LINE 1: select * from dfunc(10, 20 as b, 30);
+LINE 1: select * from dfunc(10, b := 20, 30);
                                          ^
-select * from dfunc(10 as x, 20 as b, 30 as c);  -- fail, unknown param
-ERROR:  function dfunc(integer AS x, integer AS b, integer AS c) does not exist
-LINE 1: select * from dfunc(10 as x, 20 as b, 30 as c);
+select * from dfunc(x := 10, b := 20, c := 30);  -- fail, unknown param
+ERROR:  function dfunc(x := integer, b := integer, c := integer) does not exist
+LINE 1: select * from dfunc(x := 10, b := 20, c := 30);
                       ^
 HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
-select * from dfunc(10, 10, 20 as a);  -- fail, a overlaps positional parameter
-ERROR:  function dfunc(integer, integer, integer AS a) does not exist
-LINE 1: select * from dfunc(10, 10, 20 as a);
+select * from dfunc(10, 10, a := 20);  -- fail, a overlaps positional parameter
+ERROR:  function dfunc(integer, integer, a := integer) does not exist
+LINE 1: select * from dfunc(10, 10, a := 20);
                       ^
 HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
-select * from dfunc(1,2 as c,3 as d); -- fail, no value for b
-ERROR:  function dfunc(integer, integer AS c, integer AS d) does not exist
-LINE 1: select * from dfunc(1,2 as c,3 as d);
+select * from dfunc(1,c := 2,d := 3); -- fail, no value for b
+ERROR:  function dfunc(integer, c := integer, d := integer) does not exist
+LINE 1: select * from dfunc(1,c := 2,d := 3);
                       ^
 HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
 drop function dfunc(int, int, int, int);
@@ -1134,27 +1134,27 @@ select * from dfunc('Hello World', 20, '2009-07-25'::date);
  Hello World | 20 | 07-25-2009
 (1 row)
 
-select * from dfunc('2009-07-25'::date as c, 'Hello World' as a, 20 as b);
+select * from dfunc(c := '2009-07-25'::date, a := 'Hello World', b := 20);
       a      | b  |     c      
 -------------+----+------------
  Hello World | 20 | 07-25-2009
 (1 row)
 
-select * from dfunc('Hello World', 20 as b, '2009-07-25'::date as c);
+select * from dfunc('Hello World', b := 20, c := '2009-07-25'::date);
       a      | b  |     c      
 -------------+----+------------
  Hello World | 20 | 07-25-2009
 (1 row)
 
-select * from dfunc('Hello World', '2009-07-25'::date as c, 20 as b);
+select * from dfunc('Hello World', c := '2009-07-25'::date, b := 20);
       a      | b  |     c      
 -------------+----+------------
  Hello World | 20 | 07-25-2009
 (1 row)
 
-select * from dfunc('Hello World', 20 as c, '2009-07-25'::date as b);  -- fail
-ERROR:  function dfunc(unknown, integer AS c, date AS b) does not exist
-LINE 1: select * from dfunc('Hello World', 20 as c, '2009-07-25'::da...
+select * from dfunc('Hello World', c := 20, b := '2009-07-25'::date);  -- fail
+ERROR:  function dfunc(unknown, c := integer, b := date) does not exist
+LINE 1: select * from dfunc('Hello World', c := 20, b := '2009-07-25...
                       ^
 HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
 drop function dfunc(varchar, numeric, date);
@@ -1181,13 +1181,13 @@ select * from dfunc('Hello', 100);
  Hello | 100
 (1 row)
 
-select * from dfunc('Hello' as a, 100 as c);
+select * from dfunc(a := 'Hello', c := 100);
   _a   | _c  
 -------+-----
  Hello | 100
 (1 row)
 
-select * from dfunc(100 as c, 'Hello' as a);
+select * from dfunc(c := 100, a := 'Hello');
   _a   | _c  
 -------+-----
  Hello | 100
@@ -1199,13 +1199,13 @@ select * from dfunc('Hello');
  Hello |   
 (1 row)
 
-select * from dfunc('Hello', 100 as c);
+select * from dfunc('Hello', c := 100);
   _a   | _c  
 -------+-----
  Hello | 100
 (1 row)
 
-select * from dfunc(100 as c);
+select * from dfunc(c := 100);
   _a   | _c  
 -------+-----
  def a | 100
@@ -1268,43 +1268,43 @@ select dfunc('a'::text, 'b'); -- positional notation with default
  a
 (1 row)
 
-select dfunc(1 as a, 2 as b);
+select dfunc(a := 1, b := 2);
  dfunc 
 -------
      1
 (1 row)
 
-select dfunc('a'::text as a, 'b' as b);
+select dfunc(a := 'a'::text, b := 'b');
  dfunc 
 -------
  a
 (1 row)
 
-select dfunc('a'::text as a, 'b' as b, false as flag); -- named notation
+select dfunc(a := 'a'::text, b := 'b', flag := false); -- named notation
  dfunc 
 -------
  b
 (1 row)
 
-select dfunc('b'::text as b, 'a' as a); -- named notation with default
+select dfunc(b := 'b'::text, a := 'a'); -- named notation with default
  dfunc 
 -------
  a
 (1 row)
 
-select dfunc('a'::text as a, true as flag); -- named notation with default
+select dfunc(a := 'a'::text, flag := true); -- named notation with default
  dfunc 
 -------
  a
 (1 row)
 
-select dfunc('a'::text as a, false as flag); -- named notation with default
+select dfunc(a := 'a'::text, flag := false); -- named notation with default
  dfunc 
 -------
  
 (1 row)
 
-select dfunc('b'::text as b, 'a' as a, true as flag); -- named notation
+select dfunc(b := 'b'::text, a := 'a', flag := true); -- named notation
  dfunc 
 -------
  a
@@ -1316,7 +1316,7 @@ select dfunc('a'::text, 'b', false); -- full positional notation
  b
 (1 row)
 
-select dfunc('a'::text, 'b', false as flag); -- mixed notation
+select dfunc('a'::text, 'b', flag := false); -- mixed notation
  dfunc 
 -------
  b
@@ -1328,7 +1328,7 @@ select dfunc('a'::text, 'b', true); -- full positional notation
  a
 (1 row)
 
-select dfunc('a'::text, 'b', true as flag); -- mixed notation
+select dfunc('a'::text, 'b', flag := true); -- mixed notation
  dfunc 
 -------
  a
@@ -1337,8 +1337,8 @@ select dfunc('a'::text, 'b', true as flag); -- mixed notation
 -- check reverse-listing of named-arg calls
 CREATE VIEW dfview AS
    SELECT q1, q2,
-     dfunc(q1,q2, q1>q2 as flag) as c3,
-     dfunc(q1, q1<q2 as flag, q2 AS b) as c4
+     dfunc(q1,q2, flag := q1>q2) as c3,
+     dfunc(q1, flag := q1<q2, b := q2) as c4
      FROM int8_tbl;
 select * from dfview;
         q1        |        q2         |        c3        |        c4         
@@ -1359,7 +1359,7 @@ select * from dfview;
  c3     | bigint |           | plain   | 
  c4     | bigint |           | plain   | 
 View definition:
- SELECT int8_tbl.q1, int8_tbl.q2, dfunc(int8_tbl.q1, int8_tbl.q2, int8_tbl.q1 > int8_tbl.q2 AS flag) AS c3, dfunc(int8_tbl.q1, int8_tbl.q1 < int8_tbl.q2 AS flag, int8_tbl.q2 AS b) AS c4
+ SELECT int8_tbl.q1, int8_tbl.q2, dfunc(int8_tbl.q1, int8_tbl.q2, flag := int8_tbl.q1 > int8_tbl.q2) AS c3, dfunc(int8_tbl.q1, flag := int8_tbl.q1 < int8_tbl.q2, b := int8_tbl.q2) AS c4
    FROM int8_tbl;
 
 drop view dfview;

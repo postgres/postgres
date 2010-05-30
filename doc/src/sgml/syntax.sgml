@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/syntax.sgml,v 1.144 2010/05/27 18:23:47 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/syntax.sgml,v 1.145 2010/05/30 18:10:40 tgl Exp $ -->
 
 <chapter id="sql-syntax">
  <title>SQL Syntax</title>
@@ -2285,10 +2285,11 @@ SELECT concat_lower_or_upper('Hello', 'World');
     </indexterm>
 
     <para>
-     In named notation, each argument's name is specified using the
-     <literal>AS</literal> keyword.  For example:
+     In named notation, each argument's name is specified using
+     <literal>:=</literal> to separate it from the argument expression.
+     For example:
 <screen>
-SELECT concat_lower_or_upper('Hello' AS a, 'World' AS b);
+SELECT concat_lower_or_upper(a := 'Hello', b := 'World');
  concat_lower_or_upper 
 -----------------------
  hello world
@@ -2299,13 +2300,13 @@ SELECT concat_lower_or_upper('Hello' AS a, 'World' AS b);
      using named notation is that the arguments may be specified in any
      order, for example:
 <screen>
-SELECT concat_lower_or_upper('Hello' AS a, 'World' AS b, true AS uppercase);
+SELECT concat_lower_or_upper(a := 'Hello', b := 'World', uppercase := true);
  concat_lower_or_upper 
 -----------------------
  HELLO WORLD
 (1 row)
 
-SELECT concat_lower_or_upper('Hello' AS a, true AS uppercase, 'World' AS b);
+SELECT concat_lower_or_upper(a := 'Hello', uppercase := true, b := 'World');
  concat_lower_or_upper 
 -----------------------
  HELLO WORLD
@@ -2327,7 +2328,7 @@ SELECT concat_lower_or_upper('Hello' AS a, true AS uppercase, 'World' AS b);
     already mentioned, named arguments cannot precede positional arguments.
     For example:
 <screen>
-SELECT concat_lower_or_upper('Hello', 'World', true AS uppercase);
+SELECT concat_lower_or_upper('Hello', 'World', uppercase := true);
  concat_lower_or_upper 
 -----------------------
  HELLO WORLD

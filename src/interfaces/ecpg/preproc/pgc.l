@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.173 2010/03/21 10:49:51 meskes Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.174 2010/05/30 18:10:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -230,6 +230,8 @@ identifier		{ident_start}{ident_cont}*
 
 array			({ident_cont}|{whitespace}|[\[\]\+\-\*\%\/\(\)\>\.])*
 typecast		"::"
+dot_dot			\.\.
+colon_equals	":="
 
 /*
  * "self" is the set of chars that should be returned as single-character
@@ -595,6 +597,8 @@ cppline			{space}*#([^i][A-Za-z]*|{if}|{ifdef}|{ifndef}|{import})(.*\\{space})*.
 					}
 <xdc>{xdcinside}	{ addlit(yytext, yyleng); }
 <SQL>{typecast}		{ return TYPECAST; }
+<SQL>{dot_dot}		{ return DOT_DOT; }
+<SQL>{colon_equals}	{ return COLON_EQUALS; }
 <SQL>{informix_special}	{
 			  /* are we simulating Informix? */
 				if (INFORMIX_MODE)

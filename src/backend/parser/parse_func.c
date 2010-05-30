@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_func.c,v 1.223 2010/03/17 16:52:38 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_func.c,v 1.224 2010/05/30 18:10:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1386,12 +1386,12 @@ funcname_signature_string(const char *funcname, int nargs,
 	{
 		if (i)
 			appendStringInfoString(&argbuf, ", ");
-		appendStringInfoString(&argbuf, format_type_be(argtypes[i]));
 		if (i >= numposargs)
 		{
-			appendStringInfo(&argbuf, " AS %s", (char *) lfirst(lc));
+			appendStringInfo(&argbuf, "%s := ", (char *) lfirst(lc));
 			lc = lnext(lc);
 		}
+		appendStringInfoString(&argbuf, format_type_be(argtypes[i]));
 	}
 
 	appendStringInfoChar(&argbuf, ')');

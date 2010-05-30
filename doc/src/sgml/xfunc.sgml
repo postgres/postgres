@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.148 2010/05/16 04:35:04 rhaas Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.149 2010/05/30 18:10:40 tgl Exp $ -->
 
  <sect1 id="xfunc">
   <title>User-Defined Functions</title>
@@ -705,14 +705,14 @@ SELECT mleast(VARIADIC ARRAY[10, -1, 5, 4.4]);
      <literal>VARIADIC</>.  For example, this will work:
 
 <screen>
-SELECT mleast(VARIADIC ARRAY[10, -1, 5, 4.4] AS arr);
+SELECT mleast(VARIADIC arr := ARRAY[10, -1, 5, 4.4]);
 </screen>
 
      but not these:
 
 <screen>
-SELECT mleast(10 AS arr);
-SELECT mleast(ARRAY[10, -1, 5, 4.4] AS arr);
+SELECT mleast(arr := 10);
+SELECT mleast(arr := ARRAY[10, -1, 5, 4.4]);
 </screen>
     </para>
    </sect2>
