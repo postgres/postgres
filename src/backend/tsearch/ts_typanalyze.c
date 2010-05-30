@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tsearch/ts_typanalyze.c,v 1.8 2010/01/02 16:57:53 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tsearch/ts_typanalyze.c,v 1.9 2010/05/30 21:59:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -92,21 +92,49 @@ ts_typanalyze(PG_FUNCTION_ARGS)
  *	http://www.vldb.org/conf/2002/S10P03.pdf
  *
  *	The Lossy Counting (aka LC) algorithm goes like this:
- *	Let D be a set of triples (e, f, d), where e is an element value, f is
- *	that element's frequency (occurrence count) and d is the maximum error in
- *	f.	We start with D empty and process the elements in batches of size
- *	w. (The batch size is also known as "bucket size".) Let the current batch
- *	number be b_current, starting with 1. For each element e we either
- *	increment its f count, if it's already in D, or insert a new triple into D
- *	with values (e, 1, b_current - 1). After processing each batch we prune D,
- *	by removing from it all elements with f + d <= b_current. Finally, we
- *	gather elements with largest f.  The LC paper proves error bounds on f
- *	dependent on the batch size w, and shows that the required table size
- *	is no more than a few times w.
+ *	Let s be the threshold frequency for an item (the minimum frequency we
+ *	are interested in) and epsilon the error margin for the frequency. Let D
+ *	be a set of triples (e, f, delta), where e is an element value, f is that
+ *	element's frequency (actually, its current occurrence count) and delta is
+ *	the maximum error in f. We start with D empty and process the elements in
+ *	batches of size w. (The batch size is also known as "bucket size" and is
+ *	equal to 1/epsilon.) Let the current batch number be b_current, starting
+ *	with 1. For each element e we either increment its f count, if it's
+ *	already in D, or insert a new triple into D with values (e, 1, b_current
+ *	- 1). After processing each batch we prune D, by removing from it all
+ *	elements with f + delta <= b_current.  After the algorithm finishes we
+ *	suppress all elements from D that do not satisfy f >= (s - epsilon) * N,
+ *	where N is the total number of elements in the input.  We emit the
+ *	remaining elements with estimated frequency f/N.  The LC paper proves
+ *	that this algorithm finds all elements with true frequency at least s,
+ *	and that no frequency is overestimated or is underestimated by more than
+ *	epsilon.  Furthermore, given reasonable assumptions about the input
+ *	distribution, the required table size is no more than about 7 times w.
  *
- *	We use a hashtable for the D structure and a bucket width of
- *	statistics_target * 10, where 10 is an arbitrarily chosen constant,
- *	meant to approximate the number of lexemes in a single tsvector.
+ *	We set s to be the estimated frequency of the K'th word in a natural
+ *	language's frequency table, where K is the target number of entries in
+ *	the MCELEM array plus an arbitrary constant, meant to reflect the fact
+ *	that the most common words in any language would usually be stopwords
+ *	so we will not actually see them in the input.  We assume that the
+ *	distribution of word frequencies (including the stopwords) follows Zipf's
+ *	law with an exponent of 1.
+ *
+ *	Assuming Zipfian distribution, the frequency of the K'th word is equal
+ *	to 1/(K * H(W)) where H(n) is 1/2 + 1/3 + ... + 1/n and W is the number of
+ *	words in the language.  Putting W as one million, we get roughly 0.07/K.
+ *	Assuming top 10 words are stopwords gives s = 0.07/(K + 10).  We set
+ *	epsilon = s/10, which gives bucket width w = (K + 10)/0.007 and
+ *	maximum expected hashtable size of about 1000 * (K + 10).
+ *
+ *	Note: in the above discussion, s, epsilon, and f/N are in terms of a
+ *	lexeme's frequency as a fraction of all lexemes seen in the input.
+ *	However, what we actually want to store in the finished pg_statistic
+ *	entry is each lexeme's frequency as a fraction of all rows that it occurs
+ *	in.  Assuming that the input tsvectors are correctly constructed, no
+ *	lexeme occurs more than once per tsvector, so the final count f is a
+ *	correct estimate of the number of input tsvectors it occurs in, and we
+ *	need only change the divisor from N to nonnull_cnt to get the number we
+ *	want.
  */
 static void
 compute_tsvector_stats(VacAttrStats *stats,
@@ -133,19 +161,23 @@ compute_tsvector_stats(VacAttrStats *stats,
 	LexemeHashKey hash_key;
 	TrackItem  *item;
 
-	/* We want statistics_target * 10 lexemes in the MCELEM array */
+	/*
+	 * We want statistics_target * 10 lexemes in the MCELEM array.  This
+	 * multiplier is pretty arbitrary, but is meant to reflect the fact that
+	 * the number of individual lexeme values tracked in pg_statistic ought
+	 * to be more than the number of values for a simple scalar column.
+	 */
 	num_mcelem = stats->attr->attstattarget * 10;
 
 	/*
-	 * We set bucket width equal to the target number of result lexemes. This
-	 * is probably about right but perhaps might need to be scaled up or down
-	 * a bit?
+	 * We set bucket width equal to (num_mcelem + 10) / 0.007 as per the
+	 * comment above.
 	 */
-	bucket_width = num_mcelem;
+	bucket_width = (num_mcelem + 10) * 1000 / 7;
 
 	/*
 	 * Create the hashtable. It will be in local memory, so we don't need to
-	 * worry about initial size too much. Also we don't need to pay any
+	 * worry about overflowing the initial size. Also we don't need to pay any
 	 * attention to locking and memory management.
 	 */
 	MemSet(&hash_ctl, 0, sizeof(hash_ctl));
@@ -155,13 +187,13 @@ compute_tsvector_stats(VacAttrStats *stats,
 	hash_ctl.match = lexeme_match;
 	hash_ctl.hcxt = CurrentMemoryContext;
 	lexemes_tab = hash_create("Analyzed lexemes table",
-							  bucket_width * 4,
+							  bucket_width * 7,
 							  &hash_ctl,
 					HASH_ELEM | HASH_FUNCTION | HASH_COMPARE | HASH_CONTEXT);
 
 	/* Initialize counters. */
 	b_current = 1;
-	lexeme_no = 1;
+	lexeme_no = 0;
 
 	/* Loop over the tsvectors. */
 	for (vector_no = 0; vector_no < samplerows; vector_no++)
@@ -232,6 +264,9 @@ compute_tsvector_stats(VacAttrStats *stats,
 				item->delta = b_current - 1;
 			}
 
+			/* lexeme_no is the number of elements processed (ie N) */
+			lexeme_no++;
+
 			/* We prune the D structure after processing each bucket */
 			if (lexeme_no % bucket_width == 0)
 			{
@@ -240,7 +275,6 @@ compute_tsvector_stats(VacAttrStats *stats,
 			}
 
 			/* Advance to the next WordEntry in the tsvector */
-			lexeme_no++;
 			curentryptr++;
 		}
 	}
@@ -252,6 +286,7 @@ compute_tsvector_stats(VacAttrStats *stats,
 		int			i;
 		TrackItem **sort_table;
 		int			track_len;
+		int			cutoff_freq;
 		int			minfreq,
 					maxfreq;
 
@@ -264,34 +299,51 @@ compute_tsvector_stats(VacAttrStats *stats,
 		stats->stadistinct = -1.0;
 
 		/*
-		 * Determine the top-N lexemes by simply copying pointers from the
-		 * hashtable into an array and applying qsort()
+		 * Construct an array of the interesting hashtable items, that is,
+		 * those meeting the cutoff frequency (s - epsilon)*N.  Also identify
+		 * the minimum and maximum frequencies among these items.
+		 *
+		 * Since epsilon = s/10 and bucket_width = 1/epsilon, the cutoff
+		 * frequency is 9*N / bucket_width.
 		 */
-		track_len = hash_get_num_entries(lexemes_tab);
+		cutoff_freq = 9 * lexeme_no / bucket_width;
 
-		sort_table = (TrackItem **) palloc(sizeof(TrackItem *) * track_len);
+		i = hash_get_num_entries(lexemes_tab);		/* surely enough space */
+		sort_table = (TrackItem **) palloc(sizeof(TrackItem *) * i);
 
 		hash_seq_init(&scan_status, lexemes_tab);
-		i = 0;
+		track_len = 0;
+		minfreq = lexeme_no;
+		maxfreq = 0;
 		while ((item = (TrackItem *) hash_seq_search(&scan_status)) != NULL)
 		{
-			sort_table[i++] = item;
+			if (item->frequency > cutoff_freq)
+			{
+				sort_table[track_len++] = item;
+				minfreq = Min(minfreq, item->frequency);
+				maxfreq = Max(maxfreq, item->frequency);
+			}
 		}
-		Assert(i == track_len);
+		Assert(track_len <= i);
 
-		qsort(sort_table, track_len, sizeof(TrackItem *),
-			  trackitem_compare_frequencies_desc);
+		/* emit some statistics for debug purposes */
+		elog(DEBUG3, "tsvector_stats: target # mces = %d, bucket width = %d, "
+			 "# lexemes = %d, hashtable size = %d, usable entries = %d",
+			 num_mcelem, bucket_width, lexeme_no, i, track_len);
 
-		/* Suppress any single-occurrence items */
-		while (track_len > 0)
+		/*
+		 * If we obtained more lexemes than we really want, get rid of
+		 * those with least frequencies.  The easiest way is to qsort the
+		 * array into descending frequency order and truncate the array.
+		 */
+		if (num_mcelem < track_len)
 		{
-			if (sort_table[track_len - 1]->frequency > 1)
-				break;
-			track_len--;
+			qsort(sort_table, track_len, sizeof(TrackItem *),
+				  trackitem_compare_frequencies_desc);
+			/* reset minfreq to the smallest frequency we're keeping */
+			minfreq = sort_table[num_mcelem - 1]->frequency;
 		}
-
-		/* Determine the number of most common lexemes to be stored */
-		if (num_mcelem > track_len)
+		else
 			num_mcelem = track_len;
 
 		/* Generate MCELEM slot entry */
@@ -300,10 +352,6 @@ compute_tsvector_stats(VacAttrStats *stats,
 			MemoryContext old_context;
 			Datum	   *mcelem_values;
 			float4	   *mcelem_freqs;
-
-			/* Grab the minimal and maximal frequencies that will get stored */
-			minfreq = sort_table[num_mcelem - 1]->frequency;
-			maxfreq = sort_table[0]->frequency;
 
 			/*
 			 * We want to store statistics sorted on the lexeme value using
@@ -334,6 +382,10 @@ compute_tsvector_stats(VacAttrStats *stats,
 			mcelem_values = (Datum *) palloc(num_mcelem * sizeof(Datum));
 			mcelem_freqs = (float4 *) palloc((num_mcelem + 2) * sizeof(float4));
 
+			/*
+			 * See comments above about use of nonnull_cnt as the divisor
+			 * for the final frequency estimates.
+			 */
 			for (i = 0; i < num_mcelem; i++)
 			{
 				TrackItem  *item = sort_table[i];
