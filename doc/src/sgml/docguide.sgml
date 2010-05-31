@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/docguide.sgml,v 1.81 2010/03/17 17:12:31 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/docguide.sgml,v 1.82 2010/05/31 22:14:20 momjian Exp $ -->
 
 <appendix id="docguide">
  <title>Documentation</title>
@@ -642,6 +642,26 @@ max_strings.pdfjadetex = 300000
 save_size.jadetex = 15000
 save_size.pdfjadetex = 15000
 </programlisting>
+   </para>
+
+  </sect2>
+
+  <sect2>
+   <title>Overflow Text</title>
+
+   <para>
+    Occasionally text is too wide for the printed margins, and in
+    extreme cases, too wide for the printed page, e.g.  non-wrapped
+    text, wide tables.  Overly wide text generates <quote>Overfull
+    hbox</quote> messages in the TeX log output file, e.g.
+    <filename>postgres-US.log</> or <filename>postgres-A4.log</>.
+    There are 72 points in an inch so anything reported as over 72
+    points too wide will probably not fit on the printed page (assuming
+    one inch margins).  To find the <acronym>SGML</acronym> text
+    causing the overflow, find the first page number mentioned above
+    the overflow message, e.g.  <literal>[50 XXX]</> (page 50), and look
+    at that page in the <acronym>PDF</acronym> file to see the overflow
+    text and adjust the <acronym>SGML</acronym> accordingly.
    </para>
   </sect2>
 
