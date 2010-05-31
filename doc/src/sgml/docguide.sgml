@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/docguide.sgml,v 1.83 2010/05/31 22:15:25 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/docguide.sgml,v 1.84 2010/05/31 22:42:59 momjian Exp $ -->
 
 <appendix id="docguide">
  <title>Documentation</title>
@@ -659,9 +659,10 @@ save_size.pdfjadetex = 15000
     points too wide will probably not fit on the printed page (assuming
     one inch margins).  To find the <acronym>SGML</acronym> text
     causing the overflow, find the first page number mentioned above
-    the overflow message, e.g.  <literal>[50 ###]</> (page 50), and look
-    at that page in the <acronym>PDF</acronym> file to see the overflow
-    text and adjust the <acronym>SGML</acronym> accordingly.
+    the overflow message, e.g.  <literal>[50 ###]</> (page 50), and
+    look at the page after that (e.g. page 51) in the <acronym>PDF</acronym>
+    file to see the overflow text and adjust the <acronym>SGML</acronym>
+    accordingly.
    </para>
   </sect2>
 
