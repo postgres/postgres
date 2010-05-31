@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.279 2010/05/26 23:49:18 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.280 2010/05/31 15:50:48 momjian Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -1413,34 +1413,23 @@ SET ENABLE_SEQSCAN TO OFF;
        </para>
 
        <para>
-        However, using <varname>fsync</varname> results in a
-        performance penalty: when a transaction is committed,
-        <productname>PostgreSQL</productname> must wait for the
-        operating system to flush the write-ahead log to disk.  When
-        <varname>fsync</varname> is disabled, the operating system is
-        allowed to do its best in buffering, ordering, and delaying
-        writes. This can result in significantly improved performance.
-        However, if the system crashes, the results of the last few
-        committed transactions might be completely lost, or worse,
-        might appear partially committed, leaving the database in an
-        inconsistent state. In the
-        worst case, unrecoverable data corruption might occur.
-        (Crashes of the database software itself are <emphasis>not</>
-        a risk factor here.  Only an operating-system-level crash
-        creates a risk of corruption.)
+        While turning off <varname>fsync</varname> is often a performance
+        benefit, this can result in unrecoverable data corruption in
+        the event of an unexpected system shutdown or crash.  Thus it
+        is only advisable to turn off  <varname>fsync</varname> if
+        you can easily recreate your entire database from external
+        data.
        </para>
 
        <para>
-        Due to the risks involved, there is no universally correct
-        setting for <varname>fsync</varname>. Some administrators
-        always disable <varname>fsync</varname>, while others only
-        turn it off during initial bulk data loads, where there is a clear
-        restart point if something goes wrong.  Others
-        always leave <varname>fsync</varname> enabled. The default is
-        to enable <varname>fsync</varname>, for maximum reliability.
-        If you trust your operating system, your hardware, and your
-        utility company (or your battery backup), you can consider
-        disabling <varname>fsync</varname>.
+        Examples of safe circumstances for turning off
+        <varname>fsync</varname> include the initial loading a new
+        database cluster from a backup file, using a database cluster
+        for processing statistics on an hourly basis which is then
+        recreated, or for a reporting read-only database clone which
+        gets recreated frequently and is not used for failover.  High
+        quality hardware alone is not a sufficient justification for
+        turning off <varname>fsync</varname>.
        </para>
 
        <para>
@@ -1572,12 +1561,10 @@ SET ENABLE_SEQSCAN TO OFF;
 
        <para>
         Turning this parameter off speeds normal operation, but
-        might lead to a corrupt database after an operating system crash
-        or power failure. The risks are similar to turning off
-        <varname>fsync</>, though smaller.  It might be safe to turn off
-        this parameter if you have hardware (such as a battery-backed disk
-        controller) or file-system software that reduces
-        the risk of partial page writes to an acceptably low level (e.g., ZFS).
+        might lead to either unrecoverable data corruption, or silent
+        data corruption, after a system failure. The risks are similar to turning off
+        <varname>fsync</varname>, though smaller, and it should be turned off
+        only based on the same circumstances recommended for that parameter.
        </para>
 
        <para>
