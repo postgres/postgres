@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.257 2010/04/14 23:52:10 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.258 2010/05/31 20:02:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3033,7 +3033,8 @@ exec_stmt_dynexecute(PLpgSQL_execstate *estate,
 				if (*ptr == 'S' || *ptr == 's')
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					errmsg("EXECUTE of SELECT ... INTO is not implemented")));
+					errmsg("EXECUTE of SELECT ... INTO is not implemented"),
+					errhint("You might want to use EXECUTE ... INTO instead.")));
 				break;
 			}
 
