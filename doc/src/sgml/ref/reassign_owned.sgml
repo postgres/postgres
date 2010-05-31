@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/reassign_owned.sgml,v 1.6 2010/04/03 07:23:02 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/reassign_owned.sgml,v 1.7 2010/05/31 18:47:35 alvherre Exp $
 PostgreSQL documentation
 -->
 
@@ -92,6 +92,12 @@ REASSIGN OWNED BY <replaceable class="PARAMETER">old_role</replaceable> [, ...] 
    privileges.
   </para>
 
+  <para>
+   The <command>REASSIGN OWNED</command> command does not affect the
+   ownership of any databases owned by the role.  Use
+   <xref linkend="sql-alterdatabase"> to reassign that ownership.
+  </para>
+
  </refsect1>
 
  <refsect1>
@@ -109,6 +115,7 @@ REASSIGN OWNED BY <replaceable class="PARAMETER">old_role</replaceable> [, ...] 
   <simplelist type="inline">
    <member><xref linkend="sql-drop-owned"></member>
    <member><xref linkend="sql-droprole"></member>
+   <member><xref linkend="sql-alterdatabase"></member>
   </simplelist>
  </refsect1>
 
