@@ -30,7 +30,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/replication/walsender.c,v 1.22 2010/05/26 22:34:49 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/replication/walsender.c,v 1.23 2010/05/31 10:44:37 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -394,8 +394,10 @@ WalSndLoop(void)
 		 */
 		if (ready_to_stop)
 		{
-			XLogSend(&output_message, &caughtup);
-			shutdown_requested = true;
+			if (!XLogSend(&output_message, &caughtup))
+				goto eof;
+			if (caughtup)
+				shutdown_requested = true;
 		}
 
 		/* Normal exit from the walsender is here */
@@ -458,7 +460,6 @@ eof:
 static void
 InitWalSnd(void)
 {
-	/* use volatile pointer to prevent code rearrangement */
 	int			i;
 
 	/*
@@ -474,6 +475,7 @@ InitWalSnd(void)
 	 */
 	for (i = 0; i < max_wal_senders; i++)
 	{
+		/* use volatile pointer to prevent code rearrangement */
 		volatile WalSnd *walsnd = &WalSndCtl->walsnds[i];
 
 		SpinLockAcquire(&walsnd->mutex);
