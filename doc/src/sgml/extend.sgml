@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/extend.sgml,v 1.41 2010/06/01 02:54:37 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/extend.sgml,v 1.42 2010/06/01 03:19:36 momjian Exp $ -->
 
  <chapter id="extend">
   <title>Extending <acronym>SQL</acronym></title>
@@ -273,6 +273,8 @@
   &xoper;
   &xindex;
 
+<!-- Use this someday when C++ is easier to use. bjm 2010-05-31
+
   <sect1 id="extend-Cpp">
    <title>Using C++ for Extensibility</title>
 
@@ -318,5 +320,6 @@
    </para>
 
   </sect1>
+-->
 
  </chapter>

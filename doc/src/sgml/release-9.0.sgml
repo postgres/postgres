@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release-9.0.sgml,v 2.22 2010/05/17 17:46:13 adunstan Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release-9.0.sgml,v 2.23 2010/06/01 03:19:36 momjian Exp $ -->
 
  <sect1 id="release-9-0">
   <title>Release 9.0</title>
@@ -2519,14 +2519,16 @@ recovery_connections -> hot_standby
 
      <listitem>
       <para>
-       Allow use of <productname>C++</> functions in backend code (Kurt
+       Simplify use of <productname>C++</> functions in backend code (Kurt
        Harriman, Peter Eisentraut)
       </para>
 
       <para>
-       This removes keyword conflicts that previously made <productname>C++</>
-       usage difficult in backend code. <literal>extern "C" { }</> might still
-       be necessary.
+       While this removes keyword conflicts that previously made
+       <productname>C++</> usage difficult in backend code, there are
+       still other complexities when using <productname>C++</> for backend
+       functions. <literal>extern "C" { }</> is still necessary in
+       some cases.
       </para>
      </listitem>
 
