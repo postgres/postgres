@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release-9.0.sgml,v 2.23 2010/06/01 03:19:36 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release-9.0.sgml,v 2.24 2010/06/01 13:43:39 momjian Exp $ -->
 
  <sect1 id="release-9-0">
   <title>Release 9.0</title>
@@ -2528,7 +2528,7 @@ recovery_connections -> hot_standby
        <productname>C++</> usage difficult in backend code, there are
        still other complexities when using <productname>C++</> for backend
        functions. <literal>extern "C" { }</> is still necessary in
-       some cases.
+       appropriate places.
       </para>
      </listitem>
 
