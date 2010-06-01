@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/extend.sgml,v 1.38 2010/04/03 07:22:53 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/extend.sgml,v 1.39 2010/06/01 02:31:36 momjian Exp $ -->
 
  <chapter id="extend">
   <title>Extending <acronym>SQL</acronym></title>
@@ -272,5 +272,51 @@
   &xtypes;
   &xoper;
   &xindex;
+
+  <sect1 id="extend-how">
+   <title>Using C++ for Extensibility</title>
+
+   <indexterm zone="extend-Cpp">
+    <primary>C++</primary>
+   </indexterm>
+
+   <para>
+    It is possible to use a compiler in C++ mode to build
+    <productname>PostgreSQL</productname> extensions;  you must simply
+    follow the standard methods for dynamically linking to C executables:
+
+    <itemizedlist>
+     <listitem>
+      <para>
+        Use <literal>extern C</> linkage for all functions that must
+        be accessible by <function>dlopen()</>.  This is also necessary
+        for any functions that might be passed as pointers between
+        the backend and C++ code.
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       Use <function>malloc()</> to allocate any memory that might be
+       freed by the backend C code (don't pass <function>new()</>-allocated
+       memory).
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       Use <function>free()</> to free memory allocated by the backend
+       C code (do not use <function>delete()</> for such cases).
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       Prevent exceptions from propagating into the C code (use a
+       catch-all block at the top level of all <literal>extern C</>
+       functions).
+      </para>
+     </listitem>
+    </itemizedlist>
+   </para>
+
+  </sect1>
 
  </chapter>
