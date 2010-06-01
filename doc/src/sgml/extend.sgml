@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/extend.sgml,v 1.39 2010/06/01 02:31:36 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/extend.sgml,v 1.40 2010/06/01 02:35:37 momjian Exp $ -->
 
  <chapter id="extend">
   <title>Extending <acronym>SQL</acronym></title>
@@ -273,7 +273,7 @@
   &xoper;
   &xindex;
 
-  <sect1 id="extend-how">
+  <sect1 id="extend-Cpp">
    <title>Using C++ for Extensibility</title>
 
    <indexterm zone="extend-Cpp">
