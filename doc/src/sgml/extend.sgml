@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/extend.sgml,v 1.43 2010/06/03 14:39:58 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/extend.sgml,v 1.44 2010/06/03 14:41:25 momjian Exp $ -->
 
  <chapter id="extend">
   <title>Extending <acronym>SQL</acronym></title>
@@ -302,6 +302,7 @@
        most backend memory is allocated using <function>palloc()</>, so use
        <function>pfree()</> to free it, i.e. using C++
        <function>delete()</> in such cases will fail.
+      </para>
      </listitem>
      <listitem>
       <para>
