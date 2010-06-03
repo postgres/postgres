@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release-9.0.sgml,v 2.24 2010/06/01 13:43:39 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release-9.0.sgml,v 2.25 2010/06/03 16:33:36 momjian Exp $ -->
 
  <sect1 id="release-9-0">
   <title>Release 9.0</title>
@@ -179,7 +179,7 @@ recovery_connections -> hot_standby
   <sect2>
 
   <title>Migration to Version 9.0</title>
-  <para>CURRENT AS OF 2010-05-12</para>
+  <para>CURRENT AS OF 2010-06-03</para>
 
   <para>
    A dump/restore using <application>pg_dump</application> is
@@ -588,7 +588,6 @@ recovery_connections -> hot_standby
       </para>
      </listitem>
 
-
      <listitem>
       <para>
        Allow <link linkend="auth-ldap"><acronym>LDAP</></link>
@@ -613,6 +612,13 @@ recovery_connections -> hot_standby
       <para>
        These match the server's <acronym>IP</> address and network address
        respectively.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Pass trusted SSL root certificate names to the client so the client
+       can return an appropriate client certificate (Craig Ringer)
       </para>
      </listitem>
 
@@ -1336,8 +1342,8 @@ recovery_connections -> hot_standby
 
      <para>
       For example, if a function is defined to take parameters <literal>a</>
-      and <literal>b</>, it can be called with <literal>func(7 AS a, 12
-      AS b)</> or <literal>func(12 AS b, 7 AS a)</>.
+      and <literal>b</>, it can be called with <literal>func(a := 7, b
+      := 12)</> or <literal>func(b := 12, a := 7)</>.
      </para>
     </listitem>
 
@@ -2097,6 +2103,17 @@ recovery_connections -> hot_standby
       </para>
      </listitem>
 
+     <listitem>
+      <para>
+       Load SSL certificate chain (Tom Lane)
+      </para>
+
+      <para>
+       This improves handling of indirectly-signed SSL client
+       certificates.
+      </para>
+     </listitem>
+
     </itemizedlist>
 
    </sect4>
@@ -2158,6 +2175,13 @@ recovery_connections -> hot_standby
 
       <para>
        Previously it returned the negative of the data type <type>oid</>.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Support <type>long long</> types on platforms that already have 64-bit
+       <type>long</>s (Michael Meskes))
       </para>
      </listitem>
 
@@ -2528,7 +2552,7 @@ recovery_connections -> hot_standby
        <productname>C++</> usage difficult in backend code, there are
        still other complexities when using <productname>C++</> for backend
        functions. <literal>extern "C" { }</> is still necessary in
-       appropriate places.
+       appropriate places (see <xref linkend="extend-Cpp">).
       </para>
      </listitem>
 
