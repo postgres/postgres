@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/citext.sgml,v 1.2 2008/09/12 18:29:49 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/citext.sgml,v 1.3 2010/06/03 03:04:55 momjian Exp $ -->
 
 <sect1 id="citext">
  <title>citext</title>
@@ -203,6 +203,15 @@
       as <type>citext</> and explicitly casting the column to <type>text</>
       when you want case-sensitive comparison.  In either situation, you
       will need two indexes if you want both types of searches to be fast.
+    </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      The schema containing the <type>citext</> operators must be
+      in the current <varname>search_path</> (typically <literal>public</>);
+      if it is not, a normal case-sensitive <type>text</> comparison
+      is performed.
     </para>
     </listitem>
    </itemizedlist>
