@@ -30,7 +30,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/replication/walsender.c,v 1.23 2010/05/31 10:44:37 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/replication/walsender.c,v 1.24 2010/06/03 21:02:12 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -274,7 +274,7 @@ WalSndHandshake(void)
 						if (wal_level == WAL_LEVEL_MINIMAL)
 							ereport(FATAL,
 									(errcode(ERRCODE_CANNOT_CONNECT_NOW),
-									 errmsg("standby connections not allowed because wal_level=\"minimal\"")));
+									 errmsg("standby connections not allowed because wal_level=minimal")));
 
 						/* Send a CopyOutResponse message, and start streaming */
 						pq_beginmessage(&buf, 'H');

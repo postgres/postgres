@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.610 2010/05/27 02:01:37 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.611 2010/06/03 21:02:11 petere Exp $
  *
  * NOTES
  *
@@ -730,10 +730,10 @@ PostmasterMain(int argc, char *argv[])
 	}
 	if (XLogArchiveMode && wal_level == WAL_LEVEL_MINIMAL)
 		ereport(ERROR,
-				(errmsg("WAL archival (archive_mode='on') requires wal_level 'archive' or 'hot_standby'")));
+				(errmsg("WAL archival (archive_mode=on) requires wal_level \"archive\" or \"hot_standby\"")));
 	if (max_wal_senders > 0 && wal_level == WAL_LEVEL_MINIMAL)
 		ereport(ERROR,
-				(errmsg("WAL streaming (max_wal_senders > 0) requires wal_level 'archive' or 'hot_standby")));
+				(errmsg("WAL streaming (max_wal_senders > 0) requires wal_level \"archive\" or \"hot_standby\"")));
 
 	/*
 	 * Other one-time internal sanity checks can go here, if they are fast.
