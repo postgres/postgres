@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.513 2010/04/07 06:12:52 heikki Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.514 2010/06/03 01:34:02 momjian Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -7134,7 +7134,7 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
        </row>
        <row>
         <entry> <literal>&amp;&amp;</literal> </entry>
-        <entry>Overlaps?</entry>
+        <entry>Overlaps?  (One point in common makes this true.)</entry>
         <entry><literal>box '((0,0),(1,1))' &amp;&amp; box '((0,0),(2,2))'</literal></entry>
        </row>
        <row>
