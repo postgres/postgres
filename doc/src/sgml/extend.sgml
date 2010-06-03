@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/extend.sgml,v 1.42 2010/06/01 03:19:36 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/extend.sgml,v 1.43 2010/06/03 14:39:58 momjian Exp $ -->
 
  <chapter id="extend">
   <title>Extending <acronym>SQL</acronym></title>
@@ -273,8 +273,6 @@
   &xoper;
   &xindex;
 
-<!-- Use this someday when C++ is easier to use. bjm 2010-05-31
-
   <sect1 id="extend-Cpp">
    <title>Using C++ for Extensibility</title>
 
@@ -284,42 +282,57 @@
 
    <para>
     It is possible to use a compiler in C++ mode to build
-    <productname>PostgreSQL</productname> extensions;  you must simply
-    follow the standard methods for dynamically linking to C executables:
+    <productname>PostgreSQL</productname> extensions by following these
+    guidelines:
 
     <itemizedlist>
      <listitem>
       <para>
-        Use <literal>extern C</> linkage for all functions that must
-        be accessible by <function>dlopen()</>.  This is also necessary
-        for any functions that might be passed as pointers between
-        the backend and C++ code.
+        All functions accessed by the backend must present a C interface
+        to the backend;  these C functions can then call C++ functions.
+        For example, <literal>extern C</> linkage is required for
+        backend-accessed functions.  This is also necessary for any
+        functions that are passed as pointers between the backend and
+        C++ code.
       </para>
      </listitem>
      <listitem>
       <para>
-       Use <function>palloc()</> to allocate any memory that might be
-       freed by the backend C code (don't pass <function>new()</>-allocated
-       memory).
-      </para>
-     </listitem>
-     <listitem>
-      <para>
-       Use <function>pfree()</> to free memory allocated by the backend
-       C code (do not use <function>delete()</> for such cases).
-      </para>
+       Free memory using the appropriate deallocation method.  For example,
+       most backend memory is allocated using <function>palloc()</>, so use
+       <function>pfree()</> to free it, i.e. using C++
+       <function>delete()</> in such cases will fail.
      </listitem>
      <listitem>
       <para>
        Prevent exceptions from propagating into the C code (use a
        catch-all block at the top level of all <literal>extern C</>
-       functions).
+       functions).  This is necessary even if the C++ code does not
+       throw any exceptions because events like out-of-memory still
+       throw exceptions.  Any exceptions must be caught and appropriate
+       errors passed back to the C interface.  If possible, compile C++
+       with <option>-fno-exceptions</> to eliminate exceptions entirely;
+       in such cases, you must check for failures in your C++ code, e.g.
+       check for NULL returned by <function>new()</>.
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       If calling backend functions from C++ code, be sure that the
+       C++ call stack contains only plain old data structure
+       (<acronym>POD</>).  This is necessary because backend errors
+       generate a distant <function>longjump()</> that does not properly
+       unroll a C++ call stack with non-POD objects.
       </para>
      </listitem>
     </itemizedlist>
    </para>
 
+   <para>
+    In summary, it is best to place C++ code behind a wall of
+    <literal>extern C</> functions that interface to the backend,
+    and avoid exception, memory, and call stack leakage.
+   </para>
   </sect1>
--->
 
  </chapter>
