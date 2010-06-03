@@ -29,7 +29,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/replication/walreceiver.c,v 1.10 2010/04/20 22:55:03 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/replication/walreceiver.c,v 1.11 2010/06/03 22:17:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,6 +41,7 @@
 #include "access/xlog_internal.h"
 #include "libpq/pqsignal.h"
 #include "miscadmin.h"
+#include "replication/walprotocol.h"
 #include "replication/walreceiver.h"
 #include "storage/ipc.h"
 #include "storage/pmsignal.h"
@@ -393,18 +394,18 @@ XLogWalRcvProcessMsg(unsigned char type, char *buf, Size len)
 	{
 		case 'w':				/* WAL records */
 			{
-				XLogRecPtr	recptr;
+				WalDataMessageHeader msghdr;
 
-				if (len < sizeof(XLogRecPtr))
+				if (len < sizeof(WalDataMessageHeader))
 					ereport(ERROR,
 							(errcode(ERRCODE_PROTOCOL_VIOLATION),
 							 errmsg_internal("invalid WAL message received from primary")));
+				/* memcpy is required here for alignment reasons */
+				memcpy(&msghdr, buf, sizeof(WalDataMessageHeader));
+				buf += sizeof(WalDataMessageHeader);
+				len -= sizeof(WalDataMessageHeader);
 
-				memcpy(&recptr, buf, sizeof(XLogRecPtr));
-				buf += sizeof(XLogRecPtr);
-				len -= sizeof(XLogRecPtr);
-
-				XLogWalRcvWrite(buf, len, recptr);
+				XLogWalRcvWrite(buf, len, msghdr.dataStart);
 				break;
 			}
 		default:

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/protocol.sgml,v 1.87 2010/04/03 07:22:55 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/protocol.sgml,v 1.88 2010/06/03 22:17:32 tgl Exp $ -->
 
 <chapter id="protocol">
  <title>Frontend/Backend Protocol</title>
@@ -1283,6 +1283,173 @@
    </para>
   </sect2>
  </sect1>
+
+<sect1 id="protocol-replication">
+<title>Streaming Replication Protocol</title>
+
+<para>
+To initiate streaming replication, the frontend sends the
+<literal>replication</> parameter in the startup message. This tells the
+backend to go into walsender mode, wherein a small set of replication commands
+can be issued instead of SQL statements. Only the simple query protocol can be
+used in walsender mode.
+
+The commands accepted in walsender mode are:
+
+<variablelist>
+  <varlistentry>
+    <term>IDENTIFY_SYSTEM</term>
+    <listitem>
+     <para>
+      Requests the server to identify itself. Server replies with a result
+      set of a single row, containing two fields:
+     </para>
+
+     <para>
+      <variablelist>
+      <varlistentry>
+      <term>
+       systemid
+      </term>
+      <listitem>
+      <para>
+       The unique system identifier identifying the cluster. This
+       can be used to check that the base backup used to initialize the
+       slave came from the same cluster.
+      </para>
+      </listitem>
+      </varlistentry>
+
+      <varlistentry>
+      <term>
+       timeline
+      </term>
+      <listitem>
+      <para>
+       Current TimelineID. Also useful to check that the slave is
+       consistent with the master.
+      </para>
+      </listitem>
+      </varlistentry>
+      </variablelist>
+     </para>
+    </listitem>
+  </varlistentry>
+
+  <varlistentry>
+    <term>START_REPLICATION <replaceable>XXX</>/<replaceable>XXX</></term>
+    <listitem>
+     <para>
+      Instructs server to start streaming WAL, starting at
+      WAL position <replaceable>XXX</>/<replaceable>XXX</>.
+      The server can reply with an error, e.g. if the requested section of WAL
+      has already been recycled. On success, server responds with a
+      CopyOutResponse message, and then starts to stream WAL to the frontend.
+      WAL will continue to be streamed until the connection is broken;
+      no further commands will be accepted.
+     </para>
+
+     <para>
+      WAL data is sent as a series of CopyData messages.  (This allows
+      other information to be intermixed; in particular the server can send
+      an ErrorResponse message if it encounters a failure after beginning
+      to stream.)  The payload in each CopyData message follows this format:
+     </para>
+
+     <para>
+      <variablelist>
+      <varlistentry>
+      <term>
+          XLogData (B)
+      </term>
+      <listitem>
+      <para>
+      <variablelist>
+      <varlistentry>
+      <term>
+          Byte1('w')
+      </term>
+      <listitem>
+      <para>
+          Identifies the message as WAL data.
+      </para>
+      </listitem>
+      </varlistentry>
+      <varlistentry>
+      <term>
+          Byte8
+      </term>
+      <listitem>
+      <para>
+          The starting point of the WAL data in this message, given in
+          XLogRecPtr format.
+      </para>
+      </listitem>
+      </varlistentry>
+      <varlistentry>
+      <term>
+          Byte8
+      </term>
+      <listitem>
+      <para>
+          The current end of WAL on the server, given in
+          XLogRecPtr format.
+      </para>
+      </listitem>
+      </varlistentry>
+      <varlistentry>
+      <term>
+          Byte8
+      </term>
+      <listitem>
+      <para>
+          The server's system clock at the time of transmission,
+          given in TimestampTz format.
+      </para>
+      </listitem>
+      </varlistentry>
+      <varlistentry>
+      <term>
+          Byte<replaceable>n</replaceable>
+      </term>
+      <listitem>
+      <para>
+          A section of the WAL data stream.
+      </para>
+      </listitem>
+      </varlistentry>
+      </variablelist>
+      </para>
+      </listitem>
+      </varlistentry>
+      </variablelist>
+     </para>
+     <para>
+       A single WAL record is never split across two CopyData messages.
+       When a WAL record crosses a WAL page boundary, and is therefore
+       already split using continuation records, it can be split at the page
+       boundary. In other words, the first main WAL record and its
+       continuation records can be sent in different CopyData messages.
+     </para>
+     <para>
+       Note that all fields within the WAL data and the above-described header
+       will be in the sending server's native format.  Endianness, and the
+       format for the timestamp, are unpredictable unless the receiver has
+       verified that the sender's system identifier matches its own
+       <filename>pg_control</> contents.
+     </para>
+     <para>
+       If the WAL sender process is terminated normally (during postmaster
+       shutdown), it will send a CommandComplete message before exiting.
+       This might not happen during an abnormal shutdown, of course.
+     </para>
+    </listitem>
+  </varlistentry>
+</variablelist>
+
+</para>
+
+</sect1>
 
 <sect1 id="protocol-message-types">
 <title>Message Data Types</title>
@@ -4133,120 +4300,6 @@ The client is responsible for formatting displayed information to meet its
 needs; in particular it should break long lines as needed.  Newline characters
 appearing in the error message fields should be treated as paragraph breaks,
 not line breaks.
-</para>
-
-</sect1>
-
-<sect1 id="protocol-replication">
-<title>Streaming Replication Protocol</title>
-
-<para>
-To initiate streaming replication, the frontend sends the "replication"
-parameter in the startup message. This tells the backend to go into
-walsender mode, where a small set of replication commands can be issued
-instead of SQL statements. Only the simple query protocol can be used in
-walsender mode.
-
-The commands accepted in walsender mode are:
-
-<variablelist>
-  <varlistentry>
-    <term>IDENTIFY_SYSTEM</term>
-    <listitem>
-     <para>
-      Requests the server to identify itself. Server replies with a result
-      set of a single row, and two fields:
-
-      systemid: The unique system identifier identifying the cluster. This
-      can be used to check that the base backup used to initialize the
-      slave came from the same cluster.
-
-      timeline: Current TimelineID. Also used to check that the slave is
-      consistent with the master.
-     </para>
-    </listitem>
-  </varlistentry>
-
-  <varlistentry>
-    <term>START_REPLICATION XXX/XXX</term>
-    <listitem>
-     <para>
-      Instructs backend to start streaming WAL, starting at point XXX/XXX.
-      Server can reply with an error e.g if the requested piece of WAL has
-      already been recycled. On success, server responds with a
-      CopyOutResponse message, and backend starts to stream WAL as CopyData
-      messages.
-      The payload in CopyData message consists of the following format.
-     </para>
-
-     <para>
-      <variablelist>
-      <varlistentry>
-      <term>
-          XLogData (B)
-      </term>
-      <listitem>
-      <para>
-      <variablelist>
-      <varlistentry>
-      <term>
-          Byte1('w')
-      </term>
-      <listitem>
-      <para>
-          Identifies the message as WAL data.
-      </para>
-      </listitem>
-      </varlistentry>
-      <varlistentry>
-      <term>
-          Int32
-      </term>
-      <listitem>
-      <para>
-          The log file number of the LSN, indicating the starting point of
-          the WAL in the message.
-      </para>
-      </listitem>
-      </varlistentry>
-      <varlistentry>
-      <term>
-          Int32
-      </term>
-      <listitem>
-      <para>
-          The byte offset of the LSN, indicating the starting point of
-          the WAL in the message.
-      </para>
-      </listitem>
-      </varlistentry>
-      <varlistentry>
-      <term>
-          Byte<replaceable>n</replaceable>
-      </term>
-      <listitem>
-      <para>
-          Data that forms part of WAL data stream.
-      </para>
-      </listitem>
-      </varlistentry>
-      </variablelist>
-      </para>
-      </listitem>
-      </varlistentry>
-      </variablelist>
-     </para>
-     <para>
-       A single WAL record is never split across two CopyData messages. When
-       a WAL record crosses a WAL page boundary, however, and is therefore
-       already split using continuation records, it can be split at the page
-       boundary. In other words, the first main WAL record and its
-       continuation records can be split across different CopyData messages.
-     </para>
-    </listitem>
-  </varlistentry>
-</variablelist>
-
 </para>
 
 </sect1>
