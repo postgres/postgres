@@ -1,7 +1,7 @@
 
 # -*-perl-*- hey - emacs - this is a perl file
 
-# $PostgreSQL: pgsql/src/tools/msvc/vcregress.pl,v 1.10.2.2 2010/06/02 15:58:26 adunstan Exp $
+# $PostgreSQL: pgsql/src/tools/msvc/vcregress.pl,v 1.10.2.3 2010/06/03 11:03:09 adunstan Exp $
 
 use strict;
 
@@ -170,7 +170,7 @@ sub plcheck
 			use Config;
 			if ($Config{usemultiplicity} eq 'define')
 			{
-				push(@tests,'plperl_plperlu');
+				push(@tests,'plperlu_plperl');
 			}
 		}
 		print "============================================================\n";
