@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.415 2010/06/02 09:28:44 heikki Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.416 2010/06/03 03:19:59 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -5661,6 +5661,10 @@ StartupXLOG(void)
 		ereport(LOG,
 				(errmsg("database system was shut down at %s",
 						str_time(ControlFile->time))));
+	else if (ControlFile->state == DB_SHUTDOWNED_IN_RECOVERY)
+		ereport(LOG,
+				(errmsg("database system was shut down in recovery at %s",
+						str_time(ControlFile->time))));
 	else if (ControlFile->state == DB_SHUTDOWNING)
 		ereport(LOG,
 				(errmsg("database system shutdown was interrupted; last known up at %s",
@@ -7548,6 +7552,14 @@ CreateRestartPoint(int flags)
 				  lastCheckPoint.redo.xlogid, lastCheckPoint.redo.xrecoff)));
 
 		UpdateMinRecoveryPoint(InvalidXLogRecPtr, true);
+		if (flags & CHECKPOINT_IS_SHUTDOWN)
+		{
+			LWLockAcquire(ControlFileLock, LW_EXCLUSIVE);
+			ControlFile->state = DB_SHUTDOWNED_IN_RECOVERY;
+			ControlFile->time = (pg_time_t) time(NULL);
+			UpdateControlFile();
+			LWLockRelease(ControlFileLock);
+		}
 		LWLockRelease(CheckpointLock);
 		return false;
 	}
@@ -7585,6 +7597,8 @@ CreateRestartPoint(int flags)
 		ControlFile->checkPoint = lastCheckPointRecPtr;
 		ControlFile->checkPointCopy = lastCheckPoint;
 		ControlFile->time = (pg_time_t) time(NULL);
+		if (flags & CHECKPOINT_IS_SHUTDOWN)
+			ControlFile->state = DB_SHUTDOWNED_IN_RECOVERY;
 		UpdateControlFile();
 	}
 	LWLockRelease(ControlFileLock);

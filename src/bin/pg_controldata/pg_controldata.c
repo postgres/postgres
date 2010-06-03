@@ -6,7 +6,7 @@
  * copyright (c) Oliver Elphick <olly@lfix.co.uk>, 2001;
  * licence: BSD
  *
- * $PostgreSQL: pgsql/src/bin/pg_controldata/pg_controldata.c,v 1.49 2010/04/28 19:38:49 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_controldata/pg_controldata.c,v 1.50 2010/06/03 03:20:00 rhaas Exp $
  */
 
 /*
@@ -57,6 +57,8 @@ dbState(DBState state)
 			return _("starting up");
 		case DB_SHUTDOWNED:
 			return _("shut down");
+		case DB_SHUTDOWNED_IN_RECOVERY:
+			return _("shut down in recovery");
 		case DB_SHUTDOWNING:
 			return _("shutting down");
 		case DB_IN_CRASH_RECOVERY:
