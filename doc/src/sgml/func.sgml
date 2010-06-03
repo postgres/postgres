@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.514 2010/06/03 01:34:02 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.515 2010/06/03 02:06:10 momjian Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -11419,7 +11419,7 @@ SELECT * FROM generate_series('2008-03-01 00:00'::timestamp,
    elements).  Some examples follow:
 <programlisting>
 -- basic usage
-select generate_subscripts('{NULL,1,NULL,2}'::int[], 1) as s;
+SELECT generate_subscripts('{NULL,1,NULL,2}'::int[], 1) AS s;
  s 
 ---
  1
@@ -11430,32 +11430,33 @@ select generate_subscripts('{NULL,1,NULL,2}'::int[], 1) as s;
 
 -- presenting an array, the subscript and the subscripted
 -- value requires a subquery
-select * from arrays;
+SELECT * FROM arrays;
          a          
 --------------------
  {-1,-2}
- {100,200}
+ {100,200,300}
 (2 rows)
 
-select a as array, s as subscript, a[s] as value
-from (select generate_subscripts(a, 1) as s, a from arrays) foo;
-   array   | subscript | value 
------------+-----------+-------
- {-1,-2}   |         1 |    -1
- {-1,-2}   |         2 |    -2
- {100,200} |         1 |   100
- {100,200} |         2 |   200
-(4 rows)
+SELECT a AS array, s AS subscript, a[s] AS value
+FROM (SELECT generate_subscripts(a, 1) AS s, a FROM arrays) foo;
+     array     | subscript | value
+---------------+-----------+-------
+ {-1,-2}       |         1 |    -1
+ {-1,-2}       |         2 |    -2
+ {100,200,300} |         1 |   100
+ {100,200,300} |         2 |   200
+ {100,200,300} |         3 |   300
+(5 rows)
 
 -- unnest a 2D array
-create or replace function unnest2(anyarray)
-returns setof anyelement as $$
+CREATE OR REPLACE FUNCTION unnest2(anyarray)
+RETURNS SETOF anyelement AS $$
 select $1[i][j] 
    from generate_subscripts($1,1) g1(i),
         generate_subscripts($1,2) g2(j);
-$$ language sql immutable;
+$$ LANGUAGE sql IMMUTABLE;
 CREATE FUNCTION
-postgres=# select * from unnest2(array[[1,2],[3,4]]);
+postgres=# SELECT * FROM unnest2(ARRAY[[1,2],[3,4]]);
  unnest2 
 ---------
        1
