@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.515 2010/06/03 02:06:10 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.516 2010/06/03 14:40:42 momjian Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -3445,19 +3445,22 @@ regexp_replace('foobarbaz', 'b(..)', E'X\\1Y', 'g')
    </para>
 
     <para>
-     The <function>regexp_matches</> function returns all of the captured
-     substrings resulting from matching a POSIX regular expression pattern.
-     It has the syntax
+     The <function>regexp_matches</> function returns a text array of
+     all of the captured substrings resulting from matching a POSIX
+     regular expression pattern.  It has the syntax
      <function>regexp_matches</function>(<replaceable>string</>, <replaceable>pattern</>
      <optional>, <replaceable>flags</> </optional>).
-     If there is no match to the <replaceable>pattern</>, the function returns
-     no rows.  If there is a match, the function returns a text array whose
+     The function can return no rows, one row, or multiple rows (see
+     the <literal>g</> flag below).  If the <replaceable>pattern</>
+     does not match, the function returns no rows.  If the pattern
+     contains no parenthesized subexpressions, then each row
+     returned is a single-element text array containing the substring
+     matching the whole pattern.  If the pattern contains parenthesized
+     subexpressions, the function returns a text array whose
      <replaceable>n</>'th element is the substring matching the
      <replaceable>n</>'th parenthesized subexpression of the pattern
      (not counting <quote>non-capturing</> parentheses; see below for
-     details).  If the pattern does not contain any parenthesized
-     subexpressions, then the result is a single-element text array containing
-     the substring matching the whole pattern.
+     details).
      The <replaceable>flags</> parameter is an optional text
      string containing zero or more single-letter flags that change the
      function's behavior.  Flag <literal>g</> causes the function to find
@@ -3487,6 +3490,16 @@ SELECT regexp_matches('foobarbequebaz', 'barbeque');
 ----------------
  {barbeque}
 (1 row)
+</programlisting>
+   </para>
+
+   <para>
+    It is possible to force <function>regexp_matches()</> to always
+    return one row by using a sub-select;  this is particularly useful
+    in a <literal>SELECT</> target list when you want all rows
+    returned, even non-matching ones:
+<programlisting>
+SELECT col1, (SELECT regexp_matches(col2, '(bar)(beque)')) FROM tab;
 </programlisting>
    </para>
 
