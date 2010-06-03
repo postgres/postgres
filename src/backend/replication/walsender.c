@@ -29,7 +29,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/replication/walsender.c,v 1.25 2010/06/03 22:17:32 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/replication/walsender.c,v 1.26 2010/06/03 23:00:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -641,7 +641,7 @@ XLogRead(char *buf, XLogRecPtr recptr, Size nbytes)
 }
 
 /*
- * Read up to MAX_SEND_SIZE bytes of WAL that's been written (and flushed),
+ * Read up to MAX_SEND_SIZE bytes of WAL that's been written to disk,
  * but not yet sent to the client, and send it.
  *
  * msgbuf is a work area in which the output message is constructed.  It's
@@ -662,7 +662,11 @@ XLogSend(char *msgbuf, bool *caughtup)
 	Size		nbytes;
 	WalDataMessageHeader msghdr;
 
-	/* Attempt to send all records flushed to the disk already */
+	/*
+	 * Attempt to send all data that's already been written out from WAL
+	 * buffers (note it might not yet be fsync'd to disk).  We cannot go
+	 * further than that given the current implementation of XLogRead().
+	 */
 	SendRqstPtr = GetWriteRecPtr();
 
 	/* Quick exit if nothing to do */
@@ -744,7 +748,7 @@ XLogSend(char *msgbuf, bool *caughtup)
 
 	pq_putmessage('d', msgbuf, 1 + sizeof(WalDataMessageHeader) + nbytes);
 
-	/* Flush pending output */
+	/* Flush pending output to the client */
 	if (pq_flush())
 		return false;
 
