@@ -47,6 +47,7 @@
 #include "nodes/execnodes.h"
 #include "nodes/pg_list.h"
 #include "parser/parse_type.h"
+#include "parser/scansup.h"
 #include "tcop/tcopprot.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
@@ -2107,13 +2108,13 @@ static remoteConn *
 getConnectionByName(const char *name)
 {
 	remoteConnHashEnt *hentry;
-	char		key[NAMEDATALEN];
+	char	   *key;
 
 	if (!remoteConnHash)
 		remoteConnHash = createConnHash();
 
-	MemSet(key, 0, NAMEDATALEN);
-	snprintf(key, NAMEDATALEN - 1, "%s", name);
+	key = pstrdup(name);
+	truncate_identifier(key, strlen(key), true);
 	hentry = (remoteConnHashEnt *) hash_search(remoteConnHash,
 											   key, HASH_FIND, NULL);
 
@@ -2139,13 +2140,13 @@ createNewConnection(const char *name, remoteConn * rconn)
 {
 	remoteConnHashEnt *hentry;
 	bool		found;
-	char		key[NAMEDATALEN];
+	char	   *key;
 
 	if (!remoteConnHash)
 		remoteConnHash = createConnHash();
 
-	MemSet(key, 0, NAMEDATALEN);
-	snprintf(key, NAMEDATALEN - 1, "%s", name);
+	key = pstrdup(name);
+	truncate_identifier(key, strlen(key), true);
 	hentry = (remoteConnHashEnt *) hash_search(remoteConnHash, key,
 											   HASH_ENTER, &found);
 
@@ -2163,14 +2164,13 @@ deleteConnection(const char *name)
 {
 	remoteConnHashEnt *hentry;
 	bool		found;
-	char		key[NAMEDATALEN];
+	char	   *key;
 
 	if (!remoteConnHash)
 		remoteConnHash = createConnHash();
 
-	MemSet(key, 0, NAMEDATALEN);
-	snprintf(key, NAMEDATALEN - 1, "%s", name);
-
+	key = pstrdup(name);
+	truncate_identifier(key, strlen(key), true);
 	hentry = (remoteConnHashEnt *) hash_search(remoteConnHash,
 											   key, HASH_REMOVE, &found);
 
