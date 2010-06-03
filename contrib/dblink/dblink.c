@@ -8,7 +8,7 @@
  * Darko Prenosil <Darko.Prenosil@finteh.hr>
  * Shridhar Daithankar <shridhar_daithankar@persistent.co.in>
  *
- * $PostgreSQL: pgsql/contrib/dblink/dblink.c,v 1.60.2.5 2010/02/03 23:01:47 joe Exp $
+ * $PostgreSQL: pgsql/contrib/dblink/dblink.c,v 1.60.2.6 2010/06/03 09:43:04 itagaki Exp $
  * Copyright (c) 2001-2006, PostgreSQL Global Development Group
  * ALL RIGHTS RESERVED;
  *
@@ -50,6 +50,7 @@
 #include "nodes/nodes.h"
 #include "nodes/pg_list.h"
 #include "parser/parse_type.h"
+#include "parser/scansup.h"
 #include "tcop/tcopprot.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
@@ -2243,13 +2244,13 @@ static remoteConn *
 getConnectionByName(const char *name)
 {
 	remoteConnHashEnt *hentry;
-	char		key[NAMEDATALEN];
+	char	   *key;
 
 	if (!remoteConnHash)
 		remoteConnHash = createConnHash();
 
-	MemSet(key, 0, NAMEDATALEN);
-	snprintf(key, NAMEDATALEN - 1, "%s", name);
+	key = pstrdup(name);
+	truncate_identifier(key, strlen(key), true);
 	hentry = (remoteConnHashEnt *) hash_search(remoteConnHash,
 											   key, HASH_FIND, NULL);
 
@@ -2275,13 +2276,13 @@ createNewConnection(const char *name, remoteConn * rconn)
 {
 	remoteConnHashEnt *hentry;
 	bool		found;
-	char		key[NAMEDATALEN];
+	char	   *key;
 
 	if (!remoteConnHash)
 		remoteConnHash = createConnHash();
 
-	MemSet(key, 0, NAMEDATALEN);
-	snprintf(key, NAMEDATALEN - 1, "%s", name);
+	key = pstrdup(name);
+	truncate_identifier(key, strlen(key), true);
 	hentry = (remoteConnHashEnt *) hash_search(remoteConnHash, key,
 											   HASH_ENTER, &found);
 
@@ -2299,14 +2300,13 @@ deleteConnection(const char *name)
 {
 	remoteConnHashEnt *hentry;
 	bool		found;
-	char		key[NAMEDATALEN];
+	char	   *key;
 
 	if (!remoteConnHash)
 		remoteConnHash = createConnHash();
 
-	MemSet(key, 0, NAMEDATALEN);
-	snprintf(key, NAMEDATALEN - 1, "%s", name);
-
+	key = pstrdup(name);
+	truncate_identifier(key, strlen(key), true);
 	hentry = (remoteConnHashEnt *) hash_search(remoteConnHash,
 											   key, HASH_REMOVE, &found);
 
