@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release-9.0.sgml,v 2.25 2010/06/03 16:33:36 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release-9.0.sgml,v 2.26 2010/06/03 19:38:39 momjian Exp $ -->
 
  <sect1 id="release-9-0">
   <title>Release 9.0</title>
@@ -1548,7 +1548,7 @@ recovery_connections -> hot_standby
 
       <para>
        While a check can be performed inside the trigger, doing it in an
-       external <literal>WHERE</> clause has performance benefits.
+       external <literal>WHEN</> clause has performance benefits.
       </para>
      </listitem>
 
