@@ -24,10 +24,10 @@
 
 int main() {
   /* exec sql begin declare section */
-  	  
+  	    
   
 #line 9 "insupd.pgc"
- int i1 [ 3 ] , i2 [ 3 ] ;
+ int i1 [ 3 ] , i2 [ 3 ] , i3 [ 3 ] , i4 ;
 /* exec sql end declare section */
 #line 10 "insupd.pgc"
 
@@ -72,7 +72,9 @@ if (sqlca.sqlwarn[0] == 'W') sqlprint();
 if (sqlca.sqlcode < 0) sqlprint();}
 #line 21 "insupd.pgc"
 
-  { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "insert into insupd_test ( a , b ) values ( 3 , 3 )", ECPGt_EOIT, ECPGt_EORT);
+  { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "insert into insupd_test ( a , b ) values ( 3 , 3 ) returning a", ECPGt_EOIT, 
+	ECPGt_int,&(i4),(long)1,(long)1,sizeof(int), 
+	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EORT);
 #line 22 "insupd.pgc"
 
 if (sqlca.sqlwarn[0] == 'W') sqlprint();
@@ -82,7 +84,9 @@ if (sqlca.sqlcode < 0) sqlprint();}
 #line 22 "insupd.pgc"
 
 
-  { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "update insupd_test set a = a + 1", ECPGt_EOIT, ECPGt_EORT);
+  { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "update insupd_test set a = a + 1 returning a", ECPGt_EOIT, 
+	ECPGt_int,(i3),(long)1,(long)3,sizeof(int), 
+	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EORT);
 #line 24 "insupd.pgc"
 
 if (sqlca.sqlwarn[0] == 'W') sqlprint();
@@ -124,16 +128,17 @@ if (sqlca.sqlcode < 0) sqlprint();}
 #line 28 "insupd.pgc"
 
 
+  printf("changes\n%d %d %d %d\n", i3[0], i3[1], i3[2], i4);
   printf("test\na b\n%d %d\n%d %d\n%d %d\n", i1[0], i2[0], i1[1], i2[1], i1[2], i2[2]);
 
   { ECPGdisconnect(__LINE__, "ALL");
-#line 32 "insupd.pgc"
+#line 33 "insupd.pgc"
 
 if (sqlca.sqlwarn[0] == 'W') sqlprint();
-#line 32 "insupd.pgc"
+#line 33 "insupd.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}
-#line 32 "insupd.pgc"
+#line 33 "insupd.pgc"
 
 
   return 0;

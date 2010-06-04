@@ -6,7 +6,7 @@ EXEC SQL INCLUDE ../regression;
 
 int main() {
   EXEC SQL BEGIN DECLARE SECTION;
-  	int i1[3], i2[3];
+  	int i1[3], i2[3], i3[3], i4;
   EXEC SQL END DECLARE SECTION;
 
   ECPGdebug(1, stderr);
@@ -19,14 +19,15 @@ int main() {
 
   EXEC SQL INSERT INTO insupd_test (a,b) values (1, 1);
   EXEC SQL INSERT INTO insupd_test (a,b) values (2, 2);
-  EXEC SQL INSERT INTO insupd_test (a,b) values (3, 3);
+  EXEC SQL INSERT INTO insupd_test (a,b) values (3, 3) returning a into :i4;
 
-  EXEC SQL UPDATE insupd_test set a=a+1;
+  EXEC SQL UPDATE insupd_test set a=a+1 returning a into :i3;
   EXEC SQL UPDATE insupd_test set (a,b)=(5,5) where a = 4;
   EXEC SQL UPDATE insupd_test set a=4 where a=3;;
 
   EXEC SQL SELECT a,b into :i1,:i2 from insupd_test order by a;
 
+  printf("changes\n%d %d %d %d\n", i3[0], i3[1], i3[2], i4);
   printf("test\na b\n%d %d\n%d %d\n%d %d\n", i1[0], i2[0], i1[1], i2[1], i1[2], i2[2]);
 
   EXEC SQL DISCONNECT ALL;
