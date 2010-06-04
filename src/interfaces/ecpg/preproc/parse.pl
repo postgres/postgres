@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/parse.pl,v 1.3.2.1 2009/11/21 05:44:12 tgl Exp $
+# $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/parse.pl,v 1.3.2.2 2010/06/04 10:48:05 meskes Exp $
 # parser generater for ecpg
 # call with backend parser as stdin
 #
@@ -81,6 +81,7 @@ $replace_line{'VariableShowStmtSHOWvar_name'} = 'SHOW var_name ecpg_into';
 $replace_line{'VariableShowStmtSHOWTIMEZONE'} = 'SHOW TIME ZONE ecpg_into';
 $replace_line{'VariableShowStmtSHOWTRANSACTIONISOLATIONLEVEL'} = 'SHOW TRANSACTION ISOLATION LEVEL ecpg_into';
 $replace_line{'VariableShowStmtSHOWSESSIONAUTHORIZATION'} = 'SHOW SESSION AUTHORIZATION ecpg_into';
+$replace_line{'returning_clauseRETURNINGtarget_list'} = 'RETURNING target_list ecpg_into';
 $replace_line{'ExecuteStmtEXECUTEnameexecute_param_clause'} = 'EXECUTE prepared_name execute_param_clause execute_rest';
 $replace_line{'ExecuteStmtCREATEOptTempTABLEcreate_as_targetASEXECUTEnameexecute_param_clause'} = 'CREATE OptTemp TABLE create_as_target AS EXECUTE prepared_name execute_param_clause';
 $replace_line{'PrepareStmtPREPAREnameprep_type_clauseASPreparableStmt'} = 'PREPARE prepared_name prep_type_clause AS PreparableStmt';
