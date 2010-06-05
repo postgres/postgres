@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.516 2010/06/03 14:40:42 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.517 2010/06/05 14:56:36 tgl Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -6155,7 +6155,15 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
     This expression yields true when two time periods (defined by their
     endpoints) overlap, false when they do not overlap.  The endpoints
     can be specified as pairs of dates, times, or time stamps; or as
-    a date, time, or time stamp followed by an interval.
+    a date, time, or time stamp followed by an interval.  When a pair
+    of values is provided, either the start or the end can be written
+    first; <literal>OVERLAPS</> automatically takes the earlier value
+    of the pair as the start.  Each time period is considered to
+    represent the half-open interval <replaceable>start</> <literal>&lt;=</>
+    <replaceable>time</> <literal>&lt;</> <replaceable>end</>, unless
+    <replaceable>start</> and <replaceable>end</> are equal in which case it
+    represents that single time instant.  This means for instance that two
+    time periods with only an endpoint in common do not overlap.
    </para>
 
 <screen>
@@ -6165,6 +6173,12 @@ SELECT (DATE '2001-02-16', DATE '2001-12-21') OVERLAPS
 SELECT (DATE '2001-02-16', INTERVAL '100 days') OVERLAPS
        (DATE '2001-10-30', DATE '2002-10-30');
 <lineannotation>Result: </lineannotation><computeroutput>false</computeroutput>
+SELECT (DATE '2001-10-29', DATE '2001-10-30') OVERLAPS
+       (DATE '2001-10-30', DATE '2001-10-31');
+<lineannotation>Result: </lineannotation><computeroutput>false</computeroutput>
+SELECT (DATE '2001-10-30', DATE '2001-10-30') OVERLAPS
+       (DATE '2001-10-30', DATE '2001-10-31');
+<lineannotation>Result: </lineannotation><computeroutput>true</computeroutput>
 </screen>
 
   <para>
