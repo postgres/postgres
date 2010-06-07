@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.198 2010/04/07 03:51:19 itagaki Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.199 2010/06/07 02:59:02 itagaki Exp $
  */
 
 /*----------------------------------------------------------------------
@@ -1172,8 +1172,6 @@ psql_completion(char *text, int start, int end)
 			"autovacuum_vacuum_scale_factor",
 			"autovacuum_vacuum_threshold",
 			"fillfactor",
-			"toast.autovacuum_analyze_scale_factor",
-			"toast.autovacuum_analyze_threshold",
 			"toast.autovacuum_enabled",
 			"toast.autovacuum_freeze_max_age",
 			"toast.autovacuum_freeze_min_age",

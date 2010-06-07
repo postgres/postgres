@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_table.sgml,v 1.127 2010/05/13 18:54:18 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_table.sgml,v 1.128 2010/06/07 02:59:02 itagaki Exp $
 PostgreSQL documentation
 -->
 
@@ -880,7 +880,7 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE <replaceable class="PAR
    </varlistentry>
 
    <varlistentry>
-    <term><literal>autovacuum_analyze_threshold</>, <literal>toast.autovacuum_analyze_threshold</literal> (<type>integer</>)</term>
+    <term><literal>autovacuum_analyze_threshold</> (<type>integer</>)</term>
     <listitem>
      <para>
      Minimum number of inserted, updated, or deleted tuples before initiate an
@@ -890,7 +890,7 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE <replaceable class="PAR
    </varlistentry>
 
    <varlistentry>
-    <term><literal>autovacuum_analyze_scale_factor</>, <literal>toast.autovacuum_analyze_scale_factor</literal> (<type>float4</>)</term>
+    <term><literal>autovacuum_analyze_scale_factor</> (<type>float4</>)</term>
     <listitem>
      <para>
      Multiplier for <structfield>reltuples</> to add to

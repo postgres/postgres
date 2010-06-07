@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/common/reloptions.c,v 1.34 2010/03/11 21:47:19 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/common/reloptions.c,v 1.35 2010/06/07 02:59:02 itagaki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -116,7 +116,7 @@ static relopt_int intRelOpts[] =
 		{
 			"autovacuum_analyze_threshold",
 			"Minimum number of tuple inserts, updates or deletes prior to analyze",
-			RELOPT_KIND_HEAP | RELOPT_KIND_TOAST
+			RELOPT_KIND_HEAP
 		},
 		-1, 0, INT_MAX
 	},
@@ -177,7 +177,7 @@ static relopt_real realRelOpts[] =
 		{
 			"autovacuum_analyze_scale_factor",
 			"Number of tuple inserts, updates or deletes prior to analyze as a fraction of reltuples",
-			RELOPT_KIND_HEAP | RELOPT_KIND_TOAST
+			RELOPT_KIND_HEAP
 		},
 		-1, 0.0, 100.0
 	},
@@ -1156,10 +1156,21 @@ default_reloptions(Datum reloptions, bool validate, relopt_kind kind)
 bytea *
 heap_reloptions(char relkind, Datum reloptions, bool validate)
 {
+	StdRdOptions *rdopts;
+
 	switch (relkind)
 	{
 		case RELKIND_TOASTVALUE:
-			return default_reloptions(reloptions, validate, RELOPT_KIND_TOAST);
+			rdopts = (StdRdOptions *)
+				default_reloptions(reloptions, validate, RELOPT_KIND_TOAST);
+			if (rdopts != NULL)
+			{
+				/* adjust default-only parameters for TOAST relations */
+				rdopts->fillfactor = 100;
+				rdopts->autovacuum.analyze_threshold = -1;
+				rdopts->autovacuum.analyze_scale_factor = -1;
+			}
+			return (bytea *) rdopts;
 		case RELKIND_RELATION:
 			return default_reloptions(reloptions, validate, RELOPT_KIND_HEAP);
 		default:
