@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_table.sgml,v 1.114.2.2 2010/05/13 18:54:23 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_table.sgml,v 1.114.2.3 2010/06/07 03:01:34 itagaki Exp $
 PostgreSQL documentation
 -->
 
@@ -770,7 +770,7 @@ and <replaceable class="PARAMETER">table_constraint</replaceable> is:
    </varlistentry>
 
    <varlistentry>
-    <term><literal>autovacuum_analyze_threshold</>, <literal>toast.autovacuum_analyze_threshold</literal> (<type>integer</>)</term>
+    <term><literal>autovacuum_analyze_threshold</> (<type>integer</>)</term>
     <listitem>
      <para>
      Minimum number of inserted, updated, or deleted tuples before initiate an
@@ -780,7 +780,7 @@ and <replaceable class="PARAMETER">table_constraint</replaceable> is:
    </varlistentry>
 
    <varlistentry>
-    <term><literal>autovacuum_analyze_scale_factor</>, <literal>toast.autovacuum_analyze_scale_factor</literal> (<type>float4</>)</term>
+    <term><literal>autovacuum_analyze_scale_factor</> (<type>float4</>)</term>
     <listitem>
      <para>
      Multiplier for <structfield>reltuples</> to add to
