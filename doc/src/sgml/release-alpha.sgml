@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release-alpha.sgml,v 2.1 2010/04/29 20:54:28 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release-alpha.sgml,v 2.2 2010/06/07 02:01:09 itagaki Exp $ -->
 
 <sect1 id="release-9-0-alpha">
   <title>Release 9.0alpha4</title>
@@ -126,7 +126,7 @@
          <emphasis>This implementation should be significantly more
          efficient than the old one, and is also more compatible with
          Hot Standby usage.  There is not yet any facility for HS
-         slaves to receive notifications generated on the master,
+         standby servers to receive notifications generated on the master,
          although such a thing is possible in future.</emphasis>
         </para>
        </listitem>
@@ -552,7 +552,7 @@
        <listitem>
         <para>
          Allow read-only connections during recovery, also
-         known as Hot Standby.  This provides a built-in master-slave
+         known as Hot Standby.  This provides a built-in master-standby
          replication solution.
         </para>
        </listitem>

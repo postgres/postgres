@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release-9.0.sgml,v 2.27 2010/06/03 21:23:02 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release-9.0.sgml,v 2.28 2010/06/07 02:01:08 itagaki Exp $ -->
 
  <sect1 id="release-9-0">
   <title>Release 9.0</title>
@@ -398,7 +398,7 @@ recovery_connections -> hot_standby
       <para>
        Previously <acronym>WAL</> files could be sent to standby systems only
        as 16 megabytes files; this allows master changes to be sent to the
-       slave with very little delay. There are new <filename>postgresql.conf</>
+       standby with very little delay. There are new <filename>postgresql.conf</>
        and <filename>recovery.conf</> settings to enable this
        feature, as well as extensive <link
        linkend="streaming-replication">documentation</link>.

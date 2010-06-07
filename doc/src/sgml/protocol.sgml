@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/protocol.sgml,v 1.88 2010/06/03 22:17:32 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/protocol.sgml,v 1.89 2010/06/07 02:01:08 itagaki Exp $ -->
 
 <chapter id="protocol">
  <title>Frontend/Backend Protocol</title>
@@ -1315,7 +1315,7 @@ The commands accepted in walsender mode are:
       <para>
        The unique system identifier identifying the cluster. This
        can be used to check that the base backup used to initialize the
-       slave came from the same cluster.
+       standby came from the same cluster.
       </para>
       </listitem>
       </varlistentry>
@@ -1326,7 +1326,7 @@ The commands accepted in walsender mode are:
       </term>
       <listitem>
       <para>
-       Current TimelineID. Also useful to check that the slave is
+       Current TimelineID. Also useful to check that the standby is
        consistent with the master.
       </para>
       </listitem>

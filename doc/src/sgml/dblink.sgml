@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/dblink.sgml,v 1.11 2010/04/03 07:22:53 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/dblink.sgml,v 1.12 2010/06/07 02:01:08 itagaki Exp $ -->
 
 <sect1 id="dblink">
  <title>dblink</title>
@@ -623,7 +623,7 @@ SELECT *
    <title>Example</title>
 
    <programlisting>
- select dblink_connect('dbname=dblink_test_slave');
+ select dblink_connect('dbname=dblink_test_standby');
   dblink_connect
  ----------------
   OK

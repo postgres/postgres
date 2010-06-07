@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/high-availability.sgml,v 1.70 2010/05/29 09:01:10 heikki Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/high-availability.sgml,v 1.71 2010/06/07 02:01:08 itagaki Exp $ -->
 
 <chapter id="high-availability">
  <title>High Availability, Load Balancing, and Replication</title>
@@ -161,21 +161,21 @@ protocol to make nodes agree on a serializable transactional order.
   </varlistentry>
 
   <varlistentry>
-   <term>Trigger-Based Master-Slave Replication</term>
+   <term>Trigger-Based Master-Standby Replication</term>
    <listitem>
 
     <para>
-     A master-slave replication setup sends all data modification
+     A master-standby replication setup sends all data modification
      queries to the master server.  The master server asynchronously
-     sends data changes to the slave server.  The slave can answer
+     sends data changes to the standby server.  The standby can answer
      read-only queries while the master server is running.  The
-     slave server is ideal for data warehouse queries.
+     standby server is ideal for data warehouse queries.
     </para>
 
     <para>
      <productname>Slony-I</> is an example of this type of replication, with per-table
-     granularity, and support for multiple slaves.  Because it
-     updates the slave server asynchronously (in batches), there is
+     granularity, and support for multiple standby servers.  Because it
+     updates the standby server asynchronously (in batches), there is
      possible data loss during fail over.
     </para>
    </listitem>
@@ -202,9 +202,9 @@ protocol to make nodes agree on a serializable transactional order.
      this is unacceptable, either the middleware or the application
      must query such values from a single server and then use those
      values in write queries.  Another option is to use this replication
-     option with a traditional master-slave setup, i.e. data modification
+     option with a traditional master-standby setup, i.e. data modification
      queries are sent only to the master and are propagated to the
-     slaves via master-slave replication, not by the replication
+     standby servers via master-standby replication, not by the replication
      middleware.  Care must also be taken that all
      transactions either commit or abort on all servers, perhaps
      using two-phase commit (<xref linkend="sql-prepare-transaction">
@@ -247,7 +247,7 @@ protocol to make nodes agree on a serializable transactional order.
      replication is best for mostly read workloads, though its big
      advantage is that any server can accept write requests &mdash;
      there is no need to partition workloads between master and
-     slave servers, and because the data changes are sent from one
+     standby servers, and because the data changes are sent from one
      server to another, there is no problem with non-deterministic
      functions like <function>random()</>.
     </para>
@@ -291,7 +291,7 @@ protocol to make nodes agree on a serializable transactional order.
      <entry>Shared Disk Failover</entry>
      <entry>File System Replication</entry>
      <entry>Hot/Warm Standby Using PITR</entry>
-     <entry>Trigger-Based Master-Slave Replication</entry>
+     <entry>Trigger-Based Master-Standby Replication</entry>
      <entry>Statement-Based Replication Middleware</entry>
      <entry>Asynchronous Multimaster Replication</entry>
      <entry>Synchronous Multimaster Replication</entry>
@@ -378,7 +378,7 @@ protocol to make nodes agree on a serializable transactional order.
     </row>
 
     <row>
-     <entry>Slaves accept read-only queries</entry>
+     <entry>Standby accept read-only queries</entry>
      <entry align="center"></entry>
      <entry align="center"></entry>
      <entry align="center">Hot only</entry>
@@ -430,7 +430,7 @@ protocol to make nodes agree on a serializable transactional order.
      partitioned by offices, e.g., London and Paris, with a server
      in each office.  If queries combining London and Paris data
      are necessary, an application can query both servers, or
-     master/slave replication can be used to keep a read-only copy
+     master/standby replication can be used to keep a read-only copy
      of the other office's data on each server.
     </para>
    </listitem>

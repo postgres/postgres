@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/external-projects.sgml,v 1.19 2007/11/14 01:58:18 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/external-projects.sgml,v 1.20 2010/06/07 02:01:08 itagaki Exp $ -->
 
  <appendix id="external-projects">
   <title>External Projects</title>
@@ -240,7 +240,7 @@
    <productname>PostgreSQL</> replication solutions are developed
    externally. For example, <application> <ulink
    url="http://www.slony.info">Slony-I</ulink></> is a popular
-   master/slave replication solution that is developed independently
+   master/standby replication solution that is developed independently
    from the core project.
   </para>
 
