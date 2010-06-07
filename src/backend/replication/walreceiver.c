@@ -29,7 +29,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/replication/walreceiver.c,v 1.11 2010/06/03 22:17:32 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/replication/walreceiver.c,v 1.12 2010/06/07 15:49:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -524,7 +524,6 @@ XLogWalRcvFlush(void)
 	{
 		/* use volatile pointer to prevent code rearrangement */
 		volatile WalRcvData *walrcv = WalRcv;
-		char		activitymsg[50];
 
 		issue_xlog_fsync(recvFile, recvId, recvSeg);
 
@@ -536,8 +535,14 @@ XLogWalRcvFlush(void)
 		SpinLockRelease(&walrcv->mutex);
 
 		/* Report XLOG streaming progress in PS display */
-		snprintf(activitymsg, sizeof(activitymsg), "streaming %X/%X",
-				 LogstreamResult.Write.xlogid, LogstreamResult.Write.xrecoff);
-		set_ps_display(activitymsg, false);
+		if (update_process_title)
+		{
+			char		activitymsg[50];
+
+			snprintf(activitymsg, sizeof(activitymsg), "streaming %X/%X",
+					 LogstreamResult.Write.xlogid,
+					 LogstreamResult.Write.xrecoff);
+			set_ps_display(activitymsg, false);
+		}
 	}
 }
