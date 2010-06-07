@@ -58,6 +58,10 @@ DROP FUNCTION dblink_connect (text, text);
 
 DROP FUNCTION dblink_connect (text);
 
+DROP FUNCTION dblink_connect_u (text, text);
+
+DROP FUNCTION dblink_connect_u (text);
+
 DROP FUNCTION dblink_cancel_query(text);
 
 DROP FUNCTION dblink_error_message(text);
