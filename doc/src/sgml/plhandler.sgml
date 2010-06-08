@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/plhandler.sgml,v 1.10 2010/04/03 07:22:55 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/plhandler.sgml,v 1.11 2010/06/08 20:12:59 rhaas Exp $ -->
 
  <chapter id="plhandler">
    <title>Writing A Procedural Language Handler</title>
@@ -28,6 +28,8 @@
     and returning the type <type>language_handler</type>.  This
     special pseudotype identifies the function as a call handler and
     prevents it from being called directly in SQL commands.
+    For more details on C language calling conventions and dynamic loading,
+    see <xref linkend="xfunc-c">.
    </para>
 
    <para>
