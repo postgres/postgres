@@ -2151,9 +2151,14 @@ createNewConnection(const char *name, remoteConn * rconn)
 											   HASH_ENTER, &found);
 
 	if (found)
+	{
+		PQfinish(rconn->conn);
+		pfree(rconn);
+
 		ereport(ERROR,
 				(errcode(ERRCODE_DUPLICATE_OBJECT),
 				 errmsg("duplicate connection name")));
+	}
 
 	hentry->rconn = rconn;
 	strncpy(hentry->name, name, NAMEDATALEN - 1);
