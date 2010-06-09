@@ -8,7 +8,7 @@
  * Darko Prenosil <Darko.Prenosil@finteh.hr>
  * Shridhar Daithankar <shridhar_daithankar@persistent.co.in>
  *
- * $PostgreSQL: pgsql/contrib/dblink/dblink.c,v 1.93 2010/06/09 00:56:02 itagaki Exp $
+ * $PostgreSQL: pgsql/contrib/dblink/dblink.c,v 1.94 2010/06/09 03:39:26 itagaki Exp $
  * Copyright (c) 2001-2010, PostgreSQL Global Development Group
  * ALL RIGHTS RESERVED;
  *
@@ -2399,7 +2399,7 @@ get_connect_string(const char *servername)
 
 	/* first gather the server connstr options */
 	srvname = pstrdup(servername);
-	truncate_identifier(srvname, strlen(srvname), true);
+	truncate_identifier(srvname, strlen(srvname), false);
 	foreign_server = GetForeignServerByName(srvname, true);
 
 	if (foreign_server)
