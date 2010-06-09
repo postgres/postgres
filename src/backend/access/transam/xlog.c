@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.418 2010/06/09 10:54:45 mha Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.419 2010/06/09 15:04:06 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -508,6 +508,9 @@ static bool reachedMinRecoveryPoint = false;
 
 static bool InRedo = false;
 
+/* Have we launched bgwriter during recovery? */
+static bool bgwriterLaunched = false;
+
 /*
  * Information logged when we detect a change in one of the parameters
  * important for Hot Standby.
@@ -550,6 +553,7 @@ static void CheckPointGuts(XLogRecPtr checkPointRedo, int flags);
 static bool XLogCheckBuffer(XLogRecData *rdata, bool doPageWrites,
 				XLogRecPtr *lsn, BkpBlock *bkpb);
 static bool AdvanceXLInsertBuffer(bool new_segment);
+static bool XLogCheckpointNeeded(uint32 logid, uint32 logseg);
 static void XLogWrite(XLogwrtRqst WriteRqst, bool flexible, bool xlog_switch);
 static bool InstallXLogFileSegment(uint32 *log, uint32 *seg, char *tmppath,
 					   bool find_free, int *max_advance,
@@ -1554,14 +1558,14 @@ AdvanceXLInsertBuffer(bool new_segment)
 /*
  * Check whether we've consumed enough xlog space that a checkpoint is needed.
  *
- * Caller must have just finished filling the open log file (so that
- * openLogId/openLogSeg are valid).  We measure the distance from RedoRecPtr
- * to the open log file and see if that exceeds CheckPointSegments.
+ * logid/logseg indicate a log file that has just been filled up (or read
+ * during recovery). We measure the distance from RedoRecPtr to logid/logseg
+ * and see if that exceeds CheckPointSegments.
  *
  * Note: it is caller's responsibility that RedoRecPtr is up-to-date.
  */
 static bool
-XLogCheckpointNeeded(void)
+XLogCheckpointNeeded(uint32 logid, uint32 logseg)
 {
 	/*
 	 * A straight computation of segment number could overflow 32 bits. Rather
@@ -1577,8 +1581,8 @@ XLogCheckpointNeeded(void)
 	old_segno = (RedoRecPtr.xlogid % XLogSegSize) * XLogSegsPerFile +
 		(RedoRecPtr.xrecoff / XLogSegSize);
 	old_highbits = RedoRecPtr.xlogid / XLogSegSize;
-	new_segno = (openLogId % XLogSegSize) * XLogSegsPerFile + openLogSeg;
-	new_highbits = openLogId / XLogSegSize;
+	new_segno = (logid % XLogSegSize) * XLogSegsPerFile + logseg;
+	new_highbits = logid / XLogSegSize;
 	if (new_highbits != old_highbits ||
 		new_segno >= old_segno + (uint32) (CheckPointSegments - 1))
 		return true;
@@ -1782,10 +1786,10 @@ XLogWrite(XLogwrtRqst WriteRqst, bool flexible, bool xlog_switch)
 				 * update RedoRecPtr and recheck.
 				 */
 				if (IsUnderPostmaster &&
-					XLogCheckpointNeeded())
+					XLogCheckpointNeeded(openLogId, openLogSeg))
 				{
 					(void) GetRedoRecPtr();
-					if (XLogCheckpointNeeded())
+					if (XLogCheckpointNeeded(openLogId, openLogSeg))
 						RequestCheckpoint(CHECKPOINT_CAUSE_XLOG);
 				}
 			}
@@ -5653,7 +5657,6 @@ StartupXLOG(void)
 	XLogRecord *record;
 	uint32		freespace;
 	TransactionId oldestActiveXID;
-	bool		bgwriterLaunched = false;
 
 	/*
 	 * Read control file and check XLOG status looks valid.
@@ -7576,6 +7579,21 @@ CreateRestartPoint(int flags)
 		return false;
 	}
 
+	/*
+	 * Update the shared RedoRecPtr so that the startup process can
+	 * calculate the number of segments replayed since last restartpoint,
+	 * and request a restartpoint if it exceeds checkpoint_segments.
+	 *
+	 * You need to hold WALInsertLock and info_lck to update it, although
+	 * during recovery acquiring WALInsertLock is just pro forma, because
+	 * there is no other processes updating Insert.RedoRecPtr.
+	 */
+	LWLockAcquire(WALInsertLock, LW_EXCLUSIVE);
+	SpinLockAcquire(&xlogctl->info_lck);
+	xlogctl->Insert.RedoRecPtr = lastCheckPoint.redo;
+	SpinLockRelease(&xlogctl->info_lck);
+	LWLockRelease(WALInsertLock);
+
 	if (log_checkpoints)
 	{
 		/*
@@ -9209,6 +9227,20 @@ XLogPageRead(XLogRecPtr *RecPtr, int emode, bool fetching_ckpt,
 	 */
 	if (readFile >= 0 && !XLByteInSeg(*RecPtr, readId, readSeg))
 	{
+		/*
+		 * Signal bgwriter to start a restartpoint if we've replayed too
+		 * much xlog since the last one.
+		 */
+		if (StandbyMode && bgwriterLaunched)
+		{
+			if (XLogCheckpointNeeded(readId, readSeg))
+			{
+				(void) GetRedoRecPtr();
+				if (XLogCheckpointNeeded(readId, readSeg))
+					RequestCheckpoint(CHECKPOINT_CAUSE_XLOG);
+			}
+		}
+
 		close(readFile);
 		readFile = -1;
 		readSource = 0;
