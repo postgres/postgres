@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.113 2010/05/13 18:54:18 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.114 2010/06/09 17:48:10 alvherre Exp $
 PostgreSQL documentation
 -->
 
@@ -250,8 +250,10 @@ ALTER TABLE <replaceable class="PARAMETER">name</replaceable>
       status is checked when the event occurs, not when the trigger function
       is actually executed.  One can disable or enable a single
       trigger specified by name, or all triggers on the table, or only
-      user triggers (this option excludes triggers that are used to implement
-      foreign key constraints).  Disabling or enabling constraint triggers
+      user triggers (this option excludes internally generated constraint
+      triggers such as those that are used to implement foreign key
+      constraints or deferrable uniqueness and exclusion constraints).
+      Disabling or enabling internally generated constraint triggers
       requires superuser privileges; it should be done with caution since
       of course the integrity of the constraint cannot be guaranteed if the
       triggers are not executed.
@@ -585,8 +587,10 @@ ALTER TABLE <replaceable class="PARAMETER">name</replaceable>
       <listitem>
        <para>
         Disable or enable all triggers belonging to the table.
-        (This requires superuser privilege if any of the triggers are for
-        foreign key constraints.)
+        (This requires superuser privilege if any of the triggers are
+        internally generated constraint triggers such as those that are used
+        to implement foreign key constraints or deferrable uniqueness and
+        exclusion constraints.)
        </para>
       </listitem>
      </varlistentry>
@@ -596,7 +600,9 @@ ALTER TABLE <replaceable class="PARAMETER">name</replaceable>
       <listitem>
        <para>
         Disable or enable all triggers belonging to the table except for
-        foreign key constraint triggers.
+        internally generated constraint triggers such as those that are used
+        to implement foreign key constraints or deferrable uniqueness and
+        exclusion constraints.
        </para>
       </listitem>
      </varlistentry>
