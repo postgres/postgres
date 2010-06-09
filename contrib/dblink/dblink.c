@@ -8,7 +8,7 @@
  * Darko Prenosil <Darko.Prenosil@finteh.hr>
  * Shridhar Daithankar <shridhar_daithankar@persistent.co.in>
  *
- * $PostgreSQL: pgsql/contrib/dblink/dblink.c,v 1.69.2.4 2010/06/03 09:41:26 itagaki Exp $
+ * $PostgreSQL: pgsql/contrib/dblink/dblink.c,v 1.69.2.5 2010/06/09 00:59:35 itagaki Exp $
  * Copyright (c) 2001-2008, PostgreSQL Global Development Group
  * ALL RIGHTS RESERVED;
  *
@@ -2301,9 +2301,14 @@ createNewConnection(const char *name, remoteConn * rconn)
 											   HASH_ENTER, &found);
 
 	if (found)
+	{
+		PQfinish(rconn->conn);
+		pfree(rconn);
+
 		ereport(ERROR,
 				(errcode(ERRCODE_DUPLICATE_OBJECT),
 				 errmsg("duplicate connection name")));
+	}
 
 	hentry->rconn = rconn;
 	strlcpy(hentry->name, name, sizeof(hentry->name));
