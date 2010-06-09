@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/syntax.sgml,v 1.145 2010/05/30 18:10:40 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/syntax.sgml,v 1.146 2010/06/09 16:43:47 alvherre Exp $ -->
 
 <chapter id="sql-syntax">
  <title>SQL Syntax</title>
@@ -1776,6 +1776,10 @@ UNBOUNDED FOLLOWING
 
    <indexterm>
     <primary>type cast</primary>
+   </indexterm>
+
+   <indexterm>
+    <primary>::</primary>
    </indexterm>
 
    <para>
