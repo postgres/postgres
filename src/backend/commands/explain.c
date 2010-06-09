@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/explain.c,v 1.204 2010/02/26 02:00:39 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/explain.c,v 1.205 2010/06/09 02:39:34 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2152,22 +2152,48 @@ escape_json(StringInfo buf, const char *str)
 }
 
 /*
- * YAML is a superset of JSON: if we find quotable characters, we call
- * escape_json.  If not, we emit the property unquoted for better readability.
+ * YAML is a superset of JSON, so we can use JSON escaping when escaping is
+ * needed.  However, some things that need to be quoted in JSON don't require
+ * quoting in YAML, and we prefer not to quote unnecessarily, to improve
+ * readability.
+ *
+ * Unfortunately, the YAML quoting rules are ridiculously complicated -- as
+ * documented in sections 5.3 and 7.3.3 of http://yaml.org/spec/1.2/spec.html
+ * -- and it doesn't seem worth expending a large amount of energy to avoid
+ * all unnecessary quoting, so we just do something (sort of) simple: we quote
+ * any string which is empty; any string which contains characters other than
+ * alphanumerics, period, underscore, or space; or begins or ends with a
+ * space.  The exception for period is mostly so that floating-point numbers
+ * (e.g., cost values) won't be quoted.
  */
 static void
 escape_yaml(StringInfo buf, const char *str)
 {
-	const char *p;
+	bool		needs_quoting = false;
 
-	for (p = str; *p; p++)
+#define is_safe_yaml(x) \
+	(isalnum(((unsigned char) x)) || (x) == '.' || (x) == '_')
+
+	if (!is_safe_yaml(str[0]))
+		needs_quoting = true;
+	else
 	{
-		if ((unsigned char) *p < ' ' || strchr("\"\\\b\f\n\r\t", *p))
+		const char *p;
+
+		for (p = str; *p; p++)
 		{
-			escape_json(buf, str);
-			return;
+			if (*p != ' ' && !is_safe_yaml(*p))
+			{
+				needs_quoting = true;
+				break;
+			}
 		}
+		if (!*p && p[-1] == ' ')
+			needs_quoting = true;
 	}
 
-	appendStringInfo(buf, "%s", str);
+	if (needs_quoting)
+		escape_json(buf, str);
+	else
+		appendStringInfoString(buf, str);
 }
