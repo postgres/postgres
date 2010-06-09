@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/syntax.sgml,v 1.133.2.1 2009/08/27 20:08:12 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/syntax.sgml,v 1.133.2.2 2010/06/09 16:43:52 alvherre Exp $ -->
 
 <chapter id="sql-syntax">
  <title>SQL Syntax</title>
@@ -1692,6 +1692,10 @@ ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
 
    <indexterm>
     <primary>type cast</primary>
+   </indexterm>
+
+   <indexterm>
+    <primary>::</primary>
    </indexterm>
 
    <para>
