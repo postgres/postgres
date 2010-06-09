@@ -1980,9 +1980,14 @@ createNewConnection(const char *name, remoteConn * con)
 				 errmsg("out of memory")));
 
 	if (found)
+	{
+		PQfinish(rconn->conn);
+		pfree(rconn);
+
 		ereport(ERROR,
 				(errcode(ERRCODE_DUPLICATE_OBJECT),
 				 errmsg("duplicate connection name")));
+	}
 
 	hentry->rcon = con;
 	strncpy(hentry->name, name, NAMEDATALEN - 1);
