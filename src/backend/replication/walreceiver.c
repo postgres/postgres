@@ -8,7 +8,7 @@
  *
  * When the startup process determines that it's time to start streaming,
  * it instructs postmaster to start walreceiver. Walreceiver first connects
- * connects to the primary server (it will be served by a walsender process
+ * to the primary server (it will be served by a walsender process
  * in the primary server), and then keeps receiving XLOG records and
  * writing them to the disk as long as the connection is alive. As XLOG
  * records are received and flushed to disk, it updates the
@@ -29,7 +29,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/replication/walreceiver.c,v 1.12 2010/06/07 15:49:30 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/replication/walreceiver.c,v 1.13 2010/06/09 00:54:39 ishii Exp $
  *
  *-------------------------------------------------------------------------
  */
