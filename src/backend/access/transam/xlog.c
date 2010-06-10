@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.419 2010/06/09 15:04:06 heikki Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.420 2010/06/10 07:00:27 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -8757,6 +8757,9 @@ pg_last_xlog_receive_location(PG_FUNCTION_ARGS)
 
 	recptr = GetWalRcvWriteRecPtr();
 
+	if (recptr.xlogid == 0 && recptr.xrecoff == 0)
+		PG_RETURN_NULL();
+
 	snprintf(location, sizeof(location), "%X/%X",
 			 recptr.xlogid, recptr.xrecoff);
 	PG_RETURN_TEXT_P(cstring_to_text(location));
@@ -8779,6 +8782,9 @@ pg_last_xlog_replay_location(PG_FUNCTION_ARGS)
 	SpinLockAcquire(&xlogctl->info_lck);
 	recptr = xlogctl->recoveryLastRecPtr;
 	SpinLockRelease(&xlogctl->info_lck);
+
+	if (recptr.xlogid == 0 && recptr.xrecoff == 0)
+		PG_RETURN_NULL();
 
 	snprintf(location, sizeof(location), "%X/%X",
 			 recptr.xlogid, recptr.xrecoff);
