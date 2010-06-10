@@ -2125,8 +2125,8 @@ createNewConnection(const char *name, remoteConn * con)
 
 	if (found)
 	{
-		PQfinish(rconn->conn);
-		pfree(rconn);
+		PQfinish(con->con);
+		pfree(con);
 
 		ereport(ERROR,
 				(errcode(ERRCODE_DUPLICATE_OBJECT),
