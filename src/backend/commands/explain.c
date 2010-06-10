@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/explain.c,v 1.205 2010/06/09 02:39:34 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/explain.c,v 1.206 2010/06/10 01:26:30 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1698,8 +1698,7 @@ ExplainPropertyList(const char *qlabel, List *data, ExplainState *es)
 
 		case EXPLAIN_FORMAT_YAML:
 			ExplainYAMLLineStarting(es);
-			escape_yaml(es->str, qlabel);
-			appendStringInfoChar(es->str, ':');
+			appendStringInfo(es->str, "%s: ", qlabel);
 			foreach(lc, data)
 			{
 				appendStringInfoChar(es->str, '\n');
@@ -1759,7 +1758,10 @@ ExplainProperty(const char *qlabel, const char *value, bool numeric,
 		case EXPLAIN_FORMAT_YAML:
 			ExplainYAMLLineStarting(es);
 			appendStringInfo(es->str, "%s: ", qlabel);
-			escape_yaml(es->str, value);
+			if (numeric)
+				appendStringInfoString(es->str, value);
+			else
+				escape_yaml(es->str, value);
 			break;
 	}
 }
@@ -1857,8 +1859,7 @@ ExplainOpenGroup(const char *objtype, const char *labelname,
 			ExplainYAMLLineStarting(es);
 			if (labelname)
 			{
-				escape_yaml(es->str, labelname);
-				appendStringInfoChar(es->str, ':');
+				appendStringInfo(es->str, "%s: ", labelname);
 				es->grouping_stack = lcons_int(1, es->grouping_stack);
 			}
 			else
@@ -2152,48 +2153,17 @@ escape_json(StringInfo buf, const char *str)
 }
 
 /*
- * YAML is a superset of JSON, so we can use JSON escaping when escaping is
- * needed.  However, some things that need to be quoted in JSON don't require
- * quoting in YAML, and we prefer not to quote unnecessarily, to improve
- * readability.
- *
- * Unfortunately, the YAML quoting rules are ridiculously complicated -- as
- * documented in sections 5.3 and 7.3.3 of http://yaml.org/spec/1.2/spec.html
- * -- and it doesn't seem worth expending a large amount of energy to avoid
- * all unnecessary quoting, so we just do something (sort of) simple: we quote
- * any string which is empty; any string which contains characters other than
- * alphanumerics, period, underscore, or space; or begins or ends with a
- * space.  The exception for period is mostly so that floating-point numbers
- * (e.g., cost values) won't be quoted.
+ * YAML is a superset of JSON; unfortuantely, the YAML quoting rules are
+ * ridiculously complicated -- as documented in sections 5.3 and 7.3.3 of
+ * http://yaml.org/spec/1.2/spec.html -- so we chose to just quote everything.
+ * Empty strings, strings with leading or trailing whitespace, and strings
+ * containing a variety of special characters must certainly be quoted or the
+ * output is invalid; and other seemingly harmless strings like "0xa" or
+ * "true" must be quoted, lest they be interpreted as a hexadecimal or Boolean
+ * constant rather than a string.
  */
 static void
 escape_yaml(StringInfo buf, const char *str)
 {
-	bool		needs_quoting = false;
-
-#define is_safe_yaml(x) \
-	(isalnum(((unsigned char) x)) || (x) == '.' || (x) == '_')
-
-	if (!is_safe_yaml(str[0]))
-		needs_quoting = true;
-	else
-	{
-		const char *p;
-
-		for (p = str; *p; p++)
-		{
-			if (*p != ' ' && !is_safe_yaml(*p))
-			{
-				needs_quoting = true;
-				break;
-			}
-		}
-		if (!*p && p[-1] == ' ')
-			needs_quoting = true;
-	}
-
-	if (needs_quoting)
-		escape_json(buf, str);
-	else
-		appendStringInfoString(buf, str);
+	escape_json(buf, str);
 }
