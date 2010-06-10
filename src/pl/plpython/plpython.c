@@ -1,7 +1,7 @@
 /**********************************************************************
  * plpython.c - python as a procedural language for PostgreSQL
  *
- *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.143 2010/05/01 17:04:38 tgl Exp $
+ *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.144 2010/06/10 04:05:01 tgl Exp $
  *
  *********************************************************************
  */
@@ -1838,6 +1838,7 @@ PLy_input_datum_func2(PLyDatumToOb *arg, Oid typeOid, HeapTuple typeTup)
 	arg->typioparam = getTypeIOParam(typeTup);
 	arg->typbyval = typeStruct->typbyval;
 	arg->typlen = typeStruct->typlen;
+	arg->typalign = typeStruct->typalign;
 
 	/* Determine which kind of Python object we will convert to */
 	switch (getBaseType(element_type ? element_type : typeOid))
@@ -1873,10 +1874,17 @@ PLy_input_datum_func2(PLyDatumToOb *arg, Oid typeOid, HeapTuple typeTup)
 
 	if (element_type)
 	{
+		char		dummy_delim;
+		Oid			funcid;
+
 		arg->elm = PLy_malloc0(sizeof(*arg->elm));
 		arg->elm->func = arg->func;
 		arg->func = PLyList_FromArray;
-		get_typlenbyvalalign(element_type, &arg->elm->typlen, &arg->elm->typbyval, &arg->elm->typalign);
+		arg->elm->typoid = element_type;
+		get_type_io_data(element_type, IOFunc_output,
+						 &arg->elm->typlen, &arg->elm->typbyval, &arg->elm->typalign, &dummy_delim,
+						 &arg->elm->typioparam, &funcid);
+		perm_fmgr_info(funcid, &arg->elm->typfunc);
 	}
 }
 
@@ -1986,6 +1994,7 @@ static PyObject *
 PLyList_FromArray(PLyDatumToOb *arg, Datum d)
 {
 	ArrayType  *array = DatumGetArrayTypeP(d);
+	PLyDatumToOb *elm = arg->elm;
 	PyObject   *list;
 	int			length;
 	int			lbound;
@@ -2011,11 +2020,13 @@ PLyList_FromArray(PLyDatumToOb *arg, Datum d)
 		int			offset;
 
 		offset = lbound + i;
-		elem = array_ref(array, 1, &offset, arg->typlen, arg->elm->typlen, arg->elm->typbyval, arg->elm->typalign, &isnull);
+		elem = array_ref(array, 1, &offset, arg->typlen,
+						 elm->typlen, elm->typbyval, elm->typalign,
+						 &isnull);
 		if (isnull)
 			PyList_SET_ITEM(list, i, Py_None);
 		else
-			PyList_SET_ITEM(list, i, arg->elm->func(arg, elem));
+			PyList_SET_ITEM(list, i, elm->func(elm, elem));
 	}
 
 	return list;
