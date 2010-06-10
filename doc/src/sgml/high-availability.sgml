@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/high-availability.sgml,v 1.71 2010/06/07 02:01:08 itagaki Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/high-availability.sgml,v 1.72 2010/06/10 08:13:49 itagaki Exp $ -->
 
 <chapter id="high-availability">
  <title>High Availability, Load Balancing, and Replication</title>
@@ -681,7 +681,7 @@ protocol to make nodes agree on a serializable transactional order.
    </para>
 
    <para>
-    You can use <varname>restartpoint_command</> to prune the archive of
+    You can use <varname>archive_cleanup_command</> to prune the archive of
     files no longer needed by the standby.
    </para>
 
@@ -714,7 +714,7 @@ trigger_file = '/path/to/trigger_file'
 
    <para>
     If you're using a WAL archive, its size can be minimized using
-    the <varname>restartpoint_command</> option to remove files that are
+    the <varname>archive_cleanup_command</> option to remove files that are
     no longer required by the standby server. Note however, that if you're
     using the archive for backup purposes, you need to retain files needed
     to recover from at least the latest base backup, even if they're no

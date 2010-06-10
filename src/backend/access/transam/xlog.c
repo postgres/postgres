@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.421 2010/06/10 07:49:23 heikki Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.422 2010/06/10 08:13:50 itagaki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -180,7 +180,7 @@ static bool restoredFromArchive = false;
 /* options taken from recovery.conf for archive recovery */
 static char *recoveryRestoreCommand = NULL;
 static char *recoveryEndCommand = NULL;
-static char *restartPointCommand = NULL;
+static char *archiveCleanupCommand = NULL;
 static RecoveryTargetType recoveryTarget = RECOVERY_TARGET_UNSET;
 static bool recoveryTargetInclusive = true;
 static TransactionId recoveryTargetXid;
@@ -382,10 +382,10 @@ typedef struct XLogCtlData
 	TimeLineID	ThisTimeLineID;
 	TimeLineID	RecoveryTargetTLI;
 	/*
-	 * restartPointCommand is read from recovery.conf but needs to be in
+	 * archiveCleanupCommand is read from recovery.conf but needs to be in
 	 * shared memory so that the bgwriter process can access it.
 	 */
-	char		restartPointCommand[MAXPGPATH];
+	char		archiveCleanupCommand[MAXPGPATH];
 
 	/*
 	 * SharedRecoveryInProgress indicates if we're still in crash or archive
@@ -3063,7 +3063,7 @@ not_available:
  * 'failonSignal' is true and the command is killed by a signal, a FATAL
  * error is thrown. Otherwise a WARNING is emitted.
  *
- * This is currently used for restore_end_command and restartpoint_command.
+ * This is currently used for restore_end_command and archive_cleanup_command.
  */
 static void
 ExecuteRecoveryCommand(char *command, char *commandName, bool failOnSignal)
@@ -5140,12 +5140,12 @@ readRecoveryCommandFile(void)
 					(errmsg("recovery_end_command = '%s'",
 							recoveryEndCommand)));
 		}
-		else if (strcmp(tok1, "restartpoint_command") == 0)
+		else if (strcmp(tok1, "archive_cleanup_command") == 0)
 		{
-			restartPointCommand = pstrdup(tok2);
+			archiveCleanupCommand = pstrdup(tok2);
 			ereport(DEBUG2,
-					(errmsg("restartpoint_command = '%s'",
-							restartPointCommand)));
+					(errmsg("archive_cleanup_command = '%s'",
+							archiveCleanupCommand)));
 		}
 		else if (strcmp(tok1, "recovery_target_timeline") == 0)
 		{
@@ -5752,13 +5752,13 @@ StartupXLOG(void)
 						ControlFile->checkPointCopy.ThisTimeLineID)));
 
 	/*
-	 * Save the selected recovery target timeline ID and restartpoint_command
+	 * Save the selected recovery target timeline ID and archive_cleanup_command
 	 * in shared memory so that other processes can see them
 	 */
 	XLogCtl->RecoveryTargetTLI = recoveryTargetTLI;
-	strncpy(XLogCtl->restartPointCommand,
-			restartPointCommand ? restartPointCommand : "",
-			sizeof(XLogCtl->restartPointCommand));
+	strncpy(XLogCtl->archiveCleanupCommand,
+			archiveCleanupCommand ? archiveCleanupCommand : "",
+			sizeof(XLogCtl->archiveCleanupCommand));
 
 	if (InArchiveRecovery)
 	{
@@ -7675,11 +7675,11 @@ CreateRestartPoint(int flags)
 	LWLockRelease(CheckpointLock);
 
 	/*
-	 * Finally, execute restartpoint_command, if any.
+	 * Finally, execute archive_cleanup_command, if any.
 	 */
-	if (XLogCtl->restartPointCommand[0])
-		ExecuteRecoveryCommand(XLogCtl->restartPointCommand,
-							   "restartpoint_command",
+	if (XLogCtl->archiveCleanupCommand[0])
+		ExecuteRecoveryCommand(XLogCtl->archiveCleanupCommand,
+							   "archive_cleanup_command",
 							   false);
 
 	return true;

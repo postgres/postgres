@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/recovery-config.sgml,v 2.6 2010/04/28 07:34:11 heikki Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/recovery-config.sgml,v 2.7 2010/06/10 08:13:49 itagaki Exp $ -->
 
 <chapter Id="recovery-config">
   <title>Recovery Configuration</title>
@@ -73,16 +73,16 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
       </listitem>
      </varlistentry>
 
-     <varlistentry id="restartpoint-command" xreflabel="restartpoint_command">
-      <term><varname>restartpoint_command</varname> (<type>string</type>)</term>
+     <varlistentry id="archive-cleanup-command" xreflabel="archive_cleanup_command">
+      <term><varname>archive_cleanup_command</varname> (<type>string</type>)</term>
       <indexterm>
-        <primary><varname>restartpoint_command</> recovery parameter</primary>
+        <primary><varname>archive_cleanup_command</> recovery parameter</primary>
       </indexterm>
       <listitem>
        <para>
         This parameter specifies a shell command that will be executed at
         every restartpoint. This parameter is optional. The purpose of the
-        <varname>restartpoint_command</> is to provide a mechanism for cleaning
+        <varname>archive_cleanup_command</> is to provide a mechanism for cleaning
         up old archived WAL files that are no longer needed by the standby
         server.
         Any <literal>%r</> is replaced by the name of the file
@@ -114,7 +114,7 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
         <varname>recovery_end_command</> is to provide a mechanism for cleanup
         following replication or recovery.
         Any <literal>%r</> is replaced by the name of the file containing the
-        last valid restart point, like in <xref linkend="restartpoint-command">.
+        last valid restart point, like in <xref linkend="archive-cleanup-command">.
        </para>
        <para>
         If the command returns a non-zero exit status then a WARNING log

@@ -46,12 +46,12 @@
 #restore_command = ''		# e.g. 'cp /mnt/server/archivedir/%f %p'
 #
 #
-# restartpoint_command
+# archive_cleanup_command
 #
 # specifies an optional shell command to execute at every restartpoint.
 # This can be useful for cleaning up the archive of a standby server.
 #
-#restartpoint_command = ''
+#archive_cleanup_command = ''
 #
 # recovery_end_command
 #
