@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release-9.0.sgml,v 2.28 2010/06/07 02:01:08 itagaki Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release-9.0.sgml,v 2.29 2010/06/10 21:48:28 momjian Exp $ -->
 
  <sect1 id="release-9-0">
   <title>Release 9.0</title>
@@ -7,10 +7,6 @@
    <title>Release date</title>
    <simpara>2010-??-??</simpara>
   </note>
-
-<!-- beta2 notes
-recovery_connections -> hot_standby
--->
 
   <sect2>
    <title>Overview</title>
@@ -32,123 +28,78 @@ recovery_connections -> hot_standby
     <!-- This list duplicates items below, but without authors or details-->
 
     <listitem>
+
      <para>
-      Allow continuous archive standby systems to accept read-only queries
+      Built-in, binary, log-based replication.  This advance consists of two features:
+      Hot Standby allows continuous archive standby database servers to accept read-only
+      queries, and Streaming Replication allows continuous archive (<acronym>WAL</>) files 
+      to be streamed over a network port to a standby database server.
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Allow continuous archive (<acronym>WAL</>) files to be streamed to a
-      standby system
+      Easier database object permissions management. <link
+      linkend="SQL-GRANT"><command>GRANT</>/<command>REVOKE
+      IN SCHEMA</></link> supports mass permissions changes, and
+      the <link linkend="SQL-ALTERDEFAULTPRIVILEGES"><command>ALTER
+      DEFAULT PRIVILEGES</></link> command controls privileges
+      of all newly-created objects.  Large object permissions now
+      support <command>GRANT</>/<command>REVOKE</> as well.
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Add the ability to make mass permission changes per
-       schema using the new <link
-       linkend="SQL-GRANT"><command>GRANT</>/<command>REVOKE
-       IN SCHEMA</></link> clause
+      Broadly enhanced stored procedure support.
+      The <link linkend="SQL-DO"><command>DO</></link> statement permits
+      ad-hoc or anonymous code blocks.  Functions can now be called using named
+      parameters.  PL/pgSQL is now installed by default, and PL/Perl and PL/Python
+      have been enhanced in several ways.
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Add the ability to control large object permissions with
-      <command>GRANT</>/<command>REVOKE</>
+      Triggers now support two new features,
+      SQL-compliant <link
+      linkend="SQL-CREATETRIGGER">per-column triggers</link>, and 
+      conditional trigger execution.
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Implement anonymous functions using the <link
-      linkend="SQL-DO"><command>DO</></link> statement
+      <link linkend="SQL-CREATETABLE-compatibility">Deferrable
+      unique constraints, now permit mass updates to unique keys.</link>
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Allow function calls to supply parameter names and match them to named
-      parameters in the function definition (Pavel Stehule)
+      Exclusion constraints let database designers define uniqueness
+      based on complex criteria, including for non-scalar data such
+      as time periods, ranges and arrays.
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Install server-side language PL/pgSQL by default
+      The <link linkend="SQL-LISTEN"><command>LISTEN</></link>/<link
+      linkend="SQL-NOTIFY"><command>NOTIFY</></link> 
+      feature has been overhauled to make it into
+      a high-performance event queuing system.  It now stores
+      events in a memory-based queue, and it now allows delivery
+      of a string payload to listeners with each event.
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Major PL/Perl enhancements
-     </para>
-    </listitem>
-
-    <listitem>
-     <para>
-      Allow SQL-compliant <link
-      linkend="SQL-CREATETRIGGER">per-column triggers</link>
-     </para>
-    </listitem>
-
-    <listitem>
-     <para>
-      Add <link linkend="SQL-CREATETABLE-compatibility">deferrable
-      unique constraints</link>
-     </para>
-    </listitem>
-
-    <listitem>
-     <para>
-      Have <link linkend="SQL-LISTEN"><command>LISTEN</></link>/<link
-      linkend="SQL-NOTIFY"><command>NOTIFY</></link> store events
-      in a memory queue, rather than a system table
-     </para>
-    </listitem>
-
-    <listitem>
-     <para>
-      Allow <link linkend="SQL-NOTIFY"><command>NOTIFY</></link>
-      to pass an optional string to listeners
-     </para>
-    </listitem>
-
-    <listitem>
-     <para>
-      Change <command>VACUUM FULL</> to rewrite the entire table and
-      indexes, rather than moving around single rows to compact space
-     </para>
-    </listitem>
-
-    <listitem>
-     <para>
-      Add prefix support for the full text search synonym dictionary
-     </para>
-    </listitem>
-
-    <listitem>
-     <para>
-      Use red-black trees for <acronym>GIN</> index creation
-     </para>
-    </listitem>
-
-    <listitem>
-     <para>
-      Add <link
-      linkend="functions-binarystring-other"><function>get_bit()</></link>
-      and <function>set_bit()</> functions for <type>bit</>
-      strings, mirroring those for <type>bytea</>
-     </para>
-    </listitem>
-
-    <listitem>
-     <para>
-      Add the ability for clients to set an <link
-      linkend="libpq-connect-application-name">application
-      name</link>, which is displayed in
-      <structname>pg_stat_activity</>
+      As part of our decade-long effort to eliminate the pain of VACUUM,
+      <command>VACUUM FULL</> is not substantially faster by
+      rewriting the entire table and
+      indexes, rather than moving around single rows to compact space.
      </para>
     </listitem>
 
@@ -164,7 +115,7 @@ recovery_connections -> hot_standby
     <listitem>
      <para>
       Add <link linkend="pgupgrade"><filename>/contrib/pg_upgrade</></link>
-      to support in-place upgrades
+      to support in-place upgrades from 8.3 or 8.4 to 9.0.
      </para>
     </listitem>
 
@@ -208,7 +159,7 @@ recovery_connections -> hot_standby
       Remove server variable <varname>regex_flavor</>, which
       was defaulted to <link
       linkend="posix-syntax-details"><literal>advanced</></link>
-      (e.g. Perl-regex compatible) for many years (Tom Lane)
+      (e.g. Perl-regex compatible) for many years. (Tom Lane)
      </para>
     </listitem>
 
@@ -307,9 +258,23 @@ recovery_connections -> hot_standby
      </para>
 
      <para>
-      Administrators still can rename such columns manually. Expression
-      index names are also not renamed. WHY ARE EXPRESSION INDEXES
-      SIGNIFICANT?
+      Administrators still can rename such columns manually.  This change
+      will require an update of the JDBC driver and possibly other drivers
+      so that unique indexes are correctly recognized.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      No longer change function input variable names via 
+      <command>REPLACE FUNCTION</command>(Pavel Stehule).
+     </para>
+
+     <para>
+      In order to support names parameter calls, it is
+      no longer possible to change the aliases for input variables
+      in the function declaration in place.  You now have to <command>DROP
+      </command> and recreate the function.
      </para>
     </listitem>
 
@@ -333,7 +298,8 @@ recovery_connections -> hot_standby
       linkend="plpgsql-var-subst"><varname>plpgsql.variable_conflict</></link>,
       or by the per-function option <literal>#variable_conflict</>.
       The former behavior was to bind to variable names over
-      column names.
+      column names, but not consistently.  Stored procedures
+      with naming conflicts will probably need to be refactored.
      </para>
     </listitem>
 
@@ -357,7 +323,7 @@ recovery_connections -> hot_standby
      </para>
 
      <para>
-      Variables can be double-quoted to avoid this restriction.
+      Variables can be double-quoted to avoid this restriction.  
      </para>
     </listitem>
    </itemizedlist>
@@ -372,9 +338,17 @@ recovery_connections -> hot_standby
    <title>Server</title>
 
    <sect4>
-    <title>Continuous Archiving</title>
-    <itemizedlist>
+    <title>Continuous Archiving and Binary Replication</title>
 
+    <para>
+     PostgreSQL's native standby capability has been expanded both to
+     support read-only queries on standby slaves and to greatly reduce
+     the lag between master and standby servers.  For many users, this
+     will be a useful and low-administration form of replication, either
+     for high availability or for horizontal scalability.
+    </para>
+
+    <itemizedlist>
      <listitem>
       <para>
        Allow continuous archive standby systems to accept read-only queries
@@ -396,6 +370,7 @@ recovery_connections -> hot_standby
       </para>
 
       <para>
+       This feature is called Streaming Replication.
        Previously <acronym>WAL</> files could be sent to standby systems only
        as 16 megabytes files; this allows master changes to be sent to the
        standby with very little delay. There are new <filename>postgresql.conf</>
@@ -421,6 +396,12 @@ recovery_connections -> hot_standby
 
    <sect4>
     <title>Performance</title>
+
+    <para>
+     Version 9.0 also contains several performance and optimizer enhancements to 
+     improve specific uses of PostgreSQL and remedy certain poor-performing cases.
+    </para>
+
     <itemizedlist>
 
      <listitem>
@@ -454,17 +435,6 @@ recovery_connections -> hot_standby
     <title>Optimizer</title>
 
     <itemizedlist>
-     <listitem>
-      <para>
-       Allow <literal>IS NOT NULL</> restrictions to use indexes (Tom Lane)
-      </para>
-
-      <para>
-       This is particularly useful for finding
-       <function>MAX()</>/<function>MIN()</> values in indexes that also
-       contain NULLs.
-      </para>
-     </listitem>
 
      <listitem>
       <para>
@@ -474,7 +444,21 @@ recovery_connections -> hot_standby
 
       <para>
        Outer joins where the inner side is unique and not referenced in
-       the query are unnecessary and are therefore now removed.
+       the query are unnecessary and are therefore now removed.  This will 
+       accelerate many automatically generated queries, such as those created
+       by object-relational mappers.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Allow <literal>IS NOT NULL</> restrictions to use indexes (Tom Lane)
+      </para>
+
+      <para>
+       This is particularly useful for finding
+       <function>MAX()</>/<function>MIN()</> values in indexes that also
+       contain NULLs.
       </para>
      </listitem>
 
@@ -567,7 +551,9 @@ recovery_connections -> hot_standby
       <para>
        This allows user-override of the number or percentage of distinct
        values for a column and optionally its child tables. This value
-       is normally computed by <command>ANALYZE</>.
+       is normally computed by <command>ANALYZE</>.  Database administrators
+       can use this feature to fix some poor statistics, especially on
+       tables with millions or billions of rows.
       </para>
      </listitem>
 
@@ -900,8 +886,10 @@ recovery_connections -> hot_standby
       </para>
 
       <para>
-       It currently supports tables, views, sequences, and functions, and
-       also has per-schema control.
+       This greatly simplifies the assignment of object priveleges in
+       a complex database application.  Defaults currently support tables
+       views, sequences, and functions. Defaults may be assigned on a
+       per-schema basis or database-wide.
       </para>
      </listitem>
 
@@ -995,8 +983,17 @@ recovery_connections -> hot_standby
        TABLE CONSTRAINT ... EXCLUDE</></link> clause. While
        uniqueness checks could be specified using this syntax,
        the real value of this feature is in using complex
-       operators that do not have built-in constraints.
+       operators that do not have built-in constraints. 
       </para>
+
+      <para>
+       The primary use of exclusion constraints is to allow defining
+       non-overlapping uniqueness, such as for time periods, arrays
+       or ranges of values. This supports data integrity at the 
+       table level for calendaring, time-management, and scientific
+       applications.
+      </para>
+
      </listitem>
 
      <listitem>
@@ -1026,6 +1023,13 @@ recovery_connections -> hot_standby
        linkend="SQL-GRANT"><command>GRANT</>/<command>REVOKE
        IN SCHEMA</></link> clause (Petr Jelinek)
       </para>
+
+      <para>
+       This simplifies the assignment of object permissions
+       and makes it easier to utilize database roles for application
+       data security.
+      </para>
+
      </listitem>
 
      <listitem>
@@ -1055,7 +1059,9 @@ recovery_connections -> hot_standby
      </para>
 
      <para>
-      This greatly improves performance for these operations.
+      LISTEN/NOTIFY may now be used as a full-featured, high-performance
+      event queue system for PostgreSQL, with transactional support 
+      and guaranteed delivery.
      </para>
     </listitem>
 
@@ -1116,11 +1122,24 @@ recovery_connections -> hot_standby
 
      <listitem>
       <para>
+       Allow <command>EXPLAIN</> output in <acronym>XML</>, <acronym>JSON</>,
+       and <acronym>YAML</> formats (Robert Haas, Greg Sabino Mullane)
+      </para>
+
+      <para>
+       The new output formats will support the development of new tools 
+       for analysis of EXPLAIN output.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
        Add new <command>EXPLAIN (BUFFERS)</> to report query buffer
        activity (Itagaki Takahiro)
       </para>
 
       <para>
+       This allows better query profiling for individual queries.
        log_*_stats log output, e.g. <link
        linkend="runtime-config-statistics-monitor">log_statement_stats</link>,
        no longer shows this information.
@@ -1131,13 +1150,6 @@ recovery_connections -> hot_standby
       <para>
        Add hash usage information to <command>EXPLAIN</> output (Robert
        Haas)
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       Allow <command>EXPLAIN</> output in <acronym>XML</>, <acronym>JSON</>,
-       and <acronym>YAML</> formats (Robert Haas, Greg Sabino Mullane)
       </para>
      </listitem>
 
@@ -1169,8 +1181,11 @@ recovery_connections -> hot_standby
       </para>
 
       <para>
-       The previous method was usually slower and caused index bloat.
+       The previous method was usually slower and caused index bloat.  
+       Note that the new method may use more disk space during VACUUM
+       FULL.
       </para>
+
      </listitem>
 
      <listitem>
@@ -1228,9 +1243,10 @@ recovery_connections -> hot_standby
       </para>
 
       <para>
-       Red-black trees are self-balanced so allow for faster index
-     creation.
+       Red-black trees are self-balanced.  This means much faster
+       GIN index creation.
       </para>
+
      </listitem>
 
     </itemizedlist>
