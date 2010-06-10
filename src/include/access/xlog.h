@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/xlog.h,v 1.111 2010/04/29 21:36:19 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/xlog.h,v 1.112 2010/06/10 07:49:23 heikki Exp $
  */
 #ifndef XLOG_H
 #define XLOG_H
@@ -257,10 +257,6 @@ typedef struct CheckpointStatsData
 } CheckpointStatsData;
 
 extern CheckpointStatsData CheckpointStats;
-
-/* Read from recovery.conf, in startup process */
-extern char *TriggerFile;
-
 
 extern XLogRecPtr XLogInsert(RmgrId rmid, uint8 info, XLogRecData *rdata);
 extern void XLogFlush(XLogRecPtr RecPtr);
