@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/replication/libpqwalreceiver/libpqwalreceiver.c,v 1.10 2010/04/21 03:32:53 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/replication/libpqwalreceiver/libpqwalreceiver.c,v 1.11 2010/06/11 10:13:09 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -77,7 +77,7 @@ _PG_init(void)
 static bool
 libpqrcv_connect(char *conninfo, XLogRecPtr startpoint)
 {
-	char		conninfo_repl[MAXCONNINFO + 18];
+	char		conninfo_repl[MAXCONNINFO + 37];
 	char	   *primary_sysid;
 	char		standby_sysid[32];
 	TimeLineID	primary_tli;
@@ -85,8 +85,14 @@ libpqrcv_connect(char *conninfo, XLogRecPtr startpoint)
 	PGresult   *res;
 	char		cmd[64];
 
-	/* Connect using deliberately undocumented parameter: replication */
-	snprintf(conninfo_repl, sizeof(conninfo_repl), "%s replication=true", conninfo);
+	/*
+	 * Connect using deliberately undocumented parameter: replication.
+	 * The database name is ignored by the server in replication mode, but
+	 * specify "replication" for .pgpass lookup.
+	 */
+	snprintf(conninfo_repl, sizeof(conninfo_repl),
+			 "%s dbname=replication replication=true",
+			 conninfo);
 
 	streamConn = PQconnectdb(conninfo_repl);
 	if (PQstatus(streamConn) != CONNECTION_OK)

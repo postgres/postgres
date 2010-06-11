@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.306 2010/05/26 23:49:18 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.307 2010/06/11 10:13:08 heikki Exp $ -->
 
 <chapter id="libpq">
  <title><application>libpq</application> - C Library</title>
@@ -6233,7 +6233,8 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
    A host name of <literal>localhost</> matches both TCP (host name
    <literal>localhost</>) and Unix domain socket (<literal>pghost</> empty
    or the default socket directory) connections coming from the local
-   machine.
+   machine. In a standby server, a database name of <literal>replication</>
+   matches streaming replication connections made to the master server.
   </para>
 
   <para>

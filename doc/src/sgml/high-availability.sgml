@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/high-availability.sgml,v 1.72 2010/06/10 08:13:49 itagaki Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/high-availability.sgml,v 1.73 2010/06/11 10:13:08 heikki Exp $ -->
 
 <chapter id="high-availability">
  <title>High Availability, Load Balancing, and Replication</title>
@@ -818,8 +818,10 @@ host    replication     foo             192.168.1.100/32        md5
     </para>
     <para>
      The host name and port number of the primary, connection user name,
-     and password are specified in the <filename>recovery.conf</> file or
-     the corresponding environment variable on the standby.
+     and password are specified in the <filename>recovery.conf</> file.
+     The password can also be set in the <filename>~/.pgpass</> file on the
+     standby (specify <literal>replication</> in the <replaceable>database</>
+     field).
      For example, if the primary is running on host IP <literal>192.168.1.50</>,
      port <literal>5432</literal>, the superuser's name for replication is
      <literal>foo</>, and the password is <literal>foopass</>, the administrator
