@@ -215,7 +215,7 @@ typedef struct
 	const char *progname;		/* complete pathname for this program */
 	char	   *exec_path;		/* full path to my executable */
 	char	   *user;			/* username for clusters */
-	char		cwd[MAXPGPATH];	/* directory for pg_upgrade output */
+	char		cwd[MAXPGPATH];	/* current working directory, used for output */
 	char	  **tablespaces;	/* tablespaces */
 	int			num_tablespaces;
 	char	  **libraries;		/* loadable libraries */
