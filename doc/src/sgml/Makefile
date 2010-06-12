@@ -2,7 +2,7 @@
 #
 # PostgreSQL documentation makefile
 #
-# $PostgreSQL: pgsql/doc/src/sgml/Makefile,v 1.144 2010/06/12 09:55:12 petere Exp $
+# $PostgreSQL: pgsql/doc/src/sgml/Makefile,v 1.145 2010/06/12 15:42:44 momjian Exp $
 #
 #----------------------------------------------------------------------------
 
@@ -124,7 +124,7 @@ version.sgml: $(top_srcdir)/configure
 	{ \
 	  echo "<!entity version \"$(VERSION)\">"; \
 	  echo "<!entity majorversion \"$(MAJORVERSION)\">"; \
-	} >$@
+	} > $@
 
 features-supported.sgml: $(top_srcdir)/src/backend/catalog/sql_feature_packages.txt $(top_srcdir)/src/backend/catalog/sql_features.txt
 	$(PERL) $(srcdir)/mk_feature_tables.pl YES $^ > $@
@@ -203,14 +203,14 @@ JADE.text = $(JADE) $(JADEFLAGS) $(SGMLINCLUDE) $(CATALOG) -d stylesheet.dsl -i 
 LYNX = lynx
 
 INSTALL HISTORY regress_README: % : %.html
-	$(PERL) -p -e 's/<H(1|2)$$/<H\1 align=center/g' $< | $(LYNX) -force_html -dump -nolist -stdin >$@
+	$(PERL) -p -e 's/<H(1|2)$$/<H\1 align=center/g' $< | $(LYNX) -force_html -dump -nolist -stdin > $@
 
 INSTALL.html: standalone-install.sgml installation.sgml version.sgml
-	$(JADE.text) -V nochunks standalone-install.sgml installation.sgml >$@
+	$(JADE.text) -V nochunks standalone-install.sgml installation.sgml > $@
 
 HISTORY.html: generate_history.pl $(wildcard $(srcdir)/release*.sgml)
 	$(PERL) $< "$(srcdir)" release.sgml >tempfile_HISTORY.sgml
-	$(JADE.text) -V nochunks tempfile_HISTORY.sgml >$@
+	$(JADE.text) -V nochunks tempfile_HISTORY.sgml > $@
 	rm tempfile_HISTORY.sgml
 
 regress_README.html: regress.sgml
@@ -218,7 +218,7 @@ regress_README.html: regress.sgml
 	  echo '<!entity % standalone-ignore "IGNORE">'; \
 	  echo '<!entity % standalone-include "INCLUDE"> ]>'; \
 	  cat $< ) >tempfile_regress_README.sgml
-	$(JADE.text) -V nochunks tempfile_regress_README.sgml >$@
+	$(JADE.text) -V nochunks tempfile_regress_README.sgml > $@
 	rm tempfile_regress_README.sgml
 
 
@@ -233,7 +233,7 @@ postgres.xml: $(srcdir)/postgres.sgml $(ALMOSTALLSGML)
 	$(OSX) -D. -x lower $< >postgres.xmltmp
 	$(PERL) -p -e 's/\[(amp|copy|egrave|gt|lt|mdash|nbsp|ouml|pi|quot|uuml) *\]/\&\1;/g;' \
 	           -e '$$_ .= qq{<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">\n} if $$. == 1;' \
-	  <postgres.xmltmp >$@
+	  <postgres.xmltmp > $@
 	rm postgres.xmltmp
 # ' hello Emacs
 
@@ -262,7 +262,7 @@ MAKEINFO = makeinfo
 	$(DB2X_XSLTPROC) -s texi -g output-file=$(basename $@) $< -o $@
 
 %.texi: %.texixml
-	$(DB2X_TEXIXML) --encoding=iso-8859-1//TRANSLIT $< --to-stdout >$@
+	$(DB2X_TEXIXML) --encoding=iso-8859-1//TRANSLIT $< --to-stdout > $@
 
 %.info: %.texi
 	$(MAKEINFO) --enable-encoding --no-split --no-validate $< -o $@
