@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.422 2010/06/10 08:13:50 itagaki Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.423 2010/06/12 09:14:52 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -7756,7 +7756,7 @@ XLogReportParameters(void)
 	if (wal_level != ControlFile->wal_level ||
 		MaxConnections != ControlFile->MaxConnections ||
 		max_prepared_xacts != ControlFile->max_prepared_xacts ||
-		max_locks_per_xact != max_locks_per_xact)
+		max_locks_per_xact != ControlFile->max_locks_per_xact)
 	{
 		/*
 		 * The change in number of backend slots doesn't need to be
