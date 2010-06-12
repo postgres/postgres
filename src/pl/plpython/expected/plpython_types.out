@@ -528,6 +528,18 @@ SELECT * FROM test_type_conversion_array_int4(ARRAY[[1,2,3],[4,5,6]]);
 ERROR:  cannot convert multidimensional array to Python list
 DETAIL:  PL/Python only supports one-dimensional arrays.
 CONTEXT:  PL/Python function "test_type_conversion_array_int4"
+CREATE FUNCTION test_type_conversion_array_text(x text[]) RETURNS text[] AS $$
+plpy.info(x, type(x))
+return x
+$$ LANGUAGE plpythonu;
+SELECT * FROM test_type_conversion_array_text(ARRAY['foo', 'bar']);
+INFO:  (['foo', 'bar'], <type 'list'>)
+CONTEXT:  PL/Python function "test_type_conversion_array_text"
+ test_type_conversion_array_text 
+---------------------------------
+ {foo,bar}
+(1 row)
+
 CREATE FUNCTION test_type_conversion_array_bytea(x bytea[]) RETURNS bytea[] AS $$
 plpy.info(x, type(x))
 return x

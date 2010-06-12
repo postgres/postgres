@@ -223,6 +223,14 @@ SELECT * FROM test_type_conversion_array_int4(NULL);
 SELECT * FROM test_type_conversion_array_int4(ARRAY[[1,2,3],[4,5,6]]);
 
 
+CREATE FUNCTION test_type_conversion_array_text(x text[]) RETURNS text[] AS $$
+plpy.info(x, type(x))
+return x
+$$ LANGUAGE plpythonu;
+
+SELECT * FROM test_type_conversion_array_text(ARRAY['foo', 'bar']);
+
+
 CREATE FUNCTION test_type_conversion_array_bytea(x bytea[]) RETURNS bytea[] AS $$
 plpy.info(x, type(x))
 return x
