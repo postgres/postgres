@@ -2,7 +2,7 @@
 #
 # PostgreSQL documentation makefile
 #
-# $PostgreSQL: pgsql/doc/src/sgml/Makefile,v 1.143 2010/05/13 11:49:47 petere Exp $
+# $PostgreSQL: pgsql/doc/src/sgml/Makefile,v 1.144 2010/06/12 09:55:12 petere Exp $
 #
 #----------------------------------------------------------------------------
 
@@ -103,6 +103,10 @@ html-stamp: postgres.sgml $(ALLSGML) stylesheet.dsl
 	$(JADE.html.call) -i include-index $<
 	cp $(srcdir)/stylesheet.css html/
 	touch $@
+
+# single-page HTML
+postgres.html: postgres.sgml $(ALLSGML) stylesheet.dsl
+	$(JADE.html.call) -V nochunks -V rootchunk -V '(define %root-filename% #f)' -V '(define use-output-dir #f)' -i include-index $<
 
 HTML.index: postgres.sgml $(ALMOSTALLSGML) stylesheet.dsl
 	@$(MKDIR_P) html
@@ -351,6 +355,8 @@ clean:
 # text --- these are shipped, but not in this directory
 	rm -f INSTALL HISTORY regress_README
 	rm -f INSTALL.html HISTORY.html regress_README.html
+# other HTML
+	rm -f postgres.html
 # print
 	rm -f *.rtf *.tex-ps *.tex-pdf *.dvi *.aux *.log *.ps *.pdf *.out *.fot
 # index

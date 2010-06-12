@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/docguide.sgml,v 1.84 2010/05/31 22:42:59 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/docguide.sgml,v 1.85 2010/06/12 09:55:12 petere Exp $ -->
 
 <appendix id="docguide">
  <title>Documentation</title>
@@ -564,6 +564,13 @@ checking for osx... osx
     proof-read the output, use <literal>draft</>:
 <screen>
 <prompt>doc/src/sgml$ </prompt><userinput>gmake draft</userinput>
+</screen>
+   </para>
+
+   <para>
+    To build the documentation as a single HTML page, use:
+<screen>
+<prompt>doc/src/sgml$ </prompt><userinput>gmake postgres.html</userinput>
 </screen>
    </para>
  </sect2>
