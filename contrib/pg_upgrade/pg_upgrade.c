@@ -18,7 +18,6 @@ static void copy_clog_xlog_xid(migratorContext *ctx);
 static void set_frozenxids(migratorContext *ctx);
 static void setup(migratorContext *ctx, char *argv0, bool live_check);
 static void cleanup(migratorContext *ctx);
-static void create_empty_output_directory(migratorContext *ctx);
 
 
 int
@@ -36,8 +35,6 @@ main(int argc, char **argv)
 	output_check_banner(&ctx, &live_check);
 
 	setup(&ctx, argv[0], live_check);
-
-	create_empty_output_directory(&ctx);
 
 	check_cluster_versions(&ctx);
 	check_cluster_compatibility(&ctx, live_check);
@@ -201,7 +198,7 @@ prepare_new_databases(migratorContext *ctx)
 	exec_prog(ctx, true,
 			  SYSTEMQUOTE "\"%s/psql\" --set ON_ERROR_STOP=on --port %d "
 			  "-f \"%s/%s\" --dbname template1 >> \"%s\"" SYSTEMQUOTE,
-			  ctx->new.bindir, ctx->new.port, ctx->output_dir,
+			  ctx->new.bindir, ctx->new.port, ctx->cwd,
 			  GLOBALS_DUMP_FILE, ctx->logfile);
 	check_ok(ctx);
 
@@ -223,7 +220,7 @@ create_new_objects(migratorContext *ctx)
 	exec_prog(ctx, true,
 			  SYSTEMQUOTE "\"%s/psql\" --set ON_ERROR_STOP=on --port %d "
 			  "-f \"%s/%s\" --dbname template1 >> \"%s\"" SYSTEMQUOTE,
-			  ctx->new.bindir, ctx->new.port, ctx->output_dir,
+			  ctx->new.bindir, ctx->new.port, ctx->cwd,
 			  DB_DUMP_FILE, ctx->logfile);
 	check_ok(ctx);
 
@@ -399,33 +396,10 @@ cleanup(migratorContext *ctx)
 	if (ctx->debug_fd)
 		fclose(ctx->debug_fd);
 
-	snprintf(filename, sizeof(filename), "%s/%s", ctx->output_dir, ALL_DUMP_FILE);
+	snprintf(filename, sizeof(filename), "%s/%s", ctx->cwd, ALL_DUMP_FILE);
 	unlink(filename);
-	snprintf(filename, sizeof(filename), "%s/%s", ctx->output_dir, GLOBALS_DUMP_FILE);
+	snprintf(filename, sizeof(filename), "%s/%s", ctx->cwd, GLOBALS_DUMP_FILE);
 	unlink(filename);
-	snprintf(filename, sizeof(filename), "%s/%s", ctx->output_dir, DB_DUMP_FILE);
+	snprintf(filename, sizeof(filename), "%s/%s", ctx->cwd, DB_DUMP_FILE);
 	unlink(filename);
-}
-
-
-/*
- * create_empty_output_directory
- *
- *	Create empty directory for output files
- */
-static void
-create_empty_output_directory(migratorContext *ctx)
-{
-	/*
-	 *	rmtree() outputs a warning if the directory does not exist,
-	 *	so we try to create the directory first.
-	 */
-	if (mkdir(ctx->output_dir, S_IRWXU) != 0)
-	{
-		if (errno == EEXIST)
-			rmtree(ctx->output_dir, false);
-		else
-			pg_log(ctx, PG_FATAL, "Cannot create subdirectory %s: %s\n",
-			   ctx->output_dir, getErrorText(errno));
-	}
 }

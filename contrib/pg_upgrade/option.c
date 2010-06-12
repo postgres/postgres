@@ -84,20 +84,7 @@ parseCommandLine(migratorContext *ctx, int argc, char *argv[])
 	if (user_id == 0)
 		pg_log(ctx, PG_FATAL, "%s: cannot be run as root\n", ctx->progname);
 
-#ifndef WIN32
-	get_home_path(ctx->home_dir);
-#else
-	{
-		char	   *tmppath;
-
-		/* TMP is the best place on Windows, rather than APPDATA */
-		if ((tmppath = getenv("TMP")) == NULL)
-			pg_log(ctx, PG_FATAL, "TMP environment variable is not set.\n");
-		snprintf(ctx->home_dir, MAXPGPATH, "%s", tmppath);
-	}
-#endif
-
-	snprintf(ctx->output_dir, MAXPGPATH, "%s/" OUTPUT_SUBDIR, ctx->home_dir);
+	getcwd(ctx->cwd, MAXPGPATH);
 
 	while ((option = getopt_long(argc, argv, "d:D:b:B:cgG:kl:p:P:u:v",
 								 long_options, &optindex)) != -1)

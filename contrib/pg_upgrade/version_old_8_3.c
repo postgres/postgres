@@ -28,7 +28,7 @@ old_8_3_check_for_name_data_type_usage(migratorContext *ctx, Cluster whichCluste
 	prep_status(ctx, "Checking for invalid 'name' user columns");
 
 	snprintf(output_path, sizeof(output_path), "%s/tables_using_name.txt",
-			 ctx->output_dir);
+			 ctx->cwd);
 
 	for (dbnum = 0; dbnum < active_cluster->dbarr.ndbs; dbnum++)
 	{
@@ -123,7 +123,7 @@ old_8_3_check_for_tsquery_usage(migratorContext *ctx, Cluster whichCluster)
 	prep_status(ctx, "Checking for tsquery user columns");
 
 	snprintf(output_path, sizeof(output_path), "%s/tables_using_tsquery.txt",
-			 ctx->output_dir);
+			 ctx->cwd);
 
 	for (dbnum = 0; dbnum < active_cluster->dbarr.ndbs; dbnum++)
 	{
@@ -222,7 +222,7 @@ old_8_3_check_for_isn_and_int8_passing_mismatch(migratorContext *ctx, Cluster wh
 	}
 
 	snprintf(output_path, sizeof(output_path), "%s/contrib_isn_and_int8_pass_by_value.txt",
-			 ctx->output_dir);
+			 ctx->cwd);
 
 	for (dbnum = 0; dbnum < active_cluster->dbarr.ndbs; dbnum++)
 	{
@@ -312,7 +312,7 @@ old_8_3_rebuild_tsvector_tables(migratorContext *ctx, bool check_mode,
 	prep_status(ctx, "Checking for tsvector user columns");
 
 	snprintf(output_path, sizeof(output_path), "%s/rebuild_tsvector_tables.sql",
-			 ctx->output_dir);
+			 ctx->cwd);
 
 	for (dbnum = 0; dbnum < active_cluster->dbarr.ndbs; dbnum++)
 	{
@@ -457,7 +457,7 @@ old_8_3_invalidate_hash_gin_indexes(migratorContext *ctx, bool check_mode,
 	prep_status(ctx, "Checking for hash and gin indexes");
 
 	snprintf(output_path, sizeof(output_path), "%s/reindex_hash_and_gin.sql",
-			 ctx->output_dir);
+			 ctx->cwd);
 
 	for (dbnum = 0; dbnum < active_cluster->dbarr.ndbs; dbnum++)
 	{
@@ -573,7 +573,7 @@ old_8_3_invalidate_bpchar_pattern_ops_indexes(migratorContext *ctx, bool check_m
 	prep_status(ctx, "Checking for bpchar_pattern_ops indexes");
 
 	snprintf(output_path, sizeof(output_path), "%s/reindex_bpchar_ops.sql",
-			 ctx->output_dir);
+			 ctx->cwd);
 
 	for (dbnum = 0; dbnum < active_cluster->dbarr.ndbs; dbnum++)
 	{
@@ -705,7 +705,7 @@ old_8_3_create_sequence_script(migratorContext *ctx, Cluster whichCluster)
 	bool		found = false;
 	char	   *output_path = pg_malloc(ctx, MAXPGPATH);
 
-	snprintf(output_path, MAXPGPATH, "%s/adjust_sequences.sql", ctx->output_dir);
+	snprintf(output_path, MAXPGPATH, "%s/adjust_sequences.sql", ctx->cwd);
 
 	prep_status(ctx, "Creating script to adjust sequences");
 

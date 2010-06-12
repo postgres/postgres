@@ -28,7 +28,7 @@ new_9_0_populate_pg_largeobject_metadata(migratorContext *ctx, bool check_mode,
 	prep_status(ctx, "Checking for large objects");
 
 	snprintf(output_path, sizeof(output_path), "%s/pg_largeobject.sql",
-			 ctx->output_dir);
+			 ctx->cwd);
 
 	for (dbnum = 0; dbnum < active_cluster->dbarr.ndbs; dbnum++)
 	{

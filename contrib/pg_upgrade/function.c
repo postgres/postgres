@@ -213,7 +213,7 @@ check_loadable_libraries(migratorContext *ctx)
 	prep_status(ctx, "Checking for presence of required libraries");
 
 	snprintf(output_path, sizeof(output_path), "%s/loadable_libraries.txt",
-			 ctx->output_dir);
+			 ctx->cwd);
 
 	for (libnum = 0; libnum < ctx->num_libraries; libnum++)
 	{

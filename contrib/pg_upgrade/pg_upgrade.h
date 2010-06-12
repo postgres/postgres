@@ -29,8 +29,6 @@
 #define OVERWRITE_MESSAGE	"  %-" MESSAGE_WIDTH "." MESSAGE_WIDTH "s\r"
 #define GET_MAJOR_VERSION(v)	((v) / 100)
 
-#define OUTPUT_SUBDIR		"pg_upgrade_output"
-
 #define ALL_DUMP_FILE		"pg_upgrade_dump_all.sql"
 /* contains both global db information and CREATE DATABASE commands */
 #define GLOBALS_DUMP_FILE	"pg_upgrade_dump_globals.sql"
@@ -217,8 +215,7 @@ typedef struct
 	const char *progname;		/* complete pathname for this program */
 	char	   *exec_path;		/* full path to my executable */
 	char	   *user;			/* username for clusters */
-	char		home_dir[MAXPGPATH];	/* name of user's home directory */
-	char		output_dir[MAXPGPATH];	/* directory for pg_upgrade output */
+	char		cwd[MAXPGPATH];	/* directory for pg_upgrade output */
 	char	  **tablespaces;	/* tablespaces */
 	int			num_tablespaces;
 	char	  **libraries;		/* loadable libraries */

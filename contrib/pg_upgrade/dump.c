@@ -21,7 +21,7 @@ generate_old_dump(migratorContext *ctx)
 	exec_prog(ctx, true,
 			  SYSTEMQUOTE "\"%s/pg_dumpall\" --port %d --schema-only "
 			  "--binary-upgrade > \"%s/" ALL_DUMP_FILE "\"" SYSTEMQUOTE,
-			  ctx->new.bindir, ctx->old.port, ctx->output_dir);
+			  ctx->new.bindir, ctx->old.port, ctx->cwd);
 	check_ok(ctx);
 }
 
@@ -52,13 +52,13 @@ split_old_dump(migratorContext *ctx)
 	char		filename[MAXPGPATH];
 	bool		suppressed_username = false;
 
-	snprintf(filename, sizeof(filename), "%s/%s", ctx->output_dir, ALL_DUMP_FILE);
+	snprintf(filename, sizeof(filename), "%s/%s", ctx->cwd, ALL_DUMP_FILE);
 	if ((all_dump = fopen(filename, "r")) == NULL)
 		pg_log(ctx, PG_FATAL, "Cannot open dump file %s\n", filename);
-	snprintf(filename, sizeof(filename), "%s/%s", ctx->output_dir, GLOBALS_DUMP_FILE);
+	snprintf(filename, sizeof(filename), "%s/%s", ctx->cwd, GLOBALS_DUMP_FILE);
 	if ((globals_dump = fopen(filename, "w")) == NULL)
 		pg_log(ctx, PG_FATAL, "Cannot write to dump file %s\n", filename);
-	snprintf(filename, sizeof(filename), "%s/%s", ctx->output_dir, DB_DUMP_FILE);
+	snprintf(filename, sizeof(filename), "%s/%s", ctx->cwd, DB_DUMP_FILE);
 	if ((db_dump = fopen(filename, "w")) == NULL)
 		pg_log(ctx, PG_FATAL, "Cannot write to dump file %s\n", filename);
 	current_output = globals_dump;
