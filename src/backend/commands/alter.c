@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/alter.c,v 1.35 2010/02/26 02:00:37 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/alter.c,v 1.36 2010/06/13 17:43:12 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,6 +31,7 @@
 #include "parser/parse_clause.h"
 #include "tcop/utility.h"
 #include "utils/acl.h"
+#include "utils/builtins.h"
 #include "utils/lsyscache.h"
 
 
@@ -235,7 +236,7 @@ ExecAlterOwnerStmt(AlterOwnerStmt *stmt)
 			break;
 
 		case OBJECT_LARGEOBJECT:
-			LargeObjectAlterOwner(intVal(linitial(stmt->object)), newowner);
+			LargeObjectAlterOwner(oidparse(linitial(stmt->object)), newowner);
 			break;
 
 		case OBJECT_OPERATOR:

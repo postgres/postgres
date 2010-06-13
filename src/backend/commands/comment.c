@@ -7,7 +7,7 @@
  * Copyright (c) 1996-2010, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/comment.c,v 1.114 2010/02/26 02:00:38 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/comment.c,v 1.115 2010/06/13 17:43:12 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1404,32 +1404,9 @@ static void
 CommentLargeObject(List *qualname, char *comment)
 {
 	Oid			loid;
-	Node	   *node;
 
 	Assert(list_length(qualname) == 1);
-	node = (Node *) linitial(qualname);
-
-	switch (nodeTag(node))
-	{
-		case T_Integer:
-			loid = intVal(node);
-			break;
-		case T_Float:
-
-			/*
-			 * Values too large for int4 will be represented as Float
-			 * constants by the lexer.	Accept these if they are valid OID
-			 * strings.
-			 */
-			loid = DatumGetObjectId(DirectFunctionCall1(oidin,
-											 CStringGetDatum(strVal(node))));
-			break;
-		default:
-			elog(ERROR, "unrecognized node type: %d",
-				 (int) nodeTag(node));
-			/* keep compiler quiet */
-			loid = InvalidOid;
-	}
+	loid = oidparse((Node *) linitial(qualname));
 
 	/* check that the large object exists */
 	if (!LargeObjectExists(loid))

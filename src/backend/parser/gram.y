@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.712 2010/05/30 18:10:40 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.713 2010/06/13 17:43:12 rhaas Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -365,6 +365,7 @@ static TypeName *TableFuncTypeName(List *columns);
 %type <list>	OptCreateAs CreateAsList
 %type <node>	CreateAsElement ctext_expr
 %type <value>	NumericOnly
+%type <list>	NumericOnly_list
 %type <alias>	alias_clause
 %type <sortby>	sortby
 %type <ielem>	index_elem
@@ -399,7 +400,6 @@ static TypeName *TableFuncTypeName(List *columns);
 %type <boolean> opt_varying opt_timezone
 
 %type <ival>	Iconst SignedIconst
-%type <list>	Iconst_list
 %type <str>		Sconst comment_text notify_payload
 %type <str>		RoleId opt_granted_by opt_boolean ColId_or_Sconst
 %type <list>	var_list
@@ -2879,6 +2879,10 @@ NumericOnly:
 			| SignedIconst						{ $$ = makeInteger($1); }
 		;
 
+NumericOnly_list:	NumericOnly						{ $$ = list_make1($1); }
+				| NumericOnly_list ',' NumericOnly	{ $$ = lappend($1, $3); }
+		;
+
 /*****************************************************************************
  *
  *		QUERIES :
@@ -4634,7 +4638,7 @@ privilege_target:
 					n->objs = $2;
 					$$ = n;
 				}
-			| LARGE_P OBJECT_P Iconst_list
+			| LARGE_P OBJECT_P NumericOnly_list
 				{
 					PrivTarget *n = (PrivTarget *) palloc(sizeof(PrivTarget));
 					n->targtype = ACL_TARGET_OBJECT;
@@ -5929,11 +5933,11 @@ AlterOwnerStmt: ALTER AGGREGATE func_name aggr_args OWNER TO RoleId
 					n->newowner = $7;
 					$$ = (Node *)n;
 				}
-			| ALTER LARGE_P OBJECT_P Iconst OWNER TO RoleId
+			| ALTER LARGE_P OBJECT_P NumericOnly OWNER TO RoleId
 				{
 					AlterOwnerStmt *n = makeNode(AlterOwnerStmt);
 					n->objectType = OBJECT_LARGEOBJECT;
-					n->object = list_make1(makeInteger($4));
+					n->object = list_make1($4);
 					n->newowner = $7;
 					$$ = (Node *)n;
 				}
@@ -10753,10 +10757,6 @@ RoleId:		ColId									{ $$ = $1; };
 SignedIconst: Iconst								{ $$ = $1; }
 			| '+' Iconst							{ $$ = + $2; }
 			| '-' Iconst							{ $$ = - $2; }
-		;
-
-Iconst_list:	Iconst						{ $$ = list_make1(makeInteger($1)); }
-				| Iconst_list ',' Iconst	{ $$ = lappend($1, makeInteger($3)); }
 		;
 
 /*

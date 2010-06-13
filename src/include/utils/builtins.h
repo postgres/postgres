@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/builtins.h,v 1.348 2010/02/26 02:01:28 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/builtins.h,v 1.349 2010/06/13 17:43:13 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -479,6 +479,7 @@ extern Datum oidvectorle(PG_FUNCTION_ARGS);
 extern Datum oidvectorge(PG_FUNCTION_ARGS);
 extern Datum oidvectorgt(PG_FUNCTION_ARGS);
 extern oidvector *buildoidvector(const Oid *oids, int n);
+extern Oid oidparse(Node *node);
 
 /* pseudotypes.c */
 extern Datum cstring_in(PG_FUNCTION_ARGS);
