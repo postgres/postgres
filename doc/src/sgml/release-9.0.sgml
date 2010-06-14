@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release-9.0.sgml,v 2.30 2010/06/14 01:07:41 rhaas Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release-9.0.sgml,v 2.31 2010/06/14 02:18:43 rhaas Exp $ -->
 
  <sect1 id="release-9-0">
   <title>Release 9.0</title>
@@ -842,8 +842,8 @@
 
     <listitem>
      <para>
-      Allow <link linkend="SQL-COMMENT">comments</link> only on
-      columns of tables, views, and composite types, not other
+      Allow <link linkend="SQL-COMMENT">comments</link> on
+      columns only of tables, views, and composite types, not other
       objects like indexes and <acronym>TOAST</> tables (Tom Lane)
      </para>
     </listitem>
