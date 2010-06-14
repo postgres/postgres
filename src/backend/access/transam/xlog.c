@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.423 2010/06/12 09:14:52 petere Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.424 2010/06/14 06:04:21 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -9270,6 +9270,22 @@ retry:
 			{
 				if (WalRcvInProgress())
 				{
+					/*
+					 * If we find an invalid record in the WAL streamed from
+					 * master, something is seriously wrong. There's little
+					 * chance that the problem will just go away, but PANIC
+					 * is not good for availability either, especially in
+					 * hot standby mode. Disconnect, and retry from
+					 * archive/pg_xlog again. The WAL in the archive should
+					 * be identical to what was streamed, so it's unlikely
+					 * that it helps, but one can hope...
+					 */
+					if (failedSources & XLOG_FROM_STREAM)
+					{
+						ShutdownWalRcv();
+						continue;
+					}
+
 					/*
 					 * While walreceiver is active, wait for new WAL to arrive
 					 * from primary.
