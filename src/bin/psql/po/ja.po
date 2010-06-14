@@ -1624,7 +1624,7 @@ msgstr "継承"
 #: describe.c:2005
 #, c-format
 msgid "Number of child tables: %d (Use \\d+ to list them.)"
-msgstr "子テーブルの数：%d（\\d で一覧表示）"
+msgstr "子テーブルの数：%d（\\d+ で一覧表示）"
 
 #: describe.c:2012
 msgid "Child tables"
