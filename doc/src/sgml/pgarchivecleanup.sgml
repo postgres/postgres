@@ -1,0 +1,158 @@
+<!-- $PostgreSQL: pgsql/doc/src/sgml/pgarchivecleanup.sgml,v 1.1 2010/06/14 17:25:24 sriggs Exp $ -->
+
+<sect1 id="pgarchivecleanup">
+ <title>pg_archivecleanup</title>
+
+ <indexterm zone="pgarchivecleanup">
+  <primary>pg_archivecleanup</primary>
+ </indexterm>
+
+ <para>
+  <application>pg_archivecleanup</> is designed to cleanup an archive when used
+  as an <literal>archive_cleanup_command</literal> when running with
+  <literal>standby_mode = on</literal>. <application>pg_archivecleanup</> can
+  also be used as a standalone program to clean WAL file archives.
+ </para>
+
+ <para>
+  <application>pg_archivecleanup</application> features include:
+ </para>
+ <itemizedlist>
+  <listitem>
+   <para>
+    Written in C, so very portable and easy to install
+   </para>
+  </listitem>
+  <listitem>
+   <para>
+    Easy-to-modify source code, with specifically designated
+    sections to modify for your own needs
+   </para>
+  </listitem>
+ </itemizedlist>
+
+ <sect2>
+  <title>Usage</title>
+
+  <para>
+   To configure a standby
+   server to use <application>pg_archivecleanup</>, put this into its
+   <filename>recovery.conf</filename> configuration file:
+  </para>
+  <programlisting>
+archive_cleanup_command = 'pg_archivecleanup <replaceable>archiveDir</> %r'
+  </programlisting>
+  <para>
+   where <replaceable>archiveDir</> is the directory from which WAL segment
+   files should be restored.
+  </para>
+  <para>
+   When used within <literal>archive_cleanup_command</literal>,
+   all WAL files logically preceding the value of the <literal>%r</>
+   will be removed <replaceable>archivelocation</>. This minimizes
+   the number of files that need to be retained, while preserving
+   crash-restart capability.  Use of this parameter is appropriate if the
+   <replaceable>archivelocation</> is a transient staging area for this
+   particular standby server, but <emphasis>not</> when the
+   <replaceable>archivelocation</> is intended as a long-term WAL archive area.
+  </para>
+  <para>
+   The full syntax of <application>pg_archivecleanup</>'s command line is
+  </para>
+  <synopsis>
+pg_archivecleanup <optional> <replaceable>option</> ... </optional> <replaceable>archivelocation</> <replaceable>restartwalfile</>
+  </synopsis>
+  <para>
+   When used as a standalone program all WAL files logically preceding the 
+   <literal>restartwalfile</> will be removed <replaceable>archivelocation</>.
+   In this mode, if you specify a .backup filename, then only the file prefix
+   will be used as the <literal>restartwalfile</>. This allows you to remove
+   all WAL files archived prior to a specific base backup without error.
+   For example, the following example will remove all files older than
+   WAL filename 000000010000003700000010:
+  </para>
+  <programlisting>
+pg_archivecleanup -d archive 000000010000003700000010.00000020.backup
+
+pg_archivecleanup:  keep WAL files 000000010000003700000010 and later
+pg_archivecleanup:  removing "archive/00000001000000370000000F"
+pg_archivecleanup:  removing "archive/00000001000000370000000E"
+  </programlisting>
+  <para>
+   <application>pg_archivecleanup</application> assumes that
+   <replaceable>archivelocation</> is a directory readable and writable by the
+   server-owning user.
+  </para>
+ </sect2>
+
+ <sect2>
+  <title><application>pg_archivecleanup</> Options</title>
+
+   <para>
+    <application>pg_archivecleanup</application> accepts the following command-line arguments:
+
+    <variablelist>
+
+     <varlistentry>
+      <term><option>-d</option></term>
+      <listitem>
+       <para>
+        Print lots of debug logging output on <filename>stderr</>.
+       </para>
+      </listitem>
+     </varlistentry>
+
+    </variablelist>
+   </para>
+
+ </sect2>
+
+ <sect2>
+  <title>Examples</title>
+
+  <para>On Linux or Unix systems, you might use:</para>
+
+  <programlisting>
+archive_cleanup_command = 'pg_archivecleanup -d .../archive %r 2>>cleanup.log'
+  </programlisting>
+  <para>
+   where the archive directory is physically located on the standby server,
+   so that the <literal>archive_command</> is accessing it across NFS,
+   but the files are local to the standby.
+   This will:
+  </para>
+  <itemizedlist>
+   <listitem>
+    <para>
+     produce debugging output in <filename>standby.log</>
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     remove no-longer-needed files from the archive directory
+    </para>
+   </listitem>
+  </itemizedlist>
+
+ </sect2>
+
+ <sect2>
+  <title>Supported server versions</title>
+
+  <para>
+   <application>pg_archivecleanup</application> is designed to work with
+   <productname>PostgreSQL</> 8.0 and later when used as a standalone utility,
+   or with <productname>PostgreSQL</> 9.0 and later when used as an
+   archive cleanup command.
+  </para>
+ </sect2>
+
+ <sect2>
+  <title>Author</title>
+
+  <para>
+   Simon Riggs <email>simon@2ndquadrant.com</email>
+  </para>
+ </sect2>
+
+</sect1>
