@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/plperl.sgml,v 2.84 2010/05/13 16:39:43 adunstan Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/plperl.sgml,v 2.85 2010/06/14 18:47:05 momjian Exp $ -->
 
  <chapter id="plperl">
   <title>PL/Perl - Perl Procedural Language</title>
@@ -835,7 +835,7 @@ $$ LANGUAGE plperl;
 
   <para>
     The <varname>%_SHARED</varname> variable and other global state within
-    the language is public data, available to all PL/Perl functions within a
+    the language are public data, available to all PL/Perl functions within a
     session. Use with care, especially in situations that involve use of 
     multiple roles or <literal>SECURITY DEFINER</> functions.
   </para>
