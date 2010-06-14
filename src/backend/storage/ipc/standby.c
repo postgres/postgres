@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/standby.c,v 1.24 2010/05/26 19:52:52 sriggs Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/standby.c,v 1.25 2010/06/14 00:49:24 itagaki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -184,11 +184,9 @@ ResolveRecoveryConflictWithVirtualXIDs(VirtualTransactionId *waitlist,
 				int			len;
 
 				old_status = get_ps_display(&len);
-				new_status = (char *) palloc(len + 50);
+				new_status = (char *) palloc(len + 8 + 1);
 				memcpy(new_status, old_status, len);
-				snprintf(new_status + len, 50,
-						 " waiting for max_standby_delay (%d ms)",
-						 MaxStandbyDelay);
+				strcpy(new_status + len, " waiting");
 				set_ps_display(new_status, false);
 				new_status[len] = '\0'; /* truncate off " waiting" */
 			}
