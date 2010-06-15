@@ -804,3 +804,40 @@ SELECT dblink_disconnect('dtest1');
  OK
 (1 row)
 
+-- test dropped columns in dblink_build_sql_insert, dblink_build_sql_update
+CREATE TEMP TABLE test_dropped
+(
+	col1 INT NOT NULL DEFAULT 111,
+	id SERIAL PRIMARY KEY,
+	col2 INT NOT NULL DEFAULT 112,
+	col2b INT NOT NULL DEFAULT 113
+);
+NOTICE:  CREATE TABLE will create implicit sequence "test_dropped_id_seq" for serial column "test_dropped.id"
+NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "test_dropped_pkey" for table "test_dropped"
+INSERT INTO test_dropped VALUES(default);
+ALTER TABLE test_dropped
+	DROP COLUMN col1,
+	DROP COLUMN col2,
+	ADD COLUMN col3 VARCHAR(10) NOT NULL DEFAULT 'foo',
+	ADD COLUMN col4 INT NOT NULL DEFAULT 42;
+SELECT dblink_build_sql_insert('test_dropped', '2', 1,
+                               ARRAY['1'::TEXT], ARRAY['2'::TEXT]);
+                          dblink_build_sql_insert                          
+---------------------------------------------------------------------------
+ INSERT INTO test_dropped(id,col2b,col3,col4) VALUES('2','113','foo','42')
+(1 row)
+
+SELECT dblink_build_sql_update('test_dropped', '2', 1,
+                               ARRAY['1'::TEXT], ARRAY['2'::TEXT]);
+                                  dblink_build_sql_update                                  
+-------------------------------------------------------------------------------------------
+ UPDATE test_dropped SET id = '2', col2b = '113', col3 = 'foo', col4 = '42' WHERE id = '2'
+(1 row)
+
+SELECT dblink_build_sql_delete('test_dropped', '2', 1,
+                               ARRAY['2'::TEXT]);
+         dblink_build_sql_delete         
+-----------------------------------------
+ DELETE FROM test_dropped WHERE id = '2'
+(1 row)
+
