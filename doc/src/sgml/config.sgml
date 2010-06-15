@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.280 2010/05/31 15:50:48 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.281 2010/06/15 07:52:10 itagaki Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -1963,6 +1963,29 @@ SET ENABLE_SEQSCAN TO OFF;
        allow significantly less than <varname>max_standby_delay</> seconds
        before query cancellation is possible.
       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-vacuum-defer-cleanup-age" xreflabel="vacuum_defer_cleanup_age">
+      <term><varname>vacuum_defer_cleanup_age</varname> (<type>integer</type>)</term>
+      <indexterm>
+       <primary><varname>vacuum_defer_cleanup_age</> configuration parameter</primary>
+      </indexterm>
+      <listitem>
+       <para>
+        Specifies the number of transactions by which <command>VACUUM</> and
+        <acronym>HOT</> updates will defer cleanup of dead row versions. The
+        default is 0 transactions, meaning that dead row versions will be
+        removed as soon as possible. You may wish to set this to a non-zero
+        value when planning or maintaining a <xref linkend="hot-standby">
+        configuration. The recommended value is <literal>0</> unless you have
+        clear reason to increase it. The purpose of the parameter is to
+        allow the user to specify an approximate time delay before cleanup
+        occurs. However, it should be noted that there is no direct link with
+        any specific time delay and so the results will be application and
+        installation specific, as well as variable over time, depending upon
+        the transaction rate (of writes only).
+       </para>
       </listitem>
      </varlistentry>
 
@@ -4403,29 +4426,6 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
         that there is not an unreasonably short time between forced
         autovacuums.  For more information see <xref
         linkend="vacuum-for-wraparound">.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry id="guc-vacuum-defer-cleanup-age" xreflabel="vacuum_defer_cleanup_age">
-      <term><varname>vacuum_defer_cleanup_age</varname> (<type>integer</type>)</term>
-      <indexterm>
-       <primary><varname>vacuum_defer_cleanup_age</> configuration parameter</primary>
-      </indexterm>
-      <listitem>
-       <para>
-        Specifies the number of transactions by which <command>VACUUM</> and
-        <acronym>HOT</> updates will defer cleanup of dead row versions. The
-        default is 0 transactions, meaning that dead row versions will be
-        removed as soon as possible. You may wish to set this to a non-zero
-        value when planning or maintaining a <xref linkend="hot-standby">
-        configuration. The recommended value is <literal>0</> unless you have
-        clear reason to increase it. The purpose of the parameter is to
-        allow the user to specify an approximate time delay before cleanup
-        occurs. However, it should be noted that there is no direct link with
-        any specific time delay and so the results will be application and
-        installation specific, as well as variable over time, depending upon
-        the transaction rate (of writes only).
        </para>
       </listitem>
      </varlistentry>

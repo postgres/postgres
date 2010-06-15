@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.554 2010/05/02 02:10:33 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.555 2010/06/15 07:52:10 itagaki Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -489,14 +489,24 @@ const char *const config_group_names[] =
 	gettext_noop("Resource Usage / Memory"),
 	/* RESOURCES_KERNEL */
 	gettext_noop("Resource Usage / Kernel Resources"),
+	/* RESOURCES_VACUUM_DELAY */
+	gettext_noop("Resource Usage / Cost-Based Vacuum Delay"),
+	/* RESOURCES_BGWRITER */
+	gettext_noop("Resource Usage / Background Writer"),
+	/* RESOURCES_ASYNCHRONOUS */
+	gettext_noop("Resource Usage / Asynchronous Behavior"),
 	/* WAL */
 	gettext_noop("Write-Ahead Log"),
 	/* WAL_SETTINGS */
 	gettext_noop("Write-Ahead Log / Settings"),
 	/* WAL_CHECKPOINTS */
 	gettext_noop("Write-Ahead Log / Checkpoints"),
+	/* WAL_ARCHIVING */
+	gettext_noop("Write-Ahead Log / Archiving"),
 	/* WAL_REPLICATION */
-	gettext_noop("Write-Ahead Log / Replication"),
+	gettext_noop("Write-Ahead Log / Streaming Replication"),
+	/* WAL_STANDBY_SERVERS */
+	gettext_noop("Write-Ahead Log / Standby Servers"),
 	/* QUERY_TUNING */
 	gettext_noop("Query Tuning"),
 	/* QUERY_TUNING_METHOD */
@@ -1213,7 +1223,7 @@ static struct config_bool ConfigureNamesBool[] =
 	},
 
 	{
-		{"archive_mode", PGC_POSTMASTER, WAL_SETTINGS,
+		{"archive_mode", PGC_POSTMASTER, WAL_ARCHIVING,
 			gettext_noop("Allows archiving of WAL files using archive_command."),
 			NULL
 		},
@@ -1222,7 +1232,7 @@ static struct config_bool ConfigureNamesBool[] =
 	},
 
 	{
-		{"hot_standby", PGC_POSTMASTER, WAL_SETTINGS,
+		{"hot_standby", PGC_POSTMASTER, WAL_STANDBY_SERVERS,
 			gettext_noop("Allows connections and queries during recovery."),
 			NULL
 		},
@@ -1271,7 +1281,7 @@ static struct config_bool ConfigureNamesBool[] =
 static struct config_int ConfigureNamesInt[] =
 {
 	{
-		{"archive_timeout", PGC_SIGHUP, WAL_SETTINGS,
+		{"archive_timeout", PGC_SIGHUP, WAL_ARCHIVING,
 			gettext_noop("Forces a switch to the next xlog file if a "
 						 "new file has not been started within N seconds."),
 			NULL,
@@ -1384,7 +1394,7 @@ static struct config_int ConfigureNamesInt[] =
 	},
 
 	{
-		{"max_standby_delay", PGC_SIGHUP, WAL_SETTINGS,
+		{"max_standby_delay", PGC_SIGHUP, WAL_STANDBY_SERVERS,
 			gettext_noop("Sets the maximum delay to avoid conflict processing on hot standby servers."),
 			NULL,
 			GUC_UNIT_MS
@@ -1477,7 +1487,7 @@ static struct config_int ConfigureNamesInt[] =
 	},
 
 	{
-		{"vacuum_cost_page_hit", PGC_USERSET, RESOURCES,
+		{"vacuum_cost_page_hit", PGC_USERSET, RESOURCES_VACUUM_DELAY,
 			gettext_noop("Vacuum cost for a page found in the buffer cache."),
 			NULL
 		},
@@ -1486,7 +1496,7 @@ static struct config_int ConfigureNamesInt[] =
 	},
 
 	{
-		{"vacuum_cost_page_miss", PGC_USERSET, RESOURCES,
+		{"vacuum_cost_page_miss", PGC_USERSET, RESOURCES_VACUUM_DELAY,
 			gettext_noop("Vacuum cost for a page not found in the buffer cache."),
 			NULL
 		},
@@ -1495,7 +1505,7 @@ static struct config_int ConfigureNamesInt[] =
 	},
 
 	{
-		{"vacuum_cost_page_dirty", PGC_USERSET, RESOURCES,
+		{"vacuum_cost_page_dirty", PGC_USERSET, RESOURCES_VACUUM_DELAY,
 			gettext_noop("Vacuum cost for a page dirtied by vacuum."),
 			NULL
 		},
@@ -1504,7 +1514,7 @@ static struct config_int ConfigureNamesInt[] =
 	},
 
 	{
-		{"vacuum_cost_limit", PGC_USERSET, RESOURCES,
+		{"vacuum_cost_limit", PGC_USERSET, RESOURCES_VACUUM_DELAY,
 			gettext_noop("Vacuum cost amount available before napping."),
 			NULL
 		},
@@ -1513,7 +1523,7 @@ static struct config_int ConfigureNamesInt[] =
 	},
 
 	{
-		{"vacuum_cost_delay", PGC_USERSET, RESOURCES,
+		{"vacuum_cost_delay", PGC_USERSET, RESOURCES_VACUUM_DELAY,
 			gettext_noop("Vacuum cost delay in milliseconds."),
 			NULL,
 			GUC_UNIT_MS
@@ -1554,7 +1564,7 @@ static struct config_int ConfigureNamesInt[] =
 	 * See also CheckRequiredParameterValues() if this parameter changes
 	 */
 	{
-		{"max_prepared_transactions", PGC_POSTMASTER, RESOURCES,
+		{"max_prepared_transactions", PGC_POSTMASTER, RESOURCES_MEM,
 			gettext_noop("Sets the maximum number of simultaneously prepared transactions."),
 			NULL
 		},
@@ -1612,7 +1622,7 @@ static struct config_int ConfigureNamesInt[] =
 	},
 
 	{
-		{"vacuum_defer_cleanup_age", PGC_USERSET, CLIENT_CONN_STATEMENT,
+		{"vacuum_defer_cleanup_age", PGC_USERSET, WAL_STANDBY_SERVERS,
 			gettext_noop("Age by which VACUUM and HOT cleanup should be deferred, if any."),
 			NULL
 		},
@@ -1790,7 +1800,7 @@ static struct config_int ConfigureNamesInt[] =
 	},
 
 	{
-		{"bgwriter_delay", PGC_SIGHUP, RESOURCES,
+		{"bgwriter_delay", PGC_SIGHUP, RESOURCES_BGWRITER,
 			gettext_noop("Background writer sleep time between rounds."),
 			NULL,
 			GUC_UNIT_MS
@@ -1800,7 +1810,7 @@ static struct config_int ConfigureNamesInt[] =
 	},
 
 	{
-		{"bgwriter_lru_maxpages", PGC_SIGHUP, RESOURCES,
+		{"bgwriter_lru_maxpages", PGC_SIGHUP, RESOURCES_BGWRITER,
 			gettext_noop("Background writer maximum number of LRU pages to flush per round."),
 			NULL
 		},
@@ -1815,7 +1825,7 @@ static struct config_int ConfigureNamesInt[] =
 #else
 			PGC_INTERNAL,
 #endif
-			RESOURCES,
+			RESOURCES_ASYNCHRONOUS,
 			gettext_noop("Number of simultaneous requests that can be handled efficiently by the disk subsystem."),
 			gettext_noop("For RAID arrays, this should be approximately the number of drive spindles in the array.")
 		},
@@ -2143,7 +2153,7 @@ static struct config_real ConfigureNamesReal[] =
 	},
 
 	{
-		{"bgwriter_lru_multiplier", PGC_SIGHUP, RESOURCES,
+		{"bgwriter_lru_multiplier", PGC_SIGHUP, RESOURCES_BGWRITER,
 			gettext_noop("Multiple of the average buffer usage to free per round."),
 			NULL
 		},
@@ -2197,7 +2207,7 @@ static struct config_real ConfigureNamesReal[] =
 static struct config_string ConfigureNamesString[] =
 {
 	{
-		{"archive_command", PGC_SIGHUP, WAL_SETTINGS,
+		{"archive_command", PGC_SIGHUP, WAL_ARCHIVING,
 			gettext_noop("Sets the shell command that will be called to archive a WAL file."),
 			NULL
 		},
@@ -2630,7 +2640,7 @@ static struct config_string ConfigureNamesString[] =
 #endif   /* USE_SSL */
 
 	{
-		{"application_name", PGC_USERSET, LOGGING,
+		{"application_name", PGC_USERSET, LOGGING_WHAT,
 			gettext_noop("Sets the application name to be reported in statistics and logs."),
 			NULL,
 			GUC_IS_NAME | GUC_REPORT | GUC_NOT_IN_SAMPLE
