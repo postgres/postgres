@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/select.sgml,v 1.130 2010/04/03 07:23:02 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/select.sgml,v 1.131 2010/06/15 20:04:53 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -1200,8 +1200,9 @@ FOR SHARE [ OF <replaceable class="parameter">table_name</replaceable> [, ...] ]
     case of a join query, the rows locked are those that contribute to
     returned join rows.  In addition, rows that satisfied the query
     conditions as of the query snapshot will be locked, although they
-    will not be returned if they have since been updated to not satisfy
-    the query conditions.  If a <literal>LIMIT</> is used, locking stops
+    will not be returned if they were updated after the snapshot
+    and no longer satisfy the query conditions.  If a
+    <literal>LIMIT</> is used, locking stops
     once enough rows have been returned to satisfy the limit (but note that
     rows skipped over by <literal>OFFSET</> will get locked).  Similarly,
     if <literal>FOR UPDATE</literal> or <literal>FOR SHARE</literal>
