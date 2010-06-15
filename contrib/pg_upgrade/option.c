@@ -46,7 +46,7 @@ parseCommandLine(migratorContext *ctx, int argc, char *argv[])
 		{"verbose", no_argument, NULL, 'v'},
 		{NULL, 0, NULL, 0}
 	};
-	char		option;			/* Command line option */
+	int			option;			/* Command line option */
 	int			optindex = 0;	/* used by getopt_long */
 	int			user_id;
 	
