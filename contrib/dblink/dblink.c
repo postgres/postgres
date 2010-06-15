@@ -1642,7 +1642,7 @@ get_sql_insert(Relation rel, int *pkattnums, int pknumatts, char **src_pkattvals
 	appendStringInfo(str, ") VALUES(");
 
 	/*
-	 * remember attvals are 1 based
+	 * Note: i is physical column number (counting from 0).
 	 */
 	needComma = false;
 	for (i = 0; i < natts; i++)
@@ -1653,12 +1653,9 @@ get_sql_insert(Relation rel, int *pkattnums, int pknumatts, char **src_pkattvals
 		if (needComma)
 			appendStringInfo(str, ",");
 
-		if (tgt_pkattvals != NULL)
-			key = get_attnum_pk_pos(pkattnums, pknumatts, i);
-		else
-			key = -1;
+		key = get_attnum_pk_pos(pkattnums, pknumatts, i);
 
-		if (key > -1)
+		if (key >= 0)
 			val = pstrdup(tgt_pkattvals[key]);
 		else
 			val = SPI_getvalue(tuple, tupdesc, i + 1);
@@ -1688,7 +1685,6 @@ get_sql_delete(Relation rel, int *pkattnums, int pknumatts, char **tgt_pkattvals
 	TupleDesc	tupdesc;
 	StringInfo	str = makeStringInfo();
 	char	   *sql;
-	char	   *val = NULL;
 	int			i;
 
 	/* get relation name including any needed schema prefix and quoting */
@@ -1707,17 +1703,9 @@ get_sql_delete(Relation rel, int *pkattnums, int pknumatts, char **tgt_pkattvals
 		appendStringInfo(str, "%s",
 		   quote_ident_cstr(NameStr(tupdesc->attrs[pkattnum]->attname)));
 
-		if (tgt_pkattvals != NULL)
-			val = pstrdup(tgt_pkattvals[i]);
-		else
-			/* internal error */
-			elog(ERROR, "target key array must not be NULL");
-
-		if (val != NULL)
-		{
-			appendStringInfo(str, " = %s", quote_literal_cstr(val));
-			pfree(val);
-		}
+		if (tgt_pkattvals[i] != NULL)
+			appendStringInfo(str, " = %s",
+							 quote_literal_cstr(tgt_pkattvals[i]));
 		else
 			appendStringInfo(str, " IS NULL");
 	}
@@ -1769,12 +1757,9 @@ get_sql_update(Relation rel, int *pkattnums, int pknumatts, char **src_pkattvals
 		appendStringInfo(str, "%s = ",
 					  quote_ident_cstr(NameStr(tupdesc->attrs[i]->attname)));
 
-		if (tgt_pkattvals != NULL)
-			key = get_attnum_pk_pos(pkattnums, pknumatts, i);
-		else
-			key = -1;
+		key = get_attnum_pk_pos(pkattnums, pknumatts, i);
 
-		if (key > -1)
+		if (key >= 0)
 			val = pstrdup(tgt_pkattvals[key]);
 		else
 			val = SPI_getvalue(tuple, tupdesc, i + 1);
@@ -1801,16 +1786,10 @@ get_sql_update(Relation rel, int *pkattnums, int pknumatts, char **src_pkattvals
 		appendStringInfo(str, "%s",
 		   quote_ident_cstr(NameStr(tupdesc->attrs[pkattnum]->attname)));
 
-		if (tgt_pkattvals != NULL)
-			val = pstrdup(tgt_pkattvals[i]);
-		else
-			val = SPI_getvalue(tuple, tupdesc, pkattnum + 1);
+		val = tgt_pkattvals[i];
 
 		if (val != NULL)
-		{
 			appendStringInfo(str, " = %s", quote_literal_cstr(val));
-			pfree(val);
-		}
 		else
 			appendStringInfo(str, " IS NULL");
 	}
@@ -1878,17 +1857,13 @@ get_tuple_of_interest(Relation rel, int *pkattnums, int pknumatts, char **src_pk
 {
 	char	   *relname;
 	TupleDesc	tupdesc;
+	int			natts;
 	StringInfo	str = makeStringInfo();
 	char	   *sql = NULL;
 	int			ret;
 	HeapTuple	tuple;
 	int			i;
 	char	   *val = NULL;
-
-	/* get relation name including any needed schema prefix and quoting */
-	relname = generate_relation_name(rel);
-
-	tupdesc = rel->rd_att;
 
 	/*
 	 * Connect to SPI manager
@@ -1897,11 +1872,34 @@ get_tuple_of_interest(Relation rel, int *pkattnums, int pknumatts, char **src_pk
 		/* internal error */
 		elog(ERROR, "SPI connect failure - returned %d", ret);
 
+	/* get relation name including any needed schema prefix and quoting */
+	relname = generate_relation_name(rel);
+
+	tupdesc = rel->rd_att;
+	natts = tupdesc->natts;
+
 	/*
-	 * Build sql statement to look up tuple of interest Use src_pkattvals as
-	 * the criteria.
+	 * Build sql statement to look up tuple of interest, ie, the one matching
+	 * src_pkattvals.  We used to use "SELECT *" here, but it's simpler to
+	 * generate a result tuple that matches the table's physical structure,
+	 * with NULLs for any dropped columns.  Otherwise we have to deal with
+	 * two different tupdescs and everything's very confusing.
 	 */
-	appendStringInfo(str, "SELECT * FROM %s WHERE ", relname);
+	appendStringInfoString(str, "SELECT ");
+
+	for (i = 0; i < natts; i++)
+	{
+		if (i > 0)
+			appendStringInfoString(str, ", ");
+
+		if (tupdesc->attrs[i]->attisdropped)
+			appendStringInfoString(str, "NULL");
+		else
+			appendStringInfoString(str,
+								   quote_ident_cstr(NameStr(tupdesc->attrs[i]->attname)));
+	}
+
+	appendStringInfo(str, " FROM %s WHERE ", relname);
 
 	for (i = 0; i < pknumatts; i++)
 	{
