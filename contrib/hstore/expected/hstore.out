@@ -758,36 +758,6 @@ select pg_column_size('a=>g, b=>c'::hstore || ('b'=>'gf'))
 (1 row)
 
 -- => arrays
-select ARRAY['a','b','asd'] => ARRAY['g','h','i'];
-            ?column?            
---------------------------------
- "a"=>"g", "b"=>"h", "asd"=>"i"
-(1 row)
-
-select ARRAY['a','b','asd'] => ARRAY['g','h',NULL];
-            ?column?             
----------------------------------
- "a"=>"g", "b"=>"h", "asd"=>NULL
-(1 row)
-
-select ARRAY['z','y','x'] => ARRAY['1','2','3'];
-           ?column?           
-------------------------------
- "x"=>"3", "y"=>"2", "z"=>"1"
-(1 row)
-
-select ARRAY['aaa','bb','c','d'] => ARRAY[null::text,null,null,null];
-                   ?column?                    
------------------------------------------------
- "c"=>NULL, "d"=>NULL, "bb"=>NULL, "aaa"=>NULL
-(1 row)
-
-select ARRAY['aaa','bb','c','d'] => null;
-                   ?column?                    
------------------------------------------------
- "c"=>NULL, "d"=>NULL, "bb"=>NULL, "aaa"=>NULL
-(1 row)
-
 select hstore 'aa=>1, b=>2, c=>3' => ARRAY['g','h','i'];
  ?column? 
 ----------
@@ -810,29 +780,6 @@ select hstore 'aa=>1, b=>2, c=>3' => ARRAY['c','b','aa'];
            ?column?            
 -------------------------------
  "b"=>"2", "c"=>"3", "aa"=>"1"
-(1 row)
-
-select quote_literal('{}'::text[] => '{}'::text[]);
- quote_literal 
----------------
- ''
-(1 row)
-
-select quote_literal('{}'::text[] => null);
- quote_literal 
----------------
- ''
-(1 row)
-
-select ARRAY['a'] => '{}'::text[];  -- error
-ERROR:  arrays must have same bounds
-select '{}'::text[] => ARRAY['a'];  -- error
-ERROR:  arrays must have same bounds
-select pg_column_size(ARRAY['a','b','asd'] => ARRAY['g','h','i'])
-         = pg_column_size('a=>g, b=>h, asd=>i'::hstore);
- ?column? 
-----------
- t
 (1 row)
 
 select pg_column_size(hstore 'aa=>1, b=>2, c=>3' => ARRAY['c','b'])
@@ -908,6 +855,60 @@ select hstore('[0:2][1:2]={{a,g},{b,h},{asd,i}}'::text[]);
              hstore             
 --------------------------------
  "a"=>"g", "b"=>"h", "asd"=>"i"
+(1 row)
+
+-- pairs of arrays
+select hstore(ARRAY['a','b','asd'], ARRAY['g','h','i']);
+             hstore             
+--------------------------------
+ "a"=>"g", "b"=>"h", "asd"=>"i"
+(1 row)
+
+select hstore(ARRAY['a','b','asd'], ARRAY['g','h',NULL]);
+             hstore              
+---------------------------------
+ "a"=>"g", "b"=>"h", "asd"=>NULL
+(1 row)
+
+select hstore(ARRAY['z','y','x'], ARRAY['1','2','3']);
+            hstore            
+------------------------------
+ "x"=>"3", "y"=>"2", "z"=>"1"
+(1 row)
+
+select hstore(ARRAY['aaa','bb','c','d'], ARRAY[null::text,null,null,null]);
+                    hstore                     
+-----------------------------------------------
+ "c"=>NULL, "d"=>NULL, "bb"=>NULL, "aaa"=>NULL
+(1 row)
+
+select hstore(ARRAY['aaa','bb','c','d'], null);
+                    hstore                     
+-----------------------------------------------
+ "c"=>NULL, "d"=>NULL, "bb"=>NULL, "aaa"=>NULL
+(1 row)
+
+select quote_literal(hstore('{}'::text[], '{}'::text[]));
+ quote_literal 
+---------------
+ ''
+(1 row)
+
+select quote_literal(hstore('{}'::text[], null));
+ quote_literal 
+---------------
+ ''
+(1 row)
+
+select hstore(ARRAY['a'], '{}'::text[]);  -- error
+ERROR:  arrays must have same bounds
+select hstore('{}'::text[], ARRAY['a']);  -- error
+ERROR:  arrays must have same bounds
+select pg_column_size(hstore(ARRAY['a','b','asd'], ARRAY['g','h','i']))
+         = pg_column_size('a=>g, b=>h, asd=>i'::hstore);
+ ?column? 
+----------
+ t
 (1 row)
 
 -- records

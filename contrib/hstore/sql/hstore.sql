@@ -172,21 +172,10 @@ select pg_column_size('a=>g, b=>c'::hstore || ('b'=>'gf'))
          = pg_column_size('a=>g, b=>gf'::hstore);
 
 -- => arrays
-select ARRAY['a','b','asd'] => ARRAY['g','h','i'];
-select ARRAY['a','b','asd'] => ARRAY['g','h',NULL];
-select ARRAY['z','y','x'] => ARRAY['1','2','3'];
-select ARRAY['aaa','bb','c','d'] => ARRAY[null::text,null,null,null];
-select ARRAY['aaa','bb','c','d'] => null;
 select hstore 'aa=>1, b=>2, c=>3' => ARRAY['g','h','i'];
 select hstore 'aa=>1, b=>2, c=>3' => ARRAY['c','b'];
 select hstore 'aa=>1, b=>2, c=>3' => ARRAY['aa','b'];
 select hstore 'aa=>1, b=>2, c=>3' => ARRAY['c','b','aa'];
-select quote_literal('{}'::text[] => '{}'::text[]);
-select quote_literal('{}'::text[] => null);
-select ARRAY['a'] => '{}'::text[];  -- error
-select '{}'::text[] => ARRAY['a'];  -- error
-select pg_column_size(ARRAY['a','b','asd'] => ARRAY['g','h','i'])
-         = pg_column_size('a=>g, b=>h, asd=>i'::hstore);
 select pg_column_size(hstore 'aa=>1, b=>2, c=>3' => ARRAY['c','b'])
          = pg_column_size('b=>2, c=>3'::hstore);
 select pg_column_size(hstore 'aa=>1, b=>2, c=>3' => ARRAY['c','b','aa'])
@@ -207,6 +196,19 @@ select hstore(ARRAY[['a','g','b'],['h','asd','i']]);
 select hstore(ARRAY[[['a','g'],['b','h'],['asd','i']]]);
 select hstore('[0:5]={a,g,b,h,asd,i}'::text[]);
 select hstore('[0:2][1:2]={{a,g},{b,h},{asd,i}}'::text[]);
+
+-- pairs of arrays
+select hstore(ARRAY['a','b','asd'], ARRAY['g','h','i']);
+select hstore(ARRAY['a','b','asd'], ARRAY['g','h',NULL]);
+select hstore(ARRAY['z','y','x'], ARRAY['1','2','3']);
+select hstore(ARRAY['aaa','bb','c','d'], ARRAY[null::text,null,null,null]);
+select hstore(ARRAY['aaa','bb','c','d'], null);
+select quote_literal(hstore('{}'::text[], '{}'::text[]));
+select quote_literal(hstore('{}'::text[], null));
+select hstore(ARRAY['a'], '{}'::text[]);  -- error
+select hstore('{}'::text[], ARRAY['a']);  -- error
+select pg_column_size(hstore(ARRAY['a','b','asd'], ARRAY['g','h','i']))
+         = pg_column_size('a=>g, b=>h, asd=>i'::hstore);
 
 -- records
 select hstore(v) from (values (1, 'foo', 1.2, 3::float8)) v(a,b,c,d);
