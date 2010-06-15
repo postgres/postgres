@@ -77,18 +77,20 @@ static HTAB *createConnHash(void);
 static void createNewConnection(const char *name, remoteConn * con);
 static void deleteConnection(const char *name);
 static char **get_pkey_attnames(Relation rel, int16 *numatts);
-static char *get_sql_insert(Relation rel, int16 *pkattnums, int16 pknumatts, char **src_pkattvals, char **tgt_pkattvals);
-static char *get_sql_delete(Relation rel, int16 *pkattnums, int16 pknumatts, char **tgt_pkattvals);
-static char *get_sql_update(Relation rel, int16 *pkattnums, int16 pknumatts, char **src_pkattvals, char **tgt_pkattvals);
+static char *get_sql_insert(Relation rel, int *pkattnums, int pknumatts, char **src_pkattvals, char **tgt_pkattvals);
+static char *get_sql_delete(Relation rel, int *pkattnums, int pknumatts, char **tgt_pkattvals);
+static char *get_sql_update(Relation rel, int *pkattnums, int pknumatts, char **src_pkattvals, char **tgt_pkattvals);
 static char *quote_literal_cstr(char *rawstr);
 static char *quote_ident_cstr(char *rawstr);
-static int16 get_attnum_pk_pos(int16 *pkattnums, int16 pknumatts, int16 key);
-static HeapTuple get_tuple_of_interest(Relation rel, int16 *pkattnums, int16 pknumatts, char **src_pkattvals);
+static int	get_attnum_pk_pos(int *pkattnums, int pknumatts, int key);
+static HeapTuple get_tuple_of_interest(Relation rel, int *pkattnums, int pknumatts, char **src_pkattvals);
 static Relation get_rel_from_relname(text *relname_text, LOCKMODE lockmode, AclMode aclmode);
 static char *generate_relation_name(Relation rel);
 static char *connstr_strip_password(const char *connstr);
 static void dblink_security_check(PGconn *conn, remoteConn *rcon, const char *connstr);
-static int get_nondropped_natts(Relation rel);
+static void validate_pkattnums(Relation rel,
+				   int16 *pkattnums_arg, int32 pknumatts_arg,
+				   int **pkattnums, int *pknumatts);
 
 /* Global */
 List	   *res_id = NIL;
@@ -1087,9 +1089,6 @@ dblink_get_pkey(PG_FUNCTION_ARGS)
 }
 
 
-#ifndef SHRT_MAX
-#define SHRT_MAX (0x7FFF)
-#endif
 /*
  * dblink_build_sql_insert
  *
@@ -1115,9 +1114,10 @@ dblink_build_sql_insert(PG_FUNCTION_ARGS)
 {
 	Relation	rel;
 	text	   *relname_text;
-	int16	   *pkattnums;
-	int			pknumatts_tmp;
-	int16		pknumatts = 0;
+	int16	   *pkattnums_arg;
+	int32		pknumatts_arg;
+	int		   *pkattnums;
+	int			pknumatts;
 	char	  **src_pkattvals;
 	char	  **tgt_pkattvals;
 	ArrayType  *src_pkattvals_arry;
@@ -1134,7 +1134,6 @@ dblink_build_sql_insert(PG_FUNCTION_ARGS)
 	int16		typlen;
 	bool		typbyval;
 	char		typalign;
-	int			nondropped_natts;
 
 	relname_text = PG_GETARG_TEXT_P(0);
 
@@ -1143,35 +1142,16 @@ dblink_build_sql_insert(PG_FUNCTION_ARGS)
 	 */
 	rel = get_rel_from_relname(relname_text, AccessShareLock, ACL_SELECT);
 
-	pkattnums = (int16 *) PG_GETARG_POINTER(1);
-	pknumatts_tmp = PG_GETARG_INT32(2);
-	if (pknumatts_tmp <= SHRT_MAX)
-		pknumatts = pknumatts_tmp;
-	else
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("input for number of primary key " \
-						"attributes too large")));
-
 	/*
-	 * There should be at least one key attribute
+	 * Process pkattnums argument.
 	 */
-	if (pknumatts == 0)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("number of key attributes must be > 0")));
+	pkattnums_arg = (int16 *) PG_GETARG_POINTER(1);
+	pknumatts_arg = PG_GETARG_INT32(2);
+	validate_pkattnums(rel, pkattnums_arg, pknumatts_arg,
+					   &pkattnums, &pknumatts);
 
 	src_pkattvals_arry = PG_GETARG_ARRAYTYPE_P(3);
 	tgt_pkattvals_arry = PG_GETARG_ARRAYTYPE_P(4);
-
-	/*
-	 * ensure we don't ask for more pk attributes than we have
-	 * non-dropped columns
-	 */
-	nondropped_natts = get_nondropped_natts(rel);
-	if (pknumatts > nondropped_natts)
-		ereport(ERROR, (errcode(ERRCODE_SYNTAX_ERROR),
-				errmsg("number of primary key fields exceeds number of specified relation attributes")));
 
 	/*
 	 * Source array is made up of key values that will be used to locate
@@ -1277,9 +1257,10 @@ dblink_build_sql_delete(PG_FUNCTION_ARGS)
 {
 	Relation	rel;
 	text	   *relname_text;
-	int16	   *pkattnums;
-	int			pknumatts_tmp;
-	int16		pknumatts = 0;
+	int16	   *pkattnums_arg;
+	int32		pknumatts_arg;
+	int		   *pkattnums;
+	int			pknumatts;
 	char	  **tgt_pkattvals;
 	ArrayType  *tgt_pkattvals_arry;
 	int			tgt_ndim;
@@ -1291,7 +1272,6 @@ dblink_build_sql_delete(PG_FUNCTION_ARGS)
 	int16		typlen;
 	bool		typbyval;
 	char		typalign;
-	int			nondropped_natts;
 
 	relname_text = PG_GETARG_TEXT_P(0);
 
@@ -1300,34 +1280,15 @@ dblink_build_sql_delete(PG_FUNCTION_ARGS)
 	 */
 	rel = get_rel_from_relname(relname_text, AccessShareLock, ACL_SELECT);
 
-	pkattnums = (int16 *) PG_GETARG_POINTER(1);
-	pknumatts_tmp = PG_GETARG_INT32(2);
-	if (pknumatts_tmp <= SHRT_MAX)
-		pknumatts = pknumatts_tmp;
-	else
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("input for number of primary key " \
-						"attributes too large")));
-
 	/*
-	 * There should be at least one key attribute
+	 * Process pkattnums argument.
 	 */
-	if (pknumatts == 0)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("number of key attributes must be > 0")));
+	pkattnums_arg = (int16 *) PG_GETARG_POINTER(1);
+	pknumatts_arg = PG_GETARG_INT32(2);
+	validate_pkattnums(rel, pkattnums_arg, pknumatts_arg,
+					   &pkattnums, &pknumatts);
 
 	tgt_pkattvals_arry = PG_GETARG_ARRAYTYPE_P(3);
-
-	/*
-	 * ensure we don't ask for more pk attributes than we have
-	 * non-dropped columns
-	 */
-	nondropped_natts = get_nondropped_natts(rel);
-	if (pknumatts > nondropped_natts)
-		ereport(ERROR, (errcode(ERRCODE_SYNTAX_ERROR),
-				errmsg("number of primary key fields exceeds number of specified relation attributes")));
 
 	/*
 	 * Target array is made up of key values that will be used to build
@@ -1404,9 +1365,10 @@ dblink_build_sql_update(PG_FUNCTION_ARGS)
 {
 	Relation	rel;
 	text	   *relname_text;
-	int16	   *pkattnums;
-	int			pknumatts_tmp;
-	int16		pknumatts = 0;
+	int16	   *pkattnums_arg;
+	int32		pknumatts_arg;
+	int		   *pkattnums;
+	int			pknumatts;
 	char	  **src_pkattvals;
 	char	  **tgt_pkattvals;
 	ArrayType  *src_pkattvals_arry;
@@ -1423,7 +1385,6 @@ dblink_build_sql_update(PG_FUNCTION_ARGS)
 	int16		typlen;
 	bool		typbyval;
 	char		typalign;
-	int			nondropped_natts;
 
 	relname_text = PG_GETARG_TEXT_P(0);
 
@@ -1432,35 +1393,16 @@ dblink_build_sql_update(PG_FUNCTION_ARGS)
 	 */
 	rel = get_rel_from_relname(relname_text, AccessShareLock, ACL_SELECT);
 
-	pkattnums = (int16 *) PG_GETARG_POINTER(1);
-	pknumatts_tmp = PG_GETARG_INT32(2);
-	if (pknumatts_tmp <= SHRT_MAX)
-		pknumatts = pknumatts_tmp;
-	else
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("input for number of primary key " \
-						"attributes too large")));
-
 	/*
-	 * There should be one source array key values for each key attnum
+	 * Process pkattnums argument.
 	 */
-	if (pknumatts == 0)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("number of key attributes must be > 0")));
+	pkattnums_arg = (int16 *) PG_GETARG_POINTER(1);
+	pknumatts_arg = PG_GETARG_INT32(2);
+	validate_pkattnums(rel, pkattnums_arg, pknumatts_arg,
+					   &pkattnums, &pknumatts);
 
 	src_pkattvals_arry = PG_GETARG_ARRAYTYPE_P(3);
 	tgt_pkattvals_arry = PG_GETARG_ARRAYTYPE_P(4);
-
-	/*
-	 * ensure we don't ask for more pk attributes than we have
-	 * non-dropped columns
-	 */
-	nondropped_natts = get_nondropped_natts(rel);
-	if (pknumatts > nondropped_natts)
-		ereport(ERROR, (errcode(ERRCODE_SYNTAX_ERROR),
-				errmsg("number of primary key fields exceeds number of specified relation attributes")));
 
 	/*
 	 * Source array is made up of key values that will be used to locate
@@ -1621,7 +1563,7 @@ get_pkey_attnames(Relation rel, int16 *numatts)
 }
 
 static char *
-get_sql_insert(Relation rel, int16 *pkattnums, int16 pknumatts, char **src_pkattvals, char **tgt_pkattvals)
+get_sql_insert(Relation rel, int *pkattnums, int pknumatts, char **src_pkattvals, char **tgt_pkattvals)
 {
 	char	   *relname;
 	HeapTuple	tuple;
@@ -1630,7 +1572,7 @@ get_sql_insert(Relation rel, int16 *pkattnums, int16 pknumatts, char **src_pkatt
 	StringInfo	str = makeStringInfo();
 	char	   *sql;
 	char	   *val;
-	int16		key;
+	int			key;
 	int			i;
 	bool		needComma;
 
@@ -1677,7 +1619,7 @@ get_sql_insert(Relation rel, int16 *pkattnums, int16 pknumatts, char **src_pkatt
 			appendStringInfo(str, ",");
 
 		if (tgt_pkattvals != NULL)
-			key = get_attnum_pk_pos(pkattnums, pknumatts, i + 1);
+			key = get_attnum_pk_pos(pkattnums, pknumatts, i);
 		else
 			key = -1;
 
@@ -1705,7 +1647,7 @@ get_sql_insert(Relation rel, int16 *pkattnums, int16 pknumatts, char **src_pkatt
 }
 
 static char *
-get_sql_delete(Relation rel, int16 *pkattnums, int16 pknumatts, char **tgt_pkattvals)
+get_sql_delete(Relation rel, int *pkattnums, int pknumatts, char **tgt_pkattvals)
 {
 	char	   *relname;
 	TupleDesc	tupdesc;
@@ -1724,13 +1666,13 @@ get_sql_delete(Relation rel, int16 *pkattnums, int16 pknumatts, char **tgt_pkatt
 	appendStringInfo(str, "DELETE FROM %s WHERE ", relname);
 	for (i = 0; i < pknumatts; i++)
 	{
-		int16		pkattnum = pkattnums[i];
+		int			pkattnum = pkattnums[i];
 
 		if (i > 0)
 			appendStringInfo(str, " AND ");
 
 		appendStringInfo(str, "%s",
-		quote_ident_cstr(NameStr(tupdesc->attrs[pkattnum - 1]->attname)));
+		quote_ident_cstr(NameStr(tupdesc->attrs[pkattnum]->attname)));
 
 		if (tgt_pkattvals != NULL)
 			val = pstrdup(tgt_pkattvals[i]);
@@ -1755,7 +1697,7 @@ get_sql_delete(Relation rel, int16 *pkattnums, int16 pknumatts, char **tgt_pkatt
 }
 
 static char *
-get_sql_update(Relation rel, int16 *pkattnums, int16 pknumatts, char **src_pkattvals, char **tgt_pkattvals)
+get_sql_update(Relation rel, int *pkattnums, int pknumatts, char **src_pkattvals, char **tgt_pkattvals)
 {
 	char	   *relname;
 	HeapTuple	tuple;
@@ -1764,7 +1706,7 @@ get_sql_update(Relation rel, int16 *pkattnums, int16 pknumatts, char **src_pkatt
 	StringInfo	str = makeStringInfo();
 	char	   *sql;
 	char	   *val;
-	int16		key;
+	int			key;
 	int			i;
 	bool		needComma;
 
@@ -1795,7 +1737,7 @@ get_sql_update(Relation rel, int16 *pkattnums, int16 pknumatts, char **src_pkatt
 				  quote_ident_cstr(NameStr(tupdesc->attrs[i]->attname)));
 
 		if (tgt_pkattvals != NULL)
-			key = get_attnum_pk_pos(pkattnums, pknumatts, i + 1);
+			key = get_attnum_pk_pos(pkattnums, pknumatts, i);
 		else
 			key = -1;
 
@@ -1818,18 +1760,18 @@ get_sql_update(Relation rel, int16 *pkattnums, int16 pknumatts, char **src_pkatt
 
 	for (i = 0; i < pknumatts; i++)
 	{
-		int16		pkattnum = pkattnums[i];
+		int			pkattnum = pkattnums[i];
 
 		if (i > 0)
 			appendStringInfo(str, " AND ");
 
 		appendStringInfo(str, "%s",
-		quote_ident_cstr(NameStr(tupdesc->attrs[pkattnum - 1]->attname)));
+		quote_ident_cstr(NameStr(tupdesc->attrs[pkattnum]->attname)));
 
 		if (tgt_pkattvals != NULL)
 			val = pstrdup(tgt_pkattvals[i]);
 		else
-			val = SPI_getvalue(tuple, tupdesc, pkattnum);
+			val = SPI_getvalue(tuple, tupdesc, pkattnum + 1);
 
 		if (val != NULL)
 		{
@@ -1883,8 +1825,8 @@ quote_ident_cstr(char *rawstr)
 	return result;
 }
 
-static int16
-get_attnum_pk_pos(int16 *pkattnums, int16 pknumatts, int16 key)
+static int
+get_attnum_pk_pos(int *pkattnums, int pknumatts, int key)
 {
 	int			i;
 
@@ -1899,7 +1841,7 @@ get_attnum_pk_pos(int16 *pkattnums, int16 pknumatts, int16 key)
 }
 
 static HeapTuple
-get_tuple_of_interest(Relation rel, int16 *pkattnums, int16 pknumatts, char **src_pkattvals)
+get_tuple_of_interest(Relation rel, int *pkattnums, int pknumatts, char **src_pkattvals)
 {
 	char	   *relname;
 	TupleDesc	tupdesc;
@@ -1930,13 +1872,13 @@ get_tuple_of_interest(Relation rel, int16 *pkattnums, int16 pknumatts, char **sr
 
 	for (i = 0; i < pknumatts; i++)
 	{
-		int16		pkattnum = pkattnums[i];
+		int			pkattnum = pkattnums[i];
 
 		if (i > 0)
 			appendStringInfo(str, " AND ");
 
 		appendStringInfo(str, "%s",
-		quote_ident_cstr(NameStr(tupdesc->attrs[pkattnum - 1]->attname)));
+		quote_ident_cstr(NameStr(tupdesc->attrs[pkattnum]->attname)));
 
 		val = pstrdup(src_pkattvals[i]);
 		if (val != NULL)
@@ -2281,23 +2223,48 @@ dblink_security_check(PGconn *conn, remoteConn *rcon, const char *connstr)
 	}
 }
 
-static int
-get_nondropped_natts(Relation rel)
+/*
+ * Validate the PK-attnums argument for dblink_build_sql_insert() and related
+ * functions, and translate to the internal representation.
+ *
+ * The user supplies an int2vector of 1-based physical attnums, plus a count
+ * argument (the need for the separate count argument is historical, but we
+ * still check it).  We check that each attnum corresponds to a valid,
+ * non-dropped attribute of the rel.  We do *not* prevent attnums from being
+ * listed twice, though the actual use-case for such things is dubious.
+ *
+ * The internal representation is a palloc'd int array of 0-based physical
+ * attnums.
+ */
+static void
+validate_pkattnums(Relation rel,
+				   int16 *pkattnums_arg, int32 pknumatts_arg,
+				   int **pkattnums, int *pknumatts)
 {
-	int			nondropped_natts = 0;
-	TupleDesc	tupdesc;
-	int			natts;
+	TupleDesc	tupdesc = rel->rd_att;
+	int			natts = tupdesc->natts;
 	int			i;
 
-	tupdesc = rel->rd_att;
-	natts = tupdesc->natts;
+	/* Must have at least one pk attnum selected */
+	if (pknumatts_arg <= 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("number of key attributes must be > 0")));
 
-	for (i = 0; i < natts; i++)
+	/* Allocate output array */
+	*pkattnums = (int *) palloc(pknumatts_arg * sizeof(int));
+	*pknumatts = pknumatts_arg;
+
+	/* Validate attnums and convert to internal form */
+	for (i = 0; i < pknumatts_arg; i++)
 	{
-		if (tupdesc->attrs[i]->attisdropped)
-			continue;
-		nondropped_natts++;
-	}
+		int		pkattnum = pkattnums_arg[i];
 
-	return nondropped_natts;
+		if (pkattnum <= 0 || pkattnum > natts ||
+			tupdesc->attrs[pkattnum - 1]->attisdropped)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("invalid attribute number %d", pkattnum)));
+		(*pkattnums)[i] = pkattnum - 1;
+	}
 }
