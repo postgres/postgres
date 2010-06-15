@@ -244,3 +244,28 @@ SELECT dblink_disconnect('myconn');
 -- close the named persistent connection again
 -- should get 'connection "myconn" not available' error
 SELECT dblink_disconnect('myconn');
+
+-- test dropped columns in dblink_build_sql_insert, dblink_build_sql_update
+CREATE TEMP TABLE test_dropped
+(
+	col1 INT NOT NULL DEFAULT 111,
+	id SERIAL PRIMARY KEY,
+	col2 INT NOT NULL DEFAULT 112,
+	col2b INT NOT NULL DEFAULT 113
+);
+
+ALTER TABLE test_dropped DROP COLUMN col1;
+ALTER TABLE test_dropped DROP COLUMN col2;
+ALTER TABLE test_dropped ADD COLUMN col3 VARCHAR(10);
+ALTER TABLE test_dropped ADD COLUMN col4 INT;
+
+INSERT INTO test_dropped VALUES(default,default,'foo','42');
+
+SELECT dblink_build_sql_insert('test_dropped', '2', 1,
+                               ARRAY['1'::TEXT], ARRAY['2'::TEXT]);
+
+SELECT dblink_build_sql_update('test_dropped', '2', 1,
+                               ARRAY['1'::TEXT], ARRAY['2'::TEXT]);
+
+SELECT dblink_build_sql_delete('test_dropped', '2', 1,
+                               ARRAY['2'::TEXT]);
