@@ -48,7 +48,7 @@ SELECT dblink_build_sql_insert('foo','1 2',2,'{"0", "a"}','{"99", "xyz"}');
 
 -- too many pk fields, should fail
 SELECT dblink_build_sql_insert('foo','1 2 3 4',4,'{"0", "a", "{a0,b0,c0}"}','{"99", "xyz", "{za0,zb0,zc0}"}');
-ERROR:  number of primary key fields exceeds number of specified relation attributes
+ERROR:  invalid attribute number 4
 -- build an update statement based on a local tuple,
 -- replacing the primary key values with new ones
 SELECT dblink_build_sql_update('foo','1 2',2,'{"0", "a"}','{"99", "xyz"}');
@@ -59,7 +59,7 @@ SELECT dblink_build_sql_update('foo','1 2',2,'{"0", "a"}','{"99", "xyz"}');
 
 -- too many pk fields, should fail
 SELECT dblink_build_sql_update('foo','1 2 3 4',4,'{"0", "a", "{a0,b0,c0}"}','{"99", "xyz", "{za0,zb0,zc0}"}');
-ERROR:  number of primary key fields exceeds number of specified relation attributes
+ERROR:  invalid attribute number 4
 -- build a delete statement based on a local tuple,
 SELECT dblink_build_sql_delete('foo','1 2',2,'{"0", "a"}');
            dblink_build_sql_delete           
@@ -69,7 +69,7 @@ SELECT dblink_build_sql_delete('foo','1 2',2,'{"0", "a"}');
 
 -- too many pk fields, should fail
 SELECT dblink_build_sql_delete('foo','1 2 3 4',4,'{"0", "a", "{a0,b0,c0}"}');
-ERROR:  number of primary key fields exceeds number of specified relation attributes
+ERROR:  invalid attribute number 4
 -- retest using a quoted and schema qualified table
 CREATE SCHEMA "MySchema";
 CREATE TABLE "MySchema"."Foo"(f1 int, f2 text, f3 text[], primary key (f1,f2));
