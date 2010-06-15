@@ -237,7 +237,7 @@ typedef struct
 /*
  * Global variables
  */
-char		scandir_file_pattern[MAXPGPATH];
+extern char		scandir_file_pattern[];
 
 
 /* check.c */

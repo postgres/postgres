@@ -17,6 +17,9 @@ static void transfer_relfile(migratorContext *ctx, pageCnvCtx *pageConverter,
 				 const char *oldnspname, const char *oldrelname,
 				 const char *newnspname, const char *newrelname);
 
+/* used by scandir(), must be global */
+char     scandir_file_pattern[MAXPGPATH];
+				 
 /*
  * transfer_all_new_dbs()
  *
