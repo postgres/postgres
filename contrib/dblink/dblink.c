@@ -8,7 +8,7 @@
  * Darko Prenosil <Darko.Prenosil@finteh.hr>
  * Shridhar Daithankar <shridhar_daithankar@persistent.co.in>
  *
- * $PostgreSQL: pgsql/contrib/dblink/dblink.c,v 1.60.2.9 2010/06/15 16:22:39 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/dblink/dblink.c,v 1.60.2.10 2010/06/15 19:04:34 tgl Exp $
  * Copyright (c) 2001-2006, PostgreSQL Global Development Group
  * ALL RIGHTS RESERVED;
  *
@@ -1800,7 +1800,7 @@ get_sql_insert(Relation rel, int *pkattnums, int pknumatts, char **src_pkattvals
 	appendStringInfo(&buf, ") VALUES(");
 
 	/*
-	 * remember attvals are 1 based
+	 * Note: i is physical column number (counting from 0).
 	 */
 	needComma = false;
 	for (i = 0; i < natts; i++)
@@ -1811,12 +1811,9 @@ get_sql_insert(Relation rel, int *pkattnums, int pknumatts, char **src_pkattvals
 		if (needComma)
 			appendStringInfo(&buf, ",");
 
-		if (tgt_pkattvals != NULL)
-			key = get_attnum_pk_pos(pkattnums, pknumatts, i);
-		else
-			key = -1;
+		key = get_attnum_pk_pos(pkattnums, pknumatts, i);
 
-		if (key > -1)
+		if (key >= 0)
 			val = tgt_pkattvals[key] ? pstrdup(tgt_pkattvals[key]) : NULL;
 		else
 			val = SPI_getvalue(tuple, tupdesc, i + 1);
@@ -1861,10 +1858,6 @@ get_sql_delete(Relation rel, int *pkattnums, int pknumatts, char **tgt_pkattvals
 		appendStringInfoString(&buf,
 		   quote_ident_cstr(NameStr(tupdesc->attrs[pkattnum]->attname)));
 
-		if (tgt_pkattvals == NULL)
-			/* internal error */
-			elog(ERROR, "target key array must not be NULL");
-
 		if (tgt_pkattvals[i] != NULL)
 			appendStringInfo(&buf, " = %s",
 							 quote_literal_cstr(tgt_pkattvals[i]));
@@ -1904,6 +1897,9 @@ get_sql_update(Relation rel, int *pkattnums, int pknumatts, char **src_pkattvals
 
 	appendStringInfo(&buf, "UPDATE %s SET ", relname);
 
+	/*
+	 * Note: i is physical column number (counting from 0).
+	 */
 	needComma = false;
 	for (i = 0; i < natts; i++)
 	{
@@ -1916,12 +1912,9 @@ get_sql_update(Relation rel, int *pkattnums, int pknumatts, char **src_pkattvals
 		appendStringInfo(&buf, "%s = ",
 					  quote_ident_cstr(NameStr(tupdesc->attrs[i]->attname)));
 
-		if (tgt_pkattvals != NULL)
-			key = get_attnum_pk_pos(pkattnums, pknumatts, i);
-		else
-			key = -1;
+		key = get_attnum_pk_pos(pkattnums, pknumatts, i);
 
-		if (key > -1)
+		if (key >= 0)
 			val = tgt_pkattvals[key] ? pstrdup(tgt_pkattvals[key]) : NULL;
 		else
 			val = SPI_getvalue(tuple, tupdesc, i + 1);
@@ -1948,16 +1941,10 @@ get_sql_update(Relation rel, int *pkattnums, int pknumatts, char **src_pkattvals
 		appendStringInfo(&buf, "%s",
 		   quote_ident_cstr(NameStr(tupdesc->attrs[pkattnum]->attname)));
 
-		if (tgt_pkattvals != NULL)
-			val = tgt_pkattvals[i] ? pstrdup(tgt_pkattvals[i]) : NULL;
-		else
-			val = SPI_getvalue(tuple, tupdesc, pkattnum + 1);
+		val = tgt_pkattvals[i];
 
 		if (val != NULL)
-		{
 			appendStringInfo(&buf, " = %s", quote_literal_cstr(val));
-			pfree(val);
-		}
 		else
 			appendStringInfo(&buf, " IS NULL");
 	}
@@ -2021,17 +2008,11 @@ get_tuple_of_interest(Relation rel, int *pkattnums, int pknumatts, char **src_pk
 {
 	char	   *relname;
 	TupleDesc	tupdesc;
+	int			natts;
 	StringInfoData buf;
 	int			ret;
 	HeapTuple	tuple;
 	int			i;
-
-	initStringInfo(&buf);
-
-	/* get relation name including any needed schema prefix and quoting */
-	relname = generate_relation_name(rel);
-
-	tupdesc = rel->rd_att;
 
 	/*
 	 * Connect to SPI manager
@@ -2040,11 +2021,36 @@ get_tuple_of_interest(Relation rel, int *pkattnums, int pknumatts, char **src_pk
 		/* internal error */
 		elog(ERROR, "SPI connect failure - returned %d", ret);
 
+	initStringInfo(&buf);
+
+	/* get relation name including any needed schema prefix and quoting */
+	relname = generate_relation_name(rel);
+
+	tupdesc = rel->rd_att;
+	natts = tupdesc->natts;
+
 	/*
-	 * Build sql statement to look up tuple of interest Use src_pkattvals as
-	 * the criteria.
+	 * Build sql statement to look up tuple of interest, ie, the one matching
+	 * src_pkattvals.  We used to use "SELECT *" here, but it's simpler to
+	 * generate a result tuple that matches the table's physical structure,
+	 * with NULLs for any dropped columns.  Otherwise we have to deal with
+	 * two different tupdescs and everything's very confusing.
 	 */
-	appendStringInfo(&buf, "SELECT * FROM %s WHERE ", relname);
+	appendStringInfoString(&buf, "SELECT ");
+
+	for (i = 0; i < natts; i++)
+	{
+		if (i > 0)
+			appendStringInfoString(&buf, ", ");
+
+		if (tupdesc->attrs[i]->attisdropped)
+			appendStringInfoString(&buf, "NULL");
+		else
+			appendStringInfoString(&buf,
+								   quote_ident_cstr(NameStr(tupdesc->attrs[i]->attname)));
+	}
+
+	appendStringInfo(&buf, " FROM %s WHERE ", relname);
 
 	for (i = 0; i < pknumatts; i++)
 	{
