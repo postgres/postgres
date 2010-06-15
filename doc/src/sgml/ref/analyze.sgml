@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/analyze.sgml,v 1.29 2010/04/03 07:22:57 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/analyze.sgml,v 1.30 2010/06/15 18:43:35 rhaas Exp $
 PostgreSQL documentation
 -->
 
@@ -175,6 +175,17 @@ ANALYZE [ VERBOSE ] [ <replaceable class="PARAMETER">table</replaceable> [ ( <re
    installed with
    <command>ALTER TABLE ... ALTER COLUMN ... SET (n_distinct = ...)</>
    (see <xref linkend="sql-altertable">).
+  </para>
+
+  <para>
+    If the table being analyzed has one or more children,
+    <command>ANALYZE</command> will gather statistics twice: once on the
+    rows of the parent table only, and a second time on the rows of the
+    parent table with all of its children.  The autovacuum daemon, however,
+    will only consider inserts or updates on the parent table when deciding
+    whether to trigger an automatic analyze.  If that table is rarely
+    inserted into or updated, the inheritance statistics will not be up to date
+    unless you run <command>ANALYZE</command> manually.
   </para>
  </refsect1>
 
