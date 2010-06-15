@@ -8,7 +8,7 @@
  * Darko Prenosil <Darko.Prenosil@finteh.hr>
  * Shridhar Daithankar <shridhar_daithankar@persistent.co.in>
  *
- * $PostgreSQL: pgsql/contrib/dblink/dblink.c,v 1.97 2010/06/15 19:04:15 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/dblink/dblink.c,v 1.98 2010/06/15 20:29:01 tgl Exp $
  * Copyright (c) 2001-2010, PostgreSQL Global Development Group
  * ALL RIGHTS RESERVED;
  *
@@ -2381,11 +2381,13 @@ escape_param_str(const char *str)
  * Validate the PK-attnums argument for dblink_build_sql_insert() and related
  * functions, and translate to the internal representation.
  *
- * The user supplies an int2vector of 1-based physical attnums, plus a count
+ * The user supplies an int2vector of 1-based logical attnums, plus a count
  * argument (the need for the separate count argument is historical, but we
  * still check it).  We check that each attnum corresponds to a valid,
  * non-dropped attribute of the rel.  We do *not* prevent attnums from being
  * listed twice, though the actual use-case for such things is dubious.
+ * Note that before Postgres 9.0, the user's attnums were interpreted as
+ * physical not logical column numbers; this was changed for future-proofing.
  *
  * The internal representation is a palloc'd int array of 0-based physical
  * attnums.
@@ -2416,12 +2418,32 @@ validate_pkattnums(Relation rel,
 	for (i = 0; i < pknumatts_arg; i++)
 	{
 		int		pkattnum = pkattnums_arg->values[i];
+		int		lnum;
+		int		j;
 
-		if (pkattnum <= 0 || pkattnum > natts ||
-			tupdesc->attrs[pkattnum - 1]->attisdropped)
+		/* Can throw error immediately if out of range */
+		if (pkattnum <= 0 || pkattnum > natts)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 					 errmsg("invalid attribute number %d", pkattnum)));
-		(*pkattnums)[i] = pkattnum - 1;
+
+		/* Identify which physical column has this logical number */
+		lnum = 0;
+		for (j = 0; j < natts; j++)
+		{
+			/* dropped columns don't count */
+			if (tupdesc->attrs[j]->attisdropped)
+				continue;
+
+			if (++lnum == pkattnum)
+				break;
+		}
+
+		if (j < natts)
+			(*pkattnums)[i] = j;
+		else
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("invalid attribute number %d", pkattnum)));
 	}
 }

@@ -430,11 +430,11 @@ ALTER TABLE test_dropped
 	ADD COLUMN col3 VARCHAR(10) NOT NULL DEFAULT 'foo',
 	ADD COLUMN col4 INT NOT NULL DEFAULT 42;
 
-SELECT dblink_build_sql_insert('test_dropped', '2', 1,
+SELECT dblink_build_sql_insert('test_dropped', '1', 1,
                                ARRAY['1'::TEXT], ARRAY['2'::TEXT]);
 
-SELECT dblink_build_sql_update('test_dropped', '2', 1,
+SELECT dblink_build_sql_update('test_dropped', '1', 1,
                                ARRAY['1'::TEXT], ARRAY['2'::TEXT]);
 
-SELECT dblink_build_sql_delete('test_dropped', '2', 1,
+SELECT dblink_build_sql_delete('test_dropped', '1', 1,
                                ARRAY['2'::TEXT]);

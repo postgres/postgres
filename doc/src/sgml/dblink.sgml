@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/dblink.sgml,v 1.12 2010/06/07 02:01:08 itagaki Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/dblink.sgml,v 1.13 2010/06/15 20:29:01 tgl Exp $ -->
 
 <sect1 id="dblink">
  <title>dblink</title>
@@ -1294,9 +1294,9 @@ SELECT *
    <title>Description</title>
 
    <para>
-    <function>dblink_get_notify</> retrieves notifications on either 
+    <function>dblink_get_notify</> retrieves notifications on either
     the unnamed connection, or on a named connection if specified.
-    To receive notifications via dblink, <function>LISTEN</> must 
+    To receive notifications via dblink, <function>LISTEN</> must
     first be issued, using <function>dblink_exec</>.
     For details see <xref linkend="sql-listen"> and <xref linkend="sql-notify">.
    </para>
@@ -1620,6 +1620,10 @@ SELECT * FROM dblink_get_notify();
     <programlisting>
 CREATE TYPE dblink_pkey_results AS (position int, colname text);
     </programlisting>
+
+    The <literal>position</> column simply runs from 1 to <replaceable>N</>;
+    it is the number of the field within the primary key, not the number
+    within the table's columns.
    </para>
   </refsect1>
 
@@ -1659,7 +1663,7 @@ test=# select * from dblink_get_pkey('foobar');
    <synopsis>
     dblink_build_sql_insert(text relname,
                             int2vector primary_key_attnums,
-                            int2 num_primary_key_atts,
+                            integer num_primary_key_atts,
                             text[] src_pk_att_vals_array,
                             text[] tgt_pk_att_vals_array) returns text
    </synopsis>
@@ -1746,6 +1750,20 @@ test=# select * from dblink_get_pkey('foobar');
   </refsect1>
 
   <refsect1>
+   <title>Notes</title>
+
+   <para>
+    As of <productname>PostgreSQL</> 9.0, the attribute numbers in
+    <parameter>primary_key_attnums</parameter> are interpreted as logical
+    column numbers, corresponding to the column's position in
+    <literal>SELECT * FROM relname</>.  Previous versions interpreted the
+    numbers as physical column positions.  There is a difference if any
+    column(s) to the left of the indicated column have been dropped during
+    the lifetime of the table.
+   </para>
+  </refsect1>
+
+  <refsect1>
    <title>Example</title>
 
    <programlisting>
@@ -1775,7 +1793,7 @@ test=# select * from dblink_get_pkey('foobar');
    <synopsis>
     dblink_build_sql_delete(text relname,
                             int2vector primary_key_attnums,
-                            int2 num_primary_key_atts,
+                            integer num_primary_key_atts,
                             text[] tgt_pk_att_vals_array) returns text
    </synopsis>
   </refsynopsisdiv>
@@ -1846,6 +1864,20 @@ test=# select * from dblink_get_pkey('foobar');
   </refsect1>
 
   <refsect1>
+   <title>Notes</title>
+
+   <para>
+    As of <productname>PostgreSQL</> 9.0, the attribute numbers in
+    <parameter>primary_key_attnums</parameter> are interpreted as logical
+    column numbers, corresponding to the column's position in
+    <literal>SELECT * FROM relname</>.  Previous versions interpreted the
+    numbers as physical column positions.  There is a difference if any
+    column(s) to the left of the indicated column have been dropped during
+    the lifetime of the table.
+   </para>
+  </refsect1>
+
+  <refsect1>
    <title>Example</title>
 
    <programlisting>
@@ -1875,7 +1907,7 @@ test=# select * from dblink_get_pkey('foobar');
    <synopsis>
     dblink_build_sql_update(text relname,
                             int2vector primary_key_attnums,
-                            int2 num_primary_key_atts,
+                            integer num_primary_key_atts,
                             text[] src_pk_att_vals_array,
                             text[] tgt_pk_att_vals_array) returns text
    </synopsis>
@@ -1962,6 +1994,20 @@ test=# select * from dblink_get_pkey('foobar');
    <title>Return Value</title>
 
    <para>Returns the requested SQL statement as text.</para>
+  </refsect1>
+
+  <refsect1>
+   <title>Notes</title>
+
+   <para>
+    As of <productname>PostgreSQL</> 9.0, the attribute numbers in
+    <parameter>primary_key_attnums</parameter> are interpreted as logical
+    column numbers, corresponding to the column's position in
+    <literal>SELECT * FROM relname</>.  Previous versions interpreted the
+    numbers as physical column positions.  There is a difference if any
+    column(s) to the left of the indicated column have been dropped during
+    the lifetime of the table.
+   </para>
   </refsect1>
 
   <refsect1>
