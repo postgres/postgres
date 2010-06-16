@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release-9.0.sgml,v 2.32 2010/06/16 14:50:34 adunstan Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release-9.0.sgml,v 2.33 2010/06/16 18:31:39 momjian Exp $ -->
 
  <sect1 id="release-9-0">
   <title>Release 9.0</title>
@@ -108,7 +108,7 @@
       Add support for compiling on <link
       linkend="install-win32-full">64-bit
       <productname>Windows</></link> and running in 64-bit
-      mode
+      mode.
      </para>
     </listitem>
 
@@ -133,13 +133,17 @@
   <para>CURRENT AS OF 2010-06-03</para>
 
   <para>
-   A dump/restore using <application>pg_dump</application> is
-   required for those wishing to migrate data from any previous
+   A dump/restore using <application>pg_dump</application>
+   or use of <application>pg_upgrade</application> is required 
+   for those wishing to migrate data from any previous
    release.
   </para>
 
   <para>
-   Observe the following incompatibilities:
+   Version 9.0 contains a number of changes which selectively break backwards compatibility
+   in order to support new features and code quality improvements.  Particularly, users
+   who make extensive use of PL/pgSQL and/or PITR and Warm Standby should test their
+   solutions for breakage.  Observe the following incompatibilities:
   </para>
 
   <sect3>
@@ -488,6 +492,12 @@
        linkend="guc-geqo-seed">geqo_seed</link> to randomize
        the starting value of the random plan generator.
       </para>
+
+      <para>
+       This gives GEQO query response times and resource usage
+       repeatability and predictability.
+      </para>
+
      </listitem>
 
      <listitem>
@@ -623,6 +633,11 @@
        name</link>, which is displayed in
        <structname>pg_stat_activity</> (Dave Page)
       </para>
+
+      <para>
+        This allows DBAs to characterize database traffic 
+        and troubleshoot problems by source application.
+      </para>
      </listitem>
 
      <listitem>
@@ -688,7 +703,11 @@
        in the new <structname>pg_db_role_setting</> system table. A new
        <application>psql</> <literal>\drds</> command shows these settings.
        Backwards-compatible system views do not show this information.
+       The primary use of this feature is setting schema 
+       <link linkend="guc-search-path"><varname>search_path</varname></link>.
       </para>
+
+
      </listitem>
 
      <listitem>
@@ -722,6 +741,12 @@
        Log changed parameter values when <filename>postgresql.conf</> is
        reloaded (Peter Eisentraut)
       </para>
+
+      <para>
+       This lets DBAs and security staff to audit when database settings
+       were changed.
+      </para>
+
      </listitem>
 
      <listitem>
@@ -792,6 +817,12 @@
       Have <command>SELECT</> and <command>CREATE TABLE AS</> return
       row counts to the client
       (Boszormenyi Zoltan)
+     </para>
+
+     <para>
+      For drivers which support this feature, this saves an entire 
+      round-trip to the client, allowing result counts and pagination
+      to be calculated without a second <command>COUNT</command> query.
      </para>
 
      <para>
@@ -909,7 +940,7 @@
       <para>
        Such operations either complete fully or are rolled back, so
        <acronym>WAL</> archiving can be skipped, unless running in continuous
-       archiving mode.
+       archiving mode.  This reduces I/O overhead and improves performance.
       </para>
      </listitem>
 
@@ -1274,6 +1305,13 @@
       <function>PQescapeByteaConn()</> now uses the hex format
       for <productname>PostgreSQL</> 9.0 servers.
      </para>
+
+     <para>
+      The new hex format will be directly compatible with more applications
+      which use binary data, allowing them to store and retrieve
+      it without conversion.
+     </para>
+
     </listitem>
 
     <listitem>
@@ -1417,7 +1455,8 @@
       <para>
        For example, this is now supported, <literal>array_agg(a ORDER BY
        b)</>. This is useful for aggregates where the order of values is
-       significant.
+       significant, and eliminates the need to have a subquery for
+       the ordering.
       </para>
      </listitem>
 
