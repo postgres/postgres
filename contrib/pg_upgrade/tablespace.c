@@ -38,7 +38,6 @@ get_tablespace_paths(migratorContext *ctx)
 {
 	PGconn	   *conn = connectToServer(ctx, "template1", CLUSTER_OLD);
 	PGresult   *res;
-	int			ntups;
 	int			tblnum;
 	int			i_spclocation;
 
@@ -48,12 +47,15 @@ get_tablespace_paths(migratorContext *ctx)
 							"WHERE	spcname != 'pg_default' AND "
 							"		spcname != 'pg_global'");
 
-	ctx->num_tablespaces = ntups = PQntuples(res);
-	ctx->tablespaces = (char **) pg_malloc(ctx, ntups * sizeof(char *));
+	if ((ctx->num_tablespaces = PQntuples(res)) != 0)
+		ctx->tablespaces = (char **) pg_malloc(ctx,
+									ctx->num_tablespaces * sizeof(char *));
+	else
+		ctx->tablespaces = NULL;
 
 	i_spclocation = PQfnumber(res, "spclocation");
 
-	for (tblnum = 0; tblnum < ntups; tblnum++)
+	for (tblnum = 0; tblnum < ctx->num_tablespaces; tblnum++)
 		ctx->tablespaces[tblnum] = pg_strdup(ctx,
 									 PQgetvalue(res, tblnum, i_spclocation));
 
