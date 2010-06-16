@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release-9.0.sgml,v 2.31 2010/06/14 02:18:43 rhaas Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release-9.0.sgml,v 2.32 2010/06/16 14:50:34 adunstan Exp $ -->
 
  <sect1 id="release-9-0">
   <title>Release 9.0</title>
@@ -1756,18 +1756,6 @@
      <listitem>
       <para>
        Improve PL/Perl code structure (Tim Bunce)
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       PL/Perl subroutines are now given perl-visible names (Tim Bunce)
-      </para>
-
-      <para>
-       PL/Perl subroutines are anonymous subrefs; this change adds entries 
-       to the Perl symbol table for them, making profiling and code coverage 
-       tools much more usable.
       </para>
      </listitem>
 

@@ -1,7 +1,7 @@
 /**********************************************************************
  * plperl.c - perl as a procedural language for PostgreSQL
  *
- *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.176 2010/05/17 19:43:04 adunstan Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.177 2010/06/16 14:50:34 adunstan Exp $
  *
  **********************************************************************/
 
@@ -1318,10 +1318,6 @@ plperl_create_sub(plperl_proc_desc *prodesc, char *s, Oid fn_oid)
 		ereport(ERROR,
 				(errmsg("didn't get a CODE ref from compiling %s",
 						prodesc->proname)));
-	
-	/* give the subroutine a proper name in the main:: symbol table */
-	CvGV(SvRV(subref)) = (GV *) newSV(0);
-	gv_init(CvGV(SvRV(subref)), PL_defstash, subname, strlen(subname), TRUE);
 	
 	prodesc->reference = subref;
 	
