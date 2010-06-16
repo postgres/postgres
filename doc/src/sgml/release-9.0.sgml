@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release-9.0.sgml,v 2.33 2010/06/16 18:31:39 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release-9.0.sgml,v 2.34 2010/06/16 18:46:18 momjian Exp $ -->
 
  <sect1 id="release-9-0">
   <title>Release 9.0</title>
@@ -820,9 +820,9 @@
      </para>
 
      <para>
-      For drivers which support this feature, this saves an entire 
-      round-trip to the client, allowing result counts and pagination
-      to be calculated without a second <command>COUNT</command> query.
+      This allows operations that do not return a result, like
+      <command>SELECT INTO</>, to return a count of the number of rows
+      processed.
      </para>
 
      <para>
