@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/drop_conversion.sgml,v 1.13 2010/04/03 07:23:00 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/drop_conversion.sgml,v 1.14 2010/06/16 02:12:51 petere Exp $ -->
 
 <refentry id="SQL-DROPCONVERSION">
  <refmeta>
@@ -86,7 +86,10 @@ DROP CONVERSION myname;
 
   <para>
    There is no <command>DROP CONVERSION</command> statement in the SQL
-   standard.
+   standard, but a <command>DROP TRANSLATION</command> statement that
+   goes along with the <command>CREATE TRANSLATION</command> statement
+   that is similar to the <command>CREATE CONVERSION</command>
+   statement in PostgreSQL.
   </para>
  </refsect1>
 

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/create_conversion.sgml,v 1.23 2010/04/03 07:22:58 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/create_conversion.sgml,v 1.24 2010/06/16 02:12:51 petere Exp $ -->
 
 <refentry id="SQL-CREATECONVERSION">
  <refmeta>
@@ -153,7 +153,8 @@ CREATE CONVERSION myconv FOR 'UTF8' TO 'LATIN1' FROM myfunc;
     <command>CREATE CONVERSION</command>
     is a <productname>PostgreSQL</productname> extension.
     There is no <command>CREATE CONVERSION</command>
-    statement in the SQL standard.
+    statement in the SQL standard, but a <command>CREATE TRANSLATION</command>
+    statement that is very similar in purpose and syntax.
   </para>
  </refsect1>
 
