@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/xlog.h,v 1.112 2010/06/10 07:49:23 heikki Exp $
+ * $PostgreSQL: pgsql/src/include/access/xlog.h,v 1.113 2010/06/17 16:41:25 tgl Exp $
  */
 #ifndef XLOG_H
 #define XLOG_H
@@ -294,7 +294,7 @@ extern bool CreateRestartPoint(int flags);
 extern void XLogPutNextOid(Oid nextOid);
 extern XLogRecPtr GetRedoRecPtr(void);
 extern XLogRecPtr GetInsertRecPtr(void);
-extern XLogRecPtr GetWriteRecPtr(void);
+extern XLogRecPtr GetFlushRecPtr(void);
 extern void GetNextXidAndEpoch(TransactionId *xid, uint32 *epoch);
 extern TimeLineID GetRecoveryTargetTLI(void);
 

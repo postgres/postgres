@@ -3,8 +3,9 @@
  * walsender.c
  *
  * The WAL sender process (walsender) is new as of Postgres 9.0. It takes
- * charge of XLOG streaming sender in the primary server. At first, it is
- * started by the postmaster when the walreceiver in the standby server
+ * care of sending XLOG from the primary server to a single recipient.
+ * (Note that there can be more than one walsender process concurrently.)
+ * It is started by the postmaster when the walreceiver of a standby server
  * connects to the primary server and requests XLOG streaming replication.
  * It attempts to keep reading XLOG records from the disk and sending them
  * to the standby server, as long as the connection is alive (i.e., like
@@ -23,13 +24,11 @@
  * This instruct walsender to send any outstanding WAL, including the
  * shutdown checkpoint record, and then exit.
  *
- * Note that there can be more than one walsender process concurrently.
  *
  * Portions Copyright (c) 2010-2010, PostgreSQL Global Development Group
  *
- *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/replication/walsender.c,v 1.26 2010/06/03 23:00:14 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/replication/walsender.c,v 1.27 2010/06/17 16:41:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -641,7 +640,7 @@ XLogRead(char *buf, XLogRecPtr recptr, Size nbytes)
 }
 
 /*
- * Read up to MAX_SEND_SIZE bytes of WAL that's been written to disk,
+ * Read up to MAX_SEND_SIZE bytes of WAL that's been flushed to disk,
  * but not yet sent to the client, and send it.
  *
  * msgbuf is a work area in which the output message is constructed.  It's
@@ -663,11 +662,14 @@ XLogSend(char *msgbuf, bool *caughtup)
 	WalDataMessageHeader msghdr;
 
 	/*
-	 * Attempt to send all data that's already been written out from WAL
-	 * buffers (note it might not yet be fsync'd to disk).  We cannot go
-	 * further than that given the current implementation of XLogRead().
+	 * Attempt to send all data that's already been written out and fsync'd
+	 * to disk.  We cannot go further than what's been written out given the
+	 * current implementation of XLogRead().  And in any case it's unsafe to
+	 * send WAL that is not securely down to disk on the master: if the master
+	 * subsequently crashes and restarts, slaves must not have applied any WAL
+	 * that gets lost on the master.
 	 */
-	SendRqstPtr = GetWriteRecPtr();
+	SendRqstPtr = GetFlushRecPtr();
 
 	/* Quick exit if nothing to do */
 	if (XLByteLE(SendRqstPtr, sentPtr))
@@ -679,7 +681,7 @@ XLogSend(char *msgbuf, bool *caughtup)
 	/*
 	 * Figure out how much to send in one message. If there's no more than
 	 * MAX_SEND_SIZE bytes to send, send everything. Otherwise send
-	 * MAX_SEND_SIZE bytes, but round to logfile or page boundary.
+	 * MAX_SEND_SIZE bytes, but round back to logfile or page boundary.
 	 *
 	 * The rounding is not only for performance reasons. Walreceiver
 	 * relies on the fact that we never split a WAL record across two

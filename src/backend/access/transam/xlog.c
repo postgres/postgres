@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.424 2010/06/14 06:04:21 heikki Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.425 2010/06/17 16:41:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -6803,17 +6803,18 @@ GetInsertRecPtr(void)
 }
 
 /*
- * GetWriteRecPtr -- Returns the current write position.
+ * GetFlushRecPtr -- Returns the current flush position, ie, the last WAL
+ * position known to be fsync'd to disk.
  */
 XLogRecPtr
-GetWriteRecPtr(void)
+GetFlushRecPtr(void)
 {
 	/* use volatile pointer to prevent code rearrangement */
 	volatile XLogCtlData *xlogctl = XLogCtl;
 	XLogRecPtr	recptr;
 
 	SpinLockAcquire(&xlogctl->info_lck);
-	recptr = xlogctl->LogwrtResult.Write;
+	recptr = xlogctl->LogwrtResult.Flush;
 	SpinLockRelease(&xlogctl->info_lck);
 
 	return recptr;
