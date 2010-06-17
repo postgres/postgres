@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.289.2.1 2010/05/13 14:16:58 mha Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.289.2.2 2010/06/17 16:03:36 tgl Exp $ -->
 
 <chapter id="libpq">
  <title><application>libpq</application> - C Library</title>
@@ -6470,7 +6470,7 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
       <para>
        Allows applications to select which security libraries to initialize.
        <synopsis>
-        void PQinitOpenSSL(int do_ssl, init do_crypto);
+        void PQinitOpenSSL(int do_ssl, int do_crypto);
        </synopsis>
       </para>
 
