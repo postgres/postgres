@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.555 2010/06/15 07:52:10 itagaki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.556 2010/06/17 17:44:40 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -118,8 +118,6 @@ extern bool synchronize_seqscans;
 extern bool fullPageWrites;
 extern int	vacuum_defer_cleanup_age;
 extern int	ssl_renegotiation_limit;
-
-int			trace_recovery_messages = LOG;
 
 #ifdef TRACE_SORT
 extern bool trace_sort;
@@ -375,6 +373,7 @@ int			log_min_messages = WARNING;
 int			client_min_messages = NOTICE;
 int			log_min_duration_statement = -1;
 int			log_temp_files = -1;
+int			trace_recovery_messages = LOG;
 
 int			num_temp_buffers = 1000;
 

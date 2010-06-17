@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/miscadmin.h,v 1.220 2010/02/26 02:01:20 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/miscadmin.h,v 1.221 2010/06/17 17:44:40 tgl Exp $
  *
  * NOTES
  *	  some of the information in this file should be moved to other files.
@@ -242,7 +242,7 @@ extern void PreventCommandDuringRecovery(const char *cmdname);
 
 /* in utils/misc/guc.c */
 extern int	trace_recovery_messages;
-int			trace_recovery(int trace_level);
+extern int	trace_recovery(int trace_level);
 
 /*****************************************************************************
  *	  pdir.h --																 *
