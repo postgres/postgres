@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.307 2010/06/11 10:13:08 heikki Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.308 2010/06/17 16:03:30 tgl Exp $ -->
 
 <chapter id="libpq">
  <title><application>libpq</application> - C Library</title>
@@ -6753,7 +6753,7 @@ user=admin
       <para>
        Allows applications to select which security libraries to initialize.
        <synopsis>
-        void PQinitOpenSSL(int do_ssl, init do_crypto);
+        void PQinitOpenSSL(int do_ssl, int do_crypto);
        </synopsis>
       </para>
 
