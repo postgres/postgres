@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.518 2010/06/10 07:00:25 heikki Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.519 2010/06/17 01:32:09 rhaas Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -13282,10 +13282,13 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
        <entry><type>text</type></entry>
        <entry>Get last transaction log location received and synced to disk by
         streaming replication. While streaming replication is in progress
-        this will increase monotonically. If recovevery has completed
-        this will remain static at the value of the last WAL record
-        received and synced to disk during recovery. If streaming replication
-        is disabled, or it has not yet started, the function returns NULL.
+        this will increase monotonically. But when streaming replication is
+        restarted this will back off to the replication starting position,
+        typically the beginning of the WAL file containing the current
+        replay location.  If recovery has completed this will remain static at
+        the value of the last WAL record received and synced to disk during
+        recovery. If streaming replication is disabled, or if it has not yet
+        started, the function returns NULL.
        </entry>
       </row>
       <row>
