@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/pg_archivecleanup/pg_archivecleanup.c,v 1.1 2010/06/14 16:19:24 sriggs Exp $
+ * $PostgreSQL: pgsql/contrib/pg_archivecleanup/pg_archivecleanup.c,v 1.2 2010/06/17 17:31:27 tgl Exp $
  *
  * pg_archivecleanup.c
  *
@@ -43,7 +43,6 @@ char		WALFilePath[MAXPGPATH];		/* the file path including archive */
 char		exclusiveCleanupFileName[MAXPGPATH];		/* the oldest file we want to
 														 * remain in archive */
 
-struct stat stat_buf;
 
 /* =====================================================================
  *
@@ -78,10 +77,13 @@ Initialize(void)
 	 * This code assumes that archiveLocation is a directory, so we use
 	 * stat to test if it's accessible.
 	 */
-	if (stat(archiveLocation, &stat_buf) != 0)
+	struct stat stat_buf;
+
+	if (stat(archiveLocation, &stat_buf) != 0 ||
+		!S_ISDIR(stat_buf.st_mode))
 	{
-		fprintf(stderr, "%s: archiveLocation \"%s\" does not exist\n", progname, archiveLocation);
-		fflush(stderr);
+		fprintf(stderr, "%s: archiveLocation \"%s\" does not exist\n",
+				progname, archiveLocation);
 		exit(2);
 	}
 }
@@ -122,25 +124,23 @@ CleanupPriorWALFiles(void)
 #endif
 
 				if (debug)
-					fprintf(stderr, "\n%s:  removing \"%s\"", progname, WALFilePath);
+					fprintf(stderr, "%s: removing file \"%s\"\n",
+							progname, WALFilePath);
 
 				rc = unlink(WALFilePath);
 				if (rc != 0)
 				{
-					fprintf(stderr, "\n%s: ERROR failed to remove \"%s\": %s",
+					fprintf(stderr, "%s: ERROR: could not remove file \"%s\": %s\n",
 							progname, WALFilePath, strerror(errno));
 					break;
 				}
 			}
 		}
-		if (debug)
-			fprintf(stderr, "\n");
+		closedir(xldir);
 	}
 	else
-		fprintf(stderr, "%s: archiveLocation \"%s\" open error\n", progname, archiveLocation);
-
-	closedir(xldir);
-	fflush(stderr);
+		fprintf(stderr, "%s: could not open archiveLocation \"%s\": %s\n",
+				progname, archiveLocation, strerror(errno));
 }
 
 /*
@@ -304,10 +304,8 @@ main(int argc, char **argv)
 	SetWALFileNameForCleanup();
 
 	if (debug)
-	{
-		fprintf(stderr, "%s:  keep WAL file %s and later", progname, exclusiveCleanupFileName);
-		fflush(stderr);
-	}
+		fprintf(stderr, "%s: keep WAL file \"%s\" and later\n",
+				progname, exclusiveCleanupFileName);
 
 	/*
 	 * Remove WAL files older than cut-off
