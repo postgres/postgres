@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/contrib/hstore/hstore.sql.in,v 1.13 2010/06/15 19:48:30 rhaas Exp $ */
+/* $PostgreSQL: pgsql/contrib/hstore/hstore.sql.in,v 1.14 2010/06/18 03:52:02 rhaas Exp $ */
 
 -- Adjust this setting to control where the objects get created.
 SET search_path = public;
@@ -66,7 +66,7 @@ RETURNS hstore
 AS 'MODULE_PATHNAME','hstore_slice_to_hstore'
 LANGUAGE C STRICT IMMUTABLE;
 
-CREATE OPERATOR => (
+CREATE OPERATOR % (
 	LEFTARG = hstore,
 	RIGHTARG = text[],
 	PROCEDURE = slice_hstore
