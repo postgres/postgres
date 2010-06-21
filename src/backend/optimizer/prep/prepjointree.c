@@ -16,7 +16,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepjointree.c,v 1.66.2.1 2009/09/02 17:52:33 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepjointree.c,v 1.66.2.2 2010/06/21 00:14:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1290,6 +1290,7 @@ pullup_replace_vars_callback(Var *var,
 		List	   *colnames;
 		List	   *fields;
 		bool		save_need_phvs = rcon->need_phvs;
+		int			save_sublevelsup = context->sublevels_up;
 
 		/*
 		 * If generating an expansion for a var of a named rowtype (ie, this
@@ -1307,9 +1308,12 @@ pullup_replace_vars_callback(Var *var,
 				  &colnames, &fields);
 		/* Adjust the generated per-field Vars, but don't insert PHVs */
 		rcon->need_phvs = false;
+		context->sublevels_up = 0; /* to match the expandRTE output */
 		fields = (List *) replace_rte_variables_mutator((Node *) fields,
 														context);
 		rcon->need_phvs = save_need_phvs;
+		context->sublevels_up = save_sublevelsup;
+
 		rowexpr = makeNode(RowExpr);
 		rowexpr->args = fields;
 		rowexpr->row_typeid = var->vartype;
