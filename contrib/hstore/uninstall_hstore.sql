@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/contrib/hstore/uninstall_hstore.sql,v 1.8 2009/03/25 22:19:01 tgl Exp $ */
+/* $PostgreSQL: pgsql/contrib/hstore/uninstall_hstore.sql,v 1.8.2.1 2010/06/22 11:36:28 rhaas Exp $ */
 
 -- Adjust this setting to control where the objects get dropped.
 SET search_path = public;
@@ -26,6 +26,7 @@ DROP FUNCTION hs_concat(hstore,hstore);
 DROP FUNCTION hs_contains(hstore,hstore);
 DROP FUNCTION hs_contained(hstore,hstore);
 DROP FUNCTION tconvert(text,text);
+DROP FUNCTION hstore(text,text);
 DROP FUNCTION akeys(hstore);
 DROP FUNCTION avals(hstore);
 DROP FUNCTION skeys(hstore);

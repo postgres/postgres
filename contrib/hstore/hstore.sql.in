@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/contrib/hstore/hstore.sql.in,v 1.11 2009/06/11 18:30:03 tgl Exp $ */
+/* $PostgreSQL: pgsql/contrib/hstore/hstore.sql.in,v 1.11.2.1 2010/06/22 11:36:28 rhaas Exp $ */
 
 -- Adjust this setting to control where the objects get created.
 SET search_path = public;
@@ -127,6 +127,12 @@ CREATE OPERATOR ~ (
 CREATE OR REPLACE FUNCTION tconvert(text,text)
 RETURNS hstore
 AS 'MODULE_PATHNAME'
+LANGUAGE C IMMUTABLE; -- not STRICT
+
+-- For forward compatibility with PostgreSQL >= 9.0
+CREATE OR REPLACE FUNCTION hstore(text,text)
+RETURNS hstore
+AS 'MODULE_PATHNAME', 'tconvert'
 LANGUAGE C IMMUTABLE; -- not STRICT
 
 CREATE OPERATOR => (
