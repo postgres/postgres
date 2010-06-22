@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/pg_ctl-ref.sgml,v 1.50 2010/04/08 01:39:37 rhaas Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/pg_ctl-ref.sgml,v 1.51 2010/06/22 16:19:36 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -134,16 +134,19 @@ PostgreSQL documentation
 
   <para>
    In <option>start</option> mode, a new server is launched.  The
-   server is started in the background, and standard input is attached to
-   <filename>/dev/null</filename>.  The standard output and standard
-   error are either appended to a log file (if the <option>-l</option>
-   option is used), or redirected to <application>pg_ctl</application>'s 
-   standard output (not standard error).  If no log file is chosen, the 
-   standard output of <application>pg_ctl</application> should be redirected 
-   to a file or piped to another process such as a log rotating program
-   like <application>rotatelogs</>; otherwise <command>postgres</command> 
-   will write its output to the controlling terminal (from the background) 
-   and will not leave the shell's process group.
+   server is started in the background, and standard input is attached
+   to <filename>/dev/null</filename> (or <literal>nul</> on Windows).
+   On Unix-like systems, by default, the server's standard output and
+   standard error are send to <application>pg_ctl</application>'s
+   standard output (not standard error).  The standard output of
+   <application>pg_ctl</application> should then be redirected to a
+   file or piped to another process such as a log rotating program
+   like <application>rotatelogs</>; otherwise <command>postgres</command>
+   will write its output to the controlling terminal (from the
+   background) and will not leave the shell's process group.  On
+   Windows, by default the server's standard output and standard error
+   are sent to the terminal.  These default  behaviors can be changed
+   by using <option>-l</option> to append server output to a log file.
   </para>
 
   <para>
