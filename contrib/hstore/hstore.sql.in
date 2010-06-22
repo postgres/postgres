@@ -118,6 +118,12 @@ RETURNS hstore
 AS 'MODULE_PATHNAME'
 LANGUAGE 'C' with (isstrict,iscachable);
 
+-- For forward compatibility with PostgreSQL >= 9.0
+CREATE OR REPLACE FUNCTION hstore(text,text)
+RETURNS hstore
+AS 'MODULE_PATHNAME', 'tconvert'
+LANGUAGE C IMMUTABLE; -- not STRICT
+
 CREATE OPERATOR => (
 	LEFTARG = text,
 	RIGHTARG = text,

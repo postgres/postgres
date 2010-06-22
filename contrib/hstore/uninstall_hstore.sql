@@ -21,6 +21,7 @@ DROP FUNCTION hs_concat(hstore,hstore);
 DROP FUNCTION hs_contains(hstore,hstore);
 DROP FUNCTION hs_contained(hstore,hstore);
 DROP FUNCTION tconvert(text,text);
+DROP FUNCTION hstore(text,text);
 DROP FUNCTION akeys(hstore);
 DROP FUNCTION avals(hstore);
 DROP FUNCTION skeys(hstore);
