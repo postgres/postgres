@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/high-availability.sgml,v 1.73 2010/06/11 10:13:08 heikki Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/high-availability.sgml,v 1.74 2010/06/22 02:57:50 rhaas Exp $ -->
 
 <chapter id="high-availability">
  <title>High Availability, Load Balancing, and Replication</title>
@@ -1330,7 +1330,7 @@ if (!triggered)
      </listitem>
      <listitem>
       <para>
-       LISTEN, UNLISTEN, NOTIFY
+       <command>LISTEN</>, <command>UNLISTEN</>, <command>NOTIFY</>
       </para>
      </listitem>
     </itemizedlist>
@@ -1437,14 +1437,14 @@ if (!triggered)
     Some WAL redo actions will be for <acronym>DDL</> execution. These DDL
     actions are replaying changes that have already committed on the primary
     node, so they must not fail on the standby node. These DDL locks take
-    priority and will automatically *cancel* any read-only transactions that
-    get in their way, after a grace period. This is similar to the possibility
-    of being canceled by the deadlock detector.  But in this case, the standby
-    recovery process always wins, since the replayed actions must not fail.
-    This also ensures that replication does not fall behind while waiting for a
-    query to complete. This prioritization presumes that the standby exists
-    primarily for high availability, and that adjusting the grace period
-    will allow a sufficient guard against unexpected cancellation.
+    priority and will automatically <emphasis>cancel</> any read-only
+    transactions that get in their way, after a grace period. This is similar
+    to the possibility of being canceled by the deadlock detector.  But in this
+    case, the standby recovery process always wins, since the replayed actions
+    must not fail.  This also ensures that replication does not fall behind
+    while waiting for a query to complete. This prioritization presumes that
+    the standby exists primarily for high availability, and that adjusting the
+    grace period will allow a sufficient guard against unexpected cancellation.
    </para>
 
    <para>
