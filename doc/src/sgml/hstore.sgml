@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/hstore.sgml,v 1.10 2010/06/18 03:52:03 rhaas Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/hstore.sgml,v 1.11 2010/06/22 11:36:16 rhaas Exp $ -->
 
 <sect1 id="hstore">
  <title>hstore</title>
@@ -225,6 +225,14 @@
    </para>
   </note>
 
+  <note>
+  <para>
+   The <literal>=&gt;</> operator is deprecated and may be removed in a
+   future release.  Use the <literal>hstore(text, text)</literal> function
+   instead.
+   </para>
+  </note>
+
   <table id="hstore-func-table">
    <title><type>hstore</> Functions</title>
 
@@ -263,6 +271,14 @@
       <entry>construct an <type>hstore</> from separate key and value arrays</entry>
       <entry><literal>hstore(ARRAY['a','b'], ARRAY['1','2'])</literal></entry>
       <entry><literal>"a"=&gt;"1","b"=&gt;"2"</literal></entry>
+     </row>
+
+     <row>
+      <entry><function>hstore(text, text)</function></entry>
+      <entry><type>hstore</type></entry>
+      <entry>make single-item <type>hstore</></entry>
+      <entry><literal>hstore('a', 'b')</literal></entry>
+      <entry><literal>"a"=&gt;"b"</literal></entry>
      </row>
 
      <row>

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/operatorcmds.c,v 1.45 2010/02/14 18:42:14 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/operatorcmds.c,v 1.46 2010/06/22 11:36:16 rhaas Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -87,6 +87,16 @@ DefineOperator(List *names, List *parameters)
 
 	/* Convert list of names to a name and namespace */
 	oprNamespace = QualifiedNameGetCreationNamespace(names, &oprName);
+
+	/*
+	 * The SQL standard committee has decided that => should be used for
+	 * named parameters; therefore, a future release of PostgreSQL may
+	 * disallow it as the name of a user-defined operator.
+	 */
+	if (strcmp(oprName, "=>") == 0)
+		ereport(WARNING,
+				(errmsg("=> is deprecated as an operator name"),
+				 errdetail("This name may be disallowed altogether in future versions of PostgreSQL.")));
 
 	/* Check we have creation rights in target namespace */
 	aclresult = pg_namespace_aclcheck(oprNamespace, GetUserId(), ACL_CREATE);

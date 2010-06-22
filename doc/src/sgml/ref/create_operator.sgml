@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_operator.sgml,v 1.52 2010/04/03 07:22:58 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_operator.sgml,v 1.53 2010/06/22 11:36:16 rhaas Exp $
 PostgreSQL documentation
 -->
 
@@ -69,6 +69,12 @@ CREATE OPERATOR <replaceable>name</replaceable> (
      but <literal>*-</literal> is not.
      This restriction allows <productname>PostgreSQL</productname> to
      parse SQL-compliant commands without requiring spaces between tokens.
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+     The use of <literal>=&gt;</> as an operator name is deprecated.  It may
+     be disallowed altogether in a future release.
      </para>
     </listitem>
    </itemizedlist>
