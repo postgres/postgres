@@ -48,7 +48,7 @@
 #define pg_link_file		win32_pghardlink
 #define EXE_EXT				".exe"
 #define sleep(x)			Sleep(x * 1000)
-#define DEVNULL "nul"
+#define DEVNULL				"nul"
 /* "con" does not work from the Msys 1.0.10 console (part of MinGW). */
 #define DEVTTY  "con"
 /* from pgport */

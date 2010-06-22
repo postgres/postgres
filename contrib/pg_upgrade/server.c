@@ -177,12 +177,22 @@ start_postmaster(migratorContext *ctx, Cluster whichCluster, bool quiet)
 		port = ctx->new.port;
 	}
 
-	/* use -l for Win32 */
+	/*
+	 * On Win32, we can't send both server output and pg_ctl output
+	 * to the same file because we get the error:
+	 * "The process cannot access the file because it is being used by another process."
+	 * so we have to send pg_ctl output to 'nul'.
+	 */	 
 	snprintf(cmd, sizeof(cmd),
 			 SYSTEMQUOTE "\"%s/pg_ctl\" -l \"%s\" -D \"%s\" "
 			 "-o \"-p %d -c autovacuum=off -c autovacuum_freeze_max_age=2000000000\" "
 			 "start >> \"%s\" 2>&1" SYSTEMQUOTE,
-			 bindir, ctx->logfile, datadir, port, ctx->logfile);
+			 bindir, ctx->logfile, datadir, port,
+#ifndef WIN32
+			 ctx->logfile);
+#else
+			 DEVNULL);
+#endif
 	exec_prog(ctx, true, "%s", cmd);
 
 	/* wait for the server to start properly */
@@ -200,6 +210,7 @@ start_postmaster(migratorContext *ctx, Cluster whichCluster, bool quiet)
 void
 stop_postmaster(migratorContext *ctx, bool fast, bool quiet)
 {
+	char		cmd[MAXPGPATH];
 	const char *bindir;
 	const char *datadir;
 
@@ -216,10 +227,16 @@ stop_postmaster(migratorContext *ctx, bool fast, bool quiet)
 	else
 		return;					/* no cluster running */
 
-	/* use -l for Win32 */
-	exec_prog(ctx, fast ? false : true,
+	/* See comment in start_postmaster() about why win32 output is ignored. */
+	snprintf(cmd, sizeof(cmd),
 			  SYSTEMQUOTE "\"%s/pg_ctl\" -l \"%s\" -D \"%s\" %s stop >> \"%s\" 2>&1" SYSTEMQUOTE,
-		 bindir, ctx->logfile, datadir, fast ? "-m fast" : "", ctx->logfile);
+			  bindir, ctx->logfile, datadir, fast ? "-m fast" : "",
+#ifndef WIN32
+			  ctx->logfile);
+#else
+			  DEVNULL);
+#endif
+	exec_prog(ctx, fast ? false : true, "%s", cmd);
 
 	ctx->postmasterPID = 0;
 	ctx->running_cluster = NONE;

@@ -174,12 +174,10 @@ parseCommandLine(migratorContext *ctx, int argc, char *argv[])
 		 * start.
 		 */
 		/* truncate */
-		ctx->log_fd = fopen(ctx->logfile, "w");
-		if (!ctx->log_fd)
+		if ((ctx->log_fd = fopen(ctx->logfile, "w")) == NULL)
 			pg_log(ctx, PG_FATAL, "Cannot write to log file %s\n", ctx->logfile);
 		fclose(ctx->log_fd);
-		ctx->log_fd = fopen(ctx->logfile, "a");
-		if (!ctx->log_fd)
+		if ((ctx->log_fd = fopen(ctx->logfile, "a")) == NULL)
 			pg_log(ctx, PG_FATAL, "Cannot write to log file %s\n", ctx->logfile);
 	}
 	else
