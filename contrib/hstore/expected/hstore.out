@@ -4,6 +4,8 @@
 --
 SET client_min_messages = warning;
 \set ECHO none
+psql:hstore.sql:234: WARNING:  => is deprecated as an operator name
+DETAIL:  This name may be disallowed altogether in future versions of PostgreSQL.
 RESET client_min_messages;
 set escape_string_warning=off;
 --hstore;
