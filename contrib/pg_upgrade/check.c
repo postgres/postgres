@@ -149,10 +149,11 @@ issue_warnings(migratorContext *ctx, char *sequence_script_file_name)
 		{
 			prep_status(ctx, "Adjusting sequences");
 			exec_prog(ctx, true,
-					SYSTEMQUOTE "\"%s/psql\" --set ON_ERROR_STOP=on --port %d "
-					  "-f \"%s\" --dbname template1 >> \"%s\"" SYSTEMQUOTE,
-					  ctx->new.bindir, ctx->new.port, sequence_script_file_name,
-					  ctx->logfile);
+					  SYSTEMQUOTE "\"%s/psql\" --set ON_ERROR_STOP=on --port %d "
+					  "--username \"%s\" -f \"%s\" --dbname template1 >> \"%s\""
+					  SYSTEMQUOTE,
+					  ctx->new.bindir, ctx->new.port, ctx->user,
+					  sequence_script_file_name, ctx->logfile);
 			unlink(sequence_script_file_name);
 			check_ok(ctx);
 		}

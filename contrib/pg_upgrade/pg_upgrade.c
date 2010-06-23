@@ -78,7 +78,8 @@ main(int argc, char **argv)
 	 * because there is no need to have the schema load use new oids.
 	 */
 	prep_status(&ctx, "Setting next oid for new cluster");
-	exec_prog(&ctx, true, SYSTEMQUOTE "\"%s/pg_resetxlog\" -o %u \"%s\" > " DEVNULL SYSTEMQUOTE,
+	exec_prog(&ctx, true, SYSTEMQUOTE "\"%s/pg_resetxlog\" -o %u \"%s\" > "
+		  DEVNULL SYSTEMQUOTE,
 		  ctx.new.bindir, ctx.old.controldata.chkpnt_nxtoid, ctx.new.pgdata);
 	check_ok(&ctx);
 
@@ -156,8 +157,9 @@ prepare_new_cluster(migratorContext *ctx)
 	 */
 	prep_status(ctx, "Analyzing all rows in the new cluster");
 	exec_prog(ctx, true,
-			  SYSTEMQUOTE "\"%s/vacuumdb\" --port %d --all --analyze >> %s 2>&1" SYSTEMQUOTE,
-			  ctx->new.bindir, ctx->new.port, ctx->logfile);
+			  SYSTEMQUOTE "\"%s/vacuumdb\" --port %d --username \"%s\" "
+			  "--all --analyze >> %s 2>&1" SYSTEMQUOTE,
+			  ctx->new.bindir, ctx->new.port, ctx->user, ctx->logfile);
 	check_ok(ctx);
 
 	/*
@@ -168,8 +170,9 @@ prepare_new_cluster(migratorContext *ctx)
 	 */
 	prep_status(ctx, "Freezing all rows on the new cluster");
 	exec_prog(ctx, true,
-			  SYSTEMQUOTE "\"%s/vacuumdb\" --port %d --all --freeze >> %s 2>&1" SYSTEMQUOTE,
-			  ctx->new.bindir, ctx->new.port, ctx->logfile);
+			  SYSTEMQUOTE "\"%s/vacuumdb\" --port %d --username \"%s\" "
+			  "--all --freeze >> %s 2>&1" SYSTEMQUOTE,
+			  ctx->new.bindir, ctx->new.port, ctx->user, ctx->logfile);
 	check_ok(ctx);
 
 	get_pg_database_relfilenode(ctx, CLUSTER_NEW);
@@ -196,9 +199,10 @@ prepare_new_databases(migratorContext *ctx)
 	 */
 	prep_status(ctx, "Creating databases in the new cluster");
 	exec_prog(ctx, true,
-			  SYSTEMQUOTE "\"%s/psql\" --set ON_ERROR_STOP=on --port %d "
-			  "-f \"%s/%s\" --dbname template1 >> \"%s\"" SYSTEMQUOTE,
-			  ctx->new.bindir, ctx->new.port, ctx->cwd,
+			  SYSTEMQUOTE "\"%s/psql\" --port %d --username \"%s\" "
+			  "--set ON_ERROR_STOP=on -f \"%s/%s\" --dbname template1 >> \"%s\""
+			  SYSTEMQUOTE,
+			  ctx->new.bindir, ctx->new.port, ctx->user, ctx->cwd,
 			  GLOBALS_DUMP_FILE, ctx->logfile);
 	check_ok(ctx);
 
@@ -218,9 +222,10 @@ create_new_objects(migratorContext *ctx)
 
 	prep_status(ctx, "Restoring database schema to new cluster");
 	exec_prog(ctx, true,
-			  SYSTEMQUOTE "\"%s/psql\" --set ON_ERROR_STOP=on --port %d "
-			  "-f \"%s/%s\" --dbname template1 >> \"%s\"" SYSTEMQUOTE,
-			  ctx->new.bindir, ctx->new.port, ctx->cwd,
+			  SYSTEMQUOTE "\"%s/psql\" --port %d --username \"%s\" "
+			  "--set ON_ERROR_STOP=on -f \"%s/%s\" --dbname template1 >> \"%s\""
+			  SYSTEMQUOTE,
+			  ctx->new.bindir, ctx->new.port,  ctx->user, ctx->cwd,
 			  DB_DUMP_FILE, ctx->logfile);
 	check_ok(ctx);
 

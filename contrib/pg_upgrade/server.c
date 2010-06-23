@@ -185,7 +185,8 @@ start_postmaster(migratorContext *ctx, Cluster whichCluster, bool quiet)
 	 */	 
 	snprintf(cmd, sizeof(cmd),
 			 SYSTEMQUOTE "\"%s/pg_ctl\" -l \"%s\" -D \"%s\" "
-			 "-o \"-p %d -c autovacuum=off -c autovacuum_freeze_max_age=2000000000\" "
+			 "-o \"-p %d -c autovacuum=off "
+			 "-c autovacuum_freeze_max_age=2000000000\" "
 			 "start >> \"%s\" 2>&1" SYSTEMQUOTE,
 			 bindir, ctx->logfile, datadir, port,
 #ifndef WIN32
@@ -229,7 +230,8 @@ stop_postmaster(migratorContext *ctx, bool fast, bool quiet)
 
 	/* See comment in start_postmaster() about why win32 output is ignored. */
 	snprintf(cmd, sizeof(cmd),
-			  SYSTEMQUOTE "\"%s/pg_ctl\" -l \"%s\" -D \"%s\" %s stop >> \"%s\" 2>&1" SYSTEMQUOTE,
+			  SYSTEMQUOTE "\"%s/pg_ctl\" -l \"%s\" -D \"%s\" %s stop >> "
+			  "\"%s\" 2>&1" SYSTEMQUOTE,
 			  bindir, ctx->logfile, datadir, fast ? "-m fast" : "",
 #ifndef WIN32
 			  ctx->logfile);
