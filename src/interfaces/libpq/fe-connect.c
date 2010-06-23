@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.393 2010/05/26 21:39:27 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.394 2010/06/23 21:54:13 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -182,6 +182,18 @@ static const PQconninfoOption PQconninfoOptions[] = {
 
 	{"fallback_application_name", NULL, NULL, NULL,
 	"Fallback-Application-Name", "", 64},
+
+	{"keepalives", NULL, NULL, NULL,
+	"TCP-Keepalives", "", 1}, /* should be just '0' or '1' */
+
+	{"keepalives_idle", NULL, NULL, NULL,
+	"TCP-Keepalives-Idle", "", 10}, /* strlen(INT32_MAX) == 10 */
+
+	{"keepalives_interval", NULL, NULL, NULL,
+	"TCP-Keepalives-Interval", "", 10}, /* strlen(INT32_MAX) == 10 */
+
+	{"keepalives_count", NULL, NULL, NULL,
+	"TCP-Keepalives-Count", "", 10}, /* strlen(INT32_MAX) == 10 */
 
 #ifdef USE_SSL
 
@@ -552,6 +564,14 @@ fillPGconn(PGconn *conn, PQconninfoOption *connOptions)
 	conn->pgpass = tmp ? strdup(tmp) : NULL;
 	tmp = conninfo_getval(connOptions, "connect_timeout");
 	conn->connect_timeout = tmp ? strdup(tmp) : NULL;
+	tmp = conninfo_getval(connOptions, "keepalives");
+	conn->keepalives = tmp ? strdup(tmp) : NULL;
+	tmp = conninfo_getval(connOptions, "keepalives_idle");
+	conn->keepalives_idle = tmp ? strdup(tmp) : NULL;
+	tmp = conninfo_getval(connOptions, "keepalives_interval");
+	conn->keepalives_interval = tmp ? strdup(tmp) : NULL;
+	tmp = conninfo_getval(connOptions, "keepalives_count");
+	conn->keepalives_count = tmp ? strdup(tmp) : NULL;
 	tmp = conninfo_getval(connOptions, "sslmode");
 	conn->sslmode = tmp ? strdup(tmp) : NULL;
 	tmp = conninfo_getval(connOptions, "sslkey");
@@ -943,6 +963,119 @@ connectFailureMessage(PGconn *conn, int errorno)
 	}
 }
 
+/*
+ * Should we use keepalives?  Returns 1 if yes, 0 if no, and -1 if
+ * conn->keepalives is set to a value which is not parseable as an
+ * integer.
+ */
+static int
+useKeepalives(PGconn *conn)
+{
+	char	   *ep;
+	int			val;
+
+	if (conn->keepalives == NULL)
+		return 1;
+	val = strtol(conn->keepalives, &ep, 10);
+	if (*ep)
+		return -1;
+	return val != 0 ? 1 : 0;
+}
+
+/*
+ * Set the keepalive idle timer.
+ */
+static int
+setKeepalivesIdle(PGconn *conn)
+{
+	int	idle;
+
+	if (conn->keepalives_idle == NULL)
+		return 1;
+
+	idle = atoi(conn->keepalives_idle);
+	if (idle < 0)
+		idle = 0;
+
+#ifdef TCP_KEEPIDLE
+	if (setsockopt(conn->sock, IPPROTO_TCP, TCP_KEEPIDLE,
+				   (char *) &idle, sizeof(idle)) < 0)
+	{
+		char	sebuf[256];
+
+		appendPQExpBuffer(&conn->errorMessage,
+						  libpq_gettext("setsockopt(TCP_KEEPIDLE) failed: %s\n"),
+						  SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
+		return 0;
+	}
+#endif
+
+	return 1;
+}
+
+/*
+ * Set the keepalive interval.
+ */
+static int
+setKeepalivesInterval(PGconn *conn)
+{
+	int	interval;
+
+	if (conn->keepalives_interval == NULL)
+		return 1;
+
+	interval = atoi(conn->keepalives_interval);
+	if (interval < 0)
+		interval = 0;
+
+#ifdef TCP_KEEPINTVL
+	if (setsockopt(conn->sock, IPPROTO_TCP, TCP_KEEPINTVL,
+				   (char *) &interval, sizeof(interval)) < 0)
+	{
+		char	sebuf[256];
+
+		appendPQExpBuffer(&conn->errorMessage,
+						  libpq_gettext("setsockopt(TCP_KEEPINTVL) failed: %s\n"),
+						  SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
+		return 0;
+	}
+#endif
+
+	return 1;
+}
+
+/*
+ * Set the count of lost keepalive packets that will trigger a connection
+ * break.
+ */
+static int
+setKeepalivesCount(PGconn *conn)
+{
+	int	count;
+
+	if (conn->keepalives_count == NULL)
+		return 1;
+
+	count = atoi(conn->keepalives_count);
+	if (count < 0)
+		count = 0;
+
+#ifdef TCP_KEEPCNT
+	if (setsockopt(conn->sock, IPPROTO_TCP, TCP_KEEPCNT,
+				   (char *) &count, sizeof(count)) < 0)
+	{
+		char	sebuf[256];
+
+		appendPQExpBuffer(&conn->errorMessage,
+						  libpq_gettext("setsockopt(TCP_KEEPCNT) failed: %s\n"),
+						  SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
+		return 0;
+	}
+#endif
+
+	return 1;
+}
+
 
 /* ----------
  * connectDBStart -
@@ -1328,6 +1461,45 @@ keep_going:						/* We will come back to here until there is
 						continue;
 					}
 #endif   /* F_SETFD */
+
+					if (!IS_AF_UNIX(addr_cur->ai_family))
+					{
+						int		on = 1;
+						int		usekeepalives = useKeepalives(conn);
+						int		err = 0;
+
+						if (usekeepalives < 0)
+						{
+							appendPQExpBuffer(&conn->errorMessage,
+											  libpq_gettext("keepalives parameter must be an integer\n"));
+							err = 1;
+						}
+						else if (usekeepalives == 0)
+						{
+							/* Do nothing */
+						}
+						else if (setsockopt(conn->sock,
+											SOL_SOCKET, SO_KEEPALIVE,
+											(char *) &on, sizeof(on)) < 0)
+						{
+							appendPQExpBuffer(&conn->errorMessage,
+											  libpq_gettext("setsockopt(SO_KEEPALIVE) failed: %s\n"),
+							  SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
+							err = 1;
+						}
+						else if (!setKeepalivesIdle(conn)
+								 || !setKeepalivesInterval(conn)
+								 || !setKeepalivesCount(conn))
+							err = 1;
+
+						if (err)
+						{
+							closesocket(conn->sock);
+							conn->sock = -1;
+							conn->addr_cur = addr_cur->ai_next;
+							continue;
+						}
+					}
 
 					/*----------
 					 * We have three methods of blocking SIGPIPE during
@@ -2290,6 +2462,14 @@ freePGconn(PGconn *conn)
 		free(conn->pguser);
 	if (conn->pgpass)
 		free(conn->pgpass);
+	if (conn->keepalives)
+		free(conn->keepalives);
+	if (conn->keepalives_idle)
+		free(conn->keepalives_idle);
+	if (conn->keepalives_interval)
+		free(conn->keepalives_interval);
+	if (conn->keepalives_count)
+		free(conn->keepalives_count);
 	if (conn->sslmode)
 		free(conn->sslmode);
 	if (conn->sslcert)

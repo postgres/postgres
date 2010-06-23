@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.308 2010/06/17 16:03:30 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.309 2010/06/23 21:54:13 rhaas Exp $ -->
 
 <chapter id="libpq">
  <title><application>libpq</application> - C Library</title>
@@ -276,6 +276,57 @@
            a fallback name is useful in generic utility programs that
            wish to set a default application name but allow it to be
            overridden by the user.
+          </para>
+         </listitem>
+        </varlistentry>
+
+        <varlistentry id="libpq-keepalives" xreflabel="keepalives">
+         <term><literal>keepalives</literal></term>
+         <listitem>
+          <para>
+           Controls whether TCP keepalives are used. The default value is 1,
+           meaning on, but you can change this to 0, meaning off, if keepalives
+           are not wanted.  This parameter is ignored for connections made via
+           a Unix-domain socket.
+          </para>
+         </listitem>
+        </varlistentry>
+
+        <varlistentry id="libpq-keepalives-idle" xreflabel="keepalives_idle">
+         <term><literal>keepalives_idle</literal></term>
+         <listitem>
+          <para>
+           On systems that support the <symbol>TCP_KEEPIDLE</symbol> socket
+           option, specifies the number of seconds between sending keepalives
+           on an otherwise idle connection. A value of zero uses the system
+           default.  This parameter is ignored for connections made via a
+           Unix-domain socket, or if keepalives are disabled.
+          </para>
+         </listitem>
+        </varlistentry>
+
+        <varlistentry id="libpq-keepalives-interval" xreflabel="keepalives_interval">
+         <term><literal>keepalives_interval</literal></term>
+         <listitem>
+          <para>
+           On systems that support the <symbol>TCP_KEEPINTVL</symbol> socket
+           option, specifies how long, in seconds, to wait for a response to a
+           keepalive before retransmitting. A value of zero uses the system
+           default.  This parameter is ignored for connections made via a
+           Unix-domain socket, or if keepalives are disabled.
+          </para>
+         </listitem>
+        </varlistentry>
+
+        <varlistentry id="libpq-keepalives-count" xreflabel="keepalives_count">
+         <term><literal>keepalives_count</literal></term>
+         <listitem>
+          <para>
+           On systems that support the <symbol>TCP_KEEPCNT</symbol> socket
+           option, specifies how many keepalives can be lost before the
+           connection is considered dead. A value of zero uses the system
+           default.  This parameter is ignored for connections made via a
+           Unix-domain socket, or if keepalives are disabled.
           </para>
          </listitem>
         </varlistentry>

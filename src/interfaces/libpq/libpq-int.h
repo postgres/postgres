@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/interfaces/libpq/libpq-int.h,v 1.150 2010/03/13 14:55:57 momjian Exp $
+ * $PostgreSQL: pgsql/src/interfaces/libpq/libpq-int.h,v 1.151 2010/06/23 21:54:13 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -300,6 +300,10 @@ struct pg_conn
 	char	   *replication;	/* connect as the replication standby? */
 	char	   *pguser;			/* Postgres username and password, if any */
 	char	   *pgpass;
+	char	   *keepalives;		/* use TCP keepalives? */
+	char	   *keepalives_idle;	/* time between TCP keepalives */
+	char	   *keepalives_interval;	/* time between TCP keepalive retransmits */
+	char	   *keepalives_count;	/* maximum number of TCP keepalive retransmits */
 	char	   *sslmode;		/* SSL mode (require,prefer,allow,disable) */
 	char	   *sslkey;			/* client key filename */
 	char	   *sslcert;		/* client certificate filename */
