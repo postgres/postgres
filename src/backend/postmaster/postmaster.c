@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.612 2010/06/16 00:54:16 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.613 2010/06/24 16:40:45 rhaas Exp $
  *
  * NOTES
  *
@@ -2224,11 +2224,11 @@ pmdie(SIGNAL_ARGS)
 				/* only bgwriter is active in this state */
 				pmState = PM_WAIT_BACKENDS;
 			}
-			if (pmState == PM_RUN ||
-				pmState == PM_WAIT_BACKUP ||
-				pmState == PM_WAIT_READONLY ||
-				pmState == PM_WAIT_BACKENDS ||
-				pmState == PM_HOT_STANDBY)
+			else if (pmState == PM_RUN ||
+					 pmState == PM_WAIT_BACKUP ||
+					 pmState == PM_WAIT_READONLY ||
+					 pmState == PM_WAIT_BACKENDS ||
+					 pmState == PM_HOT_STANDBY)
 			{
 				ereport(LOG,
 						(errmsg("aborting any active transactions")));
