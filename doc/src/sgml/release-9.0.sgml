@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release-9.0.sgml,v 2.34 2010/06/16 18:46:18 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release-9.0.sgml,v 2.35 2010/06/24 18:33:05 rhaas Exp $ -->
 
  <sect1 id="release-9-0">
   <title>Release 9.0</title>
@@ -55,7 +55,7 @@
       The <link linkend="SQL-DO"><command>DO</></link> statement permits
       ad-hoc or anonymous code blocks.  Functions can now be called using named
       parameters.  PL/pgSQL is now installed by default, and PL/Perl and PL/Python
-      have been enhanced in several ways.
+      have been enhanced in several ways, including support for Python3.
      </para>
     </listitem>
 
@@ -290,7 +290,6 @@
    <title>PL/pgSQL Variables</title>
    <itemizedlist>
 
-
     <listitem>
      <para>
       Have PL/pgSQL throw an error if a variable name conflicts with a
@@ -333,10 +332,32 @@
    </itemizedlist>
 
   </sect3>
+
+  <sect3>
+   <title>Other Incompatibilities</title>
+   <itemizedlist>
+    <listitem>
+      <para>
+       Remove support for platforms that don't have a working 64-bit
+       integer data types (Tom Lane)
+      </para>
+
+      <para>
+       It is believed all supported platforms have working 64-bit integer
+       data types.
+      </para>
+     </listitem>
+    </itemizedlist>
+   </sect3>
  </sect2>
 
  <sect2>
   <title>Changes</title>
+   <para>
+    Version 9.0 has an unprecedented number of new major features, 
+    and over 200 enhancements, improvements, new commands,
+    new functions, and other changes.
+   </para>
 
   <sect3>
    <title>Server</title>
@@ -573,6 +594,11 @@
 
    <sect4>
     <title>Authentication</title>
+    <para>
+     Version 9.0 further extends PostgreSQL's support for multiple
+     authentication methods, including RADIUS and improved LDAP support.
+    </para>
+
     <itemizedlist>
 
      <listitem>
@@ -624,6 +650,12 @@
 
    <sect4>
     <title>Monitoring</title>
+    <para>
+     With increased use of PostgreSQL in high-end production systems, 
+     users need increased monitoring.  PostgresSQL 9.0 continues to add
+     more ways to monitor PostgreSQL applications.
+    </para>
+
     <itemizedlist>
 
      <listitem>
@@ -635,8 +667,8 @@
       </para>
 
       <para>
-        This allows DBAs to characterize database traffic 
-        and troubleshoot problems by source application.
+       This allows DBAs to characterize database traffic 
+       and troubleshoot problems by source application.
       </para>
      </listitem>
 
@@ -646,12 +678,23 @@
        linkend="guc-log-line-prefix"><varname>log_line_prefix</></link>
        (Guillaume Smet)
       </para>
+
+      <para>
+       This allows users to compile statistics on errors and messages
+       by type.
+      </para>
+
      </listitem>
 
      <listitem>
       <para>
        Write to the Windows event log in <acronym>UTF16</> encoding
        (Itagaki Takahiro)
+      </para>
+
+      <para>
+       Now there is true multi-lingual support for PostgreSQL log messages
+       on Windows.
       </para>
      </listitem>
 
@@ -820,9 +863,9 @@
      </para>
 
      <para>
-      This allows operations that do not return a result, like
-      <command>SELECT INTO</>, to return a count of the number of rows
-      processed.
+      For drivers which support this feature, this saves an entire 
+      round-trip to the client, allowing result counts and pagination
+      to be calculated without a second <command>COUNT</command> query.
      </para>
 
      <para>
@@ -1263,7 +1306,10 @@
       </para>
 
       <para>
-       DETAILS?
+       This feature supports GiST indexing of point operations on polygons, 
+       circles, and other points, such as "point is in polygon".  Previously
+       indexing only worked for bounding boxes.  This should make many 
+       PostGIS queries faster.
       </para>
      </listitem>
 
@@ -2653,6 +2699,20 @@
     <title>Binary Upgrade Support</title>
     <itemizedlist>
 
+    <listitem>
+     <para>
+      Add <link linkend="pgupgrade"><filename>/contrib/pg_upgrade</></link>
+      to support in-place upgrades (Bruce)
+     </para>
+
+     <para>
+      This avoids the requirement of dumping/reloading the database when
+      upgrading to a new major release of PostgreSQL and speeds up offline
+      upgrades by orders of magnitude. It supports upgrades to 9.0
+      from PostgreSQL 8.3 and 8.4.
+     </para>
+    </listitem>
+
      <listitem>
       <para>
        Add support for preservation of all <link
@@ -2696,19 +2756,6 @@
 
     <listitem>
      <para>
-      Add <link linkend="pgupgrade"><filename>/contrib/pg_upgrade</></link>
-      to support in-place upgrades (Bruce)
-     </para>
-
-     <para>
-      This avoids the requirement of dumping/reloading the database when
-      upgrading to a new major release of PostgreSQL.  It supports upgrades
-      from PostgreSQL 8.3 and 8.4.
-     </para>
-    </listitem>
-
-    <listitem>
-     <para>
       Add multi-threaded option (<option>-j</>) to <link
       linkend="pgbench"><filename>/contrib/pgbench</></link>
       (Itagaki Takahiro)
@@ -2749,7 +2796,9 @@
      </para>
 
      <para>
-      This filter dictionary removes accents from tokens.
+      This filter dictionary removes accents from tokens, and 
+      makes full-text searches over multiple languages much 
+      easier.
      </para>
     </listitem>
 
@@ -2775,7 +2824,8 @@
      </para>
 
      <para>
-      New functions and operators were also added.
+      New functions and operators were also added.  These improvements
+      make HStore a full-functional key-value store embedded in PostgreSQL.
      </para>
     </listitem>
 
