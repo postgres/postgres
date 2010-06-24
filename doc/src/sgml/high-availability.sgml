@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/high-availability.sgml,v 1.74 2010/06/22 02:57:50 rhaas Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/high-availability.sgml,v 1.75 2010/06/24 19:50:25 rhaas Exp $ -->
 
 <chapter id="high-availability">
  <title>High Availability, Load Balancing, and Replication</title>
@@ -1150,9 +1150,10 @@ if (!triggered)
    <title>User's Overview</title>
 
    <para>
-    Users can connect to the database server while it is in recovery
-    mode and perform read-only queries. Read-only access to system
-    catalogs and views will also occur as normal.
+    When the <xref linkend="guc-hot-standby"> parameter is set to true on a
+    standby server, it will begin accepting connections once the recovery has
+    brought the system to a consistent state.  All such connections are
+    strictly read-only; not even temporary tables may be written.
    </para>
 
    <para>
@@ -1160,42 +1161,21 @@ if (!triggered)
     so there will be a measurable delay between primary and standby. Running the
     same query nearly simultaneously on both primary and standby might therefore
     return differing results. We say that data on the standby is
-    <firstterm>eventually consistent</firstterm> with the primary.
-    Queries executed on the standby will be correct with regard to the transactions
-    that had been recovered at the start of the query, or start of first statement
-    in the case of serializable transactions. In comparison with the primary,
-    the standby returns query results that could have been obtained on the primary
-    at some moment in the past.
+    <firstterm>eventually consistent</firstterm> with the primary.  Once the
+    commit record for a transaction is replayed on the standby, the changes
+    made by that transaction will be visible to any new snapshots taken on
+    the standby.  Snapshots may be taken at the start of each query or at the
+    start of each transaction, depending on the current transaction isolation
+    level.  For more details, see <xref linkend="transaction-iso">.
    </para>
 
    <para>
-    When a transaction is started in recovery, the parameter
-    <varname>transaction_read_only</> will be forced to be true, regardless of the
-    <varname>default_transaction_read_only</> setting in <filename>postgresql.conf</>.
-    It can't be manually set to false either. As a result, all transactions
-    started during recovery will be limited to read-only actions. In all
-    other ways, connected sessions will appear identical to sessions
-    initiated during normal processing mode. There are no special commands
-    required to initiate a connection so all interfaces
-    work unchanged. After recovery finishes, the session
-    will allow normal read-write transactions at the start of the next
-    transaction, if these are requested.
-   </para>
-
-   <para>
-    "Read-only" above means no writes to the permanent or temporary database
-    tables.  There are no problems with queries that use transient sort and
-    work files.
-   </para>
-
-   <para>
-    The following actions are allowed:
+    Transactions started during recovery may issue the following commands:
 
     <itemizedlist>
      <listitem>
       <para>
-       Query access - <command>SELECT</>, <command>COPY TO</> including views and
-       <command>SELECT</> rules
+       Query access - <command>SELECT</>, <command>COPY TO</>
       </para>
      </listitem>
      <listitem>
@@ -1251,7 +1231,9 @@ if (!triggered)
    </para>
 
    <para>
-    These actions produce error messages:
+    Transactions started during recovery may never be assigned a transaction ID
+    and may not write to the system write-ahead log.  Therefore, the following
+    actions will produce error messages:
 
     <itemizedlist>
      <listitem>
@@ -1260,20 +1242,24 @@ if (!triggered)
        <command>UPDATE</>, <command>DELETE</>, <command>COPY FROM</>,
        <command>TRUNCATE</>.
        Note that there are no allowed actions that result in a trigger
-       being executed during recovery.
+       being executed during recovery.  This restriction applies even to
+       temporary tables, because table rows cannot be read or written without
+       assigning a transaction ID, which is currently not possible in a
+       Hot Standby environment.
       </para>
      </listitem>
      <listitem>
       <para>
        Data Definition Language (DDL) - <command>CREATE</>,
        <command>DROP</>, <command>ALTER</>, <command>COMMENT</>.
-       This also applies to temporary tables also because currently their
-       definition causes writes to catalog tables.
+       This restriction applies even to temporary tables, because carrying
+       out these operations would require updating the system catalog tables.
       </para>
      </listitem>
      <listitem>
       <para>
-       <command>SELECT ... FOR SHARE | UPDATE</> which cause row locks to be written
+       <command>SELECT ... FOR SHARE | UPDATE</>, because row locks cannot be
+       taken without updating the underlying data files.
       </para>
      </listitem>
      <listitem>
@@ -1337,20 +1323,22 @@ if (!triggered)
    </para>
 
    <para>
-    Note that the current behavior of read only transactions when not in
-    recovery is to allow the last two actions, so there are small and
-    subtle differences in behavior between read-only transactions
-    run on a standby and run during normal operation.
-    It is possible that <command>LISTEN</>, <command>UNLISTEN</>,
-    and temporary tables might be allowed in a future release.
+    Outside of recovery, read-only transactions are allowed to update sequences
+    and to use <command>LISTEN</>, <command>UNLISTEN</>, and
+    <command>NOTIFY</>, so Hot Standby sessions operate under slightly tighter
+    restrictions than ordinary read-only sessions.  It is possible that some
+    of these restrictions might be loosened in a future release.
    </para>
 
    <para>
-    If failover or switchover occurs the database will switch to normal
-    processing mode. Sessions will remain connected while the server
-    changes mode. Current transactions will continue, though will remain
-    read-only. After recovery is complete, it will be possible to initiate
-    read-write transactions.
+    During recovery, the parameter <varname>transaction_read_only</> is always
+    true and may not be changed.  But as long as no attempt is made to modify
+    the database, connections during recovery will act much like any other
+    database connection.  If failover or switchover occurs, the database will
+    switch to normal processing mode.  Sessions will remain connected while the
+    server changes mode.  Once recovery finishes, it will be possible to
+    initiate read-write transactions (even from a session begun during
+    recovery).
    </para>
 
    <para>
@@ -1364,15 +1352,7 @@ if (!triggered)
    </para>
 
    <para>
-    In recovery, transactions will not be permitted to take any table lock
-    higher than <literal>RowExclusiveLock</>. In addition, transactions may never assign
-    a TransactionId and may never write WAL.
-    Any <command>LOCK TABLE</> command that runs on the standby and requests
-    a specific lock mode higher than <literal>ROW EXCLUSIVE MODE</> will be rejected.
-   </para>
-
-   <para>
-    In general queries will not experience lock conflicts from the database
+    In general, queries will not experience lock conflicts from the database
     changes made by recovery. This is because recovery follows normal
     concurrency control mechanisms, known as <acronym>MVCC</>. There are
     some types of change that will cause conflicts, covered in the following
@@ -1397,8 +1377,7 @@ if (!triggered)
     These conflicts are <emphasis>hard conflicts</> in the sense that queries
     might need to be cancelled and, in some cases, sessions disconnected to resolve them.
     The user is provided with several ways to handle these
-    conflicts, though it is important to first understand the possible causes
-    of conflicts:
+    conflicts. Conflicts can be caused by:
 
       <itemizedlist>
        <listitem>
@@ -1427,7 +1406,7 @@ if (!triggered)
        </listitem>
        <listitem>
         <para>
-         Early cleanup of data still visible to the current query's snapshot
+         Early cleanup of data still visible to the current query's snapshot.
         </para>
        </listitem>
       </itemizedlist>
@@ -1503,16 +1482,16 @@ if (!triggered)
          If the conflict is caused by cleanup records, the standby query is informed
          a conflict has occurred and that it must cancel itself to avoid the
          risk that it silently fails to read relevant data because
-         that data has been removed. (This is regrettably similar to the
-         much feared and iconic error message "snapshot too old"). Some cleanup
+         that data has been removed.  Some cleanup
          records only conflict with older queries, while others
          can affect all queries.
         </para>
 
         <para>
-         If cancellation does occur, the query and/or transaction can always
-         be re-executed. The error is dynamic and will not necessarily reoccur
-         if the query is executed again.
+		 Cancelled queries may be retried immediately (after beginning a new
+         transaction, of course).  Since query cancellation depends on
+         the nature of the WAL records being replayed, a query that was
+         cancelled may succeed if it is executed again.
         </para>
        </listitem>
       </itemizedlist>
@@ -1533,7 +1512,7 @@ if (!triggered)
     <para>
      Be sure that the primary and standby servers' clocks are kept in sync;
      otherwise the values compared to <varname>max_standby_delay</> will be
-     erroneous, possibly leading to undesirable query cancellations.
+     erroneous, possibly leading to additional query cancellations.
      If the clocks are intentionally not in sync, or if there is a large
      propagation delay from primary to standby, it is advisable to set
      <varname>max_standby_delay</> to -1.  In any case the value should be
@@ -1557,10 +1536,10 @@ if (!triggered)
     as described above. This could be done using <filename>contrib/dblink</>
     and <function>pg_sleep()</>, or via other mechanisms. If you do this, you
     should note that this will delay cleanup of dead rows on the primary by
-    vacuum or HOT, and people might find this undesirable. However, remember
+    vacuum or HOT, which may be undesirable. However, remember
     that the primary and standby nodes are linked via the WAL, so the cleanup
     situation is no different from the case where the query ran on the primary
-    node itself.  And you are still getting the benefit of off-loading the
+    node itself, and you are still getting the benefit of off-loading the
     execution onto the standby. <varname>max_standby_delay</> should
     not be used in this case because delayed WAL files might already
     contain entries that invalidate the current snapshot.
