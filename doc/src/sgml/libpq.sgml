@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.309 2010/06/23 21:54:13 rhaas Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.310 2010/06/25 17:08:09 rhaas Exp $ -->
 
 <chapter id="libpq">
  <title><application>libpq</application> - C Library</title>
@@ -284,10 +284,10 @@
          <term><literal>keepalives</literal></term>
          <listitem>
           <para>
-           Controls whether TCP keepalives are used. The default value is 1,
-           meaning on, but you can change this to 0, meaning off, if keepalives
-           are not wanted.  This parameter is ignored for connections made via
-           a Unix-domain socket.
+           Controls whether client-side TCP keepalives are used. The default
+           value is 1, meaning on, but you can change this to 0, meaning off,
+           if keepalives are not wanted.  This parameter is ignored for
+           connections made via a Unix-domain socket.
           </para>
          </listitem>
         </varlistentry>
@@ -296,11 +296,12 @@
          <term><literal>keepalives_idle</literal></term>
          <listitem>
           <para>
-           On systems that support the <symbol>TCP_KEEPIDLE</symbol> socket
-           option, specifies the number of seconds between sending keepalives
-           on an otherwise idle connection. A value of zero uses the system
-           default.  This parameter is ignored for connections made via a
-           Unix-domain socket, or if keepalives are disabled.
+           Controls the number of seconds of inactivity after which TCP should
+           send a keepalive message to the server.  A value of zero uses the
+           system default.  This parameter is ignored if the
+           <symbol>TCP_KEEPIDLE</> socket option is not supported, for
+           connections made via a Unix-domain socket, or if keepalives are
+           disabled.
           </para>
          </listitem>
         </varlistentry>
@@ -309,11 +310,12 @@
          <term><literal>keepalives_interval</literal></term>
          <listitem>
           <para>
-           On systems that support the <symbol>TCP_KEEPINTVL</symbol> socket
-           option, specifies how long, in seconds, to wait for a response to a
-           keepalive before retransmitting. A value of zero uses the system
-           default.  This parameter is ignored for connections made via a
-           Unix-domain socket, or if keepalives are disabled.
+           Controls the number of seconds after which a TCP keepalive message
+           that is not acknowledged by the server should be retransmitted.  A
+           value of zero uses the system default.  This parameter is ignored if
+           the <symbol>TCP_KEEPINTVL</> socket option is not supported, for
+           connections made via a Unix-domain socket, or if keepalives are
+           disabled.
           </para>
          </listitem>
         </varlistentry>
@@ -322,11 +324,12 @@
          <term><literal>keepalives_count</literal></term>
          <listitem>
           <para>
-           On systems that support the <symbol>TCP_KEEPCNT</symbol> socket
-           option, specifies how many keepalives can be lost before the
-           connection is considered dead. A value of zero uses the system
-           default.  This parameter is ignored for connections made via a
-           Unix-domain socket, or if keepalives are disabled.
+           Controls the number of TCP keepalives that can be lost before the
+           client's connection to the server is considered dead.  A value of
+           zero uses the system default.  This parameter is ignored if the
+           <symbol>TCP_KEEPCNT</> socket option is not supported, for
+           connections made via a Unix-domain socket, or if keepalives are
+           disabled.
           </para>
          </listitem>
         </varlistentry>
