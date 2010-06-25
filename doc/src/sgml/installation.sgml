@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.345 2010/05/28 18:04:36 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.346 2010/06/25 16:55:49 rhaas Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -2257,7 +2257,7 @@ kill `cat /usr/local/pgsql/data/postmaster.pid`
      would <quote>mysteriously</quote> not come up successfully.  This
      appears to be the result of unexpected behavior in the IPv6
      implementation.  It looks like PostgreSQL and IPv6 do not play
-     very well together at this time on AIX.
+     very well together on AIX 5.3.
     </para>
 
     <para>
@@ -2291,6 +2291,16 @@ hosts=local4,bind4
       </listitem>
      </itemizedlist>
     </para>
+
+    <warning> <para> This is really a workaround of problems relating
+    to immaturity of IPv6 support, which improved visibly during the
+    course of AIX 5.3 releases.  It has worked with AIX version 5.3,
+    but does not represent an elegant solution to the problem.  It has
+    been reported that this workaround is not only unnecessary, but
+    causes problems on AIX 6.1, where IPv6 support has become more
+    mature. </para>
+    </warning>
+
    </sect3>
 
    <sect3>
