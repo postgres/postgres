@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.142 2010/03/03 01:53:17 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.143 2010/06/25 16:40:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2080,8 +2080,8 @@ tok_is_keyword(int token, union YYSTYPE *lval,
 		 * match composite names (hence an unreserved word followed by "."
 		 * will not be recognized).
 		 */
-		if (!lval->word.quoted && lval->word.ident != NULL &&
-			strcmp(lval->word.ident, kw_str) == 0)
+		if (!lval->wdatum.quoted && lval->wdatum.ident != NULL &&
+			strcmp(lval->wdatum.ident, kw_str) == 0)
 			return true;
 	}
 	return false;				/* not the keyword */
