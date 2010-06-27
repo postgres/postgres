@@ -19,7 +19,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_custom.c,v 1.42 2009/06/11 14:49:07 momjian Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_custom.c,v 1.42.2.1 2010/06/27 19:07:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -438,29 +438,24 @@ static void
 _PrintTocData(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt)
 {
 	lclContext *ctx = (lclContext *) AH->formatData;
-	int			id;
 	lclTocEntry *tctx = (lclTocEntry *) te->formatData;
 	int			blkType;
-	int			found = 0;
+	int			id;
 
 	if (tctx->dataState == K_OFFSET_NO_DATA)
 		return;
 
 	if (!ctx->hasSeek || tctx->dataState == K_OFFSET_POS_NOT_SET)
 	{
-		/* Skip over unnecessary blocks until we get the one we want. */
-
-		found = 0;
-
+		/*
+		 * We cannot seek directly to the desired block.  Instead, skip
+		 * over block headers until we find the one we want.  This could
+		 * fail if we are asked to restore items out-of-order.
+		 */
 		_readBlockHeader(AH, &blkType, &id);
 
-		while (id != te->dumpId)
+		while (blkType != EOF && id != te->dumpId)
 		{
-			if ((TocIDRequired(AH, id, ropt) & REQ_DATA) != 0)
-				die_horribly(AH, modulename,
-							 "dumping a specific TOC data block out of order is not supported"
-					  " without ID on this input stream (fseek required)\n");
-
 			switch (blkType)
 			{
 				case BLK_DATA:
@@ -482,11 +477,31 @@ _PrintTocData(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt)
 	}
 	else
 	{
-		/* Grab it */
+		/* We can just seek to the place we need to be. */
 		if (fseeko(AH->FH, tctx->dataPos, SEEK_SET) != 0)
-			die_horribly(AH, modulename, "error during file seek: %s\n", strerror(errno));
+			die_horribly(AH, modulename, "error during file seek: %s\n",
+						 strerror(errno));
 
 		_readBlockHeader(AH, &blkType, &id);
+	}
+
+	/* Produce suitable failure message if we fell off end of file */
+	if (blkType == EOF)
+	{
+		if (tctx->dataState == K_OFFSET_POS_NOT_SET)
+			die_horribly(AH, modulename, "could not find block ID %d in archive -- "
+						 "possibly due to out-of-order restore request, "
+						 "which cannot be handled due to lack of data offsets in archive\n",
+						 te->dumpId);
+		else if (!ctx->hasSeek)
+			die_horribly(AH, modulename, "could not find block ID %d in archive -- "
+						 "possibly due to out-of-order restore request, "
+						 "which cannot be handled due to non-seekable input file\n",
+						 te->dumpId);
+		else					/* huh, the dataPos led us to EOF? */
+			die_horribly(AH, modulename, "could not find block ID %d in archive -- "
+						 "possibly corrupt archive\n",
+						 te->dumpId);
 	}
 
 	/* Are we sane? */
@@ -910,15 +925,35 @@ _getFilePos(ArchiveHandle *AH, lclContext *ctx)
 
 /*
  * Read a data block header. The format changed in V1.3, so we
- * put the code here for simplicity.
+ * centralize the code here for simplicity.  Returns *type = EOF
+ * if at EOF.
  */
 static void
 _readBlockHeader(ArchiveHandle *AH, int *type, int *id)
 {
+	lclContext *ctx = (lclContext *) AH->formatData;
+	int			byt;
+
+	/*
+	 * Note: if we are at EOF with a pre-1.3 input file, we'll die_horribly
+	 * inside ReadInt rather than returning EOF.  It doesn't seem worth
+	 * jumping through hoops to deal with that case better, because no such
+	 * files are likely to exist in the wild: only some 7.1 development
+	 * versions of pg_dump ever generated such files.
+	 */
 	if (AH->version < K_VERS_1_3)
 		*type = BLK_DATA;
 	else
-		*type = _ReadByte(AH);
+	{
+		byt = getc(AH->FH);
+		*type = byt;
+		if (byt == EOF)
+		{
+			*id = 0;			/* don't return an uninitialized value */
+			return;
+		}
+		ctx->filePos += 1;
+	}
 
 	*id = ReadInt(AH);
 }
