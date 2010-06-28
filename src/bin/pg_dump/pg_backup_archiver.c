@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.185 2010/05/15 21:41:16 tgl Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.186 2010/06/28 02:07:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1755,6 +1755,11 @@ _discoverArchiveFormat(ArchiveHandle *AH)
 
 	if (strncmp(sig, "PGDMP", 5) == 0)
 	{
+		/*
+		 * Finish reading (most of) a custom-format header.
+		 *
+		 * NB: this code must agree with ReadHead().
+		 */
 		AH->vmaj = fgetc(fh);
 		AH->vmin = fgetc(fh);
 
@@ -2981,7 +2986,12 @@ ReadHead(ArchiveHandle *AH)
 	int			fmt;
 	struct tm	crtm;
 
-	/* If we haven't already read the header... */
+	/*
+	 * If we haven't already read the header, do so.
+	 *
+	 * NB: this code must agree with _discoverArchiveFormat().  Maybe find
+	 * a way to unify the cases?
+	 */
 	if (!AH->readHeader)
 	{
 		if ((*AH->ReadBufPtr) (AH, tmpMag, 5) != 5)
@@ -2999,7 +3009,6 @@ ReadHead(ArchiveHandle *AH)
 			AH->vrev = 0;
 
 		AH->version = ((AH->vmaj * 256 + AH->vmin) * 256 + AH->vrev) * 256 + 0;
-
 
 		if (AH->version < K_VERS_1_0 || AH->version > K_VERS_MAX)
 			die_horribly(AH, modulename, "unsupported version (%d.%d) in file header\n",
@@ -3068,27 +3077,37 @@ ReadHead(ArchiveHandle *AH)
 
 /*
  * checkSeek
- *	  check to see if fseek can be performed.
+ *	  check to see if ftell/fseek can be performed.
  */
 bool
 checkSeek(FILE *fp)
 {
-	if (fseeko(fp, 0, SEEK_CUR) != 0)
-		return false;
-	else if (sizeof(pgoff_t) > sizeof(long))
-	{
-		/*
-		 * At this point, pgoff_t is too large for long, so we return based on
-		 * whether an pgoff_t version of fseek is available.
-		 */
-#ifdef HAVE_FSEEKO
-		return true;
-#else
+	pgoff_t		tpos;
+
+	/*
+	 * If pgoff_t is wider than long, we must have "real" fseeko and not
+	 * an emulation using fseek.  Otherwise report no seek capability.
+	 */
+#ifndef HAVE_FSEEKO
+	if (sizeof(pgoff_t) > sizeof(long))
 		return false;
 #endif
-	}
-	else
-		return true;
+
+	/* Check that ftello works on this file */
+	errno = 0;
+	tpos = ftello(fp);
+	if (errno)
+		return false;
+
+	/*
+	 * Check that fseeko(SEEK_SET) works, too.  NB: we used to try to test
+	 * this with fseeko(fp, 0, SEEK_CUR).  But some platforms treat that as a
+	 * successful no-op even on files that are otherwise unseekable.
+	 */
+	if (fseeko(fp, tpos, SEEK_SET) != 0)
+		return false;
+
+	return true;
 }
 
 
