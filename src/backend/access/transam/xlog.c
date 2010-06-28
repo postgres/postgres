@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.426 2010/06/17 17:37:23 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.427 2010/06/28 19:46:19 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -9542,8 +9542,13 @@ triggered:
  * in the current WAL page, previously read by XLogPageRead().
  *
  * 'emode' is the error mode that would be used to report a file-not-found
- * or legitimate end-of-WAL situation. It is upgraded to WARNING or PANIC
- * if a corrupt record is not expected at this point.
+ * or legitimate end-of-WAL situation.   Generally, we use it as-is, but if
+ * we're retrying the exact same record that we've tried previously, only
+ * complain the first time to keep the noise down.  However, we only do when
+ * reading from pg_xlog, because we don't expect any invalid records in archive
+ * or in records streamed from master. Files in the archive should be complete,
+ * and we should never hit the end of WAL because we stop and wait for more WAL
+ * to arrive before replaying it.  
  *
  * NOTE: This function remembers the RecPtr value it was last called with,
  * to suppress repeated messages about the same record. Only call this when
@@ -9555,31 +9560,7 @@ emode_for_corrupt_record(int emode, XLogRecPtr RecPtr)
 {
 	static XLogRecPtr lastComplaint = {0, 0};
 
-	/*
-	 * We don't expect any invalid records in archive or in records streamed
-	 * from master. Files in the archive should be complete, and we should
-	 * never hit the end of WAL because we stop and wait for more WAL to
-	 * arrive before replaying it.
-	 *
-	 * In standby mode, throw a WARNING and keep retrying. If we're lucky
-	 * it's a transient error and will go away by itself, and in any case
-	 * it's better to keep the standby open for any possible read-only
-	 * queries. We throw WARNING in PITR as well, which causes the recovery
-	 * to end. That's questionable, you probably would want to abort the
-	 * recovery if the archive is corrupt and investigate the situation.
-	 * But that's the behavior we've always had, and it does make sense
-	 * for tools like pg_standby that implement a standby mode externally.
-	 */
-	if (readSource == XLOG_FROM_STREAM || readSource == XLOG_FROM_ARCHIVE)
-	{
-		if (emode < WARNING)
-			emode = WARNING;
-	}
-	/*
-	 * If we retry reading a record in pg_xlog, only complain on the first
-	 * time to keep the noise down.
-	 */
-	else if (emode == LOG)
+	if (readSource == XLOG_FROM_PG_XLOG && emode == LOG)
 	{
 		if (XLByteEQ(RecPtr, lastComplaint))
 			emode = DEBUG1;
