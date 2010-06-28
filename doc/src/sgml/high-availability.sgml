@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/high-availability.sgml,v 1.75 2010/06/24 19:50:25 rhaas Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/high-availability.sgml,v 1.76 2010/06/28 12:30:32 momjian Exp $ -->
 
 <chapter id="high-availability">
  <title>High Availability, Load Balancing, and Replication</title>
@@ -1488,7 +1488,7 @@ if (!triggered)
         </para>
 
         <para>
-		 Cancelled queries may be retried immediately (after beginning a new
+         Cancelled queries may be retried immediately (after beginning a new
          transaction, of course).  Since query cancellation depends on
          the nature of the WAL records being replayed, a query that was
          cancelled may succeed if it is executed again.
