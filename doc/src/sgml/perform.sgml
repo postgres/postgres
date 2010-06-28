@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/perform.sgml,v 1.80 2010/05/29 21:08:04 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/perform.sgml,v 1.81 2010/06/28 21:57:17 momjian Exp $ -->
 
  <chapter id="performance-tips">
   <title>Performance Tips</title>
@@ -1102,6 +1102,68 @@ SELECT * FROM x, y, a, b, c WHERE something AND somethingelse;
     and <xref linkend="autovacuum"> for more information.
    </para>
   </sect2>
+  </sect1>
+
+  <sect1 id="non-durability">
+   <title>Non-Durable Settings</title>
+
+   <indexterm zone="non-durability">
+    <primary>non-durable</primary>
+   </indexterm>
+
+   <para>
+    Durability is a database feature that guarantees the recording of
+    committed transactions even if if the server crashes or loses
+    power.  However, durability adds significant database overhead,
+    so if your site does not require such a guarantee,
+    <productname>PostgreSQL</productname> can be configured to run
+    much faster.  The following are configuration changes you can make
+    to improve performance in such cases;  they do not invalidate
+    commit guarantees related to database crashes, only abrupt operating
+    system stoppage, except as mentioned below:
+
+    <itemizedlist>
+     <listitem>
+      <para>
+       Place the database cluster's data directory in a memory-backed
+       file system (i.e. <acronym>RAM</> disk).  This eliminates all
+       database disk I/O, but limits data storage to the amount of
+       available memory (and perhaps swap).
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Turn off <xref linkend="guc-fsync">;  there is no need to flush
+       data to disk.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Turn off <xref linkend="guc-full-page-writes">;  there is no need
+       to guard against partial page writes.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Increase <xref linkend="guc-checkpoint-segments"> and <xref
+       linkend="guc-checkpoint-timeout"> ; this reduces the frequency
+       of checkpoints, but increases the storage requirements of
+       <filename>/pg_xlog</>.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Turn off <xref linkend="guc-synchronous-commit">;  there might be no
+       need to write the <acronym>WAL</acronym> to disk on every
+       commit.  This does affect database crash transaction durability.
+      </para>
+     </listitem>
+    </itemizedlist>
+   </para>
   </sect1>
 
  </chapter>
