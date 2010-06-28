@@ -19,7 +19,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_custom.c,v 1.42.2.1 2010/06/27 19:07:30 tgl Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_custom.c,v 1.42.2.2 2010/06/28 02:07:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -835,9 +835,10 @@ _CloseArchive(ArchiveHandle *AH)
 		WriteDataChunks(AH);
 
 		/*
-		 * This is not an essential operation - it is really only needed if we
-		 * expect to be doing seeks to read the data back - it may be ok to
-		 * just use the existing self-consistent block formatting.
+		 * If possible, re-write the TOC in order to update the data offset
+		 * information.  This is not essential, as pg_restore can cope in
+		 * most cases without it; but it can make pg_restore significantly
+		 * faster in some situations (especially parallel restore).
 		 */
 		if (ctx->hasSeek &&
 			fseeko(AH->FH, tpos, SEEK_SET) == 0)
@@ -914,7 +915,8 @@ _getFilePos(ArchiveHandle *AH, lclContext *ctx)
 
 			/*
 			 * Prior to 1.7 (pg7.3) we relied on the internally maintained
-			 * pointer. Now we rely on pgoff_t always. pos = ctx->filePos;
+			 * pointer. Now we rely on ftello() always, unless the file has
+			 * been found to not support it.
 			 */
 		}
 	}
