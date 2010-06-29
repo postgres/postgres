@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.248 2010/04/03 07:22:53 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.249 2010/06/29 00:03:39 petere Exp $ -->
 
  <chapter id="datatype">
   <title>Data Types</title>
@@ -3985,6 +3985,17 @@ SET xmloption TO { DOCUMENT | CONTENT };
     The default is <literal>CONTENT</literal>, so all forms of XML
     data are allowed.
    </para>
+
+   <note>
+    <para>
+     With the default XML option setting, you cannot directly cast
+     character strings to type <type>xml</type> if they contain a
+     document type declaration, because the definition of XML content
+     fragment does not accept them.  If you need to do that, either
+     use <literal>XMLPARSE</literal> or change the XML option.
+    </para>
+   </note>
+
    </sect2>
 
    <sect2>
