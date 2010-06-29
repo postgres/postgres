@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.346 2010/06/25 16:55:49 rhaas Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.347 2010/06/29 22:29:13 momjian Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -912,7 +912,7 @@ su - postgres
          by GSSAPI).
          <literal>postgres</literal> is the default. There's usually no
          reason to change this unless you have a Windows environment,
-         in which case it must be set to uppercase
+         in which case it must be set to upper case
          <literal>POSTGRES</literal>.
         </para>
        </listitem>

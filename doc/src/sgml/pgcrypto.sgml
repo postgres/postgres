@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/pgcrypto.sgml,v 1.8 2009/12/08 20:08:30 mha Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/pgcrypto.sgml,v 1.9 2010/06/29 22:29:14 momjian Exp $ -->
 
 <sect1 id="pgcrypto">
  <title>pgcrypto</title>
@@ -267,7 +267,7 @@
     of different hashing algorithms.
     The table shows how much time it would take to try all
     combinations of characters in an 8-character password, assuming
-    that the password contains either only lowercase letters, or
+    that the password contains either only lower case letters, or
     upper- and lower-case letters and numbers.
     In the <literal>crypt-bf</literal> entries, the number after a slash is
     the <parameter>iter_count</parameter> parameter of

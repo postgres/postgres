@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.153 2010/04/27 14:32:40 alvherre Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.154 2010/06/29 22:29:14 momjian Exp $ -->
 
 <chapter id="plpgsql">
   <title><application>PL/pgSQL</application> - <acronym>SQL</acronym> Procedural Language</title>
@@ -219,7 +219,7 @@ END <optional> <replaceable>label</replaceable> </optional>;
 
     <para>
      All key words are case-insensitive.
-     Identifiers are implicitly converted to lowercase
+     Identifiers are implicitly converted to lower case
      unless double-quoted, just as they are in ordinary SQL commands.
     </para>
 

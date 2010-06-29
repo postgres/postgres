@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.286 2010/06/29 22:23:02 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.287 2010/06/29 22:29:13 momjian Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -1015,7 +1015,7 @@ SET ENABLE_SEQSCAN TO OFF;
         <literal>mylib.so</> (or on some platforms,
         <literal>mylib.sl</>) to be preloaded from the installation's
         standard library directory.
-        All library names are converted to lowercase unless double-quoted.
+        All library names are converted to lower case unless double-quoted.
         If more than one library is to be loaded, separate their names
         with commas.  This parameter can only be set at server start.
        </para>
@@ -4840,7 +4840,7 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
         This variable specifies one or more shared libraries that are
         to be preloaded at connection start.  If more than one library
         is to be loaded, separate their names with commas.  All library
-        names are converted to lowercase unless double-quoted.
+        names are converted to lower case unless double-quoted.
         This parameter cannot be changed after the start of a particular
         session.
        </para>

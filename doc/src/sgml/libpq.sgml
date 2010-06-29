@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.310 2010/06/25 17:08:09 rhaas Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.311 2010/06/29 22:29:14 momjian Exp $ -->
 
 <chapter id="libpq">
  <title><application>libpq</application> - C Library</title>
@@ -3157,7 +3157,7 @@ typedef struct {
       This is useful when a user-supplied identifier might contain
       special characters that would otherwise not be interpreted as part
       of the identifier by the SQL parser, or when the identifier might
-      contain uppercase characters whose case should be preserved.
+      contain upper case characters whose case should be preserved.
      </para>
 
      <para>

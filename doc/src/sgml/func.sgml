@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.519 2010/06/17 01:32:09 rhaas Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.520 2010/06/29 22:29:13 momjian Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -1227,7 +1227,7 @@
       <row>
        <entry><literal><function>upper</function>(<parameter>string</parameter>)</literal></entry>
        <entry><type>text</type></entry>
-       <entry>Convert string to uppercase</entry>
+       <entry>Convert string to upper case</entry>
        <entry><literal>upper('tom')</literal></entry>
        <entry><literal>TOM</literal></entry>
       </row>
@@ -1457,8 +1457,8 @@
        <entry><literal><function>initcap</function>(<parameter>string</parameter>)</literal></entry>
        <entry><type>text</type></entry>
        <entry>
-        Convert the first letter of each word to uppercase and the
-        rest to lowercase. Words are sequences of alphanumeric
+        Convert the first letter of each word to upper case and the
+        rest to lower case. Words are sequences of alphanumeric
         characters separated by non-alphanumeric characters.
        </entry>
        <entry><literal>initcap('hi THOMAS')</literal></entry>
@@ -5014,7 +5014,7 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
        </row>
        <row>
         <entry><literal>MONTH</literal></entry>
-        <entry>full uppercase month name (blank-padded to 9 chars)</entry>
+        <entry>full upper case month name (blank-padded to 9 chars)</entry>
        </row>
        <row>
         <entry><literal>Month</literal></entry>
@@ -5022,11 +5022,11 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
        </row>
        <row>
         <entry><literal>month</literal></entry>
-        <entry>full lowercase month name (blank-padded to 9 chars)</entry>
+        <entry>full lower case month name (blank-padded to 9 chars)</entry>
        </row>
        <row>
         <entry><literal>MON</literal></entry>
-        <entry>abbreviated uppercase month name (3 chars in English, localized lengths vary)</entry>
+        <entry>abbreviated upper case month name (3 chars in English, localized lengths vary)</entry>
        </row>
        <row>
         <entry><literal>Mon</literal></entry>
@@ -5034,7 +5034,7 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
        </row>
        <row>
         <entry><literal>mon</literal></entry>
-        <entry>abbreviated lowercase month name (3 chars in English, localized lengths vary)</entry>
+        <entry>abbreviated lower case month name (3 chars in English, localized lengths vary)</entry>
        </row>
        <row>
         <entry><literal>MM</literal></entry>
@@ -5042,7 +5042,7 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
        </row>
        <row>
         <entry><literal>DAY</literal></entry>
-        <entry>full uppercase day name (blank-padded to 9 chars)</entry>
+        <entry>full upper case day name (blank-padded to 9 chars)</entry>
        </row>
        <row>
         <entry><literal>Day</literal></entry>
@@ -5050,11 +5050,11 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
        </row>
        <row>
         <entry><literal>day</literal></entry>
-        <entry>full lowercase day name (blank-padded to 9 chars)</entry>
+        <entry>full lower case day name (blank-padded to 9 chars)</entry>
        </row>
        <row>
         <entry><literal>DY</literal></entry>
-        <entry>abbreviated uppercase day name (3 chars in English, localized lengths vary)</entry>
+        <entry>abbreviated upper case day name (3 chars in English, localized lengths vary)</entry>
        </row>
        <row>
         <entry><literal>Dy</literal></entry>
@@ -5062,7 +5062,7 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
        </row>
        <row>
         <entry><literal>dy</literal></entry>
-        <entry>abbreviated lowercase day name (3 chars in English, localized lengths vary)</entry>
+        <entry>abbreviated lower case day name (3 chars in English, localized lengths vary)</entry>
        </row>
        <row>
         <entry><literal>DDD</literal></entry>
@@ -5110,19 +5110,19 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
        </row>
        <row>
         <entry><literal>RM</literal></entry>
-        <entry>month in uppercase Roman numerals (I-XII; I=January)</entry>
+        <entry>month in upper case Roman numerals (I-XII; I=January)</entry>
        </row>
        <row>
         <entry><literal>rm</literal></entry>
-        <entry>month in lowercase Roman numerals (i-xii; i=January)</entry>
+        <entry>month in lower case Roman numerals (i-xii; i=January)</entry>
        </row>
        <row>
         <entry><literal>TZ</literal></entry>
-        <entry>uppercase time-zone name</entry>
+        <entry>upper case time-zone name</entry>
        </row>
        <row>
         <entry><literal>tz</literal></entry>
-        <entry>lowercase time-zone name</entry>
+        <entry>lower case time-zone name</entry>
        </row>
       </tbody>
      </tgroup>
@@ -5155,12 +5155,12 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
        </row>
        <row>
         <entry><literal>TH</literal> suffix</entry>
-        <entry>uppercase ordinal number suffix</entry>
+        <entry>upper case ordinal number suffix</entry>
         <entry><literal>DDTH</literal>, e.g., <literal>12TH</></entry>
        </row>   
        <row>
         <entry><literal>th</literal> suffix</entry>
-        <entry>lowercase ordinal number suffix</entry>
+        <entry>lower case ordinal number suffix</entry>
         <entry><literal>DDth</literal>, e.g., <literal>12th</></entry>
        </row>
        <row>
@@ -5521,12 +5521,12 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
        </row>
        <row>
         <entry><literal>TH</literal> suffix</entry>
-        <entry>uppercase ordinal number suffix</entry>
+        <entry>upper case ordinal number suffix</entry>
         <entry><literal>999TH</literal></entry>
        </row>   
        <row>
         <entry><literal>th</literal> suffix</entry>
-        <entry>lowercase ordinal number suffix</entry>
+        <entry>lower case ordinal number suffix</entry>
         <entry><literal>999th</literal></entry>
        </row>
       </tbody>
@@ -8959,7 +8959,7 @@ table2-mapping
    converter will do the work for you.  Just write the sequence name enclosed
    in single quotes so that it looks like a literal constant.  For
    compatibility with the handling of ordinary
-   <acronym>SQL</acronym> names, the string will be converted to lowercase
+   <acronym>SQL</acronym> names, the string will be converted to lower case
    unless it contains double quotes around the sequence name.  Thus:
 <programlisting>
 nextval('foo')      <lineannotation>operates on sequence <literal>foo</literal></>
@@ -12612,7 +12612,7 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
    with the column.  The first input parameter is a table name with
    optional schema, and the second parameter is a column name.  Because
    the first parameter is potentially a schema and table, it is not treated
-   as a double-quoted identifier, meaning it is lowercased by default,
+   as a double-quoted identifier, meaning it is lower cased by default,
    while the second parameter, being just a column name, is treated as
    double-quoted and has its case preserved.  The function returns a value
    suitably formatted for passing to sequence functions (see <xref

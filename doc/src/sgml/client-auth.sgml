@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.138 2010/05/26 23:49:18 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.139 2010/06/29 22:29:13 momjian Exp $ -->
 
 <chapter id="client-authentication">
  <title>Client Authentication</title>
@@ -994,7 +994,7 @@ omicron         bryanh                  guest1
     on the same host.
     Some Kerberos implementations might also require a different service name,
     such as Microsoft Active Directory which requires the service name
-    to be in uppercase (<literal>POSTGRES</literal>).
+    to be in upper case (<literal>POSTGRES</literal>).
    </para>
 
    <para>
