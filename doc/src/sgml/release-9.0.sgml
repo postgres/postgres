@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release-9.0.sgml,v 2.35 2010/06/24 18:33:05 rhaas Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release-9.0.sgml,v 2.36 2010/06/29 21:20:19 tgl Exp $ -->
 
  <sect1 id="release-9-0">
   <title>Release 9.0</title>
@@ -30,10 +30,11 @@
     <listitem>
 
      <para>
-      Built-in, binary, log-based replication.  This advance consists of two features:
-      Hot Standby allows continuous archive standby database servers to accept read-only
-      queries, and Streaming Replication allows continuous archive (<acronym>WAL</>) files 
-      to be streamed over a network port to a standby database server.
+      Built-in, binary, log-based replication.  This advance consists of two
+      features: Hot Standby allows continuous archive standby database servers
+      to accept read-only queries, and Streaming Replication allows continuous
+      archive (<acronym>WAL</>) files to be streamed over a network port to a
+      standby database server.
      </para>
     </listitem>
 
@@ -54,8 +55,9 @@
       Broadly enhanced stored procedure support.
       The <link linkend="SQL-DO"><command>DO</></link> statement permits
       ad-hoc or anonymous code blocks.  Functions can now be called using named
-      parameters.  PL/pgSQL is now installed by default, and PL/Perl and PL/Python
-      have been enhanced in several ways, including support for Python3.
+      parameters.  PL/pgSQL is now installed by default, and PL/Perl and
+      PL/Python have been enhanced in several ways, including support for
+      Python3.
      </para>
     </listitem>
 
@@ -63,7 +65,7 @@
      <para>
       Triggers now support two new features,
       SQL-compliant <link
-      linkend="SQL-CREATETRIGGER">per-column triggers</link>, and 
+      linkend="SQL-CREATETRIGGER">per-column triggers</link>, and
       conditional trigger execution.
      </para>
     </listitem>
@@ -86,7 +88,7 @@
     <listitem>
      <para>
       The <link linkend="SQL-LISTEN"><command>LISTEN</></link>/<link
-      linkend="SQL-NOTIFY"><command>NOTIFY</></link> 
+      linkend="SQL-NOTIFY"><command>NOTIFY</></link>
       feature has been overhauled to make it into
       a high-performance event queuing system.  It now stores
       events in a memory-based queue, and it now allows delivery
@@ -134,16 +136,17 @@
 
   <para>
    A dump/restore using <application>pg_dump</application>
-   or use of <application>pg_upgrade</application> is required 
+   or use of <application>pg_upgrade</application> is required
    for those wishing to migrate data from any previous
    release.
   </para>
 
   <para>
-   Version 9.0 contains a number of changes which selectively break backwards compatibility
-   in order to support new features and code quality improvements.  Particularly, users
-   who make extensive use of PL/pgSQL and/or PITR and Warm Standby should test their
-   solutions for breakage.  Observe the following incompatibilities:
+   Version 9.0 contains a number of changes which selectively break backwards
+   compatibility in order to support new features and code quality
+   improvements.  Particularly, users who make extensive use of PL/pgSQL
+   and/or PITR and Warm Standby should test their solutions for breakage.
+   Observe the following incompatibilities:
   </para>
 
   <sect3>
@@ -270,15 +273,15 @@
 
     <listitem>
      <para>
-      No longer change function input variable names via 
-      <command>REPLACE FUNCTION</command>(Pavel Stehule).
+      <command>CREATE OR REPLACE FUNCTION</command> can no longer change
+      the declared names of function parameters (Pavel Stehule)
      </para>
 
      <para>
-      In order to support names parameter calls, it is
-      no longer possible to change the aliases for input variables
-      in the function declaration in place.  You now have to <command>DROP
-      </command> and recreate the function.
+      In order to support named-parameter calls, it is
+      no longer allowed to change the aliases for input variables
+      in the declaration of an existing function.  You now have to
+      <command>DROP</command> and recreate the function.
      </para>
     </listitem>
 
@@ -287,22 +290,52 @@
   </sect3>
 
   <sect3>
-   <title>PL/pgSQL Variables</title>
+   <title>PL/pgSQL</title>
    <itemizedlist>
 
     <listitem>
      <para>
-      Have PL/pgSQL throw an error if a variable name conflicts with a
+      PL/pgSQL now throws an error if a variable name conflicts with a
       column name used in a query (Tom Lane)
      </para>
 
      <para>
-      This behavior can be changed via the server variable <link
+      The former behavior was to bind to variable names in preference to
+      query column names, which often resulted in surprising misbehavior.
+      Throwing an error allows easy detection of ambiguous situations.
+      Although it's recommended that functions encountering this type of
+      error be modified to remove the conflict, the old behavior can be
+      restored if necessary via the configuration parameter <link
       linkend="plpgsql-var-subst"><varname>plpgsql.variable_conflict</></link>,
-      or by the per-function option <literal>#variable_conflict</>.
-      The former behavior was to bind to variable names over
-      column names, but not consistently.  Stored procedures
-      with naming conflicts will probably need to be refactored.
+      or via the per-function option <literal>#variable_conflict</>.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      PL/pgSQL no longer allows variable names that match SQL
+      reserved words (Tom Lane)
+     </para>
+
+     <para>
+      This is a consequence of aligning the PL/pgSQL parser to match the
+      core SQL parser more closely.  If necessary,
+      variable names can be double-quoted to avoid this restriction.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      PL/pgSQL now requires columns of composite results to match the
+      expected type modifier as well as base type (Pavel Stehule, Tom Lane)
+     </para>
+
+     <para>
+      For example, if a column of the result type is declared as
+      <literal>NUMERIC(30,2)</>, it is no longer acceptable to return a
+      <literal>NUMERIC</> of some other precision in that column.  Previous
+      versions neglected to check the type modifier and would thus allow
+      result rows that didn't actually conform to the declared restrictions.
      </para>
     </listitem>
 
@@ -312,21 +345,10 @@
      </para>
 
      <para>
-      Instead, use <link
-      linkend="plpgsql-declaration-parameters"><literal>ALIAS</></link>,
+      Instead of <literal>RENAME</>, use <link
+      linkend="plpgsql-declaration-alias"><literal>ALIAS</></link>,
       which can now alias any variable, not just dollar sign
-      variables, e.g. <literal>$1</>.
-     </para>
-    </listitem>
-
-    <listitem>
-     <para>
-      PL/pgSQL no longer allows unquoted variables names that match SQL
-      reserved words (Tom Lane)
-     </para>
-
-     <para>
-      Variables can be double-quoted to avoid this restriction.  
+      parameter names (such as <literal>$1</>).
      </para>
     </listitem>
    </itemizedlist>
@@ -339,12 +361,12 @@
     <listitem>
       <para>
        Remove support for platforms that don't have a working 64-bit
-       integer data types (Tom Lane)
+       integer data type (Tom Lane)
       </para>
 
       <para>
-       It is believed all supported platforms have working 64-bit integer
-       data types.
+       It is believed all still-supported platforms have working 64-bit
+       integer data types.
       </para>
      </listitem>
     </itemizedlist>
@@ -354,7 +376,7 @@
  <sect2>
   <title>Changes</title>
    <para>
-    Version 9.0 has an unprecedented number of new major features, 
+    Version 9.0 has an unprecedented number of new major features,
     and over 200 enhancements, improvements, new commands,
     new functions, and other changes.
    </para>
@@ -423,8 +445,9 @@
     <title>Performance</title>
 
     <para>
-     Version 9.0 also contains several performance and optimizer enhancements to 
-     improve specific uses of PostgreSQL and remedy certain poor-performing cases.
+     Version 9.0 also contains several performance and optimizer enhancements
+     to improve specific uses of PostgreSQL and remedy certain poor-performing
+     cases.
     </para>
 
     <itemizedlist>
@@ -469,7 +492,7 @@
 
       <para>
        Outer joins where the inner side is unique and not referenced in
-       the query are unnecessary and are therefore now removed.  This will 
+       the query are unnecessary and are therefore now removed.  This will
        accelerate many automatically generated queries, such as those created
        by object-relational mappers.
       </para>
@@ -651,7 +674,7 @@
    <sect4>
     <title>Monitoring</title>
     <para>
-     With increased use of PostgreSQL in high-end production systems, 
+     With increased use of PostgreSQL in high-end production systems,
      users need increased monitoring.  PostgresSQL 9.0 continues to add
      more ways to monitor PostgreSQL applications.
     </para>
@@ -667,7 +690,7 @@
       </para>
 
       <para>
-       This allows DBAs to characterize database traffic 
+       This allows DBAs to characterize database traffic
        and troubleshoot problems by source application.
       </para>
      </listitem>
@@ -746,7 +769,7 @@
        in the new <structname>pg_db_role_setting</> system table. A new
        <application>psql</> <literal>\drds</> command shows these settings.
        Backwards-compatible system views do not show this information.
-       The primary use of this feature is setting schema 
+       The primary use of this feature is setting schema
        <link linkend="guc-search-path"><varname>search_path</varname></link>.
       </para>
 
@@ -863,7 +886,7 @@
      </para>
 
      <para>
-      For drivers which support this feature, this saves an entire 
+      For drivers that support this feature, this saves an entire
       round-trip to the client, allowing result counts and pagination
       to be calculated without a second <command>COUNT</command> query.
      </para>
@@ -1057,13 +1080,13 @@
        TABLE CONSTRAINT ... EXCLUDE</></link> clause. While
        uniqueness checks could be specified using this syntax,
        the real value of this feature is in using complex
-       operators that do not have built-in constraints. 
+       operators that do not have built-in constraints.
       </para>
 
       <para>
        The primary use of exclusion constraints is to allow defining
        non-overlapping uniqueness, such as for time periods, arrays
-       or ranges of values. This supports data integrity at the 
+       or ranges of values. This supports data integrity at the
        table level for calendaring, time-management, and scientific
        applications.
       </para>
@@ -1134,7 +1157,7 @@
 
      <para>
       LISTEN/NOTIFY may now be used as a full-featured, high-performance
-      event queue system for PostgreSQL, with transactional support 
+      event queue system for PostgreSQL, with transactional support
       and guaranteed delivery.
      </para>
     </listitem>
@@ -1201,7 +1224,7 @@
       </para>
 
       <para>
-       The new output formats will support the development of new tools 
+       The new output formats will support the development of new tools
        for analysis of EXPLAIN output.
       </para>
      </listitem>
@@ -1255,7 +1278,7 @@
       </para>
 
       <para>
-       The previous method was usually slower and caused index bloat.  
+       The previous method was usually slower and caused index bloat.
        Note that the new method may use more disk space during VACUUM
        FULL.
       </para>
@@ -1306,9 +1329,9 @@
       </para>
 
       <para>
-       This feature supports GiST indexing of point operations on polygons, 
+       This feature supports GiST indexing of point operations on polygons,
        circles, and other points, such as "point is in polygon".  Previously
-       indexing only worked for bounding boxes.  This should make many 
+       indexing only worked for bounding boxes.  This should make many
        PostGIS queries faster.
       </para>
      </listitem>
@@ -1688,20 +1711,29 @@
 
      <listitem>
       <para>
-       Install server-side language PL/pgSQL by default (Bruce Momjian)
+       Install PL/pgSQL by default (Bruce Momjian)
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Allow PL/pgSQL to handle row types with dropped columns (Pavel Stehule)
+       Improve PL/pgSQL's ability to handle row types with dropped columns
+       (Pavel Stehule)
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Allow <literal>IN</> parameters to be assigned values within
+       Allow input parameters to be assigned values within
        PL/pgSQL functions (Steve Prentice)
+      </para>
+
+      <para>
+       Formerly, input parameters were treated as being declared
+       <literal>CONST</>.  This restriction has been removed to simplify
+       porting of functions from other DBMSes that do not impose the
+       equivalent restriction.  An input parameter now acts like a local
+       variable initialized to the passed-in value.
       </para>
      </listitem>
 
@@ -1713,21 +1745,19 @@
 
      <listitem>
       <para>
-       Have PL/pgSQL use the main lexer, rather than a custom version (Tom Lane)
+       Make PL/pgSQL use the main lexer, rather than its own version
+       (Tom Lane)
+      </para>
+
+      <para>
+       This ensures accurate tracking of the main system's behavior for details
+       such as string escaping.
       </para>
      </listitem>
 
-    </itemizedlist>
-
-   </sect4>
-
-   <sect4>
-    <title><link linkend="plpgsql-cursors">PL/pgSQL Cursors</link></title>
-    <itemizedlist>
-
      <listitem>
       <para>
-       Add count and <literal>ALL</> options to <command>MOVE
+       Add <replaceable>count</> and <literal>ALL</> options to <command>MOVE
        FORWARD</>/<literal>BACKWARD</> in PL/pgSQL (Pavel Stehule)
       </para>
      </listitem>
@@ -1741,8 +1771,8 @@
 
      <listitem>
       <para>
-       Add PL/pgSQL's <command>OPEN cursor FOR EXECUTE</> to use parameters
-       (Pavel Stehule, Itagaki Takahiro)
+       Allow PL/pgSQL's <command>OPEN <replaceable>cursor</> FOR EXECUTE</> to
+       use parameters (Pavel Stehule, Itagaki Takahiro)
       </para>
 
       <para>
@@ -2482,7 +2512,7 @@
 
     <listitem>
      <para>
-      Enable the server lexer to be reentrant (Tom Lane)
+      Enable the server's lexer to be reentrant (Tom Lane)
      </para>
 
      <para>
@@ -2796,9 +2826,8 @@
      </para>
 
      <para>
-      This filter dictionary removes accents from tokens, and 
-      makes full-text searches over multiple languages much 
-      easier.
+      This filter dictionary removes accents from letters, which
+      makes full-text searches over multiple languages much easier.
      </para>
     </listitem>
 
