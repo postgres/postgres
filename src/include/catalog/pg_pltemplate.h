@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_pltemplate.h,v 1.13 2010/01/22 15:45:15 petere Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_pltemplate.h,v 1.14 2010/06/29 00:18:11 petere Exp $
  *
  * NOTES
  *	  the genbki.pl script reads this file and generates .bki
@@ -74,6 +74,6 @@ DATA(insert ( "plperl"		t t "plperl_call_handler" "plperl_inline_handler" "plper
 DATA(insert ( "plperlu"		f f "plperl_call_handler" "plperl_inline_handler" "plperl_validator" "$libdir/plperl" _null_ ));
 DATA(insert ( "plpythonu"	f f "plpython_call_handler" "plpython_inline_handler" _null_ "$libdir/plpython" _null_ ));
 DATA(insert ( "plpython2u"	f f "plpython_call_handler" "plpython_inline_handler" _null_ "$libdir/plpython2" _null_ ));
-DATA(insert ( "plpython3u"	f f "plpython_call_handler" "plpython_inline_handler" _null_ "$libdir/plpython3" _null_ ));
+DATA(insert ( "plpython3u"	f f "plpython3_call_handler" "plpython3_inline_handler" _null_ "$libdir/plpython3" _null_ ));
 
 #endif   /* PG_PLTEMPLATE_H */

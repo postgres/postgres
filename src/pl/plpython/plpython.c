@@ -1,7 +1,7 @@
 /**********************************************************************
  * plpython.c - python as a procedural language for PostgreSQL
  *
- *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.144 2010/06/10 04:05:01 tgl Exp $
+ *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.145 2010/06/29 00:18:11 petere Exp $
  *
  *********************************************************************
  */
@@ -243,6 +243,12 @@ typedef struct PLyResultObject
 
 
 /* function declarations */
+
+#if PY_MAJOR_VERSION >= 3
+/* Use separate names to avoid clash in pg_pltemplate */
+#define plpython_call_handler plpython3_call_handler
+#define plpython_inline_handler plpython3_inline_handler
+#endif
 
 /* exported functions */
 Datum		plpython_call_handler(PG_FUNCTION_ARGS);
