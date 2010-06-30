@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.287 2010/06/29 22:29:13 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.288 2010/06/30 02:43:10 momjian Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -1793,7 +1793,8 @@ SET ENABLE_SEQSCAN TO OFF;
         disabled, but the server continues to accumulate WAL segment files in
         the expectation that a command will soon be provided.  Setting
         <varname>archive_command</> to a command that does nothing but
-        return true, e.g. <literal>/bin/true</>, effectively disables
+        return true, e.g. <literal>/bin/true</> (<literal>REM</> on
+        Windows), effectively disables
         archiving, but also breaks the chain of WAL files needed for
         archive recovery, so it should only be used in unusual circumstances.
        </para>
