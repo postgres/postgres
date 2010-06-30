@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/fastpath.c,v 1.103 2010/02/14 18:42:15 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/fastpath.c,v 1.104 2010/06/30 18:10:23 heikki Exp $
  *
  * NOTES
  *	  This cruft is the server side of PQfn.
@@ -29,6 +29,7 @@
 #include "tcop/fastpath.h"
 #include "tcop/tcopprot.h"
 #include "utils/acl.h"
+#include "utils/fmgroids.h"
 #include "utils/lsyscache.h"
 #include "utils/snapmgr.h"
 #include "utils/syscache.h"
@@ -346,6 +347,16 @@ HandleFunctionRequest(StringInfo msgBuf)
 	if (aclresult != ACLCHECK_OK)
 		aclcheck_error(aclresult, ACL_KIND_PROC,
 					   get_func_name(fid));
+
+	/*
+	 * Restrict access to pg_get_expr(). This reflects the hack in
+	 * transformFuncCall() in parse_expr.c, see comments there for an
+	 * explanation.
+	 */
+	if ((fid == F_PG_GET_EXPR || fid == F_PG_GET_EXPR_EXT) && !superuser())
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("argument to pg_get_expr() must come from system catalogs")));
 
 	/*
 	 * Prepare function call info block and insert arguments.
