@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release-9.0.sgml,v 2.36 2010/06/29 21:20:19 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release-9.0.sgml,v 2.37 2010/06/30 14:25:24 adunstan Exp $ -->
 
  <sect1 id="release-9-0">
   <title>Release 9.0</title>
@@ -2447,7 +2447,7 @@
      <listitem>
       <para>
        Require <application>Perl</> version 5.8 or greater to build the server
-       from a <acronym>CVS</> copy (John Naylor, Andrew)
+       from a <acronym>CVS</> copy (John Naylor, Andrew Dunstan)
       </para>
      </listitem>
 
@@ -2548,7 +2548,7 @@
     <listitem>
      <para>
       Improve source code test coverage, including /contrib, PL/Python,
-      and PL/Perl (Peter Eisentraut, Andrew Dustan)
+      and PL/Perl (Peter Eisentraut, Andrew Dunstan)
      </para>
     </listitem>
 
