@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/fastpath.c,v 1.69 2003/09/25 06:58:02 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/fastpath.c,v 1.69.2.1 2010/06/30 18:11:43 heikki Exp $
  *
  * NOTES
  *	  This cruft is the server side of PQfn.
@@ -27,6 +27,7 @@
 #include "mb/pg_wchar.h"
 #include "tcop/fastpath.h"
 #include "utils/acl.h"
+#include "utils/fmgroids.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
 #include "utils/tqual.h"
@@ -338,6 +339,16 @@ HandleFunctionRequest(StringInfo msgBuf)
 	 * Set up a query snapshot in case function needs one.
 	 */
 	SetQuerySnapshot();
+
+	/*
+	 * Restrict access to pg_get_expr(). This reflects the hack in
+	 * transformExpr() in parse_expr.c, see comments there on FuncCall for an
+	 * explanation.
+	 */
+	if ((fid == F_PG_GET_EXPR || fid == F_PG_GET_EXPR_EXT) && !superuser())
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("argument to pg_get_expr() must come from system catalogs")));
 
 	/*
 	 * Prepare function call info block and insert arguments.

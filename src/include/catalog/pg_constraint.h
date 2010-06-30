@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_constraint.h,v 1.9 2003/08/08 21:42:32 momjian Exp $
+ * $Id: pg_constraint.h,v 1.9.4.1 2010/06/30 18:11:43 heikki Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -18,6 +18,8 @@
  */
 #ifndef PG_CONSTRAINT_H
 #define PG_CONSTRAINT_H
+
+#include "nodes/pg_list.h"
 
 /* ----------------
  *		postgres.h contains the system type definitions and the
