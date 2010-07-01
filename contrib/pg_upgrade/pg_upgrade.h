@@ -65,10 +65,6 @@ extern int  pgunlink(const char *path);
 /* OID system catalog preservation added during PG 9.0 development */
 #define TABLE_SPACE_SUBDIRS	201001111
 
-/* from pgport */
-extern void copydir(char *fromdir, char *todir, bool recurse);
-extern bool rmtree(const char *path, bool rmtopdir);
-
 /*
  * Each relation is represented by a relinfo structure.
  */
