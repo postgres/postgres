@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release-9.0.sgml,v 2.37 2010/06/30 14:25:24 adunstan Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release-9.0.sgml,v 2.38 2010/07/01 02:33:21 momjian Exp $ -->
 
  <sect1 id="release-9-0">
   <title>Release 9.0</title>
@@ -398,7 +398,7 @@
     <itemizedlist>
      <listitem>
       <para>
-       Allow continuous archive standby systems to accept read-only queries
+       Allow a standby system to accept read-only queries
        (Simon Riggs, Heikki Linnakangas)
       </para>
 
@@ -412,7 +412,7 @@
 
      <listitem>
       <para>
-       Allow continuous archive (<acronym>WAL</>) files to be streamed to a
+       Allow write-ahead log (<acronym>WAL</>) files to be streamed to a
        standby system (Fujii Masao, Heikki Linnakangas)
       </para>
 
