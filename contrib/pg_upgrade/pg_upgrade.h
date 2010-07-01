@@ -5,13 +5,10 @@
 #include "postgres.h"
 
 #include <unistd.h>
-#include <string.h>
-#include <stdio.h>
 #include <assert.h>
 #include <dirent.h>
 #include <sys/stat.h>
 #include <sys/time.h>
-#include <sys/types.h>
 
 #include "libpq-fe.h"
 
@@ -38,26 +35,16 @@
 #define pg_copy_file		copy_file
 #define pg_mv_file			rename
 #define pg_link_file		link
-#define DEVNULL				"/dev/null"
-#define DEVTTY				"/dev/tty"
 #define RMDIR_CMD			"rm -rf"
 #define EXEC_EXT			"sh"
 #else
 #define pg_copy_file		CopyFile
 #define pg_mv_file			pgrename
 #define pg_link_file		win32_pghardlink
-#define EXE_EXT				".exe"
 #define sleep(x)			Sleep(x * 1000)
-#define DEVNULL				"nul"
-/* "con" does not work from the Msys 1.0.10 console (part of MinGW). */
-#define DEVTTY  "con"
-/* from pgport */
-extern int  pgrename(const char *from, const char *to);
-extern int  pgunlink(const char *path);
-#define rename(from, to)	pgrename(from, to)
-#define unlink(path)		pgunlink(path)
 #define RMDIR_CMD			"RMDIR /s/q"
 #define EXEC_EXT			"bat"
+#define EXE_EXT				".exe"
 #endif
 
 #define CLUSTERNAME(cluster)	((cluster) == CLUSTER_OLD ? "old" : "new")

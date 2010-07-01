@@ -7,7 +7,6 @@
 #include "pg_upgrade.h"
 
 #include <ctype.h>
-#include <stdlib.h>
 
 
 /*

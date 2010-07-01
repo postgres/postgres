@@ -6,12 +6,7 @@
 
 #include "pg_upgrade.h"
 
-#include <sys/types.h>
 #include <fcntl.h>
-
-#ifdef WIN32
-#include <windows.h>
-#endif
 
 
 static int	copy_file(const char *fromfile, const char *tofile, bool force);
