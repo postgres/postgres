@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/hstore.sgml,v 1.11 2010/06/22 11:36:16 rhaas Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/hstore.sgml,v 1.12 2010/07/02 20:36:49 rhaas Exp $ -->
 
 <sect1 id="hstore">
  <title>hstore</title>
@@ -118,13 +118,6 @@
       <entry>make single-pair <type>hstore</></entry>
       <entry><literal>'a' =&gt; 'b'</literal></entry>
       <entry><literal>"a"=&gt;"b"</literal></entry>
-     </row>
-
-     <row>
-      <entry><type>hstore</> <literal>%</> <type>text[]</></entry>
-      <entry>extract a subset of an <type>hstore</></entry>
-      <entry><literal>'a=&gt;1,b=&gt;2,c=&gt;3'::hstore % ARRAY['b','c','x']</literal></entry>
-      <entry><literal>"b"=&gt;"2", "c"=&gt;"3"</literal></entry>
      </row>
 
      <row>
@@ -336,6 +329,14 @@ b
       <entry>get <type>hstore</>'s keys and values as a two-dimensional array</entry>
       <entry><literal>hstore_to_matrix('a=&gt;1,b=&gt;2')</literal></entry>
       <entry><literal>{{a,1},{b,2}}</literal></entry>
+     </row>
+
+     <row>
+      <entry><function>slice(hstore, text[])</function></entry>
+      <entry><type>hstore</type></entry>
+      <entry>extract a subset of an <type>hstore</></entry>
+      <entry><literal>slice('a=&gt;1,b=&gt;2,c=&gt;3'::hstore, ARRAY['b','c','x'])</literal></entry>
+      <entry><literal>"b"=&gt;"2", "c"=&gt;"3"</literal></entry>
      </row>
 
      <row>

@@ -4,7 +4,7 @@
 --
 SET client_min_messages = warning;
 \set ECHO none
-psql:hstore.sql:234: WARNING:  => is deprecated as an operator name
+psql:hstore.sql:228: WARNING:  => is deprecated as an operator name
 DETAIL:  This name may be disallowed altogether in future versions of PostgreSQL.
 RESET client_min_messages;
 set escape_string_warning=off;
@@ -759,39 +759,39 @@ select pg_column_size('a=>g, b=>c'::hstore || ('b'=>'gf'))
  t
 (1 row)
 
--- %
-select hstore 'aa=>1, b=>2, c=>3' % ARRAY['g','h','i'];
- ?column? 
-----------
+-- slice()
+select slice(hstore 'aa=>1, b=>2, c=>3', ARRAY['g','h','i']);
+ slice 
+-------
  
 (1 row)
 
-select hstore 'aa=>1, b=>2, c=>3' % ARRAY['c','b'];
-      ?column?      
+select slice(hstore 'aa=>1, b=>2, c=>3', ARRAY['c','b']);
+       slice        
 --------------------
  "b"=>"2", "c"=>"3"
 (1 row)
 
-select hstore 'aa=>1, b=>2, c=>3' % ARRAY['aa','b'];
-      ?column?       
+select slice(hstore 'aa=>1, b=>2, c=>3', ARRAY['aa','b']);
+        slice        
 ---------------------
  "b"=>"2", "aa"=>"1"
 (1 row)
 
-select hstore 'aa=>1, b=>2, c=>3' % ARRAY['c','b','aa'];
-           ?column?            
+select slice(hstore 'aa=>1, b=>2, c=>3', ARRAY['c','b','aa']);
+             slice             
 -------------------------------
  "b"=>"2", "c"=>"3", "aa"=>"1"
 (1 row)
 
-select pg_column_size(hstore 'aa=>1, b=>2, c=>3' % ARRAY['c','b'])
+select pg_column_size(slice(hstore 'aa=>1, b=>2, c=>3', ARRAY['c','b']))
          = pg_column_size('b=>2, c=>3'::hstore);
  ?column? 
 ----------
  t
 (1 row)
 
-select pg_column_size(hstore 'aa=>1, b=>2, c=>3' % ARRAY['c','b','aa'])
+select pg_column_size(slice(hstore 'aa=>1, b=>2, c=>3', ARRAY['c','b','aa']))
          = pg_column_size('aa=>1, b=>2, c=>3'::hstore);
  ?column? 
 ----------

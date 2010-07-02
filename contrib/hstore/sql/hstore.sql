@@ -171,14 +171,14 @@ select pg_column_size(('b'=>'gf'))
 select pg_column_size('a=>g, b=>c'::hstore || ('b'=>'gf'))
          = pg_column_size('a=>g, b=>gf'::hstore);
 
--- %
-select hstore 'aa=>1, b=>2, c=>3' % ARRAY['g','h','i'];
-select hstore 'aa=>1, b=>2, c=>3' % ARRAY['c','b'];
-select hstore 'aa=>1, b=>2, c=>3' % ARRAY['aa','b'];
-select hstore 'aa=>1, b=>2, c=>3' % ARRAY['c','b','aa'];
-select pg_column_size(hstore 'aa=>1, b=>2, c=>3' % ARRAY['c','b'])
+-- slice()
+select slice(hstore 'aa=>1, b=>2, c=>3', ARRAY['g','h','i']);
+select slice(hstore 'aa=>1, b=>2, c=>3', ARRAY['c','b']);
+select slice(hstore 'aa=>1, b=>2, c=>3', ARRAY['aa','b']);
+select slice(hstore 'aa=>1, b=>2, c=>3', ARRAY['c','b','aa']);
+select pg_column_size(slice(hstore 'aa=>1, b=>2, c=>3', ARRAY['c','b']))
          = pg_column_size('b=>2, c=>3'::hstore);
-select pg_column_size(hstore 'aa=>1, b=>2, c=>3' % ARRAY['c','b','aa'])
+select pg_column_size(slice(hstore 'aa=>1, b=>2, c=>3', ARRAY['c','b','aa']))
          = pg_column_size('aa=>1, b=>2, c=>3'::hstore);
 
 -- array input
