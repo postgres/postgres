@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/queries.sgml,v 1.57 2010/04/03 07:22:55 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/queries.sgml,v 1.58 2010/07/03 02:57:46 rhaas Exp $ -->
 
 <chapter id="queries">
  <title>Queries</title>
@@ -979,7 +979,8 @@ SELECT product_id, p.name, (sum(s.units) * (p.price - p.cost)) AS profit
 
    <para>
     If the query contains any window functions (see
-    <xref linkend="tutorial-window"> and
+    <xref linkend="tutorial-window">,
+    <xref linkend="functions-window"> and
     <xref linkend="syntax-window-functions">), these functions are evaluated
     after any grouping, aggregation, and <literal>HAVING</> filtering is
     performed.  That is, if the query uses any aggregates, <literal>GROUP

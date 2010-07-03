@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/syntax.sgml,v 1.146 2010/06/09 16:43:47 alvherre Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/syntax.sgml,v 1.147 2010/07/03 02:57:46 rhaas Exp $ -->
 
 <chapter id="sql-syntax">
  <title>SQL Syntax</title>
@@ -1761,7 +1761,8 @@ UNBOUNDED FOLLOWING
 
    <para>
     More information about window functions can be found in
-    <xref linkend="tutorial-window"> and
+    <xref linkend="tutorial-window">,
+    <xref linkend="functions-window">,
     <xref linkend="queries-window">.
    </para>
   </sect2>

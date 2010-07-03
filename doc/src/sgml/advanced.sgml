@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/advanced.sgml,v 1.60 2010/04/03 07:22:52 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/advanced.sgml,v 1.61 2010/07/03 02:57:46 rhaas Exp $ -->
 
  <chapter id="tutorial-advanced">
   <title>Advanced Features</title>
@@ -554,6 +554,7 @@ SELECT sum(salary) OVER w, avg(salary) OVER w
    <para>
     More details about window functions can be found in
     <xref linkend="syntax-window-functions">,
+    <xref linkend="functions-window">,
     <xref linkend="queries-window">, and the
     <xref linkend="sql-select"> reference page.
    </para>
