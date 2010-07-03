@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/procarray.c,v 1.70 2010/05/14 07:11:49 sriggs Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/procarray.c,v 1.71 2010/07/03 21:23:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1117,7 +1117,15 @@ GetOldestXmin(bool allDbs, bool ignoreVacuum)
 	LWLockRelease(ProcArrayLock);
 
 	/*
-	 * Compute the cutoff XID, being careful not to generate a "permanent" XID
+	 * Compute the cutoff XID, being careful not to generate a "permanent" XID.
+	 *
+	 * vacuum_defer_cleanup_age provides some additional "slop" for the
+	 * benefit of hot standby queries on slave servers.  This is quick and
+	 * dirty, and perhaps not all that useful unless the master has a
+	 * predictable transaction rate, but it's what we've got.  Note that
+	 * we are assuming vacuum_defer_cleanup_age isn't large enough to cause
+	 * wraparound --- so guc.c should limit it to no more than the xidStopLimit
+	 * threshold in varsup.c.
 	 */
 	result -= vacuum_defer_cleanup_age;
 	if (!TransactionIdIsNormal(result))
