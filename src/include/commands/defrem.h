@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/commands/defrem.h,v 1.101 2010/02/26 02:01:24 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/commands/defrem.h,v 1.102 2010/07/03 13:53:13 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -96,7 +96,9 @@ extern void RemoveAmProcEntryById(Oid entryOid);
 extern void RenameOpClass(List *name, const char *access_method, const char *newname);
 extern void RenameOpFamily(List *name, const char *access_method, const char *newname);
 extern void AlterOpClassOwner(List *name, const char *access_method, Oid newOwnerId);
+extern void AlterOpClassOwner_oid(Oid opclassOid, Oid newOwnerId);
 extern void AlterOpFamilyOwner(List *name, const char *access_method, Oid newOwnerId);
+extern void AlterOpFamilyOwner_oid(Oid opfamilyOid, Oid newOwnerId);
 
 /* commands/tsearchcmds.c */
 extern void DefineTSParser(List *names, List *parameters);
