@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.223.2.1 2008/02/13 22:47:09 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.223.2.2 2010/07/03 04:03:21 tgl Exp $ -->
 
  <chapter id="datatype">
   <title id="datatype-title">Data Types</title>
@@ -2706,7 +2706,7 @@ SELECT person.name, holidays.num_weeks FROM person, holidays
 
    <para>
     A rich set of functions and operators is available to perform various geometric
-    operations such as scaling, translation, rotation, and determining 
+    operations such as scaling, translation, rotation, and determining
     intersections.  They are explained in <xref linkend="functions-geometry">.
    </para>
 
@@ -2718,8 +2718,9 @@ SELECT person.name, holidays.num_weeks FROM person, holidays
     </indexterm>
 
     <para>
-     Points are the fundamental two-dimensional building block for geometric types.
-     Values of type <type>point</type> are specified using the following syntax:
+     Points are the fundamental two-dimensional building block for geometric
+     types.  Values of type <type>point</type> are specified using either of
+     the following syntaxes:
 
 <synopsis>
 ( <replaceable>x</replaceable> , <replaceable>y</replaceable> )
@@ -2728,6 +2729,10 @@ SELECT person.name, holidays.num_weeks FROM person, holidays
 
      where <replaceable>x</> and <replaceable>y</> are the respective
      coordinates as floating-point numbers.
+    </para>
+
+    <para>
+     Points are output using the first syntax.
     </para>
    </sect2>
 
@@ -2744,11 +2749,13 @@ SELECT person.name, holidays.num_weeks FROM person, holidays
 
     <para>
      Line segments (<type>lseg</type>) are represented by pairs of points.
-     Values of type <type>lseg</type> are specified using the following syntax:
+     Values of type <type>lseg</type> are specified using any of the following
+     syntaxes:
 
 <synopsis>
+[ ( <replaceable>x1</replaceable> , <replaceable>y1</replaceable> ) , ( <replaceable>x2</replaceable> , <replaceable>y2</replaceable> ) ]
 ( ( <replaceable>x1</replaceable> , <replaceable>y1</replaceable> ) , ( <replaceable>x2</replaceable> , <replaceable>y2</replaceable> ) )
-  ( <replaceable>x1</replaceable> , <replaceable>y1</replaceable> ) , ( <replaceable>x2</replaceable> , <replaceable>y2</replaceable> )  
+  ( <replaceable>x1</replaceable> , <replaceable>y1</replaceable> ) , ( <replaceable>x2</replaceable> , <replaceable>y2</replaceable> )
     <replaceable>x1</replaceable> , <replaceable>y1</replaceable>   ,   <replaceable>x2</replaceable> , <replaceable>y2</replaceable>
 </synopsis>
 
@@ -2757,6 +2764,10 @@ SELECT person.name, holidays.num_weeks FROM person, holidays
      and
      <literal>(<replaceable>x2</replaceable>,<replaceable>y2</replaceable>)</literal>
      are the end points of the line segment.
+    </para>
+
+    <para>
+     Line segments are output using the first syntax.
     </para>
    </sect2>
 
@@ -2774,11 +2785,12 @@ SELECT person.name, holidays.num_weeks FROM person, holidays
     <para>
      Boxes are represented by pairs of points that are opposite
      corners of the box.
-     Values of type <type>box</type> are specified using the following syntax:
+     Values of type <type>box</type> are specified using any of the following
+     syntaxes:
 
 <synopsis>
 ( ( <replaceable>x1</replaceable> , <replaceable>y1</replaceable> ) , ( <replaceable>x2</replaceable> , <replaceable>y2</replaceable> ) )
-  ( <replaceable>x1</replaceable> , <replaceable>y1</replaceable> ) , ( <replaceable>x2</replaceable> , <replaceable>y2</replaceable> )  
+  ( <replaceable>x1</replaceable> , <replaceable>y1</replaceable> ) , ( <replaceable>x2</replaceable> , <replaceable>y2</replaceable> )
     <replaceable>x1</replaceable> , <replaceable>y1</replaceable>   ,   <replaceable>x2</replaceable> , <replaceable>y2</replaceable>
 </synopsis>
 
@@ -2790,11 +2802,13 @@ SELECT person.name, holidays.num_weeks FROM person, holidays
     </para>
 
     <para>
-     Boxes are output using the first syntax.
-     The corners are reordered on input to store
-     the upper right corner, then the lower left corner.
-     Other corners of the box can be entered, but the lower
-     left and upper right corners are determined from the input and stored.
+     Boxes are output using the second syntax.
+    </para>
+
+    <para>
+     Any two opposite corners can be supplied on input, but the values
+     will be reordered as needed to store the
+     upper right and lower left corners, in that order.
     </para>
    </sect2>
 
@@ -2814,20 +2828,22 @@ SELECT person.name, holidays.num_weeks FROM person, holidays
     </para>
 
     <para>
-     Values of type <type>path</type> are specified using the following syntax:
+     Values of type <type>path</type> are specified using any of the following
+     syntaxes:
 
 <synopsis>
-( ( <replaceable>x1</replaceable> , <replaceable>y1</replaceable> ) , ... , ( <replaceable>xn</replaceable> , <replaceable>yn</replaceable> ) )
 [ ( <replaceable>x1</replaceable> , <replaceable>y1</replaceable> ) , ... , ( <replaceable>xn</replaceable> , <replaceable>yn</replaceable> ) ]
-  ( <replaceable>x1</replaceable> , <replaceable>y1</replaceable> ) , ... , ( <replaceable>xn</replaceable> , <replaceable>yn</replaceable> )  
-  ( <replaceable>x1</replaceable> , <replaceable>y1</replaceable>   , ... ,   <replaceable>xn</replaceable> , <replaceable>yn</replaceable> )  
-    <replaceable>x1</replaceable> , <replaceable>y1</replaceable>   , ... ,   <replaceable>xn</replaceable> , <replaceable>yn</replaceable>    
+( ( <replaceable>x1</replaceable> , <replaceable>y1</replaceable> ) , ... , ( <replaceable>xn</replaceable> , <replaceable>yn</replaceable> ) )
+  ( <replaceable>x1</replaceable> , <replaceable>y1</replaceable> ) , ... , ( <replaceable>xn</replaceable> , <replaceable>yn</replaceable> )
+  ( <replaceable>x1</replaceable> , <replaceable>y1</replaceable>   , ... ,   <replaceable>xn</replaceable> , <replaceable>yn</replaceable> )
+    <replaceable>x1</replaceable> , <replaceable>y1</replaceable>   , ... ,   <replaceable>xn</replaceable> , <replaceable>yn</replaceable>
 </synopsis>
 
      where the points are the end points of the line segments
      comprising the path.  Square brackets (<literal>[]</>) indicate
      an open path, while parentheses (<literal>()</>) indicate a
-     closed path.
+     closed path.  When the outermost parentheses are omitted, as
+     in the third through fifth syntaxes, a closed path is assumed.
     </para>
 
     <para>
@@ -2850,7 +2866,8 @@ SELECT person.name, holidays.num_weeks FROM person, holidays
     </para>
 
     <para>
-     Values of type <type>polygon</type> are specified using the following syntax:
+     Values of type <type>polygon</type> are specified using any of the
+     following syntaxes:
 
 <synopsis>
 ( ( <replaceable>x1</replaceable> , <replaceable>y1</replaceable> ) , ... , ( <replaceable>xn</replaceable> , <replaceable>yn</replaceable> ) )
@@ -2877,7 +2894,8 @@ SELECT person.name, holidays.num_weeks FROM person, holidays
 
     <para>
      Circles are represented by a center point and a radius.
-     Values of type <type>circle</type> are specified using the following syntax:
+     Values of type <type>circle</type> are specified using any of the
+     following syntaxes:
 
 <synopsis>
 &lt; ( <replaceable>x</replaceable> , <replaceable>y</replaceable> ) , <replaceable>r</replaceable> &gt;
@@ -2887,8 +2905,9 @@ SELECT person.name, holidays.num_weeks FROM person, holidays
 </synopsis>
 
      where
-     <literal>(<replaceable>x</replaceable>,<replaceable>y</replaceable>)</literal>
-     is the center and <replaceable>r</replaceable> is the radius of the circle.
+     <literal>(<replaceable>x</replaceable>,<replaceable>y</replaceable>)</>
+     is the center and <replaceable>r</replaceable> is the radius of the
+     circle.
     </para>
 
     <para>
