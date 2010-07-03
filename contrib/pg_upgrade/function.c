@@ -2,6 +2,8 @@
  *	function.c
  *
  *	server-side function support
+ *
+ *	$PostgreSQL: pgsql/contrib/pg_upgrade/function.c,v 1.4 2010/07/03 14:23:13 momjian Exp $
  */
 
 #include "pg_upgrade.h"

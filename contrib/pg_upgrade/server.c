@@ -2,6 +2,8 @@
  *	server.c
  *
  *	database server functions
+ *
+ *	$PostgreSQL: pgsql/contrib/pg_upgrade/server.c,v 1.5 2010/07/03 14:23:13 momjian Exp $
  */
 
 #include "pg_upgrade.h"

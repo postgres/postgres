@@ -2,6 +2,8 @@
  *	util.c
  *
  *	utility functions
+ *
+ *	$PostgreSQL: pgsql/contrib/pg_upgrade/util.c,v 1.2 2010/07/03 14:23:14 momjian Exp $
  */
 
 #include "pg_upgrade.h"

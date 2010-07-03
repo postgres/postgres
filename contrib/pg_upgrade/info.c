@@ -2,6 +2,8 @@
  *	info.c
  *
  *	information support functions
+ *
+ *	$PostgreSQL: pgsql/contrib/pg_upgrade/info.c,v 1.8 2010/07/03 14:23:13 momjian Exp $
  */
 
 #include "pg_upgrade.h"

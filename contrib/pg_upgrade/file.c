@@ -2,6 +2,8 @@
  *	file.c
  *
  *	file system operations
+ *
+ *	$PostgreSQL: pgsql/contrib/pg_upgrade/file.c,v 1.10 2010/07/03 14:23:13 momjian Exp $
  */
 
 #include "pg_upgrade.h"

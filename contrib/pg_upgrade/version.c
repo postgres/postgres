@@ -2,6 +2,8 @@
  *	version.c
  *
  *	Postgres-version-specific routines
+ *
+ *	$PostgreSQL: pgsql/contrib/pg_upgrade/version.c,v 1.3 2010/07/03 14:23:14 momjian Exp $
  */
 
 #include "pg_upgrade.h"

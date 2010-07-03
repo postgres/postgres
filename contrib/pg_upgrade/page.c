@@ -2,6 +2,8 @@
  *	page.c
  *
  *	per-page conversion operations
+ *
+ *	$PostgreSQL: pgsql/contrib/pg_upgrade/page.c,v 1.3 2010/07/03 14:23:13 momjian Exp $
  */
 
 #include "pg_upgrade.h"

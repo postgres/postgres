@@ -1,6 +1,7 @@
 #
 # Makefile for pg_upgrade_support
 #
+# $PostgreSQL: pgsql/contrib/pg_upgrade_support/Makefile,v 1.3 2010/07/03 14:23:14 momjian Exp $
 
 PGFILEDESC = "pg_upgrade_support - server-side functions for pg_upgrade"
 

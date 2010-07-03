@@ -2,6 +2,8 @@
  *	pg_upgrade.c
  *
  *	main source file
+ *
+ *	$PostgreSQL: pgsql/contrib/pg_upgrade/pg_upgrade.c,v 1.7 2010/07/03 14:23:13 momjian Exp $
  */
 
 #include "pg_upgrade.h"

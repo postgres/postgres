@@ -1,5 +1,7 @@
 /*
  *	pg_upgrade.h
+ *
+ *	$PostgreSQL: pgsql/contrib/pg_upgrade/pg_upgrade.h,v 1.12 2010/07/03 14:23:13 momjian Exp $
  */
 
 #include "postgres.h"
