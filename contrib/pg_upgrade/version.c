@@ -3,7 +3,8 @@
  *
  *	Postgres-version-specific routines
  *
- *	$PostgreSQL: pgsql/contrib/pg_upgrade/version.c,v 1.3 2010/07/03 14:23:14 momjian Exp $
+ *	Copyright (c) 2010-2010, PostgreSQL Global Development Group
+ *	$PostgreSQL: pgsql/contrib/pg_upgrade/version.c,v 1.4 2010/07/03 16:25:01 momjian Exp $
  */
 
 #include "pg_upgrade.h"

@@ -3,7 +3,8 @@
  *
  *	information support functions
  *
- *	$PostgreSQL: pgsql/contrib/pg_upgrade/info.c,v 1.8 2010/07/03 14:23:13 momjian Exp $
+ *	Copyright (c) 2010-2010, PostgreSQL Global Development Group
+ *	$PostgreSQL: pgsql/contrib/pg_upgrade/info.c,v 1.9 2010/07/03 16:25:01 momjian Exp $
  */
 
 #include "pg_upgrade.h"

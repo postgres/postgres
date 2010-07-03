@@ -4,7 +4,8 @@
  *	server-side functions to set backend global variables
  *	to control oid and relfilenode assignment
  *
- *	$PostgreSQL: pgsql/contrib/pg_upgrade_support/pg_upgrade_support.c,v 1.2 2010/07/03 14:23:14 momjian Exp $
+ *	Copyright (c) 2010-2010, PostgreSQL Global Development Group
+ *	$PostgreSQL: pgsql/contrib/pg_upgrade_support/pg_upgrade_support.c,v 1.3 2010/07/03 16:25:01 momjian Exp $
  */
 
 #include "postgres.h"
