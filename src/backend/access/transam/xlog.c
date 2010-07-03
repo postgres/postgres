@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.428 2010/07/03 20:43:57 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.429 2010/07/03 22:15:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -184,7 +184,6 @@ static RecoveryTargetType recoveryTarget = RECOVERY_TARGET_UNSET;
 static bool recoveryTargetInclusive = true;
 static TransactionId recoveryTargetXid;
 static TimestampTz recoveryTargetTime;
-static TimestampTz recoveryLastXTime = 0;
 
 /* options taken from recovery.conf for XLOG streaming */
 static bool StandbyMode = false;
@@ -403,10 +402,10 @@ typedef struct XLogCtlData
 
 	/* end+1 of the last record replayed (or being replayed) */
 	XLogRecPtr	replayEndRecPtr;
-	/* timestamp of last record replayed (or being replayed) */
-	TimestampTz recoveryLastXTime;
 	/* end+1 of the last record replayed */
 	XLogRecPtr	recoveryLastRecPtr;
+	/* timestamp of last COMMIT/ABORT record replayed (or being replayed) */
+	TimestampTz recoveryLastXTime;
 
 	slock_t		info_lck;		/* locks shared variables shown above */
 } XLogCtlData;
@@ -554,6 +553,8 @@ static void readRecoveryCommandFile(void);
 static void exitArchiveRecovery(TimeLineID endTLI,
 					uint32 endLogId, uint32 endLogSeg);
 static bool recoveryStopsHere(XLogRecord *record, bool *includeThis);
+static void SetLatestXTime(TimestampTz xtime);
+static TimestampTz GetLatestXTime(void);
 static void CheckRequiredParameterValues(void);
 static void XLogReportParameters(void);
 static void LocalSetXLogInsertAllowed(void);
@@ -5440,7 +5441,7 @@ exitArchiveRecovery(TimeLineID endTLI, uint32 endLogId, uint32 endLogSeg)
  * *includeThis is set TRUE if we should apply this record before stopping.
  *
  * We also track the timestamp of the latest applied COMMIT/ABORT record
- * in recoveryLastXTime, for logging purposes.
+ * in XLogCtl->recoveryLastXTime, for logging purposes.
  * Also, some information is saved in recoveryStopXid et al for use in
  * annotating the new timeline's history file.
  */
@@ -5452,43 +5453,22 @@ recoveryStopsHere(XLogRecord *record, bool *includeThis)
 	TimestampTz recordXtime;
 
 	/* We only consider stopping at COMMIT or ABORT records */
-	if (record->xl_rmid == RM_XACT_ID)
-	{
-		record_info = record->xl_info & ~XLR_INFO_MASK;
-		if (record_info == XLOG_XACT_COMMIT)
-		{
-			xl_xact_commit *recordXactCommitData;
-
-			recordXactCommitData = (xl_xact_commit *) XLogRecGetData(record);
-			recordXtime = recordXactCommitData->xact_time;
-		}
-		else if (record_info == XLOG_XACT_ABORT)
-		{
-			xl_xact_abort *recordXactAbortData;
-
-			recordXactAbortData = (xl_xact_abort *) XLogRecGetData(record);
-			recordXtime = recordXactAbortData->xact_time;
-		}
-		else
-			return false;
-	}
-	else if (record->xl_rmid == RM_XLOG_ID)
-	{
-		record_info = record->xl_info & ~XLR_INFO_MASK;
-		if (record_info == XLOG_CHECKPOINT_SHUTDOWN ||
-			record_info == XLOG_CHECKPOINT_ONLINE)
-		{
-			CheckPoint	checkPoint;
-
-			memcpy(&checkPoint, XLogRecGetData(record), sizeof(CheckPoint));
-			recoveryLastXTime = time_t_to_timestamptz(checkPoint.time);
-		}
-
-		/*
-		 * We don't want to stop recovery on a checkpoint record, but we do
-		 * want to update recoveryLastXTime. So return is unconditional.
-		 */
+	if (record->xl_rmid != RM_XACT_ID)
 		return false;
+	record_info = record->xl_info & ~XLR_INFO_MASK;
+	if (record_info == XLOG_XACT_COMMIT)
+	{
+		xl_xact_commit *recordXactCommitData;
+
+		recordXactCommitData = (xl_xact_commit *) XLogRecGetData(record);
+		recordXtime = recordXactCommitData->xact_time;
+	}
+	else if (record_info == XLOG_XACT_ABORT)
+	{
+		xl_xact_abort *recordXactAbortData;
+
+		recordXactAbortData = (xl_xact_abort *) XLogRecGetData(record);
+		recordXtime = recordXactAbortData->xact_time;
 	}
 	else
 		return false;
@@ -5496,7 +5476,7 @@ recoveryStopsHere(XLogRecord *record, bool *includeThis)
 	/* Do we have a PITR target at all? */
 	if (recoveryTarget == RECOVERY_TARGET_UNSET)
 	{
-		recoveryLastXTime = recordXtime;
+		SetLatestXTime(recordXtime);
 		return false;
 	}
 
@@ -5564,12 +5544,47 @@ recoveryStopsHere(XLogRecord *record, bool *includeThis)
 		}
 
 		if (recoveryStopAfter)
-			recoveryLastXTime = recordXtime;
+			SetLatestXTime(recordXtime);
 	}
 	else
-		recoveryLastXTime = recordXtime;
+		SetLatestXTime(recordXtime);
 
 	return stopsHere;
+}
+
+/*
+ * Save timestamp of latest processed commit/abort record.
+ *
+ * We keep this in XLogCtl, not a simple static variable, so that it can be
+ * seen by processes other than the startup process.  Note in particular
+ * that CreateRestartPoint is executed in the bgwriter.
+ */
+static void
+SetLatestXTime(TimestampTz xtime)
+{
+	/* use volatile pointer to prevent code rearrangement */
+	volatile XLogCtlData *xlogctl = XLogCtl;
+
+	SpinLockAcquire(&xlogctl->info_lck);
+	xlogctl->recoveryLastXTime = xtime;
+	SpinLockRelease(&xlogctl->info_lck);
+}
+
+/*
+ * Fetch timestamp of latest processed commit/abort record.
+ */
+static TimestampTz
+GetLatestXTime(void)
+{
+	/* use volatile pointer to prevent code rearrangement */
+	volatile XLogCtlData *xlogctl = XLogCtl;
+	TimestampTz xtime;
+
+	SpinLockAcquire(&xlogctl->info_lck);
+	xtime = xlogctl->recoveryLastXTime;
+	SpinLockRelease(&xlogctl->info_lck);
+
+	return xtime;
 }
 
 /*
@@ -5579,22 +5594,6 @@ Datum
 pg_is_in_recovery(PG_FUNCTION_ARGS)
 {
 	PG_RETURN_BOOL(RecoveryInProgress());
-}
-
-/*
- * Returns timestamp of last recovered commit/abort record.
- */
-static TimestampTz
-GetLatestXLogTime(void)
-{
-	/* use volatile pointer to prevent code rearrangement */
-	volatile XLogCtlData *xlogctl = XLogCtl;
-
-	SpinLockAcquire(&xlogctl->info_lck);
-	recoveryLastXTime = xlogctl->recoveryLastXTime;
-	SpinLockRelease(&xlogctl->info_lck);
-
-	return recoveryLastXTime;
 }
 
 /*
@@ -6078,7 +6077,8 @@ StartupXLOG(void)
 		}
 
 		/*
-		 * Initialize shared replayEndRecPtr and recoveryLastRecPtr.
+		 * Initialize shared replayEndRecPtr, recoveryLastRecPtr, and
+		 * recoveryLastXTime.
 		 *
 		 * This is slightly confusing if we're starting from an online
 		 * checkpoint; we've just read and replayed the chekpoint record,
@@ -6091,6 +6091,7 @@ StartupXLOG(void)
 		SpinLockAcquire(&xlogctl->info_lck);
 		xlogctl->replayEndRecPtr = ReadRecPtr;
 		xlogctl->recoveryLastRecPtr = ReadRecPtr;
+		xlogctl->recoveryLastXTime = 0;
 		SpinLockRelease(&xlogctl->info_lck);
 
 		/* Also ensure XLogReceiptTime has a sane value */
@@ -6140,6 +6141,7 @@ StartupXLOG(void)
 			bool		recoveryContinue = true;
 			bool		recoveryApply = true;
 			ErrorContextCallback errcontext;
+			TimestampTz xtime;
 
 			InRedo = true;
 
@@ -6210,7 +6212,6 @@ StartupXLOG(void)
 				 */
 				SpinLockAcquire(&xlogctl->info_lck);
 				xlogctl->replayEndRecPtr = EndRecPtr;
-				xlogctl->recoveryLastXTime = recoveryLastXTime;
 				SpinLockRelease(&xlogctl->info_lck);
 
 				/* If we are attempting to enter Hot Standby mode, process XIDs we see */
@@ -6243,10 +6244,11 @@ StartupXLOG(void)
 			ereport(LOG,
 					(errmsg("redo done at %X/%X",
 							ReadRecPtr.xlogid, ReadRecPtr.xrecoff)));
-			if (recoveryLastXTime)
+			xtime = GetLatestXTime();
+			if (xtime)
 				ereport(LOG,
 					 (errmsg("last completed transaction was at log time %s",
-							 timestamptz_to_str(recoveryLastXTime))));
+							 timestamptz_to_str(xtime))));
 			InRedo = false;
 		}
 		else
@@ -7553,6 +7555,7 @@ CreateRestartPoint(int flags)
 	CheckPoint	lastCheckPoint;
 	uint32		_logId;
 	uint32		_logSeg;
+	TimestampTz	xtime;
 
 	/* use volatile pointer to prevent code rearrangement */
 	volatile XLogCtlData *xlogctl = XLogCtl;
@@ -7705,10 +7708,12 @@ CreateRestartPoint(int flags)
 	if (log_checkpoints)
 		LogCheckpointEnd(true);
 
+	xtime = GetLatestXTime();
 	ereport((log_checkpoints ? LOG : DEBUG2),
-	 (errmsg("recovery restart point at %X/%X with latest known log time %s",
-			 lastCheckPoint.redo.xlogid, lastCheckPoint.redo.xrecoff,
-			 timestamptz_to_str(GetLatestXLogTime()))));
+			(errmsg("recovery restart point at %X/%X",
+					lastCheckPoint.redo.xlogid, lastCheckPoint.redo.xrecoff),
+			 xtime ? errdetail("last completed transaction was at log time %s",
+							   timestamptz_to_str(xtime)) : 0));
 
 	LWLockRelease(CheckpointLock);
 
