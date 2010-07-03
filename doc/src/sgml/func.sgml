@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.520 2010/06/29 22:29:13 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.521 2010/07/03 17:21:48 momjian Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -8610,8 +8610,11 @@ SELECT xmlagg(x) FROM (SELECT * FROM test ORDER BY y DESC) AS tab;
     mappings.  This array should be a two-dimensional array with the
     length of the second axis being equal to 2 (i.e., it should be an
     array of arrays, each of which consists of exactly 2 elements).
-    The first element of each array entry is the namespace name, the
-    second the namespace URI.
+    The first element of each array entry is the namespace name (alias), the
+    second the namespace URI. It is not required that aliases provided in
+    this array are the same that those being used in the XML document itself (in
+    other words, both in the XML document and in the <function>xpath</function>
+    function context, aliases are <emphasis>local</>).
    </para>
 
    <para>
@@ -8621,6 +8624,19 @@ SELECT xpath('/my:a/text()', '<my:a xmlns:my="http://example.com">test</my:a>',
              ARRAY[ARRAY['my', 'http://example.com']]);
 
  xpath  
+--------
+ {test}
+(1 row)
+]]></screen>
+   </para>
+
+   <para>
+    How to deal with default (anonymous) namespaces:
+<screen><![CDATA[
+SELECT xpath('//mydefns:b/text()', '<a xmlns="http://example.com"><b>test</b></a>',
+             ARRAY[ARRAY['mydefns', 'http://example.com']]);
+
+ xpath
 --------
  {test}
 (1 row)
