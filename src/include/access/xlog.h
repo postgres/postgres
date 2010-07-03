@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/xlog.h,v 1.113 2010/06/17 16:41:25 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/xlog.h,v 1.114 2010/07/03 20:43:58 tgl Exp $
  */
 #ifndef XLOG_H
 #define XLOG_H
@@ -135,22 +135,25 @@ typedef struct XLogRecData
 extern PGDLLIMPORT TimeLineID ThisTimeLineID;	/* current TLI */
 
 /*
- * Prior to 8.4, all activity during recovery was carried out by Startup
+ * Prior to 8.4, all activity during recovery was carried out by the startup
  * process. This local variable continues to be used in many parts of the
- * code to indicate actions taken by RecoveryManagers. Other processes who
- * potentially perform work during recovery should check RecoveryInProgress()
- * see XLogCtl notes in xlog.c
+ * code to indicate actions taken by RecoveryManagers. Other processes that
+ * potentially perform work during recovery should check RecoveryInProgress().
+ * See XLogCtl notes in xlog.c.
  */
 extern bool InRecovery;
 
 /*
  * Like InRecovery, standbyState is only valid in the startup process.
+ * In all other processes it will have the value STANDBY_DISABLED (so
+ * InHotStandby will read as FALSE).
  *
  * In DISABLED state, we're performing crash recovery or hot standby was
  * disabled in recovery.conf.
  *
- * In INITIALIZED state, we haven't yet received a RUNNING_XACTS or shutdown
- * checkpoint record to initialize our master transaction tracking system.
+ * In INITIALIZED state, we've run InitRecoveryTransactionEnvironment, but
+ * we haven't yet processed a RUNNING_XACTS or shutdown-checkpoint WAL record
+ * to initialize our master-transaction tracking system.
  *
  * When the transaction tracking is initialized, we enter the SNAPSHOT_PENDING
  * state. The tracked information might still be incomplete, so we can't allow
@@ -168,6 +171,7 @@ typedef enum
 	STANDBY_SNAPSHOT_PENDING,
 	STANDBY_SNAPSHOT_READY
 } HotStandbyState;
+
 extern HotStandbyState standbyState;
 
 #define InHotStandby (standbyState >= STANDBY_SNAPSHOT_PENDING)
@@ -193,7 +197,6 @@ extern int	XLogArchiveTimeout;
 extern bool XLogArchiveMode;
 extern char *XLogArchiveCommand;
 extern bool EnableHotStandby;
-extern int	MaxStandbyDelay;
 extern bool log_checkpoints;
 
 /* WAL levels */
@@ -279,7 +282,7 @@ extern void issue_xlog_fsync(int fd, uint32 log, uint32 seg);
 
 extern bool RecoveryInProgress(void);
 extern bool XLogInsertAllowed(void);
-extern TimestampTz GetLatestXLogTime(void);
+extern void GetXLogReceiptTime(TimestampTz *rtime, bool *fromStream);
 
 extern void UpdateControlFile(void);
 extern uint64 GetSystemIdentifier(void);

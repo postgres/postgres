@@ -5,7 +5,7 @@
  *
  * Portions Copyright (c) 2010-2010, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/replication/walreceiver.h,v 1.9 2010/06/03 22:17:32 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/replication/walreceiver.h,v 1.10 2010/07/03 20:43:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,24 +41,34 @@ typedef enum
 typedef struct
 {
 	/*
-	 * connection string; is used for walreceiver to connect with the primary.
-	 */
-	char		conninfo[MAXCONNINFO];
-
-	/*
-	 * PID of currently active walreceiver process, and the current state.
+	 * PID of currently active walreceiver process, its current state and
+	 * start time (actually, the time at which it was requested to be started).
 	 */
 	pid_t		pid;
 	WalRcvState walRcvState;
 	pg_time_t	startTime;
 
 	/*
-	 * receivedUpto-1 is the last byte position that has been already
-	 * received. When startup process starts the walreceiver, it sets this to
-	 * the point where it wants the streaming to begin. After that,
-	 * walreceiver updates this whenever it flushes the received WAL.
+	 * receivedUpto-1 is the last byte position that has already been
+	 * received.  When startup process starts the walreceiver, it sets
+	 * receivedUpto to the point where it wants the streaming to begin.
+	 * After that, walreceiver updates this whenever it flushes the received
+	 * WAL to disk.
 	 */
 	XLogRecPtr	receivedUpto;
+
+	/*
+	 * latestChunkStart is the starting byte position of the current "batch"
+	 * of received WAL.  It's actually the same as the previous value of
+	 * receivedUpto before the last flush to disk.  Startup process can use
+	 * this to detect whether it's keeping up or not.
+	 */
+	XLogRecPtr	latestChunkStart;
+
+	/*
+	 * connection string; is used for walreceiver to connect with the primary.
+	 */
+	char		conninfo[MAXCONNINFO];
 
 	slock_t		mutex;			/* locks shared variables shown above */
 } WalRcvData;
@@ -83,6 +93,6 @@ extern void ShutdownWalRcv(void);
 extern bool WalRcvInProgress(void);
 extern XLogRecPtr WaitNextXLogAvailable(XLogRecPtr recptr, bool *finished);
 extern void RequestXLogStreaming(XLogRecPtr recptr, const char *conninfo);
-extern XLogRecPtr GetWalRcvWriteRecPtr(void);
+extern XLogRecPtr GetWalRcvWriteRecPtr(XLogRecPtr *latestChunkStart);
 
 #endif   /* _WALRECEIVER_H */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/proc.c,v 1.219 2010/05/26 19:52:52 sriggs Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/proc.c,v 1.220 2010/07/03 20:43:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1627,12 +1627,13 @@ handle_sig_alarm(SIGNAL_ARGS)
 bool
 enable_standby_sig_alarm(TimestampTz now, TimestampTz fin_time, bool deadlock_only)
 {
-	TimestampTz deadlock_time = TimestampTzPlusMilliseconds(now, DeadlockTimeout);
+	TimestampTz deadlock_time = TimestampTzPlusMilliseconds(now,
+															DeadlockTimeout);
 
 	if (deadlock_only)
 	{
 		/*
-		 * Wake up at DeadlockTimeout only, then wait forever
+		 * Wake up at deadlock_time only, then wait forever
 		 */
 		statement_fin_time = deadlock_time;
 		deadlock_timeout_active = true;
@@ -1641,7 +1642,7 @@ enable_standby_sig_alarm(TimestampTz now, TimestampTz fin_time, bool deadlock_on
 	else if (fin_time > deadlock_time)
 	{
 		/*
-		 * Wake up at DeadlockTimeout, then again at MaxStandbyDelay
+		 * Wake up at deadlock_time, then again at fin_time
 		 */
 		statement_fin_time = deadlock_time;
 		statement_fin_time2 = fin_time;
@@ -1651,7 +1652,7 @@ enable_standby_sig_alarm(TimestampTz now, TimestampTz fin_time, bool deadlock_on
 	else
 	{
 		/*
-		 * Wake only at MaxStandbyDelay because its fairly soon
+		 * Wake only at fin_time because its fairly soon
 		 */
 		statement_fin_time = fin_time;
 		deadlock_timeout_active = false;
@@ -1729,15 +1730,16 @@ CheckStandbyTimeout(void)
 		if (deadlock_timeout_active)
 		{
 			/*
-			 * We're still waiting when we reach DeadlockTimeout, so send out a request
-			 * to have other backends check themselves for deadlock. Then continue
-			 * waiting until MaxStandbyDelay.
+			 * We're still waiting when we reach deadlock timeout, so send out
+			 * a request to have other backends check themselves for
+			 * deadlock. Then continue waiting until statement_fin_time,
+			 * if that's set.
 			 */
 			SendRecoveryConflictWithBufferPin(PROCSIG_RECOVERY_CONFLICT_STARTUP_DEADLOCK);
 			deadlock_timeout_active = false;
 
 			/*
-			 * Begin second waiting period to MaxStandbyDelay if required.
+			 * Begin second waiting period if required.
 			 */
 			if (statement_timeout_active)
 			{
@@ -1748,8 +1750,8 @@ CheckStandbyTimeout(void)
 		else
 		{
 			/*
-			 * We've now reached MaxStandbyDelay, so ask all conflicts to leave, cos
-			 * its time for us to press ahead with applying changes in recovery.
+			 * We've now reached statement_fin_time, so ask all conflicts to
+			 * leave, so we can press ahead with applying changes in recovery.
 			 */
 			SendRecoveryConflictWithBufferPin(PROCSIG_RECOVERY_CONFLICT_BUFFERPIN);
 		}

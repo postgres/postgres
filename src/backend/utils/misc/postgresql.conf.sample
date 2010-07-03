@@ -186,15 +186,19 @@
 # - Streaming Replication -
 
 #max_wal_senders = 0		# max number of walsender processes
-#wal_sender_delay = 200ms	# 1-10000 milliseconds
+#wal_sender_delay = 200ms	# walsender cycle time, 1-10000 milliseconds
 #wal_keep_segments = 0		# in logfile segments, 16MB each; 0 disables
 
 # - Standby Servers -
 
-#hot_standby = off		# allows queries during recovery
-#max_standby_delay = 30s	# max acceptable lag to allow queries to
-				# complete without conflict; -1 means forever
-#vacuum_defer_cleanup_age = 0	# num transactions by which cleanup is deferred
+#hot_standby = off			# "on" allows queries during recovery
+#max_standby_archive_delay = 30s	# max delay before canceling queries
+					# when reading WAL from archive;
+					# -1 allows indefinite delay
+#max_standby_streaming_delay = 30s	# max delay before canceling queries
+					# when reading streaming WAL;
+					# -1 allows indefinite delay
+#vacuum_defer_cleanup_age = 0		# number of transactions by which cleanup is deferred
 
 
 #------------------------------------------------------------------------------

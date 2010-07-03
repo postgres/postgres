@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/standby.c,v 1.25 2010/06/14 00:49:24 itagaki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/standby.c,v 1.26 2010/07/03 20:43:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,7 +30,10 @@
 #include "storage/standby.h"
 #include "utils/ps_status.h"
 
+/* User-settable GUC parameters */
 int			vacuum_defer_cleanup_age;
+int			max_standby_archive_delay = 30 * 1000;
+int			max_standby_streaming_delay = 30 * 1000;
 
 static List *RecoveryLockList;
 
@@ -40,13 +43,14 @@ static void ResolveRecoveryConflictWithLock(Oid dbOid, Oid relOid);
 static void LogCurrentRunningXacts(RunningTransactions CurrRunningXacts);
 static void LogAccessExclusiveLocks(int nlocks, xl_standby_lock *locks);
 
+
 /*
  * InitRecoveryTransactionEnvironment
- *		Initiallize tracking of in-progress transactions in master
+ *		Initialize tracking of in-progress transactions in master
  *
  * We need to issue shared invalidations and hold locks. Holding locks
- * means others may want to wait on us, so we need to make lock table
- * inserts to appear like a transaction. We could create and delete
+ * means others may want to wait on us, so we need to make a lock table
+ * vxact entry like a real transaction. We could create and delete
  * lock table entries for each transaction but its simpler just to create
  * one permanent entry and leave it there all the time. Locks are then
  * acquired and released as needed. Yes, this means you can see the
@@ -58,7 +62,7 @@ InitRecoveryTransactionEnvironment(void)
 	VirtualTransactionId vxid;
 
 	/*
-	 * Initialise shared invalidation management for Startup process, being
+	 * Initialize shared invalidation management for Startup process, being
 	 * careful to register ourselves as a sendOnly process so we don't need to
 	 * read messages, nor will we get signalled when the queue starts filling
 	 * up.
@@ -113,6 +117,36 @@ ShutdownRecoveryTransactionEnvironment(void)
  * -----------------------------------------------------
  */
 
+/*
+ * Determine the cutoff time at which we want to start canceling conflicting
+ * transactions.  Returns zero (a time safely in the past) if we are willing
+ * to wait forever.
+ */
+static TimestampTz
+GetStandbyLimitTime(void)
+{
+	TimestampTz	rtime;
+	bool		fromStream;
+
+	/*
+	 * The cutoff time is the last WAL data receipt time plus the appropriate
+	 * delay variable.  Delay of -1 means wait forever.
+	 */
+	GetXLogReceiptTime(&rtime, &fromStream);
+	if (fromStream)
+	{
+		if (max_standby_streaming_delay < 0)
+			return 0;			/* wait forever */
+		return TimestampTzPlusMilliseconds(rtime, max_standby_streaming_delay);
+	}
+	else
+	{
+		if (max_standby_archive_delay < 0)
+			return 0;			/* wait forever */
+		return TimestampTzPlusMilliseconds(rtime, max_standby_archive_delay);
+	}
+}
+
 #define STANDBY_INITIAL_WAIT_US  1000
 static int	standbyWait_us = STANDBY_INITIAL_WAIT_US;
 
@@ -124,10 +158,11 @@ static int	standbyWait_us = STANDBY_INITIAL_WAIT_US;
 static bool
 WaitExceedsMaxStandbyDelay(void)
 {
-	/* Are we past max_standby_delay? */
-	if (MaxStandbyDelay >= 0 &&
-		TimestampDifferenceExceeds(GetLatestXLogTime(), GetCurrentTimestamp(),
-								   MaxStandbyDelay))
+	TimestampTz	ltime;
+
+	/* Are we past the limit time? */
+	ltime = GetStandbyLimitTime();
+	if (ltime && GetCurrentTimestamp() >= ltime)
 		return true;
 
 	/*
@@ -203,8 +238,8 @@ ResolveRecoveryConflictWithVirtualXIDs(VirtualTransactionId *waitlist,
 				pid = CancelVirtualTransaction(*waitlist, reason);
 
 				/*
-				 * Wait awhile for it to die so that we avoid flooding an
-				 * unresponsive backend when system is heavily loaded.
+				 * Wait a little bit for it to die so that we avoid flooding
+				 * an unresponsive backend when system is heavily loaded.
 				 */
 				if (pid != 0)
 					pg_usleep(5000L);
@@ -286,7 +321,7 @@ void
 ResolveRecoveryConflictWithDatabase(Oid dbid)
 {
 	/*
-	 * We don't do ResolveRecoveryConflictWithVirutalXIDs() here since that
+	 * We don't do ResolveRecoveryConflictWithVirtualXIDs() here since that
 	 * only waits for transactions and completely idle sessions would block
 	 * us. This is rare enough that we do this as simply as possible: no wait,
 	 * just force them off immediately.
@@ -355,12 +390,11 @@ ResolveRecoveryConflictWithLock(Oid dbOid, Oid relOid)
  * the limit of our patience. The sleep in LockBufferForCleanup() is
  * performed here, for code clarity.
  *
- * Resolve conflict by sending a SIGUSR1 reason to all backends to check if
+ * Resolve conflicts by sending a PROCSIG signal to all backends to check if
  * they hold one of the buffer pins that is blocking Startup process. If so,
  * backends will take an appropriate error action, ERROR or FATAL.
  *
- * We also check for deadlocks before we wait, though applications that cause
- * these will be extremely rare.  Deadlocks occur because if queries
+ * We also must check for deadlocks.  Deadlocks occur because if queries
  * wait on a lock, that must be behind an AccessExclusiveLock, which can only
  * be cleared if the Startup process replays a transaction completion record.
  * If Startup process is also waiting then that is a deadlock. The deadlock
@@ -368,66 +402,51 @@ ResolveRecoveryConflictWithLock(Oid dbOid, Oid relOid)
  * Startup is sleeping and the query waits on a lock. We protect against
  * only the former sequence here, the latter sequence is checked prior to
  * the query sleeping, in CheckRecoveryConflictDeadlock().
+ *
+ * Deadlocks are extremely rare, and relatively expensive to check for,
+ * so we don't do a deadlock check right away ... only if we have had to wait
+ * at least deadlock_timeout.  Most of the logic about that is in proc.c.
  */
 void
 ResolveRecoveryConflictWithBufferPin(void)
 {
 	bool		sig_alarm_enabled = false;
+	TimestampTz	ltime;
+	TimestampTz	now;
 
 	Assert(InHotStandby);
 
-	if (MaxStandbyDelay == 0)
-	{
-		/*
-		 * We don't want to wait, so just tell everybody holding the pin to
-		 * get out of town.
-		 */
-		SendRecoveryConflictWithBufferPin(PROCSIG_RECOVERY_CONFLICT_BUFFERPIN);
-	}
-	else if (MaxStandbyDelay < 0)
-	{
-		TimestampTz now = GetCurrentTimestamp();
+	ltime = GetStandbyLimitTime();
+	now = GetCurrentTimestamp();
 
+	if (!ltime)
+	{
 		/*
-		 * Set timeout for deadlock check (only)
+		 * We're willing to wait forever for conflicts, so set timeout for
+		 * deadlock check (only)
 		 */
 		if (enable_standby_sig_alarm(now, now, true))
 			sig_alarm_enabled = true;
 		else
 			elog(FATAL, "could not set timer for process wakeup");
 	}
+	else if (now >= ltime)
+	{
+		/*
+		 * We're already behind, so clear a path as quickly as possible.
+		 */
+		SendRecoveryConflictWithBufferPin(PROCSIG_RECOVERY_CONFLICT_BUFFERPIN);
+	}
 	else
 	{
-		TimestampTz then = GetLatestXLogTime();
-		TimestampTz now = GetCurrentTimestamp();
-
-		/* Are we past max_standby_delay? */
-		if (TimestampDifferenceExceeds(then, now, MaxStandbyDelay))
-		{
-			/*
-			 * We're already behind, so clear a path as quickly as possible.
-			 */
-			SendRecoveryConflictWithBufferPin(PROCSIG_RECOVERY_CONFLICT_BUFFERPIN);
-		}
+		/*
+		 * Wake up at ltime, and check for deadlocks as well if we will be
+		 * waiting longer than deadlock_timeout
+		 */
+		if (enable_standby_sig_alarm(now, ltime, false))
+			sig_alarm_enabled = true;
 		else
-		{
-			TimestampTz max_standby_time;
-
-			/*
-			 * At what point in the future do we hit MaxStandbyDelay?
-			 */
-			max_standby_time = TimestampTzPlusMilliseconds(then, MaxStandbyDelay);
-			Assert(max_standby_time > now);
-
-			/*
-			 * Wake up at MaxStandby delay, and check for deadlocks as well
-			 * if we will be waiting longer than deadlock_timeout
-			 */
-			if (enable_standby_sig_alarm(now, max_standby_time, false))
-				sig_alarm_enabled = true;
-			else
-				elog(FATAL, "could not set timer for process wakeup");
-		}
+			elog(FATAL, "could not set timer for process wakeup");
 	}
 
 	/* Wait to be signaled by UnpinBuffer() */

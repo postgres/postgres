@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/high-availability.sgml,v 1.76 2010/06/28 12:30:32 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/high-availability.sgml,v 1.77 2010/07/03 20:43:57 tgl Exp $ -->
 
 <chapter id="high-availability">
  <title>High Availability, Load Balancing, and Replication</title>
@@ -1132,18 +1132,18 @@ if (!triggered)
    <para>
     Hot Standby is the term used to describe the ability to connect to
     the server and run read-only queries while the server is in archive
-    recovery. This
-    is useful for both log shipping replication and for restoring a backup
-    to an exact state with great precision.
+    recovery or standby mode. This
+    is useful both for replication purposes and for restoring a backup
+    to a desired state with great precision.
     The term Hot Standby also refers to the ability of the server to move
     from recovery through to normal operation while users continue running
     queries and/or keep their connections open.
    </para>
 
    <para>
-    Running queries in recovery mode is similar to normal query operation,
+    Running queries in hot standby mode is similar to normal query operation,
     though there are several usage and administrative differences
-    noted below.
+    explained below.
    </para>
 
   <sect2 id="hot-standby-users">
@@ -1170,7 +1170,7 @@ if (!triggered)
    </para>
 
    <para>
-    Transactions started during recovery may issue the following commands:
+    Transactions started during hot standby may issue the following commands:
 
     <itemizedlist>
      <listitem>
@@ -1231,9 +1231,9 @@ if (!triggered)
    </para>
 
    <para>
-    Transactions started during recovery may never be assigned a transaction ID
-    and may not write to the system write-ahead log.  Therefore, the following
-    actions will produce error messages:
+    Transactions started during hot standby will never be assigned a
+    transaction ID and cannot write to the system write-ahead log.
+    Therefore, the following actions will produce error messages:
 
     <itemizedlist>
      <listitem>
@@ -1323,22 +1323,22 @@ if (!triggered)
    </para>
 
    <para>
-    Outside of recovery, read-only transactions are allowed to update sequences
-    and to use <command>LISTEN</>, <command>UNLISTEN</>, and
+    In normal operation, <quote>read-only</> transactions are allowed to
+    update sequences and to use <command>LISTEN</>, <command>UNLISTEN</>, and
     <command>NOTIFY</>, so Hot Standby sessions operate under slightly tighter
     restrictions than ordinary read-only sessions.  It is possible that some
     of these restrictions might be loosened in a future release.
    </para>
 
    <para>
-    During recovery, the parameter <varname>transaction_read_only</> is always
+    During hot standby, the parameter <varname>transaction_read_only</> is always
     true and may not be changed.  But as long as no attempt is made to modify
-    the database, connections during recovery will act much like any other
+    the database, connections during hot standby will act much like any other
     database connection.  If failover or switchover occurs, the database will
     switch to normal processing mode.  Sessions will remain connected while the
-    server changes mode.  Once recovery finishes, it will be possible to
+    server changes mode.  Once hot standby finishes, it will be possible to
     initiate read-write transactions (even from a session begun during
-    recovery).
+    hot standby).
    </para>
 
    <para>
@@ -1350,21 +1350,13 @@ if (!triggered)
     can be used to monitor the progress of recovery, or to allow you to
     write complex programs that restore the database to particular states.
    </para>
-
-   <para>
-    In general, queries will not experience lock conflicts from the database
-    changes made by recovery. This is because recovery follows normal
-    concurrency control mechanisms, known as <acronym>MVCC</>. There are
-    some types of change that will cause conflicts, covered in the following
-    section.
-   </para>
   </sect2>
 
   <sect2 id="hot-standby-conflict">
    <title>Handling query conflicts</title>
 
    <para>
-    The primary and standby nodes are in many ways loosely connected. Actions
+    The primary and standby servers are in many ways loosely connected. Actions
     on the primary will have an effect on the standby. As a result, there is
     potential for negative interactions or conflicts between them. The easiest
     conflict to understand is performance: if a huge data load is taking place
@@ -1377,193 +1369,177 @@ if (!triggered)
     These conflicts are <emphasis>hard conflicts</> in the sense that queries
     might need to be cancelled and, in some cases, sessions disconnected to resolve them.
     The user is provided with several ways to handle these
-    conflicts. Conflicts can be caused by:
+    conflicts. Conflict cases include:
 
       <itemizedlist>
        <listitem>
         <para>
-         Access Exclusive Locks from primary node, including both explicit
-         <command>LOCK</> commands and various <acronym>DDL</> actions
+         Access Exclusive locks taken on the primary server, including both
+         explicit <command>LOCK</> commands and various <acronym>DDL</>
+         actions, conflict with table accesses in standby queries.
         </para>
        </listitem>
        <listitem>
         <para>
-         Dropping tablespaces on the primary while standby queries are using
-         those tablespaces for temporary work files (<varname>work_mem</> overflow)
+         Dropping a tablespace on the primary conflicts with standby queries
+         using that tablespace for temporary work files.
         </para>
        </listitem>
        <listitem>
         <para>
-         Dropping databases on the primary while users are connected to that
-         database on the standby.
+         Dropping a database on the primary conflicts with sessions connected
+         to that database on the standby.
         </para>
        </listitem>
        <listitem>
         <para>
-         The standby waiting longer than <varname>max_standby_delay</>
-         to acquire a buffer cleanup lock.
+         Application of a vacuum cleanup record from WAL conflicts with
+         standby transactions whose snapshots can still <quote>see</> any of
+         the rows to be removed.
         </para>
        </listitem>
        <listitem>
         <para>
-         Early cleanup of data still visible to the current query's snapshot.
+         Application of a vacuum cleanup record from WAL conflicts with
+         queries accessing the target page on the standby, whether or not
+         the data to be removed is visible.
         </para>
        </listitem>
       </itemizedlist>
    </para>
 
    <para>
-    Some WAL redo actions will be for <acronym>DDL</> execution. These DDL
-    actions are replaying changes that have already committed on the primary
-    node, so they must not fail on the standby node. These DDL locks take
-    priority and will automatically <emphasis>cancel</> any read-only
-    transactions that get in their way, after a grace period. This is similar
-    to the possibility of being canceled by the deadlock detector.  But in this
-    case, the standby recovery process always wins, since the replayed actions
-    must not fail.  This also ensures that replication does not fall behind
-    while waiting for a query to complete. This prioritization presumes that
-    the standby exists primarily for high availability, and that adjusting the
-    grace period will allow a sufficient guard against unexpected cancellation.
+    On the primary server, these cases simply result in waiting; and the
+    user might choose to cancel either of the conflicting actions.  However,
+    on the standby there is no choice: the WAL-logged action already occurred
+    on the primary so the standby must not fail to apply it.  Furthermore,
+    allowing WAL application to wait indefinitely may be very undesirable,
+    because the standby's state will become increasingly far behind the
+    primary's.  Therefore, a mechanism is provided to forcibly cancel standby
+    queries that conflict with to-be-applied WAL records.
    </para>
 
    <para>
-    An example of the above would be an administrator on the primary server
-    running <command>DROP TABLE</> on a table that is currently being queried
-    on the standby server.
-    Clearly the query cannot continue if <command>DROP TABLE</>
-    proceeds. If this situation occurred on the primary, the <command>DROP TABLE</>
-    would wait until the query had finished. When <command>DROP TABLE</> is
-    run on the primary, the primary doesn't have
-    information about which queries are running on the standby, so it
-    cannot wait for any of the standby queries. The WAL change records come through to the
-    standby while the standby query is still running, causing a conflict.
+    An example of the problem situation is an administrator on the primary
+    server running <command>DROP TABLE</> on a table that is currently being
+    queried on the standby server.  Clearly the standby query cannot continue
+    if the <command>DROP TABLE</> is applied on the standby. If this situation
+    occurred on the primary, the <command>DROP TABLE</> would wait until the
+    other query had finished. But when <command>DROP TABLE</> is run on the
+    primary, the primary doesn't have information about what queries are
+    running on the standby, so it will not wait for any such standby
+    queries. The WAL change records come through to the standby while the
+    standby query is still running, causing a conflict.  The standby server
+    must either delay application of the WAL records (and everything after
+    them, too) or else cancel the conflicting query so that the <command>DROP
+    TABLE</> can be applied.
    </para>
 
    <para>
-    The most common reason for conflict between standby queries and WAL redo is
-    "early cleanup". Normally, <productname>PostgreSQL</> allows cleanup of old
-    row versions when there are no users who need to see them to ensure correct
-    visibility of data (the heart of MVCC). If there is a standby query that has
-    been running for longer than any query on the primary then it is possible
-    for old row versions to be removed by either a vacuum or HOT. This will
-    then generate WAL records that, if applied, would remove data on the
-    standby that might <emphasis>potentially</> be required by the standby query.
-    In more technical language, the primary's xmin horizon is later than
-    the standby's xmin horizon, allowing dead rows to be removed.
+    When a conflicting query is short, it's typically desirable to allow it to
+    complete by delaying WAL application for a little bit; but a long delay in
+    WAL application is usually not desirable.  So the cancel mechanism has
+    parameters, <xref linkend="guc-max-standby-archive-delay"> and <xref
+    linkend="guc-max-standby-streaming-delay">, that define the maximum
+    allowed delay in WAL application.  Conflicting queries will be canceled
+    once it has taken longer than the relevant delay setting to apply any
+    newly-received WAL data.  There are two parameters so that different delay
+    values can be specified for the case of reading WAL data from an archive
+    (i.e., initial recovery from a base backup or <quote>catching up</> a
+    standby server that has fallen far behind) versus reading WAL data via
+    streaming replication.
+   </para>
+
+   <para>
+    In a standby server that exists primarily for high availability, it's
+    best to set the delay parameters relatively short, so that the server
+    cannot fall far behind the primary due to delays caused by standby
+    queries.  However, if the standby server is meant for executing
+    long-running queries, then a high or even infinite delay value may be
+    preferable.  Keep in mind however that a long-running query could
+    cause other sessions on the standby server to not see recent changes
+    on the primary, if it delays application of WAL records.
+   </para>
+
+   <para>
+    The most common reason for conflict between standby queries and WAL replay
+    is <quote>early cleanup</>.  Normally, <productname>PostgreSQL</> allows
+    cleanup of old row versions when there are no transactions that need to
+    see them to ensure correct visibility of data according to MVCC rules.
+    However, this rule can only be applied for transactions executing on the
+    master.  So it is possible that cleanup on the master will remove row
+    versions that are still visible to a transaction on the standby.
    </para>
 
    <para>
     Experienced users should note that both row version cleanup and row version
-    freezing will potentially conflict with recovery queries. Running a
-    manual <command>VACUUM FREEZE</> is likely to cause conflicts even on tables
-    with no updated or deleted rows.
+    freezing will potentially conflict with standby queries. Running a manual
+    <command>VACUUM FREEZE</> is likely to cause conflicts even on tables with
+    no updated or deleted rows.
    </para>
 
    <para>
-    There are a number of choices for resolving query conflicts.  The default
-    is to wait and hope the query finishes. The server will wait
-    automatically until the lag between primary and standby is at most
-    <xref linkend="guc-max-standby-delay"> (30 seconds by default).
-    Once that grace period expires,
-    one of the following actions is taken:
-
-      <itemizedlist>
-       <listitem>
-        <para>
-         If the conflict is caused by a lock, the conflicting standby
-         transaction is cancelled immediately. If the transaction is
-         idle-in-transaction, then the session is aborted instead.
-         This behavior might change in the future.
-        </para>
-       </listitem>
-
-       <listitem>
-        <para>
-         If the conflict is caused by cleanup records, the standby query is informed
-         a conflict has occurred and that it must cancel itself to avoid the
-         risk that it silently fails to read relevant data because
-         that data has been removed.  Some cleanup
-         records only conflict with older queries, while others
-         can affect all queries.
-        </para>
-
-        <para>
-         Cancelled queries may be retried immediately (after beginning a new
-         transaction, of course).  Since query cancellation depends on
-         the nature of the WAL records being replayed, a query that was
-         cancelled may succeed if it is executed again.
-        </para>
-       </listitem>
-      </itemizedlist>
+    Once the delay specified by <varname>max_standby_archive_delay</> or
+    <varname>max_standby_streaming_delay</> has been exceeded, conflicting
+    queries will be cancelled.  This usually results just in a cancellation
+    error, although in the case of replaying a <command>DROP DATABASE</>
+    the entire conflicting session will be terminated.  Also, if the conflict
+    is over a lock held by an idle transaction, the conflicting session is
+    terminated (this behavior might change in the future).
    </para>
 
    <para>
-    Keep in mind that <varname>max_standby_delay</> is compared to the
-    difference between the standby server's clock and the transaction
-    commit timestamps read from the WAL log.  Thus, the grace period
-    allowed to any one query on the standby is never more than
-    <varname>max_standby_delay</>, and could be considerably less if the
-    standby has already fallen behind as a result of waiting for previous
-    queries to complete, or as a result of being unable to keep up with a
-    heavy update load.
-   </para>
-
-   <caution>
-    <para>
-     Be sure that the primary and standby servers' clocks are kept in sync;
-     otherwise the values compared to <varname>max_standby_delay</> will be
-     erroneous, possibly leading to additional query cancellations.
-     If the clocks are intentionally not in sync, or if there is a large
-     propagation delay from primary to standby, it is advisable to set
-     <varname>max_standby_delay</> to -1.  In any case the value should be
-     larger than the largest expected clock skew between primary and standby.
-    </para>
-   </caution>
-
-   <para>
-    Users should be clear that tables that are regularly and heavily updated on the
-    primary server will quickly cause cancellation of longer running queries on
-    the standby. In those cases <varname>max_standby_delay</> can be
-    considered similar to setting
-    <varname>statement_timeout</>.
-    </para>
-
-   <para>
-    Other remedial actions exist if the number of cancellations is unacceptable.
-    The first option is to connect to the primary server and keep a query active
-    for as long as needed to run queries on the standby. This guarantees that
-    a WAL cleanup record is never generated and query conflicts do not occur,
-    as described above. This could be done using <filename>contrib/dblink</>
-    and <function>pg_sleep()</>, or via other mechanisms. If you do this, you
-    should note that this will delay cleanup of dead rows on the primary by
-    vacuum or HOT, which may be undesirable. However, remember
-    that the primary and standby nodes are linked via the WAL, so the cleanup
-    situation is no different from the case where the query ran on the primary
-    node itself, and you are still getting the benefit of off-loading the
-    execution onto the standby. <varname>max_standby_delay</> should
-    not be used in this case because delayed WAL files might already
-    contain entries that invalidate the current snapshot.
+    Cancelled queries may be retried immediately (after beginning a new
+    transaction, of course).  Since query cancellation depends on
+    the nature of the WAL records being replayed, a query that was
+    cancelled may well succeed if it is executed again.
    </para>
 
    <para>
-    It is also possible to set <varname>vacuum_defer_cleanup_age</> on the primary
-    to defer the cleanup of records by autovacuum, <command>VACUUM</>
-    and HOT. This might allow
-    more time for queries to execute before they are cancelled on the standby,
-    without the need for setting a high <varname>max_standby_delay</>.
+    Keep in mind that the delay parameters are compared to the elapsed time
+    since the WAL data was received by the standby server.  Thus, the grace
+    period allowed to any one query on the standby is never more than the
+    delay parameter, and could be considerably less if the standby has already
+    fallen behind as a result of waiting for previous queries to complete, or
+    as a result of being unable to keep up with a heavy update load.
    </para>
 
    <para>
-    Three-way deadlocks are possible between <literal>AccessExclusiveLocks</> arriving from
-    the primary, cleanup WAL records that require buffer cleanup locks, and
-    user requests that are waiting behind replayed <literal>AccessExclusiveLocks</>.
-    Deadlocks are resolved automatically after <varname>deadlock_timeout</>
-    seconds, though they are thought to be rare in practice.
+    Users should be clear that tables that are regularly and heavily updated
+    on the primary server will quickly cause cancellation of longer running
+    queries on the standby. In such cases the setting of a finite value for
+    <varname>max_standby_archive_delay</> or
+    <varname>max_standby_streaming_delay</> can be considered similar to
+    setting <varname>statement_timeout</>.
    </para>
 
    <para>
-    Dropping tablespaces or databases is discussed in the administrator's
-    section since they are not typical user situations.
+    Remedial possibilities exist if the number of standby-query cancellations
+    is found to be unacceptable.  The first option is to connect to the
+    primary server and keep a query active for as long as needed to
+    run queries on the standby. This prevents <command>VACUUM</> from removing
+    recently-dead rows and so cleanup conflicts do not occur.
+    This could be done using <filename>contrib/dblink</> and
+    <function>pg_sleep()</>, or via other mechanisms. If you do this, you
+    should note that this will delay cleanup of dead rows on the primary,
+    which may result in undesirable table bloat. However, the cleanup
+    situation will be no worse than if the standby queries were running
+    directly on the primary server, and you are still getting the benefit of
+    off-loading execution onto the standby.
+    <varname>max_standby_archive_delay</> must be kept large in this case,
+    because delayed WAL files might already contain entries that conflict with
+    the desired standby queries.
+   </para>
+
+   <para>
+    Another option is to increase <xref linkend="guc-vacuum-defer-cleanup-age">
+    on the primary server, so that dead rows will not be cleaned up as quickly
+    as they normally would be.  This will allow more time for queries to
+    execute before they are cancelled on the standby, without having to set
+    a high <varname>max_standby_streaming_delay</>.  However it is
+    difficult to guarantee any specific execution-time window with this
+    approach, since <varname>vacuum_defer_cleanup_age</> is measured in
+    transactions executed on the primary server.
    </para>
   </sect2>
 
@@ -1644,19 +1620,15 @@ LOG:  database system is ready to accept read only connections
    </para>
 
    <para>
-    It is important that the administrator consider the appropriate setting
-    of <varname>max_standby_delay</>,
-    which can be set in <filename>postgresql.conf</>.
-    There is no optimal setting, so it should be set according to business
-    priorities. For example if the server is primarily tasked as a High
-    Availability server, then you may wish to lower
-    <varname>max_standby_delay</> or even set it to zero, though that is a
-    very aggressive setting. If the standby server is tasked as an additional
-    server for decision support queries then it might be acceptable to set this
-    to a value of many hours.  It is also possible to set
-    <varname>max_standby_delay</> to -1 which means wait forever for queries
-    to complete; this will be useful when performing
-    an archive recovery from a backup.
+    It is important that the administrator select appropriate settings for
+    <xref linkend="guc-max-standby-archive-delay"> and <xref
+    linkend="guc-max-standby-streaming-delay">.  The best choices vary
+    depending on business priorities.  For example if the server is primarily
+    tasked as a High Availability server, then you will want low delay
+    settings, perhaps even zero, though that is a very aggressive setting. If
+    the standby server is tasked as an additional server for decision support
+    queries then it might be acceptable to set the maximum delay values to
+    many hours, or even -1 which means wait forever for queries to complete.
    </para>
 
    <para>
@@ -1792,11 +1764,12 @@ LOG:  database system is ready to accept read only connections
    </para>
 
    <para>
-    Running <command>DROP DATABASE</>, <command>ALTER DATABASE ... SET TABLESPACE</>,
-    or <command>ALTER DATABASE ... RENAME</> on primary will generate a log message
-    that will cause all users connected to that database on the standby to be
-    forcibly disconnected. This action occurs immediately, whatever the setting of
-    <varname>max_standby_delay</>.
+    Running <command>DROP DATABASE</>, <command>ALTER DATABASE ... SET
+    TABLESPACE</>, or <command>ALTER DATABASE ... RENAME</> on the primary
+    will generate a WAL entry that will cause all users connected to that
+    database on the standby to be forcibly disconnected. This action occurs
+    immediately, whatever the setting of
+    <varname>max_standby_streaming_delay</>.
    </para>
 
    <para>
@@ -1817,7 +1790,7 @@ LOG:  database system is ready to accept read only connections
    </para>
 
    <para>
-    Autovacuum is not active during recovery, it will start normally at the
+    Autovacuum is not active during recovery.  It will start normally at the
     end of recovery.
    </para>
 
@@ -1836,21 +1809,25 @@ LOG:  database system is ready to accept read only connections
 
    <para>
     Various parameters have been mentioned above in
-    <xref linkend="hot-standby-admin">
-    and <xref linkend="hot-standby-conflict">.
+    <xref linkend="hot-standby-conflict"> and
+    <xref linkend="hot-standby-admin">.
    </para>
 
    <para>
     On the primary, parameters <xref linkend="guc-wal-level"> and
     <xref linkend="guc-vacuum-defer-cleanup-age"> can be used.
-    <xref linkend="guc-max-standby-delay"> has no effect if set on the primary.
+    <xref linkend="guc-max-standby-archive-delay"> and
+    <xref linkend="guc-max-standby-streaming-delay"> have no effect if set on
+    the primary.
    </para>
 
    <para>
-    On the standby, parameters <xref linkend="guc-hot-standby"> and
-    <xref linkend="guc-max-standby-delay"> can be used.
-    <xref linkend="guc-vacuum-defer-cleanup-age"> has no effect during
-    recovery.
+    On the standby, parameters <xref linkend="guc-hot-standby">,
+    <xref linkend="guc-max-standby-archive-delay"> and
+    <xref linkend="guc-max-standby-streaming-delay"> can be used.
+    <xref linkend="guc-vacuum-defer-cleanup-age"> has no effect
+    as long as the server remains in standby mode, though it will
+    become relevant if the standby becomes primary.
    </para>
   </sect2>
 

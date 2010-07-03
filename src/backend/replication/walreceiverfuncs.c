@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/replication/walreceiverfuncs.c,v 1.5 2010/04/28 16:54:15 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/replication/walreceiverfuncs.c,v 1.6 2010/07/03 20:43:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -187,10 +187,11 @@ RequestXLogStreaming(XLogRecPtr recptr, const char *conninfo)
 	if (recptr.xrecoff % XLogSegSize != 0)
 		recptr.xrecoff -= recptr.xrecoff % XLogSegSize;
 
+	SpinLockAcquire(&walrcv->mutex);
+
 	/* It better be stopped before we try to restart it */
 	Assert(walrcv->walRcvState == WALRCV_STOPPED);
 
-	SpinLockAcquire(&walrcv->mutex);
 	if (conninfo != NULL)
 		strlcpy((char *) walrcv->conninfo, conninfo, MAXCONNINFO);
 	else
@@ -199,16 +200,22 @@ RequestXLogStreaming(XLogRecPtr recptr, const char *conninfo)
 	walrcv->startTime = now;
 
 	walrcv->receivedUpto = recptr;
+	walrcv->latestChunkStart = recptr;
+
 	SpinLockRelease(&walrcv->mutex);
 
 	SendPostmasterSignal(PMSIGNAL_START_WALRECEIVER);
 }
 
 /*
- * Returns the byte position that walreceiver has written
+ * Returns the last+1 byte position that walreceiver has written.
+ *
+ * Optionally, returns the previous chunk start, that is the first byte
+ * written in the most recent walreceiver flush cycle.  Callers not
+ * interested in that value may pass NULL for latestChunkStart.
  */
 XLogRecPtr
-GetWalRcvWriteRecPtr(void)
+GetWalRcvWriteRecPtr(XLogRecPtr *latestChunkStart)
 {
 	/* use volatile pointer to prevent code rearrangement */
 	volatile WalRcvData *walrcv = WalRcv;
@@ -216,6 +223,8 @@ GetWalRcvWriteRecPtr(void)
 
 	SpinLockAcquire(&walrcv->mutex);
 	recptr = walrcv->receivedUpto;
+	if (latestChunkStart)
+		*latestChunkStart = walrcv->latestChunkStart;
 	SpinLockRelease(&walrcv->mutex);
 
 	return recptr;
