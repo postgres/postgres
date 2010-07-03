@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_shdepend.c,v 1.34 2009/06/11 14:48:55 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_shdepend.c,v 1.34.2.1 2010/07/03 13:53:26 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,6 +26,8 @@
 #include "catalog/pg_language.h"
 #include "catalog/pg_namespace.h"
 #include "catalog/pg_operator.h"
+#include "catalog/pg_opclass.h"
+#include "catalog/pg_opfamily.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_shdepend.h"
 #include "catalog/pg_tablespace.h"
@@ -1363,6 +1365,14 @@ shdepReassignOwned(List *roleids, Oid newrole)
 
 				case LanguageRelationId:
 					AlterLanguageOwner_oid(sdepForm->objid, newrole);
+					break;
+
+				case OperatorClassRelationId:
+					AlterOpClassOwner_oid(sdepForm->objid, newrole);
+					break;
+
+				case OperatorFamilyRelationId:
+					AlterOpFamilyOwner_oid(sdepForm->objid, newrole);
 					break;
 
 				default:
