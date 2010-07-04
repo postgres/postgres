@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/src/tools/fsync/test_fsync.c,v 1.28 2010/07/04 01:50:29 momjian Exp $
+ * $PostgreSQL: pgsql/src/tools/fsync/test_fsync.c,v 1.29 2010/07/04 13:42:51 momjian Exp $
  *
  *
  *	test_fsync.c
@@ -79,7 +79,7 @@ main(int argc, char *argv[])
 	/*
 	 * Simple write
 	 */
-	printf("Simple write timing:\n");
+	printf("Simple write:\n");
 	/* write only */
 	gettimeofday(&start_t, NULL);
 	for (i = 0; i < loops; i++)
@@ -271,7 +271,7 @@ main(int argc, char *argv[])
 	/*
 	 * Compare 1 to 2 writes
 	 */
-	printf("\nCompare open_sync sizes:\n");
+	printf("\nCompare open_sync with different sizes:\n");
 
 #ifdef OPEN_SYNC_FLAG
 	/* 16k open_sync write */
@@ -368,17 +368,10 @@ main(int argc, char *argv[])
 void
 print_elapse(struct timeval start_t, struct timeval stop_t)
 {
-	double total_time, per_second;
-
-	if (stop_t.tv_usec < start_t.tv_usec)
-	{
-		stop_t.tv_sec--;
-		stop_t.tv_usec += 1000000;
-	}
-
-	total_time = (stop_t.tv_sec - start_t.tv_sec) +
+	double total_time = (stop_t.tv_sec - start_t.tv_sec) +
+	/* usec subtraction might be negative, e.g. 5.4 - 4.8 */
 				 (stop_t.tv_usec - start_t.tv_usec) * 0.000001;
-	per_second = loops / total_time;
+	double per_second = loops / total_time;
 	
 	printf("%9.3f/second\n", per_second);
 }
