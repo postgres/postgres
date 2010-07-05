@@ -39,7 +39,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: portal.h,v 1.47 2003/08/08 21:42:55 momjian Exp $
+ * $Id: portal.h,v 1.47.4.1 2010/07/05 09:27:56 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -117,6 +117,7 @@ typedef struct PortalData
 	bool		portalUtilReady;	/* PortalRunUtility complete? */
 	bool		portalActive;	/* portal is running (can't delete it) */
 	bool		portalDone;		/* portal is finished (don't re-run it) */
+	bool		portalPinned;	/* portal is pinned (can't delete it) */
 
 	/* If not NULL, Executor is active; call ExecutorEnd eventually: */
 	QueryDesc  *queryDesc;		/* info needed for executor invocation */
@@ -169,6 +170,8 @@ extern void AtAbort_Portals(void);
 extern void AtCleanup_Portals(void);
 extern Portal CreatePortal(const char *name, bool allowDup, bool dupSilent);
 extern Portal CreateNewPortal(void);
+extern void PinPortal(Portal portal);
+extern void UnpinPortal(Portal portal);
 extern void PortalDrop(Portal portal, bool isError);
 extern void DropDependentPortals(MemoryContext queryContext);
 extern Portal GetPortalByName(const char *name);

@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/portalmem.c,v 1.62 2003/08/24 21:02:43 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/portalmem.c,v 1.62.2.1 2010/07/05 09:27:56 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -289,6 +289,27 @@ PortalCreateHoldStore(Portal portal)
 }
 
 /*
+ * PinPortal
+ *		Protect a portal from dropping.
+ */
+void
+PinPortal(Portal portal)
+{
+	if (!portal->portalReady)
+		elog(ERROR, "cannot pin portal that's not in ready state");
+
+	portal->portalPinned = true;
+}
+
+void
+UnpinPortal(Portal portal)
+{
+	if (!portal->portalPinned)
+		elog(ERROR, "portal not pinned");
+	portal->portalPinned = false;
+}
+
+/*
  * PortalDrop
  *		Destroy the portal.
  *
@@ -300,9 +321,17 @@ PortalDrop(Portal portal, bool isError)
 {
 	AssertArg(PortalIsValid(portal));
 
-	/* Not sure if this case can validly happen or not... */
-	if (portal->portalActive)
-		elog(ERROR, "cannot drop active portal");
+	/*
+	 * Don't allow dropping a pinned portal, it's still needed by whoever
+	 * pinned it. Unless we're doing post-abort cleanup; whoever pinned the
+	 * portal is going to go away at transaction abort anyway.
+	 *
+	 * Not sure if the portalActive case can validly happen or not...
+	 */
+	if ((portal->portalPinned && !isError) || portal->portalActive)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_CURSOR_STATE),
+				 errmsg("cannot drop active portal \"%s\"", portal->name)));
 
 	/*
 	 * Remove portal from hash table.  Because we do this first, we will
@@ -399,6 +428,13 @@ AtCommit_Portals(void)
 		 */
 		if (portal->portalActive)
 			continue;
+
+		/*
+		 * There should be no pinned portals anymore. Complain if someone
+		 * leaked one.
+		 */
+		if (portal->portalPinned)
+			elog(ERROR, "cannot commit while a portal is pinned");
 
 		if (portal->cursorOptions & CURSOR_OPT_HOLD)
 		{
