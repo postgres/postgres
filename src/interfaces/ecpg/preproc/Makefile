@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1998-2010, PostgreSQL Global Development Group
 #
-# $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/Makefile,v 1.149 2010/05/12 11:33:10 momjian Exp $
+# $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/Makefile,v 1.150 2010/07/05 18:54:38 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -33,7 +33,7 @@ OBJS=	preproc.o type.o ecpg.o output.o parser.o \
 all: submake-libpgport ecpg
 
 ecpg: $(OBJS)
-	$(CC) $(CFLAGS) $(LDFLAGS) $^ $(LIBS) $(PTHREAD_LIBS) -o $@$(X)
+	$(CC) $(CFLAGS) $(LDFLAGS) $(LDFLAGS_EX) $^ $(LIBS) $(PTHREAD_LIBS) -o $@$(X)
 
 # pgc is compiled as part of preproc
 preproc.o: pgc.c

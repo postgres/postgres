@@ -704,6 +704,7 @@ ld_R_works
 with_gnu_ld
 LD
 LDFLAGS_SL
+LDFLAGS_EX
 ELF_SYS
 EGREP
 GREP
@@ -856,6 +857,7 @@ LDFLAGS
 LIBS
 CPPFLAGS
 CPP
+LDFLAGS_EX
 LDFLAGS_SL
 DOCBOOKSTYLE'
 
@@ -1551,7 +1553,8 @@ Some influential environment variables:
   CPPFLAGS    C/C++/Objective C preprocessor flags, e.g. -I<include dir> if
               you have headers in a nonstandard directory <include dir>
   CPP         C preprocessor
-  LDFLAGS_SL  linker flags for shared library linking
+  LDFLAGS_EX  extra linker flags for linking executables only
+  LDFLAGS_SL  extra linker flags for linking shared libraries only
   DOCBOOKSTYLE
               location of DocBook stylesheets
 
@@ -5784,6 +5787,7 @@ rm -f conftest*
 
 CPPFLAGS="$CPPFLAGS $INCLUDES"
 LDFLAGS="$LDFLAGS $LIBDIRS"
+
 
 
 
@@ -28826,7 +28830,6 @@ fi
 # If compiler will take -Wl,--as-needed (or various platform-specific
 # spellings thereof) then add that to LDFLAGS.  This is much easier than
 # trying to filter LIBS to the minimum for each executable.
-# (Note that shared library links won't use this switch, though.)
 # On (at least) some Red-Hat-derived systems, this switch breaks linking to
 # libreadline; therefore we postpone testing it until we know what library
 # dependencies readline has.  The test code will try to link with $LIBS.

@@ -4,7 +4,7 @@
 #
 # Copyright (c) 2003-2010, PostgreSQL Global Development Group
 #
-# $PostgreSQL: pgsql/src/tools/ifaddrs/Makefile,v 1.2 2010/01/02 16:58:16 momjian Exp $
+# $PostgreSQL: pgsql/src/tools/ifaddrs/Makefile,v 1.3 2010/07/05 18:54:38 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -21,7 +21,7 @@ OBJS = test_ifaddrs.o
 all: test_ifaddrs
 
 test_ifaddrs: test_ifaddrs.o $(libpq_backend_dir)/ip.o
-	$(CC) $(CFLAGS) test_ifaddrs.o $(libpq_backend_dir)/ip.o $(LDFLAGS) $(LIBS) -o $@$(X)
+	$(CC) $(CFLAGS) test_ifaddrs.o $(libpq_backend_dir)/ip.o $(LDFLAGS) $(LDFLAGS_EX) $(LIBS) -o $@$(X)
 
 clean distclean maintainer-clean:
 	rm -f test_ifaddrs$(X) $(OBJS)

@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/src/interfaces/ecpg/test/Makefile,v 1.78 2009/12/19 02:38:51 alvherre Exp $
+# $PostgreSQL: pgsql/src/interfaces/ecpg/test/Makefile,v 1.79 2010/07/05 18:54:38 tgl Exp $
 
 subdir = src/interfaces/ecpg/test
 top_builddir = ../../../..
@@ -54,7 +54,7 @@ clean distclean maintainer-clean:
 all: pg_regress$(X)
 
 pg_regress$(X): pg_regress_ecpg.o $(top_builddir)/src/test/regress/pg_regress.o
-	$(CC) $(CFLAGS) $(LDFLAGS) $^ $(LIBS) -o $@
+	$(CC) $(CFLAGS) $(LDFLAGS) $(LDFLAGS_EX) $^ $(LIBS) -o $@
 
 $(top_builddir)/src/test/regress/pg_regress.o:
 	$(MAKE) -C $(dir $@) $(notdir $@)

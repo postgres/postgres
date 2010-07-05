@@ -1,5 +1,5 @@
 # -*-makefile-*-
-# $PostgreSQL: pgsql/src/Makefile.global.in,v 1.262 2010/05/13 11:49:47 petere Exp $
+# $PostgreSQL: pgsql/src/Makefile.global.in,v 1.263 2010/07/05 18:54:37 tgl Exp $
 
 #------------------------------------------------------------------------------
 # All PostgreSQL makefiles include this file and use the variables it sets,
@@ -236,6 +236,7 @@ LD = @LD@
 with_gnu_ld = @with_gnu_ld@
 ld_R_works = @ld_R_works@
 LDFLAGS = @LDFLAGS@
+LDFLAGS_EX = @LDFLAGS_EX@
 LDFLAGS_SL = @LDFLAGS_SL@
 LDREL = -r
 LDOUT = -o
@@ -455,9 +456,9 @@ LIBOBJS = @LIBOBJS@
 LIBS := -lpgport $(LIBS)
 # add location of libpgport.a to LDFLAGS
 ifdef PGXS
-override LDFLAGS := -L$(libdir) $(LDFLAGS)
+  LDFLAGS += -L$(libdir)
 else
-override LDFLAGS := -L$(top_builddir)/src/port $(LDFLAGS)
+  LDFLAGS += -L$(top_builddir)/src/port
 endif
 
 # to make ws2_32.lib the last library, and always link with shfolder,

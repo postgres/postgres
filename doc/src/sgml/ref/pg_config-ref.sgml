@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/pg_config-ref.sgml,v 1.29 2010/04/03 07:23:01 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/pg_config-ref.sgml,v 1.30 2010/07/05 18:54:37 tgl Exp $ -->
 
 <refentry id="app-pgconfig">
  <refmeta>
@@ -233,12 +233,23 @@
     </varlistentry>
 
     <varlistentry>
+     <term><option>--ldflags_ex</option></>
+     <listitem>
+      <para>
+       Print the value of the <varname>LDFLAGS_EX</varname> variable that was used for building
+       <productname>PostgreSQL</>.  This shows linker switches
+       used for building executables only.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
      <term><option>--ldflags_sl</option></>
      <listitem>
       <para>
        Print the value of the <varname>LDFLAGS_SL</varname> variable that was used for building
        <productname>PostgreSQL</>.  This shows linker switches
-       used for building shared libraries.
+       used for building shared libraries only.
       </para>
      </listitem>
     </varlistentry>
@@ -275,7 +286,7 @@
   <title>Notes</title>
 
   <para>
-   The option <option>--includedir-server</option> was new in
+   The option <option>--includedir-server</option> was added in
    <productname>PostgreSQL</> 7.2.  In prior releases, the server include files were
    installed in the same location as the client headers, which could
    be queried with the option <option>--includedir</option>.  To make your
@@ -290,8 +301,9 @@
    <option>--cc</option>, <option>--cppflags</option>,
    <option>--cflags</option>, <option>--cflags_sl</option>,
    <option>--ldflags</option>, <option>--ldflags_sl</option>,
-   and <option>--libs</option> are new in <productname>PostgreSQL</> 8.1.
-   The option <option>--htmldir</option> is new in <productname>PostgreSQL</> 8.4.
+   and <option>--libs</option> were added in <productname>PostgreSQL</> 8.1.
+   The option <option>--htmldir</option> was added in <productname>PostgreSQL</> 8.4.
+   The option <option>--ldflags_ex</option> was added in <productname>PostgreSQL</> 9.0.
   </para>
 
   <para>

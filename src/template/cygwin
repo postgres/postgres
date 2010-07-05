@@ -1,9 +1,8 @@
-# $PostgreSQL: pgsql/src/template/cygwin,v 1.7 2006/03/11 04:38:40 momjian Exp $
+# $PostgreSQL: pgsql/src/template/cygwin,v 1.8 2010/07/05 18:54:38 tgl Exp $
 
 SRCH_LIB="/usr/local/lib"
 
-# This is required to link pg_dump because it finds pg_toupper() in
-# libpq and pgport
-LDFLAGS="-Wl,--allow-multiple-definition -Wl,--enable-auto-import"
+# --allow-multiple-definition is required to link pg_dump because it finds
+# pg_toupper() in both libpq and pgport
 # --enable-auto-import gets rid of a diagnostics linker message
-LDFLAGS_SL="-Wl,--enable-auto-import"
+LDFLAGS="-Wl,--allow-multiple-definition -Wl,--enable-auto-import"

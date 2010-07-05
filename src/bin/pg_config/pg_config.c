@@ -17,7 +17,7 @@
  *
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/pg_config/pg_config.c,v 1.32 2010/01/02 16:57:58 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_config/pg_config.c,v 1.33 2010/07/05 18:54:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -327,6 +327,22 @@ show_ldflags(bool all)
 }
 
 static void
+show_ldflags_ex(bool all)
+{
+#ifdef VAL_LDFLAGS_EX
+	if (all)
+		printf("LDFLAGS_EX = ");
+	printf("%s\n", VAL_LDFLAGS_EX);
+#else
+	if (!all)
+	{
+		fprintf(stderr, _("not recorded\n"));
+		exit(1);
+	}
+#endif
+}
+
+static void
 show_ldflags_sl(bool all)
 {
 #ifdef VAL_LDFLAGS_SL
@@ -398,6 +414,7 @@ static const InfoItem info_items[] = {
 	{"--cflags", show_cflags},
 	{"--cflags_sl", show_cflags_sl},
 	{"--ldflags", show_ldflags},
+	{"--ldflags_ex", show_ldflags_ex},
 	{"--ldflags_sl", show_ldflags_sl},
 	{"--libs", show_libs},
 	{"--version", show_version},
@@ -433,6 +450,7 @@ help(void)
 	printf(_("  --cflags              show CFLAGS value used when PostgreSQL was built\n"));
 	printf(_("  --cflags_sl           show CFLAGS_SL value used when PostgreSQL was built\n"));
 	printf(_("  --ldflags             show LDFLAGS value used when PostgreSQL was built\n"));
+	printf(_("  --ldflags_ex          show LDFLAGS_EX value used when PostgreSQL was built\n"));
 	printf(_("  --ldflags_sl          show LDFLAGS_SL value used when PostgreSQL was built\n"));
 	printf(_("  --libs                show LIBS value used when PostgreSQL was built\n"));
 	printf(_("  --version             show the PostgreSQL version\n"));

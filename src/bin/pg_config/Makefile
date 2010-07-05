@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1998-2010, PostgreSQL Global Development Group
 #
-# $PostgreSQL: pgsql/src/bin/pg_config/Makefile,v 1.24 2010/05/12 11:33:09 momjian Exp $
+# $PostgreSQL: pgsql/src/bin/pg_config/Makefile,v 1.25 2010/07/05 18:54:38 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -27,13 +27,14 @@ override CPPFLAGS += -DVAL_CPPFLAGS="\"$(STD_CPPFLAGS)\""
 override CPPFLAGS += -DVAL_CFLAGS="\"$(CFLAGS)\""
 override CPPFLAGS += -DVAL_CFLAGS_SL="\"$(CFLAGS_SL)\""
 override CPPFLAGS += -DVAL_LDFLAGS="\"$(STD_LDFLAGS)\""
+override CPPFLAGS += -DVAL_LDFLAGS_EX="\"$(LDFLAGS_EX)\""
 override CPPFLAGS += -DVAL_LDFLAGS_SL="\"$(LDFLAGS_SL)\""
 override CPPFLAGS += -DVAL_LIBS="\"$(LIBS)\""
 
 all: submake-libpgport pg_config
 
 pg_config: $(OBJS)
-	$(CC) $(CFLAGS) $(OBJS) $(LDFLAGS) $(LIBS) -o $@$(X)
+	$(CC) $(CFLAGS) $(OBJS) $(LDFLAGS) $(LDFLAGS_EX) $(LIBS) -o $@$(X)
 
 install: all installdirs
 	$(INSTALL_SCRIPT) pg_config$(X) '$(DESTDIR)$(bindir)/pg_config$(X)'

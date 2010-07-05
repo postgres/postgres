@@ -6,7 +6,7 @@
 # Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/test/regress/GNUmakefile,v 1.82 2010/01/02 16:58:13 momjian Exp $
+# $PostgreSQL: pgsql/src/test/regress/GNUmakefile,v 1.83 2010/07/05 18:54:38 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -53,7 +53,7 @@ EXTRADEFS = '-DHOST_TUPLE="$(host_tuple)"' \
 all: submake-libpgport pg_regress$(X)
 
 pg_regress$(X): pg_regress.o pg_regress_main.o
-	$(CC) $(CFLAGS) $^ $(LDFLAGS) $(LIBS) -o $@
+	$(CC) $(CFLAGS) $^ $(LDFLAGS) $(LDFLAGS_EX) $(LIBS) -o $@
 
 # dependencies ensure that path changes propagate
 pg_regress.o: pg_regress.c $(top_builddir)/src/port/pg_config_paths.h

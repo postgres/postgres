@@ -6,7 +6,7 @@
 # Copyright (c) 1998, Regents of the University of California
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/Makefile.shlib,v 1.123 2009/08/28 20:26:18 petere Exp $
+#    $PostgreSQL: pgsql/src/Makefile.shlib,v 1.124 2010/07/05 18:54:37 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -78,11 +78,8 @@ LINK.static = $(AR) $(AROPT)
 
 
 
-# Insert -L from LDFLAGS after any -L already present in SHLIB_LINK
-SHLIB_LINK := $(filter -L%, $(SHLIB_LINK)) $(filter -L%, $(LDFLAGS)) $(filter-out -L%, $(SHLIB_LINK))
-
-# Need a -L-free version of LDFLAGS to use in combination with SHLIB_LINK
-LDFLAGS_NO_L = $(filter-out -L%, $(LDFLAGS))
+# Automatically append LDFLAGS and LDFLAGS_SL to SHLIB_LINK
+SHLIB_LINK += $(LDFLAGS) $(LDFLAGS_SL)
 
 ifdef SO_MAJOR_VERSION
 # Default library naming convention used by the majority of platforms
@@ -104,7 +101,7 @@ stlib		= lib$(NAME).a
 
 ifndef soname
 # additional flags for backend modules
-SHLIB_LINK := $(BE_DLLLIBS) $(SHLIB_LINK)
+SHLIB_LINK += $(BE_DLLLIBS)
 endif
 
 # For each platform we support shared libraries on, set shlib to the
@@ -208,17 +205,17 @@ ifeq ($(PORTNAME), hpux)
     shlib			= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION)
   endif
   ifeq ($(with_gnu_ld), yes)
-    LINK.shared		= $(CC) $(LDFLAGS_NO_L) -shared
+    LINK.shared		= $(CC) -shared
     ifdef soname
       LINK.shared	+= -Wl,-h -Wl,$(soname)
     endif
   else
-    # can't use the CC-syntax rpath pattern here
-    rpath =
     LINK.shared		= $(LD) -b
     ifdef soname
       LINK.shared	+= +h $(soname)
     endif
+    # can't use the CC-syntax rpath pattern here, so instead:
+    rpath =
     ifeq ($(enable_rpath), yes)
       LINK.shared	+= +b '$(rpathdir)'
     endif
@@ -227,10 +224,10 @@ ifeq ($(PORTNAME), hpux)
     # ld can find the same libraries gcc does.  Make sure it goes after any
     # -L switches provided explicitly.
     ifeq ($(GCC), yes)
-      SHLIB_LINK := $(filter -L%, $(SHLIB_LINK)) -L/usr/local/lib $(filter-out -L%, $(SHLIB_LINK))
+      SHLIB_LINK	+= -L/usr/local/lib
     endif
   endif
-  # do this last so above filtering doesn't pull out -L switches in LDFLAGS
+  # And we need to link with libgcc, too
   ifeq ($(GCC), yes)
     SHLIB_LINK		+= `$(CC) $(LDFLAGS) -print-libgcc-file-name`
   endif
@@ -327,10 +324,6 @@ ifeq ($(PORTNAME), win32)
   haslibarule   = yes
 endif
 
-ifeq ($(enable_rpath), yes)
-SHLIB_LINK += $(rpath)
-endif
-
 
 
 ##
@@ -362,7 +355,7 @@ ifneq ($(PORTNAME), aix)
 
 # Normal case
 $(shlib): $(OBJS)
-	$(LINK.shared) $(LDFLAGS_SL) $(OBJS) $(SHLIB_LINK) -o $@
+	$(LINK.shared) -o $@ $(OBJS) $(SHLIB_LINK)
 ifdef shlib_major
 # If we're using major and minor versions, then make a symlink to major-version-only.
 ifneq ($(shlib), $(shlib_major))
@@ -396,7 +389,7 @@ $(shlib) $(stlib): $(OBJS)
 	$(LINK.static) $(stlib) $^
 	$(RANLIB) $(stlib)
 	$(MKLDEXPORT) $(stlib) >$(exports_file)
-	$(COMPILER) $(LDFLAGS_NO_L) $(LDFLAGS_SL) -o $(shlib) $(stlib) -Wl,-bE:$(exports_file) $(SHLIB_LINK)
+	$(COMPILER) -o $(shlib) $(stlib) -Wl,-bE:$(exports_file) $(SHLIB_LINK)
 	rm -f $(stlib)
 	$(AR) $(AROPT) $(stlib) $(shlib)
 
@@ -419,7 +412,7 @@ DLL_DEFFILE = lib$(NAME)dll.def
 endif
 
 $(shlib): $(OBJS) $(DLL_DEFFILE)
-	$(DLLWRAP) $(LDFLAGS_SL) -o $@ --dllname $(shlib) $(DLLWRAP_FLAGS) --def $(DLL_DEFFILE) $(OBJS) $(SHLIB_LINK)
+	$(DLLWRAP) -o $@ --dllname $(shlib) $(DLLWRAP_FLAGS) --def $(DLL_DEFFILE) $(OBJS) $(SHLIB_LINK)
 
 $(stlib): $(shlib) $(DLL_DEFFILE)
 	$(DLLTOOL) --dllname $(shlib) $(DLLTOOL_LIBFLAGS) --def $(DLL_DEFFILE) --output-lib $@

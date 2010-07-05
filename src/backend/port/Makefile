@@ -13,7 +13,7 @@
 # be converted to Method 2.  
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/backend/port/Makefile,v 1.27 2008/10/29 16:06:46 petere Exp $
+#    $PostgreSQL: pgsql/src/backend/port/Makefile,v 1.28 2010/07/05 18:54:37 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -44,7 +44,7 @@ endif
 
 # IPC test program
 ipc_test: ipc_test.o pg_sema.o pg_shmem.o
-	$(CC) $(CFLAGS) $(LDFLAGS) $(export_dynamic) $^ $(LIBS) -o $@
+	$(CC) $(CFLAGS) $(LDFLAGS) $(LDFLAGS_EX) $(export_dynamic) $^ $(LIBS) -o $@
 
 distclean clean:
 	rm -f ipc_test ipc_test.o tas_cpp.s

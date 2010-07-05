@@ -1,16 +1,13 @@
 AROPT = crs
-AWK= awk
  
 DLSUFFIX = .so
-CFLAGS_SL =
 
 ifdef PGXS
-BE_DLLLIBS= -bundle_loader $(bindir)/postgres
+  BE_DLLLIBS = -bundle_loader $(bindir)/postgres
 else
-BE_DLLLIBS= -bundle_loader $(top_builddir)/src/backend/postgres
+  BE_DLLLIBS = -bundle_loader $(top_builddir)/src/backend/postgres
 endif
 
-# Rule for building shared libs (currently used only for regression test
-# shlib ... should go away, since this is not really enough knowledge)
+# Rule for building a shared library from a single .o file
 %.so: %.o
-	$(CC) $(CFLAGS) -bundle -o $@ $< $(BE_DLLLIBS)
+	$(CC) $(CFLAGS) $(LDFLAGS) $(LDFLAGS_SL) -bundle -o $@ $< $(BE_DLLLIBS)
