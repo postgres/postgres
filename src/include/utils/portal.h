@@ -39,7 +39,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/portal.h,v 1.54.4.1 2005/04/11 19:51:32 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/portal.h,v 1.54.4.2 2010/07/05 09:27:49 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -135,6 +135,7 @@ typedef struct PortalData
 	/* Status data */
 	PortalStatus status;		/* see above */
 	bool		portalUtilReady;	/* PortalRunUtility complete? */
+	bool		portalPinned;	/* a pinned portal can't be dropped */
 
 	/* If not NULL, Executor is active; call ExecutorEnd eventually: */
 	QueryDesc  *queryDesc;		/* info needed for executor invocation */
@@ -195,6 +196,8 @@ extern void AtSubAbort_Portals(SubTransactionId mySubid,
 extern void AtSubCleanup_Portals(SubTransactionId mySubid);
 extern Portal CreatePortal(const char *name, bool allowDup, bool dupSilent);
 extern Portal CreateNewPortal(void);
+extern void PinPortal(Portal portal);
+extern void UnpinPortal(Portal portal);
 extern void PortalDrop(Portal portal, bool isTopCommit);
 extern void DropDependentPortals(MemoryContext queryContext);
 extern Portal GetPortalByName(const char *name);
