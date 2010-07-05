@@ -1,6 +1,6 @@
 # PGXS: PostgreSQL extensions makefile
 
-# $PostgreSQL: pgsql/src/makefiles/pgxs.mk,v 1.21 2010/07/05 23:30:50 tgl Exp $ 
+# $PostgreSQL: pgsql/src/makefiles/pgxs.mk,v 1.22 2010/07/05 23:40:13 tgl Exp $ 
 
 # This file contains generic rules to build many kinds of simple
 # extension modules.  You only need to set a few variables and include
@@ -286,5 +286,5 @@ endif
 
 ifdef PROGRAM
 $(PROGRAM): $(OBJS)
-	$(CC) $(CFLAGS) $(OBJS) $(LDFLAGS) $(LDFLAGS_EX) $(PG_LIBS) $(LIBS) -o $@
+	$(CC) $(CFLAGS) $(OBJS) $(PG_LIBS) $(LDFLAGS) $(LDFLAGS_EX) $(LIBS) -o $@
 endif
