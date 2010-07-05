@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.244.2.5 2010/06/21 09:49:58 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.244.2.6 2010/07/05 09:27:24 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1869,7 +1869,6 @@ exec_stmt_forc(PLpgSQL_execstate *estate, PLpgSQL_stmt_forc *stmt)
 {
 	PLpgSQL_var *curvar;
 	char	   *curname = NULL;
-	const char   *portalname;
 	PLpgSQL_expr *query;
 	Portal		portal;
 	int			rc;
@@ -1952,7 +1951,6 @@ exec_stmt_forc(PLpgSQL_execstate *estate, PLpgSQL_stmt_forc *stmt)
 	if (portal == NULL)
 		elog(ERROR, "could not open cursor: %s",
 			 SPI_result_code_string(SPI_result));
-	portalname = portal->name;
 
 	/*
 	 * If cursor variable was NULL, store the generated portal name in it
@@ -1967,20 +1965,11 @@ exec_stmt_forc(PLpgSQL_execstate *estate, PLpgSQL_stmt_forc *stmt)
 	rc = exec_for_query(estate, (PLpgSQL_stmt_forq *) stmt, portal, false);
 
 	/* ----------
-	 * Close portal. The statements executed in the loop might've closed the
-	 * cursor already, rendering our portal pointer invalid, so we mustn't
-	 * trust the pointer.
+	 * Close portal, and restore cursor variable if it was initially NULL.
 	 * ----------
 	 */
-	portal = SPI_cursor_find(portalname);
-	if (portal == NULL)
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_CURSOR),
-				 errmsg("cursor \"%s\" closed unexpectedly",
-						portalname)));
 	SPI_cursor_close(portal);
 
-	/* Restore cursor variable if it was initially NULL. */
 	if (curname == NULL)
 	{
 		free_var(curvar);
@@ -4200,13 +4189,6 @@ exec_run_select(PLpgSQL_execstate *estate,
  * exec_for_query --- execute body of FOR loop for each row from a portal
  *
  * Used by exec_stmt_fors, exec_stmt_forc and exec_stmt_dynfors
- *
- * If the portal is for a cursor that's visible to user code, the statements
- * we execute might move or close the cursor. You must pass prefetch_ok=false
- * in that case to disable optimizations that rely on the portal staying
- * unchanged over execution of the user statements.
- * NB: With prefetch_ok=false, the portal pointer might point to garbage
- * after the call. Caller beware!
  */
 static int
 exec_for_query(PLpgSQL_execstate *estate, PLpgSQL_stmt_forq *stmt,
@@ -4218,10 +4200,6 @@ exec_for_query(PLpgSQL_execstate *estate, PLpgSQL_stmt_forq *stmt,
 	bool		found = false;
 	int			rc = PLPGSQL_RC_OK;
 	int			n;
-	const char *portalname;
-
-	/* Remember portal name so that we can re-find it */
-	portalname = portal->name;
 
 	/*
 	 * Determine if we assign to a record or a row
@@ -4232,6 +4210,12 @@ exec_for_query(PLpgSQL_execstate *estate, PLpgSQL_stmt_forq *stmt,
 		row = (PLpgSQL_row *) (estate->datums[stmt->row->dno]);
 	else
 		elog(ERROR, "unsupported target");
+
+	/*
+	 * Make sure the portal doesn't get closed by the user statements
+	 * we execute.
+	 */
+	PinPortal(portal);
 
 	/*
 	 * Fetch the initial tuple(s).	If prefetching is allowed then we grab a
@@ -4330,22 +4314,8 @@ exec_for_query(PLpgSQL_execstate *estate, PLpgSQL_stmt_forq *stmt,
 
 		/*
 		 * Fetch more tuples.  If prefetching is allowed, grab 50 at a time.
-		 * Otherwise the statements executed in the loop might've moved or
-		 * even closed the cursor, so check that the cursor is still open,
-		 * and fetch only one row at a time.
 		 */
-		if (prefetch_ok)
-			SPI_cursor_fetch(portal, true, 50);
-		else
-		{
-			portal = SPI_cursor_find(portalname);
-			if (portal == NULL)
-				ereport(ERROR,
-						(errcode(ERRCODE_UNDEFINED_CURSOR),
-						 errmsg("cursor \"%s\" closed unexpectedly",
-								portalname)));
-			SPI_cursor_fetch(portal, true, 1);
-		}
+		SPI_cursor_fetch(portal, true, prefetch_ok ? 50 : 1);
 		tuptab = SPI_tuptable;
 		n = SPI_processed;
 	}
@@ -4356,6 +4326,8 @@ loop_exit:
 	 * Release last group of tuples (if any)
 	 */
 	SPI_freetuptable(tuptab);
+
+	UnpinPortal(portal);
 
 	/*
 	 * Set the FOUND variable to indicate the result of executing the loop
