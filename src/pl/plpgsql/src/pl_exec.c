@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.202.2.7 2010/02/12 19:37:52 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.202.2.8 2010/07/05 09:27:31 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1735,9 +1735,11 @@ exec_stmt_fors(PLpgSQL_execstate *estate, PLpgSQL_stmt_fors *stmt)
 
 	/*
 	 * Open the implicit cursor for the statement and fetch the initial 10
-	 * rows.
+	 * rows. Pin the portal to make sure it doesn't get closed by the user
+	 * statements we execute.
 	 */
 	exec_run_select(estate, stmt->query, 0, &portal);
+	PinPortal(portal);
 
 	SPI_cursor_fetch(portal, true, 10);
 	tuptab = SPI_tuptable;
@@ -1819,6 +1821,7 @@ exec_stmt_fors(PLpgSQL_execstate *estate, PLpgSQL_stmt_fors *stmt)
 				 * code should match the code after the loop.)
 				 */
 				SPI_freetuptable(tuptab);
+				UnpinPortal(portal);
 				SPI_cursor_close(portal);
 				exec_set_found(estate, found);
 
@@ -1844,6 +1847,7 @@ exec_stmt_fors(PLpgSQL_execstate *estate, PLpgSQL_stmt_fors *stmt)
 	/*
 	 * Close the implicit cursor
 	 */
+	UnpinPortal(portal);
 	SPI_cursor_close(portal);
 
 	/*
@@ -2891,6 +2895,12 @@ exec_stmt_dynfors(PLpgSQL_execstate *estate, PLpgSQL_stmt_dynfors *stmt)
 	SPI_freeplan(plan);
 
 	/*
+	 * Make sure the portal doesn't get closed by the user statements
+	 * we execute.
+	 */
+	PinPortal(portal);
+
+	/*
 	 * Fetch the initial 10 tuples
 	 */
 	SPI_cursor_fetch(portal, true, 10);
@@ -2973,6 +2983,7 @@ exec_stmt_dynfors(PLpgSQL_execstate *estate, PLpgSQL_stmt_dynfors *stmt)
 				 * code should match the code after the loop.)
 				 */
 				SPI_freetuptable(tuptab);
+				UnpinPortal(portal);
 				SPI_cursor_close(portal);
 				exec_set_found(estate, found);
 
@@ -2998,6 +3009,7 @@ exec_stmt_dynfors(PLpgSQL_execstate *estate, PLpgSQL_stmt_dynfors *stmt)
 	/*
 	 * Close the implicit cursor
 	 */
+	UnpinPortal(portal);
 	SPI_cursor_close(portal);
 
 	/*

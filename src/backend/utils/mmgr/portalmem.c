@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/portalmem.c,v 1.106.2.3 2010/01/18 02:30:37 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/portalmem.c,v 1.106.2.4 2010/07/05 09:27:31 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -367,6 +367,28 @@ PortalCreateHoldStore(Portal portal)
 }
 
 /*
+ * PinPortal
+ *		Protect a portal from dropping.
+ */
+void
+PinPortal(Portal portal)
+{
+	if (portal->portalPinned)
+		elog(ERROR, "portal already pinned");
+
+	portal->portalPinned = true;
+}
+
+void
+UnpinPortal(Portal portal)
+{
+	if (!portal->portalPinned)
+		elog(ERROR, "portal not pinned");
+
+	portal->portalPinned = false;
+}
+
+/*
  * PortalDrop
  *		Destroy the portal.
  */
@@ -375,9 +397,16 @@ PortalDrop(Portal portal, bool isTopCommit)
 {
 	AssertArg(PortalIsValid(portal));
 
-	/* Not sure if this case can validly happen or not... */
-	if (portal->status == PORTAL_ACTIVE)
-		elog(ERROR, "cannot drop active portal");
+	/*
+	 * Don't allow dropping a pinned portal, it's still needed by whoever
+	 * pinned it. Not sure if the PORTAL_ACTIVE case can validly happen or
+	 * not...
+	 */
+	if (portal->portalPinned ||
+		portal->status == PORTAL_ACTIVE)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_CURSOR_STATE),
+				 errmsg("cannot drop active portal \"%s\"", portal->name)));
 
 	/*
 	 * Remove portal from hash table.  Because we do this first, we will not
@@ -621,6 +650,13 @@ AtCommit_Portals(void)
 		}
 
 		/*
+		 * There should be no pinned portals anymore. Complain if someone
+		 * leaked one.
+		 */
+		if (portal->portalPinned)
+			elog(ERROR, "cannot commit while a portal is pinned");
+
+		/*
 		 * Do nothing to cursors held over from a previous transaction
 		 * (including holdable ones just frozen by CommitHoldablePortals).
 		 */
@@ -718,7 +754,15 @@ AtCleanup_Portals(void)
 			continue;
 		}
 
-		/* Else zap it. */
+		/*
+		 * If a portal is still pinned, forcibly unpin it. PortalDrop will
+		 * not let us drop the portal otherwise. Whoever pinned the portal
+		 * was interrupted by the abort too and won't try to use it anymore.
+		 */
+		if (portal->portalPinned)
+			portal->portalPinned = false;
+
+		/* Zap it. */
 		PortalDrop(portal, false);
 	}
 }
