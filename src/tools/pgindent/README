@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/tools/pgindent/README,v 1.40 2010/04/01 14:44:39 adunstan Exp $
+$PostgreSQL: pgsql/src/tools/pgindent/README,v 1.41 2010/07/06 19:18:19 momjian Exp $
 
 pgindent
 ========
@@ -22,10 +22,13 @@ This can format all PostgreSQL *.c and *.h files, but excludes *.y, and
 	egrep -v -f src/tools/pgindent/exclude_file_patterns | \
 	xargs -n100 pgindent src/tools/pgindent/typedefs.list
 
-5) Remove any files that generate errors.
+5) Remove any files that generate errors and restore their original versions.
 
 6) Do a full test build:
 
+	run configure
+	gmake -C src install
+	gmake -C contrib install
 	gmake installcheck-world
 
 

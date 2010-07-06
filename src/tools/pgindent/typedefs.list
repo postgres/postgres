@@ -129,7 +129,6 @@ BIO_METHOD
 BITVEC
 BITVECP
 BLOB
-BLOCK
 BMS_Membership
 BN_CTX
 BOOL
@@ -158,7 +157,6 @@ BTWriteState
 BYTE
 Backend
 BackendId
-BackendParameters
 BackslashQuoteType
 BgWriterRequest
 BgWriterShmemStruct
@@ -213,7 +211,6 @@ CAC_state
 CAST_KEY
 CFuncHashTabEntry
 CHAR
-CHECKPOINT
 CHKVAL
 CIRCLE
 CMPDAffix
@@ -223,7 +220,6 @@ CRITICAL_SECTION
 CState
 CV
 CY
-C_block
 CachedPlan
 CachedPlanSource
 CancelRequestPacket
@@ -251,6 +247,8 @@ ClonePtr
 ClosePortalStmt
 ClosePtr
 Clump
+Cluster
+ClusterInfo
 ClusterStmt
 CmdType
 CoalesceExpr
@@ -292,6 +290,7 @@ ConstraintCategory
 ConstraintExclusionType
 ConstraintInfo
 ConstraintsSetStmt
+ControlData
 ControlFileData
 ConvInfo
 ConvProcInfo
@@ -328,13 +327,11 @@ CreateTableSpaceStmt
 CreateTrigStmt
 CreateUserMappingStmt
 CreatedbStmt
-CredHandle
 CteItem
 CteScan
 CteScanState
 CteState
 CtlCommand
-CtxtHandle
 CurrentOfExpr
 CustomOutPtr
 CycleCtr
@@ -363,6 +360,8 @@ Datum
 DatumArray
 DatumPtr
 DatumTupleFields
+DbInfo
+DbInfoArr
 DeClonePtr
 DeadLockState
 DeallocateStmt
@@ -448,7 +447,6 @@ ExprState
 ExprStateEvalFunc
 ExtensionBehavior
 Extention
-FD_SET
 FILE
 FILETIME
 FIXED
@@ -469,6 +467,7 @@ FieldStore
 FieldStoreState
 File
 FileName
+FileNameMap
 FindSplitData
 FixedParamState
 FmgrBuiltin
@@ -601,7 +600,6 @@ GISTScanOpaqueData
 GISTSearchStack
 GISTTYPE
 GIST_SPLITVEC
-GROUP
 GV
 Gene
 GenericExprState
@@ -660,7 +658,6 @@ HASHELEMENT
 HASHHDR
 HASHSEGMENT
 HASH_SEQ_STATUS
-HCRYPTPROV
 HEntry
 HIST_ENTRY
 HKEY
@@ -711,11 +708,8 @@ HistControl
 HotStandbyState
 I32
 INFIX
-INPUT
 INT
 INT32
-INTERFACE_INFO
-IO
 IOFuncSelector
 IPCompareMethod
 ITEM
@@ -752,7 +746,6 @@ InhInfo
 InhOption
 InhPaths
 InhRelation
-InheritableSocket
 InlineCodeBlock
 InnerIndexscanInfo
 InsertStmt
@@ -808,7 +801,6 @@ LOCKMETHODID
 LOCKMODE
 LOCKTAG
 LONG
-LOOP
 LP
 LPBYTE
 LPCTSTR
@@ -866,6 +858,7 @@ LogicalTape
 LogicalTapeSet
 MAGIC
 MBuf
+MJEvalResult
 Material
 MaterialPath
 MaterialState
@@ -894,7 +887,6 @@ MultiXactStateData
 MyData
 NDBOX
 NODE
-NTSTATUS
 NUMCacheEntry
 NUMDesc
 NUMProc
@@ -910,7 +902,6 @@ NestPath
 NewColumnValue
 NewConstraint
 NewPage
-NoOpPath
 Node
 NodeTag
 Notification
@@ -965,7 +956,6 @@ PACL
 PATH
 PATTERN
 PBOOL
-PCtxtHandle
 PFN
 PGAsyncStatusType
 PGCALL2
@@ -1147,10 +1137,7 @@ PendingOperationEntry
 PendingOperationTag
 PendingRelDelete
 PendingUnlinkEntry
-PerlIO_funcs
 PerlInterpreter
-Perl_check_t
-Perl_ppaddr_t
 PgBackendStatus
 PgIfAddrCallback
 PgStat_BackendFunctionEntry
@@ -1220,9 +1207,6 @@ PreparedParamsData
 PreparedStatement
 PrintExtraTocPtr
 PrintTocDataPtr
-PrintfArgType
-PrintfArgValue
-PrintfTarget
 PrinttupAttrInfo
 PrivGrantee
 PrivTarget
@@ -1246,7 +1230,6 @@ PullFilterOps
 PushFilter
 PushFilterOps
 PushFunction
-PyCodeObject
 PyMethodDef
 PyObject
 PySequenceMethods
@@ -1256,7 +1239,6 @@ QPRS_STATE
 QTN2QTState
 QTNode
 QUERYTYPE
-QUERY_SECURITY_CONTEXT_TOKEN_FN
 QualCost
 QualItem
 Query
@@ -1276,7 +1258,6 @@ RBOrderControl
 RBTree
 RBTreeIterator
 REPARSE_DATA_BUFFER
-REPARSE_JUNCTION_DATA_BUFFER
 RIX
 RI_CompareHashEntry
 RI_CompareKey
@@ -1302,6 +1283,7 @@ ReassignOwnedStmt
 RecordCacheEntry
 RecordCompareData
 RecordIOData
+RecoveryTargetType
 RecursionContext
 RecursiveUnion
 RecursiveUnionState
@@ -1311,6 +1293,8 @@ RegisNode
 ReindexStmt
 RelFileNode
 RelIdCacheEnt
+RelInfo
+RelInfoArr
 RelMapFile
 RelMapping
 RelOptInfo
@@ -1365,7 +1349,6 @@ RunningTransactions
 RunningTransactionsData
 SC_HANDLE
 SECURITY_ATTRIBUTES
-SECURITY_STATUS
 SEG
 SERVICE_STATUS
 SERVICE_STATUS_HANDLE
@@ -1385,8 +1368,6 @@ SISeg
 SIZE
 SMgrRelation
 SMgrRelationData
-SOCKADDR
-SOCKET
 SPELL
 SPIPlanPtr
 SPITupleTable
@@ -1398,10 +1379,8 @@ SQLFunctionCachePtr
 SSL
 SSL_CTX
 STARTUPINFO
-STRING
 STRLEN
 SV
-SVOP
 SYSTEMTIME
 SaOpControl
 SaveArchivePtr
@@ -1417,8 +1396,6 @@ ScanKeyword
 ScanState
 ScanTypeControl
 SchemaQuery
-SecBuffer
-SecBufferDesc
 SelectStmt
 Selectivity
 SeqScan
@@ -1514,7 +1491,6 @@ TBMIterateResult
 TBMIterator
 TBMStatus
 TBlockState
-TCHAR
 TIDBitmap
 TOKEN_DEFAULT_DACL
 TOKEN_INFORMATION_CLASS
@@ -1569,7 +1545,6 @@ TextPositionState
 TheLexeme
 TheSubstitute
 ThingFile
-Thread
 TidHashKey
 TidPath
 TidScan
@@ -1579,7 +1554,6 @@ TimeInterval
 TimeIntervalData
 TimeLineID
 TimeOffset
-TimeStamp
 TimeTzADT
 Timestamp
 TimestampTz
@@ -1674,17 +1648,14 @@ Vfd
 ViewStmt
 VirtualTransactionId
 Vsrt
-WAITORTIMERCALLBACK
 WAIT_ORDER
 WCHAR
 WIN32_FILE_ATTRIBUTE_DATA
 WIN32_FIND_DATA
 WORD
 WORKSTATE
-WSABUF
-WSADATA
-WSANETWORKEVENTS
-WSAPROTOCOL_INFO
+WalDataMessageHeader
+WalLevel
 WalRcvData
 WalRcvState
 WalSnd
@@ -1736,7 +1707,6 @@ XLogwrtResult
 XLogwrtRqst
 XPVIV
 XPVMG
-XPVUV
 XRV
 XactCallback
 XactCallbackItem
@@ -1759,7 +1729,6 @@ __CreateJobObject
 __CreateRestrictedToken
 __IsProcessInJob
 __QueryInformationJobObject
-__RegisterWaitForSingleObject
 __SetInformationJobObject
 aclitem
 array_unnest_fctx
@@ -1814,11 +1783,11 @@ dev_t
 directory_fctx
 double
 ds_state
+eLogType
 ean13
 eary
 eval_const_expressions_context
 execution_state
-expectation
 explain_get_index_name_hook_type
 f_smgr
 fd_set
@@ -1839,7 +1808,6 @@ fmStringInfo
 formarray
 formfloat
 fpos_t
-freeaddrinfo_ptr_t
 freefunc
 fsec_t
 func_ptr
@@ -1853,8 +1821,6 @@ get_attavgwidth_hook_type
 get_index_stats_hook_type
 get_relation_info_hook_type
 get_relation_stats_hook_type
-getaddrinfo_ptr_t
-getnameinfo_ptr_t
 gid_t
 ginIncompleteSplit
 ginxlogCreatePostingTree
@@ -1886,6 +1852,7 @@ indexed_tlist
 inet
 inetKEY
 inet_struct
+inline_error_callback_arg
 ino_t
 inquiry
 instr_time
@@ -1940,6 +1907,7 @@ mblen_converter
 mbverifier
 md5_ctxt
 metastring
+migratorContext
 mix_data_t
 mixedStruct
 mode_t
@@ -1959,10 +1927,11 @@ objectType
 off_t
 oidKEY
 oidvector
-opcode
 optType
 ossldata
+pageCnvCtx
 pam_handle_t
+parse_error_callback_arg
 pcolor
 pendingPosition
 pgParameterStatus
@@ -2086,15 +2055,14 @@ stmtCacheEntry
 substitute_actual_parameters_context
 substitute_actual_srf_parameters_context
 substitute_multiple_relids_context
-svtype
 symbol
 teReqs
 teSection
 text
 timeKEY
 time_t
-timerCA
 tlist_vinfo
+transferMode
 trgm
 tsKEY
 ts_db_fctx
@@ -2130,8 +2098,6 @@ walrcv_connect_type
 walrcv_disconnect_type
 walrcv_receive_type
 wchar_t
-win32_deadchild_waitinfo
-win32_pthread
 wint_t
 xl_btree_delete
 xl_btree_delete_page
@@ -2160,6 +2126,7 @@ xl_heaptid
 xl_invalid_page
 xl_invalid_page_key
 xl_multixact_create
+xl_parameter_change
 xl_relmap_update
 xl_running_xacts
 xl_seq_rec
