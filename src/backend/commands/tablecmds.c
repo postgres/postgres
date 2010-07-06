@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.331 2010/07/01 14:10:21 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.332 2010/07/06 19:18:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1959,8 +1959,8 @@ renameatt(Oid myrelid,
 	/*
 	 * Renaming the columns of sequences or toast tables doesn't actually
 	 * break anything from the system's point of view, since internal
-	 * references are by attnum.  But it doesn't seem right to allow users
-	 * to change names that are hardcoded into the system, hence the following
+	 * references are by attnum.  But it doesn't seem right to allow users to
+	 * change names that are hardcoded into the system, hence the following
 	 * restriction.
 	 */
 	relkind = RelationGetForm(targetrelation)->relkind;
@@ -1970,8 +1970,8 @@ renameatt(Oid myrelid,
 		relkind != RELKIND_INDEX)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				 errmsg("\"%s\" is not a table, view, composite type or index",
-						RelationGetRelationName(targetrelation))));
+			   errmsg("\"%s\" is not a table, view, composite type or index",
+					  RelationGetRelationName(targetrelation))));
 
 	/*
 	 * permissions checking.  only the owner of a class can change its schema.
@@ -7049,9 +7049,9 @@ copy_relation_data(SMgrRelation src, SMgrRelation dst,
 
 	for (blkno = 0; blkno < nblocks; blkno++)
 	{
-        /* If we got a cancel signal during the copy of the data, quit */
-        CHECK_FOR_INTERRUPTS();
-        
+		/* If we got a cancel signal during the copy of the data, quit */
+		CHECK_FOR_INTERRUPTS();
+
 		smgrread(src, forkNum, blkno, buf);
 
 		/* XLOG stuff */

@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/error.c,v 1.26 2010/05/08 16:39:52 tgl Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/error.c,v 1.27 2010/07/06 19:19:00 momjian Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -308,8 +308,10 @@ ecpg_raise_backend(int line, PGresult *result, PGconn *conn, int compat)
 
 	if (strcmp(sqlstate, ECPG_SQLSTATE_ECPG_INTERNAL_ERROR) == 0)
 	{
-		/* we might get here if the connection breaks down, so let's
-		 * check for this instead of giving just the generic internal error */
+		/*
+		 * we might get here if the connection breaks down, so let's check for
+		 * this instead of giving just the generic internal error
+		 */
 		if (PQstatus(conn) == CONNECTION_BAD)
 		{
 			sqlstate = "57P02";

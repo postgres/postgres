@@ -4,7 +4,7 @@
  *
  * Portions Copyright (c) 2002-2010, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/pg_locale.c,v 1.56 2010/04/26 14:17:52 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/pg_locale.c,v 1.57 2010/07/06 19:18:58 momjian Exp $
  *
  *-----------------------------------------------------------------------
  */
@@ -44,7 +44,7 @@
  *
  * FYI, The Open Group locale standard is defined here:
  *
- *  http://www.opengroup.org/onlinepubs/009695399/basedefs/xbd_chap07.html
+ *	http://www.opengroup.org/onlinepubs/009695399/basedefs/xbd_chap07.html
  *----------
  */
 
@@ -398,13 +398,13 @@ free_struct_lconv(struct lconv * s)
 static char *
 db_encoding_strdup(int encoding, const char *str)
 {
-	char   *pstr;
-	char   *mstr;
+	char	   *pstr;
+	char	   *mstr;
 
 	/* convert the string to the database encoding */
 	pstr = (char *) pg_do_encoding_conversion(
-						(unsigned char *) str, strlen(str),
-						encoding, GetDatabaseEncoding());
+										  (unsigned char *) str, strlen(str),
+											encoding, GetDatabaseEncoding());
 	mstr = strdup(pstr);
 	if (pstr != str)
 		pfree(pstr);
@@ -428,6 +428,7 @@ PGLC_localeconv(void)
 	char	   *grouping;
 	char	   *thousands_sep;
 	int			encoding;
+
 #ifdef WIN32
 	char	   *save_lc_ctype;
 #endif
@@ -448,27 +449,27 @@ PGLC_localeconv(void)
 		save_lc_numeric = pstrdup(save_lc_numeric);
 
 #ifdef WIN32
-   /*
-	*  Ideally, monetary and numeric local symbols could be returned in
-	*  any server encoding.  Unfortunately, the WIN32 API does not allow
-	*  setlocale() to return values in a codepage/CTYPE that uses more
-	*  than two bytes per character, like UTF-8:
-	*
-	*      http://msdn.microsoft.com/en-us/library/x99tb11d.aspx
-	*
-	*  Evidently, LC_CTYPE allows us to control the encoding used
-	*  for strings returned by localeconv().  The Open Group
-	*  standard, mentioned at the top of this C file, doesn't
-	*  explicitly state this.
-	*
-	*  Therefore, we set LC_CTYPE to match LC_NUMERIC or LC_MONETARY
-	*  (which cannot be UTF8), call localeconv(), and then convert from
-	*  the numeric/monitary LC_CTYPE to the server encoding.  One
-	*  example use of this is for the Euro symbol.
-	*
-	*  Perhaps someday we will use GetLocaleInfoW() which returns values
-	*  in UTF16 and convert from that.
-	*/
+
+	/*
+	 * Ideally, monetary and numeric local symbols could be returned in any
+	 * server encoding.  Unfortunately, the WIN32 API does not allow
+	 * setlocale() to return values in a codepage/CTYPE that uses more than
+	 * two bytes per character, like UTF-8:
+	 *
+	 * http://msdn.microsoft.com/en-us/library/x99tb11d.aspx
+	 *
+	 * Evidently, LC_CTYPE allows us to control the encoding used for strings
+	 * returned by localeconv().  The Open Group standard, mentioned at the
+	 * top of this C file, doesn't explicitly state this.
+	 *
+	 * Therefore, we set LC_CTYPE to match LC_NUMERIC or LC_MONETARY (which
+	 * cannot be UTF8), call localeconv(), and then convert from the
+	 * numeric/monitary LC_CTYPE to the server encoding.  One example use of
+	 * this is for the Euro symbol.
+	 *
+	 * Perhaps someday we will use GetLocaleInfoW() which returns values in
+	 * UTF16 and convert from that.
+	 */
 
 	/* save user's value of ctype locale */
 	save_lc_ctype = setlocale(LC_CTYPE, NULL);
@@ -567,6 +568,7 @@ strftime_win32(char *dst, size_t dstlen, const wchar_t *format, const struct tm 
 
 	len = wcsftime(wbuf, MAX_L10N_DATA, format, tm);
 	if (len == 0)
+
 		/*
 		 * strftime call failed - return 0 with the contents of dst
 		 * unspecified
@@ -595,7 +597,6 @@ strftime_win32(char *dst, size_t dstlen, const wchar_t *format, const struct tm 
 
 /* redefine strftime() */
 #define strftime(a,b,c,d) strftime_win32(a,b,L##c,d)
-
 #endif   /* WIN32 */
 
 
@@ -611,6 +612,7 @@ cache_locale_time(void)
 	char		buf[MAX_L10N_DATA];
 	char	   *ptr;
 	int			i;
+
 #ifdef WIN32
 	char	   *save_lc_ctype;
 #endif
@@ -627,13 +629,14 @@ cache_locale_time(void)
 		save_lc_time = pstrdup(save_lc_time);
 
 #ifdef WIN32
+
 	/*
 	 * On WIN32, there is no way to get locale-specific time values in a
 	 * specified locale, like we do for monetary/numeric.  We can only get
 	 * CP_ACP (see strftime_win32) or UTF16.  Therefore, we get UTF16 and
-	 * convert it to the database locale.  However, wcsftime() internally
-	 * uses LC_CTYPE, so we set it here.  See the WIN32 comment near the
-	 * top of PGLC_localeconv().
+	 * convert it to the database locale.  However, wcsftime() internally uses
+	 * LC_CTYPE, so we set it here.  See the WIN32 comment near the top of
+	 * PGLC_localeconv().
 	 */
 
 	/* save user's value of ctype locale */

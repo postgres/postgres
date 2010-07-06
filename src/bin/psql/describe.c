@@ -8,7 +8,7 @@
  *
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.241 2010/03/11 21:29:32 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.242 2010/07/06 19:18:59 momjian Exp $
  */
 #include "postgres_fe.h"
 
@@ -1414,13 +1414,13 @@ describeOneTableDetails(const char *schemaname,
 		if (pset.sversion >= 90000)
 			appendPQExpBuffer(&buf,
 							  "  (NOT i.indimmediate) AND "
-							  "EXISTS (SELECT 1 FROM pg_catalog.pg_constraint "
+							"EXISTS (SELECT 1 FROM pg_catalog.pg_constraint "
 							  "WHERE conrelid = i.indrelid AND "
 							  "conindid = i.indexrelid AND "
 							  "contype IN ('p','u','x') AND "
 							  "condeferrable) AS condeferrable,\n"
 							  "  (NOT i.indimmediate) AND "
-							  "EXISTS (SELECT 1 FROM pg_catalog.pg_constraint "
+							"EXISTS (SELECT 1 FROM pg_catalog.pg_constraint "
 							  "WHERE conrelid = i.indrelid AND "
 							  "conindid = i.indexrelid AND "
 							  "contype IN ('p','u','x') AND "
@@ -1545,12 +1545,12 @@ describeOneTableDetails(const char *schemaname,
 			appendPQExpBuffer(&buf, "pg_catalog.pg_get_indexdef(i.indexrelid, 0, true),\n  ");
 			if (pset.sversion >= 90000)
 				appendPQExpBuffer(&buf,
-								  "pg_catalog.pg_get_constraintdef(con.oid, true), "
+						   "pg_catalog.pg_get_constraintdef(con.oid, true), "
 								  "contype, condeferrable, condeferred");
 			else
 				appendPQExpBuffer(&buf,
 								  "null AS constraintdef, null AS contype, "
-								  "false AS condeferrable, false AS condeferred");
+							 "false AS condeferrable, false AS condeferred");
 			if (pset.sversion >= 80000)
 				appendPQExpBuffer(&buf, ", c2.reltablespace");
 			appendPQExpBuffer(&buf,
@@ -1621,7 +1621,7 @@ describeOneTableDetails(const char *schemaname,
 					/* Print tablespace of the index on the same line */
 					if (pset.sversion >= 80000)
 						add_tablespace_footer(&cont, 'i',
-											atooid(PQgetvalue(result, i, 10)),
+										   atooid(PQgetvalue(result, i, 10)),
 											  false);
 				}
 			}

@@ -25,7 +25,7 @@
  *	http://archives.postgresql.org/pgsql-bugs/2010-02/msg00187.php
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.580 2010/05/15 21:41:16 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.581 2010/07/06 19:18:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3957,8 +3957,8 @@ getIndexes(TableInfo tblinfo[], int numTables)
 		 * find one, create a CONSTRAINT entry linked to the INDEX entry.  We
 		 * assume an index won't have more than one internal dependency.
 		 *
-		 * As of 9.0 we don't need to look at pg_depend but can check for
-		 * a match to pg_constraint.conindid.  The check on conrelid is
+		 * As of 9.0 we don't need to look at pg_depend but can check for a
+		 * match to pg_constraint.conindid.  The check on conrelid is
 		 * redundant but useful because that column is indexed while conindid
 		 * is not.
 		 */

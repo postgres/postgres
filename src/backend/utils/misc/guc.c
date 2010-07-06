@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.559 2010/07/03 21:23:58 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.560 2010/07/06 19:18:58 momjian Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -2893,7 +2893,7 @@ static void ShowAllGUCConfig(DestReceiver *dest);
 static char *_ShowOption(struct config_generic * record, bool use_units);
 static bool is_newvalue_equal(struct config_generic * record, const char *newvalue);
 static bool validate_option_array_item(const char *name, const char *value,
-									   bool skipIfNoPermissions);
+						   bool skipIfNoPermissions);
 
 
 /*
@@ -5905,12 +5905,13 @@ define_custom_variable(struct config_generic * variable)
 		case PGC_S_DATABASE:
 		case PGC_S_USER:
 		case PGC_S_DATABASE_USER:
+
 			/*
-			 * The existing value came from an ALTER ROLE/DATABASE SET command.
-			 * We can assume that at the time the command was issued, we
-			 * checked that the issuing user was superuser if the variable
-			 * requires superuser privileges to set.  So it's safe to
-			 * use SUSET context here.
+			 * The existing value came from an ALTER ROLE/DATABASE SET
+			 * command. We can assume that at the time the command was issued,
+			 * we checked that the issuing user was superuser if the variable
+			 * requires superuser privileges to set.  So it's safe to use
+			 * SUSET context here.
 			 */
 			phcontext = PGC_SUSET;
 			break;
@@ -5918,9 +5919,10 @@ define_custom_variable(struct config_generic * variable)
 		case PGC_S_CLIENT:
 		case PGC_S_SESSION:
 		default:
+
 			/*
-			 * We must assume that the value came from an untrusted user,
-			 * even if the current_user is a superuser.
+			 * We must assume that the value came from an untrusted user, even
+			 * if the current_user is a superuser.
 			 */
 			phcontext = PGC_USERSET;
 			break;
@@ -7443,7 +7445,7 @@ GUCArrayReset(ArrayType *array)
  * Validate a proposed option setting for GUCArrayAdd/Delete/Reset.
  *
  * name is the option name.  value is the proposed value for the Add case,
- * or NULL for the Delete/Reset cases.  If skipIfNoPermissions is true, it's
+ * or NULL for the Delete/Reset cases.	If skipIfNoPermissions is true, it's
  * not an error to have no permissions to set the option.
  *
  * Returns TRUE if OK, FALSE if skipIfNoPermissions is true and user does not
@@ -7465,19 +7467,19 @@ validate_option_array_item(const char *name, const char *value,
 	 * SUSET and user is superuser).
 	 *
 	 * name is not known, but exists or can be created as a placeholder
-	 * (implying it has a prefix listed in custom_variable_classes).
-	 * We allow this case if you're a superuser, otherwise not.  Superusers
-	 * are assumed to know what they're doing.  We can't allow it for other
-	 * users, because when the placeholder is resolved it might turn out to
-	 * be a SUSET variable; define_custom_variable assumes we checked that.
+	 * (implying it has a prefix listed in custom_variable_classes). We allow
+	 * this case if you're a superuser, otherwise not.  Superusers are assumed
+	 * to know what they're doing.  We can't allow it for other users, because
+	 * when the placeholder is resolved it might turn out to be a SUSET
+	 * variable; define_custom_variable assumes we checked that.
 	 *
 	 * name is not known and can't be created as a placeholder.  Throw error,
-	 * unless skipIfNoPermissions is true, in which case return FALSE.
-	 * (It's tempting to allow this case to superusers, if the name is
-	 * qualified but not listed in custom_variable_classes.  That would
-	 * ease restoring of dumps containing ALTER ROLE/DATABASE SET.  However,
-	 * it's not clear that this usage justifies such a loss of error checking.
-	 * You can always fix custom_variable_classes before you restore.)
+	 * unless skipIfNoPermissions is true, in which case return FALSE. (It's
+	 * tempting to allow this case to superusers, if the name is qualified but
+	 * not listed in custom_variable_classes.  That would ease restoring of
+	 * dumps containing ALTER ROLE/DATABASE SET.  However, it's not clear that
+	 * this usage justifies such a loss of error checking. You can always fix
+	 * custom_variable_classes before you restore.)
 	 */
 	gconf = find_option(name, true, WARNING);
 	if (!gconf)
@@ -7487,7 +7489,7 @@ validate_option_array_item(const char *name, const char *value,
 			return false;
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("unrecognized configuration parameter \"%s\"", name)));
+			   errmsg("unrecognized configuration parameter \"%s\"", name)));
 	}
 
 	if (gconf->flags & GUC_CUSTOM_PLACEHOLDER)
@@ -7507,9 +7509,9 @@ validate_option_array_item(const char *name, const char *value,
 
 	/* manual permissions check so we can avoid an error being thrown */
 	if (gconf->context == PGC_USERSET)
-		/* ok */ ;
+		 /* ok */ ;
 	else if (gconf->context == PGC_SUSET && superuser())
-		/* ok */ ;
+		 /* ok */ ;
 	else if (skipIfNoPermissions)
 		return false;
 	/* if a permissions error should be thrown, let set_config_option do it */

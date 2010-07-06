@@ -1,7 +1,7 @@
 /**********************************************************************
  * plpython.c - python as a procedural language for PostgreSQL
  *
- *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.145 2010/06/29 00:18:11 petere Exp $
+ *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.146 2010/07/06 19:19:01 momjian Exp $
  *
  *********************************************************************
  */
@@ -3013,7 +3013,7 @@ PLy_spi_execute_plan(PyObject *ob, PyObject *list, long limit)
 				PG_TRY();
 				{
 					plan->values[j] =
-					    plan->args[j].out.d.func(NULL, &(plan->args[j].out.d), elem);
+						plan->args[j].out.d.func(NULL, &(plan->args[j].out.d), elem);
 				}
 				PG_CATCH();
 				{

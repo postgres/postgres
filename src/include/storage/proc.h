@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/proc.h,v 1.122 2010/05/26 19:52:52 sriggs Exp $
+ * $PostgreSQL: pgsql/src/include/storage/proc.h,v 1.123 2010/07/06 19:19:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -200,7 +200,7 @@ extern bool disable_sig_alarm(bool is_statement_timeout);
 extern void handle_sig_alarm(SIGNAL_ARGS);
 
 extern bool enable_standby_sig_alarm(TimestampTz now,
-									 TimestampTz fin_time, bool deadlock_only);
+						 TimestampTz fin_time, bool deadlock_only);
 extern bool disable_standby_sig_alarm(void);
 extern void handle_standby_sig_alarm(SIGNAL_ARGS);
 

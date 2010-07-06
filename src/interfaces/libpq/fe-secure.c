@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-secure.c,v 1.134 2010/05/26 21:39:27 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-secure.c,v 1.135 2010/07/06 19:19:01 momjian Exp $
  *
  * NOTES
  *
@@ -810,7 +810,7 @@ destroy_ssl_system(void)
  *	Initialize (potentially) per-connection SSL data, namely the
  *	client certificate, private key, and trusted CA certs.
  *
- *	conn->ssl must already be created.  It receives the connection's client
+ *	conn->ssl must already be created.	It receives the connection's client
  *	certificate and private key.  Note however that certificates also get
  *	loaded into the SSL_context object, and are therefore accessible to all
  *	connections in this process.  This should be OK as long as there aren't
@@ -859,8 +859,8 @@ initialize_SSL(PGconn *conn)
 	{
 		/*
 		 * If file is not present, just go on without a client cert; server
-		 * might or might not accept the connection.  Any other error, however,
-		 * is grounds for complaint.
+		 * might or might not accept the connection.  Any other error,
+		 * however, is grounds for complaint.
 		 */
 		if (errno != ENOENT)
 		{
@@ -875,14 +875,15 @@ initialize_SSL(PGconn *conn)
 	{
 		/*
 		 * Cert file exists, so load it.  Since OpenSSL doesn't provide the
-		 * equivalent of "SSL_use_certificate_chain_file", we actually have
-		 * to load the file twice.  The first call loads any extra certs
-		 * after the first one into chain-cert storage associated with the
-		 * SSL_context.  The second call loads the first cert (only) into
-		 * the SSL object, where it will be correctly paired with the private
-		 * key we load below.  We do it this way so that each connection
-		 * understands which subject cert to present, in case different sslcert
-		 * settings are used for different connections in the same process.
+		 * equivalent of "SSL_use_certificate_chain_file", we actually have to
+		 * load the file twice.  The first call loads any extra certs after
+		 * the first one into chain-cert storage associated with the
+		 * SSL_context.  The second call loads the first cert (only) into the
+		 * SSL object, where it will be correctly paired with the private key
+		 * we load below.  We do it this way so that each connection
+		 * understands which subject cert to present, in case different
+		 * sslcert settings are used for different connections in the same
+		 * process.
 		 */
 		if (SSL_CTX_use_certificate_chain_file(SSL_context, fnbuf) != 1)
 		{
@@ -994,7 +995,7 @@ initialize_SSL(PGconn *conn)
 								 * file */
 		}
 		else
-#endif /* USE_SSL_ENGINE */
+#endif   /* USE_SSL_ENGINE */
 		{
 			/* PGSSLKEY is not an engine, treat it as a filename */
 			strncpy(fnbuf, conn->sslkey, sizeof(fnbuf));
@@ -1110,7 +1111,7 @@ initialize_SSL(PGconn *conn)
 	{
 		/*
 		 * stat() failed; assume root file doesn't exist.  If sslmode is
-		 * verify-ca or verify-full, this is an error.  Otherwise, continue
+		 * verify-ca or verify-full, this is an error.	Otherwise, continue
 		 * without performing any server cert verification.
 		 */
 		if (conn->sslmode[0] == 'v')	/* "verify-ca" or "verify-full" */

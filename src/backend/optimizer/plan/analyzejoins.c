@@ -16,7 +16,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/analyzejoins.c,v 1.2 2010/05/23 16:34:38 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/analyzejoins.c,v 1.3 2010/07/06 19:18:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,7 +37,7 @@ static List *remove_rel_from_joinlist(List *joinlist, int relid, int *nremoved);
  *		Check for relations that don't actually need to be joined at all,
  *		and remove them from the query.
  *
- * We are passed the current joinlist and return the updated list.  Other
+ * We are passed the current joinlist and return the updated list.	Other
  * data structures that have to be updated are accessible via "root".
  */
 List *
@@ -46,15 +46,15 @@ remove_useless_joins(PlannerInfo *root, List *joinlist)
 	ListCell   *lc;
 
 	/*
-	 * We are only interested in relations that are left-joined to, so we
-	 * can scan the join_info_list to find them easily.
+	 * We are only interested in relations that are left-joined to, so we can
+	 * scan the join_info_list to find them easily.
 	 */
 restart:
 	foreach(lc, root->join_info_list)
 	{
 		SpecialJoinInfo *sjinfo = (SpecialJoinInfo *) lfirst(lc);
-		int		innerrelid;
-		int		nremoved;
+		int			innerrelid;
+		int			nremoved;
 
 		/* Skip if not removable */
 		if (!join_is_removable(root, sjinfo))
@@ -85,7 +85,7 @@ restart:
 		 * Restart the scan.  This is necessary to ensure we find all
 		 * removable joins independently of ordering of the join_info_list
 		 * (note that removal of attr_needed bits may make a join appear
-		 * removable that did not before).  Also, since we just deleted the
+		 * removable that did not before).	Also, since we just deleted the
 		 * current list cell, we'd have to have some kluge to continue the
 		 * list scan anyway.
 		 */
@@ -328,7 +328,7 @@ remove_rel_from_query(PlannerInfo *root, int relid)
 		if (otherrel == NULL)
 			continue;
 
-		Assert(otherrel->relid == rti);		/* sanity check on array */
+		Assert(otherrel->relid == rti); /* sanity check on array */
 
 		/* no point in processing target rel itself */
 		if (otherrel == rel)
@@ -346,10 +346,10 @@ remove_rel_from_query(PlannerInfo *root, int relid)
 	/*
 	 * Likewise remove references from SpecialJoinInfo data structures.
 	 *
-	 * This is relevant in case the outer join we're deleting is nested
-	 * inside other outer joins: the upper joins' relid sets have to be
-	 * adjusted.  The RHS of the target outer join will be made empty here,
-	 * but that's OK since caller will delete that SpecialJoinInfo entirely.
+	 * This is relevant in case the outer join we're deleting is nested inside
+	 * other outer joins: the upper joins' relid sets have to be adjusted.
+	 * The RHS of the target outer join will be made empty here, but that's OK
+	 * since caller will delete that SpecialJoinInfo entirely.
 	 */
 	foreach(l, root->join_info_list)
 	{
@@ -374,7 +374,7 @@ remove_rel_from_query(PlannerInfo *root, int relid)
 		PlaceHolderInfo *phinfo = (PlaceHolderInfo *) lfirst(l);
 
 		phinfo->ph_eval_at = bms_del_member(phinfo->ph_eval_at, relid);
-		if (bms_is_empty(phinfo->ph_eval_at))		/* oops, belay that */
+		if (bms_is_empty(phinfo->ph_eval_at))	/* oops, belay that */
 			phinfo->ph_eval_at = bms_add_member(phinfo->ph_eval_at, relid);
 
 		phinfo->ph_needed = bms_del_member(phinfo->ph_needed, relid);
@@ -412,7 +412,7 @@ remove_rel_from_joinlist(List *joinlist, int relid, int *nremoved)
 		else if (IsA(jlnode, List))
 		{
 			/* Recurse to handle subproblem */
-			List   *sublist;
+			List	   *sublist;
 
 			sublist = remove_rel_from_joinlist((List *) jlnode,
 											   relid, nremoved);

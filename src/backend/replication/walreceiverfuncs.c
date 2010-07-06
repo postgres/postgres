@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/replication/walreceiverfuncs.c,v 1.6 2010/07/03 20:43:57 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/replication/walreceiverfuncs.c,v 1.7 2010/07/06 19:18:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -211,7 +211,7 @@ RequestXLogStreaming(XLogRecPtr recptr, const char *conninfo)
  * Returns the last+1 byte position that walreceiver has written.
  *
  * Optionally, returns the previous chunk start, that is the first byte
- * written in the most recent walreceiver flush cycle.  Callers not
+ * written in the most recent walreceiver flush cycle.	Callers not
  * interested in that value may pass NULL for latestChunkStart.
  */
 XLogRecPtr

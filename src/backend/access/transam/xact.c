@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.292 2010/06/29 18:44:58 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.293 2010/07/06 19:18:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1057,9 +1057,9 @@ RecordTransactionCommit(void)
 		 * Asynchronous commit case:
 		 *
 		 * This enables possible committed transaction loss in the case of a
-		 * postmaster crash because WAL buffers are left unwritten.
-		 * Ideally we could issue the WAL write without the fsync, but
-		 * some wal_sync_methods do not allow separate write/fsync.
+		 * postmaster crash because WAL buffers are left unwritten. Ideally we
+		 * could issue the WAL write without the fsync, but some
+		 * wal_sync_methods do not allow separate write/fsync.
 		 *
 		 * Report the latest async commit LSN, so that the WAL writer knows to
 		 * flush this commit.
@@ -1354,12 +1354,12 @@ RecordTransactionAbort(bool isSubXact)
 
 	/*
 	 * Report the latest async abort LSN, so that the WAL writer knows to
-	 * flush this abort. There's nothing to be gained by delaying this,
-	 * since WALWriter may as well do this when it can. This is important
-	 * with streaming replication because if we don't flush WAL regularly
-	 * we will find that large aborts leave us with a long backlog for
-	 * when commits occur after the abort, increasing our window of data
-	 * loss should problems occur at that point.
+	 * flush this abort. There's nothing to be gained by delaying this, since
+	 * WALWriter may as well do this when it can. This is important with
+	 * streaming replication because if we don't flush WAL regularly we will
+	 * find that large aborts leave us with a long backlog for when commits
+	 * occur after the abort, increasing our window of data loss should
+	 * problems occur at that point.
 	 */
 	if (!isSubXact)
 		XLogSetAsyncCommitLSN(XactLastRecEnd);

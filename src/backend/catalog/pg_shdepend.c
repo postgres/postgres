@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_shdepend.c,v 1.42 2010/07/03 13:53:13 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_shdepend.c,v 1.43 2010/07/06 19:18:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -391,9 +391,9 @@ getOidListDiff(Oid *list1, int *nlist1, Oid *list2, int *nlist2)
  * and then insert or delete from pg_shdepend as appropiate.
  *
  * Note that we can't just insert all referenced roles blindly during GRANT,
- * because we would end up with duplicate registered dependencies.  We could
+ * because we would end up with duplicate registered dependencies.	We could
  * check for existence of the tuples before inserting, but that seems to be
- * more expensive than what we are doing here.  Likewise we can't just delete
+ * more expensive than what we are doing here.	Likewise we can't just delete
  * blindly during REVOKE, because the user may still have other privileges.
  * It is also possible that REVOKE actually adds dependencies, due to
  * instantiation of a formerly implicit default ACL (although at present,
@@ -401,7 +401,7 @@ getOidListDiff(Oid *list1, int *nlist1, Oid *list2, int *nlist2)
  *
  * NOTE: Both input arrays must be sorted and de-duped.  (Typically they
  * are extracted from an ACL array by aclmembers(), which takes care of
- * both requirements.)  The arrays are pfreed before return.
+ * both requirements.)	The arrays are pfreed before return.
  */
 void
 updateAclDependencies(Oid classId, Oid objectId, int32 objsubId,
@@ -413,8 +413,8 @@ updateAclDependencies(Oid classId, Oid objectId, int32 objsubId,
 	int			i;
 
 	/*
-	 * Remove entries that are common to both lists; those represent
-	 * existing dependencies we don't need to change.
+	 * Remove entries that are common to both lists; those represent existing
+	 * dependencies we don't need to change.
 	 *
 	 * OK to overwrite the inputs since we'll pfree them anyway.
 	 */
@@ -460,7 +460,7 @@ updateAclDependencies(Oid classId, Oid objectId, int32 objsubId,
 				continue;
 
 			shdepDropDependency(sdepRel, classId, objectId, objsubId,
-								false,		/* exact match on objsubId */
+								false,	/* exact match on objsubId */
 								AuthIdRelationId, roleid,
 								SHARED_DEPENDENCY_ACL);
 		}

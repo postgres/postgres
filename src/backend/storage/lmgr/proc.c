@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/proc.c,v 1.220 2010/07/03 20:43:58 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/proc.c,v 1.221 2010/07/06 19:18:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1664,6 +1664,7 @@ enable_standby_sig_alarm(TimestampTz now, TimestampTz fin_time, bool deadlock_on
 		long		secs;
 		int			usecs;
 		struct itimerval timeval;
+
 		TimestampDifference(now, statement_fin_time,
 							&secs, &usecs);
 		if (secs == 0 && usecs == 0)
@@ -1715,15 +1716,15 @@ static bool
 CheckStandbyTimeout(void)
 {
 	TimestampTz now;
-	bool reschedule = false;
+	bool		reschedule = false;
 
 	standby_timeout_active = false;
 
 	now = GetCurrentTimestamp();
 
 	/*
-	 * Reschedule the timer if its not time to wake yet, or if we
-	 * have both timers set and the first one has just been reached.
+	 * Reschedule the timer if its not time to wake yet, or if we have both
+	 * timers set and the first one has just been reached.
 	 */
 	if (now >= statement_fin_time)
 	{
@@ -1731,9 +1732,8 @@ CheckStandbyTimeout(void)
 		{
 			/*
 			 * We're still waiting when we reach deadlock timeout, so send out
-			 * a request to have other backends check themselves for
-			 * deadlock. Then continue waiting until statement_fin_time,
-			 * if that's set.
+			 * a request to have other backends check themselves for deadlock.
+			 * Then continue waiting until statement_fin_time, if that's set.
 			 */
 			SendRecoveryConflictWithBufferPin(PROCSIG_RECOVERY_CONFLICT_STARTUP_DEADLOCK);
 			deadlock_timeout_active = false;
@@ -1764,6 +1764,7 @@ CheckStandbyTimeout(void)
 		long		secs;
 		int			usecs;
 		struct itimerval timeval;
+
 		TimestampDifference(now, statement_fin_time,
 							&secs, &usecs);
 		if (secs == 0 && usecs == 0)

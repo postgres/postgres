@@ -10,7 +10,7 @@
  *	Win32 (NT4 and newer).
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/dirmod.c,v 1.62 2010/04/02 15:21:20 mha Exp $
+ *	  $PostgreSQL: pgsql/src/port/dirmod.c,v 1.63 2010/07/06 19:19:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -211,7 +211,7 @@ typedef struct
 	WORD		PrintNameOffset;
 	WORD		PrintNameLength;
 	WCHAR		PathBuffer[1];
-} REPARSE_JUNCTION_DATA_BUFFER;
+}	REPARSE_JUNCTION_DATA_BUFFER;
 
 #define REPARSE_JUNCTION_DATA_BUFFER_HEADER_SIZE   \
 		FIELD_OFFSET(REPARSE_JUNCTION_DATA_BUFFER, SubstituteNameOffset)

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/fastpath.c,v 1.104 2010/06/30 18:10:23 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/fastpath.c,v 1.105 2010/07/06 19:18:57 momjian Exp $
  *
  * NOTES
  *	  This cruft is the server side of PQfn.
@@ -356,7 +356,7 @@ HandleFunctionRequest(StringInfo msgBuf)
 	if ((fid == F_PG_GET_EXPR || fid == F_PG_GET_EXPR_EXT) && !superuser())
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("argument to pg_get_expr() must come from system catalogs")));
+		errmsg("argument to pg_get_expr() must come from system catalogs")));
 
 	/*
 	 * Prepare function call info block and insert arguments.

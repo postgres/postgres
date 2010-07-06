@@ -27,7 +27,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/src/port/snprintf.c,v 1.35 2008/03/18 01:49:44 tgl Exp $
+ * $PostgreSQL: pgsql/src/port/snprintf.c,v 1.36 2010/07/06 19:19:01 momjian Exp $
  */
 
 #include "c.h"
@@ -108,7 +108,7 @@ typedef struct
 	/* bufend == NULL is for sprintf, where we assume buf is big enough */
 	FILE	   *stream;			/* eventual output destination, or NULL */
 	int			nchars;			/* # chars already sent to stream */
-} PrintfTarget;
+}	PrintfTarget;
 
 /*
  * Info about the type and value of a formatting parameter.  Note that we
@@ -124,7 +124,7 @@ typedef enum
 	ATYPE_LONGLONG,
 	ATYPE_DOUBLE,
 	ATYPE_CHARPTR
-} PrintfArgType;
+}	PrintfArgType;
 
 typedef union
 {
@@ -133,11 +133,11 @@ typedef union
 	int64		ll;
 	double		d;
 	char	   *cptr;
-} PrintfArgValue;
+}	PrintfArgValue;
 
 
-static void flushbuffer(PrintfTarget *target);
-static int	dopr(PrintfTarget *target, const char *format, va_list args);
+static void flushbuffer(PrintfTarget * target);
+static int	dopr(PrintfTarget * target, const char *format, va_list args);
 
 
 int
@@ -257,7 +257,7 @@ pg_printf(const char *fmt,...)
 
 /* call this only when stream is defined */
 static void
-flushbuffer(PrintfTarget *target)
+flushbuffer(PrintfTarget * target)
 {
 	size_t		nc = target->bufptr - target->bufstart;
 
@@ -268,29 +268,29 @@ flushbuffer(PrintfTarget *target)
 
 
 static void fmtstr(char *value, int leftjust, int minlen, int maxwidth,
-	   int pointflag, PrintfTarget *target);
-static void fmtptr(void *value, PrintfTarget *target);
+	   int pointflag, PrintfTarget * target);
+static void fmtptr(void *value, PrintfTarget * target);
 static void fmtint(int64 value, char type, int forcesign,
 	   int leftjust, int minlen, int zpad, int precision, int pointflag,
-	   PrintfTarget *target);
-static void fmtchar(int value, int leftjust, int minlen, PrintfTarget *target);
+	   PrintfTarget * target);
+static void fmtchar(int value, int leftjust, int minlen, PrintfTarget * target);
 static void fmtfloat(double value, char type, int forcesign,
 		 int leftjust, int minlen, int zpad, int precision, int pointflag,
-		 PrintfTarget *target);
-static void dostr(const char *str, int slen, PrintfTarget *target);
-static void dopr_outch(int c, PrintfTarget *target);
+		 PrintfTarget * target);
+static void dostr(const char *str, int slen, PrintfTarget * target);
+static void dopr_outch(int c, PrintfTarget * target);
 static int	adjust_sign(int is_negative, int forcesign, int *signvalue);
 static void adjust_padlen(int minlen, int vallen, int leftjust, int *padlen);
 static void leading_pad(int zpad, int *signvalue, int *padlen,
-			PrintfTarget *target);
-static void trailing_pad(int *padlen, PrintfTarget *target);
+			PrintfTarget * target);
+static void trailing_pad(int *padlen, PrintfTarget * target);
 
 
 /*
  * dopr(): poor man's version of doprintf
  */
 static int
-dopr(PrintfTarget *target, const char *format, va_list args)
+dopr(PrintfTarget * target, const char *format, va_list args)
 {
 	const char *format_start = format;
 	int			ch;
@@ -764,7 +764,7 @@ pg_strnlen(const char *str, size_t maxlen)
 
 static void
 fmtstr(char *value, int leftjust, int minlen, int maxwidth,
-	   int pointflag, PrintfTarget *target)
+	   int pointflag, PrintfTarget * target)
 {
 	int			padlen,
 				vallen;			/* amount to pad */
@@ -792,7 +792,7 @@ fmtstr(char *value, int leftjust, int minlen, int maxwidth,
 }
 
 static void
-fmtptr(void *value, PrintfTarget *target)
+fmtptr(void *value, PrintfTarget * target)
 {
 	int			vallen;
 	char		convert[64];
@@ -806,7 +806,7 @@ fmtptr(void *value, PrintfTarget *target)
 static void
 fmtint(int64 value, char type, int forcesign, int leftjust,
 	   int minlen, int zpad, int precision, int pointflag,
-	   PrintfTarget *target)
+	   PrintfTarget * target)
 {
 	uint64		base;
 	int			dosign;
@@ -883,7 +883,7 @@ fmtint(int64 value, char type, int forcesign, int leftjust,
 }
 
 static void
-fmtchar(int value, int leftjust, int minlen, PrintfTarget *target)
+fmtchar(int value, int leftjust, int minlen, PrintfTarget * target)
 {
 	int			padlen = 0;		/* amount to pad */
 
@@ -903,7 +903,7 @@ fmtchar(int value, int leftjust, int minlen, PrintfTarget *target)
 static void
 fmtfloat(double value, char type, int forcesign, int leftjust,
 		 int minlen, int zpad, int precision, int pointflag,
-		 PrintfTarget *target)
+		 PrintfTarget * target)
 {
 	int			signvalue = 0;
 	int			vallen;
@@ -932,7 +932,7 @@ fmtfloat(double value, char type, int forcesign, int leftjust,
 }
 
 static void
-dostr(const char *str, int slen, PrintfTarget *target)
+dostr(const char *str, int slen, PrintfTarget * target)
 {
 	while (slen > 0)
 	{
@@ -959,7 +959,7 @@ dostr(const char *str, int slen, PrintfTarget *target)
 }
 
 static void
-dopr_outch(int c, PrintfTarget *target)
+dopr_outch(int c, PrintfTarget * target)
 {
 	if (target->bufend != NULL && target->bufptr >= target->bufend)
 	{
@@ -998,7 +998,7 @@ adjust_padlen(int minlen, int vallen, int leftjust, int *padlen)
 
 
 static void
-leading_pad(int zpad, int *signvalue, int *padlen, PrintfTarget *target)
+leading_pad(int zpad, int *signvalue, int *padlen, PrintfTarget * target)
 {
 	if (*padlen > 0 && zpad)
 	{
@@ -1031,7 +1031,7 @@ leading_pad(int zpad, int *signvalue, int *padlen, PrintfTarget *target)
 
 
 static void
-trailing_pad(int *padlen, PrintfTarget *target)
+trailing_pad(int *padlen, PrintfTarget * target)
 {
 	while (*padlen < 0)
 	{

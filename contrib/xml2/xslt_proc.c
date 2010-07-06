@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/xml2/xslt_proc.c,v 1.20 2010/03/03 19:10:22 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/xml2/xslt_proc.c,v 1.21 2010/07/06 19:18:55 momjian Exp $
  *
  * XSLT processing functions (requiring libxslt)
  *
@@ -28,8 +28,7 @@
 #include <libxslt/xsltInternals.h>
 #include <libxslt/transform.h>
 #include <libxslt/xsltutils.h>
-
-#endif /* USE_LIBXSLT */
+#endif   /* USE_LIBXSLT */
 
 
 /* externally accessible functions */
@@ -45,8 +44,7 @@ extern void pgxml_parser_init(void);
 static void parse_params(const char **params, text *paramstr);
 
 #define MAXPARAMS 20			/* must be even, see parse_params() */
-
-#endif /* USE_LIBXSLT */
+#endif   /* USE_LIBXSLT */
 
 
 PG_FUNCTION_INFO_V1(xslt_process);
@@ -130,15 +128,13 @@ xslt_process(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 
 	PG_RETURN_TEXT_P(cstring_to_text_with_len((char *) resstr, reslen));
-
-#else /* !USE_LIBXSLT */
+#else							/* !USE_LIBXSLT */
 
 	ereport(ERROR,
 			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 			 errmsg("xslt_process() is not available without libxslt")));
 	PG_RETURN_NULL();
-
-#endif /* USE_LIBXSLT */
+#endif   /* USE_LIBXSLT */
 }
 
 #ifdef USE_LIBXSLT
@@ -191,4 +187,4 @@ parse_params(const char **params, text *paramstr)
 	params[i] = NULL;
 }
 
-#endif /* USE_LIBXSLT */
+#endif   /* USE_LIBXSLT */

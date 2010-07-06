@@ -19,11 +19,11 @@
  *
  * During hot standby, we also keep a list of XIDs representing transactions
  * that are known to be running in the master (or more precisely, were running
- * as of the current point in the WAL stream).  This list is kept in the
+ * as of the current point in the WAL stream).	This list is kept in the
  * KnownAssignedXids array, and is updated by watching the sequence of
  * arriving XIDs.  This is necessary because if we leave those XIDs out of
  * snapshots taken for standby queries, then they will appear to be already
- * complete, leading to MVCC failures.  Note that in hot standby, the PGPROC
+ * complete, leading to MVCC failures.	Note that in hot standby, the PGPROC
  * array represents standby processes, which by definition are not running
  * transactions that have XIDs.
  *
@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/procarray.c,v 1.71 2010/07/03 21:23:58 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/procarray.c,v 1.72 2010/07/06 19:18:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -71,7 +71,7 @@ typedef struct ProcArrayStruct
 	int			numKnownAssignedXids;	/* currrent # of valid entries */
 	int			tailKnownAssignedXids;	/* index of oldest valid element */
 	int			headKnownAssignedXids;	/* index of newest element, + 1 */
-	slock_t		known_assigned_xids_lck;	/* protects head/tail pointers */
+	slock_t		known_assigned_xids_lck;		/* protects head/tail pointers */
 
 	/*
 	 * Highest subxid that has been removed from KnownAssignedXids array to
@@ -145,17 +145,17 @@ static void DisplayXidCache(void);
 /* Primitives for KnownAssignedXids array handling for standby */
 static void KnownAssignedXidsCompress(bool force);
 static void KnownAssignedXidsAdd(TransactionId from_xid, TransactionId to_xid,
-								 bool exclusive_lock);
+					 bool exclusive_lock);
 static bool KnownAssignedXidsSearch(TransactionId xid, bool remove);
 static bool KnownAssignedXidExists(TransactionId xid);
 static void KnownAssignedXidsRemove(TransactionId xid);
 static void KnownAssignedXidsRemoveTree(TransactionId xid, int nsubxids,
-										TransactionId *subxids);
+							TransactionId *subxids);
 static void KnownAssignedXidsRemovePreceding(TransactionId xid);
-static int KnownAssignedXidsGet(TransactionId *xarray, TransactionId xmax);
+static int	KnownAssignedXidsGet(TransactionId *xarray, TransactionId xmax);
 static int KnownAssignedXidsGetAndSetXmin(TransactionId *xarray,
-										  TransactionId *xmin,
-										  TransactionId xmax);
+							   TransactionId *xmin,
+							   TransactionId xmax);
 static void KnownAssignedXidsDisplay(int trace_level);
 
 /*
@@ -181,9 +181,9 @@ ProcArrayShmemSize(void)
 	 * since we may at times copy the whole of the data structures around. We
 	 * refer to this size as TOTAL_MAX_CACHED_SUBXIDS.
 	 *
-	 * Ideally we'd only create this structure if we were actually doing
-	 * hot standby in the current run, but we don't know that yet at the
-	 * time shared memory is being set up.
+	 * Ideally we'd only create this structure if we were actually doing hot
+	 * standby in the current run, but we don't know that yet at the time
+	 * shared memory is being set up.
 	 */
 #define TOTAL_MAX_CACHED_SUBXIDS \
 	((PGPROC_MAX_CACHED_SUBXIDS + 1) * PROCARRAY_MAXPROCS)
@@ -465,9 +465,9 @@ void
 ProcArrayApplyRecoveryInfo(RunningTransactions running)
 {
 	TransactionId *xids;
-	int	nxids;
+	int			nxids;
 	TransactionId nextXid;
-	int i;
+	int			i;
 
 	Assert(standbyState >= STANDBY_INITIALIZED);
 	Assert(TransactionIdIsValid(running->nextXid));
@@ -510,8 +510,8 @@ ProcArrayApplyRecoveryInfo(RunningTransactions running)
 		else
 			elog(trace_recovery(DEBUG2),
 				 "recovery snapshot waiting for %u oldest active xid on standby is %u",
-					standbySnapshotPendingXmin,
-					running->oldestRunningXid);
+				 standbySnapshotPendingXmin,
+				 running->oldestRunningXid);
 		return;
 	}
 
@@ -523,8 +523,8 @@ ProcArrayApplyRecoveryInfo(RunningTransactions running)
 
 	/*
 	 * Remove all xids except xids later than the snapshot. We don't know
-	 * exactly which ones that is until precisely now, so that is why we
-	 * allow xids to be added only to remove most of them again here.
+	 * exactly which ones that is until precisely now, so that is why we allow
+	 * xids to be added only to remove most of them again here.
 	 */
 	ExpireOldKnownAssignedTransactionIds(running->nextXid);
 	StandbyReleaseOldLocks(running->nextXid);
@@ -536,41 +536,40 @@ ProcArrayApplyRecoveryInfo(RunningTransactions running)
 
 	/*
 	 * Combine the running xact data with already known xids, if any exist.
-	 * KnownAssignedXids is sorted so we cannot just add new xids, we have
-	 * to combine them first, sort them and then re-add to KnownAssignedXids.
+	 * KnownAssignedXids is sorted so we cannot just add new xids, we have to
+	 * combine them first, sort them and then re-add to KnownAssignedXids.
 	 *
-	 * Some of the new xids are top-level xids and some are subtransactions. We
-	 * don't call SubtransSetParent because it doesn't matter yet. If we aren't
-	 * overflowed then all xids will fit in snapshot and so we don't need
-	 * subtrans. If we later overflow, an xid assignment record will add xids
-	 * to subtrans. If RunningXacts is overflowed then we don't have enough
-	 * information to correctly update subtrans anyway.
+	 * Some of the new xids are top-level xids and some are subtransactions.
+	 * We don't call SubtransSetParent because it doesn't matter yet. If we
+	 * aren't overflowed then all xids will fit in snapshot and so we don't
+	 * need subtrans. If we later overflow, an xid assignment record will add
+	 * xids to subtrans. If RunningXacts is overflowed then we don't have
+	 * enough information to correctly update subtrans anyway.
 	 */
 
 	/*
-	 * Allocate a temporary array so we can combine xids. The total
-	 * of both arrays should never normally exceed TOTAL_MAX_CACHED_SUBXIDS.
+	 * Allocate a temporary array so we can combine xids. The total of both
+	 * arrays should never normally exceed TOTAL_MAX_CACHED_SUBXIDS.
 	 */
 	xids = palloc(sizeof(TransactionId) * TOTAL_MAX_CACHED_SUBXIDS);
 
 	/*
-	 * Get the remaining KnownAssignedXids. In most cases there won't
-	 * be any at all since this exists only to catch a theoretical
-	 * race condition.
+	 * Get the remaining KnownAssignedXids. In most cases there won't be any
+	 * at all since this exists only to catch a theoretical race condition.
 	 */
 	nxids = KnownAssignedXidsGet(xids, InvalidTransactionId);
 	if (nxids > 0)
 		KnownAssignedXidsDisplay(trace_recovery(DEBUG3));
 
 	/*
-	 * Now we have a copy of any KnownAssignedXids we can zero the
-	 * array before we re-insertion of combined snapshot.
+	 * Now we have a copy of any KnownAssignedXids we can zero the array
+	 * before we re-insertion of combined snapshot.
 	 */
 	KnownAssignedXidsRemovePreceding(InvalidTransactionId);
 
 	/*
-	 * Add to the temp array any xids which have not already completed,
-	 * taking care not to overflow in extreme cases.
+	 * Add to the temp array any xids which have not already completed, taking
+	 * care not to overflow in extreme cases.
 	 */
 	for (i = 0; i < running->xcnt; i++)
 	{
@@ -597,7 +596,8 @@ ProcArrayApplyRecoveryInfo(RunningTransactions running)
 	if (nxids > 0)
 	{
 		/*
-		 * Sort the array so that we can add them safely into KnownAssignedXids.
+		 * Sort the array so that we can add them safely into
+		 * KnownAssignedXids.
 		 */
 		qsort(xids, nxids, sizeof(TransactionId), xidComparator);
 
@@ -622,23 +622,21 @@ ProcArrayApplyRecoveryInfo(RunningTransactions running)
 	pfree(xids);
 
 	/*
-	 * Now we've got the running xids we need to set the global values
-	 * thare used to track snapshots as they evolve further
+	 * Now we've got the running xids we need to set the global values thare
+	 * used to track snapshots as they evolve further
 	 *
-	 *  * latestCompletedXid which will be the xmax for snapshots
-	 *  * lastOverflowedXid which shows whether snapshots overflow
-	 *  * nextXid
+	 * * latestCompletedXid which will be the xmax for snapshots *
+	 * lastOverflowedXid which shows whether snapshots overflow * nextXid
 	 *
 	 * If the snapshot overflowed, then we still initialise with what we know,
 	 * but the recovery snapshot isn't fully valid yet because we know there
-	 * are some subxids missing.
-	 * We don't know the specific subxids that are missing, so conservatively
-	 * assume the last one is latestObservedXid.  If no missing subxids,
-	 * try to clear lastOverflowedXid.
+	 * are some subxids missing. We don't know the specific subxids that are
+	 * missing, so conservatively assume the last one is latestObservedXid.
+	 * If no missing subxids, try to clear lastOverflowedXid.
 	 *
 	 * If the snapshot didn't overflow it's still possible that an overflow
-	 * occurred in the gap between taking snapshot and logging record, so
-	 * we also need to check if lastOverflowedXid is already ahead of us.
+	 * occurred in the gap between taking snapshot and logging record, so we
+	 * also need to check if lastOverflowedXid is already ahead of us.
 	 */
 	if (running->subxid_overflow)
 	{
@@ -650,7 +648,7 @@ ProcArrayApplyRecoveryInfo(RunningTransactions running)
 			procArray->lastOverflowedXid = latestObservedXid;
 	}
 	else if (TransactionIdFollows(procArray->lastOverflowedXid,
-								latestObservedXid))
+								  latestObservedXid))
 	{
 		standbyState = STANDBY_SNAPSHOT_PENDING;
 
@@ -662,7 +660,7 @@ ProcArrayApplyRecoveryInfo(RunningTransactions running)
 
 		standbySnapshotPendingXmin = InvalidTransactionId;
 		if (TransactionIdFollows(running->oldestRunningXid,
-								  procArray->lastOverflowedXid))
+								 procArray->lastOverflowedXid))
 			procArray->lastOverflowedXid = InvalidTransactionId;
 	}
 
@@ -933,10 +931,10 @@ TransactionIdIsInProgress(TransactionId xid)
 
 		/*
 		 * If the KnownAssignedXids overflowed, we have to check pg_subtrans
-		 * too.  Fetch all xids from KnownAssignedXids that are lower than xid,
-		 * since if xid is a subtransaction its parent will always have a
-		 * lower value.  Note we will collect both main and subXIDs here,
-		 * but there's no help for it.
+		 * too.  Fetch all xids from KnownAssignedXids that are lower than
+		 * xid, since if xid is a subtransaction its parent will always have a
+		 * lower value.  Note we will collect both main and subXIDs here, but
+		 * there's no help for it.
 		 */
 		if (TransactionIdPrecedesOrEquals(xid, procArray->lastOverflowedXid))
 			nxids = KnownAssignedXidsGet(xids, xid);
@@ -1117,15 +1115,16 @@ GetOldestXmin(bool allDbs, bool ignoreVacuum)
 	LWLockRelease(ProcArrayLock);
 
 	/*
-	 * Compute the cutoff XID, being careful not to generate a "permanent" XID.
+	 * Compute the cutoff XID, being careful not to generate a "permanent"
+	 * XID.
 	 *
 	 * vacuum_defer_cleanup_age provides some additional "slop" for the
 	 * benefit of hot standby queries on slave servers.  This is quick and
 	 * dirty, and perhaps not all that useful unless the master has a
-	 * predictable transaction rate, but it's what we've got.  Note that
-	 * we are assuming vacuum_defer_cleanup_age isn't large enough to cause
-	 * wraparound --- so guc.c should limit it to no more than the xidStopLimit
-	 * threshold in varsup.c.
+	 * predictable transaction rate, but it's what we've got.  Note that we
+	 * are assuming vacuum_defer_cleanup_age isn't large enough to cause
+	 * wraparound --- so guc.c should limit it to no more than the
+	 * xidStopLimit threshold in varsup.c.
 	 */
 	result -= vacuum_defer_cleanup_age;
 	if (!TransactionIdIsNormal(result))
@@ -1229,8 +1228,8 @@ GetSnapshotData(Snapshot snapshot)
 
 	/*
 	 * If we're in recovery then snapshot data comes from a different place,
-	 * so decide which route we take before grab the lock. It is possible
-	 * for recovery to end before we finish taking snapshot, and for newly
+	 * so decide which route we take before grab the lock. It is possible for
+	 * recovery to end before we finish taking snapshot, and for newly
 	 * assigned transaction ids to be added to the procarray. Xmax cannot
 	 * change while we hold ProcArrayLock, so those newly added transaction
 	 * ids would be filtered away, so we need not be concerned about them.
@@ -1240,8 +1239,8 @@ GetSnapshotData(Snapshot snapshot)
 	if (!snapshot->takenDuringRecovery)
 	{
 		/*
-		 * Spin over procArray checking xid, xmin, and subxids.  The goal is to
-		 * gather all active xids, find the lowest xmin, and try to record
+		 * Spin over procArray checking xid, xmin, and subxids.  The goal is
+		 * to gather all active xids, find the lowest xmin, and try to record
 		 * subxids. During recovery no xids will be assigned, so all normal
 		 * backends can be ignored, nor are there any VACUUMs running. All
 		 * prepared transaction xids are held in KnownAssignedXids, so these
@@ -1257,7 +1256,7 @@ GetSnapshotData(Snapshot snapshot)
 				continue;
 
 			/* Update globalxmin to be the smallest valid xmin */
-			xid = proc->xmin;		/* fetch just once */
+			xid = proc->xmin;	/* fetch just once */
 			if (TransactionIdIsNormal(xid) &&
 				TransactionIdPrecedes(xid, globalxmin))
 				globalxmin = xid;
@@ -1266,13 +1265,13 @@ GetSnapshotData(Snapshot snapshot)
 			xid = proc->xid;
 
 			/*
-			 * If the transaction has been assigned an xid < xmax we add it to the
-			 * snapshot, and update xmin if necessary.	There's no need to store
-			 * XIDs >= xmax, since we'll treat them as running anyway.  We don't
-			 * bother to examine their subxids either.
+			 * If the transaction has been assigned an xid < xmax we add it to
+			 * the snapshot, and update xmin if necessary.	There's no need to
+			 * store XIDs >= xmax, since we'll treat them as running anyway.
+			 * We don't bother to examine their subxids either.
 			 *
-			 * We don't include our own XID (if any) in the snapshot, but we must
-			 * include it into xmin.
+			 * We don't include our own XID (if any) in the snapshot, but we
+			 * must include it into xmin.
 			 */
 			if (TransactionIdIsNormal(xid))
 			{
@@ -1285,16 +1284,17 @@ GetSnapshotData(Snapshot snapshot)
 			}
 
 			/*
-			 * Save subtransaction XIDs if possible (if we've already overflowed,
-			 * there's no point).  Note that the subxact XIDs must be later than
-			 * their parent, so no need to check them against xmin.  We could
-			 * filter against xmax, but it seems better not to do that much work
-			 * while holding the ProcArrayLock.
+			 * Save subtransaction XIDs if possible (if we've already
+			 * overflowed, there's no point).  Note that the subxact XIDs must
+			 * be later than their parent, so no need to check them against
+			 * xmin.  We could filter against xmax, but it seems better not to
+			 * do that much work while holding the ProcArrayLock.
 			 *
 			 * The other backend can add more subxids concurrently, but cannot
-			 * remove any.	Hence it's important to fetch nxids just once. Should
-			 * be safe to use memcpy, though.  (We needn't worry about missing any
-			 * xids added concurrently, because they must postdate xmax.)
+			 * remove any.	Hence it's important to fetch nxids just once.
+			 * Should be safe to use memcpy, though.  (We needn't worry about
+			 * missing any xids added concurrently, because they must postdate
+			 * xmax.)
 			 *
 			 * Again, our own XIDs are not included in the snapshot.
 			 */
@@ -1805,7 +1805,7 @@ GetCurrentVirtualXIDs(TransactionId limitXmin, bool excludeXmin0,
  * us then the conflict assessment made here would never include the snapshot
  * that is being derived. So we take LW_SHARED on the ProcArray and allow
  * concurrent snapshots when limitXmin is valid. We might think about adding
- *   Assert(limitXmin < lowest(KnownAssignedXids))
+ *	 Assert(limitXmin < lowest(KnownAssignedXids))
  * but that would not be true in the case of FATAL errors lagging in array,
  * but we already know those are bogus anyway, so we skip that test.
  *
@@ -2273,7 +2273,7 @@ DisplayXidCache(void)
  * treated as running by standby transactions, even though they are not in
  * the standby server's PGPROC array.
  *
- * We record all XIDs that we know have been assigned.  That includes all the
+ * We record all XIDs that we know have been assigned.	That includes all the
  * XIDs seen in WAL records, plus all unobserved XIDs that we can deduce have
  * been assigned.  We can deduce the existence of unobserved XIDs because we
  * know XIDs are assigned in sequence, with no gaps.  The KnownAssignedXids
@@ -2282,7 +2282,7 @@ DisplayXidCache(void)
  *
  * During hot standby we do not fret too much about the distinction between
  * top-level XIDs and subtransaction XIDs. We store both together in the
- * KnownAssignedXids list.  In backends, this is copied into snapshots in
+ * KnownAssignedXids list.	In backends, this is copied into snapshots in
  * GetSnapshotData(), taking advantage of the fact that XidInMVCCSnapshot()
  * doesn't care about the distinction either.  Subtransaction XIDs are
  * effectively treated as top-level XIDs and in the typical case pg_subtrans
@@ -2338,7 +2338,7 @@ RecordKnownAssignedTransactionIds(TransactionId xid)
 	Assert(TransactionIdIsValid(xid));
 
 	elog(trace_recovery(DEBUG4), "record known xact %u latestObservedXid %u",
-					xid, latestObservedXid);
+		 xid, latestObservedXid);
 
 	/*
 	 * When a newly observed xid arrives, it is frequently the case that it is
@@ -2350,9 +2350,9 @@ RecordKnownAssignedTransactionIds(TransactionId xid)
 		TransactionId next_expected_xid;
 
 		/*
-		 * Extend clog and subtrans like we do in GetNewTransactionId()
-		 * during normal operation using individual extend steps.
-		 * Typical case requires almost no activity.
+		 * Extend clog and subtrans like we do in GetNewTransactionId() during
+		 * normal operation using individual extend steps. Typical case
+		 * requires almost no activity.
 		 */
 		next_expected_xid = latestObservedXid;
 		TransactionIdAdvance(next_expected_xid);
@@ -2391,7 +2391,7 @@ RecordKnownAssignedTransactionIds(TransactionId xid)
  */
 void
 ExpireTreeKnownAssignedTransactionIds(TransactionId xid, int nsubxids,
-									  TransactionId *subxids, TransactionId max_xid)
+							   TransactionId *subxids, TransactionId max_xid)
 {
 	Assert(standbyState >= STANDBY_INITIALIZED);
 
@@ -2485,14 +2485,14 @@ ExpireOldKnownAssignedTransactionIds(TransactionId xid)
  * must hold shared ProcArrayLock to examine the array.  To remove XIDs from
  * the array, the startup process must hold ProcArrayLock exclusively, for
  * the usual transactional reasons (compare commit/abort of a transaction
- * during normal running).  Compressing unused entries out of the array
+ * during normal running).	Compressing unused entries out of the array
  * likewise requires exclusive lock.  To add XIDs to the array, we just insert
  * them into slots to the right of the head pointer and then advance the head
  * pointer.  This wouldn't require any lock at all, except that on machines
  * with weak memory ordering we need to be careful that other processors
  * see the array element changes before they see the head pointer change.
  * We handle this by using a spinlock to protect reads and writes of the
- * head/tail pointers.  (We could dispense with the spinlock if we were to
+ * head/tail pointers.	(We could dispense with the spinlock if we were to
  * create suitable memory access barrier primitives and use those instead.)
  * The spinlock must be taken to read or write the head/tail pointers unless
  * the caller holds ProcArrayLock exclusively.
@@ -2534,9 +2534,10 @@ KnownAssignedXidsCompress(bool force)
 {
 	/* use volatile pointer to prevent code rearrangement */
 	volatile ProcArrayStruct *pArray = procArray;
-	int	head, tail;
-	int	compress_index;
-	int	i;
+	int			head,
+				tail;
+	int			compress_index;
+	int			i;
 
 	/* no spinlock required since we hold ProcArrayLock exclusively */
 	head = pArray->headKnownAssignedXids;
@@ -2545,16 +2546,16 @@ KnownAssignedXidsCompress(bool force)
 	if (!force)
 	{
 		/*
-		 * If we can choose how much to compress, use a heuristic to
-		 * avoid compressing too often or not often enough.
+		 * If we can choose how much to compress, use a heuristic to avoid
+		 * compressing too often or not often enough.
 		 *
-		 * Heuristic is if we have a large enough current spread and
-		 * less than 50% of the elements are currently in use, then
-		 * compress. This should ensure we compress fairly infrequently.
-		 * We could compress less often though the virtual array would
-		 * spread out more and snapshots would become more expensive.
+		 * Heuristic is if we have a large enough current spread and less than
+		 * 50% of the elements are currently in use, then compress. This
+		 * should ensure we compress fairly infrequently. We could compress
+		 * less often though the virtual array would spread out more and
+		 * snapshots would become more expensive.
 		 */
-		int	nelements = head - tail;
+		int			nelements = head - tail;
 
 		if (nelements < 4 * PROCARRAY_MAXPROCS ||
 			nelements < 2 * pArray->numKnownAssignedXids)
@@ -2562,8 +2563,8 @@ KnownAssignedXidsCompress(bool force)
 	}
 
 	/*
-	 * We compress the array by reading the valid values from tail
-	 * to head, re-aligning data to 0th element.
+	 * We compress the array by reading the valid values from tail to head,
+	 * re-aligning data to 0th element.
 	 */
 	compress_index = 0;
 	for (i = tail; i < head; i++)
@@ -2588,7 +2589,7 @@ KnownAssignedXidsCompress(bool force)
  * If exclusive_lock is true then caller already holds ProcArrayLock in
  * exclusive mode, so we need no extra locking here.  Else caller holds no
  * lock, so we need to be sure we maintain sufficient interlocks against
- * concurrent readers.  (Only the startup process ever calls this, so no need
+ * concurrent readers.	(Only the startup process ever calls this, so no need
  * to worry about concurrent writers.)
  */
 static void
@@ -2597,17 +2598,18 @@ KnownAssignedXidsAdd(TransactionId from_xid, TransactionId to_xid,
 {
 	/* use volatile pointer to prevent code rearrangement */
 	volatile ProcArrayStruct *pArray = procArray;
-	TransactionId	next_xid;
-	int			head, tail;
+	TransactionId next_xid;
+	int			head,
+				tail;
 	int			nxids;
 	int			i;
 
 	Assert(TransactionIdPrecedesOrEquals(from_xid, to_xid));
 
 	/*
-	 * Calculate how many array slots we'll need.  Normally this is cheap;
-	 * in the unusual case where the XIDs cross the wrap point, we do it the
-	 * hard way.
+	 * Calculate how many array slots we'll need.  Normally this is cheap; in
+	 * the unusual case where the XIDs cross the wrap point, we do it the hard
+	 * way.
 	 */
 	if (to_xid >= from_xid)
 		nxids = to_xid - from_xid + 1;
@@ -2623,8 +2625,8 @@ KnownAssignedXidsAdd(TransactionId from_xid, TransactionId to_xid,
 	}
 
 	/*
-	 * Since only the startup process modifies the head/tail pointers,
-	 * we don't need a lock to read them here.
+	 * Since only the startup process modifies the head/tail pointers, we
+	 * don't need a lock to read them here.
 	 */
 	head = pArray->headKnownAssignedXids;
 	tail = pArray->tailKnownAssignedXids;
@@ -2633,9 +2635,9 @@ KnownAssignedXidsAdd(TransactionId from_xid, TransactionId to_xid,
 	Assert(tail >= 0 && tail < pArray->maxKnownAssignedXids);
 
 	/*
-	 * Verify that insertions occur in TransactionId sequence.  Note that
-	 * even if the last existing element is marked invalid, it must still
-	 * have a correctly sequenced XID value.
+	 * Verify that insertions occur in TransactionId sequence.	Note that even
+	 * if the last existing element is marked invalid, it must still have a
+	 * correctly sequenced XID value.
 	 */
 	if (head > tail &&
 		TransactionIdFollowsOrEquals(KnownAssignedXids[head - 1], from_xid))
@@ -2687,8 +2689,8 @@ KnownAssignedXidsAdd(TransactionId from_xid, TransactionId to_xid,
 	 * ensure that other processors see the above array updates before they
 	 * see the head pointer change.
 	 *
-	 * If we're holding ProcArrayLock exclusively, there's no need to take
-	 * the spinlock.
+	 * If we're holding ProcArrayLock exclusively, there's no need to take the
+	 * spinlock.
 	 */
 	if (exclusive_lock)
 		pArray->headKnownAssignedXids = head;
@@ -2714,10 +2716,11 @@ KnownAssignedXidsSearch(TransactionId xid, bool remove)
 {
 	/* use volatile pointer to prevent code rearrangement */
 	volatile ProcArrayStruct *pArray = procArray;
-	int	first, last;
-	int	head;
-	int tail;
-	int	result_index = -1;
+	int			first,
+				last;
+	int			head;
+	int			tail;
+	int			result_index = -1;
 
 	if (remove)
 	{
@@ -2735,15 +2738,15 @@ KnownAssignedXidsSearch(TransactionId xid, bool remove)
 	}
 
 	/*
-	 * Standard binary search.  Note we can ignore the KnownAssignedXidsValid
+	 * Standard binary search.	Note we can ignore the KnownAssignedXidsValid
 	 * array here, since even invalid entries will contain sorted XIDs.
 	 */
 	first = tail;
 	last = head - 1;
 	while (first <= last)
 	{
-		int 			mid_index;
-		TransactionId	mid_xid;
+		int			mid_index;
+		TransactionId mid_xid;
 
 		mid_index = (first + last) / 2;
 		mid_xid = KnownAssignedXids[mid_index];
@@ -2825,12 +2828,12 @@ KnownAssignedXidsRemove(TransactionId xid)
 	/*
 	 * Note: we cannot consider it an error to remove an XID that's not
 	 * present.  We intentionally remove subxact IDs while processing
-	 * XLOG_XACT_ASSIGNMENT, to avoid array overflow.  Then those XIDs
-	 * will be removed again when the top-level xact commits or aborts.
+	 * XLOG_XACT_ASSIGNMENT, to avoid array overflow.  Then those XIDs will be
+	 * removed again when the top-level xact commits or aborts.
 	 *
-	 * It might be possible to track such XIDs to distinguish this case
-	 * from actual errors, but it would be complicated and probably not
-	 * worth it.  So, just ignore the search result.
+	 * It might be possible to track such XIDs to distinguish this case from
+	 * actual errors, but it would be complicated and probably not worth it.
+	 * So, just ignore the search result.
 	 */
 	(void) KnownAssignedXidsSearch(xid, true);
 }
@@ -2845,7 +2848,7 @@ static void
 KnownAssignedXidsRemoveTree(TransactionId xid, int nsubxids,
 							TransactionId *subxids)
 {
-	int 	i;
+	int			i;
 
 	if (TransactionIdIsValid(xid))
 		KnownAssignedXidsRemove(xid);
@@ -2868,8 +2871,10 @@ KnownAssignedXidsRemovePreceding(TransactionId removeXid)
 {
 	/* use volatile pointer to prevent code rearrangement */
 	volatile ProcArrayStruct *pArray = procArray;
-	int				count = 0;
-	int				head, tail, i;
+	int			count = 0;
+	int			head,
+				tail,
+				i;
 
 	if (!TransactionIdIsValid(removeXid))
 	{
@@ -2882,8 +2887,8 @@ KnownAssignedXidsRemovePreceding(TransactionId removeXid)
 	elog(trace_recovery(DEBUG4), "prune KnownAssignedXids to %u", removeXid);
 
 	/*
-	 * Mark entries invalid starting at the tail.  Since array is sorted,
-	 * we can stop as soon as we reach a entry >= removeXid.
+	 * Mark entries invalid starting at the tail.  Since array is sorted, we
+	 * can stop as soon as we reach a entry >= removeXid.
 	 */
 	tail = pArray->tailKnownAssignedXids;
 	head = pArray->headKnownAssignedXids;
@@ -2892,7 +2897,7 @@ KnownAssignedXidsRemovePreceding(TransactionId removeXid)
 	{
 		if (KnownAssignedXidsValid[i])
 		{
-			TransactionId	knownXid = KnownAssignedXids[i];
+			TransactionId knownXid = KnownAssignedXids[i];
 
 			if (TransactionIdFollowsOrEquals(knownXid, removeXid))
 				break;
@@ -2961,15 +2966,16 @@ KnownAssignedXidsGetAndSetXmin(TransactionId *xarray, TransactionId *xmin,
 	/* use volatile pointer to prevent code rearrangement */
 	volatile ProcArrayStruct *pArray = procArray;
 	int			count = 0;
-	int			head, tail;
+	int			head,
+				tail;
 	int			i;
 
 	/*
-	 * Fetch head just once, since it may change while we loop.
-	 * We can stop once we reach the initially seen head, since
-	 * we are certain that an xid cannot enter and then leave the
-	 * array while we hold ProcArrayLock.  We might miss newly-added
-	 * xids, but they should be >= xmax so irrelevant anyway.
+	 * Fetch head just once, since it may change while we loop. We can stop
+	 * once we reach the initially seen head, since we are certain that an xid
+	 * cannot enter and then leave the array while we hold ProcArrayLock.  We
+	 * might miss newly-added xids, but they should be >= xmax so irrelevant
+	 * anyway.
 	 *
 	 * Must take spinlock to ensure we see up-to-date array contents.
 	 */
@@ -3024,9 +3030,11 @@ KnownAssignedXidsDisplay(int trace_level)
 {
 	/* use volatile pointer to prevent code rearrangement */
 	volatile ProcArrayStruct *pArray = procArray;
-	StringInfoData	buf;
-	int				head, tail, i;
-	int				nxids = 0;
+	StringInfoData buf;
+	int			head,
+				tail,
+				i;
+	int			nxids = 0;
 
 	tail = pArray->tailKnownAssignedXids;
 	head = pArray->headKnownAssignedXids;

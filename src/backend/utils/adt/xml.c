@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.97 2010/03/03 17:29:45 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.98 2010/07/06 19:18:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -846,7 +846,7 @@ xml_is_document(xmltype *arg)
  * pg_xml_init --- set up for use of libxml
  *
  * This should be called by each function that is about to use libxml
- * facilities.  It has two responsibilities: verify compatibility with the
+ * facilities.	It has two responsibilities: verify compatibility with the
  * loaded libxml version (done on first call in a session) and establish
  * or re-establish our libxml error handler.  The latter needs to be done
  * anytime we might have passed control to add-on modules (eg libperl) which
@@ -1121,7 +1121,7 @@ static bool
 print_xml_decl(StringInfo buf, const xmlChar *version,
 			   pg_enc encoding, int standalone)
 {
-	pg_xml_init();					/* why is this here? */
+	pg_xml_init();				/* why is this here? */
 
 	if ((version && strcmp((char *) version, PG_XML_DEFAULT_VERSION) != 0)
 		|| (encoding && encoding != PG_UTF8)
@@ -1338,8 +1338,8 @@ xml_ereport(int level, int sqlcode, const char *msg)
 	/*
 	 * It might seem that we should just pass xml_err_buf->data directly to
 	 * errdetail.  However, we want to clean out xml_err_buf before throwing
-	 * error, in case there is another function using libxml further down
-	 * the call stack.
+	 * error, in case there is another function using libxml further down the
+	 * call stack.
 	 */
 	if (xml_err_buf->len > 0)
 	{

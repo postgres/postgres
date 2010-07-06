@@ -4,7 +4,7 @@
  *	server checks and output routines
  *
  *	Copyright (c) 2010, PostgreSQL Global Development Group
- *	$PostgreSQL: pgsql/contrib/pg_upgrade/check.c,v 1.10 2010/07/03 16:33:14 momjian Exp $
+ *	$PostgreSQL: pgsql/contrib/pg_upgrade/check.c,v 1.11 2010/07/06 19:18:55 momjian Exp $
  */
 
 #include "pg_upgrade.h"
@@ -152,8 +152,8 @@ issue_warnings(migratorContext *ctx, char *sequence_script_file_name)
 		{
 			prep_status(ctx, "Adjusting sequences");
 			exec_prog(ctx, true,
-					  SYSTEMQUOTE "\"%s/psql\" --set ON_ERROR_STOP=on --port %d "
-					  "--username \"%s\" -f \"%s\" --dbname template1 >> \"%s\""
+				  SYSTEMQUOTE "\"%s/psql\" --set ON_ERROR_STOP=on --port %d "
+				   "--username \"%s\" -f \"%s\" --dbname template1 >> \"%s\""
 					  SYSTEMQUOTE,
 					  ctx->new.bindir, ctx->new.port, ctx->user,
 					  sequence_script_file_name, ctx->logfile);
@@ -217,7 +217,7 @@ check_cluster_versions(migratorContext *ctx)
 	/* Only current PG version is supported as a target */
 	if (GET_MAJOR_VERSION(ctx->new.major_version) != GET_MAJOR_VERSION(PG_VERSION_NUM))
 		pg_log(ctx, PG_FATAL, "This utility can only upgrade to PostgreSQL version %s.\n",
-				PG_MAJORVERSION);
+			   PG_MAJORVERSION);
 
 	/*
 	 * We can't allow downgrading because we use the target pg_dumpall, and
@@ -375,7 +375,7 @@ check_new_db_is_empty(migratorContext *ctx)
  */
 void
 create_script_for_old_cluster_deletion(migratorContext *ctx,
-										char **deletion_script_file_name)
+									   char **deletion_script_file_name)
 {
 	FILE	   *script = NULL;
 	int			tblnum;
@@ -389,7 +389,7 @@ create_script_for_old_cluster_deletion(migratorContext *ctx,
 
 	if ((script = fopen(*deletion_script_file_name, "w")) == NULL)
 		pg_log(ctx, PG_FATAL, "Could not create necessary file:  %s\n",
-					*deletion_script_file_name);
+			   *deletion_script_file_name);
 
 #ifndef WIN32
 	/* add shebang header */
@@ -420,6 +420,7 @@ create_script_for_old_cluster_deletion(migratorContext *ctx,
 			}
 		}
 		else
+
 			/*
 			 * Simply delete the tablespace directory, which might be ".old"
 			 * or a version-specific subdirectory.
@@ -433,7 +434,7 @@ create_script_for_old_cluster_deletion(migratorContext *ctx,
 #ifndef WIN32
 	if (chmod(*deletion_script_file_name, S_IRWXU) != 0)
 		pg_log(ctx, PG_FATAL, "Could not add execute permission to file:  %s\n",
-				*deletion_script_file_name);
+			   *deletion_script_file_name);
 #endif
 
 	check_ok(ctx);

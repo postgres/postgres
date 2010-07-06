@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/nbtree.h,v 1.134 2010/03/28 09:27:02 sriggs Exp $
+ * $PostgreSQL: pgsql/src/include/access/nbtree.h,v 1.135 2010/07/06 19:19:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -314,9 +314,10 @@ typedef struct xl_btree_split
  */
 typedef struct xl_btree_delete
 {
-	RelFileNode node;		/* RelFileNode of the index */
+	RelFileNode node;			/* RelFileNode of the index */
 	BlockNumber block;
-	RelFileNode hnode;		/* RelFileNode of the heap the index currently points at */
+	RelFileNode hnode;			/* RelFileNode of the heap the index currently
+								 * points at */
 	int			nitems;
 
 	/* TARGET OFFSET NUMBERS FOLLOW AT THE END */
@@ -589,9 +590,9 @@ extern void _bt_relbuf(Relation rel, Buffer buf);
 extern void _bt_pageinit(Page page, Size size);
 extern bool _bt_page_recyclable(Page page);
 extern void _bt_delitems_delete(Relation rel, Buffer buf,
-			 OffsetNumber *itemnos, int nitems, Relation heapRel);
+					OffsetNumber *itemnos, int nitems, Relation heapRel);
 extern void _bt_delitems_vacuum(Relation rel, Buffer buf,
-			 OffsetNumber *itemnos, int nitems, BlockNumber lastBlockVacuumed);
+		   OffsetNumber *itemnos, int nitems, BlockNumber lastBlockVacuumed);
 extern int	_bt_pagedel(Relation rel, Buffer buf, BTStack stack);
 
 /*

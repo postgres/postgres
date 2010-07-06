@@ -4,7 +4,7 @@
  *	relfilenode functions
  *
  *	Copyright (c) 2010, PostgreSQL Global Development Group
- *	$PostgreSQL: pgsql/contrib/pg_upgrade/relfilenode.c,v 1.7 2010/07/03 16:33:14 momjian Exp $
+ *	$PostgreSQL: pgsql/contrib/pg_upgrade/relfilenode.c,v 1.8 2010/07/06 19:18:55 momjian Exp $
  */
 
 #include "pg_upgrade.h"
@@ -21,8 +21,8 @@ static void transfer_relfile(migratorContext *ctx, pageCnvCtx *pageConverter,
 				 const char *newnspname, const char *newrelname);
 
 /* used by scandir(), must be global */
-char     scandir_file_pattern[MAXPGPATH];
-				 
+char		scandir_file_pattern[MAXPGPATH];
+
 /*
  * transfer_all_new_dbs()
  *

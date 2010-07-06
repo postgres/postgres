@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtpage.c,v 1.122 2010/03/28 09:27:01 sriggs Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtpage.c,v 1.123 2010/07/06 19:18:55 momjian Exp $
  *
  *	NOTES
  *	   Postgres btree pages look like ordinary relation pages.	The opaque
@@ -720,7 +720,7 @@ _bt_page_recyclable(Page page)
  */
 void
 _bt_delitems_vacuum(Relation rel, Buffer buf,
-			 OffsetNumber *itemnos, int nitems, BlockNumber lastBlockVacuumed)
+			OffsetNumber *itemnos, int nitems, BlockNumber lastBlockVacuumed)
 {
 	Page		page = BufferGetPage(buf);
 	BTPageOpaque opaque;
@@ -797,7 +797,7 @@ _bt_delitems_vacuum(Relation rel, Buffer buf,
 
 void
 _bt_delitems_delete(Relation rel, Buffer buf,
-			 OffsetNumber *itemnos, int nitems, Relation heapRel)
+					OffsetNumber *itemnos, int nitems, Relation heapRel)
 {
 	Page		page = BufferGetPage(buf);
 	BTPageOpaque opaque;
@@ -847,8 +847,8 @@ _bt_delitems_delete(Relation rel, Buffer buf,
 		rdata[0].next = &(rdata[1]);
 
 		/*
-		 * We need the target-offsets array whether or not we store the
-		 * to allow us to find the latestRemovedXid on a standby server.
+		 * We need the target-offsets array whether or not we store the to
+		 * allow us to find the latestRemovedXid on a standby server.
 		 */
 		rdata[1].data = (char *) itemnos;
 		rdata[1].len = nitems * sizeof(OffsetNumber);

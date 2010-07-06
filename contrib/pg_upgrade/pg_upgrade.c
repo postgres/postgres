@@ -4,7 +4,7 @@
  *	main source file
  *
  *	Copyright (c) 2010, PostgreSQL Global Development Group
- *	$PostgreSQL: pgsql/contrib/pg_upgrade/pg_upgrade.c,v 1.9 2010/07/03 16:33:14 momjian Exp $
+ *	$PostgreSQL: pgsql/contrib/pg_upgrade/pg_upgrade.c,v 1.10 2010/07/06 19:18:55 momjian Exp $
  */
 
 #include "pg_upgrade.h"
@@ -82,7 +82,7 @@ main(int argc, char **argv)
 	 */
 	prep_status(&ctx, "Setting next oid for new cluster");
 	exec_prog(&ctx, true, SYSTEMQUOTE "\"%s/pg_resetxlog\" -o %u \"%s\" > "
-		  DEVNULL SYSTEMQUOTE,
+			  DEVNULL SYSTEMQUOTE,
 		  ctx.new.bindir, ctx.old.controldata.chkpnt_nxtoid, ctx.new.pgdata);
 	check_ok(&ctx);
 
@@ -166,10 +166,10 @@ prepare_new_cluster(migratorContext *ctx)
 	check_ok(ctx);
 
 	/*
-	 * We do freeze after analyze so pg_statistic is also frozen.
-	 * template0 is not frozen here, but data rows were frozen by initdb,
-	 * and we set its datfrozenxid and relfrozenxids later to match the
-	 * new xid counter later.
+	 * We do freeze after analyze so pg_statistic is also frozen. template0 is
+	 * not frozen here, but data rows were frozen by initdb, and we set its
+	 * datfrozenxid and relfrozenxids later to match the new xid counter
+	 * later.
 	 */
 	prep_status(ctx, "Freezing all rows on the new cluster");
 	exec_prog(ctx, true,
@@ -203,7 +203,7 @@ prepare_new_databases(migratorContext *ctx)
 	prep_status(ctx, "Creating databases in the new cluster");
 	exec_prog(ctx, true,
 			  SYSTEMQUOTE "\"%s/psql\" --port %d --username \"%s\" "
-			  "--set ON_ERROR_STOP=on -f \"%s/%s\" --dbname template1 >> \"%s\""
+		   "--set ON_ERROR_STOP=on -f \"%s/%s\" --dbname template1 >> \"%s\""
 			  SYSTEMQUOTE,
 			  ctx->new.bindir, ctx->new.port, ctx->user, ctx->cwd,
 			  GLOBALS_DUMP_FILE, ctx->logfile);
@@ -226,9 +226,9 @@ create_new_objects(migratorContext *ctx)
 	prep_status(ctx, "Restoring database schema to new cluster");
 	exec_prog(ctx, true,
 			  SYSTEMQUOTE "\"%s/psql\" --port %d --username \"%s\" "
-			  "--set ON_ERROR_STOP=on -f \"%s/%s\" --dbname template1 >> \"%s\""
+		   "--set ON_ERROR_STOP=on -f \"%s/%s\" --dbname template1 >> \"%s\""
 			  SYSTEMQUOTE,
-			  ctx->new.bindir, ctx->new.port,  ctx->user, ctx->cwd,
+			  ctx->new.bindir, ctx->new.port, ctx->user, ctx->cwd,
 			  DB_DUMP_FILE, ctx->logfile);
 	check_ok(ctx);
 
@@ -300,7 +300,8 @@ void
 set_frozenxids(migratorContext *ctx)
 {
 	int			dbnum;
-	PGconn	   *conn, *conn_template1;
+	PGconn	   *conn,
+			   *conn_template1;
 	PGresult   *dbres;
 	int			ntups;
 	int			i_datname;
@@ -327,21 +328,21 @@ set_frozenxids(migratorContext *ctx)
 	ntups = PQntuples(dbres);
 	for (dbnum = 0; dbnum < ntups; dbnum++)
 	{
-		char *datname = PQgetvalue(dbres, dbnum, i_datname);
-		char *datallowconn= PQgetvalue(dbres, dbnum, i_datallowconn);
+		char	   *datname = PQgetvalue(dbres, dbnum, i_datname);
+		char	   *datallowconn = PQgetvalue(dbres, dbnum, i_datallowconn);
 
 		/*
-		 *	We must update databases where datallowconn = false, e.g.
-		 *	template0, because autovacuum increments their datfrozenxids and
-		 *	relfrozenxids even if autovacuum is turned off, and even though
-		 *	all the data rows are already frozen  To enable this, we
-		 *	temporarily change datallowconn.
+		 * We must update databases where datallowconn = false, e.g.
+		 * template0, because autovacuum increments their datfrozenxids and
+		 * relfrozenxids even if autovacuum is turned off, and even though all
+		 * the data rows are already frozen  To enable this, we temporarily
+		 * change datallowconn.
 		 */
 		if (strcmp(datallowconn, "f") == 0)
 			PQclear(executeQueryOrDie(ctx, conn_template1,
-								  "UPDATE pg_catalog.pg_database "
-								  "SET	datallowconn = true "
-								  "WHERE datname = '%s'", datname));
+									  "UPDATE pg_catalog.pg_database "
+									  "SET	datallowconn = true "
+									  "WHERE datname = '%s'", datname));
 
 		conn = connectToServer(ctx, datname, CLUSTER_NEW);
 
@@ -357,9 +358,9 @@ set_frozenxids(migratorContext *ctx)
 		/* Reset datallowconn flag */
 		if (strcmp(datallowconn, "f") == 0)
 			PQclear(executeQueryOrDie(ctx, conn_template1,
-								  "UPDATE pg_catalog.pg_database "
-								  "SET	datallowconn = false "
-								  "WHERE datname = '%s'", datname));
+									  "UPDATE pg_catalog.pg_database "
+									  "SET	datallowconn = false "
+									  "WHERE datname = '%s'", datname));
 	}
 
 	PQclear(dbres);

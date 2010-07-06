@@ -4,14 +4,14 @@
  *	tablespace functions
  *
  *	Copyright (c) 2010, PostgreSQL Global Development Group
- *	$PostgreSQL: pgsql/contrib/pg_upgrade/tablespace.c,v 1.5 2010/07/03 16:33:14 momjian Exp $
+ *	$PostgreSQL: pgsql/contrib/pg_upgrade/tablespace.c,v 1.6 2010/07/06 19:18:55 momjian Exp $
  */
 
 #include "pg_upgrade.h"
 
 static void get_tablespace_paths(migratorContext *ctx);
 static void set_tablespace_directory_suffix(migratorContext *ctx,
-							Cluster whichCluster);
+								Cluster whichCluster);
 
 
 void
@@ -52,7 +52,7 @@ get_tablespace_paths(migratorContext *ctx)
 
 	if ((ctx->num_tablespaces = PQntuples(res)) != 0)
 		ctx->tablespaces = (char **) pg_malloc(ctx,
-									ctx->num_tablespaces * sizeof(char *));
+									  ctx->num_tablespaces * sizeof(char *));
 	else
 		ctx->tablespaces = NULL;
 

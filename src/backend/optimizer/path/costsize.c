@@ -59,7 +59,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.217 2010/04/19 00:55:25 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.218 2010/07/06 19:18:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1854,8 +1854,8 @@ cost_mergejoin(MergePath *path, PlannerInfo *root, SpecialJoinInfo *sjinfo)
 		cpu_operator_cost * inner_path_rows * rescanratio;
 
 	/*
-	 * Prefer materializing if it looks cheaper, unless the user has asked
-	 * to suppress materialization.
+	 * Prefer materializing if it looks cheaper, unless the user has asked to
+	 * suppress materialization.
 	 */
 	if (enable_material && mat_inner_cost < bare_inner_cost)
 		path->materialize_inner = true;
@@ -1872,9 +1872,9 @@ cost_mergejoin(MergePath *path, PlannerInfo *root, SpecialJoinInfo *sjinfo)
 	 * selected as the input of a mergejoin, and they don't support
 	 * mark/restore at present.
 	 *
-	 * We don't test the value of enable_material here, because materialization
-	 * is required for correctness in this case, and turning it off does not
-	 * entitle us to deliver an invalid plan.
+	 * We don't test the value of enable_material here, because
+	 * materialization is required for correctness in this case, and turning
+	 * it off does not entitle us to deliver an invalid plan.
 	 */
 	else if (innersortkeys == NIL &&
 			 !ExecSupportsMarkRestore(inner_path->pathtype))
@@ -1887,8 +1887,9 @@ cost_mergejoin(MergePath *path, PlannerInfo *root, SpecialJoinInfo *sjinfo)
 	 * We don't try to adjust the cost estimates for this consideration,
 	 * though.
 	 *
-	 * Since materialization is a performance optimization in this case, rather
-	 * than necessary for correctness, we skip it if enable_material is off.
+	 * Since materialization is a performance optimization in this case,
+	 * rather than necessary for correctness, we skip it if enable_material is
+	 * off.
 	 */
 	else if (enable_material && innersortkeys != NIL &&
 			 relation_byte_size(inner_path_rows, inner_path->parent->width) >

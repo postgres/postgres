@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/print.c,v 1.127 2010/05/09 18:17:47 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/print.c,v 1.128 2010/07/06 19:19:00 momjian Exp $
  */
 #include "postgres_fe.h"
 
@@ -928,14 +928,14 @@ print_aligned_text(const printTableContent *cont, FILE *fout)
 						/* spaces first */
 						fprintf(fout, "%*s", width_wrap[j] - chars_to_output, "");
 						fputnbytes(fout,
-								   (char *) (this_line->ptr + bytes_output[j]),
+								 (char *) (this_line->ptr + bytes_output[j]),
 								   bytes_to_output);
 					}
 					else	/* Left aligned cell */
 					{
 						/* spaces second */
 						fputnbytes(fout,
-								   (char *) (this_line->ptr + bytes_output[j]),
+								 (char *) (this_line->ptr + bytes_output[j]),
 								   bytes_to_output);
 					}
 
@@ -2152,7 +2152,7 @@ printTableAddCell(printTableContent *const content, const char *cell,
 	{
 		if (content->cellmustfree == NULL)
 			content->cellmustfree = pg_local_calloc(
-				content->ncolumns * content->nrows + 1, sizeof(bool));
+					   content->ncolumns * content->nrows + 1, sizeof(bool));
 
 		content->cellmustfree[content->cellsadded] = true;
 	}
@@ -2220,7 +2220,8 @@ printTableCleanup(printTableContent *const content)
 {
 	if (content->cellmustfree)
 	{
-		int i;
+		int			i;
+
 		for (i = 0; i < content->nrows * content->ncolumns; i++)
 		{
 			if (content->cellmustfree[i])

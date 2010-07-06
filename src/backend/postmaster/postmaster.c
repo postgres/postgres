@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.613 2010/06/24 16:40:45 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.614 2010/07/06 19:18:57 momjian Exp $
  *
  * NOTES
  *
@@ -238,7 +238,7 @@ static bool RecoveryError = false;		/* T if WAL recovery failed */
  *
  * When the startup process is ready to start archive recovery, it signals the
  * postmaster, and we switch to PM_RECOVERY state. The background writer is
- * launched, while the startup process continues applying WAL.  If Hot Standby
+ * launched, while the startup process continues applying WAL.	If Hot Standby
  * is enabled, then, after reaching a consistent point in WAL redo, startup
  * process signals us again, and we switch to PM_HOT_STANDBY state and
  * begin accepting connections to perform read-only queries.  When archive
@@ -287,7 +287,7 @@ typedef enum
 
 static PMState pmState = PM_INIT;
 
-static bool ReachedNormalRunning = false;	/* T if we've reached PM_RUN */
+static bool ReachedNormalRunning = false;		/* T if we've reached PM_RUN */
 
 bool		ClientAuthInProgress = false;		/* T during new-client
 												 * authentication */
@@ -385,7 +385,7 @@ typedef struct
 	HANDLE		waitHandle;
 	HANDLE		procHandle;
 	DWORD		procId;
-} win32_deadchild_waitinfo;
+}	win32_deadchild_waitinfo;
 
 HANDLE		PostmasterHandle;
 #endif
@@ -400,7 +400,7 @@ typedef struct
 	SOCKET		origsocket;		/* Original socket value, or PGINVALID_SOCKET
 								 * if not a socket */
 	WSAPROTOCOL_INFO wsainfo;
-} InheritableSocket;
+}	InheritableSocket;
 #else
 typedef int InheritableSocket;
 #endif
@@ -447,15 +447,15 @@ typedef struct
 	char		my_exec_path[MAXPGPATH];
 	char		pkglib_path[MAXPGPATH];
 	char		ExtraOptions[MAXPGPATH];
-} BackendParameters;
+}	BackendParameters;
 
 static void read_backend_variables(char *id, Port *port);
-static void restore_backend_variables(BackendParameters *param, Port *port);
+static void restore_backend_variables(BackendParameters * param, Port *port);
 
 #ifndef WIN32
-static bool save_backend_variables(BackendParameters *param, Port *port);
+static bool save_backend_variables(BackendParameters * param, Port *port);
 #else
-static bool save_backend_variables(BackendParameters *param, Port *port,
+static bool save_backend_variables(BackendParameters * param, Port *port,
 					   HANDLE childProcess, pid_t childPid);
 #endif
 
@@ -1522,7 +1522,7 @@ initMasks(fd_set *rmask)
 
 		if (fd == PGINVALID_SOCKET)
 			break;
-		FD_SET		(fd, rmask);
+		FD_SET(fd, rmask);
 
 		if (fd > maxsock)
 			maxsock = fd;
@@ -2180,6 +2180,7 @@ pmdie(SIGNAL_ARGS)
 				/* and the walwriter too */
 				if (WalWriterPID != 0)
 					signal_child(WalWriterPID, SIGTERM);
+
 				/*
 				 * If we're in recovery, we can't kill the startup process
 				 * right away, because at present doing so does not release
@@ -3033,8 +3034,8 @@ PostmasterStateMachine(void)
 			 * Terminate backup mode to avoid recovery after a clean fast
 			 * shutdown.  Since a backup can only be taken during normal
 			 * running (and not, for example, while running under Hot Standby)
-			 * it only makes sense to do this if we reached normal running.
-			 * If we're still in recovery, the backup file is one we're
+			 * it only makes sense to do this if we reached normal running. If
+			 * we're still in recovery, the backup file is one we're
 			 * recovering *from*, and we must keep it around so that recovery
 			 * restarts from the right place.
 			 */
@@ -3390,13 +3391,13 @@ BackendInitialize(Port *port)
 	{
 		if (remote_port[0])
 			ereport(LOG,
-				(errmsg("connection received: host=%s port=%s",
-					remote_host,
-					remote_port)));
+					(errmsg("connection received: host=%s port=%s",
+							remote_host,
+							remote_port)));
 		else
 			ereport(LOG,
-				(errmsg("connection received: host=%s",
-					remote_host)));
+					(errmsg("connection received: host=%s",
+							remote_host)));
 	}
 
 	/*
@@ -4601,19 +4602,19 @@ extern pgsocket pgStatSock;
 #define read_inheritable_socket(dest, src) (*(dest) = *(src))
 #else
 static bool write_duplicated_handle(HANDLE *dest, HANDLE src, HANDLE child);
-static bool write_inheritable_socket(InheritableSocket *dest, SOCKET src,
+static bool write_inheritable_socket(InheritableSocket * dest, SOCKET src,
 						 pid_t childPid);
-static void read_inheritable_socket(SOCKET *dest, InheritableSocket *src);
+static void read_inheritable_socket(SOCKET * dest, InheritableSocket * src);
 #endif
 
 
 /* Save critical backend variables into the BackendParameters struct */
 #ifndef WIN32
 static bool
-save_backend_variables(BackendParameters *param, Port *port)
+save_backend_variables(BackendParameters * param, Port *port)
 #else
 static bool
-save_backend_variables(BackendParameters *param, Port *port,
+save_backend_variables(BackendParameters * param, Port *port,
 					   HANDLE childProcess, pid_t childPid)
 #endif
 {
@@ -4705,7 +4706,7 @@ write_duplicated_handle(HANDLE *dest, HANDLE src, HANDLE childProcess)
  * straight socket inheritance.
  */
 static bool
-write_inheritable_socket(InheritableSocket *dest, SOCKET src, pid_t childpid)
+write_inheritable_socket(InheritableSocket * dest, SOCKET src, pid_t childpid)
 {
 	dest->origsocket = src;
 	if (src != 0 && src != PGINVALID_SOCKET)
@@ -4726,7 +4727,7 @@ write_inheritable_socket(InheritableSocket *dest, SOCKET src, pid_t childpid)
  * Read a duplicate socket structure back, and get the socket descriptor.
  */
 static void
-read_inheritable_socket(SOCKET *dest, InheritableSocket *src)
+read_inheritable_socket(SOCKET * dest, InheritableSocket * src)
 {
 	SOCKET		s;
 
@@ -4831,7 +4832,7 @@ read_backend_variables(char *id, Port *port)
 
 /* Restore critical backend variables from the BackendParameters struct */
 static void
-restore_backend_variables(BackendParameters *param, Port *port)
+restore_backend_variables(BackendParameters * param, Port *port)
 {
 	memcpy(port, &param->port, sizeof(Port));
 	read_inheritable_socket(&port->sock, &param->portsocket);

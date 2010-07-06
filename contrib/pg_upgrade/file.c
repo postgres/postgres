@@ -4,7 +4,7 @@
  *	file system operations
  *
  *	Copyright (c) 2010, PostgreSQL Global Development Group
- *	$PostgreSQL: pgsql/contrib/pg_upgrade/file.c,v 1.12 2010/07/03 16:33:14 momjian Exp $
+ *	$PostgreSQL: pgsql/contrib/pg_upgrade/file.c,v 1.13 2010/07/06 19:18:55 momjian Exp $
  */
 
 #include "pg_upgrade.h"
@@ -226,7 +226,7 @@ copy_file(const char *srcfile, const char *dstfile, bool force)
  */
 int
 pg_scandir(migratorContext *ctx, const char *dirname,
-		   struct dirent ***namelist,
+		   struct dirent *** namelist,
 		   int (*selector) (const struct dirent *))
 {
 #ifndef HAVE_SCANDIR
@@ -235,13 +235,14 @@ pg_scandir(migratorContext *ctx, const char *dirname,
 	/*
 	 * scandir() is originally from BSD 4.3, which had the third argument as
 	 * non-const. Linux and other C libraries have updated it to use a const.
-	 * http://unix.derkeiler.com/Mailing-Lists/FreeBSD/questions/2005-12/msg00214.html
+	 * http://unix.derkeiler.com/Mailing-Lists/FreeBSD/questions/2005-12/msg002
+	 * 14.html
 	 *
 	 * Here we try to guess which libc's need const, and which don't. The net
 	 * goal here is to try to suppress a compiler warning due to a prototype
 	 * mismatch of const usage. Ideally we would do this via autoconf, but
-	 * autoconf doesn't have a suitable builtin test and it seems overkill
-	 * to add one just to avoid a warning.
+	 * autoconf doesn't have a suitable builtin test and it seems overkill to
+	 * add one just to avoid a warning.
 	 */
 #elif defined(__FreeBSD__) || defined(__bsdi__) || defined(__darwin__) || defined(__OpenBSD__)
 	/* no const */

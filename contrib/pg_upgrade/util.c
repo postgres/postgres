@@ -4,7 +4,7 @@
  *	utility functions
  *
  *	Copyright (c) 2010, PostgreSQL Global Development Group
- *	$PostgreSQL: pgsql/contrib/pg_upgrade/util.c,v 1.4 2010/07/03 16:33:14 momjian Exp $
+ *	$PostgreSQL: pgsql/contrib/pg_upgrade/util.c,v 1.5 2010/07/06 19:18:55 momjian Exp $
  */
 
 #include "pg_upgrade.h"
@@ -156,8 +156,8 @@ quote_identifier(migratorContext *ctx, const char *s)
 int
 get_user_info(migratorContext *ctx, char **user_name)
 {
-	int	user_id;
-	
+	int			user_id;
+
 #ifndef WIN32
 	struct passwd *pw = getpwuid(geteuid());
 

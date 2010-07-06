@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/catcache.c,v 1.152 2010/04/20 23:48:47 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/catcache.c,v 1.153 2010/07/06 19:18:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -994,6 +994,7 @@ IndexScanOK(CatCache *cache, ScanKey cur_skey)
 	switch (cache->id)
 	{
 		case INDEXRELID:
+
 			/*
 			 * Rather than tracking exactly which indexes have to be loaded
 			 * before we can use indexscans (which changes from time to time),
@@ -1006,6 +1007,7 @@ IndexScanOK(CatCache *cache, ScanKey cur_skey)
 
 		case AMOID:
 		case AMNAME:
+
 			/*
 			 * Always do heap scans in pg_am, because it's so small there's
 			 * not much point in an indexscan anyway.  We *must* do this when
@@ -1017,6 +1019,7 @@ IndexScanOK(CatCache *cache, ScanKey cur_skey)
 		case AUTHNAME:
 		case AUTHOID:
 		case AUTHMEMMEMROLE:
+
 			/*
 			 * Protect authentication lookups occurring before relcache has
 			 * collected entries for shared indexes.

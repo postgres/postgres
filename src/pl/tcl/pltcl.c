@@ -2,7 +2,7 @@
  * pltcl.c		- PostgreSQL support for Tcl as
  *				  procedural language (PL)
  *
- *	  $PostgreSQL: pgsql/src/pl/tcl/pltcl.c,v 1.133 2010/05/13 18:29:12 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/tcl/pltcl.c,v 1.134 2010/07/06 19:19:01 momjian Exp $
  *
  **********************************************************************/
 
@@ -462,7 +462,7 @@ pltcl_init_load_unknown(Tcl_Interp *interp)
 	buflen = strlen(pmrelname) + 100;
 	buf = (char *) palloc(buflen);
 	snprintf(buf, buflen,
-			 "select modsrc from %s where modname = 'unknown' order by modseq",
+		   "select modsrc from %s where modname = 'unknown' order by modseq",
 			 pmrelname);
 
 	spi_rc = SPI_execute(buf, false, 0);

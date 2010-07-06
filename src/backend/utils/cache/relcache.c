@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.310 2010/04/20 23:48:47 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.311 2010/07/06 19:18:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1832,7 +1832,7 @@ RelationDestroyRelation(Relation relation)
  *
  *	 NB: when rebuilding, we'd better hold some lock on the relation,
  *	 else the catalog data we need to read could be changing under us.
- *	 Also, a rel to be rebuilt had better have refcnt > 0.  This is because
+ *	 Also, a rel to be rebuilt had better have refcnt > 0.	This is because
  *	 an sinval reset could happen while we're accessing the catalogs, and
  *	 the rel would get blown away underneath us by RelationCacheInvalidate
  *	 if it has zero refcnt.
@@ -1847,8 +1847,8 @@ RelationClearRelation(Relation relation, bool rebuild)
 	Oid			old_reltype = relation->rd_rel->reltype;
 
 	/*
-	 * As per notes above, a rel to be rebuilt MUST have refcnt > 0; while
-	 * of course it would be a bad idea to blow away one with nonzero refcnt.
+	 * As per notes above, a rel to be rebuilt MUST have refcnt > 0; while of
+	 * course it would be a bad idea to blow away one with nonzero refcnt.
 	 */
 	Assert(rebuild ?
 		   !RelationHasReferenceCountZero(relation) :
@@ -2051,9 +2051,9 @@ RelationFlushRelation(Relation relation)
 		 * forget the "new" status of the relation, which is a useful
 		 * optimization to have.  Ditto for the new-relfilenode status.
 		 *
-		 * The rel could have zero refcnt here, so temporarily increment
-		 * the refcnt to ensure it's safe to rebuild it.  We can assume that
-		 * the current transaction has some lock on the rel already.
+		 * The rel could have zero refcnt here, so temporarily increment the
+		 * refcnt to ensure it's safe to rebuild it.  We can assume that the
+		 * current transaction has some lock on the rel already.
 		 */
 		RelationIncrementReferenceCount(relation);
 		RelationClearRelation(relation, true);
@@ -2064,7 +2064,7 @@ RelationFlushRelation(Relation relation)
 		/*
 		 * Pre-existing rels can be dropped from the relcache if not open.
 		 */
-		bool	rebuild = !RelationHasReferenceCountZero(relation);
+		bool		rebuild = !RelationHasReferenceCountZero(relation);
 
 		RelationClearRelation(relation, rebuild);
 	}
@@ -2775,8 +2775,8 @@ RelationCacheInitializePhase2(void)
 	RelationMapInitializePhase2();
 
 	/*
-	 * In bootstrap mode, the shared catalogs aren't there yet anyway,
-	 * so do nothing.
+	 * In bootstrap mode, the shared catalogs aren't there yet anyway, so do
+	 * nothing.
 	 */
 	if (IsBootstrapProcessingMode())
 		return;

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtxlog.c,v 1.68 2010/04/30 06:34:29 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtxlog.c,v 1.69 2010/07/06 19:18:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -568,23 +568,26 @@ static TransactionId
 btree_xlog_delete_get_latestRemovedXid(XLogRecord *record)
 {
 	xl_btree_delete *xlrec = (xl_btree_delete *) XLogRecGetData(record);
-	OffsetNumber 	*unused;
-	Buffer			ibuffer, hbuffer;
-	Page			ipage, hpage;
-	ItemId			iitemid, hitemid;
-	IndexTuple		itup;
+	OffsetNumber *unused;
+	Buffer		ibuffer,
+				hbuffer;
+	Page		ipage,
+				hpage;
+	ItemId		iitemid,
+				hitemid;
+	IndexTuple	itup;
 	HeapTupleHeader htuphdr;
-	BlockNumber 	hblkno;
-	OffsetNumber 	hoffnum;
-	TransactionId	latestRemovedXid = InvalidTransactionId;
-	TransactionId	htupxid = InvalidTransactionId;
-	int i;
+	BlockNumber hblkno;
+	OffsetNumber hoffnum;
+	TransactionId latestRemovedXid = InvalidTransactionId;
+	TransactionId htupxid = InvalidTransactionId;
+	int			i;
 
 	/*
-	 * If there's nothing running on the standby we don't need to derive
-	 * a full latestRemovedXid value, so use a fast path out of here.
-	 * That returns InvalidTransactionId, and so will conflict with
-	 * users, but since we just worked out that's zero people, its OK.
+	 * If there's nothing running on the standby we don't need to derive a
+	 * full latestRemovedXid value, so use a fast path out of here. That
+	 * returns InvalidTransactionId, and so will conflict with users, but
+	 * since we just worked out that's zero people, its OK.
 	 */
 	if (CountDBBackends(InvalidOid) == 0)
 		return latestRemovedXid;
@@ -598,8 +601,8 @@ btree_xlog_delete_get_latestRemovedXid(XLogRecord *record)
 	ipage = (Page) BufferGetPage(ibuffer);
 
 	/*
-	 * Loop through the deleted index items to obtain the TransactionId
-	 * from the heap items they point to.
+	 * Loop through the deleted index items to obtain the TransactionId from
+	 * the heap items they point to.
 	 */
 	unused = (OffsetNumber *) ((char *) xlrec + SizeOfBtreeDelete);
 
@@ -624,8 +627,8 @@ btree_xlog_delete_get_latestRemovedXid(XLogRecord *record)
 		hpage = (Page) BufferGetPage(hbuffer);
 
 		/*
-		 * Look up the heap tuple header that the index tuple points at
-		 * by using the heap node supplied with the xlrec. We can't use
+		 * Look up the heap tuple header that the index tuple points at by
+		 * using the heap node supplied with the xlrec. We can't use
 		 * heap_fetch, since it uses ReadBuffer rather than XLogReadBuffer.
 		 * Note that we are not looking at tuple data here, just headers.
 		 */
@@ -651,8 +654,8 @@ btree_xlog_delete_get_latestRemovedXid(XLogRecord *record)
 			htuphdr = (HeapTupleHeader) PageGetItem(hpage, hitemid);
 
 			/*
-			 * Get the heap tuple's xmin/xmax and ratchet up the latestRemovedXid.
-			 * No need to consider xvac values here.
+			 * Get the heap tuple's xmin/xmax and ratchet up the
+			 * latestRemovedXid. No need to consider xvac values here.
 			 */
 			htupxid = HeapTupleHeaderGetXmin(htuphdr);
 			if (TransactionIdFollows(htupxid, latestRemovedXid))
@@ -667,7 +670,8 @@ btree_xlog_delete_get_latestRemovedXid(XLogRecord *record)
 			/*
 			 * Conjecture: if hitemid is dead then it had xids before the xids
 			 * marked on LP_NORMAL items. So we just ignore this item and move
-			 * onto the next, for the purposes of calculating latestRemovedxids.
+			 * onto the next, for the purposes of calculating
+			 * latestRemovedxids.
 			 */
 		}
 		else
@@ -679,13 +683,12 @@ btree_xlog_delete_get_latestRemovedXid(XLogRecord *record)
 	UnlockReleaseBuffer(ibuffer);
 
 	/*
-	 * Note that if all heap tuples were LP_DEAD then we will be
-	 * returning InvalidTransactionId here. That can happen if we are
-	 * re-replaying this record type, though that will be before the
-	 * consistency point and will not cause problems. It should
-	 * happen very rarely after the consistency point, though note
-	 * that we can't tell the difference between this and the fast
-	 * path exit above. May need to change that in future.
+	 * Note that if all heap tuples were LP_DEAD then we will be returning
+	 * InvalidTransactionId here. That can happen if we are re-replaying this
+	 * record type, though that will be before the consistency point and will
+	 * not cause problems. It should happen very rarely after the consistency
+	 * point, though note that we can't tell the difference between this and
+	 * the fast path exit above. May need to change that in future.
 	 */
 	return latestRemovedXid;
 }
@@ -954,6 +957,7 @@ btree_redo(XLogRecPtr lsn, XLogRecord *record)
 		switch (info)
 		{
 			case XLOG_BTREE_DELETE:
+
 				/*
 				 * Btree delete records can conflict with standby queries. You
 				 * might think that vacuum records would conflict as well, but
@@ -972,6 +976,7 @@ btree_redo(XLogRecPtr lsn, XLogRecord *record)
 				break;
 
 			case XLOG_BTREE_REUSE_PAGE:
+
 				/*
 				 * Btree reuse page records exist to provide a conflict point
 				 * when we reuse pages in the index via the FSM. That's all it
@@ -1143,7 +1148,7 @@ btree_desc(StringInfo buf, uint8 xl_info, char *rec)
 				xl_btree_delete *xlrec = (xl_btree_delete *) rec;
 
 				appendStringInfo(buf, "delete: index %u/%u/%u; iblk %u, heap %u/%u/%u;",
-								 xlrec->node.spcNode, xlrec->node.dbNode, xlrec->node.relNode,
+				xlrec->node.spcNode, xlrec->node.dbNode, xlrec->node.relNode,
 								 xlrec->block,
 								 xlrec->hnode.spcNode, xlrec->hnode.dbNode, xlrec->hnode.relNode);
 				break;
@@ -1176,7 +1181,7 @@ btree_desc(StringInfo buf, uint8 xl_info, char *rec)
 
 				appendStringInfo(buf, "reuse_page: rel %u/%u/%u; latestRemovedXid %u",
 								 xlrec->node.spcNode, xlrec->node.dbNode,
-								 xlrec->node.relNode, xlrec->latestRemovedXid);
+							   xlrec->node.relNode, xlrec->latestRemovedXid);
 				break;
 			}
 		default:

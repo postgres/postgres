@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/portalmem.c,v 1.119 2010/07/05 09:27:17 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/portalmem.c,v 1.120 2010/07/06 19:18:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -775,9 +775,9 @@ AtCleanup_Portals(void)
 		}
 
 		/*
-		 * If a portal is still pinned, forcibly unpin it. PortalDrop will
-		 * not let us drop the portal otherwise. Whoever pinned the portal
-		 * was interrupted by the abort too and won't try to use it anymore.
+		 * If a portal is still pinned, forcibly unpin it. PortalDrop will not
+		 * let us drop the portal otherwise. Whoever pinned the portal was
+		 * interrupted by the abort too and won't try to use it anymore.
 		 */
 		if (portal->portalPinned)
 			portal->portalPinned = false;

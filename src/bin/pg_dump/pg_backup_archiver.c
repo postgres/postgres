@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.186 2010/06/28 02:07:02 tgl Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.187 2010/07/06 19:18:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2989,8 +2989,8 @@ ReadHead(ArchiveHandle *AH)
 	/*
 	 * If we haven't already read the header, do so.
 	 *
-	 * NB: this code must agree with _discoverArchiveFormat().  Maybe find
-	 * a way to unify the cases?
+	 * NB: this code must agree with _discoverArchiveFormat().	Maybe find a
+	 * way to unify the cases?
 	 */
 	if (!AH->readHeader)
 	{
@@ -3085,8 +3085,8 @@ checkSeek(FILE *fp)
 	pgoff_t		tpos;
 
 	/*
-	 * If pgoff_t is wider than long, we must have "real" fseeko and not
-	 * an emulation using fseek.  Otherwise report no seek capability.
+	 * If pgoff_t is wider than long, we must have "real" fseeko and not an
+	 * emulation using fseek.  Otherwise report no seek capability.
 	 */
 #ifndef HAVE_FSEEKO
 	if (sizeof(pgoff_t) > sizeof(long))
@@ -3100,7 +3100,7 @@ checkSeek(FILE *fp)
 		return false;
 
 	/*
-	 * Check that fseeko(SEEK_SET) works, too.  NB: we used to try to test
+	 * Check that fseeko(SEEK_SET) works, too.	NB: we used to try to test
 	 * this with fseeko(fp, 0, SEEK_CUR).  But some platforms treat that as a
 	 * successful no-op even on files that are otherwise unseekable.
 	 */

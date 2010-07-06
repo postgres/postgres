@@ -5,7 +5,7 @@
  * to contain some useful information. Mechanism differs wildly across
  * platforms.
  *
- * $PostgreSQL: pgsql/src/backend/utils/misc/ps_status.c,v 1.41 2010/05/27 19:19:38 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/misc/ps_status.c,v 1.42 2010/07/06 19:18:59 momjian Exp $
  *
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
  * various details abducted from various places
@@ -94,7 +94,7 @@ static size_t ps_buffer_size;	/* space determined at run time */
 static size_t last_status_len;	/* use to minimize length of clobber */
 #endif   /* PS_USE_CLOBBER_ARGV */
 
-static size_t ps_buffer_cur_len;		/* nominal strlen(ps_buffer) */
+static size_t ps_buffer_cur_len;	/* nominal strlen(ps_buffer) */
 
 static size_t ps_buffer_fixed_size;		/* size of the constant prefix */
 

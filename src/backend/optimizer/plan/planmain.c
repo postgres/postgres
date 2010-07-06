@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planmain.c,v 1.118 2010/03/28 22:59:33 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planmain.c,v 1.119 2010/07/06 19:18:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -224,7 +224,7 @@ query_planner(PlannerInfo *root, List *tlist,
 	fix_placeholder_eval_levels(root);
 
 	/*
-	 * Remove any useless outer joins.  Ideally this would be done during
+	 * Remove any useless outer joins.	Ideally this would be done during
 	 * jointree preprocessing, but the necessary information isn't available
 	 * until we've built baserel data structures and classified qual clauses.
 	 */

@@ -4,7 +4,7 @@
  * A simple benchmark program for PostgreSQL
  * Originally written by Tatsuo Ishii and enhanced by many contributors.
  *
- * $PostgreSQL: pgsql/contrib/pgbench/pgbench.c,v 1.98 2010/03/23 01:29:22 itagaki Exp $
+ * $PostgreSQL: pgsql/contrib/pgbench/pgbench.c,v 1.99 2010/07/06 19:18:55 momjian Exp $
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
  * ALL RIGHTS RESERVED;
  *
@@ -2161,7 +2161,7 @@ threadRun(void *arg)
 	TState	   *thread = (TState *) arg;
 	CState	   *state = thread->state;
 	TResult    *result;
-	FILE	   *logfile = NULL;		/* per-thread log file */
+	FILE	   *logfile = NULL; /* per-thread log file */
 	instr_time	start,
 				end;
 	int			nstate = thread->nstate;
@@ -2273,7 +2273,7 @@ threadRun(void *arg)
 				goto done;
 			}
 
-			FD_SET		(sock, &input_mask);
+			FD_SET(sock, &input_mask);
 
 			if (maxsock < sock)
 				maxsock = sock;
@@ -2407,8 +2407,8 @@ pthread_create(pthread_t *thread,
 
 	/*
 	 * Set a different random seed in each child process.  Otherwise they all
-	 * inherit the parent's state and generate the same "random" sequence.
-	 * (In the threaded case, the different threads will obtain subsets of the
+	 * inherit the parent's state and generate the same "random" sequence. (In
+	 * the threaded case, the different threads will obtain subsets of the
 	 * output of a single random() sequence, which should be okay for our
 	 * purposes.)
 	 */
@@ -2484,7 +2484,7 @@ typedef struct win32_pthread
 	void	   *(*routine) (void *);
 	void	   *arg;
 	void	   *result;
-} win32_pthread;
+}	win32_pthread;
 
 static unsigned __stdcall
 win32_pthread_run(void *arg)

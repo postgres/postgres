@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.220 2010/05/21 17:37:44 rhaas Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.221 2010/07/06 19:18:59 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "command.h"
@@ -659,7 +659,7 @@ exec_command(const char *cmd,
 			len = strlen(opt);
 			while (len > 0 &&
 				   (isspace((unsigned char) opt[len - 1])
-						|| opt[len - 1] == ';'))
+					|| opt[len - 1] == ';'))
 				opt[--len] = '\0';
 		}
 

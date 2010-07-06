@@ -5,7 +5,7 @@
  *
  * Portions Copyright (c) 2010-2010, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/replication/walprotocol.h,v 1.1 2010/06/03 22:17:32 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/replication/walprotocol.h,v 1.2 2010/07/06 19:19:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,11 +36,11 @@ typedef struct
 	XLogRecPtr	walEnd;
 
 	/* Sender's system clock at the time of transmission */
-	TimestampTz	sendTime;
+	TimestampTz sendTime;
 } WalDataMessageHeader;
 
 /*
- * Maximum data payload in a WAL data message.  Must be >= XLOG_BLCKSZ.
+ * Maximum data payload in a WAL data message.	Must be >= XLOG_BLCKSZ.
  *
  * We don't have a good idea of what a good value would be; there's some
  * overhead per message in both walsender and walreceiver, but on the other

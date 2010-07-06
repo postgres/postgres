@@ -4,7 +4,7 @@
  *	options functions
  *
  *	Copyright (c) 2010, PostgreSQL Global Development Group
- *	$PostgreSQL: pgsql/contrib/pg_upgrade/option.c,v 1.11 2010/07/03 16:33:14 momjian Exp $
+ *	$PostgreSQL: pgsql/contrib/pg_upgrade/option.c,v 1.12 2010/07/06 19:18:55 momjian Exp $
  */
 
 #include "pg_upgrade.h"
@@ -52,7 +52,7 @@ parseCommandLine(migratorContext *ctx, int argc, char *argv[])
 	int			option;			/* Command line option */
 	int			optindex = 0;	/* used by getopt_long */
 	int			user_id;
-	
+
 	if (getenv("PGUSER"))
 	{
 		pg_free(ctx->user);
@@ -68,7 +68,7 @@ parseCommandLine(migratorContext *ctx, int argc, char *argv[])
 
 	/* user lookup and 'root' test must be split because of usage() */
 	user_id = get_user_info(ctx, &ctx->user);
-	
+
 	if (argc > 1)
 	{
 		if (strcmp(argv[1], "--help") == 0 || strcmp(argv[1], "-h") == 0 ||
@@ -303,7 +303,7 @@ validateDirectoryOption(migratorContext *ctx, char **dirpath,
 	if ((*dirpath)[strlen(*dirpath) - 1] == '/')
 #else
 	if ((*dirpath)[strlen(*dirpath) - 1] == '/' ||
-	    (*dirpath)[strlen(*dirpath) - 1] == '\\')
+		(*dirpath)[strlen(*dirpath) - 1] == '\\')
 #endif
 		(*dirpath)[strlen(*dirpath) - 1] = 0;
 }

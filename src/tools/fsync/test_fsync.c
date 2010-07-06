@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/src/tools/fsync/test_fsync.c,v 1.29 2010/07/04 13:42:51 momjian Exp $
+ * $PostgreSQL: pgsql/src/tools/fsync/test_fsync.c,v 1.30 2010/07/06 19:19:02 momjian Exp $
  *
  *
  *	test_fsync.c
@@ -34,7 +34,7 @@
 
 #define LABEL_FORMAT	"\t%-30s"
 
-int loops = 10000;
+int			loops = 10000;
 
 void		die(char *str);
 void		print_elapse(struct timeval start_t, struct timeval stop_t);
@@ -315,7 +315,7 @@ main(int argc, char *argv[])
 	 * Fsync another file descriptor?
 	 */
 	printf("\nTest if fsync on non-write file descriptor is honored:\n");
-    printf("(If the times are similar, fsync() can sync data written\n");
+	printf("(If the times are similar, fsync() can sync data written\n");
 	printf("on a different descriptor.)\n");
 
 	/* write, fsync, close */
@@ -368,11 +368,11 @@ main(int argc, char *argv[])
 void
 print_elapse(struct timeval start_t, struct timeval stop_t)
 {
-	double total_time = (stop_t.tv_sec - start_t.tv_sec) +
+	double		total_time = (stop_t.tv_sec - start_t.tv_sec) +
 	/* usec subtraction might be negative, e.g. 5.4 - 4.8 */
-				 (stop_t.tv_usec - start_t.tv_usec) * 0.000001;
-	double per_second = loops / total_time;
-	
+	(stop_t.tv_usec - start_t.tv_usec) * 0.000001;
+	double		per_second = loops / total_time;
+
 	printf("%9.3f/second\n", per_second);
 }
 

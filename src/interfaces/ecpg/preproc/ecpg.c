@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.c,v 1.115 2010/04/03 19:30:49 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.c,v 1.116 2010/07/06 19:19:00 momjian Exp $ */
 
 /* Main for ecpg, the PostgreSQL embedded SQL precompiler. */
 /* Copyright (c) 1996-2010, PostgreSQL Global Development Group */
@@ -469,6 +469,7 @@ main(int argc, char *const argv[])
 					fclose(yyin);
 				if (out_option == 0 && yyout != stdout)
 					fclose(yyout);
+
 				/*
 				 * If there was an error, delete the output file.
 				 */

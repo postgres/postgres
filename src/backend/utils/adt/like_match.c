@@ -19,7 +19,7 @@
  * Copyright (c) 1996-2010, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	$PostgreSQL: pgsql/src/backend/utils/adt/like_match.c,v 1.29 2010/05/28 18:18:19 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/utils/adt/like_match.c,v 1.30 2010/07/06 19:18:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -116,10 +116,10 @@ MatchText(char *t, int tlen, char *p, int plen)
 			 * If there are wildcards immediately following the %, we can skip
 			 * over them first, using the idea that any sequence of N _'s and
 			 * one or more %'s is equivalent to N _'s and one % (ie, it will
-			 * match any sequence of at least N text characters).  In this
-			 * way we will always run the recursive search loop using a
-			 * pattern fragment that begins with a literal character-to-match,
-			 * thereby not recursing more than we have to.
+			 * match any sequence of at least N text characters).  In this way
+			 * we will always run the recursive search loop using a pattern
+			 * fragment that begins with a literal character-to-match, thereby
+			 * not recursing more than we have to.
 			 */
 			NextByte(p, plen);
 
@@ -173,7 +173,7 @@ MatchText(char *t, int tlen, char *p, int plen)
 					int			matched = MatchText(t, tlen, p, plen);
 
 					if (matched != LIKE_FALSE)
-						return matched;		/* TRUE or ABORT */
+						return matched; /* TRUE or ABORT */
 				}
 
 				NextChar(t, tlen);

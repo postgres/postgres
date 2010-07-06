@@ -19,7 +19,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_custom.c,v 1.46 2010/06/28 02:07:02 tgl Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_custom.c,v 1.47 2010/07/06 19:18:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -448,9 +448,9 @@ _PrintTocData(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt)
 	if (!ctx->hasSeek || tctx->dataState == K_OFFSET_POS_NOT_SET)
 	{
 		/*
-		 * We cannot seek directly to the desired block.  Instead, skip
-		 * over block headers until we find the one we want.  This could
-		 * fail if we are asked to restore items out-of-order.
+		 * We cannot seek directly to the desired block.  Instead, skip over
+		 * block headers until we find the one we want.  This could fail if we
+		 * are asked to restore items out-of-order.
 		 */
 		_readBlockHeader(AH, &blkType, &id);
 
@@ -496,9 +496,9 @@ _PrintTocData(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt)
 		else if (!ctx->hasSeek)
 			die_horribly(AH, modulename, "could not find block ID %d in archive -- "
 						 "possibly due to out-of-order restore request, "
-						 "which cannot be handled due to non-seekable input file\n",
+				  "which cannot be handled due to non-seekable input file\n",
 						 te->dumpId);
-		else					/* huh, the dataPos led us to EOF? */
+		else	/* huh, the dataPos led us to EOF? */
 			die_horribly(AH, modulename, "could not find block ID %d in archive -- "
 						 "possibly corrupt archive\n",
 						 te->dumpId);
@@ -836,9 +836,9 @@ _CloseArchive(ArchiveHandle *AH)
 
 		/*
 		 * If possible, re-write the TOC in order to update the data offset
-		 * information.  This is not essential, as pg_restore can cope in
-		 * most cases without it; but it can make pg_restore significantly
-		 * faster in some situations (especially parallel restore).
+		 * information.  This is not essential, as pg_restore can cope in most
+		 * cases without it; but it can make pg_restore significantly faster
+		 * in some situations (especially parallel restore).
 		 */
 		if (ctx->hasSeek &&
 			fseeko(AH->FH, tpos, SEEK_SET) == 0)

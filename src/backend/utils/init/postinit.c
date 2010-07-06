@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/init/postinit.c,v 1.212 2010/04/26 10:52:00 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/init/postinit.c,v 1.213 2010/07/06 19:18:58 momjian Exp $
  *
  *
  *-------------------------------------------------------------------------
@@ -218,21 +218,22 @@ PerformAuthentication(Port *port)
 		elog(FATAL, "could not disable timer for authorization timeout");
 
 	/*
-	 * Log connection for streaming replication even if Log_connections disabled.
+	 * Log connection for streaming replication even if Log_connections
+	 * disabled.
 	 */
 	if (am_walsender)
 	{
 		if (port->remote_port[0])
 			ereport(LOG,
-				(errmsg("replication connection authorized: user=%s host=%s port=%s",
-					port->user_name,
-					port->remote_host,
-					port->remote_port)));
+					(errmsg("replication connection authorized: user=%s host=%s port=%s",
+							port->user_name,
+							port->remote_host,
+							port->remote_port)));
 		else
 			ereport(LOG,
 				(errmsg("replication connection authorized: user=%s host=%s",
-					port->user_name,
-					port->remote_host)));
+						port->user_name,
+						port->remote_host)));
 	}
 	else if (Log_connections)
 		ereport(LOG,
@@ -515,8 +516,8 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 	if (IsUnderPostmaster)
 	{
 		/*
-		 * The postmaster already started the XLOG machinery, but we need
-		 * to call InitXLOGAccess(), if the system isn't in hot-standby mode.
+		 * The postmaster already started the XLOG machinery, but we need to
+		 * call InitXLOGAccess(), if the system isn't in hot-standby mode.
 		 * This is handled by calling RecoveryInProgress and ignoring the
 		 * result.
 		 */
@@ -525,9 +526,9 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 	else
 	{
 		/*
-		 * We are either a bootstrap process or a standalone backend.
-		 * Either way, start up the XLOG machinery, and register to have it
-		 * closed down at exit.
+		 * We are either a bootstrap process or a standalone backend. Either
+		 * way, start up the XLOG machinery, and register to have it closed
+		 * down at exit.
 		 */
 		StartupXLOG();
 		on_shmem_exit(ShutdownXLOG, 0);
@@ -618,8 +619,8 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 	}
 
 	/*
-	 * If we're trying to shut down, only superusers can connect, and
-	 * new replication connections are not allowed.
+	 * If we're trying to shut down, only superusers can connect, and new
+	 * replication connections are not allowed.
 	 */
 	if ((!am_superuser || am_walsender) &&
 		MyProcPort != NULL &&
@@ -628,18 +629,18 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 		if (am_walsender)
 			ereport(FATAL,
 					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-		     	errmsg("new replication connections are not allowed during database shutdown")));
+					 errmsg("new replication connections are not allowed during database shutdown")));
 		else
 			ereport(FATAL,
 					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				errmsg("must be superuser to connect during database shutdown")));
+			errmsg("must be superuser to connect during database shutdown")));
 	}
 
 	/*
-	 * The last few connections slots are reserved for superusers.
-	 * Although replication connections currently require superuser
-	 * privileges, we don't allow them to consume the reserved slots,
-	 * which are intended for interactive use.
+	 * The last few connections slots are reserved for superusers. Although
+	 * replication connections currently require superuser privileges, we
+	 * don't allow them to consume the reserved slots, which are intended for
+	 * interactive use.
 	 */
 	if ((!am_superuser || am_walsender) &&
 		ReservedBackends > 0 &&

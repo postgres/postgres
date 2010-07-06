@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/replication/libpqwalreceiver/libpqwalreceiver.c,v 1.11 2010/06/11 10:13:09 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/replication/libpqwalreceiver/libpqwalreceiver.c,v 1.12 2010/07/06 19:18:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -86,9 +86,9 @@ libpqrcv_connect(char *conninfo, XLogRecPtr startpoint)
 	char		cmd[64];
 
 	/*
-	 * Connect using deliberately undocumented parameter: replication.
-	 * The database name is ignored by the server in replication mode, but
-	 * specify "replication" for .pgpass lookup.
+	 * Connect using deliberately undocumented parameter: replication. The
+	 * database name is ignored by the server in replication mode, but specify
+	 * "replication" for .pgpass lookup.
 	 */
 	snprintf(conninfo_repl, sizeof(conninfo_repl),
 			 "%s dbname=replication replication=true",
@@ -168,7 +168,7 @@ libpqrcv_connect(char *conninfo, XLogRecPtr startpoint)
 
 	justconnected = true;
 	ereport(LOG,
-			(errmsg("streaming replication successfully connected to primary")));
+		(errmsg("streaming replication successfully connected to primary")));
 
 	return true;
 }
@@ -209,7 +209,7 @@ libpq_select(int timeout_ms)
 		struct timeval *ptr_timeout;
 
 		FD_ZERO(&input_mask);
-		FD_SET		(PQsocket(streamConn), &input_mask);
+		FD_SET(PQsocket(streamConn), &input_mask);
 
 		if (timeout_ms < 0)
 			ptr_timeout = NULL;
@@ -253,19 +253,18 @@ libpq_select(int timeout_ms)
 static PGresult *
 libpqrcv_PQexec(const char *query)
 {
-	PGresult   *result		= NULL;
-	PGresult   *lastResult	= NULL;
+	PGresult   *result = NULL;
+	PGresult   *lastResult = NULL;
 
 	/*
-	 * PQexec() silently discards any prior query results on the
-	 * connection. This is not required for walreceiver since it's
-	 * expected that walsender won't generate any such junk results.
+	 * PQexec() silently discards any prior query results on the connection.
+	 * This is not required for walreceiver since it's expected that walsender
+	 * won't generate any such junk results.
 	 */
 
 	/*
-	 * Submit a query. Since we don't use non-blocking mode, this also
-	 * can block. But its risk is relatively small, so we ignore that
-	 * for now.
+	 * Submit a query. Since we don't use non-blocking mode, this also can
+	 * block. But its risk is relatively small, so we ignore that for now.
 	 */
 	if (!PQsendQuery(streamConn, query))
 		return NULL;
@@ -273,16 +272,16 @@ libpqrcv_PQexec(const char *query)
 	for (;;)
 	{
 		/*
-		 * Receive data until PQgetResult is ready to get the result
-		 * without blocking.
+		 * Receive data until PQgetResult is ready to get the result without
+		 * blocking.
 		 */
 		while (PQisBusy(streamConn))
 		{
 			/*
 			 * We don't need to break down the sleep into smaller increments,
 			 * and check for interrupts after each nap, since we can just
-			 * elog(FATAL) within SIGTERM signal handler if the signal
-			 * arrives in the middle of establishment of replication connection.
+			 * elog(FATAL) within SIGTERM signal handler if the signal arrives
+			 * in the middle of establishment of replication connection.
 			 */
 			if (!libpq_select(-1))
 				continue;		/* interrupted */
@@ -291,10 +290,9 @@ libpqrcv_PQexec(const char *query)
 		}
 
 		/*
-		 * Emulate the PQexec()'s behavior of returning the last result
-		 * when there are many.
-		 * Since walsender will never generate multiple results, we skip
-		 * the concatenation of error messages.
+		 * Emulate the PQexec()'s behavior of returning the last result when
+		 * there are many. Since walsender will never generate multiple
+		 * results, we skip the concatenation of error messages.
 		 */
 		result = PQgetResult(streamConn);
 		if (result == NULL)

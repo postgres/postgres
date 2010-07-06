@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/timezone/pgtz.c,v 1.73 2010/05/20 14:13:11 mha Exp $
+ *	  $PostgreSQL: pgsql/src/timezone/pgtz.c,v 1.74 2010/07/06 19:19:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -501,7 +501,7 @@ identify_system_timezone(void)
 				(errmsg("could not determine system time zone"),
 				 errdetail("The PostgreSQL time zone will be set to \"%s\".",
 						   "GMT"),
-				 errhint("You can specify the correct timezone in postgresql.conf.")));
+		errhint("You can specify the correct timezone in postgresql.conf.")));
 		return NULL;			/* go to GMT */
 	}
 
@@ -538,7 +538,7 @@ identify_system_timezone(void)
 			(errmsg("could not recognize system time zone"),
 			 errdetail("The PostgreSQL time zone will be set to \"%s\".",
 					   resultbuf),
-			 errhint("You can specify the correct timezone in postgresql.conf.")));
+	   errhint("You can specify the correct timezone in postgresql.conf.")));
 	return resultbuf;
 }
 
@@ -1080,10 +1080,10 @@ identify_system_timezone(void)
 	if (!tm)
 	{
 		ereport(LOG,
-				(errmsg("could not identify system time zone: localtime() failed"),
-				 errdetail("The PostgreSQL time zone will be set to \"%s\".",
-						   "GMT"),
-				 errhint("You can specify the correct timezone in postgresql.conf.")));
+		  (errmsg("could not identify system time zone: localtime() failed"),
+		   errdetail("The PostgreSQL time zone will be set to \"%s\".",
+					 "GMT"),
+		errhint("You can specify the correct timezone in postgresql.conf.")));
 		return NULL;			/* go to GMT */
 	}
 
@@ -1118,7 +1118,7 @@ identify_system_timezone(void)
 						(int) GetLastError()),
 				 errdetail("The PostgreSQL time zone will be set to \"%s\".",
 						   "GMT"),
-				 errhint("You can specify the correct timezone in postgresql.conf.")));
+		errhint("You can specify the correct timezone in postgresql.conf.")));
 		return NULL;			/* go to GMT */
 	}
 
@@ -1164,7 +1164,7 @@ identify_system_timezone(void)
 					(errmsg_internal("could not query value for key \"std\" to identify system time zone \"%s\": %i",
 									 keyname, (int) r)));
 			RegCloseKey(key);
-			continue; /* Proceed to look at the next timezone */
+			continue;			/* Proceed to look at the next timezone */
 		}
 		if (strcmp(tzname, zonename) == 0)
 		{
@@ -1181,7 +1181,7 @@ identify_system_timezone(void)
 					(errmsg_internal("could not query value for key \"dlt\" to identify system time zone \"%s\": %i",
 									 keyname, (int) r)));
 			RegCloseKey(key);
-			continue; /* Proceed to look at the next timezone */
+			continue;			/* Proceed to look at the next timezone */
 		}
 		if (strcmp(tzname, zonename) == 0)
 		{
@@ -1216,8 +1216,8 @@ identify_system_timezone(void)
 					tzname),
 			 errdetail("The PostgreSQL time zone will be set to \"%s\".",
 					   "GMT"),
-			 errhint("You can specify the correct timezone in postgresql.conf.")));
-	return NULL;			/* go to GMT */
+	   errhint("You can specify the correct timezone in postgresql.conf.")));
+	return NULL;				/* go to GMT */
 }
 #endif   /* WIN32 */
 
@@ -1554,7 +1554,7 @@ pg_tzenumerate_next(pg_tzenum *dir)
 			/* Step into the subdirectory */
 			if (dir->depth >= MAX_TZDIR_DEPTH - 1)
 				ereport(ERROR,
-						(errmsg_internal("timezone directory stack overflow")));
+					 (errmsg_internal("timezone directory stack overflow")));
 			dir->depth++;
 			dir->dirname[dir->depth] = pstrdup(fullname);
 			dir->dirdesc[dir->depth] = AllocateDir(fullname);

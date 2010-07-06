@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/be-secure.c,v 1.101 2010/05/26 16:15:57 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/be-secure.c,v 1.102 2010/07/06 19:18:56 momjian Exp $
  *
  *	  Since the server static private key ($DataDir/server.key)
  *	  will normally be stored unencrypted so that the database
@@ -500,7 +500,7 @@ err:
  *	to verify that the DBA-generated DH parameters file contains
  *	what we expect it to contain.
  */
-static DH *
+static DH  *
 load_dh_file(int keylength)
 {
 	FILE	   *fp;
@@ -558,7 +558,7 @@ load_dh_file(int keylength)
  *	To prevent problems if the DH parameters files don't even
  *	exist, we can load DH parameters hardcoded into this file.
  */
-static DH *
+static DH  *
 load_dh_buffer(const char *buffer, size_t len)
 {
 	BIO		   *bio;
@@ -590,7 +590,7 @@ load_dh_buffer(const char *buffer, size_t len)
  *	the OpenSSL library can efficiently generate random keys from
  *	the information provided.
  */
-static DH *
+static DH  *
 tmp_dh_cb(SSL *s, int is_export, int keylength)
 {
 	DH		   *r = NULL;
@@ -720,6 +720,7 @@ static void
 initialize_SSL(void)
 {
 	struct stat buf;
+
 	STACK_OF(X509_NAME) *root_cert_list = NULL;
 
 	if (!SSL_context)
@@ -809,7 +810,7 @@ initialize_SSL(void)
 						 ROOT_CERT_FILE)));
 	}
 	else if (SSL_CTX_load_verify_locations(SSL_context, ROOT_CERT_FILE, NULL) != 1 ||
-			 (root_cert_list = SSL_load_client_CA_file(ROOT_CERT_FILE)) == NULL)
+		  (root_cert_list = SSL_load_client_CA_file(ROOT_CERT_FILE)) == NULL)
 	{
 		/*
 		 * File was there, but we could not load it. This means the file is
@@ -867,7 +868,7 @@ initialize_SSL(void)
 			ssl_loaded_verify_locations = true;
 		}
 
-		/* 
+		/*
 		 * Tell OpenSSL to send the list of root certs we trust to clients in
 		 * CertificateRequests.  This lets a client with a keystore select the
 		 * appropriate client certificate to send to us.

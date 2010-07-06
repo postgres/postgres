@@ -29,7 +29,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuumlazy.c,v 1.135 2010/04/22 02:15:45 sriggs Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuumlazy.c,v 1.136 2010/07/06 19:18:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -399,9 +399,11 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 								  vacrelstats);
 			/* Remove tuples from heap */
 			lazy_vacuum_heap(onerel, vacrelstats);
+
 			/*
 			 * Forget the now-vacuumed tuples, and press on, but be careful
-			 * not to reset latestRemovedXid since we want that value to be valid.
+			 * not to reset latestRemovedXid since we want that value to be
+			 * valid.
 			 */
 			vacrelstats->num_dead_tuples = 0;
 			vacrelstats->num_index_scans++;
@@ -491,7 +493,8 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 		 * We count tuples removed by the pruning step as removed by VACUUM.
 		 */
 		tups_vacuumed += heap_page_prune(onerel, buf, OldestXmin, false,
-													&vacrelstats->latestRemovedXid);
+										 &vacrelstats->latestRemovedXid);
+
 		/*
 		 * Now scan the page to collect vacuumable items and check for tuples
 		 * requiring freezing.
@@ -682,9 +685,11 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 		{
 			/* Remove tuples from heap */
 			lazy_vacuum_page(onerel, blkno, buf, 0, vacrelstats);
+
 			/*
 			 * Forget the now-vacuumed tuples, and press on, but be careful
-			 * not to reset latestRemovedXid since we want that value to be valid.
+			 * not to reset latestRemovedXid since we want that value to be
+			 * valid.
 			 */
 			vacrelstats->num_dead_tuples = 0;
 			vacuumed_pages++;

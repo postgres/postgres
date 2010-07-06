@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeMergejoin.c,v 1.102 2010/05/28 01:14:03 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeMergejoin.c,v 1.103 2010/07/06 19:18:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -252,7 +252,7 @@ MJExamineQuals(List *mergeclauses,
  * input, since we assume mergejoin operators are strict.  If the NULL
  * is in the first join column, and that column sorts nulls last, then
  * we can further conclude that no following tuple can match anything
- * either, since they must all have nulls in the first column.  However,
+ * either, since they must all have nulls in the first column.	However,
  * that case is only interesting if we're not in FillOuter mode, else
  * we have to visit all the tuples anyway.
  *
@@ -748,6 +748,7 @@ ExecMergeJoin(MergeJoinState *node)
 				switch (MJEvalInnerValues(node, innerTupleSlot))
 				{
 					case MJEVAL_MATCHABLE:
+
 						/*
 						 * OK, we have the initial tuples.	Begin by skipping
 						 * non-matching tuples.
@@ -922,6 +923,7 @@ ExecMergeJoin(MergeJoinState *node)
 				switch (MJEvalInnerValues(node, innerTupleSlot))
 				{
 					case MJEVAL_MATCHABLE:
+
 						/*
 						 * Test the new inner tuple to see if it matches
 						 * outer.
@@ -944,6 +946,7 @@ ExecMergeJoin(MergeJoinState *node)
 						}
 						break;
 					case MJEVAL_NONMATCHABLE:
+
 						/*
 						 * It contains a NULL and hence can't match any outer
 						 * tuple, so we can skip the comparison and assume the
@@ -952,10 +955,11 @@ ExecMergeJoin(MergeJoinState *node)
 						node->mj_JoinState = EXEC_MJ_NEXTOUTER;
 						break;
 					case MJEVAL_ENDOFJOIN:
+
 						/*
-						 * No more inner tuples.  However, this might be
-						 * only effective and not physical end of inner plan,
-						 * so force mj_InnerTupleSlot to null to make sure we
+						 * No more inner tuples.  However, this might be only
+						 * effective and not physical end of inner plan, so
+						 * force mj_InnerTupleSlot to null to make sure we
 						 * don't fetch more inner tuples.  (We need this hack
 						 * because we are not transiting to a state where the
 						 * inner plan is assumed to be exhausted.)
@@ -1152,9 +1156,11 @@ ExecMergeJoin(MergeJoinState *node)
 							node->mj_JoinState = EXEC_MJ_SKIP_TEST;
 							break;
 						case MJEVAL_NONMATCHABLE:
+
 							/*
 							 * current inner can't possibly match any outer;
-							 * better to advance the inner scan than the outer.
+							 * better to advance the inner scan than the
+							 * outer.
 							 */
 							node->mj_JoinState = EXEC_MJ_SKIPINNER_ADVANCE;
 							break;
@@ -1337,6 +1343,7 @@ ExecMergeJoin(MergeJoinState *node)
 						node->mj_JoinState = EXEC_MJ_SKIP_TEST;
 						break;
 					case MJEVAL_NONMATCHABLE:
+
 						/*
 						 * current inner can't possibly match any outer;
 						 * better to advance the inner scan than the outer.

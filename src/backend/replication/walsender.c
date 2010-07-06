@@ -28,7 +28,7 @@
  * Portions Copyright (c) 2010-2010, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/replication/walsender.c,v 1.27 2010/06/17 16:41:25 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/replication/walsender.c,v 1.28 2010/07/06 19:18:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -66,7 +66,8 @@ bool		am_walsender = false;		/* Am I a walsender process ? */
 int			max_wal_senders = 0;	/* the maximum number of concurrent walsenders */
 int			WalSndDelay = 200;	/* max sleep time between some actions */
 
-#define NAPTIME_PER_CYCLE 100000L	/* max sleep time between cycles (100ms) */
+#define NAPTIME_PER_CYCLE 100000L		/* max sleep time between cycles
+										 * (100ms) */
 
 /*
  * These variables are used similarly to openLogFile/Id/Seg/Off,
@@ -266,10 +267,10 @@ WalSndHandshake(void)
 						 * NOTE: This only checks the current value of
 						 * wal_level. Even if the current setting is not
 						 * 'minimal', there can be old WAL in the pg_xlog
-						 * directory that was created with 'minimal'.
-						 * So this is not bulletproof, the purpose is
-						 * just to give a user-friendly error message that
-						 * hints how to configure the system correctly.
+						 * directory that was created with 'minimal'. So this
+						 * is not bulletproof, the purpose is just to give a
+						 * user-friendly error message that hints how to
+						 * configure the system correctly.
 						 */
 						if (wal_level == WAL_LEVEL_MINIMAL)
 							ereport(FATAL,
@@ -378,7 +379,7 @@ WalSndLoop(void)
 	/* Loop forever, unless we get an error */
 	for (;;)
 	{
-		long	remain;		/* remaining time (us) */
+		long		remain;		/* remaining time (us) */
 
 		/*
 		 * Emergency bailout if postmaster has died.  This is to avoid the
@@ -422,8 +423,8 @@ WalSndLoop(void)
 		 *
 		 * On some platforms, signals won't interrupt the sleep.  To ensure we
 		 * respond reasonably promptly when someone signals us, break down the
-		 * sleep into NAPTIME_PER_CYCLE increments, and check for
-		 * interrupts after each nap.
+		 * sleep into NAPTIME_PER_CYCLE increments, and check for interrupts
+		 * after each nap.
 		 */
 		if (caughtup)
 		{
@@ -503,8 +504,8 @@ InitWalSnd(void)
 		ereport(FATAL,
 				(errcode(ERRCODE_TOO_MANY_CONNECTIONS),
 				 errmsg("number of requested standby connections "
-					"exceeds max_wal_senders (currently %d)",
-					max_wal_senders)));
+						"exceeds max_wal_senders (currently %d)",
+						max_wal_senders)));
 
 	/* Arrange to clean up at walsender exit */
 	on_shmem_exit(WalSndKill, 0);
@@ -563,13 +564,14 @@ XLogRead(char *buf, XLogRecPtr recptr, Size nbytes)
 			if (sendFile < 0)
 			{
 				/*
-				 * If the file is not found, assume it's because the
-				 * standby asked for a too old WAL segment that has already
-				 * been removed or recycled.
+				 * If the file is not found, assume it's because the standby
+				 * asked for a too old WAL segment that has already been
+				 * removed or recycled.
 				 */
 				if (errno == ENOENT)
 				{
-					char filename[MAXFNAMELEN];
+					char		filename[MAXFNAMELEN];
+
 					XLogFileName(filename, ThisTimeLineID, sendId, sendSeg);
 					ereport(ERROR,
 							(errcode_for_file_access(),
@@ -619,10 +621,10 @@ XLogRead(char *buf, XLogRecPtr recptr, Size nbytes)
 	}
 
 	/*
-	 * After reading into the buffer, check that what we read was valid.
-	 * We do this after reading, because even though the segment was present
-	 * when we opened it, it might get recycled or removed while we read it.
-	 * The read() succeeds in that case, but the data we tried to read might
+	 * After reading into the buffer, check that what we read was valid. We do
+	 * this after reading, because even though the segment was present when we
+	 * opened it, it might get recycled or removed while we read it. The
+	 * read() succeeds in that case, but the data we tried to read might
 	 * already have been overwritten with new WAL records.
 	 */
 	XLogGetLastRemoved(&lastRemovedLog, &lastRemovedSeg);
@@ -630,7 +632,8 @@ XLogRead(char *buf, XLogRecPtr recptr, Size nbytes)
 	if (log < lastRemovedLog ||
 		(log == lastRemovedLog && seg <= lastRemovedSeg))
 	{
-		char filename[MAXFNAMELEN];
+		char		filename[MAXFNAMELEN];
+
 		XLogFileName(filename, ThisTimeLineID, log, seg);
 		ereport(ERROR,
 				(errcode_for_file_access(),
@@ -662,8 +665,8 @@ XLogSend(char *msgbuf, bool *caughtup)
 	WalDataMessageHeader msghdr;
 
 	/*
-	 * Attempt to send all data that's already been written out and fsync'd
-	 * to disk.  We cannot go further than what's been written out given the
+	 * Attempt to send all data that's already been written out and fsync'd to
+	 * disk.  We cannot go further than what's been written out given the
 	 * current implementation of XLogRead().  And in any case it's unsafe to
 	 * send WAL that is not securely down to disk on the master: if the master
 	 * subsequently crashes and restarts, slaves must not have applied any WAL
@@ -683,19 +686,18 @@ XLogSend(char *msgbuf, bool *caughtup)
 	 * MAX_SEND_SIZE bytes to send, send everything. Otherwise send
 	 * MAX_SEND_SIZE bytes, but round back to logfile or page boundary.
 	 *
-	 * The rounding is not only for performance reasons. Walreceiver
-	 * relies on the fact that we never split a WAL record across two
-	 * messages. Since a long WAL record is split at page boundary into
-	 * continuation records, page boundary is always a safe cut-off point.
-	 * We also assume that SendRqstPtr never points to the middle of a WAL
-	 * record.
+	 * The rounding is not only for performance reasons. Walreceiver relies on
+	 * the fact that we never split a WAL record across two messages. Since a
+	 * long WAL record is split at page boundary into continuation records,
+	 * page boundary is always a safe cut-off point. We also assume that
+	 * SendRqstPtr never points to the middle of a WAL record.
 	 */
 	startptr = sentPtr;
 	if (startptr.xrecoff >= XLogFileSize)
 	{
 		/*
-		 * crossing a logid boundary, skip the non-existent last log
-		 * segment in previous logical log file.
+		 * crossing a logid boundary, skip the non-existent last log segment
+		 * in previous logical log file.
 		 */
 		startptr.xlogid += 1;
 		startptr.xrecoff = 0;
@@ -739,8 +741,8 @@ XLogSend(char *msgbuf, bool *caughtup)
 	XLogRead(msgbuf + 1 + sizeof(WalDataMessageHeader), startptr, nbytes);
 
 	/*
-	 * We fill the message header last so that the send timestamp is taken
-	 * as late as possible.
+	 * We fill the message header last so that the send timestamp is taken as
+	 * late as possible.
 	 */
 	msghdr.dataStart = startptr;
 	msghdr.walEnd = SendRqstPtr;
@@ -931,4 +933,5 @@ GetOldestWALSendPointer(void)
 	}
 	return oldest;
 }
+
 #endif

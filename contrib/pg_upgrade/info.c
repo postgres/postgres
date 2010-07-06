@@ -4,7 +4,7 @@
  *	information support functions
  *
  *	Copyright (c) 2010, PostgreSQL Global Development Group
- *	$PostgreSQL: pgsql/contrib/pg_upgrade/info.c,v 1.10 2010/07/03 16:33:14 momjian Exp $
+ *	$PostgreSQL: pgsql/contrib/pg_upgrade/info.c,v 1.11 2010/07/06 19:18:55 momjian Exp $
  */
 
 #include "pg_upgrade.h"
@@ -18,12 +18,12 @@ static void dbarr_print(migratorContext *ctx, DbInfoArr *arr,
 			Cluster whichCluster);
 static void relarr_print(migratorContext *ctx, RelInfoArr *arr);
 static void get_rel_infos(migratorContext *ctx, const DbInfo *dbinfo,
-			RelInfoArr *relarr, Cluster whichCluster);
+			  RelInfoArr *relarr, Cluster whichCluster);
 static void relarr_free(RelInfoArr *rel_arr);
 static void map_rel(migratorContext *ctx, const RelInfo *oldrel,
-			const RelInfo *newrel, const DbInfo *old_db,
-			const DbInfo *new_db, const char *olddata,
-			const char *newdata, FileNameMap *map);
+		const RelInfo *newrel, const DbInfo *old_db,
+		const DbInfo *new_db, const char *olddata,
+		const char *newdata, FileNameMap *map);
 static void map_rel_by_id(migratorContext *ctx, Oid oldid, Oid newid,
 			  const char *old_nspname, const char *old_relname,
 			  const char *new_nspname, const char *new_relname,
@@ -31,10 +31,10 @@ static void map_rel_by_id(migratorContext *ctx, Oid oldid, Oid newid,
 			  const DbInfo *new_db, const char *olddata,
 			  const char *newdata, FileNameMap *map);
 static RelInfo *relarr_lookup_reloid(migratorContext *ctx,
-			 RelInfoArr *rel_arr, Oid oid, Cluster whichCluster);
+					 RelInfoArr *rel_arr, Oid oid, Cluster whichCluster);
 static RelInfo *relarr_lookup_rel(migratorContext *ctx, RelInfoArr *rel_arr,
-				const char *nspname, const char *relname,
-				Cluster whichCluster);
+				  const char *nspname, const char *relname,
+				  Cluster whichCluster);
 
 
 /*
@@ -226,13 +226,13 @@ get_db_infos(migratorContext *ctx, DbInfoArr *dbinfs_arr, Cluster whichCluster)
 	int			i_oid;
 	int			i_spclocation;
 
-	res = executeQueryOrDie(ctx, conn, 
-				  "SELECT d.oid, d.datname, t.spclocation "
-				  "FROM pg_catalog.pg_database d "
-				  " LEFT OUTER JOIN pg_catalog.pg_tablespace t "
-				  " ON d.dattablespace = t.oid "
-				  "WHERE d.datallowconn = true");
-				  
+	res = executeQueryOrDie(ctx, conn,
+							"SELECT d.oid, d.datname, t.spclocation "
+							"FROM pg_catalog.pg_database d "
+							" LEFT OUTER JOIN pg_catalog.pg_tablespace t "
+							" ON d.dattablespace = t.oid "
+							"WHERE d.datallowconn = true");
+
 	i_datname = PQfnumber(res, "datname");
 	i_oid = PQfnumber(res, "oid");
 	i_spclocation = PQfnumber(res, "spclocation");
@@ -358,7 +358,7 @@ get_rel_infos(migratorContext *ctx, const DbInfo *dbinfo,
 	for (relnum = 0; relnum < ntups; relnum++)
 	{
 		RelInfo    *curr = &relinfos[num_rels++];
-		const char	   *tblspace;
+		const char *tblspace;
 
 		curr->reloid = atol(PQgetvalue(res, relnum, i_oid));
 

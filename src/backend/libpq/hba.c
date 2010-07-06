@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.208 2010/06/03 19:29:38 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.209 2010/07/06 19:18:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -711,7 +711,7 @@ parse_hba_line(List *line, int line_num, HbaLine *parsedline)
 			ereport(LOG,
 					(errcode(ERRCODE_CONFIG_FILE_ERROR),
 					 errmsg("hostssl not supported on this platform"),
-				 errhint("Compile with --with-openssl to use SSL connections."),
+			  errhint("Compile with --with-openssl to use SSL connections."),
 					 errcontext("line %d of configuration file \"%s\"",
 								line_num, HbaFileName)));
 			return false;
@@ -891,8 +891,8 @@ parse_hba_line(List *line, int line_num, HbaLine *parsedline)
 					ereport(LOG,
 							(errcode(ERRCODE_CONFIG_FILE_ERROR),
 							 errmsg("IP address and mask do not match"),
-							 errcontext("line %d of configuration file \"%s\"",
-										line_num, HbaFileName)));
+						   errcontext("line %d of configuration file \"%s\"",
+									  line_num, HbaFileName)));
 					return false;
 				}
 			}
@@ -1011,14 +1011,15 @@ parse_hba_line(List *line, int line_num, HbaLine *parsedline)
 	{
 		ereport(LOG,
 				(errcode(ERRCODE_CONFIG_FILE_ERROR),
-			 errmsg("gssapi authentication is not supported on local sockets"),
+		   errmsg("gssapi authentication is not supported on local sockets"),
 				 errcontext("line %d of configuration file \"%s\"",
 							line_num, HbaFileName)));
 		return false;
 	}
+
 	/*
-	 * SSPI authentication can never be enabled on ctLocal connections, because
-	 * it's only supported on Windows, where ctLocal isn't supported.
+	 * SSPI authentication can never be enabled on ctLocal connections,
+	 * because it's only supported on Windows, where ctLocal isn't supported.
 	 */
 
 
@@ -1248,8 +1249,8 @@ parse_hba_line(List *line, int line_num, HbaLine *parsedline)
 			{
 				ereport(LOG,
 						(errcode(ERRCODE_CONFIG_FILE_ERROR),
-						 errmsg("unrecognized authentication option name: \"%s\"",
-								token),
+					errmsg("unrecognized authentication option name: \"%s\"",
+						   token),
 						 errcontext("line %d of configuration file \"%s\"",
 									line_num, HbaFileName)));
 				return false;
@@ -1633,8 +1634,8 @@ parse_ident_usermap(List *line, int line_number, const char *usermap_name,
 				pg_regerror(r, &re, errstr, sizeof(errstr));
 				ereport(LOG,
 						(errcode(ERRCODE_INVALID_REGULAR_EXPRESSION),
-						 errmsg("regular expression match for \"%s\" failed: %s",
-								file_ident_user + 1, errstr)));
+					 errmsg("regular expression match for \"%s\" failed: %s",
+							file_ident_user + 1, errstr)));
 				*error_p = true;
 			}
 

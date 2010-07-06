@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.199 2010/06/07 02:59:02 itagaki Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.200 2010/07/06 19:19:00 momjian Exp $
  */
 
 /*----------------------------------------------------------------------
@@ -710,7 +710,7 @@ psql_completion(char *text, int start, int end)
 	else if (pg_strcasecmp(prev3_wd, "ALTER") == 0 &&
 			 (pg_strcasecmp(prev2_wd, "AGGREGATE") == 0 ||
 			  pg_strcasecmp(prev2_wd, "FUNCTION") == 0))
-			COMPLETE_WITH_CONST("(");
+		COMPLETE_WITH_CONST("(");
 	/* ALTER AGGREGATE,FUNCTION <name> (...) */
 	else if (pg_strcasecmp(prev4_wd, "ALTER") == 0 &&
 			 (pg_strcasecmp(prev3_wd, "AGGREGATE") == 0 ||

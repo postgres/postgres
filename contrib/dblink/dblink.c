@@ -8,7 +8,7 @@
  * Darko Prenosil <Darko.Prenosil@finteh.hr>
  * Shridhar Daithankar <shridhar_daithankar@persistent.co.in>
  *
- * $PostgreSQL: pgsql/contrib/dblink/dblink.c,v 1.98 2010/06/15 20:29:01 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/dblink/dblink.c,v 1.99 2010/07/06 19:18:54 momjian Exp $
  * Copyright (c) 2001-2010, PostgreSQL Global Development Group
  * ALL RIGHTS RESERVED;
  *
@@ -1797,7 +1797,7 @@ get_sql_delete(Relation rel, int *pkattnums, int pknumatts, char **tgt_pkattvals
 			appendStringInfo(&buf, " AND ");
 
 		appendStringInfoString(&buf,
-		   quote_ident_cstr(NameStr(tupdesc->attrs[pkattnum]->attname)));
+			   quote_ident_cstr(NameStr(tupdesc->attrs[pkattnum]->attname)));
 
 		if (tgt_pkattvals[i] != NULL)
 			appendStringInfo(&buf, " = %s",
@@ -1880,7 +1880,7 @@ get_sql_update(Relation rel, int *pkattnums, int pknumatts, char **src_pkattvals
 			appendStringInfo(&buf, " AND ");
 
 		appendStringInfo(&buf, "%s",
-		   quote_ident_cstr(NameStr(tupdesc->attrs[pkattnum]->attname)));
+			   quote_ident_cstr(NameStr(tupdesc->attrs[pkattnum]->attname)));
 
 		val = tgt_pkattvals[i];
 
@@ -1976,8 +1976,8 @@ get_tuple_of_interest(Relation rel, int *pkattnums, int pknumatts, char **src_pk
 	 * Build sql statement to look up tuple of interest, ie, the one matching
 	 * src_pkattvals.  We used to use "SELECT *" here, but it's simpler to
 	 * generate a result tuple that matches the table's physical structure,
-	 * with NULLs for any dropped columns.  Otherwise we have to deal with
-	 * two different tupdescs and everything's very confusing.
+	 * with NULLs for any dropped columns.	Otherwise we have to deal with two
+	 * different tupdescs and everything's very confusing.
 	 */
 	appendStringInfoString(&buf, "SELECT ");
 
@@ -1990,7 +1990,7 @@ get_tuple_of_interest(Relation rel, int *pkattnums, int pknumatts, char **src_pk
 			appendStringInfoString(&buf, "NULL");
 		else
 			appendStringInfoString(&buf,
-								   quote_ident_cstr(NameStr(tupdesc->attrs[i]->attname)));
+					  quote_ident_cstr(NameStr(tupdesc->attrs[i]->attname)));
 	}
 
 	appendStringInfo(&buf, " FROM %s WHERE ", relname);
@@ -2003,7 +2003,7 @@ get_tuple_of_interest(Relation rel, int *pkattnums, int pknumatts, char **src_pk
 			appendStringInfo(&buf, " AND ");
 
 		appendStringInfoString(&buf,
-		   quote_ident_cstr(NameStr(tupdesc->attrs[pkattnum]->attname)));
+			   quote_ident_cstr(NameStr(tupdesc->attrs[pkattnum]->attname)));
 
 		if (src_pkattvals[i] != NULL)
 			appendStringInfo(&buf, " = %s",
@@ -2417,9 +2417,9 @@ validate_pkattnums(Relation rel,
 	/* Validate attnums and convert to internal form */
 	for (i = 0; i < pknumatts_arg; i++)
 	{
-		int		pkattnum = pkattnums_arg->values[i];
-		int		lnum;
-		int		j;
+		int			pkattnum = pkattnums_arg->values[i];
+		int			lnum;
+		int			j;
 
 		/* Can throw error immediately if out of range */
 		if (pkattnum <= 0 || pkattnum > natts)

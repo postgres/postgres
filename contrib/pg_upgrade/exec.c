@@ -4,7 +4,7 @@
  *	execution functions
  *
  *	Copyright (c) 2010, PostgreSQL Global Development Group
- *	$PostgreSQL: pgsql/contrib/pg_upgrade/exec.c,v 1.7 2010/07/03 16:33:14 momjian Exp $
+ *	$PostgreSQL: pgsql/contrib/pg_upgrade/exec.c,v 1.8 2010/07/06 19:18:55 momjian Exp $
  */
 
 #include "pg_upgrade.h"
@@ -14,7 +14,7 @@
 
 
 static void checkBinDir(migratorContext *ctx, ClusterInfo *cluster);
-static int check_exec(migratorContext *ctx, const char *dir, const char *cmdName);
+static int	check_exec(migratorContext *ctx, const char *dir, const char *cmdName);
 static const char *validate_exec(const char *path);
 static int	check_data_dir(migratorContext *ctx, const char *pg_data);
 
@@ -311,5 +311,3 @@ check_data_dir(migratorContext *ctx, const char *pg_data)
 
 	return (fail) ? -1 : 0;
 }
-
-

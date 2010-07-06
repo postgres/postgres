@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/indexcmds.c,v 1.197 2010/06/01 00:33:23 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/indexcmds.c,v 1.198 2010/07/06 19:18:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -785,14 +785,14 @@ CheckMutability(Expr *expr)
 {
 	/*
 	 * First run the expression through the planner.  This has a couple of
-	 * important consequences.  First, function default arguments will get
+	 * important consequences.	First, function default arguments will get
 	 * inserted, which may affect volatility (consider "default now()").
 	 * Second, inline-able functions will get inlined, which may allow us to
-	 * conclude that the function is really less volatile than it's marked.
-	 * As an example, polymorphic functions must be marked with the most
-	 * volatile behavior that they have for any input type, but once we
-	 * inline the function we may be able to conclude that it's not so
-	 * volatile for the particular input type we're dealing with.
+	 * conclude that the function is really less volatile than it's marked. As
+	 * an example, polymorphic functions must be marked with the most volatile
+	 * behavior that they have for any input type, but once we inline the
+	 * function we may be able to conclude that it's not so volatile for the
+	 * particular input type we're dealing with.
 	 *
 	 * We assume here that expression_planner() won't scribble on its input.
 	 */

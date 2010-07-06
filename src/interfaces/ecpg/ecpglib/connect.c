@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/connect.c,v 1.55 2010/05/07 19:35:03 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/connect.c,v 1.56 2010/07/06 19:19:00 momjian Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -495,7 +495,7 @@ ECPGconnect(int lineno, int c, const char *name, const char *user, const char *p
 			host ? "host=" : "", host ? host : "",
 			port ? "port=" : "", port ? port : "",
 			(user && strlen(user) > 0) ? "user=" : "", user ? user : "",
-			(passwd && strlen(passwd) > 0) ? "password=" : "", passwd ? passwd : "",
+	 (passwd && strlen(passwd) > 0) ? "password=" : "", passwd ? passwd : "",
 			options ? options : "");
 
 	/*

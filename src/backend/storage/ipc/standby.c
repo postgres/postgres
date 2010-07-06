@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/standby.c,v 1.26 2010/07/03 20:43:58 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/standby.c,v 1.27 2010/07/06 19:18:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -125,12 +125,12 @@ ShutdownRecoveryTransactionEnvironment(void)
 static TimestampTz
 GetStandbyLimitTime(void)
 {
-	TimestampTz	rtime;
+	TimestampTz rtime;
 	bool		fromStream;
 
 	/*
 	 * The cutoff time is the last WAL data receipt time plus the appropriate
-	 * delay variable.  Delay of -1 means wait forever.
+	 * delay variable.	Delay of -1 means wait forever.
 	 */
 	GetXLogReceiptTime(&rtime, &fromStream);
 	if (fromStream)
@@ -158,7 +158,7 @@ static int	standbyWait_us = STANDBY_INITIAL_WAIT_US;
 static bool
 WaitExceedsMaxStandbyDelay(void)
 {
-	TimestampTz	ltime;
+	TimestampTz ltime;
 
 	/* Are we past the limit time? */
 	ltime = GetStandbyLimitTime();
@@ -171,8 +171,8 @@ WaitExceedsMaxStandbyDelay(void)
 	pg_usleep(standbyWait_us);
 
 	/*
-	 * Progressively increase the sleep times, but not to more than 1s,
-	 * since pg_usleep isn't interruptable on some platforms.
+	 * Progressively increase the sleep times, but not to more than 1s, since
+	 * pg_usleep isn't interruptable on some platforms.
 	 */
 	standbyWait_us *= 2;
 	if (standbyWait_us > 1000000)
@@ -411,8 +411,8 @@ void
 ResolveRecoveryConflictWithBufferPin(void)
 {
 	bool		sig_alarm_enabled = false;
-	TimestampTz	ltime;
-	TimestampTz	now;
+	TimestampTz ltime;
+	TimestampTz now;
 
 	Assert(InHotStandby);
 
@@ -814,10 +814,10 @@ standby_desc(StringInfo buf, uint8 xl_info, char *rec)
  * up from a checkpoint and are immediately at our starting point, we
  * unconditionally move to STANDBY_INITIALIZED. After this point we
  * must do 4 things:
- *  * move shared nextXid forwards as we see new xids
- *  * extend the clog and subtrans with each new xid
- *  * keep track of uncommitted known assigned xids
- *  * keep track of uncommitted AccessExclusiveLocks
+ *	* move shared nextXid forwards as we see new xids
+ *	* extend the clog and subtrans with each new xid
+ *	* keep track of uncommitted known assigned xids
+ *	* keep track of uncommitted AccessExclusiveLocks
  *
  * When we see a commit/abort we must remove known assigned xids and locks
  * from the completing transaction. Attempted removals that cannot locate
@@ -841,11 +841,11 @@ LogStandbySnapshot(TransactionId *oldestActiveXid, TransactionId *nextXid)
 	/*
 	 * Get details of any AccessExclusiveLocks being held at the moment.
 	 *
-	 * XXX GetRunningTransactionLocks() currently holds a lock on all partitions
-	 * though it is possible to further optimise the locking. By reference
-	 * counting locks and storing the value on the ProcArray entry for each backend
-	 * we can easily tell if any locks need recording without trying to acquire
-	 * the partition locks and scanning the lock table.
+	 * XXX GetRunningTransactionLocks() currently holds a lock on all
+	 * partitions though it is possible to further optimise the locking. By
+	 * reference counting locks and storing the value on the ProcArray entry
+	 * for each backend we can easily tell if any locks need recording without
+	 * trying to acquire the partition locks and scanning the lock table.
 	 */
 	locks = GetRunningTransactionLocks(&nlocks);
 	if (nlocks > 0)
@@ -856,10 +856,12 @@ LogStandbySnapshot(TransactionId *oldestActiveXid, TransactionId *nextXid)
 	 * record we write, because standby will open up when it sees this.
 	 */
 	running = GetRunningTransactionData();
+
 	/*
-	 * The gap between GetRunningTransactionData() and LogCurrentRunningXacts()
-	 * is what most of the fuss is about here, so artifically extending this
-	 * interval is a great way to test the little used parts of the code.
+	 * The gap between GetRunningTransactionData() and
+	 * LogCurrentRunningXacts() is what most of the fuss is about here, so
+	 * artifically extending this interval is a great way to test the little
+	 * used parts of the code.
 	 */
 	LogCurrentRunningXacts(running);
 
@@ -910,20 +912,20 @@ LogCurrentRunningXacts(RunningTransactions CurrRunningXacts)
 
 	if (CurrRunningXacts->subxid_overflow)
 		elog(trace_recovery(DEBUG2),
-						"snapshot of %u running transactions overflowed (lsn %X/%X oldest xid %u latest complete %u next xid %u)",
-						CurrRunningXacts->xcnt,
-						recptr.xlogid, recptr.xrecoff,
-						CurrRunningXacts->oldestRunningXid,
-						CurrRunningXacts->latestCompletedXid,
-						CurrRunningXacts->nextXid);
+			 "snapshot of %u running transactions overflowed (lsn %X/%X oldest xid %u latest complete %u next xid %u)",
+			 CurrRunningXacts->xcnt,
+			 recptr.xlogid, recptr.xrecoff,
+			 CurrRunningXacts->oldestRunningXid,
+			 CurrRunningXacts->latestCompletedXid,
+			 CurrRunningXacts->nextXid);
 	else
 		elog(trace_recovery(DEBUG2),
-						"snapshot of %u running transaction ids (lsn %X/%X oldest xid %u latest complete %u next xid %u)",
-						CurrRunningXacts->xcnt,
-						recptr.xlogid, recptr.xrecoff,
-						CurrRunningXacts->oldestRunningXid,
-						CurrRunningXacts->latestCompletedXid,
-						CurrRunningXacts->nextXid);
+			 "snapshot of %u running transaction ids (lsn %X/%X oldest xid %u latest complete %u next xid %u)",
+			 CurrRunningXacts->xcnt,
+			 recptr.xlogid, recptr.xrecoff,
+			 CurrRunningXacts->oldestRunningXid,
+			 CurrRunningXacts->latestCompletedXid,
+			 CurrRunningXacts->nextXid);
 }
 
 /*

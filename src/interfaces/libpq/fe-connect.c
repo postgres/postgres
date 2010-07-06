@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.394 2010/06/23 21:54:13 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.395 2010/07/06 19:19:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -184,16 +184,16 @@ static const PQconninfoOption PQconninfoOptions[] = {
 	"Fallback-Application-Name", "", 64},
 
 	{"keepalives", NULL, NULL, NULL,
-	"TCP-Keepalives", "", 1}, /* should be just '0' or '1' */
+	"TCP-Keepalives", "", 1},	/* should be just '0' or '1' */
 
 	{"keepalives_idle", NULL, NULL, NULL,
-	"TCP-Keepalives-Idle", "", 10}, /* strlen(INT32_MAX) == 10 */
+	"TCP-Keepalives-Idle", "", 10},		/* strlen(INT32_MAX) == 10 */
 
 	{"keepalives_interval", NULL, NULL, NULL,
 	"TCP-Keepalives-Interval", "", 10}, /* strlen(INT32_MAX) == 10 */
 
 	{"keepalives_count", NULL, NULL, NULL,
-	"TCP-Keepalives-Count", "", 10}, /* strlen(INT32_MAX) == 10 */
+	"TCP-Keepalives-Count", "", 10},	/* strlen(INT32_MAX) == 10 */
 
 #ifdef USE_SSL
 
@@ -988,7 +988,7 @@ useKeepalives(PGconn *conn)
 static int
 setKeepalivesIdle(PGconn *conn)
 {
-	int	idle;
+	int			idle;
 
 	if (conn->keepalives_idle == NULL)
 		return 1;
@@ -1001,10 +1001,10 @@ setKeepalivesIdle(PGconn *conn)
 	if (setsockopt(conn->sock, IPPROTO_TCP, TCP_KEEPIDLE,
 				   (char *) &idle, sizeof(idle)) < 0)
 	{
-		char	sebuf[256];
+		char		sebuf[256];
 
 		appendPQExpBuffer(&conn->errorMessage,
-						  libpq_gettext("setsockopt(TCP_KEEPIDLE) failed: %s\n"),
+					  libpq_gettext("setsockopt(TCP_KEEPIDLE) failed: %s\n"),
 						  SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
 		return 0;
 	}
@@ -1019,7 +1019,7 @@ setKeepalivesIdle(PGconn *conn)
 static int
 setKeepalivesInterval(PGconn *conn)
 {
-	int	interval;
+	int			interval;
 
 	if (conn->keepalives_interval == NULL)
 		return 1;
@@ -1032,10 +1032,10 @@ setKeepalivesInterval(PGconn *conn)
 	if (setsockopt(conn->sock, IPPROTO_TCP, TCP_KEEPINTVL,
 				   (char *) &interval, sizeof(interval)) < 0)
 	{
-		char	sebuf[256];
+		char		sebuf[256];
 
 		appendPQExpBuffer(&conn->errorMessage,
-						  libpq_gettext("setsockopt(TCP_KEEPINTVL) failed: %s\n"),
+					 libpq_gettext("setsockopt(TCP_KEEPINTVL) failed: %s\n"),
 						  SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
 		return 0;
 	}
@@ -1051,7 +1051,7 @@ setKeepalivesInterval(PGconn *conn)
 static int
 setKeepalivesCount(PGconn *conn)
 {
-	int	count;
+	int			count;
 
 	if (conn->keepalives_count == NULL)
 		return 1;
@@ -1064,10 +1064,10 @@ setKeepalivesCount(PGconn *conn)
 	if (setsockopt(conn->sock, IPPROTO_TCP, TCP_KEEPCNT,
 				   (char *) &count, sizeof(count)) < 0)
 	{
-		char	sebuf[256];
+		char		sebuf[256];
 
 		appendPQExpBuffer(&conn->errorMessage,
-						  libpq_gettext("setsockopt(TCP_KEEPCNT) failed: %s\n"),
+					   libpq_gettext("setsockopt(TCP_KEEPCNT) failed: %s\n"),
 						  SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
 		return 0;
 	}
@@ -1464,9 +1464,9 @@ keep_going:						/* We will come back to here until there is
 
 					if (!IS_AF_UNIX(addr_cur->ai_family))
 					{
-						int		on = 1;
-						int		usekeepalives = useKeepalives(conn);
-						int		err = 0;
+						int			on = 1;
+						int			usekeepalives = useKeepalives(conn);
+						int			err = 0;
 
 						if (usekeepalives < 0)
 						{
@@ -1484,7 +1484,7 @@ keep_going:						/* We will come back to here until there is
 						{
 							appendPQExpBuffer(&conn->errorMessage,
 											  libpq_gettext("setsockopt(SO_KEEPALIVE) failed: %s\n"),
-							  SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
+							SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
 							err = 1;
 						}
 						else if (!setKeepalivesIdle(conn)
@@ -2313,7 +2313,7 @@ keep_going:						/* We will come back to here until there is
 error_return:
 
 	dot_pg_pass_warning(conn);
-	
+
 	/*
 	 * We used to close the socket at this point, but that makes it awkward
 	 * for those above us if they wish to remove this socket from their own
@@ -4608,7 +4608,8 @@ PasswordFromFile(char *hostname, char *port, char *dbname, char *username)
 }
 
 
-static bool getPgPassFilename(char *pgpassfile)
+static bool
+getPgPassFilename(char *pgpassfile)
 {
 	char	   *passfile_env;
 
@@ -4636,21 +4637,21 @@ dot_pg_pass_warning(PGconn *conn)
 {
 	/* If it was 'invalid authorization', add .pgpass mention */
 	if (conn->dot_pgpass_used && conn->password_needed && conn->result &&
-		/* only works with >= 9.0 servers */
+	/* only works with >= 9.0 servers */
 		strcmp(PQresultErrorField(conn->result, PG_DIAG_SQLSTATE),
-			ERRCODE_INVALID_PASSWORD) == 0)
+			   ERRCODE_INVALID_PASSWORD) == 0)
 	{
 		char		pgpassfile[MAXPGPATH];
 
 		if (!getPgPassFilename(pgpassfile))
 			return;
 		appendPQExpBuffer(&conn->errorMessage,
-						  libpq_gettext("password retrieved from file \"%s\"\n"),
+					  libpq_gettext("password retrieved from file \"%s\"\n"),
 						  pgpassfile);
 	}
 }
 
-	
+
 /*
  * Obtain user's home directory, return in given buffer
  *

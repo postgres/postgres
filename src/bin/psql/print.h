@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/print.h,v 1.45 2010/03/01 20:55:45 heikki Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/print.h,v 1.46 2010/07/06 19:19:00 momjian Exp $
  */
 #ifndef PRINT_H
 #define PRINT_H
@@ -158,7 +158,7 @@ extern void printTableInit(printTableContent *const content,
 extern void printTableAddHeader(printTableContent *const content,
 				 const char *header, const bool translate, const char align);
 extern void printTableAddCell(printTableContent *const content,
-				  const char *cell, const bool translate, const bool mustfree);
+				const char *cell, const bool translate, const bool mustfree);
 extern void printTableAddFooter(printTableContent *const content,
 					const char *footer);
 extern void printTableSetFooter(printTableContent *const content,

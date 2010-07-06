@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/aclchk.c,v 1.167 2010/06/13 17:43:12 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/aclchk.c,v 1.168 2010/07/06 19:18:55 momjian Exp $
  *
  * NOTES
  *	  See acl.h.
@@ -305,7 +305,7 @@ restrict_and_check_grant(bool is_grant, AclMode avail_goptions, bool all_privs,
 	if (is_grant)
 	{
 		if (this_privileges == 0)
-	   	{
+		{
 			if (objkind == ACL_KIND_COLUMN && colname)
 				ereport(WARNING,
 						(errcode(ERRCODE_WARNING_PRIVILEGE_NOT_GRANTED),
@@ -356,8 +356,8 @@ restrict_and_check_grant(bool is_grant, AclMode avail_goptions, bool all_privs,
 			else
 				ereport(WARNING,
 						(errcode(ERRCODE_WARNING_PRIVILEGE_NOT_REVOKED),
-						 errmsg("not all privileges could be revoked for \"%s\"",
-								objname)));
+					 errmsg("not all privileges could be revoked for \"%s\"",
+							objname)));
 		}
 	}
 
@@ -1089,7 +1089,7 @@ SetDefaultACL(InternalDefaultACL *iacls)
 
 	/*
 	 * The default for a global entry is the hard-wired default ACL for the
-	 * particular object type.  The default for non-global entries is an empty
+	 * particular object type.	The default for non-global entries is an empty
 	 * ACL.  This must be so because global entries replace the hard-wired
 	 * defaults, while others are added on.
 	 */
@@ -1188,8 +1188,8 @@ SetDefaultACL(InternalDefaultACL *iacls)
 
 	/*
 	 * If the result is the same as the default value, we do not need an
-	 * explicit pg_default_acl entry, and should in fact remove the entry
-	 * if it exists.  Must sort both arrays to compare properly.
+	 * explicit pg_default_acl entry, and should in fact remove the entry if
+	 * it exists.  Must sort both arrays to compare properly.
 	 */
 	aclitemsort(new_acl);
 	aclitemsort(def_acl);
@@ -1256,7 +1256,7 @@ SetDefaultACL(InternalDefaultACL *iacls)
 			if (OidIsValid(iacls->nspid))
 			{
 				ObjectAddress myself,
-					referenced;
+							referenced;
 
 				myself.classId = DefaultAclRelationId;
 				myself.objectId = HeapTupleGetOid(newtuple);
@@ -3202,8 +3202,8 @@ aclcheck_error_col(AclResult aclerr, AclObjectKind objectkind,
 		case ACLCHECK_NO_PRIV:
 			ereport(ERROR,
 					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-					 errmsg("permission denied for column \"%s\" of relation \"%s\"",
-							colname, objectname)));
+			 errmsg("permission denied for column \"%s\" of relation \"%s\"",
+					colname, objectname)));
 			break;
 		case ACLCHECK_NOT_OWNER:
 			/* relation msg is OK since columns don't have separate owners */

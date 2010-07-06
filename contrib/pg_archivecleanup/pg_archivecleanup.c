@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/pg_archivecleanup/pg_archivecleanup.c,v 1.2 2010/06/17 17:31:27 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/pg_archivecleanup/pg_archivecleanup.c,v 1.3 2010/07/06 19:18:55 momjian Exp $
  *
  * pg_archivecleanup.c
  *
@@ -40,8 +40,9 @@ bool		debug = false;		/* are we debugging? */
 char	   *archiveLocation;	/* where to find the archive? */
 char	   *restartWALFileName; /* the file from which we can restart restore */
 char		WALFilePath[MAXPGPATH];		/* the file path including archive */
-char		exclusiveCleanupFileName[MAXPGPATH];		/* the oldest file we want to
-														 * remain in archive */
+char		exclusiveCleanupFileName[MAXPGPATH];		/* the oldest file we
+														 * want to remain in
+														 * archive */
 
 
 /* =====================================================================
@@ -68,14 +69,14 @@ char		exclusiveCleanupFileName[MAXPGPATH];		/* the oldest file we want to
 /*
  *	Initialize allows customized commands into the archive cleanup program.
  *
- *  You may wish to add code to check for tape libraries, etc..
+ *	You may wish to add code to check for tape libraries, etc..
  */
 static void
 Initialize(void)
 {
 	/*
-	 * This code assumes that archiveLocation is a directory, so we use
-	 * stat to test if it's accessible.
+	 * This code assumes that archiveLocation is a directory, so we use stat
+	 * to test if it's accessible.
 	 */
 	struct stat stat_buf;
 
@@ -100,22 +101,21 @@ CleanupPriorWALFiles(void)
 		while ((xlde = readdir(xldir)) != NULL)
 		{
 			/*
-			 * We ignore the timeline part of the XLOG segment identifiers
-			 * in deciding whether a segment is still needed.  This
-			 * ensures that we won't prematurely remove a segment from a
-			 * parent timeline. We could probably be a little more
-			 * proactive about removing segments of non-parent timelines,
-			 * but that would be a whole lot more complicated.
+			 * We ignore the timeline part of the XLOG segment identifiers in
+			 * deciding whether a segment is still needed.	This ensures that
+			 * we won't prematurely remove a segment from a parent timeline.
+			 * We could probably be a little more proactive about removing
+			 * segments of non-parent timelines, but that would be a whole lot
+			 * more complicated.
 			 *
-			 * We use the alphanumeric sorting property of the filenames
-			 * to decide which ones are earlier than the
-			 * exclusiveCleanupFileName file. Note that this means files
-			 * are not removed in the order they were originally written,
-			 * in case this worries you.
+			 * We use the alphanumeric sorting property of the filenames to
+			 * decide which ones are earlier than the exclusiveCleanupFileName
+			 * file. Note that this means files are not removed in the order
+			 * they were originally written, in case this worries you.
 			 */
 			if (strlen(xlde->d_name) == XLOG_DATA_FNAME_LEN &&
-				strspn(xlde->d_name, "0123456789ABCDEF") == XLOG_DATA_FNAME_LEN &&
-			  strcmp(xlde->d_name + 8, exclusiveCleanupFileName + 8) < 0)
+			strspn(xlde->d_name, "0123456789ABCDEF") == XLOG_DATA_FNAME_LEN &&
+				strcmp(xlde->d_name + 8, exclusiveCleanupFileName + 8) < 0)
 			{
 #ifdef WIN32
 				snprintf(WALFilePath, MAXPGPATH, "%s\\%s", archiveLocation, xlde->d_name);
@@ -152,13 +152,13 @@ CleanupPriorWALFiles(void)
 static void
 SetWALFileNameForCleanup(void)
 {
-	bool	fnameOK = false;
+	bool		fnameOK = false;
 
 	/*
-	 * If restartWALFileName is a WAL file name then just use it directly.
-	 * If restartWALFileName is a .backup filename, make sure we use
-	 * the prefix of the filename, otherwise we will remove wrong files
-	 * since 000000010000000000000010.00000020.backup is after 
+	 * If restartWALFileName is a WAL file name then just use it directly. If
+	 * restartWALFileName is a .backup filename, make sure we use the prefix
+	 * of the filename, otherwise we will remove wrong files since
+	 * 000000010000000000000010.00000020.backup is after
 	 * 000000010000000000000010.
 	 */
 	if (strlen(restartWALFileName) == XLOG_DATA_FNAME_LEN &&
@@ -169,17 +169,20 @@ SetWALFileNameForCleanup(void)
 	}
 	else if (strlen(restartWALFileName) == XLOG_BACKUP_FNAME_LEN)
 	{
-		int	args;
+		int			args;
 		uint32		tli = 1,
 					log = 0,
 					seg = 0,
 					offset = 0;
+
 		args = sscanf(restartWALFileName, "%08X%08X%08X.%08X.backup", &tli, &log, &seg, &offset);
 		if (args == 4)
 		{
 			fnameOK = true;
+
 			/*
-			 * Use just the prefix of the filename, ignore everything after first period
+			 * Use just the prefix of the filename, ignore everything after
+			 * first period
 			 */
 			XLogFileName(exclusiveCleanupFileName, tli, log, seg);
 		}
@@ -205,12 +208,12 @@ usage(void)
 	printf("Usage:\n");
 	printf("  %s [OPTION]... ARCHIVELOCATION OLDESTKEPTWALFILE\n", progname);
 	printf("\n"
-		"for use as an archive_cleanup_command in the recovery.conf when standby_mode = on:\n"
+		   "for use as an archive_cleanup_command in the recovery.conf when standby_mode = on:\n"
 		   "  archive_cleanup_command = 'pg_archivecleanup [OPTION]... ARCHIVELOCATION %%r'\n"
 		   "e.g.\n"
 		   "  archive_cleanup_command = 'pg_archivecleanup /mnt/server/archiverdir %%r'\n");
 	printf("\n"
-		"or for use as a standalone archive cleaner:\n"
+		   "or for use as a standalone archive cleaner:\n"
 		   "e.g.\n"
 		   "  pg_archivecleanup /mnt/server/archiverdir 000000010000000000000010.00000020.backup\n");
 	printf("\nOptions:\n");
@@ -258,9 +261,10 @@ main(int argc, char **argv)
 
 	/*
 	 * We will go to the archiveLocation to check restartWALFileName.
-	 * restartWALFileName may not exist anymore, which would not be an error, so
-	 * we separate the archiveLocation and restartWALFileName so we can check
-	 * separately whether archiveLocation exists, if not that is an error
+	 * restartWALFileName may not exist anymore, which would not be an error,
+	 * so we separate the archiveLocation and restartWALFileName so we can
+	 * check separately whether archiveLocation exists, if not that is an
+	 * error
 	 */
 	if (optind < argc)
 	{

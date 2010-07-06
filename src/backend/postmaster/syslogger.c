@@ -18,7 +18,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/syslogger.c,v 1.57 2010/04/16 09:51:49 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/syslogger.c,v 1.58 2010/07/06 19:18:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -372,7 +372,7 @@ SysLoggerMain(int argc, char *argv[])
 		 * Wait for some data, timing out after 1 second
 		 */
 		FD_ZERO(&rfds);
-		FD_SET		(syslogPipe[0], &rfds);
+		FD_SET(syslogPipe[0], &rfds);
 
 		timeout.tv_sec = 1;
 		timeout.tv_usec = 0;
@@ -425,9 +425,9 @@ SysLoggerMain(int argc, char *argv[])
 		 * detect pipe EOF.  The main thread just wakes up once a second to
 		 * check for SIGHUP and rotation conditions.
 		 *
-		 * Server code isn't generally thread-safe, so we ensure that only
-		 * one of the threads is active at a time by entering the critical
-		 * section whenever we're not sleeping.
+		 * Server code isn't generally thread-safe, so we ensure that only one
+		 * of the threads is active at a time by entering the critical section
+		 * whenever we're not sleeping.
 		 */
 		LeaveCriticalSection(&sysloggerSection);
 

@@ -2,7 +2,7 @@
  *	pg_upgrade.h
  *
  *	Copyright (c) 2010, PostgreSQL Global Development Group
- *	$PostgreSQL: pgsql/contrib/pg_upgrade/pg_upgrade.h,v 1.14 2010/07/03 16:33:14 momjian Exp $
+ *	$PostgreSQL: pgsql/contrib/pg_upgrade/pg_upgrade.h,v 1.15 2010/07/06 19:18:55 momjian Exp $
  */
 
 #include "postgres.h"
@@ -21,7 +21,7 @@
 #define MAX_STRING			1024
 #define LINE_ALLOC			4096
 #define QUERY_ALLOC			8192
-  
+
 #define MIGRATOR_API_VERSION	1
 
 #define MESSAGE_WIDTH		"60"
@@ -53,19 +53,19 @@
 #define CLUSTERNAME(cluster)	((cluster) == CLUSTER_OLD ? "old" : "new")
 
 /* OID system catalog preservation added during PG 9.0 development */
-#define TABLE_SPACE_SUBDIRS	201001111
+#define TABLE_SPACE_SUBDIRS 201001111
 
 /*
  * Each relation is represented by a relinfo structure.
  */
 typedef struct
 {
-	char		nspname[NAMEDATALEN];		/* namespace name */
-	char		relname[NAMEDATALEN];		/* relation name */
+	char		nspname[NAMEDATALEN];	/* namespace name */
+	char		relname[NAMEDATALEN];	/* relation name */
 	Oid			reloid;			/* relation oid				 */
 	Oid			relfilenode;	/* relation relfile node	 */
 	Oid			toastrelid;		/* oid of the toast relation */
-	char		tablespace[MAXPGPATH]; /* relations tablespace path */
+	char		tablespace[MAXPGPATH];	/* relations tablespace path */
 } RelInfo;
 
 typedef struct
@@ -83,10 +83,10 @@ typedef struct
 	Oid			new;			/* Relfilenode of the new relation */
 	char		old_file[MAXPGPATH];
 	char		new_file[MAXPGPATH];
-	char		old_nspname[NAMEDATALEN];	/* old name of the namespace */
-	char		old_relname[NAMEDATALEN];	/* old name of the relation */
-	char		new_nspname[NAMEDATALEN];	/* new name of the namespace */
-	char		new_relname[NAMEDATALEN];	/* new name of the relation */
+	char		old_nspname[NAMEDATALEN];		/* old name of the namespace */
+	char		old_relname[NAMEDATALEN];		/* old name of the relation */
+	char		new_nspname[NAMEDATALEN];		/* new name of the namespace */
+	char		new_relname[NAMEDATALEN];		/* new name of the relation */
 } FileNameMap;
 
 /*
@@ -161,7 +161,7 @@ typedef enum
  */
 typedef enum
 {
-	NONE = 0,	/* used for no running servers */
+	NONE = 0,					/* used for no running servers */
 	CLUSTER_OLD,
 	CLUSTER_NEW
 } Cluster;
@@ -177,15 +177,15 @@ typedef long pgpid_t;
 typedef struct
 {
 	ControlData controldata;	/* pg_control information */
-	DbInfoArr	dbarr;		/* dbinfos array */
-	char	   *pgdata;		/* pathname for cluster's $PGDATA directory */
-	char	   *bindir;		/* pathname for cluster's executable directory */
-	unsigned short port;	/* port number where postmaster is waiting */
-	uint32		major_version;		/* PG_VERSION of cluster */
-	char	   *major_version_str;	/* string PG_VERSION of cluster */
-	Oid			pg_database_oid;		/* OID of pg_database relation */
-	char	   *libpath;	/* pathname for cluster's pkglibdir */
-	char	   *tablespace_suffix;	/* directory specification */
+	DbInfoArr	dbarr;			/* dbinfos array */
+	char	   *pgdata;			/* pathname for cluster's $PGDATA directory */
+	char	   *bindir;			/* pathname for cluster's executable directory */
+	unsigned short port;		/* port number where postmaster is waiting */
+	uint32		major_version;	/* PG_VERSION of cluster */
+	char	   *major_version_str;		/* string PG_VERSION of cluster */
+	Oid			pg_database_oid;	/* OID of pg_database relation */
+	char	   *libpath;		/* pathname for cluster's pkglibdir */
+	char	   *tablespace_suffix;		/* directory specification */
 } ClusterInfo;
 
 
@@ -197,11 +197,12 @@ typedef struct
  */
 typedef struct
 {
-	ClusterInfo		old, new;	/* old and new cluster information */
+	ClusterInfo old,
+				new;			/* old and new cluster information */
 	const char *progname;		/* complete pathname for this program */
 	char	   *exec_path;		/* full path to my executable */
 	char	   *user;			/* username for clusters */
-	char		cwd[MAXPGPATH];	/* current working directory, used for output */
+	char		cwd[MAXPGPATH]; /* current working directory, used for output */
 	char	  **tablespaces;	/* tablespaces */
 	int			num_tablespaces;
 	char	  **libraries;		/* loadable libraries */
@@ -216,37 +217,37 @@ typedef struct
 								 * changes */
 	bool		verbose;		/* TRUE -> be verbose in messages */
 	bool		debug;			/* TRUE -> log more information */
-	transferMode	transfer_mode;		/* copy files or link them? */
+	transferMode transfer_mode; /* copy files or link them? */
 } migratorContext;
 
 
 /*
  * Global variables
  */
-extern char		scandir_file_pattern[];
+extern char scandir_file_pattern[];
 
 
 /* check.c */
 
 void		output_check_banner(migratorContext *ctx, bool *live_check);
-void		check_old_cluster(migratorContext *ctx, bool live_check,
-						  		char **sequence_script_file_name);
+void check_old_cluster(migratorContext *ctx, bool live_check,
+				  char **sequence_script_file_name);
 void		check_new_cluster(migratorContext *ctx);
 void		report_clusters_compatible(migratorContext *ctx);
-void		issue_warnings(migratorContext *ctx,
-						   char *sequence_script_file_name);
-void		output_completion_banner(migratorContext *ctx,
-								char *deletion_script_file_name);
+void issue_warnings(migratorContext *ctx,
+			   char *sequence_script_file_name);
+void output_completion_banner(migratorContext *ctx,
+						 char *deletion_script_file_name);
 void		check_cluster_versions(migratorContext *ctx);
 void		check_cluster_compatibility(migratorContext *ctx, bool live_check);
-void		create_script_for_old_cluster_deletion(migratorContext *ctx,
-								char **deletion_script_file_name);
+void create_script_for_old_cluster_deletion(migratorContext *ctx,
+									   char **deletion_script_file_name);
 
 
 /* controldata.c */
 
 void		get_control_data(migratorContext *ctx, ClusterInfo *cluster, bool live_check);
-void		check_control_data(migratorContext *ctx, ControlData *oldctrl,
+void check_control_data(migratorContext *ctx, ControlData *oldctrl,
 				   ControlData *newctrl);
 
 
@@ -258,8 +259,8 @@ void		split_old_dump(migratorContext *ctx);
 
 /* exec.c */
 
-int			exec_prog(migratorContext *ctx, bool throw_error,
-		  		const char *cmd,...);
+int exec_prog(migratorContext *ctx, bool throw_error,
+		  const char *cmd,...);
 void		verify_directories(migratorContext *ctx);
 bool		is_server_running(migratorContext *ctx, const char *datadir);
 void		rename_old_pg_control(migratorContext *ctx);
@@ -279,31 +280,28 @@ typedef const char *(*pluginShutdown) (void *pluginData);
 
 typedef struct
 {
-	uint16		oldPageVersion;		/* Page layout version of the old
-									 * cluster		 */
-	uint16		newPageVersion;		/* Page layout version of the new
-									 * cluster		 */
+	uint16		oldPageVersion; /* Page layout version of the old cluster		*/
+	uint16		newPageVersion; /* Page layout version of the new cluster		*/
 	uint16		pluginVersion;	/* API version of converter plugin */
-	void	   *pluginData;	/* Plugin data (set by plugin) */
-	pluginStartup startup;	/* Pointer to plugin's startup function */
-	pluginConvertFile convertFile;	/* Pointer to plugin's file converter
+	void	   *pluginData;		/* Plugin data (set by plugin) */
+	pluginStartup startup;		/* Pointer to plugin's startup function */
+	pluginConvertFile convertFile;		/* Pointer to plugin's file converter
 										 * function */
-	pluginConvertPage convertPage;	/* Pointer to plugin's page converter
+	pluginConvertPage convertPage;		/* Pointer to plugin's page converter
 										 * function */
 	pluginShutdown shutdown;	/* Pointer to plugin's shutdown function */
 } pageCnvCtx;
 
 const char *setupPageConverter(migratorContext *ctx, pageCnvCtx **result);
-
 #else
 /* dummy */
 typedef void *pageCnvCtx;
 #endif
 
-int			dir_matching_filenames(const struct dirent *scan_ent);
-int			pg_scandir(migratorContext *ctx, const char *dirname,
-					   struct dirent ***namelist,
-					   int (*selector) (const struct dirent *));
+int			dir_matching_filenames(const struct dirent * scan_ent);
+int pg_scandir(migratorContext *ctx, const char *dirname,
+		   struct dirent *** namelist,
+		   int (*selector) (const struct dirent *));
 const char *copyAndUpdateFile(migratorContext *ctx,
 				  pageCnvCtx *pageConverter, const char *src,
 				  const char *dst, bool force);
@@ -315,21 +313,21 @@ void		check_hard_link(migratorContext *ctx);
 /* function.c */
 
 void		install_support_functions(migratorContext *ctx);
-void 		uninstall_support_functions(migratorContext *ctx);
+void		uninstall_support_functions(migratorContext *ctx);
 void		get_loadable_libraries(migratorContext *ctx);
 void		check_loadable_libraries(migratorContext *ctx);
 
 /* info.c */
 
 FileNameMap *gen_db_file_maps(migratorContext *ctx, DbInfo *old_db,
-				DbInfo *new_db, int *nmaps, const char *old_pgdata,
-				const char *new_pgdata);
-void		get_db_and_rel_infos(migratorContext *ctx, DbInfoArr *db_arr,
-			Cluster whichCluster);
+				 DbInfo *new_db, int *nmaps, const char *old_pgdata,
+				 const char *new_pgdata);
+void get_db_and_rel_infos(migratorContext *ctx, DbInfoArr *db_arr,
+					 Cluster whichCluster);
 DbInfo	   *dbarr_lookup_db(DbInfoArr *db_arr, const char *db_name);
 void		dbarr_free(DbInfoArr *db_arr);
-void		print_maps(migratorContext *ctx, FileNameMap *maps, int n,
-				const char *dbName);
+void print_maps(migratorContext *ctx, FileNameMap *maps, int n,
+		   const char *dbName);
 
 /* option.c */
 
@@ -349,15 +347,15 @@ void		init_tablespaces(migratorContext *ctx);
 
 /* server.c */
 
-PGconn		*connectToServer(migratorContext *ctx, const char *db_name,
+PGconn *connectToServer(migratorContext *ctx, const char *db_name,
 				Cluster whichCluster);
-PGresult	*executeQueryOrDie(migratorContext *ctx, PGconn *conn,
+PGresult *executeQueryOrDie(migratorContext *ctx, PGconn *conn,
 				  const char *fmt,...);
 
-void 		start_postmaster(migratorContext *ctx, Cluster whichCluster, bool quiet);
+void		start_postmaster(migratorContext *ctx, Cluster whichCluster, bool quiet);
 void		stop_postmaster(migratorContext *ctx, bool fast, bool quiet);
-uint32		get_major_server_version(migratorContext *ctx, char **verstr,
-								 Cluster whichCluster);
+uint32 get_major_server_version(migratorContext *ctx, char **verstr,
+						 Cluster whichCluster);
 void		check_for_libpq_envvars(migratorContext *ctx);
 
 
@@ -381,22 +379,22 @@ const char *getErrorText(int errNum);
 
 /* version.c */
 
-void		new_9_0_populate_pg_largeobject_metadata(migratorContext *ctx,
-							bool check_mode, Cluster whichCluster);
+void new_9_0_populate_pg_largeobject_metadata(migratorContext *ctx,
+									  bool check_mode, Cluster whichCluster);
 
 /* version_old_8_3.c */
 
-void		old_8_3_check_for_name_data_type_usage(migratorContext *ctx,
-							Cluster whichCluster);
-void		old_8_3_check_for_tsquery_usage(migratorContext *ctx,
-							Cluster whichCluster);
-void		old_8_3_check_for_isn_and_int8_passing_mismatch(migratorContext *ctx,
-							Cluster whichCluster);
-void		old_8_3_rebuild_tsvector_tables(migratorContext *ctx,
-							bool check_mode, Cluster whichCluster);
-void		old_8_3_invalidate_hash_gin_indexes(migratorContext *ctx,
-							bool check_mode, Cluster whichCluster);
-void		old_8_3_invalidate_bpchar_pattern_ops_indexes(migratorContext *ctx,
-							bool check_mode, Cluster whichCluster);
-char 		*old_8_3_create_sequence_script(migratorContext *ctx,
-							Cluster whichCluster);
+void old_8_3_check_for_name_data_type_usage(migratorContext *ctx,
+									   Cluster whichCluster);
+void old_8_3_check_for_tsquery_usage(migratorContext *ctx,
+								Cluster whichCluster);
+void old_8_3_check_for_isn_and_int8_passing_mismatch(migratorContext *ctx,
+												Cluster whichCluster);
+void old_8_3_rebuild_tsvector_tables(migratorContext *ctx,
+								bool check_mode, Cluster whichCluster);
+void old_8_3_invalidate_hash_gin_indexes(migratorContext *ctx,
+									bool check_mode, Cluster whichCluster);
+void old_8_3_invalidate_bpchar_pattern_ops_indexes(migratorContext *ctx,
+									  bool check_mode, Cluster whichCluster);
+char *old_8_3_create_sequence_script(migratorContext *ctx,
+							   Cluster whichCluster);

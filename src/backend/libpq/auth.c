@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/auth.c,v 1.202 2010/06/29 04:12:47 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/auth.c,v 1.203 2010/07/06 19:18:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -179,7 +179,7 @@ static int	pg_GSS_recvauth(Port *port);
  *----------------------------------------------------------------
  */
 #ifdef ENABLE_SSPI
-typedef SECURITY_STATUS
+typedef		SECURITY_STATUS
 			(WINAPI * QUERY_SECURITY_CONTEXT_TOKEN_FN) (
 													   PCtxtHandle, void **);
 static int	pg_SSPI_recvauth(Port *port);
@@ -233,8 +233,8 @@ static void
 auth_failed(Port *port, int status)
 {
 	const char *errstr;
-	int		errcode_return = ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION;
-	
+	int			errcode_return = ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION;
+
 	/*
 	 * If we failed due to EOF from client, just quit; there's no point in
 	 * trying to send a message to the client, and not much point in logging
@@ -369,13 +369,13 @@ ClientAuthentication(Port *port)
 
 			/*
 			 * An explicit "reject" entry in pg_hba.conf.  This report exposes
-			 * the fact that there's an explicit reject entry, which is perhaps
-			 * not so desirable from a security standpoint; but the message
-			 * for an implicit reject could confuse the DBA a lot when the
-			 * true situation is a match to an explicit reject.  And we don't
-			 * want to change the message for an implicit reject.  As noted
-			 * below, the additional information shown here doesn't expose
-			 * anything not known to an attacker.
+			 * the fact that there's an explicit reject entry, which is
+			 * perhaps not so desirable from a security standpoint; but the
+			 * message for an implicit reject could confuse the DBA a lot when
+			 * the true situation is a match to an explicit reject.  And we
+			 * don't want to change the message for an implicit reject.  As
+			 * noted below, the additional information shown here doesn't
+			 * expose anything not known to an attacker.
 			 */
 			{
 				char		hostinfo[NI_MAXHOST];
@@ -389,32 +389,32 @@ ClientAuthentication(Port *port)
 				{
 #ifdef USE_SSL
 					ereport(FATAL,
-							(errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
-							 errmsg("pg_hba.conf rejects replication connection for host \"%s\", user \"%s\", %s",
-									hostinfo, port->user_name,
-									port->ssl ? _("SSL on") : _("SSL off"))));
+					   (errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
+						errmsg("pg_hba.conf rejects replication connection for host \"%s\", user \"%s\", %s",
+							   hostinfo, port->user_name,
+							   port->ssl ? _("SSL on") : _("SSL off"))));
 #else
 					ereport(FATAL,
-							(errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
-							 errmsg("pg_hba.conf rejects replication connection for host \"%s\", user \"%s\"",
-									hostinfo, port->user_name)));
+					   (errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
+						errmsg("pg_hba.conf rejects replication connection for host \"%s\", user \"%s\"",
+							   hostinfo, port->user_name)));
 #endif
 				}
 				else
 				{
 #ifdef USE_SSL
 					ereport(FATAL,
-							(errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
-							 errmsg("pg_hba.conf rejects connection for host \"%s\", user \"%s\", database \"%s\", %s",
-									hostinfo, port->user_name,
-									port->database_name,
-									port->ssl ? _("SSL on") : _("SSL off"))));
+					   (errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
+						errmsg("pg_hba.conf rejects connection for host \"%s\", user \"%s\", database \"%s\", %s",
+							   hostinfo, port->user_name,
+							   port->database_name,
+							   port->ssl ? _("SSL on") : _("SSL off"))));
 #else
 					ereport(FATAL,
-							(errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
-							 errmsg("pg_hba.conf rejects connection for host \"%s\", user \"%s\", database \"%s\"",
-									hostinfo, port->user_name,
-									port->database_name)));
+					   (errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
+						errmsg("pg_hba.conf rejects connection for host \"%s\", user \"%s\", database \"%s\"",
+							   hostinfo, port->user_name,
+							   port->database_name)));
 #endif
 				}
 				break;
@@ -442,32 +442,32 @@ ClientAuthentication(Port *port)
 				{
 #ifdef USE_SSL
 					ereport(FATAL,
-							(errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
-							 errmsg("no pg_hba.conf entry for replication connection from host \"%s\", user \"%s\", %s",
-									hostinfo, port->user_name,
-									port->ssl ? _("SSL on") : _("SSL off"))));
+					   (errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
+						errmsg("no pg_hba.conf entry for replication connection from host \"%s\", user \"%s\", %s",
+							   hostinfo, port->user_name,
+							   port->ssl ? _("SSL on") : _("SSL off"))));
 #else
 					ereport(FATAL,
-							(errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
-							 errmsg("no pg_hba.conf entry for replication connection from host \"%s\", user \"%s\"",
-									hostinfo, port->user_name)));
+					   (errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
+						errmsg("no pg_hba.conf entry for replication connection from host \"%s\", user \"%s\"",
+							   hostinfo, port->user_name)));
 #endif
 				}
 				else
 				{
 #ifdef USE_SSL
 					ereport(FATAL,
-							(errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
-							 errmsg("no pg_hba.conf entry for host \"%s\", user \"%s\", database \"%s\", %s",
-									hostinfo, port->user_name,
-									port->database_name,
-									port->ssl ? _("SSL on") : _("SSL off"))));
+					   (errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
+						errmsg("no pg_hba.conf entry for host \"%s\", user \"%s\", database \"%s\", %s",
+							   hostinfo, port->user_name,
+							   port->database_name,
+							   port->ssl ? _("SSL on") : _("SSL off"))));
 #else
 					ereport(FATAL,
-							(errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
-							 errmsg("no pg_hba.conf entry for host \"%s\", user \"%s\", database \"%s\"",
-									hostinfo, port->user_name,
-									port->database_name)));
+					   (errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
+						errmsg("no pg_hba.conf entry for host \"%s\", user \"%s\", database \"%s\"",
+							   hostinfo, port->user_name,
+							   port->database_name)));
 #endif
 				}
 				break;
@@ -2781,7 +2781,7 @@ CheckRADIUSAuth(Port *port)
 	timeout.tv_sec = RADIUS_TIMEOUT;
 	timeout.tv_usec = 0;
 	FD_ZERO(&fdset);
-	FD_SET		(sock, &fdset);
+	FD_SET(sock, &fdset);
 
 	while (true)
 	{
@@ -2904,8 +2904,8 @@ CheckRADIUSAuth(Port *port)
 	else
 	{
 		ereport(LOG,
-				(errmsg("RADIUS response has invalid code (%i) for user \"%s\"",
-						receivepacket->code, port->user_name)));
+			 (errmsg("RADIUS response has invalid code (%i) for user \"%s\"",
+					 receivepacket->code, port->user_name)));
 		return STATUS_ERROR;
 	}
 }

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/functions.c,v 1.143 2010/03/19 22:54:40 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/functions.c,v 1.144 2010/07/06 19:18:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -939,9 +939,9 @@ sql_exec_error_callback(void *arg)
 	else
 	{
 		/*
-		 * Assume we failed during init_sql_fcache().  (It's possible that
-		 * the function actually has an empty body, but in that case we may
-		 * as well report all errors as being "during startup".)
+		 * Assume we failed during init_sql_fcache().  (It's possible that the
+		 * function actually has an empty body, but in that case we may as
+		 * well report all errors as being "during startup".)
 		 */
 		errcontext("SQL function \"%s\" during startup", fcache->fname);
 	}

@@ -13,7 +13,7 @@
  *
  *	Copyright (c) 2001-2010, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.203 2010/03/24 16:07:10 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.204 2010/07/06 19:18:57 momjian Exp $
  * ----------
  */
 #include "postgres.h"
@@ -431,7 +431,7 @@ retry1:
 		for (;;)				/* need a loop to handle EINTR */
 		{
 			FD_ZERO(&rset);
-			FD_SET		(pgStatSock, &rset);
+			FD_SET(pgStatSock, &rset);
 
 			tv.tv_sec = 0;
 			tv.tv_usec = 500000;
@@ -2891,7 +2891,7 @@ PgstatCollectorMain(int argc, char *argv[])
 		got_data = (input_fd.revents != 0);
 #else							/* !HAVE_POLL */
 
-		FD_SET		(pgStatSock, &rfds);
+		FD_SET(pgStatSock, &rfds);
 
 		/*
 		 * timeout struct is modified by select() on some operating systems,
@@ -3288,10 +3288,10 @@ pgstat_write_statsfile(bool permanent)
 		last_statwrite = globalStats.stats_timestamp;
 
 		/*
-		 * If there is clock skew between backends and the collector, we
-		 * could receive a stats request time that's in the future.  If so,
-		 * complain and reset last_statrequest.  Resetting ensures that no
-		 * inquiry message can cause more than one stats file write to occur.
+		 * If there is clock skew between backends and the collector, we could
+		 * receive a stats request time that's in the future.  If so, complain
+		 * and reset last_statrequest.	Resetting ensures that no inquiry
+		 * message can cause more than one stats file write to occur.
 		 */
 		if (last_statrequest > last_statwrite)
 		{

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/scansup.c,v 1.41 2010/05/09 02:15:59 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/scansup.c,v 1.42 2010/07/06 19:18:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -181,7 +181,7 @@ truncate_identifier(char *ident, int len, bool warn)
 			 * We avoid using %.*s here because it can misbehave if the data
 			 * is not valid in what libc thinks is the prevailing encoding.
 			 */
-			char	buf[NAMEDATALEN];
+			char		buf[NAMEDATALEN];
 
 			memcpy(buf, ident, len);
 			buf[len] = '\0';

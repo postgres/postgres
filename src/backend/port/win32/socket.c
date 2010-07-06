@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/port/win32/socket.c,v 1.26 2010/02/26 02:00:53 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/port/win32/socket.c,v 1.27 2010/07/06 19:18:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -457,7 +457,7 @@ pgwin32_select(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, c
 
 			r = WSASend(writefds->fd_array[i], &buf, 1, &sent, 0, NULL, NULL);
 			if (r == 0)			/* Completed - means things are fine! */
-				FD_SET		(writefds->fd_array[i], &outwritefds);
+				FD_SET(writefds->fd_array[i], &outwritefds);
 
 			else
 			{					/* Not completed */
@@ -467,7 +467,7 @@ pgwin32_select(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, c
 					 * Not completed, and not just "would block", so an error
 					 * occured
 					 */
-					FD_SET		(writefds->fd_array[i], &outwritefds);
+					FD_SET(writefds->fd_array[i], &outwritefds);
 			}
 		}
 		if (outwritefds.fd_count > 0)
@@ -554,7 +554,7 @@ pgwin32_select(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, c
 					(resEvents.lNetworkEvents & FD_ACCEPT) ||
 					(resEvents.lNetworkEvents & FD_CLOSE))
 				{
-					FD_SET		(sockets[i], &outreadfds);
+					FD_SET(sockets[i], &outreadfds);
 
 					nummatches++;
 				}
@@ -565,7 +565,7 @@ pgwin32_select(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, c
 				if ((resEvents.lNetworkEvents & FD_WRITE) ||
 					(resEvents.lNetworkEvents & FD_CLOSE))
 				{
-					FD_SET		(sockets[i], &outwritefds);
+					FD_SET(sockets[i], &outwritefds);
 
 					nummatches++;
 				}

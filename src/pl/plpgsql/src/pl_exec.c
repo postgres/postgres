@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.260 2010/07/05 09:27:18 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.261 2010/07/06 19:19:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1899,7 +1899,7 @@ exec_stmt_forc(PLpgSQL_execstate *estate, PLpgSQL_stmt_forc *stmt)
 {
 	PLpgSQL_var *curvar;
 	char	   *curname = NULL;
-	const char   *portalname;
+	const char *portalname;
 	PLpgSQL_expr *query;
 	ParamListInfo paramLI;
 	Portal		portal;
@@ -3035,8 +3035,8 @@ exec_stmt_dynexecute(PLpgSQL_execstate *estate,
 				if (*ptr == 'S' || *ptr == 's')
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					errmsg("EXECUTE of SELECT ... INTO is not implemented"),
-					errhint("You might want to use EXECUTE ... INTO instead.")));
+					 errmsg("EXECUTE of SELECT ... INTO is not implemented"),
+							 errhint("You might want to use EXECUTE ... INTO instead.")));
 				break;
 			}
 
@@ -4292,8 +4292,8 @@ exec_for_query(PLpgSQL_execstate *estate, PLpgSQL_stmt_forq *stmt,
 		elog(ERROR, "unsupported target");
 
 	/*
-	 * Make sure the portal doesn't get closed by the user statements
-	 * we execute.
+	 * Make sure the portal doesn't get closed by the user statements we
+	 * execute.
 	 */
 	PinPortal(portal);
 

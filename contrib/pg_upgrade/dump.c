@@ -4,7 +4,7 @@
  *	dump functions
  *
  *	Copyright (c) 2010, PostgreSQL Global Development Group
- *	$PostgreSQL: pgsql/contrib/pg_upgrade/dump.c,v 1.6 2010/07/03 16:33:14 momjian Exp $
+ *	$PostgreSQL: pgsql/contrib/pg_upgrade/dump.c,v 1.7 2010/07/06 19:18:55 momjian Exp $
  */
 
 #include "pg_upgrade.h"
@@ -24,7 +24,7 @@ generate_old_dump(migratorContext *ctx)
 	exec_prog(ctx, true,
 			  SYSTEMQUOTE "\"%s/pg_dumpall\" --port %d --username \"%s\" "
 			  "--schema-only --binary-upgrade > \"%s/" ALL_DUMP_FILE "\""
-			  SYSTEMQUOTE, ctx->new.bindir, ctx->old.port, ctx->user, ctx->cwd);
+		   SYSTEMQUOTE, ctx->new.bindir, ctx->old.port, ctx->user, ctx->cwd);
 	check_ok(ctx);
 }
 

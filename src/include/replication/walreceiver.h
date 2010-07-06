@@ -5,7 +5,7 @@
  *
  * Portions Copyright (c) 2010-2010, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/replication/walreceiver.h,v 1.10 2010/07/03 20:43:58 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/replication/walreceiver.h,v 1.11 2010/07/06 19:19:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,7 +42,8 @@ typedef struct
 {
 	/*
 	 * PID of currently active walreceiver process, its current state and
-	 * start time (actually, the time at which it was requested to be started).
+	 * start time (actually, the time at which it was requested to be
+	 * started).
 	 */
 	pid_t		pid;
 	WalRcvState walRcvState;
@@ -51,16 +52,16 @@ typedef struct
 	/*
 	 * receivedUpto-1 is the last byte position that has already been
 	 * received.  When startup process starts the walreceiver, it sets
-	 * receivedUpto to the point where it wants the streaming to begin.
-	 * After that, walreceiver updates this whenever it flushes the received
-	 * WAL to disk.
+	 * receivedUpto to the point where it wants the streaming to begin. After
+	 * that, walreceiver updates this whenever it flushes the received WAL to
+	 * disk.
 	 */
 	XLogRecPtr	receivedUpto;
 
 	/*
 	 * latestChunkStart is the starting byte position of the current "batch"
 	 * of received WAL.  It's actually the same as the previous value of
-	 * receivedUpto before the last flush to disk.  Startup process can use
+	 * receivedUpto before the last flush to disk.	Startup process can use
 	 * this to detect whether it's keeping up or not.
 	 */
 	XLogRecPtr	latestChunkStart;

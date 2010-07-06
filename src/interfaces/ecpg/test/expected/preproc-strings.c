@@ -18,7 +18,12 @@
 #line 3 "strings.pgc"
 /* exec sql begin declare section */
 #line 1 "strings.h"
-      
+	   
+		   
+		   
+		   
+		   
+		   
 
 #line 5 "strings.pgc"
 

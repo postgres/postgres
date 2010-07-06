@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/placeholder.c,v 1.7 2010/03/28 22:59:33 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/placeholder.c,v 1.8 2010/07/06 19:18:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -177,7 +177,7 @@ fix_placeholder_eval_levels(PlannerInfo *root)
  * If any placeholder can be computed at a base rel and is needed above it,
  * add it to that rel's targetlist.  We have to do this separately from
  * fix_placeholder_eval_levels() because join removal happens in between,
- * and can change the ph_eval_at sets.  There is essentially the same logic
+ * and can change the ph_eval_at sets.	There is essentially the same logic
  * in add_placeholders_to_joinrel, but we can't do that part until joinrels
  * are formed.
  */
