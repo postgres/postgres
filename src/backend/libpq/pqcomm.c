@@ -30,7 +30,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/libpq/pqcomm.c,v 1.209 2010/03/21 00:17:58 petere Exp $
+ *	$PostgreSQL: pgsql/src/backend/libpq/pqcomm.c,v 1.210 2010/07/06 21:14:25 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1317,7 +1317,7 @@ pq_endcopyout(bool errorAbort)
 int
 pq_getkeepalivesidle(Port *port)
 {
-#ifdef TCP_KEEPIDLE
+#if defined(TCP_KEEPIDLE) || defined(TCP_KEEPALIVE)
 	if (port == NULL || IS_AF_UNIX(port->laddr.addr.ss_family))
 		return 0;
 
@@ -1328,6 +1328,7 @@ pq_getkeepalivesidle(Port *port)
 	{
 		ACCEPT_TYPE_ARG3 size = sizeof(port->default_keepalives_idle);
 
+#ifdef TCP_KEEPIDLE
 		if (getsockopt(port->sock, IPPROTO_TCP, TCP_KEEPIDLE,
 					   (char *) &port->default_keepalives_idle,
 					   &size) < 0)
@@ -1335,6 +1336,15 @@ pq_getkeepalivesidle(Port *port)
 			elog(LOG, "getsockopt(TCP_KEEPIDLE) failed: %m");
 			port->default_keepalives_idle = -1; /* don't know */
 		}
+#else
+		if (getsockopt(port->sock, IPPROTO_TCP, TCP_KEEPALIVE,
+					   (char *) &port->default_keepalives_idle,
+					   &size) < 0)
+		{
+			elog(LOG, "getsockopt(TCP_KEEPALIVE) failed: %m");
+			port->default_keepalives_idle = -1; /* don't know */
+		}
+#endif
 	}
 
 	return port->default_keepalives_idle;
@@ -1349,7 +1359,7 @@ pq_setkeepalivesidle(int idle, Port *port)
 	if (port == NULL || IS_AF_UNIX(port->laddr.addr.ss_family))
 		return STATUS_OK;
 
-#ifdef TCP_KEEPIDLE
+#if defined(TCP_KEEPIDLE) || defined(TCP_KEEPALIVE)
 	if (idle == port->keepalives_idle)
 		return STATUS_OK;
 
@@ -1367,18 +1377,27 @@ pq_setkeepalivesidle(int idle, Port *port)
 	if (idle == 0)
 		idle = port->default_keepalives_idle;
 
+#ifdef TCP_KEEPIDLE
 	if (setsockopt(port->sock, IPPROTO_TCP, TCP_KEEPIDLE,
 				   (char *) &idle, sizeof(idle)) < 0)
 	{
 		elog(LOG, "setsockopt(TCP_KEEPIDLE) failed: %m");
 		return STATUS_ERROR;
 	}
+#else
+	if (setsockopt(port->sock, IPPROTO_TCP, TCP_KEEPALIVE,
+				   (char *) &idle, sizeof(idle)) < 0)
+	{
+		elog(LOG, "setsockopt(TCP_KEEPALIVE) failed: %m");
+		return STATUS_ERROR;
+	}
+#endif
 
 	port->keepalives_idle = idle;
 #else
 	if (idle != 0)
 	{
-		elog(LOG, "setsockopt(TCP_KEEPIDLE) not supported");
+		elog(LOG, "setting the keepalive idle time is not supported");
 		return STATUS_ERROR;
 	}
 #endif

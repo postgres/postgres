@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.291 2010/07/03 22:52:25 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.292 2010/07/06 21:14:25 rhaas Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -523,11 +523,12 @@ SET ENABLE_SEQSCAN TO OFF;
       </indexterm>
       <listitem>
        <para>
-        On systems that support the <symbol>TCP_KEEPIDLE</symbol> socket option, specifies the
+        On systems that support the <symbol>TCP_KEEPIDLE</symbol> or
+        <symbol>TCP_KEEPALIVE</> socket option, specifies the
         number of seconds between sending keepalives on an otherwise idle
-        connection. A value of zero uses the system default. If <symbol>TCP_KEEPIDLE</symbol> is
-        not supported, this parameter must be zero. This parameter is ignored for
-        connections made via a Unix-domain socket.
+        connection. A value of zero uses the system default. If neither of
+        these socket options is supported, this parameter must be zero. This
+        parameter is ignored for connections made via a Unix-domain socket.
        </para>
       </listitem>
      </varlistentry>
