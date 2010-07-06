@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.560 2010/07/06 19:18:58 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.561 2010/07/06 22:55:26 rhaas Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -2061,7 +2061,7 @@ static struct config_int ConfigureNamesInt[] =
 
 	{
 		{"log_temp_files", PGC_SUSET, LOGGING_WHAT,
-			gettext_noop("Log the use of temporary files larger than this number of bytes."),
+			gettext_noop("Log the use of temporary files larger than this number of kilobytes."),
 			gettext_noop("Zero logs all files. The default is -1 (turning this feature off)."),
 			GUC_UNIT_KB
 		},

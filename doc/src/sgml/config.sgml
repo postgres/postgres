@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.292 2010/07/06 21:14:25 rhaas Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.293 2010/07/06 22:55:26 rhaas Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -3607,7 +3607,7 @@ FROM pg_stat_activity;
         A log entry is made for each temporary file when it is deleted.
         A value of zero logs all temporary file information, while positive
         values log only files whose size is greater than or equal to
-        the specified number of bytes.  The
+        the specified number of kilobytes.  The
         default setting is <literal>-1</>, which disables such logging.
         Only superusers can change this setting.
        </para>
