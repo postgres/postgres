@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/tools/pgindent/README,v 1.41 2010/07/06 19:18:19 momjian Exp $
+$PostgreSQL: pgsql/src/tools/pgindent/README,v 1.42 2010/07/06 19:26:28 momjian Exp $
 
 pgindent
 ========
@@ -22,7 +22,9 @@ This can format all PostgreSQL *.c and *.h files, but excludes *.y, and
 	egrep -v -f src/tools/pgindent/exclude_file_patterns | \
 	xargs -n100 pgindent src/tools/pgindent/typedefs.list
 
-5) Remove any files that generate errors and restore their original versions.
+5) Remove any files that generate errors and restore their original
+   versions, e.g. ./src/backend/tsearch/wparser_def.c has problems
+   because of a DECIMAL listed as a typedef.
 
 6) Do a full test build:
 
