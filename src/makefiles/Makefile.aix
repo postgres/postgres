@@ -17,10 +17,10 @@ endif
 DLSUFFIX = .so
 ifeq ($(host_os), aix3.2.5)
 ifneq ($(GCC), yes)
-	LDFLAGS_SL = -e _nostart -H512 -bM:SRE
+	LDFLAGS_SL += -e _nostart -H512 -bM:SRE
 endif
 else
-	LDFLAGS_SL = -Wl,-bnoentry -Wl,-H512 -Wl,-bM:SRE
+	LDFLAGS_SL += -Wl,-bnoentry -Wl,-H512 -Wl,-bM:SRE
 endif
 
 
