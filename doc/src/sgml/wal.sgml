@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/wal.sgml,v 1.66 2010/04/13 14:15:25 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/wal.sgml,v 1.67 2010/07/07 14:42:09 momjian Exp $ -->
 
 <chapter id="wal">
  <title>Reliability and the Write-Ahead Log</title>
@@ -48,21 +48,27 @@
    some later time. Such caches can be a reliability hazard because the
    memory in the disk controller cache is volatile, and will lose its
    contents in a power failure.  Better controller cards have
-   <firstterm>battery-backed</> caches, meaning the card has a battery that
+   <firstterm>battery-backed unit</> (<acronym>BBU</>) caches, meaning
+   the card has a battery that
    maintains power to the cache in case of system power loss.  After power
    is restored the data will be written to the disk drives.
   </para>
 
   <para>
    And finally, most disk drives have caches. Some are write-through
-   while some are write-back, and the
-   same concerns about data loss exist for write-back drive caches as
-   exist for disk controller caches.  Consumer-grade IDE and SATA drives are
-   particularly likely to have write-back caches that will not survive a
-   power failure, though <acronym>ATAPI-6</> introduced a drive cache
-   flush command (FLUSH CACHE EXT) that some file systems use, e.g. <acronym>ZFS</>.
-   Many solid-state drives (SSD) also have volatile write-back
-   caches, and many do not honor cache flush commands by default.
+   while some are write-back, and the same concerns about data loss
+   exist for write-back drive caches as exist for disk controller
+   caches.  Consumer-grade IDE and SATA drives are particularly likely
+   to have write-back caches that will not survive a power failure,
+   though <acronym>ATAPI-6</> introduced a drive cache flush command
+   (<command>FLUSH CACHE EXT</>) that some file systems use, e.g.
+   <acronym>ZFS</>, <acronym>ext4</>.  (The SCSI command
+   <command>SYNCHRONIZE CACHE</> has long been available.) Many
+   solid-state drives (SSD) also have volatile write-back caches, and
+   many do not honor cache flush commands by default.
+  </para>
+
+  <para>
    To check write caching on <productname>Linux</> use
    <command>hdparm -I</>;  it is enabled if there is a <literal>*</> next
    to <literal>Write cache</>; <command>hdparm -W</> to turn off
@@ -80,6 +86,25 @@
    drive}\Properties\Hardware\Properties\Policies\Enable write caching on
    the disk</>.  Also on Windows, <literal>fsync</> and
    <literal>fsync_writethrough</> never do write caching.
+  </para>
+
+  <para>
+   Many file systems that use write barriers (e.g.  <acronym>ZFS</>,
+   <acronym>ext4</>) internally use <command>FLUSH CACHE EXT</> or
+   <command>SYNCHRONIZE CACHE</> commands to flush data to the platers on
+   write-back-enabled drives.  Unfortunately, such write barrier file
+   systems behave suboptimally when combined with battery-backed unit
+   (<acronym>BBU</>) disk controllers.  In such setups, the synchronize
+   command forces all data from the BBU to the disks, eliminating much
+   of the benefit of the BBU.  You can run the utility
+   <filename>src/tools/fsync</> in the PostgreSQL source tree to see
+   if you are effected.  If you are effected, the performance benefits
+   of the BBU cache can be regained by turning off write barriers in
+   the file system or reconfiguring the disk controller, if that is
+   an option.  If write barriers are turned off, make sure the battery
+   remains active; a faulty battery can potentially lead to data loss.
+   Hopefully file system and disk controller designers will eventually
+   address this suboptimal behavior.
   </para>
 
   <para>
