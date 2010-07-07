@@ -4,7 +4,7 @@
  *
  * Tatsuo Ishii
  *
- * $PostgreSQL: pgsql/src/backend/utils/mb/mbutils.c,v 1.97 2010/07/06 21:09:00 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/mb/mbutils.c,v 1.98 2010/07/07 15:13:21 tgl Exp $
  */
 #include "postgres.h"
 
@@ -1016,7 +1016,7 @@ pgwin32_toUTF16(const char *str, int len, int *utf16len)
 	{
 		utf16 = (WCHAR *) palloc(sizeof(WCHAR) * (len + 1));
 		dstlen = MultiByteToWideChar(codepage, 0, str, len, utf16, len);
-		utf16[dstlen] = L'\0';
+		utf16[dstlen] = (WCHAR) 0;
 	}
 	else
 	{
@@ -1029,7 +1029,7 @@ pgwin32_toUTF16(const char *str, int len, int *utf16len)
 
 		utf16 = (WCHAR *) palloc(sizeof(WCHAR) * (len + 1));
 		dstlen = MultiByteToWideChar(CP_UTF8, 0, utf8, len, utf16, len);
-		utf16[dstlen] = L'\0';
+		utf16[dstlen] = (WCHAR) 0;
 
 		if (utf8 != str)
 			pfree(utf8);
