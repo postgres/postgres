@@ -1,7 +1,7 @@
 /**********************************************************************
  * plpython.c - python as a procedural language for PostgreSQL
  *
- *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.147 2010/07/08 18:42:12 petere Exp $
+ *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.148 2010/07/08 19:00:11 tgl Exp $
  *
  *********************************************************************
  */
@@ -3220,6 +3220,9 @@ _PG_init(void)
 	static bool inited = false;
 	const int **version_ptr;
 
+	if (inited)
+		return;
+
 	/* Be sure we don't run Python 2 and 3 in the same session (might crash) */
 	version_ptr = (const int **) find_rendezvous_variable("plpython_python_version");
 	if (!(*version_ptr))
@@ -3233,9 +3236,6 @@ _PG_init(void)
 							   **version_ptr, plpython_python_version),
 					 errhint("Start a new session to use a different Python major version.")));
 	}
-
-	if (inited)
-		return;
 
 	pg_bindtextdomain(TEXTDOMAIN);
 
