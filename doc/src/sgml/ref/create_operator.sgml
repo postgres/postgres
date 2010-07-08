@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_operator.sgml,v 1.53 2010/06/22 11:36:16 rhaas Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_operator.sgml,v 1.54 2010/07/08 16:30:13 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -224,6 +224,12 @@ COMMUTATOR = OPERATOR(myschema.===) ,
 
   <para>
    Refer to <xref linkend="xoper"> for further information.
+  </para>
+
+  <para>
+   It is not possible to specify an operator's lexical precedence in
+   <command>CREATE OPERATOR</>, because the parser's precedence behavior
+   is hard-wired.  See <xref linkend="sql-precedence"> for precedence details.
   </para>
 
   <para>
