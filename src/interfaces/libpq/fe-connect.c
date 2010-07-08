@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.396 2010/07/06 21:14:25 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.397 2010/07/08 10:20:12 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,6 +38,7 @@
 #endif
 #define near
 #include <shlobj.h>
+#include <mstcpip.h>
 #else
 #include <sys/socket.h>
 #include <netdb.h>
@@ -982,6 +983,7 @@ useKeepalives(PGconn *conn)
 	return val != 0 ? 1 : 0;
 }
 
+#ifndef WIN32
 /*
  * Set the keepalive idle timer.
  */
@@ -1090,6 +1092,52 @@ setKeepalivesCount(PGconn *conn)
 	return 1;
 }
 
+#else /* Win32 */
+/*
+ * Enable keepalives and set the keepalive values on Win32,
+ * where they are always set in one batch.
+ */
+static int
+setKeepalivesWin32(PGconn *conn)
+{
+	struct tcp_keepalive 	ka;
+	DWORD					retsize;
+	int						idle = 0;
+	int						interval = 0;
+
+	if (conn->keepalives_idle)
+		idle = atoi(conn->keepalives_idle);
+	if (idle <= 0)
+		idle = 2 * 60 * 60; /* 2 hours = default */
+
+	if (conn->keepalives_interval)
+		interval = atoi(conn->keepalives_interval);
+	if (interval <= 0)
+		interval = 1; /* 1 second = default */
+
+	ka.onoff = 1;
+	ka.keepalivetime = idle * 1000;
+	ka.keepaliveinterval = interval * 1000;
+
+	if (WSAIoctl(conn->sock,
+				 SIO_KEEPALIVE_VALS,
+				 (LPVOID) &ka,
+				 sizeof(ka),
+				 NULL,
+				 0,
+				 &retsize,
+				 NULL,
+				 NULL)
+		!= 0)
+	{
+		appendPQExpBuffer(&conn->errorMessage,
+						  libpq_gettext("WSAIoctl(SIO_KEEPALIVE_VALS) failed: %ui\n"),
+						  WSAGetLastError());
+		return 0;
+	}
+	return 1;
+}
+#endif /* WIN32 */
 
 /* ----------
  * connectDBStart -
@@ -1492,6 +1540,7 @@ keep_going:						/* We will come back to here until there is
 						{
 							/* Do nothing */
 						}
+#ifndef WIN32
 						else if (setsockopt(conn->sock,
 											SOL_SOCKET, SO_KEEPALIVE,
 											(char *) &on, sizeof(on)) < 0)
@@ -1505,6 +1554,10 @@ keep_going:						/* We will come back to here until there is
 								 || !setKeepalivesInterval(conn)
 								 || !setKeepalivesCount(conn))
 							err = 1;
+#else /* WIN32 */
+						else if (!setKeepalivesWin32(conn))
+							err = 1;
+#endif /* WIN32 */
 
 						if (err)
 						{

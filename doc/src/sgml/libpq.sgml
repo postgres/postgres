@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.312 2010/07/06 21:14:25 rhaas Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.313 2010/07/08 10:20:14 mha Exp $ -->
 
 <chapter id="libpq">
  <title><application>libpq</application> - C Library</title>
@@ -298,10 +298,11 @@
           <para>
            Controls the number of seconds of inactivity after which TCP should
            send a keepalive message to the server.  A value of zero uses the
-           system default.  This parameter is ignored if the neither the
-           <symbol>TCP_KEEPIDLE</> nor the <symbol>TCP_KEEPALIVE</> socket
-           options are supported, for connections made via a Unix-domain
-           socket, or if keepalives are disabled.
+           system default. This parameter is ignored for connections made via a
+           Unix-domain socket, or if keepalives are disabled. It is only supported
+           on systems where the <symbol>TCP_KEEPIDLE</> or <symbol>TCP_KEEPALIVE</>
+           socket option is available, and on Windows; on other systems, it has no
+           effect.
           </para>
          </listitem>
         </varlistentry>
@@ -312,10 +313,11 @@
           <para>
            Controls the number of seconds after which a TCP keepalive message
            that is not acknowledged by the server should be retransmitted.  A
-           value of zero uses the system default.  This parameter is ignored if
-           the <symbol>TCP_KEEPINTVL</> socket option is not supported, for
-           connections made via a Unix-domain socket, or if keepalives are
-           disabled.
+           value of zero uses the system default. This parameter is ignored for
+           connections made via a Unix-domain socket, or if keepalives are disabled.
+           It is only supported on systems where the <symbol>TCP_KEEPINTVL</>
+           socket option is available, and on Windows; on other systems, it has no
+           effect.
           </para>
          </listitem>
         </varlistentry>
@@ -326,10 +328,10 @@
           <para>
            Controls the number of TCP keepalives that can be lost before the
            client's connection to the server is considered dead.  A value of
-           zero uses the system default.  This parameter is ignored if the
-           <symbol>TCP_KEEPCNT</> socket option is not supported, for
-           connections made via a Unix-domain socket, or if keepalives are
-           disabled.
+           zero uses the system default. This parameter is ignored for
+           connections made via a Unix-domain socket, or if keepalives are disabled.
+           It is only supported on systems where the <symbol>TCP_KEEPINTVL</>
+           socket option is available; on other systems, it has no effect.
           </para>
          </listitem>
         </varlistentry>

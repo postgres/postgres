@@ -30,7 +30,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/libpq/pqcomm.c,v 1.210 2010/07/06 21:14:25 rhaas Exp $
+ *	$PostgreSQL: pgsql/src/backend/libpq/pqcomm.c,v 1.211 2010/07/08 10:20:12 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -82,6 +82,9 @@
 #include <arpa/inet.h>
 #ifdef HAVE_UTIME_H
 #include <utime.h>
+#endif
+#ifdef WIN32
+#include <mstcpip.h>
 #endif
 
 #include "libpq/ip.h"
@@ -1314,10 +1317,55 @@ pq_endcopyout(bool errorAbort)
  * Support for TCP Keepalive parameters
  */
 
+/*
+ * On Windows, we need to set both idle and interval at the same time.
+ * We also cannot reset them to the default (setting to zero will
+ * actually set them to zero, not default), therefor we fallback to
+ * the out-of-the-box default instead.
+ */
+#ifdef WIN32
+static int
+pq_setkeepaliveswin32(Port *port, int idle, int interval)
+{
+	struct tcp_keepalive	ka;
+	DWORD					retsize;
+
+	if (idle <= 0)
+		idle = 2 * 60 * 60; /* default = 2 hours */
+	if (interval <= 0)
+		interval = 1;       /* default = 1 second */
+
+	ka.onoff = 1;
+	ka.keepalivetime = idle * 1000;
+	ka.keepaliveinterval = interval * 1000;
+
+	if (WSAIoctl(port->sock,
+				 SIO_KEEPALIVE_VALS,
+				 (LPVOID) &ka,
+				 sizeof(ka),
+				 NULL,
+				 0,
+				 &retsize,
+				 NULL,
+				 NULL)
+		!= 0)
+	{
+		elog(LOG, "WSAIoctl(SIO_KEEPALIVE_VALS) failed: %ui",
+			 WSAGetLastError());
+		return STATUS_ERROR;
+	}
+	if (port->keepalives_idle != idle)
+		port->keepalives_idle = idle;
+	if (port->keepalives_interval != interval)
+		port->keepalives_interval = interval;
+	return STATUS_OK;
+}
+#endif
+
 int
 pq_getkeepalivesidle(Port *port)
 {
-#if defined(TCP_KEEPIDLE) || defined(TCP_KEEPALIVE)
+#if defined(TCP_KEEPIDLE) || defined(TCP_KEEPALIVE) || defined(WIN32)
 	if (port == NULL || IS_AF_UNIX(port->laddr.addr.ss_family))
 		return 0;
 
@@ -1326,6 +1374,7 @@ pq_getkeepalivesidle(Port *port)
 
 	if (port->default_keepalives_idle == 0)
 	{
+#ifndef WIN32
 		ACCEPT_TYPE_ARG3 size = sizeof(port->default_keepalives_idle);
 
 #ifdef TCP_KEEPIDLE
@@ -1344,7 +1393,11 @@ pq_getkeepalivesidle(Port *port)
 			elog(LOG, "getsockopt(TCP_KEEPALIVE) failed: %m");
 			port->default_keepalives_idle = -1; /* don't know */
 		}
-#endif
+#endif /* TCP_KEEPIDLE */
+#else /* WIN32 */
+		/* We can't get the defaults on Windows, so return "don't know" */
+		port->default_keepalives_idle = -1;
+#endif /* WIN32 */
 	}
 
 	return port->default_keepalives_idle;
@@ -1359,10 +1412,11 @@ pq_setkeepalivesidle(int idle, Port *port)
 	if (port == NULL || IS_AF_UNIX(port->laddr.addr.ss_family))
 		return STATUS_OK;
 
-#if defined(TCP_KEEPIDLE) || defined(TCP_KEEPALIVE)
+#if defined(TCP_KEEPIDLE) || defined(TCP_KEEPALIVE) || defined(WIN32)
 	if (idle == port->keepalives_idle)
 		return STATUS_OK;
 
+#ifndef WIN32
 	if (port->default_keepalives_idle <= 0)
 	{
 		if (pq_getkeepalivesidle(port) < 0)
@@ -1394,21 +1448,23 @@ pq_setkeepalivesidle(int idle, Port *port)
 #endif
 
 	port->keepalives_idle = idle;
-#else
+#else /* WIN32 */
+	return pq_setkeepaliveswin32(port, idle, port->keepalives_interval);
+#endif
+#else /* TCP_KEEPIDLE || WIN32 */
 	if (idle != 0)
 	{
 		elog(LOG, "setting the keepalive idle time is not supported");
 		return STATUS_ERROR;
 	}
 #endif
-
 	return STATUS_OK;
 }
 
 int
 pq_getkeepalivesinterval(Port *port)
 {
-#ifdef TCP_KEEPINTVL
+#if defined(TCP_KEEPINTVL) || defined(WIN32)
 	if (port == NULL || IS_AF_UNIX(port->laddr.addr.ss_family))
 		return 0;
 
@@ -1417,6 +1473,7 @@ pq_getkeepalivesinterval(Port *port)
 
 	if (port->default_keepalives_interval == 0)
 	{
+#ifndef WIN32
 		ACCEPT_TYPE_ARG3 size = sizeof(port->default_keepalives_interval);
 
 		if (getsockopt(port->sock, IPPROTO_TCP, TCP_KEEPINTVL,
@@ -1426,6 +1483,10 @@ pq_getkeepalivesinterval(Port *port)
 			elog(LOG, "getsockopt(TCP_KEEPINTVL) failed: %m");
 			port->default_keepalives_interval = -1;		/* don't know */
 		}
+#else
+		/* We can't get the defaults on Windows, so return "don't know" */
+		port->default_keepalives_interval = -1;
+#endif /* WIN32 */
 	}
 
 	return port->default_keepalives_interval;
@@ -1440,10 +1501,11 @@ pq_setkeepalivesinterval(int interval, Port *port)
 	if (port == NULL || IS_AF_UNIX(port->laddr.addr.ss_family))
 		return STATUS_OK;
 
-#ifdef TCP_KEEPINTVL
+#if defined(TCP_KEEPINTVL) || defined (WIN32)
 	if (interval == port->keepalives_interval)
 		return STATUS_OK;
 
+#ifndef WIN32
 	if (port->default_keepalives_interval <= 0)
 	{
 		if (pq_getkeepalivesinterval(port) < 0)
@@ -1466,6 +1528,9 @@ pq_setkeepalivesinterval(int interval, Port *port)
 	}
 
 	port->keepalives_interval = interval;
+#else /* WIN32 */
+	return pq_setkeepaliveswin32(port, port->keepalives_idle, interval);
+#endif
 #else
 	if (interval != 0)
 	{

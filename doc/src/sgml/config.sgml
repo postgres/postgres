@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.293 2010/07/06 22:55:26 rhaas Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.294 2010/07/08 10:20:13 mha Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -523,12 +523,17 @@ SET ENABLE_SEQSCAN TO OFF;
       </indexterm>
       <listitem>
        <para>
-        On systems that support the <symbol>TCP_KEEPIDLE</symbol> or
-        <symbol>TCP_KEEPALIVE</> socket option, specifies the
-        number of seconds between sending keepalives on an otherwise idle
-        connection. A value of zero uses the system default. If neither of
-        these socket options is supported, this parameter must be zero. This
-        parameter is ignored for connections made via a Unix-domain socket.
+        Specifies the number of seconds before sending a keepalive packet on an otherwise idle
+        connection.  A value of 0 uses the system default.  This parameter is supported
+        only on systems that support the <symbol>TCP_KEEPIDLE</> or <symbol>TCP_KEEPALIVE</>
+        symbols, and on Windows; on other systems, it must be zero. This parameter is
+        ignored for connections made via a Unix-domain socket.
+         <note>
+          <para>
+           On Windows, a value of 0 will set this parameter to 2 hours,
+           since Windows does not provide a way to read the default value.
+          </para>
+         </note>
        </para>
       </listitem>
      </varlistentry>
@@ -540,11 +545,17 @@ SET ENABLE_SEQSCAN TO OFF;
       </indexterm>
       <listitem>
        <para>
-        On systems that support the <symbol>TCP_KEEPINTVL</symbol> socket option, specifies how
-        long, in seconds, to wait for a response to a keepalive before
-        retransmitting. A value of zero uses the system default. If <symbol>TCP_KEEPINTVL</symbol>
-        is not supported, this parameter must be zero. This parameter is ignored
-        for connections made via a Unix-domain socket.
+        Specifies the number of seconds between sending keepalives on an otherwise idle
+        connection.  A value of 0 uses the system default.  This parameter is supported
+        only on systems that support the <symbol>TCP_KEEPINTVL</>
+        symbol, and on Windows; on other systems, it must be zero. This parameter is
+        ignored for connections made via a Unix-domain socket.
+         <note>
+          <para>
+           On Windows, a value of 0 will set this parameter to 1 second,
+           since Windows does not provide a way to read the default value.
+          </para>
+         </note>
        </para>
       </listitem>
      </varlistentry>
@@ -556,11 +567,16 @@ SET ENABLE_SEQSCAN TO OFF;
       </indexterm>
       <listitem>
        <para>
-        On systems that support the <symbol>TCP_KEEPCNT</symbol> socket option, specifies how
-        many keepalives can be lost before the connection is considered dead.
-        A value of zero uses the system default. If <symbol>TCP_KEEPCNT</symbol> is not
-        supported, this parameter must be zero. This parameter is ignored
-        for connections made via a Unix-domain socket.
+        Specifies the number of keepalive packets to send on an otherwise idle
+        connection.  A value of 0 uses the system default.  This parameter is supported
+        only on systems that support the <symbol>TCP_KEEPCNT</>
+        symbol; on other systems, it must be zero. This parameter is
+        ignored for connections made via a Unix-domain socket.
+         <note>
+          <para>
+           This parameter is not supported on Windows, and must be zero.
+          </para>
+         </note>
        </para>
       </listitem>
      </varlistentry>
