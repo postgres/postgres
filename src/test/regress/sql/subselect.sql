@@ -277,3 +277,15 @@ select
   ( select min(tb.id) from tb
     where tb.aval = (select ta.val from ta where ta.id = tc.aid) ) as min_tb_id
 from tc;
+
+--
+-- Test case for sublinks pushed down into subselects via join alias expansion
+--
+
+select
+  (select sq1) as qq1
+from
+  (select exists(select 1 from int4_tbl where f1 = q2) as sq1, 42 as dummy
+   from int8_tbl) sq0
+  join
+  int4_tbl i4 on dummy = i4.f1;
