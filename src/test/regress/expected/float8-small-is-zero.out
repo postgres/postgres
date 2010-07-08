@@ -19,13 +19,13 @@ LINE 1: SELECT '-10e400'::float8;
 SELECT '10e-400'::float8;
  float8 
 --------
-     0
+      0
 (1 row)
 
 SELECT '-10e-400'::float8;
  float8 
 --------
-    -0
+     -0
 (1 row)
 
 -- bad input
