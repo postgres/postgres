@@ -191,3 +191,15 @@ FROM orderstest ord;
 SELECT * FROM orders_view;
 
 DROP TABLE orderstest cascade;
+
+--
+-- Test case for sublinks pushed down into subselects via join alias expansion
+--
+
+select
+  (select sq1) as qq1
+from
+  (select exists(select 1 from int4_tbl where f1 = q2) as sq1, 42 as dummy
+   from int8_tbl) sq0
+  join
+  int4_tbl i4 on dummy = i4.f1;
