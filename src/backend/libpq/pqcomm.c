@@ -30,7 +30,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/libpq/pqcomm.c,v 1.211 2010/07/08 10:20:12 mha Exp $
+ *	$PostgreSQL: pgsql/src/backend/libpq/pqcomm.c,v 1.212 2010/07/08 16:19:50 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -83,7 +83,7 @@
 #ifdef HAVE_UTIME_H
 #include <utime.h>
 #endif
-#ifdef WIN32
+#ifdef WIN32_ONLY_COMPILER /* mstcpip.h is missing on mingw */
 #include <mstcpip.h>
 #endif
 
@@ -1323,7 +1323,7 @@ pq_endcopyout(bool errorAbort)
  * actually set them to zero, not default), therefor we fallback to
  * the out-of-the-box default instead.
  */
-#ifdef WIN32
+#if defined(WIN32) && defined(SIO_KEEPALIVE_VALS)
 static int
 pq_setkeepaliveswin32(Port *port, int idle, int interval)
 {
@@ -1412,7 +1412,7 @@ pq_setkeepalivesidle(int idle, Port *port)
 	if (port == NULL || IS_AF_UNIX(port->laddr.addr.ss_family))
 		return STATUS_OK;
 
-#if defined(TCP_KEEPIDLE) || defined(TCP_KEEPALIVE) || defined(WIN32)
+#if defined(TCP_KEEPIDLE) || defined(TCP_KEEPALIVE) || defined(SIO_KEEPALIVE_VALS)
 	if (idle == port->keepalives_idle)
 		return STATUS_OK;
 
@@ -1451,7 +1451,7 @@ pq_setkeepalivesidle(int idle, Port *port)
 #else /* WIN32 */
 	return pq_setkeepaliveswin32(port, idle, port->keepalives_interval);
 #endif
-#else /* TCP_KEEPIDLE || WIN32 */
+#else /* TCP_KEEPIDLE || SIO_KEEPALIVE_VALS */
 	if (idle != 0)
 	{
 		elog(LOG, "setting the keepalive idle time is not supported");
@@ -1464,7 +1464,7 @@ pq_setkeepalivesidle(int idle, Port *port)
 int
 pq_getkeepalivesinterval(Port *port)
 {
-#if defined(TCP_KEEPINTVL) || defined(WIN32)
+#if defined(TCP_KEEPINTVL) || defined(SIO_KEEPALIVE_VALS)
 	if (port == NULL || IS_AF_UNIX(port->laddr.addr.ss_family))
 		return 0;
 
@@ -1501,7 +1501,7 @@ pq_setkeepalivesinterval(int interval, Port *port)
 	if (port == NULL || IS_AF_UNIX(port->laddr.addr.ss_family))
 		return STATUS_OK;
 
-#if defined(TCP_KEEPINTVL) || defined (WIN32)
+#if defined(TCP_KEEPINTVL) || defined (SIO_KEEPALIVE_VALS)
 	if (interval == port->keepalives_interval)
 		return STATUS_OK;
 

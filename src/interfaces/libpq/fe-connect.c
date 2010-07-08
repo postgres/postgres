@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.397 2010/07/08 10:20:12 mha Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.398 2010/07/08 16:19:50 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,7 +38,9 @@
 #endif
 #define near
 #include <shlobj.h>
+#ifdef WIN32_ONLY_COMPILER /* mstcpip.h is missing on mingw */
 #include <mstcpip.h>
+#endif
 #else
 #include <sys/socket.h>
 #include <netdb.h>
@@ -1093,6 +1095,7 @@ setKeepalivesCount(PGconn *conn)
 }
 
 #else /* Win32 */
+#ifdef SIO_KEEPALIVE_VALS
 /*
  * Enable keepalives and set the keepalive values on Win32,
  * where they are always set in one batch.
@@ -1137,6 +1140,7 @@ setKeepalivesWin32(PGconn *conn)
 	}
 	return 1;
 }
+#endif /* SIO_KEEPALIVE_VALS */
 #endif /* WIN32 */
 
 /* ----------
@@ -1555,8 +1559,10 @@ keep_going:						/* We will come back to here until there is
 								 || !setKeepalivesCount(conn))
 							err = 1;
 #else /* WIN32 */
+#ifdef SIO_KEEPALIVE_VALS
 						else if (!setKeepalivesWin32(conn))
 							err = 1;
+#endif /* SIO_KEEPALIVE_VALS */
 #endif /* WIN32 */
 
 						if (err)
