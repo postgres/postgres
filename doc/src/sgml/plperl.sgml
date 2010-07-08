@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/plperl.sgml,v 2.85 2010/06/14 18:47:05 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/plperl.sgml,v 2.86 2010/07/08 21:35:33 petere Exp $ -->
 
  <chapter id="plperl">
   <title>PL/Perl - Perl Procedural Language</title>
@@ -173,7 +173,7 @@ $$ LANGUAGE plperl;
    Similarly, values passed back to <productname>PostgreSQL</productname>
    must be in the external text representation format. For example, the
    <function>encode_bytea</function> function can be used to
-   to escape binary data for a return value of type <type>bytea</>.
+   escape binary data for a return value of type <type>bytea</>.
   </para>
 
   <para>
@@ -515,7 +515,8 @@ SELECT * from lotsa_md5(500);
     <literal>spi_prepare</literal> accepts a query string with numbered argument placeholders ($1, $2, etc)
     and a string list of argument types:
 <programlisting>
-$plan = spi_prepare('SELECT * FROM test WHERE id &gt; $1 AND name = $2', 'INTEGER', 'TEXT');
+$plan = spi_prepare('SELECT * FROM test WHERE id &gt; $1 AND name = $2',
+                                                     'INTEGER', 'TEXT');
 </programlisting>
     Once a query plan is prepared by a call to <literal>spi_prepare</literal>, the plan can be used instead
     of the string query, either in <literal>spi_exec_prepared</literal>, where the result is the same as returned
@@ -534,7 +535,8 @@ $plan = spi_prepare('SELECT * FROM test WHERE id &gt; $1 AND name = $2', 'INTEGE
     <para>
     <programlisting>
 CREATE OR REPLACE FUNCTION init() RETURNS VOID AS $$
-        $_SHARED{my_plan} = spi_prepare( 'SELECT (now() + $1)::date AS now', 'INTERVAL');
+        $_SHARED{my_plan} = spi_prepare('SELECT (now() + $1)::date AS now',
+                                        'INTERVAL');
 $$ LANGUAGE plperl;
 
 CREATE OR REPLACE FUNCTION add_time( INTERVAL ) RETURNS TEXT AS $$
@@ -571,10 +573,12 @@ SELECT done();
 
     <para>
     <programlisting>
-CREATE TABLE hosts AS SELECT id, ('192.168.1.'||id)::inet AS address FROM generate_series(1,3) AS id;
+CREATE TABLE hosts AS SELECT id, ('192.168.1.'||id)::inet AS address
+                      FROM generate_series(1,3) AS id;
 
 CREATE OR REPLACE FUNCTION init_hosts_query() RETURNS VOID AS $$
-        $_SHARED{plan} = spi_prepare('SELECT * FROM hosts WHERE address &lt;&lt; $1', 'inet');
+        $_SHARED{plan} = spi_prepare('SELECT * FROM hosts 
+                                      WHERE address &lt;&lt; $1', 'inet');
 $$ LANGUAGE plperl;
 
 CREATE OR REPLACE FUNCTION query_hosts(inet) RETURNS SETOF hosts AS $$
