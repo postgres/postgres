@@ -1,7 +1,7 @@
 /**********************************************************************
  * plpython.c - python as a procedural language for PostgreSQL
  *
- *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.146 2010/07/06 19:19:01 momjian Exp $
+ *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.147 2010/07/08 18:42:12 petere Exp $
  *
  *********************************************************************
  */
@@ -3206,6 +3206,8 @@ PyInit_plpy(void)
 #endif
 
 
+static const int plpython_python_version = PY_MAJOR_VERSION;
+
 /*
  * _PG_init()			- library load-time initialization
  *
@@ -3216,6 +3218,21 @@ _PG_init(void)
 {
 	/* Be sure we do initialization only once (should be redundant now) */
 	static bool inited = false;
+	const int **version_ptr;
+
+	/* Be sure we don't run Python 2 and 3 in the same session (might crash) */
+	version_ptr = (const int **) find_rendezvous_variable("plpython_python_version");
+	if (!(*version_ptr))
+		*version_ptr = &plpython_python_version;
+	else
+	{
+		if (**version_ptr != plpython_python_version)
+			ereport(FATAL,
+					(errmsg("Python major version mismatch in session"),
+					 errdetail("This session has previously used Python major version %d, and it is now attempting to use Python major version %d.",
+							   **version_ptr, plpython_python_version),
+					 errhint("Start a new session to use a different Python major version.")));
+	}
 
 	if (inited)
 		return;

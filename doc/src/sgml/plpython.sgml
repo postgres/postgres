@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/plpython.sgml,v 1.50 2010/07/06 21:37:31 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/plpython.sgml,v 1.51 2010/07/08 18:42:12 petere Exp $ -->
 
 <chapter id="plpython">
  <title>PL/Python - Python Procedural Language</title>
@@ -154,12 +154,13 @@
   </para>
 
   <para>
-   On most (possibly all) platforms, it is not possible to use
-   PL/Python based on Python 2 and PL/Python based on Python 3 in the
-   same session, because the symbols in the dynamic modules will
-   clash, which will result in crashes of the PostgreSQL server
-   process.  It is possible, however, to use both PL/Python variants
-   in the same database, from separate sessions.
+   It is not allowed to use PL/Python based on Python 2 and PL/Python
+   based on Python 3 in the same session, because the symbols in the
+   dynamic modules would clash, which could result in crashes of the
+   PostgreSQL server process.  There is a check that prevents mixing
+   Python major versions in a session, which will abort the session if
+   a mismatch is detected.  It is possible, however, to use both
+   PL/Python variants in the same database, from separate sessions.
   </para>
  </sect1>
 
