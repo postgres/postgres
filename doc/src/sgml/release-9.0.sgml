@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release-9.0.sgml,v 2.38 2010/07/01 02:33:21 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release-9.0.sgml,v 2.39 2010/07/08 22:26:14 momjian Exp $ -->
 
  <sect1 id="release-9-0">
   <title>Release 9.0</title>
@@ -132,7 +132,7 @@
   <sect2>
 
   <title>Migration to Version 9.0</title>
-  <para>CURRENT AS OF 2010-06-03</para>
+  <para>CURRENT AS OF 2010-07-08</para>
 
   <para>
    A dump/restore using <application>pg_dump</application>
@@ -176,6 +176,14 @@
       linkend="guc-wal-level"><varname>wal_level</></link> to
       <literal>archive</> to do continuous archiving.
       (Heikki Linnakangas)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Adjust <link
+      linkend="guc-log-temp-files"><varname>log_temp_files</></link> to
+      use default file sizes units of kilobytes (Robert Haas)
      </para>
     </listitem>
 
@@ -359,18 +367,19 @@
    <title>Other Incompatibilities</title>
    <itemizedlist>
     <listitem>
-      <para>
-       Remove support for platforms that don't have a working 64-bit
-       integer data type (Tom Lane)
-      </para>
+     <para>
+      Remove support for platforms that don't have a working 64-bit
+      integer data type (Tom Lane)
+     </para>
 
-      <para>
-       It is believed all still-supported platforms have working 64-bit
-       integer data types.
-      </para>
-     </listitem>
-    </itemizedlist>
-   </sect3>
+     <para>
+      It is believed all still-supported platforms have working 64-bit
+      integer data types.
+     </para>
+    </listitem>
+
+   </itemizedlist>
+  </sect3>
  </sect2>
 
  <sect2>
@@ -569,7 +578,9 @@
       </para>
 
       <para>
-       This is particularly useful for partitioned tables.
+       This is particularly useful for partitioned tables.  However,
+       autovacuum does not yet properly analyze parent tables based on
+       child table changes.
       </para>
      </listitem>
 
@@ -773,7 +784,6 @@
        <link linkend="guc-search-path"><varname>search_path</varname></link>.
       </para>
 
-
      </listitem>
 
      <listitem>
@@ -828,6 +838,19 @@
        could create or modify custom variables.
       </para>
      </listitem>
+
+    <listitem>
+     <para>
+      Adjust <link
+      linkend="guc-log-temp-files"><varname>log_temp_files</></link> to
+      use default file sizes units of kilobytes (Robert Haas)
+     </para>
+
+     <para>
+      Previously this setting defaulted to bytes if no units were
+      specified.
+     </para>
+    </listitem>
 
     </itemizedlist>
 
@@ -1926,7 +1949,9 @@
 
       <para>
        The new server-side language is called <link
-       linkend="plpython-python23"><literal>plpython3u</></link>.
+       linkend="plpython-python23"><literal>plpython3u</></link>.  This
+       cannot be used in the same backend with the usual
+       <application>Python</> 2 server-side language.
       </para>
      </listitem>
 
@@ -2209,6 +2234,18 @@
 
      <listitem>
       <para>
+       Add <link linkend="libpq-keepalives">keepalive settings</link>
+       in libpq (Tollef Fog Heen, Fujii Masao, Robert Haas)
+      </para>
+
+      <para>
+       Keepalive settings were already supported on the server end of
+       TCP connections.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
        Properly report an error if the specified <application>libpq</> service
        cannot be found (Peter Eisentraut)
       </para>
@@ -2224,7 +2261,7 @@
 
      <listitem>
       <para>
-       Load SSL certificate chain (Tom Lane)
+       Load SSL certificate chains (Tom Lane)
       </para>
 
       <para>
@@ -2423,6 +2460,20 @@
       </para>
      </listitem>
 
+    <listitem>
+     <para>
+      Add a Makefile rule to build documentation as a single text file
+      (Bruce Momjian)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Restructure use of <literal>LDFLAGS</> to be more consistent
+      across platforms (Tom Lane)
+     </para>
+    </listitem>
+
     </itemizedlist>
 
    </sect4>
@@ -2609,6 +2660,14 @@
      </para>
     </listitem>
 
+    <listitem>
+     <para>
+      New documentation <link linkend="non-durability">section</link>
+      about running <productname>PostgreSQL</> in non-durable mode,
+      to improve performance  (Bruce Momjian)
+     </para>
+    </listitem>
+
    </itemizedlist>
 
    <sect4>
@@ -2732,7 +2791,7 @@
     <listitem>
      <para>
       Add <link linkend="pgupgrade"><filename>/contrib/pg_upgrade</></link>
-      to support in-place upgrades (Bruce)
+      to support in-place upgrades (Bruce Momjian)
      </para>
 
      <para>
@@ -2845,6 +2904,19 @@
 
     <listitem>
      <para>
+      Improve <filename>/contrib/dblink</>s handling of dropped columns
+      (Tom Lane)
+     </para>
+
+     <para>
+      This affects <link
+      linkend="CONTRIB-DBLINK-BUILD-SQL-INSERT"><function>dblink_build_sql_insert()</></link>
+      and related functions.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
       Greatly increase <link
       linkend="hstore"><filename>/contrib/hstore</></link>'s
       length limit and add btree and hash abilities so <literal>GROUP
@@ -2869,6 +2941,19 @@
      <para>
       The source code of this module should be modified to implement
       site-specific password policies.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Add <link
+      linkend="pgarchivecleanup"><filename>/contrib/pg_archivecleanup</></link>
+      tool (Simon Riggs)
+     </para>
+
+     <para>
+      This is designed to be used by the <literal>archive_cleanup_command</literal>
+      setting to remove unnecessary archive files.
      </para>
     </listitem>
 
