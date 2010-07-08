@@ -309,3 +309,15 @@ select * from
   (select distinct f1, f2, (select f2 from t1 x where x.f1 = up.f1) as fs
    from t1 up) ss
 group by f1,f2,fs;
+
+--
+-- Test case for sublinks pushed down into subselects via join alias expansion
+--
+
+select
+  (select sq1) as qq1
+from
+  (select exists(select 1 from int4_tbl where f1 = q2) as sq1, 42 as dummy
+   from int8_tbl) sq0
+  join
+  int4_tbl i4 on dummy = i4.f1;
