@@ -1,7 +1,7 @@
 # translation of plperl.po to fr_fr
 # french message translation file for plperl
 #
-# $PostgreSQL: pgsql/src/pl/plperl/po/fr.po,v 1.5 2010/06/03 21:12:05 petere Exp $
+# $PostgreSQL: pgsql/src/pl/plperl/po/fr.po,v 1.6 2010/07/08 21:32:28 petere Exp $
 #
 # Use these quotes: « %s »
 # Guillaume Lelarge <guillaume@lelarge.info>, 2009.
@@ -10,8 +10,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.4\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2010-05-28 19:15+0000\n"
-"PO-Revision-Date: 2010-05-28 22:23+0100\n"
+"POT-Creation-Date: 2010-06-29 21:15+0000\n"
+"PO-Revision-Date: 2010-06-29 23:30+0100\n"
 "Last-Translator: Guillaume Lelarge <guillaume@lelarge.info>\n"
 "Language-Team: French <guillaume@lelarge.info>\n"
 "MIME-Version: 1.0\n"
@@ -50,8 +50,8 @@ msgstr ""
 #: plperl.c:763
 #: plperl.c:778
 #: plperl.c:1315
-#: plperl.c:1427
-#: plperl.c:1483
+#: plperl.c:1423
+#: plperl.c:1479
 #, c-format
 msgid "%s"
 msgstr "%s"
@@ -99,85 +99,85 @@ msgid "$_TD->{new} is not a hash reference"
 msgstr "$_TD->{new} n'est pas une référence de hachage"
 
 #: plperl.c:1232
-#: plperl.c:1925
+#: plperl.c:1921
 #, c-format
 msgid "PL/Perl functions cannot return type %s"
 msgstr "Les fonctions PL/perl ne peuvent pas renvoyer le type %s"
 
 #: plperl.c:1244
-#: plperl.c:1971
+#: plperl.c:1967
 #, c-format
 msgid "PL/Perl functions cannot accept type %s"
 msgstr "Les fonctions PL/perl ne peuvent pas accepter le type %s"
 
 #: plperl.c:1319
 #, c-format
-msgid "didn't get a CODE ref from compiling %s"
-msgstr "n'a pas obtenu une référence CODE lors de la compilation de « %s »"
+msgid "didn't get a CODE reference from compiling function \"%s\""
+msgstr "n'a pas obtenu une référence CODE lors de la compilation de la fonction « %s »"
 
-#: plperl.c:1535
+#: plperl.c:1531
 msgid "set-valued function called in context that cannot accept a set"
 msgstr ""
 "fonction renvoyant un ensemble appelée dans un contexte qui ne peut pas\n"
 "accepter un ensemble"
 
-#: plperl.c:1578
+#: plperl.c:1574
 msgid "set-returning PL/Perl function must return reference to array or use return_next"
 msgstr ""
 "la fonction PL/perl renvoyant des ensembles doit renvoyer la référence à\n"
 "un tableau ou utiliser return_next"
 
-#: plperl.c:1611
+#: plperl.c:1607
 msgid "composite-returning PL/Perl function must return reference to hash"
 msgstr ""
 "la fonction PL/perl renvoyant des valeurs composites doit renvoyer la\n"
 "référence à un hachage"
 
-#: plperl.c:1620
+#: plperl.c:1616
 msgid "function returning record called in context that cannot accept type record"
 msgstr ""
 "fonction renvoyant le type record appelée dans un contexte qui ne peut pas\n"
 "accepter le type record"
 
-#: plperl.c:1740
+#: plperl.c:1736
 msgid "ignoring modified row in DELETE trigger"
 msgstr "ignore la ligne modifiée dans le trigger DELETE"
 
-#: plperl.c:1748
+#: plperl.c:1744
 msgid "result of PL/Perl trigger function must be undef, \"SKIP\", or \"MODIFY\""
 msgstr ""
 "le résultat de la fonction trigger PL/perl doit être undef, « SKIP » ou\n"
 "« MODIFY »"
 
-#: plperl.c:1860
+#: plperl.c:1856
 msgid "out of memory"
 msgstr "mémoire épuisée"
 
-#: plperl.c:1916
+#: plperl.c:1912
 msgid "trigger functions can only be called as triggers"
 msgstr "les fonctions trigger peuvent seulement être appelées par des triggers"
 
-#: plperl.c:2229
+#: plperl.c:2225
 msgid "cannot use return_next in a non-SETOF function"
 msgstr "ne peut pas utiliser return_next dans une fonction non SETOF"
 
-#: plperl.c:2235
+#: plperl.c:2231
 msgid "SETOF-composite-returning PL/Perl function must call return_next with reference to hash"
 msgstr ""
 "une fonction PL/perl renvoyant des lignes composites doit appeler\n"
 "return_next avec la référence à un hachage"
 
-#: plperl.c:3029
+#: plperl.c:3025
 #, c-format
 msgid "PL/Perl function \"%s\""
 msgstr "fonction PL/Perl « %s »"
 
-#: plperl.c:3041
+#: plperl.c:3037
 #, c-format
 msgid "compilation of PL/Perl function \"%s\""
 msgstr "compilation de la fonction PL/Perl « %s »"
 
-#: plperl.c:3050
+#: plperl.c:3046
 msgid "PL/Perl anonymous code block"
 msgstr "bloc de code PL/Perl anonyme"
 
