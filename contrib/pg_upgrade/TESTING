@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/contrib/pg_upgrade/TESTING,v 1.2 2010/07/03 14:23:13 momjian Exp $
+$PostgreSQL: pgsql/contrib/pg_upgrade/TESTING,v 1.3 2010/07/09 16:51:23 momjian Exp $
 
 The most effective way to test pg_upgrade, aside from testing on user
 data, is by upgrading the PostgreSQL regression database.
@@ -22,11 +22,6 @@ Here are the steps needed to create a regression database dump file:
     a)  Change CREATE FUNCTION shared object paths to use '$libdir'
         The old and new cluster will have different shared object paths.
 
-    b)  Remove 'regex_flavor' (not supported in Postgres 9.0)
-
-    c)  Change CREATE OR REPLACE LANGUAGE to CREATE LANGUAGE
-        The former syntax is only supported in Postgres 9.0.
-
     d)  Perform the load/dump twice
         This fixes problems with the ordering of COPY columns for
         inherited tables.
@@ -35,7 +30,11 @@ Here are the steps needed to create a regression database dump file:
         Commands like CREATE TRIGGER and ALTER TABLE sometimes have
         differences.
 
-    f)  Adjust extra_float_digits
+    c)  For pre-9.0, change CREATE OR REPLACE LANGUAGE to CREATE LANGUAGE
+
+    b)  For pre-9.0, remove 'regex_flavor'
+
+    f)  For pre-9.0, adjust extra_float_digits
 	Postgres 9.0 pg_dump uses extra_float_digits=-2 for pre-9.0
 	databases, and extra_float_digits=-3 for >= 9.0 databases.
 	It is necessary to modify 9.0 pg_dump to always use -3, and
