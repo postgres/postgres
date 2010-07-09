@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.349 2010/04/28 16:10:42 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.350 2010/07/09 14:06:01 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -62,6 +62,9 @@
 ExecutorStart_hook_type ExecutorStart_hook = NULL;
 ExecutorRun_hook_type ExecutorRun_hook = NULL;
 ExecutorEnd_hook_type ExecutorEnd_hook = NULL;
+
+/* Hook for plugin to get control in ExecCheckRTPerms() */
+ExecutorCheckPerms_hook_type ExecutorCheckPerms_hook = NULL;
 
 /* decls for local routines only used within this module */
 static void InitPlan(QueryDesc *queryDesc, int eflags);
@@ -416,6 +419,9 @@ ExecCheckRTPerms(List *rangeTable)
 	{
 		ExecCheckRTEPerms((RangeTblEntry *) lfirst(l));
 	}
+
+	if (ExecutorCheckPerms_hook)
+		(*ExecutorCheckPerms_hook)(rangeTable);
 }
 
 /*
