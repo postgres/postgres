@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/lsyscache.c,v 1.170 2010/04/24 16:20:32 sriggs Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/lsyscache.c,v 1.170.2.1 2010/07/09 22:57:47 tgl Exp $
  *
  * NOTES
  *	  Eventually, the index information should go through here, too.
@@ -2463,6 +2463,10 @@ get_attavgwidth(Oid relid, AttrNumber attnum)
  * If the attribute type is pass-by-reference, the values referenced by
  * the values array are themselves palloc'd.  The palloc'd stuff can be
  * freed by calling free_attstatsslot.
+ *
+ * Note: at present, atttype/atttypmod aren't actually used here at all.
+ * But the caller must have the correct (or at least binary-compatible)
+ * type ID to pass to free_attstatsslot later.
  */
 bool
 get_attstatsslot(HeapTuple statstuple,
@@ -2478,6 +2482,7 @@ get_attstatsslot(HeapTuple statstuple,
 	Datum		val;
 	bool		isnull;
 	ArrayType  *statarray;
+	Oid			arrayelemtype;
 	int			narrayelem;
 	HeapTuple	typeTuple;
 	Form_pg_type typeForm;
@@ -2503,15 +2508,22 @@ get_attstatsslot(HeapTuple statstuple,
 			elog(ERROR, "stavalues is null");
 		statarray = DatumGetArrayTypeP(val);
 
-		/* Need to get info about the array element type */
-		typeTuple = SearchSysCache1(TYPEOID, ObjectIdGetDatum(atttype));
+		/*
+		 * Need to get info about the array element type.  We look at the
+		 * actual element type embedded in the array, which might be only
+		 * binary-compatible with the passed-in atttype.  The info we
+		 * extract here should be the same either way, but deconstruct_array
+		 * is picky about having an exact type OID match.
+		 */
+		arrayelemtype = ARR_ELEMTYPE(statarray);
+		typeTuple = SearchSysCache1(TYPEOID, ObjectIdGetDatum(arrayelemtype));
 		if (!HeapTupleIsValid(typeTuple))
-			elog(ERROR, "cache lookup failed for type %u", atttype);
+			elog(ERROR, "cache lookup failed for type %u", arrayelemtype);
 		typeForm = (Form_pg_type) GETSTRUCT(typeTuple);
 
 		/* Deconstruct array into Datum elements; NULLs not expected */
 		deconstruct_array(statarray,
-						  atttype,
+						  arrayelemtype,
 						  typeForm->typlen,
 						  typeForm->typbyval,
 						  typeForm->typalign,
