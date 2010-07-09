@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.326 2010/05/30 18:10:41 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.327 2010/07/09 21:11:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3635,6 +3635,49 @@ get_variable(Var *var, int levelsup, bool showstar, deparse_context *context)
 	{
 		elog(ERROR, "bogus varno: %d", var->varno);
 		return NULL;			/* keep compiler quiet */
+	}
+
+	/*
+	 * The planner will sometimes emit Vars referencing resjunk elements of a
+	 * subquery's target list (this is currently only possible if it chooses
+	 * to generate a "physical tlist" for a SubqueryScan or CteScan node).
+	 * Although we prefer to print subquery-referencing Vars using the
+	 * subquery's alias, that's not possible for resjunk items since they have
+	 * no alias.  So in that case, drill down to the subplan and print the
+	 * contents of the referenced tlist item.  This works because in a plan
+	 * tree, such Vars can only occur in a SubqueryScan or CteScan node,
+	 * and we'll have set dpns->inner_plan to reference the child plan node.
+	 */
+	if ((rte->rtekind == RTE_SUBQUERY || rte->rtekind == RTE_CTE) &&
+		attnum > list_length(rte->eref->colnames) &&
+		dpns->inner_plan)
+	{
+		TargetEntry *tle;
+		Plan	   *save_outer;
+		Plan	   *save_inner;
+
+		tle = get_tle_by_resno(dpns->inner_plan->targetlist, var->varattno);
+		if (!tle)
+			elog(ERROR, "bogus varattno for subquery var: %d", var->varattno);
+
+		Assert(netlevelsup == 0);
+		save_outer = dpns->outer_plan;
+		save_inner = dpns->inner_plan;
+		push_plan(dpns, dpns->inner_plan);
+
+		/*
+		 * Force parentheses because our caller probably assumed a Var is a
+		 * simple expression.
+		 */
+		if (!IsA(tle->expr, Var))
+			appendStringInfoChar(buf, '(');
+		get_rule_expr((Node *) tle->expr, context, true);
+		if (!IsA(tle->expr, Var))
+			appendStringInfoChar(buf, ')');
+
+		dpns->outer_plan = save_outer;
+		dpns->inner_plan = save_inner;
+		return NULL;
 	}
 
 	/* Identify names to use */
