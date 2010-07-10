@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/sources.sgml,v 2.36 2010/06/28 17:48:26 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/sources.sgml,v 2.37 2010/07/10 18:37:00 tgl Exp $ -->
 
  <chapter id="source">
   <title>PostgreSQL Coding Conventions</title>
@@ -16,6 +16,13 @@
     Layout rules (brace positioning, etc) follow BSD conventions.  In
     particular, curly braces for the controlled blocks of <literal>if</>,
     <literal>while</>, <literal>switch</>, etc go on their own lines.
+   </para>
+
+   <para>
+    Limit line lengths so that the code is readable in an 80-column window.
+    (This doesn't mean that you must never go past 80 columns.  For instance,
+    breaking a long error message string in arbitrary places just to keep the
+    code within 80 columns is probably not a net gain in readability.)
    </para>
 
    <para>
@@ -50,6 +57,8 @@
     rules, it's a good idea to do so.  Your code will get run through
     <application>pgindent</> before the next release, so there's no point in
     making it look nice under some other set of formatting conventions.
+    A good rule of thumb for patches is <quote>make the new code look like
+    the existing code around it</>.
    </para>
 
    <para>
