@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.244 2010/04/03 07:23:02 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.245 2010/07/10 00:50:24 rhaas Exp $
 PostgreSQL documentation
 -->
 
@@ -79,7 +79,9 @@ PostgreSQL documentation
       <para>
       Specifies that <application>psql</application> is to execute one
       command string, <replaceable class="parameter">command</replaceable>,
-      and then exit. This is useful in shell scripts.
+      and then exit. This is useful in shell scripts. Start-up files
+      (<filename>psqlrc</filename> and <filename>~/.psqlrc</filename>) are
+      ignored with this option.
       </para>
       <para>
       <replaceable class="parameter">command</replaceable> must be either
@@ -3090,10 +3092,12 @@ $endif
   <itemizedlist>
    <listitem>
     <para>
-     Before starting up, <application>psql</application> attempts to
+     Unless it is passed an <option>-X</option>
+     or <option>-c</option> option,
+     <application>psql</application> attempts to
      read and execute commands from the system-wide
      <filename>psqlrc</filename> file and the user's
-     <filename>~/.psqlrc</filename> file.
+     <filename>~/.psqlrc</filename> file before starting up.
      (On Windows, the user's startup file is named
      <filename>%APPDATA%\postgresql\psqlrc.conf</filename>.)
      See <filename><replaceable>PREFIX</>/share/psqlrc.sample</>
