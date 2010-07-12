@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release-9.0.sgml,v 2.39 2010/07/08 22:26:14 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release-9.0.sgml,v 2.40 2010/07/12 17:47:39 momjian Exp $ -->
 
  <sect1 id="release-9-0">
   <title>Release 9.0</title>
@@ -534,7 +534,7 @@
 
      <listitem>
       <para>
-       Use the same random seed everytime GEQO plans a query (Andres
+       Use the same random seed every time GEQO plans a query (Andres
        Freund)
       </para>
 
@@ -1006,7 +1006,7 @@
       </para>
 
       <para>
-       This greatly simplifies the assignment of object priveleges in
+       This greatly simplifies the assignment of object privileges in
        a complex database application.  Defaults currently support tables
        views, sequences, and functions. Defaults may be assigned on a
        per-schema basis or database-wide.
