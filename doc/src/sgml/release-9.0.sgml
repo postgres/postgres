@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release-9.0.sgml,v 2.41 2010/07/12 18:25:21 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release-9.0.sgml,v 2.42 2010/07/12 18:30:36 momjian Exp $ -->
 
  <sect1 id="release-9-0">
   <title>Release 9.0</title>
@@ -54,8 +54,9 @@
       Broadly enhanced stored procedure support.
       The <link linkend="SQL-DO"><command>DO</></link> statement permits
       anonymous code blocks.  Functions can now be called using named
-      parameters.  PL/Perl and PL/Python have been enhanced in several ways,
-      including support for Python3.
+      parameters.  PL/pgSQL is now installed by default, and PL/Perl and
+      PL/Python have been enhanced in several ways, including support for
+      Python3.
      </para>
     </listitem>
 
