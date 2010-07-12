@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.385 2010/03/30 21:58:10 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.386 2010/07/12 17:01:05 tgl Exp $
  *
  * NOTES
  *	  Every node type that can appear in stored rules' parsetrees *must*
@@ -517,6 +517,8 @@ _outNestLoop(StringInfo str, NestLoop *node)
 	WRITE_NODE_TYPE("NESTLOOP");
 
 	_outJoinPlanInfo(str, (Join *) node);
+
+	WRITE_NODE_FIELD(nestParams);
 }
 
 static void
@@ -746,6 +748,15 @@ _outLimit(StringInfo str, Limit *node)
 
 	WRITE_NODE_FIELD(limitOffset);
 	WRITE_NODE_FIELD(limitCount);
+}
+
+static void
+_outNestLoopParam(StringInfo str, NestLoopParam *node)
+{
+	WRITE_NODE_TYPE("NESTLOOPPARAM");
+
+	WRITE_INT_FIELD(paramno);
+	WRITE_NODE_FIELD(paramval);
 }
 
 static void
@@ -1565,6 +1576,8 @@ _outPlannerInfo(StringInfo str, PlannerInfo *node)
 	WRITE_BOOL_FIELD(hasPseudoConstantQuals);
 	WRITE_BOOL_FIELD(hasRecursion);
 	WRITE_INT_FIELD(wt_param_id);
+	WRITE_BITMAPSET_FIELD(curOuterRels);
+	WRITE_NODE_FIELD(curOuterParams);
 }
 
 static void
@@ -2561,6 +2574,9 @@ _outNode(StringInfo str, void *obj)
 				break;
 			case T_Limit:
 				_outLimit(str, obj);
+				break;
+			case T_NestLoopParam:
+				_outNestLoopParam(str, obj);
 				break;
 			case T_PlanRowMark:
 				_outPlanRowMark(str, obj);

@@ -164,12 +164,12 @@ INSERT INTO foorescan values(5009,5,'abc.5009.5');
 
 CREATE FUNCTION foorescan(int,int) RETURNS setof foorescan AS 'SELECT * FROM foorescan WHERE fooid >= $1 and fooid < $2 ;' LANGUAGE SQL;
 
---invokes ExecFunctionReScan
+--invokes ExecReScanFunctionScan
 SELECT * FROM foorescan f WHERE f.fooid IN (SELECT fooid FROM foorescan(5002,5004)) ORDER BY 1,2;
 
 CREATE VIEW vw_foorescan AS SELECT * FROM foorescan(5002,5004);
 
---invokes ExecFunctionReScan
+--invokes ExecReScanFunctionScan
 SELECT * FROM foorescan f WHERE f.fooid IN (SELECT fooid FROM vw_foorescan) ORDER BY 1,2;
 
 CREATE TABLE barrescan (fooid int primary key);
@@ -182,7 +182,7 @@ INSERT INTO barrescan values(5008);
 
 CREATE FUNCTION foorescan(int) RETURNS setof foorescan AS 'SELECT * FROM foorescan WHERE fooid = $1;' LANGUAGE SQL;
 
---invokes ExecFunctionReScan with chgParam != NULL
+--invokes ExecReScanFunctionScan with chgParam != NULL
 SELECT f.* FROM barrescan b, foorescan f WHERE f.fooid = b.fooid AND b.fooid IN (SELECT fooid FROM foorescan(b.fooid)) ORDER BY 1,2;
 SELECT b.fooid, max(f.foosubid) FROM barrescan b, foorescan f WHERE f.fooid = b.fooid AND b.fooid IN (SELECT fooid FROM foorescan(b.fooid)) GROUP BY b.fooid ORDER BY 1,2;
 

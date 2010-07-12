@@ -27,7 +27,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeWindowAgg.c,v 1.13 2010/03/21 00:17:58 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeWindowAgg.c,v 1.14 2010/07/12 17:01:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1664,7 +1664,7 @@ ExecEndWindowAgg(WindowAggState *node)
  * -----------------
  */
 void
-ExecReScanWindowAgg(WindowAggState *node, ExprContext *exprCtxt)
+ExecReScanWindowAgg(WindowAggState *node)
 {
 	ExprContext *econtext = node->ss.ps.ps_ExprContext;
 
@@ -1691,8 +1691,8 @@ ExecReScanWindowAgg(WindowAggState *node, ExprContext *exprCtxt)
 	 * if chgParam of subnode is not null then plan will be re-scanned by
 	 * first ExecProcNode.
 	 */
-	if (((PlanState *) node)->lefttree->chgParam == NULL)
-		ExecReScan(((PlanState *) node)->lefttree, exprCtxt);
+	if (node->ss.ps.lefttree->chgParam == NULL)
+		ExecReScan(node->ss.ps.lefttree);
 }
 
 /*

@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.464 2010/02/26 02:00:43 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.465 2010/07/12 17:01:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -564,6 +564,11 @@ _copyNestLoop(NestLoop *from)
 	 */
 	CopyJoinFields((Join *) from, (Join *) newnode);
 
+	/*
+	 * copy remainder of node
+	 */
+	COPY_NODE_FIELD(nestParams);
+
 	return newnode;
 }
 
@@ -840,6 +845,20 @@ _copyLimit(Limit *from)
 	 */
 	COPY_NODE_FIELD(limitOffset);
 	COPY_NODE_FIELD(limitCount);
+
+	return newnode;
+}
+
+/*
+ * _copyNestLoopParam
+ */
+static NestLoopParam *
+_copyNestLoopParam(NestLoopParam *from)
+{
+	NestLoopParam *newnode = makeNode(NestLoopParam);
+
+	COPY_SCALAR_FIELD(paramno);
+	COPY_NODE_FIELD(paramval);
 
 	return newnode;
 }
@@ -3670,6 +3689,9 @@ copyObject(void *from)
 			break;
 		case T_Limit:
 			retval = _copyLimit(from);
+			break;
+		case T_NestLoopParam:
+			retval = _copyNestLoopParam(from);
 			break;
 		case T_PlanRowMark:
 			retval = _copyPlanRowMark(from);

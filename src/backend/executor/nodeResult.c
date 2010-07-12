@@ -38,7 +38,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeResult.c,v 1.45 2010/01/02 16:57:45 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeResult.c,v 1.46 2010/07/12 17:01:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -292,7 +292,7 @@ ExecEndResult(ResultState *node)
 }
 
 void
-ExecReScanResult(ResultState *node, ExprContext *exprCtxt)
+ExecReScanResult(ResultState *node)
 {
 	node->rs_done = false;
 	node->ps.ps_TupFromTlist = false;
@@ -300,11 +300,9 @@ ExecReScanResult(ResultState *node, ExprContext *exprCtxt)
 
 	/*
 	 * If chgParam of subnode is not null then plan will be re-scanned by
-	 * first ExecProcNode.	However, if caller is passing us an exprCtxt then
-	 * forcibly rescan the subnode now, so that we can pass the exprCtxt down
-	 * to the subnode (needed for gated indexscan).
+	 * first ExecProcNode.
 	 */
 	if (node->ps.lefttree &&
-		(node->ps.lefttree->chgParam == NULL || exprCtxt != NULL))
-		ExecReScan(node->ps.lefttree, exprCtxt);
+		node->ps.lefttree->chgParam == NULL)
+		ExecReScan(node->ps.lefttree);
 }

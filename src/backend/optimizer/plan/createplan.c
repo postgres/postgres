@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.275 2010/05/25 17:44:41 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.276 2010/07/12 17:01:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,6 +28,7 @@
 #include "optimizer/planmain.h"
 #include "optimizer/predtest.h"
 #include "optimizer/restrictinfo.h"
+#include "optimizer/subselect.h"
 #include "optimizer/tlist.h"
 #include "optimizer/var.h"
 #include "parser/parse_clause.h"
@@ -35,6 +36,7 @@
 #include "utils/lsyscache.h"
 
 
+static Plan *create_plan_recurse(PlannerInfo *root, Path *best_path);
 static Plan *create_scan_plan(PlannerInfo *root, Path *best_path);
 static List *build_relation_tlist(RelOptInfo *rel);
 static bool use_physical_tlist(PlannerInfo *root, RelOptInfo *rel);
@@ -72,7 +74,10 @@ static MergeJoin *create_mergejoin_plan(PlannerInfo *root, MergePath *best_path,
 					  Plan *outer_plan, Plan *inner_plan);
 static HashJoin *create_hashjoin_plan(PlannerInfo *root, HashPath *best_path,
 					 Plan *outer_plan, Plan *inner_plan);
-static List *fix_indexqual_references(List *indexquals, IndexPath *index_path);
+static Node *replace_nestloop_params(PlannerInfo *root, Node *expr);
+static Node *replace_nestloop_params_mutator(Node *node, PlannerInfo *root);
+static List *fix_indexqual_references(PlannerInfo *root, IndexPath *index_path,
+						 List *indexquals);
 static List *get_switched_clauses(List *clauses, Relids outerrelids);
 static List *order_qual_clauses(PlannerInfo *root, List *clauses);
 static void copy_path_costsize(Plan *dest, Path *src);
@@ -103,7 +108,7 @@ static WorkTableScan *make_worktablescan(List *qptlist, List *qpqual,
 static BitmapAnd *make_bitmap_and(List *bitmapplans);
 static BitmapOr *make_bitmap_or(List *bitmapplans);
 static NestLoop *make_nestloop(List *tlist,
-			  List *joinclauses, List *otherclauses,
+			  List *joinclauses, List *otherclauses, List *nestParams,
 			  Plan *lefttree, Plan *righttree,
 			  JoinType jointype);
 static HashJoin *make_hashjoin(List *tlist,
@@ -133,8 +138,8 @@ static Material *make_material(Plan *lefttree);
 
 /*
  * create_plan
- *	  Creates the access plan for a query by tracing backwards through the
- *	  desired chain of pathnodes, starting at the node 'best_path'.  For
+ *	  Creates the access plan for a query by recursively processing the
+ *	  desired tree of pathnodes, starting at the node 'best_path'.  For
  *	  every pathnode found, we create a corresponding plan node containing
  *	  appropriate id, target list, and qualification information.
  *
@@ -148,6 +153,29 @@ static Material *make_material(Plan *lefttree);
  */
 Plan *
 create_plan(PlannerInfo *root, Path *best_path)
+{
+	Plan	   *plan;
+
+	/* Initialize this module's private workspace in PlannerInfo */
+	root->curOuterRels = NULL;
+	root->curOuterParams = NIL;
+
+	/* Recursively process the path tree */
+	plan = create_plan_recurse(root, best_path);
+
+	/* Check we successfully assigned all NestLoopParams to plan nodes */
+	if (root->curOuterParams != NIL)
+		elog(ERROR, "failed to assign all NestLoopParams to plan nodes");
+
+	return plan;
+}
+
+/*
+ * create_plan_recurse
+ *	  Recursive guts of create_plan().
+ */
+static Plan *
+create_plan_recurse(PlannerInfo *root, Path *best_path)
 {
 	Plan	   *plan;
 
@@ -477,9 +505,16 @@ create_join_plan(PlannerInfo *root, JoinPath *best_path)
 	Plan	   *outer_plan;
 	Plan	   *inner_plan;
 	Plan	   *plan;
+	Relids		saveOuterRels = root->curOuterRels;
 
-	outer_plan = create_plan(root, best_path->outerjoinpath);
-	inner_plan = create_plan(root, best_path->innerjoinpath);
+	outer_plan = create_plan_recurse(root, best_path->outerjoinpath);
+
+	/* For a nestloop, include outer relids in curOuterRels for inner side */
+	if (best_path->path.pathtype == T_NestLoop)
+		root->curOuterRels = bms_union(root->curOuterRels,
+								   best_path->outerjoinpath->parent->relids);
+
+	inner_plan = create_plan_recurse(root, best_path->innerjoinpath);
 
 	switch (best_path->path.pathtype)
 	{
@@ -496,6 +531,10 @@ create_join_plan(PlannerInfo *root, JoinPath *best_path)
 												 inner_plan);
 			break;
 		case T_NestLoop:
+			/* Restore curOuterRels */
+			bms_free(root->curOuterRels);
+			root->curOuterRels = saveOuterRels;
+
 			plan = (Plan *) create_nestloop_plan(root,
 												 (NestPath *) best_path,
 												 outer_plan,
@@ -571,7 +610,7 @@ create_append_plan(PlannerInfo *root, AppendPath *best_path)
 	{
 		Path	   *subpath = (Path *) lfirst(subpaths);
 
-		subplans = lappend(subplans, create_plan(root, subpath));
+		subplans = lappend(subplans, create_plan_recurse(root, subpath));
 	}
 
 	plan = make_append(subplans, tlist);
@@ -616,7 +655,7 @@ create_material_plan(PlannerInfo *root, MaterialPath *best_path)
 	Material   *plan;
 	Plan	   *subplan;
 
-	subplan = create_plan(root, best_path->subpath);
+	subplan = create_plan_recurse(root, best_path->subpath);
 
 	/* We don't want any excess columns in the materialized tuples */
 	disuse_physical_tlist(subplan, best_path->subpath);
@@ -650,7 +689,7 @@ create_unique_plan(PlannerInfo *root, UniquePath *best_path)
 	int			groupColPos;
 	ListCell   *l;
 
-	subplan = create_plan(root, best_path->subpath);
+	subplan = create_plan_recurse(root, best_path->subpath);
 
 	/* Done if we don't need to do any actual unique-ifying */
 	if (best_path->umethod == UNIQUE_PATH_NOOP)
@@ -904,7 +943,7 @@ create_indexscan_plan(PlannerInfo *root,
 	 * The executor needs a copy with the indexkey on the left of each clause
 	 * and with index attr numbers substituted for table ones.
 	 */
-	fixed_indexquals = fix_indexqual_references(indexquals, best_path);
+	fixed_indexquals = fix_indexqual_references(root, best_path, indexquals);
 
 	/*
 	 * If this is an innerjoin scan, the indexclauses will contain join
@@ -974,6 +1013,22 @@ create_indexscan_plan(PlannerInfo *root,
 
 	/* Reduce RestrictInfo list to bare expressions; ignore pseudoconstants */
 	qpqual = extract_actual_clauses(qpqual, false);
+
+	/*
+	 * We have to replace any outer-relation variables with nestloop params
+	 * in the indexqualorig and qpqual expressions.  A bit annoying to have to
+	 * do this separately from the processing in fix_indexqual_references ---
+	 * rethink this when generalizing the inner indexscan support.  But note
+	 * we can't really do this earlier because it'd break the comparisons to
+	 * predicates above ... (or would it?  Those wouldn't have outer refs)
+	 */
+	if (best_path->isjoininner)
+	{
+		stripped_indexquals = (List *)
+			replace_nestloop_params(root, (Node *) stripped_indexquals);
+		qpqual = (List *)
+			replace_nestloop_params(root, (Node *) qpqual);
+	}
 
 	/* Finally ready to build the plan node */
 	scan_plan = make_indexscan(tlist,
@@ -1266,6 +1321,17 @@ create_bitmap_subplan(PlannerInfo *root, Path *bitmapqual,
 				*qual = lappend(*qual, pred);
 				*indexqual = lappend(*indexqual, pred);
 			}
+		}
+		/*
+		 * Replace outer-relation variables with nestloop params, but only
+		 * after doing the above comparisons to index predicates.
+		 */
+		if (ipath->isjoininner)
+		{
+			*qual = (List *)
+				replace_nestloop_params(root, (Node *) *qual);
+			*indexqual = (List *)
+				replace_nestloop_params(root, (Node *) *indexqual);
 		}
 	}
 	else
@@ -1572,11 +1638,16 @@ create_nestloop_plan(PlannerInfo *root,
 					 Plan *outer_plan,
 					 Plan *inner_plan)
 {
+	NestLoop   *join_plan;
 	List	   *tlist = build_relation_tlist(best_path->path.parent);
 	List	   *joinrestrictclauses = best_path->joinrestrictinfo;
 	List	   *joinclauses;
 	List	   *otherclauses;
-	NestLoop   *join_plan;
+	Relids		outerrelids;
+	List	   *nestParams;
+	ListCell   *cell;
+	ListCell   *prev;
+	ListCell   *next;
 
 	/*
 	 * If the inner path is a nestloop inner indexscan, it might be using some
@@ -1605,9 +1676,32 @@ create_nestloop_plan(PlannerInfo *root,
 		otherclauses = NIL;
 	}
 
+	/*
+	 * Identify any nestloop parameters that should be supplied by this join
+	 * node, and move them from root->curOuterParams to the nestParams list.
+	 */
+	outerrelids = best_path->outerjoinpath->parent->relids;
+	nestParams = NIL;
+	prev = NULL;
+	for (cell = list_head(root->curOuterParams); cell; cell = next)
+	{
+		NestLoopParam *nlp = (NestLoopParam *) lfirst(cell);
+
+		next = lnext(cell);
+		if (bms_is_member(nlp->paramval->varno, outerrelids))
+		{
+			root->curOuterParams = list_delete_cell(root->curOuterParams,
+													cell, prev);
+			nestParams = lappend(nestParams, nlp);
+		}
+		else
+			prev = cell;
+	}
+
 	join_plan = make_nestloop(tlist,
 							  joinclauses,
 							  otherclauses,
+							  nestParams,
 							  outer_plan,
 							  inner_plan,
 							  best_path->jointype);
@@ -2016,12 +2110,72 @@ create_hashjoin_plan(PlannerInfo *root,
  *****************************************************************************/
 
 /*
+ * replace_nestloop_params
+ *	  Replace outer-relation Vars in the given expression with nestloop Params
+ *
+ * All Vars belonging to the relation(s) identified by root->curOuterRels
+ * are replaced by Params, and entries are added to root->curOuterParams if
+ * not already present.
+ */
+static Node *
+replace_nestloop_params(PlannerInfo *root, Node *expr)
+{
+	/* No setup needed for tree walk, so away we go */
+	return replace_nestloop_params_mutator(expr, root);
+}
+
+static Node *
+replace_nestloop_params_mutator(Node *node, PlannerInfo *root)
+{
+	if (node == NULL)
+		return NULL;
+	if (IsA(node, Var))
+	{
+		Var	   *var = (Var *) node;
+		Param  *param;
+		NestLoopParam *nlp;
+		ListCell *lc;
+
+		/* Upper-level Vars should be long gone at this point */
+		Assert(var->varlevelsup == 0);
+		/* If not to be replaced, we can just return the Var unmodified */
+		if (!bms_is_member(var->varno, root->curOuterRels))
+			return node;
+		/* Create a Param representing the Var */
+		param = assign_nestloop_param(root, var);
+		/* Is this param already listed in root->curOuterParams? */
+		foreach(lc, root->curOuterParams)
+		{
+			nlp = (NestLoopParam *) lfirst(lc);
+			if (nlp->paramno == param->paramid)
+			{
+				Assert(equal(var, nlp->paramval));
+				/* Present, so we can just return the Param */
+				return (Node *) param;
+			}
+		}
+		/* No, so add it */
+		nlp = makeNode(NestLoopParam);
+		nlp->paramno = param->paramid;
+		nlp->paramval = var;
+		root->curOuterParams = lappend(root->curOuterParams, nlp);
+		/* And return the replacement Param */
+		return (Node *) param;
+	}
+	return expression_tree_mutator(node,
+								   replace_nestloop_params_mutator,
+								   (void *) root);
+}
+
+/*
  * fix_indexqual_references
  *	  Adjust indexqual clauses to the form the executor's indexqual
  *	  machinery needs.
  *
- * We have three tasks here:
+ * We have four tasks here:
  *	* Remove RestrictInfo nodes from the input clauses.
+ *	* Replace any outer-relation Var nodes with nestloop Params.
+ *	  (XXX eventually, that responsibility should go elsewhere?)
  *	* Index keys must be represented by Var nodes with varattno set to the
  *	  index's attribute number, not the attribute number in the original rel.
  *	* If the index key is on the right, commute the clause to put it on the
@@ -2033,7 +2187,8 @@ create_hashjoin_plan(PlannerInfo *root,
  * two separate copies of the subplan tree, or things will go awry).
  */
 static List *
-fix_indexqual_references(List *indexquals, IndexPath *index_path)
+fix_indexqual_references(PlannerInfo *root, IndexPath *index_path,
+						 List *indexquals)
 {
 	IndexOptInfo *index = index_path->indexinfo;
 	List	   *fixed_indexquals;
@@ -2041,26 +2196,20 @@ fix_indexqual_references(List *indexquals, IndexPath *index_path)
 
 	fixed_indexquals = NIL;
 
-	/*
-	 * For each qual clause, commute if needed to put the indexkey operand on
-	 * the left, and then fix its varattno.  (We do not need to change the
-	 * other side of the clause.)
-	 */
 	foreach(l, indexquals)
 	{
 		RestrictInfo *rinfo = (RestrictInfo *) lfirst(l);
-		Expr	   *clause;
+		Node	   *clause;
 
 		Assert(IsA(rinfo, RestrictInfo));
 
 		/*
-		 * Make a copy that will become the fixed clause.
+		 * Replace any outer-relation variables with nestloop params.
 		 *
-		 * We used to try to do a shallow copy here, but that fails if there
-		 * is a subplan in the arguments of the opclause.  So just do a full
-		 * copy.
+		 * This also makes a copy of the clause, so it's safe to modify it
+		 * in-place below.
 		 */
-		clause = (Expr *) copyObject((Node *) rinfo->clause);
+		clause = replace_nestloop_params(root, (Node *) rinfo->clause);
 
 		if (IsA(clause, OpExpr))
 		{
@@ -2765,6 +2914,7 @@ static NestLoop *
 make_nestloop(List *tlist,
 			  List *joinclauses,
 			  List *otherclauses,
+			  List *nestParams,
 			  Plan *lefttree,
 			  Plan *righttree,
 			  JoinType jointype)
@@ -2779,6 +2929,7 @@ make_nestloop(List *tlist,
 	plan->righttree = righttree;
 	node->join.jointype = jointype;
 	node->join.joinqual = joinclauses;
+	node->nestParams = nestParams;
 
 	return node;
 }

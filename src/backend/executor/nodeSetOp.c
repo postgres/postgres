@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeSetOp.c,v 1.33 2010/01/02 16:57:45 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeSetOp.c,v 1.34 2010/07/12 17:01:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -597,7 +597,7 @@ ExecEndSetOp(SetOpState *node)
 
 
 void
-ExecReScanSetOp(SetOpState *node, ExprContext *exprCtxt)
+ExecReScanSetOp(SetOpState *node)
 {
 	ExecClearTuple(node->ps.ps_ResultTupleSlot);
 	node->setop_done = false;
@@ -619,7 +619,7 @@ ExecReScanSetOp(SetOpState *node, ExprContext *exprCtxt)
 		 * parameter changes, then we can just rescan the existing hash table;
 		 * no need to build it again.
 		 */
-		if (((PlanState *) node)->lefttree->chgParam == NULL)
+		if (node->ps.lefttree->chgParam == NULL)
 		{
 			ResetTupleHashIterator(node->hashtable, &node->hashiter);
 			return;
@@ -648,6 +648,6 @@ ExecReScanSetOp(SetOpState *node, ExprContext *exprCtxt)
 	 * if chgParam of subnode is not null then plan will be re-scanned by
 	 * first ExecProcNode.
 	 */
-	if (((PlanState *) node)->lefttree->chgParam == NULL)
-		ExecReScan(((PlanState *) node)->lefttree, exprCtxt);
+	if (node->ps.lefttree->chgParam == NULL)
+		ExecReScan(node->ps.lefttree);
 }

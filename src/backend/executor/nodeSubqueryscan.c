@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeSubqueryscan.c,v 1.45 2010/02/26 02:00:42 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeSubqueryscan.c,v 1.46 2010/07/12 17:01:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,7 +22,7 @@
  *		ExecSubqueryNext			retrieve next tuple in sequential order.
  *		ExecInitSubqueryScan		creates and initializes a subqueryscan node.
  *		ExecEndSubqueryScan			releases any storage allocated.
- *		ExecSubqueryReScan			rescans the relation
+ *		ExecReScanSubqueryScan		rescans the relation
  *
  */
 #include "postgres.h"
@@ -187,13 +187,13 @@ ExecEndSubqueryScan(SubqueryScanState *node)
 }
 
 /* ----------------------------------------------------------------
- *		ExecSubqueryReScan
+ *		ExecReScanSubqueryScan
  *
  *		Rescans the relation.
  * ----------------------------------------------------------------
  */
 void
-ExecSubqueryReScan(SubqueryScanState *node, ExprContext *exprCtxt)
+ExecReScanSubqueryScan(SubqueryScanState *node)
 {
 	ExecScanReScan(&node->ss);
 
@@ -210,5 +210,5 @@ ExecSubqueryReScan(SubqueryScanState *node, ExprContext *exprCtxt)
 	 * first ExecProcNode.
 	 */
 	if (node->subplan->chgParam == NULL)
-		ExecReScan(node->subplan, NULL);
+		ExecReScan(node->subplan);
 }

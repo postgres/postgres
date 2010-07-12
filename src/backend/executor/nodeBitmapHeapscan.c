@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeBitmapHeapscan.c,v 1.38 2010/01/02 16:57:41 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeBitmapHeapscan.c,v 1.39 2010/07/12 17:01:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,7 +30,7 @@
  *		ExecBitmapHeapScan			scans a relation using bitmap info
  *		ExecBitmapHeapNext			workhorse for above
  *		ExecInitBitmapHeapScan		creates and initializes state info.
- *		ExecBitmapHeapReScan		prepares to rescan the plan.
+ *		ExecReScanBitmapHeapScan	prepares to rescan the plan.
  *		ExecEndBitmapHeapScan		releases all storage.
  */
 #include "postgres.h"
@@ -420,24 +420,12 @@ ExecBitmapHeapScan(BitmapHeapScanState *node)
 }
 
 /* ----------------------------------------------------------------
- *		ExecBitmapHeapReScan(node)
+ *		ExecReScanBitmapHeapScan(node)
  * ----------------------------------------------------------------
  */
 void
-ExecBitmapHeapReScan(BitmapHeapScanState *node, ExprContext *exprCtxt)
+ExecReScanBitmapHeapScan(BitmapHeapScanState *node)
 {
-	/*
-	 * If we are being passed an outer tuple, link it into the "regular"
-	 * per-tuple econtext for possible qual eval.
-	 */
-	if (exprCtxt != NULL)
-	{
-		ExprContext *stdecontext;
-
-		stdecontext = node->ss.ps.ps_ExprContext;
-		stdecontext->ecxt_outertuple = exprCtxt->ecxt_outertuple;
-	}
-
 	/* rescan to release any page pin */
 	heap_rescan(node->ss.ss_currentScanDesc, NULL);
 
@@ -455,10 +443,11 @@ ExecBitmapHeapReScan(BitmapHeapScanState *node, ExprContext *exprCtxt)
 	ExecScanReScan(&node->ss);
 
 	/*
-	 * Always rescan the input immediately, to ensure we can pass down any
-	 * outer tuple that might be used in index quals.
+	 * if chgParam of subnode is not null then plan will be re-scanned by
+	 * first ExecProcNode.
 	 */
-	ExecReScan(outerPlanState(node), exprCtxt);
+	if (node->ss.ps.lefttree->chgParam == NULL)
+		ExecReScan(node->ss.ps.lefttree);
 }
 
 /* ----------------------------------------------------------------

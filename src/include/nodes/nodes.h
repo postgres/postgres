@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/nodes.h,v 1.234 2010/03/28 22:59:33 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/nodes.h,v 1.235 2010/07/12 17:01:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -74,6 +74,7 @@ typedef enum NodeTag
 	T_LockRows,
 	T_Limit,
 	/* these aren't subclasses of Plan: */
+	T_NestLoopParam,
 	T_PlanRowMark,
 	T_PlanInvalItem,
 

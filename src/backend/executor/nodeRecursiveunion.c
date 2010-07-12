@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeRecursiveunion.c,v 1.6 2010/01/02 16:57:45 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeRecursiveunion.c,v 1.7 2010/07/12 17:01:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -299,13 +299,13 @@ ExecEndRecursiveUnion(RecursiveUnionState *node)
 }
 
 /* ----------------------------------------------------------------
- *		ExecRecursiveUnionReScan
+ *		ExecReScanRecursiveUnion
  *
  *		Rescans the relation.
  * ----------------------------------------------------------------
  */
 void
-ExecRecursiveUnionReScan(RecursiveUnionState *node, ExprContext *exprCtxt)
+ExecReScanRecursiveUnion(RecursiveUnionState *node)
 {
 	PlanState  *outerPlan = outerPlanState(node);
 	PlanState  *innerPlan = innerPlanState(node);
@@ -323,7 +323,7 @@ ExecRecursiveUnionReScan(RecursiveUnionState *node, ExprContext *exprCtxt)
 	 * non-recursive term.
 	 */
 	if (outerPlan->chgParam == NULL)
-		ExecReScan(outerPlan, exprCtxt);
+		ExecReScan(outerPlan);
 
 	/* Release any hashtable storage */
 	if (node->tableContext)

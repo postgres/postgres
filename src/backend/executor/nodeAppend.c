@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeAppend.c,v 1.77 2010/01/02 16:57:41 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeAppend.c,v 1.78 2010/07/12 17:01:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -263,7 +263,7 @@ ExecEndAppend(AppendState *node)
 }
 
 void
-ExecReScanAppend(AppendState *node, ExprContext *exprCtxt)
+ExecReScanAppend(AppendState *node)
 {
 	int			i;
 
@@ -280,12 +280,10 @@ ExecReScanAppend(AppendState *node, ExprContext *exprCtxt)
 
 		/*
 		 * If chgParam of subnode is not null then plan will be re-scanned by
-		 * first ExecProcNode.	However, if caller is passing us an exprCtxt
-		 * then forcibly rescan all the subnodes now, so that we can pass the
-		 * exprCtxt down to the subnodes (needed for appendrel indexscan).
+		 * first ExecProcNode.
 		 */
-		if (subnode->chgParam == NULL || exprCtxt != NULL)
-			ExecReScan(subnode, exprCtxt);
+		if (subnode->chgParam == NULL)
+			ExecReScan(subnode);
 	}
 	node->as_whichplan = 0;
 	exec_append_initialize_next(node);

@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.350 2010/07/09 14:06:01 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.351 2010/07/12 17:01:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -400,7 +400,7 @@ ExecutorRewind(QueryDesc *queryDesc)
 	/*
 	 * rescan plan
 	 */
-	ExecReScan(queryDesc->planstate, NULL);
+	ExecReScan(queryDesc->planstate);
 
 	MemoryContextSwitchTo(oldcontext);
 }

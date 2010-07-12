@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.187 2010/07/06 19:19:00 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.188 2010/07/12 17:01:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -208,6 +208,10 @@ typedef struct PlannerInfo
 	/* These fields are used only when hasRecursion is true: */
 	int			wt_param_id;	/* PARAM_EXEC ID for the work table */
 	struct Plan *non_recursive_plan;	/* plan for non-recursive term */
+
+	/* These fields are workspace for createplan.c */
+	Relids		curOuterRels;			/* outer rels above current node */
+	List	   *curOuterParams;			/* not-yet-assigned NestLoopParams */
 
 	/* optional private data for join_search_hook, e.g., GEQO */
 	void	   *join_search_private;
@@ -1330,16 +1334,20 @@ typedef struct PlaceHolderInfo
 /*
  * glob->paramlist keeps track of the PARAM_EXEC slots that we have decided
  * we need for the query.  At runtime these slots are used to pass values
- * either down into subqueries (for outer references in subqueries) or up out
- * of subqueries (for the results of a subplan).  The n'th entry in the list
- * (n counts from 0) corresponds to Param->paramid = n.
+ * around from one plan node to another.  They can be used to pass values
+ * down into subqueries (for outer references in subqueries), or up out of
+ * subqueries (for the results of a subplan), or from a NestLoop plan node
+ * into its inner relation (when the inner scan is parameterized with values
+ * from the outer relation).  The n'th entry in the list (n counts from 0)
+ * corresponds to Param->paramid = n.
  *
  * Each paramlist item shows the absolute query level it is associated with,
  * where the outermost query is level 1 and nested subqueries have higher
  * numbers.  The item the parameter slot represents can be one of three kinds:
  *
  * A Var: the slot represents a variable of that level that must be passed
- * down because subqueries have outer references to it.  The varlevelsup
+ * down because subqueries have outer references to it, or must be passed
+ * from a NestLoop node of that level to its inner scan.  The varlevelsup
  * value in the Var will always be zero.
  *
  * An Aggref (with an expression tree representing its argument): the slot
@@ -1352,7 +1360,13 @@ typedef struct PlaceHolderInfo
  * to the parent query of the subplan.
  *
  * Note: we detect duplicate Var parameters and coalesce them into one slot,
- * but we do not do this for Aggref or Param slots.
+ * but we do not bother to do this for Aggrefs, and it would be incorrect
+ * to do so for Param slots.  Duplicate detection is actually *necessary*
+ * in the case of NestLoop parameters since it serves to match up the usage
+ * of a Param (in the inner scan) with the assignment of the value (in the
+ * NestLoop node).  This might result in the same PARAM_EXEC slot being used
+ * by multiple NestLoop nodes or SubPlan nodes, but no harm is done since
+ * the same value would be assigned anyway.
  */
 typedef struct PlannerParamItem
 {

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeIndexscan.c,v 1.139 2010/02/26 02:00:42 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeIndexscan.c,v 1.140 2010/07/12 17:01:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,7 +17,7 @@
  *		ExecIndexScan			scans a relation using indices
  *		ExecIndexNext			using index to retrieve next tuple
  *		ExecInitIndexScan		creates and initializes state info.
- *		ExecIndexReScan			rescans the indexed relation.
+ *		ExecReScanIndexScan		rescans the indexed relation.
  *		ExecEndIndexScan		releases all storage.
  *		ExecIndexMarkPos		marks scan position.
  *		ExecIndexRestrPos		restores scan position.
@@ -141,7 +141,7 @@ ExecIndexScan(IndexScanState *node)
 	 * If we have runtime keys and they've not already been set up, do it now.
 	 */
 	if (node->iss_NumRuntimeKeys != 0 && !node->iss_RuntimeKeysReady)
-		ExecReScan((PlanState *) node, NULL);
+		ExecReScan((PlanState *) node);
 
 	return ExecScan(&node->ss,
 					(ExecScanAccessMtd) IndexNext,
@@ -149,54 +149,35 @@ ExecIndexScan(IndexScanState *node)
 }
 
 /* ----------------------------------------------------------------
- *		ExecIndexReScan(node)
+ *		ExecReScanIndexScan(node)
  *
- *		Recalculates the value of the scan keys whose value depends on
- *		information known at runtime and rescans the indexed relation.
+ *		Recalculates the values of any scan keys whose value depends on
+ *		information known at runtime, then rescans the indexed relation.
+ *
  *		Updating the scan key was formerly done separately in
  *		ExecUpdateIndexScanKeys. Integrating it into ReScan makes
  *		rescans of indices and relations/general streams more uniform.
  * ----------------------------------------------------------------
  */
 void
-ExecIndexReScan(IndexScanState *node, ExprContext *exprCtxt)
+ExecReScanIndexScan(IndexScanState *node)
 {
-	ExprContext *econtext;
-
-	econtext = node->iss_RuntimeContext;		/* context for runtime keys */
-
-	if (econtext)
-	{
-		/*
-		 * If we are being passed an outer tuple, save it for runtime key
-		 * calc.  We also need to link it into the "regular" per-tuple
-		 * econtext, so it can be used during indexqualorig evaluations.
-		 */
-		if (exprCtxt != NULL)
-		{
-			ExprContext *stdecontext;
-
-			econtext->ecxt_outertuple = exprCtxt->ecxt_outertuple;
-			stdecontext = node->ss.ps.ps_ExprContext;
-			stdecontext->ecxt_outertuple = exprCtxt->ecxt_outertuple;
-		}
-
-		/*
-		 * Reset the runtime-key context so we don't leak memory as each outer
-		 * tuple is scanned.  Note this assumes that we will recalculate *all*
-		 * runtime keys on each call.
-		 */
-		ResetExprContext(econtext);
-	}
-
 	/*
-	 * If we are doing runtime key calculations (ie, the index keys depend on
-	 * data from an outer scan), compute the new key values
+	 * If we are doing runtime key calculations (ie, any of the index key
+	 * values weren't simple Consts), compute the new key values.  But first,
+	 * reset the context so we don't leak memory as each outer tuple is
+	 * scanned.  Note this assumes that we will recalculate *all* runtime keys
+	 * on each call.
 	 */
 	if (node->iss_NumRuntimeKeys != 0)
+	{
+		ExprContext *econtext = node->iss_RuntimeContext;
+
+		ResetExprContext(econtext);
 		ExecIndexEvalRuntimeKeys(econtext,
 								 node->iss_RuntimeKeys,
 								 node->iss_NumRuntimeKeys);
+	}
 	node->iss_RuntimeKeysReady = true;
 
 	/* reset index scan */
@@ -229,11 +210,11 @@ ExecIndexEvalRuntimeKeys(ExprContext *econtext,
 
 		/*
 		 * For each run-time key, extract the run-time expression and evaluate
-		 * it with respect to the current outer tuple.	We then stick the
-		 * result into the proper scan key.
+		 * it with respect to the current context.  We then stick the result
+		 * into the proper scan key.
 		 *
 		 * Note: the result of the eval could be a pass-by-ref value that's
-		 * stored in the outer scan's tuple, not in
+		 * stored in some outer scan's tuple, not in
 		 * econtext->ecxt_per_tuple_memory.  We assume that the outer tuple
 		 * will stay put throughout our scan.  If this is wrong, we could copy
 		 * the result into our context explicitly, but I think that's not

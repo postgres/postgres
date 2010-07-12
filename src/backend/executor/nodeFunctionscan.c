@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeFunctionscan.c,v 1.55 2010/01/02 16:57:41 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeFunctionscan.c,v 1.56 2010/07/12 17:01:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,7 +18,7 @@
  *		ExecFunctionNext		retrieve next tuple in sequential order.
  *		ExecInitFunctionScan	creates and initializes a functionscan node.
  *		ExecEndFunctionScan		releases any storage allocated.
- *		ExecFunctionReScan		rescans the function
+ *		ExecReScanFunctionScan	rescans the function
  */
 #include "postgres.h"
 
@@ -255,13 +255,13 @@ ExecEndFunctionScan(FunctionScanState *node)
 }
 
 /* ----------------------------------------------------------------
- *		ExecFunctionReScan
+ *		ExecReScanFunctionScan
  *
  *		Rescans the relation.
  * ----------------------------------------------------------------
  */
 void
-ExecFunctionReScan(FunctionScanState *node, ExprContext *exprCtxt)
+ExecReScanFunctionScan(FunctionScanState *node)
 {
 	ExecClearTuple(node->ss.ps.ps_ResultTupleSlot);
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeCtescan.c,v 1.8 2010/01/02 16:57:41 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeCtescan.c,v 1.9 2010/07/12 17:01:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -298,13 +298,13 @@ ExecEndCteScan(CteScanState *node)
 }
 
 /* ----------------------------------------------------------------
- *		ExecCteScanReScan
+ *		ExecReScanCteScan
  *
  *		Rescans the relation.
  * ----------------------------------------------------------------
  */
 void
-ExecCteScanReScan(CteScanState *node, ExprContext *exprCtxt)
+ExecReScanCteScan(CteScanState *node)
 {
 	Tuplestorestate *tuplestorestate = node->leader->cte_table;
 

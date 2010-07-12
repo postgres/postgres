@@ -71,7 +71,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeAgg.c,v 1.175 2010/02/26 02:00:41 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeAgg.c,v 1.176 2010/07/12 17:01:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1886,7 +1886,7 @@ ExecEndAgg(AggState *node)
 }
 
 void
-ExecReScanAgg(AggState *node, ExprContext *exprCtxt)
+ExecReScanAgg(AggState *node)
 {
 	ExprContext *econtext = node->ss.ps.ps_ExprContext;
 	int			aggno;
@@ -1911,7 +1911,7 @@ ExecReScanAgg(AggState *node, ExprContext *exprCtxt)
 		 * parameter changes, then we can just rescan the existing hash table;
 		 * no need to build it again.
 		 */
-		if (((PlanState *) node)->lefttree->chgParam == NULL)
+		if (node->ss.ps.lefttree->chgParam == NULL)
 		{
 			ResetTupleHashIterator(node->hashtable, &node->hashiter);
 			return;
@@ -1967,8 +1967,8 @@ ExecReScanAgg(AggState *node, ExprContext *exprCtxt)
 	 * if chgParam of subnode is not null then plan will be re-scanned by
 	 * first ExecProcNode.
 	 */
-	if (((PlanState *) node)->lefttree->chgParam == NULL)
-		ExecReScan(((PlanState *) node)->lefttree, exprCtxt);
+	if (node->ss.ps.lefttree->chgParam == NULL)
+		ExecReScan(node->ss.ps.lefttree);
 }
 
 /*

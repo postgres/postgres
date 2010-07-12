@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/executor/nodeWindowAgg.h,v 1.4 2010/01/02 16:58:03 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/executor/nodeWindowAgg.h,v 1.5 2010/07/12 17:01:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,6 +19,6 @@
 extern WindowAggState *ExecInitWindowAgg(WindowAgg *node, EState *estate, int eflags);
 extern TupleTableSlot *ExecWindowAgg(WindowAggState *node);
 extern void ExecEndWindowAgg(WindowAggState *node);
-extern void ExecReScanWindowAgg(WindowAggState *node, ExprContext *exprCtxt);
+extern void ExecReScanWindowAgg(WindowAggState *node);
 
 #endif   /* NODEWINDOWAGG_H */

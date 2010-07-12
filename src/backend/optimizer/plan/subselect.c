@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/subselect.c,v 1.162 2010/04/19 00:55:25 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/subselect.c,v 1.163 2010/07/12 17:01:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -83,30 +83,20 @@ static bool finalize_primnode(Node *node, finalize_primnode_context *context);
 
 
 /*
- * Generate a Param node to replace the given Var,
- * which is expected to have varlevelsup > 0 (ie, it is not local).
+ * Select a PARAM_EXEC number to identify the given Var.
+ * If the Var already has a param slot, return that one.
  */
-static Param *
-replace_outer_var(PlannerInfo *root, Var *var)
+static int
+assign_param_for_var(PlannerInfo *root, Var *var)
 {
-	Param	   *retval;
 	ListCell   *ppl;
 	PlannerParamItem *pitem;
 	Index		abslevel;
 	int			i;
 
-	Assert(var->varlevelsup > 0 && var->varlevelsup < root->query_level);
 	abslevel = root->query_level - var->varlevelsup;
 
-	/*
-	 * If there's already a paramlist entry for this same Var, just use it.
-	 * NOTE: in sufficiently complex querytrees, it is possible for the same
-	 * varno/abslevel to refer to different RTEs in different parts of the
-	 * parsetree, so that different fields might end up sharing the same Param
-	 * number.	As long as we check the vartype/typmod as well, I believe that
-	 * this sort of aliasing will cause no trouble.  The correct field should
-	 * get stored into the Param slot at execution in each part of the tree.
-	 */
+	/* If there's already a paramlist entry for this same Var, just use it */
 	i = 0;
 	foreach(ppl, root->glob->paramlist)
 	{
@@ -119,24 +109,76 @@ replace_outer_var(PlannerInfo *root, Var *var)
 				pvar->varattno == var->varattno &&
 				pvar->vartype == var->vartype &&
 				pvar->vartypmod == var->vartypmod)
-				break;
+				return i;
 		}
 		i++;
 	}
 
-	if (!ppl)
-	{
-		/* Nope, so make a new one */
-		var = (Var *) copyObject(var);
-		var->varlevelsup = 0;
+	/* Nope, so make a new one */
+	var = (Var *) copyObject(var);
+	var->varlevelsup = 0;
 
-		pitem = makeNode(PlannerParamItem);
-		pitem->item = (Node *) var;
-		pitem->abslevel = abslevel;
+	pitem = makeNode(PlannerParamItem);
+	pitem->item = (Node *) var;
+	pitem->abslevel = abslevel;
 
-		root->glob->paramlist = lappend(root->glob->paramlist, pitem);
-		/* i is already the correct index for the new item */
-	}
+	root->glob->paramlist = lappend(root->glob->paramlist, pitem);
+
+	/* i is already the correct list index for the new item */
+	return i;
+}
+
+/*
+ * Generate a Param node to replace the given Var,
+ * which is expected to have varlevelsup > 0 (ie, it is not local).
+ */
+static Param *
+replace_outer_var(PlannerInfo *root, Var *var)
+{
+	Param	   *retval;
+	int			i;
+
+	Assert(var->varlevelsup > 0 && var->varlevelsup < root->query_level);
+
+	/*
+	 * Find the Var in root->glob->paramlist, or add it if not present.
+	 *
+	 * NOTE: in sufficiently complex querytrees, it is possible for the same
+	 * varno/abslevel to refer to different RTEs in different parts of the
+	 * parsetree, so that different fields might end up sharing the same Param
+	 * number.	As long as we check the vartype/typmod as well, I believe that
+	 * this sort of aliasing will cause no trouble.  The correct field should
+	 * get stored into the Param slot at execution in each part of the tree.
+	 */
+	i = assign_param_for_var(root, var);
+
+	retval = makeNode(Param);
+	retval->paramkind = PARAM_EXEC;
+	retval->paramid = i;
+	retval->paramtype = var->vartype;
+	retval->paramtypmod = var->vartypmod;
+	retval->location = -1;
+
+	return retval;
+}
+
+/*
+ * Generate a Param node to replace the given Var, which will be supplied
+ * from an upper NestLoop join node.
+ *
+ * Because we allow nestloop and subquery Params to alias each other,
+ * this is effectively the same as replace_outer_var, except that we expect
+ * the Var to be local to the current query level.
+ */
+Param *
+assign_nestloop_param(PlannerInfo *root, Var *var)
+{
+	Param	   *retval;
+	int			i;
+
+	Assert(var->varlevelsup == 0);
+
+	i = assign_param_for_var(root, var);
 
 	retval = makeNode(Param);
 	retval->paramkind = PARAM_EXEC;
@@ -1773,8 +1815,9 @@ SS_finalize_plan(PlannerInfo *root, Plan *plan, bool attach_initplans)
 	 *
 	 * Note: this is a bit overly generous since some parameters of upper
 	 * query levels might belong to query subtrees that don't include this
-	 * query.  However, valid_params is only a debugging crosscheck, so it
-	 * doesn't seem worth expending lots of cycles to try to be exact.
+	 * query, or might be nestloop params that won't be passed down at all.
+	 * However, valid_params is only a debugging crosscheck, so it doesn't
+	 * seem worth expending lots of cycles to try to be exact.
 	 */
 	valid_params = bms_copy(initSetParam);
 	paramid = 0;
@@ -1849,6 +1892,8 @@ finalize_plan(PlannerInfo *root, Plan *plan, Bitmapset *valid_params,
 {
 	finalize_primnode_context context;
 	int			locally_added_param;
+	Bitmapset  *nestloop_params;
+	Bitmapset  *child_params;
 
 	if (plan == NULL)
 		return NULL;
@@ -1856,6 +1901,7 @@ finalize_plan(PlannerInfo *root, Plan *plan, Bitmapset *valid_params,
 	context.root = root;
 	context.paramids = NULL;	/* initialize set to empty */
 	locally_added_param = -1;	/* there isn't one */
+	nestloop_params = NULL;		/* there aren't any */
 
 	/*
 	 * When we call finalize_primnode, context.paramids sets are automatically
@@ -2056,8 +2102,20 @@ finalize_plan(PlannerInfo *root, Plan *plan, Bitmapset *valid_params,
 			break;
 
 		case T_NestLoop:
-			finalize_primnode((Node *) ((Join *) plan)->joinqual,
-							  &context);
+			{
+				ListCell   *l;
+
+				finalize_primnode((Node *) ((Join *) plan)->joinqual,
+								  &context);
+				/* collect set of params that will be passed to right child */
+				foreach(l, ((NestLoop *) plan)->nestParams)
+				{
+					NestLoopParam *nlp = (NestLoopParam *) lfirst(l);
+
+					nestloop_params = bms_add_member(nestloop_params,
+													 nlp->paramno);
+				}
+			}
 			break;
 
 		case T_MergeJoin:
@@ -2120,17 +2178,32 @@ finalize_plan(PlannerInfo *root, Plan *plan, Bitmapset *valid_params,
 	}
 
 	/* Process left and right child plans, if any */
-	context.paramids = bms_add_members(context.paramids,
-									   finalize_plan(root,
-													 plan->lefttree,
-													 valid_params,
-													 scan_params));
+	child_params = finalize_plan(root,
+								 plan->lefttree,
+								 valid_params,
+								 scan_params);
+	context.paramids = bms_add_members(context.paramids, child_params);
 
-	context.paramids = bms_add_members(context.paramids,
-									   finalize_plan(root,
-													 plan->righttree,
-													 valid_params,
-													 scan_params));
+	if (nestloop_params)
+	{
+		/* right child can reference nestloop_params as well as valid_params */
+		child_params = finalize_plan(root,
+									 plan->righttree,
+									 bms_union(nestloop_params, valid_params),
+									 scan_params);
+		/* ... and they don't count as parameters used at my level */
+		child_params = bms_difference(child_params, nestloop_params);
+		bms_free(nestloop_params);
+	}
+	else
+	{
+		/* easy case */
+		child_params = finalize_plan(root,
+									 plan->righttree,
+									 valid_params,
+									 scan_params);
+	}
+	context.paramids = bms_add_members(context.paramids, child_params);
 
 	/*
 	 * Any locally generated parameter doesn't count towards its generating

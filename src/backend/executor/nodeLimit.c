@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeLimit.c,v 1.41 2010/01/02 16:57:42 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeLimit.c,v 1.42 2010/07/12 17:01:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -404,7 +404,7 @@ ExecEndLimit(LimitState *node)
 
 
 void
-ExecReScanLimit(LimitState *node, ExprContext *exprCtxt)
+ExecReScanLimit(LimitState *node)
 {
 	/*
 	 * Recompute limit/offset in case parameters changed, and reset the state
@@ -417,6 +417,6 @@ ExecReScanLimit(LimitState *node, ExprContext *exprCtxt)
 	 * if chgParam of subnode is not null then plan will be re-scanned by
 	 * first ExecProcNode.
 	 */
-	if (((PlanState *) node)->lefttree->chgParam == NULL)
-		ExecReScan(((PlanState *) node)->lefttree, exprCtxt);
+	if (node->ps.lefttree->chgParam == NULL)
+		ExecReScan(node->ps.lefttree);
 }

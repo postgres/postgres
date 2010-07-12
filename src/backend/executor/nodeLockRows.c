@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeLockRows.c,v 1.4 2010/02/26 02:00:42 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeLockRows.c,v 1.5 2010/07/12 17:01:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -339,12 +339,12 @@ ExecEndLockRows(LockRowsState *node)
 
 
 void
-ExecReScanLockRows(LockRowsState *node, ExprContext *exprCtxt)
+ExecReScanLockRows(LockRowsState *node)
 {
 	/*
 	 * if chgParam of subnode is not null then plan will be re-scanned by
 	 * first ExecProcNode.
 	 */
-	if (((PlanState *) node)->lefttree->chgParam == NULL)
-		ExecReScan(((PlanState *) node)->lefttree, exprCtxt);
+	if (node->ps.lefttree->chgParam == NULL)
+		ExecReScan(node->ps.lefttree);
 }

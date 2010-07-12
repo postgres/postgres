@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/executor/nodeIndexscan.h,v 1.36 2010/01/02 16:58:03 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/executor/nodeIndexscan.h,v 1.37 2010/07/12 17:01:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,7 +21,7 @@ extern TupleTableSlot *ExecIndexScan(IndexScanState *node);
 extern void ExecEndIndexScan(IndexScanState *node);
 extern void ExecIndexMarkPos(IndexScanState *node);
 extern void ExecIndexRestrPos(IndexScanState *node);
-extern void ExecIndexReScan(IndexScanState *node, ExprContext *exprCtxt);
+extern void ExecReScanIndexScan(IndexScanState *node);
 
 /* routines exported to share code with nodeBitmapIndexscan.c */
 extern void ExecIndexBuildScanKeys(PlanState *planstate, Relation index,

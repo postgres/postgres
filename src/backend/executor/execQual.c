@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.263 2010/02/26 02:00:41 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.264 2010/07/12 17:01:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -78,7 +78,9 @@ static Datum ExecEvalWholeRowSlow(ExprState *exprstate, ExprContext *econtext,
 					 bool *isNull, ExprDoneCond *isDone);
 static Datum ExecEvalConst(ExprState *exprstate, ExprContext *econtext,
 			  bool *isNull, ExprDoneCond *isDone);
-static Datum ExecEvalParam(ExprState *exprstate, ExprContext *econtext,
+static Datum ExecEvalParamExec(ExprState *exprstate, ExprContext *econtext,
+			  bool *isNull, ExprDoneCond *isDone);
+static Datum ExecEvalParamExtern(ExprState *exprstate, ExprContext *econtext,
 			  bool *isNull, ExprDoneCond *isDone);
 static void init_fcache(Oid foid, FuncExprState *fcache,
 			MemoryContext fcacheCxt, bool needDescForSets);
@@ -961,80 +963,87 @@ ExecEvalConst(ExprState *exprstate, ExprContext *econtext,
 }
 
 /* ----------------------------------------------------------------
- *		ExecEvalParam
+ *		ExecEvalParamExec
  *
- *		Returns the value of a parameter.  A param node contains
- *		something like ($.name) and the expression context contains
- *		the current parameter bindings (name = "sam") (age = 34)...
- *		so our job is to find and return the appropriate datum ("sam").
+ *		Returns the value of a PARAM_EXEC parameter.
  * ----------------------------------------------------------------
  */
 static Datum
-ExecEvalParam(ExprState *exprstate, ExprContext *econtext,
-			  bool *isNull, ExprDoneCond *isDone)
+ExecEvalParamExec(ExprState *exprstate, ExprContext *econtext,
+				  bool *isNull, ExprDoneCond *isDone)
 {
 	Param	   *expression = (Param *) exprstate->expr;
 	int			thisParamId = expression->paramid;
+	ParamExecData *prm;
 
 	if (isDone)
 		*isDone = ExprSingleResult;
 
-	if (expression->paramkind == PARAM_EXEC)
+	/*
+	 * PARAM_EXEC params (internal executor parameters) are stored in the
+	 * ecxt_param_exec_vals array, and can be accessed by array index.
+	 */
+	prm = &(econtext->ecxt_param_exec_vals[thisParamId]);
+	if (prm->execPlan != NULL)
 	{
-		/*
-		 * PARAM_EXEC params (internal executor parameters) are stored in the
-		 * ecxt_param_exec_vals array, and can be accessed by array index.
-		 */
-		ParamExecData *prm;
-
-		prm = &(econtext->ecxt_param_exec_vals[thisParamId]);
-		if (prm->execPlan != NULL)
-		{
-			/* Parameter not evaluated yet, so go do it */
-			ExecSetParamPlan(prm->execPlan, econtext);
-			/* ExecSetParamPlan should have processed this param... */
-			Assert(prm->execPlan == NULL);
-		}
-		*isNull = prm->isnull;
-		return prm->value;
+		/* Parameter not evaluated yet, so go do it */
+		ExecSetParamPlan(prm->execPlan, econtext);
+		/* ExecSetParamPlan should have processed this param... */
+		Assert(prm->execPlan == NULL);
 	}
-	else
+	*isNull = prm->isnull;
+	return prm->value;
+}
+
+/* ----------------------------------------------------------------
+ *		ExecEvalParamExtern
+ *
+ *		Returns the value of a PARAM_EXTERN parameter.
+ * ----------------------------------------------------------------
+ */
+static Datum
+ExecEvalParamExtern(ExprState *exprstate, ExprContext *econtext,
+					bool *isNull, ExprDoneCond *isDone)
+{
+	Param	   *expression = (Param *) exprstate->expr;
+	int			thisParamId = expression->paramid;
+	ParamListInfo paramInfo = econtext->ecxt_param_list_info;
+
+	if (isDone)
+		*isDone = ExprSingleResult;
+
+	/*
+	 * PARAM_EXTERN parameters must be sought in ecxt_param_list_info.
+	 */
+	if (paramInfo &&
+		thisParamId > 0 && thisParamId <= paramInfo->numParams)
 	{
-		/*
-		 * PARAM_EXTERN parameters must be sought in ecxt_param_list_info.
-		 */
-		ParamListInfo paramInfo = econtext->ecxt_param_list_info;
+		ParamExternData *prm = &paramInfo->params[thisParamId - 1];
 
-		Assert(expression->paramkind == PARAM_EXTERN);
-		if (paramInfo &&
-			thisParamId > 0 && thisParamId <= paramInfo->numParams)
+		/* give hook a chance in case parameter is dynamic */
+		if (!OidIsValid(prm->ptype) && paramInfo->paramFetch != NULL)
+			(*paramInfo->paramFetch) (paramInfo, thisParamId);
+
+		if (OidIsValid(prm->ptype))
 		{
-			ParamExternData *prm = &paramInfo->params[thisParamId - 1];
+			/* safety check in case hook did something unexpected */
+			if (prm->ptype != expression->paramtype)
+				ereport(ERROR,
+						(errcode(ERRCODE_DATATYPE_MISMATCH),
+						 errmsg("type of parameter %d (%s) does not match that when preparing the plan (%s)",
+								thisParamId,
+								format_type_be(prm->ptype),
+								format_type_be(expression->paramtype))));
 
-			/* give hook a chance in case parameter is dynamic */
-			if (!OidIsValid(prm->ptype) && paramInfo->paramFetch != NULL)
-				(*paramInfo->paramFetch) (paramInfo, thisParamId);
-
-			if (OidIsValid(prm->ptype))
-			{
-				/* safety check in case hook did something unexpected */
-				if (prm->ptype != expression->paramtype)
-					ereport(ERROR,
-							(errcode(ERRCODE_DATATYPE_MISMATCH),
-							 errmsg("type of parameter %d (%s) does not match that when preparing the plan (%s)",
-									thisParamId,
-									format_type_be(prm->ptype),
-									format_type_be(expression->paramtype))));
-
-				*isNull = prm->isnull;
-				return prm->value;
-			}
+			*isNull = prm->isnull;
+			return prm->value;
 		}
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("no value found for parameter %d", thisParamId)));
-		return (Datum) 0;		/* keep compiler quiet */
 	}
+
+	ereport(ERROR,
+			(errcode(ERRCODE_UNDEFINED_OBJECT),
+			 errmsg("no value found for parameter %d", thisParamId)));
+	return (Datum) 0;		/* keep compiler quiet */
 }
 
 
@@ -4228,7 +4237,19 @@ ExecInitExpr(Expr *node, PlanState *parent)
 			break;
 		case T_Param:
 			state = (ExprState *) makeNode(ExprState);
-			state->evalfunc = ExecEvalParam;
+			switch (((Param *) node)->paramkind)
+			{
+				case PARAM_EXEC:
+					state->evalfunc = ExecEvalParamExec;
+					break;
+				case PARAM_EXTERN:
+					state->evalfunc = ExecEvalParamExtern;
+					break;
+				default:
+					elog(ERROR, "unrecognized paramkind: %d",
+						 (int) ((Param *) node)->paramkind);
+					break;
+			}
 			break;
 		case T_CoerceToDomainValue:
 			state = (ExprState *) makeNode(ExprState);

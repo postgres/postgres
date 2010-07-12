@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeModifyTable.c,v 1.7 2010/02/26 02:00:42 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeModifyTable.c,v 1.8 2010/07/12 17:01:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1045,7 +1045,7 @@ ExecEndModifyTable(ModifyTableState *node)
 }
 
 void
-ExecReScanModifyTable(ModifyTableState *node, ExprContext *exprCtxt)
+ExecReScanModifyTable(ModifyTableState *node)
 {
 	/*
 	 * Currently, we don't need to support rescan on ModifyTable nodes. The
