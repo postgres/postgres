@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/src/tools/fsync/test_fsync.c,v 1.30 2010/07/06 19:19:02 momjian Exp $
+ * $PostgreSQL: pgsql/src/tools/fsync/test_fsync.c,v 1.31 2010/07/13 17:00:50 momjian Exp $
  *
  *
  *	test_fsync.c
@@ -80,7 +80,8 @@ main(int argc, char *argv[])
 	 * Simple write
 	 */
 	printf("Simple write:\n");
-	/* write only */
+	printf(LABEL_FORMAT, "8k write");
+	fflush(stdout);
 	gettimeofday(&start_t, NULL);
 	for (i = 0; i < loops; i++)
 	{
@@ -91,7 +92,6 @@ main(int argc, char *argv[])
 		close(tmpfile);
 	}
 	gettimeofday(&stop_t, NULL);
-	printf(LABEL_FORMAT, "8k write");
 	print_elapse(start_t, stop_t);
 
 	/*
@@ -100,7 +100,8 @@ main(int argc, char *argv[])
 	printf("\nCompare file sync methods using one write:\n");
 
 #ifdef OPEN_DATASYNC_FLAG
-	/* open_dsync, write */
+	printf(LABEL_FORMAT, "open_datasync 8k write");
+	fflush(stdout);
 	if ((tmpfile = open(filename, O_RDWR | O_DSYNC, 0)) == -1)
 		die("Cannot open output file.");
 	gettimeofday(&start_t, NULL);
@@ -113,14 +114,14 @@ main(int argc, char *argv[])
 	}
 	gettimeofday(&stop_t, NULL);
 	close(tmpfile);
-	printf(LABEL_FORMAT, "open_datasync 8k write");
 	print_elapse(start_t, stop_t);
 #else
-	printf("\t(open_datasync unavailable)\n");
+	printf("\t(unavailable: open_datasync)\n");
 #endif
 
 #ifdef OPEN_SYNC_FLAG
-	/* open_fsync, write */
+	printf(LABEL_FORMAT, "open_sync 8k write");
+	fflush(stdout);
 	if ((tmpfile = open(filename, O_RDWR | OPEN_SYNC_FLAG, 0)) == -1)
 		die("Cannot open output file.");
 	gettimeofday(&start_t, NULL);
@@ -133,14 +134,14 @@ main(int argc, char *argv[])
 	}
 	gettimeofday(&stop_t, NULL);
 	close(tmpfile);
-	printf(LABEL_FORMAT, "open_sync 8k write");
 	print_elapse(start_t, stop_t);
 #else
-	printf("\t(open_sync unavailable)\n");
+	printf("\t(unavailable: open_sync)\n");
 #endif
 
 #ifdef HAVE_FDATASYNC
-	/* write, fdatasync */
+	printf(LABEL_FORMAT, "8k write, fdatasync");
+	fflush(stdout);
 	if ((tmpfile = open(filename, O_RDWR, 0)) == -1)
 		die("Cannot open output file.");
 	gettimeofday(&start_t, NULL);
@@ -154,13 +155,13 @@ main(int argc, char *argv[])
 	}
 	gettimeofday(&stop_t, NULL);
 	close(tmpfile);
-	printf(LABEL_FORMAT, "8k write, fdatasync");
 	print_elapse(start_t, stop_t);
 #else
-	printf("\t(fdatasync unavailable)\n");
+	printf("\t(unavailable: fdatasync)\n");
 #endif
 
-	/* write, fsync, close */
+	printf(LABEL_FORMAT, "8k write, fsync");
+	fflush(stdout);
 	if ((tmpfile = open(filename, O_RDWR, 0)) == -1)
 		die("Cannot open output file.");
 	gettimeofday(&start_t, NULL);
@@ -175,7 +176,6 @@ main(int argc, char *argv[])
 	}
 	gettimeofday(&stop_t, NULL);
 	close(tmpfile);
-	printf(LABEL_FORMAT, "8k write, fsync");
 	print_elapse(start_t, stop_t);
 
 	/*
@@ -184,7 +184,8 @@ main(int argc, char *argv[])
 	printf("\nCompare file sync methods using two writes:\n");
 
 #ifdef OPEN_DATASYNC_FLAG
-	/* open_dsync, write */
+	printf(LABEL_FORMAT, "2 open_datasync 8k writes");
+	fflush(stdout);
 	if ((tmpfile = open(filename, O_RDWR | O_DSYNC, 0)) == -1)
 		die("Cannot open output file.");
 	gettimeofday(&start_t, NULL);
@@ -199,14 +200,14 @@ main(int argc, char *argv[])
 	}
 	gettimeofday(&stop_t, NULL);
 	close(tmpfile);
-	printf(LABEL_FORMAT, "2 open_datasync 8k writes");
 	print_elapse(start_t, stop_t);
 #else
-	printf("\t(open_datasync unavailable)\n");
+	printf("\t(unavailable: open_datasync)\n");
 #endif
 
 #ifdef OPEN_SYNC_FLAG
-	/* open_fsync, write */
+	printf(LABEL_FORMAT, "2 open_sync 8k writes");
+	fflush(stdout);
 	if ((tmpfile = open(filename, O_RDWR | OPEN_SYNC_FLAG, 0)) == -1)
 		die("Cannot open output file.");
 	gettimeofday(&start_t, NULL);
@@ -221,12 +222,12 @@ main(int argc, char *argv[])
 	}
 	gettimeofday(&stop_t, NULL);
 	close(tmpfile);
-	printf(LABEL_FORMAT, "2 open_sync 8k writes");
 	print_elapse(start_t, stop_t);
 #endif
 
 #ifdef HAVE_FDATASYNC
-	/* write, fdatasync */
+	printf(LABEL_FORMAT, "8k write, 8k write, fdatasync");
+	fflush(stdout);
 	if ((tmpfile = open(filename, O_RDWR, 0)) == -1)
 		die("Cannot open output file.");
 	gettimeofday(&start_t, NULL);
@@ -242,13 +243,13 @@ main(int argc, char *argv[])
 	}
 	gettimeofday(&stop_t, NULL);
 	close(tmpfile);
-	printf(LABEL_FORMAT, "8k write, 8k write, fdatasync");
 	print_elapse(start_t, stop_t);
 #else
-	printf("\t(fdatasync unavailable)\n");
+	printf("\t(unavailable: fdatasync)\n");
 #endif
 
-	/* write, fsync, close */
+	printf(LABEL_FORMAT, "8k write, 8k write, fsync");
+	fflush(stdout);
 	if ((tmpfile = open(filename, O_RDWR, 0)) == -1)
 		die("Cannot open output file.");
 	gettimeofday(&start_t, NULL);
@@ -265,7 +266,6 @@ main(int argc, char *argv[])
 	}
 	gettimeofday(&stop_t, NULL);
 	close(tmpfile);
-	printf(LABEL_FORMAT, "8k write, 8k write, fsync");
 	print_elapse(start_t, stop_t);
 
 	/*
@@ -274,7 +274,8 @@ main(int argc, char *argv[])
 	printf("\nCompare open_sync with different sizes:\n");
 
 #ifdef OPEN_SYNC_FLAG
-	/* 16k open_sync write */
+	printf(LABEL_FORMAT, "open_sync 16k write");
+	fflush(stdout);
 	if ((tmpfile = open(filename, O_RDWR | OPEN_SYNC_FLAG, 0)) == -1)
 		die("Cannot open output file.");
 	gettimeofday(&start_t, NULL);
@@ -287,10 +288,10 @@ main(int argc, char *argv[])
 	}
 	gettimeofday(&stop_t, NULL);
 	close(tmpfile);
-	printf(LABEL_FORMAT, "open_sync 16k write");
 	print_elapse(start_t, stop_t);
 
-	/* Two 8k open_sync writes */
+	printf(LABEL_FORMAT, "2 open_sync 8k writes");
+	fflush(stdout);
 	if ((tmpfile = open(filename, O_RDWR | OPEN_SYNC_FLAG, 0)) == -1)
 		die("Cannot open output file.");
 	gettimeofday(&start_t, NULL);
@@ -305,10 +306,9 @@ main(int argc, char *argv[])
 	}
 	gettimeofday(&stop_t, NULL);
 	close(tmpfile);
-	printf(LABEL_FORMAT, "2 open_sync 8k writes");
 	print_elapse(start_t, stop_t);
 #else
-	printf("\t(open_sync unavailable)\n");
+	printf("\t(unavailable: open_sync)\n");
 #endif
 
 	/*
@@ -318,7 +318,8 @@ main(int argc, char *argv[])
 	printf("(If the times are similar, fsync() can sync data written\n");
 	printf("on a different descriptor.)\n");
 
-	/* write, fsync, close */
+	printf(LABEL_FORMAT, "8k write, fsync, close");
+	fflush(stdout);
 	gettimeofday(&start_t, NULL);
 	for (i = 0; i < loops; i++)
 	{
@@ -335,10 +336,10 @@ main(int argc, char *argv[])
 		close(tmpfile);
 	}
 	gettimeofday(&stop_t, NULL);
-	printf(LABEL_FORMAT, "8k write, fsync, close");
 	print_elapse(start_t, stop_t);
 
-	/* write, close, fsync */
+ 	printf(LABEL_FORMAT, "8k write, close, fsync");
+ 	fflush(stdout);
 	gettimeofday(&start_t, NULL);
 	for (i = 0; i < loops; i++)
 	{
@@ -355,7 +356,6 @@ main(int argc, char *argv[])
 		close(tmpfile);
 	}
 	gettimeofday(&stop_t, NULL);
-	printf(LABEL_FORMAT, "8k write, close, fsync");
 	print_elapse(start_t, stop_t);
 
 	/* cleanup */
