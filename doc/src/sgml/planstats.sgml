@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/planstats.sgml,v 1.9 2007/12/28 21:03:31 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/planstats.sgml,v 1.10 2010/07/13 20:57:19 tgl Exp $ -->
 
 <chapter id="planner-stats-details">
  <title>How the Planner Uses Statistics</title>
@@ -353,7 +353,7 @@ WHERE t1.unique1 &lt; 50 AND t1.unique2 = t2.unique2;
          -&gt;  Bitmap Index Scan on tenk1_unique1  (cost=0.00..4.63 rows=50 width=0)
                Index Cond: (unique1 &lt; 50)
    -&gt;  Index Scan using tenk2_unique2 on tenk2 t2  (cost=0.00..6.27 rows=1 width=244)
-         Index Cond: (t2.unique2 = t1.unique2)
+         Index Cond: (unique2 = t1.unique2)
 </programlisting>
 
    The restriction on <structname>tenk1</structname>,

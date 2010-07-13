@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/perform.sgml,v 1.82 2010/06/28 22:46:11 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/perform.sgml,v 1.83 2010/07/13 20:57:19 tgl Exp $ -->
 
  <chapter id="performance-tips">
   <title>Performance Tips</title>
@@ -316,7 +316,7 @@ WHERE t1.unique1 &lt; 100 AND t1.unique2 = t2.unique2;
          -&gt;  Bitmap Index Scan on tenk1_unique1  (cost=0.00..2.37 rows=106 width=0)
                Index Cond: (unique1 &lt; 100)
    -&gt;  Index Scan using tenk2_unique2 on tenk2 t2  (cost=0.00..3.01 rows=1 width=244)
-         Index Cond: (t2.unique2 = t1.unique2)
+         Index Cond: (unique2 = t1.unique2)
 </programlisting>
    </para>
 
@@ -329,7 +329,7 @@ WHERE t1.unique1 &lt; 100 AND t1.unique2 = t2.unique2;
     so it doesn't affect the row count of the outer scan.  For the inner (lower) scan, the
     <literal>unique2</> value of the current outer-scan row is plugged into
     the inner index scan to produce an index condition like
-    <literal>t2.unique2 = <replaceable>constant</replaceable></literal>.
+    <literal>unique2 = <replaceable>constant</replaceable></literal>.
     So we get the same inner-scan plan and costs that we'd get from, say,
     <literal>EXPLAIN SELECT * FROM tenk2 WHERE unique2 = 42</literal>.  The
     costs of the loop node are then set on the basis of the cost of the outer
@@ -405,7 +405,7 @@ WHERE t1.unique1 &lt; 100 AND t1.unique2 = t2.unique2;
          -&gt;  Bitmap Index Scan on tenk1_unique1  (cost=0.00..2.37 rows=106 width=0) (actual time=0.546..0.546 rows=100 loops=1)
                Index Cond: (unique1 &lt; 100)
    -&gt;  Index Scan using tenk2_unique2 on tenk2 t2  (cost=0.00..3.01 rows=1 width=244) (actual time=0.067..0.078 rows=1 loops=100)
-         Index Cond: (t2.unique2 = t1.unique2)
+         Index Cond: (unique2 = t1.unique2)
  Total runtime: 14.452 ms
 </screen>
 

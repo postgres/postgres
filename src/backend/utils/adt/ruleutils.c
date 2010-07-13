@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.327 2010/07/09 21:11:47 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.328 2010/07/13 20:57:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -102,16 +102,23 @@ typedef struct
  * The rangetable is the list of actual RTEs from the query tree, and the
  * cte list is the list of actual CTEs.
  *
- * For deparsing plan trees, we provide for outer and inner subplan nodes.
- * The tlists of these nodes are used to resolve OUTER and INNER varnos.
- * Also, in the plan-tree case we don't have access to the parse-time CTE
- * list, so we need a list of subplans instead.
+ * When deparsing plan trees, there is always just a single item in the
+ * deparse_namespace list (since a plan tree never contains Vars with
+ * varlevelsup > 0).  We store the PlanState node that is the immediate
+ * parent of the expression to be deparsed, as well as a list of that
+ * PlanState's ancestors.  In addition, we store the outer and inner
+ * subplan nodes, whose targetlists are used to resolve OUTER and INNER Vars.
+ * (Note: these could be derived on-the-fly from the planstate instead.)
  */
 typedef struct
 {
 	List	   *rtable;			/* List of RangeTblEntry nodes */
 	List	   *ctes;			/* List of CommonTableExpr nodes */
-	List	   *subplans;		/* List of subplans, in plan-tree case */
+	/* Remaining fields are used only when deparsing a Plan tree: */
+	PlanState  *planstate;		/* immediate parent of current expression */
+	List	   *ancestors;		/* ancestors of planstate */
+	PlanState  *outer_planstate;	/* OUTER subplan state, or NULL if none */
+	PlanState  *inner_planstate;	/* INNER subplan state, or NULL if none */
 	Plan	   *outer_plan;		/* OUTER subplan, or NULL if none */
 	Plan	   *inner_plan;		/* INNER subplan, or NULL if none */
 } deparse_namespace;
@@ -154,6 +161,15 @@ static text *pg_get_expr_worker(text *expr, Oid relid, const char *relname,
 static int print_function_arguments(StringInfo buf, HeapTuple proctup,
 						 bool print_table_args, bool print_defaults);
 static void print_function_rettype(StringInfo buf, HeapTuple proctup);
+static void set_deparse_planstate(deparse_namespace *dpns, PlanState *ps);
+static void push_child_plan(deparse_namespace *dpns, PlanState *ps,
+				deparse_namespace *save_dpns);
+static void pop_child_plan(deparse_namespace *dpns,
+						   deparse_namespace *save_dpns);
+static void push_ancestor_plan(deparse_namespace *dpns, ListCell *ancestor_cell,
+				   deparse_namespace *save_dpns);
+static void pop_ancestor_plan(deparse_namespace *dpns,
+							  deparse_namespace *save_dpns);
 static void make_ruledef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc,
 			 int prettyFlags);
 static void make_viewdef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc,
@@ -183,11 +199,13 @@ static void get_rule_orderby(List *orderList, List *targetList,
 static void get_rule_windowclause(Query *query, deparse_context *context);
 static void get_rule_windowspec(WindowClause *wc, List *targetList,
 					deparse_context *context);
-static void push_plan(deparse_namespace *dpns, Plan *subplan);
 static char *get_variable(Var *var, int levelsup, bool showstar,
 			 deparse_context *context);
 static RangeTblEntry *find_rte_by_refname(const char *refname,
 					deparse_context *context);
+static void get_parameter(Param *param, deparse_context *context);
+static void print_parameter_expr(Node *expr, ListCell *ancestor_cell,
+					 deparse_namespace *dpns, deparse_context *context);
 static const char *get_simple_binary_op_name(OpExpr *expr);
 static bool isSimpleNode(Node *node, Node *parentNode, int prettyFlags);
 static void appendContextKeyword(deparse_context *context, const char *str,
@@ -625,10 +643,9 @@ pg_get_triggerdef_worker(Oid trigid, bool pretty)
 		newrte->inFromCl = true;
 
 		/* Build two-element rtable */
+		memset(&dpns, 0, sizeof(dpns));
 		dpns.rtable = list_make2(oldrte, newrte);
 		dpns.ctes = NIL;
-		dpns.subplans = NIL;
-		dpns.outer_plan = dpns.inner_plan = NULL;
 
 		/* Set up context with one-deep namespace stack */
 		context.buf = &buf;
@@ -2072,7 +2089,7 @@ deparse_context_for(const char *aliasname, Oid relid)
 	deparse_namespace *dpns;
 	RangeTblEntry *rte;
 
-	dpns = (deparse_namespace *) palloc(sizeof(deparse_namespace));
+	dpns = (deparse_namespace *) palloc0(sizeof(deparse_namespace));
 
 	/* Build a minimal RTE for the rel */
 	rte = makeNode(RangeTblEntry);
@@ -2085,62 +2102,190 @@ deparse_context_for(const char *aliasname, Oid relid)
 	/* Build one-element rtable */
 	dpns->rtable = list_make1(rte);
 	dpns->ctes = NIL;
-	dpns->subplans = NIL;
-	dpns->outer_plan = dpns->inner_plan = NULL;
 
 	/* Return a one-deep namespace stack */
 	return list_make1(dpns);
 }
 
 /*
- * deparse_context_for_plan		- Build deparse context for a plan node
+ * deparse_context_for_planstate	- Build deparse context for a plan
  *
  * When deparsing an expression in a Plan tree, we might have to resolve
  * OUTER or INNER references.  To do this, the caller must provide the
- * parent Plan node.  In the normal case of a join plan node, OUTER and
- * INNER references can be resolved by drilling down into the left and
- * right child plans.  A special case is that a nestloop inner indexscan
- * might have OUTER Vars, but the outer side of the join is not a child
- * plan node.  To handle such cases the outer plan node must be passed
- * separately.	(Pass NULL for outer_plan otherwise.)
+ * parent PlanState node.  Then OUTER and INNER references can be resolved
+ * by drilling down into the left and right child plans.
  *
- * Note: plan and outer_plan really ought to be declared as "Plan *", but
- * we use "Node *" to avoid having to include plannodes.h in builtins.h.
+ * Note: planstate really ought to be declared as "PlanState *", but we use
+ * "Node *" to avoid having to include execnodes.h in builtins.h.
+ *
+ * The ancestors list is a list of the PlanState's parent PlanStates, the
+ * most-closely-nested first.  This is needed to resolve PARAM_EXEC Params.
+ * Note we assume that all the PlanStates share the same rtable.
  *
  * The plan's rangetable list must also be passed.  We actually prefer to use
  * the rangetable to resolve simple Vars, but the plan inputs are necessary
  * for Vars that reference expressions computed in subplan target lists.
- *
- * We also need the list of subplans associated with the Plan tree; this
- * is for resolving references to CTE subplans.
  */
 List *
-deparse_context_for_plan(Node *plan, Node *outer_plan,
-						 List *rtable, List *subplans)
+deparse_context_for_planstate(Node *planstate, List *ancestors,
+							  List *rtable)
 {
 	deparse_namespace *dpns;
 
-	dpns = (deparse_namespace *) palloc(sizeof(deparse_namespace));
+	dpns = (deparse_namespace *) palloc0(sizeof(deparse_namespace));
 
+	/* Initialize fields that stay the same across the whole plan tree */
 	dpns->rtable = rtable;
 	dpns->ctes = NIL;
-	dpns->subplans = subplans;
 
-	/*
-	 * Set up outer_plan and inner_plan from the Plan node (this includes
-	 * various special cases for particular Plan types).
-	 */
-	push_plan(dpns, (Plan *) plan);
-
-	/*
-	 * If outer_plan is given, that overrides whatever we got from the plan.
-	 */
-	if (outer_plan)
-		dpns->outer_plan = (Plan *) outer_plan;
+	/* Set our attention on the specific plan node passed in */
+	set_deparse_planstate(dpns, (PlanState *) planstate);
+	dpns->ancestors = ancestors;
 
 	/* Return a one-deep namespace stack */
 	return list_make1(dpns);
 }
+
+/*
+ * set_deparse_planstate: set up deparse_namespace to parse subexpressions
+ * of a given PlanState node
+ *
+ * This sets the planstate, outer_planstate, inner_planstate, outer_plan, and
+ * inner_plan fields.  Caller is responsible for adjusting the ancestors list
+ * if necessary.  Note that the rtable and ctes fields do not need to change
+ * when shifting attention to different plan nodes in a single plan tree.
+ */
+static void
+set_deparse_planstate(deparse_namespace *dpns, PlanState *ps)
+{
+	dpns->planstate = ps;
+
+	/*
+	 * We special-case Append to pretend that the first child plan is the
+	 * OUTER referent; we have to interpret OUTER Vars in the Append's tlist
+	 * according to one of the children, and the first one is the most natural
+	 * choice.	Likewise special-case ModifyTable to pretend that the first
+	 * child plan is the OUTER referent; this is to support RETURNING lists
+	 * containing references to non-target relations.
+	 */
+	if (IsA(ps, AppendState))
+		dpns->outer_planstate = ((AppendState *) ps)->appendplans[0];
+	else if (IsA(ps, ModifyTableState))
+		dpns->outer_planstate = ((ModifyTableState *) ps)->mt_plans[0];
+	else
+		dpns->outer_planstate = outerPlanState(ps);
+
+	if (dpns->outer_planstate)
+		dpns->outer_plan = dpns->outer_planstate->plan;
+	else
+		dpns->outer_plan = NULL;
+
+	/*
+	 * For a SubqueryScan, pretend the subplan is INNER referent.  (We don't
+	 * use OUTER because that could someday conflict with the normal meaning.)
+	 * Likewise, for a CteScan, pretend the subquery's plan is INNER referent.
+	 */
+	if (IsA(ps, SubqueryScanState))
+		dpns->inner_planstate = ((SubqueryScanState *) ps)->subplan;
+	else if (IsA(ps, CteScanState))
+		dpns->inner_planstate = ((CteScanState *) ps)->cteplanstate;
+	else
+		dpns->inner_planstate = innerPlanState(ps);
+
+	if (dpns->inner_planstate)
+		dpns->inner_plan = dpns->inner_planstate->plan;
+	else
+		dpns->inner_plan = NULL;
+}
+
+/*
+ * push_child_plan: temporarily transfer deparsing attention to a child plan
+ *
+ * When expanding an OUTER or INNER reference, we must adjust the deparse
+ * context in case the referenced expression itself uses OUTER/INNER.	We
+ * modify the top stack entry in-place to avoid affecting levelsup issues
+ * (although in a Plan tree there really shouldn't be any).
+ *
+ * Caller must provide a local deparse_namespace variable to save the
+ * previous state for pop_child_plan.
+ */
+static void
+push_child_plan(deparse_namespace *dpns, PlanState *ps,
+				deparse_namespace *save_dpns)
+{
+	/* Save state for restoration later */
+	*save_dpns = *dpns;
+
+	/*
+	 * Currently we don't bother to adjust the ancestors list, because an
+	 * OUTER or INNER reference really shouldn't contain any Params that
+	 * would be set by the parent node itself.  If we did want to adjust it,
+	 * lcons'ing dpns->planstate onto dpns->ancestors would be the appropriate
+	 * thing --- and pop_child_plan would need to undo the change to the list.
+	 */
+
+	/* Set attention on selected child */
+	set_deparse_planstate(dpns, ps);
+}
+
+/*
+ * pop_child_plan: undo the effects of push_child_plan
+ */
+static void
+pop_child_plan(deparse_namespace *dpns, deparse_namespace *save_dpns)
+{
+	/* Restore fields changed by push_child_plan */
+	*dpns = *save_dpns;
+}
+
+/*
+ * push_ancestor_plan: temporarily transfer deparsing attention to an
+ * ancestor plan
+ *
+ * When expanding a Param reference, we must adjust the deparse context
+ * to match the plan node that contains the expression being printed;
+ * otherwise we'd fail if that expression itself contains a Param or
+ * OUTER/INNER variables.
+ *
+ * The target ancestor is conveniently identified by the ListCell holding it
+ * in dpns->ancestors.
+ *
+ * Caller must provide a local deparse_namespace variable to save the
+ * previous state for pop_ancestor_plan.
+ */
+static void
+push_ancestor_plan(deparse_namespace *dpns, ListCell *ancestor_cell,
+				   deparse_namespace *save_dpns)
+{
+	PlanState  *ps = (PlanState *) lfirst(ancestor_cell);
+	List	   *ancestors;
+
+	/* Save state for restoration later */
+	*save_dpns = *dpns;
+
+	/* Build a new ancestor list with just this node's ancestors */
+	ancestors = NIL;
+	while ((ancestor_cell = lnext(ancestor_cell)) != NULL)
+		ancestors = lappend(ancestors, lfirst(ancestor_cell));
+	dpns->ancestors = ancestors;
+
+	/* Set attention on selected ancestor */
+	set_deparse_planstate(dpns, ps);
+}
+
+/*
+ * pop_ancestor_plan: undo the effects of push_ancestor_plan
+ */
+static void
+pop_ancestor_plan(deparse_namespace *dpns, deparse_namespace *save_dpns)
+{
+	/* Free the ancestor list made in push_ancestor_plan */
+	list_free(dpns->ancestors);
+
+	/* Restore fields changed by push_ancestor_plan */
+	*dpns = *save_dpns;
+}
+
 
 /* ----------
  * make_ruledef			- reconstruct the CREATE RULE command
@@ -2285,10 +2430,10 @@ make_ruledef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc,
 		context.varprefix = (list_length(query->rtable) != 1);
 		context.prettyFlags = prettyFlags;
 		context.indentLevel = PRETTYINDENT_STD;
+
+		memset(&dpns, 0, sizeof(dpns));
 		dpns.rtable = query->rtable;
 		dpns.ctes = query->cteList;
-		dpns.subplans = NIL;
-		dpns.outer_plan = dpns.inner_plan = NULL;
 
 		get_rule_expr(qual, &context, false);
 	}
@@ -2432,10 +2577,9 @@ get_query_def(Query *query, StringInfo buf, List *parentnamespace,
 	context.prettyFlags = prettyFlags;
 	context.indentLevel = startIndent;
 
+	memset(&dpns, 0, sizeof(dpns));
 	dpns.rtable = query->rtable;
 	dpns.ctes = query->cteList;
-	dpns.subplans = NIL;
-	dpns.outer_plan = dpns.inner_plan = NULL;
 
 	switch (query->commandType)
 	{
@@ -3481,57 +3625,6 @@ get_utility_query_def(Query *query, deparse_context *context)
 
 
 /*
- * push_plan: set up deparse_namespace to recurse into the tlist of a subplan
- *
- * When expanding an OUTER or INNER reference, we must push new outer/inner
- * subplans in case the referenced expression itself uses OUTER/INNER.	We
- * modify the top stack entry in-place to avoid affecting levelsup issues
- * (although in a Plan tree there really shouldn't be any).
- *
- * Caller must save and restore outer_plan and inner_plan around this.
- *
- * We also use this to initialize the fields during deparse_context_for_plan.
- */
-static void
-push_plan(deparse_namespace *dpns, Plan *subplan)
-{
-	/*
-	 * We special-case Append to pretend that the first child plan is the
-	 * OUTER referent; we have to interpret OUTER Vars in the Append's tlist
-	 * according to one of the children, and the first one is the most natural
-	 * choice.	Likewise special-case ModifyTable to pretend that the first
-	 * child plan is the OUTER referent; this is to support RETURNING lists
-	 * containing references to non-target relations.
-	 */
-	if (IsA(subplan, Append))
-		dpns->outer_plan = (Plan *) linitial(((Append *) subplan)->appendplans);
-	else if (IsA(subplan, ModifyTable))
-		dpns->outer_plan = (Plan *) linitial(((ModifyTable *) subplan)->plans);
-	else
-		dpns->outer_plan = outerPlan(subplan);
-
-	/*
-	 * For a SubqueryScan, pretend the subplan is INNER referent.  (We don't
-	 * use OUTER because that could someday conflict with the normal meaning.)
-	 * Likewise, for a CteScan, pretend the subquery's plan is INNER referent.
-	 */
-	if (IsA(subplan, SubqueryScan))
-		dpns->inner_plan = ((SubqueryScan *) subplan)->subplan;
-	else if (IsA(subplan, CteScan))
-	{
-		int			ctePlanId = ((CteScan *) subplan)->ctePlanId;
-
-		if (ctePlanId > 0 && ctePlanId <= list_length(dpns->subplans))
-			dpns->inner_plan = list_nth(dpns->subplans, ctePlanId - 1);
-		else
-			dpns->inner_plan = NULL;
-	}
-	else
-		dpns->inner_plan = innerPlan(subplan);
-}
-
-
-/*
  * Display a Var appropriately.
  *
  * In some cases (currently only when recursing into an unnamed join)
@@ -3576,17 +3669,14 @@ get_variable(Var *var, int levelsup, bool showstar, deparse_context *context)
 	else if (var->varno == OUTER && dpns->outer_plan)
 	{
 		TargetEntry *tle;
-		Plan	   *save_outer;
-		Plan	   *save_inner;
+		deparse_namespace save_dpns;
 
 		tle = get_tle_by_resno(dpns->outer_plan->targetlist, var->varattno);
 		if (!tle)
 			elog(ERROR, "bogus varattno for OUTER var: %d", var->varattno);
 
 		Assert(netlevelsup == 0);
-		save_outer = dpns->outer_plan;
-		save_inner = dpns->inner_plan;
-		push_plan(dpns, dpns->outer_plan);
+		push_child_plan(dpns, dpns->outer_planstate, &save_dpns);
 
 		/*
 		 * Force parentheses because our caller probably assumed a Var is a
@@ -3598,24 +3688,20 @@ get_variable(Var *var, int levelsup, bool showstar, deparse_context *context)
 		if (!IsA(tle->expr, Var))
 			appendStringInfoChar(buf, ')');
 
-		dpns->outer_plan = save_outer;
-		dpns->inner_plan = save_inner;
+		pop_child_plan(dpns, &save_dpns);
 		return NULL;
 	}
 	else if (var->varno == INNER && dpns->inner_plan)
 	{
 		TargetEntry *tle;
-		Plan	   *save_outer;
-		Plan	   *save_inner;
+		deparse_namespace save_dpns;
 
 		tle = get_tle_by_resno(dpns->inner_plan->targetlist, var->varattno);
 		if (!tle)
 			elog(ERROR, "bogus varattno for INNER var: %d", var->varattno);
 
 		Assert(netlevelsup == 0);
-		save_outer = dpns->outer_plan;
-		save_inner = dpns->inner_plan;
-		push_plan(dpns, dpns->inner_plan);
+		push_child_plan(dpns, dpns->inner_planstate, &save_dpns);
 
 		/*
 		 * Force parentheses because our caller probably assumed a Var is a
@@ -3627,8 +3713,7 @@ get_variable(Var *var, int levelsup, bool showstar, deparse_context *context)
 		if (!IsA(tle->expr, Var))
 			appendStringInfoChar(buf, ')');
 
-		dpns->outer_plan = save_outer;
-		dpns->inner_plan = save_inner;
+		pop_child_plan(dpns, &save_dpns);
 		return NULL;
 	}
 	else
@@ -3653,17 +3738,14 @@ get_variable(Var *var, int levelsup, bool showstar, deparse_context *context)
 		dpns->inner_plan)
 	{
 		TargetEntry *tle;
-		Plan	   *save_outer;
-		Plan	   *save_inner;
+		deparse_namespace save_dpns;
 
 		tle = get_tle_by_resno(dpns->inner_plan->targetlist, var->varattno);
 		if (!tle)
 			elog(ERROR, "bogus varattno for subquery var: %d", var->varattno);
 
 		Assert(netlevelsup == 0);
-		save_outer = dpns->outer_plan;
-		save_inner = dpns->inner_plan;
-		push_plan(dpns, dpns->inner_plan);
+		push_child_plan(dpns, dpns->inner_planstate, &save_dpns);
 
 		/*
 		 * Force parentheses because our caller probably assumed a Var is a
@@ -3675,8 +3757,7 @@ get_variable(Var *var, int levelsup, bool showstar, deparse_context *context)
 		if (!IsA(tle->expr, Var))
 			appendStringInfoChar(buf, ')');
 
-		dpns->outer_plan = save_outer;
-		dpns->inner_plan = save_inner;
+		pop_child_plan(dpns, &save_dpns);
 		return NULL;
 	}
 
@@ -3827,8 +3908,7 @@ get_name_for_var_field(Var *var, int fieldno,
 	else if (var->varno == OUTER && dpns->outer_plan)
 	{
 		TargetEntry *tle;
-		Plan	   *save_outer;
-		Plan	   *save_inner;
+		deparse_namespace save_dpns;
 		const char *result;
 
 		tle = get_tle_by_resno(dpns->outer_plan->targetlist, var->varattno);
@@ -3836,22 +3916,18 @@ get_name_for_var_field(Var *var, int fieldno,
 			elog(ERROR, "bogus varattno for OUTER var: %d", var->varattno);
 
 		Assert(netlevelsup == 0);
-		save_outer = dpns->outer_plan;
-		save_inner = dpns->inner_plan;
-		push_plan(dpns, dpns->outer_plan);
+		push_child_plan(dpns, dpns->outer_planstate, &save_dpns);
 
 		result = get_name_for_var_field((Var *) tle->expr, fieldno,
 										levelsup, context);
 
-		dpns->outer_plan = save_outer;
-		dpns->inner_plan = save_inner;
+		pop_child_plan(dpns, &save_dpns);
 		return result;
 	}
 	else if (var->varno == INNER && dpns->inner_plan)
 	{
 		TargetEntry *tle;
-		Plan	   *save_outer;
-		Plan	   *save_inner;
+		deparse_namespace save_dpns;
 		const char *result;
 
 		tle = get_tle_by_resno(dpns->inner_plan->targetlist, var->varattno);
@@ -3859,15 +3935,12 @@ get_name_for_var_field(Var *var, int fieldno,
 			elog(ERROR, "bogus varattno for INNER var: %d", var->varattno);
 
 		Assert(netlevelsup == 0);
-		save_outer = dpns->outer_plan;
-		save_inner = dpns->inner_plan;
-		push_plan(dpns, dpns->inner_plan);
+		push_child_plan(dpns, dpns->inner_planstate, &save_dpns);
 
 		result = get_name_for_var_field((Var *) tle->expr, fieldno,
 										levelsup, context);
 
-		dpns->outer_plan = save_outer;
-		dpns->inner_plan = save_inner;
+		pop_child_plan(dpns, &save_dpns);
 		return result;
 	}
 	else
@@ -3926,10 +3999,9 @@ get_name_for_var_field(Var *var, int fieldno,
 						deparse_namespace mydpns;
 						const char *result;
 
+						memset(&mydpns, 0, sizeof(mydpns));
 						mydpns.rtable = rte->subquery->rtable;
 						mydpns.ctes = rte->subquery->cteList;
-						mydpns.subplans = NIL;
-						mydpns.outer_plan = mydpns.inner_plan = NULL;
 
 						context->namespaces = lcons(&mydpns,
 													context->namespaces);
@@ -3954,8 +4026,7 @@ get_name_for_var_field(Var *var, int fieldno,
 					 * look into the child plan's tlist instead.
 					 */
 					TargetEntry *tle;
-					Plan	   *save_outer;
-					Plan	   *save_inner;
+					deparse_namespace save_dpns;
 					const char *result;
 
 					if (!dpns->inner_plan)
@@ -3967,15 +4038,12 @@ get_name_for_var_field(Var *var, int fieldno,
 						elog(ERROR, "bogus varattno for subquery var: %d",
 							 attnum);
 					Assert(netlevelsup == 0);
-					save_outer = dpns->outer_plan;
-					save_inner = dpns->inner_plan;
-					push_plan(dpns, dpns->inner_plan);
+					push_child_plan(dpns, dpns->inner_planstate, &save_dpns);
 
 					result = get_name_for_var_field((Var *) tle->expr, fieldno,
 													levelsup, context);
 
-					dpns->outer_plan = save_outer;
-					dpns->inner_plan = save_inner;
+					pop_child_plan(dpns, &save_dpns);
 					return result;
 				}
 			}
@@ -4049,10 +4117,9 @@ get_name_for_var_field(Var *var, int fieldno,
 						deparse_namespace mydpns;
 						const char *result;
 
+						memset(&mydpns, 0, sizeof(mydpns));
 						mydpns.rtable = ctequery->rtable;
 						mydpns.ctes = ctequery->cteList;
-						mydpns.subplans = NIL;
-						mydpns.outer_plan = mydpns.inner_plan = NULL;
 
 						new_nslist = list_copy_tail(context->namespaces,
 													ctelevelsup);
@@ -4076,8 +4143,7 @@ get_name_for_var_field(Var *var, int fieldno,
 					 * can look into the subplan's tlist instead.
 					 */
 					TargetEntry *tle;
-					Plan	   *save_outer;
-					Plan	   *save_inner;
+					deparse_namespace save_dpns;
 					const char *result;
 
 					if (!dpns->inner_plan)
@@ -4089,15 +4155,12 @@ get_name_for_var_field(Var *var, int fieldno,
 						elog(ERROR, "bogus varattno for subquery var: %d",
 							 attnum);
 					Assert(netlevelsup == 0);
-					save_outer = dpns->outer_plan;
-					save_inner = dpns->inner_plan;
-					push_plan(dpns, dpns->inner_plan);
+					push_child_plan(dpns, dpns->inner_planstate, &save_dpns);
 
 					result = get_name_for_var_field((Var *) tle->expr, fieldno,
 													levelsup, context);
 
-					dpns->outer_plan = save_outer;
-					dpns->inner_plan = save_inner;
+					pop_child_plan(dpns, &save_dpns);
 					return result;
 				}
 			}
@@ -4160,6 +4223,154 @@ find_rte_by_refname(const char *refname, deparse_context *context)
 	return result;
 }
 
+/*
+ * Display a Param appropriately.
+ */
+static void
+get_parameter(Param *param, deparse_context *context)
+{
+	/*
+	 * If it's a PARAM_EXEC parameter, try to locate the expression from
+	 * which the parameter was computed.  This will necessarily be in some
+	 * ancestor of the current expression's PlanState.  Note that failing
+	 * to find a referent isn't an error, since the Param might well be a
+	 * subplan output rather than an input.
+	 */
+	if (param->paramkind == PARAM_EXEC)
+	{
+		deparse_namespace *dpns;
+		PlanState  *child_ps;
+		bool		in_same_plan_level;
+		ListCell   *lc;
+
+		dpns = (deparse_namespace *) linitial(context->namespaces);
+		child_ps = dpns->planstate;
+		in_same_plan_level = true;
+
+		foreach(lc, dpns->ancestors)
+		{
+			PlanState  *ps = (PlanState *) lfirst(lc);
+			ListCell   *lc2;
+
+			/*
+			 * NestLoops transmit params to their inner child only; also,
+			 * once we've crawled up out of a subplan, this couldn't
+			 * possibly be the right match.
+			 */
+			if (IsA(ps, NestLoopState) &&
+				child_ps == innerPlanState(ps) &&
+				in_same_plan_level)
+			{
+				NestLoop   *nl = (NestLoop *) ps->plan;
+
+				foreach(lc2, nl->nestParams)
+				{
+					NestLoopParam  *nlp = (NestLoopParam *) lfirst(lc2);
+
+					if (nlp->paramno == param->paramid)
+					{
+						/* Found a match, so print it */
+						print_parameter_expr((Node *) nlp->paramval, lc,
+											 dpns, context);
+						return;
+					}
+				}
+			}
+
+			/*
+			 * Check to see if we're crawling up from a subplan.
+			 */
+			foreach(lc2, ps->subPlan)
+			{
+				SubPlanState *sstate = (SubPlanState *) lfirst(lc2);
+				SubPlan    *subplan = (SubPlan *) sstate->xprstate.expr;
+				ListCell   *lc3;
+				ListCell   *lc4;
+
+				if (child_ps != sstate->planstate)
+					continue;
+
+				/* Matched subplan, so check its arguments */
+				forboth(lc3, subplan->parParam, lc4, subplan->args)
+				{
+					int		paramid = lfirst_int(lc3);
+					Node   *arg = (Node *) lfirst(lc4);
+
+					if (paramid == param->paramid)
+					{
+						/* Found a match, so print it */
+						print_parameter_expr(arg, lc, dpns, context);
+						return;
+					}
+				}
+
+				/* Keep looking, but we are emerging from a subplan. */
+				in_same_plan_level = false;
+				break;
+			}
+
+			/*
+			 * Likewise check to see if we're emerging from an initplan.
+			 * Initplans never have any parParams, so no need to search that
+			 * list, but we need to know if we should reset
+			 * in_same_plan_level.
+			 */
+			foreach(lc2, ps->initPlan)
+			{
+				SubPlanState *sstate = (SubPlanState *) lfirst(lc2);
+
+				if (child_ps != sstate->planstate)
+					continue;
+
+				/* No parameters to be had here. */
+				Assert(((SubPlan *) sstate->xprstate.expr)->parParam == NIL);
+
+				/* Keep looking, but we are emerging from an initplan. */
+				in_same_plan_level = false;
+				break;
+			}
+
+			/* No luck, crawl up to next ancestor */
+			child_ps = ps;
+		}
+	}
+
+	/*
+	 * Not PARAM_EXEC, or couldn't find referent: just print $N.
+	 */
+	appendStringInfo(context->buf, "$%d", param->paramid);
+}
+
+/* Print a parameter reference expression found by get_parameter */
+static void
+print_parameter_expr(Node *expr, ListCell *ancestor_cell,
+					 deparse_namespace *dpns, deparse_context *context)
+{
+	deparse_namespace save_dpns;
+	bool		save_varprefix;
+
+	/* Switch attention to the ancestor plan node */
+	push_ancestor_plan(dpns, ancestor_cell, &save_dpns);
+
+	/*
+	 * Force prefixing of Vars, since they won't belong to the relation being
+	 * scanned in the original plan node.
+	 */
+	save_varprefix = context->varprefix;
+	context->varprefix = true;
+
+	/*
+	 * We don't need to add parentheses because a Param's expansion is
+	 * (currently) always a Var or Aggref.
+	 */
+	Assert(IsA(expr, Var) || IsA(expr, Aggref));
+
+	get_rule_expr(expr, context, false);
+
+	context->varprefix = save_varprefix;
+
+	pop_ancestor_plan(dpns, &save_dpns);
+}
 
 /*
  * get_simple_binary_op_name
@@ -4496,7 +4707,7 @@ get_rule_expr(Node *node, deparse_context *context,
 			break;
 
 		case T_Param:
-			appendStringInfo(buf, "$%d", ((Param *) node)->paramid);
+			get_parameter((Param *) node, context);
 			break;
 
 		case T_Aggref:
