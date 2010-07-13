@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/portalmem.c,v 1.113.2.4 2010/07/05 09:27:24 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/portalmem.c,v 1.113.2.5 2010/07/13 09:02:40 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -379,6 +379,9 @@ PortalCreateHoldStore(Portal portal)
 /*
  * PinPortal
  *		Protect a portal from dropping.
+ *
+ * A pinned portal is still unpinned and dropped at transaction or
+ * subtransaction abort.
  */
 void
 PinPortal(Portal portal)
@@ -901,6 +904,14 @@ AtSubCleanup_Portals(SubTransactionId mySubid)
 
 		if (portal->createSubid != mySubid)
 			continue;
+
+		/*
+		 * If a portal is still pinned, forcibly unpin it. PortalDrop will not
+		 * let us drop the portal otherwise. Whoever pinned the portal was
+		 * interrupted by the abort too and won't try to use it anymore.
+		 */
+		if (portal->portalPinned)
+			portal->portalPinned = false;
 
 		/* Zap it. */
 		PortalDrop(portal, false);
