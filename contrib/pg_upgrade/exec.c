@@ -4,7 +4,7 @@
  *	execution functions
  *
  *	Copyright (c) 2010, PostgreSQL Global Development Group
- *	$PostgreSQL: pgsql/contrib/pg_upgrade/exec.c,v 1.8 2010/07/06 19:18:55 momjian Exp $
+ *	$PostgreSQL: pgsql/contrib/pg_upgrade/exec.c,v 1.9 2010/07/13 18:09:55 momjian Exp $
  */
 
 #include "pg_upgrade.h"
@@ -13,10 +13,10 @@
 #include <grp.h>
 
 
-static void checkBinDir(migratorContext *ctx, ClusterInfo *cluster);
+static void	check_data_dir(migratorContext *ctx, const char *pg_data);
+static void check_bin_dir(migratorContext *ctx, ClusterInfo *cluster);
 static int	check_exec(migratorContext *ctx, const char *dir, const char *cmdName);
 static const char *validate_exec(const char *path);
-static int	check_data_dir(migratorContext *ctx, const char *pg_data);
 
 
 /*
@@ -56,49 +56,6 @@ exec_prog(migratorContext *ctx, bool throw_error, const char *fmt,...)
 
 
 /*
- * verify_directories()
- *
- * does all the hectic work of verifying directories and executables
- * of old and new server.
- *
- * NOTE: May update the values of all parameters
- */
-void
-verify_directories(migratorContext *ctx)
-{
-	prep_status(ctx, "Checking old data directory (%s)", ctx->old.pgdata);
-	if (check_data_dir(ctx, ctx->old.pgdata) != 0)
-		pg_log(ctx, PG_FATAL, "Failed\n");
-	checkBinDir(ctx, &ctx->old);
-	check_ok(ctx);
-
-	prep_status(ctx, "Checking new data directory (%s)", ctx->new.pgdata);
-	if (check_data_dir(ctx, ctx->new.pgdata) != 0)
-		pg_log(ctx, PG_FATAL, "Failed\n");
-	checkBinDir(ctx, &ctx->new);
-	check_ok(ctx);
-}
-
-
-/*
- * checkBinDir()
- *
- *	This function searches for the executables that we expect to find
- *	in the binaries directory.	If we find that a required executable
- *	is missing (or secured against us), we display an error message and
- *	exit().
- */
-static void
-checkBinDir(migratorContext *ctx, ClusterInfo *cluster)
-{
-	check_exec(ctx, cluster->bindir, "postgres");
-	check_exec(ctx, cluster->bindir, "psql");
-	check_exec(ctx, cluster->bindir, "pg_ctl");
-	check_exec(ctx, cluster->bindir, "pg_dumpall");
-}
-
-
-/*
  * is_server_running()
  *
  * checks whether postmaster on the given data directory is running or not.
@@ -123,6 +80,90 @@ is_server_running(migratorContext *ctx, const char *datadir)
 
 	close(fd);
 	return true;
+}
+
+
+/*
+ * verify_directories()
+ *
+ * does all the hectic work of verifying directories and executables
+ * of old and new server.
+ *
+ * NOTE: May update the values of all parameters
+ */
+void
+verify_directories(migratorContext *ctx)
+{
+	prep_status(ctx, "Checking old data directory (%s)", ctx->old.pgdata);
+	check_data_dir(ctx, ctx->old.pgdata);
+	check_ok(ctx);
+
+	prep_status(ctx, "Checking old bin directory (%s)", ctx->old.bindir);
+	check_bin_dir(ctx, &ctx->old);
+	check_ok(ctx);
+
+	prep_status(ctx, "Checking new data directory (%s)", ctx->new.pgdata);
+	check_data_dir(ctx, ctx->new.pgdata);
+	check_ok(ctx);
+
+	prep_status(ctx, "Checking new bin directory (%s)", ctx->new.bindir);
+	check_bin_dir(ctx, &ctx->new);
+	check_ok(ctx);
+}
+
+
+/*
+ * check_data_dir()
+ *
+ *	This function validates the given cluster directory - we search for a
+ *	small set of subdirectories that we expect to find in a valid $PGDATA
+ *	directory.	If any of the subdirectories are missing (or secured against
+ *	us) we display an error message and exit()
+ *
+ */
+static void
+check_data_dir(migratorContext *ctx, const char *pg_data)
+{
+	char		subDirName[MAXPGPATH];
+	int			subdirnum;
+	const char *requiredSubdirs[] = {"base", "global", "pg_clog",
+		"pg_multixact", "pg_subtrans", "pg_tblspc", "pg_twophase",
+		"pg_xlog"};
+
+	for (subdirnum = 0;
+		 subdirnum < sizeof(requiredSubdirs) / sizeof(requiredSubdirs[0]);
+		 ++subdirnum)
+	{
+		struct stat statBuf;
+
+		snprintf(subDirName, sizeof(subDirName), "%s/%s", pg_data,
+				 requiredSubdirs[subdirnum]);
+
+		if (stat(subDirName, &statBuf) != 0)
+			report_status(ctx, PG_FATAL, "check for %s failed:  %s",
+						  requiredSubdirs[subdirnum], getErrorText(errno));
+		else if (!S_ISDIR(statBuf.st_mode))
+				report_status(ctx, PG_FATAL, "%s is not a directory",
+							  requiredSubdirs[subdirnum]);
+	}
+}
+
+
+/*
+ * check_bin_dir()
+ *
+ *	This function searches for the executables that we expect to find
+ *	in the binaries directory.	If we find that a required executable
+ *	is missing (or secured against us), we display an error message and
+ *	exit().
+ */
+static void
+check_bin_dir(migratorContext *ctx, ClusterInfo *cluster)
+{
+	check_exec(ctx, cluster->bindir, "postgres");
+	check_exec(ctx, cluster->bindir, "psql");
+	check_exec(ctx, cluster->bindir, "pg_ctl");
+	check_exec(ctx, cluster->bindir, "pg_dumpall");
 }
 
 
@@ -263,51 +304,4 @@ validate_exec(const char *path)
 		return "can't execute (permission denied)";
 	return NULL;
 #endif
-}
-
-
-/*
- * check_data_dir()
- *
- *	This function validates the given cluster directory - we search for a
- *	small set of subdirectories that we expect to find in a valid $PGDATA
- *	directory.	If any of the subdirectories are missing (or secured against
- *	us) we display an error message and exit()
- *
- */
-static int
-check_data_dir(migratorContext *ctx, const char *pg_data)
-{
-	char		subDirName[MAXPGPATH];
-	const char *requiredSubdirs[] = {"base", "global", "pg_clog",
-		"pg_multixact", "pg_subtrans",
-	"pg_tblspc", "pg_twophase", "pg_xlog"};
-	bool		fail = false;
-	int			subdirnum;
-
-	for (subdirnum = 0; subdirnum < sizeof(requiredSubdirs) / sizeof(requiredSubdirs[0]); ++subdirnum)
-	{
-		struct stat statBuf;
-
-		snprintf(subDirName, sizeof(subDirName), "%s/%s", pg_data,
-				 requiredSubdirs[subdirnum]);
-
-		if ((stat(subDirName, &statBuf)) != 0)
-		{
-			report_status(ctx, PG_WARNING, "check for %s warning:  %s",
-						  requiredSubdirs[subdirnum], getErrorText(errno));
-			fail = true;
-		}
-		else
-		{
-			if (!S_ISDIR(statBuf.st_mode))
-			{
-				report_status(ctx, PG_WARNING, "%s is not a directory",
-							  requiredSubdirs[subdirnum]);
-				fail = true;
-			}
-		}
-	}
-
-	return (fail) ? -1 : 0;
 }
