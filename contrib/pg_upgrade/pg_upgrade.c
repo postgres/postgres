@@ -4,7 +4,7 @@
  *	main source file
  *
  *	Copyright (c) 2010, PostgreSQL Global Development Group
- *	$PostgreSQL: pgsql/contrib/pg_upgrade/pg_upgrade.c,v 1.10 2010/07/06 19:18:55 momjian Exp $
+ *	$PostgreSQL: pgsql/contrib/pg_upgrade/pg_upgrade.c,v 1.11 2010/07/13 15:56:53 momjian Exp $
  */
 
 #include "pg_upgrade.h"
@@ -202,9 +202,10 @@ prepare_new_databases(migratorContext *ctx)
 	 */
 	prep_status(ctx, "Creating databases in the new cluster");
 	exec_prog(ctx, true,
-			  SYSTEMQUOTE "\"%s/psql\" --port %d --username \"%s\" "
-		   "--set ON_ERROR_STOP=on -f \"%s/%s\" --dbname template1 >> \"%s\""
-			  SYSTEMQUOTE,
+			  SYSTEMQUOTE "\"%s/psql\" --set ON_ERROR_STOP=on "
+			  /* --no-psqlrc prevents AUTOCOMMIT=off */
+			  "--no-psqlrc --port %d --username \"%s\" "
+			  "-f \"%s/%s\" --dbname template1 >> \"%s\"" SYSTEMQUOTE,
 			  ctx->new.bindir, ctx->new.port, ctx->user, ctx->cwd,
 			  GLOBALS_DUMP_FILE, ctx->logfile);
 	check_ok(ctx);
@@ -225,9 +226,9 @@ create_new_objects(migratorContext *ctx)
 
 	prep_status(ctx, "Restoring database schema to new cluster");
 	exec_prog(ctx, true,
-			  SYSTEMQUOTE "\"%s/psql\" --port %d --username \"%s\" "
-		   "--set ON_ERROR_STOP=on -f \"%s/%s\" --dbname template1 >> \"%s\""
-			  SYSTEMQUOTE,
+			  SYSTEMQUOTE "\"%s/psql\" --set ON_ERROR_STOP=on "
+			  "--no-psqlrc --port %d --username \"%s\" "
+			  "-f \"%s/%s\" --dbname template1 >> \"%s\"" SYSTEMQUOTE,
 			  ctx->new.bindir, ctx->new.port, ctx->user, ctx->cwd,
 			  DB_DUMP_FILE, ctx->logfile);
 	check_ok(ctx);

@@ -4,7 +4,7 @@
  *	server checks and output routines
  *
  *	Copyright (c) 2010, PostgreSQL Global Development Group
- *	$PostgreSQL: pgsql/contrib/pg_upgrade/check.c,v 1.11 2010/07/06 19:18:55 momjian Exp $
+ *	$PostgreSQL: pgsql/contrib/pg_upgrade/check.c,v 1.12 2010/07/13 15:56:53 momjian Exp $
  */
 
 #include "pg_upgrade.h"
@@ -152,9 +152,9 @@ issue_warnings(migratorContext *ctx, char *sequence_script_file_name)
 		{
 			prep_status(ctx, "Adjusting sequences");
 			exec_prog(ctx, true,
-				  SYSTEMQUOTE "\"%s/psql\" --set ON_ERROR_STOP=on --port %d "
-				   "--username \"%s\" -f \"%s\" --dbname template1 >> \"%s\""
-					  SYSTEMQUOTE,
+				  SYSTEMQUOTE "\"%s/psql\" --set ON_ERROR_STOP=on "
+				  "--no-psqlrc --port %d --username \"%s\" "
+				  "-f \"%s\" --dbname template1 >> \"%s\"" SYSTEMQUOTE,
 					  ctx->new.bindir, ctx->new.port, ctx->user,
 					  sequence_script_file_name, ctx->logfile);
 			unlink(sequence_script_file_name);
