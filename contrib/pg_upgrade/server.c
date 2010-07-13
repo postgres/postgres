@@ -4,7 +4,7 @@
  *	database server functions
  *
  *	Copyright (c) 2010, PostgreSQL Global Development Group
- *	$PostgreSQL: pgsql/contrib/pg_upgrade/server.c,v 1.8 2010/07/06 19:18:55 momjian Exp $
+ *	$PostgreSQL: pgsql/contrib/pg_upgrade/server.c,v 1.9 2010/07/13 20:03:32 momjian Exp $
  */
 
 #include "pg_upgrade.h"
@@ -181,9 +181,9 @@ start_postmaster(migratorContext *ctx, Cluster whichCluster, bool quiet)
 	}
 
 	/*
-	 * On Win32, we can't send both server output and pg_ctl output to the
+	 * On Win32, we can't send both pg_upgrade output and pg_ctl output to the
 	 * same file because we get the error: "The process cannot access the file
-	 * because it is being used by another process." so we have to send pg_ctl
+	 * because it is being used by another process." so we have to send all other
 	 * output to 'nul'.
 	 */
 	snprintf(cmd, sizeof(cmd),
@@ -191,11 +191,11 @@ start_postmaster(migratorContext *ctx, Cluster whichCluster, bool quiet)
 			 "-o \"-p %d -c autovacuum=off "
 			 "-c autovacuum_freeze_max_age=2000000000\" "
 			 "start >> \"%s\" 2>&1" SYSTEMQUOTE,
-			 bindir, ctx->logfile, datadir, port,
+			 bindir,
 #ifndef WIN32
-			 ctx->logfile);
+			 ctx->logfile, datadir, port, ctx->logfile);
 #else
-			 DEVNULL);
+			 DEVNULL, datadir, port, DEVNULL);
 #endif
 	exec_prog(ctx, true, "%s", cmd);
 
@@ -235,11 +235,11 @@ stop_postmaster(migratorContext *ctx, bool fast, bool quiet)
 	snprintf(cmd, sizeof(cmd),
 			 SYSTEMQUOTE "\"%s/pg_ctl\" -l \"%s\" -D \"%s\" %s stop >> "
 			 "\"%s\" 2>&1" SYSTEMQUOTE,
-			 bindir, ctx->logfile, datadir, fast ? "-m fast" : "",
+			 bindir,
 #ifndef WIN32
-			 ctx->logfile);
+			 ctx->logfile, datadir, fast ? "-m fast" : "", ctx->logfile);
 #else
-			 DEVNULL);
+			 DEVNULL, datadir, fast ? "-m fast" : "", DEVNULL);
 #endif
 	exec_prog(ctx, fast ? false : true, "%s", cmd);
 
