@@ -25,7 +25,7 @@
  *	http://archives.postgresql.org/pgsql-bugs/2010-02/msg00187.php
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.581 2010/07/06 19:18:59 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.582 2010/07/14 21:21:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -173,7 +173,7 @@ static void dumpTSTemplate(Archive *fout, TSTemplateInfo *tmplinfo);
 static void dumpTSConfig(Archive *fout, TSConfigInfo *cfginfo);
 static void dumpForeignDataWrapper(Archive *fout, FdwInfo *fdwinfo);
 static void dumpForeignServer(Archive *fout, ForeignServerInfo *srvinfo);
-static void dumpUserMappings(Archive *fout, const char *target,
+static void dumpUserMappings(Archive *fout,
 				 const char *servername, const char *namespace,
 				 const char *owner, CatalogId catalogId, DumpId dumpId);
 static void dumpDefaultACL(Archive *fout, DefaultACLInfo *daclinfo);
@@ -10138,6 +10138,7 @@ dumpForeignServer(Archive *fout, ForeignServerInfo *srvinfo)
 	query = createPQExpBuffer();
 
 	/* look up the foreign-data wrapper */
+	selectSourceSchema("pg_catalog");
 	appendPQExpBuffer(query, "SELECT fdwname "
 					  "FROM pg_foreign_data_wrapper w "
 					  "WHERE w.oid = '%u'",
@@ -10198,9 +10199,7 @@ dumpForeignServer(Archive *fout, ForeignServerInfo *srvinfo)
 	free(namecopy);
 
 	/* Dump user mappings */
-	resetPQExpBuffer(q);
-	appendPQExpBuffer(q, "SERVER %s", fmtId(srvinfo->dobj.name));
-	dumpUserMappings(fout, q->data,
+	dumpUserMappings(fout,
 					 srvinfo->dobj.name, NULL,
 					 srvinfo->rolname,
 					 srvinfo->dobj.catId, srvinfo->dobj.dumpId);
@@ -10217,7 +10216,7 @@ dumpForeignServer(Archive *fout, ForeignServerInfo *srvinfo)
  * for the server.
  */
 static void
-dumpUserMappings(Archive *fout, const char *target,
+dumpUserMappings(Archive *fout,
 				 const char *servername, const char *namespace,
 				 const char *owner,
 				 CatalogId catalogId, DumpId dumpId)
@@ -10228,7 +10227,7 @@ dumpUserMappings(Archive *fout, const char *target,
 	PQExpBuffer tag;
 	PGresult   *res;
 	int			ntups;
-	int			i_umuser;
+	int			i_usename;
 	int			i_umoptions;
 	int			i;
 
@@ -10237,31 +10236,40 @@ dumpUserMappings(Archive *fout, const char *target,
 	delq = createPQExpBuffer();
 	query = createPQExpBuffer();
 
+	/*
+	 * We read from the publicly accessible view pg_user_mappings, so as not
+	 * to fail if run by a non-superuser.  Note that the view will show
+	 * umoptions as null if the user hasn't got privileges for the associated
+	 * server; this means that pg_dump will dump such a mapping, but with no
+	 * OPTIONS clause.  A possible alternative is to skip such mappings
+	 * altogether, but it's not clear that that's an improvement.
+	 */
+	selectSourceSchema("pg_catalog");
+
 	appendPQExpBuffer(query,
-					  "SELECT (%s umuser) AS umuser, "
+					  "SELECT usename, "
 					  "array_to_string(ARRAY(SELECT option_name || ' ' || quote_literal(option_value) FROM pg_options_to_table(umoptions)), ', ') AS umoptions\n"
-					  "FROM pg_user_mapping "
-					  "WHERE umserver=%u",
-					  username_subquery,
+					  "FROM pg_user_mappings "
+					  "WHERE srvid = %u",
 					  catalogId.oid);
 
 	res = PQexec(g_conn, query->data);
 	check_sql_result(res, g_conn, query->data, PGRES_TUPLES_OK);
 
 	ntups = PQntuples(res);
-	i_umuser = PQfnumber(res, "umuser");
+	i_usename = PQfnumber(res, "usename");
 	i_umoptions = PQfnumber(res, "umoptions");
 
 	for (i = 0; i < ntups; i++)
 	{
-		char	   *umuser;
+		char	   *usename;
 		char	   *umoptions;
 
-		umuser = PQgetvalue(res, i, i_umuser);
+		usename = PQgetvalue(res, i, i_usename);
 		umoptions = PQgetvalue(res, i, i_umoptions);
 
 		resetPQExpBuffer(q);
-		appendPQExpBuffer(q, "CREATE USER MAPPING FOR %s", fmtId(umuser));
+		appendPQExpBuffer(q, "CREATE USER MAPPING FOR %s", fmtId(usename));
 		appendPQExpBuffer(q, " SERVER %s", fmtId(servername));
 
 		if (umoptions && strlen(umoptions) > 0)
@@ -10270,10 +10278,12 @@ dumpUserMappings(Archive *fout, const char *target,
 		appendPQExpBuffer(q, ";\n");
 
 		resetPQExpBuffer(delq);
-		appendPQExpBuffer(delq, "DROP USER MAPPING FOR %s SERVER %s;\n", fmtId(umuser), fmtId(servername));
+		appendPQExpBuffer(delq, "DROP USER MAPPING FOR %s", fmtId(usename));
+		appendPQExpBuffer(delq, " SERVER %s;\n", fmtId(servername));
 
 		resetPQExpBuffer(tag);
-		appendPQExpBuffer(tag, "USER MAPPING %s %s", fmtId(umuser), target);
+		appendPQExpBuffer(tag, "USER MAPPING %s SERVER %s",
+						  usename, servername);
 
 		ArchiveEntry(fout, nilCatalogId, createDumpId(),
 					 tag->data,
