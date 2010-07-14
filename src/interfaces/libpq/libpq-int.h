@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/interfaces/libpq/libpq-int.h,v 1.152 2010/07/06 19:19:01 momjian Exp $
+ * $PostgreSQL: pgsql/src/interfaces/libpq/libpq-int.h,v 1.153 2010/07/14 17:09:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -282,10 +282,9 @@ struct pg_conn
 {
 	/* Saved values of connection options */
 	char	   *pghost;			/* the machine on which the server is running */
-	char	   *pghostaddr;		/* the IPv4 address of the machine on which
-								 * the server is running, in IPv4
-								 * numbers-and-dots notation. Takes precedence
-								 * over above. */
+	char	   *pghostaddr;		/* the numeric IP address of the machine on
+								 * which the server is running.  Takes
+								 * precedence over above. */
 	char	   *pgport;			/* the server's communication port */
 	char	   *pgunixsocket;	/* the Unix-domain socket that the server is
 								 * listening on; if NULL, uses a default
