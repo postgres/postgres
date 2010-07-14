@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-secure.c,v 1.127.2.2 2009/12/30 03:45:53 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-secure.c,v 1.127.2.3 2010/07/14 17:10:03 tgl Exp $
  *
  * NOTES
  *
@@ -527,16 +527,16 @@ static bool
 verify_peer_name_matches_certificate(PGconn *conn)
 {
 	/*
-	 * If told not to verify the peer name, don't do it. Return 0 indicating
+	 * If told not to verify the peer name, don't do it. Return true indicating
 	 * that the verification was successful.
 	 */
 	if (strcmp(conn->sslmode, "verify-full") != 0)
 		return true;
 
-	if (conn->pghostaddr)
+	if (!(conn->pghost && conn->pghost[0] != '\0'))
 	{
 		printfPQExpBuffer(&conn->errorMessage,
-						  libpq_gettext("verified SSL connections are only supported when connecting to a host name"));
+						  libpq_gettext("host name must be specified for a verified SSL connection\n"));
 		return false;
 	}
 	else
@@ -555,7 +555,7 @@ verify_peer_name_matches_certificate(PGconn *conn)
 		else
 		{
 			printfPQExpBuffer(&conn->errorMessage,
-							  libpq_gettext("server common name \"%s\" does not match host name \"%s\""),
+							  libpq_gettext("server common name \"%s\" does not match host name \"%s\"\n"),
 							  conn->peer_cn, conn->pghost);
 			return false;
 		}

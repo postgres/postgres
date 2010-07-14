@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.289.2.2 2010/06/17 16:03:36 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.289.2.3 2010/07/14 17:10:02 tgl Exp $ -->
 
 <chapter id="libpq">
  <title><application>libpq</application> - C Library</title>
@@ -157,22 +157,26 @@
 
           <para>
            Using <literal>hostaddr</> instead of <literal>host</> allows the
-           application to avoid a host name look-up, which might be important in
-           applications with time constraints. However, Kerberos and GSSAPI authentication
-           requires the host name. The following therefore applies: If
-           <literal>host</> is specified without <literal>hostaddr</>, a host name
-           lookup occurs. If <literal>hostaddr</> is specified without
-           <literal>host</>, the value for <literal>hostaddr</> gives the remote
-           address. When Kerberos is used, a reverse name query occurs to obtain
-           the host name for Kerberos. If both
-           <literal>host</> and <literal>hostaddr</> are specified, the value for
-           <literal>hostaddr</> gives the remote address; the value for
-           <literal>host</> is ignored, unless Kerberos is used, in which case that
-           value is used for Kerberos authentication. (Note that authentication is
-           likely to fail if <application>libpq</application> is passed a host name
-           that is not the name of the machine at <literal>hostaddr</>.)  Also,
-           <literal>host</> rather than <literal>hostaddr</> is used to identify
-           the connection in <filename>~/.pgpass</> (see
+           application to avoid a host name look-up, which might be important
+           in applications with time constraints. However, a host name is
+           required for Kerberos, GSSAPI, or SSPI authentication, as well as
+           for full SSL certificate verification. The following rules are
+           used:
+           If <literal>host</> is specified without <literal>hostaddr</>,
+           a host name lookup occurs.
+           If <literal>hostaddr</> is specified without <literal>host</>,
+           the value for <literal>hostaddr</> gives the server address.
+           The connection attempt will fail in any of the cases where a
+           host name is required.
+           If both <literal>host</> and <literal>hostaddr</> are specified,
+           the value for <literal>hostaddr</> gives the server address.
+           The value for <literal>host</> is ignored unless needed for
+           authentication or verification purposes, in which case it will be
+           used as the host name.  Note that authentication is likely to fail
+           if <literal>host</> is not the name of the machine at
+           <literal>hostaddr</>.
+           Also, note that <literal>host</> rather than <literal>hostaddr</>
+           is used to identify the connection in <filename>~/.pgpass</> (see
            <xref linkend="libpq-pgpass">).
           </para>
 
