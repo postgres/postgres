@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/opclasscmds.c,v 1.68 2010/07/06 19:18:56 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/opclasscmds.c,v 1.69 2010/07/16 00:13:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -640,16 +640,9 @@ DefineOpFamily(CreateOpFamilyStmt *stmt)
 {
 	char	   *opfname;		/* name of opfamily we're creating */
 	Oid			amoid,			/* our AM's oid */
-				namespaceoid,	/* namespace to create opfamily in */
-				opfamilyoid;	/* oid of opfamily we create */
-	Relation	rel;
+				namespaceoid;	/* namespace to create opfamily in */
 	HeapTuple	tup;
-	Datum		values[Natts_pg_opfamily];
-	bool		nulls[Natts_pg_opfamily];
 	AclResult	aclresult;
-	NameData	opfName;
-	ObjectAddress myself,
-				referenced;
 
 	/* Convert list of names to a name and namespace */
 	namespaceoid = QualifiedNameGetCreationNamespace(stmt->opfamilyname,
@@ -678,68 +671,14 @@ DefineOpFamily(CreateOpFamilyStmt *stmt)
 	/*
 	 * Currently, we require superuser privileges to create an opfamily. See
 	 * comments in DefineOpClass.
-	 *
-	 * XXX re-enable NOT_USED code sections below if you remove this test.
 	 */
 	if (!superuser())
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 errmsg("must be superuser to create an operator family")));
 
-	rel = heap_open(OperatorFamilyRelationId, RowExclusiveLock);
-
-	/*
-	 * Make sure there is no existing opfamily of this name (this is just to
-	 * give a more friendly error message than "duplicate key").
-	 */
-	if (SearchSysCacheExists3(OPFAMILYAMNAMENSP,
-							  ObjectIdGetDatum(amoid),
-							  CStringGetDatum(opfname),
-							  ObjectIdGetDatum(namespaceoid)))
-		ereport(ERROR,
-				(errcode(ERRCODE_DUPLICATE_OBJECT),
-				 errmsg("operator family \"%s\" for access method \"%s\" already exists",
-						opfname, stmt->amname)));
-
-	/*
-	 * Okay, let's create the pg_opfamily entry.
-	 */
-	memset(values, 0, sizeof(values));
-	memset(nulls, false, sizeof(nulls));
-
-	values[Anum_pg_opfamily_opfmethod - 1] = ObjectIdGetDatum(amoid);
-	namestrcpy(&opfName, opfname);
-	values[Anum_pg_opfamily_opfname - 1] = NameGetDatum(&opfName);
-	values[Anum_pg_opfamily_opfnamespace - 1] = ObjectIdGetDatum(namespaceoid);
-	values[Anum_pg_opfamily_opfowner - 1] = ObjectIdGetDatum(GetUserId());
-
-	tup = heap_form_tuple(rel->rd_att, values, nulls);
-
-	opfamilyoid = simple_heap_insert(rel, tup);
-
-	CatalogUpdateIndexes(rel, tup);
-
-	heap_freetuple(tup);
-
-	/*
-	 * Create dependencies for the opfamily proper.  Note: we do not create a
-	 * dependency link to the AM, because we don't currently support DROP
-	 * ACCESS METHOD.
-	 */
-	myself.classId = OperatorFamilyRelationId;
-	myself.objectId = opfamilyoid;
-	myself.objectSubId = 0;
-
-	/* dependency on namespace */
-	referenced.classId = NamespaceRelationId;
-	referenced.objectId = namespaceoid;
-	referenced.objectSubId = 0;
-	recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
-
-	/* dependency on owner */
-	recordDependencyOnOwner(OperatorFamilyRelationId, opfamilyoid, GetUserId());
-
-	heap_close(rel, RowExclusiveLock);
+	/* Insert pg_opfamily catalog entry */
+	(void) CreateOpFamily(stmt->amname, opfname, namespaceoid, amoid);
 }
 
 
