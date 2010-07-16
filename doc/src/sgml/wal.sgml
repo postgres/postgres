@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/wal.sgml,v 1.68.2.1 2010/07/16 11:21:46 heikki Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/wal.sgml,v 1.68.2.2 2010/07/16 11:36:10 heikki Exp $ -->
 
 <chapter id="wal">
  <title>Reliability and the Write-Ahead Log</title>
@@ -471,7 +471,7 @@
    directory. A restartpoint is triggered if at least one checkpoint record
    has been replayed and <varname>checkpoint_timeout</> seconds have passed
    since last restartpoint. In standby mode, a restartpoint is also triggered
-   if <varname>checkoint_segments</> log segments have been replayed since
+   if <varname>checkpoint_segments</> log segments have been replayed since
    last restartpoint and at least one checkpoint record has been replayed.
    Restartpoints can't be performed more frequently than checkpoints in the
    master because restartpoints can only be performed at checkpoint records.
