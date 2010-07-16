@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.561 2010/07/06 22:55:26 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.562 2010/07/16 22:25:50 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -174,6 +174,8 @@ static bool assign_autovacuum_max_workers(int newval, bool doit, GucSource sourc
 static bool assign_effective_io_concurrency(int newval, bool doit, GucSource source);
 static const char *assign_pgstat_temp_directory(const char *newval, bool doit, GucSource source);
 static const char *assign_application_name(const char *newval, bool doit, GucSource source);
+static const char *show_unix_socket_permissions(void);
+static const char *show_log_file_mode(void);
 
 static char *config_enum_get_options(struct config_enum * record,
 						const char *prefix, const char *suffix,
@@ -1454,13 +1456,27 @@ static struct config_int ConfigureNamesInt[] =
 		{"unix_socket_permissions", PGC_POSTMASTER, CONN_AUTH_SETTINGS,
 			gettext_noop("Sets the access permissions of the Unix-domain socket."),
 			gettext_noop("Unix-domain sockets use the usual Unix file system "
-						 "permission set. The parameter value is expected to be a numeric mode "
-						 "specification in the form accepted by the chmod and umask system "
-						 "calls. (To use the customary octal format the number must start with "
-						 "a 0 (zero).)")
+						 "permission set. The parameter value is expected "
+						 "to be a numeric mode specification in the form "
+						 "accepted by the chmod and umask system calls. "
+						 "(To use the customary octal format the number must "
+						 "start with a 0 (zero).)")
 		},
 		&Unix_socket_permissions,
-		0777, 0000, 0777, NULL, NULL
+		0777, 0000, 0777, NULL, show_unix_socket_permissions
+	},
+
+	{
+		{"log_file_mode", PGC_SIGHUP, LOGGING_WHERE,
+			gettext_noop("Sets the file permissions for log files."),
+			gettext_noop("The parameter value is expected "
+						 "to be a numeric mode specification in the form "
+						 "accepted by the chmod and umask system calls. "
+						 "(To use the customary octal format the number must "
+						 "start with a 0 (zero).)")
+		},
+		&Log_file_mode,
+		0600, 0000, 0777, NULL, show_log_file_mode
 	},
 
 	{
@@ -8082,6 +8098,24 @@ assign_application_name(const char *newval, bool doit, GucSource source)
 	}
 	else
 		return newval;
+}
+
+static const char *
+show_unix_socket_permissions(void)
+{
+	static char buf[8];
+
+	snprintf(buf, sizeof(buf), "%04o", Unix_socket_permissions);
+	return buf;
+}
+
+static const char *
+show_log_file_mode(void)
+{
+	static char buf[8];
+
+	snprintf(buf, sizeof(buf), "%04o", Log_file_mode);
+	return buf;
 }
 
 #include "guc-file.c"
