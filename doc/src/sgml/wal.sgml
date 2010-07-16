@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/wal.sgml,v 1.68 2010/07/08 16:44:12 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/wal.sgml,v 1.68.2.1 2010/07/16 11:21:46 heikki Exp $ -->
 
 <chapter id="wal">
  <title>Reliability and the Write-Ahead Log</title>
@@ -449,6 +449,7 @@
   <para>
    There will always be at least one WAL segment file, and will normally
    not be more than (2 + <varname>checkpoint_completion_target</varname>) * <varname>checkpoint_segments</varname> + 1
+   or <varname>checkpoint_segments</> + <xref linkend="guc-wal-keep-segments"> + 1
    files.  Each segment file is normally 16 MB (though this size can be
    altered when building the server).  You can use this to estimate space
    requirements for <acronym>WAL</acronym>.
@@ -458,6 +459,22 @@
    are more than 3 * <varname>checkpoint_segments</varname> + 1
    segment files, the unneeded segment files will be deleted instead
    of recycled until the system gets back under this limit.
+  </para>
+
+  <para>
+   In archive recovery or standby mode, the server periodically performs
+   <firstterm>restartpoints</><indexterm><primary>restartpoint</></>
+   which are similar to checkpoints in normal operation: the server forces
+   all its state to disk, updates the <filename>pg_control</> file to
+   indicate that the already-processed WAL data need not be scanned again,
+   and then recycles any old log segment files in <filename>pg_xlog</>
+   directory. A restartpoint is triggered if at least one checkpoint record
+   has been replayed and <varname>checkpoint_timeout</> seconds have passed
+   since last restartpoint. In standby mode, a restartpoint is also triggered
+   if <varname>checkoint_segments</> log segments have been replayed since
+   last restartpoint and at least one checkpoint record has been replayed.
+   Restartpoints can't be performed more frequently than checkpoints in the
+   master because restartpoints can only be performed at checkpoint records.
   </para>
 
   <para>
