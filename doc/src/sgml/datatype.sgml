@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.250 2010/07/03 04:03:06 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.251 2010/07/16 02:15:53 tgl Exp $ -->
 
  <chapter id="datatype">
   <title>Data Types</title>
@@ -839,32 +839,11 @@ ALTER SEQUENCE <replaceable class="parameter">tablename</replaceable>_<replaceab
     fractional precision; see <xref
     linkend="datatype-money-table">.  The fractional precision is
     determined by the database's <xref linkend="guc-lc-monetary"> setting.
+    The range shown in the table assumes there are two fractional digits.
     Input is accepted in a variety of formats, including integer and
     floating-point literals, as well as typical
     currency formatting, such as <literal>'$1,000.00'</literal>.
     Output is generally in the latter form but depends on the locale.
-    Non-quoted numeric values can be converted to <type>money</type> by
-    casting the numeric value to <type>text</type> and then
-    <type>money</type>, for example:
-<programlisting>
-SELECT 1234::text::money;
-</programlisting>
-    There is no simple way of doing the reverse in a locale-independent
-    manner, namely casting a <type>money</type> value to a numeric type.
-    If you know the currency symbol and thousands separator you can use
-    <function>regexp_replace()</>:
-<programlisting>
-SELECT regexp_replace('52093.89'::money::text, '[$,]', '', 'g')::numeric;
-</programlisting>
-
-   </para>
-
-   <para>
-    Since the output of this data type is locale-sensitive, it might not
-    work to load <type>money</> data into a database that has a different
-    setting of <varname>lc_monetary</>.  To avoid problems, before
-    restoring a dump into a new database make sure <varname>lc_monetary</> has the same or
-    equivalent value as in the database that was dumped.
    </para>
 
     <table id="datatype-money-table">
@@ -888,6 +867,35 @@ SELECT regexp_replace('52093.89'::money::text, '[$,]', '', 'g')::numeric;
       </tbody>
      </tgroup>
     </table>
+
+   <para>
+    Since the output of this data type is locale-sensitive, it might not
+    work to load <type>money</> data into a database that has a different
+    setting of <varname>lc_monetary</>.  To avoid problems, before
+    restoring a dump into a new database make sure <varname>lc_monetary</> has
+    the same or equivalent value as in the database that was dumped.
+   </para>
+
+   <para>
+    Values of the <type>numeric</type> data type can be cast to
+    <type>money</type>.  Other numeric types can be converted to
+    <type>money</type> by casting to <type>numeric</type> first, for example:
+<programlisting>
+SELECT 1234::numeric::money;
+</programlisting>
+    A <type>money</type> value can be cast to <type>numeric</type> without
+    loss of precision. Conversion to other types could potentially lose
+    precision, and it must be done in two stages, for example:
+<programlisting>
+SELECT '52093.89'::money::numeric::float8;
+</programlisting>
+   </para>
+
+   <para>
+    When a <type>money</type> value is divided by another <type>money</type>
+    value, the result is <type>double precision</type> (i.e., a pure number,
+    not money); the currency units cancel each other out in the division.
+   </para>
   </sect1>
 
 

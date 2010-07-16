@@ -10,7 +10,7 @@
  *
  * Copyright (c) 2002-2010, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_cast.h,v 1.44 2010/01/05 01:06:56 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_cast.h,v 1.45 2010/07/16 02:15:54 tgl Exp $
  *
  * NOTES
  *	  the genbki.pl script reads this file and generates .bki
@@ -124,6 +124,8 @@ DATA(insert ( 1700	 21 1783 a f ));
 DATA(insert ( 1700	 23 1744 a f ));
 DATA(insert ( 1700	700 1745 i f ));
 DATA(insert ( 1700	701 1746 i f ));
+DATA(insert (  790 1700 3823 a f ));
+DATA(insert ( 1700	790 3824 a f ));
 
 /* Allow explicit coercions between int4 and bool */
 DATA(insert (	23	16	2557 e f ));

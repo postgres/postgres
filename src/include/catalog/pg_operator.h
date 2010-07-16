@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_operator.h,v 1.170 2010/01/14 16:31:09 teodor Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_operator.h,v 1.171 2010/07/16 02:15:54 tgl Exp $
  *
  * NOTES
  *	  the genbki.pl script reads this file and generates .bki
@@ -415,6 +415,7 @@ DATA(insert OID = 915 (  "/"	   PGNSP PGUID b f f	790  21		790   0   0 cash_div_
 DATA(insert OID = 916 (  "*"	   PGNSP PGUID b f f	701  790	790 908   0 flt8_mul_cash - - ));
 DATA(insert OID = 917 (  "*"	   PGNSP PGUID b f f	23	790		790 912   0 int4_mul_cash - - ));
 DATA(insert OID = 918 (  "*"	   PGNSP PGUID b f f	21	790		790 914   0 int2_mul_cash - - ));
+DATA(insert OID = 3825 ( "/"	   PGNSP PGUID b f f	790	790		701   0   0 cash_div_cash - - ));
 
 DATA(insert OID = 965 (  "^"	   PGNSP PGUID b f f	701  701	701 0 0 dpow - - ));
 DATA(insert OID = 966 (  "+"	   PGNSP PGUID b f f 1034 1033 1034 0 0 aclinsert - - ));

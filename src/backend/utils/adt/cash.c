@@ -13,7 +13,7 @@
  * this version handles 64 bit numbers and so can hold values up to
  * $92,233,720,368,547,758.07.
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/cash.c,v 1.82 2009/06/11 14:49:03 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/cash.c,v 1.83 2010/07/16 02:15:53 tgl Exp $
  */
 
 #include "postgres.h"
@@ -26,6 +26,7 @@
 #include "libpq/pqformat.h"
 #include "utils/builtins.h"
 #include "utils/cash.h"
+#include "utils/numeric.h"
 #include "utils/pg_locale.h"
 
 #define CASH_BUFSZ		36
@@ -114,7 +115,6 @@ cash_in(PG_FUNCTION_ARGS)
 				psymbol;
 	const char *nsymbol,
 			   *csymbol;
-
 	struct lconv *lconvert = PGLC_localeconv();
 
 	/*
@@ -263,7 +263,6 @@ cash_out(PG_FUNCTION_ARGS)
 			   *nsymbol;
 	char		dsymbol;
 	char		convention;
-
 	struct lconv *lconvert = PGLC_localeconv();
 
 	/* see comments about frac_digits in cash_in() */
@@ -475,6 +474,26 @@ cash_mi(PG_FUNCTION_ARGS)
 	result = c1 - c2;
 
 	PG_RETURN_CASH(result);
+}
+
+
+/* cash_div_cash()
+ * Divide cash by cash, returning float8.
+ */
+Datum
+cash_div_cash(PG_FUNCTION_ARGS)
+{
+	Cash		dividend = PG_GETARG_CASH(0);
+	Cash		divisor = PG_GETARG_CASH(1);
+	float8		quotient;
+
+	if (divisor == 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_DIVISION_BY_ZERO),
+				 errmsg("division by zero")));
+
+	quotient = (float8) dividend / (float8) divisor;
+	PG_RETURN_FLOAT8(quotient);
 }
 
 
@@ -844,4 +863,78 @@ cash_words(PG_FUNCTION_ARGS)
 
 	/* return as text datum */
 	PG_RETURN_TEXT_P(cstring_to_text(buf));
+}
+
+
+/* cash_numeric()
+ * Convert cash to numeric.
+ */
+Datum
+cash_numeric(PG_FUNCTION_ARGS)
+{
+	Cash		money = PG_GETARG_CASH(0);
+	Numeric		result;
+	int			fpoint;
+	int64		scale;
+	int			i;
+	Datum		amount;
+	Datum		numeric_scale;
+	Datum		quotient;
+	struct lconv *lconvert = PGLC_localeconv();
+
+	/* see comments about frac_digits in cash_in() */
+	fpoint = lconvert->frac_digits;
+	if (fpoint < 0 || fpoint > 10)
+		fpoint = 2;
+
+	/* compute required scale factor */
+	scale = 1;
+	for (i = 0; i < fpoint; i++)
+		scale *= 10;
+
+	/* form the result as money / scale */
+	amount = DirectFunctionCall1(int8_numeric, Int64GetDatum(money));
+	numeric_scale = DirectFunctionCall1(int8_numeric, Int64GetDatum(scale));
+	quotient = DirectFunctionCall2(numeric_div, amount, numeric_scale);
+
+	/* forcibly round to exactly the intended number of digits */
+	result = DatumGetNumeric(DirectFunctionCall2(numeric_round,
+												 quotient,
+												 Int32GetDatum(fpoint)));
+
+	PG_RETURN_NUMERIC(result);
+}
+
+/* numeric_cash()
+ * Convert numeric to cash.
+ */
+Datum
+numeric_cash(PG_FUNCTION_ARGS)
+{
+	Datum		amount = PG_GETARG_DATUM(0);
+	Cash		result;
+	int			fpoint;
+	int64		scale;
+	int			i;
+	Datum		numeric_scale;
+	struct lconv *lconvert = PGLC_localeconv();
+
+	/* see comments about frac_digits in cash_in() */
+	fpoint = lconvert->frac_digits;
+	if (fpoint < 0 || fpoint > 10)
+		fpoint = 2;
+
+	/* compute required scale factor */
+	scale = 1;
+	for (i = 0; i < fpoint; i++)
+		scale *= 10;
+
+	/* multiply the input amount by scale factor */
+	numeric_scale = DirectFunctionCall1(int8_numeric, Int64GetDatum(scale));
+	amount = DirectFunctionCall2(numeric_mul, amount, numeric_scale);
+
+	/* note that numeric_int8 will round to nearest integer for us */
+	result = DatumGetInt64(DirectFunctionCall1(numeric_int8, amount));
+
+	PG_RETURN_CASH(result);
 }

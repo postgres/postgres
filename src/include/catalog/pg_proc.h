@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.571 2010/05/27 16:20:11 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.572 2010/07/16 02:15:54 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.pl reads this file and generates .bki
@@ -1165,9 +1165,9 @@ DESCR("multiply");
 DATA(insert OID =  867 (  cash_div_int2		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 790 "790 21" _null_ _null_ _null_ _null_ cash_div_int2 _null_ _null_ _null_ ));
 DESCR("divide");
 
-DATA(insert OID =  886 (  cash_in		   PGNSP PGUID 12 1 0 0 f f f t f i 1 0 790 "2275" _null_ _null_ _null_ _null_	cash_in _null_ _null_ _null_ ));
+DATA(insert OID =  886 (  cash_in		   PGNSP PGUID 12 1 0 0 f f f t f s 1 0 790 "2275" _null_ _null_ _null_ _null_	cash_in _null_ _null_ _null_ ));
 DESCR("I/O");
-DATA(insert OID =  887 (  cash_out		   PGNSP PGUID 12 1 0 0 f f f t f i 1 0 2275 "790" _null_ _null_ _null_ _null_	cash_out _null_ _null_ _null_ ));
+DATA(insert OID =  887 (  cash_out		   PGNSP PGUID 12 1 0 0 f f f t f s 1 0 2275 "790" _null_ _null_ _null_ _null_	cash_out _null_ _null_ _null_ ));
 DESCR("I/O");
 DATA(insert OID =  888 (  cash_eq		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "790 790" _null_ _null_ _null_ _null_	cash_eq _null_ _null_ _null_ ));
 DESCR("equal");
@@ -1197,6 +1197,12 @@ DATA(insert OID =  919 (  flt8_mul_cash    PGNSP PGUID 12 1 0 0 f f f t f i 2 0 
 DESCR("multiply");
 DATA(insert OID =  935 (  cash_words	   PGNSP PGUID 12 1 0 0 f f f t f i 1 0 25 "790" _null_ _null_ _null_ _null_	cash_words _null_ _null_ _null_ ));
 DESCR("output amount as words");
+DATA(insert OID = 3822 (  cash_div_cash    PGNSP PGUID 12 1 0 0 f f f t f i 2 0 701 "790 790" _null_ _null_ _null_ _null_	cash_div_cash _null_ _null_ _null_ ));
+DESCR("divide");
+DATA(insert OID = 3823 (  numeric		   PGNSP PGUID 12 1 0 0 f f f t f s 1 0 1700 "790" _null_ _null_ _null_ _null_	cash_numeric _null_ _null_ _null_ ));
+DESCR("(internal)");
+DATA(insert OID = 3824 (  money			   PGNSP PGUID 12 1 0 0 f f f t f s 1 0 790 "1700" _null_ _null_ _null_ _null_	numeric_cash _null_ _null_ _null_ ));
+DESCR("(internal)");
 
 /* OIDS 900 - 999 */
 
