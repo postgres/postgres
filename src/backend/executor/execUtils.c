@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execUtils.c,v 1.173 2010/07/06 19:18:56 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execUtils.c,v 1.174 2010/07/16 00:45:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1309,16 +1309,12 @@ retry:
 	index_endscan(index_scan);
 
 	/*
-	 * We should have found our tuple in the index, unless we exited the loop
-	 * early because of conflict.  Complain if not.  If we ever implement '<>'
-	 * index opclasses, this check will fail and will have to be removed.
+	 * Ordinarily, at this point the search should have found the originally
+	 * inserted tuple, unless we exited the loop early because of conflict.
+	 * However, it is possible to define exclusion constraints for which
+	 * that wouldn't be true --- for instance, if the operator is <>.
+	 * So we no longer complain if found_self is still false.
 	 */
-	if (!found_self && !conflict)
-		ereport(ERROR,
-				(errcode(ERRCODE_INTERNAL_ERROR),
-				 errmsg("failed to re-find tuple within index \"%s\"",
-						RelationGetRelationName(index)),
-		errhint("This may be because of a non-immutable index expression.")));
 
 	econtext->ecxt_scantuple = save_scantuple;
 
