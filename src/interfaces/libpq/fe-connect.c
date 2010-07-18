@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.401 2010/07/18 16:42:20 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.402 2010/07/18 17:08:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1751,15 +1751,15 @@ keep_going:						/* We will come back to here until there is
 				char	   *startpacket;
 				int			packetlen;
 
-#ifdef HAVE_UNIX_SOCKETS
-				if (conn->requirepeer)
+				if (conn->requirepeer && conn->requirepeer[0])
 				{
+#if defined(HAVE_GETPEEREID) || defined(SO_PEERCRED) || defined(HAVE_GETPEERUCRED)
 					char		pwdbuf[BUFSIZ];
 					struct passwd pass_buf;
 					struct passwd *pass;
 					uid_t		uid;
 
-# if defined(HAVE_GETPEEREID)
+#if defined(HAVE_GETPEEREID)
 					gid_t		gid;
 
 					errno = 0;
@@ -1770,12 +1770,13 @@ keep_going:						/* We will come back to here until there is
 										  pqStrerror(errno, sebuf, sizeof(sebuf)));
 						goto error_return;
 					}
-# elif defined(SO_PEERCRED)
+#elif defined(SO_PEERCRED)
 					struct ucred peercred;
 					ACCEPT_TYPE_ARG3 so_len = sizeof(peercred);
 
 					errno = 0;
-					if (getsockopt(conn->sock, SOL_SOCKET, SO_PEERCRED, &peercred, &so_len) != 0 ||
+					if (getsockopt(conn->sock, SOL_SOCKET, SO_PEERCRED,
+								   &peercred, &so_len) != 0 ||
 						so_len != sizeof(peercred))
 					{
 						appendPQExpBuffer(&conn->errorMessage,
@@ -1784,10 +1785,10 @@ keep_going:						/* We will come back to here until there is
 						goto error_return;
 					}
 					uid = peercred.uid;
-# elif defined(HAVE_GETPEERUCRED)
+#elif defined(HAVE_GETPEERUCRED)
 					ucred_t    *ucred;
 
-					ucred = NULL;				/* must be initialized to NULL */
+					ucred = NULL;			/* must be initialized to NULL */
 					if (getpeerucred(sock, &ucred) == -1)
 					{
 						appendPQExpBuffer(&conn->errorMessage,
@@ -1805,35 +1806,33 @@ keep_going:						/* We will come back to here until there is
 						goto error_return;
 					}
 					ucred_free(ucred);
-# else
-					appendPQExpBuffer(&conn->errorMessage,
-									  libpq_gettext("requirepeer parameter is not supported on this platform\n"));
-					goto error_return;
-# endif
+#else
+#error missing implementation method for requirepeer
+#endif
 
 					pqGetpwuid(uid, &pass_buf, pwdbuf, sizeof(pwdbuf), &pass);
 
 					if (pass == NULL)
 					{
 						appendPQExpBuffer(&conn->errorMessage,
-# if defined(SO_PEERCRED)
 										  libpq_gettext("local user with ID %d does not exist\n"),
-														(int) peercred.uid);
-#else
-										  libpq_gettext("matching local user does not exist\n"));
-#endif
+										  (int) uid);
 						goto error_return;
 					}
 
 					if (strcmp(pass->pw_name, conn->requirepeer) != 0)
 					{
 						appendPQExpBuffer(&conn->errorMessage,
-										  libpq_gettext("requirepeer failed (actual: %s != required: %s)\n"),
-														pass->pw_name, conn->requirepeer);
+										  libpq_gettext("requirepeer specifies \"%s\", but actual peer user name is \"%s\"\n"),
+										  conn->requirepeer, pass->pw_name);
 						goto error_return;
 					}
+#else  /* can't support requirepeer */
+					appendPQExpBuffer(&conn->errorMessage,
+									  libpq_gettext("requirepeer parameter is not supported on this platform\n"));
+					goto error_return;
+#endif
 				}
-#endif /* HAVE_UNIX_SOCKETS */
 
 #ifdef USE_SSL
 
