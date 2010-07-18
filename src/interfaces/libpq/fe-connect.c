@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.398 2010/07/08 16:19:50 mha Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.399 2010/07/18 11:37:26 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -228,6 +228,9 @@ static const PQconninfoOption PQconninfoOptions[] = {
 
 	{"sslcrl", "PGSSLCRL", NULL, NULL,
 	"SSL-Revocation-List", "", 64},
+
+	{"requirepeer", "PGREQUIREPEER", NULL, NULL,
+	"Require-Peer", "", 10},
 
 #if defined(KRB5) || defined(ENABLE_GSS) || defined(ENABLE_SSPI)
 	/* Kerberos and GSSAPI authentication support specifying the service name */
@@ -595,6 +598,8 @@ fillPGconn(PGconn *conn, PQconninfoOption *connOptions)
 		conn->sslmode = strdup("require");
 	}
 #endif
+	tmp = conninfo_getval(connOptions, "requirepeer");
+	conn->requirepeer = tmp ? strdup(tmp) : NULL;
 #if defined(KRB5) || defined(ENABLE_GSS) || defined(ENABLE_SSPI)
 	tmp = conninfo_getval(connOptions, "krbsrvname");
 	conn->krbsrvname = tmp ? strdup(tmp) : NULL;
@@ -1746,6 +1751,86 @@ keep_going:						/* We will come back to here until there is
 				char	   *startpacket;
 				int			packetlen;
 
+#ifdef HAVE_UNIX_SOCKETS
+				if (conn->requirepeer)
+				{
+					char		pwdbuf[BUFSIZ];
+					struct passwd pass_buf;
+					struct passwd *pass;
+					uid_t		uid;
+
+# if defined(HAVE_GETPEEREID)
+					gid_t		gid;
+
+					errno = 0;
+					if (getpeereid(sock, &uid, &gid) != 0)
+					{
+						appendPQExpBuffer(&conn->errorMessage,
+										  libpq_gettext("could not get peer credentials: %s\n"),
+										  pqStrerror(errno, sebuf, sizeof(sebuf)));
+						goto error_return;
+					}
+# elif defined(SO_PEERCRED)
+					struct ucred peercred;
+					ACCEPT_TYPE_ARG3 so_len = sizeof(peercred);
+
+					errno = 0;
+					if (getsockopt(conn->sock, SOL_SOCKET, SO_PEERCRED, &peercred, &so_len) != 0 ||
+						so_len != sizeof(peercred))
+					{
+						appendPQExpBuffer(&conn->errorMessage,
+										  libpq_gettext("could not get peer credentials: %s\n"),
+										  pqStrerror(errno, sebuf, sizeof(sebuf)));
+						goto error_return;
+					}
+					uid = peercred.uid;
+# elif defined(HAVE_GETPEERUCRED)
+					ucred_t    *ucred;
+
+					ucred = NULL;				/* must be initialized to NULL */
+					if (getpeerucred(sock, &ucred) == -1)
+					{
+						appendPQExpBuffer(&conn->errorMessage,
+										  libpq_gettext("could not get peer credentials: %s\n"),
+										  pqStrerror(errno, sebuf, sizeof(sebuf)));
+						goto error_return;
+					}
+
+					if ((uid = ucred_geteuid(ucred)) == -1)
+					{
+						appendPQExpBuffer(&conn->errorMessage,
+										  libpq_gettext("could not get effective UID from peer credentials: %s\n"),
+										  pqStrerror(errno, sebuf, sizeof(sebuf)));
+						ucred_free(ucred);
+						goto error_return;
+					}
+					ucred_free(ucred);
+# else
+					appendPQExpBuffer(&conn->errorMessage,
+									  libpq_gettext("requirepeer parameter is not supported on this platform\n"));
+					goto error_return;
+# endif
+
+					pqGetpwuid(uid, &pass_buf, pwdbuf, sizeof(pwdbuf), &pass);
+
+					if (pass == NULL)
+					{
+						appendPQExpBuffer(&conn->errorMessage,
+										  libpq_gettext("local user with ID %d does not exist\n"),
+														(int) peercred.uid);
+						goto error_return;
+					}
+
+					if (strcmp(pass->pw_name, conn->requirepeer) != 0)
+					{
+						appendPQExpBuffer(&conn->errorMessage,
+										  libpq_gettext("requirepeer failed (actual: %s != required: %s)\n"),
+														pass->pw_name, conn->requirepeer);
+						goto error_return;
+					}
+				}
+#endif /* HAVE_UNIX_SOCKETS */
+
 #ifdef USE_SSL
 
 				/*
@@ -2553,6 +2638,8 @@ freePGconn(PGconn *conn)
 		free(conn->sslrootcert);
 	if (conn->sslcrl)
 		free(conn->sslcrl);
+	if (conn->requirepeer)
+		free(conn->requirepeer);
 #if defined(KRB5) || defined(ENABLE_GSS) || defined(ENABLE_SSPI)
 	if (conn->krbsrvname)
 		free(conn->krbsrvname);

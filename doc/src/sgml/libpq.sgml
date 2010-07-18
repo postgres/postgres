@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.314 2010/07/14 17:09:45 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.315 2010/07/18 11:37:25 petere Exp $ -->
 
 <chapter id="libpq">
  <title><application>libpq</application> - C Library</title>
@@ -505,6 +505,28 @@
            exists, will be rejected while attempting to authenticate the
            server's certificate.  The default is
            <filename>~/.postgresql/root.crl</>.
+          </para>
+         </listitem>
+        </varlistentry>
+
+        <varlistentry id="libpq-connect-requirepeer" xreflabel="requirepeer">
+         <term><literal>requirepeer</literal></term>
+         <listitem>
+          <para>
+           For Unix-domain socket connections, if this parameter is
+           set, the client checks at the beginning of the connection
+           that the server process runs under the specified user name,
+           otherwise the connection is aborted with an error.  This
+           parameter can be used to achieve the kind of server
+           authentication that SSL certificates achieve on TCP/IP
+           connections.  (Note that if the Unix-domain socket is
+           in <filename>/tmp</filename> or another publically writable
+           location, any user could start a server there.  Use this
+           parameter to ensure that you are connected to a server run
+           by a trusted user,
+           e.g., <literal>requirepeer=postgres</literal>.)  This
+           option is only supported on some platforms, currently
+           Linux, FreeBSD, NetBSD, OpenBSD, and Solaris.
           </para>
          </listitem>
         </varlistentry>
@@ -6136,6 +6158,16 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
       </indexterm>
       <envar>PGSSLCRL</envar>  behaves the same as the <xref
       linkend="libpq-connect-sslcrl"> connection parameter.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      <indexterm>
+       <primary><envar>PGREQUIREPEER</envar></primary>
+      </indexterm>
+      <envar>PGREQUIREPEER</envar> behaves the same as the <xref
+      linkend="libpq-connect-requirepeer"> connection parameter.
      </para>
     </listitem>
 
