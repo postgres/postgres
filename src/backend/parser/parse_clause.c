@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_clause.c,v 1.198 2010/02/26 02:00:50 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_clause.c,v 1.198.4.1 2010/07/18 19:37:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,6 +21,7 @@
 #include "commands/defrem.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
+#include "optimizer/clauses.h"
 #include "optimizer/tlist.h"
 #include "optimizer/var.h"
 #include "parser/analyze.h"
@@ -1430,8 +1431,20 @@ findTargetlistEntrySQL99(ParseState *pstate, Node *node, List **tlist)
 	foreach(tl, *tlist)
 	{
 		TargetEntry *tle = (TargetEntry *) lfirst(tl);
+		Node	   *texpr;
 
-		if (equal(expr, tle->expr))
+		/*
+		 * Ignore any implicit cast on the existing tlist expression.
+		 *
+		 * This essentially allows the ORDER/GROUP/etc item to adopt the same
+		 * datatype previously selected for a textually-equivalent tlist item.
+		 * There can't be any implicit cast at top level in an ordinary SELECT
+		 * tlist at this stage, but the case does arise with ORDER BY in an
+		 * aggregate function.
+		 */
+		texpr = strip_implicit_coercions((Node *) tle->expr);
+
+		if (equal(expr, texpr))
 			return tle;
 	}
 
