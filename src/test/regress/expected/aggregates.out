@@ -830,3 +830,24 @@ select string_agg(a,',') from (values(null),(null)) g(a);
  
 (1 row)
 
+-- check some implicit casting cases, as per bug #5564
+select string_agg(distinct f1 order by f1) from varchar_tbl;  -- ok
+ string_agg 
+------------
+ aababcd
+(1 row)
+
+select string_agg(distinct f1::text order by f1) from varchar_tbl;  -- not ok
+ERROR:  in an aggregate with DISTINCT, ORDER BY expressions must appear in argument list
+LINE 1: select string_agg(distinct f1::text order by f1) from varcha...
+                                                     ^
+select string_agg(distinct f1 order by f1::text) from varchar_tbl;  -- not ok
+ERROR:  in an aggregate with DISTINCT, ORDER BY expressions must appear in argument list
+LINE 1: select string_agg(distinct f1 order by f1::text) from varcha...
+                                               ^
+select string_agg(distinct f1::text order by f1::text) from varchar_tbl;  -- ok
+ string_agg 
+------------
+ aababcd
+(1 row)
+
