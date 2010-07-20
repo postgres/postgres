@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.200 2010/07/06 19:19:00 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.201 2010/07/20 03:54:19 rhaas Exp $
  */
 
 /*----------------------------------------------------------------------
@@ -636,7 +636,7 @@ psql_completion(char *text, int start, int end)
 	};
 
 	static const char *const backslash_commands[] = {
-		"\\a", "\\connect", "\\C", "\\cd", "\\copy", "\\copyright",
+		"\\a", "\\connect", "\\conninfo", "\\C", "\\cd", "\\copy", "\\copyright",
 		"\\d", "\\da", "\\db", "\\dc", "\\dC", "\\dd", "\\dD", "\\des", "\\deu", "\\dew", "\\df",
 		"\\dF", "\\dFd", "\\dFp", "\\dFt", "\\dg", "\\di", "\\dl",
 		"\\dn", "\\do", "\\dp", "\\drds", "\\ds", "\\dS", "\\dt", "\\dT", "\\dv", "\\du",

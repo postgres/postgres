@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/help.c,v 1.159 2010/05/26 19:29:22 rhaas Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/help.c,v 1.160 2010/07/20 03:54:19 rhaas Exp $
  */
 #include "postgres_fe.h"
 
@@ -162,7 +162,7 @@ slashUsage(unsigned short int pager)
 {
 	FILE	   *output;
 
-	output = PageOutput(86, pager);
+	output = PageOutput(87, pager);
 
 	/* if you add/remove a line here, change the row count above */
 
@@ -249,6 +249,7 @@ slashUsage(unsigned short int pager)
 			PQdb(pset.db));
 	fprintf(output, _("  \\encoding [ENCODING]   show or set client encoding\n"));
 	fprintf(output, _("  \\password [USERNAME]   securely change the password for a user\n"));
+	fprintf(output, _("  \\conninfo              display information about current connection\n"));
 	fprintf(output, "\n");
 
 	fprintf(output, _("Operating System\n"));

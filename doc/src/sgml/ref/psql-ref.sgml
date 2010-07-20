@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.245 2010/07/10 00:50:24 rhaas Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.246 2010/07/20 03:54:19 rhaas Exp $
 PostgreSQL documentation
 -->
 
@@ -776,6 +776,16 @@ testdb=&gt;
         a user convenience against typos on the one hand, and a safety
         mechanism that scripts are not accidentally acting on the
         wrong database on the other hand.
+        </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><literal>\conninfo</literal></term>
+        <listitem>
+        <para>
+        Outputs connection information about the current database
+        connection.
         </para>
         </listitem>
       </varlistentry>

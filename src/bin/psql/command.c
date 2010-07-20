@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.221 2010/07/06 19:18:59 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.222 2010/07/20 03:54:19 rhaas Exp $
  */
 #include "postgres_fe.h"
 #include "command.h"
@@ -292,6 +292,22 @@ exec_command(const char *cmd,
 
 		if (opt)
 			free(opt);
+	}
+
+	/* \conninfo -- display information about the current connection	*/
+	else if (strcmp(cmd, "conninfo") == 0)
+	{
+		char	   *db = PQdb(pset.db);
+		char	   *host = PQhost(pset.db);
+
+		if (!db)
+			printf("You are not connected.\n");
+		else if (host)
+			printf("You are connected to database \"%s\" on host \"%s\" at port \"%s\" as user \"%s\".\n",
+				   db, host, PQport(pset.db), PQuser(pset.db));
+		else
+			printf("You are connected to database \"%s\" via local socket as user \"%s\".\n",
+				   db, PQuser(pset.db));
 	}
 
 	/* \copy */
