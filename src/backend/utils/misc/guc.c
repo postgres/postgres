@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.563 2010/07/20 00:34:44 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.564 2010/07/20 00:47:53 rhaas Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -550,6 +550,8 @@ const char *const config_group_names[] =
 	gettext_noop("Version and Platform Compatibility / Previous PostgreSQL Versions"),
 	/* COMPAT_OPTIONS_CLIENT */
 	gettext_noop("Version and Platform Compatibility / Other Platforms and Clients"),
+	/* ERROR_HANDLING */
+	gettext_noop("Error Handling"),
 	/* PRESET_OPTIONS */
 	gettext_noop("Preset Options"),
 	/* CUSTOM_OPTIONS */
@@ -813,16 +815,24 @@ static struct config_bool ConfigureNamesBool[] =
 #endif
 		assign_debug_assertions, NULL
 	},
+
 	{
-		/* currently undocumented, so don't show in SHOW ALL */
-		{"exit_on_error", PGC_USERSET, UNGROUPED,
-			gettext_noop("No description available."),
-			NULL,
-			GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE
+		{"exit_on_error", PGC_USERSET, ERROR_HANDLING_OPTIONS,
+			gettext_noop("Terminate session on any error."),
+			NULL
 		},
 		&ExitOnAnyError,
 		false, NULL, NULL
 	},
+	{
+		{"restart_after_crash", PGC_SIGHUP, ERROR_HANDLING_OPTIONS,
+			gettext_noop("Reinitialize after backend crash."),
+			NULL
+		},
+		&restart_after_crash,
+		true, NULL, NULL
+	},
+
 	{
 		{"log_duration", PGC_SUSET, LOGGING_WHAT,
 			gettext_noop("Logs the duration of each completed SQL statement."),

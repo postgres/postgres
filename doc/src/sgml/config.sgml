@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.297 2010/07/20 00:34:44 rhaas Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.298 2010/07/20 00:47:52 rhaas Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -5328,6 +5328,47 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
 
      </variablelist>
     </sect2>
+   </sect1>
+
+   <sect1 id="runtime-config-error-handling">
+    <title>Error Handling</title>
+
+    <variablelist>
+
+     <varlistentry id="guc-exit-on-error" xreflabel="exit_on_error">
+      <term><varname>exit_on_error</varname> (<type>boolean</type>)</term>
+      <indexterm>
+       <primary><varname>exit_on_error</> configuration parameter</primary>
+      </indexterm>
+      <listitem>
+       <para>
+        If true, any error will terminate the current session.  By default,
+        this is set to false, so that only FATAL errors will terminate the
+        session.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-restart-after-crash" xreflabel="restart_after_crash">
+      <term><varname>restart_after_crash</varname> (<type>boolean</type>)</term>
+      <indexterm>
+       <primary><varname>restart_after_crash</> configuration parameter</primary>
+      </indexterm>
+      <listitem>
+       <para>
+        When set to true, which is the default, <productname>PostgreSQL</>
+        will automatically reinitialize after a backend crash.  Leaving this
+        value set to true is normally the best way to maximize the availability
+        of the database.  However, in some circumstances, such as when
+        <productname>PostgreSQL</> is being invoked by clusterware, it may be
+        useful to disable this behavior, so that the clusterware can gain
+        control and take any actions it deems appropriate.
+       </para>
+      </listitem>
+     </varlistentry>
+
+    </variablelist>
+
    </sect1>
 
    <sect1 id="runtime-config-preset">

@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.614 2010/07/06 19:18:57 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.615 2010/07/20 00:47:52 rhaas Exp $
  *
  * NOTES
  *
@@ -203,6 +203,7 @@ bool		Db_user_namespace = false;
 
 bool		enable_bonjour = false;
 char	   *bonjour_name;
+bool		restart_after_crash = true;
 
 /* PIDs of special child processes; 0 when not running */
 static pid_t StartupPID = 0,
@@ -3048,12 +3049,13 @@ PostmasterStateMachine(void)
 	}
 
 	/*
-	 * If recovery failed, wait for all non-syslogger children to exit, and
-	 * then exit postmaster. We don't try to reinitialize when recovery fails,
-	 * because more than likely it will just fail again and we will keep
-	 * trying forever.
+	 * If recovery failed, or the user does not want an automatic restart after
+	 * backend crashes, wait for all non-syslogger children to exit, and then
+	 * exit postmaster. We don't try to reinitialize when recovery fails,
+	 * because more than likely it will just fail again and we will keep trying
+	 * forever.
 	 */
-	if (RecoveryError && pmState == PM_NO_CHILDREN)
+	if (pmState == PM_NO_CHILDREN && (RecoveryError || !restart_after_crash))
 		ExitPostmaster(1);
 
 	/*
