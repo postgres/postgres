@@ -48,10 +48,10 @@ select 'aa=>null'::hstore;
 select 'aa=>NuLl'::hstore;
 select 'aa=>"NuLl"'::hstore;
 
-select '\\=a=>q=w'::hstore;
-select '"=a"=>q\\=w'::hstore;
-select '"\\"a"=>q>w'::hstore;
-select '\\"a=>q"w'::hstore;
+select e'\\=a=>q=w'::hstore;
+select e'"=a"=>q\\=w'::hstore;
+select e'"\\"a"=>q>w'::hstore;
+select e'\\"a=>q"w'::hstore;
 
 select ''::hstore;
 select '	'::hstore;

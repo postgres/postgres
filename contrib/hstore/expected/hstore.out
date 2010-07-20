@@ -207,25 +207,25 @@ select 'aa=>"NuLl"'::hstore;
  "aa"=>"NuLl"
 (1 row)
 
-select '\\=a=>q=w'::hstore;
+select e'\\=a=>q=w'::hstore;
    hstore    
 -------------
  "=a"=>"q=w"
 (1 row)
 
-select '"=a"=>q\\=w'::hstore;
+select e'"=a"=>q\\=w'::hstore;
    hstore    
 -------------
  "=a"=>"q=w"
 (1 row)
 
-select '"\\"a"=>q>w'::hstore;
+select e'"\\"a"=>q>w'::hstore;
     hstore    
 --------------
  "\"a"=>"q>w"
 (1 row)
 
-select '\\"a=>q"w'::hstore;
+select e'\\"a=>q"w'::hstore;
     hstore     
 ---------------
  "\"a"=>"q\"w"
