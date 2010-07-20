@@ -40,7 +40,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablespace.c,v 1.76 2010/07/06 19:18:56 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablespace.c,v 1.76.2.1 2010/07/20 18:14:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -562,6 +562,25 @@ create_tablespace_directories(const char *location, const Oid tablespaceoid)
 						 location)));
 	}
 
+	if (InRecovery)
+	{
+		struct stat st;
+
+		/*
+		 * Our theory for replaying a CREATE is to forcibly drop the target
+		 * subdirectory if present, and then recreate it. This may be
+		 * more work than needed, but it is simple to implement.
+		 */
+		if (stat(location_with_version_dir, &st) == 0 && S_ISDIR(st.st_mode))
+		{
+			if (!rmtree(location_with_version_dir, true))
+				/* If this failed, mkdir() below is going to error. */
+				ereport(WARNING,
+						(errmsg("some useless files may be left behind in old database directory \"%s\"",
+								location_with_version_dir)));
+		}
+	}
+
 	/*
 	 * The creation of the version directory prevents more than one tablespace
 	 * in a single location.
@@ -580,6 +599,16 @@ create_tablespace_directories(const char *location, const Oid tablespaceoid)
 							location_with_version_dir)));
 	}
 
+	/* Remove old symlink in recovery, in case it points to the wrong place */
+	if (InRecovery)
+	{
+		if (unlink(linkloc) < 0 && errno != ENOENT)
+			ereport(ERROR,
+					(errcode_for_file_access(),
+					 errmsg("could not remove symbolic link \"%s\": %m",
+							linkloc)));
+	}
+	
 	/*
 	 * Create the symlink under PGDATA
 	 */

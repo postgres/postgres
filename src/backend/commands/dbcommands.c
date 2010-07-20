@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.235 2010/02/26 02:00:38 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.235.4.1 2010/07/20 18:14:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1908,6 +1908,7 @@ dbase_redo(XLogRecPtr lsn, XLogRecord *record)
 		if (stat(dst_path, &st) == 0 && S_ISDIR(st.st_mode))
 		{
 			if (!rmtree(dst_path, true))
+				/* If this failed, copydir() below is going to error. */
 				ereport(WARNING,
 						(errmsg("some useless files may be left behind in old database directory \"%s\"",
 								dst_path)));
