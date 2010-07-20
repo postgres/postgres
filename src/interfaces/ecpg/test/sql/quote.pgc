@@ -19,6 +19,8 @@ int main() {
 
   EXEC SQL CREATE TABLE "My_Table" ( Item1 int, Item2 text );
 
+  EXEC SQL SET standard_conforming_strings TO off;
+
   EXEC SQL SHOW standard_conforming_strings INTO :var;
   printf("Standard conforming strings: %s\n", var);
 
@@ -28,6 +30,9 @@ int main() {
   EXEC SQL INSERT INTO "My_Table" VALUES ( 1, E'a\\\\b' );
 
   EXEC SQL SET standard_conforming_strings TO on;
+
+  EXEC SQL SHOW standard_conforming_strings INTO :var;
+  printf("Standard conforming strings: %s\n", var);
 
   /* this is a\\\\b actually */
   EXEC SQL INSERT INTO "My_Table" VALUES ( 2, 'a\\\\b' );
