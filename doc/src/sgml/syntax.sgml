@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/syntax.sgml,v 1.147 2010/07/03 02:57:46 rhaas Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/syntax.sgml,v 1.148 2010/07/20 00:34:44 rhaas Exp $ -->
 
 <chapter id="sql-syntax">
  <title>SQL Syntax</title>
@@ -445,16 +445,15 @@ SELECT 'foo'      'bar';
      If the configuration parameter
      <xref linkend="guc-standard-conforming-strings"> is <literal>off</>,
      then <productname>PostgreSQL</productname> recognizes backslash escapes
-     in both regular and escape string constants.  This is for backward
-     compatibility with the historical behavior, where backslash escapes
-     were always recognized.
-     Although <varname>standard_conforming_strings</> currently defaults to
-     <literal>off</>, the default will change to <literal>on</> in a future
-     release for improved standards compliance.  Applications are therefore
-     encouraged to migrate away from using backslash escapes.  If you need
-     to use a backslash escape to represent a special character, write the
-     string constant with an <literal>E</> to be sure it will be handled the same
-     way in future releases.
+     in both regular and escape string constants.  However, as of
+     <productname>PostgreSQL</> 9.1, the default is <literal>on</>, meaning
+     that backslash escapes are recognized only in escape string constants.
+     This behavior is more standards-compliant, but might break applications
+     which rely on the historical behavior, where backslash escapes
+     were always recognized.  As a workaround, you can set this parameter
+     to <literal>off</>, but it is better to migrate away from using backslash
+     escapes.  If you need to use a backslash escape to represent a special
+     character, write the string constant with an <literal>E</>.
     </para>
 
     <para>

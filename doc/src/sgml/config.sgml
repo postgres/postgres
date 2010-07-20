@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.296 2010/07/16 22:25:47 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.297 2010/07/20 00:34:44 rhaas Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -5237,11 +5237,8 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
         This controls whether ordinary string literals
         (<literal>'...'</>) treat backslashes literally, as specified in
         the SQL standard.
-        The default is currently <literal>off</>, causing
-        <productname>PostgreSQL</productname> to have its historical
-        behavior of treating backslashes as escape characters.
-        The default will change to <literal>on</> in a future release
-        to improve compatibility with the SQL standard.
+        Beginning in <productname>PostgreSQL</productname> 9.1, the default is
+        <literal>on</> (prior releases defaulted to <literal>off</>).
         Applications can check this
         parameter to determine how string literals will be processed.
         The presence of this parameter can also be taken as an indication

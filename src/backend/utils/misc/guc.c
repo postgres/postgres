@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.562 2010/07/16 22:25:50 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.563 2010/07/20 00:34:44 rhaas Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -1211,7 +1211,7 @@ static struct config_bool ConfigureNamesBool[] =
 			GUC_REPORT
 		},
 		&standard_conforming_strings,
-		false, NULL, NULL
+		true, NULL, NULL
 	},
 
 	{
