@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.222 2010/07/20 03:54:19 rhaas Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.223 2010/07/20 14:14:30 rhaas Exp $
  */
 #include "postgres_fe.h"
 #include "command.h"
@@ -306,8 +306,8 @@ exec_command(const char *cmd,
 			printf("You are connected to database \"%s\" on host \"%s\" at port \"%s\" as user \"%s\".\n",
 				   db, host, PQport(pset.db), PQuser(pset.db));
 		else
-			printf("You are connected to database \"%s\" via local socket as user \"%s\".\n",
-				   db, PQuser(pset.db));
+			printf("You are connected to database \"%s\" via local socket at port \"%s\" as user \"%s\".\n",
+				   db, PQport(pset.db), PQuser(pset.db));
 	}
 
 	/* \copy */
