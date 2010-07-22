@@ -510,6 +510,7 @@
 #default_with_oids = off
 #escape_string_warning = on
 #lo_compat_privileges = off
+#quote_all_identifiers = off
 #sql_inheritance = on
 #standard_conforming_strings = on
 #synchronize_seqscans = on

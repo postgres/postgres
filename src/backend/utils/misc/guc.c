@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.564 2010/07/20 00:47:53 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.565 2010/07/22 01:22:33 rhaas Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -1279,6 +1279,15 @@ static struct config_bool ConfigureNamesBool[] =
 				  "for compatibility with PostgreSQL releases prior to 9.0.")
 		},
 		&lo_compat_privileges,
+		false, NULL, NULL
+	},
+
+	{
+		{"quote_all_identifiers", PGC_USERSET, COMPAT_OPTIONS_PREVIOUS,
+			gettext_noop("When generating SQL fragments, quote all identifiers."),
+			NULL,
+		},
+		&quote_all_identifiers,
 		false, NULL, NULL
 	},
 

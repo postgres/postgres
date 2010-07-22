@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.134 2010/02/26 02:01:17 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.135 2010/07/22 01:22:34 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -130,6 +130,7 @@ main(int argc, char *argv[])
 		{"inserts", no_argument, &inserts, 1},
 		{"lock-wait-timeout", required_argument, NULL, 2},
 		{"no-tablespaces", no_argument, &no_tablespaces, 1},
+		{"quote-all-identifiers", no_argument, &quote_all_identifiers, 1},
 		{"role", required_argument, NULL, 3},
 		{"use-set-session-authorization", no_argument, &use_setsessauth, 1},
 
@@ -328,6 +329,8 @@ main(int argc, char *argv[])
 		appendPQExpBuffer(pgdumpopts, " --inserts");
 	if (no_tablespaces)
 		appendPQExpBuffer(pgdumpopts, " --no-tablespaces");
+	if (quote_all_identifiers)
+		appendPQExpBuffer(pgdumpopts, " --quote-all-identifiers");
 	if (use_setsessauth)
 		appendPQExpBuffer(pgdumpopts, " --use-set-session-authorization");
 
@@ -439,6 +442,10 @@ main(int argc, char *argv[])
 		executeCommand(conn, query->data);
 		destroyPQExpBuffer(query);
 	}
+
+	/* Force quoting of all identifiers if requested. */
+	if (quote_all_identifiers && server_version >= 90000)
+		executeCommand(conn, "SET quote_all_identifiers = true");
 
 	fprintf(OPF, "--\n-- PostgreSQL database cluster dump\n--\n\n");
 	if (verbose)

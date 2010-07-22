@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/dumputils.h,v 1.29 2010/02/26 02:01:16 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/dumputils.h,v 1.30 2010/07/22 01:22:34 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,5 +45,7 @@ extern bool processSQLNamePattern(PGconn *conn, PQExpBuffer buf,
 					  bool have_where, bool force_escape,
 					  const char *schemavar, const char *namevar,
 					  const char *altnamevar, const char *visibilityrule);
+
+extern int quote_all_identifiers;
 
 #endif   /* DUMPUTILS_H */

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.328 2010/07/13 20:57:19 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.329 2010/07/22 01:22:33 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -132,6 +132,7 @@ static SPIPlanPtr plan_getrulebyoid = NULL;
 static const char *query_getrulebyoid = "SELECT * FROM pg_catalog.pg_rewrite WHERE oid = $1";
 static SPIPlanPtr plan_getviewrule = NULL;
 static const char *query_getviewrule = "SELECT * FROM pg_catalog.pg_rewrite WHERE ev_class = $1 AND rulename = $2";
+bool quote_all_identifiers;
 
 
 /* ----------
@@ -6726,6 +6727,9 @@ quote_identifier(const char *ident)
 				nquotes++;
 		}
 	}
+
+	if (quote_all_identifiers)
+		safe = false;
 
 	if (safe)
 	{

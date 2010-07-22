@@ -25,7 +25,7 @@
  *	http://archives.postgresql.org/pgsql-bugs/2010-02/msg00187.php
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.582 2010/07/14 21:21:08 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.583 2010/07/22 01:22:34 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -297,6 +297,7 @@ main(int argc, char **argv)
 		{"inserts", no_argument, &dump_inserts, 1},
 		{"lock-wait-timeout", required_argument, NULL, 2},
 		{"no-tablespaces", no_argument, &outputNoTablespaces, 1},
+		{"quote-all-identifiers", no_argument, &quote_all_identifiers, 1},
 		{"role", required_argument, NULL, 3},
 		{"use-set-session-authorization", no_argument, &use_setsessauth, 1},
 
@@ -633,6 +634,12 @@ main(int argc, char **argv)
 	 */
 	if (g_fout->remoteVersion >= 70300)
 		do_sql_command(g_conn, "SET statement_timeout = 0");
+
+	/*
+	 * Quote all identifiers, if requested.
+	 */
+	if (quote_all_identifiers && g_fout->remoteVersion >= 90100)
+		do_sql_command(g_conn, "SET quote_all_identifiers = true");
 
 	/*
 	 * Start serializable transaction to dump consistent data.

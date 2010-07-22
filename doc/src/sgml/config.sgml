@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.298 2010/07/20 00:47:52 rhaas Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.299 2010/07/22 01:22:32 rhaas Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -5205,6 +5205,23 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
         For example, <literal>lo_import()</literal> and
         <literal>lo_export()</literal> need superuser privileges independent
         of this setting.
+       </para>
+      </listitem>
+     </varlistentry>
+
+    <varlistentry id="guc-quote-all-identifiers" xreflabel="quote-all-identifiers">
+      <term><varname>quote_all_identifiers</varname> (<type>boolean</type>)</term>
+      <indexterm>
+       <primary><varname>quote_all_identifiers</> configuration parameter</primary>
+      </indexterm>
+      <listitem>
+       <para>
+        When the database generates SQL, force all identifiers to be quoted,
+        even if they are not (currently) keywords.  This will affect the
+        output of <command>EXPLAIN</> as well as the results of functions
+        like <function>pg_get_viewdef</>.  See also the
+	    <option>--quote-all-identifiers</option> to
+        <xref linkend="app-pgdump"> and <xref linkend="app-pg-dumpall">.
        </para>
       </listitem>
      </varlistentry>

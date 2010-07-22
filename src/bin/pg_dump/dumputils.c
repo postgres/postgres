@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/dumputils.c,v 1.56 2010/03/03 20:10:48 heikki Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/dumputils.c,v 1.57 2010/07/22 01:22:34 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,6 +35,8 @@ static void AddAcl(PQExpBuffer aclbuf, const char *keyword,
 static bool parallel_init_done = false;
 static DWORD tls_index;
 #endif
+
+int quote_all_identifiers;
 
 void
 init_parallel_dump_utils(void)
@@ -102,8 +104,10 @@ fmtId(const char *rawid)
 	 * These checks need to match the identifier production in scan.l. Don't
 	 * use islower() etc.
 	 */
+	if (quote_all_identifiers)
+		need_quotes = true;
 	/* slightly different rules for first character */
-	if (!((rawid[0] >= 'a' && rawid[0] <= 'z') || rawid[0] == '_'))
+	else if (!((rawid[0] >= 'a' && rawid[0] <= 'z') || rawid[0] == '_'))
 		need_quotes = true;
 	else
 	{
