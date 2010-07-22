@@ -15,7 +15,7 @@
  *
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/ri_triggers.c,v 1.118 2010/02/14 18:42:16 rhaas Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/ri_triggers.c,v 1.119 2010/07/22 00:47:52 rhaas Exp $
  *
  * ----------
  */
@@ -31,10 +31,12 @@
 #include "postgres.h"
 
 #include "access/xact.h"
+#include "access/sysattr.h"
 #include "catalog/pg_constraint.h"
 #include "catalog/pg_operator.h"
 #include "catalog/pg_type.h"
 #include "commands/trigger.h"
+#include "executor/executor.h"
 #include "executor/spi.h"
 #include "parser/parse_coerce.h"
 #include "parser/parse_relation.h"
@@ -2624,12 +2626,17 @@ RI_Initial_Check(Trigger *trigger, Relation fk_rel, Relation pk_rel)
 	char		fkrelname[MAX_QUOTED_REL_NAME_LEN];
 	char		pkattname[MAX_QUOTED_NAME_LEN + 3];
 	char		fkattname[MAX_QUOTED_NAME_LEN + 3];
+	RangeTblEntry  *pkrte;
+	RangeTblEntry  *fkrte;
 	const char *sep;
 	int			i;
 	int			old_work_mem;
 	char		workmembuf[32];
 	int			spi_result;
 	SPIPlanPtr	qplan;
+
+	/* Fetch constraint info. */
+	ri_FetchConstraintInfo(&riinfo, trigger, fk_rel, false);
 
 	/*
 	 * Check to make sure current user has enough permissions to do the test
@@ -2638,12 +2645,29 @@ RI_Initial_Check(Trigger *trigger, Relation fk_rel, Relation pk_rel)
 	 *
 	 * XXX are there any other show-stopper conditions to check?
 	 */
-	if (pg_class_aclcheck(RelationGetRelid(fk_rel), GetUserId(), ACL_SELECT) != ACLCHECK_OK)
-		return false;
-	if (pg_class_aclcheck(RelationGetRelid(pk_rel), GetUserId(), ACL_SELECT) != ACLCHECK_OK)
-		return false;
+	pkrte = makeNode(RangeTblEntry);
+	pkrte->rtekind = RTE_RELATION;
+	pkrte->relid = RelationGetRelid(pk_rel);
+	pkrte->requiredPerms = ACL_SELECT;
 
-	ri_FetchConstraintInfo(&riinfo, trigger, fk_rel, false);
+	fkrte = makeNode(RangeTblEntry);
+	fkrte->rtekind = RTE_RELATION;
+	fkrte->relid = RelationGetRelid(fk_rel);
+	fkrte->requiredPerms = ACL_SELECT;
+
+	for (i = 0; i < riinfo.nkeys; i++)
+	{
+		int		attno;
+
+		attno = riinfo.pk_attnums[i] - FirstLowInvalidHeapAttributeNumber;
+		pkrte->selectedCols = bms_add_member(pkrte->selectedCols, attno);
+
+		attno = riinfo.fk_attnums[i] - FirstLowInvalidHeapAttributeNumber;
+		fkrte->selectedCols = bms_add_member(fkrte->selectedCols, attno);
+	}
+
+	if (!ExecCheckRTPerms(list_make2(fkrte, pkrte), false))
+		return false;
 
 	/*----------
 	 * The query string built is:

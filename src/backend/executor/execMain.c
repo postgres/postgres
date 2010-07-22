@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.351 2010/07/12 17:01:05 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.352 2010/07/22 00:47:52 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -75,8 +75,7 @@ static void ExecutePlan(EState *estate, PlanState *planstate,
 			long numberTuples,
 			ScanDirection direction,
 			DestReceiver *dest);
-static void ExecCheckRTPerms(List *rangeTable);
-static void ExecCheckRTEPerms(RangeTblEntry *rte);
+static bool ExecCheckRTEPerms(RangeTblEntry *rte);
 static void ExecCheckXactReadOnly(PlannedStmt *plannedstmt);
 static void EvalPlanQualStart(EPQState *epqstate, EState *parentestate,
 				  Plan *planTree);
@@ -409,26 +408,42 @@ ExecutorRewind(QueryDesc *queryDesc)
 /*
  * ExecCheckRTPerms
  *		Check access permissions for all relations listed in a range table.
+ *
+ * Returns true if permissions are adequate.  Otherwise, throws an appropriate
+ * error if ereport_on_violation is true, or simply returns false otherwise.
  */
-static void
-ExecCheckRTPerms(List *rangeTable)
+bool
+ExecCheckRTPerms(List *rangeTable, bool ereport_on_violation)
 {
 	ListCell   *l;
+	bool		result = true;
 
 	foreach(l, rangeTable)
 	{
-		ExecCheckRTEPerms((RangeTblEntry *) lfirst(l));
+		RangeTblEntry  *rte = (RangeTblEntry *) lfirst(l);
+
+		result = ExecCheckRTEPerms(rte);
+		if (!result)
+		{
+			Assert(rte->rtekind == RTE_RELATION);
+			if (ereport_on_violation)
+				aclcheck_error(ACLCHECK_NO_PRIV, ACL_KIND_CLASS,
+							   get_rel_name(rte->relid));
+			return false;
+		}
 	}
 
 	if (ExecutorCheckPerms_hook)
-		(*ExecutorCheckPerms_hook)(rangeTable);
+		result = (*ExecutorCheckPerms_hook)(rangeTable,
+											ereport_on_violation);
+	return result;
 }
 
 /*
  * ExecCheckRTEPerms
  *		Check access permissions for a single RTE.
  */
-static void
+static bool
 ExecCheckRTEPerms(RangeTblEntry *rte)
 {
 	AclMode		requiredPerms;
@@ -445,14 +460,14 @@ ExecCheckRTEPerms(RangeTblEntry *rte)
 	 * Join, subquery, and special RTEs need no checks.
 	 */
 	if (rte->rtekind != RTE_RELATION)
-		return;
+		return true;
 
 	/*
 	 * No work if requiredPerms is empty.
 	 */
 	requiredPerms = rte->requiredPerms;
 	if (requiredPerms == 0)
-		return;
+		return true;
 
 	relOid = rte->relid;
 
@@ -480,8 +495,7 @@ ExecCheckRTEPerms(RangeTblEntry *rte)
 		 * we can fail straight away.
 		 */
 		if (remainingPerms & ~(ACL_SELECT | ACL_INSERT | ACL_UPDATE))
-			aclcheck_error(ACLCHECK_NO_PRIV, ACL_KIND_CLASS,
-						   get_rel_name(relOid));
+			return false;
 
 		/*
 		 * Check to see if we have the needed privileges at column level.
@@ -501,8 +515,7 @@ ExecCheckRTEPerms(RangeTblEntry *rte)
 			{
 				if (pg_attribute_aclcheck_all(relOid, userid, ACL_SELECT,
 											  ACLMASK_ANY) != ACLCHECK_OK)
-					aclcheck_error(ACLCHECK_NO_PRIV, ACL_KIND_CLASS,
-								   get_rel_name(relOid));
+					return false;
 			}
 
 			tmpset = bms_copy(rte->selectedCols);
@@ -515,15 +528,13 @@ ExecCheckRTEPerms(RangeTblEntry *rte)
 					/* Whole-row reference, must have priv on all cols */
 					if (pg_attribute_aclcheck_all(relOid, userid, ACL_SELECT,
 												  ACLMASK_ALL) != ACLCHECK_OK)
-						aclcheck_error(ACLCHECK_NO_PRIV, ACL_KIND_CLASS,
-									   get_rel_name(relOid));
+						return false;
 				}
 				else
 				{
-					if (pg_attribute_aclcheck(relOid, col, userid, ACL_SELECT)
-						!= ACLCHECK_OK)
-						aclcheck_error(ACLCHECK_NO_PRIV, ACL_KIND_CLASS,
-									   get_rel_name(relOid));
+					if (pg_attribute_aclcheck(relOid, col, userid,
+											  ACL_SELECT) != ACLCHECK_OK)
+						return false;
 				}
 			}
 			bms_free(tmpset);
@@ -546,8 +557,7 @@ ExecCheckRTEPerms(RangeTblEntry *rte)
 			{
 				if (pg_attribute_aclcheck_all(relOid, userid, remainingPerms,
 											  ACLMASK_ANY) != ACLCHECK_OK)
-					aclcheck_error(ACLCHECK_NO_PRIV, ACL_KIND_CLASS,
-								   get_rel_name(relOid));
+					return false;
 			}
 
 			tmpset = bms_copy(rte->modifiedCols);
@@ -562,15 +572,15 @@ ExecCheckRTEPerms(RangeTblEntry *rte)
 				}
 				else
 				{
-					if (pg_attribute_aclcheck(relOid, col, userid, remainingPerms)
-						!= ACLCHECK_OK)
-						aclcheck_error(ACLCHECK_NO_PRIV, ACL_KIND_CLASS,
-									   get_rel_name(relOid));
+					if (pg_attribute_aclcheck(relOid, col, userid,
+											  remainingPerms) != ACLCHECK_OK)
+						return false;
 				}
 			}
 			bms_free(tmpset);
 		}
 	}
+	return true;
 }
 
 /*
@@ -636,7 +646,7 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 	/*
 	 * Do permissions checks
 	 */
-	ExecCheckRTPerms(rangeTable);
+	ExecCheckRTPerms(rangeTable, true);
 
 	/*
 	 * initialize the node's execution state

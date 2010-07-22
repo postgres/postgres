@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/executor/executor.h,v 1.170 2010/07/12 17:01:06 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/executor/executor.h,v 1.171 2010/07/22 00:47:59 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -75,7 +75,7 @@ typedef void (*ExecutorEnd_hook_type) (QueryDesc *queryDesc);
 extern PGDLLIMPORT ExecutorEnd_hook_type ExecutorEnd_hook;
 
 /* Hook for plugins to get control in ExecCheckRTPerms() */
-typedef void (*ExecutorCheckPerms_hook_type) (List *);
+typedef bool (*ExecutorCheckPerms_hook_type) (List *, bool);
 extern PGDLLIMPORT ExecutorCheckPerms_hook_type ExecutorCheckPerms_hook;
 
 
@@ -161,6 +161,7 @@ extern void standard_ExecutorRun(QueryDesc *queryDesc,
 extern void ExecutorEnd(QueryDesc *queryDesc);
 extern void standard_ExecutorEnd(QueryDesc *queryDesc);
 extern void ExecutorRewind(QueryDesc *queryDesc);
+extern bool ExecCheckRTPerms(List *rangeTable, bool ereport_on_violation);
 extern void InitResultRelInfo(ResultRelInfo *resultRelInfo,
 				  Relation resultRelationDesc,
 				  Index resultRelationIndex,

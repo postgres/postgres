@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.327 2010/04/28 16:10:41 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.328 2010/07/22 00:47:52 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,6 +21,7 @@
 #include <arpa/inet.h>
 
 #include "access/heapam.h"
+#include "access/sysattr.h"
 #include "access/xact.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_type.h"
@@ -726,8 +727,6 @@ DoCopy(const CopyStmt *stmt, const char *queryString)
 	bool		force_quote_all = false;
 	bool		format_specified = false;
 	AclMode		required_access = (is_from ? ACL_INSERT : ACL_SELECT);
-	AclMode		relPerms;
-	AclMode		remainingPerms;
 	ListCell   *option;
 	TupleDesc	tupDesc;
 	int			num_phys_attrs;
@@ -988,6 +987,10 @@ DoCopy(const CopyStmt *stmt, const char *queryString)
 
 	if (stmt->relation)
 	{
+		RangeTblEntry  *rte;
+		List		   *attnums;
+		ListCell	   *cur;
+
 		Assert(!stmt->query);
 		cstate->queryDesc = NULL;
 
@@ -998,28 +1001,22 @@ DoCopy(const CopyStmt *stmt, const char *queryString)
 		tupDesc = RelationGetDescr(cstate->rel);
 
 		/* Check relation permissions. */
-		relPerms = pg_class_aclmask(RelationGetRelid(cstate->rel), GetUserId(),
-									required_access, ACLMASK_ALL);
-		remainingPerms = required_access & ~relPerms;
-		if (remainingPerms != 0)
+		rte = makeNode(RangeTblEntry);
+		rte->rtekind = RTE_RELATION;
+		rte->relid = RelationGetRelid(cstate->rel);
+		rte->requiredPerms = required_access;
+
+		attnums = CopyGetAttnums(tupDesc, cstate->rel, attnamelist);
+		foreach (cur, attnums)
 		{
-			/* We don't have table permissions, check per-column permissions */
-			List	   *attnums;
-			ListCell   *cur;
+			int		attno = lfirst_int(cur) - FirstLowInvalidHeapAttributeNumber;
 
-			attnums = CopyGetAttnums(tupDesc, cstate->rel, attnamelist);
-			foreach(cur, attnums)
-			{
-				int			attnum = lfirst_int(cur);
-
-				if (pg_attribute_aclcheck(RelationGetRelid(cstate->rel),
-										  attnum,
-										  GetUserId(),
-										  remainingPerms) != ACLCHECK_OK)
-					aclcheck_error(ACLCHECK_NO_PRIV, ACL_KIND_CLASS,
-								   RelationGetRelationName(cstate->rel));
-			}
+			if (is_from)
+				rte->modifiedCols = bms_add_member(rte->modifiedCols, attno);
+			else
+				rte->selectedCols = bms_add_member(rte->selectedCols, attno);
 		}
+		ExecCheckRTPerms(list_make1(rte), true);
 
 		/* check read-only transaction */
 		if (XactReadOnly && is_from && !cstate->rel->rd_islocaltemp)
