@@ -25,12 +25,18 @@ SELECT * FROM get_all_persons();
 ----+------
 (0 rows)
 
+-- certain ALTER TABLE operations on typed tables are not allowed
 ALTER TABLE persons ADD COLUMN comment text;
 ERROR:  cannot add column to typed table
 ALTER TABLE persons DROP COLUMN name;
 ERROR:  cannot drop column from typed table
 ALTER TABLE persons RENAME COLUMN id TO num;
 ERROR:  cannot rename column of typed table
+ALTER TABLE persons ALTER COLUMN name TYPE varchar;
+ERROR:  cannot alter column type of typed table
+CREATE TABLE stuff (id int);
+ALTER TABLE persons INHERIT stuff;
+ERROR:  cannot change inheritance of typed table
 CREATE TABLE personsx OF person_type (myname WITH OPTIONS NOT NULL); -- error
 ERROR:  column "myname" does not exist
 CREATE TABLE persons2 OF person_type (
@@ -83,3 +89,4 @@ DETAIL:  drop cascades to table persons
 drop cascades to function get_all_persons()
 drop cascades to table persons2
 drop cascades to table persons3
+DROP TABLE stuff;
