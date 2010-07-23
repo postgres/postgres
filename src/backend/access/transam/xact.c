@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.195.4.6 2010/01/24 21:50:06 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.195.4.7 2010/07/23 00:43:52 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -339,8 +339,35 @@ AssignSubTransactionId(TransactionState s)
 
 	Assert(s->parent != NULL);
 	Assert(s->state == TRANS_INPROGRESS);
+
+	/*
+	 * Ensure parent(s) have XIDs, so that a child always has an XID later
+	 * than its parent.  Musn't recurse here, or we might get a stack overflow
+	 * if we're at the bottom of a huge stack of subtransactions none of which
+	 * have XIDs yet.
+	 */
 	if (!TransactionIdIsValid(s->parent->transactionId))
-		AssignSubTransactionId(s->parent);
+	{
+		TransactionState	p = s->parent;
+		TransactionState   *parents;
+		size_t	parentOffset = 0;
+
+		parents = palloc(sizeof(TransactionState) *  s->nestingLevel);
+		while (p != NULL && !TransactionIdIsValid(p->transactionId))
+		{
+			parents[parentOffset++] = p;
+			p = p->parent;
+		}
+
+		/*
+		 * This is technically a recursive call, but the recursion will
+		 * never be more than one layer deep.
+		 */
+		while (parentOffset != 0)
+			AssignSubTransactionId(parents[--parentOffset]);
+
+		pfree(parents);
+	}
 
 	/*
 	 * Generate a new Xid and record it in PG_PROC and pg_subtrans.
