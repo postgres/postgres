@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.332 2010/07/06 19:18:56 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.333 2010/07/23 20:04:18 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -288,6 +288,7 @@ static void ATExecSetOptions(Relation rel, const char *colName,
 				 Node *options, bool isReset);
 static void ATExecSetStorage(Relation rel, const char *colName,
 				 Node *newValue);
+static void ATPrepDropColumn(Relation rel, bool recurse, AlterTableCmd *cmd);
 static void ATExecDropColumn(List **wqueue, Relation rel, const char *colName,
 				 DropBehavior behavior,
 				 bool recurse, bool recursing,
@@ -327,7 +328,8 @@ static void ATExecEnableDisableTrigger(Relation rel, char *trigname,
 						   char fires_when, bool skip_system);
 static void ATExecEnableDisableRule(Relation rel, char *rulename,
 						char fires_when);
-static void ATExecAddInherit(Relation rel, RangeVar *parent);
+static void ATPrepAddInherit(Relation child_rel);
+static void ATExecAddInherit(Relation child_rel, RangeVar *parent);
 static void ATExecDropInherit(Relation rel, RangeVar *parent);
 static void copy_relation_data(SMgrRelation rel, SMgrRelation dst,
 				   ForkNumber forkNum, bool istemp);
@@ -2499,10 +2501,8 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 			break;
 		case AT_DropColumn:		/* DROP COLUMN */
 			ATSimplePermissions(rel, false);
+			ATPrepDropColumn(rel, recurse, cmd);
 			/* Recursion occurs during execution phase */
-			/* No command-specific prep needed except saving recurse flag */
-			if (recurse)
-				cmd->subtype = AT_DropColumnRecurse;
 			pass = AT_PASS_DROP;
 			break;
 		case AT_AddIndex:		/* ADD INDEX */
@@ -2579,6 +2579,12 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 			/* No command-specific prep needed */
 			pass = AT_PASS_MISC;
 			break;
+		case AT_AddInherit:		/* INHERIT */
+			ATSimplePermissions(rel, false);
+			/* This command never recurses */
+			ATPrepAddInherit(rel);
+			pass = AT_PASS_MISC;
+			break;
 		case AT_EnableTrig:		/* ENABLE TRIGGER variants */
 		case AT_EnableAlwaysTrig:
 		case AT_EnableReplicaTrig:
@@ -2591,8 +2597,7 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 		case AT_EnableAlwaysRule:
 		case AT_EnableReplicaRule:
 		case AT_DisableRule:
-		case AT_AddInherit:		/* INHERIT / NO INHERIT */
-		case AT_DropInherit:
+		case AT_DropInherit:	/* NO INHERIT */
 			ATSimplePermissions(rel, false);
 			/* These commands never recurse */
 			/* No command-specific prep needed */
@@ -3568,6 +3573,11 @@ static void
 ATPrepAddColumn(List **wqueue, Relation rel, bool recurse,
 				AlterTableCmd *cmd)
 {
+	if (rel->rd_rel->reloftype)
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("cannot add column to typed table")));
+
 	/*
 	 * Recurse to add the column to child classes, if requested.
 	 *
@@ -3615,11 +3625,6 @@ ATExecAddColumn(AlteredTableInfo *tab, Relation rel,
 	int32		typmod;
 	Form_pg_type tform;
 	Expr	   *defval;
-
-	if (rel->rd_rel->reloftype)
-		ereport(ERROR,
-				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				 errmsg("cannot add column to typed table")));
 
 	attrdesc = heap_open(AttributeRelationId, RowExclusiveLock);
 
@@ -4326,6 +4331,19 @@ ATExecSetStorage(Relation rel, const char *colName, Node *newValue)
  * correctly.)
  */
 static void
+ATPrepDropColumn(Relation rel, bool recurse, AlterTableCmd *cmd)
+{
+	if (rel->rd_rel->reloftype)
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("cannot drop column from typed table")));
+
+	/* No command-specific prep needed except saving recurse flag */
+	if (recurse)
+		cmd->subtype = AT_DropColumnRecurse;
+}
+
+static void
 ATExecDropColumn(List **wqueue, Relation rel, const char *colName,
 				 DropBehavior behavior,
 				 bool recurse, bool recursing,
@@ -4336,11 +4354,6 @@ ATExecDropColumn(List **wqueue, Relation rel, const char *colName,
 	AttrNumber	attnum;
 	List	   *children;
 	ObjectAddress object;
-
-	if (rel->rd_rel->reloftype)
-		ereport(ERROR,
-				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				 errmsg("cannot drop column from typed table")));
 
 	/* At top level, permission check was done in ATPrepCmd, else do it */
 	if (recursing)
@@ -5788,6 +5801,11 @@ ATPrepAlterColumnType(List **wqueue,
 	NewColumnValue *newval;
 	ParseState *pstate = make_parsestate(NULL);
 
+	if (rel->rd_rel->reloftype)
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("cannot alter column type of typed table")));
+
 	/* lookup the attribute so we can check inheritance status */
 	tuple = SearchSysCacheAttName(RelationGetRelid(rel), colName);
 	if (!HeapTupleIsValid(tuple))
@@ -7115,6 +7133,15 @@ ATExecEnableDisableRule(Relation rel, char *trigname,
  * check constraints of the parent appear in the child and that they have the
  * same data types and expressions.
  */
+static void
+ATPrepAddInherit(Relation child_rel)
+{
+	if (child_rel->rd_rel->reloftype)
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("cannot change inheritance of typed table")));
+}
+
 static void
 ATExecAddInherit(Relation child_rel, RangeVar *parent)
 {
