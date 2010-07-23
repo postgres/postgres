@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/port/sysv_shmem.c,v 1.47.2.2 2010/05/01 22:46:50 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/port/sysv_shmem.c,v 1.47.2.3 2010/07/23 13:53:29 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,6 +49,9 @@ typedef int IpcMemoryId;		/* shared memory ID returned by shmget(2) */
 
 unsigned long UsedShmemSegID = 0;
 void	   *UsedShmemSegAddr = NULL;
+#ifdef WIN32
+Size		UsedShmemSegSize = 0;
+#endif
 
 static void *InternalIpcMemoryCreate(IpcMemoryKey memKey, Size size);
 static void IpcMemoryDetach(int status, Datum shmaddr);
@@ -446,6 +449,9 @@ PGSharedMemoryCreate(Size size, bool makePrivate, int port)
 	/* Save info for possible future use */
 	UsedShmemSegAddr = memAddress;
 	UsedShmemSegID = (unsigned long) NextShmemSegID;
+#ifdef WIN32
+	UsedShmemSegSize = size;
+#endif
 
 	return hdr;
 }
