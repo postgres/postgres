@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.250 2010/07/03 04:03:06 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.250.2.1 2010/07/24 12:17:34 petere Exp $ -->
 
  <chapter id="datatype">
   <title>Data Types</title>
@@ -2751,12 +2751,33 @@ P <optional> <replaceable>years</>-<replaceable>months</>-<replaceable>days</> <
 
    <para>
     <productname>PostgreSQL</productname> provides the
-    standard <acronym>SQL</acronym> type <type>boolean</type>.
-    <type>boolean</type> can have one of only two states:
+    standard <acronym>SQL</acronym> type <type>boolean</type>;
+    see <xref linkend="datatype-boolean-table">.
+    The <type>boolean</type> type can have one of only two states:
     <quote>true</quote> or <quote>false</quote>.  A third state,
     <quote>unknown</quote>, is represented by the
     <acronym>SQL</acronym> null value.
    </para>
+
+   <table id="datatype-boolean-table">
+    <title>Boolean Data Type</title>
+    <tgroup cols="3">
+     <thead>
+      <row>
+       <entry>Name</entry>
+       <entry>Storage Size</entry>
+       <entry>Description</entry>
+      </row>
+     </thead>
+     <tbody>
+      <row>
+       <entry><type>boolean</type></entry>
+       <entry>1 byte</entry>
+       <entry>state of true of false</entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
 
    <para>
     Valid literal values for the <quote>true</quote> state are:
@@ -2786,6 +2807,12 @@ P <optional> <replaceable>years</>-<replaceable>months</>-<replaceable>days</> <
     (<acronym>SQL</acronym>-compliant) usage.
    </para>
 
+   <para>
+    <xref linkend="datatype-boolean-example"> shows that
+    <type>boolean</type> values are output using the letters
+    <literal>t</literal> and <literal>f</literal>.
+   </para>
+
    <example id="datatype-boolean-example">
     <title>Using the <type>boolean</type> type</title>
 
@@ -2805,16 +2832,6 @@ SELECT * FROM test1 WHERE a;
  t | sic est
 </programlisting>
    </example>
-
-   <para>
-    <xref linkend="datatype-boolean-example"> shows that
-    <type>boolean</type> values are output using the letters
-    <literal>t</literal> and <literal>f</literal>.
-   </para>
-
-   <para>
-    <type>boolean</type> uses 1 byte of storage.
-   </para>
   </sect1>
 
   <sect1 id="datatype-enum">
