@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.250.2.1 2010/07/24 12:17:34 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.250.2.2 2010/07/24 16:46:43 petere Exp $ -->
 
  <chapter id="datatype">
   <title>Data Types</title>
@@ -2773,7 +2773,7 @@ P <optional> <replaceable>years</>-<replaceable>months</>-<replaceable>days</> <
       <row>
        <entry><type>boolean</type></entry>
        <entry>1 byte</entry>
-       <entry>state of true of false</entry>
+       <entry>state of true or false</entry>
       </row>
      </tbody>
     </tgroup>
