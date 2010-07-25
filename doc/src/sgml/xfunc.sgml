@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.149 2010/05/30 18:10:40 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.149.2.1 2010/07/25 08:30:41 petere Exp $ -->
 
  <sect1 id="xfunc">
   <title>User-Defined Functions</title>
@@ -292,6 +292,8 @@ CREATE TABLE emp (
     age         integer,
     cubicle     point
 );
+
+INSERT INTO emp VALUES ('Bill', 4200, 45, '(2,1)');
 
 CREATE FUNCTION double_salary(emp) RETURNS numeric AS $$
     SELECT $1.salary * 2 AS salary;
