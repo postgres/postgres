@@ -4,7 +4,7 @@
  *	Postgres-version-specific routines
  *
  *	Copyright (c) 2010, PostgreSQL Global Development Group
- *	$PostgreSQL: pgsql/contrib/pg_upgrade/version_old_8_3.c,v 1.6.2.1 2010/07/25 03:28:39 momjian Exp $
+ *	$PostgreSQL: pgsql/contrib/pg_upgrade/version_old_8_3.c,v 1.6.2.2 2010/07/25 03:47:33 momjian Exp $
  */
 
 #include "pg_upgrade.h"
@@ -190,98 +190,6 @@ old_8_3_check_for_tsquery_usage(migratorContext *ctx, Cluster whichCluster)
 			   "| currently be upgraded.  You can remove the problem\n"
 			   "| columns and restart the migration.  A list of the\n"
 			   "| problem columns is in the file:\n"
-			   "| \t%s\n\n", output_path);
-	}
-	else
-		check_ok(ctx);
-}
-
-
-/*
- * old_8_3_check_for_isn_and_int8_passing_mismatch()
- *	8.3 -> 8.4
- *	/contrib/isn relies on data type int8, and in 8.4 int8 is now passed
- *	by value.  The schema dumps the CREATE TYPE PASSEDBYVALUE setting so
- *	it must match for the old and new servers.
- */
-void
-old_8_3_check_for_isn_and_int8_passing_mismatch(migratorContext *ctx, Cluster whichCluster)
-{
-	ClusterInfo *active_cluster = (whichCluster == CLUSTER_OLD) ?
-	&ctx->old : &ctx->new;
-	int			dbnum;
-	FILE	   *script = NULL;
-	bool		found = false;
-	char		output_path[MAXPGPATH];
-
-	prep_status(ctx, "Checking for /contrib/isn with bigint-passing mismatch");
-
-	if (ctx->old.controldata.float8_pass_by_value ==
-		ctx->new.controldata.float8_pass_by_value)
-	{
-		/* no mismatch */
-		check_ok(ctx);
-		return;
-	}
-
-	snprintf(output_path, sizeof(output_path), "%s/contrib_isn_and_int8_pass_by_value.txt",
-			 ctx->cwd);
-
-	for (dbnum = 0; dbnum < active_cluster->dbarr.ndbs; dbnum++)
-	{
-		PGresult   *res;
-		bool		db_used = false;
-		int			ntups;
-		int			rowno;
-		int			i_nspname,
-					i_proname;
-		DbInfo	   *active_db = &active_cluster->dbarr.dbs[dbnum];
-		PGconn	   *conn = connectToServer(ctx, active_db->db_name, whichCluster);
-
-		/* Find any functions coming from contrib/isn */
-		res = executeQueryOrDie(ctx, conn,
-								"SELECT n.nspname, p.proname "
-								"FROM	pg_catalog.pg_proc p, "
-								"		pg_catalog.pg_namespace n "
-								"WHERE	p.pronamespace = n.oid AND "
-								"		p.probin = '$libdir/isn'");
-
-		ntups = PQntuples(res);
-		i_nspname = PQfnumber(res, "nspname");
-		i_proname = PQfnumber(res, "proname");
-		for (rowno = 0; rowno < ntups; rowno++)
-		{
-			found = true;
-			if (script == NULL && (script = fopen(output_path, "w")) == NULL)
-				pg_log(ctx, PG_FATAL, "Could not create necessary file:  %s\n", output_path);
-			if (!db_used)
-			{
-				fprintf(script, "Database:  %s\n", active_db->db_name);
-				db_used = true;
-			}
-			fprintf(script, "  %s.%s\n",
-					PQgetvalue(res, rowno, i_nspname),
-					PQgetvalue(res, rowno, i_proname));
-		}
-
-		PQclear(res);
-
-		PQfinish(conn);
-	}
-
-	if (found)
-	{
-		fclose(script);
-		pg_log(ctx, PG_REPORT, "fatal\n");
-		pg_log(ctx, PG_FATAL,
-			   "| Your installation contains \"/contrib/isn\" functions\n"
-			   "| which rely on the bigint data type.  Your old and\n"
-			   "| new clusters pass bigint values differently so this\n"
-			   "| cluster cannot currently be upgraded.  You can\n"
-			   "| manually migrate data that use \"/contrib/isn\"\n"
-			   "| facilities and remove \"/contrib/isn\" from the\n"
-			   "| old cluster and restart the migration.  A list\n"
-			   "| of the problem functions is in the file:\n"
 			   "| \t%s\n\n", output_path);
 	}
 	else
