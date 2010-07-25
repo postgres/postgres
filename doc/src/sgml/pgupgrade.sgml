@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/pgupgrade.sgml,v 1.12 2010/05/25 15:55:28 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/pgupgrade.sgml,v 1.12.2.1 2010/07/25 03:28:39 momjian Exp $ -->
 
 <sect1 id="pgupgrade">
  <title>pg_upgrade</title>
@@ -445,9 +445,9 @@ psql --username postgres --file script.sql postgres
    </listitem>
   </orderedlist>
  
-  </sect2>
+ </sect2>
  
-  <sect2>
+ <sect2>
   <title>Limitations in migrating <emphasis>from</> PostgreSQL 8.3</title>
  
   <para>
@@ -514,16 +514,30 @@ psql --username postgres --file script.sql postgres
    version 8.4 or later of the one-click distribution. It is not
    possible to upgrade from the MSI installer to the one-click installer.
   </para>
+
+ </sect2>
+ 
+ <sect2>
+  <title>Notes</title>
  
   <para>  
-   All failure, rebuild, and reindex cases will be reported by <application>pg_upgrade</>
-   if they affect your installation; post-migration scripts to rebuild
-   tables and indexes will be automatically generated. 
+   <application>pg_upgrade</> does not support migration of databases
+   containing these reg* system oid-referencing data types:
+   <type>regproc</>, <type>regprocedure</>, <type>regoper</>,
+   <type>regoperator</>, <type>regclass</>, <type>regconfig</>, and
+   <type>regdictionary</>.  (<type>regtype</> can be migrated.)
+  </para>
+ 
+  <para>  
+   All failure, rebuild, and reindex cases will be reported by
+   <application>pg_upgrade</> if they affect your installation;
+   post-migration scripts to rebuild tables and indexes will be
+   generated automatically.
   </para>
  
   <para>
    For deployment testing, create a schema-only copy of the old cluster,
-   insert dummy data, and migrate that. 
+   insert dummy data, and migrate that.
   </para>
  
   <para>  
