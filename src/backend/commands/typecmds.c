@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/typecmds.c,v 1.148 2010/02/26 02:00:40 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/typecmds.c,v 1.149 2010/07/25 23:21:21 rhaas Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -1506,6 +1506,7 @@ DefineCompositeType(const RangeVar *typevar, List *coldeflist)
 	CreateStmt *createStmt = makeNode(CreateStmt);
 	Oid			old_type_oid;
 	Oid			typeNamespace;
+	Oid			relid;
 
 	if (coldeflist == NIL)
 		ereport(ERROR,
@@ -1523,6 +1524,7 @@ DefineCompositeType(const RangeVar *typevar, List *coldeflist)
 	createStmt->options = list_make1(defWithOids(false));
 	createStmt->oncommit = ONCOMMIT_NOOP;
 	createStmt->tablespacename = NULL;
+	createStmt->if_not_exists = false;
 
 	/*
 	 * Check for collision with an existing type name. If there is one and
@@ -1546,7 +1548,9 @@ DefineCompositeType(const RangeVar *typevar, List *coldeflist)
 	/*
 	 * Finally create the relation.  This also creates the type.
 	 */
-	return DefineRelation(createStmt, RELKIND_COMPOSITE_TYPE);
+	relid = DefineRelation(createStmt, RELKIND_COMPOSITE_TYPE);
+	Assert(relid != InvalidOid);
+	return relid;
 }
 
 /*

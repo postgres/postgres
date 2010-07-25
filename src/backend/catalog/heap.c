@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.373 2010/04/05 01:09:52 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.374 2010/07/25 23:21:21 rhaas Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -903,11 +903,13 @@ heap_create_with_catalog(const char *relname,
 						 OnCommitAction oncommit,
 						 Datum reloptions,
 						 bool use_user_acl,
-						 bool allow_system_table_mods)
+						 bool allow_system_table_mods,
+						 bool if_not_exists)
 {
 	Relation	pg_class_desc;
 	Relation	new_rel_desc;
 	Acl		   *relacl;
+	Oid			existing_relid;
 	Oid			old_type_oid;
 	Oid			new_type_oid;
 	Oid			new_array_oid = InvalidOid;
@@ -921,10 +923,27 @@ heap_create_with_catalog(const char *relname,
 
 	CheckAttributeNamesTypes(tupdesc, relkind, allow_system_table_mods);
 
-	if (get_relname_relid(relname, relnamespace))
+	/*
+	 * If the relation already exists, it's an error, unless the user specifies
+	 * "IF NOT EXISTS".  In that case, we just print a notice and do nothing
+	 * further.
+	 */
+	existing_relid = get_relname_relid(relname, relnamespace);
+	if (existing_relid != InvalidOid)
+	{
+		if (if_not_exists)
+		{
+			ereport(NOTICE,
+					(errcode(ERRCODE_DUPLICATE_TABLE),
+					 errmsg("relation \"%s\" already exists, skipping",
+					 relname)));
+			heap_close(pg_class_desc, RowExclusiveLock);
+			return InvalidOid;
+		}
 		ereport(ERROR,
 				(errcode(ERRCODE_DUPLICATE_TABLE),
 				 errmsg("relation \"%s\" already exists", relname)));
+	}
 
 	/*
 	 * Since we are going to create a rowtype as well, also check for

@@ -232,8 +232,11 @@ CREATE TABLE array_index_op_test (
 	t			text[]
 );
 
-CREATE TABLE test_tsvector( 
+CREATE TABLE IF NOT EXISTS test_tsvector( 
 	t text, 
 	a tsvector 
 );
 
+CREATE TABLE IF NOT EXISTS test_tsvector( 
+	t text
+);

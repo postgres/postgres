@@ -22,7 +22,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.385 2010/02/26 02:00:43 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.386 2010/07/25 23:21:21 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1104,6 +1104,7 @@ _equalCreateStmt(CreateStmt *a, CreateStmt *b)
 	COMPARE_NODE_FIELD(options);
 	COMPARE_SCALAR_FIELD(oncommit);
 	COMPARE_STRING_FIELD(tablespacename);
+	COMPARE_SCALAR_FIELD(if_not_exists);
 
 	return true;
 }

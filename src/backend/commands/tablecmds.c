@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.333 2010/07/23 20:04:18 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.334 2010/07/25 23:21:21 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -548,8 +548,18 @@ DefineRelation(CreateStmt *stmt, char relkind)
 										  stmt->oncommit,
 										  reloptions,
 										  true,
-										  allowSystemTableMods);
+										  allowSystemTableMods,
+										  stmt->if_not_exists);
 
+	/*
+	 * If heap_create_with_catalog returns InvalidOid, it means that the user
+	 * specified "IF NOT EXISTS" and the relation already exists.  In that
+	 * case we do nothing further.
+	 */
+	if (relationId == InvalidOid)
+		return InvalidOid;
+
+	/* Store inheritance information for new rel. */
 	StoreCatalogInheritance(relationId, inheritOids);
 
 	/*

@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.352 2010/07/22 00:47:52 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.353 2010/07/25 23:21:21 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2190,7 +2190,9 @@ OpenIntoRel(QueryDesc *queryDesc)
 											  into->onCommit,
 											  reloptions,
 											  true,
-											  allowSystemTableMods);
+											  allowSystemTableMods,
+											  false);
+	Assert(intoRelationId != InvalidOid);
 
 	FreeTupleDesc(tupdesc);
 

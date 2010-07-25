@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_table.sgml,v 1.128 2010/06/07 02:59:02 itagaki Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_table.sgml,v 1.129 2010/07/25 23:21:21 rhaas Exp $
 PostgreSQL documentation
 -->
 
@@ -21,7 +21,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE <replaceable class="PARAMETER">table_name</replaceable> ( [
+CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE [ IF NOT EXISTS ] <replaceable class="PARAMETER">table_name</replaceable> ( [
   { <replaceable class="PARAMETER">column_name</replaceable> <replaceable class="PARAMETER">data_type</replaceable> [ DEFAULT <replaceable>default_expr</replaceable> ] [ <replaceable class="PARAMETER">column_constraint</replaceable> [ ... ] ]
     | <replaceable>table_constraint</replaceable>
     | LIKE <replaceable>parent_table</replaceable> [ <replaceable>like_option</replaceable> ... ] }
@@ -32,7 +32,7 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE <replaceable class="PAR
 [ ON COMMIT { PRESERVE ROWS | DELETE ROWS | DROP } ]
 [ TABLESPACE <replaceable class="PARAMETER">tablespace</replaceable> ]
 
-CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE <replaceable class="PARAMETER">table_name</replaceable>
+CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE [ IF NOT EXISTS ] <replaceable class="PARAMETER">table_name</replaceable>
     OF <replaceable class="PARAMETER">type_name</replaceable> [ (
   { <replaceable class="PARAMETER">column_name</replaceable> WITH OPTIONS [ DEFAULT <replaceable>default_expr</replaceable> ] [ <replaceable class="PARAMETER">column_constraint</replaceable> [ ... ] ]
     | <replaceable>table_constraint</replaceable> }
@@ -159,6 +159,18 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE <replaceable class="PAR
       This makes no difference in <productname>PostgreSQL</>, but see
       <xref linkend="sql-createtable-compatibility"
       endterm="sql-createtable-compatibility-title">.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>IF NOT EXISTS</></term>
+    <listitem>
+     <para>
+      Do not throw an error if a relation with the same name already exists.
+	  A notice is issued in this case.  Note that there is no guarantee that
+	  the existing relation is anything like the one that would have been
+	  created.
      </para>
     </listitem>
    </varlistentry>

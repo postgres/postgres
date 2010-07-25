@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/view.c,v 1.120 2010/01/02 16:57:40 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/view.c,v 1.121 2010/07/25 23:21:21 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -222,6 +222,8 @@ DefineVirtualRelation(const RangeVar *relation, List *tlist, bool replace)
 	}
 	else
 	{
+		Oid		relid;
+
 		/*
 		 * now set the parameters for keys/inheritance etc. All of these are
 		 * uninteresting for views...
@@ -233,13 +235,16 @@ DefineVirtualRelation(const RangeVar *relation, List *tlist, bool replace)
 		createStmt->options = list_make1(defWithOids(false));
 		createStmt->oncommit = ONCOMMIT_NOOP;
 		createStmt->tablespacename = NULL;
+		createStmt->if_not_exists = false;
 
 		/*
 		 * finally create the relation (this will error out if there's an
 		 * existing view, so we don't need more code to complain if "replace"
 		 * is false).
 		 */
-		return DefineRelation(createStmt, RELKIND_VIEW);
+		relid = DefineRelation(createStmt, RELKIND_VIEW);
+		Assert(relid != InvalidOid);
+		return relid;
 	}
 }
 

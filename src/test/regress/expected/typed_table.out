@@ -2,6 +2,8 @@ CREATE TABLE ttable1 OF nothing;
 ERROR:  type "nothing" does not exist
 CREATE TYPE person_type AS (id int, name text);
 CREATE TABLE persons OF person_type;
+CREATE TABLE IF NOT EXISTS persons OF person_type;
+NOTICE:  relation "persons" already exists, skipping
 SELECT * FROM persons;
  id | name 
 ----+------

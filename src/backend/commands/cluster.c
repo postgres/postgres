@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/cluster.c,v 1.203 2010/04/28 16:10:41 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/cluster.c,v 1.204 2010/07/25 23:21:21 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -687,7 +687,9 @@ make_new_heap(Oid OIDOldHeap, Oid NewTableSpace)
 										  ONCOMMIT_NOOP,
 										  reloptions,
 										  false,
-										  true);
+										  true,
+										  false);
+	Assert(OIDNewHeap != InvalidOid);
 
 	ReleaseSysCache(tuple);
 
