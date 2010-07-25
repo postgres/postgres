@@ -4,7 +4,7 @@
  *	server checks and output routines
  *
  *	Copyright (c) 2010, PostgreSQL Global Development Group
- *	$PostgreSQL: pgsql/contrib/pg_upgrade/check.c,v 1.12 2010/07/13 15:56:53 momjian Exp $
+ *	$PostgreSQL: pgsql/contrib/pg_upgrade/check.c,v 1.13 2010/07/25 03:28:32 momjian Exp $
  */
 
 #include "pg_upgrade.h"
@@ -14,6 +14,7 @@ static void set_locale_and_encoding(migratorContext *ctx, Cluster whichCluster);
 static void check_new_db_is_empty(migratorContext *ctx);
 static void check_locale_and_encoding(migratorContext *ctx, ControlData *oldctrl,
 						  ControlData *newctrl);
+static void check_for_reg_data_type_usage(migratorContext *ctx, Cluster whichCluster);
 
 
 void
@@ -61,11 +62,12 @@ check_old_cluster(migratorContext *ctx, bool live_check,
 	 * Check for various failure cases
 	 */
 
-	old_8_3_check_for_isn_and_int8_passing_mismatch(ctx, CLUSTER_OLD);
+	check_for_reg_data_type_usage(ctx, CLUSTER_OLD);
 
 	/* old = PG 8.3 checks? */
 	if (GET_MAJOR_VERSION(ctx->old.major_version) <= 803)
 	{
+		old_8_3_check_for_isn_and_int8_passing_mismatch(ctx, CLUSTER_OLD);
 		old_8_3_check_for_name_data_type_usage(ctx, CLUSTER_OLD);
 		old_8_3_check_for_tsquery_usage(ctx, CLUSTER_OLD);
 		if (ctx->check)
@@ -438,4 +440,105 @@ create_script_for_old_cluster_deletion(migratorContext *ctx,
 #endif
 
 	check_ok(ctx);
+}
+
+
+/*
+ * check_for_reg_data_type_usage()
+ *	pg_upgrade only preserves these system values:
+ *		pg_class.relfilenode
+ *		pg_type.oid
+ *		pg_enum.oid
+ *
+ *  Most of the reg* data types reference system catalog info that is
+ *	not preserved, and hence these data types cannot be used in user
+ *	tables upgraded by pg_upgrade.
+ */
+void
+check_for_reg_data_type_usage(migratorContext *ctx, Cluster whichCluster)
+{
+	ClusterInfo *active_cluster = (whichCluster == CLUSTER_OLD) ?
+	&ctx->old : &ctx->new;
+	int			dbnum;
+	FILE	   *script = NULL;
+	bool		found = false;
+	char		output_path[MAXPGPATH];
+
+	prep_status(ctx, "Checking for reg* system oid user data types");
+
+	snprintf(output_path, sizeof(output_path), "%s/tables_using_reg.txt",
+			 ctx->cwd);
+
+	for (dbnum = 0; dbnum < active_cluster->dbarr.ndbs; dbnum++)
+	{
+		PGresult   *res;
+		bool		db_used = false;
+		int			ntups;
+		int			rowno;
+		int			i_nspname,
+					i_relname,
+					i_attname;
+		DbInfo	   *active_db = &active_cluster->dbarr.dbs[dbnum];
+		PGconn	   *conn = connectToServer(ctx, active_db->db_name, whichCluster);
+
+		res = executeQueryOrDie(ctx, conn,
+								"SELECT n.nspname, c.relname, a.attname "
+								"FROM	pg_catalog.pg_class c, "
+								"		pg_catalog.pg_namespace n, "
+								"		pg_catalog.pg_attribute a "
+								"WHERE	c.oid = a.attrelid AND "
+								"		NOT a.attisdropped AND "
+								"		a.atttypid IN ( "
+								"			'pg_catalog.regproc'::pg_catalog.regtype, "
+								"			'pg_catalog.regprocedure'::pg_catalog.regtype, "
+								"			'pg_catalog.regoper'::pg_catalog.regtype, "
+								"			'pg_catalog.regoperator'::pg_catalog.regtype, "
+								"			'pg_catalog.regclass'::pg_catalog.regtype, "
+								/* regtype.oid is preserved, so 'regtype' is OK */
+								"			'pg_catalog.regconfig'::pg_catalog.regtype, "
+								"			'pg_catalog.regdictionary'::pg_catalog.regtype) AND "
+								"		c.relnamespace = n.oid AND "
+							  "		n.nspname != 'pg_catalog' AND "
+						 "		n.nspname != 'information_schema'");
+
+		ntups = PQntuples(res);
+		i_nspname = PQfnumber(res, "nspname");
+		i_relname = PQfnumber(res, "relname");
+		i_attname = PQfnumber(res, "attname");
+		for (rowno = 0; rowno < ntups; rowno++)
+		{
+			found = true;
+			if (script == NULL && (script = fopen(output_path, "w")) == NULL)
+				pg_log(ctx, PG_FATAL, "Could not create necessary file:  %s\n", output_path);
+			if (!db_used)
+			{
+				fprintf(script, "Database:  %s\n", active_db->db_name);
+				db_used = true;
+			}
+			fprintf(script, "  %s.%s.%s\n",
+					PQgetvalue(res, rowno, i_nspname),
+					PQgetvalue(res, rowno, i_relname),
+					PQgetvalue(res, rowno, i_attname));
+		}
+
+		PQclear(res);
+
+		PQfinish(conn);
+	}
+
+	if (found)
+	{
+		fclose(script);
+		pg_log(ctx, PG_REPORT, "fatal\n");
+		pg_log(ctx, PG_FATAL,
+			   "| Your installation contains one of the reg* data types in\n"
+			   "| user tables.  These data types reference system oids that\n"
+			   "| are not preserved by pg_upgrade, so this cluster cannot\n"
+			   "| currently be upgraded.  You can remove the problem tables\n"
+			   "| and restart the migration.  A list of the problem columns\n"
+			   "| is in the file:\n"
+			   "| \t%s\n\n", output_path);
+	}
+	else
+		check_ok(ctx);
 }

@@ -4,7 +4,7 @@
  *	server-side function support
  *
  *	Copyright (c) 2010, PostgreSQL Global Development Group
- *	$PostgreSQL: pgsql/contrib/pg_upgrade/function.c,v 1.6 2010/07/03 16:33:14 momjian Exp $
+ *	$PostgreSQL: pgsql/contrib/pg_upgrade/function.c,v 1.7 2010/07/25 03:28:32 momjian Exp $
  */
 
 #include "pg_upgrade.h"
@@ -253,7 +253,7 @@ check_loadable_libraries(migratorContext *ctx)
 		fclose(script);
 		pg_log(ctx, PG_REPORT, "fatal\n");
 		pg_log(ctx, PG_FATAL,
-			 "| Your installation uses loadable libraries that are missing\n"
+			 "| Your installation references loadable libraries that are missing\n"
 			 "| from the new installation.  You can add these libraries to\n"
 			   "| the new installation, or remove the functions using them\n"
 			"| from the old installation.  A list of the problem libraries\n"

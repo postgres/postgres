@@ -4,7 +4,7 @@
  *	Postgres-version-specific routines
  *
  *	Copyright (c) 2010, PostgreSQL Global Development Group
- *	$PostgreSQL: pgsql/contrib/pg_upgrade/version_old_8_3.c,v 1.6 2010/07/03 16:33:14 momjian Exp $
+ *	$PostgreSQL: pgsql/contrib/pg_upgrade/version_old_8_3.c,v 1.7 2010/07/25 03:28:32 momjian Exp $
  */
 
 #include "pg_upgrade.h"
@@ -94,7 +94,7 @@ old_8_3_check_for_name_data_type_usage(migratorContext *ctx, Cluster whichCluste
 		fclose(script);
 		pg_log(ctx, PG_REPORT, "fatal\n");
 		pg_log(ctx, PG_FATAL,
-			   "| Your installation uses the \"name\" data type in\n"
+			   "| Your installation contains the \"name\" data type in\n"
 			   "| user tables.  This data type changed its internal\n"
 			   "| alignment between your old and new clusters so this\n"
 			   "| cluster cannot currently be upgraded.  You can\n"
@@ -184,7 +184,7 @@ old_8_3_check_for_tsquery_usage(migratorContext *ctx, Cluster whichCluster)
 		fclose(script);
 		pg_log(ctx, PG_REPORT, "fatal\n");
 		pg_log(ctx, PG_FATAL,
-			   "| Your installation uses the \"tsquery\" data type.\n"
+			   "| Your installation contains the \"tsquery\" data type.\n"
 			   "| This data type added a new internal field between\n"
 			   "| your old and new clusters so this cluster cannot\n"
 			   "| currently be upgraded.  You can remove the problem\n"
@@ -274,7 +274,7 @@ old_8_3_check_for_isn_and_int8_passing_mismatch(migratorContext *ctx, Cluster wh
 		fclose(script);
 		pg_log(ctx, PG_REPORT, "fatal\n");
 		pg_log(ctx, PG_FATAL,
-			   "| Your installation uses \"/contrib/isn\" functions\n"
+			   "| Your installation contains \"/contrib/isn\" functions\n"
 			   "| which rely on the bigint data type.  Your old and\n"
 			   "| new clusters pass bigint values differently so this\n"
 			   "| cluster cannot currently be upgraded.  You can\n"
