@@ -2,7 +2,7 @@
  *	pg_upgrade.h
  *
  *	Copyright (c) 2010, PostgreSQL Global Development Group
- *	$PostgreSQL: pgsql/contrib/pg_upgrade/pg_upgrade.h,v 1.15 2010/07/06 19:18:55 momjian Exp $
+ *	$PostgreSQL: pgsql/contrib/pg_upgrade/pg_upgrade.h,v 1.16 2010/07/25 03:47:29 momjian Exp $
  */
 
 #include "postgres.h"
@@ -388,8 +388,6 @@ void old_8_3_check_for_name_data_type_usage(migratorContext *ctx,
 									   Cluster whichCluster);
 void old_8_3_check_for_tsquery_usage(migratorContext *ctx,
 								Cluster whichCluster);
-void old_8_3_check_for_isn_and_int8_passing_mismatch(migratorContext *ctx,
-												Cluster whichCluster);
 void old_8_3_rebuild_tsvector_tables(migratorContext *ctx,
 								bool check_mode, Cluster whichCluster);
 void old_8_3_invalidate_hash_gin_indexes(migratorContext *ctx,
