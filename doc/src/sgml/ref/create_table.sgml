@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_table.sgml,v 1.129 2010/07/25 23:21:21 rhaas Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_table.sgml,v 1.130 2010/07/26 01:43:52 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -168,9 +168,9 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE [ IF NOT EXISTS ] <repl
     <listitem>
      <para>
       Do not throw an error if a relation with the same name already exists.
-	  A notice is issued in this case.  Note that there is no guarantee that
-	  the existing relation is anything like the one that would have been
-	  created.
+      A notice is issued in this case.  Note that there is no guarantee that
+      the existing relation is anything like the one that would have been
+      created.
      </para>
     </listitem>
    </varlistentry>
