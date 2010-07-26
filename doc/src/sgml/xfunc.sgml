@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.149.2.1 2010/07/25 08:30:41 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.149.2.2 2010/07/26 20:14:06 petere Exp $ -->
 
  <sect1 id="xfunc">
   <title>User-Defined Functions</title>
@@ -861,10 +861,23 @@ SELECT * FROM getfoo(1) AS t1;
      output parameters, like this:
 
 <programlisting>
+CREATE TABLE tab (y int, z int);
+INSERT INTO tab VALUES (1, 2), (3, 4), (5, 6), (7, 8);
+
 CREATE FUNCTION sum_n_product_with_tab (x int, OUT sum int, OUT product int)
-RETURNS SETOF record AS $$
+RETURNS SETOF record
+AS $$
     SELECT $1 + tab.y, $1 * tab.y FROM tab;
 $$ LANGUAGE SQL;
+
+SELECT * FROM sum_n_product_with_tab(10);
+ sum | product
+-----+---------
+  11 |      10
+  13 |      30
+  15 |      50
+  17 |      70
+(4 rows)
 </programlisting>
 
      The key point here is that you must write <literal>RETURNS SETOF record</>
