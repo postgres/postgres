@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/contrib/sslinfo/sslinfo.sql.in,v 1.4 2007/11/13 04:24:29 momjian Exp $ */
+/* $PostgreSQL: pgsql/contrib/sslinfo/sslinfo.sql.in,v 1.5 2010/07/27 23:43:42 rhaas Exp $ */
 
 -- Adjust this setting to control where the objects get created.
 SET search_path = public;
@@ -9,6 +9,14 @@ LANGUAGE C STRICT;
 
 CREATE OR REPLACE FUNCTION ssl_is_used() RETURNS boolean
 AS 'MODULE_PATHNAME', 'ssl_is_used'
+LANGUAGE C STRICT;
+
+CREATE OR REPLACE FUNCTION ssl_version() RETURNS text
+AS 'MODULE_PATHNAME', 'ssl_version'
+LANGUAGE C STRICT;
+
+CREATE OR REPLACE FUNCTION ssl_cipher() RETURNS text
+AS 'MODULE_PATHNAME', 'ssl_cipher'
 LANGUAGE C STRICT;
 
 CREATE OR REPLACE FUNCTION ssl_client_cert_present() RETURNS boolean

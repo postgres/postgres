@@ -4,7 +4,7 @@
  * Written by Victor B. Wagner <vitus@cryptocom.ru>, Cryptocom LTD
  * This file is distributed under BSD-style license.
  *
- * $PostgreSQL: pgsql/contrib/sslinfo/sslinfo.c,v 1.8 2008/11/10 14:57:38 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/sslinfo/sslinfo.c,v 1.9 2010/07/27 23:43:42 rhaas Exp $
  */
 
 #include "postgres.h"
@@ -23,6 +23,8 @@ PG_MODULE_MAGIC;
 
 
 Datum		ssl_is_used(PG_FUNCTION_ARGS);
+Datum		ssl_version(PG_FUNCTION_ARGS);
+Datum		ssl_cipher(PG_FUNCTION_ARGS);
 Datum		ssl_client_cert_present(PG_FUNCTION_ARGS);
 Datum		ssl_client_serial(PG_FUNCTION_ARGS);
 Datum		ssl_client_dn_field(PG_FUNCTION_ARGS);
@@ -45,6 +47,32 @@ Datum
 ssl_is_used(PG_FUNCTION_ARGS)
 {
 	PG_RETURN_BOOL(MyProcPort->ssl != NULL);
+}
+
+
+/*
+ * Returns SSL cipher currently in use.
+ */
+PG_FUNCTION_INFO_V1(ssl_version);
+Datum
+ssl_version(PG_FUNCTION_ARGS)
+{
+	if (MyProcPort->ssl == NULL)
+		PG_RETURN_NULL();
+	PG_RETURN_TEXT_P(cstring_to_text(SSL_get_version(MyProcPort->ssl)));
+}
+
+
+/*
+ * Returns SSL cipher currently in use.
+ */
+PG_FUNCTION_INFO_V1(ssl_cipher);
+Datum
+ssl_cipher(PG_FUNCTION_ARGS)
+{
+	if (MyProcPort->ssl == NULL)
+		PG_RETURN_NULL();
+	PG_RETURN_TEXT_P(cstring_to_text(SSL_get_cipher(MyProcPort->ssl)));
 }
 
 

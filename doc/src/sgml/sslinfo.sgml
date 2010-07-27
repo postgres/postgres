@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/sslinfo.sgml,v 1.3 2007/12/06 04:12:10 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/sslinfo.sgml,v 1.4 2010/07/27 23:43:42 rhaas Exp $ -->
 
 <sect1 id="sslinfo">
  <title>sslinfo</title>
@@ -31,6 +31,30 @@ ssl_is_used() returns boolean
     <para>
      Returns TRUE if current connection to server uses SSL, and FALSE
      otherwise.
+    </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><function>
+ssl_version() returns text
+    </function></term>
+    <listitem>
+    <para>
+     Returns the name of the protocol used for the SSL connection (e.g. SSLv2,
+     SSLv3, or TLSv1).
+    </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><function>
+ssl_cipher() returns text
+    </function></term>
+    <listitem>
+    <para>
+     Returns the name of the cipher used for the SSL connection
+     (e.g. DHE-RSA-AES256-SHA).
     </para>
     </listitem>
    </varlistentry>
