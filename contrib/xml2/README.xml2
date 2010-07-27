@@ -159,7 +159,7 @@ Makefile)
 
 xslt_process(document,stylesheet,paramlist) RETURNS text
 
-This function appplies the XSL stylesheet to the document and returns
+This function applies the XSL stylesheet to the document and returns
 the transformed result. The paramlist is a list of parameter
 assignments to be used in the transformation, specified in the form
 'a=1,b=2'. Note that this is also proof-of-concept code and the
