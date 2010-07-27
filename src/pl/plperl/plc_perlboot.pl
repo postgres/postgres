@@ -1,7 +1,8 @@
 
-#  $PostgreSQL: pgsql/src/pl/plperl/plc_perlboot.pl,v 1.6 2010/05/13 16:39:43 adunstan Exp $
+#  $PostgreSQL: pgsql/src/pl/plperl/plc_perlboot.pl,v 1.6.2.1 2010/07/27 04:18:31 alvherre Exp $
 
 use 5.008001;
+use vars qw(%_SHARED);
 
 PostgreSQL::InServer::Util::bootstrap();
 
@@ -9,7 +10,6 @@ package PostgreSQL::InServer;
 
 use strict;
 use warnings;
-use vars qw(%_SHARED);
 
 sub plperl_warn {
 	(my $msg = shift) =~ s/\(eval \d+\) //g;
