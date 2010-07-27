@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.142.2.1 2010/02/19 23:55:52 rhaas Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.142.2.2 2010/07/27 20:02:27 rhaas Exp $ -->
 
 <chapter id="plpgsql">
   <title><application>PL/pgSQL</application> - <acronym>SQL</acronym> Procedural Language</title>
@@ -4243,7 +4243,7 @@ show errors;
 <programlisting>
 CREATE OR REPLACE FUNCTION cs_update_referrer_type_proc() RETURNS void AS $func$
 DECLARE
-    CURSOR referrer_keys IS
+    referrer_keys CURSOR IS
         SELECT * FROM cs_referrer_keys
         ORDER BY try_order;
     func_body text;
