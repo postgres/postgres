@@ -29,3 +29,14 @@ select setme('ourkey','ourval');
 select getme('ourkey');
 
 select getme('on_init');
+
+-- verify that we can use $_SHARED in strict mode
+create or replace function perl_shared() returns int as $$
+use strict;
+my $val = $_SHARED{'stuff'};
+$_SHARED{'stuff'} = '1';
+return $val;
+$$ language plperl;
+
+select perl_shared();
+select perl_shared();
