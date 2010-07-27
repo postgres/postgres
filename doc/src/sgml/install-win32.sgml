@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/install-win32.sgml,v 1.57 2010/03/17 17:12:31 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/install-win32.sgml,v 1.58 2010/07/27 19:01:16 petere Exp $ -->
 
 <chapter id="install-win32">
  <title>Installation from Source Code on <productname>Windows</productname></title>
@@ -19,7 +19,7 @@
  <para>
   There are several different ways of building PostgreSQL on
   <productname>Windows</productname>. The simplest way to build with
-  Microsoft tools is to intall a modern version of the
+  Microsoft tools is to install a modern version of the
   <productname>Microsoft Platform SDK</productname> and use use the included
   compiler. It is also possible to build with the full
   <productname>Microsoft Visual C++ 2005 or 2008</productname>. In some cases

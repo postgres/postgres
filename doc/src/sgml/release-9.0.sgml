@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release-9.0.sgml,v 2.42 2010/07/12 18:30:36 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release-9.0.sgml,v 2.43 2010/07/27 19:01:16 petere Exp $ -->
 
  <sect1 id="release-9-0">
   <title>Release 9.0</title>
@@ -685,7 +685,7 @@
     <title>Monitoring</title>
     <para>
      With increased use of PostgreSQL in high-end production systems,
-     users need increased monitoring.  PostgresSQL 9.0 continues to add
+     users need increased monitoring.  PostgreSQL 9.0 continues to add
      more ways to monitor PostgreSQL applications.
     </para>
 
@@ -744,7 +744,7 @@
        Add <link
        linkend="monitoring-stats-funcs-table"><function>pg_stat_reset_shared('bgwriter')</></link>
        to reset the cluster-wide shared statistics of the
-       bgwriter (Greg Smith)
+       background writer (Greg Smith)
       </para>
      </listitem>
 
@@ -753,7 +753,7 @@
        Add <link
        linkend="monitoring-stats-funcs-table"><function>pg_stat_reset_single_table_counters()</></link>
        and <function>pg_stat_reset_single_function_counters()</>
-       to allow the reseting of statistics counters for individual
+       to allow the resetting of statistics counters for individual
        tables and indexes (Magnus Hagander)
       </para>
      </listitem>

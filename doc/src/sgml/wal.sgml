@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/wal.sgml,v 1.70 2010/07/16 11:35:40 heikki Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/wal.sgml,v 1.71 2010/07/27 19:01:16 petere Exp $ -->
 
 <chapter id="wal">
  <title>Reliability and the Write-Ahead Log</title>
@@ -91,7 +91,7 @@
   <para>
    Many file systems that use write barriers (e.g.  <acronym>ZFS</>,
    <acronym>ext4</>) internally use <command>FLUSH CACHE EXT</> or
-   <command>SYNCHRONIZE CACHE</> commands to flush data to the platers on
+   <command>SYNCHRONIZE CACHE</> commands to flush data to the platters on
    write-back-enabled drives.  Unfortunately, such write barrier file
    systems behave suboptimally when combined with battery-backed unit
    (<acronym>BBU</>) disk controllers.  In such setups, the synchronize

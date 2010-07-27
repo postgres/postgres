@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.315 2010/07/18 11:37:25 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.316 2010/07/27 19:01:16 petere Exp $ -->
 
 <chapter id="libpq">
  <title><application>libpq</application> - C Library</title>
@@ -1766,7 +1766,7 @@ PGresult *PQexecParams(PGconn *conn,
             to be text strings.
            </para>
            <para>
-            Values passed in binary format require knowlege of
+            Values passed in binary format require knowledge of
             the internal representation expected by the backend.
             For example, integers must be passed in network byte
             order.  Passing <type>numeric</> values requires
