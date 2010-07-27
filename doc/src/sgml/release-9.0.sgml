@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release-9.0.sgml,v 2.39 2010/07/08 22:26:14 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release-9.0.sgml,v 2.39.2.1 2010/07/27 19:01:04 petere Exp $ -->
 
  <sect1 id="release-9-0">
   <title>Release 9.0</title>
@@ -534,7 +534,7 @@
 
      <listitem>
       <para>
-       Use the same random seed everytime GEQO plans a query (Andres
+       Use the same random seed every time GEQO plans a query (Andres
        Freund)
       </para>
 
@@ -686,7 +686,7 @@
     <title>Monitoring</title>
     <para>
      With increased use of PostgreSQL in high-end production systems,
-     users need increased monitoring.  PostgresSQL 9.0 continues to add
+     users need increased monitoring.  PostgreSQL 9.0 continues to add
      more ways to monitor PostgreSQL applications.
     </para>
 
@@ -745,7 +745,7 @@
        Add <link
        linkend="monitoring-stats-funcs-table"><function>pg_stat_reset_shared('bgwriter')</></link>
        to reset the cluster-wide shared statistics of the
-       bgwriter (Greg Smith)
+       background writer (Greg Smith)
       </para>
      </listitem>
 
@@ -754,7 +754,7 @@
        Add <link
        linkend="monitoring-stats-funcs-table"><function>pg_stat_reset_single_table_counters()</></link>
        and <function>pg_stat_reset_single_function_counters()</>
-       to allow the reseting of statistics counters for individual
+       to allow the resetting of statistics counters for individual
        tables and indexes (Magnus Hagander)
       </para>
      </listitem>

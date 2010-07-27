@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.250.2.2 2010/07/24 16:46:43 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.250.2.3 2010/07/27 19:01:04 petere Exp $ -->
 
  <chapter id="datatype">
   <title>Data Types</title>
@@ -1248,7 +1248,7 @@ SELECT E'\\xDEADBEEF';
     represented as an ASCII character into special escape sequences.
     If, from the point of view of the application, representing bytes
     as characters makes sense, then this representation can be
-    convenient.  But in practice it is usually confusing becauses it
+    convenient.  But in practice it is usually confusing because it
     fuzzes up the distinction between binary strings and character
     strings, and also the particular escape mechanism that was chosen is
     somewhat unwieldy.  So this format should probably be avoided
