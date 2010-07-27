@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.325.2.6 2010/01/16 20:38:57 mha Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.325.2.7 2010/07/27 18:56:22 petere Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -2269,7 +2269,7 @@ hosts=local4,bind4
 -bash-3.00$ createlang plpgsql template1
 createlang: language installation failed: ERROR:  could not load library "/opt/dbs/pgsql748/lib/plpgsql.so": A memory address is not in the address space for the process.
 </screen>
-    Running as a non-owner in the group posessing the PostgreSQL
+    Running as a non-owner in the group possessing the PostgreSQL
     installation:
 <screen>
 -bash-3.00$ createlang plpgsql template1
