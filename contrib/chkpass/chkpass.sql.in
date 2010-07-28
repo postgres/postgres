@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/contrib/chkpass/chkpass.sql.in,v 1.9 2007/11/13 04:24:27 momjian Exp $ */
+/* $PostgreSQL: pgsql/contrib/chkpass/chkpass.sql.in,v 1.10 2010/07/28 20:34:34 petere Exp $ */
 
 -- Adjust this setting to control where the objects get created.
 SET search_path = public;
@@ -19,7 +19,6 @@ CREATE OR REPLACE FUNCTION chkpass_out(chkpass)
 
 CREATE TYPE chkpass (
 	internallength = 16,
-	externallength = 13,
 	input = chkpass_in,
 	output = chkpass_out
 );
