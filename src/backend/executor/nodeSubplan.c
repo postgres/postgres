@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeSubplan.c,v 1.70.2.3 2007/04/26 23:25:08 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeSubplan.c,v 1.70.2.4 2010/07/28 04:51:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -78,7 +78,6 @@ ExecHashSubPlan(SubPlanState *node,
 {
 	SubPlan    *subplan = (SubPlan *) node->xprstate.expr;
 	PlanState  *planstate = node->planstate;
-	ExprContext *innerecontext = node->innerecontext;
 	TupleTableSlot *slot;
 
 	/* Shouldn't have any direct correlation Vars */
@@ -114,12 +113,6 @@ ExecHashSubPlan(SubPlanState *node,
 	 * be reset before we're called again, and then the tuple slot will think
 	 * it still needs to free the tuple.
 	 */
-
-	/*
-	 * Since the hashtable routines will use innerecontext's per-tuple memory
-	 * as working memory, be sure to reset it for each tuple.
-	 */
-	ResetExprContext(innerecontext);
 
 	/*
 	 * If the LHS is all non-null, probe for an exact match in the main hash
@@ -465,7 +458,6 @@ buildSubPlanHash(SubPlanState *node)
 	PlanState  *planstate = node->planstate;
 	int			ncols = list_length(node->exprs);
 	ExprContext *innerecontext = node->innerecontext;
-	MemoryContext tempcxt = innerecontext->ecxt_per_tuple_memory;
 	MemoryContext oldcontext;
 	int			nbuckets;
 	TupleTableSlot *slot;
@@ -488,7 +480,7 @@ buildSubPlanHash(SubPlanState *node)
 	 * If it's not necessary to distinguish FALSE and UNKNOWN, then we don't
 	 * need to store subplan output rows that contain NULL.
 	 */
-	MemoryContextReset(node->tablecxt);
+	MemoryContextReset(node->hashtablecxt);
 	node->hashtable = NULL;
 	node->hashnulls = NULL;
 	node->havehashrows = false;
@@ -504,8 +496,8 @@ buildSubPlanHash(SubPlanState *node)
 										  node->hashfunctions,
 										  nbuckets,
 										  sizeof(TupleHashEntryData),
-										  node->tablecxt,
-										  tempcxt);
+										  node->hashtablecxt,
+										  node->hashtempcxt);
 
 	if (!subplan->unknownEqFalse)
 	{
@@ -523,8 +515,8 @@ buildSubPlanHash(SubPlanState *node)
 											  node->hashfunctions,
 											  nbuckets,
 											  sizeof(TupleHashEntryData),
-											  node->tablecxt,
-											  tempcxt);
+											  node->hashtablecxt,
+											  node->hashtempcxt);
 	}
 
 	/*
@@ -583,7 +575,7 @@ buildSubPlanHash(SubPlanState *node)
 
 		/*
 		 * Reset innerecontext after each inner tuple to free any memory used
-		 * in hash computation or comparison routines.
+		 * during ExecProject.
 		 */
 		ResetExprContext(innerecontext);
 	}
@@ -699,7 +691,8 @@ ExecInitSubPlan(SubPlanState *node, EState *estate)
 	node->projRight = NULL;
 	node->hashtable = NULL;
 	node->hashnulls = NULL;
-	node->tablecxt = NULL;
+	node->hashtablecxt = NULL;
+	node->hashtempcxt = NULL;
 	node->innerecontext = NULL;
 	node->keyColIdx = NULL;
 	node->eqfunctions = NULL;
@@ -775,12 +768,19 @@ ExecInitSubPlan(SubPlanState *node, EState *estate)
 		ListCell   *lexpr;
 
 		/* We need a memory context to hold the hash table(s) */
-		node->tablecxt =
+		node->hashtablecxt =
 			AllocSetContextCreate(CurrentMemoryContext,
 								  "Subplan HashTable Context",
 								  ALLOCSET_DEFAULT_MINSIZE,
 								  ALLOCSET_DEFAULT_INITSIZE,
 								  ALLOCSET_DEFAULT_MAXSIZE);
+		/* and a small one for the hash tables to use as temp storage */
+		node->hashtempcxt =
+			AllocSetContextCreate(CurrentMemoryContext,
+								  "Subplan HashTable Temp Context",
+								  ALLOCSET_SMALL_MINSIZE,
+								  ALLOCSET_SMALL_INITSIZE,
+								  ALLOCSET_SMALL_MAXSIZE);
 		/* and a short-lived exprcontext for function evaluation */
 		node->innerecontext = CreateExprContext(estate);
 		/* Silly little array of column numbers 1..n */
