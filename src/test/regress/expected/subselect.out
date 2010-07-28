@@ -492,3 +492,12 @@ from
 -----
 (0 rows)
 
+--
+-- Test case for premature memory release during hashing of subplan output
+--
+select '1'::text in (select '1'::name union all select '1'::name);
+ ?column? 
+----------
+ t
+(1 row)
+
