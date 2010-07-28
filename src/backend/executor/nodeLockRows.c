@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeLockRows.c,v 1.4 2010/02/26 02:00:42 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeLockRows.c,v 1.4.4.1 2010/07/28 17:22:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -194,6 +194,13 @@ lnext:
 			ExecRowMark *erm = (ExecRowMark *) lfirst(lc);
 			HeapTupleData tuple;
 			Buffer		buffer;
+
+			/* ignore non-active child tables */
+			if (!ItemPointerIsValid(&(erm->curCtid)))
+			{
+				Assert(erm->rti != erm->prti);	/* check it's child table */
+				continue;
+			}
 
 			if (EvalPlanQualGetTuple(&node->lr_epqstate, erm->rti) != NULL)
 				continue;		/* it was updated and fetched above */
