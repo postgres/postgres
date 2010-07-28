@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/execnodes.h,v 1.219 2010/02/26 02:01:25 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/execnodes.h,v 1.220 2010/07/28 04:50:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -699,8 +699,9 @@ typedef struct SubPlanState
 	TupleHashTable hashnulls;	/* hash table for rows with null(s) */
 	bool		havehashrows;	/* TRUE if hashtable is not empty */
 	bool		havenullrows;	/* TRUE if hashnulls is not empty */
-	MemoryContext tablecxt;		/* memory context containing tables */
-	ExprContext *innerecontext; /* working context for comparisons */
+	MemoryContext hashtablecxt;	/* memory context containing hash tables */
+	MemoryContext hashtempcxt;	/* temp memory context for hash tables */
+	ExprContext *innerecontext; /* econtext for computing inner tuples */
 	AttrNumber *keyColIdx;		/* control data for hash tables */
 	FmgrInfo   *tab_hash_funcs; /* hash functions for table datatype(s) */
 	FmgrInfo   *tab_eq_funcs;	/* equality functions for table datatype(s) */
