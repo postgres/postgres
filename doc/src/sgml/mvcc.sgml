@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/mvcc.sgml,v 2.75 2010/05/03 15:35:30 alvherre Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/mvcc.sgml,v 2.76 2010/07/28 05:22:24 sriggs Exp $ -->
 
  <chapter id="mvcc">
   <title>Concurrency Control</title>
@@ -532,7 +532,7 @@ SELECT SUM(value) FROM mytab WHERE class = 2;
     most <productname>PostgreSQL</productname> commands automatically
     acquire locks of appropriate modes to ensure that referenced
     tables are not dropped or modified in incompatible ways while the
-    command executes.  (For example, <command>ALTER TABLE</> cannot safely be
+    command executes.  (For example, <command>TRUNCATE</> cannot safely be
     executed concurrently with other operations on the same table, so it
     obtains an exclusive lock on the table to enforce that.)
    </para>
@@ -695,8 +695,9 @@ SELECT SUM(value) FROM mytab WHERE class = 2;
         </para>
 
         <para>
-         This lock mode is not automatically acquired by any
-         <productname>PostgreSQL</productname> command.
+         Acquired by <command>CREATE TRIGGER</command>,
+         <command>CREATE RULE</command> (except for <literal>ON SELECT</>
+         rules) and in some cases <command>ALTER TABLE</command>.
         </para>
        </listitem>
       </varlistentry>
@@ -742,11 +743,12 @@ SELECT SUM(value) FROM mytab WHERE class = 2;
         </para>
 
         <para>
-         Acquired by the <command>ALTER TABLE</command>, <command>DROP
-         TABLE</command>, <command>TRUNCATE</command>, <command>REINDEX</command>,
+         Acquired by the <command>DROP TABLE</command>,
+         <command>TRUNCATE</command>, <command>REINDEX</command>,
          <command>CLUSTER</command>, and <command>VACUUM FULL</command>
-         commands.  This is also the default lock mode for <command>LOCK
-         TABLE</command> statements that do not specify a mode explicitly.
+         commands, as well as most variants of <command>ALTER TABLE</>.
+         This is also the default lock mode for <command>LOCK TABLE</command>
+         statements that do not specify a mode explicitly.
         </para>
        </listitem>
       </varlistentry>

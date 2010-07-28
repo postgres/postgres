@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.262 2010/02/26 02:00:39 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.263 2010/07/28 05:22:24 sriggs Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -141,7 +141,14 @@ CreateTrigger(CreateTrigStmt *stmt, const char *queryString,
 	ObjectAddress myself,
 				referenced;
 
-	rel = heap_openrv(stmt->relation, AccessExclusiveLock);
+	/*
+	 * ShareRowExclusiveLock is sufficient to prevent concurrent write activity
+	 * to the relation, and thus to lock out any operations that might want to
+	 * fire triggers on the relation.  If we had ON SELECT triggers we would
+	 * need to take an AccessExclusiveLock to add one of those, just as we do
+	 * with ON SELECT rules.
+	 */
+	rel = heap_openrv(stmt->relation, ShareRowExclusiveLock);
 
 	if (rel->rd_rel->relkind != RELKIND_RELATION)
 		ereport(ERROR,
@@ -417,7 +424,7 @@ CreateTrigger(CreateTrigStmt *stmt, const char *queryString,
 	 * can skip this for internally generated triggers, since the name
 	 * modification above should be sufficient.
 	 *
-	 * NOTE that this is cool only because we have AccessExclusiveLock on the
+	 * NOTE that this is cool only because we have ShareRowExclusiveLock on the
 	 * relation, so the trigger set won't be changing underneath us.
 	 */
 	if (!isInternal)
@@ -1051,11 +1058,14 @@ RemoveTriggerById(Oid trigOid)
 		elog(ERROR, "could not find tuple for trigger %u", trigOid);
 
 	/*
-	 * Open and exclusive-lock the relation the trigger belongs to.
+	 * Open and lock the relation the trigger belongs to.  As in
+	 * CreateTrigger, this is sufficient to lock out all operations that
+	 * could fire or add triggers; but it would need to be revisited if
+	 * we had ON SELECT triggers.
 	 */
 	relid = ((Form_pg_trigger) GETSTRUCT(tup))->tgrelid;
 
-	rel = heap_open(relid, AccessExclusiveLock);
+	rel = heap_open(relid, ShareRowExclusiveLock);
 
 	if (rel->rd_rel->relkind != RELKIND_RELATION)
 		ereport(ERROR,

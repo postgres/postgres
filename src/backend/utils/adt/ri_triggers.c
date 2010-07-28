@@ -15,7 +15,7 @@
  *
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/ri_triggers.c,v 1.119 2010/07/22 00:47:52 rhaas Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/ri_triggers.c,v 1.120 2010/07/28 05:22:24 sriggs Exp $
  *
  * ----------
  */
@@ -2608,7 +2608,7 @@ RI_FKey_keyequal_upd_fk(Trigger *trigger, Relation fk_rel,
  *	This is not a trigger procedure, but is called during ALTER TABLE
  *	ADD FOREIGN KEY to validate the initial table contents.
  *
- *	We expect that an exclusive lock has been taken on rel and pkrel;
+ *	We expect that a ShareRowExclusiveLock or higher has been taken on rel and pkrel;
  *	hence, we do not need to lock individual rows for the check.
  *
  *	If the check fails because the current user doesn't have permissions

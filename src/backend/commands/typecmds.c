@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/typecmds.c,v 1.149 2010/07/25 23:21:21 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/typecmds.c,v 1.150 2010/07/28 05:22:24 sriggs Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -2638,7 +2638,7 @@ AlterTypeOwner(List *names, Oid newOwnerId)
 		 * AlterTypeOwnerInternal to take care of the pg_type entry(s).
 		 */
 		if (typTup->typtype == TYPTYPE_COMPOSITE)
-			ATExecChangeOwner(typTup->typrelid, newOwnerId, true);
+			ATExecChangeOwner(typTup->typrelid, newOwnerId, true, AccessExclusiveLock);
 		else
 		{
 			/*

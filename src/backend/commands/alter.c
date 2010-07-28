@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/alter.c,v 1.36 2010/06/13 17:43:12 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/alter.c,v 1.37 2010/07/28 05:22:24 sriggs Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -190,7 +190,7 @@ ExecAlterObjectSchemaStmt(AlterObjectSchemaStmt *stmt)
 		case OBJECT_VIEW:
 			CheckRelationOwnership(stmt->relation, true);
 			AlterTableNamespace(stmt->relation, stmt->newschema,
-								stmt->objectType);
+								stmt->objectType, AccessExclusiveLock);
 			break;
 
 		case OBJECT_TYPE:

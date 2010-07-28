@@ -19,7 +19,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/parser/parse_utilcmd.c,v 2.40 2010/02/26 02:00:53 momjian Exp $
+ *	$PostgreSQL: pgsql/src/backend/parser/parse_utilcmd.c,v 2.41 2010/07/28 05:22:24 sriggs Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,6 +53,7 @@
 #include "parser/parse_utilcmd.h"
 #include "parser/parser.h"
 #include "rewrite/rewriteManip.h"
+#include "storage/lock.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
@@ -1528,7 +1529,7 @@ transformFKConstraints(ParseState *pstate, CreateStmtContext *cxt,
 }
 
 /*
- * transformIndexStmt - parse analysis for CREATE INDEX
+ * transformIndexStmt - parse analysis for CREATE INDEX and ALTER TABLE
  *
  * Note: this is a no-op for an index not using either index expressions or
  * a predicate expression.	There are several code paths that create indexes
@@ -1554,7 +1555,8 @@ transformIndexStmt(IndexStmt *stmt, const char *queryString)
 	 * because addRangeTableEntry() would acquire only AccessShareLock,
 	 * leaving DefineIndex() needing to do a lock upgrade with consequent risk
 	 * of deadlock.  Make sure this stays in sync with the type of lock
-	 * DefineIndex() wants.
+	 * DefineIndex() wants. If we are being called by ALTER TABLE, we will
+	 * already hold a higher lock.
 	 */
 	rel = heap_openrv(stmt->relation,
 				  (stmt->concurrent ? ShareUpdateExclusiveLock : ShareLock));
@@ -1919,6 +1921,7 @@ transformAlterTableStmt(AlterTableStmt *stmt, const char *queryString)
 	List	   *newcmds = NIL;
 	bool		skipValidation = true;
 	AlterTableCmd *newcmd;
+	LOCKMODE	lockmode;
 
 	/*
 	 * We must not scribble on the passed-in AlterTableStmt, so copy it. (This
@@ -1927,13 +1930,19 @@ transformAlterTableStmt(AlterTableStmt *stmt, const char *queryString)
 	stmt = (AlterTableStmt *) copyObject(stmt);
 
 	/*
-	 * Acquire exclusive lock on the target relation, which will be held until
+	 * Assign the appropriate lock level for this list of subcommands.
+	 */
+	lockmode = AlterTableGetLockLevel(stmt->cmds);
+
+	/*
+	 * Acquire appropriate lock on the target relation, which will be held until
 	 * end of transaction.	This ensures any decisions we make here based on
 	 * the state of the relation will still be good at execution. We must get
-	 * exclusive lock now because execution will; taking a lower grade lock
-	 * now and trying to upgrade later risks deadlock.
+	 * lock now because execution will later require it; taking a lower grade lock
+	 * now and trying to upgrade later risks deadlock.  Any new commands we add
+	 * after this must not upgrade the lock level requested here.
 	 */
-	rel = relation_openrv(stmt->relation, AccessExclusiveLock);
+	rel = relation_openrv(stmt->relation, lockmode);
 
 	/* Set up pstate */
 	pstate = make_parsestate(NULL);
