@@ -5,7 +5,7 @@
  *
  * Joe Conway <mail@joeconway.com>
  *
- * $PostgreSQL: pgsql/contrib/fuzzystrmatch/fuzzystrmatch.c,v 1.32 2010/01/02 16:57:32 momjian Exp $
+ * $PostgreSQL: pgsql/contrib/fuzzystrmatch/fuzzystrmatch.c,v 1.33 2010/07/29 20:11:48 rhaas Exp $
  * Copyright (c) 2001-2010, PostgreSQL Global Development Group
  * ALL RIGHTS RESERVED;
  *
@@ -90,7 +90,7 @@ soundex_code(char letter)
  */
 #define MAX_LEVENSHTEIN_STRLEN		255
 
-static int levenshtein_internal(const char *s, const char *t,
+static int levenshtein_internal(text *s, text *t,
 					 int ins_c, int del_c, int sub_c);
 
 
@@ -191,7 +191,7 @@ getcode(char c)
  *						  cases, but your mileage may vary.
  */
 static int
-levenshtein_internal(const char *s, const char *t,
+levenshtein_internal(text *s, text *t,
 					 int ins_c, int del_c, int sub_c)
 {
 	int			m,
@@ -203,8 +203,8 @@ levenshtein_internal(const char *s, const char *t,
 	const char *x;
 	const char *y;
 
-	m = strlen(s);
-	n = strlen(t);
+	m = VARSIZE_ANY_EXHDR(s);
+	n = VARSIZE_ANY_EXHDR(t);
 
 	/*
 	 * We can transform an empty s into t with n insertions, or a non-empty t
@@ -244,7 +244,7 @@ levenshtein_internal(const char *s, const char *t,
 		prev[i] = i * del_c;
 
 	/* Loop through rows of the notional array */
-	for (y = t, j = 1; j < n; y++, j++)
+	for (y = VARDATA_ANY(t), j = 1; j < n; y++, j++)
 	{
 		int		   *temp;
 
@@ -254,7 +254,7 @@ levenshtein_internal(const char *s, const char *t,
 		 */
 		curr[0] = j * ins_c;
 
-		for (x = s, i = 1; i < m; x++, i++)
+		for (x = VARDATA_ANY(s), i = 1; i < m; x++, i++)
 		{
 			int			ins;
 			int			del;
@@ -288,8 +288,8 @@ PG_FUNCTION_INFO_V1(levenshtein_with_costs);
 Datum
 levenshtein_with_costs(PG_FUNCTION_ARGS)
 {
-	char	   *src = TextDatumGetCString(PG_GETARG_DATUM(0));
-	char	   *dst = TextDatumGetCString(PG_GETARG_DATUM(1));
+	text	   *src = PG_GETARG_TEXT_PP(0);
+	text	   *dst = PG_GETARG_TEXT_PP(1);
 	int			ins_c = PG_GETARG_INT32(2);
 	int			del_c = PG_GETARG_INT32(3);
 	int			sub_c = PG_GETARG_INT32(4);
@@ -302,8 +302,8 @@ PG_FUNCTION_INFO_V1(levenshtein);
 Datum
 levenshtein(PG_FUNCTION_ARGS)
 {
-	char	   *src = TextDatumGetCString(PG_GETARG_DATUM(0));
-	char	   *dst = TextDatumGetCString(PG_GETARG_DATUM(1));
+	text	   *src = PG_GETARG_TEXT_PP(0);
+	text	   *dst = PG_GETARG_TEXT_PP(1);
 
 	PG_RETURN_INT32(levenshtein_internal(src, dst, 1, 1, 1));
 }
