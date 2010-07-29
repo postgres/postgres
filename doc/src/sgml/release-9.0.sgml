@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release-9.0.sgml,v 2.39.2.1 2010/07/27 19:01:04 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release-9.0.sgml,v 2.39.2.2 2010/07/29 21:18:16 tgl Exp $ -->
 
  <sect1 id="release-9-0">
   <title>Release 9.0</title>
@@ -8,6 +8,8 @@
    <simpara>2010-??-??</simpara>
   </note>
 
+  <para>CURRENT AS OF 2010-07-29</para>
+
   <sect2>
    <title>Overview</title>
 
@@ -16,11 +18,10 @@
     <productname>PostgreSQL</> adds features that have been requested
     for years, like easy-to-use replication, a mass permission
     facility, and anonymous blocks. While past major releases have
-    been quite conservative in their scope, this release shows a
-    bold new desire to provide facilities that every new and existing
-    user of <productname>PostgreSQL</> will embrace. This has all
-    been done with few incompatibilities. The major areas of
-    enhancement are:
+    been conservative in their scope, this release shows a
+    bold new desire to provide facilities that new and existing
+    users of <productname>PostgreSQL</> will embrace. This has all
+    been done with few incompatibilities. Major enhancements are:
    </para>
 
    <itemizedlist>
@@ -54,7 +55,7 @@
      <para>
       Broadly enhanced stored procedure support.
       The <link linkend="SQL-DO"><command>DO</></link> statement permits
-      ad-hoc or anonymous code blocks.  Functions can now be called using named
+      anonymous code blocks.  Functions can now be called using named
       parameters.  PL/pgSQL is now installed by default, and PL/Perl and
       PL/Python have been enhanced in several ways, including support for
       Python3.
@@ -132,7 +133,6 @@
   <sect2>
 
   <title>Migration to Version 9.0</title>
-  <para>CURRENT AS OF 2010-07-08</para>
 
   <para>
    A dump/restore using <application>pg_dump</application>
@@ -183,7 +183,7 @@
      <para>
       Adjust <link
       linkend="guc-log-temp-files"><varname>log_temp_files</></link> to
-      use default file sizes units of kilobytes (Robert Haas)
+      use default file size units of kilobytes (Robert Haas)
      </para>
     </listitem>
 
@@ -428,7 +428,7 @@
       <para>
        This feature is called Streaming Replication.
        Previously <acronym>WAL</> files could be sent to standby systems only
-       as 16 megabytes files; this allows master changes to be sent to the
+       as 16 megabytes files; Streaming Replication allows master changes to be sent to the
        standby with very little delay. There are new <filename>postgresql.conf</>
        and <filename>recovery.conf</> settings to enable this
        feature, as well as extensive <link
@@ -503,7 +503,7 @@
        Outer joins where the inner side is unique and not referenced in
        the query are unnecessary and are therefore now removed.  This will
        accelerate many automatically generated queries, such as those created
-       by object-relational mappers.
+       by object-relational mappers (ORM).
       </para>
      </listitem>
 
@@ -819,7 +819,7 @@
       </para>
 
       <para>
-       This lets DBAs and security staff to audit when database settings
+       This lets DBAs and security staff audit when database settings
        were changed.
       </para>
 
@@ -1002,12 +1002,12 @@
       <para>
        Add <link linkend="SQL-ALTERDEFAULTPRIVILEGES"><command>ALTER
        DEFAULT PRIVILEGES</></link> command to control privileges
-       of all newly-created objects (Petr Jelinek)
+       of newly-created objects (Petr Jelinek)
       </para>
 
       <para>
-       This greatly simplifies the assignment of object priveleges in
-       a complex database application.  Defaults currently support tables
+       This greatly simplifies the assignment of object privileges in
+       a complex database application.  Defaults currently support tables,
        views, sequences, and functions. Defaults may be assigned on a
        per-schema basis or database-wide.
       </para>
@@ -1085,7 +1085,7 @@
 
       <para>
        This allows <command>UPDATE tab SET col = col + 1</> to work on
-       columns that have a unique indexes or are marked as primary keys,
+       columns that have a unique indexes or are marked as primary key,
        but <literal>DEFERRABLE INITIALLY DEFERRED</> must be used to mark
        the constraint as deferred.
       </para>
@@ -1093,7 +1093,7 @@
 
      <listitem>
       <para>
-       Generalize uniqueness constraints by allowing arbitrary operator
+       Exclusion Constraints: generalize uniqueness constraints by allowing arbitrary operator
        comparisons, not just equality (Jeff Davis)
       </para>
 
@@ -1661,8 +1661,8 @@
      <listitem>
       <para>
        Implement anonymous functions using the <link
-       linkend="SQL-DO"><command>DO</></link> statement (Petr
-       Jelinek, Joshua Tolley, Hannu Valtonen)
+       linkend="SQL-DO"><command>DO</></link> statement, a.k.a anonymous
+       blocks (Petr Jelinek, Joshua Tolley, Hannu Valtonen)
       </para>
 
       <para>
@@ -1861,7 +1861,7 @@
       </para>
 
       <para>
-       This can be enabled with the server variable <link
+       This can be globally enabled with the server variable <link
        linkend="guc-plperl-use-strict">plperl.use_strict</link>.
       </para>
      </listitem>
@@ -2027,6 +2027,13 @@
       <para>
        Improve <application>psql</>'s tab completion support (Itagaki
        Takahiro)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Show <literal>\timing</> output when enabled, regardless of
+       <quote>quiet</> mode (Peter Eisentraut)
       </para>
      </listitem>
 
@@ -2305,7 +2312,7 @@
      <listitem>
       <para>
        Add the <literal>string</> data type in <application>ecpg</>
-       Informix-compatibility mode (Zoltan Boszormenyi)
+       Informix-compatibility mode (Boszormenyi Zoltan)
       </para>
      </listitem>
 
@@ -2369,8 +2376,8 @@
       <listitem>
        <para>
         Allow <application>ecpg</> to use noise words <literal>FROM</> and
-        <literal>IN</> in <command>FETCH</> and <command>MOVE</> (Zoltan
-        Boszormenyi)
+        <literal>IN</> in <command>FETCH</> and <command>MOVE</> (Boszormenyi
+        Zoltan)
        </para>
       </listitem>
 
