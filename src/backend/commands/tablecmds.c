@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.174.2.10 2010/07/01 14:11:03 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.174.2.11 2010/07/29 16:15:33 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -5893,8 +5893,15 @@ copy_relation_data(Relation rel, SMgrRelation dst)
 
 			recptr = XLogInsert(RM_HEAP_ID, XLOG_HEAP_NEWPAGE, rdata);
 
-			PageSetLSN(page, recptr);
-			PageSetTLI(page, ThisTimeLineID);
+			/*
+			 * The page may be uninitialized. If so, we can't set the LSN
+			 * and TLI because that would corrupt the page.
+			 */
+			if (!PageIsNew(page))
+			{
+				PageSetLSN(page, recptr);
+				PageSetTLI(page, ThisTimeLineID);
+			}
 
 			END_CRIT_SECTION();
 		}
