@@ -1,7 +1,7 @@
 # German message translation file for libpq
 # Peter Eisentraut <peter_e@gmx.net>, 2001 - 2010.
 #
-# pgtranslation Id: libpq.po,v 1.20 2010/07/08 21:23:53 petere Exp $
+# pgtranslation Id: libpq.po,v 1.21 2010/07/22 19:01:38 petere Exp $
 #
 # Use these quotes: »%s«
 #
@@ -9,13 +9,17 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9.0\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2010-07-08 19:23+0000\n"
-"PO-Revision-Date: 2010-07-09 00:19+0300\n"
+"POT-Creation-Date: 2010-07-21 12:10+0000\n"
+"PO-Revision-Date: 2010-07-22 17:58+0300\n"
 "Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language-Team: German <peter_e@gmx.net>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+
+#: fe-auth.c:212 fe-auth.c:432 fe-auth.c:659
+msgid "host name must be specified\n"
+msgstr "Hostname muss angegeben werden\n"
 
 #: fe-auth.c:242
 #, c-format
@@ -38,23 +42,19 @@ msgstr ""
 msgid "GSSAPI continuation error"
 msgstr "GSSAPI-Fortsetzungsfehler"
 
-#: fe-auth.c:431 fe-auth.c:657
-msgid "host name must be specified\n"
-msgstr "Hostname muss angegeben werden\n"
-
-#: fe-auth.c:438
+#: fe-auth.c:439
 msgid "duplicate GSS authentication request\n"
 msgstr "doppelte GSSAPI-Authentifizierungsanfrage\n"
 
-#: fe-auth.c:458
+#: fe-auth.c:459
 msgid "GSSAPI name import error"
 msgstr "GSSAPI-Namensimportfehler"
 
-#: fe-auth.c:544
+#: fe-auth.c:545
 msgid "SSPI continuation error"
 msgstr "SSPI-Fortsetzungsfehler"
 
-#: fe-auth.c:555 fe-auth.c:629 fe-auth.c:663 fe-auth.c:760 fe-connect.c:1802
+#: fe-auth.c:556 fe-auth.c:630 fe-auth.c:665 fe-auth.c:762 fe-connect.c:1802
 #: fe-connect.c:3129 fe-connect.c:3346 fe-connect.c:3762 fe-connect.c:3771
 #: fe-connect.c:3908 fe-connect.c:3954 fe-connect.c:3972 fe-connect.c:4051
 #: fe-connect.c:4121 fe-connect.c:4167 fe-connect.c:4185 fe-exec.c:3121
@@ -62,35 +62,35 @@ msgstr "SSPI-Fortsetzungsfehler"
 msgid "out of memory\n"
 msgstr "Speicher aufgebraucht\n"
 
-#: fe-auth.c:644
+#: fe-auth.c:645
 msgid "could not acquire SSPI credentials"
 msgstr "konnte SSPI-Credentials nicht erhalten"
 
-#: fe-auth.c:736
+#: fe-auth.c:738
 msgid "SCM_CRED authentication method not supported\n"
 msgstr "SCM_CRED-Authentifizierungsmethode nicht unterstützt\n"
 
-#: fe-auth.c:810
+#: fe-auth.c:812
 msgid "Kerberos 4 authentication not supported\n"
 msgstr "Authentifizierung mit Kerberos 4 nicht unterstützt\n"
 
-#: fe-auth.c:826
+#: fe-auth.c:828
 msgid "Kerberos 5 authentication not supported\n"
 msgstr "Authentifizierung mit Kerberos 5 nicht unterstützt\n"
 
-#: fe-auth.c:893
+#: fe-auth.c:895
 msgid "GSSAPI authentication not supported\n"
 msgstr "Authentifizierung mit GSSAPI nicht unterstützt\n"
 
-#: fe-auth.c:917
+#: fe-auth.c:919
 msgid "SSPI authentication not supported\n"
 msgstr "Authentifizierung mit SSPI nicht unterstützt\n"
 
-#: fe-auth.c:924
+#: fe-auth.c:926
 msgid "Crypt authentication not supported\n"
 msgstr "Authentifizierung mit Crypt nicht unterstützt\n"
 
-#: fe-auth.c:951
+#: fe-auth.c:953
 #, c-format
 msgid "authentication method %u not supported\n"
 msgstr "Authentifizierungsmethode %u nicht unterstützt\n"
@@ -724,11 +724,8 @@ msgid "unrecognized SSL error code: %d\n"
 msgstr "unbekannter SSL-Fehlercode: %d\n"
 
 #: fe-secure.c:601
-msgid ""
-"verified SSL connections are only supported when connecting to a host name\n"
-msgstr ""
-"verifizierte SSL-Verbindungen werden nur unterstützt, wenn mit einem "
-"Hostnamen verbunden wird\n"
+msgid "host name must be specified for a verified SSL connection\n"
+msgstr "Hostname muss angegeben werden für eine verifizierte SSL-Verbindung\n"
 
 #: fe-secure.c:620
 #, c-format
