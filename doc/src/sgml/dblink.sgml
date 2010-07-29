@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/dblink.sgml,v 1.13 2010/06/15 20:29:01 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/dblink.sgml,v 1.14 2010/07/29 19:34:40 petere Exp $ -->
 
 <sect1 id="dblink">
  <title>dblink</title>
@@ -25,10 +25,10 @@
   </refnamediv>
 
   <refsynopsisdiv>
-   <synopsis>
-    dblink_connect(text connstr) returns text
-    dblink_connect(text connname, text connstr) returns text
-   </synopsis>
+<synopsis>
+dblink_connect(text connstr) returns text
+dblink_connect(text connname, text connstr) returns text
+</synopsis>
   </refsynopsisdiv>
 
   <refsect1>
@@ -116,66 +116,66 @@
   <refsect1>
    <title>Example</title>
 
-   <programlisting>
- select dblink_connect('dbname=postgres');
-  dblink_connect
- ----------------
-  OK
- (1 row)
+<screen>
+SELECT dblink_connect('dbname=postgres');
+ dblink_connect
+----------------
+ OK
+(1 row)
 
- select dblink_connect('myconn', 'dbname=postgres');
-  dblink_connect
- ----------------
-  OK
- (1 row)
+SELECT dblink_connect('myconn', 'dbname=postgres');
+ dblink_connect
+----------------
+ OK
+(1 row)
 
- -- FOREIGN DATA WRAPPER functionality
- -- Note: local connection must require password authentication for this to work properly
- --       Otherwise, you will receive the following error from dblink_connect():
- --       ----------------------------------------------------------------------
- --       ERROR:  password is required
- --       DETAIL:  Non-superuser cannot connect if the server does not request a password.
- --       HINT:  Target server's authentication method must be changed.
- CREATE USER dblink_regression_test WITH PASSWORD 'secret';
- CREATE FOREIGN DATA WRAPPER postgresql VALIDATOR postgresql_fdw_validator;
- CREATE SERVER fdtest FOREIGN DATA WRAPPER postgresql OPTIONS (hostaddr '127.0.0.1', dbname 'contrib_regression');
+-- FOREIGN DATA WRAPPER functionality
+-- Note: local connection must require password authentication for this to work properly
+--       Otherwise, you will receive the following error from dblink_connect():
+--       ----------------------------------------------------------------------
+--       ERROR:  password is required
+--       DETAIL:  Non-superuser cannot connect if the server does not request a password.
+--       HINT:  Target server's authentication method must be changed.
+CREATE USER dblink_regression_test WITH PASSWORD 'secret';
+CREATE FOREIGN DATA WRAPPER postgresql VALIDATOR postgresql_fdw_validator;
+CREATE SERVER fdtest FOREIGN DATA WRAPPER postgresql OPTIONS (hostaddr '127.0.0.1', dbname 'contrib_regression');
 
- CREATE USER MAPPING FOR dblink_regression_test SERVER fdtest OPTIONS (user 'dblink_regression_test', password 'secret');
- GRANT USAGE ON FOREIGN SERVER fdtest TO dblink_regression_test;
- GRANT SELECT ON TABLE foo TO dblink_regression_test;
+CREATE USER MAPPING FOR dblink_regression_test SERVER fdtest OPTIONS (user 'dblink_regression_test', password 'secret');
+GRANT USAGE ON FOREIGN SERVER fdtest TO dblink_regression_test;
+GRANT SELECT ON TABLE foo TO dblink_regression_test;
 
- \set ORIGINAL_USER :USER
- \c - dblink_regression_test
- SELECT dblink_connect('myconn', 'fdtest');
-  dblink_connect 
- ----------------
-  OK
- (1 row)
+\set ORIGINAL_USER :USER
+\c - dblink_regression_test
+SELECT dblink_connect('myconn', 'fdtest');
+ dblink_connect 
+----------------
+ OK
+(1 row)
 
- SELECT * FROM dblink('myconn','SELECT * FROM foo') AS t(a int, b text, c text[]);
-  a  | b |       c       
- ----+---+---------------
-   0 | a | {a0,b0,c0}
-   1 | b | {a1,b1,c1}
-   2 | c | {a2,b2,c2}
-   3 | d | {a3,b3,c3}
-   4 | e | {a4,b4,c4}
-   5 | f | {a5,b5,c5}
-   6 | g | {a6,b6,c6}
-   7 | h | {a7,b7,c7}
-   8 | i | {a8,b8,c8}
-   9 | j | {a9,b9,c9}
-  10 | k | {a10,b10,c10}
- (11 rows)
+SELECT * FROM dblink('myconn','SELECT * FROM foo') AS t(a int, b text, c text[]);
+ a  | b |       c       
+----+---+---------------
+  0 | a | {a0,b0,c0}
+  1 | b | {a1,b1,c1}
+  2 | c | {a2,b2,c2}
+  3 | d | {a3,b3,c3}
+  4 | e | {a4,b4,c4}
+  5 | f | {a5,b5,c5}
+  6 | g | {a6,b6,c6}
+  7 | h | {a7,b7,c7}
+  8 | i | {a8,b8,c8}
+  9 | j | {a9,b9,c9}
+ 10 | k | {a10,b10,c10}
+(11 rows)
 
- \c - :ORIGINAL_USER
- REVOKE USAGE ON FOREIGN SERVER fdtest FROM dblink_regression_test;
- REVOKE SELECT ON TABLE foo FROM  dblink_regression_test;
- DROP USER MAPPING FOR dblink_regression_test SERVER fdtest;
- DROP USER dblink_regression_test;
- DROP SERVER fdtest;
- DROP FOREIGN DATA WRAPPER postgresql;
-   </programlisting>
+\c - :ORIGINAL_USER
+REVOKE USAGE ON FOREIGN SERVER fdtest FROM dblink_regression_test;
+REVOKE SELECT ON TABLE foo FROM  dblink_regression_test;
+DROP USER MAPPING FOR dblink_regression_test SERVER fdtest;
+DROP USER dblink_regression_test;
+DROP SERVER fdtest;
+DROP FOREIGN DATA WRAPPER postgresql;
+</screen>
   </refsect1>
  </refentry>
 
@@ -191,10 +191,10 @@
   </refnamediv>
 
   <refsynopsisdiv>
-   <synopsis>
-    dblink_connect_u(text connstr) returns text
-    dblink_connect_u(text connname, text connstr) returns text
-   </synopsis>
+<synopsis>
+dblink_connect_u(text connstr) returns text
+dblink_connect_u(text connname, text connstr) returns text
+</synopsis>
   </refsynopsisdiv>
 
   <refsect1>
@@ -244,10 +244,10 @@
   </refnamediv>
 
   <refsynopsisdiv>
-   <synopsis>
-    dblink_disconnect() returns text
-    dblink_disconnect(text connname) returns text
-   </synopsis>
+<synopsis>
+dblink_disconnect() returns text
+dblink_disconnect(text connname) returns text
+</synopsis>
   </refsynopsisdiv>
 
   <refsect1>
@@ -287,19 +287,19 @@
   <refsect1>
    <title>Example</title>
 
-   <programlisting>
- test=# select dblink_disconnect();
-  dblink_disconnect
- -------------------
-  OK
- (1 row)
+<screen>
+SELECT dblink_disconnect();
+ dblink_disconnect
+-------------------
+ OK
+(1 row)
 
- select dblink_disconnect('myconn');
-  dblink_disconnect
- -------------------
-  OK
- (1 row)
-   </programlisting>
+SELECT dblink_disconnect('myconn');
+ dblink_disconnect
+-------------------
+ OK
+(1 row)
+</screen>
   </refsect1>
  </refentry>
 
@@ -315,11 +315,11 @@
   </refnamediv>
 
   <refsynopsisdiv>
-   <synopsis>
-    dblink(text connname, text sql [, bool fail_on_error]) returns setof record
-    dblink(text connstr, text sql [, bool fail_on_error]) returns setof record
-    dblink(text sql [, bool fail_on_error]) returns setof record
-   </synopsis>
+<synopsis>
+dblink(text connname, text sql [, bool fail_on_error]) returns setof record
+dblink(text connstr, text sql [, bool fail_on_error]) returns setof record
+dblink(text sql [, bool fail_on_error]) returns setof record
+</synopsis>
   </refsynopsisdiv>
 
   <refsect1>
@@ -440,89 +440,89 @@ SELECT *
     This allows the column type information to be buried in the view,
     instead of having to spell it out in every query.  For example,
 
-    <programlisting>
-    create view myremote_pg_proc as
-      select *
-        from dblink('dbname=postgres', 'select proname, prosrc from pg_proc')
-        as t1(proname name, prosrc text);
+<programlisting>
+CREATE VIEW myremote_pg_proc AS
+  SELECT *
+    FROM dblink('dbname=postgres', 'select proname, prosrc from pg_proc')
+    AS t1(proname name, prosrc text);
 
-    select * from myremote_pg_proc where proname like 'bytea%';
-    </programlisting>
+SELECT * FROM myremote_pg_proc WHERE proname LIKE 'bytea%';
+</programlisting>
    </para>
   </refsect1>
 
   <refsect1>
    <title>Example</title>
 
-   <programlisting>
- select * from dblink('dbname=postgres', 'select proname, prosrc from pg_proc')
-  as t1(proname name, prosrc text) where proname like 'bytea%';
-   proname   |   prosrc
- ------------+------------
-  byteacat   | byteacat
-  byteaeq    | byteaeq
-  bytealt    | bytealt
-  byteale    | byteale
-  byteagt    | byteagt
-  byteage    | byteage
-  byteane    | byteane
-  byteacmp   | byteacmp
-  bytealike  | bytealike
-  byteanlike | byteanlike
-  byteain    | byteain
-  byteaout   | byteaout
- (12 rows)
+<screen>
+SELECT * FROM dblink('dbname=postgres', 'select proname, prosrc from pg_proc')
+  AS t1(proname name, prosrc text) WHERE proname LIKE 'bytea%';
+  proname   |   prosrc
+------------+------------
+ byteacat   | byteacat
+ byteaeq    | byteaeq
+ bytealt    | bytealt
+ byteale    | byteale
+ byteagt    | byteagt
+ byteage    | byteage
+ byteane    | byteane
+ byteacmp   | byteacmp
+ bytealike  | bytealike
+ byteanlike | byteanlike
+ byteain    | byteain
+ byteaout   | byteaout
+(12 rows)
 
- select dblink_connect('dbname=postgres');
-  dblink_connect
- ----------------
-  OK
- (1 row)
+SELECT dblink_connect('dbname=postgres');
+ dblink_connect
+----------------
+ OK
+(1 row)
 
- select * from dblink('select proname, prosrc from pg_proc')
-  as t1(proname name, prosrc text) where proname like 'bytea%';
-   proname   |   prosrc
- ------------+------------
-  byteacat   | byteacat
-  byteaeq    | byteaeq
-  bytealt    | bytealt
-  byteale    | byteale
-  byteagt    | byteagt
-  byteage    | byteage
-  byteane    | byteane
-  byteacmp   | byteacmp
-  bytealike  | bytealike
-  byteanlike | byteanlike
-  byteain    | byteain
-  byteaout   | byteaout
- (12 rows)
+SELECT * FROM dblink('select proname, prosrc from pg_proc')
+  AS t1(proname name, prosrc text) WHERE proname LIKE 'bytea%';
+  proname   |   prosrc
+------------+------------
+ byteacat   | byteacat
+ byteaeq    | byteaeq
+ bytealt    | bytealt
+ byteale    | byteale
+ byteagt    | byteagt
+ byteage    | byteage
+ byteane    | byteane
+ byteacmp   | byteacmp
+ bytealike  | bytealike
+ byteanlike | byteanlike
+ byteain    | byteain
+ byteaout   | byteaout
+(12 rows)
 
- select dblink_connect('myconn', 'dbname=regression');
-  dblink_connect
- ----------------
-  OK
- (1 row)
+SELECT dblink_connect('myconn', 'dbname=regression');
+ dblink_connect
+----------------
+ OK
+(1 row)
 
- select * from dblink('myconn', 'select proname, prosrc from pg_proc')
-  as t1(proname name, prosrc text) where proname like 'bytea%';
-   proname   |   prosrc
- ------------+------------
-  bytearecv  | bytearecv
-  byteasend  | byteasend
-  byteale    | byteale
-  byteagt    | byteagt
-  byteage    | byteage
-  byteane    | byteane
-  byteacmp   | byteacmp
-  bytealike  | bytealike
-  byteanlike | byteanlike
-  byteacat   | byteacat
-  byteaeq    | byteaeq
-  bytealt    | bytealt
-  byteain    | byteain
-  byteaout   | byteaout
- (14 rows)
-   </programlisting>
+SELECT * FROM dblink('myconn', 'select proname, prosrc from pg_proc')
+  AS t1(proname name, prosrc text) WHERE proname LIKE 'bytea%';
+  proname   |   prosrc
+------------+------------
+ bytearecv  | bytearecv
+ byteasend  | byteasend
+ byteale    | byteale
+ byteagt    | byteagt
+ byteage    | byteage
+ byteane    | byteane
+ byteacmp   | byteacmp
+ bytealike  | bytealike
+ byteanlike | byteanlike
+ byteacat   | byteacat
+ byteaeq    | byteaeq
+ bytealt    | bytealt
+ byteain    | byteain
+ byteaout   | byteaout
+(14 rows)
+</screen>
   </refsect1>
  </refentry>
 
@@ -538,11 +538,11 @@ SELECT *
   </refnamediv>
 
   <refsynopsisdiv>
-   <synopsis>
-    dblink_exec(text connname, text sql [, bool fail_on_error]) returns text
-    dblink_exec(text connstr, text sql [, bool fail_on_error]) returns text
-    dblink_exec(text sql [, bool fail_on_error]) returns text
-   </synopsis>
+<synopsis>
+dblink_exec(text connname, text sql [, bool fail_on_error]) returns text
+dblink_exec(text connstr, text sql [, bool fail_on_error]) returns text
+dblink_exec(text sql [, bool fail_on_error]) returns text
+</synopsis>
   </refsynopsisdiv>
 
   <refsect1>
@@ -622,40 +622,40 @@ SELECT *
   <refsect1>
    <title>Example</title>
 
-   <programlisting>
- select dblink_connect('dbname=dblink_test_standby');
-  dblink_connect
- ----------------
-  OK
- (1 row)
+<screen>
+SELECT dblink_connect('dbname=dblink_test_standby');
+ dblink_connect
+----------------
+ OK
+(1 row)
 
- select dblink_exec('insert into foo values(21,''z'',''{"a0","b0","c0"}'');');
-    dblink_exec
- -----------------
-  INSERT 943366 1
- (1 row)
+SELECT dblink_exec('insert into foo values(21,''z'',''{"a0","b0","c0"}'');');
+   dblink_exec
+-----------------
+ INSERT 943366 1
+(1 row)
 
- select dblink_connect('myconn', 'dbname=regression');
-  dblink_connect
- ----------------
-  OK
- (1 row)
+SELECT dblink_connect('myconn', 'dbname=regression');
+ dblink_connect
+----------------
+ OK
+(1 row)
 
- select dblink_exec('myconn', 'insert into foo values(21,''z'',''{"a0","b0","c0"}'');');
-    dblink_exec
- ------------------
-  INSERT 6432584 1
- (1 row)
+SELECT dblink_exec('myconn', 'insert into foo values(21,''z'',''{"a0","b0","c0"}'');');
+   dblink_exec
+------------------
+ INSERT 6432584 1
+(1 row)
 
- select dblink_exec('myconn', 'insert into pg_class values (''foo'')',false);
- NOTICE:  sql error
- DETAIL:  ERROR:  null value in column "relnamespace" violates not-null constraint
+SELECT dblink_exec('myconn', 'insert into pg_class values (''foo'')',false);
+NOTICE:  sql error
+DETAIL:  ERROR:  null value in column "relnamespace" violates not-null constraint
 
-  dblink_exec
- -------------
-  ERROR
- (1 row)
-   </programlisting>
+ dblink_exec
+-------------
+ ERROR
+(1 row)
+</screen>
   </refsect1>
  </refentry>
 
@@ -671,10 +671,10 @@ SELECT *
   </refnamediv>
 
   <refsynopsisdiv>
-   <synopsis>
-    dblink_open(text cursorname, text sql [, bool fail_on_error]) returns text
-    dblink_open(text connname, text cursorname, text sql [, bool fail_on_error]) returns text
-   </synopsis>
+<synopsis>
+dblink_open(text cursorname, text sql [, bool fail_on_error]) returns text
+dblink_open(text connname, text cursorname, text sql [, bool fail_on_error]) returns text
+</synopsis>
   </refsynopsisdiv>
 
   <refsect1>
@@ -763,19 +763,19 @@ SELECT *
   <refsect1>
    <title>Example</title>
 
-   <programlisting>
- test=# select dblink_connect('dbname=postgres');
-  dblink_connect
- ----------------
-  OK
- (1 row)
+<screen>
+SELECT dblink_connect('dbname=postgres');
+ dblink_connect
+----------------
+ OK
+(1 row)
 
- test=# select dblink_open('foo', 'select proname, prosrc from pg_proc');
-  dblink_open
- -------------
-  OK
- (1 row)
-   </programlisting>
+SELECT dblink_open('foo', 'select proname, prosrc from pg_proc');
+ dblink_open
+-------------
+ OK
+(1 row)
+</screen>
   </refsect1>
  </refentry>
 
@@ -791,10 +791,10 @@ SELECT *
   </refnamediv>
 
   <refsynopsisdiv>
-   <synopsis>
-    dblink_fetch(text cursorname, int howmany [, bool fail_on_error]) returns setof record
-    dblink_fetch(text connname, text cursorname, int howmany [, bool fail_on_error]) returns setof record
-   </synopsis>
+<synopsis>
+dblink_fetch(text cursorname, int howmany [, bool fail_on_error]) returns setof record
+dblink_fetch(text connname, text cursorname, int howmany [, bool fail_on_error]) returns setof record
+</synopsis>
   </refsynopsisdiv>
 
   <refsect1>
@@ -880,51 +880,51 @@ SELECT *
   <refsect1>
    <title>Example</title>
 
-   <programlisting>
- test=# select dblink_connect('dbname=postgres');
-  dblink_connect
- ----------------
-  OK
- (1 row)
+<screen>
+SELECT dblink_connect('dbname=postgres');
+ dblink_connect
+----------------
+ OK
+(1 row)
 
- test=# select dblink_open('foo', 'select proname, prosrc from pg_proc where proname like ''bytea%''');
-  dblink_open
- -------------
-  OK
- (1 row)
+SELECT dblink_open('foo', 'select proname, prosrc from pg_proc where proname like ''bytea%''');
+ dblink_open
+-------------
+ OK
+(1 row)
 
- test=# select * from dblink_fetch('foo', 5) as (funcname name, source text);
-  funcname |  source
- ----------+----------
-  byteacat | byteacat
-  byteacmp | byteacmp
-  byteaeq  | byteaeq
-  byteage  | byteage
-  byteagt  | byteagt
- (5 rows)
+SELECT * FROM dblink_fetch('foo', 5) AS (funcname name, source text);
+ funcname |  source
+----------+----------
+ byteacat | byteacat
+ byteacmp | byteacmp
+ byteaeq  | byteaeq
+ byteage  | byteage
+ byteagt  | byteagt
+(5 rows)
 
- test=# select * from dblink_fetch('foo', 5) as (funcname name, source text);
-  funcname  |  source
- -----------+-----------
-  byteain   | byteain
-  byteale   | byteale
-  bytealike | bytealike
-  bytealt   | bytealt
-  byteane   | byteane
- (5 rows)
+SELECT * FROM dblink_fetch('foo', 5) AS (funcname name, source text);
+ funcname  |  source
+-----------+-----------
+ byteain   | byteain
+ byteale   | byteale
+ bytealike | bytealike
+ bytealt   | bytealt
+ byteane   | byteane
+(5 rows)
 
- test=# select * from dblink_fetch('foo', 5) as (funcname name, source text);
-   funcname  |   source
- ------------+------------
-  byteanlike | byteanlike
-  byteaout   | byteaout
- (2 rows)
+SELECT * FROM dblink_fetch('foo', 5) AS (funcname name, source text);
+  funcname  |   source
+------------+------------
+ byteanlike | byteanlike
+ byteaout   | byteaout
+(2 rows)
 
- test=# select * from dblink_fetch('foo', 5) as (funcname name, source text);
-  funcname | source
- ----------+--------
- (0 rows)
-   </programlisting>
+SELECT * FROM dblink_fetch('foo', 5) AS (funcname name, source text);
+ funcname | source
+----------+--------
+(0 rows)
+</screen>
   </refsect1>
  </refentry>
 
@@ -940,10 +940,10 @@ SELECT *
   </refnamediv>
 
   <refsynopsisdiv>
-   <synopsis>
-    dblink_close(text cursorname [, bool fail_on_error]) returns text
-    dblink_close(text connname, text cursorname [, bool fail_on_error]) returns text
-   </synopsis>
+<synopsis>
+dblink_close(text cursorname [, bool fail_on_error]) returns text
+dblink_close(text connname, text cursorname [, bool fail_on_error]) returns text
+</synopsis>
   </refsynopsisdiv>
 
   <refsect1>
@@ -1013,25 +1013,25 @@ SELECT *
   <refsect1>
    <title>Example</title>
 
-   <programlisting>
- test=# select dblink_connect('dbname=postgres');
-  dblink_connect
- ----------------
-  OK
- (1 row)
+<screen>
+SELECT dblink_connect('dbname=postgres');
+ dblink_connect
+----------------
+ OK
+(1 row)
 
- test=# select dblink_open('foo', 'select proname, prosrc from pg_proc');
-  dblink_open
- -------------
-  OK
- (1 row)
+SELECT dblink_open('foo', 'select proname, prosrc from pg_proc');
+ dblink_open
+-------------
+ OK
+(1 row)
 
- test=# select dblink_close('foo');
-  dblink_close
- --------------
-  OK
- (1 row)
-   </programlisting>
+SELECT dblink_close('foo');
+ dblink_close
+--------------
+ OK
+(1 row)
+</screen>
   </refsect1>
  </refentry>
 
@@ -1047,9 +1047,9 @@ SELECT *
   </refnamediv>
 
   <refsynopsisdiv>
-   <synopsis>
-    dblink_get_connections() returns text[]
-   </synopsis>
+<synopsis>
+dblink_get_connections() returns text[]
+</synopsis>
   </refsynopsisdiv>
 
   <refsect1>
@@ -1070,9 +1070,9 @@ SELECT *
   <refsect1>
    <title>Example</title>
 
-   <programlisting>
-   SELECT dblink_get_connections();
-   </programlisting>
+<programlisting>
+SELECT dblink_get_connections();
+</programlisting>
   </refsect1>
  </refentry>
 
@@ -1088,9 +1088,9 @@ SELECT *
   </refnamediv>
 
   <refsynopsisdiv>
-   <synopsis>
-    dblink_error_message(text connname) returns text
-   </synopsis>
+<synopsis>
+dblink_error_message(text connname) returns text
+</synopsis>
   </refsynopsisdiv>
 
   <refsect1>
@@ -1129,9 +1129,9 @@ SELECT *
   <refsect1>
    <title>Example</title>
 
-   <programlisting>
-    SELECT dblink_error_message('dtest1');
-   </programlisting>
+<programlisting>
+SELECT dblink_error_message('dtest1');
+</programlisting>
   </refsect1>
  </refentry>
 
@@ -1147,9 +1147,9 @@ SELECT *
   </refnamediv>
 
   <refsynopsisdiv>
-   <synopsis>
-    dblink_send_query(text connname, text sql) returns int
-   </synopsis>
+<synopsis>
+dblink_send_query(text connname, text sql) returns int
+</synopsis>
   </refsynopsisdiv>
 
   <refsect1>
@@ -1207,9 +1207,9 @@ SELECT *
   <refsect1>
    <title>Example</title>
 
-   <programlisting>
-    SELECT dblink_send_query('dtest1', 'SELECT * FROM foo WHERE f1 &lt; 3');
-   </programlisting>
+<programlisting>
+SELECT dblink_send_query('dtest1', 'SELECT * FROM foo WHERE f1 &lt; 3');
+</programlisting>
   </refsect1>
  </refentry>
 
@@ -1225,9 +1225,9 @@ SELECT *
   </refnamediv>
 
   <refsynopsisdiv>
-   <synopsis>
-    dblink_is_busy(text connname) returns int
-   </synopsis>
+<synopsis>
+dblink_is_busy(text connname) returns int
+</synopsis>
   </refsynopsisdiv>
 
   <refsect1>
@@ -1266,9 +1266,9 @@ SELECT *
   <refsect1>
    <title>Example</title>
 
-   <programlisting>
-    SELECT dblink_is_busy('dtest1');
-   </programlisting>
+<programlisting>
+SELECT dblink_is_busy('dtest1');
+</programlisting>
   </refsect1>
  </refentry>
 
@@ -1284,10 +1284,10 @@ SELECT *
   </refnamediv>
 
   <refsynopsisdiv>
-   <synopsis>
-    dblink_get_notify() returns setof (notify_name text, be_pid int, extra text)
-    dblink_get_notify(text connname) returns setof (notify_name text, be_pid int, extra text)
-   </synopsis>
+<synopsis>
+dblink_get_notify() returns setof (notify_name text, be_pid int, extra text)
+dblink_get_notify(text connname) returns setof (notify_name text, be_pid int, extra text)
+</synopsis>
   </refsynopsisdiv>
 
   <refsect1>
@@ -1326,19 +1326,19 @@ SELECT *
   <refsect1>
    <title>Example</title>
 
-   <programlisting>
-test=# SELECT dblink_exec('LISTEN virtual');
+<screen>
+SELECT dblink_exec('LISTEN virtual');
  dblink_exec 
 -------------
  LISTEN
 (1 row)
 
-test=# SELECT * FROM dblink_get_notify();
+SELECT * FROM dblink_get_notify();
  notify_name | be_pid | extra
 -------------+--------+-------
 (0 rows)
 
-test=# NOTIFY virtual;
+NOTIFY virtual;
 NOTIFY
 
 SELECT * FROM dblink_get_notify();
@@ -1346,7 +1346,7 @@ SELECT * FROM dblink_get_notify();
 -------------+--------+-------
  virtual     |   1229 |
 (1 row)
-   </programlisting>
+</screen>
   </refsect1>
  </refentry>
 
@@ -1362,9 +1362,9 @@ SELECT * FROM dblink_get_notify();
   </refnamediv>
 
   <refsynopsisdiv>
-   <synopsis>
-    dblink_get_result(text connname [, bool fail_on_error]) returns setof record
-   </synopsis>
+<synopsis>
+dblink_get_result(text connname [, bool fail_on_error]) returns setof record
+</synopsis>
   </refsynopsisdiv>
 
   <refsect1>
@@ -1439,62 +1439,62 @@ SELECT * FROM dblink_get_notify();
   <refsect1>
    <title>Example</title>
 
-   <programlisting>
- contrib_regression=#   SELECT dblink_connect('dtest1', 'dbname=contrib_regression');
-  dblink_connect
- ----------------
-  OK
- (1 row)
+<screen>
+contrib_regression=# SELECT dblink_connect('dtest1', 'dbname=contrib_regression');
+ dblink_connect
+----------------
+ OK
+(1 row)
 
- contrib_regression=#   SELECT * from
- contrib_regression-#    dblink_send_query('dtest1', 'select * from foo where f1 &lt; 3') as t1;
-  t1
- ----
-   1
- (1 row)
+contrib_regression=# SELECT * FROM
+contrib_regression-# dblink_send_query('dtest1', 'select * from foo where f1 &lt; 3') AS t1;
+ t1
+----
+  1
+(1 row)
 
- contrib_regression=#   SELECT * from dblink_get_result('dtest1') as t1(f1 int, f2 text, f3 text[]);
-  f1 | f2 |     f3
- ----+----+------------
-   0 | a  | {a0,b0,c0}
-   1 | b  | {a1,b1,c1}
-   2 | c  | {a2,b2,c2}
- (3 rows)
+contrib_regression=# SELECT * FROM dblink_get_result('dtest1') AS t1(f1 int, f2 text, f3 text[]);
+ f1 | f2 |     f3
+----+----+------------
+  0 | a  | {a0,b0,c0}
+  1 | b  | {a1,b1,c1}
+  2 | c  | {a2,b2,c2}
+(3 rows)
 
- contrib_regression=#   SELECT * from dblink_get_result('dtest1') as t1(f1 int, f2 text, f3 text[]);
-  f1 | f2 | f3
- ----+----+----
- (0 rows)
+contrib_regression=# SELECT * FROM dblink_get_result('dtest1') AS t1(f1 int, f2 text, f3 text[]);
+ f1 | f2 | f3
+----+----+----
+(0 rows)
 
- contrib_regression=#   SELECT * from
-    dblink_send_query('dtest1', 'select * from foo where f1 &lt; 3; select * from foo where f1 &gt; 6') as t1;
-  t1
- ----
-   1
- (1 row)
+contrib_regression=# SELECT * FROM
+contrib_regression-# dblink_send_query('dtest1', 'select * from foo where f1 &lt; 3; select * from foo where f1 &gt; 6') AS t1;
+ t1
+----
+  1
+(1 row)
 
- contrib_regression=#   SELECT * from dblink_get_result('dtest1') as t1(f1 int, f2 text, f3 text[]);
-  f1 | f2 |     f3
- ----+----+------------
-   0 | a  | {a0,b0,c0}
-   1 | b  | {a1,b1,c1}
-   2 | c  | {a2,b2,c2}
- (3 rows)
+contrib_regression=# SELECT * FROM dblink_get_result('dtest1') AS t1(f1 int, f2 text, f3 text[]);
+ f1 | f2 |     f3
+----+----+------------
+  0 | a  | {a0,b0,c0}
+  1 | b  | {a1,b1,c1}
+  2 | c  | {a2,b2,c2}
+(3 rows)
 
- contrib_regression=#   SELECT * from dblink_get_result('dtest1') as t1(f1 int, f2 text, f3 text[]);
-  f1 | f2 |      f3
- ----+----+---------------
-   7 | h  | {a7,b7,c7}
-   8 | i  | {a8,b8,c8}
-   9 | j  | {a9,b9,c9}
-  10 | k  | {a10,b10,c10}
- (4 rows)
+contrib_regression=# SELECT * FROM dblink_get_result('dtest1') AS t1(f1 int, f2 text, f3 text[]);
+ f1 | f2 |      f3
+----+----+---------------
+  7 | h  | {a7,b7,c7}
+  8 | i  | {a8,b8,c8}
+  9 | j  | {a9,b9,c9}
+ 10 | k  | {a10,b10,c10}
+(4 rows)
 
- contrib_regression=#   SELECT * from dblink_get_result('dtest1') as t1(f1 int, f2 text, f3 text[]);
-  f1 | f2 | f3
- ----+----+----
- (0 rows)
-   </programlisting>
+contrib_regression=# SELECT * FROM dblink_get_result('dtest1') AS t1(f1 int, f2 text, f3 text[]);
+ f1 | f2 | f3
+----+----+----
+(0 rows)
+</screen>
   </refsect1>
  </refentry>
 
@@ -1510,9 +1510,9 @@ SELECT * FROM dblink_get_notify();
   </refnamediv>
 
   <refsynopsisdiv>
-   <synopsis>
-    dblink_cancel_query(text connname) returns text
-   </synopsis>
+<synopsis>
+dblink_cancel_query(text connname) returns text
+</synopsis>
   </refsynopsisdiv>
 
   <refsect1>
@@ -1556,9 +1556,9 @@ SELECT * FROM dblink_get_notify();
   <refsect1>
    <title>Example</title>
 
-   <programlisting>
-    SELECT dblink_cancel_query('dtest1');
-   </programlisting>
+<programlisting>
+SELECT dblink_cancel_query('dtest1');
+</programlisting>
   </refsect1>
  </refentry>
 
@@ -1576,9 +1576,9 @@ SELECT * FROM dblink_get_notify();
   </refnamediv>
 
   <refsynopsisdiv>
-   <synopsis>
-    dblink_get_pkey(text relname) returns setof dblink_pkey_results
-   </synopsis>
+<synopsis>
+dblink_get_pkey(text relname) returns setof dblink_pkey_results
+</synopsis>
   </refsynopsisdiv>
 
   <refsect1>
@@ -1617,9 +1617,9 @@ SELECT * FROM dblink_get_notify();
     Returns one row for each primary key field, or no rows if the relation
     has no primary key.  The result rowtype is defined as
 
-    <programlisting>
+<programlisting>
 CREATE TYPE dblink_pkey_results AS (position int, colname text);
-    </programlisting>
+</programlisting>
 
     The <literal>position</> column simply runs from 1 to <replaceable>N</>;
     it is the number of the field within the primary key, not the number
@@ -1630,18 +1630,23 @@ CREATE TYPE dblink_pkey_results AS (position int, colname text);
   <refsect1>
    <title>Example</title>
 
-   <programlisting>
-test=# create table foobar(f1 int, f2 int, f3 int,
-test(#   primary key(f1,f2,f3));
+<screen>
+CREATE TABLE foobar (
+    f1 int,
+    f2 int,
+    f3 int,
+    PRIMARY KEY (f1, f2, f3)
+);
 CREATE TABLE
-test=# select * from dblink_get_pkey('foobar');
+
+SELECT * FROM dblink_get_pkey('foobar');
  position | colname
 ----------+---------
         1 | f1
         2 | f2
         3 | f3
 (3 rows)
-   </programlisting>
+</screen>
   </refsect1>
  </refentry>
 
@@ -1660,13 +1665,13 @@ test=# select * from dblink_get_pkey('foobar');
   </refnamediv>
 
   <refsynopsisdiv>
-   <synopsis>
-    dblink_build_sql_insert(text relname,
-                            int2vector primary_key_attnums,
-                            integer num_primary_key_atts,
-                            text[] src_pk_att_vals_array,
-                            text[] tgt_pk_att_vals_array) returns text
-   </synopsis>
+<synopsis>
+dblink_build_sql_insert(text relname,
+                        int2vector primary_key_attnums,
+                        integer num_primary_key_atts,
+                        text[] src_pk_att_vals_array,
+                        text[] tgt_pk_att_vals_array) returns text
+</synopsis>
   </refsynopsisdiv>
 
   <refsect1>
@@ -1766,13 +1771,13 @@ test=# select * from dblink_get_pkey('foobar');
   <refsect1>
    <title>Example</title>
 
-   <programlisting>
- test=# select dblink_build_sql_insert('foo', '1 2', 2, '{"1", "a"}', '{"1", "b''a"}');
-              dblink_build_sql_insert
- --------------------------------------------------
-  INSERT INTO foo(f1,f2,f3) VALUES('1','b''a','1')
- (1 row)
-   </programlisting>
+<screen>
+SELECT dblink_build_sql_insert('foo', '1 2', 2, '{"1", "a"}', '{"1", "b''a"}');
+             dblink_build_sql_insert
+--------------------------------------------------
+ INSERT INTO foo(f1,f2,f3) VALUES('1','b''a','1')
+(1 row)
+</screen>
   </refsect1>
  </refentry>
 
@@ -1790,12 +1795,12 @@ test=# select * from dblink_get_pkey('foobar');
   </refnamediv>
 
   <refsynopsisdiv>
-   <synopsis>
-    dblink_build_sql_delete(text relname,
-                            int2vector primary_key_attnums,
-                            integer num_primary_key_atts,
-                            text[] tgt_pk_att_vals_array) returns text
-   </synopsis>
+<synopsis>
+dblink_build_sql_delete(text relname,
+                        int2vector primary_key_attnums,
+                        integer num_primary_key_atts,
+                        text[] tgt_pk_att_vals_array) returns text
+</synopsis>
   </refsynopsisdiv>
 
   <refsect1>
@@ -1880,13 +1885,13 @@ test=# select * from dblink_get_pkey('foobar');
   <refsect1>
    <title>Example</title>
 
-   <programlisting>
- test=# select dblink_build_sql_delete('"MyFoo"', '1 2', 2, '{"1", "b"}');
-            dblink_build_sql_delete
- ---------------------------------------------
-  DELETE FROM "MyFoo" WHERE f1='1' AND f2='b'
- (1 row)
-   </programlisting>
+<screen>
+SELECT dblink_build_sql_delete('"MyFoo"', '1 2', 2, '{"1", "b"}');
+           dblink_build_sql_delete
+---------------------------------------------
+ DELETE FROM "MyFoo" WHERE f1='1' AND f2='b'
+(1 row)
+</screen>
   </refsect1>
  </refentry>
 
@@ -1904,13 +1909,13 @@ test=# select * from dblink_get_pkey('foobar');
   </refnamediv>
 
   <refsynopsisdiv>
-   <synopsis>
-    dblink_build_sql_update(text relname,
-                            int2vector primary_key_attnums,
-                            integer num_primary_key_atts,
-                            text[] src_pk_att_vals_array,
-                            text[] tgt_pk_att_vals_array) returns text
-   </synopsis>
+<synopsis>
+dblink_build_sql_update(text relname,
+                        int2vector primary_key_attnums,
+                        integer num_primary_key_atts,
+                        text[] src_pk_att_vals_array,
+                        text[] tgt_pk_att_vals_array) returns text
+</synopsis>
   </refsynopsisdiv>
 
   <refsect1>
@@ -2013,13 +2018,13 @@ test=# select * from dblink_get_pkey('foobar');
   <refsect1>
    <title>Example</title>
 
-   <programlisting>
- test=# select dblink_build_sql_update('foo', '1 2', 2, '{"1", "a"}', '{"1", "b"}');
-                    dblink_build_sql_update
- -------------------------------------------------------------
-  UPDATE foo SET f1='1',f2='b',f3='1' WHERE f1='1' AND f2='b'
- (1 row)
-   </programlisting>
+<screen>
+SELECT dblink_build_sql_update('foo', '1 2', 2, '{"1", "a"}', '{"1", "b"}');
+                   dblink_build_sql_update
+-------------------------------------------------------------
+ UPDATE foo SET f1='1',f2='b',f3='1' WHERE f1='1' AND f2='b'
+(1 row)
+</screen>
   </refsect1>
  </refentry>
 

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ecpg.sgml,v 1.100 2010/05/13 14:16:41 mha Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ecpg.sgml,v 1.101 2010/07/29 19:34:40 petere Exp $ -->
 
 <chapter id="ecpg">
  <title><application>ECPG</application> - Embedded <acronym>SQL</acronym> in C</title>
@@ -2857,11 +2857,11 @@ struct sqlname
    the dollar sign instead of the <literal>EXEC SQL</> primitive to introduce
    embedded SQL commands.:
 <programlisting>
-   $int j = 3;
-   $CONNECT TO :dbname;
-   $CREATE TABLE test(i INT PRIMARY KEY, j INT);
-   $INSERT INTO test(i, j) VALUES (7, :j);
-   $COMMIT;
+$int j = 3;
+$CONNECT TO :dbname;
+$CREATE TABLE test(i INT PRIMARY KEY, j INT);
+$INSERT INTO test(i, j) VALUES (7, :j);
+$COMMIT;
 </programlisting>
   </para>
   <para>
@@ -2898,11 +2898,11 @@ struct sqlname
     supported in Informix-mode without using <literal>typedef</literal>. In fact, in Informix-mode,
     ECPG refuses to process source files that contain <literal>typedef sometype string;</literal>
 <programlisting>
-    EXEC SQL BEGIN DECLARE SECTION;
-    string userid; /* this variable will contain trimmed data */
-    EXEC SQL END DECLARE SECTION;
+EXEC SQL BEGIN DECLARE SECTION;
+string userid; /* this variable will contain trimmed data */
+EXEC SQL END DECLARE SECTION;
 
-    EXEC SQL FETCH MYCUR INTO :userid;
+EXEC SQL FETCH MYCUR INTO :userid;
 </programlisting>
    </para>
   </sect2>
@@ -2918,8 +2918,8 @@ struct sqlname
         This statement closes the current connection. In fact, this is a
         synonym for ecpg's <literal>DISCONNECT CURRENT</>.:
 <programlisting>
-    $CLOSE DATABASE;                /* close the current connection */
-    EXEC SQL CLOSE DATABASE;
+$CLOSE DATABASE;                /* close the current connection */
+EXEC SQL CLOSE DATABASE;
 </programlisting>
        </para>
       </listitem>
@@ -3083,15 +3083,15 @@ typedef struct sqlda_compat     sqlda_t;
         Pointer to the field data. The pointer is of <literal>char *</literal> type,
         the data pointed by it is in a binary format. Example:
 <programlisting>
-    int intval; 
+int intval; 
 
-    switch (sqldata->sqlvar[i].sqltype)
-    {
-      case SQLINTEGER:
+switch (sqldata->sqlvar[i].sqltype)
+{
+    case SQLINTEGER:
         intval = *(int *)sqldata->sqlvar[i].sqldata;
         break;
-      ...
-    }
+  ...
+}
 </programlisting>
        </para>
       </listitem>
@@ -3106,8 +3106,8 @@ typedef struct sqlda_compat     sqlda_t;
         that the value for this field is non-NULL. Otherwise a valid pointer and <literal>sqlitype</literal>
         has to be properly set. Example:
 <programlisting>
-    if (*(int2 *)sqldata->sqlvar[i].sqlind != 0)
-      printf("value is NULL\n");
+if (*(int2 *)sqldata->sqlvar[i].sqlind != 0)
+    printf("value is NULL\n");
 </programlisting>
        </para>
       </listitem>
@@ -5208,13 +5208,13 @@ EXEC SQL UPDATE Tbl SET col = MYNUMBER;
    <para>
     Example:
 <programlisting>
-   exec sql ifndef TZVAR;
-   exec sql SET TIMEZONE TO 'GMT';
-   exec sql elif TZNAME;
-   exec sql SET TIMEZONE TO TZNAME;
-   exec sql else;
-   exec sql SET TIMEZONE TO TZVAR;
-   exec sql endif;
+EXEC SQL ifndef TZVAR;
+EXEC SQL SET TIMEZONE TO 'GMT';
+EXEC SQL elif TZNAME;
+EXEC SQL SET TIMEZONE TO TZNAME;
+EXEC SQL else;
+EXEC SQL SET TIMEZONE TO TZVAR;
+EXEC SQL endif;
 </programlisting>
    </para>
 

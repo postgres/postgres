@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ltree.sgml,v 1.4 2010/03/17 17:12:31 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ltree.sgml,v 1.5 2010/07/29 19:34:40 petere Exp $ -->
 
 <sect1 id="ltree">
  <title>ltree</title>
@@ -58,32 +58,32 @@
      for matching <type>ltree</> values.  A simple word matches that
      label within a path.  A star symbol (<literal>*</>) matches zero
      or more labels.  For example:
-     <programlisting>
+<synopsis>
 foo         <lineannotation>Match the exact label path <literal>foo</></lineannotation>
 *.foo.*     <lineannotation>Match any label path containing the label <literal>foo</></lineannotation>
 *.foo       <lineannotation>Match any label path whose last label is <literal>foo</></lineannotation>
-     </programlisting>
+</synopsis>
     </para>
 
     <para>
      Star symbols can also be quantified to restrict how many labels
      they can match:
-     <programlisting>
+<synopsis>
 *{<replaceable>n</>}        <lineannotation>Match exactly <replaceable>n</> labels</lineannotation>
 *{<replaceable>n</>,}       <lineannotation>Match at least <replaceable>n</> labels</lineannotation>
 *{<replaceable>n</>,<replaceable>m</>}      <lineannotation>Match at least <replaceable>n</> but not more than <replaceable>m</> labels</lineannotation>
 *{,<replaceable>m</>}       <lineannotation>Match at most <replaceable>m</> labels &mdash; same as </lineannotation> *{0,<replaceable>m</>}
-     </programlisting>
+</synopsis>
     </para>
 
     <para>
      There are several modifiers that can be put at the end of a non-star
      label in <type>lquery</> to make it match more than just the exact match:
-     <programlisting>
+<synopsis>
 @           <lineannotation>Match case-insensitively, for example <literal>a@</> matches <literal>A</></lineannotation>
 *           <lineannotation>Match any label with this prefix, for example <literal>foo*</> matches <literal>foobar</></lineannotation>
 %           <lineannotation>Match initial underscore-separated words</lineannotation>
-     </programlisting>
+</synopsis>
      The behavior of <literal>%</> is a bit complicated.  It tries to match
      words rather than the entire label.  For example
      <literal>foo_bar%</> matches <literal>foo_bar_baz</> but not
@@ -102,10 +102,10 @@ foo         <lineannotation>Match the exact label path <literal>foo</></lineanno
 
     <para>
      Here's an annotated example of <type>lquery</type>:
-    <programlisting>
-     Top.*{0,2}.sport*@.!football|tennis.Russ*|Spain
-     a.  b.     c.      d.               e.
-    </programlisting>
+<programlisting>
+Top.*{0,2}.sport*@.!football|tennis.Russ*|Spain
+a.  b.     c.      d.               e.
+</programlisting>
      This query will match any label path that:
     </para>
     <orderedlist numeration='loweralpha'>
@@ -154,9 +154,9 @@ foo         <lineannotation>Match the exact label path <literal>foo</></lineanno
 
     <para>
      Here's an example <type>ltxtquery</type>:
-    <programlisting>
-     Europe &amp; Russia*@ &amp; !Transportation
-    </programlisting>
+<programlisting>
+Europe &amp; Russia*@ &amp; !Transportation
+</programlisting>
      This will match paths that contain the label <literal>Europe</literal> and
      any label beginning with <literal>Russia</literal> (case-insensitive),
      but not paths containing the label <literal>Transportation</literal>.
@@ -504,9 +504,9 @@ foo         <lineannotation>Match the exact label path <literal>foo</></lineanno
     <para>
      Example of creating such an index:
     </para>
-    <programlisting>
-     CREATE INDEX path_gist_idx ON test USING GIST (path);
-    </programlisting>
+<programlisting>
+CREATE INDEX path_gist_idx ON test USING GIST (path);
+</programlisting>
    </listitem>
    <listitem>
     <para>
@@ -517,9 +517,9 @@ foo         <lineannotation>Match the exact label path <literal>foo</></lineanno
     <para>
      Example of creating such an index:
     </para>
-    <programlisting>
-     CREATE INDEX path_gist_idx ON test USING GIST (array_path);
-    </programlisting>
+<programlisting>
+CREATE INDEX path_gist_idx ON test USING GIST (array_path);
+</programlisting>
     <para>
      Note: This index type is lossy.
     </para>
@@ -535,7 +535,7 @@ foo         <lineannotation>Match the exact label path <literal>foo</></lineanno
    <filename>contrib/ltree/ltreetest.sql</> in the source distribution):
   </para>
 
-  <programlisting>
+<programlisting>
 CREATE TABLE test (path ltree);
 INSERT INTO test VALUES ('Top');
 INSERT INTO test VALUES ('Top.Science');
@@ -552,31 +552,29 @@ INSERT INTO test VALUES ('Top.Collections.Pictures.Astronomy.Galaxies');
 INSERT INTO test VALUES ('Top.Collections.Pictures.Astronomy.Astronauts');
 CREATE INDEX path_gist_idx ON test USING gist(path);
 CREATE INDEX path_idx ON test USING btree(path);
-  </programlisting>
+</programlisting>
 
   <para>
    Now, we have a table <structname>test</> populated with data describing
    the hierarchy shown below:
   </para>
 
-  <programlisting>
-                            Top
-                         /   |  \
-                 Science Hobbies Collections
-                     /       |              \
-            Astronomy   Amateurs_Astronomy Pictures
-               /  \                            |
-    Astrophysics  Cosmology                Astronomy
-                                            /  |    \
-                                     Galaxies Stars Astronauts
-  </programlisting>
+<literallayout class="monospaced">
+                        Top
+                     /   |  \
+             Science Hobbies Collections
+                 /       |              \
+        Astronomy   Amateurs_Astronomy Pictures
+           /  \                            |
+Astrophysics  Cosmology                Astronomy
+                                        /  |    \
+                                 Galaxies Stars Astronauts
+</literallayout>
 
   <para>
    We can do inheritance:
-  </para>
-
-  <programlisting>
-ltreetest=# select path from test where path &lt;@ 'Top.Science';
+<screen>
+ltreetest=&gt; SELECT path FROM test WHERE path &lt;@ 'Top.Science';
                 path
 ------------------------------------
  Top.Science
@@ -584,14 +582,13 @@ ltreetest=# select path from test where path &lt;@ 'Top.Science';
  Top.Science.Astronomy.Astrophysics
  Top.Science.Astronomy.Cosmology
 (4 rows)
-  </programlisting>
+</screen>
+  </para>
 
   <para>
    Here are some examples of path matching:
-  </para>
-
-  <programlisting>
-ltreetest=# select path from test where path ~ '*.Astronomy.*';
+<screen>
+ltreetest=&gt; SELECT path FROM test WHERE path ~ '*.Astronomy.*';
                      path
 -----------------------------------------------
  Top.Science.Astronomy
@@ -603,20 +600,20 @@ ltreetest=# select path from test where path ~ '*.Astronomy.*';
  Top.Collections.Pictures.Astronomy.Astronauts
 (7 rows)
 
-ltreetest=# select path from test where path ~ '*.!pictures@.*.Astronomy.*';
+ltreetest=&gt; SELECT path FROM test WHERE path ~ '*.!pictures@.*.Astronomy.*';
                 path
 ------------------------------------
  Top.Science.Astronomy
  Top.Science.Astronomy.Astrophysics
  Top.Science.Astronomy.Cosmology
 (3 rows)
-  </programlisting>
+</screen>
+  </para>
 
   <para>
    Here are some examples of full text search:
-  </para>
-  <programlisting>
-ltreetest=# select path from test where path @ 'Astro*% &amp; !pictures@';
+<screen>
+ltreetest=&gt; SELECT path FROM test WHERE path @ 'Astro*% &amp; !pictures@';
                 path
 ------------------------------------
  Top.Science.Astronomy
@@ -625,45 +622,46 @@ ltreetest=# select path from test where path @ 'Astro*% &amp; !pictures@';
  Top.Hobbies.Amateurs_Astronomy
 (4 rows)
 
-ltreetest=# select path from test where path @ 'Astro* &amp; !pictures@';
+ltreetest=&gt; SELECT path FROM test WHERE path @ 'Astro* &amp; !pictures@';
                 path
 ------------------------------------
  Top.Science.Astronomy
  Top.Science.Astronomy.Astrophysics
  Top.Science.Astronomy.Cosmology
 (3 rows)
-  </programlisting>
+</screen>
+  </para>
 
   <para>
    Path construction using functions:
-  </para>
-  <programlisting>
-ltreetest=# select subpath(path,0,2)||'Space'||subpath(path,2) from test where path &lt;@ 'Top.Science.Astronomy';
+<screen>
+ltreetest=&gt; SELECT subpath(path,0,2)||'Space'||subpath(path,2) FROM test WHERE path &lt;@ 'Top.Science.Astronomy';
                  ?column?
 ------------------------------------------
  Top.Science.Space.Astronomy
  Top.Science.Space.Astronomy.Astrophysics
  Top.Science.Space.Astronomy.Cosmology
 (3 rows)
-  </programlisting>
+</screen>
+  </para>
 
   <para>
    We could simplify this by creating a SQL function that inserts a label
    at a specified position in a path:
-  </para>
-  <programlisting>
+<screen>
 CREATE FUNCTION ins_label(ltree, int, text) RETURNS ltree
-AS 'select subpath($1,0,$2) || $3 || subpath($1,$2);'
-LANGUAGE SQL IMMUTABLE;
+    AS 'select subpath($1,0,$2) || $3 || subpath($1,$2);'
+    LANGUAGE SQL IMMUTABLE;
 
-ltreetest=# select ins_label(path,2,'Space') from test where path &lt;@ 'Top.Science.Astronomy';
+ltreetest=&gt; SELECT ins_label(path,2,'Space') FROM test WHERE path &lt;@ 'Top.Science.Astronomy';
                 ins_label
 ------------------------------------------
  Top.Science.Space.Astronomy
  Top.Science.Space.Astronomy.Astrophysics
  Top.Science.Space.Astronomy.Cosmology
 (3 rows)
-  </programlisting>
+</screen>
+  </para>
  </sect2>
 
  <sect2>

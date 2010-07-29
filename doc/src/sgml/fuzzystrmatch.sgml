@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/fuzzystrmatch.sgml,v 1.5 2009/04/06 15:43:00 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/fuzzystrmatch.sgml,v 1.6 2010/07/29 19:34:40 petere Exp $ -->
 
 <sect1 id="fuzzystrmatch">
  <title>fuzzystrmatch</title>
@@ -34,10 +34,10 @@
    for working with Soundex codes:
   </para>
 
-  <programlisting>
-   soundex(text) returns text
-   difference(text, text) returns int
-  </programlisting>
+<synopsis>
+soundex(text) returns text
+difference(text, text) returns int
+</synopsis>
 
   <para>
    The <function>soundex</> function converts a string to its Soundex code.
@@ -53,7 +53,7 @@
    Here are some usage examples:
   </para>
 
-  <programlisting>
+<programlisting>
 SELECT soundex('hello world!');
 
 SELECT soundex('Anne'), soundex('Ann'), difference('Anne', 'Ann');
@@ -70,7 +70,7 @@ INSERT INTO s VALUES ('jack');
 SELECT * FROM s WHERE soundex(nm) = soundex('john');
 
 SELECT * FROM s WHERE difference(s.nm, 'john') &gt; 2;
-  </programlisting>
+</programlisting>
  </sect2>
 
  <sect2>
@@ -80,10 +80,10 @@ SELECT * FROM s WHERE difference(s.nm, 'john') &gt; 2;
    This function calculates the Levenshtein distance between two strings:
   </para>
 
-  <programlisting>
-   levenshtein(text source, text target, int ins_cost, int del_cost, int sub_cost) returns int
-   levenshtein(text source, text target) returns int
-  </programlisting>
+<synopsis>
+levenshtein(text source, text target, int ins_cost, int del_cost, int sub_cost) returns int
+levenshtein(text source, text target) returns int
+</synopsis>
 
   <para>
    Both <literal>source</literal> and <literal>target</literal> can be any
@@ -97,7 +97,7 @@ SELECT * FROM s WHERE difference(s.nm, 'john') &gt; 2;
    Examples:
   </para>
 
-  <programlisting>
+<screen>
 test=# SELECT levenshtein('GUMBO', 'GAMBOL');
  levenshtein
 -------------
@@ -109,7 +109,7 @@ test=# SELECT levenshtein('GUMBO', 'GAMBOL', 2,1,1);
 -------------
            3
 (1 row)
-  </programlisting>
+</screen>
  </sect2>
 
  <sect2>
@@ -125,9 +125,9 @@ test=# SELECT levenshtein('GUMBO', 'GAMBOL', 2,1,1);
    This function calculates the metaphone code of an input string:
   </para>
 
-  <programlisting>
-   metaphone(text source, int max_output_length) returns text
-  </programlisting>
+<synopsis>
+metaphone(text source, int max_output_length) returns text
+</synopsis>
 
   <para>
    <literal>source</literal> has to be a non-null string with a maximum of
@@ -140,13 +140,13 @@ test=# SELECT levenshtein('GUMBO', 'GAMBOL', 2,1,1);
    Example:
   </para>
 
-  <programlisting>
+<screen>
 test=# SELECT metaphone('GUMBO', 4);
  metaphone
 -----------
  KM
 (1 row)
-  </programlisting>
+</screen>
  </sect2>
 
  <sect2>
@@ -160,10 +160,10 @@ test=# SELECT metaphone('GUMBO', 4);
    These functions compute the primary and alternate codes:
   </para>
 
-  <programlisting>
-   dmetaphone(text source) returns text
-   dmetaphone_alt(text source) returns text
-  </programlisting>
+<synopsis>
+dmetaphone(text source) returns text
+dmetaphone_alt(text source) returns text
+</synopsis>
 
   <para>
    There is no length limit on the input strings.
@@ -173,13 +173,13 @@ test=# SELECT metaphone('GUMBO', 4);
    Example:
   </para>
 
-  <programlisting>
+<screen>
 test=# select dmetaphone('gumbo');
  dmetaphone
 ------------
  KMP
 (1 row)
-  </programlisting>
+</screen>
  </sect2>
 
 </sect1>

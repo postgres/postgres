@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/textsearch.sgml,v 1.56 2010/04/03 07:22:56 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/textsearch.sgml,v 1.57 2010/07/29 19:34:40 petere Exp $ -->
 
 <chapter id="textsearch">
  <title>Full Text Search</title>
@@ -613,9 +613,9 @@ LIMIT 10;
     <primary>to_tsvector</primary>
    </indexterm>
 
-   <synopsis>
-    to_tsvector(<optional> <replaceable class="PARAMETER">config</replaceable> <type>regconfig</>, </optional> <replaceable class="PARAMETER">document</replaceable> <type>text</>) returns <type>tsvector</>
-   </synopsis>
+<synopsis>
+to_tsvector(<optional> <replaceable class="PARAMETER">config</replaceable> <type>regconfig</>, </optional> <replaceable class="PARAMETER">document</replaceable> <type>text</>) returns <type>tsvector</>
+</synopsis>
 
    <para>
     <function>to_tsvector</function> parses a textual document into tokens,
@@ -625,12 +625,12 @@ LIMIT 10;
     text search configuration.
     Here is a simple example:
 
-<programlisting>
+<screen>
 SELECT to_tsvector('english', 'a fat  cat sat on a mat - it ate a fat rats');
                   to_tsvector
 -----------------------------------------------------
  'ate':9 'cat':3 'fat':2,11 'mat':7 'rat':12 'sat':4
-</programlisting>
+</screen>
    </para>
 
    <para>
@@ -720,9 +720,9 @@ UPDATE tt SET ti =
     <primary>to_tsquery</primary>
    </indexterm>
 
-   <synopsis>
-    to_tsquery(<optional> <replaceable class="PARAMETER">config</replaceable> <type>regconfig</>, </optional> <replaceable class="PARAMETER">querytext</replaceable> <type>text</>) returns <type>tsquery</>
-   </synopsis>
+<synopsis>
+to_tsquery(<optional> <replaceable class="PARAMETER">config</replaceable> <type>regconfig</>, </optional> <replaceable class="PARAMETER">querytext</replaceable> <type>text</>) returns <type>tsquery</>
+</synopsis>
 
    <para>
     <function>to_tsquery</function> creates a <type>tsquery</> value from
@@ -738,32 +738,32 @@ UPDATE tt SET ti =
     the specified or default configuration, and discards any tokens that are
     stop words according to the configuration.  For example:
 
-<programlisting>
+<screen>
 SELECT to_tsquery('english', 'The &amp; Fat &amp; Rats');
   to_tsquery   
 ---------------
  'fat' &amp; 'rat'
-</programlisting>
+</screen>
 
     As in basic <type>tsquery</> input, weight(s) can be attached to each
     lexeme to restrict it to match only <type>tsvector</> lexemes of those
     weight(s).  For example:
 
-<programlisting>
+<screen>
 SELECT to_tsquery('english', 'Fat | Rats:AB');
     to_tsquery    
 ------------------
  'fat' | 'rat':AB
-</programlisting>
+</screen>
 
     Also, <literal>*</> can be attached to a lexeme to specify prefix matching:
 
-<programlisting>
+<screen>
 SELECT to_tsquery('supern:*A &amp; star:A*B');
         to_tsquery        
 --------------------------
  'supern':*A &amp; 'star':*AB
-</programlisting>
+</screen>
 
     Such a lexeme will match any word in a <type>tsvector</> that begins
     with the given string.
@@ -776,12 +776,12 @@ SELECT to_tsquery('supern:*A &amp; star:A*B');
     In the example below, a thesaurus contains the rule <literal>supernovae
     stars : sn</literal>:
 
-<programlisting>
+<screen>
 SELECT to_tsquery('''supernovae stars'' &amp; !crab');
   to_tsquery
 ---------------
  'sn' &amp; !'crab'
-</programlisting>
+</screen>
 
     Without quotes, <function>to_tsquery</function> will generate a syntax
     error for tokens that are not separated by an AND or OR operator.
@@ -791,9 +791,9 @@ SELECT to_tsquery('''supernovae stars'' &amp; !crab');
     <primary>plainto_tsquery</primary>
    </indexterm>
 
-   <synopsis>
-    plainto_tsquery(<optional> <replaceable class="PARAMETER">config</replaceable> <type>regconfig</>, </optional> <replaceable class="PARAMETER">querytext</replaceable> <type>text</>) returns <type>tsquery</>
-   </synopsis>
+<synopsis>
+plainto_tsquery(<optional> <replaceable class="PARAMETER">config</replaceable> <type>regconfig</>, </optional> <replaceable class="PARAMETER">querytext</replaceable> <type>text</>) returns <type>tsquery</>
+</synopsis>
 
    <para>
     <function>plainto_tsquery</> transforms unformatted text
@@ -806,23 +806,23 @@ SELECT to_tsquery('''supernovae stars'' &amp; !crab');
    <para>
     Example:
 
-<programlisting>
- SELECT plainto_tsquery('english', 'The Fat Rats');
+<screen>
+SELECT plainto_tsquery('english', 'The Fat Rats');
  plainto_tsquery 
 -----------------
  'fat' &amp; 'rat'
-</programlisting>
+</screen>
 
     Note that <function>plainto_tsquery</> cannot
     recognize Boolean operators, weight labels, or prefix-match labels
     in its input:
 
-<programlisting>
+<screen>
 SELECT plainto_tsquery('english', 'The Fat &amp; Rats:C');
    plainto_tsquery   
 ---------------------
  'fat' &amp; 'rat' &amp; 'c'
-</programlisting>
+</screen>
 
     Here, all the input punctuation was discarded as being space symbols.
    </para>
@@ -859,10 +859,10 @@ SELECT plainto_tsquery('english', 'The Fat &amp; Rats:C');
       </indexterm>
 
       <term>
-       <synopsis>
-        ts_rank(<optional> <replaceable class="PARAMETER">weights</replaceable> <type>float4[]</>, </optional> <replaceable class="PARAMETER">vector</replaceable> <type>tsvector</>,
-                <replaceable class="PARAMETER">query</replaceable> <type>tsquery</> <optional>, <replaceable class="PARAMETER">normalization</replaceable> <type>integer</> </optional>) returns <type>float4</>
-       </synopsis>
+<synopsis>
+ts_rank(<optional> <replaceable class="PARAMETER">weights</replaceable> <type>float4[]</>, </optional> <replaceable class="PARAMETER">vector</replaceable> <type>tsvector</>,
+        <replaceable class="PARAMETER">query</replaceable> <type>tsquery</> <optional>, <replaceable class="PARAMETER">normalization</replaceable> <type>integer</> </optional>) returns <type>float4</>
+</synopsis>
       </term>
 
       <listitem>
@@ -879,10 +879,10 @@ SELECT plainto_tsquery('english', 'The Fat &amp; Rats:C');
       </indexterm>
 
       <term>
-       <synopsis>
-        ts_rank_cd(<optional> <replaceable class="PARAMETER">weights</replaceable> <type>float4[]</>, </optional> <replaceable class="PARAMETER">vector</replaceable> <type>tsvector</>,
-                   <replaceable class="PARAMETER">query</replaceable> <type>tsquery</> <optional>, <replaceable class="PARAMETER">normalization</replaceable> <type>integer</> </optional>) returns <type>float4</>
-       </synopsis>
+<synopsis>
+ts_rank_cd(<optional> <replaceable class="PARAMETER">weights</replaceable> <type>float4[]</>, </optional> <replaceable class="PARAMETER">vector</replaceable> <type>tsvector</>,
+           <replaceable class="PARAMETER">query</replaceable> <type>tsquery</> <optional>, <replaceable class="PARAMETER">normalization</replaceable> <type>integer</> </optional>) returns <type>float4</>
+</synopsis>
       </term>
 
       <listitem>
@@ -913,9 +913,9 @@ SELECT plainto_tsquery('english', 'The Fat &amp; Rats:C');
     heavily depending on how they are labeled.  The weight arrays specify
     how heavily to weigh each category of word, in the order:
 
-<programlisting>
+<synopsis>
 {D-weight, C-weight, B-weight, A-weight}
-</programlisting>
+</synopsis>
 
     If no <replaceable class="PARAMETER">weights</replaceable> are provided,
     then these defaults are used:
@@ -996,7 +996,7 @@ SELECT plainto_tsquery('english', 'The Fat &amp; Rats:C');
    <para>
     Here is an example that selects only the ten highest-ranked matches:
 
-<programlisting>
+<screen>
 SELECT title, ts_rank_cd(textsearch, query) AS rank
 FROM apod, to_tsquery('neutrino|(dark &amp; matter)') query
 WHERE query @@ textsearch
@@ -1014,11 +1014,11 @@ LIMIT 10;
  Hot Gas and Dark Matter                       |   1.6123
  Ice Fishing for Cosmic Neutrinos              |      1.6
  Weak Lensing Distorts the Universe            | 0.818218
-</programlisting>
+</screen>
 
     This is the same example using normalized ranking:
 
-<programlisting>
+<screen>
 SELECT title, ts_rank_cd(textsearch, query, 32 /* rank/(rank+1) */ ) AS rank
 FROM apod, to_tsquery('neutrino|(dark &amp; matter)') query
 WHERE  query @@ textsearch
@@ -1036,7 +1036,7 @@ LIMIT 10;
  Hot Gas and Dark Matter                       | 0.617195790024749
  Ice Fishing for Cosmic Neutrinos              | 0.615384618911517
  Weak Lensing Distorts the Universe            | 0.450010798361481
-</programlisting>
+</screen>
    </para>
 
    <para>
@@ -1063,9 +1063,9 @@ LIMIT 10;
     <primary>ts_headline</primary>
    </indexterm>
 
-   <synopsis>
-    ts_headline(<optional> <replaceable class="PARAMETER">config</replaceable> <type>regconfig</>, </optional> <replaceable class="PARAMETER">document</replaceable> <type>text</>, <replaceable class="PARAMETER">query</replaceable> <type>tsquery</> <optional>, <replaceable class="PARAMETER">options</replaceable> <type>text</> </optional>) returns <type>text</>
-   </synopsis>
+<synopsis>
+ts_headline(<optional> <replaceable class="PARAMETER">config</replaceable> <type>regconfig</>, </optional> <replaceable class="PARAMETER">document</replaceable> <type>text</>, <replaceable class="PARAMETER">query</replaceable> <type>tsquery</> <optional>, <replaceable class="PARAMETER">options</replaceable> <type>text</> </optional>) returns <type>text</>
+</synopsis>
 
    <para>
     <function>ts_headline</function> accepts a document along
@@ -1148,7 +1148,7 @@ MaxFragments=0, FragmentDelimiter=" ... "
    <para>
     For example:
 
-<programlisting>
+<screen>
 SELECT ts_headline('english',
   'The most common type of search
 is to find all documents containing given query terms 
@@ -1173,7 +1173,7 @@ query.',
  containing given &lt;query&gt; terms
  and return them in order of their &lt;similarity&gt; to the
  &lt;query&gt;.
-</programlisting>
+</screen>
    </para>
 
    <para>
@@ -1226,9 +1226,9 @@ FROM (SELECT id, body, q, ts_rank_cd(ti, q) AS rank
      </indexterm>
 
      <term>
-      <synopsis>
-       <type>tsvector</> || <type>tsvector</>
-      </synopsis>
+<synopsis>
+<type>tsvector</> || <type>tsvector</>
+</synopsis>
      </term>
 
      <listitem>
@@ -1267,9 +1267,9 @@ FROM (SELECT id, body, q, ts_rank_cd(ti, q) AS rank
      </indexterm>
 
      <term>
-      <synopsis>
-       setweight(<replaceable class="PARAMETER">vector</replaceable> <type>tsvector</>, <replaceable class="PARAMETER">weight</replaceable> <type>"char"</>) returns <type>tsvector</>
-      </synopsis>
+<synopsis>
+setweight(<replaceable class="PARAMETER">vector</replaceable> <type>tsvector</>, <replaceable class="PARAMETER">weight</replaceable> <type>"char"</>) returns <type>tsvector</>
+</synopsis>
      </term>
 
      <listitem>
@@ -1297,9 +1297,9 @@ FROM (SELECT id, body, q, ts_rank_cd(ti, q) AS rank
      </indexterm>
 
      <term>
-      <synopsis>
-       length(<replaceable class="PARAMETER">vector</replaceable> <type>tsvector</>) returns <type>integer</>
-      </synopsis>
+<synopsis>
+length(<replaceable class="PARAMETER">vector</replaceable> <type>tsvector</>) returns <type>integer</>
+</synopsis>
      </term>
 
      <listitem>
@@ -1316,9 +1316,9 @@ FROM (SELECT id, body, q, ts_rank_cd(ti, q) AS rank
      </indexterm>
 
      <term>
-      <synopsis>
-       strip(<replaceable class="PARAMETER">vector</replaceable> <type>tsvector</>) returns <type>tsvector</>
-      </synopsis>
+<synopsis>
+strip(<replaceable class="PARAMETER">vector</replaceable> <type>tsvector</>) returns <type>tsvector</>
+</synopsis>
      </term>
 
      <listitem>
@@ -1352,9 +1352,9 @@ FROM (SELECT id, body, q, ts_rank_cd(ti, q) AS rank
     <varlistentry>
 
      <term>
-      <synopsis>
-       <type>tsquery</> &amp;&amp; <type>tsquery</>
-      </synopsis>
+<synopsis>
+<type>tsquery</> &amp;&amp; <type>tsquery</>
+</synopsis>
      </term>
 
      <listitem>
@@ -1368,9 +1368,9 @@ FROM (SELECT id, body, q, ts_rank_cd(ti, q) AS rank
     <varlistentry>
 
      <term>
-      <synopsis>
-       <type>tsquery</> || <type>tsquery</>
-      </synopsis>
+<synopsis>
+<type>tsquery</> || <type>tsquery</>
+</synopsis>
      </term>
 
      <listitem>
@@ -1384,9 +1384,9 @@ FROM (SELECT id, body, q, ts_rank_cd(ti, q) AS rank
     <varlistentry>
 
      <term>
-      <synopsis>
-       !! <type>tsquery</>
-      </synopsis>
+<synopsis>
+!! <type>tsquery</>
+</synopsis>
      </term>
 
      <listitem>
@@ -1404,9 +1404,9 @@ FROM (SELECT id, body, q, ts_rank_cd(ti, q) AS rank
      </indexterm>
 
      <term>
-      <synopsis>
-       numnode(<replaceable class="PARAMETER">query</replaceable> <type>tsquery</>) returns <type>integer</>
-      </synopsis>
+<synopsis>
+numnode(<replaceable class="PARAMETER">query</replaceable> <type>tsquery</>) returns <type>integer</>
+</synopsis>
      </term>
 
      <listitem>
@@ -1417,7 +1417,7 @@ FROM (SELECT id, body, q, ts_rank_cd(ti, q) AS rank
        (returns &gt; 0), or contains only stop words (returns 0).
        Examples:
 
-<programlisting>
+<screen>
 SELECT numnode(plainto_tsquery('the any'));
 NOTICE:  query contains only stopword(s) or doesn't contain lexeme(s), ignored
  numnode
@@ -1428,7 +1428,7 @@ SELECT numnode('foo &amp; bar'::tsquery);
  numnode
 ---------
        3
-</programlisting>
+</screen>
       </para>
      </listitem>
     </varlistentry>
@@ -1440,9 +1440,9 @@ SELECT numnode('foo &amp; bar'::tsquery);
      </indexterm>
 
      <term>
-      <synopsis>
-       querytree(<replaceable class="PARAMETER">query</replaceable> <type>tsquery</>) returns <type>text</>
-      </synopsis>
+<synopsis>
+querytree(<replaceable class="PARAMETER">query</replaceable> <type>tsquery</>) returns <type>text</>
+</synopsis>
      </term>
 
      <listitem>
@@ -1452,12 +1452,12 @@ SELECT numnode('foo &amp; bar'::tsquery);
        unindexable queries, for example those containing only stop words
        or only negated terms.  For example:
 
-<programlisting>
+<screen>
 SELECT querytree(to_tsquery('!defined'));
  querytree
 -----------
 
-</programlisting>
+</screen>
       </para>
      </listitem>
     </varlistentry>
@@ -1495,9 +1495,9 @@ SELECT querytree(to_tsquery('!defined'));
      <varlistentry>
 
       <term>
-       <synopsis>
-        ts_rewrite (<replaceable class="PARAMETER">query</replaceable> <type>tsquery</>, <replaceable class="PARAMETER">target</replaceable> <type>tsquery</>, <replaceable class="PARAMETER">substitute</replaceable> <type>tsquery</>) returns <type>tsquery</>
-       </synopsis>
+<synopsis>
+ts_rewrite (<replaceable class="PARAMETER">query</replaceable> <type>tsquery</>, <replaceable class="PARAMETER">target</replaceable> <type>tsquery</>, <replaceable class="PARAMETER">substitute</replaceable> <type>tsquery</>) returns <type>tsquery</>
+</synopsis>
       </term>
 
       <listitem>
@@ -1508,12 +1508,12 @@ SELECT querytree(to_tsquery('!defined'));
         wherever it appears in <replaceable
         class="PARAMETER">query</replaceable>.  For example:
 
-<programlisting>
+<screen>
 SELECT ts_rewrite('a &amp; b'::tsquery, 'a'::tsquery, 'c'::tsquery);
  ts_rewrite
 ------------
  'b' &amp; 'c'
-</programlisting>
+</screen>
        </para>
       </listitem>
      </varlistentry>
@@ -1521,9 +1521,9 @@ SELECT ts_rewrite('a &amp; b'::tsquery, 'a'::tsquery, 'c'::tsquery);
      <varlistentry>
 
       <term>
-       <synopsis>
-        ts_rewrite (<replaceable class="PARAMETER">query</> <type>tsquery</>, <replaceable class="PARAMETER">select</> <type>text</>) returns <type>tsquery</>
-       </synopsis>
+<synopsis>
+ts_rewrite (<replaceable class="PARAMETER">query</> <type>tsquery</>, <replaceable class="PARAMETER">select</> <type>text</>) returns <type>tsquery</>
+</synopsis>
       </term>
 
       <listitem>
@@ -1536,7 +1536,7 @@ SELECT ts_rewrite('a &amp; b'::tsquery, 'a'::tsquery, 'c'::tsquery);
         (the target) are replaced by the second column value (the substitute)
         within the current <replaceable>query</> value.  For example:
 
-<programlisting>
+<screen>
 CREATE TABLE aliases (t tsquery PRIMARY KEY, s tsquery);
 INSERT INTO aliases VALUES('a', 'c');
 
@@ -1544,7 +1544,7 @@ SELECT ts_rewrite('a &amp; b'::tsquery, 'SELECT t,s FROM aliases');
  ts_rewrite
 ------------
  'b' &amp; 'c'
-</programlisting>
+</screen>
        </para>
 
        <para>
@@ -1561,7 +1561,7 @@ SELECT ts_rewrite('a &amp; b'::tsquery, 'SELECT t,s FROM aliases');
      Let's consider a real-life astronomical example. We'll expand query
      <literal>supernovae</literal> using table-driven rewriting rules:
 
-<programlisting>
+<screen>
 CREATE TABLE aliases (t tsquery primary key, s tsquery);
 INSERT INTO aliases VALUES(to_tsquery('supernovae'), to_tsquery('supernovae|sn'));
 
@@ -1569,11 +1569,11 @@ SELECT ts_rewrite(to_tsquery('supernovae &amp; crab'), 'SELECT * FROM aliases');
            ts_rewrite            
 ---------------------------------
  'crab' &amp; ( 'supernova' | 'sn' )
-</programlisting>
+</screen>
 
      We can change the rewriting rules just by updating the table:
 
-<programlisting>
+<screen>
 UPDATE aliases
 SET s = to_tsquery('supernovae|sn &amp; !nebulae')
 WHERE t = to_tsquery('supernovae');
@@ -1582,7 +1582,7 @@ SELECT ts_rewrite(to_tsquery('supernovae &amp; crab'), 'SELECT * FROM aliases');
                  ts_rewrite                  
 ---------------------------------------------
  'crab' &amp; ( 'supernova' | 'sn' &amp; !'nebula' )
-</programlisting>
+</screen>
     </para>
 
     <para>
@@ -1592,13 +1592,13 @@ SELECT ts_rewrite(to_tsquery('supernovae &amp; crab'), 'SELECT * FROM aliases');
      type. In the example below, we select only those rules which might match
      the original query:
 
-<programlisting>
+<screen>
 SELECT ts_rewrite('a &amp; b'::tsquery,
                   'SELECT t,s FROM aliases WHERE ''a &amp; b''::tsquery @&gt; t');
  ts_rewrite
 ------------
  'b' &amp; 'c'
-</programlisting>
+</screen>
     </para>
 
    </sect3>
@@ -1621,10 +1621,10 @@ SELECT ts_rewrite('a &amp; b'::tsquery,
     your own.
    </para>
 
-   <synopsis>
-    tsvector_update_trigger(<replaceable class="PARAMETER">tsvector_column_name</replaceable>, <replaceable class="PARAMETER">config_name</replaceable>, <replaceable class="PARAMETER">text_column_name</replaceable> <optional>, ... </optional>)
-    tsvector_update_trigger_column(<replaceable class="PARAMETER">tsvector_column_name</replaceable>, <replaceable class="PARAMETER">config_column_name</replaceable>, <replaceable class="PARAMETER">text_column_name</replaceable> <optional>, ... </optional>)
-   </synopsis>
+<synopsis>
+tsvector_update_trigger(<replaceable class="PARAMETER">tsvector_column_name</replaceable>, <replaceable class="PARAMETER">config_name</replaceable>, <replaceable class="PARAMETER">text_column_name</replaceable> <optional>, ... </optional>)
+tsvector_update_trigger_column(<replaceable class="PARAMETER">tsvector_column_name</replaceable>, <replaceable class="PARAMETER">config_column_name</replaceable>, <replaceable class="PARAMETER">text_column_name</replaceable> <optional>, ... </optional>)
+</synopsis>
 
    <para>
     These trigger functions automatically compute a <type>tsvector</>
@@ -1632,7 +1632,7 @@ SELECT ts_rewrite('a &amp; b'::tsquery,
     parameters specified in the <command>CREATE TRIGGER</> command.
     An example of their use is:
 
-<programlisting>
+<screen>
 CREATE TABLE messages (
     title       text,
     body        text,
@@ -1654,7 +1654,7 @@ SELECT title, body FROM messages WHERE tsv @@ to_tsquery('title &amp; body');
    title    |         body          
 ------------+-----------------------
  title here | the body text is here
-</programlisting>
+</screen>
 
     Having created this trigger, any change in <structfield>title</> or
     <structfield>body</> will automatically be reflected into
@@ -1696,7 +1696,7 @@ end
 $$ LANGUAGE plpgsql;
 
 CREATE TRIGGER tsvectorupdate BEFORE INSERT OR UPDATE
-ON messages FOR EACH ROW EXECUTE PROCEDURE messages_trigger();
+    ON messages FOR EACH ROW EXECUTE PROCEDURE messages_trigger();
 </programlisting>
    </para>
 
@@ -1722,11 +1722,11 @@ ON messages FOR EACH ROW EXECUTE PROCEDURE messages_trigger();
     configuration and for finding stop-word candidates.
    </para>
 
-   <synopsis>
-    ts_stat(<replaceable class="PARAMETER">sqlquery</replaceable> <type>text</>, <optional> <replaceable class="PARAMETER">weights</replaceable> <type>text</>, </optional>
-            OUT <replaceable class="PARAMETER">word</replaceable> <type>text</>, OUT <replaceable class="PARAMETER">ndoc</replaceable> <type>integer</>,
-            OUT <replaceable class="PARAMETER">nentry</replaceable> <type>integer</>) returns <type>setof record</>
-   </synopsis>
+<synopsis>
+ts_stat(<replaceable class="PARAMETER">sqlquery</replaceable> <type>text</>, <optional> <replaceable class="PARAMETER">weights</replaceable> <type>text</>, </optional>
+        OUT <replaceable class="PARAMETER">word</replaceable> <type>text</>, OUT <replaceable class="PARAMETER">ndoc</replaceable> <type>integer</>,
+        OUT <replaceable class="PARAMETER">nentry</replaceable> <type>integer</>) returns <type>setof record</>
+</synopsis>
 
    <para>
     <replaceable>sqlquery</replaceable> is a text value containing an SQL
@@ -1957,7 +1957,7 @@ LIMIT 10;
    piece of text.  As an example, a hyphenated word will be reported both
    as the entire word and as each component:
 
-<programlisting>
+<screen>
 SELECT alias, description, token FROM ts_debug('foo-bar-beta1');
       alias      |               description                |     token     
 -----------------+------------------------------------------+---------------
@@ -1967,13 +1967,13 @@ SELECT alias, description, token FROM ts_debug('foo-bar-beta1');
  hword_asciipart | Hyphenated word part, all ASCII          | bar
  blank           | Space symbols                            | -
  hword_numpart   | Hyphenated word part, letters and digits | beta1
-</programlisting>
+</screen>
 
    This behavior is desirable since it allows searches to work for both
    the whole compound word and for components.  Here is another
    instructive example:
 
-<programlisting>
+<screen>
 SELECT alias, description, token FROM ts_debug('http://example.com/stuff/index.html');
   alias   |  description  |            token             
 ----------+---------------+------------------------------
@@ -1981,7 +1981,7 @@ SELECT alias, description, token FROM ts_debug('http://example.com/stuff/index.h
  url      | URL           | example.com/stuff/index.html
  host     | Host          | example.com
  url_path | URL path      | /stuff/index.html
-</programlisting>
+</screen>
   </para>
 
  </sect1>
@@ -2123,17 +2123,17 @@ ALTER TEXT SEARCH CONFIGURATION astro_en
     useless to store them in an index.  However, stop words do affect the
     positions in <type>tsvector</type>, which in turn affect ranking:
 
-<programlisting>
+<screen>
 SELECT to_tsvector('english','in the list of stop words');
         to_tsvector
 ----------------------------
  'list':3 'stop':5 'word':6
-</programlisting>
+</screen>
 
     The missing positions 1,2,4 are because of stop words.  Ranks
     calculated for documents with and without stop words are quite different:
 
-<programlisting>
+<screen>
 SELECT ts_rank_cd (to_tsvector('english','in the list of stop words'), to_tsquery('list &amp; stop'));
  ts_rank_cd
 ------------
@@ -2143,7 +2143,7 @@ SELECT ts_rank_cd (to_tsvector('english','list stop words'), to_tsquery('list &a
  ts_rank_cd
 ------------
         0.1
-</programlisting>
+</screen>
 
    </para>
 
@@ -2197,7 +2197,7 @@ CREATE TEXT SEARCH DICTIONARY public.simple_dict (
    <para>
     Now we can test our dictionary:
 
-<programlisting>
+<screen>
 SELECT ts_lexize('public.simple_dict','YeS');
  ts_lexize
 -----------
@@ -2207,7 +2207,7 @@ SELECT ts_lexize('public.simple_dict','The');
  ts_lexize
 -----------
  {}
-</programlisting>
+</screen>
    </para>
 
    <para>
@@ -2216,7 +2216,7 @@ SELECT ts_lexize('public.simple_dict','The');
     selected by setting the dictionary's <literal>Accept</> parameter to
     <literal>false</>.  Continuing the example:
 
-<programlisting>
+<screen>
 ALTER TEXT SEARCH DICTIONARY public.simple_dict ( Accept = false );
 
 SELECT ts_lexize('public.simple_dict','YeS');
@@ -2228,7 +2228,7 @@ SELECT ts_lexize('public.simple_dict','The');
  ts_lexize
 -----------
  {}
-</programlisting>
+</screen>
    </para>
 
    <para>
@@ -2274,7 +2274,7 @@ SELECT ts_lexize('public.simple_dict','The');
     synonym dictionary and put it before the <literal>english_stem</>
     dictionary.  For example:
 
-<programlisting>
+<screen>
 SELECT * FROM ts_debug('english', 'Paris');
    alias   |   description   | token |  dictionaries  |  dictionary  | lexemes 
 -----------+-----------------+-------+----------------+--------------+---------
@@ -2293,7 +2293,7 @@ SELECT * FROM ts_debug('english', 'Paris');
    alias   |   description   | token |       dictionaries        | dictionary | lexemes 
 -----------+-----------------+-------+---------------------------+------------+---------
  asciiword | Word, all ASCII | Paris | {my_synonym,english_stem} | my_synonym | {paris}
-</programlisting>
+</screen>
    </para>
    
    <para>
@@ -2306,7 +2306,6 @@ SELECT * FROM ts_debug('english', 'Paris');
 
    <para>
     Contents of <filename>$SHAREDIR/tsearch_data/synonym_sample.syn</>:
-   </para>
 <programlisting>
 postgres        pgsql
 postgresql      pgsql
@@ -2314,44 +2313,45 @@ postgre pgsql
 gogle   googl
 indices index*
 </programlisting>
+   </para>
 
    <para>
     Results:
-   </para>
-<programlisting>
-=# create text search dictionary syn( template=synonym,synonyms='synonym_sample');
-=# select ts_lexize('syn','indices');
+<screen>
+=# CREATE TEXT SEARCH DICTIONARY syn (template=synonym, synonyms='synonym_sample');
+=# SELECT ts_lexize('syn','indices');
  ts_lexize
 -----------
  {index}
 (1 row)
 
-=# create text search configuration tst ( copy=simple);
-=# alter text search configuration tst alter mapping for asciiword with syn;
-=# select to_tsquery('tst','indices');
+=# CREATE TEXT SEARCH CONFIGURATION tst (copy=simple);
+=# ALTER TEXT SEARCH CONFIGURATION tst ALTER MAPPING FOR asciiword WITH syn;
+=# SELECT to_tsquery('tst','indices');
  to_tsquery
 ------------
  'index':*
 (1 row)
 
-=# select 'indexes are very useful'::tsvector;
+=# SELECT 'indexes are very useful'::tsvector;
             tsvector             
 ---------------------------------
  'are' 'indexes' 'useful' 'very'
 (1 row)
 
-=# select 'indexes are very useful'::tsvector @@ to_tsquery('tst','indices');
+=# SELECT 'indexes are very useful'::tsvector @@ to_tsquery('tst','indices');
  ?column?
 ----------
  t
 (1 row)
 
-=# select to_tsvector('tst','indices');
+=# SELECT to_tsvector('tst','indices');
  to_tsvector
 -------------
  'index':1
 (1 row)
-</programlisting>
+</screen>
+   </para>
 
    <para>
     The only parameter required by the <literal>synonym</> template is
@@ -2544,7 +2544,7 @@ ALTER TEXT SEARCH CONFIGURATION russian
     <function>plainto_tsquery</function> and <function>to_tsvector</function>
     which will break their input strings into multiple tokens:
 
-<programlisting>
+<screen>
 SELECT plainto_tsquery('supernova star');
  plainto_tsquery
 -----------------
@@ -2554,17 +2554,17 @@ SELECT to_tsvector('supernova star');
  to_tsvector
 -------------
  'sn':1
-</programlisting>
+</screen>
 
     In principle, one can use <function>to_tsquery</function> if you quote
     the argument:
 
-<programlisting>
+<screen>
 SELECT to_tsquery('''supernova star''');
  to_tsquery
 ------------
  'sn'
-</programlisting>
+</screen>
 
     Notice that <literal>supernova star</literal> matches <literal>supernovae
     stars</literal> in <literal>thesaurus_astro</literal> because we specified
@@ -2576,14 +2576,14 @@ SELECT to_tsquery('''supernova star''');
     To index the original phrase as well as the substitute, just include it
     in the right-hand part of the definition:
 
-<programlisting>
+<screen>
 supernovae stars : sn supernovae stars
 
 SELECT plainto_tsquery('supernova star');
        plainto_tsquery
 -----------------------------
  'sn' &amp; 'supernova' &amp; 'star'
-</programlisting>
+</screen>
    </para>
 
   </sect3>
@@ -2820,7 +2820,7 @@ version of our software.
     The next step is to set the session to use the new configuration, which was
     created in the <literal>public</> schema:
 
-<programlisting>
+<screen>
 =&gt; \dF
    List of text search configurations
  Schema  | Name | Description
@@ -2834,7 +2834,7 @@ SHOW default_text_search_config;
  default_text_search_config
 ----------------------------
  public.pg
-</programlisting>
+</screen>
   </para>
 
  </sect1>
@@ -2861,16 +2861,16 @@ SHOW default_text_search_config;
    <primary>ts_debug</primary>
   </indexterm>
 
-  <synopsis>
-   ts_debug(<optional> <replaceable class="PARAMETER">config</replaceable> <type>regconfig</>, </optional> <replaceable class="PARAMETER">document</replaceable> <type>text</>,
-            OUT <replaceable class="PARAMETER">alias</> <type>text</>,
-            OUT <replaceable class="PARAMETER">description</> <type>text</>,
-            OUT <replaceable class="PARAMETER">token</> <type>text</>,
-            OUT <replaceable class="PARAMETER">dictionaries</> <type>regdictionary[]</>,
-            OUT <replaceable class="PARAMETER">dictionary</> <type>regdictionary</>,
-            OUT <replaceable class="PARAMETER">lexemes</> <type>text[]</>)
-            returns setof record
-  </synopsis>
+<synopsis>
+ts_debug(<optional> <replaceable class="PARAMETER">config</replaceable> <type>regconfig</>, </optional> <replaceable class="PARAMETER">document</replaceable> <type>text</>,
+         OUT <replaceable class="PARAMETER">alias</> <type>text</>,
+         OUT <replaceable class="PARAMETER">description</> <type>text</>,
+         OUT <replaceable class="PARAMETER">token</> <type>text</>,
+         OUT <replaceable class="PARAMETER">dictionaries</> <type>regdictionary[]</>,
+         OUT <replaceable class="PARAMETER">dictionary</> <type>regdictionary</>,
+         OUT <replaceable class="PARAMETER">lexemes</> <type>text[]</>)
+         returns setof record
+</synopsis>
 
   <para>
    <function>ts_debug</> displays information about every token of
@@ -2929,7 +2929,7 @@ SHOW default_text_search_config;
   <para>
    Here is a simple example:
 
-<programlisting>
+<screen>
 SELECT * FROM ts_debug('english','a fat  cat sat on a mat - it ate a fat rats');
    alias   |   description   | token |  dictionaries  |  dictionary  | lexemes 
 -----------+-----------------+-------+----------------+--------------+---------
@@ -2957,7 +2957,7 @@ SELECT * FROM ts_debug('english','a fat  cat sat on a mat - it ate a fat rats');
  asciiword | Word, all ASCII | fat   | {english_stem} | english_stem | {fat}
  blank     | Space symbols   |       | {}             |              | 
  asciiword | Word, all ASCII | rats  | {english_stem} | english_stem | {rat}
-</programlisting>
+</screen>
   </para>
 
   <para>
@@ -2980,7 +2980,7 @@ ALTER TEXT SEARCH CONFIGURATION public.english
    ALTER MAPPING FOR asciiword WITH english_ispell, english_stem;
 </programlisting>
 
-<programlisting>
+<screen>
 SELECT * FROM ts_debug('public.english','The Brightest supernovaes');
    alias   |   description   |    token    |         dictionaries          |   dictionary   |   lexemes   
 -----------+-----------------+-------------+-------------------------------+----------------+-------------
@@ -2989,7 +2989,7 @@ SELECT * FROM ts_debug('public.english','The Brightest supernovaes');
  asciiword | Word, all ASCII | Brightest   | {english_ispell,english_stem} | english_ispell | {bright}
  blank     | Space symbols   |             | {}                            |                | 
  asciiword | Word, all ASCII | supernovaes | {english_ispell,english_stem} | english_stem   | {supernova}
-</programlisting>
+</screen>
 
   <para>
    In this example, the word <literal>Brightest</> was recognized by the
@@ -3018,7 +3018,7 @@ SELECT * FROM ts_debug('public.english','The Brightest supernovaes');
    You can reduce the width of the output by explicitly specifying which columns
    you want to see:
 
-<programlisting>
+<screen>
 SELECT alias, token, dictionary, lexemes
 FROM ts_debug('public.english','The Brightest supernovaes');
    alias   |    token    |   dictionary   |   lexemes   
@@ -3028,7 +3028,7 @@ FROM ts_debug('public.english','The Brightest supernovaes');
  asciiword | Brightest   | english_ispell | {bright}
  blank     |             |                | 
  asciiword | supernovaes | english_stem   | {supernova}
-</programlisting>
+</screen>
   </para>
 
   </sect2>
@@ -3044,12 +3044,12 @@ FROM ts_debug('public.english','The Brightest supernovaes');
    <primary>ts_parse</primary>
   </indexterm>
 
-  <synopsis>
-   ts_parse(<replaceable class="PARAMETER">parser_name</replaceable> <type>text</>, <replaceable class="PARAMETER">document</replaceable> <type>text</>,
-            OUT <replaceable class="PARAMETER">tokid</> <type>integer</>, OUT <replaceable class="PARAMETER">token</> <type>text</>) returns <type>setof record</>
-   ts_parse(<replaceable class="PARAMETER">parser_oid</replaceable> <type>oid</>, <replaceable class="PARAMETER">document</replaceable> <type>text</>,
-            OUT <replaceable class="PARAMETER">tokid</> <type>integer</>, OUT <replaceable class="PARAMETER">token</> <type>text</>) returns <type>setof record</>
-  </synopsis>
+<synopsis>
+ts_parse(<replaceable class="PARAMETER">parser_name</replaceable> <type>text</>, <replaceable class="PARAMETER">document</replaceable> <type>text</>,
+         OUT <replaceable class="PARAMETER">tokid</> <type>integer</>, OUT <replaceable class="PARAMETER">token</> <type>text</>) returns <type>setof record</>
+ts_parse(<replaceable class="PARAMETER">parser_oid</replaceable> <type>oid</>, <replaceable class="PARAMETER">document</replaceable> <type>text</>,
+         OUT <replaceable class="PARAMETER">tokid</> <type>integer</>, OUT <replaceable class="PARAMETER">token</> <type>text</>) returns <type>setof record</>
+</synopsis>
 
   <para>
    <function>ts_parse</> parses the given <replaceable>document</replaceable>
@@ -3058,7 +3058,7 @@ FROM ts_debug('public.english','The Brightest supernovaes');
    assigned token type and a <varname>token</varname> which is the text of the
    token.  For example:
 
-<programlisting>
+<screen>
 SELECT * FROM ts_parse('default', '123 - a number');
  tokid | token
 -------+--------
@@ -3068,19 +3068,19 @@ SELECT * FROM ts_parse('default', '123 - a number');
      1 | a
     12 |
      1 | number
-</programlisting>
+</screen>
   </para>
 
   <indexterm>
    <primary>ts_token_type</primary>
   </indexterm>
 
-  <synopsis>
-   ts_token_type(<replaceable class="PARAMETER">parser_name</> <type>text</>, OUT <replaceable class="PARAMETER">tokid</> <type>integer</>,
-                 OUT <replaceable class="PARAMETER">alias</> <type>text</>, OUT <replaceable class="PARAMETER">description</> <type>text</>) returns <type>setof record</>
-   ts_token_type(<replaceable class="PARAMETER">parser_oid</> <type>oid</>, OUT <replaceable class="PARAMETER">tokid</> <type>integer</>,
-                 OUT <replaceable class="PARAMETER">alias</> <type>text</>, OUT <replaceable class="PARAMETER">description</> <type>text</>) returns <type>setof record</>
-  </synopsis>
+<synopsis>
+ts_token_type(<replaceable class="PARAMETER">parser_name</> <type>text</>, OUT <replaceable class="PARAMETER">tokid</> <type>integer</>,
+              OUT <replaceable class="PARAMETER">alias</> <type>text</>, OUT <replaceable class="PARAMETER">description</> <type>text</>) returns <type>setof record</>
+ts_token_type(<replaceable class="PARAMETER">parser_oid</> <type>oid</>, OUT <replaceable class="PARAMETER">tokid</> <type>integer</>,
+              OUT <replaceable class="PARAMETER">alias</> <type>text</>, OUT <replaceable class="PARAMETER">description</> <type>text</>) returns <type>setof record</>
+</synopsis>
 
   <para>
    <function>ts_token_type</> returns a table which describes each type of
@@ -3090,7 +3090,7 @@ SELECT * FROM ts_parse('default', '123 - a number');
    in configuration commands, and a short <varname>description</varname>.  For
    example:
 
-<programlisting>
+<screen>
 SELECT * FROM ts_token_type('default');
  tokid |      alias      |               description                
 -------+-----------------+------------------------------------------
@@ -3117,7 +3117,7 @@ SELECT * FROM ts_token_type('default');
     21 | int             | Signed integer
     22 | uint            | Unsigned integer
     23 | entity          | XML entity
-</programlisting>
+</screen>
    </para>
 
   </sect2>
@@ -3133,9 +3133,9 @@ SELECT * FROM ts_token_type('default');
     <primary>ts_lexize</primary>
    </indexterm>
 
-   <synopsis>
-    ts_lexize(<replaceable class="PARAMETER">dict</replaceable> <type>regdictionary</>, <replaceable class="PARAMETER">token</replaceable> <type>text</>) returns <type>text[]</>
-   </synopsis>
+<synopsis>
+ts_lexize(<replaceable class="PARAMETER">dict</replaceable> <type>regdictionary</>, <replaceable class="PARAMETER">token</replaceable> <type>text</>) returns <type>text[]</>
+</synopsis>
 
    <para>
     <function>ts_lexize</> returns an array of lexemes if the input
@@ -3148,7 +3148,7 @@ SELECT * FROM ts_token_type('default');
    <para>
     Examples:
 
-<programlisting>
+<screen>
 SELECT ts_lexize('english_stem', 'stars');
  ts_lexize
 -----------
@@ -3158,7 +3158,7 @@ SELECT ts_lexize('english_stem', 'a');
  ts_lexize
 -----------
  {}
-</programlisting>
+</screen>
    </para>
 
    <note>
@@ -3167,12 +3167,12 @@ SELECT ts_lexize('english_stem', 'a');
      <emphasis>token</emphasis>, not text. Here is a case
      where this can be confusing:
 
-<programlisting>
+<screen>
 SELECT ts_lexize('thesaurus_astro','supernovae stars') is null;
  ?column?
 ----------
  t
-</programlisting>
+</screen>
 
      The thesaurus dictionary <literal>thesaurus_astro</literal> does know the
      phrase <literal>supernovae stars</literal>, but <function>ts_lexize</>
@@ -3180,12 +3180,12 @@ SELECT ts_lexize('thesaurus_astro','supernovae stars') is null;
      token. Use <function>plainto_tsquery</> or <function>to_tsvector</> to
      test thesaurus dictionaries, for example:
 
-<programlisting>
+<screen>
 SELECT plainto_tsquery('supernovae stars');
  plainto_tsquery
 -----------------
  'sn'
-</programlisting>
+</screen>
     </para>
    </note>
 
@@ -3219,9 +3219,9 @@ SELECT plainto_tsquery('supernovae stars');
      </indexterm>
 
      <term>
-      <synopsis>
-       CREATE INDEX <replaceable>name</replaceable> ON <replaceable>table</replaceable> USING gist(<replaceable>column</replaceable>);
-      </synopsis>
+<synopsis>
+CREATE INDEX <replaceable>name</replaceable> ON <replaceable>table</replaceable> USING gist(<replaceable>column</replaceable>);
+</synopsis>
      </term>
 
      <listitem>
@@ -3242,9 +3242,9 @@ SELECT plainto_tsquery('supernovae stars');
      </indexterm>
 
      <term>
-      <synopsis>
-       CREATE INDEX <replaceable>name</replaceable> ON <replaceable>table</replaceable> USING gin(<replaceable>column</replaceable>);
-      </synopsis>
+<synopsis>
+CREATE INDEX <replaceable>name</replaceable> ON <replaceable>table</replaceable> USING gin(<replaceable>column</replaceable>);
+</synopsis>
      </term>
 
      <listitem>
@@ -3358,9 +3358,9 @@ SELECT plainto_tsquery('supernovae stars');
   <para>
    Information about text search configuration objects can be obtained
    in <application>psql</application> using a set of commands:
-   <synopsis>
-   \dF{d,p,t}<optional>+</optional> <optional>PATTERN</optional>
-   </synopsis>
+<synopsis>
+\dF{d,p,t}<optional>+</optional> <optional>PATTERN</optional>
+</synopsis>
    An optional <literal>+</literal> produces more details.
   </para>
 
@@ -3372,39 +3372,33 @@ SELECT plainto_tsquery('supernovae stars');
    regular expression and can provide <emphasis>separate</emphasis> patterns
    for the schema and object names.  The following examples illustrate this:
 
-<programlisting>
+<screen>
 =&gt; \dF *fulltext*
        List of text search configurations
  Schema |  Name        | Description
 --------+--------------+-------------
  public | fulltext_cfg |
-</programlisting>
+</screen>
 
-<programlisting>
+<screen>
 =&gt; \dF *.fulltext*
        List of text search configurations
  Schema   |  Name        | Description
 ----------+----------------------------
  fulltext | fulltext_cfg |
  public   | fulltext_cfg |
-</programlisting>
+</screen>
 
    The available commands are:
   </para>
 
   <variablelist>
-
    <varlistentry>
     <term><synopsis>\dF<optional>+</optional> <optional>PATTERN</optional></synopsis></term>
-
     <listitem>
      <para>
       List text search configurations (add <literal>+</> for more detail).
-     </para>
-
-     <para>
-
-<programlisting>
+<screen>
 =&gt; \dF russian
             List of text search configurations
    Schema   |  Name   |            Description             
@@ -3435,7 +3429,7 @@ Parser: "pg_catalog.default"
  url_path        | simple
  version         | simple
  word            | russian_stem
-</programlisting>
+</screen>
      </para>
     </listitem>
    </varlistentry>
@@ -3445,10 +3439,7 @@ Parser: "pg_catalog.default"
     <listitem>
      <para>
       List text search dictionaries (add <literal>+</> for more detail).
-     </para>
-
-     <para>
-<programlisting>
+<screen>
 =&gt; \dFd
                             List of text search dictionaries
    Schema   |      Name       |                        Description                        
@@ -3469,21 +3460,17 @@ Parser: "pg_catalog.default"
  pg_catalog | spanish_stem    | snowball stemmer for spanish language
  pg_catalog | swedish_stem    | snowball stemmer for swedish language
  pg_catalog | turkish_stem    | snowball stemmer for turkish language
-</programlisting>
+</screen>
      </para>
     </listitem>
    </varlistentry>
 
    <varlistentry>
-
    <term><synopsis>\dFp<optional>+</optional> <optional>PATTERN</optional></synopsis></term>
     <listitem>
      <para>
       List text search parsers (add <literal>+</> for more detail).
-     </para>
-
-     <para>
-<programlisting>
+<screen>
 =&gt; \dFp
         List of text search parsers
    Schema   |  Name   |     Description     
@@ -3526,21 +3513,17 @@ Parser: "pg_catalog.default"
  version         | Version number
  word            | Word, all letters
 (23 rows)
-</programlisting>
+</screen>
      </para>
     </listitem>
    </varlistentry>
 
    <varlistentry>
-
    <term><synopsis>\dFt<optional>+</optional> <optional>PATTERN</optional></synopsis></term>
     <listitem>
      <para>
       List text search templates (add <literal>+</> for more detail).
-     </para>
-
-     <para>
-<programlisting>
+<screen>
 =&gt; \dFt
                            List of text search templates
    Schema   |   Name    |                        Description                        
@@ -3550,11 +3533,10 @@ Parser: "pg_catalog.default"
  pg_catalog | snowball  | snowball stemmer
  pg_catalog | synonym   | synonym dictionary: replace word by its synonym
  pg_catalog | thesaurus | thesaurus dictionary: phrase by phrase substitution
-</programlisting>
+</screen>
      </para>
     </listitem>
    </varlistentry>
-
   </variablelist>
 
  </sect1>

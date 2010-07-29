@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/indexam.sgml,v 2.33 2010/02/08 04:33:51 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/indexam.sgml,v 2.34 2010/07/29 19:34:40 petere Exp $ -->
 
 <chapter id="indexam">
  <title>Index Access Method Interface Definition</title>
@@ -1027,16 +1027,16 @@ amcostestimate (PlannerInfo *root,
      Compute the index access cost.  A generic estimator might do this:
 
 <programlisting>
-    /*
-     * Our generic assumption is that the index pages will be read
-     * sequentially, so they cost seq_page_cost each, not random_page_cost.
-     * Also, we charge for evaluation of the indexquals at each index row.
-     * All the costs are assumed to be paid incrementally during the scan.
-     */
-    cost_qual_eval(&amp;index_qual_cost, indexQuals, root);
-    *indexStartupCost = index_qual_cost.startup;
-    *indexTotalCost = seq_page_cost * numIndexPages +
-        (cpu_index_tuple_cost + index_qual_cost.per_tuple) * numIndexTuples;
+/*
+ * Our generic assumption is that the index pages will be read
+ * sequentially, so they cost seq_page_cost each, not random_page_cost.
+ * Also, we charge for evaluation of the indexquals at each index row.
+ * All the costs are assumed to be paid incrementally during the scan.
+ */
+cost_qual_eval(&amp;index_qual_cost, indexQuals, root);
+*indexStartupCost = index_qual_cost.startup;
+*indexTotalCost = seq_page_cost * numIndexPages +
+    (cpu_index_tuple_cost + index_qual_cost.per_tuple) * numIndexTuples;
 </programlisting>
 
      However, the above does not account for amortization of index reads

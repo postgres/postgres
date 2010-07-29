@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/pgtrgm.sgml,v 2.2 2007/12/10 05:32:51 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/pgtrgm.sgml,v 2.3 2010/07/29 19:34:40 petere Exp $ -->
 
 <sect1 id="pgtrgm">
  <title>pg_trgm</title>
@@ -136,27 +136,25 @@
   <para>
    Example:
 
-  <programlisting>
+<programlisting>
 CREATE TABLE test_trgm (t text);
 CREATE INDEX trgm_idx ON test_trgm USING gist (t gist_trgm_ops);
-  </programlisting>
+</programlisting>
 or
-  <programlisting>
+<programlisting>
 CREATE INDEX trgm_idx ON test_trgm USING gin (t gin_trgm_ops);
-  </programlisting>
+</programlisting>
   </para>
 
   <para>
    At this point, you will have an index on the <structfield>t</> column that
    you can use for similarity searching.  A typical query is
-  </para>
-  <programlisting>
+<programlisting>
 SELECT t, similarity(t, '<replaceable>word</>') AS sml
   FROM test_trgm
   WHERE t % '<replaceable>word</>'
   ORDER BY sml DESC, t;
-  </programlisting>
-  <para>
+</programlisting>
    This will return all values in the text column that are sufficiently
    similar to <replaceable>word</>, sorted from best match to worst.  The
    index will be used to make this a fast operation even over very large data
@@ -185,14 +183,12 @@ SELECT t, similarity(t, '<replaceable>word</>') AS sml
   <para>
    The first step is to generate an auxiliary table containing all
    the unique words in the documents:
-  </para>
 
-  <programlisting>
+<programlisting>
 CREATE TABLE words AS SELECT word FROM
         ts_stat('SELECT to_tsvector(''simple'', bodytext) FROM documents');
-  </programlisting>
+</programlisting>
 
-  <para>
    where <structname>documents</> is a table that has a text field
    <structfield>bodytext</> that we wish to search.  The reason for using
    the <literal>simple</> configuration with the <function>to_tsvector</>
@@ -202,13 +198,11 @@ CREATE TABLE words AS SELECT word FROM
 
   <para>
    Next, create a trigram index on the word column:
-  </para>
 
-  <programlisting>
+<programlisting>
 CREATE INDEX words_idx ON words USING gin(word gin_trgm_ops);
-  </programlisting>
+</programlisting>
 
-  <para>
    Now, a <command>SELECT</command> query similar to the previous example can
    be used to suggest spellings for misspelled words in user search terms.
    A useful extra test is to require that the selected words are also of

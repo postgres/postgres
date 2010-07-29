@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/monitoring.sgml,v 1.80 2010/04/26 19:56:55 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/monitoring.sgml,v 1.81 2010/07/29 19:34:40 petere Exp $ -->
 
 <chapter id="monitoring">
  <title>Monitoring Database Activity</title>
@@ -1680,7 +1680,7 @@ Total time (ns)                        2312105013
     <para>
      Add the probe definition to <filename>src/backend/utils/probes.d</>:
 <programlisting>
-      probe transaction__start(LocalTransactionId);
+probe transaction__start(LocalTransactionId);
 </programlisting>
      Note the use of the double underline in the probe name. In a DTrace
      script using the probe, the double underline needs to be replaced with a
@@ -1698,7 +1698,7 @@ Total time (ns)                        2312105013
      in the source code.  In this case, it looks like the following:
 
 <programlisting>
-    TRACE_POSTGRESQL_TRANSACTION_START(vxid.localTransactionId);
+TRACE_POSTGRESQL_TRANSACTION_START(vxid.localTransactionId);
 </programlisting>
     </para>
    </step>
@@ -1748,8 +1748,8 @@ Total time (ns)                        2312105013
       is actually enabled:
 
 <programlisting>
-    if (TRACE_POSTGRESQL_TRANSACTION_START_ENABLED())
-        TRACE_POSTGRESQL_TRANSACTION_START(some_function(...));
+if (TRACE_POSTGRESQL_TRANSACTION_START_ENABLED())
+    TRACE_POSTGRESQL_TRANSACTION_START(some_function(...));
 </programlisting>
 
       Each trace macro has a corresponding <literal>ENABLED</> macro.

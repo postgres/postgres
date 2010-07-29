@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/hstore.sgml,v 1.12 2010/07/02 20:36:49 rhaas Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/hstore.sgml,v 1.13 2010/07/29 19:34:40 petere Exp $ -->
 
 <sect1 id="hstore">
  <title>hstore</title>
@@ -24,11 +24,11 @@
    includes zero or more <replaceable>key</> <literal>=&gt;</>
    <replaceable>value</> pairs separated by commas. Some examples:
 
-   <programlisting>
-    k =&gt; v
-    foo =&gt; bar, baz =&gt; whatever
-    "1-a" =&gt; "anything at all"
-   </programlisting>
+<synopsis>
+k =&gt; v
+foo =&gt; bar, baz =&gt; whatever
+"1-a" =&gt; "anything at all"
+</synopsis>
 
    The order of the pairs is not significant (and may not be reproduced on
    output). Whitespace between pairs or around the <literal>=&gt;</> sign is
@@ -42,23 +42,23 @@
    with duplicate keys, only one will be stored in the <type>hstore</> and
    there is no guarantee as to which will be kept:
 
-   <programlisting>
-% select 'a=&gt;1,a=&gt;2'::hstore;
+<programlisting>
+SELECT 'a=&gt;1,a=&gt;2'::hstore;
   hstore
 ----------
  "a"=&gt;"1"
-   </programlisting>
+</programlisting>
   </para>
 
   <para>
    A value (but not a key) can be an SQL <literal>NULL</>. For example:
 
-   <programlisting>
-    key =&gt; NULL
-   </programlisting>
+<programlisting>
+key =&gt; NULL
+</programlisting>
 
    The <literal>NULL</> keyword is case-insensitive. Double-quote the
-   <literal>NULL</> to treat it as the ordinary string "NULL".
+   <literal>NULL</> to treat it as the ordinary string <quote>NULL</quote>.
   </para>
 
   <note>
@@ -421,11 +421,11 @@ b
    <type>hstore</> has GiST and GIN index support for the <literal>@&gt;</>,
    <literal>?</>, <literal>?&amp;</> and <literal>?|</> operators. For example:
   </para>
-  <programlisting>
+<programlisting>
 CREATE INDEX hidx ON testhstore USING GIST (h);
 
 CREATE INDEX hidx ON testhstore USING GIN (h);
-  </programlisting>
+</programlisting>
 
   <para>
    <type>hstore</> also supports <type>btree</> or <type>hash</> indexes for
@@ -436,11 +436,11 @@ CREATE INDEX hidx ON testhstore USING GIN (h);
    may be useful for equivalence lookups. Create indexes for <literal>=</>
    comparisons as follows:
   </para>
-  <programlisting>
+<programlisting>
 CREATE INDEX hidx ON testhstore USING BTREE (h);
 
 CREATE INDEX hidx ON testhstore USING HASH (h);
-  </programlisting>
+</programlisting>
  </sect2>
 
  <sect2>
@@ -448,22 +448,21 @@ CREATE INDEX hidx ON testhstore USING HASH (h);
 
   <para>
    Add a key, or update an existing key with a new value:
-  </para>
-  <programlisting>
+<programlisting>
 UPDATE tab SET h = h || ('c' =&gt; '3');
-  </programlisting>
+</programlisting>
+  </para>
 
   <para>
    Delete a key:
-  </para>
-  <programlisting>
+<programlisting>
 UPDATE tab SET h = delete(h, 'k1');
-  </programlisting>
+</programlisting>
+  </para>
 
   <para>
    Convert a <type>record</> to an <type>hstore</>:
-  </para>
-  <programlisting>
+<programlisting>
 CREATE TABLE test (col1 integer, col2 text, col3 text);
 INSERT INTO test VALUES (123, 'foo', 'bar');
 
@@ -472,12 +471,12 @@ SELECT hstore(t) FROM test AS t;
 ---------------------------------------------
  "col1"=&gt;"123", "col2"=&gt;"foo", "col3"=&gt;"bar"
 (1 row)
-  </programlisting>
+</programlisting>
+  </para>
 
   <para>
    Convert an <type>hstore</> to a predefined <type>record</> type:
-  </para>
-  <programlisting>
+<programlisting>
 CREATE TABLE test (col1 integer, col2 text, col3 text);
 
 SELECT * FROM populate_record(null::test,
@@ -486,12 +485,12 @@ SELECT * FROM populate_record(null::test,
 ------+------+------
   456 | zzz  | 
 (1 row)
-  </programlisting>
+</programlisting>
+  </para>
 
   <para>
    Modify an existing record using the values from an <type>hstore</>:
-  </para>
-  <programlisting>
+<programlisting>
 CREATE TABLE test (col1 integer, col2 text, col3 text);
 INSERT INTO test VALUES (123, 'foo', 'bar');
 
@@ -500,7 +499,8 @@ SELECT (r).* FROM (SELECT t #= '"col3"=&gt;"baz"' AS r FROM test t) s;
 ------+------+------
   123 | foo  | baz
 (1 row)
-  </programlisting>
+</programlisting>
+  </para>
  </sect2>
 
  <sect2>
@@ -515,22 +515,21 @@ SELECT (r).* FROM (SELECT t #= '"col3"=&gt;"baz"' AS r FROM test t) s;
 
   <para>
    Simple example:
-  </para>
-  <programlisting>
+<programlisting>
 SELECT * FROM each('aaa=&gt;bq, b=&gt;NULL, ""=&gt;1');
-  </programlisting>
+</programlisting>
+  </para>
 
   <para>
    Using a table:
-  </para>
-  <programlisting>
+<programlisting>
 SELECT (each(h)).key, (each(h)).value INTO stat FROM testhstore;
-  </programlisting>
+</programlisting>
+  </para>
 
   <para>
    Online statistics:
-  </para>
-  <programlisting>
+<programlisting>
 SELECT key, count(*) FROM
   (SELECT (each(h)).key FROM testhstore) AS stat
   GROUP BY key
@@ -547,7 +546,8 @@ SELECT key, count(*) FROM
  title     |   190
  org       |   189
 ...................
-  </programlisting>
+</programlisting>
+  </para>
  </sect2>
 
  <sect2>
@@ -572,16 +572,16 @@ SELECT key, count(*) FROM
    performance penalty when processing data that has not yet been modified by
    the new code. It is possible to force an upgrade of all values in a table
    column by doing an <literal>UPDATE</> statement as follows:
-  </para>
-  <programlisting>
+<programlisting>
 UPDATE tablename SET hstorecol = hstorecol || '';
-  </programlisting>
+</programlisting>
+  </para>
 
   <para>
    Another way to do it is:
-  <programlisting>
+<programlisting>
 ALTER TABLE tablename ALTER hstorecol TYPE hstore USING hstorecol || '';
-  </programlisting>
+</programlisting>
    The <command>ALTER TABLE</> method requires an exclusive lock on the table,
    but does not result in bloating the table with old row versions.
   </para>

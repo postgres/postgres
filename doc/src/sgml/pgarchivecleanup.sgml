@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/pgarchivecleanup.sgml,v 1.1 2010/06/14 17:25:24 sriggs Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/pgarchivecleanup.sgml,v 1.2 2010/07/29 19:34:40 petere Exp $ -->
 
 <sect1 id="pgarchivecleanup">
  <title>pg_archivecleanup</title>
@@ -38,11 +38,9 @@
    To configure a standby
    server to use <application>pg_archivecleanup</>, put this into its
    <filename>recovery.conf</filename> configuration file:
-  </para>
-  <programlisting>
+<programlisting>
 archive_cleanup_command = 'pg_archivecleanup <replaceable>archiveDir</> %r'
-  </programlisting>
-  <para>
+</programlisting>
    where <replaceable>archiveDir</> is the directory from which WAL segment
    files should be restored.
   </para>
@@ -58,11 +56,9 @@ archive_cleanup_command = 'pg_archivecleanup <replaceable>archiveDir</> %r'
   </para>
   <para>
    The full syntax of <application>pg_archivecleanup</>'s command line is
-  </para>
-  <synopsis>
+<synopsis>
 pg_archivecleanup <optional> <replaceable>option</> ... </optional> <replaceable>archivelocation</> <replaceable>restartwalfile</>
-  </synopsis>
-  <para>
+</synopsis>
    When used as a standalone program all WAL files logically preceding the 
    <literal>restartwalfile</> will be removed <replaceable>archivelocation</>.
    In this mode, if you specify a .backup filename, then only the file prefix
@@ -70,15 +66,13 @@ pg_archivecleanup <optional> <replaceable>option</> ... </optional> <replaceable
    all WAL files archived prior to a specific base backup without error.
    For example, the following example will remove all files older than
    WAL filename 000000010000003700000010:
-  </para>
-  <programlisting>
+<programlisting>
 pg_archivecleanup -d archive 000000010000003700000010.00000020.backup
 
 pg_archivecleanup:  keep WAL files 000000010000003700000010 and later
 pg_archivecleanup:  removing "archive/00000001000000370000000F"
 pg_archivecleanup:  removing "archive/00000001000000370000000E"
-  </programlisting>
-  <para>
+</programlisting>
    <application>pg_archivecleanup</application> assumes that
    <replaceable>archivelocation</> is a directory readable and writable by the
    server-owning user.
@@ -110,12 +104,10 @@ pg_archivecleanup:  removing "archive/00000001000000370000000E"
  <sect2>
   <title>Examples</title>
 
-  <para>On Linux or Unix systems, you might use:</para>
-
-  <programlisting>
+  <para>On Linux or Unix systems, you might use:
+<programlisting>
 archive_cleanup_command = 'pg_archivecleanup -d .../archive %r 2>>cleanup.log'
-  </programlisting>
-  <para>
+</programlisting>
    where the archive directory is physically located on the standby server,
    so that the <literal>archive_command</> is accessing it across NFS,
    but the files are local to the standby.

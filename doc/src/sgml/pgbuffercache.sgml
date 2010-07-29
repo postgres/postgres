@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/pgbuffercache.sgml,v 2.6 2010/02/07 20:48:09 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/pgbuffercache.sgml,v 2.7 2010/07/29 19:34:40 petere Exp $ -->
 
 <sect1 id="pgbuffercache">
  <title>pg_buffercache</title>
@@ -134,29 +134,30 @@
  <sect2>
   <title>Sample output</title>
 
-  <programlisting>
-  regression=# SELECT c.relname, count(*) AS buffers
-               FROM pg_buffercache b INNER JOIN pg_class c
-               ON b.relfilenode = pg_relation_filenode(c.oid) AND
-                  b.reldatabase IN (0, (SELECT oid FROM pg_database
-                                        WHERE datname = current_database()))
-               GROUP BY c.relname
-               ORDER BY 2 DESC
-               LIMIT 10;
-               relname             | buffers
-  ---------------------------------+---------
-   tenk2                           |     345
-   tenk1                           |     141
-   pg_proc                         |      46
-   pg_class                        |      45
-   pg_attribute                    |      43
-   pg_class_relname_nsp_index      |      30
-   pg_proc_proname_args_nsp_index  |      28
-   pg_attribute_relid_attnam_index |      26
-   pg_depend                       |      22
-   pg_depend_reference_index       |      20
-  (10 rows)
-  </programlisting>
+<screen>
+regression=# SELECT c.relname, count(*) AS buffers
+             FROM pg_buffercache b INNER JOIN pg_class c
+             ON b.relfilenode = pg_relation_filenode(c.oid) AND
+                b.reldatabase IN (0, (SELECT oid FROM pg_database
+                                      WHERE datname = current_database()))
+             GROUP BY c.relname
+             ORDER BY 2 DESC
+             LIMIT 10;
+
+             relname             | buffers
+---------------------------------+---------
+ tenk2                           |     345
+ tenk1                           |     141
+ pg_proc                         |      46
+ pg_class                        |      45
+ pg_attribute                    |      43
+ pg_class_relname_nsp_index      |      30
+ pg_proc_proname_args_nsp_index  |      28
+ pg_attribute_relid_attnam_index |      26
+ pg_depend                       |      22
+ pg_depend_reference_index       |      20
+(10 rows)
+</screen>
  </sect2>
 
  <sect2>

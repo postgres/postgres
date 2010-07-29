@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/doc/src/sgml/stylesheet.css,v 1.9 2009/08/26 21:18:29 petere Exp $ */
+/* $PostgreSQL: pgsql/doc/src/sgml/stylesheet.css,v 1.10 2010/07/29 19:34:40 petere Exp $ */
 
 /* color scheme similar to www.postgresql.org */
 
@@ -85,7 +85,7 @@ DIV.EXAMPLE {
 
 /* miscellaneous */
 
-.SCREEN, .SYNOPSIS, .PROGRAMLISTING {
+PRE.LITERALLAYOUT, .SCREEN, .SYNOPSIS, .PROGRAMLISTING {
 	margin-left: 4ex;
 }
 

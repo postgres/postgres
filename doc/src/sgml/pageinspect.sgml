@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/pageinspect.sgml,v 1.6 2009/06/08 16:22:44 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/pageinspect.sgml,v 1.7 2010/07/29 19:34:40 petere Exp $ -->
 
 <sect1 id="pageinspect">
  <title>pageinspect</title>
@@ -62,15 +62,12 @@
      <para>
       A page image obtained with <function>get_raw_page</function> should be
       passed as argument.  For example:
-     </para>
-     <programlisting>
+<screen>
 test=# SELECT * FROM page_header(get_raw_page('pg_class', 0));
     lsn    | tli | flags | lower | upper | special | pagesize | version | prune_xid
 -----------+-----+-------+-------+-------+---------+----------+---------+-----------
  0/24A1B50 |   1 |     1 |   232 |   368 |    8192 |     8192 |       4 |         0
-     </programlisting>
-
-     <para>
+</screen>
       The returned columns correspond to the fields in the
       <structname>PageHeaderData</> struct.
       See <filename>src/include/storage/bufpage.h</> for details.
@@ -93,11 +90,9 @@ test=# SELECT * FROM page_header(get_raw_page('pg_class', 0));
      <para>
       A heap page image obtained with <function>get_raw_page</function> should
       be passed as argument.  For example:
-     </para>
-     <programlisting>
+<screen>
 test=# SELECT * FROM heap_page_items(get_raw_page('pg_class', 0));
-     </programlisting>
-     <para>
+</screen>
       See <filename>src/include/storage/itemid.h</> and
       <filename>src/include/access/htup.h</> for explanations of the fields
       returned.
@@ -114,8 +109,7 @@ test=# SELECT * FROM heap_page_items(get_raw_page('pg_class', 0));
      <para>
       <function>bt_metap</function> returns information about a btree
       index's metapage.  For example:
-     </para>
-     <programlisting>
+<screen>
 test=# SELECT * FROM bt_metap('pg_cast_oid_index');
 -[ RECORD 1 ]-----
 magic     | 340322
@@ -124,7 +118,8 @@ root      | 1
 level     | 0
 fastroot  | 1
 fastlevel | 0
-     </programlisting>
+</screen>
+     </para>
     </listitem>
    </varlistentry>
 
@@ -137,8 +132,7 @@ fastlevel | 0
      <para>
       <function>bt_page_stats</function> returns summary information about
       single pages of btree indexes.  For example:
-     </para>
-     <programlisting>
+<screen>
 test=# SELECT * FROM bt_page_stats('pg_cast_oid_index', 1);
 -[ RECORD 1 ]-+-----
 blkno         | 1
@@ -152,7 +146,8 @@ btpo_prev     | 0
 btpo_next     | 0
 btpo          | 0
 btpo_flags    | 3
-     </programlisting>
+</screen>
+     </para>
     </listitem>
    </varlistentry>
 
@@ -165,8 +160,7 @@ btpo_flags    | 3
      <para>
       <function>bt_page_items</function> returns detailed information about
       all of the items on a btree index page.  For example:
-     </para>
-     <programlisting>
+<screen>
 test=# SELECT * FROM bt_page_items('pg_cast_oid_index', 1);
  itemoffset |  ctid   | itemlen | nulls | vars |    data
 ------------+---------+---------+-------+------+-------------
@@ -178,7 +172,8 @@ test=# SELECT * FROM bt_page_items('pg_cast_oid_index', 1);
           6 | (0,6)   |      12 | f     | f    | 28 27 00 00
           7 | (0,7)   |      12 | f     | f    | 29 27 00 00
           8 | (0,8)   |      12 | f     | f    | 2a 27 00 00
-     </programlisting>
+</screen>
+     </para>
     </listitem>
    </varlistentry>
 

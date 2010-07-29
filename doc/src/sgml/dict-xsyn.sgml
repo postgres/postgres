@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/dict-xsyn.sgml,v 1.3 2009/08/05 18:06:49 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/dict-xsyn.sgml,v 1.4 2010/07/29 19:34:40 petere Exp $ -->
 
 <sect1 id="dict-xsyn">
  <title>dict_xsyn</title>
@@ -64,9 +64,9 @@
     <para>
      Each line represents a group of synonyms for a single word, which is
      given first on the line. Synonyms are separated by whitespace, thus:
-    <programlisting>
+<programlisting>
 word syn1 syn2 syn3
-    </programlisting>
+</programlisting>
     </para>
    </listitem>
    <listitem>

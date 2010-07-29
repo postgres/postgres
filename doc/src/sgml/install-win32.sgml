@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/install-win32.sgml,v 1.58 2010/07/27 19:01:16 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/install-win32.sgml,v 1.59 2010/07/29 19:34:40 petere Exp $ -->
 
 <chapter id="install-win32">
  <title>Installation from Source Code on <productname>Windows</productname></title>
@@ -102,9 +102,9 @@
   and then apply any changes from <filename>config.pl</filename>. For example,
   to specify the location of your <productname>Python</productname> installation,
   put the following in <filename>config.pl</filename>:
-  <screen>
-   $config->{python} = 'c:\python26';
-  </screen>
+<programlisting>
+$config->{python} = 'c:\python26';
+</programlisting>
   You only need to specify those parameters that are different from what's in
   <filename>config_default.pl</filename>.
  </para>
@@ -114,9 +114,9 @@
   <filename>buildenv.pl</filename> and put the required commands there. For
   example, to add the path for bison when it's not in the PATH, create a file
   containing:
-  <screen>
-   $ENV{PATH}=$ENV{PATH} . ';c:\some\where\bison\bin';
-  </screen>
+<programlisting>
+$ENV{PATH}=$ENV{PATH} . ';c:\some\where\bison\bin';
+</programlisting>
  </para>
 
  <sect2>
@@ -292,43 +292,31 @@
   <para>
    To build all of PostgreSQL in release configuration (the default), run the
    command:
-   <screen>
-    <userinput>
-     build
-    </userinput>
-   </screen>
+<screen>
+<userinput>build</userinput>
+</screen>
    To build all of PostgreSQL in debug configuration, run the command:
-   <screen>
-    <userinput>
-     build DEBUG
-    </userinput>
-   </screen>
+<screen>
+<userinput>build DEBUG</userinput>
+</screen>
    To build just a single project, for example psql, run the commands:
-   <screen>
-    <userinput>
-     build psql
-    </userinput>
-    <userinput>
-     build DEBUG psql
-    </userinput>
-   </screen>
+<screen>
+<userinput>build psql</userinput>
+<userinput>build DEBUG psql</userinput>
+</screen>
    To change the default build configuration to debug, put the following
    in the <filename>buildenv.pl</filename> file:
-   <screen>
-    <userinput>
-     $ENV{CONFIG}="Debug";
-    </userinput>
-   </screen>
+<programlisting>
+$ENV{CONFIG}="Debug";
+</programlisting>
   </para>
 
   <para>
    It is also possible to build from inside the Visual Studio GUI. In this
    case, you need to run:
-   <screen>
-    <userinput>
-     perl mkvcbuild.pl
-    </userinput>
-   </screen>
+<screen>
+<userinput>perl mkvcbuild.pl</userinput>
+</screen>
    from the command prompt, and then open the generated
    <filename>pgsql.sln</filename> (in the root directory of the source tree)
    in Visual Studio.
@@ -354,11 +342,9 @@
    <filename>debug</filename> or <filename>release</filename> directories. To
    install these files using the standard layout, and also generate the files
    required to initialize and use the database, run the command:
-   <screen>
-    <userinput>
-     install c:\destination\directory
-    </userinput>
-   </screen>
+<screen>
+<userinput>install c:\destination\directory</userinput>
+</screen>
   </para>
  </sect2>
 
@@ -373,28 +359,18 @@
    the <filename>buildenv.pl</filename> file. To run the tests, run one of
    the following commands from the <filename>src\tools\msvc</filename>
    directory:
-   <screen>
-    <userinput>
-     vcregress check
-    </userinput>
-    <userinput>
-     vcregress installcheck
-    </userinput>
-    <userinput>
-     vcregress plcheck
-    </userinput>
-    <userinput>
-     vcregress contribcheck
-    </userinput>
-   </screen>
+<screen>
+<userinput>vcregress check</userinput>
+<userinput>vcregress installcheck</userinput>
+<userinput>vcregress plcheck</userinput>
+<userinput>vcregress contribcheck</userinput>
+</screen>
 
    To change the schedule used (default is parallel), append it to the
    command line like:
-   <screen>
-    <userinput>
-     vcregress check serial
-    </userinput>
-   </screen>
+<screen>
+<userinput>vcregress check serial</userinput>
+</screen>
 
    For more information about the regression tests, see
    <xref linkend="regress">.
@@ -448,9 +424,9 @@
    </variablelist>
    Edit the <filename>buildenv.pl</filename> file, and add a variable for the
    location of the root directory, for example:
-   <screen>
-    $ENV{DOCROOT}='c:\docbook';
-   </screen>
+<programlisting>
+$ENV{DOCROOT}='c:\docbook';
+</programlisting>
    To build the documentation, run the command
    <filename>builddoc.bat</filename>. Note that this will actually run the
    build twice, in order to generate the indexes. The generated HTML files

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.155 2010/07/27 20:02:06 rhaas Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.156 2010/07/29 19:34:40 petere Exp $ -->
 
 <chapter id="plpgsql">
   <title><application>PL/pgSQL</application> - <acronym>SQL</acronym> Procedural Language</title>
@@ -1217,14 +1217,14 @@ EXECUTE 'UPDATE tbl SET '
      As always, care must be taken to ensure that null values in a query do
      not deliver unintended results.  For example the <literal>WHERE</> clause
 <programlisting>
-     'WHERE key = ' || quote_nullable(keyvalue)
+'WHERE key = ' || quote_nullable(keyvalue)
 </programlisting>
      will never succeed if <literal>keyvalue</> is null, because the
      result of using the equality operator <literal>=</> with a null operand
      is always null.  If you wish null to work like an ordinary key value,
      you would need to rewrite the above as
 <programlisting>
-     'WHERE key IS NOT DISTINCT FROM ' || quote_nullable(keyvalue)
+'WHERE key IS NOT DISTINCT FROM ' || quote_nullable(keyvalue)
 </programlisting>
      (At present, <literal>IS NOT DISTINCT FROM</> is handled much less
      efficiently than <literal>=</>, so don't do this unless you must.
@@ -1391,20 +1391,20 @@ NULL;
     <para>
      For example, the following two fragments of code are equivalent:
 <programlisting>
-    BEGIN
-        y := x / 0;
-    EXCEPTION
-        WHEN division_by_zero THEN
-            NULL;  -- ignore the error
-    END;
+BEGIN
+    y := x / 0;
+EXCEPTION
+    WHEN division_by_zero THEN
+        NULL;  -- ignore the error
+END;
 </programlisting>
 
 <programlisting>
-    BEGIN
-        y := x / 0;
-    EXCEPTION
-        WHEN division_by_zero THEN  -- ignore the error
-    END;
+BEGIN
+    y := x / 0;
+EXCEPTION
+    WHEN division_by_zero THEN  -- ignore the error
+END;
 </programlisting>
      Which is preferable is a matter of taste.
     </para>
@@ -2275,8 +2275,8 @@ END;
      not case-sensitive.  Also, an error condition can be specified
      by <literal>SQLSTATE</> code; for example these are equivalent:
 <programlisting>
-        WHEN division_by_zero THEN ...
-        WHEN SQLSTATE '22012' THEN ...
+WHEN division_by_zero THEN ...
+WHEN SQLSTATE '22012' THEN ...
 </programlisting>
     </para>
 
@@ -2295,16 +2295,16 @@ END;
      As an example, consider this fragment:
 
 <programlisting>
-    INSERT INTO mytab(firstname, lastname) VALUES('Tom', 'Jones');
-    BEGIN
-        UPDATE mytab SET firstname = 'Joe' WHERE lastname = 'Jones';
-        x := x + 1;
-        y := x / 0;
-    EXCEPTION
-        WHEN division_by_zero THEN
-            RAISE NOTICE 'caught division_by_zero';
-            RETURN x;
-    END;
+INSERT INTO mytab(firstname, lastname) VALUES('Tom', 'Jones');
+BEGIN
+    UPDATE mytab SET firstname = 'Joe' WHERE lastname = 'Jones';
+    x := x + 1;
+    y := x / 0;
+EXCEPTION
+    WHEN division_by_zero THEN
+        RAISE NOTICE 'caught division_by_zero';
+        RETURN x;
+END;
 </programlisting>
 
      When control reaches the assignment to <literal>y</>, it will
@@ -3519,7 +3519,7 @@ SELECT * FROM sales_summary_bytime;
     column reference is syntactically allowed.  As an extreme case, consider
     this example of poor programming style:
 <programlisting>
-        INSERT INTO foo (foo) VALUES (foo);
+INSERT INTO foo (foo) VALUES (foo);
 </programlisting>
     The first occurrence of <literal>foo</> must syntactically be a table
     name, so it will not be substituted, even if the function has a variable
@@ -3542,7 +3542,7 @@ SELECT * FROM sales_summary_bytime;
     tables: is a given name meant to refer to a table column, or a variable?
     Let's change the previous example to
 <programlisting>
-        INSERT INTO dest (col) SELECT foo + bar FROM src;
+INSERT INTO dest (col) SELECT foo + bar FROM src;
 </programlisting>
     Here, <literal>dest</> and <literal>src</> must be table names, and
     <literal>col</> must be a column of <literal>dest</>, but <literal>foo</>
@@ -3575,12 +3575,12 @@ SELECT * FROM sales_summary_bytime;
     declare it in a labeled block and use the block's label
     (see <xref linkend="plpgsql-structure">).  For example,
 <programlisting>
-    &lt;&lt;block&gt;&gt;
-    DECLARE
-        foo int;
-    BEGIN
-        foo := ...;
-        INSERT INTO dest (col) SELECT block.foo + bar FROM src;
+&lt;&lt;block&gt;&gt;
+DECLARE
+    foo int;
+BEGIN
+    foo := ...;
+    INSERT INTO dest (col) SELECT block.foo + bar FROM src;
 </programlisting>
     Here <literal>block.foo</> means the variable even if there is a column
     <literal>foo</> in <literal>src</>.  Function parameters, as well as
@@ -4591,17 +4591,17 @@ $$ LANGUAGE plpgsql;
      is equivalent to what you'd get in Oracle with:
 
 <programlisting>
-    BEGIN
-        SAVEPOINT s1;
+BEGIN
+    SAVEPOINT s1;
+    ... code here ...
+EXCEPTION
+    WHEN ... THEN
+        ROLLBACK TO s1;
         ... code here ...
-    EXCEPTION
-        WHEN ... THEN
-            ROLLBACK TO s1;
-            ... code here ...
-        WHEN ... THEN
-            ROLLBACK TO s1;
-            ... code here ...
-    END;
+    WHEN ... THEN
+        ROLLBACK TO s1;
+        ... code here ...
+END;
 </programlisting>
 
      If you are translating an Oracle procedure that uses

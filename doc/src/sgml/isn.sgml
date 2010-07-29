@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/isn.sgml,v 1.5 2009/05/18 11:08:24 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/isn.sgml,v 1.6 2010/07/29 19:34:40 petere Exp $ -->
 
 <sect1 id="isn">
  <title>isn</title>
@@ -295,7 +295,7 @@
  <sect2>
   <title>Examples</title>
 
-  <programlisting>
+<programlisting>
 --Using the types directly:
 SELECT isbn('978-0-393-04002-9');
 SELECT isbn13('0901690546');
@@ -333,7 +333,7 @@ UPDATE test SET id = make_valid(id) WHERE id = '2-205-00876-X!';
 SELECT * FROM test;
 
 SELECT isbn13(id) FROM test;
-  </programlisting>
+</programlisting>
  </sect2>
 
  <sect2>
@@ -342,24 +342,20 @@ SELECT isbn13(id) FROM test;
   <para>
    The information to implement this module was collected from
    several sites, including:
-  </para>
-  <programlisting>
-   http://www.isbn-international.org/
-   http://www.issn.org/
-   http://www.ismn-international.org/
-   http://www.wikipedia.org/
-  </programlisting>
+   <itemizedlist>
+    <listitem><para><ulink url="http://www.isbn-international.org/"></ulink></para></listitem>
+    <listitem><para><ulink url="http://www.issn.org/"></ulink></para></listitem>
+    <listitem><para><ulink url="http://www.ismn-international.org/"></ulink></para></listitem>
+    <listitem><para><ulink url="http://www.wikipedia.org/"></ulink></para></listitem>
+   </itemizedlist>
 
-  <para>
    The prefixes used for hyphenation were also compiled from:
-  </para>
-  <programlisting>
-   http://www.gs1.org/productssolutions/idkeys/support/prefix_list.html
-   http://www.isbn-international.org/en/identifiers.html
-   http://www.ismn-international.org/ranges.html
-  </programlisting>
+   <itemizedlist>
+    <listitem><para><ulink url="http://www.gs1.org/productssolutions/idkeys/support/prefix_list.html"></ulink></para></listitem>
+    <listitem><para><ulink url="http://www.isbn-international.org/en/identifiers.html"></ulink></para></listitem>
+    <listitem><para><ulink url="http://www.ismn-international.org/ranges.html"></ulink></para></listitem>
+   </itemizedlist>
 
-  <para>
    Care was taken during the creation of the algorithms and they
    were meticulously verified against the suggested algorithms
    in the official ISBN, ISMN, ISSN User Manuals.

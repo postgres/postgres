@@ -44,7 +44,7 @@
    <listitem>
     <para>
      Each line represents pair: character_with_accent  character_without_accent
-    <programlisting>
+<programlisting>
 &Agrave;        A
 &Aacute;        A
 &Acirc;         A
@@ -52,7 +52,7 @@
 &Auml;          A
 &Aring;         A
 &AElig;         A
-    </programlisting>
+</programlisting>
     </para>
    </listitem>
   </itemizedlist>
@@ -133,15 +133,14 @@
   <primary>unaccent</primary>
  </indexterm>
 
- <synopsis>
-   unaccent(<optional><replaceable class="PARAMETER">dictionary</replaceable>,
-   </optional> <replaceable class="PARAMETER">string</replaceable>) 
-  returns <type>text</type>
- </synopsis>  
+<synopsis>
+unaccent(<optional><replaceable class="PARAMETER">dictionary</replaceable>, </optional> <replaceable class="PARAMETER">string</replaceable>)
+returns <type>text</type>
+</synopsis>
 
  <para>
 <programlisting>
-SELECT unaccent('unaccent','Hôtel');
+SELECT unaccent('unaccent', 'Hôtel');
 SELECT unaccent('Hôtel');
 </programlisting>
  </para>

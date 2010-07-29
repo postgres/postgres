@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/vacuumlo.sgml,v 1.4 2009/02/26 16:02:37 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/vacuumlo.sgml,v 1.5 2010/07/29 19:34:40 petere Exp $ -->
 
 <sect1 id="vacuumlo">
  <title>vacuumlo</title>
@@ -25,9 +25,9 @@
  <sect2>
   <title>Usage</title>
 
-  <synopsis>
+<synopsis>
 vacuumlo [options] database [database2 ... databaseN]
-  </synopsis>
+</synopsis>
 
   <para>
    All databases named on the command line are processed.  Available options

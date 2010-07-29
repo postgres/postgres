@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_index.sgml,v 1.74 2010/04/03 07:22:58 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_index.sgml,v 1.75 2010/07/29 19:34:40 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -557,12 +557,12 @@ CREATE INDEX code_idx ON films (code) TABLESPACE indexspace;
    To create a GiST index on a point attribute so that we
    can efficiently use box operators on the result of the
    conversion function:
-  <programlisting>
+<programlisting>
 CREATE INDEX pointloc
     ON points USING gist (box(location,location));
 SELECT * FROM points
     WHERE box(location,location) &amp;&amp; '(0,0),(1,1)'::box;
-  </programlisting>
+</programlisting>
   </para>
 
   <para>

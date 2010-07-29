@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/oid2name.sgml,v 1.8 2010/05/25 15:55:28 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/oid2name.sgml,v 1.9 2010/07/29 19:34:40 petere Exp $ -->
 
 <sect1 id="oid2name">
  <title>oid2name</title>
@@ -147,7 +147,7 @@
  <sect2>
   <title>Examples</title>
 
-  <programlisting>
+<screen>
 $ # what's in this database server, anyway?
 $ oid2name
 All databases:
@@ -264,7 +264,7 @@ From database "alvherre":
   Filenode  Table Name
 ----------------------
     155156         foo
-  </programlisting>
+</screen>
  </sect2>
 
  <sect2>

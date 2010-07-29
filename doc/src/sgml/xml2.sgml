@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/xml2.sgml,v 1.8 2010/07/27 19:01:16 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/xml2.sgml,v 1.9 2010/07/29 19:34:40 petere Exp $ -->
 
 <sect1 id="xml2">
  <title>xml2</title>
@@ -45,9 +45,9 @@
     <tbody>
      <row>
       <entry>
-       <synopsis>
-        xml_is_well_formed(document) returns bool
-       </synopsis>
+<synopsis>
+xml_is_well_formed(document) returns bool
+</synopsis>
       </entry>
       <entry>
        <para>
@@ -61,11 +61,11 @@
      </row>
      <row>
       <entry>
-       <synopsis>
-        xpath_string(document,query) returns text
-        xpath_number(document,query) returns float4
-        xpath_bool(document,query) returns bool
-       </synopsis>
+<synopsis>
+xpath_string(document, query) returns text
+xpath_number(document, query) returns float4
+xpath_bool(document, query) returns bool
+</synopsis>
       </entry>
       <entry>
        <para>
@@ -76,31 +76,29 @@
      </row>
      <row>
       <entry>
-       <synopsis>
-        xpath_nodeset(document,query,toptag,itemtag) returns text
-       </synopsis>
+<synopsis>
+xpath_nodeset(document, query, toptag, itemtag) returns text
+</synopsis>
       </entry>
       <entry>
        <para>
        This evaluates query on document and wraps the result in XML tags. If
        the result is multivalued, the output will look like:
-       </para>
-       <literal>
-        &lt;toptag&gt;
-        &lt;itemtag&gt;Value 1 which could be an XML fragment&lt;/itemtag&gt;
-        &lt;itemtag&gt;Value 2....&lt;/itemtag&gt;
-        &lt;/toptag&gt;
-       </literal>
-       <para>
+<synopsis>
+&lt;toptag&gt;
+&lt;itemtag&gt;Value 1 which could be an XML fragment&lt;/itemtag&gt;
+&lt;itemtag&gt;Value 2....&lt;/itemtag&gt;
+&lt;/toptag&gt;
+</synopsis>
         If either toptag or itemtag is an empty string, the relevant tag is omitted.
        </para>
       </entry>
      </row>
      <row>
       <entry>
-       <synopsis>
-        xpath_nodeset(document,query) returns text
-       </synopsis>
+<synopsis>
+xpath_nodeset(document, query) returns text
+</synopsis>
       </entry>
       <entry>
        <para>
@@ -110,9 +108,9 @@
      </row>
      <row>
       <entry>
-       <synopsis>
-        xpath_nodeset(document,query,itemtag) returns text
-       </synopsis>
+<synopsis>
+xpath_nodeset(document, query, itemtag) returns text
+</synopsis>
       </entry>
       <entry>
        <para>
@@ -122,9 +120,9 @@
      </row>
      <row>
       <entry>
-       <synopsis>
-        xpath_list(document,query,separator) returns text
-       </synopsis>
+<synopsis>
+xpath_list(document, query, separator) returns text
+</synopsis>
       </entry>
       <entry>
        <para>
@@ -136,9 +134,9 @@
      </row>
      <row>
       <entry>
-       <synopsis>
-        xpath_list(document,query) returns text
-       </synopsis>
+<synopsis>
+xpath_list(document, query) returns text
+</synopsis>
       </entry>
       <entry>
        This is a wrapper for the above function that uses <literal>,</>
@@ -153,9 +151,9 @@
  <sect2>
   <title><literal>xpath_table</literal></title>
 
-  <synopsis>
-   xpath_table(text key, text document, text relation, text xpaths, text criteria) returns setof record
-  </synopsis>
+<synopsis>
+xpath_table(text key, text document, text relation, text xpaths, text criteria) returns setof record
+</synopsis>
 
   <para>
    <function>xpath_table</> is a table function that evaluates a set of XPath
@@ -240,9 +238,7 @@
   <para>
    The function has to be used in a <literal>FROM</> expression, with an
    <literal>AS</> clause to specify the output columns; for example
-  </para>
-
-  <programlisting>
+<programlisting>
 SELECT * FROM
 xpath_table('article_id',
             'article_xml',
@@ -250,9 +246,7 @@ xpath_table('article_id',
             '/article/author|/article/pages|/article/title',
             'date_entered > ''2003-01-01'' ')
 AS t(article_id integer, author text, page_count integer, title text);
-  </programlisting>
-
-  <para>
+</programlisting>
    The <literal>AS</> clause defines the names and types of the columns in the
    output table.  The first is the <quote>key</> field and the rest correspond
    to the XPath queries.
@@ -278,9 +272,7 @@ AS t(article_id integer, author text, page_count integer, title text);
    columns by name or join them to other tables. The function produces a
    virtual table with which you can perform any operation you wish (e.g.
    aggregation, joining, sorting etc). So we could also have:
-  </para>
-
-  <programlisting>
+<programlisting>
 SELECT t.title, p.fullname, p.email
 FROM xpath_table('article_id', 'article_xml', 'articles',
                  '/article/title|/article/author/@id',
@@ -288,9 +280,7 @@ FROM xpath_table('article_id', 'article_xml', 'articles',
        AS t(article_id integer, title text, author_id integer),
      tblPeopleInfo AS p
 WHERE t.author_id = p.person_id;
-  </programlisting>
-
-  <para>
+</programlisting>
    as a more complicated example. Of course, you could wrap all
    of this in a view for convenience.
   </para>
@@ -314,60 +304,59 @@ WHERE t.author_id = p.person_id;
     result will appear only on the first row of the result. The solution
     to this is to use the key field as part of a join against a simpler
     XPath query. As an example:
+
+<programlisting>
+CREATE TABLE test (
+    id int PRIMARY KEY,
+    xml text
+);
+
+INSERT INTO test VALUES (1, '&lt;doc num="C1"&gt;
+&lt;line num="L1"&gt;&lt;a&gt;1&lt;/a&gt;&lt;b&gt;2&lt;/b&gt;&lt;c&gt;3&lt;/c&gt;&lt;/line&gt;
+&lt;line num="L2"&gt;&lt;a&gt;11&lt;/a&gt;&lt;b&gt;22&lt;/b&gt;&lt;c&gt;33&lt;/c&gt;&lt;/line&gt;
+&lt;/doc&gt;');
+
+INSERT INTO test VALUES (2, '&lt;doc num="C2"&gt;
+&lt;line num="L1"&gt;&lt;a&gt;111&lt;/a&gt;&lt;b&gt;222&lt;/b&gt;&lt;c&gt;333&lt;/c&gt;&lt;/line&gt;
+&lt;line num="L2"&gt;&lt;a&gt;111&lt;/a&gt;&lt;b&gt;222&lt;/b&gt;&lt;c&gt;333&lt;/c&gt;&lt;/line&gt;
+&lt;/doc&gt;');
+
+SELECT * FROM
+  xpath_table('id','xml','test',
+              '/doc/@num|/doc/line/@num|/doc/line/a|/doc/line/b|/doc/line/c',
+              'true')
+  AS t(id int, doc_num varchar(10), line_num varchar(10), val1 int, val2 int, val3 int)
+WHERE id = 1 ORDER BY doc_num, line_num
+
+ id | doc_num | line_num | val1 | val2 | val3
+----+---------+----------+------+------+------
+  1 | C1      | L1       |    1 |    2 |    3
+  1 |         | L2       |   11 |   22 |   33
+</programlisting>
    </para>
-
-   <programlisting>
-    CREATE TABLE test (
-        id int4 NOT NULL,
-        xml text,
-        CONSTRAINT pk PRIMARY KEY (id)
-    );
-
-    INSERT INTO test VALUES (1, '&lt;doc num="C1"&gt;
-    &lt;line num="L1"&gt;&lt;a&gt;1&lt;/a&gt;&lt;b&gt;2&lt;/b&gt;&lt;c&gt;3&lt;/c&gt;&lt;/line&gt;
-    &lt;line num="L2"&gt;&lt;a&gt;11&lt;/a&gt;&lt;b&gt;22&lt;/b&gt;&lt;c&gt;33&lt;/c&gt;&lt;/line&gt;
-    &lt;/doc&gt;');
-
-    INSERT INTO test VALUES (2, '&lt;doc num="C2"&gt;
-    &lt;line num="L1"&gt;&lt;a&gt;111&lt;/a&gt;&lt;b&gt;222&lt;/b&gt;&lt;c&gt;333&lt;/c&gt;&lt;/line&gt;
-    &lt;line num="L2"&gt;&lt;a&gt;111&lt;/a&gt;&lt;b&gt;222&lt;/b&gt;&lt;c&gt;333&lt;/c&gt;&lt;/line&gt;
-    &lt;/doc&gt;');
-
-    SELECT * FROM
-      xpath_table('id','xml','test',
-                  '/doc/@num|/doc/line/@num|/doc/line/a|/doc/line/b|/doc/line/c',
-                  'true')
-      AS t(id int4, doc_num varchar(10), line_num varchar(10), val1 int4, val2 int4, val3 int4)
-    WHERE id = 1 ORDER BY doc_num, line_num
-
-     id | doc_num | line_num | val1 | val2 | val3
-    ----+---------+----------+------+------+------
-      1 | C1      | L1       |    1 |    2 |    3
-      1 |         | L2       |   11 |   22 |   33
-   </programlisting>
 
    <para>
     To get doc_num on every line, the solution is to use two invocations
     of xpath_table and join the results:
+
+<programlisting>
+SELECT t.*,i.doc_num FROM
+  xpath_table('id', 'xml', 'test',
+              '/doc/line/@num|/doc/line/a|/doc/line/b|/doc/line/c',
+              'true')
+    AS t(id int, line_num varchar(10), val1 int, val2 int, val3 int),
+  xpath_table('id', 'xml', 'test', '/doc/@num', 'true')
+    AS i(id int, doc_num varchar(10))
+WHERE i.id=t.id AND i.id=1
+ORDER BY doc_num, line_num;
+
+ id | line_num | val1 | val2 | val3 | doc_num
+----+----------+------+------+------+---------
+  1 | L1       |    1 |    2 |    3 | C1
+  1 | L2       |   11 |   22 |   33 | C1
+(2 rows)
+</programlisting>
    </para>
-
-   <programlisting>
-   SELECT t.*,i.doc_num FROM
-     xpath_table('id', 'xml', 'test',
-                 '/doc/line/@num|/doc/line/a|/doc/line/b|/doc/line/c',
-                 'true')
-       AS t(id int4, line_num varchar(10), val1 int4, val2 int4, val3 int4),
-     xpath_table('id', 'xml', 'test', '/doc/@num', 'true')
-       AS i(id int4, doc_num varchar(10))
-   WHERE i.id=t.id AND i.id=1
-   ORDER BY doc_num, line_num;
-
-    id | line_num | val1 | val2 | val3 | doc_num
-   ----+----------+------+------+------+---------
-     1 | L1       |    1 |    2 |    3 | C1
-     1 | L2       |   11 |   22 |   33 | C1
-   (2 rows)
-   </programlisting>
   </sect3>
  </sect2>
 
@@ -381,9 +370,9 @@ WHERE t.author_id = p.person_id;
   <sect3>
    <title><literal>xslt_process</literal></title>
 
-   <synopsis>
-    xslt_process(text document, text stylesheet, text paramlist) returns text
-   </synopsis>
+<synopsis>
+xslt_process(text document, text stylesheet, text paramlist) returns text
+</synopsis>
 
    <para>
     This function applies the XSL stylesheet to the document and returns

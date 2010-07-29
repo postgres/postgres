@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/tablefunc.sgml,v 1.4 2007/12/06 04:12:10 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/tablefunc.sgml,v 1.5 2010/07/29 19:34:40 petere Exp $ -->
 
 <sect1 id="tablefunc">
  <title>tablefunc</title>
@@ -94,9 +94,9 @@
   <sect3>
    <title><function>normal_rand</function></title>
 
-    <programlisting>
+<synopsis>
 normal_rand(int numvals, float8 mean, float8 stddev) returns setof float8
-    </programlisting>
+</synopsis>
 
     <para>
      <function>normal_rand</> produces a set of normally distributed random
@@ -115,7 +115,7 @@ normal_rand(int numvals, float8 mean, float8 stddev) returns setof float8
      standard deviation of 3:
     </para>
 
-    <programlisting>
+<screen>
 test=# SELECT * FROM normal_rand(1000, 5, 3);
      normal_rand
 ----------------------
@@ -131,22 +131,22 @@ test=# SELECT * FROM normal_rand(1000, 5, 3);
      9.71308014517282
      2.49639286969028
 (1000 rows)
-    </programlisting>
+</screen>
   </sect3>
 
   <sect3>
    <title><function>crosstab(text)</function></title>
 
-   <programlisting>
+<synopsis>
 crosstab(text sql)
 crosstab(text sql, int N)
-   </programlisting>
+</synopsis>
 
    <para>
     The <function>crosstab</> function is used to produce <quote>pivot</>
     displays, wherein data is listed across the page rather than down.
     For example, we might have data like
-    <programlisting>
+<programlisting>
 row1    val11
 row1    val12
 row1    val13
@@ -155,13 +155,13 @@ row2    val21
 row2    val22
 row2    val23
 ...
-    </programlisting>
+</programlisting>
     which we wish to display like
-    <programlisting>
+<programlisting>
 row1    val11   val12   val13   ...
 row2    val21   val22   val23   ...
 ...
-    </programlisting>
+</programlisting>
     The <function>crosstab</> function takes a text parameter that is a SQL
     query producing raw data formatted in the first way, and produces a table
     formatted in the second way.
@@ -180,8 +180,6 @@ row2    val21   val22   val23   ...
 
    <para>
     For example, the provided query might produce a set something like:
-   </para>
-
 <programlisting>
  row_name    cat    value
 ----------+-------+-------
@@ -194,29 +192,25 @@ row2    val21   val22   val23   ...
   row2      cat3    val7
   row2      cat4    val8
 </programlisting>
+   </para>
 
    <para>
     The <function>crosstab</> function is declared to return <type>setof
     record</type>, so the actual names and types of the output columns must be
     defined in the <literal>FROM</> clause of the calling <command>SELECT</>
     statement, for example:
-   </para>
-
-   <programlisting>
-    SELECT * FROM crosstab('...') AS ct(row_name text, category_1 text, category_2 text);
-   </programlisting>
-
-   <para>
+<programlisting>
+SELECT * FROM crosstab('...') AS ct(row_name text, category_1 text, category_2 text);
+</programlisting>
     This example produces a set something like:
-   </para>
-
-   <programlisting>
+<programlisting>
            &lt;== value  columns  ==&gt;
-row_name   category_1   category_2
- ---------+------------+------------
-   row1        val1         val2
-   row2        val5         val6
-   </programlisting>
+ row_name   category_1   category_2
+----------+------------+------------
+  row1        val1         val2
+  row2        val5         val6
+</programlisting>
+   </para>
 
    <para>
     The <literal>FROM</> clause must define the output as one
@@ -250,9 +244,7 @@ row_name   category_1   category_2
 
    <para>
     Here is a complete example:
-   </para>
-
-   <programlisting>
+<programlisting>
 CREATE TABLE ct(id SERIAL, rowid TEXT, attribute TEXT, value TEXT);
 INSERT INTO ct(rowid, attribute, value) VALUES('test1','att1','val1');
 INSERT INTO ct(rowid, attribute, value) VALUES('test1','att2','val2');
@@ -276,7 +268,8 @@ AS ct(row_name text, category_1 text, category_2 text, category_3 text);
  test1    | val2       | val3       |
  test2    | val6       | val7       |
 (2 rows)
-   </programlisting>
+</programlisting>
+   </para>
 
    <para>
     You can avoid always having to write out a <literal>FROM</> clause to
@@ -291,9 +284,9 @@ AS ct(row_name text, category_1 text, category_2 text, category_3 text);
   <sect3>
    <title><function>crosstab<replaceable>N</>(text)</function></title>
 
-    <programlisting>
+<synopsis>
 crosstab<replaceable>N</>(text sql)
-    </programlisting>
+</synopsis>
 
     <para>
      The <function>crosstab<replaceable>N</></> functions are examples of how
@@ -304,7 +297,7 @@ crosstab<replaceable>N</>(text sql)
      <function>crosstab4</>, whose output rowtypes are defined as
     </para>
 
-    <programlisting>
+<programlisting>
 CREATE TYPE tablefunc_crosstab_N AS (
     row_name TEXT,
     category_1 TEXT,
@@ -314,7 +307,7 @@ CREATE TYPE tablefunc_crosstab_N AS (
         .
     category_N TEXT
 );
-    </programlisting>
+</programlisting>
 
     <para>
      Thus, these functions can be used directly when the input query produces
@@ -327,23 +320,21 @@ CREATE TYPE tablefunc_crosstab_N AS (
     <para>
      For instance, the example given in the previous section would also
      work as
-    </para>
-
-    <programlisting>
+<programlisting>
 SELECT *
 FROM crosstab3(
   'select rowid, attribute, value
    from ct
    where attribute = ''att2'' or attribute = ''att3''
    order by 1,2');
-    </programlisting>
+</programlisting>
+    </para>
 
     <para>
      These functions are provided mostly for illustration purposes. You
      can create your own return types and functions based on the
      underlying <function>crosstab()</> function.  There are two ways
      to do it:
-    </para>
 
     <itemizedlist>
      <listitem>
@@ -355,52 +346,52 @@ FROM crosstab3(
        <function>crosstab</> C function.  For example, if your source data
        produces row names that are <type>text</>, and values that are
        <type>float8</>, and you want 5 value columns:
+<programlisting>
+CREATE TYPE my_crosstab_float8_5_cols AS (
+    my_row_name text,
+    my_category_1 float8,
+    my_category_2 float8,
+    my_category_3 float8,
+    my_category_4 float8,
+    my_category_5 float8
+);
+
+CREATE OR REPLACE FUNCTION crosstab_float8_5_cols(text)
+    RETURNS setof my_crosstab_float8_5_cols
+    AS '$libdir/tablefunc','crosstab' LANGUAGE C STABLE STRICT;
+</programlisting>
       </para>
-
-      <programlisting>
-      CREATE TYPE my_crosstab_float8_5_cols AS (
-          my_row_name text,
-          my_category_1 float8,
-          my_category_2 float8,
-          my_category_3 float8,
-          my_category_4 float8,
-          my_category_5 float8
-      );
-
-      CREATE OR REPLACE FUNCTION crosstab_float8_5_cols(text)
-        RETURNS setof my_crosstab_float8_5_cols
-        AS '$libdir/tablefunc','crosstab' LANGUAGE C STABLE STRICT;
-      </programlisting>
      </listitem>
 
      <listitem>
       <para>
        Use <literal>OUT</> parameters to define the return type implicitly.
        The same example could also be done this way:
+<programlisting>
+CREATE OR REPLACE FUNCTION crosstab_float8_5_cols(
+    IN text,
+    OUT my_row_name text,
+    OUT my_category_1 float8,
+    OUT my_category_2 float8,
+    OUT my_category_3 float8,
+    OUT my_category_4 float8,
+    OUT my_category_5 float8)
+  RETURNS setof record
+  AS '$libdir/tablefunc','crosstab' LANGUAGE C STABLE STRICT;
+</programlisting>
       </para>
-
-      <programlisting>
-      CREATE OR REPLACE FUNCTION crosstab_float8_5_cols(IN text,
-          OUT my_row_name text,
-          OUT my_category_1 float8,
-          OUT my_category_2 float8,
-          OUT my_category_3 float8,
-          OUT my_category_4 float8,
-          OUT my_category_5 float8)
-        RETURNS setof record
-        AS '$libdir/tablefunc','crosstab' LANGUAGE C STABLE STRICT;
-      </programlisting>
      </listitem>
     </itemizedlist>
+    </para>
 
   </sect3>
 
   <sect3>
    <title><function>crosstab(text, text)</function></title>
 
-   <programlisting>
+<synopsis>
 crosstab(text source_sql, text category_sql)
-   </programlisting>
+</synopsis>
 
    <para>
     The main limitation of the single-parameter form of <function>crosstab</>
@@ -432,8 +423,7 @@ crosstab(text source_sql, text category_sql)
    <para>
     For example, <parameter>source_sql</parameter> might produce a set
     something like:
-   </para>
-   <programlisting>
+<programlisting>
  SELECT row_name, extra_col, cat, value FROM foo ORDER BY 1;
 
      row_name    extra_col   cat    value
@@ -445,7 +435,8 @@ crosstab(text source_sql, text category_sql)
       row2         extra2    cat2    val6
       row2         extra2    cat3    val7
       row2         extra2    cat4    val8
-   </programlisting>
+</programlisting>
+   </para>
 
    <para>
     <parameter>category_sql</parameter> is a SQL statement that produces
@@ -453,9 +444,8 @@ crosstab(text source_sql, text category_sql)
     It must produce at least one row, or an error will be generated.
     Also, it must not produce duplicate values, or an error will be
     generated.  <parameter>category_sql</parameter> might be something like:
-   </para>
 
-   <programlisting>
+<programlisting>
 SELECT DISTINCT cat FROM foo ORDER BY 1;
     cat
   -------
@@ -463,31 +453,31 @@ SELECT DISTINCT cat FROM foo ORDER BY 1;
     cat2
     cat3
     cat4
-   </programlisting>
+</programlisting>
+   </para>
 
    <para>
     The <function>crosstab</> function is declared to return <type>setof
     record</type>, so the actual names and types of the output columns must be
     defined in the <literal>FROM</> clause of the calling <command>SELECT</>
     statement, for example:
-   </para>
 
-   <programlisting>
-    SELECT * FROM crosstab('...', '...')
-      AS ct(row_name text, extra text, cat1 text, cat2 text, cat3 text, cat4 text);
-   </programlisting>
+<programlisting>
+SELECT * FROM crosstab('...', '...')
+    AS ct(row_name text, extra text, cat1 text, cat2 text, cat3 text, cat4 text);
+</programlisting>
+   </para>
 
    <para>
     This will produce a result something like:
+<programlisting>
+                  &lt;==  value  columns   ==&gt;
+row_name   extra   cat1   cat2   cat3   cat4
+---------+-------+------+------+------+------
+  row1     extra1  val1   val2          val4
+  row2     extra2  val5   val6   val7   val8
+</programlisting>
    </para>
-
-   <programlisting>
-                              &lt;==  value  columns   ==&gt;
-           row_name   extra   cat1   cat2   cat3   cat4
-           ---------+-------+------+------+------+------
-             row1     extra1  val1   val2          val4
-             row2     extra2  val5   val6   val7   val8
-   </programlisting>
 
    <para>
     The <literal>FROM</> clause must define the proper number of output
@@ -527,9 +517,7 @@ SELECT DISTINCT cat FROM foo ORDER BY 1;
 
    <para>
     Here are two complete examples:
-   </para>
-
-   <programlisting>
+<programlisting>
 create table sales(year int, month int, qty int);
 insert into sales values(2007, 1, 1000);
 insert into sales values(2007, 2, 1500);
@@ -561,9 +549,9 @@ select * from crosstab(
  2007 | 1000 | 1500 |     |     |     |     | 500 |     |     |     | 1500 | 2000
  2008 | 1000 |      |     |     |     |     |     |     |     |     |      |
 (2 rows)
-   </programlisting>
+</programlisting>
 
-   <programlisting>
+<programlisting>
 CREATE TABLE cth(rowid text, rowdt timestamp, attribute text, val text);
 INSERT INTO cth VALUES('test1','01 March 2003','temperature','42');
 INSERT INTO cth VALUES('test1','01 March 2003','test_result','PASS');
@@ -592,7 +580,8 @@ AS
  test1 | Sat Mar 01 00:00:00 2003 |          42 | PASS        |                          | 2.6987
  test2 | Sun Mar 02 00:00:00 2003 |          53 | FAIL        | Sat Mar 01 00:00:00 2003 | 3.1234
 (2 rows)
-   </programlisting>
+</programlisting>
+   </para>
 
    <para>
     You can create predefined functions to avoid having to write out
@@ -606,11 +595,11 @@ AS
   <sect3>
    <title><function>connectby</function></title>
 
-   <programlisting>
+<synopsis>
 connectby(text relname, text keyid_fld, text parent_keyid_fld
           [, text orderby_fld ], text start_with, int max_depth
           [, text branch_delim ])
-   </programlisting>
+</synopsis>
 
    <para>
     The <function>connectby</> function produces a display of hierarchical
@@ -675,10 +664,10 @@ connectby(text relname, text keyid_fld, text parent_keyid_fld
      statement, for example:
     </para>
 
-    <programlisting>
-    SELECT * FROM connectby('connectby_tree', 'keyid', 'parent_keyid', 'pos', 'row2', 0, '~')
-      AS t(keyid text, parent_keyid text, level int, branch text, pos int);
-    </programlisting>
+<programlisting>
+SELECT * FROM connectby('connectby_tree', 'keyid', 'parent_keyid', 'pos', 'row2', 0, '~')
+    AS t(keyid text, parent_keyid text, level int, branch text, pos int);
+</programlisting>
 
     <para>
      The first two output columns are used for the current row's key and
@@ -731,9 +720,7 @@ connectby(text relname, text keyid_fld, text parent_keyid_fld
 
     <para>
      Here is an example:
-    </para>
-
-    <programlisting>
+<programlisting>
 CREATE TABLE connectby_tree(keyid text, parent_keyid text, pos int);
 
 INSERT INTO connectby_tree VALUES('row1',NULL, 0);
@@ -797,7 +784,8 @@ SELECT * FROM connectby('connectby_tree', 'keyid', 'parent_keyid', 'pos', 'row2'
  row6  | row4         |     2 |   5
  row8  | row6         |     3 |   6
 (6 rows)
-    </programlisting>
+</programlisting>
+    </para>
    </sect3>
 
  </sect2>
