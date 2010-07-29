@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.149.2.2 2010/07/26 20:14:06 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.149.2.3 2010/07/29 19:34:37 petere Exp $ -->
 
  <sect1 id="xfunc">
   <title>User-Defined Functions</title>
@@ -3359,22 +3359,22 @@ void RequestAddinLWLocks(int n)
      <function>AddinShmemInitLock</> when connecting to and initializing
      its allocation of shared memory, as shown here:
 <programlisting>
-        static mystruct *ptr = NULL;
+static mystruct *ptr = NULL;
 
-        if (!ptr)
+if (!ptr)
+{
+        bool    found;
+
+        LWLockAcquire(AddinShmemInitLock, LW_EXCLUSIVE);
+        ptr = ShmemInitStruct("my struct name", size, &amp;found);
+        if (!found)
         {
-                bool    found;
-
-                LWLockAcquire(AddinShmemInitLock, LW_EXCLUSIVE);
-                ptr = ShmemInitStruct("my struct name", size, &amp;found);
-                if (!found)
-                {
-                        initialize contents of shmem area;
-                        acquire any requested LWLocks using:
-                        ptr->mylockid = LWLockAssign();
-                }
-                LWLockRelease(AddinShmemInitLock);
+                initialize contents of shmem area;
+                acquire any requested LWLocks using:
+                ptr->mylockid = LWLockAssign();
         }
+        LWLockRelease(AddinShmemInitLock);
+}
 </programlisting>
     </para>
    </sect2>

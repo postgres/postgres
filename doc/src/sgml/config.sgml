@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.294.2.2 2010/07/27 19:01:04 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.294.2.3 2010/07/29 19:34:36 petere Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -5720,29 +5720,20 @@ plruby.use_strict = true        # generates error: unknown class name
         type a count of the number of granted locks and waiting locks is
         also dumped as well as the totals.  An example of the log file output
         is shown here:
-       </para>
-       <para>
-        LOG:  LockAcquire: new: lock(0xb7acd844) id(24688,24696,0,0,0,1)
-              grantMask(0) req(0,0,0,0,0,0,0)=0 grant(0,0,0,0,0,0,0)=0
-              wait(0) type(AccessShareLock)
-       </para>
-       <para>
-        LOG:  GrantLock: lock(0xb7acd844) id(24688,24696,0,0,0,1)
-              grantMask(2) req(1,0,0,0,0,0,0)=1 grant(1,0,0,0,0,0,0)=1
-              wait(0) type(AccessShareLock)
-
-       </para>
-       <para>
-        LOG:  UnGrantLock: updated: lock(0xb7acd844) id(24688,24696,0,0,0,1)
-              grantMask(0) req(0,0,0,0,0,0,0)=0 grant(0,0,0,0,0,0,0)=0
-              wait(0) type(AccessShareLock)
-       </para>
-       <para>
-        LOG:  CleanUpLock: deleting: lock(0xb7acd844) id(24688,24696,0,0,0,1)
-              grantMask(0) req(0,0,0,0,0,0,0)=0 grant(0,0,0,0,0,0,0)=0
-              wait(0) type(INVALID)
-       </para>
-       <para>
+<screen>
+LOG:  LockAcquire: new: lock(0xb7acd844) id(24688,24696,0,0,0,1)
+      grantMask(0) req(0,0,0,0,0,0,0)=0 grant(0,0,0,0,0,0,0)=0
+      wait(0) type(AccessShareLock)
+LOG:  GrantLock: lock(0xb7acd844) id(24688,24696,0,0,0,1)
+      grantMask(2) req(1,0,0,0,0,0,0)=1 grant(1,0,0,0,0,0,0)=1
+      wait(0) type(AccessShareLock)
+LOG:  UnGrantLock: updated: lock(0xb7acd844) id(24688,24696,0,0,0,1)
+      grantMask(0) req(0,0,0,0,0,0,0)=0 grant(0,0,0,0,0,0,0)=0
+      wait(0) type(AccessShareLock)
+LOG:  CleanUpLock: deleting: lock(0xb7acd844) id(24688,24696,0,0,0,1)
+      grantMask(0) req(0,0,0,0,0,0,0)=0 grant(0,0,0,0,0,0,0)=0
+      wait(0) type(INVALID)
+</screen>
         Details of the structure being dumped may be found in
         src/include/storage/lock.h
        </para>

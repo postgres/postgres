@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/pgbench.sgml,v 1.16 2010/05/25 15:55:28 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/pgbench.sgml,v 1.16.2.1 2010/07/29 19:34:37 petere Exp $ -->
 
 <sect1 id="pgbench">
  <title>pgbench</title>
@@ -22,7 +22,7 @@
  <para>
   Typical output from pgbench looks like:
 
- <programlisting>
+<screen>
 transaction type: TPC-B (sort of)
 scaling factor: 10
 query mode: simple
@@ -32,7 +32,7 @@ number of transactions per client: 1000
 number of transactions actually processed: 10000/10000
 tps = 85.184871 (including connections establishing)
 tps = 85.296346 (excluding connections establishing)
- </programlisting>
+</screen>
 
   The first six lines report some of the most important parameter
   settings.  The next line reports the number of transactions completed
@@ -53,9 +53,9 @@ tps = 85.296346 (excluding connections establishing)
    step, but will instead need to do whatever setup your test needs.)
    Initialization looks like:
 
-   <programlisting>
+<programlisting>
 pgbench -i <optional> <replaceable>other-options</> </optional> <replaceable>dbname</>
-   </programlisting>
+</programlisting>
 
    where <replaceable>dbname</> is the name of the already-created
    database to test in.  (You may also need <literal>-h</>,
@@ -77,16 +77,14 @@ pgbench -i <optional> <replaceable>other-options</> </optional> <replaceable>dbn
   <para>
    At the default <quote>scale factor</> of 1, the tables initially
    contain this many rows:
-  </para>
-  <programlisting>
+<screen>
 table                   # of rows
 ---------------------------------
 pgbench_branches        1
 pgbench_tellers         10
 pgbench_accounts        100000
 pgbench_history         0
-  </programlisting>
-  <para>
+</screen>
    You can (and, for most purposes, probably should) increase the number
    of rows by using the <literal>-s</> (scale factor) option.  The
    <literal>-F</> (fillfactor) option might also be used at this point.
@@ -96,9 +94,9 @@ pgbench_history         0
    Once you have done the necessary setup, you can run your benchmark
    with a command that doesn't include <literal>-i</>, that is
 
-   <programlisting>
+<programlisting>
 pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
-   </programlisting>
+</programlisting>
 
    In nearly all cases, you'll need some options to make a useful test.
    The most important options are <literal>-c</> (number of clients),
@@ -478,9 +476,9 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
 
      <para>
       Example:
-      <programlisting>
+<programlisting>
 \set ntellers 10 * :scale
-      </programlisting>
+</programlisting>
      </para>
     </listitem>
    </varlistentry>
@@ -501,9 +499,9 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
 
      <para>
       Example:
-      <programlisting>
+<programlisting>
 \setrandom aid 1 :naccounts
-      </programlisting>
+</programlisting>
      </para>
     </listitem>
    </varlistentry>
@@ -525,9 +523,9 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
 
      <para>
       Example:
-      <programlisting>
+<programlisting>
 \sleep 10 ms
-      </programlisting>
+</programlisting>
      </para>
     </listitem>
    </varlistentry>
@@ -554,9 +552,9 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
 
      <para>
       Example:
-      <programlisting>
+<programlisting>
 \setshell variable_to_be_assigned command literal_argument :variable ::literal_starting_with_colon
-      </programlisting>
+</programlisting>
      </para>
     </listitem>
    </varlistentry>
@@ -573,9 +571,9 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
 
      <para>
       Example:
-      <programlisting>
+<programlisting>
 \shell command literal_argument :variable ::literal_starting_with_colon
-      </programlisting>
+</programlisting>
      </para>
     </listitem>
    </varlistentry>
@@ -585,7 +583,7 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
    As an example, the full definition of the built-in TPC-B-like
    transaction is:
 
-   <programlisting>
+<programlisting>
 \set nbranches :scale
 \set ntellers 10 * :scale
 \set naccounts 100000 * :scale
@@ -600,7 +598,7 @@ UPDATE pgbench_tellers SET tbalance = tbalance + :delta WHERE tid = :tid;
 UPDATE pgbench_branches SET bbalance = bbalance + :delta WHERE bid = :bid;
 INSERT INTO pgbench_history (tid, bid, aid, delta, mtime) VALUES (:tid, :bid, :aid, :delta, CURRENT_TIMESTAMP);
 END;
-   </programlisting>
+</programlisting>
 
    This script allows each iteration of the transaction to reference
    different, randomly-chosen rows.  (This example also shows why it's
@@ -630,9 +628,9 @@ END;
   <para>
    The format of the log is:
 
-   <programlisting>
-    <replaceable>client_id</> <replaceable>transaction_no</> <replaceable>time</> <replaceable>file_no</> <replaceable>time_epoch</> <replaceable>time_us</>
-   </programlisting>
+<synopsis>
+<replaceable>client_id</> <replaceable>transaction_no</> <replaceable>time</> <replaceable>file_no</> <replaceable>time_epoch</> <replaceable>time_us</>
+</synopsis>
 
    where <replaceable>time</> is the elapsed transaction time in microseconds,
    <replaceable>file_no</> identifies which script file was used
@@ -646,12 +644,12 @@ END;
 
   <para>
    Here are example outputs:
-   <programlisting>
+<screen>
  0 199 2241 0 1175850568 995598
  0 200 2465 0 1175850568 998079
  0 201 2513 0 1175850569 608
  0 202 2038 0 1175850569 2663
-   </programlisting>
+</screen>
   </para>
  </sect2>
 

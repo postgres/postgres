@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/sql.sgml,v 1.48 2009/04/27 16:27:36 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/sql.sgml,v 1.48.14.1 2010/07/29 19:34:37 petere Exp $ -->
 
  <chapter id="sql-intro">
   <title>SQL</title>
@@ -151,7 +151,7 @@
 
     <example>
      <title id="supplier-fig">The Suppliers and Parts Database</title>
-     <programlisting>
+<screen>
 SUPPLIER:                   SELLS:
  SNO |  SNAME  |  CITY       SNO | PNO
 ----+---------+--------     -----+-----
@@ -168,7 +168,7 @@ PART:                         4  |  3
  2  |  Nut    |    8
  3  |  Bolt   |   15
  4  |  Cam    |   25
-     </programlisting>
+</screen>
     </example>
    </para>
 
@@ -530,14 +530,14 @@ attributes are taken from. We often write a relation scheme as
          necessary for a join.
          Let the following two tables be given:
 
-         <programlisting>
+<screen>
 R:                 S:
  A | B | C          C | D | E
 ---+---+---        ---+---+---
  1 | 2 | 3          3 | a | b
  4 | 5 | 6          6 | c | d
  7 | 8 | 9
-         </programlisting>
+</screen>
         </para>
        </example>
 
@@ -546,7 +546,7 @@ R:                 S:
         <classname>R</classname> &times; <classname>S</classname> and
         get:
 
-        <programlisting>
+<screen>
 R x S:
  A | B | R.C | S.C | D | E
 ---+---+-----+-----+---+---
@@ -556,7 +556,7 @@ R x S:
  4 | 5 |  6  |  6  | c | d
  7 | 8 |  9  |  3  | a | b
  7 | 8 |  9  |  6  | c | d
-        </programlisting>
+</screen>
        </para>
 
        <para>
@@ -564,12 +564,12 @@ R x S:
         &sigma;<subscript>R.C=S.C</subscript>(R &times; S)
         we get:
 
-        <programlisting>
+<screen>
  A | B | R.C | S.C | D | E
 ---+---+-----+-----+---+---
  1 | 2 |  3  |  3  | a | b
  4 | 5 |  6  |  6  | c | d
-        </programlisting>
+</screen>
        </para>
 
        <para>
@@ -579,12 +579,12 @@ R x S:
         &pi;<subscript>R.A,R.B,R.C,S.D,S.E</subscript>(&sigma;<subscript>R.C=S.C</subscript>(R &times; S))
         and get:
 
-        <programlisting>
+<screen>
  A | B | C | D | E
 ---+---+---+---+---
  1 | 2 | 3 | a | b
  4 | 5 | 6 | c | d
-        </programlisting>
+</screen>
        </para>
       </listitem>
 
@@ -596,9 +596,9 @@ R x S:
         C and D.
         Then we define the division as:
 
-        <programlisting>
+<programlisting>
 R &divide; S = {t &mid; &forall; t<subscript>s</subscript> &isin; S &exist; t<subscript>r</subscript> &isin; R
-        </programlisting>
+</programlisting>
 
         such that
 t<subscript>r</subscript>(A,B)=t&and;t<subscript>r</subscript>(C,D)=t<subscript>s</subscript>}
@@ -615,7 +615,7 @@ t<subscript>r</subscript>(A,B)=t&and;t<subscript>r</subscript>(C,D)=t<subscript>
        <para id="divide-example">
         Given the following tables
 
-        <programlisting>
+<screen>
 R:                    S:
  A | B | C | D         C | D
 ---+---+---+---       ---+---
@@ -625,17 +625,17 @@ R:                    S:
  e | d | c | d
  e | d | e | f
  a | b | d | e
-        </programlisting>
+</screen>
 
         R &divide; S
         is derived as
 
-        <programlisting>
+<screen>
  A | B
 ---+---
  a | b
  e | d
-        </programlisting>
+</screen>
        </para>
       </listitem>
      </itemizedlist>
@@ -659,9 +659,9 @@ R:                    S:
       This question can be answered
       using relational algebra by the following operation:
 
-      <programlisting>
+<programlisting>
 &pi;<subscript>SUPPLIER.SNAME</subscript>(&sigma;<subscript>PART.PNAME='Screw'</subscript>(SUPPLIER &prod; SELLS &prod; PART))
-      </programlisting>
+</programlisting>
      </para>
 
      <para>
@@ -670,12 +670,12 @@ R:                    S:
       (<xref linkend="supplier-fig" endterm="supplier-fig">)
       we will obtain the following result:
 
-      <programlisting>
+<screen>
  SNAME
 -------
  Smith
  Adams
-      </programlisting>
+</screen>
      </para>
     </example>
    </sect2>
@@ -724,9 +724,9 @@ R:                    S:
      The queries used in <acronym>TRC</acronym> are of the following
      form:
 
-     <programlisting>
+<programlisting>
 x(A) &mid; F(x)
-     </programlisting>
+</programlisting>
 
      where <literal>x</literal> is a tuple variable
      <classname>A</classname> is a set of attributes and <literal>F</literal> is a
@@ -739,12 +739,12 @@ x(A) &mid; F(x)
      <xref linkend="suppl-rel-alg" endterm="suppl-rel-alg">
      using <acronym>TRC</acronym> we formulate the following query:
 
-     <programlisting>
+<programlisting>
 {x(SNAME) &mid; x &isin; SUPPLIER &and;
     &exist; y &isin; SELLS &exist; z &isin; PART (y(SNO)=x(SNO) &and;
     z(PNO)=y(PNO) &and;
     z(PNAME)='Screw')}
-     </programlisting>
+</programlisting>
     </para>
 
     <para>
@@ -813,9 +813,9 @@ x(A) &mid; F(x)
        to involve
        arithmetic operations as well as comparisons, e.g.:
 
-       <programlisting>
+<programlisting>
 A &lt; B + 3.
-       </programlisting>
+</programlisting>
 
        Note
        that + or other arithmetic operators appear neither in relational
@@ -851,7 +851,7 @@ A &lt; B + 3.
      <command>SELECT</command> statement,
      used to retrieve data. The syntax is:
 
-     <synopsis>
+<synopsis>
 SELECT [ ALL | DISTINCT [ ON ( <replaceable class="PARAMETER">expression</replaceable> [, ...] ) ] ]
     * | <replaceable class="PARAMETER">expression</replaceable> [ [ AS ] <replaceable class="PARAMETER">output_name</replaceable> ] [, ...]
     [ INTO [ TEMPORARY | TEMP ] [ TABLE ] <replaceable class="PARAMETER">new_table</replaceable> ]
@@ -864,7 +864,7 @@ SELECT [ ALL | DISTINCT [ ON ( <replaceable class="PARAMETER">expression</replac
     [ LIMIT { <replaceable class="PARAMETER">count</replaceable> | ALL } ]
     [ OFFSET <replaceable class="PARAMETER">start</replaceable> ]
     [ FOR { UPDATE | SHARE } [ OF <replaceable class="parameter">table_name</replaceable> [, ...] ] [ NOWAIT ] [...] ]
-     </synopsis>
+</synopsis>
     </para>
 
     <para>
@@ -886,19 +886,19 @@ SELECT [ ALL | DISTINCT [ ON ( <replaceable class="PARAMETER">expression</replac
         To retrieve all tuples from table PART where the attribute PRICE is
         greater than 10 we formulate the following query:
 
-        <programlisting>
+<programlisting>
 SELECT * FROM PART
     WHERE PRICE &gt; 10;
-        </programlisting>
+</programlisting>
 
         and get the table:
 
-        <programlisting>
+<screen>
  PNO |  PNAME  |  PRICE
 -----+---------+--------
   3  |  Bolt   |   15
   4  |  Cam    |   25
-        </programlisting>
+</screen>
        </para>
 
        <para>
@@ -907,20 +907,20 @@ SELECT * FROM PART
         only the attributes PNAME and PRICE from table PART we use the
         statement:
 
-        <programlisting>
+<programlisting>
 SELECT PNAME, PRICE 
     FROM PART
     WHERE PRICE &gt; 10;
-        </programlisting>
+</programlisting>
 
         In this case the result is:
 
-        <programlisting>
+<screen>
                       PNAME  |  PRICE
                      --------+--------
                       Bolt   |   15
                       Cam    |   25
-        </programlisting>
+</screen>
 
         Note that the <acronym>SQL</acronym> <command>SELECT</command>
         corresponds to the <quote>projection</quote> in relational algebra
@@ -932,20 +932,20 @@ SELECT PNAME, PRICE
         The qualifications in the WHERE clause can also be logically connected
         using the keywords OR, AND, and NOT:
 
-        <programlisting>
+<programlisting>
 SELECT PNAME, PRICE 
     FROM PART
     WHERE PNAME = 'Bolt' AND
          (PRICE = 0 OR PRICE &lt;= 15);
-        </programlisting>
+</programlisting>
 
         will lead to the result:
 
-        <programlisting>
+<screen>
  PNAME  |  PRICE
 --------+--------
  Bolt   |   15
-        </programlisting>
+</screen>
        </para>
 
        <para>
@@ -953,21 +953,21 @@ SELECT PNAME, PRICE
         clause. For example if we want to know how much it would cost if we
         take two pieces of a part we could use the following query:
 
-        <programlisting>
+<programlisting>
 SELECT PNAME, PRICE * 2 AS DOUBLE
     FROM PART
     WHERE PRICE * 2 &lt; 50;
-        </programlisting>
+</programlisting>
 
         and we get:
 
-        <programlisting>
+<screen>
  PNAME  |  DOUBLE
 --------+---------
  Screw  |    20
  Nut    |    16
  Bolt   |    30
-        </programlisting>
+</screen>
 
         Note that the word DOUBLE after the keyword AS is the new title of the
         second column. This technique can be used for every element of the
@@ -992,16 +992,16 @@ SELECT PNAME, PRICE * 2 AS DOUBLE
       To join the three tables SUPPLIER, PART and SELLS over their common
       attributes we formulate the following statement:
 
-      <programlisting>
+<programlisting>
 SELECT S.SNAME, P.PNAME
     FROM SUPPLIER S, PART P, SELLS SE
     WHERE S.SNO = SE.SNO AND
           P.PNO = SE.PNO;
-      </programlisting>
+</programlisting>
 
       and get the following table as a result:
 
-      <programlisting>
+<screen>
  SNAME | PNAME
 -------+-------
  Smith | Screw
@@ -1012,7 +1012,7 @@ SELECT S.SNAME, P.PNAME
  Blake | Nut
  Blake | Bolt
  Blake | Cam
-      </programlisting>
+</screen>
      </para>
 
      <para>
@@ -1034,13 +1034,13 @@ SELECT S.SNAME, P.PNAME
 
      <para>
      Another way to perform joins is to use the SQL JOIN syntax as follows:
-     <programlisting>
-select sname, pname from supplier
+<programlisting>
+SELECT sname, pname from supplier
     JOIN sells USING (sno)
     JOIN part USING (pno);
-    </programlisting>
+</programlisting>
     giving again:
-    <programlisting>
+<screen>
  sname | pname
 -------+-------
  Smith | Screw
@@ -1052,7 +1052,7 @@ select sname, pname from supplier
  Jones | Cam
  Blake | Cam
 (8 rows) 
-     </programlisting>
+</screen>
      </para>
 
      <para>
@@ -1267,38 +1267,38 @@ select sname, pname from supplier
         If we want to know the average cost of all parts in table PART we use
         the following query:
 
-        <programlisting>
+<programlisting>
 SELECT AVG(PRICE) AS AVG_PRICE
     FROM PART;
-        </programlisting>
+</programlisting>
        </para>
 
        <para>
         The result is:
 
-        <programlisting>
+<screen>
  AVG_PRICE
 -----------
    14.5
-        </programlisting>
+</screen>
        </para>
 
        <para>
         If we want to know how many parts are defined in table PART we use
         the statement:
 
-        <programlisting>
+<programlisting>
 SELECT COUNT(PNO)
     FROM PART;
-        </programlisting>
+</programlisting>
 
         and get:
 
-        <programlisting>
+<screen>
  COUNT
 -------
    4
-        </programlisting>
+</screen>
 
        </para>
       </example>
@@ -1335,23 +1335,23 @@ SELECT COUNT(PNO)
         If we want to know how many parts are sold by every supplier we
         formulate the query:
 
-        <programlisting>
+<programlisting>
 SELECT S.SNO, S.SNAME, COUNT(SE.PNO)
     FROM SUPPLIER S, SELLS SE
     WHERE S.SNO = SE.SNO
     GROUP BY S.SNO, S.SNAME;
-        </programlisting>
+</programlisting>
 
         and get:
 
-        <programlisting>
+<screen>
  SNO | SNAME | COUNT
 -----+-------+-------
   1  | Smith |   2
   2  | Jones |   1
   3  | Adams |   2
   4  | Blake |   3
-        </programlisting>
+</screen>
        </para>
 
        <para>
@@ -1359,7 +1359,7 @@ SELECT S.SNO, S.SNAME, COUNT(SE.PNO)
         First the join of the
         tables SUPPLIER and SELLS is derived:
 
-        <programlisting>
+<screen>
  S.SNO | S.SNAME | SE.PNO
 -------+---------+--------
    1   |  Smith  |   1
@@ -1370,14 +1370,14 @@ SELECT S.SNO, S.SNAME, COUNT(SE.PNO)
    4   |  Blake  |   2
    4   |  Blake  |   3
    4   |  Blake  |   4
-        </programlisting>
+</screen>
        </para>
 
        <para>
         Next we partition the tuples into groups by putting all tuples
         together that agree on both attributes S.SNO and S.SNAME:
 
-        <programlisting>
+<screen>
  S.SNO | S.SNAME | SE.PNO
 -------+---------+--------
    1   |  Smith  |   1
@@ -1391,7 +1391,7 @@ SELECT S.SNO, S.SNAME, COUNT(SE.PNO)
    4   |  Blake  |   2
                  |   3
                  |   4
-        </programlisting>
+</screen>
        </para>
 
        <para>
@@ -1442,23 +1442,23 @@ SELECT S.SNO, S.SNAME, COUNT(SE.PNO)
         If we want only those suppliers selling more than one part we use the
         query:
 
-        <programlisting>
+<programlisting>
 SELECT S.SNO, S.SNAME, COUNT(SE.PNO)
     FROM SUPPLIER S, SELLS SE
     WHERE S.SNO = SE.SNO
     GROUP BY S.SNO, S.SNAME
     HAVING COUNT(SE.PNO) &gt; 1;
-        </programlisting>
+</programlisting>
 
         and get:
 
-        <programlisting>
+<screen>
  SNO | SNAME | COUNT
 -----+-------+-------
   1  | Smith |   2
   3  | Adams |   2
   4  | Blake |   3
-        </programlisting>
+</screen>
        </para>
       </example>
      </para>
@@ -1481,23 +1481,23 @@ SELECT S.SNO, S.SNAME, COUNT(SE.PNO)
         If we want to know all parts having a greater price than the part
         named 'Screw' we use the query:
 
-        <programlisting>
+<programlisting>
 SELECT * 
     FROM PART 
     WHERE PRICE &gt; (SELECT PRICE FROM PART
                    WHERE PNAME='Screw');
-        </programlisting>
+</programlisting>
        </para>
 
        <para>
         The result is:
 
-        <programlisting>
+<screen>
  PNO |  PNAME  |  PRICE
 -----+---------+--------
   3  |  Bolt   |   15
   4  |  Cam    |   25
-        </programlisting>
+</screen>
        </para>
 
        <para>
@@ -1519,13 +1519,13 @@ SELECT *
         If we want to know all suppliers that do not sell any part 
         (e.g., to be able to remove these suppliers from the database) we use:
 
-        <programlisting>
+<programlisting>
 SELECT * 
     FROM SUPPLIER S
     WHERE NOT EXISTS
         (SELECT * FROM SELLS SE
          WHERE SE.SNO = S.SNO);
-        </programlisting>
+</programlisting>
        </para>
 
        <para>
@@ -1559,14 +1559,14 @@ SELECT *
         If we want to know the highest average part price among all our
         suppliers, we cannot write MAX(AVG(PRICE)), but we can write:
 
-        <programlisting>
+<programlisting>
 SELECT MAX(subtable.avgprice)
     FROM (SELECT AVG(P.PRICE) AS avgprice
           FROM SUPPLIER S, PART P, SELLS SE
           WHERE S.SNO = SE.SNO AND
                 P.PNO = SE.PNO
           GROUP BY S.SNO) subtable;
-        </programlisting>
+</programlisting>
 
         The subquery returns one row per supplier (because of its GROUP BY)
         and then we aggregate over those rows in the outer query.
@@ -1588,7 +1588,7 @@ SELECT MAX(subtable.avgprice)
        <para>
         The following query is an example for UNION:
 
-        <programlisting>
+<programlisting>
 SELECT S.SNO, S.SNAME, S.CITY
     FROM SUPPLIER S
     WHERE S.SNAME = 'Jones'
@@ -1596,22 +1596,22 @@ UNION
     SELECT S.SNO, S.SNAME, S.CITY
     FROM SUPPLIER S
     WHERE S.SNAME = 'Adams';    
-        </programlisting>
+</programlisting>
 
 gives the result:
 
-        <programlisting>
+<screen>
  SNO | SNAME |  CITY
 -----+-------+--------
   2  | Jones | Paris
   3  | Adams | Vienna
-        </programlisting>
+</screen>
        </para>
 
        <para>
         Here is an example for INTERSECT:
 
-        <programlisting>
+<programlisting>
 SELECT S.SNO, S.SNAME, S.CITY
     FROM SUPPLIER S
     WHERE S.SNO &gt; 1
@@ -1619,15 +1619,15 @@ INTERSECT
     SELECT S.SNO, S.SNAME, S.CITY
     FROM SUPPLIER S
     WHERE S.SNO &lt; 3;
-        </programlisting>
+</programlisting>
 
         gives the result:
 
-        <programlisting>
+<screen>
  SNO | SNAME |  CITY
 -----+-------+--------
   2  | Jones | Paris
-        </programlisting>
+</screen>
 
         The only tuple returned by both parts of the query is the one having SNO=2.
        </para>
@@ -1635,7 +1635,7 @@ INTERSECT
        <para>
         Finally an example for EXCEPT:
 
-        <programlisting>
+<programlisting>
 SELECT S.SNO, S.SNAME, S.CITY
     FROM SUPPLIER S
     WHERE S.SNO &gt; 1
@@ -1643,16 +1643,16 @@ EXCEPT
     SELECT S.SNO, S.SNAME, S.CITY
     FROM SUPPLIER S
     WHERE S.SNO &gt; 3;
-        </programlisting>
+</programlisting>
 
         gives the result:
 
-        <programlisting>
+<screen>
  SNO | SNAME |  CITY
 -----+-------+--------
   2  | Jones | Paris
   3  | Adams | Vienna
-        </programlisting>
+</screen>
        </para>
       </example>
      </para>
@@ -1675,12 +1675,12 @@ EXCEPT
       one that creates a new relation (a new table). The syntax of the
       <command>CREATE TABLE</command> command is:
 
-      <synopsis>
+<synopsis>
 CREATE TABLE <replaceable class="parameter">table_name</replaceable>
     (<replaceable class="parameter">name_of_attr_1</replaceable> <replaceable class="parameter">type_of_attr_1</replaceable>
      [, <replaceable class="parameter">name_of_attr_2</replaceable> <replaceable class="parameter">type_of_attr_2</replaceable> 
      [, ...]]);
-      </synopsis>
+</synopsis>
 
       <example>
        <title id="table-create">Table Creation</title>
@@ -1690,25 +1690,25 @@ CREATE TABLE <replaceable class="parameter">table_name</replaceable>
         <xref linkend="supplier-fig" endterm="supplier-fig"> the
         following <acronym>SQL</acronym> statements are used:
 
-        <programlisting>
+<programlisting>
 CREATE TABLE SUPPLIER
     (SNO   INTEGER,
      SNAME VARCHAR(20),
      CITY  VARCHAR(20));
-     </programlisting>
+</programlisting>
 
-     <programlisting>
+<programlisting>
 CREATE TABLE PART
     (PNO   INTEGER,
      PNAME VARCHAR(20),
      PRICE DECIMAL(4 , 2));
-     </programlisting>
+</programlisting>
 
-     <programlisting>
+<programlisting>
 CREATE TABLE SELLS
     (SNO INTEGER,
      PNO INTEGER);
-        </programlisting>
+</programlisting>
        </para>
       </example>
      </para>
@@ -1791,10 +1791,10 @@ CREATE TABLE SELLS
       To create an index in <acronym>SQL</acronym>
       the <command>CREATE INDEX</command> command is used. The syntax is:
 
-      <programlisting>
+<programlisting>
 CREATE INDEX <replaceable class="parameter">index_name</replaceable> 
     ON <replaceable class="parameter">table_name</replaceable> ( <replaceable class="parameter">name_of_attribute</replaceable> );
-      </programlisting>
+</programlisting>
      </para>
 
      <para>
@@ -1805,9 +1805,9 @@ CREATE INDEX <replaceable class="parameter">index_name</replaceable>
         To create an index named I on attribute SNAME of relation SUPPLIER
         we use the following statement:
 
-      <programlisting>
+<programlisting>
 CREATE INDEX I ON SUPPLIER (SNAME);
-      </programlisting>
+</programlisting>
      </para>
 
        <para>
@@ -1855,10 +1855,10 @@ CREATE INDEX I ON SUPPLIER (SNAME);
       command is used to define a view. The syntax
       is:
 
-      <programlisting>
+<programlisting>
 CREATE VIEW <replaceable class="parameter">view_name</replaceable>
     AS <replaceable class="parameter">select_stmt</replaceable>
-      </programlisting>
+</programlisting>
 
       where <replaceable class="parameter">select_stmt</replaceable> 
       is a valid select statement as defined
@@ -1874,14 +1874,14 @@ CREATE VIEW <replaceable class="parameter">view_name</replaceable>
       the tables from
       <xref linkend="supplier-fig" endterm="supplier-fig"> again):
 
-      <programlisting>
+<programlisting>
 CREATE VIEW London_Suppliers
     AS SELECT S.SNAME, P.PNAME
         FROM SUPPLIER S, PART P, SELLS SE
         WHERE S.SNO = SE.SNO AND
               P.PNO = SE.PNO AND
               S.CITY = 'London';
-      </programlisting>
+</programlisting>
      </para>
 
      <para>
@@ -1889,18 +1889,18 @@ CREATE VIEW London_Suppliers
       <classname>London_Suppliers</classname> as
       if it were another base table:
 
-      <programlisting>
+<programlisting>
 SELECT * FROM London_Suppliers
     WHERE PNAME = 'Screw';
-      </programlisting>
+</programlisting>
 
       which will return the following table:
 
-      <programlisting>
+<screen>
  SNAME | PNAME
 -------+-------
  Smith | Screw                 
-      </programlisting>
+</screen>
      </para>
 
      <para>
@@ -1922,34 +1922,34 @@ SELECT * FROM London_Suppliers
       To destroy a table (including all tuples stored in that table) the
       <command>DROP TABLE</command> command is used:
 
-      <programlisting>
+<programlisting>
 DROP TABLE <replaceable class="parameter">table_name</replaceable>;
-       </programlisting>
+</programlisting>
       </para>
 
      <para>
       To destroy the SUPPLIER table use the following statement:
 
-      <programlisting>
+<programlisting>
 DROP TABLE SUPPLIER;
-      </programlisting>
+</programlisting>
      </para>
 
      <para>
       The <command>DROP INDEX</command> command is used to destroy an index:
 
-      <programlisting>
+<programlisting>
 DROP INDEX <replaceable class="parameter">index_name</replaceable>;
-      </programlisting>
+</programlisting>
      </para>
 
      <para>
       Finally to destroy a given view use the command <command>DROP
       VIEW</command>:
 
-      <programlisting>
+<programlisting>
 DROP VIEW <replaceable class="parameter">view_name</replaceable>;
-      </programlisting>
+</programlisting>
      </para>
     </sect3>
    </sect2>
@@ -1966,11 +1966,11 @@ DROP VIEW <replaceable class="parameter">view_name</replaceable>;
       with tuples using the command <command>INSERT INTO</command>.
       The syntax is:
 
-      <programlisting>
+<programlisting>
 INSERT INTO <replaceable class="parameter">table_name</replaceable> (<replaceable class="parameter">name_of_attr_1</replaceable> 
     [, <replaceable class="parameter">name_of_attr_2</replaceable> [,...]])
     VALUES (<replaceable class="parameter">val_attr_1</replaceable> [, <replaceable class="parameter">val_attr_2</replaceable> [, ...]]);
-      </programlisting>
+</programlisting>
      </para>
 
      <para>
@@ -1978,19 +1978,19 @@ INSERT INTO <replaceable class="parameter">table_name</replaceable> (<replaceabl
       <xref linkend="supplier-fig" endterm="supplier-fig">) we use the
       following statement:
 
-      <programlisting>
+<programlisting>
 INSERT INTO SUPPLIER (SNO, SNAME, CITY)
     VALUES (1, 'Smith', 'London');
-      </programlisting>
+</programlisting>
      </para>
 
      <para>
       To insert the first tuple into the relation SELLS we use:
 
-      <programlisting>
+<programlisting>
 INSERT INTO SELLS (SNO, PNO)
     VALUES (1, 1);
-      </programlisting>
+</programlisting>
      </para>
     </sect3>
 
@@ -2001,23 +2001,23 @@ INSERT INTO SELLS (SNO, PNO)
       To change one or more attribute values of tuples in a relation the
       <command>UPDATE</command> command is used. The syntax is:
 
-      <programlisting>
+<programlisting>
 UPDATE <replaceable class="parameter">table_name</replaceable>
     SET <replaceable class="parameter">name_of_attr_1</replaceable> = <replaceable class="parameter">value_1</replaceable> 
         [, ... [, <replaceable class="parameter">name_of_attr_k</replaceable> = <replaceable class="parameter">value_k</replaceable>]]
     WHERE <replaceable class="parameter">condition</replaceable>;
-      </programlisting>
+</programlisting>
      </para>
 
      <para>
       To change the value of attribute PRICE of the part 'Screw' in the
       relation PART we use:
 
-      <programlisting>
+<programlisting>
 UPDATE PART
     SET PRICE = 15
     WHERE PNAME = 'Screw';
-      </programlisting>
+</programlisting>
      </para>
 
      <para>
@@ -2033,20 +2033,20 @@ UPDATE PART
       To delete a tuple from a particular table use the command DELETE
       FROM. The syntax is:
 
-      <programlisting>
+<programlisting>
 DELETE FROM <replaceable class="parameter">table_name</replaceable>
     WHERE <replaceable class="parameter">condition</replaceable>;
-      </programlisting>
+</programlisting>
      </para>
 
      <para>
       To delete the supplier called 'Smith' of the table SUPPLIER the
       following statement is used:
 
-      <programlisting>
+<programlisting>
 DELETE FROM SUPPLIER
     WHERE SNAME = 'Smith';
-      </programlisting>
+</programlisting>
      </para>
     </sect3>
    </sect2>

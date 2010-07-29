@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_sequence.sgml,v 1.25 2010/04/03 07:22:57 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_sequence.sgml,v 1.25.2.1 2010/07/29 19:34:37 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -22,7 +22,7 @@ PostgreSQL documentation
  </indexterm>
 
  <refsynopsisdiv>
-  <synopsis>
+<synopsis>
 ALTER SEQUENCE <replaceable class="parameter">name</replaceable> [ INCREMENT [ BY ] <replaceable class="parameter">increment</replaceable> ]
     [ MINVALUE <replaceable class="parameter">minvalue</replaceable> | NO MINVALUE ] [ MAXVALUE <replaceable class="parameter">maxvalue</replaceable> | NO MAXVALUE ]
     [ START [ WITH ] <replaceable class="parameter">start</replaceable> ]
@@ -32,7 +32,7 @@ ALTER SEQUENCE <replaceable class="parameter">name</replaceable> [ INCREMENT [ B
 ALTER SEQUENCE <replaceable class="parameter">name</replaceable> OWNER TO <replaceable class="PARAMETER">new_owner</replaceable>
 ALTER SEQUENCE <replaceable class="parameter">name</replaceable> RENAME TO <replaceable class="parameter">new_name</replaceable>
 ALTER SEQUENCE <replaceable class="parameter">name</replaceable> SET SCHEMA <replaceable class="parameter">new_schema</replaceable>
-  </synopsis>
+</synopsis>
  </refsynopsisdiv>
 
  <refsect1>

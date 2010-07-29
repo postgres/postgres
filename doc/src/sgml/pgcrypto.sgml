@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/pgcrypto.sgml,v 1.9 2010/06/29 22:29:14 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/pgcrypto.sgml,v 1.9.2.1 2010/07/29 19:34:37 petere Exp $ -->
 
 <sect1 id="pgcrypto">
  <title>pgcrypto</title>
@@ -18,10 +18,10 @@
   <sect3>
    <title><function>digest()</function></title>
 
-   <synopsis>
-    digest(data text, type text) returns bytea
-    digest(data bytea, type text) returns bytea
-   </synopsis>
+<synopsis>
+digest(data text, type text) returns bytea
+digest(data bytea, type text) returns bytea
+</synopsis>
 
    <para>
     Computes a binary hash of the given <parameter>data</>.
@@ -37,21 +37,21 @@
    <para>
     If you want the digest as a hexadecimal string, use
     <function>encode()</> on the result.  For example:
+<programlisting>
+CREATE OR REPLACE FUNCTION sha1(bytea) returns text AS $$
+    SELECT encode(digest($1, 'sha1'), 'hex')
+$$ LANGUAGE SQL STRICT IMMUTABLE;
+</programlisting>
    </para>
-   <programlisting>
-    CREATE OR REPLACE FUNCTION sha1(bytea) returns text AS $$
-      SELECT encode(digest($1, 'sha1'), 'hex')
-    $$ LANGUAGE SQL STRICT IMMUTABLE;
-   </programlisting>
   </sect3>
 
   <sect3>
    <title><function>hmac()</function></title>
 
-   <synopsis>
-    hmac(data text, key text, type text) returns bytea
-    hmac(data bytea, key text, type text) returns bytea
-   </synopsis>
+<synopsis>
+hmac(data text, key text, type text) returns bytea
+hmac(data bytea, key text, type text) returns bytea
+</synopsis>
 
    <para>
     Calculates hashed MAC for <parameter>data</> with key <parameter>key</>.
@@ -163,9 +163,9 @@
   <sect3>
    <title><function>crypt()</></title>
 
-   <synopsis>
-    crypt(password text, salt text) returns text
-   </synopsis>
+<synopsis>
+crypt(password text, salt text) returns text
+</synopsis>
 
    <para>
     Calculates a crypt(3)-style hash of <parameter>password</>.
@@ -176,17 +176,15 @@
    </para>
    <para>
     Example of setting a new password:
+<programlisting>
+UPDATE ... SET pswhash = crypt('new password', gen_salt('md5'));
+</programlisting>
    </para>
-   <programlisting>
-    UPDATE ... SET pswhash = crypt('new password', gen_salt('md5'));
-   </programlisting>
    <para>
     Example of authentication:
-   </para>
-   <programlisting>
-    SELECT pswhash = crypt('entered password', pswhash) FROM ... ;
-   </programlisting>
-   <para>
+<programlisting>
+SELECT pswhash = crypt('entered password', pswhash) FROM ... ;
+</programlisting>
     This returns <literal>true</> if the entered password is correct.
    </para>
   </sect3>
@@ -194,9 +192,9 @@
   <sect3>
    <title><function>gen_salt()</></title>
 
-   <synopsis>
-    gen_salt(type text [, iter_count integer ]) returns text
-   </synopsis>
+<synopsis>
+gen_salt(type text [, iter_count integer ]) returns text
+</synopsis>
 
    <para>
     Generates a new random salt string for use in <function>crypt()</>.
@@ -489,10 +487,10 @@
   <sect3>
    <title><function>pgp_sym_encrypt()</function></title>
 
-   <synopsis>
-    pgp_sym_encrypt(data text, psw text [, options text ]) returns bytea
-    pgp_sym_encrypt_bytea(data bytea, psw text [, options text ]) returns bytea
-   </synopsis>
+<synopsis>
+pgp_sym_encrypt(data text, psw text [, options text ]) returns bytea
+pgp_sym_encrypt_bytea(data bytea, psw text [, options text ]) returns bytea
+</synopsis>
    <para>
     Encrypt <parameter>data</> with a symmetric PGP key <parameter>psw</>.
     The <parameter>options</> parameter can contain option settings,
@@ -503,10 +501,10 @@
   <sect3>
    <title><function>pgp_sym_decrypt()</function></title>
 
-   <synopsis>
-    pgp_sym_decrypt(msg bytea, psw text [, options text ]) returns text
-    pgp_sym_decrypt_bytea(msg bytea, psw text [, options text ]) returns bytea
-   </synopsis>
+<synopsis>
+pgp_sym_decrypt(msg bytea, psw text [, options text ]) returns text
+pgp_sym_decrypt_bytea(msg bytea, psw text [, options text ]) returns bytea
+</synopsis>
    <para>
     Decrypt a symmetric-key-encrypted PGP message.
    </para>
@@ -524,10 +522,10 @@
   <sect3>
    <title><function>pgp_pub_encrypt()</function></title>
 
-   <synopsis>
-    pgp_pub_encrypt(data text, key bytea [, options text ]) returns bytea
-    pgp_pub_encrypt_bytea(data bytea, key bytea [, options text ]) returns bytea
-   </synopsis>
+<synopsis>
+pgp_pub_encrypt(data text, key bytea [, options text ]) returns bytea
+pgp_pub_encrypt_bytea(data bytea, key bytea [, options text ]) returns bytea
+</synopsis>
    <para>
     Encrypt <parameter>data</> with a public PGP key <parameter>key</>.
     Giving this function a secret key will produce a error.
@@ -541,10 +539,10 @@
   <sect3>
    <title><function>pgp_pub_decrypt()</function></title>
 
-   <synopsis>
-    pgp_pub_decrypt(msg bytea, key bytea [, psw text [, options text ]]) returns text
-    pgp_pub_decrypt_bytea(msg bytea, key bytea [, psw text [, options text ]]) returns bytea
-   </synopsis>
+<synopsis>
+pgp_pub_decrypt(msg bytea, key bytea [, psw text [, options text ]]) returns text
+pgp_pub_decrypt_bytea(msg bytea, key bytea [, psw text [, options text ]]) returns bytea
+</synopsis>
    <para>
     Decrypt a public-key-encrypted message.  <parameter>key</> must be the
     secret key corresponding to the public key that was used to encrypt.
@@ -566,9 +564,9 @@
   <sect3>
    <title><function>pgp_key_id()</function></title>
 
-   <synopsis>
-    pgp_key_id(bytea) returns text
-   </synopsis>
+<synopsis>
+pgp_key_id(bytea) returns text
+</synopsis>
    <para>
     <function>pgp_key_id</> extracts the key ID of a PGP public or secret key.
     Or it gives the key ID that was used for encrypting the data, if given
@@ -608,10 +606,10 @@
   <sect3>
    <title><function>armor()</function>, <function>dearmor()</function></title>
 
-   <synopsis>
-    armor(data bytea) returns text
-    dearmor(data text) returns bytea
-   </synopsis>
+<synopsis>
+armor(data bytea) returns text
+dearmor(data text) returns bytea
+</synopsis>
    <para>
     These functions wrap/unwrap binary data into PGP Ascii Armor format,
     which is basically Base64 with CRC and additional formatting.
@@ -625,10 +623,10 @@
     Options are named to be similar to GnuPG.  An option's value should be
     given after an equal sign; separate options from each other with commas.
     For example:
+<programlisting>
+pgp_sym_encrypt(data, psw, 'compress-algo=1, cipher-algo=aes256')
+</programlisting>
    </para>
-   <programlisting>
-    pgp_sym_encrypt(data, psw, 'compress-algo=1, cipher-algo=aes256')
-   </programlisting>
 
    <para>
     All of the options except <literal>convert-crlf</literal> apply only to
@@ -648,11 +646,11 @@
    <para>
     Which cipher algorithm to use.
    </para>
-   <programlisting>
-    Values: bf, aes128, aes192, aes256 (OpenSSL-only: <literal>3des</literal>, <literal>cast5</literal>)
-    Default: aes128
-    Applies to: pgp_sym_encrypt, pgp_pub_encrypt
-   </programlisting>
+<literallayout>
+Values: bf, aes128, aes192, aes256 (OpenSSL-only: <literal>3des</literal>, <literal>cast5</literal>)
+Default: aes128
+Applies to: pgp_sym_encrypt, pgp_pub_encrypt
+</literallayout>
   </sect4>
 
   <sect4>
@@ -662,14 +660,14 @@
     Which compression algorithm to use.  Only available if
     <productname>PostgreSQL</productname> was built with zlib.
    </para>
-   <programlisting>
-    Values:
-      0 - no compression
-      1 - ZIP compression
-      2 - ZLIB compression (= ZIP plus meta-data and block CRCs)
-    Default: 0
-    Applies to: pgp_sym_encrypt, pgp_pub_encrypt
-   </programlisting>
+<literallayout>
+Values:
+  0 - no compression
+  1 - ZIP compression
+  2 - ZLIB compression (= ZIP plus meta-data and block CRCs)
+Default: 0
+Applies to: pgp_sym_encrypt, pgp_pub_encrypt
+</literallayout>
   </sect4>
 
   <sect4>
@@ -679,11 +677,11 @@
     How much to compress.  Higher levels compress smaller but are slower.
     0 disables compression.
    </para>
-   <programlisting>
-    Values: 0, 1-9
-    Default: 6
-    Applies to: pgp_sym_encrypt, pgp_pub_encrypt
-   </programlisting>
+<literallayout>
+Values: 0, 1-9
+Default: 6
+Applies to: pgp_sym_encrypt, pgp_pub_encrypt
+</literallayout>
   </sect4>
 
   <sect4>
@@ -696,11 +694,11 @@
     <literal>\r\n</literal> line-feeds.  Use this to get fully RFC-compliant
     behavior.
    </para>
-   <programlisting>
-    Values: 0, 1
-    Default: 0
-    Applies to: pgp_sym_encrypt, pgp_pub_encrypt, pgp_sym_decrypt, pgp_pub_decrypt
-   </programlisting>
+<literallayout>
+Values: 0, 1
+Default: 0
+Applies to: pgp_sym_encrypt, pgp_pub_encrypt, pgp_sym_decrypt, pgp_pub_decrypt
+</literallayout>
   </sect4>
 
   <sect4>
@@ -712,11 +710,11 @@
     the addition of SHA-1 protected packets to RFC 4880.
     Recent gnupg.org and pgp.com software supports it fine.
    </para>
-   <programlisting>
-    Values: 0, 1
-    Default: 0
-    Applies to: pgp_sym_encrypt, pgp_pub_encrypt
-   </programlisting>
+<literallayout>
+Values: 0, 1
+Default: 0
+Applies to: pgp_sym_encrypt, pgp_pub_encrypt
+</literallayout>
   </sect4>
 
   <sect4>
@@ -727,11 +725,11 @@
     session key; this is for symmetric-key encryption, which by default
     uses the S2K key directly.
    </para>
-   <programlisting>
-    Values: 0, 1
-    Default: 0
-    Applies to: pgp_sym_encrypt
-   </programlisting>
+<literallayout>
+Values: 0, 1
+Default: 0
+Applies to: pgp_sym_encrypt
+</literallayout>
   </sect4>
 
   <sect4>
@@ -740,14 +738,14 @@
    <para>
     Which S2K algorithm to use.
    </para>
-   <programlisting>
-    Values:
-      0 - Without salt.  Dangerous!
-      1 - With salt but with fixed iteration count.
-      3 - Variable iteration count.
-    Default: 3
-    Applies to: pgp_sym_encrypt
-   </programlisting>
+<literallayout>
+Values:
+  0 - Without salt.  Dangerous!
+  1 - With salt but with fixed iteration count.
+  3 - Variable iteration count.
+Default: 3
+Applies to: pgp_sym_encrypt
+</literallayout>
   </sect4>
 
   <sect4>
@@ -756,11 +754,11 @@
    <para>
     Which digest algorithm to use in S2K calculation.
    </para>
-   <programlisting>
-    Values: md5, sha1
-    Default: sha1
-    Applies to: pgp_sym_encrypt
-   </programlisting>
+<literallayout>
+Values: md5, sha1
+Default: sha1
+Applies to: pgp_sym_encrypt
+</literallayout>
   </sect4>
 
   <sect4>
@@ -769,11 +767,11 @@
    <para>
     Which cipher to use for encrypting separate session key.
    </para>
-   <programlisting>
-    Values: bf, aes, aes128, aes192, aes256
-    Default: use cipher-algo
-    Applies to: pgp_sym_encrypt
-   </programlisting>
+<literallayout>
+Values: bf, aes, aes128, aes192, aes256
+Default: use cipher-algo
+Applies to: pgp_sym_encrypt
+</literallayout>
   </sect4>
 
   <sect4>
@@ -785,11 +783,11 @@
     be done, but the message will be tagged as UTF-8.  Without this option
     it will not be.
    </para>
-   <programlisting>
-    Values: 0, 1
-    Default: 0
-    Applies to: pgp_sym_encrypt, pgp_pub_encrypt
-   </programlisting>
+<literallayout>
+Values: 0, 1
+Default: 0
+Applies to: pgp_sym_encrypt, pgp_pub_encrypt
+</literallayout>
   </sect4>
   </sect3>
 
@@ -798,10 +796,10 @@
 
   <para>
    To generate a new key:
+<programlisting>
+gpg --gen-key
+</programlisting>
   </para>
-  <programlisting>
-   gpg --gen-key
-  </programlisting>
   <para>
    The preferred key type is <quote>DSA and Elgamal</>.
   </para>
@@ -812,22 +810,22 @@
   </para>
   <para>
    To list keys:
+<programlisting>
+gpg --list-secret-keys
+</programlisting>
   </para>
-  <programlisting>
-   gpg --list-secret-keys
-  </programlisting>
   <para>
    To export a public key in ascii-armor format:
+<programlisting>
+gpg -a --export KEYID > public.key
+</programlisting>
   </para>
-  <programlisting>
-   gpg -a --export KEYID > public.key
-  </programlisting>
   <para>
    To export a secret key in ascii-armor format:
+<programlisting>
+gpg -a --export-secret-keys KEYID > secret.key
+</programlisting>
   </para>
-  <programlisting>
-   gpg -a --export-secret-keys KEYID > secret.key
-  </programlisting>
   <para>
    You need to use <function>dearmor()</> on these keys before giving them to
    the PGP functions.  Or if you can handle binary data, you can drop
@@ -905,34 +903,29 @@
    encryption functions is discouraged.
   </para>
 
-  <synopsis>
-    encrypt(data bytea, key bytea, type text) returns bytea
-    decrypt(data bytea, key bytea, type text) returns bytea
+<synopsis>
+encrypt(data bytea, key bytea, type text) returns bytea
+decrypt(data bytea, key bytea, type text) returns bytea
 
-    encrypt_iv(data bytea, key bytea, iv bytea, type text) returns bytea
-    decrypt_iv(data bytea, key bytea, iv bytea, type text) returns bytea
-  </synopsis>
+encrypt_iv(data bytea, key bytea, iv bytea, type text) returns bytea
+decrypt_iv(data bytea, key bytea, iv bytea, type text) returns bytea
+</synopsis>
 
   <para>
    Encrypt/decrypt data using the cipher method specified by
    <parameter>type</parameter>.  The syntax of the
    <parameter>type</parameter> string is:
-  </para>
 
-  <synopsis>
-   <replaceable>algorithm</> <optional> <literal>-</> <replaceable>mode</> </optional> <optional> <literal>/pad:</> <replaceable>padding</> </optional>
-  </synopsis>
-
-  <para>
+<synopsis>
+<replaceable>algorithm</> <optional> <literal>-</> <replaceable>mode</> </optional> <optional> <literal>/pad:</> <replaceable>padding</> </optional>
+</synopsis>
    where <replaceable>algorithm</> is one of:
-  </para>
+
   <itemizedlist>
    <listitem><para><literal>bf</literal> &mdash; Blowfish</para></listitem>
    <listitem><para><literal>aes</literal> &mdash; AES (Rijndael-128)</para></listitem>
   </itemizedlist>
-  <para>
    and <replaceable>mode</> is one of:
-  </para>
   <itemizedlist>
    <listitem>
     <para>
@@ -946,9 +939,7 @@
     </para>
    </listitem>
   </itemizedlist>
-  <para>
    and <replaceable>padding</> is one of:
-  </para>
   <itemizedlist>
    <listitem>
     <para>
@@ -961,13 +952,14 @@
     </para>
    </listitem>
   </itemizedlist>
+  </para>
   <para>
    So, for example, these are equivalent:
+<programlisting>
+encrypt(data, 'fooz', 'bf')
+encrypt(data, 'fooz', 'bf-cbc/pad:pkcs')
+</programlisting>
   </para>
-  <programlisting>
-   encrypt(data, 'fooz', 'bf')
-   encrypt(data, 'fooz', 'bf-cbc/pad:pkcs')
-  </programlisting>
   <para>
    In <function>encrypt_iv</> and <function>decrypt_iv</>, the
    <parameter>iv</> parameter is the initial value for the CBC mode;
@@ -980,9 +972,9 @@
  <sect2>
   <title>Random-data functions</title>
 
-  <synopsis>
-   gen_random_bytes(count integer) returns bytea
-  </synopsis>
+<synopsis>
+gen_random_bytes(count integer) returns bytea
+</synopsis>
   <para>
    Returns <parameter>count</> cryptographically strong random bytes.
    At most 1024 bytes can be extracted at a time.  This is to avoid

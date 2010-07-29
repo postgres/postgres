@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/pgstatstatements.sgml,v 1.6 2010/01/08 00:38:20 itagaki Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/pgstatstatements.sgml,v 1.6.6.1 2010/07/29 19:34:37 petere Exp $ -->
 
 <sect1 id="pgstatstatements">
  <title>pg_stat_statements</title>
@@ -279,22 +279,22 @@
    <filename>postgresql.conf</> file,
    you will need to add <literal>pg_stat_statements</> to
    <xref linkend="guc-custom-variable-classes">.  Typical usage might be:
-  </para>
 
-  <programlisting>
+<programlisting>
 # postgresql.conf
 shared_preload_libraries = 'pg_stat_statements'
 
 custom_variable_classes = 'pg_stat_statements'
 pg_stat_statements.max = 10000
 pg_stat_statements.track = all
-  </programlisting>
+</programlisting>
+  </para>
  </sect2>
 
  <sect2>
   <title>Sample output</title>
 
-  <programlisting>
+<screen>
 bench=# SELECT pg_stat_statements_reset();
 
 $ pgbench -i bench
@@ -334,7 +334,7 @@ calls       | 1
 total_time  | 0.08142
 rows        | 0
 hit_percent | 34.4947735191637631
-  </programlisting>
+</screen>
  </sect2>
 
  <sect2>

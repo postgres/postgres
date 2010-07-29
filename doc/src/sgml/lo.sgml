@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/lo.sgml,v 1.3 2007/12/06 04:12:10 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/lo.sgml,v 1.3.16.1 2010/07/29 19:34:36 petere Exp $ -->
 
 <sect1 id="lo">
  <title>lo</title>
@@ -66,12 +66,12 @@
    Here's a simple example of usage:
   </para>
 
-  <programlisting>
-   CREATE TABLE image (title TEXT, raster lo);
+<programlisting>
+CREATE TABLE image (title TEXT, raster lo);
 
-   CREATE TRIGGER t_raster BEFORE UPDATE OR DELETE ON image
-     FOR EACH ROW EXECUTE PROCEDURE lo_manage(raster);
-  </programlisting>
+CREATE TRIGGER t_raster BEFORE UPDATE OR DELETE ON image
+    FOR EACH ROW EXECUTE PROCEDURE lo_manage(raster);
+</programlisting>
 
   <para>
    For each column that will contain unique references to large objects,

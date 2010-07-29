@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release-8.1.sgml,v 1.7 2010/05/13 21:26:59 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release-8.1.sgml,v 1.7.2.1 2010/07/29 19:34:37 petere Exp $ -->
 <!-- See header comment in release.sgml about typical markup -->
 
  <sect1 id="release-8-1-21">
@@ -4040,9 +4040,9 @@ psql -t -f fixseq.sql db1 | psql -e db1
        Previously, only a predefined list of time zone names were
        supported by <command>AT TIME ZONE</>. Now any supported time
        zone name can be used, e.g.:
-       <programlisting>
-        SELECT CURRENT_TIMESTAMP AT TIME ZONE 'Europe/London';
-       </programlisting>
+<programlisting>
+SELECT CURRENT_TIMESTAMP AT TIME ZONE 'Europe/London';
+</programlisting>
        In the above query, the time zone used is adjusted based on the
        daylight saving time rules that were in effect on the supplied
        date.
@@ -4116,10 +4116,10 @@ psql -t -f fixseq.sql db1 | psql -e db1
        the next day even if a daylight saving time adjustment occurs
        between, whereas adding <literal>24 hours</> will give a different
        local time when this happens.  For example, under US DST rules:
-       <programlisting>
-        '2005-04-03 00:00:00-05' + '1 day' = '2005-04-04 00:00:00-04'
-        '2005-04-03 00:00:00-05' + '24 hours' = '2005-04-04 01:00:00-04'
-       </programlisting>
+<programlisting>
+'2005-04-03 00:00:00-05' + '1 day' = '2005-04-04 00:00:00-04'
+'2005-04-03 00:00:00-05' + '24 hours' = '2005-04-04 01:00:00-04'
+</programlisting>
       </para>
      </listitem>
 

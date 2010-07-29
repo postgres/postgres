@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.521 2010/07/03 17:21:48 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.521.2.1 2010/07/29 19:34:36 petere Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -8228,9 +8228,9 @@ SELECT xmlcomment('hello');
      <primary>xmlconcat</primary>
     </indexterm>
 
- <synopsis>
- <function>xmlconcat</function>(<replaceable>xml</replaceable><optional>, ...</optional>)
- </synopsis>
+<synopsis>
+<function>xmlconcat</function>(<replaceable>xml</replaceable><optional>, ...</optional>)
+</synopsis>
  
     <para>
      The function <function>xmlconcat</function> concatenates a list
@@ -8286,8 +8286,8 @@ SELECT xmlconcat('<?xml version="1.1"?><foo/>', '<?xml version="1.1" standalone=
    </indexterm>
  
 <synopsis>
- <function>xmlelement</function>(name <replaceable>name</replaceable> <optional>, xmlattributes(<replaceable>value</replaceable> <optional>AS <replaceable>attname</replaceable></optional> <optional>, ... </optional>)</optional> <optional><replaceable>, content, ...</replaceable></optional>)
- </synopsis>
+<function>xmlelement</function>(name <replaceable>name</replaceable> <optional>, xmlattributes(<replaceable>value</replaceable> <optional>AS <replaceable>attname</replaceable></optional> <optional>, ... </optional>)</optional> <optional><replaceable>, content, ...</replaceable></optional>)
+</synopsis>
  
     <para>
      The <function>xmlelement</function> expression produces an XML
@@ -8383,9 +8383,9 @@ SELECT xmlelement(name foo, xmlattributes('xyz' as bar),
     <primary>xmlforest</primary>
    </indexterm>
  
- <synopsis>
- <function>xmlforest</function>(<replaceable>content</replaceable> <optional>AS <replaceable>name</replaceable></optional> <optional>, ...</optional>)
- </synopsis>
+<synopsis>
+<function>xmlforest</function>(<replaceable>content</replaceable> <optional>AS <replaceable>name</replaceable></optional> <optional>, ...</optional>)
+</synopsis>
  
     <para>
      The <function>xmlforest</function> expression produces an XML
@@ -8440,9 +8440,9 @@ WHERE table_schema = 'pg_catalog';
     <primary>xmlpi</primary>
    </indexterm>
  
- <synopsis>
- <function>xmlpi</function>(name <replaceable>target</replaceable> <optional>, <replaceable>content</replaceable></optional>)
- </synopsis>
+<synopsis>
+<function>xmlpi</function>(name <replaceable>target</replaceable> <optional>, <replaceable>content</replaceable></optional>)
+</synopsis>
  
     <para>
      The <function>xmlpi</function> expression creates an XML
@@ -8469,9 +8469,9 @@ SELECT xmlpi(name php, 'echo "hello world";');
     <primary>xmlroot</primary>
    </indexterm>
  
- <synopsis>
- <function>xmlroot</function>(<replaceable>xml</replaceable>, version <replaceable>text</replaceable> | no value <optional>, standalone yes|no|no value</optional>)
- </synopsis>
+<synopsis>
+<function>xmlroot</function>(<replaceable>xml</replaceable>, version <replaceable>text</replaceable> | no value <optional>, standalone yes|no|no value</optional>)
+</synopsis>
  
     <para>
      The <function>xmlroot</function> expression alters the properties

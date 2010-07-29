@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/pgrowlocks.sgml,v 1.5 2009/05/18 11:08:24 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/pgrowlocks.sgml,v 1.5.14.1 2010/07/29 19:34:37 petere Exp $ -->
 
 <sect1 id="pgrowlocks">
  <title>pgrowlocks</title>
@@ -101,10 +101,10 @@ pgrowlocks(text) returns setof record
    rows. If you want to take a look at the row contents at the same time, you
    could do something like this:
 
-  <programlisting>
+<programlisting>
 SELECT * FROM accounts AS a, pgrowlocks('accounts') AS p
   WHERE p.locked_row = a.ctid;
-  </programlisting>
+</programlisting>
 
    Be aware however that (as of <productname>PostgreSQL</> 8.3) such a
    query will be very inefficient.
@@ -114,7 +114,7 @@ SELECT * FROM accounts AS a, pgrowlocks('accounts') AS p
  <sect2>
   <title>Sample output</title>
 
-  <programlisting>
+<screen>
 test=# SELECT * FROM pgrowlocks('t1');
  locked_row | lock_type | locker | multi |   xids    |     pids
 ------------+-----------+--------+-------+-----------+---------------
@@ -123,7 +123,7 @@ test=# SELECT * FROM pgrowlocks('t1');
       (0,3) | Exclusive |    804 | f     | {804}     | {29066}
       (0,4) | Exclusive |    804 | f     | {804}     | {29066}
 (4 rows)
-  </programlisting>
+</screen>
  </sect2>
 
  <sect2>

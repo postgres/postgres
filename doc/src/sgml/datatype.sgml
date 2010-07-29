@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.250.2.3 2010/07/27 19:01:04 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.250.2.4 2010/07/29 19:34:36 petere Exp $ -->
 
  <chapter id="datatype">
   <title>Data Types</title>
@@ -1576,21 +1576,21 @@ SELECT E'\\xDEADBEEF';
    <para>
     The <type>interval</type> type has an additional option, which is
     to restrict the set of stored fields by writing one of these phrases:
-<programlisting>
-    YEAR
-    MONTH
-    DAY
-    HOUR
-    MINUTE
-    SECOND
-    YEAR TO MONTH
-    DAY TO HOUR
-    DAY TO MINUTE
-    DAY TO SECOND
-    HOUR TO MINUTE
-    HOUR TO SECOND
-    MINUTE TO SECOND
-</programlisting>
+<literallayout class="monospaced">
+YEAR
+MONTH
+DAY
+HOUR
+MINUTE
+SECOND
+YEAR TO MONTH
+DAY TO HOUR
+DAY TO MINUTE
+DAY TO SECOND
+HOUR TO MINUTE
+HOUR TO SECOND
+MINUTE TO SECOND
+</literallayout>
     Note that if both <replaceable>fields</replaceable> and
     <replaceable>p</replaceable> are specified, the
     <replaceable>fields</replaceable> must include <literal>SECOND</>,
@@ -3803,7 +3803,7 @@ SELECT to_tsvector('english', 'The Fat Rats');
      of the operators:
 
 <programlisting>
- SELECT 'fat &amp; rat'::tsquery;
+SELECT 'fat &amp; rat'::tsquery;
     tsquery    
 ---------------
  'fat' &amp; 'rat'

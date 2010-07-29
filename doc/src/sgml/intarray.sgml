@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/intarray.sgml,v 1.10 2010/05/05 15:10:25 heikki Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/intarray.sgml,v 1.10.2.1 2010/07/29 19:34:36 petere Exp $ -->
 
 <sect1 id="intarray">
  <title>intarray</title>
@@ -271,7 +271,7 @@
  <sect2>
   <title>Example</title>
 
-  <programlisting>
+<programlisting>
 -- a message can be in one or more <quote>sections</>
 CREATE TABLE message (mid INT PRIMARY KEY, sections INT[], ...);
 
@@ -286,7 +286,7 @@ SELECT message.mid FROM message WHERE message.sections @&gt; '{1,2}';
 
 -- the same, using QUERY operator
 SELECT message.mid FROM message WHERE message.sections @@ '1&amp;2'::query_int;
-  </programlisting>
+</programlisting>
  </sect2>
 
  <sect2>
@@ -297,13 +297,13 @@ SELECT message.mid FROM message WHERE message.sections @@ '1&amp;2'::query_int;
    benchmark test suite.  To run:
   </para>
 
-  <programlisting>
-   cd .../bench
-   createdb TEST
-   psql TEST &lt; ../_int.sql
-   ./create_test.pl | psql TEST
-   ./bench.pl
-  </programlisting>
+<programlisting>
+cd .../bench
+createdb TEST
+psql TEST &lt; ../_int.sql
+./create_test.pl | psql TEST
+./bench.pl
+</programlisting>
 
   <para>
    The <filename>bench.pl</> script has numerous options, which

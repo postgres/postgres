@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ddl.sgml,v 1.93 2010/04/06 02:18:04 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ddl.sgml,v 1.93.2.1 2010/07/29 19:34:36 petere Exp $ -->
 
 <chapter id="ddl">
  <title>Data Definition</title>
@@ -2520,7 +2520,7 @@ CREATE TABLE measurement_y2008m01 ( ) INHERITS (measurement);
         just creating the partition tables as above, the table creation
         script should really be:
 
- <programlisting>
+<programlisting>
 CREATE TABLE measurement_y2006m02 (
     CHECK ( logdate &gt;= DATE '2006-02-01' AND logdate &lt; DATE '2006-03-01' )
 ) INHERITS (measurement);
@@ -2545,7 +2545,7 @@ CREATE TABLE measurement_y2008m01 (
        <para>
         We probably need indexes on the key columns too:
 
- <programlisting>
+<programlisting>
 CREATE INDEX measurement_y2006m02_logdate ON measurement_y2006m02 (logdate);
 CREATE INDEX measurement_y2006m03_logdate ON measurement_y2006m03 (logdate);
 ...

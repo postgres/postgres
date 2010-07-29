@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/auto-explain.sgml,v 1.8 2010/04/03 07:22:52 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/auto-explain.sgml,v 1.8.2.1 2010/07/29 19:34:36 petere Exp $ -->
 
 <sect1 id="auto-explain">
  <title>auto_explain</title>
@@ -19,9 +19,9 @@
   The module provides no SQL-accessible functions.  To use it, simply
   load it into the server.  You can load it into an individual session:
 
-  <programlisting>
+<programlisting>
 LOAD 'auto_explain';
-  </programlisting>
+</programlisting>
 
   (You must be superuser to do that.)  More typical usage is to preload
   it into all sessions by including <literal>auto_explain</> in
@@ -163,45 +163,44 @@ LOAD 'auto_explain';
    <xref linkend="guc-custom-variable-classes">.  Typical usage might be:
   </para>
 
-  <programlisting>
+<programlisting>
 # postgresql.conf
 shared_preload_libraries = 'auto_explain'
 
 custom_variable_classes = 'auto_explain'
 auto_explain.log_min_duration = '3s'
-  </programlisting>
+</programlisting>
  </sect2>
 
  <sect2>
   <title>Example</title>
 
-  <programlisting>
-  postgres=# LOAD 'auto_explain';
-  postgres=# SET auto_explain.log_min_duration = 0;
-  postgres=# SELECT count(*)
-               FROM pg_class, pg_index
-              WHERE oid = indrelid AND indisunique;
-  </programlisting>
+<programlisting>
+postgres=# LOAD 'auto_explain';
+postgres=# SET auto_explain.log_min_duration = 0;
+postgres=# SELECT count(*)
+           FROM pg_class, pg_index
+           WHERE oid = indrelid AND indisunique;
+</programlisting>
 
   <para>
    This might produce log output such as:
   </para>
 
-  <programlisting><![CDATA[
-  LOG:  duration: 3.651 ms  plan:
-    Query Text: SELECT count(*)
-                FROM pg_class, pg_index
-               WHERE oid = indrelid AND indisunique;
-    Aggregate  (cost=16.79..16.80 rows=1 width=0) (actual time=3.626..3.627 rows=1 loops=1)
-      ->  Hash Join  (cost=4.17..16.55 rows=92 width=0) (actual time=3.349..3.594 rows=92 loops=1)
-            Hash Cond: (pg_class.oid = pg_index.indrelid)
-            ->  Seq Scan on pg_class  (cost=0.00..9.55 rows=255 width=4) (actual time=0.016..0.140 rows=255 loops=1)
-            ->  Hash  (cost=3.02..3.02 rows=92 width=4) (actual time=3.238..3.238 rows=92 loops=1)
-                  Buckets: 1024  Batches: 1  Memory Usage: 4kB
-                  ->  Seq Scan on pg_index  (cost=0.00..3.02 rows=92 width=4) (actual time=0.008..3.187 rows=92 loops=1)
-                        Filter: indisunique
-]]>
-  </programlisting>
+<screen><![CDATA[
+LOG:  duration: 3.651 ms  plan:
+  Query Text: SELECT count(*)
+              FROM pg_class, pg_index
+              WHERE oid = indrelid AND indisunique;
+  Aggregate  (cost=16.79..16.80 rows=1 width=0) (actual time=3.626..3.627 rows=1 loops=1)
+    ->  Hash Join  (cost=4.17..16.55 rows=92 width=0) (actual time=3.349..3.594 rows=92 loops=1)
+          Hash Cond: (pg_class.oid = pg_index.indrelid)
+          ->  Seq Scan on pg_class  (cost=0.00..9.55 rows=255 width=4) (actual time=0.016..0.140 rows=255 loops=1)
+          ->  Hash  (cost=3.02..3.02 rows=92 width=4) (actual time=3.238..3.238 rows=92 loops=1)
+                Buckets: 1024  Batches: 1  Memory Usage: 4kB
+                ->  Seq Scan on pg_index  (cost=0.00..3.02 rows=92 width=4) (actual time=0.008..3.187 rows=92 loops=1)
+                      Filter: indisunique
+]]></screen>
  </sect2>
 
  <sect2>

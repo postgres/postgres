@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/pgstandby.sgml,v 2.11 2010/05/25 15:55:28 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/pgstandby.sgml,v 2.11.2.1 2010/07/29 19:34:37 petere Exp $ -->
 
 <sect1 id="pgstandby">
  <title>pg_standby</title>
@@ -50,21 +50,17 @@
    To configure a standby
    server to use <application>pg_standby</>, put this into its
    <filename>recovery.conf</filename> configuration file:
-  </para>
-  <programlisting>
+<programlisting>
 restore_command = 'pg_standby <replaceable>archiveDir</> %f %p %r'
-  </programlisting>
-  <para>
+</programlisting>
    where <replaceable>archiveDir</> is the directory from which WAL segment
    files should be restored.
   </para>
   <para>
    The full syntax of <application>pg_standby</>'s command line is
-  </para>
-  <synopsis>
+<synopsis>
 pg_standby <optional> <replaceable>option</> ... </optional> <replaceable>archivelocation</> <replaceable>nextwalfile</> <replaceable>xlogfilepath</> <optional> <replaceable>restartwalfile</> </optional>
-  </synopsis>
-  <para>
+</synopsis>
    When used within <literal>restore_command</literal>, the <literal>%f</> and
    <literal>%p</> macros should be specified for <replaceable>nextwalfile</>
    and <replaceable>xlogfilepath</> respectively, to provide the actual file
@@ -235,21 +231,19 @@ pg_standby <optional> <replaceable>option</> ... </optional> <replaceable>archiv
  <sect2>
   <title>Examples</title>
 
-  <para>On Linux or Unix systems, you might use:</para>
+  <para>On Linux or Unix systems, you might use:
 
-  <programlisting>
+<programlisting>
 archive_command = 'cp %p .../archive/%f'
 
 restore_command = 'pg_standby -d -s 2 -t /tmp/pgsql.trigger.5442 .../archive %f %p %r 2>>standby.log'
 
 recovery_end_command = 'rm -f /tmp/pgsql.trigger.5442'
-  </programlisting>
-  <para>
+</programlisting>
    where the archive directory is physically located on the standby server,
    so that the <literal>archive_command</> is accessing it across NFS,
    but the files are local to the standby (enabling use of <literal>ln</>).
    This will:
-  </para>
   <itemizedlist>
    <listitem>
     <para>
@@ -279,22 +273,21 @@ recovery_end_command = 'rm -f /tmp/pgsql.trigger.5442'
     </para>
    </listitem>
   </itemizedlist>
+  </para>
 
-  <para>On Windows, you might use:</para>
+  <para>On Windows, you might use:
 
-  <programlisting>
+<programlisting>
 archive_command = 'copy %p ...\\archive\\%f'
 
 restore_command = 'pg_standby -d -s 5 -t C:\pgsql.trigger.5442 ...\archive %f %p %r 2>>standby.log'
 
 recovery_end_command = 'del C:\pgsql.trigger.5442'
-  </programlisting>
-  <para>
+</programlisting>
    Note that backslashes need to be doubled in the
    <literal>archive_command</>, but <emphasis>not</emphasis> in the
    <literal>restore_command</> or <literal>recovery_end_command</>.
    This will:
-  </para>
   <itemizedlist>
    <listitem>
     <para>
@@ -329,6 +322,7 @@ recovery_end_command = 'del C:\pgsql.trigger.5442'
     </para>
    </listitem>
   </itemizedlist>
+  </para>
 
   <para>
    The <literal>copy</> command on Windows sets the final file size

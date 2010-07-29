@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/seg.sgml,v 1.6 2009/12/08 20:08:30 mha Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/seg.sgml,v 1.6.8.1 2010/07/29 19:34:37 petere Exp $ -->
 
 <sect1 id="seg">
  <title>seg</title>
@@ -39,13 +39,13 @@
    6.50, and you input this reading into the database. What do you get
    when you fetch it? Watch:
 
-  <programlisting>
+<screen>
 test=> select 6.50 :: float8 as "pH";
  pH
 ---
 6.5
 (1 row)
-  </programlisting>
+</screen>
 
    In the world of measurements, 6.50 is not the same as 6.5. It may
    sometimes be critically different. The experimenters usually write
@@ -65,13 +65,13 @@ test=> select 6.50 :: float8 as "pH";
   <para>
    Check this out:
 
-   <programlisting>
+<screen>
 test=> select '6.25 .. 6.50'::seg as "pH";
           pH
 ------------
 6.25 .. 6.50
 (1 row)
-   </programlisting>
+</screen>
   </para>
  </sect2>
 
@@ -234,85 +234,75 @@ test=> select '6.25 .. 6.50'::seg as "pH";
   <para>
    The <filename>seg</> module includes a GiST index operator class for
    <type>seg</> values.
-   The operators supported by the GiST opclass include:
+   The operators supported by the GiST opclass are shown in <xref linkend="seg-gist-operators">.
   </para>
 
-  <itemizedlist>
-   <listitem>
-    <programlisting>
-[a, b] &lt;&lt; [c, d]        Is left of
-    </programlisting>
-    <para>
-     [a, b] is entirely to the left of [c, d].  That is,
-     [a, b] &lt;&lt; [c, d] is true if b &lt; c and false otherwise
-    </para>
-   </listitem>
-   <listitem>
-    <programlisting>
-[a, b] &gt;&gt; [c, d]        Is right of
-    </programlisting>
-    <para>
-     [a, b] is entirely to the right of [c, d].  That is,
-     [a, b] &gt;&gt; [c, d] is true if a &gt; d and false otherwise
-    </para>
-   </listitem>
-   <listitem>
-    <programlisting>
-[a, b] &amp;&lt; [c, d]        Overlaps or is left of
-    </programlisting>
-    <para>
-     This might be better read as <quote>does not extend to right of</quote>.
-     It is true when b &lt;= d.
-    </para>
-   </listitem>
-   <listitem>
-    <programlisting>
-[a, b] &amp;&gt; [c, d]        Overlaps or is right of
-    </programlisting>
-    <para>
-     This might be better read as <quote>does not extend to left of</quote>.
-     It is true when a &gt;= c.
-    </para>
-   </listitem>
-   <listitem>
-    <programlisting>
-[a, b] = [c, d]         Same as
-    </programlisting>
-    <para>
-     The segments [a, b] and [c, d] are identical, that is, a = c and b = d
-    </para>
-   </listitem>
-   <listitem>
-    <programlisting>
-[a, b] &amp;&amp; [c, d]        Overlaps
-    </programlisting>
-    <para>
-     The segments [a, b] and [c, d] overlap.
-    </para>
-   </listitem>
-   <listitem>
-    <programlisting>
-[a, b] @&gt; [c, d]        Contains
-    </programlisting>
-    <para>
-     The segment [a, b] contains the segment [c, d], that is,
-     a &lt;= c and b &gt;= d
-    </para>
-   </listitem>
-   <listitem>
-    <programlisting>
-[a, b] &lt;@ [c, d]        Contained in
-    </programlisting>
-    <para>
-     The segment [a, b] is contained in [c, d], that is,
-     a &gt;= c and b &lt;= d
-    </para>
-   </listitem>
-  </itemizedlist>
+  <table id="seg-gist-operators">
+   <title>Seg GiST operators</title>
+   <tgroup cols="2">
+    <thead>
+     <row>
+      <entry>Operator</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry><literal>[a, b] &lt;&lt; [c, d]</literal></entry>
+      <entry>[a, b] is entirely to the left of [c, d].  That is, [a,
+       b] &lt;&lt; [c, d] is true if b &lt; c and false otherwise.</entry>
+     </row>
+
+     <row>
+      <entry><literal>[a, b] &gt;&gt; [c, d]</literal></entry>
+      <entry>[a, b] is entirely to the right of [c, d].  That is, [a,
+       b] &gt;&gt; [c, d] is true if a &gt; d and false otherwise.</entry>
+     </row>
+
+     <row>
+      <entry><literal>[a, b] &amp;&lt; [c, d]</literal></entry>
+      <entry>Overlaps or is left of &mdash; This might be better read
+       as <quote>does not extend to right of</quote>.  It is true when
+       b &lt;= d.</entry>
+     </row>
+
+     <row>
+      <entry><literal>[a, b] &amp;&gt; [c, d]</literal></entry>
+      <entry>Overlaps or is right of &mdash; This might be better read
+       as <quote>does not extend to left of</quote>.  It is true when
+       a &gt;= c.</entry>
+     </row>
+
+     <row>
+      <entry><literal>[a, b] = [c, d]</literal></entry>
+      <entry>Same as &mdash; The segments [a, b] and [c, d] are
+       identical, that is, a = c and b = d.</entry>
+     </row>
+
+     <row>
+      <entry><literal>[a, b] &amp;&amp; [c, d]</literal></entry>
+      <entry>The segments [a, b] and [c, d] overlap.</entry>
+     </row>
+
+     <row>
+      <entry><literal>[a, b] @&gt; [c, d]</literal></entry>
+      <entry>The segment [a, b] contains the segment [c, d], that is,
+       a &lt;= c and b &gt;= d.</entry>
+     </row>
+
+     <row>
+      <entry><literal>[a, b] &lt;@ [c, d]</literal></entry>
+      <entry>The segment [a, b] is contained in [c, d], that is, a
+       &gt;= c and b &lt;= d.</entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
 
   <para>
-   (Before PostgreSQL 8.2, the containment operators @&gt; and &lt;@ were
-   respectively called @ and ~.  These names are still available, but are
+   (Before PostgreSQL 8.2, the containment operators <literal>@&gt;</> and <literal>&lt;@</> were
+   respectively called <literal>@</> and <literal>~</>.  These names are still available, but are
    deprecated and will eventually be retired.  Notice that the old names
    are reversed from the convention formerly followed by the core geometric
    datatypes!)
@@ -321,10 +311,28 @@ test=> select '6.25 .. 6.50'::seg as "pH";
   <para>
    The standard B-tree operators are also provided, for example
 
-  <programlisting>
-[a, b] &lt; [c, d]                Less than
-[a, b] &gt; [c, d]                Greater than
-  </programlisting>
+  <informaltable>
+    <tgroup cols="2">
+     <thead>
+      <row>
+       <entry>Operator</entry>
+       <entry>Description</entry>
+      </row>
+     </thead>
+
+     <tbody>
+      <row>
+       <entry><literal>[a, b] &lt; [c, d]</literal></entry>
+       <entry>Less than</entry>
+      </row>
+
+      <row>
+       <entry><literal>[a, b] &gt; [c, d]</literal></entry>
+       <entry>Greater than</entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </informaltable>
 
    These operators do not make a lot of sense for any practical
    purpose but sorting. These operators first compare (a) to (c),
@@ -347,12 +355,12 @@ test=> select '6.25 .. 6.50'::seg as "pH";
    for the boundaries.  For example, it adds an extra digit to the lower
    boundary if the resulting interval includes a power of ten:
 
-   <programlisting>
+<screen>
 postgres=> select '10(+-)1'::seg as seg;
       seg
 ---------
 9.0 .. 11             -- should be: 9 .. 11
-   </programlisting>
+</screen>
   </para>
 
   <para>

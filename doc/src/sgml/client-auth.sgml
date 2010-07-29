@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.139 2010/06/29 22:29:13 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.139.2.1 2010/07/29 19:34:36 petere Exp $ -->
 
 <chapter id="client-authentication">
  <title>Client Authentication</title>
@@ -1353,11 +1353,11 @@ omicron         bryanh                  guest1
      Since LDAP often uses commas and spaces to separate the different
      parts of a DN, it is often necessary to use double-quoted parameter
      values when configuring LDAP options, for example:
+<programlisting>
+ldapserver=ldap.example.net ldapprefix="cn=" ldapsuffix=", dc=example, dc=net"
+</programlisting>
     </para>
    </note>
-    <synopsis>
-ldapserver=ldap.example.net ldapprefix="cn=" ldapsuffix=", dc=example, dc=net"
-    </synopsis>
 
   </sect2>
 

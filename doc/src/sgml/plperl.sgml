@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/plperl.sgml,v 2.86 2010/07/08 21:35:33 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/plperl.sgml,v 2.86.2.1 2010/07/29 19:34:37 petere Exp $ -->
 
  <chapter id="plperl">
   <title>PL/Perl - Perl Procedural Language</title>
@@ -530,10 +530,7 @@ $plan = spi_prepare('SELECT * FROM test WHERE id &gt; $1 AND name = $2',
     The advantage of prepared queries is that is it possible to use one prepared plan for more
     than one query execution. After the plan is not needed anymore, it can be freed with
     <literal>spi_freeplan</literal>:
-    </para>
-
-    <para>
-    <programlisting>
+<programlisting>
 CREATE OR REPLACE FUNCTION init() RETURNS VOID AS $$
         $_SHARED{my_plan} = spi_prepare('SELECT (now() + $1)::date AS now',
                                         'INTERVAL');
@@ -558,10 +555,7 @@ SELECT done();
   add_time  |  add_time  |  add_time
 ------------+------------+------------
  2005-12-10 | 2005-12-11 | 2005-12-12
-    </programlisting>
-    </para>
-
-    <para>
+</programlisting>
     Note that the parameter subscript in <literal>spi_prepare</literal> is defined via
     $1, $2, $3, etc, so avoid declaring query strings in double quotes that might easily
     lead to hard-to-catch bugs.
@@ -569,15 +563,12 @@ SELECT done();
 
     <para>
     Another example illustrates usage of an optional parameter in <literal>spi_exec_prepared</literal>:
-    </para>
-
-    <para>
-    <programlisting>
+<programlisting>
 CREATE TABLE hosts AS SELECT id, ('192.168.1.'||id)::inet AS address
                       FROM generate_series(1,3) AS id;
 
 CREATE OR REPLACE FUNCTION init_hosts_query() RETURNS VOID AS $$
-        $_SHARED{plan} = spi_prepare('SELECT * FROM hosts 
+        $_SHARED{plan} = spi_prepare('SELECT * FROM hosts
                                       WHERE address &lt;&lt; $1', 'inet');
 $$ LANGUAGE plperl;
 
@@ -603,7 +594,7 @@ SELECT release_hosts_query();
  (1,192.168.1.1)
  (2,192.168.1.2)
 (2 rows)
-    </programlisting>
+</programlisting>
     </para>
     </listitem>
     </varlistentry>

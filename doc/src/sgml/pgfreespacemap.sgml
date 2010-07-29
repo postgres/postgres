@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/pgfreespacemap.sgml,v 2.6 2010/04/23 23:21:43 rhaas Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/pgfreespacemap.sgml,v 2.6.2.1 2010/07/29 19:34:37 petere Exp $ -->
 
 <sect1 id="pgfreespacemap">
  <title>pg_freespacemap</title>
@@ -75,7 +75,7 @@
  <sect2>
   <title>Sample output</title>
 
-  <programlisting>
+<screen>
 postgres=# SELECT * FROM pg_freespace('foo');
  blkno | avail 
 -------+-------
@@ -106,8 +106,7 @@ postgres=# SELECT * FROM pg_freespace('foo', 7);
 --------------
          1216
 (1 row)
-
-  </programlisting>
+</screen>
  </sect2>
 
  <sect2>

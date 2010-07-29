@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/citext.sgml,v 1.4 2010/06/29 22:29:13 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/citext.sgml,v 1.4.2.1 2010/07/29 19:34:36 petere Exp $ -->
 
 <sect1 id="citext">
  <title>citext</title>
@@ -22,9 +22,9 @@
    in <productname>PostgreSQL</> has been to use the <function>lower</>
    function when comparing values, for example
 
-  <programlisting>
-   SELECT * FROM tab WHERE lower(col) = LOWER(?);
-  </programlisting>
+<programlisting>
+SELECT * FROM tab WHERE lower(col) = LOWER(?);
+</programlisting>
   </para>
 
   <para>
@@ -74,20 +74,20 @@
   <para>
    Here's a simple example of usage:
 
-  <programlisting>
-   CREATE TABLE users (
-       nick CITEXT PRIMARY KEY,
-       pass TEXT   NOT NULL
-   );
+<programlisting>
+CREATE TABLE users (
+    nick CITEXT PRIMARY KEY,
+    pass TEXT   NOT NULL
+);
 
-   INSERT INTO users VALUES ( 'larry',  md5(random()::text) );
-   INSERT INTO users VALUES ( 'Tom',    md5(random()::text) );
-   INSERT INTO users VALUES ( 'Damian', md5(random()::text) );
-   INSERT INTO users VALUES ( 'NEAL',   md5(random()::text) );
-   INSERT INTO users VALUES ( 'Bj&oslash;rn',  md5(random()::text) );
+INSERT INTO users VALUES ( 'larry',  md5(random()::text) );
+INSERT INTO users VALUES ( 'Tom',    md5(random()::text) );
+INSERT INTO users VALUES ( 'Damian', md5(random()::text) );
+INSERT INTO users VALUES ( 'NEAL',   md5(random()::text) );
+INSERT INTO users VALUES ( 'Bj&oslash;rn',  md5(random()::text) );
 
-   SELECT * FROM users WHERE nick = 'Larry';
-  </programlisting>
+SELECT * FROM users WHERE nick = 'Larry';
+</programlisting>
 
    The <command>SELECT</> statement will return one tuple, even though
    the <structfield>nick</> column was set to <quote>larry</> and the query

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_domain.sgml,v 1.25 2010/04/03 07:22:56 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_domain.sgml,v 1.25.2.1 2010/07/29 19:34:37 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -22,7 +22,7 @@ PostgreSQL documentation
  </indexterm>
 
  <refsynopsisdiv>
-  <synopsis>
+<synopsis>
 ALTER DOMAIN <replaceable class="PARAMETER">name</replaceable>
     { SET DEFAULT <replaceable class="PARAMETER">expression</replaceable> | DROP DEFAULT }
 ALTER DOMAIN <replaceable class="PARAMETER">name</replaceable>
@@ -35,7 +35,7 @@ ALTER DOMAIN <replaceable class="PARAMETER">name</replaceable>
     OWNER TO <replaceable class="PARAMETER">new_owner</replaceable> 
 ALTER DOMAIN <replaceable class="PARAMETER">name</replaceable>
     SET SCHEMA <replaceable class="PARAMETER">new_schema</replaceable> 
-  </synopsis>
+</synopsis>
  </refsynopsisdiv>
 
  <refsect1>
@@ -214,34 +214,34 @@ ALTER DOMAIN <replaceable class="PARAMETER">name</replaceable>
 
   <para>
    To add a <literal>NOT NULL</literal> constraint to a domain:
-   <programlisting>
+<programlisting>
 ALTER DOMAIN zipcode SET NOT NULL;
-   </programlisting>
+</programlisting>
    To remove a <literal>NOT NULL</literal> constraint from a domain:
-   <programlisting>
+<programlisting>
 ALTER DOMAIN zipcode DROP NOT NULL;
-   </programlisting>
+</programlisting>
   </para>
 
-  <para> 
+  <para>
    To add a check constraint to a domain:
-   <programlisting>
+<programlisting>
 ALTER DOMAIN zipcode ADD CONSTRAINT zipchk CHECK (char_length(VALUE) = 5);
-   </programlisting>
+</programlisting>
   </para>
 
-  <para> 
+  <para>
    To remove a check constraint from a domain:
-   <programlisting>
+<programlisting>
 ALTER DOMAIN zipcode DROP CONSTRAINT zipchk;
-   </programlisting>
+</programlisting>
   </para>
 
   <para>
    To move the domain into a different schema:
-   <programlisting>
+<programlisting>
 ALTER DOMAIN zipcode SET SCHEMA customers;
-   </programlisting>
+</programlisting>
   </para>
  </refsect1>
 

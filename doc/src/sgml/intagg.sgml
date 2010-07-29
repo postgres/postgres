@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/intagg.sgml,v 1.4 2008/11/14 19:58:45 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/intagg.sgml,v 1.4.14.1 2010/07/29 19:34:36 petere Exp $ -->
 
 <sect1 id="intagg">
  <title>intagg</title>
@@ -44,24 +44,20 @@
   <para>
    Many database systems have the notion of a one to many table. Such a table
    usually sits between two indexed tables, for example:
-  </para>
 
- <programlisting>
+<programlisting>
 CREATE TABLE left (id INT PRIMARY KEY, ...);
 CREATE TABLE right (id INT PRIMARY KEY, ...);
 CREATE TABLE one_to_many(left INT REFERENCES left, right INT REFERENCES right);
- </programlisting>
+</programlisting>
 
- <para>
   It is typically used like this:
- </para>
 
- <programlisting>
-  SELECT right.* from right JOIN one_to_many ON (right.id = one_to_many.right)
-    WHERE one_to_many.left = <replaceable>item</>;
- </programlisting>
+<programlisting>
+SELECT right.* from right JOIN one_to_many ON (right.id = one_to_many.right)
+  WHERE one_to_many.left = <replaceable>item</>;
+</programlisting>
 
- <para>
   This will return all the items in the right hand table for an entry
   in the left hand table. This is a very common construct in SQL.
  </para>
@@ -74,35 +70,29 @@ CREATE TABLE one_to_many(left INT REFERENCES left, right INT REFERENCES right);
   left hand entry. If you have a very dynamic system, there is not much you
   can do. However, if you have some data which is fairly static, you can
   create a summary table with the aggregator.
- </para>
 
- <programlisting>
-CREATE TABLE summary as
+<programlisting>
+CREATE TABLE summary AS
   SELECT left, int_array_aggregate(right) AS right
   FROM one_to_many
   GROUP BY left;
- </programlisting>
+</programlisting>
 
- <para>
   This will create a table with one row per left item, and an array
   of right items. Now this is pretty useless without some way of using
   the array; that's why there is an array enumerator.  You can do
- </para>
 
- <programlisting>
+<programlisting>
 SELECT left, int_array_enum(right) FROM summary WHERE left = <replaceable>item</>;
- </programlisting>
+</programlisting>
 
- <para>
   The above query using <function>int_array_enum</> produces the same results
   as
- </para>
 
- <programlisting>
+<programlisting>
 SELECT left, right FROM one_to_many WHERE left = <replaceable>item</>;
- </programlisting>
+</programlisting>
 
- <para>
   The difference is that the query against the summary table has to get
   only one row from the table, whereas the direct query against
   <structname>one_to_many</> must index scan and fetch a row for each entry.
@@ -112,9 +102,8 @@ SELECT left, right FROM one_to_many WHERE left = <replaceable>item</>;
   On one system, an <command>EXPLAIN</> showed a query with a cost of 8488 was
   reduced to a cost of 329.  The original query was a join involving the
   <structname>one_to_many</> table, which was replaced by:
- </para>
 
- <programlisting>
+<programlisting>
 SELECT right, count(right) FROM
   ( SELECT left, int_array_enum(right) AS right
     FROM summary JOIN (SELECT left FROM left_table WHERE left = <replaceable>item</>) AS lefts
@@ -122,7 +111,8 @@ SELECT right, count(right) FROM
   ) AS list
   GROUP BY right
   ORDER BY count DESC;
- </programlisting>
+</programlisting>
+ </para>
 
  </sect2>
 

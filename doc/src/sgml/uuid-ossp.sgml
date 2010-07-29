@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/uuid-ossp.sgml,v 1.2 2007/12/06 04:12:10 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/uuid-ossp.sgml,v 1.2.16.1 2010/07/29 19:34:37 petere Exp $ -->
 
 <sect1 id="uuid-ossp">
  <title>uuid-ossp</title>
@@ -99,9 +99,9 @@
   <para>
    For example:
 
-   <programlisting>
-    SELECT uuid_generate_v3(uuid_ns_url(), 'http://www.postgresql.org');
-   </programlisting>
+<programlisting>
+SELECT uuid_generate_v3(uuid_ns_url(), 'http://www.postgresql.org');
+</programlisting>
 
    The name parameter will be MD5-hashed, so the cleartext cannot be
    derived from the generated UUID.
