@@ -8,16 +8,13 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.256 2010/07/06 19:18:57 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.257 2010/07/29 23:16:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include "postgres.h"
 
-#include "catalog/pg_attrdef.h"
-#include "catalog/pg_constraint.h"
-#include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
 #include "commands/dbcommands.h"
 #include "miscadmin.h"
@@ -33,7 +30,6 @@
 #include "parser/parse_target.h"
 #include "parser/parse_type.h"
 #include "utils/builtins.h"
-#include "utils/fmgroids.h"
 #include "utils/lsyscache.h"
 #include "utils/xml.h"
 
@@ -1214,7 +1210,6 @@ transformFuncCall(ParseState *pstate, FuncCall *fn)
 {
 	List	   *targs;
 	ListCell   *args;
-	Node	   *result;
 
 	/* Transform the list of arguments ... */
 	targs = NIL;
@@ -1225,97 +1220,16 @@ transformFuncCall(ParseState *pstate, FuncCall *fn)
 	}
 
 	/* ... and hand off to ParseFuncOrColumn */
-	result = ParseFuncOrColumn(pstate,
-							   fn->funcname,
-							   targs,
-							   fn->agg_order,
-							   fn->agg_star,
-							   fn->agg_distinct,
-							   fn->func_variadic,
-							   fn->over,
-							   false,
-							   fn->location);
-
-	/*
-	 * pg_get_expr() is a system function that exposes the expression
-	 * deparsing functionality in ruleutils.c to users. Very handy, but it was
-	 * later realized that the functions in ruleutils.c don't check the input
-	 * rigorously, assuming it to come from system catalogs and to therefore
-	 * be valid. That makes it easy for a user to crash the backend by passing
-	 * a maliciously crafted string representation of an expression to
-	 * pg_get_expr().
-	 *
-	 * There's a lot of code in ruleutils.c, so it's not feasible to add
-	 * water-proof input checking after the fact. Even if we did it once, it
-	 * would need to be taken into account in any future patches too.
-	 *
-	 * Instead, we restrict pg_rule_expr() to only allow input from system
-	 * catalogs instead. This is a hack, but it's the most robust and easiest
-	 * to backpatch way of plugging the vulnerability.
-	 *
-	 * This is transparent to the typical usage pattern of
-	 * "pg_get_expr(systemcolumn, ...)", but will break "pg_get_expr('foo',
-	 * ...)", even if 'foo' is a valid expression fetched earlier from a
-	 * system catalog. Hopefully there's isn't many clients doing that out
-	 * there.
-	 */
-	if (result && IsA(result, FuncExpr) &&!superuser())
-	{
-		FuncExpr   *fe = (FuncExpr *) result;
-
-		if (fe->funcid == F_PG_GET_EXPR || fe->funcid == F_PG_GET_EXPR_EXT)
-		{
-			Expr	   *arg = linitial(fe->args);
-			bool		allowed = false;
-
-			/*
-			 * Check that the argument came directly from one of the allowed
-			 * system catalog columns
-			 */
-			if (IsA(arg, Var))
-			{
-				Var		   *var = (Var *) arg;
-				RangeTblEntry *rte;
-
-				rte = GetRTEByRangeTablePosn(pstate,
-											 var->varno, var->varlevelsup);
-
-				switch (rte->relid)
-				{
-					case IndexRelationId:
-						if (var->varattno == Anum_pg_index_indexprs ||
-							var->varattno == Anum_pg_index_indpred)
-							allowed = true;
-						break;
-
-					case AttrDefaultRelationId:
-						if (var->varattno == Anum_pg_attrdef_adbin)
-							allowed = true;
-						break;
-
-					case ProcedureRelationId:
-						if (var->varattno == Anum_pg_proc_proargdefaults)
-							allowed = true;
-						break;
-
-					case ConstraintRelationId:
-						if (var->varattno == Anum_pg_constraint_conbin)
-							allowed = true;
-						break;
-
-					case TypeRelationId:
-						if (var->varattno == Anum_pg_type_typdefaultbin)
-							allowed = true;
-						break;
-				}
-			}
-			if (!allowed)
-				ereport(ERROR,
-						(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-						 errmsg("argument to pg_get_expr() must come from system catalogs")));
-		}
-	}
-	return result;
+	return ParseFuncOrColumn(pstate,
+							 fn->funcname,
+							 targs,
+							 fn->agg_order,
+							 fn->agg_star,
+							 fn->agg_distinct,
+							 fn->func_variadic,
+							 fn->over,
+							 false,
+							 fn->location);
 }
 
 static Node *
