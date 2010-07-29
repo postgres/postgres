@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.206.2.10 2010/07/29 16:15:18 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.206.2.11 2010/07/29 19:23:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -6095,11 +6095,11 @@ static void
 copy_relation_data(Relation rel, SMgrRelation dst)
 {
 	SMgrRelation src;
+	char	   *buf;
+	Page		page;
 	bool		use_wal;
 	BlockNumber nblocks;
 	BlockNumber blkno;
-	char		buf[BLCKSZ];
-	Page		page = (Page) buf;
 
 	/*
 	 * Since we copy the file directly without looking at the shared buffers,
@@ -6108,6 +6108,15 @@ copy_relation_data(Relation rel, SMgrRelation dst)
 	 * holding exclusive lock on the rel.
 	 */
 	FlushRelationBuffers(rel);
+
+	/*
+	 * palloc the buffer so that it's MAXALIGN'd.  If it were just a local
+	 * char[] array, the compiler might align it on any byte boundary, which
+	 * can seriously hurt transfer speed to and from the kernel; not to
+	 * mention possibly making PageSetLSN fail.
+	 */
+	buf = (char *) palloc(BLCKSZ);
+	page = (Page) buf;
 
 	/*
 	 * We need to log the copied data in WAL iff WAL archiving is enabled AND
@@ -6171,6 +6180,8 @@ copy_relation_data(Relation rel, SMgrRelation dst)
 		 */
 		smgrwrite(dst, blkno, buf, true);
 	}
+
+	pfree(buf);
 
 	/*
 	 * If the rel isn't temp, we must fsync it down to disk before it's safe
