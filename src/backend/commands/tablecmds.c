@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.335 2010/07/28 05:22:24 sriggs Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.336 2010/07/29 11:06:34 sriggs Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2550,6 +2550,8 @@ AlterTableGetLockLevel(List *cmds)
 			case AT_DropCluster:
 			case AT_SetRelOptions:
 			case AT_ResetRelOptions:
+			case AT_SetOptions:
+			case AT_ResetOptions:
 			case AT_SetStorage:
 				cmd_lockmode = ShareUpdateExclusiveLock;
 				break;
@@ -2669,19 +2671,19 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 			ATSimpleRecursion(wqueue, rel, cmd, recurse, lockmode);
 			/* Performs own permission checks */
 			ATPrepSetStatistics(rel, cmd->name, cmd->def, lockmode);
-			pass = AT_PASS_COL_ATTRS;
+			pass = AT_PASS_MISC;
 			break;
 		case AT_SetOptions:		/* ALTER COLUMN SET ( options ) */
 		case AT_ResetOptions:	/* ALTER COLUMN RESET ( options ) */
 			ATSimplePermissionsRelationOrIndex(rel);
 			/* This command never recurses */
-			pass = AT_PASS_COL_ATTRS;
+			pass = AT_PASS_MISC;
 			break;
 		case AT_SetStorage:		/* ALTER COLUMN SET STORAGE */
 			ATSimplePermissions(rel, false);
 			ATSimpleRecursion(wqueue, rel, cmd, recurse, lockmode);
 			/* No command-specific prep needed */
-			pass = AT_PASS_COL_ATTRS;
+			pass = AT_PASS_MISC;
 			break;
 		case AT_DropColumn:		/* DROP COLUMN */
 			ATSimplePermissions(rel, false);
@@ -6906,7 +6908,7 @@ ATExecClusterOn(Relation rel, const char *indexName, LOCKMODE lockmode)
 						indexName, RelationGetRelationName(rel))));
 
 	/* Check index is valid to cluster on */
-	check_index_is_clusterable(rel, indexOid, false);
+	check_index_is_clusterable(rel, indexOid, false, lockmode);
 
 	/* And do the work */
 	mark_index_clustered(rel, indexOid);

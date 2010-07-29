@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/cluster.c,v 1.204 2010/07/25 23:21:21 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/cluster.c,v 1.205 2010/07/29 11:06:34 sriggs Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -376,7 +376,7 @@ cluster_rel(Oid tableOid, Oid indexOid, bool recheck, bool verbose,
 
 	/* Check heap and index are valid to cluster on */
 	if (OidIsValid(indexOid))
-		check_index_is_clusterable(OldHeap, indexOid, recheck);
+		check_index_is_clusterable(OldHeap, indexOid, recheck, AccessExclusiveLock);
 
 	/* Log what we're doing (this could use more effort) */
 	if (OidIsValid(indexOid))
@@ -405,11 +405,11 @@ cluster_rel(Oid tableOid, Oid indexOid, bool recheck, bool verbose,
  * definition can't change under us.
  */
 void
-check_index_is_clusterable(Relation OldHeap, Oid indexOid, bool recheck)
+check_index_is_clusterable(Relation OldHeap, Oid indexOid, bool recheck, LOCKMODE lockmode)
 {
 	Relation	OldIndex;
 
-	OldIndex = index_open(indexOid, AccessExclusiveLock);
+	OldIndex = index_open(indexOid, lockmode);
 
 	/*
 	 * Check that index is in fact an index on the given relation

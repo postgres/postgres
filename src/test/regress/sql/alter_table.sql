@@ -1091,6 +1091,83 @@ select * from another;
 drop table another;
 
 --
+-- lock levels
+--
+drop type lockmodes;
+create type lockmodes as enum (
+ 'AccessShareLock'
+,'RowShareLock'
+,'RowExclusiveLock'
+,'ShareUpdateExclusiveLock'
+,'ShareLock'
+,'ShareRowExclusiveLock'
+,'ExclusiveLock'
+,'AccessExclusiveLock'
+);
+
+drop view my_locks;
+create or replace view my_locks as
+select case when c.relname like 'pg_toast%' then 'pg_toast' else c.relname end, max(mode::lockmodes) as max_lockmode
+from pg_locks l join pg_class c on l.relation = c.oid
+where virtualtransaction = (
+        select virtualtransaction
+        from pg_locks
+        where transactionid = txid_current()::integer)
+and locktype = 'relation'
+and relnamespace != (select oid from pg_namespace where nspname = 'pg_catalog')
+and c.relname != 'my_locks'
+group by c.relname;
+
+create table alterlock (f1 int primary key, f2 text);
+
+-- share update exclusive
+begin; alter table alterlock alter column f2 set statistics 150;
+select * from my_locks order by 1;
+rollback;
+
+begin; alter table alterlock cluster on alterlock_pkey;
+select * from my_locks order by 1;
+commit;
+
+begin; alter table alterlock set without cluster;
+select * from my_locks order by 1;
+commit;
+
+begin; alter table alterlock set (fillfactor = 100);
+select * from my_locks order by 1;
+commit;
+
+begin; alter table alterlock reset (fillfactor);
+select * from my_locks order by 1;
+commit;
+
+begin; alter table alterlock set (toast.autovacuum_enabled = off);
+select * from my_locks order by 1;
+commit;
+
+begin; alter table alterlock set (autovacuum_enabled = off);
+select * from my_locks order by 1;
+commit;
+
+begin; alter table alterlock alter column f2 set (n_distinct = 1);
+select * from my_locks order by 1;
+rollback;
+
+begin; alter table alterlock alter column f2 set storage extended;
+select * from my_locks order by 1;
+rollback;
+
+-- share row exclusive
+begin; alter table alterlock alter column f2 set default 'x';
+select * from my_locks order by 1;
+rollback;
+
+-- cleanup
+drop table alterlock;
+drop view my_locks;
+drop type lockmodes;
+
+--
 -- alter function
 --
 create function test_strict(text) returns text as

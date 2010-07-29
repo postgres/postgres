@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/commands/cluster.h,v 1.41 2010/02/26 02:01:24 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/commands/cluster.h,v 1.42 2010/07/29 11:06:34 sriggs Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -14,6 +14,7 @@
 #define CLUSTER_H
 
 #include "nodes/parsenodes.h"
+#include "storage/lock.h"
 #include "utils/relcache.h"
 
 
@@ -21,7 +22,7 @@ extern void cluster(ClusterStmt *stmt, bool isTopLevel);
 extern void cluster_rel(Oid tableOid, Oid indexOid, bool recheck,
 			bool verbose, int freeze_min_age, int freeze_table_age);
 extern void check_index_is_clusterable(Relation OldHeap, Oid indexOid,
-						   bool recheck);
+						   bool recheck, LOCKMODE lockmode);
 extern void mark_index_clustered(Relation rel, Oid indexOid);
 
 extern Oid	make_new_heap(Oid OIDOldHeap, Oid NewTableSpace);
