@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.292 2010/07/06 19:18:55 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.292.2.1 2010/07/29 16:14:45 rhaas Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -4079,8 +4079,15 @@ log_newpage(RelFileNode *rnode, ForkNumber forkNum, BlockNumber blkno,
 
 	recptr = XLogInsert(RM_HEAP_ID, XLOG_HEAP_NEWPAGE, rdata);
 
-	PageSetLSN(page, recptr);
-	PageSetTLI(page, ThisTimeLineID);
+	/*
+	 * The page may be uninitialized. If so, we can't set the LSN
+	 * and TLI because that would corrupt the page.
+	 */
+	if (!PageIsNew(page))
+	{
+		PageSetLSN(page, recptr);
+		PageSetTLI(page, ThisTimeLineID);
+	}
 
 	END_CRIT_SECTION();
 
@@ -4266,8 +4273,16 @@ heap_xlog_newpage(XLogRecPtr lsn, XLogRecord *record)
 	Assert(record->xl_len == SizeOfHeapNewpage + BLCKSZ);
 	memcpy(page, (char *) xlrec + SizeOfHeapNewpage, BLCKSZ);
 
-	PageSetLSN(page, lsn);
-	PageSetTLI(page, ThisTimeLineID);
+	/*
+	 * The page may be uninitialized. If so, we can't set the LSN
+	 * and TLI because that would corrupt the page.
+	 */
+	if (!PageIsNew(page))
+	{
+		PageSetLSN(page, lsn);
+		PageSetTLI(page, ThisTimeLineID);
+	}
+
 	MarkBufferDirty(buffer);
 	UnlockReleaseBuffer(buffer);
 }
