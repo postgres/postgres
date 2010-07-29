@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.571 2010/05/27 16:20:11 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.571.2.1 2010/07/29 20:09:34 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.pl reads this file and generates .bki
@@ -1020,7 +1020,7 @@ DATA(insert OID = 383 (  array_cat		   PGNSP PGUID 12 1 0 0 f f f f f i 2 0 2277
 DESCR("concatenate two arrays");
 DATA(insert OID = 394 (  string_to_array   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 1009 "25 25" _null_ _null_ _null_ _null_ text_to_array _null_ _null_ _null_ ));
 DESCR("split delimited text into text[]");
-DATA(insert OID = 395 (  array_to_string   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 25 "2277 25" _null_ _null_ _null_ _null_ array_to_text _null_ _null_ _null_ ));
+DATA(insert OID = 395 (  array_to_string   PGNSP PGUID 12 1 0 0 f f f t f s 2 0 25 "2277 25" _null_ _null_ _null_ _null_ array_to_text _null_ _null_ _null_ ));
 DESCR("concatenate array elements, using delimiter, into text");
 DATA(insert OID = 515 (  array_larger	   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 2277 "2277 2277" _null_ _null_ _null_ _null_ array_larger _null_ _null_ _null_ ));
 DESCR("larger of two");
@@ -1165,9 +1165,9 @@ DESCR("multiply");
 DATA(insert OID =  867 (  cash_div_int2		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 790 "790 21" _null_ _null_ _null_ _null_ cash_div_int2 _null_ _null_ _null_ ));
 DESCR("divide");
 
-DATA(insert OID =  886 (  cash_in		   PGNSP PGUID 12 1 0 0 f f f t f i 1 0 790 "2275" _null_ _null_ _null_ _null_	cash_in _null_ _null_ _null_ ));
+DATA(insert OID =  886 (  cash_in		   PGNSP PGUID 12 1 0 0 f f f t f s 1 0 790 "2275" _null_ _null_ _null_ _null_	cash_in _null_ _null_ _null_ ));
 DESCR("I/O");
-DATA(insert OID =  887 (  cash_out		   PGNSP PGUID 12 1 0 0 f f f t f i 1 0 2275 "790" _null_ _null_ _null_ _null_	cash_out _null_ _null_ _null_ ));
+DATA(insert OID =  887 (  cash_out		   PGNSP PGUID 12 1 0 0 f f f t f s 1 0 2275 "790" _null_ _null_ _null_ _null_	cash_out _null_ _null_ _null_ ));
 DESCR("I/O");
 DATA(insert OID =  888 (  cash_eq		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "790 790" _null_ _null_ _null_ _null_	cash_eq _null_ _null_ _null_ ));
 DESCR("equal");
@@ -3748,9 +3748,9 @@ DESCR("file path of relation");
 
 DATA(insert OID = 2316 ( postgresql_fdw_validator PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "1009 26" _null_ _null_ _null_ _null_ postgresql_fdw_validator _null_ _null_ _null_));
 
-DATA(insert OID = 2290 (  record_in			PGNSP PGUID 12 1 0 0 f f f t f v 3 0 2249 "2275 26 23" _null_ _null_ _null_ _null_	record_in _null_ _null_ _null_ ));
+DATA(insert OID = 2290 (  record_in			PGNSP PGUID 12 1 0 0 f f f t f s 3 0 2249 "2275 26 23" _null_ _null_ _null_ _null_	record_in _null_ _null_ _null_ ));
 DESCR("I/O");
-DATA(insert OID = 2291 (  record_out		PGNSP PGUID 12 1 0 0 f f f t f v 1 0 2275 "2249" _null_ _null_ _null_ _null_ record_out _null_ _null_ _null_ ));
+DATA(insert OID = 2291 (  record_out		PGNSP PGUID 12 1 0 0 f f f t f s 1 0 2275 "2249" _null_ _null_ _null_ _null_ record_out _null_ _null_ _null_ ));
 DESCR("I/O");
 DATA(insert OID = 2292 (  cstring_in		PGNSP PGUID 12 1 0 0 f f f t f i 1 0 2275 "2275" _null_ _null_ _null_ _null_ cstring_in _null_ _null_ _null_ ));
 DESCR("I/O");
@@ -3792,9 +3792,9 @@ DATA(insert OID = 2398 (  shell_in			PGNSP PGUID 12 1 0 0 f f f f f i 1 0 2282 "
 DESCR("I/O");
 DATA(insert OID = 2399 (  shell_out			PGNSP PGUID 12 1 0 0 f f f t f i 1 0 2275 "2282" _null_ _null_ _null_ _null_ shell_out _null_ _null_ _null_ ));
 DESCR("I/O");
-DATA(insert OID = 2597 (  domain_in			PGNSP PGUID 12 1 0 0 f f f f f v 3 0 2276 "2275 26 23" _null_ _null_ _null_ _null_ domain_in _null_ _null_ _null_ ));
+DATA(insert OID = 2597 (  domain_in			PGNSP PGUID 12 1 0 0 f f f f f s 3 0 2276 "2275 26 23" _null_ _null_ _null_ _null_ domain_in _null_ _null_ _null_ ));
 DESCR("I/O");
-DATA(insert OID = 2598 (  domain_recv		PGNSP PGUID 12 1 0 0 f f f f f v 3 0 2276 "2281 26 23" _null_ _null_ _null_ _null_ domain_recv _null_ _null_ _null_ ));
+DATA(insert OID = 2598 (  domain_recv		PGNSP PGUID 12 1 0 0 f f f f f s 3 0 2276 "2281 26 23" _null_ _null_ _null_ _null_ domain_recv _null_ _null_ _null_ ));
 DESCR("I/O");
 DATA(insert OID = 2777 (  anynonarray_in	PGNSP PGUID 12 1 0 0 f f f t f i 1 0 2776 "2275" _null_ _null_ _null_ _null_ anynonarray_in _null_ _null_ _null_ ));
 DESCR("I/O");
@@ -3905,9 +3905,9 @@ DATA(insert OID = 2400 (  array_recv		   PGNSP PGUID 12 1 0 0 f f f t f s 3 0 22
 DESCR("I/O");
 DATA(insert OID = 2401 (  array_send		   PGNSP PGUID 12 1 0 0 f f f t f s 1 0 17 "2277" _null_ _null_ _null_ _null_	array_send _null_ _null_ _null_ ));
 DESCR("I/O");
-DATA(insert OID = 2402 (  record_recv		   PGNSP PGUID 12 1 0 0 f f f t f v 3 0 2249 "2281 26 23" _null_ _null_ _null_ _null_  record_recv _null_ _null_ _null_ ));
+DATA(insert OID = 2402 (  record_recv		   PGNSP PGUID 12 1 0 0 f f f t f s 3 0 2249 "2281 26 23" _null_ _null_ _null_ _null_  record_recv _null_ _null_ _null_ ));
 DESCR("I/O");
-DATA(insert OID = 2403 (  record_send		   PGNSP PGUID 12 1 0 0 f f f t f v 1 0 17 "2249" _null_ _null_ _null_ _null_  record_send _null_ _null_ _null_ ));
+DATA(insert OID = 2403 (  record_send		   PGNSP PGUID 12 1 0 0 f f f t f s 1 0 17 "2249" _null_ _null_ _null_ _null_  record_send _null_ _null_ _null_ ));
 DESCR("I/O");
 DATA(insert OID = 2404 (  int2recv			   PGNSP PGUID 12 1 0 0 f f f t f i 1 0 21 "2281" _null_ _null_ _null_ _null_	int2recv _null_ _null_ _null_ ));
 DESCR("I/O");
