@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.348.2.1 2010/07/27 19:01:04 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.348.2.2 2010/07/29 18:29:57 tgl Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -2126,77 +2126,49 @@ kill `cat /usr/local/pgsql/data/postmaster.pid`
    </para>
 
    <para>
-    Use the following <command>configure</command> flags in addition
-    to your own if you have installed Readline or libz
-    there: <literal>--with-includes=/usr/local/include
-    --with-libraries=/usr/local/lib</literal>.
+    The minimum recommended fix levels for supported AIX versions are:
    </para>
 
-   <para>
-    If you don't have a PowerPC or use GCC you might see rounding
-    differences in the geometry regression test.  There will probably
-    be warnings about 0.0/0.0 division and duplicate symbols which you
-    can safely ignore.
-   </para>
+   <variablelist>
+    <varlistentry>
+     <term>AIX 4.3.3</term>
+     <listitem><para>Maintenance Level 11 + post ML11 bundle</para></listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term>AIX 5.1</term>
+     <listitem><para>Maintenance Level 9 + post ML9 bundle</para></listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term>AIX 5.2</term>
+     <listitem><para>Technology Level 10 Service Pack 3</para></listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term>AIX 5.3</term>
+     <listitem><para>Technology Level 7</para></listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term>AIX 6.1</term>
+     <listitem><para>Base Level</para></listitem>
+    </varlistentry>
+   </variablelist>
 
    <para>
-    Some of the AIX tools may be <quote>a little different</quote>
-    from what you may be accustomed to on other platforms.  If you are
-    looking for a version of <command>ldd</command>, useful for
-    determining what object code depends on what libraries, the
-    following URLs may help you:
-    <ulink url="http://www.faqs.org/faqs/aix-faq/part4/section-22.html"></ulink>,
-    <ulink url="http://www.han.de/~jum/aix/ldd.c"></ulink>.
-   </para>
-
-   <para>
-    <xref linkend="AIX-fixlevels"> shows the minimum recommended fix levels
-    for various AIX versions.  To check your current fix level, use
+    To check your current fix level, use
     <command>oslevel -r</command> in AIX 4.3.3 to AIX 5.2 ML 7, or
     <command>oslevel -s</command> in later versions.
    </para>
 
-   <table id="AIX-fixlevels">
-    <title>
-     Minimum recommended <systemitem class="osname">AIX</systemitem> fix levels
-    </title>
-
-    <tgroup cols="2">
-     <thead>
-      <row>
-       <entry>AIX version</entry>
-       <entry>fix level</entry>
-      </row>
-     </thead>
-
-     <tbody>
-      <row>
-       <entry>AIX 4.3.3</entry>
-       <entry>Maintenance Level 11 + post ML11 bundle</entry>
-      </row>
-
-      <row>
-       <entry>AIX 5.1</entry>
-       <entry>Maintenance Level 9 + post ML9 bundle</entry>
-      </row>
-
-      <row>
-       <entry>AIX 5.2</entry>
-       <entry>Technology Level 10 Service Pack 3</entry>
-      </row>
-
-      <row>
-       <entry>AIX 5.3</entry>
-       <entry>Technology Level 7</entry>
-      </row>
-
-      <row>
-       <entry>AIX 6.1</entry>
-       <entry>Base Level</entry>
-      </row>
-     </tbody>
-    </tgroup>
-   </table>
+   <para>
+    Use the following <command>configure</command> flags in addition
+    to your own if you have installed Readline or libz in
+    <literal>/usr/local</>:
+    <literal>--with-includes=/usr/local/include
+    --with-libraries=/usr/local/lib</literal>.
+   </para>
 
    <sect3>
     <title>GCC issues</title>
@@ -2250,8 +2222,8 @@ kill `cat /usr/local/pgsql/data/postmaster.pid`
      to parse IP addresses in <varname>listen_addresses</>,
      <filename>pg_hba.conf</>, etc.  Older versions of AIX have assorted
      bugs in this function.  If you have problems related to these settings,
-     updating to the appropriate fix level shown in <xref
-     linkend="AIX-fixlevels"> should take care of it.
+     updating to the appropriate AIX fix level shown above
+     should take care of it.
     </para>
 
     <!-- http://archives.postgresql.org/message-id/6064jt6cfm.fsf_-_@dba2.int.libertyrms.com -->
@@ -2301,13 +2273,15 @@ hosts=local4,bind4
      </itemizedlist>
     </para>
 
-    <warning> <para> This is really a workaround of problems relating
-    to immaturity of IPv6 support, which improved visibly during the
-    course of AIX 5.3 releases.  It has worked with AIX version 5.3,
-    but does not represent an elegant solution to the problem.  It has
-    been reported that this workaround is not only unnecessary, but
-    causes problems on AIX 6.1, where IPv6 support has become more
-    mature. </para>
+    <warning>
+    <para>
+     This is really a workaround for problems relating
+     to immaturity of IPv6 support, which improved visibly during the
+     course of AIX 5.3 releases.  It has worked with AIX version 5.3,
+     but does not represent an elegant solution to the problem.  It has
+     been reported that this workaround is not only unnecessary, but
+     causes problems on AIX 6.1, where IPv6 support has become more mature.
+    </para>
     </warning>
 
    </sect3>
