@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release-9.0.sgml,v 2.43 2010/07/27 19:01:16 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release-9.0.sgml,v 2.44 2010/07/29 21:18:11 tgl Exp $ -->
 
  <sect1 id="release-9-0">
   <title>Release 9.0</title>
@@ -7,6 +7,8 @@
    <title>Release date</title>
    <simpara>2010-??-??</simpara>
   </note>
+
+  <para>CURRENT AS OF 2010-07-29</para>
 
   <sect2>
    <title>Overview</title>
@@ -131,7 +133,6 @@
   <sect2>
 
   <title>Migration to Version 9.0</title>
-  <para>CURRENT AS OF 2010-07-08</para>
 
   <para>
    A dump/restore using <application>pg_dump</application>
@@ -2026,6 +2027,13 @@
       <para>
        Improve <application>psql</>'s tab completion support (Itagaki
        Takahiro)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Show <literal>\timing</> output when enabled, regardless of
+       <quote>quiet</> mode (Peter Eisentraut)
       </para>
      </listitem>
 
