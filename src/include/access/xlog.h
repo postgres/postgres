@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/xlog.h,v 1.114 2010/07/03 20:43:58 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/xlog.h,v 1.115 2010/07/29 22:27:27 sriggs Exp $
  */
 #ifndef XLOG_H
 #define XLOG_H
@@ -271,7 +271,7 @@ extern int	XLogFileOpen(uint32 log, uint32 seg);
 
 
 extern void XLogGetLastRemoved(uint32 *log, uint32 *seg);
-extern void XLogSetAsyncCommitLSN(XLogRecPtr record);
+extern void XLogSetAsyncXactLSN(XLogRecPtr record);
 
 extern void RestoreBkpBlocks(XLogRecPtr lsn, XLogRecord *record, bool cleanup);
 
