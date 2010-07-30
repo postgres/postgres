@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/btree_gist/btree_numeric.c,v 1.13 2009/06/11 14:48:50 momjian Exp $
+ * $PostgreSQL: pgsql/contrib/btree_gist/btree_numeric.c,v 1.14 2010/07/30 04:30:23 rhaas Exp $
  */
 #include "btree_gist.h"
 
@@ -185,9 +185,9 @@ gbt_numeric_penalty(PG_FUNCTION_ARGS)
 											 NumericGetDatum(os)
 											 ));
 
-	if (NUMERIC_IS_NAN(us))
+	if (numeric_is_nan(us))
 	{
-		if (NUMERIC_IS_NAN(os))
+		if (numeric_is_nan(os))
 			*result = 0.0;
 		else
 			*result = 1.0;

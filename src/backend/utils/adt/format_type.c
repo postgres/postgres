@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/format_type.c,v 1.53 2010/02/14 18:42:16 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/format_type.c,v 1.54 2010/07/30 04:30:23 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -387,15 +387,7 @@ type_maximum_size(Oid type_oid, int32 typemod)
 				+ VARHDRSZ;
 
 		case NUMERICOID:
-			/* precision (ie, max # of digits) is in upper bits of typmod */
-			if (typemod > VARHDRSZ)
-			{
-				int			precision = ((typemod - VARHDRSZ) >> 16) & 0xffff;
-
-				/* Numeric stores 2 decimal digits/byte, plus header */
-				return (precision + 1) / 2 + NUMERIC_HDRSZ;
-			}
-			break;
+			return numeric_maximum_size(typemod);
 
 		case VARBITOID:
 		case BITOID:

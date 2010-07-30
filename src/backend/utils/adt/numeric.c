@@ -14,7 +14,7 @@
  * Copyright (c) 1998-2010, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/numeric.c,v 1.123 2010/02/26 02:01:09 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/numeric.c,v 1.124 2010/07/30 04:30:23 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,6 +34,38 @@
 #include "utils/builtins.h"
 #include "utils/int8.h"
 #include "utils/numeric.h"
+
+/*
+ * Sign values and macros to deal with packing/unpacking n_sign_dscale
+ */
+#define NUMERIC_SIGN_MASK	0xC000
+#define NUMERIC_POS			0x0000
+#define NUMERIC_NEG			0x4000
+#define NUMERIC_NAN			0xC000
+#define NUMERIC_DSCALE_MASK 0x3FFF
+#define NUMERIC_SIGN(n)		((n)->n_sign_dscale & NUMERIC_SIGN_MASK)
+#define NUMERIC_DSCALE(n)	((n)->n_sign_dscale & NUMERIC_DSCALE_MASK)
+#define NUMERIC_IS_NAN(n)	(NUMERIC_SIGN(n) != NUMERIC_POS &&	\
+							 NUMERIC_SIGN(n) != NUMERIC_NEG)
+#define NUMERIC_HDRSZ	(VARHDRSZ + sizeof(uint16) + sizeof(int16))
+
+
+/*
+ * The Numeric data type stored in the database
+ *
+ * NOTE: by convention, values in the packed form have been stripped of
+ * all leading and trailing zero digits (where a "digit" is of base NBASE).
+ * In particular, if the value is zero, there will be no digits at all!
+ * The weight is arbitrary in that case, but we normally set it to zero.
+ */
+struct NumericData
+{
+	int32		vl_len_;		/* varlena header (do not touch directly!) */
+	uint16		n_sign_dscale;	/* Sign + display scale */
+	int16		n_weight;		/* Weight of 1st digit	*/
+	char		n_data[1];		/* Digits (really array of NumericDigit) */
+};
+
 
 /* ----------
  * Uncomment the following to enable compilation of dump_numeric()
@@ -425,6 +457,37 @@ numeric_out(PG_FUNCTION_ARGS)
 	free_var(&x);
 
 	PG_RETURN_CSTRING(str);
+}
+
+/*
+ * numeric_is_nan() -
+ *
+ *  Is Numeric value a NaN?
+ */
+bool
+numeric_is_nan(Numeric num)
+{
+	return NUMERIC_IS_NAN(num);
+}
+
+/*
+ * numeric_maximum_size() -
+ *
+ *  Maximum size of a numeric with given typmod, or -1 if unlimited/unknown.
+ */
+int32
+numeric_maximum_size(int32 typemod)
+{
+	int precision;
+
+	if (typemod <= VARHDRSZ)
+		return -1;
+
+	/* precision (ie, max # of digits) is in upper bits of typmod */
+	precision = ((typemod - VARHDRSZ) >> 16) & 0xffff;
+
+	/* Numeric stores 2 decimal digits/byte, plus header */
+	return (precision + 1) / 2 + NUMERIC_HDRSZ;
 }
 
 /*

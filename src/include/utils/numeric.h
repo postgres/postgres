@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1998-2010, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/utils/numeric.h,v 1.29 2010/01/02 16:58:10 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/numeric.h,v 1.30 2010/07/30 04:30:23 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,41 +37,9 @@
  */
 #define NUMERIC_MIN_SIG_DIGITS		16
 
-
-/*
- * Sign values and macros to deal with packing/unpacking n_sign_dscale
- */
-#define NUMERIC_SIGN_MASK	0xC000
-#define NUMERIC_POS			0x0000
-#define NUMERIC_NEG			0x4000
-#define NUMERIC_NAN			0xC000
-#define NUMERIC_DSCALE_MASK 0x3FFF
-#define NUMERIC_SIGN(n)		((n)->n_sign_dscale & NUMERIC_SIGN_MASK)
-#define NUMERIC_DSCALE(n)	((n)->n_sign_dscale & NUMERIC_DSCALE_MASK)
-#define NUMERIC_IS_NAN(n)	(NUMERIC_SIGN(n) != NUMERIC_POS &&	\
-							 NUMERIC_SIGN(n) != NUMERIC_NEG)
-
-
-/*
- * The Numeric data type stored in the database
- *
- * NOTE: by convention, values in the packed form have been stripped of
- * all leading and trailing zero digits (where a "digit" is of base NBASE).
- * In particular, if the value is zero, there will be no digits at all!
- * The weight is arbitrary in that case, but we normally set it to zero.
- */
-typedef struct NumericData
-{
-	int32		vl_len_;		/* varlena header (do not touch directly!) */
-	uint16		n_sign_dscale;	/* Sign + display scale */
-	int16		n_weight;		/* Weight of 1st digit	*/
-	char		n_data[1];		/* Digits (really array of NumericDigit) */
-} NumericData;
-
-typedef NumericData *Numeric;
-
-#define NUMERIC_HDRSZ	(VARHDRSZ + sizeof(uint16) + sizeof(int16))
-
+/* The actual contents of Numeric are private to numeric.c */
+struct NumericData;
+typedef struct NumericData *Numeric;
 
 /*
  * fmgr interface macros
@@ -87,6 +55,8 @@ typedef NumericData *Numeric;
 /*
  * Utility functions in numeric.c
  */
+extern bool numeric_is_nan(Numeric num);
+int32 numeric_maximum_size(int32 typemod);
 extern char *numeric_out_sci(Numeric num, int scale);
 
 #endif   /* _PG_NUMERIC_H_ */
