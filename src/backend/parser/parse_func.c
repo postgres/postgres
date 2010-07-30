@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.161 2003/09/29 00:05:25 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.161.2.1 2010/07/30 17:57:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,10 +16,14 @@
 
 #include "access/heapam.h"
 #include "catalog/catname.h"
+#include "catalog/pg_attrdef.h"
+#include "catalog/pg_constraint.h"
 #include "catalog/pg_inherits.h"
 #include "catalog/pg_proc.h"
 #include "lib/stringinfo.h"
+#include "miscadmin.h"
 #include "nodes/makefuncs.h"
+#include "parser/parsetree.h"
 #include "parser/parse_agg.h"
 #include "parser/parse_coerce.h"
 #include "parser/parse_expr.h"
@@ -370,6 +374,9 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
 					 errmsg("aggregates may not return sets")));
 	}
+
+	/* Hack to protect pg_get_expr() against misuse */
+	check_pg_get_expr_args(pstate, funcid, fargs);
 
 	return retval;
 }
@@ -1530,4 +1537,120 @@ LookupFuncNameTypeNames(List *funcname, List *argtypes, bool noError)
 	}
 
 	return LookupFuncName(funcname, argcount, argoids, noError);
+}
+
+
+/*
+ * Given an RT index and nesting depth, find the corresponding RTE.
+ * This is the inverse of RTERangeTablePosn.
+ */
+static RangeTblEntry *
+GetRTEByRangeTablePosn(ParseState *pstate,
+					   int varno,
+					   int sublevels_up)
+{
+	while (sublevels_up-- > 0)
+	{
+		pstate = pstate->parentParseState;
+		Assert(pstate != NULL);
+	}
+	Assert(varno > 0 && varno <= length(pstate->p_rtable));
+	return rt_fetch(varno, pstate->p_rtable);
+}
+
+
+/*
+ * pg_get_expr() is a system function that exposes the expression
+ * deparsing functionality in ruleutils.c to users. Very handy, but it was
+ * later realized that the functions in ruleutils.c don't check the input
+ * rigorously, assuming it to come from system catalogs and to therefore
+ * be valid. That makes it easy for a user to crash the backend by passing
+ * a maliciously crafted string representation of an expression to
+ * pg_get_expr().
+ *
+ * There's a lot of code in ruleutils.c, so it's not feasible to add
+ * water-proof input checking after the fact. Even if we did it once, it
+ * would need to be taken into account in any future patches too.
+ *
+ * Instead, we restrict pg_rule_expr() to only allow input from system
+ * catalogs. This is a hack, but it's the most robust and easiest
+ * to backpatch way of plugging the vulnerability.
+ *
+ * This is transparent to the typical usage pattern of
+ * "pg_get_expr(systemcolumn, ...)", but will break "pg_get_expr('foo',
+ * ...)", even if 'foo' is a valid expression fetched earlier from a
+ * system catalog. Hopefully there aren't many clients doing that out there.
+ */
+void
+check_pg_get_expr_args(ParseState *pstate, Oid fnoid, List *args)
+{
+	bool		allowed = false;
+	Node	   *arg;
+	int			netlevelsup;
+
+	/* if not being called for pg_get_expr, do nothing */
+	if (fnoid != F_PG_GET_EXPR && fnoid != F_PG_GET_EXPR_EXT)
+		return;
+
+	/* superusers are allowed to call it anyway (dubious) */
+	if (superuser())
+		return;
+
+	/*
+	 * The first argument must be a Var referencing one of the allowed
+	 * system-catalog columns.  It could be a join alias Var, though.
+	 */
+	Assert(args != NIL);
+	arg = (Node *) lfirst(args);
+	netlevelsup = 0;
+
+restart:
+	if (IsA(arg, Var))
+	{
+		Var		   *var = (Var *) arg;
+		RangeTblEntry *rte;
+
+		netlevelsup += var->varlevelsup;
+		rte = GetRTEByRangeTablePosn(pstate, var->varno, netlevelsup);
+
+		if (rte->rtekind == RTE_JOIN)
+		{
+			/* Expand join alias reference */
+			if (var->varattno > 0 &&
+				var->varattno <= length(rte->joinaliasvars))
+			{
+				arg = (Node *) nth(var->varattno - 1, rte->joinaliasvars);
+				goto restart;
+			}
+		}
+		else if (rte->rtekind == RTE_RELATION)
+		{
+			if (rte->relid == get_system_catalog_relid(IndexRelationName))
+			{
+				if (var->varattno == Anum_pg_index_indexprs ||
+					var->varattno == Anum_pg_index_indpred)
+					allowed = true;
+			}
+			else if (rte->relid == get_system_catalog_relid(AttrDefaultRelationName))
+			{
+				if (var->varattno == Anum_pg_attrdef_adbin)
+					allowed = true;
+			}
+			else if (rte->relid == get_system_catalog_relid(ConstraintRelationName))
+			{
+				if (var->varattno == Anum_pg_constraint_conbin)
+					allowed = true;
+			}
+			else if (rte->relid == get_system_catalog_relid(TypeRelationName))
+			{
+				if (var->varattno == Anum_pg_type_typdefaultbin)
+					allowed = true;
+			}
+		}
+	}
+
+	if (!allowed)
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("argument to pg_get_expr() must come from system catalogs")));
 }

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_oper.c,v 1.76 2003/10/06 20:09:47 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_oper.c,v 1.76.2.1 2010/07/30 17:57:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -932,6 +932,9 @@ make_scalar_array_op(ParseState *pstate, List *opname,
 	result->useOr = useOr;
 	result->args = args;
 
+	/* Hack to protect pg_get_expr() against misuse */
+	check_pg_get_expr_args(pstate, opform->oprcode, args);
+
 	ReleaseSysCache(tup);
 
 	return (Expr *) result;
@@ -1004,6 +1007,9 @@ make_op_expr(ParseState *pstate, Operator op,
 	result->opresulttype = rettype;
 	result->opretset = get_func_retset(opform->oprcode);
 	result->args = args;
+
+	/* Hack to protect pg_get_expr() against misuse */
+	check_pg_get_expr_args(pstate, opform->oprcode, args);
 
 	return (Expr *) result;
 }

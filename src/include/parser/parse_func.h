@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_func.h,v 1.50 2003/08/04 02:40:14 momjian Exp $
+ * $Id: parse_func.h,v 1.50.4.1 2010/07/30 17:57:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -77,5 +77,7 @@ extern Oid LookupFuncName(List *funcname, int nargs, const Oid *argtypes,
 			   bool noError);
 extern Oid LookupFuncNameTypeNames(List *funcname, List *argtypes,
 						bool noError);
+
+extern void check_pg_get_expr_args(ParseState *pstate, Oid fnoid, List *args);
 
 #endif   /* PARSE_FUNC_H */
