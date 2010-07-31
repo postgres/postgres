@@ -4,7 +4,7 @@
  *
  *	Copyright (c) 2006-2010, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/include/access/gin.h,v 1.38 2010/02/26 02:01:20 momjian Exp $
+ *	$PostgreSQL: pgsql/src/include/access/gin.h,v 1.38.4.1 2010/07/31 00:31:04 tgl Exp $
  *--------------------------------------------------------------------------
  */
 #ifndef GIN_H
@@ -520,6 +520,8 @@ typedef struct GinScanKeyData
 	OffsetNumber attnum;
 
 	ItemPointerData curItem;
+	bool		recheckCurItem;
+
 	bool		firstCall;
 	bool		isFinished;
 } GinScanKeyData;

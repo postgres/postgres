@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			$PostgreSQL: pgsql/src/backend/access/gin/ginscan.c,v 1.26 2010/01/18 11:50:43 teodor Exp $
+ *			$PostgreSQL: pgsql/src/backend/access/gin/ginscan.c,v 1.26.6.1 2010/07/31 00:31:04 tgl Exp $
  *-------------------------------------------------------------------------
  */
 
@@ -51,7 +51,7 @@ fillScanKey(GinState *ginstate, GinScanKey key, OffsetNumber attnum, Datum query
 	key->extra_data = extra_data;
 	key->query = query;
 	key->firstCall = TRUE;
-	ItemPointerSet(&(key->curItem), InvalidBlockNumber, InvalidOffsetNumber);
+	ItemPointerSetMin(&key->curItem);
 
 	for (i = 0; i < nEntryValues; i++)
 	{
@@ -59,7 +59,8 @@ fillScanKey(GinState *ginstate, GinScanKey key, OffsetNumber attnum, Datum query
 		key->scanEntry[i].entry = entryValues[i];
 		key->scanEntry[i].attnum = attnum;
 		key->scanEntry[i].extra_data = (extra_data) ? extra_data[i] : NULL;
-		ItemPointerSet(&(key->scanEntry[i].curItem), InvalidBlockNumber, InvalidOffsetNumber);
+		ItemPointerSetMin(&key->scanEntry[i].curItem);
+		key->scanEntry[i].isFinished = FALSE;
 		key->scanEntry[i].offset = InvalidOffsetNumber;
 		key->scanEntry[i].buffer = InvalidBuffer;
 		key->scanEntry[i].partialMatch = NULL;
@@ -100,14 +101,15 @@ resetScanKeys(GinScanKey keys, uint32 nkeys)
 		GinScanKey	key = keys + i;
 
 		key->firstCall = TRUE;
-		ItemPointerSet(&(key->curItem), InvalidBlockNumber, InvalidOffsetNumber);
+		ItemPointerSetMin(&key->curItem);
 
 		for (j = 0; j < key->nentries; j++)
 		{
 			if (key->scanEntry[j].buffer != InvalidBuffer)
 				ReleaseBuffer(key->scanEntry[i].buffer);
 
-			ItemPointerSet(&(key->scanEntry[j].curItem), InvalidBlockNumber, InvalidOffsetNumber);
+			ItemPointerSetMin(&key->scanEntry[j].curItem);
+			key->scanEntry[j].isFinished = FALSE;
 			key->scanEntry[j].offset = InvalidOffsetNumber;
 			key->scanEntry[j].buffer = InvalidBuffer;
 			key->scanEntry[j].list = NULL;
