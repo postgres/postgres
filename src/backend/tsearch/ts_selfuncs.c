@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tsearch/ts_selfuncs.c,v 1.7 2010/01/04 02:44:39 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tsearch/ts_selfuncs.c,v 1.7.6.1 2010/07/31 03:27:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,6 +51,9 @@ static Selectivity mcelem_tsquery_selec(TSQuery query,
 static Selectivity tsquery_opr_selec(QueryItem *item, char *operand,
 				  TextFreq *lookup, int length, float4 minfreq);
 static int	compare_lexeme_textfreq(const void *e1, const void *e2);
+
+#define tsquery_opr_selec_no_stats(query) \
+	tsquery_opr_selec(GETQUERY(query), GETOPERAND(query), NULL, 0, 0)
 
 
 /*
@@ -101,21 +104,20 @@ tsmatchsel(PG_FUNCTION_ARGS)
 	}
 
 	/*
-	 * OK, there's a Var and a Const we're dealing with here. We need the Var
-	 * to be a TSVector (or else we don't have any useful statistic for it).
-	 * We have to check this because the Var might be the TSQuery not the
-	 * TSVector.
+	 * OK, there's a Var and a Const we're dealing with here.  We need the
+	 * Const to be a TSQuery, else we can't do anything useful.  We have to
+	 * check this because the Var might be the TSQuery not the TSVector.
 	 */
-	if (vardata.vartype == TSVECTOROID)
+	if (((Const *) other)->consttype == TSQUERYOID)
 	{
 		/* tsvector @@ tsquery or the other way around */
-		Assert(((Const *) other)->consttype == TSQUERYOID);
+		Assert(vardata.vartype == TSVECTOROID);
 
 		selec = tsquerysel(&vardata, ((Const *) other)->constvalue);
 	}
 	else
 	{
-		/* The Var is something we don't have useful statistics for */
+		/* If we can't see the query structure, must punt */
 		selec = DEFAULT_TS_MATCH_SEL;
 	}
 
@@ -184,14 +186,14 @@ tsquerysel(VariableStatData *vardata, Datum constval)
 		}
 		else
 		{
-			/* No most-common-elements info, so we must punt */
-			selec = (Selectivity) DEFAULT_TS_MATCH_SEL;
+			/* No most-common-elements info, so do without */
+			selec = tsquery_opr_selec_no_stats(query);
 		}
 	}
 	else
 	{
-		/* No stats at all, so we must punt */
-		selec = (Selectivity) DEFAULT_TS_MATCH_SEL;
+		/* No stats at all, so do without */
+		selec = tsquery_opr_selec_no_stats(query);
 	}
 
 	return selec;
@@ -214,7 +216,7 @@ mcelem_tsquery_selec(TSQuery query, Datum *mcelem, int nmcelem,
 	 * cells are taken for minimal and maximal frequency.  Punt if not.
 	 */
 	if (nnumbers != nmcelem + 2)
-		return DEFAULT_TS_MATCH_SEL;
+		return tsquery_opr_selec_no_stats(query);
 
 	/*
 	 * Transpose the data into a single array so we can use bsearch().
@@ -258,9 +260,12 @@ mcelem_tsquery_selec(TSQuery query, Datum *mcelem, int nmcelem,
  *	 freq[val] in VAL nodes, if the value is in MCELEM
  *	 min(freq[MCELEM]) / 2 in VAL nodes, if it is not
  *
- *
  * The MCELEM array is already sorted (see ts_typanalyze.c), so we can use
  * binary search for determining freq[MCELEM].
+ *
+ * If we don't have stats for the tsvector, we still use this logic,
+ * except we always use DEFAULT_TS_MATCH_SEL for VAL nodes.  This case
+ * is signaled by lookup == NULL.
  */
 static Selectivity
 tsquery_opr_selec(QueryItem *item, char *operand,
@@ -279,6 +284,10 @@ tsquery_opr_selec(QueryItem *item, char *operand,
 	{
 		QueryOperand *oper = (QueryOperand *) item;
 
+		/* If no stats for the variable, use DEFAULT_TS_MATCH_SEL */
+		if (lookup == NULL)
+			return (Selectivity) DEFAULT_TS_MATCH_SEL;
+
 		/*
 		 * Prepare the key for bsearch().
 		 */
@@ -292,7 +301,7 @@ tsquery_opr_selec(QueryItem *item, char *operand,
 		if (searchres)
 		{
 			/*
-			 * The element is in MCELEM. Return precise selectivity (or at
+			 * The element is in MCELEM.  Return precise selectivity (or at
 			 * least as precise as ANALYZE could find out).
 			 */
 			return (Selectivity) searchres->frequency;
@@ -300,7 +309,7 @@ tsquery_opr_selec(QueryItem *item, char *operand,
 		else
 		{
 			/*
-			 * The element is not in MCELEM. Punt, but assert that the
+			 * The element is not in MCELEM.  Punt, but assume that the
 			 * selectivity cannot be more than minfreq / 2.
 			 */
 			return (Selectivity) Min(DEFAULT_TS_MATCH_SEL, minfreq / 2);
