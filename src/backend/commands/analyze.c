@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/analyze.c,v 1.152 2010/02/26 02:00:37 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/analyze.c,v 1.153 2010/08/01 22:38:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -92,7 +92,8 @@ static void compute_index_stats(Relation onerel, double totalrows,
 					AnlIndexData *indexdata, int nindexes,
 					HeapTuple *rows, int numrows,
 					MemoryContext col_context);
-static VacAttrStats *examine_attribute(Relation onerel, int attnum);
+static VacAttrStats *examine_attribute(Relation onerel, int attnum,
+									   Node *index_expr);
 static int acquire_sample_rows(Relation onerel, HeapTuple *rows,
 					int targrows, double *totalrows, double *totaldeadrows);
 static double random_fract(void);
@@ -339,7 +340,7 @@ do_analyze_rel(Relation onerel, VacuumStmt *vacstmt,
 						(errcode(ERRCODE_UNDEFINED_COLUMN),
 					errmsg("column \"%s\" of relation \"%s\" does not exist",
 						   col, RelationGetRelationName(onerel))));
-			vacattrstats[tcnt] = examine_attribute(onerel, i);
+			vacattrstats[tcnt] = examine_attribute(onerel, i, NULL);
 			if (vacattrstats[tcnt] != NULL)
 				tcnt++;
 		}
@@ -353,7 +354,7 @@ do_analyze_rel(Relation onerel, VacuumStmt *vacstmt,
 		tcnt = 0;
 		for (i = 1; i <= attr_cnt; i++)
 		{
-			vacattrstats[tcnt] = examine_attribute(onerel, i);
+			vacattrstats[tcnt] = examine_attribute(onerel, i, NULL);
 			if (vacattrstats[tcnt] != NULL)
 				tcnt++;
 		}
@@ -407,21 +408,8 @@ do_analyze_rel(Relation onerel, VacuumStmt *vacstmt,
 							elog(ERROR, "too few entries in indexprs list");
 						indexkey = (Node *) lfirst(indexpr_item);
 						indexpr_item = lnext(indexpr_item);
-
-						/*
-						 * Can't analyze if the opclass uses a storage type
-						 * different from the expression result type. We'd get
-						 * confused because the type shown in pg_attribute for
-						 * the index column doesn't match what we are getting
-						 * from the expression. Perhaps this can be fixed
-						 * someday, but for now, punt.
-						 */
-						if (exprType(indexkey) !=
-							Irel[ind]->rd_att->attrs[i]->atttypid)
-							continue;
-
 						thisdata->vacattrstats[tcnt] =
-							examine_attribute(Irel[ind], i + 1);
+							examine_attribute(Irel[ind], i + 1, indexkey);
 						if (thisdata->vacattrstats[tcnt] != NULL)
 						{
 							tcnt++;
@@ -802,9 +790,12 @@ compute_index_stats(Relation onerel, double totalrows,
  *
  * Determine whether the column is analyzable; if so, create and initialize
  * a VacAttrStats struct for it.  If not, return NULL.
+ *
+ * If index_expr isn't NULL, then we're trying to analyze an expression index,
+ * and index_expr is the expression tree representing the column's data.
  */
 static VacAttrStats *
-examine_attribute(Relation onerel, int attnum)
+examine_attribute(Relation onerel, int attnum, Node *index_expr)
 {
 	Form_pg_attribute attr = onerel->rd_att->attrs[attnum - 1];
 	HeapTuple	typtuple;
@@ -827,9 +818,30 @@ examine_attribute(Relation onerel, int attnum)
 	stats = (VacAttrStats *) palloc0(sizeof(VacAttrStats));
 	stats->attr = (Form_pg_attribute) palloc(ATTRIBUTE_FIXED_PART_SIZE);
 	memcpy(stats->attr, attr, ATTRIBUTE_FIXED_PART_SIZE);
-	typtuple = SearchSysCache1(TYPEOID, ObjectIdGetDatum(attr->atttypid));
+
+	/*
+	 * When analyzing an expression index, believe the expression tree's type
+	 * not the column datatype --- the latter might be the opckeytype storage
+	 * type of the opclass, which is not interesting for our purposes.  (Note:
+	 * if we did anything with non-expression index columns, we'd need to
+	 * figure out where to get the correct type info from, but for now that's
+	 * not a problem.)  It's not clear whether anyone will care about the
+	 * typmod, but we store that too just in case.
+	 */
+	if (index_expr)
+	{
+		stats->attrtypid = exprType(index_expr);
+		stats->attrtypmod = exprTypmod(index_expr);
+	}
+	else
+	{
+		stats->attrtypid = attr->atttypid;
+		stats->attrtypmod = attr->atttypmod;
+	}
+
+	typtuple = SearchSysCache1(TYPEOID, ObjectIdGetDatum(stats->attrtypid));
 	if (!HeapTupleIsValid(typtuple))
-		elog(ERROR, "cache lookup failed for type %u", attr->atttypid);
+		elog(ERROR, "cache lookup failed for type %u", stats->attrtypid);
 	stats->attrtype = (Form_pg_type) palloc(sizeof(FormData_pg_type));
 	memcpy(stats->attrtype, GETSTRUCT(typtuple), sizeof(FormData_pg_type));
 	ReleaseSysCache(typtuple);
@@ -838,12 +850,12 @@ examine_attribute(Relation onerel, int attnum)
 
 	/*
 	 * The fields describing the stats->stavalues[n] element types default to
-	 * the type of the field being analyzed, but the type-specific typanalyze
+	 * the type of the data being analyzed, but the type-specific typanalyze
 	 * function can change them if it wants to store something else.
 	 */
 	for (i = 0; i < STATISTIC_NUM_SLOTS; i++)
 	{
-		stats->statypid[i] = stats->attr->atttypid;
+		stats->statypid[i] = stats->attrtypid;
 		stats->statyplen[i] = stats->attrtype->typlen;
 		stats->statypbyval[i] = stats->attrtype->typbyval;
 		stats->statypalign[i] = stats->attrtype->typalign;
@@ -1780,7 +1792,7 @@ std_typanalyze(VacAttrStats *stats)
 		attr->attstattarget = default_statistics_target;
 
 	/* Look for default "<" and "=" operators for column's type */
-	get_sort_group_operators(attr->atttypid,
+	get_sort_group_operators(stats->attrtypid,
 							 false, false, false,
 							 &ltopr, &eqopr, NULL);
 
@@ -1860,10 +1872,10 @@ compute_minimal_stats(VacAttrStatsP stats,
 	int			nonnull_cnt = 0;
 	int			toowide_cnt = 0;
 	double		total_width = 0;
-	bool		is_varlena = (!stats->attr->attbyval &&
-							  stats->attr->attlen == -1);
-	bool		is_varwidth = (!stats->attr->attbyval &&
-							   stats->attr->attlen < 0);
+	bool		is_varlena = (!stats->attrtype->typbyval &&
+							  stats->attrtype->typlen == -1);
+	bool		is_varwidth = (!stats->attrtype->typbyval &&
+							   stats->attrtype->typlen < 0);
 	FmgrInfo	f_cmpeq;
 	typedef struct
 	{
@@ -2126,8 +2138,8 @@ compute_minimal_stats(VacAttrStatsP stats,
 			for (i = 0; i < num_mcv; i++)
 			{
 				mcv_values[i] = datumCopy(track[i].value,
-										  stats->attr->attbyval,
-										  stats->attr->attlen);
+										  stats->attrtype->typbyval,
+										  stats->attrtype->typlen);
 				mcv_freqs[i] = (double) track[i].count / (double) samplerows;
 			}
 			MemoryContextSwitchTo(old_context);
@@ -2184,10 +2196,10 @@ compute_scalar_stats(VacAttrStatsP stats,
 	int			nonnull_cnt = 0;
 	int			toowide_cnt = 0;
 	double		total_width = 0;
-	bool		is_varlena = (!stats->attr->attbyval &&
-							  stats->attr->attlen == -1);
-	bool		is_varwidth = (!stats->attr->attbyval &&
-							   stats->attr->attlen < 0);
+	bool		is_varlena = (!stats->attrtype->typbyval &&
+							  stats->attrtype->typlen == -1);
+	bool		is_varwidth = (!stats->attrtype->typbyval &&
+							   stats->attrtype->typlen < 0);
 	double		corr_xysum;
 	Oid			cmpFn;
 	int			cmpFlags;
@@ -2476,8 +2488,8 @@ compute_scalar_stats(VacAttrStatsP stats,
 			for (i = 0; i < num_mcv; i++)
 			{
 				mcv_values[i] = datumCopy(values[track[i].first].value,
-										  stats->attr->attbyval,
-										  stats->attr->attlen);
+										  stats->attrtype->typbyval,
+										  stats->attrtype->typlen);
 				mcv_freqs[i] = (double) track[i].count / (double) samplerows;
 			}
 			MemoryContextSwitchTo(old_context);
@@ -2583,8 +2595,8 @@ compute_scalar_stats(VacAttrStatsP stats,
 			for (i = 0; i < num_hist; i++)
 			{
 				hist_values[i] = datumCopy(values[pos].value,
-										   stats->attr->attbyval,
-										   stats->attr->attlen);
+										   stats->attrtype->typbyval,
+										   stats->attrtype->typlen);
 				pos += delta;
 				posfrac += deltafrac;
 				if (posfrac >= (num_hist - 1))
