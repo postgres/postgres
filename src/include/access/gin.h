@@ -4,7 +4,7 @@
  *
  *	Copyright (c) 2006-2010, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/include/access/gin.h,v 1.40 2010/08/01 02:12:42 tgl Exp $
+ *	$PostgreSQL: pgsql/src/include/access/gin.h,v 1.41 2010/08/01 19:16:39 tgl Exp $
  *--------------------------------------------------------------------------
  */
 #ifndef GIN_H
@@ -107,13 +107,22 @@ typedef struct GinMetaPageData
  * We use our own ItemPointerGet(BlockNumber|GetOffsetNumber)
  * to avoid Asserts, since sometimes the ip_posid isn't "valid"
  */
-
 #define GinItemPointerGetBlockNumber(pointer) \
 	BlockIdGetBlockNumber(&(pointer)->ip_blkid)
 
 #define GinItemPointerGetOffsetNumber(pointer) \
 	((pointer)->ip_posid)
 
+/*
+ * Special-case item pointer values needed by the GIN search logic.
+ *	MIN: sorts less than any valid item pointer
+ *	MAX: sorts greater than any valid item pointer
+ *	LOSSY PAGE: indicates a whole heap page, sorts after normal item
+ *				pointers for that page
+ * Note that these are all distinguishable from an "invalid" item pointer
+ * (which is InvalidBlockNumber/0) as well as from all normal item
+ * pointers (which have item numbers in the range 1..MaxHeapTuplesPerPage).
+ */
 #define ItemPointerSetMin(p)  \
 	ItemPointerSet((p), (BlockNumber)0, (OffsetNumber)0)
 #define ItemPointerIsMin(p)  \
