@@ -4,7 +4,7 @@
  *
  *	Copyright (c) 2006-2010, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/include/access/gin.h,v 1.38.4.1 2010/07/31 00:31:04 tgl Exp $
+ *	$PostgreSQL: pgsql/src/include/access/gin.h,v 1.38.4.2 2010/08/01 02:12:51 tgl Exp $
  *--------------------------------------------------------------------------
  */
 #ifndef GIN_H
@@ -565,6 +565,7 @@ extern Datum ginarrayconsistent(PG_FUNCTION_ARGS);
 /* ginbulk.c */
 typedef struct EntryAccumulator
 {
+	RBNode		rbnode;
 	Datum		value;
 	uint32		length;
 	uint32		number;
@@ -579,15 +580,14 @@ typedef struct
 	long		allocatedMemory;
 	uint32		length;
 	EntryAccumulator *entryallocator;
-	ItemPointerData *tmpList;
 	RBTree	   *tree;
-	RBTreeIterator *iterator;
 } BuildAccumulator;
 
 extern void ginInitBA(BuildAccumulator *accum);
 extern void ginInsertRecordBA(BuildAccumulator *accum,
 				  ItemPointer heapptr,
 				  OffsetNumber attnum, Datum *entries, int32 nentry);
+extern void ginBeginBAScan(BuildAccumulator *accum);
 extern ItemPointerData *ginGetEntry(BuildAccumulator *accum, OffsetNumber *attnum, Datum *entry, uint32 *n);
 
 /* ginfast.c */

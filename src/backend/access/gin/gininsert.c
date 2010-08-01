@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			$PostgreSQL: pgsql/src/backend/access/gin/gininsert.c,v 1.26 2010/02/11 14:29:50 teodor Exp $
+ *			$PostgreSQL: pgsql/src/backend/access/gin/gininsert.c,v 1.26.6.1 2010/08/01 02:12:51 tgl Exp $
  *-------------------------------------------------------------------------
  */
 
@@ -176,6 +176,7 @@ ginEntryInsert(Relation index, GinState *ginstate,
 			gdi = prepareScanPostingTree(index, rootPostingTree, FALSE);
 			gdi->btree.isBuild = isBuild;
 			insertItemPointer(gdi, items, nitem);
+			pfree(gdi);
 
 			return;
 		}
@@ -254,6 +255,7 @@ ginBuildCallback(Relation index, HeapTuple htup, Datum *values,
 		uint32		nlist;
 		OffsetNumber attnum;
 
+		ginBeginBAScan(&buildstate->accum);
 		while ((list = ginGetEntry(&buildstate->accum, &attnum, &entry, &nlist)) != NULL)
 		{
 			/* there could be many entries, so be willing to abort here */
@@ -360,6 +362,7 @@ ginbuild(PG_FUNCTION_ARGS)
 
 	/* dump remaining entries to the index */
 	oldCtx = MemoryContextSwitchTo(buildstate.tmpCtx);
+	ginBeginBAScan(&buildstate.accum);
 	while ((list = ginGetEntry(&buildstate.accum, &attnum, &entry, &nlist)) != NULL)
 	{
 		/* there could be many entries, so be willing to abort here */

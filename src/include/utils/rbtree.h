@@ -3,44 +3,64 @@
  * rbtree.h
  *	  interface for PostgreSQL generic Red-Black binary tree package
  *
- * Copyright (c) 1996-2009, PostgreSQL Global Development Group
+ * Copyright (c) 2009-2010, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/include/utils/rbtree.h,v 1.3 2010/05/11 18:14:01 rhaas Exp $
+ *		$PostgreSQL: pgsql/src/include/utils/rbtree.h,v 1.3.2.1 2010/08/01 02:12:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
-
 #ifndef RBTREE_H
 #define RBTREE_H
 
+/*
+ * RBNode is intended to be used as the first field of a larger struct,
+ * whose additional fields carry whatever payload data the caller needs
+ * for a tree entry.  (The total size of that larger struct is passed to
+ * rb_create.)  RBNode is declared here to support this usage, but
+ * callers must treat it as an opaque struct.
+ */
+typedef struct RBNode
+{
+	char		iteratorState;	/* workspace for iterating through tree */
+	char		color;			/* node's current color, red or black */
+	struct RBNode *left;		/* left child, or RBNIL if none */
+	struct RBNode *right;		/* right child, or RBNIL if none */
+	struct RBNode *parent;		/* parent, or NULL (not RBNIL!) if none */
+} RBNode;
+
+/* Opaque struct representing a whole tree */
 typedef struct RBTree RBTree;
-typedef struct RBTreeIterator RBTreeIterator;
 
-typedef int (*rb_comparator) (const void *a, const void *b, void *arg);
-typedef void *(*rb_appendator) (void *currentdata, void *newval, void *arg);
-typedef void (*rb_freefunc) (void *a);
+/* Available tree iteration orderings */
+typedef enum RBOrderControl
+{
+	LeftRightWalk,				/* inorder: left child, node, right child */
+	RightLeftWalk,				/* reverse inorder: right, node, left */
+	DirectWalk,					/* preorder: node, left child, right child */
+	InvertedWalk				/* postorder: left child, right child, node */
+} RBOrderControl;
 
-extern RBTree *rb_create(rb_comparator comparator,
-		  rb_appendator appendator,
+/* Support functions to be provided by caller */
+typedef int (*rb_comparator) (const RBNode *a, const RBNode *b, void *arg);
+typedef void (*rb_combiner) (RBNode *existing, const RBNode *newdata, void *arg);
+typedef RBNode *(*rb_allocfunc) (void *arg);
+typedef void (*rb_freefunc) (RBNode *x, void *arg);
+
+extern RBTree *rb_create(Size node_size,
+		  rb_comparator comparator,
+		  rb_combiner combiner,
+		  rb_allocfunc allocfunc,
 		  rb_freefunc freefunc,
 		  void *arg);
 
-extern void *rb_find(RBTree *rb, void *data);
-extern void *rb_insert(RBTree *rb, void *data);
-extern void rb_delete(RBTree *rb, void *data);
-extern void *rb_leftmost(RBTree *rb);
+extern RBNode *rb_find(RBTree *rb, const RBNode *data);
+extern RBNode *rb_leftmost(RBTree *rb);
 
-typedef enum RBOrderControl
-{
-	LeftRightWalk,
-	RightLeftWalk,
-	DirectWalk,
-	InvertedWalk
-} RBOrderControl;
+extern RBNode *rb_insert(RBTree *rb, const RBNode *data, bool *isNew);
+extern void rb_delete(RBTree *rb, RBNode *node);
 
-extern RBTreeIterator *rb_begin_iterate(RBTree *rb, RBOrderControl ctrl);
-extern void *rb_iterate(RBTreeIterator *iterator);
-extern void rb_free_iterator(RBTreeIterator *iterator);
+extern void rb_begin_iterate(RBTree *rb, RBOrderControl ctrl);
+extern RBNode *rb_iterate(RBTree *rb);
 
-#endif
+#endif /* RBTREE_H */

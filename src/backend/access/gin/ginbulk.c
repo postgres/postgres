@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			$PostgreSQL: pgsql/src/backend/access/gin/ginbulk.c,v 1.19 2010/02/26 02:00:33 momjian Exp $
+ *			$PostgreSQL: pgsql/src/backend/access/gin/ginbulk.c,v 1.19.4.1 2010/08/01 02:12:51 tgl Exp $
  *-------------------------------------------------------------------------
  */
 
@@ -19,17 +19,21 @@
 #include "utils/memutils.h"
 
 
-#define DEF_NENTRY	2048
-#define DEF_NPTR	4
+#define DEF_NENTRY	2048		/* EntryAccumulator allocation quantum */
+#define DEF_NPTR	5			/* ItemPointer initial allocation quantum */
 
-static void *
-ginAppendData(void *old, void *new, void *arg)
+
+/* Combiner function for rbtree.c */
+static void
+ginCombineData(RBNode *existing, const RBNode *newdata, void *arg)
 {
-	EntryAccumulator *eo = (EntryAccumulator *) old,
-			   *en = (EntryAccumulator *) new;
-
+	EntryAccumulator *eo = (EntryAccumulator *) existing;
+	const EntryAccumulator *en = (const EntryAccumulator *) newdata;
 	BuildAccumulator *accum = (BuildAccumulator *) arg;
 
+	/*
+	 * Note this code assumes that newdata contains only one itempointer.
+	 */
 	if (eo->number >= eo->length)
 	{
 		accum->allocatedMemory -= GetMemoryChunkSpace(eo->list);
@@ -53,29 +57,57 @@ ginAppendData(void *old, void *new, void *arg)
 
 	eo->list[eo->number] = en->list[0];
 	eo->number++;
-
-	return old;
 }
 
+/* Comparator function for rbtree.c */
 static int
-cmpEntryAccumulator(const void *a, const void *b, void *arg)
+cmpEntryAccumulator(const RBNode *a, const RBNode *b, void *arg)
 {
-	EntryAccumulator *ea = (EntryAccumulator *) a;
-	EntryAccumulator *eb = (EntryAccumulator *) b;
+	const EntryAccumulator *ea = (const EntryAccumulator *) a;
+	const EntryAccumulator *eb = (const EntryAccumulator *) b;
 	BuildAccumulator *accum = (BuildAccumulator *) arg;
 
 	return compareAttEntries(accum->ginstate, ea->attnum, ea->value,
 							 eb->attnum, eb->value);
 }
 
+/* Allocator function for rbtree.c */
+static RBNode *
+ginAllocEntryAccumulator(void *arg)
+{
+	BuildAccumulator *accum = (BuildAccumulator *) arg;
+	EntryAccumulator *ea;
+
+	/*
+	 * Allocate memory by rather big chunks to decrease overhead.  We have
+	 * no need to reclaim RBNodes individually, so this costs nothing.
+	 */
+	if (accum->entryallocator == NULL || accum->length >= DEF_NENTRY)
+	{
+		accum->entryallocator = palloc(sizeof(EntryAccumulator) * DEF_NENTRY);
+		accum->allocatedMemory += GetMemoryChunkSpace(accum->entryallocator);
+		accum->length = 0;
+	}
+
+	/* Allocate new RBNode from current chunk */
+	ea = accum->entryallocator + accum->length;
+	accum->length++;
+
+	return (RBNode *) ea;
+}
+
 void
 ginInitBA(BuildAccumulator *accum)
 {
 	accum->allocatedMemory = 0;
+	accum->length = 0;
 	accum->entryallocator = NULL;
-	accum->tree = rb_create(cmpEntryAccumulator, ginAppendData, NULL, accum);
-	accum->iterator = NULL;
-	accum->tmpList = NULL;
+	accum->tree = rb_create(sizeof(EntryAccumulator),
+							cmpEntryAccumulator,
+							ginCombineData,
+							ginAllocEntryAccumulator,
+							NULL,				/* no freefunc needed */
+							(void *) accum);
 }
 
 /*
@@ -104,55 +136,41 @@ getDatumCopy(BuildAccumulator *accum, OffsetNumber attnum, Datum value)
 static void
 ginInsertEntry(BuildAccumulator *accum, ItemPointer heapptr, OffsetNumber attnum, Datum entry)
 {
-	EntryAccumulator *key,
-			   *ea;
+	EntryAccumulator key;
+	EntryAccumulator *ea;
+	bool		isNew;
 
 	/*
-	 * Allocate memory by rather big chunk to decrease overhead, we don't keep
-	 * pointer to previously allocated chunks because they will free by
-	 * MemoryContextReset() call.
+	 * For the moment, fill only the fields of key that will be looked at
+	 * by cmpEntryAccumulator or ginCombineData.
 	 */
-	if (accum->entryallocator == NULL || accum->length >= DEF_NENTRY)
-	{
-		accum->entryallocator = palloc(sizeof(EntryAccumulator) * DEF_NENTRY);
-		accum->allocatedMemory += GetMemoryChunkSpace(accum->entryallocator);
-		accum->length = 0;
-	}
+	key.attnum = attnum;
+	key.value = entry;
+	/* temporarily set up single-entry itempointer list */
+	key.list = heapptr;
 
-	/* "Allocate" new key in chunk */
-	key = accum->entryallocator + accum->length;
-	accum->length++;
+	ea = (EntryAccumulator *) rb_insert(accum->tree, (RBNode *) &key, &isNew);
 
-	key->attnum = attnum;
-	key->value = entry;
-	/* To prevent multiple palloc/pfree cycles, we reuse array */
-	if (accum->tmpList == NULL)
-		accum->tmpList =
-			(ItemPointerData *) palloc(sizeof(ItemPointerData) * DEF_NPTR);
-	key->list = accum->tmpList;
-	key->list[0] = *heapptr;
-
-	ea = rb_insert(accum->tree, key);
-
-	if (ea == NULL)
+	if (isNew)
 	{
 		/*
-		 * The key has been inserted, so continue initialization.
+		 * Finish initializing new tree entry, including making permanent
+		 * copies of the datum and itempointer.
 		 */
-		key->value = getDatumCopy(accum, attnum, entry);
-		key->length = DEF_NPTR;
-		key->number = 1;
-		key->shouldSort = FALSE;
-		accum->allocatedMemory += GetMemoryChunkSpace(key->list);
-		accum->tmpList = NULL;
+		ea->value = getDatumCopy(accum, attnum, entry);
+		ea->length = DEF_NPTR;
+		ea->number = 1;
+		ea->shouldSort = FALSE;
+		ea->list =
+			(ItemPointerData *) palloc(sizeof(ItemPointerData) * DEF_NPTR);
+		ea->list[0] = *heapptr;
+		accum->allocatedMemory += GetMemoryChunkSpace(ea->list);
 	}
 	else
 	{
 		/*
-		 * The key has been appended, so "free" allocated key by decrementing
-		 * chunk's counter.
+		 * ginCombineData did everything needed.
 		 */
-		accum->length--;
 	}
 }
 
@@ -214,16 +232,20 @@ qsortCompareItemPointers(const void *a, const void *b)
 	return res;
 }
 
+/* Prepare to read out the rbtree contents using ginGetEntry */
+void
+ginBeginBAScan(BuildAccumulator *accum)
+{
+	rb_begin_iterate(accum->tree, LeftRightWalk);
+}
+
 ItemPointerData *
 ginGetEntry(BuildAccumulator *accum, OffsetNumber *attnum, Datum *value, uint32 *n)
 {
 	EntryAccumulator *entry;
 	ItemPointerData *list;
 
-	if (accum->iterator == NULL)
-		accum->iterator = rb_begin_iterate(accum->tree, LeftRightWalk);
-
-	entry = rb_iterate(accum->iterator);
+	entry = (EntryAccumulator *) rb_iterate(accum->tree);
 
 	if (entry == NULL)
 		return NULL;

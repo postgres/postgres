@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			$PostgreSQL: pgsql/src/backend/access/gin/ginentrypage.c,v 1.24 2010/02/26 02:00:33 momjian Exp $
+ *			$PostgreSQL: pgsql/src/backend/access/gin/ginentrypage.c,v 1.24.4.1 2010/08/01 02:12:51 tgl Exp $
  *-------------------------------------------------------------------------
  */
 
@@ -615,7 +615,7 @@ entrySplitPage(GinBtree btree, Buffer lbuf, Buffer rbuf, OffsetNumber off, XLogR
 }
 
 /*
- * return newly allocate rightmost tuple
+ * return newly allocated rightmost tuple
  */
 IndexTuple
 ginPageGetLinkItup(Buffer buf)
@@ -646,10 +646,12 @@ entryFillRoot(GinBtree btree, Buffer root, Buffer lbuf, Buffer rbuf)
 	itup = ginPageGetLinkItup(lbuf);
 	if (PageAddItem(page, (Item) itup, IndexTupleSize(itup), InvalidOffsetNumber, false, false) == InvalidOffsetNumber)
 		elog(ERROR, "failed to add item to index root page");
+	pfree(itup);
 
 	itup = ginPageGetLinkItup(rbuf);
 	if (PageAddItem(page, (Item) itup, IndexTupleSize(itup), InvalidOffsetNumber, false, false) == InvalidOffsetNumber)
 		elog(ERROR, "failed to add item to index root page");
+	pfree(itup);
 }
 
 void

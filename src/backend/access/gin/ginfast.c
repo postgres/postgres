@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			$PostgreSQL: pgsql/src/backend/access/gin/ginfast.c,v 1.7 2010/02/11 14:29:50 teodor Exp $
+ *			$PostgreSQL: pgsql/src/backend/access/gin/ginfast.c,v 1.7.6.1 2010/08/01 02:12:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -786,6 +786,7 @@ ginInsertCleanup(Relation index, GinState *ginstate,
 			 * significant amount of time - so, run it without locking pending
 			 * list.
 			 */
+			ginBeginBAScan(&accum);
 			while ((list = ginGetEntry(&accum, &attnum, &entry, &nlist)) != NULL)
 			{
 				ginEntryInsert(index, ginstate, attnum, entry, list, nlist, FALSE);
@@ -820,6 +821,7 @@ ginInsertCleanup(Relation index, GinState *ginstate,
 				ginInitBA(&accum);
 				processPendingPage(&accum, &datums, page, maxoff + 1);
 
+				ginBeginBAScan(&accum);
 				while ((list = ginGetEntry(&accum, &attnum, &entry, &nlist)) != NULL)
 					ginEntryInsert(index, ginstate, attnum, entry, list, nlist, FALSE);
 			}
