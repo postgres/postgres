@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			$PostgreSQL: pgsql/src/backend/access/gin/ginbtree.c,v 1.15 2010/01/02 16:57:33 momjian Exp $
+ *			$PostgreSQL: pgsql/src/backend/access/gin/ginbtree.c,v 1.16 2010/08/01 02:12:42 tgl Exp $
  *-------------------------------------------------------------------------
  */
 
@@ -267,6 +267,8 @@ findParents(GinBtree btree, GinBtreeStack *stack,
 
 /*
  * Insert value (stored in GinBtree) to tree described by stack
+ *
+ * NB: the passed-in stack is freed, as though by freeGinBtreeStack.
  */
 void
 ginInsertValue(GinBtree btree, GinBtreeStack *stack)
@@ -308,10 +310,11 @@ ginInsertValue(GinBtree btree, GinBtreeStack *stack)
 				PageSetTLI(page, ThisTimeLineID);
 			}
 
-			UnlockReleaseBuffer(stack->buffer);
+			LockBuffer(stack->buffer, GIN_UNLOCK);
 			END_CRIT_SECTION();
 
-			freeGinBtreeStack(stack->parent);
+			freeGinBtreeStack(stack);
+
 			return;
 		}
 		else
@@ -324,7 +327,6 @@ ginInsertValue(GinBtree btree, GinBtreeStack *stack)
 			 * buffer, stack->buffer should be untouched
 			 */
 			newlpage = btree->splitPage(btree, stack->buffer, rbuffer, stack->off, &rdata);
-
 
 			((ginxlogSplit *) (rdata->data))->rootBlkno = rootBlkno;
 
@@ -340,7 +342,6 @@ ginInsertValue(GinBtree btree, GinBtreeStack *stack)
 
 				((ginxlogSplit *) (rdata->data))->isRootSplit = TRUE;
 				((ginxlogSplit *) (rdata->data))->rrlink = InvalidBlockNumber;
-
 
 				page = BufferGetPage(stack->buffer);
 				lpage = BufferGetPage(lbuffer);
@@ -375,9 +376,10 @@ ginInsertValue(GinBtree btree, GinBtreeStack *stack)
 
 				UnlockReleaseBuffer(rbuffer);
 				UnlockReleaseBuffer(lbuffer);
-				UnlockReleaseBuffer(stack->buffer);
-
+				LockBuffer(stack->buffer, GIN_UNLOCK);
 				END_CRIT_SECTION();
+
+				freeGinBtreeStack(stack);
 
 				return;
 			}

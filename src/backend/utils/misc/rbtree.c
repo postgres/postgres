@@ -17,10 +17,10 @@
  * longest path from root to leaf is only about twice as long as the shortest,
  * so lookups are guaranteed to run in O(lg n) time.
  *
- * Copyright (c) 1996-2009, PostgreSQL Global Development Group
+ * Copyright (c) 2009-2010, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/rbtree.c,v 1.3 2010/02/26 02:01:14 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/rbtree.c,v 1.4 2010/08/01 02:12:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,12 +28,12 @@
 
 #include "utils/rbtree.h"
 
-/**********************************************************************
- *						 Declarations								  *
- **********************************************************************/
 
 /*
- * Values for RBNode->iteratorState
+ * Values of RBNode.iteratorState
+ *
+ * Note that iteratorState has an undefined value except in nodes that are
+ * currently being visited by an active iteration.
  */
 #define InitialState	(0)
 #define FirstStepDone	(1)
@@ -41,86 +41,161 @@
 #define ThirdStepDone	(3)
 
 /*
- * Colors of node
+ * Colors of nodes (values of RBNode.color)
  */
 #define RBBLACK		(0)
 #define RBRED		(1)
 
-typedef struct RBNode
-{
-	uint32		iteratorState:2,
-	color:		1,
-				unused:29;
-	struct RBNode *left;
-	struct RBNode *right;
-	struct RBNode *parent;
-	void	   *data;
-} RBNode;
-
+/*
+ * RBTree control structure
+ */
 struct RBTree
 {
-	RBNode	   *root;
-	rb_comparator comparator;
-	rb_appendator appendator;
-	rb_freefunc freefunc;
-	void	   *arg;
-};
+	RBNode	   *root;			/* root node, or RBNIL if tree is empty */
 
-struct RBTreeIterator
-{
-	RBNode	   *node;
-	void	   *(*iterate) (RBTreeIterator *iterator);
+	/* Iteration state */
+	RBNode	   *cur;			/* current iteration node */
+	RBNode	   *(*iterate) (RBTree *rb);
+
+	/* Remaining fields are constant after rb_create */
+
+	Size		node_size;		/* actual size of tree nodes */
+	/* The caller-supplied manipulation functions */
+	rb_comparator comparator;
+	rb_combiner combiner;
+	rb_allocfunc allocfunc;
+	rb_freefunc freefunc;
+	/* Passthrough arg passed to all manipulation functions */
+	void	   *arg;
 };
 
 /*
  * all leafs are sentinels, use customized NIL name to prevent
- * collision with sytem-wide NIL which is actually NULL
+ * collision with system-wide constant NIL which is actually NULL
  */
-#define RBNIL &sentinel
+#define RBNIL (&sentinel)
 
-RBNode		sentinel = {InitialState, RBBLACK, 0, RBNIL, RBNIL, NULL, NULL};
+static RBNode	sentinel = {InitialState, RBBLACK, RBNIL, RBNIL, NULL};
 
-/**********************************************************************
- *						  Create									  *
- **********************************************************************/
 
+/*
+ * rb_create: create an empty RBTree
+ *
+ * Arguments are:
+ *	node_size: actual size of tree nodes (> sizeof(RBNode))
+ *	The manipulation functions:
+ *	comparator: compare two RBNodes for less/equal/greater
+ *	combiner: merge an existing tree entry with a new one
+ *	allocfunc: allocate a new RBNode
+ *	freefunc: free an old RBNode
+ *	arg: passthrough pointer that will be passed to the manipulation functions
+ *
+ * Note that the combiner's righthand argument will be a "proposed" tree node,
+ * ie the input to rb_insert, in which the RBNode fields themselves aren't
+ * valid.  Similarly, either input to the comparator may be a "proposed" node.
+ * This shouldn't matter since the functions aren't supposed to look at the
+ * RBNode fields, only the extra fields of the struct the RBNode is embedded
+ * in.
+ *
+ * The freefunc should just be pfree or equivalent; it should NOT attempt
+ * to free any subsidiary data, because the node passed to it may not contain
+ * valid data!  freefunc can be NULL if caller doesn't require retail
+ * space reclamation.
+ *
+ * The RBTree node is palloc'd in the caller's memory context.  Note that
+ * all contents of the tree are actually allocated by the caller, not here.
+ *
+ * Since tree contents are managed by the caller, there is currently not
+ * an explicit "destroy" operation; typically a tree would be freed by
+ * resetting or deleting the memory context it's stored in.  You can pfree
+ * the RBTree node if you feel the urge.
+ */
 RBTree *
-rb_create(rb_comparator comparator, rb_appendator appendator,
-		  rb_freefunc freefunc, void *arg)
+rb_create(Size node_size,
+		  rb_comparator comparator,
+		  rb_combiner combiner,
+		  rb_allocfunc allocfunc,
+		  rb_freefunc freefunc,
+		  void *arg)
 {
-	RBTree	   *tree = palloc(sizeof(RBTree));
+	RBTree	   *tree = (RBTree *) palloc(sizeof(RBTree));
+
+	Assert(node_size > sizeof(RBNode));
 
 	tree->root = RBNIL;
+	tree->cur = RBNIL;
+	tree->iterate = NULL;
+	tree->node_size = node_size;
 	tree->comparator = comparator;
-	tree->appendator = appendator;
+	tree->combiner = combiner;
+	tree->allocfunc = allocfunc;
 	tree->freefunc = freefunc;
-
 	tree->arg = arg;
 
 	return tree;
+}
+
+/* Copy the additional data fields from one RBNode to another */
+static inline void
+rb_copy_data(RBTree *rb, RBNode *dest, const RBNode *src)
+{
+	memcpy(dest + 1, src + 1, rb->node_size - sizeof(RBNode));
 }
 
 /**********************************************************************
  *						  Search									  *
  **********************************************************************/
 
-void *
-rb_find(RBTree *rb, void *data)
+/*
+ * rb_find: search for a value in an RBTree
+ *
+ * data represents the value to try to find.  Its RBNode fields need not
+ * be valid, it's the extra data in the larger struct that is of interest.
+ *
+ * Returns the matching tree entry, or NULL if no match is found.
+ */
+RBNode *
+rb_find(RBTree *rb, const RBNode *data)
 {
 	RBNode	   *node = rb->root;
-	int			cmp;
 
 	while (node != RBNIL)
 	{
-		cmp = rb->comparator(data, node->data, rb->arg);
+		int		cmp = rb->comparator(data, node, rb->arg);
 
 		if (cmp == 0)
-			return node->data;
+			return node;
 		else if (cmp < 0)
 			node = node->left;
 		else
 			node = node->right;
 	}
+
+	return NULL;
+}
+
+/*
+ * rb_leftmost: fetch the leftmost (smallest-valued) tree node.
+ * Returns NULL if tree is empty.
+ *
+ * Note: in the original implementation this included an unlink step, but
+ * that's a bit awkward.  Just call rb_delete on the result if that's what
+ * you want.
+ */
+RBNode *
+rb_leftmost(RBTree *rb)
+{
+	RBNode	   *node = rb->root;
+	RBNode	   *leftmost = rb->root;
+
+	while (node != RBNIL)
+	{
+		leftmost = node;
+		node = node->left;
+	}
+
+	if (leftmost != RBNIL)
+		return leftmost;
 
 	return NULL;
 }
@@ -309,13 +384,24 @@ rb_insert_fixup(RBTree *rb, RBNode *x)
 }
 
 /*
- * Allocate node for data and insert in tree.
+ * rb_insert: insert a new value into the tree.
  *
- * Return old data (or result of appendator method) if it exists and NULL
- * otherwise.
+ * data represents the value to insert.  Its RBNode fields need not
+ * be valid, it's the extra data in the larger struct that is of interest.
+ *
+ * If the value represented by "data" is not present in the tree, then
+ * we copy "data" into a new tree entry and return that node, setting *isNew
+ * to true.
+ *
+ * If the value represented by "data" is already present, then we call the
+ * combiner function to merge data into the existing node, and return the
+ * existing node, setting *isNew to false.
+ *
+ * "data" is unmodified in either case; it's typically just a local
+ * variable in the caller.
  */
-void *
-rb_insert(RBTree *rb, void *data)
+RBNode *
+rb_insert(RBTree *rb, const RBNode *data, bool *isNew)
 {
 	RBNode	   *current,
 			   *parent,
@@ -325,43 +411,37 @@ rb_insert(RBTree *rb, void *data)
 	/* find where node belongs */
 	current = rb->root;
 	parent = NULL;
-	cmp = 0;
+	cmp = 0;					/* just to prevent compiler warning */
+
 	while (current != RBNIL)
 	{
-		cmp = rb->comparator(data, current->data, rb->arg);
+		cmp = rb->comparator(data, current, rb->arg);
 		if (cmp == 0)
 		{
 			/*
-			 * Found node with given key.  If appendator method is provided,
-			 * call it to join old and new data; else, new data replaces old
-			 * data.
+			 * Found node with given key.  Apply combiner.
 			 */
-			if (rb->appendator)
-			{
-				current->data = rb->appendator(current->data, data, rb->arg);
-				return current->data;
-			}
-			else
-			{
-				void	   *old = current->data;
-
-				current->data = data;
-				return old;
-			}
+			rb->combiner(current, data, rb->arg);
+			*isNew = false;
+			return current;
 		}
 		parent = current;
 		current = (cmp < 0) ? current->left : current->right;
 	}
 
-	/* setup new node in tree */
-	x = palloc(sizeof(RBNode));
-	x->data = data;
-	x->parent = parent;
-	x->left = RBNIL;
-	x->right = RBNIL;
-	x->color = RBRED;
+	/*
+	 * Value is not present, so create a new node containing data.
+	 */
+	*isNew = true;
+
+	x = rb->allocfunc(rb->arg);
 
 	x->iteratorState = InitialState;
+	x->color = RBRED;
+	x->left = RBNIL;
+	x->right = RBNIL;
+	x->parent = parent;
+	rb_copy_data(rb, x, data);
 
 	/* insert node in tree */
 	if (parent)
@@ -377,7 +457,8 @@ rb_insert(RBTree *rb, void *data)
 	}
 
 	rb_insert_fixup(rb, x);
-	return NULL;
+
+	return x;
 }
 
 /**********************************************************************
@@ -533,11 +614,11 @@ rb_delete_node(RBTree *rb, RBNode *z)
 	}
 
 	/*
-	 * If we removed the tree successor of z rather than z itself, then attach
+	 * If we removed the tree successor of z rather than z itself, then move
 	 * the data for the removed node to the one we were supposed to remove.
 	 */
 	if (y != z)
-		z->data = y->data;
+		rb_copy_data(rb, z, y);
 
 	/*
 	 * Removing a black node might make some paths from root to leaf contain
@@ -546,260 +627,245 @@ rb_delete_node(RBTree *rb, RBNode *z)
 	if (y->color == RBBLACK)
 		rb_delete_fixup(rb, x);
 
-	pfree(y);
-}
-
-extern void
-rb_delete(RBTree *rb, void *data)
-{
-	RBNode	   *node = rb->root;
-	int			cmp;
-
-	while (node != RBNIL)
-	{
-		cmp = rb->comparator(data, node->data, rb->arg);
-
-		if (cmp == 0)
-		{
-			/* found node to delete */
-			if (rb->freefunc)
-				rb->freefunc (node->data);
-
-			node->data = NULL;
-			rb_delete_node(rb, node);
-			return;
-		}
-		else if (cmp < 0)
-			node = node->left;
-		else
-			node = node->right;
-	}
+	/* Now we can recycle the y node */
+	if (rb->freefunc)
+		rb->freefunc(y, rb->arg);
 }
 
 /*
- * Return data on left most node and delete
- * that node
+ * rb_delete: remove the given tree entry
+ *
+ * "node" must have previously been found via rb_find or rb_leftmost.
+ * It is caller's responsibility to free any subsidiary data attached
+ * to the node before calling rb_delete.  (Do *not* try to push that
+ * responsibility off to the freefunc, as some other physical node
+ * may be the one actually freed!)
  */
-extern void *
-rb_leftmost(RBTree *rb)
+void
+rb_delete(RBTree *rb, RBNode *node)
 {
-	RBNode	   *node = rb->root;
-	RBNode	   *leftmost = rb->root;
-	void	   *res = NULL;
-
-	while (node != RBNIL)
-	{
-		leftmost = node;
-		node = node->left;
-	}
-
-	if (leftmost != RBNIL)
-	{
-		res = leftmost->data;
-		leftmost->data = NULL;
-		rb_delete_node(rb, leftmost);
-	}
-
-	return res;
+	rb_delete_node(rb, node);
 }
 
 /**********************************************************************
  *						  Traverse									  *
  **********************************************************************/
 
-static void *
-rb_next_node(RBTreeIterator *iterator, RBNode *node)
-{
-	node->iteratorState = InitialState;
-	iterator->node = node;
-	return iterator->iterate(iterator);
-}
+/*
+ * The iterator routines were originally coded in tail-recursion style,
+ * which is nice to look at, but is trouble if your compiler isn't smart
+ * enough to optimize it.  Now we just use looping.
+ */
+#define descend(next_node) \
+	do { \
+		(next_node)->iteratorState = InitialState; \
+		node = rb->cur = (next_node); \
+		goto restart; \
+	} while (0)
 
-static void *
-rb_left_right_iterator(RBTreeIterator *iterator)
-{
-	RBNode	   *node = iterator->node;
+#define ascend(next_node) \
+	do { \
+		node = rb->cur = (next_node); \
+		goto restart; \
+	} while (0)
 
+
+static RBNode *
+rb_left_right_iterator(RBTree *rb)
+{
+	RBNode	   *node = rb->cur;
+
+restart:
 	switch (node->iteratorState)
 	{
 		case InitialState:
 			if (node->left != RBNIL)
 			{
 				node->iteratorState = FirstStepDone;
-				return rb_next_node(iterator, node->left);
+				descend(node->left);
 			}
+			/* FALL THROUGH */
 		case FirstStepDone:
 			node->iteratorState = SecondStepDone;
-			return node->data;
+			return node;
 		case SecondStepDone:
 			if (node->right != RBNIL)
 			{
 				node->iteratorState = ThirdStepDone;
-				return rb_next_node(iterator, node->right);
+				descend(node->right);
 			}
+			/* FALL THROUGH */
 		case ThirdStepDone:
 			if (node->parent)
-			{
-				iterator->node = node->parent;
-				return iterator->iterate(iterator);
-			}
+				ascend(node->parent);
 			break;
 		default:
-			elog(ERROR, "Unknow node state: %d", node->iteratorState);
+			elog(ERROR, "unrecognized rbtree node state: %d",
+				 node->iteratorState);
 	}
 
 	return NULL;
 }
 
-static void *
-rb_right_left_iterator(RBTreeIterator *iterator)
+static RBNode *
+rb_right_left_iterator(RBTree *rb)
 {
-	RBNode	   *node = iterator->node;
+	RBNode	   *node = rb->cur;
 
+restart:
 	switch (node->iteratorState)
 	{
 		case InitialState:
 			if (node->right != RBNIL)
 			{
 				node->iteratorState = FirstStepDone;
-				return rb_next_node(iterator, node->right);
+				descend(node->right);
 			}
+			/* FALL THROUGH */
 		case FirstStepDone:
 			node->iteratorState = SecondStepDone;
-			return node->data;
+			return node;
 		case SecondStepDone:
 			if (node->left != RBNIL)
 			{
 				node->iteratorState = ThirdStepDone;
-				return rb_next_node(iterator, node->left);
+				descend(node->left);
 			}
+			/* FALL THROUGH */
 		case ThirdStepDone:
 			if (node->parent)
-			{
-				iterator->node = node->parent;
-				return iterator->iterate(iterator);
-			}
+				ascend(node->parent);
 			break;
 		default:
-			elog(ERROR, "Unknow node state: %d", node->iteratorState);
+			elog(ERROR, "unrecognized rbtree node state: %d",
+				 node->iteratorState);
 	}
 
 	return NULL;
 }
 
-static void *
-rb_direct_iterator(RBTreeIterator *iterator)
+static RBNode *
+rb_direct_iterator(RBTree *rb)
 {
-	RBNode	   *node = iterator->node;
+	RBNode	   *node = rb->cur;
 
+restart:
 	switch (node->iteratorState)
 	{
 		case InitialState:
 			node->iteratorState = FirstStepDone;
-			return node->data;
+			return node;
 		case FirstStepDone:
 			if (node->left != RBNIL)
 			{
 				node->iteratorState = SecondStepDone;
-				return rb_next_node(iterator, node->left);
+				descend(node->left);
 			}
+			/* FALL THROUGH */
 		case SecondStepDone:
 			if (node->right != RBNIL)
 			{
 				node->iteratorState = ThirdStepDone;
-				return rb_next_node(iterator, node->right);
+				descend(node->right);
 			}
+			/* FALL THROUGH */
 		case ThirdStepDone:
 			if (node->parent)
-			{
-				iterator->node = node->parent;
-				return iterator->iterate(iterator);
-			}
+				ascend(node->parent);
 			break;
 		default:
-			elog(ERROR, "Unknow node state: %d", node->iteratorState);
+			elog(ERROR, "unrecognized rbtree node state: %d",
+				 node->iteratorState);
 	}
 
 	return NULL;
 }
 
-static void *
-rb_inverted_iterator(RBTreeIterator *iterator)
+static RBNode *
+rb_inverted_iterator(RBTree *rb)
 {
-	RBNode	   *node = iterator->node;
+	RBNode	   *node = rb->cur;
 
+restart:
 	switch (node->iteratorState)
 	{
 		case InitialState:
 			if (node->left != RBNIL)
 			{
 				node->iteratorState = FirstStepDone;
-				return rb_next_node(iterator, node->left);
+				descend(node->left);
 			}
+			/* FALL THROUGH */
 		case FirstStepDone:
 			if (node->right != RBNIL)
 			{
 				node->iteratorState = SecondStepDone;
-				return rb_next_node(iterator, node->right);
+				descend(node->right);
 			}
+			/* FALL THROUGH */
 		case SecondStepDone:
 			node->iteratorState = ThirdStepDone;
-			return node->data;
+			return node;
 		case ThirdStepDone:
 			if (node->parent)
-			{
-				iterator->node = node->parent;
-				return iterator->iterate(iterator);
-			}
+				ascend(node->parent);
 			break;
 		default:
-			elog(ERROR, "Unknow node state: %d", node->iteratorState);
+			elog(ERROR, "unrecognized rbtree node state: %d",
+				 node->iteratorState);
 	}
 
 	return NULL;
 }
 
-RBTreeIterator *
+/*
+ * rb_begin_iterate: prepare to traverse the tree in any of several orders
+ *
+ * After calling rb_begin_iterate, call rb_iterate repeatedly until it
+ * returns NULL or the traversal stops being of interest.
+ *
+ * If the tree is changed during traversal, results of further calls to
+ * rb_iterate are unspecified.
+ *
+ * Note: this used to return a separately palloc'd iterator control struct,
+ * but that's a bit pointless since the data structure is incapable of
+ * supporting multiple concurrent traversals.  Now we just keep the state
+ * in RBTree.
+ */
+void
 rb_begin_iterate(RBTree *rb, RBOrderControl ctrl)
 {
-	RBTreeIterator *iterator = palloc(sizeof(RBTreeIterator));
-
-	iterator->node = rb->root;
-	if (iterator->node != RBNIL)
-		iterator->node->iteratorState = InitialState;
+	rb->cur = rb->root;
+	if (rb->cur != RBNIL)
+		rb->cur->iteratorState = InitialState;
 
 	switch (ctrl)
 	{
 		case LeftRightWalk:		/* visit left, then self, then right */
-			iterator->iterate = rb_left_right_iterator;
+			rb->iterate = rb_left_right_iterator;
 			break;
 		case RightLeftWalk:		/* visit right, then self, then left */
-			iterator->iterate = rb_right_left_iterator;
+			rb->iterate = rb_right_left_iterator;
 			break;
 		case DirectWalk:		/* visit self, then left, then right */
-			iterator->iterate = rb_direct_iterator;
+			rb->iterate = rb_direct_iterator;
 			break;
 		case InvertedWalk:		/* visit left, then right, then self */
-			iterator->iterate = rb_inverted_iterator;
+			rb->iterate = rb_inverted_iterator;
 			break;
 		default:
-			elog(ERROR, "Unknown iterator order: %d", ctrl);
+			elog(ERROR, "unrecognized rbtree iteration order: %d", ctrl);
 	}
-
-	return iterator;
 }
 
-void *
-rb_iterate(RBTreeIterator *iterator)
+/*
+ * rb_iterate: return the next node in traversal order, or NULL if no more
+ */
+RBNode *
+rb_iterate(RBTree *rb)
 {
-	if (iterator->node == RBNIL)
+	if (rb->cur == RBNIL)
 		return NULL;
 
-	return iterator->iterate(iterator);
-}
-
-void
-rb_free_iterator(RBTreeIterator *iterator)
-{
-	pfree(iterator);
+	return rb->iterate(rb);
 }
