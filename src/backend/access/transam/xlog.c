@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.430 2010/07/06 19:18:55 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.430.2.1 2010/08/01 23:07:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -362,7 +362,7 @@ typedef struct XLogCtlData
 	XLogwrtResult LogwrtResult;
 	uint32		ckptXidEpoch;	/* nextXID & epoch of latest checkpoint */
 	TransactionId ckptXid;
-	XLogRecPtr	asyncCommitLSN; /* LSN of newest async commit */
+	XLogRecPtr	asyncXactLSN; /* LSN of newest async commit/abort */
 	uint32		lastRemovedLog; /* latest removed/recycled XLOG segment */
 	uint32		lastRemovedSeg;
 
@@ -1874,18 +1874,18 @@ XLogWrite(XLogwrtRqst WriteRqst, bool flexible, bool xlog_switch)
 }
 
 /*
- * Record the LSN for an asynchronous transaction commit.
- * (This should not be called for aborts, nor for synchronous commits.)
+ * Record the LSN for an asynchronous transaction commit/abort.
+ * (This should not be called for for synchronous commits.)
  */
 void
-XLogSetAsyncCommitLSN(XLogRecPtr asyncCommitLSN)
+XLogSetAsyncXactLSN(XLogRecPtr asyncXactLSN)
 {
 	/* use volatile pointer to prevent code rearrangement */
 	volatile XLogCtlData *xlogctl = XLogCtl;
 
 	SpinLockAcquire(&xlogctl->info_lck);
-	if (XLByteLT(xlogctl->asyncCommitLSN, asyncCommitLSN))
-		xlogctl->asyncCommitLSN = asyncCommitLSN;
+	if (XLByteLT(xlogctl->asyncXactLSN, asyncXactLSN))
+		xlogctl->asyncXactLSN = asyncXactLSN;
 	SpinLockRelease(&xlogctl->info_lck);
 }
 
@@ -2134,7 +2134,7 @@ XLogBackgroundFlush(void)
 		volatile XLogCtlData *xlogctl = XLogCtl;
 
 		SpinLockAcquire(&xlogctl->info_lck);
-		WriteRqstPtr = xlogctl->asyncCommitLSN;
+		WriteRqstPtr = xlogctl->asyncXactLSN;
 		SpinLockRelease(&xlogctl->info_lck);
 		flexible = false;		/* ensure it all gets written */
 	}

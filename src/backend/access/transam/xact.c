@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.293.2.1 2010/07/23 00:43:09 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.293.2.2 2010/08/01 23:07:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1086,7 +1086,7 @@ RecordTransactionCommit(void)
 		 * Report the latest async commit LSN, so that the WAL writer knows to
 		 * flush this commit.
 		 */
-		XLogSetAsyncCommitLSN(XactLastRecEnd);
+		XLogSetAsyncXactLSN(XactLastRecEnd);
 
 		/*
 		 * We must not immediately update the CLOG, since we didn't flush the
@@ -1384,7 +1384,7 @@ RecordTransactionAbort(bool isSubXact)
 	 * problems occur at that point.
 	 */
 	if (!isSubXact)
-		XLogSetAsyncCommitLSN(XactLastRecEnd);
+		XLogSetAsyncXactLSN(XactLastRecEnd);
 
 	/*
 	 * Mark the transaction aborted in clog.  This is not absolutely necessary
