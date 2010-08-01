@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/commands/vacuum.h,v 1.89 2010/02/09 21:43:30 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/commands/vacuum.h,v 1.89.6.1 2010/08/01 22:38:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -62,9 +62,17 @@ typedef struct VacAttrStats
 	/*
 	 * These fields are set up by the main ANALYZE code before invoking the
 	 * type-specific typanalyze function.
+	 *
+	 * Note: do not assume that the data being analyzed has the same datatype
+	 * shown in attr, ie do not trust attr->atttypid, attlen, etc.  This is
+	 * because some index opclasses store a different type than the underlying
+	 * column/expression.  Instead use attrtypid, attrtypmod, and attrtype for
+	 * information about the datatype being fed to the typanalyze function.
 	 */
 	Form_pg_attribute attr;		/* copy of pg_attribute row for column */
-	Form_pg_type attrtype;		/* copy of pg_type row for column */
+	Oid			attrtypid;		/* type of data being analyzed */
+	int32		attrtypmod;		/* typmod of data being analyzed */
+	Form_pg_type attrtype;		/* copy of pg_type row for attrtypid */
 	MemoryContext anl_context;	/* where to save long-lived data */
 
 	/*
@@ -95,10 +103,9 @@ typedef struct VacAttrStats
 
 	/*
 	 * These fields describe the stavalues[n] element types. They will be
-	 * initialized to be the same as the column's that's underlying the slot,
-	 * but a custom typanalyze function might want to store an array of
-	 * something other than the analyzed column's elements. It should then
-	 * overwrite these fields.
+	 * initialized to match attrtypid, but a custom typanalyze function might
+	 * want to store an array of something other than the analyzed column's
+	 * elements. It should then overwrite these fields.
 	 */
 	Oid			statypid[STATISTIC_NUM_SLOTS];
 	int2		statyplen[STATISTIC_NUM_SLOTS];
