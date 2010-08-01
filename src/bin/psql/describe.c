@@ -8,7 +8,7 @@
  *
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.242 2010/07/06 19:18:59 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.243 2010/08/01 01:08:29 rhaas Exp $
  */
 #include "postgres_fe.h"
 
@@ -1592,7 +1592,12 @@ describeOneTableDetails(const char *schemaname,
 						if (strcmp(PQgetvalue(result, i, 1), "t") == 0)
 							appendPQExpBuffer(&buf, " PRIMARY KEY,");
 						else if (strcmp(PQgetvalue(result, i, 2), "t") == 0)
-							appendPQExpBuffer(&buf, " UNIQUE,");
+						{
+							if (strcmp(PQgetvalue(result, i, 7), "u") == 0)
+								appendPQExpBuffer(&buf, " UNIQUE CONSTRAINT,");
+							else
+								appendPQExpBuffer(&buf, " UNIQUE,");
+						}
 
 						/* Everything after "USING" is echoed verbatim */
 						indexdef = PQgetvalue(result, i, 5);

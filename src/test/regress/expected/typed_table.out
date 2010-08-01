@@ -55,7 +55,7 @@ NOTICE:  CREATE TABLE / UNIQUE will create implicit index "persons2_name_key" fo
  name   | text    | 
 Indexes:
     "persons2_pkey" PRIMARY KEY, btree (id)
-    "persons2_name_key" UNIQUE, btree (name)
+    "persons2_name_key" UNIQUE CONSTRAINT, btree (name)
 Typed table of type: person_type
 
 CREATE TABLE persons3 OF person_type (
