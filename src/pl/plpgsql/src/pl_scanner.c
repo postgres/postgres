@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_scanner.c,v 1.5 2010/02/26 02:01:35 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_scanner.c,v 1.6 2010/08/02 03:46:54 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -518,19 +518,6 @@ location_lineno_init(void)
 {
 	cur_line_start = scanorig;
 	cur_line_num = 1;
-
-	/*----------
-	 * Hack: skip any initial newline, so that in the common coding layout
-	 *		CREATE FUNCTION ... AS $$
-	 *			code body
-	 *		$$ LANGUAGE plpgsql;
-	 * we will think "line 1" is what the programmer thinks of as line 1.
-	 *----------
-	 */
-	if (*cur_line_start == '\r')
-		cur_line_start++;
-	if (*cur_line_start == '\n')
-		cur_line_start++;
 
 	cur_line_end = strchr(cur_line_start, '\n');
 }

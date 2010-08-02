@@ -1518,16 +1518,16 @@ ERROR:  duplicate key value violates unique constraint "pfield_name"
 DETAIL:  Key (name)=(PF1_1) already exists.
 update PSlot set backlink = 'WS.not.there' where slotname = 'PS.base.a1';
 ERROR:  WS.not.there         does not exist
-CONTEXT:  PL/pgSQL function "tg_backlink_a" line 16 at assignment
+CONTEXT:  PL/pgSQL function "tg_backlink_a" line 17 at assignment
 update PSlot set backlink = 'XX.illegal' where slotname = 'PS.base.a1';
 ERROR:  illegal backlink beginning with XX
-CONTEXT:  PL/pgSQL function "tg_backlink_a" line 16 at assignment
+CONTEXT:  PL/pgSQL function "tg_backlink_a" line 17 at assignment
 update PSlot set slotlink = 'PS.not.there' where slotname = 'PS.base.a1';
 ERROR:  PS.not.there         does not exist
-CONTEXT:  PL/pgSQL function "tg_slotlink_a" line 16 at assignment
+CONTEXT:  PL/pgSQL function "tg_slotlink_a" line 17 at assignment
 update PSlot set slotlink = 'XX.illegal' where slotname = 'PS.base.a1';
 ERROR:  illegal slotlink beginning with XX
-CONTEXT:  PL/pgSQL function "tg_slotlink_a" line 16 at assignment
+CONTEXT:  PL/pgSQL function "tg_slotlink_a" line 17 at assignment
 insert into HSlot values ('HS', 'base.hub1', 1, '');
 ERROR:  duplicate key value violates unique constraint "hslot_name"
 DETAIL:  Key (slotname)=(HS.base.hub1.1      ) already exists.
@@ -2067,13 +2067,13 @@ end$$ language plpgsql;
 select test_variable_storage();
 NOTICE:  should see this
 CONTEXT:  SQL statement "SELECT trap_zero_divide(-100)"
-PL/pgSQL function "test_variable_storage" line 7 at PERFORM
+PL/pgSQL function "test_variable_storage" line 8 at PERFORM
 NOTICE:  should see this only if -100 <> 0
 CONTEXT:  SQL statement "SELECT trap_zero_divide(-100)"
-PL/pgSQL function "test_variable_storage" line 7 at PERFORM
+PL/pgSQL function "test_variable_storage" line 8 at PERFORM
 NOTICE:  should see this only if -100 fits in smallint
 CONTEXT:  SQL statement "SELECT trap_zero_divide(-100)"
-PL/pgSQL function "test_variable_storage" line 7 at PERFORM
+PL/pgSQL function "test_variable_storage" line 8 at PERFORM
  test_variable_storage 
 -----------------------
  123456789012
@@ -2302,7 +2302,7 @@ end;
 $$ language plpgsql;
 select raise_test1(5);
 ERROR:  too many parameters specified for RAISE
-CONTEXT:  PL/pgSQL function "raise_test1" line 2 at RAISE
+CONTEXT:  PL/pgSQL function "raise_test1" line 3 at RAISE
 create function raise_test2(int) returns int as $$
 begin
     raise notice 'This message has too few parameters: %, %, %', $1, $1;
@@ -2311,7 +2311,7 @@ end;
 $$ language plpgsql;
 select raise_test2(10);
 ERROR:  too few parameters specified for RAISE
-CONTEXT:  PL/pgSQL function "raise_test2" line 2 at RAISE
+CONTEXT:  PL/pgSQL function "raise_test2" line 3 at RAISE
 --
 -- reject function definitions that contain malformed SQL queries at
 -- compile-time, where possible
@@ -2424,7 +2424,7 @@ ERROR:  column "sqlstate" does not exist
 LINE 1: SELECT sqlstate
                ^
 QUERY:  SELECT sqlstate
-CONTEXT:  PL/pgSQL function "excpt_test1" line 2 at RAISE
+CONTEXT:  PL/pgSQL function "excpt_test1" line 3 at RAISE
 create function excpt_test2() returns void as $$
 begin
     begin
@@ -2439,7 +2439,7 @@ ERROR:  column "sqlstate" does not exist
 LINE 1: SELECT sqlstate
                ^
 QUERY:  SELECT sqlstate
-CONTEXT:  PL/pgSQL function "excpt_test2" line 4 at RAISE
+CONTEXT:  PL/pgSQL function "excpt_test2" line 5 at RAISE
 create function excpt_test3() returns void as $$
 begin
     begin
@@ -2821,7 +2821,7 @@ begin
 end$$ language plpgsql;
 select footest();
 ERROR:  query returned more than one row
-CONTEXT:  PL/pgSQL function "footest" line 4 at SQL statement
+CONTEXT:  PL/pgSQL function "footest" line 5 at SQL statement
 create or replace function footest() returns void as $$
 declare x record;
 begin
@@ -2884,7 +2884,7 @@ begin
 end$$ language plpgsql;
 select footest();
 ERROR:  query returned no rows
-CONTEXT:  PL/pgSQL function "footest" line 4 at SQL statement
+CONTEXT:  PL/pgSQL function "footest" line 5 at SQL statement
 create or replace function footest() returns void as $$
 declare x record;
 begin
@@ -2894,7 +2894,7 @@ begin
 end$$ language plpgsql;
 select footest();
 ERROR:  query returned more than one row
-CONTEXT:  PL/pgSQL function "footest" line 4 at SQL statement
+CONTEXT:  PL/pgSQL function "footest" line 5 at SQL statement
 create or replace function footest() returns void as $$
 declare x record;
 begin
@@ -2918,7 +2918,7 @@ begin
 end$$ language plpgsql;
 select footest();
 ERROR:  query returned no rows
-CONTEXT:  PL/pgSQL function "footest" line 4 at EXECUTE statement
+CONTEXT:  PL/pgSQL function "footest" line 5 at EXECUTE statement
 create or replace function footest() returns void as $$
 declare x record;
 begin
@@ -2928,7 +2928,7 @@ begin
 end$$ language plpgsql;
 select footest();
 ERROR:  query returned more than one row
-CONTEXT:  PL/pgSQL function "footest" line 4 at EXECUTE statement
+CONTEXT:  PL/pgSQL function "footest" line 5 at EXECUTE statement
 drop function footest();
 -- test scrollable cursor support
 create function sc_test() returns setof integer as $$
@@ -2972,7 +2972,7 @@ $$ language plpgsql;
 select * from sc_test();  -- fails because of NO SCROLL specification
 ERROR:  cursor can only scan forward
 HINT:  Declare it with SCROLL option to enable backward scan.
-CONTEXT:  PL/pgSQL function "sc_test" line 6 at FETCH
+CONTEXT:  PL/pgSQL function "sc_test" line 7 at FETCH
 create or replace function sc_test() returns setof integer as $$
 declare
   c refcursor;
@@ -3559,7 +3559,7 @@ end;
 $$ language plpgsql;
 select raise_test();
 ERROR:  RAISE option already specified: MESSAGE
-CONTEXT:  PL/pgSQL function "raise_test" line 2 at RAISE
+CONTEXT:  PL/pgSQL function "raise_test" line 3 at RAISE
 -- conflict on errcode
 create or replace function raise_test() returns void as $$
 begin
@@ -3568,7 +3568,7 @@ end;
 $$ language plpgsql;
 select raise_test();
 ERROR:  RAISE option already specified: ERRCODE
-CONTEXT:  PL/pgSQL function "raise_test" line 2 at RAISE
+CONTEXT:  PL/pgSQL function "raise_test" line 3 at RAISE
 -- nothing to re-RAISE
 create or replace function raise_test() returns void as $$
 begin
@@ -3639,7 +3639,7 @@ select case_test(4);
 select case_test(5); -- fails
 ERROR:  case not found
 HINT:  CASE statement is missing ELSE part.
-CONTEXT:  PL/pgSQL function "case_test" line 4 at CASE
+CONTEXT:  PL/pgSQL function "case_test" line 5 at CASE
 select case_test(8);
       case_test       
 ----------------------
@@ -3667,7 +3667,7 @@ select case_test(12);
 select case_test(13); -- fails
 ERROR:  case not found
 HINT:  CASE statement is missing ELSE part.
-CONTEXT:  PL/pgSQL function "case_test" line 4 at CASE
+CONTEXT:  PL/pgSQL function "case_test" line 5 at CASE
 create or replace function catch() returns void as $$
 begin
   raise notice '%', case_test(6);
@@ -3943,7 +3943,7 @@ LINE 1: SELECT 'foo\\bar\041baz'
                ^
 HINT:  Use the escape string syntax for backslashes, e.g., E'\\'.
 QUERY:  SELECT 'foo\\bar\041baz'
-CONTEXT:  PL/pgSQL function "strtest" line 3 at RETURN
+CONTEXT:  PL/pgSQL function "strtest" line 4 at RETURN
    strtest   
 -------------
  foo\bar!baz
@@ -4026,7 +4026,7 @@ ERROR:  column "foo" does not exist
 LINE 1: SELECT rtrim(roomno) AS roomno, foo FROM Room ORDER BY roomn...
                                         ^
 QUERY:  SELECT rtrim(roomno) AS roomno, foo FROM Room ORDER BY roomno
-CONTEXT:  PL/pgSQL function "inline_code_block" line 3 at FOR over SELECT rows
+CONTEXT:  PL/pgSQL function "inline_code_block" line 4 at FOR over SELECT rows
 -- Check variable scoping -- a var is not available in its own or prior
 -- default expressions.
 create function scope_test() returns int as $$
@@ -4063,7 +4063,7 @@ LINE 1: select q1,q2 from int8_tbl
                ^
 DETAIL:  It could refer to either a PL/pgSQL variable or a table column.
 QUERY:  select q1,q2 from int8_tbl
-CONTEXT:  PL/pgSQL function "conflict_test" line 4 at FOR over SELECT rows
+CONTEXT:  PL/pgSQL function "conflict_test" line 5 at FOR over SELECT rows
 create or replace function conflict_test() returns setof int8_tbl as $$
 #variable_conflict use_variable
 declare r record;
