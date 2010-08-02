@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/datetime.c,v 1.212 2010/05/09 02:15:59 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/datetime.c,v 1.213 2010/08/02 01:24:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3098,7 +3098,7 @@ DecodeInterval(char **field, int *ftype, int nf, int range,
 						break;
 
 					case RESERV:
-						tmask = (DTK_DATE_M || DTK_TIME_M);
+						tmask = (DTK_DATE_M | DTK_TIME_M);
 						*dtype = val;
 						break;
 

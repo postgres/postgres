@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/interval.c,v 1.42 2009/09/03 09:59:20 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/interval.c,v 1.43 2010/08/02 01:24:54 tgl Exp $ */
 
 #include "postgres_fe.h"
 #include <time.h>
@@ -606,7 +606,7 @@ DecodeInterval(char **field, int *ftype, int nf,		/* int range, */
 						break;
 
 					case RESERV:
-						tmask = (DTK_DATE_M || DTK_TIME_M);
+						tmask = (DTK_DATE_M | DTK_TIME_M);
 						*dtype = val;
 						break;
 
