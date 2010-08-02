@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/btree_gist/btree_utils_var.c,v 1.23 2010/02/26 02:00:32 momjian Exp $
+ * $PostgreSQL: pgsql/contrib/btree_gist/btree_utils_var.c,v 1.24 2010/08/02 16:26:48 rhaas Exp $
  */
 #include "btree_gist.h"
 
@@ -595,6 +595,9 @@ gbt_var_consistent(
 			else
 				retval = (*tinfo->f_cmp) ((bytea *) query, key->upper) <= 0
 					|| gbt_var_node_pf_match(key, query, tinfo);
+			break;
+		case BtreeGistNotEqualStrategyNumber:
+			retval = ! ((*tinfo->f_eq) (query, key->lower) && (*tinfo->f_eq) (query, key->upper));
 			break;
 		default:
 			retval = FALSE;

@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/btree_gist/btree_gist.h,v 1.9 2009/06/11 14:48:50 momjian Exp $
+ * $PostgreSQL: pgsql/contrib/btree_gist/btree_gist.h,v 1.10 2010/08/02 16:26:48 rhaas Exp $
  */
 #ifndef __BTREE_GIST_H__
 #define __BTREE_GIST_H__
@@ -8,6 +8,8 @@
 #include "access/gist.h"
 #include "access/itup.h"
 #include "access/nbtree.h"
+
+#define BtreeGistNotEqualStrategyNumber 6
 
 /* indexed types */
 

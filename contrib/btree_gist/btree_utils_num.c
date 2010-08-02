@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/btree_gist/btree_utils_num.c,v 1.12 2009/06/11 14:48:50 momjian Exp $
+ * $PostgreSQL: pgsql/contrib/btree_gist/btree_utils_num.c,v 1.13 2010/08/02 16:26:48 rhaas Exp $
  */
 #include "btree_gist.h"
 #include "btree_utils_num.h"
@@ -224,6 +224,10 @@ gbt_num_consistent(
 			break;
 		case BTGreaterEqualStrategyNumber:
 			retval = (*tinfo->f_le) (query, key->upper);
+			break;
+		case BtreeGistNotEqualStrategyNumber:
+			retval = ! ((*tinfo->f_eq) (query, key->lower) &&
+				(*tinfo->f_eq) (query, key->upper));
 			break;
 		default:
 			retval = FALSE;
