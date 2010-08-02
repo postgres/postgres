@@ -5,7 +5,7 @@
  *
  * Joe Conway <mail@joeconway.com>
  *
- * $PostgreSQL: pgsql/contrib/fuzzystrmatch/fuzzystrmatch.c,v 1.33 2010/07/29 20:11:48 rhaas Exp $
+ * $PostgreSQL: pgsql/contrib/fuzzystrmatch/fuzzystrmatch.c,v 1.34 2010/08/02 23:20:23 rhaas Exp $
  * Copyright (c) 2001-2010, PostgreSQL Global Development Group
  * ALL RIGHTS RESERVED;
  *
@@ -50,6 +50,7 @@
 #include <ctype.h>
 
 #include "fmgr.h"
+#include "mb/pg_wchar.h"
 #include "utils/builtins.h"
 
 PG_MODULE_MAGIC;
@@ -183,6 +184,18 @@ getcode(char c)
 /* These prevent GH from becoming F */
 #define NOGHTOF(c)	(getcode(c) & 16)	/* BDH */
 
+/* Faster than memcmp(), for this use case. */
+static bool inline
+rest_of_char_same(const char *s1, const char *s2, int len)
+{
+	while (len > 0)
+	{
+		len--;
+		if (s1[len] != s2[len])
+			return false;
+	}
+	return true;
+}
 
 /*
  * levenshtein_internal - Calculates Levenshtein distance metric
@@ -195,16 +208,27 @@ levenshtein_internal(text *s, text *t,
 					 int ins_c, int del_c, int sub_c)
 {
 	int			m,
-				n;
+				n,
+				s_bytes,
+				t_bytes;
 	int		   *prev;
 	int		   *curr;
+	int		   *s_char_len = NULL;
 	int			i,
 				j;
-	const char *x;
+	const char *s_data;
+	const char *t_data;
 	const char *y;
 
-	m = VARSIZE_ANY_EXHDR(s);
-	n = VARSIZE_ANY_EXHDR(t);
+	/* Extract a pointer to the actual character data. */
+	s_data = VARDATA_ANY(s);
+	t_data = VARDATA_ANY(t);
+
+	/* Determine length of each string in bytes and characters. */
+	s_bytes = VARSIZE_ANY_EXHDR(s);
+	t_bytes = VARSIZE_ANY_EXHDR(t);
+	m = pg_mbstrlen_with_len(s_data, s_bytes);
+	n = pg_mbstrlen_with_len(t_data, t_bytes);
 
 	/*
 	 * We can transform an empty s into t with n insertions, or a non-empty t
@@ -226,6 +250,28 @@ levenshtein_internal(text *s, text *t,
 				 errmsg("argument exceeds the maximum length of %d bytes",
 						MAX_LEVENSHTEIN_STRLEN)));
 
+	/*
+	 * In order to avoid calling pg_mblen() repeatedly on each character in s,
+	 * we cache all the lengths before starting the main loop -- but if all the
+	 * characters in both strings are single byte, then we skip this and use
+	 * a fast-path in the main loop.  If only one string contains multi-byte
+	 * characters, we still build the array, so that the fast-path needn't
+	 * deal with the case where the array hasn't been initialized.
+	 */
+	if (m != s_bytes || n != t_bytes)
+	{
+		int		i;
+		const char *cp = s_data;
+
+		s_char_len = (int *) palloc((m + 1) * sizeof(int));
+		for (i = 0; i < m; ++i)
+		{
+			s_char_len[i] = pg_mblen(cp);
+			cp += s_char_len[i];
+		}
+		s_char_len[i] = 0;
+	}
+
 	/* One more cell for initialization column and row. */
 	++m;
 	++n;
@@ -244,9 +290,11 @@ levenshtein_internal(text *s, text *t,
 		prev[i] = i * del_c;
 
 	/* Loop through rows of the notional array */
-	for (y = VARDATA_ANY(t), j = 1; j < n; y++, j++)
+	for (y = t_data, j = 1; j < n; j++)
 	{
 		int		   *temp;
+		const char *x = s_data;
+		int			y_char_len = n != t_bytes + 1 ? pg_mblen(y) : 1;
 
 		/*
 		 * First cell must increment sequentially, as we're on the j'th row of
@@ -254,26 +302,77 @@ levenshtein_internal(text *s, text *t,
 		 */
 		curr[0] = j * ins_c;
 
-		for (x = VARDATA_ANY(s), i = 1; i < m; x++, i++)
+		/*
+		 * This inner loop is critical to performance, so we include a
+		 * fast-path to handle the (fairly common) case where no multibyte
+		 * characters are in the mix.  The fast-path is entitled to assume
+		 * that if s_char_len is not initialized then BOTH strings contain
+		 * only single-byte characters.
+		 */
+		if (s_char_len != NULL)
 		{
-			int			ins;
-			int			del;
-			int			sub;
+			for (i = 1; i < m; i++)
+			{
+				int			ins;
+				int			del;
+				int			sub;
+				int			x_char_len = s_char_len[i - 1];
 
-			/* Calculate costs for probable operations. */
-			ins = prev[i] + ins_c;		/* Insertion	*/
-			del = curr[i - 1] + del_c;	/* Deletion		*/
-			sub = prev[i - 1] + ((*x == *y) ? 0 : sub_c);		/* Substitution */
+				/*
+				 * Calculate costs for insertion, deletion, and substitution.
+				 *
+				 * When calculating cost for substitution, we compare the last
+				 * character of each possibly-multibyte character first,
+				 * because that's enough to rule out most mis-matches.  If we
+				 * get past that test, then we compare the lengths and the
+				 * remaining bytes.
+				 */
+				ins = prev[i] + ins_c;
+				del = curr[i - 1] + del_c;
+				if (x[x_char_len-1] == y[y_char_len-1]
+					&& x_char_len == y_char_len &&
+					(x_char_len == 1 || rest_of_char_same(x, y, x_char_len)))
+					sub = prev[i - 1];
+				else
+					sub = prev[i - 1] + sub_c;
 
-			/* Take the one with minimum cost. */
-			curr[i] = Min(ins, del);
-			curr[i] = Min(curr[i], sub);
+				/* Take the one with minimum cost. */
+				curr[i] = Min(ins, del);
+				curr[i] = Min(curr[i], sub);
+
+				/* Point to next character. */
+				x += x_char_len;
+			}
+		}
+		else
+		{
+			for (i = 1; i < m; i++)
+			{
+				int			ins;
+				int			del;
+				int			sub;
+
+				/* Calculate costs for insertion, deletion, and substitution. */
+				ins = prev[i] + ins_c;
+				del = curr[i - 1] + del_c;
+				sub = prev[i - 1] + ((*x == *y) ? 0 : sub_c);
+
+				/* Take the one with minimum cost. */
+				curr[i] = Min(ins, del);
+				curr[i] = Min(curr[i], sub);
+
+				/* Point to next character. */
+				x++;
+			}
 		}
 
 		/* Swap current row with previous row. */
 		temp = curr;
 		curr = prev;
 		prev = temp;
+
+		/* Point to next character. */
+		y += y_char_len;
 	}
 
 	/*
