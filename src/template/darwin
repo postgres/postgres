@@ -1,8 +1,4 @@
-# $PostgreSQL: pgsql/src/template/darwin,v 1.11 2007/09/26 00:32:46 tgl Exp $
-
-# Apple's cpp-precomp seems a tad broken, so don't use it
-# (Note: on OS X before 10.2, you might need -traditional-cpp instead)
-CC="$CC -no-cpp-precomp"
+# $PostgreSQL: pgsql/src/template/darwin,v 1.12 2010/08/02 04:51:17 tgl Exp $
 
 # Select appropriate semaphore support.  Darwin 6.0 (Mac OS X 10.2) and up
 # support System V semaphores; before that we have to use POSIX semaphores,
