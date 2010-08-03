@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsquery_op.c,v 1.8 2010/01/02 16:57:55 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsquery_op.c,v 1.8.6.1 2010/08/03 00:10:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -149,7 +149,7 @@ CompareTSQ(TSQuery a, TSQuery b)
 	{
 		return (VARSIZE(a) < VARSIZE(b)) ? -1 : 1;
 	}
-	else
+	else if (a->size != 0)
 	{
 		QTNode	   *an = QT2QTN(GETQUERY(a), GETOPERAND(a));
 		QTNode	   *bn = QT2QTN(GETQUERY(b), GETOPERAND(b));
