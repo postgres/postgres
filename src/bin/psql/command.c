@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.224 2010/07/23 14:56:54 rhaas Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.225 2010/08/03 18:33:09 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "command.h"
@@ -294,28 +294,25 @@ exec_command(const char *cmd,
 			free(opt);
 	}
 
-	/* \conninfo -- display information about the current connection	*/
+	/* \conninfo -- display information about the current connection */
 	else if (strcmp(cmd, "conninfo") == 0)
 	{
 		char	   *db = PQdb(pset.db);
 		char	   *host = PQhost(pset.db);
 
 		if (db == NULL)
-			printf("You are not connected.\n");
+			printf(_("You are not connected.\n"));
 		else
 		{
 			if (host == NULL)
 				host = DEFAULT_PGSOCKET_DIR;
-			/*
-			 * If the host is an absolute path, the connection is via local
-			 * socket.
-			 */
+			/* If the host is an absolute path, the connection is via socket */
 			if (is_absolute_path(host))
-				printf("You are connected to database \"%s\" via local socket in \"%s\" at port \"%s\" as user \"%s\".\n",
-					   db, host, PQport(pset.db), PQuser(pset.db));
+				printf(_("You are connected to database \"%s\" as user \"%s\" via socket in \"%s\" at port \"%s\".\n"),
+					   db, PQuser(pset.db), host, PQport(pset.db));
 			else
-				printf("You are connected to database \"%s\" on host \"%s\" at port \"%s\" as user \"%s\".\n",
-					   db, host, PQport(pset.db), PQuser(pset.db));
+				printf(_("You are connected to database \"%s\" as user \"%s\" on host \"%s\" at port \"%s\".\n"),
+					   db, PQuser(pset.db), host, PQport(pset.db));
 		}
 	}
 
@@ -1372,26 +1369,24 @@ do_connect(char *dbname, char *user, char *host, char *port)
 	/* Tell the user about the new connection */
 	if (!pset.quiet)
 	{
-		printf(_("You are now connected to database \"%s\""), PQdb(pset.db));
-
-		if (param_is_newly_set(PQhost(o_conn), PQhost(pset.db)))
+		if (param_is_newly_set(PQhost(o_conn), PQhost(pset.db)) ||
+			param_is_newly_set(PQport(o_conn), PQport(pset.db)))
 		{
 			char	*host = PQhost(pset.db);
 
-			/* If the host is an absolute path, the connection is via local socket */
+			if (host == NULL)
+				host = DEFAULT_PGSOCKET_DIR;
+			/* If the host is an absolute path, the connection is via socket */
 			if (is_absolute_path(host))
-				printf(_(" via local socket in \"%s\""), host);
+				printf(_("You are now connected to database \"%s\" as user \"%s\" via socket in \"%s\" at port \"%s\".\n"),
+					   PQdb(pset.db), PQuser(pset.db), host, PQport(pset.db));
 			else
-				printf(_(" on host \"%s\""), host);
+				printf(_("You are now connected to database \"%s\" as user \"%s\" on host \"%s\" at port \"%s\".\n"),
+					   PQdb(pset.db), PQuser(pset.db), host, PQport(pset.db));
 		}
-
-		if (param_is_newly_set(PQport(o_conn), PQport(pset.db)))
-			printf(_(" at port \"%s\""), PQport(pset.db));
-
-		if (param_is_newly_set(PQuser(o_conn), PQuser(pset.db)))
-			printf(_(" as user \"%s\""), PQuser(pset.db));
-
-		printf(".\n");
+		else
+			printf(_("You are now connected to database \"%s\" as user \"%s\".\n"),
+				   PQdb(pset.db), PQuser(pset.db));
 	}
 
 	if (o_conn)

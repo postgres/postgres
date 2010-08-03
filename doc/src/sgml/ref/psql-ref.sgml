@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.246 2010/07/20 03:54:19 rhaas Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.247 2010/08/03 18:33:09 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -784,8 +784,7 @@ testdb=&gt;
         <term><literal>\conninfo</literal></term>
         <listitem>
         <para>
-        Outputs connection information about the current database
-        connection.
+        Outputs information about the current database connection.
         </para>
         </listitem>
       </varlistentry>
