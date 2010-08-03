@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/geo_decls.h,v 1.57 2010/01/14 16:31:09 teodor Exp $
+ * $PostgreSQL: pgsql/src/include/utils/geo_decls.h,v 1.58 2010/08/03 21:21:03 tgl Exp $
  *
  * NOTE
  *	  These routines do *not* use the float types from adt/.
@@ -50,7 +50,7 @@
 #define FPge(A,B)				((A) >= (B))
 #endif
 
-#define HYPOT(A, B)				sqrt((A) * (A) + (B) * (B))
+#define HYPOT(A, B)				pg_hypot(A, B)
 
 /*---------------------------------------------------------------------
  * Point - (x,y)
@@ -211,6 +211,7 @@ extern Datum point_div(PG_FUNCTION_ARGS);
 /* private routines */
 extern double point_dt(Point *pt1, Point *pt2);
 extern double point_sl(Point *pt1, Point *pt2);
+extern double pg_hypot(double x, double y);
 
 /* public lseg routines */
 extern Datum lseg_in(PG_FUNCTION_ARGS);
