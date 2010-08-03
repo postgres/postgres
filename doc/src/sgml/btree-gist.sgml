@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/btree-gist.sgml,v 1.6 2010/08/02 16:26:48 rhaas Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/btree-gist.sgml,v 1.7 2010/08/03 15:15:31 tgl Exp $ -->
 
 <sect1 id="btree-gist">
  <title>btree_gist</title>
@@ -29,10 +29,10 @@
 
  <para>
   In addition to the typical btree search operators, btree_gist also
-  provides search operators for <literal>&lt;&gt;</literal> ("not
-  equals"). This may be useful in combination with an
-  <link linkend="SQL-CREATETABLE-EXCLUDE">Exclusion Constraint</link>,
-  as descibed below.
+  provides search operators for <literal>&lt;&gt;</literal> (<quote>not
+  equals</quote>). This may be useful in combination with an
+  <link linkend="SQL-CREATETABLE-EXCLUDE">exclusion constraint</link>,
+  as described below.
  </para>
 
  <sect2>
@@ -51,26 +51,26 @@ SELECT * FROM test WHERE a &lt; 10;
 </programlisting>
 
   <para>
-   Example using an <link linkend="SQL-CREATETABLE-EXCLUDE">Exclusion
-   Constraint</link> to enforce the constraint that a cage at a zoo
+   Use an <link linkend="SQL-CREATETABLE-EXCLUDE">exclusion
+   constraint</link> to enforce the rule that a cage at a zoo
    can contain only one kind of animal:
   </para>
 
 <programlisting>
-=> CREATE TABLE zoo (
+=&gt; CREATE TABLE zoo (
   cage   INTEGER,
   animal TEXT,
-  EXCLUDE USING gist (cage WITH =, animal WITH <>)
+  EXCLUDE USING gist (cage WITH =, animal WITH &lt;&gt;)
 );
 
-=> INSERT INTO zoo VALUES(123, 'zebra');
+=&gt; INSERT INTO zoo VALUES(123, 'zebra');
 INSERT 0 1
-=> INSERT INTO zoo VALUES(123, 'zebra');
+=&gt; INSERT INTO zoo VALUES(123, 'zebra');
 INSERT 0 1
-=> INSERT INTO zoo VALUES(123, 'lion');
+=&gt; INSERT INTO zoo VALUES(123, 'lion');
 ERROR:  conflicting key value violates exclusion constraint "zoo_cage_animal_excl"
 DETAIL:  Key (cage, animal)=(123, lion) conflicts with existing key (cage, animal)=(123, zebra).
-=> INSERT INTO zoo VALUES(124, 'lion');
+=&gt; INSERT INTO zoo VALUES(124, 'lion');
 INSERT 0 1
 </programlisting>
 
