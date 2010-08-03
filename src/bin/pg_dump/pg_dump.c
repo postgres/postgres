@@ -25,7 +25,7 @@
  *	http://archives.postgresql.org/pgsql-bugs/2010-02/msg00187.php
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.583 2010/07/22 01:22:34 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.584 2010/08/03 19:24:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -836,6 +836,7 @@ help(const char *progname)
 	printf(_("  --disable-dollar-quoting    disable dollar quoting, use SQL standard quoting\n"));
 	printf(_("  --disable-triggers          disable triggers during data-only restore\n"));
 	printf(_("  --no-tablespaces            do not dump tablespace assignments\n"));
+	printf(_("  --quote-all-identifiers     quote all identifiers, even if not keywords\n"));
 	printf(_("  --role=ROLENAME             do SET ROLE before dump\n"));
 	printf(_("  --use-set-session-authorization\n"
 			 "                              use SET SESSION AUTHORIZATION commands instead of\n"

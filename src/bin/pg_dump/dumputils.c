@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/dumputils.c,v 1.57 2010/07/22 01:22:34 rhaas Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/dumputils.c,v 1.58 2010/08/03 19:24:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,6 +19,9 @@
 #include "dumputils.h"
 
 #include "parser/keywords.h"
+
+
+int		quote_all_identifiers = 0;
 
 
 #define supports_grant_options(version) ((version) >= 70400)
@@ -35,8 +38,6 @@ static void AddAcl(PQExpBuffer aclbuf, const char *keyword,
 static bool parallel_init_done = false;
 static DWORD tls_index;
 #endif
-
-int quote_all_identifiers;
 
 void
 init_parallel_dump_utils(void)

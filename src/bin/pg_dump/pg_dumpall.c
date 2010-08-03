@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.136 2010/07/22 01:25:01 rhaas Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.137 2010/08/03 19:24:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -564,6 +564,7 @@ help(void)
 	printf(_("  --disable-dollar-quoting    disable dollar quoting, use SQL standard quoting\n"));
 	printf(_("  --disable-triggers          disable triggers during data-only restore\n"));
 	printf(_("  --no-tablespaces            do not dump tablespace assignments\n"));
+	printf(_("  --quote-all-identifiers     quote all identifiers, even if not keywords\n"));
 	printf(_("  --role=ROLENAME             do SET ROLE before dump\n"));
 	printf(_("  --use-set-session-authorization\n"
 			 "                              use SET SESSION AUTHORIZATION commands instead of\n"

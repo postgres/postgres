@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/dumputils.h,v 1.30 2010/07/22 01:22:34 rhaas Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/dumputils.h,v 1.31 2010/08/03 19:24:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,6 +18,8 @@
 
 #include "libpq-fe.h"
 #include "pqexpbuffer.h"
+
+extern int quote_all_identifiers;
 
 extern void init_parallel_dump_utils(void);
 extern const char *fmtId(const char *identifier);
@@ -45,7 +47,5 @@ extern bool processSQLNamePattern(PGconn *conn, PQExpBuffer buf,
 					  bool have_where, bool force_escape,
 					  const char *schemavar, const char *namevar,
 					  const char *altnamevar, const char *visibilityrule);
-
-extern int quote_all_identifiers;
 
 #endif   /* DUMPUTILS_H */
