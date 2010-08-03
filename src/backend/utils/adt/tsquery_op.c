@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsquery_op.c,v 1.8 2010/01/02 16:57:55 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsquery_op.c,v 1.9 2010/08/03 00:10:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -149,7 +149,7 @@ CompareTSQ(TSQuery a, TSQuery b)
 	{
 		return (VARSIZE(a) < VARSIZE(b)) ? -1 : 1;
 	}
-	else
+	else if (a->size != 0)
 	{
 		QTNode	   *an = QT2QTN(GETQUERY(a), GETOPERAND(a));
 		QTNode	   *bn = QT2QTN(GETQUERY(b), GETOPERAND(b));
@@ -247,20 +247,20 @@ tsq_mcontains(PG_FUNCTION_ARGS)
 		PG_RETURN_BOOL(false);
 	}
 
+	iq = GETQUERY(query);
 	ie = GETQUERY(ex);
 
 	for (i = 0; i < ex->size; i++)
 	{
-		iq = GETQUERY(query);
 		if (ie[i].type != QI_VAL)
 			continue;
 		for (j = 0; j < query->size; j++)
-			if (iq[j].type == QI_VAL && ie[i].qoperand.valcrc == iq[j].qoperand.valcrc)
-			{
-				j = query->size + 1;
+		{
+			if (iq[j].type == QI_VAL &&
+				ie[i].qoperand.valcrc == iq[j].qoperand.valcrc)
 				break;
-			}
-		if (j == query->size)
+		}
+		if (j >= query->size)
 		{
 			PG_FREE_IF_COPY(query, 0);
 			PG_FREE_IF_COPY(ex, 1);
