@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/nabstime.c,v 1.164 2010/02/26 02:01:09 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/nabstime.c,v 1.165 2010/08/03 16:31:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1155,9 +1155,22 @@ tintervalsame(PG_FUNCTION_ARGS)
 /*
  * tinterval comparison routines
  *
- * Note: comparison is based on the lengths of the tintervals, not on
- * endpoint value.	This is pretty bogus, but since it's only a legacy
- * datatype I'm not going to propose changing it.
+ * Note: comparison is based only on the lengths of the tintervals, not on
+ * endpoint values (as long as they're not INVALID).  This is pretty bogus,
+ * but since it's only a legacy datatype, we're not going to change it.
+ *
+ * Some other bogus things that won't be changed for compatibility reasons:
+ * 1. The interval length computations overflow at 2^31 seconds, causing
+ * intervals longer than that to sort oddly compared to those shorter.
+ * 2. infinity and minus infinity (NOEND_ABSTIME and NOSTART_ABSTIME) are
+ * just ordinary integers.  Since this code doesn't handle them specially,
+ * it's possible for [a b] to be considered longer than [c infinity] for
+ * finite abstimes a, b, c.  In combination with the previous point, the
+ * interval [-infinity infinity] is treated as being shorter than many finite
+ * intervals :-(
+ *
+ * If tinterval is ever reimplemented atop timestamp, it'd be good to give
+ * some consideration to avoiding these problems.
  */
 static int
 tinterval_cmp_internal(TimeInterval a, TimeInterval b)
