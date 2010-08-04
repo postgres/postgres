@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.317 2010/07/29 19:34:40 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.318 2010/08/04 16:27:05 tgl Exp $ -->
 
 <chapter id="libpq">
  <title><application>libpq</application> - C Library</title>
@@ -3107,7 +3107,7 @@ char *PQoidStatus(const PGresult *res);
      <listitem>
      <para>
 <synopsis>
-size_t PQescapeLiteral(PGconn *conn, char *str, size_t len);
+char *PQescapeLiteral(PGconn *conn, const char *str, size_t length);
 </synopsis>
      </para>
 
@@ -3171,12 +3171,12 @@ size_t PQescapeLiteral(PGconn *conn, char *str, size_t len);
      <listitem>
      <para>
 <synopsis>
-size_t PQescapeIdentifier(PGconn *conn, char *str, size_t len);
+char *PQescapeIdentifier(PGconn *conn, const char *str, size_t length);
 </synopsis>
      </para>
 
      <para>
-      <function>PQescapeIndentifier</function> escapes a string for
+      <function>PQescapeIdentifier</function> escapes a string for
       use as an SQL identifier, such as a table, column, or function name.
       This is useful when a user-supplied identifier might contain
       special characters that would otherwise not be interpreted as part
@@ -3438,7 +3438,7 @@ unsigned char *PQunescapeBytea(const unsigned char *from, size_t *to_length);
        to a <type>bytea</type> column. <function>PQunescapeBytea</function>
        converts this string representation into its binary representation.
        It returns a pointer to a buffer allocated with
-       <function>malloc()</function>, or null on error, and puts the size of
+       <function>malloc()</function>, or NULL on error, and puts the size of
        the buffer in <parameter>to_length</parameter>. The result must be
        freed using <function>PQfreemem</> when it is no longer needed.
       </para>
