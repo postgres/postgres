@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/syntax.sgml,v 1.147 2010/07/03 02:57:46 rhaas Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/syntax.sgml,v 1.147.2.1 2010/08/04 22:31:55 tgl Exp $ -->
 
 <chapter id="sql-syntax">
  <title>SQL Syntax</title>
@@ -1568,7 +1568,7 @@ sqrt(2)
     unspecified order.  In many cases this does not matter; for example,
     <function>min</> produces the same result no matter what order it
     receives the inputs in.  However, some aggregate functions
-    (such as <function>array_agg</> and <function>xmlagg</>) produce
+    (such as <function>array_agg</> and <function>string_agg</>) produce
     results that depend on the ordering of the input rows.  When using
     such an aggregate, the optional <replaceable>order_by_clause</> can be
     used to specify the desired ordering.  The <replaceable>order_by_clause</>
@@ -1576,10 +1576,24 @@ sqrt(2)
     described in <xref linkend="queries-order">, except that its expressions
     are always just expressions and cannot be output-column names or numbers.
     For example:
-
 <programlisting>
 SELECT array_agg(a ORDER BY b DESC) FROM table;
 </programlisting>
+   </para>
+
+   <para>
+    When dealing with multiple-argument aggregate functions, note that the
+    <literal>ORDER BY</> clause goes after all the aggregate arguments.
+    For example, this:
+<programlisting>
+SELECT string_agg(a, ',' ORDER BY a) FROM table;
+</programlisting>
+    not this:
+<programlisting>
+SELECT string_agg(a ORDER BY a, ',') FROM table;  -- not what you want
+</programlisting>
+    The latter syntax will be accepted, but <literal>','</> will be
+    treated as a (useless) sort key.
    </para>
 
    <para>
