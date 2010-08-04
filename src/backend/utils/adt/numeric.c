@@ -14,7 +14,7 @@
  * Copyright (c) 1998-2010, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/numeric.c,v 1.125 2010/08/03 23:09:29 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/numeric.c,v 1.126 2010/08/04 17:33:09 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -565,18 +565,37 @@ numeric_is_nan(Numeric num)
  *  Maximum size of a numeric with given typmod, or -1 if unlimited/unknown.
  */
 int32
-numeric_maximum_size(int32 typemod)
+numeric_maximum_size(int32 typmod)
 {
 	int precision;
+	int numeric_digits;
 
-	if (typemod <= VARHDRSZ)
+	if (typmod < (int32) (VARHDRSZ))
 		return -1;
 
 	/* precision (ie, max # of digits) is in upper bits of typmod */
-	precision = ((typemod - VARHDRSZ) >> 16) & 0xffff;
+	precision = ((typmod - VARHDRSZ) >> 16) & 0xffff;
 
-	/* Numeric stores 2 decimal digits/byte, plus header */
-	return (precision + 1) / 2 + NUMERIC_HDRSZ;
+	/*
+	 * This formula computes the maximum number of NumericDigits we could
+	 * need in order to store the specified number of decimal digits.
+	 * Because the weight is stored as a number of NumericDigits rather
+	 * than a number of decimal digits, it's possible that the first
+	 * NumericDigit will contain only a single decimal digit.  Thus, the
+	 * first two decimal digits can require two NumericDigits to store,
+	 * but it isn't until we reach DEC_DIGITS + 2 decimal digits that we
+	 * potentially need a third NumericDigit.
+	 */
+	numeric_digits = (precision + 2 * (DEC_DIGITS - 1)) / DEC_DIGITS;
+
+	/*
+	 * In most cases, the size of a numeric will be smaller than the value
+	 * computed below, because the varlena header will typically get toasted
+	 * down to a single byte before being stored on disk, and it may also
+	 * be possible to use a short numeric header.  But our job here is to
+	 * compute the worst case.
+	 */
+	return NUMERIC_HDRSZ + (numeric_digits * sizeof(NumericDigit));
 }
 
 /*
