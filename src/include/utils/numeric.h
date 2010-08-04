@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1998-2010, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/utils/numeric.h,v 1.30 2010/07/30 04:30:23 rhaas Exp $
+ * $PostgreSQL: pgsql/src/include/utils/numeric.h,v 1.31 2010/08/04 17:35:59 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -56,7 +56,7 @@ typedef struct NumericData *Numeric;
  * Utility functions in numeric.c
  */
 extern bool numeric_is_nan(Numeric num);
-int32 numeric_maximum_size(int32 typemod);
+int32 numeric_maximum_size(int32 typmod);
 extern char *numeric_out_sci(Numeric num, int scale);
 
 #endif   /* _PG_NUMERIC_H_ */
