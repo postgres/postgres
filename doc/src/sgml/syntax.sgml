@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/syntax.sgml,v 1.147.2.1 2010/08/04 22:31:55 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/syntax.sgml,v 1.147.2.2 2010/08/05 18:21:29 tgl Exp $ -->
 
 <chapter id="sql-syntax">
  <title>SQL Syntax</title>
@@ -1584,16 +1584,17 @@ SELECT array_agg(a ORDER BY b DESC) FROM table;
    <para>
     When dealing with multiple-argument aggregate functions, note that the
     <literal>ORDER BY</> clause goes after all the aggregate arguments.
-    For example, this:
+    For example, write this:
 <programlisting>
 SELECT string_agg(a, ',' ORDER BY a) FROM table;
 </programlisting>
     not this:
 <programlisting>
-SELECT string_agg(a ORDER BY a, ',') FROM table;  -- not what you want
+SELECT string_agg(a ORDER BY a, ',') FROM table;  -- incorrect
 </programlisting>
-    The latter syntax will be accepted, but <literal>','</> will be
-    treated as a (useless) sort key.
+    The latter is syntactically valid, but it represents a call of a
+    single-argument aggregate function with two <literal>ORDER BY</> keys
+    (the second one being rather useless since it's a constant).
    </para>
 
    <para>

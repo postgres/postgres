@@ -357,14 +357,13 @@ select aggfns(distinct a,a,c order by a,b)
   from (values (1,1,'foo')) v(a,b,c), generate_series(1,2) i;
 
 -- string_agg tests
-select string_agg(a) from (values('aaaa'),('bbbb'),('cccc')) g(a);
 select string_agg(a,',') from (values('aaaa'),('bbbb'),('cccc')) g(a);
 select string_agg(a,',') from (values('aaaa'),(null),('bbbb'),('cccc')) g(a);
-select string_agg(a,',') from (values(null),(null),('bbbb'),('cccc')) g(a);
+select string_agg(a,'AB') from (values(null),(null),('bbbb'),('cccc')) g(a);
 select string_agg(a,',') from (values(null),(null)) g(a);
 
 -- check some implicit casting cases, as per bug #5564
-select string_agg(distinct f1 order by f1) from varchar_tbl;  -- ok
-select string_agg(distinct f1::text order by f1) from varchar_tbl;  -- not ok
-select string_agg(distinct f1 order by f1::text) from varchar_tbl;  -- not ok
-select string_agg(distinct f1::text order by f1::text) from varchar_tbl;  -- ok
+select string_agg(distinct f1, ',' order by f1) from varchar_tbl;  -- ok
+select string_agg(distinct f1::text, ',' order by f1) from varchar_tbl;  -- not ok
+select string_agg(distinct f1, ',' order by f1::text) from varchar_tbl;  -- not ok
+select string_agg(distinct f1::text, ',' order by f1::text) from varchar_tbl;  -- ok

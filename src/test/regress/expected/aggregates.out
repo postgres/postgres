@@ -800,12 +800,6 @@ ERROR:  in an aggregate with DISTINCT, ORDER BY expressions must appear in argum
 LINE 1: select aggfns(distinct a,a,c order by a,b)
                                                 ^
 -- string_agg tests
-select string_agg(a) from (values('aaaa'),('bbbb'),('cccc')) g(a);
-  string_agg  
---------------
- aaaabbbbcccc
-(1 row)
-
 select string_agg(a,',') from (values('aaaa'),('bbbb'),('cccc')) g(a);
    string_agg   
 ----------------
@@ -818,10 +812,10 @@ select string_agg(a,',') from (values('aaaa'),(null),('bbbb'),('cccc')) g(a);
  aaaa,bbbb,cccc
 (1 row)
 
-select string_agg(a,',') from (values(null),(null),('bbbb'),('cccc')) g(a);
+select string_agg(a,'AB') from (values(null),(null),('bbbb'),('cccc')) g(a);
  string_agg 
 ------------
- bbbb,cccc
+ bbbbABcccc
 (1 row)
 
 select string_agg(a,',') from (values(null),(null)) g(a);
@@ -831,23 +825,23 @@ select string_agg(a,',') from (values(null),(null)) g(a);
 (1 row)
 
 -- check some implicit casting cases, as per bug #5564
-select string_agg(distinct f1 order by f1) from varchar_tbl;  -- ok
+select string_agg(distinct f1, ',' order by f1) from varchar_tbl;  -- ok
  string_agg 
 ------------
- aababcd
+ a,ab,abcd
 (1 row)
 
-select string_agg(distinct f1::text order by f1) from varchar_tbl;  -- not ok
+select string_agg(distinct f1::text, ',' order by f1) from varchar_tbl;  -- not ok
 ERROR:  in an aggregate with DISTINCT, ORDER BY expressions must appear in argument list
-LINE 1: select string_agg(distinct f1::text order by f1) from varcha...
-                                                     ^
-select string_agg(distinct f1 order by f1::text) from varchar_tbl;  -- not ok
+LINE 1: select string_agg(distinct f1::text, ',' order by f1) from v...
+                                                          ^
+select string_agg(distinct f1, ',' order by f1::text) from varchar_tbl;  -- not ok
 ERROR:  in an aggregate with DISTINCT, ORDER BY expressions must appear in argument list
-LINE 1: select string_agg(distinct f1 order by f1::text) from varcha...
-                                               ^
-select string_agg(distinct f1::text order by f1::text) from varchar_tbl;  -- ok
+LINE 1: select string_agg(distinct f1, ',' order by f1::text) from v...
+                                                    ^
+select string_agg(distinct f1::text, ',' order by f1::text) from varchar_tbl;  -- ok
  string_agg 
 ------------
- aababcd
+ a,ab,abcd
 (1 row)
 

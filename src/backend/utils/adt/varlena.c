@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/varlena.c,v 1.177 2010/02/26 02:01:10 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/varlena.c,v 1.177.4.1 2010/08/05 18:21:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3320,7 +3320,7 @@ pg_column_size(PG_FUNCTION_ARGS)
 /*
  * string_agg - Concatenates values and returns string.
  *
- * Syntax: string_agg(value text, delimiter text = '') RETURNS text
+ * Syntax: string_agg(value text, delimiter text) RETURNS text
  *
  * Note: Any NULL values are ignored. The first-call delimiter isn't
  * actually used at all, and on subsequent calls the delimiter precedes
@@ -3354,28 +3354,6 @@ makeStringAggState(FunctionCallInfo fcinfo)
 
 Datum
 string_agg_transfn(PG_FUNCTION_ARGS)
-{
-	StringInfo	state;
-
-	state = PG_ARGISNULL(0) ? NULL : (StringInfo) PG_GETARG_POINTER(0);
-
-	/* Append the element unless null. */
-	if (!PG_ARGISNULL(1))
-	{
-		if (state == NULL)
-			state = makeStringAggState(fcinfo);
-		appendStringInfoText(state, PG_GETARG_TEXT_PP(1));		/* value */
-	}
-
-	/*
-	 * The transition type for string_agg() is declared to be "internal",
-	 * which is a pass-by-value type the same size as a pointer.
-	 */
-	PG_RETURN_POINTER(state);
-}
-
-Datum
-string_agg_delim_transfn(PG_FUNCTION_ARGS)
 {
 	StringInfo	state;
 

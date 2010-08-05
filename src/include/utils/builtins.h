@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/builtins.h,v 1.350 2010/07/06 19:19:00 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/builtins.h,v 1.350.2.1 2010/08/05 18:21:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -728,7 +728,6 @@ extern Datum unknownsend(PG_FUNCTION_ARGS);
 extern Datum pg_column_size(PG_FUNCTION_ARGS);
 
 extern Datum string_agg_transfn(PG_FUNCTION_ARGS);
-extern Datum string_agg_delim_transfn(PG_FUNCTION_ARGS);
 extern Datum string_agg_finalfn(PG_FUNCTION_ARGS);
 
 /* version.c */
@@ -779,9 +778,6 @@ extern Datum translate(PG_FUNCTION_ARGS);
 extern Datum chr (PG_FUNCTION_ARGS);
 extern Datum repeat(PG_FUNCTION_ARGS);
 extern Datum ascii(PG_FUNCTION_ARGS);
-extern Datum string_agg_transfn(PG_FUNCTION_ARGS);
-extern Datum string_agg_delim_transfn(PG_FUNCTION_ARGS);
-extern Datum string_agg_finalfn(PG_FUNCTION_ARGS);
 
 /* inet_net_ntop.c */
 extern char *inet_net_ntop(int af, const void *src, int bits,

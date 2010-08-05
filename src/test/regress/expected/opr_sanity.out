@@ -773,6 +773,31 @@ ORDER BY 1, 2;
  min     | <       |            1
 (2 rows)
 
+-- Check that there are not aggregates with the same name and different
+-- numbers of arguments.  While not technically wrong, we have a project policy
+-- to avoid this because it opens the door for confusion in connection with
+-- ORDER BY: novices frequently put the ORDER BY in the wrong place.
+-- See the fate of the single-argument form of string_agg() for history.
+-- The only aggregates that should show up here are count(x) and count(*).
+SELECT p1.oid::regprocedure, p2.oid::regprocedure
+FROM pg_proc AS p1, pg_proc AS p2
+WHERE p1.oid < p2.oid AND p1.proname = p2.proname AND
+    p1.proisagg AND p2.proisagg AND
+    array_dims(p1.proargtypes) != array_dims(p2.proargtypes)
+ORDER BY 1;
+     oid      |   oid   
+--------------+---------
+ count("any") | count()
+(1 row)
+
+-- For the same reason, aggregates with default arguments are no good.
+SELECT oid, proname
+FROM pg_proc AS p
+WHERE proisagg AND proargdefaults IS NOT NULL;
+ oid | proname 
+-----+---------
+(0 rows)
+
 -- **************** pg_opfamily ****************
 -- Look for illegal values in pg_opfamily fields
 SELECT p1.oid
