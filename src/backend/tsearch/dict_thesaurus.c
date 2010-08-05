@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tsearch/dict_thesaurus.c,v 1.16 2010/01/02 16:57:53 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tsearch/dict_thesaurus.c,v 1.17 2010/08/05 15:25:35 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -642,7 +642,7 @@ thesaurus_init(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("missing Dictionary parameter")));
 
-	d->subdictOid = TSDictionaryGetDictid(stringToQualifiedNameList(subdictname), false);
+	d->subdictOid = get_ts_dict_oid(stringToQualifiedNameList(subdictname), false);
 	d->subdict = lookup_ts_dictionary_cache(d->subdictOid);
 
 	compileTheLexeme(d);

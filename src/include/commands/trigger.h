@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/commands/trigger.h,v 1.80 2010/01/17 22:56:23 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/commands/trigger.h,v 1.81 2010/08/05 15:25:36 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -111,6 +111,7 @@ extern Oid CreateTrigger(CreateTrigStmt *stmt, const char *queryString,
 extern void DropTrigger(Oid relid, const char *trigname,
 			DropBehavior behavior, bool missing_ok);
 extern void RemoveTriggerById(Oid trigOid);
+extern Oid get_trigger_oid(Oid relid, const char *name, bool missing_ok);
 
 extern void renametrig(Oid relid, const char *oldname, const char *newname);
 

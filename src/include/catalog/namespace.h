@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/namespace.h,v 1.63 2010/08/05 14:45:06 rhaas Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/namespace.h,v 1.64 2010/08/05 15:25:36 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -74,16 +74,16 @@ extern bool OpfamilyIsVisible(Oid opfid);
 extern Oid	ConversionGetConid(const char *conname);
 extern bool ConversionIsVisible(Oid conid);
 
-extern Oid	TSParserGetPrsid(List *names, bool failOK);
+extern Oid	get_ts_parser_oid(List *names, bool missing_ok);
 extern bool TSParserIsVisible(Oid prsId);
 
-extern Oid	TSDictionaryGetDictid(List *names, bool failOK);
+extern Oid	get_ts_dict_oid(List *names, bool missing_ok);
 extern bool TSDictionaryIsVisible(Oid dictId);
 
-extern Oid	TSTemplateGetTmplid(List *names, bool failOK);
+extern Oid	get_ts_template_oid(List *names, bool missing_ok);
 extern bool TSTemplateIsVisible(Oid tmplId);
 
-extern Oid	TSConfigGetCfgid(List *names, bool failOK);
+extern Oid	get_ts_config_oid(List *names, bool missing_ok);
 extern bool TSConfigIsVisible(Oid cfgid);
 
 extern void DeconstructQualifiedName(List *names,
@@ -112,7 +112,7 @@ extern OverrideSearchPath *GetOverrideSearchPath(MemoryContext context);
 extern void PushOverrideSearchPath(OverrideSearchPath *newpath);
 extern void PopOverrideSearchPath(void);
 
-extern Oid	FindConversionByName(List *conname);
+extern Oid	get_conversion_oid(List *conname, bool missing_ok);
 extern Oid	FindDefaultConversionProc(int4 for_encoding, int4 to_encoding);
 
 /* initialization & transaction cleanup code */

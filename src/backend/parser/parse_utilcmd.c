@@ -19,7 +19,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/parser/parse_utilcmd.c,v 2.41 2010/07/28 05:22:24 sriggs Exp $
+ *	$PostgreSQL: pgsql/src/backend/parser/parse_utilcmd.c,v 2.42 2010/08/05 15:25:35 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -713,8 +713,8 @@ transformInhRelation(ParseState *pstate, CreateStmtContext *cxt,
 
 			/* Copy comment on constraint */
 			if ((inhRelation->options & CREATE_TABLE_LIKE_COMMENTS) &&
-				(comment = GetComment(GetConstraintByName(RelationGetRelid(relation),
-														  n->conname),
+				(comment = GetComment(get_constraint_oid(RelationGetRelid(relation),
+														  n->conname, false),
 									  ConstraintRelationId,
 									  0)) != NULL)
 			{

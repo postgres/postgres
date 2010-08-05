@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/namespace.c,v 1.126 2010/08/05 14:44:58 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/namespace.c,v 1.127 2010/08/05 15:25:35 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1692,12 +1692,12 @@ ConversionIsVisible(Oid conid)
 }
 
 /*
- * TSParserGetPrsid - find a TS parser by possibly qualified name
+ * get_ts_parser_oid - find a TS parser by possibly qualified name
  *
- * If not found, returns InvalidOid if failOK, else throws error
+ * If not found, returns InvalidOid if missing_ok, else throws error
  */
 Oid
-TSParserGetPrsid(List *names, bool failOK)
+get_ts_parser_oid(List *names, bool missing_ok)
 {
 	char	   *schemaname;
 	char	   *parser_name;
@@ -1736,7 +1736,7 @@ TSParserGetPrsid(List *names, bool failOK)
 		}
 	}
 
-	if (!OidIsValid(prsoid) && !failOK)
+	if (!OidIsValid(prsoid) && !missing_ok)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
 				 errmsg("text search parser \"%s\" does not exist",
@@ -1815,12 +1815,12 @@ TSParserIsVisible(Oid prsId)
 }
 
 /*
- * TSDictionaryGetDictid - find a TS dictionary by possibly qualified name
+ * get_ts_dict_oid - find a TS dictionary by possibly qualified name
  *
  * If not found, returns InvalidOid if failOK, else throws error
  */
 Oid
-TSDictionaryGetDictid(List *names, bool failOK)
+get_ts_dict_oid(List *names, bool missing_ok)
 {
 	char	   *schemaname;
 	char	   *dict_name;
@@ -1859,7 +1859,7 @@ TSDictionaryGetDictid(List *names, bool failOK)
 		}
 	}
 
-	if (!OidIsValid(dictoid) && !failOK)
+	if (!OidIsValid(dictoid) && !missing_ok)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
 				 errmsg("text search dictionary \"%s\" does not exist",
@@ -1939,12 +1939,12 @@ TSDictionaryIsVisible(Oid dictId)
 }
 
 /*
- * TSTemplateGetTmplid - find a TS template by possibly qualified name
+ * get_ts_template_oid - find a TS template by possibly qualified name
  *
- * If not found, returns InvalidOid if failOK, else throws error
+ * If not found, returns InvalidOid if missing_ok, else throws error
  */
 Oid
-TSTemplateGetTmplid(List *names, bool failOK)
+get_ts_template_oid(List *names, bool missing_ok)
 {
 	char	   *schemaname;
 	char	   *template_name;
@@ -1983,7 +1983,7 @@ TSTemplateGetTmplid(List *names, bool failOK)
 		}
 	}
 
-	if (!OidIsValid(tmploid) && !failOK)
+	if (!OidIsValid(tmploid) && !missing_ok)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
 				 errmsg("text search template \"%s\" does not exist",
@@ -2062,12 +2062,12 @@ TSTemplateIsVisible(Oid tmplId)
 }
 
 /*
- * TSConfigGetCfgid - find a TS config by possibly qualified name
+ * get_ts_config_oid - find a TS config by possibly qualified name
  *
- * If not found, returns InvalidOid if failOK, else throws error
+ * If not found, returns InvalidOid if missing_ok, else throws error
  */
 Oid
-TSConfigGetCfgid(List *names, bool failOK)
+get_ts_config_oid(List *names, bool missing_ok)
 {
 	char	   *schemaname;
 	char	   *config_name;
@@ -2106,7 +2106,7 @@ TSConfigGetCfgid(List *names, bool failOK)
 		}
 	}
 
-	if (!OidIsValid(cfgoid) && !failOK)
+	if (!OidIsValid(cfgoid) && !missing_ok)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
 				 errmsg("text search configuration \"%s\" does not exist",
@@ -2766,15 +2766,15 @@ PopOverrideSearchPath(void)
 
 
 /*
- * FindConversionByName - find a conversion by possibly qualified name
+ * get_conversion_oid - find a conversion by possibly qualified name
  */
 Oid
-FindConversionByName(List *name)
+get_conversion_oid(List *name, bool missing_ok)
 {
 	char	   *schemaname;
 	char	   *conversion_name;
 	Oid			namespaceId;
-	Oid			conoid;
+	Oid			conoid = InvalidOid;
 	ListCell   *l;
 
 	/* deconstruct the name list */
@@ -2784,9 +2784,9 @@ FindConversionByName(List *name)
 	{
 		/* use exact schema given */
 		namespaceId = LookupExplicitNamespace(schemaname);
-		return GetSysCacheOid2(CONNAMENSP,
-							   PointerGetDatum(conversion_name),
-							   ObjectIdGetDatum(namespaceId));
+		conoid = GetSysCacheOid2(CONNAMENSP,
+								 PointerGetDatum(conversion_name),
+								 ObjectIdGetDatum(namespaceId));
 	}
 	else
 	{
@@ -2809,7 +2809,12 @@ FindConversionByName(List *name)
 	}
 
 	/* Not found in path */
-	return InvalidOid;
+	if (!OidIsValid(conoid) && !missing_ok)
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("conversion \"%s\" does not exist",
+						NameListToString(name))));
+	return conoid;
 }
 
 /*

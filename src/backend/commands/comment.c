@@ -7,7 +7,7 @@
  * Copyright (c) 1996-2010, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/comment.c,v 1.116 2010/08/05 14:44:58 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/comment.c,v 1.117 2010/08/05 15:25:35 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,12 +45,14 @@
 #include "commands/defrem.h"
 #include "commands/proclang.h"
 #include "commands/tablespace.h"
+#include "commands/trigger.h"
 #include "libpq/be-fsstubs.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "parser/parse_func.h"
 #include "parser/parse_oper.h"
 #include "parser/parse_type.h"
+#include "rewrite/rewriteSupport.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
@@ -826,7 +828,6 @@ CommentRule(List *qualname, char *comment)
 	char	   *rulename;
 	RangeVar   *rel;
 	Relation	relation;
-	HeapTuple	tuple;
 	Oid			reloid;
 	Oid			ruleoid;
 
@@ -834,46 +835,8 @@ CommentRule(List *qualname, char *comment)
 	nnames = list_length(qualname);
 	if (nnames == 1)
 	{
-		/* Old-style: only a rule name is given */
-		Relation	RewriteRelation;
-		HeapScanDesc scanDesc;
-		ScanKeyData scanKeyData;
-
 		rulename = strVal(linitial(qualname));
-
-		/* Search pg_rewrite for such a rule */
-		ScanKeyInit(&scanKeyData,
-					Anum_pg_rewrite_rulename,
-					BTEqualStrategyNumber, F_NAMEEQ,
-					PointerGetDatum(rulename));
-
-		RewriteRelation = heap_open(RewriteRelationId, AccessShareLock);
-		scanDesc = heap_beginscan(RewriteRelation, SnapshotNow,
-								  1, &scanKeyData);
-
-		tuple = heap_getnext(scanDesc, ForwardScanDirection);
-		if (HeapTupleIsValid(tuple))
-		{
-			reloid = ((Form_pg_rewrite) GETSTRUCT(tuple))->ev_class;
-			ruleoid = HeapTupleGetOid(tuple);
-		}
-		else
-		{
-			ereport(ERROR,
-					(errcode(ERRCODE_UNDEFINED_OBJECT),
-					 errmsg("rule \"%s\" does not exist", rulename)));
-			reloid = ruleoid = 0;		/* keep compiler quiet */
-		}
-
-		if (HeapTupleIsValid(tuple = heap_getnext(scanDesc,
-												  ForwardScanDirection)))
-			ereport(ERROR,
-					(errcode(ERRCODE_DUPLICATE_OBJECT),
-				   errmsg("there are multiple rules named \"%s\"", rulename),
-				errhint("Specify a relation name as well as a rule name.")));
-
-		heap_endscan(scanDesc);
-		heap_close(RewriteRelation, AccessShareLock);
+		ruleoid = get_rewrite_oid_without_relid(rulename, &reloid);
 
 		/* Open the owning relation to ensure it won't go away meanwhile */
 		relation = heap_open(reloid, AccessShareLock);
@@ -891,17 +854,7 @@ CommentRule(List *qualname, char *comment)
 		reloid = RelationGetRelid(relation);
 
 		/* Find the rule's pg_rewrite tuple, get its OID */
-		tuple = SearchSysCache2(RULERELNAME,
-								ObjectIdGetDatum(reloid),
-								PointerGetDatum(rulename));
-		if (!HeapTupleIsValid(tuple))
-			ereport(ERROR,
-					(errcode(ERRCODE_UNDEFINED_OBJECT),
-					 errmsg("rule \"%s\" for relation \"%s\" does not exist",
-							rulename, RelationGetRelationName(relation))));
-		Assert(reloid == ((Form_pg_rewrite) GETSTRUCT(tuple))->ev_class);
-		ruleoid = HeapTupleGetOid(tuple);
-		ReleaseSysCache(tuple);
+		ruleoid = get_rewrite_oid(reloid, rulename, false);
 	}
 
 	/* Check object security */
@@ -1046,11 +999,7 @@ CommentTrigger(List *qualname, char *comment)
 	List	   *relname;
 	char	   *trigname;
 	RangeVar   *rel;
-	Relation	pg_trigger,
-				relation;
-	HeapTuple	triggertuple;
-	SysScanDesc scan;
-	ScanKeyData entry[2];
+	Relation	relation;
 	Oid			oid;
 
 	/* Separate relname and trig name */
@@ -1065,46 +1014,16 @@ CommentTrigger(List *qualname, char *comment)
 	relation = heap_openrv(rel, AccessShareLock);
 
 	/* Check object security */
-
 	if (!pg_class_ownercheck(RelationGetRelid(relation), GetUserId()))
 		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CLASS,
 					   RelationGetRelationName(relation));
 
-	/*
-	 * Fetch the trigger tuple from pg_trigger.  There can be only one because
-	 * of the unique index.
-	 */
-	pg_trigger = heap_open(TriggerRelationId, AccessShareLock);
-	ScanKeyInit(&entry[0],
-				Anum_pg_trigger_tgrelid,
-				BTEqualStrategyNumber, F_OIDEQ,
-				ObjectIdGetDatum(RelationGetRelid(relation)));
-	ScanKeyInit(&entry[1],
-				Anum_pg_trigger_tgname,
-				BTEqualStrategyNumber, F_NAMEEQ,
-				CStringGetDatum(trigname));
-	scan = systable_beginscan(pg_trigger, TriggerRelidNameIndexId, true,
-							  SnapshotNow, 2, entry);
-	triggertuple = systable_getnext(scan);
-
-	/* If no trigger exists for the relation specified, notify user */
-
-	if (!HeapTupleIsValid(triggertuple))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("trigger \"%s\" for table \"%s\" does not exist",
-						trigname, RelationGetRelationName(relation))));
-
-	oid = HeapTupleGetOid(triggertuple);
-
-	systable_endscan(scan);
+	oid = get_trigger_oid(RelationGetRelid(relation), trigname, false);
 
 	/* Call CreateComments() to create/drop the comments */
 	CreateComments(oid, TriggerRelationId, 0, comment);
 
 	/* Done, but hold lock on relation */
-
-	heap_close(pg_trigger, AccessShareLock);
 	heap_close(relation, NoLock);
 }
 
@@ -1143,7 +1062,7 @@ CommentConstraint(List *qualname, char *comment)
 		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CLASS,
 					   RelationGetRelationName(relation));
 
-	conOid = GetConstraintByName(RelationGetRelid(relation), conName);
+	conOid = get_constraint_oid(RelationGetRelid(relation), conName, false);
 
 	/* Call CreateComments() to create/drop the comments */
 	CreateComments(conOid, ConstraintRelationId, 0, comment);
@@ -1166,12 +1085,7 @@ CommentConversion(List *qualname, char *comment)
 {
 	Oid			conversionOid;
 
-	conversionOid = FindConversionByName(qualname);
-	if (!OidIsValid(conversionOid))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("conversion \"%s\" does not exist",
-						NameListToString(qualname))));
+	conversionOid = get_conversion_oid(qualname, false);
 
 	/* Check object security */
 	if (!pg_conversion_ownercheck(conversionOid, GetUserId()))
@@ -1228,64 +1142,22 @@ static void
 CommentOpClass(List *qualname, List *arguments, char *comment)
 {
 	char	   *amname;
-	char	   *schemaname;
-	char	   *opcname;
 	Oid			amID;
 	Oid			opcID;
-	HeapTuple	tuple;
 
 	Assert(list_length(arguments) == 1);
 	amname = strVal(linitial(arguments));
 
 	/*
-	 * Get the access method's OID.
+	 * Get the operator class OID.
 	 */
 	amID = get_am_oid(amname, false);
-
-	/*
-	 * Look up the opclass.
-	 */
-
-	/* deconstruct the name list */
-	DeconstructQualifiedName(qualname, &schemaname, &opcname);
-
-	if (schemaname)
-	{
-		/* Look in specific schema only */
-		Oid			namespaceId;
-
-		namespaceId = LookupExplicitNamespace(schemaname);
-		tuple = SearchSysCache3(CLAAMNAMENSP,
-								ObjectIdGetDatum(amID),
-								PointerGetDatum(opcname),
-								ObjectIdGetDatum(namespaceId));
-	}
-	else
-	{
-		/* Unqualified opclass name, so search the search path */
-		opcID = OpclassnameGetOpcid(amID, opcname);
-		if (!OidIsValid(opcID))
-			ereport(ERROR,
-					(errcode(ERRCODE_UNDEFINED_OBJECT),
-					 errmsg("operator class \"%s\" does not exist for access method \"%s\"",
-							opcname, amname)));
-		tuple = SearchSysCache1(CLAOID, ObjectIdGetDatum(opcID));
-	}
-
-	if (!HeapTupleIsValid(tuple))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("operator class \"%s\" does not exist for access method \"%s\"",
-						NameListToString(qualname), amname)));
-
-	opcID = HeapTupleGetOid(tuple);
+	opcID = get_opclass_oid(amID, qualname, false);
 
 	/* Permission check: must own opclass */
 	if (!pg_opclass_ownercheck(opcID, GetUserId()))
 		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_OPCLASS,
 					   NameListToString(qualname));
-
-	ReleaseSysCache(tuple);
 
 	/* Call CreateComments() to create/drop the comments */
 	CreateComments(opcID, OperatorClassRelationId, 0, comment);
@@ -1304,64 +1176,20 @@ static void
 CommentOpFamily(List *qualname, List *arguments, char *comment)
 {
 	char	   *amname;
-	char	   *schemaname;
-	char	   *opfname;
 	Oid			amID;
 	Oid			opfID;
-	HeapTuple	tuple;
 
 	Assert(list_length(arguments) == 1);
 	amname = strVal(linitial(arguments));
 
-	/*
-	 * Get the access method's OID.
-	 */
+	/* Get the opfamily OID. */
 	amID = get_am_oid(amname, false);
-
-	/*
-	 * Look up the opfamily.
-	 */
-
-	/* deconstruct the name list */
-	DeconstructQualifiedName(qualname, &schemaname, &opfname);
-
-	if (schemaname)
-	{
-		/* Look in specific schema only */
-		Oid			namespaceId;
-
-		namespaceId = LookupExplicitNamespace(schemaname);
-		tuple = SearchSysCache3(OPFAMILYAMNAMENSP,
-								ObjectIdGetDatum(amID),
-								PointerGetDatum(opfname),
-								ObjectIdGetDatum(namespaceId));
-	}
-	else
-	{
-		/* Unqualified opfamily name, so search the search path */
-		opfID = OpfamilynameGetOpfid(amID, opfname);
-		if (!OidIsValid(opfID))
-			ereport(ERROR,
-					(errcode(ERRCODE_UNDEFINED_OBJECT),
-					 errmsg("operator family \"%s\" does not exist for access method \"%s\"",
-							opfname, amname)));
-		tuple = SearchSysCache1(OPFAMILYOID, ObjectIdGetDatum(opfID));
-	}
-
-	if (!HeapTupleIsValid(tuple))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("operator family \"%s\" does not exist for access method \"%s\"",
-						NameListToString(qualname), amname)));
-
-	opfID = HeapTupleGetOid(tuple);
+	opfID = get_opfamily_oid(amID, qualname, false);
 
 	/* Permission check: must own opfamily */
 	if (!pg_opfamily_ownercheck(opfID, GetUserId()))
 		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_OPFAMILY,
 					   NameListToString(qualname));
-
-	ReleaseSysCache(tuple);
 
 	/* Call CreateComments() to create/drop the comments */
 	CreateComments(opfID, OperatorFamilyRelationId, 0, comment);
@@ -1423,7 +1251,6 @@ CommentCast(List *qualname, List *arguments, char *comment)
 	TypeName   *targettype;
 	Oid			sourcetypeid;
 	Oid			targettypeid;
-	HeapTuple	tuple;
 	Oid			castOid;
 
 	Assert(list_length(qualname) == 1);
@@ -1436,18 +1263,8 @@ CommentCast(List *qualname, List *arguments, char *comment)
 	sourcetypeid = typenameTypeId(NULL, sourcetype, NULL);
 	targettypeid = typenameTypeId(NULL, targettype, NULL);
 
-	tuple = SearchSysCache2(CASTSOURCETARGET,
-							ObjectIdGetDatum(sourcetypeid),
-							ObjectIdGetDatum(targettypeid));
-	if (!HeapTupleIsValid(tuple))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("cast from type %s to type %s does not exist",
-						format_type_be(sourcetypeid),
-						format_type_be(targettypeid))));
-
 	/* Get the OID of the cast */
-	castOid = HeapTupleGetOid(tuple);
+	castOid = get_cast_oid(sourcetypeid, targettypeid, false);
 
 	/* Permission check */
 	if (!pg_type_ownercheck(sourcetypeid, GetUserId())
@@ -1458,8 +1275,6 @@ CommentCast(List *qualname, List *arguments, char *comment)
 						format_type_be(sourcetypeid),
 						format_type_be(targettypeid))));
 
-	ReleaseSysCache(tuple);
-
 	/* Call CreateComments() to create/drop the comments */
 	CreateComments(castOid, CastRelationId, 0, comment);
 }
@@ -1469,7 +1284,7 @@ CommentTSParser(List *qualname, char *comment)
 {
 	Oid			prsId;
 
-	prsId = TSParserGetPrsid(qualname, false);
+	prsId = get_ts_parser_oid(qualname, false);
 
 	if (!superuser())
 		ereport(ERROR,
@@ -1484,7 +1299,7 @@ CommentTSDictionary(List *qualname, char *comment)
 {
 	Oid			dictId;
 
-	dictId = TSDictionaryGetDictid(qualname, false);
+	dictId = get_ts_dict_oid(qualname, false);
 
 	if (!pg_ts_dict_ownercheck(dictId, GetUserId()))
 		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_TSDICTIONARY,
@@ -1498,7 +1313,7 @@ CommentTSTemplate(List *qualname, char *comment)
 {
 	Oid			tmplId;
 
-	tmplId = TSTemplateGetTmplid(qualname, false);
+	tmplId = get_ts_template_oid(qualname, false);
 
 	if (!superuser())
 		ereport(ERROR,
@@ -1513,7 +1328,7 @@ CommentTSConfiguration(List *qualname, char *comment)
 {
 	Oid			cfgId;
 
-	cfgId = TSConfigGetCfgid(qualname, false);
+	cfgId = get_ts_config_oid(qualname, false);
 
 	if (!pg_ts_config_ownercheck(cfgId, GetUserId()))
 		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_TSCONFIGURATION,

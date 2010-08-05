@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tsearchcmds.c,v 1.20 2010/02/14 18:42:14 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tsearchcmds.c,v 1.21 2010/08/05 15:25:35 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -295,7 +295,7 @@ RemoveTSParsers(DropStmt *drop)
 		Oid			prsOid;
 		ObjectAddress object;
 
-		prsOid = TSParserGetPrsid(names, true);
+		prsOid = get_ts_parser_oid(names, true);
 
 		if (!OidIsValid(prsOid))
 		{
@@ -368,7 +368,7 @@ RenameTSParser(List *oldname, const char *newname)
 
 	rel = heap_open(TSParserRelationId, RowExclusiveLock);
 
-	prsId = TSParserGetPrsid(oldname, false);
+	prsId = get_ts_parser_oid(oldname, false);
 
 	tup = SearchSysCacheCopy1(TSPARSEROID, ObjectIdGetDatum(prsId));
 
@@ -517,7 +517,7 @@ DefineTSDictionary(List *names, List *parameters)
 
 		if (pg_strcasecmp(defel->defname, "template") == 0)
 		{
-			templId = TSTemplateGetTmplid(defGetQualifiedName(defel), false);
+			templId = get_ts_template_oid(defGetQualifiedName(defel), false);
 		}
 		else
 		{
@@ -582,7 +582,7 @@ RenameTSDictionary(List *oldname, const char *newname)
 
 	rel = heap_open(TSDictionaryRelationId, RowExclusiveLock);
 
-	dictId = TSDictionaryGetDictid(oldname, false);
+	dictId = get_ts_dict_oid(oldname, false);
 
 	tup = SearchSysCacheCopy1(TSDICTOID, ObjectIdGetDatum(dictId));
 
@@ -643,7 +643,7 @@ RemoveTSDictionaries(DropStmt *drop)
 		HeapTuple	tup;
 		Oid			namespaceId;
 
-		dictOid = TSDictionaryGetDictid(names, true);
+		dictOid = get_ts_dict_oid(names, true);
 
 		if (!OidIsValid(dictOid))
 		{
@@ -731,7 +731,7 @@ AlterTSDictionary(AlterTSDictionaryStmt *stmt)
 	bool		repl_null[Natts_pg_ts_dict];
 	bool		repl_repl[Natts_pg_ts_dict];
 
-	dictId = TSDictionaryGetDictid(stmt->dictname, false);
+	dictId = get_ts_dict_oid(stmt->dictname, false);
 
 	rel = heap_open(TSDictionaryRelationId, RowExclusiveLock);
 
@@ -841,7 +841,7 @@ AlterTSDictionaryOwner(List *name, Oid newOwnerId)
 
 	rel = heap_open(TSDictionaryRelationId, RowExclusiveLock);
 
-	dictId = TSDictionaryGetDictid(name, false);
+	dictId = get_ts_dict_oid(name, false);
 
 	tup = SearchSysCacheCopy1(TSDICTOID, ObjectIdGetDatum(dictId));
 
@@ -1073,7 +1073,7 @@ RenameTSTemplate(List *oldname, const char *newname)
 
 	rel = heap_open(TSTemplateRelationId, RowExclusiveLock);
 
-	tmplId = TSTemplateGetTmplid(oldname, false);
+	tmplId = get_ts_template_oid(oldname, false);
 
 	tup = SearchSysCacheCopy1(TSTEMPLATEOID, ObjectIdGetDatum(tmplId));
 
@@ -1126,7 +1126,7 @@ RemoveTSTemplates(DropStmt *drop)
 		Oid			tmplOid;
 		ObjectAddress object;
 
-		tmplOid = TSTemplateGetTmplid(names, true);
+		tmplOid = get_ts_template_oid(names, true);
 
 		if (!OidIsValid(tmplOid))
 		{
@@ -1194,7 +1194,7 @@ GetTSConfigTuple(List *names)
 	HeapTuple	tup;
 	Oid			cfgId;
 
-	cfgId = TSConfigGetCfgid(names, true);
+	cfgId = get_ts_config_oid(names, true);
 	if (!OidIsValid(cfgId))
 		return NULL;
 
@@ -1329,9 +1329,9 @@ DefineTSConfiguration(List *names, List *parameters)
 		DefElem    *defel = (DefElem *) lfirst(pl);
 
 		if (pg_strcasecmp(defel->defname, "parser") == 0)
-			prsOid = TSParserGetPrsid(defGetQualifiedName(defel), false);
+			prsOid = get_ts_parser_oid(defGetQualifiedName(defel), false);
 		else if (pg_strcasecmp(defel->defname, "copy") == 0)
-			sourceOid = TSConfigGetCfgid(defGetQualifiedName(defel), false);
+			sourceOid = get_ts_config_oid(defGetQualifiedName(defel), false);
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
@@ -1461,7 +1461,7 @@ RenameTSConfiguration(List *oldname, const char *newname)
 
 	rel = heap_open(TSConfigRelationId, RowExclusiveLock);
 
-	cfgId = TSConfigGetCfgid(oldname, false);
+	cfgId = get_ts_config_oid(oldname, false);
 
 	tup = SearchSysCacheCopy1(TSCONFIGOID, ObjectIdGetDatum(cfgId));
 
@@ -1626,7 +1626,7 @@ AlterTSConfigurationOwner(List *name, Oid newOwnerId)
 
 	rel = heap_open(TSConfigRelationId, RowExclusiveLock);
 
-	cfgId = TSConfigGetCfgid(name, false);
+	cfgId = get_ts_config_oid(name, false);
 
 	tup = SearchSysCacheCopy1(TSCONFIGOID, ObjectIdGetDatum(cfgId));
 
@@ -1828,7 +1828,7 @@ MakeConfigurationMapping(AlterTSConfigurationStmt *stmt,
 	{
 		List	   *names = (List *) lfirst(c);
 
-		dictIds[i] = TSDictionaryGetDictid(names, false);
+		dictIds[i] = get_ts_dict_oid(names, false);
 		i++;
 	}
 

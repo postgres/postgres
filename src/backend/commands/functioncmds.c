@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/functioncmds.c,v 1.118 2010/02/26 02:00:39 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/functioncmds.c,v 1.119 2010/08/05 15:25:35 rhaas Exp $
  *
  * DESCRIPTION
  *	  These routines take the parse tree and pick out the
@@ -1759,30 +1759,23 @@ DropCast(DropCastStmt *stmt)
 {
 	Oid			sourcetypeid;
 	Oid			targettypeid;
-	HeapTuple	tuple;
 	ObjectAddress object;
 
 	/* when dropping a cast, the types must exist even if you use IF EXISTS */
 	sourcetypeid = typenameTypeId(NULL, stmt->sourcetype, NULL);
 	targettypeid = typenameTypeId(NULL, stmt->targettype, NULL);
 
-	tuple = SearchSysCache2(CASTSOURCETARGET,
-							ObjectIdGetDatum(sourcetypeid),
-							ObjectIdGetDatum(targettypeid));
-	if (!HeapTupleIsValid(tuple))
+	object.classId = CastRelationId;
+	object.objectId = get_cast_oid(sourcetypeid, targettypeid,
+								   stmt->missing_ok);
+	object.objectSubId = 0;
+
+	if (!OidIsValid(object.objectId))
 	{
-		if (!stmt->missing_ok)
-			ereport(ERROR,
-					(errcode(ERRCODE_UNDEFINED_OBJECT),
-					 errmsg("cast from type %s to type %s does not exist",
-							format_type_be(sourcetypeid),
-							format_type_be(targettypeid))));
-		else
-			ereport(NOTICE,
+		ereport(NOTICE,
 			 (errmsg("cast from type %s to type %s does not exist, skipping",
 					 format_type_be(sourcetypeid),
 					 format_type_be(targettypeid))));
-
 		return;
 	}
 
@@ -1798,15 +1791,31 @@ DropCast(DropCastStmt *stmt)
 	/*
 	 * Do the deletion
 	 */
-	object.classId = CastRelationId;
-	object.objectId = HeapTupleGetOid(tuple);
-	object.objectSubId = 0;
-
-	ReleaseSysCache(tuple);
-
 	performDeletion(&object, stmt->behavior);
 }
 
+/*
+ * get_cast_oid - given two type OIDs, look up a cast OID
+ *
+ * If missing_ok is false, throw an error if the cast is not found.  If
+ * true, just return InvalidOid.
+ */
+Oid
+get_cast_oid(Oid sourcetypeid, Oid targettypeid, bool missing_ok)
+{
+	Oid		oid;
+
+	oid = GetSysCacheOid2(CASTSOURCETARGET,
+						  ObjectIdGetDatum(sourcetypeid),
+						  ObjectIdGetDatum(targettypeid));
+	if (!OidIsValid(oid) && !missing_ok)
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("cast from type %s to type %s does not exist",
+						format_type_be(sourcetypeid),
+						format_type_be(targettypeid))));
+	return oid;
+}
 
 void
 DropCastById(Oid castOid)

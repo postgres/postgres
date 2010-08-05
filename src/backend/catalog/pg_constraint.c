@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_constraint.c,v 1.53 2010/02/26 02:00:37 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_constraint.c,v 1.54 2010/08/05 15:25:35 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -727,12 +727,12 @@ AlterConstraintNamespaces(Oid ownerId, Oid oldNspId,
 }
 
 /*
- * GetConstraintByName
+ * get_constraint_oid
  *		Find a constraint on the specified relation with the specified name.
  *		Returns constraint's OID.
  */
 Oid
-GetConstraintByName(Oid relid, const char *conname)
+get_constraint_oid(Oid relid, const char *conname, bool missing_ok)
 {
 	Relation	pg_constraint;
 	HeapTuple	tuple;
@@ -773,7 +773,7 @@ GetConstraintByName(Oid relid, const char *conname)
 	systable_endscan(scan);
 
 	/* If no such constraint exists, complain */
-	if (!OidIsValid(conOid))
+	if (!OidIsValid(conOid) && !missing_ok)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
 				 errmsg("constraint \"%s\" for table \"%s\" does not exist",

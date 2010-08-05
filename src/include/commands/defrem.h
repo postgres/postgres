@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/commands/defrem.h,v 1.103 2010/08/05 14:45:07 rhaas Exp $
+ * $PostgreSQL: pgsql/src/include/commands/defrem.h,v 1.104 2010/08/05 15:25:36 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -67,6 +67,7 @@ extern void DropCastById(Oid castOid);
 extern void AlterFunctionNamespace(List *name, List *argtypes, bool isagg,
 					   const char *newschema);
 extern void ExecuteDoStmt(DoStmt *stmt);
+extern Oid get_cast_oid(Oid sourcetypeid, Oid targettypeid, bool missing_ok);
 
 /* commands/operatorcmds.c */
 extern void DefineOperator(List *names, List *parameters);
@@ -75,6 +76,8 @@ extern void RemoveOperatorById(Oid operOid);
 extern void AlterOperatorOwner(List *name, TypeName *typeName1,
 				   TypeName *typename2, Oid newOwnerId);
 extern void AlterOperatorOwner_oid(Oid operOid, Oid newOwnerId);
+extern Oid get_opclass_oid(Oid amID, List *opclassname, bool missing_ok);
+extern Oid get_opfamily_oid(Oid amID, List *opfamilyname, bool missing_ok);
 
 /* commands/aggregatecmds.c */
 extern void DefineAggregate(List *name, List *args, bool oldstyle,

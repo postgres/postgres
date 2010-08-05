@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.263 2010/07/28 05:22:24 sriggs Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.264 2010/08/05 15:25:35 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -967,59 +967,23 @@ void
 DropTrigger(Oid relid, const char *trigname, DropBehavior behavior,
 			bool missing_ok)
 {
-	Relation	tgrel;
-	ScanKeyData skey[2];
-	SysScanDesc tgscan;
-	HeapTuple	tup;
 	ObjectAddress object;
 
-	/*
-	 * Find the trigger, verify permissions, set up object address
-	 */
-	tgrel = heap_open(TriggerRelationId, AccessShareLock);
+	object.classId = TriggerRelationId;
+	object.objectId = get_trigger_oid(relid, trigname, missing_ok);
+	object.objectSubId = 0;
 
-	ScanKeyInit(&skey[0],
-				Anum_pg_trigger_tgrelid,
-				BTEqualStrategyNumber, F_OIDEQ,
-				ObjectIdGetDatum(relid));
-
-	ScanKeyInit(&skey[1],
-				Anum_pg_trigger_tgname,
-				BTEqualStrategyNumber, F_NAMEEQ,
-				CStringGetDatum(trigname));
-
-	tgscan = systable_beginscan(tgrel, TriggerRelidNameIndexId, true,
-								SnapshotNow, 2, skey);
-
-	tup = systable_getnext(tgscan);
-
-	if (!HeapTupleIsValid(tup))
+	if (!OidIsValid(object.objectId))
 	{
-		if (!missing_ok)
-			ereport(ERROR,
-					(errcode(ERRCODE_UNDEFINED_OBJECT),
-					 errmsg("trigger \"%s\" for table \"%s\" does not exist",
-							trigname, get_rel_name(relid))));
-		else
-			ereport(NOTICE,
-					(errmsg("trigger \"%s\" for table \"%s\" does not exist, skipping",
-							trigname, get_rel_name(relid))));
-		/* cleanup */
-		systable_endscan(tgscan);
-		heap_close(tgrel, AccessShareLock);
+		ereport(NOTICE,
+				(errmsg("trigger \"%s\" for table \"%s\" does not exist, skipping",
+						trigname, get_rel_name(relid))));
 		return;
 	}
 
 	if (!pg_class_ownercheck(relid, GetUserId()))
 		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CLASS,
 					   get_rel_name(relid));
-
-	object.classId = TriggerRelationId;
-	object.objectId = HeapTupleGetOid(tup);
-	object.objectSubId = 0;
-
-	systable_endscan(tgscan);
-	heap_close(tgrel, AccessShareLock);
 
 	/*
 	 * Do the deletion
@@ -1100,6 +1064,59 @@ RemoveTriggerById(Oid trigOid)
 
 	/* Keep lock on trigger's rel until end of xact */
 	heap_close(rel, NoLock);
+}
+
+/*
+ * get_trigger_oid - Look up a trigger by name to find its OID.
+ *
+ * If missing_ok is false, throw an error if trigger not found.  If
+ * true, just return InvalidOid.
+ */
+Oid
+get_trigger_oid(Oid relid, const char *trigname, bool missing_ok)
+{
+	Relation	tgrel;
+	ScanKeyData skey[2];
+	SysScanDesc tgscan;
+	HeapTuple	tup;
+	Oid			oid;
+
+	/*
+	 * Find the trigger, verify permissions, set up object address
+	 */
+	tgrel = heap_open(TriggerRelationId, AccessShareLock);
+
+	ScanKeyInit(&skey[0],
+				Anum_pg_trigger_tgrelid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(relid));
+	ScanKeyInit(&skey[1],
+				Anum_pg_trigger_tgname,
+				BTEqualStrategyNumber, F_NAMEEQ,
+				CStringGetDatum(trigname));
+
+	tgscan = systable_beginscan(tgrel, TriggerRelidNameIndexId, true,
+								SnapshotNow, 2, skey);
+
+	tup = systable_getnext(tgscan);
+
+	if (!HeapTupleIsValid(tup))
+	{
+		if (!missing_ok)
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_OBJECT),
+					 errmsg("trigger \"%s\" for table \"%s\" does not exist",
+							trigname, get_rel_name(relid))));
+		oid = InvalidOid;
+	}
+	else
+	{
+		oid = HeapTupleGetOid(tup);
+	}
+
+	systable_endscan(tgscan);
+	heap_close(tgrel, AccessShareLock);
+	return oid;
 }
 
 /*

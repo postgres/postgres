@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/opclasscmds.c,v 1.70 2010/08/05 14:45:01 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/opclasscmds.c,v 1.71 2010/08/05 15:25:35 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -90,10 +90,11 @@ static void AlterOpFamilyOwner_internal(Relation rel, HeapTuple tuple,
  * Returns a syscache tuple reference, or NULL if not found.
  */
 static HeapTuple
-OpFamilyCacheLookup(Oid amID, List *opfamilyname)
+OpFamilyCacheLookup(Oid amID, List *opfamilyname, bool missing_ok)
 {
 	char	   *schemaname;
 	char	   *opfname;
+	HeapTuple	htup;
 
 	/* deconstruct the name list */
 	DeconstructQualifiedName(opfamilyname, &schemaname, &opfname);
@@ -104,7 +105,7 @@ OpFamilyCacheLookup(Oid amID, List *opfamilyname)
 		Oid			namespaceId;
 
 		namespaceId = LookupExplicitNamespace(schemaname);
-		return SearchSysCache3(OPFAMILYAMNAMENSP,
+		htup = SearchSysCache3(OPFAMILYAMNAMENSP,
 							   ObjectIdGetDatum(amID),
 							   PointerGetDatum(opfname),
 							   ObjectIdGetDatum(namespaceId));
@@ -115,9 +116,47 @@ OpFamilyCacheLookup(Oid amID, List *opfamilyname)
 		Oid			opfID = OpfamilynameGetOpfid(amID, opfname);
 
 		if (!OidIsValid(opfID))
-			return NULL;
-		return SearchSysCache1(OPFAMILYOID, ObjectIdGetDatum(opfID));
+			htup = NULL;
+		else
+			htup = SearchSysCache1(OPFAMILYOID, ObjectIdGetDatum(opfID));
 	}
+
+	if (!HeapTupleIsValid(htup) && !missing_ok)
+	{
+		HeapTuple amtup;
+
+		amtup = SearchSysCache1(AMOID, ObjectIdGetDatum(amID));
+		if (!HeapTupleIsValid(amtup))
+			elog(ERROR, "cache lookup failed for access method %u", amID);
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("operator family \"%s\" does not exist for access method \"%s\"",
+				   NameListToString(opfamilyname),
+				   NameStr(((Form_pg_am) GETSTRUCT(amtup))->amname))));
+	}
+
+	return htup;
+}
+
+/*
+ * get_opfamily_oid
+ *    find an opfamily OID by possibly qualified name
+ *
+ * If not found, returns InvalidOid if missing_ok, else throws error.
+ */
+Oid
+get_opfamily_oid(Oid amID, List *opfamilyname, bool missing_ok)
+{
+	HeapTuple	htup;
+	Oid			opfID;
+
+	htup = OpFamilyCacheLookup(amID, opfamilyname, missing_ok);
+	if (!HeapTupleIsValid(htup))
+		return InvalidOid;
+	opfID = HeapTupleGetOid(htup);
+	ReleaseSysCache(htup);
+
+	return opfID;
 }
 
 /*
@@ -127,10 +166,11 @@ OpFamilyCacheLookup(Oid amID, List *opfamilyname)
  * Returns a syscache tuple reference, or NULL if not found.
  */
 static HeapTuple
-OpClassCacheLookup(Oid amID, List *opclassname)
+OpClassCacheLookup(Oid amID, List *opclassname, bool missing_ok)
 {
 	char	   *schemaname;
 	char	   *opcname;
+	HeapTuple	htup;
 
 	/* deconstruct the name list */
 	DeconstructQualifiedName(opclassname, &schemaname, &opcname);
@@ -141,7 +181,7 @@ OpClassCacheLookup(Oid amID, List *opclassname)
 		Oid			namespaceId;
 
 		namespaceId = LookupExplicitNamespace(schemaname);
-		return SearchSysCache3(CLAAMNAMENSP,
+		htup = SearchSysCache3(CLAAMNAMENSP,
 							   ObjectIdGetDatum(amID),
 							   PointerGetDatum(opcname),
 							   ObjectIdGetDatum(namespaceId));
@@ -152,9 +192,47 @@ OpClassCacheLookup(Oid amID, List *opclassname)
 		Oid			opcID = OpclassnameGetOpcid(amID, opcname);
 
 		if (!OidIsValid(opcID))
-			return NULL;
-		return SearchSysCache1(CLAOID, ObjectIdGetDatum(opcID));
+			htup = NULL;
+		else
+			htup = SearchSysCache1(CLAOID, ObjectIdGetDatum(opcID));
 	}
+
+	if (!HeapTupleIsValid(htup) && !missing_ok)
+	{
+		HeapTuple amtup;
+
+		amtup = SearchSysCache1(AMOID, ObjectIdGetDatum(amID));
+		if (!HeapTupleIsValid(amtup))
+			elog(ERROR, "cache lookup failed for access method %u", amID);
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("operator class \"%s\" does not exist for access method \"%s\"",
+						NameListToString(opclassname),
+						NameStr(((Form_pg_am) GETSTRUCT(amtup))->amname))));
+	}
+
+	return htup;
+}
+
+/*
+ * get_opclass_oid
+ *    find an opclass OID by possibly qualified name
+ *
+ * If not found, returns InvalidOid if missing_ok, else throws error.
+ */
+Oid
+get_opclass_oid(Oid amID, List *opclassname, bool missing_ok)
+{
+	HeapTuple	htup;
+	Oid			opcID;
+
+	htup = OpClassCacheLookup(amID, opclassname, missing_ok);
+	if (!HeapTupleIsValid(htup))
+		return InvalidOid;
+	opcID = HeapTupleGetOid(htup);
+	ReleaseSysCache(htup);
+
+	return opcID;
 }
 
 /*
@@ -336,19 +414,7 @@ DefineOpClass(CreateOpClassStmt *stmt)
 	 */
 	if (stmt->opfamilyname)
 	{
-		tup = OpFamilyCacheLookup(amoid, stmt->opfamilyname);
-		if (!HeapTupleIsValid(tup))
-			ereport(ERROR,
-					(errcode(ERRCODE_UNDEFINED_OBJECT),
-					 errmsg("operator family \"%s\" does not exist for access method \"%s\"",
-					   NameListToString(stmt->opfamilyname), stmt->amname)));
-		opfamilyoid = HeapTupleGetOid(tup);
-
-		/*
-		 * XXX given the superuser check above, there's no need for an
-		 * ownership check here
-		 */
-		ReleaseSysCache(tup);
+		opfamilyoid = get_opfamily_oid(amoid, stmt->opfamilyname, false);
 	}
 	else
 	{
@@ -711,14 +777,7 @@ AlterOpFamily(AlterOpFamilyStmt *stmt)
 	ReleaseSysCache(tup);
 
 	/* Look up the opfamily */
-	tup = OpFamilyCacheLookup(amoid, stmt->opfamilyname);
-	if (!HeapTupleIsValid(tup))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("operator family \"%s\" does not exist for access method \"%s\"",
-						NameListToString(stmt->opfamilyname), stmt->amname)));
-	opfamilyoid = HeapTupleGetOid(tup);
-	ReleaseSysCache(tup);
+	opfamilyoid = get_opfamily_oid(amoid, stmt->opfamilyname, false);
 
 	/*
 	 * Currently, we require superuser privileges to alter an opfamily.
@@ -1414,26 +1473,16 @@ RemoveOpClass(RemoveOpClassStmt *stmt)
 	HeapTuple	tuple;
 	ObjectAddress object;
 
-	/*
-	 * Get the access method's OID.
-	 */
+	/* Get the access method's OID. */
 	amID = get_am_oid(stmt->amname, false);
 
-	/*
-	 * Look up the opclass.
-	 */
-	tuple = OpClassCacheLookup(amID, stmt->opclassname);
+	/* Look up the opclass. */
+	tuple = OpClassCacheLookup(amID, stmt->opclassname, stmt->missing_ok);
 	if (!HeapTupleIsValid(tuple))
 	{
-		if (!stmt->missing_ok)
-			ereport(ERROR,
-					(errcode(ERRCODE_UNDEFINED_OBJECT),
-					 errmsg("operator class \"%s\" does not exist for access method \"%s\"",
-						NameListToString(stmt->opclassname), stmt->amname)));
-		else
-			ereport(NOTICE,
-					(errmsg("operator class \"%s\" does not exist for access method \"%s\"",
-						NameListToString(stmt->opclassname), stmt->amname)));
+		ereport(NOTICE,
+				(errmsg("operator class \"%s\" does not exist for access method \"%s\"",
+					NameListToString(stmt->opclassname), stmt->amname)));
 		return;
 	}
 
@@ -1478,18 +1527,13 @@ RemoveOpFamily(RemoveOpFamilyStmt *stmt)
 	/*
 	 * Look up the opfamily.
 	 */
-	tuple = OpFamilyCacheLookup(amID, stmt->opfamilyname);
+	tuple = OpFamilyCacheLookup(amID, stmt->opfamilyname, stmt->missing_ok);
 	if (!HeapTupleIsValid(tuple))
 	{
-		if (!stmt->missing_ok)
-			ereport(ERROR,
-					(errcode(ERRCODE_UNDEFINED_OBJECT),
-					 errmsg("operator family \"%s\" does not exist for access method \"%s\"",
-					   NameListToString(stmt->opfamilyname), stmt->amname)));
-		else
-			ereport(NOTICE,
-					(errmsg("operator family \"%s\" does not exist for access method \"%s\"",
-					   NameListToString(stmt->opfamilyname), stmt->amname)));
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("operator family \"%s\" does not exist for access method \"%s\"",
+				   NameListToString(stmt->opfamilyname), stmt->amname)));
 		return;
 	}
 
@@ -1624,8 +1668,7 @@ RenameOpClass(List *name, const char *access_method, const char *newname)
 	Oid			opcOid;
 	Oid			amOid;
 	Oid			namespaceOid;
-	char	   *schemaname;
-	char	   *opcname;
+	HeapTuple	origtup;
 	HeapTuple	tup;
 	Relation	rel;
 	AclResult	aclresult;
@@ -1634,42 +1677,12 @@ RenameOpClass(List *name, const char *access_method, const char *newname)
 
 	rel = heap_open(OperatorClassRelationId, RowExclusiveLock);
 
-	/*
-	 * Look up the opclass
-	 */
-	DeconstructQualifiedName(name, &schemaname, &opcname);
-
-	if (schemaname)
-	{
-		namespaceOid = LookupExplicitNamespace(schemaname);
-
-		tup = SearchSysCacheCopy3(CLAAMNAMENSP,
-								  ObjectIdGetDatum(amOid),
-								  PointerGetDatum(opcname),
-								  ObjectIdGetDatum(namespaceOid));
-		if (!HeapTupleIsValid(tup))
-			ereport(ERROR,
-					(errcode(ERRCODE_UNDEFINED_OBJECT),
-					 errmsg("operator class \"%s\" does not exist for access method \"%s\"",
-							opcname, access_method)));
-
-		opcOid = HeapTupleGetOid(tup);
-	}
-	else
-	{
-		opcOid = OpclassnameGetOpcid(amOid, opcname);
-		if (!OidIsValid(opcOid))
-			ereport(ERROR,
-					(errcode(ERRCODE_UNDEFINED_OBJECT),
-					 errmsg("operator class \"%s\" does not exist for access method \"%s\"",
-							opcname, access_method)));
-
-		tup = SearchSysCacheCopy1(CLAOID, ObjectIdGetDatum(opcOid));
-		if (!HeapTupleIsValid(tup))		/* should not happen */
-			elog(ERROR, "cache lookup failed for opclass %u", opcOid);
-
-		namespaceOid = ((Form_pg_opclass) GETSTRUCT(tup))->opcnamespace;
-	}
+	/* Look up the opclass. */
+	origtup = OpClassCacheLookup(amOid, name, false);
+	tup = heap_copytuple(origtup);
+	ReleaseSysCache(origtup);
+	opcOid = HeapTupleGetOid(tup);
+	namespaceOid = ((Form_pg_opclass) GETSTRUCT(tup))->opcnamespace;
 
 	/* make sure the new name doesn't exist */
 	if (SearchSysCacheExists3(CLAAMNAMENSP,
@@ -1802,49 +1815,16 @@ AlterOpClassOwner(List *name, const char *access_method, Oid newOwnerId)
 	Oid			amOid;
 	Relation	rel;
 	HeapTuple	tup;
-	char	   *opcname;
-	char	   *schemaname;
+	HeapTuple	origtup;
 
 	amOid = get_am_oid(access_method, false);
 
 	rel = heap_open(OperatorClassRelationId, RowExclusiveLock);
 
-	/*
-	 * Look up the opclass
-	 */
-	DeconstructQualifiedName(name, &schemaname, &opcname);
-
-	if (schemaname)
-	{
-		Oid			namespaceOid;
-
-		namespaceOid = LookupExplicitNamespace(schemaname);
-
-		tup = SearchSysCacheCopy3(CLAAMNAMENSP,
-								  ObjectIdGetDatum(amOid),
-								  PointerGetDatum(opcname),
-								  ObjectIdGetDatum(namespaceOid));
-		if (!HeapTupleIsValid(tup))
-			ereport(ERROR,
-					(errcode(ERRCODE_UNDEFINED_OBJECT),
-					 errmsg("operator class \"%s\" does not exist for access method \"%s\"",
-							opcname, access_method)));
-	}
-	else
-	{
-		Oid			opcOid;
-
-		opcOid = OpclassnameGetOpcid(amOid, opcname);
-		if (!OidIsValid(opcOid))
-			ereport(ERROR,
-					(errcode(ERRCODE_UNDEFINED_OBJECT),
-					 errmsg("operator class \"%s\" does not exist for access method \"%s\"",
-							opcname, access_method)));
-
-		tup = SearchSysCacheCopy1(CLAOID, ObjectIdGetDatum(opcOid));
-		if (!HeapTupleIsValid(tup))		/* should not happen */
-			elog(ERROR, "cache lookup failed for opclass %u", opcOid);
-	}
+	/* Look up the opclass. */
+	origtup = OpClassCacheLookup(amOid, name, false);
+	tup = heap_copytuple(origtup);
+	ReleaseSysCache(origtup);
 
 	AlterOpClassOwner_internal(rel, tup, newOwnerId);
 

@@ -20,7 +20,7 @@
  * Copyright (c) 2006-2010, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/ts_cache.c,v 1.12 2010/02/14 18:42:17 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/ts_cache.c,v 1.13 2010/08/05 15:25:35 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -581,7 +581,7 @@ getTSCurrentConfig(bool emitError)
 
 	/* Look up the config */
 	TSCurrentConfigCache =
-		TSConfigGetCfgid(stringToQualifiedNameList(TSCurrentConfig),
+		get_ts_config_oid(stringToQualifiedNameList(TSCurrentConfig),
 						 !emitError);
 
 	return TSCurrentConfigCache;
@@ -601,7 +601,7 @@ assignTSCurrentConfig(const char *newval, bool doit, GucSource source)
 		Form_pg_ts_config cfg;
 		char	   *buf;
 
-		cfgId = TSConfigGetCfgid(stringToQualifiedNameList(newval), true);
+		cfgId = get_ts_config_oid(stringToQualifiedNameList(newval), true);
 
 		if (!OidIsValid(cfgId))
 			return NULL;

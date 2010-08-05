@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/contrib/tsearch2/tsearch2.c,v 1.12 2010/02/08 20:39:51 tgl Exp $
+ *	  $PostgreSQL: pgsql/contrib/tsearch2/tsearch2.c,v 1.13 2010/08/05 15:25:35 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -190,7 +190,7 @@ tsa_set_curdict_byname(PG_FUNCTION_ARGS)
 	text	   *name = PG_GETARG_TEXT_PP(0);
 	Oid			dict_oid;
 
-	dict_oid = TSDictionaryGetDictid(stringToQualifiedNameList(text_to_cstring(name)), false);
+	dict_oid = get_ts_dict_oid(stringToQualifiedNameList(text_to_cstring(name)), false);
 
 	current_dictionary_oid = dict_oid;
 
@@ -229,7 +229,7 @@ tsa_set_curprs_byname(PG_FUNCTION_ARGS)
 	text	   *name = PG_GETARG_TEXT_PP(0);
 	Oid			parser_oid;
 
-	parser_oid = TSParserGetPrsid(stringToQualifiedNameList(text_to_cstring(name)), false);
+	parser_oid = get_ts_parser_oid(stringToQualifiedNameList(text_to_cstring(name)), false);
 
 	current_parser_oid = parser_oid;
 
@@ -562,6 +562,6 @@ static Oid
 GetCurrentParser(void)
 {
 	if (current_parser_oid == InvalidOid)
-		current_parser_oid = TSParserGetPrsid(stringToQualifiedNameList("pg_catalog.default"), false);
+		current_parser_oid = get_ts_parser_oid(stringToQualifiedNameList("pg_catalog.default"), false);
 	return current_parser_oid;
 }
