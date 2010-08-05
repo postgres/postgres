@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/plpython.sgml,v 1.51 2010/07/08 18:42:12 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/plpython.sgml,v 1.52 2010/08/05 18:36:33 petere Exp $ -->
 
 <chapter id="plpython">
  <title>PL/Python - Python Procedural Language</title>
@@ -958,4 +958,64 @@ $$ LANGUAGE plpythonu;
   </para>
  </sect1>
 
+ <sect1 id="plpython-envar">
+  <title>Environment Variables</title>
+
+  <para>
+   Some of the environment variables that are accepted by the Python
+   interpreter can also be used to affect PL/Python behavior.  They
+   would need to be set in the environment of the main PostgreSQL
+   server process, for example in a start script.  The available
+   environment variables depend on the version of Python; see the
+   Python documentation for details.  At the time of this writing, the
+   following environment variables have an affect on PL/Python,
+   assuming an adequate Python version:
+   <itemizedlist>
+    <listitem>
+     <para><envar>PYTHONHOME</envar></para>
+    </listitem>
+
+    <listitem>
+     <para><envar>PYTHONPATH</envar></para>
+    </listitem>
+
+    <listitem>
+     <para><envar>PYTHONY2K</envar></para>
+    </listitem>
+
+    <listitem>
+     <para><envar>PYTHONOPTIMIZE</envar></para>
+    </listitem>
+
+    <listitem>
+     <para><envar>PYTHONDEBUG</envar></para>
+    </listitem>
+
+    <listitem>
+     <para><envar>PYTHONVERBOSE</envar></para>
+    </listitem>
+
+    <listitem>
+     <para><envar>PYTHONCASEOK</envar></para>
+    </listitem>
+
+    <listitem>
+     <para><envar>PYTHONDONTWRITEBYTECODE</envar></para>
+    </listitem>
+
+    <listitem>
+     <para><envar>PYTHONIOENCODING</envar></para>
+    </listitem>
+
+    <listitem>
+     <para><envar>PYTHONUSERBASE</envar></para>
+    </listitem>
+   </itemizedlist>
+
+   (It appears to be a Python implementation detail beyond the control
+   of PL/Python that some of the environment variables listed on
+   the <command>python</command> man page are only effective in a
+   command-line interpreter and not an embedded Python interpreter.)
+  </para>
+ </sect1>
 </chapter>
