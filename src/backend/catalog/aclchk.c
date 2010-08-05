@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/aclchk.c,v 1.168 2010/07/06 19:18:55 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/aclchk.c,v 1.169 2010/08/05 14:44:58 rhaas Exp $
  *
  * NOTES
  *	  See acl.h.
@@ -43,6 +43,8 @@
 #include "catalog/pg_ts_config.h"
 #include "catalog/pg_ts_dict.h"
 #include "commands/dbcommands.h"
+#include "commands/proclang.h"
+#include "commands/tablespace.h"
 #include "foreign/foreign.h"
 #include "miscadmin.h"
 #include "parser/parse_func.h"
@@ -419,7 +421,7 @@ ExecuteGrantStmt(GrantStmt *stmt)
 		else
 			istmt.grantees =
 				lappend_oid(istmt.grantees,
-							get_roleid_checked(grantee->rolname));
+							get_role_oid(grantee->rolname, false));
 	}
 
 	/*
@@ -607,12 +609,7 @@ objectNamesToOids(GrantObjectType objtype, List *objnames)
 				char	   *dbname = strVal(lfirst(cell));
 				Oid			dbid;
 
-				dbid = get_database_oid(dbname);
-				if (!OidIsValid(dbid))
-					ereport(ERROR,
-							(errcode(ERRCODE_UNDEFINED_DATABASE),
-							 errmsg("database \"%s\" does not exist",
-									dbname)));
+				dbid = get_database_oid(dbname, false);
 				objects = lappend_oid(objects, dbid);
 			}
 			break;
@@ -631,18 +628,10 @@ objectNamesToOids(GrantObjectType objtype, List *objnames)
 			foreach(cell, objnames)
 			{
 				char	   *langname = strVal(lfirst(cell));
-				HeapTuple	tuple;
+				Oid			oid;
 
-				tuple = SearchSysCache1(LANGNAME, PointerGetDatum(langname));
-				if (!HeapTupleIsValid(tuple))
-					ereport(ERROR,
-							(errcode(ERRCODE_UNDEFINED_OBJECT),
-							 errmsg("language \"%s\" does not exist",
-									langname)));
-
-				objects = lappend_oid(objects, HeapTupleGetOid(tuple));
-
-				ReleaseSysCache(tuple);
+				oid = get_language_oid(langname, false);
+				objects = lappend_oid(objects, oid);
 			}
 			break;
 		case ACL_OBJECT_LARGEOBJECT:
@@ -663,49 +652,20 @@ objectNamesToOids(GrantObjectType objtype, List *objnames)
 			foreach(cell, objnames)
 			{
 				char	   *nspname = strVal(lfirst(cell));
-				HeapTuple	tuple;
+				Oid			oid;
 
-				tuple = SearchSysCache1(NAMESPACENAME,
-										CStringGetDatum(nspname));
-				if (!HeapTupleIsValid(tuple))
-					ereport(ERROR,
-							(errcode(ERRCODE_UNDEFINED_SCHEMA),
-							 errmsg("schema \"%s\" does not exist",
-									nspname)));
-
-				objects = lappend_oid(objects, HeapTupleGetOid(tuple));
-
-				ReleaseSysCache(tuple);
+				oid = get_namespace_oid(nspname, false);
+				objects = lappend_oid(objects, oid);
 			}
 			break;
 		case ACL_OBJECT_TABLESPACE:
 			foreach(cell, objnames)
 			{
 				char	   *spcname = strVal(lfirst(cell));
-				ScanKeyData entry[1];
-				HeapScanDesc scan;
-				HeapTuple	tuple;
-				Relation	relation;
+				Oid			spcoid;
 
-				relation = heap_open(TableSpaceRelationId, AccessShareLock);
-
-				ScanKeyInit(&entry[0],
-							Anum_pg_tablespace_spcname,
-							BTEqualStrategyNumber, F_NAMEEQ,
-							CStringGetDatum(spcname));
-
-				scan = heap_beginscan(relation, SnapshotNow, 1, entry);
-				tuple = heap_getnext(scan, ForwardScanDirection);
-				if (!HeapTupleIsValid(tuple))
-					ereport(ERROR,
-							(errcode(ERRCODE_UNDEFINED_OBJECT),
-					   errmsg("tablespace \"%s\" does not exist", spcname)));
-
-				objects = lappend_oid(objects, HeapTupleGetOid(tuple));
-
-				heap_endscan(scan);
-
-				heap_close(relation, AccessShareLock);
+				spcoid = get_tablespace_oid(spcname, false);
+				objects = lappend_oid(objects, spcoid);
 			}
 			break;
 		case ACL_OBJECT_FDW:
@@ -913,7 +873,7 @@ ExecAlterDefaultPrivilegesStmt(AlterDefaultPrivilegesStmt *stmt)
 		else
 			iacls.grantees =
 				lappend_oid(iacls.grantees,
-							get_roleid_checked(grantee->rolname));
+							get_role_oid(grantee->rolname, false));
 	}
 
 	/*
@@ -996,7 +956,7 @@ ExecAlterDefaultPrivilegesStmt(AlterDefaultPrivilegesStmt *stmt)
 		{
 			char	   *rolename = strVal(lfirst(rolecell));
 
-			iacls.roleid = get_roleid_checked(rolename);
+			iacls.roleid = get_role_oid(rolename, false);
 
 			/*
 			 * We insist that calling user be a member of each target role. If
@@ -1037,18 +997,12 @@ SetDefaultACLsInSchemas(InternalDefaultACL *iacls, List *nspnames)
 			AclResult	aclresult;
 
 			/*
-			 * Normally we'd use LookupCreationNamespace here, but it's
-			 * important to do the permissions check against the target role
-			 * not the calling user, so write it out in full.  We require
-			 * CREATE privileges, since without CREATE you won't be able to do
-			 * anything using the default privs anyway.
+			 * Note that we must do the permissions check against the target
+			 * role not the calling user.  We require CREATE privileges,
+			 * since without CREATE you won't be able to do anything using the
+			 * default privs anyway.
 			 */
-			iacls->nspid = GetSysCacheOid1(NAMESPACENAME,
-										   CStringGetDatum(nspname));
-			if (!OidIsValid(iacls->nspid))
-				ereport(ERROR,
-						(errcode(ERRCODE_UNDEFINED_SCHEMA),
-						 errmsg("schema \"%s\" does not exist", nspname)));
+			iacls->nspid = get_namespace_oid(nspname, false);
 
 			aclresult = pg_namespace_aclcheck(iacls->nspid, iacls->roleid,
 											  ACL_CREATE);

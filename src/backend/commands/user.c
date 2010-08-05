@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/commands/user.c,v 1.193 2010/02/26 02:00:40 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/commands/user.c,v 1.194 2010/08/05 14:45:01 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -293,8 +293,7 @@ CreateRole(CreateRoleStmt *stmt)
 	pg_authid_rel = heap_open(AuthIdRelationId, RowExclusiveLock);
 	pg_authid_dsc = RelationGetDescr(pg_authid_rel);
 
-	tuple = SearchSysCache1(AUTHNAME, PointerGetDatum(stmt->role));
-	if (HeapTupleIsValid(tuple))
+	if (OidIsValid(get_role_oid(stmt->role, true)))
 		ereport(ERROR,
 				(errcode(ERRCODE_DUPLICATE_OBJECT),
 				 errmsg("role \"%s\" already exists",
@@ -384,7 +383,7 @@ CreateRole(CreateRoleStmt *stmt)
 	foreach(item, addroleto)
 	{
 		char	   *oldrolename = strVal(lfirst(item));
-		Oid			oldroleid = get_roleid_checked(oldrolename);
+		Oid			oldroleid = get_role_oid(oldrolename, false);
 
 		AddRoleMems(oldrolename, oldroleid,
 					list_make1(makeString(stmt->role)),
@@ -795,11 +794,7 @@ AlterRoleSet(AlterRoleSetStmt *stmt)
 	/* look up and lock the database, if specified */
 	if (stmt->database != NULL)
 	{
-		databaseid = get_database_oid(stmt->database);
-		if (!OidIsValid(databaseid))
-			ereport(ERROR,
-					(errcode(ERRCODE_UNDEFINED_OBJECT),
-					 errmsg("database \"%s\" not found", stmt->database)));
+		databaseid = get_database_oid(stmt->database, false);
 		shdepLockAndCheckObject(DatabaseRelationId, databaseid);
 	}
 
@@ -1099,7 +1094,7 @@ GrantRole(GrantRoleStmt *stmt)
 	ListCell   *item;
 
 	if (stmt->grantor)
-		grantor = get_roleid_checked(stmt->grantor);
+		grantor = get_role_oid(stmt->grantor, false);
 	else
 		grantor = GetUserId();
 
@@ -1127,7 +1122,7 @@ GrantRole(GrantRoleStmt *stmt)
 					(errcode(ERRCODE_INVALID_GRANT_OPERATION),
 			errmsg("column names cannot be included in GRANT/REVOKE ROLE")));
 
-		roleid = get_roleid_checked(rolename);
+		roleid = get_role_oid(rolename, false);
 		if (stmt->is_grant)
 			AddRoleMems(rolename, roleid,
 						stmt->grantee_roles, grantee_ids,
@@ -1194,7 +1189,7 @@ ReassignOwnedObjects(ReassignOwnedStmt *stmt)
 	}
 
 	/* Must have privileges on the receiving side too */
-	newrole = get_roleid_checked(stmt->newrole);
+	newrole = get_role_oid(stmt->newrole, false);
 
 	if (!has_privs_of_role(GetUserId(), newrole))
 		ereport(ERROR,
@@ -1220,7 +1215,7 @@ roleNamesToIds(List *memberNames)
 	foreach(l, memberNames)
 	{
 		char	   *rolename = strVal(lfirst(l));
-		Oid			roleid = get_roleid_checked(rolename);
+		Oid			roleid = get_role_oid(rolename, false);
 
 		result = lappend_oid(result, roleid);
 	}

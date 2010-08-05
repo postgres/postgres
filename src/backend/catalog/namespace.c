@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/namespace.c,v 1.125 2010/02/26 02:00:36 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/namespace.c,v 1.126 2010/08/05 14:44:58 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -332,13 +332,7 @@ RangeVarGetCreationNamespace(const RangeVar *newRelation)
 			return myTempNamespace;
 		}
 		/* use exact schema given */
-		namespaceId = GetSysCacheOid1(NAMESPACENAME,
-								   CStringGetDatum(newRelation->schemaname));
-		if (!OidIsValid(namespaceId))
-			ereport(ERROR,
-					(errcode(ERRCODE_UNDEFINED_SCHEMA),
-					 errmsg("schema \"%s\" does not exist",
-							newRelation->schemaname)));
+		namespaceId = get_namespace_oid(newRelation->schemaname, false);
 		/* we do not check for USAGE rights here! */
 	}
 	else
@@ -2270,7 +2264,7 @@ LookupNamespaceNoError(const char *nspname)
 		return InvalidOid;
 	}
 
-	return GetSysCacheOid1(NAMESPACENAME, CStringGetDatum(nspname));
+	return get_namespace_oid(nspname, true);
 }
 
 /*
@@ -2300,11 +2294,7 @@ LookupExplicitNamespace(const char *nspname)
 		 */
 	}
 
-	namespaceId = GetSysCacheOid1(NAMESPACENAME, CStringGetDatum(nspname));
-	if (!OidIsValid(namespaceId))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_SCHEMA),
-				 errmsg("schema \"%s\" does not exist", nspname)));
+	namespaceId = get_namespace_oid(nspname, false);
 
 	aclresult = pg_namespace_aclcheck(namespaceId, GetUserId(), ACL_USAGE);
 	if (aclresult != ACLCHECK_OK)
@@ -2339,11 +2329,7 @@ LookupCreationNamespace(const char *nspname)
 		return myTempNamespace;
 	}
 
-	namespaceId = GetSysCacheOid1(NAMESPACENAME, CStringGetDatum(nspname));
-	if (!OidIsValid(namespaceId))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_SCHEMA),
-				 errmsg("schema \"%s\" does not exist", nspname)));
+	namespaceId = get_namespace_oid(nspname, false);
 
 	aclresult = pg_namespace_aclcheck(namespaceId, GetUserId(), ACL_CREATE);
 	if (aclresult != ACLCHECK_OK)
@@ -2385,12 +2371,7 @@ QualifiedNameGetCreationNamespace(List *names, char **objname_p)
 			return myTempNamespace;
 		}
 		/* use exact schema given */
-		namespaceId = GetSysCacheOid1(NAMESPACENAME,
-									  CStringGetDatum(schemaname));
-		if (!OidIsValid(namespaceId))
-			ereport(ERROR,
-					(errcode(ERRCODE_UNDEFINED_SCHEMA),
-					 errmsg("schema \"%s\" does not exist", schemaname)));
+		namespaceId = get_namespace_oid(schemaname, false);
 		/* we do not check for USAGE rights here! */
 	}
 	else
@@ -2411,6 +2392,26 @@ QualifiedNameGetCreationNamespace(List *names, char **objname_p)
 	}
 
 	return namespaceId;
+}
+
+/*
+ * get_namespace_oid - given a namespace name, look up the OID
+ *
+ * If missing_ok is false, throw an error if namespace name not found.  If
+ * true, just return InvalidOid.
+ */
+Oid
+get_namespace_oid(const char *nspname, bool missing_ok)
+{
+	Oid			oid;
+
+	oid = GetSysCacheOid1(NAMESPACENAME, CStringGetDatum(nspname));
+	if (!OidIsValid(oid) && !missing_ok)
+        ereport(ERROR,
+                (errcode(ERRCODE_UNDEFINED_SCHEMA),
+                 errmsg("schema \"%s\" does not exist", nspname)));
+
+	return oid;
 }
 
 /*
@@ -2897,8 +2898,7 @@ recomputeNamespacePath(void)
 				char	   *rname;
 
 				rname = NameStr(((Form_pg_authid) GETSTRUCT(tuple))->rolname);
-				namespaceId = GetSysCacheOid1(NAMESPACENAME,
-											  CStringGetDatum(rname));
+				namespaceId = get_namespace_oid(rname, true);
 				ReleaseSysCache(tuple);
 				if (OidIsValid(namespaceId) &&
 					!list_member_oid(oidlist, namespaceId) &&
@@ -2925,8 +2925,7 @@ recomputeNamespacePath(void)
 		else
 		{
 			/* normal namespace reference */
-			namespaceId = GetSysCacheOid1(NAMESPACENAME,
-										  CStringGetDatum(curname));
+			namespaceId = get_namespace_oid(curname, true);
 			if (OidIsValid(namespaceId) &&
 				!list_member_oid(oidlist, namespaceId) &&
 				pg_namespace_aclcheck(namespaceId, roleid,
@@ -3033,8 +3032,7 @@ InitTempTableNamespace(void)
 
 	snprintf(namespaceName, sizeof(namespaceName), "pg_temp_%d", MyBackendId);
 
-	namespaceId = GetSysCacheOid1(NAMESPACENAME,
-								  CStringGetDatum(namespaceName));
+	namespaceId = get_namespace_oid(namespaceName, true);
 	if (!OidIsValid(namespaceId))
 	{
 		/*
@@ -3066,8 +3064,7 @@ InitTempTableNamespace(void)
 	snprintf(namespaceName, sizeof(namespaceName), "pg_toast_temp_%d",
 			 MyBackendId);
 
-	toastspaceId = GetSysCacheOid1(NAMESPACENAME,
-								   CStringGetDatum(namespaceName));
+	toastspaceId = get_namespace_oid(namespaceName, true);
 	if (!OidIsValid(toastspaceId))
 	{
 		toastspaceId = NamespaceCreate(namespaceName, BOOTSTRAP_SUPERUSERID);

@@ -5,7 +5,7 @@
  * Copyright (c) 2002-2010, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/dbsize.c,v 1.31 2010/02/26 02:01:07 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/dbsize.c,v 1.32 2010/08/05 14:45:04 rhaas Exp $
  *
  */
 
@@ -141,13 +141,7 @@ Datum
 pg_database_size_name(PG_FUNCTION_ARGS)
 {
 	Name		dbName = PG_GETARG_NAME(0);
-	Oid			dbOid = get_database_oid(NameStr(*dbName));
-
-	if (!OidIsValid(dbOid))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_DATABASE),
-				 errmsg("database \"%s\" does not exist",
-						NameStr(*dbName))));
+	Oid			dbOid = get_database_oid(NameStr(*dbName), false);
 
 	PG_RETURN_INT64(calculate_database_size(dbOid));
 }
@@ -240,13 +234,7 @@ Datum
 pg_tablespace_size_name(PG_FUNCTION_ARGS)
 {
 	Name		tblspcName = PG_GETARG_NAME(0);
-	Oid			tblspcOid = get_tablespace_oid(NameStr(*tblspcName));
-
-	if (!OidIsValid(tblspcOid))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("tablespace \"%s\" does not exist",
-						NameStr(*tblspcName))));
+	Oid			tblspcOid = get_tablespace_oid(NameStr(*tblspcName), false);
 
 	PG_RETURN_INT64(calculate_tablespace_size(tblspcOid));
 }

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/foreigncmds.c,v 1.11 2010/02/14 18:42:14 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/foreigncmds.c,v 1.12 2010/08/05 14:45:00 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -184,7 +184,7 @@ GetUserOidFromMapping(const char *username, bool missing_ok)
 		return GetUserId();
 
 	/* map to provided user */
-	return missing_ok ? get_roleid(username) : get_roleid_checked(username);
+	return get_role_oid(username, missing_ok);
 }
 
 

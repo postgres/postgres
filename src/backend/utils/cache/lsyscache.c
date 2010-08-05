@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/lsyscache.c,v 1.171 2010/07/09 22:57:39 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/lsyscache.c,v 1.172 2010/08/05 14:45:05 rhaas Exp $
  *
  * NOTES
  *	  Eventually, the index information should go through here, too.
@@ -2637,35 +2637,4 @@ get_namespace_name(Oid nspid)
 	}
 	else
 		return NULL;
-}
-
-/*				---------- PG_AUTHID CACHE ----------					 */
-
-/*
- * get_roleid
- *	  Given a role name, look up the role's OID.
- *	  Returns InvalidOid if no such role.
- */
-Oid
-get_roleid(const char *rolname)
-{
-	return GetSysCacheOid1(AUTHNAME, PointerGetDatum(rolname));
-}
-
-/*
- * get_roleid_checked
- *	  Given a role name, look up the role's OID.
- *	  ereports if no such role.
- */
-Oid
-get_roleid_checked(const char *rolname)
-{
-	Oid			roleid;
-
-	roleid = get_roleid(rolname);
-	if (!OidIsValid(roleid))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("role \"%s\" does not exist", rolname)));
-	return roleid;
 }

@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.236 2010/07/20 18:14:16 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.237 2010/08/05 14:45:00 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -255,7 +255,7 @@ createdb(const CreatedbStmt *stmt)
 
 	/* obtain OID of proposed owner */
 	if (dbowner)
-		datdba = get_roleid_checked(dbowner);
+		datdba = get_role_oid(dbowner, false);
 	else
 		datdba = GetUserId();
 
@@ -429,12 +429,7 @@ createdb(const CreatedbStmt *stmt)
 		AclResult	aclresult;
 
 		tablespacename = strVal(dtablespacename->arg);
-		dst_deftablespace = get_tablespace_oid(tablespacename);
-		if (!OidIsValid(dst_deftablespace))
-			ereport(ERROR,
-					(errcode(ERRCODE_UNDEFINED_OBJECT),
-					 errmsg("tablespace \"%s\" does not exist",
-							tablespacename)));
+		dst_deftablespace = get_tablespace_oid(tablespacename, false);
 		/* check permissions */
 		aclresult = pg_tablespace_aclcheck(dst_deftablespace, GetUserId(),
 										   ACL_CREATE);
@@ -491,7 +486,7 @@ createdb(const CreatedbStmt *stmt)
 	 * message than "unique index violation".  There's a race condition but
 	 * we're willing to accept the less friendly message in that case.
 	 */
-	if (OidIsValid(get_database_oid(dbname)))
+	if (OidIsValid(get_database_oid(dbname, true)))
 		ereport(ERROR,
 				(errcode(ERRCODE_DUPLICATE_DATABASE),
 				 errmsg("database \"%s\" already exists", dbname)));
@@ -919,7 +914,7 @@ RenameDatabase(const char *oldname, const char *newname)
 	 * Make sure the new name doesn't exist.  See notes for same error in
 	 * CREATE DATABASE.
 	 */
-	if (OidIsValid(get_database_oid(newname)))
+	if (OidIsValid(get_database_oid(newname, true)))
 		ereport(ERROR,
 				(errcode(ERRCODE_DUPLICATE_DATABASE),
 				 errmsg("database \"%s\" already exists", newname)));
@@ -1030,11 +1025,7 @@ movedb(const char *dbname, const char *tblspcname)
 	/*
 	 * Get tablespace's oid
 	 */
-	dst_tblspcoid = get_tablespace_oid(tblspcname);
-	if (dst_tblspcoid == InvalidOid)
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_DATABASE),
-				 errmsg("tablespace \"%s\" does not exist", tblspcname)));
+	dst_tblspcoid = get_tablespace_oid(tblspcname, false);
 
 	/*
 	 * Permission checks
@@ -1402,12 +1393,7 @@ AlterDatabase(AlterDatabaseStmt *stmt, bool isTopLevel)
 void
 AlterDatabaseSet(AlterDatabaseSetStmt *stmt)
 {
-	Oid			datid = get_database_oid(stmt->dbname);
-
-	if (!OidIsValid(datid))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_DATABASE),
-				 errmsg("database \"%s\" does not exist", stmt->dbname)));
+	Oid			datid = get_database_oid(stmt->dbname, false);
 
 	/*
 	 * Obtain a lock on the database and make sure it didn't go away in the
@@ -1818,10 +1804,11 @@ errdetail_busy_db(int notherbackends, int npreparedxacts)
 /*
  * get_database_oid - given a database name, look up the OID
  *
- * Returns InvalidOid if database name not found.
+ * If missing_ok is false, throw an error if database name not found.  If
+ * true, just return InvalidOid.
  */
 Oid
-get_database_oid(const char *dbname)
+get_database_oid(const char *dbname, bool missing_ok)
 {
 	Relation	pg_database;
 	ScanKeyData entry[1];
@@ -1851,6 +1838,12 @@ get_database_oid(const char *dbname)
 
 	systable_endscan(scan);
 	heap_close(pg_database, AccessShareLock);
+
+	if (!OidIsValid(oid) && !missing_ok)
+        ereport(ERROR,
+                (errcode(ERRCODE_UNDEFINED_DATABASE),
+                 errmsg("database \"%s\" does not exist",
+                        dbname)));
 
 	return oid;
 }

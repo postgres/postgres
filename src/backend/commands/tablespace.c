@@ -40,7 +40,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablespace.c,v 1.78 2010/07/20 18:14:16 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablespace.c,v 1.79 2010/08/05 14:45:01 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -246,7 +246,7 @@ CreateTableSpace(CreateTableSpaceStmt *stmt)
 
 	/* However, the eventual owner of the tablespace need not be */
 	if (stmt->owner)
-		ownerId = get_roleid_checked(stmt->owner);
+		ownerId = get_role_oid(stmt->owner, false);
 	else
 		ownerId = GetUserId();
 
@@ -298,7 +298,7 @@ CreateTableSpace(CreateTableSpaceStmt *stmt)
 	 * index would catch this anyway, but might as well give a friendlier
 	 * message.)
 	 */
-	if (OidIsValid(get_tablespace_oid(stmt->tablespacename)))
+	if (OidIsValid(get_tablespace_oid(stmt->tablespacename, true)))
 		ereport(ERROR,
 				(errcode(ERRCODE_DUPLICATE_OBJECT),
 				 errmsg("tablespace \"%s\" already exists",
@@ -1029,7 +1029,7 @@ assign_default_tablespace(const char *newval, bool doit, GucSource source)
 	if (IsTransactionState())
 	{
 		if (newval[0] != '\0' &&
-			!OidIsValid(get_tablespace_oid(newval)))
+			!OidIsValid(get_tablespace_oid(newval, true)))
 		{
 			ereport(GUC_complaint_elevel(source),
 					(errcode(ERRCODE_UNDEFINED_OBJECT),
@@ -1079,7 +1079,7 @@ GetDefaultTablespace(bool forTemp)
 	 * to refer to an existing tablespace; we just silently return InvalidOid,
 	 * causing the new object to be created in the database's tablespace.
 	 */
-	result = get_tablespace_oid(default_tablespace);
+	result = get_tablespace_oid(default_tablespace, true);
 
 	/*
 	 * Allow explicit specification of database's default tablespace in
@@ -1146,21 +1146,13 @@ assign_temp_tablespaces(const char *newval, bool doit, GucSource source)
 				continue;
 			}
 
-			/* Else verify that name is a valid tablespace name */
-			curoid = get_tablespace_oid(curname);
+			/*
+			 * In an interactive SET command, we ereport for bad info.
+			 * Otherwise, silently ignore any bad list elements.
+			 */
+			curoid = get_tablespace_oid(curname, source < PGC_S_INTERACTIVE);
 			if (curoid == InvalidOid)
-			{
-				/*
-				 * In an interactive SET command, we ereport for bad info.
-				 * Otherwise, silently ignore any bad list elements.
-				 */
-				if (source >= PGC_S_INTERACTIVE)
-					ereport(ERROR,
-							(errcode(ERRCODE_UNDEFINED_OBJECT),
-							 errmsg("tablespace \"%s\" does not exist",
-									curname)));
 				continue;
-			}
 
 			/*
 			 * Allow explicit specification of database's default tablespace
@@ -1259,10 +1251,10 @@ PrepareTempTablespaces(void)
 		}
 
 		/* Else verify that name is a valid tablespace name */
-		curoid = get_tablespace_oid(curname);
+		curoid = get_tablespace_oid(curname, true);
 		if (curoid == InvalidOid)
 		{
-			/* Silently ignore any bad list elements */
+			/* Skip any bad list elements */
 			continue;
 		}
 
@@ -1295,10 +1287,11 @@ PrepareTempTablespaces(void)
 /*
  * get_tablespace_oid - given a tablespace name, look up the OID
  *
- * Returns InvalidOid if tablespace name not found.
+ * If missing_ok is false, throw an error if tablespace name not found.  If
+ * true, just return InvalidOid.
  */
 Oid
-get_tablespace_oid(const char *tablespacename)
+get_tablespace_oid(const char *tablespacename, bool missing_ok)
 {
 	Oid			result;
 	Relation	rel;
@@ -1328,6 +1321,12 @@ get_tablespace_oid(const char *tablespacename)
 
 	heap_endscan(scandesc);
 	heap_close(rel, AccessShareLock);
+
+	if (!OidIsValid(result) && !missing_ok)
+        ereport(ERROR,
+                (errcode(ERRCODE_UNDEFINED_OBJECT),
+                 errmsg("tablespace \"%s\" does not exist",
+                        tablespacename)));
 
 	return result;
 }

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/lsyscache.h,v 1.133 2010/04/24 16:20:32 sriggs Exp $
+ * $PostgreSQL: pgsql/src/include/utils/lsyscache.h,v 1.134 2010/08/05 14:45:09 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -136,8 +136,6 @@ extern void free_attstatsslot(Oid atttype,
 				  Datum *values, int nvalues,
 				  float4 *numbers, int nnumbers);
 extern char *get_namespace_name(Oid nspid);
-extern Oid	get_roleid(const char *rolname);
-extern Oid	get_roleid_checked(const char *rolname);
 
 #define type_is_array(typid)  (get_element_type(typid) != InvalidOid)
 

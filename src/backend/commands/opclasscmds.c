@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/opclasscmds.c,v 1.69 2010/07/16 00:13:23 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/opclasscmds.c,v 1.70 2010/08/05 14:45:01 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -641,7 +641,6 @@ DefineOpFamily(CreateOpFamilyStmt *stmt)
 	char	   *opfname;		/* name of opfamily we're creating */
 	Oid			amoid,			/* our AM's oid */
 				namespaceoid;	/* namespace to create opfamily in */
-	HeapTuple	tup;
 	AclResult	aclresult;
 
 	/* Convert list of names to a name and namespace */
@@ -654,19 +653,10 @@ DefineOpFamily(CreateOpFamilyStmt *stmt)
 		aclcheck_error(aclresult, ACL_KIND_NAMESPACE,
 					   get_namespace_name(namespaceoid));
 
-	/* Get necessary info about access method */
-	tup = SearchSysCache1(AMNAME, CStringGetDatum(stmt->amname));
-	if (!HeapTupleIsValid(tup))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("access method \"%s\" does not exist",
-						stmt->amname)));
-
-	amoid = HeapTupleGetOid(tup);
+	/* Get access method OID, throwing an error if it doesn't exist. */
+	amoid = get_am_oid(stmt->amname, false);
 
 	/* XXX Should we make any privilege check against the AM? */
-
-	ReleaseSysCache(tup);
 
 	/*
 	 * Currently, we require superuser privileges to create an opfamily. See
@@ -1427,12 +1417,7 @@ RemoveOpClass(RemoveOpClassStmt *stmt)
 	/*
 	 * Get the access method's OID.
 	 */
-	amID = GetSysCacheOid1(AMNAME, CStringGetDatum(stmt->amname));
-	if (!OidIsValid(amID))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("access method \"%s\" does not exist",
-						stmt->amname)));
+	amID = get_am_oid(stmt->amname, false);
 
 	/*
 	 * Look up the opclass.
@@ -1488,12 +1473,7 @@ RemoveOpFamily(RemoveOpFamilyStmt *stmt)
 	/*
 	 * Get the access method's OID.
 	 */
-	amID = GetSysCacheOid1(AMNAME, CStringGetDatum(stmt->amname));
-	if (!OidIsValid(amID))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("access method \"%s\" does not exist",
-						stmt->amname)));
+	amID = get_am_oid(stmt->amname, false);
 
 	/*
 	 * Look up the opfamily.
@@ -1650,12 +1630,7 @@ RenameOpClass(List *name, const char *access_method, const char *newname)
 	Relation	rel;
 	AclResult	aclresult;
 
-	amOid = GetSysCacheOid1(AMNAME, CStringGetDatum(access_method));
-	if (!OidIsValid(amOid))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("access method \"%s\" does not exist",
-						access_method)));
+	amOid = get_am_oid(access_method, false);
 
 	rel = heap_open(OperatorClassRelationId, RowExclusiveLock);
 
@@ -1744,12 +1719,7 @@ RenameOpFamily(List *name, const char *access_method, const char *newname)
 	Relation	rel;
 	AclResult	aclresult;
 
-	amOid = GetSysCacheOid1(AMNAME, CStringGetDatum(access_method));
-	if (!OidIsValid(amOid))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("access method \"%s\" does not exist",
-						access_method)));
+	amOid = get_am_oid(access_method, false);
 
 	rel = heap_open(OperatorFamilyRelationId, RowExclusiveLock);
 
@@ -1835,12 +1805,7 @@ AlterOpClassOwner(List *name, const char *access_method, Oid newOwnerId)
 	char	   *opcname;
 	char	   *schemaname;
 
-	amOid = GetSysCacheOid1(AMNAME, CStringGetDatum(access_method));
-	if (!OidIsValid(amOid))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("access method \"%s\" does not exist",
-						access_method)));
+	amOid = get_am_oid(access_method, false);
 
 	rel = heap_open(OperatorClassRelationId, RowExclusiveLock);
 
@@ -1978,12 +1943,7 @@ AlterOpFamilyOwner(List *name, const char *access_method, Oid newOwnerId)
 	char	   *opfname;
 	char	   *schemaname;
 
-	amOid = GetSysCacheOid1(AMNAME, CStringGetDatum(access_method));
-	if (!OidIsValid(amOid))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("access method \"%s\" does not exist",
-						access_method)));
+	amOid = get_am_oid(access_method, false);
 
 	rel = heap_open(OperatorFamilyRelationId, RowExclusiveLock);
 
@@ -2107,4 +2067,23 @@ AlterOpFamilyOwner_internal(Relation rel, HeapTuple tup, Oid newOwnerId)
 		changeDependencyOnOwner(OperatorFamilyRelationId, HeapTupleGetOid(tup),
 								newOwnerId);
 	}
+}
+
+/*
+ * get_am_oid - given an access method name, look up the OID
+ *
+ * If missing_ok is false, throw an error if access method not found.  If
+ * true, just return InvalidOid.
+ */
+Oid
+get_am_oid(const char *amname, bool missing_ok)
+{
+	Oid			oid;
+
+	oid = GetSysCacheOid1(AMNAME, CStringGetDatum(amname));
+	if (!OidIsValid(oid) && !missing_ok)
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("access method \"%s\" does not exist", amname)));
+	return oid;
 }

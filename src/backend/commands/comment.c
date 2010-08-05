@@ -7,7 +7,7 @@
  * Copyright (c) 1996-2010, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/comment.c,v 1.115 2010/06/13 17:43:12 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/comment.c,v 1.116 2010/08/05 14:44:58 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,6 +42,8 @@
 #include "catalog/pg_type.h"
 #include "commands/comment.h"
 #include "commands/dbcommands.h"
+#include "commands/defrem.h"
+#include "commands/proclang.h"
 #include "commands/tablespace.h"
 #include "libpq/be-fsstubs.h"
 #include "miscadmin.h"
@@ -686,11 +688,10 @@ CommentDatabase(List *qualname, char *comment)
 	 * of the database.  Erroring out would prevent pg_restore from completing
 	 * (which is really pg_restore's fault, but for now we will work around
 	 * the problem here).  Consensus is that the best fix is to treat wrong
-	 * database name as a WARNING not an ERROR.
+	 * database name as a WARNING not an ERROR (thus, we tell get_database_oid
+	 * to ignore the error so that we can handle it differently here).
 	 */
-
-	/* First get the database OID */
-	oid = get_database_oid(database);
+	oid = get_database_oid(database, true);
 	if (!OidIsValid(oid))
 	{
 		ereport(WARNING,
@@ -729,14 +730,7 @@ CommentTablespace(List *qualname, char *comment)
 				 errmsg("tablespace name cannot be qualified")));
 	tablespace = strVal(linitial(qualname));
 
-	oid = get_tablespace_oid(tablespace);
-	if (!OidIsValid(oid))
-	{
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("tablespace \"%s\" does not exist", tablespace)));
-		return;
-	}
+	oid = get_tablespace_oid(tablespace, false);
 
 	/* Check object security */
 	if (!pg_tablespace_ownercheck(oid, GetUserId()))
@@ -766,7 +760,7 @@ CommentRole(List *qualname, char *comment)
 				 errmsg("role name cannot be qualified")));
 	role = strVal(linitial(qualname));
 
-	oid = get_roleid_checked(role);
+	oid = get_role_oid(role, false);
 
 	/* Check object security */
 	if (!has_privs_of_role(GetUserId(), oid))
@@ -799,11 +793,7 @@ CommentNamespace(List *qualname, char *comment)
 				 errmsg("schema name cannot be qualified")));
 	namespace = strVal(linitial(qualname));
 
-	oid = GetSysCacheOid1(NAMESPACENAME, CStringGetDatum(namespace));
-	if (!OidIsValid(oid))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_SCHEMA),
-				 errmsg("schema \"%s\" does not exist", namespace)));
+	oid = get_namespace_oid(namespace, false);
 
 	/* Check object security */
 	if (!pg_namespace_ownercheck(oid, GetUserId()))
@@ -1213,11 +1203,7 @@ CommentLanguage(List *qualname, char *comment)
 				 errmsg("language name cannot be qualified")));
 	language = strVal(linitial(qualname));
 
-	oid = GetSysCacheOid1(LANGNAME, CStringGetDatum(language));
-	if (!OidIsValid(oid))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_SCHEMA),
-				 errmsg("language \"%s\" does not exist", language)));
+	oid = get_language_oid(language, false);
 
 	/* Check object security */
 	if (!superuser())
@@ -1254,12 +1240,7 @@ CommentOpClass(List *qualname, List *arguments, char *comment)
 	/*
 	 * Get the access method's OID.
 	 */
-	amID = GetSysCacheOid1(AMNAME, CStringGetDatum(amname));
-	if (!OidIsValid(amID))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("access method \"%s\" does not exist",
-						amname)));
+	amID = get_am_oid(amname, false);
 
 	/*
 	 * Look up the opclass.
@@ -1335,12 +1316,7 @@ CommentOpFamily(List *qualname, List *arguments, char *comment)
 	/*
 	 * Get the access method's OID.
 	 */
-	amID = GetSysCacheOid1(AMNAME, CStringGetDatum(amname));
-	if (!OidIsValid(amID))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("access method \"%s\" does not exist",
-						amname)));
+	amID = get_am_oid(amname, false);
 
 	/*
 	 * Look up the opfamily.

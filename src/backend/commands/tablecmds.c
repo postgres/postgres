@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.338 2010/08/03 15:47:02 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.339 2010/08/05 14:45:01 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -414,12 +414,7 @@ DefineRelation(CreateStmt *stmt, char relkind)
 	 */
 	if (stmt->tablespacename)
 	{
-		tablespaceId = get_tablespace_oid(stmt->tablespacename);
-		if (!OidIsValid(tablespaceId))
-			ereport(ERROR,
-					(errcode(ERRCODE_UNDEFINED_OBJECT),
-					 errmsg("tablespace \"%s\" does not exist",
-							stmt->tablespacename)));
+		tablespaceId = get_tablespace_oid(stmt->tablespacename, false);
 	}
 	else
 	{
@@ -2941,7 +2936,7 @@ ATExecCmd(List **wqueue, AlteredTableInfo *tab, Relation rel,
 			break;
 		case AT_ChangeOwner:	/* ALTER OWNER */
 			ATExecChangeOwner(RelationGetRelid(rel),
-							  get_roleid_checked(cmd->name),
+							  get_role_oid(cmd->name, false),
 							  false, lockmode);
 			break;
 		case AT_ClusterOn:		/* CLUSTER ON */
@@ -6945,11 +6940,7 @@ ATPrepSetTableSpace(AlteredTableInfo *tab, Relation rel, char *tablespacename, L
 	AclResult	aclresult;
 
 	/* Check that the tablespace exists */
-	tablespaceId = get_tablespace_oid(tablespacename);
-	if (!OidIsValid(tablespaceId))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("tablespace \"%s\" does not exist", tablespacename)));
+	tablespaceId = get_tablespace_oid(tablespacename, false);
 
 	/* Check its permissions */
 	aclresult = pg_tablespace_aclcheck(tablespaceId, GetUserId(), ACL_CREATE);

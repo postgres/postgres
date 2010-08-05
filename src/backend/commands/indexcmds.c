@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/indexcmds.c,v 1.198 2010/07/06 19:18:56 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/indexcmds.c,v 1.199 2010/08/05 14:45:00 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -218,12 +218,7 @@ DefineIndex(RangeVar *heapRelation,
 	 */
 	if (tableSpaceName)
 	{
-		tablespaceId = get_tablespace_oid(tableSpaceName);
-		if (!OidIsValid(tablespaceId))
-			ereport(ERROR,
-					(errcode(ERRCODE_UNDEFINED_OBJECT),
-					 errmsg("tablespace \"%s\" does not exist",
-							tableSpaceName)));
+		tablespaceId = get_tablespace_oid(tableSpaceName, false);
 	}
 	else
 	{

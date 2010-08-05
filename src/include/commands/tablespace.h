@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/commands/tablespace.h,v 1.23 2010/01/07 03:53:08 rhaas Exp $
+ * $PostgreSQL: pgsql/src/include/commands/tablespace.h,v 1.24 2010/08/05 14:45:08 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,7 +51,7 @@ extern Oid	GetDefaultTablespace(bool forTemp);
 
 extern void PrepareTempTablespaces(void);
 
-extern Oid	get_tablespace_oid(const char *tablespacename);
+extern Oid	get_tablespace_oid(const char *tablespacename, bool missing_ok);
 extern char *get_tablespace_name(Oid spc_oid);
 
 extern bool directory_is_empty(const char *path);
