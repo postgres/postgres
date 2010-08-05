@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.523 2010/08/05 04:21:53 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.524 2010/08/05 18:21:17 tgl Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -9782,7 +9782,7 @@ SELECT NULLIF(value, '(none)') ...
     <thead>
      <row>
       <entry>Function</entry>
-      <entry>Argument Type</entry>
+      <entry>Argument Type(s)</entry>
       <entry>Return Type</entry>
       <entry>Description</entry>
      </row>
@@ -9952,17 +9952,17 @@ SELECT NULLIF(value, '(none)') ...
         <primary>string_agg</primary>
        </indexterm>
        <function>
-         string_agg(<replaceable class="parameter">expression</replaceable> 
-                    [, <replaceable class="parameter">delimiter</replaceable> ] )
+         string_agg(<replaceable class="parameter">expression</replaceable>,
+                    <replaceable class="parameter">delimiter</replaceable>)
        </function>
       </entry>
       <entry>
-       <type>text</type>
+       <type>text</type>, <type>text</type>
       </entry>
       <entry>
        <type>text</type>
       </entry>
-      <entry>input values concatenated into a string, optionally with delimiters</entry>
+      <entry>input values concatenated into a string, separated by delimiter</entry>
      </row>
 
      <row>
