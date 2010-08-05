@@ -456,3 +456,72 @@ LINE 1: SELECT xpath('//b', '<a>one <b>two</b> three <b>etc</b></a>'...
                             ^
 DETAIL:  This functionality requires the server to be built with libxml support.
 HINT:  You need to rebuild PostgreSQL using --with-libxml.
+-- Test xmlexists evaluation
+SELECT xmlexists('//town[text() = ''Toronto'']' PASSING BY REF '<towns><town>Bidford-on-Avon</town><town>Cwmbran</town><town>Bristol</town></towns>');
+ERROR:  unsupported XML feature
+LINE 1: ...sts('//town[text() = ''Toronto'']' PASSING BY REF '<towns><t...
+                                                             ^
+DETAIL:  This functionality requires the server to be built with libxml support.
+HINT:  You need to rebuild PostgreSQL using --with-libxml.
+SELECT xmlexists('//town[text() = ''Cwmbran'']' PASSING BY REF '<towns><town>Bidford-on-Avon</town><town>Cwmbran</town><town>Bristol</town></towns>');
+ERROR:  unsupported XML feature
+LINE 1: ...sts('//town[text() = ''Cwmbran'']' PASSING BY REF '<towns><t...
+                                                             ^
+DETAIL:  This functionality requires the server to be built with libxml support.
+HINT:  You need to rebuild PostgreSQL using --with-libxml.
+INSERT INTO xmltest VALUES (4, '<menu><beers><name>Budvar</name><cost>free</cost><name>Carling</name><cost>lots</cost></beers></menu>'::xml);
+ERROR:  unsupported XML feature
+LINE 1: INSERT INTO xmltest VALUES (4, '<menu><beers><name>Budvar</n...
+                                       ^
+DETAIL:  This functionality requires the server to be built with libxml support.
+HINT:  You need to rebuild PostgreSQL using --with-libxml.
+INSERT INTO xmltest VALUES (5, '<menu><beers><name>Molson</name><cost>free</cost><name>Carling</name><cost>lots</cost></beers></menu>'::xml);
+ERROR:  unsupported XML feature
+LINE 1: INSERT INTO xmltest VALUES (5, '<menu><beers><name>Molson</n...
+                                       ^
+DETAIL:  This functionality requires the server to be built with libxml support.
+HINT:  You need to rebuild PostgreSQL using --with-libxml.
+INSERT INTO xmltest VALUES (6, '<myns:menu xmlns:myns="http://myns.com"><myns:beers><myns:name>Budvar</myns:name><myns:cost>free</myns:cost><myns:name>Carling</myns:name><myns:cost>lots</myns:cost></myns:beers></myns:menu>'::xml);
+ERROR:  unsupported XML feature
+LINE 1: INSERT INTO xmltest VALUES (6, '<myns:menu xmlns:myns="http:...
+                                       ^
+DETAIL:  This functionality requires the server to be built with libxml support.
+HINT:  You need to rebuild PostgreSQL using --with-libxml.
+INSERT INTO xmltest VALUES (7, '<myns:menu xmlns:myns="http://myns.com"><myns:beers><myns:name>Molson</myns:name><myns:cost>free</myns:cost><myns:name>Carling</myns:name><myns:cost>lots</myns:cost></myns:beers></myns:menu>'::xml);
+ERROR:  unsupported XML feature
+LINE 1: INSERT INTO xmltest VALUES (7, '<myns:menu xmlns:myns="http:...
+                                       ^
+DETAIL:  This functionality requires the server to be built with libxml support.
+HINT:  You need to rebuild PostgreSQL using --with-libxml.
+SELECT COUNT(id) FROM xmltest WHERE xmlexists('/menu/beer' PASSING data);
+ count 
+-------
+     0
+(1 row)
+
+SELECT COUNT(id) FROM xmltest WHERE xmlexists('/menu/beer' PASSING BY REF data BY REF);
+ count 
+-------
+     0
+(1 row)
+
+SELECT COUNT(id) FROM xmltest WHERE xmlexists('/menu/beers' PASSING BY REF data);
+ count 
+-------
+     0
+(1 row)
+
+SELECT COUNT(id) FROM xmltest WHERE xmlexists('/menu/beers/name[text() = ''Molson'']' PASSING BY REF data);
+ count 
+-------
+     0
+(1 row)
+
+CREATE TABLE query ( expr TEXT );
+INSERT INTO query VALUES ('/menu/beers/cost[text() = ''lots'']');
+SELECT COUNT(id) FROM xmltest, query WHERE xmlexists(expr PASSING BY REF data);
+ count 
+-------
+     0
+(1 row)
+

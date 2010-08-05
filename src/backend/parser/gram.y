@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.714 2010/07/25 23:21:21 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.715 2010/08/05 04:21:53 petere Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -425,6 +425,7 @@ static TypeName *TableFuncTypeName(List *columns);
 %type <target>	xml_attribute_el
 %type <list>	xml_attribute_list xml_attributes
 %type <node>	xml_root_version opt_xml_root_standalone
+%type <node>	xmlexists_argument
 %type <ival>	document_or_content
 %type <boolean> xml_whitespace_option
 
@@ -511,13 +512,13 @@ static TypeName *TableFuncTypeName(List *columns);
 	OBJECT_P OF OFF OFFSET OIDS ON ONLY OPERATOR OPTION OPTIONS OR
 	ORDER OUT_P OUTER_P OVER OVERLAPS OVERLAY OWNED OWNER
 
-	PARSER PARTIAL PARTITION PASSWORD PLACING PLANS POSITION
+	PARSER PARTIAL PARTITION PASSING PASSWORD PLACING PLANS POSITION
 	PRECEDING PRECISION PRESERVE PREPARE PREPARED PRIMARY
 	PRIOR PRIVILEGES PROCEDURAL PROCEDURE
 
 	QUOTE
 
-	RANGE READ REAL REASSIGN RECHECK RECURSIVE REFERENCES REINDEX
+	RANGE READ REAL REASSIGN RECHECK RECURSIVE REF REFERENCES REINDEX
 	RELATIVE_P RELEASE RENAME REPEATABLE REPLACE REPLICA RESET RESTART
 	RESTRICT RETURNING RETURNS REVOKE RIGHT ROLE ROLLBACK ROW ROWS RULE
 
@@ -539,7 +540,7 @@ static TypeName *TableFuncTypeName(List *columns);
 
 	WHEN WHERE WHITESPACE_P WINDOW WITH WITHOUT WORK WRAPPER WRITE
 
-	XML_P XMLATTRIBUTES XMLCONCAT XMLELEMENT XMLFOREST XMLPARSE
+	XML_P XMLATTRIBUTES XMLCONCAT XMLELEMENT XMLEXISTS XMLFOREST XMLPARSE
 	XMLPI XMLROOT XMLSERIALIZE
 
 	YEAR_P YES_P
@@ -9839,6 +9840,21 @@ func_expr:	func_name '(' ')' over_clause
 				{
 					$$ = makeXmlExpr(IS_XMLELEMENT, $4, $6, $8, @1);
 				}
+			| XMLEXISTS '(' c_expr xmlexists_argument ')'
+				{
+					/* xmlexists(A PASSING [BY REF] B [BY REF]) is
+					 * converted to xmlexists(A, B)*/
+					FuncCall *n = makeNode(FuncCall);
+					n->funcname = SystemFuncName("xmlexists");
+					n->args = list_make2($3, $4);
+					n->agg_order = NIL;
+					n->agg_star = FALSE;
+					n->agg_distinct = FALSE;
+					n->func_variadic = FALSE;
+					n->over = NULL;
+					n->location = @1;
+					$$ = (Node *)n;
+				}
 			| XMLFOREST '(' xml_attribute_list ')'
 				{
 					$$ = makeXmlExpr(IS_XMLFOREST, NULL, $3, NIL, @1);
@@ -9928,6 +9944,27 @@ xml_whitespace_option: PRESERVE WHITESPACE_P		{ $$ = TRUE; }
 			| STRIP_P WHITESPACE_P					{ $$ = FALSE; }
 			| /*EMPTY*/								{ $$ = FALSE; }
 		;
+
+/* We allow several variants for SQL and other compatibility. */
+xmlexists_argument:
+			PASSING c_expr
+				{
+					$$ = $2;
+				}
+			| PASSING c_expr BY REF
+				{
+					$$ = $2;
+				}
+			| PASSING BY REF c_expr
+				{
+					$$ = $4;
+				}
+			| PASSING BY REF c_expr BY REF
+				{
+					$$ = $4;
+				}
+		;
+
 
 /*
  * Window Definitions
@@ -10999,6 +11036,7 @@ unreserved_keyword:
 			| PARSER
 			| PARTIAL
 			| PARTITION
+			| PASSING
 			| PASSWORD
 			| PLANS
 			| PRECEDING
@@ -11015,6 +11053,7 @@ unreserved_keyword:
 			| REASSIGN
 			| RECHECK
 			| RECURSIVE
+			| REF
 			| REINDEX
 			| RELATIVE_P
 			| RELEASE
@@ -11148,6 +11187,7 @@ col_name_keyword:
 			| XMLATTRIBUTES
 			| XMLCONCAT
 			| XMLELEMENT
+			| XMLEXISTS
 			| XMLFOREST
 			| XMLPARSE
 			| XMLPI

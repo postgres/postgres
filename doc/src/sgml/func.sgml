@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.522 2010/07/29 19:34:40 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.523 2010/08/05 04:21:53 petere Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -8554,9 +8554,18 @@ SELECT xmlagg(x) FROM (SELECT * FROM test ORDER BY y DESC) AS tab;
 ]]></screen>
     </para>
    </sect3>
+   </sect2>
+
+   <sect2>
+    <title>XML Predicates</title>
+
+    <para>
+     The expressions described in this section check properties
+     of <type>xml</type> values.
+    </para>
 
    <sect3>
-    <title>XML Predicates</title>
+    <title>IS DOCUMENT</title>
 
     <indexterm>
      <primary>IS DOCUMENT</primary>
@@ -8572,6 +8581,48 @@ SELECT xmlagg(x) FROM (SELECT * FROM test ORDER BY y DESC) AS tab;
      (that is, it is a content fragment), or null if the argument is
      null.  See <xref linkend="datatype-xml"> about the difference
      between documents and content fragments.
+    </para>
+   </sect3>
+
+   <sect3>
+    <title>XMLEXISTS</title>
+
+    <indexterm>
+     <primary>XMLEXISTS</primary>
+    </indexterm>
+
+<synopsis>
+<function>XMLEXISTS</function>(<replaceable>text</replaceable> PASSING <optional>BY REF</optional> <replaceable>xml</replaceable> <optional>BY REF</optional>)
+</synopsis>
+
+    <para>
+     The function <function>xmlexists</function> returns true if the
+     XPath expression in the first argument returns any nodes, and
+     false otherwise.  (If either argument is null, the result is
+     null.)
+    </para>
+
+    <para>
+     Example:
+     <screen><![CDATA[
+SELECT xmlexists('//town[text() = ''Toronto'']' PASSING BY REF '<towns><town>Toronto</town><town>Ottawa</town></towns>');
+
+ xmlexists
+------------
+ t
+(1 row)
+]]></screen>
+    </para>
+
+    <para>
+     The <literal>BY REF</literal> clauses have no effect in
+     PostgreSQL, but are allowed for SQL conformance and compatibility
+     with other implementations.  Per SQL standard, the
+     first <literal>BY REF</literal> is required, the second is
+     optional.  Also note that the SQL standard specifies
+     the <function>xmlexists</function> construct to take an XQuery
+     expression as first argument, but PostgreSQL currently only
+     supports XPath, which is a subset of XQuery.
     </para>
    </sect3>
   </sect2>

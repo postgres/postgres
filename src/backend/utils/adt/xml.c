@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.98 2010/07/06 19:18:58 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.99 2010/08/05 04:21:54 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3295,24 +3295,20 @@ xml_xmlnodetoxmltype(xmlNodePtr cur)
 
 
 /*
- * Evaluate XPath expression and return array of XML values.
+ * Common code for xpath() and xmlexists()
  *
- * As we have no support of XQuery sequences yet, this function seems
- * to be the most useful one (array of XML functions plays a role of
- * some kind of substitution for XQuery sequences).
+ * Evaluate XPath expression and return number of nodes in res_items
+ * and array of XML values in astate.
  *
  * It is up to the user to ensure that the XML passed is in fact
  * an XML document - XPath doesn't work easily on fragments without
  * a context node being known.
  */
-Datum
-xpath(PG_FUNCTION_ARGS)
-{
 #ifdef USE_LIBXML
-	text	   *xpath_expr_text = PG_GETARG_TEXT_P(0);
-	xmltype    *data = PG_GETARG_XML_P(1);
-	ArrayType  *namespaces = PG_GETARG_ARRAYTYPE_P(2);
-	ArrayBuildState *astate = NULL;
+static void
+xpath_internal(text *xpath_expr_text, xmltype *data, ArrayType *namespaces,
+			   int *res_nitems, ArrayBuildState **astate)
+{
 	xmlParserCtxtPtr ctxt = NULL;
 	xmlDocPtr	doc = NULL;
 	xmlXPathContextPtr xpathctx = NULL;
@@ -3324,7 +3320,6 @@ xpath(PG_FUNCTION_ARGS)
 	xmlChar    *string;
 	xmlChar    *xpath_expr;
 	int			i;
-	int			res_nitems;
 	int			ndim;
 	Datum	   *ns_names_uris;
 	bool	   *ns_names_uris_nulls;
@@ -3339,7 +3334,7 @@ xpath(PG_FUNCTION_ARGS)
 	 * ARRAY[ARRAY['myns', 'http://example.com'], ARRAY['myns2',
 	 * 'http://example2.com']].
 	 */
-	ndim = ARR_NDIM(namespaces);
+	ndim = namespaces ? ARR_NDIM(namespaces) : 0;
 	if (ndim != 0)
 	{
 		int		   *dims;
@@ -3439,6 +3434,13 @@ xpath(PG_FUNCTION_ARGS)
 			xml_ereport(ERROR, ERRCODE_INTERNAL_ERROR,
 						"invalid XPath expression");
 
+		/*
+		 * Version 2.6.27 introduces a function named
+		 * xmlXPathCompiledEvalToBoolean, which would be enough for
+		 * xmlexists, but we can derive the existence by whether any
+		 * nodes are returned, thereby preventing a library version
+		 * upgrade and keeping the code the same.
+		 */
 		xpathobj = xmlXPathCompiledEval(xpathcomp, xpathctx);
 		if (xpathobj == NULL)	/* TODO: reason? */
 			xml_ereport(ERROR, ERRCODE_INTERNAL_ERROR,
@@ -3446,21 +3448,22 @@ xpath(PG_FUNCTION_ARGS)
 
 		/* return empty array in cases when nothing is found */
 		if (xpathobj->nodesetval == NULL)
-			res_nitems = 0;
+			*res_nitems = 0;
 		else
-			res_nitems = xpathobj->nodesetval->nodeNr;
+			*res_nitems = xpathobj->nodesetval->nodeNr;
 
-		if (res_nitems)
+		if (*res_nitems && astate)
 		{
+			*astate = NULL;
 			for (i = 0; i < xpathobj->nodesetval->nodeNr; i++)
 			{
 				Datum		elem;
 				bool		elemisnull = false;
 
 				elem = PointerGetDatum(xml_xmlnodetoxmltype(xpathobj->nodesetval->nodeTab[i]));
-				astate = accumArrayResult(astate, elem,
-										  elemisnull, XMLOID,
-										  CurrentMemoryContext);
+				*astate = accumArrayResult(*astate, elem,
+										   elemisnull, XMLOID,
+										   CurrentMemoryContext);
 			}
 		}
 	}
@@ -3485,11 +3488,54 @@ xpath(PG_FUNCTION_ARGS)
 	xmlXPathFreeContext(xpathctx);
 	xmlFreeDoc(doc);
 	xmlFreeParserCtxt(ctxt);
+}
+#endif /* USE_LIBXML */
+
+/*
+ * Evaluate XPath expression and return array of XML values.
+ *
+ * As we have no support of XQuery sequences yet, this function seems
+ * to be the most useful one (array of XML functions plays a role of
+ * some kind of substitution for XQuery sequences).
+ */
+Datum
+xpath(PG_FUNCTION_ARGS)
+{
+#ifdef USE_LIBXML
+	text	   *xpath_expr_text = PG_GETARG_TEXT_P(0);
+	xmltype    *data = PG_GETARG_XML_P(1);
+	ArrayType  *namespaces = PG_GETARG_ARRAYTYPE_P(2);
+	int			res_nitems;
+	ArrayBuildState *astate;
+
+	xpath_internal(xpath_expr_text, data, namespaces,
+				   &res_nitems, &astate);
 
 	if (res_nitems == 0)
 		PG_RETURN_ARRAYTYPE_P(construct_empty_array(XMLOID));
 	else
 		PG_RETURN_ARRAYTYPE_P(makeArrayResult(astate, CurrentMemoryContext));
+#else
+	NO_XML_SUPPORT();
+	return 0;
+#endif
+}
+
+/*
+ * Determines if the node specified by the supplied XPath exists
+ * in a given XML document, returning a boolean.
+ */
+Datum xmlexists(PG_FUNCTION_ARGS)
+{
+#ifdef USE_LIBXML
+	text	   *xpath_expr_text = PG_GETARG_TEXT_P(0);
+	xmltype    *data = PG_GETARG_XML_P(1);
+	int			res_nitems;
+
+	xpath_internal(xpath_expr_text, data, NULL,
+				   &res_nitems, NULL);
+
+	PG_RETURN_BOOL(res_nitems > 0);
 #else
 	NO_XML_SUPPORT();
 	return 0;
