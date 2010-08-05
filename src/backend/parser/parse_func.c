@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_func.c,v 1.225 2010/07/29 23:16:33 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_func.c,v 1.226 2010/08/05 21:45:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -284,6 +284,19 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 					 errhint("Could not choose a best candidate function. "
 							 "You might need to add explicit type casts."),
 					 parser_errposition(pstate, location)));
+		else if (list_length(agg_order) > 1)
+		{
+			/* It's agg(x, ORDER BY y,z) ... perhaps misplaced ORDER BY */
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_FUNCTION),
+					 errmsg("function %s does not exist",
+							func_signature_string(funcname, nargs, argnames,
+												  actual_arg_types)),
+			errhint("No aggregate function matches the given name and argument types. "
+					"Perhaps you misplaced ORDER BY; ORDER BY must appear "
+					"after all regular arguments of the aggregate."),
+					 parser_errposition(pstate, location)));
+		}
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_FUNCTION),
