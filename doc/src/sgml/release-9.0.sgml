@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release-9.0.sgml,v 2.44 2010/07/29 21:18:11 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release-9.0.sgml,v 2.45 2010/08/06 17:56:43 rhaas Exp $ -->
 
  <sect1 id="release-9-0">
   <title>Release 9.0</title>
@@ -53,12 +53,29 @@
 
     <listitem>
      <para>
+      Add support for compiling on <link
+      linkend="install-win32-full">64-bit
+      <productname>Windows</></link> and running in 64-bit
+      mode.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
       Broadly enhanced stored procedure support.
       The <link linkend="SQL-DO"><command>DO</></link> statement permits
       anonymous code blocks.  Functions can now be called using named
       parameters.  PL/pgSQL is now installed by default, and PL/Perl and
       PL/Python have been enhanced in several ways, including support for
       Python3.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      More advanced reporting queries with additional windowing functions
+      (PRECEDING and FOLLOWING) and the ability to ORDER BY inside aggregate
+      functions.
      </para>
     </listitem>
 
@@ -80,9 +97,9 @@
 
     <listitem>
      <para>
-      Exclusion constraints let database designers define uniqueness
-      based on complex criteria, including for non-scalar data such
-      as time periods, ranges and arrays.
+      New and enhanced security features, including RADIUS authentication,
+      LDAP authentication improvements, and the new checkpassword optional module
+      for testing password strength.
      </para>
     </listitem>
 
@@ -99,8 +116,31 @@
 
     <listitem>
      <para>
+      Add <link linkend="pgupgrade"><filename>/contrib/pg_upgrade</></link>
+      to support in-place upgrades from 8.3 or 8.4 to 9.0.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Multiple performance enhancements for specific types of queries,
+      including join elimination, which optimizes automatically generated
+      queries, such as those produced by object-relational mappers (ORMs).
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Exclusion constraints let database designers define uniqueness
+      based on complex criteria, including for non-scalar data such
+      as time periods, ranges and arrays.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
       As part of our decade-long effort to eliminate the pain of VACUUM,
-      <command>VACUUM FULL</> is now substantially faster by
+      <command>VACUUM FULL</> is not substantially faster by
       rewriting the entire table and
       indexes, rather than moving around single rows to compact space.
      </para>
@@ -108,17 +148,15 @@
 
     <listitem>
      <para>
-      Add support for compiling on <link
-      linkend="install-win32-full">64-bit
-      <productname>Windows</></link> and running in 64-bit
-      mode.
+      EXPLAIN plans are now available in JSON, XML and YAML format, and include
+      buffer utilization and other data not previously available.
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Add <link linkend="pgupgrade"><filename>/contrib/pg_upgrade</></link>
-      to support in-place upgrades from 8.3 or 8.4 to 9.0.
+      The HStore optional module has been improved with new functions and greater
+      data capacity to make it a high-performance key-value store.
      </para>
     </listitem>
 
