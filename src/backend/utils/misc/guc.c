@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.565 2010/07/22 01:22:33 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.566 2010/08/06 14:51:33 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -1520,6 +1520,11 @@ static struct config_int ConfigureNamesInt[] =
 		16384, 1024, MAX_KILOBYTES, NULL, NULL
 	},
 
+	/*
+	 * We use the hopefully-safely-small value of 100kB as the compiled-in
+	 * default for max_stack_depth.  InitializeGUCOptions will increase it if
+	 * possible, depending on the actual platform-specific stack limit.
+	 */
 	{
 		{"max_stack_depth", PGC_SUSET, RESOURCES_MEM,
 			gettext_noop("Sets the maximum stack depth, in kilobytes."),
