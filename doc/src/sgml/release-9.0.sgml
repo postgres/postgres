@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release-9.0.sgml,v 2.46 2010/08/06 18:55:24 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release-9.0.sgml,v 2.47 2010/08/06 19:13:13 tgl Exp $ -->
 
  <sect1 id="release-9-0">
   <title>Release 9.0</title>
@@ -91,8 +91,8 @@
     <listitem>
      <para>
       <link linkend="SQL-CREATETABLE-compatibility">Deferrable
-      unique constraints. Mass updates to unique keys are now possible
-      without trickery.</link>
+      unique constraints</link>. Mass updates to unique keys are now possible
+      without trickery.
      </para>
     </listitem>
 
