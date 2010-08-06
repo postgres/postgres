@@ -8,13 +8,13 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/syscache.c,v 1.126 2010/02/14 18:42:17 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/syscache.c,v 1.127 2010/08/06 03:46:23 rhaas Exp $
  *
  * NOTES
  *	  These routines allow the parser/planner/executor to perform
  *	  rapid lookups on the contents of the system catalogs.
  *
- *	  see catalog/syscache.h for a list of the cache id's
+ *	  see utils/syscache.h for a list of the cache id's
  *
  *-------------------------------------------------------------------------
  */
