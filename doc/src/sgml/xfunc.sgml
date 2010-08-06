@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.138.2.2 2010/05/16 03:56:28 rhaas Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.138.2.3 2010/08/06 20:09:00 petere Exp $ -->
 
  <sect1 id="xfunc">
   <title>User-Defined Functions</title>
@@ -3230,7 +3230,7 @@ CREATE FUNCTION make_array(anyelement) RETURNS anyarray
      Add-ins can reserve LWLocks and an allocation of shared memory on server
      startup.  The add-in's shared library must be preloaded by specifying
      it in
-     <xref linkend="guc-shared-preload-libraries"><indexterm><primary>shared-preload-libraries</></>.
+     <xref linkend="guc-shared-preload-libraries"><indexterm><primary>shared_preload_libraries</></>.
      Shared memory is reserved by calling:
 <programlisting>
 void RequestAddinShmemSpace(int size)
