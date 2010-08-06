@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release-9.0.sgml,v 2.39.2.3 2010/08/06 17:57:03 rhaas Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release-9.0.sgml,v 2.39.2.4 2010/08/06 18:55:30 tgl Exp $ -->
 
  <sect1 id="release-9-0">
   <title>Release 9.0</title>
@@ -91,7 +91,8 @@
     <listitem>
      <para>
       <link linkend="SQL-CREATETABLE-compatibility">Deferrable
-      unique constraints, now permit mass updates to unique keys.</link>
+      unique constraints. Mass updates to unique keys are now possible
+      without trickery.</link>
      </para>
     </listitem>
 
@@ -1122,10 +1123,13 @@
       </para>
 
       <para>
-       This allows <command>UPDATE tab SET col = col + 1</> to work on
-       columns that have a unique indexes or are marked as primary key,
-       but <literal>DEFERRABLE INITIALLY DEFERRED</> must be used to mark
-       the constraint as deferred.
+       This allows <command>UPDATE tab SET col = col + 1</> to work reliably
+       on columns that have unique indexes or are marked as primary keys.
+       If the constraint is specified as <literal>DEFERRABLE</> it will be
+       checked at the end of the statement, rather than after each row is
+       updated. The constraint check may also be deferred until the end of the
+       current transaction, allowing updates to be spread over multiple SQL
+       commands.
       </para>
      </listitem>
 
