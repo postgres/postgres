@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release-9.0.sgml,v 2.47 2010/08/06 19:13:13 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release-9.0.sgml,v 2.48 2010/08/07 13:07:06 momjian Exp $ -->
 
  <sect1 id="release-9-0">
   <title>Release 9.0</title>
@@ -141,7 +141,7 @@
     <listitem>
      <para>
       As part of our decade-long effort to eliminate the pain of VACUUM,
-      <command>VACUUM FULL</> is not substantially faster by
+      <command>VACUUM FULL</> is now substantially faster by
       rewriting the entire table and
       indexes, rather than moving around single rows to compact space.
      </para>
