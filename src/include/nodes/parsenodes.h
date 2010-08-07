@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.433 2010/07/25 23:21:22 rhaas Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.434 2010/08/07 02:44:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -146,6 +146,9 @@ typedef struct Query
 
 	Node	   *setOperations;	/* set-operation tree if this is top level of
 								 * a UNION/INTERSECT/EXCEPT query */
+
+	List	   *constraintDeps;	/* a list of pg_constraint OIDs that the query
+								 * depends on to be semantically valid */
 } Query;
 
 

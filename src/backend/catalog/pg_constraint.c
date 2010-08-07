@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_constraint.c,v 1.54 2010/08/05 15:25:35 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_constraint.c,v 1.55 2010/08/07 02:44:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -782,4 +782,113 @@ get_constraint_oid(Oid relid, const char *conname, bool missing_ok)
 	heap_close(pg_constraint, AccessShareLock);
 
 	return conOid;
+}
+
+/*
+ * Determine whether a relation can be proven functionally dependent on
+ * a set of grouping columns.  If so, return TRUE and add the pg_constraint
+ * OIDs of the constraints needed for the proof to the *constraintDeps list.
+ *
+ * grouping_columns is a list of grouping expressions, in which columns of
+ * the rel of interest are Vars with the indicated varno/varlevelsup.
+ *
+ * Currently we only check to see if the rel has a primary key that is a
+ * subset of the grouping_columns.  We could also use plain unique constraints
+ * if all their columns are known not null, but there's a problem: we need
+ * to be able to represent the not-null-ness as part of the constraints added
+ * to *constraintDeps.  FIXME whenever not-null constraints get represented
+ * in pg_constraint.
+ */
+bool
+check_functional_grouping(Oid relid,
+						  Index varno, Index varlevelsup,
+						  List *grouping_columns,
+						  List **constraintDeps)
+{
+	bool		result = false;
+	Relation	pg_constraint;
+	HeapTuple	tuple;
+	SysScanDesc scan;
+	ScanKeyData skey[1];
+
+	/* Scan pg_constraint for constraints of the target rel */
+	pg_constraint = heap_open(ConstraintRelationId, AccessShareLock);
+
+	ScanKeyInit(&skey[0],
+				Anum_pg_constraint_conrelid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(relid));
+
+	scan = systable_beginscan(pg_constraint, ConstraintRelidIndexId, true,
+							  SnapshotNow, 1, skey);
+
+	while (HeapTupleIsValid(tuple = systable_getnext(scan)))
+	{
+		Form_pg_constraint con = (Form_pg_constraint) GETSTRUCT(tuple);
+		Datum		adatum;
+		bool		isNull;
+		ArrayType  *arr;
+		int16	   *attnums;
+		int			numkeys;
+		int			i;
+		bool		found_col;
+
+		/* Only PK constraints are of interest for now, see comment above */
+		if (con->contype != CONSTRAINT_PRIMARY)
+			continue;
+
+		/* Extract the conkey array, ie, attnums of PK's columns */
+		adatum = heap_getattr(tuple, Anum_pg_constraint_conkey,
+							  RelationGetDescr(pg_constraint), &isNull);
+		if (isNull)
+			elog(ERROR, "null conkey for constraint %u",
+				 HeapTupleGetOid(tuple));
+		arr = DatumGetArrayTypeP(adatum);	/* ensure not toasted */
+		numkeys = ARR_DIMS(arr)[0];
+		if (ARR_NDIM(arr) != 1 ||
+			numkeys < 0 ||
+			ARR_HASNULL(arr) ||
+			ARR_ELEMTYPE(arr) != INT2OID)
+			elog(ERROR, "conkey is not a 1-D smallint array");
+		attnums = (int16 *) ARR_DATA_PTR(arr);
+
+		found_col = false;
+		for (i = 0; i < numkeys; i++)
+		{
+			AttrNumber	attnum = attnums[i];
+			ListCell   *gl;
+
+			found_col = false;
+			foreach(gl, grouping_columns)
+			{
+				Var		   *gvar = (Var *) lfirst(gl);
+
+				if (IsA(gvar, Var) &&
+					gvar->varno == varno &&
+					gvar->varlevelsup == varlevelsup &&
+					gvar->varattno == attnum)
+				{
+					found_col = true;
+					break;
+				}
+			}
+			if (!found_col)
+				break;
+		}
+
+		if (found_col)
+		{
+			/* The PK is a subset of grouping_columns, so we win */
+			*constraintDeps = lappend_oid(*constraintDeps,
+										  HeapTupleGetOid(tuple));
+			result = true;
+			break;
+		}
+	}
+
+	systable_endscan(scan);
+
+	heap_close(pg_constraint, AccessShareLock);
+
+	return result;
 }

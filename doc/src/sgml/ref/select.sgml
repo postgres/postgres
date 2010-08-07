@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/select.sgml,v 1.131 2010/06/15 20:04:53 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/select.sgml,v 1.132 2010/08/07 02:44:05 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -520,9 +520,12 @@ GROUP BY <replaceable class="parameter">expression</replaceable> [, ...]
     produces a single value computed across all the selected rows).
     When <literal>GROUP BY</literal> is present, it is not valid for
     the <command>SELECT</command> list expressions to refer to
-    ungrouped columns except within aggregate functions, since there
-    would be more than one possible value to return for an ungrouped
-    column.
+    ungrouped columns except within aggregate functions or if the
+    ungrouped column is functionally dependent on the grouped columns,
+    since there would otherwise be more than one possible value to
+    return for an ungrouped column.  A functional dependency exists if
+    the grouped columns (or a subset thereof) are the primary key of
+    the table containing the ungrouped column.
    </para>
   </refsect2>
 
@@ -1587,6 +1590,18 @@ SELECT distributors.* WHERE distributors.name = 'Westward';
     In most cases, however, <productname>PostgreSQL</productname>
     will interpret an <literal>ORDER BY</literal> or <literal>GROUP
     BY</literal> expression the same way SQL:1999 does.
+   </para>
+  </refsect2>
+
+  <refsect2>
+   <title>Functional Dependencies</title>
+
+   <para>
+    <productname>PostgreSQL</productname> recognizes functional dependency
+    (allowing columns to be omitted from <literal>GROUP BY</>) only when
+    a table's primary key is included in the <literal>GROUP BY</> list.
+    The SQL standard specifies additional conditions that should be
+    recognized.
    </para>
   </refsect2>
 

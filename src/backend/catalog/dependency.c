@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/dependency.c,v 1.96 2010/02/26 02:00:36 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/dependency.c,v 1.97 2010/08/07 02:44:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1594,7 +1594,7 @@ find_expr_references_walker(Node *node,
 	{
 		/* Recurse into RTE subquery or not-yet-planned sublink subquery */
 		Query	   *query = (Query *) node;
-		ListCell   *rtable;
+		ListCell   *lc;
 		bool		result;
 
 		/*
@@ -1604,9 +1604,9 @@ find_expr_references_walker(Node *node,
 		 * of recursing into RTE_FUNCTION RTEs, subqueries, etc, so no need to
 		 * do that here.  But keep it from looking at join alias lists.)
 		 */
-		foreach(rtable, query->rtable)
+		foreach(lc, query->rtable)
 		{
-			RangeTblEntry *rte = (RangeTblEntry *) lfirst(rtable);
+			RangeTblEntry *rte = (RangeTblEntry *) lfirst(lc);
 			ListCell   *ct;
 
 			switch (rte->rtekind)
@@ -1625,6 +1625,15 @@ find_expr_references_walker(Node *node,
 				default:
 					break;
 			}
+		}
+
+		/*
+		 * Add dependencies on constraints listed in query's constraintDeps
+		 */
+		foreach(lc, query->constraintDeps)
+		{
+			add_object_address(OCLASS_CONSTRAINT, lfirst_oid(lc), 0,
+							   context->addrs);
 		}
 
 		/* query_tree_walker ignores ORDER BY etc, but we need those opers */

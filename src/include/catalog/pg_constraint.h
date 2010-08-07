@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_constraint.h,v 1.40 2010/08/05 15:25:36 rhaas Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_constraint.h,v 1.41 2010/08/07 02:44:07 tgl Exp $
  *
  * NOTES
  *	  the genbki.pl script reads this file and generates .bki
@@ -238,5 +238,10 @@ extern char *ChooseConstraintName(const char *name1, const char *name2,
 extern void AlterConstraintNamespaces(Oid ownerId, Oid oldNspId,
 						  Oid newNspId, bool isType);
 extern Oid	get_constraint_oid(Oid relid, const char *conname, bool missing_ok);
+
+extern bool check_functional_grouping(Oid relid,
+									  Index varno, Index varlevelsup,
+									  List *grouping_columns,
+									  List **constraintDeps);
 
 #endif   /* PG_CONSTRAINT_H */

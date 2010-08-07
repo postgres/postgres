@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/queries.sgml,v 1.58 2010/07/03 02:57:46 rhaas Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/queries.sgml,v 1.59 2010/08/07 02:44:05 tgl Exp $ -->
 
 <chapter id="queries">
  <title>Queries</title>
@@ -886,15 +886,24 @@ SELECT product_id, p.name, (sum(s.units) * p.price) AS sales
     In this example, the columns <literal>product_id</literal>,
     <literal>p.name</literal>, and <literal>p.price</literal> must be
     in the <literal>GROUP BY</> clause since they are referenced in
-    the query select list.  (Depending on how the products
-    table is set up, name and price might be fully dependent on the
-    product ID, so the additional groupings could theoretically be
-    unnecessary, though this is not implemented.)  The column
+    the query select list (but see below).  The column
     <literal>s.units</> does not have to be in the <literal>GROUP
     BY</> list since it is only used in an aggregate expression
     (<literal>sum(...)</literal>), which represents the sales
     of a product.  For each product, the query returns a summary row about
     all sales of the product.
+   </para>
+
+   <para>
+    If the products table is set up so that,
+    say, <literal>product_id</literal> is the primary key, then it
+    would be enough to group by <literal>product_id</literal> in the
+    above example, since name and price would
+    be <firstterm>functionally
+    dependent</firstterm><indexterm><primary>functional
+    dependency</primary></indexterm> on the product ID, and so there
+    would be no ambiguity about which name and price value to return
+    for each product ID group.
    </para>
 
    <para>
