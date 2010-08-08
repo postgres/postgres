@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/xml.h,v 1.32 2010/08/05 04:21:54 petere Exp $
+ * $PostgreSQL: pgsql/src/include/utils/xml.h,v 1.33 2010/08/08 19:15:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,6 +37,7 @@ extern Datum texttoxml(PG_FUNCTION_ARGS);
 extern Datum xmltotext(PG_FUNCTION_ARGS);
 extern Datum xmlvalidate(PG_FUNCTION_ARGS);
 extern Datum xpath(PG_FUNCTION_ARGS);
+extern Datum xpath_exists(PG_FUNCTION_ARGS);
 extern Datum xmlexists(PG_FUNCTION_ARGS);
 
 extern Datum table_to_xml(PG_FUNCTION_ARGS);

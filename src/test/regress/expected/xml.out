@@ -502,7 +502,7 @@ SELECT xpath('//b', '<a>one <b>two</b> three <b>etc</b></a>');
  {<b>two</b>,<b>etc</b>}
 (1 row)
 
--- Test xmlexists evaluation
+-- Test xmlexists and xpath_exists
 SELECT xmlexists('//town[text() = ''Toronto'']' PASSING BY REF '<towns><town>Bidford-on-Avon</town><town>Cwmbran</town><town>Bristol</town></towns>');
  xmlexists 
 -----------
@@ -512,6 +512,18 @@ SELECT xmlexists('//town[text() = ''Toronto'']' PASSING BY REF '<towns><town>Bid
 SELECT xmlexists('//town[text() = ''Cwmbran'']' PASSING BY REF '<towns><town>Bidford-on-Avon</town><town>Cwmbran</town><town>Bristol</town></towns>');
  xmlexists 
 -----------
+ t
+(1 row)
+
+SELECT xpath_exists('//town[text() = ''Toronto'']','<towns><town>Bidford-on-Avon</town><town>Cwmbran</town><town>Bristol</town></towns>'::xml);
+ xpath_exists 
+--------------
+ f
+(1 row)
+
+SELECT xpath_exists('//town[text() = ''Cwmbran'']','<towns><town>Bidford-on-Avon</town><town>Cwmbran</town><town>Bristol</town></towns>'::xml);
+ xpath_exists 
+--------------
  t
 (1 row)
 
@@ -538,6 +550,42 @@ SELECT COUNT(id) FROM xmltest WHERE xmlexists('/menu/beers' PASSING BY REF data)
 (1 row)
 
 SELECT COUNT(id) FROM xmltest WHERE xmlexists('/menu/beers/name[text() = ''Molson'']' PASSING BY REF data);
+ count 
+-------
+     1
+(1 row)
+
+SELECT COUNT(id) FROM xmltest WHERE xpath_exists('/menu/beer',data);
+ count 
+-------
+     0
+(1 row)
+
+SELECT COUNT(id) FROM xmltest WHERE xpath_exists('/menu/beers',data);
+ count 
+-------
+     2
+(1 row)
+
+SELECT COUNT(id) FROM xmltest WHERE xpath_exists('/menu/beers/name[text() = ''Molson'']',data);
+ count 
+-------
+     1
+(1 row)
+
+SELECT COUNT(id) FROM xmltest WHERE xpath_exists('/myns:menu/myns:beer',data,ARRAY[ARRAY['myns','http://myns.com']]);
+ count 
+-------
+     0
+(1 row)
+
+SELECT COUNT(id) FROM xmltest WHERE xpath_exists('/myns:menu/myns:beers',data,ARRAY[ARRAY['myns','http://myns.com']]);
+ count 
+-------
+     2
+(1 row)
+
+SELECT COUNT(id) FROM xmltest WHERE xpath_exists('/myns:menu/myns:beers/myns:name[text() = ''Molson'']',data,ARRAY[ARRAY['myns','http://myns.com']]);
  count 
 -------
      1

@@ -456,7 +456,7 @@ LINE 1: SELECT xpath('//b', '<a>one <b>two</b> three <b>etc</b></a>'...
                             ^
 DETAIL:  This functionality requires the server to be built with libxml support.
 HINT:  You need to rebuild PostgreSQL using --with-libxml.
--- Test xmlexists evaluation
+-- Test xmlexists and xpath_exists
 SELECT xmlexists('//town[text() = ''Toronto'']' PASSING BY REF '<towns><town>Bidford-on-Avon</town><town>Cwmbran</town><town>Bristol</town></towns>');
 ERROR:  unsupported XML feature
 LINE 1: ...sts('//town[text() = ''Toronto'']' PASSING BY REF '<towns><t...
@@ -466,6 +466,18 @@ HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SELECT xmlexists('//town[text() = ''Cwmbran'']' PASSING BY REF '<towns><town>Bidford-on-Avon</town><town>Cwmbran</town><town>Bristol</town></towns>');
 ERROR:  unsupported XML feature
 LINE 1: ...sts('//town[text() = ''Cwmbran'']' PASSING BY REF '<towns><t...
+                                                             ^
+DETAIL:  This functionality requires the server to be built with libxml support.
+HINT:  You need to rebuild PostgreSQL using --with-libxml.
+SELECT xpath_exists('//town[text() = ''Toronto'']','<towns><town>Bidford-on-Avon</town><town>Cwmbran</town><town>Bristol</town></towns>'::xml);
+ERROR:  unsupported XML feature
+LINE 1: ...ELECT xpath_exists('//town[text() = ''Toronto'']','<towns><t...
+                                                             ^
+DETAIL:  This functionality requires the server to be built with libxml support.
+HINT:  You need to rebuild PostgreSQL using --with-libxml.
+SELECT xpath_exists('//town[text() = ''Cwmbran'']','<towns><town>Bidford-on-Avon</town><town>Cwmbran</town><town>Bristol</town></towns>'::xml);
+ERROR:  unsupported XML feature
+LINE 1: ...ELECT xpath_exists('//town[text() = ''Cwmbran'']','<towns><t...
                                                              ^
 DETAIL:  This functionality requires the server to be built with libxml support.
 HINT:  You need to rebuild PostgreSQL using --with-libxml.
@@ -512,6 +524,42 @@ SELECT COUNT(id) FROM xmltest WHERE xmlexists('/menu/beers' PASSING BY REF data)
 (1 row)
 
 SELECT COUNT(id) FROM xmltest WHERE xmlexists('/menu/beers/name[text() = ''Molson'']' PASSING BY REF data);
+ count 
+-------
+     0
+(1 row)
+
+SELECT COUNT(id) FROM xmltest WHERE xpath_exists('/menu/beer',data);
+ count 
+-------
+     0
+(1 row)
+
+SELECT COUNT(id) FROM xmltest WHERE xpath_exists('/menu/beers',data);
+ count 
+-------
+     0
+(1 row)
+
+SELECT COUNT(id) FROM xmltest WHERE xpath_exists('/menu/beers/name[text() = ''Molson'']',data);
+ count 
+-------
+     0
+(1 row)
+
+SELECT COUNT(id) FROM xmltest WHERE xpath_exists('/myns:menu/myns:beer',data,ARRAY[ARRAY['myns','http://myns.com']]);
+ count 
+-------
+     0
+(1 row)
+
+SELECT COUNT(id) FROM xmltest WHERE xpath_exists('/myns:menu/myns:beers',data,ARRAY[ARRAY['myns','http://myns.com']]);
+ count 
+-------
+     0
+(1 row)
+
+SELECT COUNT(id) FROM xmltest WHERE xpath_exists('/myns:menu/myns:beers/myns:name[text() = ''Molson'']',data,ARRAY[ARRAY['myns','http://myns.com']]);
  count 
 -------
      0

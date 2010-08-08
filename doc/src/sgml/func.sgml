@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.524 2010/08/05 18:21:17 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.525 2010/08/08 19:15:27 tgl Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -8175,7 +8175,7 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
    linkend="datatype-xml"> for information about the <type>xml</type>
    type.  The function-like expressions <function>xmlparse</function>
    and <function>xmlserialize</function> for converting to and from
-   type <type>xml</type> are not repeated here.  Use of many of these
+   type <type>xml</type> are not repeated here.  Use of most of these
    functions requires the installation to have been built
    with <command>configure --with-libxml</>.
   </para>
@@ -8231,7 +8231,7 @@ SELECT xmlcomment('hello');
 <synopsis>
 <function>xmlconcat</function>(<replaceable>xml</replaceable><optional>, ...</optional>)
 </synopsis>
- 
+
     <para>
      The function <function>xmlconcat</function> concatenates a list
      of individual XML values to create a single value containing an
@@ -8277,18 +8277,18 @@ SELECT xmlconcat('<?xml version="1.1"?><foo/>', '<?xml version="1.1" standalone=
 ]]></screen>
     </para>
    </sect3>
- 
+
    <sect3>
     <title><literal>xmlelement</literal></title>
- 
+
    <indexterm>
     <primary>xmlelement</primary>
    </indexterm>
- 
+
 <synopsis>
 <function>xmlelement</function>(name <replaceable>name</replaceable> <optional>, xmlattributes(<replaceable>value</replaceable> <optional>AS <replaceable>attname</replaceable></optional> <optional>, ... </optional>)</optional> <optional><replaceable>, content, ...</replaceable></optional>)
 </synopsis>
- 
+
     <para>
      The <function>xmlelement</function> expression produces an XML
      element with the given name, attributes, and content.
@@ -8375,18 +8375,18 @@ SELECT xmlelement(name foo, xmlattributes('xyz' as bar),
      at which point a more precise description will appear.
     </para>
    </sect3>
- 
+
    <sect3>
     <title><literal>xmlforest</literal></title>
- 
+
    <indexterm>
     <primary>xmlforest</primary>
    </indexterm>
- 
+
 <synopsis>
 <function>xmlforest</function>(<replaceable>content</replaceable> <optional>AS <replaceable>name</replaceable></optional> <optional>, ...</optional>)
 </synopsis>
- 
+
     <para>
      The <function>xmlforest</function> expression produces an XML
      forest (sequence) of elements using the given names and content.
@@ -8432,18 +8432,18 @@ WHERE table_schema = 'pg_catalog';
      <function>xmlelement</function>.
     </para>
    </sect3>
- 
+
    <sect3>
     <title><literal>xmlpi</literal></title>
- 
+
    <indexterm>
     <primary>xmlpi</primary>
    </indexterm>
- 
+
 <synopsis>
 <function>xmlpi</function>(name <replaceable>target</replaceable> <optional>, <replaceable>content</replaceable></optional>)
 </synopsis>
- 
+
     <para>
      The <function>xmlpi</function> expression creates an XML
      processing instruction.  The content, if present, must not
@@ -8461,18 +8461,18 @@ SELECT xmlpi(name php, 'echo "hello world";');
 ]]></screen>
     </para>
    </sect3>
- 
+
    <sect3>
     <title><literal>xmlroot</literal></title>
- 
+
    <indexterm>
     <primary>xmlroot</primary>
    </indexterm>
- 
+
 <synopsis>
 <function>xmlroot</function>(<replaceable>xml</replaceable>, version <replaceable>text</replaceable> | no value <optional>, standalone yes|no|no value</optional>)
 </synopsis>
- 
+
     <para>
      The <function>xmlroot</function> expression alters the properties
      of the root node of an XML value.  If a version is specified,
@@ -8483,7 +8483,7 @@ SELECT xmlpi(name php, 'echo "hello world";');
 
     <para>
 <screen><![CDATA[
-SELECT xmlroot(xmlparse(document '<?xml version="1.1"?><content>abc</content>'), 
+SELECT xmlroot(xmlparse(document '<?xml version="1.1"?><content>abc</content>'),
                version '1.0', standalone yes);
 
                 xmlroot
@@ -8636,17 +8636,19 @@ SELECT xmlexists('//town[text() = ''Toronto'']' PASSING BY REF '<towns><town>Tor
 
    <para>
     To process values of data type <type>xml</type>, PostgreSQL offers
-    the function <function>xpath</function>, which evaluates XPath 1.0
+    the functions <function>xpath</function> and
+    <function>xpath_exists</function>, which evaluate XPath 1.0
     expressions.
    </para>
 
 <synopsis>
-<function>xpath</function>(<replaceable>xpath</replaceable>, <replaceable>xml</replaceable><optional>, <replaceable>nsarray</replaceable></optional>)
+<function>xpath</function>(<replaceable>xpath</replaceable>, <replaceable>xml</replaceable> <optional>, <replaceable>nsarray</replaceable></optional>)
 </synopsis>
 
    <para>
     The function <function>xpath</function> evaluates the XPath
-    expression <replaceable>xpath</replaceable> against the XML value
+    expression <replaceable>xpath</replaceable> (a <type>text</> value)
+    against the XML value
     <replaceable>xml</replaceable>.  It returns an array of XML values
     corresponding to the node set produced by the XPath expression.
    </para>
@@ -8657,13 +8659,13 @@ SELECT xmlexists('//town[text() = ''Toronto'']' PASSING BY REF '<towns><town>Tor
   </para>
 
    <para>
-    The third argument of the function is an array of namespace
-    mappings.  This array should be a two-dimensional array with the
-    length of the second axis being equal to 2 (i.e., it should be an
+    The optional third argument of the function is an array of namespace
+    mappings.  This array should be a two-dimensional <type>text</> array with
+    the length of the second axis being equal to 2 (i.e., it should be an
     array of arrays, each of which consists of exactly 2 elements).
     The first element of each array entry is the namespace name (alias), the
     second the namespace URI. It is not required that aliases provided in
-    this array are the same that those being used in the XML document itself (in
+    this array be the same as those being used in the XML document itself (in
     other words, both in the XML document and in the <function>xpath</function>
     function context, aliases are <emphasis>local</>).
    </para>
@@ -8671,7 +8673,7 @@ SELECT xmlexists('//town[text() = ''Toronto'']' PASSING BY REF '<towns><town>Tor
    <para>
     Example:
 <screen><![CDATA[
-SELECT xpath('/my:a/text()', '<my:a xmlns:my="http://example.com">test</my:a>', 
+SELECT xpath('/my:a/text()', '<my:a xmlns:my="http://example.com">test</my:a>',
              ARRAY[ARRAY['my', 'http://example.com']]);
 
  xpath  
@@ -8682,7 +8684,7 @@ SELECT xpath('/my:a/text()', '<my:a xmlns:my="http://example.com">test</my:a>',
    </para>
 
    <para>
-    How to deal with default (anonymous) namespaces:
+    To deal with default (anonymous) namespaces, do something like this:
 <screen><![CDATA[
 SELECT xpath('//mydefns:b/text()', '<a xmlns="http://example.com"><b>test</b></a>',
              ARRAY[ARRAY['mydefns', 'http://example.com']]);
@@ -8693,12 +8695,42 @@ SELECT xpath('//mydefns:b/text()', '<a xmlns="http://example.com"><b>test</b></a
 (1 row)
 ]]></screen>
    </para>
+
+   <indexterm>
+    <primary>xpath_exists</primary>
+   </indexterm>
+
+<synopsis>
+<function>xpath_exists</function>(<replaceable>xpath</replaceable>, <replaceable>xml</replaceable> <optional>, <replaceable>nsarray</replaceable></optional>)
+</synopsis>
+
+   <para>
+    The function <function>xpath_exists</function> is a specialized form
+    of the <function>xpath</function> function.  Instead of returning the
+    individual XML values that satisfy the XPath, this function returns a
+    boolean indicating whether the query was satisfied or not.  This
+    function is equivalent to the standard <literal>XMLEXISTS</> predicate,
+    except that it also offers support for a namespace mapping argument.
+   </para>
+
+   <para>
+    Example:
+<screen><![CDATA[
+SELECT xpath_exists('/my:a/text()', '<my:a xmlns:my="http://example.com">test</my:a>',
+                     ARRAY[ARRAY['my', 'http://example.com']]);
+
+ xpath_exists  
+--------------
+ t
+(1 row)
+]]></screen>
+   </para>
   </sect2>
 
   <sect2 id="functions-xml-mapping">
    <title>Mapping Tables to XML</title>
 
-   <indexterm zone="functions-xml-mapping"> 
+   <indexterm zone="functions-xml-mapping">
     <primary>XML export</primary>
    </indexterm>
 
