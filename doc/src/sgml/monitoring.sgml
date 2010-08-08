@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/monitoring.sgml,v 1.81 2010/07/29 19:34:40 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/monitoring.sgml,v 1.82 2010/08/08 16:27:03 tgl Exp $ -->
 
 <chapter id="monitoring">
  <title>Monitoring Database Activity</title>
@@ -124,8 +124,8 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
 
   <para>
    <productname>PostgreSQL</productname> also supports reporting of the exact
-   command currently being executed by other server processes.  This is an
-   facility independent of the collector process.
+   command currently being executed by other server processes.  This
+   facility is independent of the collector process.
   </para>
 
  <sect2 id="monitoring-stats-setup">
@@ -165,8 +165,8 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
   </para>
 
   <para>
-   The statistics collector communicates with the backends needing
-   information (including autovacuum) through temporary files.
+   The statistics collector transmits the collected
+   information to backends (including autovacuum) through temporary files.
    These files are stored in the <filename>pg_stat_tmp</filename> subdirectory.
    When the postmaster shuts down, a permanent copy of the statistics
    data is stored in the <filename>global</filename> subdirectory. For increased
@@ -217,6 +217,16 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
    <function>pg_stat_clear_snapshot</function>(), which will discard the
    current transaction's statistics snapshot (if any).  The next use of
    statistical information will cause a new snapshot to be fetched.
+  </para>
+
+  <para>
+   A transaction can also see its own statistics (as yet untransmitted to the
+   collector) in the views <structname>pg_stat_xact_all_tables</>,
+   <structname>pg_stat_xact_sys_tables</>,
+   <structname>pg_stat_xact_user_tables</>, and
+   <structname>pg_stat_xact_user_functions</>, or via these views' underlying
+   functions.  These numbers do not act as stated above; instead they update
+   continuously throughout the transaction.
   </para>
 
   <table id="monitoring-stats-views-table">
@@ -297,6 +307,27 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
       <entry><structname>pg_stat_user_tables</></entry>
       <entry>Same as <structname>pg_stat_all_tables</>, except that only user
       tables are shown.</entry>
+     </row>
+
+     <row>
+      <entry><structname>pg_stat_xact_all_tables</></entry>
+      <entry>Similar to <structname>pg_stat_all_tables</>, but counts actions
+      taken so far within the current transaction (which are <emphasis>not</>
+      yet included in <structname>pg_stat_all_tables</> and related views).
+      The columns for numbers of live and dead rows and last-vacuum and
+      last-analyze times are not present in this view.</entry>
+     </row>
+
+     <row>
+      <entry><structname>pg_stat_xact_sys_tables</></entry>
+      <entry>Same as <structname>pg_stat_xact_all_tables</>, except that only
+      system tables are shown.</entry>
+     </row>
+
+     <row>
+      <entry><structname>pg_stat_xact_user_tables</></entry>
+      <entry>Same as <structname>pg_stat_xact_all_tables</>, except that only
+      user tables are shown.</entry>
      </row>
 
      <row>
@@ -395,6 +426,13 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
      </entry>
      </row>
 
+     <row>
+      <entry><structname>pg_stat_xact_user_functions</></entry>
+      <entry>Similar to <structname>pg_stat_user_functions</>, but counts only
+      calls during the current transaction (which are <emphasis>not</>
+      yet included in <structname>pg_stat_user_functions</>).</entry>
+     </row>
+
     </tbody>
    </tgroup>
   </table>
@@ -405,7 +443,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
   </para>
 
   <para>
-   Beginning in <productname>PostgreSQL</productname> 8.1, indexes can be
+   Indexes can be
    used either directly or via <quote>bitmap scans</>.  In a bitmap scan
    the output of several indexes can be combined via AND or OR rules;
    so it is difficult to associate individual heap row fetches
@@ -681,6 +719,82 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
      </row>
 
      <row>
+      <entry><literal><function>pg_stat_get_xact_numscans</function>(<type>oid</type>)</literal></entry>
+      <entry><type>bigint</type></entry>
+      <entry>
+       Number of sequential scans done when argument is a table,
+       or number of index scans done when argument is an index, in the current transaction
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal><function>pg_stat_get_xact_tuples_returned</function>(<type>oid</type>)</literal></entry>
+      <entry><type>bigint</type></entry>
+      <entry>
+       Number of rows read by sequential scans when argument is a table,
+       or number of index entries returned when argument is an index, in the current transaction
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal><function>pg_stat_get_xact_tuples_fetched</function>(<type>oid</type>)</literal></entry>
+      <entry><type>bigint</type></entry>
+      <entry>
+       Number of table rows fetched by bitmap scans when argument is a table,
+       or table rows fetched by simple index scans using the index
+       when argument is an index, in the current transaction
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal><function>pg_stat_get_xact_tuples_inserted</function>(<type>oid</type>)</literal></entry>
+      <entry><type>bigint</type></entry>
+      <entry>
+       Number of rows inserted into table, in the current transaction
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal><function>pg_stat_get_xact_tuples_updated</function>(<type>oid</type>)</literal></entry>
+      <entry><type>bigint</type></entry>
+      <entry>
+       Number of rows updated in table (includes HOT updates), in the current transaction
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal><function>pg_stat_get_xact_tuples_deleted</function>(<type>oid</type>)</literal></entry>
+      <entry><type>bigint</type></entry>
+      <entry>
+       Number of rows deleted from table, in the current transaction
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal><function>pg_stat_get_xact_tuples_hot_updated</function>(<type>oid</type>)</literal></entry>
+      <entry><type>bigint</type></entry>
+      <entry>
+       Number of rows HOT-updated in table, in the current transaction
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal><function>pg_stat_get_xact_blocks_fetched</function>(<type>oid</type>)</literal></entry>
+      <entry><type>bigint</type></entry>
+      <entry>
+       Number of disk block fetch requests for table or index, in the current transaction
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal><function>pg_stat_get_xact_blocks_hit</function>(<type>oid</type>)</literal></entry>
+      <entry><type>bigint</type></entry>
+      <entry>
+       Number of disk block requests found in cache for table or index, in the current transaction
+      </entry>
+     </row>
+
+     <row>
        <!-- See also the entry for this in func.sgml -->
       <entry><literal><function>pg_backend_pid</function>()</literal></entry>
       <entry><type>integer</type></entry>
@@ -723,6 +837,33 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
       <entry>
        Time spent in only this function. Time spent in called functions
        is excluded.
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal><function>pg_stat_get_xact_function_calls</function>(<type>oid</type>)</literal></entry>
+      <entry><type>bigint</type></entry>
+      <entry>
+       Number of times the function has been called, in the current transaction.
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal><function>pg_stat_get_xact_function_time</function>(<type>oid</type>)</literal></entry>
+      <entry><type>bigint</type></entry>
+      <entry>
+       Total wall clock time spent in the function, in microseconds, in the
+       current transaction.  Includes the time spent in functions called by
+       this one.
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal><function>pg_stat_get_xact_function_self_time</function>(<type>oid</type>)</literal></entry>
+      <entry><type>bigint</type></entry>
+      <entry>
+       Time spent in only this function, in the current transaction. Time
+       spent in called functions is excluded.
       </entry>
      </row>
 

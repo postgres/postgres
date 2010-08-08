@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1996-2010, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/catalog/system_views.sql,v 1.66 2010/04/26 14:22:37 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/catalog/system_views.sql,v 1.67 2010/08/08 16:27:03 tgl Exp $
  */
 
 CREATE VIEW pg_roles AS 
@@ -208,13 +208,43 @@ CREATE VIEW pg_stat_all_tables AS
     WHERE C.relkind IN ('r', 't')
     GROUP BY C.oid, N.nspname, C.relname;
 
+CREATE VIEW pg_stat_xact_all_tables AS
+    SELECT
+            C.oid AS relid,
+            N.nspname AS schemaname,
+            C.relname AS relname,
+            pg_stat_get_xact_numscans(C.oid) AS seq_scan,
+            pg_stat_get_xact_tuples_returned(C.oid) AS seq_tup_read,
+            sum(pg_stat_get_xact_numscans(I.indexrelid))::bigint AS idx_scan,
+            sum(pg_stat_get_xact_tuples_fetched(I.indexrelid))::bigint +
+            pg_stat_get_xact_tuples_fetched(C.oid) AS idx_tup_fetch,
+            pg_stat_get_xact_tuples_inserted(C.oid) AS n_tup_ins,
+            pg_stat_get_xact_tuples_updated(C.oid) AS n_tup_upd,
+            pg_stat_get_xact_tuples_deleted(C.oid) AS n_tup_del,
+            pg_stat_get_xact_tuples_hot_updated(C.oid) AS n_tup_hot_upd
+    FROM pg_class C LEFT JOIN
+         pg_index I ON C.oid = I.indrelid
+         LEFT JOIN pg_namespace N ON (N.oid = C.relnamespace)
+    WHERE C.relkind IN ('r', 't')
+    GROUP BY C.oid, N.nspname, C.relname;
+
 CREATE VIEW pg_stat_sys_tables AS 
     SELECT * FROM pg_stat_all_tables 
     WHERE schemaname IN ('pg_catalog', 'information_schema') OR
           schemaname ~ '^pg_toast';
 
+CREATE VIEW pg_stat_xact_sys_tables AS
+    SELECT * FROM pg_stat_xact_all_tables
+    WHERE schemaname IN ('pg_catalog', 'information_schema') OR
+          schemaname ~ '^pg_toast';
+
 CREATE VIEW pg_stat_user_tables AS 
     SELECT * FROM pg_stat_all_tables 
+    WHERE schemaname NOT IN ('pg_catalog', 'information_schema') AND
+          schemaname !~ '^pg_toast';
+
+CREATE VIEW pg_stat_xact_user_tables AS
+    SELECT * FROM pg_stat_xact_all_tables
     WHERE schemaname NOT IN ('pg_catalog', 'information_schema') AND
           schemaname !~ '^pg_toast';
 
@@ -374,6 +404,18 @@ CREATE VIEW pg_stat_user_functions AS
     FROM pg_proc P LEFT JOIN pg_namespace N ON (N.oid = P.pronamespace)
     WHERE P.prolang != 12  -- fast check to eliminate built-in functions   
           AND pg_stat_get_function_calls(P.oid) IS NOT NULL;
+
+CREATE VIEW pg_stat_xact_user_functions AS
+    SELECT
+            P.oid AS funcid,
+            N.nspname AS schemaname,
+            P.proname AS funcname,
+            pg_stat_get_xact_function_calls(P.oid) AS calls,
+            pg_stat_get_xact_function_time(P.oid) / 1000 AS total_time,
+            pg_stat_get_xact_function_self_time(P.oid) / 1000 AS self_time
+    FROM pg_proc P LEFT JOIN pg_namespace N ON (N.oid = P.pronamespace)
+    WHERE P.prolang != 12  -- fast check to eliminate built-in functions
+          AND pg_stat_get_xact_function_calls(P.oid) IS NOT NULL;
 
 CREATE VIEW pg_stat_bgwriter AS
     SELECT

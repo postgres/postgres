@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.575 2010/08/05 18:21:17 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.576 2010/08/08 16:27:04 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.pl reads this file and generates .bki
@@ -3092,6 +3092,31 @@ DATA(insert OID = 2979 (  pg_stat_get_function_time			PGNSP PGUID 12 1 0 0 f f f
 DESCR("statistics: execution time of function");
 DATA(insert OID = 2980 (  pg_stat_get_function_self_time	PGNSP PGUID 12 1 0 0 f f f t f s 1 0 20 "26" _null_ _null_ _null_ _null_ pg_stat_get_function_self_time _null_ _null_ _null_ ));
 DESCR("statistics: self execution time of function");
+
+DATA(insert OID = 3037 (  pg_stat_get_xact_numscans				PGNSP PGUID 12 1 0 0 f f f t f v 1 0 20 "26" _null_ _null_ _null_ _null_ pg_stat_get_xact_numscans _null_ _null_ _null_ ));
+DESCR("statistics: number of scans done for table/index in current transaction");
+DATA(insert OID = 3038 (  pg_stat_get_xact_tuples_returned		PGNSP PGUID 12 1 0 0 f f f t f v 1 0 20 "26" _null_ _null_ _null_ _null_ pg_stat_get_xact_tuples_returned _null_ _null_ _null_ ));
+DESCR("statistics: number of tuples read by seqscan in current transaction");
+DATA(insert OID = 3039 (  pg_stat_get_xact_tuples_fetched		PGNSP PGUID 12 1 0 0 f f f t f v 1 0 20 "26" _null_ _null_ _null_ _null_ pg_stat_get_xact_tuples_fetched _null_ _null_ _null_ ));
+DESCR("statistics: number of tuples fetched by idxscan in current transaction");
+DATA(insert OID = 3040 (  pg_stat_get_xact_tuples_inserted		PGNSP PGUID 12 1 0 0 f f f t f v 1 0 20 "26" _null_ _null_ _null_ _null_ pg_stat_get_xact_tuples_inserted _null_ _null_ _null_ ));
+DESCR("statistics: number of tuples inserted in current transaction");
+DATA(insert OID = 3041 (  pg_stat_get_xact_tuples_updated		PGNSP PGUID 12 1 0 0 f f f t f v 1 0 20 "26" _null_ _null_ _null_ _null_ pg_stat_get_xact_tuples_updated _null_ _null_ _null_ ));
+DESCR("statistics: number of tuples updated in current transaction");
+DATA(insert OID = 3042 (  pg_stat_get_xact_tuples_deleted		PGNSP PGUID 12 1 0 0 f f f t f v 1 0 20 "26" _null_ _null_ _null_ _null_ pg_stat_get_xact_tuples_deleted _null_ _null_ _null_ ));
+DESCR("statistics: number of tuples deleted in current transaction");
+DATA(insert OID = 3043 (  pg_stat_get_xact_tuples_hot_updated	PGNSP PGUID 12 1 0 0 f f f t f v 1 0 20 "26" _null_ _null_ _null_ _null_ pg_stat_get_xact_tuples_hot_updated _null_ _null_ _null_ ));
+DESCR("statistics: number of tuples hot updated in current transaction");
+DATA(insert OID = 3044 (  pg_stat_get_xact_blocks_fetched		PGNSP PGUID 12 1 0 0 f f f t f v 1 0 20 "26" _null_ _null_ _null_ _null_ pg_stat_get_xact_blocks_fetched _null_ _null_ _null_ ));
+DESCR("statistics: number of blocks fetched in current transaction");
+DATA(insert OID = 3045 (  pg_stat_get_xact_blocks_hit			PGNSP PGUID 12 1 0 0 f f f t f v 1 0 20 "26" _null_ _null_ _null_ _null_ pg_stat_get_xact_blocks_hit _null_ _null_ _null_ ));
+DESCR("statistics: number of blocks found in cache in current transaction");
+DATA(insert OID = 3046 (  pg_stat_get_xact_function_calls		PGNSP PGUID 12 1 0 0 f f f t f v 1 0 20 "26" _null_ _null_ _null_ _null_ pg_stat_get_xact_function_calls _null_ _null_ _null_ ));
+DESCR("statistics: number of function calls in current transaction");
+DATA(insert OID = 3047 (  pg_stat_get_xact_function_time		PGNSP PGUID 12 1 0 0 f f f t f v 1 0 20 "26" _null_ _null_ _null_ _null_ pg_stat_get_xact_function_time _null_ _null_ _null_ ));
+DESCR("statistics: execution time of function in current transaction");
+DATA(insert OID = 3048 (  pg_stat_get_xact_function_self_time	PGNSP PGUID 12 1 0 0 f f f t f v 1 0 20 "26" _null_ _null_ _null_ _null_ pg_stat_get_xact_function_self_time _null_ _null_ _null_ ));
+DESCR("statistics: self execution time of function in current transaction");
 
 DATA(insert OID = 2230 (  pg_stat_clear_snapshot		PGNSP PGUID 12 1 0 0 f f f f f v 0 0 2278 "" _null_ _null_ _null_ _null_	pg_stat_clear_snapshot _null_ _null_ _null_ ));
 DESCR("statistics: discard current transaction's statistics snapshot");

@@ -5,7 +5,7 @@
  *
  *	Copyright (c) 2001-2010, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/include/pgstat.h,v 1.89 2010/02/26 02:01:20 momjian Exp $
+ *	$PostgreSQL: pgsql/src/include/pgstat.h,v 1.90 2010/08/08 16:27:06 tgl Exp $
  * ----------
  */
 #ifndef PGSTAT_H
@@ -691,6 +691,9 @@ extern void pgstat_report_appname(const char *appname);
 extern void pgstat_report_xact_timestamp(TimestampTz tstamp);
 extern void pgstat_report_waiting(bool waiting);
 extern const char *pgstat_get_backend_current_activity(int pid, bool checkUser);
+
+extern PgStat_TableStatus *find_tabstat_entry(Oid rel_id);
+extern PgStat_BackendFunctionEntry *find_funcstat_entry(Oid func_id);
 
 extern void pgstat_initstats(Relation rel);
 

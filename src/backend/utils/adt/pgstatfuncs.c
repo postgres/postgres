@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/pgstatfuncs.c,v 1.60 2010/02/26 02:01:09 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/pgstatfuncs.c,v 1.61 2010/08/08 16:27:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -75,6 +75,20 @@ extern Datum pg_stat_get_bgwriter_buf_written_clean(PG_FUNCTION_ARGS);
 extern Datum pg_stat_get_bgwriter_maxwritten_clean(PG_FUNCTION_ARGS);
 extern Datum pg_stat_get_buf_written_backend(PG_FUNCTION_ARGS);
 extern Datum pg_stat_get_buf_alloc(PG_FUNCTION_ARGS);
+
+extern Datum pg_stat_get_xact_numscans(PG_FUNCTION_ARGS);
+extern Datum pg_stat_get_xact_tuples_returned(PG_FUNCTION_ARGS);
+extern Datum pg_stat_get_xact_tuples_fetched(PG_FUNCTION_ARGS);
+extern Datum pg_stat_get_xact_tuples_inserted(PG_FUNCTION_ARGS);
+extern Datum pg_stat_get_xact_tuples_updated(PG_FUNCTION_ARGS);
+extern Datum pg_stat_get_xact_tuples_deleted(PG_FUNCTION_ARGS);
+extern Datum pg_stat_get_xact_tuples_hot_updated(PG_FUNCTION_ARGS);
+extern Datum pg_stat_get_xact_blocks_fetched(PG_FUNCTION_ARGS);
+extern Datum pg_stat_get_xact_blocks_hit(PG_FUNCTION_ARGS);
+
+extern Datum pg_stat_get_xact_function_calls(PG_FUNCTION_ARGS);
+extern Datum pg_stat_get_xact_function_time(PG_FUNCTION_ARGS);
+extern Datum pg_stat_get_xact_function_self_time(PG_FUNCTION_ARGS);
 
 extern Datum pg_stat_clear_snapshot(PG_FUNCTION_ARGS);
 extern Datum pg_stat_reset(PG_FUNCTION_ARGS);
@@ -1090,6 +1104,192 @@ Datum
 pg_stat_get_buf_alloc(PG_FUNCTION_ARGS)
 {
 	PG_RETURN_INT64(pgstat_fetch_global()->buf_alloc);
+}
+
+Datum
+pg_stat_get_xact_numscans(PG_FUNCTION_ARGS)
+{
+	Oid			relid = PG_GETARG_OID(0);
+	int64		result;
+	PgStat_TableStatus *tabentry;
+
+	if ((tabentry = find_tabstat_entry(relid)) == NULL)
+		result = 0;
+	else
+		result = (int64) (tabentry->t_counts.t_numscans);
+
+	PG_RETURN_INT64(result);
+}
+
+Datum
+pg_stat_get_xact_tuples_returned(PG_FUNCTION_ARGS)
+{
+	Oid			relid = PG_GETARG_OID(0);
+	int64		result;
+	PgStat_TableStatus *tabentry;
+
+	if ((tabentry = find_tabstat_entry(relid)) == NULL)
+		result = 0;
+	else
+		result = (int64) (tabentry->t_counts.t_tuples_returned);
+
+	PG_RETURN_INT64(result);
+}
+
+Datum
+pg_stat_get_xact_tuples_fetched(PG_FUNCTION_ARGS)
+{
+	Oid			relid = PG_GETARG_OID(0);
+	int64		result;
+	PgStat_TableStatus *tabentry;
+
+	if ((tabentry = find_tabstat_entry(relid)) == NULL)
+		result = 0;
+	else
+		result = (int64) (tabentry->t_counts.t_tuples_fetched);
+
+	PG_RETURN_INT64(result);
+}
+
+Datum
+pg_stat_get_xact_tuples_inserted(PG_FUNCTION_ARGS)
+{
+	Oid			relid = PG_GETARG_OID(0);
+	int64		result;
+	PgStat_TableStatus *tabentry;
+	PgStat_TableXactStatus *trans;
+
+	if ((tabentry = find_tabstat_entry(relid)) == NULL)
+		result = 0;
+	else
+	{
+		result = tabentry->t_counts.t_tuples_inserted;
+		/* live subtransactions' counts aren't in t_tuples_inserted yet */
+		for (trans = tabentry->trans; trans != NULL; trans = trans->upper)
+			result += trans->tuples_inserted;
+	}
+
+	PG_RETURN_INT64(result);
+}
+
+Datum
+pg_stat_get_xact_tuples_updated(PG_FUNCTION_ARGS)
+{
+	Oid			relid = PG_GETARG_OID(0);
+	int64		result;
+	PgStat_TableStatus *tabentry;
+	PgStat_TableXactStatus *trans;
+
+	if ((tabentry = find_tabstat_entry(relid)) == NULL)
+		result = 0;
+	else
+	{
+		result = tabentry->t_counts.t_tuples_updated;
+		/* live subtransactions' counts aren't in t_tuples_updated yet */
+		for (trans = tabentry->trans; trans != NULL; trans = trans->upper)
+			result += trans->tuples_updated;
+	}
+
+	PG_RETURN_INT64(result);
+}
+
+Datum
+pg_stat_get_xact_tuples_deleted(PG_FUNCTION_ARGS)
+{
+	Oid			relid = PG_GETARG_OID(0);
+	int64		result;
+	PgStat_TableStatus *tabentry;
+	PgStat_TableXactStatus *trans;
+
+	if ((tabentry = find_tabstat_entry(relid)) == NULL)
+		result = 0;
+	else
+	{
+		result = tabentry->t_counts.t_tuples_deleted;
+		/* live subtransactions' counts aren't in t_tuples_deleted yet */
+		for (trans = tabentry->trans; trans != NULL; trans = trans->upper)
+			result += trans->tuples_deleted;
+	}
+
+	PG_RETURN_INT64(result);
+}
+
+Datum
+pg_stat_get_xact_tuples_hot_updated(PG_FUNCTION_ARGS)
+{
+	Oid			relid = PG_GETARG_OID(0);
+	int64		result;
+	PgStat_TableStatus *tabentry;
+
+	if ((tabentry = find_tabstat_entry(relid)) == NULL)
+		result = 0;
+	else
+		result = (int64) (tabentry->t_counts.t_tuples_hot_updated);
+
+	PG_RETURN_INT64(result);
+}
+
+Datum
+pg_stat_get_xact_blocks_fetched(PG_FUNCTION_ARGS)
+{
+	Oid			relid = PG_GETARG_OID(0);
+	int64		result;
+	PgStat_TableStatus *tabentry;
+
+	if ((tabentry = find_tabstat_entry(relid)) == NULL)
+		result = 0;
+	else
+		result = (int64) (tabentry->t_counts.t_blocks_fetched);
+
+	PG_RETURN_INT64(result);
+}
+
+Datum
+pg_stat_get_xact_blocks_hit(PG_FUNCTION_ARGS)
+{
+	Oid			relid = PG_GETARG_OID(0);
+	int64		result;
+	PgStat_TableStatus *tabentry;
+
+	if ((tabentry = find_tabstat_entry(relid)) == NULL)
+		result = 0;
+	else
+		result = (int64) (tabentry->t_counts.t_blocks_hit);
+
+	PG_RETURN_INT64(result);
+}
+
+Datum
+pg_stat_get_xact_function_calls(PG_FUNCTION_ARGS)
+{
+	Oid			funcid = PG_GETARG_OID(0);
+	PgStat_BackendFunctionEntry *funcentry;
+
+	if ((funcentry = find_funcstat_entry(funcid)) == NULL)
+		PG_RETURN_NULL();
+	PG_RETURN_INT64(funcentry->f_counts.f_numcalls);
+}
+
+Datum
+pg_stat_get_xact_function_time(PG_FUNCTION_ARGS)
+{
+	Oid			funcid = PG_GETARG_OID(0);
+	PgStat_BackendFunctionEntry *funcentry;
+
+	if ((funcentry = find_funcstat_entry(funcid)) == NULL)
+		PG_RETURN_NULL();
+	PG_RETURN_INT64(INSTR_TIME_GET_MICROSEC(funcentry->f_counts.f_time));
+}
+
+Datum
+pg_stat_get_xact_function_self_time(PG_FUNCTION_ARGS)
+{
+	Oid			funcid = PG_GETARG_OID(0);
+	PgStat_BackendFunctionEntry *funcentry;
+
+	if ((funcentry = find_funcstat_entry(funcid)) == NULL)
+		PG_RETURN_NULL();
+	PG_RETURN_INT64(INSTR_TIME_GET_MICROSEC(funcentry->f_counts.f_time_self));
 }
 
 
