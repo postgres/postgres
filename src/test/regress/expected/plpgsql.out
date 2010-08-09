@@ -2312,6 +2312,35 @@ $$ language plpgsql;
 select raise_test2(10);
 ERROR:  too few parameters specified for RAISE
 CONTEXT:  PL/pgSQL function "raise_test2" line 3 at RAISE
+-- Test re-RAISE inside a nested exception block.  This case is allowed
+-- by Oracle's PL/SQL but was handled differently by PG before 9.1.
+CREATE FUNCTION reraise_test() RETURNS void AS $$
+BEGIN
+   BEGIN
+       RAISE syntax_error;
+   EXCEPTION
+       WHEN syntax_error THEN
+           BEGIN
+               raise notice 'exception % thrown in inner block, reraising', sqlerrm;
+               RAISE;
+           EXCEPTION
+               WHEN OTHERS THEN
+                   raise notice 'RIGHT - exception % caught in inner block', sqlerrm;
+           END;
+   END;
+EXCEPTION
+   WHEN OTHERS THEN
+       raise notice 'WRONG - exception % caught in outer block', sqlerrm;
+END;
+$$ LANGUAGE plpgsql;
+SELECT reraise_test();
+NOTICE:  exception syntax_error thrown in inner block, reraising
+NOTICE:  RIGHT - exception syntax_error caught in inner block
+ reraise_test 
+--------------
+ 
+(1 row)
+
 --
 -- reject function definitions that contain malformed SQL queries at
 -- compile-time, where possible
@@ -3577,7 +3606,7 @@ end;
 $$ language plpgsql;
 select raise_test();
 ERROR:  RAISE without parameters cannot be used outside an exception handler
-CONTEXT:  PL/pgSQL function "raise_test"
+CONTEXT:  PL/pgSQL function "raise_test" line 3 at RAISE
 -- check cases where implicit SQLSTATE variable could be confused with
 -- SQLSTATE as a keyword, cf bug #5524
 create or replace function raise_test() returns void as $$

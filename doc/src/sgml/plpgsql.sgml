@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.156 2010/07/29 19:34:40 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.157 2010/08/09 02:25:05 tgl Exp $ -->
 
 <chapter id="plpgsql">
   <title><application>PL/pgSQL</application> - <acronym>SQL</acronym> Procedural Language</title>
@@ -2160,7 +2160,7 @@ BEGIN
                    || quote_ident(mviews.mv_name) || ' ...');
         EXECUTE 'TRUNCATE TABLE ' || quote_ident(mviews.mv_name);
         EXECUTE 'INSERT INTO '
-                   || quote_ident(mviews.mv_name) || ' ' 
+                   || quote_ident(mviews.mv_name) || ' '
                    || mviews.mv_query;
     END LOOP;
 
@@ -2523,7 +2523,7 @@ OPEN <replaceable>unbound_cursorvar</replaceable> <optional> <optional> NO </opt
        <para>
         An example:
 <programlisting>
-OPEN curs1 FOR EXECUTE 'SELECT * FROM ' || quote_ident(tabname) 
+OPEN curs1 FOR EXECUTE 'SELECT * FROM ' || quote_ident(tabname)
                                         || ' WHERE col1 = $1' USING keyvalue;
 </programlisting>
         In this example, the table name is inserted into the query textually,
@@ -3012,9 +3012,20 @@ RAISE unique_violation USING MESSAGE = 'Duplicate user ID: ' || user_id;
     The last variant of <command>RAISE</> has no parameters at all.
     This form can only be used inside a <literal>BEGIN</> block's
     <literal>EXCEPTION</> clause;
-    it causes the error currently being handled to be re-thrown to the
-    next enclosing block.
+    it causes the error currently being handled to be re-thrown.
    </para>
+
+   <note>
+    <para>
+     Before <productname>PostgreSQL</> 9.1, <command>RAISE</> without
+     parameters was interpreted as re-throwing the error from the block
+     containing the active exception handler.  Thus an <literal>EXCEPTION</>
+     clause nested within that handler could not catch it, even if the
+     <command>RAISE</> was within the nested <literal>EXCEPTION</> clause's
+     block. This was deemed surprising as well as being incompatible with
+     Oracle's PL/SQL.
+    </para>
+   </note>
 
    <para>
     If no condition name nor SQLSTATE is specified in a

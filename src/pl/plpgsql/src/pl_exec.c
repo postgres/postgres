@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.261 2010/07/06 19:19:01 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.262 2010/08/09 02:25:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -327,10 +327,6 @@ plpgsql_exec_function(PLpgSQL_function *func, FunctionCallInfo fcinfo)
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
 					 errmsg("CONTINUE cannot be used outside a loop")));
-		else if (rc == PLPGSQL_RC_RERAISE)
-			ereport(ERROR,
-					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("RAISE without parameters cannot be used outside an exception handler")));
 		else
 			ereport(ERROR,
 			   (errcode(ERRCODE_S_R_E_FUNCTION_EXECUTED_NO_RETURN_STATEMENT),
@@ -695,10 +691,6 @@ plpgsql_exec_trigger(PLpgSQL_function *func,
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
 					 errmsg("CONTINUE cannot be used outside a loop")));
-		else if (rc == PLPGSQL_RC_RERAISE)
-			ereport(ERROR,
-					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("RAISE without parameters cannot be used outside an exception handler")));
 		else
 			ereport(ERROR,
 			   (errcode(ERRCODE_S_R_E_FUNCTION_EXECUTED_NO_RETURN_STATEMENT),
@@ -1019,6 +1011,7 @@ exec_stmt_block(PLpgSQL_execstate *estate, PLpgSQL_stmt_block *block)
 		MemoryContext oldcontext = CurrentMemoryContext;
 		ResourceOwner oldowner = CurrentResourceOwner;
 		ExprContext *old_eval_econtext = estate->eval_econtext;
+		ErrorData *save_cur_error = estate->cur_error;
 
 		estate->err_text = gettext_noop("during statement block entry");
 
@@ -1130,6 +1123,12 @@ exec_stmt_block(PLpgSQL_execstate *estate, PLpgSQL_stmt_block *block)
 									unpack_sql_state(edata->sqlerrcode));
 					assign_text_var(errm_var, edata->message);
 
+					/*
+					 * Also set up cur_error so the error data is accessible
+					 * inside the handler.
+					 */
+					estate->cur_error = edata;
+
 					estate->err_text = NULL;
 
 					rc = exec_stmts(estate, exception->action);
@@ -1141,13 +1140,16 @@ exec_stmt_block(PLpgSQL_execstate *estate, PLpgSQL_stmt_block *block)
 					errm_var->value = (Datum) 0;
 					errm_var->isnull = true;
 
-					/* re-throw error if requested by handler */
-					if (rc == PLPGSQL_RC_RERAISE)
-						ReThrowError(edata);
-
 					break;
 				}
 			}
+
+			/*
+			 * Restore previous state of cur_error, whether or not we executed
+			 * a handler.  This is needed in case an error got thrown from
+			 * some inner block's exception handler.
+			 */
+			estate->cur_error = save_cur_error;
 
 			/* If no match found, re-throw the error */
 			if (e == NULL)
@@ -1156,6 +1158,8 @@ exec_stmt_block(PLpgSQL_execstate *estate, PLpgSQL_stmt_block *block)
 				FreeErrorData(edata);
 		}
 		PG_END_TRY();
+
+		Assert(save_cur_error == estate->cur_error);
 	}
 	else
 	{
@@ -1177,7 +1181,6 @@ exec_stmt_block(PLpgSQL_execstate *estate, PLpgSQL_stmt_block *block)
 		case PLPGSQL_RC_OK:
 		case PLPGSQL_RC_RETURN:
 		case PLPGSQL_RC_CONTINUE:
-		case PLPGSQL_RC_RERAISE:
 			return rc;
 
 		case PLPGSQL_RC_EXIT:
@@ -1599,7 +1602,6 @@ exec_stmt_loop(PLpgSQL_execstate *estate, PLpgSQL_stmt_loop *stmt)
 				break;
 
 			case PLPGSQL_RC_RETURN:
-			case PLPGSQL_RC_RERAISE:
 				return rc;
 
 			default:
@@ -1663,7 +1665,6 @@ exec_stmt_while(PLpgSQL_execstate *estate, PLpgSQL_stmt_while *stmt)
 				break;
 
 			case PLPGSQL_RC_RETURN:
-			case PLPGSQL_RC_RERAISE:
 				return rc;
 
 			default:
@@ -1782,8 +1783,7 @@ exec_stmt_fori(PLpgSQL_execstate *estate, PLpgSQL_stmt_fori *stmt)
 		 */
 		rc = exec_stmts(estate, stmt->body);
 
-		if (rc == PLPGSQL_RC_RETURN ||
-			rc == PLPGSQL_RC_RERAISE)
+		if (rc == PLPGSQL_RC_RETURN)
 			break;				/* break out of the loop */
 		else if (rc == PLPGSQL_RC_EXIT)
 		{
@@ -2437,7 +2437,14 @@ exec_stmt_raise(PLpgSQL_execstate *estate, PLpgSQL_stmt_raise *stmt)
 	/* RAISE with no parameters: re-throw current exception */
 	if (stmt->condname == NULL && stmt->message == NULL &&
 		stmt->options == NIL)
-		return PLPGSQL_RC_RERAISE;
+	{
+		if (estate->cur_error != NULL)
+			ReThrowError(estate->cur_error);
+		/* oops, we're not inside a handler */
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("RAISE without parameters cannot be used outside an exception handler")));
+	}
 
 	if (stmt->condname)
 	{
@@ -2637,6 +2644,7 @@ plpgsql_estate_setup(PLpgSQL_execstate *estate,
 
 	estate->rettupdesc = NULL;
 	estate->exitlabel = NULL;
+	estate->cur_error = NULL;
 
 	estate->tuple_store = NULL;
 	if (rsi)
