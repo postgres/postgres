@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.180.2.13 2010/07/05 09:27:36 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.180.2.14 2010/08/09 18:50:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1012,6 +1012,9 @@ exec_stmt_block(PLpgSQL_execstate *estate, PLpgSQL_stmt_block *block)
 			 * to return to connected state.
 			 */
 			SPI_restore_connection();
+
+			/* Must clean up the econtext too */
+			exec_eval_cleanup(estate);
 
 			/* Look for a matching exception handler */
 			foreach(e, block->exceptions->exc_list)
@@ -2267,6 +2270,9 @@ plpgsql_estate_setup(PLpgSQL_execstate *estate,
  *
  * NB: the result of the evaluation is no longer valid after this is done,
  * unless it is a pass-by-value datatype.
+ *
+ * NB: if you change this code, see also the hacks in exec_assign_value's
+ * PLPGSQL_DTYPE_ARRAYELEM case.
  * ----------
  */
 static void
@@ -3248,6 +3254,10 @@ exec_assign_expr(PLpgSQL_execstate *estate, PLpgSQL_datum *target,
 
 /* ----------
  * exec_assign_value			Put a value into a target field
+ *
+ * Note: in some code paths, this may leak memory in the eval_econtext;
+ * we assume that will be cleaned up later by exec_eval_cleanup.  We cannot
+ * call exec_eval_cleanup here for fear of destroying the input Datum value.
  * ----------
  */
 static void
@@ -3507,6 +3517,9 @@ exec_assign_value(PLpgSQL_execstate *estate,
 
 		case PLPGSQL_DTYPE_ARRAYELEM:
 			{
+				/*
+				 * Target is an element of an array
+				 */
 				int			nsubscripts;
 				int			i;
 				PLpgSQL_expr *subscripts[MAXDIM];
@@ -3522,10 +3535,19 @@ exec_assign_value(PLpgSQL_execstate *estate,
 							coerced_value;
 				ArrayType  *oldarrayval;
 				ArrayType  *newarrayval;
+				SPITupleTable *save_eval_tuptable;
 
 				/*
-				 * Target is an element of an array
-				 *
+				 * We need to do subscript evaluation, which might require
+				 * evaluating general expressions; and the caller might have
+				 * done that too in order to prepare the input Datum.  We
+				 * have to save and restore the caller's SPI_execute result,
+				 * if any.
+				 */
+				save_eval_tuptable = estate->eval_tuptable;
+				estate->eval_tuptable = NULL;
+
+				/*
 				 * To handle constructs like x[1][2] := something, we have to
 				 * be prepared to deal with a chain of arrayelem datums. Chase
 				 * back to find the base array datum, and save the subscript
@@ -3579,7 +3601,22 @@ exec_assign_value(PLpgSQL_execstate *estate,
 						ereport(ERROR,
 								(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
 								 errmsg("array subscript in assignment must not be NULL")));
+
+					/*
+					 * Clean up in case the subscript expression wasn't simple.
+					 * We can't do exec_eval_cleanup, but we can do this much
+					 * (which is safe because the integer subscript value is
+					 * surely pass-by-value), and we must do it in case the
+					 * next subscript expression isn't simple either.
+					 */
+					if (estate->eval_tuptable != NULL)
+						SPI_freetuptable(estate->eval_tuptable);
+					estate->eval_tuptable = NULL;
 				}
+
+				/* Now we can restore caller's SPI_execute result if any. */
+				Assert(estate->eval_tuptable == NULL);
+				estate->eval_tuptable = save_eval_tuptable;
 
 				/* Coerce source value to match array element type. */
 				coerced_value = exec_simple_cast_value(value,
