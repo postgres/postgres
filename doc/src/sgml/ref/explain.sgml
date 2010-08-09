@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/explain.sgml,v 1.50 2010/04/03 07:23:01 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/explain.sgml,v 1.50.2.1 2010/08/09 23:49:33 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -248,6 +248,29 @@ EXPLAIN SELECT * FROM foo;
   </para>
 
   <para>
+  Here is the same query, with JSON formatting:
+<programlisting>
+EXPLAIN (FORMAT JSON) SELECT * FROM foo;
+           QUERY PLAN           
+--------------------------------
+ [                             +
+   {                           +
+     "Plan": {                 +
+       "Node Type": "Seq Scan",+
+       "Relation Name": "foo", +
+       "Alias": "foo",         +
+       "Startup Cost": 0.00,   +
+       "Total Cost": 155.00,   +
+       "Plan Rows": 10000,     +
+       "Plan Width": 4         +
+     }                         +
+   }                           +
+ ]
+(1 row)
+</programlisting>
+  </para>
+
+  <para>
    If there is an index and we use a query with an indexable
    <literal>WHERE</literal> condition, <command>EXPLAIN</command>
    might show a different plan:
@@ -263,6 +286,28 @@ EXPLAIN SELECT * FROM foo WHERE i = 4;
 </programlisting>
   </para>
 
+  <para>
+  Here is the same query, but in YAML output:
+<programlisting>
+EXPLAIN (FORMAT YAML) SELECT * FROM foo WHERE i='4';
+          QUERY PLAN           
+-------------------------------
+ - Plan:                      +
+     Node Type: "Index Scan"  +
+     Scan Direction: "Forward"+
+     Index Name: "fi"         +
+     Relation Name: "foo"     +
+     Alias: "foo"             +
+     Startup Cost: 0.00       +
+     Total Cost: 5.98         +
+     Plan Rows: 1             +
+     Plan Width: 4            +
+     Index Cond: "(i = 4)"
+(1 row)
+</programlisting>
+
+    XML output is left as an exercise to the reader.
+  </para>
   <para>
    Here is the same plan with costs suppressed:
 
