@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/lobj.sgml,v 1.49 2008/12/07 23:46:39 alvherre Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/lobj.sgml,v 1.49.2.1 2010/08/09 12:00:53 rhaas Exp $ -->
 
  <chapter id="largeObjects">
   <title id="largeObjects-title">Large Objects</title>
@@ -84,7 +84,7 @@
     <application>libpq</application> library.
    </para>
 
-   <sect2>
+   <sect2 id='lo-create'>
     <title>Creating a Large Object</title>
 
     <para>
@@ -143,7 +143,7 @@ inv_oid = lo_create(conn, desired_oid);
     </para>
    </sect2>
 
-   <sect2>
+   <sect2 id="lo-import">
     <title>Importing a Large Object</title>
 
     <para>
@@ -185,7 +185,7 @@ Oid lo_import_with_oid(PGconn *conn, const char *filename, Oid lobjId);
     </para>
    </sect2>
 
-   <sect2>
+   <sect2 id="lo-export">
     <title>Exporting a Large Object</title>
 
     <para>
@@ -203,7 +203,7 @@ int lo_export(PGconn *conn, Oid lobjId, const char *filename);
     </para>
    </sect2>
 
-   <sect2>
+   <sect2 id="lo-open">
     <title>Opening an Existing Large Object</title>
 
     <para>
@@ -253,7 +253,7 @@ inv_fd = lo_open(conn, inv_oid, INV_READ|INV_WRITE);
     </para>
 </sect2>
 
-<sect2>
+<sect2 id="lo-write">
 <title>Writing Data to a Large Object</title>
 
 <para>
@@ -271,7 +271,7 @@ int lo_write(PGconn *conn, int fd, const char *buf, size_t len);
 </para>
 </sect2>
 
-<sect2>
+<sect2 id="lo-read">
 <title>Reading Data from a Large Object</title>
 
 <para>
@@ -289,7 +289,7 @@ int lo_read(PGconn *conn, int fd, char *buf, size_t len);
 </para>
 </sect2>
 
-<sect2>
+<sect2 id="lo-seek">
 <title>Seeking in a Large Object</title>
 
 <para>
@@ -309,7 +309,7 @@ int lo_lseek(PGconn *conn, int fd, int offset, int whence);
 </para>
 </sect2>
 
-<sect2>
+<sect2 id="lo-tell">
 <title>Obtaining the Seek Position of a Large Object</title>
 
 <para>
@@ -323,7 +323,7 @@ int lo_tell(PGconn *conn, int fd);
 </para>
 </sect2>
 
-<sect2>
+<sect2 id="lo-truncate">
 <title>Truncating a Large Object</title>
 
 <para>
@@ -355,7 +355,7 @@ int lo_truncate(PGcon *conn, int fd, size_t len);
 </para>
 </sect2>
 
-<sect2>
+<sect2 id="lo-close">
 <title>Closing a Large Object Descriptor</title>
 
 <para>
@@ -375,7 +375,7 @@ int lo_close(PGconn *conn, int fd);
 </para>
 </sect2>
 
-   <sect2>
+   <sect2 id="lo-unlink">
     <title>Removing a Large Object</title>
 
     <para>
