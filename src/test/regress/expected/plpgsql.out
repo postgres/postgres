@@ -2739,3 +2739,46 @@ select multi_datum_use(42);
  t
 (1 row)
 
+-- Test for appropriate cleanup of non-simple expression evaluations
+-- (bug in all versions prior to August 2010)
+CREATE FUNCTION nonsimple_expr_test() RETURNS text[] AS $$
+DECLARE
+  arr text[];
+  lr text;
+  i integer;
+BEGIN
+  arr := array[array['foo','bar'], array['baz', 'quux']];
+  lr := 'fool';
+  i := 1;
+  -- use sub-SELECTs to make expressions non-simple
+  arr[(SELECT i)][(SELECT i+1)] := (SELECT lr);
+  RETURN arr;
+END;
+$$ LANGUAGE plpgsql;
+SELECT nonsimple_expr_test();
+   nonsimple_expr_test   
+-------------------------
+ {{foo,fool},{baz,quux}}
+(1 row)
+
+DROP FUNCTION nonsimple_expr_test();
+CREATE FUNCTION nonsimple_expr_test() RETURNS integer AS $$
+declare
+   i integer NOT NULL := 0;
+begin
+  begin
+    i := (SELECT NULL::integer);  -- should throw error
+  exception
+    WHEN OTHERS THEN
+      i := (SELECT 1::integer);
+  end;
+  return i;
+end;
+$$ LANGUAGE plpgsql;
+SELECT nonsimple_expr_test();
+ nonsimple_expr_test 
+---------------------
+                   1
+(1 row)
+
+DROP FUNCTION nonsimple_expr_test();
