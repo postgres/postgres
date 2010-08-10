@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/xml2/xslt_proc.c,v 1.21 2010/07/06 19:18:55 momjian Exp $
+ * $PostgreSQL: pgsql/contrib/xml2/xslt_proc.c,v 1.22 2010/08/10 23:02:00 tgl Exp $
  *
  * XSLT processing functions (requiring libxslt)
  *
@@ -41,9 +41,8 @@ Datum		xslt_process(PG_FUNCTION_ARGS);
 extern void pgxml_parser_init(void);
 
 /* local defs */
-static void parse_params(const char **params, text *paramstr);
+static const char **parse_params(text *paramstr);
 
-#define MAXPARAMS 20			/* must be even, see parse_params() */
 #endif   /* USE_LIBXSLT */
 
 
@@ -57,7 +56,7 @@ xslt_process(PG_FUNCTION_ARGS)
 	text	   *doct = PG_GETARG_TEXT_P(0);
 	text	   *ssheet = PG_GETARG_TEXT_P(1);
 	text	   *paramstr;
-	const char *params[MAXPARAMS + 1];	/* +1 for the terminator */
+	const char **params;
 	xsltStylesheetPtr stylesheet = NULL;
 	xmlDocPtr	doctree;
 	xmlDocPtr	restree;
@@ -69,11 +68,14 @@ xslt_process(PG_FUNCTION_ARGS)
 	if (fcinfo->nargs == 3)
 	{
 		paramstr = PG_GETARG_TEXT_P(2);
-		parse_params(params, paramstr);
+		params = parse_params(paramstr);
 	}
 	else
+	{
 		/* No parameters */
+		params = (const char **) palloc(sizeof(char *));
 		params[0] = NULL;
+	}
 
 	/* Setup parser */
 	pgxml_parser_init();
@@ -139,22 +141,34 @@ xslt_process(PG_FUNCTION_ARGS)
 
 #ifdef USE_LIBXSLT
 
-static void
-parse_params(const char **params, text *paramstr)
+static const char **
+parse_params(text *paramstr)
 {
 	char	   *pos;
 	char	   *pstr;
-	int			i;
 	char	   *nvsep = "=";
 	char	   *itsep = ",";
+	const char **params;
+	int			max_params;
+	int			nparams;
 
 	pstr = text_to_cstring(paramstr);
 
+	max_params = 20;			/* must be even! */
+	params = (const char **) palloc((max_params + 1) * sizeof(char *));
+	nparams = 0;
+
 	pos = pstr;
 
-	for (i = 0; i < MAXPARAMS; i++)
+	while (*pos != '\0')
 	{
-		params[i] = pos;
+		if (nparams >= max_params)
+		{
+			max_params *= 2;
+			params = (const char **) repalloc(params,
+											  (max_params + 1) * sizeof(char *));
+		}
+		params[nparams++] = pos;
 		pos = strstr(pos, nvsep);
 		if (pos != NULL)
 		{
@@ -164,13 +178,12 @@ parse_params(const char **params, text *paramstr)
 		else
 		{
 			/* No equal sign, so ignore this "parameter" */
-			/* We'll reset params[i] to NULL below the loop */
+			nparams--;
 			break;
 		}
-		/* Value */
-		i++;
-		/* since MAXPARAMS is even, we still have i < MAXPARAMS */
-		params[i] = pos;
+
+		/* since max_params is even, we still have nparams < max_params */
+		params[nparams++] = pos;
 		pos = strstr(pos, itsep);
 		if (pos != NULL)
 		{
@@ -178,13 +191,13 @@ parse_params(const char **params, text *paramstr)
 			pos++;
 		}
 		else
-		{
-			i++;
 			break;
-		}
 	}
 
-	params[i] = NULL;
+	/* Add the terminator marker; we left room for it in the palloc's */
+	params[nparams] = NULL;
+
+	return params;
 }
 
 #endif   /* USE_LIBXSLT */

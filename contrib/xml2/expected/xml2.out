@@ -145,3 +145,71 @@ values
 Value</attribute></attributes>');
 create index idx_xpath on t1 ( xpath_string
 ('/attributes/attribute[@name="attr_1"]/text()', xml_data::text));
+SELECT xslt_process('<employee><name>cim</name><age>30</age><pay>400</pay></employee>'::text, $$<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0">
+  <xsl:output method="xml" omit-xml-declaration="yes" indent="yes"/>
+  <xsl:strip-space elements="*"/>
+  <xsl:param name="n1"/>
+  <xsl:param name="n2"/>
+  <xsl:param name="n3"/>
+  <xsl:param name="n4"/>
+  <xsl:param name="n5" select="'me'"/>
+  <xsl:template match="*">
+    <xsl:element name="samples">
+      <xsl:element name="sample">
+        <xsl:value-of select="$n1"/>
+      </xsl:element>
+      <xsl:element name="sample">
+        <xsl:value-of select="$n2"/>
+      </xsl:element>
+      <xsl:element name="sample">
+        <xsl:value-of select="$n3"/>
+      </xsl:element>
+      <xsl:element name="sample">
+        <xsl:value-of select="$n4"/>
+      </xsl:element>
+      <xsl:element name="sample">
+        <xsl:value-of select="$n5"/>
+      </xsl:element>
+      <xsl:element name="sample">
+        <xsl:value-of select="$n6"/>
+      </xsl:element>
+      <xsl:element name="sample">
+        <xsl:value-of select="$n7"/>
+      </xsl:element>
+      <xsl:element name="sample">
+        <xsl:value-of select="$n8"/>
+      </xsl:element>
+      <xsl:element name="sample">
+        <xsl:value-of select="$n9"/>
+      </xsl:element>
+      <xsl:element name="sample">
+        <xsl:value-of select="$n10"/>
+      </xsl:element>
+      <xsl:element name="sample">
+        <xsl:value-of select="$n11"/>
+      </xsl:element>
+      <xsl:element name="sample">
+        <xsl:value-of select="$n12"/>
+      </xsl:element>
+    </xsl:element>
+  </xsl:template>
+</xsl:stylesheet>$$::text, 'n1="v1",n2="v2",n3="v3",n4="v4",n5="v5",n6="v6",n7="v7",n8="v8",n9="v9",n10="v10",n11="v11",n12="v12"'::text);
+      xslt_process      
+------------------------
+ <samples>             +
+   <sample>v1</sample> +
+   <sample>v2</sample> +
+   <sample>v3</sample> +
+   <sample>v4</sample> +
+   <sample>v5</sample> +
+   <sample>v6</sample> +
+   <sample>v7</sample> +
+   <sample>v8</sample> +
+   <sample>v9</sample> +
+   <sample>v10</sample>+
+   <sample>v11</sample>+
+   <sample>v12</sample>+
+ </samples>            +
+ 
+(1 row)
+
