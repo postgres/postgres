@@ -383,7 +383,21 @@ select string_to_array('1||2|3||', '||');
 select string_to_array('1|2|3', '');
 select string_to_array('', '|');
 select string_to_array('1|2|3', NULL);
-select string_to_array(NULL, '|');
+select string_to_array(NULL, '|') IS NULL;
+select string_to_array('abc', '');
+select string_to_array('abc', '', 'abc');
+select string_to_array('abc', ',');
+select string_to_array('abc', ',', 'abc');
+select string_to_array('1,2,3,4,,6', ',');
+select string_to_array('1,2,3,4,,6', ',', '');
+select string_to_array('1,2,3,4,*,6', ',', '*');
+
+select array_to_string(NULL::int4[], ',') IS NULL;
+select array_to_string('{}'::int4[], ',');
+select array_to_string(array[1,2,3,4,NULL,6], ',');
+select array_to_string(array[1,2,3,4,NULL,6], ',', '*');
+select array_to_string(array[1,2,3,4,NULL,6], NULL);
+select array_to_string(array[1,2,3,4,NULL,6], ',', NULL);
 
 select array_to_string(string_to_array('1|2|3', '|'), '|');
 

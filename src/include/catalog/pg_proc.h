@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.577 2010/08/08 19:15:27 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.578 2010/08/10 21:51:00 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.pl reads this file and generates .bki
@@ -1018,10 +1018,14 @@ DATA(insert OID = 379 (  array_prepend	   PGNSP PGUID 12 1 0 0 f f f f f i 2 0 2
 DESCR("prepend element onto front of array");
 DATA(insert OID = 383 (  array_cat		   PGNSP PGUID 12 1 0 0 f f f f f i 2 0 2277 "2277 2277" _null_ _null_ _null_ _null_ array_cat _null_ _null_ _null_ ));
 DESCR("concatenate two arrays");
-DATA(insert OID = 394 (  string_to_array   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 1009 "25 25" _null_ _null_ _null_ _null_ text_to_array _null_ _null_ _null_ ));
+DATA(insert OID = 394 (  string_to_array   PGNSP PGUID 12 1 0 0 f f f f f i 2 0 1009 "25 25" _null_ _null_ _null_ _null_ text_to_array _null_ _null_ _null_ ));
 DESCR("split delimited text into text[]");
 DATA(insert OID = 395 (  array_to_string   PGNSP PGUID 12 1 0 0 f f f t f s 2 0 25 "2277 25" _null_ _null_ _null_ _null_ array_to_text _null_ _null_ _null_ ));
 DESCR("concatenate array elements, using delimiter, into text");
+DATA(insert OID = 376 (  string_to_array   PGNSP PGUID 12 1 0 0 f f f f f i 3 0 1009 "25 25 25" _null_ _null_ _null_ _null_ text_to_array_null _null_ _null_ _null_ ));
+DESCR("split delimited text into text[], with null string");
+DATA(insert OID = 384 (  array_to_string   PGNSP PGUID 12 1 0 0 f f f f f s 3 0 25 "2277 25 25" _null_ _null_ _null_ _null_ array_to_text_null _null_ _null_ _null_ ));
+DESCR("concatenate array elements, using delimiter and null string, into text");
 DATA(insert OID = 515 (  array_larger	   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 2277 "2277 2277" _null_ _null_ _null_ _null_ array_larger _null_ _null_ _null_ ));
 DESCR("larger of two");
 DATA(insert OID = 516 (  array_smaller	   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 2277 "2277 2277" _null_ _null_ _null_ _null_ array_smaller _null_ _null_ _null_ ));

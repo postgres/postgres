@@ -1055,19 +1055,97 @@ select string_to_array('1|2|3', '');
 select string_to_array('', '|');
  string_to_array 
 -----------------
- 
+ {}
 (1 row)
 
 select string_to_array('1|2|3', NULL);
  string_to_array 
 -----------------
+ {1,|,2,|,3}
+(1 row)
+
+select string_to_array(NULL, '|') IS NULL;
+ ?column? 
+----------
+ t
+(1 row)
+
+select string_to_array('abc', '');
+ string_to_array 
+-----------------
+ {abc}
+(1 row)
+
+select string_to_array('abc', '', 'abc');
+ string_to_array 
+-----------------
+ {NULL}
+(1 row)
+
+select string_to_array('abc', ',');
+ string_to_array 
+-----------------
+ {abc}
+(1 row)
+
+select string_to_array('abc', ',', 'abc');
+ string_to_array 
+-----------------
+ {NULL}
+(1 row)
+
+select string_to_array('1,2,3,4,,6', ',');
+ string_to_array 
+-----------------
+ {1,2,3,4,"",6}
+(1 row)
+
+select string_to_array('1,2,3,4,,6', ',', '');
+ string_to_array  
+------------------
+ {1,2,3,4,NULL,6}
+(1 row)
+
+select string_to_array('1,2,3,4,*,6', ',', '*');
+ string_to_array  
+------------------
+ {1,2,3,4,NULL,6}
+(1 row)
+
+select array_to_string(NULL::int4[], ',') IS NULL;
+ ?column? 
+----------
+ t
+(1 row)
+
+select array_to_string('{}'::int4[], ',');
+ array_to_string 
+-----------------
  
 (1 row)
 
-select string_to_array(NULL, '|');
- string_to_array 
+select array_to_string(array[1,2,3,4,NULL,6], ',');
+ array_to_string 
+-----------------
+ 1,2,3,4,6
+(1 row)
+
+select array_to_string(array[1,2,3,4,NULL,6], ',', '*');
+ array_to_string 
+-----------------
+ 1,2,3,4,*,6
+(1 row)
+
+select array_to_string(array[1,2,3,4,NULL,6], NULL);
+ array_to_string 
 -----------------
  
+(1 row)
+
+select array_to_string(array[1,2,3,4,NULL,6], ',', NULL);
+ array_to_string 
+-----------------
+ 1,2,3,4,6
 (1 row)
 
 select array_to_string(string_to_array('1|2|3', '|'), '|');

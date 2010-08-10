@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/builtins.h,v 1.353 2010/08/05 18:21:19 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/builtins.h,v 1.354 2010/08/10 21:51:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -716,6 +716,8 @@ extern text *replace_text_regexp(text *src_text, void *regexp,
 extern Datum split_text(PG_FUNCTION_ARGS);
 extern Datum text_to_array(PG_FUNCTION_ARGS);
 extern Datum array_to_text(PG_FUNCTION_ARGS);
+extern Datum text_to_array_null(PG_FUNCTION_ARGS);
+extern Datum array_to_text_null(PG_FUNCTION_ARGS);
 extern Datum to_hex32(PG_FUNCTION_ARGS);
 extern Datum to_hex64(PG_FUNCTION_ARGS);
 extern Datum md5_text(PG_FUNCTION_ARGS);

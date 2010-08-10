@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/varlena.c,v 1.178 2010/08/05 18:21:17 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/varlena.c,v 1.179 2010/08/10 21:51:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -74,6 +74,10 @@ static bytea *bytea_substring(Datum str,
 				bool length_not_specified);
 static bytea *bytea_overlay(bytea *t1, bytea *t2, int sp, int sl);
 static StringInfo makeStringAggState(FunctionCallInfo fcinfo);
+
+static Datum text_to_array_internal(PG_FUNCTION_ARGS);
+static text *array_to_text_internal(FunctionCallInfo fcinfo, ArrayType *v,
+									char *fldsep, char *null_string);
 
 
 /*****************************************************************************
@@ -2965,97 +2969,203 @@ split_text(PG_FUNCTION_ARGS)
 }
 
 /*
+ * Convenience function to return true when two text params are equal.
+ */
+static bool
+text_isequal(text *txt1, text *txt2)
+{
+	return DatumGetBool(DirectFunctionCall2(texteq,
+											PointerGetDatum(txt1),
+											PointerGetDatum(txt2)));
+}
+
+/*
  * text_to_array
- * parse input string
- * return text array of elements
+ * parse input string and return text array of elements,
  * based on provided field separator
  */
 Datum
 text_to_array(PG_FUNCTION_ARGS)
 {
-	text	   *inputstring = PG_GETARG_TEXT_PP(0);
-	text	   *fldsep = PG_GETARG_TEXT_PP(1);
+	return text_to_array_internal(fcinfo);
+}
+
+/*
+ * text_to_array_null
+ * parse input string and return text array of elements,
+ * based on provided field separator and null string
+ *
+ * This is a separate entry point only to prevent the regression tests from
+ * complaining about different argument sets for the same internal function.
+ */
+Datum
+text_to_array_null(PG_FUNCTION_ARGS)
+{
+	return text_to_array_internal(fcinfo);
+}
+
+/*
+ * common code for text_to_array and text_to_array_null functions
+ *
+ * These are not strict so we have to test for null inputs explicitly.
+ */
+static Datum
+text_to_array_internal(PG_FUNCTION_ARGS)
+{
+	text	   *inputstring;
+	text	   *fldsep;
+	text	   *null_string;
 	int			inputstring_len;
 	int			fldsep_len;
-	TextPositionState state;
-	int			fldnum;
-	int			start_posn;
-	int			end_posn;
-	int			chunk_len;
 	char	   *start_ptr;
 	text	   *result_text;
+	bool		is_null;
 	ArrayBuildState *astate = NULL;
 
-	text_position_setup(inputstring, fldsep, &state);
-
-	/*
-	 * Note: we check the converted string length, not the original, because
-	 * they could be different if the input contained invalid encoding.
-	 */
-	inputstring_len = state.len1;
-	fldsep_len = state.len2;
-
-	/* return NULL for empty input string */
-	if (inputstring_len < 1)
-	{
-		text_position_cleanup(&state);
+	/* when input string is NULL, then result is NULL too */
+	if (PG_ARGISNULL(0))
 		PG_RETURN_NULL();
-	}
 
-	/*
-	 * empty field separator return one element, 1D, array using the input
-	 * string
-	 */
-	if (fldsep_len < 1)
+	inputstring = PG_GETARG_TEXT_PP(0);
+
+	/* fldsep can be NULL */
+	if (!PG_ARGISNULL(1))
+		fldsep = PG_GETARG_TEXT_PP(1);
+	else
+		fldsep = NULL;
+
+	/* null_string can be NULL or omitted */
+	if (PG_NARGS() > 2 && !PG_ARGISNULL(2))
+		null_string = PG_GETARG_TEXT_PP(2);
+	else
+		null_string = NULL;
+
+	if (fldsep != NULL)
 	{
+		/*
+		 * Normal case with non-null fldsep.  Use the text_position machinery
+		 * to search for occurrences of fldsep.
+		 */
+		TextPositionState state;
+		int			fldnum;
+		int			start_posn;
+		int			end_posn;
+		int			chunk_len;
+		
+		text_position_setup(inputstring, fldsep, &state);
+
+		/*
+		 * Note: we check the converted string length, not the original,
+		 * because they could be different if the input contained invalid
+		 * encoding.
+		 */
+		inputstring_len = state.len1;
+		fldsep_len = state.len2;
+
+		/* return empty array for empty input string */
+		if (inputstring_len < 1)
+		{
+			text_position_cleanup(&state);
+			PG_RETURN_ARRAYTYPE_P(construct_empty_array(TEXTOID));
+		}
+
+		/*
+		 * empty field separator: return the input string as a one-element
+		 * array
+		 */
+		if (fldsep_len < 1)
+		{
+			text_position_cleanup(&state);
+			/* single element can be a NULL too */
+			is_null = null_string ? text_isequal(inputstring, null_string) : false;
+			PG_RETURN_ARRAYTYPE_P(create_singleton_array(fcinfo, TEXTOID,
+														 PointerGetDatum(inputstring),
+														 is_null, 1));
+		}
+		
+		start_posn = 1;
+		/* start_ptr points to the start_posn'th character of inputstring */
+		start_ptr = VARDATA_ANY(inputstring);
+
+		for (fldnum = 1;; fldnum++) /* field number is 1 based */
+		{
+			CHECK_FOR_INTERRUPTS();
+
+			end_posn = text_position_next(start_posn, &state);
+
+			if (end_posn == 0)
+			{
+				/* fetch last field */
+				chunk_len = ((char *) inputstring + VARSIZE_ANY(inputstring)) - start_ptr;
+			}
+			else
+			{
+				/* fetch non-last field */
+				chunk_len = charlen_to_bytelen(start_ptr, end_posn - start_posn);
+			}
+
+			/* must build a temp text datum to pass to accumArrayResult */
+			result_text = cstring_to_text_with_len(start_ptr, chunk_len);
+			is_null = null_string ? text_isequal(result_text, null_string) : false;
+		
+			/* stash away this field */
+			astate = accumArrayResult(astate,
+									  PointerGetDatum(result_text),
+									  is_null,
+									  TEXTOID,
+									  CurrentMemoryContext);
+
+			pfree(result_text);
+
+			if (end_posn == 0)
+				break;
+
+			start_posn = end_posn;
+			start_ptr += chunk_len;
+			start_posn += fldsep_len;
+			start_ptr += charlen_to_bytelen(start_ptr, fldsep_len);
+		}
+
 		text_position_cleanup(&state);
-		PG_RETURN_ARRAYTYPE_P(create_singleton_array(fcinfo, TEXTOID,
-										   PointerGetDatum(inputstring), 1));
 	}
-
-	start_posn = 1;
-	/* start_ptr points to the start_posn'th character of inputstring */
-	start_ptr = VARDATA_ANY(inputstring);
-
-	for (fldnum = 1;; fldnum++) /* field number is 1 based */
+	else
 	{
-		CHECK_FOR_INTERRUPTS();
-
-		end_posn = text_position_next(start_posn, &state);
-
-		if (end_posn == 0)
+		/* 
+		 * When fldsep is NULL, each character in the inputstring becomes an
+		 * element in the result array.  The separator is effectively the space
+		 * between characters.
+		 */
+		inputstring_len = VARSIZE_ANY_EXHDR(inputstring);
+		
+		/* return empty array for empty input string */
+		if (inputstring_len < 1)
+			PG_RETURN_ARRAYTYPE_P(construct_empty_array(TEXTOID));
+		
+		start_ptr = VARDATA_ANY(inputstring);
+		
+		while (inputstring_len > 0)
 		{
-			/* fetch last field */
-			chunk_len = ((char *) inputstring + VARSIZE_ANY(inputstring)) - start_ptr;
+			int		chunk_len = pg_mblen(start_ptr);
+
+			CHECK_FOR_INTERRUPTS();
+
+			/* must build a temp text datum to pass to accumArrayResult */
+			result_text = cstring_to_text_with_len(start_ptr, chunk_len);
+			is_null = null_string ? text_isequal(result_text, null_string) : false;
+		
+			/* stash away this field */
+			astate = accumArrayResult(astate,
+									  PointerGetDatum(result_text),
+									  is_null,
+									  TEXTOID,
+									  CurrentMemoryContext);
+
+			pfree(result_text);
+
+			start_ptr += chunk_len;
+			inputstring_len -= chunk_len;
 		}
-		else
-		{
-			/* fetch non-last field */
-			chunk_len = charlen_to_bytelen(start_ptr, end_posn - start_posn);
-		}
-
-		/* must build a temp text datum to pass to accumArrayResult */
-		result_text = cstring_to_text_with_len(start_ptr, chunk_len);
-
-		/* stash away this field */
-		astate = accumArrayResult(astate,
-								  PointerGetDatum(result_text),
-								  false,
-								  TEXTOID,
-								  CurrentMemoryContext);
-
-		pfree(result_text);
-
-		if (end_posn == 0)
-			break;
-
-		start_posn = end_posn;
-		start_ptr += chunk_len;
-		start_posn += fldsep_len;
-		start_ptr += charlen_to_bytelen(start_ptr, fldsep_len);
 	}
-
-	text_position_cleanup(&state);
 
 	PG_RETURN_ARRAYTYPE_P(makeArrayResult(astate,
 										  CurrentMemoryContext));
@@ -3071,6 +3181,48 @@ array_to_text(PG_FUNCTION_ARGS)
 {
 	ArrayType  *v = PG_GETARG_ARRAYTYPE_P(0);
 	char	   *fldsep = text_to_cstring(PG_GETARG_TEXT_PP(1));
+
+	PG_RETURN_TEXT_P(array_to_text_internal(fcinfo, v, fldsep, NULL));
+}
+
+/*
+ * array_to_text_null
+ * concatenate Cstring representation of input array elements
+ * using provided field separator and null string
+ *
+ * This version is not strict so we have to test for null inputs explicitly.
+ */
+Datum
+array_to_text_null(PG_FUNCTION_ARGS)
+{
+	ArrayType  *v;
+	char	   *fldsep;
+	char	   *null_string;
+
+	/* returns NULL when first or second parameter is NULL */
+	if (PG_ARGISNULL(0) || PG_ARGISNULL(1))
+		PG_RETURN_NULL();
+	
+	v = PG_GETARG_ARRAYTYPE_P(0);
+	fldsep = text_to_cstring(PG_GETARG_TEXT_PP(1));
+
+	/* NULL null string is passed through as a null pointer */
+	if (!PG_ARGISNULL(2))
+		null_string = text_to_cstring(PG_GETARG_TEXT_PP(2));
+	else
+		null_string = NULL;
+
+	PG_RETURN_TEXT_P(array_to_text_internal(fcinfo, v, fldsep, null_string));
+}
+
+/*
+ * common code for array_to_text and array_to_text_null functions
+ */
+static text *
+array_to_text_internal(FunctionCallInfo fcinfo, ArrayType *v,
+					   char *fldsep, char *null_string)
+{
+	text	   *result;
 	int			nitems,
 			   *dims,
 				ndims;
@@ -3092,7 +3244,7 @@ array_to_text(PG_FUNCTION_ARGS)
 
 	/* if there are no elements, return an empty string */
 	if (nitems == 0)
-		PG_RETURN_TEXT_P(cstring_to_text(""));
+		return cstring_to_text_with_len("", 0);
 
 	element_type = ARR_ELEMTYPE(v);
 	initStringInfo(&buf);
@@ -3140,7 +3292,15 @@ array_to_text(PG_FUNCTION_ARGS)
 		/* Get source element, checking for NULL */
 		if (bitmap && (*bitmap & bitmask) == 0)
 		{
-			/* we ignore nulls */
+			/* if null_string is NULL, we just ignore null elements */
+			if (null_string != NULL)
+			{
+				if (printed)
+					appendStringInfo(&buf, "%s%s", fldsep, null_string);
+				else
+					appendStringInfoString(&buf, null_string);
+				printed = true;
+			}
 		}
 		else
 		{
@@ -3169,8 +3329,11 @@ array_to_text(PG_FUNCTION_ARGS)
 			}
 		}
 	}
+	
+	result = cstring_to_text_with_len(buf.data, buf.len);
+	pfree(buf.data);
 
-	PG_RETURN_TEXT_P(cstring_to_text_with_len(buf.data, buf.len));
+	return result;
 }
 
 #define HEXBASE 16

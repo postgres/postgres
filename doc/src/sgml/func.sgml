@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.525 2010/08/08 19:15:27 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.526 2010/08/10 21:51:00 tgl Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -9736,13 +9736,14 @@ SELECT NULLIF(value, '(none)') ...
        <row>
         <entry>
          <literal>
-          <function>array_to_string</function>(<type>anyarray</type>, <type>text</type>)
+          <function>array_to_string</function>(<type>anyarray</type>, <type>text</type> <optional>, <type>text</type></optional>)
          </literal>
         </entry>
         <entry><type>text</type></entry>
-        <entry>concatenates array elements using supplied delimiter</entry>
-        <entry><literal>array_to_string(ARRAY[1, 2, 3], '~^~')</literal></entry>
-        <entry><literal>1~^~2~^~3</literal></entry>
+        <entry>concatenates array elements using supplied delimiter and
+         optional null string</entry>
+        <entry><literal>array_to_string(ARRAY[1, 2, 3, NULL, 5], ',', '*')</literal></entry>
+        <entry><literal>1,2,3,*,5</literal></entry>
        </row>
        <row>
         <entry>
@@ -9758,13 +9759,14 @@ SELECT NULLIF(value, '(none)') ...
        <row>
         <entry>
          <literal>
-          <function>string_to_array</function>(<type>text</type>, <type>text</type>)
+          <function>string_to_array</function>(<type>text</type>, <type>text</type> <optional>, <type>text</type></optional>)
          </literal>
         </entry>
         <entry><type>text[]</type></entry>
-        <entry>splits string into array elements using supplied delimiter</entry>
-        <entry><literal>string_to_array('xx~^~yy~^~zz', '~^~')</literal></entry>
-        <entry><literal>{xx,yy,zz}</literal></entry>
+        <entry>splits string into array elements using supplied delimiter and
+         optional null string</entry>
+        <entry><literal>string_to_array('xx~^~yy~^~zz', '~^~', 'yy')</literal></entry>
+        <entry><literal>{xx,NULL,zz}</literal></entry>
        </row>
        <row>
         <entry>
@@ -9780,6 +9782,34 @@ SELECT NULLIF(value, '(none)') ...
       </tbody>
      </tgroup>
     </table>
+
+   <para>
+    In <function>string_to_array</function>, if the delimiter parameter is
+    NULL, each character in the input string will become a separate element in
+    the resulting array.  If the delimiter is an empty string, then the entire
+    input string is returned as a one-element array.  Otherwise the input
+    string is split at each occurrence of the delimiter string.
+   </para>
+
+   <para>
+    In <function>string_to_array</function>, if the null-string parameter
+    is omitted or NULL, none of the substrings of the input will be replaced
+    by NULL.
+    In <function>array_to_string</function>, if the null-string parameter
+    is omitted or NULL, any null elements in the array are simply skipped
+    and not represented in the output string.
+   </para>
+
+   <note>
+    <para>
+     There are two differences in the behavior of <function>string_to_array</>
+     from pre-9.1 versions of <productname>PostgreSQL</>.
+     First, it will return an empty (zero-element) array rather than NULL when
+     the input string is of zero length.  Second, if the delimiter string is
+     NULL, the function splits the input into individual characters, rather
+     than returning NULL as before.
+    </para>
+   </note>
 
    <para>
     See also <xref linkend="functions-aggregate"> about the aggregate
