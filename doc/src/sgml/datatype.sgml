@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.255 2010/07/29 19:34:40 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.256 2010/08/10 20:41:27 petere Exp $ -->
 
  <chapter id="datatype">
   <title>Data Types</title>
@@ -2877,10 +2877,6 @@ CREATE TYPE mood AS ENUM ('sad', 'ok', 'happy');
 
      Once created, the enum type can be used in table and function
      definitions much like any other type:
-    </para>
-
-    <example>
-     <title>Basic Enum Usage</title>
 <programlisting>
 CREATE TYPE mood AS ENUM ('sad', 'ok', 'happy');
 CREATE TABLE person (
@@ -2894,7 +2890,7 @@ SELECT * FROM person WHERE current_mood = 'happy';
  Moe  | happy
 (1 row)
 </programlisting>
-     </example>
+    </para>
     </sect2>
 
     <sect2>
@@ -2905,10 +2901,7 @@ SELECT * FROM person WHERE current_mood = 'happy';
       order in which the values were listed when the type was created.
       All standard comparison operators and related
       aggregate functions are supported for enums.  For example:
-     </para>
-
-     <example>
-      <title>Enum Ordering</title>
+ 
 <programlisting>
 INSERT INTO person VALUES ('Larry', 'sad');
 INSERT INTO person VALUES ('Curly', 'ok');
@@ -2934,7 +2927,7 @@ WHERE current_mood = (SELECT MIN(current_mood) FROM person);
  Larry
 (1 row)
 </programlisting>
-    </example>
+     </para>
    </sect2>
 
    <sect2>
@@ -2942,11 +2935,8 @@ WHERE current_mood = (SELECT MIN(current_mood) FROM person);
 
     <para>
      Each enumerated data type is separate and cannot
-     be compared with other enumerated types.
-    </para>
+     be compared with other enumerated types.  See this example:
 
-    <example>
-     <title>Lack of Casting</title>
 <programlisting>
 CREATE TYPE happiness AS ENUM ('happy', 'very happy', 'ecstatic');
 CREATE TABLE holidays (
@@ -2962,15 +2952,12 @@ SELECT person.name, holidays.num_weeks FROM person, holidays
   WHERE person.current_mood = holidays.happiness;
 ERROR:  operator does not exist: mood = happiness
 </programlisting>
-    </example>
+    </para>
 
     <para>
      If you really need to do something like that, you can either
      write a custom operator or add explicit casts to your query:
-    </para>
 
-    <example>
-     <title>Comparing Different Enums by Casting to Text</title>
 <programlisting>
 SELECT person.name, holidays.num_weeks FROM person, holidays
   WHERE person.current_mood::text = holidays.happiness::text;
@@ -2980,7 +2967,7 @@ SELECT person.name, holidays.num_weeks FROM person, holidays
 (1 row)
 
 </programlisting>
-    </example>
+    </para>
    </sect2>
 
    <sect2>
