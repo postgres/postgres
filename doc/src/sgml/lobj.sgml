@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/lobj.sgml,v 1.53.2.1 2010/08/09 12:00:39 rhaas Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/lobj.sgml,v 1.53.2.2 2010/08/10 02:57:03 rhaas Exp $ -->
 
  <chapter id="largeObjects">
   <title>Large Objects</title>
@@ -99,7 +99,7 @@
     <application>libpq</application> library.
    </para>
 
-   <sect2 id='lo-create'>
+   <sect2 id="lo-create">
     <title>Creating a Large Object</title>
 
     <para>
