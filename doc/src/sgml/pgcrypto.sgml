@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/pgcrypto.sgml,v 1.9.2.1 2010/07/29 19:34:37 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/pgcrypto.sgml,v 1.9.2.2 2010/08/10 20:42:02 petere Exp $ -->
 
 <sect1 id="pgcrypto">
  <title>pgcrypto</title>
@@ -115,7 +115,12 @@ hmac(data bytea, key text, type text) returns bytea
    </listitem>
   </orderedlist>
 
-  <table>
+  <para>
+   <xref linkend="pgcrypto-crypt-algorithms"> lists the algorithms
+   supported by the <function>crypt()</function> function.
+  </para>
+
+  <table id="pgcrypto-crypt-algorithms">
    <title>Supported algorithms for <function>crypt()</></title>
    <tgroup cols="5">
     <thead>

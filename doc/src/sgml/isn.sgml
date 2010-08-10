@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/isn.sgml,v 1.5.14.1 2010/07/29 19:34:36 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/isn.sgml,v 1.5.14.2 2010/08/10 20:42:02 petere Exp $ -->
 
 <sect1 id="isn">
  <title>isn</title>
@@ -17,7 +17,12 @@
  <sect2>
   <title>Data types</title>
 
-  <table>
+  <para>
+   <xref linkend="isn-datatypes"> shows the data types provided by
+   the <filename>isn</filename> module.
+  </para>
+
+  <table id="isn-datatypes">
    <title><filename>isn</filename> data types</title>
    <tgroup cols="2">
     <thead>

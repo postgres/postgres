@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/pgstattuple.sgml,v 1.5.14.1 2010/07/29 19:34:37 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/pgstattuple.sgml,v 1.5.14.2 2010/08/10 20:42:02 petere Exp $ -->
 
 <sect1 id="pgstattuple">
  <title>pgstattuple</title>
@@ -159,10 +159,8 @@ leaf_fragmentation | 0
 
     <para>
      The output columns are:
-    </para>
 
-    <table>
-     <title><function>pgstatindex</function> output columns</title>
+    <informaltable>
      <tgroup cols="3">
       <thead>
        <row>
@@ -235,7 +233,8 @@ leaf_fragmentation | 0
 
       </tbody>
      </tgroup>
-    </table>
+    </informaltable>
+    </para>
 
     <para>
      As with <function>pgstattuple</>, the results are accumulated

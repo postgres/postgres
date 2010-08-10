@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/tablefunc.sgml,v 1.4.16.1 2010/07/29 19:34:37 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/tablefunc.sgml,v 1.4.16.2 2010/08/10 20:42:02 petere Exp $ -->
 
 <sect1 id="tablefunc">
  <title>tablefunc</title>
@@ -17,7 +17,12 @@
  <sect2>
   <title>Functions Provided</title>
 
-  <table>
+  <para>
+   <xref linkend="tablefunc-functions"> shows the functions provided
+   by the <filename>tablefunc</filename> module.
+  </para>
+
+  <table id="tablefunc-functions">
    <title><filename>tablefunc</> functions</title>
    <tgroup cols="3">
     <thead>
@@ -609,7 +614,12 @@ connectby(text relname, text keyid_fld, text parent_keyid_fld
     sub-tree descending from any row.
    </para>
 
-   <table>
+   <para>
+    <xref linkend="tablefunc-connectby-parameters"> explains the
+    parameters.
+   </para>
+
+   <table id="tablefunc-connectby-parameters">
     <title><function>connectby</function> parameters</title>
     <tgroup cols="2">
      <thead>
