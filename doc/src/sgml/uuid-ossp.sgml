@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/uuid-ossp.sgml,v 1.3 2010/07/29 19:34:40 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/uuid-ossp.sgml,v 1.4 2010/08/10 20:42:01 petere Exp $ -->
 
 <sect1 id="uuid-ossp">
  <title>uuid-ossp</title>
@@ -22,6 +22,8 @@
   <title><literal>uuid-ossp</literal> Functions</title>
 
   <para>
+   <xref linkend="uuid-ossp-functions"> shows the functions available to
+   generate UUIDs.
    The relevant standards ITU-T Rec. X.667, ISO/IEC 9834-8:2005, and RFC
    4122 specify four algorithms for generating UUIDs, identified by the
    version numbers 1, 3, 4, and 5.  (There is no version 2 algorithm.)
@@ -29,7 +31,7 @@
    applications.
   </para>
 
-  <table>
+  <table id="uuid-ossp-functions">
    <title>Functions for UUID Generation</title>
    <tgroup cols="2">
     <thead>
@@ -67,8 +69,21 @@
         This function generates a version 3 UUID in the given namespace using
         the specified input name.  The namespace should be one of the special
         constants produced by the <function>uuid_ns_*()</> functions shown
-        below.  (It could be any UUID in theory.)  The name is an identifier
+        in <xref linkend="uuid-ossp-constants">.  (It could be any UUID in theory.)  The name is an identifier
         in the selected namespace.
+       </para>
+
+       <para>
+        For example:
+
+<programlisting>
+SELECT uuid_generate_v3(uuid_ns_url(), 'http://www.postgresql.org');
+</programlisting>
+
+        The name parameter will be MD5-hashed, so the cleartext cannot be
+        derived from the generated UUID.
+        The generation of UUIDs by this method has no random or
+        environment-dependent element and is therefore reproducible.
        </para>
       </entry>
      </row>
@@ -96,20 +111,7 @@
    </tgroup>
   </table>
 
-  <para>
-   For example:
-
-<programlisting>
-SELECT uuid_generate_v3(uuid_ns_url(), 'http://www.postgresql.org');
-</programlisting>
-
-   The name parameter will be MD5-hashed, so the cleartext cannot be
-   derived from the generated UUID.
-   The generation of UUIDs by this method has no random or
-   environment-dependent element and is therefore reproducible.
-  </para>
-
-  <table>
+  <table id="uuid-ossp-constants">
    <title>Functions Returning UUID Constants</title>
    <tgroup cols="2">
     <tbody>

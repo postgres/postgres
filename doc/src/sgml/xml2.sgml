@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/xml2.sgml,v 1.9 2010/07/29 19:34:40 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/xml2.sgml,v 1.10 2010/08/10 20:42:01 petere Exp $ -->
 
 <sect1 id="xml2">
  <title>xml2</title>
@@ -160,11 +160,12 @@ xpath_table(text key, text document, text relation, text xpaths, text criteria) 
    queries on each of a set of documents and returns the results as a
    table. The primary key field from the original document table is returned
    as the first column of the result so that the result set
-   can readily be used in joins.
+   can readily be used in joins.  The parameters are described in
+   <xref linkend="xml2-xpath-table-parameters">.
   </para>
 
-  <table>
-   <title>Parameters</title>
+  <table id="xml2-xpath-table-parameters">
+   <title><function>xpath_table</function> Parameters</title>
    <tgroup cols="2">
     <tbody>
      <row>

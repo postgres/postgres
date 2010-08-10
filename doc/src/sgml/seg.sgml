@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/seg.sgml,v 1.7 2010/07/29 19:34:40 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/seg.sgml,v 1.8 2010/08/10 20:42:01 petere Exp $ -->
 
 <sect1 id="seg">
  <title>seg</title>
@@ -86,6 +86,9 @@ test=> select '6.25 .. 6.50'::seg as "pH";
    Optional certainty indicators (<literal>&lt;</literal>,
    <literal>&gt;</literal> and <literal>~</literal>) can be stored as well.
    (Certainty indicators are ignored by all the built-in operators, however.)
+   <xref linkend="seg-repr-table"> gives on overview over the allowed
+   representations; <xref linkend="seg-input-examples"> shows some
+   examples.
   </para>
 
   <para>
@@ -129,7 +132,7 @@ test=> select '6.25 .. 6.50'::seg as "pH";
    </tgroup>
   </table>
 
-  <table>
+  <table id="seg-input-examples">
    <title>Examples of valid <type>seg</> input</title>
    <tgroup cols="2">
     <tbody>
