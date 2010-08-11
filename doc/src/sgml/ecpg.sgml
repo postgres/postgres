@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ecpg.sgml,v 1.102 2010/08/11 18:52:02 rhaas Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ecpg.sgml,v 1.103 2010/08/11 19:03:16 rhaas Exp $ -->
 
 <chapter id="ecpg">
  <title><application>ECPG</application> - Embedded <acronym>SQL</acronym> in C</title>
@@ -4883,7 +4883,7 @@ struct
     </varlistentry>
 
     <varlistentry>
-     <term>-207 (<symbol>ECPG_CONVERT_BOOL</symbol>)</term>
+     <term>-211 (<symbol>ECPG_CONVERT_BOOL</symbol>)</term>
      <listitem>
       <para>
        This means the host variable is of type <type>bool</type> and
