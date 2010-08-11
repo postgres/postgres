@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ecpg.sgml,v 1.62.4.3 2010/08/11 18:52:58 rhaas Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ecpg.sgml,v 1.62.4.4 2010/08/11 19:04:09 rhaas Exp $
 -->
 
 <chapter id="ecpg">
@@ -1288,7 +1288,7 @@ struct
     </varlistentry>
 
     <varlistentry>
-     <term>-207 (<symbol>ECPG_CONVERT_BOOL</symbol>)</term>
+     <term>-211 (<symbol>ECPG_CONVERT_BOOL</symbol>)</term>
      <listitem>
       <para>
        This means the host variable is of type <type>bool</type> and
