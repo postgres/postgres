@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/syntax.sgml,v 1.147.2.2 2010/08/05 18:21:29 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/syntax.sgml,v 1.147.2.3 2010/08/11 21:49:01 momjian Exp $ -->
 
 <chapter id="sql-syntax">
  <title>SQL Syntax</title>
@@ -56,9 +56,9 @@
    <para>
     For example, the following is (syntactically) valid SQL input:
 <programlisting>
-SELECT * FROM MY_TABLE;
-UPDATE MY_TABLE SET A = 5;
-INSERT INTO MY_TABLE VALUES (3, 'hi there');
+SELECT * FROM my_table;
+UPDATE my_table SET a = 5;
+INSERT INTO my_table VALUES (3, 'hi there');
 </programlisting>
     This is a sequence of three commands, one per line (although this
     is not required; more than one command can be on a line, and
@@ -146,11 +146,11 @@ INSERT INTO MY_TABLE VALUES (3, 'hi there');
     </indexterm>
     Key words and unquoted identifiers are case insensitive.  Therefore:
 <programlisting>
-UPDATE MY_TABLE SET A = 5;
+UPDATE my_table SET a = 5;
 </programlisting>
     can equivalently be written as:
 <programlisting>
-uPDaTE my_TabLE SeT a = 5;
+UPDATE my_table SET a = 5;
 </programlisting>
     A convention often used is to write key words in upper
     case and names in lower case, e.g.:
