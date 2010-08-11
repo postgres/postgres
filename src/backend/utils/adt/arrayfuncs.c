@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.164 2010/02/26 02:01:07 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.165 2010/08/11 19:12:27 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1213,17 +1213,21 @@ array_recv(PG_FUNCTION_ARGS)
 
 	for (i = 0; i < ndim; i++)
 	{
-		int			ub;
-
 		dim[i] = pq_getmsgint(buf, 4);
 		lBound[i] = pq_getmsgint(buf, 4);
 
-		ub = lBound[i] + dim[i] - 1;
-		/* overflow? */
-		if (lBound[i] > ub)
-			ereport(ERROR,
-					(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-					 errmsg("integer out of range")));
+		/*
+		 * Check overflow of upper bound. (ArrayNItems() below checks that
+		 * dim[i] >= 0)
+		 */
+		if (dim[i] != 0)
+		{
+			int ub = lBound[i] + dim[i] - 1;
+			if (lBound[i] > ub)
+				ereport(ERROR,
+						(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+						 errmsg("integer out of range")));
+		}
 	}
 
 	/* This checks for overflow of array dimensions */
