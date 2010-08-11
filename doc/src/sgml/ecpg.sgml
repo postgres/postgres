@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ecpg.sgml,v 1.53.2.2 2003/12/16 01:06:51 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ecpg.sgml,v 1.53.2.3 2010/08/11 18:53:04 rhaas Exp $
 -->
 
 <chapter id="ecpg">
@@ -1290,7 +1290,7 @@ struct
     </varlistentry>
 
     <varlistentry>
-     <term>-208 (<symbol>ECPG_EMPTY</symbol>)</term>
+     <term>-212 (<symbol>ECPG_EMPTY</symbol>)</term>
      <listitem>
       <para>
        The statement sent to the <productname>PostgreSQL</productname>
@@ -1302,7 +1302,7 @@ struct
     </varlistentry>
 
     <varlistentry>
-     <term>-209 (<symbol>ECPG_MISSING_INDICATOR</symbol>)</term>
+     <term>-213 (<symbol>ECPG_MISSING_INDICATOR</symbol>)</term>
      <listitem>
       <para>
        A null value was returned and no null indicator variable was
@@ -1312,7 +1312,7 @@ struct
     </varlistentry>
 
     <varlistentry>
-     <term>-210 (<symbol>ECPG_NO_ARRAY</symbol>)</term>
+     <term>-214 (<symbol>ECPG_NO_ARRAY</symbol>)</term>
      <listitem>
       <para>
        An ordinary variable was used in a place that requires an
@@ -1322,7 +1322,7 @@ struct
     </varlistentry>
 
     <varlistentry>
-     <term>-211 (<symbol>ECPG_DATA_NOT_ARRAY</symbol>)</term>
+     <term>-215 (<symbol>ECPG_DATA_NOT_ARRAY</symbol>)</term>
      <listitem>
       <para>
        The database returned an ordinary variable in a place that
