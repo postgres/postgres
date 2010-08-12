@@ -4,7 +4,7 @@
  * A simple benchmark program for PostgreSQL
  * Originally written by Tatsuo Ishii and enhanced by many contributors.
  *
- * $PostgreSQL: pgsql/contrib/pgbench/pgbench.c,v 1.100 2010/08/12 20:39:39 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/pgbench/pgbench.c,v 1.101 2010/08/12 21:10:59 tgl Exp $
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
  * ALL RIGHTS RESERVED;
  *
@@ -277,6 +277,53 @@ static char *select_only = {
 static void setalarm(int seconds);
 static void *threadRun(void *arg);
 
+
+/*
+ * routines to check mem allocations and fail noisily.
+ */
+static void *
+xmalloc(size_t size)
+{
+	void	   *result;
+
+	result = malloc(size);
+	if (!result)
+	{
+		fprintf(stderr, "out of memory\n");
+		exit(1);
+	}
+	return result;
+}
+
+static void *
+xrealloc(void *ptr, size_t size)
+{
+	void	   *result;
+
+	result = realloc(ptr, size);
+	if (!result)
+	{
+		fprintf(stderr, "out of memory\n");
+		exit(1);
+	}
+	return result;
+}
+
+static char *
+xstrdup(const char *s)
+{
+	char	   *result;
+
+	result = strdup(s);
+	if (!result)
+	{
+		fprintf(stderr, "out of memory\n");
+		exit(1);
+	}
+	return result;
+}
+
+
 static void
 usage(const char *progname)
 {
@@ -480,28 +527,17 @@ putVariable(CState *st, const char *context, char *name, char *value)
 		}
 
 		if (st->variables)
-			newvars = (Variable *) realloc(st->variables,
+			newvars = (Variable *) xrealloc(st->variables,
 									(st->nvariables + 1) * sizeof(Variable));
 		else
-			newvars = (Variable *) malloc(sizeof(Variable));
-
-		if (newvars == NULL)
-			goto out_of_memory;
+			newvars = (Variable *) xmalloc(sizeof(Variable));
 
 		st->variables = newvars;
 
 		var = &newvars[st->nvariables];
 
-		var->name = NULL;
-		var->value = NULL;
-
-		if ((var->name = strdup(name)) == NULL ||
-			(var->value = strdup(value)) == NULL)
-		{
-			free(var->name);
-			free(var->value);
-			return false;
-		}
+		var->name = xstrdup(name);
+		var->value = xstrdup(value);
 
 		st->nvariables++;
 
@@ -512,18 +548,14 @@ putVariable(CState *st, const char *context, char *name, char *value)
 	{
 		char	   *val;
 
-		if ((val = strdup(value)) == NULL)
-			return false;
+		/* dup then free, in case value is pointing at this variable */
+		val = xstrdup(value);
 
 		free(var->value);
 		var->value = val;
 	}
 
 	return true;
-
-out_of_memory:
-	fprintf(stderr, "%s: out of memory for variable '%s'\n", context, name);
-	return false;
 }
 
 static char *
@@ -539,9 +571,7 @@ parseVariable(const char *sql, int *eaten)
 	if (i == 1)
 		return NULL;
 
-	name = malloc(i);
-	if (name == NULL)
-		return NULL;
+	name = xmalloc(i);
 	memcpy(name, &sql[1], i - 1);
 	name[i - 1] = '\0';
 
@@ -556,16 +586,9 @@ replaceVariable(char **sql, char *param, int len, char *value)
 
 	if (valueln > len)
 	{
-		char	   *tmp;
 		size_t		offset = param - *sql;
 
-		tmp = realloc(*sql, strlen(*sql) - len + valueln + 1);
-		if (tmp == NULL)
-		{
-			free(*sql);
-			return NULL;
-		}
-		*sql = tmp;
+		*sql = xrealloc(*sql, strlen(*sql) - len + valueln + 1);
 		param = *sql + offset;
 	}
 
@@ -606,8 +629,7 @@ assignVariables(CState *st, char *sql)
 			continue;
 		}
 
-		if ((p = replaceVariable(&sql, p, eaten, val)) == NULL)
-			return NULL;
+		p = replaceVariable(&sql, p, eaten, val);
 	}
 
 	return sql;
@@ -902,13 +924,8 @@ top:
 		{
 			char	   *sql;
 
-			if ((sql = strdup(command->argv[0])) == NULL
-				|| (sql = assignVariables(st, sql)) == NULL)
-			{
-				fprintf(stderr, "out of memory\n");
-				st->ecnt++;
-				return true;
-			}
+			sql = xstrdup(command->argv[0]);
+			sql = assignVariables(st, sql);
 
 			if (debug)
 				fprintf(stderr, "client %d sending %s\n", st->id, sql);
@@ -1345,9 +1362,7 @@ parseQuery(Command *cmd, const char *raw_sql)
 	char	   *sql,
 			   *p;
 
-	sql = strdup(raw_sql);
-	if (sql == NULL)
-		return false;
+	sql = xstrdup(raw_sql);
 	cmd->argc = 1;
 
 	p = sql;
@@ -1374,8 +1389,7 @@ parseQuery(Command *cmd, const char *raw_sql)
 		}
 
 		sprintf(var, "$%d", cmd->argc);
-		if ((p = replaceVariable(&sql, p, eaten, var)) == NULL)
-			return false;
+		p = replaceVariable(&sql, p, eaten, var);
 
 		cmd->argv[cmd->argc] = name;
 		cmd->argc++;
@@ -1410,12 +1424,8 @@ process_commands(char *buf)
 		return NULL;
 
 	/* Allocate and initialize Command structure */
-	my_commands = (Command *) malloc(sizeof(Command));
-	if (my_commands == NULL)
-		return NULL;
-	my_commands->line = strdup(buf);
-	if (my_commands->line == NULL)
-		return NULL;
+	my_commands = (Command *) xmalloc(sizeof(Command));
+	my_commands->line = xstrdup(buf);
 	my_commands->command_num = num_commands++;
 	my_commands->type = 0;		/* until set */
 	my_commands->argc = 0;
@@ -1429,12 +1439,8 @@ process_commands(char *buf)
 
 		while (tok != NULL)
 		{
-			if ((my_commands->argv[j] = strdup(tok)) == NULL)
-				return NULL;
-
+			my_commands->argv[j++] = xstrdup(tok);
 			my_commands->argc++;
-
-			j++;
 			tok = strtok(NULL, delim);
 		}
 
@@ -1443,7 +1449,7 @@ process_commands(char *buf)
 			if (my_commands->argc < 4)
 			{
 				fprintf(stderr, "%s: missing argument\n", my_commands->argv[0]);
-				return NULL;
+				exit(1);
 			}
 
 			for (j = 4; j < my_commands->argc; j++)
@@ -1455,7 +1461,7 @@ process_commands(char *buf)
 			if (my_commands->argc < 3)
 			{
 				fprintf(stderr, "%s: missing argument\n", my_commands->argv[0]);
-				return NULL;
+				exit(1);
 			}
 
 			for (j = my_commands->argc < 5 ? 3 : 5; j < my_commands->argc; j++)
@@ -1467,7 +1473,7 @@ process_commands(char *buf)
 			if (my_commands->argc < 2)
 			{
 				fprintf(stderr, "%s: missing argument\n", my_commands->argv[0]);
-				return NULL;
+				exit(1);
 			}
 
 			/*
@@ -1498,7 +1504,7 @@ process_commands(char *buf)
 				{
 					fprintf(stderr, "%s: unknown time unit '%s' - must be us, ms or s\n",
 							my_commands->argv[0], my_commands->argv[2]);
-					return NULL;
+					exit(1);
 				}
 			}
 
@@ -1511,7 +1517,7 @@ process_commands(char *buf)
 			if (my_commands->argc < 3)
 			{
 				fprintf(stderr, "%s: missing argument\n", my_commands->argv[0]);
-				return NULL;
+				exit(1);
 			}
 		}
 		else if (pg_strcasecmp(my_commands->argv[0], "shell") == 0)
@@ -1519,13 +1525,13 @@ process_commands(char *buf)
 			if (my_commands->argc < 1)
 			{
 				fprintf(stderr, "%s: missing command\n", my_commands->argv[0]);
-				return NULL;
+				exit(1);
 			}
 		}
 		else
 		{
 			fprintf(stderr, "Invalid command %s\n", my_commands->argv[0]);
-			return NULL;
+			exit(1);
 		}
 	}
 	else
@@ -1535,17 +1541,16 @@ process_commands(char *buf)
 		switch (querymode)
 		{
 			case QUERY_SIMPLE:
-				if ((my_commands->argv[0] = strdup(p)) == NULL)
-					return NULL;
+				my_commands->argv[0] = xstrdup(p);
 				my_commands->argc++;
 				break;
 			case QUERY_EXTENDED:
 			case QUERY_PREPARED:
 				if (!parseQuery(my_commands, p))
-					return NULL;
+					exit(1);
 				break;
 			default:
-				return NULL;
+				exit(1);
 		}
 	}
 
@@ -1570,9 +1575,7 @@ process_file(char *filename)
 	}
 
 	alloc_num = COMMANDS_ALLOC_NUM;
-	my_commands = (Command **) malloc(sizeof(Command *) * alloc_num);
-	if (my_commands == NULL)
-		return false;
+	my_commands = (Command **) xmalloc(sizeof(Command *) * alloc_num);
 
 	if (strcmp(filename, "-") == 0)
 		fd = stdin;
@@ -1598,12 +1601,7 @@ process_file(char *filename)
 		if (lineno >= alloc_num)
 		{
 			alloc_num += COMMANDS_ALLOC_NUM;
-			my_commands = realloc(my_commands, sizeof(Command *) * alloc_num);
-			if (my_commands == NULL)
-			{
-				fclose(fd);
-				return false;
-			}
+			my_commands = xrealloc(my_commands, sizeof(Command *) * alloc_num);
 		}
 	}
 	fclose(fd);
@@ -1625,13 +1623,8 @@ process_builtin(char *tb)
 	char		buf[BUFSIZ];
 	int			alloc_num;
 
-	if (*tb == '\0')
-		return NULL;
-
 	alloc_num = COMMANDS_ALLOC_NUM;
-	my_commands = (Command **) malloc(sizeof(Command *) * alloc_num);
-	if (my_commands == NULL)
-		return NULL;
+	my_commands = (Command **) xmalloc(sizeof(Command *) * alloc_num);
 
 	lineno = 0;
 
@@ -1662,11 +1655,7 @@ process_builtin(char *tb)
 		if (lineno >= alloc_num)
 		{
 			alloc_num += COMMANDS_ALLOC_NUM;
-			my_commands = realloc(my_commands, sizeof(Command *) * alloc_num);
-			if (my_commands == NULL)
-			{
-				return NULL;
-			}
+			my_commands = xrealloc(my_commands, sizeof(Command *) * alloc_num);
 		}
 	}
 
@@ -1831,14 +1820,8 @@ main(int argc, char **argv)
 	else if ((env = getenv("PGUSER")) != NULL && *env != '\0')
 		login = env;
 
-	state = (CState *) malloc(sizeof(CState));
-	if (state == NULL)
-	{
-		fprintf(stderr, "Couldn't allocate memory for state\n");
-		exit(1);
-	}
-
-	memset(state, 0, sizeof(*state));
+	state = (CState *) xmalloc(sizeof(CState));
+	memset(state, 0, sizeof(CState));
 
 	while ((c = getopt(argc, argv, "ih:nvp:dSNc:j:Crs:t:T:U:lf:D:F:M:")) != -1)
 	{
@@ -2051,14 +2034,8 @@ main(int argc, char **argv)
 
 	if (nclients > 1)
 	{
-		state = (CState *) realloc(state, sizeof(CState) * nclients);
-		if (state == NULL)
-		{
-			fprintf(stderr, "Couldn't allocate memory for state\n");
-			exit(1);
-		}
-
-		memset(state + 1, 0, sizeof(*state) * (nclients - 1));
+		state = (CState *) xrealloc(state, sizeof(CState) * nclients);
+		memset(state + 1, 0, sizeof(CState) * (nclients - 1));
 
 		/* copy any -D switch values to all clients */
 		for (i = 1; i < nclients; i++)
@@ -2181,7 +2158,7 @@ main(int argc, char **argv)
 	}
 
 	/* set up thread data structures */
-	threads = (TState *) malloc(sizeof(TState) * nthreads);
+	threads = (TState *) xmalloc(sizeof(TState) * nthreads);
 	for (i = 0; i < nthreads; i++)
 	{
 		TState *thread = &threads[i];
@@ -2196,9 +2173,9 @@ main(int argc, char **argv)
 			int		t;
 
 			thread->exec_elapsed = (instr_time *)
-				malloc(sizeof(instr_time) * num_commands);
+				xmalloc(sizeof(instr_time) * num_commands);
 			thread->exec_count = (int *)
-				malloc(sizeof(int) * num_commands);
+				xmalloc(sizeof(int) * num_commands);
 
 			for (t = 0; t < num_commands; t++)
 			{
@@ -2289,7 +2266,7 @@ threadRun(void *arg)
 	int			remains = nstate;		/* number of remaining clients */
 	int			i;
 
-	result = malloc(sizeof(TResult));
+	result = xmalloc(sizeof(TResult));
 	INSTR_TIME_SET_ZERO(result->conn_time);
 
 	/* open log file if requested */
@@ -2503,8 +2480,12 @@ pthread_create(pthread_t *thread,
 	void	   *ret;
 	instr_time	start_time;
 
-	th = (fork_pthread *) malloc(sizeof(fork_pthread));
-	pipe(th->pipes);
+	th = (fork_pthread *) xmalloc(sizeof(fork_pthread));
+	if (pipe(th->pipes) < 0)
+	{
+		free(th);
+		return errno;
+	}
 
 	th->pid = fork();
 	if (th->pid == -1)			/* error */
@@ -2558,7 +2539,7 @@ pthread_join(pthread_t th, void **thread_return)
 	if (thread_return != NULL)
 	{
 		/* assume result is TResult */
-		*thread_return = malloc(sizeof(TResult));
+		*thread_return = xmalloc(sizeof(TResult));
 		if (read(th->pipes[0], *thread_return, sizeof(TResult)) != sizeof(TResult))
 		{
 			free(*thread_return);
@@ -2626,7 +2607,7 @@ pthread_create(pthread_t *thread,
 	int			save_errno;
 	win32_pthread *th;
 
-	th = (win32_pthread *) malloc(sizeof(win32_pthread));
+	th = (win32_pthread *) xmalloc(sizeof(win32_pthread));
 	th->routine = start_routine;
 	th->arg = arg;
 	th->result = NULL;
