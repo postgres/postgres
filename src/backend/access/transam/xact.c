@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.295 2010/07/29 22:27:27 sriggs Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.296 2010/08/12 23:24:53 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -4522,9 +4522,9 @@ xact_redo_abort(xl_xact_abort *xlrec, TransactionId xid)
 	sub_xids = (TransactionId *) &(xlrec->xnodes[xlrec->nrels]);
 	max_xid = TransactionIdLatest(xid, xlrec->nsubxacts, sub_xids);
 
-	/* Make sure nextXid is beyond any XID mentioned in the record */
-
 	/*
+	 * Make sure nextXid is beyond any XID mentioned in the record.
+	 *
 	 * We don't expect anyone else to modify nextXid, hence we don't need to
 	 * hold a lock while checking this. We still acquire the lock to modify
 	 * it, though.
