@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.330 2010/08/03 19:24:04 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.331 2010/08/12 00:40:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1620,6 +1620,10 @@ pg_get_serial_sequence(PG_FUNCTION_ARGS)
  * pg_get_functiondef
  *		Returns the complete "CREATE OR REPLACE FUNCTION ..." statement for
  *		the specified function.
+ *
+ * Note: if you change the output format of this function, be careful not
+ * to break psql's rules (in \ef) for identifying the start of the function
+ * body.
  */
 Datum
 pg_get_functiondef(PG_FUNCTION_ARGS)

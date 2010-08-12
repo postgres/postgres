@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.247 2010/08/03 18:33:09 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.248 2010/08/12 00:40:59 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -1338,48 +1338,60 @@ testdb=&gt;
 
 
       <varlistentry>
-        <term><literal>\edit</literal> (or <literal>\e</literal>) <literal><optional> <replaceable class="parameter">filename</replaceable> </optional></literal></term>
+        <term><literal>\edit</> (or <literal>\e</>) <literal> <optional> <replaceable class="parameter">filename</> </optional> <optional> <replaceable class="parameter">line_number</> </optional> </literal></term>
 
         <listitem>
         <para>
         If <replaceable class="parameter">filename</replaceable> is
         specified, the file is edited; after the editor exits, its
-        content is copied back to the query buffer. If no argument is
-        given, the current query buffer is copied to a temporary file
-        which is then edited in the same fashion.
+        content is copied back to the query buffer. If no <replaceable
+        class="parameter">filename</replaceable> is given, the current query
+        buffer is copied to a temporary file which is then edited in the same
+        fashion.
         </para>
 
         <para>
         The new query buffer is then re-parsed according to the normal
         rules of <application>psql</application>, where the whole buffer
         is treated as a single line. (Thus you cannot make scripts this
-        way. Use <command>\i</command> for that.) This means also that
-        if the query ends with (or rather contains) a semicolon, it is
-        immediately executed. In other cases it will merely wait in the
-        query buffer.
+        way. Use <command>\i</command> for that.) This means that
+        if the query ends with (or contains) a semicolon, it is
+        immediately executed. Otherwise it will merely wait in the
+        query buffer; type semicolon or <literal>\g</> to send it, or
+        <literal>\r</> to cancel.
         </para>
 
         <tip>
         <para>
-        <application>psql</application> searches the environment
+        <application>psql</application> checks the environment
         variables <envar>PSQL_EDITOR</envar>, <envar>EDITOR</envar>, and
         <envar>VISUAL</envar> (in that order) for an editor to use. If
         all of them are unset, <filename>vi</filename> is used on Unix
         systems, <filename>notepad.exe</filename> on Windows systems.
         </para>
         </tip>
+
+        <para>
+        If a line number is specified, <application>psql</application> will
+        position the cursor on the specified line of the file or query buffer.
+        This feature requires the <varname>EDITOR_LINENUMBER_SWITCH</varname>
+        variable to be set, so that <application>psql</application> knows how
+        to specify the line number to the editor.  Note that if a single
+        all-digits argument is given, <application>psql</application> assumes
+        it is a line number not a file name.
+        </para>
         </listitem>
       </varlistentry>
 
 
       <varlistentry>
-        <term><literal>\ef <optional> <replaceable class="parameter">function_description</replaceable> </optional></literal></term>
+        <term><literal>\ef <optional> <replaceable class="parameter">function_description</> <optional>  <replaceable class="parameter">line_number</> </optional> </optional> </literal></term>
 
         <listitem>
         <para>
          This command fetches and edits the definition of the named function,
          in the form of a <command>CREATE OR REPLACE FUNCTION</> command.
-         Editing is done in the same way as for <literal>\e</>.
+         Editing is done in the same way as for <literal>\edit</>.
          After the editor exits, the updated command waits in the query buffer;
          type semicolon or <literal>\g</> to send it, or <literal>\r</>
          to cancel.
@@ -1395,6 +1407,16 @@ testdb=&gt;
         <para>
          If no function is specified, a blank <command>CREATE FUNCTION</>
          template is presented for editing.
+        </para>
+
+        <para>
+        If a line number is specified, <application>psql</application> will
+        position the cursor on the specified line of the function body
+        (note that the function body typically does not begin on the
+        first line of the file).
+        This feature requires the <varname>EDITOR_LINENUMBER_SWITCH</varname>
+        variable to be set, so that <application>psql</application> knows how
+        to specify the line number to the editor.
         </para>
         </listitem>
       </varlistentry>
@@ -2453,6 +2475,27 @@ bar
         on program start-up, use the switch <option>-E</option>.)  If you set
         the variable to the value <literal>noexec</literal>, the queries are
         just shown but are not actually sent to the server and executed.
+        </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><varname>EDITOR_LINENUMBER_SWITCH</varname></term>
+        <listitem>
+        <para>
+        When <command>\edit</command> or <command>\ef</command> is used with a
+        line number argument, this variable specifies the command-line switch
+        used to pass the line number to the user's editor.  For editors such
+        as <productname>emacs</> or <productname>vi</>, you can simply set
+        this variable to a plus sign.  Include a trailing space in the value
+        of the variable if there needs to be space between the switch name and
+        the line number.
+        Examples:
+
+<programlisting>
+\set EDITOR_LINENUMBER_SWITCH +
+\set EDITOR_LINENUMBER_SWITCH '--line '
+</programlisting>
         </para>
         </listitem>
       </varlistentry>
