@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/xlog.h,v 1.114.2.1 2010/08/01 23:07:05 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/xlog.h,v 1.114.2.2 2010/08/12 23:25:45 rhaas Exp $
  */
 #ifndef XLOG_H
 #define XLOG_H
@@ -149,7 +149,7 @@ extern bool InRecovery;
  * InHotStandby will read as FALSE).
  *
  * In DISABLED state, we're performing crash recovery or hot standby was
- * disabled in recovery.conf.
+ * disabled in postgresql.conf.
  *
  * In INITIALIZED state, we've run InitRecoveryTransactionEnvironment, but
  * we haven't yet processed a RUNNING_XACTS or shutdown-checkpoint WAL record

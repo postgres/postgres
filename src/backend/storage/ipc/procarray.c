@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/procarray.c,v 1.72 2010/07/06 19:18:57 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/procarray.c,v 1.72.2.1 2010/08/12 23:25:45 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -449,7 +449,7 @@ ProcArrayInitRecoveryInfo(TransactionId oldestActiveXid)
 /*
  * ProcArrayApplyRecoveryInfo -- apply recovery info about xids
  *
- * Takes us through 3 states: Uninitialized, Pending and Ready.
+ * Takes us through 3 states: Initialized, Pending and Ready.
  * Normal case is to go all the way to Ready straight away, though there
  * are atypical cases where we need to take it in steps.
  *
@@ -487,7 +487,7 @@ ProcArrayApplyRecoveryInfo(RunningTransactions running)
 		return;
 
 	/*
-	 * If our initial RunningXactData had an overflowed snapshot then we knew
+	 * If our initial RunningTransactionsData had an overflowed snapshot then we knew
 	 * we were missing some subxids from our snapshot. We can use this data as
 	 * an initial snapshot, but we cannot yet mark it valid. We know that the
 	 * missing subxids are equal to or earlier than nextXid. After we
@@ -518,7 +518,7 @@ ProcArrayApplyRecoveryInfo(RunningTransactions running)
 	Assert(standbyState == STANDBY_INITIALIZED);
 
 	/*
-	 * OK, we need to initialise from the RunningXactData record
+	 * OK, we need to initialise from the RunningTransactionsData record
 	 */
 
 	/*
@@ -1499,7 +1499,7 @@ GetRunningTransactionData(void)
 				suboverflowed = true;
 
 			/*
-			 * Top-level XID of a transaction is always greater than any of
+			 * Top-level XID of a transaction is always less than any of
 			 * its subxids, so we don't need to check if any of the subxids
 			 * are smaller than oldestRunningXid
 			 */
@@ -2313,7 +2313,7 @@ DisplayXidCache(void)
  * aborted but we think they were running; the distinction is irrelevant
  * because either way any changes done by the transaction are not visible to
  * backends in the standby.  We prune KnownAssignedXids when
- * XLOG_XACT_RUNNING_XACTS arrives, to forestall possible overflow of the
+ * XLOG_RUNNING_XACTS arrives, to forestall possible overflow of the
  * array due to such dead XIDs.
  */
 
@@ -2323,9 +2323,9 @@ DisplayXidCache(void)
  *		unobserved XIDs.
  *
  * RecordKnownAssignedTransactionIds() should be run for *every* WAL record
- * type apart from XLOG_XACT_RUNNING_XACTS (since that initialises the first
+ * type apart from XLOG_RUNNING_XACTS (since that initialises the first
  * snapshot so that RecordKnownAssignedTransactionIds() can be called). Must
- * be called for each record after we have executed StartupCLog() et al,
+ * be called for each record after we have executed StartupCLOG() et al,
  * since we must ExtendCLOG() etc..
  *
  * Called during recovery in analogy with and in place of GetNewTransactionId()
@@ -3046,11 +3046,11 @@ KnownAssignedXidsDisplay(int trace_level)
 		if (KnownAssignedXidsValid[i])
 		{
 			nxids++;
-			appendStringInfo(&buf, "[%u]=%u ", i, KnownAssignedXids[i]);
+			appendStringInfo(&buf, "[%d]=%u ", i, KnownAssignedXids[i]);
 		}
 	}
 
-	elog(trace_level, "%d KnownAssignedXids (num=%u tail=%u head=%u) %s",
+	elog(trace_level, "%d KnownAssignedXids (num=%d tail=%d head=%d) %s",
 		 nxids,
 		 pArray->numKnownAssignedXids,
 		 pArray->tailKnownAssignedXids,

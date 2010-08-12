@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/standby.c,v 1.27 2010/07/06 19:18:57 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/standby.c,v 1.27.2.1 2010/08/12 23:25:45 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -522,7 +522,7 @@ CheckRecoveryConflictDeadlock(LWLockId partitionLock)
  * one transaction on one relation, and don't worry about lock queuing.
  *
  * We keep a single dynamically expandible list of locks in local memory,
- * RelationLockList, so we can keep track of the various entried made by
+ * RelationLockList, so we can keep track of the various entries made by
  * the Startup process's virtual xid in the shared lock table.
  *
  * List elements use type xl_rel_lock, since the WAL record type exactly
@@ -700,7 +700,7 @@ standby_redo(XLogRecPtr lsn, XLogRecord *record)
 {
 	uint8		info = record->xl_info & ~XLR_INFO_MASK;
 
-	/* Do nothing if we're not in standby mode */
+	/* Do nothing if we're not in hot standby mode */
 	if (standbyState == STANDBY_DISABLED)
 		return;
 
@@ -872,7 +872,7 @@ LogStandbySnapshot(TransactionId *oldestActiveXid, TransactionId *nextXid)
 /*
  * Record an enhanced snapshot of running transactions into WAL.
  *
- * The definitions of RunningTransactionData and xl_xact_running_xacts
+ * The definitions of RunningTransactionsData and xl_xact_running_xacts
  * are similar. We keep them separate because xl_xact_running_xacts
  * is a contiguous chunk of memory and never exists fully until it is
  * assembled in WAL.
