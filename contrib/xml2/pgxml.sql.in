@@ -1,18 +1,14 @@
-/* $PostgreSQL: pgsql/contrib/xml2/pgxml.sql.in,v 1.12 2010/03/01 18:07:59 tgl Exp $ */
+/* $PostgreSQL: pgsql/contrib/xml2/pgxml.sql.in,v 1.13 2010/08/13 18:36:23 tgl Exp $ */
 
 -- Adjust this setting to control where the objects get created.
 SET search_path = public;
 
 --SQL for XML parser
 
-CREATE OR REPLACE FUNCTION xml_is_well_formed(text) RETURNS bool
-AS 'MODULE_PATHNAME'
-LANGUAGE C STRICT IMMUTABLE;
-
 -- deprecated old name for xml_is_well_formed
 CREATE OR REPLACE FUNCTION xml_valid(text) RETURNS bool
-AS 'MODULE_PATHNAME', 'xml_is_well_formed'
-LANGUAGE C STRICT IMMUTABLE;
+AS 'xml_is_well_formed'
+LANGUAGE INTERNAL STRICT STABLE;
 
 CREATE OR REPLACE FUNCTION xml_encode_special_chars(text) RETURNS text
 AS 'MODULE_PATHNAME'

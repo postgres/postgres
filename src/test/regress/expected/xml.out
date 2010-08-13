@@ -599,3 +599,90 @@ SELECT COUNT(id) FROM xmltest, query WHERE xmlexists(expr PASSING BY REF data);
      2
 (1 row)
 
+-- Test xml_is_well_formed and variants
+SELECT xml_is_well_formed_document('<foo>bar</foo>');
+ xml_is_well_formed_document 
+-----------------------------
+ t
+(1 row)
+
+SELECT xml_is_well_formed_document('abc');
+ xml_is_well_formed_document 
+-----------------------------
+ f
+(1 row)
+
+SELECT xml_is_well_formed_content('<foo>bar</foo>');
+ xml_is_well_formed_content 
+----------------------------
+ t
+(1 row)
+
+SELECT xml_is_well_formed_content('abc');
+ xml_is_well_formed_content 
+----------------------------
+ t
+(1 row)
+
+SET xmloption TO DOCUMENT;
+SELECT xml_is_well_formed('abc');
+ xml_is_well_formed 
+--------------------
+ f
+(1 row)
+
+SELECT xml_is_well_formed('<>');
+ xml_is_well_formed 
+--------------------
+ f
+(1 row)
+
+SELECT xml_is_well_formed('<abc/>');
+ xml_is_well_formed 
+--------------------
+ t
+(1 row)
+
+SELECT xml_is_well_formed('<foo>bar</foo>');
+ xml_is_well_formed 
+--------------------
+ t
+(1 row)
+
+SELECT xml_is_well_formed('<foo>bar</foo');
+ xml_is_well_formed 
+--------------------
+ f
+(1 row)
+
+SELECT xml_is_well_formed('<foo><bar>baz</foo>');
+ xml_is_well_formed 
+--------------------
+ f
+(1 row)
+
+SELECT xml_is_well_formed('<local:data xmlns:local="http://127.0.0.1"><local:piece id="1">number one</local:piece><local:piece id="2" /></local:data>');
+ xml_is_well_formed 
+--------------------
+ t
+(1 row)
+
+SELECT xml_is_well_formed('<pg:foo xmlns:pg="http://postgresql.org/stuff">bar</my:foo>');
+ xml_is_well_formed 
+--------------------
+ f
+(1 row)
+
+SELECT xml_is_well_formed('<pg:foo xmlns:pg="http://postgresql.org/stuff">bar</pg:foo>');
+ xml_is_well_formed 
+--------------------
+ t
+(1 row)
+
+SET xmloption TO CONTENT;
+SELECT xml_is_well_formed('abc');
+ xml_is_well_formed 
+--------------------
+ t
+(1 row)
+

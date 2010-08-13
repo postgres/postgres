@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.578 2010/08/10 21:51:00 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.579 2010/08/13 18:36:25 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.pl reads this file and generates .bki
@@ -4423,6 +4423,12 @@ DATA(insert OID = 3049 (  xpath_exists	 PGNSP PGUID 12 1 0 0 f f f t f i 3 0 16 
 DESCR("test XML value against XPath expression, with namespace support");
 DATA(insert OID = 3050 (  xpath_exists	 PGNSP PGUID 14 1 0 0 f f f t f i 2 0 16 "25 142" _null_ _null_ _null_ _null_ "select pg_catalog.xpath_exists($1, $2, ''{}''::pg_catalog.text[])" _null_ _null_ _null_ ));
 DESCR("test XML value against XPath expression");
+DATA(insert OID = 3051 (  xml_is_well_formed			 PGNSP PGUID 12 1 0 0 f f f t f s 1 0 16 "25" _null_ _null_ _null_ _null_ xml_is_well_formed _null_ _null_ _null_ ));
+DESCR("determine if a string is well formed XML");
+DATA(insert OID = 3052 (  xml_is_well_formed_document	 PGNSP PGUID 12 1 0 0 f f f t f i 1 0 16 "25" _null_ _null_ _null_ _null_ xml_is_well_formed_document _null_ _null_ _null_ ));
+DESCR("determine if a string is well formed XML document");
+DATA(insert OID = 3053 (  xml_is_well_formed_content	 PGNSP PGUID 12 1 0 0 f f f t f i 1 0 16 "25" _null_ _null_ _null_ _null_ xml_is_well_formed_content _null_ _null_ _null_ ));
+DESCR("determine if a string is well formed XML content");
 
 /* uuid */
 DATA(insert OID = 2952 (  uuid_in		   PGNSP PGUID 12 1 0 0 f f f t f i 1 0 2950 "2275" _null_ _null_ _null_ _null_ uuid_in _null_ _null_ _null_ ));

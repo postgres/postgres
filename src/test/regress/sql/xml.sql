@@ -190,3 +190,24 @@ SELECT COUNT(id) FROM xmltest WHERE xpath_exists('/myns:menu/myns:beers/myns:nam
 CREATE TABLE query ( expr TEXT );
 INSERT INTO query VALUES ('/menu/beers/cost[text() = ''lots'']');
 SELECT COUNT(id) FROM xmltest, query WHERE xmlexists(expr PASSING BY REF data);
+
+-- Test xml_is_well_formed and variants
+
+SELECT xml_is_well_formed_document('<foo>bar</foo>');
+SELECT xml_is_well_formed_document('abc');
+SELECT xml_is_well_formed_content('<foo>bar</foo>');
+SELECT xml_is_well_formed_content('abc');
+
+SET xmloption TO DOCUMENT;
+SELECT xml_is_well_formed('abc');
+SELECT xml_is_well_formed('<>');
+SELECT xml_is_well_formed('<abc/>');
+SELECT xml_is_well_formed('<foo>bar</foo>');
+SELECT xml_is_well_formed('<foo>bar</foo');
+SELECT xml_is_well_formed('<foo><bar>baz</foo>');
+SELECT xml_is_well_formed('<local:data xmlns:local="http://127.0.0.1"><local:piece id="1">number one</local:piece><local:piece id="2" /></local:data>');
+SELECT xml_is_well_formed('<pg:foo xmlns:pg="http://postgresql.org/stuff">bar</my:foo>');
+SELECT xml_is_well_formed('<pg:foo xmlns:pg="http://postgresql.org/stuff">bar</pg:foo>');
+
+SET xmloption TO CONTENT;
+SELECT xml_is_well_formed('abc');

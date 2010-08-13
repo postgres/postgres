@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.100 2010/08/08 19:15:27 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.101 2010/08/13 18:36:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3564,4 +3564,74 @@ xpath_exists(PG_FUNCTION_ARGS)
 	NO_XML_SUPPORT();
 	return 0;
 #endif
+}
+
+/*
+ * Functions for checking well-formed-ness
+ */
+
+#ifdef USE_LIBXML
+static bool
+wellformed_xml(text *data, XmlOptionType xmloption_arg)
+{
+	bool		result;
+	xmlDocPtr	doc = NULL;
+
+	/* We want to catch any exceptions and return false */
+	PG_TRY();
+	{
+		doc = xml_parse(data, xmloption_arg, true, GetDatabaseEncoding());
+		result = true;
+	}
+	PG_CATCH();
+	{
+		FlushErrorState();
+		result = false;
+	}
+	PG_END_TRY();
+
+	if (doc)
+		xmlFreeDoc(doc);
+
+	return result;
+}
+#endif
+
+Datum
+xml_is_well_formed(PG_FUNCTION_ARGS)
+{
+#ifdef USE_LIBXML
+	text	   *data = PG_GETARG_TEXT_P(0);
+	
+	PG_RETURN_BOOL(wellformed_xml(data, xmloption));
+#else
+	NO_XML_SUPPORT();
+	return 0;
+#endif   /* not USE_LIBXML */
+}
+
+Datum
+xml_is_well_formed_document(PG_FUNCTION_ARGS)
+{
+#ifdef USE_LIBXML
+	text	   *data = PG_GETARG_TEXT_P(0);
+	
+	PG_RETURN_BOOL(wellformed_xml(data, XMLOPTION_DOCUMENT));
+#else
+	NO_XML_SUPPORT();
+	return 0;
+#endif   /* not USE_LIBXML */
+}
+
+Datum
+xml_is_well_formed_content(PG_FUNCTION_ARGS)
+{
+#ifdef USE_LIBXML
+	text	   *data = PG_GETARG_TEXT_P(0);
+	
+	PG_RETURN_BOOL(wellformed_xml(data, XMLOPTION_CONTENT));
+#else
+	NO_XML_SUPPORT();
+	return 0;
+#endif   /* not USE_LIBXML */
 }
