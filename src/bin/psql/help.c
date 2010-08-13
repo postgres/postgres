@@ -3,11 +3,9 @@
  *
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/help.c,v 1.161 2010/08/12 00:40:59 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/help.c,v 1.162 2010/08/13 20:56:18 tgl Exp $
  */
 #include "postgres_fe.h"
-
-#include <signal.h>
 
 #ifndef WIN32
 #ifdef HAVE_PWD_H
@@ -26,8 +24,6 @@
 #ifdef HAVE_TERMIOS_H
 #include <termios.h>
 #endif
-
-#include "pqsignal.h"
 
 #include "common.h"
 #include "help.h"
@@ -271,13 +267,7 @@ slashUsage(unsigned short int pager)
 					  "  \\lo_list\n"
 					  "  \\lo_unlink LOBOID      large object operations\n"));
 
-	if (output != stdout)
-	{
-		pclose(output);
-#ifndef WIN32
-		pqsignal(SIGPIPE, SIG_DFL);
-#endif
-	}
+	ClosePager(output);
 }
 
 
@@ -334,14 +324,7 @@ helpSQL(const char *topic, unsigned short int pager)
 			fputc('\n', output);
 		}
 
-		/* Only close if we used the pager */
-		if (output != stdout)
-		{
-			pclose(output);
-#ifndef WIN32
-			pqsignal(SIGPIPE, SIG_DFL);
-#endif
-		}
+		ClosePager(output);
 	}
 	else
 	{
@@ -349,7 +332,7 @@ helpSQL(const char *topic, unsigned short int pager)
 					j,
 					x = 0;
 		bool		help_found = false;
-		FILE	   *output;
+		FILE	   *output = NULL;
 		size_t		len,
 					wordlen;
 		int			nl_count = 0;
@@ -376,7 +359,8 @@ helpSQL(const char *topic, unsigned short int pager)
 				}
 				if (wordlen >= len)		/* Don't try again if the same word */
 				{
-					output = PageOutput(nl_count, pager);
+					if (!output)
+						output = PageOutput(nl_count, pager);
 					break;
 				}
 				len = wordlen;
@@ -396,7 +380,8 @@ helpSQL(const char *topic, unsigned short int pager)
 				}
 			}
 
-			output = PageOutput(nl_count, pager);
+			if (!output)
+				output = PageOutput(nl_count, pager);
 
 			for (i = 0; QL_HELP[i].cmd; i++)
 			{
@@ -426,14 +411,7 @@ helpSQL(const char *topic, unsigned short int pager)
 		if (!help_found)
 			fprintf(output, _("No help available for \"%s\".\nTry \\h with no arguments to see available help.\n"), topic);
 
-		/* Only close if we used the pager */
-		if (output != stdout)
-		{
-			pclose(output);
-#ifndef WIN32
-			pqsignal(SIGPIPE, SIG_DFL);
-#endif
-		}
+		ClosePager(output);
 	}
 }
 
