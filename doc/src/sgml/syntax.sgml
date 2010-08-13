@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/syntax.sgml,v 1.147.2.4 2010/08/12 02:04:07 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/syntax.sgml,v 1.147.2.5 2010/08/13 01:12:51 rhaas Exp $ -->
 
 <chapter id="sql-syntax">
  <title>SQL Syntax</title>
@@ -47,12 +47,6 @@
    special character is adjacent to some other token type).
   </para>
 
-  <para>
-   Additionally, <firstterm>comments</firstterm> can occur in SQL
-   input.  They are not tokens, they are effectively equivalent to
-   whitespace.
-  </para>
-
    <para>
     For example, the following is (syntactically) valid SQL input:
 <programlisting>
@@ -64,6 +58,12 @@ INSERT INTO MY_TABLE VALUES (3, 'hi there');
     is not required; more than one command can be on a line, and
     commands can usefully be split across lines).
    </para>
+
+  <para>
+   Additionally, <firstterm>comments</firstterm> can occur in SQL
+   input.  They are not tokens, they are effectively equivalent to
+   whitespace.
+  </para>
 
   <para>
    The SQL syntax is not very consistent regarding what tokens
