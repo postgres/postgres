@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/pqsignal.c,v 1.30 2010/01/02 16:58:12 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/pqsignal.c,v 1.31 2010/08/13 20:04:33 tgl Exp $
  *
  * NOTES
  *		This shouldn't be in libpq, but the monitor and some other
@@ -17,9 +17,12 @@
  *
  *-------------------------------------------------------------------------
  */
-#include "pqsignal.h"
+#include "postgres_fe.h"
 
 #include <signal.h>
+
+#include "pqsignal.h"
+
 
 pqsigfunc
 pqsignal(int signo, pqsigfunc func)
