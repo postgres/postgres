@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/file/fd.c,v 1.157 2010/07/06 22:55:26 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/file/fd.c,v 1.158 2010/08/13 20:10:52 rhaas Exp $
  *
  * NOTES:
  *
@@ -249,6 +249,9 @@ static File OpenTemporaryFileInTablespace(Oid tblspcOid, bool rejectError);
 static void AtProcExit_Files(int code, Datum arg);
 static void CleanupTempFiles(bool isProcExit);
 static void RemovePgTempFilesInDir(const char *tmpdirname);
+static void RemovePgTempRelationFiles(const char *tsdirname);
+static void RemovePgTempRelationFilesInDbspace(const char *dbspacedirname);
+static bool looks_like_temp_rel_name(const char *name);
 
 
 /*
@@ -1824,10 +1827,12 @@ CleanupTempFiles(bool isProcExit)
 
 
 /*
- * Remove temporary files left over from a prior postmaster session
+ * Remove temporary and temporary relation files left over from a prior
+ * postmaster session
  *
  * This should be called during postmaster startup.  It will forcibly
- * remove any leftover files created by OpenTemporaryFile.
+ * remove any leftover files created by OpenTemporaryFile and any leftover
+ * temporary relation files created by mdcreate.
  *
  * NOTE: we could, but don't, call this during a post-backend-crash restart
  * cycle.  The argument for not doing it is that someone might want to examine
@@ -1847,6 +1852,7 @@ RemovePgTempFiles(void)
 	 */
 	snprintf(temp_path, sizeof(temp_path), "base/%s", PG_TEMP_FILES_DIR);
 	RemovePgTempFilesInDir(temp_path);
+	RemovePgTempRelationFiles("base");
 
 	/*
 	 * Cycle through temp directories for all non-default tablespaces.
@@ -1862,6 +1868,10 @@ RemovePgTempFiles(void)
 		snprintf(temp_path, sizeof(temp_path), "pg_tblspc/%s/%s/%s",
 			spc_de->d_name, TABLESPACE_VERSION_DIRECTORY, PG_TEMP_FILES_DIR);
 		RemovePgTempFilesInDir(temp_path);
+
+		snprintf(temp_path, sizeof(temp_path), "pg_tblspc/%s/%s",
+			spc_de->d_name, TABLESPACE_VERSION_DIRECTORY);
+		RemovePgTempRelationFiles(temp_path);
 	}
 
 	FreeDir(spc_dir);
@@ -1914,4 +1924,124 @@ RemovePgTempFilesInDir(const char *tmpdirname)
 	}
 
 	FreeDir(temp_dir);
+}
+
+/* Process one tablespace directory, look for per-DB subdirectories */
+static void
+RemovePgTempRelationFiles(const char *tsdirname)
+{
+	DIR		   *ts_dir;
+	struct dirent *de;
+	char		dbspace_path[MAXPGPATH];
+
+	ts_dir = AllocateDir(tsdirname);
+	if (ts_dir == NULL)
+	{
+		/* anything except ENOENT is fishy */
+		if (errno != ENOENT)
+			elog(LOG,
+				 "could not open tablespace directory \"%s\": %m",
+				 tsdirname);
+		return;
+	}
+
+	while ((de = ReadDir(ts_dir, tsdirname)) != NULL)
+	{
+		int		i = 0;
+
+		/*
+		 * We're only interested in the per-database directories, which have
+		 * numeric names.  Note that this code will also (properly) ignore "."
+		 * and "..".
+		 */
+		while (isdigit((unsigned char) de->d_name[i]))
+			++i;
+		if (de->d_name[i] != '\0' || i == 0)
+			continue;
+
+		snprintf(dbspace_path, sizeof(dbspace_path), "%s/%s",
+				 tsdirname, de->d_name);
+		RemovePgTempRelationFilesInDbspace(dbspace_path);
+	}
+
+	FreeDir(ts_dir);
+}
+
+/* Process one per-dbspace directory for RemovePgTempRelationFiles */
+static void
+RemovePgTempRelationFilesInDbspace(const char *dbspacedirname)
+{
+	DIR		   *dbspace_dir;
+	struct dirent *de;
+	char		rm_path[MAXPGPATH];
+
+	dbspace_dir = AllocateDir(dbspacedirname);
+	if (dbspace_dir == NULL)
+	{
+		/* we just saw this directory, so it really ought to be there */
+		elog(LOG,
+			 "could not open dbspace directory \"%s\": %m",
+			 dbspacedirname);
+		return;
+	}
+
+	while ((de = ReadDir(dbspace_dir, dbspacedirname)) != NULL)
+	{
+		if (!looks_like_temp_rel_name(de->d_name))
+			continue;
+
+		snprintf(rm_path, sizeof(rm_path), "%s/%s",
+				 dbspacedirname, de->d_name);
+
+		unlink(rm_path);	/* note we ignore any error */
+	}
+
+	FreeDir(dbspace_dir);
+}
+
+/* t<digits>_<digits>, or t<digits>_<digits>_<forkname> */
+static bool
+looks_like_temp_rel_name(const char *name)
+{
+	int			pos;
+	int			savepos;
+
+	/* Must start with "t". */
+	if (name[0] != 't')
+		return false;
+
+	/* Followed by a non-empty string of digits and then an underscore. */
+	for (pos = 1; isdigit((unsigned char) name[pos]); ++pos)
+		;
+	if (pos == 1 || name[pos] != '_')
+		return false;
+
+	/* Followed by another nonempty string of digits. */
+	for (savepos = ++pos; isdigit((unsigned char) name[pos]); ++pos)
+		;
+	if (savepos == pos)
+		return false;
+
+	/* We might have _forkname or .segment or both. */
+	if (name[pos] == '_')
+	{
+		int		forkchar = forkname_chars(&name[pos+1]);
+		if (forkchar <= 0)
+			return false;
+		pos += forkchar + 1;
+	}
+	if (name[pos] == '.')
+	{
+		int		segchar;
+		for (segchar = 1; isdigit((unsigned char) name[pos+segchar]); ++segchar)
+			;
+		if (segchar <= 1)
+			return false;
+		pos += segchar;
+	}
+
+	/* Now we should be at the end. */
+	if (name[pos] != '\0')
+		return false;
+	return true;
 }

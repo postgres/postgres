@@ -5,7 +5,7 @@
  * Copyright (c) 2002-2010, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/dbsize.c,v 1.32 2010/08/05 14:45:04 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/dbsize.c,v 1.33 2010/08/13 20:10:52 rhaas Exp $
  *
  */
 
@@ -244,14 +244,14 @@ pg_tablespace_size_name(PG_FUNCTION_ARGS)
  * calculate size of (one fork of) a relation
  */
 static int64
-calculate_relation_size(RelFileNode *rfn, ForkNumber forknum)
+calculate_relation_size(RelFileNode *rfn, BackendId backend, ForkNumber forknum)
 {
 	int64		totalsize = 0;
 	char	   *relationpath;
 	char		pathname[MAXPGPATH];
 	unsigned int segcount = 0;
 
-	relationpath = relpath(*rfn, forknum);
+	relationpath = relpathbackend(*rfn, backend, forknum);
 
 	for (segcount = 0;; segcount++)
 	{
@@ -291,7 +291,7 @@ pg_relation_size(PG_FUNCTION_ARGS)
 
 	rel = relation_open(relOid, AccessShareLock);
 
-	size = calculate_relation_size(&(rel->rd_node),
+	size = calculate_relation_size(&(rel->rd_node), rel->rd_backend,
 							  forkname_to_number(text_to_cstring(forkName)));
 
 	relation_close(rel, AccessShareLock);
@@ -315,12 +315,14 @@ calculate_toast_table_size(Oid toastrelid)
 
 	/* toast heap size, including FSM and VM size */
 	for (forkNum = 0; forkNum <= MAX_FORKNUM; forkNum++)
-		size += calculate_relation_size(&(toastRel->rd_node), forkNum);
+		size += calculate_relation_size(&(toastRel->rd_node),
+										toastRel->rd_backend, forkNum);
 
 	/* toast index size, including FSM and VM size */
 	toastIdxRel = relation_open(toastRel->rd_rel->reltoastidxid, AccessShareLock);
 	for (forkNum = 0; forkNum <= MAX_FORKNUM; forkNum++)
-		size += calculate_relation_size(&(toastIdxRel->rd_node), forkNum);
+		size += calculate_relation_size(&(toastIdxRel->rd_node),
+										toastIdxRel->rd_backend, forkNum);
 
 	relation_close(toastIdxRel, AccessShareLock);
 	relation_close(toastRel, AccessShareLock);
@@ -349,7 +351,8 @@ calculate_table_size(Oid relOid)
 	 * heap size, including FSM and VM
 	 */
 	for (forkNum = 0; forkNum <= MAX_FORKNUM; forkNum++)
-		size += calculate_relation_size(&(rel->rd_node), forkNum);
+		size += calculate_relation_size(&(rel->rd_node), rel->rd_backend,
+										forkNum);
 
 	/*
 	 * Size of toast relation
@@ -392,7 +395,9 @@ calculate_indexes_size(Oid relOid)
 			idxRel = relation_open(idxOid, AccessShareLock);
 
 			for (forkNum = 0; forkNum <= MAX_FORKNUM; forkNum++)
-				size += calculate_relation_size(&(idxRel->rd_node), forkNum);
+				size += calculate_relation_size(&(idxRel->rd_node),
+												idxRel->rd_backend,
+												forkNum);
 
 			relation_close(idxRel, AccessShareLock);
 		}
@@ -563,6 +568,7 @@ pg_relation_filepath(PG_FUNCTION_ARGS)
 	HeapTuple	tuple;
 	Form_pg_class relform;
 	RelFileNode rnode;
+	BackendId	backend;
 	char	   *path;
 
 	tuple = SearchSysCache1(RELOID, ObjectIdGetDatum(relid));
@@ -600,12 +606,27 @@ pg_relation_filepath(PG_FUNCTION_ARGS)
 			break;
 	}
 
+	if (!OidIsValid(rnode.relNode))
+	{
+		ReleaseSysCache(tuple);
+		PG_RETURN_NULL();
+	}
+
+	/* If temporary, determine owning backend. */
+	if (!relform->relistemp)
+		backend = InvalidBackendId;
+	else if (isTempOrToastNamespace(relform->relnamespace))
+		backend = MyBackendId;
+	else
+	{
+		/* Do it the hard way. */
+		backend = GetTempNamespaceBackendId(relform->relnamespace);
+		Assert(backend != InvalidBackendId);
+	}
+
 	ReleaseSysCache(tuple);
 
-	if (!OidIsValid(rnode.relNode))
-		PG_RETURN_NULL();
-
-	path = relpath(rnode, MAIN_FORKNUM);
+	path = relpathbackend(rnode, backend, MAIN_FORKNUM);
 
 	PG_RETURN_TEXT_P(cstring_to_text(path));
 }

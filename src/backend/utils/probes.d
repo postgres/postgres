@@ -3,7 +3,7 @@
  *
  *	Copyright (c) 2006-2010, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/backend/utils/probes.d,v 1.12 2010/01/02 16:57:53 momjian Exp $
+ *	$PostgreSQL: pgsql/src/backend/utils/probes.d,v 1.13 2010/08/13 20:10:52 rhaas Exp $
  * ----------
  */
 
@@ -55,7 +55,7 @@ provider postgresql {
 	probe sort__done(bool, long);
 
 	probe buffer__read__start(ForkNumber, BlockNumber, Oid, Oid, Oid, bool, bool);
-	probe buffer__read__done(ForkNumber, BlockNumber, Oid, Oid, Oid, bool, bool, bool);
+	probe buffer__read__done(ForkNumber, BlockNumber, Oid, Oid, Oid, int, bool, bool);
 	probe buffer__flush__start(ForkNumber, BlockNumber, Oid, Oid, Oid);
 	probe buffer__flush__done(ForkNumber, BlockNumber, Oid, Oid, Oid);
 
@@ -81,10 +81,10 @@ provider postgresql {
 	probe twophase__checkpoint__start();
 	probe twophase__checkpoint__done();
 
-	probe smgr__md__read__start(ForkNumber, BlockNumber, Oid, Oid, Oid);
-	probe smgr__md__read__done(ForkNumber, BlockNumber, Oid, Oid, Oid, int, int);
-	probe smgr__md__write__start(ForkNumber, BlockNumber, Oid, Oid, Oid);
-	probe smgr__md__write__done(ForkNumber, BlockNumber, Oid, Oid, Oid, int, int);
+	probe smgr__md__read__start(ForkNumber, BlockNumber, Oid, Oid, Oid, int);
+	probe smgr__md__read__done(ForkNumber, BlockNumber, Oid, Oid, Oid, int, int, int);
+	probe smgr__md__write__start(ForkNumber, BlockNumber, Oid, Oid, Oid, int);
+	probe smgr__md__write__done(ForkNumber, BlockNumber, Oid, Oid, Oid, int, int, int);
 
 	probe xlog__insert(unsigned char, unsigned char);
 	probe xlog__switch();

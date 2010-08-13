@@ -59,7 +59,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtsort.c,v 1.125 2010/04/28 16:10:40 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtsort.c,v 1.126 2010/08/13 20:10:50 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -295,9 +295,8 @@ _bt_blwritepage(BTWriteState *wstate, Page page, BlockNumber blkno)
 	}
 
 	/*
-	 * Now write the page.	We say isTemp = true even if it's not a temp
-	 * index, because there's no need for smgr to schedule an fsync for this
-	 * write; we'll do it ourselves before ending the build.
+	 * Now write the page.	There's no need for smgr to schedule an fsync for
+	 * this write; we'll do it ourselves before ending the build.
 	 */
 	if (blkno == wstate->btws_pages_written)
 	{

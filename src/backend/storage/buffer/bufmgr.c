@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.256 2010/02/26 02:00:59 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.257 2010/08/13 20:10:52 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -95,7 +95,8 @@ static void WaitIO(volatile BufferDesc *buf);
 static bool StartBufferIO(volatile BufferDesc *buf, bool forInput);
 static void TerminateBufferIO(volatile BufferDesc *buf, bool clear_dirty,
 				  int set_flag_bits);
-static void buffer_write_error_callback(void *arg);
+static void shared_buffer_write_error_callback(void *arg);
+static void local_buffer_write_error_callback(void *arg);
 static volatile BufferDesc *BufferAlloc(SMgrRelation smgr, ForkNumber forkNum,
 			BlockNumber blockNum,
 			BufferAccessStrategy strategy,
@@ -141,7 +142,8 @@ PrefetchBuffer(Relation reln, ForkNumber forkNum, BlockNumber blockNum)
 		int			buf_id;
 
 		/* create a tag so we can lookup the buffer */
-		INIT_BUFFERTAG(newTag, reln->rd_smgr->smgr_rnode, forkNum, blockNum);
+		INIT_BUFFERTAG(newTag, reln->rd_smgr->smgr_rnode.node,
+					   forkNum, blockNum);
 
 		/* determine its hash code and partition lock ID */
 		newHash = BufTableHashCode(&newTag);
@@ -251,18 +253,21 @@ ReadBufferExtended(Relation reln, ForkNumber forkNum, BlockNumber blockNum,
  * ReadBufferWithoutRelcache -- like ReadBufferExtended, but doesn't require
  *		a relcache entry for the relation.
  *
- * NB: caller is assumed to know what it's doing if isTemp is true.
+ * NB: At present, this function may not be used on temporary relations, which
+ * is OK, because we only use it during XLOG replay.  If in the future we
+ * want to use it on temporary relations, we could pass the backend ID as an
+ * additional parameter.
  */
 Buffer
-ReadBufferWithoutRelcache(RelFileNode rnode, bool isTemp,
-						  ForkNumber forkNum, BlockNumber blockNum,
-						  ReadBufferMode mode, BufferAccessStrategy strategy)
+ReadBufferWithoutRelcache(RelFileNode rnode, ForkNumber forkNum,
+						  BlockNumber blockNum, ReadBufferMode mode,
+						  BufferAccessStrategy strategy)
 {
 	bool		hit;
 
-	SMgrRelation smgr = smgropen(rnode);
+	SMgrRelation smgr = smgropen(rnode, InvalidBackendId);
 
-	return ReadBuffer_common(smgr, isTemp, forkNum, blockNum, mode, strategy,
+	return ReadBuffer_common(smgr, false, forkNum, blockNum, mode, strategy,
 							 &hit);
 }
 
@@ -414,7 +419,7 @@ ReadBuffer_common(SMgrRelation smgr, bool isLocalBuf, ForkNumber forkNum,
 	{
 		/* new buffers are zero-filled */
 		MemSet((char *) bufBlock, 0, BLCKSZ);
-		smgrextend(smgr, forkNum, blockNum, (char *) bufBlock, isLocalBuf);
+		smgrextend(smgr, forkNum, blockNum, (char *) bufBlock, false);
 	}
 	else
 	{
@@ -465,10 +470,10 @@ ReadBuffer_common(SMgrRelation smgr, bool isLocalBuf, ForkNumber forkNum,
 		VacuumCostBalance += VacuumCostPageMiss;
 
 	TRACE_POSTGRESQL_BUFFER_READ_DONE(forkNum, blockNum,
-									  smgr->smgr_rnode.spcNode,
-									  smgr->smgr_rnode.dbNode,
-									  smgr->smgr_rnode.relNode,
-									  isLocalBuf,
+									  smgr->smgr_rnode.node.spcNode,
+									  smgr->smgr_rnode.node.dbNode,
+									  smgr->smgr_rnode.node.relNode,
+									  smgr->smgr_rnode.backend,
 									  isExtend,
 									  found);
 
@@ -512,7 +517,7 @@ BufferAlloc(SMgrRelation smgr, ForkNumber forkNum,
 	bool		valid;
 
 	/* create a tag so we can lookup the buffer */
-	INIT_BUFFERTAG(newTag, smgr->smgr_rnode, forkNum, blockNum);
+	INIT_BUFFERTAG(newTag, smgr->smgr_rnode.node, forkNum, blockNum);
 
 	/* determine its hash code and partition lock ID */
 	newHash = BufTableHashCode(&newTag);
@@ -1693,21 +1698,24 @@ PrintBufferLeakWarning(Buffer buffer)
 	volatile BufferDesc *buf;
 	int32		loccount;
 	char	   *path;
+	BackendId	backend;
 
 	Assert(BufferIsValid(buffer));
 	if (BufferIsLocal(buffer))
 	{
 		buf = &LocalBufferDescriptors[-buffer - 1];
 		loccount = LocalRefCount[-buffer - 1];
+		backend = MyBackendId;
 	}
 	else
 	{
 		buf = &BufferDescriptors[buffer - 1];
 		loccount = PrivateRefCount[buffer - 1];
+		backend = InvalidBackendId;
 	}
 
 	/* theoretically we should lock the bufhdr here */
-	path = relpath(buf->tag.rnode, buf->tag.forkNum);
+	path = relpathbackend(buf->tag.rnode, backend, buf->tag.forkNum);
 	elog(WARNING,
 		 "buffer refcount leak: [%03d] "
 		 "(rel=%s, blockNum=%u, flags=0x%x, refcount=%u %d)",
@@ -1831,14 +1839,14 @@ FlushBuffer(volatile BufferDesc *buf, SMgrRelation reln)
 		return;
 
 	/* Setup error traceback support for ereport() */
-	errcontext.callback = buffer_write_error_callback;
+	errcontext.callback = shared_buffer_write_error_callback;
 	errcontext.arg = (void *) buf;
 	errcontext.previous = error_context_stack;
 	error_context_stack = &errcontext;
 
 	/* Find smgr relation for buffer */
 	if (reln == NULL)
-		reln = smgropen(buf->tag.rnode);
+		reln = smgropen(buf->tag.rnode, InvalidBackendId);
 
 	TRACE_POSTGRESQL_BUFFER_FLUSH_START(buf->tag.forkNum,
 										buf->tag.blockNum,
@@ -1929,14 +1937,15 @@ RelationGetNumberOfBlocks(Relation relation)
  * --------------------------------------------------------------------
  */
 void
-DropRelFileNodeBuffers(RelFileNode rnode, ForkNumber forkNum, bool istemp,
+DropRelFileNodeBuffers(RelFileNodeBackend rnode, ForkNumber forkNum,
 					   BlockNumber firstDelBlock)
 {
 	int			i;
 
-	if (istemp)
+	if (rnode.backend != InvalidBackendId)
 	{
-		DropRelFileNodeLocalBuffers(rnode, forkNum, firstDelBlock);
+		if (rnode.backend == MyBackendId)
+			DropRelFileNodeLocalBuffers(rnode.node, forkNum, firstDelBlock);
 		return;
 	}
 
@@ -1945,7 +1954,7 @@ DropRelFileNodeBuffers(RelFileNode rnode, ForkNumber forkNum, bool istemp,
 		volatile BufferDesc *bufHdr = &BufferDescriptors[i];
 
 		LockBufHdr(bufHdr);
-		if (RelFileNodeEquals(bufHdr->tag.rnode, rnode) &&
+		if (RelFileNodeEquals(bufHdr->tag.rnode, rnode.node) &&
 			bufHdr->tag.forkNum == forkNum &&
 			bufHdr->tag.blockNum >= firstDelBlock)
 			InvalidateBuffer(bufHdr);	/* releases spinlock */
@@ -2008,7 +2017,7 @@ PrintBufferDescs(void)
 			 "[%02d] (freeNext=%d, rel=%s, "
 			 "blockNum=%u, flags=0x%x, refcount=%u %d)",
 			 i, buf->freeNext,
-			 relpath(buf->tag.rnode, buf->tag.forkNum),
+			 relpathbackend(buf->tag.rnode, InvalidBackendId, buf->tag.forkNum),
 			 buf->tag.blockNum, buf->flags,
 			 buf->refcount, PrivateRefCount[i]);
 	}
@@ -2078,7 +2087,7 @@ FlushRelationBuffers(Relation rel)
 				ErrorContextCallback errcontext;
 
 				/* Setup error traceback support for ereport() */
-				errcontext.callback = buffer_write_error_callback;
+				errcontext.callback = local_buffer_write_error_callback;
 				errcontext.arg = (void *) bufHdr;
 				errcontext.previous = error_context_stack;
 				error_context_stack = &errcontext;
@@ -2087,7 +2096,7 @@ FlushRelationBuffers(Relation rel)
 						  bufHdr->tag.forkNum,
 						  bufHdr->tag.blockNum,
 						  (char *) LocalBufHdrGetBlock(bufHdr),
-						  true);
+						  false);
 
 				bufHdr->flags &= ~(BM_DIRTY | BM_JUST_DIRTIED);
 
@@ -2699,8 +2708,9 @@ AbortBufferIO(void)
 			if (sv_flags & BM_IO_ERROR)
 			{
 				/* Buffer is pinned, so we can read tag without spinlock */
-				char	   *path = relpath(buf->tag.rnode, buf->tag.forkNum);
+				char	   *path;
 
+				path = relpathperm(buf->tag.rnode, buf->tag.forkNum);
 				ereport(WARNING,
 						(errcode(ERRCODE_IO_ERROR),
 						 errmsg("could not write block %u of %s",
@@ -2714,17 +2724,36 @@ AbortBufferIO(void)
 }
 
 /*
- * Error context callback for errors occurring during buffer writes.
+ * Error context callback for errors occurring during shared buffer writes.
  */
 static void
-buffer_write_error_callback(void *arg)
+shared_buffer_write_error_callback(void *arg)
 {
 	volatile BufferDesc *bufHdr = (volatile BufferDesc *) arg;
 
 	/* Buffer is pinned, so we can read the tag without locking the spinlock */
 	if (bufHdr != NULL)
 	{
-		char	   *path = relpath(bufHdr->tag.rnode, bufHdr->tag.forkNum);
+		char	   *path = relpathperm(bufHdr->tag.rnode, bufHdr->tag.forkNum);
+
+		errcontext("writing block %u of relation %s",
+				   bufHdr->tag.blockNum, path);
+		pfree(path);
+	}
+}
+
+/*
+ * Error context callback for errors occurring during local buffer writes.
+ */
+static void
+local_buffer_write_error_callback(void *arg)
+{
+	volatile BufferDesc *bufHdr = (volatile BufferDesc *) arg;
+
+	if (bufHdr != NULL)
+	{
+		char	   *path = relpathbackend(bufHdr->tag.rnode, MyBackendId,
+										 bufHdr->tag.forkNum);
 
 		errcontext("writing block %u of relation %s",
 				   bufHdr->tag.blockNum, path);

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.297 2010/08/13 15:42:21 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.298 2010/08/13 20:10:50 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -912,7 +912,6 @@ RecordTransactionCommit(void)
 	TransactionId latestXid = InvalidTransactionId;
 	int			nrels;
 	RelFileNode *rels;
-	bool		haveNonTemp;
 	int			nchildren;
 	TransactionId *children;
 	int			nmsgs = 0;
@@ -920,7 +919,7 @@ RecordTransactionCommit(void)
 	bool		RelcacheInitFileInval = false;
 
 	/* Get data needed for commit record */
-	nrels = smgrGetPendingDeletes(true, &rels, &haveNonTemp);
+	nrels = smgrGetPendingDeletes(true, &rels);
 	nchildren = xactGetCommittedChildren(&children);
 	if (XLogStandbyInfoActive())
 		nmsgs = xactGetCommittedInvalidationMessages(&invalMessages,
@@ -1048,7 +1047,7 @@ RecordTransactionCommit(void)
 	 * asynchronous commit if all to-be-deleted tables are temporary though,
 	 * since they are lost anyway if we crash.)
 	 */
-	if (XactSyncCommit || forceSyncCommit || haveNonTemp)
+	if (XactSyncCommit || forceSyncCommit || nrels > 0)
 	{
 		/*
 		 * Synchronous commit case:
@@ -1334,7 +1333,7 @@ RecordTransactionAbort(bool isSubXact)
 			 xid);
 
 	/* Fetch the data we need for the abort record */
-	nrels = smgrGetPendingDeletes(false, &rels, NULL);
+	nrels = smgrGetPendingDeletes(false, &rels);
 	nchildren = xactGetCommittedChildren(&children);
 
 	/* XXX do we really need a critical section here? */
@@ -4474,7 +4473,7 @@ xact_redo_commit(xl_xact_commit *xlrec, TransactionId xid, XLogRecPtr lsn)
 	/* Make sure files supposed to be dropped are dropped */
 	for (i = 0; i < xlrec->nrels; i++)
 	{
-		SMgrRelation srel = smgropen(xlrec->xnodes[i]);
+		SMgrRelation srel = smgropen(xlrec->xnodes[i], InvalidBackendId);
 		ForkNumber	fork;
 
 		for (fork = 0; fork <= MAX_FORKNUM; fork++)
@@ -4482,7 +4481,7 @@ xact_redo_commit(xl_xact_commit *xlrec, TransactionId xid, XLogRecPtr lsn)
 			if (smgrexists(srel, fork))
 			{
 				XLogDropRelation(xlrec->xnodes[i], fork);
-				smgrdounlink(srel, fork, false, true);
+				smgrdounlink(srel, fork, true);
 			}
 		}
 		smgrclose(srel);
@@ -4579,7 +4578,7 @@ xact_redo_abort(xl_xact_abort *xlrec, TransactionId xid)
 	/* Make sure files supposed to be dropped are dropped */
 	for (i = 0; i < xlrec->nrels; i++)
 	{
-		SMgrRelation srel = smgropen(xlrec->xnodes[i]);
+		SMgrRelation srel = smgropen(xlrec->xnodes[i], InvalidBackendId);
 		ForkNumber	fork;
 
 		for (fork = 0; fork <= MAX_FORKNUM; fork++)
@@ -4587,7 +4586,7 @@ xact_redo_abort(xl_xact_abort *xlrec, TransactionId xid)
 			if (smgrexists(srel, fork))
 			{
 				XLogDropRelation(xlrec->xnodes[i], fork);
-				smgrdounlink(srel, fork, false, true);
+				smgrdounlink(srel, fork, true);
 			}
 		}
 		smgrclose(srel);
@@ -4661,7 +4660,7 @@ xact_desc_commit(StringInfo buf, xl_xact_commit *xlrec)
 		appendStringInfo(buf, "; rels:");
 		for (i = 0; i < xlrec->nrels; i++)
 		{
-			char	   *path = relpath(xlrec->xnodes[i], MAIN_FORKNUM);
+			char	   *path = relpathperm(xlrec->xnodes[i], MAIN_FORKNUM);
 
 			appendStringInfo(buf, " %s", path);
 			pfree(path);
@@ -4716,7 +4715,7 @@ xact_desc_abort(StringInfo buf, xl_xact_abort *xlrec)
 		appendStringInfo(buf, "; rels:");
 		for (i = 0; i < xlrec->nrels; i++)
 		{
-			char	   *path = relpath(xlrec->xnodes[i], MAIN_FORKNUM);
+			char	   *path = relpathperm(xlrec->xnodes[i], MAIN_FORKNUM);
 
 			appendStringInfo(buf, " %s", path);
 			pfree(path);

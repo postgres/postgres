@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/namespace.c,v 1.128 2010/08/13 16:27:11 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/namespace.c,v 1.129 2010/08/13 20:10:50 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2588,7 +2588,7 @@ isOtherTempNamespace(Oid namespaceId)
  * GetTempNamespaceBackendId - if the given namespace is a temporary-table
  * namespace (either my own, or another backend's), return the BackendId
  * that owns it.  Temporary-toast-table namespaces are included, too.
- * If it isn't a temp namespace, return -1.
+ * If it isn't a temp namespace, return InvalidBackendId.
  */
 int
 GetTempNamespaceBackendId(Oid namespaceId)
@@ -2599,13 +2599,13 @@ GetTempNamespaceBackendId(Oid namespaceId)
 	/* See if the namespace name starts with "pg_temp_" or "pg_toast_temp_" */
 	nspname = get_namespace_name(namespaceId);
 	if (!nspname)
-		return -1;				/* no such namespace? */
+		return InvalidBackendId;				/* no such namespace? */
 	if (strncmp(nspname, "pg_temp_", 8) == 0)
 		result = atoi(nspname + 8);
 	else if (strncmp(nspname, "pg_toast_temp_", 14) == 0)
 		result = atoi(nspname + 14);
 	else
-		result = -1;
+		result = InvalidBackendId;
 	pfree(nspname);
 	return result;
 }

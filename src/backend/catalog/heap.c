@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.374 2010/07/25 23:21:21 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.375 2010/08/13 20:10:50 rhaas Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -39,6 +39,7 @@
 #include "catalog/heap.h"
 #include "catalog/index.h"
 #include "catalog/indexing.h"
+#include "catalog/namespace.h"
 #include "catalog/pg_attrdef.h"
 #include "catalog/pg_constraint.h"
 #include "catalog/pg_inherits.h"
@@ -994,7 +995,9 @@ heap_create_with_catalog(const char *relname,
 			binary_upgrade_next_toast_relfilenode = InvalidOid;
 		}
 		else
-			relid = GetNewRelFileNode(reltablespace, pg_class_desc);
+			relid = GetNewRelFileNode(reltablespace, pg_class_desc,
+									  isTempOrToastNamespace(relnamespace) ?
+										  MyBackendId : InvalidBackendId);
 	}
 
 	/*

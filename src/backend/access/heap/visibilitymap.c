@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/visibilitymap.c,v 1.10 2010/04/23 23:21:44 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/visibilitymap.c,v 1.11 2010/08/13 20:10:50 rhaas Exp $
  *
  * INTERFACE ROUTINES
  *		visibilitymap_clear - clear a bit in the visibility map
@@ -373,8 +373,7 @@ visibilitymap_truncate(Relation rel, BlockNumber nheapblocks)
 	}
 
 	/* Truncate the unused VM pages, and send smgr inval message */
-	smgrtruncate(rel->rd_smgr, VISIBILITYMAP_FORKNUM, newnblocks,
-				 rel->rd_istemp);
+	smgrtruncate(rel->rd_smgr, VISIBILITYMAP_FORKNUM, newnblocks);
 
 	/*
 	 * We might as well update the local smgr_vm_nblocks setting. smgrtruncate

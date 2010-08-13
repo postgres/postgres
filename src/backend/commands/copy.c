@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.328 2010/07/22 00:47:52 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.329 2010/08/13 20:10:50 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1019,7 +1019,7 @@ DoCopy(const CopyStmt *stmt, const char *queryString)
 		ExecCheckRTPerms(list_make1(rte), true);
 
 		/* check read-only transaction */
-		if (XactReadOnly && is_from && !cstate->rel->rd_islocaltemp)
+		if (XactReadOnly && is_from && cstate->rel->rd_backend != MyBackendId)
 			PreventCommandIfReadOnly("COPY FROM");
 
 		/* Don't allow COPY w/ OIDs to or from a table without them */

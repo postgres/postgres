@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/catalog.c,v 1.90 2010/04/20 23:48:47 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/catalog.c,v 1.91 2010/08/13 20:10:50 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -78,12 +78,37 @@ forkname_to_number(char *forkName)
 }
 
 /*
- * relpath			- construct path to a relation's file
+ * forkname_chars
+ * 		We use this to figure out whether a filename could be a relation
+ * 		fork (as opposed to an oddly named stray file that somehow ended
+ * 		up in the database directory).  If the passed string begins with
+ * 		a fork name (other than the main fork name), we return its length.
+ * 		If not, we return 0.
+ *
+ * Note that the present coding assumes that there are no fork names which
+ * are prefixes of other fork names.
+ */
+int
+forkname_chars(const char *str)
+{
+	ForkNumber	forkNum;
+
+	for (forkNum = 1; forkNum <= MAX_FORKNUM; forkNum++)
+	{
+		int len = strlen(forkNames[forkNum]);
+		if (strncmp(forkNames[forkNum], str, len) == 0)
+			return len;
+	}
+	return 0;
+}
+
+/*
+ * relpathbackend - construct path to a relation's file
  *
  * Result is a palloc'd string.
  */
 char *
-relpath(RelFileNode rnode, ForkNumber forknum)
+relpathbackend(RelFileNode rnode, BackendId backend, ForkNumber forknum)
 {
 	int			pathlen;
 	char	   *path;
@@ -92,6 +117,7 @@ relpath(RelFileNode rnode, ForkNumber forknum)
 	{
 		/* Shared system relations live in {datadir}/global */
 		Assert(rnode.dbNode == 0);
+		Assert(backend == InvalidBackendId);
 		pathlen = 7 + OIDCHARS + 1 + FORKNAMECHARS + 1;
 		path = (char *) palloc(pathlen);
 		if (forknum != MAIN_FORKNUM)
@@ -103,29 +129,69 @@ relpath(RelFileNode rnode, ForkNumber forknum)
 	else if (rnode.spcNode == DEFAULTTABLESPACE_OID)
 	{
 		/* The default tablespace is {datadir}/base */
-		pathlen = 5 + OIDCHARS + 1 + OIDCHARS + 1 + FORKNAMECHARS + 1;
-		path = (char *) palloc(pathlen);
-		if (forknum != MAIN_FORKNUM)
-			snprintf(path, pathlen, "base/%u/%u_%s",
-					 rnode.dbNode, rnode.relNode, forkNames[forknum]);
+		if (backend == InvalidBackendId)
+		{
+			pathlen = 5 + OIDCHARS + 1 + OIDCHARS + 1 + FORKNAMECHARS + 1;
+			path = (char *) palloc(pathlen);
+			if (forknum != MAIN_FORKNUM)
+				snprintf(path, pathlen, "base/%u/%u_%s",
+						 rnode.dbNode, rnode.relNode,
+						 forkNames[forknum]);
+			else
+				snprintf(path, pathlen, "base/%u/%u",
+						 rnode.dbNode, rnode.relNode);
+		}
 		else
-			snprintf(path, pathlen, "base/%u/%u",
-					 rnode.dbNode, rnode.relNode);
+		{
+			/* OIDCHARS will suffice for an integer, too */
+			pathlen = 5 + OIDCHARS + 2 + OIDCHARS + 1 + OIDCHARS + 1
+					+ FORKNAMECHARS + 1;
+			path = (char *) palloc(pathlen);
+			if (forknum != MAIN_FORKNUM)
+				snprintf(path, pathlen, "base/%u/t%d_%u_%s",
+						 rnode.dbNode, backend, rnode.relNode,
+						 forkNames[forknum]);
+			else
+				snprintf(path, pathlen, "base/%u/t%d_%u",
+						 rnode.dbNode, backend, rnode.relNode);
+		}
 	}
 	else
 	{
 		/* All other tablespaces are accessed via symlinks */
-		pathlen = 9 + 1 + OIDCHARS + 1 + strlen(TABLESPACE_VERSION_DIRECTORY) +
-			1 + OIDCHARS + 1 + OIDCHARS + 1 + FORKNAMECHARS + 1;
-		path = (char *) palloc(pathlen);
-		if (forknum != MAIN_FORKNUM)
-			snprintf(path, pathlen, "pg_tblspc/%u/%s/%u/%u_%s",
-					 rnode.spcNode, TABLESPACE_VERSION_DIRECTORY,
-					 rnode.dbNode, rnode.relNode, forkNames[forknum]);
+		if (backend == InvalidBackendId)
+		{
+			pathlen = 9 + 1 + OIDCHARS + 1
+					+ strlen(TABLESPACE_VERSION_DIRECTORY) + 1 + OIDCHARS + 1
+					+ OIDCHARS + 1 + FORKNAMECHARS + 1;
+			path = (char *) palloc(pathlen);
+			if (forknum != MAIN_FORKNUM)
+				snprintf(path, pathlen, "pg_tblspc/%u/%s/%u/%u_%s",
+						 rnode.spcNode, TABLESPACE_VERSION_DIRECTORY,
+						 rnode.dbNode, rnode.relNode,
+						 forkNames[forknum]);
+			else
+				snprintf(path, pathlen, "pg_tblspc/%u/%s/%u/%u",
+						 rnode.spcNode, TABLESPACE_VERSION_DIRECTORY,
+						 rnode.dbNode, rnode.relNode);
+		}
 		else
-			snprintf(path, pathlen, "pg_tblspc/%u/%s/%u/%u",
-					 rnode.spcNode, TABLESPACE_VERSION_DIRECTORY,
-					 rnode.dbNode, rnode.relNode);
+		{
+			/* OIDCHARS will suffice for an integer, too */
+			pathlen = 9 + 1 + OIDCHARS + 1
+					+ strlen(TABLESPACE_VERSION_DIRECTORY) + 1 + OIDCHARS + 2
+					+ OIDCHARS + 1 + OIDCHARS + 1 + FORKNAMECHARS + 1;
+			path = (char *) palloc(pathlen);
+			if (forknum != MAIN_FORKNUM)
+				snprintf(path, pathlen, "pg_tblspc/%u/%s/%u/t%d_%u_%s",
+						 rnode.spcNode, TABLESPACE_VERSION_DIRECTORY,
+						 rnode.dbNode, backend, rnode.relNode,
+						 forkNames[forknum]);
+			else
+				snprintf(path, pathlen, "pg_tblspc/%u/%s/%u/t%d_%u",
+						 rnode.spcNode, TABLESPACE_VERSION_DIRECTORY,
+						 rnode.dbNode, backend, rnode.relNode);
+		}
 	}
 	return path;
 }
@@ -458,16 +524,23 @@ GetNewOidWithIndex(Relation relation, Oid indexId, AttrNumber oidcolumn)
  * created by bootstrap have preassigned OIDs, so there's no need.
  */
 Oid
-GetNewRelFileNode(Oid reltablespace, Relation pg_class)
+GetNewRelFileNode(Oid reltablespace, Relation pg_class, BackendId backend)
 {
-	RelFileNode rnode;
+	RelFileNodeBackend rnode;
 	char	   *rpath;
 	int			fd;
 	bool		collides;
 
 	/* This logic should match RelationInitPhysicalAddr */
-	rnode.spcNode = reltablespace ? reltablespace : MyDatabaseTableSpace;
-	rnode.dbNode = (rnode.spcNode == GLOBALTABLESPACE_OID) ? InvalidOid : MyDatabaseId;
+	rnode.node.spcNode = reltablespace ? reltablespace : MyDatabaseTableSpace;
+	rnode.node.dbNode = (rnode.node.spcNode == GLOBALTABLESPACE_OID) ? InvalidOid : MyDatabaseId;
+
+	/*
+	 * The relpath will vary based on the backend ID, so we must initialize
+	 * that properly here to make sure that any collisions based on filename
+	 * are properly detected.
+	 */
+	rnode.backend = backend;
 
 	do
 	{
@@ -475,9 +548,9 @@ GetNewRelFileNode(Oid reltablespace, Relation pg_class)
 
 		/* Generate the OID */
 		if (pg_class)
-			rnode.relNode = GetNewOid(pg_class);
+			rnode.node.relNode = GetNewOid(pg_class);
 		else
-			rnode.relNode = GetNewObjectId();
+			rnode.node.relNode = GetNewObjectId();
 
 		/* Check for existing file of same name */
 		rpath = relpath(rnode, MAIN_FORKNUM);
@@ -508,5 +581,5 @@ GetNewRelFileNode(Oid reltablespace, Relation pg_class)
 		pfree(rpath);
 	} while (collides);
 
-	return rnode.relNode;
+	return rnode.node.relNode;
 }

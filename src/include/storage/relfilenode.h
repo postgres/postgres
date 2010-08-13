@@ -7,12 +7,14 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/relfilenode.h,v 1.25 2010/02/07 20:48:13 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/storage/relfilenode.h,v 1.26 2010/08/13 20:10:53 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef RELFILENODE_H
 #define RELFILENODE_H
+
+#include "storage/backendid.h"
 
 /*
  * The physical storage of a relation consists of one or more forks. The
@@ -37,7 +39,8 @@ typedef enum ForkNumber
 
 /*
  * RelFileNode must provide all that we need to know to physically access
- * a relation. Note, however, that a "physical" relation is comprised of
+ * a relation, with the exception of the backend ID, which can be provided
+ * separately. Note, however, that a "physical" relation is comprised of
  * multiple files on the filesystem, as each fork is stored as a separate
  * file, and each fork can be divided into multiple segments. See md.c.
  *
@@ -74,14 +77,30 @@ typedef struct RelFileNode
 } RelFileNode;
 
 /*
- * Note: RelFileNodeEquals compares relNode first since that is most likely
- * to be different in two unequal RelFileNodes.  It is probably redundant
- * to compare spcNode if the other two fields are found equal, but do it
- * anyway to be sure.
+ * Augmenting a relfilenode with the backend ID provides all the information
+ * we need to locate the physical storage.
+ */
+typedef struct RelFileNodeBackend
+{
+	RelFileNode	node;
+	BackendId	backend;
+} RelFileNodeBackend;
+
+/*
+ * Note: RelFileNodeEquals and RelFileNodeBackendEquals compare relNode first
+ * since that is most likely to be different in two unequal RelFileNodes.  It
+ * is probably redundant to compare spcNode if the other fields are found equal,
+ * but do it anyway to be sure.
  */
 #define RelFileNodeEquals(node1, node2) \
 	((node1).relNode == (node2).relNode && \
 	 (node1).dbNode == (node2).dbNode && \
 	 (node1).spcNode == (node2).spcNode)
+
+#define RelFileNodeBackendEquals(node1, node2) \
+	((node1).node.relNode == (node2).node.relNode && \
+	 (node1).node.dbNode == (node2).node.dbNode && \
+	 (node1).backend == (node2).backend && \
+	 (node1).node.spcNode == (node2).node.spcNode)
 
 #endif   /* RELFILENODE_H */

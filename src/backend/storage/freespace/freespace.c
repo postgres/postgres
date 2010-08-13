@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/freespace/freespace.c,v 1.77 2010/02/26 02:00:59 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/freespace/freespace.c,v 1.78 2010/08/13 20:10:52 rhaas Exp $
  *
  *
  * NOTES:
@@ -303,7 +303,7 @@ FreeSpaceMapTruncateRel(Relation rel, BlockNumber nblocks)
 	}
 
 	/* Truncate the unused FSM pages, and send smgr inval message */
-	smgrtruncate(rel->rd_smgr, FSM_FORKNUM, new_nfsmblocks, rel->rd_istemp);
+	smgrtruncate(rel->rd_smgr, FSM_FORKNUM, new_nfsmblocks);
 
 	/*
 	 * We might as well update the local smgr_fsm_nblocks setting.

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/backend/access/transam/twophase.c,v 1.62 2010/07/06 19:18:55 momjian Exp $
+ *		$PostgreSQL: pgsql/src/backend/access/transam/twophase.c,v 1.63 2010/08/13 20:10:50 rhaas Exp $
  *
  * NOTES
  *		Each global transaction is associated with a global transaction
@@ -865,8 +865,8 @@ StartPrepare(GlobalTransaction gxact)
 	hdr.prepared_at = gxact->prepared_at;
 	hdr.owner = gxact->owner;
 	hdr.nsubxacts = xactGetCommittedChildren(&children);
-	hdr.ncommitrels = smgrGetPendingDeletes(true, &commitrels, NULL);
-	hdr.nabortrels = smgrGetPendingDeletes(false, &abortrels, NULL);
+	hdr.ncommitrels = smgrGetPendingDeletes(true, &commitrels);
+	hdr.nabortrels = smgrGetPendingDeletes(false, &abortrels);
 	hdr.ninvalmsgs = xactGetCommittedInvalidationMessages(&invalmsgs,
 														  &hdr.initfileinval);
 	StrNCpy(hdr.gid, gxact->gid, GIDSIZE);
@@ -1320,13 +1320,13 @@ FinishPreparedTransaction(const char *gid, bool isCommit)
 	}
 	for (i = 0; i < ndelrels; i++)
 	{
-		SMgrRelation srel = smgropen(delrels[i]);
+		SMgrRelation srel = smgropen(delrels[i], InvalidBackendId);
 		ForkNumber	fork;
 
 		for (fork = 0; fork <= MAX_FORKNUM; fork++)
 		{
 			if (smgrexists(srel, fork))
-				smgrdounlink(srel, fork, false, false);
+				smgrdounlink(srel, fork, false);
 		}
 		smgrclose(srel);
 	}

@@ -38,7 +38,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/bgwriter.c,v 1.68 2010/04/28 16:54:15 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/bgwriter.c,v 1.69 2010/08/13 20:10:52 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -113,7 +113,7 @@
  */
 typedef struct
 {
-	RelFileNode rnode;
+	RelFileNodeBackend rnode;
 	ForkNumber	forknum;
 	BlockNumber segno;			/* see md.c for special values */
 	/* might add a real request-type field later; not needed yet */
@@ -1071,7 +1071,8 @@ RequestCheckpoint(int flags)
  * than we have to here.
  */
 bool
-ForwardFsyncRequest(RelFileNode rnode, ForkNumber forknum, BlockNumber segno)
+ForwardFsyncRequest(RelFileNodeBackend rnode, ForkNumber forknum,
+					BlockNumber segno)
 {
 	BgWriterRequest *request;
 

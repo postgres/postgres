@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/xlog_internal.h,v 1.33 2010/04/28 16:10:43 heikki Exp $
+ * $PostgreSQL: pgsql/src/include/access/xlog_internal.h,v 1.34 2010/08/13 20:10:53 rhaas Exp $
  */
 #ifndef XLOG_INTERNAL_H
 #define XLOG_INTERNAL_H
@@ -71,7 +71,7 @@ typedef struct XLogContRecord
 /*
  * Each page of XLOG file has a header like this:
  */
-#define XLOG_PAGE_MAGIC 0xD064	/* can be used as WAL version indicator */
+#define XLOG_PAGE_MAGIC 0xD065	/* can be used as WAL version indicator */
 
 typedef struct XLogPageHeaderData
 {

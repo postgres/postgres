@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/bufmgr.h,v 1.124 2010/01/23 16:37:12 sriggs Exp $
+ * $PostgreSQL: pgsql/src/include/storage/bufmgr.h,v 1.125 2010/08/13 20:10:53 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -160,7 +160,7 @@ extern Buffer ReadBuffer(Relation reln, BlockNumber blockNum);
 extern Buffer ReadBufferExtended(Relation reln, ForkNumber forkNum,
 				   BlockNumber blockNum, ReadBufferMode mode,
 				   BufferAccessStrategy strategy);
-extern Buffer ReadBufferWithoutRelcache(RelFileNode rnode, bool isTemp,
+extern Buffer ReadBufferWithoutRelcache(RelFileNode rnode,
 						  ForkNumber forkNum, BlockNumber blockNum,
 						  ReadBufferMode mode, BufferAccessStrategy strategy);
 extern void ReleaseBuffer(Buffer buffer);
@@ -180,8 +180,8 @@ extern BlockNumber BufferGetBlockNumber(Buffer buffer);
 extern BlockNumber RelationGetNumberOfBlocks(Relation relation);
 extern void FlushRelationBuffers(Relation rel);
 extern void FlushDatabaseBuffers(Oid dbid);
-extern void DropRelFileNodeBuffers(RelFileNode rnode, ForkNumber forkNum,
-					   bool istemp, BlockNumber firstDelBlock);
+extern void DropRelFileNodeBuffers(RelFileNodeBackend rnode,
+					   ForkNumber forkNum, BlockNumber firstDelBlock);
 extern void DropDatabaseBuffers(Oid dbid);
 
 #ifdef NOT_USED

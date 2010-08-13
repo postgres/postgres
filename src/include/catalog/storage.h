@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/storage.h,v 1.5 2010/02/07 20:48:13 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/storage.h,v 1.6 2010/08/13 20:10:53 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,8 +30,7 @@ extern void RelationTruncate(Relation rel, BlockNumber nblocks);
  * naming
  */
 extern void smgrDoPendingDeletes(bool isCommit);
-extern int smgrGetPendingDeletes(bool forCommit, RelFileNode **ptr,
-					  bool *haveNonTemp);
+extern int smgrGetPendingDeletes(bool forCommit, RelFileNode **ptr);
 extern void AtSubCommit_smgr(void);
 extern void AtSubAbort_smgr(void);
 extern void PostPrepare_smgr(void);

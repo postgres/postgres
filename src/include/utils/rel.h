@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/rel.h,v 1.124 2010/02/26 02:01:29 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/rel.h,v 1.125 2010/08/13 20:10:54 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -126,8 +126,8 @@ typedef struct RelationData
 	/* use "struct" here to avoid needing to include smgr.h: */
 	struct SMgrRelationData *rd_smgr;	/* cached file handle, or NULL */
 	int			rd_refcnt;		/* reference count */
+	BackendId	rd_backend;		/* owning backend id, if temporary relation */
 	bool		rd_istemp;		/* rel is a temporary relation */
-	bool		rd_islocaltemp; /* rel is a temp rel of this session */
 	bool		rd_isnailed;	/* rel is nailed in cache */
 	bool		rd_isvalid;		/* relcache entry is valid */
 	char		rd_indexvalid;	/* state of rd_indexlist: 0 = not valid, 1 =
@@ -347,7 +347,7 @@ typedef struct StdRdOptions
 #define RelationOpenSmgr(relation) \
 	do { \
 		if ((relation)->rd_smgr == NULL) \
-			smgrsetowner(&((relation)->rd_smgr), smgropen((relation)->rd_node)); \
+			smgrsetowner(&((relation)->rd_smgr), smgropen((relation)->rd_node, (relation)->rd_backend)); \
 	} while (0)
 
 /*
@@ -393,7 +393,7 @@ typedef struct StdRdOptions
  * Beware of multiple eval of argument
  */
 #define RELATION_IS_LOCAL(relation) \
-	((relation)->rd_islocaltemp || \
+	((relation)->rd_backend == MyBackendId || \
 	 (relation)->rd_createSubid != InvalidSubTransactionId)
 
 /*
@@ -403,7 +403,7 @@ typedef struct StdRdOptions
  * Beware of multiple eval of argument
  */
 #define RELATION_IS_OTHER_TEMP(relation) \
-	((relation)->rd_istemp && !(relation)->rd_islocaltemp)
+	((relation)->rd_istemp && (relation)->rd_backend != MyBackendId)
 
 /* routines in utils/cache/relcache.c */
 extern void RelationIncrementReferenceCount(Relation rel);

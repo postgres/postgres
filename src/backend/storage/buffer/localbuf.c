@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/localbuf.c,v 1.89 2010/01/02 16:57:51 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/localbuf.c,v 1.90 2010/08/13 20:10:52 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -68,7 +68,7 @@ LocalPrefetchBuffer(SMgrRelation smgr, ForkNumber forkNum,
 	BufferTag	newTag;			/* identity of requested block */
 	LocalBufferLookupEnt *hresult;
 
-	INIT_BUFFERTAG(newTag, smgr->smgr_rnode, forkNum, blockNum);
+	INIT_BUFFERTAG(newTag, smgr->smgr_rnode.node, forkNum, blockNum);
 
 	/* Initialize local buffers if first request in this session */
 	if (LocalBufHash == NULL)
@@ -110,7 +110,7 @@ LocalBufferAlloc(SMgrRelation smgr, ForkNumber forkNum, BlockNumber blockNum,
 	int			trycounter;
 	bool		found;
 
-	INIT_BUFFERTAG(newTag, smgr->smgr_rnode, forkNum, blockNum);
+	INIT_BUFFERTAG(newTag, smgr->smgr_rnode.node, forkNum, blockNum);
 
 	/* Initialize local buffers if first request in this session */
 	if (LocalBufHash == NULL)
@@ -127,7 +127,7 @@ LocalBufferAlloc(SMgrRelation smgr, ForkNumber forkNum, BlockNumber blockNum,
 		Assert(BUFFERTAGS_EQUAL(bufHdr->tag, newTag));
 #ifdef LBDEBUG
 		fprintf(stderr, "LB ALLOC (%u,%d,%d) %d\n",
-				smgr->smgr_rnode.relNode, forkNum, blockNum, -b - 1);
+				smgr->smgr_rnode.node.relNode, forkNum, blockNum, -b - 1);
 #endif
 		/* this part is equivalent to PinBuffer for a shared buffer */
 		if (LocalRefCount[b] == 0)
@@ -150,7 +150,8 @@ LocalBufferAlloc(SMgrRelation smgr, ForkNumber forkNum, BlockNumber blockNum,
 
 #ifdef LBDEBUG
 	fprintf(stderr, "LB ALLOC (%u,%d,%d) %d\n",
-		 smgr->smgr_rnode.relNode, forkNum, blockNum, -nextFreeLocalBuf - 1);
+		 smgr->smgr_rnode.node.relNode, forkNum, blockNum,
+		 -nextFreeLocalBuf - 1);
 #endif
 
 	/*
@@ -198,14 +199,14 @@ LocalBufferAlloc(SMgrRelation smgr, ForkNumber forkNum, BlockNumber blockNum,
 		SMgrRelation oreln;
 
 		/* Find smgr relation for buffer */
-		oreln = smgropen(bufHdr->tag.rnode);
+		oreln = smgropen(bufHdr->tag.rnode, MyBackendId);
 
 		/* And write... */
 		smgrwrite(oreln,
 				  bufHdr->tag.forkNum,
 				  bufHdr->tag.blockNum,
 				  (char *) LocalBufHdrGetBlock(bufHdr),
-				  true);
+				  false);
 
 		/* Mark not-dirty now in case we error out below */
 		bufHdr->flags &= ~BM_DIRTY;
@@ -309,7 +310,8 @@ DropRelFileNodeLocalBuffers(RelFileNode rnode, ForkNumber forkNum,
 			if (LocalRefCount[i] != 0)
 				elog(ERROR, "block %u of %s is still referenced (local %u)",
 					 bufHdr->tag.blockNum,
-					 relpath(bufHdr->tag.rnode, bufHdr->tag.forkNum),
+					 relpathbackend(bufHdr->tag.rnode, MyBackendId,
+								   bufHdr->tag.forkNum),
 					 LocalRefCount[i]);
 			/* Remove entry from hashtable */
 			hresult = (LocalBufferLookupEnt *)

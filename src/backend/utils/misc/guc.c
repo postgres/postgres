@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.566 2010/08/06 14:51:33 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.567 2010/08/13 20:10:53 rhaas Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -95,6 +95,16 @@
 #else
 #define MAX_KILOBYTES	(INT_MAX / 1024)
 #endif
+
+/*
+ * Note: MAX_BACKENDS is limited to 2^23-1 because inval.c stores the
+ * backend ID as a 3-byte signed integer.  Even if that limitation were
+ * removed, we still could not exceed INT_MAX/4 because some places compute
+ * 4*MaxBackends without any overflow check.  This is rechecked in
+ * assign_maxconnections, since MaxBackends is computed as MaxConnections
+ * plus autovacuum_max_workers plus one (for the autovacuum launcher).
+ */
+#define MAX_BACKENDS	0x7fffff
 
 #define KB_PER_MB (1024)
 #define KB_PER_GB (1024*1024)
@@ -1414,23 +1424,13 @@ static struct config_int ConfigureNamesInt[] =
 		30 * 1000, -1, INT_MAX / 1000, NULL, NULL
 	},
 
-	/*
-	 * Note: MaxBackends is limited to INT_MAX/4 because some places compute
-	 * 4*MaxBackends without any overflow check.  This check is made in
-	 * assign_maxconnections, since MaxBackends is computed as MaxConnections
-	 * plus autovacuum_max_workers plus one (for the autovacuum launcher).
-	 *
-	 * Likewise we have to limit NBuffers to INT_MAX/2.
-	 *
-	 * See also CheckRequiredParameterValues() if this parameter changes
-	 */
 	{
 		{"max_connections", PGC_POSTMASTER, CONN_AUTH_SETTINGS,
 			gettext_noop("Sets the maximum number of concurrent connections."),
 			NULL
 		},
 		&MaxConnections,
-		100, 1, INT_MAX / 4, assign_maxconnections, NULL
+		100, 1, MAX_BACKENDS, assign_maxconnections, NULL
 	},
 
 	{
@@ -1439,9 +1439,13 @@ static struct config_int ConfigureNamesInt[] =
 			NULL
 		},
 		&ReservedBackends,
-		3, 0, INT_MAX / 4, NULL, NULL
+		3, 0, MAX_BACKENDS, NULL, NULL
 	},
 
+	/*
+	 * We sometimes multiply the number of shared buffers by two without
+	 * checking for overflow, so we mustn't allow more than INT_MAX / 2.
+	 */
 	{
 		{"shared_buffers", PGC_POSTMASTER, RESOURCES_MEM,
 			gettext_noop("Sets the number of shared memory buffers used by the server."),
@@ -1618,7 +1622,7 @@ static struct config_int ConfigureNamesInt[] =
 			NULL
 		},
 		&max_prepared_xacts,
-		0, 0, INT_MAX / 4, NULL, NULL
+		0, 0, MAX_BACKENDS, NULL, NULL
 	},
 
 #ifdef LOCK_DEBUG
@@ -1782,7 +1786,7 @@ static struct config_int ConfigureNamesInt[] =
 			NULL
 		},
 		&max_wal_senders,
-		0, 0, INT_MAX / 4, NULL, NULL
+		0, 0, MAX_BACKENDS, NULL, NULL
 	},
 
 	{
@@ -2022,7 +2026,7 @@ static struct config_int ConfigureNamesInt[] =
 			NULL
 		},
 		&autovacuum_max_workers,
-		3, 1, INT_MAX / 4, assign_autovacuum_max_workers, NULL
+		3, 1, MAX_BACKENDS, assign_autovacuum_max_workers, NULL
 	},
 
 	{
@@ -7995,7 +7999,7 @@ show_tcp_keepalives_count(void)
 static bool
 assign_maxconnections(int newval, bool doit, GucSource source)
 {
-	if (newval + autovacuum_max_workers + 1 > INT_MAX / 4)
+	if (newval + autovacuum_max_workers + 1 > MAX_BACKENDS)
 		return false;
 
 	if (doit)
@@ -8007,7 +8011,7 @@ assign_maxconnections(int newval, bool doit, GucSource source)
 static bool
 assign_autovacuum_max_workers(int newval, bool doit, GucSource source)
 {
-	if (MaxConnections + newval + 1 > INT_MAX / 4)
+	if (MaxConnections + newval + 1 > MAX_BACKENDS)
 		return false;
 
 	if (doit)

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.311 2010/07/06 19:18:58 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.312 2010/08/13 20:10:52 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -858,10 +858,20 @@ RelationBuildDesc(Oid targetRelId, bool insertIt)
 	relation->rd_createSubid = InvalidSubTransactionId;
 	relation->rd_newRelfilenodeSubid = InvalidSubTransactionId;
 	relation->rd_istemp = relation->rd_rel->relistemp;
-	if (relation->rd_istemp)
-		relation->rd_islocaltemp = isTempOrToastNamespace(relation->rd_rel->relnamespace);
+	if (!relation->rd_istemp)
+		relation->rd_backend = InvalidBackendId;
+	else if (isTempOrToastNamespace(relation->rd_rel->relnamespace))
+		relation->rd_backend = MyBackendId;
 	else
-		relation->rd_islocaltemp = false;
+	{
+		/*
+		 * If it's a temporary table, but not one of ours, we have to use
+		 * the slow, grotty method to figure out the owning backend.
+		 */
+		relation->rd_backend =
+			GetTempNamespaceBackendId(relation->rd_rel->relnamespace);
+		Assert(relation->rd_backend != InvalidBackendId);
+	}
 
 	/*
 	 * initialize the tuple descriptor (relation->rd_att).
@@ -1424,7 +1434,7 @@ formrdesc(const char *relationName, Oid relationReltype,
 	relation->rd_createSubid = InvalidSubTransactionId;
 	relation->rd_newRelfilenodeSubid = InvalidSubTransactionId;
 	relation->rd_istemp = false;
-	relation->rd_islocaltemp = false;
+	relation->rd_backend = InvalidBackendId;
 
 	/*
 	 * initialize relation tuple form
@@ -2515,7 +2525,7 @@ RelationBuildLocalRelation(const char *relname,
 
 	/* it is temporary if and only if it is in my temp-table namespace */
 	rel->rd_istemp = isTempOrToastNamespace(relnamespace);
-	rel->rd_islocaltemp = rel->rd_istemp;
+	rel->rd_backend = rel->rd_istemp ? MyBackendId : InvalidBackendId;
 
 	/*
 	 * create a new tuple descriptor from the one passed in.  We do this
@@ -2629,7 +2639,7 @@ void
 RelationSetNewRelfilenode(Relation relation, TransactionId freezeXid)
 {
 	Oid			newrelfilenode;
-	RelFileNode newrnode;
+	RelFileNodeBackend newrnode;
 	Relation	pg_class;
 	HeapTuple	tuple;
 	Form_pg_class classform;
@@ -2640,7 +2650,8 @@ RelationSetNewRelfilenode(Relation relation, TransactionId freezeXid)
 		   TransactionIdIsNormal(freezeXid));
 
 	/* Allocate a new relfilenode */
-	newrelfilenode = GetNewRelFileNode(relation->rd_rel->reltablespace, NULL);
+	newrelfilenode = GetNewRelFileNode(relation->rd_rel->reltablespace, NULL,
+									   relation->rd_backend);
 
 	/*
 	 * Get a writable copy of the pg_class tuple for the given relation.
@@ -2660,9 +2671,10 @@ RelationSetNewRelfilenode(Relation relation, TransactionId freezeXid)
 	 * NOTE: any conflict in relfilenode value will be caught here, if
 	 * GetNewRelFileNode messes up for any reason.
 	 */
-	newrnode = relation->rd_node;
-	newrnode.relNode = newrelfilenode;
-	RelationCreateStorage(newrnode, relation->rd_istemp);
+	newrnode.node = relation->rd_node;
+	newrnode.node.relNode = newrelfilenode;
+	newrnode.backend = relation->rd_backend;
+	RelationCreateStorage(newrnode.node, relation->rd_istemp);
 	smgrclosenode(newrnode);
 
 	/*
