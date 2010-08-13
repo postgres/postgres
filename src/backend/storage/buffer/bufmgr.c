@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.257 2010/08/13 20:10:52 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.258 2010/08/13 22:54:17 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -295,10 +295,10 @@ ReadBuffer_common(SMgrRelation smgr, bool isLocalBuf, ForkNumber forkNum,
 	isExtend = (blockNum == P_NEW);
 
 	TRACE_POSTGRESQL_BUFFER_READ_START(forkNum, blockNum,
-									   smgr->smgr_rnode.spcNode,
-									   smgr->smgr_rnode.dbNode,
-									   smgr->smgr_rnode.relNode,
-									   isLocalBuf,
+									   smgr->smgr_rnode.node.spcNode,
+									   smgr->smgr_rnode.node.dbNode,
+									   smgr->smgr_rnode.node.relNode,
+									   smgr->smgr_rnode.backend,
 									   isExtend);
 
 	/* Substitute proper block number if caller asked for P_NEW */
@@ -340,10 +340,10 @@ ReadBuffer_common(SMgrRelation smgr, bool isLocalBuf, ForkNumber forkNum,
 				VacuumCostBalance += VacuumCostPageHit;
 
 			TRACE_POSTGRESQL_BUFFER_READ_DONE(forkNum, blockNum,
-											  smgr->smgr_rnode.spcNode,
-											  smgr->smgr_rnode.dbNode,
-											  smgr->smgr_rnode.relNode,
-											  isLocalBuf,
+											  smgr->smgr_rnode.node.spcNode,
+											  smgr->smgr_rnode.node.dbNode,
+											  smgr->smgr_rnode.node.relNode,
+											  smgr->smgr_rnode.backend,
 											  isExtend,
 											  found);
 
@@ -640,17 +640,17 @@ BufferAlloc(SMgrRelation smgr, ForkNumber forkNum,
 
 				/* OK, do the I/O */
 				TRACE_POSTGRESQL_BUFFER_WRITE_DIRTY_START(forkNum, blockNum,
-													smgr->smgr_rnode.spcNode,
-													 smgr->smgr_rnode.dbNode,
-												   smgr->smgr_rnode.relNode);
+												smgr->smgr_rnode.node.spcNode,
+												 smgr->smgr_rnode.node.dbNode,
+											   smgr->smgr_rnode.node.relNode);
 
 				FlushBuffer(buf, NULL);
 				LWLockRelease(buf->content_lock);
 
 				TRACE_POSTGRESQL_BUFFER_WRITE_DIRTY_DONE(forkNum, blockNum,
-													smgr->smgr_rnode.spcNode,
-													 smgr->smgr_rnode.dbNode,
-												   smgr->smgr_rnode.relNode);
+												smgr->smgr_rnode.node.spcNode,
+												 smgr->smgr_rnode.node.dbNode,
+											   smgr->smgr_rnode.node.relNode);
 			}
 			else
 			{
@@ -1850,9 +1850,10 @@ FlushBuffer(volatile BufferDesc *buf, SMgrRelation reln)
 
 	TRACE_POSTGRESQL_BUFFER_FLUSH_START(buf->tag.forkNum,
 										buf->tag.blockNum,
-										reln->smgr_rnode.spcNode,
-										reln->smgr_rnode.dbNode,
-										reln->smgr_rnode.relNode);
+										reln->smgr_rnode.node.spcNode,
+										reln->smgr_rnode.node.dbNode,
+										reln->smgr_rnode.node.relNode,
+										reln->smgr_rnode.backend);
 
 	/*
 	 * Force XLOG flush up to buffer's LSN.  This implements the basic WAL
@@ -1889,9 +1890,10 @@ FlushBuffer(volatile BufferDesc *buf, SMgrRelation reln)
 
 	TRACE_POSTGRESQL_BUFFER_FLUSH_DONE(buf->tag.forkNum,
 									   buf->tag.blockNum,
-									   reln->smgr_rnode.spcNode,
-									   reln->smgr_rnode.dbNode,
-									   reln->smgr_rnode.relNode);
+									   reln->smgr_rnode.node.spcNode,
+									   reln->smgr_rnode.node.dbNode,
+									   reln->smgr_rnode.node.relNode,
+									   reln->smgr_rnode.backend);
 
 	/* Pop the error context stack */
 	error_context_stack = errcontext.previous;

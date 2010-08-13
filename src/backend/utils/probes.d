@@ -3,7 +3,7 @@
  *
  *	Copyright (c) 2006-2010, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/backend/utils/probes.d,v 1.13 2010/08/13 20:10:52 rhaas Exp $
+ *	$PostgreSQL: pgsql/src/backend/utils/probes.d,v 1.14 2010/08/13 22:54:17 rhaas Exp $
  * ----------
  */
 
@@ -54,10 +54,10 @@ provider postgresql {
 	probe sort__start(int, bool, int, int, bool);
 	probe sort__done(bool, long);
 
-	probe buffer__read__start(ForkNumber, BlockNumber, Oid, Oid, Oid, bool, bool);
+	probe buffer__read__start(ForkNumber, BlockNumber, Oid, Oid, Oid, int, bool);
 	probe buffer__read__done(ForkNumber, BlockNumber, Oid, Oid, Oid, int, bool, bool);
-	probe buffer__flush__start(ForkNumber, BlockNumber, Oid, Oid, Oid);
-	probe buffer__flush__done(ForkNumber, BlockNumber, Oid, Oid, Oid);
+	probe buffer__flush__start(ForkNumber, BlockNumber, Oid, Oid, Oid, int);
+	probe buffer__flush__done(ForkNumber, BlockNumber, Oid, Oid, Oid, int);
 
 	probe buffer__checkpoint__start(int);
 	probe buffer__checkpoint__sync__start();
