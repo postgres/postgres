@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.134 2010/02/26 02:01:17 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.134.4.1 2010/08/13 14:38:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -315,22 +315,7 @@ main(int argc, char *argv[])
 		}
 	}
 
-	/* Add long options to the pg_dump argument list */
-	if (binary_upgrade)
-		appendPQExpBuffer(pgdumpopts, " --binary-upgrade");
-	if (column_inserts)
-		appendPQExpBuffer(pgdumpopts, " --column-inserts");
-	if (disable_dollar_quoting)
-		appendPQExpBuffer(pgdumpopts, " --disable-dollar-quoting");
-	if (disable_triggers)
-		appendPQExpBuffer(pgdumpopts, " --disable-triggers");
-	if (inserts)
-		appendPQExpBuffer(pgdumpopts, " --inserts");
-	if (no_tablespaces)
-		appendPQExpBuffer(pgdumpopts, " --no-tablespaces");
-	if (use_setsessauth)
-		appendPQExpBuffer(pgdumpopts, " --use-set-session-authorization");
-
+	/* Complain if any arguments remain */
 	if (optind < argc)
 	{
 		fprintf(stderr, _("%s: too many command-line arguments (first is \"%s\")\n"),
@@ -367,6 +352,22 @@ main(int argc, char *argv[])
 				progname);
 		exit(1);
 	}
+
+	/* Add long options to the pg_dump argument list */
+	if (binary_upgrade)
+		appendPQExpBuffer(pgdumpopts, " --binary-upgrade");
+	if (column_inserts)
+		appendPQExpBuffer(pgdumpopts, " --column-inserts");
+	if (disable_dollar_quoting)
+		appendPQExpBuffer(pgdumpopts, " --disable-dollar-quoting");
+	if (disable_triggers)
+		appendPQExpBuffer(pgdumpopts, " --disable-triggers");
+	if (inserts)
+		appendPQExpBuffer(pgdumpopts, " --inserts");
+	if (no_tablespaces)
+		appendPQExpBuffer(pgdumpopts, " --no-tablespaces");
+	if (use_setsessauth)
+		appendPQExpBuffer(pgdumpopts, " --use-set-session-authorization");
 
 	/*
 	 * If there was a database specified on the command line, use that,
