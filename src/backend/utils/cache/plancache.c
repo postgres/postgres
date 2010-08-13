@@ -35,7 +35,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/plancache.c,v 1.35 2010/02/26 02:01:11 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/plancache.c,v 1.36 2010/08/13 16:27:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -513,6 +513,8 @@ RevalidateCachedPlan(CachedPlanSource *plansource, bool useResOwner)
 
 		/*
 		 * Restore the search_path that was in use when the plan was made.
+		 * See comments for PushOverrideSearchPath about limitations of this.
+		 *
 		 * (XXX is there anything else we really need to restore?)
 		 */
 		PushOverrideSearchPath(plansource->search_path);
