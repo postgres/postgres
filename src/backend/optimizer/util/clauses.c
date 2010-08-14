@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.287 2010/03/19 22:54:41 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.288 2010/08/14 15:47:13 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -548,6 +548,18 @@ count_agg_clauses_walker(Node *node, AggClauseCounts *counts)
 			avgwidth = MAXALIGN(avgwidth);
 
 			counts->transitionSpace += avgwidth + 2 * sizeof(void *);
+		}
+		else if (aggtranstype == INTERNALOID)
+		{
+			/*
+			 * INTERNAL transition type is a special case: although INTERNAL
+			 * is pass-by-value, it's almost certainly being used as a pointer
+			 * to some large data structure.  We assume usage of
+			 * ALLOCSET_DEFAULT_INITSIZE, which is a good guess if the data is
+			 * being kept in a private memory context, as is done by
+			 * array_agg() for instance.
+			 */
+			counts->transitionSpace += ALLOCSET_DEFAULT_INITSIZE;
 		}
 
 		/*
