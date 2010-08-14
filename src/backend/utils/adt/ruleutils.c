@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.331 2010/08/12 00:40:59 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.332 2010/08/14 14:20:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1622,8 +1622,9 @@ pg_get_serial_sequence(PG_FUNCTION_ARGS)
  *		the specified function.
  *
  * Note: if you change the output format of this function, be careful not
- * to break psql's rules (in \ef) for identifying the start of the function
- * body.
+ * to break psql's rules (in \ef and \sf) for identifying the start of the
+ * function body.  To wit: the function body starts on a line that begins
+ * with "AS ", and no preceding line will look like that.
  */
 Datum
 pg_get_functiondef(PG_FUNCTION_ARGS)

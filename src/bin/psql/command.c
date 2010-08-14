@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.227 2010/08/14 13:59:49 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.228 2010/08/14 14:20:35 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "command.h"
@@ -611,17 +611,17 @@ exec_command(const char *cmd,
 				/*
 				 * lineno "1" should correspond to the first line of the
 				 * function body.  We expect that pg_get_functiondef() will
-				 * emit that on a line beginning with "AS $function", and that
-				 * there can be no such line before the real start of the
-				 * function body.  Increment lineno by the number of lines
-				 * before that line, so that it becomes relative to the first
-				 * line of the function definition.
+				 * emit that on a line beginning with "AS ", and that there
+				 * can be no such line before the real start of the function
+				 * body.  Increment lineno by the number of lines before that
+				 * line, so that it becomes relative to the first line of the
+				 * function definition.
 				 */
 				const char *lines = query_buf->data;
 
 				while (*lines != '\0')
 				{
-					if (strncmp(lines, "AS $function", 12) == 0)
+					if (strncmp(lines, "AS ", 3) == 0)
 						break;
 					lineno++;
 					/* find start of next line */
@@ -1150,9 +1150,9 @@ exec_command(const char *cmd,
 				/*
 				 * lineno "1" should correspond to the first line of the
 				 * function body.  We expect that pg_get_functiondef() will
-				 * emit that on a line beginning with "AS $function", and that
-				 * there can be no such line before the real start of the
-				 * function body.
+				 * emit that on a line beginning with "AS ", and that there
+				 * can be no such line before the real start of the function
+				 * body.
 				 *
 				 * Note that this loop scribbles on func_buf.
 				 */
@@ -1160,7 +1160,7 @@ exec_command(const char *cmd,
 				{
 					char   *eol;
 
-					if (in_header && strncmp(lines, "AS $function", 12) == 0)
+					if (in_header && strncmp(lines, "AS ", 3) == 0)
 						in_header = false;
 					/* increment lineno only for body's lines */
 					if (!in_header)
