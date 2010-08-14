@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.226 2010/08/12 00:40:59 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.227 2010/08/14 13:59:49 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "command.h"
@@ -1083,6 +1083,121 @@ exec_command(const char *cmd,
 		free(opt0);
 	}
 
+	/* \sf -- show a function's source code */
+	else if (strcmp(cmd, "sf") == 0 || strcmp(cmd, "sf+") == 0)
+	{
+		bool		show_linenumbers = (strcmp(cmd, "sf+") == 0);
+		PQExpBuffer	func_buf;
+		char	   *func;
+		Oid			foid = InvalidOid;
+
+		func_buf = createPQExpBuffer();
+		func = psql_scan_slash_option(scan_state,
+									  OT_WHOLE_LINE, NULL, true);
+		if (!func)
+		{
+			psql_error("function name is required\n");
+			status = PSQL_CMD_ERROR;
+		}
+		else if (!lookup_function_oid(pset.db, func, &foid))
+		{
+			/* error already reported */
+			status = PSQL_CMD_ERROR;
+		}
+		else if (!get_create_function_cmd(pset.db, foid, func_buf))
+		{
+			/* error already reported */
+			status = PSQL_CMD_ERROR;
+		}
+		else
+		{
+			FILE   *output;
+			bool	is_pager;
+
+			/* Select output stream: stdout, pager, or file */
+			if (pset.queryFout == stdout)
+			{
+				/* count lines in function to see if pager is needed */
+				int			lineno = 0;
+				const char *lines = func_buf->data;
+
+				while (*lines != '\0')
+				{
+					lineno++;
+					/* find start of next line */
+					lines = strchr(lines, '\n');
+					if (!lines)
+						break;
+					lines++;
+				}
+
+				output = PageOutput(lineno, pset.popt.topt.pager);
+				is_pager = true;
+			}
+			else
+			{
+				/* use previously set output file, without pager */
+				output = pset.queryFout;
+				is_pager = false;
+			}
+
+			if (show_linenumbers)
+			{
+				bool		in_header = true;
+				int			lineno = 0;
+				char	   *lines = func_buf->data;
+
+				/*
+				 * lineno "1" should correspond to the first line of the
+				 * function body.  We expect that pg_get_functiondef() will
+				 * emit that on a line beginning with "AS $function", and that
+				 * there can be no such line before the real start of the
+				 * function body.
+				 *
+				 * Note that this loop scribbles on func_buf.
+				 */
+				while (*lines != '\0')
+				{
+					char   *eol;
+
+					if (in_header && strncmp(lines, "AS $function", 12) == 0)
+						in_header = false;
+					/* increment lineno only for body's lines */
+					if (!in_header)
+						lineno++;
+
+					/* find and mark end of current line */
+					eol = strchr(lines, '\n');
+					if (eol != NULL)
+						*eol = '\0';
+
+					/* show current line as appropriate */
+					if (in_header)
+						fprintf(output, "        %s\n", lines);
+					else
+						fprintf(output, "%-7d %s\n", lineno, lines);
+
+					/* advance to next line, if any */
+					if (eol == NULL)
+						break;
+					lines = ++eol;
+				}
+			}
+			else
+			{
+				/* just send the function definition to output */
+				fputs(func_buf->data, output);
+			}
+
+			if (is_pager)
+				ClosePager(output);
+		}
+
+		if (func)
+			free(func);
+		destroyPQExpBuffer(func_buf);
+	}
+
 	/* \t -- turn off headers and row count */
 	else if (strcmp(cmd, "t") == 0)
 	{
@@ -1092,7 +1207,6 @@ exec_command(const char *cmd,
 		success = do_pset("tuples_only", opt, &pset.popt, pset.quiet);
 		free(opt);
 	}
-
 
 	/* \T -- define html <table ...> attributes */
 	else if (strcmp(cmd, "T") == 0)
@@ -1667,7 +1781,7 @@ editFile(const char *fname, int lineno)
 				editorName, fname);
 #else
 	if (lineno > 0)
-		sprintf(sys, SYSTEMQUOTE "\"%s\" %s%d \"%s\"" SYSTEMQUOTE, 
+		sprintf(sys, SYSTEMQUOTE "\"%s\" %s%d \"%s\"" SYSTEMQUOTE,
 				editorName, editor_lineno_switch, lineno, fname);
 	else
 		sprintf(sys, SYSTEMQUOTE "\"%s\" \"%s\"" SYSTEMQUOTE,

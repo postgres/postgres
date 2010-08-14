@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.248 2010/08/12 00:40:59 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.249 2010/08/14 13:59:49 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -2132,6 +2132,33 @@ lo_import 152801
         command <xref linkend="SQL-SET">.
         </para>
         </note>
+        </listitem>
+      </varlistentry>
+
+
+      <varlistentry>
+        <term><literal>\sf[+] <replaceable class="parameter">function_description</> </literal></term>
+
+        <listitem>
+        <para>
+         This command fetches and shows the definition of the named function,
+         in the form of a <command>CREATE OR REPLACE FUNCTION</> command.
+         The definition is printed to the current query output channel,
+         as set by <command>\o</command>.
+        </para>
+
+        <para>
+         The target function can be specified by name alone, or by name
+         and arguments, for example <literal>foo(integer, text)</>.
+         The argument types must be given if there is more
+         than one function of the same name.
+        </para>
+
+        <para>
+         If <literal>+</literal> is appended to the command name, then the
+         output lines are numbered, with the first line of the function body
+         being line 1.
+        </para>
         </listitem>
       </varlistentry>
 

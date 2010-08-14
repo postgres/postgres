@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.201 2010/07/20 03:54:19 rhaas Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.202 2010/08/14 13:59:49 tgl Exp $
  */
 
 /*----------------------------------------------------------------------
@@ -644,7 +644,7 @@ psql_completion(char *text, int start, int end)
 		"\\f", "\\g", "\\h", "\\help", "\\H", "\\i", "\\l",
 		"\\lo_import", "\\lo_export", "\\lo_list", "\\lo_unlink",
 		"\\o", "\\p", "\\password", "\\prompt", "\\pset", "\\q", "\\qecho", "\\r",
-		"\\set", "\\t", "\\T",
+		"\\set", "\\sf", "\\t", "\\T",
 		"\\timing", "\\unset", "\\x", "\\w", "\\z", "\\!", NULL
 	};
 
@@ -2517,6 +2517,8 @@ psql_completion(char *text, int start, int end)
 
 		COMPLETE_WITH_LIST(my_list);
 	}
+	else if (strcmp(prev_wd, "\\sf") == 0 || strcmp(prev_wd, "\\sf+") == 0)
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_functions, NULL);
 	else if (strcmp(prev_wd, "\\cd") == 0 ||
 			 strcmp(prev_wd, "\\e") == 0 || strcmp(prev_wd, "\\edit") == 0 ||
 			 strcmp(prev_wd, "\\g") == 0 ||

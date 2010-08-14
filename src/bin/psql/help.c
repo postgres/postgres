@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/help.c,v 1.162 2010/08/13 20:56:18 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/help.c,v 1.163 2010/08/14 13:59:49 tgl Exp $
  */
 #include "postgres_fe.h"
 
@@ -158,7 +158,7 @@ slashUsage(unsigned short int pager)
 {
 	FILE	   *output;
 
-	output = PageOutput(89, pager);
+	output = PageOutput(90, pager);
 
 	/* if you add/remove a line here, change the row count above */
 
@@ -220,6 +220,7 @@ slashUsage(unsigned short int pager)
 	fprintf(output, _("  \\du[+]  [PATTERN]      list roles (users)\n"));
 	fprintf(output, _("  \\dv[S+] [PATTERN]      list views\n"));
 	fprintf(output, _("  \\l[+]                  list all databases\n"));
+	fprintf(output, _("  \\sf[+] FUNCNAME        show a function's definition\n"));
 	fprintf(output, _("  \\z      [PATTERN]      same as \\dp\n"));
 	fprintf(output, "\n");
 
