@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.258 2010/08/13 22:54:17 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.259 2010/08/14 02:22:10 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1852,8 +1852,7 @@ FlushBuffer(volatile BufferDesc *buf, SMgrRelation reln)
 										buf->tag.blockNum,
 										reln->smgr_rnode.node.spcNode,
 										reln->smgr_rnode.node.dbNode,
-										reln->smgr_rnode.node.relNode,
-										reln->smgr_rnode.backend);
+										reln->smgr_rnode.node.relNode);
 
 	/*
 	 * Force XLOG flush up to buffer's LSN.  This implements the basic WAL
@@ -1892,8 +1891,7 @@ FlushBuffer(volatile BufferDesc *buf, SMgrRelation reln)
 									   buf->tag.blockNum,
 									   reln->smgr_rnode.node.spcNode,
 									   reln->smgr_rnode.node.dbNode,
-									   reln->smgr_rnode.node.relNode,
-									   reln->smgr_rnode.backend);
+									   reln->smgr_rnode.node.relNode);
 
 	/* Pop the error context stack */
 	error_context_stack = errcontext.previous;

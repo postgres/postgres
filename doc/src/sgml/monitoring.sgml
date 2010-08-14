@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/monitoring.sgml,v 1.82 2010/08/08 16:27:03 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/monitoring.sgml,v 1.83 2010/08/14 02:22:10 rhaas Exp $ -->
 
 <chapter id="monitoring">
  <title>Monitoring Database Activity</title>
@@ -1436,26 +1436,28 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS procpid,
     </row>
     <row>
      <entry>buffer-read-start</entry>
-     <entry>(ForkNumber, BlockNumber, Oid, Oid, Oid, bool, bool)</entry>
+     <entry>(ForkNumber, BlockNumber, Oid, Oid, Oid, int, bool)</entry>
      <entry>Probe that fires when a buffer read is started.
       arg0 and arg1 contain the fork and block numbers of the page (but
       arg1 will be -1 if this is a relation extension request).
       arg2, arg3, and arg4 contain the tablespace, database, and relation OIDs
       identifying the relation.
-      arg5 is true for a local buffer, false for a shared buffer.
+      arg5 is the ID of the backend which created the temporary relation for a
+      local buffer, or InvalidBackendId (-1) for a shared buffer.
       arg6 is true for a relation extension request, false for normal
       read.</entry>
     </row>
     <row>
      <entry>buffer-read-done</entry>
-     <entry>(ForkNumber, BlockNumber, Oid, Oid, Oid, bool, bool, bool)</entry>
+     <entry>(ForkNumber, BlockNumber, Oid, Oid, Oid, int, bool, bool)</entry>
      <entry>Probe that fires when a buffer read is complete.
       arg0 and arg1 contain the fork and block numbers of the page (if this
       is a relation extension request, arg1 now contains the block number
       of the newly added block).
       arg2, arg3, and arg4 contain the tablespace, database, and relation OIDs
       identifying the relation.
-      arg5 is true for a local buffer, false for a shared buffer.
+      arg5 is the ID of the backend which created the temporary relation for a
+      local buffer, or InvalidBackendId (-1) for a shared buffer.
       arg6 is true for a relation extension request, false for normal
       read.
       arg7 is true if the buffer was found in the pool, false if not.</entry>
@@ -1521,38 +1523,46 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS procpid,
     </row>
     <row>
      <entry>smgr-md-read-start</entry>
-     <entry>(ForkNumber, BlockNumber, Oid, Oid, Oid)</entry>
+     <entry>(ForkNumber, BlockNumber, Oid, Oid, Oid, int)</entry>
      <entry>Probe that fires when beginning to read a block from a relation.
       arg0 and arg1 contain the fork and block numbers of the page.
       arg2, arg3, and arg4 contain the tablespace, database, and relation OIDs
-      identifying the relation.</entry>
+      identifying the relation.
+      arg5 is the ID of the backend which created the temporary relation for a
+      local buffer, or InvalidBackendId (-1) for a shared buffer.</entry>
     </row>
     <row>
      <entry>smgr-md-read-done</entry>
-     <entry>(ForkNumber, BlockNumber, Oid, Oid, Oid, int, int)</entry>
+     <entry>(ForkNumber, BlockNumber, Oid, Oid, Oid, int, int, int)</entry>
      <entry>Probe that fires when a block read is complete.
       arg0 and arg1 contain the fork and block numbers of the page.
       arg2, arg3, and arg4 contain the tablespace, database, and relation OIDs
       identifying the relation.
-      arg5 is the number of bytes actually read, while arg6 is the number
+      arg5 is the ID of the backend which created the temporary relation for a
+      local buffer, or InvalidBackendId (-1) for a shared buffer.
+      arg6 is the number of bytes actually read, while arg7 is the number
       requested (if these are different it indicates trouble).</entry>
     </row>
     <row>
      <entry>smgr-md-write-start</entry>
-     <entry>(ForkNumber, BlockNumber, Oid, Oid, Oid)</entry>
+     <entry>(ForkNumber, BlockNumber, Oid, Oid, Oid, int)</entry>
      <entry>Probe that fires when beginning to write a block to a relation.
       arg0 and arg1 contain the fork and block numbers of the page.
       arg2, arg3, and arg4 contain the tablespace, database, and relation OIDs
-      identifying the relation.</entry>
+      identifying the relation.
+      arg5 is the ID of the backend which created the temporary relation for a
+      local buffer, or InvalidBackendId (-1) for a shared buffer.</entry>
     </row>
     <row>
      <entry>smgr-md-write-done</entry>
-     <entry>(ForkNumber, BlockNumber, Oid, Oid, Oid, int, int)</entry>
+     <entry>(ForkNumber, BlockNumber, Oid, Oid, Oid, int, int, int)</entry>
      <entry>Probe that fires when a block write is complete.
       arg0 and arg1 contain the fork and block numbers of the page.
       arg2, arg3, and arg4 contain the tablespace, database, and relation OIDs
       identifying the relation.
-      arg5 is the number of bytes actually written, while arg6 is the number
+      arg5 is the ID of the backend which created the temporary relation for a
+      local buffer, or InvalidBackendId (-1) for a shared buffer.
+      arg6 is the number of bytes actually written, while arg7 is the number
       requested (if these are different it indicates trouble).</entry>
     </row>
     <row>
