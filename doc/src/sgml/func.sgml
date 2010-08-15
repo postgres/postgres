@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.521.2.2 2010/08/05 18:21:29 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.521.2.3 2010/08/15 21:26:42 tgl Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -2864,6 +2864,13 @@
    </tgroup>
   </table>
 
+  <para>
+   <function>get_byte</> and <function>set_byte</> number the first byte
+   of a binary string as byte 0.
+   <function>get_bit</> and <function>set_bit</> number bits from the
+   right within each byte; for example bit 0 is the least significant bit of
+   the first byte, and bit 15 is the most significant bit of the second byte.
+  </para>
  </sect1>
 
 
@@ -2969,6 +2976,8 @@
     strings:
     <literal><function>get_bit</function></literal>,
     <literal><function>set_bit</function></literal>.
+    When working with a bit string, these functions number the first
+    (leftmost) bit of the string as bit 0.
    </para>
 
    <para>
