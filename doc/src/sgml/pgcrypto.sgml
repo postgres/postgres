@@ -1,10 +1,15 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/pgcrypto.sgml,v 1.7.2.1 2009/12/08 20:08:37 mha Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/pgcrypto.sgml,v 1.7.2.2 2010/08/15 01:57:21 rhaas Exp $ -->
 
 <sect1 id="pgcrypto">
  <title>pgcrypto</title>
 
  <indexterm zone="pgcrypto">
   <primary>pgcrypto</primary>
+ </indexterm>
+
+ <indexterm zone="pgcrypto">
+  <primary>encryption</primary>
+  <secondary>for specific columns</secondary>
  </indexterm>
 
  <para>
