@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/pgbench.sgml,v 1.18 2010/08/12 20:39:39 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/pgbench.sgml,v 1.19 2010/08/15 19:46:24 tgl Exp $ -->
 
 <sect1 id="pgbench">
  <title>pgbench</title>
@@ -40,7 +40,7 @@ tps = 85.296346 (excluding connections establishing)
   and number of transactions per client); these will be equal unless the run
   failed before completion.  (In <literal>-T</> mode, only the actual
   number of transactions is printed.)
-  The last two lines report the TPS rate,
+  The last two lines report the number of transactions per second,
   figured with and without counting the time to start database sessions.
  </para>
 
