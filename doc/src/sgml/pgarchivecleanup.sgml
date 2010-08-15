@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/pgarchivecleanup.sgml,v 1.1.2.1 2010/07/29 19:34:37 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/pgarchivecleanup.sgml,v 1.1.2.2 2010/08/15 20:20:35 tgl Exp $ -->
 
 <sect1 id="pgarchivecleanup">
  <title>pg_archivecleanup</title>
@@ -106,7 +106,7 @@ pg_archivecleanup:  removing "archive/00000001000000370000000E"
 
   <para>On Linux or Unix systems, you might use:
 <programlisting>
-archive_cleanup_command = 'pg_archivecleanup -d .../archive %r 2>>cleanup.log'
+archive_cleanup_command = 'pg_archivecleanup -d /mnt/standby/archive %r 2>>cleanup.log'
 </programlisting>
    where the archive directory is physically located on the standby server,
    so that the <literal>archive_command</> is accessing it across NFS,
@@ -116,7 +116,7 @@ archive_cleanup_command = 'pg_archivecleanup -d .../archive %r 2>>cleanup.log'
   <itemizedlist>
    <listitem>
     <para>
-     produce debugging output in <filename>standby.log</>
+     produce debugging output in <filename>cleanup.log</>
     </para>
    </listitem>
    <listitem>
