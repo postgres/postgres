@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.116.2.2 2009/12/09 21:59:07 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.116.2.3 2010/08/16 17:33:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -721,6 +721,7 @@ CreateLockFile(const char *filename, bool amPostmaster,
 				(errcode_for_file_access(),
 			  errmsg("could not write lock file \"%s\": %m", filename)));
 	}
+	pg_fsync(fd);
 	close(fd);
 
 	/*
@@ -875,6 +876,7 @@ RecordSharedMemoryInLockFile(unsigned long id1, unsigned long id2)
 		close(fd);
 		return;
 	}
+	pg_fsync(fd);
 	close(fd);
 }
 
