@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/mbprint.c,v 1.38 2010/01/02 16:57:59 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/mbprint.c,v 1.39 2010/08/16 00:06:18 tgl Exp $
  *
  * XXX this file does not really belong in psql/.  Perhaps move to libpq?
  * It also seems that the mbvalidate function is redundant with existing
@@ -53,28 +53,20 @@ utf2ucs(const unsigned char *c)
 	if ((*c & 0x80) == 0)
 		return (pg_wchar) c[0];
 	else if ((*c & 0xe0) == 0xc0)
-	{
 		return (pg_wchar) (((c[0] & 0x1f) << 6) |
 						   (c[1] & 0x3f));
-	}
 	else if ((*c & 0xf0) == 0xe0)
-	{
 		return (pg_wchar) (((c[0] & 0x0f) << 12) |
 						   ((c[1] & 0x3f) << 6) |
 						   (c[2] & 0x3f));
-	}
-	else if ((*c & 0xf0) == 0xf0)
-	{
+	else if ((*c & 0xf8) == 0xf0)
 		return (pg_wchar) (((c[0] & 0x07) << 18) |
 						   ((c[1] & 0x3f) << 12) |
 						   ((c[2] & 0x3f) << 6) |
 						   (c[3] & 0x3f));
-	}
 	else
-	{
 		/* that is an invalid code on purpose */
 		return 0xffffffff;
-	}
 }
 
 
