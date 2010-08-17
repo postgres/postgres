@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/planstats.sgml,v 1.10 2010/07/13 20:57:19 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/planstats.sgml,v 1.11 2010/08/17 04:37:21 petere Exp $ -->
 
 <chapter id="planner-stats-details">
  <title>How the Planner Uses Statistics</title>
@@ -428,7 +428,7 @@ rows = (outer_cardinality * inner_cardinality) * selectivity
    the unmodified size of <structname>tenk2</>.  It might appear from
    inspection of the <command>EXPLAIN</> output that the estimate of
    join rows comes from 50 * 1, that is, the number of outer rows times
-   the estimated number of rows obtained by each inner indexscan on
+   the estimated number of rows obtained by each inner index scan on
    <structname>tenk2</>.  But this is not the case: the join relation size
    is estimated before any particular join plan has been considered.  If
    everything is working well then the two ways of estimating the join

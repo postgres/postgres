@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/monitoring.sgml,v 1.83 2010/08/14 02:22:10 rhaas Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/monitoring.sgml,v 1.84 2010/08/17 04:37:20 petere Exp $ -->
 
 <chapter id="monitoring">
  <title>Monitoring Database Activity</title>
@@ -807,7 +807,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
       <entry><literal><function>pg_stat_get_activity</function>(<type>integer</type>)</literal></entry>
       <entry><type>setof record</type></entry>
       <entry>
-       Returns a record of information about the backend with the specified pid, or
+       Returns a record of information about the backend with the specified PID, or
        one record for each active backend in the system if <symbol>NULL</symbol> is
        specified. The fields returned are a subset of those in the
        <structname>pg_stat_activity</structname> view.

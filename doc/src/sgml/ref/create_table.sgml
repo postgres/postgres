@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_table.sgml,v 1.130 2010/07/26 01:43:52 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_table.sgml,v 1.131 2010/08/17 04:37:21 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -512,7 +512,7 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE [ IF NOT EXISTS ] <repl
       The access method must support <literal>amgettuple</> (see <xref
       linkend="indexam">); at present this means <acronym>GIN</>
       cannot be used.  Although it's allowed, there is little point in using
-      btree or hash indexes with an exclusion constraint, because this
+      B-tree or hash indexes with an exclusion constraint, because this
       does nothing that an ordinary unique constraint doesn't do better.
       So in practice the access method will always be <acronym>GiST</>.
      </para>

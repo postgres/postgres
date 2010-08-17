@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/btree-gist.sgml,v 1.7 2010/08/03 15:15:31 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/btree-gist.sgml,v 1.8 2010/08/17 04:37:20 petere Exp $ -->
 
 <sect1 id="btree-gist">
  <title>btree_gist</title>
@@ -9,7 +9,7 @@
 
  <para>
   <filename>btree_gist</> provides sample GiST operator classes that
-  implement B-Tree equivalent behavior for the data types
+  implement B-tree equivalent behavior for the data types
   <type>int2</>, <type>int4</>, <type>int8</>, <type>float4</>,
   <type>float8</>, <type>numeric</>, <type>timestamp with time zone</>,
   <type>timestamp without time zone</>, <type>time with time zone</>,
@@ -21,8 +21,8 @@
 
  <para>
   In general, these operator classes will not outperform the equivalent
-  standard btree index methods, and they lack one major feature of the
-  standard btree code: the ability to enforce uniqueness.  However,
+  standard B-tree index methods, and they lack one major feature of the
+  standard B-tree code: the ability to enforce uniqueness.  However,
   they are useful for GiST testing and as a base for developing other
   GiST operator classes.
  </para>

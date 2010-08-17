@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.320 2010/08/10 02:56:46 rhaas Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.321 2010/08/17 04:37:20 petere Exp $ -->
 
 <chapter id="libpq">
  <title><application>libpq</application> - C Library</title>
@@ -79,13 +79,13 @@
     <para>
      On Windows, there is a way to improve performance if a single
      database connection is repeatedly started and shutdown.  Internally,
-     libpq calls WSAStartup() and WSACleanup() for connection startup
-     and shutdown, respectively.  WSAStartup() increments an internal
-     Windows library reference count which is decremented by WSACleanup().
-     When the reference count is just one, calling WSACleanup() frees
+     libpq calls <function>WSAStartup()</> and <function>WSACleanup()</> for connection startup
+     and shutdown, respectively.  <function>WSAStartup()</> increments an internal
+     Windows library reference count which is decremented by <function>WSACleanup()</>.
+     When the reference count is just one, calling <function>WSACleanup()</> frees
      all resources and all DLLs are unloaded.  This is an expensive
      operation.  To avoid this, an application can manually call
-     WSAStartup() so resources will not be freed when the last database
+     <function>WSAStartup()</> so resources will not be freed when the last database
      connection is closed.
     </para>
    </note>
@@ -405,7 +405,7 @@ PGconn *PQconnectdbParams(const char **keywords, const char **values, int expand
               <entry><literal>verify-full</></entry>
               <entry>only try an <acronym>SSL</> connection, verify that
               the server certificate is issued by a trusted <acronym>CA</> and
-              that the server hostname matches that in the certificate</entry>
+              that the server host name matches that in the certificate</entry>
              </row>
 
             </tbody>
@@ -471,7 +471,7 @@ PGconn *PQconnectdbParams(const char **keywords, const char **values, int expand
          <listitem>
           <para>
            This parameter specifies the location for the secret key used for
-           the client certificate. It can either specify a filename that will
+           the client certificate. It can either specify a file name that will
            be used instead of the default
            <filename>~/.postgresql/postgresql.key</>, or it can specify a key
            obtained from an external <quote>engine</> (engines are
@@ -953,7 +953,7 @@ PQconninfoOption *PQconninfoParse(const char *conninfo, char **errmsg);
 
       <para>
        Parses a connection string and returns the resulting options as an
-       array; or returns NULL if there is a problem with the connection
+       array; or returns <symbol>NULL</> if there is a problem with the connection
        string.  This can be used to determine
        the <function>PQconnectdb</function> options in the provided
        connection string.  The return value points to an array of
@@ -967,10 +967,10 @@ PQconninfoOption *PQconninfoParse(const char *conninfo, char **errmsg);
       </para>
 
       <para>
-       If <literal>errmsg</> is not NULL, then <literal>*errmsg</> is set
-       to NULL on success, else to a malloc'd error string explaining
+       If <literal>errmsg</> is not <symbol>NULL</>, then <literal>*errmsg</> is set
+       to <symbol>NULL</> on success, else to a <function>malloc</>'d error string explaining
        the problem.  (It is also possible for <literal>*errmsg</> to be
-       set to NULL even when NULL is returned; this indicates an out-of-memory
+       set to <symbol>NULL</> even when <symbol>NULL</> is returned; this indicates an out-of-memory
        situation.)
       </para>
 
@@ -978,7 +978,7 @@ PQconninfoOption *PQconninfoParse(const char *conninfo, char **errmsg);
        After processing the options array, free it by passing it to
        <function>PQconninfoFree</function>.  If this is not done, some memory
        is leaked for each call to <function>PQconninfoParse</function>.
-       Conversely, if an error occurs and <literal>errmsg</> is not NULL,
+       Conversely, if an error occurs and <literal>errmsg</> is not <symbol>NULL</>,
        be sure to free the error string using <function>PQfreemem</>.
       </para>
 
@@ -1974,7 +1974,7 @@ PGresult *PQdescribePrepared(PGconn *conn, const char *stmtName);
        </para>
 
        <para>
-        <parameter>stmtName</> can be <literal>""</> or NULL to reference
+        <parameter>stmtName</> can be <literal>""</> or <symbol>NULL</> to reference
         the unnamed statement, otherwise it must be the name of an existing
         prepared statement.  On success, a <structname>PGresult</> with
         status <literal>PGRES_COMMAND_OK</literal> is returned.  The
@@ -2017,7 +2017,7 @@ PGresult *PQdescribePortal(PGconn *conn, const char *portalName);
        </para>
 
        <para>
-        <parameter>portalName</> can be <literal>""</> or NULL to reference
+        <parameter>portalName</> can be <literal>""</> or <symbol>NULL</> to reference
         the unnamed portal, otherwise it must be the name of an existing
         portal.  On success, a <structname>PGresult</> with status
         <literal>PGRES_COMMAND_OK</literal> is returned.  The functions
@@ -3138,7 +3138,7 @@ char *PQescapeLiteral(PGconn *conn, const char *str, size_t length);
      </para>
 
      <para>
-      On error, <function>PQescapeLiteral</> returns NULL and a suitable
+      On error, <function>PQescapeLiteral</> returns <symbol>NULL</> and a suitable
       message is stored in the <parameter>conn</> object.
      </para>
 
@@ -3201,7 +3201,7 @@ char *PQescapeIdentifier(PGconn *conn, const char *str, size_t length);
      </para>
 
      <para>
-      On error, <function>PQescapeIdentifier</> returns NULL and a suitable
+      On error, <function>PQescapeIdentifier</> returns <symbol>NULL</> and a suitable
       message is stored in the <parameter>conn</> object.
      </para>
 
@@ -3254,13 +3254,13 @@ size_t PQescapeStringConn(PGconn *conn,
      </para>
 
      <para>
-      If the <parameter>error</> parameter is not NULL, then
+      If the <parameter>error</> parameter is not <symbol>NULL</>, then
       <literal>*error</> is set to zero on success, nonzero on error.
       Presently the only possible error conditions involve invalid multibyte
       encoding in the source string.  The output string is still generated
       on error, but it can be expected that the server will reject it as
       malformed.  On error, a suitable message is stored in the
-      <parameter>conn</> object, whether or not <parameter>error</> is NULL.
+      <parameter>conn</> object, whether or not <parameter>error</> is <symbol>NULL</>.
      </para>
 
      <para>
@@ -3365,7 +3365,7 @@ unsigned char *PQescapeByteaConn(PGconn *conn,
       </para>
 
       <para>
-       On error, a NULL pointer is returned, and a suitable error message
+       On error, a null pointer is returned, and a suitable error message
        is stored in the <parameter>conn</> object.  Currently, the only
        possible error is insufficient memory for the result string.
       </para>
@@ -3438,7 +3438,7 @@ unsigned char *PQunescapeBytea(const unsigned char *from, size_t *to_length);
        to a <type>bytea</type> column. <function>PQunescapeBytea</function>
        converts this string representation into its binary representation.
        It returns a pointer to a buffer allocated with
-       <function>malloc()</function>, or NULL on error, and puts the size of
+       <function>malloc()</function>, or <symbol>NULL</> on error, and puts the size of
        the buffer in <parameter>to_length</parameter>. The result must be
        freed using <function>PQfreemem</> when it is no longer needed.
       </para>
@@ -3993,7 +3993,7 @@ PGcancel *PQgetCancel(PGconn *conn);
        <function>PQgetCancel</function> creates a
        <structname>PGcancel</><indexterm><primary>PGcancel</></> object
        given a <structname>PGconn</> connection object.  It will return
-       NULL if the given <parameter>conn</> is NULL or an invalid
+       <symbol>NULL</> if the given <parameter>conn</> is <symbol>NULL</> or an invalid
        connection.  The <structname>PGcancel</> object is an opaque
        structure that is not meant to be accessed directly by the
        application; it can only be passed to <function>PQcancel</function>
@@ -5078,7 +5078,7 @@ PGresult *PQmakeEmptyPGresult(PGconn *conn, ExecStatusType status);
      <para>
       This is <application>libpq</>'s internal function to allocate and
       initialize an empty <structname>PGresult</structname> object.  This
-      function returns NULL if memory could not be allocated. It is
+      function returns <symbol>NULL</> if memory could not be allocated. It is
       exported because some applications find it useful to generate result
       objects (particularly objects with error status) themselves.  If
       <parameter>conn</parameter> is not null and <parameter>status</>
@@ -5117,7 +5117,7 @@ int PQfireResultCreateEvents(PGconn *conn, PGresult *res);
 
      <para>
       The <literal>conn</> argument is passed through to event procedures
-      but not used directly.  It can be <literal>NULL</> if the event
+      but not used directly.  It can be <symbol>NULL</> if the event
       procedures won't use it.
      </para>
 
@@ -5149,7 +5149,7 @@ int PQfireResultCreateEvents(PGconn *conn, PGresult *res);
       Makes a copy of a <structname>PGresult</structname> object.  The copy is
       not linked to the source result in any way and
       <function>PQclear</function> must be called when the copy is no longer
-      needed.  If the function fails, NULL is returned.
+      needed.  If the function fails, <symbol>NULL</> is returned.
 
 <synopsis>
 PGresult *PQcopyResult(const PGresult *src, int flags);
@@ -5193,7 +5193,7 @@ int PQsetResultAttrs(PGresult *res, int numAttributes, PGresAttDesc *attDescs);
 
      <para>
       The provided <parameter>attDescs</parameter> are copied into the result.
-      If the <parameter>attDescs</parameter> pointer is NULL or
+      If the <parameter>attDescs</parameter> pointer is <symbol>NULL</> or
       <parameter>numAttributes</parameter> is less than one, the request is
       ignored and the function succeeds.  If <parameter>res</parameter>
       already contains attributes, the function will fail.  If the function
@@ -5227,8 +5227,8 @@ int PQsetvalue(PGresult *res, int tup_num, int field_num, char *value, int len);
       field of any existing tuple can be modified in any order.  If a value at
       <parameter>field_num</parameter> already exists, it will be overwritten.
       If <parameter>len</parameter> is <literal>-1</literal> or
-      <parameter>value</parameter> is <literal>NULL</literal>, the field value
-      will be set to an SQL <literal>NULL</literal>.  The
+      <parameter>value</parameter> is <symbol>NULL</>, the field value
+      will be set to an SQL null value.  The
       <parameter>value</parameter> is copied into the result's private storage,
       thus is no longer needed after the function
       returns.  If the function fails, the return value is zero.  If the
@@ -5256,7 +5256,7 @@ void *PQresultAlloc(PGresult *res, size_t nBytes);
      <para>
       Any memory allocated with this function will be freed when
       <parameter>res</parameter> is cleared.  If the function fails,
-      the return value is <literal>NULL</literal>.  The result is
+      the return value is <symbol>NULL</>.  The result is
       guaranteed to be adequately aligned for any type of data,
       just as for <function>malloc</>.
      </para>
@@ -5399,7 +5399,7 @@ defaultNoticeProcessor(void *arg, const char *message)
    life of the <structname>PGconn</> and all <structname>PGresult</>s
    generated from it; so if used, it must point to long-lived data.
    In addition there is an <firstterm>instance data</> pointer, which starts
-   out NULL in every <structname>PGconn</> and <structname>PGresult</>.
+   out <symbol>NULL</> in every <structname>PGconn</> and <structname>PGresult</>.
    This pointer can be manipulated using the
    <function>PQinstanceData</function>,
    <function>PQsetInstanceData</function>,
@@ -5704,11 +5704,11 @@ int PQregisterEventProc(PGconn *conn, PGEventProc proc,
        event is fired.  Its memory address is also used to lookup
        <literal>instanceData</literal>.  The <parameter>name</parameter>
        argument is used to refer to the event procedure in error messages.
-       This value cannot be NULL or a zero-length string.  The name string is
+       This value cannot be <symbol>NULL</> or a zero-length string.  The name string is
        copied into the <structname>PGconn</>, so what is passed need not be
        long-lived.  The <parameter>passThrough</parameter> pointer is passed
        to the <parameter>proc</parameter> whenever an event occurs. This
-       argument can be NULL.
+       argument can be <symbol>NULL</>.
       </para>
      </listitem>
     </varlistentry>
@@ -5722,9 +5722,11 @@ int PQregisterEventProc(PGconn *conn, PGEventProc proc,
      </term>
      <listitem>
       <para>
-       Sets the conn's instanceData for proc to data.  This returns non-zero
-       for success and zero for failure.  (Failure is only possible if
-       the proc has not been properly registered in the conn.)
+       Sets the connection <parameter>conn</>'s <literal>instanceData</>
+       for procedure <parameter>proc</> to <parameter>data</>.  This
+       returns non-zero for success and zero for failure.  (Failure is
+       only possible if <parameter>proc</> has not been properly
+       registered in <parameter>conn</>.)
 
 <synopsis>
 int PQsetInstanceData(PGconn *conn, PGEventProc proc, void *data);
@@ -5742,8 +5744,10 @@ int PQsetInstanceData(PGconn *conn, PGEventProc proc, void *data);
      </term>
      <listitem>
       <para>
-       Returns the conn's instanceData associated with proc, or NULL
-       if there is none.
+       Returns the
+       connection <parameter>conn</>'s <literal>instanceData</literal>
+       associated with procedure <parameter>proc</>,
+       or <symbol>NULL</symbol> if there is none.
 
 <synopsis>
 void *PQinstanceData(const PGconn *conn, PGEventProc proc);
@@ -5761,9 +5765,11 @@ void *PQinstanceData(const PGconn *conn, PGEventProc proc);
      </term>
      <listitem>
       <para>
-       Sets the result's instanceData for proc to data.  This returns non-zero
-       for success and zero for failure.  (Failure is only possible if the
-       proc has not been properly registered in the result.)
+       Sets the result's <literal>instanceData</>
+       for <parameter>proc</> to <parameter>data</>.  This returns
+       non-zero for success and zero for failure.  (Failure is only
+       possible if <parameter>proc</> has not been properly registered
+       in the result.)
 
 <synopsis>
 int PQresultSetInstanceData(PGresult *res, PGEventProc proc, void *data);
@@ -5781,7 +5787,7 @@ int PQresultSetInstanceData(PGresult *res, PGEventProc proc, void *data);
      </term>
      <listitem>
       <para>
-       Returns the result's instanceData associated with proc, or NULL
+       Returns the result's <literal>instanceData</> associated with <parameter>proc</>, or <symbol>NULL</>
        if there is none.
 
 <synopsis>
@@ -6513,7 +6519,7 @@ ldap://ldap.acme.com/cn=dbserver,cn=hosts?pgconnectinfo?base?(objectclass=*)
    libpq will verify that the server is trustworthy by checking the
    certificate chain up to a trusted certificate authority
    (<acronym>CA</>). If <literal>sslmode</> is set to <literal>verify-full</>,
-   libpq will <emphasis>also</> verify that the server hostname matches its
+   libpq will <emphasis>also</> verify that the server host name matches its
    certificate. The SSL connection will fail if the server certificate cannot
    be verified. <literal>verify-full</> is recommended in most
    security-sensitive environments.
@@ -6521,11 +6527,11 @@ ldap://ldap.acme.com/cn=dbserver,cn=hosts?pgconnectinfo?base?(objectclass=*)
 
   <para>
    In <literal>verify-full</> mode, the <literal>cn</> (Common Name) attribute
-   of the certificate is matched against the hostname. If the <literal>cn</>
+   of the certificate is matched against the host name. If the <literal>cn</>
    attribute starts with an asterisk (<literal>*</>), it will be treated as
    a wildcard, and will match all characters <emphasis>except</> a dot
    (<literal>.</>). This means the certificate will not match subdomains.
-   If the connection is made using an IP address instead of a hostname, the
+   If the connection is made using an IP address instead of a host name, the
    IP address will be matched (without doing any DNS lookups).
   </para>
 
@@ -6617,7 +6623,7 @@ ldap://ldap.acme.com/cn=dbserver,cn=hosts?pgconnectinfo?base?(objectclass=*)
       <entry>Eavesdropping</entry>
       <entry>If a third party can examine the network traffic between the
        client and the server, it can read both connection information (including
-       the username and password) and the data that is passed. <acronym>SSL</>
+       the user name and password) and the data that is passed. <acronym>SSL</>
        uses encryption to prevent this.
       </entry>
      </row>

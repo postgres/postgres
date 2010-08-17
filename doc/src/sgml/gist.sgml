@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/gist.sgml,v 1.31 2009/06/12 19:48:53 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/gist.sgml,v 1.32 2010/08/17 04:37:20 petere Exp $ -->
 
 <chapter id="GiST">
 <title>GiST Indexes</title>
@@ -102,7 +102,7 @@
    <function>decompress</>, which allow an index to have internal tree data of
    a different type than the data it indexes. The leaves are to be of the
    indexed data type, while the other tree nodes can be of any C struct (but
-   you still have to follow <productname>PostgreSQL</> datatype rules here,
+   you still have to follow <productname>PostgreSQL</> data type rules here,
    see about <literal>varlena</> for variable sized data). If the tree's
    internal data type exists at the SQL level, the <literal>STORAGE</> option
    of the <command>CREATE OPERATOR CLASS</> command can be used.
@@ -561,7 +561,7 @@ my_same(PG_FUNCTION_ARGS)
 </programlisting>
 
         For historical reasons, the <function>same</> function doesn't
-        just return a boolean result; instead it has to store the flag
+        just return a Boolean result; instead it has to store the flag
         at the location indicated by the third argument.
       </para>
      </listitem>
@@ -583,58 +583,58 @@ my_same(PG_FUNCTION_ARGS)
   (see <filename>src/backend/access/gist/gistproc.c</>).  The following
   <filename>contrib</> modules also contain <acronym>GiST</acronym>
   operator classes:
- </para>
 
  <variablelist>
   <varlistentry>
-   <term>btree_gist</term>
+   <term><filename>btree_gist</></term>
    <listitem>
-    <para>B-Tree equivalent functionality for several data types</para>
+    <para>B-tree equivalent functionality for several data types</para>
    </listitem>
   </varlistentry>
 
   <varlistentry>
-   <term>cube</term>
+   <term><filename>cube</></term>
    <listitem>
     <para>Indexing for multidimensional cubes</para>
    </listitem>
   </varlistentry>
 
   <varlistentry>
-   <term>hstore</term>
+   <term><filename>hstore</></term>
    <listitem>
     <para>Module for storing (key, value) pairs</para>
    </listitem>
   </varlistentry>
 
   <varlistentry>
-   <term>intarray</term>
+   <term><filename>intarray</></term>
    <listitem>
     <para>RD-Tree for one-dimensional array of int4 values</para>
    </listitem>
   </varlistentry>
 
   <varlistentry>
-   <term>ltree</term>
+   <term><filename>ltree</></term>
    <listitem>
     <para>Indexing for tree-like structures</para>
    </listitem>
   </varlistentry>
 
   <varlistentry>
-   <term>pg_trgm</term>
+   <term><filename>pg_trgm</></term>
    <listitem>
     <para>Text similarity using trigram matching</para>
    </listitem>
   </varlistentry>
 
   <varlistentry>
-   <term>seg</term>
+   <term><filename>seg</></term>
    <listitem>
     <para>Indexing for <quote>float ranges</quote></para>
    </listitem>
   </varlistentry>
  </variablelist>
+ </para>
 
 </sect1>
 

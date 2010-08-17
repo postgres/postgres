@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/spi.sgml,v 1.67 2010/04/03 07:22:55 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/spi.sgml,v 1.68 2010/08/17 04:37:21 petere Exp $ -->
 
 <chapter id="spi">
  <title>Server Programming Interface</title>
@@ -987,7 +987,7 @@ SPIPlanPtr SPI_prepare_cursor(const char * <parameter>command</parameter>, int <
   <para>
    <function>SPI_prepare_cursor</function> is identical to
    <function>SPI_prepare</function>, except that it also allows specification
-   of the planner's <quote>cursor options</> parameter.  This is a bitmask
+   of the planner's <quote>cursor options</> parameter.  This is a bit mask
    having the values shown in <filename>nodes/parsenodes.h</filename>
    for the <structfield>options</> field of <structname>DeclareCursorStmt</>.
    <function>SPI_prepare</function> always takes the cursor options as zero.
@@ -1030,7 +1030,7 @@ SPIPlanPtr SPI_prepare_cursor(const char * <parameter>command</parameter>, int <
     <term><literal>int <parameter>cursorOptions</parameter></literal></term>
     <listitem>
      <para>
-      integer bitmask of cursor options; zero produces default behavior
+      integer bit mask of cursor options; zero produces default behavior
      </para>
     </listitem>
    </varlistentry>
@@ -1130,7 +1130,7 @@ SPIPlanPtr SPI_prepare_params(const char * <parameter>command</parameter>,
     <term><literal>int <parameter>cursorOptions</parameter></literal></term>
     <listitem>
      <para>
-      integer bitmask of cursor options; zero produces default behavior
+      integer bit mask of cursor options; zero produces default behavior
      </para>
     </listitem>
    </varlistentry>
@@ -1925,7 +1925,7 @@ Portal SPI_cursor_open_with_args(const char *<parameter>name</parameter>,
     <term><literal>int <parameter>cursorOptions</parameter></literal></term>
     <listitem>
      <para>
-      integer bitmask of cursor options; zero produces default behavior
+      integer bit mask of cursor options; zero produces default behavior
      </para>
     </listitem>
    </varlistentry>

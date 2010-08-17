@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/hstore.sgml,v 1.13 2010/07/29 19:34:40 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/hstore.sgml,v 1.14 2010/08/17 04:37:20 petere Exp $ -->
 
 <sect1 id="hstore">
  <title>hstore</title>
@@ -214,7 +214,7 @@ key =&gt; NULL
    and <literal>&lt;@</> were called <literal>@</> and <literal>~</>,
    respectively. These names are still available, but are deprecated and will
    eventually be removed. Notice that the old names are reversed from the
-   convention formerly followed by the core geometric datatypes!
+   convention formerly followed by the core geometric data types!
    </para>
   </note>
 
@@ -409,7 +409,7 @@ b
    <para>
     The function <function>populate_record</function> is actually declared
     with <type>anyelement</>, not <type>record</>, as its first argument,
-    but it will reject non-record types with a runtime error.
+    but it will reject non-record types with a run-time error.
    </para>
   </note>
  </sect2>

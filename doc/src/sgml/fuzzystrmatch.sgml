@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/fuzzystrmatch.sgml,v 1.7 2010/08/02 23:20:23 rhaas Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/fuzzystrmatch.sgml,v 1.8 2010/08/17 04:37:20 petere Exp $ -->
 
 <sect1 id="fuzzystrmatch">
  <title>fuzzystrmatch</title>
@@ -16,7 +16,7 @@
   <para>
    At present, the <function>soundex</>, <function>metaphone</>,
    <function>dmetaphone</>, and <function>dmetaphone_alt</> functions do
-   not work well with multi-byte encodings (such as UTF-8).
+   not work well with multibyte encodings (such as UTF-8).
   </para>
  </caution>
 

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/intarray.sgml,v 1.11 2010/07/29 19:34:40 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/intarray.sgml,v 1.12 2010/08/17 04:37:20 petere Exp $ -->
 
 <sect1 id="intarray">
  <title>intarray</title>
@@ -207,7 +207,7 @@
    <literal>&lt;@</> were respectively called <literal>@</> and <literal>~</>.
    These names are still available, but are deprecated and will eventually be
    retired.  Notice that the old names are reversed from the convention
-   formerly followed by the core geometric datatypes!)
+   formerly followed by the core geometric data types!)
   </para>
 
   <para>

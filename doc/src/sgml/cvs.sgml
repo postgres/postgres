@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/cvs.sgml,v 1.52 2009/12/07 19:19:56 mha Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/cvs.sgml,v 1.53 2010/08/17 04:37:20 petere Exp $ -->
 
 <appendix id="cvs">
  <appendixinfo>
@@ -35,14 +35,14 @@
  </para>
 
  <para>
-  Using <productname>git</> is the most flexible way to work with the source, and it
+  Using <productname>Git</> is the most flexible way to work with the source, and it
   allows you to work offline without having constant access to the project servers.
-  <productname>rsync</> based <productname>cvs</> also lets you work offline, but
-  lacks many of the other advantages of <productname>git</>.
+  <productname>rsync</> based <productname>CVS</> also lets you work offline, but
+  lacks many of the other advantages of <productname>Git</>.
  </para>
 
  <para>
-  Our Wiki, <ulink
+  Our wiki, <ulink
   url="http://wiki.postgresql.org/wiki/Working_with_CVS"></ulink> and
   <ulink url="http://wiki.postgresql.org/wiki/Working_with_Git"></ulink>,
   has additional details on working with CVS and Git.
@@ -52,7 +52,7 @@
   <title>Getting The Source Via <productname>Git</></title>
 
   <para>
-   With <productname>git</> you will make a copy of the entire code repository
+   With <productname>Git</> you will make a copy of the entire code repository
    to your local machine, so you will have access to all history and branches
    offline. This is the fastest and most flexible way to develop or test
    patches.
@@ -63,35 +63,35 @@
 
    <step>
     <para>
-     You will need an installed version of <productname>git</>, which you can get
+     You will need an installed version of <productname>Git</>, which you can get
      from <ulink url="http://git-scm.com"></ulink>. Many systems also have a recent
-     version of <application>git</> installed by default, or available in their
+     version of <application>Git</> installed by default, or available in their
      package repository system.
     </para>
    </step>
 
    <step>
     <para>
-     To being using the git repository, make a clone of the official mirror:
+     To being using the Git repository, make a clone of the official mirror:
 
 <programlisting>
 git clone git://git.postgresql.org/git/postgresql.git
 </programlisting>
 
      This will copy the full repository to your local machine, so it may take
-     a while to complete, especially if you have a slow internet connection.
+     a while to complete, especially if you have a slow Internet connection.
     </para>
 
     <para>
-     The git mirror can also be reached via the http protocol in case for example
-     a firewall is blocking access to the git protocol. Just replace the URL
+     The Git mirror can also be reached via the HTTP protocol in case for example
+     a firewall is blocking access to the Git protocol. Just replace the URL
      like:
 
 <programlisting>
 git clone http://git.postgresql.org/git/postgresql.git
 </programlisting>
 
-     The http protocol is less efficient than the git protocol, so it will be
+     The HTTP protocol is less efficient than the Git protocol, so it will be
      slightly slower to use.
     </para>
    </step>
@@ -108,7 +108,7 @@ git fetch
    </step>
   </procedure>
   <para>
-   <productname>git</> can do a lot more things than just fetch the source. For
+   <productname>Git</> can do a lot more things than just fetch the source. For
    more information, consult the man pages for the product, or the website at
    <ulink url="http://git-scm.com"></>.
   </para>
@@ -226,7 +226,7 @@ cvs update
    CVS repository.  To work around that deficiency, use
    <productname>cvsutils</productname>, which is packaged in several
    operating systems, and is available in source form at <ulink
-   url="http://www.red-bean.com/cvsutils/"></ulink>, or use <productname>git</>
+   url="http://www.red-bean.com/cvsutils/"></ulink>, or use <productname>Git</>
    or another system designed to work offline.
   </para>
 
@@ -265,7 +265,7 @@ rsync -avzH --delete anoncvs.postgresql.org::pgsql-cvs cvsroot/
 </programlisting>
    For full instructions, see the "rsync" section in the 
    <ulink url="http://pgfoundry.org/docman/view.php/1000040/4/PGBuildFarm-HOWTO.txt">
-   pgbuildfarm instructions</ulink>.
+   PostgreSQL Build Farm instructions</ulink>.
   </para>
  </sect1>
 </appendix>

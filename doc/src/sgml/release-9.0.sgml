@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release-9.0.sgml,v 2.48 2010/08/07 13:07:06 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release-9.0.sgml,v 2.49 2010/08/17 04:37:21 petere Exp $ -->
 
  <sect1 id="release-9-0">
   <title>Release 9.0</title>
@@ -99,7 +99,7 @@
     <listitem>
      <para>
       New and enhanced security features, including RADIUS authentication,
-      LDAP authentication improvements, and the new checkpassword optional module
+      LDAP authentication improvements, and the new <filename>checkpassword</> optional module
       for testing password strength.
      </para>
     </listitem>
@@ -117,7 +117,7 @@
 
     <listitem>
      <para>
-      Add <link linkend="pgupgrade"><filename>/contrib/pg_upgrade</></link>
+      Add <link linkend="pgupgrade"><filename>contrib/pg_upgrade</></link>
       to support in-place upgrades from 8.3 or 8.4 to 9.0.
      </para>
     </listitem>
@@ -149,14 +149,14 @@
 
     <listitem>
      <para>
-      EXPLAIN plans are now available in JSON, XML and YAML format, and include
+      <command>EXPLAIN</> plans are now available in JSON, XML, and YAML format, and include
       buffer utilization and other data not previously available.
      </para>
     </listitem>
 
     <listitem>
      <para>
-      The HStore optional module has been improved with new functions and greater
+      The <filename>hstore</> optional module has been improved with new functions and greater
       data capacity to make it a high-performance key-value store.
      </para>
     </listitem>
@@ -205,7 +205,7 @@
       Remove server variable <varname>regex_flavor</>, which
       was defaulted to <link
       linkend="posix-syntax-details"><literal>advanced</></link>
-      (e.g. Perl-regex compatible) for many years. (Tom Lane)
+      (i.e., Perl compatible) for many years. (Tom Lane)
      </para>
     </listitem>
 
@@ -554,7 +554,7 @@
       <para>
        This is particularly useful for finding
        <function>MAX()</>/<function>MIN()</> values in indexes that also
-       contain NULLs.
+       contain null values.
       </para>
      </listitem>
 
@@ -581,7 +581,7 @@
        While the Genetic Query Optimizer (GEQO) still selects
        random plans, it now selects the same random plans for
        identical queries. You can modify <link
-       linkend="guc-geqo-seed">geqo_seed</link> to randomize
+       linkend="guc-geqo-seed"><varname>geqo_seed</></link> to randomize
        the starting value of the random plan generator.
       </para>
 
@@ -766,7 +766,7 @@
       </para>
 
       <para>
-       Now there is true multi-lingual support for PostgreSQL log messages
+       Now there is true multilingual support for PostgreSQL log messages
        on Windows.
       </para>
      </listitem>
@@ -827,7 +827,7 @@
 
      <listitem>
       <para>
-       Add boolean variable <link
+       Add Boolean variable <link
        linkend="guc-bonjour"><varname>bonjour</></link>, which
        controls whether a Bonjour-enabled binary advertises
        itself via <productname>Bonjour</> (Tom Lane)
@@ -840,7 +840,7 @@
 
      <listitem>
       <para>
-       Add boolean variable <link
+       Add Boolean variable <link
        linkend="guc-enable-material"><varname>enable_material</></link>, which
        controls the use of materialize nodes in the optimizer
        (Robert Haas)
@@ -1390,7 +1390,7 @@
 
      <listitem>
       <para>
-       Add <literal>point_ops</> opclass for GiST (Teodor Sigaev)
+       Add <literal>point_ops</> operator class for GiST (Teodor Sigaev)
       </para>
 
       <para>
@@ -1433,7 +1433,7 @@
 
      <para>
       The variable <link
-      linkend="guc-bytea-output">bytea_output</link> controls
+      linkend="guc-bytea-output"><varname>bytea_output</></link> controls
       if hex (default) or octal escapes are used for <type>bytea</>
       output. (SWITCH DEFAULT FOR BETA? PETER) Libpq's
       <function>PQescapeByteaConn()</> now uses the hex format
@@ -1516,8 +1516,8 @@
 
      <para>
       Previously, only <acronym>ASCII</> characters and single-byte
-      encodings worked properly. Other multi-byte, non-<acronym>UTF-8</>
-      encodings are still broken for case-insensitive regular expression
+      encodings worked properly. Multibyte encodings other than <acronym>UTF-8</>
+      are still broken for case-insensitive regular expression
       matching.
      </para>
     </listitem>
@@ -1868,14 +1868,14 @@
      <listitem>
       <para>
        Add server variable <link
-       linkend="guc-plperl-on-init">plperl.on_init</link> to
+       linkend="guc-plperl-on-init"><varname>plperl.on_init</></link> to
        specify a PL/Perl Perl initialization function (Tim
        Bunce)
       </para>
 
       <para>
        <link
-       linkend="guc-plperl-on-plperl-init">plperl.on_plperl_init</link>
+       linkend="guc-plperl-on-plperl-init"><varname>plperl.on_plperl_init</></link>
        and <varname>plperl.on_plperlu_init</> are also available
        for trusted/untrusted-specific initialization.
       </para>
@@ -1904,7 +1904,7 @@
 
       <para>
        This can be globally enabled with the server variable <link
-       linkend="guc-plperl-use-strict">plperl.use_strict</link>.
+       linkend="guc-plperl-use-strict"><varname>plperl.use_strict</></link>.
       </para>
      </listitem>
 
@@ -1965,8 +1965,8 @@
 
       <para>
        <type>Bytea</> values passed into PL/Python now are represented as
-       binary, rather than the Postgres <type>bytea</> text format. Null
-       bytes are now also output properly from PL/Python. <type>Boolean</>
+       binary, rather than the PostgreSQL <type>bytea</> text format. Null
+       bytes are now also output properly from PL/Python. <type>boolean</>
        and <type>numeric</> value passing in PL/Python was also improved.
       </para>
      </listitem>
@@ -2489,7 +2489,7 @@
       <para>
        These are similar to the existing <literal>all</>, <literal>install</>,
        and <literal>installcheck</> targets, but they build <acronym>HTML</>
-       documentation, build and test <filename>/contrib</>, and test
+       documentation, build and test <filename>contrib</>, and test
        server-side languages and <application>ecpg</>.
       </para>
      </listitem>
@@ -2582,7 +2582,7 @@
 
      <listitem>
       <para>
-       Allow multi-processor compilation using <productname>Microsoft Visual
+       Allow multiprocessor compilation using <productname>Microsoft Visual
        C</> (Magnus Hagander)
       </para>
      </listitem>
@@ -2647,7 +2647,7 @@
 
     <listitem>
      <para>
-      Improve source code test coverage, including /contrib, PL/Python,
+      Improve source code test coverage, including <filename>contrib</>, PL/Python,
       and PL/Perl (Peter Eisentraut, Andrew Dunstan)
      </para>
     </listitem>
@@ -2839,7 +2839,7 @@
 
     <listitem>
      <para>
-      Add <link linkend="pgupgrade"><filename>/contrib/pg_upgrade</></link>
+      Add <link linkend="pgupgrade"><filename>contrib/pg_upgrade</></link>
       to support in-place upgrades (Bruce Momjian)
      </para>
 
@@ -2894,8 +2894,8 @@
 
     <listitem>
      <para>
-      Add multi-threaded option (<option>-j</>) to <link
-      linkend="pgbench"><filename>/contrib/pgbench</></link>
+      Add multithreaded option (<option>-j</>) to <link
+      linkend="pgbench"><filename>contrib/pgbench</></link>
       (Itagaki Takahiro)
      </para>
 
@@ -2908,7 +2908,7 @@
      <para>
       Add <command>\shell</> and <command>\setshell</> meta
       commands to <link
-      linkend="pgbench"><filename>/contrib/pgbench</></link>
+      linkend="pgbench"><filename>contrib/pgbench</></link>
       (Michael Paquier)
      </para>
     </listitem>
@@ -2916,7 +2916,7 @@
     <listitem>
      <para>
       New features for <link
-      linkend="dict-xsyn"><filename>/contrib/dict_xsyn</></link>
+      linkend="dict-xsyn"><filename>contrib/dict_xsyn</></link>
       (Sergey Karpov)
      </para>
 
@@ -2929,7 +2929,7 @@
     <listitem>
      <para>
       Add full text dictionary <link
-      linkend="unaccent"><filename>/contrib/unaccent</></link>
+      linkend="unaccent"><filename>contrib/unaccent</></link>
       (Teodor Sigaev)
      </para>
 
@@ -2943,17 +2943,17 @@
      <para>
       Add <link
       linkend="CONTRIB-DBLINK-GET-NOTIFY"><function>dblink_get_notify()</></link>
-      to <filename>/contrib/dblink</> (Marcus Kempe)
+      to <filename>contrib/dblink</> (Marcus Kempe)
      </para>
 
      <para>
-      This allows async notifications in <productname>dblink</>.
+      This allows asynchronous notifications in <productname>dblink</>.
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Improve <filename>/contrib/dblink</>s handling of dropped columns
+      Improve <filename>contrib/dblink</>s handling of dropped columns
       (Tom Lane)
      </para>
 
@@ -2967,22 +2967,22 @@
     <listitem>
      <para>
       Greatly increase <link
-      linkend="hstore"><filename>/contrib/hstore</></link>'s
-      length limit and add btree and hash abilities so <literal>GROUP
+      linkend="hstore"><filename>contrib/hstore</></link>'s
+      length limit and add B-tree and hash abilities so <literal>GROUP
       BY</> and <literal>DISTINCT</> operations are possible
       (Andrew Gierth)
      </para>
 
      <para>
       New functions and operators were also added.  These improvements
-      make HStore a full-functional key-value store embedded in PostgreSQL.
+      make hstore a full-functional key-value store embedded in PostgreSQL.
      </para>
     </listitem>
 
     <listitem>
      <para>
       Add <link
-      linkend="passwordcheck"><filename>/contrib/passwordcheck</></link>
+      linkend="passwordcheck"><filename>contrib/passwordcheck</></link>
       which can check the strength of assigned passwords (Laurenz
       Albe)
      </para>
@@ -2996,7 +2996,7 @@
     <listitem>
      <para>
       Add <link
-      linkend="pgarchivecleanup"><filename>/contrib/pg_archivecleanup</></link>
+      linkend="pgarchivecleanup"><filename>contrib/pg_archivecleanup</></link>
       tool (Simon Riggs)
      </para>
 
@@ -3009,7 +3009,7 @@
     <listitem>
      <para>
       Add query text to <link
-      linkend="auto-explain"><filename>/contrib/auto_explain</></link>
+      linkend="auto-explain"><filename>contrib/auto_explain</></link>
       output (Andrew Dunstan)
      </para>
     </listitem>
@@ -3017,7 +3017,7 @@
     <listitem>
      <para>
       Add buffer access counters to <link
-      linkend="pgstatstatements"><filename>/contrib/pg_stat_statements</></link>
+      linkend="pgstatstatements"><filename>contrib/pg_stat_statements</></link>
       (Itagaki Takahiro)
      </para>
     </listitem>
@@ -3025,7 +3025,7 @@
     <listitem>
      <para>
       Update <link
-      linkend="server-start"><filename>/contrib/start-scripts/linux</></link>
+      linkend="server-start"><filename>contrib/start-scripts/linux</></link>
       to use <filename>/proc/self/oom_adj</> to disable the
       <link linkend="linux-memory-overcommit"><productname>Linux</>
       out-of-memory</link> (<acronym>OOM</>) killer (Alex

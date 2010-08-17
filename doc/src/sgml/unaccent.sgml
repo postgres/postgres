@@ -9,7 +9,7 @@
   <filename>unaccent</> removes accents (diacritic signs) from a lexeme.
   It's a filtering dictionary, that means its output is 
   always passed to the next dictionary (if any), contrary to the standard 
-  behavior. Currently, it supports most important accents from european 
+  behavior. Currently, it supports most important accents from European 
   languages. 
  </para>
 

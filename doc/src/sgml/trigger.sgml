@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/trigger.sgml,v 1.63 2010/04/03 07:22:56 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/trigger.sgml,v 1.64 2010/08/17 04:37:21 petere Exp $ -->
 
  <chapter id="triggers">
   <title>Triggers</title>
@@ -141,7 +141,7 @@
    </para>
 
    <para>
-    A trigger definition can also specify a boolean <literal>WHEN</>
+    A trigger definition can also specify a Boolean <literal>WHEN</>
     condition, which will be tested to see whether the trigger should
     be fired.  In row-level triggers the <literal>WHEN</> condition can
     examine the old and/or new values of columns of the row.  (Statement-level

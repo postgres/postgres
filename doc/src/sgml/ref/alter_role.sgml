@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_role.sgml,v 1.17 2010/04/21 20:54:19 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_role.sgml,v 1.18 2010/08/17 04:37:21 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -86,7 +86,7 @@ ALTER ROLE <replaceable class="PARAMETER">name</replaceable> [ IN DATABASE <repl
    the named database. Whenever the role subsequently
    starts a new session, the specified value becomes the session
    default, overriding whatever setting is present in
-   <filename>postgresql.conf</> or has been received from the postgres
+   <filename>postgresql.conf</> or has been received from the <command>postgres</command>
    command line. This only happens at login time; executing
    <xref linkend="sql-set-role"> or
    <xref linkend="sql-set-session-authorization"> does not cause new

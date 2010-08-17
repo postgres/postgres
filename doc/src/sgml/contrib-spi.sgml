@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/contrib-spi.sgml,v 1.2 2007/12/06 04:12:09 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/contrib-spi.sgml,v 1.3 2010/08/17 04:37:20 petere Exp $ -->
 
 <sect1 id="contrib-spi">
  <title>spi</title>
@@ -133,8 +133,8 @@ CREATE TABLE mytab (
   <para>
    <function>set_timetravel()</> allows you to turn time-travel on or off for
    a table.
-   <literal>set_timetravel('mytab', 1)</> will turn TT ON for table mytab.
-   <literal>set_timetravel('mytab', 0)</> will turn TT OFF for table mytab.
+   <literal>set_timetravel('mytab', 1)</> will turn TT ON for table <literal>mytab</>.
+   <literal>set_timetravel('mytab', 0)</> will turn TT OFF for table <literal>mytab</>.
    In both cases the old status is reported.  While TT is off, you can modify
    the start_date and stop_date columns freely.  Note that the on/off status
    is local to the current database session &mdash; fresh sessions will

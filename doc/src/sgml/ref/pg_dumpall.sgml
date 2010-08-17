@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/pg_dumpall.sgml,v 1.83 2010/07/22 01:22:33 rhaas Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/pg_dumpall.sgml,v 1.84 2010/08/17 04:37:21 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -406,8 +406,8 @@ PostgreSQL documentation
        <para>
          Specifies the name of the database to connect to to dump global
          objects and discover what other databases should be dumped. If
-         not specified, the <quote>postgres</quote> database will be used,
-         and if that does not exist, <quote>template1</quote> will be used.
+         not specified, the <literal>postgres</literal> database will be used,
+         and if that does not exist, <literal>template1</literal> will be used.
        </para>
       </listitem>
      </varlistentry>

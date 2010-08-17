@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/xoper.sgml,v 1.43 2007/11/28 15:42:31 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/xoper.sgml,v 1.44 2010/08/17 04:37:21 petere Exp $ -->
 
  <sect1 id="xoper">
   <title>User-Defined Operators</title>
@@ -435,7 +435,7 @@ table1.column1 OP table2.column2
 
     <para>
      To be marked <literal>MERGES</literal>, the join operator must appear
-     as an equality member of a btree index operator family.
+     as an equality member of a <literal>btree</> index operator family.
      This is not enforced when you create
      the operator, since of course the referencing operator family couldn't
      exist yet.  But the operator will not actually be used for merge joins
@@ -450,7 +450,7 @@ table1.column1 OP table2.column2
      if they are different) that appears in the same operator family.
      If this is not the case, planner errors might occur when the operator
      is used.  Also, it is a good idea (but not strictly required) for
-     a btree operator family that supports multiple data types to provide
+     a <literal>btree</> operator family that supports multiple data types to provide
      equality operators for every combination of the data types; this
      allows better optimization.
     </para>

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/high-availability.sgml,v 1.78 2010/07/14 22:04:21 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/high-availability.sgml,v 1.79 2010/08/17 04:37:20 petere Exp $ -->
 
 <chapter id="high-availability">
  <title>High Availability, Load Balancing, and Replication</title>
@@ -449,7 +449,7 @@ protocol to make nodes agree on a serializable transactional order.
      part of the query and return results to a central server where they
      are combined and returned to the user.  <productname>Pgpool-II</>
      has this capability.  Also, this can be implemented using the
-     <productname>PL/Proxy</> toolset.
+     <productname>PL/Proxy</> tool set.
     </para>
 
    </listitem>
@@ -602,21 +602,21 @@ protocol to make nodes agree on a serializable transactional order.
     At startup, the standby begins by restoring all WAL available in the
     archive location, calling <varname>restore_command</>. Once it
     reaches the end of WAL available there and <varname>restore_command</>
-    fails, it tries to restore any WAL available in the pg_xlog directory.
+    fails, it tries to restore any WAL available in the <filename>pg_xlog</> directory.
     If that fails, and streaming replication has been configured, the
     standby tries to connect to the primary server and start streaming WAL
-    from the last valid record found in archive or pg_xlog. If that fails
+    from the last valid record found in archive or <filename>pg_xlog</>. If that fails
     or streaming replication is not configured, or if the connection is
     later disconnected, the standby goes back to step 1 and tries to
     restore the file from the archive again. This loop of retries from the
-    archive, pg_xlog, and via streaming replication goes on until the server
+    archive, <filename>pg_xlog</>, and via streaming replication goes on until the server
     is stopped or failover is triggered by a trigger file.
    </para>
 
    <para>
     Standby mode is exited and the server switches to normal operation,
     when a trigger file is found (<varname>trigger_file</>). Before failover,
-    any WAL immediately available in the archive or in pg_xlog will be
+    any WAL immediately available in the archive or in <filename>pg_xlog</> will be
     restored, but no attempt is made to connect to the master.
    </para>
   </sect2>
@@ -753,7 +753,7 @@ trigger_file = '/path/to/trigger_file'
     too early, while the standby might still need them to catch up. If the
     standby falls behind too much, it needs to be reinitialized from a new
     base backup. If you set up a WAL archive that's accessible from the
-    standby, wal_keep_segments is not required as the standby can always
+    standby, <varname>wal_keep_segments</> is not required as the standby can always
     use the archive to catch up.
    </para>
 
@@ -1743,7 +1743,7 @@ LOG:  database system is ready to accept read only connections
    </para>
 
    <para>
-    New oids cannot be assigned, though some <acronym>UUID</> generators may still
+    New OIDs cannot be assigned, though some <acronym>UUID</> generators may still
     work as long as they do not rely on writing new status to the database.
    </para>
 

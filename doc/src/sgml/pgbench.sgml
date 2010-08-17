@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/pgbench.sgml,v 1.19 2010/08/15 19:46:24 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/pgbench.sgml,v 1.20 2010/08/17 04:37:20 petere Exp $ -->
 
 <sect1 id="pgbench">
  <title>pgbench</title>
@@ -242,7 +242,7 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
       <term><option>-l</option></term>
       <listitem>
        <para>
-        Write the time taken by each transaction to a logfile.
+        Write the time taken by each transaction to a log file.
         See below for details.
        </para>
       </listitem>
@@ -380,7 +380,7 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
       <term><option>-h</option> <replaceable>hostname</></term>
       <listitem>
        <para>
-        The database server's hostname
+        The database server's host name
        </para>
       </listitem>
      </varlistentry>
@@ -398,7 +398,7 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
       <term><option>-U</option> <replaceable>login</></term>
       <listitem>
        <para>
-        The username to connect as
+        The user name to connect as
        </para>
       </listitem>
      </varlistentry>
@@ -447,7 +447,7 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
   </para>
 
   <para>
-   The format of a script file is one SQL command per line; multi-line
+   The format of a script file is one SQL command per line; multiline
    SQL commands are not supported.  Empty lines and lines beginning with
    <literal>--</> are ignored.  Script file lines can also be
    <quote>meta commands</>, which are interpreted by <application>pgbench</>
@@ -626,7 +626,7 @@ END;
 
   <para>
    With the <literal>-l</> option, <application>pgbench</> writes the time
-   taken by each transaction to a logfile.  The logfile will be named
+   taken by each transaction to a log file.  The log file will be named
    <filename>pgbench_log.<replaceable>nnn</></filename>, where
    <replaceable>nnn</> is the PID of the pgbench process.
    If the <literal>-j</> option is 2 or higher, creating multiple worker

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.256 2010/08/10 20:41:27 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.257 2010/08/17 04:37:20 petere Exp $ -->
 
  <chapter id="datatype">
   <title>Data Types</title>
@@ -3792,7 +3792,7 @@ SELECT to_tsvector('english', 'The Fat Rats');
 
     <para>
      A <type>tsquery</type> value stores lexemes that are to be
-     searched for, and combines them honoring the boolean operators
+     searched for, and combines them honoring the Boolean operators
      <literal>&amp;</literal> (AND), <literal>|</literal> (OR), and
      <literal>!</> (NOT).  Parentheses can be used to enforce grouping
      of the operators:

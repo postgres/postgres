@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/arch-dev.sgml,v 2.34 2010/04/03 07:22:52 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/arch-dev.sgml,v 2.35 2010/08/17 04:37:20 petere Exp $ -->
 
  <chapter id="overview">
   <title>Overview of PostgreSQL Internals</title>
@@ -463,7 +463,7 @@
      needed, plus any auxiliary steps needed, such as sort nodes or
      aggregate-function calculation nodes.  Most of these plan node
      types have the additional ability to do <firstterm>selection</>
-     (discarding rows that do not meet a specified boolean condition)
+     (discarding rows that do not meet a specified Boolean condition)
      and <firstterm>projection</> (computation of a derived column set
      based on given column values, that is, evaluation of scalar
      expressions where needed).  One of the responsibilities of the

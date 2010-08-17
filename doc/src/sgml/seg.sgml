@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/seg.sgml,v 1.8 2010/08/10 20:42:01 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/seg.sgml,v 1.9 2010/08/17 04:37:21 petere Exp $ -->
 
 <sect1 id="seg">
  <title>seg</title>
@@ -237,7 +237,7 @@ test=> select '6.25 .. 6.50'::seg as "pH";
   <para>
    The <filename>seg</> module includes a GiST index operator class for
    <type>seg</> values.
-   The operators supported by the GiST opclass are shown in <xref linkend="seg-gist-operators">.
+   The operators supported by the GiST operator class are shown in <xref linkend="seg-gist-operators">.
   </para>
 
   <table id="seg-gist-operators">
@@ -308,7 +308,7 @@ test=> select '6.25 .. 6.50'::seg as "pH";
    respectively called <literal>@</> and <literal>~</>.  These names are still available, but are
    deprecated and will eventually be retired.  Notice that the old names
    are reversed from the convention formerly followed by the core geometric
-   datatypes!)
+   data types!)
   </para>
 
   <para>

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/tablefunc.sgml,v 1.6 2010/08/10 20:42:01 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/tablefunc.sgml,v 1.7 2010/08/17 04:37:21 petere Exp $ -->
 
 <sect1 id="tablefunc">
  <title>tablefunc</title>
@@ -46,7 +46,7 @@
       <entry>
        Produces a <quote>pivot table</> containing
        row names plus <replaceable>N</> value columns, where
-       <replaceable>N</> is determined by the rowtype specified in the calling
+       <replaceable>N</> is determined by the row type specified in the calling
        query
       </entry>
      </row>
@@ -219,9 +219,9 @@ SELECT * FROM crosstab('...') AS ct(row_name text, category_1 text, category_2 t
 
    <para>
     The <literal>FROM</> clause must define the output as one
-    <structfield>row_name</> column (of the same datatype as the first result
+    <structfield>row_name</> column (of the same data type as the first result
     column of the SQL query) followed by N <structfield>value</> columns
-    (all of the same datatype as the third result column of the SQL query).
+    (all of the same data type as the third result column of the SQL query).
     You can set up as many output value columns as you wish.  The names of the
     output columns are up to you.
    </para>
@@ -299,7 +299,7 @@ crosstab<replaceable>N</>(text sql)
      so that you need not write out column names and types in the calling
      <command>SELECT</> query.  The <filename>tablefunc</> module includes
      <function>crosstab2</>, <function>crosstab3</>, and
-     <function>crosstab4</>, whose output rowtypes are defined as
+     <function>crosstab4</>, whose output row types are defined as
     </para>
 
 <programlisting>

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/pg_restore.sgml,v 1.87 2010/05/15 18:11:07 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/pg_restore.sgml,v 1.88 2010/08/17 04:37:21 petere Exp $ -->
 
 <refentry id="APP-PGRESTORE">
  <refmeta>
@@ -221,7 +221,7 @@
         create indexes, or create constraints &mdash; using multiple
         concurrent jobs.  This option can dramatically reduce the time
         to restore a large database to a server running on a
-        multi-processor machine.
+        multiprocessor machine.
        </para>
 
        <para>

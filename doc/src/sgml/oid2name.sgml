@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/oid2name.sgml,v 1.9 2010/07/29 19:34:40 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/oid2name.sgml,v 1.10 2010/08/17 04:37:20 petere Exp $ -->
 
 <sect1 id="oid2name">
  <title>oid2name</title>
@@ -105,7 +105,7 @@
 
     <varlistentry>
      <term><option>-U</option> <replaceable>username</></term>
-     <listitem><para>username to connect as</para></listitem>
+     <listitem><para>user name to connect as</para></listitem>
     </varlistentry>
 
     <varlistentry>
@@ -122,8 +122,8 @@
    using <option>-o</>, <option>-f</> and/or <option>-t</>.
    <option>-o</> takes an OID,
    <option>-f</> takes a filenode,
-   and <option>-t</> takes a tablename (actually, it's a LIKE
-   pattern, so you can use things like <option>foo%</>).
+   and <option>-t</> takes a table name (actually, it's a <literal>LIKE</>
+   pattern, so you can use things like <literal>foo%</>).
    You can use as many
    of these options as you like, and the listing will include all objects
    matched by any of the options.  But note that these options can only

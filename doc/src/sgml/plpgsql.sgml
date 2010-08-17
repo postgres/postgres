@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.157 2010/08/09 02:25:05 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.158 2010/08/17 04:37:21 petere Exp $ -->
 
 <chapter id="plpgsql">
   <title><application>PL/pgSQL</application> - <acronym>SQL</acronym> Procedural Language</title>
@@ -1842,7 +1842,7 @@ END CASE;
 
       <para>
        The searched form of <command>CASE</> provides conditional execution
-       based on truth of boolean expressions.  Each <literal>WHEN</> clause's
+       based on truth of Boolean expressions.  Each <literal>WHEN</> clause's
        <replaceable>boolean-expression</replaceable> is evaluated in turn,
        until one is found that yields <literal>true</>.  Then the
        corresponding <replaceable>statements</replaceable> are executed, and

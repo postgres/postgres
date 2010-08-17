@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ltree.sgml,v 1.5 2010/07/29 19:34:40 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ltree.sgml,v 1.6 2010/08/17 04:37:20 petere Exp $ -->
 
 <sect1 id="ltree">
  <title>ltree</title>
@@ -42,7 +42,7 @@
   </para>
 
   <para>
-   The <filename>ltree</> module provides several datatypes:
+   The <filename>ltree</> module provides several data types:
   </para>
 
   <itemizedlist>

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/pgstattuple.sgml,v 1.7 2010/08/10 20:42:01 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/pgstattuple.sgml,v 1.8 2010/08/17 04:37:21 petere Exp $ -->
 
 <sect1 id="pgstattuple">
  <title>pgstattuple</title>
@@ -140,7 +140,7 @@ free_percent       | 1.95
     <listitem>
      <para>
       <function>pgstatindex</function> returns a record showing information
-      about a btree index.  For example:
+      about a B-tree index.  For example:
 <programlisting>
 test=> SELECT * FROM pgstatindex('pg_cast_oid_index');
 -[ RECORD 1 ]------+------
@@ -174,7 +174,7 @@ leaf_fragmentation | 0
        <row>
         <entry><structfield>version</structfield></entry>
         <entry><type>integer</type></entry>
-        <entry>Btree version number</entry>
+        <entry>B-tree version number</entry>
        </row>
 
        <row>

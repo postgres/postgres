@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/cube.sgml,v 1.8 2010/07/29 19:34:40 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/cube.sgml,v 1.9 2010/08/17 04:37:20 petere Exp $ -->
 
 <sect1 id="cube">
  <title>cube</title>
@@ -9,7 +9,7 @@
 
  <para>
   This module implements a data type <type>cube</> for
-  representing multi-dimensional cubes.
+  representing multidimensional cubes.
  </para>
 
  <sect2>
@@ -98,7 +98,7 @@
   <para>
    The <filename>cube</> module includes a GiST index operator class for
    <type>cube</> values.
-   The operators supported by the GiST opclass are shown in <xref linkend="cube-gist-operators">.
+   The operators supported by the GiST operator class are shown in <xref linkend="cube-gist-operators">.
   </para>
 
   <table id="cube-gist-operators">
@@ -140,7 +140,7 @@
    respectively called <literal>@</> and <literal>~</>.  These names are still available, but are
    deprecated and will eventually be retired.  Notice that the old names
    are reversed from the convention formerly followed by the core geometric
-   datatypes!)
+   data types!)
   </para>
 
   <para>
@@ -339,7 +339,7 @@ cube_inter
 
    <para>
     In all binary operations on differently-dimensioned cubes, I assume the
-    lower-dimensional one to be a cartesian projection, i. e., having zeroes
+    lower-dimensional one to be a Cartesian projection, i. e., having zeroes
     in place of coordinates omitted in the string representation. The above
     examples are equivalent to:
    </para>

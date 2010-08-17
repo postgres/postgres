@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/pgcrypto.sgml,v 1.12 2010/08/15 01:57:03 rhaas Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/pgcrypto.sgml,v 1.13 2010/08/17 04:37:21 petere Exp $ -->
 
 <sect1 id="pgcrypto">
  <title>pgcrypto</title>
@@ -519,7 +519,7 @@ pgp_sym_decrypt_bytea(msg bytea, psw text [, options text ]) returns bytea
     Decrypt a symmetric-key-encrypted PGP message.
    </para>
    <para>
-    Decrypting bytea data with <function>pgp_sym_decrypt</> is disallowed.
+    Decrypting <type>bytea</> data with <function>pgp_sym_decrypt</> is disallowed.
     This is to avoid outputting invalid character data.  Decrypting
     originally textual data with <function>pgp_sym_decrypt_bytea</> is fine.
    </para>
@@ -561,7 +561,7 @@ pgp_pub_decrypt_bytea(msg bytea, key bytea [, psw text [, options text ]]) retur
     options, you need to give an empty password.
    </para>
    <para>
-    Decrypting bytea data with <function>pgp_pub_decrypt</> is disallowed.
+    Decrypting <type>bytea</> data with <function>pgp_pub_decrypt</> is disallowed.
     This is to avoid outputting invalid character data.  Decrypting
     originally textual data with <function>pgp_pub_decrypt_bytea</> is fine.
    </para>
@@ -621,7 +621,7 @@ armor(data bytea) returns text
 dearmor(data text) returns bytea
 </synopsis>
    <para>
-    These functions wrap/unwrap binary data into PGP Ascii Armor format,
+    These functions wrap/unwrap binary data into PGP ASCII-armor format,
     which is basically Base64 with CRC and additional formatting.
    </para>
   </sect3>
@@ -825,13 +825,13 @@ gpg --list-secret-keys
 </programlisting>
   </para>
   <para>
-   To export a public key in ascii-armor format:
+   To export a public key in ASCII-armor format:
 <programlisting>
 gpg -a --export KEYID > public.key
 </programlisting>
   </para>
   <para>
-   To export a secret key in ascii-armor format:
+   To export a secret key in ASCII-armor format:
 <programlisting>
 gpg -a --export-secret-keys KEYID > secret.key
 </programlisting>
@@ -1206,7 +1206,7 @@ gen_random_bytes(count integer) returns bytea
     </listitem>
     <listitem>
      <para><ulink url="http://jlcooke.ca/random/"></ulink></para>
-     <para>Jean-Luc Cooke Fortuna-based /dev/random driver for Linux.</para>
+     <para>Jean-Luc Cooke Fortuna-based <filename>/dev/random</> driver for Linux.</para>
     </listitem>
     <listitem>
      <para><ulink url="http://research.cyber.ee/~lipmaa/crypto/"></ulink></para>

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/pgstandby.sgml,v 2.12 2010/07/29 19:34:40 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/pgstandby.sgml,v 2.13 2010/08/17 04:37:21 petere Exp $ -->
 
 <sect1 id="pgstandby">
  <title>pg_standby</title>
@@ -202,7 +202,7 @@ pg_standby <optional> <replaceable>option</> ... </optional> <replaceable>archiv
       <listitem>
        <para>
         Specify a trigger file whose presence should cause failover.
-        It is recommended that you use a structured filename to
+        It is recommended that you use a structured file name to
         avoid confusion as to which server is being triggered
         when multiple servers exist on the same system; for example
         <filename>/tmp/pgsql.trigger.5432</>.
@@ -326,7 +326,7 @@ recovery_end_command = 'del C:\pgsql.trigger.5442'
 
   <para>
    The <literal>copy</> command on Windows sets the final file size
-   before the file is completely copied, which would ordinarly confuse
+   before the file is completely copied, which would ordinarily confuse
    <application>pg_standby</application>.  Therefore
    <application>pg_standby</application> waits <literal>sleeptime</>
    seconds once it sees the proper file size.  GNUWin32's <literal>cp</>

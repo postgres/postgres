@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/xml2.sgml,v 1.10 2010/08/10 20:42:01 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/xml2.sgml,v 1.11 2010/08/17 04:37:21 petere Exp $ -->
 
 <sect1 id="xml2">
  <title>xml2</title>
@@ -90,7 +90,7 @@ xpath_nodeset(document, query, toptag, itemtag) returns text
 &lt;itemtag&gt;Value 2....&lt;/itemtag&gt;
 &lt;/toptag&gt;
 </synopsis>
-        If either toptag or itemtag is an empty string, the relevant tag is omitted.
+        If either <literal>toptag</> or <literal>itemtag</> is an empty string, the relevant tag is omitted.
        </para>
       </entry>
      </row>
@@ -102,7 +102,7 @@ xpath_nodeset(document, query) returns text
       </entry>
       <entry>
        <para>
-        Like xpath_nodeset(document,query,toptag,itemtag) but result omits both tags.
+        Like <function>xpath_nodeset(document, query, toptag, itemtag)</> but result omits both tags.
        </para>
       </entry>
      </row>
@@ -114,7 +114,7 @@ xpath_nodeset(document, query, itemtag) returns text
       </entry>
       <entry>
        <para>
-        Like xpath_nodeset(document,query,toptag,itemtag) but result omits toptag.
+        Like <function>xpath_nodeset(document, query, toptag, itemtag)</> but result omits toptag.
        </para>
       </entry>
      </row>
@@ -295,7 +295,7 @@ WHERE t.author_id = p.person_id;
     may not be the same as the number of input documents. The first row
     returned contains the first result from each query, the second row the
     second result from each query. If one of the queries has fewer values
-    than the others, NULLs will be returned instead.
+    than the others, null values will be returned instead.
    </para>
 
    <para>
@@ -337,8 +337,8 @@ WHERE id = 1 ORDER BY doc_num, line_num
    </para>
 
    <para>
-    To get doc_num on every line, the solution is to use two invocations
-    of xpath_table and join the results:
+    To get <literal>doc_num</> on every line, the solution is to use two invocations
+    of <function>xpath_table</> and join the results:
 
 <programlisting>
 SELECT t.*,i.doc_num FROM
@@ -377,7 +377,7 @@ xslt_process(text document, text stylesheet, text paramlist) returns text
 
    <para>
     This function applies the XSL stylesheet to the document and returns
-    the transformed result. The paramlist is a list of parameter
+    the transformed result. The <literal>paramlist</> is a list of parameter
     assignments to be used in the transformation, specified in the form
     <literal>a=1,b=2</>. Note that the
     parameter parsing is very simple-minded: parameter values cannot

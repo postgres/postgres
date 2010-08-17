@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/citext.sgml,v 1.5 2010/07/29 19:34:40 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/citext.sgml,v 1.6 2010/08/17 04:37:20 petere Exp $ -->
 
 <sect1 id="citext">
  <title>citext</title>
@@ -62,7 +62,7 @@ SELECT * FROM tab WHERE lower(col) = LOWER(?);
     lower case characters is dependent on the rules of
     the <literal>LC_CTYPE</> locale setting. Again, this behavior is
     identical to the use of <function>lower</> in queries. But because it's
-    done transparently by the datatype, you don't have to remember to do
+    done transparently by the data type, you don't have to remember to do
     anything special in your queries.
    </para>
 
@@ -90,8 +90,8 @@ SELECT * FROM users WHERE nick = 'Larry';
 </programlisting>
 
    The <command>SELECT</> statement will return one tuple, even though
-   the <structfield>nick</> column was set to <quote>larry</> and the query
-   was for <quote>Larry</>.
+   the <structfield>nick</> column was set to <literal>larry</> and the query
+   was for <literal>Larry</>.
   </para>
  </sect2>
 
@@ -184,7 +184,7 @@ SELECT * FROM users WHERE nick = 'Larry';
     <listitem>
      <para>
        <type>citext</> is not as efficient as <type>text</> because the
-       operator functions and the btree comparison functions must make copies
+       operator functions and the B-tree comparison functions must make copies
        of the data and convert it to lower case for comparisons. It is,
        however, slightly more efficient than using <function>lower</> to get
        case-insensitive matching.
