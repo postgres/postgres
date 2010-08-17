@@ -83,6 +83,8 @@ main(void)
 	}
 	exec sql close cur1;
 
+	PGTYPESnumeric_free(num);
+
 	exec sql rollback;
 	exec sql disconnect;
 

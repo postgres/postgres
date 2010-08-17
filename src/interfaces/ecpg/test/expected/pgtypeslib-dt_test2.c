@@ -139,6 +139,7 @@ main(void)
 					printf("TS[%d,%d]: %s\n",
 						i, j, errno ? "-" : text);
 				free(text);
+				free(t);
 			}
 		}
 	}
@@ -169,6 +170,7 @@ main(void)
 		printf("interval_copy[%d]: %s\n", i, text ? text : "-");
 		free(text);
 		PGTYPESinterval_free(ic);
+		PGTYPESinterval_free(i1);
 	}
 
 	return (0);
