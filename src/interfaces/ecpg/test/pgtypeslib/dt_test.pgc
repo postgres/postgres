@@ -49,6 +49,7 @@ main(void)
 	PGTYPESinterval_copy(iv1, &iv2);
 	text = PGTYPESinterval_to_asc(&iv2);
 	printf ("interval: %s\n", text);
+	PGTYPESinterval_free(iv1);
 	free(text);
 
 	PGTYPESdate_mdyjul(mdy, &date2);

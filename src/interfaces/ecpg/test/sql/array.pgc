@@ -73,5 +73,7 @@ EXEC SQL END DECLARE SECTION;
 
 	EXEC SQL DISCONNECT;
 
+	free(t);
+
 	return (0);
 }

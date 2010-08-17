@@ -252,17 +252,19 @@ if (sqlca.sqlcode < 0) sqlprint ( );}
 #line 84 "nan_test.pgc"
 
 
+	PGTYPESnumeric_free(num);
+
 	{ ECPGtrans(__LINE__, NULL, "rollback");
-#line 86 "nan_test.pgc"
+#line 88 "nan_test.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint ( );}
-#line 86 "nan_test.pgc"
+#line 88 "nan_test.pgc"
 
 	{ ECPGdisconnect(__LINE__, "CURRENT");
-#line 87 "nan_test.pgc"
+#line 89 "nan_test.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint ( );}
-#line 87 "nan_test.pgc"
+#line 89 "nan_test.pgc"
 
 
 	return (0);

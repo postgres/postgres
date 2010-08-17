@@ -131,6 +131,9 @@ if (sqlca.sqlcode < 0) sqlprint ( );}
 	PGTYPESnumeric_to_double(res, &d);
 	printf("div = %s %e\n", text, d);
 
+	PGTYPESnumeric_free(value1);
+	PGTYPESnumeric_free(value2);
+
 	value1 = PGTYPESnumeric_from_asc("2E7", NULL);
 	value2 = PGTYPESnumeric_from_asc("14", NULL);
 	i = PGTYPESnumeric_to_long(value1, &l1) | PGTYPESnumeric_to_long(value2, &l2);
@@ -142,16 +145,16 @@ if (sqlca.sqlcode < 0) sqlprint ( );}
 	PGTYPESnumeric_free(res);
 
 	{ ECPGtrans(__LINE__, NULL, "rollback");
-#line 90 "num_test.pgc"
+#line 93 "num_test.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint ( );}
-#line 90 "num_test.pgc"
+#line 93 "num_test.pgc"
 
 	{ ECPGdisconnect(__LINE__, "CURRENT");
-#line 91 "num_test.pgc"
+#line 94 "num_test.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint ( );}
-#line 91 "num_test.pgc"
+#line 94 "num_test.pgc"
 
 
 	return (0);

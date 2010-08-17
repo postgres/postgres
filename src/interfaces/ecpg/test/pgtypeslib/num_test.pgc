@@ -77,6 +77,9 @@ main(void)
 	PGTYPESnumeric_to_double(res, &d);
 	printf("div = %s %e\n", text, d);
 
+	PGTYPESnumeric_free(value1);
+	PGTYPESnumeric_free(value2);
+
 	value1 = PGTYPESnumeric_from_asc("2E7", NULL);
 	value2 = PGTYPESnumeric_from_asc("14", NULL);
 	i = PGTYPESnumeric_to_long(value1, &l1) | PGTYPESnumeric_to_long(value2, &l2);

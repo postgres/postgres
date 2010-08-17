@@ -80,6 +80,7 @@ main(void)
 		{
 			check_errno();
 			printf("dec[%d,0]: r: %d\n", i, r);
+			PGTYPESdecimal_free(dec);
 			continue;
 		}
 		decarr = realloc(decarr, sizeof(decimal *) * (count + 1));
@@ -220,7 +221,10 @@ main(void)
 	{
 		dectoasc(decarr[i], buf, BUFSIZE-1, -1);
 		printf("%d: %s\n", i, buf);
+
+		PGTYPESdecimal_free(decarr[i]);
 	}
+	free(decarr);
 
 	return (0);
 }
