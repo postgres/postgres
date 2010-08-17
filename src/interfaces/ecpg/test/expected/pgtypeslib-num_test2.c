@@ -211,6 +211,11 @@ main(void)
 				printf("num[d,%d,%d]: %s\n", i, j, text);
 				free(text);
 			}
+
+			PGTYPESnumeric_free(a);
+			PGTYPESnumeric_free(s);
+			PGTYPESnumeric_free(m);
+			PGTYPESnumeric_free(d);
 		}
 	}
 
@@ -219,7 +224,9 @@ main(void)
 		text = PGTYPESnumeric_to_asc(numarr[i], -1);
 		printf("%d: %s\n", i, text);
 		free(text);
+		PGTYPESnumeric_free(numarr[i]);
 	}
+	free(numarr);
 
 	return (0);
 }

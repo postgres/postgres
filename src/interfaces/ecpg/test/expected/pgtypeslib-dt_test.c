@@ -123,6 +123,7 @@ if (sqlca.sqlcode < 0) sqlprint ( );}
 	PGTYPESinterval_copy(iv1, &iv2);
 	text = PGTYPESinterval_to_asc(&iv2);
 	printf ("interval: %s\n", text);
+	PGTYPESinterval_free(iv1);
 	free(text);
 
 	PGTYPESdate_mdyjul(mdy, &date2);
@@ -430,16 +431,16 @@ if (sqlca.sqlcode < 0) sqlprint ( );}
 	free(text);
 
 	{ ECPGtrans(__LINE__, NULL, "rollback");
-#line 358 "dt_test.pgc"
+#line 359 "dt_test.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint ( );}
-#line 358 "dt_test.pgc"
+#line 359 "dt_test.pgc"
 
         { ECPGdisconnect(__LINE__, "CURRENT");
-#line 359 "dt_test.pgc"
+#line 360 "dt_test.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint ( );}
-#line 359 "dt_test.pgc"
+#line 360 "dt_test.pgc"
 
 
 	return (0);

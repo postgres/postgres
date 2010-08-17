@@ -273,5 +273,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 #line 74 "array.pgc"
 
 
+	free(t);
+
 	return (0);
 }
