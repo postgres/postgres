@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/jdbc.sgml,v 1.50 2003/11/01 01:56:29 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/jdbc.sgml,v 1.50.2.1 2010/08/17 04:49:31 petere Exp $
 -->
 
  <chapter id="jdbc">
@@ -2436,7 +2436,7 @@ library.It allows you to have random access to the large object.
 library.It allows you to have random access to the large object.
 
         Parameters:
-                pos - position within object from begining
+                pos - position within object from beginning
 
         Throws: SQLException
                 if a database-access error occurs.
