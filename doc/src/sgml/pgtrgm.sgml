@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/pgtrgm.sgml,v 2.2.16.1 2010/07/29 19:34:37 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/pgtrgm.sgml,v 2.2.16.2 2010/08/17 04:37:17 petere Exp $ -->
 
 <sect1 id="pgtrgm">
  <title>pg_trgm</title>
@@ -130,7 +130,7 @@
    operator classes that allow you to create an index over a text column for
    the purpose of very fast similarity searches.  These index types support
    the <literal>%</> similarity operator (and no other operators, so you may
-   want a regular btree index too).
+   want a regular B-tree index too).
   </para>
 
   <para>

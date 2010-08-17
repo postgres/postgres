@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ecpg.sgml,v 1.100.2.3 2010/08/11 19:03:25 rhaas Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ecpg.sgml,v 1.100.2.4 2010/08/17 04:37:16 petere Exp $ -->
 
 <chapter id="ecpg">
  <title><application>ECPG</application> - Embedded <acronym>SQL</acronym> in C</title>
@@ -825,7 +825,7 @@ numeric *PGTYPESnumeric_from_asc(char *str, char **endptr);
         <literal>592.49E07</literal> or
         <literal>-32.84e-4</literal>.
        If the value could be parsed successfully, a valid pointer is returned,
-       else the NULL pointer. At the moment ecpg always parses the complete
+       else the NULL pointer. At the moment ECPG always parses the complete
        string and so it currently does not support to store the address of the
        first invalid character in <literal>*endptr</literal>. You can safely
        set <literal>endptr</literal> to NULL.
@@ -1127,14 +1127,14 @@ date PGTYPESdate_from_timestamp(timestamp dt);
 date PGTYPESdate_from_asc(char *str, char **endptr);
 </synopsis>
         The function receives a C char* string <literal>str</> and a pointer to
-        a C char* string <literal>endptr</>. At the moment ecpg always parses
+        a C char* string <literal>endptr</>. At the moment ECPG always parses
         the complete string and so it currently does not support to store the
         address of the first invalid character in <literal>*endptr</literal>.
         You can safely set <literal>endptr</literal> to NULL.
        </para>
        <para>
         Note that the function always assumes MDY-formatted dates and there is
-        currently no variable to change that within ecpg.
+        currently no variable to change that within ECPG.
        </para>
        <para>
         <xref linkend="ecpg-pgtypesdate-from-asc-table"> shows the allowed input formats.
@@ -1401,8 +1401,8 @@ int PGTYPESdate_fmt_asc(date dDate, char *fmtstring, char *outbuf);
          <tgroup cols="2">
           <thead>
            <row>
-            <entry>fmt</entry>
-            <entry>result</entry>
+            <entry>Format</entry>
+            <entry>Result</entry>
            </row>
           </thead>
           <tbody>
@@ -1464,7 +1464,7 @@ int PGTYPESdate_fmt_asc(date dDate, char *fmtstring, char *outbuf);
       <term><function>PGTYPESdate_defmt_asc</function></term>
       <listitem>
        <para>
-        Use a format mask to convert a C char* string to a value of type
+        Use a format mask to convert a C <type>char*</type> string to a value of type
         date.
 <synopsis>
 int PGTYPESdate_defmt_asc(date *d, char *fmt, char *str);
@@ -1491,9 +1491,9 @@ int PGTYPESdate_defmt_asc(date *d, char *fmt, char *str);
          <tgroup cols="3">
           <thead>
            <row>
-            <entry>fmt</entry>
-            <entry>str</entry>
-            <entry>result</entry>
+            <entry>Format</entry>
+            <entry>String</entry>
+            <entry>Result</entry>
            </row>
           </thead>
           <tbody>
@@ -1592,21 +1592,21 @@ timestamp PGTYPEStimestamp_from_asc(char *str, char **endptr);
 </synopsis>
         The function receives the string to parse (<literal>str</>) and a
         pointer to a C char* (<literal>endptr</>).
-        At the moment ecpg always parses
+        At the moment ECPG always parses
         the complete string and so it currently does not support to store the
         address of the first invalid character in <literal>*endptr</literal>.
         You can safely set <literal>endptr</literal> to NULL.
        </para>
        <para>
         The function returns the parsed timestamp on success. On error,
-        <literal>PGTYPESInvalidTimestamp</literal> is returned and errno is
+        <literal>PGTYPESInvalidTimestamp</literal> is returned and <varname>errno</> is
         set to <literal>PGTYPES_TS_BAD_TIMESTAMP</>. See <xref linkend="PGTYPESInvalidTimestamp"> for important notes on this value.
         
        </para>
        <para>
         In general, the input string can contain any combination of an allowed
         date specification, a whitespace character and an allowed time
-        specification. Note that timezones are not supported by ecpg. It can
+        specification. Note that timezones are not supported by ECPG. It can
         parse them but does not apply any calculation as the
         <productname>PostgreSQL</> server does for example. Timezone
         specifiers are silently discarded.
@@ -2146,7 +2146,7 @@ interval *PGTYPESinterval_from_asc(char *str, char **endptr);
 </synopsis>
         The function parses the input string <literal>str</> and returns a
         pointer to an allocated interval variable.
-        At the moment ecpg always parses
+        At the moment ECPG always parses
         the complete string and so it currently does not support to store the
         address of the first invalid character in <literal>*endptr</literal>.
         You can safely set <literal>endptr</literal> to NULL.
@@ -2195,7 +2195,7 @@ int PGTYPESinterval_copy(interval *intvlsrc, interval *intvldest);
      a maximal precision of 30 significant digits. In contrast to the numeric
      type which can be created on the heap only, the decimal type can be
      created either on the stack or on the heap (by means of the functions
-     PGTYPESdecimal_new() and PGTYPESdecimal_free(). There are a lot of other
+     <function>PGTYPESdecimal_new()</> and <function>PGTYPESdecimal_free()</>. There are a lot of other
      functions that deal with the decimal type in the <productname>Informix</productname> compatibility
      mode described in <xref linkend="ecpg-informix-compat">.
    </para>
@@ -2231,7 +2231,7 @@ void PGTYPESdecimal_free(decimal *var);
   </sect2>
  
    <sect2>
-    <title>errno values of pgtypeslib </title>
+    <title>errno values of pgtypeslib</title>
    <para>
     <variablelist>
      <varlistentry>
@@ -2351,7 +2351,7 @@ void PGTYPESdecimal_free(decimal *var);
   </sect2>
 
    <sect2>
-    <title>Special constants of pgtypeslib </title>
+    <title>Special constants of pgtypeslib</title>
    <para>
     <variablelist>
      <varlistentry id="PGTYPESInvalidTimestamp">
@@ -2361,7 +2361,7 @@ void PGTYPESdecimal_free(decimal *var);
         A value of type timestamp representing an invalid time stamp. This is
         returned by the function <function>PGTYPEStimestamp_from_asc</> on
         parse error.
-        Note that due to the internal representation of the timestamp datatype,
+        Note that due to the internal representation of the <type>timestamp</type> data type,
         <literal>PGTYPESInvalidTimestamp</literal> is also a valid timestamp at
         the same time. It is set to <literal>1899-12-31 23:59:59</>. In order
         to detect errors, make sure that your application does not only test
@@ -2421,13 +2421,13 @@ EXEC SQL DEALLOCATE DESCRIPTOR <replaceable>identifier</replaceable>;
 <programlisting>
 EXEC SQL FETCH NEXT FROM mycursor INTO SQL DESCRIPTOR mydesc;
 </programlisting>
-    If the resultset is empty, the Descriptor Area will still contain
+    If the result set is empty, the Descriptor Area will still contain
     the metadata from the query, i.e. the field names.
    </para>
 
    <para>
     For not yet executed prepared queries, the <command>DESCRIBE</command>
-    statement can be used to get the metadata of the resultset:
+    statement can be used to get the metadata of the result set:
 <programlisting> 
 EXEC SQL BEGIN DECLARE SECTION;
 char *sql_stmt = "SELECT * FROM table1";
@@ -2449,7 +2449,7 @@ EXEC SQL DESCRIBE stmt1 INTO SQL DESCRIPTOR mydesc;
    <para>
     In <command>DESCRIBE</command> and <command>FETCH</command> statements,
     the <literal>INTO</literal> and <literal>USING</literal> keywords can be
-    used to similarly: they produce the resultset and the metadata in a
+    used to similarly: they produce the result set and the metadata in a
     Descriptor Area.
    </para>
 
@@ -2648,8 +2648,8 @@ EXEC SQL GET DESCRIPTOR mydesc VALUE 1 :id = DATA;
 
    <para>
     An SQLDA Descriptor Area is a C language structure which can be also used
-    to get the resultset and the metadata of a query. One structure stores one
-    record from the resultset.
+    to get the result set and the metadata of a query. One structure stores one
+    record from the result set.
 <programlisting>
 EXEC SQL include sqlda.h;
 sqlda_t         *mysqlda;
@@ -2703,7 +2703,7 @@ typedef struct sqlda_struct     sqlda_t;
 
    <para>
     The allocated data for an SQLDA structure is variable as it depends on the
-    number of fields in a resultset and also depends on the length of the string
+    number of fields in a result set and also depends on the length of the string
     data values in a record. The individual fields of the <literal>SQLDA</literal>
     structure are:
 
@@ -2742,7 +2742,7 @@ typedef struct sqlda_struct     sqlda_t;
       <term><literal>sqld</></term>
       <listitem>
        <para>
-        It contains the number of fields in a resultset.
+        It contains the number of fields in a result set.
        </para>
       </listitem>
      </varlistentry>
@@ -2759,7 +2759,7 @@ typedef struct sqlda_struct     sqlda_t;
       <term><literal>sqlvar</></term>
       <listitem>
        <para>
-        This is the array of the fields in the resultset. The fields are:
+        This is the array of the fields in the result set. The fields are:
 
         <variablelist>
 
@@ -2777,7 +2777,7 @@ typedef struct sqlda_struct     sqlda_t;
          <term><literal>sqllen</></term>
           <listitem>
            <para>
-            It contains the binary length of the field. E.g. 4 bytes for ECPGt_int.
+            It contains the binary length of the field. E.g. 4 bytes for <type>ECPGt_int</type>.
            </para>
           </listitem>
          </varlistentry>
@@ -2851,7 +2851,7 @@ struct sqlname
  <sect1 id="ecpg-informix-compat">
   <title><productname>Informix</productname> compatibility mode</title>
   <para>
-   ecpg can be run in a so-called <firstterm>Informix compatibility mode</>. If
+   <command>ecpg</command> can be run in a so-called <firstterm>Informix compatibility mode</>. If
    this mode is active, it tries to behave as if it were the <productname>Informix</productname>
    precompiler for <productname>Informix</productname> E/SQL. Generally spoken this will allow you to use
    the dollar sign instead of the <literal>EXEC SQL</> primitive to introduce
@@ -2865,20 +2865,20 @@ $COMMIT;
 </programlisting>
   </para>
   <para>
-   There are two compatibility modes: INFORMIX, INFORMIX_SE
+   There are two compatibility modes: <literal>INFORMIX</>, <literal>INFORMIX_SE</>
   </para>
   <para>
    When linking programs that use this compatibility mode, remember to link
-   against <literal>libcompat</> that is shipped with ecpg.
+   against <literal>libcompat</> that is shipped with ECPG.
   </para>
   <para>
    Besides the previously explained syntactic sugar, the <productname>Informix</productname> compatibility
    mode ports some functions for input, output and transformation of data as
-   well as embedded SQL statements known from E/SQL to ecpg.
+   well as embedded SQL statements known from E/SQL to ECPG.
   </para>
   <para>
    <productname>Informix</productname> compatibility mode is closely connected to the pgtypeslib library
-   of ecpg. pgtypeslib maps SQL data types to data types within the C host
+   of ECPG. pgtypeslib maps SQL data types to data types within the C host
    program and most of the additional functions of the <productname>Informix</productname> compatibility
    mode allow you to operate on those C host program types. Note however that
    the extent of the compatibility is limited. It does not try to copy <productname>Informix</productname>
@@ -2888,7 +2888,7 @@ $COMMIT;
    some of the data types are different. For example,
    <productname>PostgreSQL's</productname> datetime and interval types do not
    know about ranges like for example <literal>YEAR TO MINUTE</> so you won't
-   find support in ecpg for that either.
+   find support in ECPG for that either.
   </para>
 
   <sect2>
@@ -2916,7 +2916,7 @@ EXEC SQL FETCH MYCUR INTO :userid;
       <listitem>
        <para>
         This statement closes the current connection. In fact, this is a
-        synonym for ecpg's <literal>DISCONNECT CURRENT</>.:
+        synonym for ECPG's <literal>DISCONNECT CURRENT</>.:
 <programlisting>
 $CLOSE DATABASE;                /* close the current connection */
 EXEC SQL CLOSE DATABASE;
@@ -2929,11 +2929,11 @@ EXEC SQL CLOSE DATABASE;
       <listitem>
        <para>
         Due to the differences how ECPG works compared to Informix's ESQL/C (i.e. which steps
-        are purely grammar transformations and which steps rely on the underlying runtime library)
+        are purely grammar transformations and which steps rely on the underlying run-time library)
         there is no <literal>FREE cursor_name</> statement in ECPG. This is because in ECPG,
         <literal>DECLARE CURSOR</literal> doesn't translate to a function call into
-        the runtime library that uses to the cursor name. This means that there's no runtime
-        bookkeeping of SQL cursors in the ECPG runtime library, only in the PostgreSQL server.
+        the run-time library that uses to the cursor name. This means that there's no run-time
+        bookkeeping of SQL cursors in the ECPG run-time library, only in the PostgreSQL server.
        </para>
       </listitem>
      </varlistentry>
@@ -3020,7 +3020,7 @@ typedef struct sqlda_compat     sqlda_t;
      <term><literal>desc_name</></term>
       <listitem>
        <para>
-        Unused, filled with zerobytes.
+        Unused, filled with zero-bytes.
        </para>
       </listitem>
      </varlistentry>
@@ -3038,7 +3038,7 @@ typedef struct sqlda_compat     sqlda_t;
      <term><literal>desc_next</></term>
       <listitem>
        <para>
-        Pointer to the next SQLDA structure if the resultset contains more than one records.
+        Pointer to the next SQLDA structure if the result set contains more than one records.
        </para>
       </listitem>
      </varlistentry>
@@ -3126,7 +3126,7 @@ if (*(int2 *)sqldata->sqlvar[i].sqlind != 0)
      <term><literal>sqlformat</></term>
       <listitem>
        <para>
-        Reserved in Informix, value of PQfformat() for the field.
+        Reserved in Informix, value of <function>PQfformat()</> for the field.
        </para>
       </listitem>
      </varlistentry>
@@ -3155,7 +3155,7 @@ if (*(int2 *)sqldata->sqlvar[i].sqlind != 0)
      <term><literal>sqlxid</></term>
       <listitem>
        <para>
-        Extended type of the field, result of PQftype().
+        Extended type of the field, result of <function>PQftype()</>.
        </para>
       </listitem>
      </varlistentry>
@@ -3243,9 +3243,9 @@ int decadd(decimal *arg1, decimal *arg2, decimal *sum);
         (<literal>arg1</>), a pointer to the second operand of type decimal
         (<literal>arg2</>) and a pointer to a value of type decimal that will
         contain the sum (<literal>sum</>). On success, the function returns 0.
-        ECPG_INFORMIX_NUM_OVERFLOW is returned in case of overflow and 
-        ECPG_INFORMIX_NUM_UNDERFLOW in case of underflow. -1 is returned for
-        other failures and errno is set to the respective errno number of the
+        <symbol>ECPG_INFORMIX_NUM_OVERFLOW</> is returned in case of overflow and 
+        <symbol>ECPG_INFORMIX_NUM_UNDERFLOW</> in case of underflow. -1 is returned for
+        other failures and <varname>errno</> is set to the respective <varname>errno</> number of the
         pgtypeslib.
        </para>
       </listitem>
@@ -3530,9 +3530,9 @@ int dectoint(decimal *np, int *ip);
         is returned.
        </para>
        <para>
-        Note that the ecpg implementation differs from the <productname>Informix</productname>
+        Note that the ECPG implementation differs from the <productname>Informix</productname>
         implementation. <productname>Informix</productname> limits an integer to the range from -32767 to
-        32767, while the limits in the ecpg implementation depend on the
+        32767, while the limits in the ECPG implementation depend on the
         architecture (<literal>-INT_MAX .. INT_MAX</>).
        </para>
       </listitem>
@@ -3556,9 +3556,9 @@ int dectolong(decimal *np, long *lngp);
         is returned.
        </para>
        <para>
-        Note that the ecpg implementation differs from the <productname>Informix</productname>
+        Note that the ECPG implementation differs from the <productname>Informix</productname>
         implementation. <productname>Informix</productname> limits a long integer to the range from
-        -2,147,483,647 to 2,147,483,647, while the limits in the ecpg
+        -2,147,483,647 to 2,147,483,647, while the limits in the ECPG
         implementation depend on the architecture (<literal>-LONG_MAX ..
         LONG_MAX</>).
        </para>
@@ -3584,9 +3584,9 @@ int rdatestr(date d, char *str);
         error.
        </para>
        <para>
-        Note that ecpg's implementation differs from the <productname>Informix</productname>
+        Note that ECPG's implementation differs from the <productname>Informix</productname>
         implementation. In <productname>Informix</productname> the format can be influenced by setting
-        environment variables. In ecpg however, you cannot change the output
+        environment variables. In ECPG however, you cannot change the output
         format.
        </para>
       </listitem>
@@ -5129,14 +5129,14 @@ EXEC SQL UNDEF MYNUMBER;
     Of course you can continue to use the C versions <literal>#define</literal>
     and <literal>#undef</literal> in your embedded SQL program. The difference
     is where your defined values get evaluated. If you use <literal>EXEC SQL
-    DEFINE</> then the ecpg preprocessor evaluates the defines and substitutes
+    DEFINE</> then the <command>ecpg</> preprocessor evaluates the defines and substitutes
     the values. For example if you write:
 <programlisting>
 EXEC SQL DEFINE MYNUMBER 12;
 ...
 EXEC SQL UPDATE Tbl SET col = MYNUMBER;
 </programlisting>
-    then ecpg will already do the substitution and your C compiler will never
+    then <command>ecpg</> will already do the substitution and your C compiler will never
     see any name or identifier <literal>MYNUMBER</>. Note that you cannot use
     <literal>#define</literal> for a constant that you are going to use in an
     embedded SQL query because in this case the embedded SQL precompiler is not
@@ -5145,7 +5145,7 @@ EXEC SQL UPDATE Tbl SET col = MYNUMBER;
   </sect2>
 
   <sect2>
-   <title>ifdef, ifndef, else, elif and endif directives</title>
+   <title>ifdef, ifndef, else, elif, and endif directives</title>
    <para>
    You can use the following directives to compile code sections conditionally:
 

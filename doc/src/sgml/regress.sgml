@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/regress.sgml,v 1.67 2010/05/02 12:22:40 sriggs Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/regress.sgml,v 1.67.2.1 2010/08/17 04:37:17 petere Exp $ -->
 
  <chapter id="regress">
   <title>Regression Tests</title>
@@ -165,8 +165,8 @@ psql -h primary -c "CREATE DATABASE regression"
 psql -h primary -f src/test/regress/sql/hs_primary_setup.sql regression
 </screen>
    Now confirm that the default connection for the tester is the standby
-   server under test and then run standbycheck from the regression
-   directory.
+   server under test and then run the <literal>standbycheck</> target from the regression
+   directory:
 <screen>
 cd src/test/regress
 gmake standbycheck

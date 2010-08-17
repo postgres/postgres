@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/diskusage.sgml,v 1.20 2010/02/07 20:48:09 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/diskusage.sgml,v 1.20.6.1 2010/08/17 04:37:16 petere Exp $ -->
 
 <chapter id="diskusage">
  <title>Monitoring Disk Usage</title>
@@ -52,7 +52,7 @@ SELECT pg_relation_filepath(oid), relpages FROM pg_class WHERE relname = 'custom
 </programlisting>
    Each page is typically 8 kilobytes. (Remember, <structfield>relpages</>
    is only updated by <command>VACUUM</>, <command>ANALYZE</>, and
-   a few DDL commands such as <command>CREATE INDEX</>.)  The file pathname
+   a few DDL commands such as <command>CREATE INDEX</>.)  The file path name
    is of interest if you want to examine the table's disk file directly.
   </para>
 

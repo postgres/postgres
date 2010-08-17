@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/plperl.sgml,v 2.86.2.1 2010/07/29 19:34:37 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/plperl.sgml,v 2.86.2.2 2010/08/17 04:37:17 petere Exp $ -->
 
  <chapter id="plperl">
   <title>PL/Perl - Perl Procedural Language</title>
@@ -694,7 +694,7 @@ SELECT release_hosts_query();
      <listitem>
       <para>
         Return the unescaped binary data represented by the contents of the given string,
-        which should be bytea encoded.
+        which should be <type>bytea</type> encoded.
         </para>
      </listitem>
     </varlistentry>
@@ -708,7 +708,7 @@ SELECT release_hosts_query();
      <term><literal><function>encode_bytea</>(<replaceable>string</replaceable>)</literal></term>
      <listitem>
       <para>
-        Return the bytea encoded form of the binary data contents of the given string.
+        Return the <type>bytea</type> encoded form of the binary data contents of the given string.
         </para>
      </listitem>
     </varlistentry>

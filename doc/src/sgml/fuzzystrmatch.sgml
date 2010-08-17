@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/fuzzystrmatch.sgml,v 1.5.14.1 2010/07/29 19:34:36 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/fuzzystrmatch.sgml,v 1.5.14.2 2010/08/17 04:37:16 petere Exp $ -->
 
 <sect1 id="fuzzystrmatch">
  <title>fuzzystrmatch</title>
@@ -15,7 +15,7 @@
  <caution>
   <para>
    At present, <filename>fuzzystrmatch</> does not work well with
-   multi-byte encodings (such as UTF-8).
+   multibyte encodings (such as UTF-8).
   </para>
  </caution>
 

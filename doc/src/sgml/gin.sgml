@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/gin.sgml,v 2.20 2010/04/03 07:22:54 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/gin.sgml,v 2.20.2.1 2010/08/17 04:37:16 petere Exp $ -->
 
 <chapter id="GIN">
 <title>GIN Indexes</title>
@@ -62,11 +62,10 @@
  <para>
    The four methods that an operator class for
    <acronym>GIN</acronym> must provide are:
- </para>
 
  <variablelist>
     <varlistentry>
-     <term>int compare(Datum a, Datum b)</term>
+     <term><function>int compare(Datum a, Datum b)</></term>
      <listitem>
       <para>
        Compares keys (not indexed values!) and returns an integer less than
@@ -77,7 +76,7 @@
     </varlistentry>
 
     <varlistentry>
-     <term>Datum *extractValue(Datum inputValue, int32 *nkeys)</term>
+     <term><function>Datum *extractValue(Datum inputValue, int32 *nkeys)</></term>
      <listitem>
       <para>
        Returns an array of keys given a value to be indexed.  The
@@ -87,8 +86,8 @@
     </varlistentry>
 
     <varlistentry>
-     <term>Datum *extractQuery(Datum query, int32 *nkeys,
-        StrategyNumber n, bool **pmatch, Pointer **extra_data)</term>
+     <term><function>Datum *extractQuery(Datum query, int32 *nkeys,
+        StrategyNumber n, bool **pmatch, Pointer **extra_data)</></term>
      <listitem>
       <para>
        Returns an array of keys given a value to be queried; that is,
@@ -109,7 +108,7 @@
        so the index scan can be skipped entirely.
        <literal>pmatch</> is an output argument for use when partial match
        is supported.  To use it, <function>extractQuery</> must allocate
-       an array of <literal>*nkeys</> booleans and store its address at
+       an array of <literal>*nkeys</> Booleans and store its address at
        <literal>*pmatch</>.  Each element of the array should be set to TRUE
        if the corresponding key requires partial match, FALSE if not.
        If <literal>*pmatch</> is set to NULL then GIN assumes partial match
@@ -133,8 +132,8 @@
     </varlistentry>
 
     <varlistentry>
-     <term>bool consistent(bool check[], StrategyNumber n, Datum query,
-                           int32 nkeys, Pointer extra_data[], bool *recheck)</term>
+     <term><function>bool consistent(bool check[], StrategyNumber n, Datum query,
+                           int32 nkeys, Pointer extra_data[], bool *recheck)</></term>
      <listitem>
       <para>
        Returns TRUE if the indexed value satisfies the query operator with
@@ -156,19 +155,15 @@
       </para>
      </listitem>
     </varlistentry>
-
   </variablelist>
 
- <para>
   Optionally, an operator class for
   <acronym>GIN</acronym> can supply a fifth method:
- </para>
 
   <variablelist>
-
     <varlistentry>
-     <term>int comparePartial(Datum partial_key, Datum key, StrategyNumber n,
-                              Pointer extra_data)</term>
+     <term><function>int comparePartial(Datum partial_key, Datum key, StrategyNumber n,
+                              Pointer extra_data)</></term>
      <listitem>
       <para>
        Compare a partial-match query to an index key.  Returns an integer
@@ -184,8 +179,8 @@
       </para>
      </listitem>
     </varlistentry>
-
   </variablelist>
+ </para>
 
  <para>
   To support <quote>partial match</> queries, an operator class must
@@ -408,37 +403,37 @@
   feature.
   The following <filename>contrib</> modules also contain
   <acronym>GIN</acronym> operator classes:
- </para>
 
  <variablelist>
   <varlistentry>
-   <term>btree-gin</term>
+   <term><filename>btree_gin</></term>
    <listitem>
-    <para>B-Tree equivalent functionality for several data types</para>
+    <para>B-tree equivalent functionality for several data types</para>
    </listitem>
   </varlistentry>
 
   <varlistentry>
-   <term>hstore</term>
+   <term><filename>hstore</></term>
    <listitem>
     <para>Module for storing (key, value) pairs</para>
    </listitem>
   </varlistentry>
 
   <varlistentry>
-   <term>intarray</term>
+   <term><filename>intarray</></term>
    <listitem>
-    <para>Enhanced support for int4[]</para>
+    <para>Enhanced support for <type>int[]</type></para>
    </listitem>
   </varlistentry>
 
   <varlistentry>
-   <term>pg_trgm</term>
+   <term><filename>pg_trgm</></term>
    <listitem>
     <para>Text similarity using trigram matching</para>
    </listitem>
   </varlistentry>
  </variablelist>
+ </para>
 </sect1>
 
 </chapter>

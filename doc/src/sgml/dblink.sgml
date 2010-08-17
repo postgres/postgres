@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/dblink.sgml,v 1.13.2.1 2010/07/29 19:34:36 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/dblink.sgml,v 1.13.2.2 2010/08/17 04:37:16 petere Exp $ -->
 
 <sect1 id="dblink">
  <title>dblink</title>
@@ -413,7 +413,7 @@ SELECT *
     extension.)  This allows the system to understand what
     <literal>*</> should expand to, and what <structname>proname</>
     in the <literal>WHERE</> clause refers to, in advance of trying
-    to execute the function.  At runtime, an error will be thrown
+    to execute the function.  At run time, an error will be thrown
     if the actual query result from the remote database does not
     have the same number of columns shown in the <literal>FROM</> clause.
     The column names need not match, however, and <function>dblink</>
@@ -1320,7 +1320,7 @@ dblink_get_notify(text connname) returns setof (notify_name text, be_pid int, ex
 
   <refsect1>
    <title>Return Value</title>
-    <para>Returns setof (notify_name text, be_pid int, extra text), or an empty set if none.</para>
+    <para>Returns <type>setof (notify_name text, be_pid int, extra text)</type>, or an empty set if none.</para>
   </refsect1>
 
   <refsect1>
@@ -1615,7 +1615,7 @@ dblink_get_pkey(text relname) returns setof dblink_pkey_results
 
    <para>
     Returns one row for each primary key field, or no rows if the relation
-    has no primary key.  The result rowtype is defined as
+    has no primary key.  The result row type is defined as
 
 <programlisting>
 CREATE TYPE dblink_pkey_results AS (position int, colname text);

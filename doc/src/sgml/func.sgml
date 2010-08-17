@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.521.2.3 2010/08/15 21:26:42 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.521.2.4 2010/08/17 04:37:16 petere Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -9497,7 +9497,7 @@ SELECT NULLIF(value, '(none)') ...
 
   <para>
    Array comparisons compare the array contents element-by-element,
-   using the default B-Tree comparison function for the element data type.
+   using the default B-tree comparison function for the element data type.
    In multidimensional arrays the elements are visited in row-major order
    (last subscript varies most rapidly).
    If the contents of two arrays are equal but the dimensionality is
@@ -9988,8 +9988,8 @@ SELECT NULLIF(value, '(none)') ...
 SELECT b1 = ANY((SELECT b2 FROM t2 ...)) FROM t1 ...;
 </programlisting>
       Here <function>ANY</function> can be considered either as introducing
-      a subquery, or as being an aggregate function, if the sub-select
-      returns one row with a boolean value.
+      a subquery, or as being an aggregate function, if the subquery
+      returns one row with a Boolean value.
       Thus the standard name cannot be given to these aggregates.
     </para>
   </note>
@@ -11224,8 +11224,8 @@ AND
    <literal>&gt;</> or
    <literal>&gt;=</>,
    or has semantics similar to one of these.  (To be specific, an operator
-   can be a row comparison operator if it is a member of a B-Tree operator
-   class, or is the negator of the <literal>=</> member of a B-Tree operator
+   can be a row comparison operator if it is a member of a B-tree operator
+   class, or is the negator of the <literal>=</> member of a B-tree operator
    class.)
   </para>
 
@@ -13199,7 +13199,7 @@ postgres=# select pg_start_backup('label_goes_here');
  0/D4445B8
 (1 row)
 </programlisting>
-    There is an optional boolean second parameter.  If <literal>true</>,
+    There is an optional second parameter of type <type>boolean</type>.  If <literal>true</>,
     it specifies executing <function>pg_start_backup</> as quickly as
     possible.  This forces an immediate checkpoint which will cause a
     spike in I/O operations, slowing any concurrently executing queries.
@@ -13576,7 +13576,7 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
 
    <para>
     <function>pg_relation_filepath</> is similar to
-    <function>pg_relation_filenode</>, but it returns the entire file pathname
+    <function>pg_relation_filenode</>, but it returns the entire file path name
     (relative to the database cluster's data directory <varname>PGDATA</>) of
     the relation.
    </para>

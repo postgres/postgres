@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/docguide.sgml,v 1.85 2010/06/12 09:55:12 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/docguide.sgml,v 1.85.2.1 2010/08/17 04:37:16 petere Exp $ -->
 
 <appendix id="docguide">
  <title>Documentation</title>
@@ -241,7 +241,7 @@
    <para>
     It's possible that the ports do not update the main catalog file
     in <filename>/usr/local/share/sgml/catalog.ports</filename> or order 
-    isn't proper .  Be sure to have the following lines in begining of file:
+    isn't proper .  Be sure to have the following lines in beginning of file:
 <programlisting>
 CATALOG "openjade/catalog"
 CATALOG "iso8879/catalog"
@@ -306,7 +306,7 @@ make install
         <envar>SGML_CATALOG_FILES</envar> to point to the file
         whenever you use <application>jade</application> later on.
         (This method is also an option if OpenJade is already
-        installed and you want to install the rest of the tool chain
+        installed and you want to install the rest of the toolchain
         locally.)
        </para>
       </step>

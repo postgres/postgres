@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/bki.sgml,v 1.23 2010/01/05 01:06:55 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/bki.sgml,v 1.23.6.1 2010/08/17 04:37:15 petere Exp $ -->
 
 <chapter id="bki">
  <title><acronym>BKI</acronym> Backend Interface</title>
@@ -122,7 +122,7 @@
       The table is created as shared if <literal>shared_relation</> is
       specified.
       It will have OIDs unless <literal>without_oids</> is specified.
-      The table's rowtype OID (<structname>pg_type</> OID) can optionally
+      The table's row type OID (<structname>pg_type</> OID) can optionally
       be specified via the <literal>rowtype_oid</> clause; if not specified,
       an OID is automatically generated for it.  (The <literal>rowtype_oid</>
       clause is useless if <literal>bootstrap</> is specified, but it can be

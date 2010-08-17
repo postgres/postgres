@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.225 2010/04/03 07:22:52 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.225.2.1 2010/08/17 04:37:15 petere Exp $ -->
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
  -->
@@ -344,8 +344,8 @@
       <entry>
        The initial value of the transition state.  This is a text
        field containing the initial value in its external string
-       representation.  If this field is NULL, the transition state
-       value starts out NULL
+       representation.  If this field is null, the transition state
+       value starts out null.
       </entry>
      </row>
     </tbody>
@@ -461,7 +461,7 @@
       <entry><structfield>amsearchnulls</structfield></entry>
       <entry><type>bool</type></entry>
       <entry></entry>
-      <entry>Does the access method support IS NULL/NOT NULL searches?</entry>
+      <entry>Does the access method support <literal>IS NULL</>/<literal>NOT NULL</> searches?</entry>
      </row>
 
      <row>
@@ -892,7 +892,7 @@
        The exact meaning of positive values is data type-dependent.
        For scalar data types, <structfield>attstattarget</structfield>
        is both the target number of <quote>most common values</quote>
-       to collect, and the target number of histogram bins to create
+       to collect, and the target number of histogram bins to create.
       </entry>
      </row>
 
@@ -913,7 +913,7 @@
       <entry>
        The number of the column.  Ordinary columns are numbered from 1
        up.  System columns, such as <structfield>oid</structfield>,
-       have (arbitrary) negative numbers
+       have (arbitrary) negative numbers.
       </entry>
      </row>
 
@@ -924,7 +924,7 @@
       <entry>
        Number of dimensions, if the column is an array type; otherwise 0.
        (Presently, the number of dimensions of an array is not enforced,
-       so any nonzero value effectively means <quote>it's an array</>)
+       so any nonzero value effectively means <quote>it's an array</>.)
       </entry>
      </row>
 
@@ -948,7 +948,7 @@
        supplied at table creation time (for example, the maximum
        length of a <type>varchar</type> column).  It is passed to
        type-specific input functions and length coercion functions.
-       The value will generally be -1 for types that do not need <structfield>atttypmod</>
+       The value will generally be -1 for types that do not need <structfield>atttypmod</>.
       </entry>
      </row>
 
@@ -968,7 +968,7 @@
       <entry>
        Normally a copy of <literal>pg_type.typstorage</> of this
        column's type.  For TOAST-able data types, this can be altered
-       after column creation to control storage policy
+       after column creation to control storage policy.
       </entry>
      </row>
 
@@ -987,7 +987,7 @@
       <entry></entry>
       <entry>
        This represents a not-null constraint.  It is possible to
-       change this column to enable or disable the constraint
+       change this column to enable or disable the constraint.
       </entry>
      </row>
 
@@ -998,7 +998,7 @@
       <entry>
        This column has a default value, in which case there will be a
        corresponding entry in the <structname>pg_attrdef</structname>
-       catalog that actually defines the value
+       catalog that actually defines the value.
       </entry>
      </row>
 
@@ -1009,7 +1009,7 @@
       <entry>
        This column has been dropped and is no longer valid.  A dropped
        column is still physically present in the table, but is
-       ignored by the parser and so cannot be accessed via SQL
+       ignored by the parser and so cannot be accessed via SQL.
       </entry>
      </row>
 
@@ -1019,7 +1019,7 @@
       <entry></entry>
       <entry>
        This column is defined locally in the relation.  Note that a column can
-       be locally defined and inherited simultaneously
+       be locally defined and inherited simultaneously.
       </entry>
      </row>
 
@@ -1029,7 +1029,7 @@
       <entry></entry>
       <entry>
        The number of direct ancestors this column has.  A column with a
-       nonzero number of ancestors cannot be dropped nor renamed
+       nonzero number of ancestors cannot be dropped nor renamed.
       </entry>
      </row>
 
@@ -1163,7 +1163,7 @@
       <entry><type>bool</type></entry>
       <entry>
        Role can log in. That is, this role can be given as the initial
-       session authorization identifier
+       session authorization identifier.
       </entry>
      </row>
 
@@ -1172,21 +1172,21 @@
       <entry><type>int4</type></entry>
       <entry>
        For roles that can log in, this sets maximum number of concurrent
-       connections this role can make.  -1 means no limit
+       connections this role can make.  -1 means no limit.
       </entry>
      </row>
 
      <row>
       <entry><structfield>rolpassword</structfield></entry>
       <entry><type>text</type></entry>
-      <entry>Password (possibly encrypted); NULL if none</entry>
+      <entry>Password (possibly encrypted); null if none</entry>
      </row>
 
      <row>
       <entry><structfield>rolvaliduntil</structfield></entry>
       <entry><type>timestamptz</type></entry>
       <entry>Password expiry time (only used for password authentication);
-       NULL if no expiration</entry>
+       null if no expiration</entry>
      </row>
     </tbody>
    </tgroup>
@@ -1338,7 +1338,7 @@
        <literal>a</> means implicitly in assignment
        to a target column, as well as explicitly.
        <literal>i</> means implicitly in expressions, as well as the
-       other cases
+       other cases.
       </entry>
      </row>
      <row>
@@ -1349,7 +1349,7 @@
        Indicates how the cast is performed.
        <literal>f</> means that the function specified in the <structfield>castfunc</> field is used.
        <literal>i</> means that the input/output functions are used.
-       <literal>b</> means that the types are binary-coercible, thus no conversion is required
+       <literal>b</> means that the types are binary-coercible, thus no conversion is required.
       </entry>
      </row>
     </tbody>
@@ -1487,7 +1487,7 @@
        <symbol>BLCKSZ</symbol>).  This is only an estimate used by the
        planner.  It is updated by <command>VACUUM</command>,
        <command>ANALYZE</command>, and a few DDL commands such as
-       <command>CREATE INDEX</command>
+       <command>CREATE INDEX</command>.
       </entry>
      </row>
 
@@ -1499,7 +1499,7 @@
        Number of rows in the table.  This is only an estimate used by the
        planner.  It is updated by <command>VACUUM</command>,
        <command>ANALYZE</command>, and a few DDL commands such as
-       <command>CREATE INDEX</command>
+       <command>CREATE INDEX</command>.
       </entry>
      </row>
 
@@ -1510,7 +1510,7 @@
       <entry>
        OID of the TOAST table associated with this table, 0 if none.  The
        TOAST table stores large attributes <quote>out of line</quote> in a
-       secondary table
+       secondary table.
       </entry>
      </row>
 
@@ -1519,7 +1519,7 @@
       <entry><type>oid</type></entry>
       <entry><literal><link linkend="catalog-pg-class"><structname>pg_class</structname></link>.oid</literal></entry>
       <entry>
-       For a TOAST table, the OID of its index.  0 if not a TOAST table
+       For a TOAST table, the OID of its index.  0 if not a TOAST table.
       </entry>
      </row>
 
@@ -1539,7 +1539,7 @@
       <entry>
        True if this table is shared across all databases in the cluster.  Only
        certain system catalogs (such as <structname>pg_database</structname>)
-       are shared
+       are shared.
       </entry>
      </row>
 
@@ -1549,7 +1549,7 @@
       <entry></entry>
       <entry>
        True if this table is a temporary relation.  If so, only the creating
-       session can safely access its contents
+       session can safely access its contents.
       </entry>
      </row>
 
@@ -1573,7 +1573,7 @@
        Number of user columns in the relation (system columns not
        counted).  There must be this many corresponding entries in
        <structname>pg_attribute</structname>.  See also
-       <literal>pg_attribute.attnum</literal>
+       <literal>pg_attribute.attnum</literal>.
       </entry>
      </row>
 
@@ -1652,7 +1652,7 @@
        (<quote>frozen</>) transaction ID in this table.  This is used to track
        whether the table needs to be vacuumed in order to prevent transaction
        ID wraparound or to allow <literal>pg_clog</> to be shrunk.  Zero
-       (<symbol>InvalidTransactionId</symbol>) if the relation is not a table
+       (<symbol>InvalidTransactionId</symbol>) if the relation is not a table.
       </entry>
      </row>
 
@@ -1681,7 +1681,7 @@
   </table>
 
   <para>
-   Several of the boolean flags in <structname>pg_class</> are maintained
+   Several of the Boolean flags in <structname>pg_class</> are maintained
    lazily: they are guaranteed to be true if that's the correct state, but
    may not be reset to false immediately when the condition is no longer
    true.  For example, <structfield>relhasindex</> is set by
@@ -1847,7 +1847,7 @@
       <entry></entry>
       <entry>
        This constraint is defined locally for the relation.  Note that a
-       constraint can be locally defined and inherited simultaneously
+       constraint can be locally defined and inherited simultaneously.
       </entry>
      </row>
 
@@ -1858,7 +1858,7 @@
       <entry>
        The number of direct inheritance ancestors this constraint has.
        A constraint with
-       a nonzero number of ancestors cannot be dropped nor renamed
+       a nonzero number of ancestors cannot be dropped nor renamed.
       </entry>
      </row>
 
@@ -2128,7 +2128,7 @@
       <entry></entry>
       <entry>
        If false then no one can connect to this database.  This is
-       used to protect the <literal>template0</> database from being altered
+       used to protect the <literal>template0</> database from being altered.
       </entry>
      </row>
 
@@ -2138,7 +2138,7 @@
       <entry></entry>
       <entry>
        Sets maximum number of concurrent connections that can be made
-       to this database.  -1 means no limit
+       to this database.  -1 means no limit.
       </entry>
      </row>
 
@@ -2162,7 +2162,7 @@
        track whether the database needs to be vacuumed in order to prevent
        transaction ID wraparound or to allow <literal>pg_clog</> to be shrunk.
        It is the minimum of the per-table
-       <structname>pg_class</>.<structfield>relfrozenxid</> values
+       <structname>pg_class</>.<structfield>relfrozenxid</> values.
       </entry>
      </row>
 
@@ -2175,7 +2175,7 @@
        Within this database, all tables for which
        <structname>pg_class</>.<structfield>reltablespace</> is zero
        will be stored in this tablespace; in particular, all the non-shared
-       system catalogs will be there
+       system catalogs will be there.
       </entry>
      </row>
 
@@ -2273,7 +2273,7 @@
   </para>
 
   <para>
-   Note that when an ACL entry in another catalog is NULL, it is taken
+   Note that when an ACL entry in another catalog is null, it is taken
    to represent the hard-wired default privileges for its object,
    <emphasis>not</> whatever might be in <structname>pg_default_acl</>
    at the moment.  <structname>pg_default_acl</> is only consulted during
@@ -2340,7 +2340,7 @@
        For a table column, this is the column number (the
        <structfield>objid</> and <structfield>classid</> refer to the
        table itself).  For all other object types, this column is
-       zero
+       zero.
       </entry>
      </row>
 
@@ -2366,7 +2366,7 @@
        For a table column, this is the column number (the
        <structfield>refobjid</> and <structfield>refclassid</> refer
        to the table itself).  For all other object types, this column
-       is zero
+       is zero.
       </entry>
      </row>
 
@@ -2515,7 +2515,7 @@
        For a comment on a table column, this is the column number (the
        <structfield>objoid</> and <structfield>classoid</> refer to
        the table itself).  For all other object types, this column is
-       zero
+       zero.
       </entry>
      </row>
 
@@ -2743,7 +2743,7 @@
       <entry><type>text[]</type></entry>
       <entry></entry>
       <entry>
-       Foreign server specific options, as <quote>keyword=value</> strings.
+       Foreign server specific options, as <quote>keyword=value</> strings
       </entry>
      </row>
     </tbody>
@@ -2840,7 +2840,7 @@
        index is possibly incomplete: it must still be modified by
        <command>INSERT</>/<command>UPDATE</> operations, but it cannot safely
        be used for queries. If it is unique, the uniqueness property is not
-       true either
+       true either.
       </entry>
      </row>
 
@@ -2850,7 +2850,7 @@
       <entry></entry>
       <entry>
        If true, queries must not use the index until the <structfield>xmin</>
-       of this <structname>pg_index</> row is below their TransactionXmin
+       of this <structname>pg_index</> row is below their <symbol>TransactionXmin</symbol>
        event horizon, because the table may contain broken HOT chains with
        incompatible rows that they can see
       </entry>
@@ -2863,7 +2863,7 @@
       <entry>
        If true, the index is currently ready for inserts.  False means the
        index must be ignored by <command>INSERT</>/<command>UPDATE</>
-       operations
+       operations.
       </entry>
      </row>
 
@@ -2877,7 +2877,7 @@
        of <literal>1 3</literal> would mean that the first and the third table
        columns make up the index key.  A zero in this array indicates that the
        corresponding index attribute is an expression over the table columns,
-       rather than a simple column reference
+       rather than a simple column reference.
       </entry>
      </row>
 
@@ -2888,7 +2888,7 @@
       <entry>
        For each column in the index key, this contains the OID of
        the operator class to use.  See
-       <link linkend="catalog-pg-opclass"><structname>pg_opclass</structname></link> for details
+       <link linkend="catalog-pg-opclass"><structname>pg_opclass</structname></link> for details.
       </entry>
      </row>
 
@@ -2899,7 +2899,7 @@
       <entry>
        This is an array of <structfield>indnatts</structfield> values that
        store per-column flag bits.  The meaning of the bits is defined by
-       the index's access method
+       the index's access method.
       </entry>
      </row>
 
@@ -2907,18 +2907,24 @@
       <entry><structfield>indexprs</structfield></entry>
       <entry><type>text</type></entry>
       <entry></entry>
-      <entry>Expression trees (in <function>nodeToString()</function> representation)
-      for index attributes that are not simple column references.  This is a
-      list with one element for each zero entry in <structfield>indkey</>.
-      NULL if all index attributes are simple references</entry>
+      <entry>
+       Expression trees (in <function>nodeToString()</function>
+       representation) for index attributes that are not simple column
+       references.  This is a list with one element for each zero
+       entry in <structfield>indkey</>.  Null if all index attributes
+       are simple references.
+      </entry>
      </row>
 
      <row>
       <entry><structfield>indpred</structfield></entry>
       <entry><type>text</type></entry>
       <entry></entry>
-      <entry>Expression tree (in <function>nodeToString()</function> representation)
-      for partial index predicate.  NULL if not a partial index</entry>
+      <entry>
+       Expression tree (in <function>nodeToString()</function>
+       representation) for partial index predicate.  Null if not a
+       partial index.
+      </entry>
      </row>
     </tbody>
    </tgroup>
@@ -2980,7 +2986,7 @@
       <entry>
        If there is more than one direct parent for a child table (multiple
        inheritance), this number tells the order in which the
-       inherited columns are to be arranged.  The count starts at 1
+       inherited columns are to be arranged.  The count starts at 1.
       </entry>
      </row>
     </tbody>
@@ -3041,7 +3047,7 @@
        <acronym>SQL</acronym>) and true for user-defined languages.
        Currently, <application>pg_dump</application> still uses this
        to determine which languages need to be dumped, but this might be
-       replaced by a different mechanism in the future
+       replaced by a different mechanism in the future.
       </entry>
      </row>
 
@@ -3053,7 +3059,7 @@
        True if this is a trusted language, which means that it is believed
        not to grant access to anything outside the normal SQL execution
        environment.  Only superusers can create functions in untrusted
-       languages
+       languages.
       </entry>
      </row>
 
@@ -3077,7 +3083,7 @@
        This references a function that is responsible for executing
        <quote>inline</> anonymous code blocks
        (<xref linkend="sql-do"> blocks).
-       Zero if inline blocks are not supported
+       Zero if inline blocks are not supported.
       </entry>
      </row>
 
@@ -3088,7 +3094,7 @@
       <entry>
        This references a language validator function that is responsible
        for checking the syntax and validity of new functions when they
-       are created.  Zero if no validator is provided
+       are created.  Zero if no validator is provided.
       </entry>
      </row>
 
@@ -3133,7 +3139,7 @@
    <structname>pg_largeobject</structname> was publicly readable and could be
    used to obtain the OIDs (and contents) of all large objects in the system.
    This is no longer the case; use
-   <link linkend="catalog-pg-largeobject-metadata">pg_largeobject_metadata</link>
+   <link linkend="catalog-pg-largeobject-metadata"><structname>pg_largeobject_metadata</></link>
    to obtain a list of large object OIDs.
   </para>
 
@@ -3172,7 +3178,7 @@
       <entry></entry>
       <entry>
        Actual data stored in the large object.
-       This will never be more than <symbol>LOBLKSIZE</> bytes and might be less
+       This will never be more than <symbol>LOBLKSIZE</> bytes and might be less.
       </entry>
      </row>
     </tbody>
@@ -3201,7 +3207,7 @@
    The catalog <structname>pg_largeobject_metadata</structname>
    holds metadata associated with large objects.  The actual large object
    data is stored in
-   <link linkend="catalog-pg-largeobject">pg_largeobject</link>.
+   <link linkend="catalog-pg-largeobject"><structname>pg_largeobject</></link>.
   </para>
 
   <table>
@@ -3222,7 +3228,7 @@
       <entry><structfield>lomowner</structfield></entry>
       <entry><type>oid</type></entry>
       <entry><literal><link linkend="catalog-pg-authid"><structname>pg_authid</structname></link>.oid</literal></entry>
-      <entry>Owner of the largeobject</entry>
+      <entry>Owner of the large object</entry>
      </row>
 
      <row>
@@ -3693,13 +3699,13 @@
      <row>
       <entry><structfield>tmplinline</structfield></entry>
       <entry><type>text</type></entry>
-      <entry>Name of anonymous-block handler function, or NULL if none</entry>
+      <entry>Name of anonymous-block handler function, or null if none</entry>
      </row>
 
      <row>
       <entry><structfield>tmplvalidator</structfield></entry>
       <entry><type>text</type></entry>
-      <entry>Name of validator function, or NULL if none</entry>
+      <entry>Name of validator function, or null if none</entry>
      </row>
 
      <row>
@@ -3853,7 +3859,7 @@
        Function returns null if any call argument is null.  In that
        case the function won't actually be called at all.  Functions
        that are not <quote>strict</quote> must be prepared to handle
-       null inputs
+       null inputs.
       </entry>
      </row>
 
@@ -3913,7 +3919,7 @@
        An array with the data types of the function arguments.  This includes
        only input arguments (including <literal>INOUT</literal> and
        <literal>VARIADIC</> arguments), and thus represents
-       the call signature of the function
+       the call signature of the function.
       </entry>
      </row>
 
@@ -3927,7 +3933,7 @@
        <literal>INOUT</literal> arguments); however, if all the
        arguments are <literal>IN</literal> arguments, this field will be null.
        Note that subscripting is 1-based, whereas for historical reasons
-       <structfield>proargtypes</> is subscripted from 0
+       <structfield>proargtypes</> is subscripted from 0.
       </entry>
      </row>
 
@@ -3945,7 +3951,7 @@
         If all the arguments are <literal>IN</literal> arguments,
         this field will be null.
         Note that subscripts correspond to positions of
-        <structfield>proallargtypes</> not <structfield>proargtypes</>
+        <structfield>proallargtypes</> not <structfield>proargtypes</>.
       </entry>
      </row>
 
@@ -3958,7 +3964,7 @@
         Arguments without a name are set to empty strings in the array.
         If none of the arguments have a name, this field will be null.
         Note that subscripts correspond to positions of
-        <structfield>proallargtypes</> not <structfield>proargtypes</>
+        <structfield>proallargtypes</> not <structfield>proargtypes</>.
       </entry>
      </row>
 
@@ -3972,7 +3978,7 @@
        <structfield>pronargdefaults</> elements, corresponding to the last
        <replaceable>N</> <emphasis>input</> arguments (i.e., the last
        <replaceable>N</> <structfield>proargtypes</> positions).
-       If none of the arguments have defaults, this field will be null
+       If none of the arguments have defaults, this field will be null.
       </entry>
      </row>
 
@@ -3984,7 +3990,7 @@
        This tells the function handler how to invoke the function.  It
        might be the actual source code of the function for interpreted
        languages, a link symbol, a file name, or just about anything
-       else, depending on the implementation language/call convention
+       else, depending on the implementation language/call convention.
       </entry>
      </row>
 
@@ -3994,7 +4000,7 @@
       <entry></entry>
       <entry>
        Additional information about how to invoke the function.
-       Again, the interpretation is language-specific
+       Again, the interpretation is language-specific.
       </entry>
      </row>
 
@@ -4276,7 +4282,7 @@
       <entry>
        For a table column, this is the column number (the
        <structfield>objid</> and <structfield>classid</> refer to the
-       table itself).  For all other object types, this column is zero
+       table itself).  For all other object types, this column is zero.
       </entry>
      </row>
 
@@ -4548,7 +4554,7 @@
       of rows in the table; for example, a column in which values appear about
       twice on the average could be represented by
       <structfield>stadistinct</> = -0.5.
-      A zero value means the number of distinct values is unknown
+      A zero value means the number of distinct values is unknown.
       </entry>
      </row>
 
@@ -4559,7 +4565,7 @@
       <entry>
        A code number indicating the kind of statistics stored in the
        <replaceable>N</>th <quote>slot</quote> of the
-       <structname>pg_statistic</structname> row
+       <structname>pg_statistic</structname> row.
       </entry>
      </row>
 
@@ -4571,7 +4577,7 @@
        An operator used to derive the statistics stored in the
        <replaceable>N</>th <quote>slot</quote>.  For example, a
        histogram slot would show the <literal>&lt;</literal> operator
-       that defines the sort order of the data
+       that defines the sort order of the data.
       </entry>
      </row>
 
@@ -4581,7 +4587,7 @@
       <entry></entry>
       <entry>
        Numerical statistics of the appropriate kind for the
-       <replaceable>N</>th <quote>slot</quote>, or NULL if the slot
+       <replaceable>N</>th <quote>slot</quote>, or null if the slot
        kind does not involve numerical values
       </entry>
      </row>
@@ -4592,11 +4598,11 @@
       <entry></entry>
       <entry>
        Column data values of the appropriate kind for the
-       <replaceable>N</>th <quote>slot</quote>, or NULL if the slot
+       <replaceable>N</>th <quote>slot</quote>, or null if the slot
        kind does not store any data values.  Each array's element
        values are actually of the specific column's data type, so there
        is no way to define these columns' type more specifically than
-       <type>anyarray</>
+       <type>anyarray</>.
       </entry>
      </row>
     </tbody>
@@ -4810,7 +4816,7 @@
       <entry><structfield>tgattr</structfield></entry>
       <entry><type>int2vector</type></entry>
       <entry><literal><link linkend="catalog-pg-attribute"><structname>pg_attribute</structname></link>.attnum</literal></entry>
-      <entry>column numbers, if trigger is column-specific; otherwise an
+      <entry>Column numbers, if trigger is column-specific; otherwise an
        empty array</entry>
      </row>
 
@@ -4826,7 +4832,7 @@
       <entry><type>text</type></entry>
       <entry></entry>
       <entry>Expression tree (in <function>nodeToString()</function>
-       representation) for the trigger's <literal>WHEN</> condition, or NULL
+       representation) for the trigger's <literal>WHEN</> condition, or null
        if none</entry>
      </row>
     </tbody>
@@ -5319,7 +5325,7 @@
        where Datum is 8 bytes).
        Variable-length types are always passed by reference. Note that
        <structfield>typbyval</structfield> can be false even if the
-       length would allow pass-by-value
+       length would allow pass-by-value.
       </entry>
      </row>
 
@@ -5335,7 +5341,7 @@
        <literal>e</literal> for an enum type,
        or <literal>p</literal> for a pseudo-type.
        See also <structfield>typrelid</structfield> and
-       <structfield>typbasetype</structfield>
+       <structfield>typbasetype</structfield>.
       </entry>
      </row>
 
@@ -5347,7 +5353,7 @@
        <structfield>typcategory</structfield> is an arbitrary classification
        of data types that is used by the parser to determine which implicit
        casts should be <quote>preferred</>.
-       See <xref linkend="catalog-typcategory-table">
+       See <xref linkend="catalog-typcategory-table">.
       </entry>
      </row>
 
@@ -5369,7 +5375,7 @@
        True if the type is defined, false if this is a placeholder
        entry for a not-yet-defined type.  When
        <structfield>typisdefined</structfield> is false, nothing
-       except the type name, namespace, and OID can be relied on
+       except the type name, namespace, and OID can be relied on.
       </entry>
      </row>
 
@@ -5380,7 +5386,7 @@
       <entry>
        Character that separates two values of this type when parsing
        array input.  Note that the delimiter is associated with the array
-       element data type, not the array data type
+       element data type, not the array data type.
       </entry>
      </row>
 
@@ -5396,7 +5402,7 @@
        <structname>pg_class</structname> entry doesn't really represent
        a table, but it is needed anyway for the type's
        <structname>pg_attribute</structname> entries to link to.)
-       Zero for non-composite types
+       Zero for non-composite types.
       </entry>
      </row>
 
@@ -5418,7 +5424,7 @@
        its internal representation must be some number of values of the
        <structfield>typelem</structfield> data type with no other data.
        Variable-length array types have a header defined by the array
-       subroutines
+       subroutines.
       </entry>
      </row>
 
@@ -5479,7 +5485,7 @@
       <entry><structfield>typanalyze</structfield></entry>
       <entry><type>regproc</type></entry>
       <entry><literal><link linkend="catalog-pg-proc"><structname>pg_proc</structname></link>.oid</literal></entry>
-      <entry>Custom ANALYZE function, or 0 to use the standard function</entry>
+      <entry>Custom <command>ANALYZE</command> function, or 0 to use the standard function</entry>
      </row>
 
      <row>
@@ -5565,7 +5571,7 @@
       <entry></entry>
       <entry><para>
        <structfield>typnotnull</structfield> represents a not-null
-       constraint on a type.  Used for domains only
+       constraint on a type.  Used for domains only.
       </para></entry>
      </row>
 
@@ -5576,7 +5582,7 @@
       <entry><para>
        If this is a domain (see <structfield>typtype</structfield>), then
        <structfield>typbasetype</structfield> identifies the type that this
-       one is based on.  Zero if this type is not a domain
+       one is based on.  Zero if this type is not a domain.
       </para></entry>
      </row>
 
@@ -5587,7 +5593,7 @@
       <entry><para>
        Domains use <structfield>typtypmod</structfield> to record the <literal>typmod</>
        to be applied to their base type (-1 if base type does not use a
-       <literal>typmod</>).  -1 if this type is not a domain
+       <literal>typmod</>).  -1 if this type is not a domain.
       </para></entry>
      </row>
 
@@ -5600,7 +5606,7 @@
        for a domain that is an array (that is, <structfield>typbasetype</> is
        an array type; the domain's <structfield>typelem</> will match the base
        type's <structfield>typelem</structfield>).
-       Zero for types other than domains over array types
+       Zero for types other than domains over array types.
        </para></entry>
      </row>
 
@@ -5611,7 +5617,7 @@
       <entry><para>
        If <structfield>typdefaultbin</> is not null, it is the <function>nodeToString()</function>
        representation of a default expression for the type.  This is
-       only used for domains
+       only used for domains.
       </para></entry>
      </row>
 
@@ -5627,7 +5633,7 @@
        <structfield>typdefaultbin</> is null and <structfield>typdefault</> is
        not, then <structfield>typdefault</> is the external representation of
        the type's default value, which might be fed to the type's input
-       converter to produce a constant
+       converter to produce a constant.
       </para></entry>
      </row>
     </tbody>
@@ -5766,7 +5772,7 @@
       <entry><type>text[]</type></entry>
       <entry></entry>
       <entry>
-       User mapping specific options, as <quote>keyword=value</> strings.
+       User mapping specific options, as <quote>keyword=value</> strings
       </entry>
      </row>
     </tbody>
@@ -6126,7 +6132,7 @@
       <entry><structfield>tablespace</structfield></entry>
       <entry><type>name</type></entry>
       <entry><literal><link linkend="catalog-pg-tablespace"><structname>pg_tablespace</structname></link>.spcname</literal></entry>
-      <entry>Name of tablespace containing index (NULL if default for database)</entry>
+      <entry>Name of tablespace containing index (null if default for database)</entry>
      </row>
      <row>
       <entry><structfield>indexdef</structfield></entry>
@@ -6193,7 +6199,7 @@
       <entry><type>text</type></entry>
       <entry></entry>
       <entry>
-       type of the lockable object:
+       Type of the lockable object:
        <literal>relation</>,
        <literal>extend</>,
        <literal>page</>,
@@ -6212,7 +6218,7 @@
       <entry>
        OID of the database in which the object exists, or
        zero if the object is a shared object, or
-       NULL if the object is a transaction ID
+       null if the object is a transaction ID
       </entry>
      </row>
      <row>
@@ -6220,7 +6226,7 @@
       <entry><type>oid</type></entry>
       <entry><literal><link linkend="catalog-pg-class"><structname>pg_class</structname></link>.oid</literal></entry>
       <entry>
-       OID of the relation, or NULL if the object is not
+       OID of the relation, or null if the object is not
        a relation or part of a relation
       </entry>
      </row>
@@ -6229,7 +6235,7 @@
       <entry><type>integer</type></entry>
       <entry></entry>
       <entry>
-       Page number within the relation, or NULL if the object
+       Page number within the relation, or null if the object
        is not a tuple or relation page
       </entry>
      </row>
@@ -6238,7 +6244,7 @@
       <entry><type>smallint</type></entry>
       <entry></entry>
       <entry>
-       Tuple number within the page, or NULL if the object is not a tuple
+       Tuple number within the page, or null if the object is not a tuple
       </entry>
      </row>
      <row>
@@ -6246,7 +6252,7 @@
       <entry><type>text</type></entry>
       <entry></entry>
       <entry>
-       Virtual ID of a transaction, or NULL if the object is not a
+       Virtual ID of a transaction, or null if the object is not a
        virtual transaction ID
       </entry>
      </row>
@@ -6255,7 +6261,7 @@
       <entry><type>xid</type></entry>
       <entry></entry>
       <entry>
-       ID of a transaction, or NULL if the object is not a transaction ID
+       ID of a transaction, or null if the object is not a transaction ID
       </entry>
      </row>
      <row>
@@ -6263,7 +6269,7 @@
       <entry><type>oid</type></entry>
       <entry><literal><link linkend="catalog-pg-class"><structname>pg_class</structname></link>.oid</literal></entry>
       <entry>
-       OID of the system catalog containing the object, or NULL if the
+       OID of the system catalog containing the object, or null if the
        object is not a general database object
       </entry>
      </row>
@@ -6272,7 +6278,7 @@
       <entry><type>oid</type></entry>
       <entry>any OID column</entry>
       <entry>
-       OID of the object within its system catalog, or NULL if the
+       OID of the object within its system catalog, or null if the
        object is not a general database object.
        For advisory locks it is used to distinguish the two key
        spaces (<literal>1</> for an int8 key, <literal>2</> for two
@@ -6287,7 +6293,7 @@
        For a table column, this is the column number (the
        <structfield>classid</> and <structfield>objid</> refer to the
        table itself).  For all other object types, this column is
-       zero.  NULL if the object is not a general database object
+       zero.  Null if the object is not a general database object
       </entry>
      </row>
      <row>
@@ -6304,7 +6310,7 @@
       <entry></entry>
       <entry>
        Process ID of the server process holding or awaiting this
-       lock.  NULL if the lock is held by a prepared transaction
+       lock.  Null if the lock is held by a prepared transaction.
       </entry>
      </row>
      <row>
@@ -6452,7 +6458,7 @@
        this is the <command>PREPARE</command> statement submitted by
        the client. For prepared statements created via the
        frontend/backend protocol, this is the text of the prepared
-       statement itself
+       statement itself.
       </entry>
      </row>
      <row>
@@ -6469,7 +6475,7 @@
        The expected parameter types for the prepared statement in the
        form of an array of <type>regtype</type>. The OID corresponding
        to an element of this array can be obtained by casting the
-       <type>regtype</type> value to <type>oid</type>
+       <type>regtype</type> value to <type>oid</type>.
       </entry>
      </row>
      <row>
@@ -6675,7 +6681,7 @@
       <entry></entry>
       <entry>
        For roles that can log in, this sets maximum number of concurrent
-       connections this role can make.  -1 means no limit
+       connections this role can make.  -1 means no limit.
       </entry>
      </row>
 
@@ -6691,7 +6697,7 @@
       <entry><type>timestamptz</type></entry>
       <entry></entry>
       <entry>Password expiry time (only used for password authentication);
-       NULL if no expiration</entry>
+       null if no expiration</entry>
      </row>
 
      <row>
@@ -6845,19 +6851,19 @@
      <row>
       <entry><structfield>min_val</structfield></entry>
       <entry><type>text</type></entry>
-      <entry>Minimum allowed value of the parameter (NULL for non-numeric
+      <entry>Minimum allowed value of the parameter (null for non-numeric
       values)</entry>
      </row>
      <row>
       <entry><structfield>max_val</structfield></entry>
       <entry><type>text</type></entry>
-      <entry>Maximum allowed value of the parameter (NULL for non-numeric
+      <entry>Maximum allowed value of the parameter (null for non-numeric
       values)</entry>
      </row>
      <row>
       <entry><structfield>enumvals</structfield></entry>
       <entry><type>text[]</type></entry>
-      <entry>Allowed values of an enum parameter (NULL for non-enum
+      <entry>Allowed values of an enum parameter (null for non-enum
       values)</entry>
      </row>
      <row>
@@ -6875,16 +6881,16 @@
      <row>
       <entry><structfield>sourcefile</structfield></entry>
       <entry><type>text</type></entry>
-      <entry>Configuration file the current value was set in (NULL for
+      <entry>Configuration file the current value was set in (null for
       values set from sources other than configuration files, or when
-      examined by a non-superuser).
-      Helpful when using configuration include directives</entry>
+      examined by a non-superuser);
+      helpful when using <literal>include</> directives in configuration files</entry>
      </row>
      <row>
       <entry><structfield>sourceline</structfield></entry>
       <entry><type>integer</type></entry>
       <entry>Line number within the configuration file the current value was
-      set at (NULL for values set from sources other than configuration files,
+      set at (null for values set from sources other than configuration files,
       or when examined by a non-superuser)
       </entry>
      </row>
@@ -7101,7 +7107,7 @@
        likely to increase as the table grows; the positive form is used when
        the column seems to have a fixed number of possible values.)  For
        example, -1 indicates a unique column in which the number of distinct
-       values is the same as the number of rows
+       values is the same as the number of rows.
       </entry>
      </row>
 
@@ -7110,9 +7116,9 @@
       <entry><type>anyarray</type></entry>
       <entry></entry>
       <entry>
-       A list of the most common values in the column. (NULL if
+       A list of the most common values in the column. (Null if
        no values seem to be more common than any others.)
-       For some datatypes such as <type>tsvector</>, this is a list of
+       For some data types such as <type>tsvector</>, this is a list of
        the most common element values rather than values of the type itself.
       </entry>
      </row>
@@ -7124,8 +7130,8 @@
       <entry>
        A list of the frequencies of the most common values or elements,
        i.e., number of occurrences of each divided by total number of rows.
-       (NULL when <structfield>most_common_vals</structfield> is.)
-       For some datatypes such as <type>tsvector</>, it can also store some
+       (Null when <structfield>most_common_vals</structfield> is.)
+       For some data types such as <type>tsvector</>, it can also store some
        additional information, making it longer than the
        <structfield>most_common_vals</> array.
       </entry>
@@ -7139,7 +7145,7 @@
        A list of values that divide the column's values into groups of
        approximately equal population.  The values in
        <structfield>most_common_vals</>, if present, are omitted from this
-       histogram calculation.  (This column is NULL if the column data type
+       histogram calculation.  (This column is null if the column data type
        does not have a <literal>&lt;</> operator or if the
        <structfield>most_common_vals</> list accounts for the entire
        population.)
@@ -7155,7 +7161,7 @@
        logical ordering of the column values.  This ranges from -1 to +1.
        When the value is near -1 or +1, an index scan on the column will
        be estimated to be cheaper than when it is near zero, due to reduction
-       of random access to the disk.  (This column is NULL if the column data
+       of random access to the disk.  (This column is null if the column data
        type does not have a <literal>&lt;</> operator.)
       </entry>
      </row>
@@ -7220,25 +7226,25 @@
       <entry><structfield>tablespace</structfield></entry>
       <entry><type>name</type></entry>
       <entry><literal><link linkend="catalog-pg-tablespace"><structname>pg_tablespace</structname></link>.spcname</literal></entry>
-      <entry>Name of tablespace containing table (NULL if default for database)</entry>
+      <entry>Name of tablespace containing table (null if default for database)</entry>
      </row>
      <row>
       <entry><structfield>hasindexes</structfield></entry>
       <entry><type>boolean</type></entry>
       <entry><literal><link linkend="catalog-pg-class"><structname>pg_class</structname></link>.relhasindex</literal></entry>
-      <entry>true if table has (or recently had) any indexes</entry>
+      <entry>True if table has (or recently had) any indexes</entry>
      </row>
      <row>
       <entry><structfield>hasrules</structfield></entry>
       <entry><type>boolean</type></entry>
       <entry><literal><link linkend="catalog-pg-class"><structname>pg_class</structname></link>.relhasrules</literal></entry>
-      <entry>true if table has (or once had) rules</entry>
+      <entry>True if table has (or once had) rules</entry>
      </row>
      <row>
       <entry><structfield>hastriggers</structfield></entry>
       <entry><type>boolean</type></entry>
       <entry><literal><link linkend="catalog-pg-class"><structname>pg_class</structname></link>.relhastriggers</literal></entry>
-      <entry>true if table has (or once had) triggers</entry>
+      <entry>True if table has (or once had) triggers</entry>
      </row>
     </tbody>
    </tgroup>
@@ -7509,7 +7515,7 @@
       <entry>
        User mapping specific options, as <quote>keyword=value</>
        strings, if the current user is the owner of the foreign
-       server, else null.
+       server, else null
       </entry>
      </row>
     </tbody>

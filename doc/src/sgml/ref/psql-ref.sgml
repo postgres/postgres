@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.244.2.1 2010/07/10 00:50:37 rhaas Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.244.2.2 2010/08/17 04:37:19 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -1034,7 +1034,7 @@ testdb=&gt;
         If <replaceable class="parameter">pattern</replaceable> is
         specified, only those servers whose name matches the pattern
         are listed.  If the form <literal>\des+</literal> is used, a
-        full desription of each server is shown, including the
+        full description of each server is shown, including the
         server's ACL, type, version, and options.
         </para>
         </listitem>
@@ -1675,8 +1675,8 @@ lo_import 152801
         <para>
          Prompts the user to set variable <replaceable
          class="parameter">name</>.  An optional prompt, <replaceable
-         class="parameter">text</>, can be specified.  (For multi-word
-         prompts, use single-quotes.)
+         class="parameter">text</>, can be specified.  (For multiword
+         prompts, use single quotes.)
         </para>
 
         <para>
@@ -2757,7 +2757,7 @@ testdb=&gt; <userinput>SELECT * FROM :"foo";</userinput>
 testdb=&gt; <userinput>\set content `cat my_file.txt`</userinput>
 testdb=&gt; <userinput>INSERT INTO my_table VALUES (:'content');</userinput>
 </programlisting>
-    (Note that this still won't work if my_file.txt contains NUL bytes.
+    (Note that this still won't work if <filename>my_file.txt</filename> contains NUL bytes.
     psql does not support embedded NUL bytes in variable values.)
     </para>
 

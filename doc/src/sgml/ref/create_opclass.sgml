@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_opclass.sgml,v 1.25 2010/04/03 07:22:58 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_opclass.sgml,v 1.25.2.1 2010/08/17 04:37:19 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -250,7 +250,7 @@ CREATE OPERATOR CLASS <replaceable class="parameter">name</replaceable> [ DEFAUL
    Before <productname>PostgreSQL</productname> 8.4, the <literal>OPERATOR</>
    clause could include a <literal>RECHECK</> option.  This is no longer
    supported because whether an index operator is <quote>lossy</> is now
-   determined on-the-fly at runtime.  This allows efficient handling of
+   determined on-the-fly at run time.  This allows efficient handling of
    cases where an operator might or might not be lossy.
   </para>
  </refsect1>

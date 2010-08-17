@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/xindex.sgml,v 1.66 2010/02/24 15:54:31 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/xindex.sgml,v 1.66.4.1 2010/08/17 04:37:19 petere Exp $ -->
 
 <sect1 id="xindex">
  <title>Interfacing Extensions To Indexes</title>
@@ -416,39 +416,47 @@
 
    <table tocentry="1" id="xindex-gin-support-table">
     <title>GIN Support Functions</title>
-    <tgroup cols="2">
+    <tgroup cols="3">
      <thead>
       <row>
        <entry>Function</entry>
+       <entry>Description</entry>
        <entry>Support Number</entry>
       </row>
      </thead>
      <tbody>
       <row>
+       <entry><function>compare</></entry>
        <entry>
-        compare - compare two keys and return an integer less than zero, zero,
+        compare two keys and return an integer less than zero, zero,
         or greater than zero, indicating whether the first key is less than,
         equal to, or greater than the second
        </entry>
        <entry>1</entry>
       </row>
       <row>
-       <entry>extractValue - extract keys from a value to be indexed</entry>
+       <entry><function>extractValue</></entry>
+       <entry>extract keys from a value to be indexed</entry>
        <entry>2</entry>
       </row>
       <row>
-       <entry>extractQuery - extract keys from a query condition</entry>
+       <entry><function>extractQuery</></entry>
+       <entry>extract keys from a query condition</entry>
        <entry>3</entry>
       </row>
       <row>
-       <entry>consistent - determine whether value matches query condition</entry>
+       <entry><function>consistent</></entry>
+       <entry>determine whether value matches query condition</entry>
        <entry>4</entry>
       </row>
       <row>
-       <entry>comparePartial - (optional method) compare partial key from
+       <entry><function>comparePartial</></entry>
+       <entry>
+        (optional method) compare partial key from
         query and key from index, and return an integer less than zero, zero,
         or greater than zero, indicating whether GIN should ignore this index
-        entry, treat the entry as a match, or stop the index scan</entry>
+        entry, treat the entry as a match, or stop the index scan
+       </entry>
        <entry>5</entry>
       </row>
      </tbody>

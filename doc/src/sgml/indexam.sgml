@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/indexam.sgml,v 2.33.6.1 2010/07/29 19:34:36 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/indexam.sgml,v 2.33.6.2 2010/08/17 04:37:16 petere Exp $ -->
 
 <chapter id="indexam">
  <title>Index Access Method Interface Definition</title>
@@ -189,7 +189,7 @@ aminsert (Relation indexRelation,
   </para>
 
   <para>
-   The function's boolean result value is significant only when
+   The function's Boolean result value is significant only when
    <literal>checkUnique</> is <literal>UNIQUE_CHECK_PARTIAL</>.
    In this case a TRUE result means the new entry is known unique, whereas
    FALSE means it might be non-unique (and a deferred uniqueness check must
@@ -366,7 +366,7 @@ amgetbitmap (IndexScanDesc scan,
              TIDBitmap *tbm);
 </programlisting>
    Fetch all tuples in the given scan and add them to the caller-supplied
-   TIDBitmap (that is, OR the set of tuple IDs into whatever set is already
+   <type>TIDBitmap</type> (that is, OR the set of tuple IDs into whatever set is already
    in the bitmap).  The number of tuples fetched is returned (this might be
    just an approximate count, for instance some AMs do not detect duplicates).
    While inserting tuple IDs into the bitmap, <function>amgetbitmap</> can
@@ -820,19 +820,19 @@ amrestrpos (IndexScanDesc scan);
   <title>Index Cost Estimation Functions</title>
 
   <para>
-   The amcostestimate function is given a list of WHERE clauses that have
+   The <function>amcostestimate</> function is given a list of WHERE clauses that have
    been determined to be usable with the index.  It must return estimates
    of the cost of accessing the index and the selectivity of the WHERE
    clauses (that is, the fraction of parent-table rows that will be
    retrieved during the index scan).  For simple cases, nearly all the
    work of the cost estimator can be done by calling standard routines
-   in the optimizer; the point of having an amcostestimate function is
+   in the optimizer; the point of having an <function>amcostestimate</> function is
    to allow index access methods to provide index-type-specific knowledge,
    in case it is possible to improve on the standard estimates.
   </para>
 
   <para>
-   Each amcostestimate function must have the signature:
+   Each <function>amcostestimate</> function must have the signature:
 
 <programlisting>
 void
@@ -850,7 +850,7 @@ amcostestimate (PlannerInfo *root,
 
    <variablelist>
     <varlistentry>
-     <term>root</term>
+     <term><parameter>root</></term>
      <listitem>
       <para>
        The planner's information about the query being processed.
@@ -859,7 +859,7 @@ amcostestimate (PlannerInfo *root,
     </varlistentry>
 
     <varlistentry>
-     <term>index</term>
+     <term><parameter>index</></term>
      <listitem>
       <para>
        The index being considered.
@@ -868,23 +868,23 @@ amcostestimate (PlannerInfo *root,
     </varlistentry>
 
     <varlistentry>
-     <term>indexQuals</term>
+     <term><parameter>indexQuals</></term>
      <listitem>
       <para>
        List of index qual clauses (implicitly ANDed);
-       a NIL list indicates no qualifiers are available.
+       a <symbol>NIL</> list indicates no qualifiers are available.
        Note that the list contains expression trees, not ScanKeys.
       </para>
      </listitem>
     </varlistentry>
 
     <varlistentry>
-     <term>outer_rel</term>
+     <term><parameter>outer_rel</></term>
      <listitem>
       <para>
        If the index is being considered for use in a join inner indexscan,
        the planner's information about the outer side of the join.  Otherwise
-       NULL.  When non-NULL, some of the qual clauses will be join clauses
+       <symbol>NULL</>.  When non-<symbol>NULL</>, some of the qual clauses will be join clauses
        with this rel rather than being simple restriction clauses.  Also,
        the cost estimator should expect that the index scan will be repeated
        for each row of the outer rel.
@@ -899,7 +899,7 @@ amcostestimate (PlannerInfo *root,
 
    <variablelist>
     <varlistentry>
-     <term>*indexStartupCost</term>
+     <term><parameter>*indexStartupCost</></term>
      <listitem>
       <para>
        Set to cost of index start-up processing
@@ -908,7 +908,7 @@ amcostestimate (PlannerInfo *root,
     </varlistentry>
 
     <varlistentry>
-     <term>*indexTotalCost</term>
+     <term><parameter>*indexTotalCost</></term>
      <listitem>
       <para>
        Set to total cost of index processing
@@ -917,7 +917,7 @@ amcostestimate (PlannerInfo *root,
     </varlistentry>
 
     <varlistentry>
-     <term>*indexSelectivity</term>
+     <term><parameter>*indexSelectivity</></term>
      <listitem>
       <para>
        Set to index selectivity
@@ -926,7 +926,7 @@ amcostestimate (PlannerInfo *root,
     </varlistentry>
 
     <varlistentry>
-     <term>*indexCorrelation</term>
+     <term><parameter>*indexCorrelation</></term>
      <listitem>
       <para>
        Set to correlation coefficient between index scan order and
@@ -951,7 +951,7 @@ amcostestimate (PlannerInfo *root,
    row should usually be taken as <varname>cpu_index_tuple_cost</>.  In
    addition, an appropriate multiple of <varname>cpu_operator_cost</> should
    be charged for any comparison operators invoked during index processing
-   (especially evaluation of the indexQuals themselves).
+   (especially evaluation of the <literal>indexQuals</> themselves).
   </para>
 
   <para>
@@ -968,14 +968,14 @@ amcostestimate (PlannerInfo *root,
   </para>
 
   <para>
-   The indexSelectivity should be set to the estimated fraction of the parent
+   The <parameter>indexSelectivity</> should be set to the estimated fraction of the parent
    table rows that will be retrieved during the index scan.  In the case
    of a lossy query, this will typically be higher than the fraction of
    rows that actually pass the given qual conditions.
   </para>
 
   <para>
-   The indexCorrelation should be set to the correlation (ranging between
+   The <parameter>indexCorrelation</> should be set to the correlation (ranging between
    -1.0 and 1.0) between the index order and the table order.  This is used
    to adjust the estimate for the cost of fetching rows from the parent
    table.
@@ -1009,16 +1009,16 @@ amcostestimate (PlannerInfo *root,
    <step>
     <para>
      Estimate the number of index rows that will be visited during the
-     scan.  For many index types this is the same as indexSelectivity times
+     scan.  For many index types this is the same as <parameter>indexSelectivity</> times
      the number of rows in the index, but it might be more.  (Note that the
-     index's size in pages and rows is available from the IndexOptInfo struct.)
+     index's size in pages and rows is available from the <structname>IndexOptInfo</> struct.)
     </para>
    </step>
 
    <step>
     <para>
      Estimate the number of index pages that will be retrieved during the scan.
-     This might be just indexSelectivity times the index's size in pages.
+     This might be just <parameter>indexSelectivity</> times the index's size in pages.
     </para>
    </step>
 

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/isn.sgml,v 1.5.14.2 2010/08/10 20:42:02 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/isn.sgml,v 1.5.14.3 2010/08/17 04:37:17 petere Exp $ -->
 
 <sect1 id="isn">
  <title>isn</title>
@@ -214,7 +214,7 @@
 
   <para>
    The <filename>isn</> module provides the standard comparison operators,
-   plus btree and hash indexing support for all these datatypes.  In
+   plus B-tree and hash indexing support for all these data types.  In
    addition there are several specialized functions; shown in <xref linkend="isn-functions">.
    In this table,
    <type>isn</> means any one of the module's data types.
@@ -375,7 +375,7 @@ SELECT isbn13(id) FROM test;
 
   <para>
    This module was inspired by Garrett A. Wollman's
-   isbn_issn code.
+   <filename>isbn_issn</> code.
   </para>
  </sect2>
 

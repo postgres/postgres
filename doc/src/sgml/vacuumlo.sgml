@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/vacuumlo.sgml,v 1.4.14.1 2010/07/29 19:34:37 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/vacuumlo.sgml,v 1.4.14.2 2010/08/17 04:37:19 petere Exp $ -->
 
 <sect1 id="vacuumlo">
  <title>vacuumlo</title>
@@ -52,7 +52,7 @@ vacuumlo [options] database [database2 ... databaseN]
    <varlistentry>
     <term><option>-U</option> <replaceable>username</></term>
     <listitem>
-     <para>Username to connect as.</para>
+     <para>User name to connect as.</para>
     </listitem>
    </varlistentry>
 

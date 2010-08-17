@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.348.2.2 2010/07/29 18:29:57 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.348.2.3 2010/08/17 04:37:16 petere Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -2471,7 +2471,7 @@ createlang: language installation failed: ERROR:  could not load library "/opt/d
 
      <listitem>
       <para>
-       The GNU make command is called "make" not "gmake".
+       The GNU make command is called <command>make</command>, not <command>gmake</command>.
       </para>
      </listitem>
 
@@ -2982,7 +2982,7 @@ configure ... LDFLAGS="-R /usr/sfw/lib:/opt/sfw/lib:/usr/local/lib"
      On Solaris 7 and older, the 64-bit version of libc has a buggy
      <function>vsnprintf</function> routine, which leads to erratic
      core dumps in PostgreSQL.  The simplest known workaround is to
-     force PostgreSQL to use its own version of vsnprintf rather than
+     force PostgreSQL to use its own version of <function>vsnprintf</function> rather than
      the library copy.  To do this, after you
      run <command>configure</command> edit a file produced by
      <command>configure</command>:
@@ -3044,7 +3044,7 @@ LIBOBJS = snprintf.o
     </para>
 
     <para>
-     If you see the linking of the postgres executable abort with an
+     If you see the linking of the <command>postgres</command> executable abort with an
      error message like:
 <screen>
 Undefined                       first referenced

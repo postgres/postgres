@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/storage.sgml,v 1.32 2010/02/16 22:34:43 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/storage.sgml,v 1.32.6.1 2010/08/17 04:37:19 petere Exp $ -->
 
 <chapter id="storage">
 
@@ -817,7 +817,7 @@ data. Empty in ordinary tables.</entry>
   the next. Then make sure you have the right alignment.  If the field is a
   fixed width field, then all the bytes are simply placed. If it's a
   variable length field (attlen = -1) then it's a bit more complicated.
-  All variable-length datatypes share the common header structure
+  All variable-length data types share the common header structure
   <type>struct varlena</type>, which includes the total length of the stored
   value and some flag bits.  Depending on the flags, the data can be either
   inline or in a <acronym>TOAST</> table;
