@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/pgstandby.sgml,v 2.10 2009/06/25 12:03:11 heikki Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/pgstandby.sgml,v 2.10.2.1 2010/08/17 04:49:33 petere Exp $ -->
 
 <sect1 id="pgstandby">
  <title>pg_standby</title>
@@ -317,7 +317,7 @@ recovery_end_command = 'del C:\pgsql.trigger.5442'
 
   <para>
    The <literal>copy</> command on Windows sets the final file size
-   before the file is completely copied, which would ordinarly confuse
+   before the file is completely copied, which would ordinarily confuse
    <application>pg_standby</application>.  Therefore
    <application>pg_standby</application> waits <literal>sleeptime</>
    seconds once it sees the proper file size.  GNUWin32's <literal>cp</>

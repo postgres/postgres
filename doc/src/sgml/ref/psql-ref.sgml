@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.225.2.4 2010/03/08 12:39:51 mha Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.225.2.5 2010/08/17 04:49:33 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -1002,7 +1002,7 @@ testdb=&gt;
         If <replaceable class="parameter">pattern</replaceable> is
         specified, only those servers whose name matches the pattern
         are listed.  If the form <literal>\des+</literal> is used, a
-        full desription of each server is shown, including the
+        full description of each server is shown, including the
         server's ACL, type, version, and options.
         </para>
         </listitem>
