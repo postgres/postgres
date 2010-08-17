@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/lo.sgml,v 1.5 2010/08/17 04:37:20 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/lo.sgml,v 1.6 2010/08/17 04:47:04 petere Exp $ -->
 
 <sect1 id="lo">
  <title>lo</title>
@@ -19,7 +19,7 @@
   <para>
    One of the problems with the JDBC driver (and this affects the ODBC driver
    also), is that the specification assumes that references to BLOBs (Binary
-   Large Objects) are stored within a table, and if that entry is changed, the
+   Large OBjects) are stored within a table, and if that entry is changed, the
    associated BLOB is deleted from the database.
   </para>
 
