@@ -17,7 +17,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_param.c,v 2.4 2010/02/26 02:00:52 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_param.c,v 2.5 2010/08/18 12:20:15 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,6 +36,7 @@ typedef struct FixedParamState
 {
 	Oid		   *paramTypes;		/* array of parameter type OIDs */
 	int			numParams;		/* number of array entries */
+	Oid		   *unknownParamTypes; /* resolved types of 'unknown' params  */
 } FixedParamState;
 
 /*
@@ -55,6 +56,9 @@ static Node *variable_paramref_hook(ParseState *pstate, ParamRef *pref);
 static Node *variable_coerce_param_hook(ParseState *pstate, Param *param,
 						   Oid targetTypeId, int32 targetTypeMod,
 						   int location);
+static Node *fixed_coerce_param_hook(ParseState *pstate, Param *param,
+						   Oid targetTypeId, int32 targetTypeMod,
+						   int location);
 static bool check_parameter_resolution_walker(Node *node, ParseState *pstate);
 
 
@@ -69,9 +73,10 @@ parse_fixed_parameters(ParseState *pstate,
 
 	parstate->paramTypes = paramTypes;
 	parstate->numParams = numParams;
+	parstate->unknownParamTypes = NULL;
 	pstate->p_ref_hook_state = (void *) parstate;
 	pstate->p_paramref_hook = fixed_paramref_hook;
-	/* no need to use p_coerce_param_hook */
+	pstate->p_coerce_param_hook = fixed_coerce_param_hook;
 }
 
 /*
@@ -168,6 +173,83 @@ variable_paramref_hook(ParseState *pstate, ParamRef *pref)
 	param->location = pref->location;
 
 	return (Node *) param;
+}
+
+/*
+ * Coerce a Param to a query-requested datatype, in the fixed params case.
+ *
+ * 'unknown' type params are coerced to the type requested, analogous to the
+ * coercion of unknown constants performed in coerce_type(). We can't change
+ * the param types like we do in the varparams case, so the coercion is done
+ * at runtime using CoerceViaIO nodes.
+ */
+static Node *
+fixed_coerce_param_hook(ParseState *pstate, Param *param,
+						Oid targetTypeId, int32 targetTypeMode,
+						int location)
+{
+	if (param->paramkind == PARAM_EXTERN && param->paramtype == UNKNOWNOID)
+	{
+		FixedParamState *parstate = (FixedParamState *) pstate->p_ref_hook_state;
+		Oid *unknownParamTypes = parstate->unknownParamTypes;
+		int			paramno = param->paramid;
+		CoerceViaIO *iocoerce;
+
+		if (paramno <= 0 ||		/* shouldn't happen, but... */
+			paramno > parstate->numParams)
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_PARAMETER),
+					 errmsg("there is no parameter $%d", paramno),
+					 parser_errposition(pstate, param->location)));
+
+		/* Allocate the array on first use */
+		if (unknownParamTypes == NULL)
+		{
+			unknownParamTypes = palloc0(parstate->numParams * sizeof(Oid));
+			parstate->unknownParamTypes = unknownParamTypes;
+		}
+
+		/*
+		 * If the same parameter is used multiple times in the query, make
+		 * sure it's always resolved to the same type. The code would cope
+		 * with differing interpretations, but it might lead to surprising
+		 * results. The varparams code forbids that anyway, so better be
+		 * consistent.
+		 */
+		if (unknownParamTypes[paramno - 1] == InvalidOid)
+		{
+			/* We've successfully resolved the type */
+			unknownParamTypes[paramno - 1] = targetTypeId;
+		}
+		else if (unknownParamTypes[paramno - 1] == targetTypeId)
+		{
+			/* We previously resolved the type, and it matches */
+		}
+		else
+		{
+			/* Ooops */
+			ereport(ERROR,
+					(errcode(ERRCODE_AMBIGUOUS_PARAMETER),
+					 errmsg("inconsistent types deduced for parameter $%d",
+							paramno),
+					 errdetail("%s versus %s",
+							   format_type_be(unknownParamTypes[paramno - 1]),
+							   format_type_be(targetTypeId)),
+					 parser_errposition(pstate, param->location)));
+		}
+
+		/* Build a CoerceViaIO node */
+		iocoerce = makeNode(CoerceViaIO);
+		iocoerce->arg = (Expr *) param;
+		iocoerce->resulttype = targetTypeId;
+		iocoerce->coerceformat = COERCE_IMPLICIT_CAST;
+		iocoerce->location = location;
+
+		return (Node *) iocoerce;
+	}
+
+	/* Else signal to proceed with normal coercion */
+	return NULL;
 }
 
 /*
