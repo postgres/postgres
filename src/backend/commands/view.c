@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/view.c,v 1.121 2010/07/25 23:21:21 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/view.c,v 1.122 2010/08/18 18:35:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -242,7 +242,7 @@ DefineVirtualRelation(const RangeVar *relation, List *tlist, bool replace)
 		 * existing view, so we don't need more code to complain if "replace"
 		 * is false).
 		 */
-		relid = DefineRelation(createStmt, RELKIND_VIEW);
+		relid = DefineRelation(createStmt, RELKIND_VIEW, InvalidOid);
 		Assert(relid != InvalidOid);
 		return relid;
 	}

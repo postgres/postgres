@@ -22,7 +22,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.387 2010/08/07 02:44:06 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.388 2010/08/18 18:35:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1513,6 +1513,7 @@ _equalCreateSeqStmt(CreateSeqStmt *a, CreateSeqStmt *b)
 {
 	COMPARE_NODE_FIELD(sequence);
 	COMPARE_NODE_FIELD(options);
+	COMPARE_SCALAR_FIELD(ownerId);
 
 	return true;
 }

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.336 2010/07/25 23:21:22 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.337 2010/08/18 18:35:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -510,7 +510,8 @@ standard_ProcessUtility(Node *parsetree,
 
 						/* Create the table itself */
 						relOid = DefineRelation((CreateStmt *) stmt,
-												RELKIND_RELATION);
+												RELKIND_RELATION,
+												InvalidOid);
 
 						/*
 						 * If "IF NOT EXISTS" was specified and the relation
