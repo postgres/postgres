@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/typecmds.c,v 1.148 2010/02/26 02:00:40 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/typecmds.c,v 1.148.4.1 2010/08/18 18:35:29 tgl Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -1546,7 +1546,7 @@ DefineCompositeType(const RangeVar *typevar, List *coldeflist)
 	/*
 	 * Finally create the relation.  This also creates the type.
 	 */
-	return DefineRelation(createStmt, RELKIND_COMPOSITE_TYPE);
+	return DefineRelation(createStmt, RELKIND_COMPOSITE_TYPE, InvalidOid);
 }
 
 /*

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/sequence.c,v 1.168 2010/02/20 21:24:02 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/sequence.c,v 1.168.4.1 2010/08/18 18:35:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -204,7 +204,7 @@ DefineSequence(CreateSeqStmt *seq)
 	stmt->oncommit = ONCOMMIT_NOOP;
 	stmt->tablespacename = NULL;
 
-	seqoid = DefineRelation(stmt, RELKIND_SEQUENCE);
+	seqoid = DefineRelation(stmt, RELKIND_SEQUENCE, seq->ownerId);
 
 	rel = heap_open(seqoid, AccessExclusiveLock);
 	tupDesc = RelationGetDescr(rel);
