@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/mbprint.c,v 1.39 2010/08/16 00:06:18 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/mbprint.c,v 1.40 2010/08/18 19:54:01 tgl Exp $
  *
  * XXX this file does not really belong in psql/.  Perhaps move to libpq?
  * It also seems that the mbvalidate function is redundant with existing
@@ -43,13 +43,15 @@ pg_get_utf8_id(void)
 #define PG_UTF8		pg_get_utf8_id()
 
 
+/*
+ * Convert a UTF-8 character to a Unicode code point.
+ * This is a one-character version of pg_utf2wchar_with_len.
+ *
+ * No error checks here, c must point to a long-enough string.
+ */
 static pg_wchar
-utf2ucs(const unsigned char *c)
+utf8_to_unicode(const unsigned char *c)
 {
-	/*
-	 * one char version of pg_utf2wchar_with_len. no control here, c must
-	 * point to a large enough string
-	 */
 	if ((*c & 0x80) == 0)
 		return (pg_wchar) c[0];
 	else if ((*c & 0xe0) == 0xc0)
@@ -346,7 +348,7 @@ pg_wcsformat(unsigned char *pwcs, size_t len, int encoding,
 		else if (w < 0)			/* Non-ascii control char */
 		{
 			if (encoding == PG_UTF8)
-				sprintf((char *) ptr, "\\u%04X", utf2ucs(pwcs));
+				sprintf((char *) ptr, "\\u%04X", utf8_to_unicode(pwcs));
 			else
 			{
 				/*

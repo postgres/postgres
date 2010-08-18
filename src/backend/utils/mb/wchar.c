@@ -1,7 +1,7 @@
 /*
  * conversion functions between pg_wchar and multibyte streams.
  * Tatsuo Ishii
- * $PostgreSQL: pgsql/src/backend/utils/mb/wchar.c,v 1.74 2010/01/04 20:38:31 adunstan Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/mb/wchar.c,v 1.75 2010/08/18 19:54:01 tgl Exp $
  *
  */
 /* can be used in either frontend or backend */
@@ -462,7 +462,7 @@ unicode_to_utf8(pg_wchar c, unsigned char *utf8string)
  * We return "1" for any leading byte that is either flat-out illegal or
  * indicates a length larger than we support.
  *
- * pg_utf2wchar_with_len(), utf2ucs(), pg_utf8_islegal(), and perhaps
+ * pg_utf2wchar_with_len(), utf8_to_unicode(), pg_utf8_islegal(), and perhaps
  * other places would need to be fixed to change this.
  */
 int
@@ -632,13 +632,15 @@ ucs_wcwidth(pg_wchar ucs)
 		  (ucs >= 0x20000 && ucs <= 0x2ffff)));
 }
 
-static pg_wchar
-utf2ucs(const unsigned char *c)
+/*
+ * Convert a UTF-8 character to a Unicode code point.
+ * This is a one-character version of pg_utf2wchar_with_len.
+ *
+ * No error checks here, c must point to a long-enough string.
+ */
+pg_wchar
+utf8_to_unicode(const unsigned char *c)
 {
-	/*
-	 * one char version of pg_utf2wchar_with_len. no control here, c must
-	 * point to a large enough string
-	 */
 	if ((*c & 0x80) == 0)
 		return (pg_wchar) c[0];
 	else if ((*c & 0xe0) == 0xc0)
@@ -661,7 +663,7 @@ utf2ucs(const unsigned char *c)
 static int
 pg_utf_dsplen(const unsigned char *s)
 {
-	return ucs_wcwidth(utf2ucs(s));
+	return ucs_wcwidth(utf8_to_unicode(s));
 }
 
 /*
