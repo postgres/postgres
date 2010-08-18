@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeModifyTable.c,v 1.7 2010/02/26 02:00:42 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeModifyTable.c,v 1.7.4.1 2010/08/18 21:52:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -682,6 +682,14 @@ ExecModifyTable(ModifyTableState *node)
 	 */
 	for (;;)
 	{
+		/*
+		 * Reset the per-output-tuple exprcontext.  This is needed because
+		 * triggers expect to use that context as workspace.  It's a bit ugly
+		 * to do this below the top level of the plan, however.  We might need
+		 * to rethink this later.
+		 */
+		ResetPerTupleExprContext(estate);
+
 		planSlot = ExecProcNode(subplanstate);
 
 		if (TupIsNull(planSlot))
