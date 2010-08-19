@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.143 2010/06/25 16:40:13 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.144 2010/08/19 18:57:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1642,26 +1642,41 @@ stmt_dynexecute : K_EXECUTE
 						new->row = NULL;
 						new->params = NIL;
 
-						/* If we found "INTO", collect the argument */
-						if (endtoken == K_INTO)
+						/*
+						 * We loop to allow the INTO and USING clauses to
+						 * appear in either order, since people easily get
+						 * that wrong.  This coding also prevents "INTO foo"
+						 * from getting absorbed into a USING expression,
+						 * which is *really* confusing.
+						 */
+						for (;;)
 						{
-							new->into = true;
-							read_into_target(&new->rec, &new->row, &new->strict);
-							endtoken = yylex();
-							if (endtoken != ';' && endtoken != K_USING)
-								yyerror("syntax error");
-						}
-
-						/* If we found "USING", collect the argument(s) */
-						if (endtoken == K_USING)
-						{
-							do
+							if (endtoken == K_INTO)
 							{
-								expr = read_sql_expression2(',', ';',
-															", or ;",
-															&endtoken);
-								new->params = lappend(new->params, expr);
-							} while (endtoken == ',');
+								if (new->into)			/* multiple INTO */
+									yyerror("syntax error");
+								new->into = true;
+								read_into_target(&new->rec, &new->row, &new->strict);
+								endtoken = yylex();
+							}
+							else if (endtoken == K_USING)
+							{
+								if (new->params)		/* multiple USING */
+									yyerror("syntax error");
+								do
+								{
+									expr = read_sql_construct(',', ';', K_INTO,
+															  ", or ; or INTO",
+															  "SELECT ",
+															  true, true,
+															  NULL, &endtoken);
+									new->params = lappend(new->params, expr);
+								} while (endtoken == ',');
+							}
+							else if (endtoken == ';')
+								break;
+							else
+								yyerror("syntax error");
 						}
 
 						$$ = (PLpgSQL_stmt *)new;
