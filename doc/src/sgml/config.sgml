@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.304 2010/08/17 04:37:20 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.305 2010/08/19 22:55:00 tgl Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -5777,6 +5777,31 @@ plruby.use_strict = true        # generates error: unknown class name
       </listitem>
      </varlistentry>
 
+     <varlistentry id="guc-trace-recovery-messages" xreflabel="trace_recovery_messages">
+      <term><varname>trace_recovery_messages</varname> (<type>enum</type>)</term>
+      <indexterm>
+       <primary><varname>trace_recovery_messages</> configuration parameter</primary>
+      </indexterm>
+      <listitem>
+       <para>
+        Enables logging of recovery-related debugging output that otherwise
+        would not be logged. This parameter allows the user to override the
+        normal setting of <xref linkend="guc-log-min-messages">, but only for
+        specific messages. This is intended for use in debugging Hot Standby.
+        Valid values are <literal>DEBUG5</>, <literal>DEBUG4</>,
+        <literal>DEBUG3</>, <literal>DEBUG2</>, <literal>DEBUG1</>, and
+        <literal>LOG</>.  The default, <literal>LOG</>, does not affect
+        logging decisions at all.  The other values cause recovery-related
+        debug messages of that priority or higher to be logged as though they
+        had <literal>LOG</> priority; for common settings of
+        <varname>log_min_messages</> this results in unconditionally sending
+        them to the server log.
+        This parameter can only be set in the <filename>postgresql.conf</>
+        file or on the server command line.
+       </para>
+      </listitem>
+     </varlistentry>
+
      <varlistentry id="guc-trace-sort" xreflabel="trace_sort">
       <term><varname>trace_sort</varname> (<type>boolean</type>)</term>
       <indexterm>
@@ -5955,32 +5980,6 @@ LOG:  CleanUpLock: deleting: lock(0xb7acd844) id(24688,24696,0,0,0,1)
         only available if the <symbol>WAL_DEBUG</symbol> macro was
         defined when <productname>PostgreSQL</productname> was
         compiled.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry id="guc-trace-recovery-messages" xreflabel="trace_recovery_messages">
-      <term><varname>trace_recovery_messages</varname> (<type>enum</type>)</term>
-      <indexterm>
-       <primary><varname>trace_recovery_messages</> configuration parameter</primary>
-      </indexterm>
-      <listitem>
-       <para>
-        Controls which message levels are written to the server log
-        for system modules needed for recovery processing. This allows
-        the user to override the normal setting of log_min_messages,
-        but only for specific messages. This is intended for use in
-        debugging Hot Standby.
-        Valid values are <literal>DEBUG5</>, <literal>DEBUG4</>,
-        <literal>DEBUG3</>, <literal>DEBUG2</>, <literal>DEBUG1</>,
-        <literal>INFO</>, <literal>NOTICE</>, <literal>WARNING</>,
-        <literal>ERROR</>, <literal>LOG</>, <literal>FATAL</>, and
-        <literal>PANIC</>.  Each level includes all the levels that
-        follow it.  The later the level, the fewer messages are sent
-        to the log.  The default is <literal>WARNING</>.  Note that
-        <literal>LOG</> has a different rank here than in
-        <varname>client_min_messages</>.
-        Parameter should be set in <filename>postgresql.conf</filename> only.
        </para>
       </listitem>
      </varlistentry>

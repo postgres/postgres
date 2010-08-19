@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/standby.c,v 1.28 2010/08/12 23:24:54 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/standby.c,v 1.29 2010/08/19 22:55:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -591,7 +591,7 @@ StandbyReleaseLocks(TransactionId xid)
 				 lock->xid, lock->dbOid, lock->relOid);
 			SET_LOCKTAG_RELATION(locktag, lock->dbOid, lock->relOid);
 			if (!LockRelease(&locktag, AccessExclusiveLock, true))
-				elog(trace_recovery(LOG),
+				elog(LOG,
 					 "RecoveryLockList contains entry for lock no longer recorded by lock manager: xid %u database %u relation %u",
 					 lock->xid, lock->dbOid, lock->relOid);
 
@@ -655,7 +655,7 @@ StandbyReleaseLocksMany(TransactionId removeXid, bool keepPreparedXacts)
 				 lock->xid, lock->dbOid, lock->relOid);
 			SET_LOCKTAG_RELATION(locktag, lock->dbOid, lock->relOid);
 			if (!LockRelease(&locktag, AccessExclusiveLock, true))
-				elog(trace_recovery(LOG),
+				elog(LOG,
 					 "RecoveryLockList contains entry for lock no longer recorded by lock manager: xid %u database %u relation %u",
 					 lock->xid, lock->dbOid, lock->relOid);
 			RecoveryLockList = list_delete_cell(RecoveryLockList, cell, prev);

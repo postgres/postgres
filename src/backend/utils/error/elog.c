@@ -42,7 +42,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.225 2010/07/18 23:43:32 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.226 2010/08/19 22:55:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2798,12 +2798,19 @@ is_log_level_output(int elevel, int log_min_level)
 }
 
 /*
- * If trace_recovery_messages is set to make this visible, then show as LOG,
- * else display as whatever level is set. It may still be shown, but only
- * if log_min_messages is set lower than trace_recovery_messages.
+ * Adjust the level of a recovery-related message per trace_recovery_messages.
+ *
+ * The argument is the default log level of the message, eg, DEBUG2.  (This
+ * should only be applied to DEBUGn log messages, otherwise it's a no-op.)
+ * If the level is >= trace_recovery_messages, we return LOG, causing the
+ * message to be logged unconditionally (for most settings of
+ * log_min_messages).  Otherwise, we return the argument unchanged.
+ * The message will then be shown based on the setting of log_min_messages.
  *
  * Intention is to keep this for at least the whole of the 9.0 production
  * release, so we can more easily diagnose production problems in the field.
+ * It should go away eventually, though, because it's an ugly and
+ * hard-to-explain kluge.
  */
 int
 trace_recovery(int trace_level)
