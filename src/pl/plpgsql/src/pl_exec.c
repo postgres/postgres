@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.244.2.7 2010/08/09 18:50:29 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.244.2.8 2010/08/19 16:54:51 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -5428,8 +5428,22 @@ exec_eval_using_params(PLpgSQL_execstate *estate, List *params)
 		ppd->nulls[i] = isnull ? 'n' : ' ';
 		ppd->freevals[i] = false;
 
+		if (ppd->types[i] == UNKNOWNOID)
+		{
+			/*
+			 * Treat 'unknown' parameters as text, that's what most people
+			 * would expect. The backend can coerce unknown constants in a
+			 * more intelligent way, but not unknown Params. 
+			 */
+			ppd->types[i] = TEXTOID;
+			if (!isnull)
+			{
+				ppd->values[i] = CStringGetTextDatum((char *) ppd->values[i]);
+				ppd->freevals[i] = true;
+			}
+		}
 		/* pass-by-ref non null values must be copied into plpgsql context */
-		if (!isnull)
+		else if (!isnull)
 		{
 			int16		typLen;
 			bool		typByVal;
