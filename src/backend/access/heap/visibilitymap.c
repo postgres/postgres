@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/visibilitymap.c,v 1.11 2010/08/13 20:10:50 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/visibilitymap.c,v 1.12 2010/08/19 02:58:37 rhaas Exp $
  *
  * INTERFACE ROUTINES
  *		visibilitymap_clear - clear a bit in the visibility map
@@ -477,7 +477,7 @@ vm_extend(Relation rel, BlockNumber vm_nblocks)
 	while (vm_nblocks_now < vm_nblocks)
 	{
 		smgrextend(rel->rd_smgr, VISIBILITYMAP_FORKNUM, vm_nblocks_now,
-				   (char *) pg, rel->rd_istemp);
+				   (char *) pg, false);
 		vm_nblocks_now++;
 	}
 

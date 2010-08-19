@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/freespace/freespace.c,v 1.78 2010/08/13 20:10:52 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/freespace/freespace.c,v 1.79 2010/08/19 02:58:37 rhaas Exp $
  *
  *
  * NOTES:
@@ -588,7 +588,7 @@ fsm_extend(Relation rel, BlockNumber fsm_nblocks)
 	while (fsm_nblocks_now < fsm_nblocks)
 	{
 		smgrextend(rel->rd_smgr, FSM_FORKNUM, fsm_nblocks_now,
-				   (char *) pg, rel->rd_istemp);
+				   (char *) pg, false);
 		fsm_nblocks_now++;
 	}
 

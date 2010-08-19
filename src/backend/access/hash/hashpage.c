@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/hash/hashpage.c,v 1.83 2010/02/26 02:00:33 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/hash/hashpage.c,v 1.84 2010/08/19 02:58:37 rhaas Exp $
  *
  * NOTES
  *	  Postgres hash pages look like ordinary relation pages.  The opaque
@@ -733,7 +733,7 @@ _hash_alloc_buckets(Relation rel, BlockNumber firstblock, uint32 nblocks)
 	MemSet(zerobuf, 0, sizeof(zerobuf));
 
 	RelationOpenSmgr(rel);
-	smgrextend(rel->rd_smgr, MAIN_FORKNUM, lastblock, zerobuf, rel->rd_istemp);
+	smgrextend(rel->rd_smgr, MAIN_FORKNUM, lastblock, zerobuf, false);
 
 	return true;
 }
