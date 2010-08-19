@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/localbuf.c,v 1.89 2010/01/02 16:57:51 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/localbuf.c,v 1.89.6.1 2010/08/19 16:16:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -397,6 +397,7 @@ GetLocalBufferStorage(void)
 	static int	next_buf_in_block = 0;
 	static int	num_bufs_in_block = 0;
 	static int	total_bufs_allocated = 0;
+	static MemoryContext LocalBufferContext = NULL;
 
 	char	   *this_buf;
 
@@ -407,6 +408,19 @@ GetLocalBufferStorage(void)
 		/* Need to make a new request to memmgr */
 		int			num_bufs;
 
+		/*
+		 * We allocate local buffers in a context of their own, so that the
+		 * space eaten for them is easily recognizable in MemoryContextStats
+		 * output.  Create the context on first use.
+		 */
+		if (LocalBufferContext == NULL)
+			LocalBufferContext =
+				AllocSetContextCreate(TopMemoryContext,
+									  "LocalBufferContext",
+									  ALLOCSET_DEFAULT_MINSIZE,
+									  ALLOCSET_DEFAULT_INITSIZE,
+									  ALLOCSET_DEFAULT_MAXSIZE);
+
 		/* Start with a 16-buffer request; subsequent ones double each time */
 		num_bufs = Max(num_bufs_in_block * 2, 16);
 		/* But not more than what we need for all remaining local bufs */
@@ -414,8 +428,7 @@ GetLocalBufferStorage(void)
 		/* And don't overflow MaxAllocSize, either */
 		num_bufs = Min(num_bufs, MaxAllocSize / BLCKSZ);
 
-		/* Allocate space from TopMemoryContext so it never goes away */
-		cur_block = (char *) MemoryContextAlloc(TopMemoryContext,
+		cur_block = (char *) MemoryContextAlloc(LocalBufferContext,
 												num_bufs * BLCKSZ);
 		next_buf_in_block = 0;
 		num_bufs_in_block = num_bufs;
