@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.561 2010/07/06 22:55:26 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.561.2.1 2010/08/19 22:55:10 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -2785,13 +2785,17 @@ static struct config_enum ConfigureNamesEnum[] =
 	},
 
 	{
-		{"trace_recovery_messages", PGC_SUSET, LOGGING_WHEN,
-			gettext_noop("Sets the message levels that are logged during recovery."),
+		{"trace_recovery_messages", PGC_SIGHUP, DEVELOPER_OPTIONS,
+			gettext_noop("Enables logging of recovery-related debugging information."),
 			gettext_noop("Each level includes all the levels that follow it. The later"
 						 " the level, the fewer messages are sent.")
 		},
 		&trace_recovery_messages,
-		DEBUG1, server_message_level_options, NULL, NULL
+		/*
+		 * client_message_level_options allows too many values, really,
+		 * but it's not worth having a separate options array for this.
+		 */
+		LOG, client_message_level_options, NULL, NULL
 	},
 
 	{
