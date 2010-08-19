@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/contrib/pgcrypto/uninstall_pgcrypto.sql,v 1.4 2007/11/13 04:24:28 momjian Exp $ */
+/* $PostgreSQL: pgsql/contrib/pgcrypto/uninstall_pgcrypto.sql,v 1.5 2010/08/19 05:57:33 petere Exp $ */
 
 -- Adjust this setting to control where the objects get dropped.
 SET search_path = public;
@@ -43,4 +43,3 @@ DROP FUNCTION pgp_pub_decrypt_bytea(bytea, bytea, text, text);
 DROP FUNCTION pgp_key_id(bytea);
 DROP FUNCTION armor(bytea);
 DROP FUNCTION dearmor(text);
-

@@ -1,4 +1,3 @@
-
 CREATE TABLE users (
 	fname text not null,
 	lname text not null,

@@ -1,4 +1,3 @@
-
 `> .sqlf`;
 
 # PgSQL specific to execute all queries in single xaction

@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/contrib/pg_upgrade/TESTING,v 1.3 2010/07/09 16:51:23 momjian Exp $
+$PostgreSQL: pgsql/contrib/pg_upgrade/TESTING,v 1.4 2010/08/19 05:57:33 petere Exp $
 
 The most effective way to test pg_upgrade, aside from testing on user
 data, is by upgrading the PostgreSQL regression database.
@@ -62,7 +62,3 @@ steps:
 
 7)  Diff the regression database dump file with the regression dump
     file loaded into the old server.
-
-
-
-

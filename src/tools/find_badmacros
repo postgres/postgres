@@ -3,7 +3,7 @@
 # This script attempts to find bad ifdef's, i.e. ifdef's that use braces
 # but not the do { ... } while (0) syntax
 #
-# $PostgreSQL: pgsql/src/tools/find_badmacros,v 1.2 2006/03/11 04:38:41 momjian Exp $
+# $PostgreSQL: pgsql/src/tools/find_badmacros,v 1.3 2010/08/19 05:57:35 petere Exp $
 #
 # This is useful for running before pgindent
 
@@ -20,4 +20,3 @@ do
 				}' "$FILE"
 	grep -on '^#define.*{' "$FILE" | grep -v 'do[ 	]*{'
 done
-

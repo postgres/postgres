@@ -244,4 +244,3 @@ DROP VIEW street;
 DROP VIEW iexit;
 
 DROP VIEW toyemp;
-

@@ -1,4 +1,4 @@
--- $PostgreSQL: pgsql/src/backend/snowball/snowball_func.sql.in,v 1.2 2007/09/03 02:30:43 tgl Exp $$
+-- $PostgreSQL: pgsql/src/backend/snowball/snowball_func.sql.in,v 1.3 2010/08/19 05:57:34 petere Exp $$
 
 SET search_path = pg_catalog;
 
@@ -15,4 +15,3 @@ CREATE TEXT SEARCH TEMPLATE snowball
 	LEXIZE = dsnowball_lexize);
 
 COMMENT ON TEXT SEARCH TEMPLATE snowball IS 'snowball stemmer';
-

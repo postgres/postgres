@@ -41,4 +41,3 @@ SELECT random, count(random) FROM RANDOM_TBL
 
 SELECT AVG(random) FROM RANDOM_TBL
   HAVING AVG(random) NOT BETWEEN 80 AND 120;
-

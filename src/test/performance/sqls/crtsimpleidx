@@ -2,4 +2,3 @@ if ( $TestDBMS =~ /^pgsql/ )
 {
 	`echo "CREATE INDEX simpleidx ON simple (justint);" | time $FrontEnd`;
 }
-

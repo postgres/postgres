@@ -1,7 +1,6 @@
-
 # -*-perl-*- hey - emacs - this is a perl file
 
-# $PostgreSQL: pgsql/src/tools/msvc/build.pl,v 1.3 2010/04/09 13:05:58 mha Exp $
+# $PostgreSQL: pgsql/src/tools/msvc/build.pl,v 1.4 2010/08/19 05:57:36 petere Exp $
 
 BEGIN
 {

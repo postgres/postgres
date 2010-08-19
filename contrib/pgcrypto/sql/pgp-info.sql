@@ -20,4 +20,3 @@ select pgp_key_id(dearmor(seckey)) from keytbl where id=6;
 
 select pgp_key_id(dearmor(data)) as data_key_id
 from encdata order by id;
-

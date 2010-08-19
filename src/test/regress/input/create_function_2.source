@@ -68,4 +68,3 @@ CREATE FUNCTION oldstyle_length(int4, text)
 -- Function dynamic loading
 --
 LOAD '@libdir@/regress@DLSUFFIX@';
-

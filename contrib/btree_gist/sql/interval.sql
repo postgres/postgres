@@ -29,4 +29,3 @@ SELECT count(*) FROM intervaltmp WHERE a  = '199 days 21:21:23'::interval;
 SELECT count(*) FROM intervaltmp WHERE a >= '199 days 21:21:23'::interval;
 
 SELECT count(*) FROM intervaltmp WHERE a >  '199 days 21:21:23'::interval;
-

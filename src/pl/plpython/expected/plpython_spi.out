@@ -1,3 +1,4 @@
+--
 -- nested calls
 --
 CREATE FUNCTION nested_call_one(a text) RETURNS text

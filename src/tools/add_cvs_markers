@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $PostgreSQL: pgsql/src/tools/add_cvs_markers,v 1.2 2008/06/15 21:58:55 adunstan Exp $
+# $PostgreSQL: pgsql/src/tools/add_cvs_markers,v 1.3 2010/08/19 05:57:35 petere Exp $
 
 # Author: Andrew Dunstan
 
@@ -47,4 +47,3 @@ find . \( \( -name 'libstemmer' -o -name 'expected' -o -name 'ppport.h' \
   xargs -l sed -i -e '1i/*\n * \x24PostgreSQL:$ \n */'
 
 rm -f dummy
-

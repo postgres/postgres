@@ -10,4 +10,3 @@ TESTS = dt_test dt_test.c \
         nan_test nan_test.c
 
 all: $(TESTS)
-

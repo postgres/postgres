@@ -11,4 +11,3 @@ TESTS = thread_implicit thread_implicit.c \
         alloc alloc.c
 
 all: $(TESTS)
-

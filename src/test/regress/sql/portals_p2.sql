@@ -96,4 +96,3 @@ CLOSE foo24;
 CLOSE foo25;
 
 END;
-

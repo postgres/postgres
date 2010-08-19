@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.tokens,v 1.2 2009/07/14 20:34:48 tgl Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.tokens,v 1.3 2010/08/19 05:57:34 petere Exp $ */
 
 /* special embedded SQL tokens */
 %token  SQL_ALLOCATE SQL_AUTOCOMMIT SQL_BOOL SQL_BREAK
@@ -25,4 +25,3 @@
 
 %token CSTRING CVARIABLE CPP_LINE IP 
 %token DOLCONST ECONST NCONST UCONST UIDENT
-

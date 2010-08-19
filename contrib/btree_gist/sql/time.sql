@@ -29,4 +29,3 @@ SELECT count(*) FROM timetmp WHERE a  = '10:57:11'::time;
 SELECT count(*) FROM timetmp WHERE a >= '10:57:11'::time;
 
 SELECT count(*) FROM timetmp WHERE a >  '10:57:11'::time;
-

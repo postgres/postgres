@@ -578,4 +578,3 @@ SELECT * FROM min_updates_test_oids;
 DROP TABLE min_updates_test;
 
 DROP TABLE min_updates_test_oids;
-

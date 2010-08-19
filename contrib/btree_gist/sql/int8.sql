@@ -29,4 +29,3 @@ SELECT count(*) FROM int8tmp WHERE a  = 464571291354841::int8;
 SELECT count(*) FROM int8tmp WHERE a >= 464571291354841::int8;
 
 SELECT count(*) FROM int8tmp WHERE a >  464571291354841::int8;
-

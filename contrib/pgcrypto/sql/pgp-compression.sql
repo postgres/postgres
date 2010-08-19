@@ -28,4 +28,3 @@ select pgp_sym_decrypt(
 	pgp_sym_encrypt('Secret message', 'key',
 			'compress-algo=2, compress-level=0'),
 	'key', 'expect-compress-algo=0');
-

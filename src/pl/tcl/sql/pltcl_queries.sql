@@ -78,6 +78,3 @@ select * from T_pkey2 order by key1 using @<, key2;
 insert into trigger_test values(1,'insert');
 update trigger_test set v = 'update' where i = 1;
 delete from trigger_test;
-      
-
-

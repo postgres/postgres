@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/backend/optimizer/README,v 1.53 2010/03/28 22:59:32 tgl Exp $
+$PostgreSQL: pgsql/src/backend/optimizer/README,v 1.54 2010/08/19 05:57:34 petere Exp $
 
 Optimizer
 =========
@@ -637,4 +637,3 @@ coding of our optimizer, he is available to field questions about
 optimizer topics.
 
 -- bjm & tgl
-

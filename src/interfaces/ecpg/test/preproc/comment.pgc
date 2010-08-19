@@ -19,4 +19,3 @@ int main(void)
   exec sql disconnect;
   exit (0);
 }
-

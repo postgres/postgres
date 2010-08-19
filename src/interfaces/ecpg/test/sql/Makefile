@@ -28,4 +28,3 @@ all: $(TESTS)
 
 oldexec.c:	oldexec.pgc ../regression.h
 	$(ECPG) -r questionmarks -o $@ -I$(srcdir) $<
-

@@ -18,4 +18,3 @@ INSERT INTO username_test VALUES ('tab', '	');
 INSERT INTO username_test VALUES ('name', 'name');
 
 SELECT * FROM username_test;
-

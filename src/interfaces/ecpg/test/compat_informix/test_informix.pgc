@@ -94,4 +94,3 @@ static void openit(void)
 {
 	$open c;
 }
-

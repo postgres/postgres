@@ -220,4 +220,3 @@ NOTICE:  TG_table_name: trigger_test
 NOTICE:  TG_table_schema: public
 NOTICE:  TG_when: BEFORE
 NOTICE:  args: {23 skidoo}
-      

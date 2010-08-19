@@ -1,4 +1,3 @@
-
 struct mytype
 {
 	int			id;

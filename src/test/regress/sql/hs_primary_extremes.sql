@@ -71,4 +71,3 @@ COMMIT;
 SELECT hs_locks_drop(257);
 
 SELECT pg_switch_xlog();
-

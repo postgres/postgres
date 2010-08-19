@@ -116,4 +116,3 @@ DELETE FROM trigger_test;
 
 
 SELECT * FROM trigger_test;
-

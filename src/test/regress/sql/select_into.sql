@@ -15,4 +15,3 @@ SELECT *
    WHERE onek2.unique1 < 2;
 
 DROP TABLE tmp1;
-

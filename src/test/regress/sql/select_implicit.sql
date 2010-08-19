@@ -152,4 +152,3 @@ SELECT * FROM test_missing_target3;
 DROP TABLE test_missing_target;
 DROP TABLE test_missing_target2;
 DROP TABLE test_missing_target3;
-

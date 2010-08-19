@@ -151,4 +151,3 @@ SELECT h.seqno AS f20000
 
 -- SELECT count(*) AS i988 FROM hash_ovfl_heap
 --  WHERE x = 1000;
-

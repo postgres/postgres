@@ -103,4 +103,3 @@ sub exec_sql {
         $sth->finish;   
         return @row;
 }
-

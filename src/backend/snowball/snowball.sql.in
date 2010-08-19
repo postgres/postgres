@@ -1,4 +1,4 @@
--- $PostgreSQL: pgsql/src/backend/snowball/snowball.sql.in,v 1.6 2007/10/27 16:01:08 tgl Exp $$
+-- $PostgreSQL: pgsql/src/backend/snowball/snowball.sql.in,v 1.7 2010/08/19 05:57:34 petere Exp $$
 
 -- text search configuration for _LANGNAME_ language
 CREATE TEXT SEARCH DICTIONARY _DICTNAME_
@@ -24,4 +24,3 @@ ALTER TEXT SEARCH CONFIGURATION _CFGNAME_ ADD MAPPING
 ALTER TEXT SEARCH CONFIGURATION _CFGNAME_ ADD MAPPING
     FOR word, hword_part, hword
 	WITH _NONASCDICTNAME_;
-

@@ -29,4 +29,3 @@ SELECT count(*) FROM timestamptmp WHERE a  = '2004-10-26 08:55:08'::timestamp;
 SELECT count(*) FROM timestamptmp WHERE a >= '2004-10-26 08:55:08'::timestamp;
 
 SELECT count(*) FROM timestamptmp WHERE a >  '2004-10-26 08:55:08'::timestamp;
-

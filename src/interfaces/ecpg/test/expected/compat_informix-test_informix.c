@@ -253,4 +253,3 @@ if (sqlca.sqlcode < 0) dosqlprint ( );}
 #line 95 "test_informix.pgc"
 
 }
-

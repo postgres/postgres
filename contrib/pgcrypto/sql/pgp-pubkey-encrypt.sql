@@ -48,5 +48,3 @@ select pgp_pub_decrypt(
 		pgp_pub_encrypt_bytea('Secret msg', dearmor(pubkey)),
 		dearmor(seckey))
 from keytbl where keytbl.id=1;
-
-

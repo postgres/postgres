@@ -546,4 +546,3 @@ from keytbl, encdata where keytbl.id=5 and encdata.id=1;
 -- password-protected secret key, right password
 select pgp_pub_decrypt(dearmor(data), dearmor(seckey), 'parool')
 from keytbl, encdata where keytbl.id=5 and encdata.id=1;
-

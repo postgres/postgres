@@ -106,4 +106,3 @@ this is just a line full of junk that would error out if parsed
 \.
 
 copy copytest3 to stdout csv header;
-

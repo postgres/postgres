@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/port/README,v 1.4 2008/03/21 13:23:29 momjian Exp $
+$PostgreSQL: pgsql/src/port/README,v 1.5 2010/08/19 05:57:35 petere Exp $
 
 libpgport
 =========
@@ -30,4 +30,3 @@ dependent on symbols that are _used_ by libpq, but not intended to be
 exported by libpq.  libpq's libpgport usage changes over time, so such a
 dependency is a problem.  Win32, Linux, and Darwin use an export list to
 control the symbols exported by libpq.
-

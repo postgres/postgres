@@ -117,4 +117,3 @@ SELECT '' AS one, b1.*, b2.*
    WHERE b1.f1 @> b2.f1 and not b1.f1 ~= b2.f1;
 
 SELECT '' AS four, height(f1), width(f1) FROM BOX_TBL;
-

@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/backend/storage/freespace/README,v 1.1 2008/09/30 10:52:13 heikki Exp $
+$PostgreSQL: pgsql/src/backend/storage/freespace/README,v 1.2 2010/08/19 05:57:34 petere Exp $
 
 Free Space Map
 --------------
@@ -192,4 +192,3 @@ TODO
 - fastroot to avoid traversing upper nodes with just 1 child
 - use a different system for tables that fit into one FSM page, with a
   mechanism to switch to the real thing as it grows.
-

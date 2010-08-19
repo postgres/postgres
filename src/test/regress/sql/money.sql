@@ -56,4 +56,3 @@ SELECT * FROM money_data;
 DELETE FROM money_data;
 INSERT INTO money_data VALUES ('$123.459');
 SELECT * FROM money_data;
-

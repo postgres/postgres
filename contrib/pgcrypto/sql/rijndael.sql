@@ -61,4 +61,3 @@ select decrypt_iv(decode('2c24cb7da91d6d5699801268b0f5adad', 'hex'),
 -- long message
 select encode(encrypt('Lets try a longer message.', '0123456789', 'aes'), 'hex');
 select decrypt(encrypt('Lets try a longer message.', '0123456789', 'aes'), '0123456789', 'aes');
-

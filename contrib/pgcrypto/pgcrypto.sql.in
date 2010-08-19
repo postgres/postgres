@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/contrib/pgcrypto/pgcrypto.sql.in,v 1.15 2007/11/13 04:24:28 momjian Exp $ */
+/* $PostgreSQL: pgsql/contrib/pgcrypto/pgcrypto.sql.in,v 1.16 2010/08/19 05:57:33 petere Exp $ */
 
 -- Adjust this setting to control where the objects get created.
 SET search_path = public;
@@ -200,4 +200,3 @@ CREATE OR REPLACE FUNCTION dearmor(text)
 RETURNS bytea
 AS 'MODULE_PATHNAME', 'pg_dearmor'
 LANGUAGE C IMMUTABLE STRICT;
-

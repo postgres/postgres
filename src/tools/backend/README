@@ -1,5 +1,4 @@
-$PostgreSQL: pgsql/src/tools/backend/README,v 1.2 2008/03/21 13:23:29 momjian Exp $
+$PostgreSQL: pgsql/src/tools/backend/README,v 1.3 2010/08/19 05:57:35 petere Exp $
 
 Just point your browser at the index.html file, and click on the 
 flowchart to see the description and source code.
-

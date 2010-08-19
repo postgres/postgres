@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/interfaces/ecpg/README.dynSQL,v 1.3 2008/03/21 13:23:28 momjian Exp $
+$PostgreSQL: pgsql/src/interfaces/ecpg/README.dynSQL,v 1.4 2010/08/19 05:57:34 petere Exp $
 
 descriptor statements have the following shortcomings
 
@@ -9,4 +9,3 @@ descriptor statements have the following shortcomings
   	Since this is not likely to happen in the near future and you
   	can cover the same functionality with the existing infrastructure
   	(using s[n]printf), I'll leave the work to someone else.
-

@@ -40,4 +40,3 @@ c) "addon" - the automatic action for the rule (SQL syntax constructed
 
 Multiple "addon" or "block" lines may appear together with the
 new code block if the code block is common for those rules.
-

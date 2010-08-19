@@ -29,4 +29,3 @@ SELECT count(*) FROM inettmp WHERE a  = '89.225.196.191'::inet;
 SELECT count(*) FROM inettmp WHERE a >= '89.225.196.191'::inet;
 
 SELECT count(*) FROM inettmp WHERE a >  '89.225.196.191'::inet;
-

@@ -99,7 +99,6 @@ int			PGTYPESnumeric_from_decimal(decimal *, numeric *);
 /* exec sql begin declare section */
 
 #line 1 "struct.h"
-
  
 
 				
@@ -110,7 +109,7 @@ int			PGTYPESnumeric_from_decimal(decimal *, numeric *);
 
    typedef struct mytype  MYTYPE ;
 
-#line 10 "struct.h"
+#line 9 "struct.h"
 
 
  
@@ -123,40 +122,40 @@ int			PGTYPESnumeric_from_decimal(decimal *, numeric *);
 
    typedef struct mynulltype  MYNULLTYPE ;
 
-#line 20 "struct.h"
+#line 19 "struct.h"
 
 
 #line 11 "outofscope.pgc"
 
 struct mytype { 
-#line 4 "struct.h"
+#line 3 "struct.h"
  int id ;
  
-#line 5 "struct.h"
+#line 4 "struct.h"
  char t [ 64 ] ;
  
-#line 6 "struct.h"
+#line 5 "struct.h"
  double d1 ;
  
-#line 7 "struct.h"
+#line 6 "struct.h"
  double d2 ;
  
-#line 8 "struct.h"
+#line 7 "struct.h"
  char c [ 30 ] ;
  } ; struct mynulltype { 
-#line 14 "struct.h"
+#line 13 "struct.h"
  int id ;
  
-#line 15 "struct.h"
+#line 14 "struct.h"
  int t ;
  
-#line 16 "struct.h"
+#line 15 "struct.h"
  int d1 ;
  
-#line 17 "struct.h"
+#line 16 "struct.h"
  int d2 ;
  
-#line 18 "struct.h"
+#line 17 "struct.h"
  int c ;
  } ;/* exec sql end declare section */
 #line 12 "outofscope.pgc"

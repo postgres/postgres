@@ -1,5 +1,4 @@
-
-# $PostgreSQL: pgsql/src/test/performance/sqls/inssimple,v 1.2 2006/03/11 04:38:41 momjian Exp $
+# $PostgreSQL: pgsql/src/test/performance/sqls/inssimple,v 1.3 2010/08/19 05:57:35 petere Exp $
 #
 # Transactions are unsupported by MySQL - so for insertion of
 # 8192 rows, 1 INSERT per Xaction, we returned "Transactions unsupported"
@@ -27,4 +26,3 @@ if ( $TestDBMS =~ /^mysql/ && $XACTBLOCK eq '' )
 
 # Ok - run queries
 `time $FrontEnd < .sqlf`;
-

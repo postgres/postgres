@@ -29,4 +29,3 @@ SELECT count(*) FROM int2tmp WHERE a  = 237::int2;
 SELECT count(*) FROM int2tmp WHERE a >= 237::int2;
 
 SELECT count(*) FROM int2tmp WHERE a >  237::int2;
-

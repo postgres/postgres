@@ -29,4 +29,3 @@ SELECT count(*) FROM datetmp WHERE a  = '2001-02-13'::date;
 SELECT count(*) FROM datetmp WHERE a >= '2001-02-13'::date;
 
 SELECT count(*) FROM datetmp WHERE a >  '2001-02-13'::date;
-

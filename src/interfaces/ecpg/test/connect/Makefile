@@ -10,4 +10,3 @@ TESTS = test1 test1.c \
         test5 test5.c
 
 all: $(TESTS)
-

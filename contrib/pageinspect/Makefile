@@ -2,7 +2,7 @@
 #
 # pageinspect Makefile
 #
-# $PostgreSQL: pgsql/contrib/pageinspect/Makefile,v 1.4 2008/09/30 10:52:09 heikki Exp $
+# $PostgreSQL: pgsql/contrib/pageinspect/Makefile,v 1.5 2010/08/19 05:57:33 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -21,4 +21,3 @@ top_builddir = ../..
 include $(top_builddir)/src/Makefile.global
 include $(top_srcdir)/contrib/contrib-global.mk
 endif
-

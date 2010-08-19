@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/pl/tcl/modules/README,v 1.3 2008/03/21 13:23:29 momjian Exp $
+$PostgreSQL: pgsql/src/pl/tcl/modules/README,v 1.4 2010/08/19 05:57:35 petere Exp $
 
 Regular Tcl scripts of any size (over 8K :-) can be loaded into
 the table pltcl_modules using the pltcl_loadmod script. The script
@@ -16,4 +16,3 @@ command that invoked unknown.
 I know, this readme should be more explanatory - but time.
 
 Jan
-

@@ -445,4 +445,3 @@ if (sqlca.sqlcode < 0) sqlprint ( );}
 
 	return (0);
 }
-

@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $PostgreSQL: pgsql/src/tools/find_static,v 1.5 2006/07/14 14:59:00 momjian Exp $
+# $PostgreSQL: pgsql/src/tools/find_static,v 1.6 2010/08/19 05:57:35 petere Exp $
 
 trap "rm -f /tmp/$$" 0 1 2 3 15
 
@@ -49,4 +49,3 @@ echo "
 	where	scope = 'T' and func != 'main'
         order by file, func;
 " |psql debug
-

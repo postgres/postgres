@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/tools/make_diff/README,v 1.4 2008/03/21 13:23:29 momjian Exp $
+$PostgreSQL: pgsql/src/tools/make_diff/README,v 1.5 2010/08/19 05:57:36 petere Exp $
 
 scripts
 =======
@@ -37,4 +37,3 @@ the files I used with cporig.
 Finally, I remove my old copies with 'rmorig'.
 
 Bruce Momjian
-

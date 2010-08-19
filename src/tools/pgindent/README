@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/tools/pgindent/README,v 1.42 2010/07/06 19:26:28 momjian Exp $
+$PostgreSQL: pgsql/src/tools/pgindent/README,v 1.43 2010/08/19 05:57:36 petere Exp $
 
 pgindent
 ========
@@ -75,4 +75,3 @@ To use pgindent:
 4) Save a list of typedefs by running:
 
 	src/tools/find_typedef /usr/local/pgsql/bin /usr/local/pgsql/lib > /tmp/pgtypedefs
-

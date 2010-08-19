@@ -53,4 +53,3 @@ test: thread/prep
 test: thread/alloc
 test: thread/descriptor
 test: connect/test1
-

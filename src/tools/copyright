@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $PostgreSQL: pgsql/src/tools/copyright,v 1.18 2009/01/01 18:31:55 momjian Exp $
+# $PostgreSQL: pgsql/src/tools/copyright,v 1.19 2010/08/19 05:57:35 petere Exp $
 
 echo "Using current year:  `date '+%Y'`"
 
@@ -12,4 +12,3 @@ do
 done
 
 echo "Manually update doc/src/sgml/legal.sgml and src/interfaces/libpq/libpq.rc.in too" 1>&2
-

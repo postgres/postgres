@@ -95,4 +95,3 @@ select encode(digest(pgp_sym_decrypt(
   pgp_sym_encrypt(E'\r\n0\n1\r\r\n\n2\r', 'key', 'convert-crlf=1'),
  	'key', 'convert-crlf=1'), 'sha1'), 'hex') as result,
   encode(digest(E'\r\n0\n1\r\r\n\n2\r', 'sha1'), 'hex') as expect;
-

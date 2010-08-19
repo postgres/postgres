@@ -135,4 +135,3 @@ while (<TMPF>)
 	($tmp, $rtime, $rest) = split (/[ 	]+/, $rtime);
 	print RESF "$test: $rtime\n";
 }
-

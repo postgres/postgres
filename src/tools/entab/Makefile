@@ -26,4 +26,3 @@ install:
 	install -s $(TARGET) $(BINDIR)
 	rm -f $(BINDIR)/detab
 	ln $(BINDIR)/$(TARGET) $(BINDIR)/detab
-
