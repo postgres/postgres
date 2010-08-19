@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.264 2010/08/05 15:25:35 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.265 2010/08/19 15:46:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2955,6 +2955,7 @@ afterTriggerAddEvent(AfterTriggerEventList *events,
 		else
 			events->tail->next = chunk;
 		events->tail = chunk;
+		/* events->tailfree is now out of sync, but we'll fix it below */
 	}
 
 	/*
@@ -3356,6 +3357,15 @@ afterTriggerInvokeEvents(AfterTriggerEventList *events,
 		{
 			chunk->freeptr = CHUNK_DATA_START(chunk);
 			chunk->endfree = chunk->endptr;
+
+			/*
+			 * If it's last chunk, must sync event list's tailfree too.  Note
+			 * that delete_ok must NOT be passed as true if there could be
+			 * stacked AfterTriggerEventList values pointing at this event
+			 * list, since we'd fail to fix their copies of tailfree.
+			 */
+			if (chunk == events->tail)
+				events->tailfree = chunk->freeptr;
 		}
 	}
 
