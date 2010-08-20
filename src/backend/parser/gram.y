@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.716 2010/08/18 18:35:20 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.717 2010/08/20 14:55:05 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -2252,6 +2252,7 @@ CreateStmt:	CREATE OptTemp TABLE qualified_name '(' OptTableElementList ')'
 			OptTypedTableElementList OptWith OnCommitOption OptTableSpace
 				{
 					CreateStmt *n = makeNode(CreateStmt);
+					$7->istemp = $2;
 					n->relation = $7;
 					n->tableElts = $10;
 					n->ofTypename = makeTypeNameFromNameList($9);
