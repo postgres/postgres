@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.259 2010/08/14 02:22:10 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.260 2010/08/20 01:07:50 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -82,7 +82,7 @@ static bool IsForInput;
 static volatile BufferDesc *PinCountWaitBuf = NULL;
 
 
-static Buffer ReadBuffer_common(SMgrRelation reln, bool isLocalBuf,
+static Buffer ReadBuffer_common(SMgrRelation reln,
 				  ForkNumber forkNum, BlockNumber blockNum,
 				  ReadBufferMode mode, BufferAccessStrategy strategy,
 				  bool *hit);
@@ -241,7 +241,7 @@ ReadBufferExtended(Relation reln, ForkNumber forkNum, BlockNumber blockNum,
 	 * miss.
 	 */
 	pgstat_count_buffer_read(reln);
-	buf = ReadBuffer_common(reln->rd_smgr, reln->rd_istemp, forkNum, blockNum,
+	buf = ReadBuffer_common(reln->rd_smgr, forkNum, blockNum,
 							mode, strategy, &hit);
 	if (hit)
 		pgstat_count_buffer_hit(reln);
@@ -267,8 +267,7 @@ ReadBufferWithoutRelcache(RelFileNode rnode, ForkNumber forkNum,
 
 	SMgrRelation smgr = smgropen(rnode, InvalidBackendId);
 
-	return ReadBuffer_common(smgr, false, forkNum, blockNum, mode, strategy,
-							 &hit);
+	return ReadBuffer_common(smgr, forkNum, blockNum, mode, strategy, &hit);
 }
 
 
@@ -278,7 +277,7 @@ ReadBufferWithoutRelcache(RelFileNode rnode, ForkNumber forkNum,
  * *hit is set to true if the request was satisfied from shared buffer cache.
  */
 static Buffer
-ReadBuffer_common(SMgrRelation smgr, bool isLocalBuf, ForkNumber forkNum,
+ReadBuffer_common(SMgrRelation smgr, ForkNumber forkNum,
 				  BlockNumber blockNum, ReadBufferMode mode,
 				  BufferAccessStrategy strategy, bool *hit)
 {
@@ -286,6 +285,7 @@ ReadBuffer_common(SMgrRelation smgr, bool isLocalBuf, ForkNumber forkNum,
 	Block		bufBlock;
 	bool		found;
 	bool		isExtend;
+	bool		isLocalBuf = SmgrIsTemp(smgr);
 
 	*hit = false;
 
