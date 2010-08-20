@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ddl.sgml,v 1.94 2010/07/29 19:34:40 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ddl.sgml,v 1.95 2010/08/20 13:59:45 tgl Exp $ -->
 
 <chapter id="ddl">
  <title>Data Definition</title>
@@ -36,7 +36,7 @@
    is fixed, and each column has a name.  The number of rows is
    variable &mdash; it reflects how much data is stored at a given moment.
    SQL does not make any guarantees about the order of the rows in a
-   table.  When a table is read, the rows will appear in random order,
+   table.  When a table is read, the rows will appear in an unspecified order,
    unless sorting is explicitly requested.  This is covered in <xref
    linkend="queries">.  Furthermore, SQL does not assign unique
    identifiers to rows, so it is possible to have several completely
