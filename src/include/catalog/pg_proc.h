@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.579 2010/08/13 18:36:25 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.580 2010/08/21 10:59:17 mha Exp $
  *
  * NOTES
  *	  The script catalog/genbki.pl reads this file and generates .bki
@@ -3029,6 +3029,14 @@ DATA(insert OID = 2783 (  pg_stat_get_last_analyze_time PGNSP PGUID 12 1 0 0 f f
 DESCR("statistics: last manual analyze time for a table");
 DATA(insert OID = 2784 (  pg_stat_get_last_autoanalyze_time PGNSP PGUID 12 1 0 0 f f f t f s 1 0 1184 "26" _null_ _null_ _null_ _null_	pg_stat_get_last_autoanalyze_time _null_ _null_ _null_ ));
 DESCR("statistics: last auto analyze time for a table");
+DATA(insert OID = 3054 ( pg_stat_get_vacuum_count PGNSP PGUID 12 1 0 0 f f f t f s 1 0 20 "26" _null_ _null_ _null_ _null_ pg_stat_get_vacuum_count _null_ _null_ _null_ ));
+DESCR("statistics: number of manual vacuums for a table");
+DATA(insert OID = 3055 ( pg_stat_get_autovacuum_count PGNSP PGUID 12 1 0 0 f f f t f s 1 0 20 "26" _null_ _null_ _null_ _null_ pg_stat_get_autovacuum_count _null_ _null_ _null_ ));
+DESCR("statistics: number of auto vacuums for a table");
+DATA(insert OID = 3056 ( pg_stat_get_analyze_count PGNSP PGUID 12 1 0 0 f f f t f s 1 0 20 "26" _null_ _null_ _null_ _null_ pg_stat_get_analyze_count _null_ _null_ _null_ ));
+DESCR("statistics: number of manual analyzes for a table");
+DATA(insert OID = 3057 ( pg_stat_get_autoanalyze_count PGNSP PGUID 12 1 0 0 f f f t f s 1 0 20 "26" _null_ _null_ _null_ _null_ pg_stat_get_autoanalyze_count _null_ _null_ _null_ ));
+DESCR("statistics: number of auto analyzes for a table");
 DATA(insert OID = 1936 (  pg_stat_get_backend_idset		PGNSP PGUID 12 1 100 0 f f f t t s 0 0 23 "" _null_ _null_ _null_ _null_ pg_stat_get_backend_idset _null_ _null_ _null_ ));
 DESCR("statistics: currently active backend IDs");
 DATA(insert OID = 2022 (  pg_stat_get_activity			PGNSP PGUID 12 1 100 0 f f f f t s 1 0 2249 "23" "{23,26,23,26,25,25,16,1184,1184,1184,869,23}" "{i,o,o,o,o,o,o,o,o,o,o,o}" "{pid,datid,procpid,usesysid,application_name,current_query,waiting,xact_start,query_start,backend_start,client_addr,client_port}" _null_ pg_stat_get_activity _null_ _null_ _null_ ));

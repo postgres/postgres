@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/pgstatfuncs.c,v 1.61 2010/08/08 16:27:04 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/pgstatfuncs.c,v 1.62 2010/08/21 10:59:17 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,6 +38,10 @@ extern Datum pg_stat_get_last_vacuum_time(PG_FUNCTION_ARGS);
 extern Datum pg_stat_get_last_autovacuum_time(PG_FUNCTION_ARGS);
 extern Datum pg_stat_get_last_analyze_time(PG_FUNCTION_ARGS);
 extern Datum pg_stat_get_last_autoanalyze_time(PG_FUNCTION_ARGS);
+extern Datum pg_stat_get_vacuum_count(PG_FUNCTION_ARGS);
+extern Datum pg_stat_get_autovacuum_count(PG_FUNCTION_ARGS);
+extern Datum pg_stat_get_analyze_count(PG_FUNCTION_ARGS);
+extern Datum pg_stat_get_autoanalyze_count(PG_FUNCTION_ARGS);
 
 extern Datum pg_stat_get_function_calls(PG_FUNCTION_ARGS);
 extern Datum pg_stat_get_function_time(PG_FUNCTION_ARGS);
@@ -344,6 +348,66 @@ pg_stat_get_last_autoanalyze_time(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 	else
 		PG_RETURN_TIMESTAMPTZ(result);
+}
+
+Datum
+pg_stat_get_vacuum_count(PG_FUNCTION_ARGS)
+{
+	Oid			relid = PG_GETARG_OID(0);
+	int64		result;
+	PgStat_StatTabEntry	*tabentry;
+
+	if ((tabentry = pgstat_fetch_stat_tabentry(relid)) == NULL)
+		result = 0;
+	else
+		result = (int64) (tabentry->vacuum_count);
+
+	PG_RETURN_INT64(result);
+}
+
+Datum
+pg_stat_get_autovacuum_count(PG_FUNCTION_ARGS)
+{
+	Oid			relid = PG_GETARG_OID(0);
+	int64		result;
+	PgStat_StatTabEntry	*tabentry;
+
+	if ((tabentry = pgstat_fetch_stat_tabentry(relid)) == NULL)
+		result = 0;
+	else
+		result = (int64) (tabentry->autovac_vacuum_count);
+
+	PG_RETURN_INT64(result);
+}
+
+Datum
+pg_stat_get_analyze_count(PG_FUNCTION_ARGS)
+{
+	Oid			relid = PG_GETARG_OID(0);
+	int64		result;
+	PgStat_StatTabEntry	*tabentry;
+
+	if ((tabentry = pgstat_fetch_stat_tabentry(relid)) == NULL)
+		result = 0;
+	else
+		result = (int64) (tabentry->analyze_count);
+
+	PG_RETURN_INT64(result);
+}
+
+Datum
+pg_stat_get_autoanalyze_count(PG_FUNCTION_ARGS)
+{
+	Oid			relid = PG_GETARG_OID(0);
+	int64		result;
+	PgStat_StatTabEntry	*tabentry;
+
+	if ((tabentry = pgstat_fetch_stat_tabentry(relid)) == NULL)
+		result = 0;
+	else
+		result = (int64) (tabentry->autovac_analyze_count);
+
+	PG_RETURN_INT64(result);
 }
 
 Datum

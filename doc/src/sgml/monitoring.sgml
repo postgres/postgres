@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/monitoring.sgml,v 1.84 2010/08/17 04:37:20 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/monitoring.sgml,v 1.85 2010/08/21 10:59:17 mha Exp $ -->
 
 <chapter id="monitoring">
  <title>Monitoring Database Activity</title>
@@ -117,9 +117,9 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
    is a subsystem that supports collection and reporting of information about
    server activity.  Presently, the collector can count accesses to tables
    and indexes in both disk-block and individual-row terms.  It also tracks
-   the total number of rows in each table, and the last vacuum and analyze times
-   for each table.  It can also count calls to user-defined functions and
-   the total time spent in each one.
+   the total number of rows in each table, and information about vacuum and
+   analyze actions for each table.  It can also count calls to user-defined
+   functions and the total time spent in each one.
   </para>
 
   <para>
@@ -293,7 +293,11 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
       the last time the table was vacuumed manually,
       the last time it was vacuumed by the autovacuum daemon,
       the last time it was analyzed manually,
-      and the last time it was analyzed by the autovacuum daemon.
+      the last time it was analyzed by the autovacuum daemon,
+      number of times it has been vacuumed manually,
+      number of times it has been vacuumed by the autovacuum daemon,
+      number of times it has been analyzed manually,
+      and the number of times it has been analyzed by the autovacuum daemon.
       </entry>
      </row>
 
@@ -314,8 +318,8 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
       <entry>Similar to <structname>pg_stat_all_tables</>, but counts actions
       taken so far within the current transaction (which are <emphasis>not</>
       yet included in <structname>pg_stat_all_tables</> and related views).
-      The columns for numbers of live and dead rows and last-vacuum and
-      last-analyze times are not present in this view.</entry>
+      The columns for numbers of live and dead rows and vacuum and
+      analyze actions are not present in this view.</entry>
      </row>
 
      <row>
@@ -715,6 +719,38 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
       <entry>
        Time of the last analyze initiated by the autovacuum daemon on this
        table
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal><function>pg_stat_get_vacuum_count</function>(<type>oid</type>)</literal></entry>
+      <entry><type>bigint</type></entry>
+      <entry>
+       The number of times this table has been vacuumed manually
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal><function>pg_stat_get_autovacuum_count</function>(<type>oid</type>)</literal></entry>
+      <entry><type>bigint</type></entry>
+      <entry>
+       The number of times this table has been vacuumed by the autovacuum daemon
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal><function>pg_stat_get_analyze_count</function>(<type>oid</type>)</literal></entry>
+      <entry><type>bigint</type></entry>
+      <entry>
+       The number of times this table has been analyzed manually
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal><function>pg_stat_get_autoanalyze_count</function>(<type>oid</type>)</literal></entry>
+      <entry><type>bigint</type></entry>
+      <entry>
+       The number of times this table has been analyzed by the autovacuum daemon
       </entry>
      </row>
 

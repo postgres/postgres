@@ -5,7 +5,7 @@
  *
  *	Copyright (c) 2001-2010, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/include/pgstat.h,v 1.90 2010/08/08 16:27:06 tgl Exp $
+ *	$PostgreSQL: pgsql/src/include/pgstat.h,v 1.91 2010/08/21 10:59:17 mha Exp $
  * ----------
  */
 #ifndef PGSTAT_H
@@ -525,9 +525,13 @@ typedef struct PgStat_StatTabEntry
 	PgStat_Counter blocks_hit;
 
 	TimestampTz vacuum_timestamp;		/* user initiated vacuum */
+	PgStat_Counter vacuum_count;
 	TimestampTz autovac_vacuum_timestamp;		/* autovacuum initiated */
+	PgStat_Counter autovac_vacuum_count;
 	TimestampTz analyze_timestamp;		/* user initiated */
+	PgStat_Counter analyze_count;
 	TimestampTz autovac_analyze_timestamp;		/* autovacuum initiated */
+	PgStat_Counter autovac_analyze_count;
 } PgStat_StatTabEntry;
 
 
