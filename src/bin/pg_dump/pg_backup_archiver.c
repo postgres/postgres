@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.187 2010/07/06 19:18:59 momjian Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.188 2010/08/21 13:59:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -102,7 +102,7 @@ static bool _tocEntryIsACL(TocEntry *te);
 static void _disableTriggersIfNecessary(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt);
 static void _enableTriggersIfNecessary(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt);
 static TocEntry *getTocEntryByDumpId(ArchiveHandle *AH, DumpId id);
-static void _moveAfter(ArchiveHandle *AH, TocEntry *pos, TocEntry *te);
+static void _moveBefore(ArchiveHandle *AH, TocEntry *pos, TocEntry *te);
 static int	_discoverArchiveFormat(ArchiveHandle *AH);
 
 static void dump_lo_buf(ArchiveHandle *AH);
@@ -995,14 +995,10 @@ SortTocFromFile(Archive *AHX, RestoreOptions *ropt)
 	char	   *endptr;
 	DumpId		id;
 	TocEntry   *te;
-	TocEntry   *tePrev;
 
 	/* Allocate space for the 'wanted' array, and init it */
 	ropt->idWanted = (bool *) malloc(sizeof(bool) * AH->maxDumpId);
 	memset(ropt->idWanted, 0, sizeof(bool) * AH->maxDumpId);
-
-	/* Set prev entry as head of list */
-	tePrev = AH->toc;
 
 	/* Setup the file */
 	fh = fopen(ropt->tocFile, PG_BINARY_R);
@@ -1018,7 +1014,7 @@ SortTocFromFile(Archive *AHX, RestoreOptions *ropt)
 			cmnt[0] = '\0';
 
 		/* Ignore if all blank */
-		if (strspn(buf, " \t\r") == strlen(buf))
+		if (strspn(buf, " \t\r\n") == strlen(buf))
 			continue;
 
 		/* Get an ID, check it's valid and not already seen */
@@ -1036,10 +1032,21 @@ SortTocFromFile(Archive *AHX, RestoreOptions *ropt)
 			die_horribly(AH, modulename, "could not find entry for ID %d\n",
 						 id);
 
+		/* Mark it wanted */
 		ropt->idWanted[id - 1] = true;
 
-		_moveAfter(AH, tePrev, te);
-		tePrev = te;
+		/*
+		 * Move each item to the end of the list as it is selected, so that
+		 * they are placed in the desired order.  Any unwanted items will end
+		 * up at the front of the list, which may seem unintuitive but it's
+		 * what we need.  In an ordinary serial restore that makes no
+		 * difference, but in a parallel restore we need to mark unrestored
+		 * items' dependencies as satisfied before we start examining
+		 * restorable items.  Otherwise they could have surprising
+		 * side-effects on the order in which restorable items actually get
+		 * restored.
+		 */
+		_moveBefore(AH, AH->toc, te);
 	}
 
 	if (fclose(fh) != 0)
@@ -1471,33 +1478,37 @@ warn_or_die_horribly(ArchiveHandle *AH,
 	va_end(ap);
 }
 
+#ifdef NOT_USED
+
 static void
 _moveAfter(ArchiveHandle *AH, TocEntry *pos, TocEntry *te)
 {
+	/* Unlink te from list */
 	te->prev->next = te->next;
 	te->next->prev = te->prev;
 
+	/* and insert it after "pos" */
 	te->prev = pos;
 	te->next = pos->next;
-
 	pos->next->prev = te;
 	pos->next = te;
 }
 
-#ifdef NOT_USED
+#endif
 
 static void
 _moveBefore(ArchiveHandle *AH, TocEntry *pos, TocEntry *te)
 {
+	/* Unlink te from list */
 	te->prev->next = te->next;
 	te->next->prev = te->prev;
 
+	/* and insert it before "pos" */
 	te->prev = pos->prev;
 	te->next = pos;
 	pos->prev->next = te;
 	pos->prev = te;
 }
-#endif
 
 static TocEntry *
 getTocEntryByDumpId(ArchiveHandle *AH, DumpId id)
@@ -3180,13 +3191,16 @@ restore_toc_entries_parallel(ArchiveHandle *AH)
 	 * Do all the early stuff in a single connection in the parent. There's no
 	 * great point in running it in parallel, in fact it will actually run
 	 * faster in a single connection because we avoid all the connection and
-	 * setup overhead.
+	 * setup overhead.  Also, pg_dump is not currently very good about
+	 * showing all the dependencies of SECTION_PRE_DATA items, so we do not
+	 * risk trying to process them out-of-order.
 	 */
 	for (next_work_item = AH->toc->next; next_work_item != AH->toc; next_work_item = next_work_item->next)
 	{
+		/* Non-PRE_DATA items are just ignored for now */
 		if (next_work_item->section == SECTION_DATA ||
 			next_work_item->section == SECTION_POST_DATA)
-			break;
+			continue;
 
 		ahlog(AH, 1, "processing item %d %s %s\n",
 			  next_work_item->dumpId,
@@ -3229,12 +3243,17 @@ restore_toc_entries_parallel(ArchiveHandle *AH)
 	 */
 	par_list_header_init(&pending_list);
 	par_list_header_init(&ready_list);
-	for (; next_work_item != AH->toc; next_work_item = next_work_item->next)
+	for (next_work_item = AH->toc->next; next_work_item != AH->toc; next_work_item = next_work_item->next)
 	{
-		if (next_work_item->depCount > 0)
-			par_list_append(&pending_list, next_work_item);
-		else
-			par_list_append(&ready_list, next_work_item);
+		/* All PRE_DATA items were dealt with above */
+		if (next_work_item->section == SECTION_DATA ||
+			next_work_item->section == SECTION_POST_DATA)
+		{
+			if (next_work_item->depCount > 0)
+				par_list_append(&pending_list, next_work_item);
+			else
+				par_list_append(&ready_list, next_work_item);
+		}
 	}
 
 	/*
