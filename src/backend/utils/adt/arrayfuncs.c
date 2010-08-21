@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.164.4.1 2010/08/11 19:12:36 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.164.4.2 2010/08/21 16:55:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,6 +50,7 @@ typedef enum
 	ARRAY_LEVEL_DELIMITED
 } ArrayParseState;
 
+static bool array_isspace(char ch);
 static int	ArrayCount(const char *str, int *dim, char typdelim);
 static void ReadArrayStr(char *arrayStr, const char *origStr,
 			 int nitems, int ndim, int *dim,
@@ -192,7 +193,7 @@ array_in(PG_FUNCTION_ARGS)
 		 * Note: we currently allow whitespace between, but not within,
 		 * dimension items.
 		 */
-		while (isspace((unsigned char) *p))
+		while (array_isspace(*p))
 			p++;
 		if (*p != '[')
 			break;				/* no more dimension items */
@@ -265,7 +266,7 @@ array_in(PG_FUNCTION_ARGS)
 					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 					 errmsg("missing assignment operator")));
 		p += strlen(ASSGN);
-		while (isspace((unsigned char) *p))
+		while (array_isspace(*p))
 			p++;
 
 		/*
@@ -348,6 +349,27 @@ array_in(PG_FUNCTION_ARGS)
 	pfree(string_save);
 
 	PG_RETURN_ARRAYTYPE_P(retval);
+}
+
+/*
+ * array_isspace() --- a non-locale-dependent isspace()
+ *
+ * We used to use isspace() for parsing array values, but that has
+ * undesirable results: an array value might be silently interpreted
+ * differently depending on the locale setting.  Now we just hard-wire
+ * the traditional ASCII definition of isspace().
+ */
+static bool
+array_isspace(char ch)
+{
+	if (ch == ' ' ||
+		ch == '\t' ||
+		ch == '\n' ||
+		ch == '\r' ||
+		ch == '\v' ||
+		ch == '\f')
+		return true;
+	return false;
 }
 
 /*
@@ -534,7 +556,7 @@ ArrayCount(const char *str, int *dim, char typdelim)
 							itemdone = true;
 							nelems[nest_level - 1]++;
 						}
-						else if (!isspace((unsigned char) *ptr))
+						else if (!array_isspace(*ptr))
 						{
 							/*
 							 * Other non-space characters must be after a
@@ -563,7 +585,7 @@ ArrayCount(const char *str, int *dim, char typdelim)
 	/* only whitespace is allowed after the closing brace */
 	while (*ptr)
 	{
-		if (!isspace((unsigned char) *ptr++))
+		if (!array_isspace(*ptr++))
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 					 errmsg("malformed array literal: \"%s\"", str)));
@@ -756,7 +778,7 @@ ReadArrayStr(char *arrayStr,
 						indx[ndim - 1]++;
 						srcptr++;
 					}
-					else if (isspace((unsigned char) *srcptr))
+					else if (array_isspace(*srcptr))
 					{
 						/*
 						 * If leading space, drop it immediately.  Else, copy
@@ -1044,7 +1066,7 @@ array_out(PG_FUNCTION_ARGS)
 					overall_length += 1;
 				}
 				else if (ch == '{' || ch == '}' || ch == typdelim ||
-						 isspace((unsigned char) ch))
+						 array_isspace(ch))
 					needquote = true;
 			}
 		}
