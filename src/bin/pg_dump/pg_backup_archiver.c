@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.172.2.2 2010/06/28 02:07:09 tgl Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.172.2.3 2010/08/21 13:59:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -99,7 +99,7 @@ static teReqs _tocEntryRequired(TocEntry *te, RestoreOptions *ropt, bool include
 static void _disableTriggersIfNecessary(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt);
 static void _enableTriggersIfNecessary(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt);
 static TocEntry *getTocEntryByDumpId(ArchiveHandle *AH, DumpId id);
-static void _moveAfter(ArchiveHandle *AH, TocEntry *pos, TocEntry *te);
+static void _moveBefore(ArchiveHandle *AH, TocEntry *pos, TocEntry *te);
 static int	_discoverArchiveFormat(ArchiveHandle *AH);
 
 static void dump_lo_buf(ArchiveHandle *AH);
@@ -962,14 +962,10 @@ SortTocFromFile(Archive *AHX, RestoreOptions *ropt)
 	char	   *endptr;
 	DumpId		id;
 	TocEntry   *te;
-	TocEntry   *tePrev;
 
 	/* Allocate space for the 'wanted' array, and init it */
 	ropt->idWanted = (bool *) malloc(sizeof(bool) * AH->maxDumpId);
 	memset(ropt->idWanted, 0, sizeof(bool) * AH->maxDumpId);
-
-	/* Set prev entry as head of list */
-	tePrev = AH->toc;
 
 	/* Setup the file */
 	fh = fopen(ropt->tocFile, PG_BINARY_R);
@@ -985,7 +981,7 @@ SortTocFromFile(Archive *AHX, RestoreOptions *ropt)
 			cmnt[0] = '\0';
 
 		/* Ignore if all blank */
-		if (strspn(buf, " \t\r") == strlen(buf))
+		if (strspn(buf, " \t\r\n") == strlen(buf))
 			continue;
 
 		/* Get an ID, check it's valid and not already seen */
@@ -1003,10 +999,21 @@ SortTocFromFile(Archive *AHX, RestoreOptions *ropt)
 			die_horribly(AH, modulename, "could not find entry for ID %d\n",
 						 id);
 
+		/* Mark it wanted */
 		ropt->idWanted[id - 1] = true;
 
-		_moveAfter(AH, tePrev, te);
-		tePrev = te;
+		/*
+		 * Move each item to the end of the list as it is selected, so that
+		 * they are placed in the desired order.  Any unwanted items will end
+		 * up at the front of the list, which may seem unintuitive but it's
+		 * what we need.  In an ordinary serial restore that makes no
+		 * difference, but in a parallel restore we need to mark unrestored
+		 * items' dependencies as satisfied before we start examining
+		 * restorable items.  Otherwise they could have surprising
+		 * side-effects on the order in which restorable items actually get
+		 * restored.
+		 */
+		_moveBefore(AH, AH->toc, te);
 	}
 
 	if (fclose(fh) != 0)
@@ -1439,33 +1446,37 @@ warn_or_die_horribly(ArchiveHandle *AH,
 	va_end(ap);
 }
 
+#ifdef NOT_USED
+
 static void
 _moveAfter(ArchiveHandle *AH, TocEntry *pos, TocEntry *te)
 {
+	/* Unlink te from list */
 	te->prev->next = te->next;
 	te->next->prev = te->prev;
 
+	/* and insert it after "pos" */
 	te->prev = pos;
 	te->next = pos->next;
-
 	pos->next->prev = te;
 	pos->next = te;
 }
 
-#ifdef NOT_USED
+#endif
 
 static void
 _moveBefore(ArchiveHandle *AH, TocEntry *pos, TocEntry *te)
 {
+	/* Unlink te from list */
 	te->prev->next = te->next;
 	te->next->prev = te->prev;
 
+	/* and insert it before "pos" */
 	te->prev = pos->prev;
 	te->next = pos;
 	pos->prev->next = te;
 	pos->prev = te;
 }
-#endif
 
 static TocEntry *
 getTocEntryByDumpId(ArchiveHandle *AH, DumpId id)
@@ -3116,7 +3127,14 @@ restore_toc_entries_parallel(ArchiveHandle *AH)
 	{
 		if (next_work_item->section == SECTION_DATA ||
 			next_work_item->section == SECTION_POST_DATA)
-			break;
+		{
+			teReqs		reqs;
+
+			/* If not to be dumped, we can stay in this loop */
+			reqs = _tocEntryRequired(next_work_item, AH->ropt, false);
+			if ((reqs & (REQ_SCHEMA | REQ_DATA)) != 0)
+				break;
+		}
 
 		ahlog(AH, 1, "processing item %d %s %s\n",
 			  next_work_item->dumpId,
