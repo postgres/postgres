@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.294.2.6 2010/08/22 02:37:38 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.294.2.7 2010/08/23 02:43:35 tgl Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -3474,7 +3474,7 @@ local0.*    /var/log/postgresql
             </row>
             <row>
              <entry><literal>%e</literal></entry>
-             <entry>SQL state</entry>
+             <entry>SQLSTATE error code</entry>
              <entry>no</entry>
             </row>
             <row>
@@ -3545,7 +3545,7 @@ FROM pg_stat_activity;
         <para>
          <application>Syslog</> produces its own 
          time stamp and process ID information, so you probably do not want to
-         use those escapes if you are logging to <application>syslog</>.
+         include those escapes if you are logging to <application>syslog</>.
         </para>
        </tip>
       </listitem>
@@ -3672,7 +3672,7 @@ FROM pg_stat_activity;
         virtual transaction ID,
         regular transaction ID,
         error severity,
-        SQL state code,
+        SQLSTATE code,
         error message,
         error message detail,
         hint,
