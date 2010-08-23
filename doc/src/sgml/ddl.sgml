@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ddl.sgml,v 1.95 2010/08/20 13:59:45 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ddl.sgml,v 1.96 2010/08/23 02:43:25 tgl Exp $ -->
 
 <chapter id="ddl">
  <title>Data Definition</title>
@@ -846,7 +846,7 @@ CREATE TABLE order_items (
    </para>
   </sect2>
 
-  <sect2>
+  <sect2 id="ddl-constraints-exclusion">
    <title>Exclusion constraints</title>
 
    <indexterm>
