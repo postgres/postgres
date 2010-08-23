@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/pmsignal.c,v 1.30 2010/01/15 09:19:03 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/pmsignal.c,v 1.31 2010/08/23 17:20:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,6 +19,7 @@
 
 #include "miscadmin.h"
 #include "postmaster/postmaster.h"
+#include "replication/walsender.h"
 #include "storage/pmsignal.h"
 #include "storage/shmem.h"
 
@@ -46,8 +47,8 @@
  * child processes at random, and postmaster.c is responsible for tracking
  * which one goes with which PID.
  *
- * The fourth state, WALSENDER, is just like ACTIVE, but carries the extra
- * information that the child is a WAL sender.
+ * Actually there is a fourth state, WALSENDER.  This is just like ACTIVE,
+ * but carries the extra information that the child is a WAL sender.
  */
 
 #define PM_CHILD_UNUSED		0	/* these values must fit in sig_atomic_t */
@@ -224,23 +225,8 @@ MarkPostmasterChildActive(void)
 	Assert(slot > 0 && slot <= PMSignalState->num_child_flags);
 	slot--;
 	Assert(PMSignalState->PMChildFlags[slot] == PM_CHILD_ASSIGNED);
-	PMSignalState->PMChildFlags[slot] = PM_CHILD_ACTIVE;
-}
-
-/*
- * MarkPostmasterChildWalSender - like MarkPostmasterChildActive(), but
- * marks the postmaster child as a WAL sender instead of a regular backend.
- * This is called in the child process.
- */
-void
-MarkPostmasterChildWalSender(void)
-{
-	int			slot = MyPMChildSlot;
-
-	Assert(slot > 0 && slot <= PMSignalState->num_child_flags);
-	slot--;
-	Assert(PMSignalState->PMChildFlags[slot] == PM_CHILD_ASSIGNED);
-	PMSignalState->PMChildFlags[slot] = PM_CHILD_WALSENDER;
+	PMSignalState->PMChildFlags[slot] =
+		(am_walsender ? PM_CHILD_WALSENDER : PM_CHILD_ACTIVE);
 }
 
 /*
