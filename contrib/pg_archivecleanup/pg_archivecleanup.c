@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/pg_archivecleanup/pg_archivecleanup.c,v 1.3 2010/07/06 19:18:55 momjian Exp $
+ * $PostgreSQL: pgsql/contrib/pg_archivecleanup/pg_archivecleanup.c,v 1.4 2010/08/23 02:56:24 tgl Exp $
  *
  * pg_archivecleanup.c
  *
@@ -18,16 +18,16 @@
 #include <fcntl.h>
 #include <signal.h>
 
-#ifdef WIN32
-int			getopt(int argc, char *const argv[], const char *optstring);
-#else
+#ifndef WIN32
 #include <sys/time.h>
 #include <unistd.h>
 
 #ifdef HAVE_GETOPT_H
 #include <getopt.h>
 #endif
-#endif   /* ! WIN32 */
+#else	/* WIN32 */
+extern int	getopt(int argc, char *const argv[], const char *optstring);
+#endif	/* ! WIN32 */
 
 extern char *optarg;
 extern int	optind;
@@ -117,12 +117,8 @@ CleanupPriorWALFiles(void)
 			strspn(xlde->d_name, "0123456789ABCDEF") == XLOG_DATA_FNAME_LEN &&
 				strcmp(xlde->d_name + 8, exclusiveCleanupFileName + 8) < 0)
 			{
-#ifdef WIN32
-				snprintf(WALFilePath, MAXPGPATH, "%s\\%s", archiveLocation, xlde->d_name);
-#else
-				snprintf(WALFilePath, MAXPGPATH, "%s/%s", archiveLocation, xlde->d_name);
-#endif
-
+				snprintf(WALFilePath, MAXPGPATH, "%s/%s",
+						 archiveLocation, xlde->d_name);
 				if (debug)
 					fprintf(stderr, "%s: removing file \"%s\"\n",
 							progname, WALFilePath);
@@ -308,8 +304,12 @@ main(int argc, char **argv)
 	SetWALFileNameForCleanup();
 
 	if (debug)
+	{
+		snprintf(WALFilePath, MAXPGPATH, "%s/%s",
+				 archiveLocation, exclusiveCleanupFileName);
 		fprintf(stderr, "%s: keep WAL file \"%s\" and later\n",
-				progname, exclusiveCleanupFileName);
+				progname, WALFilePath);
+	}
 
 	/*
 	 * Remove WAL files older than cut-off
