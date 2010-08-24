@@ -1,5 +1,5 @@
 # -*-makefile-*-
-# $PostgreSQL: pgsql/src/Makefile.global.in,v 1.264 2010/07/06 22:03:05 tgl Exp $
+# $PostgreSQL: pgsql/src/Makefile.global.in,v 1.265 2010/08/24 18:06:12 petere Exp $
 
 #------------------------------------------------------------------------------
 # All PostgreSQL makefiles include this file and use the variables it sets,
@@ -579,6 +579,17 @@ clean distclean maintainer-clean: clean-deps
 .PHONY: clean-deps
 clean-deps:
 	@rm -rf $(DEPDIR)
+
+# When in automatic dependency mode, never delete any intermediate
+# files automatically.  Otherwise, the following could happen: When
+# starting from a clean source tree, the first build would delete the
+# intermediate file, but also create the dependency file, which
+# mentions the intermediate file, thus making it non-intermediate.
+# The second build will then need to rebuild the now non-intermediate
+# missing file.  So the second build will do work even though nothing
+# had changed.  One place where this happens is the .c -> .o -> .so
+# chain for some contrib modules.
+.SECONDARY:
 
 endif # autodepend
 
