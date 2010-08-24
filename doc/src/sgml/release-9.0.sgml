@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release-9.0.sgml,v 2.39.2.8 2010/08/24 14:46:35 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release-9.0.sgml,v 2.39.2.9 2010/08/24 23:45:37 tgl Exp $ -->
 
  <sect1 id="release-9-0">
   <title>Release 9.0</title>
@@ -43,50 +43,48 @@
     <listitem>
      <para>
       Easier database object permissions management. <link
-      linkend="SQL-GRANT"><command>GRANT</>/<command>REVOKE
-      IN SCHEMA</></link> supports mass permissions changes, and
-      the <link linkend="SQL-ALTERDEFAULTPRIVILEGES"><command>ALTER
-      DEFAULT PRIVILEGES</></link> command controls privileges
-      of all newly-created objects.  Large object permissions now
-      support <command>GRANT</>/<command>REVOKE</> as well.
-     </para>
-    </listitem>
-
-    <listitem>
-     <para>
-      Add support for compiling on <link
-      linkend="install-win32-full">64-bit
-      <productname>Windows</></link> and running in 64-bit
-      mode.
+      linkend="SQL-GRANT"><command>GRANT</>/<command>REVOKE IN
+      SCHEMA</></link> supports mass permissions changes on existing objects,
+      while <link linkend="SQL-ALTERDEFAULTPRIVILEGES"><command>ALTER DEFAULT
+      PRIVILEGES</></link> allows control of privileges for objects created in
+      the future.  Large objects (BLOBs) now support privilege management as
+      well.
      </para>
     </listitem>
 
     <listitem>
      <para>
       Broadly enhanced stored procedure support.
-      The <link linkend="SQL-DO"><command>DO</></link> statement permits
-      ad-hoc or anonymous code blocks.  Functions can now be called using named
-      parameters.  <link linkend="plpgsql">PL/pgSQL</link> is now installed by default,
-      and <link linkend="plperl">PL/Perl</link> and <link linkend="plpython">PL/Python</link>
-      have been enhanced in several ways, including support for Python3.
+      The <link linkend="SQL-DO"><command>DO</></link> statement supports
+      ad-hoc or <quote>anonymous</> code blocks.
+      Functions can now be called using named parameters.
+      <link linkend="plpgsql">PL/pgSQL</link> is now installed by default, and
+      <link linkend="plperl">PL/Perl</link> and <link
+      linkend="plpython">PL/Python</link> have been enhanced in several ways,
+      including support for Python3.
      </para>
     </listitem>
 
     <listitem>
      <para>
-      More advanced reporting queries with additional <link
-      linkend="functions-window">window functions</link>
-      (<literal>PRECEDING</> and <literal>FOLLOWING</>) and the ability
-      to <link linkend="syntax-aggregates"><literal>ORDER BY</></link>
-      inside aggregate functions.
+      Full support for <link linkend="install-win32">64-bit
+      <productname>Windows</></link>.
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Triggers now support two new features,
-      SQL-compliant <link
-      linkend="SQL-CREATETRIGGER">per-column triggers</link>, and
+      More advanced reporting queries, including additional windowing options
+      (<literal>PRECEDING</> and <literal>FOLLOWING</>) and the ability to
+      control the order in which values are fed to aggregate functions.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      New trigger features, including
+      SQL-standard-compliant <link
+      linkend="SQL-CREATETRIGGER">per-column triggers</link> and
       conditional trigger execution.
      </para>
     </listitem>
@@ -101,26 +99,46 @@
 
     <listitem>
      <para>
-      New and enhanced security features, including <link linkend="client-authentication">RADIUS authentication</link>,
-      LDAP authentication improvements, and the new <link linkend="passwordcheck">passwordcheck</link> optional module
+      <link linkend="ddl-constraints-exclusion">Exclusion constraints</link>.
+      These provide a generalized version of unique constraints, allowing
+      enforcement of complex conditions.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      New and enhanced security features, including RADIUS authentication,
+      LDAP authentication improvements, and a new contrib module
+      <link linkend="passwordcheck"><filename>passwordcheck</></link>
       for testing password strength.
      </para>
     </listitem>
 
     <listitem>
      <para>
-      The <link linkend="SQL-LISTEN"><command>LISTEN</></link>/<link
-      linkend="SQL-NOTIFY"><command>NOTIFY</></link>
-      feature has been overhauled to make it into
-      a high-performance event queuing system.  It now stores
-      events in a memory-based queue, and it now allows delivery
-      of a string payload to listeners with each event.
+      New high-performance implementation of the
+      <link linkend="SQL-LISTEN"><command>LISTEN</></link>/<link
+      linkend="SQL-NOTIFY"><command>NOTIFY</></link> feature.
+      Pending events are now stored in a memory-based queue rather than
+      a table.  Also, a <quote>payload</> string can be sent with each
+      event, rather than transmitting just an event name as before.
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Add <link linkend="pgupgrade"><filename>/contrib/pg_upgrade</></link>
+      New implementation of
+      <link linkend="SQL-VACUUM"><command>VACUUM FULL</></link>.
+      This command now rewrites the entire table and indexes, rather than
+      moving individual rows to compact space.  It is substantially faster
+      in most cases, and no longer results in index bloat.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      New contrib module
+      <link linkend="pgupgrade"><filename>pg_upgrade</></link>
       to support in-place upgrades from 8.3 or 8.4 to 9.0.
      </para>
     </listitem>
@@ -128,41 +146,24 @@
     <listitem>
      <para>
       Multiple performance enhancements for specific types of queries,
-      including join elimination, which optimizes automatically generated
-      queries, such as those produced by object-relational mappers (ORMs).
+      including elimination of unnecessary joins.  This helps optimize some
+      automatically-generated queries, such as those produced by
+      object-relational mappers (ORMs).
      </para>
     </listitem>
 
     <listitem>
      <para>
-      <link linkend="ddl-constraints-exclusion">Exclusion constraints</link>
-      let database designers define uniqueness based on complex
-      criteria, including for non-scalar data such as time periods,
-      ranges and arrays.
-     </para>
-    </listitem>
-
-    <listitem>
-     <para>
-      As part of our decade-long effort to eliminate the pain of VACUUM,
-      <link linkend="vacuum-for-space-recovery"><command>VACUUM FULL</></link>
-      is now substantially faster by rewriting the entire table and
-      indexes, rather than moving around single rows to compact space.
-     </para>
-    </listitem>
-
-    <listitem>
-     <para>
-      <link linkend="using-explain"><command>EXPLAIN</command></link>
-      plans are now available in JSON, XML and YAML format, and include
+      <link linkend="SQL-EXPLAIN "><command>EXPLAIN</></link> enhancements.
+      The output is now available in JSON, XML, or YAML format, and includes
       buffer utilization and other data not previously available.
      </para>
     </listitem>
 
     <listitem>
      <para>
-      The <link linkend="hstore">HStore optional module</link> has been improved with new functions and greater
-      data capacity to make it a high-performance key-value store.
+      <link linkend="hstore"><filename>hstore</></link> improvements,
+      including new functions and greater data capacity.
      </para>
     </listitem>
 
@@ -216,9 +217,9 @@
 
     <listitem>
      <para>
-      <link linkend="guc-wal-level"><varname>wal_level</></link> should now be
-      set to <literal>archive</>, not <literal>on</>, to do continuous
-      archiving (Heikki Linnakangas)
+      Replace server parameter <varname>archive_mode</> with
+      <link linkend="guc-wal-level"><varname>wal_level</></link>
+      (Heikki Linnakangas)
      </para>
     </listitem>
 
@@ -249,18 +250,6 @@
      The SQL standard specifies this behavior, and it is also much more
      convenient in practice than the former behavior of checking permissions
      on each child as well as the parent.
-    </para>
-   </listitem>
-
-   <listitem>
-    <para>
-     Make <function>date_trunc</> truncate rather than round when reducing
-     fractional-seconds precision (Tom Lane)
-    </para>
-
-    <para>
-     The code always acted this way for integer-based dates/times.
-     Now float-based dates/times behave similarly.
     </para>
    </listitem>
 
@@ -313,6 +302,18 @@
      Reject negative length values in 3-parameter <link
      linkend="functions-string-sql"><function>substring()</></link>
      for bit strings, per the SQL standard (Tom Lane)
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+     Make <function>date_trunc</> truncate rather than round when reducing
+     precision of fractional seconds (Tom Lane)
+    </para>
+
+    <para>
+     The code always acted this way for integer-based dates/times.
+     Now float-based dates/times behave similarly.
     </para>
    </listitem>
 
@@ -552,9 +553,23 @@
 
      <listitem>
       <para>
+       Improve performance and reliability of EvalPlanQual rechecks in join
+       queries (Tom Lane)
+      </para>
+
+      <para>
+       <command>UPDATE</>, <command>DELETE</>, and <command>SELECT FOR
+       UPDATE/SHARE</> queries that involve joins will now behave much better
+       when encountering freshly-updated rows.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
        Improve performance of <link
        linkend="SQL-TRUNCATE"><command>TRUNCATE</></link> when
-       used in the same transaction as table creation (Tom Lane)
+       the table was created or truncated earlier in the same transaction
+       (Tom Lane)
       </para>
      </listitem>
 
@@ -580,8 +595,8 @@
       </para>
 
       <para>
-       Outer joins where the inner side is unique and not referenced in
-       the query are unnecessary and are therefore now removed.  This will
+       Outer joins where the inner side is unique and not referenced above
+       the join are unnecessary and are therefore now removed.  This will
        accelerate many automatically generated queries, such as those created
        by object-relational mappers (ORMs).
       </para>
@@ -596,6 +611,14 @@
        This is particularly useful for finding
        <function>MAX()</>/<function>MIN()</> values in indexes that
        contain many null values.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Improve the optimizer's choices about when to use materialize nodes,
+       and when to use sorting versus hashing for <literal>DISTINCT</>
+       (Tom Lane)
       </para>
      </listitem>
 
@@ -634,7 +657,8 @@
       </para>
 
       <para>
-       This avoids the rare error <quote>failed to make a valid plan</>.
+       This avoids the rare error <quote>failed to make a valid plan</>,
+       and should also improve planning speed.
       </para>
      </listitem>
 
@@ -823,7 +847,7 @@
        Add <link
        linkend="monitoring-stats-funcs-table"><function>pg_stat_reset_single_table_counters()</></link>
        and <function>pg_stat_reset_single_function_counters()</>
-       to allow resetting of the statistics counters for individual
+       to allow resetting the statistics counters for individual
        tables and indexes (Magnus Hagander)
       </para>
      </listitem>
@@ -849,9 +873,11 @@
        not combinations. All role and database settings are now stored
        in the new <structname>pg_db_role_setting</> system table. A new
        <application>psql</> command <literal>\drds</> shows these settings.
-       Backwards-compatible system views do not show combination settings.
+       The legacy system views <structname>pg_roles</>,
+       <structname>pg_shadow</>, and <structname>pg_user</>
+       do not show combination settings, and therefore no longer
+       completely represent the configuration for a user or database.
       </para>
-
      </listitem>
 
      <listitem>
@@ -886,6 +912,19 @@
 
      <listitem>
       <para>
+       Change server parameter <link
+       linkend="guc-log-temp-files"><varname>log_temp_files</></link> to
+       use default file size units of kilobytes (Robert Haas)
+      </para>
+
+      <para>
+       Previously this setting was interpreted in bytes if no units were
+       specified.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
        Log changes of parameter values when <filename>postgresql.conf</> is
        reloaded (Peter Eisentraut)
       </para>
@@ -895,35 +934,23 @@
        settings, and is also very convenient for checking the effects of
        <filename>postgresql.conf</> edits.
       </para>
-
      </listitem>
 
      <listitem>
       <para>
-       Add proper permissions for custom server parameters (Tom Lane)
+       Properly enforce superuser permissions for custom server parameters
+       (Tom Lane)
       </para>
 
       <para>
-       Custom parameters can now only be created by super-users,
-       but then can be modified by ordinary users if the parameter's
-       permissions allow it. This makes custom parameters
-       appropriate for security-related settings. Previously, any user
-       could create or modify custom parameters.
+       Non-superusers can no longer issue <command>ALTER
+       ROLE</>/<command>DATABASE SET</> for parameters that are not currently
+       known to the server.  This allows the server to correctly check that
+       superuser-only parameters are only set by superusers.  Previously,
+       the <literal>SET</> would be allowed and then ignored at session start,
+       making superuser-only custom parameters practically useless.
       </para>
      </listitem>
-
-    <listitem>
-     <para>
-      Change server parameter <link
-      linkend="guc-log-temp-files"><varname>log_temp_files</></link> to
-      use default file size units of kilobytes (Robert Haas)
-     </para>
-
-     <para>
-      Previously this setting was interpreted in bytes if no units were
-      specified.
-     </para>
-    </listitem>
 
     </itemizedlist>
 
@@ -957,7 +984,7 @@
      <para>
       Allow mixing of traditional and SQL-standard <link
       linkend="SQL-LIMIT"><literal>LIMIT</>/<literal>OFFSET</></link>
-      syntax in the same query (Tom Lane)
+      syntax (Tom Lane)
      </para>
     </listitem>
 
@@ -1063,29 +1090,14 @@
    </itemizedlist>
 
    <sect4>
-    <title><command>ALTER</></title>
+    <title><command>ALTER TABLE</></title>
 
     <itemizedlist>
 
      <listitem>
       <para>
-       Add <link linkend="SQL-ALTERDEFAULTPRIVILEGES"><command>ALTER
-       DEFAULT PRIVILEGES</></link> command to control privileges
-       of objects created later (Petr Jelinek)
-      </para>
-
-      <para>
-       This greatly simplifies the assignment of object privileges in a
-       complex database application.  Default privileges can be set for
-       tables, views, sequences, and functions. Defaults may be assigned on a
-       per-schema basis, or database-wide.
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       Implement <literal>IF EXISTS</> for <literal>DROP COLUMN</> and
-       <literal>DROP CONSTRAINT </> (Andres Freund)
+       Implement <literal>IF EXISTS</> for <literal>ALTER TABLE DROP COLUMN</>
+       and <literal>ALTER TABLE DROP CONSTRAINT </> (Andres Freund)
       </para>
      </listitem>
 
@@ -1223,7 +1235,21 @@
        and makes it easier to utilize database roles for application
        data security.
       </para>
+     </listitem>
 
+     <listitem>
+      <para>
+       Add <link linkend="SQL-ALTERDEFAULTPRIVILEGES"><command>ALTER
+       DEFAULT PRIVILEGES</></link> command to control privileges
+       of objects created later (Petr Jelinek)
+      </para>
+
+      <para>
+       This greatly simplifies the assignment of object privileges in a
+       complex database application.  Default privileges can be set for
+       tables, views, sequences, and functions. Defaults may be assigned on a
+       per-schema basis, or database-wide.
+      </para>
      </listitem>
 
      <listitem>
@@ -1235,7 +1261,7 @@
       <para>
        Formerly, any database user could read or modify any large object.
        Read and write permissions can now be granted and revoked per
-       large object.
+       large object, and the ownership of large objects is tracked.
       </para>
      </listitem>
 
@@ -1285,7 +1311,7 @@
      </para>
 
      <para>
-      Global catalogs still cannot be clustered.
+      Shared catalogs still cannot be clustered.
      </para>
     </listitem>
 
@@ -1431,6 +1457,14 @@
 
      <listitem>
       <para>
+       By default, multicolumn indexes are now named after all their columns;
+       and index expression columns are now named based on their expressions
+       (Tom Lane)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
        Reindexing shared system catalogs is now fully transactional
        and crash-safe (Tom Lane)
       </para>
@@ -1521,7 +1555,7 @@
 
     <listitem>
      <para>
-      Tighten input requirements for <type>int2vector</> input (Caleb
+      Tighten input checking for <type>int2vector</> values (Caleb
       Welton)
      </para>
     </listitem>
@@ -1630,9 +1664,9 @@
 
     <listitem>
      <para>
-      Fix <function>to_char()</> to output the proper localized
-      numeric and monetary characters on <productname>Windows</>
-      (Hiroshi Inoue, Itagaki Takahir, Bruce Momjian)
+      Fix <function>to_char()</> to output localized numeric and monetary
+      strings in the correct encoding on <productname>Windows</>
+      (Hiroshi Inoue, Itagaki Takahiro, Bruce Momjian)
      </para>
     </listitem>
 
@@ -1654,8 +1688,7 @@
      <listitem>
       <para>
        Allow aggregate functions to use <link
-       linkend="syntax-aggregates"><literal>ORDER BY</></> (Andrew
-       Gierth)
+       linkend="syntax-aggregates"><literal>ORDER BY</></> (Andrew Gierth)
       </para>
 
       <para>
@@ -1663,6 +1696,13 @@
        b)</>.  This is useful with aggregates for which the order of input
        values is significant, and eliminates the need to use a nonstandard
        subquery to determine the ordering.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Multi-argument aggregate functions can now use <literal>DISTINCT</>
+       (Andrew Gierth)
       </para>
      </listitem>
 
@@ -1746,16 +1786,24 @@
 
      <listitem>
       <para>
-       Make the <link linkend="information-schema">information_schema</link>
-       views properly display maximum octet lengths for <type>char</> and
-       <type>varchar</> columns, as well as the proper precision for datetime
-       columns (Peter Eisentraut)
+       Update the <link linkend="information-schema">information_schema</link>
+       views to conform to SQL:2008
+       (Peter Eisentraut)
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Speed up information_schema privilege views (Joachim Wieland)
+       Make the <literal>information_schema</> views correctly display maximum
+       octet lengths for <type>char</> and <type>varchar</> columns (Peter
+       Eisentraut)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Speed up <literal>information_schema</> privilege views
+       (Joachim Wieland)
       </para>
      </listitem>
 
@@ -1886,6 +1934,23 @@
        such as string escaping.  Some user-visible details, such as the set
        of keywords considered reserved in PL/pgSQL, have changed in
        consequence.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Avoid throwing an unnecessary error for an invalid record reference
+       (Tom Lane)
+      </para>
+
+      <para>
+       An error is now thrown only if the reference is actually fetched,
+       rather than whenever the enclosing expression is reached.  For
+       example, many people have tried to do this in triggers:
+<programlisting>
+if TG_OP = 'INSERT' AND NEW.col1 = ... then
+</programlisting>
+       This will now actually work as expected.
       </para>
      </listitem>
 
@@ -2057,22 +2122,23 @@
 
       <para>
        <type>Bytea</> values passed into PL/Python are now represented as
-       binary, rather than the PostgreSQL <type>bytea</> text format. Null
-       bytes are now also output properly from PL/Python. <type>boolean</>
-       and <type>numeric</> value passing in PL/Python was also improved.
+       binary, rather than the PostgreSQL <type>bytea</> text format.
+       <type>Bytea</> values containing null bytes are now also output
+       properly from PL/Python.  Passing of boolean, integer, and float
+       values was also improved.
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Add <link linkend="plpython-arrays">array parameter/return
-       support</link> to PL/Python (Peter Eisentraut)
+       Support <link linkend="plpython-arrays">arrays</link> as parameters and
+       return values in PL/Python (Peter Eisentraut)
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Improve mapping of domains to Python base types in PL/Python (Peter Eisentraut)
+       Improve mapping of SQL domains to Python types (Peter Eisentraut)
       </para>
      </listitem>
 
@@ -2330,10 +2396,10 @@
       </para>
 
       <para>
-       Previously the <application>pg_ctl</> process could have been mistakenly
-       identified as a running <application>postmaster</> based on a stale
-       <application>postmaster</> lock file, resulting in a transient failure
-       to start the database.
+       Previously, <application>pg_ctl</>'s parent process could have been
+       mistakenly identified as a running <application>postmaster</> based on
+       a stale <application>postmaster</> lock file, resulting in a transient
+       failure to start the database.
       </para>
      </listitem>
 
@@ -2414,6 +2480,14 @@
       <para>
        Keepalive settings were already supported on the server end of
        TCP connections.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Avoid extra system calls to block and unblock <literal>SIGPIPE</>
+       in <application>libpq</>, on platforms that offer alternative methods
+       (Jeremy Kerr)
       </para>
      </listitem>
 
@@ -2517,20 +2591,20 @@
 
       <listitem>
        <para>
-        Add <application>ecpg</> out-of-scope cursor support in native mode
+        Add out-of-scope cursor support in <application>ecpg</>'s native mode
         (Boszormenyi Zoltan)
        </para>
 
        <para>
         This allows <command>DECLARE</> to use variables that are not in
         scope when <command>OPEN</> is called. This facility already existed
-        in <application>ecpg</> Informix-compatibility mode.
+        in <application>ecpg</>'s Informix-compatibility mode.
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Allow dynamic <application>ecpg</> cursor names (Boszormenyi Zoltan)
+        Allow dynamic cursor names in <application>ecpg</> (Boszormenyi Zoltan)
        </para>
       </listitem>
 
@@ -2601,15 +2675,15 @@
 
       <para>
        These are similar to the existing <literal>all</>, <literal>install</>,
-       and <literal>installcheck</> targets, but they build <acronym>HTML</>
-       documentation, build and test <filename>contrib</>, and test
-       server-side languages and <application>ecpg</>.
+       and <literal>installcheck</> targets, but they also build
+       <acronym>HTML</> documentation, build and test <filename>contrib</>,
+       and test server-side languages and <application>ecpg</>.
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Add data and documentation location control to <link
+       Add data and documentation installation location control to <link
        linkend="xfunc-c-pgxs"><acronym>PGXS</></link> Makefiles
        (Mark Cave-Ayland)
       </para>
@@ -2617,8 +2691,9 @@
 
     <listitem>
      <para>
-      Add a Makefile rule to build documentation as a single text file
-      (Bruce Momjian)
+      Add Makefile rules to build documentation as a single <acronym>HTML</>
+      file or as a single plain-text file
+      (Peter Eisentraut, Bruce Momjian)
      </para>
     </listitem>
 
@@ -2649,13 +2724,6 @@
        Support server builds using <link
        linkend="install-win32-full"><productname>Visual Studio
        2008</></link> (Magnus Hagander)
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       Support multiprocessor compilation using <productname>Microsoft Visual
-       C</> (Magnus Hagander)
       </para>
      </listitem>
 
@@ -2757,14 +2825,39 @@
 
     <listitem>
      <para>
-      Improve the ability to translate <application>psql</> strings
+      Automatically generate the initial contents of
+      <structname>pg_attribute</> for <quote>bootstrapped</> catalogs
+      (John Naylor)
+     </para>
+
+     <para>
+      This greatly simplifies changes to these catalogs.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Split the processing of
+      <command>INSERT</>/<command>UPDATE</>/<command>DELETE</> operations out
+      of <filename>execMain.c</> (Marko Tiikkaja)
+     </para>
+
+     <para>
+      Updates are now executed in a separate ModifyTable node.  This change is
+      necessary infrastructure for future improvements.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Simplify translation of <application>psql</>'s SQL help text
       (Peter Eisentraut)
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Reduce the length of some file names so that all file paths in the
+      Reduce the lengths of some file names so that all file paths in the
       distribution tarball are less than 100 characters (Tom Lane)
      </para>
 
@@ -2803,15 +2896,20 @@
 
     <listitem>
      <para>
-      Restructure the <acronym>HTML</> documentation build
-      <filename>Makefile</> rules (Peter Eisentraut)
+      Restructure the <acronym>HTML</> documentation
+      <filename>Makefile</> rules to make their dependency checks work
+      correctly, avoiding unnecessary rebuilds (Peter Eisentraut)
      </para>
     </listitem>
 
     <listitem>
      <para>
       Use <productname>DocBook</> <acronym>XSL</> stylesheets for man page
-      building (Peter Eisentraut)
+      building, rather than <productname>Docbook2X</> (Peter Eisentraut)
+     </para>
+
+     <para>
+      This changes the set of tools needed to build the man pages.
      </para>
     </listitem>
 
@@ -2823,7 +2921,7 @@
 
     <listitem>
      <para>
-      Improve error context support in PL/Perl (Alexey Klyukin)
+      Improve error context reports in PL/Perl (Alexey Klyukin)
      </para>
     </listitem>
 
@@ -2906,6 +3004,12 @@
        Restructure use of <literal>LDFLAGS</> to be more consistent
        across platforms (Tom Lane)
       </para>
+
+      <para>
+       <literal>LDFLAGS</> is now used for linking both executables and shared
+       libraries, and we add on <literal>LDFLAGS_EX</> when linking
+       executables, or <literal>LDFLAGS_SL</> when linking shared libraries.
+      </para>
      </listitem>
 
     </itemizedlist>
@@ -2919,8 +3023,8 @@
 
      <listitem>
       <para>
-       Simplify use of <productname>C++</> functions in backend code (Kurt
-       Harriman, Peter Eisentraut)
+       Make backend header files safe to include in <productname>C++</>
+       (Kurt Harriman, Peter Eisentraut)
       </para>
 
       <para>
@@ -2944,8 +3048,21 @@
 
      <listitem>
       <para>
+       Change calling convention for <function>SearchSysCache()</> and related
+       functions to avoid hard-wiring the maximum number of cache keys
+       (Robert Haas)
+      </para>
+
+      <para>
+       Existing calls will still work for the moment, but can be expected to
+       break in 9.1 or later if not converted.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
        Require calls of <function>fastgetattr()</> and
-       <function>heap_getattr()</> backend macros to use a non-NULL fourth
+       <function>heap_getattr()</> backend macros to provide a non-NULL fourth
        argument (Robert Haas)
       </para>
      </listitem>
@@ -2961,8 +3078,8 @@
 
      <listitem>
       <para>
-       Add parser hooks to access column and parameter references in
-       queries (Tom Lane)
+       Add parser hooks for processing ColumnRef and ParamRef nodes
+       (Tom Lane)
       </para>
      </listitem>
 
@@ -3085,7 +3202,7 @@
      </para>
 
      <para>
-      This filter dictionary removes accents from letters, which
+      This filtering dictionary removes accents from letters, which
       makes full-text searches over multiple languages much easier.
      </para>
     </listitem>
