@@ -28,3 +28,16 @@ select 'four: ' || 2+2;
 -- but not this:
 
 select 3 || 4.0;
+
+/*
+ * string functions
+ */
+select concat('one');
+select concat(1,2,3,'hello',true, false, to_date('20100309','YYYYMMDD'));
+select concat_ws('#','one');
+select concat_ws('#',1,2,3,'hello',true, false, to_date('20100309','YYYYMMDD'));
+select concat_ws(',',10,20,null,30);
+select concat_ws('',10,20,null,30);
+select concat_ws(NULL,10,20,null,30) is null;
+select reverse('abcde');
+select i, left('ahoj', i), right('ahoj', i) from generate_series(-5, 5) t(i) order by i;

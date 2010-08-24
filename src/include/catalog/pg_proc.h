@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.580 2010/08/21 10:59:17 mha Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.581 2010/08/24 06:30:43 itagaki Exp $
  *
  * NOTES
  *	  The script catalog/genbki.pl reads this file and generates .bki
@@ -2722,6 +2722,16 @@ DESCR("I/O");
 DATA(insert OID = 1799 (  oidout		   PGNSP PGUID 12 1 0 0 f f f t f i 1 0 2275 "26" _null_ _null_ _null_ _null_ oidout _null_ _null_ _null_ ));
 DESCR("I/O");
 
+DATA(insert OID = 3058 ( concat		PGNSP PGUID 12 1 0 2276 f f f f f s 1 0 25 "2276" "{2276}" "{v}" _null_ _null_  text_concat _null_ _null_ _null_ ));
+DESCR("concatenate values");
+DATA(insert OID = 3059 ( concat_ws	PGNSP PGUID 12 1 0 2276 f f f f f s 2 0 25 "25 2276" "{25,2276}" "{i,v}" _null_ _null_  text_concat_ws _null_ _null_ _null_ ));
+DESCR("concatenate values with separators");
+DATA(insert OID = 3060 ( left		PGNSP PGUID 12 1 0 0 f f f t f i 2 0 25 "25 23" _null_ _null_ _null_ _null_  text_left _null_ _null_ _null_ ));
+DESCR("return the first n characters");
+DATA(insert OID = 3061 ( right		PGNSP PGUID 12 1 0 0 f f f t f i 2 0 25 "25 23" _null_ _null_ _null_ _null_  text_right _null_ _null_ _null_ ));
+DESCR("return the last n characters");
+DATA(insert OID = 3062 ( reverse	PGNSP PGUID 12 1 0 0 f f f t f i 1 0 25 "25" _null_ _null_ _null_ _null_  text_reverse  _null_ _null_ _null_ ));
+DESCR("reverse text");
 
 DATA(insert OID = 1810 (  bit_length	   PGNSP PGUID 14 1 0 0 f f f t f i 1 0 23 "17" _null_ _null_ _null_ _null_ "select pg_catalog.octet_length($1) * 8" _null_ _null_ _null_ ));
 DESCR("length in bits");

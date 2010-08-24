@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.529 2010/08/17 04:37:20 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.530 2010/08/24 06:30:43 itagaki Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -1251,6 +1251,12 @@
     <primary>chr</primary>
    </indexterm>
    <indexterm>
+    <primary>concat</primary>
+   </indexterm>
+   <indexterm>
+    <primary>concat_ws</primary>
+   </indexterm>
+   <indexterm>
     <primary>convert</primary>
    </indexterm>
    <indexterm>
@@ -1267,6 +1273,9 @@
    </indexterm>
    <indexterm>
     <primary>initcap</primary>
+   </indexterm>
+   <indexterm>
+    <primary>left</primary>
    </indexterm>
    <indexterm>
     <primary>lpad</primary>
@@ -1294,6 +1303,12 @@
    </indexterm>
    <indexterm>
     <primary>replace</primary>
+   </indexterm>
+   <indexterm>
+    <primary>reverse</primary>
+   </indexterm>
+   <indexterm>
+    <primary>right</primary>
    </indexterm>
    <indexterm>
     <primary>rpad</primary>
@@ -1372,6 +1387,34 @@
        </entry>
        <entry><literal>chr(65)</literal></entry>
        <entry><literal>A</literal></entry>
+      </row>
+
+      <row>
+       <entry>
+        <literal><function>concat</function>(<parameter>str</parameter> <type>"any"</type>
+         [, <parameter>str</parameter> <type>"any"</type> [, ...] ])</literal>
+       </entry>
+       <entry><type>text</type></entry>
+       <entry>
+        Concatenate all arguments. NULL arguments are ignored.
+       </entry>
+       <entry><literal>concat('abcde', 2, NULL, 22)</literal></entry>
+       <entry><literal>abcde222</literal></entry>
+      </row>
+
+      <row>
+       <entry>
+        <literal><function>concat_ws</function>(<parameter>sep</parameter> <type>text</type>,
+        <parameter>str</parameter> <type>"any"</type>
+        [, <parameter>str</parameter> <type>"any"</type> [, ...] ])</literal>
+       </entry>
+       <entry><type>text</type></entry>
+       <entry>
+        Concatenate all but first arguments with separators. The first
+        parameter is used as a separator. NULL arguments are ignored.
+       </entry>
+       <entry><literal>concat_ws(',', 'abcde', 2, NULL, 22)</literal></entry>
+       <entry><literal>abcde,2,22</literal></entry>
       </row>
 
       <row>
@@ -1463,6 +1506,20 @@
        </entry>
        <entry><literal>initcap('hi THOMAS')</literal></entry>
        <entry><literal>Hi Thomas</literal></entry>
+      </row>
+
+      <row>
+       <entry>
+        <literal><function>left</function>(<parameter>str</parameter> <type>text</type>,
+        <parameter>n</parameter> <type>int</type>)</literal>
+       </entry>
+       <entry><type>text</type></entry>
+       <entry>
+        Return first <replaceable>n</> characters in the string. When <replaceable>n</>
+        is negative, return all but last |<replaceable>n</>| characters.
+        </entry>
+       <entry><literal>left('abcde', 2)</literal></entry>
+       <entry><literal>ab</literal></entry>
       </row>
 
       <row>
@@ -1676,6 +1733,32 @@
        </entry>
        <entry><literal>replace('abcdefabcdef', 'cd', 'XX')</literal></entry>
        <entry><literal>abXXefabXXef</literal></entry>
+      </row>
+
+      <row>
+       <entry>
+        <literal><function>reverse</function>(<parameter>str</parameter>)</literal>
+       </entry>
+       <entry><type>text</type></entry>
+       <entry>
+        Return reversed string.
+       </entry>
+       <entry><literal>reverse('abcde')</literal></entry>
+       <entry><literal>edcba</literal></entry>
+      </row>
+
+      <row>
+       <entry>
+        <literal><function>right</function>(<parameter>str</parameter> <type>text</type>,
+         <parameter>n</parameter> <type>int</type>)</literal>
+       </entry>
+       <entry><type>text</type></entry>
+       <entry>
+        Return last <replaceable>n</> characters in the string. When <replaceable>n</>
+        is negative, return all but first |<replaceable>n</>| characters.
+       </entry>
+       <entry><literal>right('abcde', 2)</literal></entry>
+       <entry><literal>de</literal></entry>
       </row>
 
       <row>

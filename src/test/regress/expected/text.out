@@ -51,3 +51,70 @@ ERROR:  operator does not exist: integer || numeric
 LINE 1: select 3 || 4.0;
                  ^
 HINT:  No operator matches the given name and argument type(s). You might need to add explicit type casts.
+/*
+ * string functions
+ */
+select concat('one');
+ concat 
+--------
+ one
+(1 row)
+
+select concat(1,2,3,'hello',true, false, to_date('20100309','YYYYMMDD'));
+        concat        
+----------------------
+ 123hellotf03-09-2010
+(1 row)
+
+select concat_ws('#','one');
+ concat_ws 
+-----------
+ one
+(1 row)
+
+select concat_ws('#',1,2,3,'hello',true, false, to_date('20100309','YYYYMMDD'));
+         concat_ws          
+----------------------------
+ 1#2#3#hello#t#f#03-09-2010
+(1 row)
+
+select concat_ws(',',10,20,null,30);
+ concat_ws 
+-----------
+ 10,20,30
+(1 row)
+
+select concat_ws('',10,20,null,30);
+ concat_ws 
+-----------
+ 102030
+(1 row)
+
+select concat_ws(NULL,10,20,null,30) is null;
+ ?column? 
+----------
+ t
+(1 row)
+
+select reverse('abcde');
+ reverse 
+---------
+ edcba
+(1 row)
+
+select i, left('ahoj', i), right('ahoj', i) from generate_series(-5, 5) t(i) order by i;
+ i  | left | right 
+----+------+-------
+ -5 |      | 
+ -4 |      | 
+ -3 | a    | j
+ -2 | ah   | oj
+ -1 | aho  | hoj
+  0 |      | 
+  1 | a    | j
+  2 | ah   | oj
+  3 | aho  | hoj
+  4 | ahoj | ahoj
+  5 | ahoj | ahoj
+(11 rows)
+

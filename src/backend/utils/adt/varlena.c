@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/varlena.c,v 1.179 2010/08/10 21:51:00 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/varlena.c,v 1.180 2010/08/24 06:30:43 itagaki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3555,4 +3555,150 @@ string_agg_finalfn(PG_FUNCTION_ARGS)
 		PG_RETURN_TEXT_P(cstring_to_text(state->data));
 	else
 		PG_RETURN_NULL();
+}
+
+static text *
+concat_internal(const char *sepstr, int seplen, int argidx, FunctionCallInfo fcinfo)
+{
+	StringInfoData	str;
+	text		   *result;
+	int				i;
+
+	initStringInfo(&str);
+
+	for (i = argidx; i < PG_NARGS(); i++)
+	{
+		if (!PG_ARGISNULL(i))
+		{
+			Oid		valtype;
+			Datum	value;
+			Oid		typOutput;
+			bool	typIsVarlena;
+
+			if (i > argidx)
+				appendBinaryStringInfo(&str, sepstr, seplen);
+
+			/* append n-th value */
+			value = PG_GETARG_DATUM(i);
+			valtype = get_fn_expr_argtype(fcinfo->flinfo, i);
+			getTypeOutputInfo(valtype, &typOutput, &typIsVarlena);
+			appendStringInfoString(&str,
+				OidOutputFunctionCall(typOutput, value));
+		}
+	}
+
+	result = cstring_to_text_with_len(str.data, str.len);
+	pfree(str.data);
+
+	return result;
+}
+
+/*
+ * Concatenate all arguments. NULL arguments are ignored.
+ */
+Datum
+text_concat(PG_FUNCTION_ARGS)
+{
+	PG_RETURN_TEXT_P(concat_internal(NULL, 0, 0, fcinfo));
+}
+
+/*
+ * Concatenate all but first argument values with separators. The first
+ * parameter is used as a separator. NULL arguments are ignored.
+ */
+Datum
+text_concat_ws(PG_FUNCTION_ARGS)
+{
+	text		   *sep;
+
+	/* return NULL when separator is NULL */
+	if (PG_ARGISNULL(0))
+		PG_RETURN_NULL();
+
+	sep = PG_GETARG_TEXT_PP(0);
+
+	PG_RETURN_TEXT_P(concat_internal(
+		VARDATA_ANY(sep), VARSIZE_ANY_EXHDR(sep), 1, fcinfo));
+}
+
+/*
+ * Return first n characters in the string. When n is negative,
+ * return all but last |n| characters.
+ */
+Datum
+text_left(PG_FUNCTION_ARGS)
+{
+	text	   *str = PG_GETARG_TEXT_PP(0);
+	const char *p = VARDATA_ANY(str);
+	int			len = VARSIZE_ANY_EXHDR(str);
+	int			n = PG_GETARG_INT32(1);
+	int			rlen;
+
+	if (n < 0)
+		n = pg_mbstrlen_with_len(p, len) + n;
+	rlen = pg_mbcharcliplen(p, len, n);
+
+	PG_RETURN_TEXT_P(cstring_to_text_with_len(p, rlen));
+}
+
+/*
+ * Return last n characters in the string. When n is negative,
+ * return all but first |n| characters.
+ */
+Datum
+text_right(PG_FUNCTION_ARGS)
+{
+	text	   *str = PG_GETARG_TEXT_PP(0);
+	const char *p = VARDATA_ANY(str);
+	int			len = VARSIZE_ANY_EXHDR(str);
+	int			n = PG_GETARG_INT32(1);
+	int			off;
+
+	if (n < 0)
+		n = -n;
+	else
+		n = pg_mbstrlen_with_len(p, len) - n;
+	off = pg_mbcharcliplen(p, len, n);
+
+	PG_RETURN_TEXT_P(cstring_to_text_with_len(p + off, len - off));
+}
+
+/*
+ * Return reversed string
+ */
+Datum
+text_reverse(PG_FUNCTION_ARGS)
+{
+	text		   *str = PG_GETARG_TEXT_PP(0);
+	const char	   *p = VARDATA_ANY(str);
+	int				len = VARSIZE_ANY_EXHDR(str);
+	const char	   *endp = p + len;
+	text		   *result;
+	char		   *dst;
+
+	result = palloc(len + VARHDRSZ);
+	dst = (char*) VARDATA(result) + len;
+	SET_VARSIZE(result, len + VARHDRSZ);
+
+	if (pg_database_encoding_max_length() > 1)
+	{
+		/* multibyte version */
+		while (p < endp)
+		{
+			int		sz;
+
+			sz = pg_mblen(p);
+			dst -= sz;
+			memcpy(dst, p, sz);
+			p += sz;
+		}
+	}
+	else
+	{
+		/* single byte version */
+		while (p < endp)
+			*(--dst) = *p++;
+	}
+
+	PG_RETURN_TEXT_P(result);
 }
