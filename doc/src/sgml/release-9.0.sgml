@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release-9.0.sgml,v 2.39.2.7 2010/08/23 02:43:35 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release-9.0.sgml,v 2.39.2.8 2010/08/24 14:46:35 momjian Exp $ -->
 
  <sect1 id="release-9-0">
   <title>Release 9.0</title>
@@ -43,12 +43,21 @@
     <listitem>
      <para>
       Easier database object permissions management. <link
-      linkend="SQL-GRANT"><command>GRANT</>/<command>REVOKE IN
-      SCHEMA</></link> supports mass permissions changes on existing objects,
-      while <link linkend="SQL-ALTERDEFAULTPRIVILEGES"><command>ALTER DEFAULT
-      PRIVILEGES</></link> allows control of privileges for objects created in
-      the future.  Large objects (BLOBs) now support privilege management as
-      well.
+      linkend="SQL-GRANT"><command>GRANT</>/<command>REVOKE
+      IN SCHEMA</></link> supports mass permissions changes, and
+      the <link linkend="SQL-ALTERDEFAULTPRIVILEGES"><command>ALTER
+      DEFAULT PRIVILEGES</></link> command controls privileges
+      of all newly-created objects.  Large object permissions now
+      support <command>GRANT</>/<command>REVOKE</> as well.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Add support for compiling on <link
+      linkend="install-win32-full">64-bit
+      <productname>Windows</></link> and running in 64-bit
+      mode.
      </para>
     </listitem>
 
@@ -56,34 +65,28 @@
      <para>
       Broadly enhanced stored procedure support.
       The <link linkend="SQL-DO"><command>DO</></link> statement permits
-      execution of <quote>anonymous</> code blocks, without having to
-      define a function first.  Functions can now be called using named
-      parameters.  PL/pgSQL is now installed by default, and PL/Perl and
-      PL/Python have been enhanced in several ways, including support for
-      Python3.
+      ad-hoc or anonymous code blocks.  Functions can now be called using named
+      parameters.  <link linkend="plpgsql">PL/pgSQL</link> is now installed by default,
+      and <link linkend="plperl">PL/Perl</link> and <link linkend="plpython">PL/Python</link>
+      have been enhanced in several ways, including support for Python3.
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Full support for <link linkend="install-win32">64-bit
-      <productname>Windows</></link>.
+      More advanced reporting queries with additional <link
+      linkend="functions-window">window functions</link>
+      (<literal>PRECEDING</> and <literal>FOLLOWING</>) and the ability
+      to <link linkend="syntax-aggregates"><literal>ORDER BY</></link>
+      inside aggregate functions.
      </para>
     </listitem>
 
     <listitem>
      <para>
-      More advanced reporting queries, including additional windowing options
-      (<literal>PRECEDING</> and <literal>FOLLOWING</>) and the ability to
-      control the order in which values are fed to aggregate functions.
-     </para>
-    </listitem>
-
-    <listitem>
-     <para>
-      New trigger features, including
-      SQL-standard-compliant <link
-      linkend="SQL-CREATETRIGGER">per-column triggers</link> and
+      Triggers now support two new features,
+      SQL-compliant <link
+      linkend="SQL-CREATETRIGGER">per-column triggers</link>, and
       conditional trigger execution.
      </para>
     </listitem>
@@ -98,46 +101,26 @@
 
     <listitem>
      <para>
-      <link linkend="ddl-constraints-exclusion">Exclusion constraints</link>.
-      These provide a generalized version of unique constraints, allowing
-      enforcement of complex conditions.
-     </para>
-    </listitem>
-
-    <listitem>
-     <para>
-      New and enhanced security features, including RADIUS authentication,
-      LDAP authentication improvements, and a new contrib module
-      <link linkend="passwordcheck"><filename>passwordcheck</></link>
+      New and enhanced security features, including <link linkend="client-authentication">RADIUS authentication</link>,
+      LDAP authentication improvements, and the new <link linkend="passwordcheck">passwordcheck</link> optional module
       for testing password strength.
      </para>
     </listitem>
 
     <listitem>
      <para>
-      New high-performance implementation of the
-      <link linkend="SQL-LISTEN"><command>LISTEN</></link>/<link
-      linkend="SQL-NOTIFY"><command>NOTIFY</></link> feature.
-      Pending events are now stored in a memory-based queue rather than
-      a table.  Also, a <quote>payload</> string can be sent with each
-      event, rather than transmitting just an event name as before.
+      The <link linkend="SQL-LISTEN"><command>LISTEN</></link>/<link
+      linkend="SQL-NOTIFY"><command>NOTIFY</></link>
+      feature has been overhauled to make it into
+      a high-performance event queuing system.  It now stores
+      events in a memory-based queue, and it now allows delivery
+      of a string payload to listeners with each event.
      </para>
     </listitem>
 
     <listitem>
      <para>
-      New implementation of
-      <link linkend="SQL-VACUUM"><command>VACUUM FULL</></link>.
-      This command now rewrites the entire table and indexes, rather than
-      moving individual rows to compact space.  It is substantially faster
-      in most cases, and no longer results in index bloat.
-     </para>
-    </listitem>
-
-    <listitem>
-     <para>
-      New contrib module
-      <link linkend="pgupgrade"><filename>pg_upgrade</></link>
+      Add <link linkend="pgupgrade"><filename>/contrib/pg_upgrade</></link>
       to support in-place upgrades from 8.3 or 8.4 to 9.0.
      </para>
     </listitem>
@@ -145,24 +128,41 @@
     <listitem>
      <para>
       Multiple performance enhancements for specific types of queries,
-      including elimination of unnecessary joins.  This helps optimize some
-      automatically-generated queries, such as those produced by
-      object-relational mappers (ORMs).
+      including join elimination, which optimizes automatically generated
+      queries, such as those produced by object-relational mappers (ORMs).
      </para>
     </listitem>
 
     <listitem>
      <para>
-      <link linkend="SQL-EXPLAIN "><command>EXPLAIN</></link> enhancements.
-      The output is now available in JSON, XML, or YAML format, and includes
+      <link linkend="ddl-constraints-exclusion">Exclusion constraints</link>
+      let database designers define uniqueness based on complex
+      criteria, including for non-scalar data such as time periods,
+      ranges and arrays.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      As part of our decade-long effort to eliminate the pain of VACUUM,
+      <link linkend="vacuum-for-space-recovery"><command>VACUUM FULL</></link>
+      is now substantially faster by rewriting the entire table and
+      indexes, rather than moving around single rows to compact space.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      <link linkend="using-explain"><command>EXPLAIN</command></link>
+      plans are now available in JSON, XML and YAML format, and include
       buffer utilization and other data not previously available.
      </para>
     </listitem>
 
     <listitem>
      <para>
-      <link linkend="hstore"><filename>hstore</></link> improvements,
-      including new functions and greater data capacity.
+      The <link linkend="hstore">HStore optional module</link> has been improved with new functions and greater
+      data capacity to make it a high-performance key-value store.
      </para>
     </listitem>
 
@@ -1653,7 +1653,8 @@
 
      <listitem>
       <para>
-       Allow aggregate functions to use <literal>ORDER BY</> (Andrew
+       Allow aggregate functions to use <link
+       linkend="syntax-aggregates"><literal>ORDER BY</></> (Andrew
        Gierth)
       </para>
 
