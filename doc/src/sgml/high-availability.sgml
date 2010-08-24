@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/high-availability.sgml,v 1.79 2010/08/17 04:37:20 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/high-availability.sgml,v 1.80 2010/08/24 15:22:12 momjian Exp $ -->
 
 <chapter id="high-availability">
  <title>High Availability, Load Balancing, and Replication</title>
@@ -1957,7 +1957,7 @@ psql -c "select pg_last_xlog_replay_location();" > /path/to/backup/end_location
       progress of the recovery with the stored backup ending WAL location:
       the server is not consistent until recovery has reached the backup end
       location. The progress of the recovery can also be observed with the
-      <function>pg_last_xlog_replay_location</> function, but that required
+      <function>pg_last_xlog_replay_location</> function, though that requires
       connecting to the server while it might not be consistent yet, so
       care should be taken with that method.
      </para>
