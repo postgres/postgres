@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/explain.c,v 1.207 2010/07/13 20:57:19 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/explain.c,v 1.208 2010/08/24 21:20:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -59,6 +59,9 @@ static void ExplainNode(PlanState *planstate, List *ancestors,
 			ExplainState *es);
 static void show_plan_tlist(PlanState *planstate, List *ancestors,
 							ExplainState *es);
+static void show_expression(Node *node, const char *qlabel,
+				PlanState *planstate, List *ancestors,
+				bool useprefix, ExplainState *es);
 static void show_qual(List *qual, const char *qlabel,
 					  PlanState *planstate, List *ancestors,
 					  bool useprefix, ExplainState *es);
@@ -1017,11 +1020,17 @@ ExplainNode(PlanState *planstate, List *ancestors,
 						   "Recheck Cond", planstate, ancestors, es);
 			/* FALL THRU */
 		case T_SeqScan:
-		case T_FunctionScan:
 		case T_ValuesScan:
 		case T_CteScan:
 		case T_WorkTableScan:
 		case T_SubqueryScan:
+			show_scan_qual(plan->qual, "Filter", planstate, ancestors, es);
+			break;
+		case T_FunctionScan:
+			if (es->verbose)
+				show_expression(((FunctionScan *) plan)->funcexpr,
+								"Function Call", planstate, ancestors,
+								es->verbose, es);
 			show_scan_qual(plan->qual, "Filter", planstate, ancestors, es);
 			break;
 		case T_TidScan:
@@ -1282,23 +1291,15 @@ show_plan_tlist(PlanState *planstate, List *ancestors, ExplainState *es)
 }
 
 /*
- * Show a qualifier expression
+ * Show a generic expression
  */
 static void
-show_qual(List *qual, const char *qlabel,
-		  PlanState *planstate, List *ancestors,
-		  bool useprefix, ExplainState *es)
+show_expression(Node *node, const char *qlabel,
+				PlanState *planstate, List *ancestors,
+				bool useprefix, ExplainState *es)
 {
 	List	   *context;
-	Node	   *node;
 	char	   *exprstr;
-
-	/* No work if empty qual */
-	if (qual == NIL)
-		return;
-
-	/* Convert AND list to explicit AND */
-	node = (Node *) make_ands_explicit(qual);
 
 	/* Set up deparsing context */
 	context = deparse_context_for_planstate((Node *) planstate,
@@ -1310,6 +1311,27 @@ show_qual(List *qual, const char *qlabel,
 
 	/* And add to es->str */
 	ExplainPropertyText(qlabel, exprstr, es);
+}
+
+/*
+ * Show a qualifier expression (which is a List with implicit AND semantics)
+ */
+static void
+show_qual(List *qual, const char *qlabel,
+		  PlanState *planstate, List *ancestors,
+		  bool useprefix, ExplainState *es)
+{
+	Node	   *node;
+
+	/* No work if empty qual */
+	if (qual == NIL)
+		return;
+
+	/* Convert AND list to explicit AND */
+	node = (Node *) make_ands_explicit(qual);
+
+	/* And show it */
+	show_expression(node, qlabel, planstate, ancestors, useprefix, es);
 }
 
 /*
