@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/port/sysv_shmem.c,v 1.57 2010/07/06 19:18:57 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/port/sysv_shmem.c,v 1.57.2.1 2010/08/25 20:10:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -135,7 +135,13 @@ InternalIpcMemoryCreate(IpcMemoryKey memKey, Size size)
 		}
 
 		/*
-		 * Else complain and abort
+		 * Else complain and abort.
+		 *
+		 * Note: at this point EINVAL should mean that either SHMMIN or SHMMAX
+		 * is violated.  SHMALL violation might be reported as either ENOMEM
+		 * (BSDen) or ENOSPC (Linux); the Single Unix Spec fails to say which
+		 * it should be.  SHMMNI violation is ENOSPC, per spec.  Just plain
+		 * not-enough-RAM is ENOMEM.
 		 */
 		ereport(FATAL,
 				(errmsg("could not create shared memory segment: %m"),
@@ -157,7 +163,9 @@ InternalIpcMemoryCreate(IpcMemoryKey memKey, Size size)
 						 (unsigned long) size, NBuffers, MaxBackends) : 0,
 				 (errno == ENOMEM) ?
 				 errhint("This error usually means that PostgreSQL's request for a shared "
-				   "memory segment exceeded available memory or swap space. "
+				   "memory segment exceeded available memory or swap space, "
+						 "or exceeded your kernel's SHMALL parameter.  You can either "
+						 "reduce the request size or reconfigure the kernel with larger SHMALL.  "
 				  "To reduce the request size (currently %lu bytes), reduce "
 			   "PostgreSQL's shared_buffers parameter (currently %d) and/or "
 						 "its max_connections parameter (currently %d).\n"
