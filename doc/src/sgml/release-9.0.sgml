@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release-9.0.sgml,v 2.39.2.9 2010/08/24 23:45:37 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release-9.0.sgml,v 2.39.2.10 2010/08/25 00:48:06 tgl Exp $ -->
 
  <sect1 id="release-9-0">
   <title>Release 9.0</title>
@@ -8,7 +8,7 @@
    <simpara>2010-??-??</simpara>
   </note>
 
-  <para>CURRENT AS OF 2010-07-29</para>
+  <para>CURRENT AS OF 2010-08-24</para>
 
   <sect2>
    <title>Overview</title>
@@ -273,6 +273,19 @@
       linkend="guc-bytea-output"><varname>bytea_output</></link> can be
       used to select the traditional output format if needed for
       compatibility.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Array input now considers only plain ASCII whitespace characters
+      to be potentially ignorable; it will never ignore non-ASCII characters,
+      even if they are whitespace according to some locales (Tom Lane)
+     </para>
+
+     <para>
+      This avoids some corner cases where array values could be interpreted
+      differently depending on the server's locale settings.
      </para>
     </listitem>
 
@@ -1115,6 +1128,14 @@
       </para>
      </listitem>
 
+     <listitem>
+      <para>
+       Fix failure of <literal>ALTER TABLE <replaceable>table</> ADD COLUMN
+       <replaceable>col</> serial</literal> when done by non-owner of table
+       (Tom Lane)
+      </para>
+     </listitem>
+
     </itemizedlist>
 
    </sect4>
@@ -1688,7 +1709,7 @@
      <listitem>
       <para>
        Allow aggregate functions to use <link
-       linkend="syntax-aggregates"><literal>ORDER BY</></> (Andrew Gierth)
+       linkend="syntax-aggregates"><literal>ORDER BY</></link> (Andrew Gierth)
       </para>
 
       <para>
@@ -2379,6 +2400,17 @@ if TG_OP = 'INSERT' AND NEW.col1 = ... then
       </para>
      </listitem>
 
+     <listitem>
+      <para>
+       <application>pg_restore</> now complains if any command-line arguments
+       remain after the switches and optional file name (Tom Lane)
+      </para>
+
+      <para>
+       Previously, it silently ignored any such arguments.
+      </para>
+     </listitem>
+
     </itemizedlist>
 
    </sect4>
@@ -3064,6 +3096,21 @@ if TG_OP = 'INSERT' AND NEW.col1 = ... then
        Require calls of <function>fastgetattr()</> and
        <function>heap_getattr()</> backend macros to provide a non-NULL fourth
        argument (Robert Haas)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Custom typanalyze functions should no longer rely on
+       <structname>VacAttrStats</>.<structfield>attr</> to determine the type
+       of data they will be passed (Tom Lane)
+      </para>
+
+      <para>
+       This was changed to allow collection of statistics on index columns
+       for which the storage type is different from the underlying column
+       data type.  There are new fields that tell the actual datatype being
+       analyzed.
       </para>
      </listitem>
 
