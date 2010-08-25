@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/high-availability.sgml,v 1.80 2010/08/24 15:22:12 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/high-availability.sgml,v 1.81 2010/08/25 23:55:54 momjian Exp $ -->
 
 <chapter id="high-availability">
  <title>High Availability, Load Balancing, and Replication</title>
@@ -1889,96 +1889,5 @@ LOG:  database system is ready to accept read only connections
   </sect2>
 
  </sect1>
-
-  <sect1 id="backup-incremental-updated">
-   <title>Incrementally Updated Backups</title>
-
-  <indexterm zone="high-availability">
-   <primary>incrementally updated backups</primary>
-  </indexterm>
-
-  <indexterm zone="high-availability">
-   <primary>change accumulation</primary>
-  </indexterm>
-
-   <para>
-    In a standby configuration, it is possible to offload the expense of
-    taking periodic base backups from the primary server; instead base backups
-    can be made by backing
-    up a standby server's files.  This concept is generally known as
-    incrementally updated backups, log change accumulation, or more simply,
-    change accumulation.
-   </para>
-
-   <para>
-    If we take a file system backup of the standby server's data
-    directory while it is processing
-    logs shipped from the primary, we will be able to reload that backup and
-    restart the standby's recovery process from the last restart point.
-    We no longer need to keep WAL files from before the standby's restart point.
-    If recovery is needed, it will be faster to recover from the incrementally
-    updated backup than from the original base backup.
-   </para>
-
-   <para>
-    The procedure for taking a file system backup of the standby server's
-    data directory while it's processing logs shipped from the primary is:
-   <orderedlist>
-    <listitem>
-     <para>
-      Perform the backup, without using <function>pg_start_backup</> and
-      <function>pg_stop_backup</>. Note that the <filename>pg_control</>
-      file must be backed up <emphasis>first</>, as in:
-<programlisting>
-cp /var/lib/pgsql/data/global/pg_control /tmp
-cp -r /var/lib/pgsql/data /path/to/backup
-mv /tmp/pg_control /path/to/backup/data/global
-</programlisting>
-      <filename>pg_control</> contains the location where WAL replay will
-      begin after restoring from the backup; backing it up first ensures
-      that it points to the last restartpoint when the backup started, not
-      some later restartpoint that happened while files were copied to the
-      backup.
-     </para>
-    </listitem>
-    <listitem>
-     <para>
-      Make note of the backup ending WAL location by calling the <function>
-      pg_last_xlog_replay_location</> function at the end of the backup,
-      and keep it with the backup.
-<programlisting>
-psql -c "select pg_last_xlog_replay_location();" > /path/to/backup/end_location
-</programlisting>
-      When recovering from the incrementally updated backup, the server
-      can begin accepting connections and complete the recovery successfully
-      before the database has become consistent. To avoid that, you must
-      ensure the database is consistent before users try to connect to the
-      server and when the recovery ends. You can do that by comparing the
-      progress of the recovery with the stored backup ending WAL location:
-      the server is not consistent until recovery has reached the backup end
-      location. The progress of the recovery can also be observed with the
-      <function>pg_last_xlog_replay_location</> function, though that requires
-      connecting to the server while it might not be consistent yet, so
-      care should be taken with that method.
-     </para>
-     <para>
-     </para>
-    </listitem>
-   </orderedlist>
-   </para>
-
-   <para>
-    Since the standby server is not <quote>live</>, it is not possible to
-    use <function>pg_start_backup()</> and <function>pg_stop_backup()</>
-    to manage the backup process; it will be up to you to determine how
-    far back you need to keep WAL segment files to have a recoverable
-    backup. That is determined by the last restartpoint when the backup
-    was taken, any WAL older than that can be deleted from the archive
-    once the backup is complete. You can determine the last restartpoint
-    by running <application>pg_controldata</> on the standby server before
-    taking the backup, or by using the <varname>log_checkpoints</> option
-    to print values to the standby's server log.
-   </para>
-  </sect1>
 
 </chapter>
