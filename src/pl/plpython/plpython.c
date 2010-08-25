@@ -29,7 +29,7 @@
  * MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.66.2.9 2010/04/30 19:16:10 tgl Exp $
+ *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.66.2.10 2010/08/25 19:37:34 petere Exp $
  *
  *********************************************************************
  */
@@ -967,6 +967,8 @@ PLy_procedure_get(FunctionCallInfo fcinfo, Oid tgreloid)
 			elog(FATAL, "expected a PyCObject, didn't get one");
 
 		proc = PyCObject_AsVoidPtr(plproc);
+		if (!proc)
+			PLy_elog(ERROR, "PyCObject_AsVoidPtr() failed");
 		if (proc->me != plproc)
 			elog(FATAL, "proc->me != plproc");
 		/* did we find an up-to-date cache entry? */
@@ -1135,8 +1137,11 @@ PLy_procedure_create(FunctionCallInfo fcinfo, Oid tgreloid,
 		PLy_procedure_compile(proc, procSource);
 
 		pfree(procSource);
+		procSource = NULL;
 
 		proc->me = PyCObject_FromVoidPtr(proc, NULL);
+		if (!proc->me)
+			PLy_elog(ERROR, "PyCObject_FromVoidPtr() failed");
 		PyDict_SetItemString(PLy_procedure_cache, key, proc->me);
 	}
 	PG_CATCH();
