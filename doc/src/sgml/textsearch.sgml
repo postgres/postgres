@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/textsearch.sgml,v 1.56.2.1 2010/07/29 19:34:37 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/textsearch.sgml,v 1.56.2.2 2010/08/25 21:43:01 tgl Exp $ -->
 
 <chapter id="textsearch">
  <title>Full Text Search</title>
@@ -112,7 +112,7 @@
      as a sorted array of normalized lexemes. Along with the lexemes it is
      often desirable to store positional information to use for
      <firstterm>proximity ranking</firstterm>, so that a document that
-     contains a more <quote>dense</> region of query words is 
+     contains a more <quote>dense</> region of query words is
      assigned a higher rank than one with scattered query words.
     </para>
    </listitem>
@@ -1151,13 +1151,13 @@ MaxFragments=0, FragmentDelimiter=" ... "
 <screen>
 SELECT ts_headline('english',
   'The most common type of search
-is to find all documents containing given query terms 
+is to find all documents containing given query terms
 and return them in order of their similarity to the
 query.',
   to_tsquery('query &amp; similarity'));
                         ts_headline                         
 ------------------------------------------------------------
- containing given &lt;b&gt;query&lt;/b&gt; terms 
+ containing given &lt;b&gt;query&lt;/b&gt; terms
  and return them in order of their &lt;b&gt;similarity&lt;/b&gt; to the
  &lt;b&gt;query&lt;/b&gt;.
 
@@ -1166,7 +1166,7 @@ SELECT ts_headline('english',
 is to find all documents containing given query terms
 and return them in order of their similarity to the
 query.',
-  to_tsquery('query &amp; similarity'), 
+  to_tsquery('query &amp; similarity'),
   'StartSel = &lt;, StopSel = &gt;');
                       ts_headline                      
 -------------------------------------------------------
@@ -2066,6 +2066,14 @@ SELECT alias, description, token FROM ts_debug('http://example.com/stuff/index.h
     </listitem>
     <listitem>
      <para>
+      a single lexeme with the <literal>TSL_FILTER</> flag set, to replace
+      the original token with a new token to be passed to subsequent
+      dictionaries (a dictionary that does this is called a
+      <firstterm>filtering dictionary</>)
+     </para>
+    </listitem>
+    <listitem>
+     <para>
       an empty array if the dictionary knows the token, but it is a stop word
      </para>
     </listitem>
@@ -2096,6 +2104,13 @@ SELECT alias, description, token FROM ts_debug('http://example.com/stuff/index.h
    until some dictionary recognizes it as a known word.  If it is identified
    as a stop word, or if no dictionary recognizes the token, it will be
    discarded and not indexed or searched for.
+   Normally, the first dictionary that returns a non-<literal>NULL</>
+   output determines the result, and any remaining dictionaries are not
+   consulted; but a filtering dictionary can replace the given word
+   with a modified word, which is then passed to subsequent dictionaries.
+  </para>
+
+  <para>
    The general rule for configuring a list of dictionaries
    is to place first the most narrow, most specific dictionary, then the more
    general dictionaries, finishing with a very general dictionary, like
@@ -2110,6 +2125,16 @@ SELECT alias, description, token FROM ts_debug('http://example.com/stuff/index.h
 ALTER TEXT SEARCH CONFIGURATION astro_en
     ADD MAPPING FOR asciiword WITH astrosyn, english_ispell, english_stem;
 </programlisting>
+  </para>
+
+  <para>
+   A filtering dictionary can be placed anywhere in the list, except at the
+   end where it'd be useless.  Filtering dictionaries are useful to partially
+   normalize words to simplify the task of later dictionaries.  For example,
+   a filtering dictionary could be used to remove accents from accented
+   letters, as is done by the
+   <link linkend="unaccent"><filename>contrib/unaccent</></link>
+   extension module.
   </para>
 
   <sect2 id="textsearch-stopwords">
@@ -2184,7 +2209,7 @@ CREATE TEXT SEARCH DICTIONARY public.simple_dict (
     Here, <literal>english</literal> is the base name of a file of stop words.
     The file's full name will be
     <filename>$SHAREDIR/tsearch_data/english.stop</>,
-    where <literal>$SHAREDIR</> means the 
+    where <literal>$SHAREDIR</> means the
     <productname>PostgreSQL</productname> installation's shared-data directory,
     often <filename>/usr/local/share/postgresql</> (use <command>pg_config
     --sharedir</> to determine it if you're not sure).
@@ -2295,63 +2320,6 @@ SELECT * FROM ts_debug('english', 'Paris');
  asciiword | Word, all ASCII | Paris | {my_synonym,english_stem} | my_synonym | {paris}
 </screen>
    </para>
-   
-   <para>
-    An asterisk (<literal>*</literal>) at the end of definition word indicates 
-    that definition word is a prefix, and <function>to_tsquery()</function> 
-    function will transform that definition to the prefix search format (see 
-    <xref linkend="textsearch-parsing-queries">). 
-    Notice that it is ignored in <function>to_tsvector()</function>.
-   </para>
-
-   <para>
-    Contents of <filename>$SHAREDIR/tsearch_data/synonym_sample.syn</>:
-<programlisting>
-postgres        pgsql
-postgresql      pgsql
-postgre pgsql
-gogle   googl
-indices index*
-</programlisting>
-   </para>
-
-   <para>
-    Results:
-<screen>
-=# CREATE TEXT SEARCH DICTIONARY syn (template=synonym, synonyms='synonym_sample');
-=# SELECT ts_lexize('syn','indices');
- ts_lexize
------------
- {index}
-(1 row)
-
-=# CREATE TEXT SEARCH CONFIGURATION tst (copy=simple);
-=# ALTER TEXT SEARCH CONFIGURATION tst ALTER MAPPING FOR asciiword WITH syn;
-=# SELECT to_tsquery('tst','indices');
- to_tsquery
-------------
- 'index':*
-(1 row)
-
-=# SELECT 'indexes are very useful'::tsvector;
-            tsvector             
----------------------------------
- 'are' 'indexes' 'useful' 'very'
-(1 row)
-
-=# SELECT 'indexes are very useful'::tsvector @@ to_tsquery('tst','indices');
- ?column?
-----------
- t
-(1 row)
-
-=# SELECT to_tsvector('tst','indices');
- to_tsvector
--------------
- 'index':1
-(1 row)
-</screen>
-   </para>
 
    <para>
     The only parameter required by the <literal>synonym</> template is
@@ -2373,6 +2341,60 @@ indices index*
     are folded to lower case, as are input tokens.  When it is
     <literal>true</>, words and tokens are not folded to lower case,
     but are compared as-is.
+   </para>
+
+   <para>
+    An asterisk (<literal>*</literal>) can be placed at the end of a synonym
+    in the configuration file.  This indicates that the synonym is a prefix.
+    The asterisk is ignored when the entry is used in
+    <function>to_tsvector()</function>, but when it is used in
+    <function>to_tsquery()</function>, the result will be a query item with
+    the prefix match marker (see
+    <xref linkend="textsearch-parsing-queries">).
+    For example, suppose we have these entries in
+    <filename>$SHAREDIR/tsearch_data/synonym_sample.syn</>:
+<programlisting>
+postgres        pgsql
+postgresql      pgsql
+postgre pgsql
+gogle   googl
+indices index*
+</programlisting>
+    Then we will get these results:
+<screen>
+mydb=# CREATE TEXT SEARCH DICTIONARY syn (template=synonym, synonyms='synonym_sample');
+mydb=# SELECT ts_lexize('syn','indices');
+ ts_lexize
+-----------
+ {index}
+(1 row)
+
+mydb=# CREATE TEXT SEARCH CONFIGURATION tst (copy=simple);
+mydb=# ALTER TEXT SEARCH CONFIGURATION tst ALTER MAPPING FOR asciiword WITH syn;
+mydb=# SELECT to_tsvector('tst','indices');
+ to_tsvector
+-------------
+ 'index':1
+(1 row)
+
+mydb=# SELECT to_tsquery('tst','indices');
+ to_tsquery
+------------
+ 'index':*
+(1 row)
+
+mydb=# SELECT 'indexes are very useful'::tsvector;
+            tsvector             
+---------------------------------
+ 'are' 'indexes' 'useful' 'very'
+(1 row)
+
+mydb=# SELECT 'indexes are very useful'::tsvector @@ to_tsquery('tst','indices');
+ ?column?
+----------
+ t
+(1 row)
+</screen>
    </para>
   </sect2>
 
@@ -3270,7 +3292,7 @@ CREATE INDEX <replaceable>name</replaceable> ON <replaceable>table</replaceable>
    (<productname>PostgreSQL</productname> does this automatically when needed.)
    GiST indexes are lossy because each document is represented in the
    index by a fixed-length signature. The signature is generated by hashing
-   each word into a random bit in an n-bit string, with all these bits OR-ed
+   each word into a single bit in an n-bit string, with all these bits OR-ed
    together to produce an n-bit document signature.  When two words hash to
    the same bit position there will be a false match.  If all words in
    the query have matches (real or false) then the table row must be

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/unaccent.sgml,v 1.3.6.3 2010/08/25 02:12:11 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/unaccent.sgml,v 1.3.6.4 2010/08/25 21:43:01 tgl Exp $ -->
 
 <sect1 id="unaccent">
  <title>unaccent</title>
@@ -75,8 +75,10 @@
   <para>
    Running the installation script <filename>unaccent.sql</> creates a text
    search template <literal>unaccent</> and a dictionary <literal>unaccent</>
-   based on it, with default parameters.  You can alter the
-   parameters, for example
+   based on it.  The <literal>unaccent</> dictionary has the default
+   parameter setting <literal>RULES='unaccent'</>, which makes it immediately
+   usable with the standard <filename>unaccent.rules</> file.
+   If you wish, you can alter the parameter, for example
 
 <programlisting>
 mydb=# ALTER TEXT SEARCH DICTIONARY unaccent (RULES='my_rules');
