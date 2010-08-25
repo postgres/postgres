@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release-9.0.sgml,v 2.53 2010/08/25 00:47:57 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release-9.0.sgml,v 2.54 2010/08/25 19:41:38 momjian Exp $ -->
 
  <sect1 id="release-9-0">
   <title>Release 9.0</title>
@@ -189,8 +189,9 @@
   <para>
    Version 9.0 contains a number of changes that selectively break backwards
    compatibility in order to support new features and code quality
-   improvements.  Particularly, users who make extensive use of PL/pgSQL
-   and/or PITR and Warm Standby should test their solutions for breakage.
+   improvements.  Also, users who make extensive use of PL/pgSQL,
+   Point-In-Time Recovery (PITR), and Warm Standby should test their
+   solutions because of slight user-visible changes in these areas.
    Observe the following incompatibilities:
   </para>
 
@@ -217,9 +218,12 @@
 
     <listitem>
      <para>
-      Replace server parameter <varname>archive_mode</> with
-      <link linkend="guc-wal-level"><varname>wal_level</></link>
-      (Heikki Linnakangas)
+      <link linkend="guc-archive-mode"><varname>archive_mode</></link>
+      now only affects <link
+      linkend="guc-archive-command"><varname>archive_command</></link>;
+      a new setting, <link
+      linkend="guc-wal-level"><varname>wal_level</></link>, affects
+      the contents of the write-ahead log (Heikki Linnakangas)
      </para>
     </listitem>
 
