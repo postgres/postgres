@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.226 2010/08/17 04:37:20 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.227 2010/08/25 18:18:41 petere Exp $ -->
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
  -->
@@ -1441,6 +1441,16 @@
       <entry>
        The OID of the data type that corresponds to this table's row type,
        if any (zero for indexes, which have no <structname>pg_type</> entry)
+      </entry>
+     </row>
+
+     <row>
+      <entry><structfield>reloftype</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry><literal><link linkend="catalog-pg-type"><structname>pg_type</structname></link>.oid</literal></entry>
+      <entry>
+       For typed tables, the OID of the underlying composite type,
+       zero for all other relations
       </entry>
      </row>
 
