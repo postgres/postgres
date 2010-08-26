@@ -30,7 +30,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/libpq/pqcomm.c,v 1.212 2010/07/08 16:19:50 mha Exp $
+ *	$PostgreSQL: pgsql/src/backend/libpq/pqcomm.c,v 1.213 2010/08/26 22:00:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -484,6 +484,11 @@ Lock_AF_UNIX(unsigned short portNumber, char *unixSocketName)
 
 	/*
 	 * Grab an interlock file associated with the socket file.
+	 *
+	 * Note: there are two reasons for using a socket lock file, rather than
+	 * trying to interlock directly on the socket itself.  First, it's a lot
+	 * more portable, and second, it lets us remove any pre-existing socket
+	 * file without race conditions.
 	 */
 	CreateSocketLockFile(sock_path, true);
 
