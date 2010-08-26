@@ -13,10 +13,10 @@ GRANT ALL ON TABLE deptest TO regression_user, regression_user2;
 -- can't drop neither because they have privileges somewhere
 DROP USER regression_user;
 ERROR:  role "regression_user" cannot be dropped because some objects depend on it
-DETAIL:  access to table deptest
+DETAIL:  privileges for table deptest
 DROP GROUP regression_group;
 ERROR:  role "regression_group" cannot be dropped because some objects depend on it
-DETAIL:  access to table deptest
+DETAIL:  privileges for table deptest
 -- if we revoke the privileges we can drop the group
 REVOKE SELECT ON deptest FROM GROUP regression_group;
 DROP GROUP regression_group;
@@ -24,7 +24,7 @@ DROP GROUP regression_group;
 REVOKE SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES ON deptest FROM regression_user;
 DROP USER regression_user;
 ERROR:  role "regression_user" cannot be dropped because some objects depend on it
-DETAIL:  access to table deptest
+DETAIL:  privileges for table deptest
 -- now we are OK to drop him
 REVOKE TRIGGER ON deptest FROM regression_user;
 DROP USER regression_user;
@@ -110,7 +110,7 @@ REASSIGN OWNED BY regression_user1 TO regression_user2;
 -- doesn't work: grant still exists
 DROP USER regression_user1;
 ERROR:  role "regression_user1" cannot be dropped because some objects depend on it
-DETAIL:  access to table deptest1
+DETAIL:  privileges for table deptest1
 DROP OWNED BY regression_user1;
 DROP USER regression_user1;
 \set VERBOSITY terse
