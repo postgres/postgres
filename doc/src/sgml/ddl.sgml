@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ddl.sgml,v 1.93.2.2 2010/08/23 02:43:35 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ddl.sgml,v 1.93.2.3 2010/08/26 21:08:43 tgl Exp $ -->
 
 <chapter id="ddl">
  <title>Data Definition</title>
@@ -544,6 +544,11 @@ CREATE TABLE products (
 </programlisting>
    </para>
 
+   <para>
+    Adding a unique constraint will automatically create a unique btree
+    index on the column or group of columns used in the constraint.
+   </para>
+
    <indexterm>
     <primary>null value</primary>
     <secondary sortas="unique constraints">with unique constraints</secondary>
@@ -620,6 +625,11 @@ CREATE TABLE example (
     a GUI application that allows modifying row values probably needs
     to know the primary key of a table to be able to identify rows
     uniquely.
+   </para>
+
+   <para>
+    Adding a primary key will automatically create a unique btree index
+    on the column or group of columns used in the primary key.
    </para>
 
    <para>
@@ -832,6 +842,16 @@ CREATE TABLE order_items (
    </para>
 
    <para>
+    Since a <command>DELETE</command> of a row from the referenced table
+    or an <command>UPDATE</command> of a referenced column will require
+    a scan of the referencing table for rows matching the old value, it
+    is often a good idea to index the referencing columns.  Because this
+    is not always needed, and there are many choices available on how
+    to index, declaration of a foreign key constraint does not
+    automatically create an index on the referencing columns.
+   </para>
+
+   <para>
     More information about updating and deleting data is in <xref
     linkend="dml">.
    </para>
@@ -874,6 +894,11 @@ CREATE TABLE circles (
    <para>
     See also <link linkend="SQL-CREATETABLE-EXCLUDE"><command>CREATE
     TABLE ... CONSTRAINT ... EXCLUDE</></link> for details.
+   </para>
+
+   <para>
+    Adding an exclusion constraint will automatically create an index
+    of the type specified in the constraint declaration.
    </para>
   </sect2>
  </sect1>
