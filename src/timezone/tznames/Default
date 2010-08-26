@@ -4,7 +4,7 @@
 # timezone_abbreviations to 'Default'.  See the `Date/Time Support'
 # appendix in the PostgreSQL documentation for more information.
 #
-# $PostgreSQL: pgsql/src/timezone/tznames/Default,v 1.2.2.6 2010/05/11 22:37:12 tgl Exp $
+# $PostgreSQL: pgsql/src/timezone/tznames/Default,v 1.2.2.7 2010/08/26 19:59:15 tgl Exp $
 
 
 #################### AFRICA ####################
@@ -661,6 +661,8 @@ CHADT   49500 D  # Chatham Daylight Time (New Zealand)
                  #     (Pacific/Chatham)
 CHAST   45900    # Chatham Standard Time (New Zealand)
                  #     (Pacific/Chatham)
+CHUT    36000    # Chuuk Time
+                 #     (Pacific/Chuuk)
 CKT     43200    # Cook Islands Time (not in zic)
 EASST  -18000 D  # Easter Island Summer Time (Chile)
                  #     (Pacific/Easter)
@@ -712,7 +714,7 @@ TAHT   -36000    # Tahiti Time (zic says "TAHT", other sources "THAT")
 TKT    -36000    # Tokelau Time
                  #     (Pacific/Fakaofo)
 TOT     46800    # Tonga Time (not in zic)
-TRUT    36000    # Truk Time (zic says "TRUT", other souces say "TRUK")
+TRUT    36000    # Truk Time (zic used to say "TRUT", other sources say "TRUK")
                  #     (Pacific/Truk)
 TVT     43200    # Tuvalu Time
                  #     (Pacific/Funafuti)
