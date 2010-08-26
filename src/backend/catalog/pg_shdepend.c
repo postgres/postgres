@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_shdepend.c,v 1.43 2010/07/06 19:18:56 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_shdepend.c,v 1.43.2.1 2010/08/26 19:49:41 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1067,7 +1067,7 @@ storeObjectDescription(StringInfo descs, objectType type,
 			if (deptype == SHARED_DEPENDENCY_OWNER)
 				appendStringInfo(descs, _("owner of %s"), objdesc);
 			else if (deptype == SHARED_DEPENDENCY_ACL)
-				appendStringInfo(descs, _("access to %s"), objdesc);
+				appendStringInfo(descs, _("privileges for %s"), objdesc);
 			else
 				elog(ERROR, "unrecognized dependency type: %d",
 					 (int) deptype);

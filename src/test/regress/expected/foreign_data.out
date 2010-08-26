@@ -412,7 +412,7 @@ RESET ROLE;
 DROP ROLE regress_test_indirect;                            -- ERROR
 ERROR:  role "regress_test_indirect" cannot be dropped because some objects depend on it
 DETAIL:  owner of server s1
-access to foreign-data wrapper foo
+privileges for foreign-data wrapper foo
 \des+
                                                               List of foreign servers
  Name |         Owner         | Foreign-data wrapper |            Access privileges            |  Type  | Version |             Options             
@@ -941,8 +941,8 @@ RESET ROLE;
 -- Cleanup
 DROP ROLE regress_test_role;                                -- ERROR
 ERROR:  role "regress_test_role" cannot be dropped because some objects depend on it
-DETAIL:  access to server s4
-access to foreign-data wrapper foo
+DETAIL:  privileges for server s4
+privileges for foreign-data wrapper foo
 owner of user mapping for regress_test_role
 owner of user mapping for regress_test_role
 owner of server s5
@@ -968,7 +968,7 @@ DROP ROLE regress_test_indirect;
 DROP ROLE regress_test_role;
 DROP ROLE unprivileged_role;                                -- ERROR
 ERROR:  role "unprivileged_role" cannot be dropped because some objects depend on it
-DETAIL:  access to foreign-data wrapper postgresql
+DETAIL:  privileges for foreign-data wrapper postgresql
 REVOKE ALL ON FOREIGN DATA WRAPPER postgresql FROM unprivileged_role;
 DROP ROLE unprivileged_role;
 DROP ROLE regress_test_role2;
