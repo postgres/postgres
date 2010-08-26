@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.226.2.3 2010/02/18 18:42:04 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.226.2.4 2010/08/26 18:54:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1723,6 +1723,16 @@ ExecMakeTableFunctionResult(ExprState *funcexpr,
 				HeapTupleHeader td;
 
 				td = DatumGetHeapTupleHeader(result);
+
+				/*
+				 * Verify all returned rows have same subtype; necessary in
+				 * case the type is RECORD.
+				 */
+				if (HeapTupleHeaderGetTypeId(td) != tupdesc->tdtypeid ||
+					HeapTupleHeaderGetTypMod(td) != tupdesc->tdtypmod)
+					ereport(ERROR,
+							(errcode(ERRCODE_DATATYPE_MISMATCH),
+							 errmsg("rows returned by function are not all of the same row type")));
 
 				/*
 				 * tuplestore_puttuple needs a HeapTuple not a bare
