@@ -1,5 +1,5 @@
 # <pre>
-# @(#)backward	8.8
+# @(#)backward	8.9
 # This file is in the public domain, so clarified as of
 # 2009-05-17 by Arthur David Olson.
 
@@ -90,7 +90,9 @@ Link	Pacific/Chatham		NZ-CHAT
 Link	America/Denver		Navajo
 Link	Asia/Shanghai		PRC
 Link	Pacific/Pago_Pago	Pacific/Samoa
-Link	Pacific/Truk		Pacific/Yap
+Link	Pacific/Chuuk		Pacific/Yap
+Link	Pacific/Chuuk		Pacific/Truk
+Link	Pacific/Pohnpei		Pacific/Ponape
 Link	Europe/Warsaw		Poland
 Link	Europe/Lisbon		Portugal
 Link	Asia/Taipei		ROC
