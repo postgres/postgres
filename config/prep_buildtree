@@ -38,4 +38,13 @@ for item in `find "$sourcetree" -name Makefile -print -o -name GNUmakefile -prin
     fi
 done
 
+# We must not auto-create the subdirectories holding built documentation.
+# If we did, it would interfere with installation of prebuilt docs from
+# the source tree, if a VPATH build is done from a distribution tarball.
+# See bug #5595.
+rmdir "$buildtree/doc/src/sgml/html" 2>/dev/null
+rmdir "$buildtree/doc/src/sgml/man1" 2>/dev/null
+rmdir "$buildtree/doc/src/sgml/man3" 2>/dev/null
+rmdir "$buildtree/doc/src/sgml/man7" 2>/dev/null
+
 exit 0
