@@ -1,5 +1,5 @@
 # <pre>
-# @(#)zone.tab	8.36
+# @(#)zone.tab	8.37
 # This file is in the public domain, so clarified as of
 # 2009-05-17 by Arthur David Olson.
 #
@@ -177,8 +177,8 @@ ET	+0902+03842	Africa/Addis_Ababa
 FI	+6010+02458	Europe/Helsinki
 FJ	-1808+17825	Pacific/Fiji
 FK	-5142-05751	Atlantic/Stanley
-FM	+0725+15147	Pacific/Truk	Truk (Chuuk) and Yap
-FM	+0658+15813	Pacific/Ponape	Ponape (Pohnpei)
+FM	+0725+15147	Pacific/Chuuk	Chuuk (Truk) and Yap
+FM	+0658+15813	Pacific/Pohnpei	Pohnpei (Ponape)
 FM	+0519+16259	Pacific/Kosrae	Kosrae
 FO	+6201-00646	Atlantic/Faroe
 FR	+4852+00220	Europe/Paris
