@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/objectaddress.c,v 1.1 2010/08/27 11:47:41 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/objectaddress.c,v 1.2 2010/08/27 21:31:19 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -215,6 +215,10 @@ get_object_address(ObjectType objtype, List *objname, List *objargs,
 			break;
 		default:
 			elog(ERROR, "unrecognized objtype: %d", (int) objtype);
+			/* placate compiler, in case it things elog might return */
+			address.classId = InvalidOid;
+			address.objectId = InvalidOid;
+			address.objectSubId = 0;
 	}
 
 	/*
