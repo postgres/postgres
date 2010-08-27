@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/plancat.c,v 1.163 2010/03/30 21:58:10 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/plancat.c,v 1.164 2010/08/27 20:30:08 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -727,11 +727,7 @@ build_physical_tlist(PlannerInfo *root, RelOptInfo *rel)
 				 * A resjunk column of the subquery can be reflected as
 				 * resjunk in the physical tlist; we need not punt.
 				 */
-				var = makeVar(varno,
-							  tle->resno,
-							  exprType((Node *) tle->expr),
-							  exprTypmod((Node *) tle->expr),
-							  0);
+				var = makeVarFromTargetEntry(varno, tle);
 
 				tlist = lappend(tlist,
 								makeTargetEntry((Expr *) var,

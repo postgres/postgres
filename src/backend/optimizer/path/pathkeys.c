@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/pathkeys.c,v 1.101 2010/02/26 02:00:45 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/pathkeys.c,v 1.102 2010/08/27 20:30:08 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -629,12 +629,7 @@ convert_subquery_pathkeys(PlannerInfo *root, RelOptInfo *rel,
 
 				Assert(list_length(sub_eclass->ec_members) == 1);
 				sub_member = (EquivalenceMember *) linitial(sub_eclass->ec_members);
-				outer_expr = (Expr *)
-					makeVar(rel->relid,
-							tle->resno,
-							exprType((Node *) tle->expr),
-							exprTypmod((Node *) tle->expr),
-							0);
+				outer_expr = (Expr *) makeVarFromTargetEntry(rel->relid, tle);
 
 				/*
 				 * Note: it might look funny to be setting sortref = 0 for a
@@ -712,12 +707,7 @@ convert_subquery_pathkeys(PlannerInfo *root, RelOptInfo *rel,
 					if (equal(tle->expr, sub_expr))
 					{
 						/* Exact match */
-						outer_expr = (Expr *)
-							makeVar(rel->relid,
-									tle->resno,
-									exprType((Node *) tle->expr),
-									exprTypmod((Node *) tle->expr),
-									0);
+						outer_expr = (Expr *) makeVarFromTargetEntry(rel->relid, tle);
 					}
 					else
 					{
@@ -730,12 +720,7 @@ convert_subquery_pathkeys(PlannerInfo *root, RelOptInfo *rel,
 						if (equal(tle_stripped, sub_stripped))
 						{
 							/* Match after discarding RelabelType */
-							outer_expr = (Expr *)
-								makeVar(rel->relid,
-										tle->resno,
-										exprType((Node *) tle->expr),
-										exprTypmod((Node *) tle->expr),
-										0);
+							outer_expr = (Expr *) makeVarFromTargetEntry(rel->relid, tle);
 							if (exprType((Node *) outer_expr) !=
 								exprType((Node *) sub_expr))
 								outer_expr = (Expr *)

@@ -17,7 +17,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.402 2010/02/26 02:00:49 momjian Exp $
+ *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.403 2010/08/27 20:30:08 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -484,11 +484,7 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 				expr = tle->expr;
 			else
 			{
-				Var		   *var = makeVar(rtr->rtindex,
-										  tle->resno,
-										  exprType((Node *) tle->expr),
-										  exprTypmod((Node *) tle->expr),
-										  0);
+				Var		   *var = makeVarFromTargetEntry(rtr->rtindex, tle);
 
 				var->location = exprLocation((Node *) tle->expr);
 				expr = (Expr *) var;

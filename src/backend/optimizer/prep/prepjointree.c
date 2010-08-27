@@ -16,7 +16,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepjointree.c,v 1.73 2010/07/06 19:18:56 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepjointree.c,v 1.74 2010/08/27 20:30:08 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -991,11 +991,7 @@ make_setop_translation_list(Query *query, Index newvarno,
 		if (tle->resjunk)
 			continue;
 
-		vars = lappend(vars, makeVar(newvarno,
-									 tle->resno,
-									 exprType((Node *) tle->expr),
-									 exprTypmod((Node *) tle->expr),
-									 0));
+		vars = lappend(vars, makeVarFromTargetEntry(newvarno, tle));
 	}
 
 	*translated_vars = vars;

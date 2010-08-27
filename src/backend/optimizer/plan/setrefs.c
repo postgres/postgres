@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/setrefs.c,v 1.161 2010/07/12 17:01:06 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/setrefs.c,v 1.162 2010/08/27 20:30:08 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1283,11 +1283,7 @@ search_indexed_tlist_for_non_var(Node *node,
 		/* Found a matching subplan output expression */
 		Var		   *newvar;
 
-		newvar = makeVar(newvarno,
-						 tle->resno,
-						 exprType((Node *) tle->expr),
-						 exprTypmod((Node *) tle->expr),
-						 0);
+		newvar = makeVarFromTargetEntry(newvarno, tle);
 		newvar->varnoold = 0;	/* wasn't ever a plain Var */
 		newvar->varoattno = 0;
 		return newvar;
@@ -1325,11 +1321,7 @@ search_indexed_tlist_for_sortgroupref(Node *node,
 			/* Found a matching subplan output expression */
 			Var		   *newvar;
 
-			newvar = makeVar(newvarno,
-							 tle->resno,
-							 exprType((Node *) tle->expr),
-							 exprTypmod((Node *) tle->expr),
-							 0);
+			newvar = makeVarFromTargetEntry(newvarno, tle);
 			newvar->varnoold = 0;		/* wasn't ever a plain Var */
 			newvar->varoattno = 0;
 			return newvar;

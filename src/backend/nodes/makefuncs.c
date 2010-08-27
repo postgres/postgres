@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/makefuncs.c,v 1.66 2010/01/02 16:57:46 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/makefuncs.c,v 1.67 2010/08/27 20:30:07 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,6 +17,7 @@
 
 #include "catalog/pg_type.h"
 #include "nodes/makefuncs.h"
+#include "nodes/nodeFuncs.h"
 #include "utils/lsyscache.h"
 
 
@@ -88,6 +89,22 @@ makeVar(Index varno,
 	var->location = -1;
 
 	return var;
+}
+
+/*
+ * makeVarFromTargetEntry -
+ *		convenience function to create a same-level Var node from a
+ *		TargetEntry
+ */
+Var *
+makeVarFromTargetEntry(Index varno,
+					   TargetEntry *tle)
+{
+	return makeVar(varno,
+				   tle->resno,
+				   exprType((Node *) tle->expr),
+				   exprTypmod((Node *) tle->expr),
+				   0);
 }
 
 /*
