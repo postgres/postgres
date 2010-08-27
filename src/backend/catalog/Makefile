@@ -2,7 +2,7 @@
 #
 # Makefile for backend/catalog
 #
-# $PostgreSQL: pgsql/src/backend/catalog/Makefile,v 1.78 2010/05/13 11:49:48 petere Exp $
+# $PostgreSQL: pgsql/src/backend/catalog/Makefile,v 1.79 2010/08/27 11:47:41 rhaas Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -11,9 +11,10 @@ top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
 
 OBJS = catalog.o dependency.o heap.o index.o indexing.o namespace.o aclchk.o \
-       pg_aggregate.o pg_constraint.o pg_conversion.o pg_depend.o pg_enum.o \
-       pg_inherits.o pg_largeobject.o pg_namespace.o pg_operator.o pg_proc.o \
-       pg_db_role_setting.o pg_shdepend.o pg_type.o storage.o toasting.o
+       objectaddress.o pg_aggregate.o pg_constraint.o pg_conversion.o \
+       pg_depend.o pg_enum.o pg_inherits.o pg_largeobject.o pg_namespace.o \
+       pg_operator.o pg_proc.o pg_db_role_setting.o pg_shdepend.o pg_type.o \
+       storage.o toasting.o
 
 BKIFILES = postgres.bki postgres.description postgres.shdescription
 

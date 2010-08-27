@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/dependency.h,v 1.45 2010/04/05 01:09:53 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/dependency.h,v 1.46 2010/08/27 11:47:41 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,6 +15,7 @@
 #define DEPENDENCY_H
 
 #include "nodes/parsenodes.h"	/* for DropBehavior */
+#include "catalog/objectaddress.h"
 
 
 /*
@@ -99,17 +100,6 @@ typedef enum SharedDependencyType
 	SHARED_DEPENDENCY_ACL = 'a',
 	SHARED_DEPENDENCY_INVALID = 0
 } SharedDependencyType;
-
-
-/*
- * The two objects related by a dependency are identified by ObjectAddresses.
- */
-typedef struct ObjectAddress
-{
-	Oid			classId;		/* Class Id from pg_class */
-	Oid			objectId;		/* OID of the object */
-	int32		objectSubId;	/* Subitem within object (eg column), or 0 */
-} ObjectAddress;
 
 /* expansible list of ObjectAddresses (private in dependency.c) */
 typedef struct ObjectAddresses ObjectAddresses;
