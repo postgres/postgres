@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.313.2.7 2010/08/17 04:37:17 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.313.2.8 2010/08/29 15:19:12 tgl Exp $ -->
 
 <chapter id="libpq">
  <title><application>libpq</application> - C Library</title>
@@ -1873,9 +1873,7 @@ PGresult *PQprepare(PGconn *conn,
 
     Prepared statements for use with <function>PQexecPrepared</> can also
     be created by executing SQL <xref linkend="sql-prepare">
-    statements.  (But <function>PQprepare</>
-    is more flexible since it does not require parameter types to be
-    pre-specified.)  Also, although there is no <application>libpq</>
+    statements.  Also, although there is no <application>libpq</>
     function for deleting a prepared statement, the SQL <xref
     linkend="sql-deallocate"> statement
     can be used for that purpose.
