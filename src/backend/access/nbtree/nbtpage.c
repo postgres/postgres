@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtpage.c,v 1.123 2010/07/06 19:18:55 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtpage.c,v 1.123.2.1 2010/08/29 19:33:21 tgl Exp $
  *
  *	NOTES
  *	   Postgres btree pages look like ordinary relation pages.	The opaque
@@ -1175,6 +1175,13 @@ _bt_pagedel(Relation rel, Buffer buf, BTStack stack)
 	 */
 	rightsib = opaque->btpo_next;
 	rbuf = _bt_getbuf(rel, rightsib, BT_WRITE);
+	page = BufferGetPage(rbuf);
+	opaque = (BTPageOpaque) PageGetSpecialPointer(page);
+	if (opaque->btpo_prev != target)
+		elog(ERROR, "right sibling's left-link doesn't match: "
+			 "block %u links to %u instead of expected %u in index \"%s\"",
+			 rightsib, opaque->btpo_prev, target,
+			 RelationGetRelationName(rel));
 
 	/*
 	 * Next find and write-lock the current parent of the target page. This is
@@ -1253,6 +1260,38 @@ _bt_pagedel(Relation rel, Buffer buf, BTStack stack)
 	}
 
 	/*
+	 * Check that the parent-page index items we're about to delete/overwrite
+	 * contain what we expect.  This can fail if the index has become
+	 * corrupt for some reason.  We want to throw any error before entering
+	 * the critical section --- otherwise it'd be a PANIC.
+	 *
+	 * The test on the target item is just an Assert because _bt_getstackbuf
+	 * should have guaranteed it has the expected contents.  The test on the
+	 * next-child downlink is known to sometimes fail in the field, though.
+	 */
+	page = BufferGetPage(pbuf);
+	opaque = (BTPageOpaque) PageGetSpecialPointer(page);
+
+#ifdef USE_ASSERT_CHECKING
+	itemid = PageGetItemId(page, poffset);
+	itup = (IndexTuple) PageGetItem(page, itemid);
+	Assert(ItemPointerGetBlockNumber(&(itup->t_tid)) == target);
+#endif
+
+	if (!parent_half_dead)
+	{
+		OffsetNumber nextoffset;
+
+		nextoffset = OffsetNumberNext(poffset);
+		itemid = PageGetItemId(page, nextoffset);
+		itup = (IndexTuple) PageGetItem(page, itemid);
+		if (ItemPointerGetBlockNumber(&(itup->t_tid)) != rightsib)
+			elog(ERROR, "right sibling %u of block %u is not next child %u of block %u in index \"%s\"",
+				 rightsib, target, ItemPointerGetBlockNumber(&(itup->t_tid)),
+				 parent, RelationGetRelationName(rel));
+	}
+
+	/*
 	 * Here we begin doing the deletion.
 	 */
 
@@ -1265,8 +1304,6 @@ _bt_pagedel(Relation rel, Buffer buf, BTStack stack)
 	 * to copy the right sibling's downlink over the target downlink, and then
 	 * delete the following item.
 	 */
-	page = BufferGetPage(pbuf);
-	opaque = (BTPageOpaque) PageGetSpecialPointer(page);
 	if (parent_half_dead)
 	{
 		PageIndexTupleDelete(page, poffset);
@@ -1278,23 +1315,16 @@ _bt_pagedel(Relation rel, Buffer buf, BTStack stack)
 
 		itemid = PageGetItemId(page, poffset);
 		itup = (IndexTuple) PageGetItem(page, itemid);
-		Assert(ItemPointerGetBlockNumber(&(itup->t_tid)) == target);
 		ItemPointerSet(&(itup->t_tid), rightsib, P_HIKEY);
 
 		nextoffset = OffsetNumberNext(poffset);
-		/* This part is just for double-checking */
-		itemid = PageGetItemId(page, nextoffset);
-		itup = (IndexTuple) PageGetItem(page, itemid);
-		if (ItemPointerGetBlockNumber(&(itup->t_tid)) != rightsib)
-			elog(PANIC, "right sibling %u of block %u is not next child of %u in index \"%s\"",
-				 rightsib, target, BufferGetBlockNumber(pbuf),
-				 RelationGetRelationName(rel));
 		PageIndexTupleDelete(page, nextoffset);
 	}
 
 	/*
 	 * Update siblings' side-links.  Note the target page's side-links will
-	 * continue to point to the siblings.
+	 * continue to point to the siblings.  Asserts here are just rechecking
+	 * things we already verified above.
 	 */
 	if (BufferIsValid(lbuf))
 	{
