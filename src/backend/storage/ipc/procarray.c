@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/procarray.c,v 1.72.2.2 2010/08/30 15:20:31 sriggs Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/procarray.c,v 1.72.2.3 2010/08/30 17:30:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -156,7 +156,7 @@ static int	KnownAssignedXidsGet(TransactionId *xarray, TransactionId xmax);
 static int KnownAssignedXidsGetAndSetXmin(TransactionId *xarray,
 							   TransactionId *xmin,
 							   TransactionId xmax);
-static int KnownAssignedXidsGetOldestXmin(void);
+static TransactionId KnownAssignedXidsGetOldestXmin(void);
 static void KnownAssignedXidsDisplay(int trace_level);
 
 /*
@@ -564,7 +564,7 @@ ProcArrayApplyRecoveryInfo(RunningTransactions running)
 
 	/*
 	 * Now we have a copy of any KnownAssignedXids we can zero the array
-	 * before we re-insertion of combined snapshot.
+	 * before we re-insert combined snapshot.
 	 */
 	KnownAssignedXidsRemovePreceding(InvalidTransactionId);
 
@@ -1120,6 +1120,7 @@ GetOldestXmin(bool allDbs, bool ignoreVacuum)
 		 * older than the main procarray.
 		 */
 		TransactionId kaxmin = KnownAssignedXidsGetOldestXmin();
+
 		if (TransactionIdIsNormal(kaxmin) &&
 			TransactionIdPrecedes(kaxmin, result))
 				result = kaxmin;
@@ -3028,7 +3029,11 @@ KnownAssignedXidsGetAndSetXmin(TransactionId *xarray, TransactionId *xmin,
 	return count;
 }
 
-static int
+/*
+ * Get oldest XID in the KnownAssignedXids array, or InvalidTransactionId
+ * if nothing there.
+ */
+static TransactionId
 KnownAssignedXidsGetOldestXmin(void)
 {
 	/* use volatile pointer to prevent code rearrangement */
