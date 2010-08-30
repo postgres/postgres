@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.433 2010/08/30 14:22:05 sriggs Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.434 2010/08/30 15:37:41 sriggs Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3272,9 +3272,6 @@ RemoveOldXlogFiles(uint32 log, uint32 seg, XLogRecPtr endptr)
 #endif
 	struct stat statbuf;
 
-	elog(DEBUG2, "removing WAL segments older than log file %u, segment %u",
-		 log, seg);
-
 	/*
 	 * Initialize info about where to try to recycle to.  We allow recycling
 	 * segments up to XLOGfileslop segments beyond the current XLOG location.
@@ -3290,6 +3287,9 @@ RemoveOldXlogFiles(uint32 log, uint32 seg, XLogRecPtr endptr)
 						XLOGDIR)));
 
 	XLogFileName(lastoff, ThisTimeLineID, log, seg);
+
+	elog(DEBUG2, "attempting to remove WAL segments older than log file %s",
+		 lastoff);
 
 	while ((xlde = ReadDir(xldir, XLOGDIR)) != NULL)
 	{
