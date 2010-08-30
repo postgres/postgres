@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.430.2.2 2010/08/26 19:24:40 alvherre Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.430.2.3 2010/08/30 15:21:18 sriggs Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -7706,10 +7706,14 @@ CreateRestartPoint(int flags)
 	}
 
 	/*
-	 * Currently, there is no need to truncate pg_subtrans during recovery. If
-	 * we did do that, we will need to have called StartupSUBTRANS() already
-	 * and then TruncateSUBTRANS() would go here.
+	 * Truncate pg_subtrans if possible.  We can throw away all data before
+	 * the oldest XMIN of any running transaction.	No future transaction will
+	 * attempt to reference any pg_subtrans entry older than that (see Asserts
+	 * in subtrans.c).	When hot standby is disabled, though, we mustn't do
+	 * this because StartupSUBTRANS hasn't been called yet.
 	 */
+	if (EnableHotStandby)
+		TruncateSUBTRANS(GetOldestXmin(true, false));
 
 	/* All real work is done, but log before releasing lock. */
 	if (log_checkpoints)
