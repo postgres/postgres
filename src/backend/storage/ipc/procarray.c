@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/procarray.c,v 1.72.2.1 2010/08/12 23:25:45 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/procarray.c,v 1.72.2.2 2010/08/30 15:20:31 sriggs Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -156,6 +156,7 @@ static int	KnownAssignedXidsGet(TransactionId *xarray, TransactionId xmax);
 static int KnownAssignedXidsGetAndSetXmin(TransactionId *xarray,
 							   TransactionId *xmin,
 							   TransactionId xmax);
+static int KnownAssignedXidsGetOldestXmin(void);
 static void KnownAssignedXidsDisplay(int trace_level);
 
 /*
@@ -1110,6 +1111,18 @@ GetOldestXmin(bool allDbs, bool ignoreVacuum)
 				TransactionIdPrecedes(xid, result))
 				result = xid;
 		}
+	}
+
+	if (RecoveryInProgress())
+	{
+		/*
+		 * Check to see whether KnownAssignedXids contains an xid value
+		 * older than the main procarray.
+		 */
+		TransactionId kaxmin = KnownAssignedXidsGetOldestXmin();
+		if (TransactionIdIsNormal(kaxmin) &&
+			TransactionIdPrecedes(kaxmin, result))
+				result = kaxmin;
 	}
 
 	LWLockRelease(ProcArrayLock);
@@ -3013,6 +3026,33 @@ KnownAssignedXidsGetAndSetXmin(TransactionId *xarray, TransactionId *xmin,
 	}
 
 	return count;
+}
+
+static int
+KnownAssignedXidsGetOldestXmin(void)
+{
+	/* use volatile pointer to prevent code rearrangement */
+	volatile ProcArrayStruct *pArray = procArray;
+	int			head,
+				tail;
+	int			i;
+
+	/*
+	 * Fetch head just once, since it may change while we loop.
+	 */
+	SpinLockAcquire(&pArray->known_assigned_xids_lck);
+	tail = pArray->tailKnownAssignedXids;
+	head = pArray->headKnownAssignedXids;
+	SpinLockRelease(&pArray->known_assigned_xids_lck);
+
+	for (i = tail; i < head; i++)
+	{
+		/* Skip any gaps in the array */
+		if (KnownAssignedXidsValid[i])
+			return KnownAssignedXids[i];
+	}
+
+	return InvalidTransactionId;
 }
 
 /*
