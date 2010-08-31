@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_aggregate.sgml,v 1.40 2010/04/03 07:22:58 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_aggregate.sgml,v 1.41 2010/08/31 05:57:54 alvherre Exp $
 PostgreSQL documentation
 -->
 
@@ -29,7 +29,7 @@ CREATE AGGREGATE <replaceable class="PARAMETER">name</replaceable> ( <replaceabl
     [ , SORTOP = <replaceable class="PARAMETER">sort_operator</replaceable> ]
 )
 
-or the old syntax
+<phrase>or the old syntax</phrase>
 
 CREATE AGGREGATE <replaceable class="PARAMETER">name</replaceable> (
     BASETYPE = <replaceable class="PARAMETER">base_type</replaceable>,
