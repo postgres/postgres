@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.521.2.4 2010/08/17 04:37:16 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.521.2.5 2010/09/01 18:22:35 tgl Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -9760,7 +9760,7 @@ SELECT NULLIF(value, '(none)') ...
       <entry>
        array of the argument type
       </entry>
-      <entry>input values concatenated into an array</entry>
+      <entry>input values, including nulls, concatenated into an array</entry>
      </row>
 
      <row>
