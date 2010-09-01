@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/syntax.sgml,v 1.153 2010/08/13 01:12:38 rhaas Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/syntax.sgml,v 1.154 2010/09/01 18:22:29 tgl Exp $ -->
 
 <chapter id="sql-syntax">
  <title>SQL Syntax</title>
@@ -1541,23 +1541,29 @@ sqrt(2)
 
    <para>
     The first form of aggregate expression invokes the aggregate
-    across all input rows for which the given expression(s) yield
-    non-null values.  (Actually, it is up to the aggregate function
-    whether to ignore null values or not &mdash; but all the standard ones do.)
+    once for each input row.
     The second form is the same as the first, since
-    <literal>ALL</literal> is the default.  The third form invokes the
-    aggregate for all distinct values of the expressions found
-    in the input rows (ignoring nulls if the function chooses to do so).
-    The last form invokes the aggregate once for
-    each input row regardless of null or non-null values; since no
+    <literal>ALL</literal> is the default.
+    The third form invokes the aggregate once for each distinct value
+    of the expression (or distinct set of values, for multiple expressions)
+    found in the input rows.
+    The last form invokes the aggregate once for each input row; since no
     particular input value is specified, it is generally only useful
     for the <function>count(*)</function> aggregate function.
    </para>
 
    <para>
+    Most aggregate functions ignore null inputs, so that rows in which
+    one or more of the expression(s) yield null are discarded.  This
+    can be assumed to be true, unless otherwise specified, for all
+    built-in aggregates.
+   </para>
+
+   <para>
     For example, <literal>count(*)</literal> yields the total number
     of input rows; <literal>count(f1)</literal> yields the number of
-    input rows in which <literal>f1</literal> is non-null;
+    input rows in which <literal>f1</literal> is non-null, since
+    <function>count</> ignores nulls; and
     <literal>count(distinct f1)</literal> yields the number of
     distinct non-null values of <literal>f1</literal>.
    </para>
