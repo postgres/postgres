@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release-9.0.sgml,v 2.39.2.11 2010/08/25 19:41:51 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release-9.0.sgml,v 2.39.2.12 2010/09/01 15:14:48 tgl Exp $ -->
 
  <sect1 id="release-9-0">
   <title>Release 9.0</title>
@@ -1698,8 +1698,19 @@
     <listitem>
      <para>
       Correct calculations of <link
-      linkend="functions-geometry-op-table"><quote>overlap</quote></link>
-      and <quote>contains</quote> operations over polygons (Teodor Sigaev)
+      linkend="functions-geometry-op-table"><quote>overlaps</quote></link>
+      and <quote>contains</quote> operations for polygons (Teodor Sigaev)
+     </para>
+
+     <para>
+      The polygon <literal>&amp;&amp;</> (overlaps) operator formerly just
+      checked to see if the two polygons' bounding boxes overlapped.  It now
+      does a more correct check.  The polygon <literal>@&gt;</> and
+      <literal>&lt;@</> (contains/contained by) operators formerly checked
+      to see if one polygon's vertexes were all contained in the other;
+      this can wrongly report <quote>true</> for some non-convex polygons.
+      Now they check that all line segments of one polygon are contained in
+      the other.
      </para>
     </listitem>
 
