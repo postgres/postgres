@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.250.2.6 2010/04/14 21:31:33 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.250.2.7 2010/09/02 03:17:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -63,7 +63,6 @@
 #include "utils/relcache.h"
 #include "utils/resowner.h"
 #include "utils/syscache.h"
-#include "utils/typcache.h"
 
 
 /*
@@ -1652,8 +1651,6 @@ RelationDestroyRelation(Relation relation)
 static void
 RelationClearRelation(Relation relation, bool rebuild)
 {
-	Oid			old_reltype = relation->rd_rel->reltype;
-
 	/*
 	 * As per notes above, a rel to be rebuilt MUST have refcnt > 0; while
 	 * of course it would be a bad idea to blow away one with nonzero refcnt.
@@ -1729,9 +1726,6 @@ RelationClearRelation(Relation relation, bool rebuild)
 	 */
 	if (!rebuild)
 	{
-		/* Flush any rowtype cache entry */
-		flush_rowtype_cache(old_reltype);
-
 		/* Remove it from the hash table */
 		RelationCacheDelete(relation);
 
@@ -1778,7 +1772,6 @@ RelationClearRelation(Relation relation, bool rebuild)
 		if (newrel == NULL)
 		{
 			/* Should only get here if relation was deleted */
-			flush_rowtype_cache(old_reltype);
 			RelationCacheDelete(relation);
 			RelationDestroyRelation(relation);
 			elog(ERROR, "relation %u deleted while still in use", save_relid);
@@ -1786,8 +1779,6 @@ RelationClearRelation(Relation relation, bool rebuild)
 
 		keep_tupdesc = equalTupleDescs(relation->rd_att, newrel->rd_att);
 		keep_rules = equalRuleLocks(relation->rd_rules, newrel->rd_rules);
-		if (!keep_tupdesc)
-			flush_rowtype_cache(old_reltype);
 
 		/*
 		 * Perform swapping of the relcache entry contents.  Within this
