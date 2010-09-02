@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ecpg.sgml,v 1.104 2010/08/17 04:37:20 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ecpg.sgml,v 1.105 2010/09/02 14:46:44 tgl Exp $ -->
 
 <chapter id="ecpg">
  <title><application>ECPG</application> - Embedded <acronym>SQL</acronym> in C</title>
@@ -778,9 +778,9 @@ free(out);
     <xref linkend="datatype-numeric"> for the equivalent type in the
     <productname>PostgreSQL</> server. Because of the arbitrary precision this
     variable needs to be able to expand and shrink dynamically. That's why you
-    can only create variables on the heap by means of the
+    can only create numeric variables on the heap, by means of the
     <function>PGTYPESnumeric_new</> and <function>PGTYPESnumeric_free</>
-    functions. The decimal type, which is similar but limited in the precision,
+    functions. The decimal type, which is similar but limited in precision,
     can be created on the stack as well as on the heap.
    </para>
    <para>
@@ -2192,12 +2192,14 @@ int PGTYPESinterval_copy(interval *intvlsrc, interval *intvldest);
    <title>The decimal type</title>
    <para>
      The decimal type is similar to the numeric type. However it is limited to
-     a maximal precision of 30 significant digits. In contrast to the numeric
+     a maximum precision of 30 significant digits. In contrast to the numeric
      type which can be created on the heap only, the decimal type can be
      created either on the stack or on the heap (by means of the functions
-     <function>PGTYPESdecimal_new()</> and <function>PGTYPESdecimal_free()</>. There are a lot of other
-     functions that deal with the decimal type in the <productname>Informix</productname> compatibility
-     mode described in <xref linkend="ecpg-informix-compat">.
+     <function>PGTYPESdecimal_new</> and
+     <function>PGTYPESdecimal_free</>).
+     There are a lot of other functions that deal with the decimal type in the
+     <productname>Informix</productname> compatibility mode described in <xref
+     linkend="ecpg-informix-compat">.
    </para>
    <para>
     The following functions can be used to work with the decimal type and are
