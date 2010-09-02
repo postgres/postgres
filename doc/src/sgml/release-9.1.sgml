@@ -1,0 +1,484 @@
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release-9.1.sgml,v 1.1 2010/09/02 17:30:06 tgl Exp $ -->
+
+<!-- This is up-to-date with commits through 2010-09-01 -->
+
+<sect1 id="release-9-1-alpha">
+  <title>Release 9.1alpha1</title>
+  <sect2>
+    <title>Overview</title>
+    <para>
+      PostgreSQL alpha releases are snapshots of development code. They
+      are intended to preview and test upcoming features and to provide
+      the possibility for early feedback. They should not be used in
+      production installations or active development projects. While the
+      PostgreSQL code is continuously subject to a number of automated
+      and manual tests, alpha releases might have serious bugs. Also
+      features may be changed incompatibly or removed at any time during
+      the development cycle.
+    </para>
+    <para>
+      The development cycle of a PostgreSQL major release alternates
+      between periods of development and periods of integration work,
+      called commit fests, normally one month each. Alpha releases are
+      planned to be produced at the end of every commit fest, thus every
+      two months. Since the first commit fest starts within a month from
+      the beginning of development altogether, early alpha releases are
+      not indicative of the likely feature set of the final release.
+    </para>
+    <para>
+      The release notes below highlight user visible changes and new
+      features. There are normally numerous bug fixes and performance
+      improvements in every new snapshot of PostgreSQL, and it would be
+      too bulky to attempt to list them all. Note that many bug fixes are
+      also backported to stable releases of PostgreSQL, and you should be
+      using those if you are looking for bug-fix-only upgrades for your
+      current installations.
+    </para>
+    <para>
+      These notes are cumulative over all alpha releases of the current
+      development cycle.  Items that are new in the latest alpha release are
+      <emphasis>emphasized</emphasis>.
+    </para>
+  </sect2>
+  <sect2>
+    <title>Migration</title>
+    <para>
+      To upgrade from any release to an alpha release or from an alpha
+      release to any other release will most likely require a
+      dump/restore upgrade procedure. It may happen that this is not
+      necessary in particular cases, but that is not verified beforehand.
+      (The server will warn you in any case when a dump/restore is
+      necessary if you attempt to use it with an old data directory.)
+      Note, however, that the dump/restore upgrade procedure is expected
+      to work for alpha releases, and problems in this area should be
+      reported.
+    </para>
+  </sect2>
+  <sect2>
+    <title>Testing</title>
+    <para>
+      The primary reason we release alphas is to get users to test new
+      features as early as possible.  If you are interested in helping
+      with organized testing, please see
+      <ulink url="http://wiki.postgresql.org/wiki/HowToBetaTest">the
+      testing information page</ulink>.
+      </para>
+  </sect2>
+  <sect2>
+    <title>Changes</title>
+    <sect3>
+      <title>SQL Features</title>
+      <itemizedlist>
+
+       <listitem>
+        <para>
+         <emphasis>Recognize functional dependency on primary
+         keys</emphasis>
+        </para>
+        <para>
+         This allows a table's other columns to be referenced without listing
+         them in GROUP BY, so long as the primary key column(s) are listed in
+         GROUP BY.
+        </para>
+       </listitem>
+
+       <listitem>
+        <para>
+         <emphasis>Add CREATE TABLE IF NOT EXISTS</emphasis>
+        </para>
+       </listitem>
+
+      </itemizedlist>
+    </sect3>
+    <sect3>
+      <title>Performance</title>
+      <itemizedlist>
+
+       <listitem>
+        <para>
+         <emphasis>Reduce lock levels of CREATE TRIGGER and some ALTER
+         TABLE, CREATE RULE actions</emphasis>
+        </para>
+       </listitem>
+
+       <listitem>
+        <para>
+         <emphasis>Add some knowledge about prefix matches to
+         tsmatchsel()</emphasis>
+        </para>
+       </listitem>
+
+       <listitem>
+        <para>
+         <emphasis>Replace the naive HYPOT() macro with a
+         standards-conformant hypotenuse function</emphasis>
+        </para>
+       </listitem>
+
+      </itemizedlist>
+    </sect3>
+    <sect3>
+      <title>Server Settings</title>
+      <itemizedlist>
+
+       <listitem>
+        <para>
+         <emphasis>Change the default value of
+         <literal>standard_conforming_strings</> to
+         <literal>on</></emphasis>
+        </para>
+        <warning>
+         <para>
+          This is a significant incompatibility with previous releases,
+          because it may break unwary applications in security-critical ways.
+         </para>
+        </warning>
+       </listitem>
+
+       <listitem>
+        <para>
+         <emphasis>Add <literal>log_file_mode</> parameter</emphasis>
+        </para>
+        <para>
+         This allows control of the file permissions set on log files created
+         by the syslogger process.
+        </para>
+       </listitem>
+
+       <listitem>
+        <para>
+         <emphasis>Add <literal>restart_after_crash</> parameter</emphasis>
+        </para>
+        <para>
+         Normally, we automatically restart after a backend crash, but in
+         some cases when PostgreSQL is invoked by clusterware it may be
+         desirable to suppress this behavior, so we now provide an option which
+         does that.
+        </para>
+       </listitem>
+
+      </itemizedlist>
+    </sect3>
+    <sect3>
+      <title>Administration and Monitoring</title>
+      <itemizedlist>
+
+       <listitem>
+        <para>
+         <emphasis>Make EXPLAIN show the function call expression of a
+         FunctionScan plan node, but only in VERBOSE mode</emphasis>
+        </para>
+       </listitem>
+
+       <listitem>
+        <para>
+         <emphasis>Make EXPLAIN print PARAM_EXEC Params as
+         the referenced expressions, rather than just $N</emphasis>
+        </para>
+       </listitem>
+
+       <listitem>
+        <para>
+         <emphasis>Add vacuum and analyze counters to pg_stat_*_tables
+         views</emphasis>
+        </para>
+       </listitem>
+
+       <listitem>
+        <para>
+         <emphasis>Add stats functions and views to provide access to a
+         transaction's own statistics counts</emphasis>
+        </para>
+       </listitem>
+
+      </itemizedlist>
+    </sect3>
+    <sect3>
+      <title>Security</title>
+      <itemizedlist>
+
+       <listitem>
+        <para>
+         <emphasis>Add server authentication over Unix-domain
+         sockets</emphasis>
+        </para>
+        <para>
+         This adds a libpq connection parameter <literal>requirepeer</> that
+         specifies the user name that the server process is expected to run
+         under.
+        </para>
+       </listitem>
+
+      </itemizedlist>
+    </sect3>
+    <sect3>
+      <title>Built-In Functions</title>
+      <itemizedlist>
+
+       <listitem>
+        <para>
+         <emphasis>Add string functions: concat(), concat_ws(), left(),
+         right(), and reverse()</emphasis>
+        </para>
+       </listitem>
+
+       <listitem>
+        <para>
+         <emphasis>Add three-parameter forms of array_to_string and
+         string_to_array</emphasis>
+        </para>
+       </listitem>
+
+       <listitem>
+        <para>
+         <emphasis>Add XMLEXISTS function</emphasis>
+        </para>
+       </listitem>
+
+       <listitem>
+        <para>
+         <emphasis>Add xpath_exists() function</emphasis>
+        </para>
+        <para>
+         This is equivalent to XMLEXISTS except that it offers support for
+         namespace mapping.
+        </para>
+       </listitem>
+
+       <listitem>
+        <para>
+         <emphasis>Add xml_is_well_formed, xml_is_well_formed_document,
+         xml_is_well_formed_content functions to the core XML
+         code</emphasis>
+        </para>
+        <para>
+         These supersede a version previously offered by contrib/xml2.
+        </para>
+       </listitem>
+
+      </itemizedlist>
+    </sect3>
+    <sect3>
+      <title>Data Types</title>
+      <itemizedlist>
+
+       <listitem>
+        <para>
+         <emphasis>Allow numeric to use a more compact, 2-byte header in
+         many cases</emphasis>
+        </para>
+       </listitem>
+
+       <listitem>
+        <para>
+         <emphasis>Add support for dividing money by money (yielding a
+         float8 result) and for casting between money and numeric</emphasis>
+        </para>
+       </listitem>
+
+      </itemizedlist>
+    </sect3>
+    <sect3>
+      <title>Server Tools</title>
+      <itemizedlist>
+
+       <listitem>
+        <para>
+         <emphasis>Add options to force quoting of all
+         identifiers</emphasis>
+        </para>
+        <para>
+         This includes a quote_all_identifiers parameter which affects the
+         behavior of the backend, and a --quote-all-identifiers argument to
+         pg_dump and pg_dumpall which sets the parameter and also affects the
+         quoting done internally by those applications.
+        </para>
+       </listitem>
+
+      </itemizedlist>
+    </sect3>
+    <sect3>
+      <title>psql</title>
+      <itemizedlist>
+
+       <listitem>
+        <para>
+         <emphasis>Add \conninfo command to psql, to show current connection
+         info</emphasis>
+        </para>
+       </listitem>
+
+       <listitem>
+        <para>
+         <emphasis>Extend psql's \e and \ef commands so that a line number
+         can be specified, and the editor's cursor will be initially placed
+         on that line</emphasis>
+        </para>
+        <para>
+         To avoid assumptions about what switch the user's editor takes for
+         this purpose, there is a new psql variable EDITOR_LINENUMBER_SWITCH
+         with (at present) no default value.
+        </para>
+       </listitem>
+
+       <listitem>
+        <para>
+         <emphasis>Add a \sf (show function) command to psql, for those
+         times when you need to look at a function but don't wish to fire up
+         an editor</emphasis>
+        </para>
+       </listitem>
+
+       <listitem>
+        <para>
+         <emphasis>Make psql distinguish between unique indices and unique
+         constraints in \d printout</emphasis>
+        </para>
+       </listitem>
+
+      </itemizedlist>
+    </sect3>
+    <sect3>
+      <title>Procedural Languages</title>
+      <sect4>
+       <title>PL/pgSQL</title>
+      <itemizedlist>
+
+       <listitem>
+        <para>
+         <emphasis>Modify the handling of RAISE without parameters so that
+         the error it throws can be caught in the same places that could
+         catch an ordinary RAISE ERROR in the same location</emphasis>
+        </para>
+        <para>
+         The previous coding insisted on throwing the error from the block
+         containing the active exception handler; which is arguably more
+         surprising, and definitely unlike Oracle's behavior.
+        </para>
+       </listitem>
+
+       <listitem>
+        <para>
+         <emphasis>Remove ancient PL/pgSQL line numbering hack</emphasis>
+        </para>
+        <para>
+         PL/pgSQL used to count the second line of the function body as
+         <quote>line 1</>, if the first line was zero-length.
+         While this hack arguably has some benefit in terms of making
+         PL/pgsql's line numbering match the programmer's expectations, it
+         also makes PL/pgsql inconsistent with the remaining PLs, making it
+         difficult for clients to reliably determine where the error
+         actually is.  On balance, it seems better to be consistent.
+        </para>
+       </listitem>
+
+      </itemizedlist>
+      </sect4>
+    </sect3>
+    <sect3>
+      <title>Additional Supplied Modules</title>
+      <itemizedlist>
+
+       <listitem>
+        <para>
+         <emphasis>Add the ability to compute per-statement latencies (ie,
+         average execution times) to pgbench</emphasis>
+        </para>
+       </listitem>
+
+       <listitem>
+        <para>
+         <emphasis>Teach levenshtein() about multi-byte
+         characters</emphasis>
+        </para>
+       </listitem>
+
+       <listitem>
+        <para>
+         <emphasis>Add btree_gist support for searching on <quote>not
+         equals</quote></emphasis>
+        </para>
+       </listitem>
+
+       <listitem>
+        <para>
+         <emphasis>Add ssl_cipher() and ssl_version() functions to
+         contrib/sslinfo</emphasis>
+        </para>
+       </listitem>
+
+       <listitem>
+        <para>
+         <emphasis>Remove the arbitrary (and undocumented) limit on the
+         number of parameter=value pairs that can be handled by
+         xslt_process()</emphasis>
+        </para>
+       </listitem>
+
+      </itemizedlist>
+    </sect3>
+    <sect3>
+      <title>Source Code, Build Options</title>
+      <itemizedlist>
+
+       <listitem>
+        <para>
+         <emphasis>Include the backend ID in the relpath of temporary
+         relations</emphasis>
+        </para>
+        <para>
+         This allows us to reliably remove all leftover temporary relation
+         files on cluster startup without reference to system catalogs or
+         WAL; therefore, we no longer include temporary relations in
+         XLOG_XACT_COMMIT and XLOG_XACT_ABORT WAL records.
+        </para>
+       </listitem>
+
+       <listitem>
+        <para>
+         <emphasis>Rewrite COMMENT ON <replaceable>object</> code for better
+         modularity, and add necessary locking</emphasis>
+        </para>
+       </listitem>
+
+       <listitem>
+        <para>
+         <emphasis>Add a hook in ExecCheckRTPerms() for eventual use by
+         external security-checking modules</emphasis>
+        </para>
+       </listitem>
+
+       <listitem>
+        <para>
+         <emphasis>Standardize names and calling conventions of
+         get_whatever_oid functions</emphasis>
+        </para>
+       </listitem>
+
+       <listitem>
+        <para>
+         <emphasis>Make NestLoop plan nodes pass outer-relation variables
+         into their inner relation using the general PARAM_EXEC executor
+         parameter mechanism, rather than the ad-hoc kluge of passing the
+         outer tuple down through ExecReScan</emphasis>
+        </para>
+       </listitem>
+
+       <listitem>
+        <para>
+         <emphasis>Make details of the Numeric representation private to
+         numeric.c</emphasis>
+        </para>
+       </listitem>
+
+       <listitem>
+        <para>
+         <emphasis>Suppress some compiler warnings from
+         <literal>clang</></emphasis>
+        </para>
+       </listitem>
+
+      </itemizedlist>
+    </sect3>
+  </sect2>
+</sect1>
