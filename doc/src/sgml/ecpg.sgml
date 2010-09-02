@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ecpg.sgml,v 1.100.2.5 2010/09/02 14:46:51 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ecpg.sgml,v 1.100.2.6 2010/09/02 14:57:09 tgl Exp $ -->
 
 <chapter id="ecpg">
  <title><application>ECPG</application> - Embedded <acronym>SQL</acronym> in C</title>
@@ -3883,11 +3883,12 @@ dtcvfmtasc(char *inbuf, char *fmtstr, timestamp *dtvalue)
 </synopsis>
         The function receives the string to parse (<literal>inbuf</>), the
         format mask to use (<literal>fmtstr</>) and a pointer to the timestamp
-        variable that should hold the result of the operation (<literal>ts</>).
+        variable that should hold the result of the operation
+        (<literal>dtvalue</>).
        </para>
        <para>
-        This functions is implemented by means of the <xref
-        linkend="PGTYPEStimestampdefmtasc">. See the documentation
+        This function is implemented by means of the <xref
+        linkend="PGTYPEStimestampdefmtasc"> function. See the documentation
         there for a list of format specifiers that can be used.
        </para>
        <para>
