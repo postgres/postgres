@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_oper.c,v 1.114 2010/07/29 23:16:33 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_oper.c,v 1.115 2010/09/03 01:26:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -869,9 +869,6 @@ make_op(ParseState *pstate, List *opname, Node *ltree, Node *rtree,
 
 	ReleaseSysCache(tup);
 
-	/* Hack to protect pg_get_expr() against misuse */
-	check_pg_get_expr_args(pstate, result->opfuncid, args);
-
 	return (Expr *) result;
 }
 
@@ -999,9 +996,6 @@ make_scalar_array_op(ParseState *pstate, List *opname,
 	result->location = location;
 
 	ReleaseSysCache(tup);
-
-	/* Hack to protect pg_get_expr() against misuse */
-	check_pg_get_expr_args(pstate, result->opfuncid, args);
 
 	return (Expr *) result;
 }
