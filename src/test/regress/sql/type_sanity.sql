@@ -51,7 +51,7 @@ WHERE (p1.typtype = 'c' AND p1.typrelid = 0) OR
     (p1.typtype != 'c' AND p1.typrelid != 0);
 
 -- Look for basic or enum types that don't have an array type.
--- NOTE: as of 8.0, this check finds smgr and unknown.
+-- NOTE: as of 9.1, this check finds pg_node_tree, smgr, and unknown.
 
 SELECT p1.oid, p1.typname
 FROM pg_type as p1

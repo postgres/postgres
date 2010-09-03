@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.581 2010/08/24 06:30:43 itagaki Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.582 2010/09/03 01:34:55 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.pl reads this file and generates .bki
@@ -57,8 +57,8 @@ CATALOG(pg_proc,1255) BKI_BOOTSTRAP BKI_ROWTYPE_OID(81) BKI_SCHEMA_MACRO
 	Oid			proallargtypes[1];		/* all param types (NULL if IN only) */
 	char		proargmodes[1]; /* parameter modes (NULL if IN only) */
 	text		proargnames[1]; /* parameter names (NULL if no names) */
-	text		proargdefaults; /* list of expression trees for argument
-								 * defaults (NULL if none) */
+	pg_node_tree proargdefaults; /* list of expression trees for argument
+								  * defaults (NULL if none) */
 	text		prosrc;			/* procedure source text */
 	text		probin;			/* secondary procedure info (can be NULL) */
 	text		proconfig[1];	/* procedure-local GUC settings */
@@ -398,6 +398,15 @@ DATA(insert OID = 192 (  box_contained	   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 1
 DESCR("is contained by?");
 DATA(insert OID = 193 (  box_contain_pt    PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "603 600" _null_ _null_ _null_ _null_ box_contain_pt _null_ _null_ _null_ ));
 DESCR("contains?");
+
+DATA(insert OID = 195 (  pg_node_tree_in	PGNSP PGUID 12 1 0 0 f f f t f i 1 0 194 "2275" _null_ _null_ _null_ _null_ pg_node_tree_in _null_ _null_ _null_ ));
+DESCR("I/O");
+DATA(insert OID = 196 (  pg_node_tree_out	PGNSP PGUID 12 1 0 0 f f f t f i 1 0 2275 "194" _null_ _null_ _null_ _null_ pg_node_tree_out _null_ _null_ _null_ ));
+DESCR("I/O");
+DATA(insert OID = 197 (  pg_node_tree_recv	PGNSP PGUID 12 1 0 0 f f f t f s 1 0 194 "2281" _null_ _null_ _null_ _null_ pg_node_tree_recv _null_ _null_ _null_ ));
+DESCR("I/O");
+DATA(insert OID = 198 (  pg_node_tree_send	PGNSP PGUID 12 1 0 0 f f f t f s 1 0 17 "194" _null_ _null_ _null_ _null_	pg_node_tree_send _null_ _null_ _null_ ));
+DESCR("I/O");
 
 /* OIDS 200 - 299 */
 
@@ -2317,7 +2326,7 @@ DATA(insert OID = 1662 (  pg_get_triggerdef    PGNSP PGUID 12 1 0 0 f f f t f s 
 DESCR("trigger description");
 DATA(insert OID = 1387 (  pg_get_constraintdef PGNSP PGUID 12 1 0 0 f f f t f s 1 0 25 "26" _null_ _null_ _null_ _null_ pg_get_constraintdef _null_ _null_ _null_ ));
 DESCR("constraint description");
-DATA(insert OID = 1716 (  pg_get_expr		   PGNSP PGUID 12 1 0 0 f f f t f s 2 0 25 "25 26" _null_ _null_ _null_ _null_ pg_get_expr _null_ _null_ _null_ ));
+DATA(insert OID = 1716 (  pg_get_expr		   PGNSP PGUID 12 1 0 0 f f f t f s 2 0 25 "194 26" _null_ _null_ _null_ _null_ pg_get_expr _null_ _null_ _null_ ));
 DESCR("deparse an encoded expression");
 DATA(insert OID = 1665 (  pg_get_serial_sequence	PGNSP PGUID 12 1 0 0 f f f t f s 2 0 25 "25 25" _null_ _null_ _null_ _null_ pg_get_serial_sequence _null_ _null_ _null_ ));
 DESCR("name of sequence for a serial column");
@@ -4170,7 +4179,7 @@ DATA(insert OID = 2507 (  pg_get_indexdef	   PGNSP PGUID 12 1 0 0 f f f t f s 3 
 DESCR("index description (full create statement or single expression) with pretty-print option");
 DATA(insert OID = 2508 (  pg_get_constraintdef PGNSP PGUID 12 1 0 0 f f f t f s 2 0 25 "26 16" _null_ _null_ _null_ _null_	pg_get_constraintdef_ext _null_ _null_ _null_ ));
 DESCR("constraint description with pretty-print option");
-DATA(insert OID = 2509 (  pg_get_expr		   PGNSP PGUID 12 1 0 0 f f f t f s 3 0 25 "25 26 16" _null_ _null_ _null_ _null_ pg_get_expr_ext _null_ _null_ _null_ ));
+DATA(insert OID = 2509 (  pg_get_expr		   PGNSP PGUID 12 1 0 0 f f f t f s 3 0 25 "194 26 16" _null_ _null_ _null_ _null_ pg_get_expr_ext _null_ _null_ _null_ ));
 DESCR("deparse an encoded expression with pretty-print option");
 DATA(insert OID = 2510 (  pg_prepared_statement PGNSP PGUID 12 1 1000 0 f f f t t s 0 0 2249 "" "{25,25,1184,2211,16}" "{o,o,o,o,o}" "{name,statement,prepare_time,parameter_types,from_sql}" _null_ pg_prepared_statement _null_ _null_ _null_ ));
 DESCR("get the prepared statements for this session");

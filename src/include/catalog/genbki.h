@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/genbki.h,v 1.6 2010/01/05 01:06:56 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/genbki.h,v 1.7 2010/09/03 01:34:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,7 +35,8 @@
 #define DESCR(x)  extern int no_such_variable
 #define SHDESCR(x) extern int no_such_variable
 
-/* PHONY type definition for use in catalog structure definitions only */
+/* PHONY type definitions for use in catalog structure definitions only */
 typedef int aclitem;
+typedef int pg_node_tree;
 
 #endif   /* GENBKI_H */

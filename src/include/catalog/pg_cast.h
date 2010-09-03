@@ -10,7 +10,7 @@
  *
  * Copyright (c) 2002-2010, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_cast.h,v 1.45 2010/07/16 02:15:54 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_cast.h,v 1.46 2010/09/03 01:34:55 tgl Exp $
  *
  * NOTES
  *	  the genbki.pl script reads this file and generates .bki
@@ -234,6 +234,9 @@ DATA(insert ( 1043	 19 1400 i f ));
 /* Allow explicit coercions between int4 and "char" */
 DATA(insert (	18	 23   77 e f ));
 DATA(insert (	23	 18   78 e f ));
+
+/* pg_node_tree can be coerced to, but not from, text */
+DATA(insert (  194	 25    0 i b ));
 
 /*
  * Datetime category

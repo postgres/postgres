@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_constraint.h,v 1.41 2010/08/07 02:44:07 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_constraint.h,v 1.42 2010/09/03 01:34:55 tgl Exp $
  *
  * NOTES
  *	  the genbki.pl script reads this file and generates .bki
@@ -129,7 +129,7 @@ CATALOG(pg_constraint,2606)
 	/*
 	 * If a check constraint, nodeToString representation of expression
 	 */
-	text		conbin;
+	pg_node_tree conbin;
 
 	/*
 	 * If a check constraint, source-text representation of expression

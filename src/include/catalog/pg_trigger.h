@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_trigger.h,v 1.39 2010/01/17 22:56:23 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_trigger.h,v 1.40 2010/09/03 01:34:55 tgl Exp $
  *
  * NOTES
  *	  the genbki.pl script reads this file and generates .bki
@@ -53,7 +53,7 @@ CATALOG(pg_trigger,2620)
 	/* VARIABLE LENGTH FIELDS (note: tgattr and tgargs must not be null) */
 	int2vector	tgattr;			/* column numbers, if trigger is on columns */
 	bytea		tgargs;			/* first\000second\000tgnargs\000 */
-	text		tgqual;			/* WHEN expression, or NULL if none */
+	pg_node_tree tgqual;		/* WHEN expression, or NULL if none */
 } FormData_pg_trigger;
 
 /* ----------------

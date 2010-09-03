@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_type.h,v 1.212 2010/01/05 01:06:57 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_type.h,v 1.213 2010/09/03 01:34:55 tgl Exp $
  *
  * NOTES
  *	  the genbki.pl script reads this file and generates .bki
@@ -199,7 +199,7 @@ CATALOG(pg_type,1247) BKI_BOOTSTRAP BKI_ROWTYPE_OID(71) BKI_SCHEMA_MACRO
 	 * a default expression for the type.  Currently this is only used for
 	 * domains.
 	 */
-	text		typdefaultbin;	/* VARIABLE LENGTH FIELD */
+	pg_node_tree typdefaultbin;	/* VARIABLE LENGTH FIELD */
 
 	/*
 	 * typdefault is NULL if the type has no associated default value. If
@@ -342,6 +342,10 @@ DATA(insert OID = 142 ( xml		   PGNSP PGUID -1 f b U f t \054 0 0 143 xml_in xml
 DESCR("XML content");
 #define XMLOID 142
 DATA(insert OID = 143 ( _xml	   PGNSP PGUID -1 f b A f t \054 0 142 0 array_in array_out array_recv array_send - - - i x f 0 -1 0 _null_ _null_ ));
+
+DATA(insert OID = 194 (	pg_node_tree	PGNSP PGUID -1 f b S f t \054 0	0 0 pg_node_tree_in pg_node_tree_out pg_node_tree_recv pg_node_tree_send - - - i x f 0 -1 0 _null_ _null_ ));
+DESCR("string representing an internal node tree");
+#define PGNODETREEOID	194
 
 /* OIDS 200 - 299 */
 

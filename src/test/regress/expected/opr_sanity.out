@@ -400,22 +400,25 @@ WHERE c.castfunc = p.oid AND
 -- As of 8.3, this finds the casts from xml to text, varchar, and bpchar,
 -- because those are binary-compatible while the reverse goes through
 -- texttoxml(), which does an XML syntax check.
-SELECT *
+-- As of 9.1, this finds the cast from pg_node_tree to text, which we
+-- intentionally do not provide a reverse pathway for.
+SELECT castsource::regtype, casttarget::regtype, castfunc, castcontext
 FROM pg_cast c
 WHERE c.castmethod = 'b' AND
     NOT EXISTS (SELECT 1 FROM pg_cast k
                 WHERE k.castmethod = 'b' AND
                     k.castsource = c.casttarget AND
                     k.casttarget = c.castsource);
- castsource | casttarget | castfunc | castcontext | castmethod 
-------------+------------+----------+-------------+------------
-         25 |       1042 |        0 | i           | b
-       1043 |       1042 |        0 | i           | b
-        650 |        869 |        0 | i           | b
-        142 |         25 |        0 | a           | b
-        142 |       1043 |        0 | a           | b
-        142 |       1042 |        0 | a           | b
-(6 rows)
+    castsource     |    casttarget     | castfunc | castcontext 
+-------------------+-------------------+----------+-------------
+ text              | character         |        0 | i
+ character varying | character         |        0 | i
+ pg_node_tree      | text              |        0 | i
+ cidr              | inet              |        0 | i
+ xml               | text              |        0 | a
+ xml               | character varying |        0 | a
+ xml               | character         |        0 | a
+(7 rows)
 
 -- **************** pg_operator ****************
 -- Look for illegal values in pg_operator fields.

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_index.h,v 1.50 2010/01/05 01:06:56 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_index.h,v 1.51 2010/09/03 01:34:55 tgl Exp $
  *
  * NOTES
  *	  the genbki.pl script reads this file and generates .bki
@@ -45,10 +45,10 @@ CATALOG(pg_index,2610) BKI_WITHOUT_OIDS BKI_SCHEMA_MACRO
 	int2vector	indkey;			/* column numbers of indexed cols, or 0 */
 	oidvector	indclass;		/* opclass identifiers */
 	int2vector	indoption;		/* per-column flags (AM-specific meanings) */
-	text		indexprs;		/* expression trees for index attributes that
+	pg_node_tree indexprs;		/* expression trees for index attributes that
 								 * are not simple column references; one for
 								 * each zero entry in indkey[] */
-	text		indpred;		/* expression tree for predicate, if a partial
+	pg_node_tree indpred;		/* expression tree for predicate, if a partial
 								 * index; else NULL */
 } FormData_pg_index;
 
