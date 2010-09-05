@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_constraint.c,v 1.55 2010/08/07 02:44:06 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_constraint.c,v 1.56 2010/09/05 15:45:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -835,6 +835,9 @@ check_functional_grouping(Oid relid,
 
 		/* Only PK constraints are of interest for now, see comment above */
 		if (con->contype != CONSTRAINT_PRIMARY)
+			continue;
+		/* Constraint must be non-deferrable */
+		if (con->condeferrable)
 			continue;
 
 		/* Extract the conkey array, ie, attnums of PK's columns */
