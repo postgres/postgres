@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/syntax.sgml,v 1.147.2.6 2010/09/01 18:22:35 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/syntax.sgml,v 1.147.2.7 2010/09/07 18:54:08 petere Exp $ -->
 
 <chapter id="sql-syntax">
  <title>SQL Syntax</title>
@@ -236,12 +236,15 @@ U&amp;"d!0061t!+000061" UESCAPE '!'
 
    <para>
     The Unicode escape syntax works only when the server encoding is
-    UTF8.  When other server encodings are used, only code points in
-    the ASCII range (up to <literal>\007F</literal>) can be specified.
-    Both the 4-digit and the 6-digit form can be used to specify
-    UTF-16 surrogate pairs to compose characters with code points
-    larger than U+FFFF (although the availability of
-    the 6-digit form technically makes this unnecessary).
+    <literal>UTF8</>.  When other server encodings are used, only code
+    points in the ASCII range (up to <literal>\007F</literal>) can be
+    specified.  Both the 4-digit and the 6-digit form can be used to
+    specify UTF-16 surrogate pairs to compose characters with code
+    points larger than U+FFFF, although the availability of the
+    6-digit form technically makes this unnecessary.  (When surrogate
+    pairs are used when the server encoding is <literal>UTF8</>, they
+    are first combined into a single code point that is then encoded
+    in UTF-8.)
    </para>
 
    <para>
@@ -431,13 +434,15 @@ SELECT 'foo'      'bar';
 
     <para>
      The Unicode escape syntax works fully only when the server
-     encoding is UTF-8.  When other server encodings are used, only
-     code points in the ASCII range (up to <literal>\u007F</>) can be
-     specified.  Both the 4-digit and the 8-digit form can be used to
-     specify UTF-16 surrogate pairs to compose characters with code
-     points larger than U+FFFF (although the
-     availability of the 8-digit form technically makes this
-     unnecessary).
+     encoding is <literal>UTF8</>.  When other server encodings are
+     used, only code points in the ASCII range (up
+     to <literal>\u007F</>) can be specified.  Both the 4-digit and
+     the 8-digit form can be used to specify UTF-16 surrogate pairs to
+     compose characters with code points larger than U+FFFF, although
+     the availability of the 8-digit form technically makes this
+     unnecessary.  (When surrogate pairs are used when the server
+     encoding is <literal>UTF8</>, they are first combined into a
+     single code point that is then encoded in UTF-8.)
     </para>
 
     <caution>
@@ -518,13 +523,15 @@ U&amp;'d!0061t!+000061' UESCAPE '!'
 
     <para>
      The Unicode escape syntax works only when the server encoding is
-     UTF8.  When other server encodings are used, only code points in
-     the ASCII range (up to <literal>\007F</literal>) can be
-     specified.
-     Both the 4-digit and the 6-digit form can be used to specify
-     UTF-16 surrogate pairs to compose characters with code points
-     larger than U+FFFF (although the availability
-     of the 6-digit form technically makes this unnecessary).
+     <literal>UTF8</>.  When other server encodings are used, only
+     code points in the ASCII range (up to <literal>\007F</literal>)
+     can be specified.  Both the 4-digit and the 6-digit form can be
+     used to specify UTF-16 surrogate pairs to compose characters with
+     code points larger than U+FFFF, although the availability of the
+     6-digit form technically makes this unnecessary.  (When surrogate
+     pairs are used when the server encoding is <literal>UTF8</>, they
+     are first combined into a single code point that is then encoded
+     in UTF-8.)
     </para>
 
     <para>
