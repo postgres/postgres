@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/unsetenv.c,v 1.11 2010/01/02 16:58:13 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/port/unsetenv.c,v 1.12 2010/09/07 14:10:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,6 +32,7 @@ unsetenv(const char *name)
 	 * implementations (notably recent BSDs) that do not obey SUS but copy the
 	 * presented string.  This method fails on such platforms.	Hopefully all
 	 * such platforms have unsetenv() and thus won't be using this hack.
+	 * See:  http://www.greenend.org.uk/rjk/2008/putenv.html
 	 *
 	 * Note that repeatedly setting and unsetting a var using this code will
 	 * leak memory.

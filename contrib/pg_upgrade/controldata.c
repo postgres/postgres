@@ -4,13 +4,14 @@
  *	controldata functions
  *
  *	Copyright (c) 2010, PostgreSQL Global Development Group
- *	$PostgreSQL: pgsql/contrib/pg_upgrade/controldata.c,v 1.9 2010/07/06 19:18:55 momjian Exp $
+ *	$PostgreSQL: pgsql/contrib/pg_upgrade/controldata.c,v 1.10 2010/09/07 14:10:30 momjian Exp $
  */
 
 #include "pg_upgrade.h"
 
 #include <ctype.h>
 
+static void putenv2(migratorContext *ctx, const char *var, const char *val);
 
 /*
  * get_control_data()
@@ -51,19 +52,55 @@ get_control_data(migratorContext *ctx, ClusterInfo *cluster, bool live_check)
 	bool		got_toast = false;
 	bool		got_date_is_int = false;
 	bool		got_float8_pass_by_value = false;
+	char	   *lc_collate = NULL;
+	char	   *lc_ctype = NULL;
+	char	   *lc_monetary = NULL;
+	char	   *lc_numeric = NULL;
+	char	   *lc_time = NULL;
 	char	   *lang = NULL;
+	char	   *language = NULL;
+	char	   *lc_all = NULL;
+	char	   *lc_messages = NULL;
 
 	/*
-	 * Because we test the pg_resetxlog output strings, it has to be in
-	 * English.
+	 * Because we test the pg_resetxlog output as strings, it has to be in
+	 * English.  Copied from pg_regress.c.
 	 */
+	if (getenv("LC_COLLATE"))
+		lc_collate = pg_strdup(ctx, getenv("LC_COLLATE"));
+	if (getenv("LC_CTYPE"))
+		lc_ctype = pg_strdup(ctx, getenv("LC_CTYPE"));
+	if (getenv("LC_MONETARY"))
+		lc_monetary = pg_strdup(ctx, getenv("LC_MONETARY"));
+	if (getenv("LC_NUMERIC"))
+		lc_numeric = pg_strdup(ctx, getenv("LC_NUMERIC"));
+	if (getenv("LC_TIME"))
+		lc_time = pg_strdup(ctx, getenv("LC_TIME"));
 	if (getenv("LANG"))
 		lang = pg_strdup(ctx, getenv("LANG"));
+	if (getenv("LANGUAGE"))
+		language = pg_strdup(ctx, getenv("LANGUAGE"));
+	if (getenv("LC_ALL"))
+		lc_all = pg_strdup(ctx, getenv("LC_ALL"));
+	if (getenv("LC_MESSAGES"))
+		lc_messages = pg_strdup(ctx, getenv("LC_MESSAGES"));
+
+	putenv2(ctx, "LC_COLLATE", NULL);
+	putenv2(ctx, "LC_CTYPE", NULL);
+	putenv2(ctx, "LC_MONETARY", NULL);
+	putenv2(ctx, "LC_NUMERIC", NULL);
+	putenv2(ctx, "LC_TIME", NULL);
+	putenv2(ctx, "LANG",
 #ifndef WIN32
-	putenv(pg_strdup(ctx, "LANG=C"));
+			NULL);
 #else
-	SetEnvironmentVariableA("LANG", "C");
+			/* On Windows the default locale cannot be English, so force it */
+			"en");
 #endif
+	putenv2(ctx, "LANGUAGE", NULL);
+	putenv2(ctx, "LC_ALL", NULL);
+	putenv2(ctx, "LC_MESSAGES", "C");
+
 	snprintf(cmd, sizeof(cmd), SYSTEMQUOTE "\"%s/%s \"%s\"" SYSTEMQUOTE,
 			 cluster->bindir,
 			 live_check ? "pg_controldata\"" : "pg_resetxlog\" -n",
@@ -334,28 +371,29 @@ get_control_data(migratorContext *ctx, ClusterInfo *cluster, bool live_check)
 	if (output)
 		pclose(output);
 
-	/* restore LANG */
-	if (lang)
-	{
-#ifndef WIN32
-		char	   *envstr = (char *) pg_malloc(ctx, strlen(lang) + 6);
+	/*
+	 *	Restore environment variables
+	 */
+	putenv2(ctx, "LC_COLLATE", lc_collate);
+	putenv2(ctx, "LC_CTYPE", lc_ctype);
+	putenv2(ctx, "LC_MONETARY", lc_monetary);
+	putenv2(ctx, "LC_NUMERIC", lc_numeric);
+	putenv2(ctx, "LC_TIME", lc_time);
+	putenv2(ctx, "LANG", lang);
+	putenv2(ctx, "LANGUAGE", language);
+	putenv2(ctx, "LC_ALL", lc_all);
+	putenv2(ctx, "LC_MESSAGES", lc_messages);
 
-		sprintf(envstr, "LANG=%s", lang);
-		putenv(envstr);
-#else
-		SetEnvironmentVariableA("LANG", lang);
-#endif
-		pg_free(lang);
-	}
-	else
-	{
-#ifndef WIN32
-		unsetenv("LANG");
-#else
-		SetEnvironmentVariableA("LANG", "");
-#endif
-	}
-
+	pg_free(lc_collate);
+	pg_free(lc_ctype);
+	pg_free(lc_monetary);
+	pg_free(lc_numeric);
+	pg_free(lc_time);
+	pg_free(lang);
+	pg_free(language);
+	pg_free(lc_all);
+	pg_free(lc_messages);
+ 
 	/* verify that we got all the mandatory pg_control data */
 	if (!got_xid || !got_oid ||
 		(!live_check && !got_log_id) ||
@@ -491,4 +529,40 @@ rename_old_pg_control(migratorContext *ctx)
 	if (pg_mv_file(old_path, new_path) != 0)
 		pg_log(ctx, PG_FATAL, "Unable to rename %s to %s.\n", old_path, new_path);
 	check_ok(ctx);
+}
+
+
+/*
+ *	putenv2()
+ *
+ *	This is like putenv(), but takes two arguments.
+ *	It also does unsetenv() if val is NULL.
+ */
+static void
+putenv2(migratorContext *ctx, const char *var, const char *val)
+{
+	if (val)
+	{
+#ifndef WIN32
+		char	   *envstr = (char *) pg_malloc(ctx, strlen(var) +
+												strlen(val) + 1);
+
+		sprintf(envstr, "%s=%s", var, val);
+		putenv(envstr);
+		/*
+		 *	Do not free envstr because it becomes part of the environment
+		 *	on some operating systems.  See port/unsetenv.c::unsetenv.
+		 */
+#else
+		SetEnvironmentVariableA(var, val);
+#endif
+	}
+	else
+	{
+#ifndef WIN32
+		unsetenv(var);
+#else
+		SetEnvironmentVariableA(var, "");
+#endif
+	}
 }
