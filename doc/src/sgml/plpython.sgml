@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/plpython.sgml,v 1.52 2010/08/05 18:36:33 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/plpython.sgml,v 1.53 2010/09/08 20:35:51 petere Exp $ -->
 
 <chapter id="plpython">
  <title>PL/Python - Python Procedural Language</title>
@@ -93,6 +93,17 @@
    whether PL/Python for Python 2 or Python 3 or both are available.
   </para>
 
+  <tip>
+   <para>
+    The built variant depends on which Python version was found during
+    the installation or which version was explicitly set using
+    the <envar>PYTHON</envar> environment variable;
+    see <xref linkend="install-procedure">.  To make both variants of
+    PL/Python available in one installation, the source tree has to be
+    configured and built twice.
+   </para>
+  </tip>
+
   <para>
    This results in the following usage and migration strategy:
 
@@ -148,7 +159,7 @@
 
   <para>
    See also the
-   document <ulink url="http://docs.python.org/dev/3.0/whatsnew/3.0.html">What's
+   document <ulink url="http://docs.python.org/py3k/whatsnew/3.0.html">What's
    New In Python 3.0</ulink> for more information about porting to
    Python 3.
   </para>
