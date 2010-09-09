@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.250.2.6 2010/08/17 04:37:16 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.250.2.7 2010/09/09 00:48:29 momjian Exp $ -->
 
  <chapter id="datatype">
   <title>Data Types</title>
@@ -3405,7 +3405,7 @@ SELECT person.name, holidays.num_weeks FROM person, holidays
         <row> 
          <entry><type>cidr</type> Input</entry>
          <entry><type>cidr</type> Output</entry>
-         <entry><literal><function>abbrev</function>(<type>cidr</type>)</literal></entry>
+         <entry><literal><function>abbrev(<type>cidr</type>)</function></literal></entry>
         </row>
        </thead>
        <tbody>
