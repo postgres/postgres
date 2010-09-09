@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/xml2.sgml,v 1.11 2010/08/17 04:37:21 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/xml2.sgml,v 1.12 2010/09/09 00:48:22 momjian Exp $ -->
 
 <sect1 id="xml2">
  <title>xml2</title>
@@ -41,13 +41,23 @@
 
   <table id="xml2-functions-table">
    <title>Functions</title>
-   <tgroup cols="2">
+   <tgroup cols="3">
+   <thead>
+     <row>
+      <entry>Function</entry>
+      <entry>Returns</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
     <tbody>
      <row>
       <entry>
-<synopsis>
-xml_is_well_formed(document) returns bool
-</synopsis>
+       <function>
+        xml_is_well_formed(document)
+       </function>
+      </entry>
+      <entry>
+       <type>bool</type>
       </entry>
       <entry>
        <para>
@@ -61,13 +71,14 @@ xml_is_well_formed(document) returns bool
      </row>
      <row>
       <entry>
-<synopsis>
-xpath_string(document, query) returns text
-xpath_number(document, query) returns float4
-xpath_bool(document, query) returns bool
-</synopsis>
+        <function>
+         xpath_string(document, query)
+        </function>
       </entry>
       <entry>
+       <type>text</type>
+      </entry>
+      <entry morerows="2">
        <para>
         These functions evaluate the XPath query on the supplied document, and
         cast the result to the specified type.
@@ -76,9 +87,32 @@ xpath_bool(document, query) returns bool
      </row>
      <row>
       <entry>
-<synopsis>
-xpath_nodeset(document, query, toptag, itemtag) returns text
-</synopsis>
+       <function>
+        xpath_number(document, query)
+       </function>
+      </entry>
+      <entry>
+       <type>float4</type>
+      </entry>
+     </row>
+     <row>
+      <entry>
+       <function>
+        xpath_bool(document, query)
+       </function>
+      </entry>
+      <entry>
+       <type>bool</type>
+      </entry>
+     </row>
+     <row>
+      <entry>
+        <function>
+         xpath_nodeset(document, query, toptag, itemtag)
+        </function>
+      </entry>
+      <entry>
+       <type>text</type>
       </entry>
       <entry>
        <para>
@@ -96,9 +130,12 @@ xpath_nodeset(document, query, toptag, itemtag) returns text
      </row>
      <row>
       <entry>
-<synopsis>
-xpath_nodeset(document, query) returns text
-</synopsis>
+        <function>
+         xpath_nodeset(document, query)
+        </function>
+      </entry>
+      <entry>
+       <type>text</type>
       </entry>
       <entry>
        <para>
@@ -108,9 +145,12 @@ xpath_nodeset(document, query) returns text
      </row>
      <row>
       <entry>
-<synopsis>
-xpath_nodeset(document, query, itemtag) returns text
-</synopsis>
+        <function>
+         xpath_nodeset(document, query, itemtag)
+        </function>
+      </entry>
+      <entry>
+       <type>text</type>
       </entry>
       <entry>
        <para>
@@ -120,9 +160,12 @@ xpath_nodeset(document, query, itemtag) returns text
      </row>
      <row>
       <entry>
-<synopsis>
-xpath_list(document, query, separator) returns text
-</synopsis>
+        <function>
+         xpath_list(document, query, separator)
+        </function>
+      </entry>
+      <entry>
+       <type>text</type>
       </entry>
       <entry>
        <para>
@@ -134,9 +177,12 @@ xpath_list(document, query, separator) returns text
      </row>
      <row>
       <entry>
-<synopsis>
-xpath_list(document, query) returns text
-</synopsis>
+        <function>
+         xpath_list(document, query)
+        </function>
+      </entry>
+      <entry>
+       <type>text</type>
       </entry>
       <entry>
        This is a wrapper for the above function that uses <literal>,</>
@@ -167,6 +213,12 @@ xpath_table(text key, text document, text relation, text xpaths, text criteria) 
   <table id="xml2-xpath-table-parameters">
    <title><function>xpath_table</function> Parameters</title>
    <tgroup cols="2">
+     <thead>
+     <row>
+      <entry>Parameter</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
     <tbody>
      <row>
       <entry><parameter>key</parameter></entry>

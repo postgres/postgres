@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/sources.sgml,v 2.37 2010/07/10 18:37:00 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/sources.sgml,v 2.38 2010/09/09 00:48:22 momjian Exp $ -->
 
  <chapter id="source">
   <title>PostgreSQL Coding Conventions</title>
@@ -419,7 +419,7 @@ Hint:       the addendum
 
    <para>
     There are functions in the backend that will double-quote their own output
-    at need (for example, <function>format_type_be</>()).  Do not put
+    at need (for example, <function>format_type_be()</function>).  Do not put
     additional quotes around the output of such functions.
    </para>
 
