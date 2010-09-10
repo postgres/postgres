@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.trailer,v 1.26 2010/05/25 17:28:20 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.trailer,v 1.27 2010/09/10 10:13:20 meskes Exp $ */
 
 statements: /*EMPTY*/
                 | statements statement
@@ -289,13 +289,14 @@ ECPGCursorStmt:  DECLARE cursor_name cursor_options CURSOR opt_hold FOR prepared
 		{
 			struct cursor *ptr, *this;
 			char *cursor_marker = $2[0] == ':' ? make_str("$0") : mm_strdup($2);
+			int (* strcmp_fn)(const char *, const char *) = ($2[0] == ':' ? strcmp : pg_strcasecmp);
 			struct variable *thisquery = (struct variable *)mm_alloc(sizeof(struct variable));
 			const char *con = connection ? connection : "NULL";
 			char *comment;
 
 			for (ptr = cur; ptr != NULL; ptr = ptr->next)
 			{
-				if (strcmp($2, ptr->name) == 0)
+				if (strcmp_fn($2, ptr->name) == 0)
 				{
 					/* re-definition is a bug */
 					if ($2[0] == ':')

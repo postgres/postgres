@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.header,v 1.16 2010/05/25 14:32:55 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.header,v 1.17 2010/09/10 10:13:20 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -386,10 +386,11 @@ add_additional_variables(char *name, bool insert)
 {
 	struct cursor *ptr;
 	struct arguments *p;
+	int (* strcmp_fn)(const char *, const char *) = (name[0] == ':' ? strcmp : pg_strcasecmp);
 
 	for (ptr = cur; ptr != NULL; ptr=ptr->next)
 	{
-		if (strcmp(ptr->name, name) == 0)
+		if (strcmp_fn(ptr->name, name) == 0)
 			break;
 	}
 

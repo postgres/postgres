@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.addons,v 1.19 2010/03/31 08:45:18 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.addons,v 1.20 2010/09/10 10:13:20 meskes Exp $ */
 ECPG: stmtClosePortalStmt block
 	{
 		if (INFORMIX_MODE)
@@ -302,10 +302,11 @@ ECPG: DeclareCursorStmtDECLAREcursor_namecursor_optionsCURSORopt_holdFORSelectSt
 		struct cursor *ptr, *this;
 		char *cursor_marker = $2[0] == ':' ? make_str("$0") : mm_strdup($2);
 		char *comment, *c1, *c2;
+		int (* strcmp_fn)(const char *, const char *) = ($2[0] == ':' ? strcmp : pg_strcasecmp);
 
 		for (ptr = cur; ptr != NULL; ptr = ptr->next)
 		{
-			if (strcmp($2, ptr->name) == 0)
+			if (strcmp_fn($2, ptr->name) == 0)
 			{
 				if ($2[0] == ':')
                                         mmerror(PARSE_ERROR, ET_ERROR, "using variable \"%s\" in different declare statements is not supported", $2+1);
