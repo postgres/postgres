@@ -27773,6 +27773,13 @@ _ACEOF
   SHMEM_IMPLEMENTATION="src/backend/port/win32_shmem.c"
 fi
 
+# Select latch implementation type.
+if test "$PORTNAME" != "win32"; then
+  LATCH_IMPLEMENTATION="src/backend/port/unix_latch.c"
+else
+  LATCH_IMPLEMENTATION="src/backend/port/win32_latch.c"
+fi
+
 # If not set in template file, set bytes to use libc memset()
 if test x"$MEMSET_LOOP_LIMIT" = x"" ; then
   MEMSET_LOOP_LIMIT=1024
@@ -29098,7 +29105,7 @@ fi
 ac_config_files="$ac_config_files GNUmakefile src/Makefile.global"
 
 
-ac_config_links="$ac_config_links src/backend/port/dynloader.c:src/backend/port/dynloader/${template}.c src/backend/port/pg_sema.c:${SEMA_IMPLEMENTATION} src/backend/port/pg_shmem.c:${SHMEM_IMPLEMENTATION} src/include/dynloader.h:src/backend/port/dynloader/${template}.h src/include/pg_config_os.h:src/include/port/${template}.h src/Makefile.port:src/makefiles/Makefile.${template}"
+ac_config_links="$ac_config_links src/backend/port/dynloader.c:src/backend/port/dynloader/${template}.c src/backend/port/pg_sema.c:${SEMA_IMPLEMENTATION} src/backend/port/pg_shmem.c:${SHMEM_IMPLEMENTATION} src/backend/port/pg_latch.c:${LATCH_IMPLEMENTATION} src/include/dynloader.h:src/backend/port/dynloader/${template}.h src/include/pg_config_os.h:src/include/port/${template}.h src/Makefile.port:src/makefiles/Makefile.${template}"
 
 
 if test "$PORTNAME" = "win32"; then
@@ -29722,6 +29729,7 @@ do
     "src/backend/port/dynloader.c") CONFIG_LINKS="$CONFIG_LINKS src/backend/port/dynloader.c:src/backend/port/dynloader/${template}.c" ;;
     "src/backend/port/pg_sema.c") CONFIG_LINKS="$CONFIG_LINKS src/backend/port/pg_sema.c:${SEMA_IMPLEMENTATION}" ;;
     "src/backend/port/pg_shmem.c") CONFIG_LINKS="$CONFIG_LINKS src/backend/port/pg_shmem.c:${SHMEM_IMPLEMENTATION}" ;;
+    "src/backend/port/pg_latch.c") CONFIG_LINKS="$CONFIG_LINKS src/backend/port/pg_latch.c:${LATCH_IMPLEMENTATION}" ;;
     "src/include/dynloader.h") CONFIG_LINKS="$CONFIG_LINKS src/include/dynloader.h:src/backend/port/dynloader/${template}.h" ;;
     "src/include/pg_config_os.h") CONFIG_LINKS="$CONFIG_LINKS src/include/pg_config_os.h:src/include/port/${template}.h" ;;
     "src/Makefile.port") CONFIG_LINKS="$CONFIG_LINKS src/Makefile.port:src/makefiles/Makefile.${template}" ;;

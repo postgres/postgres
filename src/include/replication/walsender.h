@@ -5,7 +5,7 @@
  *
  * Portions Copyright (c) 2010-2010, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/replication/walsender.h,v 1.4 2010/06/17 00:06:34 itagaki Exp $
+ * $PostgreSQL: pgsql/src/include/replication/walsender.h,v 1.5 2010/09/11 15:48:04 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -13,6 +13,7 @@
 #define _WALSENDER_H
 
 #include "access/xlog.h"
+#include "storage/latch.h"
 #include "storage/spin.h"
 
 /*
@@ -24,6 +25,12 @@ typedef struct WalSnd
 	XLogRecPtr	sentPtr;		/* WAL has been sent up to this point */
 
 	slock_t		mutex;			/* locks shared variables shown above */
+
+	/*
+	 * Latch used by backends to wake up this walsender when it has work
+	 * to do.
+	 */
+	Latch		latch;
 } WalSnd;
 
 /* There is one WalSndCtl struct for the whole database cluster */
@@ -45,5 +52,6 @@ extern int	WalSenderMain(void);
 extern void WalSndSignals(void);
 extern Size WalSndShmemSize(void);
 extern void WalSndShmemInit(void);
+extern void WalSndWakeup(void);
 
 #endif   /* _WALSENDER_H */

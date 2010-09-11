@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/procsignal.c,v 1.7 2010/08/30 06:33:22 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/procsignal.c,v 1.8 2010/09/11 15:48:04 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,6 +21,7 @@
 #include "commands/async.h"
 #include "miscadmin.h"
 #include "storage/ipc.h"
+#include "storage/latch.h"
 #include "storage/procsignal.h"
 #include "storage/shmem.h"
 #include "storage/sinval.h"
@@ -277,6 +278,8 @@ procsignal_sigusr1_handler(SIGNAL_ARGS)
 
 	if (CheckProcSignal(PROCSIG_RECOVERY_CONFLICT_BUFFERPIN))
 		RecoveryConflictInterrupt(PROCSIG_RECOVERY_CONFLICT_BUFFERPIN);
+
+	latch_sigusr1_handler();
 
 	errno = save_errno;
 }
