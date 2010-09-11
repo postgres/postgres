@@ -77,7 +77,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/port/unix_latch.c,v 1.1 2010/09/11 15:48:04 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/port/unix_latch.c,v 1.2 2010/09/11 16:26:04 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -86,6 +86,11 @@
 #include <fcntl.h>
 #include <signal.h>
 #include <unistd.h>
+#include <sys/time.h>
+#include <sys/types.h>
+#ifdef HAVE_SYS_SELECT_H
+#include <sys/select.h>
+#endif
 
 #include "miscadmin.h"
 #include "storage/latch.h"
