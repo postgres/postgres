@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeModifyTable.c,v 1.9 2010/08/18 21:52:24 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeModifyTable.c,v 1.10 2010/09/11 18:38:56 joe Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -310,7 +310,7 @@ ExecDelete(ItemPointer tupleid,
 	 * Note: if es_crosscheck_snapshot isn't InvalidSnapshot, we check that
 	 * the row to be deleted is visible to that snapshot, and throw a can't-
 	 * serialize error if not.	This is a special-case behavior needed for
-	 * referential integrity updates in serializable transactions.
+	 * referential integrity updates in transaction-snapshot mode transactions.
 	 */
 ldelete:;
 	result = heap_delete(resultRelationDesc, tupleid,
@@ -328,7 +328,7 @@ ldelete:;
 			break;
 
 		case HeapTupleUpdated:
-			if (IsXactIsoLevelSerializable)
+			if (IsolationUsesXactSnapshot())
 				ereport(ERROR,
 						(errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
 						 errmsg("could not serialize access due to concurrent update")));
@@ -499,7 +499,7 @@ lreplace:;
 	 * Note: if es_crosscheck_snapshot isn't InvalidSnapshot, we check that
 	 * the row to be updated is visible to that snapshot, and throw a can't-
 	 * serialize error if not.	This is a special-case behavior needed for
-	 * referential integrity updates in serializable transactions.
+	 * referential integrity updates in transaction-snapshot mode transactions.
 	 */
 	result = heap_update(resultRelationDesc, tupleid, tuple,
 						 &update_ctid, &update_xmax,
@@ -516,7 +516,7 @@ lreplace:;
 			break;
 
 		case HeapTupleUpdated:
-			if (IsXactIsoLevelSerializable)
+			if (IsolationUsesXactSnapshot())
 				ereport(ERROR,
 						(errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
 						 errmsg("could not serialize access due to concurrent update")));

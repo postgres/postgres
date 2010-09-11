@@ -15,7 +15,7 @@
  *
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/ri_triggers.c,v 1.120 2010/07/28 05:22:24 sriggs Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/ri_triggers.c,v 1.121 2010/09/11 18:38:56 joe Exp $
  *
  * ----------
  */
@@ -2784,10 +2784,10 @@ RI_Initial_Check(Trigger *trigger, Relation fk_rel, Relation pk_rel)
 
 	/*
 	 * Run the plan.  For safety we force a current snapshot to be used. (In
-	 * serializable mode, this arguably violates serializability, but we
-	 * really haven't got much choice.)  We don't need to register the
-	 * snapshot, because SPI_execute_snapshot will see to it.  We need at most
-	 * one tuple returned, so pass limit = 1.
+	 * transaction-snapshot mode, this arguably violates transaction
+	 * isolation rules, but we really haven't got much choice.)
+	 * We don't need to register the snapshot, because SPI_execute_snapshot
+	 * will see to it. We need at most one tuple returned, so pass limit = 1.
 	 */
 	spi_result = SPI_execute_snapshot(qplan,
 									  NULL, NULL,
@@ -3332,15 +3332,15 @@ ri_PerformCheck(RI_QueryKey *qkey, SPIPlanPtr qplan,
 	/*
 	 * In READ COMMITTED mode, we just need to use an up-to-date regular
 	 * snapshot, and we will see all rows that could be interesting. But in
-	 * SERIALIZABLE mode, we can't change the transaction snapshot. If the
-	 * caller passes detectNewRows == false then it's okay to do the query
+	 * transaction-snapshot mode, we can't change the transaction snapshot.
+	 * If the caller passes detectNewRows == false then it's okay to do the query
 	 * with the transaction snapshot; otherwise we use a current snapshot, and
 	 * tell the executor to error out if it finds any rows under the current
 	 * snapshot that wouldn't be visible per the transaction snapshot.  Note
 	 * that SPI_execute_snapshot will register the snapshots, so we don't need
 	 * to bother here.
 	 */
-	if (IsXactIsoLevelSerializable && detectNewRows)
+	if (IsolationUsesXactSnapshot() && detectNewRows)
 	{
 		CommandCounterIncrement();		/* be sure all my own work is visible */
 		test_snapshot = GetLatestSnapshot();

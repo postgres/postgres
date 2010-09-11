@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/pquery.c,v 1.137 2010/02/26 02:01:02 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/pquery.c,v 1.138 2010/09/11 18:38:56 joe Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1163,8 +1163,8 @@ PortalRunUtility(Portal portal, Node *utilityStmt, bool isTopLevel,
 	 * Set snapshot if utility stmt needs one.	Most reliable way to do this
 	 * seems to be to enumerate those that do not need one; this is a short
 	 * list.  Transaction control, LOCK, and SET must *not* set a snapshot
-	 * since they need to be executable at the start of a serializable
-	 * transaction without freezing a snapshot.  By extension we allow SHOW
+	 * since they need to be executable at the start of a transaction-snapshot
+	 * mode transaction without freezing a snapshot.  By extension we allow SHOW
 	 * not to set a snapshot.  The other stmts listed are just efficiency
 	 * hacks.  Beware of listing anything that can modify the database --- if,
 	 * say, it has to update an index with expressions that invoke

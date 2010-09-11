@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.293 2010/07/29 16:14:36 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.294 2010/09/11 18:38:55 joe Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -2173,7 +2173,7 @@ l1:
 
 	if (crosscheck != InvalidSnapshot && result == HeapTupleMayBeUpdated)
 	{
-		/* Perform additional check for serializable RI updates */
+		/* Perform additional check for transaction-snapshot mode RI updates */
 		if (!HeapTupleSatisfiesVisibility(&tp, crosscheck, buffer))
 			result = HeapTupleUpdated;
 	}
@@ -2525,7 +2525,7 @@ l2:
 
 	if (crosscheck != InvalidSnapshot && result == HeapTupleMayBeUpdated)
 	{
-		/* Perform additional check for serializable RI updates */
+		/* Perform additional check for transaction-snapshot mode RI updates */
 		if (!HeapTupleSatisfiesVisibility(&oldtup, crosscheck, buffer))
 			result = HeapTupleUpdated;
 	}

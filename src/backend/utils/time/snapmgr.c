@@ -19,7 +19,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/time/snapmgr.c,v 1.15 2010/02/26 02:01:15 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/time/snapmgr.c,v 1.16 2010/09/11 18:38:56 joe Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,10 +37,10 @@
 
 
 /*
- * CurrentSnapshot points to the only snapshot taken in a serializable
- * transaction, and to the latest one taken in a read-committed transaction.
+ * CurrentSnapshot points to the only snapshot taken in transaction-snapshot
+ * mode, and to the latest one taken in a read-committed transaction.
  * SecondarySnapshot is a snapshot that's always up-to-date as of the current
- * instant, even on a serializable transaction.  It should only be used for
+ * instant, even in transaction-snapshot mode.  It should only be used for
  * special-purpose code (say, RI checking.)
  *
  * These SnapshotData structs are static to simplify memory allocation
@@ -97,11 +97,11 @@ static int	RegisteredSnapshots = 0;
 bool		FirstSnapshotSet = false;
 
 /*
- * Remembers whether this transaction registered a serializable snapshot at
+ * Remembers whether this transaction registered a transaction snapshot at
  * start.  We cannot trust FirstSnapshotSet in combination with
- * IsXactIsoLevelSerializable, because GUC may be reset before us.
+ * IsolationUsesXactSnapshot(), because GUC may be reset before us.
  */
-static bool registered_serializable = false;
+static bool registered_xact_snapshot = false;
 
 
 static Snapshot CopySnapshot(Snapshot snapshot);
@@ -130,21 +130,21 @@ GetTransactionSnapshot(void)
 		FirstSnapshotSet = true;
 
 		/*
-		 * In serializable mode, the first snapshot must live until end of
-		 * xact regardless of what the caller does with it, so we must
+		 * In transaction-snapshot mode, the first snapshot must live until
+		 * end of xact regardless of what the caller does with it, so we must
 		 * register it internally here and unregister it at end of xact.
 		 */
-		if (IsXactIsoLevelSerializable)
+		if (IsolationUsesXactSnapshot())
 		{
 			CurrentSnapshot = RegisterSnapshotOnOwner(CurrentSnapshot,
 												TopTransactionResourceOwner);
-			registered_serializable = true;
+			registered_xact_snapshot = true;
 		}
 
 		return CurrentSnapshot;
 	}
 
-	if (IsXactIsoLevelSerializable)
+	if (IsolationUsesXactSnapshot())
 		return CurrentSnapshot;
 
 	CurrentSnapshot = GetSnapshotData(&CurrentSnapshotData);
@@ -155,7 +155,7 @@ GetTransactionSnapshot(void)
 /*
  * GetLatestSnapshot
  *		Get a snapshot that is up-to-date as of the current instant,
- *		even if we are executing in SERIALIZABLE mode.
+ *		even if we are executing in transaction-snapshot mode.
  */
 Snapshot
 GetLatestSnapshot(void)
@@ -515,13 +515,13 @@ void
 AtEarlyCommit_Snapshot(void)
 {
 	/*
-	 * On a serializable transaction we must unregister our private refcount
-	 * to the serializable snapshot.
+	 * In transaction-snapshot mode we must unregister our private refcount
+	 * to the transaction-snapshot.
 	 */
-	if (registered_serializable)
+	if (registered_xact_snapshot)
 		UnregisterSnapshotFromOwner(CurrentSnapshot,
 									TopTransactionResourceOwner);
-	registered_serializable = false;
+	registered_xact_snapshot = false;
 
 }
 
@@ -557,5 +557,5 @@ AtEOXact_Snapshot(bool isCommit)
 	SecondarySnapshot = NULL;
 
 	FirstSnapshotSet = false;
-	registered_serializable = false;
+	registered_xact_snapshot = false;
 }

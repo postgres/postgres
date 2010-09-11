@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeLockRows.c,v 1.6 2010/07/28 17:21:56 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeLockRows.c,v 1.7 2010/09/11 18:38:56 joe Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -130,7 +130,7 @@ lnext:
 				break;
 
 			case HeapTupleUpdated:
-				if (IsXactIsoLevelSerializable)
+				if (IsolationUsesXactSnapshot())
 					ereport(ERROR,
 							(errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
 							 errmsg("could not serialize access due to concurrent update")));
