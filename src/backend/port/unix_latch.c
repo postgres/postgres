@@ -77,7 +77,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/port/unix_latch.c,v 1.2 2010/09/11 16:26:04 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/port/unix_latch.c,v 1.3 2010/09/13 18:01:20 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -156,6 +156,7 @@ OwnLatch(volatile Latch *latch)
 	if (selfpipe_readfd == -1)
 		initSelfPipe();
 
+	/* sanity check */
 	if (latch->owner_pid != 0)
 		elog(ERROR, "latch already owned");
 	latch->owner_pid = MyProcPid;
