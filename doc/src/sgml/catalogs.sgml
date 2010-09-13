@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.225.2.2 2010/08/25 18:18:38 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.225.2.3 2010/09/13 01:25:12 rhaas Exp $ -->
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
  -->
@@ -6936,7 +6936,8 @@
    compatibility: it emulates a catalog that existed in
    <productname>PostgreSQL</productname> before version 8.1.
    It shows properties of all roles that are marked as
-   <structfield>rolcanlogin</>.
+   <structfield>rolcanlogin</> in
+   <link linkend="catalog-pg-authid">pg_authid</link>.
   </para>
 
   <para>
