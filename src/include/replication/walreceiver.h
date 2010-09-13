@@ -5,7 +5,7 @@
  *
  * Portions Copyright (c) 2010-2010, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/replication/walreceiver.h,v 1.11 2010/07/06 19:19:00 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/replication/walreceiver.h,v 1.12 2010/09/13 10:14:25 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -87,12 +87,14 @@ extern PGDLLIMPORT walrcv_receive_type walrcv_receive;
 typedef void (*walrcv_disconnect_type) (void);
 extern PGDLLIMPORT walrcv_disconnect_type walrcv_disconnect;
 
+/* prototypes for functions in walreceiver.c */
 extern void WalReceiverMain(void);
+
+/* prototypes for functions in walreceiverfuncs.c */
 extern Size WalRcvShmemSize(void);
 extern void WalRcvShmemInit(void);
 extern void ShutdownWalRcv(void);
 extern bool WalRcvInProgress(void);
-extern XLogRecPtr WaitNextXLogAvailable(XLogRecPtr recptr, bool *finished);
 extern void RequestXLogStreaming(XLogRecPtr recptr, const char *conninfo);
 extern XLogRecPtr GetWalRcvWriteRecPtr(XLogRecPtr *latestChunkStart);
 
