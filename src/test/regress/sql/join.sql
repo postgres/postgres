@@ -615,6 +615,23 @@ explain (costs off)
     left join (select c.*, true as linked from child c) as ss
     on (p.k = ss.k);
 
+-- check for a 9.0rc1 bug: join removal breaks pseudoconstant qual handling
+select p.* from
+  parent p left join child c on (p.k = c.k)
+  where p.k = 1 and p.k = 2;
+explain (costs off)
+select p.* from
+  parent p left join child c on (p.k = c.k)
+  where p.k = 1 and p.k = 2;
+
+select p.* from
+  (parent p left join child c on (p.k = c.k)) join parent x on p.k = x.k
+  where p.k = 1 and p.k = 2;
+explain (costs off)
+select p.* from
+  (parent p left join child c on (p.k = c.k)) join parent x on p.k = x.k
+  where p.k = 1 and p.k = 2;
+
 -- bug 5255: this is not optimizable by join removal
 begin;
 

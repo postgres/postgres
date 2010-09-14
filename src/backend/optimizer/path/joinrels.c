@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/joinrels.c,v 1.105 2010/02/26 02:00:45 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/joinrels.c,v 1.106 2010/09/14 23:15:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,7 +29,8 @@ static bool has_join_restriction(PlannerInfo *root, RelOptInfo *rel);
 static bool has_legal_joinclause(PlannerInfo *root, RelOptInfo *rel);
 static bool is_dummy_rel(RelOptInfo *rel);
 static void mark_dummy_rel(RelOptInfo *rel);
-static bool restriction_is_constant_false(List *restrictlist);
+static bool restriction_is_constant_false(List *restrictlist,
+										  bool only_pushed_down);
 
 
 /*
@@ -603,7 +604,10 @@ make_join_rel(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2)
 	 *
 	 * Also, a provably constant-false join restriction typically means that
 	 * we can skip evaluating one or both sides of the join.  We do this by
-	 * marking the appropriate rel as dummy.
+	 * marking the appropriate rel as dummy.  For outer joins, a constant-false
+	 * restriction that is pushed down still means the whole join is dummy,
+	 * while a non-pushed-down one means that no inner rows will join so we
+	 * can treat the inner rel as dummy.
 	 *
 	 * We need only consider the jointypes that appear in join_info_list, plus
 	 * JOIN_INNER.
@@ -612,7 +616,7 @@ make_join_rel(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2)
 	{
 		case JOIN_INNER:
 			if (is_dummy_rel(rel1) || is_dummy_rel(rel2) ||
-				restriction_is_constant_false(restrictlist))
+				restriction_is_constant_false(restrictlist, false))
 			{
 				mark_dummy_rel(joinrel);
 				break;
@@ -625,12 +629,13 @@ make_join_rel(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2)
 								 restrictlist);
 			break;
 		case JOIN_LEFT:
-			if (is_dummy_rel(rel1))
+			if (is_dummy_rel(rel1) ||
+				restriction_is_constant_false(restrictlist, true))
 			{
 				mark_dummy_rel(joinrel);
 				break;
 			}
-			if (restriction_is_constant_false(restrictlist) &&
+			if (restriction_is_constant_false(restrictlist, false) &&
 				bms_is_subset(rel2->relids, sjinfo->syn_righthand))
 				mark_dummy_rel(rel2);
 			add_paths_to_joinrel(root, joinrel, rel1, rel2,
@@ -641,7 +646,8 @@ make_join_rel(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2)
 								 restrictlist);
 			break;
 		case JOIN_FULL:
-			if (is_dummy_rel(rel1) && is_dummy_rel(rel2))
+			if ((is_dummy_rel(rel1) && is_dummy_rel(rel2)) ||
+				restriction_is_constant_false(restrictlist, true))
 			{
 				mark_dummy_rel(joinrel);
 				break;
@@ -665,7 +671,7 @@ make_join_rel(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2)
 				bms_is_subset(sjinfo->min_righthand, rel2->relids))
 			{
 				if (is_dummy_rel(rel1) || is_dummy_rel(rel2) ||
-					restriction_is_constant_false(restrictlist))
+					restriction_is_constant_false(restrictlist, false))
 				{
 					mark_dummy_rel(joinrel);
 					break;
@@ -687,6 +693,12 @@ make_join_rel(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2)
 				create_unique_path(root, rel2, rel2->cheapest_total_path,
 								   sjinfo) != NULL)
 			{
+				if (is_dummy_rel(rel1) || is_dummy_rel(rel2) ||
+					restriction_is_constant_false(restrictlist, false))
+				{
+					mark_dummy_rel(joinrel);
+					break;
+				}
 				add_paths_to_joinrel(root, joinrel, rel1, rel2,
 									 JOIN_UNIQUE_INNER, sjinfo,
 									 restrictlist);
@@ -696,12 +708,13 @@ make_join_rel(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2)
 			}
 			break;
 		case JOIN_ANTI:
-			if (is_dummy_rel(rel1))
+			if (is_dummy_rel(rel1) ||
+				restriction_is_constant_false(restrictlist, true))
 			{
 				mark_dummy_rel(joinrel);
 				break;
 			}
-			if (restriction_is_constant_false(restrictlist) &&
+			if (restriction_is_constant_false(restrictlist, false) &&
 				bms_is_subset(rel2->relids, sjinfo->syn_righthand))
 				mark_dummy_rel(rel2);
 			add_paths_to_joinrel(root, joinrel, rel1, rel2,
@@ -947,9 +960,11 @@ mark_dummy_rel(RelOptInfo *rel)
  * join situations this will leave us computing cartesian products only to
  * decide there's no match for an outer row, which is pretty stupid.  So,
  * we need to detect the case.
+ *
+ * If only_pushed_down is TRUE, then consider only pushed-down quals.
  */
 static bool
-restriction_is_constant_false(List *restrictlist)
+restriction_is_constant_false(List *restrictlist, bool only_pushed_down)
 {
 	ListCell   *lc;
 
@@ -964,6 +979,9 @@ restriction_is_constant_false(List *restrictlist)
 		RestrictInfo *rinfo = (RestrictInfo *) lfirst(lc);
 
 		Assert(IsA(rinfo, RestrictInfo));
+		if (only_pushed_down && !rinfo->is_pushed_down)
+			continue;
+
 		if (rinfo->clause && IsA(rinfo->clause, Const))
 		{
 			Const	   *con = (Const *) rinfo->clause;
