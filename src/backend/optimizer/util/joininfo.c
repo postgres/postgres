@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/joininfo.c,v 1.52 2010/01/02 16:57:48 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/joininfo.c,v 1.52.6.1 2010/09/14 23:15:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -95,6 +95,40 @@ add_join_clause_to_rels(PlannerInfo *root,
 		RelOptInfo *rel = find_base_rel(root, cur_relid);
 
 		rel->joininfo = lappend(rel->joininfo, restrictinfo);
+	}
+	bms_free(tmprelids);
+}
+
+/*
+ * remove_join_clause_from_rels
+ *	  Delete 'restrictinfo' from all the joininfo lists it is in
+ *
+ * This reverses the effect of add_join_clause_to_rels.  It's used when we
+ * discover that a relation need not be joined at all.
+ *
+ * 'restrictinfo' describes the join clause
+ * 'join_relids' is the list of relations participating in the join clause
+ *				 (there must be more than one)
+ */
+void
+remove_join_clause_from_rels(PlannerInfo *root,
+							 RestrictInfo *restrictinfo,
+							 Relids join_relids)
+{
+	Relids		tmprelids;
+	int			cur_relid;
+
+	tmprelids = bms_copy(join_relids);
+	while ((cur_relid = bms_first_member(tmprelids)) >= 0)
+	{
+		RelOptInfo *rel = find_base_rel(root, cur_relid);
+
+		/*
+		 * Remove the restrictinfo from the list.  Pointer comparison is
+		 * sufficient.
+		 */
+		Assert(list_member_ptr(rel->joininfo, restrictinfo));
+		rel->joininfo = list_delete_ptr(rel->joininfo, restrictinfo);
 	}
 	bms_free(tmprelids);
 }
