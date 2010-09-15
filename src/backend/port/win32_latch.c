@@ -3,14 +3,16 @@
  * win32_latch.c
  *	  Windows implementation of latches.
  *
- * The Windows implementation uses Windows events. See unix_latch.c for
- * information on usage.
+ * See unix_latch.c for information on usage.
+ *
+ * The Windows implementation uses Windows events that are inherited by
+ * all postmaster child processes.
  *
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/port/win32_latch.c,v 1.1 2010/09/11 15:48:04 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/port/win32_latch.c,v 1.2 2010/09/15 10:06:21 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,83 +26,60 @@
 #include "replication/walsender.h"
 #include "storage/latch.h"
 #include "storage/shmem.h"
-#include "storage/spin.h"
 
-/*
- * Shared latches are implemented with Windows events that are shared by
- * all postmaster child processes. At postmaster startup we create enough
- * Event objects, and mark them as inheritable so that they are accessible
- * in child processes. The handles are stored in sharedHandles.
- */
-typedef struct
-{
-	slock_t		mutex;			/* protects all the other fields */
-
-	int			maxhandles;		/* number of shared handles created */
-	int			nfreehandles;	/* number of free handles in array */
-	HANDLE		handles[1];		/* free handles, variable length */
-} SharedEventHandles;
-
-static SharedEventHandles *sharedHandles;
 
 void
 InitLatch(volatile Latch *latch)
 {
-	latch->event = CreateEvent(NULL, TRUE, FALSE, NULL);
-	latch->is_shared = false;
 	latch->is_set = false;
+	latch->owner_pid = MyProcPid;
+	latch->is_shared = false;
+
+	latch->event = CreateEvent(NULL, TRUE, FALSE, NULL);
+	if (latch->event == NULL)
+		elog(ERROR, "CreateEvent failed: error code %d", (int) GetLastError());
 }
 
 void
 InitSharedLatch(volatile Latch *latch)
 {
-	latch->is_shared = true;
+	SECURITY_ATTRIBUTES sa;
+
 	latch->is_set = false;
-	latch->event = NULL;
+	latch->owner_pid = 0;
+	latch->is_shared = true;
+
+	/*
+	 * Set up security attributes to specify that the events are
+	 * inherited.
+	 */
+	ZeroMemory(&sa, sizeof(sa));
+	sa.nLength = sizeof(sa);
+	sa.bInheritHandle = TRUE;
+
+	latch->event = CreateEvent(&sa, TRUE, FALSE, NULL);
+	if (latch->event == NULL)
+		elog(ERROR, "CreateEvent failed: error code %d", (int) GetLastError());
 }
 
 void
 OwnLatch(volatile Latch *latch)
 {
-	HANDLE event;
-
 	/* Sanity checks */
 	Assert(latch->is_shared);
-	if (latch->event != 0)
+	if (latch->owner_pid != 0)
 		elog(ERROR, "latch already owned");
 
-	/* Reserve an event handle from the shared handles array */
-	SpinLockAcquire(&sharedHandles->mutex);
-	if (sharedHandles->nfreehandles <= 0)
-	{
-		SpinLockRelease(&sharedHandles->mutex);
-		elog(ERROR, "out of shared event objects");
-	}
-	sharedHandles->nfreehandles--;
-	event = sharedHandles->handles[sharedHandles->nfreehandles];
-	SpinLockRelease(&sharedHandles->mutex);
-
-	latch->event = event;
+	latch->owner_pid = MyProcPid;
 }
 
 void
 DisownLatch(volatile Latch *latch)
 {
 	Assert(latch->is_shared);
-	Assert(latch->event != NULL);
+	Assert(latch->owner_pid == MyProcPid);
 
-	/* Put the event handle back to the pool */
-	SpinLockAcquire(&sharedHandles->mutex);
-	if (sharedHandles->nfreehandles >= sharedHandles->maxhandles)
-	{
-		SpinLockRelease(&sharedHandles->mutex);
-		elog(PANIC, "too many free event handles");
-	}
-	sharedHandles->handles[sharedHandles->nfreehandles] = latch->event;
-	sharedHandles->nfreehandles++;
-	SpinLockRelease(&sharedHandles->mutex);
-
-	latch->event = NULL;
+	latch->owner_pid = 0;
 }
 
 bool
@@ -216,69 +195,4 @@ void
 ResetLatch(volatile Latch *latch)
 {
 	latch->is_set = false;
-}
-
-/*
- * Number of shared latches, used to allocate the right number of shared
- * Event handles at postmaster startup. You must update this if you
- * introduce a new shared latch!
- */
-static int
-NumSharedLatches(void)
-{
-	int numLatches = 0;
-
-	/* Each walsender needs one latch */
-	numLatches += max_wal_senders;
-
-	return numLatches;
-}
-
-/*
- * LatchShmemSize
- *		Compute space needed for latch's shared memory
- */
-Size
-LatchShmemSize(void)
-{
-	return offsetof(SharedEventHandles, handles) +
-		NumSharedLatches() * sizeof(HANDLE);
-}
-
-/*
- * LatchShmemInit
- *		Allocate and initialize shared memory needed for latches
- */
-void
-LatchShmemInit(void)
-{
-	Size		size = LatchShmemSize();
-	bool		found;
-
-	sharedHandles = ShmemInitStruct("SharedEventHandles", size, &found);
-
-	/* If we're first, initialize the struct and allocate handles */
-	if (!found)
-	{
-		int i;
-		SECURITY_ATTRIBUTES sa;
-
-		/*
-		 * Set up security attributes to specify that the events are
-		 * inherited.
-		 */
-		ZeroMemory(&sa, sizeof(sa));
-		sa.nLength = sizeof(sa);
-		sa.bInheritHandle = TRUE;
-
-		SpinLockInit(&sharedHandles->mutex);
-		sharedHandles->maxhandles = NumSharedLatches();
-		sharedHandles->nfreehandles = sharedHandles->maxhandles;
-		for (i = 0; i < sharedHandles->maxhandles; i++)
-		{
-			sharedHandles->handles[i] = CreateEvent(&sa, TRUE, FALSE, NULL);
-			if (sharedHandles->handles[i] == NULL)
-				elog(ERROR, "CreateEvent failed: error code %d", (int) GetLastError());
-		}
-	}
 }

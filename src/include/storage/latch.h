@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/latch.h,v 1.1 2010/09/11 15:48:04 heikki Exp $
+ * $PostgreSQL: pgsql/src/include/storage/latch.h,v 1.2 2010/09/15 10:06:21 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,9 +25,8 @@ typedef struct
 {
 	sig_atomic_t	is_set;
 	bool			is_shared;
-#ifndef WIN32
 	int				owner_pid;
-#else
+#ifdef WIN32
 	HANDLE			event;
 #endif
 } Latch;
@@ -45,9 +44,6 @@ extern int	WaitLatchOrSocket(volatile Latch *latch, pgsocket sock,
 extern void SetLatch(volatile Latch *latch);
 extern void ResetLatch(volatile Latch *latch);
 #define TestLatch(latch) (((volatile Latch *) latch)->is_set)
-
-extern Size LatchShmemSize(void);
-extern void LatchShmemInit(void);
 
 /*
  * Unix implementation uses SIGUSR1 for inter-process signaling, Win32 doesn't

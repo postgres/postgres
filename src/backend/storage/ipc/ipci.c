@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/ipci.c,v 1.105 2010/09/11 15:48:04 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/ipci.c,v 1.106 2010/09/15 10:06:21 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,7 +30,6 @@
 #include "replication/walsender.h"
 #include "storage/bufmgr.h"
 #include "storage/ipc.h"
-#include "storage/latch.h"
 #include "storage/pg_shmem.h"
 #include "storage/pmsignal.h"
 #include "storage/procarray.h"
@@ -118,7 +117,6 @@ CreateSharedMemoryAndSemaphores(bool makePrivate, int port)
 		size = add_size(size, SInvalShmemSize());
 		size = add_size(size, PMSignalShmemSize());
 		size = add_size(size, ProcSignalShmemSize());
-		size = add_size(size, LatchShmemSize());
 		size = add_size(size, BgWriterShmemSize());
 		size = add_size(size, AutoVacuumShmemSize());
 		size = add_size(size, WalSndShmemSize());
@@ -219,7 +217,6 @@ CreateSharedMemoryAndSemaphores(bool makePrivate, int port)
 	 */
 	PMSignalShmemInit();
 	ProcSignalShmemInit();
-	LatchShmemInit();
 	BgWriterShmemInit();
 	AutoVacuumShmemInit();
 	WalSndShmemInit();
