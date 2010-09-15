@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release-9.0.sgml,v 2.55 2010/09/01 15:14:42 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release-9.0.sgml,v 2.56 2010/09/15 17:45:57 tgl Exp $ -->
 
  <sect1 id="release-9-0">
   <title>Release 9.0</title>
@@ -431,6 +431,31 @@
       <literal>NUMERIC</> of some other precision in that column.  Previous
       versions neglected to check the type modifier and would thus allow
       result rows that didn't actually conform to the declared restrictions.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      PL/pgSQL now treats selection into composite fields more consistently
+      (Tom Lane)
+     </para>
+
+     <para>
+      Formerly, a statement like
+      <literal>SELECT ... INTO <replaceable>rec</>.<replaceable>fld</> FROM ...</literal>
+      was treated as a scalar assignment even if the record field
+      <replaceable>fld</> was of composite type.  Now it is treated as a
+      record assignment, the same as when the <literal>INTO</> target is a
+      regular variable of composite type.  So the values to be assigned to the
+      field's subfields should be written as separate columns of the
+      <command>SELECT</> list, not as a <literal>ROW(...)</> construct as in
+      previous versions.
+     </para>
+
+     <para>
+      If you need to do this in a way that will work in both 9.0 and previous
+      releases, you can write something like
+      <literal><replaceable>rec</>.<replaceable>fld</> := ROW(...) FROM ...</literal>.
      </para>
     </listitem>
 
