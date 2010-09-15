@@ -29,7 +29,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/replication/walreceiver.c,v 1.16 2010/07/06 19:18:57 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/replication/walreceiver.c,v 1.17 2010/09/15 10:35:05 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -528,6 +528,9 @@ XLogWalRcvFlush(void)
 		walrcv->latestChunkStart = walrcv->receivedUpto;
 		walrcv->receivedUpto = LogstreamResult.Flush;
 		SpinLockRelease(&walrcv->mutex);
+
+		/* Signal the startup process that new WAL has arrived */
+		WakeupRecovery();
 
 		/* Report XLOG streaming progress in PS display */
 		if (update_process_title)

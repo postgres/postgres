@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.434 2010/08/30 15:37:41 sriggs Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.435 2010/09/15 10:35:05 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,6 +46,7 @@
 #include "storage/bufmgr.h"
 #include "storage/fd.h"
 #include "storage/ipc.h"
+#include "storage/latch.h"
 #include "storage/pmsignal.h"
 #include "storage/procarray.h"
 #include "storage/smgr.h"
@@ -391,6 +392,13 @@ typedef struct XLogCtlData
 	 * recovery.  Protected by info_lck.
 	 */
 	bool		SharedRecoveryInProgress;
+
+	/*
+	 * recoveryWakeupLatch is used to wake up the startup process to
+	 * continue WAL replay, if it is waiting for WAL to arrive or failover
+	 * trigger file to appear.
+	 */
+	Latch		recoveryWakeupLatch;
 
 	/*
 	 * During recovery, we keep a copy of the latest checkpoint record here.
@@ -4840,6 +4848,7 @@ XLOGShmemInit(void)
 	XLogCtl->SharedRecoveryInProgress = true;
 	XLogCtl->Insert.currpage = (XLogPageHeader) (XLogCtl->pages);
 	SpinLockInit(&XLogCtl->info_lck);
+	InitSharedLatch(&XLogCtl->recoveryWakeupLatch);
 
 	/*
 	 * If we are not in bootstrap mode, pg_control should already exist. Read
@@ -5814,6 +5823,13 @@ StartupXLOG(void)
 					(errmsg("starting archive recovery")));
 	}
 
+	/*
+	 * Take ownership of the wakup latch if we're going to sleep during
+	 * recovery.
+	 */
+	if (StandbyMode)
+		OwnLatch(&XLogCtl->recoveryWakeupLatch);
+
 	if (read_backup_label(&checkPointLoc))
 	{
 		/*
@@ -6273,6 +6289,13 @@ StartupXLOG(void)
 	 */
 	if (WalRcvInProgress())
 		elog(PANIC, "wal receiver still active");
+
+	/*
+	 * We don't need the latch anymore. It's not strictly necessary to disown
+	 * it, but let's do it for the sake of tidyness.
+	 */
+	if (StandbyMode)
+		DisownLatch(&XLogCtl->recoveryWakeupLatch);
 
 	/*
 	 * We are now done reading the xlog from stream. Turn off streaming
@@ -9139,6 +9162,13 @@ startupproc_quickdie(SIGNAL_ARGS)
 }
 
 
+/* SIGUSR1: let latch facility handle the signal */
+static void
+StartupProcSigUsr1Handler(SIGNAL_ARGS)
+{
+	latch_sigusr1_handler();
+}
+
 /* SIGHUP: set flag to re-read config file at next convenient time */
 static void
 StartupProcSigHupHandler(SIGNAL_ARGS)
@@ -9213,7 +9243,7 @@ StartupProcessMain(void)
 	else
 		pqsignal(SIGALRM, SIG_IGN);
 	pqsignal(SIGPIPE, SIG_IGN);
-	pqsignal(SIGUSR1, SIG_IGN);
+	pqsignal(SIGUSR1, StartupProcSigUsr1Handler);
 	pqsignal(SIGUSR2, SIG_IGN);
 
 	/*
@@ -9397,16 +9427,17 @@ retry:
 					}
 
 					/*
-					 * Data not here yet, so check for trigger then sleep.
+					 * Data not here yet, so check for trigger then sleep for
+					 * five seconds like in the WAL file polling case below.
 					 */
 					if (CheckForStandbyTrigger())
 						goto triggered;
 
 					/*
-					 * When streaming is active, we want to react quickly when
-					 * the next WAL record arrives, so sleep only a bit.
+					 * Wait for more WAL to arrive, or timeout to be reached
 					 */
-					pg_usleep(100000L); /* 100ms */
+					WaitLatch(&XLogCtl->recoveryWakeupLatch, 5000000L);
+					ResetLatch(&XLogCtl->recoveryWakeupLatch);
 				}
 				else
 				{
@@ -9680,4 +9711,14 @@ CheckForStandbyTrigger(void)
 		return true;
 	}
 	return false;
+}
+
+/*
+ * Wake up startup process to replay newly arrived WAL, or to notice that
+ * failover has been requested.
+ */
+void
+WakeupRecovery(void)
+{
+	SetLatch(&XLogCtl->recoveryWakeupLatch);
 }

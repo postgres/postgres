@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/xlog.h,v 1.116 2010/08/12 23:24:54 rhaas Exp $
+ * $PostgreSQL: pgsql/src/include/access/xlog.h,v 1.117 2010/09/15 10:35:05 heikki Exp $
  */
 #ifndef XLOG_H
 #define XLOG_H
@@ -303,5 +303,6 @@ extern TimeLineID GetRecoveryTargetTLI(void);
 
 extern void HandleStartupProcInterrupts(void);
 extern void StartupProcessMain(void);
+extern void WakeupRecovery(void);
 
 #endif   /* XLOG_H */
