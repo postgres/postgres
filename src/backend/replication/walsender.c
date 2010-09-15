@@ -28,7 +28,7 @@
  * Portions Copyright (c) 2010-2010, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/replication/walsender.c,v 1.31 2010/09/14 13:35:14 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/replication/walsender.c,v 1.32 2010/09/15 06:51:19 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -511,15 +511,15 @@ InitWalSnd(void)
 		else
 		{
 			/*
-			 * Found a free slot. Take ownership of the latch and initialize
-			 * the other fields.
+			 * Found a free slot. Reserve it for us.
 			 */
-			OwnLatch((Latch *) &walsnd->latch);
 			walsnd->pid = MyProcPid;
 			MemSet(&walsnd->sentPtr, 0, sizeof(XLogRecPtr));
-			/* Set MyWalSnd only after it's fully initialized. */
-			MyWalSnd = (WalSnd *) walsnd;
 			SpinLockRelease(&walsnd->mutex);
+			/* don't need the lock anymore */
+			OwnLatch((Latch *) &walsnd->latch);
+			MyWalSnd = (WalSnd *) walsnd;
+
 			break;
 		}
 	}
