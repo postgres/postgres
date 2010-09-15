@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.435 2010/09/15 10:35:05 heikki Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.436 2010/09/15 13:58:22 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -5824,7 +5824,7 @@ StartupXLOG(void)
 	}
 
 	/*
-	 * Take ownership of the wakup latch if we're going to sleep during
+	 * Take ownership of the wakeup latch if we're going to sleep during
 	 * recovery.
 	 */
 	if (StandbyMode)
@@ -6292,7 +6292,7 @@ StartupXLOG(void)
 
 	/*
 	 * We don't need the latch anymore. It's not strictly necessary to disown
-	 * it, but let's do it for the sake of tidyness.
+	 * it, but let's do it for the sake of tidiness.
 	 */
 	if (StandbyMode)
 		DisownLatch(&XLogCtl->recoveryWakeupLatch);
