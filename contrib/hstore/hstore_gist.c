@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/hstore/hstore_gist.c,v 1.12 2010/02/26 02:00:32 momjian Exp $
+ * $PostgreSQL: pgsql/contrib/hstore/hstore_gist.c,v 1.13 2010/09/16 02:54:01 tgl Exp $
  */
 #include "postgres.h"
 
@@ -168,28 +168,14 @@ ghstore_compress(PG_FUNCTION_ARGS)
 	PG_RETURN_POINTER(retval);
 }
 
+/*
+ * Since type ghstore isn't toastable (and doesn't need to be),
+ * this function can be a no-op.
+ */
 Datum
 ghstore_decompress(PG_FUNCTION_ARGS)
 {
-	GISTENTRY  *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
-	GISTENTRY  *retval;
-	HStore	   *key;
-
-	key = DatumGetHStoreP(entry->key);
-
-	if (key != (HStore *) DatumGetPointer(entry->key))
-	{
-		/* need to pass back the decompressed item */
-		retval = palloc(sizeof(GISTENTRY));
-		gistentryinit(*retval, PointerGetDatum(key),
-					  entry->rel, entry->page, entry->offset, entry->leafkey);
-		PG_RETURN_POINTER(retval);
-	}
-	else
-	{
-		/* we can return the entry as-is */
-		PG_RETURN_POINTER(entry);
-	}
+	PG_RETURN_POINTER(PG_GETARG_POINTER(0));
 }
 
 Datum
