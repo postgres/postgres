@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.583.2.7 2009/12/02 17:41:07 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.583.2.8 2010/09/16 20:37:16 mha Exp $
  *
  * NOTES
  *
@@ -2495,6 +2495,19 @@ CleanupBackend(int pid,
 	 * assume everything is all right and proceed to remove the backend from
 	 * the active backend list.
 	 */
+#ifdef WIN32
+	/*
+	 * On win32, also treat ERROR_WAIT_NO_CHILDREN (128) as nonfatal
+	 * case, since that sometimes happens under load when the process fails
+	 * to start properly (long before it starts using shared memory).
+	 */
+	if (exitstatus == ERROR_WAIT_NO_CHILDREN)
+	{
+		LogChildExit(LOG, _("server process"), pid, exitstatus);
+		exitstatus = 0;
+	}
+#endif
+
 	if (!EXIT_STATUS_0(exitstatus) && !EXIT_STATUS_1(exitstatus))
 	{
 		HandleChildCrash(pid, exitstatus, _("server process"));
