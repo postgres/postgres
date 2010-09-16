@@ -1,37 +1,37 @@
 # LANGUAGE message translation file for plperl
-# Copyright (C) 2009 PostgreSQL Global Development Group
+# Copyright (C) 2010 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
-# FIRST AUTHOR <EMAIL@ADDRESS>, 2009.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2010.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: PostgreSQL 8.4\n"
+"Project-Id-Version: PostgreSQL 9.0\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2010-08-31 20:01+0000\n"
-"PO-Revision-Date: 2010-09-01 14:46+0200\n"
-"Last-Translator: Devrim GÜNDÜZ <devrim@gunduz.org>\n"
-"Language-Team: Turkish <devrim@gunduz.org>\n"
+"POT-Creation-Date: 2010-09-02 17:58+0000\n"
+"PO-Revision-Date: 2010-09-04 21:32-0000\n"
+"Last-Translator: Max <max@oceanline.co.uk>\n"
+"Language-Team: ROMANA <max@oceanline.co.uk>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Poedit-Language: Turkish\n"
-"X-Poedit-Country: Turkey\n"
+"X-Poedit-Language: Romanian\n"
+"X-Poedit-Country: ROMANIA\n"
 
 #: plperl.c:257
 msgid "If true, trusted and untrusted Perl code will be compiled in strict mode."
-msgstr "Doğru ise, trusted ve untrusted Perl kodları strict modda derlenecektir"
+msgstr "Dacă true, trusted și untrusted codul Perl se va compila în modul strict."
 
 #: plperl.c:265
 msgid "Perl initialization code to execute when a Perl interpreter is initialized."
-msgstr "Perl yorumlayıcısı ilklendirildiğinde çalışacak Perl ilklendirme kodu."
+msgstr "codul de inițializare Perl de executat odată când interpreterul Perl este inițializat."
 
 #: plperl.c:282
 msgid "Perl initialization code to execute once when plperl is first used."
-msgstr "plperl ilk kez kullanıldığında çalışacak Perl ilklendirme kodu"
+msgstr "codul de inițializare Perl de executat odată când plperl este folosit pentru prima oară."
 
 #: plperl.c:290
 msgid "Perl initialization code to execute once when plperlu is first used."
-msgstr "plperlu ilk kez kullanıldığında çalışacak Perl ilklendirme kodu"
+msgstr "codul de inițializare Perl de executat odată când plperlu este folosit pentru prima oară."
 
 #: plperl.c:455
 #: plperl.c:608
@@ -49,119 +49,114 @@ msgstr "%s"
 
 #: plperl.c:456
 msgid "while executing PostgreSQL::InServer::SPI::bootstrap"
-msgstr "PostgreSQL::InServer::SPI::bootstrap çalıştırılırken"
+msgstr "în timpul execuției PostgreSQL::InServer::SPI::bootstrap"
 
 #: plperl.c:609
 msgid "while parsing Perl initialization"
-msgstr "Perl ilklendirmesi ayrıştırılırken"
+msgstr "în timpul parsing inițializării Perl"
 
 #: plperl.c:614
 msgid "while running Perl initialization"
-msgstr "Perl ilklendirmesi sırasında"
+msgstr "în timpul rulării intializării Perl"
 
 #: plperl.c:712
 msgid "while executing PLC_TRUSTED"
-msgstr " PLC_TRUSTED çalıştırılırken"
+msgstr "în timpul execuției PLC_TRUSTED"
 
 #: plperl.c:725
 msgid "while executing utf8fix"
-msgstr "utf8fix çalıştırılırken"
+msgstr "în timpul execuției utf8fix"
 
 #: plperl.c:767
 msgid "while executing plperl.on_plperl_init"
-msgstr "plperl.on_plperl_init çalıştırılırken"
+msgstr "în timpul execuției plperl.on_plperl_init"
 
 #: plperl.c:782
 msgid "while executing plperl.on_plperlu_init"
-msgstr "plperl.on_plperlu_init çalıştırılırken"
+msgstr "în timpul execuției plperl.on_plperlu_init"
 
 #: plperl.c:824
 #: plperl.c:1021
 #, c-format
 msgid "Perl hash contains nonexistent column \"%s\""
-msgstr "Perl hashi olmayan kolonu içeriyor: \"%s\""
+msgstr "Perl hash conține o coloană \"%s\" inexistentă"
 
 #: plperl.c:997
 msgid "$_TD->{new} does not exist"
-msgstr "$_TD->{new} mevcut değil"
+msgstr "$_TD->{new} nu există"
 
 #: plperl.c:1001
 msgid "$_TD->{new} is not a hash reference"
-msgstr "$_TD->{new} hash referansı değil"
+msgstr "$_TD->{new} nu e o referință de tip hash"
 
 #: plperl.c:1235
 #: plperl.c:1924
 #, c-format
 msgid "PL/Perl functions cannot return type %s"
-msgstr "PL/Perl fonksiyonları %s veri tipini döndüremezler"
+msgstr "funcțiile PL/Perl functions nu pot avea ca rezultat tipul %s"
 
 #: plperl.c:1247
 #: plperl.c:1970
 #, c-format
 msgid "PL/Perl functions cannot accept type %s"
-msgstr "PL/Perl fonksiyonları %s tipini kabul etmez"
+msgstr "funcțiile PL/Perl nu pot accepta tipul %s"
 
 #: plperl.c:1322
 #, c-format
 msgid "didn't get a CODE reference from compiling function \"%s\""
-msgstr "\"%s\" fonksiyonu derlenirken CODE referansı alınamadı"
+msgstr "compilarea funcției \"%s\" nu a rezultat o referință CODE"
 
 #: plperl.c:1534
 msgid "set-valued function called in context that cannot accept a set"
-msgstr "set değerini kabul etmediği ortamda set değeri alan fonksiyon çağırılmış"
+msgstr "funcţie set-valoare apelată într-un context care nu acceptă set"
 
 #: plperl.c:1577
 msgid "set-returning PL/Perl function must return reference to array or use return_next"
-msgstr "se dönen PL/Perl fonksiyonu return_next kullanmalı ya da bir diziye referans dönmelidir"
+msgstr "funcția PL/Perl care are rezultat de tip set trebuie să intoarcă o referință la un array sau să folosească return_next"
 
 #: plperl.c:1610
 msgid "composite-returning PL/Perl function must return reference to hash"
-msgstr "composite döndüren PL/Perl fonksiyonu hash'e referans dönmelidir"
+msgstr "funcția PL/Perl cu rezultat de tip composite trebuie să întoarcă o referință la hash"
 
 #: plperl.c:1619
 msgid "function returning record called in context that cannot accept type record"
-msgstr "tip kaydı içermeyen alanda çağırılan ve kayıt döndüren fonksiyon"
+msgstr "apel de funcție care are rezultat de tip rând într-un context care nu acceptă tipul rând"
 
 #: plperl.c:1739
 msgid "ignoring modified row in DELETE trigger"
-msgstr "DELETE triggerındaki değiştirilmiş satır gözardı ediliyor"
+msgstr "ignor rândul modificat in triggerul DELETE"
 
 #: plperl.c:1747
 msgid "result of PL/Perl trigger function must be undef, \"SKIP\", or \"MODIFY\""
-msgstr "PL/Perl trigger fonksiyonun sonucu undef, \"SKIP\" ya da  \"MODIFY\" olmalıdır"
+msgstr "rezultatul unei funcții trigger PL/Perl trebuie să fie de tip undef, \"SKIP\", or \"MODIFY\""
 
 #: plperl.c:1859
 msgid "out of memory"
-msgstr "yetersiz bellek"
+msgstr "memorie insuficientă"
 
 #: plperl.c:1915
 msgid "trigger functions can only be called as triggers"
-msgstr "trigger fonksiyonları sadece trigger olarak çağırılabilirler"
+msgstr "funcţiile trigger pot fi apelate doar ca triggere"
 
 #: plperl.c:2228
 msgid "cannot use return_next in a non-SETOF function"
-msgstr "SETOF olmayan bir fonksiyonda return_next kullanılamaz"
+msgstr "nu puteți folosi return_next într-o funcție de tip non-SETOF"
 
 #: plperl.c:2234
 msgid "SETOF-composite-returning PL/Perl function must call return_next with reference to hash"
-msgstr "SETOF-composite döndüren PL/Perl fonksiyonları return_next'i hash'e referans olarak çağırmalıdır"
+msgstr "funcția PL/Perl cu rezultat de tip SETOF-composite trebuie să apeleze return_next cu referință la hash"
 
 #: plperl.c:3028
 #, c-format
 msgid "PL/Perl function \"%s\""
-msgstr "\"%s\" PL/Perl fonksiyonu"
+msgstr "funcție PL/Perl  \"%s\""
 
 #: plperl.c:3040
 #, c-format
 msgid "compilation of PL/Perl function \"%s\""
-msgstr "\"%s\" PL/Perl fonksiyonunun derlenmesi"
+msgstr "compilare a funcției PL/Perl \"%s\""
 
 #: plperl.c:3049
 msgid "PL/Perl anonymous code block"
-msgstr "PL/Perl anonim kod bloğu"
+msgstr "bloc de cod PL/Perl anonim"
 
-#~ msgid "creation of Perl function \"%s\" failed: %s"
-#~ msgstr " \"%s\" Perl fonksiyonunun yaratılması başarısız oldu: %s"
-
-#~ msgid "error from Perl function \"%s\": %s"
-#~ msgstr "Perl fonksiyonunda hata:  \"%s\": %s"

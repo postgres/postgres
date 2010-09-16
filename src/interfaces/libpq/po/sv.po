@@ -2,7 +2,7 @@
 # Peter Eisentraut <peter_e@gmx.net>, 2001, 2010.
 # Dennis Björklund <db@zigo.dhs.org>, 2002, 2003, 2004, 2005, 2006.
 #
-# pgtranslation Id: libpq.po,v 1.10 2010/07/27 19:15:04 petere Exp $
+# pgtranslation Id: libpq.po,v 1.11 2010/09/14 19:48:42 petere Exp $
 #
 # Use these quotes: "%s"
 #
@@ -10,8 +10,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9.0\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2010-07-27 06:10+0000\n"
-"PO-Revision-Date: 2010-07-27 22:10+0300\n"
+"POT-Creation-Date: 2010-09-14 14:00+0000\n"
+"PO-Revision-Date: 2010-09-14 22:43+0300\n"
 "Last-Translator: Magnus Hagander <magnus@hagander.net>\n"
 "Language-Team: Swedish <sv@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -750,22 +750,22 @@ msgstr "kunde inte läsa certifikatfil \"%s\": %s\n"
 #: fe-secure.c:940
 #, c-format
 msgid "could not load SSL engine \"%s\": %s\n"
-msgstr "kan inte ladda SSL-motor \"%s\": %s\n"
+msgstr "kunde inte ladda SSL-motor \"%s\": %s\n"
 
 #: fe-secure.c:952
-#, fuzzy, c-format
+#, c-format
 msgid "could not initialize SSL engine \"%s\": %s\n"
-msgstr "kan inte ladda SSL-motor \"%s\": %s\n"
+msgstr "kunde inte initiera SSL-motor \"%s\": %s\n"
 
 #: fe-secure.c:968
 #, c-format
 msgid "could not read private SSL key \"%s\" from engine \"%s\": %s\n"
-msgstr "kunde inte läsa privat nyckelfil \"%s\" från motor \"%s\": %s\n"
+msgstr "kunde inte läsa privat SSL-nyckel \"%s\" från motor \"%s\": %s\n"
 
 #: fe-secure.c:982
-#, fuzzy, c-format
+#, c-format
 msgid "could not load private SSL key \"%s\" from engine \"%s\": %s\n"
-msgstr "kunde inte läsa privat nyckelfil \"%s\" från motor \"%s\": %s\n"
+msgstr "kunde inte ladda privat SSL-nyckel \"%s\" från motor \"%s\": %s\n"
 
 #: fe-secure.c:1017
 #, c-format
@@ -782,9 +782,9 @@ msgstr ""
 "rättigheten skall vara u=rw (0600)\n"
 
 #: fe-secure.c:1036
-#, fuzzy, c-format
+#, c-format
 msgid "could not load private key file \"%s\": %s\n"
-msgstr "kunde inte läsa in privata nyckelfilen \"%s\": %s"
+msgstr "kunde inte ladda privata nyckelfilen \"%s\": %s\n"
 
 #: fe-secure.c:1050
 #, c-format

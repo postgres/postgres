@@ -1,21 +1,22 @@
-# SOME DESCRIPTIVE TITLE.
 # This file is put in the public domain.
-# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 #
+# amachu <amachu@amachu.com>, 2010.
 msgid ""
 msgstr ""
 "Project-Id-Version: Postgres Tamil Translation\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2007-09-21 09:19-0300\n"
-"PO-Revision-Date: 2007-10-14 11:58+0530\n"
-"Last-Translator: ஆமாச்சு <amachu@ubuntu.com>\n"
-"Language-Team: Ubuntu Tamil Team <ubuntu-l10n-tam@lists.ubuntu.com>\n"
+"PO-Revision-Date: 2010-08-27 07:37+0530\n"
+"Last-Translator: amachu <amachu@amachu.com>\n"
+"Language-Team: Tamil <kde-i18n-doc@kde.org>\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=utf-8\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "X-Poedit-Language: Tamil\n"
 "X-Poedit-Country: INDIA\n"
 "X-Poedit-SourceCharset: utf-8\n"
+"X-Generator: Lokalize 1.0\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
 
 #: fe-auth.c:268
 #, c-format
@@ -31,7 +32,7 @@ msgstr "கேர்பரோஸ் 5 அங்கீகாரம் மறு�
 #: fe-auth.c:316
 #, c-format
 msgid "could not restore non-blocking mode on socket: %s\n"
-msgstr "தடையில்லா  முறையினை  சாக்கெட்டின் மீது மீட்டமைக்க இயலவில்லை: %s\n"
+msgstr "தடையில்லா  முறையினை  சாக்கெட்டின் மீது மீட்டமைக்க முடியவில்லை: %s\n"
 
 #: fe-auth.c:439
 msgid "GSSAPI continuation error"
@@ -791,4 +792,5 @@ msgstr "SSL வழு எதுவும் தெரிவிக்கப் �
 #, c-format
 msgid "SSL error code %lu"
 msgstr "SSL வழுக் குறி %lu"
+
 

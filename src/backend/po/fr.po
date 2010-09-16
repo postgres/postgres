@@ -1,7 +1,7 @@
 # translation of postgres.po to fr_fr
 # french message translation file for postgres
 #
-# $PostgreSQL: pgsql/src/backend/po/fr.po,v 1.28.2.2 2010/08/26 19:23:08 petere Exp $
+# $PostgreSQL: pgsql/src/backend/po/fr.po,v 1.28.2.3 2010/09/16 19:09:32 petere Exp $
 #
 # Use these quotes: « %s »
 # Guillaume Lelarge <guillaume@lelarge.info>, 2003-2009.
@@ -10,8 +10,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.4\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2010-08-26 01:32+0000\n"
-"PO-Revision-Date: 2010-08-26 20:40+0100\n"
+"POT-Creation-Date: 2010-09-09 15:26+0000\n"
+"PO-Revision-Date: 2010-09-09 18:25+0100\n"
 "Last-Translator: Guillaume Lelarge <guillaume@lelarge.info>\n"
 "Language-Team: French <guillaume@lelarge.info>\n"
 "MIME-Version: 1.0\n"
@@ -496,7 +496,7 @@ msgid "could not write archive status file \"%s\": %m"
 msgstr "n'a pas pu écrire le fichier de statut d'archivage « %s » : %m"
 
 #: access/transam/xlog.c:1738
-#: access/transam/xlog.c:9577
+#: access/transam/xlog.c:9581
 #: replication/walreceiver.c:479
 #: replication/walsender.c:596
 #, c-format
@@ -531,8 +531,8 @@ msgstr "n'a pas pu ouvrir le fichier « %s » (journal de transactions %u, segment
 #: access/transam/xlog.c:2323
 #: access/transam/xlog.c:2456
 #: access/transam/xlog.c:4286
-#: access/transam/xlog.c:8439
-#: access/transam/xlog.c:8594
+#: access/transam/xlog.c:8443
+#: access/transam/xlog.c:8598
 #: postmaster/postmaster.c:3627
 #: storage/smgr/md.c:278
 #: storage/file/copydir.c:172
@@ -593,10 +593,10 @@ msgstr "n'a pas pu ouvrir le fichier « %s » : %m"
 
 #: access/transam/xlog.c:2469
 #: access/transam/xlog.c:4317
-#: access/transam/xlog.c:8542
-#: access/transam/xlog.c:8616
-#: access/transam/xlog.c:8999
-#: access/transam/xlog.c:9024
+#: access/transam/xlog.c:8546
+#: access/transam/xlog.c:8620
+#: access/transam/xlog.c:9003
+#: access/transam/xlog.c:9028
 #: utils/adt/genfile.c:133
 #: storage/file/copydir.c:186
 #, c-format
@@ -630,7 +630,7 @@ msgstr "n'a pas pu fermer le journal de transactions %u, segment %u : %m"
 
 #: access/transam/xlog.c:2858
 #: access/transam/xlog.c:3023
-#: access/transam/xlog.c:8422
+#: access/transam/xlog.c:8426
 #: utils/adt/dbsize.c:65
 #: utils/adt/dbsize.c:217
 #: utils/adt/dbsize.c:288
@@ -642,7 +642,7 @@ msgid "could not stat file \"%s\": %m"
 msgstr "n'a pas pu tester le fichier « %s » : %m"
 
 #: access/transam/xlog.c:2866
-#: access/transam/xlog.c:8621
+#: access/transam/xlog.c:8625
 #: storage/smgr/md.c:348
 #: storage/smgr/md.c:395
 #: storage/smgr/md.c:1192
@@ -670,7 +670,7 @@ msgstr "n'a pas pu restaurer le fichier « %s » à partir de l'archive : code de r
 msgid "%s \"%s\": return code %d"
 msgstr "%s « %s » : code de retour %d"
 
-#: access/transam/xlog.c:3289
+#: access/transam/xlog.c:3286
 #: access/transam/xlog.c:3469
 #, c-format
 msgid "could not open transaction log directory \"%s\": %m"
@@ -1164,17 +1164,16 @@ msgid "recovery_target_time = '%s'"
 msgstr "recovery_target_time = '%s'"
 
 #: access/transam/xlog.c:5234
-msgid "parameter \"recovery_target_inclusive\" requires a Boolean value"
-msgstr "le paramètre « recovery_target_inclusive » requiert une valeur booléenne"
+#: access/transam/xlog.c:5243
+#: utils/misc/guc.c:4895
+#, c-format
+msgid "parameter \"%s\" requires a Boolean value"
+msgstr "le paramètre « %s » requiert une valeur booléenne"
 
 #: access/transam/xlog.c:5236
 #, c-format
 msgid "recovery_target_inclusive = %s"
 msgstr "recovery_target_inclusive = %s"
-
-#: access/transam/xlog.c:5243
-msgid "parameter \"standby_mode\" requires a Boolean value"
-msgstr "le paramètre « standby_mode » requiert une valeur booléenne"
 
 #: access/transam/xlog.c:5245
 #, c-format
@@ -1439,7 +1438,7 @@ msgid "redo done at %X/%X"
 msgstr "ré-exécution faite à %X/%X"
 
 #: access/transam/xlog.c:6257
-#: access/transam/xlog.c:7722
+#: access/transam/xlog.c:7726
 #, c-format
 msgid "last completed transaction was at log time %s"
 msgstr "la dernière transaction a eu lieu à %s (moment de la journalisation)"
@@ -1551,202 +1550,202 @@ msgstr "restartpoint ignoré, la récupération est déjà terminée"
 msgid "skipping restartpoint, already performed at %X/%X"
 msgstr "ignore le point de redémarrage, déjà réalisé à %X/%X"
 
-#: access/transam/xlog.c:7720
+#: access/transam/xlog.c:7724
 #, c-format
 msgid "recovery restart point at %X/%X"
 msgstr "la ré-exécution en restauration commence à %X/%X"
 
-#: access/transam/xlog.c:7890
+#: access/transam/xlog.c:7894
 msgid "online backup was cancelled, recovery cannot continue"
 msgstr "le mode de sauvegarde en ligne a été annulé, la restauration ne peut pas continuer"
 
-#: access/transam/xlog.c:7942
+#: access/transam/xlog.c:7946
 #, c-format
 msgid "unexpected timeline ID %u (after %u) in checkpoint record"
 msgstr ""
 "identifiant timeline %u inattendu (après %u) dans l'enregistrement du point\n"
 "de vérification"
 
-#: access/transam/xlog.c:7978
+#: access/transam/xlog.c:7982
 #, c-format
 msgid "unexpected timeline ID %u (should be %u) in checkpoint record"
 msgstr ""
 "identifiant timeline %u inattendu (devrait être %u) dans l'enregistrement du\n"
 "point de vérification"
 
-#: access/transam/xlog.c:8234
-#: access/transam/xlog.c:8260
+#: access/transam/xlog.c:8238
+#: access/transam/xlog.c:8264
 #, c-format
 msgid "could not fsync log file %u, segment %u: %m"
 msgstr ""
 "n'a pas pu synchroniser sur disque (fsync) le journal des transactions %u,\n"
 "segment %u : %m"
 
-#: access/transam/xlog.c:8268
+#: access/transam/xlog.c:8272
 #, c-format
 msgid "could not fsync write-through log file %u, segment %u: %m"
 msgstr ""
 "n'a pas pu synchroniser sur disque (fsync) le journal des transactions %u,\n"
 "segment %u : %m"
 
-#: access/transam/xlog.c:8277
+#: access/transam/xlog.c:8281
 #, c-format
 msgid "could not fdatasync log file %u, segment %u: %m"
 msgstr ""
 "n'a pas pu synchroniser sur disque (fdatasync) le journal de transactions\n"
 "%u, segment %u : %m"
 
-#: access/transam/xlog.c:8320
-#: access/transam/xlog.c:8512
+#: access/transam/xlog.c:8324
+#: access/transam/xlog.c:8516
 msgid "must be superuser to run a backup"
 msgstr "doit être super-utilisateur pour exécuter une sauvegarde"
 
-#: access/transam/xlog.c:8325
-#: access/transam/xlog.c:8517
-#: access/transam/xlog.c:8720
-#: access/transam/xlog.c:8748
-#: access/transam/xlog.c:8781
-#: access/transam/xlog.c:8873
-#: access/transam/xlog.c:8948
+#: access/transam/xlog.c:8329
+#: access/transam/xlog.c:8521
+#: access/transam/xlog.c:8724
+#: access/transam/xlog.c:8752
+#: access/transam/xlog.c:8785
+#: access/transam/xlog.c:8877
+#: access/transam/xlog.c:8952
 msgid "recovery is in progress"
 msgstr "restauration en cours"
 
-#: access/transam/xlog.c:8326
-#: access/transam/xlog.c:8518
-#: access/transam/xlog.c:8721
-#: access/transam/xlog.c:8749
-#: access/transam/xlog.c:8782
+#: access/transam/xlog.c:8330
+#: access/transam/xlog.c:8522
+#: access/transam/xlog.c:8725
+#: access/transam/xlog.c:8753
+#: access/transam/xlog.c:8786
 msgid "WAL control functions cannot be executed during recovery."
 msgstr ""
 "les fonctions de contrôle des journaux de transactions ne peuvent pas\n"
 "être exécutées lors de la restauration."
 
-#: access/transam/xlog.c:8331
-#: access/transam/xlog.c:8523
+#: access/transam/xlog.c:8335
+#: access/transam/xlog.c:8527
 msgid "WAL level not sufficient for making an online backup"
 msgstr ""
 "Le niveau de journalisation (configuré par wal_level) n'est pas suffisant pour\n"
 "faire une sauvegarde en ligne."
 
-#: access/transam/xlog.c:8332
-#: access/transam/xlog.c:8524
+#: access/transam/xlog.c:8336
+#: access/transam/xlog.c:8528
 msgid "wal_level must be set to \"archive\" or \"hot_standby\" at server start."
 msgstr ""
 "wal_level doit être configuré à « archive » ou « hot_standby » au démarrage\n"
 "du serveur."
 
-#: access/transam/xlog.c:8359
-#: access/transam/xlog.c:8428
+#: access/transam/xlog.c:8363
+#: access/transam/xlog.c:8432
 msgid "a backup is already in progress"
 msgstr "une sauvegarde est déjà en cours"
 
-#: access/transam/xlog.c:8360
+#: access/transam/xlog.c:8364
 msgid "Run pg_stop_backup() and try again."
 msgstr "Exécutez pg_stop_backup() et tentez de nouveau."
 
-#: access/transam/xlog.c:8429
+#: access/transam/xlog.c:8433
 #, c-format
 msgid "If you're sure there is no backup in progress, remove file \"%s\" and try again."
 msgstr ""
 "Si vous êtes certain qu'aucune sauvegarde n'est en cours, supprimez le\n"
 "fichier « %s » et recommencez de nouveau."
 
-#: access/transam/xlog.c:8450
-#: access/transam/xlog.c:8607
+#: access/transam/xlog.c:8454
+#: access/transam/xlog.c:8611
 #, c-format
 msgid "could not write file \"%s\": %m"
 msgstr "impossible d'écrire le fichier « %s » : %m"
 
-#: access/transam/xlog.c:8546
+#: access/transam/xlog.c:8550
 msgid "a backup is not in progress"
 msgstr "une sauvegarde n'est pas en cours"
 
-#: access/transam/xlog.c:8558
-#: access/transam/xlog.c:9014
-#: access/transam/xlog.c:9020
+#: access/transam/xlog.c:8562
+#: access/transam/xlog.c:9018
+#: access/transam/xlog.c:9024
 #, c-format
 msgid "invalid data in file \"%s\""
 msgstr "données invalides dans le fichier « %s »"
 
-#: access/transam/xlog.c:8670
+#: access/transam/xlog.c:8674
 msgid "pg_stop_backup cleanup done, waiting for required WAL segments to be archived"
 msgstr "nettoyage de pg_stop_backup terminé, en attente des journaux de transactions requis à archiver"
 
-#: access/transam/xlog.c:8680
+#: access/transam/xlog.c:8684
 #, c-format
 msgid "pg_stop_backup still waiting for all required WAL segments to be archived (%d seconds elapsed)"
 msgstr ""
 "pg_stop_backup toujours en attente de la fin de l'archivage des segments de\n"
 "journaux de transactions requis (%d secondes passées)"
 
-#: access/transam/xlog.c:8682
+#: access/transam/xlog.c:8686
 msgid "Check that your archive_command is executing properly.  pg_stop_backup can be cancelled safely, but the database backup will not be usable without all the WAL segments."
 msgstr ""
 "Vérifiez que votre archive_command s'exécute correctement. pg_stop_backup\n"
 "peut être annulé avec sûreté mais la sauvegarde de la base ne sera pas\n"
 "utilisable sans tous les segments WAL."
 
-#: access/transam/xlog.c:8689
+#: access/transam/xlog.c:8693
 msgid "pg_stop_backup complete, all required WAL segments have been archived"
 msgstr "pg_stop_backup terminé, tous les journaux de transactions requis ont été archivés"
 
-#: access/transam/xlog.c:8693
+#: access/transam/xlog.c:8697
 msgid "WAL archiving is not enabled; you must ensure that all required WAL segments are copied through other means to complete the backup"
 msgstr ""
 "L'archivage des journaux de transactions n'est pas activé ;\n"
 "vous devez vous assurer que tous les fichiers requis des journaux de\n"
 "transactions sont copiés par d'autre moyens pour terminer la sauvegarde."
 
-#: access/transam/xlog.c:8715
+#: access/transam/xlog.c:8719
 msgid "must be superuser to switch transaction log files"
 msgstr "doit être super-utilisateur pour changer de journal de transactions"
 
-#: access/transam/xlog.c:8874
+#: access/transam/xlog.c:8878
 msgid "pg_xlogfile_name_offset() cannot be executed during recovery."
 msgstr "pg_xlogfile_name_offset() ne peut pas être exécuté lors de la restauration."
 
-#: access/transam/xlog.c:8884
-#: access/transam/xlog.c:8956
+#: access/transam/xlog.c:8888
+#: access/transam/xlog.c:8960
 #, c-format
 msgid "could not parse transaction log location \"%s\""
 msgstr ""
 "n'a pas pu analyser l'emplacement du journal des transactions nommé « %s » :\n"
 "%m"
 
-#: access/transam/xlog.c:8949
+#: access/transam/xlog.c:8953
 msgid "pg_xlogfile_name() cannot be executed during recovery."
 msgstr "pg_xlogfile_name() ne peut pas être exécuté lors de la restauration."
 
-#: access/transam/xlog.c:9046
+#: access/transam/xlog.c:9050
 #, c-format
 msgid "xlog redo %s"
 msgstr "xlog redo %s"
 
-#: access/transam/xlog.c:9086
+#: access/transam/xlog.c:9090
 msgid "online backup mode cancelled"
 msgstr "mode de sauvegarde en ligne annulé"
 
-#: access/transam/xlog.c:9087
+#: access/transam/xlog.c:9091
 #, c-format
 msgid "\"%s\" was renamed to \"%s\"."
 msgstr "« %s » a été renommé en « %s »."
 
-#: access/transam/xlog.c:9094
+#: access/transam/xlog.c:9098
 msgid "online backup mode was not cancelled"
 msgstr "le mode de sauvegarde en ligne n'a pas été annulé"
 
-#: access/transam/xlog.c:9095
+#: access/transam/xlog.c:9099
 #, c-format
 msgid "Could not rename \"%s\" to \"%s\": %m."
 msgstr "N'a pas pu renommer « %s » en « %s » : %m"
 
-#: access/transam/xlog.c:9563
-#: access/transam/xlog.c:9585
+#: access/transam/xlog.c:9567
+#: access/transam/xlog.c:9589
 #, c-format
 msgid "could not read from log file %u, segment %u, offset %u: %m"
 msgstr "n'a pas pu lire le journal de transactions %u, segment %u, décalage %u : %m"
 
-#: access/transam/xlog.c:9673
+#: access/transam/xlog.c:9677
 #, c-format
 msgid "trigger file found: %s"
 msgstr "fichier trigger trouvé : %s"
@@ -1757,7 +1756,7 @@ msgstr "le tableau ne doit pas contenir de valeurs NULL"
 
 #: access/gin/ginentrypage.c:83
 #: access/gin/ginentrypage.c:118
-#: access/nbtree/nbtinsert.c:523
+#: access/nbtree/nbtinsert.c:522
 #: access/nbtree/nbtsort.c:483
 #, c-format
 msgid "index row size %lu exceeds maximum %lu for index \"%s\""
@@ -1768,28 +1767,28 @@ msgstr "la taille de la ligne index, %lu, dépasse le maximum, %lu, pour l'index 
 msgid "GIN indexes do not support whole-index scans"
 msgstr "les index GIN ne supportent pas les parcours complets d'index"
 
-#: access/nbtree/nbtinsert.c:385
+#: access/nbtree/nbtinsert.c:384
 #, c-format
 msgid "duplicate key value violates unique constraint \"%s\""
 msgstr "la valeur d'une clé dupliquée rompt la contrainte unique « %s »"
 
-#: access/nbtree/nbtinsert.c:387
+#: access/nbtree/nbtinsert.c:386
 #, c-format
 msgid "Key %s already exists."
 msgstr "La clé « %s » existe déjà."
 
-#: access/nbtree/nbtinsert.c:449
+#: access/nbtree/nbtinsert.c:448
 #: executor/execUtils.c:1319
 #, c-format
 msgid "failed to re-find tuple within index \"%s\""
 msgstr "échec pour retrouver la ligne dans l'index « %s »"
 
-#: access/nbtree/nbtinsert.c:451
+#: access/nbtree/nbtinsert.c:450
 #: executor/execUtils.c:1321
 msgid "This may be because of a non-immutable index expression."
 msgstr "Ceci peut être dû à une expression d'index immutable."
 
-#: access/nbtree/nbtinsert.c:527
+#: access/nbtree/nbtinsert.c:526
 #: access/nbtree/nbtsort.c:487
 msgid ""
 "Values larger than 1/3 of a buffer page cannot be indexed.\n"
@@ -2378,7 +2377,7 @@ msgstr "nombre de dimensions invalides : %d"
 #: utils/adt/arrayfuncs.c:4566
 #: executor/execQual.c:296
 #: executor/execQual.c:324
-#: executor/execQual.c:2978
+#: executor/execQual.c:2988
 #, c-format
 msgid "number of array dimensions (%d) exceeds the maximum allowed (%d)"
 msgstr "le nombre de dimensions du tableau (%d) dépasse le maximum autorisé (%d)"
@@ -2439,8 +2438,8 @@ msgid "malformed array literal: \"%s\""
 msgstr "tableau litéral mal formé : « %s »"
 
 #: utils/adt/arrayfuncs.c:518
-#: executor/execQual.c:2998
-#: executor/execQual.c:3025
+#: executor/execQual.c:3008
+#: executor/execQual.c:3035
 msgid "multidimensional arrays must have array expressions with matching dimensions"
 msgstr ""
 "les tableaux multidimensionnels doivent avoir des expressions de tableaux\n"
@@ -2546,7 +2545,7 @@ msgstr "n'a pas pu identifier un opérateur d'égalité pour le type %s"
 
 #: utils/adt/arrayfuncs.c:3306
 #: utils/adt/rowtypes.c:913
-#: executor/execQual.c:4749
+#: executor/execQual.c:4759
 #, c-format
 msgid "could not identify a comparison function for type %s"
 msgstr "n'a pas pu identifier une fonction de comparaison pour le type %s"
@@ -2836,13 +2835,13 @@ msgid "type %s is not a domain"
 msgstr "le type %s n'est pas un domaine"
 
 #: utils/adt/domains.c:128
-#: executor/execQual.c:3770
+#: executor/execQual.c:3780
 #, c-format
 msgid "domain %s does not allow null values"
 msgstr "le domaine %s n'autorise pas les valeurs NULL"
 
 #: utils/adt/domains.c:164
-#: executor/execQual.c:3799
+#: executor/execQual.c:3809
 #, c-format
 msgid "value for domain %s violates check constraint \"%s\""
 msgstr "la valeur pour le domaine %s viole la contrainte de vérification « %s »"
@@ -3117,11 +3116,11 @@ msgstr "« %s » n'est pas un nombre"
 #: storage/file/fd.c:355
 #: storage/file/fd.c:738
 #: storage/file/fd.c:856
-#: storage/ipc/procarray.c:840
-#: storage/ipc/procarray.c:1205
-#: storage/ipc/procarray.c:1212
-#: storage/ipc/procarray.c:1443
-#: storage/ipc/procarray.c:1837
+#: storage/ipc/procarray.c:841
+#: storage/ipc/procarray.c:1219
+#: storage/ipc/procarray.c:1226
+#: storage/ipc/procarray.c:1457
+#: storage/ipc/procarray.c:1851
 msgid "out of memory"
 msgstr "mémoire épuisée"
 
@@ -6605,11 +6604,6 @@ msgstr ""
 "ne peut pas configurer le paramètre « %s » à l'intérieur d'une fonction\n"
 "SECURITY DEFINER"
 
-#: utils/misc/guc.c:4895
-#, c-format
-msgid "parameter \"%s\" requires a Boolean value"
-msgstr "le paramètre « %s » requiert une valeur booléenne"
-
 #: utils/misc/guc.c:4917
 #: utils/misc/guc.c:4992
 #, c-format
@@ -6872,27 +6866,27 @@ msgstr "aucune fonction en sortie disponible pour le type %s"
 msgid "cached plan must not change result type"
 msgstr "le plan en cache ne doit pas modifier le type en résultat"
 
-#: utils/cache/relcache.c:4298
+#: utils/cache/relcache.c:4289
 #, c-format
 msgid "could not create relation-cache initialization file \"%s\": %m"
 msgstr "n'a pas pu créer le fichier d'initialisation relation-cache « %s » : %m"
 
-#: utils/cache/relcache.c:4300
+#: utils/cache/relcache.c:4291
 msgid "Continuing anyway, but there's something wrong."
 msgstr "Continue malgré tout, mais quelque chose s'est mal passé."
 
-#: utils/cache/typcache.c:145
+#: utils/cache/typcache.c:151
 #: parser/parse_type.c:202
 #, c-format
 msgid "type \"%s\" is only a shell"
 msgstr "le type « %s » est seulement un shell"
 
-#: utils/cache/typcache.c:325
+#: utils/cache/typcache.c:331
 #, c-format
 msgid "type %s is not composite"
 msgstr "le type %s n'est pas un type composite"
 
-#: utils/cache/typcache.c:339
+#: utils/cache/typcache.c:345
 msgid "record type has not been registered"
 msgstr "le type d'enregistrement n'a pas été enregistré"
 
@@ -6977,7 +6971,7 @@ msgstr "ne peut pas préparer une transaction qui a créé un curseur WITH HOLD"
 #: executor/execQual.c:1615
 #: executor/execQual.c:1640
 #: executor/execQual.c:2001
-#: executor/execQual.c:5090
+#: executor/execQual.c:5100
 #: executor/functions.c:652
 #: foreign/foreign.c:271
 msgid "set-valued function called in context that cannot accept a set"
@@ -8900,8 +8894,8 @@ msgstr "propriétaire de %s"
 
 #: catalog/pg_shdepend.c:1070
 #, c-format
-msgid "access to %s"
-msgstr "accès à %s"
+msgid "privileges for %s"
+msgstr "droits pour « %s »"
 
 #. translator: %s will always be "database %s"
 #: catalog/pg_shdepend.c:1078
@@ -9025,7 +9019,7 @@ msgstr ""
 "  %.0f lignes totales estimées"
 
 #: commands/analyze.c:1493
-#: executor/execQual.c:2725
+#: executor/execQual.c:2735
 msgid "could not convert row type"
 msgstr "n'a pas pu convertir le type de ligne"
 
@@ -12518,13 +12512,13 @@ msgid "array subscript in assignment must not be null"
 msgstr "l'indice du tableau dans l'affectation ne doit pas être NULL"
 
 #: executor/execQual.c:633
-#: executor/execQual.c:3896
+#: executor/execQual.c:3906
 #, c-format
 msgid "attribute %d has wrong type"
 msgstr "l'attribut %d a un type invalide"
 
 #: executor/execQual.c:634
-#: executor/execQual.c:3897
+#: executor/execQual.c:3907
 #, c-format
 msgid "Table has type %s, but query expects %s."
 msgstr "La table a le type %s alors que la requête attend %s."
@@ -12599,12 +12593,12 @@ msgid "Returned type %s at ordinal position %d, but query expects %s."
 msgstr "A renvoyé le type %s à la position ordinale %d, mais la requête attend %s."
 
 #: executor/execQual.c:1748
-#: executor/execQual.c:2161
+#: executor/execQual.c:2171
 msgid "table-function protocol for materialize mode was not followed"
 msgstr "le protocole de la fonction table pour le mode matérialisé n'a pas été respecté"
 
 #: executor/execQual.c:1768
-#: executor/execQual.c:2168
+#: executor/execQual.c:2178
 #, c-format
 msgid "unrecognized table-function returnMode: %d"
 msgstr "returnMode de la fonction table non reconnu : %d"
@@ -12615,46 +12609,50 @@ msgstr ""
 "la fonction renvoyant un ensemble de lignes ne peut pas renvoyer une valeur\n"
 "NULL"
 
-#: executor/execQual.c:2328
+#: executor/execQual.c:2145
+msgid "rows returned by function are not all of the same row type"
+msgstr "les lignes renvoyées par la fonction ne sont pas toutes du même type ligne"
+
+#: executor/execQual.c:2338
 msgid "IS DISTINCT FROM does not support set arguments"
 msgstr "IS DISTINCT FROM ne supporte pas les arguments d'ensemble"
 
-#: executor/execQual.c:2403
+#: executor/execQual.c:2413
 msgid "op ANY/ALL (array) does not support set arguments"
 msgstr ""
 "l'opérateur ANY/ALL (pour les types array) ne supporte pas les arguments\n"
 "d'ensemble"
 
-#: executor/execQual.c:2956
+#: executor/execQual.c:2966
 msgid "cannot merge incompatible arrays"
 msgstr "ne peut pas fusionner les tableaux incompatibles"
 
-#: executor/execQual.c:2957
+#: executor/execQual.c:2967
 #, c-format
 msgid "Array with element type %s cannot be included in ARRAY construct with element type %s."
 msgstr "Le tableau avec le type d'élément %s ne peut pas être inclus dans la construction ARRAY avec le type d'élément %s."
 
-#: executor/execQual.c:3540
+#: executor/execQual.c:3550
 msgid "NULLIF does not support set arguments"
 msgstr "NULLIF ne supporte pas les arguments d'ensemble"
 
-#: executor/execQual.c:4267
+#: executor/execQual.c:4277
 #: optimizer/util/clauses.c:572
 #: parser/parse_agg.c:160
 msgid "aggregate function calls cannot be nested"
 msgstr "les appels à la fonction d'agrégat ne peuvent pas être imbriqués"
 
-#: executor/execQual.c:4305
+#: executor/execQual.c:4315
 #: optimizer/util/clauses.c:646
 #: parser/parse_agg.c:207
 msgid "window function calls cannot be nested"
 msgstr "les appels à la fonction window ne peuvent pas être imbriqués"
 
-#: executor/execQual.c:4505
+#: executor/execQual.c:4515
 msgid "target type is not an array"
 msgstr "le type cible n'est pas un tableau"
 
-#: executor/execQual.c:4618
+#: executor/execQual.c:4628
 #, c-format
 msgid "ROW() column has type %s instead of type %s"
 msgstr "une colonne ROW() a le type %s au lieu du type %s"
@@ -14559,57 +14557,57 @@ msgstr ""
 msgid "could not listen on %s socket: %m"
 msgstr "n'a pas pu écouter sur le socket %s : %m"
 
-#: libpq/pqcomm.c:537
+#: libpq/pqcomm.c:542
 #, c-format
 msgid "group \"%s\" does not exist"
 msgstr "le groupe « %s » n'existe pas"
 
-#: libpq/pqcomm.c:547
+#: libpq/pqcomm.c:552
 #, c-format
 msgid "could not set group of file \"%s\": %m"
 msgstr "n'a pas pu initialiser le groupe du fichier « %s » : %m"
 
-#: libpq/pqcomm.c:558
+#: libpq/pqcomm.c:563
 #, c-format
 msgid "could not set permissions of file \"%s\": %m"
 msgstr "n'a pas pu initialiser les droits du fichier « %s » : %m"
 
-#: libpq/pqcomm.c:588
+#: libpq/pqcomm.c:593
 #, c-format
 msgid "could not accept new connection: %m"
 msgstr "n'a pas pu accepter la nouvelle connexion : %m"
 
-#: libpq/pqcomm.c:774
-#: libpq/pqcomm.c:874
+#: libpq/pqcomm.c:779
+#: libpq/pqcomm.c:879
 #, c-format
 msgid "could not receive data from client: %m"
 msgstr "n'a pas pu recevoir les données du client : %m"
 
-#: libpq/pqcomm.c:849
+#: libpq/pqcomm.c:854
 #, c-format
 msgid "could not set socket to non-blocking mode: %m"
 msgstr "n'a pas pu activer le mode non-bloquant pour la socket : %m"
 
-#: libpq/pqcomm.c:895
-#: libpq/pqcomm.c:906
+#: libpq/pqcomm.c:900
+#: libpq/pqcomm.c:911
 #, c-format
 msgid "could not set socket to blocking mode: %m"
 msgstr "n'a pas pu activer le mode bloquant pour la socket : %m"
 
-#: libpq/pqcomm.c:1051
+#: libpq/pqcomm.c:1056
 msgid "unexpected EOF within message length word"
 msgstr "fin de fichier (EOF) inattendue à l'intérieur de la longueur du message"
 
-#: libpq/pqcomm.c:1062
+#: libpq/pqcomm.c:1067
 msgid "invalid message length"
 msgstr "longueur du message invalide"
 
-#: libpq/pqcomm.c:1084
-#: libpq/pqcomm.c:1094
+#: libpq/pqcomm.c:1089
+#: libpq/pqcomm.c:1099
 msgid "incomplete message from client"
 msgstr "message incomplet du client"
 
-#: libpq/pqcomm.c:1203
+#: libpq/pqcomm.c:1208
 #, c-format
 msgid "could not send data to client: %m"
 msgstr "n'a pas pu envoyer les données au client : %m"
@@ -16911,7 +16909,7 @@ msgstr "le système de bases de données est en cours de restauration"
 
 #: postmaster/postmaster.c:1833
 #: storage/lmgr/proc.c:289
-#: storage/ipc/procarray.c:269
+#: storage/ipc/procarray.c:270
 #: storage/ipc/sinvaladt.c:302
 msgid "sorry, too many clients already"
 msgstr "désolé, trop de clients sont déjà connectés"
@@ -17779,7 +17777,7 @@ msgstr "le processus %d a acquis %s sur %s après %ld.%03d ms"
 msgid "process %d failed to acquire %s on %s after %ld.%03d ms"
 msgstr "le processus %d a échoué pour l'acquisition de %s sur %s après %ld.%03d ms"
 
-#: storage/ipc/procarray.c:693
+#: storage/ipc/procarray.c:694
 msgid "consistent state delayed because recovery snapshot incomplete"
 msgstr "état de cohérence pas encore atteint à cause d'un snapshot de restauration incomplet"
 
@@ -17950,6 +17948,13 @@ msgstr "correspondance du code d'erreur win32 %lu en %d"
 msgid "unrecognized win32 error code: %lu"
 msgstr "code d'erreur win32 non reconnu : %lu"
 
+#~ msgid "parameter \"recovery_target_inclusive\" requires a Boolean value"
+#~ msgstr ""
+#~ "le paramètre « recovery_target_inclusive » requiert une valeur booléenne"
+#~ msgid "parameter \"standby_mode\" requires a Boolean value"
+#~ msgstr "le paramètre « standby_mode » requiert une valeur booléenne"
+#~ msgid "access to %s"
+#~ msgstr "accès à %s"
 #~ msgid "Sets the message levels that are logged during recovery."
 #~ msgstr ""
 #~ "Initialise les niveaux de messages qui sont tracés lors de la "
