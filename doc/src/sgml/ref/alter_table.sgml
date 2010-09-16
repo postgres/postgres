@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.115 2010/06/24 14:57:21 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.116 2010/09/16 18:15:21 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -163,14 +163,14 @@ ALTER TABLE <replaceable class="PARAMETER">name</replaceable>
     <term><literal>RESET ( <replaceable class="PARAMETER">attribute_option</replaceable> [, ... ] )</literal></term>
     <listitem>
      <para>
-      This form sets or resets attribute-level options.  Currently, the only
-      define attribute-level options are <literal>n_distinct</> and
+      This form sets or resets per-attribute options.  Currently, the only
+      defined per-attribute options are <literal>n_distinct</> and
       <literal>n_distinct_inherited</>, which override the
-      number-of-distinct-values estimate made by subsequent
+      number-of-distinct-values estimates made by subsequent
       <xref linkend="sql-analyze">
       operations.  <literal>n_distinct</> affects the statistics for the table
       itself, while <literal>n_distinct_inherited</> affects the statistics
-      gathered for the table and its inheritance children.  When set to a
+      gathered for the table plus its inheritance children.  When set to a
       positive value, <command>ANALYZE</> will assume that the column contains
       exactly the specified number of distinct nonnull values.  When set to a
       negative value, which must be greater

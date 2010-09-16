@@ -1,14 +1,13 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release-9.0.sgml,v 2.56 2010/09/15 17:45:57 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release-9.0.sgml,v 2.57 2010/09/16 18:15:21 tgl Exp $ -->
+<!-- See header comment in release.sgml about typical markup -->
 
  <sect1 id="release-9-0">
   <title>Release 9.0</title>
 
   <note>
    <title>Release date</title>
-   <simpara>2010-??-??</simpara>
+   <simpara>2010-09-20</simpara>
   </note>
-
-  <para>CURRENT AS OF 2010-08-24</para>
 
   <sect2>
    <title>Overview</title>
@@ -47,7 +46,7 @@
       SCHEMA</></link> supports mass permissions changes on existing objects,
       while <link linkend="SQL-ALTERDEFAULTPRIVILEGES"><command>ALTER DEFAULT
       PRIVILEGES</></link> allows control of privileges for objects created in
-      the future.  Large objects (BLOBs) now support privilege management as
+      the future.  Large objects (BLOBs) now support permissions management as
       well.
      </para>
     </listitem>
@@ -189,9 +188,9 @@
   <para>
    Version 9.0 contains a number of changes that selectively break backwards
    compatibility in order to support new features and code quality
-   improvements.  Also, users who make extensive use of PL/pgSQL,
-   Point-In-Time Recovery (PITR), and Warm Standby should test their
-   solutions because of slight user-visible changes in these areas.
+   improvements.  In particular, users who make extensive use of PL/pgSQL,
+   Point-In-Time Recovery (PITR), or Warm Standby should test their
+   applications because of slight user-visible changes in those areas.
    Observe the following incompatibilities:
   </para>
 
@@ -751,7 +750,7 @@
 
      <listitem>
       <para>
-       Allow setting of distinct statistics using <link
+       Allow setting of number-of-distinct-values statistics using <link
        linkend="SQL-ALTERTABLE"><command>ALTER TABLE</></link>
        (Robert Haas)
       </para>
@@ -890,7 +889,7 @@
        linkend="monitoring-stats-funcs-table"><function>pg_stat_reset_single_table_counters()</></link>
        and <function>pg_stat_reset_single_function_counters()</>
        to allow resetting the statistics counters for individual
-       tables and indexes (Magnus Hagander)
+       tables and functions (Magnus Hagander)
       </para>
      </listitem>
 
@@ -913,7 +912,7 @@
       <para>
        Previously only per-database and per-role settings were possible,
        not combinations. All role and database settings are now stored
-       in the new <structname>pg_db_role_setting</> system table. A new
+       in the new <structname>pg_db_role_setting</> system catalog. A new
        <application>psql</> command <literal>\drds</> shows these settings.
        The legacy system views <structname>pg_roles</>,
        <structname>pg_shadow</>, and <structname>pg_user</>
@@ -990,7 +989,8 @@
        known to the server.  This allows the server to correctly check that
        superuser-only parameters are only set by superusers.  Previously,
        the <literal>SET</> would be allowed and then ignored at session start,
-       making superuser-only custom parameters practically useless.
+       making superuser-only custom parameters much less useful than they
+       should be.
       </para>
      </listitem>
 
@@ -1067,7 +1067,7 @@
 
      <listitem>
       <para>
-       Add Unicode surrogate pair (dual 16-bit) support to
+       Support Unicode surrogate pairs (dual 16-bit representation) in
        <link
        linkend="sql-syntax-strings-uescape"><literal>U&amp;</></link>
        strings and identifiers (Peter Eisentraut)
@@ -1184,7 +1184,7 @@
 
      <listitem>
       <para>
-       Add support for copying all attributes in <command>CREATE
+       Add a shortcut for copying all properties in <command>CREATE
        TABLE ... LIKE</> commands (Itagaki Takahiro)
       </para>
      </listitem>
@@ -1661,23 +1661,6 @@
 
     <listitem>
      <para>
-      Support locale-specific <link
-      linkend="functions-posix-regexp">regular expression</link>
-      processing with <acronym>UTF-8</> server encoding (Tom Lane)
-     </para>
-
-     <para>
-      Locale-specific regular expression functionality includes
-      case-insensitive matching and locale-specific character classes.
-      Previously, these features only worked correctly for
-      non-<acronym>ASCII</> characters when using a single-byte server
-      encoding (such as LATIN1).  They will still misbehave in multi-byte
-      encodings other than <acronym>UTF-8</>.
-     </para>
-    </listitem>
-
-    <listitem>
-     <para>
       Allow function calls to supply parameter names and match them to named
       parameters in the function definition (Pavel Stehule)
      </para>
@@ -1686,6 +1669,23 @@
       For example, if a function is defined to take parameters <literal>a</>
       and <literal>b</>, it can be called with <literal>func(a := 7, b
       := 12)</> or <literal>func(b := 12, a := 7)</>.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Support locale-specific <link
+      linkend="functions-posix-regexp">regular expression</link>
+      processing with <acronym>UTF-8</> server encoding (Tom Lane)
+     </para>
+
+     <para>
+      Locale-specific regular expression functionality includes
+      case-insensitive matching and locale-specific character classes.
+      Previously, these features worked correctly for non-<acronym>ASCII</>
+      characters only if the database used a single-byte server encoding (such
+      as LATIN1).  They will still misbehave in multi-byte encodings other
+      than <acronym>UTF-8</>.
      </para>
     </listitem>
 
@@ -2009,7 +2009,7 @@
        rather than whenever the enclosing expression is reached.  For
        example, many people have tried to do this in triggers:
 <programlisting>
-if TG_OP = 'INSERT' AND NEW.col1 = ... then
+if TG_OP = 'INSERT' and NEW.col1 = ... then
 </programlisting>
        This will now actually work as expected.
       </para>
@@ -2235,9 +2235,9 @@ if TG_OP = 'INSERT' AND NEW.col1 = ... then
 
     <listitem>
     <para>
-     Add <link linkend="APP-VACUUMDB"><command>vacuumdb</></link>
-     <option>--analyze-only</> option to analyze without vacuuming
-     (Bruce Momjian)
+     Add an <option>--analyze-only</> option to <link
+     linkend="APP-VACUUMDB"><command>vacuumdb</></link>, to analyze without
+     vacuuming (Bruce Momjian)
      </para>
     </listitem>
 
@@ -2573,7 +2573,8 @@ if TG_OP = 'INSERT' AND NEW.col1 = ... then
 
      <listitem>
       <para>
-       Load SSL certificate chains (Tom Lane)
+       Load all SSL certificates given in the client certificate file
+       (Tom Lane)
       </para>
 
       <para>
@@ -2601,16 +2602,15 @@ if TG_OP = 'INSERT' AND NEW.col1 = ... then
      <listitem>
       <para>
        Add the <link linkend="ecpg-descriptors"><command>DESCRIBE</>
-       [<literal>OUTPUT</>]</link> statement to <application>ecpg</>
+       [ <literal>OUTPUT</> ]</link> statement to <application>ecpg</>
        (Boszormenyi Zoltan)
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Add an <application>ecpg</> function <link
-       linkend="ecpg-library">ECPGtransactionStatus</link> to return the
-       current transaction status (Bernd Helmle)
+       Add an <link linkend="ecpg-library">ECPGtransactionStatus</link>
+       function to return the current transaction status (Bernd Helmle)
       </para>
      </listitem>
 
@@ -2707,7 +2707,7 @@ if TG_OP = 'INSERT' AND NEW.col1 = ... then
      </para>
 
      <para>
-      Thread-safe builds can be disabled with <link
+      The thread-safety option can be disabled with <link
       linkend="configure"><literal>configure</></link>
       <option>--disable-thread-safety</>.
      </para>
@@ -2747,7 +2747,7 @@ if TG_OP = 'INSERT' AND NEW.col1 = ... then
 
       <para>
        These are similar to the existing <literal>all</>, <literal>install</>,
-       and <literal>installcheck</> targets, but they also build
+       and <literal>installcheck</> targets, but they also build the
        <acronym>HTML</> documentation, build and test <filename>contrib</>,
        and test server-side languages and <application>ecpg</>.
       </para>
@@ -2763,8 +2763,8 @@ if TG_OP = 'INSERT' AND NEW.col1 = ... then
 
     <listitem>
      <para>
-      Add Makefile rules to build documentation as a single <acronym>HTML</>
-      file or as a single plain-text file
+      Add Makefile rules to build the <productname>PostgreSQL</> documentation
+      as a single <acronym>HTML</> file or as a single plain-text file
       (Peter Eisentraut, Bruce Momjian)
      </para>
     </listitem>
@@ -3127,7 +3127,7 @@ if TG_OP = 'INSERT' AND NEW.col1 = ... then
 
       <para>
        Existing calls will still work for the moment, but can be expected to
-       break in 9.1 or later if not converted.
+       break in 9.1 or later if not converted to the new style.
       </para>
      </listitem>
 
@@ -3167,13 +3167,6 @@ if TG_OP = 'INSERT' AND NEW.col1 = ... then
       <para>
        Add parser hooks for processing ColumnRef and ParamRef nodes
        (Tom Lane)
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       Allow the calling of parser hooks from <acronym>SPI</> and cached
-       plans (Tom Lane)
       </para>
      </listitem>
 
