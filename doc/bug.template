@@ -27,7 +27,7 @@ System Configuration:
 
   Operating System (example: Linux 2.4.18)	:
 
-  PostgreSQL version (example: PostgreSQL 9.0rc1):  PostgreSQL 9.0rc1
+  PostgreSQL version (example: PostgreSQL 9.0.0):  PostgreSQL 9.0.0
 
   Compiler used (example: gcc 3.3.5)		:
 
