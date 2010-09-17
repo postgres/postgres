@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/backend/access/transam/README,v 1.13 2009/12/19 01:32:33 sriggs Exp $
+$PostgreSQL: pgsql/src/backend/access/transam/README,v 1.14 2010/09/17 00:42:39 tgl Exp $
 
 The Transaction System
 ======================
@@ -541,6 +541,85 @@ If no matching insert has been found by the time the WAL replay ends, the
 replay code has to do the insertion on its own to restore the index to
 consistency.  Such insertions occur after WAL is operational, so they can
 and should write WAL records for the additional generated actions.
+
+
+Write-Ahead Logging for Filesystem Actions
+------------------------------------------
+
+The previous section described how to WAL-log actions that only change page
+contents within shared buffers.  For that type of action it is generally
+possible to check all likely error cases (such as insufficient space on the
+page) before beginning to make the actual change.  Therefore we can make
+the change and the creation of the associated WAL log record "atomic" by
+wrapping them into a critical section --- the odds of failure partway
+through are low enough that PANIC is acceptable if it does happen.
+
+Clearly, that approach doesn't work for cases where there's a significant
+probability of failure within the action to be logged, such as creation
+of a new file or database.  We don't want to PANIC, and we especially don't
+want to PANIC after having already written a WAL record that says we did
+the action --- if we did, replay of the record would probably fail again
+and PANIC again, making the failure unrecoverable.  This means that the
+ordinary WAL rule of "write WAL before the changes it describes" doesn't
+work, and we need a different design for such cases.
+
+There are several basic types of filesystem actions that have this
+issue.  Here is how we deal with each:
+
+1. Adding a disk page to an existing table.
+
+This action isn't WAL-logged at all.  We extend a table by writing a page
+of zeroes at its end.  We must actually do this write so that we are sure
+the filesystem has allocated the space.  If the write fails we can just
+error out normally.  Once the space is known allocated, we can initialize
+and fill the page via one or more normal WAL-logged actions.  Because it's
+possible that we crash between extending the file and writing out the WAL
+entries, we have to treat discovery of an all-zeroes page in a table or
+index as being a non-error condition.  In such cases we can just reclaim
+the space for re-use.
+
+2. Creating a new table, which requires a new file in the filesystem.
+
+We try to create the file, and if successful we make a WAL record saying
+we did it.  If not successful, we can just throw an error.  Notice that
+there is a window where we have created the file but not yet written any
+WAL about it to disk.  If we crash during this window, the file remains
+on disk as an "orphan".  It would be possible to clean up such orphans
+by having database restart search for files that don't have any committed
+entry in pg_class, but that currently isn't done because of the possibility
+of deleting data that is useful for forensic analysis of the crash.
+Orphan files are harmless --- at worst they waste a bit of disk space ---
+because we check for on-disk collisions when allocating new relfilenode
+OIDs.  So cleaning up isn't really necessary.
+
+3. Deleting a table, which requires an unlink() that could fail.
+
+Our approach here is to WAL-log the operation first, but to treat failure
+of the actual unlink() call as a warning rather than error condition.
+Again, this can leave an orphan file behind, but that's cheap compared to
+the alternatives.  Since we can't actually do the unlink() until after
+we've committed the DROP TABLE transaction, throwing an error would be out
+of the question anyway.  (It may be worth noting that the WAL entry about
+the file deletion is actually part of the commit record for the dropping
+transaction.)
+
+4. Creating and deleting databases and tablespaces, which requires creating
+and deleting directories and entire directory trees.
+
+These cases are handled similarly to creating individual files, ie, we
+try to do the action first and then write a WAL entry if it succeeded.
+The potential amount of wasted disk space is rather larger, of course.
+In the creation case we try to delete the directory tree again if creation
+fails, so as to reduce the risk of wasted space.  Failure partway through
+a deletion operation results in a corrupt database: the DROP failed, but
+some of the data is gone anyway.  There is little we can do about that,
+though, and in any case it was presumably data the user no longer wants.
+
+In all of these cases, if WAL replay fails to redo the original action
+we must panic and abort recovery.  The DBA will have to manually clean up
+(for instance, free up some disk space or fix directory permissions) and
+then restart recovery.  This is part of the reason for not writing a WAL
+entry until we've successfully done the original action.
 
 
 Asynchronous Commit
