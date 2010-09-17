@@ -7,7 +7,7 @@
  * Copyright (c) 1996-2010, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/comment.c,v 1.118 2010/08/27 11:47:41 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/comment.c,v 1.119 2010/09/17 02:49:10 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,7 +38,6 @@
  * object types require something more complex; for those, we define helper
  * functions.
  */
-static void CheckRelationComment(int objtype, Relation relation);
 static void CheckAttributeComment(Relation relation);
 static void CheckCastComment(List *qualname, List *arguments);
 
@@ -92,7 +91,9 @@ CommentObject(CommentStmt *stmt)
 		case OBJECT_SEQUENCE:
 		case OBJECT_TABLE:
 		case OBJECT_VIEW:
-			CheckRelationComment(stmt->objtype, relation);
+			if (!pg_class_ownercheck(RelationGetRelid(relation), GetUserId()))
+				aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CLASS,
+							   RelationGetRelationName(relation));
 			break;
 		case OBJECT_COLUMN:
 			CheckAttributeComment(relation);
@@ -559,51 +560,6 @@ GetComment(Oid oid, Oid classoid, int32 subid)
 	heap_close(description, AccessShareLock);
 
 	return comment;
-}
-
-/*
- * Check whether the user is allowed to comment on this relation.
- */
-static void
-CheckRelationComment(int objtype, Relation relation)
-{
-	/* Check object security */
-	if (!pg_class_ownercheck(RelationGetRelid(relation), GetUserId()))
-		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CLASS,
-					   RelationGetRelationName(relation));
-
-	/* Next, verify that the relation type matches the intent */
-	switch (objtype)
-	{
-		case OBJECT_INDEX:
-			if (relation->rd_rel->relkind != RELKIND_INDEX)
-				ereport(ERROR,
-						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-						 errmsg("\"%s\" is not an index",
-								RelationGetRelationName(relation))));
-			break;
-		case OBJECT_SEQUENCE:
-			if (relation->rd_rel->relkind != RELKIND_SEQUENCE)
-				ereport(ERROR,
-						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-						 errmsg("\"%s\" is not a sequence",
-								RelationGetRelationName(relation))));
-			break;
-		case OBJECT_TABLE:
-			if (relation->rd_rel->relkind != RELKIND_RELATION)
-				ereport(ERROR,
-						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-						 errmsg("\"%s\" is not a table",
-								RelationGetRelationName(relation))));
-			break;
-		case OBJECT_VIEW:
-			if (relation->rd_rel->relkind != RELKIND_VIEW)
-				ereport(ERROR,
-						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-						 errmsg("\"%s\" is not a view",
-								RelationGetRelationName(relation))));
-			break;
-	}
 }
 
 /*
