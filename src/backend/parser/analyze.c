@@ -17,7 +17,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.403 2010/08/27 20:30:08 petere Exp $
+ *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.404 2010/09/18 18:37:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,6 +47,7 @@ static Query *transformDeleteStmt(ParseState *pstate, DeleteStmt *stmt);
 static Query *transformInsertStmt(ParseState *pstate, InsertStmt *stmt);
 static List *transformInsertRow(ParseState *pstate, List *exprlist,
 				   List *stmtcols, List *icolumns, List *attrnos);
+static int	count_rowexpr_columns(ParseState *pstate, Node *expr);
 static Query *transformSelectStmt(ParseState *pstate, SelectStmt *stmt);
 static Query *transformValuesClause(ParseState *pstate, SelectStmt *stmt);
 static Query *transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt);
@@ -726,12 +727,27 @@ transformInsertRow(ParseState *pstate, List *exprlist,
 												  list_length(icolumns))))));
 	if (stmtcols != NIL &&
 		list_length(exprlist) < list_length(icolumns))
+	{
+		/*
+		 * We can get here for cases like INSERT ... SELECT (a,b,c) FROM ...
+		 * where the user accidentally created a RowExpr instead of separate
+		 * columns.  Add a suitable hint if that seems to be the problem,
+		 * because the main error message is quite misleading for this case.
+		 * (If there's no stmtcols, you'll get something about data type
+		 * mismatch, which is less misleading so we don't worry about giving
+		 * a hint in that case.)
+		 */
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("INSERT has more target columns than expressions"),
+				 ((list_length(exprlist) == 1 &&
+				   count_rowexpr_columns(pstate, linitial(exprlist)) ==
+				   list_length(icolumns)) ?
+				  errhint("The insertion source is a row expression containing the same number of columns expected by the INSERT. Did you accidentally use extra parentheses?") : 0),
 				 parser_errposition(pstate,
 									exprLocation(list_nth(icolumns,
 												  list_length(exprlist))))));
+	}
 
 	/*
 	 * Prepare columns for assignment to target table.
@@ -760,6 +776,49 @@ transformInsertRow(ParseState *pstate, List *exprlist,
 	}
 
 	return result;
+}
+
+/*
+ * count_rowexpr_columns -
+ *	  get number of columns contained in a ROW() expression;
+ *	  return -1 if expression isn't a RowExpr or a Var referencing one.
+ *
+ * This is currently used only for hint purposes, so we aren't terribly
+ * tense about recognizing all possible cases.  The Var case is interesting
+ * because that's what we'll get in the INSERT ... SELECT (...) case.
+ */
+static int
+count_rowexpr_columns(ParseState *pstate, Node *expr)
+{
+	if (expr == NULL)
+		return -1;
+	if (IsA(expr, RowExpr))
+		return list_length(((RowExpr *) expr)->args);
+	if (IsA(expr, Var))
+	{
+		Var		   *var = (Var *) expr;
+		AttrNumber	attnum = var->varattno;
+
+		if (attnum > 0 && var->vartype == RECORDOID)
+		{
+			RangeTblEntry *rte;
+
+			rte = GetRTEByRangeTablePosn(pstate, var->varno, var->varlevelsup);
+			if (rte->rtekind == RTE_SUBQUERY)
+			{
+				/* Subselect-in-FROM: examine sub-select's output expr */
+				TargetEntry *ste = get_tle_by_resno(rte->subquery->targetList,
+													attnum);
+
+				if (ste == NULL || ste->resjunk)
+					return -1;
+				expr = (Node *) ste->expr;
+				if (IsA(expr, RowExpr))
+					return list_length(((RowExpr *) expr)->args);
+			}
+		}
+	}
+	return -1;
 }
 
 
