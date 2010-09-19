@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/backend/access/heap/README.HOT,v 1.6 2010/04/23 23:21:44 rhaas Exp $
+$PostgreSQL: pgsql/src/backend/access/heap/README.HOT,v 1.7 2010/09/19 17:51:44 momjian Exp $
 
 Heap Only Tuples (HOT)
 ======================
@@ -245,6 +245,12 @@ case, and to keep various work arrays as well as the bitmaps in bitmap
 scans reasonably sized, the maximum number of line pointers per page
 is arbitrarily capped at MaxHeapTuplesPerPage (the most tuples that
 could fit without HOT pruning).
+
+Effectively, space reclamation happens during tuple retrieval when the
+page is nearly full (<10% free) and a buffer cleanup lock can be
+acquired.  This means that UPDATE, DELETE, and SELECT can trigger space
+reclamation, but often not during INSERT ... VALUES because it does
+not retrieve a row.
 
 
 VACUUM
