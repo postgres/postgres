@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/btree_gin/btree_gin.c,v 1.4 2010/01/07 04:53:34 tgl Exp $
+ * contrib/btree_gin/btree_gin.c
  */
 #include "postgres.h"
 

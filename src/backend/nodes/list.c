@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/list.c,v 1.74 2010/02/13 02:34:11 tgl Exp $
+ *	  src/backend/nodes/list.c
  *
  *-------------------------------------------------------------------------
  */

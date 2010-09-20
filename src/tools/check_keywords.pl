@@ -5,7 +5,7 @@ use strict;
 # Check that the keyword lists in gram.y and kwlist.h are sane. Run from
 # the top directory, or pass a path to a top directory as argument.
 #
-# $PostgreSQL: pgsql/src/tools/check_keywords.pl,v 1.2 2009/04/30 10:26:35 heikki Exp $
+# src/tools/check_keywords.pl
 
 my $path;
 

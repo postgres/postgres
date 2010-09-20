@@ -3,7 +3,7 @@ my @def;
 #
 # Script that generates a .DEF file for all objects in a directory
 #
-# $PostgreSQL: pgsql/src/tools/msvc/gendef.pl,v 1.10 2010/04/09 13:05:58 mha Exp $
+# src/tools/msvc/gendef.pl
 #
 
 die "Usage: gendef.pl <modulepath> <platform>\n"

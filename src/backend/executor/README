@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/backend/executor/README,v 1.11 2009/10/26 02:26:29 tgl Exp $
+src/backend/executor/README
 
 The Postgres Executor
 =====================

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/value.c,v 1.7 2010/01/02 16:57:46 momjian Exp $
+ *	  src/backend/nodes/value.c
  *
  *-------------------------------------------------------------------------
  */

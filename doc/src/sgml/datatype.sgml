@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.258 2010/09/09 00:48:22 momjian Exp $ -->
+<!-- doc/src/sgml/datatype.sgml -->
 
  <chapter id="datatype">
   <title>Data Types</title>

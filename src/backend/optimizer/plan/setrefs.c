@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/setrefs.c,v 1.162 2010/08/27 20:30:08 petere Exp $
+ *	  src/backend/optimizer/plan/setrefs.c
  *
  *-------------------------------------------------------------------------
  */

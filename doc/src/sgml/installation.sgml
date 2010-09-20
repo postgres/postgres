@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.353 2010/09/09 17:19:40 tgl Exp $ -->
+<!-- doc/src/sgml/installation.sgml -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>

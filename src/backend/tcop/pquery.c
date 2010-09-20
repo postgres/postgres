@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/pquery.c,v 1.138 2010/09/11 18:38:56 joe Exp $
+ *	  src/backend/tcop/pquery.c
  *
  *-------------------------------------------------------------------------
  */

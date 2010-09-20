@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	$PostgreSQL: pgsql/src/backend/utils/adt/like.c,v 1.75 2010/01/02 16:57:54 momjian Exp $
+ *	src/backend/utils/adt/like.c
  *
  *-------------------------------------------------------------------------
  */

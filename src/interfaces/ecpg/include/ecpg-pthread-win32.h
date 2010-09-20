@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/include/ecpg-pthread-win32.h,v 1.5 2007/11/15 21:14:45 momjian Exp $ */
+/* src/interfaces/ecpg/include/ecpg-pthread-win32.h */
 /*
  * pthread mapping macros for win32 native thread implementation
  */

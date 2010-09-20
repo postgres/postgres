@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/typecmds.c,v 1.151 2010/08/18 18:35:19 tgl Exp $
+ *	  src/backend/commands/typecmds.c
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the

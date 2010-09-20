@@ -2,7 +2,7 @@
 #
 # Copyright (c) 2007-2010, PostgreSQL Global Development Group
 #
-# $PostgreSQL: pgsql/src/backend/utils/mb/Unicode/UCS_to_GB18030.pl,v 1.7 2010/09/19 16:27:17 tgl Exp $
+# src/backend/utils/mb/Unicode/UCS_to_GB18030.pl
 #
 # Generate UTF-8 <--> GB18030 code conversion tables from
 # "ISO10646-GB18030.TXT"

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tsearch/ts_parse.c,v 1.17 2010/02/26 02:01:05 momjian Exp $
+ *	  src/backend/tsearch/ts_parse.c
  *
  *-------------------------------------------------------------------------
  */

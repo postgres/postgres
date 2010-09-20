@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tsearch/spell.c,v 1.17 2010/01/02 16:57:53 momjian Exp $
+ *	  src/backend/tsearch/spell.c
  *
  *-------------------------------------------------------------------------
  */

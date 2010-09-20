@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/backend/access/hash/README,v 1.9 2009/11/01 21:25:25 tgl Exp $
+src/backend/access/hash/README
 
 Hash Indexing
 =============

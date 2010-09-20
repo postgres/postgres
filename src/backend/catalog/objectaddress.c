@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/objectaddress.c,v 1.3 2010/09/02 02:52:14 rhaas Exp $
+ *	  src/backend/catalog/objectaddress.c
  *
  *-------------------------------------------------------------------------
  */

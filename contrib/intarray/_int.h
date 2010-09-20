@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/intarray/_int.h,v 1.17 2009/06/11 14:48:51 momjian Exp $
+ * contrib/intarray/_int.h
  */
 #ifndef ___INT_H__
 #define ___INT_H__

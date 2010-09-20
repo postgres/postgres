@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1998-2010, PostgreSQL Global Development Group
 #
-# $PostgreSQL: pgsql/src/bin/pg_config/Makefile,v 1.25 2010/07/05 18:54:38 tgl Exp $
+# src/bin/pg_config/Makefile
 #
 #-------------------------------------------------------------------------
 

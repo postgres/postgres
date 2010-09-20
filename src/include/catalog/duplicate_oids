@@ -2,7 +2,7 @@
 #
 # duplicate_oids
 #
-# $PostgreSQL: pgsql/src/include/catalog/duplicate_oids,v 1.9 2009/09/26 22:42:01 tgl Exp $
+# src/include/catalog/duplicate_oids
 #
 # finds manually-assigned oids that are duplicated in the system tables.
 #

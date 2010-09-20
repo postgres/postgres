@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/checkpoint.sgml,v 1.18 2010/04/03 07:22:57 petere Exp $ -->
+<!-- doc/src/sgml/ref/checkpoint.sgml -->
 
 <refentry id="sql-checkpoint">
  <refmeta>

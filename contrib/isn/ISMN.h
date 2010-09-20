@@ -6,7 +6,7 @@
  * http://www.ismn-international.org
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/contrib/isn/ISMN.h,v 1.2 2006/10/04 00:29:45 momjian Exp $
+ *	  contrib/isn/ISMN.h
  *
  * M-3452-4680-5 <=> (0)-3452-4680-5 <=> 0345246805 <=> 9790345246805 <=> 979-0-3452-4680-5
  *

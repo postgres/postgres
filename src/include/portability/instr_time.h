@@ -45,7 +45,7 @@
  *
  * Copyright (c) 2001-2010, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/portability/instr_time.h,v 1.6 2010/02/13 02:34:15 tgl Exp $
+ * src/include/portability/instr_time.h
  *
  *-------------------------------------------------------------------------
  */

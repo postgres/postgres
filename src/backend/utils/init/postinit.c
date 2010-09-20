@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/init/postinit.c,v 1.214 2010/09/13 09:00:30 heikki Exp $
+ *	  src/backend/utils/init/postinit.c
  *
  *
  *-------------------------------------------------------------------------

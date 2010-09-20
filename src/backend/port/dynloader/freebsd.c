@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/backend/port/dynloader/freebsd.c,v 1.30 2010/01/02 16:57:50 momjian Exp $ */
+/* src/backend/port/dynloader/freebsd.c */
 
 /*
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group

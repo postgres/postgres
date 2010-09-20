@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/name.c,v 1.65 2010/01/02 16:57:54 momjian Exp $
+ *	  src/backend/utils/adt/name.c
  *
  *-------------------------------------------------------------------------
  */

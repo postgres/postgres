@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/citext.sgml,v 1.6 2010/08/17 04:37:20 petere Exp $ -->
+<!-- doc/src/sgml/citext.sgml -->
 
 <sect1 id="citext">
  <title>citext</title>

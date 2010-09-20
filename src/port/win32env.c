@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/win32env.c,v 1.8 2010/02/26 02:01:38 momjian Exp $
+ *	  src/port/win32env.c
  *
  *-------------------------------------------------------------------------
  */

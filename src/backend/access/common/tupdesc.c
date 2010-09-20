@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/common/tupdesc.c,v 1.133 2010/02/14 18:42:12 rhaas Exp $
+ *	  src/backend/access/common/tupdesc.c
  *
  * NOTES
  *	  some of the executor utility code such as "ExecTypeFromTL" should be

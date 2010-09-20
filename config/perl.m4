@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/config/perl.m4,v 1.9 2010/02/23 18:35:06 tgl Exp $
+# config/perl.m4
 
 
 # PGAC_PATH_PERL

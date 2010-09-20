@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/smgr/md.c,v 1.152 2010/08/13 20:10:52 rhaas Exp $
+ *	  src/backend/storage/smgr/md.c
  *
  *-------------------------------------------------------------------------
  */

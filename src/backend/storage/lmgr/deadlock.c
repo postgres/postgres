@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/deadlock.c,v 1.58 2010/01/02 16:57:52 momjian Exp $
+ *	  src/backend/storage/lmgr/deadlock.c
  *
  *	Interface:
  *

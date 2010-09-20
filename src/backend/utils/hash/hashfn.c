@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/hash/hashfn.c,v 1.34 2010/01/02 16:57:56 momjian Exp $
+ *	  src/backend/utils/hash/hashfn.c
  *
  * NOTES
  *	  It is expected that every bit of a hash function's 32-bit result is

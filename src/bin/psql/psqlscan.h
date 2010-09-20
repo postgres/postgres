@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/psqlscan.h,v 1.11 2010/01/02 16:57:59 momjian Exp $
+ * src/bin/psql/psqlscan.h
  */
 #ifndef PSQLSCAN_H
 #define PSQLSCAN_H

@@ -4,7 +4,7 @@
 # Copyright (c) 2001-2004 Serguei A. Mokhov, mokhov@cs.concordia.ca
 # Distributed under the same licensing terms as PostgreSQL itself.
 #
-# $PostgreSQL: pgsql/src/interfaces/libpq/po/ru.po,v 1.19 2007/10/27 00:13:43 petere Exp $
+# src/interfaces/libpq/po/ru.po
 #
 # ChangeLog:
 #   - January, 2005: Corrections and improvements by Oleg Bartunov <oleg@sai.msu.su>

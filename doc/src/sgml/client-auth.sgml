@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.141 2010/08/17 04:37:20 petere Exp $ -->
+<!-- doc/src/sgml/client-auth.sgml -->
 
 <chapter id="client-authentication">
  <title>Client Authentication</title>

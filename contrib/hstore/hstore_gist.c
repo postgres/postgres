@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/hstore/hstore_gist.c,v 1.13 2010/09/16 02:54:01 tgl Exp $
+ * contrib/hstore/hstore_gist.c
  */
 #include "postgres.h"
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-protocol2.c,v 1.30 2010/01/02 16:58:12 momjian Exp $
+ *	  src/interfaces/libpq/fe-protocol2.c
  *
  *-------------------------------------------------------------------------
  */

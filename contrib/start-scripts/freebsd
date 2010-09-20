@@ -6,7 +6,7 @@
 # Created through merger of the Linux start script by Ryan Kirkpatrick
 # and the script in the FreeBSD ports collection.
 
-# $PostgreSQL: pgsql/contrib/start-scripts/freebsd,v 1.7 2010/02/23 22:17:25 momjian Exp $
+# contrib/start-scripts/freebsd
 
 ## EDIT FROM HERE
 

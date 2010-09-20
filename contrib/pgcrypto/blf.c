@@ -1,7 +1,7 @@
 /*
  * Butchered version of sshblowf.c from putty-0.59.
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/blf.c,v 1.10 2009/06/11 14:48:52 momjian Exp $
+ * contrib/pgcrypto/blf.c
  */
 
 /*

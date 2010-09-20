@@ -16,7 +16,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_tar.c,v 1.69 2010/02/26 02:01:16 momjian Exp $
+ *		src/bin/pg_dump/pg_backup_tar.c
  *
  *-------------------------------------------------------------------------
  */

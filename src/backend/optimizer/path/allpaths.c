@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/allpaths.c,v 1.194 2010/03/28 22:59:32 tgl Exp $
+ *	  src/backend/optimizer/path/allpaths.c
  *
  *-------------------------------------------------------------------------
  */

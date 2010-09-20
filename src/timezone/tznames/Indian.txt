@@ -4,7 +4,7 @@
 #   a template for timezones you could need.  See the `Date/Time Support'
 #   appendix in the PostgreSQL documentation for more information.
 #
-# $PostgreSQL: pgsql/src/timezone/tznames/Indian.txt,v 1.3 2009/03/05 14:27:50 heikki Exp $
+# src/timezone/tznames/Indian.txt
 #
 
 CCT     23400    # Cocos Islands Time (Indian Ocean)

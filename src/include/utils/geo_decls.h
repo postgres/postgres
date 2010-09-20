@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/geo_decls.h,v 1.58 2010/08/03 21:21:03 tgl Exp $
+ * src/include/utils/geo_decls.h
  *
  * NOTE
  *	  These routines do *not* use the float types from adt/.

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/catalog.c,v 1.91 2010/08/13 20:10:50 rhaas Exp $
+ *	  src/backend/catalog/catalog.c
  *
  *-------------------------------------------------------------------------
  */

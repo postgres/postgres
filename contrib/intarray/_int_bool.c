@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/intarray/_int_bool.c,v 1.16 2009/06/11 14:48:51 momjian Exp $
+ * contrib/intarray/_int_bool.c
  */
 #include "postgres.h"
 

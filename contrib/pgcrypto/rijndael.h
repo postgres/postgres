@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/pgcrypto/rijndael.h,v 1.7 2009/06/11 14:48:52 momjian Exp $
+ * contrib/pgcrypto/rijndael.h
  *
  *	$OpenBSD: rijndael.h,v 1.3 2001/05/09 23:01:32 markus Exp $ */
 

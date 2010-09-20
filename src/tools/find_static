@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $PostgreSQL: pgsql/src/tools/find_static,v 1.6 2010/08/19 05:57:35 petere Exp $
+# src/tools/find_static
 
 trap "rm -f /tmp/$$" 0 1 2 3 15
 

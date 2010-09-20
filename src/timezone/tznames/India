@@ -4,7 +4,7 @@
 # timezone_abbreviations to 'India'.  See the `Date/Time Support'
 # appendix in the PostgreSQL documentation for more information.
 #
-# $PostgreSQL: pgsql/src/timezone/tznames/India,v 1.2 2006/07/25 13:49:21 tgl Exp $
+# src/timezone/tznames/India
 
 
 # include the default set

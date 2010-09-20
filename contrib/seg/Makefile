@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/contrib/seg/Makefile,v 1.22 2009/08/28 20:26:18 petere Exp $
+# contrib/seg/Makefile
 
 MODULE_big = seg
 OBJS = seg.o segparse.o

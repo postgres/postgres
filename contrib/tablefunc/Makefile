@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/contrib/tablefunc/Makefile,v 1.10 2010/07/05 23:15:56 tgl Exp $
+# contrib/tablefunc/Makefile
 
 MODULES = tablefunc
 DATA_built = tablefunc.sql

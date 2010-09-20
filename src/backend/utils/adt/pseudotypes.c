@@ -16,7 +16,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/pseudotypes.c,v 1.24 2010/09/03 01:34:55 tgl Exp $
+ *	  src/backend/utils/adt/pseudotypes.c
  *
  *-------------------------------------------------------------------------
  */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/datetime.c,v 1.213 2010/08/02 01:24:53 tgl Exp $
+ *	  src/backend/utils/adt/datetime.c
  *
  *-------------------------------------------------------------------------
  */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_depend.c,v 1.33 2010/01/02 16:57:36 momjian Exp $
+ *	  src/backend/catalog/pg_depend.c
  *
  *-------------------------------------------------------------------------
  */

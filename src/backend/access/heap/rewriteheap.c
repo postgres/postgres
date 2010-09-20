@@ -96,7 +96,7 @@
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/rewriteheap.c,v 1.22 2010/04/28 16:10:40 heikki Exp $
+ *	  src/backend/access/heap/rewriteheap.c
  *
  *-------------------------------------------------------------------------
  */

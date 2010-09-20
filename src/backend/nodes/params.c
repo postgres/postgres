@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/params.c,v 1.15 2010/02/26 02:00:43 momjian Exp $
+ *	  src/backend/nodes/params.c
  *
  *-------------------------------------------------------------------------
  */

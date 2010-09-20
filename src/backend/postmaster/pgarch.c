@@ -19,7 +19,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/pgarch.c,v 1.42 2010/05/11 16:42:28 tgl Exp $
+ *	  src/backend/postmaster/pgarch.c
  *
  *-------------------------------------------------------------------------
  */

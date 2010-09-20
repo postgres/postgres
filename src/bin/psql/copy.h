@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/copy.h,v 1.23 2010/01/02 16:57:59 momjian Exp $
+ * src/bin/psql/copy.h
  */
 #ifndef COPY_H
 #define COPY_H

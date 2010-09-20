@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/int8.h,v 1.51 2010/01/02 16:58:10 momjian Exp $
+ * src/include/utils/int8.h
  *
  * NOTES
  * These data types are supported on all 64-bit architectures, and may

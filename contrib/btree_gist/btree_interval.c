@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/btree_gist/btree_interval.c,v 1.14 2010/02/26 02:00:31 momjian Exp $
+ * contrib/btree_gist/btree_interval.c
  */
 #include "btree_gist.h"
 #include "btree_utils_num.h"

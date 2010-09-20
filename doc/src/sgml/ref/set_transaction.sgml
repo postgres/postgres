@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/set_transaction.sgml,v 1.28 2010/04/03 07:23:02 petere Exp $ -->
+<!-- doc/src/sgml/ref/set_transaction.sgml -->
 <refentry id="SQL-SET-TRANSACTION">
  <refmeta>
   <refentrytitle>SET TRANSACTION</refentrytitle>

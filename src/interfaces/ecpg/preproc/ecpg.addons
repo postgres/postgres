@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.addons,v 1.20 2010/09/10 10:13:20 meskes Exp $ */
+/* src/interfaces/ecpg/preproc/ecpg.addons */
 ECPG: stmtClosePortalStmt block
 	{
 		if (INFORMIX_MODE)

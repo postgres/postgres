@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepunion.c,v 1.183 2010/07/06 19:18:56 momjian Exp $
+ *	  src/backend/optimizer/prep/prepunion.c
  *
  *-------------------------------------------------------------------------
  */

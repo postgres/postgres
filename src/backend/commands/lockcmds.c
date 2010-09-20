@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/lockcmds.c,v 1.29 2010/02/26 02:00:39 momjian Exp $
+ *	  src/backend/commands/lockcmds.c
  *
  *-------------------------------------------------------------------------
  */

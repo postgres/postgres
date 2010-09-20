@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/buf_table.c,v 1.52 2010/04/28 16:54:15 tgl Exp $
+ *	  src/backend/storage/buffer/buf_table.c
  *
  *-------------------------------------------------------------------------
  */

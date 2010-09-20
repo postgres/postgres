@@ -4,7 +4,7 @@
  *	server checks and output routines
  *
  *	Copyright (c) 2010, PostgreSQL Global Development Group
- *	$PostgreSQL: pgsql/contrib/pg_upgrade/check.c,v 1.14 2010/07/25 03:47:29 momjian Exp $
+ *	contrib/pg_upgrade/check.c
  */
 
 #include "pg_upgrade.h"

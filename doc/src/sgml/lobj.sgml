@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/lobj.sgml,v 1.55 2010/08/10 02:56:46 rhaas Exp $ -->
+<!-- doc/src/sgml/lobj.sgml -->
 
  <chapter id="largeObjects">
   <title>Large Objects</title>

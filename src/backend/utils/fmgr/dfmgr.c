@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.102 2010/02/26 02:01:13 momjian Exp $
+ *	  src/backend/utils/fmgr/dfmgr.c
  *
  *-------------------------------------------------------------------------
  */

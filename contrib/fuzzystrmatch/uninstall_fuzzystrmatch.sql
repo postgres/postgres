@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/contrib/fuzzystrmatch/uninstall_fuzzystrmatch.sql,v 1.4 2008/04/03 21:13:07 tgl Exp $ */
+/* contrib/fuzzystrmatch/uninstall_fuzzystrmatch.sql */
 
 -- Adjust this setting to control where the objects get dropped.
 SET search_path = public;

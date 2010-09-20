@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/README.links,v 1.3 2009/01/10 16:58:39 momjian Exp $ -->
+<!-- doc/src/sgml/README.links -->
 
 Linking within SGML documents can be confusing, so here is a summary:
 

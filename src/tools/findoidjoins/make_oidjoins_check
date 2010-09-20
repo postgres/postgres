@@ -1,6 +1,6 @@
 #! /bin/sh
 
-# $PostgreSQL: pgsql/src/tools/findoidjoins/make_oidjoins_check,v 1.3 2008/10/13 12:59:29 tgl Exp $
+# src/tools/findoidjoins/make_oidjoins_check
 
 # You first run findoidjoins on the template1 database, and send that
 # output into this script to generate a list of SQL statements.

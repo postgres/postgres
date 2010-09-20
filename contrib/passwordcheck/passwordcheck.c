@@ -8,7 +8,7 @@
  * Author: Laurenz Albe <laurenz.albe@wien.gv.at>
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/contrib/passwordcheck/passwordcheck.c,v 1.3 2010/02/26 02:00:32 momjian Exp $
+ *	  contrib/passwordcheck/passwordcheck.c
  *
  *-------------------------------------------------------------------------
  */

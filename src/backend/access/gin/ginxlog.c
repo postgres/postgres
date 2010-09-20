@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			 $PostgreSQL: pgsql/src/backend/access/gin/ginxlog.c,v 1.22 2010/02/09 20:31:24 heikki Exp $
+ *			 src/backend/access/gin/ginxlog.c
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"

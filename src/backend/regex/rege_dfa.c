@@ -28,7 +28,7 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/src/backend/regex/rege_dfa.c,v 1.8 2007/10/06 16:05:54 tgl Exp $
+ * src/backend/regex/rege_dfa.c
  *
  */
 

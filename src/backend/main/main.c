@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/main/main.c,v 1.113 2010/01/02 16:57:45 momjian Exp $
+ *	  src/backend/main/main.c
  *
  *-------------------------------------------------------------------------
  */

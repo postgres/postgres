@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tsearch/ts_utils.c,v 1.14 2010/01/02 16:57:53 momjian Exp $
+ *	  src/backend/tsearch/ts_utils.c
  *
  *-------------------------------------------------------------------------
  */

@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/backend/replication/README,v 1.3 2010/03/24 06:25:39 heikki Exp $
+src/backend/replication/README
 
 Walreceiver - libpqwalreceiver API
 ----------------------------------

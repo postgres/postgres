@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.266 2010/09/11 18:38:56 joe Exp $
+ *	  src/backend/commands/trigger.c
  *
  *-------------------------------------------------------------------------
  */

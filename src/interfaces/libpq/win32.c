@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/src/interfaces/libpq/win32.c,v 1.27 2010/01/02 16:58:12 momjian Exp $
+ * src/interfaces/libpq/win32.c
  *
  *
  *	FILE

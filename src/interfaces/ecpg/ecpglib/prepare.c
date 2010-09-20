@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/prepare.c,v 1.38 2010/03/21 11:33:44 meskes Exp $ */
+/* src/interfaces/ecpg/ecpglib/prepare.c */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"

@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.98 2010/07/06 19:19:00 momjian Exp $ */
+/* src/interfaces/ecpg/ecpglib/execute.c */
 
 /*
  * The aim is to get a simpler inteface to the database routines.

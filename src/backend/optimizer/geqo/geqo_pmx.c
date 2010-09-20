@@ -6,7 +6,7 @@
 *	 PMX operator according to Goldberg & Lingle
 *	 (Proc Int'l Conf on GA's)
 *
-* $PostgreSQL: pgsql/src/backend/optimizer/geqo/geqo_pmx.c,v 1.11 2009/07/16 20:55:44 tgl Exp $
+* src/backend/optimizer/geqo/geqo_pmx.c
 *
 *-------------------------------------------------------------------------
 */

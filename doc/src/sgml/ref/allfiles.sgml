@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/allfiles.sgml,v 1.77 2009/12/11 03:34:55 itagaki Exp $
+doc/src/sgml/ref/allfiles.sgml
 PostgreSQL documentation
 Complete list of usable sgml source files in this directory.
 -->

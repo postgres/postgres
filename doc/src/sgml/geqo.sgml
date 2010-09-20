@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/geqo.sgml,v 1.43 2010/04/03 07:22:54 petere Exp $ -->
+<!-- doc/src/sgml/geqo.sgml -->
 
  <chapter id="geqo">
   <chapterinfo>

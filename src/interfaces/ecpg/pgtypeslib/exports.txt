@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/exports.txt,v 1.3 2007/10/04 17:49:31 meskes Exp $
+# src/interfaces/ecpg/pgtypeslib/exports.txt
 # Functions to be exported by pgtypeslib DLL
 PGTYPESdate_dayofweek           1
 PGTYPESdate_defmt_asc           2

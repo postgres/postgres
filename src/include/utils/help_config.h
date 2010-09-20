@@ -5,7 +5,7 @@
  *
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  *
- *	  $PostgreSQL: pgsql/src/include/utils/help_config.h,v 1.12 2010/01/02 16:58:10 momjian Exp $
+ *	  src/include/utils/help_config.h
  *
  *-------------------------------------------------------------------------
  */

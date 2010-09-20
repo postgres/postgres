@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/dml.sgml,v 1.22 2010/04/03 07:22:53 petere Exp $ -->
+<!-- doc/src/sgml/dml.sgml -->
 
 <chapter id="dml">
  <title>Data Manipulation</title>

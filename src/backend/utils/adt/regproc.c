@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/regproc.c,v 1.114 2010/08/05 15:25:35 rhaas Exp $
+ *	  src/backend/utils/adt/regproc.c
  *
  *-------------------------------------------------------------------------
  */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/pruneheap.c,v 1.25 2010/07/06 19:18:55 momjian Exp $
+ *	  src/backend/access/heap/pruneheap.c
  *
  *-------------------------------------------------------------------------
  */

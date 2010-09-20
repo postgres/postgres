@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/dict-int.sgml,v 1.2 2007/12/06 04:12:10 tgl Exp $ -->
+<!-- doc/src/sgml/dict-int.sgml -->
 
 <sect1 id="dict-int">
  <title>dict_int</title>

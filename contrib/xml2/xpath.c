@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/xml2/xpath.c,v 1.31 2010/08/13 18:36:23 tgl Exp $
+ * contrib/xml2/xpath.c
  *
  * Parser interface for DOM-based parser (libxml) rather than
  * stream-based SAX-type parser

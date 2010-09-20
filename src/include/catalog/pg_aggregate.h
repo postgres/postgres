@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_aggregate.h,v 1.72 2010/08/05 18:21:17 tgl Exp $
+ * src/include/catalog/pg_aggregate.h
  *
  * NOTES
  *	  the genbki.pl script reads this file and generates .bki

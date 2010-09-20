@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/optimizer/geqo_recombination.h,v 1.23 2010/02/26 02:01:26 momjian Exp $
+ * src/include/optimizer/geqo_recombination.h
  *
  *-------------------------------------------------------------------------
  */

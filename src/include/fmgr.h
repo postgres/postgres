@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/fmgr.h,v 1.66 2010/05/27 07:59:48 itagaki Exp $
+ * src/include/fmgr.h
  *
  *-------------------------------------------------------------------------
  */

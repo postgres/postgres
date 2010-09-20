@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/high-availability.sgml,v 1.81 2010/08/25 23:55:54 momjian Exp $ -->
+<!-- doc/src/sgml/high-availability.sgml -->
 
 <chapter id="high-availability">
  <title>High Availability, Load Balancing, and Replication</title>

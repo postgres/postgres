@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/contrib/ltree/uninstall_ltree.sql,v 1.6 2008/04/14 17:05:32 tgl Exp $ */
+/* contrib/ltree/uninstall_ltree.sql */
 
 -- Adjust this setting to control where the objects get dropped.
 SET search_path = public;

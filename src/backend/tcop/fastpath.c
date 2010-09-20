@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/fastpath.c,v 1.106 2010/09/03 01:26:52 tgl Exp $
+ *	  src/backend/tcop/fastpath.c
  *
  * NOTES
  *	  This cruft is the server side of PQfn.

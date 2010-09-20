@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.337 2010/08/18 18:35:20 tgl Exp $
+ *	  src/backend/tcop/utility.c
  *
  *-------------------------------------------------------------------------
  */

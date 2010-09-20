@@ -31,7 +31,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/src/port/getopt_long.c,v 1.8 2009/06/11 14:49:15 momjian Exp $
+ * src/port/getopt_long.c
  */
 
 #include "c.h"

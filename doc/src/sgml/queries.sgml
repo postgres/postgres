@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/queries.sgml,v 1.59 2010/08/07 02:44:05 tgl Exp $ -->
+<!-- doc/src/sgml/queries.sgml -->
 
 <chapter id="queries">
  <title>Queries</title>

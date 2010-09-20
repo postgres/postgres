@@ -9,7 +9,7 @@
 #
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/backend/utils/Gen_fmgrtab.pl,v 1.5 2010/01/05 20:23:32 tgl Exp $
+#    src/backend/utils/Gen_fmgrtab.pl
 #
 #-------------------------------------------------------------------------
 

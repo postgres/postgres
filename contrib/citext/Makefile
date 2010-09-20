@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/contrib/citext/Makefile,v 1.1 2008/07/29 18:31:20 tgl Exp $
+# contrib/citext/Makefile
 
 MODULES = citext
 DATA_built = citext.sql

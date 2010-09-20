@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/contrib/sslinfo/Makefile,v 1.10 2007/11/10 23:59:51 momjian Exp $
+# contrib/sslinfo/Makefile
 
 MODULE_big = sslinfo
 OBJS = sslinfo.o

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.330 2010/09/18 20:10:15 tgl Exp $
+ *	  src/backend/commands/copy.c
  *
  *-------------------------------------------------------------------------
  */

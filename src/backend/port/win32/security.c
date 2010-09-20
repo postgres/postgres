@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/port/win32/security.c,v 1.15 2010/01/02 16:57:50 momjian Exp $
+ *	  src/backend/port/win32/security.c
  *
  *-------------------------------------------------------------------------
  */

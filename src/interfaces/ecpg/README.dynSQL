@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/interfaces/ecpg/README.dynSQL,v 1.4 2010/08/19 05:57:34 petere Exp $
+src/interfaces/ecpg/README.dynSQL
 
 descriptor statements have the following shortcomings
 

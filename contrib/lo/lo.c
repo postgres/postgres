@@ -1,7 +1,7 @@
 /*
  *	PostgreSQL definitions for managed Large Objects.
  *
- *	$PostgreSQL: pgsql/contrib/lo/lo.c,v 1.17 2006/07/11 17:04:12 momjian Exp $
+ *	contrib/lo/lo.c
  *
  */
 

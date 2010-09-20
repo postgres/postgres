@@ -4,7 +4,7 @@
  *	tablespace functions
  *
  *	Copyright (c) 2010, PostgreSQL Global Development Group
- *	$PostgreSQL: pgsql/contrib/pg_upgrade/tablespace.c,v 1.6 2010/07/06 19:18:55 momjian Exp $
+ *	contrib/pg_upgrade/tablespace.c
  */
 
 #include "pg_upgrade.h"

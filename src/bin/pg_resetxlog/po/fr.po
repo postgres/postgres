@@ -1,7 +1,7 @@
 # translation of pg_resetxlog.po to fr_fr
 # french message translation file for pg_resetxlog
 #
-# $PostgreSQL: pgsql/src/bin/pg_resetxlog/po/fr.po,v 1.15 2010/05/13 15:56:39 petere Exp $
+# src/bin/pg_resetxlog/po/fr.po
 #
 # Use these quotes: « %s »
 #

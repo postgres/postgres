@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/initsplan.c,v 1.158 2010/02/26 02:00:45 momjian Exp $
+ *	  src/backend/optimizer/plan/initsplan.c
  *
  *-------------------------------------------------------------------------
  */

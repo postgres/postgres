@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_largeobject.c,v 1.40 2010/06/09 21:14:28 rhaas Exp $
+ *	  src/backend/catalog/pg_largeobject.c
  *
  *-------------------------------------------------------------------------
  */

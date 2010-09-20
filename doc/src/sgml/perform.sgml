@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/perform.sgml,v 1.84 2010/07/26 20:28:49 petere Exp $ -->
+<!-- doc/src/sgml/perform.sgml -->
 
  <chapter id="performance-tips">
   <title>Performance Tips</title>

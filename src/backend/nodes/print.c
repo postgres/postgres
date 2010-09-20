@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/print.c,v 1.92 2010/01/02 16:57:46 momjian Exp $
+ *	  src/backend/nodes/print.c
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT

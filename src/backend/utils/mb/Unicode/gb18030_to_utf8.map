@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/backend/utils/mb/Unicode/gb18030_to_utf8.map,v 1.5 2006/03/11 04:38:31 momjian Exp $ */
+/* src/backend/utils/mb/Unicode/gb18030_to_utf8.map */
 
 static pg_local_to_utf LUmapGB18030[ 63360 ] = {
   {0x8140, 0xe4b882},

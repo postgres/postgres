@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.202 2010/08/14 13:59:49 tgl Exp $
+ * src/bin/psql/tab-complete.c
  */
 
 /*----------------------------------------------------------------------

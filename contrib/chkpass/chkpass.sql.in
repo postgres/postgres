@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/contrib/chkpass/chkpass.sql.in,v 1.10 2010/07/28 20:34:34 petere Exp $ */
+/* contrib/chkpass/chkpass.sql.in */
 
 -- Adjust this setting to control where the objects get created.
 SET search_path = public;

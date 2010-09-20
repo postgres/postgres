@@ -5,7 +5,7 @@
  * Copyright (c) 2002-2010, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/dbsize.c,v 1.33 2010/08/13 20:10:52 rhaas Exp $
+ *	  src/backend/utils/adt/dbsize.c
  *
  */
 

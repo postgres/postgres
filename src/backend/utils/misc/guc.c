@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.568 2010/08/19 22:55:01 tgl Exp $
+ *	  src/backend/utils/misc/guc.c
  *
  *--------------------------------------------------------------------
  */

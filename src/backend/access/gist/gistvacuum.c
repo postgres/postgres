@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/gist/gistvacuum.c,v 1.48 2010/02/08 05:17:31 tgl Exp $
+ *	  src/backend/access/gist/gistvacuum.c
  *
  *-------------------------------------------------------------------------
  */

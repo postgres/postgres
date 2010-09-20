@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/spi/refint.c,v 1.35 2009/06/11 14:48:52 momjian Exp $
+ * contrib/spi/refint.c
  *
  *
  * refint.c --	set of functions to define referential integrity

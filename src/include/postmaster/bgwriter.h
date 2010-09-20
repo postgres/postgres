@@ -5,7 +5,7 @@
  *
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/postmaster/bgwriter.h,v 1.16 2010/08/13 20:10:53 rhaas Exp $
+ * src/include/postmaster/bgwriter.h
  *
  *-------------------------------------------------------------------------
  */

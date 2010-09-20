@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.trailer,v 1.27 2010/09/10 10:13:20 meskes Exp $ */
+/* src/interfaces/ecpg/preproc/ecpg.trailer */
 
 statements: /*EMPTY*/
                 | statements statement

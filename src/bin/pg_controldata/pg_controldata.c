@@ -6,7 +6,7 @@
  * copyright (c) Oliver Elphick <olly@lfix.co.uk>, 2001;
  * licence: BSD
  *
- * $PostgreSQL: pgsql/src/bin/pg_controldata/pg_controldata.c,v 1.50 2010/06/03 03:20:00 rhaas Exp $
+ * src/bin/pg_controldata/pg_controldata.c
  */
 
 /*

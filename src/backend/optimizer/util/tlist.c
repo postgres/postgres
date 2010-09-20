@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/tlist.c,v 1.87 2010/01/02 16:57:48 momjian Exp $
+ *	  src/backend/optimizer/util/tlist.c
  *
  *-------------------------------------------------------------------------
  */

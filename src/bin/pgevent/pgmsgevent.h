@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/bin/pgevent/pgmsgevent.h,v 1.4 2006/03/11 04:38:38 momjian Exp $ */
+/* src/bin/pgevent/pgmsgevent.h */
 
 /*	*/
 /*	 Values are 32 bit values layed out as follows: */

@@ -55,7 +55,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.110 2010/04/28 16:54:15 tgl Exp $
+ *	  src/backend/postmaster/autovacuum.c
  *
  *-------------------------------------------------------------------------
  */

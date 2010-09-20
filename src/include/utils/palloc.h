@@ -21,7 +21,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/palloc.h,v 1.44 2010/02/13 20:46:52 tgl Exp $
+ * src/include/utils/palloc.h
  *
  *-------------------------------------------------------------------------
  */

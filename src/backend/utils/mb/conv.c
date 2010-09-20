@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mb/conv.c,v 1.68 2010/01/02 16:57:56 momjian Exp $
+ *	  src/backend/utils/mb/conv.c
  *
  *-------------------------------------------------------------------------
  */

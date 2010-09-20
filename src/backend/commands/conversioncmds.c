@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/conversioncmds.c,v 1.42 2010/08/05 15:25:35 rhaas Exp $
+ *	  src/backend/commands/conversioncmds.c
  *
  *-------------------------------------------------------------------------
  */

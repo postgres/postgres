@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/procsignal.c,v 1.8 2010/09/11 15:48:04 heikki Exp $
+ *	  src/backend/storage/ipc/procsignal.c
  *
  *-------------------------------------------------------------------------
  */

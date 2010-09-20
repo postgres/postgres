@@ -10,7 +10,7 @@
  * Copyright (c) 2002-2010, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/prepare.c,v 1.102 2010/01/02 16:57:37 momjian Exp $
+ *	  src/backend/commands/prepare.c
  *
  *-------------------------------------------------------------------------
  */

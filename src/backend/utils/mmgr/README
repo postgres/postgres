@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/backend/utils/mmgr/README,v 1.15 2008/04/09 01:00:46 momjian Exp $
+src/backend/utils/mmgr/README
 
 Notes About Memory Allocation Redesign
 ======================================

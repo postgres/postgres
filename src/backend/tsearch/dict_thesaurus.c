@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tsearch/dict_thesaurus.c,v 1.17 2010/08/05 15:25:35 rhaas Exp $
+ *	  src/backend/tsearch/dict_thesaurus.c
  *
  *-------------------------------------------------------------------------
  */

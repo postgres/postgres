@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $PostgreSQL: pgsql/src/tools/pgindent/pgindent,v 1.102 2010/04/05 03:09:09 adunstan Exp $
+# src/tools/pgindent/pgindent
 
 # Known bugs:
 #

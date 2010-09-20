@@ -6,7 +6,7 @@
  * Copyright (c) 2003-2010, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/array_userfuncs.c,v 1.36 2010/08/10 21:51:00 tgl Exp $
+ *	  src/backend/utils/adt/array_userfuncs.c
  *
  *-------------------------------------------------------------------------
  */

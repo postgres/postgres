@@ -29,7 +29,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/replication/walreceiver.c,v 1.17 2010/09/15 10:35:05 heikki Exp $
+ *	  src/backend/replication/walreceiver.c
  *
  *-------------------------------------------------------------------------
  */

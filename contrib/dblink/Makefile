@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/contrib/dblink/Makefile,v 1.15 2007/11/10 23:59:50 momjian Exp $
+# contrib/dblink/Makefile
 
 MODULE_big = dblink
 PG_CPPFLAGS = -I$(libpq_srcdir)

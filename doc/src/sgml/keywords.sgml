@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/keywords.sgml,v 2.31 2010/03/02 20:40:48 petere Exp $ -->
+<!-- doc/src/sgml/keywords.sgml -->
 
 <appendix id="sql-keywords-appendix">
  <title><acronym>SQL</acronym> Key Words</title>

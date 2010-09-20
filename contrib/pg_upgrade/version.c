@@ -4,7 +4,7 @@
  *	Postgres-version-specific routines
  *
  *	Copyright (c) 2010, PostgreSQL Global Development Group
- *	$PostgreSQL: pgsql/contrib/pg_upgrade/version.c,v 1.5 2010/07/03 16:33:14 momjian Exp $
+ *	contrib/pg_upgrade/version.c
  */
 
 #include "pg_upgrade.h"

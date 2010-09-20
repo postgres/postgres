@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.410 2010/02/26 02:00:40 momjian Exp $
+ *	  src/backend/commands/vacuum.c
  *
  *-------------------------------------------------------------------------
  */

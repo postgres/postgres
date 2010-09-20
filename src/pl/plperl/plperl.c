@@ -1,7 +1,7 @@
 /**********************************************************************
  * plperl.c - perl as a procedural language for PostgreSQL
  *
- *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.179 2010/07/06 19:19:01 momjian Exp $
+ *	  src/pl/plperl/plperl.c
  *
  **********************************************************************/
 

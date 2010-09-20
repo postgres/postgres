@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/contacts.sgml,v 1.9 2006/03/10 19:10:47 momjian Exp $ -->
+<!-- doc/src/sgml/contacts.sgml -->
 
 <appendix label="B" id="contacts">
 <title>Contacts</title>

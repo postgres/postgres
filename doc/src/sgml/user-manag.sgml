@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/user-manag.sgml,v 1.43 2010/04/03 07:22:56 petere Exp $ -->
+<!-- doc/src/sgml/user-manag.sgml -->
 
 <chapter id="user-manag">
  <title>Database Roles and Privileges</title>

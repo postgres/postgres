@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/shmem.c,v 1.105 2010/07/06 19:18:57 momjian Exp $
+ *	  src/backend/storage/ipc/shmem.c
  *
  *-------------------------------------------------------------------------
  */

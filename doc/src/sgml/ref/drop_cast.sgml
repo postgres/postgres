@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/drop_cast.sgml,v 1.11 2010/04/03 07:23:00 petere Exp $ -->
+<!-- doc/src/sgml/ref/drop_cast.sgml -->
 
 <refentry id="SQL-DROPCAST">
  <refmeta>

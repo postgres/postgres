@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/problems.sgml,v 2.30 2009/04/27 16:27:36 momjian Exp $ -->
+<!-- doc/src/sgml/problems.sgml -->
 
 <sect1 id="bug-reporting">
  <title>Bug Reporting Guidelines</title>

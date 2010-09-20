@@ -6,7 +6,7 @@
  * Copyright (c) 2007-2010, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/uuid.c,v 1.12 2010/01/02 16:57:55 momjian Exp $
+ *	  src/backend/utils/adt/uuid.c
  *
  *-------------------------------------------------------------------------
  */

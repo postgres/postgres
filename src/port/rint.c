@@ -4,7 +4,7 @@
  *	  rint() implementation
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/rint.c,v 1.4 2010/02/06 05:42:49 tgl Exp $
+ *	  src/port/rint.c
  *
  *-------------------------------------------------------------------------
  */

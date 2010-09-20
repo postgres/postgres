@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2007-2010, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/contrib/uuid-ossp/uuid-ossp.c,v 1.12 2010/01/02 16:57:33 momjian Exp $
+ * contrib/uuid-ossp/uuid-ossp.c
  *
  *-------------------------------------------------------------------------
  */

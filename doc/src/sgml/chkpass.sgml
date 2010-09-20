@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/chkpass.sgml,v 1.3 2010/08/17 04:37:20 petere Exp $ -->
+<!-- doc/src/sgml/chkpass.sgml -->
 
 <sect1 id="chkpass">
  <title>chkpass</title>

@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/src/test/regress/standby_schedule,v 1.1 2009/12/19 01:32:45 sriggs Exp $
+# src/test/regress/standby_schedule
 #
 # Test schedule for Hot Standby
 #

@@ -4,7 +4,7 @@
 #    Makefile for port/darwin
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/backend/port/darwin/Makefile,v 1.6 2008/02/19 15:29:58 petere Exp $
+#    src/backend/port/darwin/Makefile
 #
 #-------------------------------------------------------------------------
 

@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/contrib/xml2/pgxml.sql.in,v 1.13 2010/08/13 18:36:23 tgl Exp $ */
+/* contrib/xml2/pgxml.sql.in */
 
 -- Adjust this setting to control where the objects get created.
 SET search_path = public;

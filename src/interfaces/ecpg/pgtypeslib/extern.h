@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/extern.h,v 1.8 2006/03/11 04:38:39 momjian Exp $ */
+/* src/interfaces/ecpg/pgtypeslib/extern.h */
 
 #ifndef __PGTYPES_COMMON_H__
 #define __PGTYPES_COMMON_H__

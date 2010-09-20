@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/test-parser.sgml,v 1.2 2007/12/06 04:12:10 tgl Exp $ -->
+<!-- doc/src/sgml/test-parser.sgml -->
 
 <sect1 id="test-parser">
  <title>test_parser</title>

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/pg_restore.sgml,v 1.88 2010/08/17 04:37:21 petere Exp $ -->
+<!-- doc/src/sgml/ref/pg_restore.sgml -->
 
 <refentry id="APP-PGRESTORE">
  <refmeta>

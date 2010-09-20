@@ -4,7 +4,7 @@
 #    Makefile for optimizer/path
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/backend/optimizer/path/Makefile,v 1.19 2008/02/19 10:30:07 petere Exp $
+#    src/backend/optimizer/path/Makefile
 #
 #-------------------------------------------------------------------------
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/transam.c,v 1.80 2010/01/02 16:57:35 momjian Exp $
+ *	  src/backend/access/transam/transam.c
  *
  * NOTES
  *	  This file contains the high level access-method interface to the

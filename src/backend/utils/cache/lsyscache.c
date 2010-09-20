@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/lsyscache.c,v 1.172 2010/08/05 14:45:05 rhaas Exp $
+ *	  src/backend/utils/cache/lsyscache.c
  *
  * NOTES
  *	  Eventually, the index information should go through here, too.

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tsearch/to_tsany.c,v 1.15 2010/01/02 16:57:53 momjian Exp $
+ *	  src/backend/tsearch/to_tsany.c
  *
  *-------------------------------------------------------------------------
  */

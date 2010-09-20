@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/pg_trgm/trgm_op.c,v 1.12 2009/06/11 14:48:51 momjian Exp $
+ * contrib/pg_trgm/trgm_op.c
  */
 #include "trgm.h"
 #include <ctype.h>

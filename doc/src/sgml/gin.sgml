@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/gin.sgml,v 2.21 2010/08/17 04:37:20 petere Exp $ -->
+<!-- doc/src/sgml/gin.sgml -->
 
 <chapter id="GIN">
 <title>GIN Indexes</title>

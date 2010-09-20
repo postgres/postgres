@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.339 2010/09/11 18:38:56 joe Exp $
+ *	  src/backend/catalog/index.c
  *
  *
  * INTERFACE ROUTINES

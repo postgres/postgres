@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/tools/make_diff/README,v 1.5 2010/08/19 05:57:36 petere Exp $
+src/tools/make_diff/README
 
 scripts
 =======

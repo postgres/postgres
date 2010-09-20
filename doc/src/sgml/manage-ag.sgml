@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/manage-ag.sgml,v 2.62 2010/04/03 07:22:55 petere Exp $ -->
+<!-- doc/src/sgml/manage-ag.sgml -->
 
 <chapter id="managing-databases">
  <title>Managing Databases</title>

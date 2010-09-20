@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/path.c,v 1.80 2010/01/02 16:58:13 momjian Exp $
+ *	  src/port/path.c
  *
  *-------------------------------------------------------------------------
  */

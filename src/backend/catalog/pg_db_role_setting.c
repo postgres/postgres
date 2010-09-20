@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/backend/catalog/pg_db_role_setting.c,v 1.4 2010/03/25 14:44:33 alvherre Exp $
+ *		src/backend/catalog/pg_db_role_setting.c
  */
 #include "postgres.h"
 

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/subselect.c,v 1.164 2010/08/27 20:30:08 petere Exp $
+ *	  src/backend/optimizer/plan/subselect.c
  *
  *-------------------------------------------------------------------------
  */

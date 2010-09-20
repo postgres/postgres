@@ -13,7 +13,7 @@
  * this version handles 64 bit numbers and so can hold values up to
  * $92,233,720,368,547,758.07.
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/cash.c,v 1.83 2010/07/16 02:15:53 tgl Exp $
+ * src/backend/utils/adt/cash.c
  */
 
 #include "postgres.h"

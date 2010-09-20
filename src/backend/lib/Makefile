@@ -4,7 +4,7 @@
 #    Makefile for lib (miscellaneous stuff)
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/backend/lib/Makefile,v 1.21 2008/02/19 10:30:07 petere Exp $
+#    src/backend/lib/Makefile
 #
 #-------------------------------------------------------------------------
 

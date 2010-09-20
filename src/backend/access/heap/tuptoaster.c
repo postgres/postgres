@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/tuptoaster.c,v 1.98 2010/02/26 02:00:33 momjian Exp $
+ *	  src/backend/access/heap/tuptoaster.c
  *
  *
  * INTERFACE ROUTINES

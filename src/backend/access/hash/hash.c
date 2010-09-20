@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/hash/hash.c,v 1.117 2010/02/26 02:00:33 momjian Exp $
+ *	  src/backend/access/hash/hash.c
  *
  * NOTES
  *	  This file contains only the public interface routines.

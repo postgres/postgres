@@ -1,7 +1,7 @@
 #
 # Makefile for optimizer
 #
-# $PostgreSQL: pgsql/src/backend/optimizer/Makefile,v 1.14 2008/02/19 10:30:07 petere Exp $
+# src/backend/optimizer/Makefile
 #
 
 subdir = src/backend/optimizer

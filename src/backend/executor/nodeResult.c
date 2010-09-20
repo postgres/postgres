@@ -38,7 +38,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeResult.c,v 1.46 2010/07/12 17:01:05 tgl Exp $
+ *	  src/backend/executor/nodeResult.c
  *
  *-------------------------------------------------------------------------
  */

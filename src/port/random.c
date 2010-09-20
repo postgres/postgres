@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/random.c,v 1.11 2010/01/02 16:58:13 momjian Exp $
+ *	  src/port/random.c
  *
  *-------------------------------------------------------------------------
  */

@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtree.c,v 1.177 2010/03/28 09:27:01 sriggs Exp $
+ *	  src/backend/access/nbtree/nbtree.c
  *
  *-------------------------------------------------------------------------
  */

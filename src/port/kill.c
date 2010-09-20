@@ -9,7 +9,7 @@
  *	signals that the backend can recognize.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/kill.c,v 1.14 2010/01/31 17:18:28 mha Exp $
+ *	  src/port/kill.c
  *
  *-------------------------------------------------------------------------
  */

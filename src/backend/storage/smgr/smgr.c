@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/smgr/smgr.c,v 1.122 2010/08/13 20:10:52 rhaas Exp $
+ *	  src/backend/storage/smgr/smgr.c
  *
  *-------------------------------------------------------------------------
  */

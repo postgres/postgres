@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/geo_selfuncs.c,v 1.33 2010/01/02 16:57:54 momjian Exp $
+ *	  src/backend/utils/adt/geo_selfuncs.c
  *
  *	XXX These are totally bogus.  Perhaps someone will make them do
  *	something reasonable, someday.

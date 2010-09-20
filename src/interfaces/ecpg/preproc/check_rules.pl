@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/check_rules.pl,v 1.3 2010/08/19 05:57:34 petere Exp $
+# src/interfaces/ecpg/preproc/check_rules.pl
 # test parser generater for ecpg
 # call with backend parser as stdin
 #

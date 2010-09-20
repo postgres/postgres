@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tsearch/dict_simple.c,v 1.9 2010/01/02 16:57:53 momjian Exp $
+ *	  src/backend/tsearch/dict_simple.c
  *
  *-------------------------------------------------------------------------
  */

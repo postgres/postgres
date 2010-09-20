@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/backend/utils/resowner/README,v 1.8 2008/11/25 20:28:29 alvherre Exp $
+src/backend/utils/resowner/README
 
 Notes About Resource Owners
 ===========================

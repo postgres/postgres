@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/contrib/pg_trgm/uninstall_pg_trgm.sql,v 1.7 2009/03/25 22:19:01 tgl Exp $ */
+/* contrib/pg_trgm/uninstall_pg_trgm.sql */
 
 -- Adjust this setting to control where the objects get dropped.
 SET search_path = public;

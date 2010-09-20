@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/shmqueue.c,v 1.34 2010/01/02 16:57:51 momjian Exp $
+ *	  src/backend/storage/ipc/shmqueue.c
  *
  * NOTES
  *

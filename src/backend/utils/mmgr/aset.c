@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/aset.c,v 1.83 2010/02/26 02:01:14 momjian Exp $
+ *	  src/backend/utils/mmgr/aset.c
  *
  * NOTE:
  *	This is a new (Feb. 05, 1999) implementation of the allocation set

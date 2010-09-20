@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/test/locale/README,v 1.6 2008/03/21 13:23:29 momjian Exp $
+src/test/locale/README
 
 Locales
 =======

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/keywords.c,v 1.90 2010/01/02 16:58:11 momjian Exp $
+ *	  src/interfaces/ecpg/preproc/keywords.c
  *
  *-------------------------------------------------------------------------
  */

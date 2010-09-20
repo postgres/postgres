@@ -3,7 +3,7 @@
  * c_keywords.c
  *	  lexical token lookup for reserved words in postgres embedded SQL
  *
- * $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/c_keywords.c,v 1.25 2010/02/26 02:01:31 momjian Exp $
+ * src/interfaces/ecpg/preproc/c_keywords.c
  *
  *-------------------------------------------------------------------------
  */

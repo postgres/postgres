@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	$PostgreSQL: pgsql/src/backend/utils/adt/oracle_compat.c,v 1.85 2010/01/02 16:57:54 momjian Exp $
+ *	src/backend/utils/adt/oracle_compat.c
  *
  *-------------------------------------------------------------------------
  */

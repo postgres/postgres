@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/int.c,v 1.89 2010/02/26 02:01:08 momjian Exp $
+ *	  src/backend/utils/adt/int.c
  *
  *-------------------------------------------------------------------------
  */

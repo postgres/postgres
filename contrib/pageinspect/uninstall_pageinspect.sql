@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/contrib/pageinspect/uninstall_pageinspect.sql,v 1.5 2009/06/08 16:22:44 tgl Exp $ */
+/* contrib/pageinspect/uninstall_pageinspect.sql */
 
 -- Adjust this setting to control where the objects get dropped.
 SET search_path = public;

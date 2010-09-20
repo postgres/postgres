@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/config/docbook.m4,v 1.11 2009/08/04 22:04:37 petere Exp $
+# config/docbook.m4
 
 # PGAC_PROG_JADE
 # --------------

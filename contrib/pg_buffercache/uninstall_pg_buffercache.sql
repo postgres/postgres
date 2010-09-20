@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/contrib/pg_buffercache/uninstall_pg_buffercache.sql,v 1.3 2007/11/13 04:24:28 momjian Exp $ */
+/* contrib/pg_buffercache/uninstall_pg_buffercache.sql */
 
 -- Adjust this setting to control where the objects get dropped.
 SET search_path = public;

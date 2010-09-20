@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/src/pl/tcl/nls.mk,v 1.7 2009/10/20 18:23:27 petere Exp $
+# src/pl/tcl/nls.mk
 CATALOG_NAME	:= pltcl
 AVAIL_LANGUAGES	:= de es fr it ja pt_BR tr
 GETTEXT_FILES	:= pltcl.c

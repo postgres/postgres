@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/contrib/pgstattuple/uninstall_pgstattuple.sql,v 1.6 2007/11/13 04:24:28 momjian Exp $ */
+/* contrib/pgstattuple/uninstall_pgstattuple.sql */
 
 -- Adjust this setting to control where the objects get dropped.
 SET search_path = public;

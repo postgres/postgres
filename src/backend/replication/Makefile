@@ -4,7 +4,7 @@
 #    Makefile for src/backend/replication
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/backend/replication/Makefile,v 1.2 2010/01/20 09:16:24 heikki Exp $
+#    src/backend/replication/Makefile
 #
 #-------------------------------------------------------------------------
 

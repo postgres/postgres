@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/vacuumlo.sgml,v 1.6 2010/08/17 04:37:21 petere Exp $ -->
+<!-- doc/src/sgml/vacuumlo.sgml -->
 
 <sect1 id="vacuumlo">
  <title>vacuumlo</title>

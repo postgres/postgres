@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/pathnode.c,v 1.158 2010/03/28 22:59:33 tgl Exp $
+ *	  src/backend/optimizer/util/pathnode.c
  *
  *-------------------------------------------------------------------------
  */

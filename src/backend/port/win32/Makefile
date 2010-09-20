@@ -4,7 +4,7 @@
 #    Makefile for backend/port/win32
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/backend/port/win32/Makefile,v 1.12 2008/02/19 15:29:58 petere Exp $
+#    src/backend/port/win32/Makefile
 #
 #-------------------------------------------------------------------------
 

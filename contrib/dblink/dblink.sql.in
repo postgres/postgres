@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/contrib/dblink/dblink.sql.in,v 1.19 2009/08/05 16:11:07 joe Exp $ */
+/* contrib/dblink/dblink.sql.in */
 
 -- Adjust this setting to control where the objects get created.
 SET search_path = public;

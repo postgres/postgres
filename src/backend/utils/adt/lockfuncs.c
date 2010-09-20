@@ -6,7 +6,7 @@
  * Copyright (c) 2002-2010, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/backend/utils/adt/lockfuncs.c,v 1.37 2010/01/02 16:57:54 momjian Exp $
+ *		src/backend/utils/adt/lockfuncs.c
  *
  *-------------------------------------------------------------------------
  */

@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/backend/utils/mb/Unicode/iso8859_13_to_utf8.map,v 1.2 2006/03/11 04:38:37 momjian Exp $ */
+/* src/backend/utils/mb/Unicode/iso8859_13_to_utf8.map */
 
 static pg_local_to_utf LUmapISO8859_13[ 128 ] = {
   {0x0080, 0xc280},

@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/contrib/pageinspect/pageinspect.sql.in,v 1.7 2009/06/08 16:22:44 tgl Exp $ */
+/* contrib/pageinspect/pageinspect.sql.in */
 
 -- Adjust this setting to control where the objects get created.
 SET search_path = public;

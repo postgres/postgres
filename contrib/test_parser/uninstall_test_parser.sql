@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/contrib/test_parser/uninstall_test_parser.sql,v 1.3 2007/11/13 04:24:29 momjian Exp $ */
+/* contrib/test_parser/uninstall_test_parser.sql */
 
 -- Adjust this setting to control where the objects get dropped.
 SET search_path = public;

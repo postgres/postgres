@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_user_mapping.h,v 1.5 2010/01/05 01:06:57 tgl Exp $
+ * src/include/catalog/pg_user_mapping.h
  *
  * NOTES
  *	  the genbki.pl script reads this file and generates .bki

@@ -4,7 +4,7 @@
 #    Makefile for executor
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/backend/executor/Makefile,v 1.31 2009/10/12 18:10:41 tgl Exp $
+#    src/backend/executor/Makefile
 #
 #-------------------------------------------------------------------------
 

@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/backend/access/gin/README,v 1.7 2010/02/08 04:33:52 tgl Exp $
+src/backend/access/gin/README
 
 Gin for PostgreSQL
 ==================

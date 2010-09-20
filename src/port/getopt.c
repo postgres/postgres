@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/port/getopt.c,v 1.14 2009/06/11 14:49:15 momjian Exp $ */
+/* src/port/getopt.c */
 
 /* This is used by psql under Win32 */
 

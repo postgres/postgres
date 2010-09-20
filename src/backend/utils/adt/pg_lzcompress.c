@@ -166,7 +166,7 @@
  *
  * Copyright (c) 1999-2010, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/pg_lzcompress.c,v 1.35 2010/01/02 16:57:54 momjian Exp $
+ * src/backend/utils/adt/pg_lzcompress.c
  * ----------
  */
 #include "postgres.h"

@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/pl/plperl/README,v 1.4 2008/03/21 13:23:29 momjian Exp $
+src/pl/plperl/README
 
 PL/Perl allows you to write PostgreSQL functions and procedures in
 Perl.  To include PL/Perl in the build use './configure --with-perl'.

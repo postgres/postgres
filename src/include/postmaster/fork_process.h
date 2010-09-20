@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1996-2010, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/postmaster/fork_process.h,v 1.8 2010/01/02 16:58:08 momjian Exp $
+ * src/include/postmaster/fork_process.h
  *
  *-------------------------------------------------------------------------
  */

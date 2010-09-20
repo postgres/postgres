@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/readfuncs.c,v 1.233 2010/08/07 02:44:07 tgl Exp $
+ *	  src/backend/nodes/readfuncs.c
  *
  * NOTES
  *	  Path and Plan nodes do not have any readfuncs support, because we

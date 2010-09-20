@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/error.c,v 1.27 2010/07/06 19:19:00 momjian Exp $ */
+/* src/interfaces/ecpg/ecpglib/error.c */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"

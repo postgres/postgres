@@ -24,7 +24,7 @@
 
 # Original author:  Ryan Kirkpatrick <pgsql@rkirkpat.net>
 
-# $PostgreSQL: pgsql/contrib/start-scripts/linux,v 1.11 2010/02/23 22:15:35 momjian Exp $
+# contrib/start-scripts/linux
 
 ## EDIT FROM HERE
 

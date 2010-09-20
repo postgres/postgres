@@ -1,7 +1,7 @@
 :
 # remove extra #include's
 
-# $PostgreSQL: pgsql/src/tools/pginclude/pgrminclude,v 1.16 2006/07/14 01:05:14 momjian Exp $
+# src/tools/pginclude/pgrminclude
 
 trap "rm -f /tmp/$$.c /tmp/$$.o /tmp/$$ /tmp/$$a /tmp/$$b" 0 1 2 3 15
 find . \( -name CVS -a -prune \) -o -type f -name '*.[ch]' -print | 

@@ -4,7 +4,7 @@
 #    Makefile for utils/mb
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/backend/utils/mb/Makefile,v 1.24 2008/02/19 10:30:09 petere Exp $
+#    src/backend/utils/mb/Makefile
 #
 #-------------------------------------------------------------------------
 

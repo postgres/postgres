@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/drop_foreign_data_wrapper.sgml,v 1.3 2010/04/03 07:23:00 petere Exp $
+doc/src/sgml/ref/drop_foreign_data_wrapper.sgml
 PostgreSQL documentation
 -->
 

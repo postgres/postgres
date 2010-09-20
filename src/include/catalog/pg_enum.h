@@ -7,7 +7,7 @@
  *
  * Copyright (c) 2006-2010, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_enum.h,v 1.9 2010/02/26 02:01:21 momjian Exp $
+ * src/include/catalog/pg_enum.h
  *
  * NOTES
  *	  the genbki.pl script reads this file and generates .bki

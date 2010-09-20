@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/pgstattuple.sgml,v 1.8 2010/08/17 04:37:21 petere Exp $ -->
+<!-- doc/src/sgml/pgstattuple.sgml -->
 
 <sect1 id="pgstattuple">
  <title>pgstattuple</title>

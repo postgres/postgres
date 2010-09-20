@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/indexam.sgml,v 2.35 2010/08/17 04:37:20 petere Exp $ -->
+<!-- doc/src/sgml/indexam.sgml -->
 
 <chapter id="indexam">
  <title>Index Access Method Interface Definition</title>

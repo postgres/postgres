@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/common.c,v 1.147 2010/07/28 04:39:14 petere Exp $
+ * src/bin/psql/common.c
  */
 #include "postgres_fe.h"
 #include "common.h"

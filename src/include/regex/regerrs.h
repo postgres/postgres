@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/src/include/regex/regerrs.h,v 1.5 2008/01/03 20:47:55 tgl Exp $
+ * src/include/regex/regerrs.h
  */
 
 {

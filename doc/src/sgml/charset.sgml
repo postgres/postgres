@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/charset.sgml,v 2.99 2010/03/17 17:12:31 petere Exp $ -->
+<!-- doc/src/sgml/charset.sgml -->
 
 <chapter id="charset">
  <title>Localization</>

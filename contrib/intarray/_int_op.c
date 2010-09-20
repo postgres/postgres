@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/intarray/_int_op.c,v 1.9 2009/06/11 14:48:51 momjian Exp $
+ * contrib/intarray/_int_op.c
  */
 #include "postgres.h"
 

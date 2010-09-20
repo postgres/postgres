@@ -27,7 +27,7 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/src/include/regex/regguts.h,v 1.7 2008/02/14 17:33:37 tgl Exp $
+ * src/include/regex/regguts.h
  */
 
 

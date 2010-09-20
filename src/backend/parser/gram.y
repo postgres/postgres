@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.717 2010/08/20 14:55:05 tgl Exp $
+ *	  src/backend/parser/gram.y
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT

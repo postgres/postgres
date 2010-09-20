@@ -4,7 +4,7 @@
  *	database server functions
  *
  *	Copyright (c) 2010, PostgreSQL Global Development Group
- *	$PostgreSQL: pgsql/contrib/pg_upgrade/server.c,v 1.9 2010/07/13 20:03:32 momjian Exp $
+ *	contrib/pg_upgrade/server.c
  */
 
 #include "pg_upgrade.h"

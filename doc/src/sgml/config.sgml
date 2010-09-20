@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.309 2010/08/26 22:00:19 tgl Exp $ -->
+<!-- doc/src/sgml/config.sgml -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>

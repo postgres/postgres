@@ -7,7 +7,7 @@
  * Copyright (c) 1996-2010, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/fork_process.c,v 1.12 2010/02/26 02:00:55 momjian Exp $
+ *	  src/backend/postmaster/fork_process.c
  */
 #include "postgres.h"
 #include "postmaster/fork_process.h"

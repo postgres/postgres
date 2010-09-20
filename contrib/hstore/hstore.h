@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/hstore/hstore.h,v 1.10 2010/02/26 02:00:32 momjian Exp $
+ * contrib/hstore/hstore.h
  */
 #ifndef __HSTORE_H__
 #define __HSTORE_H__

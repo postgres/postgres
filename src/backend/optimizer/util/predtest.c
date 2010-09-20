@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/predtest.c,v 1.33 2010/02/26 02:00:47 momjian Exp $
+ *	  src/backend/optimizer/util/predtest.c
  *
  *-------------------------------------------------------------------------
  */

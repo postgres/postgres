@@ -7,7 +7,7 @@
  *
  * Copyright (c) 2007-2010, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/utils/uuid.h,v 1.6 2010/01/02 16:58:10 momjian Exp $
+ * src/include/utils/uuid.h
  *
  *-------------------------------------------------------------------------
  */

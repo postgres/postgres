@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/sslinfo.sgml,v 1.5 2010/07/29 19:34:40 petere Exp $ -->
+<!-- doc/src/sgml/sslinfo.sgml -->
 
 <sect1 id="sslinfo">
  <title>sslinfo</title>

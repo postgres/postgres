@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_constraint.c,v 1.56 2010/09/05 15:45:42 tgl Exp $
+ *	  src/backend/catalog/pg_constraint.c
  *
  *-------------------------------------------------------------------------
  */

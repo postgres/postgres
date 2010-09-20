@@ -3,7 +3,7 @@
  * 1996-06-05 by Arthur David Olson.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/timezone/localtime.c,v 1.22 2010/03/11 18:43:24 tgl Exp $
+ *	  src/timezone/localtime.c
  */
 
 /*

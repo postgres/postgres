@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/trigger.sgml,v 1.64 2010/08/17 04:37:21 petere Exp $ -->
+<!-- doc/src/sgml/trigger.sgml -->
 
  <chapter id="triggers">
   <title>Triggers</title>

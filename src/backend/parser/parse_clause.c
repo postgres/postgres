@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_clause.c,v 1.199 2010/07/18 19:37:48 tgl Exp $
+ *	  src/backend/parser/parse_clause.c
  *
  *-------------------------------------------------------------------------
  */

@@ -6,7 +6,7 @@
  * Copyright (c) 2009-2010, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/contrib/unaccent/unaccent.c,v 1.6 2010/08/05 15:25:35 rhaas Exp $
+ *	  contrib/unaccent/unaccent.c
  *
  *-------------------------------------------------------------------------
  */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/port/dynloader/ultrix4.c,v 1.28 2010/01/02 16:57:50 momjian Exp $
+ *	  src/backend/port/dynloader/ultrix4.c
  *
  *-------------------------------------------------------------------------
  */

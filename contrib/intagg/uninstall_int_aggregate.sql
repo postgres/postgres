@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/contrib/intagg/uninstall_int_aggregate.sql,v 1.4 2008/11/14 19:58:45 tgl Exp $ */
+/* contrib/intagg/uninstall_int_aggregate.sql */
 
 -- Adjust this setting to control where the objects get dropped.
 SET search_path = public;

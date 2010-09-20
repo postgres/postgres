@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.294 2010/09/11 18:38:55 joe Exp $
+ *	  src/backend/access/heap/heapam.c
  *
  *
  * INTERFACE ROUTINES

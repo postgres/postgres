@@ -15,7 +15,7 @@
  *
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/snowball/header.h,v 1.5 2010/01/02 16:58:08 momjian Exp $
+ * src/include/snowball/header.h
  *
  *-------------------------------------------------------------------------
  */

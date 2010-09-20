@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/portalcmds.c,v 1.82 2010/01/02 16:57:37 momjian Exp $
+ *	  src/backend/commands/portalcmds.c
  *
  *-------------------------------------------------------------------------
  */

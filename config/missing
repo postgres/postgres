@@ -1,6 +1,6 @@
 #! /bin/sh
 
-# $PostgreSQL: pgsql/config/missing,v 1.7 2010/02/22 21:16:50 momjian Exp $
+# config/missing
 
 # This is *not* the GNU `missing' script, although it is similar in
 # concept. You can call it from the makefiles to get consistent

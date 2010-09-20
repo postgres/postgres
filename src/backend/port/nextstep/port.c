@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/src/backend/port/nextstep/port.c,v 1.12 2009/06/11 14:49:00 momjian Exp $
+ * src/backend/port/nextstep/port.c
  */
 #include "postgres.h"
 

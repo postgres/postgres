@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/datetime.c,v 1.38 2009/06/11 14:49:13 momjian Exp $ */
+/* src/interfaces/ecpg/pgtypeslib/datetime.c */
 
 #include "postgres_fe.h"
 

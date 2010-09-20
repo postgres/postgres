@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/contrib/pg_trgm/pg_trgm.sql.in,v 1.10 2009/06/11 18:30:03 tgl Exp $ */
+/* contrib/pg_trgm/pg_trgm.sql.in */
 
 -- Adjust this setting to control where the objects get created.
 SET search_path = public;

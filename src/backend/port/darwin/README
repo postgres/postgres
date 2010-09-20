@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/backend/port/darwin/README,v 1.5 2008/03/21 13:23:28 momjian Exp $
+src/backend/port/darwin/README
 
 Darwin
 ======

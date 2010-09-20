@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/src/port/strtol.c,v 1.18 2010/01/02 16:58:13 momjian Exp $
+ * src/port/strtol.c
  *
  *
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group

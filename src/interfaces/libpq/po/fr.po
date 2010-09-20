@@ -1,7 +1,7 @@
 # translation of libpq.po to fr_fr
 # french message translation file for libpq
 #
-# $PostgreSQL: pgsql/src/interfaces/libpq/po/fr.po,v 1.26 2010/07/08 21:32:28 petere Exp $
+# src/interfaces/libpq/po/fr.po
 #
 # Use these quotes: « %s »
 #

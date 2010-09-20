@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/contrib/lo/Makefile,v 1.17 2007/11/10 23:59:51 momjian Exp $
+# contrib/lo/Makefile
 
 MODULES = lo
 DATA_built = lo.sql

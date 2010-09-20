@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/keywords.c,v 1.5 2010/01/02 16:57:59 momjian Exp $
+ *	  src/bin/pg_dump/keywords.c
  *
  *-------------------------------------------------------------------------
  */

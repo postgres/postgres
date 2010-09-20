@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/px.c,v 1.18 2009/06/11 14:48:52 momjian Exp $
+ * contrib/pgcrypto/px.c
  */
 
 #include "postgres.h"

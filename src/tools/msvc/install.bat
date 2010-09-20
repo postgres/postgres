@@ -1,5 +1,5 @@
 @echo off
-REM $PostgreSQL: pgsql/src/tools/msvc/install.bat,v 1.3 2007/12/19 12:29:36 mha Exp $
+REM src/tools/msvc/install.bat
 
 if NOT "%1"=="" GOTO RUN_INSTALL
 

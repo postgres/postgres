@@ -2,7 +2,7 @@
 #
 # Copyright (c) 2001-2010, PostgreSQL Global Development Group
 #
-# $PostgreSQL: pgsql/src/backend/utils/mb/Unicode/UCS_to_BIG5.pl,v 1.11 2010/08/19 05:57:34 petere Exp $
+# src/backend/utils/mb/Unicode/UCS_to_BIG5.pl
 #
 # Generate UTF-8 <--> BIG5 conversion tables from
 # map files provided by Unicode organization.

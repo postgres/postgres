@@ -4,7 +4,7 @@
  *	utility functions
  *
  *	Copyright (c) 2010, PostgreSQL Global Development Group
- *	$PostgreSQL: pgsql/contrib/pg_upgrade/util.c,v 1.5 2010/07/06 19:18:55 momjian Exp $
+ *	contrib/pg_upgrade/util.c
  */
 
 #include "pg_upgrade.h"

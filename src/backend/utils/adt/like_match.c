@@ -19,7 +19,7 @@
  * Copyright (c) 1996-2010, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	$PostgreSQL: pgsql/src/backend/utils/adt/like_match.c,v 1.30 2010/07/06 19:18:58 momjian Exp $
+ *	src/backend/utils/adt/like_match.c
  *
  *-------------------------------------------------------------------------
  */

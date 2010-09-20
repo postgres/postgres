@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsquery_gist.c,v 1.10 2010/01/02 16:57:55 momjian Exp $
+ *	  src/backend/utils/adt/tsquery_gist.c
  *
  *-------------------------------------------------------------------------
  */

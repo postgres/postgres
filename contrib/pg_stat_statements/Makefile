@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/contrib/pg_stat_statements/Makefile,v 1.1 2009/01/04 22:19:59 tgl Exp $
+# contrib/pg_stat_statements/Makefile
 
 MODULE_big = pg_stat_statements
 DATA_built = pg_stat_statements.sql

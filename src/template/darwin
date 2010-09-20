@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/src/template/darwin,v 1.12 2010/08/02 04:51:17 tgl Exp $
+# src/template/darwin
 
 # Select appropriate semaphore support.  Darwin 6.0 (Mac OS X 10.2) and up
 # support System V semaphores; before that we have to use POSIX semaphores,

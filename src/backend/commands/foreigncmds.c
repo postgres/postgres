@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/foreigncmds.c,v 1.12 2010/08/05 14:45:00 rhaas Exp $
+ *	  src/backend/commands/foreigncmds.c
  *
  *-------------------------------------------------------------------------
  */

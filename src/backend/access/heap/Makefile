@@ -4,7 +4,7 @@
 #    Makefile for access/heap
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/backend/access/heap/Makefile,v 1.19 2008/12/03 13:05:22 heikki Exp $
+#    src/backend/access/heap/Makefile
 #
 #-------------------------------------------------------------------------
 

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/s_lock.c,v 1.51 2010/01/02 16:57:52 momjian Exp $
+ *	  src/backend/storage/lmgr/s_lock.c
  *
  *-------------------------------------------------------------------------
  */

@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/command.h,v 1.34 2010/02/16 21:07:01 momjian Exp $
+ * src/bin/psql/command.h
  */
 #ifndef COMMAND_H
 #define COMMAND_H

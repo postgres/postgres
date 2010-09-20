@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tsearch/wparser.c,v 1.13 2010/08/05 15:25:35 rhaas Exp $
+ *	  src/backend/tsearch/wparser.c
  *
  *-------------------------------------------------------------------------
  */

@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/include/pgtypes_date.h,v 1.11 2006/10/04 00:30:11 momjian Exp $ */
+/* src/interfaces/ecpg/include/pgtypes_date.h */
 
 #ifndef PGTYPES_DATETIME
 #define PGTYPES_DATETIME

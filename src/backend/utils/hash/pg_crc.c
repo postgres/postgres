@@ -19,7 +19,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/hash/pg_crc.c,v 1.24 2010/02/26 02:01:13 momjian Exp $
+ *	  src/backend/utils/hash/pg_crc.c
  *
  *-------------------------------------------------------------------------
  */

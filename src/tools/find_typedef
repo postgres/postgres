@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $PostgreSQL: pgsql/src/tools/find_typedef,v 1.16 2009/06/12 03:09:07 momjian Exp $
+# src/tools/find_typedef
 
 # This script attempts to find all typedef's in the postgres binaries
 # by using 'nm' to report all typedef debugging symbols.

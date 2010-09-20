@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/extern.h,v 1.41 2010/05/25 14:32:55 meskes Exp $ */
+/* src/interfaces/ecpg/ecpglib/extern.h */
 
 #ifndef _ECPG_LIB_EXTERN_H
 #define _ECPG_LIB_EXTERN_H

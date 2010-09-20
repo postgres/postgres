@@ -1,6 +1,6 @@
 /* dynamic SQL support routines
  *
- * $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/descriptor.c,v 1.38 2010/05/25 17:28:20 meskes Exp $
+ * src/interfaces/ecpg/ecpglib/descriptor.c
  */
 
 #define POSTGRES_ECPG_INTERNAL

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 2002-2010, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/commands/prepare.h,v 1.32 2010/01/02 16:58:03 momjian Exp $
+ * src/include/commands/prepare.h
  *
  *-------------------------------------------------------------------------
  */

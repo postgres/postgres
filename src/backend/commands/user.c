@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/commands/user.c,v 1.194 2010/08/05 14:45:01 rhaas Exp $
+ * src/backend/commands/user.c
  *
  *-------------------------------------------------------------------------
  */

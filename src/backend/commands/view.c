@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/view.c,v 1.122 2010/08/18 18:35:19 tgl Exp $
+ *	  src/backend/commands/view.c
  *
  *-------------------------------------------------------------------------
  */

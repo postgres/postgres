@@ -1,7 +1,7 @@
 @echo off
 REM Adjust path for your docbook installation in buildenv.pl
 
-REM $PostgreSQL: pgsql/src/tools/msvc/builddoc.bat,v 1.6 2007/12/19 12:29:36 mha Exp $
+REM src/tools/msvc/builddoc.bat
 
 SETLOCAL
 SET STARTDIR=%CD%

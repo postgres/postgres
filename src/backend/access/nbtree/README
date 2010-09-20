@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/backend/access/nbtree/README,v 1.22 2010/02/08 04:33:53 tgl Exp $
+src/backend/access/nbtree/README
 
 Btree Indexing
 ==============

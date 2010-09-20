@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/replication/walreceiverfuncs.c,v 1.7 2010/07/06 19:18:57 momjian Exp $
+ *	  src/backend/replication/walreceiverfuncs.c
  *
  *-------------------------------------------------------------------------
  */

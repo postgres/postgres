@@ -5,7 +5,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/backend/optimizer/geqo/Makefile,v 1.21 2009/07/16 20:55:44 tgl Exp $
+# src/backend/optimizer/geqo/Makefile
 #
 #-------------------------------------------------------------------------
 

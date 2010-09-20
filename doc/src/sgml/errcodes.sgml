@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/errcodes.sgml,v 1.29 2010/03/13 14:55:57 momjian Exp $ -->
+<!-- doc/src/sgml/errcodes.sgml -->
 
 <appendix id="errcodes-appendix">
  <title><productname>PostgreSQL</productname> Error Codes</title>

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/pgbench.sgml,v 1.20 2010/08/17 04:37:20 petere Exp $ -->
+<!-- doc/src/sgml/pgbench.sgml -->
 
 <sect1 id="pgbench">
  <title>pgbench</title>

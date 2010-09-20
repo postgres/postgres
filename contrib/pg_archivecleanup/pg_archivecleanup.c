@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/pg_archivecleanup/pg_archivecleanup.c,v 1.4 2010/08/23 02:56:24 tgl Exp $
+ * contrib/pg_archivecleanup/pg_archivecleanup.c
  *
  * pg_archivecleanup.c
  *

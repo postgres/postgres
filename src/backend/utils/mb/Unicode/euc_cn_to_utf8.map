@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/backend/utils/mb/Unicode/euc_cn_to_utf8.map,v 1.3 2006/03/11 04:38:31 momjian Exp $ */
+/* src/backend/utils/mb/Unicode/euc_cn_to_utf8.map */
 
 static pg_local_to_utf LUmapEUC_CN[ 7445 ] = {
   {0xa1a1, 0xe38080},

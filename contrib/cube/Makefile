@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/contrib/cube/Makefile,v 1.23 2009/08/28 20:26:18 petere Exp $
+# contrib/cube/Makefile
 
 MODULE_big = cube
 OBJS= cube.o cubeparse.o

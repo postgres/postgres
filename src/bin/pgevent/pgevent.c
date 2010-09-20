@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pgevent/pgevent.c,v 1.6 2009/06/11 14:49:07 momjian Exp $
+ *	  src/bin/pgevent/pgevent.c
  *
  *-------------------------------------------------------------------------
  */

@@ -4,7 +4,7 @@
 #    Makefile for storage/lmgr
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/backend/storage/lmgr/Makefile,v 1.23 2008/02/19 10:30:08 petere Exp $
+#    src/backend/storage/lmgr/Makefile
 #
 #-------------------------------------------------------------------------
 

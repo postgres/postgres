@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/contrib/passwordcheck/Makefile,v 1.1 2009/11/18 21:57:56 tgl Exp $
+# contrib/passwordcheck/Makefile
 
 MODULE_big = passwordcheck
 OBJS = passwordcheck.o

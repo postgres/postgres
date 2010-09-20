@@ -3,7 +3,7 @@
 # mkldexport
 #	create an AIX exports file from an object file
 #
-# $PostgreSQL: pgsql/src/backend/port/aix/mkldexport.sh,v 1.9 2006/03/11 04:38:31 momjian Exp $
+# src/backend/port/aix/mkldexport.sh
 #
 # Usage:
 #	mkldexport objectfile [location]

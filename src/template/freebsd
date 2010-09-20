@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/src/template/freebsd,v 1.35 2006/03/11 04:38:41 momjian Exp $
+# src/template/freebsd
 
 case $host_cpu in
   alpha*)   CFLAGS="-O";;  # alpha has problems with -O2

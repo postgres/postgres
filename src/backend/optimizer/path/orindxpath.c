@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/orindxpath.c,v 1.91 2010/01/02 16:57:47 momjian Exp $
+ *	  src/backend/optimizer/path/orindxpath.c
  *
  *-------------------------------------------------------------------------
  */

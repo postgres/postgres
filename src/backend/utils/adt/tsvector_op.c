@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsvector_op.c,v 1.27 2010/08/05 15:25:35 rhaas Exp $
+ *	  src/backend/utils/adt/tsvector_op.c
  *
  *-------------------------------------------------------------------------
  */

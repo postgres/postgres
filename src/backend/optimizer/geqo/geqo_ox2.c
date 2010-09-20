@@ -6,7 +6,7 @@
 *	 OX2 operator according to Syswerda
 *	 (The Genetic Algorithms Handbook, ed L Davis)
 *
-* $PostgreSQL: pgsql/src/backend/optimizer/geqo/geqo_ox2.c,v 1.11 2009/07/16 20:55:44 tgl Exp $
+* src/backend/optimizer/geqo/geqo_ox2.c
 *
 *-------------------------------------------------------------------------
 */

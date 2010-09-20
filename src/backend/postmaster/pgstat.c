@@ -13,7 +13,7 @@
  *
  *	Copyright (c) 2001-2010, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.206 2010/08/21 10:59:17 mha Exp $
+ *	src/backend/postmaster/pgstat.c
  * ----------
  */
 #include "postgres.h"

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/create_conversion.sgml,v 1.24 2010/06/16 02:12:51 petere Exp $ -->
+<!-- doc/src/sgml/ref/create_conversion.sgml -->
 
 <refentry id="SQL-CREATECONVERSION">
  <refmeta>

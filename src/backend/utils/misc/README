@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/backend/utils/misc/README,v 1.10 2008/03/20 17:55:15 momjian Exp $
+src/backend/utils/misc/README
 
 Guc Implementation Notes
 ========================

@@ -3,7 +3,7 @@
  *
  * Resource managers definition
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/rmgr.c,v 1.29 2010/02/07 20:48:09 tgl Exp $
+ * src/backend/access/transam/rmgr.c
  */
 #include "postgres.h"
 

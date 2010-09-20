@@ -2,7 +2,7 @@
 #
 # Copyright (c) 2007-2010, PostgreSQL Global Development Group
 #
-# $PostgreSQL: pgsql/src/backend/utils/mb/Unicode/UCS_to_EUC_JIS_2004.pl,v 1.4 2010/01/02 16:57:56 momjian Exp $
+# src/backend/utils/mb/Unicode/UCS_to_EUC_JIS_2004.pl
 #
 # Generate UTF-8 <--> EUC_JIS_2004 code conversion tables from
 # "euc-jis-2004-std.txt" (http://x0213.org)

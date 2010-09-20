@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/toasting.h,v 1.14 2010/04/20 23:48:47 tgl Exp $
+ * src/include/catalog/toasting.h
  *
  *-------------------------------------------------------------------------
  */

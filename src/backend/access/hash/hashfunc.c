@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/hash/hashfunc.c,v 1.62 2010/01/07 04:53:34 tgl Exp $
+ *	  src/backend/access/hash/hashfunc.c
  *
  * NOTES
  *	  These functions are stored in pg_amproc.	For each operator class

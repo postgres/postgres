@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/config/general.m4,v 1.11 2009/07/02 18:55:40 petere Exp $
+# config/general.m4
 
 # This file defines new macros to process configure command line
 # arguments, to replace the brain-dead AC_ARG_WITH and AC_ARG_ENABLE.

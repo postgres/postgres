@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/windowfuncs.c,v 1.4 2010/01/02 16:57:55 momjian Exp $
+ *	  src/backend/utils/adt/windowfuncs.c
  *
  *-------------------------------------------------------------------------
  */

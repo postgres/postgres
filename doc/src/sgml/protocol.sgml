@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/protocol.sgml,v 1.89 2010/06/07 02:01:08 itagaki Exp $ -->
+<!-- doc/src/sgml/protocol.sgml -->
 
 <chapter id="protocol">
  <title>Frontend/Backend Protocol</title>

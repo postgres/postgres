@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/include/port/darwin.h,v 1.11 2006/10/04 00:30:09 momjian Exp $ */
+/* src/include/port/darwin.h */
 
 #define __darwin__	1
 

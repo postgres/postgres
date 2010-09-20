@@ -27,7 +27,7 @@
   CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
   SOFTWARE.
  */
-/* $PostgreSQL: pgsql/contrib/pgcrypto/imath.c,v 1.9 2010/04/02 15:21:20 mha Exp $ */
+/* contrib/pgcrypto/imath.c */
 
 #include "postgres.h"
 #include "px.h"

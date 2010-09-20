@@ -16,7 +16,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/analyzejoins.c,v 1.4 2010/09/14 23:15:29 tgl Exp $
+ *	  src/backend/optimizer/plan/analyzejoins.c
  *
  *-------------------------------------------------------------------------
  */

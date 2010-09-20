@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/backend/access/transam/twophase.c,v 1.64 2010/09/11 15:48:04 heikki Exp $
+ *		src/backend/access/transam/twophase.c
  *
  * NOTES
  *		Each global transaction is associated with a global transaction

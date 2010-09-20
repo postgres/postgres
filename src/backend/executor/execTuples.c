@@ -17,7 +17,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execTuples.c,v 1.112 2010/02/26 02:00:41 momjian Exp $
+ *	  src/backend/executor/execTuples.c
  *
  *-------------------------------------------------------------------------
  */

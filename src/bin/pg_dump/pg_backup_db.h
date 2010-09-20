@@ -2,7 +2,7 @@
  *	Definitions for pg_backup_db.c
  *
  *	IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_db.h,v 1.13 2006/07/18 17:42:01 momjian Exp $
+ *		src/bin/pg_dump/pg_backup_db.h
  */
 
 #ifndef PG_BACKUP_DB_H

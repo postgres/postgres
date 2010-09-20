@@ -20,7 +20,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_files.c,v 1.36 2009/07/21 21:46:10 tgl Exp $
+ *		src/bin/pg_dump/pg_backup_files.c
  *
  *-------------------------------------------------------------------------
  */

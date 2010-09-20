@@ -4,7 +4,7 @@
 #    Makefile for utils/cache
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/backend/utils/cache/Makefile,v 1.26 2010/02/07 20:48:10 tgl Exp $
+#    src/backend/utils/cache/Makefile
 #
 #-------------------------------------------------------------------------
 

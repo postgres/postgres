@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/contrib/unaccent/Makefile,v 1.2 2009/08/18 15:51:16 tgl Exp $
+# contrib/unaccent/Makefile
 
 MODULE_big = unaccent
 OBJS = unaccent.o

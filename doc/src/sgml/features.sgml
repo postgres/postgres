@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/features.sgml,v 2.30 2008/12/19 16:25:16 petere Exp $ -->
+<!-- doc/src/sgml/features.sgml -->
 
 <appendix id="features">
  <title>SQL Conformance</title>

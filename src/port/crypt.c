@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/port/crypt.c,v 1.17 2010/07/06 19:19:01 momjian Exp $ */
+/* src/port/crypt.c */
 /*	$NetBSD: crypt.c,v 1.18 2001/03/01 14:37:35 wiz Exp $	*/
 
 /*

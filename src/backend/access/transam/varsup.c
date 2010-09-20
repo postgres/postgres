@@ -6,7 +6,7 @@
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/varsup.c,v 1.91 2010/02/26 02:00:34 momjian Exp $
+ *	  src/backend/access/transam/varsup.c
  *
  *-------------------------------------------------------------------------
  */

@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/src/test/regress/serial_schedule,v 1.57 2010/08/07 02:44:08 tgl Exp $
+# src/test/regress/serial_schedule
 # This should probably be in an order similar to parallel_schedule.
 test: tablespace
 test: boolean

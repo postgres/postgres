@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/superuser.c,v 1.41 2010/02/14 18:42:18 rhaas Exp $
+ *	  src/backend/utils/misc/superuser.c
  *
  *-------------------------------------------------------------------------
  */

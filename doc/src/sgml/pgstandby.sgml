@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/pgstandby.sgml,v 2.13 2010/08/17 04:37:21 petere Exp $ -->
+<!-- doc/src/sgml/pgstandby.sgml -->
 
 <sect1 id="pgstandby">
  <title>pg_standby</title>

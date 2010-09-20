@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/interfaces/ecpg/test/connect/README,v 1.2 2008/03/21 13:23:28 momjian Exp $
+src/interfaces/ecpg/test/connect/README
 
 Programs in this directory test all sorts of connections.
 

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_scanner.c,v 1.6 2010/08/02 03:46:54 rhaas Exp $
+ *	  src/pl/plpgsql/src/pl_scanner.c
  *
  *-------------------------------------------------------------------------
  */

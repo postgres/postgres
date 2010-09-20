@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/contrib/pgbench/Makefile,v 1.18 2010/05/12 11:33:08 momjian Exp $
+# contrib/pgbench/Makefile
 
 PGFILEDESC = "pgbench - a simple program for running benchmark tests"
 PGAPPICON=win32

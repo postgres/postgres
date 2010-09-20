@@ -4,7 +4,7 @@
 #   a template for timezones you could need.  See the `Date/Time Support'
 #   appendix in the PostgreSQL documentation for more information.
 #
-# $PostgreSQL: pgsql/src/timezone/tznames/Asia.txt,v 1.5 2010/05/11 22:36:52 tgl Exp $
+# src/timezone/tznames/Asia.txt
 #
 
 # CONFLICT! ADT is not unique

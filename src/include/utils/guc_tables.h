@@ -7,7 +7,7 @@
  *
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  *
- *	  $PostgreSQL: pgsql/src/include/utils/guc_tables.h,v 1.50 2010/07/20 00:47:53 rhaas Exp $
+ *	  src/include/utils/guc_tables.h
  *
  *-------------------------------------------------------------------------
  */

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/gin/ginarrayproc.c,v 1.17 2010/01/02 16:57:33 momjian Exp $
+ *	  src/backend/access/gin/ginarrayproc.c
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"

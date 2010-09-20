@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/internal-sha2.c,v 1.3 2009/06/11 14:48:52 momjian Exp $
+ * contrib/pgcrypto/internal-sha2.c
  */
 
 #include "postgres.h"

@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.616 2010/09/16 20:37:13 mha Exp $
+ *	  src/backend/postmaster/postmaster.c
  *
  * NOTES
  *

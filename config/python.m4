@@ -1,7 +1,7 @@
 #
 # Autoconf macros for configuring the build of Python extension modules
 #
-# $PostgreSQL: pgsql/config/python.m4,v 1.18 2010/03/17 22:02:44 petere Exp $
+# config/python.m4
 #
 
 # PGAC_PATH_PYTHON

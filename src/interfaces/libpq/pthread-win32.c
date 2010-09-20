@@ -5,7 +5,7 @@
 *
 * Copyright (c) 2004-2010, PostgreSQL Global Development Group
 * IDENTIFICATION
-*	$PostgreSQL: pgsql/src/interfaces/libpq/pthread-win32.c,v 1.20 2010/01/02 16:58:12 momjian Exp $
+*	src/interfaces/libpq/pthread-win32.c
 *
 *-------------------------------------------------------------------------
 */

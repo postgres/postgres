@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/hstore/hstore_compat.c,v 1.3 2010/09/16 02:54:01 tgl Exp $
+ * contrib/hstore/hstore_compat.c
  *
  * Notes on old/new hstore format disambiguation.
  *

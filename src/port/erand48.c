@@ -20,7 +20,7 @@
  * to anyone/anything when using this software.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/erand48.c,v 1.1 2009/07/16 17:43:52 tgl Exp $
+ *	  src/port/erand48.c
  *
  *-------------------------------------------------------------------------
  */

@@ -6,7 +6,7 @@
  * http://www.issn.org/
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/contrib/isn/ISSN.h,v 1.2 2006/10/04 00:29:45 momjian Exp $
+ *	  contrib/isn/ISSN.h
  *
  * 1144-875X <=> 1144875(X) <=> 1144875 <=> (977)1144875 <=> 9771144875(00) <=> 977114487500(7) <=> 977-1144-875-00-7
  *

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tsearch/ts_selfuncs.c,v 1.9 2010/08/01 21:31:08 tgl Exp $
+ *	  src/backend/tsearch/ts_selfuncs.c
  *
  *-------------------------------------------------------------------------
  */

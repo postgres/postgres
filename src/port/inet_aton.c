@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/port/inet_aton.c,v 1.10 2007/03/26 21:44:11 momjian Exp $
+/* src/port/inet_aton.c
  *
  *	This inet_aton() function was taken from the GNU C library and
  *	incorporated into Postgres for those systems which do not have this

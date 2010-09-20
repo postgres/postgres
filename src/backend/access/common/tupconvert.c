@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/common/tupconvert.c,v 1.4 2010/02/26 02:00:33 momjian Exp $
+ *	  src/backend/access/common/tupconvert.c
  *
  *-------------------------------------------------------------------------
  */

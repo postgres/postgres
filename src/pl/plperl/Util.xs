@@ -1,7 +1,7 @@
 /**********************************************************************
  * PostgreSQL::InServer::Util
  *
- * $PostgreSQL: pgsql/src/pl/plperl/Util.xs,v 1.1 2010/01/20 01:08:21 adunstan Exp $
+ * src/pl/plperl/Util.xs
  *
  * Defines plperl interfaces for general-purpose utilities.
  * This module is bootstrapped as soon as an interpreter is initialized.

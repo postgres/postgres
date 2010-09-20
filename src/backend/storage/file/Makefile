@@ -4,7 +4,7 @@
 #    Makefile for storage/file
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/backend/storage/file/Makefile,v 1.14 2010/07/02 17:03:30 rhaas Exp $
+#    src/backend/storage/file/Makefile
 #
 #-------------------------------------------------------------------------
 

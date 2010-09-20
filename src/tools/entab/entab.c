@@ -2,7 +2,7 @@
 **		entab.c			- add tabs to a text file
 **		by Bruce Momjian (root@candle.pha.pa.us)
 **
-** $PostgreSQL: pgsql/src/tools/entab/entab.c,v 1.18 2007/02/08 11:10:27 petere Exp $
+** src/tools/entab/entab.c
 **
 **	version 1.3
 **

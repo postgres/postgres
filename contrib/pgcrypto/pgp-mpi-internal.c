@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/pgp-mpi-internal.c,v 1.8 2009/06/11 14:48:52 momjian Exp $
+ * contrib/pgcrypto/pgp-mpi-internal.c
  */
 #include "postgres.h"
 

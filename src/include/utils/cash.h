@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/src/include/utils/cash.h,v 1.28 2010/07/16 02:15:56 tgl Exp $
+ * src/include/utils/cash.h
  *
  *
  * cash.h

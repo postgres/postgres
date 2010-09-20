@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planagg.c,v 1.53 2010/07/06 19:18:56 momjian Exp $
+ *	  src/backend/optimizer/plan/planagg.c
  *
  *-------------------------------------------------------------------------
  */

@@ -6,7 +6,7 @@
  * for developers.	If you edit any of these, be sure to do a *full*
  * rebuild (and an initdb if noted).
  *
- * $PostgreSQL: pgsql/src/include/pg_config_manual.h,v 1.40 2010/01/07 04:53:35 tgl Exp $
+ * src/include/pg_config_manual.h
  *------------------------------------------------------------------------
  */
 

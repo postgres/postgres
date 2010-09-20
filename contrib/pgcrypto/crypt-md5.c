@@ -3,7 +3,7 @@
  *
  * $FreeBSD: src/lib/libcrypt/crypt-md5.c,v 1.5 1999/12/17 20:21:45 peter Exp $
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/crypt-md5.c,v 1.9 2009/04/15 18:58:24 mha Exp $
+ * contrib/pgcrypto/crypt-md5.c
  */
 
 #include "postgres.h"

@@ -1,7 +1,7 @@
 #!/bin/sh
 # install - install a program, script, or datafile
 
-# $PostgreSQL: pgsql/config/install-sh,v 1.8 2009/08/26 22:24:42 petere Exp $
+# config/install-sh
 
 scriptversion=2009-08-26.20
 

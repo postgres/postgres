@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeMergejoin.c,v 1.104 2010/07/12 17:01:05 tgl Exp $
+ *	  src/backend/executor/nodeMergejoin.c
  *
  *-------------------------------------------------------------------------
  */

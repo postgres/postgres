@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/nodes.c,v 1.31 2010/01/02 16:57:46 momjian Exp $
+ *	  src/backend/nodes/nodes.c
  *
  * HISTORY
  *	  Andrew Yu			Oct 20, 1994	file creation

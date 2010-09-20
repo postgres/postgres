@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeMaterial.c,v 1.72 2010/07/12 17:01:05 tgl Exp $
+ *	  src/backend/executor/nodeMaterial.c
  *
  *-------------------------------------------------------------------------
  */

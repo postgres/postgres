@@ -8,7 +8,7 @@
  *
  * Copyright (c) 2003-2010, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/libpq/ip.h,v 1.24 2010/02/26 02:01:24 momjian Exp $
+ * src/include/libpq/ip.h
  *
  *-------------------------------------------------------------------------
  */

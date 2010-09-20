@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/namespace.c,v 1.129 2010/08/13 20:10:50 rhaas Exp $
+ *	  src/backend/catalog/namespace.c
  *
  *-------------------------------------------------------------------------
  */

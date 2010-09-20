@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/contrib/isn/isn.sql.in,v 1.9 2008/11/30 19:01:29 tgl Exp $ */
+/* contrib/isn/isn.sql.in */
 
 -- Adjust this setting to control where the objects get created.
 SET search_path = public;

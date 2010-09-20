@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteManip.c,v 1.127 2010/02/26 02:00:59 momjian Exp $
+ *	  src/backend/rewrite/rewriteManip.c
  *
  *-------------------------------------------------------------------------
  */

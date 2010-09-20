@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $PostgreSQL: pgsql/src/tools/pgindent/pgcppindent,v 1.2 2006/03/11 04:38:42 momjian Exp $
+# src/tools/pgindent/pgcppindent
 
 trap "rm -f /tmp/$$ /tmp/$$a" 0 1 2 3 15
 entab </dev/null >/dev/null

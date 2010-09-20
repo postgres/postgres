@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/functioncmds.c,v 1.119 2010/08/05 15:25:35 rhaas Exp $
+ *	  src/backend/commands/functioncmds.c
  *
  * DESCRIPTION
  *	  These routines take the parse tree and pick out the

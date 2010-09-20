@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/contrib/chkpass/Makefile,v 1.10 2007/11/10 23:59:50 momjian Exp $
+# contrib/chkpass/Makefile
 
 MODULE_big = chkpass
 OBJS = chkpass.o

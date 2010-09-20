@@ -4,7 +4,7 @@
 #    Makefile for optimizer/util
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/backend/optimizer/util/Makefile,v 1.19 2008/10/21 20:42:53 tgl Exp $
+#    src/backend/optimizer/util/Makefile
 #
 #-------------------------------------------------------------------------
 

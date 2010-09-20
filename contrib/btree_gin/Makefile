@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/contrib/btree_gin/Makefile,v 1.1 2009/03/25 23:20:01 tgl Exp $
+# contrib/btree_gin/Makefile
 
 MODULE_big = btree_gin
 OBJS = btree_gin.o 

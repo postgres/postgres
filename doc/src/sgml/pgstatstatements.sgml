@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/pgstatstatements.sgml,v 1.7 2010/07/29 19:34:40 petere Exp $ -->
+<!-- doc/src/sgml/pgstatstatements.sgml -->
 
 <sect1 id="pgstatstatements">
  <title>pg_stat_statements</title>

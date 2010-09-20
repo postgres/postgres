@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $PostgreSQL: pgsql/src/tools/copyright,v 1.19 2010/08/19 05:57:35 petere Exp $
+# src/tools/copyright
 
 echo "Using current year:  `date '+%Y'`"
 

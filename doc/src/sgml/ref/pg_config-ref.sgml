@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/pg_config-ref.sgml,v 1.30 2010/07/05 18:54:37 tgl Exp $ -->
+<!-- doc/src/sgml/ref/pg_config-ref.sgml -->
 
 <refentry id="app-pgconfig">
  <refmeta>

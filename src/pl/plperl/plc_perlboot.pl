@@ -1,4 +1,4 @@
-#  $PostgreSQL: pgsql/src/pl/plperl/plc_perlboot.pl,v 1.8 2010/08/19 05:57:35 petere Exp $
+#  src/pl/plperl/plc_perlboot.pl
 
 use 5.008001;
 use vars qw(%_SHARED);

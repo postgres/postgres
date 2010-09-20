@@ -1,7 +1,7 @@
 /*
  *	PostgreSQL type definitions for MAC addresses.
  *
- *	$PostgreSQL: pgsql/src/backend/utils/adt/mac.c,v 1.38 2007/06/05 21:31:06 tgl Exp $
+ *	src/backend/utils/adt/mac.c
  */
 
 #include "postgres.h"

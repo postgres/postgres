@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_funcs.c,v 1.90 2010/02/26 02:01:35 momjian Exp $
+ *	  src/pl/plpgsql/src/pl_funcs.c
  *
  *-------------------------------------------------------------------------
  */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/float.c,v 1.166 2010/02/27 21:53:21 tgl Exp $
+ *	  src/backend/utils/adt/float.c
  *
  *-------------------------------------------------------------------------
  */

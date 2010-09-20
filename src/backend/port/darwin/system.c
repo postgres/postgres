@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/src/backend/port/darwin/system.c,v 1.8 2009/06/11 14:49:00 momjian Exp $
+ * src/backend/port/darwin/system.c
  *
  * only needed in OS X 10.1 and possibly early 10.2 releases */
 #include <AvailabilityMacros.h>

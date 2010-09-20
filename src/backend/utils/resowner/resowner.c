@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/resowner/resowner.c,v 1.34 2010/01/02 16:57:58 momjian Exp $
+ *	  src/backend/utils/resowner/resowner.c
  *
  *-------------------------------------------------------------------------
  */

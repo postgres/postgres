@@ -14,7 +14,7 @@
  *	Author: Jan Wieck, Afilias USA INC.
  *	64-bit txids: Marko Kreen, Skype Technologies
  *
- *	$PostgreSQL: pgsql/src/backend/utils/adt/txid.c,v 1.13 2010/02/26 02:01:10 momjian Exp $
+ *	src/backend/utils/adt/txid.c
  *
  *-------------------------------------------------------------------------
  */

@@ -2,7 +2,7 @@
 #
 # unused_oids
 #
-# $PostgreSQL: pgsql/src/include/catalog/unused_oids,v 1.9 2009/09/26 22:42:03 tgl Exp $
+# src/include/catalog/unused_oids
 #
 #	finds blocks of manually-assignable oids that have not already been
 #	claimed by post_hackers.  primarily useful for finding available

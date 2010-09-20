@@ -1,7 +1,7 @@
 # translation of ecpglib.po to fr_fr
 # french message translation file for ecpglib
 #
-# $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/po/fr.po,v 1.3 2010/05/13 15:56:40 petere Exp $
+# src/interfaces/ecpg/ecpglib/po/fr.po
 #
 # Use these quotes: « %s »
 #

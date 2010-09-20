@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_inherits.c,v 1.8 2010/02/26 02:00:37 momjian Exp $
+ *	  src/backend/catalog/pg_inherits.c
  *
  *-------------------------------------------------------------------------
  */

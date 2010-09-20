@@ -1,4 +1,4 @@
--- $PostgreSQL: pgsql/src/backend/snowball/snowball_func.sql.in,v 1.3 2010/08/19 05:57:34 petere Exp $$
+-- src/backend/snowball/snowball_func.sql.in$
 
 SET search_path = pg_catalog;
 

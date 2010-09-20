@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/unsetenv.c,v 1.12 2010/09/07 14:10:30 momjian Exp $
+ *	  src/port/unsetenv.c
  *
  *-------------------------------------------------------------------------
  */

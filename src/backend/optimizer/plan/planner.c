@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.267 2010/03/30 21:58:10 tgl Exp $
+ *	  src/backend/optimizer/plan/planner.c
  *
  *-------------------------------------------------------------------------
  */

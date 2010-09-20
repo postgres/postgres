@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/src/interfaces/ecpg/include/sqlda-native.h,v 1.3 2010/02/26 02:01:31 momjian Exp $
+ * src/interfaces/ecpg/include/sqlda-native.h
  */
 
 #ifndef ECPG_SQLDA_NATIVE_H

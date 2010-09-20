@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/timestamp.c,v 1.46 2009/09/03 09:59:20 meskes Exp $
+ * src/interfaces/ecpg/pgtypeslib/timestamp.c
  */
 #include "postgres_fe.h"
 

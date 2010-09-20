@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/contrib/citext/uninstall_citext.sql,v 1.3 2008/09/05 18:25:16 tgl Exp $ */
+/* contrib/citext/uninstall_citext.sql */
 
 -- Adjust this setting to control where the objects get dropped.
 SET search_path = public;

@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/pgrowlocks/pgrowlocks.c,v 1.12 2009/06/11 14:48:52 momjian Exp $
+ * contrib/pgrowlocks/pgrowlocks.c
  *
  * Copyright (c) 2005-2006	Tatsuo Ishii
  *

@@ -4,7 +4,7 @@
 *
 *	 TSP mutation routines
 *
-* $PostgreSQL: pgsql/src/backend/optimizer/geqo/geqo_mutation.c,v 1.10 2009/07/16 20:55:44 tgl Exp $
+* src/backend/optimizer/geqo/geqo_mutation.c
 *
 *-------------------------------------------------------------------------
 */

@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $PostgreSQL: pgsql/src/tools/make_ctags,v 1.12 2009/01/14 21:59:19 momjian Exp $
+# src/tools/make_ctags
 
 trap "rm -f /tmp/$$" 0 1 2 3 15
 rm -f ./tags

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.257 2010/07/29 23:16:33 tgl Exp $
+ *	  src/backend/parser/parse_expr.c
  *
  *-------------------------------------------------------------------------
  */

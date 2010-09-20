@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/bin/pgevent/README,v 1.3 2008/03/21 13:23:28 momjian Exp $
+src/bin/pgevent/README
 
 pgevent
 =======

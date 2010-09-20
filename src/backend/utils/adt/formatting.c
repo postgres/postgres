@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.171 2010/07/06 19:18:58 momjian Exp $
+ * src/backend/utils/adt/formatting.c
  *
  *
  *	 Portions Copyright (c) 1999-2010, PostgreSQL Global Development Group

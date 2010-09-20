@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_relation.c,v 1.151 2010/04/28 00:46:33 tgl Exp $
+ *	  src/backend/parser/parse_relation.c
  *
  *-------------------------------------------------------------------------
  */

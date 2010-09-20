@@ -1,7 +1,7 @@
 /**********************************************************************
  * plpython.c - python as a procedural language for PostgreSQL
  *
- *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.149 2010/08/25 19:37:56 petere Exp $
+ *	src/pl/plpython/plpython.c
  *
  *********************************************************************
  */

@@ -29,7 +29,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuumlazy.c,v 1.136 2010/07/06 19:18:56 momjian Exp $
+ *	  src/backend/commands/vacuumlazy.c
  *
  *-------------------------------------------------------------------------
  */

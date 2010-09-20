@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/src/tools/ifaddrs/test_ifaddrs.c,v 1.2 2010/02/26 02:01:40 momjian Exp $
+ * src/tools/ifaddrs/test_ifaddrs.c
  *
  *
  *	test_ifaddrs.c

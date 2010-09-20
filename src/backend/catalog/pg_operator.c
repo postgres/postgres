@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_operator.c,v 1.111 2010/02/14 18:42:13 rhaas Exp $
+ *	  src/backend/catalog/pg_operator.c
  *
  * NOTES
  *	  these routines moved here from commands/define.c and somewhat cleaned up.

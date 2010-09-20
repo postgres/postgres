@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/contrib/fuzzystrmatch/Makefile,v 1.10 2007/11/10 23:59:50 momjian Exp $
+# contrib/fuzzystrmatch/Makefile
 
 MODULE_big = fuzzystrmatch
 OBJS = fuzzystrmatch.o dmetaphone.o

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.166 2010/08/21 16:55:51 tgl Exp $
+ *	  src/backend/utils/adt/arrayfuncs.c
  *
  *-------------------------------------------------------------------------
  */

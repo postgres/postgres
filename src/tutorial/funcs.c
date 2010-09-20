@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/tutorial/funcs.c,v 1.17 2007/02/27 23:48:10 tgl Exp $ */
+/* src/tutorial/funcs.c */
 
 /******************************************************************************
   These are user-defined functions that can be bound to a Postgres backend

@@ -5,7 +5,7 @@
  *
  *	Copyright (c) 2006-2010, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/include/pg_trace.h,v 1.6 2010/01/02 16:58:00 momjian Exp $
+ *	src/include/pg_trace.h
  * ----------
  */
 

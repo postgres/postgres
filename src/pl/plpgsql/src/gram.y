@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.144 2010/08/19 18:57:57 tgl Exp $
+ *	  src/pl/plpgsql/src/gram.y
  *
  *-------------------------------------------------------------------------
  */

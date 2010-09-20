@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/contrib/vacuumlo/vacuumlo.c,v 1.45 2010/02/17 04:19:37 tgl Exp $
+ *	  contrib/vacuumlo/vacuumlo.c
  *
  *-------------------------------------------------------------------------
  */

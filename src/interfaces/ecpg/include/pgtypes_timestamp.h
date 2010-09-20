@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/include/pgtypes_timestamp.h,v 1.11 2006/08/23 12:01:52 meskes Exp $ */
+/* src/interfaces/ecpg/include/pgtypes_timestamp.h */
 
 #ifndef PGTYPES_TIMESTAMP
 #define PGTYPES_TIMESTAMP

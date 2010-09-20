@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/contrib/earthdistance/uninstall_earthdistance.sql,v 1.3 2007/11/13 04:24:27 momjian Exp $ */
+/* contrib/earthdistance/uninstall_earthdistance.sql */
 
 -- Adjust this setting to control where the objects get dropped.
 SET search_path = public;

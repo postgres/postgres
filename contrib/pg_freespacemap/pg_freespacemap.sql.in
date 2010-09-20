@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/contrib/pg_freespacemap/pg_freespacemap.sql.in,v 1.12 2009/06/10 22:12:28 tgl Exp $ */
+/* contrib/pg_freespacemap/pg_freespacemap.sql.in */
 
 -- Adjust this setting to control where the objects get created.
 SET search_path = public;

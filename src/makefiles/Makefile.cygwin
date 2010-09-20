@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/src/makefiles/Makefile.cygwin,v 1.15 2010/07/05 23:15:56 tgl Exp $
+# src/makefiles/Makefile.cygwin
 DLLTOOL= dlltool
 DLLWRAP= dllwrap
 ifdef PGXS

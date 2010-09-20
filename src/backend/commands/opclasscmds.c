@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/opclasscmds.c,v 1.71 2010/08/05 15:25:35 rhaas Exp $
+ *	  src/backend/commands/opclasscmds.c
  *
  *-------------------------------------------------------------------------
  */

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/varbit.h,v 1.31 2010/01/25 20:55:32 tgl Exp $
+ * src/include/utils/varbit.h
  *
  *-------------------------------------------------------------------------
  */

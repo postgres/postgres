@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/pgrowlocks.sgml,v 1.6 2010/07/29 19:34:40 petere Exp $ -->
+<!-- doc/src/sgml/pgrowlocks.sgml -->
 
 <sect1 id="pgrowlocks">
  <title>pgrowlocks</title>

@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/backend/access/heap/README.HOT,v 1.7 2010/09/19 17:51:44 momjian Exp $
+src/backend/access/heap/README.HOT
 
 Heap Only Tuples (HOT)
 ======================

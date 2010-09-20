@@ -1,4 +1,4 @@
-#  $PostgreSQL: pgsql/src/pl/plperl/plc_trusted.pl,v 1.2 2010/08/19 05:57:35 petere Exp $
+#  src/pl/plperl/plc_trusted.pl
 
 package PostgreSQL::InServer::safe;
  

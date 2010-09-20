@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/hash/hashpage.c,v 1.84 2010/08/19 02:58:37 rhaas Exp $
+ *	  src/backend/access/hash/hashpage.c
  *
  * NOTES
  *	  Postgres hash pages look like ordinary relation pages.  The opaque

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtutils.c,v 1.98 2010/02/26 02:00:34 momjian Exp $
+ *	  src/backend/access/nbtree/nbtutils.c
  *
  *-------------------------------------------------------------------------
  */

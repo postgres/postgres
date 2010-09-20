@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			$PostgreSQL: pgsql/src/backend/access/gin/ginfast.c,v 1.8 2010/08/01 02:12:42 tgl Exp $
+ *			src/backend/access/gin/ginfast.c
  *
  *-------------------------------------------------------------------------
  */

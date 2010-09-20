@@ -11,7 +11,7 @@
  *	as a service.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/file/copydir.c,v 1.2 2010/07/06 19:18:57 momjian Exp $
+ *	  src/backend/storage/file/copydir.c
  *
  *-------------------------------------------------------------------------
  */

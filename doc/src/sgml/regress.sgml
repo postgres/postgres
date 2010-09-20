@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/regress.sgml,v 1.68 2010/08/17 04:37:21 petere Exp $ -->
+<!-- doc/src/sgml/regress.sgml -->
 
  <chapter id="regress">
   <title>Regression Tests</title>

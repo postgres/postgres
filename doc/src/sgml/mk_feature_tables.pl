@@ -1,6 +1,6 @@
 # /usr/bin/perl -w
 
-# $PostgreSQL: pgsql/doc/src/sgml/mk_feature_tables.pl,v 2.3 2008/10/18 00:35:32 petere Exp $
+# doc/src/sgml/mk_feature_tables.pl
 
 my $yesno = $ARGV[0];
 

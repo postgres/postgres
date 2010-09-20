@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tsearch/dict_synonym.c,v 1.13 2010/02/26 02:01:05 momjian Exp $
+ *	  src/backend/tsearch/dict_synonym.c
  *
  *-------------------------------------------------------------------------
  */

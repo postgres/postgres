@@ -1,7 +1,7 @@
 /*
  * txtquery io
  * Teodor Sigaev <teodor@stack.net>
- * $PostgreSQL: pgsql/contrib/ltree/ltxtquery_io.c,v 1.17 2009/06/11 14:48:51 momjian Exp $
+ * contrib/ltree/ltxtquery_io.c
  */
 #include "postgres.h"
 

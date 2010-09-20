@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/indexcmds.c,v 1.199 2010/08/05 14:45:00 rhaas Exp $
+ *	  src/backend/commands/indexcmds.c
  *
  *-------------------------------------------------------------------------
  */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_target.c,v 1.177 2010/02/26 02:00:52 momjian Exp $
+ *	  src/backend/parser/parse_target.c
  *
  *-------------------------------------------------------------------------
  */

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/hstore.sgml,v 1.14 2010/08/17 04:37:20 petere Exp $ -->
+<!-- doc/src/sgml/hstore.sgml -->
 
 <sect1 id="hstore">
  <title>hstore</title>

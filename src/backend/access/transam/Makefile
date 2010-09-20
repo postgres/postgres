@@ -4,7 +4,7 @@
 #    Makefile for access/transam
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/backend/access/transam/Makefile,v 1.22 2008/02/19 10:30:07 petere Exp $
+#    src/backend/access/transam/Makefile
 #
 #-------------------------------------------------------------------------
 

@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/backend/utils/mb/Unicode/euc_jp_to_utf8.map,v 1.5 2006/03/11 04:38:31 momjian Exp $ */
+/* src/backend/utils/mb/Unicode/euc_jp_to_utf8.map */
 
 static pg_local_to_utf LUmapEUC_JP[] = {
   {0x8ea1, 0xefbda1},

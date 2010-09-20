@@ -36,7 +36,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/typcache.c,v 1.33 2010/09/02 03:16:46 tgl Exp $
+ *	  src/backend/utils/cache/typcache.c
  *
  *-------------------------------------------------------------------------
  */

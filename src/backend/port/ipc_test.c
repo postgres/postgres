@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/port/ipc_test.c,v 1.27 2010/01/02 16:57:50 momjian Exp $
+ *	  src/backend/port/ipc_test.c
  *
  *-------------------------------------------------------------------------
  */

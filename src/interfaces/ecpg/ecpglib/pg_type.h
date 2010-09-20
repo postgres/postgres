@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/pg_type.h,v 1.11 2010/01/05 01:06:57 tgl Exp $
+ * src/interfaces/ecpg/ecpglib/pg_type.h
  *
  *-------------------------------------------------------------------------
  */

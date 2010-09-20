@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/backend/catalog/README,v 1.15 2010/07/20 18:38:53 momjian Exp $
+src/backend/catalog/README
 
 System Catalog
 ==============

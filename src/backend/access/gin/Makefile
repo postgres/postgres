@@ -4,7 +4,7 @@
 #    Makefile for access/gin
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/backend/access/gin/Makefile,v 1.4 2009/03/24 20:17:10 tgl Exp $
+#    src/backend/access/gin/Makefile
 #
 #-------------------------------------------------------------------------
 

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/snowball/dict_snowball.c,v 1.9 2010/01/02 16:57:51 momjian Exp $
+ *	  src/backend/snowball/dict_snowball.c
  *
  *-------------------------------------------------------------------------
  */

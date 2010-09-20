@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.597 2010/09/11 18:38:56 joe Exp $
+ *	  src/backend/tcop/postgres.c
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and

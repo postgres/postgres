@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/pgbuffercache.sgml,v 2.7 2010/07/29 19:34:40 petere Exp $ -->
+<!-- doc/src/sgml/pgbuffercache.sgml -->
 
 <sect1 id="pgbuffercache">
  <title>pg_buffercache</title>

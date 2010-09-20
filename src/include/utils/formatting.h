@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * formatting.h
  *
- * $PostgreSQL: pgsql/src/include/utils/formatting.h,v 1.23 2010/08/19 05:57:34 petere Exp $
+ * src/include/utils/formatting.h
  *
  *
  *	 Portions Copyright (c) 1999-2010, PostgreSQL Global Development Group

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/varlena.c,v 1.180 2010/08/24 06:30:43 itagaki Exp $
+ *	  src/backend/utils/adt/varlena.c
  *
  *-------------------------------------------------------------------------
  */

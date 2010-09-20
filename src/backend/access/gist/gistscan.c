@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/gist/gistscan.c,v 1.79 2010/02/26 02:00:33 momjian Exp $
+ *	  src/backend/access/gist/gistscan.c
  *
  *-------------------------------------------------------------------------
  */

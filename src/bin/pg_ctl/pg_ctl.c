@@ -4,7 +4,7 @@
  *
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.123 2010/09/14 08:05:33 heikki Exp $
+ * src/bin/pg_ctl/pg_ctl.c
  *
  *-------------------------------------------------------------------------
  */

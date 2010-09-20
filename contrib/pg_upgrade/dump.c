@@ -4,7 +4,7 @@
  *	dump functions
  *
  *	Copyright (c) 2010, PostgreSQL Global Development Group
- *	$PostgreSQL: pgsql/contrib/pg_upgrade/dump.c,v 1.7 2010/07/06 19:18:55 momjian Exp $
+ *	contrib/pg_upgrade/dump.c
  */
 
 #include "pg_upgrade.h"

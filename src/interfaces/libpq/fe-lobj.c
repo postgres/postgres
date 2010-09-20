@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-lobj.c,v 1.69 2010/01/02 16:58:12 momjian Exp $
+ *	  src/interfaces/libpq/fe-lobj.c
  *
  *-------------------------------------------------------------------------
  */

@@ -2,7 +2,7 @@
 #
 # Makefile for the bootstrap module
 #
-# $PostgreSQL: pgsql/src/backend/bootstrap/Makefile,v 1.39 2010/01/05 03:56:52 tgl Exp $
+# src/backend/bootstrap/Makefile
 #
 #-------------------------------------------------------------------------
 

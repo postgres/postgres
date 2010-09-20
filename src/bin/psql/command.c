@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.229 2010/08/25 00:53:37 tgl Exp $
+ * src/bin/psql/command.c
  */
 #include "postgres_fe.h"
 #include "command.h"

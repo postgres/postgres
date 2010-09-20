@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.299 2010/09/11 15:48:04 heikki Exp $
+ *	  src/backend/access/transam/xact.c
  *
  *-------------------------------------------------------------------------
  */

@@ -10,7 +10,7 @@
  *
  * Copyright (c) 2002-2010, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_cast.h,v 1.46 2010/09/03 01:34:55 tgl Exp $
+ * src/include/catalog/pg_cast.h
  *
  * NOTES
  *	  the genbki.pl script reads this file and generates .bki

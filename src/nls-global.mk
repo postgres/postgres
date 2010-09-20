@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/src/nls-global.mk,v 1.22 2010/05/13 14:35:28 petere Exp $
+# src/nls-global.mk
 
 # Common rules for Native Language Support (NLS)
 #

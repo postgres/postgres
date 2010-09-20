@@ -4,7 +4,7 @@
 #    Makefile for access/nbtree
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/backend/access/nbtree/Makefile,v 1.16 2008/02/19 10:30:06 petere Exp $
+#    src/backend/access/nbtree/Makefile
 #
 #-------------------------------------------------------------------------
 

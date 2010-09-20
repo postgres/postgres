@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/information_schema.sgml,v 1.45 2010/01/28 23:21:10 petere Exp $ -->
+<!-- doc/src/sgml/information_schema.sgml -->
 
 <chapter id="information-schema">
  <title>The Information Schema</title>

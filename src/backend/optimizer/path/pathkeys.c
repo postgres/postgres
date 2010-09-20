@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/pathkeys.c,v 1.102 2010/08/27 20:30:08 petere Exp $
+ *	  src/backend/optimizer/path/pathkeys.c
  *
  *-------------------------------------------------------------------------
  */

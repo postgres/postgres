@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/contrib/btree_gist/uninstall_btree_gist.sql,v 1.5 2008/04/14 17:05:32 tgl Exp $ */
+/* contrib/btree_gist/uninstall_btree_gist.sql */
 
 -- Adjust this setting to control where the objects get dropped.
 SET search_path = public;

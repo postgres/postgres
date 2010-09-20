@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/pg_rusage.c,v 1.8 2010/01/02 16:57:58 momjian Exp $
+ *	  src/backend/utils/misc/pg_rusage.c
  *
  *-------------------------------------------------------------------------
  */

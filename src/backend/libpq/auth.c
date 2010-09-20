@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/auth.c,v 1.203 2010/07/06 19:18:56 momjian Exp $
+ *	  src/backend/libpq/auth.c
  *
  *-------------------------------------------------------------------------
  */

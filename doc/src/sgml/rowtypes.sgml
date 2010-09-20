@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/rowtypes.sgml,v 2.11 2009/06/17 21:58:49 tgl Exp $ -->
+<!-- doc/src/sgml/rowtypes.sgml -->
 
 <sect1 id="rowtypes">
  <title>Composite Types</title>

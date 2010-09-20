@@ -15,7 +15,7 @@
  *
  * Copyright (c) 2003-2010, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/nodes/tidbitmap.h,v 1.12 2010/01/02 16:58:07 momjian Exp $
+ * src/include/nodes/tidbitmap.h
  *
  *-------------------------------------------------------------------------
  */

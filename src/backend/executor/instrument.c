@@ -7,7 +7,7 @@
  * Copyright (c) 2001-2010, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/instrument.c,v 1.25 2010/02/26 02:00:41 momjian Exp $
+ *	  src/backend/executor/instrument.c
  *
  *-------------------------------------------------------------------------
  */

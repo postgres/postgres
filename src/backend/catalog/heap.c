@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.375 2010/08/13 20:10:50 rhaas Exp $
+ *	  src/backend/catalog/heap.c
  *
  *
  * INTERFACE ROUTINES

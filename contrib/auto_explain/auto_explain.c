@@ -6,7 +6,7 @@
  * Copyright (c) 2008-2010, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/contrib/auto_explain/auto_explain.c,v 1.14 2010/02/26 02:00:31 momjian Exp $
+ *	  contrib/auto_explain/auto_explain.c
  *
  *-------------------------------------------------------------------------
  */

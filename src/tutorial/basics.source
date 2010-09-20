@@ -4,7 +4,7 @@
 --    Tutorial on the basics (table creation and data manipulation)
 --
 --
--- $PostgreSQL: pgsql/src/tutorial/basics.source,v 1.6 2010/02/02 18:52:02 momjian Exp $
+-- src/tutorial/basics.source
 --
 ---------------------------------------------------------------------------
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_namespace.c,v 1.23 2010/02/14 18:42:13 rhaas Exp $
+ *	  src/backend/catalog/pg_namespace.c
  *
  *-------------------------------------------------------------------------
  */

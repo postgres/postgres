@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tsearch/ts_typanalyze.c,v 1.10 2010/07/06 19:18:57 momjian Exp $
+ *	  src/backend/tsearch/ts_typanalyze.c
  *
  *-------------------------------------------------------------------------
  */

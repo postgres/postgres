@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/xaggr.sgml,v 1.41 2010/07/29 19:34:40 petere Exp $ -->
+<!-- doc/src/sgml/xaggr.sgml -->
 
  <sect1 id="xaggr">
   <title>User-Defined Aggregates</title>

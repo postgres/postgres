@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/dumputils.h,v 1.31 2010/08/03 19:24:04 tgl Exp $
+ * src/bin/pg_dump/dumputils.h
  *
  *-------------------------------------------------------------------------
  */

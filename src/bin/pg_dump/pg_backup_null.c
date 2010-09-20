@@ -17,7 +17,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_null.c,v 1.24 2010/02/18 01:29:10 tgl Exp $
+ *		src/bin/pg_dump/pg_backup_null.c
  *
  *-------------------------------------------------------------------------
  */

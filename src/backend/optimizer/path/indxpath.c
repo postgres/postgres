@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.246 2010/02/26 02:00:44 momjian Exp $
+ *	  src/backend/optimizer/path/indxpath.c
  *
  *-------------------------------------------------------------------------
  */

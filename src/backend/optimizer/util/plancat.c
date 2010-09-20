@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/plancat.c,v 1.164 2010/08/27 20:30:08 petere Exp $
+ *	  src/backend/optimizer/util/plancat.c
  *
  *-------------------------------------------------------------------------
  */

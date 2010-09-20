@@ -3,7 +3,7 @@
 * geqo_erx.c
 *	 edge recombination crossover [ER]
 *
-* $PostgreSQL: pgsql/src/backend/optimizer/geqo/geqo_erx.c,v 1.21 2009/07/16 20:55:44 tgl Exp $
+* src/backend/optimizer/geqo/geqo_erx.c
 *
 *-------------------------------------------------------------------------
 */

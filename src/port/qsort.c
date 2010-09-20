@@ -9,7 +9,7 @@
  *
  *	CAUTION: if you change this file, see also qsort_arg.c
  *
- *	$PostgreSQL: pgsql/src/port/qsort.c,v 1.13 2007/03/18 05:36:50 neilc Exp $
+ *	src/port/qsort.c
  */
 
 /*	$NetBSD: qsort.c,v 1.13 2003/08/07 16:43:42 agc Exp $	*/

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/port/win32/mingwcompat.c,v 1.11 2010/02/26 02:00:53 momjian Exp $
+ *	  src/backend/port/win32/mingwcompat.c
  *
  *-------------------------------------------------------------------------
  */

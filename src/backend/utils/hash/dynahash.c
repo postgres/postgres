@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/hash/dynahash.c,v 1.80 2010/01/02 16:57:56 momjian Exp $
+ *	  src/backend/utils/hash/dynahash.c
  *
  *-------------------------------------------------------------------------
  */

@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.469 2010/08/18 18:35:20 tgl Exp $
+ *	  src/backend/nodes/copyfuncs.c
  *
  *-------------------------------------------------------------------------
  */

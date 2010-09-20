@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/hio.c,v 1.78 2010/02/09 21:43:29 tgl Exp $
+ *	  src/backend/access/heap/hio.c
  *
  *-------------------------------------------------------------------------
  */

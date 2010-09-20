@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/src/test/performance/sqls/inssimple,v 1.3 2010/08/19 05:57:35 petere Exp $
+# src/test/performance/sqls/inssimple
 #
 # Transactions are unsupported by MySQL - so for insertion of
 # 8192 rows, 1 INSERT per Xaction, we returned "Transactions unsupported"

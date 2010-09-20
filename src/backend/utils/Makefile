@@ -1,7 +1,7 @@
 #
 # Makefile for utils
 #
-# $PostgreSQL: pgsql/src/backend/utils/Makefile,v 1.29 2010/01/05 01:06:56 tgl Exp $
+# src/backend/utils/Makefile
 #
 
 subdir = src/backend/utils

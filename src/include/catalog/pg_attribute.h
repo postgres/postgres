@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_attribute.h,v 1.158 2010/01/22 16:40:19 rhaas Exp $
+ * src/include/catalog/pg_attribute.h
  *
  * NOTES
  *	  the genbki.pl script reads this file and generates .bki

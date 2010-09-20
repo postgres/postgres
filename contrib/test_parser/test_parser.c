@@ -6,7 +6,7 @@
  * Copyright (c) 2007-2010, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/contrib/test_parser/test_parser.c,v 1.7 2010/01/02 16:57:32 momjian Exp $
+ *	  contrib/test_parser/test_parser.c
  *
  *-------------------------------------------------------------------------
  */

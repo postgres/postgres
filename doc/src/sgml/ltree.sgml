@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ltree.sgml,v 1.6 2010/08/17 04:37:20 petere Exp $ -->
+<!-- doc/src/sgml/ltree.sgml -->
 
 <sect1 id="ltree">
  <title>ltree</title>

@@ -1,7 +1,7 @@
 /*
  * conversion functions between pg_wchar and multibyte streams.
  * Tatsuo Ishii
- * $PostgreSQL: pgsql/src/backend/utils/mb/wchar.c,v 1.75 2010/08/18 19:54:01 tgl Exp $
+ * src/backend/utils/mb/wchar.c
  *
  */
 /* can be used in either frontend or backend */

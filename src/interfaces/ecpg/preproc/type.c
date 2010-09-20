@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/type.c,v 1.93 2010/07/06 19:19:00 momjian Exp $ */
+/* src/interfaces/ecpg/preproc/type.c */
 
 #include "postgres_fe.h"
 

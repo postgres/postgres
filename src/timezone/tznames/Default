@@ -4,7 +4,7 @@
 # timezone_abbreviations to 'Default'.  See the `Date/Time Support'
 # appendix in the PostgreSQL documentation for more information.
 #
-# $PostgreSQL: pgsql/src/timezone/tznames/Default,v 1.10 2010/08/26 19:58:36 tgl Exp $
+# src/timezone/tznames/Default
 
 
 #################### AFRICA ####################

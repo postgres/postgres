@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1995, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/postgres.h,v 1.94 2010/01/02 16:58:00 momjian Exp $
+ * src/include/postgres.h
  *
  *-------------------------------------------------------------------------
  */

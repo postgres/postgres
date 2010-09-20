@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/rollback_prepared.sgml,v 1.5 2010/04/03 07:23:02 petere Exp $
+doc/src/sgml/ref/rollback_prepared.sgml
 PostgreSQL documentation
 -->
 

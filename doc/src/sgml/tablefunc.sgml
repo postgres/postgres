@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/tablefunc.sgml,v 1.7 2010/08/17 04:37:21 petere Exp $ -->
+<!-- doc/src/sgml/tablefunc.sgml -->
 
 <sect1 id="tablefunc">
  <title>tablefunc</title>

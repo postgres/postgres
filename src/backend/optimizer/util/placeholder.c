@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/placeholder.c,v 1.8 2010/07/06 19:18:57 momjian Exp $
+ *	  src/backend/optimizer/util/placeholder.c
  *
  *-------------------------------------------------------------------------
  */

@@ -35,7 +35,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/plancache.c,v 1.36 2010/08/13 16:27:11 tgl Exp $
+ *	  src/backend/utils/cache/plancache.c
  *
  *-------------------------------------------------------------------------
  */

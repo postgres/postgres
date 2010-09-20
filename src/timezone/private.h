@@ -6,7 +6,7 @@
  * 1996-06-05 by Arthur David Olson.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/timezone/private.h,v 1.13 2009/06/11 14:49:15 momjian Exp $
+ *	  src/timezone/private.h
  */
 
 /*

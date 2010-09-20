@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/kwlookup.c,v 2.4 2010/01/02 16:57:49 momjian Exp $
+ *	  src/backend/parser/kwlookup.c
  *
  *-------------------------------------------------------------------------
  */

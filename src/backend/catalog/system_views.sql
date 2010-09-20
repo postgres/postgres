@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1996-2010, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/catalog/system_views.sql,v 1.68 2010/08/21 10:59:17 mha Exp $
+ * src/backend/catalog/system_views.sql
  */
 
 CREATE VIEW pg_roles AS 

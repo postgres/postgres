@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/btree-gist.sgml,v 1.8 2010/08/17 04:37:20 petere Exp $ -->
+<!-- doc/src/sgml/btree-gist.sgml -->
 
 <sect1 id="btree-gist">
  <title>btree_gist</title>

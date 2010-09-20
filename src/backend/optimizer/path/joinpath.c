@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/joinpath.c,v 1.133 2010/04/19 00:55:25 rhaas Exp $
+ *	  src/backend/optimizer/path/joinpath.c
  *
  *-------------------------------------------------------------------------
  */

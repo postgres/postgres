@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootscanner.l,v 1.51 2010/01/02 16:57:36 momjian Exp $
+ *	  src/backend/bootstrap/bootscanner.l
  *
  *-------------------------------------------------------------------------
  */

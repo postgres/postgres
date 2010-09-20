@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/common.c,v 1.109 2010/01/02 16:57:58 momjian Exp $
+ *	  src/bin/pg_dump/common.c
  *
  *-------------------------------------------------------------------------
  */

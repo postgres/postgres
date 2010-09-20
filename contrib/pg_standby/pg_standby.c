@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/pg_standby/pg_standby.c,v 1.29 2010/05/15 09:31:57 heikki Exp $
+ * contrib/pg_standby/pg_standby.c
  *
  *
  * pg_standby.c

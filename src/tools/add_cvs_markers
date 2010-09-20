@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $PostgreSQL: pgsql/src/tools/add_cvs_markers,v 1.3 2010/08/19 05:57:35 petere Exp $
+# src/tools/add_cvs_markers
 
 # Author: Andrew Dunstan
 

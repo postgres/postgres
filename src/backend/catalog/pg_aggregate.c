@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_aggregate.c,v 1.106 2010/02/26 02:00:37 momjian Exp $
+ *	  src/backend/catalog/pg_aggregate.c
  *
  *-------------------------------------------------------------------------
  */

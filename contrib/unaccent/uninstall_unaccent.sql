@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/contrib/unaccent/uninstall_unaccent.sql,v 1.2 2009/11/14 18:24:32 tgl Exp $ */
+/* contrib/unaccent/uninstall_unaccent.sql */
 
 -- Adjust this setting to control where the objects get dropped.
 SET search_path = public;

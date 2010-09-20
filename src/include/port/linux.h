@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/include/port/linux.h,v 1.44 2007/11/15 21:14:44 momjian Exp $ */
+/* src/include/port/linux.h */
 
 /*
  * As of July 2007, all known versions of the Linux kernel will sometimes

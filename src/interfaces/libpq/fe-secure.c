@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-secure.c,v 1.136 2010/07/14 17:09:45 tgl Exp $
+ *	  src/interfaces/libpq/fe-secure.c
  *
  * NOTES
  *

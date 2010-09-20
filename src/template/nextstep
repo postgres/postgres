@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/src/template/nextstep,v 1.9 2006/03/11 04:38:41 momjian Exp $
+# src/template/nextstep
 
 AROPT=rc
 SHARED_LIB=

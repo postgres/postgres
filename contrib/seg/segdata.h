@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/seg/segdata.h,v 1.6 2009/06/11 14:48:52 momjian Exp $
+ * contrib/seg/segdata.h
  */
 typedef struct SEG
 {

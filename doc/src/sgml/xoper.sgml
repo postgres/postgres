@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/xoper.sgml,v 1.44 2010/08/17 04:37:21 petere Exp $ -->
+<!-- doc/src/sgml/xoper.sgml -->
 
  <sect1 id="xoper">
   <title>User-Defined Operators</title>

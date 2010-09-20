@@ -4,7 +4,7 @@
  *
  * Tatsuo Ishii
  *
- * $PostgreSQL: pgsql/src/backend/utils/mb/mbutils.c,v 1.98 2010/07/07 15:13:21 tgl Exp $
+ * src/backend/utils/mb/mbutils.c
  */
 #include "postgres.h"
 

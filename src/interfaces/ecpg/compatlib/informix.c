@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/compatlib/informix.c,v 1.64 2010/02/26 02:01:29 momjian Exp $ */
+/* src/interfaces/ecpg/compatlib/informix.c */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"

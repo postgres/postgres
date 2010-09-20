@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/contrib/Makefile,v 1.93 2010/06/14 16:17:56 sriggs Exp $
+# contrib/Makefile
 
 subdir = contrib
 top_builddir = ..

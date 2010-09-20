@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/chklocale.c,v 1.17 2010/05/06 02:12:38 itagaki Exp $
+ *	  src/port/chklocale.c
  *
  *-------------------------------------------------------------------------
  */

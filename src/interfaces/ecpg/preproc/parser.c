@@ -14,7 +14,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/parser.c,v 1.6 2010/01/02 16:58:11 momjian Exp $
+ *	  src/interfaces/ecpg/preproc/parser.c
  *
  *-------------------------------------------------------------------------
  */

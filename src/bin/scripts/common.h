@@ -4,7 +4,7 @@
  *
  *	Copyright (c) 2003-2010, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/bin/scripts/common.h,v 1.24 2010/01/02 16:58:00 momjian Exp $
+ *	src/bin/scripts/common.h
  */
 #ifndef COMMON_H
 #define COMMON_H

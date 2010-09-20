@@ -15,7 +15,7 @@
  *	use header files that are otherwise internal to Postgres to interface
  *	with the backend.
  *
- * $PostgreSQL: pgsql/src/include/postgres_ext.h,v 1.17 2007/02/06 09:16:08 petere Exp $
+ * src/include/postgres_ext.h
  *
  *-------------------------------------------------------------------------
  */

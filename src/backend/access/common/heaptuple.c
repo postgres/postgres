@@ -50,7 +50,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/common/heaptuple.c,v 1.130 2010/01/10 04:26:36 rhaas Exp $
+ *	  src/backend/access/common/heaptuple.c
  *
  *-------------------------------------------------------------------------
  */

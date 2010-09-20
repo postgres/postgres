@@ -4,7 +4,7 @@
 #   a template for timezones you could need.  See the `Date/Time Support'
 #   appendix in the PostgreSQL documentation for more information.
 #
-# $PostgreSQL: pgsql/src/timezone/tznames/America.txt,v 1.4 2008/03/02 00:10:22 tgl Exp $
+# src/timezone/tznames/America.txt
 #
 
 # Acre time is sometimes called Acre Standard Time (AST) which leads to a

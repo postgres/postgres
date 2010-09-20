@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/backend/access/transam/README,v 1.14 2010/09/17 00:42:39 tgl Exp $
+src/backend/access/transam/README
 
 The Transaction System
 ======================

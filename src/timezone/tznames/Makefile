@@ -4,7 +4,7 @@
 #    Makefile for the timezone names
 
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/timezone/tznames/Makefile,v 1.3 2009/08/26 22:24:44 petere Exp $
+#    src/timezone/tznames/Makefile
 #
 #-------------------------------------------------------------------------
 

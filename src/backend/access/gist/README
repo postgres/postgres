@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/backend/access/gist/README,v 1.5 2010/04/14 20:17:26 rhaas Exp $
+src/backend/access/gist/README
 
 GiST Indexing
 =============

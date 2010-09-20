@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/src/backend/utils/mb/wstrcmp.c,v 1.10 2009/06/11 14:49:06 momjian Exp $
+ * src/backend/utils/mb/wstrcmp.c
  *
  *-
  * Copyright (c) 1990, 1993

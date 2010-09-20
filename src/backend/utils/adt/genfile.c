@@ -9,7 +9,7 @@
  * Author: Andreas Pflug <pgadmin@pse-consulting.de>
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/genfile.c,v 1.23 2010/01/05 01:29:36 itagaki Exp $
+ *	  src/backend/utils/adt/genfile.c
  *
  *-------------------------------------------------------------------------
  */

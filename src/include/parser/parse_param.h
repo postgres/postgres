@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/parser/parse_param.h,v 1.3 2010/02/26 02:01:27 momjian Exp $
+ * src/include/parser/parse_param.h
  *
  *-------------------------------------------------------------------------
  */

@@ -1,4 +1,4 @@
--- $PostgreSQL: pgsql/src/backend/snowball/snowball.sql.in,v 1.7 2010/08/19 05:57:34 petere Exp $$
+-- src/backend/snowball/snowball.sql.in$
 
 -- text search configuration for _LANGNAME_ language
 CREATE TEXT SEARCH DICTIONARY _DICTNAME_

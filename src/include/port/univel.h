@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/src/include/port/univel.h,v 1.25 2009/06/11 14:49:12 momjian Exp $
+ * src/include/port/univel.h
  *
  ***************************************
  * Define this if you are compiling with

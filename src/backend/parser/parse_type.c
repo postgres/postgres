@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_type.c,v 1.106 2010/02/14 18:42:15 rhaas Exp $
+ *	  src/backend/parser/parse_type.c
  *
  *-------------------------------------------------------------------------
  */

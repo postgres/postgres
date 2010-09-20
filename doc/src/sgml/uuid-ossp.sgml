@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/uuid-ossp.sgml,v 1.4 2010/08/10 20:42:01 petere Exp $ -->
+<!-- doc/src/sgml/uuid-ossp.sgml -->
 
 <sect1 id="uuid-ossp">
  <title>uuid-ossp</title>

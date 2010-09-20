@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.174 2010/05/30 18:10:41 tgl Exp $
+ *	  src/interfaces/ecpg/preproc/pgc.l
  *
  *-------------------------------------------------------------------------
  */

@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/contrib/pg_stat_statements/pg_stat_statements.sql.in,v 1.2 2010/01/08 00:38:19 itagaki Exp $ */
+/* contrib/pg_stat_statements/pg_stat_statements.sql.in */
 
 -- Adjust this setting to control where the objects get created.
 SET search_path = public;

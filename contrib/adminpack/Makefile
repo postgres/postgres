@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/contrib/adminpack/Makefile,v 1.6 2007/11/10 23:59:50 momjian Exp $
+# contrib/adminpack/Makefile
 
 MODULE_big = adminpack
 PG_CPPFLAGS = -I$(libpq_srcdir)

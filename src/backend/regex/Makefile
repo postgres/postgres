@@ -4,7 +4,7 @@
 #    Makefile for backend/regex
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/backend/regex/Makefile,v 1.22 2008/02/19 10:30:08 petere Exp $
+#    src/backend/regex/Makefile
 #
 #-------------------------------------------------------------------------
 

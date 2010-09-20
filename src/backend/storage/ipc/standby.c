@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/standby.c,v 1.29 2010/08/19 22:55:01 tgl Exp $
+ *	  src/backend/storage/ipc/standby.c
  *
  *-------------------------------------------------------------------------
  */

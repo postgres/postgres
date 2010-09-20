@@ -4,7 +4,7 @@
 #    Makefile for access/common
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/backend/access/common/Makefile,v 1.26 2009/08/06 20:44:31 tgl Exp $
+#    src/backend/access/common/Makefile
 #
 #-------------------------------------------------------------------------
 

@@ -38,7 +38,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/bgwriter.c,v 1.69 2010/08/13 20:10:52 rhaas Exp $
+ *	  src/backend/postmaster/bgwriter.c
  *
  *-------------------------------------------------------------------------
  */

@@ -59,7 +59,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtsort.c,v 1.126 2010/08/13 20:10:50 rhaas Exp $
+ *	  src/backend/access/nbtree/nbtsort.c
  *
  *-------------------------------------------------------------------------
  */

@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/src/tools/fsync/test_fsync.c,v 1.31 2010/07/13 17:00:50 momjian Exp $
+ * src/tools/fsync/test_fsync.c
  *
  *
  *	test_fsync.c

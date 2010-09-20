@@ -23,7 +23,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/pg_resetxlog/pg_resetxlog.c,v 1.80 2010/04/28 19:38:49 tgl Exp $
+ * src/bin/pg_resetxlog/pg_resetxlog.c
  *
  *-------------------------------------------------------------------------
  */

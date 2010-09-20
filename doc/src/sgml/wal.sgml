@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/wal.sgml,v 1.72 2010/08/17 04:37:21 petere Exp $ -->
+<!-- doc/src/sgml/wal.sgml -->
 
 <chapter id="wal">
  <title>Reliability and the Write-Ahead Log</title>

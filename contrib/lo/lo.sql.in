@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/contrib/lo/lo.sql.in,v 1.15 2007/11/13 04:24:28 momjian Exp $ */
+/* contrib/lo/lo.sql.in */
 
 -- Adjust this setting to control where the objects get created.
 SET search_path = public;

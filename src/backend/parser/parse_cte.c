@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_cte.c,v 2.9 2010/01/02 16:57:49 momjian Exp $
+ *	  src/backend/parser/parse_cte.c
  *
  *-------------------------------------------------------------------------
  */

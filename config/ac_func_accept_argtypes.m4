@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/config/ac_func_accept_argtypes.m4,v 1.6 2003/11/29 19:51:17 pgsql Exp $
+# config/ac_func_accept_argtypes.m4
 # This comes from the official Autoconf macro archive at
 # <http://research.cys.de/autoconf-archive/>
 # (I removed the $ before the Id CVS keyword below.)

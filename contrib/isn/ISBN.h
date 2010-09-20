@@ -7,7 +7,7 @@
  * http://www.isbn.org/
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/contrib/isn/ISBN.h,v 1.2 2006/10/04 00:29:45 momjian Exp $
+ *	  contrib/isn/ISBN.h
  *
  * 0-393-04002-X => 039304002(X) <=> 039304002 <=> (978)039304002 <=> 978039304002(9) <=> 978-0-393-04002-9
  *

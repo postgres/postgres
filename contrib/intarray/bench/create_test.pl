@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 
-# $PostgreSQL: pgsql/contrib/intarray/bench/create_test.pl,v 1.4 2006/03/11 04:38:29 momjian Exp $
+# contrib/intarray/bench/create_test.pl
 
 use strict;
 print <<EOT;

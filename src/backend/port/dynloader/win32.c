@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/backend/port/dynloader/win32.c,v 1.9 2006/12/04 22:23:40 momjian Exp $ */
+/* src/backend/port/dynloader/win32.c */
 
 #include "postgres.h"
 

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.332 2010/08/14 14:20:35 tgl Exp $
+ *	  src/backend/utils/adt/ruleutils.c
  *
  *-------------------------------------------------------------------------
  */

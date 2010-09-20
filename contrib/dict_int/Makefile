@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/contrib/dict_int/Makefile,v 1.2 2007/12/02 21:15:38 tgl Exp $
+# contrib/dict_int/Makefile
 
 MODULE_big = dict_int
 OBJS = dict_int.o

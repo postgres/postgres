@@ -3,7 +3,7 @@
  *
  *	Copyright (c) 2006-2010, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/backend/utils/probes.d,v 1.15 2010/08/14 02:22:10 rhaas Exp $
+ *	src/backend/utils/probes.d
  * ----------
  */
 

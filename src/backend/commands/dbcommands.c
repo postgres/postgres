@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.237 2010/08/05 14:45:00 rhaas Exp $
+ *	  src/backend/commands/dbcommands.c
  *
  *-------------------------------------------------------------------------
  */

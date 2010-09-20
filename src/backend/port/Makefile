@@ -13,7 +13,7 @@
 # be converted to Method 2.  
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/backend/port/Makefile,v 1.29 2010/09/11 15:48:04 heikki Exp $
+#    src/backend/port/Makefile
 #
 #-------------------------------------------------------------------------
 

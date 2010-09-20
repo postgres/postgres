@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/datum.c,v 1.38 2010/01/02 16:57:53 momjian Exp $
+ *	  src/backend/utils/adt/datum.c
  *
  *-------------------------------------------------------------------------
  */

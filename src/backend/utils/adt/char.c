@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/char.c,v 1.50 2010/01/02 16:57:53 momjian Exp $
+ *	  src/backend/utils/adt/char.c
  *
  *-------------------------------------------------------------------------
  */

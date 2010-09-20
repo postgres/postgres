@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteHandler.c,v 1.194 2010/02/26 02:00:58 momjian Exp $
+ *	  src/backend/rewrite/rewriteHandler.c
  *
  *-------------------------------------------------------------------------
  */

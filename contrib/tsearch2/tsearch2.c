@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/contrib/tsearch2/tsearch2.c,v 1.13 2010/08/05 15:25:35 rhaas Exp $
+ *	  contrib/tsearch2/tsearch2.c
  *
  *-------------------------------------------------------------------------
  */

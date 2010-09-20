@@ -4,7 +4,7 @@
  *
  *	Copyright (c) 2006-2010, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/include/access/gin.h,v 1.41 2010/08/01 19:16:39 tgl Exp $
+ *	src/include/access/gin.h
  *--------------------------------------------------------------------------
  */
 #ifndef GIN_H

@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/src/pl/plpython/nls.mk,v 1.7 2009/10/20 18:23:27 petere Exp $
+# src/pl/plpython/nls.mk
 CATALOG_NAME	:= plpython
 AVAIL_LANGUAGES	:= de es fr it ja pt_BR tr
 GETTEXT_FILES	:= plpython.c

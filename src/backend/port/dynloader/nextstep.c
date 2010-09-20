@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/backend/port/dynloader/nextstep.c,v 1.6 2006/03/11 04:38:31 momjian Exp $ */
+/* src/backend/port/dynloader/nextstep.c */
 
 #include "postgres.h"
 

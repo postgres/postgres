@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.210 2010/08/05 14:45:03 rhaas Exp $
+ *	  src/backend/libpq/hba.c
  *
  *-------------------------------------------------------------------------
  */

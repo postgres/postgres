@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/contrib/cube/cubedata.h,v 1.10 2009/06/11 14:48:50 momjian Exp $ */
+/* contrib/cube/cubedata.h */
 
 #define CUBE_MAX_DIM (100)
 

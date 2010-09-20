@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/contrib/spi/Makefile,v 1.29 2010/07/05 23:15:56 tgl Exp $
+# contrib/spi/Makefile
 
 MODULES = autoinc insert_username moddatetime refint timetravel
 DATA_built = $(addsuffix .sql, $(MODULES))

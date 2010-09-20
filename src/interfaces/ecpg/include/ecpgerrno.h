@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/include/ecpgerrno.h,v 1.27 2006/03/11 04:38:39 momjian Exp $ */
+/* src/interfaces/ecpg/include/ecpgerrno.h */
 
 #ifndef _ECPG_ERRNO_H
 #define _ECPG_ERRNO_H

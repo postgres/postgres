@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/variable.c,v 1.56 2010/04/01 10:30:53 meskes Exp $ */
+/* src/interfaces/ecpg/preproc/variable.c */
 
 #include "postgres_fe.h"
 

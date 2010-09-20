@@ -4,7 +4,7 @@
  *	server-side function support
  *
  *	Copyright (c) 2010, PostgreSQL Global Development Group
- *	$PostgreSQL: pgsql/contrib/pg_upgrade/function.c,v 1.7 2010/07/25 03:28:32 momjian Exp $
+ *	contrib/pg_upgrade/function.c
  */
 
 #include "pg_upgrade.h"

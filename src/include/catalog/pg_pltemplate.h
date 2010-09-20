@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_pltemplate.h,v 1.14 2010/06/29 00:18:11 petere Exp $
+ * src/include/catalog/pg_pltemplate.h
  *
  * NOTES
  *	  the genbki.pl script reads this file and generates .bki

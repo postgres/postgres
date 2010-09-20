@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/backend/storage/ipc/README,v 1.5 2008/03/20 17:55:15 momjian Exp $
+src/backend/storage/ipc/README
 
 Cache Invalidation Synchronization Routines
 ===========================================

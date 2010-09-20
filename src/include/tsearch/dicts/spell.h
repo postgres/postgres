@@ -6,7 +6,7 @@
  *
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/tsearch/dicts/spell.h,v 1.9 2010/04/02 15:21:20 mha Exp $
+ * src/include/tsearch/dicts/spell.h
  *
  *-------------------------------------------------------------------------
  */

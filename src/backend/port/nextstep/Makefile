@@ -4,7 +4,7 @@
 #    Makefile for port/nextstep
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/backend/port/nextstep/Makefile,v 1.11 2008/02/19 15:29:58 petere Exp $
+#    src/backend/port/nextstep/Makefile
 #
 #-------------------------------------------------------------------------
 

@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/contrib/pgcrypto/uninstall_pgcrypto.sql,v 1.5 2010/08/19 05:57:33 petere Exp $ */
+/* contrib/pgcrypto/uninstall_pgcrypto.sql */
 
 -- Adjust this setting to control where the objects get dropped.
 SET search_path = public;

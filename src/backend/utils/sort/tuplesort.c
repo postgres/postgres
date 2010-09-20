@@ -91,7 +91,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/sort/tuplesort.c,v 1.95 2010/02/26 02:01:15 momjian Exp $
+ *	  src/backend/utils/sort/tuplesort.c
  *
  *-------------------------------------------------------------------------
  */

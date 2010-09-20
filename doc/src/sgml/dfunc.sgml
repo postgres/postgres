@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/dfunc.sgml,v 1.36 2010/04/03 07:22:53 petere Exp $ -->
+<!-- doc/src/sgml/dfunc.sgml -->
 
 <sect2 id="dfunc">
  <title>Compiling and Linking Dynamically-Loaded Functions</title>

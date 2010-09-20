@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/backend/parser/README,v 1.11 2009/10/31 01:41:31 tgl Exp $
+src/backend/parser/README
 
 Parser
 ======

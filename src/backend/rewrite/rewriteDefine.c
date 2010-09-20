@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteDefine.c,v 1.142 2010/07/28 05:22:24 sriggs Exp $
+ *	  src/backend/rewrite/rewriteDefine.c
  *
  *-------------------------------------------------------------------------
  */

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/file/buffile.c,v 1.36 2010/01/02 16:57:51 momjian Exp $
+ *	  src/backend/storage/file/buffile.c
  *
  * NOTES:
  *

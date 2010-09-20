@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/dblink.sgml,v 1.15 2010/08/17 04:37:20 petere Exp $ -->
+<!-- doc/src/sgml/dblink.sgml -->
 
 <sect1 id="dblink">
  <title>dblink</title>

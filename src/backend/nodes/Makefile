@@ -4,7 +4,7 @@
 #    Makefile for backend/nodes
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/backend/nodes/Makefile,v 1.20 2008/02/19 10:30:07 petere Exp $
+#    src/backend/nodes/Makefile
 #
 #-------------------------------------------------------------------------
 

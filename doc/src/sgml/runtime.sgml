@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.437 2010/08/15 01:57:03 rhaas Exp $ -->
+<!-- doc/src/sgml/runtime.sgml -->
 
 <chapter Id="runtime">
  <title>Server Setup and Operation</title>

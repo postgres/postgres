@@ -4,7 +4,7 @@
 #    Makefile for src/backend/replication/libpqwalreceiver
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/backend/replication/libpqwalreceiver/Makefile,v 1.2 2010/01/20 20:34:51 heikki Exp $
+#    src/backend/replication/libpqwalreceiver/Makefile
 #
 #-------------------------------------------------------------------------
 

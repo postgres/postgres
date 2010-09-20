@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/contrib/seg/uninstall_seg.sql,v 1.8 2008/04/18 20:51:17 tgl Exp $ */
+/* contrib/seg/uninstall_seg.sql */
 
 -- Adjust this setting to control where the objects get dropped.
 SET search_path = public;

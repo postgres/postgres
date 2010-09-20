@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/earthdistance.sgml,v 1.4 2010/08/17 04:37:20 petere Exp $ -->
+<!-- doc/src/sgml/earthdistance.sgml -->
 
 <sect1 id="earthdistance">
  <title>earthdistance</title>

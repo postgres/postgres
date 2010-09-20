@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/spi.c,v 1.215 2010/02/26 02:00:42 momjian Exp $
+ *	  src/backend/executor/spi.c
  *
  *-------------------------------------------------------------------------
  */

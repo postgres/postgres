@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.355 2010/09/11 18:38:56 joe Exp $
+ *	  src/backend/executor/execMain.c
  *
  *-------------------------------------------------------------------------
  */

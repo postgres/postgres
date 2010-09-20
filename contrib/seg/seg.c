@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/seg/seg.c,v 1.25 2009/06/11 14:48:52 momjian Exp $
+ * contrib/seg/seg.c
  *
  ******************************************************************************
   This file contains routines that can be bound to a Postgres backend and

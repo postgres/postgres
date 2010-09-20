@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/cluster.c,v 1.205 2010/07/29 11:06:34 sriggs Exp $
+ *	  src/backend/commands/cluster.c
  *
  *-------------------------------------------------------------------------
  */

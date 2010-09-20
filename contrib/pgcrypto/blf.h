@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/contrib/pgcrypto/blf.h,v 1.8 2009/06/11 14:48:52 momjian Exp $ */
+/* contrib/pgcrypto/blf.h */
 /*
  * PuTTY is copyright 1997-2007 Simon Tatham.
  *

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/init/globals.c,v 1.111 2010/01/02 16:57:56 momjian Exp $
+ *	  src/backend/utils/init/globals.c
  *
  * NOTES
  *	  Globals used all over the place should be declared here and not

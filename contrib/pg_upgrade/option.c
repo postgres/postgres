@@ -4,7 +4,7 @@
  *	options functions
  *
  *	Copyright (c) 2010, PostgreSQL Global Development Group
- *	$PostgreSQL: pgsql/contrib/pg_upgrade/option.c,v 1.13 2010/07/13 18:14:14 momjian Exp $
+ *	contrib/pg_upgrade/option.c
  */
 
 #include "pg_upgrade.h"

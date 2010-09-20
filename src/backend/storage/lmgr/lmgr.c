@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lmgr.c,v 1.101 2010/08/16 02:02:28 rhaas Exp $
+ *	  src/backend/storage/lmgr/lmgr.c
  *
  *-------------------------------------------------------------------------
  */

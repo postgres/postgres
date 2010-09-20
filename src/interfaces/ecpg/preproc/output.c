@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/output.c,v 1.26 2009/12/16 10:15:06 meskes Exp $ */
+/* src/interfaces/ecpg/preproc/output.c */
 
 #include "postgres_fe.h"
 

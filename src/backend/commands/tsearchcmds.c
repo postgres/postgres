@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tsearchcmds.c,v 1.21 2010/08/05 15:25:35 rhaas Exp $
+ *	  src/backend/commands/tsearchcmds.c
  *
  *-------------------------------------------------------------------------
  */

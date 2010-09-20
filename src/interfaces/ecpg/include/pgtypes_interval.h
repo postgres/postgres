@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/include/pgtypes_interval.h,v 1.16 2010/02/26 02:01:31 momjian Exp $ */
+/* src/interfaces/ecpg/include/pgtypes_interval.h */
 
 #ifndef PGTYPES_INTERVAL
 #define PGTYPES_INTERVAL

@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/btree_gist/btree_gist.h,v 1.10 2010/08/02 16:26:48 rhaas Exp $
+ * contrib/btree_gist/btree_gist.h
  */
 #ifndef __BTREE_GIST_H__
 #define __BTREE_GIST_H__

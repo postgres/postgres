@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/contrib/xml2/uninstall_pgxml.sql,v 1.5 2010/08/13 18:36:23 tgl Exp $ */
+/* contrib/xml2/uninstall_pgxml.sql */
 
 -- Adjust this setting to control where the objects get dropped.
 SET search_path = public;

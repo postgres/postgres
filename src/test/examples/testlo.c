@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/test/examples/testlo.c,v 1.32 2010/01/02 16:58:13 momjian Exp $
+ *	  src/test/examples/testlo.c
  *
  *-------------------------------------------------------------------------
  */

@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/contrib/tsearch2/Makefile,v 1.20 2007/11/13 21:02:28 tgl Exp $
+# contrib/tsearch2/Makefile
 
 MODULES = tsearch2
 DATA_built = tsearch2.sql

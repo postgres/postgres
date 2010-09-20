@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.403 2010/07/19 18:53:25 petere Exp $
+ *	  src/interfaces/libpq/fe-connect.c
  *
  *-------------------------------------------------------------------------
  */

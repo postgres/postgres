@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/pgtrgm.sgml,v 2.4 2010/08/17 04:37:21 petere Exp $ -->
+<!-- doc/src/sgml/pgtrgm.sgml -->
 
 <sect1 id="pgtrgm">
  <title>pg_trgm</title>

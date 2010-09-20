@@ -4,7 +4,7 @@
  *	execution functions
  *
  *	Copyright (c) 2010, PostgreSQL Global Development Group
- *	$PostgreSQL: pgsql/contrib/pg_upgrade/exec.c,v 1.9 2010/07/13 18:09:55 momjian Exp $
+ *	contrib/pg_upgrade/exec.c
  */
 
 #include "pg_upgrade.h"

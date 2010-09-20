@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_node.c,v 1.108 2010/02/14 18:42:15 rhaas Exp $
+ *	  src/backend/parser/parse_node.c
  *
  *-------------------------------------------------------------------------
  */

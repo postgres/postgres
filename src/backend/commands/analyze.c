@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/analyze.c,v 1.153 2010/08/01 22:38:11 tgl Exp $
+ *	  src/backend/commands/analyze.c
  *
  *-------------------------------------------------------------------------
  */

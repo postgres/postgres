@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/backend/storage/buffer/README,v 1.17 2009/06/22 20:04:28 tgl Exp $
+src/backend/storage/buffer/README
 
 Notes About Shared Buffer Access Rules
 ======================================

@@ -27,7 +27,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/src/port/snprintf.c,v 1.36 2010/07/06 19:19:01 momjian Exp $
+ * src/port/snprintf.c
  */
 
 #include "c.h"

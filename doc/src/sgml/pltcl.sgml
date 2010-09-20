@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/pltcl.sgml,v 2.50 2010/05/13 18:29:12 tgl Exp $ -->
+<!-- doc/src/sgml/pltcl.sgml -->
 
  <chapter id="pltcl">
   <title>PL/Tcl - Tcl Procedural Language</title>

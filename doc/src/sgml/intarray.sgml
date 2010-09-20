@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/intarray.sgml,v 1.12 2010/08/17 04:37:20 petere Exp $ -->
+<!-- doc/src/sgml/intarray.sgml -->
 
 <sect1 id="intarray">
  <title>intarray</title>

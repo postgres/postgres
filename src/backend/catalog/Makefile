@@ -2,7 +2,7 @@
 #
 # Makefile for backend/catalog
 #
-# $PostgreSQL: pgsql/src/backend/catalog/Makefile,v 1.79 2010/08/27 11:47:41 rhaas Exp $
+# src/backend/catalog/Makefile
 #
 #-------------------------------------------------------------------------
 

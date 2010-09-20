@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/src/template/cygwin,v 1.8 2010/07/05 18:54:38 tgl Exp $
+# src/template/cygwin
 
 SRCH_LIB="/usr/local/lib"
 

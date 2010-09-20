@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.231 2010/09/17 18:49:54 rhaas Exp $ -->
+<!-- doc/src/sgml/catalogs.sgml -->
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
  -->

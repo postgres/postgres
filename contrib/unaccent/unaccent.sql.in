@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/contrib/unaccent/unaccent.sql.in,v 1.2 2009/11/14 18:24:32 tgl Exp $ */
+/* contrib/unaccent/unaccent.sql.in */
 
 -- Adjust this setting to control where the objects get created.
 SET search_path = public;

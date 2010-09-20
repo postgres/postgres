@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/relnode.c,v 1.98 2010/02/26 02:00:47 momjian Exp $
+ *	  src/backend/optimizer/util/relnode.c
  *
  *-------------------------------------------------------------------------
  */

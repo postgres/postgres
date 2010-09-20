@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/plperl.sgml,v 2.89 2010/09/09 00:48:22 momjian Exp $ -->
+<!-- doc/src/sgml/plperl.sgml -->
 
  <chapter id="plperl">
   <title>PL/Perl - Perl Procedural Language</title>

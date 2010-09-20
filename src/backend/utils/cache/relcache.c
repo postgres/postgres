@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.313 2010/09/02 03:16:45 tgl Exp $
+ *	  src/backend/utils/cache/relcache.c
  *
  *-------------------------------------------------------------------------
  */

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/discard.c,v 1.7 2010/01/02 16:57:37 momjian Exp $
+ *	  src/backend/commands/discard.c
  *
  *-------------------------------------------------------------------------
  */

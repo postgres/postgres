@@ -9,7 +9,7 @@
  *
  * Copyright (c) 2003-2010, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/pl/plpgsql/src/plerrcodes.h,v 1.21 2010/03/13 14:55:57 momjian Exp $
+ * src/pl/plpgsql/src/plerrcodes.h
  *
  *-------------------------------------------------------------------------
  */

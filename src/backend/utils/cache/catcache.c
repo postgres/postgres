@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/catcache.c,v 1.153 2010/07/06 19:18:58 momjian Exp $
+ *	  src/backend/utils/cache/catcache.c
  *
  *-------------------------------------------------------------------------
  */

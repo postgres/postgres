@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/bufmgr.h,v 1.125 2010/08/13 20:10:53 rhaas Exp $
+ * src/include/storage/bufmgr.h
  *
  *-------------------------------------------------------------------------
  */

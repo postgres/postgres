@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/contrib/tsearch2/uninstall_tsearch2.sql,v 1.2 2007/11/16 00:34:54 tgl Exp $ */
+/* contrib/tsearch2/uninstall_tsearch2.sql */
 
 -- Adjust this setting to control where the objects get dropped.
 SET search_path = public, pg_catalog;

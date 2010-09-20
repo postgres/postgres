@@ -1,4 +1,4 @@
-/*	$PostgreSQL: pgsql/contrib/pgcrypto/sha1.h,v 1.10 2010/04/02 15:21:20 mha Exp $ */
+/*	contrib/pgcrypto/sha1.h */
 /*	   $KAME: sha1.h,v 1.4 2000/02/22 14:01:18 itojun Exp $    */
 
 /*

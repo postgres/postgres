@@ -77,7 +77,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/port/unix_latch.c,v 1.4 2010/09/15 10:06:21 heikki Exp $
+ *	  src/backend/port/unix_latch.c
  *
  *-------------------------------------------------------------------------
  */

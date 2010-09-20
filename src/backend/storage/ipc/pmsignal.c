@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/pmsignal.c,v 1.31 2010/08/23 17:20:01 tgl Exp $
+ *	  src/backend/storage/ipc/pmsignal.c
  *
  *-------------------------------------------------------------------------
  */

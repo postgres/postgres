@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/contrib/pgcrypto/pgcrypto.sql.in,v 1.16 2010/08/19 05:57:33 petere Exp $ */
+/* contrib/pgcrypto/pgcrypto.sql.in */
 
 -- Adjust this setting to control where the objects get created.
 SET search_path = public;

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/variable.c,v 1.133 2010/02/14 18:42:14 rhaas Exp $
+ *	  src/backend/commands/variable.c
  *
  *-------------------------------------------------------------------------
  */

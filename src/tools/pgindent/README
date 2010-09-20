@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/tools/pgindent/README,v 1.43 2010/08/19 05:57:36 petere Exp $
+src/tools/pgindent/README
 
 pgindent
 ========

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *		  $PostgreSQL: pgsql/src/backend/foreign/foreign.c,v 1.8 2010/02/14 18:42:14 rhaas Exp $
+ *		  src/backend/foreign/foreign.c
  *
  *-------------------------------------------------------------------------
  */

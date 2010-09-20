@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/btree_gist/btree_utils_var.h,v 1.9 2009/06/11 14:48:50 momjian Exp $
+ * contrib/btree_gist/btree_utils_var.h
  */
 #ifndef __BTREE_UTILS_VAR_H__
 #define __BTREE_UTILS_VAR_H__

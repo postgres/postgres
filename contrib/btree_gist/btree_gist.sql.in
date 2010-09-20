@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/contrib/btree_gist/btree_gist.sql.in,v 1.22 2010/08/02 16:26:48 rhaas Exp $ */
+/* contrib/btree_gist/btree_gist.sql.in */
 
 -- Adjust this setting to control where the objects get created.
 SET search_path = public;

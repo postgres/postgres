@@ -3,7 +3,7 @@
 * geqo_recombination.c
 *	 misc recombination procedures
 *
-* $PostgreSQL: pgsql/src/backend/optimizer/geqo/geqo_recombination.c,v 1.17 2009/07/19 21:00:43 tgl Exp $
+* src/backend/optimizer/geqo/geqo_recombination.c
 *
 *-------------------------------------------------------------------------
 */

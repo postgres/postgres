@@ -24,7 +24,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/scan.l,v 1.168 2010/07/20 00:34:44 rhaas Exp $
+ *	  src/backend/parser/scan.l
  *
  *-------------------------------------------------------------------------
  */

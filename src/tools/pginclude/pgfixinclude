@@ -1,6 +1,6 @@
 :
 # change #include's to <> or ""
-# $PostgreSQL: pgsql/src/tools/pginclude/pgfixinclude,v 1.6 2006/07/10 16:07:24 momjian Exp $
+# src/tools/pginclude/pgfixinclude
 
 trap "rm -f /tmp/$$.c /tmp/$$.o /tmp/$$ /tmp/$$a /tmp/$$b" 0 1 2 3 15
 find . \( -name CVS -a -prune \) -o -type f -name '*.[chyls]' -print |

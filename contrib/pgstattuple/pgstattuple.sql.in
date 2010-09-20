@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/contrib/pgstattuple/pgstattuple.sql.in,v 1.16 2008/03/21 03:23:30 tgl Exp $ */
+/* contrib/pgstattuple/pgstattuple.sql.in */
 
 -- Adjust this setting to control where the objects get created.
 SET search_path = public;

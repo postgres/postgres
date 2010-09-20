@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/procarray.c,v 1.75 2010/08/30 17:30:44 tgl Exp $
+ *	  src/backend/storage/ipc/procarray.c
  *
  *-------------------------------------------------------------------------
  */

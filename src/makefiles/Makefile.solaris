@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/src/makefiles/Makefile.solaris,v 1.15 2010/07/05 18:54:38 tgl Exp $
+# src/makefiles/Makefile.solaris
 
 AROPT = crs
 

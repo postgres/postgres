@@ -7,7 +7,7 @@
  *
  * IDENTIFICATION
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/version.c,v 1.19 2010/01/02 16:57:55 momjian Exp $
+ * src/backend/utils/adt/version.c
  *
  *-------------------------------------------------------------------------
  */

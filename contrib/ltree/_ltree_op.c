@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/ltree/_ltree_op.c,v 1.14 2010/02/24 18:02:24 tgl Exp $
+ * contrib/ltree/_ltree_op.c
  *
  *
  * op function for ltree[]

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.389 2010/08/18 15:21:54 tgl Exp $
+ *	  src/backend/nodes/outfuncs.c
  *
  * NOTES
  *	  Every node type that can appear in stored rules' parsetrees *must*

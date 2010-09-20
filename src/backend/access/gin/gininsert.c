@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			$PostgreSQL: pgsql/src/backend/access/gin/gininsert.c,v 1.27 2010/08/01 02:12:42 tgl Exp $
+ *			src/backend/access/gin/gininsert.c
  *-------------------------------------------------------------------------
  */
 

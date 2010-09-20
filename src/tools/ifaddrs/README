@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/tools/ifaddrs/README,v 1.1 2009/10/01 01:58:58 tgl Exp $
+src/tools/ifaddrs/README
 
 test_ifaddrs
 ============

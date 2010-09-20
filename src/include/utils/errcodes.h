@@ -11,7 +11,7 @@
  *
  * Copyright (c) 2003-2010, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/utils/errcodes.h,v 1.32 2010/03/13 14:55:57 momjian Exp $
+ * src/include/utils/errcodes.h
  *
  *-------------------------------------------------------------------------
  */

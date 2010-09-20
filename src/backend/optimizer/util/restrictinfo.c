@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/restrictinfo.c,v 1.63 2010/02/26 02:00:49 momjian Exp $
+ *	  src/backend/optimizer/util/restrictinfo.c
  *
  *-------------------------------------------------------------------------
  */

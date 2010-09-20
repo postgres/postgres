@@ -2,7 +2,7 @@
 #
 # PostgreSQL documentation makefile
 #
-# $PostgreSQL: pgsql/doc/src/sgml/Makefile,v 1.148 2010/06/12 21:40:31 tgl Exp $
+# doc/src/sgml/Makefile
 #
 #----------------------------------------------------------------------------
 

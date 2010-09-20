@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeModifyTable.c,v 1.10 2010/09/11 18:38:56 joe Exp $
+ *	  src/backend/executor/nodeModifyTable.c
  *
  *-------------------------------------------------------------------------
  */

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/recovery-config.sgml,v 2.8 2010/06/11 10:13:09 heikki Exp $ -->
+<!-- doc/src/sgml/recovery-config.sgml -->
 
 <chapter Id="recovery-config">
   <title>Recovery Configuration</title>

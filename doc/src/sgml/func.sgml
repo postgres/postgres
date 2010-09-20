@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.533 2010/09/09 00:48:22 momjian Exp $ -->
+<!-- doc/src/sgml/func.sgml -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>

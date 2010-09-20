@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/contrib/tsearch2/tsearch2.sql.in,v 1.7 2009/03/25 22:19:01 tgl Exp $ */
+/* contrib/tsearch2/tsearch2.sql.in */
 
 -- Adjust this setting to control where the objects get created.
 SET search_path = public;

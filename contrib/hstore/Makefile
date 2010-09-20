@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/contrib/hstore/Makefile,v 1.7 2009/09/30 19:50:22 tgl Exp $
+# contrib/hstore/Makefile
 
 subdir = contrib/hstore
 top_builddir = ../..

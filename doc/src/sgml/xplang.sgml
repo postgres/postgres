@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/xplang.sgml,v 1.38 2010/05/30 02:23:09 momjian Exp $ -->
+<!-- doc/src/sgml/xplang.sgml -->
 
  <chapter id="xplang">
   <title>Procedural Languages</title>

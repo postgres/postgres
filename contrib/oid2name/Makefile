@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/contrib/oid2name/Makefile,v 1.11 2010/05/12 11:33:07 momjian Exp $
+# contrib/oid2name/Makefile
 
 PGFILEDESC = "oid2name - examine the file structure"
 PGAPPICON=win32

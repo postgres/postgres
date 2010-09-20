@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/ltree/_ltree_gist.c,v 1.27 2010/02/24 18:02:24 tgl Exp $
+ * contrib/ltree/_ltree_gist.c
  *
  *
  * GiST support for ltree[]

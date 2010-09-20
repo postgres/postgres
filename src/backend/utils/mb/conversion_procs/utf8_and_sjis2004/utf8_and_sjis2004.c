@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/utf8_and_sjis2004/utf8_and_sjis2004.c,v 1.2 2010/01/02 16:57:57 momjian Exp $
+ *	  src/backend/utils/mb/conversion_procs/utf8_and_sjis2004/utf8_and_sjis2004.c
  *
  *-------------------------------------------------------------------------
  */

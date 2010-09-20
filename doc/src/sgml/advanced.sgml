@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/advanced.sgml,v 1.61 2010/07/03 02:57:46 rhaas Exp $ -->
+<!-- doc/src/sgml/advanced.sgml -->
 
  <chapter id="tutorial-advanced">
   <title>Advanced Features</title>

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/define.c,v 1.108 2010/02/26 02:00:38 momjian Exp $
+ *	  src/backend/commands/define.c
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the

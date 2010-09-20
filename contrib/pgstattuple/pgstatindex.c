@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/pgstattuple/pgstatindex.c,v 1.13 2009/06/11 14:48:52 momjian Exp $
+ * contrib/pgstattuple/pgstatindex.c
  *
  *
  * pgstatindex

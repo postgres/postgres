@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/contrib/pg_trgm/Makefile,v 1.10 2009/04/28 17:07:50 momjian Exp $
+# contrib/pg_trgm/Makefile
 
 MODULE_big = pg_trgm
 OBJS = trgm_op.o trgm_gist.o trgm_gin.o

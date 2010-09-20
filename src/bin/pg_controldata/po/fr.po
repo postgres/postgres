@@ -1,7 +1,7 @@
 # translation of pg_controldata.po to fr_fr
 # french message translation file for pg_controldata
 #
-# $PostgreSQL: pgsql/src/bin/pg_controldata/po/fr.po,v 1.21 2010/07/08 21:32:27 petere Exp $
+# src/bin/pg_controldata/po/fr.po
 #
 # Use these quotes: « %s »
 #

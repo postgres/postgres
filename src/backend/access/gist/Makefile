@@ -4,7 +4,7 @@
 #    Makefile for access/gist
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/backend/access/gist/Makefile,v 1.18 2008/02/19 10:30:06 petere Exp $
+#    src/backend/access/gist/Makefile
 #
 #-------------------------------------------------------------------------
 

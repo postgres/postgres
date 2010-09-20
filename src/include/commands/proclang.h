@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/src/include/commands/proclang.h,v 1.16 2010/08/05 14:45:08 rhaas Exp $
+ * src/include/commands/proclang.h
  *
  *-------------------------------------------------------------------------
  *

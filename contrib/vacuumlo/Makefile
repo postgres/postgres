@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/contrib/vacuumlo/Makefile,v 1.18 2010/05/12 11:33:08 momjian Exp $
+# contrib/vacuumlo/Makefile
 
 PGFILEDESC = "vacuumlo - removes orphaned large objects"
 PGAPPICON=win32

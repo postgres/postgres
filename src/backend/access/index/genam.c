@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/index/genam.c,v 1.81 2010/02/26 02:00:33 momjian Exp $
+ *	  src/backend/access/index/genam.c
  *
  * NOTES
  *	  many of the old access method routines have been turned into

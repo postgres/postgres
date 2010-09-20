@@ -18,7 +18,7 @@
  * Copyright (c) 2007-2010, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/contrib/pageinspect/heapfuncs.c,v 1.9 2010/04/02 15:19:22 mha Exp $
+ *	  contrib/pageinspect/heapfuncs.c
  *
  *-------------------------------------------------------------------------
  */

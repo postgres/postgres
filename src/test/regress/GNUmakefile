@@ -6,7 +6,7 @@
 # Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/test/regress/GNUmakefile,v 1.83 2010/07/05 18:54:38 tgl Exp $
+# src/test/regress/GNUmakefile
 #
 #-------------------------------------------------------------------------
 

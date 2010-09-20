@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/src/pl/tcl/modules/Makefile,v 1.5 2009/08/26 22:24:43 petere Exp $
+# src/pl/tcl/modules/Makefile
 
 subdir = src/pl/tcl/modules
 top_builddir = ../../../..

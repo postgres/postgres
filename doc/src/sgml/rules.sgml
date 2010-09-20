@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/rules.sgml,v 1.56 2010/05/13 19:16:14 tgl Exp $ -->
+<!-- doc/src/sgml/rules.sgml -->
 
 <chapter id="rules">
 <title>The Rule System</title>

@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $PostgreSQL: pgsql/src/tools/make_etags,v 1.6 2009/01/14 21:59:19 momjian Exp $
+# src/tools/make_etags
 
 rm -f ./TAGS
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/acl.c,v 1.158 2010/08/05 14:45:04 rhaas Exp $
+ *	  src/backend/utils/adt/acl.c
  *
  *-------------------------------------------------------------------------
  */

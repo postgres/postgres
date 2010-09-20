@@ -8,7 +8,7 @@
  * Author: Andreas Pflug <pgadmin@pse-consulting.de>
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/contrib/adminpack/adminpack.c,v 1.13 2010/01/02 16:57:32 momjian Exp $
+ *	  contrib/adminpack/adminpack.c
  *
  *-------------------------------------------------------------------------
  */

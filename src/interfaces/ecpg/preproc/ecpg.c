@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.c,v 1.116 2010/07/06 19:19:00 momjian Exp $ */
+/* src/interfaces/ecpg/preproc/ecpg.c */
 
 /* Main for ecpg, the PostgreSQL embedded SQL precompiler. */
 /* Copyright (c) 1996-2010, PostgreSQL Global Development Group */

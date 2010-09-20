@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/sequence.c,v 1.171 2010/08/18 18:35:19 tgl Exp $
+ *	  src/backend/commands/sequence.c
  *
  *-------------------------------------------------------------------------
  */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsquery_cleanup.c,v 1.13 2010/01/02 16:57:55 momjian Exp $
+ *	  src/backend/utils/adt/tsquery_cleanup.c
  *
  *-------------------------------------------------------------------------
  */

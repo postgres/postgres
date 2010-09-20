@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/alter.c,v 1.38 2010/08/05 14:44:58 rhaas Exp $
+ *	  src/backend/commands/alter.c
  *
  *-------------------------------------------------------------------------
  */

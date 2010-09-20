@@ -1,7 +1,7 @@
 # translation of pg_dump.po to fr_fr
 # french message translation file for pg_dump
 #
-# $PostgreSQL: pgsql/src/bin/pg_dump/po/fr.po,v 1.23 2010/07/08 21:32:28 petere Exp $
+# src/bin/pg_dump/po/fr.po
 #
 # Use these quotes: « %s »
 #

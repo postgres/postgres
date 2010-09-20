@@ -19,7 +19,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_custom.c,v 1.47 2010/07/06 19:18:59 momjian Exp $
+ *		src/bin/pg_dump/pg_backup_custom.c
  *
  *-------------------------------------------------------------------------
  */

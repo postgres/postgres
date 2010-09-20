@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/twophase_rmgr.c,v 1.14 2010/02/26 02:00:34 momjian Exp $
+ *	  src/backend/access/transam/twophase_rmgr.c
  *
  *-------------------------------------------------------------------------
  */

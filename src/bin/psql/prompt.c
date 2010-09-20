@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/prompt.c,v 1.54 2010/04/30 17:09:13 tgl Exp $
+ * src/bin/psql/prompt.c
  */
 #include "postgres_fe.h"
 

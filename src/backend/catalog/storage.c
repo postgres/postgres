@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/storage.c,v 1.11 2010/08/13 20:10:50 rhaas Exp $
+ *	  src/backend/catalog/storage.c
  *
  * NOTES
  *	  Some of this code used to be in storage/smgr/smgr.c, and the

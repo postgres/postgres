@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/latin_and_mic/latin_and_mic.c,v 1.18 2010/01/02 16:57:57 momjian Exp $
+ *	  src/backend/utils/mb/conversion_procs/latin_and_mic/latin_and_mic.c
  *
  *-------------------------------------------------------------------------
  */

@@ -1,7 +1,7 @@
 # translation of libpq-cs.po to Czech
 # Czech translation of libpq messages
 #
-# $PostgreSQL: pgsql/src/interfaces/libpq/po/cs.po,v 1.7 2009/06/26 19:33:51 petere Exp $
+# src/interfaces/libpq/po/cs.po
 # Karel Žák, 2001-2003, 2004.
 # Zdeněk Kotala, 2009.
 #

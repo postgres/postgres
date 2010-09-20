@@ -30,7 +30,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/tidpath.c,v 1.35 2010/01/02 16:57:47 momjian Exp $
+ *	  src/backend/optimizer/path/tidpath.c
  *
  *-------------------------------------------------------------------------
  */

@@ -4,7 +4,7 @@
  *	main source file
  *
  *	Copyright (c) 2010, PostgreSQL Global Development Group
- *	$PostgreSQL: pgsql/contrib/pg_upgrade/pg_upgrade.c,v 1.11 2010/07/13 15:56:53 momjian Exp $
+ *	contrib/pg_upgrade/pg_upgrade.c
  */
 
 #include "pg_upgrade.h"

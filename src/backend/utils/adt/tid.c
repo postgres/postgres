@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/tid.c,v 1.64 2010/01/02 16:57:55 momjian Exp $
+ *	  src/backend/utils/adt/tid.c
  *
  * NOTES
  *	  input routine largely stolen from boxin().

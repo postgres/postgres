@@ -4,7 +4,7 @@
 #    Makefile for utils/time
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/backend/utils/time/Makefile,v 1.15 2008/03/26 18:48:59 alvherre Exp $
+#    src/backend/utils/time/Makefile
 #
 #-------------------------------------------------------------------------
 

@@ -5,7 +5,7 @@
  *	Implements the basic DB functions used by the archiver.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.90 2010/02/26 02:01:16 momjian Exp $
+ *	  src/bin/pg_dump/pg_backup_db.c
  *
  *-------------------------------------------------------------------------
  */

@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/src/test/examples/testlibpq3.c,v 1.17 2009/12/31 00:16:47 adunstan Exp $
+ * src/test/examples/testlibpq3.c
  *
  *
  * testlibpq3.c

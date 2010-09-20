@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/hash/hashovfl.c,v 1.69 2010/02/26 02:00:33 momjian Exp $
+ *	  src/backend/access/hash/hashovfl.c
  *
  * NOTES
  *	  Overflow pages look like ordinary relation pages.

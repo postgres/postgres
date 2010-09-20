@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/be-fsstubs.c,v 1.94 2010/02/26 02:00:42 momjian Exp $
+ *	  src/backend/libpq/be-fsstubs.c
  *
  * NOTES
  *	  This should be moved to a more appropriate place.  It is here

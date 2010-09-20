@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/test/thread/README,v 1.4 2010/08/19 05:57:35 petere Exp $
+src/test/thread/README
 
 Threading
 =========

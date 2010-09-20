@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/include/port/cygwin.h,v 1.9 2010/05/28 16:34:15 itagaki Exp $ */
+/* src/include/port/cygwin.h */
 
 #include <cygwin/version.h>
 

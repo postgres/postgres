@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.header,v 1.17 2010/09/10 10:13:20 meskes Exp $ */
+/* src/interfaces/ecpg/preproc/ecpg.header */
 
 /* Copyright comment */
 %{

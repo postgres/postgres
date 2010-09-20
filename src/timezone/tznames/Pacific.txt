@@ -4,7 +4,7 @@
 #   a template for timezones you could need.  See the `Date/Time Support'
 #   appendix in the PostgreSQL documentation for more information.
 #
-# $PostgreSQL: pgsql/src/timezone/tznames/Pacific.txt,v 1.3 2010/08/26 19:58:36 tgl Exp $
+# src/timezone/tznames/Pacific.txt
 #
 
 CHADT   49500 D  # Chatham Daylight Time (New Zealand)

@@ -1,7 +1,7 @@
 # translation of psql-cs.po to Czech
 # Czech message translation file for psql
 #
-# $PostgreSQL: pgsql/src/bin/psql/po/cs.po,v 1.6 2009/06/10 23:42:43 petere Exp $
+# src/bin/psql/po/cs.po
 # Karel Žák, 2001-2003, 2004.
 # Zdeněk Kotala, 2009.
 

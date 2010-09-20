@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/include/port/solaris.h,v 1.19 2010/02/02 19:09:37 mha Exp $ */
+/* src/include/port/solaris.h */
 
 /*
  * Sort this out for all operating systems some time.  The __xxx

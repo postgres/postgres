@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/contrib/pg_stat_statements/uninstall_pg_stat_statements.sql,v 1.1 2009/01/04 22:19:59 tgl Exp $ */
+/* contrib/pg_stat_statements/uninstall_pg_stat_statements.sql */
 
 -- Adjust this setting to control where the objects get dropped.
 SET search_path = public;

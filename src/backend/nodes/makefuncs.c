@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/makefuncs.c,v 1.67 2010/08/27 20:30:07 petere Exp $
+ *	  src/backend/nodes/makefuncs.c
  *
  *-------------------------------------------------------------------------
  */

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 2007-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/visibilitymap.h,v 1.6 2010/01/02 16:58:00 momjian Exp $
+ * src/include/access/visibilitymap.h
  *
  *-------------------------------------------------------------------------
  */

@@ -15,7 +15,7 @@
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/timezone/strftime.c,v 1.15 2010/03/11 18:43:24 tgl Exp $
+ *	  src/timezone/strftime.c
  */
 
 #include "postgres.h"

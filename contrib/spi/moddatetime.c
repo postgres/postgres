@@ -1,7 +1,7 @@
 /*
 moddatetime.c
 
-$PostgreSQL: pgsql/contrib/spi/moddatetime.c,v 1.15 2009/01/07 13:44:36 tgl Exp $
+contrib/spi/moddatetime.c
 
 What is this?
 It is a function to be called from a trigger for the purpose of updating

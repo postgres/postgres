@@ -33,7 +33,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/relmapper.c,v 1.3 2010/02/26 02:01:12 momjian Exp $
+ *	  src/backend/utils/cache/relmapper.c
  *
  *-------------------------------------------------------------------------
  */

@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/utils/misc/guc-file.l,v 1.64 2010/01/02 16:57:58 momjian Exp $
+ * src/backend/utils/misc/guc-file.l
  */
 
 %{

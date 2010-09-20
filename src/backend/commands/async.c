@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/async.c,v 1.157 2010/04/28 16:54:15 tgl Exp $
+ *	  src/backend/commands/async.c
  *
  *-------------------------------------------------------------------------
  */

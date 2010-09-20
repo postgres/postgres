@@ -1,6 +1,6 @@
 #-------------------------------------------------------------------------
 #
-# $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/utf8_and_euc2004/Makefile,v 1.1 2009/11/04 23:47:04 tgl Exp $
+# src/backend/utils/mb/conversion_procs/utf8_and_euc2004/Makefile
 #
 #-------------------------------------------------------------------------
 subdir = src/backend/utils/mb/conversion_procs/utf8_and_euc2004

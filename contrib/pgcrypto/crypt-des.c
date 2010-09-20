@@ -1,7 +1,7 @@
 /*
  * FreeSec: libcrypt for NetBSD
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/crypt-des.c,v 1.15 2006/07/13 04:15:24 neilc Exp $
+ * contrib/pgcrypto/crypt-des.c
  *
  * Copyright (c) 1994 David Burren
  * All rights reserved.

@@ -5,7 +5,7 @@
  *
  * Portions Copyright (c) 2010-2010, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/replication/walreceiver.h,v 1.12 2010/09/13 10:14:25 heikki Exp $
+ * src/include/replication/walreceiver.h
  *
  *-------------------------------------------------------------------------
  */

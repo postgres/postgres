@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/ipci.c,v 1.106 2010/09/15 10:06:21 heikki Exp $
+ *	  src/backend/storage/ipc/ipci.c
  *
  *-------------------------------------------------------------------------
  */

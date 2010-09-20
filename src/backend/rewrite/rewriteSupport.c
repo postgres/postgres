@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteSupport.c,v 1.70 2010/08/05 15:25:35 rhaas Exp $
+ *	  src/backend/rewrite/rewriteSupport.c
  *
  *-------------------------------------------------------------------------
  */

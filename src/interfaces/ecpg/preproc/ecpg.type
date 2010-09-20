@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.type,v 1.7 2010/08/19 05:57:34 petere Exp $ */
+/* src/interfaces/ecpg/preproc/ecpg.type */
 %type <str> ECPGAllocateDescr
 %type <str> ECPGCKeywords
 %type <str> ECPGColId

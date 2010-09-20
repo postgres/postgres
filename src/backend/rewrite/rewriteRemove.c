@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteRemove.c,v 1.80 2010/02/14 18:42:15 rhaas Exp $
+ *	  src/backend/rewrite/rewriteRemove.c
  *
  *-------------------------------------------------------------------------
  */

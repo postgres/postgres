@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/clausesel.c,v 1.99 2010/01/02 16:57:46 momjian Exp $
+ *	  src/backend/optimizer/path/clausesel.c
  *
  *-------------------------------------------------------------------------
  */

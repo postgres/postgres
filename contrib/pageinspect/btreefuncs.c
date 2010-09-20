@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/pageinspect/btreefuncs.c,v 1.10 2009/06/11 14:48:51 momjian Exp $
+ * contrib/pageinspect/btreefuncs.c
  *
  *
  * btreefuncs.c

@@ -2,7 +2,7 @@
 #
 # Makefile for src/backend/snowball
 #
-# $PostgreSQL: pgsql/src/backend/snowball/Makefile,v 1.8 2009/08/28 20:26:19 petere Exp $
+# src/backend/snowball/Makefile
 #
 #-------------------------------------------------------------------------
 

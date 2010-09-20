@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/tools/msvc/README,v 1.7 2008/03/21 13:23:29 momjian Exp $
+src/tools/msvc/README
 
 MSVC build
 ==========

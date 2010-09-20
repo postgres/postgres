@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/contrib/fuzzystrmatch/fuzzystrmatch.sql.in,v 1.10 2008/04/03 21:13:07 tgl Exp $ */
+/* contrib/fuzzystrmatch/fuzzystrmatch.sql.in */
 
 -- Adjust this setting to control where the objects get created.
 SET search_path = public;

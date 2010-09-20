@@ -40,7 +40,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablespace.c,v 1.79 2010/08/05 14:45:01 rhaas Exp $
+ *	  src/backend/commands/tablespace.c
  *
  *-------------------------------------------------------------------------
  */

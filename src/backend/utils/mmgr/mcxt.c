@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/mcxt.c,v 1.69 2010/02/13 02:34:12 tgl Exp $
+ *	  src/backend/utils/mmgr/mcxt.c
  *
  *-------------------------------------------------------------------------
  */

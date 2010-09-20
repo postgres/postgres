@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/numeric.c,v 1.36 2010/08/17 09:36:04 meskes Exp $ */
+/* src/interfaces/ecpg/pgtypeslib/numeric.c */
 
 #include "postgres_fe.h"
 #include <ctype.h>

@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/backend/storage/lmgr/README,v 1.25 2009/12/19 01:32:35 sriggs Exp $
+src/backend/storage/lmgr/README
 
 Locking Overview
 ================

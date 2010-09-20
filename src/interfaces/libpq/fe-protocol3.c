@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-protocol3.c,v 1.43 2010/04/28 13:46:23 mha Exp $
+ *	  src/interfaces/libpq/fe-protocol3.c
  *
  *-------------------------------------------------------------------------
  */

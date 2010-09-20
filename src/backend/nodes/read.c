@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/read.c,v 1.54 2010/01/18 22:19:34 petere Exp $
+ *	  src/backend/nodes/read.c
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT

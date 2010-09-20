@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.138 2010/08/13 14:38:04 tgl Exp $
+ * src/bin/pg_dump/pg_dumpall.c
  *
  *-------------------------------------------------------------------------
  */

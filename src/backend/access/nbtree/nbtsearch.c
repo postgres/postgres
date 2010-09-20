@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.121 2010/01/02 16:57:35 momjian Exp $
+ *	  src/backend/access/nbtree/nbtsearch.c
  *
  *-------------------------------------------------------------------------
  */

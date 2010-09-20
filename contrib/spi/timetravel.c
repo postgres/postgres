@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/spi/timetravel.c,v 1.31 2009/06/11 14:48:52 momjian Exp $
+ * contrib/spi/timetravel.c
  *
  *
  * timetravel.c --	function to get time travel feature

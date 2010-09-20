@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/executor/execAmi.c,v 1.109 2010/07/12 17:01:05 tgl Exp $
+ *	src/backend/executor/execAmi.c
  *
  *-------------------------------------------------------------------------
  */

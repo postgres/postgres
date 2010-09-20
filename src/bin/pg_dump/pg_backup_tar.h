@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_tar.h,v 1.5 2003/11/29 19:52:05 pgsql Exp $
+ * src/bin/pg_dump/pg_backup_tar.h
  *
  * TAR Header
  *

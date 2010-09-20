@@ -3,7 +3,7 @@
  *
  * SPI interface for plperl.  
  *
- *    $PostgreSQL: pgsql/src/pl/plperl/SPI.xs,v 1.21 2010/01/20 01:08:21 adunstan Exp $
+ *    src/pl/plperl/SPI.xs
  *
  **********************************************************************/
 

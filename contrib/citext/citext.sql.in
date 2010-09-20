@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/contrib/citext/citext.sql.in,v 1.3 2008/09/05 18:25:16 tgl Exp $ */
+/* contrib/citext/citext.sql.in */
 
 -- Adjust this setting to control where the objects get created.
 SET search_path = public;

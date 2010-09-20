@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/include/pgtime.h,v 1.20 2010/01/02 16:58:00 momjian Exp $
+ *	  src/include/pgtime.h
  *
  *-------------------------------------------------------------------------
  */

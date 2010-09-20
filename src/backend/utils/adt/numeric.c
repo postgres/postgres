@@ -14,7 +14,7 @@
  * Copyright (c) 1998-2010, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/numeric.c,v 1.126 2010/08/04 17:33:09 rhaas Exp $
+ *	  src/backend/utils/adt/numeric.c
  *
  *-------------------------------------------------------------------------
  */

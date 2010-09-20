@@ -2,7 +2,7 @@
 #
 # Copyright (c) 2001-2010, PostgreSQL Global Development Group
 #
-# $PostgreSQL: pgsql/src/backend/utils/mb/Unicode/UCS_to_SJIS.pl,v 1.13 2010/01/02 16:57:56 momjian Exp $
+# src/backend/utils/mb/Unicode/UCS_to_SJIS.pl
 #
 # Generate UTF-8 <--> SJIS code conversion tables from
 # map files provided by Unicode organization.

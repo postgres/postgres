@@ -3,7 +3,7 @@
  * 2006-07-17 by Arthur David Olson.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/timezone/zic.c,v 1.26 2010/03/13 00:40:43 momjian Exp $
+ *	  src/timezone/zic.c
  */
 
 #include "postgres_fe.h"

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/localbuf.c,v 1.91 2010/08/19 16:16:20 tgl Exp $
+ *	  src/backend/storage/buffer/localbuf.c
  *
  *-------------------------------------------------------------------------
  */

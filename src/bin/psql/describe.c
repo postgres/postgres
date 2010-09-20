@@ -8,7 +8,7 @@
  *
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.243 2010/08/01 01:08:29 rhaas Exp $
+ * src/bin/psql/describe.c
  */
 #include "postgres_fe.h"
 

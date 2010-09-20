@@ -16,7 +16,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/spin.c,v 1.25 2010/01/02 16:57:52 momjian Exp $
+ *	  src/backend/storage/lmgr/spin.c
  *
  *-------------------------------------------------------------------------
  */

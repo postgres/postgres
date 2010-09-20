@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/portalmem.c,v 1.121 2010/07/13 09:02:30 heikki Exp $
+ *	  src/backend/utils/mmgr/portalmem.c
  *
  *-------------------------------------------------------------------------
  */

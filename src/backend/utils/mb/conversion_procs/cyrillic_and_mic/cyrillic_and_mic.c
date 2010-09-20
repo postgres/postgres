@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/cyrillic_and_mic/cyrillic_and_mic.c,v 1.22 2010/01/02 16:57:56 momjian Exp $
+ *	  src/backend/utils/mb/conversion_procs/cyrillic_and_mic/cyrillic_and_mic.c
  *
  *-------------------------------------------------------------------------
  */

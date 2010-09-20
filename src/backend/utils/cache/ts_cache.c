@@ -20,7 +20,7 @@
  * Copyright (c) 2006-2010, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/ts_cache.c,v 1.13 2010/08/05 15:25:35 rhaas Exp $
+ *	  src/backend/utils/cache/ts_cache.c
  *
  *-------------------------------------------------------------------------
  */

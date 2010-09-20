@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/pg_trgm/trgm.h,v 1.11 2009/06/11 14:48:51 momjian Exp $
+ * contrib/pg_trgm/trgm.h
  */
 #ifndef __TRGM_H__
 #define __TRGM_H__

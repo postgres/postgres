@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/contrib/pg_buffercache/pg_buffercache.sql.in,v 1.8 2008/08/14 12:56:41 heikki Exp $ */
+/* contrib/pg_buffercache/pg_buffercache.sql.in */
 
 -- Adjust this setting to control where the objects get created.
 SET search_path = public;

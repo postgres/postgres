@@ -18,7 +18,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/hash/hashsort.c,v 1.4 2010/01/02 16:57:34 momjian Exp $
+ *	  src/backend/access/hash/hashsort.c
  *
  *-------------------------------------------------------------------------
  */

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/commands/cluster.h,v 1.42 2010/07/29 11:06:34 sriggs Exp $
+ * src/include/commands/cluster.h
  *
  *-------------------------------------------------------------------------
  */

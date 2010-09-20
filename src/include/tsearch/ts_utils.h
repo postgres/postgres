@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1998-2010, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/tsearch/ts_utils.h,v 1.19 2010/01/02 16:58:09 momjian Exp $
+ * src/include/tsearch/ts_utils.h
  *
  *-------------------------------------------------------------------------
  */

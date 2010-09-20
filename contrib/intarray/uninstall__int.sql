@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/contrib/intarray/uninstall__int.sql,v 1.12 2009/06/07 20:09:34 tgl Exp $ */
+/* contrib/intarray/uninstall__int.sql */
 
 -- Adjust this setting to control where the objects get created.
 SET search_path = public;

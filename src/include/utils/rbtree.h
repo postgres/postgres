@@ -6,7 +6,7 @@
  * Copyright (c) 2009-2010, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/include/utils/rbtree.h,v 1.4 2010/08/01 02:12:42 tgl Exp $
+ *		src/include/utils/rbtree.h
  *
  *-------------------------------------------------------------------------
  */

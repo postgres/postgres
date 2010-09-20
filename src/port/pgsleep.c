@@ -6,7 +6,7 @@
  *
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/port/pgsleep.c,v 1.13 2010/01/02 16:58:13 momjian Exp $
+ * src/port/pgsleep.c
  *
  *-------------------------------------------------------------------------
  */

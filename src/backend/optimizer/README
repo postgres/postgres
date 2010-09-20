@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/backend/optimizer/README,v 1.54 2010/08/19 05:57:34 petere Exp $
+src/backend/optimizer/README
 
 Optimizer
 =========

@@ -5,7 +5,7 @@
  *	 Portions Copyright (c) 1999-2010, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ascii.c,v 1.34 2010/01/02 16:57:53 momjian Exp $
+ *	  src/backend/utils/adt/ascii.c
  *
  *-----------------------------------------------------------------------
  */

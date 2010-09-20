@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/install-win32.sgml,v 1.59 2010/07/29 19:34:40 petere Exp $ -->
+<!-- doc/src/sgml/install-win32.sgml -->
 
 <chapter id="install-win32">
  <title>Installation from Source Code on <productname>Windows</productname></title>

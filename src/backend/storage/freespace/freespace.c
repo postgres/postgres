@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/freespace/freespace.c,v 1.79 2010/08/19 02:58:37 rhaas Exp $
+ *	  src/backend/storage/freespace/freespace.c
  *
  *
  * NOTES:

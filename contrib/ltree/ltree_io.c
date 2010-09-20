@@ -1,7 +1,7 @@
 /*
  * in/out function for ltree and lquery
  * Teodor Sigaev <teodor@stack.net>
- * $PostgreSQL: pgsql/contrib/ltree/ltree_io.c,v 1.18 2009/06/11 14:48:51 momjian Exp $
+ * contrib/ltree/ltree_io.c
  */
 #include "postgres.h"
 

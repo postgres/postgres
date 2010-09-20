@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/src/pl/plperl/nls.mk,v 1.8 2009/10/20 18:23:26 petere Exp $
+# src/pl/plperl/nls.mk
 CATALOG_NAME	:= plperl
 AVAIL_LANGUAGES	:= de es fr it ja pt_BR tr
 GETTEXT_FILES	:= plperl.c SPI.c

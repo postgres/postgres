@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $PostgreSQL: pgsql/src/tools/FAQ2txt,v 1.3 2008/04/22 10:30:32 momjian Exp $:
+# src/tools/FAQ2txt:
 
 # Converts doc/src/FAQ/FAQ.html to text file doc/FAQ
 

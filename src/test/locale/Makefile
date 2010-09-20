@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/src/test/locale/Makefile,v 1.10 2008/03/18 16:24:50 petere Exp $
+# src/test/locale/Makefile
 
 subdir = src/test/locale
 top_builddir = ../../..

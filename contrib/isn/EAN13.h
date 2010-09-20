@@ -6,7 +6,7 @@
  * http://www.gs1.org/productssolutions/idkeys/support/prefix_list.html
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/contrib/isn/EAN13.h,v 1.2 2006/10/04 00:29:45 momjian Exp $
+ *	  contrib/isn/EAN13.h
  *
  */
 

@@ -4,7 +4,7 @@
 #    Makefile for utils/init
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/backend/utils/init/Makefile,v 1.23 2009/09/01 02:54:51 alvherre Exp $
+#    src/backend/utils/init/Makefile
 #
 #-------------------------------------------------------------------------
 

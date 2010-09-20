@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/src/test/locale/test-ctype.c,v 1.6 2009/06/11 14:49:15 momjian Exp $
+ * src/test/locale/test-ctype.c
  */
 
 /*

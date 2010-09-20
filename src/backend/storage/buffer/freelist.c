@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/freelist.c,v 1.68 2010/01/02 16:57:51 momjian Exp $
+ *	  src/backend/storage/buffer/freelist.c
  *
  *-------------------------------------------------------------------------
  */

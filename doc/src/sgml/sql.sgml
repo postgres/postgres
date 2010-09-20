@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/sql.sgml,v 1.49 2010/07/29 19:34:40 petere Exp $ -->
+<!-- doc/src/sgml/sql.sgml -->
 
  <chapter id="sql-intro">
   <title>SQL</title>

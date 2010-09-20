@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/common/indextuple.c,v 1.91 2010/01/10 04:26:36 rhaas Exp $
+ *	  src/backend/access/common/indextuple.c
  *
  *-------------------------------------------------------------------------
  */

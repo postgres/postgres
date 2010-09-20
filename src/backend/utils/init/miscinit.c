@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/init/miscinit.c,v 1.185 2010/08/16 17:32:46 tgl Exp $
+ *	  src/backend/utils/init/miscinit.c
  *
  *-------------------------------------------------------------------------
  */

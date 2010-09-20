@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/contrib/btree_gist/Makefile,v 1.13 2010/08/03 19:53:19 rhaas Exp $
+# contrib/btree_gist/Makefile
 
 MODULE_big  = btree_gist
 

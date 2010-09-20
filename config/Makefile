@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/config/Makefile,v 1.3 2009/08/26 22:24:42 petere Exp $
+# config/Makefile
 
 subdir = config
 top_builddir = ..

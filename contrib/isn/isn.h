@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/contrib/isn/isn.h,v 1.10 2010/02/26 02:00:32 momjian Exp $
+ *	  contrib/isn/isn.h
  *
  *-------------------------------------------------------------------------
  */

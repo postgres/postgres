@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.206 2010/02/26 02:01:10 momjian Exp $
+ *	  src/backend/utils/adt/timestamp.c
  *
  *-------------------------------------------------------------------------
  */

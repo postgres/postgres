@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/replication/libpqwalreceiver/libpqwalreceiver.c,v 1.12 2010/07/06 19:18:57 momjian Exp $
+ *	  src/backend/replication/libpqwalreceiver/libpqwalreceiver.c
  *
  *-------------------------------------------------------------------------
  */

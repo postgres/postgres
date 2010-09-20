@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeCtescan.c,v 1.9 2010/07/12 17:01:05 tgl Exp $
+ *	  src/backend/executor/nodeCtescan.c
  *
  *-------------------------------------------------------------------------
  */

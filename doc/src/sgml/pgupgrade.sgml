@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/pgupgrade.sgml,v 1.15 2010/08/19 05:57:33 petere Exp $ -->
+<!-- doc/src/sgml/pgupgrade.sgml -->
 
 <sect1 id="pgupgrade">
  <title>pg_upgrade</title>

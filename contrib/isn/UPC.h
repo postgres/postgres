@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/contrib/isn/UPC.h,v 1.2 2006/10/04 00:29:45 momjian Exp $
+ *	  contrib/isn/UPC.h
  *
  */
 

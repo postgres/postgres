@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ddl.sgml,v 1.97 2010/08/26 21:08:35 tgl Exp $ -->
+<!-- doc/src/sgml/ddl.sgml -->
 
 <chapter id="ddl">
  <title>Data Definition</title>

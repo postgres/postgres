@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.436 2010/09/15 13:58:22 heikki Exp $
+ * src/backend/access/transam/xlog.c
  *
  *-------------------------------------------------------------------------
  */

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootparse.y,v 1.106 2010/07/25 23:21:21 rhaas Exp $
+ *	  src/backend/bootstrap/bootparse.y
  *
  *-------------------------------------------------------------------------
  */

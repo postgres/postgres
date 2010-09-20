@@ -15,7 +15,7 @@
  *	  locate group boundaries.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeGroup.c,v 1.78 2010/07/12 17:01:05 tgl Exp $
+ *	  src/backend/executor/nodeGroup.c
  *
  *-------------------------------------------------------------------------
  */

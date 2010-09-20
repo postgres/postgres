@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/contrib/uuid-ossp/uuid-ossp.sql.in,v 1.6 2007/11/13 04:24:29 momjian Exp $ */
+/* contrib/uuid-ossp/uuid-ossp.sql.in */
 
 -- Adjust this setting to control where the objects get created.
 SET search_path = public;

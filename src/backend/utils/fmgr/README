@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/backend/utils/fmgr/README,v 1.16 2008/10/31 19:37:56 tgl Exp $
+src/backend/utils/fmgr/README
 
 Function Manager
 ================

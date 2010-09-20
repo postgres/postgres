@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/contrib/earthdistance/Makefile,v 1.20 2010/07/05 23:15:55 tgl Exp $
+# contrib/earthdistance/Makefile
 
 MODULES = earthdistance
 DATA_built = earthdistance.sql

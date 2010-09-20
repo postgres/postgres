@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/unaccent.sgml,v 1.7 2010/08/25 21:42:55 tgl Exp $ -->
+<!-- doc/src/sgml/unaccent.sgml -->
 
 <sect1 id="unaccent">
  <title>unaccent</title>

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.288 2010/08/14 15:47:13 tgl Exp $
+ *	  src/backend/optimizer/util/clauses.c
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT

@@ -2,7 +2,7 @@
  *	pg_upgrade.h
  *
  *	Copyright (c) 2010, PostgreSQL Global Development Group
- *	$PostgreSQL: pgsql/contrib/pg_upgrade/pg_upgrade.h,v 1.16 2010/07/25 03:47:29 momjian Exp $
+ *	contrib/pg_upgrade/pg_upgrade.h
  */
 
 #include "postgres.h"

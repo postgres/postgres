@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/libpq-events.c,v 1.6 2010/01/02 16:58:12 momjian Exp $
+ *	  src/interfaces/libpq/libpq-events.c
  *
  *-------------------------------------------------------------------------
  */

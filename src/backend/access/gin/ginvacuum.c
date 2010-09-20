@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			$PostgreSQL: pgsql/src/backend/access/gin/ginvacuum.c,v 1.33 2010/02/08 04:33:52 tgl Exp $
+ *			src/backend/access/gin/ginvacuum.c
  *-------------------------------------------------------------------------
  */
 

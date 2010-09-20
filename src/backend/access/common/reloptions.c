@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/common/reloptions.c,v 1.35 2010/06/07 02:59:02 itagaki Exp $
+ *	  src/backend/access/common/reloptions.c
  *
  *-------------------------------------------------------------------------
  */

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/twophase.h,v 1.15 2010/04/13 14:17:46 heikki Exp $
+ * src/include/access/twophase.h
  *
  *-------------------------------------------------------------------------
  */

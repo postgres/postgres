@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/var.c,v 1.88 2010/07/08 00:14:03 tgl Exp $
+ *	  src/backend/optimizer/util/var.c
  *
  *-------------------------------------------------------------------------
  */

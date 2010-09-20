@@ -80,7 +80,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/inval.c,v 1.99 2010/08/13 20:10:52 rhaas Exp $
+ *	  src/backend/utils/cache/inval.c
  *
  *-------------------------------------------------------------------------
  */

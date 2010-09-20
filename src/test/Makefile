@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/test/Makefile,v 1.4 2003/11/29 19:52:13 pgsql Exp $
+#    src/test/Makefile
 #
 #-------------------------------------------------------------------------
 

@@ -21,7 +21,7 @@
  *
  * Portions Copyright (c) 2000-2010, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/windowapi.h,v 1.4 2010/01/02 16:58:00 momjian Exp $
+ * src/include/windowapi.h
  *
  *-------------------------------------------------------------------------
  */

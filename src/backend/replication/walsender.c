@@ -28,7 +28,7 @@
  * Portions Copyright (c) 2010-2010, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/replication/walsender.c,v 1.32 2010/09/15 06:51:19 heikki Exp $
+ *	  src/backend/replication/walsender.c
  *
  *-------------------------------------------------------------------------
  */

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/pgfreespacemap.sgml,v 2.8 2010/08/17 04:37:21 petere Exp $ -->
+<!-- doc/src/sgml/pgfreespacemap.sgml -->
 
 <sect1 id="pgfreespacemap">
  <title>pg_freespacemap</title>

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/syscache.c,v 1.127 2010/08/06 03:46:23 rhaas Exp $
+ *	  src/backend/utils/cache/syscache.c
  *
  * NOTES
  *	  These routines allow the parser/planner/executor to perform

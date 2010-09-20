@@ -4,7 +4,7 @@
 #
 # Copyright (c) 2008-2010, PostgreSQL Global Development Group
 #
-# $PostgreSQL: pgsql/src/tools/win32tzlist.pl,v 1.1 2010/04/15 11:00:45 mha Exp $
+# src/tools/win32tzlist.pl
 #################################################################
 
 #

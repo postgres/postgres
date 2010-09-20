@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.188 2010/08/21 13:59:44 tgl Exp $
+ *		src/bin/pg_dump/pg_backup_archiver.c
  *
  *-------------------------------------------------------------------------
  */

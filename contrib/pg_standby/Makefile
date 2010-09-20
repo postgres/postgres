@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/contrib/pg_standby/Makefile,v 1.6 2010/05/12 11:33:07 momjian Exp $
+# contrib/pg_standby/Makefile
 
 PGFILEDESC = "pg_standby - supports creation of a warm standby"
 PGAPPICON=win32

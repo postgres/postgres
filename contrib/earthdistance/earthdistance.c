@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/contrib/earthdistance/earthdistance.c,v 1.16 2009/06/11 14:48:51 momjian Exp $ */
+/* contrib/earthdistance/earthdistance.c */
 
 #include "postgres.h"
 

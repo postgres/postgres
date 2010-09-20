@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeSubplan.c,v 1.103 2010/07/28 04:50:50 tgl Exp $
+ *	  src/backend/executor/nodeSubplan.c
  *
  *-------------------------------------------------------------------------
  */

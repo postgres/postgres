@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtcompare.c,v 1.58 2010/01/02 16:57:35 momjian Exp $
+ *	  src/backend/access/nbtree/nbtcompare.c
  *
  * NOTES
  *

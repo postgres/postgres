@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/textsearch.sgml,v 1.59 2010/08/25 21:42:55 tgl Exp $ -->
+<!-- doc/src/sgml/textsearch.sgml -->
 
 <chapter id="textsearch">
  <title>Full Text Search</title>

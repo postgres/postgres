@@ -5,7 +5,7 @@
  * All types that can be handled for host variable declarations has to
  * be handled eventually.
  *
- * $PostgreSQL: pgsql/src/interfaces/ecpg/include/ecpgtype.h,v 1.40 2010/02/26 02:01:31 momjian Exp $
+ * src/interfaces/ecpg/include/ecpgtype.h
  */
 
 /*

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/getrusage.c,v 1.18 2010/01/02 16:58:13 momjian Exp $
+ *	  src/port/getrusage.c
  *
  *-------------------------------------------------------------------------
  */

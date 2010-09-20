@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/filelist.sgml,v 1.70 2010/09/02 17:30:06 tgl Exp $ -->
+<!-- doc/src/sgml/filelist.sgml -->
 
 <!entity history    SYSTEM "history.sgml">
 <!entity info       SYSTEM "info.sgml">

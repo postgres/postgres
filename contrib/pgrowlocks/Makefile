@@ -2,7 +2,7 @@
 #
 # pgrowlocks Makefile
 #
-# $PostgreSQL: pgsql/contrib/pgrowlocks/Makefile,v 1.6 2009/04/28 17:07:50 momjian Exp $
+# contrib/pgrowlocks/Makefile
 #
 #-------------------------------------------------------------------------
 

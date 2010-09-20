@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/backend/storage/smgr/README,v 1.6 2008/08/11 11:05:11 heikki Exp $
+src/backend/storage/smgr/README
 
 Storage Manager
 ===============

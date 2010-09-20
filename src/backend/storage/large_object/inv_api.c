@@ -24,7 +24,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/large_object/inv_api.c,v 1.141 2010/02/26 02:01:00 momjian Exp $
+ *	  src/backend/storage/large_object/inv_api.c
  *
  *-------------------------------------------------------------------------
  */

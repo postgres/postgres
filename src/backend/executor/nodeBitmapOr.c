@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeBitmapOr.c,v 1.13 2010/07/12 17:01:05 tgl Exp $
+ *	  src/backend/executor/nodeBitmapOr.c
  *
  *-------------------------------------------------------------------------
  */

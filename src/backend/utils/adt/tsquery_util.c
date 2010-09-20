@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsquery_util.c,v 1.15 2010/08/03 01:50:27 tgl Exp $
+ *	  src/backend/utils/adt/tsquery_util.c
  *
  *-------------------------------------------------------------------------
  */

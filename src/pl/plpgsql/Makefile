@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/pl/plpgsql/Makefile,v 1.10 2009/08/07 20:50:22 petere Exp $
+# src/pl/plpgsql/Makefile
 #
 #-------------------------------------------------------------------------
 

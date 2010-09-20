@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/src/pl/plperl/text2macro.pl,v 1.3 2010/08/19 05:57:35 petere Exp $
+# src/pl/plperl/text2macro.pl
 
 =head1 NAME
 

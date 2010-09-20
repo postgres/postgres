@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/sources.sgml,v 2.38 2010/09/09 00:48:22 momjian Exp $ -->
+<!-- doc/src/sgml/sources.sgml -->
 
  <chapter id="source">
   <title>PostgreSQL Coding Conventions</title>

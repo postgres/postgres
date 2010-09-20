@@ -6,7 +6,7 @@
  *
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/access/tuptoaster.h,v 1.46 2010/02/26 02:01:21 momjian Exp $
+ * src/include/access/tuptoaster.h
  *
  *-------------------------------------------------------------------------
  */

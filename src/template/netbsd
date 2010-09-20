@@ -1,2 +1,2 @@
-# $PostgreSQL: pgsql/src/template/netbsd,v 1.21 2010/08/19 05:57:35 petere Exp $
+# src/template/netbsd
 # tools/thread/thread_test must be run

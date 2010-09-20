@@ -4,7 +4,7 @@
  *
  * Tatsuo Ishii
  *
- * $PostgreSQL: pgsql/src/backend/utils/mb/win866.c,v 1.1 2005/03/07 04:30:52 momjian Exp $
+ * src/backend/utils/mb/win866.c
  */
 
 #include <stdio.h>

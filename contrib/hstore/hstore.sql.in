@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/contrib/hstore/hstore.sql.in,v 1.15 2010/07/02 20:36:48 rhaas Exp $ */
+/* contrib/hstore/hstore.sql.in */
 
 -- Adjust this setting to control where the objects get created.
 SET search_path = public;

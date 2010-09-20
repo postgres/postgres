@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $PostgreSQL: pgsql/src/tools/pgcvslog,v 1.40 2009/08/29 17:09:20 momjian Exp $
+# src/tools/pgcvslog
 
 # This utility is used to generate a compact list of changes
 # for each release, bjm 2000-02-22

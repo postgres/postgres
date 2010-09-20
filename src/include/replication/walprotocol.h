@@ -5,7 +5,7 @@
  *
  * Portions Copyright (c) 2010-2010, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/replication/walprotocol.h,v 1.2 2010/07/06 19:19:00 momjian Exp $
+ * src/include/replication/walprotocol.h
  *
  *-------------------------------------------------------------------------
  */

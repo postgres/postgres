@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.159 2010/09/13 01:35:46 momjian Exp $ -->
+<!-- doc/src/sgml/backup.sgml -->
 
 <chapter id="backup">
  <title>Backup and Restore</title>

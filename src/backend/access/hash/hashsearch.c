@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/hash/hashsearch.c,v 1.59 2010/01/02 16:57:34 momjian Exp $
+ *	  src/backend/access/hash/hashsearch.c
  *
  *-------------------------------------------------------------------------
  */

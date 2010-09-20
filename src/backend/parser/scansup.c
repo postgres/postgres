@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/scansup.c,v 1.42 2010/07/06 19:18:57 momjian Exp $
+ *	  src/backend/parser/scansup.c
  *
  *-------------------------------------------------------------------------
  */

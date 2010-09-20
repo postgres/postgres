@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1995, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/pl/plperl/plperl.h,v 1.11 2010/01/20 01:08:21 adunstan Exp $
+ * src/pl/plperl/plperl.h
  */
 
 #ifndef PL_PERL_H

@@ -2,7 +2,7 @@
 #
 # pgstattuple Makefile
 #
-# $PostgreSQL: pgsql/contrib/pgstattuple/Makefile,v 1.10 2009/04/28 17:07:50 momjian Exp $
+# contrib/pgstattuple/Makefile
 #
 #-------------------------------------------------------------------------
 

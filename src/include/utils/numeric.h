@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1998-2010, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/utils/numeric.h,v 1.31 2010/08/04 17:35:59 rhaas Exp $
+ * src/include/utils/numeric.h
  *
  *-------------------------------------------------------------------------
  */

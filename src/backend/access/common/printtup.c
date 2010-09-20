@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/common/printtup.c,v 1.106 2010/01/02 16:57:33 momjian Exp $
+ *	  src/backend/access/common/printtup.c
  *
  *-------------------------------------------------------------------------
  */

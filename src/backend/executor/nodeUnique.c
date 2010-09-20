@@ -16,7 +16,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeUnique.c,v 1.64 2010/07/12 17:01:05 tgl Exp $
+ *	  src/backend/executor/nodeUnique.c
  *
  *-------------------------------------------------------------------------
  */

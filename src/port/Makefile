@@ -19,7 +19,7 @@
 # OBJS adds additional object files that are always compiled.
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/port/Makefile,v 1.39 2010/07/02 17:03:30 rhaas Exp $
+#    src/port/Makefile
 #
 #-------------------------------------------------------------------------
 

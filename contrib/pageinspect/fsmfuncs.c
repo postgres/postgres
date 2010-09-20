@@ -12,7 +12,7 @@
  * Copyright (c) 2007-2010, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/contrib/pageinspect/fsmfuncs.c,v 1.4 2010/01/02 16:57:32 momjian Exp $
+ *	  contrib/pageinspect/fsmfuncs.c
  *
  *-------------------------------------------------------------------------
  */

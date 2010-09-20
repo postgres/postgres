@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execJunk.c,v 1.60 2010/01/02 16:57:40 momjian Exp $
+ *	  src/backend/executor/execJunk.c
  *
  *-------------------------------------------------------------------------
  */

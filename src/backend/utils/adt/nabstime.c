@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/nabstime.c,v 1.165 2010/08/03 16:31:02 tgl Exp $
+ *	  src/backend/utils/adt/nabstime.c
  *
  *-------------------------------------------------------------------------
  */

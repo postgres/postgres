@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/timezone/README,v 1.9 2010/04/15 11:00:45 mha Exp $
+src/timezone/README
 
 Timezone
 ========

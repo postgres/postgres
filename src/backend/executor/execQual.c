@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.265 2010/08/26 18:54:37 tgl Exp $
+ *	  src/backend/executor/execQual.c
  *
  *-------------------------------------------------------------------------
  */

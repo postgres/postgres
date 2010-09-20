@@ -7,7 +7,7 @@
  * Copyright (c) 1996-2010, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/comment.c,v 1.119 2010/09/17 02:49:10 rhaas Exp $
+ *	  src/backend/commands/comment.c
  *
  *-------------------------------------------------------------------------
  */

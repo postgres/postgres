@@ -5,7 +5,7 @@
  *
  * Copyright (c) 2004-2010, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/postmaster/syslogger.h,v 1.17 2010/07/16 22:25:51 tgl Exp $
+ * src/include/postmaster/syslogger.h
  *
  *-------------------------------------------------------------------------
  */

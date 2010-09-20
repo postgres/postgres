@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/contrib/sslinfo/sslinfo.sql.in,v 1.5 2010/07/27 23:43:42 rhaas Exp $ */
+/* contrib/sslinfo/sslinfo.sql.in */
 
 -- Adjust this setting to control where the objects get created.
 SET search_path = public;

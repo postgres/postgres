@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			$PostgreSQL: pgsql/src/backend/access/gin/ginscan.c,v 1.27 2010/07/31 00:30:54 tgl Exp $
+ *			src/backend/access/gin/ginscan.c
  *-------------------------------------------------------------------------
  */
 

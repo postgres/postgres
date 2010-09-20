@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_shdepend.c,v 1.45 2010/08/26 19:49:08 alvherre Exp $
+ *	  src/backend/catalog/pg_shdepend.c
  *
  *-------------------------------------------------------------------------
  */

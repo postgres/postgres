@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/win32error.c,v 1.7 2010/01/02 16:58:13 momjian Exp $
+ *	  src/port/win32error.c
  *
  *-------------------------------------------------------------------------
  */

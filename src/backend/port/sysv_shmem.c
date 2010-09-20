@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/port/sysv_shmem.c,v 1.58 2010/08/25 20:10:55 tgl Exp $
+ *	  src/backend/port/sysv_shmem.c
  *
  *-------------------------------------------------------------------------
  */

@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/port/README,v 1.5 2010/08/19 05:57:35 petere Exp $
+src/port/README
 
 libpgport
 =========

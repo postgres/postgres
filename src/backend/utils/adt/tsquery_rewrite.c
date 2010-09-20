@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsquery_rewrite.c,v 1.17 2010/01/02 16:57:55 momjian Exp $
+ *	  src/backend/utils/adt/tsquery_rewrite.c
  *
  *-------------------------------------------------------------------------
  */

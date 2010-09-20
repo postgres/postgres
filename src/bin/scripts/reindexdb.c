@@ -4,7 +4,7 @@
  *
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/scripts/reindexdb.c,v 1.19 2010/01/02 16:58:00 momjian Exp $
+ * src/bin/scripts/reindexdb.c
  *
  *-------------------------------------------------------------------------
  */

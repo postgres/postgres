@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/nodeFuncs.c,v 1.46 2010/02/12 17:33:20 tgl Exp $
+ *	  src/backend/nodes/nodeFuncs.c
  *
  *-------------------------------------------------------------------------
  */

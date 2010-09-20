@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/common/scankey.c,v 1.34 2010/01/02 16:57:33 momjian Exp $
+ *	  src/backend/access/common/scankey.c
  *
  *-------------------------------------------------------------------------
  */

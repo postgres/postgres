@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2003-2010, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/catalog/information_schema.sql,v 1.66 2010/04/28 21:18:07 tgl Exp $
+ * src/backend/catalog/information_schema.sql
  */
 
 /*

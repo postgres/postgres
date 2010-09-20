@@ -2,7 +2,7 @@
 #
 # Makefile for parser
 #
-# $PostgreSQL: pgsql/src/backend/parser/Makefile,v 1.53 2010/01/05 03:56:52 tgl Exp $
+# src/backend/parser/Makefile
 #
 #-------------------------------------------------------------------------
 

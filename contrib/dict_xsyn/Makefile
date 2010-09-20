@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/contrib/dict_xsyn/Makefile,v 1.3 2007/12/02 21:15:38 tgl Exp $
+# contrib/dict_xsyn/Makefile
 
 MODULE_big = dict_xsyn
 OBJS = dict_xsyn.o

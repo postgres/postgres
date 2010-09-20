@@ -4,7 +4,7 @@
  *	controldata functions
  *
  *	Copyright (c) 2010, PostgreSQL Global Development Group
- *	$PostgreSQL: pgsql/contrib/pg_upgrade/controldata.c,v 1.10 2010/09/07 14:10:30 momjian Exp $
+ *	contrib/pg_upgrade/controldata.c
  */
 
 #include "pg_upgrade.h"

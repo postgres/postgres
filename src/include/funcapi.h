@@ -9,7 +9,7 @@
  *
  * Copyright (c) 2002-2010, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/funcapi.h,v 1.32 2010/02/26 02:01:20 momjian Exp $
+ * src/include/funcapi.h
  *
  *-------------------------------------------------------------------------
  */

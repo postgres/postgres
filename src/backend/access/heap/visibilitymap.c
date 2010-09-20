@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/visibilitymap.c,v 1.12 2010/08/19 02:58:37 rhaas Exp $
+ *	  src/backend/access/heap/visibilitymap.c
  *
  * INTERFACE ROUTINES
  *		visibilitymap_clear - clear a bit in the visibility map

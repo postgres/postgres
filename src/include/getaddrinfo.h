@@ -15,7 +15,7 @@
  *
  * Copyright (c) 2003-2010, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/getaddrinfo.h,v 1.27 2010/01/02 16:58:00 momjian Exp $
+ * src/include/getaddrinfo.h
  *
  *-------------------------------------------------------------------------
  */

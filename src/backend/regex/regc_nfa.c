@@ -28,7 +28,7 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/src/backend/regex/regc_nfa.c,v 1.7 2009/06/11 14:49:01 momjian Exp $
+ * src/backend/regex/regc_nfa.c
  *
  *
  * One or two things that technically ought to be in here

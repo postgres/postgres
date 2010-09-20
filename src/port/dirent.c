@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/dirent.c,v 1.7 2010/01/02 16:58:13 momjian Exp $
+ *	  src/port/dirent.c
  *
  *-------------------------------------------------------------------------
  */

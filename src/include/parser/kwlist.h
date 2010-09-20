@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/include/parser/kwlist.h,v 1.13 2010/08/05 04:21:54 petere Exp $
+ *	  src/include/parser/kwlist.h
  *
  *-------------------------------------------------------------------------
  */

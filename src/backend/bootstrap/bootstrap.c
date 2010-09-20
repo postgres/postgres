@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootstrap.c,v 1.262 2010/09/03 01:34:55 tgl Exp $
+ *	  src/backend/bootstrap/bootstrap.c
  *
  *-------------------------------------------------------------------------
  */

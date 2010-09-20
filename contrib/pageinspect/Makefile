@@ -2,7 +2,7 @@
 #
 # pageinspect Makefile
 #
-# $PostgreSQL: pgsql/contrib/pageinspect/Makefile,v 1.5 2010/08/19 05:57:33 petere Exp $
+# contrib/pageinspect/Makefile
 #
 #-------------------------------------------------------------------------
 
