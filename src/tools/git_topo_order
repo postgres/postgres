@@ -1,0 +1,155 @@
+#!/usr/bin/perl
+
+#
+# Display all commits on active branches, merging together commits from
+# different branches that occur close together in time and with identical
+# log messages.  Most of the time, such commits occur in the same order
+# on all branches, and we print them out in that order.  However, if commit
+# A occurs before commit B on branch X and commit B occurs before commit A
+# on branch Y, then there's no ordering which is consistent with both
+# branches.
+#
+# When we encounter a situation where there's no single "best" commit to
+# print next, we print the one that involves the least distortion of the
+# commit order, summed across all branches.  In the event of a further tie,
+# the commit from the newer branch prints first.  It is best not to sort
+# based on timestamp, because git timestamps aren't necessarily in order
+# (since the timestamp is provided by the committer's machine), even though
+# for the portion of the history we imported from CVS, we expect that they
+# will be.
+#
+# Even though we don't use timestamps to order commits, it is used to
+# identify which commits happened at about the same time, for the purpose
+# of matching up commits from different branches.
+#
+
+use strict;
+use warnings;
+require Date::Calc;
+require Getopt::Long;
+require IPC::Open2;
+
+my @BRANCHES = qw(master REL9_0_STABLE REL8_4_STABLE REL8_3_STABLE
+    REL8_2_STABLE REL8_1_STABLE REL8_0_STABLE REL7_4_STABLE);
+
+my $since;
+Getopt::Long::GetOptions('since=s' => \$since) || usage();
+usage() if @ARGV;
+
+my @git = qw(git log --date=iso);
+push @git, '--since=' . $since if defined $since;
+
+my %all_commits;
+my %all_commits_by_branch;
+
+my %commit;
+for my $branch (@BRANCHES) {
+	my $commitnum = 0;
+	IPC::Open2::open2(my $git_out, my $git_in, @git, "origin/$branch")
+		|| die "can't run @git origin/$branch: $!";
+	while (my $line = <$git_out>) {
+		if ($line =~ /^commit\s+(.*)/) {
+			push_commit(\%commit) if %commit;
+			%commit = (
+				'branch' => $branch,
+				'commit' => $1,
+				'message' => '',
+				'commitnum' => $commitnum++,
+			);
+		}
+		elsif ($line =~ /^Author:\s+(.*)/) {
+			$commit{'author'} = $1;
+		}
+		elsif ($line =~ /^Date:\s+(.*)/) {
+			$commit{'date'} = $1;
+		}
+		elsif ($line =~ /^\s+/) {
+			$commit{'message'} .= $line;
+		}
+	}
+}
+
+my %position;
+for my $branch (@BRANCHES) {
+	$position{$branch} = 0;
+}
+while (1) {
+	my $best_branch;
+	my $best_inversions;
+	for my $branch (@BRANCHES) {
+		my $leader = $all_commits_by_branch{$branch}->[$position{$branch}];
+		next if !defined $leader;
+		my $inversions = 0;
+		for my $branch2 (@BRANCHES) {
+			if (defined $leader->{'branch_position'}{$branch2}) {
+				$inversions += $leader->{'branch_position'}{$branch2}
+					- $position{$branch2};
+			}
+		}
+		if (!defined $best_inversions || $inversions < $best_inversions) {
+			$best_branch = $branch;
+			$best_inversions = $inversions;
+		}
+	}
+	last if !defined $best_branch;
+	my $winner =
+		$all_commits_by_branch{$best_branch}->[$position{$best_branch}];
+	print $winner->{'header'};
+	print "Commit-Order-Inversions: $best_inversions\n"
+		if $best_inversions != 0;
+	print $winner->{'message'};
+	$winner->{'done'} = 1;
+	for my $branch (@BRANCHES) {
+		my $leader = $all_commits_by_branch{$branch}->[$position{$branch}];
+		if (defined $leader && $leader->{'done'}) {
+			++$position{$branch};
+			redo;
+		}
+	}
+}
+
+sub push_commit {
+	my ($c) = @_;
+	my $ht = hash_commit($c);
+	my $ts = parse_datetime($c->{'date'});
+	my $cc;
+	for my $candidate (@{$all_commits{$ht}}) {
+		if (abs($ts - $candidate->{'timestamp'}) < 600
+			&& !exists $candidate->{'branch_position'}{$c->{'branch'}})
+		{
+			$cc = $candidate;
+			last;
+		}
+	}
+	if (!defined $cc) {
+		$cc = {
+			'header' => sprintf("Author: %s\n", $c->{'author'}),
+			'message' => $c->{'message'},
+			'timestamp' => $ts
+		};
+		push @{$all_commits{$ht}}, $cc;
+	}
+	$cc->{'header'} .= sprintf "Branch: %s [%s] %s\n",
+		$c->{'branch'}, substr($c->{'commit'}, 0, 9), $c->{'date'};
+	push @{$all_commits_by_branch{$c->{'branch'}}}, $cc;
+	$cc->{'branch_position'}{$c->{'branch'}} =
+		-1+@{$all_commits_by_branch{$c->{'branch'}}};
+}
+
+sub hash_commit {
+	my ($c) = @_;
+	return $c->{'author'} . "\0" . $c->{'message'};
+}
+
+sub parse_datetime {
+	my ($dt) = @_;
+	$dt =~ /^(\d\d\d\d)-(\d\d)-(\d\d)\s+(\d\d):(\d\d):(\d\d)/;
+	return Date::Calc::Mktime($1, $2, $3, $4, $5, $6);
+}
+
+sub usage {
+	print STDERR <<EOM;
+Usage: git-topo-order [--since=SINCE]
+EOM
+	exit 1;
+}
