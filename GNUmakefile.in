@@ -92,7 +92,7 @@ postgresql-test-$(VERSION).tar: distdir
 
 distdir:
 	-rm -rf $(distdir)* $(dummy)
-	for x in `cd $(top_srcdir) && find . -name CVS -prune -o -print`; do \
+	for x in `cd $(top_srcdir) && find . \( -name CVS -prune \) -o \( -name .git -prune \) -o -print`; do \
 	  file=`expr X$$x : 'X\./\(.*\)'`; \
 	  if test -d "$(top_srcdir)/$$file" ; then \
 	    mkdir "$(distdir)/$$file" && chmod 777 "$(distdir)/$$file";	\
@@ -103,7 +103,7 @@ distdir:
 	done
 	$(MAKE) -C $(distdir) distprep
 	$(MAKE) -C $(distdir) distclean
-	rm -f $(distdir)/README.CVS
+	rm -f $(distdir)/README.git
 
 distcheck: $(distdir).tar.gz
 	-rm -rf $(dummy)
