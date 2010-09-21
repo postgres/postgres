@@ -122,7 +122,7 @@ distdir:
 	cp $(distdir)/doc/src/sgml/INSTALL $(distdir)/
 	cp $(distdir)/doc/src/sgml/regress_README $(distdir)/src/test/regress/README
 	$(MAKE) -C $(distdir) distclean
-	rm -f $(distdir)/README.CVS
+	rm -f $(distdir)/README.git
 
 distcheck: dist
 	rm -rf $(dummy)

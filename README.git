@@ -2,13 +2,13 @@
 
 In a release or snapshot tarball of PostgreSQL, documentation files named
 INSTALL and HISTORY will appear in this directory.  However, these files are
-not stored in CVS and so will not be present if you are using a CVS checkout.
-If you are using CVS, you can view the most recent install instructions at:
+not stored in git and so will not be present if you are using a git checkout.
+If you are using git , you can view the most recent install instructions at:
 	http://developer.postgresql.org/docs/postgres/installation.html
 and the current release notes at:
 	http://developer.postgresql.org/docs/postgres/release.html
 
-Users compiling from CVS will also need compatible versions of Bison, Flex,
+Users compiling from git will also need compatible versions of Bison, Flex,
 and Perl, as discussed in the install documentation.  These programs are not
 needed when using a tarball, since the files they are needed to build are
 already present in the tarball.  (On Windows, however, you need Perl anyway.)
