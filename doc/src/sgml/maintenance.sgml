@@ -638,7 +638,7 @@ vacuum threshold = vacuum base threshold + vacuum scale factor * number of tuple
 <programlisting>
 analyze threshold = analyze base threshold + analyze scale factor * number of tuples
 </programlisting>
-    is compared to the total number of tuples inserted or updated
+    is compared to the total number of tuples inserted, updated, or deleted
     since the last <command>ANALYZE</command>.
    </para>
 
