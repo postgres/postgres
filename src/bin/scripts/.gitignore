@@ -1,0 +1,15 @@
+/clusterdb
+/createdb
+/createlang
+/createuser
+/dropdb
+/droplang
+/dropuser
+/reindexdb
+/vacuumdb
+
+/dumputils.c
+/keywords.c
+/kwlookup.c
+/mbprint.c
+/print.c
