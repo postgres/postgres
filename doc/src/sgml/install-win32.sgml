@@ -176,7 +176,7 @@ $ENV{PATH}=$ENV{PATH} . ';c:\some\where\bison\bin';
      <term><productname>Bison</productname> and
       <productname>Flex</productname></term>
      <listitem><para>
-      Bison and Flex are required to build from CVS, but not required when
+      Bison and Flex are required to build from Git, but not required when
       building from a release file. Note that only Bison 1.875 or versions
       2.2 and later will work. Also, Flex version 2.5.31 or later is required.
       Bison can be downloaded from <ulink url="http://gnuwin32.sourceforge.net"></>.

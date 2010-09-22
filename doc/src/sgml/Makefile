@@ -8,7 +8,7 @@
 
 # This makefile is for building and installing the documentation.
 # When a release tarball is created, the documentation files are
-# prepared using the distprep target.  In CVS-based trees these files
+# prepared using the distprep target.  In Git-based trees these files
 # don't exist, unless explicitly built, so we skip the installation in
 # that case.
 
