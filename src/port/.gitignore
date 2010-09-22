@@ -1,0 +1,3 @@
+/libpgport.a
+/libpgport_srv.a
+/pg_config_paths.h
