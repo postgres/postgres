@@ -137,12 +137,12 @@
 
 <!-- appendixes -->
 <!entity contacts   SYSTEM "contacts.sgml">
-<!entity cvs        SYSTEM "cvs.sgml">
 <!entity datetime   SYSTEM "datetime.sgml">
 <!entity docguide   SYSTEM "docguide.sgml">
 <!entity errcodes   SYSTEM "errcodes.sgml">
 <!entity features   SYSTEM "features.sgml">
 <!entity keywords   SYSTEM "keywords.sgml">
+<!entity sourcerepo SYSTEM "sourcerepo.sgml">
 
 <!entity release    SYSTEM "release.sgml">
 <!entity release-9.1    SYSTEM "release-9.1.sgml">
