@@ -255,7 +255,7 @@
   &release;
   &contrib;
   &external-projects;
-  &cvs;
+  &sourcerepo;
   &docguide;
   &acronyms;
 

@@ -228,8 +228,8 @@
       If the function or the options do not exist then your version is
       more than old enough to warrant an upgrade.
       If you run a prepackaged version, such as RPMs, say so, including any
-      subversion the package might have. If you are talking about a CVS
-      snapshot, mention that, including its date and time.
+      subversion the package might have. If you are talking about a Git
+      snapshot, mention that, including the commit hash.
      </para>
 
      <para>
