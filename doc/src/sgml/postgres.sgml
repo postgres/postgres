@@ -252,7 +252,7 @@ $PostgreSQL: pgsql/doc/src/sgml/postgres.sgml,v 1.76 2005/09/12 22:11:38 neilc E
   &keywords;
   &features;
   &release;
-  &cvs;
+  &sourcerepo;
   &docguide;
   &external-projects;
 
