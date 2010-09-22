@@ -1,3 +1,4 @@
 # Exclude all non-pgc files
 *
 !*.pgc
+/test1.pgc
