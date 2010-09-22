@@ -250,7 +250,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/postgres.sgml,v 1.59.2.1 2003/11/04 09:45:2
   &keywords;
   &features;
   &release;
-  &cvs;
+  &sourcerepo;
   &docguide;
 
  </part>
