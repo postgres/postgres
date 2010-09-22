@@ -7,3 +7,5 @@
 /strlcpy.c
 /thread.c
 /wchar.c
+/dllist.c
+/path.c

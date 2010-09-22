@@ -1,3 +1,6 @@
 /segparse.c
+/segparse.h
 /segscan.c
 /seg.sql
+# Generated subdirectories
+/results/

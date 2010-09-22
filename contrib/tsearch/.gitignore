@@ -1,3 +1,4 @@
-/pgcrypto.sql
+/parser.c
+/tsearch.sql
 # Generated subdirectories
 /results/

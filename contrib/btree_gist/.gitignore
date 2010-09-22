@@ -1,1 +1,8 @@
+/btree_int2.c
+/btree_int4.c
+/btree_int8.c
+/btree_float4.c
+/btree_float8.c
 /btree_gist.sql
+# Generated subdirectories
+/results/
