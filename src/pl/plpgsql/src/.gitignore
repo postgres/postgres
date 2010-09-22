@@ -1,2 +1,4 @@
 /pl_gram.c
 /pl_gram.h
+/pl.tab.h
+/pl_scan.c
