@@ -17,7 +17,7 @@
    projects that are maintained outside the core <productname>PostgreSQL</>
    distribution. PgFoundry is built using the GForge software project and is
    similar to <ulink url="http://sourceforge.net">SourceForge.net</> in its
-   feature set, providing mailing lists, forums, bug tracking, CVS, and web
+   feature set, providing mailing lists, forums, bug tracking, SCM, and web
    hosting. If you have a <productname>PostgreSQL</>-related open source
    project that you would like to have hosted at PgFoundy, please feel free
    to create a new project.

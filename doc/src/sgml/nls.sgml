@@ -46,7 +46,7 @@
     <filename>msgmerge</filename>, respectively, in a GNU-compatible
     implementation.  Later, we will try to arrange it so that if you
     use a packaged source distribution, you won't need
-    <filename>xgettext</filename>.  (If working from CVS, you will still need
+    <filename>xgettext</filename>.  (If working from Git, you will still need
     it.)  <application>GNU Gettext 0.10.36</application> or later is currently recommended.
    </para>
 

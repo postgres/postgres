@@ -27,7 +27,7 @@ fi
 
 if test -z "$BISON"; then
   AC_MSG_WARN([
-*** Without Bison you will not be able to build PostgreSQL from CVS nor
+*** Without Bison you will not be able to build PostgreSQL from Git nor
 *** change any of the parser definition files.  You can obtain Bison from
 *** a GNU mirror site.  (If you are using the official distribution of
 *** PostgreSQL then you do not need to worry about this, because the Bison
@@ -89,7 +89,7 @@ fi
 
 if test x"$pgac_cv_path_flex" = x"no"; then
   AC_MSG_WARN([
-*** Without Flex you will not be able to build PostgreSQL from CVS nor
+*** Without Flex you will not be able to build PostgreSQL from Git nor
 *** change any of the scanner definition files.  You can obtain Flex from
 *** a GNU mirror site.  (If you are using the official distribution of
 *** PostgreSQL then you do not need to worry about this because the Flex

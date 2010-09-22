@@ -22,7 +22,7 @@ sourcetree=`cd $1 && pwd`
 
 buildtree=`cd ${2:-'.'} && pwd`
 
-for item in `find "$sourcetree" -type d \( -name CVS -prune -o -print \)`; do
+for item in `find "$sourcetree" -type d \( \( -name CVS -prune \) -o \( -name .git -prune \) -o -print \)`; do
     subdir=`expr "$item" : "$sourcetree\(.*\)"`
     if test ! -d "$buildtree/$subdir"; then
         mkdir -p "$buildtree/$subdir" || exit 1
