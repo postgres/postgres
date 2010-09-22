@@ -252,7 +252,7 @@
   &keywords;
   &features;
   &release;
-  &cvs;
+  &sourcerepo;
   &docguide;
   &external-projects;
 

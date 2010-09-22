@@ -292,8 +292,8 @@ su - postgres
   </para>
 
   <para>
-   If you are building from a <acronym>CVS</acronym> tree instead of
-   using a released source package, or if you want to do development,
+   If you are building from a <productname>Git</productname> tree instead of
+   using a released source package, or if you want to do server development,
    you also need the following packages:
 
    <itemizedlist>
@@ -310,7 +310,7 @@ su - postgres
       </indexterm>
 
       GNU <application>Flex</> and <application>Bison</>
-      are needed to build a CVS checkout or if you changed the actual
+      are needed to build from a Git checkout, or if you changed the actual
       scanner and parser definition files. If you need them, be sure
       to get <application>Flex</> 2.5.4 or later and
       <application>Bison</> 1.875 or later. Other <application>yacc</>
