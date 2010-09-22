@@ -7,3 +7,7 @@
 /strlcpy.c
 /thread.c
 /wchar.c
+/libpq.rc
+/blibpqdll.def
+/libpqddll.def
+/libpqdll.def

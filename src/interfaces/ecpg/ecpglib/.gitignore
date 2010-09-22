@@ -1,9 +1,2 @@
-/libecpgdll.def
-/libecpgddll.def
-/blibecpgdll.def
-/exports.list
-
+/exec.c
 /path.c
-/pgstrcasecmp.c
-/strlcpy.c
-/thread.c
