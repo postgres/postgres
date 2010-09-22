@@ -108,17 +108,6 @@
    </varlistentry>
 
    <varlistentry>
-    <term><acronym>CVS</acronym></term>
-    <listitem>
-     <para>
-      <ulink
-      url="http://en.wikipedia.org/wiki/Concurrent_Versions_System">Concurrent
-      Versions System</ulink>
-     </para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry>
     <term><acronym>DBA</acronym></term>
     <listitem>
      <para>
@@ -244,6 +233,16 @@
     <listitem>
      <para>
       <link linkend="GiST">Generalized Search Tree</link>
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><acronym>Git</acronym></term>
+    <listitem>
+     <para>
+      <ulink
+      url="http://en.wikipedia.org/wiki/Git_(software)">Git</ulink>
      </para>
     </listitem>
    </varlistentry>

@@ -1,7 +1,6 @@
 # $PostgreSQL: pgsql/config/ac_func_accept_argtypes.m4,v 1.6 2003/11/29 19:51:17 pgsql Exp $
 # This comes from the official Autoconf macro archive at
 # <http://research.cys.de/autoconf-archive/>
-# (I removed the $ before the Id CVS keyword below.)
 
 
 dnl @synopsis AC_FUNC_ACCEPT_ARGTYPES
@@ -21,7 +20,7 @@ dnl
 dnl NOTE: This is just a modified version of the AC_FUNC_SELECT_ARGTYPES
 dnl macro. Credit for that one goes to David MacKenzie et. al.
 dnl
-dnl @version Id: ac_func_accept_argtypes.m4,v 1.1 1999/12/03 11:29:29 simons Exp $
+dnl @version $Id: ac_func_accept_argtypes.m4,v 1.1 1999/12/03 11:29:29 simons Exp $
 dnl @author Daniel Richard G. <skunk@mit.edu>
 dnl
 

@@ -24,7 +24,7 @@ fi
 
 if test -z "$PERL"; then
   AC_MSG_WARN([
-*** Without Perl you will not be able to build PostgreSQL from CVS.
+*** Without Perl you will not be able to build PostgreSQL from Git.
 *** You can obtain Perl from any CPAN mirror site.
 *** (If you are using the official distribution of PostgreSQL then you do not
 *** need to worry about this, because the Perl output is pre-generated.)])

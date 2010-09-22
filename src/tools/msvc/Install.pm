@@ -438,6 +438,7 @@ sub CopyIncludeFiles
     while (my $d = readdir($D))
     {
         next if ($d =~ /^\./);
+        next if ($d eq '.git');
         next if ($d eq 'CVS');
         next unless (-d 'src/include/' . $d);
 
