@@ -66,7 +66,7 @@
 
     <listitem>
      <para>
-      Full support for <link linkend="install-win32">64-bit
+      Full support for <link linkend="install-windows">64-bit
       <productname>Windows</></link>.
      </para>
     </listitem>
@@ -2781,7 +2781,7 @@ if TG_OP = 'INSERT' and NEW.col1 = ... then
      <listitem>
       <para>
        Support compiling on <link
-       linkend="install-win32">64-bit
+       linkend="install-windows">64-bit
        <productname>Windows</></link> and running in 64-bit
        mode (Tsutomu Yamada, Magnus Hagander)
       </para>
@@ -2794,7 +2794,7 @@ if TG_OP = 'INSERT' and NEW.col1 = ... then
      <listitem>
       <para>
        Support server builds using <link
-       linkend="install-win32-full"><productname>Visual Studio
+       linkend="install-windows-full"><productname>Visual Studio
        2008</></link> (Magnus Hagander)
       </para>
      </listitem>
