@@ -56,6 +56,9 @@ SELECT time with time zone 'T040506.789-08';
 SELECT time with time zone 'T040506.789 +08';
 SELECT time with time zone 'T040506.789 -08';
 SET DateStyle = 'Postgres, MDY';
+-- Check Julian dates BC
+SELECT date 'J1520447' AS "Confucius' Birthday";
+SELECT date 'J0' AS "Julian Epoch";
 
 --
 -- date, time arithmetic
