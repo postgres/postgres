@@ -5433,6 +5433,7 @@ getForeignDataWrappers(int *numForeignDataWrappers)
 	int			i;
 	PQExpBuffer query = createPQExpBuffer();
 	FdwInfo    *fdwinfo;
+	int			i_tableoid;
 	int			i_oid;
 	int			i_fdwname;
 	int			i_rolname;
@@ -5450,7 +5451,7 @@ getForeignDataWrappers(int *numForeignDataWrappers)
 	/* Make sure we are in proper schema */
 	selectSourceSchema("pg_catalog");
 
-	appendPQExpBuffer(query, "SELECT oid, fdwname, "
+	appendPQExpBuffer(query, "SELECT tableoid, oid, fdwname, "
 		"(%s fdwowner) AS rolname, fdwvalidator::pg_catalog.regproc, fdwacl,"
 					  "array_to_string(ARRAY("
 		 "		SELECT option_name || ' ' || quote_literal(option_value) "
@@ -5466,6 +5467,7 @@ getForeignDataWrappers(int *numForeignDataWrappers)
 
 	fdwinfo = (FdwInfo *) malloc(ntups * sizeof(FdwInfo));
 
+	i_tableoid = PQfnumber(res, "tableoid");
 	i_oid = PQfnumber(res, "oid");
 	i_fdwname = PQfnumber(res, "fdwname");
 	i_rolname = PQfnumber(res, "rolname");
@@ -5476,6 +5478,7 @@ getForeignDataWrappers(int *numForeignDataWrappers)
 	for (i = 0; i < ntups; i++)
 	{
 		fdwinfo[i].dobj.objType = DO_FDW;
+		fdwinfo[i].dobj.catId.tableoid = atooid(PQgetvalue(res, i, i_tableoid));
 		fdwinfo[i].dobj.catId.oid = atooid(PQgetvalue(res, i, i_oid));
 		AssignDumpId(&fdwinfo[i].dobj);
 		fdwinfo[i].dobj.name = strdup(PQgetvalue(res, i, i_fdwname));
@@ -5512,6 +5515,7 @@ getForeignServers(int *numForeignServers)
 	int			i;
 	PQExpBuffer query = createPQExpBuffer();
 	ForeignServerInfo *srvinfo;
+	int			i_tableoid;
 	int			i_oid;
 	int			i_srvname;
 	int			i_rolname;
@@ -5531,7 +5535,7 @@ getForeignServers(int *numForeignServers)
 	/* Make sure we are in proper schema */
 	selectSourceSchema("pg_catalog");
 
-	appendPQExpBuffer(query, "SELECT oid, srvname, "
+	appendPQExpBuffer(query, "SELECT tableoid, oid, srvname, "
 					  "(%s srvowner) AS rolname, "
 					  "srvfdw, srvtype, srvversion, srvacl,"
 					  "array_to_string(ARRAY("
@@ -5548,6 +5552,7 @@ getForeignServers(int *numForeignServers)
 
 	srvinfo = (ForeignServerInfo *) malloc(ntups * sizeof(ForeignServerInfo));
 
+	i_tableoid = PQfnumber(res, "tableoid");
 	i_oid = PQfnumber(res, "oid");
 	i_srvname = PQfnumber(res, "srvname");
 	i_rolname = PQfnumber(res, "rolname");
@@ -5560,6 +5565,7 @@ getForeignServers(int *numForeignServers)
 	for (i = 0; i < ntups; i++)
 	{
 		srvinfo[i].dobj.objType = DO_FOREIGN_SERVER;
+		srvinfo[i].dobj.catId.tableoid = atooid(PQgetvalue(res, i, i_tableoid));
 		srvinfo[i].dobj.catId.oid = atooid(PQgetvalue(res, i, i_oid));
 		AssignDumpId(&srvinfo[i].dobj);
 		srvinfo[i].dobj.name = strdup(PQgetvalue(res, i, i_srvname));
