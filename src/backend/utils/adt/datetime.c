@@ -42,7 +42,7 @@ static int	DecodeTimezone(char *str, int *tzp);
 static const datetkn *datebsearch(const char *key, const datetkn *base, int nel);
 static int DecodeDate(char *str, int fmask, int *tmask, bool *is2digits,
 		   struct pg_tm * tm);
-static int ValidateDate(int fmask, bool is2digits, bool bc,
+static int ValidateDate(int fmask, bool isjulian, bool is2digits, bool bc,
 			 struct pg_tm * tm);
 static void TrimTrailingZeros(char *str);
 static void AppendSeconds(char *cp, int sec, fsec_t fsec,
@@ -795,6 +795,7 @@ DecodeDateTime(char **field, int *ftype, int nf,
 	int			dterr;
 	int			mer = HR24;
 	bool		haveTextMonth = FALSE;
+	bool		isjulian = FALSE;
 	bool		is2digits = FALSE;
 	bool		bc = FALSE;
 	pg_tz	   *namedTz = NULL;
@@ -833,10 +834,12 @@ DecodeDateTime(char **field, int *ftype, int nf,
 
 					errno = 0;
 					val = strtoi(field[i], &cp, 10);
-					if (errno == ERANGE)
+					if (errno == ERANGE || val < 0)
 						return DTERR_FIELD_OVERFLOW;
 
 					j2date(val, &tm->tm_year, &tm->tm_mon, &tm->tm_mday);
+					isjulian = TRUE;
+
 					/* Get the time zone from the end of the string */
 					dterr = DecodeTimezone(cp, tzp);
 					if (dterr)
@@ -1065,11 +1068,13 @@ DecodeDateTime(char **field, int *ftype, int nf,
 							break;
 
 						case DTK_JULIAN:
-							/***
-							 * previous field was a label for "julian date"?
-							 ***/
+							/* previous field was a label for "julian date" */
+							if (val < 0)
+								return DTERR_FIELD_OVERFLOW;
 							tmask = DTK_DATE_M;
 							j2date(val, &tm->tm_year, &tm->tm_mon, &tm->tm_mday);
+							isjulian = TRUE;
+
 							/* fractional Julian Day? */
 							if (*cp == '.')
 							{
@@ -1361,7 +1366,7 @@ DecodeDateTime(char **field, int *ftype, int nf,
 	}							/* end loop over fields */
 
 	/* do final checking/adjustment of Y/M/D fields */
-	dterr = ValidateDate(fmask, is2digits, bc, tm);
+	dterr = ValidateDate(fmask, isjulian, is2digits, bc, tm);
 	if (dterr)
 		return dterr;
 
@@ -1564,6 +1569,7 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 	int			i;
 	int			val;
 	int			dterr;
+	bool		isjulian = FALSE;
 	bool		is2digits = FALSE;
 	bool		bc = FALSE;
 	int			mer = HR24;
@@ -1795,11 +1801,13 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 							break;
 
 						case DTK_JULIAN:
-							/***
-							 * previous field was a label for "julian date"?
-							 ***/
+							/* previous field was a label for "julian date" */
+							if (val < 0)
+								return DTERR_FIELD_OVERFLOW;
 							tmask = DTK_DATE_M;
 							j2date(val, &tm->tm_year, &tm->tm_mon, &tm->tm_mday);
+							isjulian = TRUE;
+
 							if (*cp == '.')
 							{
 								double		time;
@@ -2045,7 +2053,7 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 	}							/* end loop over fields */
 
 	/* do final checking/adjustment of Y/M/D fields */
-	dterr = ValidateDate(fmask, is2digits, bc, tm);
+	dterr = ValidateDate(fmask, isjulian, is2digits, bc, tm);
 	if (dterr)
 		return dterr;
 
@@ -2247,11 +2255,16 @@ DecodeDate(char *str, int fmask, int *tmask, bool *is2digits,
  * Return 0 if okay, a DTERR code if not.
  */
 static int
-ValidateDate(int fmask, bool is2digits, bool bc, struct pg_tm * tm)
+ValidateDate(int fmask, bool isjulian, bool is2digits, bool bc,
+			 struct pg_tm * tm)
 {
 	if (fmask & DTK_M(YEAR))
 	{
-		if (bc)
+		if (isjulian)
+		{
+			/* tm_year is correct and should not be touched */
+		}
+		else if (bc)
 		{
 			/* there is no year zero in AD/BC notation */
 			if (tm->tm_year <= 0)
