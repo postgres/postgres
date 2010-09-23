@@ -2090,7 +2090,10 @@ ProcessIncomingNotify(void)
 {
 	bool		catchup_enabled;
 
-	/* Do nothing if we aren't actively listening */
+	/* We *must* reset the flag */
+	notifyInterruptOccurred = 0;
+
+	/* Do nothing else if we aren't actively listening */
 	if (listenChannels == NIL)
 		return;
 
@@ -2101,8 +2104,6 @@ ProcessIncomingNotify(void)
 		elog(DEBUG1, "ProcessIncomingNotify");
 
 	set_ps_display("notify interrupt", false);
-
-	notifyInterruptOccurred = 0;
 
 	/*
 	 * We must run asyncQueueReadAllNotifications inside a transaction, else
