@@ -372,7 +372,7 @@ set_append_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 		childpath = childrel->cheapest_total_path;
 		if (IsA(childpath, AppendPath))
 			subpaths = list_concat(subpaths,
-								   ((AppendPath *) childpath)->subpaths);
+							list_copy(((AppendPath *) childpath)->subpaths));
 		else
 			subpaths = lappend(subpaths, childpath);
 
