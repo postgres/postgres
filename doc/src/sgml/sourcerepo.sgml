@@ -4,24 +4,25 @@
  <title>The Source Code Repository</title>
 
  <para>
-  The <productname>PostgreSQL</productname> source code is stored and managed using the
-  <productname>Git</productname> version control system. An public mirror of this
-  is available and updated within a minute of the master repository.
+  The <productname>PostgreSQL</productname> source code is stored and managed
+  using the <productname>Git</productname> version control system. A public
+  mirror of the master repository is available; it is updated within a minute
+  of any change to the master repository.
  </para>
 
  <para>
   Our wiki, <ulink
   url="http://wiki.postgresql.org/wiki/Working_with_Git"></ulink>,
-  has additional details on working with Git.
+  has some discussion on working with Git.
  </para>
 
   <para>
    Note that building <productname>PostgreSQL</productname> from the source
-   repository requires reasonably up-to-date versions of <application>bison</>
-   and <application>flex</>. These tools are not needed to build from a
-   distribution tarball since their output is included in the file.
-   You will need Perl as well, but otherwise the tool requirements are the
-   same.
+   repository requires reasonably up-to-date versions of <application>bison</>,
+   <application>flex</>, and <application>Perl</>. These tools are not needed
+   to build from a distribution tarball since the files they are used to build
+   are included in the tarball.  Other tool requirements are the same as shown
+   in <xref linkend="installation">.
   </para>
 
  <sect1 id="git">
@@ -29,7 +30,7 @@
 
   <para>
    With <productname>Git</> you will make a copy of the entire code repository
-   to your local machine, so you will have access to all history and branches
+   on your local machine, so you will have access to all history and branches
    offline. This is the fastest and most flexible way to develop or test
    patches.
   </para>
@@ -39,16 +40,16 @@
 
    <step>
     <para>
-     You will need an installed version of <productname>Git</>, which you can get
-     from <ulink url="http://git-scm.com"></ulink>. Many systems also have a recent
-     version of <application>Git</> installed by default, or available in their
-     package repository system.
+     You will need an installed version of <productname>Git</>, which you can
+     get from <ulink url="http://git-scm.com"></ulink>. Many systems already
+     have a recent version of <application>Git</> installed by default, or
+     available in their package distribution system.
     </para>
    </step>
 
    <step>
     <para>
-     To being using the Git repository, make a clone of the official mirror:
+     To begin using the Git repository, make a clone of the official mirror:
 
 <programlisting>
 git clone git://git.postgresql.org/git/postgresql.git
@@ -56,12 +57,14 @@ git clone git://git.postgresql.org/git/postgresql.git
 
      This will copy the full repository to your local machine, so it may take
      a while to complete, especially if you have a slow Internet connection.
+     The files will be placed in a new subdirectory <filename>postgresql</> of
+     your current directory.
     </para>
 
     <para>
-     The Git mirror can also be reached via the HTTP protocol in case for example
-     a firewall is blocking access to the Git protocol. Just replace the URL
-     like:
+     The Git mirror can also be reached via the HTTP protocol, if for example
+     a firewall is blocking access to the Git protocol. Just change the URL
+     prefix to <literal>http</>, as in:
 
 <programlisting>
 git clone http://git.postgresql.org/git/postgresql.git
@@ -83,10 +86,11 @@ git fetch
     </para>
    </step>
   </procedure>
+
   <para>
    <productname>Git</> can do a lot more things than just fetch the source. For
-   more information, consult the man pages for the product, or the website at
-   <ulink url="http://git-scm.com"></>.
+   more information, consult the <productname>Git</> man pages, or see the
+   website at <ulink url="http://git-scm.com"></>.
   </para>
  </sect1>
 
