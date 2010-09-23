@@ -1352,12 +1352,15 @@ _outFromExpr(StringInfo str, FromExpr *node)
 /*
  * print the basic stuff of all nodes that inherit from Path
  *
- * Note we do NOT print the parent, else we'd be in infinite recursion
+ * Note we do NOT print the parent, else we'd be in infinite recursion.
+ * We can print the parent's relids for identification purposes, though.
  */
 static void
 _outPathInfo(StringInfo str, Path *node)
 {
 	WRITE_ENUM_FIELD(pathtype, NodeTag);
+	appendStringInfo(str, " :parent_relids ");
+	_outBitmapset(str, node->parent->relids);
 	WRITE_FLOAT_FIELD(startup_cost, "%.2f");
 	WRITE_FLOAT_FIELD(total_cost, "%.2f");
 	WRITE_NODE_FIELD(pathkeys);
