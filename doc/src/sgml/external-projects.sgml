@@ -145,7 +145,7 @@
   <para>
    <productname>PostgreSQL</productname> includes several procedural
    languages with the base distribution: <link
-   linkend="plpgsql">PL/PgSQL</link>, <link linkend="pltcl">PL/Tcl</link>,
+   linkend="plpgsql">PL/pgSQL</link>, <link linkend="pltcl">PL/Tcl</link>,
    <link linkend="plperl">PL/Perl</link>, and <link
    linkend="plpython">PL/Python</link>.
   </para>

@@ -1420,7 +1420,7 @@ insert into IFace values ('IF', 'orion', 'ethernet_interface_name_too_long', '')
 
 --
 -- The following tests are unrelated to the scenario outlined above;
--- they merely exercise specific parts of PL/PgSQL
+-- they merely exercise specific parts of PL/pgSQL
 --
 
 --

@@ -1212,7 +1212,7 @@
 
     <listitem>
      <para>
-      Fix PL/PgSQL to not fail when a <literal>FOR</> loop's target variable
+      Fix PL/pgSQL to not fail when a <literal>FOR</> loop's target variable
       is a record containing composite-type fields (Tom)
      </para>
     </listitem>
@@ -4343,7 +4343,7 @@ SELECT CURRENT_TIMESTAMP AT TIME ZONE 'Europe/London';
 
      <listitem>
       <para>
-       Allow SQL and PL/PgSQL functions to use <command>OUT</> and
+       Allow SQL and PL/pgSQL functions to use <command>OUT</> and
        <command>INOUT</> parameters (Tom)
       </para>
       <para>
@@ -4378,12 +4378,12 @@ SELECT CURRENT_TIMESTAMP AT TIME ZONE 'Europe/London';
    </sect3>
 
    <sect3>
-    <title>PL/PgSQL Server-Side Language Changes</title>
+    <title>PL/pgSQL Server-Side Language Changes</title>
     <itemizedlist>
 
      <listitem>
       <para>
-       Overhaul the memory management of PL/PgSQL functions (Neil)
+       Overhaul the memory management of PL/pgSQL functions (Neil)
       </para>
       <para>
        The parsetree of each function is now stored in a separate
@@ -4426,7 +4426,7 @@ SELECT CURRENT_TIMESTAMP AT TIME ZONE 'Europe/London';
      <listitem>
       <para>
        Add support for an optional <command>INTO</> clause to
-       PL/PgSQL's <command>EXECUTE</> statement (Pavel Stehule, Neil)
+       PL/pgSQL's <command>EXECUTE</> statement (Pavel Stehule, Neil)
       </para>
      </listitem>
 

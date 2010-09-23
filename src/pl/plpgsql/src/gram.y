@@ -3058,11 +3058,11 @@ make_scalar_list1(char *initial_name,
 }
 
 /*
- * When the PL/PgSQL parser expects to see a SQL statement, it is very
+ * When the PL/pgSQL parser expects to see a SQL statement, it is very
  * liberal in what it accepts; for example, we often assume an
  * unrecognized keyword is the beginning of a SQL statement. This
  * avoids the need to duplicate parts of the SQL grammar in the
- * PL/PgSQL grammar, but it means we can accept wildly malformed
+ * PL/pgSQL grammar, but it means we can accept wildly malformed
  * input. To try and catch some of the more obviously invalid input,
  * we run the strings we expect to be SQL statements through the main
  * SQL parser.
@@ -3071,7 +3071,7 @@ make_scalar_list1(char *initial_name,
  * any database access and does not check any semantic rules, it just
  * checks for basic syntactic correctness. We do this here, rather
  * than after parsing has finished, because a malformed SQL statement
- * may cause the PL/PgSQL parser to become confused about statement
+ * may cause the PL/pgSQL parser to become confused about statement
  * borders. So it is best to bail out as early as we can.
  *
  * It is assumed that "stmt" represents a copy of the function source text

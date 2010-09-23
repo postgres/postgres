@@ -2689,7 +2689,7 @@ WITH w AS (SELECT * FROM foo) SELECT * FROM w, bar ... FOR UPDATE
       </para>
 
       <para>
-       In particular, this means that functions written in PL/PgSQL
+       In particular, this means that functions written in PL/pgSQL
        and other PL languages can now be called this way.
       </para>
      </listitem>
@@ -3815,7 +3815,7 @@ WITH w AS (SELECT * FROM foo) SELECT * FROM w, bar ... FOR UPDATE
     </sect4>
 
     <sect4>
-     <title>PL/PgSQL Server-Side Language</title>
+     <title>PL/pgSQL Server-Side Language</title>
      <itemizedlist>
 
       <listitem>

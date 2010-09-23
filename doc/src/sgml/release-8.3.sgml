@@ -2239,7 +2239,7 @@
 
     <listitem>
      <para>
-      Fix PL/PgSQL to not fail when a <literal>FOR</> loop's target variable
+      Fix PL/pgSQL to not fail when a <literal>FOR</> loop's target variable
       is a record containing composite-type fields (Tom)
      </para>
     </listitem>
@@ -3914,7 +3914,7 @@ current_date &lt; 2017-11-17
       </para>
 
       <para>
-       Previously PL/PgSQL functions that referenced temporary tables
+       Previously PL/pgSQL functions that referenced temporary tables
        would fail if the temporary table was dropped and recreated
        between function invocations, unless <literal>EXECUTE</> was
        used.  This improvement fixes that problem and many related issues.
@@ -4740,7 +4740,7 @@ current_date &lt; 2017-11-17
        The first request for statistics in a transaction takes a statistics
        snapshot that does not change during the transaction.  This function
        allows the snapshot to be discarded and a new snapshot loaded during
-       the next statistics query. This is particularly useful for PL/PgSQL
+       the next statistics query. This is particularly useful for PL/pgSQL
        functions, which are confined to a single transaction.
       </para>
      </listitem>
@@ -4835,7 +4835,7 @@ current_date &lt; 2017-11-17
    </sect3>
 
    <sect3>
-    <title>PL/PgSQL Server-Side Language</title>
+    <title>PL/pgSQL Server-Side Language</title>
     <itemizedlist>
 
      <listitem>
@@ -4848,7 +4848,7 @@ current_date &lt; 2017-11-17
      <listitem>
       <para>
        Allow <literal>IN</literal> as an alternative to
-       <literal>FROM</literal> in PL/PgSQL's <command>FETCH</command>
+       <literal>FROM</literal> in PL/pgSQL's <command>FETCH</command>
        statement, for consistency with the backend's
        <command>FETCH</command> command (Pavel Stehule)
       </para>
@@ -4856,7 +4856,7 @@ current_date &lt; 2017-11-17
 
      <listitem>
       <para>
-       Add <command>MOVE</command> to PL/PgSQL (Magnus, Pavel Stehule,
+       Add <command>MOVE</command> to PL/pgSQL (Magnus, Pavel Stehule,
        Neil)
       </para>
      </listitem>
@@ -4867,7 +4867,7 @@ current_date &lt; 2017-11-17
       </para>
 
       <para>
-       This adds convenient syntax for PL/PgSQL set-returning functions
+       This adds convenient syntax for PL/pgSQL set-returning functions
        that want to return the result of a query.  <command>RETURN QUERY</>
        is easier and more efficient than a loop
        around <command>RETURN NEXT</command>.

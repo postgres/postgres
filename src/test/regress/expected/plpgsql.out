@@ -1541,7 +1541,7 @@ insert into IFace values ('IF', 'orion', 'ethernet_interface_name_too_long', '')
 ERROR:  IFace slotname "IF.orion.ethernet_interface_name_too_long" too long (20 char max)
 --
 -- The following tests are unrelated to the scenario outlined above;
--- they merely exercise specific parts of PL/PgSQL
+-- they merely exercise specific parts of PL/pgSQL
 --
 --
 -- Test recursion, per bug report 7-Sep-01

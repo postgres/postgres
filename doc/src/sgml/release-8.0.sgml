@@ -2512,7 +2512,7 @@ when opening the file fails</para></listitem>
 constraints more reliably</para></listitem>
 <listitem><para>Fix password prompting in <application>pg_restore</> on
 Windows</para></listitem>
-<listitem><para>Fix PL/PgSQL to handle <literal>var := var</> correctly when
+<listitem><para>Fix PL/pgSQL to handle <literal>var := var</> correctly when
 the variable is of pass-by-reference type</para></listitem>
 <listitem><para>Fix PL/Perl <literal>%_SHARED</> so it's actually
 shared</para></listitem>

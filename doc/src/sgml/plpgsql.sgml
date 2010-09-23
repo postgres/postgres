@@ -1139,17 +1139,17 @@ EXECUTE 'SELECT count(*) FROM '
 
     <indexterm>
      <primary>quote_ident</primary>
-     <secondary>use in PL/PgSQL</secondary>
+     <secondary>use in PL/pgSQL</secondary>
     </indexterm>
 
     <indexterm>
      <primary>quote_literal</primary>
-     <secondary>use in PL/PgSQL</secondary>
+     <secondary>use in PL/pgSQL</secondary>
     </indexterm>
 
     <indexterm>
      <primary>quote_nullable</primary>
-     <secondary>use in PL/PgSQL</secondary>
+     <secondary>use in PL/pgSQL</secondary>
     </indexterm>
 
     <para>
@@ -1492,11 +1492,11 @@ RETURN <replaceable>expression</replaceable>;
      <title><command>RETURN NEXT</> and <command>RETURN QUERY</command></title>
     <indexterm>
      <primary>RETURN NEXT</primary>
-     <secondary>in PL/PgSQL</secondary>
+     <secondary>in PL/pgSQL</secondary>
     </indexterm>
     <indexterm>
      <primary>RETURN QUERY</primary>
-     <secondary>in PL/PgSQL</secondary>
+     <secondary>in PL/pgSQL</secondary>
     </indexterm>
 
 <synopsis>
@@ -2220,7 +2220,7 @@ END LOOP <optional> <replaceable>label</replaceable> </optional>;
 
     <indexterm>
      <primary>exceptions</primary>
-     <secondary>in PL/PgSQL</secondary>
+     <secondary>in PL/pgSQL</secondary>
     </indexterm>
 
     <para>
@@ -2898,7 +2898,7 @@ END LOOP <optional> <replaceable>label</replaceable> </optional>;
 
    <indexterm>
     <primary>reporting errors</primary>
-    <secondary>in PL/PgSQL</secondary>
+    <secondary>in PL/pgSQL</secondary>
    </indexterm>
 
    <para>

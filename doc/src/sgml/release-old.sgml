@@ -692,7 +692,7 @@ pages</para></listitem>
 enabled</para></listitem>
 <listitem><para>Various memory leakage fixes</para></listitem>
 <listitem><para>Various portability improvements</para></listitem>
-<listitem><para>Fix PL/PgSQL to handle <literal>var := var</> correctly when
+<listitem><para>Fix PL/pgSQL to handle <literal>var := var</> correctly when
 the variable is of pass-by-reference type</para></listitem>
 </itemizedlist>
 

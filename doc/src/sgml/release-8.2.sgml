@@ -1661,7 +1661,7 @@
 
     <listitem>
      <para>
-      Fix PL/PgSQL to not fail when a <literal>FOR</> loop's target variable
+      Fix PL/pgSQL to not fail when a <literal>FOR</> loop's target variable
       is a record containing composite-type fields (Tom)
      </para>
     </listitem>
@@ -4883,7 +4883,7 @@
    </sect3>
 
    <sect3>
-    <title>PL/PgSQL Server-Side Language Changes</title>
+    <title>PL/pgSQL Server-Side Language Changes</title>
     <itemizedlist>
 
      <listitem>
@@ -5448,7 +5448,7 @@
        linkend="guc-local-preload-libraries"><varname>local_preload_libraries</></link>
        that allows libraries to be loaded into specific sessions without
        explicit cooperation from the client application.  This allows
-       external add-ons to implement features such as a PL/PgSQL debugger.
+       external add-ons to implement features such as a PL/pgSQL debugger.
       </para>
      </listitem>
 

@@ -1948,7 +1948,7 @@
     </itemizedlist>
 
     <sect4>
-    <title><link linkend="plpgsql">PL/PgSQL</link> Server-Side
+    <title><link linkend="plpgsql">PL/pgSQL</link> Server-Side
     Language</title>
 
     <itemizedlist>

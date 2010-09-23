@@ -2064,7 +2064,7 @@ static int
 exec_stmt_return(PLpgSQL_execstate *estate, PLpgSQL_stmt_return *stmt)
 {
 	/*
-	 * If processing a set-returning PL/PgSQL function, the final RETURN
+	 * If processing a set-returning PL/pgSQL function, the final RETURN
 	 * indicates that the function is finished producing tuples.  The rest of
 	 * the work will be done at the top level.
 	 */
