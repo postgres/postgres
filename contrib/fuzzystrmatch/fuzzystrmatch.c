@@ -277,15 +277,25 @@ levenshtein_internal(text *s, text *t,
 	++n;
 
 	/*
-	 * Instead of building an (m+1)x(n+1) array, we'll use two different
-	 * arrays of size m+1 for storing accumulated values. At each step one
-	 * represents the "previous" row and one is the "current" row of the
-	 * notional large array.
+	 * One way to compute Levenshtein distance is to incrementally construct
+	 * an (m+1)x(n+1) matrix where cell (i, j) represents the minimum number
+	 * of operations required to transform the first i characters of s into
+	 * the first j characters of t.  The last column of the final row is the
+	 * answer.
+	 *
+	 * We use that algorithm here with some modification.  In lieu of holding
+	 * the entire array in memory at once, we'll just use two arrays of size
+	 * m+1 for storing accumulated values. At each step one array represents
+	 * the "previous" row and one is the "current" row of the notional large
+	 * array.
 	 */
 	prev = (int *) palloc(2 * m * sizeof(int));
 	curr = prev + m;
 
-	/* Initialize the "previous" row to 0..cols */
+	/*
+	 * To transform the first i characters of s into the first 0 characters
+	 * of t, we must perform i deletions.
+	 */
 	for (i = 0; i < m; i++)
 		prev[i] = i * del_c;
 
@@ -297,8 +307,8 @@ levenshtein_internal(text *s, text *t,
 		int			y_char_len = n != t_bytes + 1 ? pg_mblen(y) : 1;
 
 		/*
-		 * First cell must increment sequentially, as we're on the j'th row of
-		 * the (m+1)x(n+1) array.
+		 * To transform the first 0 characters of s into the first j
+		 * characters of t, we must perform j insertions.
 		 */
 		curr[0] = j * ins_c;
 
