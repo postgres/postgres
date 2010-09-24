@@ -1,3 +1,22 @@
-# Exclude all non-pgc files
-*
-!*.pgc
+/array_of_struct
+/array_of_struct.c
+/autoprep
+/autoprep.c
+/comment
+/comment.c
+/cursor
+/cursor.c
+/define
+/define.c
+/init
+/init.c
+/outofscope
+/outofscope.c
+/strings
+/strings.c
+/type
+/type.c
+/variable
+/variable.c
+/whenever
+/whenever.c

@@ -1,3 +1,10 @@
-# Exclude all non-pgc files
-*
-!*.pgc
+/alloc
+/alloc.c
+/descriptor
+/descriptor.c
+/prep
+/prep.c
+/thread
+/thread.c
+/thread_implicit
+/thread_implicit.c
