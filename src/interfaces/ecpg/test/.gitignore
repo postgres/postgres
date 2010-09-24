@@ -1,8 +1,4 @@
 /pg_regress
-
-# Exclude all C files in subdirectories
-/*/*.c
-
 # Exclude subdirectories
 /log/
 /results/
