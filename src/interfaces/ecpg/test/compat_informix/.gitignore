@@ -1,3 +1,18 @@
-# Exclude all non-pgc files
-*
-!*.pgc
+/charfuncs
+/charfuncs.c
+/dec_test
+/dec_test.c
+/describe
+/describe.c
+/rfmtdate
+/rfmtdate.c
+/rfmtlong
+/rfmtlong.c
+/rnull
+/rnull.c
+/sqlda
+/sqlda.c
+/test_informix
+/test_informix.c
+/test_informix2
+/test_informix2.c
