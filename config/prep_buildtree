@@ -22,7 +22,11 @@ sourcetree=`cd $1 && pwd`
 
 buildtree=`cd ${2:-'.'} && pwd`
 
-for item in `find "$sourcetree" -type d \( \( -name CVS -prune \) -o \( -name .git -prune \) -o -print \)`; do
+# We must not auto-create the subdirectories holding built documentation.
+# If we did, it would interfere with installation of prebuilt docs from
+# the source tree, if a VPATH build is done from a distribution tarball.
+# See bug #5595.
+for item in `find "$sourcetree" -type d \( \( -name CVS -prune \) -o \( -name .git -prune \) -o \( -path "$sourcetree/doc/src/sgml/*" -prune \) -o -print \)`; do
     subdir=`expr "$item" : "$sourcetree\(.*\)"`
     if test ! -d "$buildtree/$subdir"; then
         mkdir -p "$buildtree/$subdir" || exit 1
@@ -37,14 +41,5 @@ for item in `find "$sourcetree" -name Makefile -print -o -name GNUmakefile -prin
         fi
     fi
 done
-
-# We must not auto-create the subdirectories holding built documentation.
-# If we did, it would interfere with installation of prebuilt docs from
-# the source tree, if a VPATH build is done from a distribution tarball.
-# See bug #5595.
-rmdir "$buildtree/doc/src/sgml/html" 2>/dev/null
-rmdir "$buildtree/doc/src/sgml/man1" 2>/dev/null
-rmdir "$buildtree/doc/src/sgml/man3" 2>/dev/null
-rmdir "$buildtree/doc/src/sgml/man7" 2>/dev/null
 
 exit 0
