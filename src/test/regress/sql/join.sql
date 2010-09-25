@@ -644,3 +644,18 @@ SELECT * FROM b LEFT JOIN a ON (b.a_id = a.id) WHERE (a.id IS NULL OR a.id > 0);
 SELECT b.* FROM b LEFT JOIN a ON (b.a_id = a.id) WHERE (a.id IS NULL OR a.id > 0);
 
 rollback;
+
+-- another join removal bug: this is not optimizable, either
+begin;
+
+create temp table innertab (id int8 primary key, dat1 int8);
+insert into innertab values(123, 42);
+
+SELECT * FROM
+    (SELECT 1 AS x) ss1
+  LEFT JOIN
+    (SELECT q1, q2, COALESCE(dat1, q1) AS y
+     FROM int8_tbl LEFT JOIN innertab ON q2 = id) ss2
+  ON true;
+
+rollback;
