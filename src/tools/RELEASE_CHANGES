@@ -6,7 +6,7 @@ For All Releases (major, minor, beta, RC)
 	  (by packager) (beta)
 
 * Release notes
-	o run git log and, if useful, src/tools/git_topo_order
+	o run git log and, if useful, src/tools/git_changelog
 	o update doc/src/sgml/release.sgml
 	o run spellchecker on result
 	o add SGML markup
@@ -31,7 +31,7 @@ For Major Releases
 (in addition to the above)
 
 * Release notes
-	o use git log or src/tools/git_topo_order to find the relevant commits
+	o use git log or src/tools/git_changelog to find the relevant commits
 	o check completion of items that have been marked as completed at
 	  http://wiki.postgresql.org/wiki/Todo
 	o remove completed TODO items
@@ -76,7 +76,7 @@ Starting a New Development Cycle
 Creating Back-Branch Release Notes
 ==================================
 
-* Run src/tools/git_topo_order to generate a list of relevant commits
+* Run src/tools/git_changelog to generate a list of relevant commits
 
 * On the git master branch, edit and create SGML markup for the most recent
   branch in that branch's release-N.N.sgml file

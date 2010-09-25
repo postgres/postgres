@@ -1,6 +1,8 @@
 #!/usr/bin/perl
 
 #
+# src/tools/git_changelog
+#
 # Display all commits on active branches, merging together commits from
 # different branches that occur close together in time and with identical
 # log messages.  Most of the time, such commits occur in the same order
@@ -18,7 +20,7 @@
 # for the portion of the history we imported from CVS, we expect that they
 # will be.
 #
-# Even though we don't use timestamps to order commits, it is used to
+# Even though we don't use timestamps to order commits, they are used to
 # identify which commits happened at about the same time, for the purpose
 # of matching up commits from different branches.
 #
@@ -29,8 +31,12 @@ require Date::Calc;
 require Getopt::Long;
 require IPC::Open2;
 
+# Adjust this list when the set of active branches changes.
 my @BRANCHES = qw(master REL9_0_STABLE REL8_4_STABLE REL8_3_STABLE
     REL8_2_STABLE REL8_1_STABLE REL8_0_STABLE REL7_4_STABLE);
+
+# Might want to make this parameter user-settable.
+my $timestamp_slop = 600;
 
 my $since;
 Getopt::Long::GetOptions('since=s' => \$since) || usage();
@@ -114,7 +120,7 @@ sub push_commit {
 	my $ts = parse_datetime($c->{'date'});
 	my $cc;
 	for my $candidate (@{$all_commits{$ht}}) {
-		if (abs($ts - $candidate->{'timestamp'}) < 600
+		if (abs($ts - $candidate->{'timestamp'}) < $timestamp_slop
 			&& !exists $candidate->{'branch_position'}{$c->{'branch'}})
 		{
 			$cc = $candidate;
@@ -149,7 +155,7 @@ sub parse_datetime {
 
 sub usage {
 	print STDERR <<EOM;
-Usage: git-topo-order [--since=SINCE]
+Usage: git_changelog [--since=SINCE]
 EOM
 	exit 1;
 }
