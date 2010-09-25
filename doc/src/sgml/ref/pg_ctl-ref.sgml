@@ -21,14 +21,14 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
   <cmdsynopsis>
-
    <command>pg_ctl</command>
    <arg choice="plain">init[db]</arg>
    <arg>-s</arg>
    <arg>-D <replaceable>datadir</replaceable></arg>
    <arg>-o <replaceable>options</replaceable></arg>
-   <sbr>
+  </cmdsynopsis>
 
+  <cmdsynopsis>
    <command>pg_ctl</command>
    <arg choice="plain">start</arg>
    <arg>-w</arg>
@@ -39,8 +39,9 @@ PostgreSQL documentation
    <arg>-o <replaceable>options</replaceable></arg>
    <arg>-p <replaceable>path</replaceable></arg>
    <arg>-c</arg>
-   <sbr>
+  </cmdsynopsis>
 
+  <cmdsynopsis>
    <command>pg_ctl</command>
    <arg choice="plain">stop</arg>
    <arg>-W</arg>
@@ -54,8 +55,9 @@ PostgreSQL documentation
        <arg>i[mmediate]</arg>
      </group>
    </arg>
-   <sbr>
+  </cmdsynopsis>
 
+  <cmdsynopsis>
    <command>pg_ctl</command>
    <arg choice="plain">restart</arg>
    <arg>-w</arg>
@@ -71,25 +73,29 @@ PostgreSQL documentation
      </group>
    </arg>
    <arg>-o <replaceable>options</replaceable></arg>
-   <sbr>
+  </cmdsynopsis>
 
+  <cmdsynopsis>
    <command>pg_ctl</command>
    <arg choice="plain">reload</arg>
    <arg>-s</arg>
    <arg>-D <replaceable>datadir</replaceable></arg>
-   <sbr>
+  </cmdsynopsis>
 
+  <cmdsynopsis>
    <command>pg_ctl</command>
    <arg choice="plain">status</arg>
    <arg>-D <replaceable>datadir</replaceable></arg>
-   <sbr>
+  </cmdsynopsis>
 
+  <cmdsynopsis>
    <command>pg_ctl</command>
    <arg choice="plain">kill</arg>
    <arg><replaceable>signal_name</replaceable></arg>
    <arg><replaceable>process_id</replaceable></arg>
-   <sbr>
+  </cmdsynopsis>
 
+  <cmdsynopsis>
    <command>pg_ctl</command>
    <arg choice="plain">register</arg>
    <arg>-N <replaceable>servicename</replaceable></arg>
@@ -99,12 +105,12 @@ PostgreSQL documentation
    <arg>-w</arg>
    <arg>-t <replaceable>seconds</replaceable></arg>
    <arg>-o <replaceable>options</replaceable></arg>
-   <sbr>
+  </cmdsynopsis>
 
+  <cmdsynopsis>
    <command>pg_ctl</command>
    <arg choice="plain">unregister</arg>
    <arg>-N <replaceable>servicename</replaceable></arg>
-
   </cmdsynopsis>
  </refsynopsisdiv>
 

@@ -26,7 +26,9 @@ PostgreSQL documentation
    <group><arg>--verbose</arg><arg>-v</arg></group>
    <arg>--table | -t <replaceable>table</replaceable> </arg>
    <arg><replaceable>dbname</replaceable></arg>
-   <sbr>
+  </cmdsynopsis>
+
+  <cmdsynopsis>
    <command>clusterdb</command>
    <arg rep="repeat"><replaceable>connection-option</replaceable></arg>
    <group><arg>--verbose</arg><arg>-v</arg></group>

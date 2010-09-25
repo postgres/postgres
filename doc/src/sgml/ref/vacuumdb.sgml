@@ -32,7 +32,9 @@ PostgreSQL documentation
     <arg>( <replaceable class="parameter">column</replaceable> [,...] )</arg>
    </arg>
    <arg><replaceable>dbname</replaceable></arg>
-   <sbr>
+  </cmdsynopsis>
+
+  <cmdsynopsis>
    <command>vacuumdb</command>
    <arg rep="repeat"><replaceable>connection-option</replaceable></arg>
    <group><arg>--full</arg><arg>-f</arg></group>

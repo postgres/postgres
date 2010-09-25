@@ -25,7 +25,9 @@ PostgreSQL documentation
    <arg rep="repeat"><replaceable>connection-option</replaceable></arg>
    <arg choice="plain"><replaceable>langname</replaceable></arg>
    <arg><replaceable>dbname</replaceable></arg>
-   <sbr>
+  </cmdsynopsis>
+
+  <cmdsynopsis>
    <command>createlang</command>
    <arg rep="repeat"><replaceable>connection-option</replaceable></arg>
    <group choice="plain"><arg>--list</arg><arg>-l</arg></group>

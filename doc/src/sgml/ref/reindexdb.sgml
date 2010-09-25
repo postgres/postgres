@@ -26,11 +26,15 @@ PostgreSQL documentation
    <arg>--table | -t <replaceable>table</replaceable> </arg>
    <arg>--index | -i <replaceable>index</replaceable> </arg>
    <arg><replaceable>dbname</replaceable></arg>
-   <sbr>
+  </cmdsynopsis>
+
+  <cmdsynopsis>
    <command>reindexdb</command>
    <arg rep="repeat"><replaceable>connection-option</replaceable></arg>
    <arg>--all | -a</arg>
-   <sbr>
+  </cmdsynopsis>
+
+  <cmdsynopsis>
    <command>reindexdb</command>
    <arg rep="repeat"><replaceable>connection-option</replaceable></arg>
    <arg>--system | -s</arg>
