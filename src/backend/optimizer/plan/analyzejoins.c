@@ -26,6 +26,7 @@
 #include "optimizer/pathnode.h"
 #include "optimizer/paths.h"
 #include "optimizer/planmain.h"
+#include "optimizer/var.h"
 
 /* local functions */
 static bool join_is_removable(PlannerInfo *root, SpecialJoinInfo *sjinfo);
@@ -197,16 +198,23 @@ join_is_removable(PlannerInfo *root, SpecialJoinInfo *sjinfo)
 	}
 
 	/*
-	 * Similarly check that the inner rel doesn't produce any PlaceHolderVars
-	 * that will be used above the join.
+	 * Similarly check that the inner rel isn't needed by any PlaceHolderVars
+	 * that will be used above the join.  We only need to fail if such a PHV
+	 * actually references some inner-rel attributes; but the correct check
+	 * for that is relatively expensive, so we first check against ph_eval_at,
+	 * which must mention the inner rel if the PHV uses any inner-rel attrs.
 	 */
 	foreach(l, root->placeholder_list)
 	{
 		PlaceHolderInfo *phinfo = (PlaceHolderInfo *) lfirst(l);
 
-		if (bms_is_subset(phinfo->ph_eval_at, innerrel->relids) &&
-			!bms_is_subset(phinfo->ph_needed, joinrelids))
-			return false;
+		if (bms_is_subset(phinfo->ph_needed, joinrelids))
+			continue;			/* PHV is not used above the join */
+		if (!bms_overlap(phinfo->ph_eval_at, innerrel->relids))
+			continue;			/* it definitely doesn't reference innerrel */
+		if (bms_overlap(pull_varnos((Node *) phinfo->ph_var),
+						innerrel->relids))
+			return false;		/* it does reference innerrel */
 	}
 
 	/*
