@@ -30,6 +30,7 @@
 #include "parser/parse_func.h"
 #include "parser/parse_relation.h"
 #include "parser/parse_type.h"
+#include "parser/parsetree.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
 #include "utils/lsyscache.h"
@@ -44,6 +45,7 @@ static Oid **gen_cross_product(InhPaths *arginh, int nargs);
 static FieldSelect *setup_field_select(Node *input, char *attname, Oid relid);
 static void unknown_attribute(const char *schemaname, const char *relname,
 				  const char *attname);
+static bool check_pg_get_expr_arg(ParseState *pstate, Node *arg, int netlevelsup);
 
 
 /*
@@ -1584,9 +1586,7 @@ GetRTEByRangeTablePosn(ParseState *pstate,
 void
 check_pg_get_expr_args(ParseState *pstate, Oid fnoid, List *args)
 {
-	bool		allowed = false;
 	Node	   *arg;
-	int			netlevelsup;
 
 	/* if not being called for pg_get_expr, do nothing */
 	if (fnoid != F_PG_GET_EXPR && fnoid != F_PG_GET_EXPR_EXT)
@@ -1598,59 +1598,91 @@ check_pg_get_expr_args(ParseState *pstate, Oid fnoid, List *args)
 
 	/*
 	 * The first argument must be a Var referencing one of the allowed
-	 * system-catalog columns.  It could be a join alias Var, though.
+	 * system-catalog columns.  It could be a join alias Var or subquery
+	 * reference Var, though, so we need a recursive subroutine to chase
+	 * through those possibilities.
 	 */
 	Assert(args != NIL);
 	arg = (Node *) lfirst(args);
-	netlevelsup = 0;
 
-restart:
-	if (IsA(arg, Var))
+	if (!check_pg_get_expr_arg(pstate, arg, 0))
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("argument to pg_get_expr() must come from system catalogs")));
+}
+
+static bool
+check_pg_get_expr_arg(ParseState *pstate, Node *arg, int netlevelsup)
+{
+	if (arg && IsA(arg, Var))
 	{
 		Var		   *var = (Var *) arg;
 		RangeTblEntry *rte;
+		AttrNumber	attnum;
 
 		netlevelsup += var->varlevelsup;
 		rte = GetRTEByRangeTablePosn(pstate, var->varno, netlevelsup);
+		attnum = var->varattno;
 
 		if (rte->rtekind == RTE_JOIN)
 		{
-			/* Expand join alias reference */
-			if (var->varattno > 0 &&
-				var->varattno <= length(rte->joinaliasvars))
+			/* Recursively examine join alias variable */
+			if (attnum > 0 &&
+				attnum <= length(rte->joinaliasvars))
 			{
-				arg = (Node *) nth(var->varattno - 1, rte->joinaliasvars);
-				goto restart;
+				arg = (Node *) nth(attnum - 1, rte->joinaliasvars);
+				return check_pg_get_expr_arg(pstate, arg, netlevelsup);
 			}
+		}
+		else if (rte->rtekind == RTE_SUBQUERY)
+		{
+			/* Subselect-in-FROM: examine sub-select's output expr */
+			TargetEntry *ste = get_tle_by_resno(rte->subquery->targetList,
+												attnum);
+			ParseState	mypstate;
+
+			if (ste == NULL || ste->resdom->resjunk)
+				elog(ERROR, "subquery %s does not have attribute %d",
+					 rte->eref->aliasname, attnum);
+			arg = (Node *) ste->expr;
+
+			/*
+			 * Recurse into the sub-select to see what its expr refers to.
+			 * We have to build an additional level of ParseState to keep in
+			 * step with varlevelsup in the subselect.
+			 */
+			MemSet(&mypstate, 0, sizeof(mypstate));
+			mypstate.parentParseState = pstate;
+			mypstate.p_rtable = rte->subquery->rtable;
+			/* don't bother filling the rest of the fake pstate */
+
+			return check_pg_get_expr_arg(&mypstate, arg, 0);
 		}
 		else if (rte->rtekind == RTE_RELATION)
 		{
 			if (rte->relid == get_system_catalog_relid(IndexRelationName))
 			{
-				if (var->varattno == Anum_pg_index_indexprs ||
-					var->varattno == Anum_pg_index_indpred)
-					allowed = true;
+				if (attnum == Anum_pg_index_indexprs ||
+					attnum == Anum_pg_index_indpred)
+					return true;
 			}
 			else if (rte->relid == get_system_catalog_relid(AttrDefaultRelationName))
 			{
-				if (var->varattno == Anum_pg_attrdef_adbin)
-					allowed = true;
+				if (attnum == Anum_pg_attrdef_adbin)
+					return true;
 			}
 			else if (rte->relid == get_system_catalog_relid(ConstraintRelationName))
 			{
-				if (var->varattno == Anum_pg_constraint_conbin)
-					allowed = true;
+				if (attnum == Anum_pg_constraint_conbin)
+					return true;
 			}
 			else if (rte->relid == get_system_catalog_relid(TypeRelationName))
 			{
-				if (var->varattno == Anum_pg_type_typdefaultbin)
-					allowed = true;
+				if (attnum == Anum_pg_type_typdefaultbin)
+					return true;
 			}
 		}
 	}
 
-	if (!allowed)
-		ereport(ERROR,
-				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("argument to pg_get_expr() must come from system catalogs")));
+	return false;
 }
