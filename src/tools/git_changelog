@@ -27,7 +27,7 @@
 
 use strict;
 use warnings;
-require Date::Calc;
+require Time::Local;
 require Getopt::Long;
 require IPC::Open2;
 
@@ -51,8 +51,9 @@ my %all_commits_by_branch;
 my %commit;
 for my $branch (@BRANCHES) {
 	my $commitnum = 0;
-	IPC::Open2::open2(my $git_out, my $git_in, @git, "origin/$branch")
-		|| die "can't run @git origin/$branch: $!";
+	my $pid =
+	  IPC::Open2::open2(my $git_out, my $git_in, @git, "origin/$branch")
+	      || die "can't run @git origin/$branch: $!";
 	while (my $line = <$git_out>) {
 		if ($line =~ /^commit\s+(.*)/) {
 			push_commit(\%commit) if %commit;
@@ -69,16 +70,20 @@ for my $branch (@BRANCHES) {
 		elsif ($line =~ /^Date:\s+(.*)/) {
 			$commit{'date'} = $1;
 		}
-		elsif ($line =~ /^\s+/) {
+		elsif ($line =~ /^\s\s/) {
 			$commit{'message'} .= $line;
 		}
 	}
+	waitpid($pid, 0);
+	my $child_exit_status = $? >> 8;
+	die "@git origin/$branch failed" if $child_exit_status != 0;
 }
 
 my %position;
 for my $branch (@BRANCHES) {
 	$position{$branch} = 0;
 }
+
 while (1) {
 	my $best_branch;
 	my $best_inversions;
@@ -103,7 +108,9 @@ while (1) {
 	print $winner->{'header'};
 	print "Commit-Order-Inversions: $best_inversions\n"
 		if $best_inversions != 0;
+	print "\n";
 	print $winner->{'message'};
+	print "\n";
 	$winner->{'done'} = 1;
 	for my $branch (@BRANCHES) {
 		my $leader = $all_commits_by_branch{$branch}->[$position{$branch}];
@@ -149,8 +156,11 @@ sub hash_commit {
 
 sub parse_datetime {
 	my ($dt) = @_;
-	$dt =~ /^(\d\d\d\d)-(\d\d)-(\d\d)\s+(\d\d):(\d\d):(\d\d)/;
-	return Date::Calc::Mktime($1, $2, $3, $4, $5, $6);
+	$dt =~ /^(\d\d\d\d)-(\d\d)-(\d\d)\s+(\d\d):(\d\d):(\d\d)\s+([-+])(\d\d)(\d\d)$/;
+	my $gm = Time::Local::timegm($6, $5, $4, $3, $2-1, $1);
+	my $tzoffset = ($8 * 60 + $9) * 60;
+	$tzoffset = - $tzoffset if $7 eq '-';
+	return $gm - $tzoffset;
 }
 
 sub usage {
