@@ -47,7 +47,6 @@ for my $branch (@BRANCHES) {
 	my $pid =
 	  IPC::Open2::open2(my $git_out, my $git_in, @git, "origin/$branch")
 	      || die "can't run @git origin/$branch: $!";
-	my $commitnum = 0;
 	my %commit;
 	while (my $line = <$git_out>) {
 		if ($line =~ /^commit\s+(.*)/) {
@@ -56,7 +55,6 @@ for my $branch (@BRANCHES) {
 				'branch' => $branch,
 				'commit' => $1,
 				'message' => '',
-				'commitnum' => $commitnum++,
 			);
 		}
 		elsif ($line =~ /^Author:\s+(.*)/) {
@@ -127,21 +125,37 @@ sub push_commit {
 	my $ht = hash_commit($c);
 	my $ts = parse_datetime($c->{'date'});
 	my $cc;
+	# Note that this code will never merge two commits on the same branch,
+	# even if they have the same hash (author/message) and nearby
+	# timestamps.  This means that there could be multiple potential
+	# matches when we come to add a commit from another branch.  Prefer
+	# the closest-in-time one.
 	for my $candidate (@{$all_commits{$ht}}) {
-		if (abs($ts - $candidate->{'timestamp'}) < $timestamp_slop
-			&& !exists $candidate->{'branch_position'}{$c->{'branch'}})
+		my $diff = abs($ts - $candidate->{'timestamp'});
+		if ($diff < $timestamp_slop &&
+		    !exists $candidate->{'branch_position'}{$c->{'branch'}})
 		{
+		    if (!defined $cc ||
+			$diff < abs($ts - $cc->{'timestamp'})) {
 			$cc = $candidate;
-			last;
+		    }
 		}
 	}
 	if (!defined $cc) {
 		$cc = {
 			'header' => sprintf("Author: %s\n", $c->{'author'}),
 			'message' => $c->{'message'},
+			'commit' => $c->{'commit'},
 			'timestamp' => $ts
 		};
 		push @{$all_commits{$ht}}, $cc;
+	} elsif ($cc->{'commit'} eq $c->{'commit'}) {
+	    # If this is exactly the same commit we saw before on another
+	    # branch, ignore it.  Hence, a commit that's reachable from more
+	    # than one branch head will be reported only for the first
+	    # head it's reachable from.  This will give the desired results
+	    # so long as @BRANCHES is ordered with master first.
+	    return;
 	}
 	$cc->{'header'} .= sprintf "Branch: %s [%s] %s\n",
 		$c->{'branch'}, substr($c->{'commit'}, 0, 9), $c->{'date'};
