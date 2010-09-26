@@ -1253,14 +1253,44 @@ psql_completion(char *text, int start, int end)
 		COMPLETE_WITH_LIST(list_ALTERTEXTSEARCH3);
 	}
 
-	/* complete ALTER TYPE <foo> with OWNER TO, SET SCHEMA */
+	/* complete ALTER TYPE <foo> with actions */
 	else if (pg_strcasecmp(prev3_wd, "ALTER") == 0 &&
 			 pg_strcasecmp(prev2_wd, "TYPE") == 0)
 	{
 		static const char *const list_ALTERTYPE[] =
-		{"OWNER TO", "RENAME TO", "SET SCHEMA", NULL};
+		{"ADD ATTRIBUTE", "ALTER ATTRIBUTE", "DROP ATTRIBUTE",
+		 "OWNER TO", "RENAME", "SET SCHEMA", NULL};
 
 		COMPLETE_WITH_LIST(list_ALTERTYPE);
+	}
+	/* ALTER TYPE <foo> RENAME  */
+	else if (pg_strcasecmp(prev4_wd, "ALTER") == 0 &&
+			 pg_strcasecmp(prev3_wd, "TYPE") == 0 &&
+			 pg_strcasecmp(prev_wd, "RENAME") == 0)
+	{
+		static const char *const list_ALTERTYPE[] =
+		{"ATTRIBUTE", "TO", NULL};
+
+		COMPLETE_WITH_LIST(list_ALTERTYPE);
+	}
+	/* ALTER TYPE xxx RENAME ATTRIBUTE yyy */
+	else if (pg_strcasecmp(prev5_wd, "TYPE") == 0 &&
+			 pg_strcasecmp(prev3_wd, "RENAME") == 0 &&
+			 pg_strcasecmp(prev2_wd, "ATTRIBUTE") == 0)
+		COMPLETE_WITH_CONST("TO");
+
+	/* If we have TYPE <sth> ALTER/DROP/RENAME ATTRIBUTE, provide list of attributes */
+	else if (pg_strcasecmp(prev4_wd, "TYPE") == 0 &&
+			 (pg_strcasecmp(prev2_wd, "ALTER") == 0 ||
+			  pg_strcasecmp(prev2_wd, "DROP") == 0 ||
+			  pg_strcasecmp(prev2_wd, "RENAME") == 0) &&
+			 pg_strcasecmp(prev_wd, "ATTRIBUTE") == 0)
+		COMPLETE_WITH_ATTR(prev3_wd, "");
+	/* ALTER TYPE ALTER ATTRIBUTE <foo> */
+	else if ((pg_strcasecmp(prev3_wd, "ALTER") == 0 &&
+			  pg_strcasecmp(prev2_wd, "ATTRIBUTE") == 0))
+	{
+		COMPLETE_WITH_CONST("TYPE");
 	}
 	/* complete ALTER GROUP <foo> */
 	else if (pg_strcasecmp(prev3_wd, "ALTER") == 0 &&

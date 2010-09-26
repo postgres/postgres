@@ -1657,6 +1657,7 @@ CreateCommandTag(Node *parsetree)
 				case OBJECT_TSCONFIGURATION:
 					tag = "ALTER TEXT SEARCH CONFIGURATION";
 					break;
+				case OBJECT_ATTRIBUTE:
 				case OBJECT_TYPE:
 					tag = "ALTER TYPE";
 					break;
@@ -1779,6 +1780,9 @@ CreateCommandTag(Node *parsetree)
 					break;
 				case OBJECT_SEQUENCE:
 					tag = "ALTER SEQUENCE";
+					break;
+				case OBJECT_TYPE:
+					tag = "ALTER TYPE";
 					break;
 				case OBJECT_VIEW:
 					tag = "ALTER VIEW";

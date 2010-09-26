@@ -22,7 +22,7 @@ PostgreSQL documentation
  <refsynopsisdiv>
 <synopsis>
 CREATE TYPE <replaceable class="parameter">name</replaceable> AS
-    ( <replaceable class="PARAMETER">attribute_name</replaceable> <replaceable class="PARAMETER">data_type</replaceable> [, ... ] )
+    ( [ <replaceable class="PARAMETER">attribute_name</replaceable> <replaceable class="PARAMETER">data_type</replaceable> [, ... ] ] )
 
 CREATE TYPE <replaceable class="parameter">name</replaceable> AS ENUM
     ( [ '<replaceable class="parameter">label</replaceable>' [, ... ] ] )
@@ -768,10 +768,18 @@ CREATE TABLE big_objs (
   <title>Compatibility</title>
 
   <para>
-   This <command>CREATE TYPE</command> command is a
-   <productname>PostgreSQL</productname> extension.  There is a
-   <command>CREATE TYPE</command> statement in the <acronym>SQL</> standard
-   that is rather different in detail.
+   The first form of the <command>CREATE TYPE</command> command, which
+   creates a composite type, conforms to the <acronym>SQL</> standard.
+   The other forms are <productname>PostgreSQL</productname>
+   extensions.  The <command>CREATE TYPE</command> statement in
+   the <acronym>SQL</> standard also defines other forms that are not
+   implemented in <productname>PostgreSQL</>.
+  </para>
+
+  <para>
+   The ability to create a composite type with zero attributes is
+   a <productname>PostgreSQL</productname>-specific deviation from the
+   standard (analogous to <command>CREATE TABLE</command>).
   </para>
  </refsect1>
 
@@ -779,10 +787,10 @@ CREATE TABLE big_objs (
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-createfunction"></member>
-   <member><xref linkend="sql-droptype"></member>
    <member><xref linkend="sql-altertype"></member>
    <member><xref linkend="sql-createdomain"></member>
+   <member><xref linkend="sql-createfunction"></member>
+   <member><xref linkend="sql-droptype"></member>
   </simplelist>
  </refsect1>
 

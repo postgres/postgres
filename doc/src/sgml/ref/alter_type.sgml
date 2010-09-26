@@ -23,9 +23,17 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-ALTER TYPE <replaceable class="PARAMETER">name</replaceable> RENAME TO <replaceable class="PARAMETER">new_name</replaceable>
+ALTER TYPE <replaceable class="PARAMETER">name</replaceable> <replaceable class="PARAMETER">action</replaceable> [, ... ]
 ALTER TYPE <replaceable class="PARAMETER">name</replaceable> OWNER TO <replaceable class="PARAMETER">new_owner</replaceable> 
+ALTER TYPE <replaceable class="PARAMETER">name</replaceable> RENAME ATTRIBUTE <replaceable class="PARAMETER">attribute_name</replaceable> TO <replaceable class="PARAMETER">new_attribute_name</replaceable>
+ALTER TYPE <replaceable class="PARAMETER">name</replaceable> RENAME TO <replaceable class="PARAMETER">new_name</replaceable>
 ALTER TYPE <replaceable class="PARAMETER">name</replaceable> SET SCHEMA <replaceable class="PARAMETER">new_schema</replaceable>
+
+<phrase>where <replaceable class="PARAMETER">action</replaceable> is one of:</phrase>
+
+    ADD ATTRIBUTE <replaceable class="PARAMETER">attribute_name</replaceable> <replaceable class="PARAMETER">data_type</replaceable>
+    DROP ATTRIBUTE [ IF EXISTS ] <replaceable class="PARAMETER">attribute_name</replaceable>
+    ALTER ATTRIBUTE <replaceable class="PARAMETER">attribute_name</replaceable> [ SET DATA ] TYPE <replaceable class="PARAMETER">data_type</replaceable>
 </synopsis>
  </refsynopsisdiv>
 
@@ -34,6 +42,76 @@ ALTER TYPE <replaceable class="PARAMETER">name</replaceable> SET SCHEMA <replace
 
   <para>
    <command>ALTER TYPE</command> changes the definition of an existing type.
+   There are several subforms:
+
+  <variablelist>
+   <varlistentry>
+    <term><literal>ADD ATTRIBUTE</literal></term>
+    <listitem>
+     <para>
+      This form adds a new attribute to a composite type, using the same syntax as
+      <xref linkend="SQL-CREATETYPE">.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>DROP ATTRIBUTE [ IF EXISTS ]</literal></term>
+    <listitem>
+     <para>
+      This form drops an attribute from a composite type.
+      If <literal>IF EXISTS</literal> is specified and the attribute
+      does not exist, no error is thrown. In this case a notice
+      is issued instead.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>SET DATA TYPE</literal></term>
+    <listitem>
+     <para>
+      This form changes the type of an attribute of a composite type.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>OWNER</literal></term>
+    <listitem>
+     <para>
+      This form changes the owner of the type.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>RENAME</literal></term>
+    <listitem>
+     <para>
+      This form changes the name of the type or the name of an
+      individual attribute of a composite type.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>SET SCHEMA</literal></term>
+    <listitem>
+     <para>
+      This form moves the type into another schema.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+  </para>
+
+  <para>
+   The <literal>ADD ATTRIBUTE</literal>, <literal>DROP
+   ATTRIBUTE</literal>, and <literal>ALTER ATTRIBUTE</literal> actions
+   can be combined into a list of multiple alterations to apply in
+   parallel.  For example, it is possible to add several attributes
+   and/or alter the type of several attributes in a single command.
   </para>
 
   <para>
@@ -90,6 +168,34 @@ ALTER TYPE <replaceable class="PARAMETER">name</replaceable> SET SCHEMA <replace
       </listitem>
      </varlistentry>
 
+     <varlistentry>
+      <term><replaceable class="PARAMETER">attribute_name</replaceable></term>
+      <listitem>
+       <para>
+        The name of the attribute to add, alter, or drop.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><replaceable class="PARAMETER">new_attribute_name</replaceable></term>
+      <listitem>
+       <para>
+        The new name of the attribute begin renamed.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><replaceable class="PARAMETER">data_type</replaceable></term>
+      <listitem>
+       <para>
+        The data type of the attribute to add, or the new type of the
+        attribute to alter.
+       </para>
+      </listitem>
+     </varlistentry>
+
     </variablelist>
    </para>
   </refsect1>
@@ -119,14 +225,30 @@ ALTER TYPE email OWNER TO joe;
 ALTER TYPE email SET SCHEMA customers;
 </programlisting>
   </para>
+
+  <para>
+   To add a new attribute to a type:
+<programlisting>
+ALTER TYPE compfoo ADD ATTRIBUTE f3 int;
+</programlisting>
+  </para>
  </refsect1>
 
  <refsect1>
   <title>Compatibility</title>
-    
+
   <para>
-   There is no <command>ALTER TYPE</command> statement in the SQL
-   standard.
+   The variants to add and drop attributes are part of the SQL
+   standard; the other variants are PostgreSQL extensions.
   </para>
+ </refsect1>
+
+ <refsect1 id="SQL-ALTERTYPE-see-also">
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member><xref linkend="sql-createtype"></member>
+   <member><xref linkend="sql-droptype"></member>
+  </simplelist>
  </refsect1>
 </refentry>

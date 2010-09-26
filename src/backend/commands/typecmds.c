@@ -1508,11 +1508,6 @@ DefineCompositeType(const RangeVar *typevar, List *coldeflist)
 	Oid			typeNamespace;
 	Oid			relid;
 
-	if (coldeflist == NIL)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-				 errmsg("composite type must have at least one attribute")));
-
 	/*
 	 * now set the parameters for keys/inheritance etc. All of these are
 	 * uninteresting for composite types...

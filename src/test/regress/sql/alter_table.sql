@@ -1090,6 +1090,11 @@ select * from another;
 
 drop table another;
 
+-- table's row type
+create table tab1 (a int, b text);
+create table tab2 (x int, y tab1);
+alter table tab1 alter column b type varchar; -- fails
+
 --
 -- lock levels
 --
@@ -1224,3 +1229,53 @@ select alter2.plus1(41);
 
 -- clean up
 drop schema alter2 cascade;
+
+--
+-- composite types
+--
+
+CREATE TYPE test_type AS (a int);
+\d test_type
+
+ALTER TYPE nosuchtype ADD ATTRIBUTE b text; -- fails
+
+ALTER TYPE test_type ADD ATTRIBUTE b text;
+\d test_type
+
+ALTER TYPE test_type ADD ATTRIBUTE b text; -- fails
+
+ALTER TYPE test_type ALTER ATTRIBUTE b SET DATA TYPE varchar;
+\d test_type
+
+ALTER TYPE test_type ALTER ATTRIBUTE b SET DATA TYPE integer;
+\d test_type
+
+ALTER TYPE test_type DROP ATTRIBUTE b;
+\d test_type
+
+ALTER TYPE test_type DROP ATTRIBUTE c; -- fails
+
+ALTER TYPE test_type DROP ATTRIBUTE IF EXISTS c;
+
+ALTER TYPE test_type DROP ATTRIBUTE a, ADD ATTRIBUTE d boolean;
+\d test_type
+
+ALTER TYPE test_type RENAME ATTRIBUTE a TO aa;
+ALTER TYPE test_type RENAME ATTRIBUTE d TO dd;
+\d test_type
+
+DROP TYPE test_type;
+
+CREATE TYPE test_type1 AS (a int, b text);
+CREATE TABLE test_tbl1 (x int, y test_type1);
+ALTER TYPE test_type1 ALTER ATTRIBUTE b TYPE varchar; -- fails
+
+CREATE TYPE test_type2 AS (a int, b text);
+CREATE TABLE test_tbl2 OF test_type2;
+ALTER TYPE test_type2 ADD ATTRIBUTE c text; -- fails
+ALTER TYPE test_type2 ALTER ATTRIBUTE b TYPE varchar; -- fails
+ALTER TYPE test_type2 DROP ATTRIBUTE b; -- fails
+ALTER TYPE test_type2 RENAME ATTRIBUTE b TO bb; -- fails
+
+CREATE TYPE test_type_empty AS ();
+DROP TYPE test_type_empty;

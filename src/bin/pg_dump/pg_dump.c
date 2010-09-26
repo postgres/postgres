@@ -7249,13 +7249,7 @@ dumpCompositeType(Archive *fout, TypeInfo *tyinfo)
 	res = PQexec(g_conn, query->data);
 	check_sql_result(res, g_conn, query->data, PGRES_TUPLES_OK);
 
-	/* Expecting at least a single result */
 	ntups = PQntuples(res);
-	if (ntups < 1)
-	{
-		write_msg(NULL, "query returned no rows: %s\n", query->data);
-		exit_nicely();
-	}
 
 	i_attname = PQfnumber(res, "attname");
 	i_atttypdefn = PQfnumber(res, "atttypdefn");
@@ -7356,12 +7350,12 @@ dumpCompositeTypeColComments(Archive *fout, TypeInfo *tyinfo)
 	res = PQexec(g_conn, query->data);
 	check_sql_result(res, g_conn, query->data, PGRES_TUPLES_OK);
 
-	/* Expecting at least a single result */
 	ntups = PQntuples(res);
 	if (ntups < 1)
 	{
-		write_msg(NULL, "query returned no rows: %s\n", query->data);
-		exit_nicely();
+		PQclear(res);
+		destroyPQExpBuffer(query);
+		return;
 	}
 
 	pgClassOid = atooid(PQgetvalue(res, 0, PQfnumber(res, "tableoid")));

@@ -839,6 +839,9 @@ transformOfType(ParseState *pstate, CreateStmtContext *cxt, TypeName *ofTypename
 		Form_pg_attribute attr = tupdesc->attrs[i];
 		ColumnDef  *n = makeNode(ColumnDef);
 
+		if (attr->attisdropped)
+			continue;
+
 		n->colname = pstrdup(NameStr(attr->attname));
 		n->typeName = makeTypeNameFromOid(attr->atttypid, attr->atttypmod);
 		n->constraints = NULL;

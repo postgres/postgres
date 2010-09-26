@@ -854,7 +854,7 @@ select * from myview;
 (0 rows)
 
 alter table myview drop d;
-ERROR:  "myview" is not a table
+ERROR:  "myview" is not a table or composite type
 drop view myview;
 -- test some commands to make sure they fail on the dropped column
 analyze atacc1(a);
@@ -1472,6 +1472,11 @@ select * from another;
 (3 rows)
 
 drop table another;
+-- table's row type
+create table tab1 (a int, b text);
+create table tab2 (x int, y tab1);
+alter table tab1 alter column b type varchar; -- fails
+ERROR:  cannot alter table "tab1" because column "tab2"."y" uses its rowtype
 --
 -- lock levels
 --
@@ -1683,3 +1688,85 @@ drop cascades to view alter2.v1
 drop cascades to function alter2.plus1(integer)
 drop cascades to type alter2.posint
 drop cascades to type alter2.ctype
+--
+-- composite types
+--
+CREATE TYPE test_type AS (a int);
+\d test_type
+Composite type "public.test_type"
+ Column |  Type   
+--------+---------
+ a      | integer
+
+ALTER TYPE nosuchtype ADD ATTRIBUTE b text; -- fails
+ERROR:  relation "nosuchtype" does not exist
+ALTER TYPE test_type ADD ATTRIBUTE b text;
+\d test_type
+Composite type "public.test_type"
+ Column |  Type   
+--------+---------
+ a      | integer
+ b      | text
+
+ALTER TYPE test_type ADD ATTRIBUTE b text; -- fails
+ERROR:  column "b" of relation "test_type" already exists
+ALTER TYPE test_type ALTER ATTRIBUTE b SET DATA TYPE varchar;
+\d test_type
+Composite type "public.test_type"
+ Column |       Type        
+--------+-------------------
+ a      | integer
+ b      | character varying
+
+ALTER TYPE test_type ALTER ATTRIBUTE b SET DATA TYPE integer;
+\d test_type
+Composite type "public.test_type"
+ Column |  Type   
+--------+---------
+ a      | integer
+ b      | integer
+
+ALTER TYPE test_type DROP ATTRIBUTE b;
+\d test_type
+Composite type "public.test_type"
+ Column |  Type   
+--------+---------
+ a      | integer
+
+ALTER TYPE test_type DROP ATTRIBUTE c; -- fails
+ERROR:  column "c" of relation "test_type" does not exist
+ALTER TYPE test_type DROP ATTRIBUTE IF EXISTS c;
+NOTICE:  column "c" of relation "test_type" does not exist, skipping
+ALTER TYPE test_type DROP ATTRIBUTE a, ADD ATTRIBUTE d boolean;
+\d test_type
+Composite type "public.test_type"
+ Column |  Type   
+--------+---------
+ d      | boolean
+
+ALTER TYPE test_type RENAME ATTRIBUTE a TO aa;
+ERROR:  column "a" does not exist
+ALTER TYPE test_type RENAME ATTRIBUTE d TO dd;
+\d test_type
+Composite type "public.test_type"
+ Column |  Type   
+--------+---------
+ dd     | boolean
+
+DROP TYPE test_type;
+CREATE TYPE test_type1 AS (a int, b text);
+CREATE TABLE test_tbl1 (x int, y test_type1);
+ALTER TYPE test_type1 ALTER ATTRIBUTE b TYPE varchar; -- fails
+ERROR:  cannot alter type "test_type1" because column "test_tbl1"."y" uses it
+CREATE TYPE test_type2 AS (a int, b text);
+CREATE TABLE test_tbl2 OF test_type2;
+ALTER TYPE test_type2 ADD ATTRIBUTE c text; -- fails
+ERROR:  cannot alter type "test_type2" because it is the type of a typed table
+ALTER TYPE test_type2 ALTER ATTRIBUTE b TYPE varchar; -- fails
+ERROR:  cannot alter type "test_type2" because it is the type of a typed table
+ALTER TYPE test_type2 DROP ATTRIBUTE b; -- fails
+ERROR:  cannot alter type "test_type2" because it is the type of a typed table
+ALTER TYPE test_type2 RENAME ATTRIBUTE b TO bb; -- fails
+ERROR:  cannot alter type "test_type2" because it is the type of a typed table
+CREATE TYPE test_type_empty AS ();
+DROP TYPE test_type_empty;

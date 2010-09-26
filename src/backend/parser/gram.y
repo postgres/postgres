@@ -131,6 +131,7 @@ static Node *makeXmlExpr(XmlExprOp op, char *name, List *named_args,
 						 List *args, int location);
 static List *mergeTableFuncParameters(List *func_args, List *columns);
 static TypeName *TableFuncTypeName(List *columns);
+static RangeVar *makeRangeVarFromAnyName(List *names, int position, core_yyscan_t yyscanner);
 
 %}
 
@@ -184,7 +185,7 @@ static TypeName *TableFuncTypeName(List *columns);
 		AlterDatabaseStmt AlterDatabaseSetStmt AlterDomainStmt AlterFdwStmt
 		AlterForeignServerStmt AlterGroupStmt
 		AlterObjectSchemaStmt AlterOwnerStmt AlterSeqStmt AlterTableStmt
-		AlterUserStmt AlterUserMappingStmt AlterUserSetStmt
+		AlterCompositeTypeStmt AlterUserStmt AlterUserMappingStmt AlterUserSetStmt
 		AlterRoleStmt AlterRoleSetStmt
 		AlterDefaultPrivilegesStmt DefACLAction
 		AnalyzeStmt ClosePortalStmt ClusterStmt CommentStmt
@@ -218,8 +219,8 @@ static TypeName *TableFuncTypeName(List *columns);
 %type <node>	alter_column_default opclass_item opclass_drop alter_using
 %type <ival>	add_drop opt_asc_desc opt_nulls_order
 
-%type <node>	alter_table_cmd
-%type <list>	alter_table_cmds
+%type <node>	alter_table_cmd alter_type_cmd
+%type <list>	alter_table_cmds alter_type_cmds
 
 %type <dbehavior>	opt_drop_behavior
 
@@ -295,7 +296,7 @@ static TypeName *TableFuncTypeName(List *columns);
 				reloption_list group_clause TriggerFuncArgs select_limit
 				opt_select_limit opclass_item_list opclass_drop_list
 				opt_opfamily transaction_mode_list_or_empty
-				TableFuncElementList opt_type_modifiers
+				OptTableFuncElementList TableFuncElementList opt_type_modifiers
 				prep_type_clause
 				execute_param_clause using_clause returning_clause
 				opt_enum_val_list enum_val_list table_func_column_list
@@ -462,7 +463,7 @@ static TypeName *TableFuncTypeName(List *columns);
 /* ordinary key words in alphabetical order */
 %token <keyword> ABORT_P ABSOLUTE_P ACCESS ACTION ADD_P ADMIN AFTER
 	AGGREGATE ALL ALSO ALTER ALWAYS ANALYSE ANALYZE AND ANY ARRAY AS ASC
-	ASSERTION ASSIGNMENT ASYMMETRIC AT AUTHORIZATION
+	ASSERTION ASSIGNMENT ASYMMETRIC AT ATTRIBUTE AUTHORIZATION
 
 	BACKWARD BEFORE BEGIN_P BETWEEN BIGINT BINARY BIT
 	BOOLEAN_P BOTH BY
@@ -657,6 +658,7 @@ stmt :
 			| AlterOwnerStmt
 			| AlterSeqStmt
 			| AlterTableStmt
+			| AlterCompositeTypeStmt
 			| AlterRoleSetStmt
 			| AlterRoleStmt
 			| AlterTSConfigurationStmt
@@ -1964,6 +1966,72 @@ reloption_elem:
 			| ColLabel '.' ColLabel
 				{
 					$$ = makeDefElemExtended($1, $3, NULL, DEFELEM_UNSPEC);
+				}
+		;
+
+
+/*****************************************************************************
+ *
+ *	ALTER TYPE
+ *
+ * really variants of the ALTER TABLE subcommands with different spellings
+ *****************************************************************************/
+
+AlterCompositeTypeStmt:
+			ALTER TYPE_P any_name alter_type_cmds
+				{
+					AlterTableStmt *n = makeNode(AlterTableStmt);
+
+					/* can't use qualified_name, sigh */
+					n->relation = makeRangeVarFromAnyName($3, @3, yyscanner);
+					n->cmds = $4;
+					n->relkind = OBJECT_TYPE;
+					$$ = (Node *)n;
+				}
+			;
+
+alter_type_cmds:
+			alter_type_cmd							{ $$ = list_make1($1); }
+			| alter_type_cmds ',' alter_type_cmd	{ $$ = lappend($1, $3); }
+		;
+
+alter_type_cmd:
+			/* ALTER TYPE <name> ADD ATTRIBUTE <coldef> */
+			ADD_P ATTRIBUTE TableFuncElement
+				{
+					AlterTableCmd *n = makeNode(AlterTableCmd);
+					n->subtype = AT_AddColumn;
+					n->def = $3;
+					$$ = (Node *)n;
+				}
+			/* ALTER TYPE <name> DROP ATTRIBUTE IF EXISTS <attname> */
+			| DROP ATTRIBUTE IF_P EXISTS ColId
+				{
+					AlterTableCmd *n = makeNode(AlterTableCmd);
+					n->subtype = AT_DropColumn;
+					n->name = $5;
+					n->behavior = DROP_RESTRICT; /* currently no effect */
+					n->missing_ok = TRUE;
+					$$ = (Node *)n;
+				}
+			/* ALTER TYPE <name> DROP ATTRIBUTE <attname> */
+			| DROP ATTRIBUTE ColId opt_drop_behavior
+				{
+					AlterTableCmd *n = makeNode(AlterTableCmd);
+					n->subtype = AT_DropColumn;
+					n->name = $3;
+					n->behavior = DROP_RESTRICT; /* currently no effect */
+					n->missing_ok = FALSE;
+					$$ = (Node *)n;
+				}
+			/* ALTER TYPE <name> ALTER ATTRIBUTE <attname> [SET DATA] TYPE <typename> */
+			| ALTER ATTRIBUTE ColId opt_set_data TYPE_P Typename
+				{
+					AlterTableCmd *n = makeNode(AlterTableCmd);
+					n->subtype = AT_AlterColumnType;
+					n->name = $3;
+					n->def = (Node *) $6;
+					$$ = (Node *)n;
 				}
 		;
 
@@ -3678,39 +3746,12 @@ DefineStmt:
 					n->definition = NIL;
 					$$ = (Node *)n;
 				}
-			| CREATE TYPE_P any_name AS '(' TableFuncElementList ')'
+			| CREATE TYPE_P any_name AS '(' OptTableFuncElementList ')'
 				{
 					CompositeTypeStmt *n = makeNode(CompositeTypeStmt);
-					RangeVar *r = makeNode(RangeVar);
 
 					/* can't use qualified_name, sigh */
-					switch (list_length($3))
-					{
-						case 1:
-							r->catalogname = NULL;
-							r->schemaname = NULL;
-							r->relname = strVal(linitial($3));
-							break;
-						case 2:
-							r->catalogname = NULL;
-							r->schemaname = strVal(linitial($3));
-							r->relname = strVal(lsecond($3));
-							break;
-						case 3:
-							r->catalogname = strVal(linitial($3));
-							r->schemaname = strVal(lsecond($3));
-							r->relname = strVal(lthird($3));
-							break;
-						default:
-							ereport(ERROR,
-									(errcode(ERRCODE_SYNTAX_ERROR),
-									 errmsg("improper qualified name (too many dotted names): %s",
-											NameListToString($3)),
-											parser_errposition(@3)));
-							break;
-					}
-					r->location = @3;
-					n->typevar = r;
+					n->typevar = makeRangeVarFromAnyName($3, @3, yyscanner);
 					n->coldeflist = $6;
 					$$ = (Node *)n;
 				}
@@ -5834,6 +5875,15 @@ RenameStmt: ALTER AGGREGATE func_name aggr_args RENAME TO name
 					n->renameType = OBJECT_TYPE;
 					n->object = $3;
 					n->newname = $6;
+					$$ = (Node *)n;
+				}
+			| ALTER TYPE_P any_name RENAME ATTRIBUTE name TO name
+				{
+					RenameStmt *n = makeNode(RenameStmt);
+					n->renameType = OBJECT_ATTRIBUTE;
+					n->relation = makeRangeVarFromAnyName($3, @3, yyscanner);
+					n->subname = $6;
+					n->newname = $8;
 					$$ = (Node *)n;
 				}
 		;
@@ -8215,6 +8265,11 @@ where_or_current_clause:
 			| /*EMPTY*/								{ $$ = NULL; }
 		;
 
+
+OptTableFuncElementList:
+			TableFuncElementList				{ $$ = $1; }
+			| /*EMPTY*/							{ $$ = NIL; }
+		;
 
 TableFuncElementList:
 			TableFuncElement
@@ -10897,6 +10952,7 @@ unreserved_keyword:
 			| ASSERTION
 			| ASSIGNMENT
 			| AT
+			| ATTRIBUTE
 			| BACKWARD
 			| BEFORE
 			| BEGIN_P
@@ -11855,6 +11911,47 @@ TableFuncTypeName(List *columns)
 	result->setof = true;
 
 	return result;
+}
+
+/*
+ * Convert a list of (dotted) names to a RangeVar (like
+ * makeRangeVarFromNameList, but with position support).  The
+ * "AnyName" refers to the any_name production in the grammar.
+ */
+static RangeVar *
+makeRangeVarFromAnyName(List *names, int position, core_yyscan_t yyscanner)
+{
+	RangeVar *r = makeNode(RangeVar);
+
+	switch (list_length(names))
+	{
+		case 1:
+			r->catalogname = NULL;
+			r->schemaname = NULL;
+			r->relname = strVal(linitial(names));
+			break;
+		case 2:
+			r->catalogname = NULL;
+			r->schemaname = strVal(linitial(names));
+			r->relname = strVal(lsecond(names));
+			break;
+		case 3:
+			r->catalogname = strVal(linitial(names));;
+			r->schemaname = strVal(lsecond(names));
+			r->relname = strVal(lthird(names));
+			break;
+		default:
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("improper qualified name (too many dotted names): %s",
+							NameListToString(names)),
+					 parser_errposition(position)));
+			break;
+	}
+
+	r->location = position;
+
+	return r;
 }
 
 /*

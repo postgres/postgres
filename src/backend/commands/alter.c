@@ -89,6 +89,7 @@ ExecRenameStmt(RenameStmt *stmt)
 		case OBJECT_VIEW:
 		case OBJECT_INDEX:
 		case OBJECT_COLUMN:
+		case OBJECT_ATTRIBUTE:
 		case OBJECT_TRIGGER:
 			{
 				Oid			relid;
@@ -123,6 +124,7 @@ ExecRenameStmt(RenameStmt *stmt)
 							break;
 						}
 					case OBJECT_COLUMN:
+					case OBJECT_ATTRIBUTE:
 						renameatt(relid,
 								  stmt->subname,		/* old att name */
 								  stmt->newname,		/* new att name */
