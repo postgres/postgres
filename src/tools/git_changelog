@@ -5,24 +5,19 @@
 #
 # Display all commits on active branches, merging together commits from
 # different branches that occur close together in time and with identical
-# log messages.  Most of the time, such commits occur in the same order
-# on all branches, and we print them out in that order.  However, if commit
-# A occurs before commit B on branch X and commit B occurs before commit A
-# on branch Y, then there's no ordering which is consistent with both
-# branches.
+# log messages.
+#
+# Most of the time, matchable commits occur in the same order on all branches,
+# and we print them out in that order.  However, if commit A occurs before
+# commit B on branch X and commit B occurs before commit A on branch Y, then
+# there's no ordering which is consistent with both branches.
 #
 # When we encounter a situation where there's no single "best" commit to
 # print next, we print the one that involves the least distortion of the
-# commit order, summed across all branches.  In the event of a further tie,
-# the commit from the newer branch prints first.  It is best not to sort
-# based on timestamp, because git timestamps aren't necessarily in order
-# (since the timestamp is provided by the committer's machine), even though
-# for the portion of the history we imported from CVS, we expect that they
-# will be.
-#
-# Even though we don't use timestamps to order commits, they are used to
-# identify which commits happened at about the same time, for the purpose
-# of matching up commits from different branches.
+# commit order, summed across all branches.  In the event of a tie on the
+# distortion measure (which is actually the common case: normally, the
+# distortion is zero), we choose the commit with latest timestamp.  If
+# that's a tie too, the commit from the newer branch prints first.
 #
 
 use strict;
@@ -48,12 +43,12 @@ push @git, '--since=' . $since if defined $since;
 my %all_commits;
 my %all_commits_by_branch;
 
-my %commit;
 for my $branch (@BRANCHES) {
-	my $commitnum = 0;
 	my $pid =
 	  IPC::Open2::open2(my $git_out, my $git_in, @git, "origin/$branch")
 	      || die "can't run @git origin/$branch: $!";
+	my $commitnum = 0;
+	my %commit;
 	while (my $line = <$git_out>) {
 		if ($line =~ /^commit\s+(.*)/) {
 			push_commit(\%commit) if %commit;
@@ -74,6 +69,7 @@ for my $branch (@BRANCHES) {
 			$commit{'message'} .= $line;
 		}
 	}
+	push_commit(\%commit) if %commit;
 	waitpid($pid, 0);
 	my $child_exit_status = $? >> 8;
 	die "@git origin/$branch failed" if $child_exit_status != 0;
@@ -87,6 +83,7 @@ for my $branch (@BRANCHES) {
 while (1) {
 	my $best_branch;
 	my $best_inversions;
+	my $best_timestamp;
 	for my $branch (@BRANCHES) {
 		my $leader = $all_commits_by_branch{$branch}->[$position{$branch}];
 		next if !defined $leader;
@@ -97,9 +94,13 @@ while (1) {
 					- $position{$branch2};
 			}
 		}
-		if (!defined $best_inversions || $inversions < $best_inversions) {
+		if (!defined $best_inversions ||
+		    $inversions < $best_inversions ||
+		    ($inversions == $best_inversions &&
+		     $leader->{'timestamp'} > $best_timestamp)) {
 			$best_branch = $branch;
 			$best_inversions = $inversions;
+			$best_timestamp = $leader->{'timestamp'};
 		}
 	}
 	last if !defined $best_branch;
