@@ -5,7 +5,14 @@
 #
 # Display all commits on active branches, merging together commits from
 # different branches that occur close together in time and with identical
-# log messages.
+# log messages.  Commits are annotated with branch and release info thus:
+# Branch: REL8_3_STABLE Release: REL8_3_2 [92c3a8004] 2008-03-29 00:15:37 +0000
+# This shows that the commit on REL8_3_STABLE was released in 8.3.2.
+# Commits on master will usually instead have notes like
+# Branch: master Release: REL8_4_BR [6fc9d4272] 2008-03-29 00:15:28 +0000
+# showing that this commit is ancestral to release branches 8.4 and later.
+# If no Release: marker appears, the commit hasn't yet made it into any
+# release.
 #
 # Most of the time, matchable commits occur in the same order on all branches,
 # and we print them out in that order.  However, if commit A occurs before
@@ -26,36 +33,84 @@ require Time::Local;
 require Getopt::Long;
 require IPC::Open2;
 
-# Adjust this list when the set of active branches changes.
+# Adjust this list when the set of interesting branches changes.
+# (We could get this from "git branches", but not worth the trouble.)
+# NB: master must be first!
 my @BRANCHES = qw(master REL9_0_STABLE REL8_4_STABLE REL8_3_STABLE
-    REL8_2_STABLE REL8_1_STABLE REL8_0_STABLE REL7_4_STABLE);
+    REL8_2_STABLE REL8_1_STABLE REL8_0_STABLE REL7_4_STABLE REL7_3_STABLE
+    REL7_2_STABLE REL7_1_STABLE REL7_0_PATCHES REL6_5_PATCHES REL6_4);
 
 # Might want to make this parameter user-settable.
 my $timestamp_slop = 600;
 
+my $post_date = 0;
 my $since;
-Getopt::Long::GetOptions('since=s' => \$since) || usage();
+Getopt::Long::GetOptions('post-date' => \$post_date,
+                         'since=s' => \$since) || usage();
 usage() if @ARGV;
 
 my @git = qw(git log --date=iso);
 push @git, '--since=' . $since if defined $since;
 
+# Collect the release tag data
+my %rel_tags;
+
+{
+	my $cmd = "git for-each-ref refs/tags";
+	my $pid = IPC::Open2::open2(my $git_out, my $git_in, $cmd)
+		|| die "can't run $cmd: $!";
+	while (my $line = <$git_out>) {
+		if ($line =~ m|^([a-f0-9]+)\s+commit\s+refs/tags/(\S+)|) {
+		    my $commit = $1;
+		    my $tag = $2;
+		    if ($tag =~ /^REL\d+_\d+$/ ||
+			$tag =~ /^REL\d+_\d+_\d+$/) {
+			$rel_tags{$commit} = $tag;
+		    }
+		}
+	}
+	waitpid($pid, 0);
+	my $child_exit_status = $? >> 8;
+	die "$cmd failed" if $child_exit_status != 0;
+}
+
+# Collect the commit data
 my %all_commits;
 my %all_commits_by_branch;
+# This remembers where each branch sprouted from master.  Note the values
+# will be wrong if --since terminates the log listing before the branch
+# sprouts; but in that case it doesn't matter since we also won't reach
+# the part of master where it would matter.
+my %sprout_tags;
 
 for my $branch (@BRANCHES) {
-	my $pid =
-	  IPC::Open2::open2(my $git_out, my $git_in, @git, "origin/$branch")
-	      || die "can't run @git origin/$branch: $!";
+	my @cmd = @git;
+	if ($branch eq "master") {
+	    push @cmd, "origin/$branch";
+	} else {
+	    push @cmd, "--parents";
+	    push @cmd, "master..origin/$branch";
+	}
+	my $pid = IPC::Open2::open2(my $git_out, my $git_in, @cmd)
+		|| die "can't run @cmd: $!";
+	my $last_tag = undef;
+	my $last_parent;
 	my %commit;
 	while (my $line = <$git_out>) {
-		if ($line =~ /^commit\s+(.*)/) {
+		if ($line =~ /^commit\s+(\S+)/) {
 			push_commit(\%commit) if %commit;
+			$last_tag = $rel_tags{$1} if defined $rel_tags{$1};
 			%commit = (
 				'branch' => $branch,
 				'commit' => $1,
+				'last_tag' => $last_tag,
 				'message' => '',
 			);
+			if ($line =~ /^commit\s+\S+\s+(\S+)/) {
+				$last_parent = $1;
+			} else {
+				$last_parent = undef;
+			}
 		}
 		elsif ($line =~ /^Author:\s+(.*)/) {
 			$commit{'author'} = $1;
@@ -68,9 +123,43 @@ for my $branch (@BRANCHES) {
 		}
 	}
 	push_commit(\%commit) if %commit;
+	$sprout_tags{$last_parent} = $branch if defined $last_parent;
 	waitpid($pid, 0);
 	my $child_exit_status = $? >> 8;
-	die "@git origin/$branch failed" if $child_exit_status != 0;
+	die "@cmd failed" if $child_exit_status != 0;
+}
+
+# Run through the master branch and apply tags.  We already tagged the other
+# branches, but master needs a separate pass after we've acquired the
+# sprout_tags data.  Also, in post-date mode we need to add phony entries
+# for branches that sprouted after a particular master commit was made.
+{
+	my $last_tag = undef;
+	my %sprouted_branches;
+	for my $cc (@{$all_commits_by_branch{'master'}}) {
+	    my $commit = $cc->{'commit'};
+	    my $c = $cc->{'commits'}->[0];
+	    $last_tag = $rel_tags{$commit} if defined $rel_tags{$commit};
+	    if (defined $sprout_tags{$commit}) {
+		$last_tag = $sprout_tags{$commit};
+		# normalize branch names for making sprout tags
+		$last_tag =~ s/^(REL\d+_\d+).*/$1_BR/;
+	    }
+	    $c->{'last_tag'} = $last_tag;
+	    if ($post_date) {
+		if (defined $sprout_tags{$commit}) {
+		    $sprouted_branches{$sprout_tags{$commit}} = 1;
+		}
+		# insert new commits between master and any other commits
+		my @new_commits = ( shift @{$cc->{'commits'}} );
+		for my $branch (reverse sort keys %sprouted_branches) {
+		    my $ccopy = {%{$c}};
+		    $ccopy->{'branch'} = $branch;
+		    push @new_commits, $ccopy;
+		}
+		$cc->{'commits'} = [ @new_commits, @{$cc->{'commits'}} ];
+	    }
+	}
 }
 
 my %position;
@@ -104,7 +193,14 @@ while (1) {
 	last if !defined $best_branch;
 	my $winner =
 		$all_commits_by_branch{$best_branch}->[$position{$best_branch}];
-	print $winner->{'header'};
+	printf "Author: %s\n", $winner->{'author'};
+	foreach my $c (@{$winner->{'commits'}}) {
+	    printf "Branch: %s", $c->{'branch'};
+	    if (defined $c->{'last_tag'}) {
+		printf " Release: %s", $c->{'last_tag'};
+	    }
+	    printf " [%s] %s\n", substr($c->{'commit'}, 0, 9), $c->{'date'};
+	}
 	print "Commit-Order-Inversions: $best_inversions\n"
 		if $best_inversions != 0;
 	print "\n";
@@ -143,22 +239,22 @@ sub push_commit {
 	}
 	if (!defined $cc) {
 		$cc = {
-			'header' => sprintf("Author: %s\n", $c->{'author'}),
+			'author' => $c->{'author'},
 			'message' => $c->{'message'},
 			'commit' => $c->{'commit'},
+			'commits' => [],
 			'timestamp' => $ts
 		};
 		push @{$all_commits{$ht}}, $cc;
-	} elsif ($cc->{'commit'} eq $c->{'commit'}) {
-	    # If this is exactly the same commit we saw before on another
-	    # branch, ignore it.  Hence, a commit that's reachable from more
-	    # than one branch head will be reported only for the first
-	    # head it's reachable from.  This will give the desired results
-	    # so long as @BRANCHES is ordered with master first.
-	    return;
 	}
-	$cc->{'header'} .= sprintf "Branch: %s [%s] %s\n",
-		$c->{'branch'}, substr($c->{'commit'}, 0, 9), $c->{'date'};
+	# stash only the fields we'll need later
+	my $smallc = {
+	    'branch' => $c->{'branch'},
+	    'commit' => $c->{'commit'},
+	    'date' => $c->{'date'},
+	    'last_tag' => $c->{'last_tag'}
+	};
+	push @{$cc->{'commits'}}, $smallc;
 	push @{$all_commits_by_branch{$c->{'branch'}}}, $cc;
 	$cc->{'branch_position'}{$c->{'branch'}} =
 		-1+@{$all_commits_by_branch{$c->{'branch'}}};
@@ -180,7 +276,9 @@ sub parse_datetime {
 
 sub usage {
 	print STDERR <<EOM;
-Usage: git_changelog [--since=SINCE]
+Usage: git_changelog [--post-date/-p] [--since=SINCE]
+    --post-date Show branches made after a commit occurred
+    --since     Print only commits dated since SINCE
 EOM
 	exit 1;
 }
