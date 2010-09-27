@@ -151,6 +151,7 @@
 # - Settings -
 
 #wal_level = minimal			# minimal, archive, or hot_standby
+					# (change requires restart)
 #fsync = on				# turns forced synchronization on or off
 #synchronous_commit = on		# immediate fsync at commit
 #wal_sync_method = fsync		# the default is the first option 
@@ -186,6 +187,7 @@
 # - Streaming Replication -
 
 #max_wal_senders = 0		# max number of walsender processes
+				# (change requires restart)
 #wal_sender_delay = 200ms	# walsender cycle time, 1-10000 milliseconds
 #wal_keep_segments = 0		# in logfile segments, 16MB each; 0 disables
 #vacuum_defer_cleanup_age = 0	# number of xacts by which cleanup is delayed
@@ -193,6 +195,7 @@
 # - Standby Servers -
 
 #hot_standby = off			# "on" allows queries during recovery
+					# (change requires restart)
 #max_standby_archive_delay = 30s	# max delay before canceling queries
 					# when reading WAL from archive;
 					# -1 allows indefinite delay
@@ -392,7 +395,7 @@
 #track_activities = on
 #track_counts = on
 #track_functions = none			# none, pl, all
-#track_activity_query_size = 1024
+#track_activity_query_size = 1024 	# (change requires restart)
 #update_process_title = on
 #stats_temp_directory = 'pg_stat_tmp'
 
@@ -416,6 +419,7 @@
 					# actions running at least this number
 					# of milliseconds.
 #autovacuum_max_workers = 3		# max number of autovacuum subprocesses
+					# (change requires restart)
 #autovacuum_naptime = 1min		# time between autovacuum runs
 #autovacuum_vacuum_threshold = 50	# min number of row updates before
 					# vacuum
