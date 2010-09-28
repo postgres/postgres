@@ -1,0 +1,194 @@
+<!--
+$PostgreSQL$
+PostgreSQL documentation
+-->
+
+<refentry id="SQL-SECURITY-LABEL">
+ <refmeta>
+  <refentrytitle>SECURITY LABEL</refentrytitle>
+  <manvolnum>7</manvolnum>
+  <refmiscinfo>SQL - Language Statements</refmiscinfo>
+ </refmeta>
+
+ <refnamediv>
+  <refname>SECURITY LABEL</refname>
+  <refpurpose>define or change a security label applied to an object</refpurpose>
+ </refnamediv>
+
+ <indexterm zone="sql-security-label">
+  <primary>SECURITY LABEL</primary>
+ </indexterm>
+
+ <refsynopsisdiv>
+<synopsis>
+SECURITY LABEL [ FOR <replaceable class="PARAMETER">provider</replaceable> ] ON
+{
+  TABLE <replaceable class="PARAMETER">object_name</replaceable> |
+  COLUMN <replaceable class="PARAMETER">table_name</replaceable>.<replaceable class="PARAMETER">column_name</replaceable> |
+  AGGREGATE <replaceable class="PARAMETER">agg_name</replaceable> (<replaceable class="PARAMETER">agg_type</replaceable> [, ...] ) |
+  DOMAIN <replaceable class="PARAMETER">object_name</replaceable> |
+  FUNCTION <replaceable class="PARAMETER">function_name</replaceable> ( [ [ <replaceable class="parameter">argmode</replaceable> ] [ <replaceable class="parameter">argname</replaceable> ] <replaceable class="parameter">argtype</replaceable> [, ...] ] ) |
+  LARGE OBJECT <replaceable class="PARAMETER">large_object_oid</replaceable> |
+  [ PROCEDURAL ] LANGUAGE <replaceable class="PARAMETER">object_name</replaceable> |
+  SCHEMA <replaceable class="PARAMETER">object_name</replaceable> |
+  SEQUENCE <replaceable class="PARAMETER">object_name</replaceable> |
+  TYPE <replaceable class="PARAMETER">object_name</replaceable> |
+  VIEW <replaceable class="PARAMETER">object_name</replaceable>
+} IS '<replaceable class="PARAMETER">label</replaceable>'
+</synopsis>
+ </refsynopsisdiv>
+
+ <refsect1>
+  <title>Description</title>
+
+  <para>
+   <command>SECURITY LABEL</command> applies a security label to a database
+   object.  An arbitrary number of security labels, one per label provider, can
+   be associated with a given database object.  Label providers are loadable
+   modules which register themselves by using the function
+   <function>register_label_provider</>.
+  </para>
+
+  <note>
+    <para>
+      <function>register_label_provider</> is not an SQL function; it can
+      only be called from C code loaded into the backend.
+    </para>
+  </note>
+
+  <para>
+   The label provider determines whether a given a label is valid and whether
+   it is permissible to assign that label to a given object.  The meaning of a
+   given label is likewise at the discretion of the label provider.
+   <productname>PostgreSQL</> places no restrictions on whether or how a
+   label provider must interpret security labels; it merely provides a
+   mechanism for storing them.  In practice, this facility is intended to allow
+   integration with label-based mandatory access control (MAC) systems such as
+   <productname>SE-Linux</>.  Such systems make all access control decisions
+   based on object labels, rather than traditional discretionary access control
+   (DAC) concepts such as users and groups.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Parameters</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><replaceable class="parameter">object_name</replaceable></term>
+    <term><replaceable class="parameter">table_name.column_name</replaceable></term>
+    <term><replaceable class="parameter">agg_name</replaceable></term>
+    <term><replaceable class="parameter">function_name</replaceable></term>
+    <listitem>
+     <para>
+      The name of the object to be commented.  Names of tables,
+      aggregates, domains, functions, sequences, types, and views can
+      be schema-qualified.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">provider</replaceable></term>
+    <listitem>
+     <para>
+      The name of the provider with which this label is to be associated.  The
+      named provider must be loaded and must consent to the proposed labeling
+      operation.  If exactly one provider is loaded, the provider name may be
+      omitted for brevity.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">argmode</replaceable></term>
+
+    <listitem>
+     <para>
+      The mode of a function argument: <literal>IN</>, <literal>OUT</>,
+      <literal>INOUT</>, or <literal>VARIADIC</>.
+      If omitted, the default is <literal>IN</>.
+      Note that <command>COMMENT ON FUNCTION</command> does not actually pay
+      any attention to <literal>OUT</> arguments, since only the input
+      arguments are needed to determine the function's identity.
+      So it is sufficient to list the <literal>IN</>, <literal>INOUT</>,
+      and <literal>VARIADIC</> arguments.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">argname</replaceable></term>
+
+    <listitem>
+     <para>
+      The name of a function argument.
+      Note that <command>COMMENT ON FUNCTION</command> does not actually pay
+      any attention to argument names, since only the argument data
+      types are needed to determine the function's identity.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">argtype</replaceable></term>
+
+    <listitem>
+     <para>
+      The data type(s) of the function's arguments (optionally 
+      schema-qualified), if any.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">large_object_oid</replaceable></term>
+    <listitem>
+     <para>
+      The OID of the large object.
+     </para>
+    </listitem>
+   </varlistentry>
+
+    <varlistentry>
+     <term><literal>PROCEDURAL</literal></term>
+
+     <listitem>
+      <para>
+       This is a noise word.
+      </para>
+     </listitem>
+    </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">label</replaceable></term>
+    <listitem>
+     <para>
+      The new security label, written as a string literal; or <literal>NULL</>
+      to drop the security label.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Examples</title>
+
+  <para>
+   The following example shows how the security label of a table might
+   be changed.
+
+<programlisting>
+SECURITY LABEL FOR selinux ON TABLE mytable IS 'system_u:object_r:sepgsql_table_t:s0';
+</programlisting>
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Compatibility</title>
+  <para>
+   There is no <command>SECURITY LABEL</command> command in the SQL standard.
+  </para>
+ </refsect1>
+</refentry>

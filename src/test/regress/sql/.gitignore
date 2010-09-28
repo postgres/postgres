@@ -4,4 +4,5 @@
 /create_function_2.sql
 /largeobject.sql
 /misc.sql
+/security_label.sql
 /tablespace.sql

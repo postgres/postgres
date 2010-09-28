@@ -132,6 +132,7 @@ Complete list of usable sgml source files in this directory.
 <!entity rollbackPrepared   system "rollback_prepared.sgml">
 <!entity rollbackTo         system "rollback_to.sgml">
 <!entity savepoint          system "savepoint.sgml">
+<!entity securityLabel      system "security_label.sgml">
 <!entity select             system "select.sgml">
 <!entity selectInto         system "select_into.sgml">
 <!entity set                system "set.sgml">

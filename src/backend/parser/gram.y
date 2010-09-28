@@ -205,7 +205,7 @@ static RangeVar *makeRangeVarFromAnyName(List *names, int position, core_yyscan_
 		CreateFunctionStmt AlterFunctionStmt ReindexStmt RemoveAggrStmt
 		RemoveFuncStmt RemoveOperStmt RenameStmt RevokeStmt RevokeRoleStmt
 		RuleActionStmt RuleActionStmtOrEmpty RuleStmt
-		SelectStmt TransactionStmt TruncateStmt
+		SecLabelStmt SelectStmt TransactionStmt TruncateStmt
 		UnlistenStmt UpdateStmt VacuumStmt
 		VariableResetStmt VariableSetStmt VariableShowStmt
 		ViewStmt CheckPointStmt CreateConversionStmt
@@ -335,7 +335,7 @@ static RangeVar *makeRangeVarFromAnyName(List *names, int position, core_yyscan_
 %type <boolean> copy_from
 
 %type <ival>	opt_column event cursor_options opt_hold opt_set_data
-%type <objtype>	reindex_type drop_type comment_type
+%type <objtype>	reindex_type drop_type comment_type security_label_type
 
 %type <node>	fetch_args limit_clause select_limit_value
 				offset_clause select_offset_value
@@ -423,6 +423,8 @@ static RangeVar *makeRangeVarFromAnyName(List *names, int position, core_yyscan_
 %type <str>		OptTableSpace OptConsTableSpace OptTableSpaceOwner
 %type <list>	opt_check_option
 
+%type <str>		opt_provider security_label
+
 %type <target>	xml_attribute_el
 %type <list>	xml_attribute_list xml_attributes
 %type <node>	xml_root_version opt_xml_root_standalone
@@ -500,7 +502,7 @@ static RangeVar *makeRangeVarFromAnyName(List *names, int position, core_yyscan_
 
 	KEY
 
-	LANGUAGE LARGE_P LAST_P LC_COLLATE_P LC_CTYPE_P LEADING
+	LABEL LANGUAGE LARGE_P LAST_P LC_COLLATE_P LC_CTYPE_P LEADING
 	LEAST LEFT LEVEL LIKE LIMIT LISTEN LOAD LOCAL LOCALTIME LOCALTIMESTAMP
 	LOCATION LOCK_P LOGIN_P
 
@@ -739,6 +741,7 @@ stmt :
 			| RevokeStmt
 			| RevokeRoleStmt
 			| RuleStmt
+			| SecLabelStmt
 			| SelectStmt
 			| TransactionStmt
 			| TruncateStmt
@@ -4366,6 +4369,92 @@ comment_type:
 comment_text:
 			Sconst								{ $$ = $1; }
 			| NULL_P							{ $$ = NULL; }
+		;
+
+
+/*****************************************************************************
+ *
+ *  SECURITY LABEL [FOR <provider>] ON <object> IS <label>
+ *
+ *  As with COMMENT ON, <object> can refer to various types of database
+ *  objects (e.g. TABLE, COLUMN, etc.).
+ *
+ *****************************************************************************/
+
+SecLabelStmt:
+			SECURITY LABEL opt_provider ON security_label_type any_name
+			IS security_label
+				{
+					SecLabelStmt *n = makeNode(SecLabelStmt);
+					n->provider = $3;
+					n->objtype = $5;
+					n->objname = $6;
+					n->objargs = NIL;
+					n->label = $8;
+					$$ = (Node *) n;
+				}
+			| SECURITY LABEL opt_provider ON AGGREGATE func_name aggr_args
+			  IS security_label
+				{
+					SecLabelStmt *n = makeNode(SecLabelStmt);
+					n->provider = $3;
+					n->objtype = OBJECT_AGGREGATE;
+					n->objname = $6;
+					n->objargs = $7;
+					n->label = $9;
+					$$ = (Node *) n;
+				}
+			| SECURITY LABEL opt_provider ON FUNCTION func_name func_args
+			  IS security_label
+				{
+					SecLabelStmt *n = makeNode(SecLabelStmt);
+					n->provider = $3;
+					n->objtype = OBJECT_FUNCTION;
+					n->objname = $6;
+					n->objargs = extractArgTypes($7);
+					n->label = $9;
+					$$ = (Node *) n;
+				}
+			| SECURITY LABEL opt_provider ON LARGE_P OBJECT_P NumericOnly
+			  IS security_label
+				{
+					SecLabelStmt *n = makeNode(SecLabelStmt);
+					n->provider = $3;
+					n->objtype = OBJECT_LARGEOBJECT;
+					n->objname = list_make1($7);
+					n->objargs = NIL;
+					n->label = $9;
+					$$ = (Node *) n;
+				}
+			| SECURITY LABEL opt_provider ON opt_procedural LANGUAGE any_name
+			  IS security_label
+				{
+					SecLabelStmt *n = makeNode(SecLabelStmt);
+					n->provider = $3;
+					n->objtype = OBJECT_LANGUAGE;
+					n->objname = $7;
+					n->objargs = NIL;
+					n->label = $9;
+					$$ = (Node *) n;
+				}
+		;
+
+opt_provider:	FOR ColId_or_Sconst	{ $$ = $2; }
+				| /* empty */		{ $$ = NULL; }
+		;
+
+security_label_type:
+			COLUMN								{ $$ = OBJECT_COLUMN; }
+			| SCHEMA							{ $$ = OBJECT_SCHEMA; }
+			| SEQUENCE							{ $$ = OBJECT_SEQUENCE; }
+			| TABLE								{ $$ = OBJECT_TABLE; }
+			| DOMAIN_P							{ $$ = OBJECT_TYPE; }
+			| TYPE_P							{ $$ = OBJECT_TYPE; }
+			| VIEW								{ $$ = OBJECT_VIEW; }
+		;
+
+security_label:	Sconst				{ $$ = $1; }
+				| NULL_P			{ $$ = NULL; }
 		;
 
 /*****************************************************************************
@@ -11049,6 +11138,7 @@ unreserved_keyword:
 			| INVOKER
 			| ISOLATION
 			| KEY
+			| LABEL
 			| LANGUAGE
 			| LARGE_P
 			| LAST_P

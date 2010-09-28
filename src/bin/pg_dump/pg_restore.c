@@ -76,6 +76,7 @@ main(int argc, char **argv)
 	static int	no_data_for_failed_tables = 0;
 	static int	outputNoTablespaces = 0;
 	static int	use_setsessauth = 0;
+	static int	skip_seclabel = 0;
 
 	struct option cmdopts[] = {
 		{"clean", 0, NULL, 'c'},
@@ -116,6 +117,7 @@ main(int argc, char **argv)
 		{"no-tablespaces", no_argument, &outputNoTablespaces, 1},
 		{"role", required_argument, NULL, 2},
 		{"use-set-session-authorization", no_argument, &use_setsessauth, 1},
+		{"no-security-label", no_argument, &skip_seclabel, 1},
 
 		{NULL, 0, NULL, 0}
 	};
@@ -262,6 +264,8 @@ main(int argc, char **argv)
 					outputNoTablespaces = 1;
 				else if (strcmp(optarg, "use-set-session-authorization") == 0)
 					use_setsessauth = 1;
+				else if (strcmp(optarg, "no-security-label") == 0)
+					skip_seclabel = 1;
 				else
 				{
 					fprintf(stderr,
@@ -337,6 +341,7 @@ main(int argc, char **argv)
 	opts->noDataForFailedTables = no_data_for_failed_tables;
 	opts->noTablespace = outputNoTablespaces;
 	opts->use_setsessauth = use_setsessauth;
+	opts->skip_seclabel = skip_seclabel;
 
 	if (opts->formatName)
 	{
@@ -442,6 +447,7 @@ usage(const char *progname)
 			 "                           do not restore data of tables that could not be\n"
 			 "                           created\n"));
 	printf(_("  --no-tablespaces         do not restore tablespace assignments\n"));
+	printf(_("  --no-security-label      do not restore security labels\n"));
 	printf(_("  --role=ROLENAME          do SET ROLE before restore\n"));
 	printf(_("  --use-set-session-authorization\n"
 			 "                           use SET SESSION AUTHORIZATION commands instead of\n"

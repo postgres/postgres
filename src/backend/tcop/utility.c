@@ -37,6 +37,7 @@
 #include "commands/prepare.h"
 #include "commands/proclang.h"
 #include "commands/schemacmds.h"
+#include "commands/seclabel.h"
 #include "commands/sequence.h"
 #include "commands/tablecmds.h"
 #include "commands/tablespace.h"
@@ -218,6 +219,7 @@ check_xact_readonly(Node *parsetree)
 		case T_AlterUserMappingStmt:
 		case T_DropUserMappingStmt:
 		case T_AlterTableSpaceOptionsStmt:
+		case T_SecLabelStmt:
 			PreventCommandIfReadOnly(CreateCommandTag(parsetree));
 			break;
 		default:
@@ -661,6 +663,10 @@ standard_ProcessUtility(Node *parsetree,
 
 		case T_CommentStmt:
 			CommentObject((CommentStmt *) parsetree);
+			break;
+
+		case T_SecLabelStmt:
+			ExecSecLabelStmt((SecLabelStmt *) parsetree);
 			break;
 
 		case T_CopyStmt:
@@ -1592,6 +1598,10 @@ CreateCommandTag(Node *parsetree)
 			tag = "COMMENT";
 			break;
 
+		case T_SecLabelStmt:
+			tag = "SECURITY LABEL";
+			break;
+
 		case T_CopyStmt:
 			tag = "COPY";
 			break;
@@ -2315,6 +2325,10 @@ GetCommandLogLevel(Node *parsetree)
 			break;
 
 		case T_CommentStmt:
+			lev = LOGSTMT_DDL;
+			break;
+
+		case T_SecLabelStmt:
 			lev = LOGSTMT_DDL;
 			break;
 

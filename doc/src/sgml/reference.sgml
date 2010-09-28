@@ -160,6 +160,7 @@
    &rollbackPrepared;
    &rollbackTo;
    &savepoint;
+   &securityLabel;
    &select;
    &selectInto;
    &set;

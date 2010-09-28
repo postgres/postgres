@@ -2607,6 +2607,20 @@ _copyCommentStmt(CommentStmt *from)
 	return newnode;
 }
 
+static SecLabelStmt *
+_copySecLabelStmt(SecLabelStmt *from)
+{
+	SecLabelStmt *newnode = makeNode(SecLabelStmt);
+
+	COPY_SCALAR_FIELD(objtype);
+	COPY_NODE_FIELD(objname);
+	COPY_NODE_FIELD(objargs);
+	COPY_STRING_FIELD(provider);
+	COPY_STRING_FIELD(label);
+
+	return newnode;
+}
+
 static FetchStmt *
 _copyFetchStmt(FetchStmt *from)
 {
@@ -3957,6 +3971,9 @@ copyObject(void *from)
 			break;
 		case T_CommentStmt:
 			retval = _copyCommentStmt(from);
+			break;
+		case T_SecLabelStmt:
+			retval = _copySecLabelStmt(from);
 			break;
 		case T_FetchStmt:
 			retval = _copyFetchStmt(from);

@@ -57,6 +57,7 @@
 #include "commands/defrem.h"
 #include "commands/proclang.h"
 #include "commands/schemacmds.h"
+#include "commands/seclabel.h"
 #include "commands/tablespace.h"
 #include "commands/trigger.h"
 #include "commands/typecmds.h"
@@ -1004,10 +1005,12 @@ deleteOneObject(const ObjectAddress *object, Relation depRel)
 	doDeletion(object);
 
 	/*
-	 * Delete any comments associated with this object.  (This is a convenient
-	 * place to do it instead of having every object type know to do it.)
+	 * Delete any comments or security labels associated with this object.
+	 * (This is a convenient place to do these things, rather than having every
+	 * object type know to do it.)
 	 */
 	DeleteComments(object->objectId, object->classId, object->objectSubId);
+	DeleteSecurityLabel(object);
 
 	/*
 	 * CommandCounterIncrement here to ensure that preceding changes are all

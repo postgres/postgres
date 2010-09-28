@@ -70,6 +70,14 @@ typedef struct
 	int			objsubid;		/* subobject (table column #) */
 } CommentItem;
 
+typedef struct
+{
+	const char *provider;		/* label provider of this security label */
+	const char *label;			/* security label for an object */
+	Oid			classoid;		/* object class (catalog OID) */
+	Oid			objoid;			/* object OID */
+	int			objsubid;		/* subobject (table column #) */
+} SecLabelItem;
 
 /* global decls */
 bool		g_verbose;			/* User wants verbose narration of our
@@ -125,6 +133,7 @@ static int	binary_upgrade = 0;
 static int	disable_dollar_quoting = 0;
 static int	dump_inserts = 0;
 static int	column_inserts = 0;
+static int	no_security_label = 0;
 
 
 static void help(const char *progname);
@@ -141,6 +150,12 @@ static void dumpComment(Archive *fout, const char *target,
 static int findComments(Archive *fout, Oid classoid, Oid objoid,
 			 CommentItem **items);
 static int	collectComments(Archive *fout, CommentItem **items);
+static void	dumpSecLabel(Archive *fout, const char *target,
+						 const char *namespace, const char *owner,
+						 CatalogId catalogId, int subid, DumpId dumpId);
+static int	findSecLabels(Archive *fout, Oid classoid, Oid objoid,
+						  SecLabelItem **items);
+static int	collectSecLabels(Archive *fout, SecLabelItem **items);
 static void dumpDumpableObject(Archive *fout, DumpableObject *dobj);
 static void dumpNamespace(Archive *fout, NamespaceInfo *nspinfo);
 static void dumpType(Archive *fout, TypeInfo *tyinfo);
@@ -300,6 +315,7 @@ main(int argc, char **argv)
 		{"quote-all-identifiers", no_argument, &quote_all_identifiers, 1},
 		{"role", required_argument, NULL, 3},
 		{"use-set-session-authorization", no_argument, &use_setsessauth, 1},
+		{"no-security-label", no_argument, &no_security_label, 1},
 
 		{NULL, 0, NULL, 0}
 	};
@@ -448,6 +464,8 @@ main(int argc, char **argv)
 					outputNoTablespaces = 1;
 				else if (strcmp(optarg, "use-set-session-authorization") == 0)
 					use_setsessauth = 1;
+				else if (strcmp(optarg, "no-security-label") == 0)
+					no_security_label = 1;
 				else
 				{
 					fprintf(stderr,
@@ -641,6 +659,12 @@ main(int argc, char **argv)
 	 */
 	if (quote_all_identifiers && g_fout->remoteVersion >= 90100)
 		do_sql_command(g_conn, "SET quote_all_identifiers = true");
+
+	/*
+	 * Disables security label support if server version < v9.1.x
+	 */
+	if (!no_security_label && g_fout->remoteVersion < 90100)
+		no_security_label = 1;
 
 	/*
 	 * Start serializable transaction to dump consistent data.
@@ -839,6 +863,7 @@ help(const char *progname)
 	printf(_("  --no-tablespaces            do not dump tablespace assignments\n"));
 	printf(_("  --quote-all-identifiers     quote all identifiers, even if not keywords\n"));
 	printf(_("  --role=ROLENAME             do SET ROLE before dump\n"));
+	printf(_("  --no-security-label         do not dump security label assignments\n"));
 	printf(_("  --use-set-session-authorization\n"
 			 "                              use SET SESSION AUTHORIZATION commands instead of\n"
 	"                              ALTER OWNER commands to set ownership\n"));
@@ -2057,6 +2082,11 @@ dumpBlob(Archive *AH, BlobInfo *binfo)
 	dumpComment(AH, cquery->data,
 				NULL, binfo->rolname,
 				binfo->dobj.catId, 0, binfo->dobj.dumpId);
+
+	/* Dump security label if any */
+	dumpSecLabel(AH, cquery->data,
+				 NULL, binfo->rolname,
+				 binfo->dobj.catId, 0, binfo->dobj.dumpId);
 
 	/* Dump ACL if any */
 	if (binfo->blobacl)
@@ -6569,12 +6599,15 @@ dumpNamespace(Archive *fout, NamespaceInfo *nspinfo)
 				 nspinfo->dobj.dependencies, nspinfo->dobj.nDeps,
 				 NULL, NULL);
 
-	/* Dump Schema Comments */
+	/* Dump Schema Comments and Security Labels */
 	resetPQExpBuffer(q);
 	appendPQExpBuffer(q, "SCHEMA %s", qnspname);
 	dumpComment(fout, q->data,
 				NULL, nspinfo->rolname,
 				nspinfo->dobj.catId, 0, nspinfo->dobj.dumpId);
+	dumpSecLabel(fout, q->data,
+				 NULL, nspinfo->rolname,
+				 nspinfo->dobj.catId, 0, nspinfo->dobj.dumpId);
 
 	dumpACL(fout, nspinfo->dobj.catId, nspinfo->dobj.dumpId, "SCHEMA",
 			qnspname, NULL, nspinfo->dobj.name, NULL,
@@ -6699,13 +6732,16 @@ dumpEnumType(Archive *fout, TypeInfo *tyinfo)
 				 tyinfo->dobj.dependencies, tyinfo->dobj.nDeps,
 				 NULL, NULL);
 
-	/* Dump Type Comments */
+	/* Dump Type Comments and Security Labels */
 	resetPQExpBuffer(q);
 
 	appendPQExpBuffer(q, "TYPE %s", fmtId(tyinfo->dobj.name));
 	dumpComment(fout, q->data,
 				tyinfo->dobj.namespace->dobj.name, tyinfo->rolname,
 				tyinfo->dobj.catId, 0, tyinfo->dobj.dumpId);
+	dumpSecLabel(fout, q->data,
+				 tyinfo->dobj.namespace->dobj.name, tyinfo->rolname,
+				 tyinfo->dobj.catId, 0, tyinfo->dobj.dumpId);
 
 	PQclear(res);
 	destroyPQExpBuffer(q);
@@ -7075,13 +7111,16 @@ dumpBaseType(Archive *fout, TypeInfo *tyinfo)
 				 tyinfo->dobj.dependencies, tyinfo->dobj.nDeps,
 				 NULL, NULL);
 
-	/* Dump Type Comments */
+	/* Dump Type Comments and Security Labels */
 	resetPQExpBuffer(q);
 
 	appendPQExpBuffer(q, "TYPE %s", fmtId(tyinfo->dobj.name));
 	dumpComment(fout, q->data,
 				tyinfo->dobj.namespace->dobj.name, tyinfo->rolname,
 				tyinfo->dobj.catId, 0, tyinfo->dobj.dumpId);
+	dumpSecLabel(fout, q->data,
+				 tyinfo->dobj.namespace->dobj.name, tyinfo->rolname,
+				 tyinfo->dobj.catId, 0, tyinfo->dobj.dumpId);
 
 	PQclear(res);
 	destroyPQExpBuffer(q);
@@ -7199,13 +7238,16 @@ dumpDomain(Archive *fout, TypeInfo *tyinfo)
 				 tyinfo->dobj.dependencies, tyinfo->dobj.nDeps,
 				 NULL, NULL);
 
-	/* Dump Domain Comments */
+	/* Dump Domain Comments and Security Labels */
 	resetPQExpBuffer(q);
 
 	appendPQExpBuffer(q, "DOMAIN %s", fmtId(tyinfo->dobj.name));
 	dumpComment(fout, q->data,
 				tyinfo->dobj.namespace->dobj.name, tyinfo->rolname,
 				tyinfo->dobj.catId, 0, tyinfo->dobj.dumpId);
+	dumpSecLabel(fout, q->data,
+				 tyinfo->dobj.namespace->dobj.name, tyinfo->rolname,
+				 tyinfo->dobj.catId, 0, tyinfo->dobj.dumpId);
 
 	destroyPQExpBuffer(q);
 	destroyPQExpBuffer(delq);
@@ -7299,13 +7341,16 @@ dumpCompositeType(Archive *fout, TypeInfo *tyinfo)
 				 NULL, NULL);
 
 
-	/* Dump Type Comments */
+	/* Dump Type Comments and Security Labels */
 	resetPQExpBuffer(q);
 
 	appendPQExpBuffer(q, "TYPE %s", fmtId(tyinfo->dobj.name));
 	dumpComment(fout, q->data,
 				tyinfo->dobj.namespace->dobj.name, tyinfo->rolname,
 				tyinfo->dobj.catId, 0, tyinfo->dobj.dumpId);
+	dumpSecLabel(fout, q->data,
+				 tyinfo->dobj.namespace->dobj.name, tyinfo->rolname,
+				 tyinfo->dobj.catId, 0, tyinfo->dobj.dumpId);
 
 	PQclear(res);
 	destroyPQExpBuffer(q);
@@ -7623,12 +7668,15 @@ dumpProcLang(Archive *fout, ProcLangInfo *plang)
 				 plang->dobj.dependencies, plang->dobj.nDeps,
 				 NULL, NULL);
 
-	/* Dump Proc Lang Comments */
+	/* Dump Proc Lang Comments and Security Labels */
 	resetPQExpBuffer(defqry);
 	appendPQExpBuffer(defqry, "LANGUAGE %s", qlanname);
 	dumpComment(fout, defqry->data,
 				NULL, "",
 				plang->dobj.catId, 0, plang->dobj.dumpId);
+	dumpSecLabel(fout, defqry->data,
+				 NULL, "",
+				 plang->dobj.catId, 0, plang->dobj.dumpId);
 
 	if (plang->lanpltrusted)
 		dumpACL(fout, plang->dobj.catId, plang->dobj.dumpId, "LANGUAGE",
@@ -8184,12 +8232,15 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 				 finfo->dobj.dependencies, finfo->dobj.nDeps,
 				 NULL, NULL);
 
-	/* Dump Function Comments */
+	/* Dump Function Comments and Security Labels */
 	resetPQExpBuffer(q);
 	appendPQExpBuffer(q, "FUNCTION %s", funcsig);
 	dumpComment(fout, q->data,
 				finfo->dobj.namespace->dobj.name, finfo->rolname,
 				finfo->dobj.catId, 0, finfo->dobj.dumpId);
+	dumpSecLabel(fout, q->data,
+				 finfo->dobj.namespace->dobj.name, finfo->rolname,
+				 finfo->dobj.catId, 0, finfo->dobj.dumpId);
 
 	dumpACL(fout, finfo->dobj.catId, finfo->dobj.dumpId, "FUNCTION",
 			funcsig, NULL, funcsig_tag,
@@ -9687,6 +9738,9 @@ dumpAgg(Archive *fout, AggInfo *agginfo)
 	dumpComment(fout, q->data,
 			agginfo->aggfn.dobj.namespace->dobj.name, agginfo->aggfn.rolname,
 				agginfo->aggfn.dobj.catId, 0, agginfo->aggfn.dobj.dumpId);
+	dumpSecLabel(fout, q->data,
+			agginfo->aggfn.dobj.namespace->dobj.name, agginfo->aggfn.rolname,
+				 agginfo->aggfn.dobj.catId, 0, agginfo->aggfn.dobj.dumpId);
 
 	/*
 	 * Since there is no GRANT ON AGGREGATE syntax, we have to make the ACL
@@ -10435,6 +10489,300 @@ dumpACL(Archive *fout, CatalogId objCatId, DumpId objDumpId,
 }
 
 /*
+ * dumpSecLabel 
+ *
+ * This routine is used to dump any security labels associated with the
+ * object handed to this routine. The routine takes a constant character
+ * string for the target part of the security-label command, plus
+ * the namespace and owner of the object (for labeling the ArchiveEntry),
+ * plus catalog ID and subid which are the lookup key for pg_seclabel,
+ * plus the dump ID for the object (for setting a dependency).
+ * If a matching pg_seclabel entry is found, it is dumped.
+ *
+ * Note: although this routine takes a dumpId for dependency purposes,
+ * that purpose is just to mark the dependency in the emitted dump file
+ * for possible future use by pg_restore.  We do NOT use it for determining
+ * ordering of the label in the dump file, because this routine is called
+ * after dependency sorting occurs.  This routine should be called just after
+ * calling ArchiveEntry() for the specified object.
+ */
+static void
+dumpSecLabel(Archive *fout, const char *target,
+			 const char *namespace, const char *owner,
+			 CatalogId catalogId, int subid, DumpId dumpId)
+{
+	SecLabelItem   *labels;
+	int				nlabels;
+	int				i;
+	PQExpBuffer		query;
+
+	/* do nothing, if --no-security-label is supplied */
+	if (no_security_label)
+		return;
+
+	/* Comments are schema not data ... except blob comments are data */
+	if (strncmp(target, "LARGE OBJECT ", 13) != 0)
+	{
+		if (dataOnly)
+			return;
+	}
+	else
+	{
+		if (schemaOnly)
+			return;
+	}
+
+	/* Search for security labels associated with catalogId, using table */
+	nlabels = findSecLabels(fout, catalogId.tableoid, catalogId.oid, &labels);
+
+	query = createPQExpBuffer();
+
+	for (i = 0; i < nlabels; i++)
+	{
+		/*
+		 * Ignore label entries for which the subid doesn't match.
+		 */
+		if (labels[i].objsubid != subid)
+			continue;
+
+		appendPQExpBuffer(query,
+						  "SECURITY LABEL FOR %s ON %s IS ",
+						  fmtId(labels[i].provider), target);
+		appendStringLiteralAH(query, labels[i].label, fout);
+		appendPQExpBuffer(query, ";\n");
+	}
+
+	if (query->len > 0)
+	{
+		ArchiveEntry(fout, nilCatalogId, createDumpId(),
+					 target, namespace, NULL, owner,
+					 false, "SECURITY LABEL", SECTION_NONE,
+					 query->data, "", NULL,
+					 &(dumpId), 1,
+					 NULL, NULL);
+	}
+	destroyPQExpBuffer(query);
+}
+
+/*
+ * dumpTableSecLabel
+ *
+ * As above, but dump security label for both the specified table (or view)
+ * and its columns.
+ */
+static void
+dumpTableSecLabel(Archive *fout, TableInfo *tbinfo, const char *reltypename)
+{
+	SecLabelItem   *labels;
+	int				nlabels;
+	int				i;
+	PQExpBuffer		query;
+    PQExpBuffer		target;
+
+	/* do nothing, if --no-security-label is supplied */
+	if (no_security_label)
+		return;
+
+	/* SecLabel are SCHEMA not data */
+	if (dataOnly)
+		return;
+
+	/* Search for comments associated with relation, using table */
+	nlabels = findSecLabels(fout,
+							tbinfo->dobj.catId.tableoid,
+							tbinfo->dobj.catId.oid,
+							&labels);
+
+	/* If comments exist, build SECURITY LABEL statements */
+	if (nlabels <= 0)
+		return;
+
+	query = createPQExpBuffer();
+	target = createPQExpBuffer();
+
+	for (i = 0; i < nlabels; i++)
+	{
+		const char *colname;
+		const char *provider	= labels[i].provider;
+		const char *label		= labels[i].label;
+		int			objsubid	= labels[i].objsubid;
+
+		resetPQExpBuffer(target);
+		if (objsubid == 0)
+		{
+			appendPQExpBuffer(target, "%s %s", reltypename,
+							  fmtId(tbinfo->dobj.name));
+		}
+		else
+		{
+			colname = getAttrName(objsubid, tbinfo);
+			appendPQExpBuffer(target, "COLUMN %s.%s",
+							  fmtId(tbinfo->dobj.name),
+							  fmtId(colname));
+		}
+		appendPQExpBuffer(query, "SECURITY LABEL FOR %s ON %s IS ",
+						  fmtId(provider), target->data);
+		appendStringLiteralAH(query, label, fout);
+		appendPQExpBuffer(query, ";\n");
+	}
+	if (query->len > 0)
+	{
+		resetPQExpBuffer(target);
+		appendPQExpBuffer(target, "%s %s", reltypename,
+						  fmtId(tbinfo->dobj.name));
+		ArchiveEntry(fout, nilCatalogId, createDumpId(),
+					 target->data,
+					 tbinfo->dobj.namespace->dobj.name,
+					 NULL, tbinfo->rolname,
+					 false, "SECURITY LABEL", SECTION_NONE,
+					 query->data, "", NULL,
+					 &(tbinfo->dobj.dumpId), 1,
+					 NULL, NULL);
+	}
+	destroyPQExpBuffer(query);
+	destroyPQExpBuffer(target);
+}
+
+/*
+ * findSecLabels
+ *
+ * Find the security label(s), if any, associated with the given object.
+ * All the objsubid values associated with the given classoid/objoid are
+ * found with one search.
+ */
+static int
+findSecLabels(Archive *fout, Oid classoid, Oid objoid, SecLabelItem **items)
+{
+	/* static storage for table of security labels */
+	static SecLabelItem *labels = NULL;
+	static int			 nlabels = -1;
+
+	SecLabelItem		*middle = NULL;
+	SecLabelItem		*low;
+	SecLabelItem		*high;
+	int					 nmatch;
+
+	/* Get security labels if we didn't already */
+	if (nlabels < 0)
+		nlabels = collectSecLabels(fout, &labels);
+
+	/*
+	 * Do binary search to find some item matching the object.
+	 */
+	low = &labels[0];
+	high = &labels[nlabels - 1];
+	while (low <= high)
+	{
+		middle = low + (high - low) / 2;
+
+		if (classoid < middle->classoid)
+			high = middle - 1;
+		else if (classoid > middle->classoid)
+			low = middle + 1;
+		else if (objoid < middle->objoid)
+			high = middle - 1;
+		else if (objoid > middle->objoid)
+			low = middle + 1;
+		else
+			break;			/* found a match */
+	}
+
+	if (low > high)			/* no matches */
+	{
+		*items = NULL;
+		return 0;
+	}
+
+	/*
+	 * Now determine how many items match the object.  The search loop
+	 * invariant still holds: only items between low and high inclusive could
+	 * match.
+	 */
+	nmatch = 1;
+	while (middle > low)
+	{
+		if (classoid != middle[-1].classoid ||
+			objoid != middle[-1].objoid)
+			break;
+		middle--;
+		nmatch++;
+	}
+
+	*items = middle;
+
+	middle += nmatch;
+	while (middle <= high)
+	{
+		if (classoid != middle->classoid ||
+			objoid != middle->objoid)
+			break;
+		middle++;
+		nmatch++;
+	}
+
+	return nmatch;
+}
+
+/*
+ * collectSecLabels
+ *
+ * Construct a table of all security labels available for database objects.
+ * It's much faster to pull them all at once.
+ *
+ * The table is sorted by classoid/objid/objsubid for speed in lookup.
+ */
+static int
+collectSecLabels(Archive *fout, SecLabelItem **items)
+{
+	PGresult	   *res;
+	PQExpBuffer		query;
+	int				i_label;
+	int				i_provider;
+	int				i_classoid;
+	int				i_objoid;
+	int				i_objsubid;
+	int				ntups;
+	int				i;
+	SecLabelItem   *labels;
+
+	query = createPQExpBuffer();
+
+	appendPQExpBuffer(query,
+					  "SELECT label, provider, classoid, objoid, objsubid "
+					  "FROM pg_catalog.pg_seclabel "
+					  "ORDER BY classoid, objoid, objsubid");
+
+	res = PQexec(g_conn, query->data);
+	check_sql_result(res, g_conn, query->data, PGRES_TUPLES_OK);
+
+	/* Construct lookup table containing OIDs in numeric form */
+	i_label		= PQfnumber(res, "label");
+	i_provider	= PQfnumber(res, "provider");
+	i_classoid	= PQfnumber(res, "classoid");
+	i_objoid	= PQfnumber(res, "objoid");
+	i_objsubid	= PQfnumber(res, "objsubid");
+
+	ntups = PQntuples(res);
+
+	labels = (SecLabelItem *) malloc(ntups * sizeof(SecLabelItem));
+
+	for (i = 0; i < ntups; i++)
+	{
+		labels[i].label		= PQgetvalue(res, i, i_label);
+		labels[i].provider	= PQgetvalue(res, i, i_provider);
+		labels[i].classoid = atooid(PQgetvalue(res, i, i_classoid));
+		labels[i].objoid = atooid(PQgetvalue(res, i, i_objoid));
+		labels[i].objsubid = atoi(PQgetvalue(res, i, i_objsubid));
+	}
+
+	/* Do NOT free the PGresult since we are keeping pointers into it */
+    destroyPQExpBuffer(query);
+
+	*items = labels;
+	return ntups;
+}
+
+/*
  * dumpTable
  *	  write out to fout the declarations (not data) of a user-defined table
  */
@@ -10949,6 +11297,9 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 
 	/* Dump Table Comments */
 	dumpTableComment(fout, tbinfo, reltypename);
+
+	/* Dump Table Security Labels */
+	dumpTableSecLabel(fout, tbinfo, reltypename);
 
 	/* Dump comments on inlined table constraints */
 	for (j = 0; j < tbinfo->ncheck; j++)
@@ -11663,12 +12014,15 @@ dumpSequence(Archive *fout, TableInfo *tbinfo)
 			}
 		}
 
-		/* Dump Sequence Comments */
+		/* Dump Sequence Comments and Security Labels */
 		resetPQExpBuffer(query);
 		appendPQExpBuffer(query, "SEQUENCE %s", fmtId(tbinfo->dobj.name));
 		dumpComment(fout, query->data,
 					tbinfo->dobj.namespace->dobj.name, tbinfo->rolname,
 					tbinfo->dobj.catId, 0, tbinfo->dobj.dumpId);
+		dumpSecLabel(fout, query->data,
+					 tbinfo->dobj.namespace->dobj.name, tbinfo->rolname,
+					 tbinfo->dobj.catId, 0, tbinfo->dobj.dumpId);
 	}
 
 	if (!schemaOnly)

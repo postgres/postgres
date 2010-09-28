@@ -160,6 +160,114 @@ CREATE VIEW pg_prepared_xacts AS
 CREATE VIEW pg_prepared_statements AS
     SELECT * FROM pg_prepared_statement() AS P;
 
+CREATE VIEW pg_seclabels AS
+SELECT
+	l.objoid, l.classoid, l.objsubid,
+	CASE WHEN rel.relkind = 'r' THEN 'table'::text
+	     WHEN rel.relkind = 'v' THEN 'view'::text
+	     WHEN rel.relkind = 'S' THEN 'sequence'::text END AS objtype,
+	rel.relnamespace AS objnamespace,
+	CASE WHEN pg_table_is_visible(rel.oid)
+	     THEN quote_ident(rel.relname)
+	     ELSE quote_ident(nsp.nspname) || '.' || quote_ident(rel.relname)
+	     END AS objname,
+	l.provider, l.label
+FROM
+	pg_seclabel l
+	JOIN pg_class rel ON l.classoid = rel.tableoid AND l.objoid = rel.oid
+	JOIN pg_namespace nsp ON rel.relnamespace = nsp.oid
+WHERE
+	l.objsubid = 0
+UNION ALL
+SELECT
+	l.objoid, l.classoid, l.objsubid,
+	'column'::text AS objtype,
+	rel.relnamespace AS objnamespace,
+	CASE WHEN pg_table_is_visible(rel.oid)
+	     THEN quote_ident(rel.relname)
+	     ELSE quote_ident(nsp.nspname) || '.' || quote_ident(rel.relname)
+	     END || '.' || att.attname AS objname,
+	l.provider, l.label
+FROM
+	pg_seclabel l
+	JOIN pg_class rel ON l.classoid = rel.tableoid AND l.objoid = rel.oid
+	JOIN pg_attribute att
+	     ON rel.oid = att.attrelid AND l.objsubid = att.attnum
+	JOIN pg_namespace nsp ON rel.relnamespace = nsp.oid
+WHERE
+	l.objsubid != 0
+UNION ALL
+SELECT
+	l.objoid, l.classoid, l.objsubid,
+	CASE WHEN pro.proisagg = true THEN 'aggregate'::text
+	     WHEN pro.proisagg = false THEN 'function'::text
+	END AS objtype,
+	pro.pronamespace AS objnamespace,
+	CASE WHEN pg_function_is_visible(pro.oid)
+	     THEN quote_ident(pro.proname)
+	     ELSE quote_ident(nsp.nspname) || '.' || quote_ident(pro.proname)
+	END || '(' || pg_catalog.pg_get_function_arguments(pro.oid) || ')' AS objname,
+	l.provider, l.label
+FROM
+	pg_seclabel l
+	JOIN pg_proc pro ON l.classoid = pro.tableoid AND l.objoid = pro.oid
+	JOIN pg_namespace nsp ON pro.pronamespace = nsp.oid
+WHERE
+	l.objsubid = 0
+UNION ALL
+SELECT
+	l.objoid, l.classoid, l.objsubid,
+	CASE WHEN typ.typtype = 'd' THEN 'domain'::text
+	ELSE 'type'::text END AS objtype,
+	typ.typnamespace AS objnamespace,
+	CASE WHEN pg_type_is_visible(typ.oid)
+	THEN quote_ident(typ.typname)
+	ELSE quote_ident(nsp.nspname) || '.' || quote_ident(typ.typname)
+	END AS objname,
+	l.provider, l.label
+FROM
+	pg_seclabel l
+	JOIN pg_type typ ON l.classoid = typ.tableoid AND l.objoid = typ.oid
+	JOIN pg_namespace nsp ON typ.typnamespace = nsp.oid
+WHERE
+	l.objsubid = 0
+UNION ALL
+SELECT
+	l.objoid, l.classoid, l.objsubid,
+	'large object'::text AS objtype,
+	NULL::oid AS objnamespace,
+	l.objoid::text AS objname,
+	l.provider, l.label
+FROM
+	pg_seclabel l
+	JOIN pg_largeobject_metadata lom ON l.objoid = lom.oid
+WHERE
+	l.classoid = 'pg_catalog.pg_largeobject'::regclass AND l.objsubid = 0
+UNION ALL
+SELECT
+	l.objoid, l.classoid, l.objsubid,
+	'language'::text AS objtype,
+	NULL::oid AS objnamespace,
+	quote_ident(lan.lanname) AS objname,
+	l.provider, l.label
+FROM
+	pg_seclabel l
+	JOIN pg_language lan ON l.classoid = lan.tableoid AND l.objoid = lan.oid
+WHERE
+	l.objsubid = 0
+UNION ALL
+SELECT
+	l.objoid, l.classoid, l.objsubid,
+	'schema'::text AS objtype,
+	nsp.oid AS objnamespace,
+	quote_ident(nsp.nspname) AS objname,
+	l.provider, l.label
+FROM
+	pg_seclabel l
+	JOIN pg_namespace nsp ON l.classoid = nsp.tableoid AND l.objoid = nsp.oid
+WHERE
+	l.objsubid = 0;
+
 CREATE VIEW pg_settings AS 
     SELECT * FROM pg_show_all_settings() AS A; 
 

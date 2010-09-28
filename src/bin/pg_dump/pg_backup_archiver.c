@@ -2275,6 +2275,10 @@ _tocEntryRequired(TocEntry *te, RestoreOptions *ropt, bool include_acls)
 	if ((!include_acls || ropt->aclsSkip) && _tocEntryIsACL(te))
 		return 0;
 
+	/* If it's security labels, maybe ignore it */
+	if (ropt->skip_seclabel && strcmp(te->desc, "SECURITY LABEL") == 0)
+		return 0;
+
 	/* Ignore DATABASE entry unless we should create it */
 	if (!ropt->createDB && strcmp(te->desc, "DATABASE") == 0)
 		return 0;
@@ -2341,6 +2345,8 @@ _tocEntryRequired(TocEntry *te, RestoreOptions *ropt, bool include_acls)
 			(strcmp(te->desc, "ACL") == 0 &&
 			 strncmp(te->tag, "LARGE OBJECT ", 13) == 0) ||
 			(strcmp(te->desc, "COMMENT") == 0 &&
+			 strncmp(te->tag, "LARGE OBJECT ", 13) == 0) ||
+			(strcmp(te->desc, "SECURITY LABEL") == 0 &&
 			 strncmp(te->tag, "LARGE OBJECT ", 13) == 0))
 			res = res & REQ_DATA;
 		else

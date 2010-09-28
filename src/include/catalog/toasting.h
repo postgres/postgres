@@ -45,6 +45,7 @@ DECLARE_TOAST(pg_constraint, 2832, 2833);
 DECLARE_TOAST(pg_description, 2834, 2835);
 DECLARE_TOAST(pg_proc, 2836, 2837);
 DECLARE_TOAST(pg_rewrite, 2838, 2839);
+DECLARE_TOAST(pg_seclabel, 3039, 3040);
 DECLARE_TOAST(pg_statistic, 2840, 2841);
 DECLARE_TOAST(pg_trigger, 2336, 2337);
 

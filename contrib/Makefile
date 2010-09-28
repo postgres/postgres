@@ -15,6 +15,7 @@ SUBDIRS = \
 		dblink		\
 		dict_int	\
 		dict_xsyn	\
+		dummy_seclabel	\
 		earthdistance	\
 		fuzzystrmatch	\
 		hstore		\

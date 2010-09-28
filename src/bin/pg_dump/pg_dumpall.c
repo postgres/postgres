@@ -69,6 +69,7 @@ static int	disable_triggers = 0;
 static int	inserts = 0;
 static int	no_tablespaces = 0;
 static int	use_setsessauth = 0;
+static int	no_security_label = 0;
 static int	server_version;
 
 static FILE *OPF;
@@ -133,6 +134,7 @@ main(int argc, char *argv[])
 		{"quote-all-identifiers", no_argument, &quote_all_identifiers, 1},
 		{"role", required_argument, NULL, 3},
 		{"use-set-session-authorization", no_argument, &use_setsessauth, 1},
+		{"no-security-label", no_argument, &no_security_label, 1},
 
 		{NULL, 0, NULL, 0}
 	};
@@ -286,6 +288,8 @@ main(int argc, char *argv[])
 					no_tablespaces = 1;
 				else if (strcmp(optarg, "use-set-session-authorization") == 0)
 					use_setsessauth = 1;
+				else if (strcmp(optarg, "no-security-label") == 0)
+					no_security_label = 1;
 				else
 				{
 					fprintf(stderr,
@@ -371,6 +375,8 @@ main(int argc, char *argv[])
 		appendPQExpBuffer(pgdumpopts, " --quote-all-identifiers");
 	if (use_setsessauth)
 		appendPQExpBuffer(pgdumpopts, " --use-set-session-authorization");
+	if (no_security_label)
+		appendPQExpBuffer(pgdumpopts, " --no-security-label");
 
 	/*
 	 * If there was a database specified on the command line, use that,
@@ -567,6 +573,7 @@ help(void)
 	printf(_("  --no-tablespaces            do not dump tablespace assignments\n"));
 	printf(_("  --quote-all-identifiers     quote all identifiers, even if not keywords\n"));
 	printf(_("  --role=ROLENAME             do SET ROLE before dump\n"));
+	printf(_("  --no-security-label         do not dump security label assignments\n"));
 	printf(_("  --use-set-session-authorization\n"
 			 "                              use SET SESSION AUTHORIZATION commands instead of\n"
 	"                              ALTER OWNER commands to set ownership\n"));

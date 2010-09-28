@@ -493,6 +493,15 @@ PostgreSQL documentation
        </para>
       </listitem>
      </varlistentry>
+     <varlistentry>
+      <term><option>--security-label</option></term>
+      <listitem>
+       <para>
+        With this option, it also outputs security labels of database
+        objects to be dumped, if labeled.
+       </para>
+      </listitem>
+     </varlistentry>
    </variablelist>
   </para>
  </refsect1>

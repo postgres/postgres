@@ -631,8 +631,9 @@ psql_completion(char *text, int start, int end)
 		"DELETE FROM", "DISCARD", "DO", "DROP", "END", "EXECUTE", "EXPLAIN", "FETCH",
 		"GRANT", "INSERT", "LISTEN", "LOAD", "LOCK", "MOVE", "NOTIFY", "PREPARE",
 		"REASSIGN", "REINDEX", "RELEASE", "RESET", "REVOKE", "ROLLBACK",
-		"SAVEPOINT", "SELECT", "SET", "SHOW", "START", "TABLE", "TRUNCATE", "UNLISTEN",
-		"UPDATE", "VACUUM", "VALUES", "WITH", NULL
+		"SAVEPOINT", "SECURITY LABEL", "SELECT", "SET", "SHOW", "START",
+		"TABLE", "TRUNCATE", "UNLISTEN", "UPDATE", "VACUUM", "VALUES", "WITH",
+		NULL
 	};
 
 	static const char *const backslash_commands[] = {
@@ -2192,6 +2193,40 @@ psql_completion(char *text, int start, int end)
 				 pg_strcasecmp(prev_wd, "DATABASE") == 0)
 			COMPLETE_WITH_QUERY(Query_for_list_of_databases);
 	}
+
+/* SECURITY LABEL */
+	else if (pg_strcasecmp(prev_wd, "SECURITY") == 0)
+		COMPLETE_WITH_CONST("LABEL");
+	else if (pg_strcasecmp(prev2_wd, "SECURITY") == 0 &&
+			 pg_strcasecmp(prev_wd, "LABEL") == 0)
+	{
+		static const char *const list_SECURITY_LABEL_preposition[] =
+			{"ON", "FOR"};
+		COMPLETE_WITH_LIST(list_SECURITY_LABEL_preposition);
+	}
+	else if (pg_strcasecmp(prev4_wd, "SECURITY") == 0 &&
+			 pg_strcasecmp(prev3_wd, "LABEL") == 0 &&
+			 pg_strcasecmp(prev2_wd, "FOR") == 0)
+		COMPLETE_WITH_CONST("ON");
+	else if ((pg_strcasecmp(prev3_wd, "SECURITY") == 0 &&
+			  pg_strcasecmp(prev2_wd, "LABEL") == 0 &&
+			  pg_strcasecmp(prev_wd, "ON") == 0) ||
+	         (pg_strcasecmp(prev5_wd, "SECURITY") == 0 &&
+			  pg_strcasecmp(prev4_wd, "LABEL") == 0 &&
+			  pg_strcasecmp(prev3_wd, "FOR") == 0 &&
+			  pg_strcasecmp(prev_wd, "ON") == 0))
+	{
+		static const char *const list_SECURITY_LABEL[] =
+		{"LANGUAGE", "SCHEMA", "SEQUENCE", "TABLE", "TYPE", "VIEW", "COLUMN",
+		 "AGGREGATE", "FUNCTION", "DOMAIN", "LARGE OBJECT",
+		NULL};
+
+		COMPLETE_WITH_LIST(list_SECURITY_LABEL);
+	}
+	else if (pg_strcasecmp(prev5_wd, "SECURITY") == 0 &&
+			 pg_strcasecmp(prev4_wd, "LABEL") == 0 &&
+			 pg_strcasecmp(prev3_wd, "ON") == 0)
+		COMPLETE_WITH_CONST("IS");
 
 /* SELECT */
 	/* naah . . . */

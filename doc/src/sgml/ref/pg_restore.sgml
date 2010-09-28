@@ -329,6 +329,16 @@
      </varlistentry>
 
      <varlistentry>
+      <term><option>--no-security-label</option></term>
+      <listitem>
+       <para>
+        Do not output commands to restore security labels,
+        even if the archive contains them.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>-P <replaceable class="parameter">function-name(argtype [, ...])</replaceable></option></term>
       <term><option>--function=<replaceable class="parameter">function-name(argtype [, ...])</replaceable></option></term>
       <listitem>

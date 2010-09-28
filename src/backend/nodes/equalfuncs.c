@@ -1164,6 +1164,18 @@ _equalCommentStmt(CommentStmt *a, CommentStmt *b)
 }
 
 static bool
+_equalSecLabelStmt(SecLabelStmt *a, SecLabelStmt *b)
+{
+	COMPARE_SCALAR_FIELD(objtype);
+	COMPARE_NODE_FIELD(objname);
+	COMPARE_NODE_FIELD(objargs);
+	COMPARE_STRING_FIELD(provider);
+	COMPARE_STRING_FIELD(label);
+
+	return true;
+}
+
+static bool
 _equalFetchStmt(FetchStmt *a, FetchStmt *b)
 {
 	COMPARE_SCALAR_FIELD(direction);
@@ -2623,6 +2635,9 @@ equal(void *a, void *b)
 			break;
 		case T_CommentStmt:
 			retval = _equalCommentStmt(a, b);
+			break;
+		case T_SecLabelStmt:
+			retval = _equalSecLabelStmt(a, b);
 			break;
 		case T_FetchStmt:
 			retval = _equalFetchStmt(a, b);

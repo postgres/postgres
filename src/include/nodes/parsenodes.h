@@ -1851,6 +1851,20 @@ typedef struct CommentStmt
 } CommentStmt;
 
 /* ----------------------
+ *				SECURITY LABEL Statement
+ * ----------------------
+ */
+typedef struct SecLabelStmt
+{
+	NodeTag		type;
+	ObjectType	objtype;		/* Object's type */
+	List	   *objname;		/* Qualified name of the object */
+	List	   *objargs;		/* Arguments if needed (eg, for functions) */
+	char	   *provider;		/* Label provider (or NULL) */
+	char	   *label;			/* New security label to be assigned */
+} SecLabelStmt;
+
+/* ----------------------
  *		Declare Cursor Statement
  *
  * Note: the "query" field of DeclareCursorStmt is only used in the raw grammar
