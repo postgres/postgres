@@ -1207,6 +1207,9 @@ adjust_appendrel_attrs_mutator(Node *node, AppendRelInfo *context)
 		newinfo->required_relids = adjust_relid_set(oldinfo->required_relids,
 													context->parent_relid,
 													context->child_relid);
+		newinfo->nullable_relids = adjust_relid_set(oldinfo->nullable_relids,
+													context->parent_relid,
+													context->child_relid);
 		newinfo->left_relids = adjust_relid_set(oldinfo->left_relids,
 												context->parent_relid,
 												context->child_relid);
