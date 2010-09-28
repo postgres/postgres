@@ -376,6 +376,8 @@ char	   *pg_strdup(migratorContext *ctx, const char *s);
 void	   *pg_malloc(migratorContext *ctx, int size);
 void		pg_free(void *ptr);
 const char *getErrorText(int errNum);
+unsigned int str2uint(const char *str);
+
 
 /* version.c */
 

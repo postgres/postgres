@@ -242,7 +242,7 @@ get_db_infos(migratorContext *ctx, DbInfoArr *dbinfs_arr, Cluster whichCluster)
 
 	for (tupnum = 0; tupnum < ntups; tupnum++)
 	{
-		dbinfos[tupnum].db_oid = atol(PQgetvalue(res, tupnum, i_oid));
+		dbinfos[tupnum].db_oid = str2uint(PQgetvalue(res, tupnum, i_oid));
 
 		snprintf(dbinfos[tupnum].db_name, sizeof(dbinfos[tupnum].db_name), "%s",
 				 PQgetvalue(res, tupnum, i_datname));
@@ -360,7 +360,7 @@ get_rel_infos(migratorContext *ctx, const DbInfo *dbinfo,
 		RelInfo    *curr = &relinfos[num_rels++];
 		const char *tblspace;
 
-		curr->reloid = atol(PQgetvalue(res, relnum, i_oid));
+		curr->reloid = str2uint(PQgetvalue(res, relnum, i_oid));
 
 		nspname = PQgetvalue(res, relnum, i_nspname);
 		strlcpy(curr->nspname, nspname, sizeof(curr->nspname));
@@ -368,8 +368,8 @@ get_rel_infos(migratorContext *ctx, const DbInfo *dbinfo,
 		relname = PQgetvalue(res, relnum, i_relname);
 		strlcpy(curr->relname, relname, sizeof(curr->relname));
 
-		curr->relfilenode = atol(PQgetvalue(res, relnum, i_relfilenode));
-		curr->toastrelid = atol(PQgetvalue(res, relnum, i_reltoastrelid));
+		curr->relfilenode = str2uint(PQgetvalue(res, relnum, i_relfilenode));
+		curr->toastrelid = str2uint(PQgetvalue(res, relnum, i_reltoastrelid));
 
 		tblspace = PQgetvalue(res, relnum, i_spclocation);
 		/* if no table tablespace, use the database tablespace */
