@@ -155,7 +155,7 @@ get_control_data(migratorContext *ctx, ClusterInfo *cluster, bool live_check)
 				pg_log(ctx, PG_FATAL, "%d: pg_resetxlog problem\n", __LINE__);
 
 			p++;				/* removing ':' char */
-			cluster->controldata.ctrl_ver = (uint32) atol(p);
+			cluster->controldata.ctrl_ver = str2uint(p);
 		}
 		else if ((p = strstr(bufin, "Catalog version number:")) != NULL)
 		{
@@ -165,7 +165,7 @@ get_control_data(migratorContext *ctx, ClusterInfo *cluster, bool live_check)
 				pg_log(ctx, PG_FATAL, "%d: controldata retrieval problem\n", __LINE__);
 
 			p++;				/* removing ':' char */
-			cluster->controldata.cat_ver = (uint32) atol(p);
+			cluster->controldata.cat_ver = str2uint(p);
 		}
 		else if ((p = strstr(bufin, "First log file ID after reset:")) != NULL)
 		{
@@ -175,7 +175,7 @@ get_control_data(migratorContext *ctx, ClusterInfo *cluster, bool live_check)
 				pg_log(ctx, PG_FATAL, "%d: controldata retrieval problem\n", __LINE__);
 
 			p++;				/* removing ':' char */
-			cluster->controldata.logid = (uint32) atol(p);
+			cluster->controldata.logid = str2uint(p);
 			got_log_id = true;
 		}
 		else if ((p = strstr(bufin, "First log file segment after reset:")) != NULL)
@@ -186,7 +186,7 @@ get_control_data(migratorContext *ctx, ClusterInfo *cluster, bool live_check)
 				pg_log(ctx, PG_FATAL, "%d: controldata retrieval problem\n", __LINE__);
 
 			p++;				/* removing ':' char */
-			cluster->controldata.nxtlogseg = (uint32) atol(p);
+			cluster->controldata.nxtlogseg = str2uint(p);
 			got_log_seg = true;
 		}
 		else if ((p = strstr(bufin, "Latest checkpoint's TimeLineID:")) != NULL)
@@ -197,7 +197,7 @@ get_control_data(migratorContext *ctx, ClusterInfo *cluster, bool live_check)
 				pg_log(ctx, PG_FATAL, "%d: controldata retrieval problem\n", __LINE__);
 
 			p++;				/* removing ':' char */
-			cluster->controldata.chkpnt_tli = (uint32) atol(p);
+			cluster->controldata.chkpnt_tli = str2uint(p);
 			got_tli = true;
 		}
 		else if ((p = strstr(bufin, "Latest checkpoint's NextXID:")) != NULL)
@@ -211,7 +211,7 @@ get_control_data(migratorContext *ctx, ClusterInfo *cluster, bool live_check)
 				pg_log(ctx, PG_FATAL, "%d: controldata retrieval problem\n", __LINE__);
 
 			op++;				/* removing ':' char */
-			cluster->controldata.chkpnt_nxtxid = (uint32) atol(op);
+			cluster->controldata.chkpnt_nxtxid = str2uint(op);
 			got_xid = true;
 		}
 		else if ((p = strstr(bufin, "Latest checkpoint's NextOID:")) != NULL)
@@ -222,7 +222,7 @@ get_control_data(migratorContext *ctx, ClusterInfo *cluster, bool live_check)
 				pg_log(ctx, PG_FATAL, "%d: controldata retrieval problem\n", __LINE__);
 
 			p++;				/* removing ':' char */
-			cluster->controldata.chkpnt_nxtoid = (uint32) atol(p);
+			cluster->controldata.chkpnt_nxtoid = str2uint(p);
 			got_oid = true;
 		}
 		else if ((p = strstr(bufin, "Maximum data alignment:")) != NULL)
@@ -233,7 +233,7 @@ get_control_data(migratorContext *ctx, ClusterInfo *cluster, bool live_check)
 				pg_log(ctx, PG_FATAL, "%d: controldata retrieval problem\n", __LINE__);
 
 			p++;				/* removing ':' char */
-			cluster->controldata.align = (uint32) atol(p);
+			cluster->controldata.align = str2uint(p);
 			got_align = true;
 		}
 		else if ((p = strstr(bufin, "Database block size:")) != NULL)
@@ -244,7 +244,7 @@ get_control_data(migratorContext *ctx, ClusterInfo *cluster, bool live_check)
 				pg_log(ctx, PG_FATAL, "%d: controldata retrieval problem\n", __LINE__);
 
 			p++;				/* removing ':' char */
-			cluster->controldata.blocksz = (uint32) atol(p);
+			cluster->controldata.blocksz = str2uint(p);
 			got_blocksz = true;
 		}
 		else if ((p = strstr(bufin, "Blocks per segment of large relation:")) != NULL)
@@ -255,7 +255,7 @@ get_control_data(migratorContext *ctx, ClusterInfo *cluster, bool live_check)
 				pg_log(ctx, PG_FATAL, "%d: controldata retrieval problem\n", __LINE__);
 
 			p++;				/* removing ':' char */
-			cluster->controldata.largesz = (uint32) atol(p);
+			cluster->controldata.largesz = str2uint(p);
 			got_largesz = true;
 		}
 		else if ((p = strstr(bufin, "WAL block size:")) != NULL)
@@ -266,7 +266,7 @@ get_control_data(migratorContext *ctx, ClusterInfo *cluster, bool live_check)
 				pg_log(ctx, PG_FATAL, "%d: controldata retrieval problem\n", __LINE__);
 
 			p++;				/* removing ':' char */
-			cluster->controldata.walsz = (uint32) atol(p);
+			cluster->controldata.walsz = str2uint(p);
 			got_walsz = true;
 		}
 		else if ((p = strstr(bufin, "Bytes per WAL segment:")) != NULL)
@@ -277,7 +277,7 @@ get_control_data(migratorContext *ctx, ClusterInfo *cluster, bool live_check)
 				pg_log(ctx, PG_FATAL, "%d: controldata retrieval problem\n", __LINE__);
 
 			p++;				/* removing ':' char */
-			cluster->controldata.walseg = (uint32) atol(p);
+			cluster->controldata.walseg = str2uint(p);
 			got_walseg = true;
 		}
 		else if ((p = strstr(bufin, "Maximum length of identifiers:")) != NULL)
@@ -288,7 +288,7 @@ get_control_data(migratorContext *ctx, ClusterInfo *cluster, bool live_check)
 				pg_log(ctx, PG_FATAL, "%d: controldata retrieval problem\n", __LINE__);
 
 			p++;				/* removing ':' char */
-			cluster->controldata.ident = (uint32) atol(p);
+			cluster->controldata.ident = str2uint(p);
 			got_ident = true;
 		}
 		else if ((p = strstr(bufin, "Maximum columns in an index:")) != NULL)
@@ -299,7 +299,7 @@ get_control_data(migratorContext *ctx, ClusterInfo *cluster, bool live_check)
 				pg_log(ctx, PG_FATAL, "%d: controldata retrieval problem\n", __LINE__);
 
 			p++;				/* removing ':' char */
-			cluster->controldata.index = (uint32) atol(p);
+			cluster->controldata.index = str2uint(p);
 			got_index = true;
 		}
 		else if ((p = strstr(bufin, "Maximum size of a TOAST chunk:")) != NULL)
@@ -310,7 +310,7 @@ get_control_data(migratorContext *ctx, ClusterInfo *cluster, bool live_check)
 				pg_log(ctx, PG_FATAL, "%d: controldata retrieval problem\n", __LINE__);
 
 			p++;				/* removing ':' char */
-			cluster->controldata.toast = (uint32) atol(p);
+			cluster->controldata.toast = str2uint(p);
 			got_toast = true;
 		}
 		else if ((p = strstr(bufin, "Date/time type storage:")) != NULL)

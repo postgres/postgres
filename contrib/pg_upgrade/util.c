@@ -259,3 +259,15 @@ getErrorText(int errNum)
 #endif
 	return strdup(strerror(errNum));
 }
+
+
+/*
+ *	str2uint()
+ *
+ *	convert string to oid
+ */
+unsigned int
+str2uint(const char *str)
+{
+	return strtol(str, NULL, 10);
+}

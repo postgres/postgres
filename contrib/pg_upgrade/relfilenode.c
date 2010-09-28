@@ -94,9 +94,9 @@ get_pg_database_relfilenode(migratorContext *ctx, Cluster whichCluster)
 
 	i_relfile = PQfnumber(res, "relfilenode");
 	if (whichCluster == CLUSTER_OLD)
-		ctx->old.pg_database_oid = atol(PQgetvalue(res, 0, i_relfile));
+		ctx->old.pg_database_oid = str2uint(PQgetvalue(res, 0, i_relfile));
 	else
-		ctx->new.pg_database_oid = atol(PQgetvalue(res, 0, i_relfile));
+		ctx->new.pg_database_oid = str2uint(PQgetvalue(res, 0, i_relfile));
 
 	PQclear(res);
 	PQfinish(conn);
