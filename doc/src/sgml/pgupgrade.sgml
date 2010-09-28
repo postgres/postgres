@@ -272,7 +272,7 @@ NET STOP pgsql-8.3  (<productname>PostgreSQL</> 8.3 and older used a different s
     <title>Run <application>pg_upgrade</></title>
  
     <para>
-     Always run the <application>pg_upgrade</> binary in the new server, not the old one.
+     Always run the <application>pg_upgrade</> binary of the new server, not the old one.
      <application>pg_upgrade</> requires the specification of the old and new cluster's
      data and executable (<filename>bin</>) directories. You can also specify separate
      user and port values, and whether you want the data linked instead of
@@ -306,6 +306,7 @@ pg_upgrade.exe
      to perform only the checks, even if the old server is still
      running. <command>pg_upgrade --check</> will also outline any
      manual adjustments you will need to make after the migration.
+     <command>pg_upgrade</> requires write permission in the current directory.
     </para>
  
     <para>
