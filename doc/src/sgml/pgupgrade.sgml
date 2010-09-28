@@ -246,14 +246,14 @@ gmake prefix=/usr/local/pgsql.new install
     <title>Stop both servers</title>
  
     <para>
-     Make sure both database servers are stopped using on Unix, e.g.:
+     Make sure both database servers are stopped using, on Unix, e.g.:
  
 <programlisting>
 pg_ctl -D /opt/PostgreSQL/8.4 stop
 pg_ctl -D /opt/PostgreSQL/9.0 stop
 </programlisting>
  
-     or on Windows
+     or on Windows, using the proper service names:
  
 <programlisting>
 NET STOP postgresql-8.4
