@@ -52,6 +52,8 @@
 
 #define CLUSTERNAME(cluster)	((cluster) == CLUSTER_OLD ? "old" : "new")
 
+#define atooid(x)  ((Oid) strtoul((x), NULL, 10))
+
 /* OID system catalog preservation added during PG 9.0 development */
 #define TABLE_SPACE_SUBDIRS 201001111
 
