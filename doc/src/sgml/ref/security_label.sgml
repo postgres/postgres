@@ -101,6 +101,17 @@ SECURITY LABEL [ FOR <replaceable class="PARAMETER">provider</replaceable> ] ON
    </varlistentry>
 
    <varlistentry>
+    <term><replaceable class="parameter">arg_type</replaceable></term>
+    <listitem>
+     <para>
+      An input data type on which the aggregate function operates.
+      To reference a zero-argument aggregate function, write <literal>*</>
+      in place of the list of input data types.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
     <term><replaceable class="parameter">argmode</replaceable></term>
 
     <listitem>
