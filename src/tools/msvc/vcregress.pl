@@ -40,6 +40,7 @@ my $Config = -e "release/postgres/postgres.exe" ? "Release" : "Debug";
 copy("$Config/refint/refint.dll","src/test/regress");
 copy("$Config/autoinc/autoinc.dll","src/test/regress");
 copy("$Config/regress/regress.dll","src/test/regress");
+copy("$Config/dummy_seclabel/dummy_seclabel.dll","src/test/regress");
 
 $ENV{PATH} = "../../../$Config/libpq;../../$Config/libpq;$ENV{PATH}";
 
