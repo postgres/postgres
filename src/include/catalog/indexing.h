@@ -281,8 +281,8 @@ DECLARE_UNIQUE_INDEX(pg_default_acl_oid_index, 828, on pg_default_acl using btre
 DECLARE_UNIQUE_INDEX(pg_db_role_setting_databaseid_rol_index, 2965, on pg_db_role_setting using btree(setdatabase oid_ops, setrole oid_ops));
 #define DbRoleSettingDatidRolidIndexId	2965
 
-DECLARE_UNIQUE_INDEX(pg_seclabel_object_index, 3038, on pg_seclabel using btree(objoid oid_ops, classoid oid_ops, objsubid int4_ops, provider text_ops));
-#define SecLabelObjectIndexId				3038
+DECLARE_UNIQUE_INDEX(pg_seclabel_object_index, 3597, on pg_seclabel using btree(objoid oid_ops, classoid oid_ops, objsubid int4_ops, provider text_ops));
+#define SecLabelObjectIndexId				3597
 
 /* last step of initialization script: build the indexes declared above */
 BUILD_INDICES

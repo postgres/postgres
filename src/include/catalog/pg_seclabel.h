@@ -18,9 +18,9 @@
  *		typedef struct FormData_pg_seclabel
  * ----------------
  */
-#define SecLabelRelationId		3037
+#define SecLabelRelationId		3596
 
-CATALOG(pg_seclabel,3037) BKI_WITHOUT_OIDS
+CATALOG(pg_seclabel,3596) BKI_WITHOUT_OIDS
 {
 	Oid			objoid;		/* OID of the object itself */
 	Oid			classoid;	/* OID of table containing the object */
