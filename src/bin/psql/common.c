@@ -1386,6 +1386,7 @@ command_no_begin(const char *query)
 			return true;
 		if (wordlen == 10 && pg_strncasecmp(query, "tablespace", 10) == 0)
 			return true;
+		return false;
 	}
 
 	/* DISCARD ALL isn't allowed in xacts, but other variants are allowed. */
@@ -1401,6 +1402,7 @@ command_no_begin(const char *query)
 
 		if (wordlen == 3 && pg_strncasecmp(query, "all", 3) == 0)
 			return true;
+		return false;
 	}
 
 	return false;
