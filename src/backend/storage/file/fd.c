@@ -1398,7 +1398,8 @@ AllocateFile(const char *name, const char *mode)
 	 */
 	if (numAllocatedDescs >= MAX_ALLOCATED_DESCS ||
 		numAllocatedDescs >= max_safe_fds - 1)
-		elog(ERROR, "too many private files demanded");
+		elog(ERROR, "exceeded MAX_ALLOCATED_DESCS while trying to open file \"%s\"",
+			 name);
 
 TryAgain:
 	if ((file = fopen(name, mode)) != NULL)
@@ -1513,7 +1514,8 @@ AllocateDir(const char *dirname)
 	 */
 	if (numAllocatedDescs >= MAX_ALLOCATED_DESCS ||
 		numAllocatedDescs >= max_safe_fds - 1)
-		elog(ERROR, "too many private dirs demanded");
+		elog(ERROR, "exceeded MAX_ALLOCATED_DESCS while trying to open directory \"%s\"",
+			 dirname);
 
 TryAgain:
 	if ((dir = opendir(dirname)) != NULL)
