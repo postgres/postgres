@@ -1279,8 +1279,22 @@ typedef struct AppendRelInfo
  * then allow it to bubble up like a Var until the ph_needed join level.
  * ph_needed has the same definition as attr_needed for a regular Var.
  *
+ * ph_may_need is an initial estimate of ph_needed, formed using the
+ * syntactic locations of references to the PHV.  We need this in order to
+ * determine whether the PHV reference forces a join ordering constraint:
+ * if the PHV has to be evaluated below the nullable side of an outer join,
+ * and then used above that outer join, we must constrain join order to ensure
+ * there's a valid place to evaluate the PHV below the join.  The final
+ * actual ph_needed level might be lower than ph_may_need, but we can't
+ * determine that until later on.  Fortunately this doesn't matter for what
+ * we need ph_may_need for: if there's a PHV reference syntactically
+ * above the outer join, it's not going to be allowed to drop below the outer
+ * join, so we would come to the same conclusions about join order even if
+ * we had the final ph_needed value to compare to.
+ *
  * We create a PlaceHolderInfo only after determining that the PlaceHolderVar
- * is actually referenced in the plan tree.
+ * is actually referenced in the plan tree, so that unreferenced placeholders
+ * don't result in unnecessary constraints on join order.
  */
 
 typedef struct PlaceHolderInfo
@@ -1291,6 +1305,7 @@ typedef struct PlaceHolderInfo
 	PlaceHolderVar *ph_var;		/* copy of PlaceHolderVar tree */
 	Relids		ph_eval_at;		/* lowest level we can evaluate value at */
 	Relids		ph_needed;		/* highest level the value is needed at */
+	Relids		ph_may_need;	/* highest level it might be needed at */
 	int32		ph_width;		/* estimated attribute width */
 } PlaceHolderInfo;
 

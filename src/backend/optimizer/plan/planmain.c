@@ -203,13 +203,18 @@ query_planner(PlannerInfo *root, List *tlist,
 	root->total_table_pages = total_pages;
 
 	/*
-	 * Examine the targetlist and qualifications, adding entries to baserel
-	 * targetlists for all referenced Vars.  Restrict and join clauses are
-	 * added to appropriate lists belonging to the mentioned relations.  We
-	 * also build EquivalenceClasses for provably equivalent expressions, and
-	 * form a target joinlist for make_one_rel() to work from.
+	 * Examine the targetlist and join tree, adding entries to baserel
+	 * targetlists for all referenced Vars, and generating PlaceHolderInfo
+	 * entries for all referenced PlaceHolderVars.  Restrict and join clauses
+	 * are added to appropriate lists belonging to the mentioned relations.
+	 * We also build EquivalenceClasses for provably equivalent expressions.
+	 * The SpecialJoinInfo list is also built to hold information about join
+	 * order restrictions.  Finally, we form a target joinlist for
+	 * make_one_rel() to work from.
 	 */
 	build_base_rel_tlists(root, tlist);
+
+	find_placeholders_in_jointree(root);
 
 	joinlist = deconstruct_jointree(root);
 
@@ -241,10 +246,10 @@ query_planner(PlannerInfo *root, List *tlist,
 
 	/*
 	 * Examine any "placeholder" expressions generated during subquery pullup.
-	 * Make sure that we know what level to evaluate them at, and that the
-	 * Vars they need are marked as needed.
+	 * Make sure that the Vars they need are marked as needed at the relevant
+	 * join level.
 	 */
-	fix_placeholder_eval_levels(root);
+	fix_placeholder_input_needed_levels(root);
 
 	/*
 	 * Ready to do the primary planning.

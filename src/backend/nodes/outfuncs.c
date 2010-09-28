@@ -1689,6 +1689,7 @@ _outPlaceHolderInfo(StringInfo str, PlaceHolderInfo *node)
 	WRITE_NODE_FIELD(ph_var);
 	WRITE_BITMAPSET_FIELD(ph_eval_at);
 	WRITE_BITMAPSET_FIELD(ph_needed);
+	WRITE_BITMAPSET_FIELD(ph_may_need);
 	WRITE_INT_FIELD(ph_width);
 }
 
