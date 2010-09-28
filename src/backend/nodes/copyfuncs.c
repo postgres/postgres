@@ -1806,6 +1806,7 @@ _copyPlaceHolderInfo(PlaceHolderInfo *from)
 	COPY_NODE_FIELD(ph_var);
 	COPY_BITMAPSET_FIELD(ph_eval_at);
 	COPY_BITMAPSET_FIELD(ph_needed);
+	COPY_BITMAPSET_FIELD(ph_may_need);
 	COPY_SCALAR_FIELD(ph_width);
 
 	return newnode;
