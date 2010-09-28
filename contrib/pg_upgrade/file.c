@@ -75,7 +75,7 @@ copyAndUpdateFile(migratorContext *ctx, pageCnvCtx *pageConverter,
 
 			if ((dstfd = open(dst, O_RDWR | O_CREAT | O_EXCL, S_IRUSR | S_IWUSR)) < 0)
 			{
-				fclose(src_fd);
+				close(src_fd);
 				return "can't create destination file";
 			}
 
