@@ -103,7 +103,10 @@ getPageVersion(migratorContext *ctx, uint16 *version, const char *pathName)
 		return "can't open relation";
 
 	if ((bytesRead = read(relfd, &page, sizeof(page))) != sizeof(page))
+	{
+		close(relfd);
 		return "can't read page header";
+	}
 
 	*version = PageGetPageLayoutVersion(&page);
 
