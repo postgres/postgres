@@ -1369,6 +1369,9 @@ command_no_begin(const char *query)
 			return true;
 	}
 
+	if (wordlen == 7 && pg_strncasecmp(query, "discard", 7) == 0)
+		return true;
+
 	return false;
 }
 
