@@ -4794,10 +4794,31 @@ struct
 
     <variablelist>
      <varlistentry>
+      <term>0 (<symbol>ECPG_NO_ERROR</symbol>)</term>
+      <listitem>
+       <para>
+        Indicates no error. (SQLSTATE 00000)
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term>100 (<symbol>ECPG_NOT_FOUND</symbol>)</term>
+     <listitem>
+      <para>
+       This is a harmless condition indicating that the last command
+       retrieved or processed zero rows, or that you are at the end of
+       the cursor.  (SQLSTATE 02000)
+      </para>
+     </listitem>
+    </varlistentry>
+
+     <varlistentry>
       <term>-12 (<symbol>ECPG_OUT_OF_MEMORY</symbol>)</term>
       <listitem>
        <para>
-        Indicates that your virtual memory is exhausted. (SQLSTATE
+        Indicates that your virtual memory is exhausted.  The numeric
+        value is defined as <literal>-ENOMEM</literal>.  (SQLSTATE
         YE001)
       </para>
      </listitem>
@@ -4886,6 +4907,54 @@ struct
     </varlistentry>
 
     <varlistentry>
+     <term>-207 (<symbol>ECPG_NUMERIC_FORMAT</symbol>)</term>
+     <listitem>
+      <para>
+       The host variable is of type <type>numeric</type> and the datum
+       in the database is of another type and contains a value that
+       cannot be interpreted as a <type>numeric</type> value.
+       (SQLSTATE 42804)
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term>-208 (<symbol>ECPG_INTERVAL_FORMAT</symbol>)</term>
+     <listitem>
+      <para>
+       The host variable is of type <type>interval</type> and the datum
+       in the database is of another type and contains a value that
+       cannot be interpreted as an <type>interval</type> value.
+       (SQLSTATE 42804)
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term>-209 (<symbol>ECPG_DATE_FORMAT</symbol>)</term>
+     <listitem>
+      <para>
+       The host variable is of type <type>date</type> and the datum in
+       the database is of another type and contains a value that
+       cannot be interpreted as a <type>date</type> value.
+       (SQLSTATE 42804)
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term>-210 (<symbol>ECPG_TIMESTAMP_FORMAT</symbol>)</term>
+     <listitem>
+      <para>
+       The host variable is of type <type>timestamp</type> and the
+       datum in the database is of another type and contains a value
+       that cannot be interpreted as a <type>timestamp</type> value.
+       (SQLSTATE 42804)
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
      <term>-211 (<symbol>ECPG_CONVERT_BOOL</symbol>)</term>
      <listitem>
       <para>
@@ -4938,6 +5007,19 @@ struct
      </listitem>
     </varlistentry>
 
+<![IGNORE[
+    <!-- disabled by #if 0 in ecpglib -->
+    <varlistentry>
+     <term>-216 (<symbol>ECPG_ARRAY_INSERT</symbol>)</term>
+     <listitem>
+      <para>
+       The value could not be inserted into the array.  (SQLSTATE
+       42804)
+      </para>
+     </listitem>
+    </varlistentry>
+]]>
+
     <varlistentry>
      <term>-220 (<symbol>ECPG_NO_CONN</symbol>)</term>
      <listitem>
@@ -4964,6 +5046,16 @@ struct
       <para>
        The statement you are trying to use has not been prepared.
        (SQLSTATE 26000)
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term>-239 (<symbol>ECPG_INFORMIX_DUPLICATE_KEY</symbol>)</term>
+     <listitem>
+      <para>
+       Duplicate key error, violation of unique constraint (Informix
+       compatibility mode).  (SQLSTATE 23505)
       </para>
      </listitem>
     </varlistentry>
@@ -5021,6 +5113,16 @@ struct
     </varlistentry>
 
     <varlistentry>
+     <term>-284 (<symbol>ECPG_INFORMIX_SUBSELECT_NOT_ONE</symbol>)</term>
+     <listitem>
+      <para>
+       A result of the subquery is not single row (Informix
+       compatibility mode).  (SQLSTATE 21000)
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
      <term>-400 (<symbol>ECPG_PGSQL</symbol>)</term>
      <listitem>
       <para>
@@ -5053,15 +5155,82 @@ struct
     </varlistentry>
 
     <varlistentry>
-     <term>100 (<symbol>ECPG_NOT_FOUND</symbol>)</term>
+     <term>-403 (<symbol>ECPG_DUPLICATE_KEY</symbol>)</term>
      <listitem>
       <para>
-       This is a harmless condition indicating that the last command
-       retrieved or processed zero rows, or that you are at the end of
-       the cursor.  (SQLSTATE 02000)
+       Duplicate key error, violation of unique constraint.  (SQLSTATE
+       23505)
       </para>
      </listitem>
     </varlistentry>
+
+    <varlistentry>
+     <term>-404 (<symbol>ECPG_SUBSELECT_NOT_ONE</symbol>)</term>
+     <listitem>
+      <para>
+       A result for the subquery is not single row. (SQLSTATE 21000)
+      </para>
+     </listitem>
+    </varlistentry>
+
+<![IGNORE[
+    <!-- currently not used by the code -->
+    <varlistentry>
+     <term>-600 (<symbol>ECPG_WARNING_UNRECOGNIZED</symbol>)</term>
+     <listitem>
+      <para>
+       An unrecognized warning was received from the server.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term>-601 (<symbol>ECPG_WARNING_QUERY_IGNORED</symbol>)</term>
+     <listitem>
+      <para>
+       Current transaction is aborted.  Queries are ignored until the
+       end of the transaction block.
+      </para>
+     </listitem>
+    </varlistentry>
+]]>
+
+    <varlistentry>
+     <term>-602 (<symbol>ECPG_WARNING_UNKNOWN_PORTAL</symbol>)</term>
+     <listitem>
+      <para>
+       An invalid cursor name was specified. (SQLSTATE 34000)
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term>-603 (<symbol>ECPG_WARNING_IN_TRANSACTION</symbol>)</term>
+     <listitem>
+      <para>
+       Transaction is in progress. (SQLSTATE 25001)
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term>-604 (<symbol>ECPG_WARNING_NO_TRANSACTION</symbol>)</term>
+     <listitem>
+      <para>
+       There is no active (in-progress) transaction. (SQLSTATE 25P01)
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term>-605 (<symbol>ECPG_WARNING_PORTAL_EXISTS</symbol>)</term>
+     <listitem>
+      <para>
+       An existing cursor name was specified. (SQLSTATE 42P03)
+      </para>
+     </listitem>
+    </varlistentry>
+
    </variablelist>
   </para>
   </sect2>
