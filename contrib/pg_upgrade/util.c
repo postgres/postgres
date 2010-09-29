@@ -269,5 +269,5 @@ getErrorText(int errNum)
 unsigned int
 str2uint(const char *str)
 {
-	return strtol(str, NULL, 10);
+	return strtoul(str, NULL, 10);
 }
