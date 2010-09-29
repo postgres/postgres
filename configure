@@ -3999,9 +3999,12 @@ fi
 if test "$GCC" = yes -a "$ICC" = no; then
   CFLAGS="$CFLAGS -Wall -Wmissing-prototypes -Wpointer-arith"
   # These work in some but not all gcc versions
-  { $as_echo "$as_me:$LINENO: checking if $CC supports -Wdeclaration-after-statement" >&5
-$as_echo_n "checking if $CC supports -Wdeclaration-after-statement... " >&6; }
-pgac_save_CFLAGS=$CFLAGS
+  { $as_echo "$as_me:$LINENO: checking whether $CC supports -Wdeclaration-after-statement" >&5
+$as_echo_n "checking whether $CC supports -Wdeclaration-after-statement... " >&6; }
+if test "${pgac_cv_prog_cc_cflags__Wdeclaration_after_statement+set}" = set; then
+  $as_echo_n "(cached) " >&6
+else
+  pgac_save_CFLAGS=$CFLAGS
 CFLAGS="$pgac_save_CFLAGS -Wdeclaration-after-statement"
 cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
@@ -4036,22 +4039,29 @@ $as_echo "$ac_try_echo") >&5
 	 test -z "$ac_c_werror_flag" ||
 	 test ! -s conftest.err
        } && test -s conftest.$ac_objext; then
-  { $as_echo "$as_me:$LINENO: result: yes" >&5
-$as_echo "yes" >&6; }
+  pgac_cv_prog_cc_cflags__Wdeclaration_after_statement=yes
 else
   $as_echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-	CFLAGS="$pgac_save_CFLAGS"
-                    { $as_echo "$as_me:$LINENO: result: no" >&5
-$as_echo "no" >&6; }
+	pgac_cv_prog_cc_cflags__Wdeclaration_after_statement=no
 fi
 
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+CFLAGS="$pgac_save_CFLAGS"
+fi
+{ $as_echo "$as_me:$LINENO: result: $pgac_cv_prog_cc_cflags__Wdeclaration_after_statement" >&5
+$as_echo "$pgac_cv_prog_cc_cflags__Wdeclaration_after_statement" >&6; }
+if test x"$pgac_cv_prog_cc_cflags__Wdeclaration_after_statement" = x"yes"; then
+  CFLAGS="$CFLAGS -Wdeclaration-after-statement"
+fi
 
-  { $as_echo "$as_me:$LINENO: checking if $CC supports -Wendif-labels" >&5
-$as_echo_n "checking if $CC supports -Wendif-labels... " >&6; }
-pgac_save_CFLAGS=$CFLAGS
+  { $as_echo "$as_me:$LINENO: checking whether $CC supports -Wendif-labels" >&5
+$as_echo_n "checking whether $CC supports -Wendif-labels... " >&6; }
+if test "${pgac_cv_prog_cc_cflags__Wendif_labels+set}" = set; then
+  $as_echo_n "(cached) " >&6
+else
+  pgac_save_CFLAGS=$CFLAGS
 CFLAGS="$pgac_save_CFLAGS -Wendif-labels"
 cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
@@ -4086,23 +4096,30 @@ $as_echo "$ac_try_echo") >&5
 	 test -z "$ac_c_werror_flag" ||
 	 test ! -s conftest.err
        } && test -s conftest.$ac_objext; then
-  { $as_echo "$as_me:$LINENO: result: yes" >&5
-$as_echo "yes" >&6; }
+  pgac_cv_prog_cc_cflags__Wendif_labels=yes
 else
   $as_echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-	CFLAGS="$pgac_save_CFLAGS"
-                    { $as_echo "$as_me:$LINENO: result: no" >&5
-$as_echo "no" >&6; }
+	pgac_cv_prog_cc_cflags__Wendif_labels=no
 fi
 
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+CFLAGS="$pgac_save_CFLAGS"
+fi
+{ $as_echo "$as_me:$LINENO: result: $pgac_cv_prog_cc_cflags__Wendif_labels" >&5
+$as_echo "$pgac_cv_prog_cc_cflags__Wendif_labels" >&6; }
+if test x"$pgac_cv_prog_cc_cflags__Wendif_labels" = x"yes"; then
+  CFLAGS="$CFLAGS -Wendif-labels"
+fi
 
   # Disable strict-aliasing rules; needed for gcc 3.3+
-  { $as_echo "$as_me:$LINENO: checking if $CC supports -fno-strict-aliasing" >&5
-$as_echo_n "checking if $CC supports -fno-strict-aliasing... " >&6; }
-pgac_save_CFLAGS=$CFLAGS
+  { $as_echo "$as_me:$LINENO: checking whether $CC supports -fno-strict-aliasing" >&5
+$as_echo_n "checking whether $CC supports -fno-strict-aliasing... " >&6; }
+if test "${pgac_cv_prog_cc_cflags__fno_strict_aliasing+set}" = set; then
+  $as_echo_n "(cached) " >&6
+else
+  pgac_save_CFLAGS=$CFLAGS
 CFLAGS="$pgac_save_CFLAGS -fno-strict-aliasing"
 cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
@@ -4137,23 +4154,30 @@ $as_echo "$ac_try_echo") >&5
 	 test -z "$ac_c_werror_flag" ||
 	 test ! -s conftest.err
        } && test -s conftest.$ac_objext; then
-  { $as_echo "$as_me:$LINENO: result: yes" >&5
-$as_echo "yes" >&6; }
+  pgac_cv_prog_cc_cflags__fno_strict_aliasing=yes
 else
   $as_echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-	CFLAGS="$pgac_save_CFLAGS"
-                    { $as_echo "$as_me:$LINENO: result: no" >&5
-$as_echo "no" >&6; }
+	pgac_cv_prog_cc_cflags__fno_strict_aliasing=no
 fi
 
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+CFLAGS="$pgac_save_CFLAGS"
+fi
+{ $as_echo "$as_me:$LINENO: result: $pgac_cv_prog_cc_cflags__fno_strict_aliasing" >&5
+$as_echo "$pgac_cv_prog_cc_cflags__fno_strict_aliasing" >&6; }
+if test x"$pgac_cv_prog_cc_cflags__fno_strict_aliasing" = x"yes"; then
+  CFLAGS="$CFLAGS -fno-strict-aliasing"
+fi
 
   # Disable optimizations that assume no overflow; needed for gcc 4.3+
-  { $as_echo "$as_me:$LINENO: checking if $CC supports -fwrapv" >&5
-$as_echo_n "checking if $CC supports -fwrapv... " >&6; }
-pgac_save_CFLAGS=$CFLAGS
+  { $as_echo "$as_me:$LINENO: checking whether $CC supports -fwrapv" >&5
+$as_echo_n "checking whether $CC supports -fwrapv... " >&6; }
+if test "${pgac_cv_prog_cc_cflags__fwrapv+set}" = set; then
+  $as_echo_n "(cached) " >&6
+else
+  pgac_save_CFLAGS=$CFLAGS
 CFLAGS="$pgac_save_CFLAGS -fwrapv"
 cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
@@ -4188,25 +4212,32 @@ $as_echo "$ac_try_echo") >&5
 	 test -z "$ac_c_werror_flag" ||
 	 test ! -s conftest.err
        } && test -s conftest.$ac_objext; then
-  { $as_echo "$as_me:$LINENO: result: yes" >&5
-$as_echo "yes" >&6; }
+  pgac_cv_prog_cc_cflags__fwrapv=yes
 else
   $as_echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-	CFLAGS="$pgac_save_CFLAGS"
-                    { $as_echo "$as_me:$LINENO: result: no" >&5
-$as_echo "no" >&6; }
+	pgac_cv_prog_cc_cflags__fwrapv=no
 fi
 
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+CFLAGS="$pgac_save_CFLAGS"
+fi
+{ $as_echo "$as_me:$LINENO: result: $pgac_cv_prog_cc_cflags__fwrapv" >&5
+$as_echo "$pgac_cv_prog_cc_cflags__fwrapv" >&6; }
+if test x"$pgac_cv_prog_cc_cflags__fwrapv" = x"yes"; then
+  CFLAGS="$CFLAGS -fwrapv"
+fi
 
 elif test "$ICC" = yes; then
   # Intel's compiler has a bug/misoptimization in checking for
   # division by NAN (NaN == 0), -mp1 fixes it, so add it to the CFLAGS.
-  { $as_echo "$as_me:$LINENO: checking if $CC supports -mp1" >&5
-$as_echo_n "checking if $CC supports -mp1... " >&6; }
-pgac_save_CFLAGS=$CFLAGS
+  { $as_echo "$as_me:$LINENO: checking whether $CC supports -mp1" >&5
+$as_echo_n "checking whether $CC supports -mp1... " >&6; }
+if test "${pgac_cv_prog_cc_cflags__mp1+set}" = set; then
+  $as_echo_n "(cached) " >&6
+else
+  pgac_save_CFLAGS=$CFLAGS
 CFLAGS="$pgac_save_CFLAGS -mp1"
 cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
@@ -4241,23 +4272,30 @@ $as_echo "$ac_try_echo") >&5
 	 test -z "$ac_c_werror_flag" ||
 	 test ! -s conftest.err
        } && test -s conftest.$ac_objext; then
-  { $as_echo "$as_me:$LINENO: result: yes" >&5
-$as_echo "yes" >&6; }
+  pgac_cv_prog_cc_cflags__mp1=yes
 else
   $as_echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-	CFLAGS="$pgac_save_CFLAGS"
-                    { $as_echo "$as_me:$LINENO: result: no" >&5
-$as_echo "no" >&6; }
+	pgac_cv_prog_cc_cflags__mp1=no
 fi
 
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+CFLAGS="$pgac_save_CFLAGS"
+fi
+{ $as_echo "$as_me:$LINENO: result: $pgac_cv_prog_cc_cflags__mp1" >&5
+$as_echo "$pgac_cv_prog_cc_cflags__mp1" >&6; }
+if test x"$pgac_cv_prog_cc_cflags__mp1" = x"yes"; then
+  CFLAGS="$CFLAGS -mp1"
+fi
 
   # Make sure strict aliasing is off (though this is said to be the default)
-  { $as_echo "$as_me:$LINENO: checking if $CC supports -fno-strict-aliasing" >&5
-$as_echo_n "checking if $CC supports -fno-strict-aliasing... " >&6; }
-pgac_save_CFLAGS=$CFLAGS
+  { $as_echo "$as_me:$LINENO: checking whether $CC supports -fno-strict-aliasing" >&5
+$as_echo_n "checking whether $CC supports -fno-strict-aliasing... " >&6; }
+if test "${pgac_cv_prog_cc_cflags__fno_strict_aliasing+set}" = set; then
+  $as_echo_n "(cached) " >&6
+else
+  pgac_save_CFLAGS=$CFLAGS
 CFLAGS="$pgac_save_CFLAGS -fno-strict-aliasing"
 cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
@@ -4292,24 +4330,31 @@ $as_echo "$ac_try_echo") >&5
 	 test -z "$ac_c_werror_flag" ||
 	 test ! -s conftest.err
        } && test -s conftest.$ac_objext; then
-  { $as_echo "$as_me:$LINENO: result: yes" >&5
-$as_echo "yes" >&6; }
+  pgac_cv_prog_cc_cflags__fno_strict_aliasing=yes
 else
   $as_echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-	CFLAGS="$pgac_save_CFLAGS"
-                    { $as_echo "$as_me:$LINENO: result: no" >&5
-$as_echo "no" >&6; }
+	pgac_cv_prog_cc_cflags__fno_strict_aliasing=no
 fi
 
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+CFLAGS="$pgac_save_CFLAGS"
+fi
+{ $as_echo "$as_me:$LINENO: result: $pgac_cv_prog_cc_cflags__fno_strict_aliasing" >&5
+$as_echo "$pgac_cv_prog_cc_cflags__fno_strict_aliasing" >&6; }
+if test x"$pgac_cv_prog_cc_cflags__fno_strict_aliasing" = x"yes"; then
+  CFLAGS="$CFLAGS -fno-strict-aliasing"
+fi
 
 elif test "$PORTNAME" = "aix"; then
   # AIX's xlc has to have strict aliasing turned off too
-  { $as_echo "$as_me:$LINENO: checking if $CC supports -qnoansialias" >&5
-$as_echo_n "checking if $CC supports -qnoansialias... " >&6; }
-pgac_save_CFLAGS=$CFLAGS
+  { $as_echo "$as_me:$LINENO: checking whether $CC supports -qnoansialias" >&5
+$as_echo_n "checking whether $CC supports -qnoansialias... " >&6; }
+if test "${pgac_cv_prog_cc_cflags__qnoansialias+set}" = set; then
+  $as_echo_n "(cached) " >&6
+else
+  pgac_save_CFLAGS=$CFLAGS
 CFLAGS="$pgac_save_CFLAGS -qnoansialias"
 cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
@@ -4344,18 +4389,22 @@ $as_echo "$ac_try_echo") >&5
 	 test -z "$ac_c_werror_flag" ||
 	 test ! -s conftest.err
        } && test -s conftest.$ac_objext; then
-  { $as_echo "$as_me:$LINENO: result: yes" >&5
-$as_echo "yes" >&6; }
+  pgac_cv_prog_cc_cflags__qnoansialias=yes
 else
   $as_echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-	CFLAGS="$pgac_save_CFLAGS"
-                    { $as_echo "$as_me:$LINENO: result: no" >&5
-$as_echo "no" >&6; }
+	pgac_cv_prog_cc_cflags__qnoansialias=no
 fi
 
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+CFLAGS="$pgac_save_CFLAGS"
+fi
+{ $as_echo "$as_me:$LINENO: result: $pgac_cv_prog_cc_cflags__qnoansialias" >&5
+$as_echo "$pgac_cv_prog_cc_cflags__qnoansialias" >&6; }
+if test x"$pgac_cv_prog_cc_cflags__qnoansialias" = x"yes"; then
+  CFLAGS="$CFLAGS -qnoansialias"
+fi
 
 fi
 
@@ -8081,6 +8130,8 @@ fi
 if test "$with_readline" = yes; then
 
 
+{ $as_echo "$as_me:$LINENO: checking for library containing readline" >&5
+$as_echo_n "checking for library containing readline... " >&6; }
 if test "${pgac_cv_check_readline+set}" = set; then
   $as_echo_n "(cached) " >&6
 else
@@ -8091,8 +8142,6 @@ then	READLINE_ORDER="-lreadline -ledit"
 else	READLINE_ORDER="-ledit -lreadline"
 fi
 for pgac_rllib in $READLINE_ORDER ; do
-  { $as_echo "$as_me:$LINENO: checking for ${pgac_rllib}" >&5
-$as_echo_n "checking for ${pgac_rllib}... " >&6; }
   for pgac_lib in "" " -ltermcap" " -lncurses" " -lcurses" ; do
     LIBS="${pgac_rllib}${pgac_lib} $pgac_save_LIBS"
     cat >conftest.$ac_ext <<_ACEOF
@@ -8164,18 +8213,14 @@ rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
   done
   if test "$pgac_cv_check_readline" != no ; then
-    { $as_echo "$as_me:$LINENO: result: yes ($pgac_cv_check_readline)" >&5
-$as_echo "yes ($pgac_cv_check_readline)" >&6; }
     break
-  else
-    { $as_echo "$as_me:$LINENO: result: no" >&5
-$as_echo "no" >&6; }
   fi
 done
 LIBS=$pgac_save_LIBS
 
 fi
-
+{ $as_echo "$as_me:$LINENO: result: $pgac_cv_check_readline" >&5
+$as_echo "$pgac_cv_check_readline" >&6; }
 if test "$pgac_cv_check_readline" != no ; then
   LIBS="$pgac_cv_check_readline $LIBS"
 
@@ -20869,7 +20914,10 @@ fi
 if test "$with_readline" = yes; then
   { $as_echo "$as_me:$LINENO: checking for rl_completion_append_character" >&5
 $as_echo_n "checking for rl_completion_append_character... " >&6; }
-cat >conftest.$ac_ext <<_ACEOF
+if test "${pgac_cv_var_rl_completion_append_character+set}" = set; then
+  $as_echo_n "(cached) " >&6
+else
+  cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
 _ACEOF
 cat confdefs.h >>conftest.$ac_ext
@@ -20911,24 +20959,27 @@ $as_echo "$ac_try_echo") >&5
 	 test "$cross_compiling" = yes ||
 	 $as_test_x conftest$ac_exeext
        }; then
-  { $as_echo "$as_me:$LINENO: result: yes" >&5
-$as_echo "yes" >&6; }
-
-cat >>confdefs.h <<\_ACEOF
-#define HAVE_RL_COMPLETION_APPEND_CHARACTER 1
-_ACEOF
-
+  pgac_cv_var_rl_completion_append_character=yes
 else
   $as_echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-	{ $as_echo "$as_me:$LINENO: result: no" >&5
-$as_echo "no" >&6; }
+	pgac_cv_var_rl_completion_append_character=no
 fi
 
 rm -rf conftest.dSYM
 rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
+fi
+{ $as_echo "$as_me:$LINENO: result: $pgac_cv_var_rl_completion_append_character" >&5
+$as_echo "$pgac_cv_var_rl_completion_append_character" >&6; }
+if test x"$pgac_cv_var_rl_completion_append_character" = x"yes"; then
+
+cat >>confdefs.h <<\_ACEOF
+#define HAVE_RL_COMPLETION_APPEND_CHARACTER 1
+_ACEOF
+
+fi
 
 
 for ac_func in rl_completion_matches rl_filename_completion_function
@@ -21138,7 +21189,10 @@ fi
 
 { $as_echo "$as_me:$LINENO: checking for sigsetjmp" >&5
 $as_echo_n "checking for sigsetjmp... " >&6; }
-cat >conftest.$ac_ext <<_ACEOF
+if test "${pgac_cv_func_sigsetjmp+set}" = set; then
+  $as_echo_n "(cached) " >&6
+else
+  cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
 _ACEOF
 cat confdefs.h >>conftest.$ac_ext
@@ -21174,24 +21228,27 @@ $as_echo "$ac_try_echo") >&5
 	 test "$cross_compiling" = yes ||
 	 $as_test_x conftest$ac_exeext
        }; then
-
-cat >>confdefs.h <<\_ACEOF
-#define HAVE_SIGSETJMP 1
-_ACEOF
-
-{ $as_echo "$as_me:$LINENO: result: yes" >&5
-$as_echo "yes" >&6; }
+  pgac_cv_func_sigsetjmp=yes
 else
   $as_echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-	{ $as_echo "$as_me:$LINENO: result: no" >&5
-$as_echo "no" >&6; }
+	pgac_cv_func_sigsetjmp=no
 fi
 
 rm -rf conftest.dSYM
 rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
+fi
+{ $as_echo "$as_me:$LINENO: result: $pgac_cv_func_sigsetjmp" >&5
+$as_echo "$pgac_cv_func_sigsetjmp" >&6; }
+if test x"$pgac_cv_func_sigsetjmp" = x"yes"; then
+
+cat >>confdefs.h <<\_ACEOF
+#define HAVE_SIGSETJMP 1
+_ACEOF
+
+fi
 
 { $as_echo "$as_me:$LINENO: checking whether sys_siglist is declared" >&5
 $as_echo_n "checking whether sys_siglist is declared... " >&6; }
@@ -28847,14 +28904,15 @@ else
 fi
 
 if test "$PORTNAME" = "darwin"; then
-  { $as_echo "$as_me:$LINENO: checking if $CC supports -Wl,-dead_strip_dylibs" >&5
-$as_echo_n "checking if $CC supports -Wl,-dead_strip_dylibs... " >&6; }
-pgac_save_LDFLAGS=$LDFLAGS
+  { $as_echo "$as_me:$LINENO: checking whether $CC supports -Wl,-dead_strip_dylibs" >&5
+$as_echo_n "checking whether $CC supports -Wl,-dead_strip_dylibs... " >&6; }
+if test "${pgac_cv_prog_cc_ldflags__Wl__dead_strip_dylibs+set}" = set; then
+  $as_echo_n "(cached) " >&6
+else
+  pgac_save_LDFLAGS=$LDFLAGS
 LDFLAGS="$pgac_save_LDFLAGS -Wl,-dead_strip_dylibs"
 if test "$cross_compiling" = yes; then
-  LDFLAGS="$pgac_save_LDFLAGS"
-               { $as_echo "$as_me:$LINENO: result: assuming no" >&5
-$as_echo "assuming no" >&6; }
+  pgac_cv_prog_cc_ldflags__Wl__dead_strip_dylibs="assuming no"
 else
   cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
@@ -28893,33 +28951,38 @@ $as_echo "$ac_try_echo") >&5
   ac_status=$?
   $as_echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  { $as_echo "$as_me:$LINENO: result: yes" >&5
-$as_echo "yes" >&6; }
+  pgac_cv_prog_cc_ldflags__Wl__dead_strip_dylibs=yes
 else
   $as_echo "$as_me: program exited with status $ac_status" >&5
 $as_echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
 ( exit $ac_status )
-LDFLAGS="$pgac_save_LDFLAGS"
-               { $as_echo "$as_me:$LINENO: result: no" >&5
-$as_echo "no" >&6; }
+pgac_cv_prog_cc_ldflags__Wl__dead_strip_dylibs=no
 fi
 rm -rf conftest.dSYM
 rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext conftest.$ac_objext conftest.$ac_ext
 fi
 
 
+LDFLAGS="$pgac_save_LDFLAGS"
+fi
+{ $as_echo "$as_me:$LINENO: result: $pgac_cv_prog_cc_ldflags__Wl__dead_strip_dylibs" >&5
+$as_echo "$pgac_cv_prog_cc_ldflags__Wl__dead_strip_dylibs" >&6; }
+if test x"$pgac_cv_prog_cc_ldflags__Wl__dead_strip_dylibs" = x"yes"; then
+  LDFLAGS="$LDFLAGS -Wl,-dead_strip_dylibs"
+fi
 
 elif test "$PORTNAME" = "openbsd"; then
-  { $as_echo "$as_me:$LINENO: checking if $CC supports -Wl,-Bdynamic" >&5
-$as_echo_n "checking if $CC supports -Wl,-Bdynamic... " >&6; }
-pgac_save_LDFLAGS=$LDFLAGS
+  { $as_echo "$as_me:$LINENO: checking whether $CC supports -Wl,-Bdynamic" >&5
+$as_echo_n "checking whether $CC supports -Wl,-Bdynamic... " >&6; }
+if test "${pgac_cv_prog_cc_ldflags__Wl__Bdynamic+set}" = set; then
+  $as_echo_n "(cached) " >&6
+else
+  pgac_save_LDFLAGS=$LDFLAGS
 LDFLAGS="$pgac_save_LDFLAGS -Wl,-Bdynamic"
 if test "$cross_compiling" = yes; then
-  LDFLAGS="$pgac_save_LDFLAGS"
-               { $as_echo "$as_me:$LINENO: result: assuming no" >&5
-$as_echo "assuming no" >&6; }
+  pgac_cv_prog_cc_ldflags__Wl__Bdynamic="assuming no"
 else
   cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
@@ -28958,33 +29021,38 @@ $as_echo "$ac_try_echo") >&5
   ac_status=$?
   $as_echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  { $as_echo "$as_me:$LINENO: result: yes" >&5
-$as_echo "yes" >&6; }
+  pgac_cv_prog_cc_ldflags__Wl__Bdynamic=yes
 else
   $as_echo "$as_me: program exited with status $ac_status" >&5
 $as_echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
 ( exit $ac_status )
-LDFLAGS="$pgac_save_LDFLAGS"
-               { $as_echo "$as_me:$LINENO: result: no" >&5
-$as_echo "no" >&6; }
+pgac_cv_prog_cc_ldflags__Wl__Bdynamic=no
 fi
 rm -rf conftest.dSYM
 rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext conftest.$ac_objext conftest.$ac_ext
 fi
 
 
+LDFLAGS="$pgac_save_LDFLAGS"
+fi
+{ $as_echo "$as_me:$LINENO: result: $pgac_cv_prog_cc_ldflags__Wl__Bdynamic" >&5
+$as_echo "$pgac_cv_prog_cc_ldflags__Wl__Bdynamic" >&6; }
+if test x"$pgac_cv_prog_cc_ldflags__Wl__Bdynamic" = x"yes"; then
+  LDFLAGS="$LDFLAGS -Wl,-Bdynamic"
+fi
 
 else
-  { $as_echo "$as_me:$LINENO: checking if $CC supports -Wl,--as-needed" >&5
-$as_echo_n "checking if $CC supports -Wl,--as-needed... " >&6; }
-pgac_save_LDFLAGS=$LDFLAGS
+  { $as_echo "$as_me:$LINENO: checking whether $CC supports -Wl,--as-needed" >&5
+$as_echo_n "checking whether $CC supports -Wl,--as-needed... " >&6; }
+if test "${pgac_cv_prog_cc_ldflags__Wl___as_needed+set}" = set; then
+  $as_echo_n "(cached) " >&6
+else
+  pgac_save_LDFLAGS=$LDFLAGS
 LDFLAGS="$pgac_save_LDFLAGS -Wl,--as-needed"
 if test "$cross_compiling" = yes; then
-  LDFLAGS="$pgac_save_LDFLAGS"
-               { $as_echo "$as_me:$LINENO: result: assuming no" >&5
-$as_echo "assuming no" >&6; }
+  pgac_cv_prog_cc_ldflags__Wl___as_needed="assuming no"
 else
   cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
@@ -29023,23 +29091,27 @@ $as_echo "$ac_try_echo") >&5
   ac_status=$?
   $as_echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  { $as_echo "$as_me:$LINENO: result: yes" >&5
-$as_echo "yes" >&6; }
+  pgac_cv_prog_cc_ldflags__Wl___as_needed=yes
 else
   $as_echo "$as_me: program exited with status $ac_status" >&5
 $as_echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
 ( exit $ac_status )
-LDFLAGS="$pgac_save_LDFLAGS"
-               { $as_echo "$as_me:$LINENO: result: no" >&5
-$as_echo "no" >&6; }
+pgac_cv_prog_cc_ldflags__Wl___as_needed=no
 fi
 rm -rf conftest.dSYM
 rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext conftest.$ac_objext conftest.$ac_ext
 fi
 
 
+LDFLAGS="$pgac_save_LDFLAGS"
+fi
+{ $as_echo "$as_me:$LINENO: result: $pgac_cv_prog_cc_ldflags__Wl___as_needed" >&5
+$as_echo "$pgac_cv_prog_cc_ldflags__Wl___as_needed" >&6; }
+if test x"$pgac_cv_prog_cc_ldflags__Wl___as_needed" = x"yes"; then
+  LDFLAGS="$LDFLAGS -Wl,--as-needed"
+fi
 
 fi
 

@@ -1355,12 +1355,14 @@ fi
 dnl Cannot use AC_CHECK_FUNC because sigsetjmp may be a macro
 dnl (especially on GNU libc)
 dnl See also comments in c.h.
-AC_MSG_CHECKING(for sigsetjmp)
-AC_TRY_LINK([#include <setjmp.h>],
+AC_CACHE_CHECK([for sigsetjmp], pgac_cv_func_sigsetjmp,
+[AC_TRY_LINK([#include <setjmp.h>],
             [sigjmp_buf x; sigsetjmp(x, 1);],
-            [AC_DEFINE(HAVE_SIGSETJMP, 1, [Define to 1 if you have sigsetjmp().])
-AC_MSG_RESULT(yes)],
-            [AC_MSG_RESULT(no)])
+            [pgac_cv_func_sigsetjmp=yes],
+            [pgac_cv_func_sigsetjmp=no])])
+if test x"$pgac_cv_func_sigsetjmp" = x"yes"; then
+  AC_DEFINE(HAVE_SIGSETJMP, 1, [Define to 1 if you have sigsetjmp().])
+fi
 
 AC_DECL_SYS_SIGLIST
 

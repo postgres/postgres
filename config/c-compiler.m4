@@ -126,13 +126,18 @@ fi])# PGAC_C_FUNCNAME_SUPPORT
 # Given a string, check if the compiler supports the string as a
 # command-line option. If it does, add the string to CFLAGS.
 AC_DEFUN([PGAC_PROG_CC_CFLAGS_OPT],
-[AC_MSG_CHECKING([if $CC supports $1])
-pgac_save_CFLAGS=$CFLAGS
+[define([Ac_cachevar], [AS_TR_SH([pgac_cv_prog_cc_cflags_$1])])dnl
+AC_CACHE_CHECK([whether $CC supports $1], [Ac_cachevar],
+[pgac_save_CFLAGS=$CFLAGS
 CFLAGS="$pgac_save_CFLAGS $1"
 _AC_COMPILE_IFELSE([AC_LANG_PROGRAM()],
-                   AC_MSG_RESULT(yes),
-                   [CFLAGS="$pgac_save_CFLAGS"
-                    AC_MSG_RESULT(no)])
+                   [Ac_cachevar=yes],
+                   [Ac_cachevar=no])
+CFLAGS="$pgac_save_CFLAGS"])
+if test x"$Ac_cachevar" = x"yes"; then
+  CFLAGS="$CFLAGS $1"
+fi
+undefine([Ac_cachevar])dnl
 ])# PGAC_PROG_CC_CFLAGS_OPT
 
 
@@ -145,13 +150,17 @@ _AC_COMPILE_IFELSE([AC_LANG_PROGRAM()],
 # you can link to a particular function, not just whether you can link.
 # In fact, we must actually check that the resulting program runs :-(
 AC_DEFUN([PGAC_PROG_CC_LDFLAGS_OPT],
-[AC_MSG_CHECKING([if $CC supports $1])
-pgac_save_LDFLAGS=$LDFLAGS
+[define([Ac_cachevar], [AS_TR_SH([pgac_cv_prog_cc_ldflags_$1])])dnl
+AC_CACHE_CHECK([whether $CC supports $1], [Ac_cachevar],
+[pgac_save_LDFLAGS=$LDFLAGS
 LDFLAGS="$pgac_save_LDFLAGS $1"
 AC_RUN_IFELSE([AC_LANG_PROGRAM([extern void $2 (); void (*fptr) () = $2;],[])],
-              AC_MSG_RESULT(yes),
-              [LDFLAGS="$pgac_save_LDFLAGS"
-               AC_MSG_RESULT(no)],
-              [LDFLAGS="$pgac_save_LDFLAGS"
-               AC_MSG_RESULT(assuming no)])
+              [Ac_cachevar=yes],
+              [Ac_cachevar=no],
+              [Ac_cachevar="assuming no"])
+LDFLAGS="$pgac_save_LDFLAGS"])
+if test x"$Ac_cachevar" = x"yes"; then
+  LDFLAGS="$LDFLAGS $1"
+fi
+undefine([Ac_cachevar])dnl
 ])# PGAC_PROG_CC_LDFLAGS_OPT
