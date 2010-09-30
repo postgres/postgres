@@ -1,5 +1,172 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release-8.0.sgml,v 1.1.2.7 2010/05/13 21:27:15 tgl Exp $ -->
+<!-- doc/src/sgml/release-8.0.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
+
+ <sect1 id="release-8-0-26">
+  <title>Release 8.0.26</title>
+
+  <note>
+  <title>Release date</title>
+  <simpara>2010-10-04</simpara>
+  </note>
+
+  <para>
+   This release contains a variety of fixes from 8.0.25.
+   For information about new features in the 8.0 major release, see
+   <xref linkend="release-8-0">.
+  </para>
+
+  <para>
+   This is expected to be the last <productname>PostgreSQL</> release
+   in the 8.0.X series.  Users are encouraged to update to a newer
+   release branch soon.
+  </para>
+
+  <sect2>
+   <title>Migration to Version 8.0.26</title>
+
+   <para>
+    A dump/restore is not required for those running 8.0.X.
+    However, if you are upgrading from a version earlier than 8.0.22,
+    see the release notes for 8.0.22.
+   </para>
+
+  </sect2>
+
+  <sect2>
+   <title>Changes</title>
+
+   <itemizedlist>
+
+    <listitem>
+     <para>
+      Prevent possible crashes in <function>pg_get_expr()</> by disallowing
+      it from being called with an argument that is not one of the system
+      catalog columns it's intended to be used with
+      (Heikki Linnakangas, Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <quote>cannot handle unplanned sub-select</quote> error (Tom Lane)
+     </para>
+
+     <para>
+      This occurred when a sub-select contains a join alias reference that
+      expands into an expression containing another sub-select.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Defend against functions returning setof record where not all the
+      returned rows are actually of the same rowtype (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Take care to fsync the contents of lockfiles (both
+      <filename>postmaster.pid</> and the socket lockfile) while writing them
+      (Tom Lane)
+     </para>
+
+     <para>
+      This omission could result in corrupted lockfile contents if the
+      machine crashes shortly after postmaster start.  That could in turn
+      prevent subsequent attempts to start the postmaster from succeeding,
+      until the lockfile is manually removed.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Avoid recursion while assigning XIDs to heavily-nested
+      subtransactions (Andres Freund, Robert Haas)
+     </para>
+
+     <para>
+      The original coding could result in a crash if there was limited
+      stack space.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <varname>log_line_prefix</>'s <literal>%i</> escape,
+      which could produce junk early in backend startup (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix possible data corruption in <command>ALTER TABLE ... SET
+      TABLESPACE</> when archiving is enabled (Jeff Davis)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Allow <command>CREATE DATABASE</> and <command>ALTER DATABASE ... SET
+      TABLESPACE</> to be interrupted by query-cancel (Guillaume Lelarge)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      In PL/Python, defend against null pointer results from
+      <function>PyCObject_AsVoidPtr</> and <function>PyCObject_FromVoidPtr</>
+      (Peter Eisentraut)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Improve <filename>contrib/dblink</>'s handling of tables containing
+      dropped columns (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix connection leak after <quote>duplicate connection name</quote>
+      errors in <filename>contrib/dblink</> (Itagaki Takahiro)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <filename>contrib/dblink</> to handle connection names longer than
+      62 bytes correctly (Itagaki Takahiro)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Update build infrastructure and documentation to reflect the source code
+      repository's move from CVS to Git (Magnus Hagander and others)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Update time zone data files to <application>tzdata</> release 2010l
+      for DST law changes in Egypt and Palestine; also historical corrections
+      for Finland.
+     </para>
+
+     <para>
+      This change also adds new names for two Micronesian timezones:
+      Pacific/Chuuk is now preferred over Pacific/Truk (and the preferred
+      abbreviation is CHUT not TRUT) and Pacific/Pohnpei is preferred over
+      Pacific/Ponape.
+     </para>
+    </listitem>
+
+   </itemizedlist>
+
+  </sect2>
+ </sect1>
 
  <sect1 id="release-8-0-25">
   <title>Release 8.0.25</title>
@@ -2512,7 +2679,7 @@ when opening the file fails</para></listitem>
 constraints more reliably</para></listitem>
 <listitem><para>Fix password prompting in <application>pg_restore</> on
 Windows</para></listitem>
-<listitem><para>Fix PL/PgSQL to handle <literal>var := var</> correctly when
+<listitem><para>Fix PL/pgSQL to handle <literal>var := var</> correctly when
 the variable is of pass-by-reference type</para></listitem>
 <listitem><para>Fix PL/Perl <literal>%_SHARED</> so it's actually
 shared</para></listitem>

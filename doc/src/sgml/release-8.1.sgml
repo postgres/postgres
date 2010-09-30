@@ -1,5 +1,186 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release-8.1.sgml,v 1.1.2.7 2010/05/13 21:27:15 tgl Exp $ -->
+<!-- doc/src/sgml/release-8.1.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
+
+ <sect1 id="release-8-1-22">
+  <title>Release 8.1.22</title>
+
+  <note>
+  <title>Release date</title>
+  <simpara>2010-10-04</simpara>
+  </note>
+
+  <para>
+   This release contains a variety of fixes from 8.1.21.
+   For information about new features in the 8.1 major release, see
+   <xref linkend="release-8-1">.
+  </para>
+
+  <para>
+   The <productname>PostgreSQL</> community will stop releasing updates
+   for the 8.1.X release series in November 2010.
+   Users are encouraged to update to a newer release branch soon.
+  </para>
+
+  <sect2>
+   <title>Migration to Version 8.1.22</title>
+
+   <para>
+    A dump/restore is not required for those running 8.1.X.
+    However, if you are upgrading from a version earlier than 8.1.18,
+    see the release notes for 8.1.18.
+   </para>
+
+  </sect2>
+
+  <sect2>
+   <title>Changes</title>
+
+   <itemizedlist>
+
+    <listitem>
+     <para>
+      Prevent possible crashes in <function>pg_get_expr()</> by disallowing
+      it from being called with an argument that is not one of the system
+      catalog columns it's intended to be used with
+      (Heikki Linnakangas, Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <quote>cannot handle unplanned sub-select</quote> error (Tom Lane)
+     </para>
+
+     <para>
+      This occurred when a sub-select contains a join alias reference that
+      expands into an expression containing another sub-select.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Prevent show_session_authorization() from crashing within autovacuum
+      processes (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Defend against functions returning setof record where not all the
+      returned rows are actually of the same rowtype (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix possible failure when hashing a pass-by-reference function result
+      (Tao Ma, Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Take care to fsync the contents of lockfiles (both
+      <filename>postmaster.pid</> and the socket lockfile) while writing them
+      (Tom Lane)
+     </para>
+
+     <para>
+      This omission could result in corrupted lockfile contents if the
+      machine crashes shortly after postmaster start.  That could in turn
+      prevent subsequent attempts to start the postmaster from succeeding,
+      until the lockfile is manually removed.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Avoid recursion while assigning XIDs to heavily-nested
+      subtransactions (Andres Freund, Robert Haas)
+     </para>
+
+     <para>
+      The original coding could result in a crash if there was limited
+      stack space.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <varname>log_line_prefix</>'s <literal>%i</> escape,
+      which could produce junk early in backend startup (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix possible data corruption in <command>ALTER TABLE ... SET
+      TABLESPACE</> when archiving is enabled (Jeff Davis)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Allow <command>CREATE DATABASE</> and <command>ALTER DATABASE ... SET
+      TABLESPACE</> to be interrupted by query-cancel (Guillaume Lelarge)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      In PL/Python, defend against null pointer results from
+      <function>PyCObject_AsVoidPtr</> and <function>PyCObject_FromVoidPtr</>
+      (Peter Eisentraut)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Improve <filename>contrib/dblink</>'s handling of tables containing
+      dropped columns (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix connection leak after <quote>duplicate connection name</quote>
+      errors in <filename>contrib/dblink</> (Itagaki Takahiro)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <filename>contrib/dblink</> to handle connection names longer than
+      62 bytes correctly (Itagaki Takahiro)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Update build infrastructure and documentation to reflect the source code
+      repository's move from CVS to Git (Magnus Hagander and others)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Update time zone data files to <application>tzdata</> release 2010l
+      for DST law changes in Egypt and Palestine; also historical corrections
+      for Finland.
+     </para>
+
+     <para>
+      This change also adds new names for two Micronesian timezones:
+      Pacific/Chuuk is now preferred over Pacific/Truk (and the preferred
+      abbreviation is CHUT not TRUT) and Pacific/Pohnpei is preferred over
+      Pacific/Ponape.
+     </para>
+    </listitem>
+
+   </itemizedlist>
+
+  </sect2>
+ </sect1>
 
  <sect1 id="release-8-1-21">
   <title>Release 8.1.21</title>
@@ -1212,7 +1393,7 @@
 
     <listitem>
      <para>
-      Fix PL/PgSQL to not fail when a <literal>FOR</> loop's target variable
+      Fix PL/pgSQL to not fail when a <literal>FOR</> loop's target variable
       is a record containing composite-type fields (Tom)
      </para>
     </listitem>
@@ -4040,9 +4221,9 @@ psql -t -f fixseq.sql db1 | psql -e db1
        Previously, only a predefined list of time zone names were
        supported by <command>AT TIME ZONE</>. Now any supported time
        zone name can be used, e.g.:
-       <programlisting>
-        SELECT CURRENT_TIMESTAMP AT TIME ZONE 'Europe/London';
-       </programlisting>
+<programlisting>
+SELECT CURRENT_TIMESTAMP AT TIME ZONE 'Europe/London';
+</programlisting>
        In the above query, the time zone used is adjusted based on the
        daylight saving time rules that were in effect on the supplied
        date.
@@ -4116,10 +4297,10 @@ psql -t -f fixseq.sql db1 | psql -e db1
        the next day even if a daylight saving time adjustment occurs
        between, whereas adding <literal>24 hours</> will give a different
        local time when this happens.  For example, under US DST rules:
-       <programlisting>
-        '2005-04-03 00:00:00-05' + '1 day' = '2005-04-04 00:00:00-04'
-        '2005-04-03 00:00:00-05' + '24 hours' = '2005-04-04 01:00:00-04'
-       </programlisting>
+<programlisting>
+'2005-04-03 00:00:00-05' + '1 day' = '2005-04-04 00:00:00-04'
+'2005-04-03 00:00:00-05' + '24 hours' = '2005-04-04 01:00:00-04'
+</programlisting>
       </para>
      </listitem>
 
@@ -4343,7 +4524,7 @@ psql -t -f fixseq.sql db1 | psql -e db1
 
      <listitem>
       <para>
-       Allow SQL and PL/PgSQL functions to use <command>OUT</> and
+       Allow SQL and PL/pgSQL functions to use <command>OUT</> and
        <command>INOUT</> parameters (Tom)
       </para>
       <para>
@@ -4378,12 +4559,12 @@ psql -t -f fixseq.sql db1 | psql -e db1
    </sect3>
 
    <sect3>
-    <title>PL/PgSQL Server-Side Language Changes</title>
+    <title>PL/pgSQL Server-Side Language Changes</title>
     <itemizedlist>
 
      <listitem>
       <para>
-       Overhaul the memory management of PL/PgSQL functions (Neil)
+       Overhaul the memory management of PL/pgSQL functions (Neil)
       </para>
       <para>
        The parsetree of each function is now stored in a separate
@@ -4426,7 +4607,7 @@ psql -t -f fixseq.sql db1 | psql -e db1
      <listitem>
       <para>
        Add support for an optional <command>INTO</> clause to
-       PL/PgSQL's <command>EXECUTE</> statement (Pavel Stehule, Neil)
+       PL/pgSQL's <command>EXECUTE</> statement (Pavel Stehule, Neil)
       </para>
      </listitem>
 
