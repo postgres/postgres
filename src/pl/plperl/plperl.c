@@ -48,6 +48,7 @@
 #include "executor/spi.h"
 #include "commands/trigger.h"
 #include "fmgr.h"
+#include "miscadmin.h"
 #include "mb/pg_wchar.h"
 #include "access/heapam.h"
 #include "tcop/tcopprot.h"
@@ -56,6 +57,7 @@
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
 #include "utils/hsearch.h"
+#include "utils/lsyscache.h"
 
 /* perl stuff */
 #include "EXTERN.h"
@@ -72,6 +74,40 @@
 /* defines PLPERL_SET_OPMASK */
 #include "plperl_opmask.h"
 
+EXTERN_C void boot_DynaLoader(pTHX_ CV *cv);
+EXTERN_C void boot_SPI(pTHX_ CV *cv);
+
+
+/**********************************************************************
+ * Information associated with a Perl interpreter.  We have one interpreter
+ * that is used for all plperlu (untrusted) functions.  For plperl (trusted)
+ * functions, there is a separate interpreter for each effective SQL userid.
+ * (This is needed to ensure that an unprivileged user can't inject Perl code
+ * that'll be executed with the privileges of some other SQL user.)
+ *
+ * The plperl_interp_desc structs are kept in a Postgres hash table indexed
+ * by userid OID, with OID 0 used for the single untrusted interpreter.
+ *
+ * We start out by creating a "held" interpreter, which we initialize
+ * only as far as we can do without deciding if it will be trusted or
+ * untrusted.  Later, when we first need to run a plperl or plperlu
+ * function, we complete the initialization appropriately and move the
+ * PerlInterpreter pointer into the plperl_interp_hash hashtable.  If after
+ * that we need more interpreters, we create them as needed if we can, or
+ * fail if the Perl build doesn't support multiple interpreters.
+ *
+ * The reason for all the dancing about with a held interpreter is to make
+ * it possible for people to preload a lot of Perl code at postmaster startup
+ * (using plperl.on_init) and then use that code in backends.  Of course this
+ * will only work for the first interpreter created in any backend, but it's
+ * still useful with that restriction.
+ **********************************************************************/
+typedef struct plperl_interp_desc
+{
+	Oid			user_id;				/* Hash key (must be first!) */
+	PerlInterpreter *interp;			/* The interpreter */
+} plperl_interp_desc;
+
 
 /**********************************************************************
  * The information we cache about loaded procedures
@@ -81,6 +117,7 @@ typedef struct plperl_proc_desc
 	char	   *proname;
 	TransactionId fn_xmin;
 	CommandId	fn_cmin;
+	plperl_interp_desc *interp;	/* interpreter it's created in */
 	bool		lanpltrusted;
 	FmgrInfo	result_in_func;
 	Oid			result_in_elem;
@@ -95,38 +132,24 @@ typedef struct plperl_proc_desc
  * Global data
  **********************************************************************/
 
-typedef enum
-{
-	INTERP_NONE,
-	INTERP_HELD,
-	INTERP_TRUSTED,
-	INTERP_UNTRUSTED,
-	INTERP_BOTH
-} InterpState;
-
-static InterpState interp_state = INTERP_NONE;
-static bool can_run_two = false;
-
-static int	plperl_firstcall = 1;
-static bool plperl_safe_init_done = false;
-static PerlInterpreter *plperl_trusted_interp = NULL;
-static PerlInterpreter *plperl_untrusted_interp = NULL;
-static PerlInterpreter *plperl_held_interp = NULL;
-static OP  *(*pp_require_orig) (pTHX) = NULL;
-static OP  *pp_require_safe(pTHX);
-static bool trusted_context;
+static bool plperl_firstcall = true;
+static HTAB *plperl_interp_hash = NULL;
 static HTAB *plperl_proc_hash = NULL;
+static plperl_interp_desc *plperl_active_interp = NULL;
+/* If we have an unassigned "held" interpreter, it's stored here */
+static PerlInterpreter *plperl_held_interp = NULL;
+
+static OP  *(*pp_require_orig) (pTHX) = NULL;
 static char plperl_opmask[MAXO];
-static void set_interp_require(void);
 
 /**********************************************************************
  * Forward declarations
  **********************************************************************/
-static void plperl_init_all(void);
-static void plperl_init_interp(void);
-
 Datum		plperl_call_handler(PG_FUNCTION_ARGS);
 void		plperl_init(void);
+
+static PerlInterpreter *plperl_init_interp(void);
+static void set_interp_require(bool trusted);
 
 static Datum plperl_func_handler(PG_FUNCTION_ARGS);
 
@@ -134,17 +157,43 @@ static plperl_proc_desc *compile_plperl_function(Oid fn_oid, bool is_trigger);
 
 static SV  *plperl_build_tuple_argument(HeapTuple tuple, TupleDesc tupdesc);
 static void plperl_init_shared_libs(pTHX);
-static void plperl_safe_init(void);
+static void plperl_trusted_init(void);
+static void plperl_untrusted_init(void);
+static void plperl_create_sub(plperl_proc_desc *desc, char *s, Oid fn_oid);
 static char *strip_trailing_ws(const char *msg);
+static OP  *pp_require_safe(pTHX);
+static void activate_interpreter(plperl_interp_desc *interp_desc);
 
-/* hash table entry for proc desc  */
 
-typedef struct plperl_proc_entry
+/**********************************************************************
+ * For speedy lookup, we maintain a hash table mapping from
+ * function OID + trigger flag + user OID to plperl_proc_desc pointers.
+ * The reason the plperl_proc_desc struct isn't directly part of the hash
+ * entry is to simplify recovery from errors during compile_plperl_function.
+ *
+ * Note: if the same function is called by multiple userIDs within a session,
+ * there will be a separate plperl_proc_desc entry for each userID in the case
+ * of plperl functions, but only one entry for plperlu functions, because we
+ * set user_id = 0 for that case.  If the user redeclares the same function
+ * from plperl to plperlu or vice versa, there might be multiple
+ * plperl_proc_ptr entries in the hashtable, but only one is valid.
+ **********************************************************************/
+typedef struct plperl_proc_key
 {
-	char		proc_name[NAMEDATALEN];
-	plperl_proc_desc *proc_data;
-} plperl_proc_entry;
+	Oid			proc_id;				/* Function OID */
+	/*
+	 * is_trigger is really a bool, but declare as Oid to ensure this struct
+	 * contains no padding
+	 */
+	Oid			is_trigger;				/* is it a trigger function? */
+	Oid			user_id;				/* User calling the function, or 0 */
+} plperl_proc_key;
 
+typedef struct plperl_proc_ptr
+{
+	plperl_proc_key proc_key;			/* Hash key (must be first!) */
+	plperl_proc_desc *proc_ptr;
+} plperl_proc_ptr;
 
 /*
  * This routine is a crock, and so is everyplace that calls it.  The problem
@@ -181,24 +230,32 @@ plperl_init(void)
 	if (!plperl_firstcall)
 		return;
 
-	MemSet(&hash_ctl, 0, sizeof(hash_ctl));
+	memset(&hash_ctl, 0, sizeof(hash_ctl));
+	hash_ctl.keysize = sizeof(Oid);
+	hash_ctl.entrysize = sizeof(plperl_interp_desc);
+	hash_ctl.hash = tag_hash;
+	plperl_interp_hash = hash_create("PL/Perl interpreters",
+									 8,
+									 &hash_ctl,
+									 HASH_ELEM | HASH_FUNCTION);
 
-	hash_ctl.keysize = NAMEDATALEN;
-	hash_ctl.entrysize = sizeof(plperl_proc_entry);
-
-	plperl_proc_hash = hash_create("PLPerl Procedures",
+	memset(&hash_ctl, 0, sizeof(hash_ctl));
+	hash_ctl.keysize = sizeof(plperl_proc_key);
+	hash_ctl.entrysize = sizeof(plperl_proc_ptr);
+	hash_ctl.hash = tag_hash;
+	plperl_proc_hash = hash_create("PL/Perl procedures",
 								   32,
 								   &hash_ctl,
-								   HASH_ELEM);
+								   HASH_ELEM | HASH_FUNCTION);
 
 	/************************************************************
-	 * Now recreate a new Perl interpreter
+	 * Create the Perl interpreter
 	 ************************************************************/
 	PLPERL_SET_OPMASK(plperl_opmask);
 
-	plperl_init_interp();
+	plperl_held_interp = plperl_init_interp();
 
-	plperl_firstcall = 0;
+	plperl_firstcall = false;
 }
 
 /**********************************************************************
@@ -224,17 +281,10 @@ plperl_init_all(void)
 #define PLC_TRUSTED \
 	"require strict; "
 
-#define TEST_FOR_MULTI \
-	"use Config; " \
-	"$Config{usemultiplicity} eq 'define' or "	\
-	"($Config{usethreads} eq 'define' " \
-	" and $Config{useithreads} eq 'define')"
-
-
 static void
-set_interp_require(void)
+set_interp_require(bool trusted)
 {
-	if (trusted_context)
+	if (trusted)
 	{
 		PL_ppaddr[OP_REQUIRE] = pp_require_safe;
 		PL_ppaddr[OP_DOFILE] = pp_require_safe;
@@ -246,97 +296,128 @@ set_interp_require(void)
 	}
 }
 
-/********************************************************************
- *
- * We start out by creating a "held" interpreter that we can use in
- * trusted or untrusted mode (but not both) as the need arises. Later, we
- * assign that interpreter if it is available to either the trusted or
- * untrusted interpreter. If it has already been assigned, and we need to
- * create the other interpreter, we do that if we can, or error out.
- * We detect if it is safe to run two interpreters during the setup of the
- * dummy interpreter.
+/*
+ * Select and activate an appropriate Perl interpreter.
  */
-
-
 static void
-check_interp(bool trusted)
+select_perl_context(bool trusted)
 {
-	if (interp_state == INTERP_HELD)
+	Oid			user_id;
+	plperl_interp_desc *interp_desc;
+	bool		found;
+	PerlInterpreter *interp = NULL;
+
+	/* Find or create the interpreter hashtable entry for this userid */
+	if (trusted)
+		user_id = GetUserId();
+	else
+		user_id = InvalidOid;
+
+	interp_desc = hash_search(plperl_interp_hash, &user_id,
+							  HASH_ENTER,
+							  &found);
+	if (!found)
 	{
-		if (trusted)
-		{
-			plperl_trusted_interp = plperl_held_interp;
-			interp_state = INTERP_TRUSTED;
-		}
-		else
-		{
-			plperl_untrusted_interp = plperl_held_interp;
-			interp_state = INTERP_UNTRUSTED;
-		}
-		plperl_held_interp = NULL;
-		trusted_context = trusted;
-		set_interp_require();
+		/* Initialize newly-created hashtable entry */
+		interp_desc->interp = NULL;
 	}
-	else if (interp_state == INTERP_BOTH ||
-			 (trusted && interp_state == INTERP_TRUSTED) ||
-			 (!trusted && interp_state == INTERP_UNTRUSTED))
+
+	/*
+	 * Quick exit if already have an interpreter
+	 */
+	if (interp_desc->interp)
 	{
-		if (trusted_context != trusted)
-		{
-			if (trusted)
-				PERL_SET_CONTEXT(plperl_trusted_interp);
-			else
-				PERL_SET_CONTEXT(plperl_untrusted_interp);
-			trusted_context = trusted;
-			set_interp_require();
-		}
+		activate_interpreter(interp_desc);
+		return;
 	}
-	else if (can_run_two)
+
+	/*
+	 * adopt held interp if free, else create new one if possible
+	 */
+	if (plperl_held_interp != NULL)
 	{
-		PERL_SET_CONTEXT(plperl_held_interp);
-		plperl_init_interp();
-		if (trusted)
-			plperl_trusted_interp = plperl_held_interp;
-		else
-			plperl_untrusted_interp = plperl_held_interp;
-		interp_state = INTERP_BOTH;
+		/* first actual use of a perl interpreter */
+		interp = plperl_held_interp;
+
+		/*
+		 * Reset the plperl_held_interp pointer first; if we fail during init
+		 * we don't want to try again with the partially-initialized interp.
+		 */
 		plperl_held_interp = NULL;
-		trusted_context = trusted;
-		set_interp_require();
+
+		if (trusted)
+			plperl_trusted_init();
+		else
+			plperl_untrusted_init();
 	}
 	else
 	{
-		elog(ERROR,
-			 "can not allocate second Perl interpreter on this platform");
+#ifdef MULTIPLICITY
+		/*
+		 * plperl_init_interp will change Perl's idea of the active
+		 * interpreter.  Reset plperl_active_interp temporarily, so that if we
+		 * hit an error partway through here, we'll make sure to switch back
+		 * to a non-broken interpreter before running any other Perl
+		 * functions.
+		 */
+		plperl_active_interp = NULL;
 
-	}
+		/* Now build the new interpreter */
+		interp = plperl_init_interp();
 
-}
-
-
-static void
-restore_context(bool old_context)
-{
-	if (trusted_context != old_context)
-	{
-		if (old_context)
-			PERL_SET_CONTEXT(plperl_trusted_interp);
+		if (trusted)
+			plperl_trusted_init();
 		else
-			PERL_SET_CONTEXT(plperl_untrusted_interp);
+			plperl_untrusted_init();
+#else
+		elog(ERROR,
+			 "cannot allocate multiple Perl interpreters on this platform");
+#endif
+	}
 
-		trusted_context = old_context;
-		set_interp_require();
+	set_interp_require(trusted);
+
+	/* Fully initialized, so mark the hashtable entry valid */
+	interp_desc->interp = interp;
+
+	/* And mark this as the active interpreter */
+	plperl_active_interp = interp_desc;
+}
+
+/*
+ * Make the specified interpreter the active one
+ *
+ * A call with NULL does nothing.  This is so that "restoring" to a previously
+ * null state of plperl_active_interp doesn't result in useless thrashing.
+ */
+static void
+activate_interpreter(plperl_interp_desc *interp_desc)
+{
+	if (interp_desc && plperl_active_interp != interp_desc)
+	{
+		Assert(interp_desc->interp);
+		PERL_SET_CONTEXT(interp_desc->interp);
+		/* trusted iff user_id isn't InvalidOid */
+		set_interp_require(OidIsValid(interp_desc->user_id));
+		plperl_active_interp = interp_desc;
 	}
 }
 
-/**********************************************************************
- * plperl_init_interp() - Create the Perl interpreter
- **********************************************************************/
-static void
+/*
+ * Create a new Perl interpreter.
+ *
+ * We initialize the interpreter as far as we can without knowing whether
+ * it will become a trusted or untrusted interpreter; in particular, the
+ * plperl.on_init code will get executed.  Later, either plperl_trusted_init
+ * or plperl_untrusted_init must be called to complete the initialization.
+ */
+static PerlInterpreter *
 plperl_init_interp(void)
 {
+	PerlInterpreter *plperl;
+	static int	perl_sys_init_done;
 
-	char	   *embedding[3] = {
+	static char *embedding[3] = {
 		"", "-e",
 
 		/*
@@ -357,7 +438,7 @@ plperl_init_interp(void)
 	 * true when MYMALLOC is set.
 	 */
 #if defined(PERL_SYS_INIT3) && !defined(MYMALLOC)
-	if (interp_state == INTERP_NONE)
+	if (!perl_sys_init_done)
 	{
 		int			nargs;
 		char	   *dummy_perl_env[1];
@@ -366,14 +447,16 @@ plperl_init_interp(void)
 		nargs = 3;
 		dummy_perl_env[0] = NULL;
 		PERL_SYS_INIT3(&nargs, (char ***) &embedding, (char ***) &dummy_perl_env);
+		perl_sys_init_done = 1;
 	}
 #endif
 
-	plperl_held_interp = perl_alloc();
-	if (!plperl_held_interp)
+	plperl = perl_alloc();
+	if (!plperl)
 		elog(ERROR, "could not allocate Perl interpreter");
 
-	perl_construct(plperl_held_interp);
+	PERL_SET_CONTEXT(plperl);
+	perl_construct(plperl);
 
 	/*
 	 * Record the original function for the 'require' and 'dofile' opcodes.
@@ -390,18 +473,18 @@ plperl_init_interp(void)
 		PL_ppaddr[OP_DOFILE] = pp_require_orig;
 	}
 
-	perl_parse(plperl_held_interp, plperl_init_shared_libs,
-			   3, embedding, NULL);
-	perl_run(plperl_held_interp);
+	if (perl_parse(plperl, plperl_init_shared_libs,
+				   3, embedding, NULL) != 0)
+		ereport(ERROR,
+				(errmsg("%s", strip_trailing_ws(SvPV_nolen(ERRSV))),
+				 errcontext("while parsing Perl initialization")));
 
-	if (interp_state == INTERP_NONE)
-	{
-		SV		   *res;
+	if (perl_run(plperl) != 0)
+		ereport(ERROR,
+				(errmsg("%s", strip_trailing_ws(SvPV_nolen(ERRSV))),
+				 errcontext("while running Perl initialization")));
 
-		res = eval_pv(TEST_FOR_MULTI, TRUE);
-		can_run_two = SvIV(res);
-		interp_state = INTERP_HELD;
-	}
+	return plperl;
 }
 
 
@@ -419,7 +502,7 @@ Datum
 plperl_call_handler(PG_FUNCTION_ARGS)
 {
 	Datum		retval;
-	bool		oldcontext = trusted_context;
+	plperl_interp_desc *oldinterp;
 	sigjmp_buf	save_restart;
 
 	/************************************************************
@@ -437,15 +520,15 @@ plperl_call_handler(PG_FUNCTION_ARGS)
 	 * Determine if called as function or trigger and
 	 * call appropriate subhandler
 	 ************************************************************/
+	oldinterp = plperl_active_interp;
 
 	memcpy(&save_restart, &Warn_restart, sizeof(save_restart));
 	if (sigsetjmp(Warn_restart, 1) != 0)
 	{
 		memcpy(&Warn_restart, &save_restart, sizeof(Warn_restart));
-		restore_context(oldcontext);
+		activate_interpreter(oldinterp);
 		siglongjmp(Warn_restart, 1);
 	}
-
 
 	if (CALLED_AS_TRIGGER(fcinfo))
 	{
@@ -466,7 +549,7 @@ plperl_call_handler(PG_FUNCTION_ARGS)
 	}
 
 	memcpy(&Warn_restart, &save_restart, sizeof(Warn_restart));
-	restore_context(oldcontext);
+	activate_interpreter(oldinterp);
 	return retval;
 }
 
@@ -476,18 +559,12 @@ plperl_call_handler(PG_FUNCTION_ARGS)
  *		create the anonymous subroutine whose text is in the SV.
  *		Returns the SV containing the RV to the closure.
  **********************************************************************/
-static SV  *
-plperl_create_sub(char *s, bool trusted)
+static void
+plperl_create_sub(plperl_proc_desc *prodesc, char *s, Oid fn_oid)
 {
 	dSP;
 	SV		   *subref;
 	int			count;
-
-	if (trusted && !plperl_safe_init_done)
-	{
-		plperl_safe_init();
-		SPAGAIN;
-	}
 
 	ENTER;
 	SAVETMPS;
@@ -544,7 +621,7 @@ plperl_create_sub(char *s, bool trusted)
 	FREETMPS;
 	LEAVE;
 
-	return subref;
+	prodesc->reference = subref;
 }
 
 /*
@@ -576,8 +653,11 @@ pp_require_safe(pTHX)
 	DIE(aTHX_ "Unable to load %s into plperl", name);
 }
 
+/*
+ * Initialize the current Perl interpreter as a trusted interp
+ */
 static void
-plperl_safe_init(void)
+plperl_trusted_init(void)
 {
 	HV		   *stash;
 	SV		   *sv;
@@ -617,9 +697,9 @@ plperl_safe_init(void)
 	PL_ppaddr[OP_REQUIRE] = pp_require_safe;
 	PL_ppaddr[OP_DOFILE] = pp_require_safe;
 
-	/* 
-	 * prevent (any more) unsafe opcodes being compiled 
-	 * PL_op_mask is per interpreter, so this only needs to be set once 
+	/*
+	 * prevent (any more) unsafe opcodes being compiled
+	 * PL_op_mask is per interpreter, so this only needs to be set once
 	 */
 	PL_op_mask = plperl_opmask;
 	/* delete the DynaLoader:: namespace so extensions can't be loaded */
@@ -639,8 +719,17 @@ plperl_safe_init(void)
 #ifdef PL_stashcache
 	hv_clear(PL_stashcache);
 #endif
+}
 
-	plperl_safe_init_done = true;
+/*
+ * Initialize the current Perl interpreter as an untrusted interp
+ */
+static void
+plperl_untrusted_init(void)
+{
+	/*
+	 * Nothing to do here
+	 */
 }
 
 
@@ -652,10 +741,6 @@ plperl_safe_init(void)
  * and do the initialization behind perl's back.
  *
  **********************************************************************/
-
-EXTERN_C void boot_DynaLoader(pTHX_ CV *cv);
-EXTERN_C void boot_SPI(pTHX_ CV *cv);
-
 static void
 plperl_init_shared_libs(pTHX)
 {
@@ -761,7 +846,7 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 	/* Find or compile the function */
 	prodesc = compile_plperl_function(fcinfo->flinfo->fn_oid, false);
 
-	check_interp(prodesc->lanpltrusted);
+	activate_interpreter(prodesc->interp);
 
 	/************************************************************
 	 * Call the Perl function
@@ -797,50 +882,13 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 }
 
 
-/**********************************************************************
- * compile_plperl_function	- compile (or hopefully just look up) function
- **********************************************************************/
-static plperl_proc_desc *
-compile_plperl_function(Oid fn_oid, bool is_trigger)
+static bool
+validate_plperl_function(plperl_proc_ptr *proc_ptr, HeapTuple procTup)
 {
-	HeapTuple	procTup;
-	Form_pg_proc procStruct;
-	char		internal_proname[64];
-	int			proname_len;
-	plperl_proc_desc *prodesc = NULL;
-	int			i;
-	plperl_proc_entry *hash_entry;
-	bool		found;
-	bool		oldcontext = trusted_context;
-
-	/* We'll need the pg_proc tuple in any case... */
-	procTup = SearchSysCache(PROCOID,
-							 ObjectIdGetDatum(fn_oid),
-							 0, 0, 0);
-	if (!HeapTupleIsValid(procTup))
-		elog(ERROR, "cache lookup failed for function %u", fn_oid);
-	procStruct = (Form_pg_proc) GETSTRUCT(procTup);
-
-	/************************************************************
-	 * Build our internal proc name from the functions Oid
-	 ************************************************************/
-	if (!is_trigger)
-		sprintf(internal_proname, "__PLPerl_proc_%u", fn_oid);
-	else
-		sprintf(internal_proname, "__PLPerl_proc_%u_trigger", fn_oid);
-	proname_len = strlen(internal_proname);
-
-	/************************************************************
-	 * Lookup the internal proc name in the hashtable
-	 ************************************************************/
-	hash_entry = hash_search(plperl_proc_hash, internal_proname,
-							 HASH_FIND, NULL);
-
-	if (hash_entry)
+	if (proc_ptr && proc_ptr->proc_ptr)
 	{
+		plperl_proc_desc *prodesc = proc_ptr->proc_ptr;
 		bool		uptodate;
-
-		prodesc = hash_entry->proc_data;
 
 		/************************************************************
 		 * If it's present, must check whether it's still up to date.
@@ -850,20 +898,68 @@ compile_plperl_function(Oid fn_oid, bool is_trigger)
 		uptodate = (prodesc->fn_xmin == HeapTupleHeaderGetXmin(procTup->t_data) &&
 				prodesc->fn_cmin == HeapTupleHeaderGetCmin(procTup->t_data));
 
-		if (!uptodate)
+		if (uptodate)
+			return true;
+
+		/* Otherwise, unlink the obsoleted entry from the hashtable ... */
+		proc_ptr->proc_ptr = NULL;
+		/* ... and throw it away */
+		if (prodesc->reference)
 		{
-			hash_search(plperl_proc_hash, internal_proname,
-						HASH_REMOVE, NULL);
-			if (prodesc->reference)
-			{
-				check_interp(prodesc->lanpltrusted);
-				SvREFCNT_dec(prodesc->reference);
-				restore_context(oldcontext);
-			}
-			free(prodesc->proname);
-			free(prodesc);
-			prodesc = NULL;
+			plperl_interp_desc *oldinterp = plperl_active_interp;
+
+			activate_interpreter(prodesc->interp);
+			SvREFCNT_dec(prodesc->reference);
+			activate_interpreter(oldinterp);
 		}
+		free(prodesc->proname);
+		free(prodesc);
+	}
+
+	return false;
+}
+
+
+/**********************************************************************
+ * compile_plperl_function	- compile (or hopefully just look up) function
+ **********************************************************************/
+static plperl_proc_desc *
+compile_plperl_function(Oid fn_oid, bool is_trigger)
+{
+	HeapTuple	procTup;
+	Form_pg_proc procStruct;
+	plperl_proc_key proc_key;
+	plperl_proc_ptr *proc_ptr;
+	plperl_proc_desc *prodesc = NULL;
+	int			i;
+	plperl_interp_desc *oldinterp = plperl_active_interp;
+
+	/* We'll need the pg_proc tuple in any case... */
+	procTup = SearchSysCache(PROCOID,
+							 ObjectIdGetDatum(fn_oid),
+							 0, 0, 0);
+	if (!HeapTupleIsValid(procTup))
+		elog(ERROR, "cache lookup failed for function %u", fn_oid);
+	procStruct = (Form_pg_proc) GETSTRUCT(procTup);
+
+	/* Try to find function in plperl_proc_hash */
+	proc_key.proc_id = fn_oid;
+	proc_key.is_trigger = is_trigger;
+	proc_key.user_id = GetUserId();
+
+	proc_ptr = hash_search(plperl_proc_hash, &proc_key,
+						   HASH_FIND, NULL);
+
+	if (validate_plperl_function(proc_ptr, procTup))
+		prodesc = proc_ptr->proc_ptr;
+	else
+	{
+		/* If not found or obsolete, maybe it's plperlu */
+		proc_key.user_id = InvalidOid;
+		proc_ptr = hash_search(plperl_proc_hash, &proc_key,
+							   HASH_FIND, NULL);
+		if (validate_plperl_function(proc_ptr, procTup))
+			prodesc = proc_ptr->proc_ptr;
 	}
 
 	/************************************************************
@@ -891,7 +987,11 @@ compile_plperl_function(Oid fn_oid, bool is_trigger)
 					(errcode(ERRCODE_OUT_OF_MEMORY),
 					 errmsg("out of memory")));
 		MemSet(prodesc, 0, sizeof(plperl_proc_desc));
-		prodesc->proname = strdup(internal_proname);
+		prodesc->proname = strdup(NameStr(procStruct->proname));
+		if (prodesc->proname == NULL)
+			ereport(ERROR,
+					(errcode(ERRCODE_OUT_OF_MEMORY),
+					 errmsg("out of memory")));
 		prodesc->fn_xmin = HeapTupleHeaderGetXmin(procTup->t_data);
 		prodesc->fn_cmin = HeapTupleHeaderGetCmin(procTup->t_data);
 
@@ -1032,31 +1132,33 @@ compile_plperl_function(Oid fn_oid, bool is_trigger)
 									  PointerGetDatum(&procStruct->prosrc)));
 
 		/************************************************************
-		 * Create the procedure in the interpreter
+		 * Create the procedure in the appropriate interpreter
 		 ************************************************************/
 
-		check_interp(prodesc->lanpltrusted);
+		select_perl_context(prodesc->lanpltrusted);
 
-		prodesc->reference =
-			plperl_create_sub(proc_source, prodesc->lanpltrusted);
+		prodesc->interp = plperl_active_interp;
 
-		restore_context(oldcontext);
+		plperl_create_sub(prodesc, proc_source, fn_oid);
+
+		activate_interpreter(oldinterp);
 
 		pfree(proc_source);
 		if (!prodesc->reference)
 		{
 			free(prodesc->proname);
 			free(prodesc);
-			elog(ERROR, "could not create internal procedure \"%s\"",
-				 internal_proname);
+			elog(ERROR, "could not create PL/Perl internal procedure");
 		}
 
 		/************************************************************
-		 * Add the proc description block to the hashtable
+		 * OK, link the procedure into the correct hashtable entry
 		 ************************************************************/
-		hash_entry = hash_search(plperl_proc_hash, internal_proname,
-								 HASH_ENTER, &found);
-		hash_entry->proc_data = prodesc;
+		proc_key.user_id = prodesc->lanpltrusted ? GetUserId() : InvalidOid;
+
+		proc_ptr = hash_search(plperl_proc_hash, &proc_key,
+							   HASH_ENTER, NULL);
+		proc_ptr->proc_ptr = prodesc;
 	}
 
 	ReleaseSysCache(procTup);

@@ -199,14 +199,36 @@ CREATE FUNCTION overpaid(employee) RETURNS boolean AS '
      Sometimes it
      is useful to have some global data that is held between two
      calls to a function or is shared between different functions.
-     This is easily done since
-     all PL/Tcl functions executed in one session share the same
-     safe Tcl interpreter.  So, any global Tcl variable is accessible to
-     all PL/Tcl function calls and will persist for the duration of the
-     SQL session.  (Note that <application>PL/TclU</> functions likewise share
-     global data, but they are in a different Tcl interpreter and cannot
-     communicate with PL/Tcl functions.)
+     This is easily done in PL/Tcl, but there are some restrictions that
+     must be understood.
     </para>
+
+    <para>
+     For security reasons, PL/Tcl executes functions called by any one SQL
+     role in a separate Tcl interpreter for that role.  This prevents
+     accidental or malicious interference by one user with the behavior of
+     another user's PL/Tcl functions.  Each such interpreter will have its own
+     values for any <quote>global</> Tcl variables.  Thus, two PL/Tcl
+     functions will share the same global variables if and only if they are
+     executed by the same SQL role.  In an application wherein a single
+     session executes code under multiple SQL roles (via <literal>SECURITY
+     DEFINER</> functions, use of <command>SET ROLE</>, etc) you may need to
+     take explicit steps to ensure that PL/Tcl functions can share data.  To
+     do that, make sure that functions that should communicate are owned by
+     the same user, and mark them <literal>SECURITY DEFINER</>.  You must of
+     course take care that such functions can't be used to do anything
+     unintended.
+    </para>
+
+    <para>
+     All PL/TclU functions used in a session execute in the same Tcl
+     interpreter, which of course is distinct from the interpreter(s)
+     used for PL/Tcl functions.  So global data is automatically shared
+     between PL/TclU functions.  This is not considered a security risk
+     because all PL/TclU functions execute at the same trust level,
+     namely that of a database superuser.
+    </para>
+
     <para>
      To help protect PL/Tcl functions from unintentionally interfering
      with each other, a global
@@ -214,9 +236,11 @@ CREATE FUNCTION overpaid(employee) RETURNS boolean AS '
      command. The global name of this variable is the function's internal
      name, and the local name is <literal>GD</>.  It is recommended that
      <literal>GD</> be used
-     for private data of a function.  Use regular Tcl global variables
-     only for values that you specifically intend to be shared among multiple
-     functions.
+     for persistent private data of a function.  Use regular Tcl global
+     variables only for values that you specifically intend to be shared among
+     multiple functions.  (Note that the <literal>GD</> arrays are only
+     global within a particular interpreter, so they do not bypass the
+     security restrictions mentioned above.)
     </para>
 
     <para>
@@ -648,8 +672,8 @@ CREATE TRIGGER trig_mytab_modcount BEFORE INSERT OR UPDATE ON mytab
 	exists, the module <literal>unknown</> is fetched from the table
 	and loaded into the Tcl interpreter immediately before the first
 	execution of a PL/Tcl function in a database session.  (This
-	happens separately for PL/Tcl and PL/TclU, if both are used,
-	because separate interpreters are used for the two languages.)
+        happens separately for each Tcl interpreter, if more than one is
+        used in a session; see <xref linkend="pltcl-global">.)
        </para>
        <para>
 	While the <literal>unknown</> module could actually contain any
