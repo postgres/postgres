@@ -33,6 +33,43 @@
 
     <listitem>
      <para>
+      Use a separate interpreter for each calling SQL userid in PL/Perl and
+      PL/Tcl (Tom Lane)
+     </para>
+
+     <para>
+      This change prevents security problems that can be caused by subverting
+      Perl or Tcl code that will be executed later in the same session under
+      another SQL user identity (for example, within a <literal>SECURITY
+      DEFINER</> function).  Most scripting languages offer numerous ways that
+      that might be done, such as redefining standard functions or operators
+      called by the target function.  Without this change, any SQL user with
+      Perl or Tcl language usage rights can do essentially anything with the
+      SQL privileges of the target function's owner.
+     </para>
+
+     <para>
+      The cost of this change is that intentional communication among Perl
+      and Tcl functions becomes more difficult.  To provide an escape hatch,
+      PL/PerlU and PL/TclU functions continue to use only one interpreter
+      per session.  This is not considered a security issue since all such
+      functions execute at the trust level of a database superuser already.
+     </para>
+
+     <para>
+      It is likely that third-party procedural languages that claim to offer
+      trusted execution have similar security issues.  We advise contacting
+      the authors of any PL you are depending on for security-critical
+      purposes.
+     </para>
+
+     <para>
+      Our thanks to Tim Bunce for pointing out this issue (CVE-2010-3433).
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
       Prevent possible crashes in <function>pg_get_expr()</> by disallowing
       it from being called with an argument that is not one of the system
       catalog columns it's intended to be used with

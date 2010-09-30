@@ -41,7 +41,7 @@
    <para>
     Users of source packages must specially enable the build of
     PL/Perl during the installation process.  (Refer to <xref
-    linkend="install-short"> for more information.)  Users of
+    linkend="installation"> for more information.)  Users of
     binary packages might find PL/Perl in a separate subpackage.
    </para>
   </note>
@@ -83,7 +83,7 @@ $$ LANGUAGE plperl;
    most convenient to use dollar quoting (see <xref
    linkend="sql-syntax-dollar-quoting">) for the string constant.
    If you choose to use escape string syntax <literal>E''</>,
-   you must double the single quote marks (<literal>'</>) and backslashes
+   you must double any single quote marks (<literal>'</>) and backslashes
    (<literal>\</>) used in the body of the function 
    (see <xref linkend="sql-syntax-strings">).
   </para>
@@ -679,6 +679,23 @@ $$ LANGUAGE plperl;
    <literal>return $_SHARED{myquote}-&gt;($_[0]);</literal>
    at the expense of readability.)
   </para>
+
+  <para>
+   For security reasons, PL/Perl executes functions called by any one SQL role
+   in a separate Perl interpreter for that role.  This prevents accidental or
+   malicious interference by one user with the behavior of another user's
+   PL/Perl functions.  Each such interpreter has its own value of the
+   <varname>%_SHARED</varname> variable and other global state.  Thus, two
+   PL/Perl functions will share the same value of <varname>%_SHARED</varname>
+   if and only if they are executed by the same SQL role.  In an application
+   wherein a single session executes code under multiple SQL roles (via
+   <literal>SECURITY DEFINER</> functions, use of <command>SET ROLE</>, etc)
+   you may need to take explicit steps to ensure that PL/Perl functions can
+   share data via <varname>%_SHARED</varname>.  To do that, make sure that
+   functions that should communicate are owned by the same user, and mark
+   them <literal>SECURITY DEFINER</>.  You must of course take care that
+   such functions can't be used to do anything unintended.
+  </para>
  </sect1>
 
  <sect1 id="plperl-trusted">
@@ -746,21 +763,31 @@ $$ LANGUAGE plperl;
   </para>
 
   <note>
-    <para>
-      For security reasons, to stop a leak of privileged operations from
-      <application>PL/PerlU</> to <application>PL/Perl</>, these two languages
-      have to run in separate instances of the Perl interpreter. If your
-      Perl installation has been appropriately compiled, this is not a problem.
-      However, not all installations are compiled with the requisite flags.
-      If <productname>PostgreSQL</> detects that this is the case then it will
-      not start a second interpreter, but instead create an error. In
-      consequence, in such an installation, you cannot use both 
-      <application>PL/PerlU</> and <application>PL/Perl</> in the same backend
-      process. The remedy for this is to obtain a Perl installation created
-      with the appropriate flags, namely either <literal>usemultiplicity</> or
-      both <literal>usethreads</> and <literal>useithreads</>. 
-      For more details,see the <literal>perlembed</> manual page.
-    </para>
+   <para>
+    While <application>PL/Perl</> functions run in a separate Perl
+    interpreter for each SQL role, all <application>PL/PerlU</> functions
+    executed in a given session run in a single Perl interpreter (which is
+    not any of the ones used for <application>PL/Perl</> functions).
+    This allows <application>PL/PerlU</> functions to share data freely,
+    but no communication can occur between <application>PL/Perl</> and
+    <application>PL/PerlU</> functions.
+   </para>
+  </note>
+
+  <note>
+   <para>
+    Perl cannot support multiple interpreters within one process unless
+    it was built with the appropriate flags, namely either
+    <literal>usemultiplicity</> or <literal>useithreads</>.
+    (<literal>usemultiplicity</> is preferred unless you actually need
+    to use threads.  For more details, see the
+    <citerefentry><refentrytitle>perlembed</></citerefentry> man page.)
+    If <application>PL/Perl</> is used with a copy of Perl that was not built
+    this way, then it is only possible to have one Perl interpreter per
+    session, and so any one session can only execute either
+    <application>PL/PerlU</> functions, or <application>PL/Perl</> functions
+    that are all called by the same SQL role.
+   </para>
   </note>
   
  </sect1>
