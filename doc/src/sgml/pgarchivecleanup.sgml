@@ -69,9 +69,9 @@ pg_archivecleanup <optional> <replaceable>option</> ... </optional> <replaceable
 <programlisting>
 pg_archivecleanup -d archive 000000010000003700000010.00000020.backup
 
-pg_archivecleanup:  keep WAL files 000000010000003700000010 and later
-pg_archivecleanup:  removing "archive/00000001000000370000000F"
-pg_archivecleanup:  removing "archive/00000001000000370000000E"
+pg_archivecleanup:  keep WAL file "archive/000000010000003700000010" and later
+pg_archivecleanup:  removing file "archive/00000001000000370000000F"
+pg_archivecleanup:  removing file "archive/00000001000000370000000E"
 </programlisting>
    <application>pg_archivecleanup</application> assumes that
    <replaceable>archivelocation</> is a directory readable and writable by the
