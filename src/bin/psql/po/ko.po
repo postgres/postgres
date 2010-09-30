@@ -1,0 +1,4762 @@
+# Korean message translation file for psql
+# Ioseph Kim. <ioseph@uri.sarang.net>, 2004.
+#
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PostgreSQL 8.4\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
+"POT-Creation-Date: 2010-09-09 16:34+0000\n"
+"PO-Revision-Date: 2010-09-24 12:38-0400\n"
+"Last-Translator: EnterpriseDB translation team <dev-escalations@enterprisedb.com>\n"
+"Language-Team: EnterpriseDB translation team <dev-escalations@enterprisedb.com>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=euc-kr\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+#: command.c:112
+#, c-format
+msgid "Invalid command \\%s. Try \\? for help.\n"
+msgstr "잘못된 명령: \\%s. 도움말은 \\?.\n"
+
+#: command.c:114
+#, c-format
+msgid "invalid command \\%s\n"
+msgstr "잘못된 명령: \\%s\n"
+
+#: command.c:125
+#, c-format
+msgid "\\%s: extra argument \"%s\" ignored\n"
+msgstr "\\%s: \"%s\" 추가 인수가 무시되었음\n"
+
+#: command.c:267
+#, c-format
+msgid "could not get home directory: %s\n"
+msgstr "홈 디렉터리를 찾을 수 없음: %s\n"
+
+#: command.c:283
+#, c-format
+msgid "\\%s: could not change directory to \"%s\": %s\n"
+msgstr "\\%s: \"%s\" 디렉터리로 이동할 수 없음: %s\n"
+
+#: command.c:316 common.c:935
+#, c-format
+msgid "Time: %.3f ms\n"
+msgstr "작업시간: %.3f ms\n"
+
+#: command.c:469 command.c:497 command.c:1037
+msgid "no query buffer\n"
+msgstr "쿼리 버퍼가 없음\n"
+
+#: command.c:539
+msgid "No changes"
+msgstr "변경 내용 없음"
+
+#: command.c:593
+#, c-format
+msgid "%s: invalid encoding name or conversion procedure not found\n"
+msgstr "%s: 타당치 못한 인코딩 이름 또는 문자셋 변환 프로시저 없음\n"
+
+#: command.c:661 command.c:695 command.c:709 command.c:726 command.c:830
+#: command.c:880 command.c:1017 command.c:1048
+#, c-format
+msgid "\\%s: missing required argument\n"
+msgstr "\\%s: 필요한 인수가 빠졌음\n"
+
+#: command.c:758
+msgid "Query buffer is empty."
+msgstr "쿼리 버퍼가 비었음."
+
+#: command.c:768
+msgid "Enter new password: "
+msgstr "새 암호를 입력하세요:"
+
+#: command.c:769
+msgid "Enter it again: "
+msgstr "다시 입력해 주세요:"
+
+#: command.c:773
+#, c-format
+msgid "Passwords didn't match.\n"
+msgstr "암호가 서로 틀립니다.\n"
+
+#: command.c:791
+#, c-format
+msgid "Password encryption failed.\n"
+msgstr "암호 암호화 실패\n"
+
+#: command.c:859 command.c:960 command.c:1022
+#, c-format
+msgid "\\%s: error\n"
+msgstr "\\%s: 오류\n"
+
+#: command.c:900
+msgid "Query buffer reset (cleared)."
+msgstr "쿼리 버퍼 초기화 (비웠음)."
+
+#: command.c:913
+#, c-format
+msgid "Wrote history to file \"%s/%s\".\n"
+msgstr "명령내역(history)을 \"%s/%s\" 파일에 기록했습니다.\n"
+
+#: command.c:951 common.c:52 common.c:66 input.c:198 mainloop.c:70
+#: mainloop.c:228 print.c:61 print.c:75
+#, c-format
+msgid "out of memory\n"
+msgstr "메모리 부족\n"
+
+#: command.c:1002
+msgid "Timing is on."
+msgstr "작업수행시간 보임"
+
+#: command.c:1004
+msgid "Timing is off."
+msgstr "작업수행시간 숨김"
+
+#: command.c:1065 command.c:1085 command.c:1584 command.c:1591 command.c:1600
+#: command.c:1610 command.c:1619 command.c:1633 command.c:1650 command.c:1683
+#: common.c:137 copy.c:517 copy.c:584
+#, c-format
+msgid "%s: %s\n"
+msgstr "%s: %s\n"
+
+#: command.c:1167 startup.c:159
+msgid "Password: "
+msgstr "암호: "
+
+#: command.c:1174 startup.c:162 startup.c:164
+#, c-format
+msgid "Password for user %s: "
+msgstr "%s 사용자의 암호: "
+
+#: command.c:1270 command.c:2131 common.c:183 common.c:460 common.c:525
+#: common.c:811 common.c:836 common.c:920 copy.c:655 copy.c:700 copy.c:829
+#, c-format
+msgid "%s"
+msgstr "%s"
+
+#: command.c:1274
+msgid "Previous connection kept\n"
+msgstr "이전 연결이 유지되었음\n"
+
+#: command.c:1278
+#, c-format
+msgid "\\connect: %s"
+msgstr "\\연결: %s"
+
+#: command.c:1302
+#, c-format
+msgid "You are now connected to database \"%s\""
+msgstr "\"%s\" 데이터베이스에 접속했습니다"
+
+#: command.c:1305
+#, c-format
+msgid " on host \"%s\""
+msgstr " 호스트: \"%s\""
+
+#: command.c:1308
+#, c-format
+msgid " at port \"%s\""
+msgstr " 포트: \"%s\""
+
+#: command.c:1311
+#, c-format
+msgid " as user \"%s\""
+msgstr " 사용자: \"%s\""
+
+#: command.c:1346
+#, c-format
+msgid "%s (%s, server %s)\n"
+msgstr "%s(%s, %s 서버)\n"
+
+#: command.c:1353
+#, c-format
+msgid ""
+"WARNING: %s version %d.%d, server version %d.%d.\n"
+"         Some psql features might not work.\n"
+msgstr ""
+"경고: %s 버전 %d.%d, 서버 버전 %d.%d.\n"
+"         일부 psql 기능이 작동하지 않을 수도 있습니다.\n"
+
+#: command.c:1383
+#, c-format
+msgid "SSL connection (cipher: %s, bits: %i)\n"
+msgstr "SSL 연결(암호: %s, 비트: %i)\n"
+
+#: command.c:1393
+#, c-format
+msgid "SSL connection (unknown cipher)\n"
+msgstr "SSL 연결(알 수 없는 암호)\n"
+
+#: command.c:1414
+#, c-format
+msgid ""
+"WARNING: Console code page (%u) differs from Windows code page (%u)\n"
+"         8-bit characters might not work correctly. See psql reference\n"
+"         page \"Notes for Windows users\" for details.\n"
+msgstr ""
+"경고: 콘솔 코드 페이지(%u)가 Windows 코드 페이지(%u)와 달라서\n"
+"         8비트 문자가 올바르게 표시되지 않을 수 있습니다. 자세한 내용은 psql "
+"참조\n"
+"         페이지 \"Notes for Windows users\"를 참조하십시오.\n"
+
+#: command.c:1503
+#, c-format
+msgid "could not start editor \"%s\"\n"
+msgstr "\"%s\" 문서 편집기를 실행시킬 수 없음\n"
+
+#: command.c:1505
+msgid "could not start /bin/sh\n"
+msgstr "/bin/sh 명령을 실행할 수 없음\n"
+
+#: command.c:1542
+#, c-format
+msgid "cannot locate temporary directory: %s"
+msgstr "임시 디렉터리를 경로를 알 수 없음: %s"
+
+#: command.c:1569
+#, c-format
+msgid "could not open temporary file \"%s\": %s\n"
+msgstr "\"%s\" 임시 파일을 열 수 없음: %s\n"
+
+#: command.c:1785
+msgid ""
+"\\pset: allowed formats are unaligned, aligned, wrapped, html, latex, troff-"
+"ms\n"
+msgstr ""
+"\\pset: 허용되는 출력 형식: unaligned, aligned, wrapped, html, latex, troff-"
+"ms\n"
+
+#: command.c:1790
+#, c-format
+msgid "Output format is %s.\n"
+msgstr "현재 출력 형식: %s.\n"
+
+#: command.c:1800
+#, c-format
+msgid "Border style is %d.\n"
+msgstr "html 테이블의 테두리를 %d로 지정했습니다.\n"
+
+#: command.c:1812
+#, c-format
+msgid "Expanded display is on.\n"
+msgstr "확장된 출력 형식으로 보여집니다.\n"
+
+#: command.c:1813
+#, c-format
+msgid "Expanded display is off.\n"
+msgstr "일반적인 출력 형식으로 보여집니다.\n"
+
+#: command.c:1826
+msgid "Showing locale-adjusted numeric output."
+msgstr "로캘 지정 숫자 출력 형식으로 보여줌."
+
+#: command.c:1828
+msgid "Locale-adjusted numeric output is off."
+msgstr "로캘 지정 숫자 출력 형식으로 안 보여줌."
+
+#: command.c:1841
+#, c-format
+msgid "Null display is \"%s\".\n"
+msgstr "Null 값은 \"%s\" 문자로 보여짐.\n"
+
+#: command.c:1853
+#, c-format
+msgid "Field separator is \"%s\".\n"
+msgstr "필드 구분자 \"%s\".\n"
+
+#: command.c:1867
+#, c-format
+msgid "Record separator is <newline>."
+msgstr "레코드 구분자는 줄바꿈 문자입니다."
+
+#: command.c:1869
+#, c-format
+msgid "Record separator is \"%s\".\n"
+msgstr "레코드 구분자 \"%s\".\n"
+
+#: command.c:1883
+msgid "Showing only tuples."
+msgstr "필드이름을 뺀 자료만 보여줍니다."
+
+#: command.c:1885
+msgid "Tuples only is off."
+msgstr "필드이름과 자료를 같이 보여줍니다."
+
+#: command.c:1901
+#, c-format
+msgid "Title is \"%s\".\n"
+msgstr "출력 테이블의 제목: \"%s\"\n"
+
+#: command.c:1903
+#, c-format
+msgid "Title is unset.\n"
+msgstr "출력 테이블의 제목을 지정하지 않았습니다.\n"
+
+#: command.c:1919
+#, c-format
+msgid "Table attribute is \"%s\".\n"
+msgstr "<table %s>형태로 표현됩니다.\n"
+
+#: command.c:1921
+#, c-format
+msgid "Table attributes unset.\n"
+msgstr "<table> 형태로 표현됩니다.\n"
+
+#: command.c:1942
+msgid "Pager is used for long output."
+msgstr "긴 출력을 페이지 단위로 나누워서 봄"
+
+#: command.c:1944
+msgid "Pager is always used."
+msgstr "pager 항상 사용됨."
+
+#: command.c:1946
+msgid "Pager usage is off."
+msgstr "화면단위 보기 기능 끔(전체 자료 모두 보여줌)"
+
+#: command.c:1960
+msgid "Default footer is on."
+msgstr "기본 꼬릿말 사용 함"
+
+#: command.c:1962
+msgid "Default footer is off."
+msgstr "기본 꼬릿말 사용 안함"
+
+#: command.c:1973
+#, c-format
+msgid "Target width for \"wrapped\" format is %d.\n"
+msgstr "\"wrapped\" 출력 형식의 대상 너비는 %d입니다.\n"
+
+#: command.c:1978
+#, c-format
+msgid "\\pset: unknown option: %s\n"
+msgstr "\\pset: 알 수 없는 옵션: %s\n"
+
+#: command.c:2032
+msgid "\\!: failed\n"
+msgstr "\\!: 실패\n"
+
+#: common.c:45
+#, c-format
+msgid "%s: pg_strdup: cannot duplicate null pointer (internal error)\n"
+msgstr "%s: pg_strdup: 널 포인터를 중복할 수 없음 (내부 오류)\n"
+
+#: common.c:90
+msgid "out of memory"
+msgstr "메모리 부족"
+
+#: common.c:343
+msgid "connection to server was lost\n"
+msgstr "서버로부터 연결이 끊어졌습니다.\n"
+
+#: common.c:347
+msgid "The connection to the server was lost. Attempting reset: "
+msgstr "서버로부터 연결이 끊어졌습니다. 다시 연결을 시도합니다: "
+
+#: common.c:352
+msgid "Failed.\n"
+msgstr "실패.\n"
+
+#: common.c:359
+msgid "Succeeded.\n"
+msgstr "성공.\n"
+
+#: common.c:493 common.c:768
+msgid "You are currently not connected to a database.\n"
+msgstr "현재 데이터베이스에 연결되어있지 않습니다.\n"
+
+#: common.c:499 common.c:506 common.c:794
+#, c-format
+msgid ""
+"********* QUERY **********\n"
+"%s\n"
+"**************************\n"
+"\n"
+msgstr ""
+"********** 쿼리 **********\n"
+"%s\n"
+"**************************\n"
+"\n"
+
+#: common.c:558
+#, c-format
+msgid ""
+"Asynchronous notification \"%s\" received from server process with PID %d.\n"
+msgstr "동기화 신호 \"%s\" 받음 해당 프로세스 PID %d.\n"
+
+#: common.c:776
+#, c-format
+msgid ""
+"***(Single step mode: verify command)"
+"*******************************************\n"
+"%s\n"
+"***(press return to proceed or enter x and return to cancel)"
+"********************\n"
+msgstr ""
+"***(단독 순차 모드: 쿼리 확인)*********************************************\n"
+"%s\n"
+"***(Enter: 계속 진행, x Enter: 중지)********************\n"
+
+#: common.c:827
+#, c-format
+msgid ""
+"The server (version %d.%d) does not support savepoints for "
+"ON_ERROR_ROLLBACK.\n"
+msgstr ""
+"서버(%d.%d 버전)에서 ON_ERROR_ROLLBACK에 사용할 savepoint를 지원하지 않습니"
+"다.\n"
+
+#: copy.c:120
+msgid "\\copy: arguments required\n"
+msgstr "\\copy: 인수가 필요합니다\n"
+
+#: copy.c:399
+#, c-format
+msgid "\\copy: parse error at \"%s\"\n"
+msgstr "\\copy: 구문 오류: \"%s\"\n"
+
+#: copy.c:401
+msgid "\\copy: parse error at end of line\n"
+msgstr "\\copy: 줄 끝에 구문 오류\n"
+
+#: copy.c:528
+#, c-format
+msgid "%s: cannot copy from/to a directory\n"
+msgstr "%s: 디렉터리부터 또는 디렉터리로 복사할 수 없음\n"
+
+#: copy.c:554
+#, c-format
+msgid "\\copy: %s"
+msgstr "\\copy: %s"
+
+#: copy.c:558 copy.c:572
+#, c-format
+msgid "\\copy: unexpected response (%d)\n"
+msgstr "\\copy: 기대되지 않은 응답 (%d)\n"
+
+#: copy.c:576
+msgid "trying to exit copy mode"
+msgstr "복사 모드를 종료하는 중"
+
+#: copy.c:630 copy.c:640
+#, c-format
+msgid "could not write COPY data: %s\n"
+msgstr "COPY 자료를 기록할 수 없음: %s\n"
+
+#: copy.c:647
+#, c-format
+msgid "COPY data transfer failed: %s"
+msgstr "COPY 자료 변환 실패: %s"
+
+#: copy.c:695
+msgid "canceled by user"
+msgstr "사용자에 의해서 취소됨"
+
+#: copy.c:710
+msgid ""
+"Enter data to be copied followed by a newline.\n"
+"End with a backslash and a period on a line by itself."
+msgstr ""
+"한 줄에 한 레코드씩 데이터를 입력하고\n"
+"자료입력이 끝나면 backslash 점 (\\.) 마지막 줄 처음에 입력합니다."
+
+#: copy.c:822
+msgid "aborted because of read failure"
+msgstr "읽기 실패로 중지됨"
+
+#: help.c:52
+msgid "on"
+msgstr "켜짐"
+
+#: help.c:52
+msgid "off"
+msgstr "꺼짐"
+
+#: help.c:74
+#, c-format
+msgid "could not get current user name: %s\n"
+msgstr "현재 사용자 이름을 찾을 없음: %s\n"
+
+#: help.c:86
+#, c-format
+msgid ""
+"psql is the PostgreSQL interactive terminal.\n"
+"\n"
+msgstr ""
+"psql은 PostgreSQL 대화식 터미널입니다.\n"
+"\n"
+
+#: help.c:87
+#, c-format
+msgid "Usage:\n"
+msgstr "사용법:\n"
+
+#: help.c:88
+#, c-format
+msgid ""
+"  psql [OPTION]... [DBNAME [USERNAME]]\n"
+"\n"
+msgstr ""
+"  psql [OPTION]... [DBNAME [USERNAME]]\n"
+"\n"
+
+#: help.c:90
+#, c-format
+msgid "General options:\n"
+msgstr "일반 옵션:\n"
+
+#: help.c:95
+#, c-format
+msgid ""
+"  -c, --command=COMMAND    run only single command (SQL or internal) and "
+"exit\n"
+msgstr ""
+"  -c, --command=COMMAND    하나의 명령(SQL 또는 내부 명령)만 실행하고 끝냄\n"
+
+#: help.c:96
+#, c-format
+msgid ""
+"  -d, --dbname=DBNAME      database name to connect to (default: \"%s\")\n"
+msgstr "  -d, --dbname=DBNAME      연결할 데이터베이스 이름(기본 값: \"%s\")\n"
+
+#: help.c:97
+#, c-format
+msgid "  -f, --file=FILENAME      execute commands from file, then exit\n"
+msgstr "  -f, --file=FILENAME      파일 안에 지정한 명령을 실행하고 끝냄\n"
+
+#: help.c:98
+#, c-format
+msgid "  -l, --list               list available databases, then exit\n"
+msgstr ""
+"  -l, --list               사용 가능한 데이터베이스 목록을 표시하고 끝냄\n"
+
+#: help.c:99
+#, c-format
+msgid ""
+"  -v, --set=, --variable=NAME=VALUE\n"
+"                           set psql variable NAME to VALUE\n"
+msgstr ""
+"  -v, --set=, --variable=NAME=VALUE\n"
+"                           psql 변수 NAME을 VALUE로 설정\n"
+
+#: help.c:101
+#, c-format
+msgid "  -X, --no-psqlrc          do not read startup file (~/.psqlrc)\n"
+msgstr "  -X, --no-psqlrc          시작 파일(~/.psqlrc)을 읽지 않음\n"
+
+#: help.c:102
+#, c-format
+msgid ""
+"  -1 (\"one\"), --single-transaction\n"
+"                           execute command file as a single transaction\n"
+msgstr ""
+"  -1 (\"one\"), --single-transaction\n"
+"                          명령 파일을 하나의 트랜잭션으로 실행\n"
+
+#: help.c:104
+#, c-format
+msgid "  --help                   show this help, then exit\n"
+msgstr "  --help                   이 도움말을 보여주고 마침\n"
+
+#: help.c:105
+#, c-format
+msgid "  --version                output version information, then exit\n"
+msgstr "  --version                버전 정보를 보여주고 마침\n"
+
+#: help.c:107
+#, c-format
+msgid ""
+"\n"
+"Input and output options:\n"
+msgstr ""
+"\n"
+"입출력 옵션:\n"
+
+#: help.c:108
+#, c-format
+msgid "  -a, --echo-all           echo all input from script\n"
+msgstr "  -a, --echo-all           스크립트의 모든 입력 표시\n"
+
+#: help.c:109
+#, c-format
+msgid "  -e, --echo-queries       echo commands sent to server\n"
+msgstr "  -e, --echo-queries       서버로 보낸 명령 표시\n"
+
+#: help.c:110
+#, c-format
+msgid ""
+"  -E, --echo-hidden        display queries that internal commands generate\n"
+msgstr "  -E, --echo-hidden        내부 명령이 생성하는 쿼리 표시\n"
+
+#: help.c:111
+#, c-format
+msgid "  -L, --log-file=FILENAME  send session log to file\n"
+msgstr "  -L, --log-file=FILENAME  세션 로그를 파일로 보냄\n"
+
+#: help.c:112
+#, c-format
+msgid ""
+"  -n, --no-readline        disable enhanced command line editing (readline)\n"
+msgstr ""
+"  -n, --no-readline        확장된 명령행 편집 기능을 사용중지함(readline)\n"
+
+#: help.c:113
+#, c-format
+msgid "  -o, --output=FILENAME    send query results to file (or |pipe)\n"
+msgstr "  -o, --output=FILENAME    쿼리 결과를 파일(또는 |파이프)로 보냄\n"
+
+#: help.c:114
+#, c-format
+msgid ""
+"  -q, --quiet              run quietly (no messages, only query output)\n"
+msgstr "  -q, --quiet              자동 실행(메시지 없이 쿼리 결과만 표시)\n"
+
+#: help.c:115
+#, c-format
+msgid "  -s, --single-step        single-step mode (confirm each query)\n"
+msgstr "  -s, --single-step        단독 순차 모드(각 쿼리 확인)\n"
+
+#: help.c:116
+#, c-format
+msgid ""
+"  -S, --single-line        single-line mode (end of line terminates SQL "
+"command)\n"
+msgstr "  -S, --single-line        한 줄 모드(줄 끝에서 SQL 명령이 종료됨)\n"
+
+#: help.c:118
+#, c-format
+msgid ""
+"\n"
+"Output format options:\n"
+msgstr ""
+"\n"
+"출력 형식 옵션:\n"
+
+#: help.c:119
+#, c-format
+msgid "  -A, --no-align           unaligned table output mode\n"
+msgstr "  -A, --no-align           정렬되지 않은 표 형태의 출력 모드\n"
+
+#: help.c:120
+#, c-format
+msgid ""
+"  -F, --field-separator=STRING\n"
+"                           set field separator (default: \"%s\")\n"
+msgstr ""
+"  -F, --field-separator=STRING\n"
+"                           필드 구분자 설정(기본 값: \"%s\")\n"
+
+#: help.c:123
+#, c-format
+msgid "  -H, --html               HTML table output mode\n"
+msgstr "  -H, --html               HTML 표 형태 출력 모드\n"
+
+#: help.c:124
+#, c-format
+msgid ""
+"  -P, --pset=VAR[=ARG]     set printing option VAR to ARG (see \\pset "
+"command)\n"
+msgstr ""
+"  -P, --pset=VAR[=ARG]     인쇄 옵션 VAR을 ARG로 설정(\\pset 명령 참조)\n"
+
+#: help.c:125
+#, c-format
+msgid ""
+"  -R, --record-separator=STRING\n"
+"                           set record separator (default: newline)\n"
+msgstr ""
+"  -R, --record-separator=STRING\n"
+"                           레코드 구분자 설정(기본 값: 줄바꿈 문자)\n"
+
+#: help.c:127
+#, c-format
+msgid "  -t, --tuples-only        print rows only\n"
+msgstr "  -t, --tuples-only        행만 인쇄\n"
+
+#: help.c:128
+#, c-format
+msgid ""
+"  -T, --table-attr=TEXT    set HTML table tag attributes (e.g., width, "
+"border)\n"
+msgstr ""
+"  -T, --table-attr=TEXT    HTML table 태그 속성 설정(예: width, border)\n"
+
+#: help.c:129
+#, c-format
+msgid "  -x, --expanded           turn on expanded table output\n"
+msgstr "  -x, --expanded           확장된 표 형태로 출력\n"
+
+#: help.c:131
+#, c-format
+msgid ""
+"\n"
+"Connection options:\n"
+msgstr ""
+"\n"
+"연결 옵션들:\n"
+
+#: help.c:134
+#, c-format
+msgid ""
+"  -h, --host=HOSTNAME      database server host or socket directory "
+"(default: \"%s\")\n"
+msgstr ""
+"  -h, --host=HOSTNAME      데이터베이스 서버 호스트 또는 소켓 디렉터리(기본 "
+"값: \"%s\")\n"
+
+#: help.c:135
+msgid "local socket"
+msgstr "로컬 소켓"
+
+#: help.c:138
+#, c-format
+msgid "  -p, --port=PORT          database server port (default: \"%s\")\n"
+msgstr "  -p, --port=PORT          데이터베이스 서버 포트(기본 값: \"%s\")\n"
+
+#: help.c:144
+#, c-format
+msgid "  -U, --username=USERNAME  database user name (default: \"%s\")\n"
+msgstr "  -U, --username=USERNAME  데이터베이스 사용자 이름(기본 값: \"%s\")\n"
+
+#: help.c:145
+#, c-format
+msgid "  -w, --no-password        never prompt for password\n"
+msgstr "  -w, --no-password        암호 프롬프트 표시 안 함\n"
+
+#: help.c:146
+#, c-format
+msgid ""
+"  -W, --password           force password prompt (should happen "
+"automatically)\n"
+msgstr "  -W, --password           암호 입력 프롬프트 보임(자동으로 처리함)\n"
+
+#: help.c:148
+#, c-format
+msgid ""
+"\n"
+"For more information, type \"\\?\" (for internal commands) or \"\\help"
+"\" (for SQL\n"
+"commands) from within psql, or consult the psql section in the PostgreSQL\n"
+"documentation.\n"
+"\n"
+msgstr ""
+"\n"
+"자세한 내용을 보려면 edb-psql 내에서 \"\\?\"(내부 명령) 또는 \"\\help\"(SQL\n"
+"명령)를 입력하거나 PostgreSQL\n"
+"설명서에서 psql 섹션을 참조하십시오.\n"
+"\n"
+
+#: help.c:151
+#, c-format
+msgid "Report bugs to <pgsql-bugs@postgresql.org>.\n"
+msgstr "오류보고: <pgsql-bugs@postgresql.org>.\n"
+
+#: help.c:169
+#, c-format
+msgid "General\n"
+msgstr "일반\n"
+
+#: help.c:170
+#, c-format
+msgid ""
+"  \\copyright             show PostgreSQL usage and distribution terms\n"
+msgstr "  \\copyright             PostgreSQL 사용법 및 저작권 정보 표시\n"
+
+#: help.c:171
+#, c-format
+msgid ""
+"  \\g [FILE] or ;         execute query (and send results to file or |pipe)\n"
+msgstr ""
+"  \\g [FILE] 또는          쿼리 실행(및 결과를 파일 또는 |파이프로 보냄)\n"
+
+#: help.c:172
+#, c-format
+msgid ""
+"  \\h [NAME]              help on syntax of SQL commands, * for all "
+"commands\n"
+msgstr ""
+"  \\h [NAME]              SQL 명령의 구문에 대한 도움말 표시, 모든 명령을 표"
+"시하려면 * 입력\n"
+
+#: help.c:173
+#, c-format
+msgid "  \\q                     quit psql\n"
+msgstr "  \\q                     psql 종료\n"
+
+#: help.c:176
+#, c-format
+msgid "Query Buffer\n"
+msgstr "쿼리 버퍼\n"
+
+#: help.c:177
+#, c-format
+msgid ""
+"  \\e [FILE]              edit the query buffer (or file) with external "
+"editor\n"
+msgstr "  \\e [FILE]              외부 편집기에서 쿼리 버퍼(또는 파일) 편집\n"
+
+#: help.c:178
+#, c-format
+msgid ""
+"  \\ef [FUNCNAME]         edit function definition with external editor\n"
+msgstr "  \\ef [FUNCNAME]         외부 편집기에서 함수 정의 편집\n"
+
+#: help.c:179
+#, c-format
+msgid "  \\p                     show the contents of the query buffer\n"
+msgstr "  \\p                     쿼리 버퍼의 내용 표시\n"
+
+#: help.c:180
+#, c-format
+msgid "  \\r                     reset (clear) the query buffer\n"
+msgstr "  \\r                     쿼리 버퍼 초기화(모두 지움)\n"
+
+#: help.c:182
+#, c-format
+msgid "  \\s [FILE]              display history or save it to file\n"
+msgstr "  \\s [FILE]              기록 표시 또는 파일에 저장\n"
+
+#: help.c:184
+#, c-format
+msgid "  \\w FILE                write query buffer to file\n"
+msgstr "  \\w FILE                쿼리 버퍼를 파일에 기록\n"
+
+#: help.c:187
+#, c-format
+msgid "Input/Output\n"
+msgstr "입력/출력\n"
+
+#: help.c:188
+#, c-format
+msgid ""
+"  \\copy ...              perform SQL COPY with data stream to the client "
+"host\n"
+msgstr ""
+"  \\copy ...              클라이언트 호스트에 대한 데이터 스트림으로 SQL "
+"COPY 수행\n"
+
+#: help.c:189
+#, c-format
+msgid "  \\echo [STRING]         write string to standard output\n"
+msgstr "  \\echo [STRING]         문자열을 표준 출력에 기록\n"
+
+#: help.c:190
+#, c-format
+msgid "  \\i FILE                execute commands from file\n"
+msgstr "  \\i FILE                파일에서 명령 실행\n"
+
+#: help.c:191
+#, c-format
+msgid "  \\o [FILE]              send all query results to file or |pipe\n"
+msgstr "  \\o [FILE]              모든 쿼리 결과를 파일 또는 |파이프로 보냄\n"
+
+#: help.c:192
+#, c-format
+msgid ""
+"  \\qecho [STRING]        write string to query output stream (see \\o)\n"
+msgstr "  \\qecho [STRING]        문자열을 쿼리 출력 스트림에 기록(\\o 참조)\n"
+
+#: help.c:195
+#, c-format
+msgid "Informational\n"
+msgstr "정보보기\n"
+
+#: help.c:196
+#, c-format
+msgid "  (options: S = show system objects, + = additional detail)\n"
+msgstr "  (옵션: S = 시스템 개체 표시, + = 추가 상세 정보)\n"
+
+#: help.c:197
+#, c-format
+msgid "  \\d[S+]                 list tables, views, and sequences\n"
+msgstr "  \\d[S+]                 테이블, 뷰 및 시퀀스 목록\n"
+
+#: help.c:198
+#, c-format
+msgid "  \\d[S+]  NAME           describe table, view, sequence, or index\n"
+msgstr "  \\d[S+]  NAME           테이블, 뷰, 시퀀스 또는 인덱스 설명\n"
+
+#: help.c:199
+#, c-format
+msgid "  \\da[+]  [PATTERN]      list aggregates\n"
+msgstr "  \\da[+]  [PATTERN]      집계 목록\n"
+
+#: help.c:200
+#, c-format
+msgid "  \\db[+]  [PATTERN]      list tablespaces\n"
+msgstr "  \\db[+]  [PATTERN]      테이블스페이스 목록\n"
+
+#: help.c:201
+#, c-format
+msgid "  \\dc[S]  [PATTERN]      list conversions\n"
+msgstr "  \\dc[S]  [PATTERN]      변환 목록\n"
+
+#: help.c:202
+#, c-format
+msgid "  \\dC     [PATTERN]      list casts\n"
+msgstr "  \\dC     [PATTERN]      형변환자 목록\n"
+
+#: help.c:203
+#, c-format
+msgid "  \\dd[S]  [PATTERN]      show comments on objects\n"
+msgstr "  \\dd[S]  [PATTERN]      개체에 대한 주석 표시\n"
+
+#: help.c:204
+#, c-format
+msgid "  \\dD[S]  [PATTERN]      list domains\n"
+msgstr "  \\dD[S]  [PATTERN]      도메인 목록\n"
+
+#: help.c:205
+#, c-format
+msgid "  \\des[+] [PATTERN]      list foreign servers\n"
+msgstr "  \\des[+] [PATTERN]      외부 서버 목록\n"
+
+#: help.c:206
+#, c-format
+msgid "  \\deu[+] [PATTERN]      list user mappings\n"
+msgstr "  \\deu[+] [PATTERN]      사용자 매핑 목록\n"
+
+#: help.c:207
+#, c-format
+msgid "  \\dew[+] [PATTERN]      list foreign-data wrappers\n"
+msgstr "  \\dew[+] [PATTERN]      외부 데이터 래퍼 목록\n"
+
+#: help.c:208
+#, c-format
+msgid ""
+"  \\df[antw][S+] [PATRN]  list [only agg/normal/trigger/window] functions\n"
+msgstr "  \\df[antw][S+] [PATRN]  [only agg/normal/trigger/window] 함수 목록\n"
+
+#: help.c:209
+#, c-format
+msgid "  \\dF[+]  [PATTERN]      list text search configurations\n"
+msgstr "  \\dF[+]  [PATTERN]      텍스트 검색 구성 목록\n"
+
+#: help.c:210
+#, c-format
+msgid "  \\dFd[+] [PATTERN]      list text search dictionaries\n"
+msgstr "  \\dFd[+] [PATTERN]      텍스트 검색 사전 목록\n"
+
+#: help.c:211
+#, c-format
+msgid "  \\dFp[+] [PATTERN]      list text search parsers\n"
+msgstr "  \\dFp[+] [PATTERN]      텍스트 검색 파서 목록\n"
+
+#: help.c:212
+#, c-format
+msgid "  \\dFt[+] [PATTERN]      list text search templates\n"
+msgstr "  \\dFt[+] [PATTERN]      텍스트 검색 템플릿 목록\n"
+
+#: help.c:213
+#, c-format
+msgid "  \\dg[+]  [PATTERN]      list roles (groups)\n"
+msgstr "  \\dg[+]  [PATTERN]      역할(그룹) 목록\n"
+
+#: help.c:214
+#, c-format
+msgid "  \\di[S+] [PATTERN]      list indexes\n"
+msgstr "  \\di[S+] [PATTERN]      인덱스 목록\n"
+
+#: help.c:215
+#, c-format
+msgid "  \\dl                    list large objects, same as \\lo_list\n"
+msgstr "  \\dl                    큰 개체 목록, \\lo_list 명령과 같음\n"
+
+#: help.c:216
+#, c-format
+msgid "  \\dn[+]  [PATTERN]      list schemas\n"
+msgstr "  \\dn[+]  [PATTERN]      스키마 목록\n"
+
+#: help.c:217
+#, c-format
+msgid "  \\do[S]  [PATTERN]      list operators\n"
+msgstr "  \\do[S]  [PATTERN]      연산자 목록\n"
+
+#: help.c:218
+#, c-format
+msgid ""
+"  \\dp     [PATTERN]      list table, view, and sequence access privileges\n"
+msgstr "  \\dp     [PATTERN]      테이블, 뷰 및 시퀀스 액세스 권한 목록\n"
+
+#: help.c:219
+#, c-format
+msgid "  \\ds[S+] [PATTERN]      list sequences\n"
+msgstr "  \\ds[S+] [PATTERN]      시퀀스 목록\n"
+
+#: help.c:220
+#, c-format
+msgid "  \\dt[S+] [PATTERN]      list tables\n"
+msgstr "  \\dt[S+] [PATTERN]      테이블 목록\n"
+
+#: help.c:221
+#, c-format
+msgid "  \\dT[S+] [PATTERN]      list data types\n"
+msgstr "  \\dT[S+] [PATTERN]      데이터 형식 목록\n"
+
+#: help.c:222
+#, c-format
+msgid "  \\du[+]  [PATTERN]      list roles (users)\n"
+msgstr "  \\du[+]  [PATTERN]      역할(사용자) 목록\n"
+
+#: help.c:223
+#, c-format
+msgid "  \\dv[S+] [PATTERN]      list views\n"
+msgstr "  \\dv[S+] [PATTERN]      뷰 목록\n"
+
+#: help.c:224
+#, c-format
+msgid "  \\l[+]                  list all databases\n"
+msgstr "  \\l[+]                  모든 데이터베이스 목록\n"
+
+#: help.c:225
+#, c-format
+msgid "  \\z      [PATTERN]      same as \\dp\n"
+msgstr "  \\z      [PATTERN]      \\dp와 같음\n"
+
+#: help.c:228
+#, c-format
+msgid "Formatting\n"
+msgstr "출력 형식\n"
+
+#: help.c:229
+#, c-format
+msgid ""
+"  \\a                     toggle between unaligned and aligned output mode\n"
+msgstr ""
+"  \\a                     정렬되지 않은 출력 모드와 정렬된 출력 모드 전환\n"
+
+#: help.c:230
+#, c-format
+msgid "  \\C [STRING]            set table title, or unset if none\n"
+msgstr ""
+"  \\C [STRING]            테이블 제목 설정 또는 값이 없는 경우 설정 안 함\n"
+
+#: help.c:231
+#, c-format
+msgid ""
+"  \\f [STRING]            show or set field separator for unaligned query "
+"output\n"
+msgstr ""
+"  \\f [STRING]            정렬되지 않은 쿼리 출력에 대해 필드 구분자 표시 또"
+"는 설정\n"
+
+#: help.c:232
+#, c-format
+msgid "  \\H                     toggle HTML output mode (currently %s)\n"
+msgstr "  \\H                     HTML 출력 모드 전환(현재 %s)\n"
+
+#: help.c:234
+#, c-format
+msgid ""
+"  \\pset NAME [VALUE]     set table output option\n"
+"                         (NAME := {format|border|expanded|fieldsep|footer|"
+"null|\n"
+"                         numericlocale|recordsep|tuples_only|title|tableattr|"
+"pager})\n"
+msgstr ""
+"  \\pset NAME [VALUE]     테이블 출력 옵션 설정\n"
+"                         (NAME := {format|border|expanded|fieldsep|footer|"
+"null|\n"
+"                         numericlocale|recordsep|tuples_only|title|tableattr|"
+"pager})\n"
+
+#: help.c:237
+#, c-format
+msgid "  \\t [on|off]            show only rows (currently %s)\n"
+msgstr "  \\t [on|off]            행만 표시(현재 %s)\n"
+
+#: help.c:239
+#, c-format
+msgid ""
+"  \\T [STRING]            set HTML <table> tag attributes, or unset if none\n"
+msgstr ""
+"  \\T [STRING]            HTML <table> 태그 속성 설정 또는 값이 없는 경우 설"
+"정 안 함\n"
+
+#: help.c:240
+#, c-format
+msgid "  \\x [on|off]            toggle expanded output (currently %s)\n"
+msgstr "  \\x [on|off]            확장된 출력 전환(현재 %s)\n"
+
+#: help.c:244
+#, c-format
+msgid "Connection\n"
+msgstr "연결\n"
+
+#: help.c:245
+#, c-format
+msgid ""
+"  \\c[onnect] [DBNAME|- USER|- HOST|- PORT|-]\n"
+"                         connect to new database (currently \"%s\")\n"
+msgstr ""
+"  \\c[onnect] [DBNAME|- USER|- HOST|- PORT|-]\n"
+"                         새 데이터베이스에 연결(현재 \"%s\")\n"
+
+#: help.c:248
+#, c-format
+msgid "  \\encoding [ENCODING]   show or set client encoding\n"
+msgstr "  \\encoding [ENCODING]   클라이언트 인코딩 표시 또는 설정\n"
+
+#: help.c:249
+#, c-format
+msgid "  \\password [USERNAME]   securely change the password for a user\n"
+msgstr "  \\password [USERNAME]   사용자 암호를 안전하게 변경\n"
+
+#: help.c:252
+#, c-format
+msgid "Operating System\n"
+msgstr "운영 체제\n"
+
+#: help.c:253
+#, c-format
+msgid "  \\cd [DIR]              change the current working directory\n"
+msgstr "  \\cd [DIR]              현재 작업 디렉터리 변경\n"
+
+#: help.c:254
+#, c-format
+msgid "  \\timing [on|off]       toggle timing of commands (currently %s)\n"
+msgstr "  \\timing [on|off]       명령 실행 시간 전환(현재 %s)\n"
+
+#: help.c:256
+#, c-format
+msgid ""
+"  \\! [COMMAND]           execute command in shell or start interactive "
+"shell\n"
+msgstr "  \\! [COMMAND]           셸 명령 실행 또는 대화식 셸 시작\n"
+
+#: help.c:259
+#, c-format
+msgid "Variables\n"
+msgstr "변수\n"
+
+#: help.c:260
+#, c-format
+msgid "  \\prompt [TEXT] NAME    prompt user to set internal variable\n"
+msgstr ""
+"  \\prompt [TEXT] NAME    사용자에게 내부 변수를 설정하라는 메시지 표시\n"
+
+#: help.c:261
+#, c-format
+msgid ""
+"  \\set [NAME [VALUE]]    set internal variable, or list all if no "
+"parameters\n"
+msgstr ""
+"  \\set [NAME [VALUE]]    내부 변수 설정 또는 매개 변수가 없는 경우 모든 변"
+"수 목록 표시\n"
+
+#: help.c:262
+#, c-format
+msgid "  \\unset NAME            unset (delete) internal variable\n"
+msgstr "  \\unset NAME            내부 변수 설정 해제(삭제)\n"
+
+#: help.c:265
+#, c-format
+msgid "Large Objects\n"
+msgstr "큰 개체\n"
+
+#: help.c:266
+#, c-format
+msgid ""
+"  \\lo_export LOBOID FILE\n"
+"  \\lo_import FILE [COMMENT]\n"
+"  \\lo_list\n"
+"  \\lo_unlink LOBOID      large object operations\n"
+msgstr ""
+"  \\lo_export LOBOID FILE\n"
+"  \\lo_import FILE [COMMENT]\n"
+"  \\lo_list\n"
+"  \\lo_unlink LOBOID      큰 개체 작업\n"
+
+#: help.c:318
+msgid "Available help:\n"
+msgstr "사용 가능한 도움말:\n"
+
+#: help.c:407
+#, c-format
+msgid ""
+"Command:     %s\n"
+"Description: %s\n"
+"Syntax:\n"
+"%s\n"
+"\n"
+msgstr ""
+"명령:     %s\n"
+"설명: %s\n"
+"문법:\n"
+"%s\n"
+"\n"
+
+#: help.c:423
+#, c-format
+msgid ""
+"No help available for \"%-.*s\".\n"
+"Try \\h with no arguments to see available help.\n"
+msgstr ""
+"\"%-.*s\" 관련 도움말 없음.\n"
+"\\h 명령을 인수 없이 호출 하면 사용 가능한 모든 명령 보여줌.\n"
+
+#: input.c:187
+#, c-format
+msgid "could not read from input file: %s\n"
+msgstr "입력 파일을 읽을 수 없음: %s\n"
+
+#: input.c:347
+#, c-format
+msgid "could not save history to file \"%s\": %s\n"
+msgstr "history를 \"%s\" 파일로 저장할 수 없음: %s\n"
+
+#: input.c:352
+msgid "history is not supported by this installation\n"
+msgstr "히스토리 기능은 이 설치본에서는 지원하지 않음\n"
+
+#: large_obj.c:66
+#, c-format
+msgid "%s: not connected to a database\n"
+msgstr "%s: 데이터베이스에 연되어있지 않음\n"
+
+#: large_obj.c:85
+#, c-format
+msgid "%s: current transaction is aborted\n"
+msgstr "%s: 현재 트랜잭션 중지됨\n"
+
+#: large_obj.c:88
+#, c-format
+msgid "%s: unknown transaction status\n"
+msgstr "%s: 알 수 없는 트랜잭션 상태\n"
+
+#: large_obj.c:286
+msgid "ID"
+msgstr "ID"
+
+#: large_obj.c:287 describe.c:95 describe.c:158 describe.c:337 describe.c:490
+#: describe.c:566 describe.c:637 describe.c:760 describe.c:1231
+#: describe.c:2006 describe.c:2137 describe.c:2431 describe.c:2493
+#: describe.c:2629 describe.c:2668 describe.c:2735 describe.c:2794
+#: describe.c:2803 describe.c:2862
+msgid "Description"
+msgstr "설명"
+
+#: large_obj.c:295
+msgid "Large objects"
+msgstr "Large objects"
+
+#: mainloop.c:157
+#, c-format
+msgid "Use \"\\q\" to leave %s.\n"
+msgstr "마치려면 \"\\q\"를 입력하세요: %s\n"
+
+#: mainloop.c:183
+msgid "You are using psql, the command-line interface to PostgreSQL."
+msgstr "PostgreSQL에 대한 명령행 인터페이스인 psql을 사용하고 있습니다."
+
+#: mainloop.c:184
+#, c-format
+msgid ""
+"Type:  \\copyright for distribution terms\n"
+"       \\h for help with SQL commands\n"
+"       \\? for help with psql commands\n"
+"       \\g or terminate with semicolon to execute query\n"
+"       \\q to quit\n"
+msgstr ""
+"사용법:  \\copyright 저작권 정보\n"
+"       \\h SQL 명령 도움말\n"
+"       \\? psql 명령 도움말\n"
+"       \\g 또는 명령 끝에 세미콜론(;) 쿼리 실행\n"
+"       \\q 종료\n"
+
+#: print.c:955
+#, c-format
+msgid "(No rows)\n"
+msgstr "(해당 자료 없음)\n"
+
+#: print.c:1872
+#, c-format
+msgid "Interrupted\n"
+msgstr "인트럽트발생\n"
+
+#: print.c:1941
+#, c-format
+msgid "Cannot add header to table content: column count of %d exceeded.\n"
+msgstr "테이블 내용에 헤더를 추가할 수 없음: 열 수가 %d개를 초과했습니다.\n"
+
+#: print.c:1981
+#, c-format
+msgid "Cannot add cell to table content: total cell count of %d exceeded.\n"
+msgstr "테이블 내용에 셀을 추가할 수 없음: 총 셀 수가 %d개를 초과했습니다.\n"
+
+#: print.c:2201
+#, c-format
+msgid "invalid output format (internal error): %d"
+msgstr "잘못된 출력 형식 (내부 오류): %d"
+
+#: print.c:2298
+#, c-format
+msgid "(%lu row)"
+msgid_plural "(%lu rows)"
+msgstr[0] "(%lu개 행)"
+
+#: startup.c:217
+#, c-format
+msgid "%s: could not open log file \"%s\": %s\n"
+msgstr "%s: \"%s\" 로그 파일을 열 수 없음: %s\n"
+
+#: startup.c:279
+#, c-format
+msgid ""
+"Type \"help\" for help.\n"
+"\n"
+msgstr ""
+"도움말을 보려면 \"help\"를 입력하십시오.\n"
+"\n"
+
+#: startup.c:425
+#, c-format
+msgid "%s: could not set printing parameter \"%s\"\n"
+msgstr "%s: 출력 매개 변수 \"%s\" 지정할 수 없음\n"
+
+#: startup.c:464
+#, c-format
+msgid "%s: could not delete variable \"%s\"\n"
+msgstr "%s: \"%s\" 변수를 지울 수 없음\n"
+
+#: startup.c:474
+#, c-format
+msgid "%s: could not set variable \"%s\"\n"
+msgstr "%s: \"%s\" 변수를 지정할 수 없음\n"
+
+#: startup.c:511 startup.c:517
+#, c-format
+msgid "Try \"%s --help\" for more information.\n"
+msgstr "자세한 도움말은 \"%s --help\"\n"
+
+#: startup.c:534
+#, c-format
+msgid "%s: warning: extra command-line argument \"%s\" ignored\n"
+msgstr "%s: 경고: 추가 명령행 인수 \"%s\" 무시됨\n"
+
+#: startup.c:599
+msgid "contains support for command-line editing"
+msgstr "명령행 편집을 위해 지원하는 기능: "
+
+#: describe.c:68 describe.c:235 describe.c:462 describe.c:561 describe.c:682
+#: describe.c:757 describe.c:2115 describe.c:2236 describe.c:2291
+#: describe.c:2491 describe.c:2718 describe.c:2790 describe.c:2801
+#: describe.c:2860
+msgid "Schema"
+msgstr "스키마"
+
+#: describe.c:69 describe.c:145 describe.c:236 describe.c:463 describe.c:562
+#: describe.c:612 describe.c:683 describe.c:758 describe.c:2116
+#: describe.c:2237 describe.c:2292 describe.c:2422 describe.c:2492
+#: describe.c:2719 describe.c:2791 describe.c:2802 describe.c:2861
+#: describe.c:3051 describe.c:3110
+msgid "Name"
+msgstr "이름"
+
+#: describe.c:70 describe.c:248 describe.c:294 describe.c:311
+msgid "Result data type"
+msgstr "Result 자료형"
+
+#: describe.c:84 describe.c:88 describe.c:249 describe.c:295 describe.c:312
+msgid "Argument data types"
+msgstr "자료형 인수"
+
+#: describe.c:113
+msgid "List of aggregate functions"
+msgstr "통계 함수 목록"
+
+#: describe.c:134
+#, c-format
+msgid "The server (version %d.%d) does not support tablespaces.\n"
+msgstr "서버(%d.%d 버전)에서 테이블스페이스를 지원하지 않습니다.\n"
+
+#: describe.c:146 describe.c:334 describe.c:613 describe.c:2123
+#: describe.c:2423 describe.c:3052 describe.c:3111
+msgid "Owner"
+msgstr "소유주"
+
+#: describe.c:147
+msgid "Location"
+msgstr "위치"
+
+#: describe.c:175
+msgid "List of tablespaces"
+msgstr "테이블스페이스 목록"
+
+#: describe.c:212
+#, c-format
+msgid "\\df only takes [antwS+] as options\n"
+msgstr "\\df는 [antwS+]만 옵션으로 사용함\n"
+
+#: describe.c:218
+#, c-format
+msgid "\\df does not take a \"w\" option with server version %d.%d\n"
+msgstr "\\df는 서버 버전 %d.%d에 \"w\" 옵션을 사용하지 않음\n"
+
+#. translator: "agg" is short for "aggregate"
+#: describe.c:251 describe.c:297 describe.c:314
+msgid "agg"
+msgstr "집계"
+
+#: describe.c:252
+msgid "window"
+msgstr "창"
+
+#: describe.c:253 describe.c:298 describe.c:315 describe.c:897
+msgid "trigger"
+msgstr "트리거"
+
+#: describe.c:254 describe.c:299 describe.c:316
+msgid "normal"
+msgstr "일반"
+
+#: describe.c:255 describe.c:300 describe.c:317 describe.c:685 describe.c:1216
+#: describe.c:2122 describe.c:2238 describe.c:3123
+msgid "Type"
+msgstr "형태"
+
+#: describe.c:330
+msgid "immutable"
+msgstr "변경 불가"
+
+#: describe.c:331
+msgid "stable"
+msgstr "안정"
+
+#: describe.c:332
+msgid "volatile"
+msgstr "휘발성"
+
+#: describe.c:333
+msgid "Volatility"
+msgstr "휘발성"
+
+#: describe.c:335
+msgid "Language"
+msgstr "언어"
+
+#: describe.c:336
+msgid "Source code"
+msgstr "소스 코드"
+
+#: describe.c:434
+msgid "List of functions"
+msgstr "함수 목록"
+
+#: describe.c:473
+msgid "Internal name"
+msgstr "내부 이름"
+
+#: describe.c:474 describe.c:629 describe.c:2133
+msgid "Size"
+msgstr "크기"
+
+#: describe.c:486
+msgid "Elements"
+msgstr "요소"
+
+#: describe.c:530
+msgid "List of data types"
+msgstr "자료형 목록"
+
+#: describe.c:563
+msgid "Left arg type"
+msgstr "왼쪽 인수 자료형"
+
+#: describe.c:564
+msgid "Right arg type"
+msgstr "오른쪽 인수 자료형"
+
+#: describe.c:565
+msgid "Result type"
+msgstr "Result 자료형"
+
+#: describe.c:584
+msgid "List of operators"
+msgstr "연산자 목록"
+
+#: describe.c:614
+msgid "Encoding"
+msgstr "인코딩"
+
+#: describe.c:619
+msgid "Collation"
+msgstr "데이터 정렬"
+
+#: describe.c:620
+msgid "Ctype"
+msgstr "Ctype"
+
+#: describe.c:633
+msgid "Tablespace"
+msgstr "테이블스페이스"
+
+#: describe.c:650
+msgid "List of databases"
+msgstr "데이터베이스 목록"
+
+#: describe.c:684 describe.c:852 describe.c:2117
+msgid "table"
+msgstr "테이블"
+
+#: describe.c:684 describe.c:853 describe.c:2118
+msgid "view"
+msgstr "뷰(view)"
+
+#: describe.c:684 describe.c:855 describe.c:2120
+msgid "sequence"
+msgstr "시퀀스"
+
+#: describe.c:696
+msgid "Column access privileges"
+msgstr "열 액세스 권한"
+
+#: describe.c:722 describe.c:3218 describe.c:3222
+msgid "Access privileges"
+msgstr "액세스 권한"
+
+#: describe.c:759
+msgid "Object"
+msgstr "개체"
+
+#: describe.c:771
+msgid "aggregate"
+msgstr "통계"
+
+#: describe.c:791
+msgid "function"
+msgstr "함수"
+
+#: describe.c:810
+msgid "operator"
+msgstr "연산자"
+
+#: describe.c:829
+msgid "data type"
+msgstr "자료형"
+
+#: describe.c:854 describe.c:2119
+msgid "index"
+msgstr "인덱스"
+
+#: describe.c:876
+msgid "rule"
+msgstr "룰(rule)"
+
+#: describe.c:920
+msgid "Object descriptions"
+msgstr "개체 설명"
+
+#: describe.c:973
+#, c-format
+msgid "Did not find any relation named \"%s\".\n"
+msgstr "\"%s\" 이름을 릴레이션(relation) 없음.\n"
+
+#: describe.c:1110
+#, c-format
+msgid "Did not find any relation with OID %s.\n"
+msgstr "%s oid의 어떤 릴레이션(relation)도 찾을 수 없음.\n"
+
+#: describe.c:1178
+#, c-format
+msgid "Table \"%s.%s\""
+msgstr "\"%s.%s\" 테이블"
+
+#: describe.c:1182
+#, c-format
+msgid "View \"%s.%s\""
+msgstr "\"%s.%s\" 뷰(view)"
+
+#: describe.c:1186
+#, c-format
+msgid "Sequence \"%s.%s\""
+msgstr "\"%s.%s\" 시퀀스"
+
+#: describe.c:1190
+#, c-format
+msgid "Index \"%s.%s\""
+msgstr "\"%s.%s\" 인덱스"
+
+#: describe.c:1195
+#, c-format
+msgid "Special relation \"%s.%s\""
+msgstr "\"%s.%s\" 특수 릴레이션(relation)"
+
+#: describe.c:1199
+#, c-format
+msgid "TOAST table \"%s.%s\""
+msgstr "\"%s.%s\" TOAST 테이블"
+
+#: describe.c:1203
+#, c-format
+msgid "Composite type \"%s.%s\""
+msgstr "\"%s.%s\" 복합자료형"
+
+#: describe.c:1215
+msgid "Column"
+msgstr "필드명"
+
+#: describe.c:1221
+msgid "Modifiers"
+msgstr "기타 조건"
+
+#: describe.c:1226
+msgid "Value"
+msgstr "값"
+
+#: describe.c:1230
+msgid "Storage"
+msgstr "스토리지"
+
+#: describe.c:1272
+msgid "not null"
+msgstr "Null 아님"
+
+#. translator: default values of column definitions
+#: describe.c:1281
+#, c-format
+msgid "default %s"
+msgstr "기본 값 %s"
+
+#: describe.c:1347
+msgid "primary key, "
+msgstr "기본키, "
+
+#: describe.c:1349
+msgid "unique, "
+msgstr "고유, "
+
+#: describe.c:1355
+#, c-format
+msgid "for table \"%s.%s\""
+msgstr "적용테이블: \"%s.%s\""
+
+#: describe.c:1359
+#, c-format
+msgid ", predicate (%s)"
+msgstr ", predicate (%s)"
+
+#: describe.c:1362
+msgid ", clustered"
+msgstr ", 클러스됨"
+
+#: describe.c:1365
+msgid ", invalid"
+msgstr ", 잘못됨"
+
+#: describe.c:1379
+msgid "View definition:"
+msgstr "뷰 정의:"
+
+#: describe.c:1396 describe.c:1647
+msgid "Rules:"
+msgstr "룰(rule)들:"
+
+#: describe.c:1443
+msgid "Indexes:"
+msgstr "인덱스들:"
+
+#: describe.c:1503
+msgid "Check constraints:"
+msgstr "체크 제약 조건:"
+
+#: describe.c:1534
+msgid "Foreign-key constraints:"
+msgstr "Foreign-key 제약 조건:"
+
+#: describe.c:1565
+msgid "Referenced by:"
+msgstr "다음에서 참조됨:"
+
+#: describe.c:1650
+msgid "Disabled rules:"
+msgstr "사용중지된 규칙:"
+
+#: describe.c:1653
+msgid "Rules firing always:"
+msgstr "항상 발생하는 규칙:"
+
+#: describe.c:1656
+msgid "Rules firing on replica only:"
+msgstr "복제본에서만 발생하는 규칙:"
+
+#: describe.c:1755
+msgid "Triggers:"
+msgstr "트리거들:"
+
+#: describe.c:1758
+msgid "Disabled triggers:"
+msgstr "사용중지된 트리거:"
+
+#: describe.c:1761
+msgid "Triggers firing always:"
+msgstr "항상 발생하는 트리거:"
+
+#: describe.c:1764
+msgid "Triggers firing on replica only:"
+msgstr "복제본에서만 발생하는 트리거:"
+
+#: describe.c:1797
+msgid "Inherits"
+msgstr "상속"
+
+#: describe.c:1812
+msgid "Has OIDs"
+msgstr "OID 있음"
+
+#: describe.c:1815 describe.c:2295 describe.c:2369
+msgid "yes"
+msgstr "예"
+
+#: describe.c:1815 describe.c:2295 describe.c:2369
+msgid "no"
+msgstr "아니오"
+
+#: describe.c:1823 describe.c:3061 describe.c:3125 describe.c:3181
+msgid "Options"
+msgstr "옵션"
+
+#: describe.c:1908
+#, c-format
+msgid "Tablespace: \"%s\""
+msgstr "테이블스페이스: \"%s\""
+
+#: describe.c:1921
+#, c-format
+msgid ", tablespace \"%s\""
+msgstr ", \"%s\" 테이블스페이스"
+
+#: describe.c:1999
+msgid "List of roles"
+msgstr "롤 목록"
+
+#: describe.c:2001
+msgid "Role name"
+msgstr "롤 이름"
+
+#: describe.c:2002
+msgid "Attributes"
+msgstr "속성"
+
+#: describe.c:2003
+msgid "Member of"
+msgstr "멤버:"
+
+#: describe.c:2014
+msgid "Superuser"
+msgstr "superuser"
+
+#: describe.c:2017
+msgid "No inheritance"
+msgstr "상속 없음"
+
+#: describe.c:2020
+msgid "Create role"
+msgstr "롤 만들기"
+
+#: describe.c:2023
+msgid "Create DB"
+msgstr "DB 만들기"
+
+#: describe.c:2026
+msgid "Cannot login"
+msgstr "로그인할 수 없음"
+
+#: describe.c:2035
+msgid "No connections"
+msgstr "연결 없음"
+
+#: describe.c:2037
+#, c-format
+msgid "%d connection"
+msgid_plural "%d connections"
+msgstr[0] "%d개 연결"
+
+#: describe.c:2121
+msgid "special"
+msgstr "특수"
+
+#: describe.c:2128
+msgid "Table"
+msgstr "테이블"
+
+#: describe.c:2188
+#, c-format
+msgid "No matching relations found.\n"
+msgstr "검색조건에 일치하는 릴레이션(relation) 없음.\n"
+
+#: describe.c:2190
+#, c-format
+msgid "No relations found.\n"
+msgstr "릴레이션(relation) 없음.\n"
+
+#: describe.c:2195
+msgid "List of relations"
+msgstr "릴레이션(relation) 목록"
+
+#: describe.c:2239
+msgid "Modifier"
+msgstr "기타 조건"
+
+#: describe.c:2240
+msgid "Check"
+msgstr "체크"
+
+#: describe.c:2258
+msgid "List of domains"
+msgstr "도메인(domain) 목록"
+
+#: describe.c:2293
+msgid "Source"
+msgstr "소스"
+
+#: describe.c:2294
+msgid "Destination"
+msgstr "설명"
+
+#: describe.c:2296
+msgid "Default?"
+msgstr "초기값?"
+
+#: describe.c:2314
+msgid "List of conversions"
+msgstr "문자코드변환규칙(conversion) 목록"
+
+#: describe.c:2366
+msgid "Source type"
+msgstr "Source 자료형"
+
+#: describe.c:2367
+msgid "Target type"
+msgstr "Target 자료형"
+
+#: describe.c:2368 describe.c:2628
+msgid "Function"
+msgstr "함수"
+
+#: describe.c:2369
+msgid "in assignment"
+msgstr "in assignment"
+
+#: describe.c:2370
+msgid "Implicit?"
+msgstr "Implicit?"
+
+#: describe.c:2396
+msgid "List of casts"
+msgstr "형변환자 목록"
+
+#: describe.c:2451
+msgid "List of schemas"
+msgstr "스키마(schema) 목록"
+
+#: describe.c:2474 describe.c:2707 describe.c:2775 describe.c:2843
+#, c-format
+msgid "The server (version %d.%d) does not support full text search.\n"
+msgstr "서버(%d.%d 버전)에서 전체 텍스트 검색을 지원하지 않습니다.\n"
+
+#: describe.c:2508
+msgid "List of text search parsers"
+msgstr "텍스트 검색 파서 목록"
+
+#: describe.c:2551
+#, c-format
+msgid "Did not find any text search parser named \"%s\".\n"
+msgstr "\"%s\"(이)라는 텍스트 검색 파서를 찾지 못했습니다.\n"
+
+#: describe.c:2626
+msgid "Start parse"
+msgstr "구문 분석 시작"
+
+#: describe.c:2627
+msgid "Method"
+msgstr "방법"
+
+#: describe.c:2631
+msgid "Get next token"
+msgstr "다음 토큰 가져오기"
+
+#: describe.c:2633
+msgid "End parse"
+msgstr "구문 분석 종료"
+
+#: describe.c:2635
+msgid "Get headline"
+msgstr "헤드라인 가져오기"
+
+#: describe.c:2637
+msgid "Get token types"
+msgstr "토큰 형식 가져오기"
+
+#: describe.c:2647
+#, c-format
+msgid "Text search parser \"%s.%s\""
+msgstr "\"%s.%s\" 텍스트 검색 파서"
+
+#: describe.c:2649
+#, c-format
+msgid "Text search parser \"%s\""
+msgstr "\"%s\" 텍스트 검색 파서"
+
+#: describe.c:2667
+msgid "Token name"
+msgstr "토큰 이름"
+
+#: describe.c:2678
+#, c-format
+msgid "Token types for parser \"%s.%s\""
+msgstr "\"%s.%s\" 파서의 토큰 형식"
+
+#: describe.c:2680
+#, c-format
+msgid "Token types for parser \"%s\""
+msgstr "\"%s\" 파서의 토큰 형식"
+
+#: describe.c:2729
+msgid "Template"
+msgstr "템플릿"
+
+#: describe.c:2730
+msgid "Init options"
+msgstr "초기화 옵션"
+
+#: describe.c:2752
+msgid "List of text search dictionaries"
+msgstr "텍스트 검색 사전 목록"
+
+#: describe.c:2792
+msgid "Init"
+msgstr "초기화"
+
+#: describe.c:2793
+msgid "Lexize"
+msgstr "Lexize"
+
+#: describe.c:2820
+msgid "List of text search templates"
+msgstr "텍스트 검색 템플릿 목록"
+
+#: describe.c:2877
+msgid "List of text search configurations"
+msgstr "텍스트 검색 구성 목록"
+
+#: describe.c:2921
+#, c-format
+msgid "Did not find any text search configuration named \"%s\".\n"
+msgstr "\"%s\"(이)라는 텍스트 검색 구성을 찾지 못했습니다.\n"
+
+#: describe.c:2987
+msgid "Token"
+msgstr "토큰"
+
+#: describe.c:2988
+msgid "Dictionaries"
+msgstr "사전"
+
+#: describe.c:2999
+#, c-format
+msgid "Text search configuration \"%s.%s\""
+msgstr "텍스트 검색 구성 \"%s.%s\""
+
+#: describe.c:3002
+#, c-format
+msgid "Text search configuration \"%s\""
+msgstr "텍스트 검색 구성 \"%s\""
+
+#: describe.c:3006
+#, c-format
+msgid ""
+"\n"
+"Parser: \"%s.%s\""
+msgstr ""
+"\n"
+"파서: \"%s.%s\""
+
+#: describe.c:3009
+#, c-format
+msgid ""
+"\n"
+"Parser: \"%s\""
+msgstr ""
+"\n"
+"파서: \"%s\""
+
+#: describe.c:3041
+#, c-format
+msgid "The server (version %d.%d) does not support foreign-data wrappers.\n"
+msgstr "서버(%d.%d 버전)에서 외부 데이터 래퍼를 지원하지 않습니다.\n"
+
+#: describe.c:3053
+msgid "Validator"
+msgstr "유효성 검사기"
+
+#: describe.c:3077
+msgid "List of foreign-data wrappers"
+msgstr "외부 데이터 래퍼 목록"
+
+#: describe.c:3100
+#, c-format
+msgid "The server (version %d.%d) does not support foreign servers.\n"
+msgstr "서버(%d.%d 버전)에서 외부 서버를 지원하지 않습니다.\n"
+
+#: describe.c:3112
+msgid "Foreign-data wrapper"
+msgstr "외부 데이터 래퍼"
+
+#: describe.c:3124
+msgid "Version"
+msgstr "버전"
+
+#: describe.c:3143
+msgid "List of foreign servers"
+msgstr "외부 서버 목록"
+
+#: describe.c:3166
+#, c-format
+msgid "The server (version %d.%d) does not support user mappings.\n"
+msgstr "서버(%d.%d 버전)에서 사용자 매핑을 지원하지 않습니다.\n"
+
+#: describe.c:3175
+msgid "Server"
+msgstr "서버"
+
+#: describe.c:3176
+msgid "User name"
+msgstr "사용자 이름"
+
+#: describe.c:3196
+msgid "List of user mappings"
+msgstr "사용자 매핑 목록"
+
+#: sql_help.h:25 sql_help.h:505
+msgid "abort the current transaction"
+msgstr "현재 트랜잭션 중지함"
+
+#: sql_help.h:26
+msgid "ABORT [ WORK | TRANSACTION ]"
+msgstr "ABORT [ WORK | TRANSACTION ]"
+
+#: sql_help.h:29
+msgid "change the definition of an aggregate function"
+msgstr "집계함수 정보 바꾸기"
+
+#: sql_help.h:30
+msgid ""
+"ALTER AGGREGATE name ( type [ , ... ] ) RENAME TO new_name\n"
+"ALTER AGGREGATE name ( type [ , ... ] ) OWNER TO new_owner\n"
+"ALTER AGGREGATE name ( type [ , ... ] ) SET SCHEMA new_schema"
+msgstr ""
+"ALTER AGGREGATE 이름 ( type [ , ... ] ) RENAME TO 새이름\n"
+"ALTER AGGREGATE 이름 ( type [ , ... ] ) OWNER TO 새사용자\n"
+"ALTER AGGREGATE 이름 ( type [ , ... ] ) SET SCHEMA 새스키마"
+
+#: sql_help.h:33
+msgid "change the definition of a conversion"
+msgstr "문자코드 변환규칙(conversion) 정보 바꾸기"
+
+#: sql_help.h:34
+msgid ""
+"ALTER CONVERSION name RENAME TO newname\n"
+"ALTER CONVERSION name OWNER TO newowner"
+msgstr ""
+"ALTER CONVERSION 이름 RENAME TO 새이름\n"
+"ALTER CONVERSION 이름 OWNER TO 새사용자"
+
+#: sql_help.h:37
+msgid "change a database"
+msgstr "데이터베이스 변경"
+
+#: sql_help.h:38
+msgid ""
+"ALTER DATABASE name [ [ WITH ] option [ ... ] ]\n"
+"\n"
+"where option can be:\n"
+"\n"
+"    CONNECTION LIMIT connlimit\n"
+"\n"
+"ALTER DATABASE name RENAME TO newname\n"
+"\n"
+"ALTER DATABASE name OWNER TO new_owner\n"
+"\n"
+"ALTER DATABASE name SET TABLESPACE new_tablespace\n"
+"\n"
+"ALTER DATABASE name SET configuration_parameter { TO | = } { value | "
+"DEFAULT }\n"
+"ALTER DATABASE name SET configuration_parameter FROM CURRENT\n"
+"ALTER DATABASE name RESET configuration_parameter\n"
+"ALTER DATABASE name RESET ALL"
+msgstr ""
+"ALTER DATABASE name [ [ WITH ] option [ ... ] ]\n"
+"\n"
+"여기서 option은 다음과 같을 수 있습니다.\n"
+"\n"
+"    CONNECTION LIMIT connlimit\n"
+"\n"
+"ALTER DATABASE name RENAME TO newname\n"
+"\n"
+"ALTER DATABASE name OWNER TO new_owner\n"
+"\n"
+"ALTER DATABASE name SET TABLESPACE new_tablespace\n"
+"\n"
+"ALTER DATABASE name SET configuration_parameter { TO | = } { value | "
+"DEFAULT }\n"
+"ALTER DATABASE name SET configuration_parameter FROM CURRENT\n"
+"ALTER DATABASE name RESET configuration_parameter\n"
+"ALTER DATABASE name RESET ALL"
+
+#: sql_help.h:41
+msgid "change the definition of a domain"
+msgstr "도메인 정보 바꾸기"
+
+#: sql_help.h:42
+msgid ""
+"ALTER DOMAIN name\n"
+"    { SET DEFAULT expression | DROP DEFAULT }\n"
+"ALTER DOMAIN name\n"
+"    { SET | DROP } NOT NULL\n"
+"ALTER DOMAIN name\n"
+"    ADD domain_constraint\n"
+"ALTER DOMAIN name\n"
+"    DROP CONSTRAINT constraint_name [ RESTRICT | CASCADE ]\n"
+"ALTER DOMAIN name\n"
+"    OWNER TO new_owner \n"
+"ALTER DOMAIN name\n"
+"    SET SCHEMA new_schema"
+msgstr ""
+"ALTER DOMAIN name\n"
+"    { SET DEFAULT expression | DROP DEFAULT }\n"
+"ALTER DOMAIN name\n"
+"    { SET | DROP } NOT NULL\n"
+"ALTER DOMAIN name\n"
+"    ADD domain_constraint\n"
+"ALTER DOMAIN name\n"
+"    DROP CONSTRAINT constraint_name [ RESTRICT | CASCADE ]\n"
+"ALTER DOMAIN name\n"
+"    OWNER TO new_owner \n"
+"ALTER DOMAIN name\n"
+"    SET SCHEMA new_schema"
+
+#: sql_help.h:45
+msgid "change the definition of a foreign-data wrapper"
+msgstr "외부 데이터 래퍼 정의 바꾸기"
+
+#: sql_help.h:46
+msgid ""
+"ALTER FOREIGN DATA WRAPPER name\n"
+"    [ VALIDATOR valfunction | NO VALIDATOR ]\n"
+"    [ OPTIONS ( [ ADD | SET | DROP ] option ['value'] [, ... ]) ]\n"
+"ALTER FOREIGN DATA WRAPPER name OWNER TO new_owner"
+msgstr ""
+"ALTER FOREIGN DATA WRAPPER name\n"
+"    [ VALIDATOR valfunction | NO VALIDATOR ]\n"
+"    [ OPTIONS ( [ ADD | SET | DROP ] option [&apos;value&apos;] [, ... ]) ]\n"
+"ALTER FOREIGN DATA WRAPPER name OWNER TO new_owner"
+
+#: sql_help.h:49
+msgid "change the definition of a function"
+msgstr "함수 정보 바꾸기"
+
+#: sql_help.h:50
+msgid ""
+"ALTER FUNCTION name ( [ [ argmode ] [ argname ] argtype [, ...] ] )\n"
+"    action [ ... ] [ RESTRICT ]\n"
+"ALTER FUNCTION name ( [ [ argmode ] [ argname ] argtype [, ...] ] )\n"
+"    RENAME TO new_name\n"
+"ALTER FUNCTION name ( [ [ argmode ] [ argname ] argtype [, ...] ] )\n"
+"    OWNER TO new_owner\n"
+"ALTER FUNCTION name ( [ [ argmode ] [ argname ] argtype [, ...] ] )\n"
+"    SET SCHEMA new_schema\n"
+"\n"
+"where action is one of:\n"
+"\n"
+"    CALLED ON NULL INPUT | RETURNS NULL ON NULL INPUT | STRICT\n"
+"    IMMUTABLE | STABLE | VOLATILE\n"
+"    [ EXTERNAL ] SECURITY INVOKER | [ EXTERNAL ] SECURITY DEFINER\n"
+"    COST execution_cost\n"
+"    ROWS result_rows\n"
+"    SET configuration_parameter { TO | = } { value | DEFAULT }\n"
+"    SET configuration_parameter FROM CURRENT\n"
+"    RESET configuration_parameter\n"
+"    RESET ALL"
+msgstr ""
+"ALTER FUNCTION name ( [ [ argmode ] [ argname ] argtype [, ...] ] )\n"
+"    action [ ... ] [ RESTRICT ]\n"
+"ALTER FUNCTION name ( [ [ argmode ] [ argname ] argtype [, ...] ] )\n"
+"    RENAME TO new_name\n"
+"ALTER FUNCTION name ( [ [ argmode ] [ argname ] argtype [, ...] ] )\n"
+"    OWNER TO new_owner\n"
+"ALTER FUNCTION name ( [ [ argmode ] [ argname ] argtype [, ...] ] )\n"
+"    SET SCHEMA new_schema\n"
+"\n"
+"여기서 action은 다음 중 하나입니다.\n"
+"\n"
+"    CALLED ON NULL INPUT | RETURNS NULL ON NULL INPUT | STRICT\n"
+"    IMMUTABLE | STABLE | VOLATILE\n"
+"    [ EXTERNAL ] SECURITY INVOKER | [ EXTERNAL ] SECURITY DEFINER\n"
+"    COST execution_cost\n"
+"    ROWS result_rows\n"
+"    SET configuration_parameter { TO | = } { value | DEFAULT }\n"
+"    SET configuration_parameter FROM CURRENT\n"
+"    RESET configuration_parameter\n"
+"    RESET ALL"
+
+#: sql_help.h:53
+msgid "change role name or membership"
+msgstr "롤 이름이나 맴버쉽 바꾸기"
+
+#: sql_help.h:54
+msgid ""
+"ALTER GROUP groupname ADD USER username [, ... ]\n"
+"ALTER GROUP groupname DROP USER username [, ... ]\n"
+"\n"
+"ALTER GROUP groupname RENAME TO newname"
+msgstr ""
+"ALTER GROUP groupname ADD USER username [, ... ]\n"
+"ALTER GROUP groupname DROP USER username [, ... ]\n"
+"\n"
+"ALTER GROUP groupname RENAME TO newname"
+
+#: sql_help.h:57
+msgid "change the definition of an index"
+msgstr "인덱스 정의 바꾸기"
+
+#: sql_help.h:58
+msgid ""
+"ALTER INDEX name RENAME TO new_name\n"
+"ALTER INDEX name SET TABLESPACE tablespace_name\n"
+"ALTER INDEX name SET ( storage_parameter = value [, ... ] )\n"
+"ALTER INDEX name RESET ( storage_parameter [, ... ] )"
+msgstr ""
+"ALTER INDEX name RENAME TO new_name\n"
+"ALTER INDEX name SET TABLESPACE tablespace_name\n"
+"ALTER INDEX name SET ( storage_parameter = value [, ... ] )\n"
+"ALTER INDEX name RESET ( storage_parameter [, ... ] )"
+
+#: sql_help.h:61
+msgid "change the definition of a procedural language"
+msgstr "procedural language 정보 바꾸기"
+
+#: sql_help.h:62
+msgid ""
+"ALTER [ PROCEDURAL ] LANGUAGE name RENAME TO newname\n"
+"ALTER [ PROCEDURAL ] LANGUAGE name OWNER TO new_owner"
+msgstr ""
+"ALTER [ PROCEDURAL ] LANGUAGE name RENAME TO newname\n"
+"ALTER [ PROCEDURAL ] LANGUAGE name OWNER TO new_owner"
+
+#: sql_help.h:65
+msgid "change the definition of an operator"
+msgstr "연산자 정의 바꾸기"
+
+#: sql_help.h:66
+msgid ""
+"ALTER OPERATOR name ( { lefttype | NONE } , { righttype | NONE } ) OWNER TO "
+"newowner"
+msgstr ""
+"ALTER OPERATOR name ( { lefttype | NONE } , { righttype | NONE } ) OWNER TO "
+"newowner"
+
+#: sql_help.h:69
+msgid "change the definition of an operator class"
+msgstr "연산자 클래스 정보 바꾸기"
+
+#: sql_help.h:70
+msgid ""
+"ALTER OPERATOR CLASS name USING index_method RENAME TO newname\n"
+"ALTER OPERATOR CLASS name USING index_method OWNER TO newowner"
+msgstr ""
+"ALTER OPERATOR CLASS name USING index_method RENAME TO newname\n"
+"ALTER OPERATOR CLASS name USING index_method OWNER TO newowner"
+
+#: sql_help.h:73
+msgid "change the definition of an operator family"
+msgstr "연산자 부류의 정의 바꾸기"
+
+#: sql_help.h:74
+msgid ""
+"ALTER OPERATOR FAMILY name USING index_method ADD\n"
+"  {  OPERATOR strategy_number operator_name ( op_type, op_type )\n"
+"   | FUNCTION support_number [ ( op_type [ , op_type ] ) ] funcname "
+"( argument_type [, ...] )\n"
+"  } [, ... ]\n"
+"ALTER OPERATOR FAMILY name USING index_method DROP\n"
+"  {  OPERATOR strategy_number ( op_type [ , op_type ] )\n"
+"   | FUNCTION support_number ( op_type [ , op_type ] )\n"
+"  } [, ... ]\n"
+"ALTER OPERATOR FAMILY name USING index_method RENAME TO newname\n"
+"ALTER OPERATOR FAMILY name USING index_method OWNER TO newowner"
+msgstr ""
+"ALTER OPERATOR FAMILY name USING index_method ADD\n"
+"  {  OPERATOR strategy_number operator_name ( op_type, op_type )\n"
+"   | FUNCTION support_number [ ( op_type [ , op_type ] ) ] funcname "
+"( argument_type [, ...] )\n"
+"  } [, ... ]\n"
+"ALTER OPERATOR FAMILY name USING index_method DROP\n"
+"  {  OPERATOR strategy_number ( op_type [ , op_type ] )\n"
+"   | FUNCTION support_number ( op_type [ , op_type ] )\n"
+"  } [, ... ]\n"
+"ALTER OPERATOR FAMILY name USING index_method RENAME TO newname\n"
+"ALTER OPERATOR FAMILY name USING index_method OWNER TO newowner"
+
+#: sql_help.h:77 sql_help.h:125
+msgid "change a database role"
+msgstr "데이터베이스 롤 변경"
+
+#: sql_help.h:78
+msgid ""
+"ALTER ROLE name [ [ WITH ] option [ ... ] ]\n"
+"\n"
+"where option can be:\n"
+"    \n"
+"      SUPERUSER | NOSUPERUSER\n"
+"    | CREATEDB | NOCREATEDB\n"
+"    | CREATEROLE | NOCREATEROLE\n"
+"    | CREATEUSER | NOCREATEUSER\n"
+"    | INHERIT | NOINHERIT\n"
+"    | LOGIN | NOLOGIN\n"
+"    | CONNECTION LIMIT connlimit\n"
+"    | [ ENCRYPTED | UNENCRYPTED ] PASSWORD 'password'\n"
+"    | VALID UNTIL 'timestamp' \n"
+"\n"
+"ALTER ROLE name RENAME TO newname\n"
+"\n"
+"ALTER ROLE name SET configuration_parameter { TO | = } { value | DEFAULT }\n"
+"ALTER ROLE name SET configuration_parameter FROM CURRENT\n"
+"ALTER ROLE name RESET configuration_parameter\n"
+"ALTER ROLE name RESET ALL"
+msgstr ""
+"ALTER ROLE name [ [ WITH ] option [ ... ] ]\n"
+"\n"
+"여기서 option은 다음과 같을 수 있습니다.\n"
+"    \n"
+"      SUPERUSER | NOSUPERUSER\n"
+"    | CREATEDB | NOCREATEDB\n"
+"    | CREATEROLE | NOCREATEROLE\n"
+"    | CREATEUSER | NOCREATEUSER\n"
+"    | INHERIT | NOINHERIT\n"
+"    | LOGIN | NOLOGIN\n"
+"    | CONNECTION LIMIT connlimit\n"
+"    | [ ENCRYPTED | UNENCRYPTED ] PASSWORD &apos;password&apos;\n"
+"    | VALID UNTIL &apos;timestamp&apos; \n"
+"\n"
+"ALTER ROLE name RENAME TO newname\n"
+"\n"
+"ALTER ROLE name SET configuration_parameter { TO | = } { value | DEFAULT }\n"
+"ALTER ROLE name SET configuration_parameter FROM CURRENT\n"
+"ALTER ROLE name RESET configuration_parameter\n"
+"ALTER ROLE name RESET ALL"
+
+#: sql_help.h:81
+msgid "change the definition of a schema"
+msgstr "스키마 이름 바꾸기"
+
+#: sql_help.h:82
+msgid ""
+"ALTER SCHEMA name RENAME TO newname\n"
+"ALTER SCHEMA name OWNER TO newowner"
+msgstr ""
+"ALTER SCHEMA name RENAME TO newname\n"
+"ALTER SCHEMA name OWNER TO newowner"
+
+#: sql_help.h:85
+msgid "change the definition of a sequence generator"
+msgstr "시퀀스 정보 바꾸기"
+
+#: sql_help.h:86
+msgid ""
+"ALTER SEQUENCE name [ INCREMENT [ BY ] increment ]\n"
+"    [ MINVALUE minvalue | NO MINVALUE ] [ MAXVALUE maxvalue | NO MAXVALUE ]\n"
+"    [ START [ WITH ] start ]\n"
+"    [ RESTART [ [ WITH ] restart ] ]\n"
+"    [ CACHE cache ] [ [ NO ] CYCLE ]\n"
+"    [ OWNED BY { table.column | NONE } ]\n"
+"ALTER SEQUENCE name OWNER TO new_owner\n"
+"ALTER SEQUENCE name RENAME TO new_name\n"
+"ALTER SEQUENCE name SET SCHEMA new_schema"
+msgstr ""
+"ALTER SEQUENCE name [ INCREMENT [ BY ] increment ]\n"
+"    [ MINVALUE minvalue | NO MINVALUE ] [ MAXVALUE maxvalue | NO MAXVALUE ]\n"
+"    [ START [ WITH ] start ]\n"
+"    [ RESTART [ [ WITH ] restart ] ]\n"
+"    [ CACHE cache ] [ [ NO ] CYCLE ]\n"
+"    [ OWNED BY { table.column | NONE } ]\n"
+"ALTER SEQUENCE name OWNER TO new_owner\n"
+"ALTER SEQUENCE name RENAME TO new_name\n"
+"ALTER SEQUENCE name SET SCHEMA new_schema"
+
+#: sql_help.h:89
+msgid "change the definition of a foreign server"
+msgstr "외부 서버 정의 바꾸기"
+
+#: sql_help.h:90
+msgid ""
+"ALTER SERVER servername [ VERSION 'newversion' ]\n"
+"    [ OPTIONS ( [ ADD | SET | DROP ] option ['value'] [, ... ] ) ]\n"
+"ALTER SERVER servername OWNER TO new_owner"
+msgstr ""
+"ALTER SERVER servername [ VERSION &apos;newversion&apos; ]\n"
+"    [ OPTIONS ( [ ADD | SET | DROP ] option [&apos;value&apos;] "
+"[, ... ] ) ]\n"
+"ALTER SERVER servername OWNER TO new_owner"
+
+#: sql_help.h:93
+msgid "change the definition of a table"
+msgstr "테이블 정보 바꾸기"
+
+#: sql_help.h:94
+msgid ""
+"ALTER TABLE [ ONLY ] name [ * ]\n"
+"    action [, ... ]\n"
+"ALTER TABLE [ ONLY ] name [ * ]\n"
+"    RENAME [ COLUMN ] column TO new_column\n"
+"ALTER TABLE name\n"
+"    RENAME TO new_name\n"
+"ALTER TABLE name\n"
+"    SET SCHEMA new_schema\n"
+"\n"
+"where action is one of:\n"
+"\n"
+"    ADD [ COLUMN ] column type [ column_constraint [ ... ] ]\n"
+"    DROP [ COLUMN ] column [ RESTRICT | CASCADE ]\n"
+"    ALTER [ COLUMN ] column [ SET DATA ] TYPE type [ USING expression ]\n"
+"    ALTER [ COLUMN ] column SET DEFAULT expression\n"
+"    ALTER [ COLUMN ] column DROP DEFAULT\n"
+"    ALTER [ COLUMN ] column { SET | DROP } NOT NULL\n"
+"    ALTER [ COLUMN ] column SET STATISTICS integer\n"
+"    ALTER [ COLUMN ] column SET STORAGE { PLAIN | EXTERNAL | EXTENDED | "
+"MAIN }\n"
+"    ADD table_constraint\n"
+"    DROP CONSTRAINT constraint_name [ RESTRICT | CASCADE ]\n"
+"    DISABLE TRIGGER [ trigger_name | ALL | USER ]\n"
+"    ENABLE TRIGGER [ trigger_name | ALL | USER ]\n"
+"    ENABLE REPLICA TRIGGER trigger_name\n"
+"    ENABLE ALWAYS TRIGGER trigger_name\n"
+"    DISABLE RULE rewrite_rule_name\n"
+"    ENABLE RULE rewrite_rule_name\n"
+"    ENABLE REPLICA RULE rewrite_rule_name\n"
+"    ENABLE ALWAYS RULE rewrite_rule_name\n"
+"    CLUSTER ON index_name\n"
+"    SET WITHOUT CLUSTER\n"
+"    SET WITH OIDS\n"
+"    SET WITHOUT OIDS\n"
+"    SET ( storage_parameter = value [, ... ] )\n"
+"    RESET ( storage_parameter [, ... ] )\n"
+"    INHERIT parent_table\n"
+"    NO INHERIT parent_table\n"
+"    OWNER TO new_owner\n"
+"    SET TABLESPACE new_tablespace"
+msgstr ""
+"ALTER TABLE [ ONLY ] name [ * ]\n"
+"    action [, ... ]\n"
+"ALTER TABLE [ ONLY ] name [ * ]\n"
+"    RENAME [ COLUMN ] column TO new_column\n"
+"ALTER TABLE name\n"
+"    RENAME TO new_name\n"
+"ALTER TABLE name\n"
+"    SET SCHEMA new_schema\n"
+"\n"
+"여기서 action은 다음 중 하나입니다.\n"
+"\n"
+"    ADD [ COLUMN ] column type [ column_constraint [ ... ] ]\n"
+"    DROP [ COLUMN ] column [ RESTRICT | CASCADE ]\n"
+"    ALTER [ COLUMN ] column [ SET DATA ] TYPE type [ USING expression ]\n"
+"    ALTER [ COLUMN ] column SET DEFAULT expression\n"
+"    ALTER [ COLUMN ] column DROP DEFAULT\n"
+"    ALTER [ COLUMN ] column { SET | DROP } NOT NULL\n"
+"    ALTER [ COLUMN ] column SET STATISTICS integer\n"
+"    ALTER [ COLUMN ] column SET STORAGE { PLAIN | EXTERNAL | EXTENDED | "
+"MAIN }\n"
+"    ADD table_constraint\n"
+"    DROP CONSTRAINT constraint_name [ RESTRICT | CASCADE ]\n"
+"    DISABLE TRIGGER [ trigger_name | ALL | USER ]\n"
+"    ENABLE TRIGGER [ trigger_name | ALL | USER ]\n"
+"    ENABLE REPLICA TRIGGER trigger_name\n"
+"    ENABLE ALWAYS TRIGGER trigger_name\n"
+"    DISABLE RULE rewrite_rule_name\n"
+"    ENABLE RULE rewrite_rule_name\n"
+"    ENABLE REPLICA RULE rewrite_rule_name\n"
+"    ENABLE ALWAYS RULE rewrite_rule_name\n"
+"    CLUSTER ON index_name\n"
+"    SET WITHOUT CLUSTER\n"
+"    SET WITH OIDS\n"
+"    SET WITHOUT OIDS\n"
+"    SET ( storage_parameter = value [, ... ] )\n"
+"    RESET ( storage_parameter [, ... ] )\n"
+"    INHERIT parent_table\n"
+"    NO INHERIT parent_table\n"
+"    OWNER TO new_owner\n"
+"    SET TABLESPACE new_tablespace"
+
+#: sql_help.h:97
+msgid "change the definition of a tablespace"
+msgstr "테이블스페이스 정의 바꾸기"
+
+#: sql_help.h:98
+msgid ""
+"ALTER TABLESPACE name RENAME TO newname\n"
+"ALTER TABLESPACE name OWNER TO newowner"
+msgstr ""
+"ALTER TABLESPACE name RENAME TO newname\n"
+"ALTER TABLESPACE name OWNER TO newowner"
+
+#: sql_help.h:101
+msgid "change the definition of a text search configuration"
+msgstr "텍스트 검색 구성 정의 바꾸기"
+
+#: sql_help.h:102
+msgid ""
+"ALTER TEXT SEARCH CONFIGURATION name\n"
+"    ADD MAPPING FOR token_type [, ... ] WITH dictionary_name [, ... ]\n"
+"ALTER TEXT SEARCH CONFIGURATION name\n"
+"    ALTER MAPPING FOR token_type [, ... ] WITH dictionary_name [, ... ]\n"
+"ALTER TEXT SEARCH CONFIGURATION name\n"
+"    ALTER MAPPING REPLACE old_dictionary WITH new_dictionary\n"
+"ALTER TEXT SEARCH CONFIGURATION name\n"
+"    ALTER MAPPING FOR token_type [, ... ] REPLACE old_dictionary WITH "
+"new_dictionary\n"
+"ALTER TEXT SEARCH CONFIGURATION name\n"
+"    DROP MAPPING [ IF EXISTS ] FOR token_type [, ... ]\n"
+"ALTER TEXT SEARCH CONFIGURATION name RENAME TO newname\n"
+"ALTER TEXT SEARCH CONFIGURATION name OWNER TO newowner"
+msgstr ""
+"ALTER TEXT SEARCH CONFIGURATION name\n"
+"    ADD MAPPING FOR token_type [, ... ] WITH dictionary_name [, ... ]\n"
+"ALTER TEXT SEARCH CONFIGURATION name\n"
+"    ALTER MAPPING FOR token_type [, ... ] WITH dictionary_name [, ... ]\n"
+"ALTER TEXT SEARCH CONFIGURATION name\n"
+"    ALTER MAPPING REPLACE old_dictionary WITH new_dictionary\n"
+"ALTER TEXT SEARCH CONFIGURATION name\n"
+"    ALTER MAPPING FOR token_type [, ... ] REPLACE old_dictionary WITH "
+"new_dictionary\n"
+"ALTER TEXT SEARCH CONFIGURATION name\n"
+"    DROP MAPPING [ IF EXISTS ] FOR token_type [, ... ]\n"
+"ALTER TEXT SEARCH CONFIGURATION name RENAME TO newname\n"
+"ALTER TEXT SEARCH CONFIGURATION name OWNER TO newowner"
+
+#: sql_help.h:105
+msgid "change the definition of a text search dictionary"
+msgstr "텍스트 검색 사전 정의 바꾸기"
+
+#: sql_help.h:106
+msgid ""
+"ALTER TEXT SEARCH DICTIONARY name (\n"
+"    option [ = value ] [, ... ]\n"
+")\n"
+"ALTER TEXT SEARCH DICTIONARY name RENAME TO newname\n"
+"ALTER TEXT SEARCH DICTIONARY name OWNER TO newowner"
+msgstr ""
+"ALTER TEXT SEARCH DICTIONARY name (\n"
+"    option [ = value ] [, ... ]\n"
+")\n"
+"ALTER TEXT SEARCH DICTIONARY name RENAME TO newname\n"
+"ALTER TEXT SEARCH DICTIONARY name OWNER TO newowner"
+
+#: sql_help.h:109
+msgid "change the definition of a text search parser"
+msgstr "텍스트 검색 파서 정의 바꾸기"
+
+#: sql_help.h:110
+msgid "ALTER TEXT SEARCH PARSER name RENAME TO newname"
+msgstr "ALTER TEXT SEARCH PARSER name RENAME TO newname"
+
+#: sql_help.h:113
+msgid "change the definition of a text search template"
+msgstr "텍스트 검색 템플릿 정의 바꾸기"
+
+#: sql_help.h:114
+msgid "ALTER TEXT SEARCH TEMPLATE name RENAME TO newname"
+msgstr "ALTER TEXT SEARCH TEMPLATE name RENAME TO newname"
+
+#: sql_help.h:117
+msgid "change the definition of a trigger"
+msgstr "트리거 정보 바꾸기"
+
+#: sql_help.h:118
+msgid "ALTER TRIGGER name ON table RENAME TO newname"
+msgstr "ALTER TRIGGER 이름 ON 테이블 RENAME TO 새이름"
+
+#: sql_help.h:121
+msgid "change the definition of a type"
+msgstr "자료형 정의 바꾸기"
+
+#: sql_help.h:122
+msgid ""
+"ALTER TYPE name RENAME TO new_name\n"
+"ALTER TYPE name OWNER TO new_owner \n"
+"ALTER TYPE name SET SCHEMA new_schema"
+msgstr ""
+"ALTER TYPE name RENAME TO new_name\n"
+"ALTER TYPE name OWNER TO new_owner \n"
+"ALTER TYPE name SET SCHEMA new_schema"
+
+#: sql_help.h:126
+msgid ""
+"ALTER USER name [ [ WITH ] option [ ... ] ]\n"
+"\n"
+"where option can be:\n"
+"    \n"
+"      SUPERUSER | NOSUPERUSER\n"
+"    | CREATEDB | NOCREATEDB\n"
+"    | CREATEROLE | NOCREATEROLE\n"
+"    | CREATEUSER | NOCREATEUSER\n"
+"    | INHERIT | NOINHERIT\n"
+"    | LOGIN | NOLOGIN\n"
+"    | CONNECTION LIMIT connlimit\n"
+"    | [ ENCRYPTED | UNENCRYPTED ] PASSWORD 'password'\n"
+"    | VALID UNTIL 'timestamp' \n"
+"\n"
+"ALTER USER name RENAME TO newname\n"
+"\n"
+"ALTER USER name SET configuration_parameter { TO | = } { value | DEFAULT }\n"
+"ALTER USER name SET configuration_parameter FROM CURRENT\n"
+"ALTER USER name RESET configuration_parameter\n"
+"ALTER USER name RESET ALL"
+msgstr ""
+"ALTER USER name [ [ WITH ] option [ ... ] ]\n"
+"\n"
+"여기서 option은 다음과 같을 수 있습니다.\n"
+"    \n"
+"      SUPERUSER | NOSUPERUSER\n"
+"    | CREATEDB | NOCREATEDB\n"
+"    | CREATEROLE | NOCREATEROLE\n"
+"    | CREATEUSER | NOCREATEUSER\n"
+"    | INHERIT | NOINHERIT\n"
+"    | LOGIN | NOLOGIN\n"
+"    | CONNECTION LIMIT connlimit\n"
+"    | [ ENCRYPTED | UNENCRYPTED ] PASSWORD &apos;password&apos;\n"
+"    | VALID UNTIL &apos;timestamp&apos; \n"
+"\n"
+"ALTER USER name RENAME TO newname\n"
+"\n"
+"ALTER USER name SET configuration_parameter { TO | = } { value | DEFAULT }\n"
+"ALTER USER name SET configuration_parameter FROM CURRENT\n"
+"ALTER USER name RESET configuration_parameter\n"
+"ALTER USER name RESET ALL"
+
+#: sql_help.h:129
+msgid "change the definition of a user mapping"
+msgstr "사용자 매핑 정의 바꾸기"
+
+#: sql_help.h:130
+msgid ""
+"ALTER USER MAPPING FOR { username | USER | CURRENT_USER | PUBLIC }\n"
+"    SERVER servername\n"
+"    OPTIONS ( [ ADD | SET | DROP ] option ['value'] [, ... ] )"
+msgstr ""
+"ALTER USER MAPPING FOR { username | USER | CURRENT_USER | PUBLIC }\n"
+"    SERVER servername\n"
+"    OPTIONS ( [ ADD | SET | DROP ] option [&apos;value&apos;] [, ... ] )"
+
+#: sql_help.h:133
+msgid "change the definition of a view"
+msgstr "뷰 정의 바꾸기"
+
+#: sql_help.h:134
+msgid ""
+"ALTER VIEW name ALTER [ COLUMN ] column SET DEFAULT expression\n"
+"ALTER VIEW name ALTER [ COLUMN ] column DROP DEFAULT\n"
+"ALTER VIEW name OWNER TO new_owner\n"
+"ALTER VIEW name RENAME TO new_name\n"
+"ALTER VIEW name SET SCHEMA new_schema"
+msgstr ""
+"ALTER VIEW name ALTER [ COLUMN ] column SET DEFAULT expression\n"
+"ALTER VIEW name ALTER [ COLUMN ] column DROP DEFAULT\n"
+"ALTER VIEW name OWNER TO new_owner\n"
+"ALTER VIEW name RENAME TO new_name\n"
+"ALTER VIEW name SET SCHEMA new_schema"
+
+#: sql_help.h:137
+msgid "collect statistics about a database"
+msgstr "데이터베이스 사용 통계 정보를 갱신함"
+
+#: sql_help.h:138
+msgid "ANALYZE [ VERBOSE ] [ table [ ( column [, ...] ) ] ]"
+msgstr "ANALYZE [ VERBOSE ] [ table [ ( column [, ...] ) ] ]"
+
+#: sql_help.h:141 sql_help.h:553
+msgid "start a transaction block"
+msgstr "트랜잭션 블럭을 시작함"
+
+#: sql_help.h:142
+msgid ""
+"BEGIN [ WORK | TRANSACTION ] [ transaction_mode [, ...] ]\n"
+"\n"
+"where transaction_mode is one of:\n"
+"\n"
+"    ISOLATION LEVEL { SERIALIZABLE | REPEATABLE READ | READ COMMITTED | READ "
+"UNCOMMITTED }\n"
+"    READ WRITE | READ ONLY"
+msgstr ""
+"BEGIN [ WORK | TRANSACTION ] [ transaction_mode [, ...] ]\n"
+"\n"
+"where transaction_mode is one of:\n"
+"\n"
+"    ISOLATION LEVEL { SERIALIZABLE | REPEATABLE READ | READ COMMITTED | READ "
+"UNCOMMITTED }\n"
+"    READ WRITE | READ ONLY"
+
+#: sql_help.h:145
+msgid "force a transaction log checkpoint"
+msgstr "트랜잭션 로그를 강제로 checkpoint함"
+
+#: sql_help.h:146
+msgid "CHECKPOINT"
+msgstr "CHECKPOINT"
+
+#: sql_help.h:149
+msgid "close a cursor"
+msgstr "커서 닫기"
+
+#: sql_help.h:150
+msgid "CLOSE { name | ALL }"
+msgstr "CLOSE { name | ALL }"
+
+#: sql_help.h:153
+msgid "cluster a table according to an index"
+msgstr "지정한 인덱스 기준으로 테이블 자료를 다시 저장함"
+
+#: sql_help.h:154
+msgid ""
+"CLUSTER [VERBOSE] tablename [ USING indexname ]\n"
+"CLUSTER [VERBOSE]"
+msgstr ""
+"CLUSTER [VERBOSE] tablename [ USING indexname ]\n"
+"CLUSTER [VERBOSE]"
+
+#: sql_help.h:157
+msgid "define or change the comment of an object"
+msgstr "해당 개체의 코멘트를 지정하거나 수정함"
+
+#: sql_help.h:158
+msgid ""
+"COMMENT ON\n"
+"{\n"
+"  TABLE object_name |\n"
+"  COLUMN table_name.column_name |\n"
+"  AGGREGATE agg_name (agg_type [, ...] ) |\n"
+"  CAST (sourcetype AS targettype) |\n"
+"  CONSTRAINT constraint_name ON table_name |\n"
+"  CONVERSION object_name |\n"
+"  DATABASE object_name |\n"
+"  DOMAIN object_name |\n"
+"  FUNCTION func_name ( [ [ argmode ] [ argname ] argtype [, ...] ] ) |\n"
+"  INDEX object_name |\n"
+"  LARGE OBJECT large_object_oid |\n"
+"  OPERATOR op (leftoperand_type, rightoperand_type) |\n"
+"  OPERATOR CLASS object_name USING index_method |\n"
+"  OPERATOR FAMILY object_name USING index_method |\n"
+"  [ PROCEDURAL ] LANGUAGE object_name |\n"
+"  ROLE object_name |\n"
+"  RULE rule_name ON table_name |\n"
+"  SCHEMA object_name |\n"
+"  SEQUENCE object_name |\n"
+"  TABLESPACE object_name |\n"
+"  TEXT SEARCH CONFIGURATION object_name |\n"
+"  TEXT SEARCH DICTIONARY object_name |\n"
+"  TEXT SEARCH PARSER object_name |\n"
+"  TEXT SEARCH TEMPLATE object_name |\n"
+"  TRIGGER trigger_name ON table_name |\n"
+"  TYPE object_name |\n"
+"  VIEW object_name\n"
+"} IS 'text'"
+msgstr ""
+"COMMENT ON\n"
+"{\n"
+"  TABLE object_name |\n"
+"  COLUMN table_name.column_name |\n"
+"  AGGREGATE agg_name (agg_type [, ...] ) |\n"
+"  CAST (sourcetype AS targettype) |\n"
+"  CONSTRAINT constraint_name ON table_name |\n"
+"  CONVERSION object_name |\n"
+"  DATABASE object_name |\n"
+"  DOMAIN object_name |\n"
+"  FUNCTION func_name ( [ [ argmode ] [ argname ] argtype [, ...] ] ) |\n"
+"  INDEX object_name |\n"
+"  LARGE OBJECT large_object_oid |\n"
+"  OPERATOR op (leftoperand_type, rightoperand_type) |\n"
+"  OPERATOR CLASS object_name USING index_method |\n"
+"  OPERATOR FAMILY object_name USING index_method |\n"
+"  [ PROCEDURAL ] LANGUAGE object_name |\n"
+"  ROLE object_name |\n"
+"  RULE rule_name ON table_name |\n"
+"  SCHEMA object_name |\n"
+"  SEQUENCE object_name |\n"
+"  TABLESPACE object_name |\n"
+"  TEXT SEARCH CONFIGURATION object_name |\n"
+"  TEXT SEARCH DICTIONARY object_name |\n"
+"  TEXT SEARCH PARSER object_name |\n"
+"  TEXT SEARCH TEMPLATE object_name |\n"
+"  TRIGGER trigger_name ON table_name |\n"
+"  TYPE object_name |\n"
+"  VIEW object_name\n"
+"} IS &apos;text&apos;"
+
+#: sql_help.h:161 sql_help.h:433
+msgid "commit the current transaction"
+msgstr "현재 트랜잭션 commit"
+
+#: sql_help.h:162
+msgid "COMMIT [ WORK | TRANSACTION ]"
+msgstr "COMMIT [ WORK | TRANSACTION ]"
+
+#: sql_help.h:165
+msgid "commit a transaction that was earlier prepared for two-phase commit"
+msgstr "two-phase 커밋을 위해 먼저 준비된 트랜잭션을 커밋하세요."
+
+#: sql_help.h:166
+msgid "COMMIT PREPARED transaction_id"
+msgstr "COMMIT PREPARED transaction_id"
+
+#: sql_help.h:169
+msgid "copy data between a file and a table"
+msgstr "테이블과 파일 사이 자료를 복사함"
+
+#: sql_help.h:170
+msgid ""
+"COPY tablename [ ( column [, ...] ) ]\n"
+"    FROM { 'filename' | STDIN }\n"
+"    [ [ WITH ] \n"
+"          [ BINARY ]\n"
+"          [ OIDS ]\n"
+"          [ DELIMITER [ AS ] 'delimiter' ]\n"
+"          [ NULL [ AS ] 'null string' ]\n"
+"          [ CSV [ HEADER ]\n"
+"                [ QUOTE [ AS ] 'quote' ] \n"
+"                [ ESCAPE [ AS ] 'escape' ]\n"
+"                [ FORCE NOT NULL column [, ...] ]\n"
+"\n"
+"COPY { tablename [ ( column [, ...] ) ] | ( query ) }\n"
+"    TO { 'filename' | STDOUT }\n"
+"    [ [ WITH ] \n"
+"          [ BINARY ]\n"
+"          [ OIDS ]\n"
+"          [ DELIMITER [ AS ] 'delimiter' ]\n"
+"          [ NULL [ AS ] 'null string' ]\n"
+"          [ CSV [ HEADER ]\n"
+"                [ QUOTE [ AS ] 'quote' ] \n"
+"                [ ESCAPE [ AS ] 'escape' ]\n"
+"                [ FORCE QUOTE column [, ...] ]"
+msgstr ""
+"COPY tablename [ ( column [, ...] ) ]\n"
+"    FROM { &apos;filename&apos; | STDIN }\n"
+"    [ [ WITH ] \n"
+"          [ BINARY ]\n"
+"          [ OIDS ]\n"
+"          [ DELIMITER [ AS ] &apos;delimiter&apos; ]\n"
+"          [ NULL [ AS ] &apos;null string&apos; ]\n"
+"          [ CSV [ HEADER ]\n"
+"                [ QUOTE [ AS ] &apos;quote&apos; ] \n"
+"                [ ESCAPE [ AS ] &apos;escape&apos; ]\n"
+"                [ FORCE NOT NULL column [, ...] ]\n"
+"\n"
+"COPY { tablename [ ( column [, ...] ) ] | ( query ) }\n"
+"    TO { &apos;filename&apos; | STDOUT }\n"
+"    [ [ WITH ] \n"
+"          [ BINARY ]\n"
+"          [ OIDS ]\n"
+"          [ DELIMITER [ AS ] &apos;delimiter&apos; ]\n"
+"          [ NULL [ AS ] &apos;null string&apos; ]\n"
+"          [ CSV [ HEADER ]\n"
+"                [ QUOTE [ AS ] &apos;quote&apos; ] \n"
+"                [ ESCAPE [ AS ] &apos;escape&apos; ]\n"
+"                [ FORCE QUOTE column [, ...] ]"
+
+#: sql_help.h:173
+msgid "define a new aggregate function"
+msgstr "새 집계합수 만들기"
+
+#: sql_help.h:174
+msgid ""
+"CREATE AGGREGATE name ( input_data_type [ , ... ] ) (\n"
+"    SFUNC = sfunc,\n"
+"    STYPE = state_data_type\n"
+"    [ , FINALFUNC = ffunc ]\n"
+"    [ , INITCOND = initial_condition ]\n"
+"    [ , SORTOP = sort_operator ]\n"
+")\n"
+"\n"
+"or the old syntax\n"
+"\n"
+"CREATE AGGREGATE name (\n"
+"    BASETYPE = base_type,\n"
+"    SFUNC = sfunc,\n"
+"    STYPE = state_data_type\n"
+"    [ , FINALFUNC = ffunc ]\n"
+"    [ , INITCOND = initial_condition ]\n"
+"    [ , SORTOP = sort_operator ]\n"
+")"
+msgstr ""
+"CREATE AGGREGATE name ( input_data_type [ , ... ] ) (\n"
+"    SFUNC = sfunc,\n"
+"    STYPE = state_data_type\n"
+"    [ , FINALFUNC = ffunc ]\n"
+"    [ , INITCOND = initial_condition ]\n"
+"    [ , SORTOP = sort_operator ]\n"
+")\n"
+"\n"
+"or the old syntax\n"
+"\n"
+"CREATE AGGREGATE name (\n"
+"    BASETYPE = base_type,\n"
+"    SFUNC = sfunc,\n"
+"    STYPE = state_data_type\n"
+"    [ , FINALFUNC = ffunc ]\n"
+"    [ , INITCOND = initial_condition ]\n"
+"    [ , SORTOP = sort_operator ]\n"
+")"
+
+#: sql_help.h:177
+msgid "define a new cast"
+msgstr "새 형변환자 만들기"
+
+#: sql_help.h:178
+msgid ""
+"CREATE CAST (sourcetype AS targettype)\n"
+"    WITH FUNCTION funcname (argtypes)\n"
+"    [ AS ASSIGNMENT | AS IMPLICIT ]\n"
+"\n"
+"CREATE CAST (sourcetype AS targettype)\n"
+"    WITHOUT FUNCTION\n"
+"    [ AS ASSIGNMENT | AS IMPLICIT ]\n"
+"\n"
+"CREATE CAST (sourcetype AS targettype)\n"
+"    WITH INOUT\n"
+"    [ AS ASSIGNMENT | AS IMPLICIT ]"
+msgstr ""
+"CREATE CAST (sourcetype AS targettype)\n"
+"    WITH FUNCTION funcname (argtypes)\n"
+"    [ AS ASSIGNMENT | AS IMPLICIT ]\n"
+"\n"
+"CREATE CAST (sourcetype AS targettype)\n"
+"    WITHOUT FUNCTION\n"
+"    [ AS ASSIGNMENT | AS IMPLICIT ]\n"
+"\n"
+"CREATE CAST (sourcetype AS targettype)\n"
+"    WITH INOUT\n"
+"    [ AS ASSIGNMENT | AS IMPLICIT ]"
+
+#: sql_help.h:181
+msgid "define a new constraint trigger"
+msgstr "새 제약 조건 트리거 만들기"
+
+#: sql_help.h:182
+msgid ""
+"CREATE CONSTRAINT TRIGGER name\n"
+"    AFTER event [ OR ... ]\n"
+"    ON table_name\n"
+"    [ FROM referenced_table_name ]\n"
+"    { NOT DEFERRABLE | [ DEFERRABLE ] { INITIALLY IMMEDIATE | INITIALLY "
+"DEFERRED } }\n"
+"    FOR EACH ROW\n"
+"    EXECUTE PROCEDURE funcname ( arguments )"
+msgstr ""
+"CREATE CONSTRAINT TRIGGER name\n"
+"    AFTER event [ OR ... ]\n"
+"    ON table_name\n"
+"    [ FROM referenced_table_name ]\n"
+"    { NOT DEFERRABLE | [ DEFERRABLE ] { INITIALLY IMMEDIATE | INITIALLY "
+"DEFERRED } }\n"
+"    FOR EACH ROW\n"
+"    EXECUTE PROCEDURE funcname ( arguments )"
+
+#: sql_help.h:185
+msgid "define a new encoding conversion"
+msgstr "새 문자코드변환규칙(conversion) 만들기"
+
+#: sql_help.h:186
+msgid ""
+"CREATE [ DEFAULT ] CONVERSION name\n"
+"    FOR source_encoding TO dest_encoding FROM funcname"
+msgstr ""
+"CREATE [ DEFAULT ] CONVERSION name\n"
+"    FOR source_encoding TO dest_encoding FROM funcname"
+
+#: sql_help.h:189
+msgid "create a new database"
+msgstr "데이터베이스 생성"
+
+#: sql_help.h:190
+msgid ""
+"CREATE DATABASE name\n"
+"    [ [ WITH ] [ OWNER [=] dbowner ]\n"
+"           [ TEMPLATE [=] template ]\n"
+"           [ ENCODING [=] encoding ]\n"
+"           [ LC_COLLATE [=] lc_collate ]\n"
+"           [ LC_CTYPE [=] lc_ctype ]\n"
+"           [ TABLESPACE [=] tablespace ]\n"
+"           [ CONNECTION LIMIT [=] connlimit ] ]"
+msgstr ""
+"CREATE DATABASE name\n"
+"    [ [ WITH ] [ OWNER [=] dbowner ]\n"
+"           [ TEMPLATE [=] template ]\n"
+"           [ ENCODING [=] encoding ]\n"
+"           [ LC_COLLATE [=] lc_collate ]\n"
+"           [ LC_CTYPE [=] lc_ctype ]\n"
+"           [ TABLESPACE [=] tablespace ]\n"
+"           [ CONNECTION LIMIT [=] connlimit ] ]"
+
+#: sql_help.h:193
+msgid "define a new domain"
+msgstr "새 도메인 만들기"
+
+#: sql_help.h:194
+msgid ""
+"CREATE DOMAIN name [ AS ] data_type\n"
+"    [ DEFAULT expression ]\n"
+"    [ constraint [ ... ] ]\n"
+"\n"
+"where constraint is:\n"
+"\n"
+"[ CONSTRAINT constraint_name ]\n"
+"{ NOT NULL | NULL | CHECK (expression) }"
+msgstr ""
+"CREATE DOMAIN name [ AS ] data_type\n"
+"    [ DEFAULT expression ]\n"
+"    [ constraint [ ... ] ]\n"
+"\n"
+"where constraint is:\n"
+"\n"
+"[ CONSTRAINT constraint_name ]\n"
+"{ NOT NULL | NULL | CHECK (expression) }"
+
+#: sql_help.h:197
+msgid "define a new foreign-data wrapper"
+msgstr "새 외부 데이터 래퍼 정의"
+
+#: sql_help.h:198
+msgid ""
+"CREATE FOREIGN DATA WRAPPER name\n"
+"    [ VALIDATOR valfunction | NO VALIDATOR ]\n"
+"    [ OPTIONS ( option 'value' [, ... ] ) ]"
+msgstr ""
+"CREATE FOREIGN DATA WRAPPER name\n"
+"    [ VALIDATOR valfunction | NO VALIDATOR ]\n"
+"    [ OPTIONS ( option &apos;value&apos; [, ... ] ) ]"
+
+#: sql_help.h:201
+msgid "define a new function"
+msgstr "새 함수 만들기"
+
+#: sql_help.h:202
+msgid ""
+"CREATE [ OR REPLACE ] FUNCTION\n"
+"    name ( [ [ argmode ] [ argname ] argtype [ { DEFAULT | = } defexpr ] "
+"[, ...] ] )\n"
+"    [ RETURNS rettype\n"
+"      | RETURNS TABLE ( colname coltype [, ...] ) ]\n"
+"  { LANGUAGE langname\n"
+"    | WINDOW\n"
+"    | IMMUTABLE | STABLE | VOLATILE\n"
+"    | CALLED ON NULL INPUT | RETURNS NULL ON NULL INPUT | STRICT\n"
+"    | [ EXTERNAL ] SECURITY INVOKER | [ EXTERNAL ] SECURITY DEFINER\n"
+"    | COST execution_cost\n"
+"    | ROWS result_rows\n"
+"    | SET configuration_parameter { TO value | = value | FROM CURRENT }\n"
+"    | AS 'definition'\n"
+"    | AS 'obj_file', 'link_symbol'\n"
+"  } ...\n"
+"    [ WITH ( attribute [, ...] ) ]"
+msgstr ""
+"CREATE [ OR REPLACE ] FUNCTION\n"
+"    name ( [ [ argmode ] [ argname ] argtype [ { DEFAULT | = } defexpr ] "
+"[, ...] ] )\n"
+"    [ RETURNS rettype\n"
+"      | RETURNS TABLE ( colname coltype [, ...] ) ]\n"
+"  { LANGUAGE langname\n"
+"    | WINDOW\n"
+"    | IMMUTABLE | STABLE | VOLATILE\n"
+"    | CALLED ON NULL INPUT | RETURNS NULL ON NULL INPUT | STRICT\n"
+"    | [ EXTERNAL ] SECURITY INVOKER | [ EXTERNAL ] SECURITY DEFINER\n"
+"    | COST execution_cost\n"
+"    | ROWS result_rows\n"
+"    | SET configuration_parameter { TO value | = value | FROM CURRENT }\n"
+"    | AS &apos;definition&apos;\n"
+"    | AS &apos;obj_file&apos;, &apos;link_symbol&apos;\n"
+"  } ...\n"
+"    [ WITH ( attribute [, ...] ) ]"
+
+#: sql_help.h:205 sql_help.h:229 sql_help.h:285
+msgid "define a new database role"
+msgstr "새 데이터베이스 롤 만들기"
+
+#: sql_help.h:206
+msgid ""
+"CREATE GROUP name [ [ WITH ] option [ ... ] ]\n"
+"\n"
+"where option can be:\n"
+"    \n"
+"      SUPERUSER | NOSUPERUSER\n"
+"    | CREATEDB | NOCREATEDB\n"
+"    | CREATEROLE | NOCREATEROLE\n"
+"    | CREATEUSER | NOCREATEUSER\n"
+"    | INHERIT | NOINHERIT\n"
+"    | LOGIN | NOLOGIN\n"
+"    | [ ENCRYPTED | UNENCRYPTED ] PASSWORD 'password'\n"
+"    | VALID UNTIL 'timestamp' \n"
+"    | IN ROLE rolename [, ...]\n"
+"    | IN GROUP rolename [, ...]\n"
+"    | ROLE rolename [, ...]\n"
+"    | ADMIN rolename [, ...]\n"
+"    | USER rolename [, ...]\n"
+"    | SYSID uid"
+msgstr ""
+"CREATE GROUP name [ [ WITH ] option [ ... ] ]\n"
+"\n"
+"where option can be:\n"
+"    \n"
+"      SUPERUSER | NOSUPERUSER\n"
+"    | CREATEDB | NOCREATEDB\n"
+"    | CREATEROLE | NOCREATEROLE\n"
+"    | CREATEUSER | NOCREATEUSER\n"
+"    | INHERIT | NOINHERIT\n"
+"    | LOGIN | NOLOGIN\n"
+"    | [ ENCRYPTED | UNENCRYPTED ] PASSWORD 'password'\n"
+"    | VALID UNTIL 'timestamp' \n"
+"    | IN ROLE rolename [, ...]\n"
+"    | IN GROUP rolename [, ...]\n"
+"    | ROLE rolename [, ...]\n"
+"    | ADMIN rolename [, ...]\n"
+"    | USER rolename [, ...]\n"
+"    | SYSID uid"
+
+#: sql_help.h:209
+msgid "define a new index"
+msgstr "새 인덱스 만들기"
+
+#: sql_help.h:210
+msgid ""
+"CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] name ON table [ USING method ]\n"
+"    ( { column | ( expression ) } [ opclass ] [ ASC | DESC ] [ NULLS { FIRST "
+"| LAST } ] [, ...] )\n"
+"    [ WITH ( storage_parameter = value [, ... ] ) ]\n"
+"    [ TABLESPACE tablespace ]\n"
+"    [ WHERE predicate ]"
+msgstr ""
+"CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] name ON table [ USING method ]\n"
+"    ( { column | ( expression ) } [ opclass ] [ ASC | DESC ] [ NULLS { FIRST "
+"| LAST } ] [, ...] )\n"
+"    [ WITH ( storage_parameter = value [, ... ] ) ]\n"
+"    [ TABLESPACE tablespace ]\n"
+"    [ WHERE predicate ]"
+
+#: sql_help.h:213
+msgid "define a new procedural language"
+msgstr "새 프로시주얼 언어 만들기"
+
+#: sql_help.h:214
+msgid ""
+"CREATE [ PROCEDURAL ] LANGUAGE name\n"
+"CREATE [ TRUSTED ] [ PROCEDURAL ] LANGUAGE name\n"
+"    HANDLER call_handler [ VALIDATOR valfunction ]"
+msgstr ""
+"CREATE [ PROCEDURAL ] LANGUAGE name\n"
+"CREATE [ TRUSTED ] [ PROCEDURAL ] LANGUAGE name\n"
+"    HANDLER call_handler [ VALIDATOR valfunction ]"
+
+#: sql_help.h:217
+msgid "define a new operator"
+msgstr "새 연산자 만들기"
+
+#: sql_help.h:218
+msgid ""
+"CREATE OPERATOR name (\n"
+"    PROCEDURE = funcname\n"
+"    [, LEFTARG = lefttype ] [, RIGHTARG = righttype ]\n"
+"    [, COMMUTATOR = com_op ] [, NEGATOR = neg_op ]\n"
+"    [, RESTRICT = res_proc ] [, JOIN = join_proc ]\n"
+"    [, HASHES ] [, MERGES ]\n"
+")"
+msgstr ""
+"CREATE OPERATOR name (\n"
+"    PROCEDURE = funcname\n"
+"    [, LEFTARG = lefttype ] [, RIGHTARG = righttype ]\n"
+"    [, COMMUTATOR = com_op ] [, NEGATOR = neg_op ]\n"
+"    [, RESTRICT = res_proc ] [, JOIN = join_proc ]\n"
+"    [, HASHES ] [, MERGES ]\n"
+")"
+
+#: sql_help.h:221
+msgid "define a new operator class"
+msgstr "새 연잔자 클래스 만들기"
+
+#: sql_help.h:222
+msgid ""
+"CREATE OPERATOR CLASS name [ DEFAULT ] FOR TYPE data_type\n"
+"  USING index_method [ FAMILY family_name ] AS\n"
+"  {  OPERATOR strategy_number operator_name [ ( op_type, op_type ) ]\n"
+"   | FUNCTION support_number [ ( op_type [ , op_type ] ) ] funcname "
+"( argument_type [, ...] )\n"
+"   | STORAGE storage_type\n"
+"  } [, ... ]"
+msgstr ""
+"CREATE OPERATOR CLASS name [ DEFAULT ] FOR TYPE data_type\n"
+"  USING index_method [ FAMILY family_name ] AS\n"
+"  {  OPERATOR strategy_number operator_name [ ( op_type, op_type ) ]\n"
+"   | FUNCTION support_number [ ( op_type [ , op_type ] ) ] funcname "
+"( argument_type [, ...] )\n"
+"   | STORAGE storage_type\n"
+"  } [, ... ]"
+
+#: sql_help.h:225
+msgid "define a new operator family"
+msgstr "새 연산자 부류 만들기"
+
+#: sql_help.h:226
+msgid "CREATE OPERATOR FAMILY name USING index_method"
+msgstr "CREATE OPERATOR FAMILY name USING index_method"
+
+#: sql_help.h:230
+msgid ""
+"CREATE ROLE name [ [ WITH ] option [ ... ] ]\n"
+"\n"
+"where option can be:\n"
+"    \n"
+"      SUPERUSER | NOSUPERUSER\n"
+"    | CREATEDB | NOCREATEDB\n"
+"    | CREATEROLE | NOCREATEROLE\n"
+"    | CREATEUSER | NOCREATEUSER\n"
+"    | INHERIT | NOINHERIT\n"
+"    | LOGIN | NOLOGIN\n"
+"    | CONNECTION LIMIT connlimit\n"
+"    | [ ENCRYPTED | UNENCRYPTED ] PASSWORD 'password'\n"
+"    | VALID UNTIL 'timestamp' \n"
+"    | IN ROLE rolename [, ...]\n"
+"    | IN GROUP rolename [, ...]\n"
+"    | ROLE rolename [, ...]\n"
+"    | ADMIN rolename [, ...]\n"
+"    | USER rolename [, ...]\n"
+"    | SYSID uid"
+msgstr ""
+"CREATE ROLE name [ [ WITH ] option [ ... ] ]\n"
+"\n"
+"where option can be:\n"
+"    \n"
+"      SUPERUSER | NOSUPERUSER\n"
+"    | CREATEDB | NOCREATEDB\n"
+"    | CREATEROLE | NOCREATEROLE\n"
+"    | CREATEUSER | NOCREATEUSER\n"
+"    | INHERIT | NOINHERIT\n"
+"    | LOGIN | NOLOGIN\n"
+"    | CONNECTION LIMIT connlimit\n"
+"    | [ ENCRYPTED | UNENCRYPTED ] PASSWORD 'password'\n"
+"    | VALID UNTIL 'timestamp' \n"
+"    | IN ROLE rolename [, ...]\n"
+"    | IN GROUP rolename [, ...]\n"
+"    | ROLE rolename [, ...]\n"
+"    | ADMIN rolename [, ...]\n"
+"    | USER rolename [, ...]\n"
+"    | SYSID uid"
+
+#: sql_help.h:233
+msgid "define a new rewrite rule"
+msgstr "새 룰(rule) 만들기"
+
+#: sql_help.h:234
+msgid ""
+"CREATE [ OR REPLACE ] RULE name AS ON event\n"
+"    TO table [ WHERE condition ]\n"
+"    DO [ ALSO | INSTEAD ] { NOTHING | command | ( command ; command ... ) }"
+msgstr ""
+"CREATE [ OR REPLACE ] RULE name AS ON event\n"
+"    TO table [ WHERE condition ]\n"
+"    DO [ ALSO | INSTEAD ] { NOTHING | command | ( command ; command ... ) }"
+
+#: sql_help.h:237
+msgid "define a new schema"
+msgstr "새 스키마(schema) 만들기"
+
+#: sql_help.h:238
+msgid ""
+"CREATE SCHEMA schemaname [ AUTHORIZATION username ] [ schema_element "
+"[ ... ] ]\n"
+"CREATE SCHEMA AUTHORIZATION username [ schema_element [ ... ] ]"
+msgstr ""
+"CREATE SCHEMA schemaname [ AUTHORIZATION username ] [ schema_element "
+"[ ... ] ]\n"
+"CREATE SCHEMA AUTHORIZATION username [ schema_element [ ... ] ]"
+
+#: sql_help.h:241
+msgid "define a new sequence generator"
+msgstr "새 시퀀스 만들기"
+
+#: sql_help.h:242
+msgid ""
+"CREATE [ TEMPORARY | TEMP ] SEQUENCE name [ INCREMENT [ BY ] increment ]\n"
+"    [ MINVALUE minvalue | NO MINVALUE ] [ MAXVALUE maxvalue | NO MAXVALUE ]\n"
+"    [ START [ WITH ] start ] [ CACHE cache ] [ [ NO ] CYCLE ]\n"
+"    [ OWNED BY { table.column | NONE } ]"
+msgstr ""
+"CREATE [ TEMPORARY | TEMP ] SEQUENCE name [ INCREMENT [ BY ] increment ]\n"
+"    [ MINVALUE minvalue | NO MINVALUE ] [ MAXVALUE maxvalue | NO MAXVALUE ]\n"
+"    [ START [ WITH ] start ] [ CACHE cache ] [ [ NO ] CYCLE ]\n"
+"    [ OWNED BY { table.column | NONE } ]"
+
+#: sql_help.h:245
+msgid "define a new foreign server"
+msgstr "새 외부 서버 정의"
+
+#: sql_help.h:246
+msgid ""
+"CREATE SERVER servername [ TYPE 'servertype' ] [ VERSION 'serverversion' ]\n"
+"    FOREIGN DATA WRAPPER fdwname\n"
+"    [ OPTIONS ( option 'value' [, ... ] ) ]"
+msgstr ""
+"CREATE SERVER servername [ TYPE &apos;servertype&apos; ] [ VERSION &apos;"
+"serverversion&apos; ]\n"
+"    FOREIGN DATA WRAPPER fdwname\n"
+"    [ OPTIONS ( option &apos;value&apos; [, ... ] ) ]"
+
+#: sql_help.h:249
+msgid "define a new table"
+msgstr "새 테이블 만들기"
+
+#: sql_help.h:250
+msgid ""
+"CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE table_name ( [\n"
+"  { column_name data_type [ DEFAULT default_expr ] [ column_constraint "
+"[ ... ] ]\n"
+"    | table_constraint\n"
+"    | LIKE parent_table [ { INCLUDING | EXCLUDING } { DEFAULTS | CONSTRAINTS "
+"| INDEXES } ] ... }\n"
+"    [, ... ]\n"
+"] )\n"
+"[ INHERITS ( parent_table [, ... ] ) ]\n"
+"[ WITH ( storage_parameter [= value] [, ... ] ) | WITH OIDS | WITHOUT "
+"OIDS ]\n"
+"[ ON COMMIT { PRESERVE ROWS | DELETE ROWS | DROP } ]\n"
+"[ TABLESPACE tablespace ]\n"
+"\n"
+"where column_constraint is:\n"
+"\n"
+"[ CONSTRAINT constraint_name ]\n"
+"{ NOT NULL | \n"
+"  NULL | \n"
+"  UNIQUE index_parameters |\n"
+"  PRIMARY KEY index_parameters |\n"
+"  CHECK ( expression ) |\n"
+"  REFERENCES reftable [ ( refcolumn ) ] [ MATCH FULL | MATCH PARTIAL | MATCH "
+"SIMPLE ]\n"
+"    [ ON DELETE action ] [ ON UPDATE action ] }\n"
+"[ DEFERRABLE | NOT DEFERRABLE ] [ INITIALLY DEFERRED | INITIALLY "
+"IMMEDIATE ]\n"
+"\n"
+"and table_constraint is:\n"
+"\n"
+"[ CONSTRAINT constraint_name ]\n"
+"{ UNIQUE ( column_name [, ... ] ) index_parameters |\n"
+"  PRIMARY KEY ( column_name [, ... ] ) index_parameters |\n"
+"  CHECK ( expression ) |\n"
+"  FOREIGN KEY ( column_name [, ... ] ) REFERENCES reftable [ ( refcolumn "
+"[, ... ] ) ]\n"
+"    [ MATCH FULL | MATCH PARTIAL | MATCH SIMPLE ] [ ON DELETE action ] [ ON "
+"UPDATE action ] }\n"
+"[ DEFERRABLE | NOT DEFERRABLE ] [ INITIALLY DEFERRED | INITIALLY "
+"IMMEDIATE ]\n"
+"\n"
+"index_parameters in UNIQUE and PRIMARY KEY constraints are:\n"
+"\n"
+"[ WITH ( storage_parameter [= value] [, ... ] ) ]\n"
+"[ USING INDEX TABLESPACE tablespace ]"
+msgstr ""
+"CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE table_name ( [\n"
+"  { column_name data_type [ DEFAULT default_expr ] [ column_constraint "
+"[ ... ] ]\n"
+"    | table_constraint\n"
+"    | LIKE parent_table [ { INCLUDING | EXCLUDING } { DEFAULTS | CONSTRAINTS "
+"| INDEXES } ] ... }\n"
+"    [, ... ]\n"
+"] )\n"
+"[ INHERITS ( parent_table [, ... ] ) ]\n"
+"[ WITH ( storage_parameter [= value] [, ... ] ) | WITH OIDS | WITHOUT "
+"OIDS ]\n"
+"[ ON COMMIT { PRESERVE ROWS | DELETE ROWS | DROP } ]\n"
+"[ TABLESPACE tablespace ]\n"
+"\n"
+"where column_constraint is:\n"
+"\n"
+"[ CONSTRAINT constraint_name ]\n"
+"{ NOT NULL | \n"
+"  NULL | \n"
+"  UNIQUE index_parameters |\n"
+"  PRIMARY KEY index_parameters |\n"
+"  CHECK ( expression ) |\n"
+"  REFERENCES reftable [ ( refcolumn ) ] [ MATCH FULL | MATCH PARTIAL | MATCH "
+"SIMPLE ]\n"
+"    [ ON DELETE action ] [ ON UPDATE action ] }\n"
+"[ DEFERRABLE | NOT DEFERRABLE ] [ INITIALLY DEFERRED | INITIALLY "
+"IMMEDIATE ]\n"
+"\n"
+"and table_constraint is:\n"
+"\n"
+"[ CONSTRAINT constraint_name ]\n"
+"{ UNIQUE ( column_name [, ... ] ) index_parameters |\n"
+"  PRIMARY KEY ( column_name [, ... ] ) index_parameters |\n"
+"  CHECK ( expression ) |\n"
+"  FOREIGN KEY ( column_name [, ... ] ) REFERENCES reftable [ ( refcolumn "
+"[, ... ] ) ]\n"
+"    [ MATCH FULL | MATCH PARTIAL | MATCH SIMPLE ] [ ON DELETE action ] [ ON "
+"UPDATE action ] }\n"
+"[ DEFERRABLE | NOT DEFERRABLE ] [ INITIALLY DEFERRED | INITIALLY "
+"IMMEDIATE ]\n"
+"\n"
+"index_parameters in UNIQUE and PRIMARY KEY constraints are:\n"
+"\n"
+"[ WITH ( storage_parameter [= value] [, ... ] ) ]\n"
+"[ USING INDEX TABLESPACE tablespace ]"
+
+#: sql_help.h:253 sql_help.h:525
+msgid "define a new table from the results of a query"
+msgstr "쿼리 결과를 새 테이블로 만들기"
+
+#: sql_help.h:254
+msgid ""
+"CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE table_name\n"
+"    [ (column_name [, ...] ) ]\n"
+"    [ WITH ( storage_parameter [= value] [, ... ] ) | WITH OIDS | WITHOUT "
+"OIDS ]\n"
+"    [ ON COMMIT { PRESERVE ROWS | DELETE ROWS | DROP } ]\n"
+"    [ TABLESPACE tablespace ]\n"
+"    AS query\n"
+"    [ WITH [ NO ] DATA ]"
+msgstr ""
+"CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE table_name\n"
+"    [ (column_name [, ...] ) ]\n"
+"    [ WITH ( storage_parameter [= value] [, ... ] ) | WITH OIDS | WITHOUT "
+"OIDS ]\n"
+"    [ ON COMMIT { PRESERVE ROWS | DELETE ROWS | DROP } ]\n"
+"    [ TABLESPACE tablespace ]\n"
+"    AS query\n"
+"    [ WITH [ NO ] DATA ]"
+
+#: sql_help.h:257
+msgid "define a new tablespace"
+msgstr "새 테이블스페이스 만들기"
+
+#: sql_help.h:258
+msgid ""
+"CREATE TABLESPACE tablespacename [ OWNER username ] LOCATION 'directory'"
+msgstr ""
+"CREATE TABLESPACE tablespacename [ OWNER username ] LOCATION 'directory'"
+
+#: sql_help.h:261
+msgid "define a new text search configuration"
+msgstr "새 텍스트 검색 구성 정의"
+
+#: sql_help.h:262
+msgid ""
+"CREATE TEXT SEARCH CONFIGURATION name (\n"
+"    PARSER = parser_name |\n"
+"    COPY = source_config\n"
+")"
+msgstr ""
+"CREATE TEXT SEARCH CONFIGURATION name (\n"
+"    PARSER = parser_name |\n"
+"    COPY = source_config\n"
+")"
+
+#: sql_help.h:265
+msgid "define a new text search dictionary"
+msgstr "새 텍스트 검색 사전 정의"
+
+#: sql_help.h:266
+msgid ""
+"CREATE TEXT SEARCH DICTIONARY name (\n"
+"    TEMPLATE = template\n"
+"    [, option = value [, ... ]]\n"
+")"
+msgstr ""
+"CREATE TEXT SEARCH DICTIONARY name (\n"
+"    TEMPLATE = template\n"
+"    [, option = value [, ... ]]\n"
+")"
+
+#: sql_help.h:269
+msgid "define a new text search parser"
+msgstr "새 텍스트 검색 파서 정의"
+
+#: sql_help.h:270
+msgid ""
+"CREATE TEXT SEARCH PARSER name (\n"
+"    START = start_function ,\n"
+"    GETTOKEN = gettoken_function ,\n"
+"    END = end_function ,\n"
+"    LEXTYPES = lextypes_function\n"
+"    [, HEADLINE = headline_function ]\n"
+")"
+msgstr ""
+"CREATE TEXT SEARCH PARSER name (\n"
+"    START = start_function ,\n"
+"    GETTOKEN = gettoken_function ,\n"
+"    END = end_function ,\n"
+"    LEXTYPES = lextypes_function\n"
+"    [, HEADLINE = headline_function ]\n"
+")"
+
+#: sql_help.h:273
+msgid "define a new text search template"
+msgstr "새 텍스트 검색 템플릿 정의"
+
+#: sql_help.h:274
+msgid ""
+"CREATE TEXT SEARCH TEMPLATE name (\n"
+"    [ INIT = init_function , ]\n"
+"    LEXIZE = lexize_function\n"
+")"
+msgstr ""
+"CREATE TEXT SEARCH TEMPLATE name (\n"
+"    [ INIT = init_function , ]\n"
+"    LEXIZE = lexize_function\n"
+")"
+
+#: sql_help.h:277
+msgid "define a new trigger"
+msgstr "새 트리거 만들기"
+
+#: sql_help.h:278
+msgid ""
+"CREATE TRIGGER name { BEFORE | AFTER } { event [ OR ... ] }\n"
+"    ON table [ FOR [ EACH ] { ROW | STATEMENT } ]\n"
+"    EXECUTE PROCEDURE funcname ( arguments )"
+msgstr ""
+"CREATE TRIGGER name { BEFORE | AFTER } { event [ OR ... ] }\n"
+"    ON table [ FOR [ EACH ] { ROW | STATEMENT } ]\n"
+"    EXECUTE PROCEDURE funcname ( arguments )"
+
+#: sql_help.h:281
+msgid "define a new data type"
+msgstr "새 자료형 만들기"
+
+#: sql_help.h:282
+msgid ""
+"CREATE TYPE name AS\n"
+"    ( attribute_name data_type [, ... ] )\n"
+"\n"
+"CREATE TYPE name AS ENUM\n"
+"    ( 'label' [, ... ] )\n"
+"\n"
+"CREATE TYPE name (\n"
+"    INPUT = input_function,\n"
+"    OUTPUT = output_function\n"
+"    [ , RECEIVE = receive_function ]\n"
+"    [ , SEND = send_function ]\n"
+"    [ , TYPMOD_IN = type_modifier_input_function ]\n"
+"    [ , TYPMOD_OUT = type_modifier_output_function ]\n"
+"    [ , ANALYZE = analyze_function ]\n"
+"    [ , INTERNALLENGTH = { internallength | VARIABLE } ]\n"
+"    [ , PASSEDBYVALUE ]\n"
+"    [ , ALIGNMENT = alignment ]\n"
+"    [ , STORAGE = storage ]\n"
+"    [ , LIKE = like_type ]\n"
+"    [ , CATEGORY = category ]\n"
+"    [ , PREFERRED = preferred ]\n"
+"    [ , DEFAULT = default ]\n"
+"    [ , ELEMENT = element ]\n"
+"    [ , DELIMITER = delimiter ]\n"
+")\n"
+"\n"
+"CREATE TYPE name"
+msgstr ""
+"CREATE TYPE name AS\n"
+"    ( attribute_name data_type [, ... ] )\n"
+"\n"
+"CREATE TYPE name AS ENUM\n"
+"    ( &apos;label&apos; [, ... ] )\n"
+"\n"
+"CREATE TYPE name (\n"
+"    INPUT = input_function,\n"
+"    OUTPUT = output_function\n"
+"    [ , RECEIVE = receive_function ]\n"
+"    [ , SEND = send_function ]\n"
+"    [ , TYPMOD_IN = type_modifier_input_function ]\n"
+"    [ , TYPMOD_OUT = type_modifier_output_function ]\n"
+"    [ , ANALYZE = analyze_function ]\n"
+"    [ , INTERNALLENGTH = { internallength | VARIABLE } ]\n"
+"    [ , PASSEDBYVALUE ]\n"
+"    [ , ALIGNMENT = alignment ]\n"
+"    [ , STORAGE = storage ]\n"
+"    [ , LIKE = like_type ]\n"
+"    [ , CATEGORY = category ]\n"
+"    [ , PREFERRED = preferred ]\n"
+"    [ , DEFAULT = default ]\n"
+"    [ , ELEMENT = element ]\n"
+"    [ , DELIMITER = delimiter ]\n"
+")\n"
+"\n"
+"CREATE TYPE name"
+
+#: sql_help.h:286
+msgid ""
+"CREATE USER name [ [ WITH ] option [ ... ] ]\n"
+"\n"
+"where option can be:\n"
+"    \n"
+"      SUPERUSER | NOSUPERUSER\n"
+"    | CREATEDB | NOCREATEDB\n"
+"    | CREATEROLE | NOCREATEROLE\n"
+"    | CREATEUSER | NOCREATEUSER\n"
+"    | INHERIT | NOINHERIT\n"
+"    | LOGIN | NOLOGIN\n"
+"    | CONNECTION LIMIT connlimit\n"
+"    | [ ENCRYPTED | UNENCRYPTED ] PASSWORD 'password'\n"
+"    | VALID UNTIL 'timestamp' \n"
+"    | IN ROLE rolename [, ...]\n"
+"    | IN GROUP rolename [, ...]\n"
+"    | ROLE rolename [, ...]\n"
+"    | ADMIN rolename [, ...]\n"
+"    | USER rolename [, ...]\n"
+"    | SYSID uid"
+msgstr ""
+"CREATE USER name [ [ WITH ] option [ ... ] ]\n"
+"\n"
+"where option can be:\n"
+"    \n"
+"      SUPERUSER | NOSUPERUSER\n"
+"    | CREATEDB | NOCREATEDB\n"
+"    | CREATEROLE | NOCREATEROLE\n"
+"    | CREATEUSER | NOCREATEUSER\n"
+"    | INHERIT | NOINHERIT\n"
+"    | LOGIN | NOLOGIN\n"
+"    | CONNECTION LIMIT connlimit\n"
+"    | [ ENCRYPTED | UNENCRYPTED ] PASSWORD 'password'\n"
+"    | VALID UNTIL 'timestamp' \n"
+"    | IN ROLE rolename [, ...]\n"
+"    | IN GROUP rolename [, ...]\n"
+"    | ROLE rolename [, ...]\n"
+"    | ADMIN rolename [, ...]\n"
+"    | USER rolename [, ...]\n"
+"    | SYSID uid"
+
+#: sql_help.h:289
+msgid "define a new mapping of a user to a foreign server"
+msgstr "사용자와 외부 서버 간의 새 매핑 정의"
+
+#: sql_help.h:290
+msgid ""
+"CREATE USER MAPPING FOR { username | USER | CURRENT_USER | PUBLIC }\n"
+"    SERVER servername\n"
+"    [ OPTIONS ( option 'value' [ , ... ] ) ]"
+msgstr ""
+"CREATE USER MAPPING FOR { username | USER | CURRENT_USER | PUBLIC }\n"
+"    SERVER servername\n"
+"    [ OPTIONS ( option &apos;value&apos; [ , ... ] ) ]"
+
+#: sql_help.h:293
+msgid "define a new view"
+msgstr "새 view 만들기"
+
+#: sql_help.h:294
+msgid ""
+"CREATE [ OR REPLACE ] [ TEMP | TEMPORARY ] VIEW name [ ( column_name "
+"[, ...] ) ]\n"
+"    AS query"
+msgstr ""
+"CREATE [ OR REPLACE ] [ TEMP | TEMPORARY ] VIEW name [ ( column_name "
+"[, ...] ) ]\n"
+"    AS query"
+
+#: sql_help.h:297
+msgid "deallocate a prepared statement"
+msgstr "준비된 구문(prepared statement) 정의"
+
+#: sql_help.h:298
+msgid "DEALLOCATE [ PREPARE ] { name | ALL }"
+msgstr "DEALLOCATE [ PREPARE ] { name | ALL }"
+
+#: sql_help.h:301
+msgid "define a cursor"
+msgstr "커서 지정"
+
+#: sql_help.h:302
+msgid ""
+"DECLARE name [ BINARY ] [ INSENSITIVE ] [ [ NO ] SCROLL ]\n"
+"    CURSOR [ { WITH | WITHOUT } HOLD ] FOR query"
+msgstr ""
+"DECLARE name [ BINARY ] [ INSENSITIVE ] [ [ NO ] SCROLL ]\n"
+"    CURSOR [ { WITH | WITHOUT } HOLD ] FOR query"
+
+#: sql_help.h:305
+msgid "delete rows of a table"
+msgstr "테이블의 자료 삭제"
+
+#: sql_help.h:306
+msgid ""
+"DELETE FROM [ ONLY ] table [ [ AS ] alias ]\n"
+"    [ USING usinglist ]\n"
+"    [ WHERE condition | WHERE CURRENT OF cursor_name ]\n"
+"    [ RETURNING * | output_expression [ [ AS ] output_name ] [, ...] ]"
+msgstr ""
+"DELETE FROM [ ONLY ] table [ [ AS ] alias ]\n"
+"    [ USING usinglist ]\n"
+"    [ WHERE condition | WHERE CURRENT OF cursor_name ]\n"
+"    [ RETURNING * | output_expression [ [ AS ] output_name ] [, ...] ]"
+
+#: sql_help.h:309
+msgid "discard session state"
+msgstr "세션 상태 삭제"
+
+#: sql_help.h:310
+msgid "DISCARD { ALL | PLANS | TEMPORARY | TEMP }"
+msgstr "DISCARD { ALL | PLANS | TEMPORARY | TEMP }"
+
+#: sql_help.h:313
+msgid "remove an aggregate function"
+msgstr "집계 함수 삭제"
+
+#: sql_help.h:314
+msgid ""
+"DROP AGGREGATE [ IF EXISTS ] name ( type [ , ... ] ) [ CASCADE | RESTRICT ]"
+msgstr ""
+"DROP AGGREGATE [ IF EXISTS ] name ( type [ , ... ] ) [ CASCADE | RESTRICT ]"
+
+#: sql_help.h:317
+msgid "remove a cast"
+msgstr "형변환자 삭제"
+
+#: sql_help.h:318
+msgid ""
+"DROP CAST [ IF EXISTS ] (sourcetype AS targettype) [ CASCADE | RESTRICT ]"
+msgstr ""
+"DROP CAST [ IF EXISTS ] (sourcetype AS targettype) [ CASCADE | RESTRICT ]"
+
+#: sql_help.h:321
+msgid "remove a conversion"
+msgstr "문자코드 변환규칙(conversion) 삭제"
+
+#: sql_help.h:322
+msgid "DROP CONVERSION [ IF EXISTS ] name [ CASCADE | RESTRICT ]"
+msgstr "DROP CONVERSION [ IF EXISTS ] name [ CASCADE | RESTRICT ]"
+
+#: sql_help.h:325
+msgid "remove a database"
+msgstr "데이터베이스 삭제"
+
+#: sql_help.h:326
+msgid "DROP DATABASE [ IF EXISTS ] name"
+msgstr "DROP DATABASE [ IF EXISTS ] name"
+
+#: sql_help.h:329
+msgid "remove a domain"
+msgstr "도메인 삭제"
+
+#: sql_help.h:330
+msgid "DROP DOMAIN [ IF EXISTS ] name [, ...] [ CASCADE | RESTRICT ]"
+msgstr "DROP DOMAIN [ IF EXISTS ] name [, ...] [ CASCADE | RESTRICT ]"
+
+#: sql_help.h:333
+msgid "remove a foreign-data wrapper"
+msgstr "외부 데이터 래퍼 제거"
+
+#: sql_help.h:334
+msgid "DROP FOREIGN DATA WRAPPER [ IF EXISTS ] name [ CASCADE | RESTRICT ]"
+msgstr "DROP FOREIGN DATA WRAPPER [ IF EXISTS ] name [ CASCADE | RESTRICT ]"
+
+#: sql_help.h:337
+msgid "remove a function"
+msgstr "함수 삭제"
+
+#: sql_help.h:338
+msgid ""
+"DROP FUNCTION [ IF EXISTS ] name ( [ [ argmode ] [ argname ] argtype "
+"[, ...] ] )\n"
+"    [ CASCADE | RESTRICT ]"
+msgstr ""
+"DROP FUNCTION [ IF EXISTS ] name ( [ [ argmode ] [ argname ] argtype "
+"[, ...] ] )\n"
+"    [ CASCADE | RESTRICT ]"
+
+#: sql_help.h:341 sql_help.h:369 sql_help.h:421
+msgid "remove a database role"
+msgstr "데이터베이스 롤 삭제"
+
+#: sql_help.h:342
+msgid "DROP GROUP [ IF EXISTS ] name [, ...]"
+msgstr "DROP GROUP [ IF EXISTS ] name [, ...]"
+
+#: sql_help.h:345
+msgid "remove an index"
+msgstr "인덱스 삭제"
+
+#: sql_help.h:346
+msgid "DROP INDEX [ IF EXISTS ] name [, ...] [ CASCADE | RESTRICT ]"
+msgstr "DROP INDEX [ IF EXISTS ] name [, ...] [ CASCADE | RESTRICT ]"
+
+#: sql_help.h:349
+msgid "remove a procedural language"
+msgstr "프로시주얼 언어 삭제"
+
+#: sql_help.h:350
+msgid "DROP [ PROCEDURAL ] LANGUAGE [ IF EXISTS ] name [ CASCADE | RESTRICT ]"
+msgstr "DROP [ PROCEDURAL ] LANGUAGE [ IF EXISTS ] name [ CASCADE | RESTRICT ]"
+
+#: sql_help.h:353
+msgid "remove an operator"
+msgstr "연산자 삭제"
+
+#: sql_help.h:354
+msgid ""
+"DROP OPERATOR [ IF EXISTS ] name ( { lefttype | NONE } , { righttype | "
+"NONE } ) [ CASCADE | RESTRICT ]"
+msgstr ""
+"DROP OPERATOR [ IF EXISTS ] name ( { lefttype | NONE } , { righttype | "
+"NONE } ) [ CASCADE | RESTRICT ]"
+
+#: sql_help.h:357
+msgid "remove an operator class"
+msgstr "연산자 클래스 삭제"
+
+#: sql_help.h:358
+msgid ""
+"DROP OPERATOR CLASS [ IF EXISTS ] name USING index_method [ CASCADE | "
+"RESTRICT ]"
+msgstr ""
+"DROP OPERATOR CLASS [ IF EXISTS ] name USING index_method [ CASCADE | "
+"RESTRICT ]"
+
+#: sql_help.h:361
+msgid "remove an operator family"
+msgstr "연산자 부류 삭제"
+
+#: sql_help.h:362
+msgid ""
+"DROP OPERATOR FAMILY [ IF EXISTS ] name USING index_method [ CASCADE | "
+"RESTRICT ]"
+msgstr ""
+"DROP OPERATOR FAMILY [ IF EXISTS ] name USING index_method [ CASCADE | "
+"RESTRICT ]"
+
+#: sql_help.h:365
+msgid "remove database objects owned by a database role"
+msgstr "데이터베이스 롤로 권한이 부여된 데이터베이스 개체들을 삭제하세요"
+
+#: sql_help.h:366
+msgid "DROP OWNED BY name [, ...] [ CASCADE | RESTRICT ]"
+msgstr "DROP OWNED BY name [, ...] [ CASCADE | RESTRICT ]"
+
+#: sql_help.h:370
+msgid "DROP ROLE [ IF EXISTS ] name [, ...]"
+msgstr "DROP ROLE [ IF EXISTS ] name [, ...]"
+
+#: sql_help.h:373
+msgid "remove a rewrite rule"
+msgstr "룰(rule) 삭제"
+
+#: sql_help.h:374
+msgid "DROP RULE [ IF EXISTS ] name ON relation [ CASCADE | RESTRICT ]"
+msgstr "DROP RULE [ IF EXISTS ] name ON relation [ CASCADE | RESTRICT ]"
+
+#: sql_help.h:377
+msgid "remove a schema"
+msgstr "스키마(schema) 삭제"
+
+#: sql_help.h:378
+msgid "DROP SCHEMA [ IF EXISTS ] name [, ...] [ CASCADE | RESTRICT ]"
+msgstr "DROP SCHEMA [ IF EXISTS ] name [, ...] [ CASCADE | RESTRICT ]"
+
+#: sql_help.h:381
+msgid "remove a sequence"
+msgstr "시퀀스 삭제"
+
+#: sql_help.h:382
+msgid "DROP SEQUENCE [ IF EXISTS ] name [, ...] [ CASCADE | RESTRICT ]"
+msgstr "DROP SEQUENCE [ IF EXISTS ] name [, ...] [ CASCADE | RESTRICT ]"
+
+#: sql_help.h:385
+msgid "remove a foreign server descriptor"
+msgstr "외부 서버 설명자 제거"
+
+#: sql_help.h:386
+msgid "DROP SERVER [ IF EXISTS ] servername [ CASCADE | RESTRICT ]"
+msgstr "DROP SERVER [ IF EXISTS ] servername [ CASCADE | RESTRICT ]"
+
+#: sql_help.h:389
+msgid "remove a table"
+msgstr "테이블 삭제"
+
+#: sql_help.h:390
+msgid "DROP TABLE [ IF EXISTS ] name [, ...] [ CASCADE | RESTRICT ]"
+msgstr "DROP TABLE [ IF EXISTS ] name [, ...] [ CASCADE | RESTRICT ]"
+
+#: sql_help.h:393
+msgid "remove a tablespace"
+msgstr "테이블스페이스 삭제"
+
+#: sql_help.h:394
+msgid "DROP TABLESPACE [ IF EXISTS ] tablespacename"
+msgstr "DROP TABLESPACE [ IF EXISTS ] tablespacename"
+
+#: sql_help.h:397
+msgid "remove a text search configuration"
+msgstr "텍스트 검색 구성 제거"
+
+#: sql_help.h:398
+msgid ""
+"DROP TEXT SEARCH CONFIGURATION [ IF EXISTS ] name [ CASCADE | RESTRICT ]"
+msgstr ""
+"DROP TEXT SEARCH CONFIGURATION [ IF EXISTS ] name [ CASCADE | RESTRICT ]"
+
+#: sql_help.h:401
+msgid "remove a text search dictionary"
+msgstr "텍스트 검색 사전 제거"
+
+#: sql_help.h:402
+msgid "DROP TEXT SEARCH DICTIONARY [ IF EXISTS ] name [ CASCADE | RESTRICT ]"
+msgstr "DROP TEXT SEARCH DICTIONARY [ IF EXISTS ] name [ CASCADE | RESTRICT ]"
+
+#: sql_help.h:405
+msgid "remove a text search parser"
+msgstr "텍스트 검색 파서 제거"
+
+#: sql_help.h:406
+msgid "DROP TEXT SEARCH PARSER [ IF EXISTS ] name [ CASCADE | RESTRICT ]"
+msgstr "DROP TEXT SEARCH PARSER [ IF EXISTS ] name [ CASCADE | RESTRICT ]"
+
+#: sql_help.h:409
+msgid "remove a text search template"
+msgstr "텍스트 검색 템플릿 제거"
+
+#: sql_help.h:410
+msgid "DROP TEXT SEARCH TEMPLATE [ IF EXISTS ] name [ CASCADE | RESTRICT ]"
+msgstr "DROP TEXT SEARCH TEMPLATE [ IF EXISTS ] name [ CASCADE | RESTRICT ]"
+
+#: sql_help.h:413
+msgid "remove a trigger"
+msgstr "트리거 삭제"
+
+#: sql_help.h:414
+msgid "DROP TRIGGER [ IF EXISTS ] name ON table [ CASCADE | RESTRICT ]"
+msgstr "DROP TRIGGER [ IF EXISTS ] name ON table [ CASCADE | RESTRICT ]"
+
+#: sql_help.h:417
+msgid "remove a data type"
+msgstr "자료형 삭제"
+
+#: sql_help.h:418
+msgid "DROP TYPE [ IF EXISTS ] name [, ...] [ CASCADE | RESTRICT ]"
+msgstr "DROP TYPE [ IF EXISTS ] name [, ...] [ CASCADE | RESTRICT ]"
+
+#: sql_help.h:422
+msgid "DROP USER [ IF EXISTS ] name [, ...]"
+msgstr "DROP USER [ IF EXISTS ] name [, ...]"
+
+#: sql_help.h:425
+msgid "remove a user mapping for a foreign server"
+msgstr "외부 서버에 대한 사용자 매핑 제거"
+
+#: sql_help.h:426
+msgid ""
+"DROP USER MAPPING [ IF EXISTS ] FOR { username | USER | CURRENT_USER | "
+"PUBLIC } SERVER servername"
+msgstr ""
+"DROP USER MAPPING [ IF EXISTS ] FOR { username | USER | CURRENT_USER | "
+"PUBLIC } SERVER servername"
+
+#: sql_help.h:429
+msgid "remove a view"
+msgstr "뷰(view) 삭제"
+
+#: sql_help.h:430
+msgid "DROP VIEW [ IF EXISTS ] name [, ...] [ CASCADE | RESTRICT ]"
+msgstr "DROP VIEW [ IF EXISTS ] name [, ...] [ CASCADE | RESTRICT ]"
+
+#: sql_help.h:434
+msgid "END [ WORK | TRANSACTION ]"
+msgstr "END [ WORK | TRANSACTION ]"
+
+#: sql_help.h:437
+msgid "execute a prepared statement"
+msgstr "준비된 구문(prepared statement) 실행"
+
+#: sql_help.h:438
+msgid "EXECUTE name [ ( parameter [, ...] ) ]"
+msgstr "EXECUTE name [ ( parameter [, ...] ) ]"
+
+#: sql_help.h:441
+msgid "show the execution plan of a statement"
+msgstr "쿼리 실행계획 보기"
+
+#: sql_help.h:442
+msgid "EXPLAIN [ ANALYZE ] [ VERBOSE ] statement"
+msgstr "EXPLAIN [ ANALYZE ] [ VERBOSE ] statement"
+
+#: sql_help.h:445
+msgid "retrieve rows from a query using a cursor"
+msgstr "해당 커서에서 자료 뽑기"
+
+#: sql_help.h:446
+msgid ""
+"FETCH [ direction { FROM | IN } ] cursorname\n"
+"\n"
+"where direction can be empty or one of:\n"
+"\n"
+"    NEXT\n"
+"    PRIOR\n"
+"    FIRST\n"
+"    LAST\n"
+"    ABSOLUTE count\n"
+"    RELATIVE count\n"
+"    count\n"
+"    ALL\n"
+"    FORWARD\n"
+"    FORWARD count\n"
+"    FORWARD ALL\n"
+"    BACKWARD\n"
+"    BACKWARD count\n"
+"    BACKWARD ALL"
+msgstr ""
+"FETCH [ direction { FROM | IN } ] cursorname\n"
+"\n"
+"where direction can be empty or one of:\n"
+"\n"
+"    NEXT\n"
+"    PRIOR\n"
+"    FIRST\n"
+"    LAST\n"
+"    ABSOLUTE count\n"
+"    RELATIVE count\n"
+"    count\n"
+"    ALL\n"
+"    FORWARD\n"
+"    FORWARD count\n"
+"    FORWARD ALL\n"
+"    BACKWARD\n"
+"    BACKWARD count\n"
+"    BACKWARD ALL"
+
+#: sql_help.h:449
+msgid "define access privileges"
+msgstr "액세스 권한 지정하기"
+
+#: sql_help.h:450
+msgid ""
+"GRANT { { SELECT | INSERT | UPDATE | DELETE | TRUNCATE | REFERENCES | "
+"TRIGGER }\n"
+"    [,...] | ALL [ PRIVILEGES ] }\n"
+"    ON [ TABLE ] tablename [, ...]\n"
+"    TO { [ GROUP ] rolename | PUBLIC } [, ...] [ WITH GRANT OPTION ]\n"
+"\n"
+"GRANT { { SELECT | INSERT | UPDATE | REFERENCES } ( column [, ...] )\n"
+"    [,...] | ALL [ PRIVILEGES ] ( column [, ...] ) }\n"
+"    ON [ TABLE ] tablename [, ...]\n"
+"    TO { [ GROUP ] rolename | PUBLIC } [, ...] [ WITH GRANT OPTION ]\n"
+"\n"
+"GRANT { { USAGE | SELECT | UPDATE }\n"
+"    [,...] | ALL [ PRIVILEGES ] }\n"
+"    ON SEQUENCE sequencename [, ...]\n"
+"    TO { [ GROUP ] rolename | PUBLIC } [, ...] [ WITH GRANT OPTION ]\n"
+"\n"
+"GRANT { { CREATE | CONNECT | TEMPORARY | TEMP } [,...] | ALL "
+"[ PRIVILEGES ] }\n"
+"    ON DATABASE dbname [, ...]\n"
+"    TO { [ GROUP ] rolename | PUBLIC } [, ...] [ WITH GRANT OPTION ]\n"
+"\n"
+"GRANT { USAGE | ALL [ PRIVILEGES ] }\n"
+"    ON FOREIGN DATA WRAPPER fdwname [, ...]\n"
+"    TO { [ GROUP ] rolename | PUBLIC } [, ...] [ WITH GRANT OPTION ]\n"
+"\n"
+"GRANT { USAGE | ALL [ PRIVILEGES ] }\n"
+"    ON FOREIGN SERVER servername [, ...]\n"
+"    TO { [ GROUP ] rolename | PUBLIC } [, ...] [ WITH GRANT OPTION ]\n"
+"\n"
+"GRANT { EXECUTE | ALL [ PRIVILEGES ] }\n"
+"    ON FUNCTION funcname ( [ [ argmode ] [ argname ] argtype [, ...] ] ) "
+"[, ...]\n"
+"    TO { [ GROUP ] rolename | PUBLIC } [, ...] [ WITH GRANT OPTION ]\n"
+"\n"
+"GRANT { USAGE | ALL [ PRIVILEGES ] }\n"
+"    ON LANGUAGE langname [, ...]\n"
+"    TO { [ GROUP ] rolename | PUBLIC } [, ...] [ WITH GRANT OPTION ]\n"
+"\n"
+"GRANT { { CREATE | USAGE } [,...] | ALL [ PRIVILEGES ] }\n"
+"    ON SCHEMA schemaname [, ...]\n"
+"    TO { [ GROUP ] rolename | PUBLIC } [, ...] [ WITH GRANT OPTION ]\n"
+"\n"
+"GRANT { CREATE | ALL [ PRIVILEGES ] }\n"
+"    ON TABLESPACE tablespacename [, ...]\n"
+"    TO { [ GROUP ] rolename | PUBLIC } [, ...] [ WITH GRANT OPTION ]\n"
+"\n"
+"GRANT role [, ...] TO rolename [, ...] [ WITH ADMIN OPTION ]"
+msgstr ""
+"GRANT { { SELECT | INSERT | UPDATE | DELETE | TRUNCATE | REFERENCES | "
+"TRIGGER }\n"
+"    [,...] | ALL [ PRIVILEGES ] }\n"
+"    ON [ TABLE ] tablename [, ...]\n"
+"    TO { [ GROUP ] rolename | PUBLIC } [, ...] [ WITH GRANT OPTION ]\n"
+"\n"
+"GRANT { { SELECT | INSERT | UPDATE | REFERENCES } ( column [, ...] )\n"
+"    [,...] | ALL [ PRIVILEGES ] ( column [, ...] ) }\n"
+"    ON [ TABLE ] tablename [, ...]\n"
+"    TO { [ GROUP ] rolename | PUBLIC } [, ...] [ WITH GRANT OPTION ]\n"
+"\n"
+"GRANT { { USAGE | SELECT | UPDATE }\n"
+"    [,...] | ALL [ PRIVILEGES ] }\n"
+"    ON SEQUENCE sequencename [, ...]\n"
+"    TO { [ GROUP ] rolename | PUBLIC } [, ...] [ WITH GRANT OPTION ]\n"
+"\n"
+"GRANT { { CREATE | CONNECT | TEMPORARY | TEMP } [,...] | ALL "
+"[ PRIVILEGES ] }\n"
+"    ON DATABASE dbname [, ...]\n"
+"    TO { [ GROUP ] rolename | PUBLIC } [, ...] [ WITH GRANT OPTION ]\n"
+"\n"
+"GRANT { USAGE | ALL [ PRIVILEGES ] }\n"
+"    ON FOREIGN DATA WRAPPER fdwname [, ...]\n"
+"    TO { [ GROUP ] rolename | PUBLIC } [, ...] [ WITH GRANT OPTION ]\n"
+"\n"
+"GRANT { USAGE | ALL [ PRIVILEGES ] }\n"
+"    ON FOREIGN SERVER servername [, ...]\n"
+"    TO { [ GROUP ] rolename | PUBLIC } [, ...] [ WITH GRANT OPTION ]\n"
+"\n"
+"GRANT { EXECUTE | ALL [ PRIVILEGES ] }\n"
+"    ON FUNCTION funcname ( [ [ argmode ] [ argname ] argtype [, ...] ] ) "
+"[, ...]\n"
+"    TO { [ GROUP ] rolename | PUBLIC } [, ...] [ WITH GRANT OPTION ]\n"
+"\n"
+"GRANT { USAGE | ALL [ PRIVILEGES ] }\n"
+"    ON LANGUAGE langname [, ...]\n"
+"    TO { [ GROUP ] rolename | PUBLIC } [, ...] [ WITH GRANT OPTION ]\n"
+"\n"
+"GRANT { { CREATE | USAGE } [,...] | ALL [ PRIVILEGES ] }\n"
+"    ON SCHEMA schemaname [, ...]\n"
+"    TO { [ GROUP ] rolename | PUBLIC } [, ...] [ WITH GRANT OPTION ]\n"
+"\n"
+"GRANT { CREATE | ALL [ PRIVILEGES ] }\n"
+"    ON TABLESPACE tablespacename [, ...]\n"
+"    TO { [ GROUP ] rolename | PUBLIC } [, ...] [ WITH GRANT OPTION ]\n"
+"\n"
+"GRANT role [, ...] TO rolename [, ...] [ WITH ADMIN OPTION ]"
+
+#: sql_help.h:453
+msgid "create new rows in a table"
+msgstr "테이블 자료 삽입"
+
+#: sql_help.h:454
+msgid ""
+"INSERT INTO table [ ( column [, ...] ) ]\n"
+"    { DEFAULT VALUES | VALUES ( { expression | DEFAULT } [, ...] ) [, ...] | "
+"query }\n"
+"    [ RETURNING * | output_expression [ [ AS ] output_name ] [, ...] ]"
+msgstr ""
+"INSERT INTO table [ ( column [, ...] ) ]\n"
+"    { DEFAULT VALUES | VALUES ( { expression | DEFAULT } [, ...] ) [, ...] | "
+"query }\n"
+"    [ RETURNING * | output_expression [ [ AS ] output_name ] [, ...] ]"
+
+#: sql_help.h:457
+msgid "listen for a notification"
+msgstr "특정 서버 메시지 수신함"
+
+#: sql_help.h:458
+msgid "LISTEN name"
+msgstr "LISTEN name"
+
+#: sql_help.h:461
+msgid "load a shared library file"
+msgstr "공유 라이브러리 파일 로드"
+
+#: sql_help.h:462
+msgid "LOAD 'filename'"
+msgstr "LOAD 'filename'"
+
+#: sql_help.h:465
+msgid "lock a table"
+msgstr "테이블 잠금"
+
+#: sql_help.h:466
+msgid ""
+"LOCK [ TABLE ] [ ONLY ] name [, ...] [ IN lockmode MODE ] [ NOWAIT ]\n"
+"\n"
+"where lockmode is one of:\n"
+"\n"
+"    ACCESS SHARE | ROW SHARE | ROW EXCLUSIVE | SHARE UPDATE EXCLUSIVE\n"
+"    | SHARE | SHARE ROW EXCLUSIVE | EXCLUSIVE | ACCESS EXCLUSIVE"
+msgstr ""
+"LOCK [ TABLE ] [ ONLY ] name [, ...] [ IN lockmode MODE ] [ NOWAIT ]\n"
+"\n"
+"여기서 lockmode는 다음 중 하나입니다.\n"
+"\n"
+"    ACCESS SHARE | ROW SHARE | ROW EXCLUSIVE | SHARE UPDATE EXCLUSIVE\n"
+"    | SHARE | SHARE ROW EXCLUSIVE | EXCLUSIVE | ACCESS EXCLUSIVE"
+
+#: sql_help.h:469
+msgid "position a cursor"
+msgstr "커서 위치 옮기기"
+
+#: sql_help.h:470
+msgid "MOVE [ direction { FROM | IN } ] cursorname"
+msgstr "MOVE [ direction { FROM | IN } ] cursorname"
+
+#: sql_help.h:473
+msgid "generate a notification"
+msgstr "특정 서버 메시지 발생"
+
+#: sql_help.h:474
+msgid "NOTIFY name"
+msgstr "NOTIFY name"
+
+#: sql_help.h:477
+msgid "prepare a statement for execution"
+msgstr "준비된 구문(prepared statement) 만들기"
+
+#: sql_help.h:478
+msgid "PREPARE name [ ( datatype [, ...] ) ] AS statement"
+msgstr "PREPARE name [ ( datatype [, ...] ) ] AS statement"
+
+#: sql_help.h:481
+msgid "prepare the current transaction for two-phase commit"
+msgstr "two-phase 커밋을 위해 현재 트랜잭션을 준비함"
+
+#: sql_help.h:482
+msgid "PREPARE TRANSACTION transaction_id"
+msgstr "PREPARE TRANSACTION transaction_id"
+
+#: sql_help.h:485
+msgid "change the ownership of database objects owned by a database role"
+msgstr "데이터베이스 롤로 권한이 부여된 데이터베이스 개체들의 소유주 바꾸기"
+
+#: sql_help.h:486
+msgid "REASSIGN OWNED BY old_role [, ...] TO new_role"
+msgstr "REASSIGN OWNED BY old_role [, ...] TO new_role"
+
+#: sql_help.h:489
+msgid "rebuild indexes"
+msgstr "인덱스 다시 만들기"
+
+#: sql_help.h:490
+msgid "REINDEX { INDEX | TABLE | DATABASE | SYSTEM } name [ FORCE ]"
+msgstr "REINDEX { INDEX | TABLE | DATABASE | SYSTEM } name [ FORCE ]"
+
+#: sql_help.h:493
+msgid "destroy a previously defined savepoint"
+msgstr "이전 정의된 savepoint를 파기함"
+
+#: sql_help.h:494
+msgid "RELEASE [ SAVEPOINT ] savepoint_name"
+msgstr "RELEASE [ SAVEPOINT ] savepoint_name"
+
+#: sql_help.h:497
+msgid "restore the value of a run-time parameter to the default value"
+msgstr "실시간 환경 변수값을 초기값으로 다시 지정"
+
+#: sql_help.h:498
+msgid ""
+"RESET configuration_parameter\n"
+"RESET ALL"
+msgstr ""
+"RESET configuration_parameter\n"
+"RESET ALL"
+
+#: sql_help.h:501
+msgid "remove access privileges"
+msgstr "액세스 권한 해제하기"
+
+#: sql_help.h:502
+msgid ""
+"REVOKE [ GRANT OPTION FOR ]\n"
+"    { { SELECT | INSERT | UPDATE | DELETE | TRUNCATE | REFERENCES | "
+"TRIGGER }\n"
+"    [,...] | ALL [ PRIVILEGES ] }\n"
+"    ON [ TABLE ] tablename [, ...]\n"
+"    FROM { [ GROUP ] rolename | PUBLIC } [, ...]\n"
+"    [ CASCADE | RESTRICT ]\n"
+"\n"
+"REVOKE [ GRANT OPTION FOR ]\n"
+"    { { SELECT | INSERT | UPDATE | REFERENCES } ( column [, ...] )\n"
+"    [,...] | ALL [ PRIVILEGES ] ( column [, ...] ) }\n"
+"    ON [ TABLE ] tablename [, ...]\n"
+"    FROM { [ GROUP ] rolename | PUBLIC } [, ...]\n"
+"    [ CASCADE | RESTRICT ]\n"
+"\n"
+"REVOKE [ GRANT OPTION FOR ]\n"
+"    { { USAGE | SELECT | UPDATE }\n"
+"    [,...] | ALL [ PRIVILEGES ] }\n"
+"    ON SEQUENCE sequencename [, ...]\n"
+"    FROM { [ GROUP ] rolename | PUBLIC } [, ...]\n"
+"    [ CASCADE | RESTRICT ]\n"
+"\n"
+"REVOKE [ GRANT OPTION FOR ]\n"
+"    { { CREATE | CONNECT | TEMPORARY | TEMP } [,...] | ALL [ PRIVILEGES ] }\n"
+"    ON DATABASE dbname [, ...]\n"
+"    FROM { [ GROUP ] rolename | PUBLIC } [, ...]\n"
+"    [ CASCADE | RESTRICT ]\n"
+"\n"
+"REVOKE [ GRANT OPTION FOR ]\n"
+"    { USAGE | ALL [ PRIVILEGES ] }\n"
+"    ON FOREIGN DATA WRAPPER fdwname [, ...]\n"
+"    FROM { [ GROUP ] rolename | PUBLIC } [, ...]\n"
+"    [ CASCADE | RESTRICT ]\n"
+"\n"
+"REVOKE [ GRANT OPTION FOR ]\n"
+"    { USAGE | ALL [ PRIVILEGES ] }\n"
+"    ON FOREIGN SERVER servername [, ...]\n"
+"    FROM { [ GROUP ] rolename | PUBLIC } [, ...]\n"
+"    [ CASCADE | RESTRICT ]\n"
+"\n"
+"REVOKE [ GRANT OPTION FOR ]\n"
+"    { EXECUTE | ALL [ PRIVILEGES ] }\n"
+"    ON FUNCTION funcname ( [ [ argmode ] [ argname ] argtype [, ...] ] ) "
+"[, ...]\n"
+"    FROM { [ GROUP ] rolename | PUBLIC } [, ...]\n"
+"    [ CASCADE | RESTRICT ]\n"
+"\n"
+"REVOKE [ GRANT OPTION FOR ]\n"
+"    { USAGE | ALL [ PRIVILEGES ] }\n"
+"    ON LANGUAGE langname [, ...]\n"
+"    FROM { [ GROUP ] rolename | PUBLIC } [, ...]\n"
+"    [ CASCADE | RESTRICT ]\n"
+"\n"
+"REVOKE [ GRANT OPTION FOR ]\n"
+"    { { CREATE | USAGE } [,...] | ALL [ PRIVILEGES ] }\n"
+"    ON SCHEMA schemaname [, ...]\n"
+"    FROM { [ GROUP ] rolename | PUBLIC } [, ...]\n"
+"    [ CASCADE | RESTRICT ]\n"
+"\n"
+"REVOKE [ GRANT OPTION FOR ]\n"
+"    { CREATE | ALL [ PRIVILEGES ] }\n"
+"    ON TABLESPACE tablespacename [, ...]\n"
+"    FROM { [ GROUP ] rolename | PUBLIC } [, ...]\n"
+"    [ CASCADE | RESTRICT ]\n"
+"\n"
+"REVOKE [ ADMIN OPTION FOR ]\n"
+"    role [, ...] FROM rolename [, ...]\n"
+"    [ CASCADE | RESTRICT ]"
+msgstr ""
+"REVOKE [ GRANT OPTION FOR ]\n"
+"    { { SELECT | INSERT | UPDATE | DELETE | TRUNCATE | REFERENCES | "
+"TRIGGER }\n"
+"    [,...] | ALL [ PRIVILEGES ] }\n"
+"    ON [ TABLE ] tablename [, ...]\n"
+"    FROM { [ GROUP ] rolename | PUBLIC } [, ...]\n"
+"    [ CASCADE | RESTRICT ]\n"
+"\n"
+"REVOKE [ GRANT OPTION FOR ]\n"
+"    { { SELECT | INSERT | UPDATE | REFERENCES } ( column [, ...] )\n"
+"    [,...] | ALL [ PRIVILEGES ] ( column [, ...] ) }\n"
+"    ON [ TABLE ] tablename [, ...]\n"
+"    FROM { [ GROUP ] rolename | PUBLIC } [, ...]\n"
+"    [ CASCADE | RESTRICT ]\n"
+"\n"
+"REVOKE [ GRANT OPTION FOR ]\n"
+"    { { USAGE | SELECT | UPDATE }\n"
+"    [,...] | ALL [ PRIVILEGES ] }\n"
+"    ON SEQUENCE sequencename [, ...]\n"
+"    FROM { [ GROUP ] rolename | PUBLIC } [, ...]\n"
+"    [ CASCADE | RESTRICT ]\n"
+"\n"
+"REVOKE [ GRANT OPTION FOR ]\n"
+"    { { CREATE | CONNECT | TEMPORARY | TEMP } [,...] | ALL [ PRIVILEGES ] }\n"
+"    ON DATABASE dbname [, ...]\n"
+"    FROM { [ GROUP ] rolename | PUBLIC } [, ...]\n"
+"    [ CASCADE | RESTRICT ]\n"
+"\n"
+"REVOKE [ GRANT OPTION FOR ]\n"
+"    { USAGE | ALL [ PRIVILEGES ] }\n"
+"    ON FOREIGN DATA WRAPPER fdwname [, ...]\n"
+"    FROM { [ GROUP ] rolename | PUBLIC } [, ...]\n"
+"    [ CASCADE | RESTRICT ]\n"
+"\n"
+"REVOKE [ GRANT OPTION FOR ]\n"
+"    { USAGE | ALL [ PRIVILEGES ] }\n"
+"    ON FOREIGN SERVER servername [, ...]\n"
+"    FROM { [ GROUP ] rolename | PUBLIC } [, ...]\n"
+"    [ CASCADE | RESTRICT ]\n"
+"\n"
+"REVOKE [ GRANT OPTION FOR ]\n"
+"    { EXECUTE | ALL [ PRIVILEGES ] }\n"
+"    ON FUNCTION funcname ( [ [ argmode ] [ argname ] argtype [, ...] ] ) "
+"[, ...]\n"
+"    FROM { [ GROUP ] rolename | PUBLIC } [, ...]\n"
+"    [ CASCADE | RESTRICT ]\n"
+"\n"
+"REVOKE [ GRANT OPTION FOR ]\n"
+"    { USAGE | ALL [ PRIVILEGES ] }\n"
+"    ON LANGUAGE langname [, ...]\n"
+"    FROM { [ GROUP ] rolename | PUBLIC } [, ...]\n"
+"    [ CASCADE | RESTRICT ]\n"
+"\n"
+"REVOKE [ GRANT OPTION FOR ]\n"
+"    { { CREATE | USAGE } [,...] | ALL [ PRIVILEGES ] }\n"
+"    ON SCHEMA schemaname [, ...]\n"
+"    FROM { [ GROUP ] rolename | PUBLIC } [, ...]\n"
+"    [ CASCADE | RESTRICT ]\n"
+"\n"
+"REVOKE [ GRANT OPTION FOR ]\n"
+"    { CREATE | ALL [ PRIVILEGES ] }\n"
+"    ON TABLESPACE tablespacename [, ...]\n"
+"    FROM { [ GROUP ] rolename | PUBLIC } [, ...]\n"
+"    [ CASCADE | RESTRICT ]\n"
+"\n"
+"REVOKE [ ADMIN OPTION FOR ]\n"
+"    role [, ...] FROM rolename [, ...]\n"
+"    [ CASCADE | RESTRICT ]"
+
+#: sql_help.h:506
+msgid "ROLLBACK [ WORK | TRANSACTION ]"
+msgstr "ROLLBACK [ WORK | TRANSACTION ]"
+
+#: sql_help.h:509
+msgid "cancel a transaction that was earlier prepared for two-phase commit"
+msgstr "two-phase 커밋을 위해 먼저 준비되었던 트랜잭션 실행취소하기"
+
+#: sql_help.h:510
+msgid "ROLLBACK PREPARED transaction_id"
+msgstr "ROLLBACK PREPARED transaction_id"
+
+#: sql_help.h:513
+msgid "roll back to a savepoint"
+msgstr "savepoint 파기하기"
+
+#: sql_help.h:514
+msgid "ROLLBACK [ WORK | TRANSACTION ] TO [ SAVEPOINT ] savepoint_name"
+msgstr "ROLLBACK [ WORK | TRANSACTION ] TO [ SAVEPOINT ] savepoint_name"
+
+#: sql_help.h:517
+msgid "define a new savepoint within the current transaction"
+msgstr "현재 트랜잭션에서 새로운 savepoint 만들기"
+
+#: sql_help.h:518
+msgid "SAVEPOINT savepoint_name"
+msgstr "SAVEPOINT savepoint_name"
+
+#: sql_help.h:521 sql_help.h:557 sql_help.h:581
+msgid "retrieve rows from a table or view"
+msgstr "테이블이나 뷰의 자료를 출력"
+
+#: sql_help.h:522 sql_help.h:558 sql_help.h:582
+msgid ""
+"[ WITH [ RECURSIVE ] with_query [, ...] ]\n"
+"SELECT [ ALL | DISTINCT [ ON ( expression [, ...] ) ] ]\n"
+"    * | expression [ [ AS ] output_name ] [, ...]\n"
+"    [ FROM from_item [, ...] ]\n"
+"    [ WHERE condition ]\n"
+"    [ GROUP BY expression [, ...] ]\n"
+"    [ HAVING condition [, ...] ]\n"
+"    [ WINDOW window_name AS ( window_definition ) [, ...] ]\n"
+"    [ { UNION | INTERSECT | EXCEPT } [ ALL ] select ]\n"
+"    [ ORDER BY expression [ ASC | DESC | USING operator ] [ NULLS { FIRST | "
+"LAST } ] [, ...] ]\n"
+"    [ LIMIT { count | ALL } ]\n"
+"    [ OFFSET start [ ROW | ROWS ] ]\n"
+"    [ FETCH { FIRST | NEXT } [ count ] { ROW | ROWS } ONLY ]\n"
+"    [ FOR { UPDATE | SHARE } [ OF table_name [, ...] ] [ NOWAIT ] [...] ]\n"
+"\n"
+"where from_item can be one of:\n"
+"\n"
+"    [ ONLY ] table_name [ * ] [ [ AS ] alias [ ( column_alias [, ...] ) ] ]\n"
+"    ( select ) [ AS ] alias [ ( column_alias [, ...] ) ]\n"
+"    with_query_name [ [ AS ] alias [ ( column_alias [, ...] ) ] ]\n"
+"    function_name ( [ argument [, ...] ] ) [ AS ] alias [ ( column_alias "
+"[, ...] | column_definition [, ...] ) ]\n"
+"    function_name ( [ argument [, ...] ] ) AS ( column_definition [, ...] )\n"
+"    from_item [ NATURAL ] join_type from_item [ ON join_condition | USING "
+"( join_column [, ...] ) ]\n"
+"\n"
+"and with_query is:\n"
+"\n"
+"    with_query_name [ ( column_name [, ...] ) ] AS ( select )\n"
+"\n"
+"TABLE { [ ONLY ] table_name [ * ] | with_query_name }"
+msgstr ""
+"[ WITH [ RECURSIVE ] with_query [, ...] ]\n"
+"SELECT [ ALL | DISTINCT [ ON ( expression [, ...] ) ] ]\n"
+"    * | expression [ [ AS ] output_name ] [, ...]\n"
+"    [ FROM from_item [, ...] ]\n"
+"    [ WHERE condition ]\n"
+"    [ GROUP BY expression [, ...] ]\n"
+"    [ HAVING condition [, ...] ]\n"
+"    [ WINDOW window_name AS ( window_definition ) [, ...] ]\n"
+"    [ { UNION | INTERSECT | EXCEPT } [ ALL ] select ]\n"
+"    [ ORDER BY expression [ ASC | DESC | USING operator ] [ NULLS { FIRST | "
+"LAST } ] [, ...] ]\n"
+"    [ LIMIT { count | ALL } ]\n"
+"    [ OFFSET start [ ROW | ROWS ] ]\n"
+"    [ FETCH { FIRST | NEXT } [ count ] { ROW | ROWS } ONLY ]\n"
+"    [ FOR { UPDATE | SHARE } [ OF table_name [, ...] ] [ NOWAIT ] [...] ]\n"
+"\n"
+"여기서 from_item은 다음 중 하나일 수 있습니다.\n"
+"\n"
+"    [ ONLY ] table_name [ * ] [ [ AS ] alias [ ( column_alias [, ...] ) ] ]\n"
+"    ( select ) [ AS ] alias [ ( column_alias [, ...] ) ]\n"
+"    with_query_name [ [ AS ] alias [ ( column_alias [, ...] ) ] ]\n"
+"    function_name ( [ argument [, ...] ] ) [ AS ] alias [ ( column_alias "
+"[, ...] | column_definition [, ...] ) ]\n"
+"    function_name ( [ argument [, ...] ] ) AS ( column_definition [, ...] )\n"
+"    from_item [ NATURAL ] join_type from_item [ ON join_condition | USING "
+"( join_column [, ...] ) ]\n"
+"\n"
+"and with_query is:\n"
+"\n"
+"    with_query_name [ ( column_name [, ...] ) ] AS ( select )\n"
+"\n"
+"TABLE { [ ONLY ] table_name [ * ] | with_query_name }"
+
+#: sql_help.h:526
+msgid ""
+"[ WITH [ RECURSIVE ] with_query [, ...] ]\n"
+"SELECT [ ALL | DISTINCT [ ON ( expression [, ...] ) ] ]\n"
+"    * | expression [ [ AS ] output_name ] [, ...]\n"
+"    INTO [ TEMPORARY | TEMP ] [ TABLE ] new_table\n"
+"    [ FROM from_item [, ...] ]\n"
+"    [ WHERE condition ]\n"
+"    [ GROUP BY expression [, ...] ]\n"
+"    [ HAVING condition [, ...] ]\n"
+"    [ WINDOW window_name AS ( window_definition ) [, ...] ]\n"
+"    [ { UNION | INTERSECT | EXCEPT } [ ALL ] select ]\n"
+"    [ ORDER BY expression [ ASC | DESC | USING operator ] [ NULLS { FIRST | "
+"LAST } ] [, ...] ]\n"
+"    [ LIMIT { count | ALL } ]\n"
+"    [ OFFSET start [ ROW | ROWS ] ]\n"
+"    [ FETCH { FIRST | NEXT } [ count ] { ROW | ROWS } ONLY ]\n"
+"    [ FOR { UPDATE | SHARE } [ OF table_name [, ...] ] [ NOWAIT ] [...] ]"
+msgstr ""
+"[ WITH [ RECURSIVE ] with_query [, ...] ]\n"
+"SELECT [ ALL | DISTINCT [ ON ( expression [, ...] ) ] ]\n"
+"    * | expression [ [ AS ] output_name ] [, ...]\n"
+"    INTO [ TEMPORARY | TEMP ] [ TABLE ] new_table\n"
+"    [ FROM from_item [, ...] ]\n"
+"    [ WHERE condition ]\n"
+"    [ GROUP BY expression [, ...] ]\n"
+"    [ HAVING condition [, ...] ]\n"
+"    [ WINDOW window_name AS ( window_definition ) [, ...] ]\n"
+"    [ { UNION | INTERSECT | EXCEPT } [ ALL ] select ]\n"
+"    [ ORDER BY expression [ ASC | DESC | USING operator ] [ NULLS { FIRST | "
+"LAST } ] [, ...] ]\n"
+"    [ LIMIT { count | ALL } ]\n"
+"    [ OFFSET start [ ROW | ROWS ] ]\n"
+"    [ FETCH { FIRST | NEXT } [ count ] { ROW | ROWS } ONLY ]\n"
+"    [ FOR { UPDATE | SHARE } [ OF table_name [, ...] ] [ NOWAIT ] [...] ]"
+
+#: sql_help.h:529
+msgid "change a run-time parameter"
+msgstr "실시간 환경 변수값 바꾸기"
+
+#: sql_help.h:530
+msgid ""
+"SET [ SESSION | LOCAL ] configuration_parameter { TO | = } { value | 'value' "
+"| DEFAULT }\n"
+"SET [ SESSION | LOCAL ] TIME ZONE { timezone | LOCAL | DEFAULT }"
+msgstr ""
+"SET [ SESSION | LOCAL ] configuration_parameter { TO | = } { value | 'value' "
+"| DEFAULT }\n"
+"SET [ SESSION | LOCAL ] TIME ZONE { timezone | LOCAL | DEFAULT }"
+
+#: sql_help.h:533
+msgid "set constraint checking modes for the current transaction"
+msgstr "현재 트랜잭션에서 제약 조건 검사 방식을 지정함"
+
+#: sql_help.h:534
+msgid "SET CONSTRAINTS { ALL | name [, ...] } { DEFERRED | IMMEDIATE }"
+msgstr "SET CONSTRAINTS { ALL | name [, ...] } { DEFERRED | IMMEDIATE }"
+
+#: sql_help.h:537
+msgid "set the current user identifier of the current session"
+msgstr "현재 세션의 현재 사용자 식별자를 지정"
+
+#: sql_help.h:538
+msgid ""
+"SET [ SESSION | LOCAL ] ROLE rolename\n"
+"SET [ SESSION | LOCAL ] ROLE NONE\n"
+"RESET ROLE"
+msgstr ""
+"SET [ SESSION | LOCAL ] ROLE rolename\n"
+"SET [ SESSION | LOCAL ] ROLE NONE\n"
+"RESET ROLE"
+
+#: sql_help.h:541
+msgid ""
+"set the session user identifier and the current user identifier of the "
+"current session"
+msgstr "현재 세션의 사용자 인증을 지정함 - 사용자 지정"
+
+#: sql_help.h:542
+msgid ""
+"SET [ SESSION | LOCAL ] SESSION AUTHORIZATION username\n"
+"SET [ SESSION | LOCAL ] SESSION AUTHORIZATION DEFAULT\n"
+"RESET SESSION AUTHORIZATION"
+msgstr ""
+"SET [ SESSION | LOCAL ] SESSION AUTHORIZATION username\n"
+"SET [ SESSION | LOCAL ] SESSION AUTHORIZATION DEFAULT\n"
+"RESET SESSION AUTHORIZATION"
+
+#: sql_help.h:545
+msgid "set the characteristics of the current transaction"
+msgstr "현재 트랜잭션의 성질을 지정함"
+
+#: sql_help.h:546
+msgid ""
+"SET TRANSACTION transaction_mode [, ...]\n"
+"SET SESSION CHARACTERISTICS AS TRANSACTION transaction_mode [, ...]\n"
+"\n"
+"where transaction_mode is one of:\n"
+"\n"
+"    ISOLATION LEVEL { SERIALIZABLE | REPEATABLE READ | READ COMMITTED | READ "
+"UNCOMMITTED }\n"
+"    READ WRITE | READ ONLY"
+msgstr ""
+"SET TRANSACTION transaction_mode [, ...]\n"
+"SET SESSION CHARACTERISTICS AS TRANSACTION transaction_mode [, ...]\n"
+"\n"
+"where transaction_mode is one of:\n"
+"\n"
+"    ISOLATION LEVEL { SERIALIZABLE | REPEATABLE READ | READ COMMITTED | READ "
+"UNCOMMITTED }\n"
+"    READ WRITE | READ ONLY"
+
+#: sql_help.h:549
+msgid "show the value of a run-time parameter"
+msgstr "실시간 환경 변수값들을 보여줌"
+
+#: sql_help.h:550
+msgid ""
+"SHOW name\n"
+"SHOW ALL"
+msgstr ""
+"SHOW name\n"
+"SHOW ALL"
+
+#: sql_help.h:554
+msgid ""
+"START TRANSACTION [ transaction_mode [, ...] ]\n"
+"\n"
+"where transaction_mode is one of:\n"
+"\n"
+"    ISOLATION LEVEL { SERIALIZABLE | REPEATABLE READ | READ COMMITTED | READ "
+"UNCOMMITTED }\n"
+"    READ WRITE | READ ONLY"
+msgstr ""
+"START TRANSACTION [ transaction_mode [, ...] ]\n"
+"\n"
+"where transaction_mode is one of:\n"
+"\n"
+"    ISOLATION LEVEL { SERIALIZABLE | REPEATABLE READ | READ COMMITTED | READ "
+"UNCOMMITTED }\n"
+"    READ WRITE | READ ONLY"
+
+#: sql_help.h:561
+msgid "empty a table or set of tables"
+msgstr "하나 또는 지정한 여러개의 테이블에서 모든 자료 지움"
+
+#: sql_help.h:562
+msgid ""
+"TRUNCATE [ TABLE ] [ ONLY ] name [, ... ]\n"
+"    [ RESTART IDENTITY | CONTINUE IDENTITY ] [ CASCADE | RESTRICT ]"
+msgstr ""
+"TRUNCATE [ TABLE ] [ ONLY ] name [, ... ]\n"
+"    [ RESTART IDENTITY | CONTINUE IDENTITY ] [ CASCADE | RESTRICT ]"
+
+#: sql_help.h:565
+msgid "stop listening for a notification"
+msgstr "특정 서버 메시지 수신 기능 끔"
+
+#: sql_help.h:566
+msgid "UNLISTEN { name | * }"
+msgstr "UNLISTEN { name | * }"
+
+#: sql_help.h:569
+msgid "update rows of a table"
+msgstr "테이블 자료 갱신"
+
+#: sql_help.h:570
+msgid ""
+"UPDATE [ ONLY ] table [ [ AS ] alias ]\n"
+"    SET { column = { expression | DEFAULT } |\n"
+"          ( column [, ...] ) = ( { expression | DEFAULT } [, ...] ) } "
+"[, ...]\n"
+"    [ FROM fromlist ]\n"
+"    [ WHERE condition | WHERE CURRENT OF cursor_name ]\n"
+"    [ RETURNING * | output_expression [ [ AS ] output_name ] [, ...] ]"
+msgstr ""
+"UPDATE [ ONLY ] table [ [ AS ] alias ]\n"
+"    SET { column = { expression | DEFAULT } |\n"
+"          ( column [, ...] ) = ( { expression | DEFAULT } [, ...] ) } "
+"[, ...]\n"
+"    [ FROM fromlist ]\n"
+"    [ WHERE condition | WHERE CURRENT OF cursor_name ]\n"
+"    [ RETURNING * | output_expression [ [ AS ] output_name ] [, ...] ]"
+
+#: sql_help.h:573
+msgid "garbage-collect and optionally analyze a database"
+msgstr "물리적인 자료 정리 작업 - 쓰레기값 청소"
+
+#: sql_help.h:574
+msgid ""
+"VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] [ table ]\n"
+"VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] ANALYZE [ table [ (column "
+"[, ...] ) ] ]"
+msgstr ""
+"VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] [ table ]\n"
+"VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] ANALYZE [ table [ (column "
+"[, ...] ) ] ]"
+
+#: sql_help.h:577
+msgid "compute a set of rows"
+msgstr "compute a set of rows"
+
+#: sql_help.h:578
+msgid ""
+"VALUES ( expression [, ...] ) [, ...]\n"
+"    [ ORDER BY sort_expression [ ASC | DESC | USING operator ] [, ...] ]\n"
+"    [ LIMIT { count | ALL } ]\n"
+"    [ OFFSET start [ ROW | ROWS ] ]\n"
+"    [ FETCH { FIRST | NEXT } [ count ] { ROW | ROWS } ONLY ]"
+msgstr ""
+"VALUES ( expression [, ...] ) [, ...]\n"
+"    [ ORDER BY sort_expression [ ASC | DESC | USING operator ] [, ...] ]\n"
+"    [ LIMIT { count | ALL } ]\n"
+"    [ OFFSET start [ ROW | ROWS ] ]\n"
+"    [ FETCH { FIRST | NEXT } [ count ] { ROW | ROWS } ONLY ]"
+
+#: ../../port/exec.c:195 ../../port/exec.c:309 ../../port/exec.c:352
+#, c-format
+msgid "could not identify current directory: %s"
+msgstr "현재 디렉터리를 찾을 수 없음: %s"
+
+#: ../../port/exec.c:214
+#, c-format
+msgid "invalid binary \"%s\""
+msgstr "잘못된 바이너리 파일: \"%s\""
+
+#: ../../port/exec.c:263
+#, c-format
+msgid "could not read binary \"%s\""
+msgstr "\"%s\" 바이너리 파일을 읽을 수 없음"
+
+#: ../../port/exec.c:270
+#, c-format
+msgid "could not find a \"%s\" to execute"
+msgstr "실행할 \"%s\" 파일 찾을 수 없음"
+
+#: ../../port/exec.c:325 ../../port/exec.c:361
+#, c-format
+msgid "could not change directory to \"%s\""
+msgstr "\"%s\" 디렉터리로 이동할 수 없음"
+
+#: ../../port/exec.c:340
+#, c-format
+msgid "could not read symbolic link \"%s\""
+msgstr "\"%s\" 실벌릭 링크를 읽을 수 없음"
+
+#: ../../port/exec.c:586
+#, c-format
+msgid "child process exited with exit code %d"
+msgstr "하위 프로세스가 %d 코드로 종료했음"
+
+#: ../../port/exec.c:590
+#, c-format
+msgid "child process was terminated by exception 0x%X"
+msgstr "0x%X 예외처리에 의해 하위 프로세스가 종료되었음"
+
+#: ../../port/exec.c:599
+#, c-format
+msgid "child process was terminated by signal %s"
+msgstr "%s 시그널 감지로 하위 프로세스가 종료되었음"
+
+#: ../../port/exec.c:602
+#, c-format
+msgid "child process was terminated by signal %d"
+msgstr "하위 프로세스가 %d 신호를 받고 종료되었음"
+
+#: ../../port/exec.c:606
+#, c-format
+msgid "child process exited with unrecognized status %d"
+msgstr "하위 프로세스가 알 수 없는 상태(%d)로 종료되었음"

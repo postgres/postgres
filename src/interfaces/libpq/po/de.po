@@ -9,13 +9,17 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.4\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2009-12-18 00:01+0000\n"
-"PO-Revision-Date: 2009-12-19 12:36+0200\n"
+"POT-Creation-Date: 2010-07-28 08:45+0000\n"
+"PO-Revision-Date: 2010-07-28 23:46+0300\n"
 "Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language-Team: German <peter_e@gmx.net>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=ISO-8859-1\n"
 "Content-Transfer-Encoding: 8bit\n"
+
+#: fe-auth.c:212 fe-auth.c:432 fe-auth.c:659
+msgid "host name must be specified\n"
+msgstr "Hostname muss angegeben werden\n"
 
 #: fe-auth.c:242
 #, c-format
@@ -38,58 +42,54 @@ msgstr ""
 msgid "GSSAPI continuation error"
 msgstr "GSSAPI-Fortsetzungsfehler"
 
-#: fe-auth.c:432
+#: fe-auth.c:439
 msgid "duplicate GSS authentication request\n"
 msgstr "doppelte GSSAPI-Authentifizierungsanfrage\n"
 
-#: fe-auth.c:452
+#: fe-auth.c:459
 msgid "GSSAPI name import error"
 msgstr "GSSAPI-Namensimportfehler"
 
-#: fe-auth.c:538
+#: fe-auth.c:545
 msgid "SSPI continuation error"
 msgstr "SSPI-Fortsetzungsfehler"
 
-#: fe-auth.c:549 fe-auth.c:623 fe-auth.c:657 fe-auth.c:754 fe-connect.c:1342
+#: fe-auth.c:556 fe-auth.c:630 fe-auth.c:665 fe-auth.c:762 fe-connect.c:1342
 #: fe-connect.c:2625 fe-connect.c:2842 fe-connect.c:3208 fe-connect.c:3217
 #: fe-connect.c:3354 fe-connect.c:3400 fe-connect.c:3418 fe-exec.c:3110
 #: fe-lobj.c:696 fe-protocol2.c:1027 fe-protocol3.c:1421
 msgid "out of memory\n"
 msgstr "Speicher aufgebraucht\n"
 
-#: fe-auth.c:638
+#: fe-auth.c:645
 msgid "could not acquire SSPI credentials"
 msgstr "konnte SSPI-Credentials nicht erhalten"
 
-#: fe-auth.c:651
-msgid "host name must be specified\n"
-msgstr "Hostname muss angegeben werden\n"
-
-#: fe-auth.c:730
+#: fe-auth.c:738
 msgid "SCM_CRED authentication method not supported\n"
 msgstr "SCM_CRED-Authentifizierungsmethode nicht unterstützt\n"
 
-#: fe-auth.c:804
+#: fe-auth.c:812
 msgid "Kerberos 4 authentication not supported\n"
 msgstr "Authentifizierung mit Kerberos 4 nicht unterstützt\n"
 
-#: fe-auth.c:820
+#: fe-auth.c:828
 msgid "Kerberos 5 authentication not supported\n"
 msgstr "Authentifizierung mit Kerberos 5 nicht unterstützt\n"
 
-#: fe-auth.c:887
+#: fe-auth.c:895
 msgid "GSSAPI authentication not supported\n"
 msgstr "Authentifizierung mit GSSAPI nicht unterstützt\n"
 
-#: fe-auth.c:911
+#: fe-auth.c:919
 msgid "SSPI authentication not supported\n"
 msgstr "Authentifizierung mit SSPI nicht unterstützt\n"
 
-#: fe-auth.c:918
+#: fe-auth.c:926
 msgid "Crypt authentication not supported\n"
 msgstr "Authentifizierung mit Crypt nicht unterstützt\n"
 
-#: fe-auth.c:945
+#: fe-auth.c:953
 #, c-format
 msgid "authentication method %u not supported\n"
 msgstr "Authentifizierungsmethode %u nicht unterstützt\n"
@@ -464,26 +464,26 @@ msgstr "kann OID der Funktion loread nicht ermitteln\n"
 msgid "cannot determine OID of function lowrite\n"
 msgstr "kann OID der Funktion lowrite nicht ermitteln\n"
 
-#: fe-misc.c:241
+#: fe-misc.c:262
 #, c-format
 msgid "integer of size %lu not supported by pqGetInt"
 msgstr "Integer der Größe %lu wird nicht von pqGetInt unterstützt"
 
-#: fe-misc.c:277
+#: fe-misc.c:298
 #, c-format
 msgid "integer of size %lu not supported by pqPutInt"
 msgstr "Integer der Größe %lu wird nicht von pqPutInt unterstützt"
 
-#: fe-misc.c:557 fe-misc.c:759
+#: fe-misc.c:578 fe-misc.c:780
 msgid "connection not open\n"
 msgstr "Verbindung nicht offen\n"
 
-#: fe-misc.c:622 fe-misc.c:712
+#: fe-misc.c:643 fe-misc.c:733
 #, c-format
 msgid "could not receive data from server: %s\n"
 msgstr "konnte keine Daten vom Server empfangen: %s\n"
 
-#: fe-misc.c:729 fe-misc.c:807
+#: fe-misc.c:750 fe-misc.c:828
 msgid ""
 "server closed the connection unexpectedly\n"
 "\tThis probably means the server terminated abnormally\n"
@@ -493,20 +493,20 @@ msgstr ""
 "\tDas heißt wahrscheinlich, daß der Server abnormal beendete\n"
 "\tbevor oder während die Anweisung bearbeitet wurde.\n"
 
-#: fe-misc.c:824
+#: fe-misc.c:845
 #, c-format
 msgid "could not send data to server: %s\n"
 msgstr "konnte keine Daten an den Server senden: %s\n"
 
-#: fe-misc.c:943
+#: fe-misc.c:964
 msgid "timeout expired\n"
 msgstr "Timeout abgelaufen\n"
 
-#: fe-misc.c:988
+#: fe-misc.c:1009
 msgid "socket not open\n"
 msgstr "Socket ist nicht offen\n"
 
-#: fe-misc.c:1011
+#: fe-misc.c:1032
 #, c-format
 msgid "select() failed: %s\n"
 msgstr "select() fehlgeschlagen: %s\n"
@@ -649,74 +649,71 @@ msgstr "PQgetline: Text COPY OUT nicht ausgeführt\n"
 msgid "could not establish SSL connection: %s\n"
 msgstr "konnte SSL-Verbindung nicht aufbauen: %s\n"
 
-#: fe-secure.c:317 fe-secure.c:401 fe-secure.c:1138
+#: fe-secure.c:318 fe-secure.c:403 fe-secure.c:1140
 #, c-format
 msgid "SSL SYSCALL error: %s\n"
 msgstr "SSL-SYSCALL-Fehler: %s\n"
 
-#: fe-secure.c:323 fe-secure.c:407 fe-secure.c:1142
+#: fe-secure.c:324 fe-secure.c:409 fe-secure.c:1144
 msgid "SSL SYSCALL error: EOF detected\n"
 msgstr "SSL-SYSCALL-Fehler: Dateiende entdeckt\n"
 
-#: fe-secure.c:335 fe-secure.c:418 fe-secure.c:1161
+#: fe-secure.c:336 fe-secure.c:420 fe-secure.c:1163
 #, c-format
 msgid "SSL error: %s\n"
 msgstr "SSL-Fehler: %s\n"
 
-#: fe-secure.c:345 fe-secure.c:428 fe-secure.c:1171
+#: fe-secure.c:346 fe-secure.c:430 fe-secure.c:1173
 #, c-format
 msgid "unrecognized SSL error code: %d\n"
 msgstr "unbekannter SSL-Fehlercode: %d\n"
 
-#: fe-secure.c:537
-msgid ""
-"verified SSL connections are only supported when connecting to a host name"
-msgstr ""
-"verifizierte SSL-Verbindungen werden nur unterstützt, wenn mit einem "
-"Hostnamen verbunden wird"
+#: fe-secure.c:539
+msgid "host name must be specified for a verified SSL connection\n"
+msgstr "Hostname muss angegeben werden für eine verifizierte SSL-Verbindung\n"
 
-#: fe-secure.c:556
+#: fe-secure.c:558
 #, c-format
-msgid "server common name \"%s\" does not match host name \"%s\""
-msgstr "Server-Common-Name »%s« stimmt nicht mit dem Hostnamen »%s« überein"
+msgid "server common name \"%s\" does not match host name \"%s\"\n"
+msgstr "Server-Common-Name »%s« stimmt nicht mit dem Hostnamen »%s« überein\n"
 
-#: fe-secure.c:598
+#: fe-secure.c:600
 msgid "could not get home directory to locate client certificate files"
 msgstr ""
 "konnte Home-Verzeichnis nicht ermitteln, um Client-Zertifikat-Dateien zu "
 "finden"
 
-#: fe-secure.c:622 fe-secure.c:636
+#: fe-secure.c:624 fe-secure.c:638
 #, c-format
 msgid "could not open certificate file \"%s\": %s\n"
 msgstr "konnte Zertifikatdatei »%s« nicht öffnen: %s\n"
 
-#: fe-secure.c:647
+#: fe-secure.c:649
 #, c-format
 msgid "could not read certificate file \"%s\": %s\n"
 msgstr "konnte Zertifikatdatei »%s« nicht lesen: %s\n"
 
-#: fe-secure.c:685
+#: fe-secure.c:687
 #, c-format
 msgid "could not load SSL engine \"%s\": %s\n"
 msgstr "konnte SSL-Engine »%s« nicht laden: %s\n"
 
-#: fe-secure.c:698
+#: fe-secure.c:700
 #, c-format
 msgid "could not initialize SSL engine \"%s\": %s\n"
 msgstr "konnte SSL-Engine »%s« nicht initialisieren: %s\n"
 
-#: fe-secure.c:715
+#: fe-secure.c:717
 #, c-format
 msgid "could not read private SSL key \"%s\" from engine \"%s\": %s\n"
 msgstr "konnte privaten SSL-Schlüssel »%s« nicht von Engine »%s« lesen: %s\n"
 
-#: fe-secure.c:750
+#: fe-secure.c:752
 #, c-format
 msgid "certificate present, but not private key file \"%s\"\n"
 msgstr "Zertifikat vorhanden, aber keine private Schlüsseldatei »%s«\n"
 
-#: fe-secure.c:759
+#: fe-secure.c:761
 #, c-format
 msgid ""
 "private key file \"%s\" has group or world access; permissions should be "
@@ -725,47 +722,47 @@ msgstr ""
 "WARNUNG: private Schlüsseldatei »%s« erlaubt Lesezugriff für Gruppe oder "
 "Andere; Rechte sollten u=rw (0600) oder weniger sein\n"
 
-#: fe-secure.c:769
+#: fe-secure.c:771
 #, c-format
 msgid "could not open private key file \"%s\": %s\n"
 msgstr "konnte private Schlüsseldatei »%s« nicht öffnen: %s\n"
 
-#: fe-secure.c:780
+#: fe-secure.c:782
 #, c-format
 msgid "private key file \"%s\" changed during execution\n"
 msgstr "private Schlüsseldatei »%s« während der Ausführung geändert\n"
 
-#: fe-secure.c:791
+#: fe-secure.c:793
 #, c-format
 msgid "could not read private key file \"%s\": %s\n"
 msgstr "konnte private Schlüsseldatei »%s« nicht lesen: %s\n"
 
-#: fe-secure.c:809
+#: fe-secure.c:811
 #, c-format
 msgid "certificate does not match private key file \"%s\": %s\n"
 msgstr "Zertifikat passt nicht zur privaten Schlüsseldatei »%s«: %s\n"
 
-#: fe-secure.c:940
+#: fe-secure.c:942
 #, c-format
 msgid "could not create SSL context: %s\n"
 msgstr "konnte SSL-Kontext nicht erzeugen: %s\n"
 
-#: fe-secure.c:1028
+#: fe-secure.c:1030
 msgid "could not get home directory to locate root certificate file"
 msgstr ""
 "konnte Home-Verzeichnis nicht ermitteln, um Root-Zertifikat-Datei zu finden"
 
-#: fe-secure.c:1052
+#: fe-secure.c:1054
 #, c-format
 msgid "could not read root certificate file \"%s\": %s\n"
 msgstr "konnte Root-Zertifikat-Datei »%s« nicht lesen: %s\n"
 
-#: fe-secure.c:1077
+#: fe-secure.c:1079
 #, c-format
 msgid "SSL library does not support CRL certificates (file \"%s\")\n"
 msgstr "SSL-Bibliothek unterstützt keine CRL-Zertifikate (Datei »%s«)\n"
 
-#: fe-secure.c:1093
+#: fe-secure.c:1095
 #, c-format
 msgid ""
 "root certificate file \"%s\" does not exist\n"
@@ -776,20 +773,20 @@ msgstr ""
 "Legen Sie entweder die Datei an oder ändern Sie sslmode, um die Überprüfung "
 "der Serverzertifikate abzuschalten.\n"
 
-#: fe-secure.c:1190
+#: fe-secure.c:1192
 #, c-format
 msgid "certificate could not be obtained: %s\n"
 msgstr "Zertifikat konnte nicht ermittelt werden: %s\n"
 
-#: fe-secure.c:1218
+#: fe-secure.c:1220
 msgid "SSL certificate's common name contains embedded null\n"
 msgstr "Common-Name im SSL-Zertifikat enthält Null-Byte\n"
 
-#: fe-secure.c:1292
+#: fe-secure.c:1294
 msgid "no SSL error reported"
 msgstr "kein SSL-Fehler berichtet"
 
-#: fe-secure.c:1301
+#: fe-secure.c:1303
 #, c-format
 msgid "SSL error code %lu"
 msgstr "SSL-Fehlercode %lu"

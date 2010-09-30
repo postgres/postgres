@@ -1,0 +1,291 @@
+# 2004-12-13 Zhenbang Wei <forth@zbwei.net>
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PostgreSQL 8.4\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
+"POT-Creation-Date: 2010-09-09 16:27+0000\n"
+"PO-Revision-Date: 2010-09-24 17:05-0400\n"
+"Last-Translator: EnterpriseDB translation team <dev-escalations@enterprisedb.com>\n"
+"Language-Team: EnterpriseDB translation team <dev-escalations@enterprisedb.com>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+#: pg_config.c:243 pg_config.c:259 pg_config.c:275 pg_config.c:291
+#: pg_config.c:307 pg_config.c:323 pg_config.c:339 pg_config.c:355
+#, c-format
+msgid "not recorded\n"
+msgstr "未記錄\n"
+
+#: pg_config.c:411
+#, c-format
+msgid ""
+"\n"
+"%s provides information about the installed version of PostgreSQL.\n"
+"\n"
+msgstr ""
+"\n"
+"%s 顯示已安裝的PostgreSQL資訊。\n"
+"\n"
+
+#: pg_config.c:412
+#, c-format
+msgid "Usage:\n"
+msgstr "使用方法：\n"
+
+#: pg_config.c:413
+#, c-format
+msgid ""
+"  %s [OPTION]...\n"
+"\n"
+msgstr ""
+"  %s [OPTION]...\n"
+"\n"
+
+#: pg_config.c:414
+#, c-format
+msgid "Options:\n"
+msgstr "選項：\n"
+
+#: pg_config.c:415
+#, c-format
+msgid "  --bindir              show location of user executables\n"
+msgstr "  --bindir              顯示執行檔位置\n"
+
+#: pg_config.c:416
+#, c-format
+msgid "  --docdir              show location of documentation files\n"
+msgstr "  --docdir              顯示文件檔位置\n"
+
+#: pg_config.c:417
+#, c-format
+msgid "  --htmldir             show location of HTML documentation files\n"
+msgstr "  --htmldir             顯示 HTML 文件檔位置\n"
+
+#: pg_config.c:418
+#, c-format
+msgid ""
+"  --includedir          show location of C header files of the client\n"
+"                        interfaces\n"
+msgstr "  --includedir          顯使用戶端介面C標頭檔位置\n"
+
+#: pg_config.c:420
+#, c-format
+msgid "  --pkgincludedir       show location of other C header files\n"
+msgstr "  --pkgincludedir       顯示其他 C 標頭檔位置\n"
+
+#: pg_config.c:421
+#, c-format
+msgid ""
+"  --includedir-server   show location of C header files for the server\n"
+msgstr "  --includedir-server   顯示伺服器C標頭檔位置\n"
+
+#: pg_config.c:422
+#, c-format
+msgid "  --libdir              show location of object code libraries\n"
+msgstr "  --libdir              顯示程式庫位置\n"
+
+#: pg_config.c:423
+#, c-format
+msgid "  --pkglibdir           show location of dynamically loadable modules\n"
+msgstr "  --pkglibdir           顯示可動態載入模組位置\n"
+
+#: pg_config.c:424
+#, c-format
+msgid "  --localedir           show location of locale support files\n"
+msgstr "  --localedir           顯示區域支援檔位置\n"
+
+#: pg_config.c:425
+#, c-format
+msgid "  --mandir              show location of manual pages\n"
+msgstr "  --mandir              顯示手冊頁面位置\n"
+
+#: pg_config.c:426
+#, c-format
+msgid ""
+"  --sharedir            show location of architecture-independent support "
+"files\n"
+msgstr "  --sharedir            顯示與架構無關的支援檔位置\n"
+
+#: pg_config.c:427
+#, c-format
+msgid ""
+"  --sysconfdir          show location of system-wide configuration files\n"
+msgstr "  --sysconfdir          顯示系統層級設定檔位置\n"
+
+#: pg_config.c:428
+#, c-format
+msgid "  --pgxs                show location of extension makefile\n"
+msgstr "  --pgxs                顯示外掛程式makefile位置\n"
+
+#: pg_config.c:429
+#, c-format
+msgid ""
+"  --configure           show options given to \"configure\" script when\n"
+"                        PostgreSQL was built\n"
+msgstr ""
+"  --configure           顯示編譯PostgreSQL時'configure'命令搞\n"
+"                        所使用的參數\n"
+
+#: pg_config.c:431
+#, c-format
+msgid "  --cc                  show CC value used when PostgreSQL was built\n"
+msgstr "  --cc                  顯示建立 PostgreSQL 時使用的 CC 值\n"
+
+#: pg_config.c:432
+#, c-format
+msgid ""
+"  --cppflags            show CPPFLAGS value used when PostgreSQL was built\n"
+msgstr "  --cppflags            顯示建立 PostgreSQL 時使用的 CPPFLAGS 值\n"
+
+#: pg_config.c:433
+#, c-format
+msgid ""
+"  --cflags              show CFLAGS value used when PostgreSQL was built\n"
+msgstr "  --cflags              顯示建立 PostgreSQL 時使用的 CFLAGS 值\n"
+
+#: pg_config.c:434
+#, c-format
+msgid ""
+"  --cflags_sl           show CFLAGS_SL value used when PostgreSQL was built\n"
+msgstr "  --cflags_sl           顯示建立 PostgreSQL 時使用的 CFLAGS_SL 值\n"
+
+#: pg_config.c:435
+#, c-format
+msgid ""
+"  --ldflags             show LDFLAGS value used when PostgreSQL was built\n"
+msgstr "  --ldflags             顯示建立 PostgreSQL 時使用的 LDFLAGS 值\n"
+
+#: pg_config.c:436
+#, c-format
+msgid ""
+"  --ldflags_sl          show LDFLAGS_SL value used when PostgreSQL was "
+"built\n"
+msgstr "  --ldflags_sl          顯示建立 PostgreSQL 時使用的 LDFLAGS_SL 值\n"
+
+#: pg_config.c:437
+#, c-format
+msgid ""
+"  --libs                show LIBS value used when PostgreSQL was built\n"
+msgstr "  --libs                顯示建立 PostgreSQL 時使用的 LIBS 值\n"
+
+#: pg_config.c:438
+#, c-format
+msgid "  --version             show the PostgreSQL version\n"
+msgstr "  --version             顯示 PostgreSQL 版本\n"
+
+#: pg_config.c:439
+#, c-format
+msgid "  --help                show this help, then exit\n"
+msgstr "  --help                顯示本說明，然後結束\n"
+
+#: pg_config.c:440
+#, c-format
+msgid ""
+"\n"
+"With no arguments, all known items are shown.\n"
+"\n"
+msgstr ""
+"\n"
+"已顯示所有已知項目 (不含參數)。\n"
+"\n"
+
+#: pg_config.c:441
+#, c-format
+msgid "Report bugs to <pgsql-bugs@postgresql.org>.\n"
+msgstr "回報錯誤至<pgsql-bugs@postgresql.org>。\n"
+
+# postmaster/postmaster.c:512 postmaster/postmaster.c:525
+#: pg_config.c:447
+#, c-format
+msgid "Try \"%s --help\" for more information.\n"
+msgstr "執行\"%s --help\"顯示更多資訊。\n"
+
+#: pg_config.c:486
+#, c-format
+msgid "%s: could not find own program executable\n"
+msgstr "%s：找不到程式執行檔\n"
+
+#: pg_config.c:509
+#, c-format
+msgid "%s: invalid argument: %s\n"
+msgstr "%s：無效的參數：%s\n"
+
+#: ../../port/exec.c:195 ../../port/exec.c:309 ../../port/exec.c:352
+#, c-format
+msgid "could not identify current directory: %s"
+msgstr "無法識別目前的目錄：%s"
+
+# command.c:122
+#: ../../port/exec.c:214
+#, c-format
+msgid "invalid binary \"%s\""
+msgstr "無效的二進制碼 \"%s\""
+
+# command.c:1103
+#: ../../port/exec.c:263
+#, c-format
+msgid "could not read binary \"%s\""
+msgstr "無法讀取二進制碼 \"%s\""
+
+#: ../../port/exec.c:270
+#, c-format
+msgid "could not find a \"%s\" to execute"
+msgstr "未能找到一個 \"%s\" 來執行"
+
+#: ../../port/exec.c:325 ../../port/exec.c:361
+#, c-format
+msgid "could not change directory to \"%s\""
+msgstr "無法切換目錄至\"%s\""
+
+#: ../../port/exec.c:340
+#, c-format
+msgid "could not read symbolic link \"%s\""
+msgstr "無法讀取符號連結\"%s\""
+
+#: ../../port/exec.c:586
+#, c-format
+msgid "child process exited with exit code %d"
+msgstr "子行程結束，結束代碼 %d"
+
+#: ../../port/exec.c:590
+#, c-format
+msgid "child process was terminated by exception 0x%X"
+msgstr "子進程被例外(exception) 0x%X 終止"
+
+#: ../../port/exec.c:599
+#, c-format
+msgid "child process was terminated by signal %s"
+msgstr "子進程被信號 %s 終止"
+
+#: ../../port/exec.c:602
+#, c-format
+msgid "child process was terminated by signal %d"
+msgstr "子行程被信號 %d 結束"
+
+#: ../../port/exec.c:606
+#, c-format
+msgid "child process exited with unrecognized status %d"
+msgstr "子行程結束，不明狀態代碼 %d"
+
+#~ msgid ""
+#~ "  %s OPTION...\n"
+#~ "\n"
+#~ msgstr ""
+#~ "  %s 選項...\n"
+#~ "\n"
+
+#~ msgid ""
+#~ "\n"
+#~ "Try \"%s --help\" for more information\n"
+#~ msgstr ""
+#~ "\n"
+#~ "執行\"%s --help\"取得更多資訊\n"
+
+#~ msgid "%s: argument required\n"
+#~ msgstr "%s：不能省略參數\n"
+
+#~ msgid "%s: could not find own executable\n"
+#~ msgstr "%s：找不到執行檔\n"

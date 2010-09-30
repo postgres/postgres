@@ -7,26 +7,26 @@
 # Alvaro Herrera <alvherre@alvh.no-ip.org>, 2009
 #
 # pgtranslation Id$
-# $PostgreSQL: pgsql/src/pl/tcl/po/es.po,v 1.2.2.1 2010/05/13 10:50:20 petere Exp $
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: pltcl (PostgreSQL 8.4)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2009-04-01 11:24+0000\n"
-"PO-Revision-Date: 2010-02-02 15:57-0300\n"
+"POT-Creation-Date: 2010-09-24 19:00+0000\n"
+"PO-Revision-Date: 2010-09-24 18:08-0400\n"
 "Last-Translator: Emanuel Calvo Franco <postgres.arg@gmail.com>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@postgresql.org>\n"
+"Language: \n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: pltcl.c:1027
+#: pltcl.c:1076
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: pltcl.c:1028
+#: pltcl.c:1077
 #, c-format
 msgid ""
 "%s\n"
@@ -35,24 +35,24 @@ msgstr ""
 "%s\n"
 "en función PL/Tcl \"%s\""
 
-#: pltcl.c:1127
+#: pltcl.c:1176
 msgid "out of memory"
 msgstr "memoria agotada"
 
-#: pltcl.c:1192
+#: pltcl.c:1238
 msgid "trigger functions can only be called as triggers"
 msgstr "las funciones disparadoras sólo pueden ser invocadas como disparadores"
 
-#: pltcl.c:1201
+#: pltcl.c:1247
 #, c-format
 msgid "PL/Tcl functions cannot return type %s"
 msgstr "las funciones PL/Tcl no pueden retornar tipo %s"
 
-#: pltcl.c:1213
+#: pltcl.c:1259
 msgid "PL/Tcl functions cannot return composite types"
 msgstr "las funciones PL/Tcl no pueden retornar tipos compuestos"
 
-#: pltcl.c:1253
+#: pltcl.c:1299
 #, c-format
 msgid "PL/Tcl functions cannot accept type %s"
 msgstr "las funciones PL/Tcl no pueden aceptar el tipog%s"

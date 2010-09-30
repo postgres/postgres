@@ -1,7 +1,7 @@
 # translation of pg_dump.po to fr_fr
 # french message translation file for pg_dump
 #
-# $PostgreSQL: pgsql/src/bin/pg_dump/po/fr.po,v 1.18.2.3 2010/05/13 10:50:03 petere Exp $
+# $PostgreSQL$
 #
 # Use these quotes: « %s »
 #
@@ -11,8 +11,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.4\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2010-02-14 19:59+0000\n"
-"PO-Revision-Date: 2010-02-15 21:03+0100\n"
+"POT-Creation-Date: 2010-06-29 05:56+0000\n"
+"PO-Revision-Date: 2010-06-29 23:24+0100\n"
 "Last-Translator: Guillaume Lelarge <guillaume@lelarge.info>\n"
 "Language-Team: PostgreSQLfr <pgsql-fr-generale@postgresql.org>\n"
 "MIME-Version: 1.0\n"
@@ -213,8 +213,8 @@ msgstr ""
 #, c-format
 msgid "  -c, --clean                 clean (drop) database objects before recreating\n"
 msgstr ""
-"  -c, --clean               nettoie/supprime les bases de données avant de\n"
-"                            les créer\n"
+"  -c, --clean               nettoie/supprime les objets des bases de données\n"
+"                            avant de les créer\n"
 
 #: pg_dump.c:807
 #, c-format
@@ -920,16 +920,16 @@ msgstr "ne peut pas dupliquer un pointeur nul\n"
 #: pg_backup_archiver.c:1194
 #: pg_backup_archiver.c:1254
 #: pg_backup_archiver.c:1662
-#: pg_backup_archiver.c:1814
-#: pg_backup_archiver.c:1855
-#: pg_backup_archiver.c:3891
+#: pg_backup_archiver.c:1819
+#: pg_backup_archiver.c:1860
+#: pg_backup_archiver.c:3910
 #: pg_backup_custom.c:144
 #: pg_backup_custom.c:149
 #: pg_backup_custom.c:155
 #: pg_backup_custom.c:170
-#: pg_backup_custom.c:555
-#: pg_backup_custom.c:1076
-#: pg_backup_custom.c:1085
+#: pg_backup_custom.c:570
+#: pg_backup_custom.c:1113
+#: pg_backup_custom.c:1122
 #: pg_backup_db.c:152
 #: pg_backup_db.c:186
 #: pg_backup_db.c:230
@@ -1113,9 +1113,9 @@ msgstr "n'a pas pu écrire le « Large Object » (résultat : %lu, attendu : %lu)\n"
 
 #: pg_backup_archiver.c:1302
 #: pg_backup_archiver.c:1325
-#: pg_backup_custom.c:766
-#: pg_backup_custom.c:998
-#: pg_backup_custom.c:1012
+#: pg_backup_custom.c:781
+#: pg_backup_custom.c:1035
+#: pg_backup_custom.c:1049
 #: pg_backup_files.c:432
 #: pg_backup_tar.c:587
 #: pg_backup_tar.c:1090
@@ -1155,8 +1155,8 @@ msgid "file offset in dump file is too large\n"
 msgstr "le décalage dans le fichier de sauvegarde est trop important\n"
 
 #: pg_backup_archiver.c:1665
-#: pg_backup_archiver.c:2917
-#: pg_backup_custom.c:742
+#: pg_backup_archiver.c:2927
+#: pg_backup_custom.c:757
 #: pg_backup_files.c:419
 #: pg_backup_tar.c:786
 msgid "unexpected end of file\n"
@@ -1168,7 +1168,7 @@ msgstr "tentative d'identification du format de l'archive\n"
 
 #: pg_backup_archiver.c:1698
 #: pg_backup_custom.c:200
-#: pg_backup_custom.c:872
+#: pg_backup_custom.c:888
 #: pg_backup_files.c:155
 #: pg_backup_files.c:307
 #, c-format
@@ -1192,198 +1192,198 @@ msgstr "n'a pas pu lire le fichier en entrée : %s\n"
 msgid "input file is too short (read %lu, expected 5)\n"
 msgstr "le fichier en entrée est trop petit (%lu lus, 5 attendus)\n"
 
-#: pg_backup_archiver.c:1769
+#: pg_backup_archiver.c:1774
 msgid "input file does not appear to be a valid archive (too short?)\n"
 msgstr "le fichier en entrée ne semble pas être une archive valide (trop petit ?)\n"
 
-#: pg_backup_archiver.c:1772
+#: pg_backup_archiver.c:1777
 msgid "input file does not appear to be a valid archive\n"
 msgstr "le fichier en entrée ne semble pas être une archive valide\n"
 
-#: pg_backup_archiver.c:1792
+#: pg_backup_archiver.c:1797
 #, c-format
 msgid "could not close input file: %s\n"
 msgstr "n'a pas pu fermer le fichier en entrée : %s\n"
 
-#: pg_backup_archiver.c:1809
+#: pg_backup_archiver.c:1814
 #, c-format
 msgid "allocating AH for %s, format %d\n"
 msgstr "allocation d'AH pour %s, format %d\n"
 
-#: pg_backup_archiver.c:1912
+#: pg_backup_archiver.c:1917
 #, c-format
 msgid "unrecognized file format \"%d\"\n"
 msgstr "format de fichier « %d » non reconnu\n"
 
-#: pg_backup_archiver.c:2034
+#: pg_backup_archiver.c:2039
 #, c-format
 msgid "entry ID %d out of range -- perhaps a corrupt TOC\n"
 msgstr "ID %d de l'entrée en dehors de la plage -- peut-être un TOC corrompu\n"
 
-#: pg_backup_archiver.c:2148
+#: pg_backup_archiver.c:2153
 #, c-format
 msgid "read TOC entry %d (ID %d) for %s %s\n"
 msgstr "lecture de l'entrée %d de la TOC (ID %d) pour %s %s\n"
 
-#: pg_backup_archiver.c:2182
+#: pg_backup_archiver.c:2187
 #, c-format
 msgid "unrecognized encoding \"%s\"\n"
 msgstr "encodage « %s » non reconnu\n"
 
-#: pg_backup_archiver.c:2187
+#: pg_backup_archiver.c:2192
 #, c-format
 msgid "invalid ENCODING item: %s\n"
 msgstr "élément ENCODING invalide : %s\n"
 
-#: pg_backup_archiver.c:2205
+#: pg_backup_archiver.c:2210
 #, c-format
 msgid "invalid STDSTRINGS item: %s\n"
 msgstr "élément STDSTRINGS invalide : %s\n"
 
-#: pg_backup_archiver.c:2373
+#: pg_backup_archiver.c:2378
 #, c-format
 msgid "could not set session user to \"%s\": %s"
 msgstr "n'a pas pu initialiser la session utilisateur à « %s »: %s"
 
-#: pg_backup_archiver.c:2704
-#: pg_backup_archiver.c:2853
+#: pg_backup_archiver.c:2709
+#: pg_backup_archiver.c:2858
 #, c-format
 msgid "WARNING: don't know how to set owner for object type %s\n"
 msgstr "ATTENTION : ne sait pas comment initialiser le propriétaire du type d'objet %s\n"
 
-#: pg_backup_archiver.c:2885
+#: pg_backup_archiver.c:2890
 msgid "WARNING: requested compression not available in this installation -- archive will be uncompressed\n"
 msgstr ""
 "ATTENTION : la compression requise n'est pas disponible avec cette\n"
 "installation -- l'archive ne sera pas compressée\n"
 
-#: pg_backup_archiver.c:2920
+#: pg_backup_archiver.c:2930
 msgid "did not find magic string in file header\n"
 msgstr "n'a pas trouver la chaîne magique dans le fichier d'en-tête\n"
 
-#: pg_backup_archiver.c:2934
+#: pg_backup_archiver.c:2943
 #, c-format
 msgid "unsupported version (%d.%d) in file header\n"
 msgstr "version non supportée (%d.%d) dans le fichier d'en-tête\n"
 
-#: pg_backup_archiver.c:2939
+#: pg_backup_archiver.c:2948
 #, c-format
 msgid "sanity check on integer size (%lu) failed\n"
 msgstr "échec de la vérification sur la taille de l'entier (%lu)\n"
 
-#: pg_backup_archiver.c:2943
+#: pg_backup_archiver.c:2952
 msgid "WARNING: archive was made on a machine with larger integers, some operations might fail\n"
 msgstr ""
 "ATTENTION : l'archive a été créée sur une machine disposant d'entiers plus\n"
 "larges, certaines opérations peuvent échouer\n"
 
-#: pg_backup_archiver.c:2953
+#: pg_backup_archiver.c:2962
 #, c-format
 msgid "expected format (%d) differs from format found in file (%d)\n"
 msgstr "le format attendu (%d) diffère du format du fichier (%d)\n"
 
-#: pg_backup_archiver.c:2969
+#: pg_backup_archiver.c:2978
 msgid "WARNING: archive is compressed, but this installation does not support compression -- no data will be available\n"
 msgstr ""
 "ATTENTION : l'archive est compressée mais cette installation ne supporte\n"
 "pas la compression -- aucune donnée ne sera disponible\n"
 
-#: pg_backup_archiver.c:2987
+#: pg_backup_archiver.c:2996
 msgid "WARNING: invalid creation date in header\n"
 msgstr "ATTENTION : date de création invalide dans l'en-tête\n"
 
-#: pg_backup_archiver.c:3074
+#: pg_backup_archiver.c:3093
 msgid "entering restore_toc_entries_parallel\n"
 msgstr "entrée dans restore_toc_entries_parallel\n"
 
-#: pg_backup_archiver.c:3078
+#: pg_backup_archiver.c:3097
 msgid "parallel restore is not supported with this archive file format\n"
 msgstr ""
 "la restauration parallèle n'est pas supportée avec ce format de fichier\n"
 "d'archive\n"
 
-#: pg_backup_archiver.c:3082
+#: pg_backup_archiver.c:3101
 msgid "parallel restore is not supported with archives made by pre-8.0 pg_dump\n"
 msgstr ""
 "la restauration parallèle n'est pas supportée avec les archives réalisées\n"
 "par un pg_dump antérieur à la 8.0 d'archive\n"
 
-#: pg_backup_archiver.c:3102
+#: pg_backup_archiver.c:3121
 #, c-format
 msgid "processing item %d %s %s\n"
 msgstr "traitement de l'élément %d %s %s\n"
 
-#: pg_backup_archiver.c:3139
+#: pg_backup_archiver.c:3158
 msgid "entering main parallel loop\n"
 msgstr "entrée dans la boucle parallèle principale\n"
 
-#: pg_backup_archiver.c:3153
+#: pg_backup_archiver.c:3172
 #, c-format
 msgid "skipping item %d %s %s\n"
 msgstr "omission de l'élément %d %s %s\n"
 
-#: pg_backup_archiver.c:3169
+#: pg_backup_archiver.c:3188
 #, c-format
 msgid "launching item %d %s %s\n"
 msgstr "élément de lancement %d %s %s\n"
 
-#: pg_backup_archiver.c:3205
+#: pg_backup_archiver.c:3224
 #, c-format
 msgid "worker process crashed: status %d\n"
 msgstr "crash du processus worker : statut %d\n"
 
-#: pg_backup_archiver.c:3210
+#: pg_backup_archiver.c:3229
 msgid "finished main parallel loop\n"
 msgstr "fin de la boucle parallèle principale\n"
 
-#: pg_backup_archiver.c:3230
+#: pg_backup_archiver.c:3249
 #, c-format
 msgid "processing missed item %d %s %s\n"
 msgstr "traitement de l'élément manquant %d %s %s\n"
 
-#: pg_backup_archiver.c:3257
+#: pg_backup_archiver.c:3276
 msgid "parallel_restore should not return\n"
 msgstr "parallel_restore ne devrait pas retourner\n"
 
-#: pg_backup_archiver.c:3263
+#: pg_backup_archiver.c:3282
 #, c-format
 msgid "could not create worker process: %s\n"
 msgstr "n'a pas pu créer le processus de travail : %s\n"
 
-#: pg_backup_archiver.c:3271
+#: pg_backup_archiver.c:3290
 #, c-format
 msgid "could not create worker thread: %s\n"
 msgstr "n'a pas pu créer le fil de travail: %s\n"
 
-#: pg_backup_archiver.c:3477
+#: pg_backup_archiver.c:3496
 msgid "no item ready\n"
 msgstr "aucun élément prêt\n"
 
-#: pg_backup_archiver.c:3571
+#: pg_backup_archiver.c:3590
 msgid "could not find slot of finished worker\n"
 msgstr "n'a pas pu trouver l'emplacement du worker qui vient de terminer\n"
 
-#: pg_backup_archiver.c:3573
+#: pg_backup_archiver.c:3592
 #, c-format
 msgid "finished item %d %s %s\n"
 msgstr "élément terminé %d %s %s\n"
 
-#: pg_backup_archiver.c:3586
+#: pg_backup_archiver.c:3605
 #, c-format
 msgid "worker process failed: exit code %d\n"
 msgstr "échec du processus de travail : code de sortie %d\n"
 
-#: pg_backup_archiver.c:3735
+#: pg_backup_archiver.c:3754
 #, c-format
 msgid "transferring dependency %d -> %d to %d\n"
 msgstr "transfert de la dépendance %d -> %d vers %d\n"
 
-#: pg_backup_archiver.c:3808
+#: pg_backup_archiver.c:3827
 #, c-format
 msgid "reducing dependencies for %d\n"
 msgstr "réduction des dépendances pour %d\n"
 
-#: pg_backup_archiver.c:3857
+#: pg_backup_archiver.c:3876
 #, c-format
 msgid "table \"%s\" could not be created, will not restore its data\n"
 msgstr "la table « %s » n'a pas pu être créée, ses données ne seront pas restaurées\n"
@@ -1397,105 +1397,124 @@ msgstr "programme d'archivage personnalisé"
 msgid "invalid OID for large object\n"
 msgstr "OID invalide pour le « Large Object »\n"
 
-#: pg_backup_custom.c:461
-msgid "dumping a specific TOC data block out of order is not supported without ID on this input stream (fseek required)\n"
-msgstr ""
-"la sauvegarde d'un bloc de données spécifique du TOC dans le désordre n'est\n"
-"pas supporté sans identifiant sur ce flux d'entrée (fseek requis)\n"
-
-#: pg_backup_custom.c:476
+#: pg_backup_custom.c:471
 #, c-format
 msgid "unrecognized data block type (%d) while searching archive\n"
 msgstr ""
 "type de bloc de données non reconnu (%d) lors de la recherche dans\n"
 "l'archive\n"
 
-#: pg_backup_custom.c:487
+#: pg_backup_custom.c:482
 #, c-format
 msgid "error during file seek: %s\n"
 msgstr "erreur lors du parcours du fichier : %s\n"
 
-#: pg_backup_custom.c:494
+#: pg_backup_custom.c:492
+#, c-format
+msgid "could not find block ID %d in archive -- possibly due to out-of-order restore request, which cannot be handled due to lack of data offsets in archive\n"
+msgstr ""
+"n'a pas pu trouver l'identifiant de bloc %d dans l'archive -\n"
+"il est possible que cela soit dû à une demande de restauration dans un ordre\n"
+"différent, qui n'a pas pu être géré à cause d'un manque d'information de\n"
+"position dans l'archive\n"
+
+#: pg_backup_custom.c:497
+#, c-format
+msgid "could not find block ID %d in archive -- possibly due to out-of-order restore request, which cannot be handled due to non-seekable input file\n"
+msgstr ""
+"n'a pas pu trouver l'identifiant de bloc %d dans l'archive -\n"
+"il est possible que cela soit dû à une demande de restauration dans un ordre\n"
+"différent, ce qui ne peut pas être géré à cause d'un fichier non gérable en\n"
+"recherche\n"
+
+#: pg_backup_custom.c:502
+#, c-format
+msgid "could not find block ID %d in archive -- possibly corrupt archive\n"
+msgstr ""
+"n'a pas pu trouver l'identifiant de bloc %d dans l'archive -\n"
+"possible corruption de l'archive\n"
+
+#: pg_backup_custom.c:509
 #, c-format
 msgid "found unexpected block ID (%d) when reading data -- expected %d\n"
 msgstr "ID de bloc inattendu (%d) lors de la lecture des données -- %d attendu\n"
 
-#: pg_backup_custom.c:508
+#: pg_backup_custom.c:523
 #, c-format
 msgid "unrecognized data block type %d while restoring archive\n"
 msgstr "type de bloc de données %d non reconnu lors de la restauration de l'archive\n"
 
-#: pg_backup_custom.c:542
-#: pg_backup_custom.c:948
+#: pg_backup_custom.c:557
+#: pg_backup_custom.c:985
 #, c-format
 msgid "could not initialize compression library: %s\n"
 msgstr "n'a pas pu initialiser la bibliothèque de compression : %s\n"
 
-#: pg_backup_custom.c:566
-#: pg_backup_custom.c:690
+#: pg_backup_custom.c:581
+#: pg_backup_custom.c:705
 msgid "could not read from input file: end of file\n"
 msgstr "n'a pas pu lire à partir du fichier en entrée : fin du fichier\n"
 
-#: pg_backup_custom.c:569
-#: pg_backup_custom.c:693
+#: pg_backup_custom.c:584
+#: pg_backup_custom.c:708
 #, c-format
 msgid "could not read from input file: %s\n"
 msgstr "n'a pas pu lire à partir du fichier en entrée : %s\n"
 
-#: pg_backup_custom.c:586
-#: pg_backup_custom.c:613
+#: pg_backup_custom.c:601
+#: pg_backup_custom.c:628
 #, c-format
 msgid "could not uncompress data: %s\n"
 msgstr "n'a pas pu décompresser les données : %s\n"
 
-#: pg_backup_custom.c:619
+#: pg_backup_custom.c:634
 #, c-format
 msgid "could not close compression library: %s\n"
 msgstr "n'a pas pu fermer la bibliothèque de compression : %s\n"
 
-#: pg_backup_custom.c:721
+#: pg_backup_custom.c:736
 #, c-format
 msgid "could not write byte: %s\n"
 msgstr "n'a pas pu écrire un octet : %s\n"
 
-#: pg_backup_custom.c:833
-#: pg_backup_custom.c:866
+#: pg_backup_custom.c:849
+#: pg_backup_custom.c:882
 #, c-format
 msgid "could not close archive file: %s\n"
 msgstr "n'a pas pu fermer le fichier d'archive : %s\n"
 
-#: pg_backup_custom.c:852
+#: pg_backup_custom.c:868
 msgid "can only reopen input archives\n"
 msgstr "peut seulement rouvrir l'archive en entrée\n"
 
-#: pg_backup_custom.c:854
+#: pg_backup_custom.c:870
 msgid "cannot reopen stdin\n"
 msgstr "ne peut pas rouvrir stdin\n"
 
-#: pg_backup_custom.c:856
+#: pg_backup_custom.c:872
 msgid "cannot reopen non-seekable file\n"
 msgstr "ne peut pas rouvrir le fichier non cherchable\n"
 
-#: pg_backup_custom.c:861
+#: pg_backup_custom.c:877
 #, c-format
 msgid "could not determine seek position in archive file: %s\n"
 msgstr "n'a pas pu déterminer la position de recherche dans le fichier d'archive : %s\n"
 
-#: pg_backup_custom.c:876
+#: pg_backup_custom.c:892
 #, c-format
 msgid "could not set seek position in archive file: %s\n"
 msgstr "n'a pas pu initialiser la recherche de position dans le fichier d'archive : %s\n"
 
-#: pg_backup_custom.c:898
+#: pg_backup_custom.c:914
 msgid "WARNING: ftell mismatch with expected position -- ftell used\n"
 msgstr "ATTENTION : ftell ne correspond pas à la position attendue -- ftell utilisé\n"
 
-#: pg_backup_custom.c:979
+#: pg_backup_custom.c:1016
 #, c-format
 msgid "could not compress data: %s\n"
 msgstr "n'a pas pu compresser les données : %s\n"
 
-#: pg_backup_custom.c:1057
+#: pg_backup_custom.c:1094
 #, c-format
 msgid "could not close compression stream: %s\n"
 msgstr "n'a pas pu fermer le flux de compression : %s\n"
@@ -2303,6 +2322,13 @@ msgstr "le processus fils a été terminé par le signal %d"
 msgid "child process exited with unrecognized status %d"
 msgstr "le processus fils a quitté avec un statut %d non reconnu"
 
+#~ msgid ""
+#~ "dumping a specific TOC data block out of order is not supported without "
+#~ "ID on this input stream (fseek required)\n"
+#~ msgstr ""
+#~ "la sauvegarde d'un bloc de données spécifique du TOC dans le désordre "
+#~ "n'est\n"
+#~ "pas supporté sans identifiant sur ce flux d'entrée (fseek requis)\n"
 #~ msgid "query returned %d rows instead of one: %s\n"
 #~ msgstr "la requête a renvoyé %d lignes au lieu d'une seule : %s\n"
 #~ msgid "read %lu byte into lookahead buffer\n"

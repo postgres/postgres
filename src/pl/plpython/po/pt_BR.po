@@ -1,16 +1,17 @@
 # Brazilian Portuguese message translation file for plpython
 # Copyright (C) 2009 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
-# Euler Taveira de Oliveira <euler@timbira.com>, 2009.
+# Euler Taveira de Oliveira <euler@timbira.com>, 2009-2010.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.4\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2010-05-09 11:41-0300\n"
+"POT-Creation-Date: 2010-09-08 23:53-0300\n"
 "PO-Revision-Date: 2009-05-10 01:15-0300\n"
 "Last-Translator: Euler Taveira de Oliveira <euler@timbira.com>\n"
 "Language-Team: Brazilian Portuguese <pgbr-dev@listas.postgresql.org.br>\n"
+"Language: pt_BR\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -88,7 +89,8 @@ msgstr "objeto retornado não pode ser iterado"
 
 #: plpython.c:852
 msgid "PL/Python set-returning functions must return an iterable object."
-msgstr "funções PL/Python que retornam conjunto devem retornar um objeto iterável."
+msgstr ""
+"funções PL/Python que retornam conjunto devem retornar um objeto iterável."
 
 #: plpython.c:880
 msgid "error fetching next item from iterator"
@@ -129,171 +131,181 @@ msgstr ""
 "PyDict_SetItemString() falhou para função PL/Python \"%s\" ao definir "
 "argumentos"
 
-#: plpython.c:1246
+#: plpython.c:1139
+msgid "PyCObject_AsVoidPtr() failed"
+msgstr "PyCObject_AsVoidPtr() falhou"
+
+#: plpython.c:1248
 msgid "trigger functions can only be called as triggers"
 msgstr "funções de gatilho só podem ser chamadas como gatilhos"
 
-#: plpython.c:1250
+#: plpython.c:1252
 #, c-format
 msgid "PL/Python functions cannot return type %s"
 msgstr "funções PL/Python não podem retornar tipo %s"
 
-#: plpython.c:1329
+#: plpython.c:1331
 #, c-format
 msgid "PL/Python functions cannot accept type %s"
 msgstr "funções PL/Python não podem aceitar tipo %s"
 
-#: plpython.c:1423
+#: plpython.c:1370
+msgid "PyCObject_FromVoidPtr() failed"
+msgstr "PyCObject_FromVoidPtr() falhou"
+
+#: plpython.c:1428
 #, c-format
 msgid "could not compile PL/Python function \"%s\""
 msgstr "não pôde compilar função PL/Python \"%s\""
 
-#: plpython.c:1735
+#: plpython.c:1740
 msgid "could not create new dictionary"
 msgstr "não pôde criar novo dicionário"
 
-#: plpython.c:1822 plpython.c:1911 plpython.c:1982
+#: plpython.c:1827 plpython.c:1916 plpython.c:1987
 msgid "could not compute string representation of Python object"
 msgstr ""
 "não pôde computar representação de uma cadeia de caracteres de um objeto "
 "Python"
 
-#: plpython.c:1836
+#: plpython.c:1841
 #, c-format
 msgid "key \"%s\" not found in mapping"
 msgstr "chave \"%s\" não foi encontrada no mapeamento"
 
-#: plpython.c:1837
+#: plpython.c:1842
 msgid ""
 "To return null in a column, add the value None to the mapping with the key "
 "named after the column."
 msgstr ""
-"Para retornar nulo em uma coluna, adicionar o valor None no mapeamento cuja chave é o nome da coluna."
+"Para retornar nulo em uma coluna, adicionar o valor None no mapeamento cuja "
+"chave é o nome da coluna."
 
-#: plpython.c:1881
+#: plpython.c:1886
 msgid "length of returned sequence did not match number of columns in row"
 msgstr ""
 "tamanho da sequência retornada não combina com número de colunas no registro"
 
-#: plpython.c:1995
+#: plpython.c:2000
 #, c-format
 msgid "attribute \"%s\" does not exist in Python object"
 msgstr "atributo \"%s\" não existe no objeto Python"
 
-#: plpython.c:1996
+#: plpython.c:2001
 msgid ""
 "To return null in a column, let the returned object have an attribute named "
 "after column with value None."
 msgstr ""
-"Para retornar nulo na coluna, deixe o objeto retornado ter um atributo cuja chave é o nome do coluna e o valor é None."
+"Para retornar nulo na coluna, deixe o objeto retornado ter um atributo cuja "
+"chave é o nome do coluna e o valor é None."
 
-#: plpython.c:2218
+#: plpython.c:2223
 msgid "plan.status takes no arguments"
 msgstr "plan.status não contém argumentos"
 
-#: plpython.c:2348 plpython.c:2487
+#: plpython.c:2353 plpython.c:2492
 msgid "transaction aborted"
 msgstr "transação interrompida"
 
-#: plpython.c:2355
+#: plpython.c:2360
 msgid "invalid arguments for plpy.prepare"
 msgstr "argumentos inválidos para plpy.prepare"
 
-#: plpython.c:2362
+#: plpython.c:2367
 msgid "second argument of plpy.prepare must be a sequence"
 msgstr "segundo argumento de plpy.prepare deve ser uma sequência"
 
-#: plpython.c:2407
+#: plpython.c:2412
 #, c-format
 msgid "plpy.prepare: type name at ordinal position %d is not a string"
 msgstr ""
 "plpy.prepare: nome do tipo na posição %d não é uma cadeia de caracteres"
 
-#: plpython.c:2434
+#: plpython.c:2439
 msgid "plpy.prepare does not support composite types"
 msgstr "plpy.prepare não suporta tipos compostos"
 
-#: plpython.c:2462
+#: plpython.c:2467
 msgid "unrecognized error in PLy_spi_prepare"
 msgstr "erro desconhecido em PLy_spi_prepare"
 
-#: plpython.c:2464 plpython.c:2628 plpython.c:2675
+#: plpython.c:2469 plpython.c:2633 plpython.c:2680
 #, c-format
 msgid "in PL/Python function \"%s\""
 msgstr "na função PL/Python \"%s\""
 
-#: plpython.c:2500
+#: plpython.c:2505
 msgid "plpy.execute expected a query or a plan"
 msgstr "plpy.execute espera uma consulta ou um plano"
 
-#: plpython.c:2517
+#: plpython.c:2522
 msgid "plpy.execute takes a sequence as its second argument"
 msgstr "plpy.execute recebe uma sequência como segundo argumento"
 
-#: plpython.c:2533 plpython.c:2562
+#: plpython.c:2538 plpython.c:2567
 #, c-format
 msgid "PL/Python function \"%s\" could not execute plan"
 msgstr "função PL/Python \"%s\" não pode executar o plano"
 
-#: plpython.c:2537
+#: plpython.c:2542
 #, c-format
 msgid "Expected sequence of %d argument, got %d: %s"
 msgid_plural "Expected sequence of %d arguments, got %d: %s"
 msgstr[0] "Sequência esperada de %d argumento, recebeu %d: %s"
 msgstr[1] "Sequência esperada de %d argumentos, recebeu %d: %s"
 
-#: plpython.c:2626
+#: plpython.c:2631
 msgid "unrecognized error in PLy_spi_execute_plan"
 msgstr "erro desconhecido em PLy_spi_execute_plan"
 
-#: plpython.c:2647
+#: plpython.c:2652
 #, c-format
 msgid "SPI_execute_plan failed: %s"
 msgstr "SPI_execute_plan falhou: %s"
 
-#: plpython.c:2673
+#: plpython.c:2678
 msgid "unrecognized error in PLy_spi_execute_query"
 msgstr "erro desconhecido em PLy_spi_execute_query"
 
-#: plpython.c:2684
+#: plpython.c:2689
 #, c-format
 msgid "SPI_execute failed: %s"
 msgstr "SPI_execute falhou: %s"
 
-#: plpython.c:2741
+#: plpython.c:2746
 msgid "unrecognized error in PLy_spi_execute_fetch_result"
 msgstr "erro desconhecido em PLy_spi_execute_fetch_result"
 
-#: plpython.c:2781
+#: plpython.c:2786
 msgid "untrapped error in initialization"
 msgstr "erro não interceptado na inicialização"
 
-#: plpython.c:2784
+#: plpython.c:2789
 msgid "could not create procedure cache"
 msgstr "não pôde criar cache da função"
 
-#: plpython.c:2796
+#: plpython.c:2801
 msgid "could not import \"__main__\" module"
 msgstr "não pôde importar módulo \"__main__\""
 
-#: plpython.c:2803
+#: plpython.c:2808
 msgid "could not initialize globals"
 msgstr "não pôde inicializar globais"
 
-#: plpython.c:2905
+#: plpython.c:2910
 msgid "could not parse error message in plpy.elog"
 msgstr "não pode analisar mensagem de erro em plpy.elog"
 
-#: plpython.c:3024
+#: plpython.c:3029
 #, c-format
 msgid "PL/Python: %s"
 msgstr "PL/Python: %s"
 
-#: plpython.c:3025
+#: plpython.c:3030
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: plpython.c:3115
+#: plpython.c:3120
 msgid "out of memory"
 msgstr "sem memória"

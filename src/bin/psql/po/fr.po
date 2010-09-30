@@ -1,7 +1,7 @@
 # translation of psql.po to fr_fr
 # french message translation file for psql
 #
-# $PostgreSQL: pgsql/src/bin/psql/po/fr.po,v 1.26.2.2 2009/12/08 22:22:17 petere Exp $
+# $PostgreSQL$
 #
 # Use these quotes: « %s »
 # Peter Eisentraut <peter_e@gmx.net>, 2001.
@@ -988,17 +988,17 @@ msgstr "  \\dD[S] [MODÈLE]      affiche la liste des domaines\n"
 #: help.c:205
 #, c-format
 msgid "  \\des[+] [PATTERN]      list foreign servers\n"
-msgstr "  \\des[+] [MODÈLE]     affiche la liste des utilisateurs\n"
+msgstr "  \\des[+] [MODÈLE]     affiche la liste des serveurs distants\n"
 
 #: help.c:206
 #, c-format
 msgid "  \\deu[+] [PATTERN]      list user mappings\n"
-msgstr "  \\deu[+] [MODÈLE]     affiche la liste des utilisateurs\n"
+msgstr "  \\deu[+] [MODÈLE]     affiche la liste des correspondances utilisateurs\n"
 
 #: help.c:207
 #, c-format
 msgid "  \\dew[+] [PATTERN]      list foreign-data wrappers\n"
-msgstr "  \\dew[+] [MODÈLE]     affiche la liste des groupes\n"
+msgstr "  \\dew[+] [MODÈLE]     affiche la liste des wrappers de données distantes\n"
 
 #: help.c:208
 #, c-format

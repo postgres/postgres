@@ -2,7 +2,7 @@
 # Peter Eisentraut <peter_e@gmx.net>, 2001, 2009.
 # Dennis Björklund <db@zigo.dhs.org>, 2002, 2003, 2004, 2005, 2006.
 #
-# pgtranslation Id: psql.po,v 1.5 2009/06/13 19:16:49 petere Exp $
+# pgtranslation Id$
 #
 # Use these quotes: "%s"
 #
@@ -11,7 +11,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 8.4\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2009-06-12 21:08+0000\n"
-"PO-Revision-Date: 2009-06-13 22:12+0300\n"
+"PO-Revision-Date: 2010-07-02 21:46-0400\n"
 "Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language-Team: Swedish <sv@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -1487,9 +1487,8 @@ msgid "sequence"
 msgstr "sekvens"
 
 #: describe.c:696
-#, fuzzy
 msgid "Column access privileges"
-msgstr "definera Åtkomsträttigheter"
+msgstr ""
 
 #: describe.c:722 describe.c:3229 describe.c:3233
 msgid "Access privileges"
@@ -3910,7 +3909,7 @@ msgstr ""
 
 #: sql_help.h:449
 msgid "define access privileges"
-msgstr "definera Åtkomsträttigheter"
+msgstr "definera åtkomsträttigheter"
 
 #: sql_help.h:450
 #, fuzzy
@@ -4125,7 +4124,7 @@ msgstr ""
 
 #: sql_help.h:501
 msgid "remove access privileges"
-msgstr "ta bort Åtkomsträttigheter"
+msgstr "ta bort åtkomsträttigheter"
 
 #: sql_help.h:502
 #, fuzzy
