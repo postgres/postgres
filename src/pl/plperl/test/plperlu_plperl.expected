@@ -23,13 +23,13 @@ $$;
 SELECT * FROM recurse_plperl(5);
                              recurse_plperl                             
 ------------------------------------------------------------------------
- plperl  5 entry: 'stat' trapped by operation mask at (eval 4) line 1.
+ plperl  5 entry: 'stat' trapped by operation mask at (eval 3) line 1.
 
  plperlu 4 entry: ok
- plperl  3 entry: 'stat' trapped by operation mask at (eval 5) line 1.
+ plperl  3 entry: 'stat' trapped by operation mask at (eval 4) line 1.
 
  plperlu 2 entry: ok
- plperl  1 entry: 'stat' trapped by operation mask at (eval 6) line 1.
+ plperl  1 entry: 'stat' trapped by operation mask at (eval 5) line 1.
 
 (5 rows)
 
@@ -37,10 +37,10 @@ SELECT * FROM recurse_plperlu(5);
                             recurse_plperlu                             
 ------------------------------------------------------------------------
  plperlu 5 entry: ok
- plperl  4 entry: 'stat' trapped by operation mask at (eval 7) line 1.
+ plperl  4 entry: 'stat' trapped by operation mask at (eval 6) line 1.
 
  plperlu 3 entry: ok
- plperl  2 entry: 'stat' trapped by operation mask at (eval 8) line 1.
+ plperl  2 entry: 'stat' trapped by operation mask at (eval 7) line 1.
 
  plperlu 1 entry: ok
 (5 rows)
@@ -54,8 +54,8 @@ AS $$
 use Errno;
 $$;
 select use_plperl();
-ERROR:  creation of Perl function failed: Unable to load Errno.pm into plperl at (eval 9) line 2.
-BEGIN failed--compilation aborted at (eval 9) line 2.
+ERROR:  creation of Perl function failed: Unable to load Errno.pm into plperl at (eval 8) line 2.
+BEGIN failed--compilation aborted at (eval 8) line 2.
 select use_plperlu();
  use_plperlu 
 -------------
@@ -67,5 +67,5 @@ AS $$
 use Errno;
 $$;
 select use_plperl();
-ERROR:  creation of Perl function failed: Unable to load Errno.pm into plperl at (eval 10) line 2.
-BEGIN failed--compilation aborted at (eval 10) line 2.
+ERROR:  creation of Perl function failed: Unable to load Errno.pm into plperl at (eval 9) line 2.
+BEGIN failed--compilation aborted at (eval 9) line 2.

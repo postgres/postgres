@@ -304,4 +304,4 @@ CREATE OR REPLACE FUNCTION perl_unsafe1() RETURNS void AS $$
       my $fd = fileno STDERR;
 $$ LANGUAGE plperl;
 select perl_unsafe1();
-ERROR:  creation of Perl function failed: 'fileno' trapped by operation mask at (eval 26) line 2.
+ERROR:  creation of Perl function failed: 'fileno' trapped by operation mask at (eval 25) line 2.
