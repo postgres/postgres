@@ -1,18 +1,19 @@
 # Spanish message translation file for pg_controldata
 #  Karim Mribti <karim@mribti.com>, 2002.
-#  Alvaro Herrera <alvherre@alvh.no-ip.org>, 2003, 2003, 2004, 2005
+#  Alvaro Herrera <alvherre@alvh.no-ip.org>, 2003-2005, 2010
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_controldata (PostgreSQL 8.1)\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2005-11-05 23:13-0300\n"
-"PO-Revision-Date: 2002-08-30 18:23+0200\n"
+"POT-Creation-Date: 2010-09-27 21:14+0000\n"
+"PO-Revision-Date: 2010-09-30 11:07-0400\n"
 "Last-Translator: Alvaro Herrera <alvherre@alvh.no-ip.org>\n"
-"Language-Team: Castellano <pgsql-es-ayuda@postgresql.org>\n"
+"Language-Team: Spanish <pgsql-es-ayuda@postgresql.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=ISO-8859-1\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Language: es\n"
 
 #: pg_controldata.c:24
 #, c-format

@@ -7,7 +7,7 @@ msgstr ""
 "Project-Id-Version: initdb-tr\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2009-05-03 23:47+0000\n"
-"PO-Revision-Date: 2009-05-06 21:46+0200\n"
+"PO-Revision-Date: 2010-09-25 00:51+0300\n"
 "Last-Translator: Devrim GÜNDÜZ <devrim@commandprompt.com>\n"
 "Language-Team: Turkish <ceviri@postgresql.org.tr>\n"
 "MIME-Version: 1.0\n"
@@ -134,7 +134,7 @@ msgid ""
 msgstr ""
 "%s: \"%s\" dosyası bulunamadı\n"
 "Bu ileti, bozulmus bir kurulumunuz olduğu ya da\n"
-"initdb betiğine verdiğiniz -L parametresi ile yanlış dizin belirttiğiniz anlamına gelir..\n"
+"initdb betiğine verdiğiniz -L parametresi ile yanlış dizin belirttiğiniz anlamına gelir.\n"
 
 #: initdb.c:1106
 #, c-format
@@ -543,12 +543,12 @@ msgstr "Öntanımlı veritabanı dil kodlaması %s olarak ayarlandı.\n"
 #: initdb.c:2609
 #, c-format
 msgid "creating directory %s ... "
-msgstr "%s dizini yaratılıyor... "
+msgstr "%s dizini yaratılıyor ... "
 
 #: initdb.c:2623
 #, c-format
 msgid "fixing permissions on existing directory %s ... "
-msgstr "mevcut %s dizininin izinleri düzeltiliyor..."
+msgstr "mevcut %s dizininin izinleri düzeltiliyor ... "
 
 #: initdb.c:2629
 #, c-format
@@ -576,7 +576,7 @@ msgstr "%s: \"%s\" dizine erişim hatası: %s\n"
 #: initdb.c:2660
 #, c-format
 msgid "creating directory %s/%s ... "
-msgstr "%s/%s dizini yaratılıyor... "
+msgstr "%s/%s dizini yaratılıyor ... "
 
 #: initdb.c:2729
 #, c-format
@@ -692,7 +692,4 @@ msgstr "alt süreç %d sinyali tarafından sonlandırılmıştır"
 #, c-format
 msgid "child process exited with unrecognized status %d"
 msgstr "alt süreç %d bilinmeyen durumu ile sonlandırılmıştır"
-
-#~ msgid "creating subdirectories ... "
-#~ msgstr "alt dizinler oluşturuluyor... "
 

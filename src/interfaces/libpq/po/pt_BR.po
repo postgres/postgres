@@ -1,13 +1,13 @@
 # "libpq" translation to Brazilian Portuguese Language.
 # Cesar Suga <sartre@linuxbr.com>, 2002.
 # Roberto Mello <rmello@fslc.usu.edu>, 2002.
-# Euler Taveira de Oliveira <euler@timbira.com>, 2003-2009.
+# Euler Taveira de Oliveira <euler@timbira.com>, 2003-2010.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2009-05-20 16:03-0300\n"
+"POT-Creation-Date: 2010-06-18 16:48-0300\n"
 "PO-Revision-Date: 2005-10-04 22:45-0300\n"
 "Last-Translator: Euler Taveira de Oliveira <euler@timbira.com>\n"
 "Language-Team: Brazilian Portuguese <pgbr-dev@listas.postgresql.org.br>\n"
@@ -361,26 +361,26 @@ msgstr "não pode determinar OID da função loread\n"
 msgid "cannot determine OID of function lowrite\n"
 msgstr "não pode determinar OID da função lowrite\n"
 
-#: fe-misc.c:229
+#: fe-misc.c:250
 #, c-format
 msgid "integer of size %lu not supported by pqGetInt"
 msgstr "inteiro de tamanho %lu não é suportado por pqGetInt"
 
-#: fe-misc.c:265
+#: fe-misc.c:286
 #, c-format
 msgid "integer of size %lu not supported by pqPutInt"
 msgstr "inteiro de tamanho %lu não é suportado por pqPutInt"
 
-#: fe-misc.c:545 fe-misc.c:747
+#: fe-misc.c:566 fe-misc.c:768
 msgid "connection not open\n"
 msgstr "conexão não está aberta\n"
 
-#: fe-misc.c:610 fe-misc.c:700
+#: fe-misc.c:631 fe-misc.c:721
 #, c-format
 msgid "could not receive data from server: %s\n"
 msgstr "não pôde receber dados do servidor: %s\n"
 
-#: fe-misc.c:717 fe-misc.c:785
+#: fe-misc.c:738 fe-misc.c:806
 msgid ""
 "server closed the connection unexpectedly\n"
 "\tThis probably means the server terminated abnormally\n"
@@ -390,20 +390,20 @@ msgstr ""
 "\tIsto provavelmente significa que o servidor terminou de forma anormal\n"
 "\tantes ou durante o processamento do pedido.\n"
 
-#: fe-misc.c:802
+#: fe-misc.c:823
 #, c-format
 msgid "could not send data to server: %s\n"
 msgstr "não pôde enviar dados ao servidor: %s\n"
 
-#: fe-misc.c:921
+#: fe-misc.c:942
 msgid "timeout expired\n"
 msgstr "tempo de espera expirado\n"
 
-#: fe-misc.c:966
+#: fe-misc.c:987
 msgid "socket not open\n"
 msgstr "soquete não está aberto\n"
 
-#: fe-misc.c:989
+#: fe-misc.c:1010
 #, c-format
 msgid "select() failed: %s\n"
 msgstr "select() falhou: %s\n"
@@ -654,3 +654,7 @@ msgstr "certificado não pôde ser validado: %s\n"
 #, c-format
 msgid "certificate could not be obtained: %s\n"
 msgstr "certificado não pôde ser obtido: %s\n"
+
+#: fe-secure.c:1149
+msgid "SSL certificate's common name contains embedded null\n"
+msgstr "nome do certificado SSL contém nulo embutido\n"

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.1\n"
 "POT-Creation-Date: 2005-10-20 07:16-0300\n"
-"PO-Revision-Date: 2005-10-20 16:25+0200\n"
+"PO-Revision-Date: 2010-09-25 00:46+0300\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <sv@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -127,7 +127,7 @@ msgstr "väljer initialt värde för shared_buffers ... "
 
 #: initdb.c:1163
 msgid "creating configuration files ... "
-msgstr "skapar konfigurationsfiler ..."
+msgstr "skapar konfigurationsfiler ... "
 
 #: initdb.c:1302
 #, c-format

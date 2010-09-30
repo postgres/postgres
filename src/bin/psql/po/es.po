@@ -1,17 +1,18 @@
 # translation of psql.
-# (c) <alvherre@dcc.uchile.cl>, 2003, 2004
-# 
+# (c) <alvherre@dcc.uchile.cl>, 2003, 2004, 2010
+#
 msgid ""
 msgstr ""
-"Project-Id-Version: psql 8.0\n"
+"Project-Id-Version: psql (PostgreSQL 8.1)\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2005-11-05 23:20-0300\n"
-"PO-Revision-Date: 2005-10-19 10:58-0300\n"
-"Last-Translator: Diego A. Gil <diego@adminsa.com>\n"
-"Language-Team: Castellano <pgsql-es-ayuda@postgresql.org>\n"
+"POT-Creation-Date: 2010-09-27 21:14+0000\n"
+"PO-Revision-Date: 2010-09-30 11:07-0400\n"
+"Last-Translator: Alvaro Herrera <alvherre@alvh.no-ip.org>\n"
+"Language-Team: Spanish <pgsql-es-ayuda@postgresql.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=iso-8859-1\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Language: es\n"
 "X-Poedit-Language: Spanish\n"
 
 #: command.c:123
@@ -39,7 +40,7 @@ msgstr "No se ha podido obtener directorio home: %s\n"
 msgid "\\%s: could not change directory to \"%s\": %s\n"
 msgstr "\\%s: no se pudo cambiar directorio a «%s»: %s\n"
 
-#: command.c:389 command.c:782
+#: command.c:389 command.c:781
 msgid "no query buffer\n"
 msgstr "no hay búfer de consulta\n"
 
@@ -51,7 +52,7 @@ msgstr ""
 "no encontrado\n"
 
 #: command.c:520 command.c:554 command.c:568 command.c:585 command.c:631
-#: command.c:762 command.c:793
+#: command.c:761 command.c:792
 #, c-format
 msgid "\\%s: missing required argument\n"
 msgstr "\\%s: falta argumento requerido\n"
@@ -64,196 +65,201 @@ msgstr "El búfer de consulta está vacío."
 msgid "Query buffer reset (cleared)."
 msgstr "El búfer de consulta ha sido reiniciado (limpiado)."
 
-#: command.c:665
+#: command.c:664
 #, c-format
 msgid "Wrote history to file \"%s/%s\".\n"
 msgstr "Escribí historia en archivo \"%s/%s\".\n"
 
-#: command.c:703 common.c:83 common.c:97 mainloop.c:71 print.c:46 print.c:362
-#: print.c:369 print.c:388 print.c:586 print.c:610 print.c:677 print.c:1619
-#: print.c:1631 print.c:1652 print.c:1669
+#: command.c:702 common.c:83 common.c:97 mainloop.c:71 print.c:46 print.c:346
+#: print.c:353 print.c:372 print.c:553 print.c:577 print.c:637 print.c:1521
+#: print.c:1532 print.c:1559 print.c:1584 print.c:1603 print.c:1620
 #, c-format
 msgid "out of memory\n"
 msgstr "memoria agotada\n"
 
-#: command.c:718 command.c:767
+#: command.c:717 command.c:766
 #, c-format
 msgid "\\%s: error\n"
 msgstr "\\%s: error\n"
 
-#: command.c:748
+#: command.c:747
 msgid "Timing is on."
 msgstr "Mostrar tiempos está activado."
 
-#: command.c:750
+#: command.c:749
 msgid "Timing is off."
 msgstr "Mostrar tiempos está desactivado."
 
-#: command.c:810 command.c:830 command.c:1224 command.c:1231 command.c:1241
-#: command.c:1253 command.c:1266 command.c:1280 command.c:1302 command.c:1334
-#: common.c:168 copy.c:535 copy.c:580
+#: command.c:809 command.c:829 command.c:1223 command.c:1230 command.c:1240
+#: command.c:1252 command.c:1265 command.c:1279 command.c:1301 command.c:1333
+#: common.c:168 copy.c:535 copy.c:595
 #, c-format
 msgid "%s: %s\n"
 msgstr "%s: %s\n"
 
-#: command.c:984 common.c:214 common.c:694 common.c:758 common.c:1020
-#: common.c:1047 common.c:1101
+#: command.c:937 command.c:939 startup.c:196 startup.c:198
+#, c-format
+msgid "Password for user %s: "
+msgstr "Contraseña para usuario %s: "
+
+#: command.c:983 common.c:214 common.c:692 common.c:756 common.c:1018
+#: common.c:1045 common.c:1099
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: command.c:988
+#: command.c:987
 msgid "Previous connection kept\n"
 msgstr "Se ha mantenido la conexión anterior\n"
 
-#: command.c:999
+#: command.c:998
 #, c-format
 msgid "\\connect: %s"
 msgstr "\\connect: %s"
 
-#: command.c:1011
+#: command.c:1010
 #, c-format
 msgid "You are now connected to database \"%s\".\n"
 msgstr "Ahora está conectado a la base de datos «%s».\n"
 
-#: command.c:1013
+#: command.c:1012
 #, c-format
 msgid "You are now connected as new user \"%s\".\n"
 msgstr "Ahora está conectado como el usuario «%s».\n"
 
-#: command.c:1016
+#: command.c:1015
 #, c-format
 msgid "You are now connected to database \"%s\" as user \"%s\".\n"
 msgstr ""
 "Ahora está conectado a la base de datos «%s»\n"
 "con el usuario «%s».\n"
 
-#: command.c:1141
+#: command.c:1140
 #, c-format
 msgid "could not start editor \"%s\"\n"
 msgstr "no se pudo iniciar el editor «%s»\n"
 
-#: command.c:1143
+#: command.c:1142
 msgid "could not start /bin/sh\n"
 msgstr "no se pudo iniciar /bin/sh\n"
 
-#: command.c:1182
+#: command.c:1181
 #, c-format
 msgid "cannot locate temporary directory: %s"
 msgstr "no se encontró el directorio temporal: %s"
 
-#: command.c:1209
+#: command.c:1208
 #, c-format
 msgid "could not open temporary file \"%s\": %s\n"
 msgstr "no se pudo abrir archivo temporal «%s»: %s\n"
 
-#: command.c:1407
+#: command.c:1406
 msgid "\\pset: allowed formats are unaligned, aligned, html, latex, troff-ms\n"
 msgstr ""
 "\\pset: formatos permitidos son unaligned, aligned, html, latex, troff-ms\n"
 
-#: command.c:1412
+#: command.c:1411
 #, c-format
 msgid "Output format is %s.\n"
 msgstr "El formato de salida es %s.\n"
 
-#: command.c:1422
+#: command.c:1421
 #, c-format
 msgid "Border style is %d.\n"
 msgstr "El estilo de borde es %d.\n"
 
-#: command.c:1431
+#: command.c:1430
 #, c-format
 msgid "Expanded display is on.\n"
 msgstr "Se ha activado el despliegue expandido.\n"
 
-#: command.c:1432
+#: command.c:1431
 #, c-format
 msgid "Expanded display is off.\n"
 msgstr "Se ha desactivado el despliegue expandido.\n"
 
-#: command.c:1442
+#: command.c:1441
 msgid "Showing locale-adjusted numeric output."
 msgstr "Mostrando salida numérica ajustada localmente"
 
-#: command.c:1444
+#: command.c:1443
 msgid "Locale-adjusted numeric output is off."
 msgstr "La salida numérica ajustada localmente está deshabilitada. "
 
-#: command.c:1457
+#: command.c:1456
 #, c-format
 msgid "Null display is \"%s\".\n"
 msgstr "Despliegue de nulos es «%s».\n"
 
-#: command.c:1469
+#: command.c:1468
 #, c-format
 msgid "Field separator is \"%s\".\n"
 msgstr "El separador de campos es «%s».\n"
 
-#: command.c:1483
+#: command.c:1482
 #, c-format
 msgid "Record separator is <newline>."
 msgstr "El separador de filas es <salto de línea>."
 
-#: command.c:1485
+#: command.c:1484
 #, c-format
 msgid "Record separator is \"%s\".\n"
 msgstr "El separador de filas es «%s».\n"
 
-#: command.c:1496
+#: command.c:1495
 msgid "Showing only tuples."
 msgstr "Mostrando sólo filas."
 
-#: command.c:1498
+#: command.c:1497
 msgid "Tuples only is off."
 msgstr "Mostrar sólo filas está desactivado."
 
-#: command.c:1514
+#: command.c:1513
 #, c-format
 msgid "Title is \"%s\".\n"
 msgstr "El título es «%s».\n"
 
-#: command.c:1516
+#: command.c:1515
 #, c-format
 msgid "Title is unset.\n"
 msgstr "El título ha sido indefinido.\n"
 
-#: command.c:1532
+#: command.c:1531
 #, c-format
 msgid "Table attribute is \"%s\".\n"
 msgstr "Los atributos de tabla son «%s».\n"
 
-#: command.c:1534
+#: command.c:1533
 #, c-format
 msgid "Table attributes unset.\n"
 msgstr "Los atributos de tabla han sido indefinidos.\n"
 
-#: command.c:1550
+#: command.c:1549
 msgid "Pager is used for long output."
 msgstr "El paginador se usará para salida larga."
 
-#: command.c:1552
+#: command.c:1551
 msgid "Pager is always used."
 msgstr "El paginador se usará siempre."
 
-#: command.c:1554
+#: command.c:1553
 msgid "Pager usage is off."
 msgstr "El paginador no se usará."
 
-#: command.c:1565
+#: command.c:1564
 msgid "Default footer is on."
 msgstr "El pie por omisión está activo."
 
-#: command.c:1567
+#: command.c:1566
 msgid "Default footer is off."
 msgstr "El pie de página por omisión está desactivado."
 
-#: command.c:1573
+#: command.c:1572
 #, c-format
 msgid "\\pset: unknown option: %s\n"
 msgstr "\\pset: opción desconocida: %s\n"
 
-#: command.c:1628
+#: command.c:1627
 msgid "\\!: failed\n"
 msgstr "\\!: falló\n"
 
@@ -266,42 +272,42 @@ msgstr "%s: pg_strdup: no se puede duplicar puntero nulo (error interno)\n"
 msgid "out of memory"
 msgstr "memoria agotada"
 
-#: common.c:362
+#: common.c:360
 msgid "connection to server was lost\n"
 msgstr "se ha perdido la conexión al servidor\n"
 
-#: common.c:366
+#: common.c:364
 msgid "The connection to the server was lost. Attempting reset: "
 msgstr "La conexión al servidor se ha perdido. Intentando reiniciar: "
 
-#: common.c:371
+#: common.c:369
 msgid "Failed.\n"
 msgstr "falló.\n"
 
-#: common.c:378
+#: common.c:376
 msgid "Succeeded.\n"
 msgstr "con éxito.\n"
 
-#: common.c:477
+#: common.c:475
 #, c-format
 msgid "INTERNAL ERROR: unexpected statement position \"%s\"\n"
 msgstr "ERROR INTERNO: posición de sentencia inesperada «%s»\n"
 
-#: common.c:613
+#: common.c:611
 #, c-format
 msgid "LINE %d: "
 msgstr "LINEA %d: "
 
-#: common.c:630 common.c:639
+#: common.c:628 common.c:637
 #, c-format
 msgid "%s\n"
 msgstr "%s\n"
 
-#: common.c:726 common.c:977
+#: common.c:724 common.c:975
 msgid "You are currently not connected to a database.\n"
 msgstr "No está conectado a una base de datos.\n"
 
-#: common.c:733 common.c:740 common.c:1003
+#: common.c:731 common.c:738 common.c:1001
 #, c-format
 msgid ""
 "********* QUERY **********\n"
@@ -314,14 +320,14 @@ msgstr ""
 "**************************\n"
 "\n"
 
-#: common.c:789
+#: common.c:787
 #, c-format
 msgid ""
 "Asynchronous notification \"%s\" received from server process with PID %d.\n"
 msgstr ""
 "Notificación asíncrona «%s» recibida del proceso de servidor con PID %d.\n"
 
-#: common.c:985
+#: common.c:983
 #, c-format
 msgid ""
 "***(Single step mode: verify command)"
@@ -336,14 +342,14 @@ msgstr ""
 "***(presione enter para continuar, o x y enter para cancelar)"
 "*******************\n"
 
-#: common.c:1038
+#: common.c:1036
 #, c-format
 msgid ""
 "The server version (%d) does not support savepoints for ON_ERROR_ROLLBACK.\n"
 msgstr ""
 "La versión del servidor (%d) no soporta savepoints para ON_ERROR_ROLLBACK.\n"
 
-#: common.c:1111
+#: common.c:1113
 #, c-format
 msgid "Time: %.3f ms\n"
 msgstr "Duración: %.3f ms\n"
@@ -371,12 +377,16 @@ msgstr "%s: no se puede copiar desde/hacia un directorio\n"
 msgid "\\copy: %s"
 msgstr "\\copy: %s"
 
-#: copy.c:571
+#: copy.c:571 copy.c:583
 #, c-format
 msgid "\\copy: unexpected response (%d)\n"
 msgstr "\\copy: respuesta inesperada (%d)\n"
 
-#: copy.c:673
+#: copy.c:587
+msgid "trying to exit copy mode"
+msgstr "tratando de salir del modo copy"
+
+#: copy.c:688
 msgid ""
 "Enter data to be copied followed by a newline.\n"
 "End with a backslash and a period on a line by itself."
@@ -1017,22 +1027,22 @@ msgstr "Objetos grandes"
 msgid "Use \"\\q\" to leave %s.\n"
 msgstr "Use \"\\q\" para salir de %s.\n"
 
-#: print.c:574
+#: print.c:541
 #, c-format
 msgid "(No rows)\n"
 msgstr "(Sin filas)\n"
 
-#: print.c:1586
+#: print.c:1487
 #, c-format
 msgid "invalid output format (internal error): %d"
 msgstr "formato de salida no válido (error interno): %d"
 
-#: print.c:1658
+#: print.c:1609
 #, c-format
 msgid "(1 row)"
 msgstr "(1 fila)"
 
-#: print.c:1660
+#: print.c:1611
 #, c-format
 msgid "(%d rows)"
 msgstr "(%d filas)"
@@ -1050,17 +1060,12 @@ msgstr "Nombre de usuario: "
 msgid "Password: "
 msgstr "Contraseña: "
 
-#: startup.c:196 startup.c:198
-#, c-format
-msgid "Password for user %s: "
-msgstr "Contraseña para usuario %s: "
-
-#: startup.c:254
+#: startup.c:255
 #, c-format
 msgid "%s: could not open log file \"%s\": %s\n"
 msgstr "%s: no se pudo abrir archivo de log  \"%s\": %s\n"
 
-#: startup.c:335
+#: startup.c:336
 #, c-format
 msgid ""
 "Welcome to %s %s (server %s), the PostgreSQL interactive terminal.\n"
@@ -1069,7 +1074,7 @@ msgstr ""
 "Bienvenido a %s %s (servidor %s), la terminal interactiva de PostgreSQL.\n"
 "\n"
 
-#: startup.c:339
+#: startup.c:340
 #, c-format
 msgid ""
 "Welcome to %s %s, the PostgreSQL interactive terminal.\n"
@@ -1078,7 +1083,7 @@ msgstr ""
 "Bienvenido a %s %s, la terminal interactiva de PostgreSQL.\n"
 "\n"
 
-#: startup.c:342
+#: startup.c:343
 #, c-format
 msgid ""
 "Type:  \\copyright for distribution terms\n"
@@ -1095,7 +1100,7 @@ msgstr ""
 "       \\q para salir\n"
 "\n"
 
-#: startup.c:349
+#: startup.c:350
 #, c-format
 msgid ""
 "WARNING:  You are connected to a server with major version %d.%d,\n"
@@ -1108,48 +1113,48 @@ msgstr ""
 "tales como \\d, pueden no funcionar adecuadamente.\n"
 "\n"
 
-#: startup.c:531
+#: startup.c:532
 #, c-format
 msgid "%s: could not set printing parameter \"%s\"\n"
 msgstr "%s: no se pudo definir parámetro de impresión \"%s\"\n"
 
-#: startup.c:577
+#: startup.c:578
 #, c-format
 msgid "%s: could not delete variable \"%s\"\n"
 msgstr "%s: no se pudo eliminar la variable «%s»\n"
 
-#: startup.c:587
+#: startup.c:588
 #, c-format
 msgid "%s: could not set variable \"%s\"\n"
 msgstr "%s: no se pudo definir la variable «%s»\n"
 
-#: startup.c:618 startup.c:624
+#: startup.c:619 startup.c:625
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "Use «%s --help» para obtener más información.\n"
 
-#: startup.c:641
+#: startup.c:642
 #, c-format
 msgid "%s: warning: extra command-line argument \"%s\" ignored\n"
 msgstr "%s: atención: se ignoró argumento extra «%s» en línea de comandos\n"
 
-#: startup.c:648
+#: startup.c:649
 #, c-format
 msgid "%s: Warning: The -u option is deprecated. Use -U.\n"
 msgstr "%s: Atención: La opción -u está obsoleta. Use -U.\n"
 
-#: startup.c:710
+#: startup.c:711
 msgid "contains support for command-line editing"
 msgstr "incluye soporte para edición de línea de comandos"
 
-#: startup.c:733
+#: startup.c:734
 #, c-format
 msgid ""
 "SSL connection (cipher: %s, bits: %i)\n"
 "\n"
 msgstr "conexión SSL (cifrado: %s, bits: %i)\n"
 
-#: startup.c:756
+#: startup.c:757
 #, c-format
 msgid ""
 "Warning: Console code page (%u) differs from Windows code page (%u)\n"
@@ -2140,7 +2145,6 @@ msgid ""
 "    TO { 'filename' | STDOUT }\n"
 "    [ [ WITH ] \n"
 "          [ BINARY ]\n"
-"          [ HEADER ]\n"
 "          [ OIDS ]\n"
 "          [ DELIMITER [ AS ] 'delimiter' ]\n"
 "          [ NULL [ AS ] 'null string' ]\n"
@@ -2155,22 +2159,21 @@ msgstr ""
 "          [ BINARY ]\n"
 "          [ OIDS ]\n"
 "          [ DELIMITER [ AS ] 'delimitador' ]\n"
-"          [ NULL [ AS ] 'cadena para null' ]\n"
+"          [ NULL [ AS ] 'cadena_para_null' ]\n"
 "          [ CSV [ HEADER ]\n"
-"                [ QUOTE [ AS ] 'quote' ] \n"
+"                [ QUOTE [ AS ] 'comilla' ] \n"
 "                [ ESCAPE [ AS ] 'escape' ]\n"
 "                [ FORCE NOT NULL columna [, ...] ]\n"
 "\n"
-"COPY nombre_tabla [ ( columna [, ...] ) ]\n"
+"COPY nombre_tabla [ ( columna [, ...] ) ] \n"
 "    TO { 'archivo' | STDOUT }\n"
 "    [ [ WITH ] \n"
 "          [ BINARY ]\n"
-"          [ HEADER ]\n"
 "          [ OIDS ]\n"
 "          [ DELIMITER [ AS ] 'delimitador' ]\n"
-"          [ NULL [ AS ] 'cadena para null' ]\n"
+"          [ NULL [ AS ] 'cadena_para_null' ]\n"
 "          [ CSV [ HEADER ]\n"
-"                [ QUOTE [ AS ] 'quote' ] \n"
+"                [ QUOTE [ AS ] 'comilla' ] \n"
 "                [ ESCAPE [ AS ] 'escape' ]\n"
 "                [ FORCE QUOTE columna [, ...] ]"
 
@@ -3055,8 +3058,7 @@ msgid ""
 "    TO { username | GROUP groupname | PUBLIC } [, ...] [ WITH GRANT "
 "OPTION ]\n"
 "\n"
-"GRANT role [, ...]\n"
-"    TO { username | GROUP groupname | PUBLIC } [, ...] [ WITH ADMIN OPTION ]"
+"GRANT role [, ...] TO username [, ...] [ WITH ADMIN OPTION ]"
 msgstr ""
 "GRANT { { SELECT | INSERT | UPDATE | DELETE | RULE | REFERENCES | TRIGGER }\n"
 "    [,...] | ALL [ PRIVILEGES ] }\n"
@@ -3064,7 +3066,8 @@ msgstr ""
 "    TO { nombre_usuario | GROUP nombre_grupo | PUBLIC } [, ...] [ WITH GRANT "
 "OPTION ]\n"
 "\n"
-"GRANT { { CREATE | TEMPORARY | TEMP } [,...] | ALL [ PRIVILEGES ] }\n"
+"GRANT { { CREATE | TEMPORARY | TEMP } [,...] | ALL "
+"[ PRIVILEGES ] }\n"
 "    ON DATABASE nombre_bd [, ...]\n"
 "    TO { nomnbre_usuario | GROUP nombre_grupo | PUBLIC } [, ...] [ WITH "
 "GRANT OPTION ]\n"
@@ -3090,9 +3093,7 @@ msgstr ""
 "    TO { nombre_usuario | GROUP nombre_grupo | PUBLIC } [, ...] [ WITH GRANT "
 "OPTION ]\n"
 "\n"
-"GRANT rol [, ...]\n"
-"    TO { nombre_usuario | GROUP nombre_grupo | PUBLIC } [, ...] [ WITH ADMIN "
-"OPTION ]"
+"GRANT rol [, ...] TO nombre_usuario [, ...] [ WITH ADMIN OPTION ]"
 
 #: sql_help.h:345
 msgid "create new rows in a table"
@@ -3247,8 +3248,7 @@ msgid ""
 "    [ CASCADE | RESTRICT ]\n"
 "\n"
 "REVOKE [ ADMIN OPTION FOR ]\n"
-"    role [, ...]\n"
-"    FROM { username | GROUP groupname | PUBLIC } [, ...]\n"
+"    role [, ...] FROM username [, ...]\n"
 "    [ CASCADE | RESTRICT ]"
 msgstr ""
 "REVOKE [ GRANT OPTION FOR ]\n"
@@ -3266,8 +3266,7 @@ msgstr ""
 "\n"
 "REVOKE [ GRANT OPTION FOR ]\n"
 "    { EXECUTE | ALL [ PRIVILEGES ] }\n"
-"    ON FUNCTION nombre_función ( [ [ modo_arg ] [ nombre_arg ] tipo_arg "
-"[, ...] ] ) [, ...]\n"
+"    ON FUNCTION nombre_función ( [ [ modo_arg ] [ nombre_arg ] tipo_arg [, ...] ] ) [, ...]\n"
 "    FROM { nombre_usuario | GROUP nombre_grupo | PUBLIC } [, ...]\n"
 "    [ CASCADE | RESTRICT ]\n"
 "\n"
@@ -3290,8 +3289,7 @@ msgstr ""
 "    [ CASCADE | RESTRICT ]\n"
 "\n"
 "REVOKE [ ADMIN OPTION FOR ]\n"
-"    rol [, ...]\n"
-"    FROM { nombre_usuario | GROUP nombre_grupo | PUBLIC } [, ...]\n"
+"    rol [, ...] FROM nombre_usuario [, ...]\n"
 "    [ CASCADE | RESTRICT ]"
 
 #: sql_help.h:394

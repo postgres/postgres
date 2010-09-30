@@ -1,53 +1,54 @@
 # Spanish message translation file for libpq
 # Karim <karim@mribti.com>, 2002.
-# Updated on 2003-2005 by Alvaro Herrera <alvherre@dcc.uchile.cl>
+# Alvaro Herrera <alvherre@alvh.no-ip.org>, 2003-2005, 2010
 # Mario González <gonzalemario@gmail.com>, 2005
 msgid ""
 msgstr ""
-"Project-Id-Version: libpq 8.0\n"
+"Project-Id-Version: libpq (PostgreSQL 8.1)\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2005-11-05 23:47-0300\n"
-"PO-Revision-Date: 2005-10-31 09:14-0300\n"
-"Last-Translator: Álvaro Herrera <alvherre@alvh.no-ip.org>\n"
-"Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@postgresql.org>\n"
+"POT-Creation-Date: 2010-09-27 21:14+0000\n"
+"PO-Revision-Date: 2010-09-30 11:06-0400\n"
+"Last-Translator: Alvaro Herrera <alvherre@alvh.no-ip.org>\n"
+"Language-Team: Spanish <pgsql-es-ayuda@postgresql.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=ISO-8859-1\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Language: es\n"
 
-#: fe-auth.c:227
+#: fe-auth.c:257
 #, c-format
 msgid "could not set socket to blocking mode: %s\n"
 msgstr "no se pudo poner el socket en modo bloqueante: %s\n"
 
-#: fe-auth.c:244 fe-auth.c:248
+#: fe-auth.c:275 fe-auth.c:279
 #, c-format
 msgid "Kerberos 5 authentication rejected: %*s\n"
 msgstr "autentificación Kerberos 5 denegada: %*s\n"
 
-#: fe-auth.c:274
+#: fe-auth.c:305
 #, c-format
 msgid "could not restore non-blocking mode on socket: %s\n"
 msgstr "no se pudo restablecer el modo no bloqueante en el socket: %s\n"
 
-#: fe-auth.c:343
+#: fe-auth.c:374
 msgid "SCM_CRED authentication method not supported\n"
 msgstr "el método de autentificación SCM_CRED no está soportado\n"
 
-#: fe-auth.c:366 fe-connect.c:1258 fe-connect.c:2503 fe-connect.c:2512
-#: fe-connect.c:2649 fe-connect.c:2689 fe-connect.c:2707 fe-lobj.c:602
-#: fe-protocol2.c:1029 fe-protocol3.c:977
+#: fe-auth.c:397 fe-connect.c:1259 fe-connect.c:2505 fe-connect.c:2514
+#: fe-connect.c:2651 fe-connect.c:2691 fe-connect.c:2709 fe-exec.c:2522
+#: fe-lobj.c:602 fe-protocol2.c:1029 fe-protocol3.c:1046
 msgid "out of memory\n"
 msgstr "memoria agotada\n"
 
-#: fe-auth.c:429
+#: fe-auth.c:460
 msgid "Kerberos 4 authentication not supported\n"
 msgstr "el método de autentificación Kerberos 4 no está soportado\n"
 
-#: fe-auth.c:446
+#: fe-auth.c:477
 msgid "Kerberos 5 authentication not supported\n"
 msgstr "el método de autentificación Kerberos 5 no está soportado\n"
 
-#: fe-auth.c:474
+#: fe-auth.c:505
 #, c-format
 msgid "authentication method %u not supported\n"
 msgstr "el método de autentificación %u no está soportado\n"
@@ -130,83 +131,83 @@ msgstr "no se pudo determinar el estado de error del socket: %s\n"
 msgid "could not get client address from socket: %s\n"
 msgstr "no se pudo determinar la dirección del cliente desde el socket: %s\n"
 
-#: fe-connect.c:1236
+#: fe-connect.c:1237
 #, c-format
 msgid "could not send SSL negotiation packet: %s\n"
 msgstr "no se pudo enviar el paquete de negociación SSL: %s\n"
 
-#: fe-connect.c:1271
+#: fe-connect.c:1272
 #, c-format
 msgid "could not send startup packet: %s\n"
 msgstr "no se pudo enviar el paquete de inicio: %s\n"
 
-#: fe-connect.c:1336 fe-connect.c:1353
+#: fe-connect.c:1337 fe-connect.c:1354
 msgid "server does not support SSL, but SSL was required\n"
 msgstr "el servidor no soporta SSL, pero SSL es requerida\n"
 
-#: fe-connect.c:1369
+#: fe-connect.c:1370
 #, c-format
 msgid "received invalid response to SSL negotiation: %c\n"
 msgstr "se ha recibido una respuesta no válida en la negociación SSL: %c\n"
 
-#: fe-connect.c:1426 fe-connect.c:1458
+#: fe-connect.c:1427 fe-connect.c:1459
 #, c-format
 msgid "expected authentication request from server, but received %c\n"
 msgstr ""
 "se esperaba una petición de autentificación desde el servidor, pero se ha "
 "recibido %c\n"
 
-#: fe-connect.c:1690
+#: fe-connect.c:1691
 msgid "unexpected message from server during startup\n"
 msgstr "se ha recibido un mensaje inesperado del servidor durante el inicio\n"
 
-#: fe-connect.c:1758
+#: fe-connect.c:1759
 #, c-format
 msgid "invalid connection state %c, probably indicative of memory corruption\n"
 msgstr ""
 "estado de conexión no válido %c, probablemente por corrupción de memoria\n"
 
-#: fe-connect.c:2370
+#: fe-connect.c:2372
 #, c-format
 msgid "ERROR: service file \"%s\" not found\n"
 msgstr "ERROR: archivo de servicio «%s» no encontrado\n"
 
-#: fe-connect.c:2383
+#: fe-connect.c:2385
 #, c-format
 msgid "ERROR: line %d too long in service file \"%s\"\n"
 msgstr "ERROR: línea %d demasiado larga en archivo de servicio «%s»\n"
 
-#: fe-connect.c:2434 fe-connect.c:2461
+#: fe-connect.c:2436 fe-connect.c:2463
 #, c-format
 msgid "ERROR: syntax error in service file \"%s\", line %d\n"
 msgstr "ERROR: error de sintaxis en archivo de servicio «%s», línea %d\n"
 
-#: fe-connect.c:2551
+#: fe-connect.c:2553
 #, c-format
 msgid "missing \"=\" after \"%s\" in connection info string\n"
 msgstr "falta «=» después de «%s» en la cadena de información de la conexión\n"
 
-#: fe-connect.c:2600
+#: fe-connect.c:2602
 msgid "unterminated quoted string in connection info string\n"
 msgstr ""
 "cadena de caracteres entre comillas sin terminar en la cadena de información "
 "de conexión\n"
 
-#: fe-connect.c:2633
+#: fe-connect.c:2635
 #, c-format
 msgid "invalid connection option \"%s\"\n"
 msgstr "opción de conexión no válida «%s»\n"
 
-#: fe-connect.c:2876
+#: fe-connect.c:2878
 msgid "connection pointer is NULL\n"
 msgstr "el puntero de conexión es NULL\n"
 
-#: fe-connect.c:3122
+#: fe-connect.c:3130
 #, c-format
 msgid "WARNING: password file \"%s\" is not a plain file\n"
 msgstr "ATENCIÓN: El archivo de claves «%s» no es un archivo plano\n"
 
-#: fe-connect.c:3132
+#: fe-connect.c:3139
 #, c-format
 msgid ""
 "WARNING: password file \"%s\" has world or group read access; permission "
@@ -215,78 +216,82 @@ msgstr ""
 "ATENCIÓN: El archivo de claves «%s» tiene permiso de lectura para el grupo u "
 "otros; los permisosdeberían ser u=rw (0600)\n"
 
-#: fe-exec.c:482
+#: fe-exec.c:488
 msgid "NOTICE"
 msgstr "NOTICE"
 
-#: fe-exec.c:655 fe-exec.c:706 fe-exec.c:746
+#: fe-exec.c:672 fe-exec.c:723 fe-exec.c:763
 msgid "command string is a null pointer\n"
 msgstr "la cadena de comando es un puntero nulo\n"
 
-#: fe-exec.c:739 fe-exec.c:828
+#: fe-exec.c:756 fe-exec.c:845
 msgid "statement name is a null pointer\n"
 msgstr "el nombre de sentencia es un puntero nulo\n"
 
-#: fe-exec.c:754 fe-exec.c:902 fe-exec.c:1582
+#: fe-exec.c:771 fe-exec.c:919 fe-exec.c:1599
 msgid "function requires at least protocol version 3.0\n"
 msgstr "la función requiere protocolo 3.0 o superior\n"
 
-#: fe-exec.c:859
+#: fe-exec.c:876
 msgid "no connection to the server\n"
 msgstr "no hay conexión con el servidor\n"
 
-#: fe-exec.c:866
+#: fe-exec.c:883
 msgid "another command is already in progress\n"
 msgstr "hay otro comando en ejecución\n"
 
-#: fe-exec.c:973
+#: fe-exec.c:990
 msgid "length must be given for binary parameter\n"
 msgstr "el largo debe ser especificado para un parámetro binario\n"
 
-#: fe-exec.c:1211
+#: fe-exec.c:1228
 #, c-format
 msgid "unexpected asyncStatus: %d\n"
 msgstr "asyncStatus no esperado: %d\n"
 
-#: fe-exec.c:1337
+#: fe-exec.c:1354
 msgid "COPY terminated by new PQexec"
 msgstr "COPY terminado por un nuevo PQexec"
 
-#: fe-exec.c:1345
+#: fe-exec.c:1362
 msgid "COPY IN state must be terminated first\n"
 msgstr "el estado COPY IN debe ser terminado primero\n"
 
-#: fe-exec.c:1365
+#: fe-exec.c:1382
 msgid "COPY OUT state must be terminated first\n"
 msgstr "el estado COPY OUT debe ser terminado primero\n"
 
-#: fe-exec.c:1474 fe-exec.c:1539 fe-exec.c:1624 fe-protocol2.c:1174
-#: fe-protocol3.c:1133
+#: fe-exec.c:1491 fe-exec.c:1556 fe-exec.c:1641 fe-protocol2.c:1174
+#: fe-protocol3.c:1182
 msgid "no COPY in progress\n"
 msgstr "no hay ningún COPY en ejecución\n"
 
-#: fe-exec.c:1816
+#: fe-exec.c:1833
 msgid "connection in wrong state\n"
 msgstr "la conexión está en un estado incorrecto\n"
 
-#: fe-exec.c:1847
+#: fe-exec.c:1864
 msgid "invalid ExecStatusType code"
 msgstr "el código de ExecStatusType no es válido"
 
-#: fe-exec.c:1911 fe-exec.c:1934
+#: fe-exec.c:1928 fe-exec.c:1951
 #, c-format
 msgid "column number %d is out of range 0..%d"
 msgstr "el número de columna %d está fuera del rango 0..%d"
 
-#: fe-exec.c:1927
+#: fe-exec.c:1944
 #, c-format
 msgid "row number %d is out of range 0..%d"
 msgstr "el número de fila %d está fuera del rango 0..%d"
 
-#: fe-exec.c:2208
+#: fe-exec.c:2225
 #, c-format
 msgid "could not interpret result from server: %s"
 msgstr "no se pudo interpretar el resultado del servidor: %s"
+
+#: fe-exec.c:2430
+msgid "incomplete multibyte character\n"
+msgstr "carácter multibyte incompleto\n"
 
 #: fe-lobj.c:331
 msgid "cannot determine OID of function lo_create\n"
@@ -355,26 +360,26 @@ msgstr "no se pudo determinar el OID de la función loread\n"
 msgid "cannot determine OID of function lowrite\n"
 msgstr "no se pudo determinar el OID de la función lowrite\n"
 
-#: fe-misc.c:229
+#: fe-misc.c:250
 #, c-format
 msgid "integer of size %lu not supported by pqGetInt"
 msgstr "el entero de tamaño %lu no está soportado por pqGetInt"
 
-#: fe-misc.c:265
+#: fe-misc.c:286
 #, c-format
 msgid "integer of size %lu not supported by pqPutInt"
 msgstr "el entero de tamaño %lu no está soportado por pqPutInt"
 
-#: fe-misc.c:545 fe-misc.c:747
+#: fe-misc.c:566 fe-misc.c:768
 msgid "connection not open\n"
 msgstr "la conexión no está abierta\n"
 
-#: fe-misc.c:610 fe-misc.c:700
+#: fe-misc.c:631 fe-misc.c:721
 #, c-format
 msgid "could not receive data from server: %s\n"
 msgstr "no se pudo recibir datos del servidor: %s\n"
 
-#: fe-misc.c:717 fe-misc.c:785
+#: fe-misc.c:738 fe-misc.c:806
 msgid ""
 "server closed the connection unexpectedly\n"
 "\tThis probably means the server terminated abnormally\n"
@@ -384,20 +389,20 @@ msgstr ""
 "\tprobablemente porque terminó de manera anormal\n"
 "\tantes o durante el procesamiento de la petición.\n"
 
-#: fe-misc.c:802
+#: fe-misc.c:823
 #, c-format
 msgid "could not send data to server: %s\n"
 msgstr "no se pudo enviar datos al servidor: %s\n"
 
-#: fe-misc.c:921
+#: fe-misc.c:942
 msgid "timeout expired\n"
 msgstr "tiempo de espera agotado\n"
 
-#: fe-misc.c:966
+#: fe-misc.c:987
 msgid "socket not open\n"
 msgstr "el socket no está abierto\n"
 
-#: fe-misc.c:989
+#: fe-misc.c:1010
 #, c-format
 msgid "select() failed: %s\n"
 msgstr "select() fallida: %s\n"
@@ -453,7 +458,7 @@ msgstr ""
 msgid "out of memory for query result\n"
 msgstr "no hay suficiente memoria para el resultado de la consulta\n"
 
-#: fe-protocol2.c:1217 fe-protocol3.c:1201
+#: fe-protocol2.c:1217 fe-protocol3.c:1250
 #, c-format
 msgid "%s"
 msgstr "%s"
@@ -462,7 +467,7 @@ msgstr "%s"
 msgid "lost synchronization with server, resetting connection"
 msgstr "se perdió la sincronía con el servidor, reseteando la conexión"
 
-#: fe-protocol2.c:1363 fe-protocol2.c:1395 fe-protocol3.c:1403
+#: fe-protocol2.c:1363 fe-protocol2.c:1395 fe-protocol3.c:1452
 #, c-format
 msgid "protocol error: id=0x%x\n"
 msgstr "error de protocolo: id=0x%x\n"
@@ -532,7 +537,7 @@ msgstr "%s, "
 msgid "%s:%s"
 msgstr "%s:%s"
 
-#: fe-protocol3.c:1019
+#: fe-protocol3.c:1078
 msgid "PQgetline: not doing text COPY OUT\n"
 msgstr "PQgetline: no se está haciendo COPY OUT de texto\n"
 
@@ -648,3 +653,7 @@ msgstr "el certificado no pudo ser validado: %s\n"
 #, c-format
 msgid "certificate could not be obtained: %s\n"
 msgstr "el certificado no pudo ser obtenido: %s\n"
+
+#: fe-secure.c:1149
+msgid "SSL certificate's common name contains embedded null\n"
+msgstr "el common name del certificado SSL contiene un null\n"

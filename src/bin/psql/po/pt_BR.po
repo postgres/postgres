@@ -1,11 +1,11 @@
 # "psql" translation to Brazilian Portuguese Language.
-# Euler Taveira de Oliveira <euler@timbira.com>, 2003-2009.
+# Euler Taveira de Oliveira <euler@timbira.com>, 2003-2010.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2009-05-20 15:58-0300\n"
+"POT-Creation-Date: 2010-06-18 16:49-0300\n"
 "PO-Revision-Date: 2005-11-02 10:30-0300\n"
 "Last-Translator: Euler Taveira de Oliveira <euler@timbira.com>\n"
 "Language-Team: Brazilian Portuguese <pgbr-dev@listas.postgresql.org.br>\n"
@@ -68,9 +68,9 @@ msgstr "Buffer de consulta reiniciado (limpo)."
 msgid "Wrote history to file \"%s/%s\".\n"
 msgstr "Histórico escrito para arquivo \"%s/%s\".\n"
 
-#: command.c:702 common.c:83 common.c:97 mainloop.c:71 print.c:46 print.c:362
-#: print.c:369 print.c:388 print.c:586 print.c:610 print.c:677 print.c:1619
-#: print.c:1631 print.c:1652 print.c:1669
+#: command.c:702 common.c:83 common.c:97 mainloop.c:71 print.c:46 print.c:346
+#: print.c:353 print.c:372 print.c:553 print.c:577 print.c:637 print.c:1521
+#: print.c:1532 print.c:1559 print.c:1584 print.c:1603 print.c:1620
 #, c-format
 msgid "out of memory\n"
 msgstr "sem memória\n"
@@ -90,7 +90,7 @@ msgstr "Tempo de execução está desabilitado."
 
 #: command.c:809 command.c:829 command.c:1223 command.c:1230 command.c:1240
 #: command.c:1252 command.c:1265 command.c:1279 command.c:1301 command.c:1333
-#: common.c:168 copy.c:535 copy.c:592
+#: common.c:168 copy.c:535 copy.c:595
 #, c-format
 msgid "%s: %s\n"
 msgstr "%s: %s\n"
@@ -379,7 +379,11 @@ msgstr "\\copy: %s"
 msgid "\\copy: unexpected response (%d)\n"
 msgstr "\\copy: resposta inesperada (%d)\n"
 
-#: copy.c:685
+#: copy.c:587
+msgid "trying to exit copy mode"
+msgstr "tentando sair do modo copy"
+
+#: copy.c:688
 msgid ""
 "Enter data to be copied followed by a newline.\n"
 "End with a backslash and a period on a line by itself."
@@ -1024,22 +1028,22 @@ msgstr "Objetos grandes"
 msgid "Use \"\\q\" to leave %s.\n"
 msgstr "Use \"\\q\" para sair do %s.\n"
 
-#: print.c:574
+#: print.c:541
 #, c-format
 msgid "(No rows)\n"
 msgstr "(Nenhum registro)\n"
 
-#: print.c:1586
+#: print.c:1487
 #, c-format
 msgid "invalid output format (internal error): %d"
 msgstr "formato de saída inválido (erro interno): %d"
 
-#: print.c:1658
+#: print.c:1609
 #, c-format
 msgid "(1 row)"
 msgstr "(1 registro)"
 
-#: print.c:1660
+#: print.c:1611
 #, c-format
 msgid "(%d rows)"
 msgstr "(%d registros)"
