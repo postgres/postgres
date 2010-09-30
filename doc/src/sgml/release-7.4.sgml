@@ -1,5 +1,102 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release-7.4.sgml,v 1.1.10.7 2010/05/13 21:27:44 tgl Exp $ -->
+<!-- doc/src/sgml/release-7.4.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
+
+ <sect1 id="release-7-4-30">
+  <title>Release 7.4.30</title>
+
+  <note>
+  <title>Release date</title>
+  <simpara>2010-10-04</simpara>
+  </note>
+
+  <para>
+   This release contains a variety of fixes from 7.4.29.
+   For information about new features in the 7.4 major release, see
+   <xref linkend="release-7-4">.
+  </para>
+
+  <para>
+   This is expected to be the last <productname>PostgreSQL</> release
+   in the 7.4.X series.  Users are encouraged to update to a newer
+   release branch soon.
+  </para>
+
+  <sect2>
+   <title>Migration to Version 7.4.30</title>
+
+   <para>
+    A dump/restore is not required for those running 7.4.X.
+    However, if you are upgrading from a version earlier than 7.4.26,
+    see the release notes for 7.4.26.
+   </para>
+
+  </sect2>
+
+  <sect2>
+   <title>Changes</title>
+
+   <itemizedlist>
+
+    <listitem>
+     <para>
+      Prevent possible crashes in <function>pg_get_expr()</> by disallowing
+      it from being called with an argument that is not one of the system
+      catalog columns it's intended to be used with
+      (Heikki Linnakangas, Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <quote>cannot handle unplanned sub-select</quote> error (Tom Lane)
+     </para>
+
+     <para>
+      This occurred when a sub-select contains a join alias reference that
+      expands into an expression containing another sub-select.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Take care to fsync the contents of lockfiles (both
+      <filename>postmaster.pid</> and the socket lockfile) while writing them
+      (Tom Lane)
+     </para>
+
+     <para>
+      This omission could result in corrupted lockfile contents if the
+      machine crashes shortly after postmaster start.  That could in turn
+      prevent subsequent attempts to start the postmaster from succeeding,
+      until the lockfile is manually removed.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Improve <filename>contrib/dblink</>'s handling of tables containing
+      dropped columns (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix connection leak after <quote>duplicate connection name</quote>
+      errors in <filename>contrib/dblink</> (Itagaki Takahiro)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Update build infrastructure and documentation to reflect the source code
+      repository's move from CVS to Git (Magnus Hagander and others)
+     </para>
+    </listitem>
+
+   </itemizedlist>
+
+  </sect2>
+ </sect1>
 
  <sect1 id="release-7-4-29">
   <title>Release 7.4.29</title>
@@ -1897,7 +1994,7 @@ enabled</para></listitem>
 files during postmaster startup</para></listitem>
 <listitem><para>Various memory leakage fixes</para></listitem>
 <listitem><para>Various portability improvements</para></listitem>
-<listitem><para>Fix PL/PgSQL to handle <literal>var := var</> correctly when
+<listitem><para>Fix PL/pgSQL to handle <literal>var := var</> correctly when
 the variable is of pass-by-reference type</para></listitem>
 <listitem><para>Update <filename>contrib/tsearch2</> to use current Snowball
 code</para></listitem>
