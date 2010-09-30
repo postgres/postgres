@@ -11,7 +11,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 8.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2005-01-06 12:21+0100\n"
-"PO-Revision-Date: 2005-01-06 12:31+0100\n"
+"PO-Revision-Date: 2010-07-02 21:40-0400\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <sv@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -2699,7 +2699,7 @@ msgstr ""
 
 #: sql_help.h:325
 msgid "define access privileges"
-msgstr "definera Åtkomsträttigheter"
+msgstr "definera åtkomsträttigheter"
 
 #: sql_help.h:326
 msgid ""
@@ -2864,7 +2864,7 @@ msgstr ""
 
 #: sql_help.h:369
 msgid "remove access privileges"
-msgstr "ta bort Åtkomsträttigheter"
+msgstr "ta bort åtkomsträttigheter"
 
 #: sql_help.h:370
 msgid ""

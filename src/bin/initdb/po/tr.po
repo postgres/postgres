@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: initdb-tr\n"
 "POT-Creation-Date: 2005-04-02 07:10+0100\n"
-"PO-Revision-Date: 2005-04-02 19:05+0300\n"
+"PO-Revision-Date: 2010-09-25 00:50+0300\n"
 "Last-Translator: \n"
 "Language-Team:  <en@li.org>\n"
 "current/libpq-tr.po>\n"
@@ -118,8 +118,7 @@ msgid ""
 msgstr ""
 "%s: \"%s\" dosyası bulunamadı\n"
 "Bu ileti, bozulmus bir kurulumunuz olduğu ya da\n"
-"initdb betiğine verdiğiniz -L parametresi ile yanlış dizin belirttiğiniz "
-"anlamına gelir..\n"
+"initdb betiğine verdiğiniz -L parametresi ile yanlış dizin belirttiğiniz anlamına gelir.\n"
 
 #: initdb.c:1078
 msgid "selecting default max_connections ... "
@@ -510,12 +509,12 @@ msgstr "Öntanımlı veritabanı dil kodlaması %s olarak ayarlandı.\n"
 #: initdb.c:2500
 #, c-format
 msgid "creating directory %s ... "
-msgstr "%s dizini yaratılıyor... "
+msgstr "%s dizini yaratılıyor ... "
 
 #: initdb.c:2514
 #, c-format
 msgid "fixing permissions on existing directory %s ... "
-msgstr "mevcut %s dizininin izinleri düzeltiliyor..."
+msgstr "mevcut %s dizininin izinleri düzeltiliyor ... "
 
 #: initdb.c:2520
 #, c-format
@@ -543,7 +542,7 @@ msgstr "%s: \"%s\" dizine erişim hatası: %s\n"
 #: initdb.c:2551
 #, c-format
 msgid "creating directory %s/%s ... "
-msgstr "%s/%s dizini yaratılıyor... "
+msgstr "%s/%s dizini yaratılıyor ... "
 
 #: initdb.c:2619
 #, c-format

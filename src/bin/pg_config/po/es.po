@@ -1,18 +1,19 @@
 # pg_config spanish translation
 # This file is put in the public domain.
-# Alvaro Herrera <alvherre@dcc.uchile.cl>, 2004
+# Alvaro Herrera <alvherre@dcc.uchile.cl>, 2004, 2010
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: pg_config 8.0\n"
+"Project-Id-Version: pg_config (PostgreSQL 8.0)\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2005-09-27 23:04-0400\n"
-"PO-Revision-Date: 2004-11-02 23:30 CLST\n"
-"Last-Translator: Alvaro Herrera <alvherre@dcc.uchile.cl>\n"
-"Language-Team: es <pgsql-es-ayuda@postgresql.org>\n"
+"POT-Creation-Date: 2010-09-27 21:16+0000\n"
+"PO-Revision-Date: 2010-09-30 11:14-0400\n"
+"Last-Translator: Alvaro Herrera <alvherre@alvh.no-ip.org>\n"
+"Language-Team: Spanish <pgsql-es-ayuda@postgresql.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=iso-8859-1\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Language: es\n"
 
 #: pg_config.c:36
 #, c-format

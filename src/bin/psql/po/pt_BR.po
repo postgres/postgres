@@ -1,11 +1,11 @@
 # "psql" translation to Brazilian Portuguese Language.
-# Euler Taveira de Oliveira <euler@timbira.com>, 2003-2009.
+# Euler Taveira de Oliveira <euler@timbira.com>, 2003-2010.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2009-05-31 01:54-0300\n"
+"POT-Creation-Date: 2010-06-18 16:40-0300\n"
 "PO-Revision-Date: 2004-11-13 18:42-0300\n"
 "Last-Translator: Euler Taveira de Oliveira <euler@timbira.com>\n"
 "Language-Team: Brazilian Portuguese <pgbr-dev@listas.postgresql.org.br>\n"
@@ -94,7 +94,7 @@ msgstr "Tempo de execução está desabilitado."
 
 #: command.c:803 command.c:823 command.c:1208 command.c:1215 command.c:1225
 #: command.c:1237 command.c:1250 command.c:1264 command.c:1286 command.c:1318
-#: common.c:170 copy.c:530 copy.c:587
+#: common.c:170 copy.c:530 copy.c:590
 #, c-format
 msgid "%s: %s\n"
 msgstr "%s: %s\n"
@@ -352,7 +352,11 @@ msgstr "\\copy: %s"
 msgid "\\copy: unexpected response (%d)\n"
 msgstr "\\copy: resposta inesperada (%d)\n"
 
-#: copy.c:680
+#: copy.c:582
+msgid "trying to exit copy mode"
+msgstr "tentando sair do modo copy"
+
+#: copy.c:683
 msgid ""
 "Enter data to be copied followed by a newline.\n"
 "End with a backslash and a period on a line by itself."
@@ -2128,7 +2132,8 @@ msgid ""
 "  } ...\n"
 "    [ WITH ( attribute [, ...] ) ]"
 msgstr ""
-"CREATE [ OR REPLACE ] FUNCTION nome ( [ [ modo_argumento ] [ nome_argumento ] tipo_argumento [, ... ] ] )\n"
+"CREATE [ OR REPLACE ] FUNCTION nome ( [ [ modo_argumento ] "
+"[ nome_argumento ] tipo_argumento [, ... ] ] )\n"
 "    [ RETURNS tipo_retorno ]\n"
 "  { LANGUAGE nome_linguagem\n"
 "    | IMMUTABLE | STABLE | VOLATILE\n"
@@ -2474,7 +2479,8 @@ msgstr "define uma nova visão"
 
 #: sql_help.h:214
 msgid "CREATE [ OR REPLACE ] VIEW name [ ( column_name [, ...] ) ] AS query"
-msgstr "CREATE [ OR REPLACE ] VIEW nome [ ( nome_coluna [, ...] ) ] AS consulta"
+msgstr ""
+"CREATE [ OR REPLACE ] VIEW nome [ ( nome_coluna [, ...] ) ] AS consulta"
 
 #: sql_help.h:217
 msgid "deallocate a prepared statement"

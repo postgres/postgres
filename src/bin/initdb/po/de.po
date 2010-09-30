@@ -3,14 +3,14 @@
 #
 # Use these quotes: »%s«
 #
-# $PostgreSQL: pgsql/src/bin/initdb/po/de.po,v 1.7.4.1 2009/09/03 18:58:58 petere Exp $
+# $PostgreSQL: pgsql/src/bin/initdb/po/de.po,v 1.7 2005/01/17 10:00:04 petere Exp $
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2009-04-11 19:07+0300\n"
-"PO-Revision-Date: 2009-04-11 19:40+0300\n"
+"PO-Revision-Date: 2010-09-25 00:26+0300\n"
 "Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language-Team: Peter Eisentraut <peter_e@gmx.net>\n"
 "MIME-Version: 1.0\n"
@@ -223,7 +223,7 @@ msgstr "erzeuge Informationsschema ... "
 
 #: initdb.c:1826
 msgid "vacuuming database template1 ... "
-msgstr "führe Vacuum in Datenbank template1 durch ..."
+msgstr "führe Vacuum in Datenbank template1 durch ... "
 
 #: initdb.c:1880
 msgid "copying template1 to template0 ... "

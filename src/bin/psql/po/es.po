@@ -1,17 +1,18 @@
 # translation of psql.
-# (c) Alvaro Herrera <alvherre@alvh.no-ip.org>, 2003, 2004, 2005
-# 
+# (c) Alvaro Herrera <alvherre@alvh.no-ip.org>, 2003, 2004, 2005, 2010
+#
 msgid ""
 msgstr ""
-"Project-Id-Version: psql 8.0\n"
+"Project-Id-Version: psql (PostgreSQL 8.0)\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2005-09-27 22:41-0400\n"
-"PO-Revision-Date: 2004-11-03 01:12-0300\n"
-"Last-Translator: Álvaro Herrera <alvherre@alvh.no-ip.org>\n"
-"Language-Team: Castellano <pgsql-es-ayuda@postgresql.org>\n"
+"POT-Creation-Date: 2010-09-27 21:16+0000\n"
+"PO-Revision-Date: 2010-09-30 11:14-0400\n"
+"Last-Translator: Alvaro Herrera <alvherre@alvh.no-ip.org>\n"
+"Language-Team: Spanish <pgsql-es-ayuda@postgresql.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=iso-8859-1\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Language: es\n"
 
 #: command.c:116
 msgid "Warning: This syntax is deprecated.\n"
@@ -42,7 +43,7 @@ msgstr "No se ha podido obtener directorio home: %s\n"
 msgid "\\%s: could not change directory to \"%s\": %s\n"
 msgstr "\\%s: no se pudo cambiar directorio a «%s»: %s\n"
 
-#: command.c:384 command.c:776
+#: command.c:384 command.c:775
 msgid "no query buffer\n"
 msgstr "no hay búfer de consulta\n"
 
@@ -54,7 +55,7 @@ msgstr ""
 "no encontrado\n"
 
 #: command.c:515 command.c:549 command.c:563 command.c:580 command.c:626
-#: command.c:756 command.c:787
+#: command.c:755 command.c:786
 #, c-format
 msgid "\\%s: missing required argument\n"
 msgstr "\\%s: falta argumento requerido\n"
@@ -67,88 +68,88 @@ msgstr "El búfer de consulta está vacío."
 msgid "Query buffer reset (cleared)."
 msgstr "El búfer de consulta ha sido reiniciado (limpiado)."
 
-#: command.c:660
+#: command.c:659
 #, c-format
 msgid "Wrote history to file \"%s\".\n"
 msgstr "Se escribió historial a archivo «%s».\n"
 
-#: command.c:697 common.c:85 common.c:99 mainloop.c:71 print.c:230 print.c:237
+#: command.c:696 common.c:85 common.c:99 mainloop.c:71 print.c:230 print.c:237
 #: print.c:256 print.c:440 print.c:464 print.c:488 print.c:517 print.c:535
 #: print.c:1156 print.c:1168 print.c:1189 print.c:1196 print.c:1211
 #, c-format
 msgid "out of memory\n"
 msgstr "memoria agotada\n"
 
-#: command.c:712 command.c:761
+#: command.c:711 command.c:760
 #, c-format
 msgid "\\%s: error\n"
 msgstr "\\%s: error\n"
 
-#: command.c:742
+#: command.c:741
 msgid "Timing is on."
 msgstr "Mostrar tiempos está activado."
 
-#: command.c:744
+#: command.c:743
 msgid "Timing is off."
 msgstr "Mostrar tiempos está desactivado."
 
-#: command.c:804 command.c:824 command.c:1209 command.c:1216 command.c:1226
-#: command.c:1238 command.c:1251 command.c:1265 command.c:1287 command.c:1318
-#: common.c:170 copy.c:530 copy.c:575
+#: command.c:803 command.c:823 command.c:1208 command.c:1215 command.c:1225
+#: command.c:1237 command.c:1250 command.c:1264 command.c:1286 command.c:1318
+#: common.c:170 copy.c:530 copy.c:590
 #, c-format
 msgid "%s: %s\n"
 msgstr "%s: %s\n"
 
-#: command.c:931 command.c:955 startup.c:188 startup.c:206
+#: command.c:930 command.c:954 startup.c:188 startup.c:206
 msgid "Password: "
 msgstr "Contraseña: "
 
-#: command.c:969 common.c:216 common.c:685 common.c:740 common.c:983
+#: command.c:968 common.c:216 common.c:692 common.c:747 common.c:990
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: command.c:973
+#: command.c:972
 msgid "Previous connection kept\n"
 msgstr "Se ha mantenido la conexión anterior\n"
 
-#: command.c:985
+#: command.c:984
 #, c-format
 msgid "\\connect: %s"
 msgstr "\\connect: %s"
 
-#: command.c:997
+#: command.c:996
 #, c-format
 msgid "You are now connected to database \"%s\".\n"
 msgstr "Ahora está conectado a la base de datos «%s».\n"
 
-#: command.c:999
+#: command.c:998
 #, c-format
 msgid "You are now connected as new user \"%s\".\n"
 msgstr "Ahora está conectado como el usuario «%s».\n"
 
-#: command.c:1002
+#: command.c:1001
 #, c-format
 msgid "You are now connected to database \"%s\" as user \"%s\".\n"
 msgstr ""
 "Ahora está conectado a la base de datos «%s»\n"
 "con el usuario «%s».\n"
 
-#: command.c:1127
+#: command.c:1126
 #, c-format
 msgid "could not start editor \"%s\"\n"
 msgstr "no se pudo iniciar el editor «%s»\n"
 
-#: command.c:1129
+#: command.c:1128
 msgid "could not start /bin/sh\n"
 msgstr "no se pudo iniciar /bin/sh\n"
 
-#: command.c:1168
+#: command.c:1167
 #, c-format
 msgid "cannot locate temporary directory: %s"
 msgstr "no se encontró el directorio temporal: %s"
 
-#: command.c:1194
+#: command.c:1193
 #, c-format
 msgid "could not open temporary file \"%s\": %s\n"
 msgstr "no se pudo abrir archivo temporal «%s»: %s\n"
@@ -263,49 +264,49 @@ msgstr "%s: xstrdup: no se puede duplicar puntero nulo (error interno)\n"
 msgid "out of memory"
 msgstr "memoria agotada"
 
-#: common.c:356
+#: common.c:363
 msgid "connection to server was lost\n"
 msgstr "se ha perdido la conexión al servidor\n"
 
-#: common.c:360
+#: common.c:367
 msgid "The connection to the server was lost. Attempting reset: "
 msgstr "La conexión al servidor se ha perdido. Intentando reiniciar: "
 
-#: common.c:365
+#: common.c:372
 msgid "Failed.\n"
 msgstr "falló.\n"
 
-#: common.c:372
+#: common.c:379
 msgid "Succeeded.\n"
 msgstr "con éxito.\n"
 
-#: common.c:471
+#: common.c:478
 #, c-format
 msgid "INTERNAL ERROR: unexpected statement position \"%s\"\n"
 msgstr "ERROR INTERNO: posición de sentencia inesperada «%s»\n"
 
-#: common.c:607
+#: common.c:614
 #, c-format
 msgid "LINE %d: "
 msgstr "LINEA %d: "
 
-#: common.c:624 common.c:633
+#: common.c:631 common.c:640
 #, c-format
 msgid "%s\n"
 msgstr "%s\n"
 
-#: common.c:716 common.c:951
+#: common.c:723 common.c:958
 msgid "You are currently not connected to a database.\n"
 msgstr "No está conectado a una base de datos.\n"
 
-#: common.c:771
+#: common.c:778
 #, c-format
 msgid ""
 "Asynchronous notification \"%s\" received from server process with PID %d.\n"
 msgstr ""
 "Notificación asíncrona «%s» recibida del proceso de servidor con PID %d.\n"
 
-#: common.c:959
+#: common.c:966
 #, c-format
 msgid ""
 "***(Single step mode: verify command)"
@@ -320,7 +321,7 @@ msgstr ""
 "***(presione «enter» para continuar, o «x <enter>» para cancelar)"
 "***************\n"
 
-#: common.c:1010
+#: common.c:1017
 #, c-format
 msgid "Time: %.3f ms\n"
 msgstr "Duración: %.3f ms\n"
@@ -348,12 +349,16 @@ msgstr "%s: no se puede copiar desde/hacia un directorio\n"
 msgid "\\copy: %s"
 msgstr "\\copy: %s"
 
-#: copy.c:566
+#: copy.c:566 copy.c:578
 #, c-format
 msgid "\\copy: unexpected response (%d)\n"
 msgstr "\\copy: respuesta inesperada (%d)\n"
 
-#: copy.c:668
+#: copy.c:582
+msgid "trying to exit copy mode"
+msgstr "tratando de salir del modo copy"
+
+#: copy.c:683
 msgid ""
 "Enter data to be copied followed by a newline.\n"
 "End with a backslash and a period on a line by itself."
@@ -553,15 +558,13 @@ msgstr "socket local"
 #, c-format
 msgid "  -p PORT         database server port (default: \"%s\")\n"
 msgstr ""
-"  -p PORT          puerto del servidor de bases de datos (por omisión: «%"
-"s»)\n"
+"  -p PORT          puerto del servidor de bases de datos (por omisión: «%s»)\n"
 
 #: help.c:137
 #, c-format
 msgid "  -U NAME         database user name (default: \"%s\")\n"
 msgstr ""
-"  -U NOMBRE        nombre de usuario de la base de datos (por omisión: «%"
-"s»)\n"
+"  -U NOMBRE        nombre de usuario de la base de datos (por omisión: «%s»)\n"
 
 #: help.c:138
 msgid "  -W              prompt for password (should happen automatically)"
