@@ -1,6 +1,111 @@
 <!-- doc/src/sgml/release-9.0.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+ <sect1 id="release-9-0-1">
+  <title>Release 9.0.1</title>
+
+  <note>
+  <title>Release date</title>
+  <simpara>2010-10-04</simpara>
+  </note>
+
+  <para>
+   This release contains a variety of fixes from 9.0.0.
+   For information about new features in the 9.0 major release, see
+   <xref linkend="release-9-0">.
+  </para>
+
+  <sect2>
+   <title>Migration to Version 9.0.1</title>
+
+   <para>
+    A dump/restore is not required for those running 9.0.X.
+   </para>
+
+  </sect2>
+
+  <sect2>
+   <title>Changes</title>
+
+   <itemizedlist>
+
+    <listitem>
+     <para>
+      Improve <function>pg_get_expr()</> security fix so that the function
+      can still be used on the output of a sub-select (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix incorrect placement of placeholder evaluation (Tom Lane)
+     </para>
+
+     <para>
+      This bug could result in query outputs being non-null when they
+      should be null, in cases where the inner side of an outer join
+      is a sub-select with non-strict expressions in its output list.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix join removal's handling of placeholder expressions (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix possible duplicate scans of <literal>UNION ALL</> member relations
+      (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Prevent infinite loop in ProcessIncomingNotify() after unlistening
+      (Jeff Davis)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Prevent show_session_authorization() from crashing within autovacuum
+      processes (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Re-allow input of Julian dates prior to 0001-01-01 AD (Tom Lane)
+     </para>
+
+     <para>
+      Input such as <literal>'J100000'::date</> worked before 8.4,
+      but was unintentionally broken by added error-checking.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Make psql recognize <command>DISCARD ALL</> as a command that should
+      not be encased in a transaction block in autocommit-off mode
+      (Itagaki Takahiro)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Update build infrastructure and documentation to reflect the source code
+      repository's move from CVS to Git (Magnus Hagander and others)
+     </para>
+    </listitem>
+
+   </itemizedlist>
+
+  </sect2>
+ </sect1>
+
  <sect1 id="release-9-0">
   <title>Release 9.0</title>
 
