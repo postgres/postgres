@@ -41,7 +41,7 @@
    <para>
     Users of source packages must specially enable the build of
     PL/Perl during the installation process.  (Refer to <xref
-    linkend="install-short"> for more information.)  Users of
+    linkend="installation"> for more information.)  Users of
     binary packages might find PL/Perl in a separate subpackage.
    </para>
   </note>
@@ -101,7 +101,7 @@ $$ LANGUAGE plperl;
    most convenient to use dollar quoting (see <xref
    linkend="sql-syntax-dollar-quoting">) for the string constant.
    If you choose to use escape string syntax <literal>E''</>,
-   you must double the single quote marks (<literal>'</>) and backslashes
+   you must double any single quote marks (<literal>'</>) and backslashes
    (<literal>\</>) used in the body of the function
    (see <xref linkend="sql-syntax-strings">).
   </para>
@@ -829,10 +829,20 @@ $$ LANGUAGE plperl;
   </para>
 
   <para>
-    The <varname>%_SHARED</varname> variable and other global state within
-    the language are public data, available to all PL/Perl functions within a
-    session. Use with care, especially in situations that involve use of 
-    multiple roles or <literal>SECURITY DEFINER</> functions.
+   For security reasons, PL/Perl executes functions called by any one SQL role
+   in a separate Perl interpreter for that role.  This prevents accidental or
+   malicious interference by one user with the behavior of another user's
+   PL/Perl functions.  Each such interpreter has its own value of the
+   <varname>%_SHARED</varname> variable and other global state.  Thus, two
+   PL/Perl functions will share the same value of <varname>%_SHARED</varname>
+   if and only if they are executed by the same SQL role.  In an application
+   wherein a single session executes code under multiple SQL roles (via
+   <literal>SECURITY DEFINER</> functions, use of <command>SET ROLE</>, etc)
+   you may need to take explicit steps to ensure that PL/Perl functions can
+   share data via <varname>%_SHARED</varname>.  To do that, make sure that
+   functions that should communicate are owned by the same user, and mark
+   them <literal>SECURITY DEFINER</>.  You must of course take care that
+   such functions can't be used to do anything unintended.
   </para>
  </sect1>
 
@@ -908,22 +918,31 @@ $$ LANGUAGE plperl;
   </para>
 
   <note>
-    <para>
-      For security reasons, to stop a leak of privileged operations from
-      <application>PL/PerlU</> to <application>PL/Perl</>, these two languages
-      have to run in separate instances of the Perl interpreter. If your
-      Perl installation has been appropriately compiled, this is not a problem.
-      However, not all installations are compiled with the requisite flags.
-      If <productname>PostgreSQL</> detects that this is the case then it will
-      not start a second interpreter, but instead create an error. In
-      consequence, in such an installation, you cannot use both
-      <application>PL/PerlU</> and <application>PL/Perl</> in the same backend
-      process. The remedy for this is to obtain a Perl installation configured
-      with the appropriate flags, namely either <literal>usemultiplicity</>
-      or <literal>useithreads</>. <literal>usemultiplicity</> is preferred
-      unless you actually need to use threads. For more details, see the
-      <citerefentry><refentrytitle>perlembed</></citerefentry> man page.
-    </para>
+   <para>
+    While <application>PL/Perl</> functions run in a separate Perl
+    interpreter for each SQL role, all <application>PL/PerlU</> functions
+    executed in a given session run in a single Perl interpreter (which is
+    not any of the ones used for <application>PL/Perl</> functions).
+    This allows <application>PL/PerlU</> functions to share data freely,
+    but no communication can occur between <application>PL/Perl</> and
+    <application>PL/PerlU</> functions.
+   </para>
+  </note>
+
+  <note>
+   <para>
+    Perl cannot support multiple interpreters within one process unless
+    it was built with the appropriate flags, namely either
+    <literal>usemultiplicity</> or <literal>useithreads</>.
+    (<literal>usemultiplicity</> is preferred unless you actually need
+    to use threads.  For more details, see the
+    <citerefentry><refentrytitle>perlembed</></citerefentry> man page.)
+    If <application>PL/Perl</> is used with a copy of Perl that was not built
+    this way, then it is only possible to have one Perl interpreter per
+    session, and so any one session can only execute either
+    <application>PL/PerlU</> functions, or <application>PL/Perl</> functions
+    that are all called by the same SQL role.
+   </para>
   </note>
 
  </sect1>
@@ -1137,12 +1156,13 @@ CREATE TRIGGER test_valid_id_trig
       </indexterm>
       <listitem>
        <para>
-       Specifies Perl code to be executed when a Perl interpreter is first initialized
-       and before it is specialized for use by <literal>plperl</> or <literal>plperlu</>.
-       The SPI functions are not available when this code is executed.
-       If the code fails with an error it will abort the initialization of the interpreter
-       and propagate out to the calling query, causing the current transaction
-       or subtransaction to be aborted.
+        Specifies Perl code to be executed when a Perl interpreter is first
+        initialized, before it is specialized for use by <literal>plperl</> or
+        <literal>plperlu</>.
+        The SPI functions are not available when this code is executed.
+        If the code fails with an error it will abort the initialization of
+        the interpreter and propagate out to the calling query, causing the
+        current transaction or subtransaction to be aborted.
        </para>
        <para>
        The Perl code is limited to a single string. Longer code can be placed
@@ -1162,9 +1182,21 @@ DO 'elog(WARNING, join ", ", sort keys %INC)' language plperl;
 </programlisting>
        </para>
        <para>
-       Initialization will happen in the postmaster if the plperl library is included
-       in <literal>shared_preload_libraries</> (see <xref linkend="guc-shared-preload-libraries">),
-       in which case extra consideration should be given to the risk of destabilizing the postmaster.
+        Initialization will happen in the postmaster if the plperl library is
+        included in <xref linkend="guc-shared-preload-libraries">, in which
+        case extra consideration should be given to the risk of destabilizing
+        the postmaster.  The principal reason for making use of this feature
+        is that Perl modules loaded by <literal>plperl.on_init</> need be
+        loaded only at postmaster start, and will be instantly available
+        without loading overhead in individual database sessions.  However,
+        keep in mind that the overhead is avoided only for the first Perl
+        interpreter used by a database session &mdash; either PL/PerlU, or
+        PL/Perl for the first SQL role that calls a PL/Perl function.  Any
+        additional Perl interpreters created in a database session will have
+        to execute <literal>plperl.on_init</> afresh.  Also, on Windows there
+        will be no savings whatsoever from preloading, since the Perl
+        interpreter created in the postmaster process does not propagate to
+        child processes.
        </para>
        <para>
        This parameter can only be set in the postgresql.conf file or on the server command line.
@@ -1183,41 +1215,30 @@ DO 'elog(WARNING, join ", ", sort keys %INC)' language plperl;
       </indexterm>
       <listitem>
        <para>
-       These parameters specify Perl code to be executed when the
-       <literal>plperl</>, or <literal>plperlu</> language is first used in a
-       session.  Changes to these parameters after the corresponding language
-       has been used will have no effect.
-       The SPI functions are not available when this code is executed.
-       Only superusers can change these settings.
-       The Perl code in <literal>plperl.on_plperl_init</> can only perform trusted operations.
+        These parameters specify Perl code to be executed when a Perl
+        interpreter is specialized for <literal>plperl</> or
+        <literal>plperlu</> respectively.  This will happen when a PL/Perl or
+        PL/PerlU function is first executed in a database session, or when
+        an additional interpreter has to be created because the other language
+        is called or a PL/Perl function is called by a new SQL role.  This
+        follows any initialization done by <literal>plperl.on_init</>.
+        The SPI functions are not available when this code is executed.
+        The Perl code in <literal>plperl.on_plperl_init</> is executed after
+        <quote>locking down</> the interpreter, and thus it can only perform
+        trusted operations.
        </para>
        <para>
-       The effect of setting these parameters is very similar to executing a
-       <literal>DO</> command with the Perl code before any other use of the
-       language.  The parameters are useful when you want to execute the Perl
-       code automatically on every connection, or when a connection is not
-       interactive. The parameters can be used by non-superusers by having a
-       superuser execute an <literal>ALTER USER ... SET ...</> command.
-       For example:
-<programlisting>
-ALTER USER joe SET plperl.on_plperl_init = '$_SHARED{debug} = 1';
-</programlisting>
+        If the code fails with an error it will abort the initialization and
+        propagate out to the calling query, causing the current transaction or
+        subtransaction to be aborted.  Any actions already done within Perl
+        won't be undone; however, that interpreter won't be used again.
+        If the language is used again the initialization will be attempted
+        again within a fresh Perl interpreter.
        </para>
        <para>
-       If the code fails with an error it will abort the initialization and
-       propagate out to the calling query, causing the current transaction or
-       subtransaction to be aborted. Any changes within Perl won't be undone.
-       If the language is used again the initialization will be repeated.
-       </para>
-       <para>
-       The difference between these two settings and the 
-       <literal>plperl.on_init</> setting is that these can be used for
-       settings specific to the trusted or untrusted language variant, such
-       as setting values in the <varname>%_SHARED</> variable. By contrast,
-       <literal>plperl.on_init</> is more useful for doing things like
-       setting the library search path for <productname>Perl</> or 
-       loading Perl modules that don't interact directly with 
-       <productname>PostgreSQL</>.
+        Only superusers can change these settings.  Although these settings
+        can be changed within a session, such changes will not affect Perl
+        interpreters that have already been used to execute functions.
        </para>
       </listitem>
      </varlistentry>
@@ -1229,8 +1250,9 @@ ALTER USER joe SET plperl.on_plperl_init = '$_SHARED{debug} = 1';
       </indexterm>
       <listitem>
        <para>
-       When set true subsequent compilations of PL/Perl functions have the <literal>strict</> pragma enabled.
-       This parameter does not affect functions already compiled in the current session.
+        When set true subsequent compilations of PL/Perl functions will have
+        the <literal>strict</> pragma enabled.  This parameter does not affect
+        functions already compiled in the current session.
        </para>
       </listitem>
      </varlistentry>
