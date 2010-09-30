@@ -2,17 +2,18 @@
 #  Karim Mribti <karim@mribti.com>, 2002.
 #  Alvaro Herrera <alvherre@alvh.no-ip.org>, 2003-2008
 #
-# pgtranslation Id: pg_controldata.po,v 1.5 2008/01/30 15:09:56 alvherre Exp $
-# $PostgreSQL: pgsql/src/bin/pg_controldata/po/es.po,v 1.10.2.2 2008/06/05 23:36:45 tgl Exp $
+# pgtranslation Id: pg_controldata.po,v 1.5.2.1 2010/09/24 22:23:39 alvherre Exp $
+# $PostgreSQL$
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_controldata (PostgreSQL 8.3)\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-01-30 08:18-0400\n"
+"POT-Creation-Date: 2010-09-24 19:09+0000\n"
 "PO-Revision-Date: 2008-01-30 12:08-0300\n"
 "Last-Translator: Alvaro Herrera <alvherre@alvh.no-ip.org>\n"
 "Language-Team: Castellano <pgsql-es-ayuda@postgresql.org>\n"
+"Language: \n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=ISO-8859-1\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -139,7 +140,8 @@ msgid ""
 msgstr ""
 "ATENCIÓN: posible discordancia en orden de bytes\n"
 "El orden de bytes usado para almacenar el archivo pg_control puede no\n"
-"coincidir con el que usa este programa.  En tal caso, los resultados de abajo\n"
+"coincidir con el que usa este programa.  En tal caso, los resultados de "
+"abajo\n"
 "serán incorrectos, y esta instalación de PostgreSQL será incompatible con\n"
 "este directorio de datos.\n"
 

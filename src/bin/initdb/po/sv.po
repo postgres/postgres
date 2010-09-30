@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 8.2\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2006-11-06 19:11-0400\n"
-"PO-Revision-Date: 2007-12-06 16:36+0100\n"
+"PO-Revision-Date: 2010-09-25 00:47+0300\n"
 "Last-Translator: Magnus Hagander <magnus@hagander.net>\n"
 "Language-Team: Swedish <sv@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -157,7 +157,7 @@ msgstr "väljer initialt värde för shared_buffers/max_fsm_pages ... "
 
 #: initdb.c:1151
 msgid "creating configuration files ... "
-msgstr "skapar konfigurationsfiler ..."
+msgstr "skapar konfigurationsfiler ... "
 
 #: initdb.c:1320
 #, c-format
@@ -216,7 +216,7 @@ msgstr "skapar systemvyer ... "
 
 #: initdb.c:1666
 msgid "loading system objects' descriptions ... "
-msgstr "laddar systemobjektens beskrivningar... "
+msgstr "laddar systemobjektens beskrivningar ... "
 
 #: initdb.c:1718
 msgid "creating conversions ... "

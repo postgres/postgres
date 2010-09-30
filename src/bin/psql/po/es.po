@@ -2,17 +2,18 @@
 # (c) <alvherre@alvh.no-ip.org>, 2003-2008
 # (c) Diego A. Gil <diego@adminsa.com>, 2005
 #
-# pgtranslation Id: psql.po,v 1.7 2008/01/30 15:09:57 alvherre Exp $
-# $PostgreSQL: pgsql/src/bin/psql/po/es.po,v 1.16.2.3 2008/10/30 21:30:20 petere Exp $
+# pgtranslation Id: psql.po,v 1.8.2.2 2010/09/24 22:23:40 alvherre Exp $
+# $PostgreSQL$
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: psql (PostgreSQL 8.3)\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-05-06 13:19-0300\n"
+"POT-Creation-Date: 2010-09-24 19:09+0000\n"
 "PO-Revision-Date: 2008-09-17 19:51-0400\n"
 "Last-Translator: Álvaro Herrera <alvherre@alvh.no-ip.org>\n"
 "Language-Team: Castellano <pgsql-es-ayuda@postgresql.org>\n"
+"Language: \n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=iso-8859-1\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -102,7 +103,7 @@ msgid "Wrote history to file \"%s/%s\".\n"
 msgstr "Se escribió la historia en el archivo \"%s/%s\".\n"
 
 #: command.c:870 common.c:50 common.c:64 mainloop.c:67 print.c:56 print.c:70
-#: print.c:885
+#: print.c:835
 #, c-format
 msgid "out of memory\n"
 msgstr "memoria agotada\n"
@@ -117,7 +118,7 @@ msgstr "El despliegue de duración está desactivado."
 
 #: command.c:977 command.c:997 command.c:1395 command.c:1402 command.c:1411
 #: command.c:1421 command.c:1430 command.c:1444 command.c:1458 command.c:1491
-#: common.c:135 copy.c:509 copy.c:573
+#: common.c:135 copy.c:509 copy.c:576
 #, c-format
 msgid "%s: %s\n"
 msgstr "%s: %s\n"
@@ -132,7 +133,7 @@ msgid "Password for user %s: "
 msgstr "Contraseña para usuario %s: "
 
 #: command.c:1182 common.c:181 common.c:458 common.c:523 common.c:809
-#: common.c:834 common.c:907 copy.c:644 copy.c:689 copy.c:818
+#: common.c:834 common.c:907 copy.c:647 copy.c:692 copy.c:821
 #, c-format
 msgid "%s"
 msgstr "%s"
@@ -185,113 +186,113 @@ msgstr "no se encontró el directorio temporal: %s"
 msgid "could not open temporary file \"%s\": %s\n"
 msgstr "no se pudo abrir archivo temporal «%s»: %s\n"
 
-#: command.c:1570
+#: command.c:1588
 msgid "\\pset: allowed formats are unaligned, aligned, html, latex, troff-ms\n"
 msgstr ""
 "\\pset: formatos permitidos son unaligned, aligned, html, latex, troff-ms\n"
 
-#: command.c:1575
+#: command.c:1593
 #, c-format
 msgid "Output format is %s.\n"
 msgstr "El formato de salida es %s.\n"
 
-#: command.c:1585
+#: command.c:1603
 #, c-format
 msgid "Border style is %d.\n"
 msgstr "El estilo de borde es %d.\n"
 
-#: command.c:1597
+#: command.c:1615
 #, c-format
 msgid "Expanded display is on.\n"
 msgstr "Se ha activado el despliegue expandido.\n"
 
-#: command.c:1598
+#: command.c:1616
 #, c-format
 msgid "Expanded display is off.\n"
 msgstr "Se ha desactivado el despliegue expandido.\n"
 
-#: command.c:1611
+#: command.c:1629
 msgid "Showing locale-adjusted numeric output."
 msgstr "Mostrando salida numérica ajustada localmente"
 
-#: command.c:1613
+#: command.c:1631
 msgid "Locale-adjusted numeric output is off."
 msgstr "La salida numérica ajustada localmente está deshabilitada. "
 
-#: command.c:1626
+#: command.c:1644
 #, c-format
 msgid "Null display is \"%s\".\n"
 msgstr "Despliegue de nulos es «%s».\n"
 
-#: command.c:1638
+#: command.c:1656
 #, c-format
 msgid "Field separator is \"%s\".\n"
 msgstr "El separador de campos es «%s».\n"
 
-#: command.c:1652
+#: command.c:1670
 #, c-format
 msgid "Record separator is <newline>."
 msgstr "El separador de filas es <salto de línea>."
 
-#: command.c:1654
+#: command.c:1672
 #, c-format
 msgid "Record separator is \"%s\".\n"
 msgstr "El separador de filas es «%s».\n"
 
-#: command.c:1668
+#: command.c:1686
 msgid "Showing only tuples."
 msgstr "Mostrando sólo filas."
 
-#: command.c:1670
+#: command.c:1688
 msgid "Tuples only is off."
 msgstr "Mostrar sólo filas está desactivado."
 
-#: command.c:1686
+#: command.c:1704
 #, c-format
 msgid "Title is \"%s\".\n"
 msgstr "El título es «%s».\n"
 
-#: command.c:1688
+#: command.c:1706
 #, c-format
 msgid "Title is unset.\n"
 msgstr "El título ha sido indefinido.\n"
 
-#: command.c:1704
+#: command.c:1722
 #, c-format
 msgid "Table attribute is \"%s\".\n"
 msgstr "Los atributos de tabla son «%s».\n"
 
-#: command.c:1706
+#: command.c:1724
 #, c-format
 msgid "Table attributes unset.\n"
 msgstr "Los atributos de tabla han sido indefinidos.\n"
 
-#: command.c:1727
+#: command.c:1745
 msgid "Pager is used for long output."
 msgstr "El paginador se usará para salida larga."
 
-#: command.c:1729
+#: command.c:1747
 msgid "Pager is always used."
 msgstr "El paginador se usará siempre."
 
-#: command.c:1731
+#: command.c:1749
 msgid "Pager usage is off."
 msgstr "El paginador no se usará."
 
-#: command.c:1745
+#: command.c:1763
 msgid "Default footer is on."
 msgstr "El pie por omisión está activo."
 
-#: command.c:1747
+#: command.c:1765
 msgid "Default footer is off."
 msgstr "El pie de página por omisión está desactivado."
 
-#: command.c:1753
+#: command.c:1771
 #, c-format
 msgid "\\pset: unknown option: %s\n"
 msgstr "\\pset: opción desconocida: %s\n"
 
-#: command.c:1808
+#: command.c:1826
 msgid "\\!: failed\n"
 msgstr "\\!: falló\n"
 
@@ -394,21 +395,25 @@ msgstr "\\copy: %s"
 msgid "\\copy: unexpected response (%d)\n"
 msgstr "\\copy: respuesta inesperada (%d)\n"
 
-#: copy.c:619 copy.c:629
+#: copy.c:568
+msgid "trying to exit copy mode"
+msgstr "tratando de salir del modo copy"
+
+#: copy.c:622 copy.c:632
 #, c-format
 msgid "could not write COPY data: %s\n"
 msgstr "no se pudo escribir datos COPY: %s\n"
 
-#: copy.c:636
+#: copy.c:639
 #, c-format
 msgid "COPY data transfer failed: %s"
 msgstr "falló la transferencia de datos COPY: %s"
 
-#: copy.c:684
+#: copy.c:687
 msgid "canceled by user"
 msgstr "cancelada por el usuario"
 
-#: copy.c:699
+#: copy.c:702
 msgid ""
 "Enter data to be copied followed by a newline.\n"
 "End with a backslash and a period on a line by itself."
@@ -416,7 +421,7 @@ msgstr ""
 "Ingrese los datos a ser copiados seguidos de un fin de línea.\n"
 "Termine con un backslash y un punto."
 
-#: copy.c:811
+#: copy.c:814
 msgid "aborted because of read failure"
 msgstr "se abortó por un error de lectura"
 
@@ -1112,27 +1117,27 @@ msgstr "Objetos grandes"
 msgid "Use \"\\q\" to leave %s.\n"
 msgstr "Use \"\\q\" para salir de %s.\n"
 
-#: print.c:773
+#: print.c:730
 #, c-format
 msgid "(No rows)\n"
 msgstr "(Sin filas)\n"
 
-#: print.c:1808
+#: print.c:1692
 #, c-format
 msgid "Interrupted\n"
 msgstr "Interrumpido\n"
 
-#: print.c:1916
+#: print.c:1800
 #, c-format
 msgid "invalid output format (internal error): %d"
 msgstr "formato de salida no válido (error interno): %d"
 
-#: print.c:1996
+#: print.c:1922
 #, c-format
 msgid "(1 row)"
 msgstr "(1 fila)"
 
-#: print.c:1998
+#: print.c:1924
 #, c-format
 msgid "(%lu rows)"
 msgstr "(%lu filas)"
@@ -2550,7 +2555,6 @@ msgid ""
 "    TO { 'filename' | STDOUT }\n"
 "    [ [ WITH ] \n"
 "          [ BINARY ]\n"
-"          [ HEADER ]\n"
 "          [ OIDS ]\n"
 "          [ DELIMITER [ AS ] 'delimiter' ]\n"
 "          [ NULL [ AS ] 'null string' ]\n"
@@ -2565,9 +2569,9 @@ msgstr ""
 "          [ BINARY ]\n"
 "          [ OIDS ]\n"
 "          [ DELIMITER [ AS ] 'delimitador' ]\n"
-"          [ NULL [ AS ] 'cadena para null' ]\n"
+"          [ NULL [ AS ] 'cadena_para_null' ]\n"
 "          [ CSV [ HEADER ]\n"
-"                [ QUOTE [ AS ] 'quote' ] \n"
+"                [ QUOTE [ AS ] 'comilla' ] \n"
 "                [ ESCAPE [ AS ] 'escape' ]\n"
 "                [ FORCE NOT NULL columna [, ...] ]\n"
 "\n"
@@ -2575,12 +2579,11 @@ msgstr ""
 "    TO { 'archivo' | STDOUT }\n"
 "    [ [ WITH ] \n"
 "          [ BINARY ]\n"
-"          [ HEADER ]\n"
 "          [ OIDS ]\n"
 "          [ DELIMITER [ AS ] 'delimitador' ]\n"
-"          [ NULL [ AS ] 'cadena para null' ]\n"
+"          [ NULL [ AS ] 'cadena_para_null' ]\n"
 "          [ CSV [ HEADER ]\n"
-"                [ QUOTE [ AS ] 'quote' ] \n"
+"                [ QUOTE [ AS ] 'comilla' ] \n"
 "                [ ESCAPE [ AS ] 'escape' ]\n"
 "                [ FORCE QUOTE columna [, ...] ]"
 
@@ -3750,8 +3753,8 @@ msgid "LISTEN name"
 msgstr "LISTEN name"
 
 #: sql_help.h:425
-msgid "load or reload a shared library file"
-msgstr "carga o recarga un archivo de biblioteca compartida"
+msgid "load a shared library file"
+msgstr "carga un archivo de biblioteca compartida"
 
 #: sql_help.h:426
 msgid "LOAD 'filename'"

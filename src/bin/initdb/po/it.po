@@ -7,7 +7,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 8.3\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2007-11-16 19:17-0400\n"
-"PO-Revision-Date: 2003-12-11 20:32+0100\n"
+"PO-Revision-Date: 2010-09-25 00:42+0300\n"
 "Last-Translator: Ottavio Campana <campana@oc-si.it>\n"
 "Language-Team: Fabrizio Mazzoni <veramente@libero.it>\n"
 "MIME-Version: 1.0\n"
@@ -136,12 +136,12 @@ msgstr "%s: il file \"%s\" non e' un file regolare\n"
 #: initdb.c:1074
 #, c-format
 msgid "selecting default max_connections ... "
-msgstr "selezione del parametro max_connections predefinito ..."
+msgstr "selezione del parametro max_connections predefinito ... "
 
 #: initdb.c:1105
 #, c-format
 msgid "selecting default shared_buffers/max_fsm_pages ... "
-msgstr "selezione del parametro shared_buffers/max_fsm_pages predefinito ..."
+msgstr "selezione del parametro shared_buffers/max_fsm_pages predefinito ... "
 
 #: initdb.c:1151
 msgid "creating configuration files ... "
@@ -165,7 +165,7 @@ msgstr ""
 #: initdb.c:1414
 #, fuzzy
 msgid "initializing pg_authid ... "
-msgstr "inizializzazione di pg_authid ..."
+msgstr "inizializzazione di pg_authid ... "
 
 #: initdb.c:1450
 msgid "Enter new superuser password: "
@@ -188,7 +188,7 @@ msgstr "%s: impossibile leggere il file delle password \"%s\": %s\n"
 #: initdb.c:1494
 #, c-format
 msgid "setting password ... "
-msgstr "impostazione password ..."
+msgstr "impostazione password ... "
 
 #: initdb.c:1518
 #, c-format
@@ -199,11 +199,11 @@ msgstr ""
 #: initdb.c:1602
 #, fuzzy
 msgid "initializing dependencies ... "
-msgstr "inizializzazione delle dipendenze ..."
+msgstr "inizializzazione delle dipendenze ... "
 
 #: initdb.c:1630
 msgid "creating system views ... "
-msgstr "creazione delle viste di sistema ..."
+msgstr "creazione delle viste di sistema ... "
 
 #: initdb.c:1666
 msgid "loading system objects' descriptions ... "
@@ -211,7 +211,7 @@ msgstr "caricamento delle descrizioni degli oggetti di sistema"
 
 #: initdb.c:1718
 msgid "creating conversions ... "
-msgstr "creazione delle conversioni ..."
+msgstr "creazione delle conversioni ... "
 
 #: initdb.c:1753
 #, fuzzy
@@ -220,7 +220,7 @@ msgstr "creazione delle directory ... "
 
 #: initdb.c:1806
 msgid "setting privileges on built-in objects ... "
-msgstr "impostazione dei privilegi per gli oggetti incorporati ..."
+msgstr "impostazione dei privilegi per gli oggetti incorporati ... "
 
 #: initdb.c:1864
 msgid "creating information schema ... "

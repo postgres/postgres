@@ -1,13 +1,13 @@
 # "libpq" translation to Brazilian Portuguese Language.
 # Cesar Suga <sartre@linuxbr.com>, 2002.
 # Roberto Mello <rmello@fslc.usu.edu>, 2002.
-# Euler Taveira de Oliveira <euler@timbira.com>, 2003-2009.
+# Euler Taveira de Oliveira <euler@timbira.com>, 2003-2010.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2009-05-19 19:19-0300\n"
+"POT-Creation-Date: 2010-06-18 18:16-0300\n"
 "PO-Revision-Date: 2005-10-04 22:45-0300\n"
 "Last-Translator: Euler Taveira de Oliveira <euler@timbira.com>\n"
 "Language-Team: Brazilian Portuguese <pgbr-dev@listas.postgresql.org.br>\n"
@@ -34,50 +34,50 @@ msgstr "não pôde restaurar modo não-bloqueado no soquete: %s\n"
 msgid "GSSAPI continuation error"
 msgstr "erro ao continuar autenticação GSSAPI"
 
-#: fe-auth.c:458
+#: fe-auth.c:457 fe-auth.c:674
+msgid "host name must be specified\n"
+msgstr "nome da máquina deve ser especificado\n"
+
+#: fe-auth.c:464
 msgid "duplicate GSS authentication request\n"
 msgstr "pedido de autenticação GSS duplicado\n"
 
-#: fe-auth.c:478
+#: fe-auth.c:484
 msgid "GSSAPI name import error"
 msgstr "erro de importação de nome GSSAPI"
 
-#: fe-auth.c:564
+#: fe-auth.c:570
 msgid "SSPI continuation error"
 msgstr "erro ao continuar autenticação SSPI"
 
-#: fe-auth.c:575 fe-auth.c:648 fe-auth.c:674 fe-auth.c:771 fe-connect.c:1307
+#: fe-auth.c:581 fe-auth.c:654 fe-auth.c:680 fe-auth.c:777 fe-connect.c:1307
 #: fe-connect.c:2520 fe-connect.c:2737 fe-connect.c:3071 fe-connect.c:3080
 #: fe-connect.c:3217 fe-connect.c:3263 fe-connect.c:3281 fe-exec.c:2754
 #: fe-lobj.c:669 fe-protocol2.c:1027 fe-protocol3.c:1415
 msgid "out of memory\n"
 msgstr "sem memória\n"
 
-#: fe-auth.c:668
-msgid "host name must be specified\n"
-msgstr "nome da máquina deve ser especificado\n"
-
-#: fe-auth.c:747
+#: fe-auth.c:753
 msgid "SCM_CRED authentication method not supported\n"
 msgstr "método de autenticação SCM_CRED não é suportado\n"
 
-#: fe-auth.c:829
+#: fe-auth.c:835
 msgid "Kerberos 4 authentication not supported\n"
 msgstr "Autenticação Kerberos 4 não é suportada\n"
 
-#: fe-auth.c:845
+#: fe-auth.c:851
 msgid "Kerberos 5 authentication not supported\n"
 msgstr "Autenticação Kerberos 5 não é suportada\n"
 
-#: fe-auth.c:912
+#: fe-auth.c:918
 msgid "GSSAPI authentication not supported\n"
 msgstr "Autenticação GSSAPI não é suportada\n"
 
-#: fe-auth.c:936
+#: fe-auth.c:942
 msgid "SSPI authentication not supported\n"
 msgstr "Autenticação SSPI não é suportada\n"
 
-#: fe-auth.c:966
+#: fe-auth.c:972
 #, c-format
 msgid "authentication method %u not supported\n"
 msgstr "método de autenticação %u não é suportado\n"
@@ -445,26 +445,26 @@ msgstr "não pode determinar OID da função loread\n"
 msgid "cannot determine OID of function lowrite\n"
 msgstr "não pode determinar OID da função lowrite\n"
 
-#: fe-misc.c:227
+#: fe-misc.c:248
 #, c-format
 msgid "integer of size %lu not supported by pqGetInt"
 msgstr "inteiro de tamanho %lu não é suportado por pqGetInt"
 
-#: fe-misc.c:263
+#: fe-misc.c:284
 #, c-format
 msgid "integer of size %lu not supported by pqPutInt"
 msgstr "inteiro de tamanho %lu não é suportado por pqPutInt"
 
-#: fe-misc.c:543 fe-misc.c:745
+#: fe-misc.c:564 fe-misc.c:766
 msgid "connection not open\n"
 msgstr "conexão não está aberta\n"
 
-#: fe-misc.c:608 fe-misc.c:698
+#: fe-misc.c:629 fe-misc.c:719
 #, c-format
 msgid "could not receive data from server: %s\n"
 msgstr "não pôde receber dados do servidor: %s\n"
 
-#: fe-misc.c:715 fe-misc.c:792
+#: fe-misc.c:736 fe-misc.c:813
 msgid ""
 "server closed the connection unexpectedly\n"
 "\tThis probably means the server terminated abnormally\n"
@@ -474,20 +474,20 @@ msgstr ""
 "\tIsto provavelmente significa que o servidor terminou de forma anormal\n"
 "\tantes ou durante o processamento do pedido.\n"
 
-#: fe-misc.c:809
+#: fe-misc.c:830
 #, c-format
 msgid "could not send data to server: %s\n"
 msgstr "não pôde enviar dados ao servidor: %s\n"
 
-#: fe-misc.c:928
+#: fe-misc.c:949
 msgid "timeout expired\n"
 msgstr "tempo de espera expirado\n"
 
-#: fe-misc.c:973
+#: fe-misc.c:994
 msgid "socket not open\n"
 msgstr "soquete não está aberto\n"
 
-#: fe-misc.c:996
+#: fe-misc.c:1017
 #, c-format
 msgid "select() failed: %s\n"
 msgstr "select() falhou: %s\n"
@@ -637,137 +637,141 @@ msgstr "PQgetline: não está fazendo COPY OUT de texto\n"
 msgid "could not establish SSL connection: %s\n"
 msgstr "não pôde estabelecer conexão SSL: %s\n"
 
-#: fe-secure.c:345 fe-secure.c:429 fe-secure.c:1012
+#: fe-secure.c:346 fe-secure.c:431 fe-secure.c:1014
 #, c-format
 msgid "SSL SYSCALL error: %s\n"
 msgstr "Erro de SYSCALL SSL: %s\n"
 
-#: fe-secure.c:351 fe-secure.c:435 fe-secure.c:1016
+#: fe-secure.c:352 fe-secure.c:437 fe-secure.c:1018
 msgid "SSL SYSCALL error: EOF detected\n"
 msgstr "Erro de SYSCALL SSL: EOF detectado\n"
 
-#: fe-secure.c:363 fe-secure.c:446 fe-secure.c:1035
+#: fe-secure.c:364 fe-secure.c:448 fe-secure.c:1037
 #, c-format
 msgid "SSL error: %s\n"
 msgstr "Erro de SSL: %s\n"
 
-#: fe-secure.c:373 fe-secure.c:456 fe-secure.c:1045
+#: fe-secure.c:374 fe-secure.c:458 fe-secure.c:1047
 #, c-format
 msgid "unrecognized SSL error code: %d\n"
 msgstr "código de erro SSL desconhecido: %d\n"
 
-#: fe-secure.c:517
+#: fe-secure.c:519
 #, c-format
 msgid "error querying socket: %s\n"
 msgstr "erro ao consultar soquete: %s\n"
 
-#: fe-secure.c:544
+#: fe-secure.c:546
 #, c-format
 msgid "could not get information about host \"%s\": %s\n"
 msgstr "não pôde obter informação sobre máquina \"%s\": %s\n"
 
-#: fe-secure.c:563
+#: fe-secure.c:565
 msgid "unsupported protocol\n"
 msgstr "protocolo não é suportado\n"
 
-#: fe-secure.c:585
+#: fe-secure.c:587
 #, c-format
 msgid "server common name \"%s\" does not resolve to %ld.%ld.%ld.%ld\n"
 msgstr "nome do servidor \"%s\" não resolve para %ld.%ld.%ld.%ld\n"
 
-#: fe-secure.c:592
+#: fe-secure.c:594
 #, c-format
 msgid "server common name \"%s\" does not resolve to peer address\n"
 msgstr "nome do servidor \"%s\" não resolve ao endereço remoto\n"
 
-#: fe-secure.c:629
+#: fe-secure.c:631
 msgid "could not get user information\n"
 msgstr "não pôde obter informação do usuário\n"
 
-#: fe-secure.c:649 fe-secure.c:663
+#: fe-secure.c:651 fe-secure.c:665
 #, c-format
 msgid "could not open certificate file \"%s\": %s\n"
 msgstr "não pôde abrir arquivo do certificado \"%s\": %s\n"
 
-#: fe-secure.c:674
+#: fe-secure.c:676
 #, c-format
 msgid "could not read certificate file \"%s\": %s\n"
 msgstr "não pôde ler arquivo do certificado \"%s\": %s\n"
 
-#: fe-secure.c:696
+#: fe-secure.c:698
 msgid "invalid value of PGSSLKEY environment variable\n"
 msgstr "valor inválido da variável de ambiente PGSSLKEY\n"
 
-#: fe-secure.c:709
+#: fe-secure.c:711
 #, c-format
 msgid "could not load SSL engine \"%s\": %s\n"
 msgstr "não pôde carregar mecanismo SSL \"%s\": %s\n"
 
-#: fe-secure.c:724
+#: fe-secure.c:726
 #, c-format
 msgid "could not read private SSL key \"%s\" from engine \"%s\": %s\n"
 msgstr "não pôde ler chave privada SSL \"%s\" do mecanismo \"%s\": %s\n"
 
-#: fe-secure.c:741
+#: fe-secure.c:743
 #, c-format
 msgid "certificate present, but not private key file \"%s\"\n"
 msgstr "certificado presente, mas não o arquivo da chave privada \"%s\"\n"
 
-#: fe-secure.c:751
+#: fe-secure.c:753
 #, c-format
 msgid "private key file \"%s\" has wrong permissions\n"
 msgstr "arquivo da chave privada \"%s\" tem permissões erradas\n"
 
-#: fe-secure.c:761
+#: fe-secure.c:763
 #, c-format
 msgid "could not open private key file \"%s\": %s\n"
 msgstr "não pôde abrir arquivo da chave privada \"%s\": %s\n"
 
-#: fe-secure.c:772
+#: fe-secure.c:774
 #, c-format
 msgid "private key file \"%s\" changed during execution\n"
 msgstr "arquivo da chave privada \"%s\" mudou durante a execução\n"
 
-#: fe-secure.c:783
+#: fe-secure.c:785
 #, c-format
 msgid "could not read private key file \"%s\": %s\n"
 msgstr "não pôde ler arquivo da chave privada \"%s\": %s\n"
 
-#: fe-secure.c:801
+#: fe-secure.c:803
 #, c-format
 msgid "certificate does not match private key file \"%s\": %s\n"
 msgstr "certificado não corresponde ao arquivo da chave privada \"%s\": %s\n"
 
-#: fe-secure.c:893
+#: fe-secure.c:895
 #, c-format
 msgid "could not create SSL context: %s\n"
 msgstr "não pôde criar contexto SSL: %s\n"
 
-#: fe-secure.c:934
+#: fe-secure.c:936
 #, c-format
 msgid "could not read root certificate file \"%s\": %s\n"
 msgstr "não pôde ler arquivo de certificado raiz \"%s\": %s\n"
 
-#: fe-secure.c:954
+#: fe-secure.c:956
 #, c-format
 msgid "SSL library does not support CRL certificates (file \"%s\")\n"
 msgstr "biblioteca SSL não suporta certificados CRL (arquivo \"%s\")\n"
 
-#: fe-secure.c:1065
+#: fe-secure.c:1067
 #, c-format
 msgid "certificate could not be validated: %s\n"
 msgstr "certificado não pôde ser validado: %s\n"
 
-#: fe-secure.c:1079
+#: fe-secure.c:1081
 #, c-format
 msgid "certificate could not be obtained: %s\n"
 msgstr "certificado não pôde ser obtido: %s\n"
 
-#: fe-secure.c:1163
+#: fe-secure.c:1109
+msgid "SSL certificate's common name contains embedded null\n"
+msgstr "nome do certificado SSL contém nulo embutido\n"
+
+#: fe-secure.c:1184
 msgid "no SSL error reported"
 msgstr "nenhum erro SSL relatado"
 
-#: fe-secure.c:1172
+#: fe-secure.c:1193
 #, c-format
 msgid "SSL error code %lu"
 msgstr "código de erro SSL %lu"

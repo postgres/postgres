@@ -5,10 +5,11 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pgscripts (PostgreSQL 8.3)\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-01-15 19:21-0400\n"
+"POT-Creation-Date: 2010-09-24 19:09+0000\n"
 "PO-Revision-Date: 2004-12-06 18:46-0300\n"
 "Last-Translator: Alvaro Herrera <alvherre@alvh.no-ip.org>\n"
 "Language-Team: Castellano <pgsql-es-ayuda@postgresql.org>\n"
+"Language: \n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=ISO-8859-1\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -107,8 +108,7 @@ msgstr "  -T, --template=PATRÓN     base de datos patrón a copiar\n"
 #, c-format
 msgid ""
 "  -e, --echo                   show the commands being sent to the server\n"
-msgstr ""
-"  -e, --echo                mostrar las órdenes enviadas al servidor\n"
+msgstr "  -e, --echo                mostrar las órdenes enviadas al servidor\n"
 
 #: createdb.c:215
 #, c-format
@@ -690,8 +690,7 @@ msgstr "  -z, --analyze             actualizar las estadísticas\n"
 msgid ""
 "  -e, --echo                      show the commands being sent to the "
 "server\n"
-msgstr ""
-"  -e, --echo                mostrar las órdenes enviadas al servidor\n"
+msgstr "  -e, --echo                mostrar las órdenes enviadas al servidor\n"
 
 #: vacuumdb.c:260
 #, c-format

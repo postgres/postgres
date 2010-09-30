@@ -7,7 +7,7 @@ msgstr ""
 "Project-Id-Version: initdb-cs\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2004-10-27 14:06+0200\n"
-"PO-Revision-Date: 2004-10-27 14:25+0200\n"
+"PO-Revision-Date: 2010-09-25 00:36+0300\n"
 "Last-Translator: \n"
 "Language-Team:  <cs@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -109,7 +109,7 @@ msgstr "vybírám základní nastavení shared_buffers ... "
 
 #: initdb.c:1093
 msgid "creating configuration files ... "
-msgstr "vytváøím konfiguraèní soubory ..."
+msgstr "vytváøím konfiguraèní soubory ... "
 
 #: initdb.c:1189
 #, c-format
@@ -160,7 +160,7 @@ msgstr "%s: Soubor s hesly nebyl vytvoøen. Prosíme oznamte tento problém tvùrcùm
 
 #: initdb.c:1415
 msgid "enabling unlimited row size for system tables ... "
-msgstr "zapínám neomezenou velikost øádku pro systémové tabulky ..."
+msgstr "zapínám neomezenou velikost øádku pro systémové tabulky ... "
 
 #: initdb.c:1488
 msgid "initializing pg_depend ... "
