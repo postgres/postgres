@@ -1,11 +1,11 @@
 # "psql" translation to Brazilian Portuguese Language.
-# Euler Taveira de Oliveira <euler@timbira.com>, 2003-2009.
+# Euler Taveira de Oliveira <euler@timbira.com>, 2003-2010.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.2\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2009-05-20 13:04-0300\n"
+"POT-Creation-Date: 2010-06-18 17:12-0300\n"
 "PO-Revision-Date: 2005-11-02 10:30-0300\n"
 "Last-Translator: Euler Taveira de Oliveira <euler@timbira.com>\n"
 "Language-Team: Brazilian Portuguese <pgbr-dev@listas.postgresql.org.br>\n"
@@ -87,7 +87,7 @@ msgid "Wrote history to file \"%s/%s\".\n"
 msgstr "Histórico escrito para arquivo \"%s/%s\".\n"
 
 #: command.c:777 common.c:75 common.c:89 mainloop.c:67 print.c:56 print.c:70
-#: print.c:885
+#: print.c:835
 #, c-format
 msgid "out of memory\n"
 msgstr "sem memória\n"
@@ -107,7 +107,7 @@ msgstr "Tempo de execução está desabilitado."
 
 #: command.c:878 command.c:898 command.c:1289 command.c:1296 command.c:1305
 #: command.c:1315 command.c:1324 command.c:1338 command.c:1352 command.c:1385
-#: common.c:160 copy.c:549 copy.c:613
+#: common.c:160 copy.c:549 copy.c:616
 #, c-format
 msgid "%s: %s\n"
 msgstr "%s: %s\n"
@@ -117,7 +117,7 @@ msgid "Password: "
 msgstr "Senha: "
 
 #: command.c:1076 common.c:206 common.c:483 common.c:548 common.c:834
-#: common.c:859 common.c:932 copy.c:684 copy.c:729 copy.c:858
+#: common.c:859 common.c:932 copy.c:687 copy.c:732 copy.c:861
 #, c-format
 msgid "%s"
 msgstr "%s"
@@ -170,113 +170,113 @@ msgstr "não pôde localizar diretório temporário: %s"
 msgid "could not open temporary file \"%s\": %s\n"
 msgstr "não pôde abrir arquivo temporário \"%s\": %s\n"
 
-#: command.c:1464
+#: command.c:1482
 msgid "\\pset: allowed formats are unaligned, aligned, html, latex, troff-ms\n"
 msgstr ""
 "\\pset: formatos permitidos são unaligned, aligned, html, latex, troff-ms\n"
 
-#: command.c:1469
+#: command.c:1487
 #, c-format
 msgid "Output format is %s.\n"
 msgstr "Formato de saída é %s.\n"
 
-#: command.c:1479
+#: command.c:1497
 #, c-format
 msgid "Border style is %d.\n"
 msgstr "Estilo de borda é %d.\n"
 
-#: command.c:1488
+#: command.c:1506
 #, c-format
 msgid "Expanded display is on.\n"
 msgstr "Exibição expandida está habilitada.\n"
 
-#: command.c:1489
+#: command.c:1507
 #, c-format
 msgid "Expanded display is off.\n"
 msgstr "Exibição expandida está desabilitada.\n"
 
-#: command.c:1499
+#: command.c:1517
 msgid "Showing locale-adjusted numeric output."
 msgstr "Exibindo formato numérico baseado no idioma."
 
-#: command.c:1501
+#: command.c:1519
 msgid "Locale-adjusted numeric output is off."
 msgstr "Formato numérico baseado no idioma está desabilitado."
 
-#: command.c:1514
+#: command.c:1532
 #, c-format
 msgid "Null display is \"%s\".\n"
 msgstr "Exibição nula é \"%s\".\n"
 
-#: command.c:1526
+#: command.c:1544
 #, c-format
 msgid "Field separator is \"%s\".\n"
 msgstr "Separador de campos é \"%s\".\n"
 
-#: command.c:1540
+#: command.c:1558
 #, c-format
 msgid "Record separator is <newline>."
 msgstr "Separador de registros é <novalinha>."
 
-#: command.c:1542
+#: command.c:1560
 #, c-format
 msgid "Record separator is \"%s\".\n"
 msgstr "Separador de registros é \"%s\".\n"
 
-#: command.c:1553
+#: command.c:1571
 msgid "Showing only tuples."
 msgstr "Mostrando apenas tuplas."
 
-#: command.c:1555
+#: command.c:1573
 msgid "Tuples only is off."
 msgstr "Somente tuplas está desabilitado."
 
-#: command.c:1571
+#: command.c:1589
 #, c-format
 msgid "Title is \"%s\".\n"
 msgstr "Título é \"%s\".\n"
 
-#: command.c:1573
+#: command.c:1591
 #, c-format
 msgid "Title is unset.\n"
 msgstr "Título não está definido.\n"
 
-#: command.c:1589
+#: command.c:1607
 #, c-format
 msgid "Table attribute is \"%s\".\n"
 msgstr "Atributo de tabela é \"%s\".\n"
 
-#: command.c:1591
+#: command.c:1609
 #, c-format
 msgid "Table attributes unset.\n"
 msgstr "Atributos de tabela não estão definidos.\n"
 
-#: command.c:1607
+#: command.c:1625
 msgid "Pager is used for long output."
 msgstr "Paginação é usada para saída longa."
 
-#: command.c:1609
+#: command.c:1627
 msgid "Pager is always used."
 msgstr "Paginação é sempre utilizada."
 
-#: command.c:1611
+#: command.c:1629
 msgid "Pager usage is off."
 msgstr "Uso de paginação está desabilitado."
 
-#: command.c:1622
+#: command.c:1640
 msgid "Default footer is on."
 msgstr "Rodapé padrão está habilitado."
 
-#: command.c:1624
+#: command.c:1642
 msgid "Default footer is off."
 msgstr "Rodapé padrão está desabilitado."
 
-#: command.c:1630
+#: command.c:1648
 #, c-format
 msgid "\\pset: unknown option: %s\n"
 msgstr "\\pset: opção desconhecida: %s\n"
 
-#: command.c:1685
+#: command.c:1703
 msgid "\\!: failed\n"
 msgstr "\\!: falhou\n"
 
@@ -385,21 +385,25 @@ msgstr "\\copy: %s"
 msgid "\\copy: unexpected response (%d)\n"
 msgstr "\\copy: resposta inesperada (%d)\n"
 
-#: copy.c:659 copy.c:669
+#: copy.c:608
+msgid "trying to exit copy mode"
+msgstr "tentando sair do modo copy"
+
+#: copy.c:662 copy.c:672
 #, c-format
 msgid "could not write COPY data: %s\n"
 msgstr "não pôde escrever dados utilizando COPY: %s\n"
 
-#: copy.c:676
+#: copy.c:679
 #, c-format
 msgid "COPY data transfer failed: %s"
 msgstr "transferência de dados utilizando COPY falhou: %s"
 
-#: copy.c:724
+#: copy.c:727
 msgid "canceled by user"
 msgstr "cancelado pelo usuário"
 
-#: copy.c:739
+#: copy.c:742
 msgid ""
 "Enter data to be copied followed by a newline.\n"
 "End with a backslash and a period on a line by itself."
@@ -407,7 +411,7 @@ msgstr ""
 "Informe os dados a serem copiados seguido pelo caracter de nova linha.\n"
 "Finalize com uma barra invertida e um ponto na linha."
 
-#: copy.c:851
+#: copy.c:854
 msgid "aborted because of read failure"
 msgstr "interrompido devido a falha de leitura"
 
@@ -464,7 +468,8 @@ msgstr "  -f ARQUIVO      executa comandos de um arquivo e termina"
 
 #: help.c:92
 msgid "  -1 (\"one\")      execute command file as a single transaction"
-msgstr "  -1 (\"um\")       executa o arquivo com comandos em uma transação única"
+msgstr ""
+"  -1 (\"um\")       executa o arquivo com comandos em uma transação única"
 
 #: help.c:93
 msgid "  -l              list available databases, then exit"
@@ -1053,27 +1058,27 @@ msgstr "Objetos grandes"
 msgid "Use \"\\q\" to leave %s.\n"
 msgstr "Use \"\\q\" para sair do %s.\n"
 
-#: print.c:773
+#: print.c:730
 #, c-format
 msgid "(No rows)\n"
 msgstr "(Nenhum registro)\n"
 
-#: print.c:1808
+#: print.c:1692
 #, c-format
 msgid "Interrupted\n"
 msgstr "Interrompido\n"
 
-#: print.c:1916
+#: print.c:1800
 #, c-format
 msgid "invalid output format (internal error): %d"
 msgstr "formato de saída inválido (erro interno): %d"
 
-#: print.c:1975
+#: print.c:1903
 #, c-format
 msgid "(1 row)"
 msgstr "(1 registro)"
 
-#: print.c:1977
+#: print.c:1905
 #, c-format
 msgid "(%lu rows)"
 msgstr "(%lu registros)"
@@ -3258,8 +3263,8 @@ msgid "LISTEN name"
 msgstr "LISTEN nome"
 
 #: sql_help.h:357
-msgid "load or reload a shared library file"
-msgstr "carrega ou recarrega um arquivo de biblioteca compartilhada"
+msgid "load a shared library file"
+msgstr "carrega um arquivo de biblioteca compartilhada"
 
 #: sql_help.h:358
 msgid "LOAD 'filename'"

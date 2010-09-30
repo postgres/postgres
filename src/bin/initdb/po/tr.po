@@ -7,7 +7,7 @@ msgstr ""
 "Project-Id-Version: initdb-tr\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2009-05-04 09:38+0000\n"
-"PO-Revision-Date: 2009-05-06 21:40+0200\n"
+"PO-Revision-Date: 2010-09-25 00:53+0300\n"
 "Last-Translator: Devrim GÜNDÜZ <devrim@commandprompt.com>\n"
 "Language-Team: Turkish <ceviri@postgresql.org.tr>\n"
 "MIME-Version: 1.0\n"
@@ -134,7 +134,7 @@ msgid ""
 msgstr ""
 "%s: \"%s\" dosyası bulunamadı\n"
 "Bu ileti, bozulmus bir kurulumunuz olduğu ya da\n"
-"initdb betiğine verdiğiniz -L parametresi ile yanlış dizin belirttiğiniz anlamına gelir..\n"
+"initdb betiğine verdiğiniz -L parametresi ile yanlış dizin belirttiğiniz anlamına gelir.\n"
 
 #: initdb.c:1145
 #, c-format
@@ -539,12 +539,12 @@ msgstr "Öntanımlı veritabanı dil kodlaması %s olarak ayarlandı.\n"
 #: initdb.c:2869
 #, c-format
 msgid "creating directory %s ... "
-msgstr "%s dizini yaratılıyor... "
+msgstr "%s dizini yaratılıyor ... "
 
 #: initdb.c:2883
 #, c-format
 msgid "fixing permissions on existing directory %s ... "
-msgstr "mevcut %s dizininin izinleri düzeltiliyor..."
+msgstr "mevcut %s dizininin izinleri düzeltiliyor ... "
 
 #: initdb.c:2889
 #, c-format
@@ -572,7 +572,7 @@ msgstr "%s: \"%s\" dizine erişim hatası: %s\n"
 #: initdb.c:2917
 #, c-format
 msgid "creating subdirectories ... "
-msgstr "alt dizinler oluşturuluyor... "
+msgstr "alt dizinler oluşturuluyor ... "
 
 #: initdb.c:2977
 #, c-format
@@ -668,54 +668,4 @@ msgstr "alt süreç %d sinyali tarafından sonlandırılmıştır"
 #, c-format
 msgid "child process exited with unrecognized status %d"
 msgstr "alt süreç %d bilinmeyen durumu ile sonlandırılmıştır"
-
-#~ msgid "%s: removing transaction log directory \"%s\"\n"
-#~ msgstr "%s: transaction log dizini siliniyor \"%s\"\n"
-#~ msgid "%s: failed to remove transaction log directory\n"
-#~ msgstr "%s: transaction log dizini silme başarısız\n"
-#~ msgid "%s: removing contents of transaction log directory \"%s\"\n"
-#~ msgstr "%s: transaction log dizininin içindekileri siliniyor \"%s\"\n"
-#~ msgid "%s: failed to remove contents of transaction log directory\n"
-#~ msgstr ""
-#~ "%s: transaction log dizininin içindekilerinin silme işlemini başarısız\n"
-#~ msgid "%s: transaction log directory \"%s\" not removed at user's request\n"
-#~ msgstr ""
-#~ "%s: \"%s\" transaction log dizini kullanıcının isteği üzerine silinmedi\n"
-#~ msgid ""
-#~ "%s: could not access file \"%s\": %s\n"
-#~ "This might mean you have a corrupted installation or identified\n"
-#~ "the wrong directory with the invocation option -L.\n"
-#~ msgstr ""
-#~ "%s: \"%s\" dosyasına erişilemedi: %s\n"
-#~ "Bu durum, bozulmus bir kurulumunuz olduğu ya da\n"
-#~ "initdb betiğine verdiğiniz -L parametresi ile yanlış dizin belirttiğiniz "
-#~ "anlamına gelir.\n"
-#~ msgid ""
-#~ "%s: file \"%s\" is not a regular file\n"
-#~ "This means you have a corrupted installation or identified\n"
-#~ "the wrong directory with the invocation option -L.\n"
-#~ msgstr ""
-#~ "%s: \"%s\" dosyası normal bir dosya değildir\n"
-#~ "Bu durum, bozulmus bir kurulumunuz olduğu ya da\n"
-#~ "initdb betiğine verdiğiniz -L parametresi ile yanlış dizin belirttiğiniz "
-#~ "anlamına gelir.\n"
-#~ msgid ""
-#~ "  -X, --xlogdir=XLOGDIR     location for the transaction log directory\n"
-#~ msgstr "  -X, --xlogdir=XLOGDIR     transaction log dizini\n"
-#~ msgid ""
-#~ "%s: directory \"%s\" exists but is not empty\n"
-#~ "If you want to store the transaction log there, either\n"
-#~ "remove or empty the directory \"%s\".\n"
-#~ msgstr ""
-#~ "%s: \"%s\" dizini mevcut ancak boş değil \n"
-#~ "Eğer transaction logları orada tutmak istiyorsanız\n"
-#~ "\"%s\" dizinin boşaltın ya da silin.\n"
-#~ msgid "%s: could not create symbolic link \"%s\": %s\n"
-#~ msgstr "%s: symbolic link \"%s\" oluşturma hatası: %s\n"
-#~ msgid "%s: symlinks are not supported on this plataform"
-#~ msgstr "%s: bu platformda symlink desteklenmemektedir"
-#~ msgid "child process was terminated by exception 0x%X"
-#~ msgstr "alt süreç 0x%X exception tarafından sonlandırılmıştır"
-#~ msgid "child process was terminated by signal %s"
-#~ msgstr "alt süreç %s sinyali tarafından sonlandırılmıştır"
 

@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.0\n"
 "POT-Creation-Date: 2003-12-11 01:23-0400\n"
-"PO-Revision-Date: 2003-12-11 20:32+0100\n"
+"PO-Revision-Date: 2010-09-25 00:41+0300\n"
 "Last-Translator: Fabrizio Mazzoni <veramente@libero.it>\n"
 "Language-Team: Fabrizio Mazzoni <veramente@libero.it>\n"
 "MIME-Version: 1.0\n"
@@ -117,7 +117,7 @@ msgstr ""
 
 #: initdb.c:1322
 msgid "initializing pg_shadow ... "
-msgstr "inizializzazione di pg_shadow ..."
+msgstr "inizializzazione di pg_shadow ... "
 
 #: initdb.c:1353
 msgid "Enter new superuser password: "
@@ -133,7 +133,7 @@ msgstr "Le password non corrispondono. \n"
 
 #: initdb.c:1362
 msgid "setting password ... "
-msgstr "impostazione password ..."
+msgstr "impostazione password ... "
 
 #: initdb.c:1386
 #, c-format
@@ -146,11 +146,11 @@ msgstr ""
 
 #: initdb.c:1489
 msgid "initializing pg_depend ... "
-msgstr "inizializzazione di pg_depend ..."
+msgstr "inizializzazione di pg_depend ... "
 
 #: initdb.c:1517
 msgid "creating system views ... "
-msgstr "creazione delle viste di sistema ..."
+msgstr "creazione delle viste di sistema ... "
 
 #: initdb.c:1554
 msgid "loading pg_description ... "
@@ -158,11 +158,11 @@ msgstr ""
 
 #: initdb.c:1602
 msgid "creating conversions ... "
-msgstr "creazione delle conversioni ..."
+msgstr "creazione delle conversioni ... "
 
 #: initdb.c:1658
 msgid "setting privileges on built-in objects ... "
-msgstr "impostazione dei privilegi per gli oggetti incorporati ..."
+msgstr "impostazione dei privilegi per gli oggetti incorporati ... "
 
 #: initdb.c:1716
 msgid "creating information schema ... "

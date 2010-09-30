@@ -5,14 +5,14 @@ msgid ""
 msgstr ""
 "Project-Id-Version: psql (PostgreSQL 8.2)\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-11-30 10:09-0300\n"
-"PO-Revision-Date: 2005-10-19 10:58-0300\n"
+"POT-Creation-Date: 2010-09-29 14:44+0000\n"
+"PO-Revision-Date: 2010-09-30 10:38-0400\n"
 "Last-Translator: Álvaro Herrera <alvherre@alvh.no-ip.org>\n"
-"Language-Team: Castellano <pgsql-es-ayuda@postgresql.org>\n"
+"Language-Team: Spanish <pgsql-es-ayuda@postgresql.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=iso-8859-1\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Poedit-Language: Spanish\n"
+"Language: es\n"
 
 #: command.c:121
 #, c-format
@@ -88,7 +88,7 @@ msgid "Wrote history to file \"%s/%s\".\n"
 msgstr "Escribí historia en archivo \"%s/%s\".\n"
 
 #: command.c:777 common.c:75 common.c:89 mainloop.c:67 print.c:56 print.c:70
-#: print.c:885
+#: print.c:835
 #, c-format
 msgid "out of memory\n"
 msgstr "memoria agotada\n"
@@ -108,7 +108,7 @@ msgstr "Mostrar tiempos está desactivado."
 
 #: command.c:878 command.c:898 command.c:1289 command.c:1296 command.c:1305
 #: command.c:1315 command.c:1324 command.c:1338 command.c:1352 command.c:1385
-#: common.c:160 copy.c:553 copy.c:617
+#: common.c:160 copy.c:549 copy.c:616
 #, c-format
 msgid "%s: %s\n"
 msgstr "%s: %s\n"
@@ -118,7 +118,7 @@ msgid "Password: "
 msgstr "Contraseña: "
 
 #: command.c:1076 common.c:206 common.c:483 common.c:548 common.c:834
-#: common.c:859 common.c:932 copy.c:688 copy.c:733 copy.c:862
+#: common.c:859 common.c:932 copy.c:687 copy.c:732 copy.c:861
 #, c-format
 msgid "%s"
 msgstr "%s"
@@ -171,113 +171,113 @@ msgstr "no se encontró el directorio temporal: %s"
 msgid "could not open temporary file \"%s\": %s\n"
 msgstr "no se pudo abrir archivo temporal «%s»: %s\n"
 
-#: command.c:1464
+#: command.c:1482
 msgid "\\pset: allowed formats are unaligned, aligned, html, latex, troff-ms\n"
 msgstr ""
 "\\pset: formatos permitidos son unaligned, aligned, html, latex, troff-ms\n"
 
-#: command.c:1469
+#: command.c:1487
 #, c-format
 msgid "Output format is %s.\n"
 msgstr "El formato de salida es %s.\n"
 
-#: command.c:1479
+#: command.c:1497
 #, c-format
 msgid "Border style is %d.\n"
 msgstr "El estilo de borde es %d.\n"
 
-#: command.c:1488
+#: command.c:1506
 #, c-format
 msgid "Expanded display is on.\n"
 msgstr "Se ha activado el despliegue expandido.\n"
 
-#: command.c:1489
+#: command.c:1507
 #, c-format
 msgid "Expanded display is off.\n"
 msgstr "Se ha desactivado el despliegue expandido.\n"
 
-#: command.c:1499
+#: command.c:1517
 msgid "Showing locale-adjusted numeric output."
 msgstr "Mostrando salida numérica ajustada localmente"
 
-#: command.c:1501
+#: command.c:1519
 msgid "Locale-adjusted numeric output is off."
 msgstr "La salida numérica ajustada localmente está deshabilitada. "
 
-#: command.c:1514
+#: command.c:1532
 #, c-format
 msgid "Null display is \"%s\".\n"
 msgstr "Despliegue de nulos es «%s».\n"
 
-#: command.c:1526
+#: command.c:1544
 #, c-format
 msgid "Field separator is \"%s\".\n"
 msgstr "El separador de campos es «%s».\n"
 
-#: command.c:1540
+#: command.c:1558
 #, c-format
 msgid "Record separator is <newline>."
 msgstr "El separador de filas es <salto de línea>."
 
-#: command.c:1542
+#: command.c:1560
 #, c-format
 msgid "Record separator is \"%s\".\n"
 msgstr "El separador de filas es «%s».\n"
 
-#: command.c:1553
+#: command.c:1571
 msgid "Showing only tuples."
 msgstr "Mostrando sólo filas."
 
-#: command.c:1555
+#: command.c:1573
 msgid "Tuples only is off."
 msgstr "Mostrar sólo filas está desactivado."
 
-#: command.c:1571
+#: command.c:1589
 #, c-format
 msgid "Title is \"%s\".\n"
 msgstr "El título es «%s».\n"
 
-#: command.c:1573
+#: command.c:1591
 #, c-format
 msgid "Title is unset.\n"
 msgstr "El título ha sido indefinido.\n"
 
-#: command.c:1589
+#: command.c:1607
 #, c-format
 msgid "Table attribute is \"%s\".\n"
 msgstr "Los atributos de tabla son «%s».\n"
 
-#: command.c:1591
+#: command.c:1609
 #, c-format
 msgid "Table attributes unset.\n"
 msgstr "Los atributos de tabla han sido indefinidos.\n"
 
-#: command.c:1607
+#: command.c:1625
 msgid "Pager is used for long output."
 msgstr "El paginador se usará para salida larga."
 
-#: command.c:1609
+#: command.c:1627
 msgid "Pager is always used."
 msgstr "El paginador se usará siempre."
 
-#: command.c:1611
+#: command.c:1629
 msgid "Pager usage is off."
 msgstr "El paginador no se usará."
 
-#: command.c:1622
+#: command.c:1640
 msgid "Default footer is on."
 msgstr "El pie por omisión está activo."
 
-#: command.c:1624
+#: command.c:1642
 msgid "Default footer is off."
 msgstr "El pie de página por omisión está desactivado."
 
-#: command.c:1630
+#: command.c:1648
 #, c-format
 msgid "\\pset: unknown option: %s\n"
 msgstr "\\pset: opción desconocida: %s\n"
 
-#: command.c:1685
+#: command.c:1703
 msgid "\\!: failed\n"
 msgstr "\\!: falló\n"
 
@@ -370,36 +370,40 @@ msgstr "\\copy: error de procesamiento en «%s»\n"
 msgid "\\copy: parse error at end of line\n"
 msgstr "\\copy: error de procesamiento al final de la línea\n"
 
-#: copy.c:564
+#: copy.c:560
 #, c-format
 msgid "%s: cannot copy from/to a directory\n"
 msgstr "%s: no se puede copiar desde/hacia un directorio\n"
 
-#: copy.c:590
+#: copy.c:586
 #, c-format
 msgid "\\copy: %s"
 msgstr "\\copy: %s"
 
-#: copy.c:594 copy.c:608
+#: copy.c:590 copy.c:604
 #, c-format
 msgid "\\copy: unexpected response (%d)\n"
 msgstr "\\copy: respuesta inesperada (%d)\n"
 
-#: copy.c:663 copy.c:673
+#: copy.c:608
+msgid "trying to exit copy mode"
+msgstr "tratando de salir del modo copy"
+
+#: copy.c:662 copy.c:672
 #, c-format
 msgid "could not write COPY data: %s\n"
 msgstr "no se pudo escribir datos COPY: %s\n"
 
-#: copy.c:680
+#: copy.c:679
 #, c-format
 msgid "COPY data transfer failed: %s"
 msgstr "falló la transferencia de datos COPY: %s"
 
-#: copy.c:728
+#: copy.c:727
 msgid "canceled by user"
 msgstr "cancelada por el usuario"
 
-#: copy.c:743
+#: copy.c:742
 msgid ""
 "Enter data to be copied followed by a newline.\n"
 "End with a backslash and a period on a line by itself."
@@ -407,7 +411,7 @@ msgstr ""
 "Ingrese los datos a ser copiados seguidos de un fin de línea.\n"
 "Termine con un backslash y un punto."
 
-#: copy.c:855
+#: copy.c:854
 msgid "aborted because of read failure"
 msgstr "se abortó por un error de lectura"
 
@@ -1048,27 +1052,27 @@ msgstr "Objetos grandes"
 msgid "Use \"\\q\" to leave %s.\n"
 msgstr "Use \"\\q\" para salir de %s.\n"
 
-#: print.c:773
+#: print.c:730
 #, c-format
 msgid "(No rows)\n"
 msgstr "(Sin filas)\n"
 
-#: print.c:1808
+#: print.c:1692
 #, c-format
 msgid "Interrupted\n"
 msgstr "Interrumpido\n"
 
-#: print.c:1916
+#: print.c:1800
 #, c-format
 msgid "invalid output format (internal error): %d"
 msgstr "formato de salida no válido (error interno): %d"
 
-#: print.c:1975
+#: print.c:1903
 #, c-format
 msgid "(1 row)"
 msgstr "(1 fila)"
 
-#: print.c:1977
+#: print.c:1905
 #, c-format
 msgid "(%lu rows)"
 msgstr "(%lu filas)"
@@ -1848,7 +1852,8 @@ msgstr ""
 "\n"
 "ALTER ROLE nombre RENAME TO nuevo_nombre\n"
 "\n"
-"ALTER ROLE nombre SET parámetro_de_configuración { TO | = } { valor | DEFAULT }\n"
+"ALTER ROLE nombre SET parámetro_de_configuración { TO | = } { valor | "
+"DEFAULT }\n"
 "ALTER ROLE nombre RESET parámetro_de_configuración"
 
 #: sql_help.h:73
@@ -2025,7 +2030,8 @@ msgstr ""
 "\n"
 "ALTER USER nombre RENAME TO nuevo_nombre\n"
 "\n"
-"ALTER USER nombre SET parámetro_de_configuración { TO | = } { valor | DEFAULT }\n"
+"ALTER USER nombre SET parámetro_de_configuración { TO | = } { valor | "
+"DEFAULT }\n"
 "ALTER USER nombre RESET parámetro_de_configuración"
 
 #: sql_help.h:101
@@ -2185,7 +2191,6 @@ msgid ""
 "    TO { 'filename' | STDOUT }\n"
 "    [ [ WITH ] \n"
 "          [ BINARY ]\n"
-"          [ HEADER ]\n"
 "          [ OIDS ]\n"
 "          [ DELIMITER [ AS ] 'delimiter' ]\n"
 "          [ NULL [ AS ] 'null string' ]\n"
@@ -2200,9 +2205,9 @@ msgstr ""
 "          [ BINARY ]\n"
 "          [ OIDS ]\n"
 "          [ DELIMITER [ AS ] 'delimitador' ]\n"
-"          [ NULL [ AS ] 'cadena para null' ]\n"
+"          [ NULL [ AS ] 'cadena_para_null' ]\n"
 "          [ CSV [ HEADER ]\n"
-"                [ QUOTE [ AS ] 'quote' ] \n"
+"                [ QUOTE [ AS ] 'comilla' ] \n"
 "                [ ESCAPE [ AS ] 'escape' ]\n"
 "                [ FORCE NOT NULL columna [, ...] ]\n"
 "\n"
@@ -2210,12 +2215,11 @@ msgstr ""
 "    TO { 'archivo' | STDOUT }\n"
 "    [ [ WITH ] \n"
 "          [ BINARY ]\n"
-"          [ HEADER ]\n"
 "          [ OIDS ]\n"
 "          [ DELIMITER [ AS ] 'delimitador' ]\n"
-"          [ NULL [ AS ] 'cadena para null' ]\n"
+"          [ NULL [ AS ] 'cadena_para_null' ]\n"
 "          [ CSV [ HEADER ]\n"
-"                [ QUOTE [ AS ] 'quote' ] \n"
+"                [ QUOTE [ AS ] 'comilla' ] \n"
 "                [ ESCAPE [ AS ] 'escape' ]\n"
 "                [ FORCE QUOTE columna [, ...] ]"
 
@@ -2602,8 +2606,8 @@ msgid ""
 msgstr ""
 "CREATE [ TEMPORARY | TEMP ] SEQUENCE name [ INCREMENT [ BY ] increment ]\n"
 "    [ MINVALUE minvalue | NO MINVALUE ] [ MAXVALUE maxvalue | NO MAXVALUE ]\n"
-"    [ START [ WITH ] start ] [ CACHE cache ] [ [ NO ] CYCLE ]"
-"    [ OWNED BY { tabla.columna | NONE } ]"
+"    [ START [ WITH ] start ] [ CACHE cache ] [ [ NO ] CYCLE ]    [ OWNED BY "
+"{ tabla.columna | NONE } ]"
 
 #: sql_help.h:201
 msgid "define a new table"
@@ -2661,11 +2665,13 @@ msgstr ""
 "  { nombre_columna tipo_dato [ DEFAULT expr_default ] [ restricción_columna"
 "[ ... ] ]\n"
 "    | restricción_tabla\n"
-"    | LIKE tabla_padre [ { INCLUDING | EXCLUDING } { DEFAULTS | CONSTRAINTS } ] ... }\n"
+"    | LIKE tabla_padre [ { INCLUDING | EXCLUDING } { DEFAULTS | "
+"CONSTRAINTS } ] ... }\n"
 "    [, ... ]\n"
 "] )\n"
 "[ INHERITS ( tabla_padre [, ... ] ) ]\n"
-"[ WITH ( parámetro_de_almacenamiento [= valor] [, ... ] ) | WITH OIDS | WITHOUT OIDS ]\n"
+"[ WITH ( parámetro_de_almacenamiento [= valor] [, ... ] ) | WITH OIDS | "
+"WITHOUT OIDS ]\n"
 "[ ON COMMIT { PRESERVE ROWS | DELETE ROWS | DROP } ]\n"
 "[ TABLESPACE tablespace ]\n"
 "\n"
@@ -2693,7 +2699,8 @@ msgstr ""
 "[ ( columna_referencia [, ... ] ) ]\n"
 "    [ MATCH FULL | MATCH PARTIAL | MATCH SIMPLE ] [ ON DELETE acción ] [ ON "
 "UPDATE acción ] }\n"
-"[ DEFERRABLE | NOT DEFERRABLE ] [ INITIALLY DEFERRED | INITIALLY IMMEDIATE ]\n"
+"[ DEFERRABLE | NOT DEFERRABLE ] [ INITIALLY DEFERRED | INITIALLY "
+"IMMEDIATE ]\n"
 "\n"
 "parámetros_de_índice en restricciones UNIQUE y PRIMARY KEY pueden ser:\n"
 "[ WITH ( parámetro_de_almacenamiento [= valor] [, ...] ) ]\n"
@@ -2715,7 +2722,8 @@ msgid ""
 msgstr ""
 "CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE nombre_tabla\n"
 "    [ (nombre_columna [, ...] ) ]\n"
-"    [ WITH (parámetro_de_almacenamiento [= valor] [, ... ]) | WITH OIDS | WITHOUT OIDS ]\n"
+"    [ WITH (parámetro_de_almacenamiento [= valor] [, ... ]) | WITH OIDS | "
+"WITHOUT OIDS ]\n"
 "    [ ON COMMIT { PRESERVE ROWS | DELETE ROWS | DROP } ]\n"
 "    [ TABLESPACE tablespace ]\n"
 "    AS consulta"
@@ -2976,7 +2984,8 @@ msgid ""
 "DROP OPERATOR CLASS [ IF EXISTS ] name USING index_method [ CASCADE | "
 "RESTRICT ]"
 msgstr ""
-"DROP OPERATOR CLASS [ IF EXISTS ] nombre USING método_de_índice [ CASCADE | RESTRICT ]"
+"DROP OPERATOR CLASS [ IF EXISTS ] nombre USING método_de_índice [ CASCADE | "
+"RESTRICT ]"
 
 #: sql_help.h:281
 msgid "remove an operator"
@@ -3193,7 +3202,8 @@ msgstr ""
 "    TO { nombre_usuario | GROUP nombre_group | PUBLIC } [, ...] [ WITH GRANT "
 "OPTION ]\n"
 "\n"
-"GRANT { { CREATE | CONNECT | TEMPORARY | TEMP } [,...] | ALL [ PRIVILEGES ] }\n"
+"GRANT { { CREATE | CONNECT | TEMPORARY | TEMP } [,...] | ALL "
+"[ PRIVILEGES ] }\n"
 "    ON DATABASE nombre_bd [, ...]\n"
 "    TO { nomnbre_usuario | GROUP nombre_grupo | PUBLIC } [, ...] [ WITH "
 "GRANT OPTION ]\n"
@@ -3233,7 +3243,8 @@ msgid ""
 "    [ RETURNING * | output_expression [ AS output_name ] [, ...] ]"
 msgstr ""
 "INSERT INTO table [ ( columna [, ...] ) ]\n"
-"    { DEFAULT VALUES | VALUES ( { expresión | DEFAULT } [, ...] ) | consulta }\n"
+"    { DEFAULT VALUES | VALUES ( { expresión | DEFAULT } [, ...] ) | "
+"consulta }\n"
 "    [ RETURNING * | expresión_de_salida [ AS nombre_de_salida ] [, ...] ]"
 
 #: sql_help.h:353
@@ -3245,8 +3256,8 @@ msgid "LISTEN name"
 msgstr "LISTEN name"
 
 #: sql_help.h:357
-msgid "load or reload a shared library file"
-msgstr "carga o recarga un archivo de biblioteca compartida"
+msgid "load a shared library file"
+msgstr "carga un archivo de biblioteca compartida"
 
 #: sql_help.h:358
 msgid "LOAD 'filename'"
@@ -3732,47 +3743,47 @@ msgstr ""
 "    [ LIMIT { cuenta | ALL } ]\n"
 "    [ OFFSET inicio ]"
 
-#: ../../port/exec.c:191 ../../port/exec.c:305 ../../port/exec.c:348
+#: ../../port/exec.c:194 ../../port/exec.c:308 ../../port/exec.c:351
 #, c-format
 msgid "could not identify current directory: %s"
 msgstr "no se pudo identificar el directorio actual: %s"
 
-#: ../../port/exec.c:210
+#: ../../port/exec.c:213
 #, c-format
 msgid "invalid binary \"%s\""
 msgstr "el binario «%s» no es válido"
 
-#: ../../port/exec.c:259
+#: ../../port/exec.c:262
 #, c-format
 msgid "could not read binary \"%s\""
 msgstr "no se pudo leer el enlace binario «%s»"
 
-#: ../../port/exec.c:266
+#: ../../port/exec.c:269
 #, c-format
 msgid "could not find a \"%s\" to execute"
 msgstr "no se pudo encontrar un «%s» para ejecutar"
 
-#: ../../port/exec.c:321 ../../port/exec.c:357
+#: ../../port/exec.c:324 ../../port/exec.c:360
 #, c-format
 msgid "could not change directory to \"%s\""
 msgstr "no se pudo cambiar el directorio a «%s»"
 
-#: ../../port/exec.c:336
+#: ../../port/exec.c:339
 #, c-format
 msgid "could not read symbolic link \"%s\""
 msgstr "no se pudo leer el enlace simbólico «%s»"
 
-#: ../../port/exec.c:582
+#: ../../port/exec.c:585
 #, c-format
 msgid "child process exited with exit code %d"
 msgstr "el proceso hijo terminó con código de salida %d"
 
-#: ../../port/exec.c:585
+#: ../../port/exec.c:588
 #, c-format
 msgid "child process was terminated by signal %d"
 msgstr "el proceso hijo fue terminado por una señal %d"
 
-#: ../../port/exec.c:588
+#: ../../port/exec.c:591
 #, c-format
 msgid "child process exited with unrecognized status %d"
 msgstr "el proceso hijo terminó con código no reconocido %d"

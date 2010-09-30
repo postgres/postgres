@@ -2,7 +2,7 @@
 # Peter Eisentraut <peter_e@gmx.net>, 2001.
 # Dennis Björklund <db@zigo.dhs.org>, 2002, 2003, 2004, 2005, 2006.
 #
-# $PostgreSQL: pgsql/src/bin/psql/po/sv.po,v 1.37 2006/11/24 17:11:57 petere Exp $
+# $PostgreSQL: pgsql/src/bin/psql/po/sv.po,v 1.33 2005/01/06 11:36:51 dennis Exp $
 #
 # Use these quotes: "%s"
 #
@@ -11,7 +11,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 8.2\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2006-11-06 19:12-0400\n"
-"PO-Revision-Date: 2006-11-07 11:31+0100\n"
+"PO-Revision-Date: 2010-07-02 21:43-0400\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <sv@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -3104,7 +3104,7 @@ msgstr ""
 
 #: sql_help.h:345
 msgid "define access privileges"
-msgstr "definera Åtkomsträttigheter"
+msgstr "definera åtkomsträttigheter"
 
 #: sql_help.h:346
 msgid ""
@@ -3302,7 +3302,7 @@ msgstr ""
 
 #: sql_help.h:397
 msgid "remove access privileges"
-msgstr "ta bort Åtkomsträttigheter"
+msgstr "ta bort åtkomsträttigheter"
 
 #: sql_help.h:398
 msgid ""
