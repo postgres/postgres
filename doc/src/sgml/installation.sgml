@@ -192,6 +192,11 @@ su - postgres
       recent <productname>Perl</productname> versions, but it was not
       in earlier versions, and in any case it is the choice of whomever
       installed Perl at your site.
+      If you intend to make more than incidental use of
+      <application>PL/Perl</application>, you should ensure that the
+      <productname>Perl</productname> installation was built with the
+      <literal>usemultiplicity</> option enabled (<literal>perl -V</>
+      will show whether this is the case).
      </para>
 
      <para>
