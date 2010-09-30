@@ -1,5 +1,490 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release-8.4.sgml,v 1.12.2.7 2010/05/13 21:27:08 tgl Exp $ -->
+<!-- doc/src/sgml/release-8.4.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
+
+ <sect1 id="release-8-4-5">
+  <title>Release 8.4.5</title>
+
+  <note>
+  <title>Release date</title>
+  <simpara>2010-10-04</simpara>
+  </note>
+
+  <para>
+   This release contains a variety of fixes from 8.4.4.
+   For information about new features in the 8.4 major release, see
+   <xref linkend="release-8-4">.
+  </para>
+
+  <sect2>
+   <title>Migration to Version 8.4.5</title>
+
+   <para>
+    A dump/restore is not required for those running 8.4.X.
+    However, if you are upgrading from a version earlier than 8.4.2,
+    see the release notes for 8.4.2.
+   </para>
+
+  </sect2>
+
+  <sect2>
+   <title>Changes</title>
+
+   <itemizedlist>
+
+    <listitem>
+     <para>
+      Prevent possible crashes in <function>pg_get_expr()</> by disallowing
+      it from being called with an argument that is not one of the system
+      catalog columns it's intended to be used with
+      (Heikki Linnakangas, Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Treat exit code 128 (<literal>ERROR_WAIT_NO_CHILDREN</>) as non-fatal on
+      Windows (Magnus Hagander)
+     </para>
+
+     <para>
+      Under high load, Windows processes will sometimes fail at startup with
+      this error code.  Formerly the postmaster treated this as a panic
+      condition and restarted the whole database, but that seems to be
+      an overreaction.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix incorrect placement of placeholder evaluation (Tom Lane)
+     </para>
+
+     <para>
+      This bug could result in query outputs being non-null when they
+      should be null, in cases where the inner side of an outer join
+      is a sub-select with non-strict expressions in its output list.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix possible duplicate scans of <literal>UNION ALL</> member relations
+      (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <quote>cannot handle unplanned sub-select</quote> error (Tom Lane)
+     </para>
+
+     <para>
+      This occurred when a sub-select contains a join alias reference that
+      expands into an expression containing another sub-select.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix mishandling of whole-row Vars that reference a view or sub-select
+      and appear within a nested sub-select (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix mishandling of cross-type <literal>IN</> comparisons (Tom Lane)
+     </para>
+
+     <para>
+      This could result in failures if the planner tried to implement an
+      <literal>IN</> join with a sort-then-unique-then-plain-join plan.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix computation of <command>ANALYZE</> statistics for <type>tsvector</>
+      columns (Jan Urbanski)
+     </para>
+
+     <para>
+      The original coding could produce incorrect statistics, leading to
+      poor plan choices later.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Improve planner's estimate of memory used by <function>array_agg()</>,
+      <function>string_agg()</>, and similar aggregate functions
+      (Hitoshi Harada)
+     </para>
+
+     <para>
+      The previous drastic underestimate could lead to out-of-memory failures
+      due to inappropriate choice of a hash-aggregation plan.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix failure to mark cached plans as transient (Tom Lane)
+     </para>
+
+     <para>
+      If a plan is prepared while <command>CREATE INDEX CONCURRENTLY</> is
+      in progress for one of the referenced tables, it is supposed to be
+      re-planned once the index is ready for use.  This was not happening
+      reliably.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Reduce PANIC to ERROR in some occasionally-reported btree failure cases,
+      and provide additional detail in the resulting error messages
+      (Tom Lane)
+     </para>
+
+     <para>
+      This should improve the system's robustness with corrupted indexes.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix incorrect search logic for partial-match queries with GIN indexes
+      (Tom Lane)
+     </para>
+
+     <para>
+      Cases involving AND/OR combination of several GIN index conditions
+      didn't always give the right answer, and were sometimes much slower
+      than necessary.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Prevent show_session_authorization() from crashing within autovacuum
+      processes (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Defend against functions returning setof record where not all the
+      returned rows are actually of the same rowtype (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix possible corruption of pending trigger event lists during
+      subtransaction rollback (Tom Lane)
+     </para>
+
+     <para>
+      This could lead to a crash or incorrect firing of triggers.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix possible failure when hashing a pass-by-reference function result
+      (Tao Ma, Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Improve merge join's handling of NULLs in the join columns (Tom Lane)
+     </para>
+
+     <para>
+      A merge join can now stop entirely upon reaching the first NULL,
+      if the sort order is such that NULLs sort high.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Take care to fsync the contents of lockfiles (both
+      <filename>postmaster.pid</> and the socket lockfile) while writing them
+      (Tom Lane)
+     </para>
+
+     <para>
+      This omission could result in corrupted lockfile contents if the
+      machine crashes shortly after postmaster start.  That could in turn
+      prevent subsequent attempts to start the postmaster from succeeding,
+      until the lockfile is manually removed.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Avoid recursion while assigning XIDs to heavily-nested
+      subtransactions (Andres Freund, Robert Haas)
+     </para>
+
+     <para>
+      The original coding could result in a crash if there was limited
+      stack space.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Avoid holding open old WAL segments in the walwriter process
+      (Magnus Hagander, Heikki Linnakangas)
+     </para>
+
+     <para>
+      The previous coding would prevent removal of no-longer-needed segments.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <varname>log_line_prefix</>'s <literal>%i</> escape,
+      which could produce junk early in backend startup (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Prevent misinterpretation of partially-specified relation options
+      for TOAST tables (Itagaki Takahiro)
+     </para>
+
+     <para>
+      In particular, <literal>fillfactor</> would be read as zero if any
+      other reloption had been set for the table, leading to serious bloat.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix inheritance count tracking in <command>ALTER TABLE ... ADD
+      CONSTRAINT</> (Robert Haas)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix possible data corruption in <command>ALTER TABLE ... SET
+      TABLESPACE</> when archiving is enabled (Jeff Davis)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Allow <command>CREATE DATABASE</> and <command>ALTER DATABASE ... SET
+      TABLESPACE</> to be interrupted by query-cancel (Guillaume Lelarge)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Improve <command>CREATE INDEX</>'s checking of whether proposed index
+      expressions are immutable (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <command>REASSIGN OWNED</> to handle operator classes and families
+      (Asko Tiidumaa)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix possible core dump when comparing two empty <type>tsquery</> values
+      (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <literal>LIKE</>'s handling of patterns containing <literal>%</>
+      followed by <literal>_</> (Tom Lane)
+     </para>
+
+     <para>
+      We've fixed this before, but there were still some incorrectly-handled
+      cases.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Re-allow input of Julian dates prior to 0001-01-01 AD (Tom Lane)
+     </para>
+
+     <para>
+      Input such as <literal>'J100000'::date</> worked before 8.4,
+      but was unintentionally broken by added error-checking.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix PL/pgSQL to throw an error, not crash, if a cursor is closed within
+      a <literal>FOR</> loop that is iterating over that cursor
+      (Heikki Linnakangas)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      In PL/Python, defend against null pointer results from
+      <function>PyCObject_AsVoidPtr</> and <function>PyCObject_FromVoidPtr</>
+      (Peter Eisentraut)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      In <application>libpq</>, fix full SSL certificate verification for the
+      case where both <literal>host</> and <literal>hostaddr</> are specified
+      (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Make psql recognize <command>DISCARD ALL</> as a command that should
+      not be encased in a transaction block in autocommit-off mode
+      (Itagaki Takahiro)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix some issues in <application>pg_dump</>'s handling of SQL/MED objects
+      (Tom Lane)
+     </para>
+
+     <para>
+      Notably, <application>pg_dump</> would always fail if run by a
+      non-superuser, which was not intended.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Improve <application>pg_dump</> and <application>pg_restore</>'s
+      handling of non-seekable archive files (Tom Lane, Robert Haas)
+     </para>
+
+     <para>
+      This is important for proper functioning of parallel restore.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Improve parallel pg_restore's ability to cope with selective restore
+      (<literal>-L</> option) (Tom Lane)
+     </para>
+
+     <para>
+      The original code tended to fail if the <literal>-L</> file commanded
+      a non-default restore ordering.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <application>ecpg</> to process data from <literal>RETURNING</>
+      clauses correctly (Michael Meskes)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix some memory leaks in <application>ecpg</> (Zoltan Boszormenyi)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Improve <filename>contrib/dblink</>'s handling of tables containing
+      dropped columns (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix connection leak after <quote>duplicate connection name</quote>
+      errors in <filename>contrib/dblink</> (Itagaki Takahiro)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <filename>contrib/dblink</> to handle connection names longer than
+      62 bytes correctly (Itagaki Takahiro)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Add <function>hstore(text, text)</>
+      function to <filename>contrib/hstore</> (Robert Haas)
+     </para>
+
+     <para>
+      This function is the recommended substitute for the now-deprecated
+      <literal>=&gt;</> operator.  It was back-patched so that future-proofed
+      code can be used with older server versions.  Note that the patch will
+      be effective only after <filename>contrib/hstore</> is installed or
+      reinstalled in a particular database.  Users might prefer to execute
+      the <command>CREATE FUNCTION</> command by hand, instead.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Update build infrastructure and documentation to reflect the source code
+      repository's move from CVS to Git (Magnus Hagander and others)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Update time zone data files to <application>tzdata</> release 2010l
+      for DST law changes in Egypt and Palestine; also historical corrections
+      for Finland.
+     </para>
+
+     <para>
+      This change also adds new names for two Micronesian timezones:
+      Pacific/Chuuk is now preferred over Pacific/Truk (and the preferred
+      abbreviation is CHUT not TRUT) and Pacific/Pohnpei is preferred over
+      Pacific/Ponape.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Make Windows' <quote>N. Central Asia Standard Time</> timezone map to
+      Asia/Novosibirsk, not Asia/Almaty (Magnus Hagander)
+     </para>
+
+     <para>
+      Microsoft changed the DST behavior of this zone in the timezone update
+      from KB976098. Asia/Novosibirsk is a better match to its new behavior.
+     </para>
+    </listitem>
+
+   </itemizedlist>
+
+  </sect2>
+ </sect1>
 
  <sect1 id="release-8-4-4">
   <title>Release 8.4.4</title>
@@ -2689,7 +3174,7 @@ WITH w AS (SELECT * FROM foo) SELECT * FROM w, bar ... FOR UPDATE
       </para>
 
       <para>
-       In particular, this means that functions written in PL/PgSQL
+       In particular, this means that functions written in PL/pgSQL
        and other PL languages can now be called this way.
       </para>
      </listitem>
@@ -3815,7 +4300,7 @@ WITH w AS (SELECT * FROM foo) SELECT * FROM w, bar ... FOR UPDATE
     </sect4>
 
     <sect4>
-     <title>PL/PgSQL Server-Side Language</title>
+     <title>PL/pgSQL Server-Side Language</title>
      <itemizedlist>
 
       <listitem>
