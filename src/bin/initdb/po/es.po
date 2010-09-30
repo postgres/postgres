@@ -5,14 +5,14 @@
 #
 # Álvaro Herrera <alvherre@alvh.no-ip.org>, 2004-2010
 #
-# pgtranslation Id: initdb.po,v 1.9 2010/08/31 04:40:22 alvherre Exp $
+# pgtranslation Id: initdb.po,v 1.10 2010/09/24 21:58:59 petere Exp $
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: initdb (PostgreSQL 8.4)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2010-08-30 20:02+0000\n"
-"PO-Revision-Date: 2010-08-31 00:38-0400\n"
+"PO-Revision-Date: 2010-09-25 00:37+0300\n"
 "Last-Translator: Álvaro Herrera <alvherre@alvh.no-ip.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@postgresql.org>\n"
 "MIME-Version: 1.0\n"
@@ -240,7 +240,7 @@ msgstr "creando el esquema de información ... "
 
 #: initdb.c:1868
 msgid "loading PL/pgSQL server-side language ... "
-msgstr "instalando el lenguaje PL/pgSQL ..."
+msgstr "instalando el lenguaje PL/pgSQL ... "
 
 #: initdb.c:1893
 msgid "vacuuming database template1 ... "

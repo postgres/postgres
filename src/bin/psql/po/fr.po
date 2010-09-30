@@ -1,7 +1,7 @@
 # translation of psql.po to fr_fr
 # french message translation file for psql
 #
-# $PostgreSQL: pgsql/src/bin/psql/po/fr.po,v 1.30.2.1 2010/09/16 19:09:38 petere Exp $
+# $PostgreSQL$
 #
 # Use these quotes: « %s »
 # Peter Eisentraut <peter_e@gmx.net>, 2001.
@@ -3147,7 +3147,7 @@ msgstr "nouveau_tablespace"
 #: sql_help.c:2265
 #: sql_help.c:2538
 msgid "configuration_parameter"
-msgstr "paramètre_configurationRESET ALL"
+msgstr "paramètre_configuration"
 
 #: sql_help.c:81
 #: sql_help.c:185

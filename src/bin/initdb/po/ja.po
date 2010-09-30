@@ -1,9 +1,9 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: PostgreSQL 9.0 beta 3\n"
+"Project-Id-Version: PostgreSQL 9.0.0rc1\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2010-07-20 12:52+0900\n"
-"PO-Revision-Date: 2010-07-20 12:53+0900\n"
+"PO-Revision-Date: 2010-09-25 00:58+0300\n"
 "Last-Translator: HOTTA Michihide <hotta@net-newbie.com>\n"
 "Language-Team: jpug-doc <jpug-doc@ml.postgresql.jp>\n"
 "MIME-Version: 1.0\n"
@@ -229,7 +229,7 @@ msgstr "情報スキーマを作成しています ... "
 
 #: initdb.c:1868
 msgid "loading PL/pgSQL server-side language ... "
-msgstr "PL/pgSQL サーバサイド言語をロードしています ..."
+msgstr "PL/pgSQL サーバサイド言語をロードしています ... "
 
 #: initdb.c:1893
 msgid "vacuuming database template1 ... "
@@ -277,10 +277,10 @@ msgid ""
 "Rerun %s and either do not specify an encoding explicitly,\n"
 "or choose a matching combination.\n"
 msgstr ""
-"選択した符号化方式(%s)と選択したロケールが使用する符号化方式(%s)\n"
-"が合ういません。かどうか不明です。これにより各種の文字列処理関数\n"
-"が不正な動作をする可能性があります。明示的な符号化方式の指定を止\n"
-"めるか合致する組み合わせを選択して%sを再実行してください\n"
+"選択した符号化方式(%s)と選択したロケールが使用する符号化方式(%s)が\n"
+"が合いません。これにより各種の文字列処理関数が不正な動作をする可能性が\n"
+"あります。明示的な符号化方式の指定を止めるか合致する組み合わせを\n"
+"選択して%sを再実行してください\n"
 
 #: initdb.c:2378
 #, c-format

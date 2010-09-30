@@ -7,7 +7,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 8.0\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2010-02-19 01:52+0000\n"
-"PO-Revision-Date: 2010-03-30 13:49+0800\n"
+"PO-Revision-Date: 2010-09-25 00:49+0300\n"
 "Last-Translator: Weibin <ssmei_2000@yahoo.com>\n"
 "Language-Team: Weiping He <laser@zhengmai.com.cn>\n"
 "MIME-Version: 1.0\n"
@@ -224,7 +224,7 @@ msgstr "创建系统视图 ... "
 
 #: initdb.c:1681
 msgid "loading system objects' descriptions ... "
-msgstr "正在加载系统对象描述 ..."
+msgstr "正在加载系统对象描述 ... "
 
 #: initdb.c:1733
 msgid "creating conversions ... "

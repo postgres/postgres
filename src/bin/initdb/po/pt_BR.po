@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 9.0\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2010-05-08 21:46-0300\n"
-"PO-Revision-Date: 2005-10-04 22:36-0300\n"
+"PO-Revision-Date: 2010-09-25 00:45+0300\n"
 "Last-Translator: Euler Taveira de Oliveira <euler@timbira.com>\n"
 "Language-Team: Brazilian Portuguese <pgbr-dev@listas.postgresql.org.br>\n"
 "MIME-Version: 1.0\n"
@@ -234,7 +234,7 @@ msgstr "criando esquema informação ... "
 
 #: initdb.c:1868
 msgid "loading PL/pgSQL server-side language ... "
-msgstr "carregando linguagem PL/pgSQL ..."
+msgstr "carregando linguagem PL/pgSQL ... "
 
 #: initdb.c:1893
 msgid "vacuuming database template1 ... "

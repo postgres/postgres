@@ -1,7 +1,7 @@
 # translation of pg_dump.po to fr_fr
 # french message translation file for pg_dump
 #
-# $PostgreSQL: pgsql/src/bin/pg_dump/po/fr.po,v 1.23 2010/07/08 21:32:28 petere Exp $
+# $PostgreSQL$
 #
 # Use these quotes: « %s »
 #
@@ -213,8 +213,8 @@ msgstr ""
 #, c-format
 msgid "  -c, --clean                 clean (drop) database objects before recreating\n"
 msgstr ""
-"  -c, --clean               nettoie/supprime les bases de données avant de\n"
-"                            les créer\n"
+"  -c, --clean                  nettoie/supprime les bases de données avant de\n"
+"                               les créer\n"
 
 #: pg_dump.c:814
 #, c-format
@@ -267,8 +267,8 @@ msgstr ""
 #, c-format
 msgid "  -S, --superuser=NAME        superuser user name to use in plain-text format\n"
 msgstr ""
-"  -S, --superuser=NOM       indique le nom du super-utilisateur à utiliser\n"
-"                            avec le format texte\n"
+"  -S, --superuser=NOM          indique le nom du super-utilisateur à\n"
+"                               utiliser avec le format texte\n"
 
 #: pg_dump.c:823
 #, c-format
@@ -331,7 +331,7 @@ msgstr ""
 #: pg_dumpall.c:559
 #, c-format
 msgid "  --no-tablespaces            do not dump tablespace assignments\n"
-msgstr "  --no-tablespaces            ne sauvegarde pas les affectations de tablespaces\n"
+msgstr "  --no-tablespaces             ne sauvegarde pas les affectations de tablespaces\n"
 
 #: pg_dump.c:832
 #: pg_dumpall.c:560
@@ -1944,7 +1944,9 @@ msgstr "  -I, --index=NOM              restaurer l'index indiqué\n"
 #: pg_restore.c:417
 #, c-format
 msgid "  -j, --jobs=NUM           use this many parallel jobs to restore\n"
-msgstr "  -j, --jobs=NUMERO            utilise ce nombre de jobs en parallèle pour la                               restauration\n"
+msgstr ""
+"  -j, --jobs=NUMERO            utilise ce nombre de jobs en parallèle pour\n"
+"                               la restauration\n"
 
 #: pg_restore.c:418
 #, c-format
@@ -2148,15 +2150,15 @@ msgstr "  %s [OPTION]...\n"
 #, c-format
 msgid "  -c, --clean                 clean (drop) databases before recreating\n"
 msgstr ""
-"  -c, --clean               nettoie (supprime) les bases de données avant de\n"
-"                            les créer\n"
+"  -c, --clean                  nettoie (supprime) les bases de données avant de\n"
+"                               les créer\n"
 
 #: pg_dumpall.c:546
 #, c-format
 msgid "  -g, --globals-only          dump only global objects, no databases\n"
 msgstr ""
-"  -g, --globals-only        sauvegarde uniquement les objets système, pas\n"
-"                            les bases de données\n"
+"  -g, --globals-only           sauvegarde uniquement les objets système, pas\n"
+"                               les bases de données\n"
 
 #: pg_dumpall.c:548
 #, c-format
@@ -2169,27 +2171,27 @@ msgstr ""
 #, c-format
 msgid "  -r, --roles-only            dump only roles, no databases or tablespaces\n"
 msgstr ""
-"  -r, --roles-only          sauvegarde uniquement les rôles, pas les bases\n"
-"                            de données ni les tablespaces\n"
+"  -r, --roles-only             sauvegarde uniquement les rôles, pas les bases\n"
+"                               de données ni les tablespaces\n"
 
 #: pg_dumpall.c:551
 #, c-format
 msgid "  -S, --superuser=NAME        superuser user name to use in the dump\n"
 msgstr ""
-"  -S, --superuser=NOM       indique le nom du super-utilisateur à utiliser\n"
-"                            avec le format texte\n"
+"  -S, --superuser=NOM          indique le nom du super-utilisateur à utiliser\n"
+"                               avec le format texte\n"
 
 #: pg_dumpall.c:552
 #, c-format
 msgid "  -t, --tablespaces-only      dump only tablespaces, no databases or roles\n"
 msgstr ""
-"  -t, --tablespaces-only    sauvegarde uniquement les tablespaces, pas les\n"
-"                            bases de données ni les rôles\n"
+"  -t, --tablespaces-only       sauvegarde uniquement les tablespaces, pas les\n"
+"                               bases de données ni les rôles\n"
 
 #: pg_dumpall.c:567
 #, c-format
 msgid "  -l, --database=DBNAME    alternative default database\n"
-msgstr "  -l, --database=NOM_BASE   indique une autre base par défaut\n"
+msgstr "  -l, --database=NOM_BASE      indique une autre base par défaut\n"
 
 #: pg_dumpall.c:573
 #, c-format

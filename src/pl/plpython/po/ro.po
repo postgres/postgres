@@ -1,0 +1,312 @@
+# LANGUAGE message translation file for plpython
+# Copyright (C) 2010 PostgreSQL Global Development Group
+# This file is distributed under the same license as the PostgreSQL package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2010.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PostgreSQL 9.0\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
+"POT-Creation-Date: 2010-09-04 19:58+0000\n"
+"PO-Revision-Date: 2010-09-26 19:49-0000\n"
+"Last-Translator: Max <max@oceanline.co.uk>\n"
+"Language-Team: Română <max@oceanline.co.uk>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=n==1 ? 0 : (n==0 || (n%100 > 0 && n%100 < 20)) ? 1 : 2;\n"
+
+#: plpython.c:424
+#, c-format
+msgid "PL/Python function \"%s\""
+msgstr "funcție PL/Python \"%s\""
+
+#: plpython.c:430
+msgid "PL/Python anonymous code block"
+msgstr "bloc de cod PL/Python anonim"
+
+#: plpython.c:437
+msgid "while modifying trigger row"
+msgstr "în timpul modificării triggerului de rând"
+
+#: plpython.c:444
+msgid "while creating return value"
+msgstr "în timpul creării valorii rezultat"
+
+#: plpython.c:613
+#: plpython.c:639
+msgid "unexpected return value from trigger procedure"
+msgstr "procedura trigger a rezultat o valoare neașteptată"
+
+#: plpython.c:614
+msgid "Expected None or a string."
+msgstr "așteptam None sau un șir String"
+
+#: plpython.c:629
+msgid "PL/Python trigger function returned \"MODIFY\" in a DELETE trigger -- ignored"
+msgstr "funcția trigger PL/Python a rezultat \"MODIFY\" întro funcție trigger de tip DELETE  -- ignor"
+
+#: plpython.c:640
+msgid "Expected None, \"OK\", \"SKIP\", or \"MODIFY\"."
+msgstr "Așteptam None, \"OK\", \"SKIP\", sau \"MODIFY\"."
+
+#: plpython.c:692
+msgid "TD[\"new\"] deleted, cannot modify row"
+msgstr "TD[\"new\"] șters, nu poate modifica rândul "
+
+#: plpython.c:695
+msgid "TD[\"new\"] is not a dictionary"
+msgstr "TD[\"new\"] nu este un dicționar"
+
+#: plpython.c:719
+#, c-format
+msgid "TD[\"new\"] dictionary key at ordinal position %d is not a string"
+msgstr "TD[\"new\"] cheia dicționarului la poziția %d nu este un șir String"
+
+#: plpython.c:725
+#, c-format
+msgid "key \"%s\" found in TD[\"new\"] does not exist as a column in the triggering row"
+msgstr "cheia \"%s\" găsită în TD[\"new\"] nu există ca și coloană în rândul care a activat triggerul"
+
+#: plpython.c:819
+msgid "could not create new dictionary while building trigger arguments"
+msgstr "nu pot crea un nou dicționar în timp ce construiesc argumentele triggerului"
+
+#: plpython.c:1026
+msgid "unsupported set function return mode"
+msgstr "mod de returnare a funcției set nesuportat"
+
+#: plpython.c:1027
+msgid "PL/Python set-returning functions only support returning only value per call."
+msgstr "funcțiile PL/Python ce returnează doar seturi suportă doar o singură valoare returnată la fiecare apel."
+
+#: plpython.c:1039
+msgid "returned object cannot be iterated"
+msgstr "obiectul returnat nu poate fi iterat"
+
+#: plpython.c:1040
+msgid "PL/Python set-returning functions must return an iterable object."
+msgstr "funcțiile PL/Python ce returnează seturi trebuie să aibă ca rezultat un obiect iterabil."
+
+#: plpython.c:1067
+msgid "error fetching next item from iterator"
+msgstr "eroare la obținerea următorului element din iterator"
+
+#: plpython.c:1089
+msgid "PL/Python function with return type \"void\" did not return None"
+msgstr "funcția PL/Python cu rezultatul de tip \"void\" nu a returbat None"
+
+#: plpython.c:1246
+msgid "PyList_SetItem() failed, while setting up arguments"
+msgstr "PyList_SetItem() a eșuat, în timpul creării argumentelor"
+
+#: plpython.c:1250
+msgid "PyDict_SetItemString() failed, while setting up arguments"
+msgstr "PyDict_SetItemString() a eșuat, în timpul creării argumentelor"
+
+#: plpython.c:1319
+msgid "PyCObject_AsVoidPtr() failed"
+msgstr "PyCObject_AsVoidPtr() a eșuat"
+
+#: plpython.c:1427
+msgid "trigger functions can only be called as triggers"
+msgstr "funcţiile trigger pot fi apelate doar ca triggere"
+
+#: plpython.c:1431
+#: plpython.c:1815
+#, c-format
+msgid "PL/Python functions cannot return type %s"
+msgstr "funcțiile PL/Python nu pot returna tipul %s"
+
+#: plpython.c:1509
+#, c-format
+msgid "PL/Python functions cannot accept type %s"
+msgstr "funcțiile PL/Python nu pot accepta tipul %s"
+
+#: plpython.c:1548
+msgid "PyCObject_FromVoidPtr() failed"
+msgstr "PyCObject_FromVoidPtr() a eșuat"
+
+#: plpython.c:1606
+#, c-format
+msgid "could not compile PL/Python function \"%s\""
+msgstr "nu pot compila funcția PL/Python \"%s\""
+
+#: plpython.c:1817
+msgid "PL/Python does not support conversion to arrays of row types."
+msgstr "PL/Python nu suportă conversia în array-uri de tip rând."
+
+#: plpython.c:2020
+msgid "cannot convert multidimensional array to Python list"
+msgstr "nu pot converti un array-ul  mai multe dimensiuni într-o listă Python"
+
+#: plpython.c:2021
+msgid "PL/Python only supports one-dimensional arrays."
+msgstr "PL/Python suportă doar array-uri cu o dimensiune."
+
+#: plpython.c:2057
+msgid "could not create new dictionary"
+msgstr "nu pot crea un nou dicționar"
+
+#: plpython.c:2133
+msgid "could not create bytes representation of Python object"
+msgstr "nu pot crea reprezentarea octet a obiectului Python"
+
+#: plpython.c:2189
+msgid "could not create string representation of Python object"
+msgstr "nu pot crea reprezentarea șir String a obiectului Python"
+
+#: plpython.c:2200
+msgid "could not convert Python object into cstring: Python string representation appears to contain null bytes"
+msgstr "nu pot converti obiectul Python într-un cstring: reprezentarea string a obiectului Python pare să conțină octeți nuli"
+
+#: plpython.c:2233
+msgid "return value of function with array return type is not a Python sequence"
+msgstr "return value of function with array return type is not a Python sequence"
+
+#: plpython.c:2308
+#, c-format
+msgid "key \"%s\" not found in mapping"
+msgstr "cheia \"%s\" nu e gasită în mapare"
+
+#: plpython.c:2309
+msgid "To return null in a column, add the value None to the mapping with the key named after the column."
+msgstr "Pentru a obșine null într-o coloană, adăugați valoarea None la mapare cu cheia numită cu numele coloanei."
+
+#: plpython.c:2352
+msgid "length of returned sequence did not match number of columns in row"
+msgstr "lungimea secvenței returnate nu se potrivește cu numărul de coloane din rând"
+
+#: plpython.c:2445
+#, c-format
+msgid "attribute \"%s\" does not exist in Python object"
+msgstr "atributul \"%s\" nu există în obiectul Python"
+
+#: plpython.c:2446
+msgid "To return null in a column, let the returned object have an attribute named after column with value None."
+msgstr "Pentru a abține null într-o coloană, obiectul returnat trebuie să aibă un atribut cu numele coloanei și cu valoarea None."
+
+#: plpython.c:2680
+msgid "plan.status takes no arguments"
+msgstr "plan.status nu acceptă argumente"
+
+#: plpython.c:2804
+#: plpython.c:2947
+msgid "transaction aborted"
+msgstr "tranzacție anulată"
+
+#: plpython.c:2811
+msgid "invalid arguments for plpy.prepare"
+msgstr "argumente invalide pentru plpy.prepare"
+
+#: plpython.c:2818
+msgid "second argument of plpy.prepare must be a sequence"
+msgstr "al doilea argument al plpy.prepare trebuie să fie o secvență"
+
+#: plpython.c:2868
+#, c-format
+msgid "plpy.prepare: type name at ordinal position %d is not a string"
+msgstr "plpy.prepare: numele tipului la poziția %d nu este un șir"
+
+#: plpython.c:2895
+msgid "plpy.prepare does not support composite types"
+msgstr "plpy.prepare nu suportă tipul compozit"
+
+#: plpython.c:2924
+msgid "unrecognized error in PLy_spi_prepare"
+msgstr "eroare necunoscută în PLy_spi_prepare"
+
+#: plpython.c:2960
+msgid "plpy.execute expected a query or a plan"
+msgstr "plpy.execute aștepta o interogare sau un plan"
+
+#: plpython.c:2977
+msgid "plpy.execute takes a sequence as its second argument"
+msgstr "plpy.execute acceptă o secvență ca al doilea argument"
+
+#: plpython.c:2993
+msgid "could not execute plan"
+msgstr "nu pot executa planul"
+
+#: plpython.c:2996
+#, c-format
+msgid "Expected sequence of %d argument, got %d: %s"
+msgid_plural "Expected sequence of %d arguments, got %d: %s"
+msgstr[0] "Secvența așteptată a argumentului %d, a obținut %d: %s"
+msgstr[1] "Secvența așteptată a argumentelor %d, a obținut %d: %s"
+msgstr[2] "Secvența așteptată a argumentelor %d, a obținut %d: %s"
+
+#: plpython.c:3073
+msgid "unrecognized error in PLy_spi_execute_plan"
+msgstr "eroare necunoscută în PLy_spi_execute_plan"
+
+#: plpython.c:3092
+#, c-format
+msgid "SPI_execute_plan failed: %s"
+msgstr "SPI_execute_plan a eșuat: %s"
+
+#: plpython.c:3119
+msgid "unrecognized error in PLy_spi_execute_query"
+msgstr "eroare necunoscută în PLy_spi_execute_query"
+
+#: plpython.c:3128
+#, c-format
+msgid "SPI_execute failed: %s"
+msgstr "SPI_execute a eșuat: %s"
+
+#: plpython.c:3185
+msgid "unrecognized error in PLy_spi_execute_fetch_result"
+msgstr "eroare necunoscută în PLy_spi_execute_fetch_result"
+
+#: plpython.c:3239
+msgid "Python major version mismatch in session"
+msgstr "nepotrivire în sesiune de versiune majoră Python"
+
+#: plpython.c:3240
+#, c-format
+msgid "This session has previously used Python major version %d, and it is now attempting to use Python major version %d."
+msgstr "Această sesiune a folosit versiunea majoră de Python %d și acum încearcă să folosească versiunea majoră de Python %d."
+
+#: plpython.c:3242
+msgid "Start a new session to use a different Python major version."
+msgstr "Începe o nouă sesiune pentru a folosi o versiune majoră de Python diferită"
+
+#: plpython.c:3257
+msgid "untrapped error in initialization"
+msgstr "eroare netratată la inițializare"
+
+#: plpython.c:3260
+msgid "could not create procedure cache"
+msgstr "nu pot crea procedura cache"
+
+#: plpython.c:3272
+msgid "could not import \"__main__\" module"
+msgstr "nu pot importa modulul \"__main__\""
+
+#: plpython.c:3279
+msgid "could not initialize globals"
+msgstr "nu pot inițializa globals"
+
+#: plpython.c:3397
+msgid "could not parse error message in plpy.elog"
+msgstr "nu pot analiza mesajul de eroare în plpy.elog"
+
+#: plpython.c:3526
+#: plpython.c:3530
+#, c-format
+msgid "PL/Python: %s"
+msgstr "PL/Python: %s"
+
+#: plpython.c:3527
+#, c-format
+msgid "%s"
+msgstr "%s"
+
+#: plpython.c:3640
+msgid "out of memory"
+msgstr "memorie insuficientă"
+
+#: plpython.c:3694
+msgid "could not convert Python Unicode object to PostgreSQL server encoding"
+msgstr "nu pot converti obiectul Unicode Python Unicode în codificarea folosită de serverul PostgreSQL"
+

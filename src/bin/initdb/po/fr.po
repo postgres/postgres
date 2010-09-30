@@ -1,7 +1,7 @@
 # translation of initdb.po to fr_fr
 # french message translation file for initdb
 #
-# $PostgreSQL: pgsql/src/bin/initdb/po/fr.po,v 1.17 2009/12/19 20:23:25 petere Exp $
+# $PostgreSQL$
 #
 # Use these quotes: « %s »
 #
@@ -12,7 +12,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 8.4\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2009-12-19 01:11+0000\n"
-"PO-Revision-Date: 2009-12-19 02:26+0100\n"
+"PO-Revision-Date: 2010-09-25 00:38+0300\n"
 "Last-Translator: Guillaume Lelarge <guillaume@lelarge.info>\n"
 "Language-Team: PostgreSQLfr <pgsql-fr-generale@postgresql.org>\n"
 "MIME-Version: 1.0\n"
@@ -246,7 +246,7 @@ msgstr "création du schéma d'informations... "
 
 #: initdb.c:1905
 msgid "loading PL/pgSQL server-side language ... "
-msgstr "chargement du langage PL/pgSQL..."
+msgstr "chargement du langage PL/pgSQL... "
 
 #: initdb.c:1930
 msgid "vacuuming database template1 ... "

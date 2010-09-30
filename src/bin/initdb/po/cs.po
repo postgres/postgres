@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: postgresql-8.4\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2009-06-06 23:08+0000\n"
-"PO-Revision-Date: 2009-06-07 14:25+0200\n"
+"PO-Revision-Date: 2010-09-25 00:36+0300\n"
 "Last-Translator: Zdeněk Kotala\n"
 "Language-Team:  \n"
 "MIME-Version: 1.0\n"
@@ -158,7 +158,7 @@ msgstr "vybírám základní nastavení shared_buffers ... "
 
 #: initdb.c:1147
 msgid "creating configuration files ... "
-msgstr "vytvářím konfigurační soubory ..."
+msgstr "vytvářím konfigurační soubory ... "
 
 #: initdb.c:1314
 #, c-format

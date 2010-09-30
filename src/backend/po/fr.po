@@ -1,7 +1,7 @@
 # translation of postgres.po to fr_fr
 # french message translation file for postgres
 #
-# $PostgreSQL: pgsql/src/backend/po/fr.po,v 1.28.2.3 2010/09/16 19:09:32 petere Exp $
+# $PostgreSQL$
 #
 # Use these quotes: « %s »
 # Guillaume Lelarge <guillaume@lelarge.info>, 2003-2009.
@@ -10714,7 +10714,7 @@ msgstr "nom de l'instruction invalide : ne doit pas être vide"
 #: parser/parse_param.c:293
 #, c-format
 msgid "could not determine data type of parameter $%d"
-msgstr "n'a pas pu déterminer le type de données du paramètres $%d"
+msgstr "n'a pas pu déterminer le type de données du paramètre $%d"
 
 #: commands/prepare.c:139
 msgid "utility statements cannot be prepared"
