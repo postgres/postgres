@@ -1,16 +1,18 @@
 # translation of psql.
-# (C) <alvherre@dcc.uchile.cl>, 2003.
-# 
+# (C) <alvherre@dcc.uchile.cl>, 2003, 2010
+#
 msgid ""
 msgstr ""
-"Project-Id-Version: PostgreSQL 7.4\n"
-"POT-Creation-Date: 2003-11-15 21:21+0100\n"
-"PO-Revision-Date: 2003-11-15 21:32+0100\n"
-"Last-Translator: Álvaro Herrera <alvherre@dcc.uchile.cl>\n"
-"Language-Team: Castellano <pgsql-ayuda@tlali.iztacala.unam.mx>\n"
+"Project-Id-Version: psql (PostgreSQL 7.4)\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2010-09-27 21:18+0000\n"
+"PO-Revision-Date: 2010-09-30 11:19-0400\n"
+"Last-Translator: Alvaro Herrera <alvherre@alvh.no-ip.org>\n"
+"Language-Team: Spanish <pgsql-es-ayuda@postgresql.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=iso-8859-1\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Language: es\n"
 
 #: command.c:154
 msgid "Warning: This syntax is deprecated.\n"
@@ -67,7 +69,7 @@ msgid "Wrote history to file \"%s\".\n"
 msgstr "Se escribió historial a archivo \"%s\".\n"
 
 #: command.c:692 command.c:1149 command.c:1246 command.c:1964 common.c:86
-#: copy.c:88 copy.c:116 describe.c:51 mainloop.c:78 mainloop.c:341
+#: copy.c:88 copy.c:116 mainloop.c:78 mainloop.c:338 describe.c:51
 msgid "out of memory\n"
 msgstr "memoria agotada\n"
 
@@ -164,10 +166,12 @@ msgid "Border style is %d.\n"
 msgstr "El estilo de borde es %d.\n"
 
 #: command.c:1807
+#, c-format
 msgid "Expanded display is on.\n"
 msgstr "Se ha activado el despliegue expandido.\n"
 
 #: command.c:1808
+#, c-format
 msgid "Expanded display is off.\n"
 msgstr "Se ha desactivado el despliegue expandido.\n"
 
@@ -182,6 +186,7 @@ msgid "Field separator is \"%s\".\n"
 msgstr "El separador de campos es \"%s\".\n"
 
 #: command.c:1846
+#, c-format
 msgid "Record separator is <newline>."
 msgstr "El separador de filas es <salto de línea>."
 
@@ -204,6 +209,7 @@ msgid "Title is \"%s\".\n"
 msgstr "El título es \"%s\".\n"
 
 #: command.c:1879
+#, c-format
 msgid "Title is unset.\n"
 msgstr "El título ha sido indefinido.\n"
 
@@ -213,6 +219,7 @@ msgid "Table attribute is \"%s\".\n"
 msgstr "Los atributos de tabla son \"%s\".\n"
 
 #: command.c:1897
+#, c-format
 msgid "Table attributes unset.\n"
 msgstr "Los atributos de tabla han sido indefinidos.\n"
 
@@ -328,10 +335,14 @@ msgstr "%s: no se puede copiar desde/hacia un directorio\n"
 msgid "\\copy: %s"
 msgstr "\\copy: %s"
 
-#: copy.c:414
+#: copy.c:414 copy.c:426
 #, c-format
 msgid "\\copy: unexpected response (%d)\n"
 msgstr "\\copy: respuesta inesperada (%d)\n"
+
+#: copy.c:430
+msgid "trying to exit copy mode"
+msgstr "tratando de salir del modo copy"
 
 #: help.c:48
 msgid "on"
@@ -559,6 +570,7 @@ msgstr ""
 "Reporte errores a <pgsql-bugs@postgresql.org>."
 
 #: help.c:174
+#, c-format
 msgid "General\n"
 msgstr "General\n"
 
@@ -572,15 +584,18 @@ msgstr ""
 "                  conectar a una nueva base de datos (actual: \"%s\")\n"
 
 #: help.c:178
+#, c-format
 msgid "  \\cd [DIR]      change the current working directory\n"
 msgstr "  \\cd [DIR]       cambiar el directorio de trabajo\n"
 
 #: help.c:179
+#, c-format
 msgid "  \\copyright     show PostgreSQL usage and distribution terms\n"
 msgstr ""
 "  \\copyright      mostrar términos de uso y distribución de PostgreSQL\n"
 
 #: help.c:180
+#, c-format
 msgid ""
 "  \\encoding [ENCODING]\n"
 "                 show or set client encoding\n"
@@ -589,16 +604,19 @@ msgstr ""
 "                  mostrar o definir codificación del cliente\n"
 
 #: help.c:182
+#, c-format
 msgid "  \\h [NAME]      help on syntax of SQL commands, * for all commands\n"
 msgstr ""
 "  \\h [NOMBRE]     mostrar ayuda de sintaxis de comandos SQL,\n"
 "                  * para todos los comandos\n"
 
 #: help.c:183
+#, c-format
 msgid "  \\q             quit psql\n"
 msgstr "  \\q              salir de psql\n"
 
 #: help.c:184
+#, c-format
 msgid ""
 "  \\set [NAME [VALUE]]\n"
 "                 set internal variable, or list all if no parameters\n"
@@ -615,20 +633,24 @@ msgstr ""
 "                  (actualmente %s)\n"
 
 #: help.c:188
+#, c-format
 msgid "  \\unset NAME    unset (delete) internal variable\n"
 msgstr "  \\unset NOMBRE   indefinir (eliminar) variable interna\n"
 
 #: help.c:189
+#, c-format
 msgid "  \\! [COMMAND]   execute command in shell or start interactive shell\n"
 msgstr ""
 "  \\! [COMANDO]    ejecutar comando en intérprete de comandos,\n"
 "                  o iniciar intérprete interactivo\n"
 
 #: help.c:192
+#, c-format
 msgid "Query Buffer\n"
 msgstr "Búfer de consulta\n"
 
 #: help.c:193
+#, c-format
 msgid ""
 "  \\e [FILE]      edit the query buffer (or file) with external editor\n"
 msgstr ""
@@ -636,6 +658,7 @@ msgstr ""
 "externo\n"
 
 #: help.c:194
+#, c-format
 msgid ""
 "  \\g [FILE]      send query buffer to server (and results to file or |"
 "pipe)\n"
@@ -644,54 +667,66 @@ msgstr ""
 "                  (y resultados a archivo o |comando)\n"
 
 #: help.c:195
+#, c-format
 msgid "  \\p             show the contents of the query buffer\n"
 msgstr "  \\p              mostrar el contenido del búfer de consulta\n"
 
 #: help.c:196
+#, c-format
 msgid "  \\r             reset (clear) the query buffer\n"
 msgstr "  \\r              reiniciar (limpiar) el búfer de consulta\n"
 
 #: help.c:197
+#, c-format
 msgid "  \\s [FILE]      display history or save it to file\n"
 msgstr ""
 "  \\s [ARCHIVO]    mostrar historial de comandos o guardarlo en archivo\n"
 
 #: help.c:198
+#, c-format
 msgid "  \\w [FILE]      write query buffer to file\n"
 msgstr "  \\w [ARCHIVO]    escribir búfer de consulta a archivo\n"
 
 #: help.c:201
+#, c-format
 msgid "Input/Output\n"
 msgstr "Entrada/Salida\n"
 
 #: help.c:202
+#, c-format
 msgid "  \\echo [STRING] write string to standard output\n"
 msgstr "  \\echo [CADENA]  escribir cadena a salida estándar\n"
 
 #: help.c:203
+#, c-format
 msgid "  \\i FILE        execute commands from file\n"
 msgstr "  \\i ARCHIVO      ejecutar comandos desde archivo\n"
 
 #: help.c:204
+#, c-format
 msgid "  \\o [FILE]      send all query results to file or |pipe\n"
 msgstr ""
 "  \\o [ARCHIVO]    envíar resultados de consultas a archivo o |comando\n"
 
 #: help.c:205
+#, c-format
 msgid ""
 "  \\qecho [STRING]\n"
 "                 write string to query output stream (see \\o)\n"
 msgstr "  \\qecho [CADENA] escribir cadena a salida de consultas (ver \\o)\n"
 
 #: help.c:209
+#, c-format
 msgid "Informational\n"
 msgstr "Informacional\n"
 
 #: help.c:210
+#, c-format
 msgid "  \\d [NAME]      describe table, index, sequence, or view\n"
 msgstr "  \\d [NOMBRE]     describir tabla, índice, secuencia o vista\n"
 
 #: help.c:211
+#, c-format
 msgid ""
 "  \\d{t|i|s|v|S} [PATTERN] (add \"+\" for more detail)\n"
 "                 list tables/indexes/sequences/views/system tables\n"
@@ -700,79 +735,97 @@ msgstr ""
 "                  listar tablas/índices/secuencias/vistas/tablas de sistema\n"
 
 #: help.c:213
+#, c-format
 msgid "  \\da [PATTERN]  list aggregate functions\n"
 msgstr "  \\da [PATRÓN]    listar funciones de agregación\n"
 
 #: help.c:214
+#, c-format
 msgid "  \\dc [PATTERN]  list conversions\n"
 msgstr "  \\dc [PATRÓN]    listar conversiones\n"
 
 #: help.c:215
+#, c-format
 msgid "  \\dC            list casts\n"
 msgstr "  \\dC             listar conversiones de tipo (casts)\n"
 
 #: help.c:216
+#, c-format
 msgid "  \\dd [PATTERN]  show comment for object\n"
 msgstr "  \\dd [PATRÓN]    listar comentarios de objetos\n"
 
 #: help.c:217
+#, c-format
 msgid "  \\dD [PATTERN]  list domains\n"
 msgstr "  \\dD [PATRÓN]    listar dominios\n"
 
 #: help.c:218
+#, c-format
 msgid "  \\df [PATTERN]  list functions (add \"+\" for more detail)\n"
 msgstr "  \\df [PATRÓN]    listar funciones (\"+\" para más detalles)\n"
 
 #: help.c:219
+#, c-format
 msgid "  \\dn [PATTERN]  list schemas\n"
 msgstr "  \\dn [PATRÓN]    listar esquemas\n"
 
 #: help.c:220
+#, c-format
 msgid "  \\do [NAME]     list operators\n"
 msgstr "  \\do [NOMBRE]    listar operadores\n"
 
 #: help.c:221
+#, c-format
 msgid "  \\dl            list large objects, same as \\lo_list\n"
 msgstr "  \\dl             listar objetos grandes, lo mismo que \\lo_list\n"
 
 #: help.c:222
+#, c-format
 msgid "  \\dp [PATTERN]  list table access privileges\n"
 msgstr "  \\dp [PATRÓN]    listar privilegios de acceso a tablas\n"
 
 #: help.c:223
+#, c-format
 msgid "  \\dT [PATTERN]  list data types (add \"+\" for more detail)\n"
 msgstr "  \\dT [PATRÓN]    listar tipos de dato (\"+\" para más detalles)\n"
 
 #: help.c:224
+#, c-format
 msgid "  \\du [PATTERN]  list users\n"
 msgstr "  \\du [PATRÓN]    listar usuarios\n"
 
 #: help.c:225
+#, c-format
 msgid "  \\l             list all databases (add \"+\" for more detail)\n"
 msgstr ""
 "  \\l              listar todas las bases de datos (\"+\" para más "
 "detalles)\n"
 
 #: help.c:226
+#, c-format
 msgid "  \\z [PATTERN]   list table access privileges (same as \\dp)\n"
 msgstr ""
 "  \\z [PATRÓN]     listar privilegios de acceso a tablas (lo mismo que "
 "\\dp)\n"
 
 #: help.c:229
+#, c-format
 msgid "Formatting\n"
 msgstr "Formato\n"
 
 #: help.c:230
+#, c-format
 msgid "  \\a             toggle between unaligned and aligned output mode\n"
 msgstr ""
 "  \\a              cambiar entre modo de salida alineado y sin alinear\n"
 
 #: help.c:231
+#, c-format
 msgid "  \\C [STRING]    set table title, or unset if none\n"
 msgstr "  \\C [CADENA]     definir título de tabla, o indefinir si es vacío\n"
 
 #: help.c:232
+#, c-format
 msgid ""
 "  \\f [STRING]    show or set field separator for unaligned query output\n"
 msgstr ""
@@ -785,6 +838,7 @@ msgid "  \\H             toggle HTML output mode (currently %s)\n"
 msgstr "  \\H              cambiar modo de salida HTML (actualmente %s)\n"
 
 #: help.c:235
+#, c-format
 msgid ""
 "  \\pset NAME [VALUE]\n"
 "                 set table output option\n"
@@ -802,6 +856,7 @@ msgid "  \\t             show only rows (currently %s)\n"
 msgstr "  \\t              mostrar sólo filas (actualmente %s)\n"
 
 #: help.c:241
+#, c-format
 msgid "  \\T [STRING]    set HTML <table> tag attributes, or unset if none\n"
 msgstr ""
 "  \\T [CADENA]     definir atributos HTML de <table>, o indefinir si es "
@@ -813,16 +868,19 @@ msgid "  \\x             toggle expanded output (currently %s)\n"
 msgstr "  \\x              cambiar modo expandido (actualmente %s)\n"
 
 #: help.c:246
+#, c-format
 msgid "Copy, Large Object\n"
 msgstr "Copy, Objetos Grandes\n"
 
 #: help.c:247
+#, c-format
 msgid ""
 "  \\copy ...      perform SQL COPY with data stream to the client host\n"
 msgstr ""
 "  \\copy ...       ejecutar comando SQL COPY con flujo de datos al cliente\n"
 
 #: help.c:248
+#, c-format
 msgid ""
 "  \\lo_export\n"
 "  \\lo_import\n"
@@ -881,8 +939,8 @@ msgstr "%s: transacción en curso está abortada\n"
 msgid "%s: unknown transaction status\n"
 msgstr "%s: estado de transacción desconocido\n"
 
-#: describe.c:106 describe.c:157 describe.c:230 describe.c:292 describe.c:339
-#: describe.c:438 describe.c:718 describe.c:1345 large_obj.c:278
+#: large_obj.c:278 describe.c:106 describe.c:157 describe.c:230 describe.c:292
+#: describe.c:339 describe.c:438 describe.c:718 describe.c:1345
 msgid "Description"
 msgstr "Descripción"
 
@@ -890,7 +948,7 @@ msgstr "Descripción"
 msgid "Large objects"
 msgstr "Objetos grandes"
 
-#: mainloop.c:206
+#: mainloop.c:203
 #, c-format
 msgid "Use \"\\q\" to leave %s.\n"
 msgstr "Use \"\\q\" para salir de %s.\n"
@@ -900,6 +958,7 @@ msgid "(No rows)\n"
 msgstr "(Sin filas)\n"
 
 #: print.c:1186
+#, c-format
 msgid "(1 row)"
 msgstr "(1 fila)"
 
@@ -1197,6 +1256,11 @@ msgstr "único, "
 msgid "for table \"%s.%s\""
 msgstr "de tabla \"%s.%s\""
 
+#: describe.c:895
+#, c-format
+msgid ", predicate %s"
+msgstr ", predicado %s"
+
 #: describe.c:929
 #, c-format
 msgid ""
@@ -1285,10 +1349,12 @@ msgid "special"
 msgstr "especial"
 
 #: describe.c:1401
+#, c-format
 msgid "No matching relations found.\n"
 msgstr "No se encontraron relaciones coincidentes.\n"
 
 #: describe.c:1403
+#, c-format
 msgid "No relations found.\n"
 msgstr "No se encontraron relaciones.\n"
 
@@ -1469,9 +1535,8 @@ msgid "ALTER OPERATOR CLASS name USING index_method RENAME TO newname"
 msgstr "ALTER OPERATOR CLASS name USING index_method RENAME TO newname"
 
 #: sql_help.h:61
-#, fuzzy
 msgid "change the definition of a schema"
-msgstr "cambia la definición de un dominio"
+msgstr "cambia la definición de un esquema"
 
 #: sql_help.h:62
 msgid "ALTER SCHEMA name RENAME TO newname"
@@ -1792,7 +1857,7 @@ msgstr ""
 "    FOR EACH ROW EXECUTE PROCEDURE funcname ( args )"
 
 #: sql_help.h:125
-msgid "define a new conversion"
+msgid "define a new encoding conversion"
 msgstr "define una nueva conversión de codificación"
 
 #: sql_help.h:126
@@ -2049,7 +2114,8 @@ msgid ""
 "[ DEFERRABLE | NOT DEFERRABLE ] [ INITIALLY DEFERRED | INITIALLY IMMEDIATE ]"
 msgstr ""
 "CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE table_name (\n"
-"    { column_name data_type [ DEFAULT default_expr ] [ column_constraint [ ... ] ]\n"
+"    { column_name data_type [ DEFAULT default_expr ] [ column_constraint "
+"[ ... ] ]\n"
 "    | table_constraint\n"
 "    | LIKE parent_table [ { INCLUDING | EXCLUDING } DEFAULTS ] }  [, ... ]\n"
 ")\n"
@@ -2062,9 +2128,11 @@ msgstr ""
 "[ CONSTRAINT constraint_name ]\n"
 "{ NOT NULL | NULL | UNIQUE | PRIMARY KEY |\n"
 "  CHECK (expression) |\n"
-"  REFERENCES reftable [ ( refcolumn ) ] [ MATCH FULL | MATCH PARTIAL | MATCH SIMPLE ]\n"
+"  REFERENCES reftable [ ( refcolumn ) ] [ MATCH FULL | MATCH PARTIAL | MATCH "
+"SIMPLE ]\n"
 "    [ ON DELETE action ] [ ON UPDATE action ] }\n"
-"[ DEFERRABLE | NOT DEFERRABLE ] [ INITIALLY DEFERRED | INITIALLY IMMEDIATE ]\n"
+"[ DEFERRABLE | NOT DEFERRABLE ] [ INITIALLY DEFERRED | INITIALLY "
+"IMMEDIATE ]\n"
 "\n"
 "y table_constraint es:\n"
 "\n"
@@ -2072,8 +2140,10 @@ msgstr ""
 "{ UNIQUE ( column_name [, ... ] ) |\n"
 "  PRIMARY KEY ( column_name [, ... ] ) |\n"
 "  CHECK ( expression ) |\n"
-"  FOREIGN KEY ( column_name [, ... ] ) REFERENCES reftable [ ( refcolumn [, ... ] ) ]\n"
-"    [ MATCH FULL | MATCH PARTIAL | MATCH SIMPLE ] [ ON DELETE action ] [ ON UPDATE action ] }\n"
+"  FOREIGN KEY ( column_name [, ... ] ) REFERENCES reftable [ ( refcolumn "
+"[, ... ] ) ]\n"
+"    [ MATCH FULL | MATCH PARTIAL | MATCH SIMPLE ] [ ON DELETE action ] [ ON "
+"UPDATE action ] }\n"
 "[ DEFERRABLE | NOT DEFERRABLE ] [ INITIALLY DEFERRED | INITIALLY IMMEDIATE ]"
 
 #: sql_help.h:177 sql_help.h:353

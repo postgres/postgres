@@ -1,11 +1,11 @@
 # "psql" translation to Brazilian Portuguese Language.
-# Euler Taveira de Oliveira <euler@timbira.com>, 2003-2009.
+# Euler Taveira de Oliveira <euler@timbira.com>, 2003-2010.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 7.4\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2005-05-08 21:18-0300\n"
+"POT-Creation-Date: 2010-06-18 15:39-0300\n"
 "PO-Revision-Date: 2004-01-07 11:37-0200\n"
 "Last-Translator: Euler Taveira de Oliveira <euler@timbira.com>\n"
 "Language-Team: Brazilian Portuguese <pgbr-dev@listas.postgresql.org.br>\n"
@@ -333,10 +333,14 @@ msgstr "%s: não pode copiar de/para o diretório\n"
 msgid "\\copy: %s"
 msgstr "\\copy: %s"
 
-#: copy.c:414
+#: copy.c:414 copy.c:426
 #, c-format
 msgid "\\copy: unexpected response (%d)\n"
 msgstr "\\copy: resposta inesperada (%d)\n"
+
+#: copy.c:430
+msgid "trying to exit copy mode"
+msgstr "tentando sair do modo copy"
 
 #: help.c:48
 msgid "on"

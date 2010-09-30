@@ -1,16 +1,19 @@
 # Spanish message translation file for pg_resetxlog
 # Ivan Hernandez <ivanx@ciencias.unam.mx>, 2003.
+# Alvaro Herrera <alvherre@alvh.no-ip.org>, 2010
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: PostgreSQL 7.4\n"
-"POT-Creation-Date: 2003-10-20 00:52-0300\n"
-"PO-Revision-Date: 2003-10-03 15:24-0500\n"
-"Last-Translator: Ivan Hernandez <ivanx@ciencias.unam.mx>\n"
-"Language-Team: Español <pgsql-ayuda@tlali.iztacala.unam.mx>\n"
+"Project-Id-Version: pg_resetxlog (PostgreSQL 7.4)\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2010-09-27 21:18+0000\n"
+"PO-Revision-Date: 2010-09-30 11:18-0400\n"
+"Last-Translator: Alvaro Herrera <alvherre@alvh.no-ip.org>\n"
+"Language-Team: Spanish <pgsql-es-ayuda@postgresql.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=iso-8859-1\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Language: es\n"
 
 #: pg_resetxlog.c:142
 #, c-format
@@ -64,6 +67,7 @@ msgstr ""
 "nuevo\n"
 
 #: pg_resetxlog.c:258
+#, c-format
 msgid ""
 "\n"
 "If these values seem acceptable, use -f to force reset.\n"
@@ -72,6 +76,7 @@ msgstr ""
 "Si estos valores parecen aceptables, usa -f para forzar reinicio.\n"
 
 #: pg_resetxlog.c:270
+#, c-format
 msgid ""
 "The database server was not shut down cleanly.\n"
 "Resetting the transaction log may cause data to be lost.\n"
@@ -82,6 +87,7 @@ msgstr ""
 "Si de todas formas quieres proceder, usa -f para forzar su reinicio.\n"
 
 #: pg_resetxlog.c:283
+#, c-format
 msgid "Transaction log reset\n"
 msgstr "Bitácora de transacciones reiniciada\n"
 
@@ -124,6 +130,7 @@ msgid "%s: invalid LC_CTYPE setting\n"
 msgstr "%s: el valor de LC_CTYPE no es válido\n"
 
 #: pg_resetxlog.c:437
+#, c-format
 msgid ""
 "Guessed pg_control values:\n"
 "\n"
@@ -132,6 +139,7 @@ msgstr ""
 "\n"
 
 #: pg_resetxlog.c:439
+#, c-format
 msgid ""
 "pg_control values:\n"
 "\n"
@@ -291,14 +299,17 @@ msgstr ""
 "\n"
 
 #: pg_resetxlog.c:694
+#, c-format
 msgid "Options:\n"
 msgstr "Opciones:\n"
 
 #: pg_resetxlog.c:695
+#, c-format
 msgid "  -f              force update to be done\n"
 msgstr "  -f              fuerza que la actualización sea hecha\n"
 
 #: pg_resetxlog.c:696
+#, c-format
 msgid ""
 "  -l FILEID,SEG   force minimum WAL starting location for new transaction "
 "log\n"
@@ -307,31 +318,38 @@ msgstr ""
 "                  nueva bitácora de transacción\n"
 
 #: pg_resetxlog.c:697
+#, c-format
 msgid ""
 "  -n              no update, just show extracted control values (for "
 "testing)\n"
 msgstr ""
-"  -n              no actualiza, sólo muestra los valores de control extraídos\n"
+"  -n              no actualiza, sólo muestra los valores de control "
+"extraídos\n"
 "                  (para prueba)\n"
 
 #: pg_resetxlog.c:698
+#, c-format
 msgid "  -o OID          set next OID\n"
 msgstr "  -o OID          asigna el siguiente OID\n"
 
 #: pg_resetxlog.c:699
+#, c-format
 msgid "  -x XID          set next transaction ID\n"
 msgstr "  -x XID          asigna el siguiente ID de transacción\n"
 
 #: pg_resetxlog.c:700
+#, c-format
 msgid "  --help          show this help, then exit\n"
 msgstr "  --help          muestra esta ayuda y sale del programa\n"
 
 #: pg_resetxlog.c:701
+#, c-format
 msgid "  --version       output version information, then exit\n"
 msgstr ""
 "  --version       despliega la información de versión y sale del programa\n"
 
 #: pg_resetxlog.c:702
+#, c-format
 msgid ""
 "\n"
 "Report bugs to <pgsql-bugs@postgresql.org>.\n"
