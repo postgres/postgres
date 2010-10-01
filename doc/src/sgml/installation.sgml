@@ -2460,7 +2460,7 @@ createlang: language installation failed: ERROR:  could not load library "/opt/d
    <para>
     PostgreSQL can be built using Cygwin, a Linux-like environment for
     Windows, but that method is inferior to the native Windows build
-    <![%standalone-ignore[(see <xref linkend="install-win32">)]]> and
+    <![%standalone-ignore[(see <xref linkend="install-windows">)]]> and
     is no longer recommended.
    </para>
 
@@ -2711,7 +2711,7 @@ cc-1020 cc: ERROR File = pqcomm.c, Line = 427
     The MinGW build variant uses the normal build system described in
     this chapter; the Visual C++ build works completely differently
     and is described in <![%standalone-include[the
-    documentation]]><![%standalone-ignore[<xref linkend="install-win32">]]>.
+    documentation]]><![%standalone-ignore[<xref linkend="install-windows">]]>.
     It is a fully native build and uses no additional software like
     MinGW.  A ready-made installer is available on the main
     PostgreSQL web site.

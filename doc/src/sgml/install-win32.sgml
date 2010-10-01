@@ -1,6 +1,6 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/install-win32.sgml,v 1.57.4.2 2010/07/29 19:34:36 petere Exp $ -->
+<!-- doc/src/sgml/install-windows.sgml -->
 
-<chapter id="install-win32">
+<chapter id="install-windows">
  <title>Installation from Source Code on <productname>Windows</productname></title>
 
  <indexterm>
@@ -56,7 +56,7 @@
   binaries are built using <productname>Visual Studio</productname>.
  </para>
 
- <sect1 id="install-win32-full">
+ <sect1 id="install-windows-full">
   <title>Building with <productname>Visual C++</productname> or the
   <productname>Platform SDK</productname></title>
 
@@ -436,7 +436,7 @@ $ENV{DOCROOT}='c:\docbook';
 
  </sect1>
 
- <sect1 id="install-win32-libpq">
+ <sect1 id="install-windows-libpq">
   <title>Building <application>libpq</application> with
   <productname>Visual C++</productname> or
   <productname>Borland C++</productname></title>
