@@ -21,7 +21,7 @@ dnl The GNU folks apparently haven't heard that some people don't use
 dnl Texinfo. Use this sorcery to use "docdir" instead of "infodir".
 m4_define([info], [doc])
 m4_define([infodir], [docdir])
-AC_INIT([PostgreSQL], [7.4.29], [pgsql-bugs@postgresql.org])
+AC_INIT([PostgreSQL], [7.4.30], [pgsql-bugs@postgresql.org])
 m4_undefine([infodir])
 m4_undefine([info])
 AC_SUBST(docdir)
