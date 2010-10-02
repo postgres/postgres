@@ -6411,6 +6411,24 @@ ATExecAlterColumnType(AlteredTableInfo *tab, Relation rel,
 								   colName)));
 				break;
 
+			case OCLASS_TRIGGER:
+				/*
+				 * A trigger can depend on a column because the column is
+				 * specified as an update target, or because the column is
+				 * used in the trigger's WHEN condition.  The first case would
+				 * not require any extra work, but the second case would
+				 * require updating the WHEN expression, which will take a
+				 * significant amount of new code.  Since we can't easily tell
+				 * which case applies, we punt for both.  FIXME someday.
+				 */
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("cannot alter type of a column used in a trigger definition"),
+						 errdetail("%s depends on column \"%s\"",
+								   getObjectDescription(&foundObject),
+								   colName)));
+				break;
+
 			case OCLASS_DEFAULT:
 
 				/*
@@ -6431,7 +6449,6 @@ ATExecAlterColumnType(AlteredTableInfo *tab, Relation rel,
 			case OCLASS_OPFAMILY:
 			case OCLASS_AMOP:
 			case OCLASS_AMPROC:
-			case OCLASS_TRIGGER:
 			case OCLASS_SCHEMA:
 			case OCLASS_TSPARSER:
 			case OCLASS_TSDICT:
