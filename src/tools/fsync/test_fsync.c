@@ -63,7 +63,7 @@ main(int argc, char *argv[])
 	for (i = 0; i < XLOG_SEG_SIZE; i++)
 		full_buf[i] = random();
 
-	if ((tmpfile = open(filename, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR, 0)) == -1)
+	if ((tmpfile = open(filename, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR)) == -1)
 		die("Cannot open output file.");
 	if (write(tmpfile, full_buf, XLOG_SEG_SIZE) != XLOG_SEG_SIZE)
 		die("write failed");
