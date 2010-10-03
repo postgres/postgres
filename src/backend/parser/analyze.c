@@ -353,8 +353,16 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 	 * We have three cases to deal with: DEFAULT VALUES (selectStmt == NULL),
 	 * VALUES list, or general SELECT input.  We special-case VALUES, both for
 	 * efficiency and so we can handle DEFAULT specifications.
+	 *
+	 * The grammar allows attaching ORDER BY, LIMIT, or FOR UPDATE to a
+	 * VALUES clause.  If we have any of those, treat it as a general SELECT;
+	 * so it will work, but you can't use DEFAULT items together with those.
 	 */
-	isGeneralSelect = (selectStmt && selectStmt->valuesLists == NIL);
+	isGeneralSelect = (selectStmt && (selectStmt->valuesLists == NIL ||
+									  selectStmt->sortClause != NIL ||
+									  selectStmt->limitOffset != NULL ||
+									  selectStmt->limitCount != NULL ||
+									  selectStmt->lockingClause != NIL));
 
 	/*
 	 * If a non-nil rangetable/namespace was passed in, and we are doing
