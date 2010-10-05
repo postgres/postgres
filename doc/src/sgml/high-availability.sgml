@@ -1764,12 +1764,15 @@ LOG:  database system is ready to accept read only connections
    </para>
 
    <para>
-    Running <command>DROP DATABASE</>, <command>ALTER DATABASE ... SET
-    TABLESPACE</>, or <command>ALTER DATABASE ... RENAME</> on the primary
+    Running <command>DROP DATABASE</> or <command>ALTER DATABASE ... SET
+    TABLESPACE</> on the primary
     will generate a WAL entry that will cause all users connected to that
     database on the standby to be forcibly disconnected. This action occurs
     immediately, whatever the setting of
-    <varname>max_standby_streaming_delay</>.
+    <varname>max_standby_streaming_delay</>. Note that
+    <command>ALTER DATABASE ... RENAME</> does not disconnect users, which
+    in most cases will go unnoticed, though might in some cases cause a
+    program confusion if it depends in some way upon database name.
    </para>
 
    <para>
