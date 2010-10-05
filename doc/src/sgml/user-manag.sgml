@@ -129,7 +129,7 @@ SELECT rolname FROM pg_roles;
    is determined by the client authentication setup, as explained in
    <xref linkend="client-authentication">. (Thus, a client is not
    limited to connect as the role matching
-   its operating system user, just as a person's login name 
+   its operating system user, just as a person's login name
    need not match her real name.)  Since the role
    identity determines the set of privileges available to a connected
    client, it is important to carefully configure privileges when setting up
@@ -219,7 +219,7 @@ CREATE USER <replaceable>name</replaceable>;
         make use of passwords. Database passwords are separate from
         operating system passwords. Specify a password upon role
         creation with <literal>CREATE ROLE
-        <replaceable>name</replaceable> PASSWORD '<replaceable>string</>'</literal>. 
+        <replaceable>name</replaceable> PASSWORD '<replaceable>string</>'</literal>.
        </para>
       </listitem>
      </varlistentry>
@@ -249,11 +249,11 @@ CREATE USER <replaceable>name</replaceable>;
    want to disable index scans (hint: not a good idea) anytime you
    connect, you can use:
 <programlisting>
-ALTER ROLE myname SET statement_timeout = '5min';
+ALTER ROLE myname SET enable_indexscan TO off;
 </programlisting>
    This will save the setting (but not set it immediately).  In
    subsequent connections by this role it will appear as though
-   <literal>SET statement_timeout = '5min'</literal> had been executed
+   <literal>SET enable_indexscan TO off</literal> had been executed
    just before the session started.
    You can still alter this setting during the session; it will only
    be the default. To remove a role-specific default setting, use
@@ -387,10 +387,10 @@ REVOKE <replaceable>group_role</replaceable> FROM <replaceable>role1</replaceabl
    database session has access to the privileges of the group role rather
    than the original login role, and any database objects created are
    considered owned by the group role not the login role.  Second, member
-   roles that have the <literal>INHERIT</> attribute automatically inherit the
-   privileges of roles of which they are members, including their
-   <literal>INHERIT</> attributes.  As an example, suppose we have
-   done:
+   roles that have the <literal>INHERIT</> attribute automatically have use
+   of the privileges of roles of which they are members, including any
+   privileges inherited by those roles.
+   As an example, suppose we have done:
 <programlisting>
 CREATE ROLE joe LOGIN INHERIT;
 CREATE ROLE admin NOINHERIT;
