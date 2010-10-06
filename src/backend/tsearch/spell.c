@@ -21,42 +21,57 @@
 
 /*
  * Initialization requires a lot of memory that's not needed
- * after the initialization is done.  In init function,
- * CurrentMemoryContext is a long lived memory context associated
- * with the dictionary cache entry, so we use a temporary context
- * for the short-lived stuff.
+ * after the initialization is done.  During initialization,
+ * CurrentMemoryContext is the long-lived memory context associated
+ * with the dictionary cache entry.  We keep the short-lived stuff
+ * in the Conf->buildCxt context.
  */
-static MemoryContext tmpCtx = NULL;
+#define tmpalloc(sz)  MemoryContextAlloc(Conf->buildCxt, (sz))
+#define tmpalloc0(sz)  MemoryContextAllocZero(Conf->buildCxt, (sz))
 
-#define tmpalloc(sz)  MemoryContextAlloc(tmpCtx, (sz))
-#define tmpalloc0(sz)  MemoryContextAllocZero(tmpCtx, (sz))
-
-static void
-checkTmpCtx(void)
+/*
+ * Prepare for constructing an ISpell dictionary.
+ *
+ * The IspellDict struct is assumed to be zeroed when allocated.
+ */
+void
+NIStartBuild(IspellDict *Conf)
 {
 	/*
-	 * XXX: This assumes that CurrentMemoryContext doesn't have any children
-	 * other than the one we create here.
+	 * The temp context is a child of CurTransactionContext, so that it will
+	 * go away automatically on error.
 	 */
-	if (CurrentMemoryContext->firstchild == NULL)
-	{
-		tmpCtx = AllocSetContextCreate(CurrentMemoryContext,
-									   "Ispell dictionary init context",
-									   ALLOCSET_DEFAULT_MINSIZE,
-									   ALLOCSET_DEFAULT_INITSIZE,
-									   ALLOCSET_DEFAULT_MAXSIZE);
-	}
-	else
-		tmpCtx = CurrentMemoryContext->firstchild;
+	Conf->buildCxt = AllocSetContextCreate(CurTransactionContext,
+										   "Ispell dictionary init context",
+										   ALLOCSET_DEFAULT_MINSIZE,
+										   ALLOCSET_DEFAULT_INITSIZE,
+										   ALLOCSET_DEFAULT_MAXSIZE);
 }
 
+/*
+ * Clean up when dictionary construction is complete.
+ */
+void
+NIFinishBuild(IspellDict *Conf)
+{
+	/* Release no-longer-needed temp memory */
+	MemoryContextDelete(Conf->buildCxt);
+	/* Just for cleanliness, zero the now-dangling pointers */
+	Conf->buildCxt = NULL;
+	Conf->Spell = NULL;
+}
+
+
+/*
+ * Apply lowerstr(), producing a temporary result (in the buildCxt).
+ */
 static char *
-lowerstr_ctx(char *src)
+lowerstr_ctx(IspellDict *Conf, const char *src)
 {
 	MemoryContext saveCtx;
 	char	   *dst;
 
-	saveCtx = MemoryContextSwitchTo(tmpCtx);
+	saveCtx = MemoryContextSwitchTo(Conf->buildCxt);
 	dst = lowerstr(src);
 	MemoryContextSwitchTo(saveCtx);
 
@@ -120,6 +135,7 @@ strbcmp(const unsigned char *s1, const unsigned char *s2)
 
 	return 0;
 }
+
 static int
 strbncmp(const unsigned char *s1, const unsigned char *s2, size_t count)
 {
@@ -196,8 +212,6 @@ NIImportDictionary(IspellDict *Conf, const char *filename)
 	tsearch_readline_state trst;
 	char	   *line;
 
-	checkTmpCtx();
-
 	if (!tsearch_readline_begin(&trst, filename))
 		ereport(ERROR,
 				(errcode(ERRCODE_CONFIG_FILE_ERROR),
@@ -242,7 +256,7 @@ NIImportDictionary(IspellDict *Conf, const char *filename)
 			}
 			s += pg_mblen(s);
 		}
-		pstr = lowerstr_ctx(line);
+		pstr = lowerstr_ctx(Conf, line);
 
 		NIAddSpell(Conf, pstr, flag);
 		pfree(pstr);
@@ -545,8 +559,6 @@ NIImportOOAffixes(IspellDict *Conf, const char *filename)
 	char		scanbuf[BUFSIZ];
 	char	   *recoded;
 
-	checkTmpCtx();
-
 	/* read file to find any flag */
 	memset(Conf->flagval, 0, sizeof(Conf->flagval));
 	Conf->usecompound = false;
@@ -624,7 +636,7 @@ NIImportOOAffixes(IspellDict *Conf, const char *filename)
 
 		if (ptype)
 			pfree(ptype);
-		ptype = lowerstr_ctx(type);
+		ptype = lowerstr_ctx(Conf, type);
 		if (scanread < 4 || (STRNCMP(ptype, "sfx") && STRNCMP(ptype, "pfx")))
 			goto nextline;
 
@@ -646,7 +658,7 @@ NIImportOOAffixes(IspellDict *Conf, const char *filename)
 
 			if (strlen(sflag) != 1 || flag != *sflag || flag == 0)
 				goto nextline;
-			prepl = lowerstr_ctx(repl);
+			prepl = lowerstr_ctx(Conf, repl);
 			/* affix flag */
 			if ((ptr = strchr(prepl, '/')) != NULL)
 			{
@@ -658,8 +670,8 @@ NIImportOOAffixes(IspellDict *Conf, const char *filename)
 					ptr++;
 				}
 			}
-			pfind = lowerstr_ctx(find);
-			pmask = lowerstr_ctx(mask);
+			pfind = lowerstr_ctx(Conf, find);
+			pmask = lowerstr_ctx(Conf, mask);
 			if (t_iseq(find, '0'))
 				*pfind = '\0';
 			if (t_iseq(repl, '0'))
@@ -701,8 +713,6 @@ NIImportAffixes(IspellDict *Conf, const char *filename)
 	tsearch_readline_state trst;
 	bool		oldformat = false;
 	char	   *recoded = NULL;
-
-	checkTmpCtx();
 
 	if (!tsearch_readline_begin(&trst, filename))
 		ereport(ERROR,
@@ -945,8 +955,6 @@ NISortDictionary(IspellDict *Conf)
 	int			naffix = 0;
 	int			curaffix;
 
-	checkTmpCtx();
-
 	/* compress affixes */
 
 	/* Count the number of different flags used in the dictionary */
@@ -985,8 +993,6 @@ NISortDictionary(IspellDict *Conf)
 
 	qsort((void *) Conf->Spell, Conf->nspell, sizeof(SPELL *), cmpspell);
 	Conf->Dictionary = mkSPNode(Conf, 0, Conf->nspell, 0);
-
-	Conf->Spell = NULL;
 }
 
 static AffixNode *
@@ -1122,8 +1128,6 @@ NISortAffixes(IspellDict *Conf)
 	size_t		i;
 	CMPDAffix  *ptr;
 	int			firstsuffix = Conf->naffixes;
-
-	checkTmpCtx();
 
 	if (Conf->naffixes == 0)
 		return;

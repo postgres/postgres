@@ -138,14 +138,6 @@ typedef struct
 	int			naffixes;
 	AFFIX	   *Affix;
 
-	/*
-	 * Temporary array of all words in the dict file. Only used during
-	 * initialization
-	 */
-	SPELL	  **Spell;
-	int			nspell;			/* number of valid entries in Spell array */
-	int			mspell;			/* allocated length of Spell array */
-
 	AffixNode  *Suffix;
 	AffixNode  *Prefix;
 
@@ -158,12 +150,26 @@ typedef struct
 
 	unsigned char flagval[256];
 	bool		usecompound;
+
+	/*
+	 * Remaining fields are only used during dictionary construction;
+	 * they are set up by NIStartBuild and cleared by NIFinishBuild.
+	 */
+	MemoryContext	buildCxt;	/* temp context for construction */
+
+	/* Temporary array of all words in the dict file */
+	SPELL	  **Spell;
+	int			nspell;			/* number of valid entries in Spell array */
+	int			mspell;			/* allocated length of Spell array */
 } IspellDict;
 
 extern TSLexeme *NINormalizeWord(IspellDict *Conf, char *word);
+
+extern void NIStartBuild(IspellDict *Conf);
 extern void NIImportAffixes(IspellDict *Conf, const char *filename);
 extern void NIImportDictionary(IspellDict *Conf, const char *filename);
 extern void NISortDictionary(IspellDict *Conf);
 extern void NISortAffixes(IspellDict *Conf);
+extern void NIFinishBuild(IspellDict *Conf);
 
 #endif

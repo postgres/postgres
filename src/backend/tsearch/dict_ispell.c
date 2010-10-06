@@ -19,7 +19,6 @@
 #include "tsearch/ts_public.h"
 #include "tsearch/ts_utils.h"
 #include "utils/builtins.h"
-#include "utils/memutils.h"
 
 
 typedef struct
@@ -39,6 +38,8 @@ dispell_init(PG_FUNCTION_ARGS)
 	ListCell   *l;
 
 	d = (DictISpell *) palloc0(sizeof(DictISpell));
+
+	NIStartBuild(&(d->obj));
 
 	foreach(l, dictoptions)
 	{
@@ -102,7 +103,7 @@ dispell_init(PG_FUNCTION_ARGS)
 				 errmsg("missing DictFile parameter")));
 	}
 
-	MemoryContextDeleteChildren(CurrentMemoryContext);
+	NIFinishBuild(&(d->obj));
 
 	PG_RETURN_POINTER(d);
 }
