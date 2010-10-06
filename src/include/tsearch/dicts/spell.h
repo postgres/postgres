@@ -161,6 +161,10 @@ typedef struct
 	SPELL	  **Spell;
 	int			nspell;			/* number of valid entries in Spell array */
 	int			mspell;			/* allocated length of Spell array */
+
+	/* These are used to allocate "compact" data without palloc overhead */
+	char	   *firstfree;		/* first free address (always maxaligned) */
+	size_t		avail;			/* free space remaining at firstfree */
 } IspellDict;
 
 extern TSLexeme *NINormalizeWord(IspellDict *Conf, char *word);

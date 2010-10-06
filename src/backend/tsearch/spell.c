@@ -59,6 +59,63 @@ NIFinishBuild(IspellDict *Conf)
 	/* Just for cleanliness, zero the now-dangling pointers */
 	Conf->buildCxt = NULL;
 	Conf->Spell = NULL;
+	Conf->firstfree = NULL;
+}
+
+
+/*
+ * "Compact" palloc: allocate without extra palloc overhead.
+ *
+ * Since we have no need to free the ispell data items individually, there's
+ * not much value in the per-chunk overhead normally consumed by palloc.
+ * Getting rid of it is helpful since ispell can allocate a lot of small nodes.
+ *
+ * We currently pre-zero all data allocated this way, even though some of it
+ * doesn't need that.  The cpalloc and cpalloc0 macros are just documentation
+ * to indicate which allocations actually require zeroing.
+ */
+#define COMPACT_ALLOC_CHUNK	8192	/* must be > aset.c's allocChunkLimit */
+#define COMPACT_MAX_REQ		1024	/* must be < COMPACT_ALLOC_CHUNK */
+
+static void *
+compact_palloc0(IspellDict *Conf, size_t size)
+{
+	void	   *result;
+
+	/* Should only be called during init */
+	Assert(Conf->buildCxt != NULL);
+
+	/* No point in this for large chunks */
+	if (size > COMPACT_MAX_REQ)
+		return palloc0(size);
+
+	/* Keep everything maxaligned */
+	size = MAXALIGN(size);
+
+	/* Need more space? */
+	if (size > Conf->avail)
+	{
+		Conf->firstfree = palloc0(COMPACT_ALLOC_CHUNK);
+		Conf->avail = COMPACT_ALLOC_CHUNK;
+	}
+
+	result = (void *) Conf->firstfree;
+	Conf->firstfree += size;
+	Conf->avail -= size;
+
+	return result;
+}
+
+#define cpalloc(size) compact_palloc0(Conf, size)
+#define cpalloc0(size) compact_palloc0(Conf, size)
+
+static char *
+cpstrdup(IspellDict *Conf, const char *str)
+{
+	char	   *res = cpalloc(strlen(str) + 1);
+
+	strcpy(res, str);
+	return res;
 }
 
 
@@ -186,7 +243,7 @@ NIAddSpell(IspellDict *Conf, const char *word, const char *flag)
 	{
 		if (Conf->mspell)
 		{
-			Conf->mspell += 1024 * 20;
+			Conf->mspell *= 2;
 			Conf->Spell = (SPELL **) repalloc(Conf->Spell, Conf->mspell * sizeof(SPELL *));
 		}
 		else
@@ -324,7 +381,7 @@ NIAddAffix(IspellDict *Conf, int flag, char flagflags, const char *mask, const c
 	{
 		if (Conf->maffixes)
 		{
-			Conf->maffixes += 16;
+			Conf->maffixes *= 2;
 			Conf->Affix = (AFFIX *) repalloc((void *) Conf->Affix, Conf->maffixes * sizeof(AFFIX));
 		}
 		else
@@ -389,9 +446,9 @@ NIAddAffix(IspellDict *Conf, int flag, char flagflags, const char *mask, const c
 	Affix->flag = flag;
 	Affix->type = type;
 
-	Affix->find = (find && *find) ? pstrdup(find) : VoidString;
+	Affix->find = (find && *find) ? cpstrdup(Conf, find) : VoidString;
 	if ((Affix->replen = strlen(repl)) > 0)
-		Affix->repl = pstrdup(repl);
+		Affix->repl = cpstrdup(Conf, repl);
 	else
 		Affix->repl = VoidString;
 	Conf->naffixes++;
@@ -843,8 +900,9 @@ MergeAffix(IspellDict *Conf, int a1, int a2)
 	}
 
 	ptr = Conf->AffixData + Conf->nAffixData;
-	*ptr = palloc(strlen(Conf->AffixData[a1]) + strlen(Conf->AffixData[a2]) +
-				  1 /* space */ + 1 /* \0 */ );
+	*ptr = cpalloc(strlen(Conf->AffixData[a1]) +
+				   strlen(Conf->AffixData[a2]) +
+				   1 /* space */ + 1 /* \0 */ );
 	sprintf(*ptr, "%s %s", Conf->AffixData[a1], Conf->AffixData[a2]);
 	ptr++;
 	*ptr = NULL;
@@ -888,7 +946,7 @@ mkSPNode(IspellDict *Conf, int low, int high, int level)
 	if (!nchar)
 		return NULL;
 
-	rs = (SPNode *) palloc0(SPNHDRSZ + nchar * sizeof(SPNodeData));
+	rs = (SPNode *) cpalloc0(SPNHDRSZ + nchar * sizeof(SPNodeData));
 	rs->length = nchar;
 	data = rs->data;
 
@@ -982,7 +1040,7 @@ NISortDictionary(IspellDict *Conf)
 		{
 			curaffix++;
 			Assert(curaffix < naffix);
-			Conf->AffixData[curaffix] = pstrdup(Conf->Spell[i]->p.flag);
+			Conf->AffixData[curaffix] = cpstrdup(Conf, Conf->Spell[i]->p.flag);
 		}
 
 		Conf->Spell[i]->p.d.affix = curaffix;
@@ -1020,7 +1078,7 @@ mkANode(IspellDict *Conf, int low, int high, int level, int type)
 	aff = (AFFIX **) tmpalloc(sizeof(AFFIX *) * (high - low + 1));
 	naff = 0;
 
-	rs = (AffixNode *) palloc0(ANHRDSZ + nchar * sizeof(AffixNodeData));
+	rs = (AffixNode *) cpalloc0(ANHRDSZ + nchar * sizeof(AffixNodeData));
 	rs->length = nchar;
 	data = rs->data;
 
@@ -1036,7 +1094,7 @@ mkANode(IspellDict *Conf, int low, int high, int level, int type)
 					if (naff)
 					{
 						data->naff = naff;
-						data->aff = (AFFIX **) palloc(sizeof(AFFIX *) * naff);
+						data->aff = (AFFIX **) cpalloc(sizeof(AFFIX *) * naff);
 						memcpy(data->aff, aff, sizeof(AFFIX *) * naff);
 						naff = 0;
 					}
@@ -1056,7 +1114,7 @@ mkANode(IspellDict *Conf, int low, int high, int level, int type)
 	if (naff)
 	{
 		data->naff = naff;
-		data->aff = (AFFIX **) palloc(sizeof(AFFIX *) * naff);
+		data->aff = (AFFIX **) cpalloc(sizeof(AFFIX *) * naff);
 		memcpy(data->aff, aff, sizeof(AFFIX *) * naff);
 		naff = 0;
 	}
@@ -1097,7 +1155,7 @@ mkVoidAffix(IspellDict *Conf, bool issuffix, int startsuffix)
 	if (cnt == 0)
 		return;
 
-	Affix->data->aff = (AFFIX **) palloc(sizeof(AFFIX *) * cnt);
+	Affix->data->aff = (AFFIX **) cpalloc(sizeof(AFFIX *) * cnt);
 	Affix->data->naff = (uint32) cnt;
 
 	cnt = 0;
