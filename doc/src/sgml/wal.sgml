@@ -75,7 +75,9 @@
    by unchecking <literal>My Computer\Open\{select disk
    drive}\Properties\Hardware\Properties\Policies\Enable write caching on
    the disk</>.  Also on Windows, <literal>fsync</> and
-   <literal>fsync_writethrough</> never do write caching.
+   <literal>fsync_writethrough</> never do write caching.  The
+   <literal>fsync_writethrough</> option can also be used to disable
+   write caching on <productname>MacOS X</>.
   </para>
 
   <para>
@@ -481,8 +483,10 @@
    The <xref linkend="guc-wal-sync-method"> parameter determines how
    <productname>PostgreSQL</productname> will ask the kernel to force
     <acronym>WAL</acronym> updates out to disk.
-   All the options should be the same as far as reliability goes,
-   but it's quite platform-specific which one will be the fastest.
+   With the exception of <literal>fsync_writethrough</>, which can sometimes
+   force a flush of the disk cache even when other options do not do so,
+   all the options should be the same in terms of reliability.
+   However, it's quite platform-specific which one will be the fastest.
    Note that this parameter is irrelevant if <varname>fsync</varname>
    has been turned off.
   </para>
@@ -542,6 +546,7 @@
    irrecoverable data corruption.  Administrators should try to ensure
    that disks holding <productname>PostgreSQL</productname>'s
    <acronym>WAL</acronym> log files do not make such false reports.
+   (See <xref linkend="wal-reliability">.)
   </para>
 
   <para>
