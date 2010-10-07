@@ -1486,7 +1486,11 @@ SET ENABLE_SEQSCAN TO OFF;
        <para>
         Not all of these choices are available on all platforms.
         The default is the first method in the above list that is supported
-        by the platform.
+        by the platform.  The default is not necessarily best; it may be
+        necessary to change this setting, or other aspects of your system
+        configuration, in order to create a crash-safe configuration, as
+        discussed in <xref linkend="wal-reliability">, or to achieve best
+        performance.
         The <literal>open_</>* options also use <literal>O_DIRECT</> if available.
         This parameter can only be set in the <filename>postgresql.conf</>
         file or on the server command line.
