@@ -120,9 +120,9 @@
 
 
 /* sort-type codes for sort__start probes */
-#define HEAP_SORT	0
-#define INDEX_SORT	1
-#define DATUM_SORT	2
+#define HEAP_SORT		0
+#define INDEX_SORT		1
+#define DATUM_SORT		2
 #define CLUSTER_SORT	3
 
 /* GUC variables */
@@ -434,6 +434,13 @@ struct Tuplesortstate
  * we won't count any wasted space in palloc allocation blocks, but it's
  * a lot better than what we were doing before 7.3.
  */
+
+/* When using this macro, beware of double evaluation of len */
+#define LogicalTapeReadExact(tapeset, tapenum, ptr, len) \
+	do { \
+		if (LogicalTapeRead(tapeset, tapenum, ptr, len) != (size_t) (len)) \
+			elog(ERROR, "unexpected end of data"); \
+	} while(0)
 
 
 static Tuplesortstate *tuplesort_begin_common(int workMem, bool randomAccess);
@@ -2576,8 +2583,8 @@ getlen(Tuplesortstate *state, int tapenum, bool eofOK)
 {
 	unsigned int len;
 
-	if (LogicalTapeRead(state->tapeset, tapenum, (void *) &len,
-						sizeof(len)) != sizeof(len))
+	if (LogicalTapeRead(state->tapeset, tapenum,
+						&len, sizeof(len)) != sizeof(len))
 		elog(ERROR, "unexpected end of tape");
 	if (len == 0 && !eofOK)
 		elog(ERROR, "unexpected end of data");
@@ -2810,14 +2817,11 @@ readtup_heap(Tuplesortstate *state, SortTuple *stup,
 	USEMEM(state, GetMemoryChunkSpace(tuple));
 	/* read in the tuple proper */
 	tuple->t_len = tuplen;
-	if (LogicalTapeRead(state->tapeset, tapenum,
-						(void *) tupbody,
-						tupbodylen) != (size_t) tupbodylen)
-		elog(ERROR, "unexpected end of data");
+	LogicalTapeReadExact(state->tapeset, tapenum,
+						 tupbody, tupbodylen);
 	if (state->randomAccess)	/* need trailing length word? */
-		if (LogicalTapeRead(state->tapeset, tapenum, (void *) &tuplen,
-							sizeof(tuplen)) != sizeof(tuplen))
-			elog(ERROR, "unexpected end of data");
+		LogicalTapeReadExact(state->tapeset, tapenum,
+							 &tuplen, sizeof(tuplen));
 	stup->tuple = (void *) tuple;
 	/* set up first-column key value */
 	htup.t_len = tuple->t_len + MINIMAL_TUPLE_OFFSET;
@@ -2998,20 +3002,16 @@ readtup_cluster(Tuplesortstate *state, SortTuple *stup,
 	/* Reconstruct the HeapTupleData header */
 	tuple->t_data = (HeapTupleHeader) ((char *) tuple + HEAPTUPLESIZE);
 	tuple->t_len = t_len;
-	if (LogicalTapeRead(state->tapeset, tapenum,
-						&tuple->t_self,
-						sizeof(ItemPointerData)) != sizeof(ItemPointerData))
-		elog(ERROR, "unexpected end of data");
+	LogicalTapeReadExact(state->tapeset, tapenum,
+						 &tuple->t_self, sizeof(ItemPointerData));
 	/* We don't currently bother to reconstruct t_tableOid */
 	tuple->t_tableOid = InvalidOid;
 	/* Read in the tuple body */
-	if (LogicalTapeRead(state->tapeset, tapenum,
-						tuple->t_data, tuple->t_len) != tuple->t_len)
-		elog(ERROR, "unexpected end of data");
+	LogicalTapeReadExact(state->tapeset, tapenum,
+						 tuple->t_data, tuple->t_len);
 	if (state->randomAccess)	/* need trailing length word? */
-		if (LogicalTapeRead(state->tapeset, tapenum, &tuplen,
-							sizeof(tuplen)) != sizeof(tuplen))
-			elog(ERROR, "unexpected end of data");
+		LogicalTapeReadExact(state->tapeset, tapenum,
+							 &tuplen, sizeof(tuplen));
 	stup->tuple = (void *) tuple;
 	/* set up first-column key value, if it's a simple column */
 	if (state->indexInfo->ii_KeyAttrNumbers[0] != 0)
@@ -3243,13 +3243,11 @@ readtup_index(Tuplesortstate *state, SortTuple *stup,
 	IndexTuple	tuple = (IndexTuple) palloc(tuplen);
 
 	USEMEM(state, GetMemoryChunkSpace(tuple));
-	if (LogicalTapeRead(state->tapeset, tapenum, (void *) tuple,
-						tuplen) != tuplen)
-		elog(ERROR, "unexpected end of data");
+	LogicalTapeReadExact(state->tapeset, tapenum,
+						 tuple, tuplen);
 	if (state->randomAccess)	/* need trailing length word? */
-		if (LogicalTapeRead(state->tapeset, tapenum, (void *) &tuplen,
-							sizeof(tuplen)) != sizeof(tuplen))
-			elog(ERROR, "unexpected end of data");
+		LogicalTapeReadExact(state->tapeset, tapenum,
+							 &tuplen, sizeof(tuplen));
 	stup->tuple = (void *) tuple;
 	/* set up first-column key value */
 	stup->datum1 = index_getattr(tuple,
@@ -3357,9 +3355,8 @@ readtup_datum(Tuplesortstate *state, SortTuple *stup,
 	else if (state->datumTypeByVal)
 	{
 		Assert(tuplen == sizeof(Datum));
-		if (LogicalTapeRead(state->tapeset, tapenum, (void *) &stup->datum1,
-							tuplen) != tuplen)
-			elog(ERROR, "unexpected end of data");
+		LogicalTapeReadExact(state->tapeset, tapenum,
+							 &stup->datum1, tuplen);
 		stup->isnull1 = false;
 		stup->tuple = NULL;
 	}
@@ -3367,9 +3364,8 @@ readtup_datum(Tuplesortstate *state, SortTuple *stup,
 	{
 		void	   *raddr = palloc(tuplen);
 
-		if (LogicalTapeRead(state->tapeset, tapenum, raddr,
-							tuplen) != tuplen)
-			elog(ERROR, "unexpected end of data");
+		LogicalTapeReadExact(state->tapeset, tapenum,
+							 raddr, tuplen);
 		stup->datum1 = PointerGetDatum(raddr);
 		stup->isnull1 = false;
 		stup->tuple = raddr;
@@ -3377,9 +3373,8 @@ readtup_datum(Tuplesortstate *state, SortTuple *stup,
 	}
 
 	if (state->randomAccess)	/* need trailing length word? */
-		if (LogicalTapeRead(state->tapeset, tapenum, (void *) &tuplen,
-							sizeof(tuplen)) != sizeof(tuplen))
-			elog(ERROR, "unexpected end of data");
+		LogicalTapeReadExact(state->tapeset, tapenum,
+							 &tuplen, sizeof(tuplen));
 }
 
 static void
