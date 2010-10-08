@@ -1730,18 +1730,18 @@ SELECT * FROM shoelace;
 <programlisting>
 CREATE TABLE phone_data (person text, phone text, private boolean);
 CREATE VIEW phone_number AS
-    SELECT person, phone FROM phone_data WHERE NOT private;
+    SELECT person, CASE WHEN NOT private THEN phone END AS phone
+    FROM phone_data;
 GRANT SELECT ON phone_number TO secretary;
 </programlisting>
-    
+
     Nobody except him (and the database superusers) can access the
     <literal>phone_data</> table. But because of the <command>GRANT</>,
     the secretary can run a <command>SELECT</command> on the
     <literal>phone_number</> view. The rule system will rewrite the
     <command>SELECT</command> from <literal>phone_number</> into a
-    <command>SELECT</command> from <literal>phone_data</> and add the
-    qualification that only entries where <literal>private</> is false
-    are wanted. Since the user is the owner of
+    <command>SELECT</command> from <literal>phone_data</>.
+    Since the user is the owner of
     <literal>phone_number</> and therefore the owner of the rule, the
     read access to <literal>phone_data</> is now checked against his
     privileges and the query is permitted. The check for accessing
@@ -1775,7 +1775,41 @@ GRANT SELECT ON phone_number TO secretary;
 </para>
 
 <para>
-    This mechanism also works for update rules. In the examples of
+    Note that while views can be used to hide the contents of certain
+    columns using the technique shown above, they cannot be used to reliably
+    conceal the data in unseen rows.  For example, the following view is
+    insecure:
+<programlisting>
+CREATE VIEW phone_number AS
+    SELECT person, phone FROM phone_data WHERE phone NOT LIKE '412%';
+</programlisting>
+    This view might seem secure, since the rule system will rewrite any
+	<command>SELECT</command> from <literal>phone_number</> into a 
+    <command>SELECT</command> from <literal>phone_data</> and add the
+    qualification that only entries where <literal>phone</> does not begin
+    with 412 are wanted.  But if the user can create his or her own functions,
+    it is not difficult to convince the planner to execute the user-defined
+    function prior to the <function>NOT LIKE</function> expression.
+<programlisting>
+CREATE FUNCTION tricky(text, text) RETURNS bool AS $$
+BEGIN
+    RAISE NOTICE '% => %', $1, $2;
+    RETURN true;
+END
+$$ LANGUAGE plpgsql COST 0.0000000000000000000001;
+SELECT * FROM phone_number WHERE tricky(person, phone);
+</programlisting>
+    Every person and phone number in the <literal>phone_data</> table will be
+    printed as a <literal>NOTICE</literal>, because the planner will choose to
+    execute the inexpensive <function>tricky</function> function before the
+    more expensive <function>NOT LIKE</function>.  Even if the user is
+    prevented from defining new functions, built-in functions can be used in
+    similar attacks.  (For example, casting functions include their inputs in
+    the error messages they produce.)
+</para>
+
+<para>
+    Similar considerations apply to update rules. In the examples of
     the previous section, the owner of the tables in the example
     database could grant the privileges <literal>SELECT</>,
     <literal>INSERT</>, <literal>UPDATE</>, and <literal>DELETE</> on
@@ -1783,7 +1817,11 @@ GRANT SELECT ON phone_number TO secretary;
     <literal>SELECT</> on <literal>shoelace_log</>. The rule action to
     write log entries will still be executed successfully, and that
     other user could see the log entries.  But he cannot create fake
-    entries, nor could he manipulate or remove existing ones.
+    entries, nor could he manipulate or remove existing ones.  In this
+    case, there is no possibility of subverting the rules by convincing
+    the planner to alter the order of operations, because the only rule
+    which references <literal>shoelace_log</> is an unqualified
+    <literal>INSERT</>.  This might not be true in more complex scenarios.
 </para>
 </sect1>
 
