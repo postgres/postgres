@@ -254,8 +254,6 @@ end_heap_rewrite(RewriteState state)
 	/*
 	 * Write any remaining tuples in the UnresolvedTups table. If we have any
 	 * left, they should in fact be dead, but let's err on the safe side.
-	 *
-	 * XXX this really is a waste of code no?
 	 */
 	hash_seq_init(&seq_status, state->rs_unresolved_tups);
 
@@ -502,8 +500,12 @@ rewrite_heap_tuple(RewriteState state,
  * Register a dead tuple with an ongoing rewrite. Dead tuples are not
  * copied to the new table, but we still make note of them so that we
  * can release some resources earlier.
+ *
+ * Returns true if a tuple was removed from the unresolved_tups table.
+ * This indicates that that tuple, previously thought to be "recently dead",
+ * is now known really dead and won't be written to the output.
  */
-void
+bool
 rewrite_heap_dead_tuple(RewriteState state, HeapTuple old_tuple)
 {
 	/*
@@ -539,7 +541,10 @@ rewrite_heap_dead_tuple(RewriteState state, HeapTuple old_tuple)
 		hash_search(state->rs_unresolved_tups, &hashkey,
 					HASH_REMOVE, &found);
 		Assert(found);
+		return true;
 	}
+
+	return false;
 }
 
 /*

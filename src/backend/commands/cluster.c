@@ -45,6 +45,7 @@
 #include "utils/inval.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
+#include "utils/pg_rusage.h"
 #include "utils/relcache.h"
 #include "utils/relmapper.h"
 #include "utils/snapmgr.h"
@@ -66,9 +67,9 @@ typedef struct
 
 
 static void rebuild_relation(Relation OldHeap, Oid indexOid,
-				 int freeze_min_age, int freeze_table_age);
+				 int freeze_min_age, int freeze_table_age, bool verbose);
 static void copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex,
-			   int freeze_min_age, int freeze_table_age,
+			   int freeze_min_age, int freeze_table_age, bool verbose,
 			   bool *pSwapToastByContent, TransactionId *pFreezeXid);
 static List *get_tables_to_cluster(MemoryContext cluster_context);
 static void reform_and_rewrite_tuple(HeapTuple tuple,
@@ -383,20 +384,9 @@ cluster_rel(Oid tableOid, Oid indexOid, bool recheck, bool verbose,
 	if (OidIsValid(indexOid))
 		check_index_is_clusterable(OldHeap, indexOid, recheck, AccessExclusiveLock);
 
-	/* Log what we're doing (this could use more effort) */
-	if (OidIsValid(indexOid))
-		ereport(verbose ? INFO : DEBUG2,
-				(errmsg("clustering \"%s.%s\"",
-						get_namespace_name(RelationGetNamespace(OldHeap)),
-						RelationGetRelationName(OldHeap))));
-	else
-		ereport(verbose ? INFO : DEBUG2,
-				(errmsg("vacuuming \"%s.%s\"",
-						get_namespace_name(RelationGetNamespace(OldHeap)),
-						RelationGetRelationName(OldHeap))));
-
 	/* rebuild_relation does all the dirty work */
-	rebuild_relation(OldHeap, indexOid, freeze_min_age, freeze_table_age);
+	rebuild_relation(OldHeap, indexOid, freeze_min_age, freeze_table_age,
+					 verbose);
 
 	/* NB: rebuild_relation does heap_close() on OldHeap */
 }
@@ -580,7 +570,7 @@ mark_index_clustered(Relation rel, Oid indexOid)
  */
 static void
 rebuild_relation(Relation OldHeap, Oid indexOid,
-				 int freeze_min_age, int freeze_table_age)
+				 int freeze_min_age, int freeze_table_age, bool verbose)
 {
 	Oid			tableOid = RelationGetRelid(OldHeap);
 	Oid			tableSpace = OldHeap->rd_rel->reltablespace;
@@ -604,7 +594,7 @@ rebuild_relation(Relation OldHeap, Oid indexOid,
 
 	/* Copy the heap data into the new table in the desired order */
 	copy_heap_data(OIDNewHeap, tableOid, indexOid,
-				   freeze_min_age, freeze_table_age,
+				   freeze_min_age, freeze_table_age, verbose,
 				   &swap_toast_by_content, &frozenXid);
 
 	/*
@@ -746,7 +736,7 @@ make_new_heap(Oid OIDOldHeap, Oid NewTableSpace)
  */
 static void
 copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex,
-			   int freeze_min_age, int freeze_table_age,
+			   int freeze_min_age, int freeze_table_age, bool verbose,
 			   bool *pSwapToastByContent, TransactionId *pFreezeXid)
 {
 	Relation	NewHeap,
@@ -766,6 +756,13 @@ copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex,
 	RewriteState rwstate;
 	bool 		 use_sort;
 	Tuplesortstate *tuplesort;
+	double		num_tuples = 0,
+				tups_vacuumed = 0,
+				tups_recently_dead = 0;
+	int			elevel = verbose ? INFO : DEBUG2;
+	PGRUsage	ru0;
+
+	pg_rusage_init(&ru0);
 
 	/*
 	 * Open the relations we need.
@@ -887,6 +884,24 @@ copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex,
 		indexScan = NULL;
 	}
 
+	/* Log what we're doing */
+	if (indexScan != NULL)
+		ereport(elevel,
+				(errmsg("clustering \"%s.%s\" using index scan on \"%s\"",
+						get_namespace_name(RelationGetNamespace(OldHeap)),
+						RelationGetRelationName(OldHeap),
+						RelationGetRelationName(OldIndex))));
+	else if (tuplesort != NULL)
+		ereport(elevel,
+				(errmsg("clustering \"%s.%s\" using sequential scan and sort",
+						get_namespace_name(RelationGetNamespace(OldHeap)),
+						RelationGetRelationName(OldHeap))));
+	else
+		ereport(elevel,
+				(errmsg("vacuuming \"%s.%s\"",
+						get_namespace_name(RelationGetNamespace(OldHeap)),
+						RelationGetRelationName(OldHeap))));
+
 	/*
 	 * Scan through the OldHeap, either in OldIndex order or sequentially;
 	 * copy each tuple into the NewHeap, or transiently to the tuplesort
@@ -930,8 +945,10 @@ copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex,
 				/* Definitely dead */
 				isdead = true;
 				break;
-			case HEAPTUPLE_LIVE:
 			case HEAPTUPLE_RECENTLY_DEAD:
+				tups_recently_dead += 1;
+				/* fall through */
+			case HEAPTUPLE_LIVE:
 				/* Live or recently dead, must copy it */
 				isdead = false;
 				break;
@@ -963,6 +980,7 @@ copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex,
 					elog(WARNING, "concurrent delete in progress within table \"%s\"",
 						 RelationGetRelationName(OldHeap));
 				/* treat as recently dead */
+				tups_recently_dead += 1;
 				isdead = false;
 				break;
 			default:
@@ -975,11 +993,18 @@ copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex,
 
 		if (isdead)
 		{
+			tups_vacuumed += 1;
 			/* heap rewrite module still needs to see it... */
-			rewrite_heap_dead_tuple(rwstate, tuple);
+			if (rewrite_heap_dead_tuple(rwstate, tuple))
+			{
+				/* A previous recently-dead tuple is now known dead */
+				tups_vacuumed += 1;
+				tups_recently_dead -= 1;
+			}
 			continue;
 		}
 
+		num_tuples += 1;
 		if (tuplesort != NULL)
 			tuplesort_putheaptuple(tuplesort, tuple);
 		else
@@ -1030,6 +1055,17 @@ copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex,
 
 	/* Reset rd_toastoid just to be tidy --- it shouldn't be looked at again */
 	NewHeap->rd_toastoid = InvalidOid;
+
+	/* Log what we did */
+	ereport(elevel,
+			(errmsg("\"%s\": found %.0f removable, %.0f nonremovable row versions in %u pages",
+					RelationGetRelationName(OldHeap),
+					tups_vacuumed, num_tuples,
+					RelationGetNumberOfBlocks(OldHeap)),
+			 errdetail("%.0f dead row versions cannot be removed yet.\n"
+					   "%s.",
+					   tups_recently_dead,
+					   pg_rusage_show(&ru0))));
 
 	/* Clean up */
 	pfree(values);

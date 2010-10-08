@@ -25,6 +25,6 @@ extern RewriteState begin_heap_rewrite(Relation NewHeap,
 extern void end_heap_rewrite(RewriteState state);
 extern void rewrite_heap_tuple(RewriteState state, HeapTuple oldTuple,
 				   HeapTuple newTuple);
-extern void rewrite_heap_dead_tuple(RewriteState state, HeapTuple oldTuple);
+extern bool rewrite_heap_dead_tuple(RewriteState state, HeapTuple oldTuple);
 
 #endif   /* REWRITE_HEAP_H */
