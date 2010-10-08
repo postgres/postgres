@@ -841,7 +841,6 @@ PLy_trigger_build_args(FunctionCallInfo fcinfo, PLyProcedure *proc, HeapTuple *r
 		Py_DECREF(plttableschema);
 		pfree(stroid);
 
-
 		if (TRIGGER_FIRED_BEFORE(tdata->tg_event))
 			pltwhen = PyString_FromString("BEFORE");
 		else if (TRIGGER_FIRED_AFTER(tdata->tg_event))

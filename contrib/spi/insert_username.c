@@ -38,10 +38,10 @@ insert_username(PG_FUNCTION_ARGS)
 	if (!CALLED_AS_TRIGGER(fcinfo))
 		/* internal error */
 		elog(ERROR, "insert_username: not fired by trigger manager");
-	if (TRIGGER_FIRED_FOR_STATEMENT(trigdata->tg_event))
+	if (!TRIGGER_FIRED_FOR_ROW(trigdata->tg_event))
 		/* internal error */
-		elog(ERROR, "insert_username: cannot process STATEMENT events");
-	if (TRIGGER_FIRED_AFTER(trigdata->tg_event))
+		elog(ERROR, "insert_username: must be fired for row");
+	if (!TRIGGER_FIRED_BEFORE(trigdata->tg_event))
 		/* internal error */
 		elog(ERROR, "insert_username: must be fired before event");
 

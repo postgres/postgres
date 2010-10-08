@@ -43,17 +43,17 @@ moddatetime(PG_FUNCTION_ARGS)
 		/* internal error */
 		elog(ERROR, "moddatetime: not fired by trigger manager");
 
-	if (TRIGGER_FIRED_FOR_STATEMENT(trigdata->tg_event))
+	if (!TRIGGER_FIRED_FOR_ROW(trigdata->tg_event))
 		/* internal error */
-		elog(ERROR, "moddatetime: cannot process STATEMENT events");
+		elog(ERROR, "moddatetime: must be fired for row");
 
-	if (TRIGGER_FIRED_AFTER(trigdata->tg_event))
+	if (!TRIGGER_FIRED_BEFORE(trigdata->tg_event))
 		/* internal error */
 		elog(ERROR, "moddatetime: must be fired before event");
 
 	if (TRIGGER_FIRED_BY_INSERT(trigdata->tg_event))
 		/* internal error */
-		elog(ERROR, "moddatetime: must be fired before event");
+		elog(ERROR, "moddatetime: cannot process INSERT events");
 	else if (TRIGGER_FIRED_BY_UPDATE(trigdata->tg_event))
 		rettuple = trigdata->tg_newtuple;
 	else
