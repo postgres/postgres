@@ -128,18 +128,33 @@ CLUSTER [VERBOSE]
    </para>
 
    <para>
-    During the cluster operation, a temporary copy of the table is created
-    that contains the table data in the index order.  Temporary copies of
-    each index on the table are created as well.  Therefore, you need free
-    space on disk at least equal to the sum of the table size and the index
-    sizes.
+    <command>CLUSTER</> can re-sort the table using either an indexscan
+    on the specified index, or (if the index is a b-tree) a sequential
+    scan followed by sorting.  It will attempt to choose the method that
+    will be faster, based on planner cost parameters and available statistical
+    information.
    </para>
 
    <para>
-    Because <command>CLUSTER</command> remembers the clustering information,
-    one can cluster the tables one wants clustered manually the first time, and
-    setup a timed event similar to <command>VACUUM</command> so that the tables
-    are periodically reclustered.
+    When an indexscan is used, a temporary copy of the table is created that
+    contains the table data in the index order.  Temporary copies of each
+    index on the table are created as well.  Therefore, you need free space on
+    disk at least equal to the sum of the table size and the index sizes.
+   </para>
+
+   <para>
+    When a sequential scan and sort is used, a temporary sort file is
+    also created, so that the peak temporary space requirement is as much
+    as double the table size, plus the index sizes.  This method is often
+    faster than the indexscan method, but if the disk space requirement is
+    intolerable, you can disable this choice by temporarily setting <xref
+    linkend="guc-enable-sort"> to <literal>off</>.
+   </para>
+
+   <para>
+    It is advisable to set <xref linkend="guc-maintenance-work-mem"> to
+    a reasonably large value (but not more than the amount of RAM you can
+    dedicate to the <command>CLUSTER</> operation) before clustering.
    </para>
 
    <para>
@@ -150,35 +165,13 @@ CLUSTER [VERBOSE]
    </para>
 
    <para>
-    There is another way to cluster data. The
-    <command>CLUSTER</command> command reorders the original table by
-    scanning it using the index you specify. This can be slow
-    on large tables because the rows are fetched from the table
-    in index order, and if the table is disordered, the
-    entries are on random pages, so there is one disk page
-    retrieved for every row moved. (<productname>PostgreSQL</productname> has
-    a cache, but the majority of a big table will not fit in the cache.)
-    The other way to cluster a table is to use:
-
-<programlisting>
-CREATE TABLE <replaceable class="parameter">newtable</replaceable> AS
-    SELECT * FROM <replaceable class="parameter">table</replaceable> ORDER BY <replaceable class="parameter">columnlist</replaceable>;
-</programlisting>
-
-    which uses the <productname>PostgreSQL</productname> sorting code
-    to produce the desired order;
-    this is usually much faster than an index scan for disordered data.
-    Then you drop the old table, use
-    <command>ALTER TABLE ... RENAME</command>
-    to rename <replaceable class="parameter">newtable</replaceable> to the
-    old name, and recreate the table's indexes.
-    The big disadvantage of this approach is that it does not preserve
-    OIDs, constraints, foreign key relationships, granted privileges, and
-    other ancillary properties of the table &mdash; all such items must be
-    manually recreated.  Another disadvantage is that this way requires a sort
-    temporary file about the same size as the table itself, so peak disk usage
-    is about three times the table size instead of twice the table size.
+    Because <command>CLUSTER</command> remembers which indexes are clustered,
+    one can cluster the tables one wants clustered manually the first time,
+    then set up a periodic maintenance script that executes
+    <command>CLUSTER</> without any parameters, so that the desired tables
+    are periodically reclustered.
    </para>
+
  </refsect1>
 
  <refsect1>

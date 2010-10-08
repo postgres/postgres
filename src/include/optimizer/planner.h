@@ -37,4 +37,6 @@ extern Plan *subquery_planner(PlannerGlobal *glob, Query *parse,
 
 extern Expr *expression_planner(Expr *expr);
 
+extern bool plan_cluster_use_sort(Oid tableOid, Oid indexOid);
+
 #endif   /* PLANNER_H */

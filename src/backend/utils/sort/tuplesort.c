@@ -102,9 +102,11 @@
 
 #include "access/genam.h"
 #include "access/nbtree.h"
+#include "catalog/index.h"
 #include "catalog/pg_amop.h"
 #include "catalog/pg_operator.h"
 #include "commands/tablespace.h"
+#include "executor/executor.h"
 #include "miscadmin.h"
 #include "pg_trace.h"
 #include "utils/datum.h"
@@ -121,6 +123,7 @@
 #define HEAP_SORT	0
 #define INDEX_SORT	1
 #define DATUM_SORT	2
+#define CLUSTER_SORT	3
 
 /* GUC variables */
 #ifdef TRACE_SORT
@@ -343,6 +346,14 @@ struct Tuplesortstate
 	ScanKey		scanKeys;		/* array of length nKeys */
 
 	/*
+	 * These variables are specific to the CLUSTER case; they are set by
+	 * tuplesort_begin_cluster.  Note CLUSTER also uses tupDesc and
+	 * indexScanKey.
+	 */
+	IndexInfo  *indexInfo;		/* info about index being used for reference */
+	EState 	   *estate;			/* for evaluating index expressions */
+
+	/*
 	 * These variables are specific to the IndexTuple case; they are set by
 	 * tuplesort_begin_index_xxx and used only by the IndexTuple routines.
 	 */
@@ -450,6 +461,13 @@ static void writetup_heap(Tuplesortstate *state, int tapenum,
 static void readtup_heap(Tuplesortstate *state, SortTuple *stup,
 			 int tapenum, unsigned int len);
 static void reversedirection_heap(Tuplesortstate *state);
+static int comparetup_cluster(const SortTuple *a, const SortTuple *b,
+							  Tuplesortstate *state);
+static void copytup_cluster(Tuplesortstate *state, SortTuple *stup, void *tup);
+static void writetup_cluster(Tuplesortstate *state, int tapenum,
+							 SortTuple *stup);
+static void readtup_cluster(Tuplesortstate *state, SortTuple *stup,
+							int tapenum, unsigned int len);
 static int comparetup_index_btree(const SortTuple *a, const SortTuple *b,
 					   Tuplesortstate *state);
 static int comparetup_index_hash(const SortTuple *a, const SortTuple *b,
@@ -620,6 +638,67 @@ tuplesort_begin_heap(TupleDesc tupDesc,
 			state->scanKeys[i].sk_flags |= SK_BT_DESC;
 		if (nullsFirstFlags[i])
 			state->scanKeys[i].sk_flags |= SK_BT_NULLS_FIRST;
+	}
+
+	MemoryContextSwitchTo(oldcontext);
+
+	return state;
+}
+
+Tuplesortstate *
+tuplesort_begin_cluster(TupleDesc tupDesc,
+						Relation indexRel,
+						int workMem, bool randomAccess)
+{
+	Tuplesortstate *state = tuplesort_begin_common(workMem, randomAccess);
+	MemoryContext oldcontext;
+
+	Assert(indexRel->rd_rel->relam == BTREE_AM_OID);
+
+	oldcontext = MemoryContextSwitchTo(state->sortcontext);
+
+#ifdef TRACE_SORT
+	if (trace_sort)
+		elog(LOG,
+			 "begin tuple sort: nkeys = %d, workMem = %d, randomAccess = %c",
+			 RelationGetNumberOfAttributes(indexRel),
+			 workMem, randomAccess ? 't' : 'f');
+#endif
+
+	state->nKeys = RelationGetNumberOfAttributes(indexRel);
+
+	TRACE_POSTGRESQL_SORT_START(CLUSTER_SORT,
+								false,	/* no unique check */
+								state->nKeys,
+								workMem,
+								randomAccess);
+
+	state->comparetup = comparetup_cluster;
+	state->copytup = copytup_cluster;
+	state->writetup = writetup_cluster;
+	state->readtup = readtup_cluster;
+	state->reversedirection = reversedirection_index_btree;
+
+	state->indexInfo = BuildIndexInfo(indexRel);
+	state->indexScanKey = _bt_mkscankey_nodata(indexRel);
+
+	state->tupDesc = tupDesc;	/* assume we need not copy tupDesc */
+
+	if (state->indexInfo->ii_Expressions != NULL)
+	{
+		TupleTableSlot *slot;
+		ExprContext	   *econtext;
+
+		/*
+		 * We will need to use FormIndexDatum to evaluate the index
+		 * expressions.  To do that, we need an EState, as well as a
+		 * TupleTableSlot to put the table tuples into.  The econtext's
+		 * scantuple has to point to that slot, too.
+		 */
+		state->estate = CreateExecutorState();
+		slot = MakeSingleTupleTableSlot(tupDesc);
+		econtext = GetPerTupleExprContext(state->estate);
+		econtext->ecxt_scantuple = slot;
 	}
 
 	MemoryContextSwitchTo(oldcontext);
@@ -850,6 +929,15 @@ tuplesort_end(Tuplesortstate *state)
 	TRACE_POSTGRESQL_SORT_DONE(state->tapeset != NULL, 0L);
 #endif
 
+	/* Free any execution state created for CLUSTER case */
+	if (state->estate != NULL)
+	{
+		ExprContext	   *econtext = GetPerTupleExprContext(state->estate);
+
+		ExecDropSingleTupleTableSlot(econtext->ecxt_scantuple);
+		FreeExecutorState(state->estate);
+	}
+
 	MemoryContextSwitchTo(oldcontext);
 
 	/*
@@ -917,6 +1005,28 @@ tuplesort_puttupleslot(Tuplesortstate *state, TupleTableSlot *slot)
 	 * Then call the common code.
 	 */
 	COPYTUP(state, &stup, (void *) slot);
+
+	puttuple_common(state, &stup);
+
+	MemoryContextSwitchTo(oldcontext);
+}
+
+/*
+ * Accept one tuple while collecting input data for sort.
+ *
+ * Note that the input data is always copied; the caller need not save it.
+ */
+void
+tuplesort_putheaptuple(Tuplesortstate *state, HeapTuple tup)
+{
+	MemoryContext oldcontext = MemoryContextSwitchTo(state->sortcontext);
+	SortTuple	stup;
+
+	/*
+	 * Copy the given tuple into memory we control, and decrease availMem.
+	 * Then call the common code.
+	 */
+	COPYTUP(state, &stup, (void *) tup);
 
 	puttuple_common(state, &stup);
 
@@ -1419,6 +1529,25 @@ tuplesort_gettupleslot(Tuplesortstate *state, bool forward,
 		ExecClearTuple(slot);
 		return false;
 	}
+}
+
+/*
+ * Fetch the next tuple in either forward or back direction.
+ * Returns NULL if no more tuples.  If *should_free is set, the
+ * caller must pfree the returned tuple when done with it.
+ */
+HeapTuple
+tuplesort_getheaptuple(Tuplesortstate *state, bool forward, bool *should_free)
+{
+	MemoryContext oldcontext = MemoryContextSwitchTo(state->sortcontext);
+	SortTuple	stup;
+
+	if (!tuplesort_gettuple_common(state, forward, &stup, should_free))
+		stup.tuple = NULL;
+
+	MemoryContextSwitchTo(oldcontext);
+
+	return stup.tuple;
 }
 
 /*
@@ -2709,6 +2838,187 @@ reversedirection_heap(Tuplesortstate *state)
 	{
 		scanKey->sk_flags ^= (SK_BT_DESC | SK_BT_NULLS_FIRST);
 	}
+}
+
+
+/*
+ * Routines specialized for the CLUSTER case (HeapTuple data, with
+ * comparisons per a btree index definition)
+ */
+
+static int
+comparetup_cluster(const SortTuple *a, const SortTuple *b,
+				   Tuplesortstate *state)
+{
+	ScanKey		scanKey = state->indexScanKey;
+	HeapTuple	ltup;
+	HeapTuple	rtup;
+	TupleDesc	tupDesc;
+	int			nkey;
+	int32		compare;
+
+	/* Allow interrupting long sorts */
+	CHECK_FOR_INTERRUPTS();
+
+	/* Compare the leading sort key, if it's simple */
+	if (state->indexInfo->ii_KeyAttrNumbers[0] != 0)
+	{
+		compare = inlineApplySortFunction(&scanKey->sk_func, scanKey->sk_flags,
+										  a->datum1, a->isnull1,
+										  b->datum1, b->isnull1);
+		if (compare != 0 || state->nKeys == 1)
+			return compare;
+		/* Compare additional columns the hard way */
+		scanKey++;
+		nkey = 1;
+	}
+	else
+	{
+		/* Must compare all keys the hard way */
+		nkey = 0;
+	}
+
+	/* Compare additional sort keys */
+	ltup = (HeapTuple) a->tuple;
+	rtup = (HeapTuple) b->tuple;
+
+	if (state->indexInfo->ii_Expressions == NULL)
+	{
+		/* If not expression index, just compare the proper heap attrs */
+		tupDesc = state->tupDesc;
+
+		for (; nkey < state->nKeys; nkey++, scanKey++)
+		{
+			AttrNumber	attno = state->indexInfo->ii_KeyAttrNumbers[nkey];
+			Datum		datum1,
+						datum2;
+			bool		isnull1,
+						isnull2;
+
+			datum1 = heap_getattr(ltup, attno, tupDesc, &isnull1);
+			datum2 = heap_getattr(rtup, attno, tupDesc, &isnull2);
+
+			compare = inlineApplySortFunction(&scanKey->sk_func,
+											  scanKey->sk_flags,
+											  datum1, isnull1,
+											  datum2, isnull2);
+			if (compare != 0)
+				return compare;
+		}
+	}
+	else
+	{
+		/*
+		 * In the expression index case, compute the whole index tuple and
+		 * then compare values.  It would perhaps be faster to compute only as
+		 * many columns as we need to compare, but that would require
+		 * duplicating all the logic in FormIndexDatum.
+		 */
+		Datum		l_index_values[INDEX_MAX_KEYS];
+		bool		l_index_isnull[INDEX_MAX_KEYS];
+		Datum		r_index_values[INDEX_MAX_KEYS];
+		bool		r_index_isnull[INDEX_MAX_KEYS];
+		TupleTableSlot *ecxt_scantuple;
+
+		/* Reset context each time to prevent memory leakage */
+		ResetPerTupleExprContext(state->estate);
+
+		ecxt_scantuple = GetPerTupleExprContext(state->estate)->ecxt_scantuple;
+
+		ExecStoreTuple(ltup, ecxt_scantuple, InvalidBuffer, false);
+		FormIndexDatum(state->indexInfo, ecxt_scantuple, state->estate,
+					   l_index_values, l_index_isnull);
+
+		ExecStoreTuple(rtup, ecxt_scantuple, InvalidBuffer, false);
+		FormIndexDatum(state->indexInfo, ecxt_scantuple, state->estate,
+					   r_index_values, r_index_isnull);
+
+		for (; nkey < state->nKeys; nkey++, scanKey++)
+		{
+			compare = inlineApplySortFunction(&scanKey->sk_func,
+											  scanKey->sk_flags,
+											  l_index_values[nkey],
+											  l_index_isnull[nkey],
+											  r_index_values[nkey],
+											  r_index_isnull[nkey]);
+			if (compare != 0)
+				return compare;
+		}
+	}
+
+	return 0;
+}
+
+static void
+copytup_cluster(Tuplesortstate *state, SortTuple *stup, void *tup)
+{
+	HeapTuple	tuple = (HeapTuple) tup;
+
+	/* copy the tuple into sort storage */
+	tuple = heap_copytuple(tuple);
+	stup->tuple = (void *) tuple;
+	USEMEM(state, GetMemoryChunkSpace(tuple));
+	/* set up first-column key value, if it's a simple column */
+	if (state->indexInfo->ii_KeyAttrNumbers[0] != 0)
+		stup->datum1 = heap_getattr(tuple,
+									state->indexInfo->ii_KeyAttrNumbers[0],
+									state->tupDesc,
+									&stup->isnull1);
+}
+
+static void
+writetup_cluster(Tuplesortstate *state, int tapenum, SortTuple *stup)
+{
+	HeapTuple	tuple = (HeapTuple) stup->tuple;
+	unsigned int tuplen = tuple->t_len + sizeof(ItemPointerData) + sizeof(int);
+
+	/* We need to store t_self, but not other fields of HeapTupleData */
+	LogicalTapeWrite(state->tapeset, tapenum,
+					 &tuplen, sizeof(tuplen));
+	LogicalTapeWrite(state->tapeset, tapenum,
+					 &tuple->t_self, sizeof(ItemPointerData));
+	LogicalTapeWrite(state->tapeset, tapenum,
+					 tuple->t_data, tuple->t_len);
+	if (state->randomAccess)	/* need trailing length word? */
+		LogicalTapeWrite(state->tapeset, tapenum,
+						 &tuplen, sizeof(tuplen));
+
+	FREEMEM(state, GetMemoryChunkSpace(tuple));
+	heap_freetuple(tuple);
+}
+
+static void
+readtup_cluster(Tuplesortstate *state, SortTuple *stup,
+				int tapenum, unsigned int tuplen)
+{
+	unsigned int t_len = tuplen - sizeof(ItemPointerData) - sizeof(int);
+	HeapTuple	tuple = (HeapTuple) palloc(t_len + HEAPTUPLESIZE);
+
+	USEMEM(state, GetMemoryChunkSpace(tuple));
+	/* Reconstruct the HeapTupleData header */
+	tuple->t_data = (HeapTupleHeader) ((char *) tuple + HEAPTUPLESIZE);
+	tuple->t_len = t_len;
+	if (LogicalTapeRead(state->tapeset, tapenum,
+						&tuple->t_self,
+						sizeof(ItemPointerData)) != sizeof(ItemPointerData))
+		elog(ERROR, "unexpected end of data");
+	/* We don't currently bother to reconstruct t_tableOid */
+	tuple->t_tableOid = InvalidOid;
+	/* Read in the tuple body */
+	if (LogicalTapeRead(state->tapeset, tapenum,
+						tuple->t_data, tuple->t_len) != tuple->t_len)
+		elog(ERROR, "unexpected end of data");
+	if (state->randomAccess)	/* need trailing length word? */
+		if (LogicalTapeRead(state->tapeset, tapenum, &tuplen,
+							sizeof(tuplen)) != sizeof(tuplen))
+			elog(ERROR, "unexpected end of data");
+	stup->tuple = (void *) tuple;
+	/* set up first-column key value, if it's a simple column */
+	if (state->indexInfo->ii_KeyAttrNumbers[0] != 0)
+		stup->datum1 = heap_getattr(tuple,
+									state->indexInfo->ii_KeyAttrNumbers[0],
+									state->tupDesc,
+									&stup->isnull1);
 }
 
 

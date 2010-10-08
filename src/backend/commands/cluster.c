@@ -36,6 +36,7 @@
 #include "commands/trigger.h"
 #include "commands/vacuum.h"
 #include "miscadmin.h"
+#include "optimizer/planner.h"
 #include "storage/bufmgr.h"
 #include "storage/procarray.h"
 #include "storage/smgr.h"
@@ -49,6 +50,7 @@
 #include "utils/snapmgr.h"
 #include "utils/syscache.h"
 #include "utils/tqual.h"
+#include "utils/tuplesort.h"
 
 
 /*
@@ -69,7 +71,10 @@ static void copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex,
 			   int freeze_min_age, int freeze_table_age,
 			   bool *pSwapToastByContent, TransactionId *pFreezeXid);
 static List *get_tables_to_cluster(MemoryContext cluster_context);
-
+static void reform_and_rewrite_tuple(HeapTuple tuple,
+						 TupleDesc oldTupDesc, TupleDesc newTupDesc,
+						 Datum *values, bool *isnull,
+						 bool newRelHasOids, RewriteState rwstate);
 
 
 /*---------------------------------------------------------------------------
@@ -759,6 +764,8 @@ copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex,
 	TransactionId OldestXmin;
 	TransactionId FreezeXid;
 	RewriteState rwstate;
+	bool 		 use_sort;
+	Tuplesortstate *tuplesort;
 
 	/*
 	 * Open the relations we need.
@@ -845,12 +852,30 @@ copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex,
 	rwstate = begin_heap_rewrite(NewHeap, OldestXmin, FreezeXid, use_wal);
 
 	/*
-	 * Scan through the OldHeap, either in OldIndex order or sequentially, and
-	 * copy each tuple into the NewHeap.  To ensure we see recently-dead
-	 * tuples that still need to be copied, we scan with SnapshotAny and use
+	 * Decide whether to use an indexscan or seqscan-and-optional-sort to
+	 * scan the OldHeap.  We know how to use a sort to duplicate the ordering
+	 * of a btree index, and will use seqscan-and-sort for that case if the
+	 * planner tells us it's cheaper.  Otherwise, always indexscan if an
+	 * index is provided, else plain seqscan.
+	 */
+	if (OldIndex != NULL && OldIndex->rd_rel->relam == BTREE_AM_OID)
+		use_sort = plan_cluster_use_sort(OIDOldHeap, OIDOldIndex);
+	else
+		use_sort = false;
+
+	/* Set up sorting if wanted */
+	if (use_sort)
+		tuplesort = tuplesort_begin_cluster(oldTupDesc, OldIndex,
+											maintenance_work_mem, false);
+	else
+		tuplesort = NULL;
+
+	/*
+	 * Prepare to scan the OldHeap.  To ensure we see recently-dead tuples
+	 * that still need to be copied, we scan with SnapshotAny and use
 	 * HeapTupleSatisfiesVacuum for the visibility test.
 	 */
-	if (OldIndex != NULL)
+	if (OldIndex != NULL && !use_sort)
 	{
 		heapScan = NULL;
 		indexScan = index_beginscan(OldHeap, OldIndex,
@@ -862,17 +887,21 @@ copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex,
 		indexScan = NULL;
 	}
 
+	/*
+	 * Scan through the OldHeap, either in OldIndex order or sequentially;
+	 * copy each tuple into the NewHeap, or transiently to the tuplesort
+	 * module.  Note that we don't bother sorting dead tuples (they won't
+	 * get to the new table anyway).
+	 */
 	for (;;)
 	{
 		HeapTuple	tuple;
-		HeapTuple	copiedTuple;
 		Buffer		buf;
 		bool		isdead;
-		int			i;
 
 		CHECK_FOR_INTERRUPTS();
 
-		if (OldIndex != NULL)
+		if (indexScan != NULL)
 		{
 			tuple = index_getnext(indexScan, ForwardScanDirection);
 			if (tuple == NULL)
@@ -951,45 +980,50 @@ copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex,
 			continue;
 		}
 
-		/*
-		 * We cannot simply copy the tuple as-is, for several reasons:
-		 *
-		 * 1. We'd like to squeeze out the values of any dropped columns, both
-		 * to save space and to ensure we have no corner-case failures. (It's
-		 * possible for example that the new table hasn't got a TOAST table
-		 * and so is unable to store any large values of dropped cols.)
-		 *
-		 * 2. The tuple might not even be legal for the new table; this is
-		 * currently only known to happen as an after-effect of ALTER TABLE
-		 * SET WITHOUT OIDS.
-		 *
-		 * So, we must reconstruct the tuple from component Datums.
-		 */
-		heap_deform_tuple(tuple, oldTupDesc, values, isnull);
-
-		/* Be sure to null out any dropped columns */
-		for (i = 0; i < natts; i++)
-		{
-			if (newTupDesc->attrs[i]->attisdropped)
-				isnull[i] = true;
-		}
-
-		copiedTuple = heap_form_tuple(newTupDesc, values, isnull);
-
-		/* Preserve OID, if any */
-		if (NewHeap->rd_rel->relhasoids)
-			HeapTupleSetOid(copiedTuple, HeapTupleGetOid(tuple));
-
-		/* The heap rewrite module does the rest */
-		rewrite_heap_tuple(rwstate, tuple, copiedTuple);
-
-		heap_freetuple(copiedTuple);
+		if (tuplesort != NULL)
+			tuplesort_putheaptuple(tuplesort, tuple);
+		else
+			reform_and_rewrite_tuple(tuple,
+									 oldTupDesc, newTupDesc,
+									 values, isnull,
+									 NewHeap->rd_rel->relhasoids, rwstate);
 	}
 
-	if (OldIndex != NULL)
+	if (indexScan != NULL)
 		index_endscan(indexScan);
-	else
+	if (heapScan != NULL)
 		heap_endscan(heapScan);
+
+	/*
+	 * In scan-and-sort mode, complete the sort, then read out all live
+	 * tuples from the tuplestore and write them to the new relation.
+	 */
+	if (tuplesort != NULL)
+	{
+		tuplesort_performsort(tuplesort);
+
+		for (;;)
+		{
+			HeapTuple	tuple;
+			bool		shouldfree;
+
+			CHECK_FOR_INTERRUPTS();
+
+			tuple = tuplesort_getheaptuple(tuplesort, true, &shouldfree);
+			if (tuple == NULL)
+				break;
+
+			reform_and_rewrite_tuple(tuple,
+									 oldTupDesc, newTupDesc,
+									 values, isnull,
+									 NewHeap->rd_rel->relhasoids, rwstate);
+
+			if (shouldfree)
+				heap_freetuple(tuple);
+		}
+
+		tuplesort_end(tuplesort);
+	}
 
 	/* Write out any remaining tuples, and fsync if needed */
 	end_heap_rewrite(rwstate);
@@ -1487,4 +1521,51 @@ get_tables_to_cluster(MemoryContext cluster_context)
 	relation_close(indRelation, AccessShareLock);
 
 	return rvs;
+}
+
+
+/*
+ * Reconstruct and rewrite the given tuple
+ *
+ * We cannot simply copy the tuple as-is, for several reasons:
+ *
+ * 1. We'd like to squeeze out the values of any dropped columns, both
+ * to save space and to ensure we have no corner-case failures. (It's
+ * possible for example that the new table hasn't got a TOAST table
+ * and so is unable to store any large values of dropped cols.)
+ *
+ * 2. The tuple might not even be legal for the new table; this is
+ * currently only known to happen as an after-effect of ALTER TABLE
+ * SET WITHOUT OIDS.
+ *
+ * So, we must reconstruct the tuple from component Datums.
+ */
+static void
+reform_and_rewrite_tuple(HeapTuple tuple,
+						 TupleDesc oldTupDesc, TupleDesc newTupDesc,
+						 Datum *values, bool *isnull,
+						 bool newRelHasOids, RewriteState rwstate)
+{
+	HeapTuple	copiedTuple;
+	int 		i;
+
+	heap_deform_tuple(tuple, oldTupDesc, values, isnull);
+
+	/* Be sure to null out any dropped columns */
+	for (i = 0; i < newTupDesc->natts; i++)
+	{
+		if (newTupDesc->attrs[i]->attisdropped)
+			isnull[i] = true;
+	}
+
+	copiedTuple = heap_form_tuple(newTupDesc, values, isnull);
+
+	/* Preserve OID, if any */
+	if (newRelHasOids)
+		HeapTupleSetOid(copiedTuple, HeapTupleGetOid(tuple));
+
+	/* The heap rewrite module does the rest */
+	rewrite_heap_tuple(rwstate, tuple, copiedTuple);
+
+	heap_freetuple(copiedTuple);
 }

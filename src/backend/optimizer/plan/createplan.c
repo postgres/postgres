@@ -20,6 +20,7 @@
 #include <math.h>
 
 #include "access/skey.h"
+#include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
 #include "optimizer/clauses.h"
@@ -3041,6 +3042,8 @@ make_sort(PlannerInfo *root, Plan *lefttree, int numCols,
 			  lefttree->total_cost,
 			  lefttree->plan_rows,
 			  lefttree->plan_width,
+			  0.0,
+			  work_mem,
 			  limit_tuples);
 	plan->startup_cost = sort_path.startup_cost;
 	plan->total_cost = sort_path.total_cost;

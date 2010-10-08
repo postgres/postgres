@@ -46,6 +46,7 @@ int			constraint_exclusion = CONSTRAINT_EXCLUSION_PARTITION;
 get_relation_info_hook_type get_relation_info_hook = NULL;
 
 
+static int32 get_rel_data_width(Relation rel, int32 *attr_widths);
 static List *get_relation_constraints(PlannerInfo *root,
 						 Oid relationObjectId, RelOptInfo *rel,
 						 bool include_notnull);
@@ -406,28 +407,9 @@ estimate_rel_size(Relation rel, int32 *attr_widths,
 				 * platform dependencies in the default plans which are kind
 				 * of a headache for regression testing.
 				 */
-				int32		tuple_width = 0;
-				int			i;
+				int32		tuple_width;
 
-				for (i = 1; i <= RelationGetNumberOfAttributes(rel); i++)
-				{
-					Form_pg_attribute att = rel->rd_att->attrs[i - 1];
-					int32		item_width;
-
-					if (att->attisdropped)
-						continue;
-					/* This should match set_rel_width() in costsize.c */
-					item_width = get_attavgwidth(RelationGetRelid(rel), i);
-					if (item_width <= 0)
-					{
-						item_width = get_typavgwidth(att->atttypid,
-													 att->atttypmod);
-						Assert(item_width > 0);
-					}
-					if (attr_widths != NULL)
-						attr_widths[i] = item_width;
-					tuple_width += item_width;
-				}
+				tuple_width = get_rel_data_width(rel, attr_widths);
 				tuple_width += sizeof(HeapTupleHeaderData);
 				tuple_width += sizeof(ItemPointerData);
 				/* note: integer division is intentional here */
@@ -446,6 +428,68 @@ estimate_rel_size(Relation rel, int32 *attr_widths,
 			*tuples = 0;
 			break;
 	}
+}
+
+
+/*
+ * get_rel_data_width
+ *
+ * Estimate the average width of (the data part of) the relation's tuples.
+ * If attr_widths isn't NULL, also store per-column width estimates into
+ * that array.
+ *
+ * Currently we ignore dropped columns.  Ideally those should be included
+ * in the result, but we haven't got any way to get info about them; and
+ * since they might be mostly NULLs, treating them as zero-width is not
+ * necessarily the wrong thing anyway.
+ */
+static int32
+get_rel_data_width(Relation rel, int32 *attr_widths)
+{
+	int32		tuple_width = 0;
+	int			i;
+
+	for (i = 1; i <= RelationGetNumberOfAttributes(rel); i++)
+	{
+		Form_pg_attribute att = rel->rd_att->attrs[i - 1];
+		int32		item_width;
+
+		if (att->attisdropped)
+			continue;
+		/* This should match set_rel_width() in costsize.c */
+		item_width = get_attavgwidth(RelationGetRelid(rel), i);
+		if (item_width <= 0)
+		{
+			item_width = get_typavgwidth(att->atttypid, att->atttypmod);
+			Assert(item_width > 0);
+		}
+		if (attr_widths != NULL)
+			attr_widths[i] = item_width;
+		tuple_width += item_width;
+	}
+
+	return tuple_width;
+}
+
+/*
+ * get_relation_data_width
+ *
+ * External API for get_rel_data_width
+ */
+int32
+get_relation_data_width(Oid relid)
+{
+	int32		result;
+	Relation	relation;
+
+	/* As above, assume relation is already locked */
+	relation = heap_open(relid, NoLock);
+
+	result = get_rel_data_width(relation, NULL);
+
+	heap_close(relation, NoLock);
+
+	return result;
 }
 
 

@@ -20,6 +20,7 @@
  */
 #include "postgres.h"
 
+#include "miscadmin.h"
 #include "optimizer/cost.h"
 #include "optimizer/pathnode.h"
 #include "optimizer/paths.h"
@@ -415,7 +416,7 @@ query_planner(PlannerInfo *root, List *tlist,
 			cost_sort(&sort_path, root, root->query_pathkeys,
 					  cheapestpath->total_cost,
 					  final_rel->rows, final_rel->width,
-					  limit_tuples);
+					  0.0, work_mem, limit_tuples);
 		}
 
 		if (compare_fractional_path_costs(sortedpath, &sort_path,

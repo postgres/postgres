@@ -969,6 +969,8 @@ create_unique_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath,
 				  subpath->total_cost,
 				  rel->rows,
 				  rel->width,
+				  0.0,
+				  work_mem,
 				  -1.0);
 
 		/*

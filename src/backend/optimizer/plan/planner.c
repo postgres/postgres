@@ -26,6 +26,7 @@
 #include "optimizer/cost.h"
 #include "optimizer/pathnode.h"
 #include "optimizer/paths.h"
+#include "optimizer/plancat.h"
 #include "optimizer/planmain.h"
 #include "optimizer/planner.h"
 #include "optimizer/prep.h"
@@ -2276,7 +2277,8 @@ choose_hashed_grouping(PlannerInfo *root,
 	/* Result of hashed agg is always unsorted */
 	if (target_pathkeys)
 		cost_sort(&hashed_p, root, target_pathkeys, hashed_p.total_cost,
-				  dNumGroups, path_width, limit_tuples);
+				  dNumGroups, path_width,
+				  0.0, work_mem, limit_tuples);
 
 	if (sorted_path)
 	{
@@ -2293,7 +2295,8 @@ choose_hashed_grouping(PlannerInfo *root,
 	if (!pathkeys_contained_in(root->group_pathkeys, current_pathkeys))
 	{
 		cost_sort(&sorted_p, root, root->group_pathkeys, sorted_p.total_cost,
-				  path_rows, path_width, -1.0);
+				  path_rows, path_width,
+				  0.0, work_mem, -1.0);
 		current_pathkeys = root->group_pathkeys;
 	}
 
@@ -2310,7 +2313,8 @@ choose_hashed_grouping(PlannerInfo *root,
 	if (target_pathkeys &&
 		!pathkeys_contained_in(target_pathkeys, current_pathkeys))
 		cost_sort(&sorted_p, root, target_pathkeys, sorted_p.total_cost,
-				  dNumGroups, path_width, limit_tuples);
+				  dNumGroups, path_width,
+				  0.0, work_mem, limit_tuples);
 
 	/*
 	 * Now make the decision using the top-level tuple fraction.  First we
@@ -2427,7 +2431,8 @@ choose_hashed_distinct(PlannerInfo *root,
 	 */
 	if (parse->sortClause)
 		cost_sort(&hashed_p, root, root->sort_pathkeys, hashed_p.total_cost,
-				  dNumDistinctRows, path_width, limit_tuples);
+				  dNumDistinctRows, path_width,
+				  0.0, work_mem, limit_tuples);
 
 	/*
 	 * Now for the GROUP case.	See comments in grouping_planner about the
@@ -2450,7 +2455,8 @@ choose_hashed_distinct(PlannerInfo *root,
 		else
 			current_pathkeys = root->sort_pathkeys;
 		cost_sort(&sorted_p, root, current_pathkeys, sorted_p.total_cost,
-				  path_rows, path_width, -1.0);
+				  path_rows, path_width,
+				  0.0, work_mem, -1.0);
 	}
 	cost_group(&sorted_p, root, numDistinctCols, dNumDistinctRows,
 			   sorted_p.startup_cost, sorted_p.total_cost,
@@ -2458,7 +2464,8 @@ choose_hashed_distinct(PlannerInfo *root,
 	if (parse->sortClause &&
 		!pathkeys_contained_in(root->sort_pathkeys, current_pathkeys))
 		cost_sort(&sorted_p, root, root->sort_pathkeys, sorted_p.total_cost,
-				  dNumDistinctRows, path_width, limit_tuples);
+				  dNumDistinctRows, path_width,
+				  0.0, work_mem, limit_tuples);
 
 	/*
 	 * Now make the decision using the top-level tuple fraction.  First we
@@ -2996,4 +3003,108 @@ expression_planner(Expr *expr)
 	fix_opfuncids(result);
 
 	return (Expr *) result;
+}
+
+
+/*
+ * plan_cluster_use_sort
+ *		Use the planner to decide how CLUSTER should implement sorting
+ *
+ * tableOid is the OID of a table to be clustered on its index indexOid
+ * (which is already known to be a btree index).  Decide whether it's
+ * cheaper to do an indexscan or a seqscan-plus-sort to execute the CLUSTER.
+ * Return TRUE to use sorting, FALSE to use an indexscan.
+ *
+ * Note: caller had better already hold some type of lock on the table.
+ */
+bool
+plan_cluster_use_sort(Oid tableOid, Oid indexOid)
+{
+	PlannerInfo *root;
+	Query	   *query;
+	PlannerGlobal *glob;
+	RangeTblEntry *rte;
+	RelOptInfo *rel;
+	IndexOptInfo *indexInfo;
+	QualCost	indexExprCost;
+	Cost		comparisonCost;
+	Path	   *seqScanPath;
+	Path		seqScanAndSortPath;
+	IndexPath  *indexScanPath;
+	ListCell   *lc;
+
+	/* Set up mostly-dummy planner state */
+	query = makeNode(Query);
+	query->commandType = CMD_SELECT;
+
+	glob = makeNode(PlannerGlobal);
+
+	root = makeNode(PlannerInfo);
+	root->parse = query;
+	root->glob = glob;
+	root->query_level = 1;
+	root->planner_cxt = CurrentMemoryContext;
+	root->wt_param_id = -1;
+
+	/* Build a minimal RTE for the rel */
+	rte = makeNode(RangeTblEntry);
+	rte->rtekind = RTE_RELATION;
+	rte->relid = tableOid;
+	rte->inh = false;
+	rte->inFromCl = true;
+	query->rtable = list_make1(rte);
+
+	/* ... and insert it into PlannerInfo */
+	root->simple_rel_array_size = 2;
+	root->simple_rel_array = (RelOptInfo **)
+		palloc0(root->simple_rel_array_size * sizeof(RelOptInfo *));
+	root->simple_rte_array = (RangeTblEntry **)
+		palloc0(root->simple_rel_array_size * sizeof(RangeTblEntry *));
+	root->simple_rte_array[1] = rte;
+
+	/* Build RelOptInfo */
+	rel = build_simple_rel(root, 1, RELOPT_BASEREL);
+
+	/*
+	 * Rather than doing all the pushups that would be needed to use
+	 * set_baserel_size_estimates, just do a quick hack for rows and width.
+	 */
+	rel->rows = rel->tuples;
+	rel->width = get_relation_data_width(tableOid);
+
+	root->total_table_pages = rel->pages;
+
+	/* Locate IndexOptInfo for the target index */
+	indexInfo = NULL;
+	foreach(lc, rel->indexlist)
+	{
+		indexInfo = (IndexOptInfo *) lfirst(lc);
+		if (indexInfo->indexoid == indexOid)
+			break;
+	}
+	if (lc == NULL)				/* not in the list? */
+		elog(ERROR, "index %u does not belong to table %u",
+			 indexOid, tableOid);
+
+	/*
+	 * Determine eval cost of the index expressions, if any.  We need to
+	 * charge twice that amount for each tuple comparison that happens
+	 * during the sort, since tuplesort.c will have to re-evaluate the
+	 * index expressions each time.  (XXX that's pretty inefficient...)
+	 */
+	cost_qual_eval(&indexExprCost, indexInfo->indexprs, root);
+	comparisonCost = 2.0 * (indexExprCost.startup + indexExprCost.per_tuple);
+
+	/* Estimate the cost of seq scan + sort */
+	seqScanPath = create_seqscan_path(root, rel);
+	cost_sort(&seqScanAndSortPath, root, NIL,
+			  seqScanPath->total_cost, rel->tuples, rel->width,
+			  comparisonCost, maintenance_work_mem, -1.0);
+
+	/* Estimate the cost of index scan */
+	indexScanPath = create_index_path(root, indexInfo,
+									  NIL, NIL,
+									  ForwardScanDirection, NULL);
+
+	return (seqScanAndSortPath.total_cost < indexScanPath->path.total_cost);
 }

@@ -805,7 +805,8 @@ choose_hashed_setop(PlannerInfo *root, List *groupClauses,
 	sorted_p.total_cost = input_plan->total_cost;
 	/* XXX cost_sort doesn't actually look at pathkeys, so just pass NIL */
 	cost_sort(&sorted_p, root, NIL, sorted_p.total_cost,
-			  input_plan->plan_rows, input_plan->plan_width, -1.0);
+			  input_plan->plan_rows, input_plan->plan_width,
+			  0.0, work_mem, -1.0);
 	cost_group(&sorted_p, root, numGroupCols, dNumGroups,
 			   sorted_p.startup_cost, sorted_p.total_cost,
 			   input_plan->plan_rows);
