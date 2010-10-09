@@ -31,8 +31,16 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-EXPLAIN [ ( { ANALYZE <replaceable class="parameter">boolean</replaceable> | VERBOSE <replaceable class="parameter">boolean</replaceable> | COSTS <replaceable class="parameter">boolean</replaceable> | BUFFERS <replaceable class="parameter">boolean</replaceable> | FORMAT { TEXT | XML | JSON | YAML } } [, ...] ) ] <replaceable class="parameter">statement</replaceable>
+EXPLAIN [ ( <replaceable class="parameter">option</replaceable> [, ...] ) ] <replaceable class="parameter">statement</replaceable>
 EXPLAIN [ ANALYZE ] [ VERBOSE ] <replaceable class="parameter">statement</replaceable>
+
+<phrase>where <replaceable class="parameter">option</replaceable> can be one of:</phrase>
+
+    ANALYZE [ <replaceable class="parameter">boolean</replaceable> ]
+    VERBOSE [ <replaceable class="parameter">boolean</replaceable> ]
+    COSTS [ <replaceable class="parameter">boolean</replaceable> ]
+    BUFFERS [ <replaceable class="parameter">boolean</replaceable> ]
+    FORMAT { TEXT | XML | JSON | YAML }
 </synopsis>
  </refsynopsisdiv>
 
