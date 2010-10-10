@@ -90,6 +90,50 @@
 </xsl:template>
 
 
+<!-- For refentries we don't man to generate a man page for, leave out
+     manvolnum, let it default to 0, and skip writing out man files
+     with section 0. -->
+
+<!-- overridden from common/refentry.xsl -->
+<xsl:template name="get.refentry.section">
+  <xsl:choose>
+    <xsl:when test="refmeta/manvolnum">
+      <xsl:value-of select="refmeta/manvolnum"/>
+    </xsl:when>
+    <xsl:otherwise>
+      <xsl:text>0</xsl:text>
+    </xsl:otherwise>
+  </xsl:choose>
+</xsl:template>
+
+<!-- overridden from manpages/other.xsl -->
+  <xsl:template name="write.man.file">
+    <xsl:param name="name"/>
+    <xsl:param name="section"/>
+    <xsl:param name="lang"/>
+    <xsl:param name="content"/>
+    <xsl:param name="filename">
+      <xsl:call-template name="make.adjusted.man.filename">
+        <xsl:with-param name="name" select="$name"/>
+        <xsl:with-param name="section" select="$section"/>
+        <xsl:with-param name="lang" select="$lang"/>
+      </xsl:call-template>
+    </xsl:param>
+    <xsl:if test="$section != 0">
+    <xsl:call-template name="write.text.chunk">
+      <xsl:with-param name="filename" select="$filename"/>
+      <xsl:with-param name="suppress-context-node-name" select="1"/>
+      <xsl:with-param name="quiet" select="$man.output.quietly"/>
+      <xsl:with-param
+          name="message-prolog"
+          >Note: </xsl:with-param>
+      <xsl:with-param name="encoding" select="$man.output.encoding"/>
+      <xsl:with-param name="content" select="$content"/>
+    </xsl:call-template>
+    </xsl:if>
+  </xsl:template>
+
+
 <!-- Overridden template as workaround for this problem:
      <https://sourceforge.net/tracker/?func=detail&aid=2831602&group_id=21935&atid=373747>
 -->
