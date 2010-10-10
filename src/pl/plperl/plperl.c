@@ -1087,6 +1087,8 @@ plperl_trigger_build_args(FunctionCallInfo fcinfo)
 		when = "BEFORE";
 	else if (TRIGGER_FIRED_AFTER(tdata->tg_event))
 		when = "AFTER";
+	else if (TRIGGER_FIRED_INSTEAD(tdata->tg_event))
+		when = "INSTEAD OF";
 	else
 		when = "UNKNOWN";
 	hv_store_string(hv, "when", newSVstring(when));

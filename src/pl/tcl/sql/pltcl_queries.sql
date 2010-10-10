@@ -73,8 +73,12 @@ select 100 @< 4;
 select * from T_pkey1 order by key1 using @<, key2;
 select * from T_pkey2 order by key1 using @<, key2;
 
-
 -- show dump of trigger data
 insert into trigger_test values(1,'insert');
+
+insert into trigger_test_view values(2,'insert');
+update trigger_test_view set v = 'update' where i=1;
+delete from trigger_test_view;
+
 update trigger_test set v = 'update' where i = 1;
 delete from trigger_test;

@@ -1820,10 +1820,17 @@ describeOneTableDetails(const char *schemaname,
 			}
 			PQclear(result);
 		}
+	}
 
-		/* print triggers (but only user-defined triggers) */
-		if (tableinfo.hastriggers)
-		{
+	/*
+	 * Print triggers next, if any (but only user-defined triggers).  This
+	 * could apply to either a table or a view.
+	 */
+	if (tableinfo.hastriggers)
+	{
+			PGresult   *result;
+			int			tuples;
+
 			printfPQExpBuffer(&buf,
 							  "SELECT t.tgname, "
 							  "pg_catalog.pg_get_triggerdef(t.oid%s), "
@@ -1934,7 +1941,15 @@ describeOneTableDetails(const char *schemaname,
 				}
 			}
 			PQclear(result);
-		}
+	}
+
+	/*
+	 * Finish printing the footer information about a table.
+	 */
+	if (tableinfo.relkind == 'r')
+	{
+		PGresult   *result;
+		int			tuples;
 
 		/* print inherited tables */
 		printfPQExpBuffer(&buf, "SELECT c.oid::pg_catalog.regclass FROM pg_catalog.pg_class c, pg_catalog.pg_inherits i WHERE c.oid=i.inhparent AND i.inhrelid = '%s' ORDER BY inhseqno", oid);

@@ -1934,18 +1934,22 @@ CREATE VIEW triggers AS
                        position('EXECUTE PROCEDURE' in substring(pg_get_triggerdef(t.oid) from 48)) + 47)
              AS character_data) AS action_statement,
            CAST(
-             CASE WHEN t.tgtype & 1 = 1 THEN 'ROW' ELSE 'STATEMENT' END
+             -- hard-wired reference to TRIGGER_TYPE_ROW
+             CASE t.tgtype & 1 WHEN 1 THEN 'ROW' ELSE 'STATEMENT' END
              AS character_data) AS action_orientation,
            CAST(
-             CASE WHEN t.tgtype & 2 = 2 THEN 'BEFORE' ELSE 'AFTER' END
-             AS character_data) AS condition_timing,
-           CAST(null AS sql_identifier) AS condition_reference_old_table,
-           CAST(null AS sql_identifier) AS condition_reference_new_table,
-           CAST(null AS sql_identifier) AS condition_reference_old_row,
-           CAST(null AS sql_identifier) AS condition_reference_new_row,
+             -- hard-wired refs to TRIGGER_TYPE_BEFORE, TRIGGER_TYPE_INSTEAD
+             CASE t.tgtype & 66 WHEN 2 THEN 'BEFORE' WHEN 64 THEN 'INSTEAD OF' ELSE 'AFTER' END
+             AS character_data) AS action_timing,
+           CAST(null AS sql_identifier) AS action_reference_old_table,
+           CAST(null AS sql_identifier) AS action_reference_new_table,
+           CAST(null AS sql_identifier) AS action_reference_old_row,
+           CAST(null AS sql_identifier) AS action_reference_new_row,
            CAST(null AS time_stamp) AS created
 
     FROM pg_namespace n, pg_class c, pg_trigger t,
+         -- hard-wired refs to TRIGGER_TYPE_INSERT, TRIGGER_TYPE_DELETE,
+         -- TRIGGER_TYPE_UPDATE; we intentionally omit TRIGGER_TYPE_TRUNCATE
          (VALUES (4, 'INSERT'),
                  (8, 'DELETE'),
                  (16, 'UPDATE')) AS em (num, text)
@@ -2233,9 +2237,23 @@ CREATE VIEW views AS
                   THEN 'YES' ELSE 'NO' END
              AS yes_or_no) AS is_insertable_into,
 
-           CAST('NO' AS yes_or_no) AS is_trigger_updatable,
-           CAST('NO' AS yes_or_no) AS is_trigger_deletable,
-           CAST('NO' AS yes_or_no) AS is_trigger_insertable_into
+           CAST(
+             -- TRIGGER_TYPE_ROW + TRIGGER_TYPE_INSTEAD + TRIGGER_TYPE_UPDATE
+             CASE WHEN EXISTS (SELECT 1 FROM pg_trigger WHERE tgrelid = c.oid AND tgtype & 81 = 81)
+                  THEN 'YES' ELSE 'NO' END
+           AS yes_or_no) AS is_trigger_updatable,
+
+           CAST(
+             -- TRIGGER_TYPE_ROW + TRIGGER_TYPE_INSTEAD + TRIGGER_TYPE_DELETE
+             CASE WHEN EXISTS (SELECT 1 FROM pg_trigger WHERE tgrelid = c.oid AND tgtype & 73 = 73)
+                  THEN 'YES' ELSE 'NO' END
+           AS yes_or_no) AS is_trigger_deletable,
+
+           CAST(
+             -- TRIGGER_TYPE_ROW + TRIGGER_TYPE_INSTEAD + TRIGGER_TYPE_INSERT
+             CASE WHEN EXISTS (SELECT 1 FROM pg_trigger WHERE tgrelid = c.oid AND tgtype & 69 = 69)
+                  THEN 'YES' ELSE 'NO' END
+           AS yes_or_no) AS is_trigger_insertable_into
 
     FROM pg_namespace nc, pg_class c
 

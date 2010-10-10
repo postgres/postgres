@@ -545,8 +545,13 @@ pg_get_triggerdef_worker(Oid trigid, bool pretty)
 
 	if (TRIGGER_FOR_BEFORE(trigrec->tgtype))
 		appendStringInfo(&buf, "BEFORE");
-	else
+	else if (TRIGGER_FOR_AFTER(trigrec->tgtype))
 		appendStringInfo(&buf, "AFTER");
+	else if (TRIGGER_FOR_INSTEAD(trigrec->tgtype))
+		appendStringInfo(&buf, "INSTEAD OF");
+	else
+		elog(ERROR, "unexpected tgtype value: %d", trigrec->tgtype);
+
 	if (TRIGGER_FOR_INSERT(trigrec->tgtype))
 	{
 		appendStringInfo(&buf, " INSERT");

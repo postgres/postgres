@@ -12096,11 +12096,19 @@ dumpTrigger(Archive *fout, TriggerInfo *tginfo)
 		appendPQExpBuffer(query, "\n    ");
 
 		/* Trigger type */
-		findx = 0;
 		if (TRIGGER_FOR_BEFORE(tginfo->tgtype))
 			appendPQExpBuffer(query, "BEFORE");
-		else
+		else if (TRIGGER_FOR_AFTER(tginfo->tgtype))
 			appendPQExpBuffer(query, "AFTER");
+		else if (TRIGGER_FOR_INSTEAD(tginfo->tgtype))
+			appendPQExpBuffer(query, "INSTEAD OF");
+		else
+		{
+			write_msg(NULL, "unexpected tgtype value: %d\n", tginfo->tgtype);
+			exit_nicely();
+		}
+
+		findx = 0;
 		if (TRIGGER_FOR_INSERT(tginfo->tgtype))
 		{
 			appendPQExpBuffer(query, " INSERT");

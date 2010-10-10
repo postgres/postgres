@@ -3112,9 +3112,9 @@ RAISE unique_violation USING MESSAGE = 'Duplicate user ID: ' || user_id;
      <term><varname>TG_WHEN</varname></term>
      <listitem>
       <para>
-       Data type <type>text</type>; a string of either
-       <literal>BEFORE</literal> or <literal>AFTER</literal>
-       depending on the trigger's definition.
+       Data type <type>text</type>; a string of
+       <literal>BEFORE</literal>, <literal>AFTER</literal>, or
+       <literal>INSTEAD OF</literal>, depending on the trigger's definition.
       </para>
      </listitem>
     </varlistentry>
@@ -3234,8 +3234,25 @@ RAISE unique_violation USING MESSAGE = 'Duplicate user ID: ' || user_id;
     effect, but it has to be nonnull to allow the trigger action to
     proceed.  Note that <varname>NEW</varname> is null
     in <command>DELETE</command> triggers, so returning that is
-    usually not sensible.  A useful idiom in <command>DELETE</command>
-    triggers might be to return <varname>OLD</varname>.
+    usually not sensible.  The usual idiom in <command>DELETE</command>
+    triggers is to return <varname>OLD</varname>.
+   </para>
+
+   <para>
+    <literal>INSTEAD OF</> triggers (which are always row-level triggers,
+    and may only be used on views) can return null to signal that they did
+    not perform any updates, and that the rest of the operation for this
+    row should be skipped (i.e., subsequent triggers are not fired, and the
+    row is not counted in the rows-affected status for the surrounding
+    <command>INSERT</>/<command>UPDATE</>/<command>DELETE</>).
+    Otherwise a nonnull value should be returned, to signal
+    that the trigger performed the requested operation. For
+    <command>INSERT</> and <command>UPDATE</> operations, the return value
+    should be <varname>NEW</>, which the trigger function may modify to
+    support <command>INSERT RETURNING</> and <command>UPDATE RETURNING</>
+    (this will also affect the row value passed to any subsequent triggers).
+    For <command>DELETE</> operations, the return value should be
+    <varname>OLD</>.
    </para>
 
    <para>
@@ -3351,6 +3368,85 @@ $emp_audit$ LANGUAGE plpgsql;
 CREATE TRIGGER emp_audit
 AFTER INSERT OR UPDATE OR DELETE ON emp
     FOR EACH ROW EXECUTE PROCEDURE process_emp_audit();
+</programlisting>
+   </example>
+
+   <para>
+    A variation of the previous example uses a view joining the main table
+    to the audit table, to show when each entry was last modified. This
+    approach still records the full audit trail of changes to the table,
+    but also presents a simplified view of the audit trail, showing just
+    the last modified timestamp derived from the audit trail for each entry.
+    <xref linkend="plpgsql-view-trigger-audit-example"> shows an example
+    of an audit trigger on a view in <application>PL/pgSQL</application>.
+   </para>
+
+   <example id="plpgsql-view-trigger-audit-example">
+    <title>A <application>PL/pgSQL</application> View Trigger Procedure For Auditing</title>
+
+    <para>
+     This example uses a trigger on the view to make it updatable, and
+     ensure that any insert, update or delete of a row in the view is
+     recorded (i.e., audited) in the emp_audit table. The current time
+     and user name are recorded, together with the type of operation
+     performed, and the view displays the last modified time of each row.
+    </para>
+
+<programlisting>
+CREATE TABLE emp (
+    empname           text PRIMARY KEY,
+    salary            integer
+);
+
+CREATE TABLE emp_audit(
+    operation         char(1)   NOT NULL,
+    userid            text      NOT NULL,
+    empname           text      NOT NULL,
+    salary            integer,
+    stamp             timestamp NOT NULL
+);
+
+CREATE VIEW emp_view AS
+    SELECT e.empname,
+           e.salary,
+           max(ea.stamp) AS last_updated
+      FROM emp e
+      LEFT JOIN emp_audit ea ON ea.empname = e.empname
+     GROUP BY 1, 2;
+
+CREATE OR REPLACE FUNCTION update_emp_view() RETURNS TRIGGER AS $$
+    BEGIN
+        --
+        -- Perform the required operation on emp, and create a row in emp_audit
+        -- to reflect the change made to emp.
+        --
+        IF (TG_OP = 'DELETE') THEN
+            DELETE FROM emp WHERE empname = OLD.empname;
+            IF NOT FOUND THEN RETURN NULL; END IF;
+
+            OLD.last_updated = now();
+            INSERT INTO emp_audit VALUES('D', user, OLD.*);
+            RETURN OLD;
+        ELSIF (TG_OP = 'UPDATE') THEN
+            UPDATE emp SET salary = NEW.salary WHERE empname = OLD.empname;
+            IF NOT FOUND THEN RETURN NULL; END IF;
+
+            NEW.last_updated = now();
+            INSERT INTO emp_audit VALUES('U', user, NEW.*);
+            RETURN NEW;
+        ELSIF (TG_OP = 'INSERT') THEN
+            INSERT INTO emp VALUES(NEW.empname, NEW.salary);
+
+            NEW.last_updated = now();
+            INSERT INTO emp_audit VALUES('I', user, NEW.*);
+            RETURN NEW;
+        END IF;
+    END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER emp_audit
+INSTEAD OF INSERT OR UPDATE OR DELETE ON emp_view
+    FOR EACH ROW EXECUTE PROCEDURE update_emp_view();
 </programlisting>
    </example>
 

@@ -4885,8 +4885,8 @@ ORDER BY c.ordinal_position;
 
   <para>
    The view <literal>triggers</literal> contains all triggers defined
-   in the current database on tables that the current user owns or has
-   some non-SELECT privilege on.
+   in the current database on tables and views that the current user owns
+   or has some non-SELECT privilege on.
   </para>
 
   <table>
@@ -4987,34 +4987,34 @@ ORDER BY c.ordinal_position;
      </row>
 
      <row>
-      <entry><literal>condition_timing</literal></entry>
+      <entry><literal>action_timing</literal></entry>
       <entry><type>character_data</type></entry>
       <entry>
-       Time at which the trigger fires (<literal>BEFORE</literal> or
-       <literal>AFTER</literal>)
+       Time at which the trigger fires (<literal>BEFORE</literal>,
+       <literal>AFTER</literal>, or <literal>INSTEAD OF</literal>)
       </entry>
      </row>
 
      <row>
-      <entry><literal>condition_reference_old_table</literal></entry>
+      <entry><literal>action_reference_old_table</literal></entry>
       <entry><type>sql_identifier</type></entry>
       <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
      </row>
 
      <row>
-      <entry><literal>condition_reference_new_table</literal></entry>
+      <entry><literal>action_reference_new_table</literal></entry>
       <entry><type>sql_identifier</type></entry>
       <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
      </row>
 
      <row>
-      <entry><literal>condition_reference_old_row</literal></entry>
+      <entry><literal>action_reference_old_row</literal></entry>
       <entry><type>sql_identifier</type></entry>
       <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
      </row>
 
      <row>
-      <entry><literal>condition_reference_new_row</literal></entry>
+      <entry><literal>action_reference_new_row</literal></entry>
       <entry><type>sql_identifier</type></entry>
       <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
      </row>
@@ -5032,9 +5032,9 @@ ORDER BY c.ordinal_position;
    Triggers in <productname>PostgreSQL</productname> have two
    incompatibilities with the SQL standard that affect the
    representation in the information schema.  First, trigger names are
-   local to the table in <productname>PostgreSQL</productname>, rather
+   local to each table in <productname>PostgreSQL</productname>, rather
    than being independent schema objects.  Therefore there can be duplicate
-   trigger names defined in one schema, as long as they belong to
+   trigger names defined in one schema, so long as they belong to
    different tables.  (<literal>trigger_catalog</literal> and
    <literal>trigger_schema</literal> are really the values pertaining
    to the table that the trigger is defined on.)  Second, triggers can
@@ -5045,14 +5045,34 @@ ORDER BY c.ordinal_position;
    multiple rows in the information schema, one for each type of
    event.  As a consequence of these two issues, the primary key of
    the view <literal>triggers</literal> is really
-   <literal>(trigger_catalog, trigger_schema, trigger_name,
-   event_object_table, event_manipulation)</literal> instead of
+   <literal>(trigger_catalog, trigger_schema, event_object_table,
+   trigger_name, event_manipulation)</literal> instead of
    <literal>(trigger_catalog, trigger_schema, trigger_name)</literal>,
    which is what the SQL standard specifies.  Nonetheless, if you
    define your triggers in a manner that conforms with the SQL
    standard (trigger names unique in the schema and only one event
    type per trigger), this will not affect you.
   </para>
+
+  <note>
+   <para>
+    Prior to <productname>PostgreSQL</> 9.1, this view's columns
+    <structfield>action_timing</structfield>,
+    <structfield>action_reference_old_table</structfield>,
+    <structfield>action_reference_new_table</structfield>,
+    <structfield>action_reference_old_row</structfield>, and
+    <structfield>action_reference_new_row</structfield>
+    were named
+    <structfield>condition_timing</structfield>,
+    <structfield>condition_reference_old_table</structfield>,
+    <structfield>condition_reference_new_table</structfield>,
+    <structfield>condition_reference_old_row</structfield>, and
+    <structfield>condition_reference_new_row</structfield>
+    respectively.
+    That was how they were named in the SQL:1999 standard.
+    The new naming conforms to SQL:2003 and later.
+   </para>
+  </note>
  </sect1>
 
  <sect1 id="infoschema-usage-privileges">
@@ -5562,19 +5582,28 @@ ORDER BY c.ordinal_position;
      <row>
       <entry><literal>is_trigger_updatable</literal></entry>
       <entry><type>yes_or_no</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>
+       <literal>YES</> if the view has an <literal>INSTEAD OF</>
+       <command>UPDATE</> trigger defined on it, <literal>NO</> if not
+      </entry>
      </row>
 
      <row>
       <entry><literal>is_trigger_deletable</literal></entry>
       <entry><type>yes_or_no</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>
+       <literal>YES</> if the view has an <literal>INSTEAD OF</>
+       <command>DELETE</> trigger defined on it, <literal>NO</> if not
+      </entry>
      </row>
 
      <row>
       <entry><literal>is_trigger_insertable_into</literal></entry>
       <entry><type>yes_or_no</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>
+       <literal>YES</> if the view has an <literal>INSTEAD OF</>
+       <command>INSERT</> trigger defined on it, <literal>NO</> if not
+      </entry>
      </row>
     </tbody>
    </tgroup>

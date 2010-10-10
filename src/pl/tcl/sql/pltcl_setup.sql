@@ -60,6 +60,8 @@ create function check_pkey1_exists(int4, bpchar) returns bool as E'
 CREATE TABLE trigger_test
     (i int, v text );
 
+CREATE VIEW trigger_test_view AS SELECT * FROM trigger_test;
+
 CREATE FUNCTION trigger_data() returns trigger language pltcl as $_$
 
 	if { [info exists TG_relid] } {
@@ -96,6 +98,9 @@ CREATE TRIGGER show_trigger_data_trig
 BEFORE INSERT OR UPDATE OR DELETE ON trigger_test
 FOR EACH ROW EXECUTE PROCEDURE trigger_data(23,'skidoo');
 
+CREATE TRIGGER show_trigger_data_view_trig
+INSTEAD OF INSERT OR UPDATE OR DELETE ON trigger_test_view
+FOR EACH ROW EXECUTE PROCEDURE trigger_data(24,'skidoo view');
 
 --
 -- Trigger function on every change to T_pkey1

@@ -33,7 +33,11 @@
    <para>
     A trigger is a specification that the database should automatically
     execute a particular function whenever a certain type of operation is
-    performed.  Triggers can be defined to execute either before or after any
+    performed.  Triggers can be attached to both tables and views.
+  </para>
+
+  <para>
+    On tables, triggers can be defined to execute either before or after any
     <command>INSERT</command>, <command>UPDATE</command>, or
     <command>DELETE</command> operation, either once per modified row,
     or once per <acronym>SQL</acronym> statement.
@@ -43,6 +47,20 @@
     Triggers can also fire for <command>TRUNCATE</command> statements.
     If a trigger event occurs, the trigger's function is called at the
     appropriate time to handle the event.
+   </para>
+
+   <para>
+    On views, triggers can be defined to execute instead of
+    <command>INSERT</command>, <command>UPDATE</command>, or
+    <command>DELETE</command> operations.  <literal>INSTEAD OF</> triggers
+    are fired once for each row that needs to be modified in the view.
+    It is the responsibility of the
+    trigger's function to perform the necessary modifications to the
+    underlying base tables and, where appropriate, return the modified
+    row as it will appear in the view.  Triggers on views can also be defined
+    to execute once per <acronym>SQL</acronym> statement, before or after
+    <command>INSERT</command>, <command>UPDATE</command>, or
+    <command>DELETE</command> operations.
    </para>
 
    <para>
@@ -74,18 +92,29 @@
     two types of triggers are sometimes called <firstterm>row-level</>
     triggers and <firstterm>statement-level</> triggers,
     respectively. Triggers on <command>TRUNCATE</command> may only be
-    defined at statement-level.
+    defined at statement level.  On views, triggers that fire before or
+    after may only be defined at statement level, while triggers that fire
+    instead of an <command>INSERT</command>, <command>UPDATE</command>,
+    or <command>DELETE</command> may only be defined at row level.
    </para>
 
    <para>
-    Triggers are also classified as <firstterm>before</> triggers and
-    <firstterm>after</> triggers.
-    Statement-level before triggers naturally fire before the
-    statement starts to do anything, while statement-level after
-    triggers fire at the very end of the statement.  Row-level before
+    Triggers are also classified according to whether they fire
+    <firstterm>before</>, <firstterm>after</>, or
+    <firstterm>instead of</> the operation. These are referred to
+    as <literal>BEFORE</> triggers, <literal>AFTER</> triggers, and
+    <literal>INSTEAD OF</> triggers respectively.
+    Statement-level <literal>BEFORE</> triggers naturally fire before the
+    statement starts to do anything, while statement-level <literal>AFTER</>
+    triggers fire at the very end of the statement.  These types of
+    triggers may be defined on tables or views.  Row-level <literal>BEFORE</>
     triggers fire immediately before a particular row is operated on,
-    while row-level after triggers fire at the end of the statement
-    (but before any statement-level after triggers).
+    while row-level <literal>AFTER</> triggers fire at the end of the
+    statement (but before any statement-level <literal>AFTER</> triggers).
+    These types of triggers may only be defined on tables.  Row-level
+    <literal>INSTEAD OF</> triggers may only be defined on views, and fire
+    immediately as each row in the view is identified as needing to be
+    operated on.
    </para>
 
    <para>
@@ -101,8 +130,8 @@
       <para>
        It can return <symbol>NULL</> to skip the operation for the
        current row. This instructs the executor to not perform the
-       row-level operation that invoked the trigger (the insertion or
-       modification of a particular table row).
+       row-level operation that invoked the trigger (the insertion,
+       modification, or deletion of a particular table row).
       </para>
      </listitem>
 
@@ -117,12 +146,31 @@
      </listitem>
     </itemizedlist>
 
-    A row-level before trigger that does not intend to cause either of
-    these behaviors must be careful to return as its result the same
+    A row-level <literal>BEFORE</> trigger that does not intend to cause
+    either of these behaviors must be careful to return as its result the same
     row that was passed in (that is, the <varname>NEW</varname> row
     for <command>INSERT</command> and <command>UPDATE</command>
     triggers, the <varname>OLD</varname> row for
     <command>DELETE</command> triggers).
+   </para>
+
+   <para>
+    A row-level <literal>INSTEAD OF</> trigger should either return
+    <symbol>NULL</> to indicate that it did not modify any data from
+    the view's underlying base tables, or it should return the view
+    row that was passed in (the <varname>NEW</varname> row
+    for <command>INSERT</command> and <command>UPDATE</command>
+    operations, or the <varname>OLD</varname> row for
+    <command>DELETE</command> operations). A nonnull return value is
+    used to signal that the trigger performed the necessary data
+    modifications in the view.  This will cause the count of the number
+    of rows affected by the command to be incremented. For
+    <command>INSERT</> and <command>UPDATE</> operations, the trigger
+    may modify the <varname>NEW</> row before returning it.  This will
+    change the data returned by
+    <command>INSERT RETURNING</> or <command>UPDATE RETURNING</>,
+    and is useful when the view will not show exactly the same data
+    that was provided.
    </para>
 
    <para>
@@ -133,11 +181,12 @@
    <para>
     If more than one trigger is defined for the same event on the same
     relation, the triggers will be fired in alphabetical order by
-    trigger name.  In the case of before triggers, the
-    possibly-modified row returned by each trigger becomes the input
-    to the next trigger.  If any before trigger returns
+    trigger name.  In the case of <literal>BEFORE</> and
+    <literal>INSTEAD OF</> triggers, the possibly-modified row returned by
+    each trigger becomes the input to the next trigger.  If any
+    <literal>BEFORE</> or <literal>INSTEAD OF</> trigger returns
     <symbol>NULL</>, the operation is abandoned for that row and subsequent
-    triggers are not fired.
+    triggers are not fired (for that row).
    </para>
 
    <para>
@@ -146,31 +195,37 @@
     be fired.  In row-level triggers the <literal>WHEN</> condition can
     examine the old and/or new values of columns of the row.  (Statement-level
     triggers can also have <literal>WHEN</> conditions, although the feature
-    is not so useful for them.)  In a before trigger, the <literal>WHEN</>
+    is not so useful for them.)  In a <literal>BEFORE</> trigger, the
+    <literal>WHEN</>
     condition is evaluated just before the function is or would be executed,
     so using <literal>WHEN</> is not materially different from testing the
     same condition at the beginning of the trigger function.  However, in
-    an after trigger, the <literal>WHEN</> condition is evaluated just after
-    the row update occurs, and it determines whether an event is queued to
-    fire the trigger at the end of statement.  So when an after trigger's
+    an <literal>AFTER</> trigger, the <literal>WHEN</> condition is evaluated
+    just after the row update occurs, and it determines whether an event is
+    queued to fire the trigger at the end of statement.  So when an
+    <literal>AFTER</> trigger's
     <literal>WHEN</> condition does not return true, it is not necessary
     to queue an event nor to re-fetch the row at end of statement.  This
     can result in significant speedups in statements that modify many
     rows, if the trigger only needs to be fired for a few of the rows.
+    <literal>INSTEAD OF</> triggers do not support
+    <literal>WHEN</> conditions.
    </para>
 
    <para>
-    Typically, row before triggers are used for checking or
+    Typically, row-level <literal>BEFORE</> triggers are used for checking or
     modifying the data that will be inserted or updated.  For example,
-    a before trigger might be used to insert the current time into a
+    a <literal>BEFORE</> trigger might be used to insert the current time into a
     <type>timestamp</type> column, or to check that two elements of the row are
-    consistent. Row after triggers are most sensibly
+    consistent. Row-level <literal>AFTER</> triggers are most sensibly
     used to propagate the updates to other tables, or make consistency
     checks against other tables.  The reason for this division of labor is
-    that an after trigger can be certain it is seeing the final value of the
-    row, while a before trigger cannot; there might be other before triggers
-    firing after it.  If you have no specific reason to make a trigger before
-    or after, the before case is more efficient, since the information about
+    that an <literal>AFTER</> trigger can be certain it is seeing the final
+    value of the row, while a <literal>BEFORE</> trigger cannot; there might
+    be other <literal>BEFORE</> triggers firing after it.  If you have no
+    specific reason to make a trigger <literal>BEFORE</> or
+    <literal>AFTER</>, the <literal>BEFORE</> case is more efficient, since
+    the information about
     the operation doesn't have to be saved until end of statement.
    </para>
 
@@ -237,7 +292,8 @@
        Statement-level triggers follow simple visibility rules: none of
        the changes made by a statement are visible to statement-level
        triggers that are invoked before the statement, whereas all
-       modifications are visible to statement-level after triggers.
+       modifications are visible to statement-level <literal>AFTER</>
+       triggers.
       </para>
      </listitem>
 
@@ -245,14 +301,14 @@
       <para>
        The data change (insertion, update, or deletion) causing the
        trigger to fire is naturally <emphasis>not</emphasis> visible
-       to SQL commands executed in a row-level before trigger, because
-       it hasn't happened yet.
+       to SQL commands executed in a row-level <literal>BEFORE</> trigger,
+       because it hasn't happened yet.
       </para>
      </listitem>
 
      <listitem>
       <para>
-       However, SQL commands executed in a row-level before
+       However, SQL commands executed in a row-level <literal>BEFORE</>
        trigger <emphasis>will</emphasis> see the effects of data
        changes for rows previously processed in the same outer
        command.  This requires caution, since the ordering of these
@@ -263,7 +319,16 @@
 
      <listitem>
       <para>
-       When a row-level after trigger is fired, all data changes made
+       Similarly, a row-level <literal>INSTEAD OF</> trigger will see the
+       effects of data changes made by previous firings of <literal>INSTEAD
+       OF</> triggers in the same outer command.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       When a row-level <literal>AFTER</> trigger is fired, all data
+       changes made
        by the outer command are already complete, and are visible to
        the invoked trigger function.
       </para>
@@ -382,6 +447,15 @@ typedef struct TriggerData
           <listitem>
            <para>
             Returns true if the trigger fired after the operation.
+           </para>
+          </listitem>
+         </varlistentry>
+
+         <varlistentry>
+          <term><literal>TRIGGER_FIRED_INSTEAD(tg_event)</literal></term>
+          <listitem>
+           <para>
+            Returns true if the trigger fired instead of the operation.
            </para>
           </listitem>
          </varlistentry>

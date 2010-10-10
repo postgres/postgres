@@ -53,7 +53,7 @@ CREATE [ OR REPLACE ] RULE <replaceable class="parameter">name</replaceable> AS 
    physical row, you probably want to use a trigger, not a rule.
    More information about the rules system is in <xref linkend="rules">.
   </para>
-  
+
   <para>
    Presently, <literal>ON SELECT</literal> rules must be unconditional
    <literal>INSTEAD</literal> rules and must have actions that consist
@@ -73,7 +73,9 @@ CREATE [ OR REPLACE ] RULE <replaceable class="parameter">name</replaceable> AS 
    sufficient for your purposes) to replace update actions on the view
    with appropriate updates on other tables.  If you want to support
    <command>INSERT RETURNING</> and so on, then be sure to put a suitable
-   <literal>RETURNING</> clause into each of these rules.
+   <literal>RETURNING</> clause into each of these rules.  Alternatively,
+   an updatable view can be implemented using <literal>INSTEAD OF</>
+   triggers (see <xref linkend="sql-createtrigger">).
   </para>
 
   <para>
@@ -232,12 +234,12 @@ CREATE [ OR REPLACE ] RULE <replaceable class="parameter">name</replaceable> AS 
 <programlisting>
 CREATE RULE "_RETURN" AS
     ON SELECT TO t1
-    DO INSTEAD 
+    DO INSTEAD
         SELECT * FROM t2;
 
 CREATE RULE "_RETURN" AS
     ON SELECT TO t2
-    DO INSTEAD 
+    DO INSTEAD
         SELECT * FROM t1;
 
 SELECT * FROM t1;

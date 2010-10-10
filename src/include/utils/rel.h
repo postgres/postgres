@@ -71,26 +71,31 @@ typedef struct Trigger
 
 typedef struct TriggerDesc
 {
+	Trigger    *triggers;		/* array of Trigger structs */
+	int			numtriggers;	/* number of array entries */
+
 	/*
-	 * Index data to identify which triggers are which.  Since each trigger
-	 * can appear in more than one class, for each class we provide a list of
-	 * integer indexes into the triggers array.  The class codes are defined
-	 * by TRIGGER_EVENT_xxx macros in commands/trigger.h.
+	 * These flags indicate whether the array contains at least one of each
+	 * type of trigger.  We use these to skip searching the array if not.
 	 */
-#define TRIGGER_NUM_EVENT_CLASSES  4
-
-	uint16		n_before_statement[TRIGGER_NUM_EVENT_CLASSES];
-	uint16		n_before_row[TRIGGER_NUM_EVENT_CLASSES];
-	uint16		n_after_row[TRIGGER_NUM_EVENT_CLASSES];
-	uint16		n_after_statement[TRIGGER_NUM_EVENT_CLASSES];
-	int		   *tg_before_statement[TRIGGER_NUM_EVENT_CLASSES];
-	int		   *tg_before_row[TRIGGER_NUM_EVENT_CLASSES];
-	int		   *tg_after_row[TRIGGER_NUM_EVENT_CLASSES];
-	int		   *tg_after_statement[TRIGGER_NUM_EVENT_CLASSES];
-
-	/* The actual array of triggers is here */
-	Trigger    *triggers;
-	int			numtriggers;
+	bool		trig_insert_before_row;
+	bool		trig_insert_after_row;
+	bool		trig_insert_instead_row;
+	bool		trig_insert_before_statement;
+	bool		trig_insert_after_statement;
+	bool		trig_update_before_row;
+	bool		trig_update_after_row;
+	bool		trig_update_instead_row;
+	bool		trig_update_before_statement;
+	bool		trig_update_after_statement;
+	bool		trig_delete_before_row;
+	bool		trig_delete_after_row;
+	bool		trig_delete_instead_row;
+	bool		trig_delete_before_statement;
+	bool		trig_delete_after_statement;
+	/* there are no row-level truncate triggers */
+	bool		trig_truncate_before_statement;
+	bool		trig_truncate_after_statement;
 } TriggerDesc;
 
 

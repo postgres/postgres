@@ -51,44 +51,48 @@ typedef struct TriggerData
 #define TRIGGER_EVENT_UPDATE			0x00000002
 #define TRIGGER_EVENT_TRUNCATE			0x00000003
 #define TRIGGER_EVENT_OPMASK			0x00000003
+
 #define TRIGGER_EVENT_ROW				0x00000004
+
 #define TRIGGER_EVENT_BEFORE			0x00000008
+#define TRIGGER_EVENT_AFTER				0x00000000
+#define TRIGGER_EVENT_INSTEAD			0x00000010
+#define TRIGGER_EVENT_TIMINGMASK		0x00000018
 
 /* More TriggerEvent flags, used only within trigger.c */
 
-#define AFTER_TRIGGER_DEFERRABLE		0x00000010
-#define AFTER_TRIGGER_INITDEFERRED		0x00000020
+#define AFTER_TRIGGER_DEFERRABLE		0x00000020
+#define AFTER_TRIGGER_INITDEFERRED		0x00000040
 
-#define TRIGGER_FIRED_BY_INSERT(event)	\
-		(((TriggerEvent) (event) & TRIGGER_EVENT_OPMASK) == \
-												TRIGGER_EVENT_INSERT)
+#define TRIGGER_FIRED_BY_INSERT(event) \
+	(((event) & TRIGGER_EVENT_OPMASK) == TRIGGER_EVENT_INSERT)
 
-#define TRIGGER_FIRED_BY_DELETE(event)	\
-		(((TriggerEvent) (event) & TRIGGER_EVENT_OPMASK) == \
-												TRIGGER_EVENT_DELETE)
+#define TRIGGER_FIRED_BY_DELETE(event) \
+	(((event) & TRIGGER_EVENT_OPMASK) == TRIGGER_EVENT_DELETE)
 
-#define TRIGGER_FIRED_BY_UPDATE(event)	\
-		(((TriggerEvent) (event) & TRIGGER_EVENT_OPMASK) == \
-												TRIGGER_EVENT_UPDATE)
+#define TRIGGER_FIRED_BY_UPDATE(event) \
+	(((event) & TRIGGER_EVENT_OPMASK) == TRIGGER_EVENT_UPDATE)
 
 #define TRIGGER_FIRED_BY_TRUNCATE(event) \
-		(((TriggerEvent) (event) & TRIGGER_EVENT_OPMASK) == \
-												TRIGGER_EVENT_TRUNCATE)
+	(((event) & TRIGGER_EVENT_OPMASK) == TRIGGER_EVENT_TRUNCATE)
 
-#define TRIGGER_FIRED_FOR_ROW(event)			\
-		((TriggerEvent) (event) & TRIGGER_EVENT_ROW)
+#define TRIGGER_FIRED_FOR_ROW(event) \
+	((event) & TRIGGER_EVENT_ROW)
 
-#define TRIGGER_FIRED_FOR_STATEMENT(event)		\
-		(!TRIGGER_FIRED_FOR_ROW (event))
+#define TRIGGER_FIRED_FOR_STATEMENT(event) \
+	(!TRIGGER_FIRED_FOR_ROW(event))
 
-#define TRIGGER_FIRED_BEFORE(event)				\
-		((TriggerEvent) (event) & TRIGGER_EVENT_BEFORE)
+#define TRIGGER_FIRED_BEFORE(event) \
+	(((event) & TRIGGER_EVENT_TIMINGMASK) == TRIGGER_EVENT_BEFORE)
 
-#define TRIGGER_FIRED_AFTER(event)				\
-		(!TRIGGER_FIRED_BEFORE (event))
+#define TRIGGER_FIRED_AFTER(event) \
+	(((event) & TRIGGER_EVENT_TIMINGMASK) == TRIGGER_EVENT_AFTER)
+
+#define TRIGGER_FIRED_INSTEAD(event) \
+	(((event) & TRIGGER_EVENT_TIMINGMASK) == TRIGGER_EVENT_INSTEAD)
 
 /*
- * Definitions for the replication role based firing.
+ * Definitions for replication role based firing.
  */
 #define SESSION_REPLICATION_ROLE_ORIGIN		0
 #define SESSION_REPLICATION_ROLE_REPLICA	1
@@ -135,6 +139,9 @@ extern void ExecARInsertTriggers(EState *estate,
 					 ResultRelInfo *relinfo,
 					 HeapTuple trigtuple,
 					 List *recheckIndexes);
+extern HeapTuple ExecIRInsertTriggers(EState *estate,
+					 ResultRelInfo *relinfo,
+					 HeapTuple trigtuple);
 extern void ExecBSDeleteTriggers(EState *estate,
 					 ResultRelInfo *relinfo);
 extern void ExecASDeleteTriggers(EState *estate,
@@ -146,6 +153,9 @@ extern bool ExecBRDeleteTriggers(EState *estate,
 extern void ExecARDeleteTriggers(EState *estate,
 					 ResultRelInfo *relinfo,
 					 ItemPointer tupleid);
+extern bool ExecIRDeleteTriggers(EState *estate,
+					 ResultRelInfo *relinfo,
+					 HeapTuple trigtuple);
 extern void ExecBSUpdateTriggers(EState *estate,
 					 ResultRelInfo *relinfo);
 extern void ExecASUpdateTriggers(EState *estate,
@@ -160,6 +170,10 @@ extern void ExecARUpdateTriggers(EState *estate,
 					 ItemPointer tupleid,
 					 HeapTuple newtuple,
 					 List *recheckIndexes);
+extern HeapTuple ExecIRUpdateTriggers(EState *estate,
+					 ResultRelInfo *relinfo,
+					 HeapTuple oldtuple,
+					 HeapTuple newtuple);
 extern void ExecBSTruncateTriggers(EState *estate,
 					   ResultRelInfo *relinfo);
 extern void ExecASTruncateTriggers(EState *estate,

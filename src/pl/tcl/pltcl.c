@@ -889,6 +889,8 @@ pltcl_trigger_handler(PG_FUNCTION_ARGS, bool pltrusted)
 			Tcl_DStringAppendElement(&tcl_cmd, "BEFORE");
 		else if (TRIGGER_FIRED_AFTER(trigdata->tg_event))
 			Tcl_DStringAppendElement(&tcl_cmd, "AFTER");
+		else if (TRIGGER_FIRED_INSTEAD(trigdata->tg_event))
+			Tcl_DStringAppendElement(&tcl_cmd, "INSTEAD OF");
 		else
 			elog(ERROR, "unrecognized WHEN tg_event: %u", trigdata->tg_event);
 

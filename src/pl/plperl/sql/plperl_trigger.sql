@@ -60,6 +60,20 @@ update trigger_test set v = 'update' where i = 1;
 delete from trigger_test;
 	  
 DROP TRIGGER show_trigger_data_trig on trigger_test;
+
+insert into trigger_test values(1,'insert');
+CREATE VIEW trigger_test_view AS SELECT * FROM trigger_test;
+
+CREATE TRIGGER show_trigger_data_trig
+INSTEAD OF INSERT OR UPDATE OR DELETE ON trigger_test_view
+FOR EACH ROW EXECUTE PROCEDURE trigger_data(24,'skidoo view');
+
+insert into trigger_test_view values(2,'insert');
+update trigger_test_view set v = 'update' where i = 1;
+delete from trigger_test_view;
+
+DROP VIEW trigger_test_view;
+delete from trigger_test;
 	  
 DROP FUNCTION trigger_data();
 

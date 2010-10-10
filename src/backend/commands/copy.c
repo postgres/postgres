@@ -2155,7 +2155,7 @@ CopyFrom(CopyState cstate)
 
 		/* BEFORE ROW INSERT Triggers */
 		if (resultRelInfo->ri_TrigDesc &&
-		  resultRelInfo->ri_TrigDesc->n_before_row[TRIGGER_EVENT_INSERT] > 0)
+			resultRelInfo->ri_TrigDesc->trig_insert_before_row)
 		{
 			HeapTuple	newtuple;
 

@@ -591,8 +591,8 @@ SELECT 'doesn''t' AS ret
        <term><varname>$TG_when</varname></term>
        <listitem>
         <para>
-         The string <literal>BEFORE</> or <literal>AFTER</> depending on the
-         type of trigger event.
+         The string <literal>BEFORE</>, <literal>AFTER</>, or
+         <literal>INSTEAD OF</>, depending on the type of trigger event.
         </para>
        </listitem>
       </varlistentry>
@@ -665,10 +665,14 @@ SELECT 'doesn''t' AS ret
      the operation (<command>INSERT</>/<command>UPDATE</>/<command>DELETE</>) that fired the trigger will proceed
      normally. <literal>SKIP</> tells the trigger manager to silently suppress
      the operation for this row. If a list is returned, it tells PL/Tcl to
-     return a modified row to the trigger manager that will be inserted
-     instead of the one given in <varname>$NEW</>.  (This works for <command>INSERT</> and <command>UPDATE</>
-     only.) Needless to say that all this is only meaningful when the trigger
-     is <literal>BEFORE</> and <command>FOR EACH ROW</>; otherwise the return value is ignored.
+     return a modified row to the trigger manager. This is only meaningful
+     for row-level <literal>BEFORE</> <command>INSERT</> or <command>UPDATE</>
+     triggers for which the modified row will be inserted instead of the one
+     given in <varname>$NEW</>; or for row-level <literal>INSTEAD OF</>
+     <command>INSERT</> or <command>UPDATE</> triggers where the returned row
+     is used to support <command>INSERT RETURNING</> and
+     <command>UPDATE RETURNING</> commands. The return value is ignored for
+     other types of triggers.
     </para>
 
     <para>

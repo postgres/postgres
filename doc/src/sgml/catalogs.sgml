@@ -4243,7 +4243,7 @@
 
   <para>
    The catalog <structname>pg_seclabel</structname> stores security
-   labels on database objects.  See the 
+   labels on database objects.  See the
    <xref linkend="sql-security-label"> statement.
   </para>
 
@@ -4795,7 +4795,8 @@
   </indexterm>
 
   <para>
-   The catalog <structname>pg_trigger</structname> stores triggers on tables.
+   The catalog <structname>pg_trigger</structname> stores triggers on tables
+   and views.
    See <xref linkend="sql-createtrigger">
    for more information.
   </para>
@@ -4839,7 +4840,7 @@
       <entry><structfield>tgtype</structfield></entry>
       <entry><type>int2</type></entry>
       <entry></entry>
-      <entry>Bit mask identifying trigger conditions</entry>
+      <entry>Bit mask identifying trigger firing conditions</entry>
      </row>
 
      <row>
@@ -4956,7 +4957,7 @@
   <note>
    <para>
     <literal>pg_class.relhastriggers</literal>
-    must be true if a table has any triggers in this catalog.
+    must be true if a relation has any triggers in this catalog.
    </para>
   </note>
 

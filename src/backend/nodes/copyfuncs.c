@@ -3243,8 +3243,8 @@ _copyCreateTrigStmt(CreateTrigStmt *from)
 	COPY_NODE_FIELD(relation);
 	COPY_NODE_FIELD(funcname);
 	COPY_NODE_FIELD(args);
-	COPY_SCALAR_FIELD(before);
 	COPY_SCALAR_FIELD(row);
+	COPY_SCALAR_FIELD(timing);
 	COPY_SCALAR_FIELD(events);
 	COPY_NODE_FIELD(columns);
 	COPY_NODE_FIELD(whenClause);

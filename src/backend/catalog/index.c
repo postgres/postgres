@@ -824,8 +824,8 @@ index_create(Oid heapRelationId,
 				trigger->relation = heapRel;
 				trigger->funcname = SystemFuncName("unique_key_recheck");
 				trigger->args = NIL;
-				trigger->before = false;
 				trigger->row = true;
+				trigger->timing = TRIGGER_TYPE_AFTER;
 				trigger->events = TRIGGER_TYPE_INSERT | TRIGGER_TYPE_UPDATE;
 				trigger->columns = NIL;
 				trigger->whenClause = NULL;

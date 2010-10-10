@@ -76,7 +76,7 @@
 </para>
 
 <para>
-    When reading the <acronym>SQL</acronym> representations of the 
+    When reading the <acronym>SQL</acronym> representations of the
     query trees in this chapter it is necessary to be able to identify
     the parts the statement is broken into when it is in the query tree
     structure. The parts of a query tree are
@@ -132,11 +132,11 @@
     </para>
 
     <para>
-        <command>SELECT</command> queries normally don't have a result
-        relation. The special case of a <command>SELECT INTO</command> is
-        mostly identical to a <command>CREATE TABLE</command> followed by a
-        <literal>INSERT ... SELECT</literal> and is not discussed
-        separately here.
+        <command>SELECT</command> queries don't have a result
+        relation. (The special case of <command>SELECT INTO</command> is
+        mostly identical to <command>CREATE TABLE</command> followed by
+        <literal>INSERT ... SELECT</literal>, and is not discussed
+        separately here.)
     </para>
 
     <para>
@@ -166,11 +166,13 @@
     </para>
 
     <para>
-        <command>DELETE</command> commands don't need a target list
-        because they don't produce any result. In fact, the planner will
-        add a special <acronym>CTID</> entry to the empty target list, but
-        this is after the rule system and will be discussed later; for the
-        rule system, the target list is empty.
+        <command>DELETE</command> commands don't need a normal target list
+        because they don't produce any result.  Instead, the rule system
+        adds a special <acronym>CTID</> entry to the empty target list,
+        to allow the executor to find the row to be deleted.
+        (<acronym>CTID</> is added when the result relation is an ordinary
+        table.  If it is a view, a whole-row variable is added instead,
+        as described in <xref linkend="rules-views-update">.)
     </para>
 
     <para>
@@ -189,10 +191,11 @@
         For <command>UPDATE</command> commands, the target list
         describes the new rows that should replace the old ones. In the
         rule system, it contains just the expressions from the <literal>SET
-        column = expression</literal> part of the command.  The planner will handle
-        missing columns by inserting expressions that copy the values from
-        the old row into the new one. And it will add the special
-        <acronym>CTID</> entry just as for <command>DELETE</command>, too.
+        column = expression</literal> part of the command.  The planner will
+        handle missing columns by inserting expressions that copy the values
+        from the old row into the new one.  Just as for <command>DELETE</>,
+        the rule system adds a <acronym>CTID</> or whole-row variable so that
+        the executor can identify the old row to be updated.
     </para>
 
     <para>
@@ -283,7 +286,7 @@
 <programlisting>
 CREATE VIEW myview AS SELECT * FROM mytab;
 </programlisting>
-    
+
     compared against the two commands:
 
 <programlisting>
@@ -291,7 +294,7 @@ CREATE TABLE myview (<replaceable>same column list as mytab</replaceable>);
 CREATE RULE "_RETURN" AS ON SELECT TO myview DO INSTEAD
     SELECT * FROM mytab;
 </programlisting>
-    
+
     because this is exactly what the <command>CREATE VIEW</command>
     command does internally.  This has some side effects. One of them
     is that the information about a view in the
@@ -431,7 +434,7 @@ CREATE VIEW shoe_ready AS
     The action of the rule is one query tree that is a copy of the
     <command>SELECT</command> statement in the view creation command.
 </para>
-    
+
     <note>
     <para>
     The two extra range
@@ -512,7 +515,7 @@ SELECT s.sl_name, s.sl_avail,
 <para>
     To expand the view, the rewriter simply creates a subquery range-table
     entry containing the rule's action query tree, and substitutes this
-    range table entry for the original one that referenced the view.  The 
+    range table entry for the original one that referenced the view.  The
     resulting rewritten query tree is almost the same as if you had typed:
 
 <programlisting>
@@ -578,7 +581,7 @@ SELECT shoe_ready.shoename, shoe_ready.sh_avail,
  WHERE shoe_ready.total_avail &gt;= 2;
 </programlisting>
 
-    The first rule applied will be the one for the 
+    The first rule applied will be the one for the
     <literal>shoe_ready</literal> view and it results in the
     query tree:
 
@@ -656,7 +659,9 @@ SELECT shoe_ready.shoename, shoe_ready.sh_avail,
 <para>
     Two details of the query tree aren't touched in the description of
     view rules above. These are the command type and the result relation.
-    In fact, view rules don't need this information.
+    In fact, the command type is not needed by view rules, but the result
+    relation may affect the way in which the query rewriter works, because
+    special care needs to be taken if the result relation is a view.
 </para>
 
 <para>
@@ -718,22 +723,21 @@ UPDATE t1 SET a = t1.a, b = t2.b FROM t2 WHERE t1.a = t2.a;
 </programlisting>
 
     and thus the executor run over the join will produce exactly the
-    same result set as a:
+    same result set as:
 
 <programlisting>
 SELECT t1.a, t2.b FROM t1, t2 WHERE t1.a = t2.a;
 </programlisting>
-    
-    will do. But there is a little problem in
-    <command>UPDATE</command>: The executor does not care what the
-    results from the join it is doing are meant for. It just produces
-    a result set of rows. The difference that one is a
-    <command>SELECT</command> command and the other is an
-    <command>UPDATE</command> is handled in the caller of the
-    executor. The caller still knows (looking at the query tree) that
-    this is an <command>UPDATE</command>, and it knows that this
-    result should go into table <literal>t1</>. But which of the rows that are
-    there has to be replaced by the new row?
+
+    But there is a little problem in
+    <command>UPDATE</command>: the part of the executor plan that does
+    the join does not care what the results from the join are
+    meant for. It just produces a result set of rows. The fact that
+    one is a <command>SELECT</command> command and the other is an
+    <command>UPDATE</command> is handled higher up in the executor, where
+    it knows that this is an <command>UPDATE</command>, and it knows that
+    this result should go into table <literal>t1</>. But which of the rows
+    that are there has to be replaced by the new row?
 </para>
 
 <para>
@@ -750,7 +754,7 @@ SELECT t1.a, t2.b FROM t1, t2 WHERE t1.a = t2.a;
 <programlisting>
 SELECT t1.a, t2.b, t1.ctid FROM t1, t2 WHERE t1.a = t2.a;
 </programlisting>
-    
+
     Now another detail of <productname>PostgreSQL</productname> enters
     the stage. Old table rows aren't overwritten, and this
     is why <command>ROLLBACK</command> is fast. In an <command>UPDATE</command>,
@@ -759,7 +763,8 @@ SELECT t1.a, t2.b, t1.ctid FROM t1, t2 WHERE t1.a = t2.a;
     <acronym>CTID</> pointed to, the <literal>cmax</> and
     <literal>xmax</> entries are set to the current command counter
     and current transaction ID. Thus the old row is hidden, and after
-    the transaction commits the vacuum cleaner can really remove it.
+    the transaction commits the vacuum cleaner can eventually remove
+    the dead row.
 </para>
 
 <para>
@@ -803,16 +808,57 @@ SELECT t1.a, t2.b, t1.ctid FROM t1, t2 WHERE t1.a = t2.a;
 <para>
     What happens if a view is named as the target relation for an
     <command>INSERT</command>, <command>UPDATE</command>, or
-    <command>DELETE</command>?  After doing the substitutions
-    described above, we will have a query tree in which the result
-    relation points at a subquery range-table entry.  This will not
-    work, so the rewriter throws an error if it sees it has produced
-    such a thing.
+    <command>DELETE</command>?  Simply doing the substitutions
+    described above would give a query tree in which the result
+    relation points at a subquery range-table entry, which will not
+    work.  Instead, the rewriter assumes that the operation will be
+    handled by an <literal>INSTEAD OF</> trigger on the view.
+    (If there is no such trigger, the executor will throw an error
+    when execution starts.)  Rewriting works slightly differently
+    in this case.  For <command>INSERT</command>, the rewriter does
+    nothing at all with the view, leaving it as the result relation
+    for the query.  For <command>UPDATE</command> and
+    <command>DELETE</command>, it's still necessary to expand the
+    view query to produce the <quote>old</> rows that the command will
+    attempt to update or delete.  So the view is expanded as normal,
+    but another unexpanded range-table entry is added to the query
+    to represent the view in its capacity as the result relation.
 </para>
 
 <para>
-    To change this, we can define rules that modify the behavior of
-    these kinds of commands. This is the topic of the next section.
+    The problem that now arises is how to identify the rows to be
+    updated in the view. Recall that when the result relation
+    is a table, a special <acronym>CTID</> entry is added to the target
+    list to identify the physical locations of the rows to be updated.
+    This does not work if the result relation is a view, because a view
+    does not have any <acronym>CTID</>, since its rows do not have
+    actual physical locations. Instead, for an <command>UPDATE</command>
+    or <command>DELETE</command> operation, a special <literal>wholerow</>
+    entry is added to the target list, which expands to include all
+    columns from the view. The executor uses this value to supply the
+    <quote>old</> row to the <literal>INSTEAD OF</> trigger.  It is
+    up to the trigger to work out what to update based on the old and
+    new row values.
+</para>
+
+<para>
+    If there are no <literal>INSTEAD OF</> triggers to update the view,
+    the executor will throw an error, because it cannot automatically
+    update a view by itself. To change this, we can define rules that
+    modify the behavior of <command>INSERT</command>,
+    <command>UPDATE</command>, and <command>DELETE</command> commands on
+    a view. These rules will rewrite the command, typically into a command
+    that updates one or more tables, rather than views. That is the topic
+    of the next section.
+</para>
+
+<para>
+    Note that rules are evaluated first, rewriting the original query
+    before it is planned and executed. Therefore, if a view has
+    <literal>INSTEAD OF</> triggers as well as rules on <command>INSERT</>,
+    <command>UPDATE</>, or <command>DELETE</>, then the rules will be
+    evaluated first, and depending on the result, the triggers may not be
+    used at all.
 </para>
 </sect2>
 
@@ -1383,7 +1429,7 @@ SELECT * FROM shoelace_arrive;
 </programlisting>
 
     Take a quick look at the current data:
-    
+
 <programlisting>
 SELECT * FROM shoelace;
 
@@ -1522,8 +1568,8 @@ SELECT s.sl_name,
    AND shoelace_data.sl_name = s.sl_name
    AND (s.sl_avail + shoelace_arrive.arr_quant) &lt;&gt; s.sl_avail;
 </programlisting>
-    
-    After that the rule system runs out of rules and returns the 
+
+    After that the rule system runs out of rules and returns the
     generated query trees.
    </para>
 
@@ -1542,7 +1588,7 @@ SELECT s.sl_name,
  WHERE s.sl_name = shoelace_arrive.arr_name
    AND shoelace_data.sl_name = s.sl_name
    AND s.sl_avail + shoelace_arrive.arr_quant &lt;&gt; s.sl_avail;
-           
+
 UPDATE shoelace_data
    SET sl_avail = shoelace_data.sl_avail + shoelace_arrive.arr_quant
   FROM shoelace_arrive shoelace_arrive,
@@ -1675,7 +1721,7 @@ SELECT * FROM shoelace;
     in total uses 4 nesting/joined views, where one of them
     itself has a subquery qualification containing a view
     and where calculated view columns are used,
-    gets rewritten into 
+    gets rewritten into
     one single query tree that deletes the requested data
     from a real table.
 </para>
@@ -1783,12 +1829,13 @@ CREATE VIEW phone_number AS
     SELECT person, phone FROM phone_data WHERE phone NOT LIKE '412%';
 </programlisting>
     This view might seem secure, since the rule system will rewrite any
-	<command>SELECT</command> from <literal>phone_number</> into a 
+    <command>SELECT</command> from <literal>phone_number</> into a
     <command>SELECT</command> from <literal>phone_data</> and add the
     qualification that only entries where <literal>phone</> does not begin
     with 412 are wanted.  But if the user can create his or her own functions,
     it is not difficult to convince the planner to execute the user-defined
     function prior to the <function>NOT LIKE</function> expression.
+    For example:
 <programlisting>
 CREATE FUNCTION tricky(text, text) RETURNS bool AS $$
 BEGIN
@@ -1796,6 +1843,7 @@ BEGIN
     RETURN true;
 END
 $$ LANGUAGE plpgsql COST 0.0000000000000000000001;
+
 SELECT * FROM phone_number WHERE tricky(person, phone);
 </programlisting>
     Every person and phone number in the <literal>phone_data</> table will be
@@ -1803,8 +1851,8 @@ SELECT * FROM phone_number WHERE tricky(person, phone);
     execute the inexpensive <function>tricky</function> function before the
     more expensive <function>NOT LIKE</function>.  Even if the user is
     prevented from defining new functions, built-in functions can be used in
-    similar attacks.  (For example, casting functions include their inputs in
-    the error messages they produce.)
+    similar attacks.  (For example, most casting functions include their
+    input values in the error messages they produce.)
 </para>
 
 <para>
@@ -1906,19 +1954,21 @@ SELECT * FROM phone_number WHERE tricky(person, phone);
 </para>
 
 <para>
-    On the other hand, a trigger cannot be created on views because
-    there is no real data in a view relation;  however INSERT, UPDATE,
-    and DELETE rules can be created on views.
+    In this chapter, we focused on using rules to update views. All of
+    the update rule examples in this chapter can also be implemented
+    using <literal>INSTEAD OF</> triggers on the views.  Writing such
+    triggers is often easier than writing rules, particularly if complex
+    logic is required to perform the update.
 </para>
 
 <para>
     For the things that can be implemented by both, which is best
     depends on the usage of the database.
-    A trigger is fired for any affected row once. A rule manipulates
+    A trigger is fired once for each affected row. A rule modifies
     the query or generates an additional query. So if many
     rows are affected in one statement, a rule issuing one extra
     command is likely to be faster than a trigger that is
-    called for every single row and must execute its operations
+    called for every single row and must re-determine what to do
     many times.  However, the trigger approach is conceptually far
     simpler than the rule approach, and is easier for novices to get right.
 </para>
@@ -1961,7 +2011,7 @@ CREATE RULE computer_del AS ON DELETE TO computer
 
    <para>
     Now we look at different types of deletes. In the case of a:
-    
+
 <programlisting>
 DELETE FROM computer WHERE hostname = 'mypc.local.net';
 </programlisting>

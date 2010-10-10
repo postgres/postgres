@@ -21,7 +21,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-CREATE TRIGGER <replaceable class="PARAMETER">name</replaceable> { BEFORE | AFTER } { <replaceable class="PARAMETER">event</replaceable> [ OR ... ] }
+CREATE TRIGGER <replaceable class="PARAMETER">name</replaceable> { BEFORE | AFTER | INSTEAD OF } { <replaceable class="PARAMETER">event</replaceable> [ OR ... ] }
     ON <replaceable class="PARAMETER">table</replaceable> [ FOR [ EACH ] { ROW | STATEMENT } ]
     [ WHEN ( <replaceable class="parameter">condition</replaceable> ) ]
     EXECUTE PROCEDURE <replaceable class="PARAMETER">function_name</replaceable> ( <replaceable class="PARAMETER">arguments</replaceable> )
@@ -33,21 +33,22 @@ CREATE TRIGGER <replaceable class="PARAMETER">name</replaceable> { BEFORE | AFTE
 
   <para>
    <command>CREATE TRIGGER</command> creates a new trigger.  The
-   trigger will be associated with the specified table and will
+   trigger will be associated with the specified table or view and will
    execute the specified function <replaceable
    class="parameter">function_name</replaceable> when certain events occur.
   </para>
 
   <para>
-   The trigger can be specified to fire either before the
+   The trigger can be specified to fire before the
    operation is attempted on a row (before constraints are checked and
    the <command>INSERT</command>, <command>UPDATE</command>, or
-   <command>DELETE</command> is attempted) or after the operation has
+   <command>DELETE</command> is attempted); or after the operation has
    completed (after constraints are checked and the
    <command>INSERT</command>, <command>UPDATE</command>, or
-   <command>DELETE</command> has completed). If the trigger fires
-   before the event, the trigger can skip the operation for the
-   current row, or change the row being inserted (for
+   <command>DELETE</command> has completed); or instead of the operation
+   (in the case of inserts, updates or deletes on a view).
+   If the trigger fires before or instead of the event, the trigger can skip
+   the operation for the current row, or change the row being inserted (for
    <command>INSERT</command> and <command>UPDATE</command> operations
    only). If the trigger fires after the event, all changes, including
    the effects of other triggers, are <quote>visible</quote>
@@ -68,10 +69,70 @@ CREATE TRIGGER <replaceable class="PARAMETER">name</replaceable> { BEFORE | AFTE
   </para>
 
   <para>
-   In addition, triggers may be defined to fire for a
+   Triggers that are specified to fire <literal>INSTEAD OF</> the trigger
+   event must be marked <literal>FOR EACH ROW</>, and can only be defined
+   on views. <literal>BEFORE</> and <literal>AFTER</> triggers on a view
+   must be marked as <literal>FOR EACH STATEMENT</>.
+  </para>
+
+  <para>
+   In addition, triggers may be defined to fire for
    <command>TRUNCATE</command>, though only
    <literal>FOR EACH STATEMENT</literal>.
   </para>
+
+  <para>
+   The following table summarizes which types of triggers may be used on
+   tables and views:
+  </para>
+
+  <informaltable id="supported-trigger-types">
+   <tgroup cols="4">
+    <thead>
+     <row>
+      <entry>When</entry>
+      <entry>Event</entry>
+      <entry>Row-level</entry>
+      <entry>Statement-level</entry>
+     </row>
+    </thead>
+    <tbody>
+     <row>
+      <entry align="center" morerows="1"><literal>BEFORE</></entry>
+      <entry align="center"><command>INSERT</>/<command>UPDATE</>/<command>DELETE</></entry>
+      <entry align="center">Tables</entry>
+      <entry align="center">Tables and views</entry>
+     </row>
+     <row>
+      <entry align="center"><command>TRUNCATE</></entry>
+      <entry align="center">&mdash;</entry>
+      <entry align="center">Tables</entry>
+     </row>
+     <row>
+      <entry align="center" morerows="1"><literal>AFTER</></entry>
+      <entry align="center"><command>INSERT</>/<command>UPDATE</>/<command>DELETE</></entry>
+      <entry align="center">Tables</entry>
+      <entry align="center">Tables and views</entry>
+     </row>
+     <row>
+      <entry align="center"><command>TRUNCATE</></entry>
+      <entry align="center">&mdash;</entry>
+      <entry align="center">Tables</entry>
+     </row>
+     <row>
+      <entry align="center" morerows="1"><literal>INSTEAD OF</></entry>
+      <entry align="center"><command>INSERT</>/<command>UPDATE</>/<command>DELETE</></entry>
+      <entry align="center">Views</entry>
+      <entry align="center">&mdash;</entry>
+     </row>
+     <row>
+      <entry align="center"><command>TRUNCATE</></entry>
+      <entry align="center">&mdash;</entry>
+      <entry align="center">&mdash;</entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </informaltable>
 
   <para>
    Also, a trigger definition can specify a Boolean <literal>WHEN</>
@@ -116,10 +177,11 @@ CREATE TRIGGER <replaceable class="PARAMETER">name</replaceable> { BEFORE | AFTE
    <varlistentry>
     <term><literal>BEFORE</literal></term>
     <term><literal>AFTER</literal></term>
+    <term><literal>INSTEAD OF</literal></term>
     <listitem>
      <para>
-      Determines whether the function is called before or after the
-      event.
+      Determines whether the function is called before, after, or instead of
+      the event.
      </para>
     </listitem>
    </varlistentry>
@@ -143,6 +205,10 @@ UPDATE OF <replaceable>column_name1</replaceable> [, <replaceable>column_name2</
       The trigger will only fire if at least one of the listed columns
       is mentioned as a target of the update.
      </para>
+
+     <para>
+      <literal>UPDATE INSTEAD OF</> triggers do not support lists of columns.
+     </para>
     </listitem>
    </varlistentry>
 
@@ -150,7 +216,7 @@ UPDATE OF <replaceable>column_name1</replaceable> [, <replaceable>column_name2</
     <term><replaceable class="parameter">table</replaceable></term>
     <listitem>
      <para>
-      The name (optionally schema-qualified) of the table the trigger
+      The name (optionally schema-qualified) of the table or view the trigger
       is for.
      </para>
     </listitem>
@@ -186,6 +252,11 @@ UPDATE OF <replaceable>column_name1</replaceable> [, <replaceable>column_name2</
       class="parameter">column_name</replaceable></literal> respectively.
       Of course, <literal>INSERT</> triggers cannot refer to <literal>OLD</>
       and <literal>DELETE</> triggers cannot refer to <literal>NEW</>.
+     </para>
+
+     <para>
+      <literal>INSTEAD OF</> triggers do not support <literal>WHEN</>
+      conditions.
      </para>
 
      <para>
@@ -326,6 +397,16 @@ CREATE TRIGGER log_update
     WHEN (OLD.* IS DISTINCT FROM NEW.*)
     EXECUTE PROCEDURE log_account_update();
 </programlisting>
+
+   Execute the function <function>view_insert_row</> for each row to insert
+   rows into the tables underlying a view:
+
+<programlisting>
+CREATE TRIGGER view_insert
+    INSTEAD OF INSERT ON my_view
+    FOR EACH ROW
+    EXECUTE PROCEDURE view_insert_row();
+</programlisting>
   </para>
 
   <para>
@@ -396,7 +477,8 @@ CREATE TRIGGER log_update
 
   <para>
    The ability to fire triggers for <command>TRUNCATE</command> is a
-   <productname>PostgreSQL</> extension of the SQL standard.
+   <productname>PostgreSQL</> extension of the SQL standard, as is the
+   ability to define statement-level triggers on views.
   </para>
 
  </refsect1>

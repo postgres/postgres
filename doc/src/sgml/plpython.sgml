@@ -609,7 +609,7 @@ CREATE TYPE greeting AS (
   who text
 );
 </programlisting>
-   
+
    A set result can be returned from a:
 
    <variablelist>
@@ -751,8 +751,7 @@ $$ LANGUAGE plpythonu;
       <para>
        contains the event as a string:
        <literal>INSERT</>, <literal>UPDATE</>,
-       <literal>DELETE</>, <literal>TRUNCATE</>,
-       or <literal>UNKNOWN</>.
+       <literal>DELETE</>, or <literal>TRUNCATE</>.
       </para>
      </listitem>
     </varlistentry>
@@ -761,8 +760,8 @@ $$ LANGUAGE plpythonu;
      <term><literal>TD["when"]</></term>
      <listitem>
       <para>
-       contains one of <literal>BEFORE</>, <literal>AFTER</>,
-       or <literal>UNKNOWN</>.
+       contains one of <literal>BEFORE</>, <literal>AFTER</>, or
+       <literal>INSTEAD OF</>.
       </para>
      </listitem>
     </varlistentry>
@@ -771,8 +770,7 @@ $$ LANGUAGE plpythonu;
      <term><literal>TD["level"]</></term>
      <listitem>
       <para>
-       contains one of <literal>ROW</>,
-       <literal>STATEMENT</>, or <literal>UNKNOWN</>.
+       contains <literal>ROW</> or <literal>STATEMENT</>.
       </para>
      </listitem>
     </varlistentry>
@@ -838,12 +836,14 @@ $$ LANGUAGE plpythonu;
   </para>
 
   <para>
-   If <literal>TD["when"]</literal> is <literal>BEFORE</> and
+   If <literal>TD["when"]</literal> is <literal>BEFORE</> or
+   <literal>INSTEAD OF</> and
    <literal>TD["level"]</literal> is <literal>ROW</>, you can
    return <literal>None</literal> or <literal>"OK"</literal> from the
    Python function to indicate the row is unmodified,
-   <literal>"SKIP"</> to abort the event, or <literal>"MODIFY"</> to
-   indicate you've modified the row.
+   <literal>"SKIP"</> to abort the event, or if <literal>TD["event"]</>
+   is <command>INSERT</> or <command>UPDATE</> you can return
+   <literal>"MODIFY"</> to indicate you've modified the new row.
    Otherwise the return value is ignored.
   </para>
  </sect1>

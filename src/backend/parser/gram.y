@@ -246,8 +246,8 @@ static RangeVar *makeRangeVarFromAnyName(List *names, int position, core_yyscan_
 %type <str>		OptSchemaName
 %type <list>	OptSchemaEltList
 
-%type <boolean> TriggerActionTime TriggerForSpec opt_trusted opt_restart_seqs
-
+%type <boolean> TriggerForSpec TriggerForType
+%type <ival>	TriggerActionTime
 %type <list>	TriggerEvents TriggerOneEvent
 %type <value>	TriggerFuncArg
 %type <node>	TriggerWhen
@@ -311,7 +311,7 @@ static RangeVar *makeRangeVarFromAnyName(List *names, int position, core_yyscan_
 %type <fun_param_mode> arg_class
 %type <typnam>	func_return func_type
 
-%type <boolean>  TriggerForType OptTemp
+%type <boolean>  OptTemp opt_trusted opt_restart_seqs
 %type <oncommit> OnCommitOption
 
 %type <node>	for_locking_item
@@ -3448,8 +3448,8 @@ CreateTrigStmt:
 					n->relation = $7;
 					n->funcname = $12;
 					n->args = $14;
-					n->before = $4;
 					n->row = $8;
+					n->timing = $4;
 					n->events = intVal(linitial($5));
 					n->columns = (List *) lsecond($5);
 					n->whenClause = $9;
@@ -3469,8 +3469,8 @@ CreateTrigStmt:
 					n->relation = $8;
 					n->funcname = $17;
 					n->args = $19;
-					n->before = FALSE;
 					n->row = TRUE;
+					n->timing = TRIGGER_TYPE_AFTER;
 					n->events = intVal(linitial($6));
 					n->columns = (List *) lsecond($6);
 					n->whenClause = $14;
@@ -3483,8 +3483,9 @@ CreateTrigStmt:
 		;
 
 TriggerActionTime:
-			BEFORE									{ $$ = TRUE; }
-			| AFTER									{ $$ = FALSE; }
+			BEFORE								{ $$ = TRIGGER_TYPE_BEFORE; }
+			| AFTER								{ $$ = TRIGGER_TYPE_AFTER; }
+			| INSTEAD OF						{ $$ = TRIGGER_TYPE_INSTEAD; }
 		;
 
 TriggerEvents:
@@ -3525,7 +3526,7 @@ TriggerOneEvent:
 		;
 
 TriggerForSpec:
-			FOR TriggerForOpt TriggerForType
+			FOR TriggerForOptEach TriggerForType
 				{
 					$$ = $3;
 				}
@@ -3539,7 +3540,7 @@ TriggerForSpec:
 				}
 		;
 
-TriggerForOpt:
+TriggerForOptEach:
 			EACH									{}
 			| /*EMPTY*/								{}
 		;

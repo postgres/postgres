@@ -426,7 +426,7 @@ T211	Basic trigger capability	06	Support for run-time rules for the interaction 
 T211	Basic trigger capability	07	TRIGGER privilege	YES	
 T211	Basic trigger capability	08	Multiple triggers for the same event are executed in the order in which they were created in the catalog	NO	intentionally omitted
 T212	Enhanced trigger capability			YES	
-T213	INSTEAD OF triggers			NO	
+T213	INSTEAD OF triggers			YES	
 T231	Sensitive cursors			YES	
 T241	START TRANSACTION statement			YES	
 T251	SET TRANSACTION statement: LOCAL option			NO	

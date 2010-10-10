@@ -999,7 +999,9 @@ $$ LANGUAGE plperl;
      <term><literal>$_TD-&gt;{when}</literal></term>
      <listitem>
       <para>
-       When the trigger was called: <literal>BEFORE</literal>, <literal>AFTER</literal>, or <literal>UNKNOWN</literal>
+       When the trigger was called: <literal>BEFORE</literal>,
+       <literal>AFTER</literal>, <literal>INSTEAD OF</literal>, or
+       <literal>UNKNOWN</literal>
       </para>
      </listitem>
     </varlistentry>

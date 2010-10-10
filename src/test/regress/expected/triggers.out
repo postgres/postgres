@@ -791,3 +791,628 @@ SELECT * FROM min_updates_test_oids;
 
 DROP TABLE min_updates_test;
 DROP TABLE min_updates_test_oids;
+--
+-- Test triggers on views
+--
+CREATE VIEW main_view AS SELECT a, b FROM main_table;
+-- Updates should fail without rules or triggers
+INSERT INTO main_view VALUES (1,2);
+ERROR:  cannot insert into view "main_view"
+HINT:  You need an unconditional ON INSERT DO INSTEAD rule or an INSTEAD OF INSERT trigger.
+UPDATE main_view SET b = 20 WHERE a = 50;
+ERROR:  cannot update view "main_view"
+HINT:  You need an unconditional ON UPDATE DO INSTEAD rule or an INSTEAD OF UPDATE trigger.
+DELETE FROM main_view WHERE a = 50;
+ERROR:  cannot delete from view "main_view"
+HINT:  You need an unconditional ON DELETE DO INSTEAD rule or an INSTEAD OF DELETE trigger.
+-- Should fail even when there are no matching rows
+DELETE FROM main_view WHERE a = 51;
+ERROR:  cannot delete from view "main_view"
+HINT:  You need an unconditional ON DELETE DO INSTEAD rule or an INSTEAD OF DELETE trigger.
+-- VIEW trigger function
+CREATE OR REPLACE FUNCTION view_trigger() RETURNS trigger
+LANGUAGE plpgsql AS $$
+declare
+    argstr text := '';
+begin
+    for i in 0 .. TG_nargs - 1 loop
+        if i > 0 then
+            argstr := argstr || ', ';
+        end if;
+        argstr := argstr || TG_argv[i];
+    end loop;
+
+    raise notice '% % % % (%)', TG_RELNAME, TG_WHEN, TG_OP, TG_LEVEL, argstr;
+
+    if TG_LEVEL = 'ROW' then
+        if TG_OP = 'INSERT' then
+            raise NOTICE 'NEW: %', NEW;
+            INSERT INTO main_table VALUES (NEW.a, NEW.b);
+            RETURN NEW;
+        end if;
+
+        if TG_OP = 'UPDATE' then
+            raise NOTICE 'OLD: %, NEW: %', OLD, NEW;
+            UPDATE main_table SET a = NEW.a, b = NEW.b WHERE a = OLD.a AND b = OLD.b;
+            if NOT FOUND then RETURN NULL; end if;
+            RETURN NEW;
+        end if;
+
+        if TG_OP = 'DELETE' then
+            raise NOTICE 'OLD: %', OLD;
+            DELETE FROM main_table WHERE a = OLD.a AND b = OLD.b;
+            if NOT FOUND then RETURN NULL; end if;
+            RETURN OLD;
+        end if;
+    end if;
+
+    RETURN NULL;
+end;
+$$;
+-- Before row triggers aren't allowed on views
+CREATE TRIGGER invalid_trig BEFORE INSERT ON main_view
+FOR EACH ROW EXECUTE PROCEDURE trigger_func('before_ins_row');
+ERROR:  "main_view" is a view
+DETAIL:  Views cannot have row-level BEFORE or AFTER triggers.
+CREATE TRIGGER invalid_trig BEFORE UPDATE ON main_view
+FOR EACH ROW EXECUTE PROCEDURE trigger_func('before_upd_row');
+ERROR:  "main_view" is a view
+DETAIL:  Views cannot have row-level BEFORE or AFTER triggers.
+CREATE TRIGGER invalid_trig BEFORE DELETE ON main_view
+FOR EACH ROW EXECUTE PROCEDURE trigger_func('before_del_row');
+ERROR:  "main_view" is a view
+DETAIL:  Views cannot have row-level BEFORE or AFTER triggers.
+-- After row triggers aren't allowed on views
+CREATE TRIGGER invalid_trig AFTER INSERT ON main_view
+FOR EACH ROW EXECUTE PROCEDURE trigger_func('before_ins_row');
+ERROR:  "main_view" is a view
+DETAIL:  Views cannot have row-level BEFORE or AFTER triggers.
+CREATE TRIGGER invalid_trig AFTER UPDATE ON main_view
+FOR EACH ROW EXECUTE PROCEDURE trigger_func('before_upd_row');
+ERROR:  "main_view" is a view
+DETAIL:  Views cannot have row-level BEFORE or AFTER triggers.
+CREATE TRIGGER invalid_trig AFTER DELETE ON main_view
+FOR EACH ROW EXECUTE PROCEDURE trigger_func('before_del_row');
+ERROR:  "main_view" is a view
+DETAIL:  Views cannot have row-level BEFORE or AFTER triggers.
+-- Truncate triggers aren't allowed on views
+CREATE TRIGGER invalid_trig BEFORE TRUNCATE ON main_view
+EXECUTE PROCEDURE trigger_func('before_tru_row');
+ERROR:  "main_view" is a view
+DETAIL:  Views cannot have TRUNCATE triggers.
+CREATE TRIGGER invalid_trig AFTER TRUNCATE ON main_view
+EXECUTE PROCEDURE trigger_func('before_tru_row');
+ERROR:  "main_view" is a view
+DETAIL:  Views cannot have TRUNCATE triggers.
+-- INSTEAD OF triggers aren't allowed on tables
+CREATE TRIGGER invalid_trig INSTEAD OF INSERT ON main_table
+FOR EACH ROW EXECUTE PROCEDURE view_trigger('instead_of_ins');
+ERROR:  "main_table" is a table
+DETAIL:  Tables cannot have INSTEAD OF triggers.
+CREATE TRIGGER invalid_trig INSTEAD OF UPDATE ON main_table
+FOR EACH ROW EXECUTE PROCEDURE view_trigger('instead_of_upd');
+ERROR:  "main_table" is a table
+DETAIL:  Tables cannot have INSTEAD OF triggers.
+CREATE TRIGGER invalid_trig INSTEAD OF DELETE ON main_table
+FOR EACH ROW EXECUTE PROCEDURE view_trigger('instead_of_del');
+ERROR:  "main_table" is a table
+DETAIL:  Tables cannot have INSTEAD OF triggers.
+-- Don't support WHEN clauses with INSTEAD OF triggers
+CREATE TRIGGER invalid_trig INSTEAD OF UPDATE ON main_view
+FOR EACH ROW WHEN (OLD.a <> NEW.a) EXECUTE PROCEDURE view_trigger('instead_of_upd');
+ERROR:  INSTEAD OF triggers cannot have WHEN conditions
+-- Don't support column-level INSTEAD OF triggers
+CREATE TRIGGER invalid_trig INSTEAD OF UPDATE OF a ON main_view
+FOR EACH ROW EXECUTE PROCEDURE view_trigger('instead_of_upd');
+ERROR:  INSTEAD OF triggers cannot have column lists
+-- Don't support statement-level INSTEAD OF triggers
+CREATE TRIGGER invalid_trig INSTEAD OF UPDATE ON main_view
+EXECUTE PROCEDURE view_trigger('instead_of_upd');
+ERROR:  INSTEAD OF triggers must be FOR EACH ROW
+-- Valid INSTEAD OF triggers
+CREATE TRIGGER instead_of_insert_trig INSTEAD OF INSERT ON main_view
+FOR EACH ROW EXECUTE PROCEDURE view_trigger('instead_of_ins');
+CREATE TRIGGER instead_of_update_trig INSTEAD OF UPDATE ON main_view
+FOR EACH ROW EXECUTE PROCEDURE view_trigger('instead_of_upd');
+CREATE TRIGGER instead_of_delete_trig INSTEAD OF DELETE ON main_view
+FOR EACH ROW EXECUTE PROCEDURE view_trigger('instead_of_del');
+-- Valid BEFORE statement VIEW triggers
+CREATE TRIGGER before_ins_stmt_trig BEFORE INSERT ON main_view
+FOR EACH STATEMENT EXECUTE PROCEDURE view_trigger('before_view_ins_stmt');
+CREATE TRIGGER before_upd_stmt_trig BEFORE UPDATE ON main_view
+FOR EACH STATEMENT EXECUTE PROCEDURE view_trigger('before_view_upd_stmt');
+CREATE TRIGGER before_del_stmt_trig BEFORE DELETE ON main_view
+FOR EACH STATEMENT EXECUTE PROCEDURE view_trigger('before_view_del_stmt');
+-- Valid AFTER statement VIEW triggers
+CREATE TRIGGER after_ins_stmt_trig AFTER INSERT ON main_view
+FOR EACH STATEMENT EXECUTE PROCEDURE view_trigger('after_view_ins_stmt');
+CREATE TRIGGER after_upd_stmt_trig AFTER UPDATE ON main_view
+FOR EACH STATEMENT EXECUTE PROCEDURE view_trigger('after_view_upd_stmt');
+CREATE TRIGGER after_del_stmt_trig AFTER DELETE ON main_view
+FOR EACH STATEMENT EXECUTE PROCEDURE view_trigger('after_view_del_stmt');
+\set QUIET false
+-- Insert into view using trigger
+INSERT INTO main_view VALUES (20, 30);
+NOTICE:  main_view BEFORE INSERT STATEMENT (before_view_ins_stmt)
+NOTICE:  main_view INSTEAD OF INSERT ROW (instead_of_ins)
+NOTICE:  NEW: (20,30)
+NOTICE:  trigger_func(before_ins_stmt) called: action = INSERT, when = BEFORE, level = STATEMENT
+CONTEXT:  SQL statement "INSERT INTO main_table VALUES (NEW.a, NEW.b)"
+PL/pgSQL function "view_trigger" line 17 at SQL statement
+NOTICE:  trigger_func(after_ins_stmt) called: action = INSERT, when = AFTER, level = STATEMENT
+CONTEXT:  SQL statement "INSERT INTO main_table VALUES (NEW.a, NEW.b)"
+PL/pgSQL function "view_trigger" line 17 at SQL statement
+NOTICE:  main_view AFTER INSERT STATEMENT (after_view_ins_stmt)
+INSERT 0 1
+INSERT INTO main_view VALUES (21, 31) RETURNING a, b;
+NOTICE:  main_view BEFORE INSERT STATEMENT (before_view_ins_stmt)
+NOTICE:  main_view INSTEAD OF INSERT ROW (instead_of_ins)
+NOTICE:  NEW: (21,31)
+NOTICE:  trigger_func(before_ins_stmt) called: action = INSERT, when = BEFORE, level = STATEMENT
+CONTEXT:  SQL statement "INSERT INTO main_table VALUES (NEW.a, NEW.b)"
+PL/pgSQL function "view_trigger" line 17 at SQL statement
+NOTICE:  trigger_func(after_ins_stmt) called: action = INSERT, when = AFTER, level = STATEMENT
+CONTEXT:  SQL statement "INSERT INTO main_table VALUES (NEW.a, NEW.b)"
+PL/pgSQL function "view_trigger" line 17 at SQL statement
+NOTICE:  main_view AFTER INSERT STATEMENT (after_view_ins_stmt)
+ a  | b  
+----+----
+ 21 | 31
+(1 row)
+
+INSERT 0 1
+-- Table trigger will prevent updates
+UPDATE main_view SET b = 31 WHERE a = 20;
+NOTICE:  main_view BEFORE UPDATE STATEMENT (before_view_upd_stmt)
+NOTICE:  main_view INSTEAD OF UPDATE ROW (instead_of_upd)
+NOTICE:  OLD: (20,30), NEW: (20,31)
+NOTICE:  trigger_func(before_upd_a_stmt) called: action = UPDATE, when = BEFORE, level = STATEMENT
+CONTEXT:  SQL statement "UPDATE main_table SET a = NEW.a, b = NEW.b WHERE a = OLD.a AND b = OLD.b"
+PL/pgSQL function "view_trigger" line 23 at SQL statement
+NOTICE:  trigger_func(before_upd_a_row) called: action = UPDATE, when = BEFORE, level = ROW
+CONTEXT:  SQL statement "UPDATE main_table SET a = NEW.a, b = NEW.b WHERE a = OLD.a AND b = OLD.b"
+PL/pgSQL function "view_trigger" line 23 at SQL statement
+NOTICE:  trigger_func(after_upd_b_stmt) called: action = UPDATE, when = AFTER, level = STATEMENT
+CONTEXT:  SQL statement "UPDATE main_table SET a = NEW.a, b = NEW.b WHERE a = OLD.a AND b = OLD.b"
+PL/pgSQL function "view_trigger" line 23 at SQL statement
+NOTICE:  trigger_func(after_upd_stmt) called: action = UPDATE, when = AFTER, level = STATEMENT
+CONTEXT:  SQL statement "UPDATE main_table SET a = NEW.a, b = NEW.b WHERE a = OLD.a AND b = OLD.b"
+PL/pgSQL function "view_trigger" line 23 at SQL statement
+NOTICE:  main_view AFTER UPDATE STATEMENT (after_view_upd_stmt)
+UPDATE 0
+UPDATE main_view SET b = 32 WHERE a = 21 AND b = 31 RETURNING a, b;
+NOTICE:  main_view BEFORE UPDATE STATEMENT (before_view_upd_stmt)
+NOTICE:  main_view INSTEAD OF UPDATE ROW (instead_of_upd)
+NOTICE:  OLD: (21,31), NEW: (21,32)
+NOTICE:  trigger_func(before_upd_a_stmt) called: action = UPDATE, when = BEFORE, level = STATEMENT
+CONTEXT:  SQL statement "UPDATE main_table SET a = NEW.a, b = NEW.b WHERE a = OLD.a AND b = OLD.b"
+PL/pgSQL function "view_trigger" line 23 at SQL statement
+NOTICE:  trigger_func(before_upd_a_row) called: action = UPDATE, when = BEFORE, level = ROW
+CONTEXT:  SQL statement "UPDATE main_table SET a = NEW.a, b = NEW.b WHERE a = OLD.a AND b = OLD.b"
+PL/pgSQL function "view_trigger" line 23 at SQL statement
+NOTICE:  trigger_func(after_upd_b_stmt) called: action = UPDATE, when = AFTER, level = STATEMENT
+CONTEXT:  SQL statement "UPDATE main_table SET a = NEW.a, b = NEW.b WHERE a = OLD.a AND b = OLD.b"
+PL/pgSQL function "view_trigger" line 23 at SQL statement
+NOTICE:  trigger_func(after_upd_stmt) called: action = UPDATE, when = AFTER, level = STATEMENT
+CONTEXT:  SQL statement "UPDATE main_table SET a = NEW.a, b = NEW.b WHERE a = OLD.a AND b = OLD.b"
+PL/pgSQL function "view_trigger" line 23 at SQL statement
+NOTICE:  main_view AFTER UPDATE STATEMENT (after_view_upd_stmt)
+ a | b 
+---+---
+(0 rows)
+
+UPDATE 0
+-- Remove table trigger to allow updates
+DROP TRIGGER before_upd_a_row_trig ON main_table;
+DROP TRIGGER
+UPDATE main_view SET b = 31 WHERE a = 20;
+NOTICE:  main_view BEFORE UPDATE STATEMENT (before_view_upd_stmt)
+NOTICE:  main_view INSTEAD OF UPDATE ROW (instead_of_upd)
+NOTICE:  OLD: (20,30), NEW: (20,31)
+NOTICE:  trigger_func(before_upd_a_stmt) called: action = UPDATE, when = BEFORE, level = STATEMENT
+CONTEXT:  SQL statement "UPDATE main_table SET a = NEW.a, b = NEW.b WHERE a = OLD.a AND b = OLD.b"
+PL/pgSQL function "view_trigger" line 23 at SQL statement
+NOTICE:  trigger_func(after_upd_a_b_row) called: action = UPDATE, when = AFTER, level = ROW
+CONTEXT:  SQL statement "UPDATE main_table SET a = NEW.a, b = NEW.b WHERE a = OLD.a AND b = OLD.b"
+PL/pgSQL function "view_trigger" line 23 at SQL statement
+NOTICE:  trigger_func(after_upd_b_row) called: action = UPDATE, when = AFTER, level = ROW
+CONTEXT:  SQL statement "UPDATE main_table SET a = NEW.a, b = NEW.b WHERE a = OLD.a AND b = OLD.b"
+PL/pgSQL function "view_trigger" line 23 at SQL statement
+NOTICE:  trigger_func(after_upd_b_stmt) called: action = UPDATE, when = AFTER, level = STATEMENT
+CONTEXT:  SQL statement "UPDATE main_table SET a = NEW.a, b = NEW.b WHERE a = OLD.a AND b = OLD.b"
+PL/pgSQL function "view_trigger" line 23 at SQL statement
+NOTICE:  trigger_func(after_upd_stmt) called: action = UPDATE, when = AFTER, level = STATEMENT
+CONTEXT:  SQL statement "UPDATE main_table SET a = NEW.a, b = NEW.b WHERE a = OLD.a AND b = OLD.b"
+PL/pgSQL function "view_trigger" line 23 at SQL statement
+NOTICE:  main_view AFTER UPDATE STATEMENT (after_view_upd_stmt)
+UPDATE 1
+UPDATE main_view SET b = 32 WHERE a = 21 AND b = 31 RETURNING a, b;
+NOTICE:  main_view BEFORE UPDATE STATEMENT (before_view_upd_stmt)
+NOTICE:  main_view INSTEAD OF UPDATE ROW (instead_of_upd)
+NOTICE:  OLD: (21,31), NEW: (21,32)
+NOTICE:  trigger_func(before_upd_a_stmt) called: action = UPDATE, when = BEFORE, level = STATEMENT
+CONTEXT:  SQL statement "UPDATE main_table SET a = NEW.a, b = NEW.b WHERE a = OLD.a AND b = OLD.b"
+PL/pgSQL function "view_trigger" line 23 at SQL statement
+NOTICE:  trigger_func(after_upd_a_b_row) called: action = UPDATE, when = AFTER, level = ROW
+CONTEXT:  SQL statement "UPDATE main_table SET a = NEW.a, b = NEW.b WHERE a = OLD.a AND b = OLD.b"
+PL/pgSQL function "view_trigger" line 23 at SQL statement
+NOTICE:  trigger_func(after_upd_b_row) called: action = UPDATE, when = AFTER, level = ROW
+CONTEXT:  SQL statement "UPDATE main_table SET a = NEW.a, b = NEW.b WHERE a = OLD.a AND b = OLD.b"
+PL/pgSQL function "view_trigger" line 23 at SQL statement
+NOTICE:  trigger_func(after_upd_b_stmt) called: action = UPDATE, when = AFTER, level = STATEMENT
+CONTEXT:  SQL statement "UPDATE main_table SET a = NEW.a, b = NEW.b WHERE a = OLD.a AND b = OLD.b"
+PL/pgSQL function "view_trigger" line 23 at SQL statement
+NOTICE:  trigger_func(after_upd_stmt) called: action = UPDATE, when = AFTER, level = STATEMENT
+CONTEXT:  SQL statement "UPDATE main_table SET a = NEW.a, b = NEW.b WHERE a = OLD.a AND b = OLD.b"
+PL/pgSQL function "view_trigger" line 23 at SQL statement
+NOTICE:  main_view AFTER UPDATE STATEMENT (after_view_upd_stmt)
+ a  | b  
+----+----
+ 21 | 32
+(1 row)
+
+UPDATE 1
+-- Before and after stmt triggers should fire even when no rows are affected
+UPDATE main_view SET b = 0 WHERE false;
+NOTICE:  main_view BEFORE UPDATE STATEMENT (before_view_upd_stmt)
+NOTICE:  main_view AFTER UPDATE STATEMENT (after_view_upd_stmt)
+UPDATE 0
+-- Delete from view using trigger
+DELETE FROM main_view WHERE a IN (20,21);
+NOTICE:  main_view BEFORE DELETE STATEMENT (before_view_del_stmt)
+NOTICE:  main_view INSTEAD OF DELETE ROW (instead_of_del)
+NOTICE:  OLD: (21,10)
+NOTICE:  main_view INSTEAD OF DELETE ROW (instead_of_del)
+NOTICE:  OLD: (20,31)
+NOTICE:  main_view INSTEAD OF DELETE ROW (instead_of_del)
+NOTICE:  OLD: (21,32)
+NOTICE:  main_view AFTER DELETE STATEMENT (after_view_del_stmt)
+DELETE 3
+DELETE FROM main_view WHERE a = 31 RETURNING a, b;
+NOTICE:  main_view BEFORE DELETE STATEMENT (before_view_del_stmt)
+NOTICE:  main_view INSTEAD OF DELETE ROW (instead_of_del)
+NOTICE:  OLD: (31,10)
+NOTICE:  main_view AFTER DELETE STATEMENT (after_view_del_stmt)
+ a  | b  
+----+----
+ 31 | 10
+(1 row)
+
+DELETE 1
+\set QUIET true
+-- Describe view should list triggers
+\d main_view
+   View "public.main_view"
+ Column |  Type   | Modifiers 
+--------+---------+-----------
+ a      | integer | 
+ b      | integer | 
+Triggers:
+    after_del_stmt_trig AFTER DELETE ON main_view FOR EACH STATEMENT EXECUTE PROCEDURE view_trigger('after_view_del_stmt')
+    after_ins_stmt_trig AFTER INSERT ON main_view FOR EACH STATEMENT EXECUTE PROCEDURE view_trigger('after_view_ins_stmt')
+    after_upd_stmt_trig AFTER UPDATE ON main_view FOR EACH STATEMENT EXECUTE PROCEDURE view_trigger('after_view_upd_stmt')
+    before_del_stmt_trig BEFORE DELETE ON main_view FOR EACH STATEMENT EXECUTE PROCEDURE view_trigger('before_view_del_stmt')
+    before_ins_stmt_trig BEFORE INSERT ON main_view FOR EACH STATEMENT EXECUTE PROCEDURE view_trigger('before_view_ins_stmt')
+    before_upd_stmt_trig BEFORE UPDATE ON main_view FOR EACH STATEMENT EXECUTE PROCEDURE view_trigger('before_view_upd_stmt')
+    instead_of_delete_trig INSTEAD OF DELETE ON main_view FOR EACH ROW EXECUTE PROCEDURE view_trigger('instead_of_del')
+    instead_of_insert_trig INSTEAD OF INSERT ON main_view FOR EACH ROW EXECUTE PROCEDURE view_trigger('instead_of_ins')
+    instead_of_update_trig INSTEAD OF UPDATE ON main_view FOR EACH ROW EXECUTE PROCEDURE view_trigger('instead_of_upd')
+
+-- Test dropping view triggers
+DROP TRIGGER instead_of_insert_trig ON main_view;
+DROP TRIGGER instead_of_delete_trig ON main_view;
+\d+ main_view
+               View "public.main_view"
+ Column |  Type   | Modifiers | Storage | Description 
+--------+---------+-----------+---------+-------------
+ a      | integer |           | plain   | 
+ b      | integer |           | plain   | 
+View definition:
+ SELECT main_table.a, main_table.b
+   FROM main_table;
+Triggers:
+    after_del_stmt_trig AFTER DELETE ON main_view FOR EACH STATEMENT EXECUTE PROCEDURE view_trigger('after_view_del_stmt')
+    after_ins_stmt_trig AFTER INSERT ON main_view FOR EACH STATEMENT EXECUTE PROCEDURE view_trigger('after_view_ins_stmt')
+    after_upd_stmt_trig AFTER UPDATE ON main_view FOR EACH STATEMENT EXECUTE PROCEDURE view_trigger('after_view_upd_stmt')
+    before_del_stmt_trig BEFORE DELETE ON main_view FOR EACH STATEMENT EXECUTE PROCEDURE view_trigger('before_view_del_stmt')
+    before_ins_stmt_trig BEFORE INSERT ON main_view FOR EACH STATEMENT EXECUTE PROCEDURE view_trigger('before_view_ins_stmt')
+    before_upd_stmt_trig BEFORE UPDATE ON main_view FOR EACH STATEMENT EXECUTE PROCEDURE view_trigger('before_view_upd_stmt')
+    instead_of_update_trig INSTEAD OF UPDATE ON main_view FOR EACH ROW EXECUTE PROCEDURE view_trigger('instead_of_upd')
+
+DROP VIEW main_view;
+--
+-- Test triggers on a join view
+--
+CREATE TABLE country_table (
+    country_id        serial primary key,
+    country_name    text unique not null,
+    continent        text not null
+);
+NOTICE:  CREATE TABLE will create implicit sequence "country_table_country_id_seq" for serial column "country_table.country_id"
+NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "country_table_pkey" for table "country_table"
+NOTICE:  CREATE TABLE / UNIQUE will create implicit index "country_table_country_name_key" for table "country_table"
+INSERT INTO country_table (country_name, continent)
+    VALUES ('Japan', 'Asia'),
+           ('UK', 'Europe'),
+           ('USA', 'North America')
+    RETURNING *;
+ country_id | country_name |   continent   
+------------+--------------+---------------
+          1 | Japan        | Asia
+          2 | UK           | Europe
+          3 | USA          | North America
+(3 rows)
+
+CREATE TABLE city_table (
+    city_id        serial primary key,
+    city_name    text not null,
+    population    bigint,
+    country_id    int references country_table
+);
+NOTICE:  CREATE TABLE will create implicit sequence "city_table_city_id_seq" for serial column "city_table.city_id"
+NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "city_table_pkey" for table "city_table"
+CREATE VIEW city_view AS
+    SELECT city_id, city_name, population, country_name, continent
+    FROM city_table ci
+    LEFT JOIN country_table co ON co.country_id = ci.country_id;
+CREATE FUNCTION city_insert() RETURNS trigger LANGUAGE plpgsql AS $$
+declare
+    ctry_id int;
+begin
+    if NEW.country_name IS NOT NULL then
+        SELECT country_id, continent INTO ctry_id, NEW.continent
+            FROM country_table WHERE country_name = NEW.country_name;
+        if NOT FOUND then
+            raise exception 'No such country: "%"', NEW.country_name;
+        end if;
+    else
+        NEW.continent := NULL;
+    end if;
+
+    if NEW.city_id IS NOT NULL then
+        INSERT INTO city_table
+            VALUES(NEW.city_id, NEW.city_name, NEW.population, ctry_id);
+    else
+        INSERT INTO city_table(city_name, population, country_id)
+            VALUES(NEW.city_name, NEW.population, ctry_id)
+            RETURNING city_id INTO NEW.city_id;
+    end if;
+
+    RETURN NEW;
+end;
+$$;
+CREATE TRIGGER city_insert_trig INSTEAD OF INSERT ON city_view
+FOR EACH ROW EXECUTE PROCEDURE city_insert();
+CREATE FUNCTION city_delete() RETURNS trigger LANGUAGE plpgsql AS $$
+begin
+    DELETE FROM city_table WHERE city_id = OLD.city_id;
+    if NOT FOUND then RETURN NULL; end if;
+    RETURN OLD;
+end;
+$$;
+CREATE TRIGGER city_delete_trig INSTEAD OF DELETE ON city_view
+FOR EACH ROW EXECUTE PROCEDURE city_delete();
+CREATE FUNCTION city_update() RETURNS trigger LANGUAGE plpgsql AS $$
+declare
+    ctry_id int;
+begin
+    if NEW.country_name IS DISTINCT FROM OLD.country_name then
+        SELECT country_id, continent INTO ctry_id, NEW.continent
+            FROM country_table WHERE country_name = NEW.country_name;
+        if NOT FOUND then
+            raise exception 'No such country: "%"', NEW.country_name;
+        end if;
+
+        UPDATE city_table SET city_name = NEW.city_name,
+                              population = NEW.population,
+                              country_id = ctry_id
+            WHERE city_id = OLD.city_id;
+    else
+        UPDATE city_table SET city_name = NEW.city_name,
+                              population = NEW.population
+            WHERE city_id = OLD.city_id;
+        NEW.continent := OLD.continent;
+    end if;
+
+    if NOT FOUND then RETURN NULL; end if;
+    RETURN NEW;
+end;
+$$;
+CREATE TRIGGER city_update_trig INSTEAD OF UPDATE ON city_view
+FOR EACH ROW EXECUTE PROCEDURE city_update();
+\set QUIET false
+-- INSERT .. RETURNING
+INSERT INTO city_view(city_name) VALUES('Tokyo') RETURNING *;
+ city_id | city_name | population | country_name | continent 
+---------+-----------+------------+--------------+-----------
+       1 | Tokyo     |            |              | 
+(1 row)
+
+INSERT 0 1
+INSERT INTO city_view(city_name, population) VALUES('London', 7556900) RETURNING *;
+ city_id | city_name | population | country_name | continent 
+---------+-----------+------------+--------------+-----------
+       2 | London    |    7556900 |              | 
+(1 row)
+
+INSERT 0 1
+INSERT INTO city_view(city_name, country_name) VALUES('Washington DC', 'USA') RETURNING *;
+ city_id |   city_name   | population | country_name |   continent   
+---------+---------------+------------+--------------+---------------
+       3 | Washington DC |            | USA          | North America
+(1 row)
+
+INSERT 0 1
+INSERT INTO city_view(city_id, city_name) VALUES(123456, 'New York') RETURNING *;
+ city_id | city_name | population | country_name | continent 
+---------+-----------+------------+--------------+-----------
+  123456 | New York  |            |              | 
+(1 row)
+
+INSERT 0 1
+INSERT INTO city_view VALUES(234567, 'Birmingham', 1016800, 'UK', 'EU') RETURNING *;
+ city_id | city_name  | population | country_name | continent 
+---------+------------+------------+--------------+-----------
+  234567 | Birmingham |    1016800 | UK           | Europe
+(1 row)
+
+INSERT 0 1
+-- UPDATE .. RETURNING
+UPDATE city_view SET country_name = 'Japon' WHERE city_name = 'Tokyo'; -- error
+ERROR:  No such country: "Japon"
+UPDATE city_view SET country_name = 'Japan' WHERE city_name = 'Takyo'; -- no match
+UPDATE 0
+UPDATE city_view SET country_name = 'Japan' WHERE city_name = 'Tokyo' RETURNING *; -- OK
+ city_id | city_name | population | country_name | continent 
+---------+-----------+------------+--------------+-----------
+       1 | Tokyo     |            | Japan        | Asia
+(1 row)
+
+UPDATE 1
+UPDATE city_view SET population = 13010279 WHERE city_name = 'Tokyo' RETURNING *;
+ city_id | city_name | population | country_name | continent 
+---------+-----------+------------+--------------+-----------
+       1 | Tokyo     |   13010279 | Japan        | Asia
+(1 row)
+
+UPDATE 1
+UPDATE city_view SET country_name = 'UK' WHERE city_name = 'New York' RETURNING *;
+ city_id | city_name | population | country_name | continent 
+---------+-----------+------------+--------------+-----------
+  123456 | New York  |            | UK           | Europe
+(1 row)
+
+UPDATE 1
+UPDATE city_view SET country_name = 'USA', population = 8391881 WHERE city_name = 'New York' RETURNING *;
+ city_id | city_name | population | country_name |   continent   
+---------+-----------+------------+--------------+---------------
+  123456 | New York  |    8391881 | USA          | North America
+(1 row)
+
+UPDATE 1
+UPDATE city_view SET continent = 'EU' WHERE continent = 'Europe' RETURNING *;
+ city_id | city_name  | population | country_name | continent 
+---------+------------+------------+--------------+-----------
+  234567 | Birmingham |    1016800 | UK           | Europe
+(1 row)
+
+UPDATE 1
+UPDATE city_view v1 SET country_name = v2.country_name FROM city_view v2
+    WHERE v2.city_name = 'Birmingham' AND v1.city_name = 'London' RETURNING *;
+ city_id | city_name | population | country_name | continent | city_id | city_name  | population | country_name | continent 
+---------+-----------+------------+--------------+-----------+---------+------------+------------+--------------+-----------
+       2 | London    |    7556900 | UK           | Europe    |  234567 | Birmingham |    1016800 | UK           | Europe
+(1 row)
+
+UPDATE 1
+-- DELETE .. RETURNING
+DELETE FROM city_view WHERE city_name = 'Birmingham' RETURNING *;
+ city_id | city_name  | population | country_name | continent 
+---------+------------+------------+--------------+-----------
+  234567 | Birmingham |    1016800 | UK           | Europe
+(1 row)
+
+DELETE 1
+\set QUIET true
+-- read-only view with WHERE clause
+CREATE VIEW european_city_view AS
+    SELECT * FROM city_view WHERE continent = 'Europe';
+SELECT count(*) FROM european_city_view;
+ count 
+-------
+     1
+(1 row)
+
+CREATE FUNCTION no_op_trig_fn() RETURNS trigger LANGUAGE plpgsql
+AS 'begin RETURN NULL; end';
+CREATE TRIGGER no_op_trig INSTEAD OF INSERT OR UPDATE OR DELETE
+ON european_city_view FOR EACH ROW EXECUTE PROCEDURE no_op_trig_fn();
+\set QUIET false
+INSERT INTO european_city_view VALUES (0, 'x', 10000, 'y', 'z');
+INSERT 0 0
+UPDATE european_city_view SET population = 10000;
+UPDATE 0
+DELETE FROM european_city_view;
+DELETE 0
+\set QUIET true
+-- rules bypassing no-op triggers
+CREATE RULE european_city_insert_rule AS ON INSERT TO european_city_view
+DO INSTEAD INSERT INTO city_view
+VALUES (NEW.city_id, NEW.city_name, NEW.population, NEW.country_name, NEW.continent)
+RETURNING *;
+CREATE RULE european_city_update_rule AS ON UPDATE TO european_city_view
+DO INSTEAD UPDATE city_view SET
+    city_name = NEW.city_name,
+    population = NEW.population,
+    country_name = NEW.country_name
+WHERE city_id = OLD.city_id
+RETURNING NEW.*;
+CREATE RULE european_city_delete_rule AS ON DELETE TO european_city_view
+DO INSTEAD DELETE FROM city_view WHERE city_id = OLD.city_id RETURNING *;
+\set QUIET false
+-- INSERT not limited by view's WHERE clause, but UPDATE AND DELETE are
+INSERT INTO european_city_view(city_name, country_name)
+    VALUES ('Cambridge', 'USA') RETURNING *;
+ city_id | city_name | population | country_name |   continent   
+---------+-----------+------------+--------------+---------------
+       4 | Cambridge |            | USA          | North America
+(1 row)
+
+INSERT 0 1
+UPDATE european_city_view SET country_name = 'UK'
+    WHERE city_name = 'Cambridge';
+UPDATE 0
+DELETE FROM european_city_view WHERE city_name = 'Cambridge';
+DELETE 0
+-- UPDATE and DELETE via rule and trigger
+UPDATE city_view SET country_name = 'UK'
+    WHERE city_name = 'Cambridge' RETURNING *;
+ city_id | city_name | population | country_name | continent 
+---------+-----------+------------+--------------+-----------
+       4 | Cambridge |            | UK           | Europe
+(1 row)
+
+UPDATE 1
+UPDATE european_city_view SET population = 122800
+    WHERE city_name = 'Cambridge' RETURNING *;
+ city_id | city_name | population | country_name | continent 
+---------+-----------+------------+--------------+-----------
+       4 | Cambridge |     122800 | UK           | Europe
+(1 row)
+
+UPDATE 1
+DELETE FROM european_city_view WHERE city_name = 'Cambridge' RETURNING *;
+ city_id | city_name | population | country_name | continent 
+---------+-----------+------------+--------------+-----------
+       4 | Cambridge |     122800 | UK           | Europe
+(1 row)
+
+DELETE 1
+-- join UPDATE test
+UPDATE city_view v SET population = 599657
+    FROM city_table ci, country_table co
+    WHERE ci.city_name = 'Washington DC' and co.country_name = 'USA'
+    AND v.city_id = ci.city_id AND v.country_name = co.country_name
+    RETURNING co.country_id, v.country_name,
+              v.city_id, v.city_name, v.population;
+ country_id | country_name | city_id |   city_name   | population 
+------------+--------------+---------+---------------+------------
+          3 | USA          |       3 | Washington DC |     599657
+(1 row)
+
+UPDATE 1
+\set QUIET true
+SELECT * FROM city_view;
+ city_id |   city_name   | population | country_name |   continent   
+---------+---------------+------------+--------------+---------------
+       1 | Tokyo         |   13010279 | Japan        | Asia
+  123456 | New York      |    8391881 | USA          | North America
+       2 | London        |    7556900 | UK           | Europe
+       3 | Washington DC |     599657 | USA          | North America
+(4 rows)
+
+DROP TABLE city_table CASCADE;
+NOTICE:  drop cascades to 2 other objects
+DETAIL:  drop cascades to view city_view
+drop cascades to view european_city_view
+DROP TABLE country_table;

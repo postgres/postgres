@@ -197,7 +197,7 @@ ExecInsert(TupleTableSlot *slot,
 
 	/* BEFORE ROW INSERT Triggers */
 	if (resultRelInfo->ri_TrigDesc &&
-		resultRelInfo->ri_TrigDesc->n_before_row[TRIGGER_EVENT_INSERT] > 0)
+		resultRelInfo->ri_TrigDesc->trig_insert_before_row)
 	{
 		HeapTuple	newtuple;
 
@@ -225,31 +225,65 @@ ExecInsert(TupleTableSlot *slot,
 		}
 	}
 
-	/*
-	 * Check the constraints of the tuple
-	 */
-	if (resultRelationDesc->rd_att->constr)
-		ExecConstraints(resultRelInfo, slot, estate);
+	/* INSTEAD OF ROW INSERT Triggers */
+	if (resultRelInfo->ri_TrigDesc &&
+		resultRelInfo->ri_TrigDesc->trig_insert_instead_row)
+	{
+		HeapTuple	newtuple;
 
-	/*
-	 * insert the tuple
-	 *
-	 * Note: heap_insert returns the tid (location) of the new tuple in the
-	 * t_self field.
-	 */
-	newId = heap_insert(resultRelationDesc, tuple,
-						estate->es_output_cid, 0, NULL);
+		newtuple = ExecIRInsertTriggers(estate, resultRelInfo, tuple);
+
+		if (newtuple == NULL)	/* "do nothing" */
+			return NULL;
+
+		if (newtuple != tuple)	/* modified by Trigger(s) */
+		{
+			/*
+			 * Put the modified tuple into a slot for convenience of routines
+			 * below.  We assume the tuple was allocated in per-tuple memory
+			 * context, and therefore will go away by itself. The tuple table
+			 * slot should not try to clear it.
+			 */
+			TupleTableSlot *newslot = estate->es_trig_tuple_slot;
+			TupleDesc	tupdesc = RelationGetDescr(resultRelationDesc);
+
+			if (newslot->tts_tupleDescriptor != tupdesc)
+				ExecSetSlotDescriptor(newslot, tupdesc);
+			ExecStoreTuple(newtuple, newslot, InvalidBuffer, false);
+			slot = newslot;
+			tuple = newtuple;
+		}
+
+		newId = InvalidOid;
+	}
+	else
+	{
+		/*
+		 * Check the constraints of the tuple
+		 */
+		if (resultRelationDesc->rd_att->constr)
+			ExecConstraints(resultRelInfo, slot, estate);
+
+		/*
+		 * insert the tuple
+		 *
+		 * Note: heap_insert returns the tid (location) of the new tuple in
+		 * the t_self field.
+		 */
+		newId = heap_insert(resultRelationDesc, tuple,
+							estate->es_output_cid, 0, NULL);
+
+		/*
+		 * insert index entries for tuple
+		 */
+		if (resultRelInfo->ri_NumIndices > 0)
+			recheckIndexes = ExecInsertIndexTuples(slot, &(tuple->t_self),
+												   estate);
+	}
 
 	(estate->es_processed)++;
 	estate->es_lastoid = newId;
 	setLastTid(&(tuple->t_self));
-
-	/*
-	 * insert index entries for tuple
-	 */
-	if (resultRelInfo->ri_NumIndices > 0)
-		recheckIndexes = ExecInsertIndexTuples(slot, &(tuple->t_self),
-											   estate);
 
 	/* AFTER ROW INSERT Triggers */
 	ExecARInsertTriggers(estate, resultRelInfo, tuple, recheckIndexes);
@@ -268,13 +302,19 @@ ExecInsert(TupleTableSlot *slot,
  *		ExecDelete
  *
  *		DELETE is like UPDATE, except that we delete the tuple and no
- *		index modifications are needed
+ *		index modifications are needed.
+ *
+ *		When deleting from a table, tupleid identifies the tuple to
+ *		delete and oldtuple is NULL.  When deleting from a view,
+ *		oldtuple is passed to the INSTEAD OF triggers and identifies
+ *		what to delete, and tupleid is invalid.
  *
  *		Returns RETURNING result if any, otherwise NULL.
  * ----------------------------------------------------------------
  */
 static TupleTableSlot *
 ExecDelete(ItemPointer tupleid,
+		   HeapTupleHeader oldtuple,
 		   TupleTableSlot *planSlot,
 		   EPQState *epqstate,
 		   EState *estate)
@@ -293,7 +333,7 @@ ExecDelete(ItemPointer tupleid,
 
 	/* BEFORE ROW DELETE Triggers */
 	if (resultRelInfo->ri_TrigDesc &&
-		resultRelInfo->ri_TrigDesc->n_before_row[TRIGGER_EVENT_DELETE] > 0)
+		resultRelInfo->ri_TrigDesc->trig_delete_before_row)
 	{
 		bool		dodelete;
 
@@ -304,68 +344,90 @@ ExecDelete(ItemPointer tupleid,
 			return NULL;
 	}
 
-	/*
-	 * delete the tuple
-	 *
-	 * Note: if es_crosscheck_snapshot isn't InvalidSnapshot, we check that
-	 * the row to be deleted is visible to that snapshot, and throw a can't-
-	 * serialize error if not.	This is a special-case behavior needed for
-	 * referential integrity updates in transaction-snapshot mode transactions.
-	 */
-ldelete:;
-	result = heap_delete(resultRelationDesc, tupleid,
-						 &update_ctid, &update_xmax,
-						 estate->es_output_cid,
-						 estate->es_crosscheck_snapshot,
-						 true /* wait for commit */ );
-	switch (result)
+	/* INSTEAD OF ROW DELETE Triggers */
+	if (resultRelInfo->ri_TrigDesc &&
+		resultRelInfo->ri_TrigDesc->trig_delete_instead_row)
 	{
-		case HeapTupleSelfUpdated:
-			/* already deleted by self; nothing to do */
+		HeapTupleData tuple;
+		bool		dodelete;
+
+		Assert(oldtuple != NULL);
+		tuple.t_data = oldtuple;
+		tuple.t_len = HeapTupleHeaderGetDatumLength(oldtuple);
+		ItemPointerSetInvalid(&(tuple.t_self));
+		tuple.t_tableOid = InvalidOid;
+
+		dodelete = ExecIRDeleteTriggers(estate, resultRelInfo, &tuple);
+
+		if (!dodelete)			/* "do nothing" */
 			return NULL;
+	}
+	else
+	{
+		/*
+		 * delete the tuple
+		 *
+		 * Note: if es_crosscheck_snapshot isn't InvalidSnapshot, we check
+		 * that the row to be deleted is visible to that snapshot, and throw a
+		 * can't-serialize error if not. This is a special-case behavior
+		 * needed for referential integrity updates in transaction-snapshot
+		 * mode transactions.
+		 */
+ldelete:;
+		result = heap_delete(resultRelationDesc, tupleid,
+							 &update_ctid, &update_xmax,
+							 estate->es_output_cid,
+							 estate->es_crosscheck_snapshot,
+							 true /* wait for commit */ );
+		switch (result)
+		{
+			case HeapTupleSelfUpdated:
+				/* already deleted by self; nothing to do */
+				return NULL;
 
-		case HeapTupleMayBeUpdated:
-			break;
+			case HeapTupleMayBeUpdated:
+				break;
 
-		case HeapTupleUpdated:
-			if (IsolationUsesXactSnapshot())
-				ereport(ERROR,
-						(errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
-						 errmsg("could not serialize access due to concurrent update")));
-			if (!ItemPointerEquals(tupleid, &update_ctid))
-			{
-				TupleTableSlot *epqslot;
-
-				epqslot = EvalPlanQual(estate,
-									   epqstate,
-									   resultRelationDesc,
-									   resultRelInfo->ri_RangeTableIndex,
-									   &update_ctid,
-									   update_xmax);
-				if (!TupIsNull(epqslot))
+			case HeapTupleUpdated:
+				if (IsolationUsesXactSnapshot())
+					ereport(ERROR,
+							(errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
+							 errmsg("could not serialize access due to concurrent update")));
+				if (!ItemPointerEquals(tupleid, &update_ctid))
 				{
-					*tupleid = update_ctid;
-					goto ldelete;
-				}
-			}
-			/* tuple already deleted; nothing to do */
-			return NULL;
+					TupleTableSlot *epqslot;
 
-		default:
-			elog(ERROR, "unrecognized heap_delete status: %u", result);
-			return NULL;
+					epqslot = EvalPlanQual(estate,
+										   epqstate,
+										   resultRelationDesc,
+										   resultRelInfo->ri_RangeTableIndex,
+										   &update_ctid,
+										   update_xmax);
+					if (!TupIsNull(epqslot))
+					{
+						*tupleid = update_ctid;
+						goto ldelete;
+					}
+				}
+				/* tuple already deleted; nothing to do */
+				return NULL;
+
+			default:
+				elog(ERROR, "unrecognized heap_delete status: %u", result);
+				return NULL;
+		}
+
+		/*
+		 * Note: Normally one would think that we have to delete index tuples
+		 * associated with the heap tuple now...
+		 *
+		 * ... but in POSTGRES, we have no need to do this because VACUUM will
+		 * take care of it later.  We can't delete index tuples immediately
+		 * anyway, since the tuple is still visible to other transactions.
+		 */
 	}
 
 	(estate->es_processed)++;
-
-	/*
-	 * Note: Normally one would think that we have to delete index tuples
-	 * associated with the heap tuple now...
-	 *
-	 * ... but in POSTGRES, we have no need to do this because VACUUM will
-	 * take care of it later.  We can't delete index tuples immediately
-	 * anyway, since the tuple is still visible to other transactions.
-	 */
 
 	/* AFTER ROW DELETE Triggers */
 	ExecARDeleteTriggers(estate, resultRelInfo, tupleid);
@@ -382,10 +444,21 @@ ldelete:;
 		HeapTupleData deltuple;
 		Buffer		delbuffer;
 
-		deltuple.t_self = *tupleid;
-		if (!heap_fetch(resultRelationDesc, SnapshotAny,
-						&deltuple, &delbuffer, false, NULL))
-			elog(ERROR, "failed to fetch deleted tuple for DELETE RETURNING");
+		if (oldtuple != NULL)
+		{
+			deltuple.t_data = oldtuple;
+			deltuple.t_len = HeapTupleHeaderGetDatumLength(oldtuple);
+			ItemPointerSetInvalid(&(deltuple.t_self));
+			deltuple.t_tableOid = InvalidOid;
+			delbuffer = InvalidBuffer;
+		}
+		else
+		{
+			deltuple.t_self = *tupleid;
+			if (!heap_fetch(resultRelationDesc, SnapshotAny,
+							&deltuple, &delbuffer, false, NULL))
+				elog(ERROR, "failed to fetch deleted tuple for DELETE RETURNING");
+		}
 
 		if (slot->tts_tupleDescriptor != RelationGetDescr(resultRelationDesc))
 			ExecSetSlotDescriptor(slot, RelationGetDescr(resultRelationDesc));
@@ -395,7 +468,8 @@ ldelete:;
 									 slot, planSlot);
 
 		ExecClearTuple(slot);
-		ReleaseBuffer(delbuffer);
+		if (BufferIsValid(delbuffer))
+			ReleaseBuffer(delbuffer);
 
 		return rslot;
 	}
@@ -413,11 +487,17 @@ ldelete:;
  *		is, we don't want to get stuck in an infinite loop
  *		which corrupts your database..
  *
+ *		When updating a table, tupleid identifies the tuple to
+ *		update and oldtuple is NULL.  When updating a view, oldtuple
+ *		is passed to the INSTEAD OF triggers and identifies what to
+ *		update, and tupleid is invalid.
+ *
  *		Returns RETURNING result if any, otherwise NULL.
  * ----------------------------------------------------------------
  */
 static TupleTableSlot *
 ExecUpdate(ItemPointer tupleid,
+		   HeapTupleHeader oldtuple,
 		   TupleTableSlot *slot,
 		   TupleTableSlot *planSlot,
 		   EPQState *epqstate,
@@ -451,7 +531,7 @@ ExecUpdate(ItemPointer tupleid,
 
 	/* BEFORE ROW UPDATE Triggers */
 	if (resultRelInfo->ri_TrigDesc &&
-		resultRelInfo->ri_TrigDesc->n_before_row[TRIGGER_EVENT_UPDATE] > 0)
+		resultRelInfo->ri_TrigDesc->trig_update_before_row)
 	{
 		HeapTuple	newtuple;
 
@@ -480,93 +560,135 @@ ExecUpdate(ItemPointer tupleid,
 		}
 	}
 
-	/*
-	 * Check the constraints of the tuple
-	 *
-	 * If we generate a new candidate tuple after EvalPlanQual testing, we
-	 * must loop back here and recheck constraints.  (We don't need to redo
-	 * triggers, however.  If there are any BEFORE triggers then trigger.c
-	 * will have done heap_lock_tuple to lock the correct tuple, so there's no
-	 * need to do them again.)
-	 */
-lreplace:;
-	if (resultRelationDesc->rd_att->constr)
-		ExecConstraints(resultRelInfo, slot, estate);
-
-	/*
-	 * replace the heap tuple
-	 *
-	 * Note: if es_crosscheck_snapshot isn't InvalidSnapshot, we check that
-	 * the row to be updated is visible to that snapshot, and throw a can't-
-	 * serialize error if not.	This is a special-case behavior needed for
-	 * referential integrity updates in transaction-snapshot mode transactions.
-	 */
-	result = heap_update(resultRelationDesc, tupleid, tuple,
-						 &update_ctid, &update_xmax,
-						 estate->es_output_cid,
-						 estate->es_crosscheck_snapshot,
-						 true /* wait for commit */ );
-	switch (result)
+	/* INSTEAD OF ROW UPDATE Triggers */
+	if (resultRelInfo->ri_TrigDesc &&
+		resultRelInfo->ri_TrigDesc->trig_update_instead_row)
 	{
-		case HeapTupleSelfUpdated:
-			/* already deleted by self; nothing to do */
+		HeapTupleData oldtup;
+		HeapTuple	newtuple;
+
+		Assert(oldtuple != NULL);
+		oldtup.t_data = oldtuple;
+		oldtup.t_len = HeapTupleHeaderGetDatumLength(oldtuple);
+		ItemPointerSetInvalid(&(oldtup.t_self));
+		oldtup.t_tableOid = InvalidOid;
+
+		newtuple = ExecIRUpdateTriggers(estate, resultRelInfo,
+										&oldtup, tuple);
+
+		if (newtuple == NULL)	/* "do nothing" */
 			return NULL;
 
-		case HeapTupleMayBeUpdated:
-			break;
+		if (newtuple != tuple)	/* modified by Trigger(s) */
+		{
+			/*
+			 * Put the modified tuple into a slot for convenience of routines
+			 * below.  We assume the tuple was allocated in per-tuple memory
+			 * context, and therefore will go away by itself. The tuple table
+			 * slot should not try to clear it.
+			 */
+			TupleTableSlot *newslot = estate->es_trig_tuple_slot;
+			TupleDesc	tupdesc = RelationGetDescr(resultRelationDesc);
 
-		case HeapTupleUpdated:
-			if (IsolationUsesXactSnapshot())
-				ereport(ERROR,
-						(errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
-						 errmsg("could not serialize access due to concurrent update")));
-			if (!ItemPointerEquals(tupleid, &update_ctid))
-			{
-				TupleTableSlot *epqslot;
+			if (newslot->tts_tupleDescriptor != tupdesc)
+				ExecSetSlotDescriptor(newslot, tupdesc);
+			ExecStoreTuple(newtuple, newslot, InvalidBuffer, false);
+			slot = newslot;
+			tuple = newtuple;
+		}
+	}
+	else
+	{
+		/*
+		 * Check the constraints of the tuple
+		 *
+		 * If we generate a new candidate tuple after EvalPlanQual testing, we
+		 * must loop back here and recheck constraints.  (We don't need to
+		 * redo triggers, however.  If there are any BEFORE triggers then
+		 * trigger.c will have done heap_lock_tuple to lock the correct tuple,
+		 * so there's no need to do them again.)
+		 */
+lreplace:;
+		if (resultRelationDesc->rd_att->constr)
+			ExecConstraints(resultRelInfo, slot, estate);
 
-				epqslot = EvalPlanQual(estate,
-									   epqstate,
-									   resultRelationDesc,
-									   resultRelInfo->ri_RangeTableIndex,
-									   &update_ctid,
-									   update_xmax);
-				if (!TupIsNull(epqslot))
+		/*
+		 * replace the heap tuple
+		 *
+		 * Note: if es_crosscheck_snapshot isn't InvalidSnapshot, we check
+		 * that the row to be updated is visible to that snapshot, and throw a
+		 * can't-serialize error if not. This is a special-case behavior
+		 * needed for referential integrity updates in transaction-snapshot
+		 * mode transactions.
+		 */
+		result = heap_update(resultRelationDesc, tupleid, tuple,
+							 &update_ctid, &update_xmax,
+							 estate->es_output_cid,
+							 estate->es_crosscheck_snapshot,
+							 true /* wait for commit */ );
+		switch (result)
+		{
+			case HeapTupleSelfUpdated:
+				/* already deleted by self; nothing to do */
+				return NULL;
+
+			case HeapTupleMayBeUpdated:
+				break;
+
+			case HeapTupleUpdated:
+				if (IsolationUsesXactSnapshot())
+					ereport(ERROR,
+							(errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
+							 errmsg("could not serialize access due to concurrent update")));
+				if (!ItemPointerEquals(tupleid, &update_ctid))
 				{
-					*tupleid = update_ctid;
-					slot = ExecFilterJunk(resultRelInfo->ri_junkFilter, epqslot);
-					tuple = ExecMaterializeSlot(slot);
-					goto lreplace;
-				}
-			}
-			/* tuple already deleted; nothing to do */
-			return NULL;
+					TupleTableSlot *epqslot;
 
-		default:
-			elog(ERROR, "unrecognized heap_update status: %u", result);
-			return NULL;
+					epqslot = EvalPlanQual(estate,
+										   epqstate,
+										   resultRelationDesc,
+										   resultRelInfo->ri_RangeTableIndex,
+										   &update_ctid,
+										   update_xmax);
+					if (!TupIsNull(epqslot))
+					{
+						*tupleid = update_ctid;
+						slot = ExecFilterJunk(resultRelInfo->ri_junkFilter, epqslot);
+						tuple = ExecMaterializeSlot(slot);
+						goto lreplace;
+					}
+				}
+				/* tuple already deleted; nothing to do */
+				return NULL;
+
+			default:
+				elog(ERROR, "unrecognized heap_update status: %u", result);
+				return NULL;
+		}
+
+		/*
+		 * Note: instead of having to update the old index tuples associated
+		 * with the heap tuple, all we do is form and insert new index
+		 * tuples. This is because UPDATEs are actually DELETEs and INSERTs,
+		 * and index tuple deletion is done later by VACUUM (see notes in
+		 * ExecDelete). All we do here is insert new index tuples.  -cim
+		 * 9/27/89
+		 */
+
+		/*
+		 * insert index entries for tuple
+		 *
+		 * Note: heap_update returns the tid (location) of the new tuple in
+		 * the t_self field.
+		 *
+		 * If it's a HOT update, we mustn't insert new index entries.
+		 */
+		if (resultRelInfo->ri_NumIndices > 0 && !HeapTupleIsHeapOnly(tuple))
+			recheckIndexes = ExecInsertIndexTuples(slot, &(tuple->t_self),
+												   estate);
 	}
 
 	(estate->es_processed)++;
-
-	/*
-	 * Note: instead of having to update the old index tuples associated with
-	 * the heap tuple, all we do is form and insert new index tuples. This is
-	 * because UPDATEs are actually DELETEs and INSERTs, and index tuple
-	 * deletion is done later by VACUUM (see notes in ExecDelete).	All we do
-	 * here is insert new index tuples.  -cim 9/27/89
-	 */
-
-	/*
-	 * insert index entries for tuple
-	 *
-	 * Note: heap_update returns the tid (location) of the new tuple in the
-	 * t_self field.
-	 *
-	 * If it's a HOT update, we mustn't insert new index entries.
-	 */
-	if (resultRelInfo->ri_NumIndices > 0 && !HeapTupleIsHeapOnly(tuple))
-		recheckIndexes = ExecInsertIndexTuples(slot, &(tuple->t_self),
-											   estate);
 
 	/* AFTER ROW UPDATE Triggers */
 	ExecARUpdateTriggers(estate, resultRelInfo, tupleid, tuple,
@@ -654,6 +776,7 @@ ExecModifyTable(ModifyTableState *node)
 	TupleTableSlot *planSlot;
 	ItemPointer tupleid = NULL;
 	ItemPointerData tuple_ctid;
+	HeapTupleHeader	oldtuple = NULL;
 
 	/*
 	 * On first call, fire BEFORE STATEMENT triggers before proceeding.
@@ -714,22 +837,37 @@ ExecModifyTable(ModifyTableState *node)
 		if (junkfilter != NULL)
 		{
 			/*
-			 * extract the 'ctid' junk attribute.
+			 * extract the 'ctid' or 'wholerow' junk attribute.
 			 */
 			if (operation == CMD_UPDATE || operation == CMD_DELETE)
 			{
 				Datum		datum;
 				bool		isNull;
 
-				datum = ExecGetJunkAttribute(slot, junkfilter->jf_junkAttNo,
-											 &isNull);
-				/* shouldn't ever get a null result... */
-				if (isNull)
-					elog(ERROR, "ctid is NULL");
+				if (estate->es_result_relation_info->ri_RelationDesc->rd_rel->relkind == RELKIND_RELATION)
+				{
+					datum = ExecGetJunkAttribute(slot,
+												 junkfilter->jf_junkAttNo,
+												 &isNull);
+					/* shouldn't ever get a null result... */
+					if (isNull)
+						elog(ERROR, "ctid is NULL");
 
-				tupleid = (ItemPointer) DatumGetPointer(datum);
-				tuple_ctid = *tupleid;	/* be sure we don't free the ctid!! */
-				tupleid = &tuple_ctid;
+					tupleid = (ItemPointer) DatumGetPointer(datum);
+					tuple_ctid = *tupleid;	/* be sure we don't free ctid!! */
+					tupleid = &tuple_ctid;
+				}
+				else
+				{
+					datum = ExecGetJunkAttribute(slot,
+												 junkfilter->jf_junkAttNo,
+												 &isNull);
+					/* shouldn't ever get a null result... */
+					if (isNull)
+						elog(ERROR, "wholerow is NULL");
+
+					oldtuple = DatumGetHeapTupleHeader(datum);
+				}
 			}
 
 			/*
@@ -745,11 +883,11 @@ ExecModifyTable(ModifyTableState *node)
 				slot = ExecInsert(slot, planSlot, estate);
 				break;
 			case CMD_UPDATE:
-				slot = ExecUpdate(tupleid, slot, planSlot,
+				slot = ExecUpdate(tupleid, oldtuple, slot, planSlot,
 								  &node->mt_epqstate, estate);
 				break;
 			case CMD_DELETE:
-				slot = ExecDelete(tupleid, planSlot,
+				slot = ExecDelete(tupleid, oldtuple, planSlot,
 								  &node->mt_epqstate, estate);
 				break;
 			default:
@@ -934,8 +1072,8 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 	/*
 	 * Initialize the junk filter(s) if needed.  INSERT queries need a filter
 	 * if there are any junk attrs in the tlist.  UPDATE and DELETE always
-	 * need a filter, since there's always a junk 'ctid' attribute present ---
-	 * no need to look first.
+	 * need a filter, since there's always a junk 'ctid' or 'wholerow'
+	 * attribute present --- no need to look first.
 	 *
 	 * If there are multiple result relations, each one needs its own junk
 	 * filter.	Note multiple rels are only possible for UPDATE/DELETE, so we
@@ -988,10 +1126,19 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 
 				if (operation == CMD_UPDATE || operation == CMD_DELETE)
 				{
-					/* For UPDATE/DELETE, find the ctid junk attr now */
-					j->jf_junkAttNo = ExecFindJunkAttribute(j, "ctid");
-					if (!AttributeNumberIsValid(j->jf_junkAttNo))
-						elog(ERROR, "could not find junk ctid column");
+					/* For UPDATE/DELETE, find the appropriate junk attr now */
+					if (resultRelInfo->ri_RelationDesc->rd_rel->relkind == RELKIND_RELATION)
+					{
+						j->jf_junkAttNo = ExecFindJunkAttribute(j, "ctid");
+						if (!AttributeNumberIsValid(j->jf_junkAttNo))
+							elog(ERROR, "could not find junk ctid column");
+					}
+					else
+					{
+						j->jf_junkAttNo = ExecFindJunkAttribute(j, "wholerow");
+						if (!AttributeNumberIsValid(j->jf_junkAttNo))
+							elog(ERROR, "could not find junk wholerow column");
+					}
 				}
 
 				resultRelInfo->ri_junkFilter = j;

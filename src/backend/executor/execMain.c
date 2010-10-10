@@ -877,9 +877,13 @@ InitResultRelInfo(ResultRelInfo *resultRelInfo,
 				  CmdType operation,
 				  int instrument_options)
 {
+	TriggerDesc	*trigDesc = resultRelationDesc->trigdesc;
+
 	/*
-	 * Check valid relkind ... parser and/or planner should have noticed this
-	 * already, but let's make sure.
+	 * Check valid relkind ... in most cases parser and/or planner should have
+	 * noticed this already, but let's make sure.  In the view case we do need
+	 * a test here, because if the view wasn't rewritten by a rule, it had
+	 * better have an INSTEAD trigger.
 	 */
 	switch (resultRelationDesc->rd_rel->relkind)
 	{
@@ -899,10 +903,36 @@ InitResultRelInfo(ResultRelInfo *resultRelInfo,
 							RelationGetRelationName(resultRelationDesc))));
 			break;
 		case RELKIND_VIEW:
-			ereport(ERROR,
-					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-					 errmsg("cannot change view \"%s\"",
-							RelationGetRelationName(resultRelationDesc))));
+			switch (operation)
+			{
+				case CMD_INSERT:
+					if (!trigDesc || !trigDesc->trig_insert_instead_row)
+						ereport(ERROR,
+								(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+								 errmsg("cannot insert into view \"%s\"",
+										RelationGetRelationName(resultRelationDesc)),
+								 errhint("You need an unconditional ON INSERT DO INSTEAD rule or an INSTEAD OF INSERT trigger.")));
+					break;
+				case CMD_UPDATE:
+					if (!trigDesc || !trigDesc->trig_update_instead_row)
+						ereport(ERROR,
+								(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+								 errmsg("cannot update view \"%s\"",
+										RelationGetRelationName(resultRelationDesc)),
+								 errhint("You need an unconditional ON UPDATE DO INSTEAD rule or an INSTEAD OF UPDATE trigger.")));
+					break;
+				case CMD_DELETE:
+					if (!trigDesc || !trigDesc->trig_delete_instead_row)
+						ereport(ERROR,
+								(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+								 errmsg("cannot delete from view \"%s\"",
+										RelationGetRelationName(resultRelationDesc)),
+								 errhint("You need an unconditional ON DELETE DO INSTEAD rule or an INSTEAD OF DELETE trigger.")));
+					break;
+				default:
+					elog(ERROR, "unrecognized CmdType: %d", (int) operation);
+					break;
+			}
 			break;
 		default:
 			ereport(ERROR,
@@ -921,7 +951,7 @@ InitResultRelInfo(ResultRelInfo *resultRelInfo,
 	resultRelInfo->ri_IndexRelationDescs = NULL;
 	resultRelInfo->ri_IndexRelationInfo = NULL;
 	/* make a copy so as not to depend on relcache info not changing... */
-	resultRelInfo->ri_TrigDesc = CopyTriggerDesc(resultRelationDesc->trigdesc);
+	resultRelInfo->ri_TrigDesc = CopyTriggerDesc(trigDesc);
 	if (resultRelInfo->ri_TrigDesc)
 	{
 		int			n = resultRelInfo->ri_TrigDesc->numtriggers;

@@ -1262,7 +1262,7 @@ ResolveNew_callback(Var *var,
 	/* Normal case referencing one targetlist element */
 	tle = get_tle_by_resno(rcon->targetlist, var->varattno);
 
-	if (tle == NULL)
+	if (tle == NULL || tle->resjunk)
 	{
 		/* Failed to find column in insert/update tlist */
 		if (rcon->event == CMD_UPDATE)

@@ -581,8 +581,10 @@ plpgsql_exec_trigger(PLpgSQL_function *func,
 		var->value = CStringGetTextDatum("BEFORE");
 	else if (TRIGGER_FIRED_AFTER(trigdata->tg_event))
 		var->value = CStringGetTextDatum("AFTER");
+	else if (TRIGGER_FIRED_INSTEAD(trigdata->tg_event))
+		var->value = CStringGetTextDatum("INSTEAD OF");
 	else
-		elog(ERROR, "unrecognized trigger execution time: not BEFORE or AFTER");
+		elog(ERROR, "unrecognized trigger execution time: not BEFORE, AFTER, or INSTEAD OF");
 	var->isnull = false;
 	var->freeval = true;
 

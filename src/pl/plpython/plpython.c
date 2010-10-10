@@ -845,6 +845,8 @@ PLy_trigger_build_args(FunctionCallInfo fcinfo, PLyProcedure *proc, HeapTuple *r
 			pltwhen = PyString_FromString("BEFORE");
 		else if (TRIGGER_FIRED_AFTER(tdata->tg_event))
 			pltwhen = PyString_FromString("AFTER");
+		else if (TRIGGER_FIRED_INSTEAD(tdata->tg_event))
+			pltwhen = PyString_FromString("INSTEAD OF");
 		else
 		{
 			elog(ERROR, "unrecognized WHEN tg_event: %u", tdata->tg_event);

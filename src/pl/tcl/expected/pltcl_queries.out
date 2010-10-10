@@ -196,6 +196,42 @@ NOTICE:  TG_table_name: trigger_test
 NOTICE:  TG_table_schema: public
 NOTICE:  TG_when: BEFORE
 NOTICE:  args: {23 skidoo}
+insert into trigger_test_view values(2,'insert');
+NOTICE:  NEW: {i: 2, v: insert}
+NOTICE:  OLD: {}
+NOTICE:  TG_level: ROW
+NOTICE:  TG_name: show_trigger_data_view_trig
+NOTICE:  TG_op: INSERT
+NOTICE:  TG_relatts: {{} i v}
+NOTICE:  TG_relid: bogus:12345
+NOTICE:  TG_table_name: trigger_test_view
+NOTICE:  TG_table_schema: public
+NOTICE:  TG_when: {INSTEAD OF}
+NOTICE:  args: {24 {skidoo view}}
+update trigger_test_view set v = 'update' where i=1;
+NOTICE:  NEW: {i: 1, v: update}
+NOTICE:  OLD: {i: 1, v: insert}
+NOTICE:  TG_level: ROW
+NOTICE:  TG_name: show_trigger_data_view_trig
+NOTICE:  TG_op: UPDATE
+NOTICE:  TG_relatts: {{} i v}
+NOTICE:  TG_relid: bogus:12345
+NOTICE:  TG_table_name: trigger_test_view
+NOTICE:  TG_table_schema: public
+NOTICE:  TG_when: {INSTEAD OF}
+NOTICE:  args: {24 {skidoo view}}
+delete from trigger_test_view;
+NOTICE:  NEW: {}
+NOTICE:  OLD: {i: 1, v: insert}
+NOTICE:  TG_level: ROW
+NOTICE:  TG_name: show_trigger_data_view_trig
+NOTICE:  TG_op: DELETE
+NOTICE:  TG_relatts: {{} i v}
+NOTICE:  TG_relid: bogus:12345
+NOTICE:  TG_table_name: trigger_test_view
+NOTICE:  TG_table_schema: public
+NOTICE:  TG_when: {INSTEAD OF}
+NOTICE:  args: {24 {skidoo view}}
 update trigger_test set v = 'update' where i = 1;
 NOTICE:  NEW: {i: 1, v: update}
 NOTICE:  OLD: {i: 1, v: insert}
