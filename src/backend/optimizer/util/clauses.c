@@ -98,7 +98,7 @@ static List *simplify_or_arguments(List *args,
 static List *simplify_and_arguments(List *args,
 					   eval_const_expressions_context *context,
 					   bool *haveNull, bool *forceFalse);
-static Expr *simplify_boolean_equality(Oid opno, List *args);
+static Node *simplify_boolean_equality(Oid opno, List *args);
 static Expr *simplify_function(Oid funcid,
 				  Oid result_type, int32 result_typmod, List **args,
 				  bool has_named_args,
@@ -2229,7 +2229,7 @@ eval_const_expressions_mutator(Node *node,
 		if (expr->opno == BooleanEqualOperator ||
 			expr->opno == BooleanNotEqualOperator)
 		{
-			simple = simplify_boolean_equality(expr->opno, args);
+			simple = (Expr *) simplify_boolean_equality(expr->opno, args);
 			if (simple)			/* successfully simplified it */
 				return (Node *) simple;
 		}
@@ -2395,24 +2395,12 @@ eval_const_expressions_mutator(Node *node,
 					Assert(list_length(expr->args) == 1);
 					arg = eval_const_expressions_mutator(linitial(expr->args),
 														 context);
-					if (IsA(arg, Const))
-					{
-						Const	   *const_input = (Const *) arg;
 
-						/* NOT NULL => NULL */
-						if (const_input->constisnull)
-							return makeBoolConst(false, true);
-						/* otherwise pretty easy */
-						return makeBoolConst(!DatumGetBool(const_input->constvalue),
-											 false);
-					}
-					else if (not_clause(arg))
-					{
-						/* Cancel NOT/NOT */
-						return (Node *) get_notclausearg((Expr *) arg);
-					}
-					/* Else we still need a NOT node */
-					return (Node *) make_notclause((Expr *) arg);
+					/*
+					 * Use negate_clause() to see if we can simplify away
+					 * the NOT.
+					 */
+					return negate_clause(arg);
 				}
 			default:
 				elog(ERROR, "unrecognized boolop: %d",
@@ -3222,11 +3210,11 @@ simplify_and_arguments(List *args,
  * We come here only if simplify_function has failed; therefore we cannot
  * see two constant inputs, nor a constant-NULL input.
  */
-static Expr *
+static Node *
 simplify_boolean_equality(Oid opno, List *args)
 {
-	Expr	   *leftop;
-	Expr	   *rightop;
+	Node	   *leftop;
+	Node	   *rightop;
 
 	Assert(list_length(args) == 2);
 	leftop = linitial(args);
@@ -3239,12 +3227,12 @@ simplify_boolean_equality(Oid opno, List *args)
 			if (DatumGetBool(((Const *) leftop)->constvalue))
 				return rightop; /* true = foo */
 			else
-				return make_notclause(rightop); /* false = foo */
+				return negate_clause(rightop); /* false = foo */
 		}
 		else
 		{
 			if (DatumGetBool(((Const *) leftop)->constvalue))
-				return make_notclause(rightop); /* true <> foo */
+				return negate_clause(rightop); /* true <> foo */
 			else
 				return rightop; /* false <> foo */
 		}
@@ -3257,12 +3245,12 @@ simplify_boolean_equality(Oid opno, List *args)
 			if (DatumGetBool(((Const *) rightop)->constvalue))
 				return leftop;	/* foo = true */
 			else
-				return make_notclause(leftop);	/* foo = false */
+				return negate_clause(leftop);	/* foo = false */
 		}
 		else
 		{
 			if (DatumGetBool(((Const *) rightop)->constvalue))
-				return make_notclause(leftop);	/* foo <> true */
+				return negate_clause(leftop);	/* foo <> true */
 			else
 				return leftop;	/* foo <> false */
 		}
