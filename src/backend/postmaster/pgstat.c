@@ -1660,7 +1660,7 @@ pgstat_count_heap_insert(Relation rel)
 {
 	PgStat_TableStatus *pgstat_info = rel->pgstat_info;
 
-	if (pgstat_track_counts && pgstat_info != NULL)
+	if (pgstat_info != NULL)
 	{
 		/* We have to log the effect at the proper transactional level */
 		int			nest_level = GetCurrentTransactionNestLevel();
@@ -1681,7 +1681,7 @@ pgstat_count_heap_update(Relation rel, bool hot)
 {
 	PgStat_TableStatus *pgstat_info = rel->pgstat_info;
 
-	if (pgstat_track_counts && pgstat_info != NULL)
+	if (pgstat_info != NULL)
 	{
 		/* We have to log the effect at the proper transactional level */
 		int			nest_level = GetCurrentTransactionNestLevel();
@@ -1706,7 +1706,7 @@ pgstat_count_heap_delete(Relation rel)
 {
 	PgStat_TableStatus *pgstat_info = rel->pgstat_info;
 
-	if (pgstat_track_counts && pgstat_info != NULL)
+	if (pgstat_info != NULL)
 	{
 		/* We have to log the effect at the proper transactional level */
 		int			nest_level = GetCurrentTransactionNestLevel();
@@ -1732,7 +1732,7 @@ pgstat_update_heap_dead_tuples(Relation rel, int delta)
 {
 	PgStat_TableStatus *pgstat_info = rel->pgstat_info;
 
-	if (pgstat_track_counts && pgstat_info != NULL)
+	if (pgstat_info != NULL)
 		pgstat_info->t_counts.t_delta_dead_tuples -= delta;
 }
 

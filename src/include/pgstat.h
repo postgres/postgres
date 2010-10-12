@@ -705,37 +705,37 @@ extern void pgstat_initstats(Relation rel);
 
 #define pgstat_count_heap_scan(rel)									\
 	do {															\
-		if (pgstat_track_counts && (rel)->pgstat_info != NULL)		\
+		if ((rel)->pgstat_info != NULL)								\
 			(rel)->pgstat_info->t_counts.t_numscans++;				\
 	} while (0)
 #define pgstat_count_heap_getnext(rel)								\
 	do {															\
-		if (pgstat_track_counts && (rel)->pgstat_info != NULL)		\
+		if ((rel)->pgstat_info != NULL)								\
 			(rel)->pgstat_info->t_counts.t_tuples_returned++;		\
 	} while (0)
 #define pgstat_count_heap_fetch(rel)								\
 	do {															\
-		if (pgstat_track_counts && (rel)->pgstat_info != NULL)		\
+		if ((rel)->pgstat_info != NULL)								\
 			(rel)->pgstat_info->t_counts.t_tuples_fetched++;		\
 	} while (0)
 #define pgstat_count_index_scan(rel)								\
 	do {															\
-		if (pgstat_track_counts && (rel)->pgstat_info != NULL)		\
+		if ((rel)->pgstat_info != NULL)								\
 			(rel)->pgstat_info->t_counts.t_numscans++;				\
 	} while (0)
 #define pgstat_count_index_tuples(rel, n)							\
 	do {															\
-		if (pgstat_track_counts && (rel)->pgstat_info != NULL)		\
+		if ((rel)->pgstat_info != NULL)								\
 			(rel)->pgstat_info->t_counts.t_tuples_returned += (n);	\
 	} while (0)
 #define pgstat_count_buffer_read(rel)								\
 	do {															\
-		if (pgstat_track_counts && (rel)->pgstat_info != NULL)		\
+		if ((rel)->pgstat_info != NULL)								\
 			(rel)->pgstat_info->t_counts.t_blocks_fetched++;		\
 	} while (0)
 #define pgstat_count_buffer_hit(rel)								\
 	do {															\
-		if (pgstat_track_counts && (rel)->pgstat_info != NULL)		\
+		if ((rel)->pgstat_info != NULL)								\
 			(rel)->pgstat_info->t_counts.t_blocks_hit++;			\
 	} while (0)
 
