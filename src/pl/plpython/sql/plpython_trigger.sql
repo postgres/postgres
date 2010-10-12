@@ -303,3 +303,26 @@ UPDATE trigger_test SET v = 'null' WHERE i = 0;
 DROP TRIGGER test_null_trigger ON trigger_test;
 
 SELECT * FROM trigger_test;
+
+
+--
+-- Test that triggers honor typmod when assigning to tuple fields,
+-- as per an early 9.0 bug report
+--
+
+SET DateStyle = 'ISO';
+
+CREATE FUNCTION set_modif_time() RETURNS trigger AS $$
+    TD['new']['modif_time'] = '2010-10-13 21:57:28.930486'
+    return 'MODIFY'
+$$ LANGUAGE plpythonu;
+
+CREATE TABLE pb (a TEXT, modif_time TIMESTAMP(0) WITHOUT TIME ZONE);
+
+CREATE TRIGGER set_modif_time BEFORE UPDATE ON pb
+  FOR EACH ROW EXECUTE PROCEDURE set_modif_time();
+
+INSERT INTO pb VALUES ('a', '2010-10-09 21:57:33.930486');
+SELECT * FROM pb;
+UPDATE pb SET a = 'b';
+SELECT * FROM pb;
