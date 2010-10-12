@@ -6699,7 +6699,7 @@ DESCRIBE [ OUTPUT ] <replaceable class="PARAMETER">prepared_name</replaceable> I
     <title>Description</title>
 
     <para>
-     <command>DECLARE</command> retrieves metadata information about
+     <command>DESCRIBE</command> retrieves metadata information about
      the result columns contained in a prepared statement, without
      actually fetching a row.
     </para>
