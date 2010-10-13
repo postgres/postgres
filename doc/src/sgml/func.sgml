@@ -12348,8 +12348,8 @@ SET search_path TO <replaceable>schema</> <optional>, <replaceable>schema</>, ..
    <para>
     <function>has_table_privilege</function> checks whether a user
     can access a table in a particular way.  The user can be
-    specified by name or by OID
-    (<literal>pg_authid.oid</literal>), or if the argument is
+    specified by name, by OID (<literal>pg_authid.oid</literal>),
+    <literal>public</> to indicate the PUBLIC pseudo-role, or if the argument is
     omitted
     <function>current_user</function> is assumed.  The table can be specified
     by name or by OID.  (Thus, there are actually six variants of
@@ -12496,7 +12496,8 @@ SELECT has_function_privilege('joeuser', 'myfunc(int, text)', 'execute');
     <function>pg_has_role</function> checks whether a user
     can access a role in a particular way.
     Its argument possibilities
-    are analogous to <function>has_table_privilege</function>.
+    are analogous to <function>has_table_privilege</function>,
+    except that <literal>public</> is not allowed as a user name.
     The desired access privilege type must evaluate to some combination of
     <literal>MEMBER</literal> or
     <literal>USAGE</literal>.
