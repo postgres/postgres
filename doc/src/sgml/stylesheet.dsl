@@ -371,6 +371,49 @@
 	(empty-sosofo))))
 
 
+;; Put index "quicklinks" (A | B | C | ...) at the top of the bookindex page.
+
+(element index
+  (let ((preamble (node-list-filter-by-not-gi
+                   (children (current-node))
+                   (list (normalize "indexentry"))))
+        (indexdivs  (node-list-filter-by-gi
+		     (children (current-node))
+		     (list (normalize "indexdiv"))))
+        (entries  (node-list-filter-by-gi
+                   (children (current-node))
+                   (list (normalize "indexentry")))))
+    (html-document
+     (with-mode head-title-mode
+       (literal (element-title-string (current-node))))
+     (make element gi: "DIV"
+           attributes: (list (list "CLASS" (gi)))
+           ($component-separator$)
+           ($component-title$)
+	   (if (node-list-empty? indexdivs)
+	       (empty-sosofo)
+	       (make element gi: "P"
+		     attributes: (list (list "CLASS" "INDEXDIV-QUICKLINKS"))
+		     (with-mode indexdiv-quicklinks-mode
+		       (process-node-list indexdivs))))
+           (process-node-list preamble)
+           (if (node-list-empty? entries)
+               (empty-sosofo)
+               (make element gi: "DL"
+                     (process-node-list entries)))))))
+
+
+(mode indexdiv-quicklinks-mode
+  (element indexdiv
+    (make sequence
+      (make element gi: "A"
+	    attributes: (list (list "HREF" (href-to (current-node))))
+	    (element-title-sosofo))
+      (if (not (last-sibling?))
+	  (literal " | ")
+	  (literal "")))))
+
+
 ]]> <!-- %output-html -->
 
 
