@@ -242,7 +242,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
 
     <tbody>
      <row>
-      <entry><structname>pg_stat_activity</></entry>
+      <entry><structname>pg_stat_activity</><indexterm><primary>pg_stat_activity</primary></indexterm></entry>
       <entry>One row per server process, showing database OID, database
       name, process <acronym>ID</>, user OID, user name, application name,
       client's address and port number, times at which the server process,
@@ -257,7 +257,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
      </row>
 
      <row>
-      <entry><structname>pg_stat_bgwriter</></entry>
+      <entry><structname>pg_stat_bgwriter</><indexterm><primary>pg_stat_bgwriter</primary></indexterm></entry>
       <entry>One row only, showing cluster-wide statistics from the
       background writer: number of scheduled checkpoints, requested
       checkpoints, buffers written by checkpoints and cleaning scans,
@@ -270,7 +270,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
      </row>
 
      <row>
-      <entry><structname>pg_stat_database</></entry>
+      <entry><structname>pg_stat_database</><indexterm><primary>pg_stat_database</primary></indexterm></entry>
       <entry>One row per database, showing database OID, database name,
       number of active server processes connected to that database,
       number of transactions committed and rolled back in that database,
@@ -281,7 +281,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
      </row>
 
      <row>
-      <entry><structname>pg_stat_all_tables</></entry>
+      <entry><structname>pg_stat_all_tables</><indexterm><primary>pg_stat_all_tables</primary></indexterm></entry>
       <entry>For each table in the current database (including TOAST tables),
       the table OID, schema and table name, number of sequential
       scans initiated, number of live rows fetched by sequential
@@ -302,19 +302,19 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
      </row>
 
      <row>
-      <entry><structname>pg_stat_sys_tables</></entry>
+      <entry><structname>pg_stat_sys_tables</><indexterm><primary>pg_stat_sys_tables</primary></indexterm></entry>
       <entry>Same as <structname>pg_stat_all_tables</>, except that only
       system tables are shown.</entry>
      </row>
 
      <row>
-      <entry><structname>pg_stat_user_tables</></entry>
+      <entry><structname>pg_stat_user_tables</><indexterm><primary>pg_stat_user_tables</primary></indexterm></entry>
       <entry>Same as <structname>pg_stat_all_tables</>, except that only user
       tables are shown.</entry>
      </row>
 
      <row>
-      <entry><structname>pg_stat_xact_all_tables</></entry>
+      <entry><structname>pg_stat_xact_all_tables</><indexterm><primary>pg_stat_xact_all_tables</primary></indexterm></entry>
       <entry>Similar to <structname>pg_stat_all_tables</>, but counts actions
       taken so far within the current transaction (which are <emphasis>not</>
       yet included in <structname>pg_stat_all_tables</> and related views).
@@ -323,19 +323,19 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
      </row>
 
      <row>
-      <entry><structname>pg_stat_xact_sys_tables</></entry>
+      <entry><structname>pg_stat_xact_sys_tables</><indexterm><primary>pg_stat_xact_sys_tables</primary></indexterm></entry>
       <entry>Same as <structname>pg_stat_xact_all_tables</>, except that only
       system tables are shown.</entry>
      </row>
 
      <row>
-      <entry><structname>pg_stat_xact_user_tables</></entry>
+      <entry><structname>pg_stat_xact_user_tables</><indexterm><primary>pg_stat_xact_user_tables</primary></indexterm></entry>
       <entry>Same as <structname>pg_stat_xact_all_tables</>, except that only
       user tables are shown.</entry>
      </row>
 
      <row>
-      <entry><structname>pg_stat_all_indexes</></entry>
+      <entry><structname>pg_stat_all_indexes</><indexterm><primary>pg_stat_all_indexes</primary></indexterm></entry>
       <entry>For each index in the current database,
       the table and index OID, schema, table and index name,
       number of index scans initiated on that index, number of
@@ -345,19 +345,19 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
      </row>
 
      <row>
-      <entry><structname>pg_stat_sys_indexes</></entry>
+      <entry><structname>pg_stat_sys_indexes</><indexterm><primary>pg_stat_sys_indexes</primary></indexterm></entry>
       <entry>Same as <structname>pg_stat_all_indexes</>, except that only
       indexes on system tables are shown.</entry>
      </row>
 
      <row>
-      <entry><structname>pg_stat_user_indexes</></entry>
+      <entry><structname>pg_stat_user_indexes</><indexterm><primary>pg_stat_user_indexes</primary></indexterm></entry>
       <entry>Same as <structname>pg_stat_all_indexes</>, except that only
       indexes on user tables are shown.</entry>
      </row>
 
      <row>
-      <entry><structname>pg_statio_all_tables</></entry>
+      <entry><structname>pg_statio_all_tables</><indexterm><primary>pg_statio_all_tables</primary></indexterm></entry>
       <entry>For each table in the current database (including TOAST tables),
       the table OID, schema and table name, number of disk
       blocks read from that table, number of buffer hits, numbers of
@@ -369,19 +369,19 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
      </row>
 
      <row>
-      <entry><structname>pg_statio_sys_tables</></entry>
+      <entry><structname>pg_statio_sys_tables</><indexterm><primary>pg_statio_sys_tables</primary></indexterm></entry>
       <entry>Same as <structname>pg_statio_all_tables</>, except that only
       system tables are shown.</entry>
      </row>
 
      <row>
-      <entry><structname>pg_statio_user_tables</></entry>
+      <entry><structname>pg_statio_user_tables</><indexterm><primary>pg_statio_user_tables</primary></indexterm></entry>
       <entry>Same as <structname>pg_statio_all_tables</>, except that only
       user tables are shown.</entry>
      </row>
 
      <row>
-      <entry><structname>pg_statio_all_indexes</></entry>
+      <entry><structname>pg_statio_all_indexes</><indexterm><primary>pg_statio_all_indexes</primary></indexterm></entry>
       <entry>For each index in the current database,
       the table and index OID, schema, table and index name,
       numbers of disk blocks read and buffer hits in that index.
@@ -389,19 +389,19 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
      </row>
 
      <row>
-      <entry><structname>pg_statio_sys_indexes</></entry>
+      <entry><structname>pg_statio_sys_indexes</><indexterm><primary>pg_statio_sys_indexes</primary></indexterm></entry>
       <entry>Same as <structname>pg_statio_all_indexes</>, except that only
       indexes on system tables are shown.</entry>
      </row>
 
      <row>
-      <entry><structname>pg_statio_user_indexes</></entry>
+      <entry><structname>pg_statio_user_indexes</><indexterm><primary>pg_statio_user_indexes</primary></indexterm></entry>
       <entry>Same as <structname>pg_statio_all_indexes</>, except that only
       indexes on user tables are shown.</entry>
      </row>
 
      <row>
-      <entry><structname>pg_statio_all_sequences</></entry>
+      <entry><structname>pg_statio_all_sequences</><indexterm><primary>pg_statio_all_sequences</primary></indexterm></entry>
       <entry>For each sequence object in the current database,
       the sequence OID, schema and sequence name,
       numbers of disk blocks read and buffer hits in that sequence.
@@ -409,20 +409,20 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
      </row>
 
      <row>
-      <entry><structname>pg_statio_sys_sequences</></entry>
+      <entry><structname>pg_statio_sys_sequences</><indexterm><primary>pg_statio_sys_sequences</primary></indexterm></entry>
       <entry>Same as <structname>pg_statio_all_sequences</>, except that only
       system sequences are shown.  (Presently, no system sequences are defined,
       so this view is always empty.)</entry>
      </row>
 
      <row>
-      <entry><structname>pg_statio_user_sequences</></entry>
+      <entry><structname>pg_statio_user_sequences</><indexterm><primary>pg_statio_user_sequences</primary></indexterm></entry>
       <entry>Same as <structname>pg_statio_all_sequences</>, except that only
       user sequences are shown.</entry>
      </row>
 
      <row>
-      <entry><structname>pg_stat_user_functions</></entry>
+      <entry><structname>pg_stat_user_functions</><indexterm><primary>pg_stat_user_functions</primary></indexterm></entry>
       <entry>For all tracked functions, function OID, schema, name, number
       of calls, total time, and self time.  Self time is the
       amount of time spent in the function itself, total time includes the
@@ -431,7 +431,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
      </row>
 
      <row>
-      <entry><structname>pg_stat_xact_user_functions</></entry>
+      <entry><structname>pg_stat_xact_user_functions</><indexterm><primary>pg_stat_xact_user_functions</primary></indexterm></entry>
       <entry>Similar to <structname>pg_stat_user_functions</>, but counts only
       calls during the current transaction (which are <emphasis>not</>
       yet included in <structname>pg_stat_user_functions</>).</entry>
