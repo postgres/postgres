@@ -867,7 +867,7 @@ CREATE TABLE order_items (
   </sect2>
 
   <sect2 id="ddl-constraints-exclusion">
-   <title>Exclusion constraints</title>
+   <title>Exclusion Constraints</title>
 
    <indexterm>
     <primary>exclusion constraint</primary>
