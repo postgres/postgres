@@ -4361,7 +4361,7 @@ writeTimeLineHistory(TimeLineID newTLI, TimeLineID parentTLI,
 				 xlogfname,
 				 recoveryStopAfter ? "after" : "before",
 				 recoveryStopXid);
-	if (recoveryTarget == RECOVERY_TARGET_TIME)
+	else if (recoveryTarget == RECOVERY_TARGET_TIME)
 		snprintf(buffer, sizeof(buffer),
 				 "%s%u\t%s\t%s %s\n",
 				 (srcfd < 0) ? "" : "\n",
