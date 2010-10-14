@@ -9174,6 +9174,7 @@ static void
 StartupProcSigHupHandler(SIGNAL_ARGS)
 {
 	got_SIGHUP = true;
+	WakeupRecovery();
 }
 
 /* SIGTERM: set flag to abort redo and exit */
@@ -9184,6 +9185,7 @@ StartupProcShutdownHandler(SIGNAL_ARGS)
 		proc_exit(1);
 	else
 		shutdown_requested = true;
+	WakeupRecovery();
 }
 
 /* Handle SIGHUP and SIGTERM signals of startup process */
