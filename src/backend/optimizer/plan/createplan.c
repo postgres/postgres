@@ -25,6 +25,7 @@
 #include "nodes/nodeFuncs.h"
 #include "optimizer/clauses.h"
 #include "optimizer/cost.h"
+#include "optimizer/paths.h"
 #include "optimizer/plancat.h"
 #include "optimizer/planmain.h"
 #include "optimizer/predtest.h"
@@ -45,6 +46,7 @@ static void disuse_physical_tlist(Plan *plan, Path *path);
 static Plan *create_gating_plan(PlannerInfo *root, Plan *plan, List *quals);
 static Plan *create_join_plan(PlannerInfo *root, JoinPath *best_path);
 static Plan *create_append_plan(PlannerInfo *root, AppendPath *best_path);
+static Plan *create_merge_append_plan(PlannerInfo *root, MergeAppendPath *best_path);
 static Result *create_result_plan(PlannerInfo *root, ResultPath *best_path);
 static Material *create_material_plan(PlannerInfo *root, MaterialPath *best_path);
 static Plan *create_unique_plan(PlannerInfo *root, UniquePath *best_path);
@@ -134,6 +136,13 @@ static MergeJoin *make_mergejoin(List *tlist,
 static Sort *make_sort(PlannerInfo *root, Plan *lefttree, int numCols,
 		  AttrNumber *sortColIdx, Oid *sortOperators, bool *nullsFirst,
 		  double limit_tuples);
+static Plan *prepare_sort_from_pathkeys(PlannerInfo *root,
+										Plan *lefttree, List *pathkeys,
+										bool adjust_tlist_in_place,
+										int *p_numsortkeys,
+										AttrNumber **p_sortColIdx,
+										Oid **p_sortOperators,
+										bool **p_nullsFirst);
 static Material *make_material(Plan *lefttree);
 
 
@@ -202,6 +211,10 @@ create_plan_recurse(PlannerInfo *root, Path *best_path)
 		case T_Append:
 			plan = create_append_plan(root,
 									  (AppendPath *) best_path);
+			break;
+		case T_MergeAppend:
+			plan = create_merge_append_plan(root,
+											(MergeAppendPath *) best_path);
 			break;
 		case T_Result:
 			plan = (Plan *) create_result_plan(root,
@@ -617,6 +630,97 @@ create_append_plan(PlannerInfo *root, AppendPath *best_path)
 	plan = make_append(subplans, tlist);
 
 	return (Plan *) plan;
+}
+
+/*
+ * create_merge_append_plan
+ *	  Create a MergeAppend plan for 'best_path' and (recursively) plans
+ *	  for its subpaths.
+ *
+ *	  Returns a Plan node.
+ */
+static Plan *
+create_merge_append_plan(PlannerInfo *root, MergeAppendPath *best_path)
+{
+	MergeAppend *node = makeNode(MergeAppend);
+	Plan	   *plan = &node->plan;
+	List	   *tlist = build_relation_tlist(best_path->path.parent);
+	List	   *pathkeys = best_path->path.pathkeys;
+	List	   *subplans = NIL;
+	ListCell   *subpaths;
+
+	/*
+	 * We don't have the actual creation of the MergeAppend node split out
+	 * into a separate make_xxx function.  This is because we want to run
+	 * prepare_sort_from_pathkeys on it before we do so on the individual
+	 * child plans, to make cross-checking the sort info easier.
+	 */
+	copy_path_costsize(plan, (Path *) best_path);
+	plan->targetlist = tlist;
+	plan->qual = NIL;
+	plan->lefttree = NULL;
+	plan->righttree = NULL;
+
+	/* Compute sort column info, and adjust MergeAppend's tlist as needed */
+	(void) prepare_sort_from_pathkeys(root, plan, pathkeys,
+									  true,
+									  &node->numCols,
+									  &node->sortColIdx,
+									  &node->sortOperators,
+									  &node->nullsFirst);
+
+	/*
+	 * Now prepare the child plans.  We must apply prepare_sort_from_pathkeys
+	 * even to subplans that don't need an explicit sort, to make sure they
+	 * are returning the same sort key columns the MergeAppend expects.
+	 */
+	foreach(subpaths, best_path->subpaths)
+	{
+		Path	   *subpath = (Path *) lfirst(subpaths);
+		Plan	   *subplan;
+		int			numsortkeys;
+		AttrNumber *sortColIdx;
+		Oid		   *sortOperators;
+		bool	   *nullsFirst;
+
+		/* Build the child plan */
+		subplan = create_plan_recurse(root, subpath);
+
+		/* Compute sort column info, and adjust subplan's tlist as needed */
+		subplan = prepare_sort_from_pathkeys(root, subplan, pathkeys,
+											 false,
+											 &numsortkeys,
+											 &sortColIdx,
+											 &sortOperators,
+											 &nullsFirst);
+
+		/*
+		 * Check that we got the same sort key information.  We just Assert
+		 * that the sortops match, since those depend only on the pathkeys;
+		 * but it seems like a good idea to check the sort column numbers
+		 * explicitly, to ensure the tlists really do match up.
+		 */
+		Assert(numsortkeys == node->numCols);
+		if (memcmp(sortColIdx, node->sortColIdx,
+				   numsortkeys * sizeof(AttrNumber)) != 0)
+			elog(ERROR, "MergeAppend child's targetlist doesn't match MergeAppend");
+		Assert(memcmp(sortOperators, node->sortOperators,
+					  numsortkeys * sizeof(Oid)) == 0);
+		Assert(memcmp(nullsFirst, node->nullsFirst,
+					  numsortkeys * sizeof(bool)) == 0);
+
+		/* Now, insert a Sort node if subplan isn't sufficiently ordered */
+		if (!pathkeys_contained_in(pathkeys, subpath->pathkeys))
+			subplan = (Plan *) make_sort(root, subplan, numsortkeys,
+										 sortColIdx, sortOperators, nullsFirst,
+										 -1.0);
+
+		subplans = lappend(subplans, subplan);
+	}
+
+	node->mergeplans = subplans;
+
+	return (Plan *) node;
 }
 
 /*
@@ -2502,7 +2606,7 @@ order_qual_clauses(PlannerInfo *root, List *clauses)
 
 /*
  * Copy cost and size info from a Path node to the Plan node created from it.
- * The executor won't use this info, but it's needed by EXPLAIN.
+ * The executor usually won't use this info, but it's needed by EXPLAIN.
  */
 static void
 copy_path_costsize(Plan *dest, Path *src)
@@ -2525,9 +2629,7 @@ copy_path_costsize(Plan *dest, Path *src)
 
 /*
  * Copy cost and size info from a lower plan node to an inserted node.
- * This is not critical, since the decisions have already been made,
- * but it helps produce more reasonable-looking EXPLAIN output.
- * (Some callers alter the info after copying it.)
+ * (Most callers alter the info after copying it.)
  */
 static void
 copy_plan_costsize(Plan *dest, Plan *src)
@@ -2796,6 +2898,12 @@ make_append(List *appendplans, List *tlist)
 	 * Compute cost as sum of subplan costs.  We charge nothing extra for the
 	 * Append itself, which perhaps is too optimistic, but since it doesn't do
 	 * any selection or projection, it is a pretty cheap node.
+	 *
+	 * If you change this, see also create_append_path().  Also, the size
+	 * calculations should match set_append_rel_pathlist().  It'd be better
+	 * not to duplicate all this logic, but some callers of this function
+	 * aren't working from an appendrel or AppendPath, so there's noplace
+	 * to copy the data from.
 	 */
 	plan->startup_cost = 0;
 	plan->total_cost = 0;
@@ -3102,26 +3210,41 @@ add_sort_column(AttrNumber colIdx, Oid sortOp, bool nulls_first,
 }
 
 /*
- * make_sort_from_pathkeys
- *	  Create sort plan to sort according to given pathkeys
+ * prepare_sort_from_pathkeys
+ *	  Prepare to sort according to given pathkeys
  *
+ * This is used to set up for both Sort and MergeAppend nodes.  It calculates
+ * the executor's representation of the sort key information, and adjusts the
+ * plan targetlist if needed to add resjunk sort columns.
+ *
+ * Input parameters:
  *	  'lefttree' is the node which yields input tuples
  *	  'pathkeys' is the list of pathkeys by which the result is to be sorted
- *	  'limit_tuples' is the bound on the number of output tuples;
- *				-1 if no bound
+ *	  'adjust_tlist_in_place' is TRUE if lefttree must be modified in-place
  *
  * We must convert the pathkey information into arrays of sort key column
- * numbers and sort operator OIDs.
+ * numbers and sort operator OIDs, which is the representation the executor
+ * wants.  These are returned into the output parameters *p_numsortkeys etc.
  *
  * If the pathkeys include expressions that aren't simple Vars, we will
  * usually need to add resjunk items to the input plan's targetlist to
- * compute these expressions (since the Sort node itself won't do it).
- * If the input plan type isn't one that can do projections, this means
- * adding a Result node just to do the projection.
+ * compute these expressions, since the Sort/MergeAppend node itself won't
+ * do any such calculations.  If the input plan type isn't one that can do
+ * projections, this means adding a Result node just to do the projection.
+ * However, the caller can pass adjust_tlist_in_place = TRUE to force the
+ * lefttree tlist to be modified in-place regardless of whether the node type
+ * can project --- we use this for fixing the tlist of MergeAppend itself.
+ *
+ * Returns the node which is to be the input to the Sort (either lefttree,
+ * or a Result stacked atop lefttree).
  */
-Sort *
-make_sort_from_pathkeys(PlannerInfo *root, Plan *lefttree, List *pathkeys,
-						double limit_tuples)
+static Plan *
+prepare_sort_from_pathkeys(PlannerInfo *root, Plan *lefttree, List *pathkeys,
+						   bool adjust_tlist_in_place,
+						   int *p_numsortkeys,
+						   AttrNumber **p_sortColIdx,
+						   Oid **p_sortOperators,
+						   bool **p_nullsFirst)
 {
 	List	   *tlist = lefttree->targetlist;
 	ListCell   *i;
@@ -3185,7 +3308,12 @@ make_sort_from_pathkeys(PlannerInfo *root, Plan *lefttree, List *pathkeys,
 			{
 				EquivalenceMember *em = (EquivalenceMember *) lfirst(j);
 
-				if (em->em_is_const || em->em_is_child)
+				/*
+				 * We shouldn't be trying to sort by an equivalence class that
+				 * contains a constant, so no need to consider such cases any
+				 * further.
+				 */
+				if (em->em_is_const)
 					continue;
 
 				tle = tlist_member((Node *) em->em_expr, tlist);
@@ -3221,7 +3349,7 @@ make_sort_from_pathkeys(PlannerInfo *root, Plan *lefttree, List *pathkeys,
 					List	   *exprvars;
 					ListCell   *k;
 
-					if (em->em_is_const || em->em_is_child)
+					if (em->em_is_const)
 						continue;
 					sortexpr = em->em_expr;
 					exprvars = pull_var_clause((Node *) sortexpr,
@@ -3244,13 +3372,17 @@ make_sort_from_pathkeys(PlannerInfo *root, Plan *lefttree, List *pathkeys,
 				/*
 				 * Do we need to insert a Result node?
 				 */
-				if (!is_projection_capable_plan(lefttree))
+				if (!adjust_tlist_in_place &&
+					!is_projection_capable_plan(lefttree))
 				{
 					/* copy needed so we don't modify input's tlist below */
 					tlist = copyObject(tlist);
 					lefttree = (Plan *) make_result(root, tlist, NULL,
 													lefttree);
 				}
+
+				/* Don't bother testing is_projection_capable_plan again */
+				adjust_tlist_in_place = true;
 
 				/*
 				 * Add resjunk entry to input's tlist
@@ -3292,6 +3424,42 @@ make_sort_from_pathkeys(PlannerInfo *root, Plan *lefttree, List *pathkeys,
 
 	Assert(numsortkeys > 0);
 
+	/* Return results */
+	*p_numsortkeys = numsortkeys;
+	*p_sortColIdx = sortColIdx;
+	*p_sortOperators = sortOperators;
+	*p_nullsFirst = nullsFirst;
+
+	return lefttree;
+}
+
+/*
+ * make_sort_from_pathkeys
+ *	  Create sort plan to sort according to given pathkeys
+ *
+ *	  'lefttree' is the node which yields input tuples
+ *	  'pathkeys' is the list of pathkeys by which the result is to be sorted
+ *	  'limit_tuples' is the bound on the number of output tuples;
+ *				-1 if no bound
+ */
+Sort *
+make_sort_from_pathkeys(PlannerInfo *root, Plan *lefttree, List *pathkeys,
+						double limit_tuples)
+{
+	int			numsortkeys;
+	AttrNumber *sortColIdx;
+	Oid		   *sortOperators;
+	bool	   *nullsFirst;
+
+	/* Compute sort column info, and adjust lefttree as needed */
+	lefttree = prepare_sort_from_pathkeys(root, lefttree, pathkeys,
+										  false,
+										  &numsortkeys,
+										  &sortColIdx,
+										  &sortOperators,
+										  &nullsFirst);
+
+	/* Now build the Sort node */
 	return make_sort(root, lefttree, numsortkeys,
 					 sortColIdx, sortOperators, nullsFirst, limit_tuples);
 }
@@ -3998,6 +4166,7 @@ is_projection_capable_plan(Plan *plan)
 		case T_Limit:
 		case T_ModifyTable:
 		case T_Append:
+		case T_MergeAppend:
 		case T_RecursiveUnion:
 			return false;
 		default:

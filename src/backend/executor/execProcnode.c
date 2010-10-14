@@ -93,6 +93,7 @@
 #include "executor/nodeLimit.h"
 #include "executor/nodeLockRows.h"
 #include "executor/nodeMaterial.h"
+#include "executor/nodeMergeAppend.h"
 #include "executor/nodeMergejoin.h"
 #include "executor/nodeModifyTable.h"
 #include "executor/nodeNestloop.h"
@@ -156,6 +157,11 @@ ExecInitNode(Plan *node, EState *estate, int eflags)
 		case T_Append:
 			result = (PlanState *) ExecInitAppend((Append *) node,
 												  estate, eflags);
+			break;
+
+		case T_MergeAppend:
+			result = (PlanState *) ExecInitMergeAppend((MergeAppend *) node,
+													   estate, eflags);
 			break;
 
 		case T_RecursiveUnion:
@@ -361,6 +367,10 @@ ExecProcNode(PlanState *node)
 
 		case T_AppendState:
 			result = ExecAppend((AppendState *) node);
+			break;
+
+		case T_MergeAppendState:
+			result = ExecMergeAppend((MergeAppendState *) node);
 			break;
 
 		case T_RecursiveUnionState:
@@ -579,6 +589,10 @@ ExecEndNode(PlanState *node)
 
 		case T_AppendState:
 			ExecEndAppend((AppendState *) node);
+			break;
+
+		case T_MergeAppendState:
+			ExecEndMergeAppend((MergeAppendState *) node);
 			break;
 
 		case T_RecursiveUnionState:

@@ -256,9 +256,9 @@ typedef struct PlannerInfo
  * the entire append relation.	The member RTEs are otherrels.	The parent
  * is present in the query join tree but the members are not.  The member
  * RTEs and otherrels are used to plan the scans of the individual tables or
- * subqueries of the append set; then the parent baserel is given an Append
- * plan comprising the best plans for the individual member rels.  (See
- * comments for AppendRelInfo for more information.)
+ * subqueries of the append set; then the parent baserel is given Append
+ * and/or MergeAppend paths comprising the best paths for the individual
+ * member rels.  (See comments for AppendRelInfo for more information.)
  *
  * At one time we also made otherrels to represent join RTEs, for use in
  * handling join alias Vars.  Currently this is not needed because all join
@@ -542,10 +542,11 @@ typedef struct EquivalenceClass
  *
  * em_is_child signifies that this element was built by transposing a member
  * for an inheritance parent relation to represent the corresponding expression
- * on an inheritance child.  The element should be ignored for all purposes
- * except constructing inner-indexscan paths for the child relation.  (Other
- * types of join are driven from transposed joininfo-list entries.)  Note
- * that the EC's ec_relids field does NOT include the child relation.
+ * on an inheritance child.  These elements are used for constructing
+ * inner-indexscan paths for the child relation (other types of join are
+ * driven from transposed joininfo-list entries) and for constructing
+ * MergeAppend paths for the whole inheritance tree.  Note that the EC's
+ * ec_relids field does NOT include the child relation.
  *
  * em_datatype is usually the same as exprType(em_expr), but can be
  * different when dealing with a binary-compatible opfamily; in particular
@@ -754,6 +755,16 @@ typedef struct AppendPath
 
 #define IS_DUMMY_PATH(p) \
 	(IsA((p), AppendPath) && ((AppendPath *) (p))->subpaths == NIL)
+
+/*
+ * MergeAppendPath represents a MergeAppend plan, ie, the merging of sorted
+ * results from several member plans to produce similarly-sorted output.
+ */
+typedef struct MergeAppendPath
+{
+	Path		path;
+	List	   *subpaths;		/* list of component Paths */
+} MergeAppendPath;
 
 /*
  * ResultPath represents use of a Result plan node to compute a variable-free

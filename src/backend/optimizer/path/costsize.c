@@ -1210,6 +1210,70 @@ cost_sort(Path *path, PlannerInfo *root,
 }
 
 /*
+ * cost_merge_append
+ *	  Determines and returns the cost of a MergeAppend node.
+ *
+ * MergeAppend merges several pre-sorted input streams, using a heap that
+ * at any given instant holds the next tuple from each stream.  If there
+ * are N streams, we need about N*log2(N) tuple comparisons to construct
+ * the heap at startup, and then for each output tuple, about log2(N)
+ * comparisons to delete the top heap entry and another log2(N) comparisons
+ * to insert its successor from the same stream.
+ *
+ * (The effective value of N will drop once some of the input streams are
+ * exhausted, but it seems unlikely to be worth trying to account for that.)
+ *
+ * The heap is never spilled to disk, since we assume N is not very large.
+ * So this is much simpler than cost_sort.
+ *
+ * As in cost_sort, we charge two operator evals per tuple comparison.
+ *
+ * 'pathkeys' is a list of sort keys
+ * 'n_streams' is the number of input streams
+ * 'input_startup_cost' is the sum of the input streams' startup costs
+ * 'input_total_cost' is the sum of the input streams' total costs
+ * 'tuples' is the number of tuples in all the streams
+ */
+void
+cost_merge_append(Path *path, PlannerInfo *root,
+				  List *pathkeys, int n_streams,
+				  Cost input_startup_cost, Cost input_total_cost,
+				  double tuples)
+{
+	Cost		startup_cost = 0;
+	Cost		run_cost = 0;
+	Cost		comparison_cost;
+	double		N;
+	double		logN;
+
+	/*
+	 * Avoid log(0)...
+	 */
+	N = (n_streams < 2) ? 2.0 : (double) n_streams;
+	logN = LOG2(N);
+
+	/* Assumed cost per tuple comparison */
+	comparison_cost = 2.0 * cpu_operator_cost;
+
+	/* Heap creation cost */
+	startup_cost += comparison_cost * N * logN;
+
+	/* Per-tuple heap maintenance cost */
+	run_cost += tuples * comparison_cost * 2.0 * logN;
+
+	/*
+	 * Also charge a small amount (arbitrarily set equal to operator cost) per
+	 * extracted tuple.  We don't charge cpu_tuple_cost because a MergeAppend
+	 * node doesn't do qual-checking or projection, so it has less overhead
+	 * than most plan nodes.
+	 */
+	run_cost += cpu_operator_cost * tuples;
+
+	path->startup_cost = startup_cost + input_startup_cost;
+	path->total_cost = startup_cost + run_cost + input_total_cost;
+}
+
+/*
  * cost_material
  *	  Determines and returns the cost of materializing a relation, including
  *	  the cost of reading the input data.
@@ -1405,7 +1469,9 @@ cost_group(Path *path, PlannerInfo *root,
  * output row count, which may be lower than the restriction-clause-only row
  * count of its parent.  (We don't include this case in the PATH_ROWS macro
  * because it applies *only* to a nestloop's inner relation.)  We have to
- * be prepared to recurse through Append nodes in case of an appendrel.
+ * be prepared to recurse through Append or MergeAppend nodes in case of an
+ * appendrel.  (It's not clear MergeAppend can be seen here, but we may as
+ * well handle it if so.)
  */
 static double
 nestloop_inner_path_rows(Path *path)
@@ -1422,6 +1488,16 @@ nestloop_inner_path_rows(Path *path)
 
 		result = 0;
 		foreach(l, ((AppendPath *) path)->subpaths)
+		{
+			result += nestloop_inner_path_rows((Path *) lfirst(l));
+		}
+	}
+	else if (IsA(path, MergeAppendPath))
+	{
+		ListCell   *l;
+
+		result = 0;
+		foreach(l, ((MergeAppendPath *) path)->subpaths)
 		{
 			result += nestloop_inner_path_rows((Path *) lfirst(l));
 		}

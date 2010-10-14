@@ -554,6 +554,24 @@ set_plan_refs(PlannerGlobal *glob, Plan *plan, int rtoffset)
 				}
 			}
 			break;
+		case T_MergeAppend:
+			{
+				MergeAppend *splan = (MergeAppend *) plan;
+
+				/*
+				 * MergeAppend, like Sort et al, doesn't actually evaluate its
+				 * targetlist or check quals.
+				 */
+				set_dummy_tlist_references(plan, rtoffset);
+				Assert(splan->plan.qual == NIL);
+				foreach(l, splan->mergeplans)
+				{
+					lfirst(l) = set_plan_refs(glob,
+											  (Plan *) lfirst(l),
+											  rtoffset);
+				}
+			}
+			break;
 		case T_RecursiveUnion:
 			/* This doesn't evaluate targetlist or check quals either */
 			set_dummy_tlist_references(plan, rtoffset);

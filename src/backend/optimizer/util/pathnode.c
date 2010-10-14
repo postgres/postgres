@@ -636,6 +636,8 @@ create_tidscan_path(PlannerInfo *root, RelOptInfo *rel, List *tidquals)
  * create_append_path
  *	  Creates a path corresponding to an Append plan, returning the
  *	  pathnode.
+ *
+ * Note that we must handle subpaths = NIL, representing a dummy access path.
  */
 AppendPath *
 create_append_path(RelOptInfo *rel, List *subpaths)
@@ -649,6 +651,13 @@ create_append_path(RelOptInfo *rel, List *subpaths)
 										 * unsorted */
 	pathnode->subpaths = subpaths;
 
+	/*
+	 * Compute cost as sum of subplan costs.  We charge nothing extra for the
+	 * Append itself, which perhaps is too optimistic, but since it doesn't do
+	 * any selection or projection, it is a pretty cheap node.
+	 *
+	 * If you change this, see also make_append().
+	 */
 	pathnode->path.startup_cost = 0;
 	pathnode->path.total_cost = 0;
 	foreach(l, subpaths)
@@ -659,6 +668,68 @@ create_append_path(RelOptInfo *rel, List *subpaths)
 			pathnode->path.startup_cost = subpath->startup_cost;
 		pathnode->path.total_cost += subpath->total_cost;
 	}
+
+	return pathnode;
+}
+
+/*
+ * create_merge_append_path
+ *	  Creates a path corresponding to a MergeAppend plan, returning the
+ *	  pathnode.
+ */
+MergeAppendPath *
+create_merge_append_path(PlannerInfo *root,
+						 RelOptInfo *rel,
+						 List *subpaths,
+						 List *pathkeys)
+{
+	MergeAppendPath *pathnode = makeNode(MergeAppendPath);
+	Cost		input_startup_cost;
+	Cost		input_total_cost;
+	ListCell   *l;
+
+	pathnode->path.pathtype = T_MergeAppend;
+	pathnode->path.parent = rel;
+	pathnode->path.pathkeys = pathkeys;
+	pathnode->subpaths = subpaths;
+
+	/* Add up all the costs of the input paths */
+	input_startup_cost = 0;
+	input_total_cost = 0;
+	foreach(l, subpaths)
+	{
+		Path	   *subpath = (Path *) lfirst(l);
+
+		if (pathkeys_contained_in(pathkeys, subpath->pathkeys))
+		{
+			/* Subpath is adequately ordered, we won't need to sort it */
+			input_startup_cost += subpath->startup_cost;
+			input_total_cost += subpath->total_cost;
+		}
+		else
+		{
+			/* We'll need to insert a Sort node, so include cost for that */
+			Path	sort_path;		/* dummy for result of cost_sort */
+
+			cost_sort(&sort_path,
+					  root,
+					  pathkeys,
+					  subpath->total_cost,
+					  subpath->parent->tuples,
+					  subpath->parent->width,
+					  0.0,
+					  work_mem,
+					  -1.0);
+			input_startup_cost += sort_path.startup_cost;
+			input_total_cost += sort_path.total_cost;
+		}
+	}
+
+	/* Now we can compute total costs of the MergeAppend */
+	cost_merge_append(&pathnode->path, root,
+					  pathkeys, list_length(subpaths),
+					  input_startup_cost, input_total_cost,
+					  rel->tuples);
 
 	return pathnode;
 }

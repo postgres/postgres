@@ -2065,6 +2065,22 @@ finalize_plan(PlannerInfo *root, Plan *plan, Bitmapset *valid_params,
 			}
 			break;
 
+		case T_MergeAppend:
+			{
+				ListCell   *l;
+
+				foreach(l, ((MergeAppend *) plan)->mergeplans)
+				{
+					context.paramids =
+						bms_add_members(context.paramids,
+										finalize_plan(root,
+													  (Plan *) lfirst(l),
+													  valid_params,
+													  scan_params));
+				}
+			}
+			break;
+
 		case T_BitmapAnd:
 			{
 				ListCell   *l;

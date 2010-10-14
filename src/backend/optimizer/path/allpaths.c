@@ -51,6 +51,7 @@ static void set_plain_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 					   RangeTblEntry *rte);
 static void set_append_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 						Index rti, RangeTblEntry *rte);
+static List *accumulate_append_subpath(List *subpaths, Path *path);
 static void set_dummy_rel_pathlist(RelOptInfo *rel);
 static void set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
 					  Index rti, RangeTblEntry *rte);
@@ -283,7 +284,9 @@ set_append_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 						Index rti, RangeTblEntry *rte)
 {
 	int			parentRTindex = rti;
+	List	   *live_childrels = NIL;
 	List	   *subpaths = NIL;
+	List	   *all_child_pathkeys = NIL;
 	double		parent_rows;
 	double		parent_size;
 	double	   *parent_attrsizes;
@@ -321,7 +324,7 @@ set_append_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 		RelOptInfo *childrel;
 		List	   *childquals;
 		Node	   *childqual;
-		Path	   *childpath;
+		ListCell   *lcp;
 		ListCell   *parentvars;
 		ListCell   *childvars;
 
@@ -395,13 +398,15 @@ set_append_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 
 		/*
 		 * We have to make child entries in the EquivalenceClass data
-		 * structures as well.
+		 * structures as well.  This is needed either if the parent
+		 * participates in some eclass joins (because we will want to
+		 * consider inner-indexscan joins on the individual children)
+		 * or if the parent has useful pathkeys (because we should try
+		 * to build MergeAppend paths that produce those sort orderings).
 		 */
-		if (rel->has_eclass_joins)
-		{
+		if (rel->has_eclass_joins || has_useful_pathkeys(root, rel))
 			add_child_rel_equivalences(root, appinfo, rel, childrel);
-			childrel->has_eclass_joins = true;
-		}
+		childrel->has_eclass_joins = rel->has_eclass_joins;
 
 		/*
 		 * Note: we could compute appropriate attr_needed data for the child's
@@ -411,23 +416,52 @@ set_append_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 		 * otherrels.  So we just leave the child's attr_needed empty.
 		 */
 
+		/* Remember which childrels are live, for MergeAppend logic below */
+		live_childrels = lappend(live_childrels, childrel);
+
 		/*
 		 * Compute the child's access paths, and add the cheapest one to the
 		 * Append path we are constructing for the parent.
-		 *
-		 * It's possible that the child is itself an appendrel, in which case
-		 * we can "cut out the middleman" and just add its child paths to our
-		 * own list.  (We don't try to do this earlier because we need to
-		 * apply both levels of transformation to the quals.)
 		 */
 		set_rel_pathlist(root, childrel, childRTindex, childRTE);
 
-		childpath = childrel->cheapest_total_path;
-		if (IsA(childpath, AppendPath))
-			subpaths = list_concat(subpaths,
-							list_copy(((AppendPath *) childpath)->subpaths));
-		else
-			subpaths = lappend(subpaths, childpath);
+		subpaths = accumulate_append_subpath(subpaths,
+											 childrel->cheapest_total_path);
+
+		/*
+		 * Collect a list of all the available path orderings for all the
+		 * children.  We use this as a heuristic to indicate which sort
+		 * orderings we should build MergeAppend paths for.
+		 */
+		foreach(lcp, childrel->pathlist)
+		{
+			Path	   *childpath = (Path *) lfirst(lcp);
+			List	   *childkeys = childpath->pathkeys;
+			ListCell   *lpk;
+			bool		found = false;
+
+			/* Ignore unsorted paths */
+			if (childkeys == NIL)
+				continue;
+
+			/* Have we already seen this ordering? */
+			foreach(lpk, all_child_pathkeys)
+			{
+				List   *existing_pathkeys = (List *) lfirst(lpk);
+
+				if (compare_pathkeys(existing_pathkeys,
+									 childkeys) == PATHKEYS_EQUAL)
+				{
+					found = true;
+					break;
+				}
+			}
+			if (!found)
+			{
+				/* No, so add it to all_child_pathkeys */
+				all_child_pathkeys = lappend(all_child_pathkeys, childkeys);
+			}
+		}
 
 		/*
 		 * Accumulate size information from each child.
@@ -483,14 +517,104 @@ set_append_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 	pfree(parent_attrsizes);
 
 	/*
-	 * Finally, build Append path and install it as the only access path for
-	 * the parent rel.	(Note: this is correct even if we have zero or one
-	 * live subpath due to constraint exclusion.)
+	 * Next, build an unordered Append path for the rel.  (Note: this is
+	 * correct even if we have zero or one live subpath due to constraint
+	 * exclusion.)
 	 */
 	add_path(rel, (Path *) create_append_path(rel, subpaths));
 
-	/* Select cheapest path (pretty easy in this case...) */
+	/*
+	 * Next, build MergeAppend paths based on the collected list of child
+	 * pathkeys.  We consider both cheapest-startup and cheapest-total
+	 * cases, ie, for each interesting ordering, collect all the cheapest
+	 * startup subpaths and all the cheapest total paths, and build a
+	 * MergeAppend path for each list.
+	 */
+	foreach(l, all_child_pathkeys)
+	{
+		List   *pathkeys = (List *) lfirst(l);
+		List   *startup_subpaths = NIL;
+		List   *total_subpaths = NIL;
+		bool	startup_neq_total = false;
+		ListCell *lcr;
+
+		/* Select the child paths for this ordering... */
+		foreach(lcr, live_childrels)
+		{
+			RelOptInfo *childrel = (RelOptInfo *) lfirst(lcr);
+			Path	   *cheapest_startup,
+					   *cheapest_total;
+
+			/* Locate the right paths, if they are available. */
+			cheapest_startup =
+				get_cheapest_path_for_pathkeys(childrel->pathlist,
+											   pathkeys,
+											   STARTUP_COST);
+			cheapest_total =
+				get_cheapest_path_for_pathkeys(childrel->pathlist,
+											   pathkeys,
+											   TOTAL_COST);
+
+			/*
+			 * If we can't find any paths with the right order just add the
+			 * cheapest-total path; we'll have to sort it.
+			 */
+			if (cheapest_startup == NULL)
+				cheapest_startup = childrel->cheapest_total_path;
+			if (cheapest_total == NULL)
+				cheapest_total = childrel->cheapest_total_path;
+
+			/*
+			 * Notice whether we actually have different paths for the
+			 * "cheapest" and "total" cases; frequently there will be no
+			 * point in two create_merge_append_path() calls.
+			 */
+			if (cheapest_startup != cheapest_total)
+				startup_neq_total = true;
+
+			startup_subpaths =
+				accumulate_append_subpath(startup_subpaths, cheapest_startup);
+			total_subpaths =
+				accumulate_append_subpath(total_subpaths, cheapest_total);
+		}
+
+		/* ... and build the MergeAppend paths */
+		add_path(rel, (Path *) create_merge_append_path(root,
+														rel,
+														startup_subpaths,
+														pathkeys));
+		if (startup_neq_total)
+			add_path(rel, (Path *) create_merge_append_path(root,
+															rel,
+															total_subpaths,
+															pathkeys));
+	}
+
+	/* Select cheapest path */
 	set_cheapest(rel);
+}
+
+/*
+ * accumulate_append_subpath
+ *		Add a subpath to the list being built for an Append or MergeAppend
+ *
+ * It's possible that the child is itself an Append path, in which case
+ * we can "cut out the middleman" and just add its child paths to our
+ * own list.  (We don't try to do this earlier because we need to
+ * apply both levels of transformation to the quals.)
+ */
+static List *
+accumulate_append_subpath(List *subpaths, Path *path)
+{
+	if (IsA(path, AppendPath))
+	{
+		AppendPath	*apath = (AppendPath *) path;
+
+		/* list_copy is important here to avoid sharing list substructure */
+		return list_concat(subpaths, list_copy(apath->subpaths));
+	}
+	else
+		return lappend(subpaths, path);
 }
 
 /*
@@ -1384,6 +1508,9 @@ print_path(PlannerInfo *root, Path *path, int indent)
 			break;
 		case T_AppendPath:
 			ptype = "Append";
+			break;
+		case T_MergeAppendPath:
+			ptype = "MergeAppend";
 			break;
 		case T_ResultPath:
 			ptype = "Result";

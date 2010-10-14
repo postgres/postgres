@@ -343,11 +343,12 @@ RelOptInfo      - a relation or joined relations
                    join clauses)
 
  Path           - every way to generate a RelOptInfo(sequential,index,joins)
-  SeqScan       - a plain Path node with pathtype = T_SeqScan
-  IndexPath     - index scans
+  SeqScan       - represents a sequential scan plan
+  IndexPath     - index scan
   BitmapHeapPath - top of a bitmapped index scan
   TidPath       - scan by CTID
   AppendPath    - append multiple subpaths together
+  MergeAppendPath - merge multiple subpaths, preserving their common sort order
   ResultPath    - a Result plan node (used for FROM-less SELECT)
   MaterialPath  - a Material plan node
   UniquePath    - remove duplicate rows

@@ -296,6 +296,29 @@ search_plan_tree(PlanState *node, Oid table_oid)
 			}
 
 			/*
+			 * Similarly for MergeAppend
+			 */
+		case T_MergeAppendState:
+			{
+				MergeAppendState *mstate = (MergeAppendState *) node;
+				ScanState  *result = NULL;
+				int			i;
+
+				for (i = 0; i < mstate->ms_nplans; i++)
+				{
+					ScanState  *elem = search_plan_tree(mstate->mergeplans[i],
+														table_oid);
+
+					if (!elem)
+						continue;
+					if (result)
+						return NULL;	/* multiple matches */
+					result = elem;
+				}
+				return result;
+			}
+
+			/*
 			 * Result and Limit can be descended through (these are safe
 			 * because they always return their input's current row)
 			 */

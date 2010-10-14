@@ -30,6 +30,7 @@
 #include "executor/nodeLimit.h"
 #include "executor/nodeLockRows.h"
 #include "executor/nodeMaterial.h"
+#include "executor/nodeMergeAppend.h"
 #include "executor/nodeMergejoin.h"
 #include "executor/nodeModifyTable.h"
 #include "executor/nodeNestloop.h"
@@ -127,6 +128,10 @@ ExecReScan(PlanState *node)
 
 		case T_AppendState:
 			ExecReScanAppend((AppendState *) node);
+			break;
+
+		case T_MergeAppendState:
+			ExecReScanMergeAppend((MergeAppendState *) node);
 			break;
 
 		case T_RecursiveUnionState:

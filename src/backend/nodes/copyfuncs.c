@@ -203,6 +203,31 @@ _copyAppend(Append *from)
 }
 
 /*
+ * _copyMergeAppend
+ */
+static MergeAppend *
+_copyMergeAppend(MergeAppend *from)
+{
+	MergeAppend *newnode = makeNode(MergeAppend);
+
+	/*
+	 * copy node superclass fields
+	 */
+	CopyPlanFields((Plan *) from, (Plan *) newnode);
+
+	/*
+	 * copy remainder of node
+	 */
+	COPY_NODE_FIELD(mergeplans);
+	COPY_SCALAR_FIELD(numCols);
+	COPY_POINTER_FIELD(sortColIdx, from->numCols * sizeof(AttrNumber));
+	COPY_POINTER_FIELD(sortOperators, from->numCols * sizeof(Oid));
+	COPY_POINTER_FIELD(nullsFirst, from->numCols * sizeof(bool));
+
+	return newnode;
+}
+
+/*
  * _copyRecursiveUnion
  */
 static RecursiveUnion *
@@ -3624,6 +3649,9 @@ copyObject(void *from)
 			break;
 		case T_Append:
 			retval = _copyAppend(from);
+			break;
+		case T_MergeAppend:
+			retval = _copyMergeAppend(from);
 			break;
 		case T_RecursiveUnion:
 			retval = _copyRecursiveUnion(from);

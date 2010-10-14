@@ -73,6 +73,11 @@ static void show_upper_qual(List *qual, const char *qlabel,
 							ExplainState *es);
 static void show_sort_keys(SortState *sortstate, List *ancestors,
 						   ExplainState *es);
+static void show_merge_append_keys(MergeAppendState *mstate, List *ancestors,
+								   ExplainState *es);
+static void show_sort_keys_common(PlanState *planstate,
+								  int nkeys, AttrNumber *keycols,
+								  List *ancestors, ExplainState *es);
 static void show_sort_info(SortState *sortstate, ExplainState *es);
 static void show_hash_info(HashState *hashstate, ExplainState *es);
 static const char *explain_get_index_name(Oid indexId);
@@ -647,6 +652,9 @@ ExplainNode(PlanState *planstate, List *ancestors,
 		case T_Append:
 			pname = sname = "Append";
 			break;
+		case T_MergeAppend:
+			pname = sname = "Merge Append";
+			break;
 		case T_RecursiveUnion:
 			pname = sname = "Recursive Union";
 			break;
@@ -1074,6 +1082,10 @@ ExplainNode(PlanState *planstate, List *ancestors,
 			show_sort_keys((SortState *) planstate, ancestors, es);
 			show_sort_info((SortState *) planstate, es);
 			break;
+		case T_MergeAppend:
+			show_merge_append_keys((MergeAppendState *) planstate,
+								   ancestors, es);
+			break;
 		case T_Result:
 			show_upper_qual((List *) ((Result *) plan)->resconstantqual,
 							"One-Time Filter", planstate, ancestors, es);
@@ -1170,6 +1182,7 @@ ExplainNode(PlanState *planstate, List *ancestors,
 		innerPlanState(planstate) ||
 		IsA(plan, ModifyTable) ||
 		IsA(plan, Append) ||
+		IsA(plan, MergeAppend) ||
 		IsA(plan, BitmapAnd) ||
 		IsA(plan, BitmapOr) ||
 		IsA(plan, SubqueryScan) ||
@@ -1206,6 +1219,11 @@ ExplainNode(PlanState *planstate, List *ancestors,
 		case T_Append:
 			ExplainMemberNodes(((Append *) plan)->appendplans,
 							   ((AppendState *) planstate)->appendplans,
+							   ancestors, es);
+			break;
+		case T_MergeAppend:
+			ExplainMemberNodes(((MergeAppend *) plan)->mergeplans,
+							   ((MergeAppendState *) planstate)->mergeplans,
 							   ancestors, es);
 			break;
 		case T_BitmapAnd:
@@ -1265,7 +1283,9 @@ show_plan_tlist(PlanState *planstate, List *ancestors, ExplainState *es)
 	/* The tlist of an Append isn't real helpful, so suppress it */
 	if (IsA(plan, Append))
 		return;
-	/* Likewise for RecursiveUnion */
+	/* Likewise for MergeAppend and RecursiveUnion */
+	if (IsA(plan, MergeAppend))
+		return;
 	if (IsA(plan, RecursiveUnion))
 		return;
 
@@ -1369,8 +1389,31 @@ static void
 show_sort_keys(SortState *sortstate, List *ancestors, ExplainState *es)
 {
 	Sort	   *plan = (Sort *) sortstate->ss.ps.plan;
-	int			nkeys = plan->numCols;
-	AttrNumber *keycols = plan->sortColIdx;
+
+	show_sort_keys_common((PlanState *) sortstate,
+						  plan->numCols, plan->sortColIdx,
+						  ancestors, es);
+}
+
+/*
+ * Likewise, for a MergeAppend node.
+ */
+static void
+show_merge_append_keys(MergeAppendState *mstate, List *ancestors,
+					   ExplainState *es)
+{
+	MergeAppend *plan = (MergeAppend *) mstate->ps.plan;
+
+	show_sort_keys_common((PlanState *) mstate,
+						  plan->numCols, plan->sortColIdx,
+						  ancestors, es);
+}
+
+static void
+show_sort_keys_common(PlanState *planstate, int nkeys, AttrNumber *keycols,
+					  List *ancestors, ExplainState *es)
+{
+	Plan	   *plan = planstate->plan;
 	List	   *context;
 	List	   *result = NIL;
 	bool		useprefix;
@@ -1381,7 +1424,7 @@ show_sort_keys(SortState *sortstate, List *ancestors, ExplainState *es)
 		return;
 
 	/* Set up deparsing context */
-	context = deparse_context_for_planstate((Node *) sortstate,
+	context = deparse_context_for_planstate((Node *) planstate,
 											ancestors,
 											es->rtable);
 	useprefix = (list_length(es->rtable) > 1 || es->verbose);
@@ -1390,7 +1433,7 @@ show_sort_keys(SortState *sortstate, List *ancestors, ExplainState *es)
 	{
 		/* find key expression in tlist */
 		AttrNumber	keyresno = keycols[keyno];
-		TargetEntry *target = get_tle_by_resno(plan->plan.targetlist,
+		TargetEntry *target = get_tle_by_resno(plan->targetlist,
 											   keyresno);
 
 		if (!target)
@@ -1603,8 +1646,8 @@ ExplainScanTarget(Scan *plan, ExplainState *es)
 }
 
 /*
- * Explain the constituent plans of a ModifyTable, Append, BitmapAnd,
- * or BitmapOr node.
+ * Explain the constituent plans of a ModifyTable, Append, MergeAppend,
+ * BitmapAnd, or BitmapOr node.
  *
  * The ancestors list should already contain the immediate parent of these
  * plans.

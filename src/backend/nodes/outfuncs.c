@@ -345,6 +345,32 @@ _outAppend(StringInfo str, Append *node)
 }
 
 static void
+_outMergeAppend(StringInfo str, MergeAppend *node)
+{
+	int			i;
+
+	WRITE_NODE_TYPE("MERGEAPPEND");
+
+	_outPlanInfo(str, (Plan *) node);
+
+	WRITE_NODE_FIELD(mergeplans);
+
+	WRITE_INT_FIELD(numCols);
+
+	appendStringInfo(str, " :sortColIdx");
+	for (i = 0; i < node->numCols; i++)
+		appendStringInfo(str, " %d", node->sortColIdx[i]);
+
+	appendStringInfo(str, " :sortOperators");
+	for (i = 0; i < node->numCols; i++)
+		appendStringInfo(str, " %u", node->sortOperators[i]);
+
+	appendStringInfo(str, " :nullsFirst");
+	for (i = 0; i < node->numCols; i++)
+		appendStringInfo(str, " %s", booltostr(node->nullsFirst[i]));
+}
+
+static void
 _outRecursiveUnion(StringInfo str, RecursiveUnion *node)
 {
 	int			i;
@@ -1460,6 +1486,16 @@ _outAppendPath(StringInfo str, AppendPath *node)
 }
 
 static void
+_outMergeAppendPath(StringInfo str, MergeAppendPath *node)
+{
+	WRITE_NODE_TYPE("MERGEAPPENDPATH");
+
+	_outPathInfo(str, (Path *) node);
+
+	WRITE_NODE_FIELD(subpaths);
+}
+
+static void
 _outResultPath(StringInfo str, ResultPath *node)
 {
 	WRITE_NODE_TYPE("RESULTPATH");
@@ -2498,6 +2534,9 @@ _outNode(StringInfo str, void *obj)
 			case T_Append:
 				_outAppend(str, obj);
 				break;
+			case T_MergeAppend:
+				_outMergeAppend(str, obj);
+				break;
 			case T_RecursiveUnion:
 				_outRecursiveUnion(str, obj);
 				break;
@@ -2744,6 +2783,9 @@ _outNode(StringInfo str, void *obj)
 				break;
 			case T_AppendPath:
 				_outAppendPath(str, obj);
+				break;
+			case T_MergeAppendPath:
+				_outMergeAppendPath(str, obj);
 				break;
 			case T_ResultPath:
 				_outResultPath(str, obj);

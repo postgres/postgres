@@ -373,3 +373,36 @@ SELECT a.attrelid::regclass, a.attname, a.attinhcount, e.expected
   ORDER BY a.attrelid::regclass::name, a.attnum;
 
 DROP TABLE t1, s1 CASCADE;
+
+--
+-- Test merge-append plans for inheritance trees
+--
+
+create table matest0 (id serial primary key, name text);
+create table matest1 (id integer primary key) inherits (matest0);
+create table matest2 (id integer primary key) inherits (matest0);
+create table matest3 (id integer primary key) inherits (matest0);
+
+create index matest0i on matest0 ((1-id));
+create index matest1i on matest1 ((1-id));
+-- create index matest2i on matest2 ((1-id));  -- intentionally missing
+create index matest3i on matest3 ((1-id));
+
+insert into matest1 (name) values ('Test 1');
+insert into matest1 (name) values ('Test 2');
+insert into matest2 (name) values ('Test 3');
+insert into matest2 (name) values ('Test 4');
+insert into matest3 (name) values ('Test 5');
+insert into matest3 (name) values ('Test 6');
+
+set enable_indexscan = off;  -- force use of seqscan/sort, so no merge
+explain (verbose, costs off) select * from matest0 order by 1-id;
+select * from matest0 order by 1-id;
+reset enable_indexscan;
+
+set enable_seqscan = off;  -- plan with fewest seqscans should be merge
+explain (verbose, costs off) select * from matest0 order by 1-id;
+select * from matest0 order by 1-id;
+reset enable_seqscan;
+
+drop table matest0 cascade;

@@ -86,6 +86,10 @@ extern void cost_sort(Path *path, PlannerInfo *root,
 		  List *pathkeys, Cost input_cost, double tuples, int width,
 		  Cost comparison_cost, int sort_mem,
 		  double limit_tuples);
+extern void cost_merge_append(Path *path, PlannerInfo *root,
+				  List *pathkeys, int n_streams,
+				  Cost input_startup_cost, Cost input_total_cost,
+				  double tuples);
 extern void cost_material(Path *path,
 			  Cost input_startup_cost, Cost input_total_cost,
 			  double tuples, int width);

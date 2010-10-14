@@ -2174,15 +2174,17 @@ set_deparse_planstate(deparse_namespace *dpns, PlanState *ps)
 	dpns->planstate = ps;
 
 	/*
-	 * We special-case Append to pretend that the first child plan is the
-	 * OUTER referent; we have to interpret OUTER Vars in the Append's tlist
-	 * according to one of the children, and the first one is the most natural
-	 * choice.	Likewise special-case ModifyTable to pretend that the first
-	 * child plan is the OUTER referent; this is to support RETURNING lists
-	 * containing references to non-target relations.
+	 * We special-case Append and MergeAppend to pretend that the first child
+	 * plan is the OUTER referent; we have to interpret OUTER Vars in their
+	 * tlists according to one of the children, and the first one is the most
+	 * natural choice.  Likewise special-case ModifyTable to pretend that the
+	 * first child plan is the OUTER referent; this is to support RETURNING
+	 * lists containing references to non-target relations.
 	 */
 	if (IsA(ps, AppendState))
 		dpns->outer_planstate = ((AppendState *) ps)->appendplans[0];
+	else if (IsA(ps, MergeAppendState))
+		dpns->outer_planstate = ((MergeAppendState *) ps)->mergeplans[0];
 	else if (IsA(ps, ModifyTableState))
 		dpns->outer_planstate = ((ModifyTableState *) ps)->mt_plans[0];
 	else

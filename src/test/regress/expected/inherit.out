@@ -1147,3 +1147,98 @@ DETAIL:  drop cascades to table t2
 drop cascades to table ts
 drop cascades to table t3
 drop cascades to table t4
+--
+-- Test merge-append plans for inheritance trees
+--
+create table matest0 (id serial primary key, name text);
+NOTICE:  CREATE TABLE will create implicit sequence "matest0_id_seq" for serial column "matest0.id"
+NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "matest0_pkey" for table "matest0"
+create table matest1 (id integer primary key) inherits (matest0);
+NOTICE:  merging column "id" with inherited definition
+NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "matest1_pkey" for table "matest1"
+create table matest2 (id integer primary key) inherits (matest0);
+NOTICE:  merging column "id" with inherited definition
+NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "matest2_pkey" for table "matest2"
+create table matest3 (id integer primary key) inherits (matest0);
+NOTICE:  merging column "id" with inherited definition
+NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "matest3_pkey" for table "matest3"
+create index matest0i on matest0 ((1-id));
+create index matest1i on matest1 ((1-id));
+-- create index matest2i on matest2 ((1-id));  -- intentionally missing
+create index matest3i on matest3 ((1-id));
+insert into matest1 (name) values ('Test 1');
+insert into matest1 (name) values ('Test 2');
+insert into matest2 (name) values ('Test 3');
+insert into matest2 (name) values ('Test 4');
+insert into matest3 (name) values ('Test 5');
+insert into matest3 (name) values ('Test 6');
+set enable_indexscan = off;  -- force use of seqscan/sort, so no merge
+explain (verbose, costs off) select * from matest0 order by 1-id;
+                                   QUERY PLAN                                    
+---------------------------------------------------------------------------------
+ Sort
+   Output: public.matest0.id, public.matest0.name, ((1 - public.matest0.id))
+   Sort Key: ((1 - public.matest0.id))
+   ->  Result
+         Output: public.matest0.id, public.matest0.name, (1 - public.matest0.id)
+         ->  Append
+               ->  Seq Scan on public.matest0
+                     Output: public.matest0.id, public.matest0.name
+               ->  Seq Scan on public.matest1 matest0
+                     Output: public.matest0.id, public.matest0.name
+               ->  Seq Scan on public.matest2 matest0
+                     Output: public.matest0.id, public.matest0.name
+               ->  Seq Scan on public.matest3 matest0
+                     Output: public.matest0.id, public.matest0.name
+(14 rows)
+
+select * from matest0 order by 1-id;
+ id |  name  
+----+--------
+  6 | Test 6
+  5 | Test 5
+  4 | Test 4
+  3 | Test 3
+  2 | Test 2
+  1 | Test 1
+(6 rows)
+
+reset enable_indexscan;
+set enable_seqscan = off;  -- plan with fewest seqscans should be merge
+explain (verbose, costs off) select * from matest0 order by 1-id;
+                                         QUERY PLAN                                          
+---------------------------------------------------------------------------------------------
+ Result
+   Output: public.matest0.id, public.matest0.name, ((1 - public.matest0.id))
+   ->  Merge Append
+         Sort Key: ((1 - public.matest0.id))
+         ->  Index Scan using matest0i on public.matest0
+               Output: public.matest0.id, public.matest0.name, (1 - public.matest0.id)
+         ->  Index Scan using matest1i on public.matest1 matest0
+               Output: public.matest0.id, public.matest0.name, (1 - public.matest0.id)
+         ->  Sort
+               Output: public.matest0.id, public.matest0.name, ((1 - public.matest0.id))
+               Sort Key: ((1 - public.matest0.id))
+               ->  Seq Scan on public.matest2 matest0
+                     Output: public.matest0.id, public.matest0.name, (1 - public.matest0.id)
+         ->  Index Scan using matest3i on public.matest3 matest0
+               Output: public.matest0.id, public.matest0.name, (1 - public.matest0.id)
+(15 rows)
+
+select * from matest0 order by 1-id;
+ id |  name  
+----+--------
+  6 | Test 6
+  5 | Test 5
+  4 | Test 4
+  3 | Test 3
+  2 | Test 2
+  1 | Test 1
+(6 rows)
+
+reset enable_seqscan;
+drop table matest0 cascade;
+NOTICE:  drop cascades to 3 other objects
+DETAIL:  drop cascades to table matest1
+drop cascades to table matest2
+drop cascades to table matest3

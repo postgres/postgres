@@ -1050,6 +1050,33 @@ typedef struct AppendState
 } AppendState;
 
 /* ----------------
+ *	 MergeAppendState information
+ *
+ *		nplans			how many plans are in the array
+ *		nkeys			number of sort key columns
+ *		scankeys		sort keys in ScanKey representation
+ *		slots			current output tuple of each subplan
+ *		heap			heap of active tuples (represented as array indexes)
+ *		heap_size		number of active heap entries
+ *		initialized		true if we have fetched first tuple from each subplan
+ *		last_slot		last subplan fetched from (which must be re-called)
+ * ----------------
+ */
+typedef struct MergeAppendState
+{
+	PlanState	ps;				/* its first field is NodeTag */
+	PlanState **mergeplans;		/* array of PlanStates for my inputs */
+	int			ms_nplans;
+	int			ms_nkeys;
+	ScanKey		ms_scankeys;	/* array of length ms_nkeys */
+	TupleTableSlot **ms_slots;	/* array of length ms_nplans */
+	int			*ms_heap;		/* array of length ms_nplans */
+	int			ms_heap_size;	/* current active length of ms_heap[] */
+	bool		ms_initialized;	/* are subplans started? */
+	int			ms_last_slot;	/* last subplan slot we returned from */
+} MergeAppendState;
+
+/* ----------------
  *	 RecursiveUnionState information
  *
  *		RecursiveUnionState is used for performing a recursive union.

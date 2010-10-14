@@ -183,6 +183,22 @@ typedef struct Append
 } Append;
 
 /* ----------------
+ *	 MergeAppend node -
+ *		Merge the results of pre-sorted sub-plans to preserve the ordering.
+ * ----------------
+ */
+typedef struct MergeAppend
+{
+	Plan		plan;
+	List	   *mergeplans;
+	/* remaining fields are just like the sort-key info in struct Sort */
+	int			numCols;		/* number of sort-key columns */
+	AttrNumber *sortColIdx;		/* their indexes in the target list */
+	Oid		   *sortOperators;	/* OIDs of operators to sort them by */
+	bool	   *nullsFirst;		/* NULLS FIRST/LAST directions */
+} MergeAppend;
+
+/* ----------------
  *	RecursiveUnion node -
  *		Generate a recursive union of two subplans.
  *
