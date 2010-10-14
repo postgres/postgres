@@ -204,10 +204,7 @@ ECPGtrans(int lineno, const char *connection_name, const char *transaction)
 		PQclear(res);
 	}
 
-	if (strncmp(transaction, "commit", 6) == 0 || strncmp(transaction, "rollback", 8) == 0)
-		con->committed = true;
-	else
-		con->committed = false;
+	con->committed = (PQtransactionStatus(con->connection) == PQTRANS_IDLE);
 
 	return true;
 }
