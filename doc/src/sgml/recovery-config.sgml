@@ -80,20 +80,30 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
       </indexterm>
       <listitem>
        <para>
-        This parameter specifies a shell command that will be executed at
-        every restartpoint. This parameter is optional. The purpose of the
-        <varname>archive_cleanup_command</> is to provide a mechanism for cleaning
-        up old archived WAL files that are no longer needed by the standby
-        server.
-        Any <literal>%r</> is replaced by the name of the file
-        containing the last valid restart point. That is the earliest file that
-        must be kept to allow a restore to be restartable, so this information
-        can be used to truncate the archive to just the minimum required to
-        support restart from the current restore. <literal>%r</> would
-        typically be used in a warm-standby configuration
-        (see <xref linkend="warm-standby">).
-        Write <literal>%%</> to embed an actual <literal>%</> character
-        in the command.
+        This optional parameter specifies a shell command that will be executed
+        at every restartpoint.  The purpose of
+        <varname>archive_cleanup_command</> is to provide a mechanism for
+        cleaning up old archived WAL files that are no longer needed by the
+        standby server.
+        Any <literal>%r</> is replaced by the name of the file containing the
+        last valid restart point.
+        That is the earliest file that must be <emphasis>kept</> to allow a
+        restore to be restartable, and so all files earlier than <literal>%r</>
+        may be safely removed.
+        This information can be used to truncate the archive to just the
+        minimum required to support restart from the current restore.
+        The <application>pg_archivecleanup</> utility provided in
+        <literal>contrib</> (see <xref linkend="pgarchivecleanup">) serves as a
+        convenient target for <varname>archive_cleanup_command</> in typical
+        single-standby configurations, for example:
+<programlisting> archive_cleanup_command = 'pg_archivecleanup /mnt/server/archivedir %r' </programlisting>
+        Note however that if multiple standby servers are restoring from the
+        same archive directory, you will need to ensure that you do not delete
+        WAL files until they are no longer needed by any of the servers.
+        <varname>archive_cleanup_command</> would typically be used in a
+        warm-standby configuration (see <xref linkend="warm-standby">).
+        Write <literal>%%</> to embed an actual <literal>%</> character in the
+        command.
        </para>
        <para>
         If the command returns a non-zero exit status then a WARNING log
