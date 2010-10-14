@@ -339,8 +339,10 @@ GRANT <replaceable class="PARAMETER">role_name</replaceable> [, ...] TO <replace
        to create new servers using that foreign-data wrapper.
       </para>
       <para>
-       For servers, this privilege enables the grantee to query the
-       options of the server and associated user mappings.
+       For servers, this privilege enables the grantee to create,
+       alter, and drop his own user's user mappings associated with
+       that server.  Also, it enables the grantee to query the options
+       of the server and associated user mappings.
       </para>
      </listitem>
     </varlistentry>
