@@ -8,10 +8,11 @@
  </indexterm>
 
  <para>
-  <application>pg_archivecleanup</> is designed to cleanup an archive when used
-  as an <literal>archive_cleanup_command</literal> when running with
-  <literal>standby_mode = on</literal>. <application>pg_archivecleanup</> can
-  also be used as a standalone program to clean WAL file archives.
+  <application>pg_archivecleanup</> is designed to be used as an
+  <literal>archive_cleanup_command</literal> to clean up WAL file archives when
+  running as a standby server (see <xref linkend="warm-standby">).
+  <application>pg_archivecleanup</> can also be used as a standalone program to
+  clean WAL file archives.
  </para>
 
  <para>
@@ -39,20 +40,21 @@
    server to use <application>pg_archivecleanup</>, put this into its
    <filename>recovery.conf</filename> configuration file:
 <programlisting>
-archive_cleanup_command = 'pg_archivecleanup <replaceable>archiveDir</> %r'
+archive_cleanup_command = 'pg_archivecleanup <replaceable>archivelocation</> %r'
 </programlisting>
-   where <replaceable>archiveDir</> is the directory from which WAL segment
-   files should be restored.
+   where <replaceable>archivelocation</> is the directory from which WAL segment
+   files should be removed.
   </para>
   <para>
-   When used within <literal>archive_cleanup_command</literal>,
-   all WAL files logically preceding the value of the <literal>%r</>
-   will be removed <replaceable>archivelocation</>. This minimizes
-   the number of files that need to be retained, while preserving
-   crash-restart capability.  Use of this parameter is appropriate if the
-   <replaceable>archivelocation</> is a transient staging area for this
-   particular standby server, but <emphasis>not</> when the
-   <replaceable>archivelocation</> is intended as a long-term WAL archive area.
+   When used within <xref linkend="archive-cleanup-command">, all WAL files
+   logically preceding the value of the <literal>%r</> argument will be removed
+   from <replaceable>archivelocation</>. This minimizes the number of files
+   that need to be retained, while preserving crash-restart capability.  Use of
+   this parameter is appropriate if the <replaceable>archivelocation</> is a
+   transient staging area for this particular standby server, but
+   <emphasis>not</> when the <replaceable>archivelocation</> is intended as a
+   long-term WAL archive area, or when multiple standby servers are recovering
+   from the same archive location.
   </para>
   <para>
    The full syntax of <application>pg_archivecleanup</>'s command line is

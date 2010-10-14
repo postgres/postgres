@@ -681,11 +681,6 @@ protocol to make nodes agree on a serializable transactional order.
    </para>
 
    <para>
-    You can use <varname>archive_cleanup_command</> to prune the archive of
-    files no longer needed by the standby.
-   </para>
-
-   <para>
     If you're setting up the standby server for high availability purposes,
     set up WAL archiving, connections and authentication like the primary
     server, because the standby server will work as a primary server after
@@ -697,12 +692,25 @@ protocol to make nodes agree on a serializable transactional order.
    </para>
 
    <para>
+    If you're using a WAL archive, its size can be minimized using the <xref
+    linkend="archive-cleanup-command"> parameter to remove files that are no
+    longer required by the standby server.
+    The <application>pg_archivecleanup</> utility is designed specifically to
+    be used with <varname>archive_cleanup_command</> in typical single-standby
+    configurations, see <xref linkend="pgarchivecleanup">.
+    Note however, that if you're using the archive for backup purposes, you
+    need to retain files needed to recover from at least the latest base
+    backup, even if they're no longer needed by the standby.
+   </para>
+
+   <para>
     A simple example of a <filename>recovery.conf</> is:
 <programlisting>
 standby_mode = 'on'
 primary_conninfo = 'host=192.168.1.50 port=5432 user=foo password=foopass'
 restore_command = 'cp /path/to/archive/%f %p'
 trigger_file = '/path/to/trigger_file'
+archive_cleanup_command = 'pg_archivecleanup /path/to/archive %r'
 </programlisting>
    </para>
 
@@ -712,14 +720,6 @@ trigger_file = '/path/to/trigger_file'
     the primary to allow them to be connected simultaneously.
    </para>
 
-   <para>
-    If you're using a WAL archive, its size can be minimized using
-    the <varname>archive_cleanup_command</> option to remove files that are
-    no longer required by the standby server. Note however, that if you're
-    using the archive for backup purposes, you need to retain files needed
-    to recover from at least the latest base backup, even if they're no
-    longer needed by the standby.
-   </para>
   </sect2>
 
   <sect2 id="streaming-replication">
