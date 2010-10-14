@@ -5918,6 +5918,11 @@
      </row>
 
      <row>
+      <entry><link linkend="view-pg-user-mappings"><structname>pg_user_mappings</structname></link></entry>
+      <entry>user mappings</entry>
+     </row>
+
+     <row>
       <entry><link linkend="view-pg-views"><structname>pg_views</structname></link></entry>
       <entry>views</entry>
      </row>
