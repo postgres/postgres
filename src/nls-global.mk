@@ -45,22 +45,26 @@ all-po: $(MO_FILES)
 %.mo: %.po
 	$(MSGFMT) -o $@ $<
 
-ifdef XGETTEXT
 ifeq ($(word 1,$(GETTEXT_FILES)),+)
 po/$(CATALOG_NAME).pot: $(word 2, $(GETTEXT_FILES)) $(MAKEFILE_LIST)
+ifdef XGETTEXT
 	$(XGETTEXT) -D $(srcdir) -n $(addprefix -k, $(GETTEXT_TRIGGERS)) -f $<
 else
+	@echo "You don't have 'xgettext'."; exit 1
+endif
+else # GETTEXT_FILES
 po/$(CATALOG_NAME).pot: $(GETTEXT_FILES) $(MAKEFILE_LIST)
 # Change to srcdir explicitly, don't rely on $^.  That way we get
 # consistent #: file references in the po files.
+ifdef XGETTEXT
 	$(XGETTEXT) -D $(srcdir) -n $(addprefix -k, $(GETTEXT_TRIGGERS)) $(GETTEXT_FILES)
+else
+	@echo "You don't have 'xgettext'."; exit 1
 endif
+endif # GETTEXT_FILES
 	@$(MKDIR_P) $(dir $@)
 	sed -e '1,18 { s/SOME DESCRIPTIVE TITLE./LANGUAGE message translation file for $(CATALOG_NAME)/;s/PACKAGE/PostgreSQL/g;s/VERSION/$(MAJORVERSION)/g;s/YEAR/'`date +%Y`'/g; }' messages.po >$@
 	rm messages.po
-else # not XGETTEXT
-	@echo "You don't have 'xgettext'."; exit 1
-endif # not XGETTEXT
 
 
 # catalog name extentions must match behavior of PG_TEXTDOMAIN() in c.h
