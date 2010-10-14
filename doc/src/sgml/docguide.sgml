@@ -1005,10 +1005,8 @@ save_size.pdfjadetex = 15000
 (setq sgml-indent-step 1)
 (setq sgml-indent-data t)
 (setq sgml-parent-document nil)
-(setq sgml-default-dtd-file "./reference.ced")
 (setq sgml-exposed-tags nil)
 (setq sgml-catalog-files '("/usr/local/share/sgml/catalog"))
-(setq sgml-ecat-files nil)
 
 (autoload 'sgml-mode "psgml" "Major mode to edit SGML files." t )
 </programlisting>
@@ -1025,8 +1023,6 @@ save_size.pdfjadetex = 15000
     </para>
 
     <para>
-     The <productname>PostgreSQL</productname> distribution includes a
-     parsed DTD definitions file <filename>reference.ced</filename>.
      You might find that when using <productname>PSGML</productname>, a
      comfortable way of working with these separate files of book
      parts is to insert a proper <literal>DOCTYPE</literal>
@@ -1056,6 +1052,8 @@ save_size.pdfjadetex = 15000
      <productname>PSGML</productname>, but it's less confusing and
      lighter weight.  Also, it offers syntax highlighting (font lock),
      which can be very helpful.
+     <filename>src/tools/editors/emacs.samples</filename> contains
+     sample settings for this mode.
     </para>
 
     <para>
