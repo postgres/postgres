@@ -167,25 +167,23 @@ ECPGsetcommit(int lineno, const char *mode, const char *connection_name)
 
 	if (con->autocommit == true && strncmp(mode, "off", strlen("off")) == 0)
 	{
-		if (con->committed)
+		if (PQtransactionStatus(con->connection) == PQTRANS_IDLE)
 		{
 			results = PQexec(con->connection, "begin transaction");
 			if (!ecpg_check_PQresult(results, lineno, con->connection, ECPG_COMPAT_PGSQL))
 				return false;
 			PQclear(results);
-			con->committed = false;
 		}
 		con->autocommit = false;
 	}
 	else if (con->autocommit == false && strncmp(mode, "on", strlen("on")) == 0)
 	{
-		if (!con->committed)
+		if (PQtransactionStatus(con->connection) != PQTRANS_IDLE)
 		{
 			results = PQexec(con->connection, "commit");
 			if (!ecpg_check_PQresult(results, lineno, con->connection, ECPG_COMPAT_PGSQL))
 				return false;
 			PQclear(results);
-			con->committed = true;
 		}
 		con->autocommit = true;
 	}
@@ -540,7 +538,6 @@ ECPGconnect(int lineno, int c, const char *name, const char *user, const char *p
 	pthread_mutex_unlock(&connections_mutex);
 #endif
 
-	this->committed = true;
 	this->autocommit = autocommit;
 
 	PQsetNoticeReceiver(this->connection, &ECPGnoticeReceiver, (void *) this);

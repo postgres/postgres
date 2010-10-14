@@ -206,7 +206,7 @@ ECPGtrans(int lineno, const char *connection_name, const char *transaction)
 		 * developers have to take care themselves. However, if the command is
 		 * a begin statement, we just execute it once.
 		 */
-		if (con->committed && !con->autocommit && strncmp(transaction, "begin", 5) != 0 && strncmp(transaction, "start", 5) != 0)
+		if (PQtransactionStatus(con->connection) == PQTRANS_IDLE && !con->autocommit && strncmp(transaction, "begin", 5) != 0 && strncmp(transaction, "start", 5) != 0)
 		{
 			res = PQexec(con->connection, "begin transaction");
 			if (!ecpg_check_PQresult(res, lineno, con->connection, ECPG_COMPAT_PGSQL))
@@ -218,11 +218,6 @@ ECPGtrans(int lineno, const char *connection_name, const char *transaction)
 		if (!ecpg_check_PQresult(res, lineno, con->connection, ECPG_COMPAT_PGSQL))
 			return FALSE;
 		PQclear(res);
-
-		if (strncmp(transaction, "commit", 6) == 0 || strncmp(transaction, "rollback", 8) == 0)
-			con->committed = true;
-		else
-			con->committed = false;
 	}
 
 	return true;
