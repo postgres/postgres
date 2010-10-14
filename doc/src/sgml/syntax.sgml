@@ -1448,6 +1448,15 @@ $1.somecolumn
     or that <structname>mytable</> is a table name not a schema name
     in the second case.
    </para>
+
+   <para>
+    In a select list (see <xref linkend="queries-select-lists">), you
+    can ask for all fields of a composite value by
+    writing <literal>.*</literal>:
+<programlisting>
+(compositecol).*
+</programlisting>
+   </para>
   </sect2>
 
   <sect2>
