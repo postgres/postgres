@@ -102,6 +102,12 @@ PostgreSQL documentation
    <arg>-U <replaceable>username</replaceable></arg>
    <arg>-P <replaceable>password</replaceable></arg>
    <arg>-D <replaceable>datadir</replaceable></arg>
+   <arg>-S
+     <group choice="plain">
+       <arg>a[uto]</arg>
+       <arg>d[emand]</arg>
+     </group>
+   </arg>
    <arg>-w</arg>
    <arg>-t <replaceable>seconds</replaceable></arg>
    <arg>-o <replaceable>options</replaceable></arg>
@@ -203,7 +209,9 @@ PostgreSQL documentation
 
   <para>
    <option>register</option> mode allows you to register a system service
-   on <productname>Microsoft Windows</>.
+   on <productname>Microsoft Windows</>.  The <option>-S</option> option
+   allows selection of service start type, either <quote>auto</quote> (start
+   service automatically on system startup), on <quote>demand</quote>.
   </para>
 
   <para>
@@ -261,7 +269,7 @@ PostgreSQL documentation
         Specifies the shutdown mode.  <replaceable>mode</replaceable>
         can be <literal>smart</literal>, <literal>fast</literal>, or
         <literal>immediate</literal>, or the first letter of one of
-        these three.
+        these three.  If this is omitted, <literal>smart</literal> is used.
        </para>
       </listitem>
      </varlistentry>
@@ -381,6 +389,18 @@ PostgreSQL documentation
       <para>
        User name for the user to start the service. For domain users, use the
        format <literal>DOMAIN\username</literal>.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><option>-S <replaceable class="parameter">start-type</replaceable></option></term>
+     <listitem>
+      <para>
+       Start type of the system service to register.  start-type can
+       be <literal>auto</literal>, or <literal>demand</literal>, or
+       the first letter of one of these two. If this is omitted,
+       <literal>auto</literal> is used.
       </para>
      </listitem>
     </varlistentry>

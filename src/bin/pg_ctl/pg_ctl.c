@@ -121,6 +121,7 @@ static void WINAPI pgwin32_ServiceMain(DWORD, LPTSTR *);
 static void pgwin32_doRunAsService(void);
 static int	CreateRestrictedProcess(char *cmd, PROCESS_INFORMATION *processInfo, bool as_service);
 
+static DWORD pgctl_start_type = SERVICE_AUTO_START;
 static SERVICE_STATUS status;
 static SERVICE_STATUS_HANDLE hStatus = (SERVICE_STATUS_HANDLE) 0;
 static HANDLE shutdownHandles[2];
@@ -1163,8 +1164,8 @@ pgwin32_doRegister(void)
 	}
 
 	if ((hService = CreateService(hSCM, register_servicename, register_servicename,
-							   SERVICE_ALL_ACCESS, SERVICE_WIN32_OWN_PROCESS,
-								  SERVICE_AUTO_START, SERVICE_ERROR_NORMAL,
+								  SERVICE_ALL_ACCESS, SERVICE_WIN32_OWN_PROCESS,
+								  pgctl_start_type, SERVICE_ERROR_NORMAL,
 								  pgwin32_CommandLine(true),
 	   NULL, NULL, "RPCSS\0", register_username, register_password)) == NULL)
 	{
@@ -1603,7 +1604,7 @@ do_help(void)
 	printf(_("  %s kill    SIGNALNAME PID\n"), progname);
 #if defined(WIN32) || defined(__CYGWIN__)
 	printf(_("  %s register   [-N SERVICENAME] [-U USERNAME] [-P PASSWORD] [-D DATADIR]\n"
-		 "                    [-w] [-t SECS] [-o \"OPTIONS\"]\n"), progname);
+		 "                    [-S START-TYPE] [-w] [-t SECS] [-o \"OPTIONS\"]\n"), progname);
 	printf(_("  %s unregister [-N SERVICENAME]\n"), progname);
 #endif
 
@@ -1644,6 +1645,11 @@ do_help(void)
 	printf(_("  -N SERVICENAME  service name with which to register PostgreSQL server\n"));
 	printf(_("  -P PASSWORD     password of account to register PostgreSQL server\n"));
 	printf(_("  -U USERNAME     user name of account to register PostgreSQL server\n"));
+	printf(_("  -S START-TYPE   service start type to register PostgreSQL server\n"));
+
+	printf(_("\nStart types are:\n"));
+	printf(_("  auto       start service automatically during system startup (default)\n"));
+	printf(_("  demand     start service on demand\n"));
 #endif
 
 	printf(_("\nReport bugs to <pgsql-bugs@postgresql.org>.\n"));
@@ -1708,9 +1714,25 @@ set_sig(char *signame)
 		do_advice();
 		exit(1);
 	}
-
 }
 
+
+#if defined(WIN32) || defined(__CYGWIN__)
+static void
+set_starttype(char *starttypeopt)
+{
+	if (strcmp(starttypeopt, "a") == 0 || strcmp(starttypeopt, "auto") == 0)
+		pgctl_start_type = SERVICE_AUTO_START;
+	else if (strcmp(starttypeopt, "d") == 0 || strcmp(starttypeopt, "demand") == 0)
+		pgctl_start_type = SERVICE_DEMAND_START;
+	else
+	{
+		write_stderr(_("%s: unrecognized start type \"%s\"\n"), progname, starttypeopt);
+		do_advice();
+		exit(1);
+	}
+}
+#endif
 
 
 int
@@ -1789,7 +1811,7 @@ main(int argc, char **argv)
 	/* process command-line options */
 	while (optind < argc)
 	{
-		while ((c = getopt_long(argc, argv, "cD:l:m:N:o:p:P:st:U:wW", long_options, &option_index)) != -1)
+		while ((c = getopt_long(argc, argv, "cD:l:m:N:o:p:P:sS:t:U:wW", long_options, &option_index)) != -1)
 		{
 			switch (c)
 			{
@@ -1835,6 +1857,15 @@ main(int argc, char **argv)
 					break;
 				case 's':
 					silent_mode = true;
+					break;
+				case 'S':
+#if defined(WIN32) || defined(__CYGWIN__)
+					set_starttype(optarg);
+#else
+					write_stderr(_("%s: -S option not supported on this platform\n"),
+								 progname);
+					exit(1);
+#endif
 					break;
 				case 't':
 					wait_seconds = atoi(optarg);
@@ -1944,8 +1975,7 @@ main(int argc, char **argv)
 	if (pg_data == NULL &&
 		ctl_command != KILL_COMMAND && ctl_command != UNREGISTER_COMMAND)
 	{
-		write_stderr(_("%s: no database directory specified "
-					   "and environment variable PGDATA unset\n"),
+		write_stderr(_("%s: no database directory specified and environment variable PGDATA unset\n"),
 					 progname);
 		do_advice();
 		exit(1);
