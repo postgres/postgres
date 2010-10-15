@@ -283,6 +283,13 @@ transformDeleteStmt(ParseState *pstate, DeleteStmt *stmt)
 
 	qry->commandType = CMD_DELETE;
 
+	/* process the WITH clause independently of all else */
+	if (stmt->withClause)
+	{
+		qry->hasRecursive = stmt->withClause->recursive;
+		qry->cteList = transformWithClause(pstate, stmt->withClause);
+	}
+
 	/* set up range table with just the result rel */
 	qry->resultRelation = setTargetTable(pstate, stmt->relation,
 								  interpretInhOption(stmt->relation->inhOpt),
@@ -340,8 +347,18 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 	ListCell   *attnos;
 	ListCell   *lc;
 
+	/* There can't be any outer WITH to worry about */
+	Assert(pstate->p_ctenamespace == NIL);
+
 	qry->commandType = CMD_INSERT;
 	pstate->p_is_insert = true;
+
+	/* process the WITH clause independently of all else */
+	if (stmt->withClause)
+	{
+		qry->hasRecursive = stmt->withClause->recursive;
+		qry->cteList = transformWithClause(pstate, stmt->withClause);
+	}
 
 	/*
 	 * We have three cases to deal with: DEFAULT VALUES (selectStmt == NULL),
@@ -376,8 +393,6 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 		pstate->p_relnamespace = NIL;
 		sub_varnamespace = pstate->p_varnamespace;
 		pstate->p_varnamespace = NIL;
-		/* There can't be any outer WITH to worry about */
-		Assert(pstate->p_ctenamespace == NIL);
 	}
 	else
 	{
@@ -518,13 +533,6 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 		List	   *exprsLists = NIL;
 		int			sublist_length = -1;
 
-		/* process the WITH clause */
-		if (selectStmt->withClause)
-		{
-			qry->hasRecursive = selectStmt->withClause->recursive;
-			qry->cteList = transformWithClause(pstate, selectStmt->withClause);
-		}
-
 		foreach(lc, selectStmt->valuesLists)
 		{
 			List	   *sublist = (List *) lfirst(lc);
@@ -617,13 +625,6 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 		List	   *valuesLists = selectStmt->valuesLists;
 
 		Assert(list_length(valuesLists) == 1);
-
-		/* process the WITH clause */
-		if (selectStmt->withClause)
-		{
-			qry->hasRecursive = selectStmt->withClause->recursive;
-			qry->cteList = transformWithClause(pstate, selectStmt->withClause);
-		}
 
 		/* Do basic expression transformation (same as a ROW() expr) */
 		exprList = transformExpressionList(pstate,
@@ -1793,6 +1794,13 @@ transformUpdateStmt(ParseState *pstate, UpdateStmt *stmt)
 
 	qry->commandType = CMD_UPDATE;
 	pstate->p_is_update = true;
+
+	/* process the WITH clause independently of all else */
+	if (stmt->withClause)
+	{
+		qry->hasRecursive = stmt->withClause->recursive;
+		qry->cteList = transformWithClause(pstate, stmt->withClause);
+	}
 
 	qry->resultRelation = setTargetTable(pstate, stmt->relation,
 								  interpretInhOption(stmt->relation->inhOpt),

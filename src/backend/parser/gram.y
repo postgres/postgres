@@ -433,7 +433,7 @@ static RangeVar *makeRangeVarFromAnyName(List *names, int position, core_yyscan_
 %type <boolean> xml_whitespace_option
 
 %type <node> 	common_table_expr
-%type <with> 	with_clause
+%type <with> 	with_clause opt_with_clause
 %type <list>	cte_list
 
 %type <list>	window_clause window_definition_list opt_partition_clause
@@ -7269,11 +7269,12 @@ DeallocateStmt: DEALLOCATE name
  *****************************************************************************/
 
 InsertStmt:
-			INSERT INTO qualified_name insert_rest returning_clause
+			opt_with_clause INSERT INTO qualified_name insert_rest returning_clause
 				{
-					$4->relation = $3;
-					$4->returningList = $5;
-					$$ = (Node *) $4;
+					$5->relation = $4;
+					$5->returningList = $6;
+					$5->withClause = $1;
+					$$ = (Node *) $5;
 				}
 		;
 
@@ -7329,14 +7330,15 @@ returning_clause:
  *
  *****************************************************************************/
 
-DeleteStmt: DELETE_P FROM relation_expr_opt_alias
+DeleteStmt: opt_with_clause DELETE_P FROM relation_expr_opt_alias
 			using_clause where_or_current_clause returning_clause
 				{
 					DeleteStmt *n = makeNode(DeleteStmt);
-					n->relation = $3;
-					n->usingClause = $4;
-					n->whereClause = $5;
-					n->returningList = $6;
+					n->relation = $4;
+					n->usingClause = $5;
+					n->whereClause = $6;
+					n->returningList = $7;
+					n->withClause = $1;
 					$$ = (Node *)n;
 				}
 		;
@@ -7391,18 +7393,19 @@ opt_nowait:	NOWAIT							{ $$ = TRUE; }
  *
  *****************************************************************************/
 
-UpdateStmt: UPDATE relation_expr_opt_alias
+UpdateStmt: opt_with_clause UPDATE relation_expr_opt_alias
 			SET set_clause_list
 			from_clause
 			where_or_current_clause
 			returning_clause
 				{
 					UpdateStmt *n = makeNode(UpdateStmt);
-					n->relation = $2;
-					n->targetList = $4;
-					n->fromClause = $5;
-					n->whereClause = $6;
-					n->returningList = $7;
+					n->relation = $3;
+					n->targetList = $5;
+					n->fromClause = $6;
+					n->whereClause = $7;
+					n->returningList = $8;
+					n->withClause = $1;
 					$$ = (Node *)n;
 				}
 		;
@@ -7742,6 +7745,11 @@ common_table_expr:  name opt_name_list AS select_with_parens
 				n->location = @1;
 				$$ = (Node *) n;
 			}
+		;
+
+opt_with_clause:
+		with_clause								{ $$ = $1; }
+		| /*EMPTY*/								{ $$ = NULL; }
 		;
 
 into_clause:

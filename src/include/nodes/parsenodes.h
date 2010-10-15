@@ -896,6 +896,7 @@ typedef struct InsertStmt
 	List	   *cols;			/* optional: names of the target columns */
 	Node	   *selectStmt;		/* the source SELECT/VALUES, or NULL */
 	List	   *returningList;	/* list of expressions to return */
+	WithClause *withClause;		/* WITH clause */
 } InsertStmt;
 
 /* ----------------------
@@ -909,6 +910,7 @@ typedef struct DeleteStmt
 	List	   *usingClause;	/* optional using clause for more tables */
 	Node	   *whereClause;	/* qualifications */
 	List	   *returningList;	/* list of expressions to return */
+	WithClause *withClause;		/* WITH clause */
 } DeleteStmt;
 
 /* ----------------------
@@ -923,6 +925,7 @@ typedef struct UpdateStmt
 	Node	   *whereClause;	/* qualifications */
 	List	   *fromClause;		/* optional from clause for more tables */
 	List	   *returningList;	/* list of expressions to return */
+	WithClause *withClause;		/* WITH clause */
 } UpdateStmt;
 
 /* ----------------------

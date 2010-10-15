@@ -3352,6 +3352,9 @@ get_insert_query_def(Query *query, deparse_context *context)
 	ListCell   *l;
 	List	   *strippedexprs;
 
+	/* Insert the WITH clause if given */
+	get_with_clause(query, context);
+
 	/*
 	 * If it's an INSERT ... SELECT or VALUES (...), (...), ... there will be
 	 * a single RTE for the SELECT or VALUES.
@@ -3451,15 +3454,11 @@ get_insert_query_def(Query *query, deparse_context *context)
 	}
 	else if (values_rte)
 	{
-		/* A WITH clause is possible here */
-		get_with_clause(query, context);
 		/* Add the multi-VALUES expression lists */
 		get_values_def(values_rte->values_lists, context);
 	}
 	else
 	{
-		/* A WITH clause is possible here */
-		get_with_clause(query, context);
 		/* Add the single-VALUES expression list */
 		appendContextKeyword(context, "VALUES (",
 							 -PRETTYINDENT_STD, PRETTYINDENT_STD, 2);
@@ -3488,6 +3487,9 @@ get_update_query_def(Query *query, deparse_context *context)
 	char	   *sep;
 	RangeTblEntry *rte;
 	ListCell   *l;
+
+	/* Insert the WITH clause if given */
+	get_with_clause(query, context);
 
 	/*
 	 * Start the query with UPDATE relname SET
@@ -3569,6 +3571,9 @@ get_delete_query_def(Query *query, deparse_context *context)
 {
 	StringInfo	buf = context->buf;
 	RangeTblEntry *rte;
+
+	/* Insert the WITH clause if given */
+	get_with_clause(query, context);
 
 	/*
 	 * Start the query with DELETE FROM relname

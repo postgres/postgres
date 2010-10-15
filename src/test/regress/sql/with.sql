@@ -339,6 +339,39 @@ WITH RECURSIVE
  SELECT * FROM z;
 
 --
+-- Test WITH attached to a DML statement
+--
+
+CREATE TEMPORARY TABLE y (a INTEGER);
+INSERT INTO y SELECT generate_series(1, 10);
+
+WITH t AS (
+	SELECT a FROM y
+)
+INSERT INTO y
+SELECT a+20 FROM t RETURNING *;
+
+SELECT * FROM y;
+
+WITH t AS (
+	SELECT a FROM y
+)
+UPDATE y SET a = y.a-10 FROM t WHERE y.a > 20 AND t.a = y.a RETURNING y.a;
+
+SELECT * FROM y;
+
+WITH RECURSIVE t(a) AS (
+	SELECT 11
+	UNION ALL
+	SELECT a+1 FROM t WHERE a < 50
+)
+DELETE FROM y USING t WHERE t.a = y.a RETURNING y.a;
+
+SELECT * FROM y;
+
+DROP TABLE y;
+
+--
 -- error cases
 --
 
@@ -469,6 +502,11 @@ WITH RECURSIVE foo(i) AS
    UNION ALL
    SELECT (i+1)::numeric(10,0) FROM foo WHERE i < 10)
 SELECT * FROM foo;
+
+-- disallow OLD/NEW reference in CTE
+CREATE TEMPORARY TABLE x (n integer);
+CREATE RULE r2 AS ON UPDATE TO x DO INSTEAD
+    WITH t AS (SELECT OLD.*) UPDATE y SET a = t.n FROM t;
 
 --
 -- test for bug #4902

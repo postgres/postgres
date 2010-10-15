@@ -21,6 +21,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
+[ WITH [ RECURSIVE ] <replaceable class="parameter">with_query</replaceable> [, ...] ]
 INSERT INTO <replaceable class="PARAMETER">table</replaceable> [ ( <replaceable class="PARAMETER">column</replaceable> [, ...] ) ]
     { DEFAULT VALUES | VALUES ( { <replaceable class="PARAMETER">expression</replaceable> | DEFAULT } [, ...] ) [, ...] | <replaceable class="PARAMETER">query</replaceable> }
     [ RETURNING * | <replaceable class="parameter">output_expression</replaceable> [ [ AS ] <replaceable class="parameter">output_name</replaceable> ] [, ...] ]
@@ -84,6 +85,26 @@ INSERT INTO <replaceable class="PARAMETER">table</replaceable> [ ( <replaceable 
   <title>Parameters</title>
 
   <variablelist>
+   <varlistentry>
+    <term><replaceable class="parameter">with_query</replaceable></term>
+    <listitem>
+     <para>
+      The <literal>WITH</literal> clause allows you to specify one or more
+      subqueries that can be referenced by name in the <command>INSERT</>
+      query. See <xref linkend="queries-with"> and <xref linkend="sql-select">
+      for details.
+     </para>
+     <para>
+      It is possible for the <replaceable class="parameter">query</replaceable>
+      (<command>SELECT</command> statement)
+      to also contain a <literal>WITH</literal> clause.  In such a case both
+      sets of <replaceable>with_query</replaceable> can be referenced within
+      the <replaceable class="parameter">query</replaceable>, but the
+      second one takes precedence since it is more closely nested.
+     </para>
+    </listitem>
+   </varlistentry>
+
    <varlistentry>
     <term><replaceable class="PARAMETER">table</replaceable></term>
     <listitem>
@@ -287,7 +308,9 @@ INSERT INTO distributors (did, dname) VALUES (DEFAULT, 'XYZ Widgets')
   <para>
    <command>INSERT</command> conforms to the SQL standard, except that
    the <literal>RETURNING</> clause is a
-   <productname>PostgreSQL</productname> extension.  Also, the case in
+   <productname>PostgreSQL</productname> extension, as is the ability
+   to use <literal>WITH</> with <command>INSERT</>.
+   Also, the case in
    which a column name list is omitted, but not all the columns are
    filled from the <literal>VALUES</> clause or <replaceable>query</>,
    is disallowed by the standard.

@@ -2313,6 +2313,7 @@ _copyInsertStmt(InsertStmt *from)
 	COPY_NODE_FIELD(cols);
 	COPY_NODE_FIELD(selectStmt);
 	COPY_NODE_FIELD(returningList);
+	COPY_NODE_FIELD(withClause);
 
 	return newnode;
 }
@@ -2326,6 +2327,7 @@ _copyDeleteStmt(DeleteStmt *from)
 	COPY_NODE_FIELD(usingClause);
 	COPY_NODE_FIELD(whereClause);
 	COPY_NODE_FIELD(returningList);
+	COPY_NODE_FIELD(withClause);
 
 	return newnode;
 }
@@ -2340,6 +2342,7 @@ _copyUpdateStmt(UpdateStmt *from)
 	COPY_NODE_FIELD(whereClause);
 	COPY_NODE_FIELD(fromClause);
 	COPY_NODE_FIELD(returningList);
+	COPY_NODE_FIELD(withClause);
 
 	return newnode;
 }

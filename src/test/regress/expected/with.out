@@ -738,6 +738,134 @@ WITH RECURSIVE
 (54 rows)
 
 --
+-- Test WITH attached to a DML statement
+--
+CREATE TEMPORARY TABLE y (a INTEGER);
+INSERT INTO y SELECT generate_series(1, 10);
+WITH t AS (
+	SELECT a FROM y
+)
+INSERT INTO y
+SELECT a+20 FROM t RETURNING *;
+ a  
+----
+ 21
+ 22
+ 23
+ 24
+ 25
+ 26
+ 27
+ 28
+ 29
+ 30
+(10 rows)
+
+SELECT * FROM y;
+ a  
+----
+  1
+  2
+  3
+  4
+  5
+  6
+  7
+  8
+  9
+ 10
+ 21
+ 22
+ 23
+ 24
+ 25
+ 26
+ 27
+ 28
+ 29
+ 30
+(20 rows)
+
+WITH t AS (
+	SELECT a FROM y
+)
+UPDATE y SET a = y.a-10 FROM t WHERE y.a > 20 AND t.a = y.a RETURNING y.a;
+ a  
+----
+ 11
+ 12
+ 13
+ 14
+ 15
+ 16
+ 17
+ 18
+ 19
+ 20
+(10 rows)
+
+SELECT * FROM y;
+ a  
+----
+  1
+  2
+  3
+  4
+  5
+  6
+  7
+  8
+  9
+ 10
+ 11
+ 12
+ 13
+ 14
+ 15
+ 16
+ 17
+ 18
+ 19
+ 20
+(20 rows)
+
+WITH RECURSIVE t(a) AS (
+	SELECT 11
+	UNION ALL
+	SELECT a+1 FROM t WHERE a < 50
+)
+DELETE FROM y USING t WHERE t.a = y.a RETURNING y.a;
+ a  
+----
+ 11
+ 12
+ 13
+ 14
+ 15
+ 16
+ 17
+ 18
+ 19
+ 20
+(10 rows)
+
+SELECT * FROM y;
+ a  
+----
+  1
+  2
+  3
+  4
+  5
+  6
+  7
+  8
+  9
+ 10
+(10 rows)
+
+DROP TABLE y;
+--
 -- error cases
 --
 -- INTERSECT
@@ -912,6 +1040,11 @@ ERROR:  recursive query "foo" column 1 has type numeric(3,0) in non-recursive te
 LINE 2:    (SELECT i::numeric(3,0) FROM (VALUES(1),(2)) t(i)
                    ^
 HINT:  Cast the output of the non-recursive term to the correct type.
+-- disallow OLD/NEW reference in CTE
+CREATE TEMPORARY TABLE x (n integer);
+CREATE RULE r2 AS ON UPDATE TO x DO INSTEAD
+    WITH t AS (SELECT OLD.*) UPDATE y SET a = t.n FROM t;
+ERROR:  cannot refer to OLD within WITH query
 --
 -- test for bug #4902
 --

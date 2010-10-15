@@ -1868,6 +1868,35 @@ transformRuleStmt(RuleStmt *stmt, const char *queryString,
 			}
 
 			/*
+			 * OLD/NEW are not allowed in WITH queries, because they would
+			 * amount to outer references for the WITH, which we disallow.
+			 * However, they were already in the outer rangetable when we
+			 * analyzed the query, so we have to check.
+			 *
+			 * Note that in the INSERT...SELECT case, we need to examine
+			 * the CTE lists of both top_subqry and sub_qry.
+			 *
+			 * Note that we aren't digging into the body of the query
+			 * looking for WITHs in nested sub-SELECTs.  A WITH down there
+			 * can legitimately refer to OLD/NEW, because it'd be an
+			 * indirect-correlated outer reference.
+			 */
+			if (rangeTableEntry_used((Node *) top_subqry->cteList,
+									 PRS2_OLD_VARNO, 0) ||
+				rangeTableEntry_used((Node *) sub_qry->cteList,
+									  PRS2_OLD_VARNO, 0))
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("cannot refer to OLD within WITH query")));
+			if (rangeTableEntry_used((Node *) top_subqry->cteList,
+									 PRS2_NEW_VARNO, 0) ||
+				rangeTableEntry_used((Node *) sub_qry->cteList,
+									 PRS2_NEW_VARNO, 0))
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("cannot refer to NEW within WITH query")));
+
+			/*
 			 * For efficiency's sake, add OLD to the rule action's jointree
 			 * only if it was actually referenced in the statement or qual.
 			 *

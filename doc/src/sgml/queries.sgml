@@ -472,7 +472,7 @@ FROM <replaceable>table_reference</replaceable> <optional>, <replaceable>table_r
 (1 row)
 </screen>
      This is because a restriction placed in the <literal>ON</>
-     clause is processed <emphasis>before</> the join, while 
+     clause is processed <emphasis>before</> the join, while
      a restriction placed in the <literal>WHERE</> clause is processed
      <emphasis>after</> the join.
     </para>
@@ -1139,7 +1139,7 @@ SELECT a "value", b + c AS sum FROM ...
     <para>
      The naming of output columns here is different from that done in
      the <literal>FROM</> clause (see <xref
-     linkend="queries-table-aliases">).  It is possible 
+     linkend="queries-table-aliases">).  It is possible
      to rename the same column twice, but the name assigned in
      the select list is the one that will be passed on.
     </para>
@@ -1539,7 +1539,7 @@ SELECT <replaceable>select_list</replaceable> FROM <replaceable>table_expression
 
   <para>
    <literal>WITH</> provides a way to write subqueries for use in a larger
-   <literal>SELECT</> query.  The subqueries can be thought of as defining
+   query.  The subqueries can be thought of as defining
    temporary tables that exist just for this query.  One use of this feature
    is to break down complicated queries into simpler parts.  An example is:
 
@@ -1791,10 +1791,18 @@ SELECT n FROM t LIMIT 100;
    However, the other side of this coin is that the optimizer is less able to
    push restrictions from the parent query down into a <literal>WITH</> query
    than an ordinary sub-query.  The <literal>WITH</> query will generally be
-   evaluated as stated, without suppression of rows that the parent query
+   evaluated as written, without suppression of rows that the parent query
    might discard afterwards.  (But, as mentioned above, evaluation might stop
    early if the reference(s) to the query demand only a limited number of
    rows.)
+  </para>
+
+  <para>
+   The examples above only show <literal>WITH</> being used with
+   <command>SELECT</>, but it can be attached in the same way to
+   <command>INSERT</>, <command>UPDATE</>, or <command>DELETE</>.
+   In each case it effectively provides temporary table(s) that can
+   be referred to in the main command.
   </para>
 
  </sect1>

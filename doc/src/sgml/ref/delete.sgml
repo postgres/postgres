@@ -21,6 +21,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
+[ WITH [ RECURSIVE ] <replaceable class="parameter">with_query</replaceable> [, ...] ]
 DELETE FROM [ ONLY ] <replaceable class="PARAMETER">table</replaceable> [ [ AS ] <replaceable class="parameter">alias</replaceable> ]
     [ USING <replaceable class="PARAMETER">using_list</replaceable> ]
     [ WHERE <replaceable class="PARAMETER">condition</replaceable> | WHERE CURRENT OF <replaceable class="PARAMETER">cursor_name</replaceable> ]
@@ -83,6 +84,18 @@ DELETE FROM [ ONLY ] <replaceable class="PARAMETER">table</replaceable> [ [ AS ]
   <title>Parameters</title>
 
   <variablelist>
+   <varlistentry>
+    <term><replaceable class="parameter">with_query</replaceable></term>
+    <listitem>
+     <para>
+      The <literal>WITH</literal> clause allows you to specify one or more
+      subqueries that can be referenced by name in the <command>DELETE</>
+      query. See <xref linkend="queries-with"> and <xref linkend="sql-select">
+      for details.
+     </para>
+    </listitem>
+   </varlistentry>
+
    <varlistentry>
     <term><literal>ONLY</></term>
     <listitem>
@@ -272,7 +285,8 @@ DELETE FROM tasks WHERE CURRENT OF c_tasks;
   <para>
    This command conforms to the <acronym>SQL</acronym> standard, except
    that the <literal>USING</literal> and <literal>RETURNING</> clauses
-   are <productname>PostgreSQL</productname> extensions.
+   are <productname>PostgreSQL</productname> extensions, as is the ability
+   to use <literal>WITH</> with <command>DELETE</>.
   </para>
  </refsect1>
 </refentry>

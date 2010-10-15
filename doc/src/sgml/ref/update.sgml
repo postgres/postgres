@@ -21,6 +21,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
+[ WITH [ RECURSIVE ] <replaceable class="parameter">with_query</replaceable> [, ...] ]
 UPDATE [ ONLY ] <replaceable class="PARAMETER">table</replaceable> [ [ AS ] <replaceable class="parameter">alias</replaceable> ]
     SET { <replaceable class="PARAMETER">column</replaceable> = { <replaceable class="PARAMETER">expression</replaceable> | DEFAULT } |
           ( <replaceable class="PARAMETER">column</replaceable> [, ...] ) = ( { <replaceable class="PARAMETER">expression</replaceable> | DEFAULT } [, ...] ) } [, ...]
@@ -79,6 +80,18 @@ UPDATE [ ONLY ] <replaceable class="PARAMETER">table</replaceable> [ [ AS ] <rep
   <title>Parameters</title>
 
   <variablelist>
+   <varlistentry>
+    <term><replaceable class="parameter">with_query</replaceable></term>
+    <listitem>
+     <para>
+      The <literal>WITH</literal> clause allows you to specify one or more
+      subqueries that can be referenced by name in the <command>UPDATE</>
+      query. See <xref linkend="queries-with"> and <xref linkend="sql-select">
+      for details.
+     </para>
+    </listitem>
+   </varlistentry>
+
    <varlistentry>
     <term><replaceable class="PARAMETER">table</replaceable></term>
     <listitem>
@@ -345,7 +358,8 @@ UPDATE films SET kind = 'Dramatic' WHERE CURRENT OF c_films;
   <para>
    This command conforms to the <acronym>SQL</acronym> standard, except
    that the <literal>FROM</literal> and <literal>RETURNING</> clauses
-   are <productname>PostgreSQL</productname> extensions.
+   are <productname>PostgreSQL</productname> extensions, as is the ability
+   to use <literal>WITH</> with <command>UPDATE</>.
   </para>
 
   <para>
