@@ -2593,6 +2593,8 @@ CleanupBackend(int pid,
 	 * On win32, also treat ERROR_WAIT_NO_CHILDREN (128) as nonfatal
 	 * case, since that sometimes happens under load when the process fails
 	 * to start properly (long before it starts using shared memory).
+	 * Microsoft reports it is related to mutex failure:
+	 *    http://archives.postgresql.org/pgsql-hackers/2010-09/msg00790.php
 	 */
 	if (exitstatus == ERROR_WAIT_NO_CHILDREN)
 	{
