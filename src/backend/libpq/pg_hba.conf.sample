@@ -10,9 +10,9 @@
 # databases they can access.  Records take one of these forms:
 #
 # local      DATABASE  USER  METHOD  [OPTIONS]
-# host       DATABASE  USER  CIDR-ADDRESS  METHOD  [OPTIONS]
-# hostssl    DATABASE  USER  CIDR-ADDRESS  METHOD  [OPTIONS]
-# hostnossl  DATABASE  USER  CIDR-ADDRESS  METHOD  [OPTIONS]
+# host       DATABASE  USER  ADDRESS  METHOD  [OPTIONS]
+# hostssl    DATABASE  USER  ADDRESS  METHOD  [OPTIONS]
+# hostnossl  DATABASE  USER  ADDRESS  METHOD  [OPTIONS]
 #
 # (The uppercase items must be replaced by actual values.)
 #
@@ -29,14 +29,15 @@
 # you can also write a file name prefixed with "@" to include names
 # from a separate file.
 #
-# CIDR-ADDRESS specifies the set of hosts the record matches.  It is
-# made up of an IP address and a CIDR mask that is an integer (between
-# 0 and 32 (IPv4) or 128 (IPv6) inclusive) that specifies the number
-# of significant bits in the mask.  Alternatively, you can write an IP
-# address and netmask in separate columns to specify the set of hosts.
-# Instead of a CIDR-address, you can write "samehost" to match any of
-# the server's own IP addresses, or "samenet" to match any address in
-# any subnet that the server is directly connected to.
+# ADDRESS specifies the set of hosts the record matches.  It can be a
+# host name, or it is made up of an IP address and a CIDR mask that is
+# an integer (between 0 and 32 (IPv4) or 128 (IPv6) inclusive) that
+# specifies the number of significant bits in the mask.
+# Alternatively, you can write an IP address and netmask in separate
+# columns to specify the set of hosts.  Instead of a CIDR-address, you
+# can write "samehost" to match any of the server's own IP addresses,
+# or "samenet" to match any address in any subnet that the server is
+# directly connected to.
 #
 # METHOD can be "trust", "reject", "md5", "password", "gss", "sspi",
 # "krb5", "ident", "pam", "ldap", "radius" or "cert".  Note that
@@ -70,7 +71,7 @@
 
 @authcomment@
 
-# TYPE  DATABASE        USER            CIDR-ADDRESS            METHOD
+# TYPE  DATABASE        USER            ADDRESS                 METHOD
 
 @remove-line-for-nolocal@# "local" is for Unix domain socket connections only
 @remove-line-for-nolocal@local   all             all                                     @authmethod@

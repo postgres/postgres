@@ -80,9 +80,9 @@
    A record is made
    up of a number of fields which are separated by spaces and/or tabs.
    Fields can contain white space if the field value is quoted.
-   Quoting one of the keywords in a database or user name field (e.g.,
+   Quoting one of the keywords in a database, user, or address field (e.g.,
    <literal>all</> or <literal>replication</>) makes the word lose its special
-   character, and just match a database or user with that name.
+   character, and just match a database, user, or host with that name.
   </para>
 
   <para>
@@ -101,9 +101,9 @@
    A record can have one of the seven formats
 <synopsis>
 local      <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>auth-method</replaceable>  <optional><replaceable>auth-options</replaceable></optional>
-host       <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>CIDR-address</replaceable>  <replaceable>auth-method</replaceable>  <optional><replaceable>auth-options</replaceable></optional>
-hostssl    <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>CIDR-address</replaceable>  <replaceable>auth-method</replaceable>  <optional><replaceable>auth-options</replaceable></optional>
-hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>CIDR-address</replaceable>  <replaceable>auth-method</replaceable>  <optional><replaceable>auth-options</replaceable></optional>
+host       <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>address</replaceable>  <replaceable>auth-method</replaceable>  <optional><replaceable>auth-options</replaceable></optional>
+hostssl    <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>address</replaceable>  <replaceable>auth-method</replaceable>  <optional><replaceable>auth-options</replaceable></optional>
+hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>address</replaceable>  <replaceable>auth-method</replaceable>  <optional><replaceable>auth-options</replaceable></optional>
 host       <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>IP-address</replaceable>  <replaceable>IP-mask</replaceable>  <replaceable>auth-method</replaceable>  <optional><replaceable>auth-options</replaceable></optional>
 hostssl    <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>IP-address</replaceable>  <replaceable>IP-mask</replaceable>  <replaceable>auth-method</replaceable>  <optional><replaceable>auth-options</replaceable></optional>
 hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>IP-address</replaceable>  <replaceable>IP-mask</replaceable>  <replaceable>auth-method</replaceable>  <optional><replaceable>auth-options</replaceable></optional>
@@ -218,13 +218,17 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
     </varlistentry>
 
     <varlistentry>
-     <term><replaceable>CIDR-address</replaceable></term>
+     <term><replaceable>address</replaceable></term>
      <listitem>
       <para>
-       Specifies the client machine IP address range that this record
-       matches. This field contains an IP address in standard dotted decimal
-       notation and a <acronym>CIDR</> mask length. (IP addresses can only be
-       specified numerically, not as domain or host names.)  The mask
+       Specifies the client machine addresses that this record
+       matches.  This field can contain either a host name, an IP
+       address range, or one of the special key words mentioned below.
+      </para>
+
+      <para>
+       An IP address is specified in standard dotted decimal
+       notation with a <acronym>CIDR</> mask length.  The mask
        length indicates the number of high-order bits of the client
        IP address that must match.  Bits to the right of this must
        be zero in the given IP address.
@@ -233,14 +237,7 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
       </para>
 
       <para>
-       Instead of a <replaceable>CIDR-address</replaceable>, you can write
-       <literal>samehost</literal> to match any of the server's own IP
-       addresses, or <literal>samenet</literal> to match any address in any
-       subnet that the server is directly connected to.
-      </para>
-
-      <para>
-       Typical examples of a <replaceable>CIDR-address</replaceable> are
+       Typical examples of an IP address range specified this way are
        <literal>172.20.143.89/32</literal> for a single host, or
        <literal>172.20.143.0/24</literal> for a small network, or
        <literal>10.6.0.0/16</literal> for a larger one.
@@ -258,6 +255,67 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
        in IPv6 format will be rejected if the system's C library does not have
        support for IPv6 addresses.
       </para>
+
+      <para>
+       You can also write
+       <literal>samehost</literal> to match any of the server's own IP
+       addresses, or <literal>samenet</literal> to match any address in any
+       subnet that the server is directly connected to.
+      </para>
+
+      <para>
+       If a host name is specified (anything that is not an IP address
+       or a special key word is processed as a potential host name),
+       that name is compared with the result of a reverse name
+       resolution of the client's IP address (e.g., reverse DNS
+       lookup, if DNS is used).  Host name comparisons are case
+       insensitive.  If there is a match, then a forward name
+       resolution (e.g., forward DNS lookup) is performed on the host
+       name to check whether any of the addresses it resolves to are
+       equal to the client's IP address.  If both directions match,
+       then the entry is considered to match.  (The host name that is
+       used in <filename>pg_hba.conf</filename> should be the one that
+       address-to-name resolution of the client's IP address returns,
+       otherwise the line won't be matched.  Some host name databases
+       allow associating an IP address with multiple host names, but
+       the operating system will only return one host name when asked
+       to resolve an IP address.)
+      </para>
+
+      <para>
+       When host names are specified
+       in <filename>pg_hba.conf</filename>, you should make sure that
+       name resolution is reasonably fast.  It can be of advantage to
+       set up a local name resolution cache such
+       as <command>nscd</command>.  Also, you may wish to enable the
+       configuration parameter <varname>log_hostname</varname> to see
+       the client's host name instead of the IP address in the log.
+      </para>
+
+      <sidebar>
+       <para>
+        Occasionally, users have wondered why host names are handled
+        in this seemingly complicated way with two name resolutions
+        and requiring reverse lookup of IP addresses, which is
+        sometimes not set up or points to some undesirable host name.
+        It is primarily for efficiency: A connection attempt requires
+        two resolver lookups of the current client's address.  If
+        there is resolver problem with that address, it becomes only
+        that client's problem.  A hypothetical alternative
+        implementation which only does forward lookups would have to
+        resolve every host name mentioned in
+        <filename>pg_hba.conf</filename> at every connection attempt.
+        That would already be slow by itself.  And if there is a
+        resolver problem with one of the host names, it becomes
+        everyone's problem.
+       </para>
+
+       <para>
+        Note that this behavior is consistent with other popular
+        implementations of host name-based access control, such as the
+        Apache HTTP Server and TCP Wrappers.
+       </para>
+      </sidebar>
 
       <para>
        This field only applies to <literal>host</literal>,
@@ -511,12 +569,12 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
 # any database user name using Unix-domain sockets (the default for local
 # connections).
 #
-# TYPE  DATABASE        USER            CIDR-ADDRESS            METHOD
+# TYPE  DATABASE        USER            ADDRESS                 METHOD
 local   all             all                                     trust
 
 # The same using local loopback TCP/IP connections.
 #
-# TYPE  DATABASE        USER            CIDR-ADDRESS            METHOD
+# TYPE  DATABASE        USER            ADDRESS                 METHOD
 host    all             all             127.0.0.1/32            trust
 
 # The same as the previous line, but using a separate netmask column
@@ -524,17 +582,27 @@ host    all             all             127.0.0.1/32            trust
 # TYPE  DATABASE        USER            IP-ADDRESS      IP-MASK             METHOD
 host    all             all             127.0.0.1       255.255.255.255     trust
 
+# The same over IPv6.
+#
+# TYPE  DATABASE        USER            ADDRESS                 METHOD
+host    all             all             ::1/128                 trust
+
+# The same using a host name (would typically cover both IPv4 and IPv6).
+#
+# TYPE  DATABASE        USER            ADDRESS                 METHOD
+host    all             all             localhost               trust
+
 # Allow any user from any host with IP address 192.168.93.x to connect
 # to database "postgres" as the same user name that ident reports for
 # the connection (typically the operating system user name).
 #
-# TYPE  DATABASE        USER            CIDR-ADDRESS            METHOD
+# TYPE  DATABASE        USER            ADDRESS                 METHOD
 host    postgres        all             192.168.93.0/24         ident
 
 # Allow any user from host 192.168.12.10 to connect to database
 # "postgres" if the user's password is correctly supplied.
 #
-# TYPE  DATABASE        USER            CIDR-ADDRESS            METHOD
+# TYPE  DATABASE        USER            ADDRESS                 METHOD
 host    postgres        all             192.168.12.10/32        md5
 
 # In the absence of preceding "host" lines, these two lines will
@@ -543,7 +611,7 @@ host    postgres        all             192.168.12.10/32        md5
 # on the Internet.  The zero mask causes no bits of the host IP
 # address to be considered, so it matches any host.
 #
-# TYPE  DATABASE        USER            CIDR-ADDRESS            METHOD
+# TYPE  DATABASE        USER            ADDRESS                 METHOD
 host    all             all             192.168.54.1/32         reject
 host    all             all             0.0.0.0/0               krb5
 
@@ -553,7 +621,7 @@ host    all             all             0.0.0.0/0               krb5
 # connection is allowed if there is an entry in pg_ident.conf for map
 # "omicron" that says "bryanh" is allowed to connect as "guest1".
 #
-# TYPE  DATABASE        USER            CIDR-ADDRESS            METHOD
+# TYPE  DATABASE        USER            ADDRESS                 METHOD
 host    all             all             192.168.0.0/16          ident map=omicron
 
 # If these are the only three lines for local connections, they will
@@ -563,7 +631,7 @@ host    all             all             192.168.0.0/16          ident map=omicro
 # $PGDATA/admins contains a list of names of administrators.  Passwords
 # are required in all cases.
 #
-# TYPE  DATABASE        USER            CIDR-ADDRESS            METHOD
+# TYPE  DATABASE        USER            ADDRESS                 METHOD
 local   sameuser        all                                     md5
 local   all             @admins                                 md5
 local   all             +support                                md5

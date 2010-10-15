@@ -3422,6 +3422,8 @@ BackendInitialize(Port *port)
 	 */
 	port->remote_host = strdup(remote_host);
 	port->remote_port = strdup(remote_port);
+	if (log_hostname)
+		port->remote_hostname = port->remote_host;
 
 	/*
 	 * Ready to begin client interaction.  We will give up and exit(1) after a

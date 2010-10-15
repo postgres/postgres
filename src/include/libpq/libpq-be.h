@@ -109,6 +109,10 @@ typedef struct Port
 	SockAddr	laddr;			/* local addr (postmaster) */
 	SockAddr	raddr;			/* remote addr (client) */
 	char	   *remote_host;	/* name (or ip addr) of remote host */
+	char	   *remote_hostname; /* name (not ip addr) of remote host, if available */
+	int			remote_hostname_resolv; /* +1 = remote_hostname is known to resolve to client's IP address;
+										   -1 = remote_hostname is known NOT to resolve to client's IP address;
+										   0 = we have not done the forward DNS lookup yet */
 	char	   *remote_port;	/* text rep of remote port */
 	CAC_state	canAcceptConnections;	/* postmaster connection status */
 

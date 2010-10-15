@@ -102,8 +102,8 @@ pg_isblank(const char c)
  * whichever comes first. If no more tokens on line, position the file to the
  * beginning of the next line or EOF, whichever comes first.
  *
- * Handle comments. Treat unquoted keywords that might be role names or
- * database names specially, by appending a newline to them.  Also, when
+ * Handle comments. Treat unquoted keywords that might be role, database, or
+ * host names specially, by appending a newline to them.  Also, when
  * a token is terminated by a comma, the comma is included in the returned
  * token.
  */
@@ -198,6 +198,8 @@ next_token(FILE *fp, char *buf, int bufsz, bool *initial_quote)
 
 	if (!saw_quote &&
 		(strcmp(start_buf, "all") == 0 ||
+		 strcmp(start_buf, "samehost") == 0 ||
+		 strcmp(start_buf, "samenet") == 0 ||
 		 strcmp(start_buf, "sameuser") == 0 ||
 		 strcmp(start_buf, "samegroup") == 0 ||
 		 strcmp(start_buf, "samerole") == 0 ||
@@ -540,6 +542,102 @@ check_db(const char *dbname, const char *role, Oid roleid, char *param_str)
 	return false;
 }
 
+static bool
+ipv4eq(struct sockaddr_in *a, struct sockaddr_in *b)
+{
+	return (a->sin_addr.s_addr == b->sin_addr.s_addr);
+}
+
+static bool
+ipv6eq(struct sockaddr_in6 *a, struct sockaddr_in6 *b)
+{
+	int i;
+
+	for (i = 0; i < 16; i++)
+		if (a->sin6_addr.s6_addr[i] != b->sin6_addr.s6_addr[i])
+			return false;
+
+	return true;
+}
+
+/*
+ * Check to see if a connecting IP matches a given host name.
+ */
+static bool
+check_hostname(hbaPort *port, const char *hostname)
+{
+	struct addrinfo *gai_result, *gai;
+	int			ret;
+	bool		found;
+
+	/* Lookup remote host name if not already done */
+	if (!port->remote_hostname)
+	{
+		char		remote_hostname[NI_MAXHOST];
+
+		if (pg_getnameinfo_all(&port->raddr.addr, port->raddr.salen,
+							   remote_hostname, sizeof(remote_hostname),
+							   NULL, 0,
+							   0))
+			return false;
+
+		port->remote_hostname = pstrdup(remote_hostname);
+	}
+
+	if (pg_strcasecmp(port->remote_hostname, hostname) != 0)
+		return false;
+
+	/* Lookup IP from host name and check against original IP */
+
+	if (port->remote_hostname_resolv == +1)
+		return true;
+	if (port->remote_hostname_resolv == -1)
+		return false;
+
+	ret = getaddrinfo(port->remote_hostname, NULL, NULL, &gai_result);
+	if (ret != 0)
+		ereport(ERROR,
+				(errmsg("could not translate host name \"%s\" to address: %s",
+						port->remote_hostname, gai_strerror(ret))));
+
+	found = false;
+	for (gai = gai_result; gai; gai = gai->ai_next)
+	{
+		if (gai->ai_addr->sa_family == port->raddr.addr.ss_family)
+		{
+			if (gai->ai_addr->sa_family == AF_INET)
+			{
+				if (ipv4eq((struct sockaddr_in *) gai->ai_addr,
+						   (struct sockaddr_in *) &port->raddr.addr))
+				{
+					found = true;
+					break;
+				}
+			}
+			else if (gai->ai_addr->sa_family == AF_INET6)
+			{
+				if (ipv6eq((struct sockaddr_in6 *) gai->ai_addr,
+						   (struct sockaddr_in6 *) &port->raddr.addr))
+				{
+					found = true;
+					break;
+				}
+			}
+		}
+	}
+
+	if (gai_result)
+		freeaddrinfo(gai_result);
+
+	if (!found)
+		elog(DEBUG2, "pg_hba.conf host name \"%s\" rejected because address resolution did not return a match with IP address of client",
+			 hostname);
+
+	port->remote_hostname_resolv = found ? +1 : -1;
+
+	return found;
+}
+
 /*
  * Check to see if a connecting IP matches the given address and netmask.
  */
@@ -782,12 +880,12 @@ parse_hba_line(List *line, int line_num, HbaLine *parsedline)
 		token = lfirst(line_item);
 
 		/* Is it equal to 'samehost' or 'samenet'? */
-		if (strcmp(token, "samehost") == 0)
+		if (strcmp(token, "samehost\n") == 0)
 		{
 			/* Any IP on this host is allowed to connect */
 			parsedline->ip_cmp_method = ipCmpSameHost;
 		}
-		else if (strcmp(token, "samenet") == 0)
+		else if (strcmp(token, "samenet\n") == 0)
 		{
 			/* Any IP on the host's subnets is allowed to connect */
 			parsedline->ip_cmp_method = ipCmpSameNet;
@@ -816,7 +914,12 @@ parse_hba_line(List *line, int line_num, HbaLine *parsedline)
 			hints.ai_next = NULL;
 
 			ret = pg_getaddrinfo_all(token, NULL, &hints, &gai_result);
-			if (ret || !gai_result)
+			if (ret == 0 && gai_result)
+				memcpy(&parsedline->addr, gai_result->ai_addr,
+					   gai_result->ai_addrlen);
+			else if (ret == EAI_NONAME)
+				parsedline->hostname = token;
+			else
 			{
 				ereport(LOG,
 						(errcode(ERRCODE_CONFIG_FILE_ERROR),
@@ -830,13 +933,24 @@ parse_hba_line(List *line, int line_num, HbaLine *parsedline)
 				return false;
 			}
 
-			memcpy(&parsedline->addr, gai_result->ai_addr,
-				   gai_result->ai_addrlen);
 			pg_freeaddrinfo_all(hints.ai_family, gai_result);
 
 			/* Get the netmask */
 			if (cidr_slash)
 			{
+				if (parsedline->hostname)
+				{
+					*cidr_slash = '/';	/* restore token for message */
+					ereport(LOG,
+							(errcode(ERRCODE_CONFIG_FILE_ERROR),
+							 errmsg("specifying both host name and CIDR mask is invalid: \"%s\"",
+									token),
+							 errcontext("line %d of configuration file \"%s\"",
+										line_num, HbaFileName)));
+					pfree(token);
+					return false;
+				}
+
 				if (pg_sockaddr_cidr_mask(&parsedline->mask, cidr_slash + 1,
 										  parsedline->addr.ss_family) < 0)
 				{
@@ -852,7 +966,7 @@ parse_hba_line(List *line, int line_num, HbaLine *parsedline)
 				}
 				pfree(token);
 			}
-			else
+			else if (!parsedline->hostname)
 			{
 				/* Read the mask field. */
 				pfree(token);
@@ -1369,10 +1483,19 @@ check_hba(hbaPort *port)
 			switch (hba->ip_cmp_method)
 			{
 				case ipCmpMask:
-					if (!check_ip(&port->raddr,
-								  (struct sockaddr *) & hba->addr,
-								  (struct sockaddr *) & hba->mask))
-						continue;
+					if (hba->hostname)
+					{
+						if (!check_hostname(port,
+											hba->hostname))
+							continue;
+					}
+					else
+					{
+						if (!check_ip(&port->raddr,
+									  (struct sockaddr *) & hba->addr,
+									  (struct sockaddr *) & hba->mask))
+							continue;
+					}
 					break;
 				case ipCmpSameHost:
 				case ipCmpSameNet:
