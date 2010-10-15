@@ -2619,7 +2619,7 @@ CheckRADIUSAuth(Port *port)
 	char		portstr[128];
 	ACCEPT_TYPE_ARG3 addrsize;
 	fd_set		fdset;
-	struct timeval timeout;
+	struct timeval endtime;
 	int			i,
 				r;
 
@@ -2777,14 +2777,36 @@ CheckRADIUSAuth(Port *port)
 	/* Don't need the server address anymore */
 	pg_freeaddrinfo_all(hint.ai_family, serveraddrs);
 
-	/* Wait for a response */
-	timeout.tv_sec = RADIUS_TIMEOUT;
-	timeout.tv_usec = 0;
-	FD_ZERO(&fdset);
-	FD_SET(sock, &fdset);
+	/*
+	 * Figure out at what time we should time out. We can't just use
+	 * a single call to select() with a timeout, since somebody can
+	 * be sending invalid packets to our port thus causing us to
+	 * retry in a loop and never time out.
+	 */
+	gettimeofday(&endtime, NULL);
+	endtime.tv_sec += RADIUS_TIMEOUT;
 
 	while (true)
 	{
+		struct timeval timeout;
+		struct timeval now;
+		int64 timeoutval;
+
+		gettimeofday(&now, NULL);
+		timeoutval = (endtime.tv_sec * 1000000 + endtime.tv_usec) - (now.tv_sec * 1000000 + now.tv_usec);
+		if (timeoutval <= 0)
+		{
+			ereport(LOG,
+					(errmsg("timeout waiting for RADIUS response")));
+			closesocket(sock);
+			return STATUS_ERROR;
+		}
+		timeout.tv_sec = timeoutval / 1000000;
+		timeout.tv_usec = timeoutval % 1000000;
+
+		FD_ZERO(&fdset);
+		FD_SET(sock, &fdset);
+
 		r = select(sock + 1, &fdset, NULL, NULL, &timeout);
 		if (r < 0)
 		{
@@ -2805,107 +2827,117 @@ CheckRADIUSAuth(Port *port)
 			return STATUS_ERROR;
 		}
 
-		/* else we actually have a packet ready to read */
-		break;
-	}
+		/*
+		 * Attempt to read the response packet, and verify the contents.
+		 *
+		 * Any packet that's not actually a RADIUS packet, or otherwise
+		 * does not validate as an explicit reject, is just ignored and
+		 * we retry for another packet (until we reach the timeout). This
+		 * is to avoid the possibility to denial-of-service the login by
+		 * flooding the server with invalid packets on the port that
+		 * we're expecting the RADIUS response on.
+		 */
 
-	/* Read the response packet */
-	addrsize = sizeof(remoteaddr);
-	packetlength = recvfrom(sock, receive_buffer, RADIUS_BUFFER_SIZE, 0,
-							(struct sockaddr *) & remoteaddr, &addrsize);
-	if (packetlength < 0)
-	{
-		ereport(LOG,
-				(errmsg("could not read RADIUS response: %m")));
-		closesocket(sock);
-		return STATUS_ERROR;
-	}
-
-	closesocket(sock);
+		addrsize = sizeof(remoteaddr);
+		packetlength = recvfrom(sock, receive_buffer, RADIUS_BUFFER_SIZE, 0,
+								(struct sockaddr *) & remoteaddr, &addrsize);
+		if (packetlength < 0)
+		{
+			ereport(LOG,
+					(errmsg("could not read RADIUS response: %m")));
+			return STATUS_ERROR;
+		}
 
 #ifdef HAVE_IPV6
-	if (remoteaddr.sin6_port != htons(port->hba->radiusport))
+		if (remoteaddr.sin6_port != htons(port->hba->radiusport))
 #else
-	if (remoteaddr.sin_port != htons(port->hba->radiusport))
+		if (remoteaddr.sin_port != htons(port->hba->radiusport))
 #endif
-	{
+		{
 #ifdef HAVE_IPV6
-		ereport(LOG,
-				(errmsg("RADIUS response was sent from incorrect port: %i",
-						ntohs(remoteaddr.sin6_port))));
+			ereport(LOG,
+					(errmsg("RADIUS response was sent from incorrect port: %i",
+							ntohs(remoteaddr.sin6_port))));
 #else
-		ereport(LOG,
-				(errmsg("RADIUS response was sent from incorrect port: %i",
-						ntohs(remoteaddr.sin_port))));
+			ereport(LOG,
+					(errmsg("RADIUS response was sent from incorrect port: %i",
+							ntohs(remoteaddr.sin_port))));
 #endif
-		return STATUS_ERROR;
-	}
+			continue;
+		}
 
-	if (packetlength < RADIUS_HEADER_LENGTH)
-	{
-		ereport(LOG,
-				(errmsg("RADIUS response too short: %i", packetlength)));
-		return STATUS_ERROR;
-	}
+		if (packetlength < RADIUS_HEADER_LENGTH)
+		{
+			ereport(LOG,
+					(errmsg("RADIUS response too short: %i", packetlength)));
+			continue;
+		}
 
-	if (packetlength != ntohs(receivepacket->length))
-	{
-		ereport(LOG,
-		 (errmsg("RADIUS response has corrupt length: %i (actual length %i)",
-				 ntohs(receivepacket->length), packetlength)));
-		return STATUS_ERROR;
-	}
+		if (packetlength != ntohs(receivepacket->length))
+		{
+			ereport(LOG,
+					(errmsg("RADIUS response has corrupt length: %i (actual length %i)",
+							ntohs(receivepacket->length), packetlength)));
+			continue;
+		}
 
-	if (packet->id != receivepacket->id)
-	{
-		ereport(LOG,
-				(errmsg("RADIUS response is to a different request: %i (should be %i)",
-						receivepacket->id, packet->id)));
-		return STATUS_ERROR;
-	}
+		if (packet->id != receivepacket->id)
+		{
+			ereport(LOG,
+					(errmsg("RADIUS response is to a different request: %i (should be %i)",
+							receivepacket->id, packet->id)));
+			continue;
+		}
 
-	/*
-	 * Verify the response authenticator, which is calculated as
-	 * MD5(Code+ID+Length+RequestAuthenticator+Attributes+Secret)
-	 */
-	cryptvector = palloc(packetlength + strlen(port->hba->radiussecret));
+		/*
+		 * Verify the response authenticator, which is calculated as
+		 * MD5(Code+ID+Length+RequestAuthenticator+Attributes+Secret)
+		 */
+		cryptvector = palloc(packetlength + strlen(port->hba->radiussecret));
 
-	memcpy(cryptvector, receivepacket, 4);		/* code+id+length */
-	memcpy(cryptvector + 4, packet->vector, RADIUS_VECTOR_LENGTH);		/* request
-																		 * authenticator, from
-																		 * original packet */
-	if (packetlength > RADIUS_HEADER_LENGTH)	/* there may be no attributes
-												 * at all */
-		memcpy(cryptvector + RADIUS_HEADER_LENGTH, receive_buffer + RADIUS_HEADER_LENGTH, packetlength - RADIUS_HEADER_LENGTH);
-	memcpy(cryptvector + packetlength, port->hba->radiussecret, strlen(port->hba->radiussecret));
+		memcpy(cryptvector, receivepacket, 4);		/* code+id+length */
+		memcpy(cryptvector + 4, packet->vector, RADIUS_VECTOR_LENGTH);		/* request
+																			 * authenticator, from
+																			 * original packet */
+		if (packetlength > RADIUS_HEADER_LENGTH)	/* there may be no attributes
+													 * at all */
+			memcpy(cryptvector + RADIUS_HEADER_LENGTH, receive_buffer + RADIUS_HEADER_LENGTH, packetlength - RADIUS_HEADER_LENGTH);
+		memcpy(cryptvector + packetlength, port->hba->radiussecret, strlen(port->hba->radiussecret));
 
-	if (!pg_md5_binary(cryptvector,
-					   packetlength + strlen(port->hba->radiussecret),
-					   encryptedpassword))
-	{
-		ereport(LOG,
-			(errmsg("could not perform MD5 encryption of received packet")));
+		if (!pg_md5_binary(cryptvector,
+						   packetlength + strlen(port->hba->radiussecret),
+						   encryptedpassword))
+		{
+			ereport(LOG,
+					(errmsg("could not perform MD5 encryption of received packet")));
+			pfree(cryptvector);
+			continue;
+		}
 		pfree(cryptvector);
-		return STATUS_ERROR;
-	}
-	pfree(cryptvector);
 
-	if (memcmp(receivepacket->vector, encryptedpassword, RADIUS_VECTOR_LENGTH) != 0)
-	{
-		ereport(LOG,
-				(errmsg("RADIUS response has incorrect MD5 signature")));
-		return STATUS_ERROR;
-	}
+		if (memcmp(receivepacket->vector, encryptedpassword, RADIUS_VECTOR_LENGTH) != 0)
+		{
+			ereport(LOG,
+					(errmsg("RADIUS response has incorrect MD5 signature")));
+			continue;
+		}
 
-	if (receivepacket->code == RADIUS_ACCESS_ACCEPT)
-		return STATUS_OK;
-	else if (receivepacket->code == RADIUS_ACCESS_REJECT)
-		return STATUS_ERROR;
-	else
-	{
-		ereport(LOG,
-			 (errmsg("RADIUS response has invalid code (%i) for user \"%s\"",
-					 receivepacket->code, port->user_name)));
-		return STATUS_ERROR;
-	}
+		if (receivepacket->code == RADIUS_ACCESS_ACCEPT)
+		{
+			closesocket(sock);
+			return STATUS_OK;
+		}
+		else if (receivepacket->code == RADIUS_ACCESS_REJECT)
+		{
+			closesocket(sock);
+			return STATUS_ERROR;
+		}
+		else
+		{
+			ereport(LOG,
+					(errmsg("RADIUS response has invalid code (%i) for user \"%s\"",
+							receivepacket->code, port->user_name)));
+			continue;
+		}
+	} /* while (true) */
 }
