@@ -40,7 +40,7 @@ SELECT [ ALL | DISTINCT [ ON ( <replaceable class="parameter">expression</replac
     [ GROUP BY <replaceable class="parameter">expression</replaceable> [, ...] ]
     [ HAVING <replaceable class="parameter">condition</replaceable> [, ...] ]
     [ WINDOW <replaceable class="parameter">window_name</replaceable> AS ( <replaceable class="parameter">window_definition</replaceable> ) [, ...] ]
-    [ { UNION | INTERSECT | EXCEPT } [ ALL ] <replaceable class="parameter">select</replaceable> ]
+    [ { UNION | INTERSECT | EXCEPT } [ ALL | DISTINCT ] <replaceable class="parameter">select</replaceable> ]
     [ ORDER BY <replaceable class="parameter">expression</replaceable> [ ASC | DESC | USING <replaceable class="parameter">operator</replaceable> ] [ NULLS { FIRST | LAST } ] [, ...] ]
     [ LIMIT { <replaceable class="parameter">count</replaceable> | ALL } ]
     [ OFFSET <replaceable class="parameter">start</replaceable> [ ROW | ROWS ] ]
@@ -106,7 +106,7 @@ TABLE { [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ] |
     <listitem>
      <para>
       If the <literal>GROUP BY</literal> clause is specified, the
-      output is divided into groups of rows that match on one or more
+      output is combined into groups of rows that match on one or more
       values.  If the <literal>HAVING</literal> clause is present, it
       eliminates groups that do not satisfy the given condition.  (See
       <xref linkend="sql-groupby" endterm="sql-groupby-title"> and
@@ -118,9 +118,20 @@ TABLE { [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ] |
      <para>
       The actual output rows are computed using the
       <command>SELECT</command> output expressions for each selected
-      row.  (See
+      row or row group.  (See
       <xref linkend="sql-select-list" endterm="sql-select-list-title">
       below.)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      <literal>SELECT DISTINCT</literal> eliminates duplicate rows from the
+      result.  <literal>SELECT DISTINCT ON</literal> eliminates rows that
+      match on all the specified expressions.  <literal>SELECT ALL</literal>
+      (the default) will return all candidate rows, including
+      duplicates.  (See <xref linkend="sql-distinct"
+      endterm="sql-distinct-title"> below.)
      </para>
     </listitem>
 
@@ -136,7 +147,11 @@ TABLE { [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ] |
       strictly in both result sets.  The <literal>EXCEPT</literal>
       operator returns the rows that are in the first result set but
       not in the second.  In all three cases, duplicate rows are
-      eliminated unless <literal>ALL</literal> is specified. (See
+      eliminated unless <literal>ALL</literal> is specified.  The noise
+      word <literal>DISTINCT</> can be added to explicitly specify
+      eliminating duplicate rows.  Notice that <literal>DISTINCT</> is
+      the default behavior here, even though <literal>ALL</literal> is
+      the default for <command>SELECT</> itself.  (See
       <xref linkend="sql-union" endterm="sql-union-title">, <xref
       linkend="sql-intersect" endterm="sql-intersect-title">, and
       <xref linkend="sql-except" endterm="sql-except-title"> below.)
@@ -150,17 +165,6 @@ TABLE { [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ] |
       <literal>ORDER BY</literal> is not given, the rows are returned
       in whatever order the system finds fastest to produce.  (See
       <xref linkend="sql-orderby" endterm="sql-orderby-title"> below.)
-     </para>
-    </listitem>
-
-    <listitem>
-     <para>
-      <literal>DISTINCT</literal> eliminates duplicate rows from the
-      result.  <literal>DISTINCT ON</literal> eliminates rows that
-      match on all the specified expressions.  <literal>ALL</literal>
-      (the default) will return all candidate rows, including
-      duplicates.  (See <xref linkend="sql-distinct"
-      endterm="sql-distinct-title"> below.)
      </para>
     </listitem>
 
@@ -219,7 +223,7 @@ TABLE { [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ] |
     subquery to reference itself by name.  Such a subquery must have
     the form
 <synopsis>
-<replaceable class="parameter">non_recursive_term</replaceable> UNION [ ALL ] <replaceable class="parameter">recursive_term</replaceable>
+<replaceable class="parameter">non_recursive_term</replaceable> UNION [ ALL | DISTINCT ] <replaceable class="parameter">recursive_term</replaceable>
 </synopsis>
     where the recursive self-reference must appear on the right-hand
     side of the <literal>UNION</>.  Only one recursive self-reference
@@ -755,13 +759,52 @@ UNBOUNDED FOLLOWING
    </para>
   </refsect2>
 
+  <refsect2 id="sql-distinct">
+   <title id="sql-distinct-title"><literal>DISTINCT</literal> Clause</title>
+
+   <para>
+    If <literal>SELECT DISTINCT</> is specified, all duplicate rows are
+    removed from the result set (one row is kept from each group of
+    duplicates).  <literal>SELECT ALL</> specifies the opposite: all rows are
+    kept; that is the default.
+   </para>
+
+   <para>
+    <literal>SELECT DISTINCT ON ( <replaceable
+    class="parameter">expression</replaceable> [, ...] )</literal>
+    keeps only the first row of each set of rows where the given
+    expressions evaluate to equal.  The <literal>DISTINCT ON</literal>
+    expressions are interpreted using the same rules as for
+    <literal>ORDER BY</> (see above).  Note that the <quote>first
+    row</quote> of each set is unpredictable unless <literal>ORDER
+    BY</> is used to ensure that the desired row appears first.  For
+    example:
+<programlisting>
+SELECT DISTINCT ON (location) location, time, report
+    FROM weather_reports
+    ORDER BY location, time DESC;
+</programlisting>
+    retrieves the most recent weather report for each location.  But
+    if we had not used <literal>ORDER BY</> to force descending order
+    of time values for each location, we'd have gotten a report from
+    an unpredictable time for each location.
+   </para>
+
+   <para>
+    The <literal>DISTINCT ON</> expression(s) must match the leftmost
+    <literal>ORDER BY</> expression(s).  The <literal>ORDER BY</> clause
+    will normally contain additional expression(s) that determine the
+    desired precedence of rows within each <literal>DISTINCT ON</> group.
+   </para>
+  </refsect2>
+
   <refsect2 id="SQL-UNION">
    <title id="sql-union-title"><literal>UNION</literal> Clause</title>
 
    <para>
     The <literal>UNION</literal> clause has this general form:
 <synopsis>
-<replaceable class="parameter">select_statement</replaceable> UNION [ ALL ] <replaceable class="parameter">select_statement</replaceable>
+<replaceable class="parameter">select_statement</replaceable> UNION [ ALL | DISTINCT ] <replaceable class="parameter">select_statement</replaceable>
 </synopsis>
     <replaceable class="parameter">select_statement</replaceable> is
     any <command>SELECT</command> statement without an <literal>ORDER
@@ -791,6 +834,8 @@ UNBOUNDED FOLLOWING
     <literal>ALL</> prevents elimination of duplicates.  (Therefore,
     <literal>UNION ALL</> is usually significantly quicker than
     <literal>UNION</>; use <literal>ALL</> when you can.)
+    <literal>DISTINCT</> can be written to explicitly specify the
+    default behavior of eliminating duplicate rows.
    </para>
 
    <para>
@@ -812,7 +857,7 @@ UNBOUNDED FOLLOWING
    <para>
     The <literal>INTERSECT</literal> clause has this general form:
 <synopsis>
-<replaceable class="parameter">select_statement</replaceable> INTERSECT [ ALL ] <replaceable class="parameter">select_statement</replaceable>
+<replaceable class="parameter">select_statement</replaceable> INTERSECT [ ALL | DISTINCT ] <replaceable class="parameter">select_statement</replaceable>
 </synopsis>
     <replaceable class="parameter">select_statement</replaceable> is
     any <command>SELECT</command> statement without an <literal>ORDER
@@ -833,6 +878,8 @@ UNBOUNDED FOLLOWING
     With <literal>ALL</>, a row that has <replaceable>m</> duplicates in the
     left table and <replaceable>n</> duplicates in the right table will appear
     min(<replaceable>m</>,<replaceable>n</>) times in the result set.
+    <literal>DISTINCT</> can be written to explicitly specify the
+    default behavior of eliminating duplicate rows.
    </para>
 
    <para>
@@ -858,7 +905,7 @@ UNBOUNDED FOLLOWING
    <para>
     The <literal>EXCEPT</literal> clause has this general form:
 <synopsis>
-<replaceable class="parameter">select_statement</replaceable> EXCEPT [ ALL ] <replaceable class="parameter">select_statement</replaceable>
+<replaceable class="parameter">select_statement</replaceable> EXCEPT [ ALL | DISTINCT ] <replaceable class="parameter">select_statement</replaceable>
 </synopsis>
     <replaceable class="parameter">select_statement</replaceable> is
     any <command>SELECT</command> statement without an <literal>ORDER
@@ -878,6 +925,8 @@ UNBOUNDED FOLLOWING
     With <literal>ALL</>, a row that has <replaceable>m</> duplicates in the
     left table and <replaceable>n</> duplicates in the right table will appear
     max(<replaceable>m</>-<replaceable>n</>,0) times in the result set.
+    <literal>DISTINCT</> can be written to explicitly specify the
+    default behavior of eliminating duplicate rows.
    </para>
 
    <para>
@@ -984,45 +1033,6 @@ SELECT name FROM distributors ORDER BY code;
    <para>
     Character-string data is sorted according to the locale-specific
     collation order that was established when the database was created.
-   </para>
-  </refsect2>
-
-  <refsect2 id="sql-distinct">
-   <title id="sql-distinct-title"><literal>DISTINCT</literal> Clause</title>
-
-   <para>
-    If <literal>DISTINCT</> is specified, all duplicate rows are
-    removed from the result set (one row is kept from each group of
-    duplicates).  <literal>ALL</> specifies the opposite: all rows are
-    kept; that is the default.
-   </para>
-
-   <para>
-    <literal>DISTINCT ON ( <replaceable
-    class="parameter">expression</replaceable> [, ...] )</literal>
-    keeps only the first row of each set of rows where the given
-    expressions evaluate to equal.  The <literal>DISTINCT ON</literal>
-    expressions are interpreted using the same rules as for
-    <literal>ORDER BY</> (see above).  Note that the <quote>first
-    row</quote> of each set is unpredictable unless <literal>ORDER
-    BY</> is used to ensure that the desired row appears first.  For
-    example:
-<programlisting>
-SELECT DISTINCT ON (location) location, time, report
-    FROM weather_reports
-    ORDER BY location, time DESC;
-</programlisting>
-    retrieves the most recent weather report for each location.  But
-    if we had not used <literal>ORDER BY</> to force descending order
-    of time values for each location, we'd have gotten a report from
-    an unpredictable time for each location.
-   </para>
-
-   <para>
-    The <literal>DISTINCT ON</> expression(s) must match the leftmost
-    <literal>ORDER BY</> expression(s).  The <literal>ORDER BY</> clause
-    will normally contain additional expression(s) that determine the
-    desired precedence of rows within each <literal>DISTINCT ON</> group.
    </para>
   </refsect2>
 
