@@ -450,9 +450,9 @@
 
   <para>
    There will always be at least one WAL segment file, and will normally
-   not be more than (2 + <varname>checkpoint_completion_target</varname>) * <varname>checkpoint_segments</varname> + 1
-   or <varname>checkpoint_segments</> + <xref linkend="guc-wal-keep-segments"> + 1
-   files.  Each segment file is normally 16 MB (though this size can be
+   not be more files than the higher of <xref linkend="guc-wal-keep-segments"> or
+   (2 + <varname>checkpoint_completion_target</varname>) * <varname>checkpoint_segments</varname> + 1.
+   Each segment file is normally 16 MB (though this size can be
    altered when building the server).  You can use this to estimate space
    requirements for <acronym>WAL</acronym>.
    Ordinarily, when old log segment files are no longer needed, they
