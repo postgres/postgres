@@ -1866,10 +1866,12 @@
         Any character in <parameter>string</parameter> that matches a
         character in the <parameter>from</parameter> set is replaced by
         the corresponding character in the <parameter>to</parameter>
-        set
+        set. If <parameter>from</parameter> is longer than
+        <parameter>to</parameter>, occurrences of the extra characters in
+        <parameter>from</parameter> are removed.
        </entry>
-       <entry><literal>translate('12345', '14', 'ax')</literal></entry>
-       <entry><literal>a23x5</literal></entry>
+       <entry><literal>translate('12345', '143', 'ax')</literal></entry>
+       <entry><literal>a2x5</literal></entry>
       </row>       
       
      </tbody>
