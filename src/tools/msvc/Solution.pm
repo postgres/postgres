@@ -66,7 +66,7 @@ sub DetermineToolVersions
     open(P,"vcbuild /? |") || die "vcbuild command not found";
     my $line = <P>;
     close(P);
-    if ($line !~ /^Microsoft\s*\(R\) Visual C\+\+ Project Builder - \D+(\d+)\.00\.\d+/)
+    if ($line !~ /^Microsoft\s*\(R\) Visual C\+\+ [^-]+ - \D+(\d+)\.00\.\d+/)
     {
         die "Unable to determine vcbuild version from first line of output!";
     }
