@@ -729,17 +729,6 @@ CommandCounterIncrement(void)
 		 */
 		AtCCI_LocalCache();
 	}
-
-	/*
-	 * Make any other backends' catalog changes visible to me.
-	 *
-	 * XXX this is probably in the wrong place: CommandCounterIncrement should
-	 * be purely a local operation, most likely.  However fooling with this
-	 * will affect asynchronous cross-backend interactions, which doesn't seem
-	 * like a wise thing to do in late beta, so save improving this for
-	 * another day - tgl 2007-11-30
-	 */
-	AtStart_Cache();
 }
 
 /*
