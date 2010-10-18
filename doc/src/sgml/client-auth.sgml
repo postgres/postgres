@@ -257,7 +257,7 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
       </para>
 
       <para>
-       You can also write
+       You can also write <literal>all</literal> to match any IP address,
        <literal>samehost</literal> to match any of the server's own IP
        addresses, or <literal>samenet</literal> to match any address in any
        subnet that the server is directly connected to.

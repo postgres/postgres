@@ -885,8 +885,11 @@ parse_hba_line(List *line, int line_num, HbaLine *parsedline)
 		}
 		token = lfirst(line_item);
 
-		/* Is it equal to 'samehost' or 'samenet'? */
-		if (strcmp(token, "samehost\n") == 0)
+		if (strcmp(token, "all\n") == 0)
+		{
+			parsedline->ip_cmp_method = ipCmpAll;
+		}
+		else if (strcmp(token, "samehost\n") == 0)
 		{
 			/* Any IP on this host is allowed to connect */
 			parsedline->ip_cmp_method = ipCmpSameHost;
@@ -1502,6 +1505,8 @@ check_hba(hbaPort *port)
 									  (struct sockaddr *) & hba->mask))
 							continue;
 					}
+					break;
+				case ipCmpAll:
 					break;
 				case ipCmpSameHost:
 				case ipCmpSameNet:

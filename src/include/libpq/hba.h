@@ -36,7 +36,8 @@ typedef enum IPCompareMethod
 {
 	ipCmpMask,
 	ipCmpSameHost,
-	ipCmpSameNet
+	ipCmpSameNet,
+	ipCmpAll
 } IPCompareMethod;
 
 typedef enum ConnType
