@@ -1783,7 +1783,7 @@ CREATE VIEW phone_number AS
     SELECT person, phone FROM phone_data WHERE phone NOT LIKE '412%';
 </programlisting>
     This view might seem secure, since the rule system will rewrite any
-	<command>SELECT</command> from <literal>phone_number</> into a 
+    <command>SELECT</command> from <literal>phone_number</> into a 
     <command>SELECT</command> from <literal>phone_data</> and add the
     qualification that only entries where <literal>phone</> does not begin
     with 412 are wanted.  But if the user can create his or her own functions,
