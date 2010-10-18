@@ -75,7 +75,8 @@ fillScanKey(GinState *ginstate, GinScanKey key, OffsetNumber attnum, Datum query
 		/* link to the equals entry in current scan key */
 		key->scanEntry[i].master = NULL;
 		for (j = 0; j < i; j++)
-			if (compareEntries(ginstate, attnum, entryValues[i], entryValues[j]) == 0 &&
+			if (ginCompareEntries(ginstate, attnum,
+								  entryValues[i], entryValues[j]) == 0 &&
 				key->scanEntry[i].isPartialMatch == key->scanEntry[j].isPartialMatch &&
 				key->scanEntry[i].strategy == key->scanEntry[j].strategy)
 			{
@@ -155,7 +156,7 @@ freeScanKeys(GinScanKey keys, uint32 nkeys)
 }
 
 void
-newScanKey(IndexScanDesc scan)
+ginNewScanKey(IndexScanDesc scan)
 {
 	ScanKey		scankey = scan->keyData;
 	GinScanOpaque so = (GinScanOpaque) scan->opaque;

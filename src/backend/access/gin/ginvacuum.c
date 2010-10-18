@@ -293,7 +293,7 @@ ginDeletePage(GinVacuumState *gvs, BlockNumber deleteBlkno, BlockNumber leftBlkn
 		Assert(PostingItemGetBlockNumber(tod) == deleteBlkno);
 	} while (0);
 #endif
-	PageDeletePostingItem(parentPage, myoff);
+	GinPageDeletePostingItem(parentPage, myoff);
 
 	page = BufferGetPage(dBuffer);
 

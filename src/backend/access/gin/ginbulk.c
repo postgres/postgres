@@ -48,7 +48,7 @@ ginCombineData(RBNode *existing, const RBNode *newdata, void *arg)
 	{
 		int			res;
 
-		res = compareItemPointers(eo->list + eo->number - 1, en->list);
+		res = ginCompareItemPointers(eo->list + eo->number - 1, en->list);
 		Assert(res != 0);
 
 		if (res > 0)
@@ -67,8 +67,8 @@ cmpEntryAccumulator(const RBNode *a, const RBNode *b, void *arg)
 	const EntryAccumulator *eb = (const EntryAccumulator *) b;
 	BuildAccumulator *accum = (BuildAccumulator *) arg;
 
-	return compareAttEntries(accum->ginstate, ea->attnum, ea->value,
-							 eb->attnum, eb->value);
+	return ginCompareAttEntries(accum->ginstate, ea->attnum, ea->value,
+								eb->attnum, eb->value);
 }
 
 /* Allocator function for rbtree.c */
@@ -226,7 +226,7 @@ ginInsertRecordBA(BuildAccumulator *accum, ItemPointer heapptr, OffsetNumber att
 static int
 qsortCompareItemPointers(const void *a, const void *b)
 {
-	int			res = compareItemPointers((ItemPointer) a, (ItemPointer) b);
+	int			res = ginCompareItemPointers((ItemPointer) a, (ItemPointer) b);
 
 	Assert(res != 0);
 	return res;

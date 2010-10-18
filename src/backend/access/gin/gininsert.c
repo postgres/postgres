@@ -114,9 +114,10 @@ addItemPointersToTuple(Relation index, GinState *ginstate,
 		/* good, small enough */
 		uint32		newnitem;
 
-		newnitem = MergeItemPointers(GinGetPosting(res),
-									 GinGetPosting(old), GinGetNPosting(old),
-									 items, nitem);
+		newnitem = ginMergeItemPointers(GinGetPosting(res),
+										GinGetPosting(old),
+										GinGetNPosting(old),
+										items, nitem);
 		/* merge might have eliminated some duplicate items */
 		GinShortenTuple(res, newnitem);
 	}
@@ -130,7 +131,7 @@ addItemPointersToTuple(Relation index, GinState *ginstate,
 		postingRoot = createPostingTree(index, GinGetPosting(old), GinGetNPosting(old));
 		GinSetPostingTree(res, postingRoot);
 
-		gdi = prepareScanPostingTree(index, postingRoot, FALSE);
+		gdi = ginPrepareScanPostingTree(index, postingRoot, FALSE);
 		gdi->btree.isBuild = (buildStats != NULL);
 
 		ginInsertItemPointer(gdi, items, nitem, buildStats);
@@ -166,7 +167,7 @@ ginEntryInsert(Relation index, GinState *ginstate,
 	if (buildStats)
 		buildStats->nEntries++;
 
-	prepareEntryScan(&btree, index, attnum, value, ginstate);
+	ginPrepareEntryScan(&btree, index, attnum, value, ginstate);
 
 	stack = ginFindLeafPage(&btree, NULL);
 	page = BufferGetPage(stack->buffer);
@@ -187,7 +188,7 @@ ginEntryInsert(Relation index, GinState *ginstate,
 			freeGinBtreeStack(stack);
 
 			/* insert into posting tree */
-			gdi = prepareScanPostingTree(index, rootPostingTree, FALSE);
+			gdi = ginPrepareScanPostingTree(index, rootPostingTree, FALSE);
 			gdi->btree.isBuild = (buildStats != NULL);
 			ginInsertItemPointer(gdi, items, nitem, buildStats);
 			pfree(gdi);
@@ -233,7 +234,7 @@ ginHeapTupleBulkInsert(GinBuildState *buildstate, OffsetNumber attnum, Datum val
 	MemoryContext oldCtx;
 
 	oldCtx = MemoryContextSwitchTo(buildstate->funcCtx);
-	entries = extractEntriesSU(buildstate->accum.ginstate, attnum, value, &nentries);
+	entries = ginExtractEntriesSU(buildstate->accum.ginstate, attnum, value, &nentries);
 	MemoryContextSwitchTo(oldCtx);
 
 	if (nentries == 0)
@@ -420,7 +421,7 @@ ginHeapTupleInsert(Relation index, GinState *ginstate, OffsetNumber attnum, Datu
 	int32		i,
 				nentries;
 
-	entries = extractEntriesSU(ginstate, attnum, value, &nentries);
+	entries = ginExtractEntriesSU(ginstate, attnum, value, &nentries);
 
 	if (nentries == 0)
 		/* nothing to insert */

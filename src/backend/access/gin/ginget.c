@@ -51,7 +51,7 @@ findItemInPage(Page page, ItemPointer item, OffsetNumber *off)
 	 */
 	for (*off = FirstOffsetNumber; *off <= maxoff; (*off)++)
 	{
-		res = compareItemPointers(item, (ItemPointer) GinDataPageGetItem(page, *off));
+		res = ginCompareItemPointers(item, (ItemPointer) GinDataPageGetItem(page, *off));
 
 		if (res <= 0)
 			return true;
@@ -99,9 +99,9 @@ scanForItems(Relation index, GinScanEntry scanEntry, BlockNumber rootPostingTree
 	Page		page;
 	BlockNumber blkno;
 
-	gdi = prepareScanPostingTree(index, rootPostingTree, TRUE);
+	gdi = ginPrepareScanPostingTree(index, rootPostingTree, TRUE);
 
-	buffer = scanBeginPostingTree(gdi);
+	buffer = ginScanBeginPostingTree(gdi);
 	IncrBufferRefCount(buffer); /* prevent unpin in freeGinBtreeStack */
 
 	freeGinBtreeStack(gdi->stack);
@@ -241,7 +241,8 @@ computePartialMatchList(GinBtreeData *btree, GinBtreeStack *stack, GinScanEntry 
 				if (gintuple_get_attrnum(btree->ginstate, itup) != scanEntry->attnum)
 					elog(ERROR, "lost saved point in index");	/* must not happen !!! */
 
-				if (compareEntries(btree->ginstate, scanEntry->attnum, newDatum, savedDatum) == 0)
+				if (ginCompareEntries(btree->ginstate, scanEntry->attnum,
+									  newDatum, savedDatum) == 0)
 				{
 					/* Found!  */
 					if (btree->ginstate->origTupdesc->attrs[scanEntry->attnum - 1]->attbyval == false)
@@ -298,7 +299,7 @@ startScanEntry(Relation index, GinState *ginstate, GinScanEntry entry)
 	 * posting list in memory
 	 */
 
-	prepareEntryScan(&btreeEntry, index, entry->attnum, entry->entry, ginstate);
+	ginPrepareEntryScan(&btreeEntry, index, entry->attnum, entry->entry, ginstate);
 	btreeEntry.searchMode = TRUE;
 	stackEntry = ginFindLeafPage(&btreeEntry, NULL);
 	page = BufferGetPage(stackEntry->buffer);
@@ -359,9 +360,9 @@ startScanEntry(Relation index, GinState *ginstate, GinScanEntry entry)
 			 */
 			LockBuffer(stackEntry->buffer, GIN_UNLOCK);
 			needUnlock = FALSE;
-			gdi = prepareScanPostingTree(index, rootPostingTree, TRUE);
+			gdi = ginPrepareScanPostingTree(index, rootPostingTree, TRUE);
 
-			entry->buffer = scanBeginPostingTree(gdi);
+			entry->buffer = ginScanBeginPostingTree(gdi);
 
 			/*
 			 * We keep buffer pinned because we need to prevent deletion of
@@ -504,8 +505,8 @@ entryGetNextItem(Relation index, GinScanEntry entry)
 				LockBuffer(entry->buffer, GIN_UNLOCK);
 
 				if (!ItemPointerIsValid(&entry->curItem) ||
-					compareItemPointers(&entry->curItem,
-										entry->list + entry->offset - 1) == 0)
+					ginCompareItemPointers(&entry->curItem,
+										   entry->list + entry->offset - 1) == 0)
 				{
 					/*
 					 * First pages are deleted or empty, or we found exact
@@ -699,11 +700,11 @@ keyGetItem(Relation index, GinState *ginstate, MemoryContext tempCtx,
 			entry = key->scanEntry + i;
 
 			while (entry->isFinished == FALSE &&
-				   compareItemPointers(&entry->curItem, &myAdvancePast) <= 0)
+				   ginCompareItemPointers(&entry->curItem, &myAdvancePast) <= 0)
 				entryGetItem(index, entry);
 
 			if (entry->isFinished == FALSE &&
-				compareItemPointers(&entry->curItem, &key->curItem) < 0)
+				ginCompareItemPointers(&entry->curItem, &key->curItem) < 0)
 				key->curItem = entry->curItem;
 		}
 
@@ -757,7 +758,7 @@ keyGetItem(Relation index, GinState *ginstate, MemoryContext tempCtx,
 		{
 			entry = key->scanEntry + i;
 			if (entry->isFinished == FALSE &&
-				compareItemPointers(&entry->curItem, &curPageLossy) == 0)
+				ginCompareItemPointers(&entry->curItem, &curPageLossy) == 0)
 			{
 				if (haveLossyEntry)
 				{
@@ -810,7 +811,7 @@ keyGetItem(Relation index, GinState *ginstate, MemoryContext tempCtx,
 		{
 			entry = key->scanEntry + i;
 			if (entry->isFinished == FALSE &&
-				compareItemPointers(&entry->curItem, &key->curItem) == 0)
+				ginCompareItemPointers(&entry->curItem, &key->curItem) == 0)
 				key->entryRes[i] = TRUE;
 			else
 				key->entryRes[i] = FALSE;
@@ -1071,10 +1072,10 @@ collectDatumForItem(IndexScanDesc scan, pendingPosition *pos)
 							datum[StopMiddle - 1] = gin_index_getattr(&so->ginstate, itup);
 							datumExtracted[StopMiddle - 1] = true;
 						}
-						res = compareEntries(&so->ginstate,
-											 entry->attnum,
-											 entry->entry,
-											 datum[StopMiddle - 1]);
+						res = ginCompareEntries(&so->ginstate,
+												entry->attnum,
+												entry->entry,
+												datum[StopMiddle - 1]);
 
 						if (res == 0)
 						{
@@ -1282,14 +1283,14 @@ scanGetItem(IndexScanDesc scan, ItemPointer advancePast,
 			GinScanKey	key = so->keys + i;
 
 			while (key->isFinished == FALSE &&
-				   compareItemPointers(&key->curItem, &myAdvancePast) <= 0)
+				   ginCompareItemPointers(&key->curItem, &myAdvancePast) <= 0)
 				keyGetItem(scan->indexRelation, &so->ginstate, so->tempCtx,
 						   key, &myAdvancePast);
 
 			if (key->isFinished)
 					return FALSE;		/* finished one of keys */
 
-			if (compareItemPointers(&key->curItem, item) < 0)
+			if (ginCompareItemPointers(&key->curItem, item) < 0)
 				*item = key->curItem;
 		}
 
@@ -1321,7 +1322,7 @@ scanGetItem(IndexScanDesc scan, ItemPointer advancePast,
 		{
 			GinScanKey	key = so->keys + i;
 
-			if (compareItemPointers(item, &key->curItem) == 0)
+			if (ginCompareItemPointers(item, &key->curItem) == 0)
 				continue;
 			if (ItemPointerIsLossyPage(&key->curItem) &&
 				GinItemPointerGetBlockNumber(&key->curItem) ==
@@ -1372,7 +1373,7 @@ gingetbitmap(PG_FUNCTION_ARGS)
 	bool		recheck;
 
 	if (GinIsNewKey(scan))
-		newScanKey(scan);
+		ginNewScanKey(scan);
 
 	if (GinIsVoidRes(scan))
 		PG_RETURN_INT64(0);

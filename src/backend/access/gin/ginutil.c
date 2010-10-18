@@ -236,22 +236,18 @@ GinInitMetabuffer(Buffer b)
 }
 
 int
-compareEntries(GinState *ginstate, OffsetNumber attnum, Datum a, Datum b)
+ginCompareEntries(GinState *ginstate, OffsetNumber attnum, Datum a, Datum b)
 {
-	return DatumGetInt32(
-						 FunctionCall2(
-									   &ginstate->compareFn[attnum - 1],
-									   a, b
-									   )
-		);
+	return DatumGetInt32(FunctionCall2(&ginstate->compareFn[attnum - 1],
+									   a, b));
 }
 
 int
-compareAttEntries(GinState *ginstate, OffsetNumber attnum_a, Datum a,
-				  OffsetNumber attnum_b, Datum b)
+ginCompareAttEntries(GinState *ginstate, OffsetNumber attnum_a, Datum a,
+					 OffsetNumber attnum_b, Datum b)
 {
 	if (attnum_a == attnum_b)
-		return compareEntries(ginstate, attnum_a, a, b);
+		return ginCompareEntries(ginstate, attnum_a, a, b);
 
 	return (attnum_a < attnum_b) ? -1 : 1;
 }
@@ -275,7 +271,7 @@ cmpEntries(const Datum *a, const Datum *b, cmpEntriesData *arg)
 }
 
 Datum *
-extractEntriesS(GinState *ginstate, OffsetNumber attnum, Datum value, int32 *nentries,
+ginExtractEntriesS(GinState *ginstate, OffsetNumber attnum, Datum value, int32 *nentries,
 				bool *needUnique)
 {
 	Datum	   *entries;
@@ -305,11 +301,11 @@ extractEntriesS(GinState *ginstate, OffsetNumber attnum, Datum value, int32 *nen
 
 
 Datum *
-extractEntriesSU(GinState *ginstate, OffsetNumber attnum, Datum value, int32 *nentries)
+ginExtractEntriesSU(GinState *ginstate, OffsetNumber attnum, Datum value, int32 *nentries)
 {
 	bool		needUnique;
-	Datum	   *entries = extractEntriesS(ginstate, attnum, value, nentries,
-										  &needUnique);
+	Datum	   *entries = ginExtractEntriesS(ginstate, attnum, value, nentries,
+											 &needUnique);
 
 	if (needUnique)
 	{
@@ -320,7 +316,7 @@ extractEntriesSU(GinState *ginstate, OffsetNumber attnum, Datum value, int32 *ne
 
 		while (ptr - entries < *nentries)
 		{
-			if (compareEntries(ginstate, attnum, *ptr, *res) != 0)
+			if (ginCompareEntries(ginstate, attnum, *ptr, *res) != 0)
 				*(++res) = *ptr++;
 			else
 				ptr++;

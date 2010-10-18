@@ -339,12 +339,12 @@ ginRedoSplit(XLogRecPtr lsn, XLogRecord *record)
 		if (data->isData)
 		{
 			Assert(data->rootBlkno != GIN_ROOT_BLKNO);
-			dataFillRoot(NULL, rootBuf, lbuffer, rbuffer);
+			ginDataFillRoot(NULL, rootBuf, lbuffer, rbuffer);
 		}
 		else
 		{
 			Assert(data->rootBlkno == GIN_ROOT_BLKNO);
-			entryFillRoot(NULL, rootBuf, lbuffer, rbuffer);
+			ginEntryFillRoot(NULL, rootBuf, lbuffer, rbuffer);
 		}
 
 		PageSetLSN(rootPage, lsn);
@@ -448,7 +448,7 @@ ginRedoDeletePage(XLogRecPtr lsn, XLogRecord *record)
 			{
 				Assert(GinPageIsData(page));
 				Assert(!GinPageIsLeaf(page));
-				PageDeletePostingItem(page, data->parentOffset);
+				GinPageDeletePostingItem(page, data->parentOffset);
 				PageSetLSN(page, lsn);
 				PageSetTLI(page, ThisTimeLineID);
 				MarkBufferDirty(buffer);
@@ -813,14 +813,14 @@ ginContinueSplit(ginIncompleteSplit *split)
 
 	if (split->rootBlkno == GIN_ROOT_BLKNO)
 	{
-		prepareEntryScan(&btree, reln, InvalidOffsetNumber, (Datum) 0, NULL);
+		ginPrepareEntryScan(&btree, reln, InvalidOffsetNumber, (Datum) 0, NULL);
 		btree.entry = ginPageGetLinkItup(buffer);
 	}
 	else
 	{
 		Page		page = BufferGetPage(buffer);
 
-		prepareDataScan(&btree, reln);
+		ginPrepareDataScan(&btree, reln);
 
 		PostingItemSetBlockNumber(&(btree.pitem), split->leftBlkno);
 		if (GinPageIsLeaf(page))
@@ -838,7 +838,7 @@ ginContinueSplit(ginIncompleteSplit *split)
 	stack.off = InvalidOffsetNumber;
 	stack.parent = NULL;
 
-	findParents(&btree, &stack, split->rootBlkno);
+	ginFindParents(&btree, &stack, split->rootBlkno);
 	ginInsertValue(&btree, stack.parent, NULL);
 
 	FreeFakeRelcacheEntry(reln);

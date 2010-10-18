@@ -362,12 +362,12 @@ extern Buffer GinNewBuffer(Relation index);
 extern void GinInitBuffer(Buffer b, uint32 f);
 extern void GinInitPage(Page page, uint32 f, Size pageSize);
 extern void GinInitMetabuffer(Buffer b);
-extern int	compareEntries(GinState *ginstate, OffsetNumber attnum, Datum a, Datum b);
-extern int compareAttEntries(GinState *ginstate, OffsetNumber attnum_a, Datum a,
+extern int	ginCompareEntries(GinState *ginstate, OffsetNumber attnum, Datum a, Datum b);
+extern int	ginCompareAttEntries(GinState *ginstate, OffsetNumber attnum_a, Datum a,
 				  OffsetNumber attnum_b, Datum b);
-extern Datum *extractEntriesS(GinState *ginstate, OffsetNumber attnum, Datum value,
+extern Datum *ginExtractEntriesS(GinState *ginstate, OffsetNumber attnum, Datum value,
 				int32 *nentries, bool *needUnique);
-extern Datum *extractEntriesSU(GinState *ginstate, OffsetNumber attnum, Datum value, int32 *nentries);
+extern Datum *ginExtractEntriesSU(GinState *ginstate, OffsetNumber attnum, Datum value, int32 *nentries);
 
 extern Datum gin_index_getattr(GinState *ginstate, IndexTuple tuple);
 extern OffsetNumber gintuple_get_attrnum(GinState *ginstate, IndexTuple tuple);
@@ -460,26 +460,26 @@ extern GinBtreeStack *ginFindLeafPage(GinBtree btree, GinBtreeStack *stack);
 extern void freeGinBtreeStack(GinBtreeStack *stack);
 extern void ginInsertValue(GinBtree btree, GinBtreeStack *stack,
 						   GinStatsData *buildStats);
-extern void findParents(GinBtree btree, GinBtreeStack *stack, BlockNumber rootBlkno);
+extern void ginFindParents(GinBtree btree, GinBtreeStack *stack, BlockNumber rootBlkno);
 
 /* ginentrypage.c */
 extern IndexTuple GinFormTuple(Relation index, GinState *ginstate,
 			 OffsetNumber attnum, Datum key,
 			 ItemPointerData *ipd, uint32 nipd, bool errorTooBig);
 extern void GinShortenTuple(IndexTuple itup, uint32 nipd);
-extern void prepareEntryScan(GinBtree btree, Relation index, OffsetNumber attnum,
+extern void ginPrepareEntryScan(GinBtree btree, Relation index, OffsetNumber attnum,
 				 Datum value, GinState *ginstate);
-extern void entryFillRoot(GinBtree btree, Buffer root, Buffer lbuf, Buffer rbuf);
+extern void ginEntryFillRoot(GinBtree btree, Buffer root, Buffer lbuf, Buffer rbuf);
 extern IndexTuple ginPageGetLinkItup(Buffer buf);
 
 /* gindatapage.c */
-extern int	compareItemPointers(ItemPointer a, ItemPointer b);
-extern uint32 MergeItemPointers(ItemPointerData *dst,
+extern int	ginCompareItemPointers(ItemPointer a, ItemPointer b);
+extern uint32 ginMergeItemPointers(ItemPointerData *dst,
 				  ItemPointerData *a, uint32 na,
 				  ItemPointerData *b, uint32 nb);
 
 extern void GinDataPageAddItem(Page page, void *data, OffsetNumber offset);
-extern void PageDeletePostingItem(Page page, OffsetNumber offset);
+extern void GinPageDeletePostingItem(Page page, OffsetNumber offset);
 
 typedef struct
 {
@@ -487,14 +487,14 @@ typedef struct
 	GinBtreeStack *stack;
 } GinPostingTreeScan;
 
-extern GinPostingTreeScan *prepareScanPostingTree(Relation index,
+extern GinPostingTreeScan *ginPrepareScanPostingTree(Relation index,
 					   BlockNumber rootBlkno, bool searchMode);
 extern void ginInsertItemPointer(GinPostingTreeScan *gdi,
 								 ItemPointerData *items, uint32 nitem,
 								 GinStatsData *buildStats);
-extern Buffer scanBeginPostingTree(GinPostingTreeScan *gdi);
-extern void dataFillRoot(GinBtree btree, Buffer root, Buffer lbuf, Buffer rbuf);
-extern void prepareDataScan(GinBtree btree, Relation index);
+extern Buffer ginScanBeginPostingTree(GinPostingTreeScan *gdi);
+extern void ginDataFillRoot(GinBtree btree, Buffer root, Buffer lbuf, Buffer rbuf);
+extern void ginPrepareDataScan(GinBtree btree, Relation index);
 
 /* ginscan.c */
 
@@ -583,7 +583,7 @@ extern Datum ginendscan(PG_FUNCTION_ARGS);
 extern Datum ginrescan(PG_FUNCTION_ARGS);
 extern Datum ginmarkpos(PG_FUNCTION_ARGS);
 extern Datum ginrestrpos(PG_FUNCTION_ARGS);
-extern void newScanKey(IndexScanDesc scan);
+extern void ginNewScanKey(IndexScanDesc scan);
 
 /* ginget.c */
 extern PGDLLIMPORT int GinFuzzySearchLimit;

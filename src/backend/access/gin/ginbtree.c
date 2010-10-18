@@ -173,8 +173,8 @@ freeGinBtreeStack(GinBtreeStack *stack)
  * with vacuum process
  */
 void
-findParents(GinBtree btree, GinBtreeStack *stack,
-			BlockNumber rootBlkno)
+ginFindParents(GinBtree btree, GinBtreeStack *stack,
+			   BlockNumber rootBlkno)
 {
 
 	Page		page;
@@ -456,7 +456,7 @@ ginInsertValue(GinBtree btree, GinBtreeStack *stack, GinStatsData *buildStats)
 				 * rightmost page, but we don't find parent, we should use
 				 * plain search...
 				 */
-				findParents(btree, stack, rootBlkno);
+				ginFindParents(btree, stack, rootBlkno);
 				parent = stack->parent;
 				page = BufferGetPage(parent->buffer);
 				break;

@@ -437,7 +437,7 @@ ginHeapTupleFastCollect(Relation index, GinState *ginstate,
 	int32		i,
 				nentries;
 
-	entries = extractEntriesSU(ginstate, attnum, value, &nentries);
+	entries = ginExtractEntriesSU(ginstate, attnum, value, &nentries);
 
 	if (nentries == 0)
 		/* nothing to insert */
