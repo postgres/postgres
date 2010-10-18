@@ -789,7 +789,7 @@ ginInsertCleanup(Relation index, GinState *ginstate,
 			ginBeginBAScan(&accum);
 			while ((list = ginGetEntry(&accum, &attnum, &entry, &nlist)) != NULL)
 			{
-				ginEntryInsert(index, ginstate, attnum, entry, list, nlist, FALSE);
+				ginEntryInsert(index, ginstate, attnum, entry, list, nlist, NULL);
 				if (vac_delay)
 					vacuum_delay_point();
 			}
@@ -823,7 +823,7 @@ ginInsertCleanup(Relation index, GinState *ginstate,
 
 				ginBeginBAScan(&accum);
 				while ((list = ginGetEntry(&accum, &attnum, &entry, &nlist)) != NULL)
-					ginEntryInsert(index, ginstate, attnum, entry, list, nlist, FALSE);
+					ginEntryInsert(index, ginstate, attnum, entry, list, nlist, NULL);
 			}
 
 			/*

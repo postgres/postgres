@@ -839,7 +839,7 @@ ginContinueSplit(ginIncompleteSplit *split)
 	stack.parent = NULL;
 
 	findParents(&btree, &stack, split->rootBlkno);
-	ginInsertValue(&btree, stack.parent);
+	ginInsertValue(&btree, stack.parent, NULL);
 
 	FreeFakeRelcacheEntry(reln);
 

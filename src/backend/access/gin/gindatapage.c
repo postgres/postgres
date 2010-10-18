@@ -592,9 +592,11 @@ void
 prepareDataScan(GinBtree btree, Relation index)
 {
 	memset(btree, 0, sizeof(GinBtreeData));
+
 	btree->index = index;
-	btree->isMoveRight = dataIsMoveRight;
+
 	btree->findChildPage = dataLocateItem;
+	btree->isMoveRight = dataIsMoveRight;
 	btree->findItem = dataLocateLeafItem;
 	btree->findChildPtr = dataFindChildPtr;
 	btree->getLeftMostPage = dataGetLeftMostPage;
@@ -603,6 +605,7 @@ prepareDataScan(GinBtree btree, Relation index)
 	btree->splitPage = dataSplitPage;
 	btree->fillRoot = dataFillRoot;
 
+	btree->isData = TRUE;
 	btree->searchMode = FALSE;
 	btree->isDelete = FALSE;
 	btree->fullScan = FALSE;
@@ -628,7 +631,9 @@ prepareScanPostingTree(Relation index, BlockNumber rootBlkno, bool searchMode)
  * Inserts array of item pointers, may execute several tree scan (very rare)
  */
 void
-insertItemPointer(GinPostingTreeScan *gdi, ItemPointerData *items, uint32 nitem)
+ginInsertItemPointer(GinPostingTreeScan *gdi,
+					 ItemPointerData *items, uint32 nitem,
+					 GinStatsData *buildStats)
 {
 	BlockNumber rootBlkno = gdi->stack->blkno;
 
@@ -653,7 +658,7 @@ insertItemPointer(GinPostingTreeScan *gdi, ItemPointerData *items, uint32 nitem)
 			freeGinBtreeStack(gdi->stack);
 		}
 		else
-			ginInsertValue(&(gdi->btree), gdi->stack);
+			ginInsertValue(&(gdi->btree), gdi->stack, buildStats);
 
 		gdi->stack = NULL;
 	}

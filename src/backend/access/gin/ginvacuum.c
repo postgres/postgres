@@ -707,9 +707,8 @@ ginvacuumcleanup(PG_FUNCTION_ARGS)
 	BlockNumber npages,
 				blkno;
 	BlockNumber totFreePages;
-	BlockNumber lastBlock = GIN_ROOT_BLKNO,
-				lastFilledBlock = GIN_ROOT_BLKNO;
 	GinState	ginstate;
+	GinStatsData idxStat;
 
 	/*
 	 * In an autovacuum analyze, we want to clean up pending insertions.
@@ -736,6 +735,8 @@ ginvacuumcleanup(PG_FUNCTION_ARGS)
 		ginInsertCleanup(index, &ginstate, true, stats);
 	}
 
+	memset(&idxStat, 0, sizeof(idxStat));
+
 	/*
 	 * XXX we always report the heap tuple count as the number of index
 	 * entries.  This is bogus if the index is partial, but it's real hard to
@@ -757,7 +758,7 @@ ginvacuumcleanup(PG_FUNCTION_ARGS)
 
 	totFreePages = 0;
 
-	for (blkno = GIN_ROOT_BLKNO + 1; blkno < npages; blkno++)
+	for (blkno = GIN_ROOT_BLKNO; blkno < npages; blkno++)
 	{
 		Buffer		buffer;
 		Page		page;
@@ -771,15 +772,28 @@ ginvacuumcleanup(PG_FUNCTION_ARGS)
 
 		if (GinPageIsDeleted(page))
 		{
+			Assert(blkno != GIN_ROOT_BLKNO);
 			RecordFreeIndexPage(index, blkno);
 			totFreePages++;
 		}
-		else
-			lastFilledBlock = blkno;
+		else if (GinPageIsData(page))
+		{
+			idxStat.nDataPages++;
+		}
+		else if (!GinPageIsList(page))
+		{
+			idxStat.nEntryPages++;
+
+			if ( GinPageIsLeaf(page) )
+				idxStat.nEntries += PageGetMaxOffsetNumber(page);
+		}
 
 		UnlockReleaseBuffer(buffer);
 	}
-	lastBlock = npages - 1;
+
+	/* Update the metapage with accurate page and entry counts */
+	idxStat.nTotalPages = npages;
+	ginUpdateStats(info->index, &idxStat);
 
 	/* Finally, vacuum the FSM */
 	IndexFreeSpaceMapVacuum(info->index);

@@ -91,6 +91,7 @@
 #include <ctype.h>
 #include <math.h>
 
+#include "access/gin.h"
 #include "access/sysattr.h"
 #include "catalog/index.h"
 #include "catalog/pg_opfamily.h"
@@ -6235,6 +6236,24 @@ gistcostestimate(PG_FUNCTION_ARGS)
 	PG_RETURN_VOID();
 }
 
+/* Find the index column matching "op"; return its index, or -1 if no match */
+static int
+find_index_column(Node *op, IndexOptInfo *index)
+{
+	int			i;
+
+	for (i = 0; i < index->ncolumns; i++)
+	{
+		if (match_index_to_operand(op, i, index))
+			return i;
+	}
+
+	return -1;
+}
+
+/*
+ * GIN has search behavior completely different from other index types
+ */
 Datum
 gincostestimate(PG_FUNCTION_ARGS)
 {
@@ -6246,10 +6265,329 @@ gincostestimate(PG_FUNCTION_ARGS)
 	Cost	   *indexTotalCost = (Cost *) PG_GETARG_POINTER(5);
 	Selectivity *indexSelectivity = (Selectivity *) PG_GETARG_POINTER(6);
 	double	   *indexCorrelation = (double *) PG_GETARG_POINTER(7);
+	ListCell	   *l;
+	int32		   nfullscan = 0;
+	List		   *selectivityQuals;
+	double		   numPages = index->pages,
+				   numTuples = index->tuples;
+	double		   numEntryPages,
+				   numDataPages,
+				   numPendingPages,
+				   numEntries;
+	double		   partialEntriesInQuals = 0.0;
+	double		   searchEntriesInQuals = 0.0;
+	double		   exactEntriesInQuals = 0.0;
+	double		   entryPagesFetched,
+				   dataPagesFetched,
+				   dataPagesFetchedBySel;
+	double		   qual_op_cost,
+				   qual_arg_cost,
+				   spc_random_page_cost,
+				   num_scans;
+	QualCost	   index_qual_cost;
+	Relation	   indexRel;
+	GinStatsData   ginStats;
 
-	genericcostestimate(root, index, indexQuals, outer_rel, 0.0,
-						indexStartupCost, indexTotalCost,
-						indexSelectivity, indexCorrelation);
+	/*
+	 * Obtain statistic information from the meta page
+	 */
+	indexRel = index_open(index->indexoid, AccessShareLock);
+	ginGetStats(indexRel, &ginStats);
+	index_close(indexRel, AccessShareLock);
+
+	numEntryPages = ginStats.nEntryPages;
+	numDataPages = ginStats.nDataPages;
+	numPendingPages = ginStats.nPendingPages;
+	numEntries = ginStats.nEntries;
+
+	/*
+	 * nPendingPages can be trusted, but the other fields are as of the last
+	 * VACUUM.  Scale them by the ratio numPages / nTotalPages to account for
+	 * growth since then.  If the fields are zero (implying no VACUUM at all,
+	 * and an index created pre-9.1), assume all pages are entry pages.
+	 */
+	if (ginStats.nTotalPages == 0 || ginStats.nEntryPages == 0)
+	{
+		numEntryPages = numPages;
+		numDataPages = 0;
+		numEntries = numTuples;		/* bogus, but no other info available */
+	}
+	else
+	{
+		double	scale = numPages / ginStats.nTotalPages;
+
+		numEntryPages = ceil(numEntryPages * scale);
+		numDataPages = ceil(numDataPages * scale);
+		numEntries = ceil(numEntries * scale);
+		/* ensure we didn't round up too much */
+		numEntryPages = Min(numEntryPages, numPages);
+		numDataPages = Min(numDataPages, numPages - numEntryPages);
+	}
+
+	/*
+	 * Include predicate in selectivityQuals (should match genericcostestimate)
+	 */
+	if (index->indpred != NIL)
+	{
+		List	   *predExtraQuals = NIL;
+
+		foreach(l, index->indpred)
+		{
+			Node	   *predQual = (Node *) lfirst(l);
+			List	   *oneQual = list_make1(predQual);
+
+			if (!predicate_implied_by(oneQual, indexQuals))
+				predExtraQuals = list_concat(predExtraQuals, oneQual);
+		}
+		/* list_concat avoids modifying the passed-in indexQuals list */
+		selectivityQuals = list_concat(predExtraQuals, indexQuals);
+	}
+	else
+		selectivityQuals = indexQuals;
+
+	/* Estimate the fraction of main-table tuples that will be visited */
+	*indexSelectivity = clauselist_selectivity(root, selectivityQuals,
+												index->rel->relid,
+												JOIN_INNER,
+												NULL);
+
+	/* fetch estimated page cost for schema containing index */
+    get_tablespace_page_costs(index->reltablespace,
+							  &spc_random_page_cost,
+							  NULL);
+
+	/*
+	 * Generic assumption about index correlation: there isn't any.
+	 */
+	*indexCorrelation = 0.0;
+
+	/*
+	 * Examine quals to estimate number of search entries & partial matches
+	 */
+	foreach(l, indexQuals)
+	{
+		RestrictInfo	*rinfo = (RestrictInfo *) lfirst(l);
+		Expr			*clause;
+		Node			*leftop,
+						*rightop,
+						*operand;
+		Oid				extractProcOid;
+		Oid				clause_op;
+		int				strategy_op;
+		Oid				lefttype,
+						righttype;
+		int32			nentries = 0;
+		bool			*partial_matches = NULL;
+		Pointer			*extra_data = NULL;
+		int				indexcol;
+
+		Assert(IsA(rinfo, RestrictInfo));
+		clause = rinfo->clause;
+		Assert(IsA(clause, OpExpr));
+		leftop = get_leftop(clause);
+		rightop = get_rightop(clause);
+		clause_op = ((OpExpr *) clause)->opno;
+
+		if ((indexcol = find_index_column(leftop, index)) >= 0)
+		{
+			operand = rightop;
+		}
+		else if ((indexcol = find_index_column(rightop, index)) >= 0)
+		{
+			operand = leftop;
+			clause_op = get_commutator(clause_op);
+		}
+		else
+		{
+			elog(ERROR, "Could not match index to operand");
+			operand = NULL; /* keep compiler quiet */
+		}
+
+		if (IsA(operand, RelabelType))
+			operand = (Node *) ((RelabelType *) operand)->arg;
+
+		/*
+		 * It's impossible to call extractQuery method for unknown operand.
+		 * So unless operand is a Const we can't do much; just assume there
+		 * will be one ordinary search entry from the operand at runtime.
+		 */
+		if (!IsA(operand, Const))
+		{
+			searchEntriesInQuals++;
+			continue;
+		}
+
+		/* If Const is null, there can be no matches */
+		if (((Const*) operand)->constisnull)
+		{
+			*indexStartupCost = 0;
+			*indexTotalCost = 0;
+			*indexSelectivity = 0;
+			PG_RETURN_VOID();
+		}
+
+		/*
+		 * Get the operator's strategy number and declared input data types
+		 * within the index opfamily.
+		 */
+		get_op_opfamily_properties(clause_op, index->opfamily[indexcol],
+								   &strategy_op, &lefttype, &righttype);
+
+		/*
+		 * GIN (like GiST) always has lefttype == righttype in pg_amproc
+		 * and they are equal to type Oid on which index was created/designed
+		 */
+		extractProcOid = get_opfamily_proc(index->opfamily[indexcol],
+										   lefttype, lefttype,
+										   GIN_EXTRACTQUERY_PROC);
+
+		if (!OidIsValid(extractProcOid))
+		{
+			/* probably shouldn't happen, but cope sanely if so */
+			searchEntriesInQuals++;
+			continue;
+		}
+
+		OidFunctionCall5(extractProcOid,
+						 ((Const*)operand)->constvalue,
+						 PointerGetDatum(&nentries),
+						 UInt16GetDatum(strategy_op),
+						 PointerGetDatum(&partial_matches),
+						 PointerGetDatum(&extra_data));
+
+		if (nentries == 0)
+		{
+			nfullscan++;
+		}
+		else if (nentries < 0)
+		{
+			/*
+			 * GIN_EXTRACTQUERY_PROC guarantees that nothing will be found
+			 */
+			*indexStartupCost = 0;
+			*indexTotalCost = 0;
+			*indexSelectivity = 0;
+			PG_RETURN_VOID();
+		}
+		else
+		{
+			int		i;
+
+			for (i=0; i<nentries; i++)
+			{
+				/*
+				 * For partial match we haven't any information to estimate
+				 * number of matched entries in index, so, we just estimate it
+				 * as 100
+				 */
+				if (partial_matches && partial_matches[i])
+					partialEntriesInQuals += 100;
+				else
+					exactEntriesInQuals++;
+
+				searchEntriesInQuals++;
+			}
+		}
+	}
+
+	if (nfullscan == list_length(indexQuals))
+		searchEntriesInQuals = numEntries;
+
+	/* Will we have more than one iteration of a nestloop scan? */
+	if (outer_rel != NULL && outer_rel->rows > 1)
+		num_scans = outer_rel->rows;
+	else
+		num_scans = 1;
+
+	/*
+	 * cost to begin scan, first of all, pay attention to
+	 * pending list.
+	 */
+	entryPagesFetched = numPendingPages;
+
+	/*
+	 * Estimate number of entry pages read.  We need to do
+	 * searchEntriesInQuals searches.  Use a power function as it should be,
+	 * but tuples on leaf pages usually is much greater.
+	 * Here we include all searches in entry tree, including
+	 * search of first entry in partial match algorithm
+	 */
+	entryPagesFetched += ceil(searchEntriesInQuals * rint(pow(numEntryPages, 0.15)));
+
+	/*
+	 * Add an estimate of entry pages read by partial match algorithm.
+	 * It's a scan over leaf pages in entry tree.  We haven't any useful stats
+	 * here, so estimate it as proportion.
+	 */
+	entryPagesFetched += ceil(numEntryPages * partialEntriesInQuals / numEntries);
+
+	/*
+	 * Partial match algorithm reads all data pages before
+	 * doing actual scan, so it's a startup cost. Again,
+	 * we havn't any useful stats here, so, estimate it as
+	 * proportion
+	 */
+	dataPagesFetched = ceil(numDataPages * partialEntriesInQuals / numEntries);
+
+	/* calculate cache effects */
+	if (num_scans > 1 || searchEntriesInQuals > 1)
+	{
+		entryPagesFetched = index_pages_fetched(entryPagesFetched,
+												(BlockNumber) numEntryPages,
+												numEntryPages, root);
+		dataPagesFetched = index_pages_fetched(dataPagesFetched,
+											   (BlockNumber) numDataPages,
+											   numDataPages, root);
+	}
+
+	/*
+	 * Here we use random page cost because logically-close pages could be
+	 * far apart on disk.
+	 */
+	*indexStartupCost = (entryPagesFetched + dataPagesFetched) * spc_random_page_cost;
+
+	/* cost to scan data pages for each exact (non-partial) matched entry */
+	dataPagesFetched = ceil(numDataPages * exactEntriesInQuals / numEntries);
+
+	/*
+	 * Estimate number of data pages read, using selectivity estimation and
+	 * capacity of data page.
+	 */
+	dataPagesFetchedBySel = ceil(*indexSelectivity *
+								 (numTuples / (BLCKSZ/SizeOfIptrData)));
+
+	if (dataPagesFetchedBySel > dataPagesFetched)
+	{
+		/*
+		 * At least one of entries is very frequent and, unfortunately,
+		 * we couldn't get statistic about entries (only tsvector has
+		 * such statistics). So, we obviously have too small estimation of
+		 * pages fetched from data tree. Re-estimate it from known
+		 * capacity of data pages
+		 */
+		dataPagesFetched = dataPagesFetchedBySel;
+	}
+
+	if (num_scans > 1)
+		dataPagesFetched = index_pages_fetched(dataPagesFetched,
+											   (BlockNumber) numDataPages,
+											   numDataPages, root);
+	*indexTotalCost = *indexStartupCost +
+		dataPagesFetched * spc_random_page_cost;
+
+	/*
+	 * Add on index qual eval costs, much as in genericcostestimate
+	 */
+	cost_qual_eval(&index_qual_cost, indexQuals, root);
+	qual_op_cost = cpu_operator_cost * list_length(indexQuals);
+	qual_arg_cost = index_qual_cost.startup +
+		index_qual_cost.per_tuple - qual_op_cost;
+	if (qual_arg_cost < 0)      /* just in case... */
+		qual_arg_cost = 0;
+
+	*indexStartupCost += qual_arg_cost;
+	*indexTotalCost += qual_arg_cost;
+	*indexTotalCost += ( numTuples * *indexSelectivity ) * (cpu_index_tuple_cost + qual_op_cost);
 
 	PG_RETURN_VOID();
 }

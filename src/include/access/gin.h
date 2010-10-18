@@ -79,6 +79,14 @@ typedef struct GinMetaPageData
 	 */
 	BlockNumber nPendingPages;
 	int64		nPendingHeapTuples;
+
+	/*
+	 * Statistics for planner use (accurate as of last VACUUM)
+	 */
+	BlockNumber	nTotalPages;
+	BlockNumber	nEntryPages;
+	BlockNumber	nDataPages;
+	int64		nEntries;
 } GinMetaPageData;
 
 #define GinPageGetMeta(p) \
@@ -94,6 +102,8 @@ typedef struct GinMetaPageData
 #define GinPageSetNonLeaf(page)    ( GinPageGetOpaque(page)->flags &= ~GIN_LEAF )
 #define GinPageIsData(page)    ( GinPageGetOpaque(page)->flags & GIN_DATA )
 #define GinPageSetData(page)   ( GinPageGetOpaque(page)->flags |= GIN_DATA )
+#define GinPageIsList(page)    ( GinPageGetOpaque(page)->flags & GIN_LIST )
+#define GinPageSetList(page)   ( GinPageGetOpaque(page)->flags |= GIN_LIST )
 #define GinPageHasFullRow(page)    ( GinPageGetOpaque(page)->flags & GIN_LIST_FULLROW )
 #define GinPageSetFullRow(page)   ( GinPageGetOpaque(page)->flags |= GIN_LIST_FULLROW )
 
@@ -362,13 +372,28 @@ extern Datum *extractEntriesSU(GinState *ginstate, OffsetNumber attnum, Datum va
 extern Datum gin_index_getattr(GinState *ginstate, IndexTuple tuple);
 extern OffsetNumber gintuple_get_attrnum(GinState *ginstate, IndexTuple tuple);
 
+/*
+ * GinStatsData represents stats data for planner use
+ */
+typedef struct GinStatsData
+{
+	BlockNumber nPendingPages;
+	BlockNumber	nTotalPages;
+	BlockNumber	nEntryPages;
+	BlockNumber	nDataPages;
+	int64		nEntries;
+} GinStatsData;
+
+extern void ginGetStats(Relation index, GinStatsData *stats);
+extern void ginUpdateStats(Relation index, const GinStatsData *stats);
+
 /* gininsert.c */
 extern Datum ginbuild(PG_FUNCTION_ARGS);
 extern Datum gininsert(PG_FUNCTION_ARGS);
 extern void ginEntryInsert(Relation index, GinState *ginstate,
 			   OffsetNumber attnum, Datum value,
 			   ItemPointerData *items, uint32 nitem,
-			   bool isBuild);
+			   GinStatsData *buildStats);
 
 /* ginxlog.c */
 extern void gin_redo(XLogRecPtr lsn, XLogRecord *record);
@@ -406,6 +431,7 @@ typedef struct GinBtreeData
 	Page		(*splitPage) (GinBtree, Buffer, Buffer, OffsetNumber, XLogRecData **);
 	void		(*fillRoot) (GinBtree, Buffer, Buffer, Buffer);
 
+	bool		isData;
 	bool		searchMode;
 
 	Relation	index;
@@ -432,7 +458,8 @@ typedef struct GinBtreeData
 extern GinBtreeStack *ginPrepareFindLeafPage(GinBtree btree, BlockNumber blkno);
 extern GinBtreeStack *ginFindLeafPage(GinBtree btree, GinBtreeStack *stack);
 extern void freeGinBtreeStack(GinBtreeStack *stack);
-extern void ginInsertValue(GinBtree btree, GinBtreeStack *stack);
+extern void ginInsertValue(GinBtree btree, GinBtreeStack *stack,
+						   GinStatsData *buildStats);
 extern void findParents(GinBtree btree, GinBtreeStack *stack, BlockNumber rootBlkno);
 
 /* ginentrypage.c */
@@ -462,8 +489,9 @@ typedef struct
 
 extern GinPostingTreeScan *prepareScanPostingTree(Relation index,
 					   BlockNumber rootBlkno, bool searchMode);
-extern void insertItemPointer(GinPostingTreeScan *gdi,
-				  ItemPointerData *items, uint32 nitem);
+extern void ginInsertItemPointer(GinPostingTreeScan *gdi,
+								 ItemPointerData *items, uint32 nitem,
+								 GinStatsData *buildStats);
 extern Buffer scanBeginPostingTree(GinPostingTreeScan *gdi);
 extern void dataFillRoot(GinBtree btree, Buffer root, Buffer lbuf, Buffer rbuf);
 extern void prepareDataScan(GinBtree btree, Relation index);

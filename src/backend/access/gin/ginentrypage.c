@@ -659,8 +659,11 @@ prepareEntryScan(GinBtree btree, Relation index, OffsetNumber attnum, Datum valu
 {
 	memset(btree, 0, sizeof(GinBtreeData));
 
-	btree->isMoveRight = entryIsMoveRight;
+	btree->index = index;
+	btree->ginstate = ginstate;
+
 	btree->findChildPage = entryLocateEntry;
+	btree->isMoveRight = entryIsMoveRight;
 	btree->findItem = entryLocateLeafEntry;
 	btree->findChildPtr = entryFindChildPtr;
 	btree->getLeftMostPage = entryGetLeftMostPage;
@@ -669,13 +672,12 @@ prepareEntryScan(GinBtree btree, Relation index, OffsetNumber attnum, Datum valu
 	btree->splitPage = entrySplitPage;
 	btree->fillRoot = entryFillRoot;
 
-	btree->index = index;
-	btree->ginstate = ginstate;
-	btree->entryAttnum = attnum;
-	btree->entryValue = value;
-
-	btree->isDelete = FALSE;
+	btree->isData = FALSE;
 	btree->searchMode = FALSE;
 	btree->fullScan = FALSE;
 	btree->isBuild = FALSE;
+
+	btree->entryAttnum = attnum;
+	btree->entryValue = value;
+	btree->isDelete = FALSE;
 }

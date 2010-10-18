@@ -27,6 +27,7 @@ typedef struct
 {
 	GinState	ginstate;
 	double		indtuples;
+	GinStatsData buildStats;
 	MemoryContext tmpCtx;
 	MemoryContext funcCtx;
 	BuildAccumulator accum;
@@ -97,8 +98,10 @@ createPostingTree(Relation index, ItemPointerData *items, uint32 nitems)
  * GinFormTuple().
  */
 static IndexTuple
-addItemPointersToTuple(Relation index, GinState *ginstate, GinBtreeStack *stack,
-		  IndexTuple old, ItemPointerData *items, uint32 nitem, bool isBuild)
+addItemPointersToTuple(Relation index, GinState *ginstate,
+					   GinBtreeStack *stack, IndexTuple old,
+					   ItemPointerData *items, uint32 nitem,
+					   GinStatsData *buildStats)
 {
 	Datum		key = gin_index_getattr(ginstate, old);
 	OffsetNumber attnum = gintuple_get_attrnum(ginstate, old);
@@ -128,11 +131,15 @@ addItemPointersToTuple(Relation index, GinState *ginstate, GinBtreeStack *stack,
 		GinSetPostingTree(res, postingRoot);
 
 		gdi = prepareScanPostingTree(index, postingRoot, FALSE);
-		gdi->btree.isBuild = isBuild;
+		gdi->btree.isBuild = (buildStats != NULL);
 
-		insertItemPointer(gdi, items, nitem);
+		ginInsertItemPointer(gdi, items, nitem, buildStats);
 
 		pfree(gdi);
+
+		/* During index build, count the newly-added data page */
+		if (buildStats)
+			buildStats->nDataPages++;
 	}
 
 	return res;
@@ -140,17 +147,24 @@ addItemPointersToTuple(Relation index, GinState *ginstate, GinBtreeStack *stack,
 
 /*
  * Inserts only one entry to the index, but it can add more than 1 ItemPointer.
+ *
+ * During an index build, buildStats is non-null and the counters
+ * it contains should be incremented as needed.
  */
 void
 ginEntryInsert(Relation index, GinState *ginstate,
 			   OffsetNumber attnum, Datum value,
 			   ItemPointerData *items, uint32 nitem,
-			   bool isBuild)
+			   GinStatsData *buildStats)
 {
 	GinBtreeData btree;
 	GinBtreeStack *stack;
 	IndexTuple	itup;
 	Page		page;
+
+	/* During index build, count the to-be-inserted entry */
+	if (buildStats)
+		buildStats->nEntries++;
 
 	prepareEntryScan(&btree, index, attnum, value, ginstate);
 
@@ -174,14 +188,15 @@ ginEntryInsert(Relation index, GinState *ginstate,
 
 			/* insert into posting tree */
 			gdi = prepareScanPostingTree(index, rootPostingTree, FALSE);
-			gdi->btree.isBuild = isBuild;
-			insertItemPointer(gdi, items, nitem);
+			gdi->btree.isBuild = (buildStats != NULL);
+			ginInsertItemPointer(gdi, items, nitem, buildStats);
 			pfree(gdi);
 
 			return;
 		}
 
-		itup = addItemPointersToTuple(index, ginstate, stack, itup, items, nitem, isBuild);
+		itup = addItemPointersToTuple(index, ginstate, stack, itup,
+									  items, nitem, buildStats);
 
 		btree.isDelete = TRUE;
 	}
@@ -195,13 +210,14 @@ ginEntryInsert(Relation index, GinState *ginstate,
 			/* Add the rest, making a posting tree if necessary */
 			IndexTuple	previtup = itup;
 
-			itup = addItemPointersToTuple(index, ginstate, stack, previtup, items + 1, nitem - 1, isBuild);
+			itup = addItemPointersToTuple(index, ginstate, stack, previtup,
+										  items + 1, nitem - 1, buildStats);
 			pfree(previtup);
 		}
 	}
 
 	btree.entry = itup;
-	ginInsertValue(&btree, stack);
+	ginInsertValue(&btree, stack, buildStats);
 	pfree(itup);
 }
 
@@ -260,7 +276,8 @@ ginBuildCallback(Relation index, HeapTuple htup, Datum *values,
 		{
 			/* there could be many entries, so be willing to abort here */
 			CHECK_FOR_INTERRUPTS();
-			ginEntryInsert(index, &buildstate->ginstate, attnum, entry, list, nlist, TRUE);
+			ginEntryInsert(index, &buildstate->ginstate, attnum, entry,
+						   list, nlist, &buildstate->buildStats);
 		}
 
 		MemoryContextReset(buildstate->tmpCtx);
@@ -292,6 +309,8 @@ ginbuild(PG_FUNCTION_ARGS)
 			 RelationGetRelationName(index));
 
 	initGinState(&buildstate.ginstate, index);
+	buildstate.indtuples = 0;
+	memset(&buildstate.buildStats, 0, sizeof(GinStatsData));
 
 	/* initialize the meta page */
 	MetaBuffer = GinNewBuffer(index);
@@ -331,8 +350,8 @@ ginbuild(PG_FUNCTION_ARGS)
 	UnlockReleaseBuffer(RootBuffer);
 	END_CRIT_SECTION();
 
-	/* build the index */
-	buildstate.indtuples = 0;
+	/* count the root as first entry page */
+	buildstate.buildStats.nEntryPages++;
 
 	/*
 	 * create a temporary memory context that is reset once for each tuple
@@ -367,11 +386,18 @@ ginbuild(PG_FUNCTION_ARGS)
 	{
 		/* there could be many entries, so be willing to abort here */
 		CHECK_FOR_INTERRUPTS();
-		ginEntryInsert(index, &buildstate.ginstate, attnum, entry, list, nlist, TRUE);
+		ginEntryInsert(index, &buildstate.ginstate, attnum, entry,
+					   list, nlist, &buildstate.buildStats);
 	}
 	MemoryContextSwitchTo(oldCtx);
 
 	MemoryContextDelete(buildstate.tmpCtx);
+
+	/*
+	 * Update metapage stats
+	 */
+	buildstate.buildStats.nTotalPages = RelationGetNumberOfBlocks(index);
+	ginUpdateStats(index, &buildstate.buildStats);
 
 	/*
 	 * Return statistics
@@ -401,7 +427,7 @@ ginHeapTupleInsert(Relation index, GinState *ginstate, OffsetNumber attnum, Datu
 		return 0;
 
 	for (i = 0; i < nentries; i++)
-		ginEntryInsert(index, ginstate, attnum, entries[i], item, 1, FALSE);
+		ginEntryInsert(index, ginstate, attnum, entries[i], item, 1, NULL);
 
 	return nentries;
 }
