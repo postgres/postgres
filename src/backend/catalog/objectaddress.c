@@ -473,7 +473,7 @@ get_object_address_attribute(ObjectType objtype, List *objname,
 	/* Extract relation name and open relation. */
 	attname = strVal(lfirst(list_tail(objname)));
 	relname = list_truncate(list_copy(objname), list_length(objname) - 1);
-	relation = heap_openrv(makeRangeVarFromNameList(relname), lockmode);
+	relation = relation_openrv(makeRangeVarFromNameList(relname), lockmode);
 	reloid = RelationGetRelid(relation);
 
 	/* Look up attribute and construct return value. */

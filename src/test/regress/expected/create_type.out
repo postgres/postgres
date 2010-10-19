@@ -97,6 +97,10 @@ COMMENT ON TYPE bad IS 'bad comment';
 ERROR:  type "bad" does not exist
 COMMENT ON TYPE default_test_row IS 'good comment';
 COMMENT ON TYPE default_test_row IS NULL;
+COMMENT ON COLUMN default_test_row.nope IS 'bad comment';
+ERROR:  column "nope" of relation "default_test_row" does not exist
+COMMENT ON COLUMN default_test_row.f1 IS 'good comment';
+COMMENT ON COLUMN default_test_row.f1 IS NULL;
 -- Check shell type create for existing types
 CREATE TYPE text_w_default;		-- should fail
 ERROR:  type "text_w_default" already exists
