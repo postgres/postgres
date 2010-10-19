@@ -1569,13 +1569,13 @@ SET ENABLE_SEQSCAN TO OFF;
        </itemizedlist>
        <para>
         Not all of these choices are available on all platforms.
-        The default is the first method in the above list that is supported
-        by the platform.  The default is not necessarily best; it may be
-        necessary to change this setting, or other aspects of your system
-        configuration, in order to create a crash-safe configuration, as
-        discussed in <xref linkend="wal-reliability">, or to achieve best
-        performance.
         The <literal>open_</>* options also use <literal>O_DIRECT</> if available.
+        The default is the first method in the above list that is supported
+        by the platform.  The default is not necessarily ideal; it might be
+        necessary to change this setting or other aspects of your system
+        configuration in order to create a crash-safe configuration or
+        achieve optimal performance.
+        These aspects are discussed in <xref linkend="wal-reliability">.
         The utility <filename>src/tools/fsync</> in the PostgreSQL source tree
         can do performance testing of various fsync methods.
         This parameter can only be set in the <filename>postgresql.conf</>
