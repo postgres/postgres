@@ -2015,12 +2015,6 @@ transformCurrentOfExpr(ParseState *pstate, CurrentOfExpr *cexpr)
 
 /*
  * Construct a whole-row reference to represent the notation "relation.*".
- *
- * A whole-row reference is a Var with varno set to the correct range
- * table entry, and varattno == 0 to signal that it references the whole
- * tuple.  (Use of zero here is unclean, since it could easily be confused
- * with error cases, but it's not worth changing now.)  The vartype indicates
- * a rowtype; either a named composite type, or RECORD.
  */
 static Node *
 transformWholeRowRef(ParseState *pstate, RangeTblEntry *rte, int location)
@@ -2028,80 +2022,14 @@ transformWholeRowRef(ParseState *pstate, RangeTblEntry *rte, int location)
 	Var		   *result;
 	int			vnum;
 	int			sublevels_up;
-	Oid			toid;
 
 	/* Find the RTE's rangetable location */
-
 	vnum = RTERangeTablePosn(pstate, rte, &sublevels_up);
 
 	/* Build the appropriate referencing node */
+	result = makeWholeRowVar(rte, vnum, sublevels_up);
 
-	switch (rte->rtekind)
-	{
-		case RTE_RELATION:
-			/* relation: the rowtype is a named composite type */
-			toid = get_rel_type_id(rte->relid);
-			if (!OidIsValid(toid))
-				elog(ERROR, "could not find type OID for relation %u",
-					 rte->relid);
-			result = makeVar(vnum,
-							 InvalidAttrNumber,
-							 toid,
-							 -1,
-							 sublevels_up);
-			break;
-		case RTE_FUNCTION:
-			toid = exprType(rte->funcexpr);
-			if (type_is_rowtype(toid))
-			{
-				/* func returns composite; same as relation case */
-				result = makeVar(vnum,
-								 InvalidAttrNumber,
-								 toid,
-								 -1,
-								 sublevels_up);
-			}
-			else
-			{
-				/*
-				 * func returns scalar; instead of making a whole-row Var,
-				 * just reference the function's scalar output.  (XXX this
-				 * seems a tad inconsistent, especially if "f.*" was
-				 * explicitly written ...)
-				 */
-				result = makeVar(vnum,
-								 1,
-								 toid,
-								 -1,
-								 sublevels_up);
-			}
-			break;
-		case RTE_VALUES:
-			toid = RECORDOID;
-			/* returns composite; same as relation case */
-			result = makeVar(vnum,
-							 InvalidAttrNumber,
-							 toid,
-							 -1,
-							 sublevels_up);
-			break;
-		default:
-
-			/*
-			 * RTE is a join or subselect.	We represent this as a whole-row
-			 * Var of RECORD type.	(Note that in most cases the Var will be
-			 * expanded to a RowExpr during planning, but that is not our
-			 * concern here.)
-			 */
-			result = makeVar(vnum,
-							 InvalidAttrNumber,
-							 RECORDOID,
-							 -1,
-							 sublevels_up);
-			break;
-	}
-
-	/* location is not filled in by makeVar */
+	/* location is not filled in by makeWholeRowVar */
 	result->location = location;
 
 	/* mark relation as requiring whole-row SELECT access */
