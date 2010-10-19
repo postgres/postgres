@@ -53,7 +53,7 @@
 #endif
 
 #define CLUSTERNAME(cluster)	((cluster) == CLUSTER_OLD ? "old" : "new")
-#define ACTIVE_CLUSTER(cluster)	(((cluster) == CLUSTER_OLD) ? \
+#define ACTIVE_CLUSTER(cluster) (((cluster) == CLUSTER_OLD) ? \
 									&old_cluster : &new_cluster)
 
 #define atooid(x)  ((Oid) strtoul((x), NULL, 10))
@@ -85,8 +85,8 @@ typedef struct
  */
 typedef struct
 {
-	Oid			old_relfilenode;			/* Relfilenode of the old relation */
-	Oid			new_relfilenode;			/* Relfilenode of the new relation */
+	Oid			old_relfilenode;	/* Relfilenode of the old relation */
+	Oid			new_relfilenode;	/* Relfilenode of the new relation */
 	char		old_file[MAXPGPATH];
 	char		new_file[MAXPGPATH];
 	char		old_nspname[NAMEDATALEN];		/* old name of the namespace */
@@ -240,10 +240,11 @@ typedef struct
 /*
  * Global variables
  */
-extern Log			log;
-extern UserOpts		user_opts;
-extern ClusterInfo 	old_cluster, new_cluster;
-extern OSInfo		os_info;
+extern Log	log;
+extern UserOpts user_opts;
+extern ClusterInfo old_cluster,
+			new_cluster;
+extern OSInfo os_info;
 extern char scandir_file_pattern[];
 
 
@@ -260,7 +261,7 @@ void output_completion_banner(
 						 char *deletion_script_file_name);
 void		check_cluster_versions(void);
 void		check_cluster_compatibility(bool live_check);
-void create_script_for_old_cluster_deletion(char **deletion_script_file_name);
+void		create_script_for_old_cluster_deletion(char **deletion_script_file_name);
 
 
 /* controldata.c */
@@ -402,12 +403,12 @@ void new_9_0_populate_pg_largeobject_metadata(
 
 /* version_old_8_3.c */
 
-void old_8_3_check_for_name_data_type_usage(Cluster whichCluster);
-void old_8_3_check_for_tsquery_usage(Cluster whichCluster);
+void		old_8_3_check_for_name_data_type_usage(Cluster whichCluster);
+void		old_8_3_check_for_tsquery_usage(Cluster whichCluster);
 void old_8_3_rebuild_tsvector_tables(bool check_mode,
-												   Cluster whichCluster);
+								Cluster whichCluster);
 void old_8_3_invalidate_hash_gin_indexes(bool check_mode,
-												   Cluster whichCluster);
+									Cluster whichCluster);
 void old_8_3_invalidate_bpchar_pattern_ops_indexes(bool check_mode,
-												   Cluster whichCluster);
-char *old_8_3_create_sequence_script(Cluster whichCluster);
+											  Cluster whichCluster);
+char	   *old_8_3_create_sequence_script(Cluster whichCluster);

@@ -23,7 +23,7 @@ static void get_pkglibdirs(void);
 static char *get_pkglibdir(const char *bindir);
 
 
-UserOpts     user_opts;
+UserOpts	user_opts;
 
 
 /*

@@ -36,7 +36,7 @@ connectToServer(const char *db_name,
 	PGconn	   *conn;
 
 	snprintf(connectString, sizeof(connectString),
-			 "dbname = '%s' user = '%s' port = %d", db_name, os_info.user, port);
+		 "dbname = '%s' user = '%s' port = %d", db_name, os_info.user, port);
 
 	conn = PQconnectdb(connectString);
 
@@ -175,8 +175,8 @@ start_postmaster(Cluster whichCluster, bool quiet)
 	/*
 	 * On Win32, we can't send both pg_upgrade output and pg_ctl output to the
 	 * same file because we get the error: "The process cannot access the file
-	 * because it is being used by another process." so we have to send all other
-	 * output to 'nul'.
+	 * because it is being used by another process." so we have to send all
+	 * other output to 'nul'.
 	 */
 	snprintf(cmd, sizeof(cmd),
 			 SYSTEMQUOTE "\"%s/pg_ctl\" -l \"%s\" -D \"%s\" "
@@ -260,7 +260,7 @@ test_server_conn(int timeout, Cluster whichCluster)
 	bool		ret = false;
 
 	snprintf(con_opts, sizeof(con_opts),
-			 "dbname = 'template1' user = '%s' port = %d ", os_info.user, port);
+		  "dbname = 'template1' user = '%s' port = %d ", os_info.user, port);
 
 	for (tries = 0; tries < timeout; tries++)
 	{

@@ -201,9 +201,9 @@ print_maps(FileNameMap *maps, int n, const char *dbName)
 		for (mapnum = 0; mapnum < n; mapnum++)
 			pg_log(PG_DEBUG, "%s.%s:%u ==> %s.%s:%u\n",
 				   maps[mapnum].old_nspname, maps[mapnum].old_relname,
-												maps[mapnum].old_relfilenode,
+				   maps[mapnum].old_relfilenode,
 				   maps[mapnum].new_nspname, maps[mapnum].new_relname,
-												maps[mapnum].new_relfilenode);
+				   maps[mapnum].new_relfilenode);
 
 		pg_log(PG_DEBUG, "\n\n");
 	}

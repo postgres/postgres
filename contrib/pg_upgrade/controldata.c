@@ -94,7 +94,7 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 #ifndef WIN32
 			NULL);
 #else
-			/* On Windows the default locale cannot be English, so force it */
+	/* On Windows the default locale cannot be English, so force it */
 			"en");
 #endif
 	putenv2("LANGUAGE", NULL);
@@ -372,7 +372,7 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 		pclose(output);
 
 	/*
-	 *	Restore environment variables
+	 * Restore environment variables
 	 */
 	putenv2("LC_COLLATE", lc_collate);
 	putenv2("LC_CTYPE", lc_ctype);
@@ -393,7 +393,7 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 	pg_free(language);
 	pg_free(lc_all);
 	pg_free(lc_messages);
- 
+
 	/* verify that we got all the mandatory pg_control data */
 	if (!got_xid || !got_oid ||
 		(!live_check && !got_log_id) ||
@@ -549,9 +549,10 @@ putenv2(const char *var, const char *val)
 
 		sprintf(envstr, "%s=%s", var, val);
 		putenv(envstr);
+
 		/*
-		 *	Do not free envstr because it becomes part of the environment
-		 *	on some operating systems.  See port/unsetenv.c::unsetenv.
+		 * Do not free envstr because it becomes part of the environment on
+		 * some operating systems.	See port/unsetenv.c::unsetenv.
 		 */
 #else
 		SetEnvironmentVariableA(var, val);

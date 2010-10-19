@@ -13,7 +13,7 @@
 #include <grp.h>
 
 
-static void	check_data_dir(const char *pg_data);
+static void check_data_dir(const char *pg_data);
 static void check_bin_dir(ClusterInfo *cluster);
 static int	check_exec(const char *dir, const char *cmdName);
 static const char *validate_exec(const char *path);
@@ -128,7 +128,7 @@ check_data_dir(const char *pg_data)
 	int			subdirnum;
 	const char *requiredSubdirs[] = {"base", "global", "pg_clog",
 		"pg_multixact", "pg_subtrans", "pg_tblspc", "pg_twophase",
-		"pg_xlog"};
+	"pg_xlog"};
 
 	for (subdirnum = 0;
 		 subdirnum < sizeof(requiredSubdirs) / sizeof(requiredSubdirs[0]);
@@ -143,8 +143,8 @@ check_data_dir(const char *pg_data)
 			report_status(PG_FATAL, "check for %s failed:  %s",
 						  requiredSubdirs[subdirnum], getErrorText(errno));
 		else if (!S_ISDIR(statBuf.st_mode))
-				report_status(PG_FATAL, "%s is not a directory",
-							  requiredSubdirs[subdirnum]);
+			report_status(PG_FATAL, "%s is not a directory",
+						  requiredSubdirs[subdirnum]);
 	}
 }
 

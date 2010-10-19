@@ -63,7 +63,7 @@ transfer_all_new_dbs(DbInfoArr *olddb_arr,
 		}
 	}
 
-	prep_status("");		/* in case nothing printed */
+	prep_status("");			/* in case nothing printed */
 	check_ok();
 
 	return msg;
@@ -122,9 +122,9 @@ transfer_single_new_db(pageCnvCtx *pageConverter,
 		/* Copying files might take some time, so give feedback. */
 
 		snprintf(old_file, sizeof(old_file), "%s/%u", maps[mapnum].old_file,
-												maps[mapnum].old_relfilenode);
+				 maps[mapnum].old_relfilenode);
 		snprintf(new_file, sizeof(new_file), "%s/%u", maps[mapnum].new_file,
-												maps[mapnum].new_relfilenode);
+				 maps[mapnum].new_relfilenode);
 		pg_log(PG_REPORT, OVERWRITE_MESSAGE, old_file);
 
 		/*
@@ -142,7 +142,7 @@ transfer_single_new_db(pageCnvCtx *pageConverter,
 			 * Now copy/link any fsm and vm files, if they exist
 			 */
 			snprintf(scandir_file_pattern, sizeof(scandir_file_pattern), "%u_",
-																		maps[mapnum].old_relfilenode);
+					 maps[mapnum].old_relfilenode);
 			numFiles = pg_scandir(maps[mapnum].old_file, &namelist, dir_matching_filenames);
 
 			while (numFiles--)
@@ -150,7 +150,7 @@ transfer_single_new_db(pageCnvCtx *pageConverter,
 				snprintf(old_file, sizeof(old_file), "%s/%s", maps[mapnum].old_file,
 						 namelist[numFiles]->d_name);
 				snprintf(new_file, sizeof(new_file), "%s/%u%s", maps[mapnum].new_file,
-				  maps[mapnum].new_relfilenode, strchr(namelist[numFiles]->d_name, '_'));
+						 maps[mapnum].new_relfilenode, strchr(namelist[numFiles]->d_name, '_'));
 
 				unlink(new_file);
 				transfer_relfile(pageConverter, old_file, new_file,
@@ -171,7 +171,7 @@ transfer_single_new_db(pageCnvCtx *pageConverter,
 		 * copied.
 		 */
 		snprintf(scandir_file_pattern, sizeof(scandir_file_pattern), "%u.",
-																maps[mapnum].old_relfilenode);
+				 maps[mapnum].old_relfilenode);
 		numFiles = pg_scandir(maps[mapnum].old_file, &namelist, dir_matching_filenames);
 
 		while (numFiles--)
@@ -179,7 +179,7 @@ transfer_single_new_db(pageCnvCtx *pageConverter,
 			snprintf(old_file, sizeof(old_file), "%s/%s", maps[mapnum].old_file,
 					 namelist[numFiles]->d_name);
 			snprintf(new_file, sizeof(new_file), "%s/%u%s", maps[mapnum].new_file,
-				  maps[mapnum].new_relfilenode, strchr(namelist[numFiles]->d_name, '.'));
+					 maps[mapnum].new_relfilenode, strchr(namelist[numFiles]->d_name, '.'));
 
 			unlink(new_file);
 			transfer_relfile(pageConverter, old_file, new_file,

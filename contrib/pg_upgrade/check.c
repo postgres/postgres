@@ -15,7 +15,7 @@ static void check_new_db_is_empty(void);
 static void check_locale_and_encoding(ControlData *oldctrl,
 						  ControlData *newctrl);
 static void check_for_isn_and_int8_passing_mismatch(
-												Cluster whichCluster);
+										Cluster whichCluster);
 static void check_for_reg_data_type_usage(Cluster whichCluster);
 
 
@@ -156,9 +156,9 @@ issue_warnings(char *sequence_script_file_name)
 		{
 			prep_status("Adjusting sequences");
 			exec_prog(true,
-				  SYSTEMQUOTE "\"%s/psql\" --set ON_ERROR_STOP=on "
-				  "--no-psqlrc --port %d --username \"%s\" "
-				  "-f \"%s\" --dbname template1 >> \"%s\"" SYSTEMQUOTE,
+					  SYSTEMQUOTE "\"%s/psql\" --set ON_ERROR_STOP=on "
+					  "--no-psqlrc --port %d --username \"%s\" "
+					  "-f \"%s\" --dbname template1 >> \"%s\"" SYSTEMQUOTE,
 					  new_cluster.bindir, new_cluster.port, os_info.user,
 					  sequence_script_file_name, log.filename);
 			unlink(sequence_script_file_name);
@@ -418,12 +418,12 @@ create_script_for_old_cluster_deletion(
 			/* remove PG_VERSION? */
 			if (GET_MAJOR_VERSION(old_cluster.major_version) <= 804)
 				fprintf(script, RM_CMD " %s%s/PG_VERSION\n",
-						os_info.tablespaces[tblnum], old_cluster.tablespace_suffix);
+				 os_info.tablespaces[tblnum], old_cluster.tablespace_suffix);
 
 			for (dbnum = 0; dbnum < new_cluster.dbarr.ndbs; dbnum++)
 			{
 				fprintf(script, RMDIR_CMD " %s%s/%d\n",
-						os_info.tablespaces[tblnum], old_cluster.tablespace_suffix,
+				  os_info.tablespaces[tblnum], old_cluster.tablespace_suffix,
 						old_cluster.dbarr.dbs[dbnum].db_oid);
 			}
 		}
@@ -434,7 +434,7 @@ create_script_for_old_cluster_deletion(
 			 * or a version-specific subdirectory.
 			 */
 			fprintf(script, RMDIR_CMD " %s%s\n",
-					os_info.tablespaces[tblnum], old_cluster.tablespace_suffix);
+				 os_info.tablespaces[tblnum], old_cluster.tablespace_suffix);
 	}
 
 	fclose(script);
@@ -450,7 +450,7 @@ create_script_for_old_cluster_deletion(
 
 
 /*
- * 	check_for_isn_and_int8_passing_mismatch()
+ *	check_for_isn_and_int8_passing_mismatch()
  *
  *	/contrib/isn relies on data type int8, and in 8.4 int8 can now be passed
  *	by value.  The schema dumps the CREATE TYPE PASSEDBYVALUE setting so
@@ -547,7 +547,7 @@ check_for_isn_and_int8_passing_mismatch(Cluster whichCluster)
  *		pg_type.oid
  *		pg_enum.oid
  *
- *  Most of the reg* data types reference system catalog info that is
+ *	Most of the reg* data types reference system catalog info that is
  *	not preserved, and hence these data types cannot be used in user
  *	tables upgraded by pg_upgrade.
  */
@@ -585,13 +585,13 @@ check_for_reg_data_type_usage(Cluster whichCluster)
 								"WHERE	c.oid = a.attrelid AND "
 								"		NOT a.attisdropped AND "
 								"		a.atttypid IN ( "
-								"			'pg_catalog.regproc'::pg_catalog.regtype, "
+		  "			'pg_catalog.regproc'::pg_catalog.regtype, "
 								"			'pg_catalog.regprocedure'::pg_catalog.regtype, "
-								"			'pg_catalog.regoper'::pg_catalog.regtype, "
+		  "			'pg_catalog.regoper'::pg_catalog.regtype, "
 								"			'pg_catalog.regoperator'::pg_catalog.regtype, "
-								"			'pg_catalog.regclass'::pg_catalog.regtype, "
-								/* regtype.oid is preserved, so 'regtype' is OK */
-								"			'pg_catalog.regconfig'::pg_catalog.regtype, "
+		 "			'pg_catalog.regclass'::pg_catalog.regtype, "
+		/* regtype.oid is preserved, so 'regtype' is OK */
+		"			'pg_catalog.regconfig'::pg_catalog.regtype, "
 								"			'pg_catalog.regdictionary'::pg_catalog.regtype) AND "
 								"		c.relnamespace = n.oid AND "
 							  "		n.nspname != 'pg_catalog' AND "

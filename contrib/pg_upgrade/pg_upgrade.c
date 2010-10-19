@@ -22,7 +22,8 @@ static void set_frozenxids(void);
 static void setup(char *argv0, bool live_check);
 static void cleanup(void);
 
-ClusterInfo old_cluster, new_cluster;
+ClusterInfo old_cluster,
+			new_cluster;
 OSInfo		os_info;
 
 int
@@ -82,7 +83,7 @@ main(int argc, char **argv)
 	prep_status("Setting next oid for new cluster");
 	exec_prog(true, SYSTEMQUOTE "\"%s/pg_resetxlog\" -o %u \"%s\" > "
 			  DEVNULL SYSTEMQUOTE,
-		  new_cluster.bindir, old_cluster.controldata.chkpnt_nxtoid, new_cluster.pgdata);
+			  new_cluster.bindir, old_cluster.controldata.chkpnt_nxtoid, new_cluster.pgdata);
 	check_ok();
 
 	create_script_for_old_cluster_deletion(&deletion_script_file_name);
@@ -161,7 +162,7 @@ prepare_new_cluster(void)
 	exec_prog(true,
 			  SYSTEMQUOTE "\"%s/vacuumdb\" --port %d --username \"%s\" "
 			  "--all --analyze >> %s 2>&1" SYSTEMQUOTE,
-			  new_cluster.bindir, new_cluster.port, os_info.user, log.filename);
+		   new_cluster.bindir, new_cluster.port, os_info.user, log.filename);
 	check_ok();
 
 	/*
@@ -174,7 +175,7 @@ prepare_new_cluster(void)
 	exec_prog(true,
 			  SYSTEMQUOTE "\"%s/vacuumdb\" --port %d --username \"%s\" "
 			  "--all --freeze >> %s 2>&1" SYSTEMQUOTE,
-			  new_cluster.bindir, new_cluster.port, os_info.user, log.filename);
+		   new_cluster.bindir, new_cluster.port, os_info.user, log.filename);
 	check_ok();
 
 	get_pg_database_relfilenode(CLUSTER_NEW);
@@ -202,7 +203,7 @@ prepare_new_databases(void)
 	prep_status("Creating databases in the new cluster");
 	exec_prog(true,
 			  SYSTEMQUOTE "\"%s/psql\" --set ON_ERROR_STOP=on "
-			  /* --no-psqlrc prevents AUTOCOMMIT=off */
+	/* --no-psqlrc prevents AUTOCOMMIT=off */
 			  "--no-psqlrc --port %d --username \"%s\" "
 			  "-f \"%s/%s\" --dbname template1 >> \"%s\"" SYSTEMQUOTE,
 			  new_cluster.bindir, new_cluster.port, os_info.user, os_info.cwd,
@@ -273,14 +274,14 @@ copy_clog_xlog_xid(void)
 	/* set the next transaction id of the new cluster */
 	prep_status("Setting next transaction id for new cluster");
 	exec_prog(true, SYSTEMQUOTE "\"%s/pg_resetxlog\" -f -x %u \"%s\" > " DEVNULL SYSTEMQUOTE,
-	   new_cluster.bindir, old_cluster.controldata.chkpnt_nxtxid, new_cluster.pgdata);
+			  new_cluster.bindir, old_cluster.controldata.chkpnt_nxtxid, new_cluster.pgdata);
 	check_ok();
 
 	/* now reset the wal archives in the new cluster */
 	prep_status("Resetting WAL archives");
 	exec_prog(true, SYSTEMQUOTE "\"%s/pg_resetxlog\" -l %u,%u,%u \"%s\" >> \"%s\" 2>&1" SYSTEMQUOTE,
 			  new_cluster.bindir, old_cluster.controldata.chkpnt_tli,
-			  old_cluster.controldata.logid, old_cluster.controldata.nxtlogseg,
+			old_cluster.controldata.logid, old_cluster.controldata.nxtlogseg,
 			  new_cluster.pgdata, log.filename);
 	check_ok();
 }

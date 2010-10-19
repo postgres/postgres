@@ -293,8 +293,8 @@ old_8_3_rebuild_tsvector_tables(bool check_mode,
 					if (strlen(old_nspname) != 0 || strlen(old_relname) != 0)
 						fprintf(script, ";\n\n");
 					fprintf(script, "ALTER TABLE %s.%s\n",
-					quote_identifier(PQgetvalue(res, rowno, i_nspname)),
-					quote_identifier(PQgetvalue(res, rowno, i_relname)));
+						 quote_identifier(PQgetvalue(res, rowno, i_nspname)),
+						quote_identifier(PQgetvalue(res, rowno, i_relname)));
 				}
 				else
 					fprintf(script, ",\n");
@@ -304,8 +304,8 @@ old_8_3_rebuild_tsvector_tables(bool check_mode,
 				fprintf(script, "ALTER COLUMN %s "
 				/* This could have been a custom conversion function call. */
 						"TYPE pg_catalog.tsvector USING %s::pg_catalog.text::pg_catalog.tsvector",
-					quote_identifier(PQgetvalue(res, rowno, i_attname)),
-				   quote_identifier(PQgetvalue(res, rowno, i_attname)));
+						quote_identifier(PQgetvalue(res, rowno, i_attname)),
+						quote_identifier(PQgetvalue(res, rowno, i_attname)));
 			}
 		}
 		if (strlen(old_nspname) != 0 || strlen(old_relname) != 0)
@@ -407,8 +407,8 @@ old_8_3_invalidate_hash_gin_indexes(bool check_mode,
 					db_used = true;
 				}
 				fprintf(script, "REINDEX INDEX %s.%s;\n",
-					quote_identifier(PQgetvalue(res, rowno, i_nspname)),
-				   quote_identifier(PQgetvalue(res, rowno, i_relname)));
+						quote_identifier(PQgetvalue(res, rowno, i_nspname)),
+						quote_identifier(PQgetvalue(res, rowno, i_relname)));
 			}
 		}
 
@@ -532,8 +532,8 @@ old_8_3_invalidate_bpchar_pattern_ops_indexes(bool check_mode,
 					db_used = true;
 				}
 				fprintf(script, "REINDEX INDEX %s.%s;\n",
-					quote_identifier(PQgetvalue(res, rowno, i_nspname)),
-				   quote_identifier(PQgetvalue(res, rowno, i_relname)));
+						quote_identifier(PQgetvalue(res, rowno, i_nspname)),
+						quote_identifier(PQgetvalue(res, rowno, i_relname)));
 			}
 		}
 
@@ -669,7 +669,7 @@ old_8_3_create_sequence_script(Cluster whichCluster)
 			i_is_called = PQfnumber(seq_res, "is_called");
 
 			fprintf(script, "SELECT setval('%s.%s', %s, '%s');\n",
-			  quote_identifier(nspname), quote_identifier(relname),
+					quote_identifier(nspname), quote_identifier(relname),
 					PQgetvalue(seq_res, 0, i_last_value), PQgetvalue(seq_res, 0, i_is_called));
 			PQclear(seq_res);
 		}

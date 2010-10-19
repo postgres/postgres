@@ -23,7 +23,7 @@ init_tablespaces(void)
 	set_tablespace_directory_suffix(CLUSTER_NEW);
 
 	if (os_info.num_tablespaces > 0 &&
-		strcmp(old_cluster.tablespace_suffix, new_cluster.tablespace_suffix) == 0)
+	strcmp(old_cluster.tablespace_suffix, new_cluster.tablespace_suffix) == 0)
 		pg_log(PG_FATAL,
 			   "Cannot migrate to/from the same system catalog version when\n"
 			   "using tablespaces.\n");
@@ -52,7 +52,7 @@ get_tablespace_paths(void)
 
 	if ((os_info.num_tablespaces = PQntuples(res)) != 0)
 		os_info.tablespaces = (char **) pg_malloc(
-									  os_info.num_tablespaces * sizeof(char *));
+								   os_info.num_tablespaces * sizeof(char *));
 	else
 		os_info.tablespaces = NULL;
 
@@ -81,8 +81,8 @@ set_tablespace_directory_suffix(Cluster whichCluster)
 	{
 		/* This cluster has a version-specific subdirectory */
 		active_cluster->tablespace_suffix = pg_malloc(4 +
-									strlen(active_cluster->major_version_str) +
-									10 /* OIDCHARS */ + 1);
+								  strlen(active_cluster->major_version_str) +
+													  10 /* OIDCHARS */ + 1);
 
 		/* The leading slash is needed to start a new directory. */
 		sprintf(active_cluster->tablespace_suffix, "/PG_%s_%d", active_cluster->major_version_str,
