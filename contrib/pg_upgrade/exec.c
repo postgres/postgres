@@ -13,9 +13,9 @@
 #include <grp.h>
 
 
-static void	check_data_dir(migratorContext *ctx, const char *pg_data);
-static void check_bin_dir(migratorContext *ctx, ClusterInfo *cluster);
-static int	check_exec(migratorContext *ctx, const char *dir, const char *cmdName);
+static void	check_data_dir(const char *pg_data);
+static void check_bin_dir(ClusterInfo *cluster);
+static int	check_exec(const char *dir, const char *cmdName);
 static const char *validate_exec(const char *path);
 
 
@@ -30,7 +30,7 @@ static const char *validate_exec(const char *path);
  *	instead of returning should an error occur.
  */
 int
-exec_prog(migratorContext *ctx, bool throw_error, const char *fmt,...)
+exec_prog(bool throw_error, const char *fmt,...)
 {
 	va_list		args;
 	int			result;
@@ -40,13 +40,13 @@ exec_prog(migratorContext *ctx, bool throw_error, const char *fmt,...)
 	vsnprintf(cmd, MAXPGPATH, fmt, args);
 	va_end(args);
 
-	pg_log(ctx, PG_INFO, "%s\n", cmd);
+	pg_log(PG_INFO, "%s\n", cmd);
 
 	result = system(cmd);
 
 	if (result != 0)
 	{
-		pg_log(ctx, throw_error ? PG_FATAL : PG_INFO,
+		pg_log(throw_error ? PG_FATAL : PG_INFO,
 			   "\nThere were problems executing %s\n", cmd);
 		return 1;
 	}
@@ -62,7 +62,7 @@ exec_prog(migratorContext *ctx, bool throw_error, const char *fmt,...)
  * The check is performed by looking for the existence of postmaster.pid file.
  */
 bool
-is_server_running(migratorContext *ctx, const char *datadir)
+is_server_running(const char *datadir)
 {
 	char		path[MAXPGPATH];
 	int			fd;
@@ -72,7 +72,7 @@ is_server_running(migratorContext *ctx, const char *datadir)
 	if ((fd = open(path, O_RDONLY, 0)) < 0)
 	{
 		if (errno != ENOENT)
-			pg_log(ctx, PG_FATAL, "\ncould not open file \"%s\" for reading\n",
+			pg_log(PG_FATAL, "\ncould not open file \"%s\" for reading\n",
 				   path);
 
 		return false;
@@ -92,23 +92,23 @@ is_server_running(migratorContext *ctx, const char *datadir)
  * NOTE: May update the values of all parameters
  */
 void
-verify_directories(migratorContext *ctx)
+verify_directories(void)
 {
-	prep_status(ctx, "Checking old data directory (%s)", ctx->old.pgdata);
-	check_data_dir(ctx, ctx->old.pgdata);
-	check_ok(ctx);
+	prep_status("Checking old data directory (%s)", old_cluster.pgdata);
+	check_data_dir(old_cluster.pgdata);
+	check_ok();
 
-	prep_status(ctx, "Checking old bin directory (%s)", ctx->old.bindir);
-	check_bin_dir(ctx, &ctx->old);
-	check_ok(ctx);
+	prep_status("Checking old bin directory (%s)", old_cluster.bindir);
+	check_bin_dir(&old_cluster);
+	check_ok();
 
-	prep_status(ctx, "Checking new data directory (%s)", ctx->new.pgdata);
-	check_data_dir(ctx, ctx->new.pgdata);
-	check_ok(ctx);
+	prep_status("Checking new data directory (%s)", new_cluster.pgdata);
+	check_data_dir(new_cluster.pgdata);
+	check_ok();
 
-	prep_status(ctx, "Checking new bin directory (%s)", ctx->new.bindir);
-	check_bin_dir(ctx, &ctx->new);
-	check_ok(ctx);
+	prep_status("Checking new bin directory (%s)", new_cluster.bindir);
+	check_bin_dir(&new_cluster);
+	check_ok();
 }
 
 
@@ -122,7 +122,7 @@ verify_directories(migratorContext *ctx)
  *
  */
 static void
-check_data_dir(migratorContext *ctx, const char *pg_data)
+check_data_dir(const char *pg_data)
 {
 	char		subDirName[MAXPGPATH];
 	int			subdirnum;
@@ -140,10 +140,10 @@ check_data_dir(migratorContext *ctx, const char *pg_data)
 				 requiredSubdirs[subdirnum]);
 
 		if (stat(subDirName, &statBuf) != 0)
-			report_status(ctx, PG_FATAL, "check for %s failed:  %s",
+			report_status(PG_FATAL, "check for %s failed:  %s",
 						  requiredSubdirs[subdirnum], getErrorText(errno));
 		else if (!S_ISDIR(statBuf.st_mode))
-				report_status(ctx, PG_FATAL, "%s is not a directory",
+				report_status(PG_FATAL, "%s is not a directory",
 							  requiredSubdirs[subdirnum]);
 	}
 }
@@ -158,12 +158,12 @@ check_data_dir(migratorContext *ctx, const char *pg_data)
  *	exit().
  */
 static void
-check_bin_dir(migratorContext *ctx, ClusterInfo *cluster)
+check_bin_dir(ClusterInfo *cluster)
 {
-	check_exec(ctx, cluster->bindir, "postgres");
-	check_exec(ctx, cluster->bindir, "psql");
-	check_exec(ctx, cluster->bindir, "pg_ctl");
-	check_exec(ctx, cluster->bindir, "pg_dumpall");
+	check_exec(cluster->bindir, "postgres");
+	check_exec(cluster->bindir, "psql");
+	check_exec(cluster->bindir, "pg_ctl");
+	check_exec(cluster->bindir, "pg_dumpall");
 }
 
 
@@ -177,7 +177,7 @@ check_bin_dir(migratorContext *ctx, ClusterInfo *cluster)
  *	a valid executable, this function returns 0 to indicated failure.
  */
 static int
-check_exec(migratorContext *ctx, const char *dir, const char *cmdName)
+check_exec(const char *dir, const char *cmdName)
 {
 	char		path[MAXPGPATH];
 	const char *errMsg;
@@ -187,7 +187,7 @@ check_exec(migratorContext *ctx, const char *dir, const char *cmdName)
 	if ((errMsg = validate_exec(path)) == NULL)
 		return 1;				/* 1 -> first alternative OK */
 	else
-		pg_log(ctx, PG_FATAL, "check for %s failed - %s\n", cmdName, errMsg);
+		pg_log(PG_FATAL, "check for %s failed - %s\n", cmdName, errMsg);
 
 	return 0;					/* 0 -> neither alternative is acceptable */
 }

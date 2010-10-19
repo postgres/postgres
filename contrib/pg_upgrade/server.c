@@ -14,8 +14,8 @@
 #define STARTUP_WARNING_TRIES 2
 
 
-static pgpid_t get_postmaster_pid(migratorContext *ctx, const char *datadir);
-static bool test_server_conn(migratorContext *ctx, int timeout,
+static pgpid_t get_postmaster_pid(const char *datadir);
+static bool test_server_conn(int timeout,
 				 Cluster whichCluster);
 
 
@@ -27,28 +27,28 @@ static bool test_server_conn(migratorContext *ctx, int timeout,
  *	message and calls exit_nicely() to kill the program.
  */
 PGconn *
-connectToServer(migratorContext *ctx, const char *db_name,
+connectToServer(const char *db_name,
 				Cluster whichCluster)
 {
+	ClusterInfo *active_cluster = ACTIVE_CLUSTER(whichCluster);
+	unsigned short port = active_cluster->port;
 	char		connectString[MAXPGPATH];
-	unsigned short port = (whichCluster == CLUSTER_OLD) ?
-	ctx->old.port : ctx->new.port;
 	PGconn	   *conn;
 
 	snprintf(connectString, sizeof(connectString),
-			 "dbname = '%s' user = '%s' port = %d", db_name, ctx->user, port);
+			 "dbname = '%s' user = '%s' port = %d", db_name, os_info.user, port);
 
 	conn = PQconnectdb(connectString);
 
 	if (conn == NULL || PQstatus(conn) != CONNECTION_OK)
 	{
-		pg_log(ctx, PG_REPORT, "Connection to database failed: %s\n",
+		pg_log(PG_REPORT, "Connection to database failed: %s\n",
 			   PQerrorMessage(conn));
 
 		if (conn)
 			PQfinish(conn);
 
-		exit_nicely(ctx, true);
+		exit_nicely(true);
 	}
 
 	return conn;
@@ -63,7 +63,7 @@ connectToServer(migratorContext *ctx, const char *db_name,
  *	message and calls exit_nicely() to kill the program.
  */
 PGresult *
-executeQueryOrDie(migratorContext *ctx, PGconn *conn, const char *fmt,...)
+executeQueryOrDie(PGconn *conn, const char *fmt,...)
 {
 	static char command[8192];
 	va_list		args;
@@ -74,17 +74,17 @@ executeQueryOrDie(migratorContext *ctx, PGconn *conn, const char *fmt,...)
 	vsnprintf(command, sizeof(command), fmt, args);
 	va_end(args);
 
-	pg_log(ctx, PG_DEBUG, "executing: %s\n", command);
+	pg_log(PG_DEBUG, "executing: %s\n", command);
 	result = PQexec(conn, command);
 	status = PQresultStatus(result);
 
 	if ((status != PGRES_TUPLES_OK) && (status != PGRES_COMMAND_OK))
 	{
-		pg_log(ctx, PG_REPORT, "DB command failed\n%s\n%s\n", command,
+		pg_log(PG_REPORT, "DB command failed\n%s\n%s\n", command,
 			   PQerrorMessage(conn));
 		PQclear(result);
 		PQfinish(conn);
-		exit_nicely(ctx, true);
+		exit_nicely(true);
 		return NULL;			/* Never get here, but keeps compiler happy */
 	}
 	else
@@ -99,7 +99,7 @@ executeQueryOrDie(migratorContext *ctx, PGconn *conn, const char *fmt,...)
  * from the postmaster.pid file
  */
 static pgpid_t
-get_postmaster_pid(migratorContext *ctx, const char *datadir)
+get_postmaster_pid(const char *datadir)
 {
 	FILE	   *pidf;
 	long		pid;
@@ -114,8 +114,8 @@ get_postmaster_pid(migratorContext *ctx, const char *datadir)
 	if (fscanf(pidf, "%ld", &pid) != 1)
 	{
 		fclose(pidf);
-		pg_log(ctx, PG_FATAL, "%s: invalid data in PID file \"%s\"\n",
-			   ctx->progname, pid_file);
+		pg_log(PG_FATAL, "%s: invalid data in PID file \"%s\"\n",
+			   os_info.progname, pid_file);
 	}
 
 	fclose(pidf);
@@ -132,16 +132,16 @@ get_postmaster_pid(migratorContext *ctx, const char *datadir)
  * is retrieved by reading the PG_VERSION file.
  */
 uint32
-get_major_server_version(migratorContext *ctx, char **verstr, Cluster whichCluster)
+get_major_server_version(char **verstr, Cluster whichCluster)
 {
-	const char *datadir = whichCluster == CLUSTER_OLD ?
-	ctx->old.pgdata : ctx->new.pgdata;
+	ClusterInfo *active_cluster = ACTIVE_CLUSTER(whichCluster);
+	const char *datadir = active_cluster->pgdata;
 	FILE	   *version_fd;
 	char		ver_file[MAXPGPATH];
 	int			integer_version = 0;
 	int			fractional_version = 0;
 
-	*verstr = pg_malloc(ctx, 64);
+	*verstr = pg_malloc(64);
 
 	snprintf(ver_file, sizeof(ver_file), "%s/PG_VERSION", datadir);
 	if ((version_fd = fopen(ver_file, "r")) == NULL)
@@ -150,7 +150,7 @@ get_major_server_version(migratorContext *ctx, char **verstr, Cluster whichClust
 	if (fscanf(version_fd, "%63s", *verstr) == 0 ||
 		sscanf(*verstr, "%d.%d", &integer_version, &fractional_version) != 2)
 	{
-		pg_log(ctx, PG_FATAL, "could not get version from %s\n", datadir);
+		pg_log(PG_FATAL, "could not get version from %s\n", datadir);
 		fclose(version_fd);
 		return 0;
 	}
@@ -160,25 +160,17 @@ get_major_server_version(migratorContext *ctx, char **verstr, Cluster whichClust
 
 
 void
-start_postmaster(migratorContext *ctx, Cluster whichCluster, bool quiet)
+start_postmaster(Cluster whichCluster, bool quiet)
 {
+	ClusterInfo *active_cluster = ACTIVE_CLUSTER(whichCluster);
 	char		cmd[MAXPGPATH];
 	const char *bindir;
 	const char *datadir;
 	unsigned short port;
 
-	if (whichCluster == CLUSTER_OLD)
-	{
-		bindir = ctx->old.bindir;
-		datadir = ctx->old.pgdata;
-		port = ctx->old.port;
-	}
-	else
-	{
-		bindir = ctx->new.bindir;
-		datadir = ctx->new.pgdata;
-		port = ctx->new.port;
-	}
+	bindir = active_cluster->bindir;
+	datadir = active_cluster->pgdata;
+	port = active_cluster->port;
 
 	/*
 	 * On Win32, we can't send both pg_upgrade output and pg_ctl output to the
@@ -193,40 +185,40 @@ start_postmaster(migratorContext *ctx, Cluster whichCluster, bool quiet)
 			 "start >> \"%s\" 2>&1" SYSTEMQUOTE,
 			 bindir,
 #ifndef WIN32
-			 ctx->logfile, datadir, port, ctx->logfile);
+			 log.filename, datadir, port, log.filename);
 #else
 			 DEVNULL, datadir, port, DEVNULL);
 #endif
-	exec_prog(ctx, true, "%s", cmd);
+	exec_prog(true, "%s", cmd);
 
 	/* wait for the server to start properly */
 
-	if (test_server_conn(ctx, POSTMASTER_UPTIME, whichCluster) == false)
-		pg_log(ctx, PG_FATAL, " Unable to start %s postmaster with the command: %s\nPerhaps pg_hba.conf was not set to \"trust\".",
+	if (test_server_conn(POSTMASTER_UPTIME, whichCluster) == false)
+		pg_log(PG_FATAL, " Unable to start %s postmaster with the command: %s\nPerhaps pg_hba.conf was not set to \"trust\".",
 			   CLUSTERNAME(whichCluster), cmd);
 
-	if ((ctx->postmasterPID = get_postmaster_pid(ctx, datadir)) == 0)
-		pg_log(ctx, PG_FATAL, " Unable to get postmaster pid\n");
-	ctx->running_cluster = whichCluster;
+	if ((os_info.postmasterPID = get_postmaster_pid(datadir)) == 0)
+		pg_log(PG_FATAL, " Unable to get postmaster pid\n");
+	os_info.running_cluster = whichCluster;
 }
 
 
 void
-stop_postmaster(migratorContext *ctx, bool fast, bool quiet)
+stop_postmaster(bool fast, bool quiet)
 {
 	char		cmd[MAXPGPATH];
 	const char *bindir;
 	const char *datadir;
 
-	if (ctx->running_cluster == CLUSTER_OLD)
+	if (os_info.running_cluster == CLUSTER_OLD)
 	{
-		bindir = ctx->old.bindir;
-		datadir = ctx->old.pgdata;
+		bindir = old_cluster.bindir;
+		datadir = old_cluster.pgdata;
 	}
-	else if (ctx->running_cluster == CLUSTER_NEW)
+	else if (os_info.running_cluster == CLUSTER_NEW)
 	{
-		bindir = ctx->new.bindir;
-		datadir = ctx->new.pgdata;
+		bindir = new_cluster.bindir;
+		datadir = new_cluster.pgdata;
 	}
 	else
 		return;					/* no cluster running */
@@ -237,14 +229,14 @@ stop_postmaster(migratorContext *ctx, bool fast, bool quiet)
 			 "\"%s\" 2>&1" SYSTEMQUOTE,
 			 bindir,
 #ifndef WIN32
-			 ctx->logfile, datadir, fast ? "-m fast" : "", ctx->logfile);
+			 log.filename, datadir, fast ? "-m fast" : "", log.filename);
 #else
 			 DEVNULL, datadir, fast ? "-m fast" : "", DEVNULL);
 #endif
-	exec_prog(ctx, fast ? false : true, "%s", cmd);
+	exec_prog(fast ? false : true, "%s", cmd);
 
-	ctx->postmasterPID = 0;
-	ctx->running_cluster = NONE;
+	os_info.postmasterPID = 0;
+	os_info.running_cluster = NONE;
 }
 
 
@@ -258,17 +250,17 @@ stop_postmaster(migratorContext *ctx, bool fast, bool quiet)
  * Returns true if the connection attempt was successfull, false otherwise.
  */
 static bool
-test_server_conn(migratorContext *ctx, int timeout, Cluster whichCluster)
+test_server_conn(int timeout, Cluster whichCluster)
 {
+	ClusterInfo *active_cluster = ACTIVE_CLUSTER(whichCluster);
+	unsigned short port = active_cluster->port;
 	PGconn	   *conn = NULL;
 	char		con_opts[MAX_STRING];
 	int			tries;
-	unsigned short port = (whichCluster == CLUSTER_OLD) ?
-	ctx->old.port : ctx->new.port;
 	bool		ret = false;
 
 	snprintf(con_opts, sizeof(con_opts),
-			 "dbname = 'template1' user = '%s' port = %d ", ctx->user, port);
+			 "dbname = 'template1' user = '%s' port = %d ", os_info.user, port);
 
 	for (tries = 0; tries < timeout; tries++)
 	{
@@ -282,14 +274,14 @@ test_server_conn(migratorContext *ctx, int timeout, Cluster whichCluster)
 		}
 
 		if (tries == STARTUP_WARNING_TRIES)
-			prep_status(ctx, "Trying to start %s server ",
+			prep_status("Trying to start %s server ",
 						CLUSTERNAME(whichCluster));
 		else if (tries > STARTUP_WARNING_TRIES)
-			pg_log(ctx, PG_REPORT, ".");
+			pg_log(PG_REPORT, ".");
 	}
 
 	if (tries > STARTUP_WARNING_TRIES)
-		check_ok(ctx);
+		check_ok();
 
 	return ret;
 }
@@ -305,7 +297,7 @@ test_server_conn(migratorContext *ctx, int timeout, Cluster whichCluster)
  * If any are found, will log them and cancel.
  */
 void
-check_for_libpq_envvars(migratorContext *ctx)
+check_for_libpq_envvars(void)
 {
 	PQconninfoOption *option;
 	PQconninfoOption *start;
@@ -323,7 +315,7 @@ check_for_libpq_envvars(migratorContext *ctx)
 		{
 			found = true;
 
-			pg_log(ctx, PG_WARNING,
+			pg_log(PG_WARNING,
 				   "libpq env var %-20s is currently set to: %s\n", option->envvar, value);
 		}
 
@@ -334,6 +326,6 @@ check_for_libpq_envvars(migratorContext *ctx)
 	PQconninfoFree(start);
 
 	if (found)
-		pg_log(ctx, PG_FATAL,
+		pg_log(PG_FATAL,
 			   "libpq env vars have been found and listed above, please unset them for pg_upgrade\n");
 }

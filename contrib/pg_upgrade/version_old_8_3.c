@@ -19,19 +19,18 @@
  *	checks tables and indexes.
  */
 void
-old_8_3_check_for_name_data_type_usage(migratorContext *ctx, Cluster whichCluster)
+old_8_3_check_for_name_data_type_usage(Cluster whichCluster)
 {
-	ClusterInfo *active_cluster = (whichCluster == CLUSTER_OLD) ?
-	&ctx->old : &ctx->new;
+	ClusterInfo *active_cluster = ACTIVE_CLUSTER(whichCluster);
 	int			dbnum;
 	FILE	   *script = NULL;
 	bool		found = false;
 	char		output_path[MAXPGPATH];
 
-	prep_status(ctx, "Checking for invalid 'name' user columns");
+	prep_status("Checking for invalid 'name' user columns");
 
 	snprintf(output_path, sizeof(output_path), "%s/tables_using_name.txt",
-			 ctx->cwd);
+			 os_info.cwd);
 
 	for (dbnum = 0; dbnum < active_cluster->dbarr.ndbs; dbnum++)
 	{
@@ -43,7 +42,7 @@ old_8_3_check_for_name_data_type_usage(migratorContext *ctx, Cluster whichCluste
 					i_relname,
 					i_attname;
 		DbInfo	   *active_db = &active_cluster->dbarr.dbs[dbnum];
-		PGconn	   *conn = connectToServer(ctx, active_db->db_name, whichCluster);
+		PGconn	   *conn = connectToServer(active_db->db_name, whichCluster);
 
 		/*
 		 * With a smaller alignment in 8.4, 'name' cannot be used in a
@@ -51,7 +50,7 @@ old_8_3_check_for_name_data_type_usage(migratorContext *ctx, Cluster whichCluste
 		 * that condition with enough analysis, but it seems not worth the
 		 * trouble.)
 		 */
-		res = executeQueryOrDie(ctx, conn,
+		res = executeQueryOrDie(conn,
 								"SELECT n.nspname, c.relname, a.attname "
 								"FROM	pg_catalog.pg_class c, "
 								"		pg_catalog.pg_namespace n, "
@@ -72,7 +71,7 @@ old_8_3_check_for_name_data_type_usage(migratorContext *ctx, Cluster whichCluste
 		{
 			found = true;
 			if (script == NULL && (script = fopen(output_path, "w")) == NULL)
-				pg_log(ctx, PG_FATAL, "Could not create necessary file:  %s\n", output_path);
+				pg_log(PG_FATAL, "Could not create necessary file:  %s\n", output_path);
 			if (!db_used)
 			{
 				fprintf(script, "Database:  %s\n", active_db->db_name);
@@ -92,8 +91,8 @@ old_8_3_check_for_name_data_type_usage(migratorContext *ctx, Cluster whichCluste
 	if (found)
 	{
 		fclose(script);
-		pg_log(ctx, PG_REPORT, "fatal\n");
-		pg_log(ctx, PG_FATAL,
+		pg_log(PG_REPORT, "fatal\n");
+		pg_log(PG_FATAL,
 			   "| Your installation contains the \"name\" data type in\n"
 			   "| user tables.  This data type changed its internal\n"
 			   "| alignment between your old and new clusters so this\n"
@@ -103,7 +102,7 @@ old_8_3_check_for_name_data_type_usage(migratorContext *ctx, Cluster whichCluste
 			   "| \t%s\n\n", output_path);
 	}
 	else
-		check_ok(ctx);
+		check_ok();
 }
 
 
@@ -114,19 +113,18 @@ old_8_3_check_for_name_data_type_usage(migratorContext *ctx, Cluster whichCluste
  *	so migration of such fields is impossible.
  */
 void
-old_8_3_check_for_tsquery_usage(migratorContext *ctx, Cluster whichCluster)
+old_8_3_check_for_tsquery_usage(Cluster whichCluster)
 {
-	ClusterInfo *active_cluster = (whichCluster == CLUSTER_OLD) ?
-	&ctx->old : &ctx->new;
+	ClusterInfo *active_cluster = ACTIVE_CLUSTER(whichCluster);
 	int			dbnum;
 	FILE	   *script = NULL;
 	bool		found = false;
 	char		output_path[MAXPGPATH];
 
-	prep_status(ctx, "Checking for tsquery user columns");
+	prep_status("Checking for tsquery user columns");
 
 	snprintf(output_path, sizeof(output_path), "%s/tables_using_tsquery.txt",
-			 ctx->cwd);
+			 os_info.cwd);
 
 	for (dbnum = 0; dbnum < active_cluster->dbarr.ndbs; dbnum++)
 	{
@@ -138,10 +136,10 @@ old_8_3_check_for_tsquery_usage(migratorContext *ctx, Cluster whichCluster)
 					i_relname,
 					i_attname;
 		DbInfo	   *active_db = &active_cluster->dbarr.dbs[dbnum];
-		PGconn	   *conn = connectToServer(ctx, active_db->db_name, whichCluster);
+		PGconn	   *conn = connectToServer(active_db->db_name, whichCluster);
 
 		/* Find any user-defined tsquery columns */
-		res = executeQueryOrDie(ctx, conn,
+		res = executeQueryOrDie(conn,
 								"SELECT n.nspname, c.relname, a.attname "
 								"FROM	pg_catalog.pg_class c, "
 								"		pg_catalog.pg_namespace n, "
@@ -162,7 +160,7 @@ old_8_3_check_for_tsquery_usage(migratorContext *ctx, Cluster whichCluster)
 		{
 			found = true;
 			if (script == NULL && (script = fopen(output_path, "w")) == NULL)
-				pg_log(ctx, PG_FATAL, "Could not create necessary file:  %s\n", output_path);
+				pg_log(PG_FATAL, "Could not create necessary file:  %s\n", output_path);
 			if (!db_used)
 			{
 				fprintf(script, "Database:  %s\n", active_db->db_name);
@@ -182,8 +180,8 @@ old_8_3_check_for_tsquery_usage(migratorContext *ctx, Cluster whichCluster)
 	if (found)
 	{
 		fclose(script);
-		pg_log(ctx, PG_REPORT, "fatal\n");
-		pg_log(ctx, PG_FATAL,
+		pg_log(PG_REPORT, "fatal\n");
+		pg_log(PG_FATAL,
 			   "| Your installation contains the \"tsquery\" data type.\n"
 			   "| This data type added a new internal field between\n"
 			   "| your old and new clusters so this cluster cannot\n"
@@ -193,7 +191,7 @@ old_8_3_check_for_tsquery_usage(migratorContext *ctx, Cluster whichCluster)
 			   "| \t%s\n\n", output_path);
 	}
 	else
-		check_ok(ctx);
+		check_ok();
 }
 
 
@@ -210,20 +208,19 @@ old_8_3_check_for_tsquery_usage(migratorContext *ctx, Cluster whichCluster)
  *	'c' 'bb' 'aaa'		   -- 8.3
  */
 void
-old_8_3_rebuild_tsvector_tables(migratorContext *ctx, bool check_mode,
+old_8_3_rebuild_tsvector_tables(bool check_mode,
 								Cluster whichCluster)
 {
-	ClusterInfo *active_cluster = (whichCluster == CLUSTER_OLD) ?
-	&ctx->old : &ctx->new;
+	ClusterInfo *active_cluster = ACTIVE_CLUSTER(whichCluster);
 	int			dbnum;
 	FILE	   *script = NULL;
 	bool		found = false;
 	char		output_path[MAXPGPATH];
 
-	prep_status(ctx, "Checking for tsvector user columns");
+	prep_status("Checking for tsvector user columns");
 
 	snprintf(output_path, sizeof(output_path), "%s/rebuild_tsvector_tables.sql",
-			 ctx->cwd);
+			 os_info.cwd);
 
 	for (dbnum = 0; dbnum < active_cluster->dbarr.ndbs; dbnum++)
 	{
@@ -237,10 +234,10 @@ old_8_3_rebuild_tsvector_tables(migratorContext *ctx, bool check_mode,
 					i_relname,
 					i_attname;
 		DbInfo	   *active_db = &active_cluster->dbarr.dbs[dbnum];
-		PGconn	   *conn = connectToServer(ctx, active_db->db_name, whichCluster);
+		PGconn	   *conn = connectToServer(active_db->db_name, whichCluster);
 
 		/* Find any user-defined tsvector columns */
-		res = executeQueryOrDie(ctx, conn,
+		res = executeQueryOrDie(conn,
 								"SELECT n.nspname, c.relname, a.attname "
 								"FROM	pg_catalog.pg_class c, "
 								"		pg_catalog.pg_namespace n, "
@@ -281,11 +278,11 @@ old_8_3_rebuild_tsvector_tables(migratorContext *ctx, bool check_mode,
 			if (!check_mode)
 			{
 				if (script == NULL && (script = fopen(output_path, "w")) == NULL)
-					pg_log(ctx, PG_FATAL, "Could not create necessary file:  %s\n", output_path);
+					pg_log(PG_FATAL, "Could not create necessary file:  %s\n", output_path);
 				if (!db_used)
 				{
 					fprintf(script, "\\connect %s\n\n",
-							quote_identifier(ctx, active_db->db_name));
+							quote_identifier(active_db->db_name));
 					db_used = true;
 				}
 
@@ -296,8 +293,8 @@ old_8_3_rebuild_tsvector_tables(migratorContext *ctx, bool check_mode,
 					if (strlen(old_nspname) != 0 || strlen(old_relname) != 0)
 						fprintf(script, ";\n\n");
 					fprintf(script, "ALTER TABLE %s.%s\n",
-					quote_identifier(ctx, PQgetvalue(res, rowno, i_nspname)),
-					quote_identifier(ctx, PQgetvalue(res, rowno, i_relname)));
+					quote_identifier(PQgetvalue(res, rowno, i_nspname)),
+					quote_identifier(PQgetvalue(res, rowno, i_relname)));
 				}
 				else
 					fprintf(script, ",\n");
@@ -307,8 +304,8 @@ old_8_3_rebuild_tsvector_tables(migratorContext *ctx, bool check_mode,
 				fprintf(script, "ALTER COLUMN %s "
 				/* This could have been a custom conversion function call. */
 						"TYPE pg_catalog.tsvector USING %s::pg_catalog.text::pg_catalog.tsvector",
-					quote_identifier(ctx, PQgetvalue(res, rowno, i_attname)),
-				   quote_identifier(ctx, PQgetvalue(res, rowno, i_attname)));
+					quote_identifier(PQgetvalue(res, rowno, i_attname)),
+				   quote_identifier(PQgetvalue(res, rowno, i_attname)));
 			}
 		}
 		if (strlen(old_nspname) != 0 || strlen(old_relname) != 0)
@@ -325,16 +322,16 @@ old_8_3_rebuild_tsvector_tables(migratorContext *ctx, bool check_mode,
 	{
 		if (!check_mode)
 			fclose(script);
-		report_status(ctx, PG_WARNING, "warning");
+		report_status(PG_WARNING, "warning");
 		if (check_mode)
-			pg_log(ctx, PG_WARNING, "\n"
+			pg_log(PG_WARNING, "\n"
 				   "| Your installation contains tsvector columns.\n"
 				   "| The tsvector internal storage format changed\n"
 				   "| between your old and new clusters so the tables\n"
 				   "| must be rebuilt.  After migration, you will be\n"
 				   "| given instructions.\n\n");
 		else
-			pg_log(ctx, PG_WARNING, "\n"
+			pg_log(PG_WARNING, "\n"
 				   "| Your installation contains tsvector columns.\n"
 				   "| The tsvector internal storage format changed\n"
 				   "| between your old and new clusters so the tables\n"
@@ -345,7 +342,7 @@ old_8_3_rebuild_tsvector_tables(migratorContext *ctx, bool check_mode,
 				   output_path);
 	}
 	else
-		check_ok(ctx);
+		check_ok();
 }
 
 
@@ -355,20 +352,19 @@ old_8_3_rebuild_tsvector_tables(migratorContext *ctx, bool check_mode,
  *	Hash, Gin, and GiST index binary format has changes from 8.3->8.4
  */
 void
-old_8_3_invalidate_hash_gin_indexes(migratorContext *ctx, bool check_mode,
+old_8_3_invalidate_hash_gin_indexes(bool check_mode,
 									Cluster whichCluster)
 {
-	ClusterInfo *active_cluster = (whichCluster == CLUSTER_OLD) ?
-	&ctx->old : &ctx->new;
+	ClusterInfo *active_cluster = ACTIVE_CLUSTER(whichCluster);
 	int			dbnum;
 	FILE	   *script = NULL;
 	bool		found = false;
 	char		output_path[MAXPGPATH];
 
-	prep_status(ctx, "Checking for hash and gin indexes");
+	prep_status("Checking for hash and gin indexes");
 
 	snprintf(output_path, sizeof(output_path), "%s/reindex_hash_and_gin.sql",
-			 ctx->cwd);
+			 os_info.cwd);
 
 	for (dbnum = 0; dbnum < active_cluster->dbarr.ndbs; dbnum++)
 	{
@@ -379,10 +375,10 @@ old_8_3_invalidate_hash_gin_indexes(migratorContext *ctx, bool check_mode,
 		int			i_nspname,
 					i_relname;
 		DbInfo	   *active_db = &active_cluster->dbarr.dbs[dbnum];
-		PGconn	   *conn = connectToServer(ctx, active_db->db_name, whichCluster);
+		PGconn	   *conn = connectToServer(active_db->db_name, whichCluster);
 
 		/* find hash and gin indexes */
-		res = executeQueryOrDie(ctx, conn,
+		res = executeQueryOrDie(conn,
 								"SELECT n.nspname, c.relname "
 								"FROM 	pg_catalog.pg_class c, "
 								"		pg_catalog.pg_index i, "
@@ -403,16 +399,16 @@ old_8_3_invalidate_hash_gin_indexes(migratorContext *ctx, bool check_mode,
 			if (!check_mode)
 			{
 				if (script == NULL && (script = fopen(output_path, "w")) == NULL)
-					pg_log(ctx, PG_FATAL, "Could not create necessary file:  %s\n", output_path);
+					pg_log(PG_FATAL, "Could not create necessary file:  %s\n", output_path);
 				if (!db_used)
 				{
 					fprintf(script, "\\connect %s\n",
-							quote_identifier(ctx, active_db->db_name));
+							quote_identifier(active_db->db_name));
 					db_used = true;
 				}
 				fprintf(script, "REINDEX INDEX %s.%s;\n",
-					quote_identifier(ctx, PQgetvalue(res, rowno, i_nspname)),
-				   quote_identifier(ctx, PQgetvalue(res, rowno, i_relname)));
+					quote_identifier(PQgetvalue(res, rowno, i_nspname)),
+				   quote_identifier(PQgetvalue(res, rowno, i_relname)));
 			}
 		}
 
@@ -420,7 +416,7 @@ old_8_3_invalidate_hash_gin_indexes(migratorContext *ctx, bool check_mode,
 
 		if (!check_mode && found)
 			/* mark hash and gin indexes as invalid */
-			PQclear(executeQueryOrDie(ctx, conn,
+			PQclear(executeQueryOrDie(conn,
 									  "UPDATE pg_catalog.pg_index i "
 									  "SET	indisvalid = false "
 									  "FROM 	pg_catalog.pg_class c, "
@@ -438,9 +434,9 @@ old_8_3_invalidate_hash_gin_indexes(migratorContext *ctx, bool check_mode,
 	{
 		if (!check_mode)
 			fclose(script);
-		report_status(ctx, PG_WARNING, "warning");
+		report_status(PG_WARNING, "warning");
 		if (check_mode)
-			pg_log(ctx, PG_WARNING, "\n"
+			pg_log(PG_WARNING, "\n"
 				   "| Your installation contains hash and/or gin\n"
 				   "| indexes.  These indexes have different\n"
 				   "| internal formats between your old and new\n"
@@ -448,7 +444,7 @@ old_8_3_invalidate_hash_gin_indexes(migratorContext *ctx, bool check_mode,
 				   "| REINDEX command. After migration, you will\n"
 				   "| be given REINDEX instructions.\n\n");
 		else
-			pg_log(ctx, PG_WARNING, "\n"
+			pg_log(PG_WARNING, "\n"
 				   "| Your installation contains hash and/or gin\n"
 				   "| indexes.  These indexes have different internal\n"
 				   "| formats between your old and new clusters so\n"
@@ -461,7 +457,7 @@ old_8_3_invalidate_hash_gin_indexes(migratorContext *ctx, bool check_mode,
 				   output_path);
 	}
 	else
-		check_ok(ctx);
+		check_ok();
 }
 
 
@@ -471,20 +467,19 @@ old_8_3_invalidate_hash_gin_indexes(migratorContext *ctx, bool check_mode,
  *	8.4 bpchar_pattern_ops no longer sorts based on trailing spaces
  */
 void
-old_8_3_invalidate_bpchar_pattern_ops_indexes(migratorContext *ctx, bool check_mode,
+old_8_3_invalidate_bpchar_pattern_ops_indexes(bool check_mode,
 											  Cluster whichCluster)
 {
-	ClusterInfo *active_cluster = (whichCluster == CLUSTER_OLD) ?
-	&ctx->old : &ctx->new;
+	ClusterInfo *active_cluster = ACTIVE_CLUSTER(whichCluster);
 	int			dbnum;
 	FILE	   *script = NULL;
 	bool		found = false;
 	char		output_path[MAXPGPATH];
 
-	prep_status(ctx, "Checking for bpchar_pattern_ops indexes");
+	prep_status("Checking for bpchar_pattern_ops indexes");
 
 	snprintf(output_path, sizeof(output_path), "%s/reindex_bpchar_ops.sql",
-			 ctx->cwd);
+			 os_info.cwd);
 
 	for (dbnum = 0; dbnum < active_cluster->dbarr.ndbs; dbnum++)
 	{
@@ -495,7 +490,7 @@ old_8_3_invalidate_bpchar_pattern_ops_indexes(migratorContext *ctx, bool check_m
 		int			i_nspname,
 					i_relname;
 		DbInfo	   *active_db = &active_cluster->dbarr.dbs[dbnum];
-		PGconn	   *conn = connectToServer(ctx, active_db->db_name, whichCluster);
+		PGconn	   *conn = connectToServer(active_db->db_name, whichCluster);
 
 		/* find bpchar_pattern_ops indexes */
 
@@ -503,7 +498,7 @@ old_8_3_invalidate_bpchar_pattern_ops_indexes(migratorContext *ctx, bool check_m
 		 * Do only non-hash, non-gin indexees;	we already invalidated them
 		 * above; no need to reindex twice
 		 */
-		res = executeQueryOrDie(ctx, conn,
+		res = executeQueryOrDie(conn,
 								"SELECT n.nspname, c.relname "
 								"FROM	pg_catalog.pg_index i, "
 								"		pg_catalog.pg_class c, "
@@ -529,16 +524,16 @@ old_8_3_invalidate_bpchar_pattern_ops_indexes(migratorContext *ctx, bool check_m
 			if (!check_mode)
 			{
 				if (script == NULL && (script = fopen(output_path, "w")) == NULL)
-					pg_log(ctx, PG_FATAL, "Could not create necessary file:  %s\n", output_path);
+					pg_log(PG_FATAL, "Could not create necessary file:  %s\n", output_path);
 				if (!db_used)
 				{
 					fprintf(script, "\\connect %s\n",
-							quote_identifier(ctx, active_db->db_name));
+							quote_identifier(active_db->db_name));
 					db_used = true;
 				}
 				fprintf(script, "REINDEX INDEX %s.%s;\n",
-					quote_identifier(ctx, PQgetvalue(res, rowno, i_nspname)),
-				   quote_identifier(ctx, PQgetvalue(res, rowno, i_relname)));
+					quote_identifier(PQgetvalue(res, rowno, i_nspname)),
+				   quote_identifier(PQgetvalue(res, rowno, i_relname)));
 			}
 		}
 
@@ -546,7 +541,7 @@ old_8_3_invalidate_bpchar_pattern_ops_indexes(migratorContext *ctx, bool check_m
 
 		if (!check_mode && found)
 			/* mark bpchar_pattern_ops indexes as invalid */
-			PQclear(executeQueryOrDie(ctx, conn,
+			PQclear(executeQueryOrDie(conn,
 									  "UPDATE pg_catalog.pg_index i "
 									  "SET	indisvalid = false "
 									  "FROM	pg_catalog.pg_class c, "
@@ -569,9 +564,9 @@ old_8_3_invalidate_bpchar_pattern_ops_indexes(migratorContext *ctx, bool check_m
 	{
 		if (!check_mode)
 			fclose(script);
-		report_status(ctx, PG_WARNING, "warning");
+		report_status(PG_WARNING, "warning");
 		if (check_mode)
-			pg_log(ctx, PG_WARNING, "\n"
+			pg_log(PG_WARNING, "\n"
 				   "| Your installation contains indexes using\n"
 				   "| \"bpchar_pattern_ops\".  These indexes have\n"
 				   "| different internal formats between your old and\n"
@@ -579,7 +574,7 @@ old_8_3_invalidate_bpchar_pattern_ops_indexes(migratorContext *ctx, bool check_m
 				   "| REINDEX command.  After migration, you will be\n"
 				   "| given REINDEX instructions.\n\n");
 		else
-			pg_log(ctx, PG_WARNING, "\n"
+			pg_log(PG_WARNING, "\n"
 				   "| Your installation contains indexes using\n"
 				   "| \"bpchar_pattern_ops\".  These indexes have\n"
 				   "| different internal formats between your old and\n"
@@ -592,7 +587,7 @@ old_8_3_invalidate_bpchar_pattern_ops_indexes(migratorContext *ctx, bool check_m
 				   output_path);
 	}
 	else
-		check_ok(ctx);
+		check_ok();
 }
 
 
@@ -607,18 +602,17 @@ old_8_3_invalidate_bpchar_pattern_ops_indexes(migratorContext *ctx, bool check_m
  *	server, even in link mode.
  */
 char *
-old_8_3_create_sequence_script(migratorContext *ctx, Cluster whichCluster)
+old_8_3_create_sequence_script(Cluster whichCluster)
 {
-	ClusterInfo *active_cluster = (whichCluster == CLUSTER_OLD) ?
-	&ctx->old : &ctx->new;
+	ClusterInfo *active_cluster = ACTIVE_CLUSTER(whichCluster);
 	int			dbnum;
 	FILE	   *script = NULL;
 	bool		found = false;
-	char	   *output_path = pg_malloc(ctx, MAXPGPATH);
+	char	   *output_path = pg_malloc(MAXPGPATH);
 
-	snprintf(output_path, MAXPGPATH, "%s/adjust_sequences.sql", ctx->cwd);
+	snprintf(output_path, MAXPGPATH, "%s/adjust_sequences.sql", os_info.cwd);
 
-	prep_status(ctx, "Creating script to adjust sequences");
+	prep_status("Creating script to adjust sequences");
 
 	for (dbnum = 0; dbnum < active_cluster->dbarr.ndbs; dbnum++)
 	{
@@ -629,10 +623,10 @@ old_8_3_create_sequence_script(migratorContext *ctx, Cluster whichCluster)
 		int			i_nspname,
 					i_relname;
 		DbInfo	   *active_db = &active_cluster->dbarr.dbs[dbnum];
-		PGconn	   *conn = connectToServer(ctx, active_db->db_name, whichCluster);
+		PGconn	   *conn = connectToServer(active_db->db_name, whichCluster);
 
 		/* Find any sequences */
-		res = executeQueryOrDie(ctx, conn,
+		res = executeQueryOrDie(conn,
 								"SELECT n.nspname, c.relname "
 								"FROM	pg_catalog.pg_class c, "
 								"		pg_catalog.pg_namespace n "
@@ -655,27 +649,27 @@ old_8_3_create_sequence_script(migratorContext *ctx, Cluster whichCluster)
 			found = true;
 
 			if (script == NULL && (script = fopen(output_path, "w")) == NULL)
-				pg_log(ctx, PG_FATAL, "Could not create necessary file:  %s\n", output_path);
+				pg_log(PG_FATAL, "Could not create necessary file:  %s\n", output_path);
 			if (!db_used)
 			{
 				fprintf(script, "\\connect %s\n\n",
-						quote_identifier(ctx, active_db->db_name));
+						quote_identifier(active_db->db_name));
 				db_used = true;
 			}
 
 			/* Find the desired sequence */
-			seq_res = executeQueryOrDie(ctx, conn,
+			seq_res = executeQueryOrDie(conn,
 										"SELECT s.last_value, s.is_called "
 										"FROM	%s.%s s",
-										quote_identifier(ctx, nspname),
-										quote_identifier(ctx, relname));
+										quote_identifier(nspname),
+										quote_identifier(relname));
 
 			assert(PQntuples(seq_res) == 1);
 			i_last_value = PQfnumber(seq_res, "last_value");
 			i_is_called = PQfnumber(seq_res, "is_called");
 
 			fprintf(script, "SELECT setval('%s.%s', %s, '%s');\n",
-			  quote_identifier(ctx, nspname), quote_identifier(ctx, relname),
+			  quote_identifier(nspname), quote_identifier(relname),
 					PQgetvalue(seq_res, 0, i_last_value), PQgetvalue(seq_res, 0, i_is_called));
 			PQclear(seq_res);
 		}
@@ -689,7 +683,7 @@ old_8_3_create_sequence_script(migratorContext *ctx, Cluster whichCluster)
 	if (found)
 		fclose(script);
 
-	check_ok(ctx);
+	check_ok();
 
 	if (found)
 		return output_path;

@@ -12,20 +12,20 @@
 
 
 void
-generate_old_dump(migratorContext *ctx)
+generate_old_dump(void)
 {
 	/* run new pg_dumpall binary */
-	prep_status(ctx, "Creating catalog dump");
+	prep_status("Creating catalog dump");
 
 	/*
 	 * --binary-upgrade records the width of dropped columns in pg_class, and
 	 * restores the frozenid's for databases and relations.
 	 */
-	exec_prog(ctx, true,
+	exec_prog(true,
 			  SYSTEMQUOTE "\"%s/pg_dumpall\" --port %d --username \"%s\" "
 			  "--schema-only --binary-upgrade > \"%s/" ALL_DUMP_FILE "\""
-		   SYSTEMQUOTE, ctx->new.bindir, ctx->old.port, ctx->user, ctx->cwd);
-	check_ok(ctx);
+		   SYSTEMQUOTE, new_cluster.bindir, old_cluster.port, os_info.user, os_info.cwd);
+	check_ok();
 }
 
 
@@ -42,7 +42,7 @@ generate_old_dump(migratorContext *ctx)
  *	an error during restore
  */
 void
-split_old_dump(migratorContext *ctx)
+split_old_dump(void)
 {
 	FILE	   *all_dump,
 			   *globals_dump,
@@ -55,22 +55,22 @@ split_old_dump(migratorContext *ctx)
 	char		filename[MAXPGPATH];
 	bool		suppressed_username = false;
 
-	snprintf(filename, sizeof(filename), "%s/%s", ctx->cwd, ALL_DUMP_FILE);
+	snprintf(filename, sizeof(filename), "%s/%s", os_info.cwd, ALL_DUMP_FILE);
 	if ((all_dump = fopen(filename, "r")) == NULL)
-		pg_log(ctx, PG_FATAL, "Cannot open dump file %s\n", filename);
-	snprintf(filename, sizeof(filename), "%s/%s", ctx->cwd, GLOBALS_DUMP_FILE);
+		pg_log(PG_FATAL, "Cannot open dump file %s\n", filename);
+	snprintf(filename, sizeof(filename), "%s/%s", os_info.cwd, GLOBALS_DUMP_FILE);
 	if ((globals_dump = fopen(filename, "w")) == NULL)
-		pg_log(ctx, PG_FATAL, "Cannot write to dump file %s\n", filename);
-	snprintf(filename, sizeof(filename), "%s/%s", ctx->cwd, DB_DUMP_FILE);
+		pg_log(PG_FATAL, "Cannot write to dump file %s\n", filename);
+	snprintf(filename, sizeof(filename), "%s/%s", os_info.cwd, DB_DUMP_FILE);
 	if ((db_dump = fopen(filename, "w")) == NULL)
-		pg_log(ctx, PG_FATAL, "Cannot write to dump file %s\n", filename);
+		pg_log(PG_FATAL, "Cannot write to dump file %s\n", filename);
 	current_output = globals_dump;
 
 	/* patterns used to prevent our own username from being recreated */
 	snprintf(create_role_str, sizeof(create_role_str),
-			 "CREATE ROLE %s;", ctx->user);
+			 "CREATE ROLE %s;", os_info.user);
 	snprintf(create_role_str_quote, sizeof(create_role_str_quote),
-			 "CREATE ROLE %s;", quote_identifier(ctx, ctx->user));
+			 "CREATE ROLE %s;", quote_identifier(os_info.user));
 
 	while (fgets(line, sizeof(line), all_dump) != NULL)
 	{

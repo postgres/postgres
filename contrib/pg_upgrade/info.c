@@ -12,27 +12,27 @@
 #include "access/transam.h"
 
 
-static void get_db_infos(migratorContext *ctx, DbInfoArr *dbinfos,
+static void get_db_infos(DbInfoArr *dbinfos,
 			 Cluster whichCluster);
-static void dbarr_print(migratorContext *ctx, DbInfoArr *arr,
+static void dbarr_print(DbInfoArr *arr,
 			Cluster whichCluster);
-static void relarr_print(migratorContext *ctx, RelInfoArr *arr);
-static void get_rel_infos(migratorContext *ctx, const DbInfo *dbinfo,
+static void relarr_print(RelInfoArr *arr);
+static void get_rel_infos(const DbInfo *dbinfo,
 			  RelInfoArr *relarr, Cluster whichCluster);
 static void relarr_free(RelInfoArr *rel_arr);
-static void map_rel(migratorContext *ctx, const RelInfo *oldrel,
+static void map_rel(const RelInfo *oldrel,
 		const RelInfo *newrel, const DbInfo *old_db,
 		const DbInfo *new_db, const char *olddata,
 		const char *newdata, FileNameMap *map);
-static void map_rel_by_id(migratorContext *ctx, Oid oldid, Oid newid,
+static void map_rel_by_id(Oid oldid, Oid newid,
 			  const char *old_nspname, const char *old_relname,
 			  const char *new_nspname, const char *new_relname,
 			  const char *old_tablespace, const DbInfo *old_db,
 			  const DbInfo *new_db, const char *olddata,
 			  const char *newdata, FileNameMap *map);
-static RelInfo *relarr_lookup_reloid(migratorContext *ctx,
+static RelInfo *relarr_lookup_reloid(
 					 RelInfoArr *rel_arr, Oid oid, Cluster whichCluster);
-static RelInfo *relarr_lookup_rel(migratorContext *ctx, RelInfoArr *rel_arr,
+static RelInfo *relarr_lookup_rel(RelInfoArr *rel_arr,
 				  const char *nspname, const char *relname,
 				  Cluster whichCluster);
 
@@ -47,14 +47,14 @@ static RelInfo *relarr_lookup_rel(migratorContext *ctx, RelInfoArr *rel_arr,
  * NOTE: Its the Caller's responsibility to free the returned array.
  */
 FileNameMap *
-gen_db_file_maps(migratorContext *ctx, DbInfo *old_db, DbInfo *new_db,
+gen_db_file_maps(DbInfo *old_db, DbInfo *new_db,
 				 int *nmaps, const char *old_pgdata, const char *new_pgdata)
 {
 	FileNameMap *maps;
 	int			relnum;
 	int			num_maps = 0;
 
-	maps = (FileNameMap *) pg_malloc(ctx, sizeof(FileNameMap) *
+	maps = (FileNameMap *) pg_malloc(sizeof(FileNameMap) *
 									 new_db->rel_arr.nrels);
 
 	for (relnum = 0; relnum < new_db->rel_arr.nrels; relnum++)
@@ -66,10 +66,10 @@ gen_db_file_maps(migratorContext *ctx, DbInfo *old_db, DbInfo *new_db,
 		if (strcmp(newrel->nspname, "pg_toast") == 0)
 			continue;
 
-		oldrel = relarr_lookup_rel(ctx, &(old_db->rel_arr), newrel->nspname,
+		oldrel = relarr_lookup_rel(&(old_db->rel_arr), newrel->nspname,
 								   newrel->relname, CLUSTER_OLD);
 
-		map_rel(ctx, oldrel, newrel, old_db, new_db, old_pgdata, new_pgdata,
+		map_rel(oldrel, newrel, old_db, new_db, old_pgdata, new_pgdata,
 				maps + num_maps);
 		num_maps++;
 
@@ -91,13 +91,13 @@ gen_db_file_maps(migratorContext *ctx, DbInfo *old_db, DbInfo *new_db,
 					 newrel->reloid);
 
 			/* look them up in their respective arrays */
-			old_toast = relarr_lookup_reloid(ctx, &old_db->rel_arr,
+			old_toast = relarr_lookup_reloid(&old_db->rel_arr,
 											 oldrel->toastrelid, CLUSTER_OLD);
-			new_toast = relarr_lookup_rel(ctx, &new_db->rel_arr,
+			new_toast = relarr_lookup_rel(&new_db->rel_arr,
 										  "pg_toast", new_name, CLUSTER_NEW);
 
 			/* finally create a mapping for them */
-			map_rel(ctx, old_toast, new_toast, old_db, new_db, old_pgdata, new_pgdata,
+			map_rel(old_toast, new_toast, old_db, new_db, old_pgdata, new_pgdata,
 					maps + num_maps);
 			num_maps++;
 
@@ -117,13 +117,13 @@ gen_db_file_maps(migratorContext *ctx, DbInfo *old_db, DbInfo *new_db,
 					 newrel->reloid);
 
 			/* look them up in their respective arrays */
-			old_toast = relarr_lookup_rel(ctx, &old_db->rel_arr,
+			old_toast = relarr_lookup_rel(&old_db->rel_arr,
 										  "pg_toast", old_name, CLUSTER_OLD);
-			new_toast = relarr_lookup_rel(ctx, &new_db->rel_arr,
+			new_toast = relarr_lookup_rel(&new_db->rel_arr,
 										  "pg_toast", new_name, CLUSTER_NEW);
 
 			/* finally create a mapping for them */
-			map_rel(ctx, old_toast, new_toast, old_db, new_db, old_pgdata,
+			map_rel(old_toast, new_toast, old_db, new_db, old_pgdata,
 					new_pgdata, maps + num_maps);
 			num_maps++;
 		}
@@ -135,11 +135,11 @@ gen_db_file_maps(migratorContext *ctx, DbInfo *old_db, DbInfo *new_db,
 
 
 static void
-map_rel(migratorContext *ctx, const RelInfo *oldrel, const RelInfo *newrel,
+map_rel(const RelInfo *oldrel, const RelInfo *newrel,
 		const DbInfo *old_db, const DbInfo *new_db, const char *olddata,
 		const char *newdata, FileNameMap *map)
 {
-	map_rel_by_id(ctx, oldrel->relfilenode, newrel->relfilenode, oldrel->nspname,
+	map_rel_by_id(oldrel->relfilenode, newrel->relfilenode, oldrel->nspname,
 				  oldrel->relname, newrel->nspname, newrel->relname, oldrel->tablespace, old_db,
 				  new_db, olddata, newdata, map);
 }
@@ -151,15 +151,15 @@ map_rel(migratorContext *ctx, const RelInfo *oldrel, const RelInfo *newrel,
  * fills a file node map structure and returns it in "map".
  */
 static void
-map_rel_by_id(migratorContext *ctx, Oid oldid, Oid newid,
+map_rel_by_id(Oid oldid, Oid newid,
 			  const char *old_nspname, const char *old_relname,
 			  const char *new_nspname, const char *new_relname,
 			  const char *old_tablespace, const DbInfo *old_db,
 			  const DbInfo *new_db, const char *olddata,
 			  const char *newdata, FileNameMap *map)
 {
-	map->new = newid;
-	map->old = oldid;
+	map->old_relfilenode = oldid;
+	map->new_relfilenode = newid;
 
 	snprintf(map->old_nspname, sizeof(map->old_nspname), "%s", old_nspname);
 	snprintf(map->old_relname, sizeof(map->old_relname), "%s", old_relname);
@@ -182,28 +182,30 @@ map_rel_by_id(migratorContext *ctx, Oid oldid, Oid newid,
 		 * location
 		 */
 		snprintf(map->old_file, sizeof(map->old_file), "%s%s/%u", old_tablespace,
-				 ctx->old.tablespace_suffix, old_db->db_oid);
+				 old_cluster.tablespace_suffix, old_db->db_oid);
 		snprintf(map->new_file, sizeof(map->new_file), "%s%s/%u", old_tablespace,
-				 ctx->new.tablespace_suffix, new_db->db_oid);
+				 new_cluster.tablespace_suffix, new_db->db_oid);
 	}
 }
 
 
 void
-print_maps(migratorContext *ctx, FileNameMap *maps, int n, const char *dbName)
+print_maps(FileNameMap *maps, int n, const char *dbName)
 {
-	if (ctx->debug)
+	if (log.debug)
 	{
 		int			mapnum;
 
-		pg_log(ctx, PG_DEBUG, "mappings for db %s:\n", dbName);
+		pg_log(PG_DEBUG, "mappings for db %s:\n", dbName);
 
 		for (mapnum = 0; mapnum < n; mapnum++)
-			pg_log(ctx, PG_DEBUG, "%s.%s:%u ==> %s.%s:%u\n",
-				   maps[mapnum].old_nspname, maps[mapnum].old_relname, maps[mapnum].old,
-				   maps[mapnum].new_nspname, maps[mapnum].new_relname, maps[mapnum].new);
+			pg_log(PG_DEBUG, "%s.%s:%u ==> %s.%s:%u\n",
+				   maps[mapnum].old_nspname, maps[mapnum].old_relname,
+												maps[mapnum].old_relfilenode,
+				   maps[mapnum].new_nspname, maps[mapnum].new_relname,
+												maps[mapnum].new_relfilenode);
 
-		pg_log(ctx, PG_DEBUG, "\n\n");
+		pg_log(PG_DEBUG, "\n\n");
 	}
 }
 
@@ -215,9 +217,9 @@ print_maps(migratorContext *ctx, FileNameMap *maps, int n, const char *dbName)
  * databases.
  */
 static void
-get_db_infos(migratorContext *ctx, DbInfoArr *dbinfs_arr, Cluster whichCluster)
+get_db_infos(DbInfoArr *dbinfs_arr, Cluster whichCluster)
 {
-	PGconn	   *conn = connectToServer(ctx, "template1", whichCluster);
+	PGconn	   *conn = connectToServer("template1", whichCluster);
 	PGresult   *res;
 	int			ntups;
 	int			tupnum;
@@ -226,7 +228,7 @@ get_db_infos(migratorContext *ctx, DbInfoArr *dbinfs_arr, Cluster whichCluster)
 	int			i_oid;
 	int			i_spclocation;
 
-	res = executeQueryOrDie(ctx, conn,
+	res = executeQueryOrDie(conn,
 							"SELECT d.oid, d.datname, t.spclocation "
 							"FROM pg_catalog.pg_database d "
 							" LEFT OUTER JOIN pg_catalog.pg_tablespace t "
@@ -238,7 +240,7 @@ get_db_infos(migratorContext *ctx, DbInfoArr *dbinfs_arr, Cluster whichCluster)
 	i_spclocation = PQfnumber(res, "spclocation");
 
 	ntups = PQntuples(res);
-	dbinfos = (DbInfo *) pg_malloc(ctx, sizeof(DbInfo) * ntups);
+	dbinfos = (DbInfo *) pg_malloc(sizeof(DbInfo) * ntups);
 
 	for (tupnum = 0; tupnum < ntups; tupnum++)
 	{
@@ -265,18 +267,18 @@ get_db_infos(migratorContext *ctx, DbInfoArr *dbinfs_arr, Cluster whichCluster)
  * on the given "port". Assumes that server is already running.
  */
 void
-get_db_and_rel_infos(migratorContext *ctx, DbInfoArr *db_arr, Cluster whichCluster)
+get_db_and_rel_infos(DbInfoArr *db_arr, Cluster whichCluster)
 {
 	int			dbnum;
 
-	get_db_infos(ctx, db_arr, whichCluster);
+	get_db_infos(db_arr, whichCluster);
 
 	for (dbnum = 0; dbnum < db_arr->ndbs; dbnum++)
-		get_rel_infos(ctx, &db_arr->dbs[dbnum],
+		get_rel_infos(&db_arr->dbs[dbnum],
 					  &(db_arr->dbs[dbnum].rel_arr), whichCluster);
 
-	if (ctx->debug)
-		dbarr_print(ctx, db_arr, whichCluster);
+	if (log.debug)
+		dbarr_print(db_arr, whichCluster);
 }
 
 
@@ -290,10 +292,10 @@ get_db_and_rel_infos(migratorContext *ctx, DbInfoArr *db_arr, Cluster whichClust
  * FirstNormalObjectId belongs to the user
  */
 static void
-get_rel_infos(migratorContext *ctx, const DbInfo *dbinfo,
+get_rel_infos(const DbInfo *dbinfo,
 			  RelInfoArr *relarr, Cluster whichCluster)
 {
-	PGconn	   *conn = connectToServer(ctx, dbinfo->db_name, whichCluster);
+	PGconn	   *conn = connectToServer(dbinfo->db_name, whichCluster);
 	PGresult   *res;
 	RelInfo    *relinfos;
 	int			ntups;
@@ -339,14 +341,14 @@ get_rel_infos(migratorContext *ctx, const DbInfo *dbinfo,
 			 "ORDER BY n.nspname, c.relname;",
 			 FirstNormalObjectId,
 	/* see the comment at the top of old_8_3_create_sequence_script() */
-			 (GET_MAJOR_VERSION(ctx->old.major_version) <= 803) ?
+			 (GET_MAJOR_VERSION(old_cluster.major_version) <= 803) ?
 			 "" : ", 'S'");
 
-	res = executeQueryOrDie(ctx, conn, query);
+	res = executeQueryOrDie(conn, query);
 
 	ntups = PQntuples(res);
 
-	relinfos = (RelInfo *) pg_malloc(ctx, sizeof(RelInfo) * ntups);
+	relinfos = (RelInfo *) pg_malloc(sizeof(RelInfo) * ntups);
 
 	i_oid = PQfnumber(res, "oid");
 	i_nspname = PQfnumber(res, "nspname");
@@ -416,7 +418,7 @@ dbarr_lookup_db(DbInfoArr *db_arr, const char *db_name)
  * RelInfo structure.
  */
 static RelInfo *
-relarr_lookup_rel(migratorContext *ctx, RelInfoArr *rel_arr,
+relarr_lookup_rel(RelInfoArr *rel_arr,
 				  const char *nspname, const char *relname,
 				  Cluster whichCluster)
 {
@@ -431,7 +433,7 @@ relarr_lookup_rel(migratorContext *ctx, RelInfoArr *rel_arr,
 			strcmp(rel_arr->rels[relnum].relname, relname) == 0)
 			return &rel_arr->rels[relnum];
 	}
-	pg_log(ctx, PG_FATAL, "Could not find %s.%s in %s cluster\n",
+	pg_log(PG_FATAL, "Could not find %s.%s in %s cluster\n",
 		   nspname, relname, CLUSTERNAME(whichCluster));
 	return NULL;
 }
@@ -445,7 +447,7 @@ relarr_lookup_rel(migratorContext *ctx, RelInfoArr *rel_arr,
  *	found.
  */
 static RelInfo *
-relarr_lookup_reloid(migratorContext *ctx, RelInfoArr *rel_arr, Oid oid,
+relarr_lookup_reloid(RelInfoArr *rel_arr, Oid oid,
 					 Cluster whichCluster)
 {
 	int			relnum;
@@ -458,7 +460,7 @@ relarr_lookup_reloid(migratorContext *ctx, RelInfoArr *rel_arr, Oid oid,
 		if (rel_arr->rels[relnum].reloid == oid)
 			return &rel_arr->rels[relnum];
 	}
-	pg_log(ctx, PG_FATAL, "Could not find %d in %s cluster\n",
+	pg_log(PG_FATAL, "Could not find %d in %s cluster\n",
 		   oid, CLUSTERNAME(whichCluster));
 	return NULL;
 }
@@ -484,28 +486,28 @@ dbarr_free(DbInfoArr *db_arr)
 
 
 static void
-dbarr_print(migratorContext *ctx, DbInfoArr *arr, Cluster whichCluster)
+dbarr_print(DbInfoArr *arr, Cluster whichCluster)
 {
 	int			dbnum;
 
-	pg_log(ctx, PG_DEBUG, "%s databases\n", CLUSTERNAME(whichCluster));
+	pg_log(PG_DEBUG, "%s databases\n", CLUSTERNAME(whichCluster));
 
 	for (dbnum = 0; dbnum < arr->ndbs; dbnum++)
 	{
-		pg_log(ctx, PG_DEBUG, "Database: %s\n", arr->dbs[dbnum].db_name);
-		relarr_print(ctx, &arr->dbs[dbnum].rel_arr);
-		pg_log(ctx, PG_DEBUG, "\n\n");
+		pg_log(PG_DEBUG, "Database: %s\n", arr->dbs[dbnum].db_name);
+		relarr_print(&arr->dbs[dbnum].rel_arr);
+		pg_log(PG_DEBUG, "\n\n");
 	}
 }
 
 
 static void
-relarr_print(migratorContext *ctx, RelInfoArr *arr)
+relarr_print(RelInfoArr *arr)
 {
 	int			relnum;
 
 	for (relnum = 0; relnum < arr->nrels; relnum++)
-		pg_log(ctx, PG_DEBUG, "relname: %s.%s: reloid: %u reltblspace: %s\n",
+		pg_log(PG_DEBUG, "relname: %s.%s: reloid: %u reltblspace: %s\n",
 			   arr->rels[relnum].nspname, arr->rels[relnum].relname,
 			   arr->rels[relnum].reloid, arr->rels[relnum].tablespace);
 }

@@ -16,11 +16,14 @@
 #endif
 
 
-static void usage(migratorContext *ctx);
-static void validateDirectoryOption(migratorContext *ctx, char **dirpath,
+static void usage(void);
+static void validateDirectoryOption(char **dirpath,
 				   char *envVarName, char *cmdLineOption, char *description);
-static void get_pkglibdirs(migratorContext *ctx);
-static char *get_pkglibdir(migratorContext *ctx, const char *bindir);
+static void get_pkglibdirs(void);
+static char *get_pkglibdir(const char *bindir);
+
+
+UserOpts     user_opts;
 
 
 /*
@@ -30,7 +33,7 @@ static char *get_pkglibdir(migratorContext *ctx, const char *bindir);
  *	and initializes the rest of the object.
  */
 void
-parseCommandLine(migratorContext *ctx, int argc, char *argv[])
+parseCommandLine(int argc, char *argv[])
 {
 	static struct option long_options[] = {
 		{"old-datadir", required_argument, NULL, 'd'},
@@ -55,39 +58,39 @@ parseCommandLine(migratorContext *ctx, int argc, char *argv[])
 
 	if (getenv("PGUSER"))
 	{
-		pg_free(ctx->user);
-		ctx->user = pg_strdup(ctx, getenv("PGUSER"));
+		pg_free(os_info.user);
+		os_info.user = pg_strdup(getenv("PGUSER"));
 	}
 
-	ctx->progname = get_progname(argv[0]);
-	ctx->old.port = getenv("PGPORT") ? atoi(getenv("PGPORT")) : DEF_PGPORT;
-	ctx->new.port = getenv("PGPORT") ? atoi(getenv("PGPORT")) : DEF_PGPORT;
+	os_info.progname = get_progname(argv[0]);
+	old_cluster.port = getenv("PGPORT") ? atoi(getenv("PGPORT")) : DEF_PGPORT;
+	new_cluster.port = getenv("PGPORT") ? atoi(getenv("PGPORT")) : DEF_PGPORT;
 	/* must save value, getenv()'s pointer is not stable */
 
-	ctx->transfer_mode = TRANSFER_MODE_COPY;
+	user_opts.transfer_mode = TRANSFER_MODE_COPY;
 
 	/* user lookup and 'root' test must be split because of usage() */
-	user_id = get_user_info(ctx, &ctx->user);
+	user_id = get_user_info(&os_info.user);
 
 	if (argc > 1)
 	{
 		if (strcmp(argv[1], "--help") == 0 || strcmp(argv[1], "-h") == 0 ||
 			strcmp(argv[1], "-?") == 0)
 		{
-			usage(ctx);
-			exit_nicely(ctx, false);
+			usage();
+			exit_nicely(false);
 		}
 		if (strcmp(argv[1], "--version") == 0 || strcmp(argv[1], "-V") == 0)
 		{
-			pg_log(ctx, PG_REPORT, "pg_upgrade " PG_VERSION "\n");
-			exit_nicely(ctx, false);
+			pg_log(PG_REPORT, "pg_upgrade " PG_VERSION "\n");
+			exit_nicely(false);
 		}
 	}
 
 	if (user_id == 0)
-		pg_log(ctx, PG_FATAL, "%s: cannot be run as root\n", ctx->progname);
+		pg_log(PG_FATAL, "%s: cannot be run as root\n", os_info.progname);
 
-	getcwd(ctx->cwd, MAXPGPATH);
+	getcwd(os_info.cwd, MAXPGPATH);
 
 	while ((option = getopt_long(argc, argv, "d:D:b:B:cgG:kl:p:P:u:v",
 								 long_options, &optindex)) != -1)
@@ -95,81 +98,81 @@ parseCommandLine(migratorContext *ctx, int argc, char *argv[])
 		switch (option)
 		{
 			case 'd':
-				ctx->old.pgdata = pg_strdup(ctx, optarg);
+				old_cluster.pgdata = pg_strdup(optarg);
 				break;
 
 			case 'D':
-				ctx->new.pgdata = pg_strdup(ctx, optarg);
+				new_cluster.pgdata = pg_strdup(optarg);
 				break;
 
 			case 'b':
-				ctx->old.bindir = pg_strdup(ctx, optarg);
+				old_cluster.bindir = pg_strdup(optarg);
 				break;
 
 			case 'B':
-				ctx->new.bindir = pg_strdup(ctx, optarg);
+				new_cluster.bindir = pg_strdup(optarg);
 				break;
 
 			case 'c':
-				ctx->check = true;
+				user_opts.check = true;
 				break;
 
 			case 'g':
-				pg_log(ctx, PG_REPORT, "Running in debug mode\n");
-				ctx->debug = true;
+				pg_log(PG_REPORT, "Running in debug mode\n");
+				log.debug = true;
 				break;
 
 			case 'G':
-				if ((ctx->debug_fd = fopen(optarg, "w")) == NULL)
+				if ((log.debug_fd = fopen(optarg, "w")) == NULL)
 				{
-					pg_log(ctx, PG_FATAL, "cannot open debug file\n");
-					exit_nicely(ctx, false);
+					pg_log(PG_FATAL, "cannot open debug file\n");
+					exit_nicely(false);
 				}
 				break;
 
 			case 'k':
-				ctx->transfer_mode = TRANSFER_MODE_LINK;
+				user_opts.transfer_mode = TRANSFER_MODE_LINK;
 				break;
 
 			case 'l':
-				ctx->logfile = pg_strdup(ctx, optarg);
+				log.filename = pg_strdup(optarg);
 				break;
 
 			case 'p':
-				if ((ctx->old.port = atoi(optarg)) <= 0)
+				if ((old_cluster.port = atoi(optarg)) <= 0)
 				{
-					pg_log(ctx, PG_FATAL, "invalid old port number\n");
-					exit_nicely(ctx, false);
+					pg_log(PG_FATAL, "invalid old port number\n");
+					exit_nicely(false);
 				}
 				break;
 
 			case 'P':
-				if ((ctx->new.port = atoi(optarg)) <= 0)
+				if ((new_cluster.port = atoi(optarg)) <= 0)
 				{
-					pg_log(ctx, PG_FATAL, "invalid new port number\n");
-					exit_nicely(ctx, false);
+					pg_log(PG_FATAL, "invalid new port number\n");
+					exit_nicely(false);
 				}
 				break;
 
 			case 'u':
-				pg_free(ctx->user);
-				ctx->user = pg_strdup(ctx, optarg);
+				pg_free(os_info.user);
+				os_info.user = pg_strdup(optarg);
 				break;
 
 			case 'v':
-				pg_log(ctx, PG_REPORT, "Running in verbose mode\n");
-				ctx->verbose = true;
+				pg_log(PG_REPORT, "Running in verbose mode\n");
+				log.verbose = true;
 				break;
 
 			default:
-				pg_log(ctx, PG_FATAL,
+				pg_log(PG_FATAL,
 					   "Try \"%s --help\" for more information.\n",
-					   ctx->progname);
+					   os_info.progname);
 				break;
 		}
 	}
 
-	if (ctx->logfile != NULL)
+	if (log.filename != NULL)
 	{
 		/*
 		 * We must use append mode so output generated by child processes via
@@ -177,39 +180,39 @@ parseCommandLine(migratorContext *ctx, int argc, char *argv[])
 		 * start.
 		 */
 		/* truncate */
-		if ((ctx->log_fd = fopen(ctx->logfile, "w")) == NULL)
-			pg_log(ctx, PG_FATAL, "Cannot write to log file %s\n", ctx->logfile);
-		fclose(ctx->log_fd);
-		if ((ctx->log_fd = fopen(ctx->logfile, "a")) == NULL)
-			pg_log(ctx, PG_FATAL, "Cannot write to log file %s\n", ctx->logfile);
+		if ((log.fd = fopen(log.filename, "w")) == NULL)
+			pg_log(PG_FATAL, "Cannot write to log file %s\n", log.filename);
+		fclose(log.fd);
+		if ((log.fd = fopen(log.filename, "a")) == NULL)
+			pg_log(PG_FATAL, "Cannot write to log file %s\n", log.filename);
 	}
 	else
-		ctx->logfile = strdup(DEVNULL);
+		log.filename = strdup(DEVNULL);
 
 	/* if no debug file name, output to the terminal */
-	if (ctx->debug && !ctx->debug_fd)
+	if (log.debug && !log.debug_fd)
 	{
-		ctx->debug_fd = fopen(DEVTTY, "w");
-		if (!ctx->debug_fd)
-			pg_log(ctx, PG_FATAL, "Cannot write to terminal\n");
+		log.debug_fd = fopen(DEVTTY, "w");
+		if (!log.debug_fd)
+			pg_log(PG_FATAL, "Cannot write to terminal\n");
 	}
 
 	/* Get values from env if not already set */
-	validateDirectoryOption(ctx, &ctx->old.pgdata, "OLDDATADIR", "-d",
+	validateDirectoryOption(&old_cluster.pgdata, "OLDDATADIR", "-d",
 							"old cluster data resides");
-	validateDirectoryOption(ctx, &ctx->new.pgdata, "NEWDATADIR", "-D",
+	validateDirectoryOption(&new_cluster.pgdata, "NEWDATADIR", "-D",
 							"new cluster data resides");
-	validateDirectoryOption(ctx, &ctx->old.bindir, "OLDBINDIR", "-b",
+	validateDirectoryOption(&old_cluster.bindir, "OLDBINDIR", "-b",
 							"old cluster binaries reside");
-	validateDirectoryOption(ctx, &ctx->new.bindir, "NEWBINDIR", "-B",
+	validateDirectoryOption(&new_cluster.bindir, "NEWBINDIR", "-B",
 							"new cluster binaries reside");
 
-	get_pkglibdirs(ctx);
+	get_pkglibdirs();
 }
 
 
 static void
-usage(migratorContext *ctx)
+usage(void)
 {
 	printf(_("\nUsage: pg_upgrade [OPTIONS]...\n\
 \n\
@@ -243,7 +246,7 @@ When you run pg_upgrade, you must provide the following information:\n\
 \n\
 For example:\n\
   pg_upgrade -d oldCluster/data -D newCluster/data -b oldCluster/bin -B newCluster/bin\n\
-or\n"), ctx->old.port, ctx->new.port, ctx->user);
+or\n"), old_cluster.port, new_cluster.port, os_info.user);
 #ifndef WIN32
 	printf(_("\
   $ export OLDDATADIR=oldCluster/data\n\
@@ -275,7 +278,7 @@ or\n"), ctx->old.port, ctx->new.port, ctx->user);
  * user hasn't provided the required directory name.
  */
 static void
-validateDirectoryOption(migratorContext *ctx, char **dirpath,
+validateDirectoryOption(char **dirpath,
 					char *envVarName, char *cmdLineOption, char *description)
 {
 	if (*dirpath == NULL || (strlen(*dirpath) == 0))
@@ -283,10 +286,10 @@ validateDirectoryOption(migratorContext *ctx, char **dirpath,
 		const char *envVar;
 
 		if ((envVar = getenv(envVarName)) && strlen(envVar))
-			*dirpath = pg_strdup(ctx, envVar);
+			*dirpath = pg_strdup(envVar);
 		else
 		{
-			pg_log(ctx, PG_FATAL, "You must identify the directory where the %s\n"
+			pg_log(PG_FATAL, "You must identify the directory where the %s\n"
 				   "Please use the %s command-line option or the %s environment variable\n",
 				   description, cmdLineOption, envVarName);
 		}
@@ -306,15 +309,15 @@ validateDirectoryOption(migratorContext *ctx, char **dirpath,
 
 
 static void
-get_pkglibdirs(migratorContext *ctx)
+get_pkglibdirs(void)
 {
-	ctx->old.libpath = get_pkglibdir(ctx, ctx->old.bindir);
-	ctx->new.libpath = get_pkglibdir(ctx, ctx->new.bindir);
+	old_cluster.libpath = get_pkglibdir(old_cluster.bindir);
+	new_cluster.libpath = get_pkglibdir(new_cluster.bindir);
 }
 
 
 static char *
-get_pkglibdir(migratorContext *ctx, const char *bindir)
+get_pkglibdir(const char *bindir)
 {
 	char		cmd[MAXPGPATH];
 	char		bufin[MAX_STRING];
@@ -324,7 +327,7 @@ get_pkglibdir(migratorContext *ctx, const char *bindir)
 	snprintf(cmd, sizeof(cmd), "\"%s/pg_config\" --pkglibdir", bindir);
 
 	if ((output = popen(cmd, "r")) == NULL)
-		pg_log(ctx, PG_FATAL, "Could not get pkglibdir data: %s\n",
+		pg_log(PG_FATAL, "Could not get pkglibdir data: %s\n",
 			   getErrorText(errno));
 
 	fgets(bufin, sizeof(bufin), output);
@@ -338,5 +341,5 @@ get_pkglibdir(migratorContext *ctx, const char *bindir)
 	if (bufin[i] == '\n')
 		bufin[i] = '\0';
 
-	return pg_strdup(ctx, bufin);
+	return pg_strdup(bufin);
 }
