@@ -9,15 +9,6 @@
  * Copyright (c) 2001-2010, PostgreSQL Global Development Group
  * ALL RIGHTS RESERVED;
  *
- * levenshtein()
- * -------------
- * Written based on a description of the algorithm by Michael Gilleland
- * found at http://www.merriampark.com/ld.htm
- * Also looked at levenshtein.c in the PHP 4.0.6 distribution for
- * inspiration.
- * Configurable penalty costs extension is introduced by Volkan
- * YAZICI <volkan.yazici@gmail.com>.
- *
  * metaphone()
  * -----------
  * Modified for PostgreSQL by Joe Conway.
@@ -61,6 +52,8 @@ PG_MODULE_MAGIC;
  */
 extern Datum levenshtein_with_costs(PG_FUNCTION_ARGS);
 extern Datum levenshtein(PG_FUNCTION_ARGS);
+extern Datum levenshtein_less_equal_with_costs(PG_FUNCTION_ARGS);
+extern Datum levenshtein_less_equal(PG_FUNCTION_ARGS);
 extern Datum metaphone(PG_FUNCTION_ARGS);
 extern Datum soundex(PG_FUNCTION_ARGS);
 extern Datum difference(PG_FUNCTION_ARGS);
@@ -84,16 +77,6 @@ soundex_code(char letter)
 		return soundex_table[letter - 'A'];
 	return letter;
 }
-
-
-/*
- * Levenshtein
- */
-#define MAX_LEVENSHTEIN_STRLEN		255
-
-static int levenshtein_internal(text *s, text *t,
-					 int ins_c, int del_c, int sub_c);
-
 
 /*
  * Metaphone
@@ -197,201 +180,9 @@ rest_of_char_same(const char *s1, const char *s2, int len)
 	return true;
 }
 
-/*
- * levenshtein_internal - Calculates Levenshtein distance metric
- *						  between supplied strings. Generally
- *						  (1, 1, 1) penalty costs suffices common
- *						  cases, but your mileage may vary.
- */
-static int
-levenshtein_internal(text *s, text *t,
-					 int ins_c, int del_c, int sub_c)
-{
-	int			m,
-				n,
-				s_bytes,
-				t_bytes;
-	int		   *prev;
-	int		   *curr;
-	int		   *s_char_len = NULL;
-	int			i,
-				j;
-	const char *s_data;
-	const char *t_data;
-	const char *y;
-
-	/* Extract a pointer to the actual character data. */
-	s_data = VARDATA_ANY(s);
-	t_data = VARDATA_ANY(t);
-
-	/* Determine length of each string in bytes and characters. */
-	s_bytes = VARSIZE_ANY_EXHDR(s);
-	t_bytes = VARSIZE_ANY_EXHDR(t);
-	m = pg_mbstrlen_with_len(s_data, s_bytes);
-	n = pg_mbstrlen_with_len(t_data, t_bytes);
-
-	/*
-	 * We can transform an empty s into t with n insertions, or a non-empty t
-	 * into an empty s with m deletions.
-	 */
-	if (!m)
-		return n * ins_c;
-	if (!n)
-		return m * del_c;
-
-	/*
-	 * For security concerns, restrict excessive CPU+RAM usage. (This
-	 * implementation uses O(m) memory and has O(mn) complexity.)
-	 */
-	if (m > MAX_LEVENSHTEIN_STRLEN ||
-		n > MAX_LEVENSHTEIN_STRLEN)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("argument exceeds the maximum length of %d bytes",
-						MAX_LEVENSHTEIN_STRLEN)));
-
-	/*
-	 * In order to avoid calling pg_mblen() repeatedly on each character in s,
-	 * we cache all the lengths before starting the main loop -- but if all the
-	 * characters in both strings are single byte, then we skip this and use
-	 * a fast-path in the main loop.  If only one string contains multi-byte
-	 * characters, we still build the array, so that the fast-path needn't
-	 * deal with the case where the array hasn't been initialized.
-	 */
-	if (m != s_bytes || n != t_bytes)
-	{
-		int		i;
-		const char *cp = s_data;
-
-		s_char_len = (int *) palloc((m + 1) * sizeof(int));
-		for (i = 0; i < m; ++i)
-		{
-			s_char_len[i] = pg_mblen(cp);
-			cp += s_char_len[i];
-		}
-		s_char_len[i] = 0;
-	}
-
-	/* One more cell for initialization column and row. */
-	++m;
-	++n;
-
-	/*
-	 * One way to compute Levenshtein distance is to incrementally construct
-	 * an (m+1)x(n+1) matrix where cell (i, j) represents the minimum number
-	 * of operations required to transform the first i characters of s into
-	 * the first j characters of t.  The last column of the final row is the
-	 * answer.
-	 *
-	 * We use that algorithm here with some modification.  In lieu of holding
-	 * the entire array in memory at once, we'll just use two arrays of size
-	 * m+1 for storing accumulated values. At each step one array represents
-	 * the "previous" row and one is the "current" row of the notional large
-	 * array.
-	 */
-	prev = (int *) palloc(2 * m * sizeof(int));
-	curr = prev + m;
-
-	/*
-	 * To transform the first i characters of s into the first 0 characters
-	 * of t, we must perform i deletions.
-	 */
-	for (i = 0; i < m; i++)
-		prev[i] = i * del_c;
-
-	/* Loop through rows of the notional array */
-	for (y = t_data, j = 1; j < n; j++)
-	{
-		int		   *temp;
-		const char *x = s_data;
-		int			y_char_len = n != t_bytes + 1 ? pg_mblen(y) : 1;
-
-		/*
-		 * To transform the first 0 characters of s into the first j
-		 * characters of t, we must perform j insertions.
-		 */
-		curr[0] = j * ins_c;
-
-		/*
-		 * This inner loop is critical to performance, so we include a
-		 * fast-path to handle the (fairly common) case where no multibyte
-		 * characters are in the mix.  The fast-path is entitled to assume
-		 * that if s_char_len is not initialized then BOTH strings contain
-		 * only single-byte characters.
-		 */
-		if (s_char_len != NULL)
-		{
-			for (i = 1; i < m; i++)
-			{
-				int			ins;
-				int			del;
-				int			sub;
-				int			x_char_len = s_char_len[i - 1];
-
-				/*
-				 * Calculate costs for insertion, deletion, and substitution.
-				 *
-				 * When calculating cost for substitution, we compare the last
-				 * character of each possibly-multibyte character first,
-				 * because that's enough to rule out most mis-matches.  If we
-				 * get past that test, then we compare the lengths and the
-				 * remaining bytes.
-				 */
-				ins = prev[i] + ins_c;
-				del = curr[i - 1] + del_c;
-				if (x[x_char_len-1] == y[y_char_len-1]
-					&& x_char_len == y_char_len &&
-					(x_char_len == 1 || rest_of_char_same(x, y, x_char_len)))
-					sub = prev[i - 1];
-				else
-					sub = prev[i - 1] + sub_c;
-
-				/* Take the one with minimum cost. */
-				curr[i] = Min(ins, del);
-				curr[i] = Min(curr[i], sub);
-
-				/* Point to next character. */
-				x += x_char_len;
-			}
-		}
-		else
-		{
-			for (i = 1; i < m; i++)
-			{
-				int			ins;
-				int			del;
-				int			sub;
-
-				/* Calculate costs for insertion, deletion, and substitution. */
-				ins = prev[i] + ins_c;
-				del = curr[i - 1] + del_c;
-				sub = prev[i - 1] + ((*x == *y) ? 0 : sub_c);
-
-				/* Take the one with minimum cost. */
-				curr[i] = Min(ins, del);
-				curr[i] = Min(curr[i], sub);
-
-				/* Point to next character. */
-				x++;
-			}
-		}
-
-		/* Swap current row with previous row. */
-		temp = curr;
-		curr = prev;
-		prev = temp;
-
-		/* Point to next character. */
-		y += y_char_len;
-	}
-
-	/*
-	 * Because the final value was swapped from the previous row to the
-	 * current row, that's where we'll find it.
-	 */
-	return prev[m - 1];
-}
-
+#include "levenshtein.c"
+#define LEVENSHTEIN_LESS_EQUAL
+#include "levenshtein.c"
 
 PG_FUNCTION_INFO_V1(levenshtein_with_costs);
 Datum
@@ -415,6 +206,33 @@ levenshtein(PG_FUNCTION_ARGS)
 	text	   *dst = PG_GETARG_TEXT_PP(1);
 
 	PG_RETURN_INT32(levenshtein_internal(src, dst, 1, 1, 1));
+}
+
+
+PG_FUNCTION_INFO_V1(levenshtein_less_equal_with_costs);
+Datum
+levenshtein_less_equal_with_costs(PG_FUNCTION_ARGS)
+{
+	text	   *src = PG_GETARG_TEXT_PP(0);
+	text	   *dst = PG_GETARG_TEXT_PP(1);
+	int			ins_c = PG_GETARG_INT32(2);
+	int			del_c = PG_GETARG_INT32(3);
+	int			sub_c = PG_GETARG_INT32(4);
+	int			max_d = PG_GETARG_INT32(5);
+
+	PG_RETURN_INT32(levenshtein_less_equal_internal(src, dst, ins_c, del_c, sub_c, max_d));
+}
+
+
+PG_FUNCTION_INFO_V1(levenshtein_less_equal);
+Datum
+levenshtein_less_equal(PG_FUNCTION_ARGS)
+{
+	text	   *src = PG_GETARG_TEXT_PP(0);
+	text	   *dst = PG_GETARG_TEXT_PP(1);
+	int			max_d = PG_GETARG_INT32(2);
+
+	PG_RETURN_INT32(levenshtein_less_equal_internal(src, dst, 1, 1, 1, max_d));
 }
 
 
