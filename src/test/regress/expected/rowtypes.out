@@ -286,3 +286,41 @@ select row(1,1.1) = any (array[ row(7,7.7), row(1,1.0), row(0,0.0) ]);
  f
 (1 row)
 
+--
+-- Test case derived from bug #5716: check multiple uses of a rowtype result
+--
+BEGIN;
+CREATE TABLE price (
+    id SERIAL PRIMARY KEY,
+    active BOOLEAN NOT NULL,
+    price NUMERIC
+);
+NOTICE:  CREATE TABLE will create implicit sequence "price_id_seq" for serial column "price.id"
+NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "price_pkey" for table "price"
+CREATE TYPE price_input AS (
+    id INTEGER,
+    price NUMERIC
+);
+CREATE TYPE price_key AS (
+    id INTEGER
+);
+CREATE FUNCTION price_key_from_table(price) RETURNS price_key AS $$
+    SELECT $1.id
+$$ LANGUAGE SQL;
+CREATE FUNCTION price_key_from_input(price_input) RETURNS price_key AS $$
+    SELECT $1.id
+$$ LANGUAGE SQL;
+insert into price values (1,false,42), (10,false,100), (11,true,17.99);
+UPDATE price
+    SET active = true, price = input_prices.price
+    FROM unnest(ARRAY[(10, 123.00), (11, 99.99)]::price_input[]) input_prices
+    WHERE price_key_from_table(price.*) = price_key_from_input(input_prices.*);
+select * from price;
+ id | active | price  
+----+--------+--------
+  1 | f      |     42
+ 10 | t      | 123.00
+ 11 | t      |  99.99
+(3 rows)
+
+rollback;

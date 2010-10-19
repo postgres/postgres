@@ -32,6 +32,10 @@ extern Var *makeVar(Index varno,
 extern Var *makeVarFromTargetEntry(Index varno,
 								   TargetEntry *tle);
 
+extern Var *makeWholeRowVar(RangeTblEntry *rte,
+				Index varno,
+				Index varlevelsup);
+
 extern TargetEntry *makeTargetEntry(Expr *expr,
 				AttrNumber resno,
 				char *resname,
