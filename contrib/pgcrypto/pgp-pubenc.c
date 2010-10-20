@@ -199,13 +199,15 @@ pgp_write_pubenc_sesskey(PGP_Context * ctx, PushFilter * dst)
 	PGP_PubKey *pk = ctx->pub_key;
 	uint8		ver = 3;
 	PushFilter *pkt = NULL;
-	uint8		algo = pk->algo;
+	uint8		algo;
 
 	if (pk == NULL)
 	{
 		px_debug("no pubkey?\n");
 		return PXE_BUG;
 	}
+
+	algo = pk->algo;
 
 	/*
 	 * now write packet
