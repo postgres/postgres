@@ -8,11 +8,11 @@ override LIBS := -lecpg -lpgtypes $(libpq) $(LIBS) $(PTHREAD_LIBS)
 ECPG = ../../preproc/ecpg -I$(srcdir)/../../include
 
 %: %.c
-	$(CC) $(CPPFLAGS) $(CFLAGS) $^ $(LDFLAGS) $(LIBS) -o $@
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $*.o
+	$(CC) $(CPPFLAGS) $(CFLAGS) $*.o $(LDFLAGS) $(LIBS) -o $@
 
 %.c: %.pgc ../regression.h
 	$(ECPG) -o $@ -I$(srcdir) $<
 
 clean:
 	rm -f $(TESTS) $(TESTS:%=%.o) $(TESTS:%=%.c)
-
