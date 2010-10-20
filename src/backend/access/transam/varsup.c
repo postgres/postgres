@@ -16,6 +16,7 @@
 #include "access/clog.h"
 #include "access/subtrans.h"
 #include "access/transam.h"
+#include "access/xact.h"
 #include "commands/dbcommands.h"
 #include "miscadmin.h"
 #include "postmaster/autovacuum.h"
@@ -346,13 +347,22 @@ SetTransactionIdLimit(TransactionId oldest_datfrozenxid, Oid oldest_datoid)
 	/* Give an immediate warning if past the wrap warn point */
 	if (TransactionIdFollowsOrEquals(curXid, xidWarnLimit) && !InRecovery)
 	{
-		char	   *oldest_datname = get_database_name(oldest_datoid);
+		char	   *oldest_datname;
 
 		/*
-		 * Note: it's possible that get_database_name fails and returns NULL,
-		 * for example because the database just got dropped.  We'll still
-		 * warn, even though the warning might now be unnecessary.
+		 * We can be called when not inside a transaction, for example
+		 * during StartupXLOG().  In such a case we cannot do database
+		 * access, so we must just report the oldest DB's OID.
+		 *
+		 * Note: it's also possible that get_database_name fails and returns
+		 * NULL, for example because the database just got dropped.  We'll
+		 * still warn, even though the warning might now be unnecessary.
 		 */
+		if (IsTransactionState())
+			oldest_datname = get_database_name(oldest_datoid);
+		else
+			oldest_datname = NULL;
+
 		if (oldest_datname)
 			ereport(WARNING,
 			(errmsg("database \"%s\" must be vacuumed within %u transactions",
