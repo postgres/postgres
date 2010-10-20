@@ -1847,9 +1847,6 @@ GRANT SELECT ON tables TO PUBLIC;
  * TRIGGERED_UPDATE_COLUMNS view
  */
 
--- PostgreSQL doesn't allow the specification of individual triggered
--- update columns, so this view is empty.
-
 CREATE VIEW triggered_update_columns AS
     SELECT CAST(current_database() AS sql_identifier) AS trigger_catalog,
            CAST(n.nspname AS sql_identifier) AS trigger_schema,
