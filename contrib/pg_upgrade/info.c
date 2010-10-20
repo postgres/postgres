@@ -423,11 +423,21 @@ relarr_lookup_rel(RelInfoArr *rel_arr,
 				  const char *nspname, const char *relname,
 				  Cluster whichCluster)
 {
-	int			relnum;
+	static int			relnum = 0;
 
 	if (!rel_arr || !relname)
 		return NULL;
 
+	/* Test most recent lookup first, for speed */
+	if (strcmp(rel_arr->rels[relnum].nspname, nspname) == 0 &&
+		strcmp(rel_arr->rels[relnum].relname, relname) == 0)
+		return &rel_arr->rels[relnum];
+
+	if (relnum + 1 < rel_arr->nrels &&
+		strcmp(rel_arr->rels[relnum + 1].nspname, nspname) == 0 &&
+		strcmp(rel_arr->rels[relnum + 1].relname, relname) == 0)
+		return &rel_arr->rels[relnum + 1];
+	
 	for (relnum = 0; relnum < rel_arr->nrels; relnum++)
 	{
 		if (strcmp(rel_arr->rels[relnum].nspname, nspname) == 0 &&
