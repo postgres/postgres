@@ -66,7 +66,7 @@ gen_db_file_maps(DbInfo *old_db, DbInfo *new_db,
 		if (strcmp(newrel->nspname, "pg_toast") == 0)
 			continue;
 
-		oldrel = relarr_lookup_rel(&(old_db->rel_arr), newrel->nspname,
+		oldrel = relarr_lookup_rel(&old_db->rel_arr, newrel->nspname,
 								   newrel->relname, CLUSTER_OLD);
 
 		map_rel(oldrel, newrel, old_db, new_db, old_pgdata, new_pgdata,
@@ -275,7 +275,7 @@ get_db_and_rel_infos(DbInfoArr *db_arr, Cluster whichCluster)
 
 	for (dbnum = 0; dbnum < db_arr->ndbs; dbnum++)
 		get_rel_infos(&db_arr->dbs[dbnum],
-					  &(db_arr->dbs[dbnum].rel_arr), whichCluster);
+					  &db_arr->dbs[dbnum].rel_arr, whichCluster);
 
 	if (log.debug)
 		dbarr_print(db_arr, whichCluster);
@@ -292,8 +292,7 @@ get_db_and_rel_infos(DbInfoArr *db_arr, Cluster whichCluster)
  * FirstNormalObjectId belongs to the user
  */
 static void
-get_rel_infos(const DbInfo *dbinfo,
-			  RelInfoArr *relarr, Cluster whichCluster)
+get_rel_infos(const DbInfo *dbinfo, RelInfoArr *relarr, Cluster whichCluster)
 {
 	PGconn	   *conn = connectToServer(dbinfo->db_name, whichCluster);
 	PGresult   *res;
@@ -386,6 +385,7 @@ get_rel_infos(const DbInfo *dbinfo,
 
 	relarr->rels = relinfos;
 	relarr->nrels = num_rels;
+	relarr->cache_name_rel = 0;
 }
 
 
@@ -419,31 +419,31 @@ dbarr_lookup_db(DbInfoArr *db_arr, const char *db_name)
  * RelInfo structure.
  */
 static RelInfo *
-relarr_lookup_rel(RelInfoArr *rel_arr,
-				  const char *nspname, const char *relname,
-				  Cluster whichCluster)
+relarr_lookup_rel(RelInfoArr *rel_arr, const char *nspname,
+					const char *relname, Cluster whichCluster)
 {
-	static int			relnum = 0;
+	int			relnum;
 
 	if (!rel_arr || !relname)
 		return NULL;
 
-	/* Test most recent lookup first, for speed */
-	if (relnum < rel_arr->nrels &&
-		strcmp(rel_arr->rels[relnum].nspname, nspname) == 0 &&
-		strcmp(rel_arr->rels[relnum].relname, relname) == 0)
-		return &rel_arr->rels[relnum];
+	/* Test next lookup first, for speed */
+	if (rel_arr->cache_name_rel + 1 < rel_arr->nrels &&
+		strcmp(rel_arr->rels[rel_arr->cache_name_rel + 1].nspname, nspname) == 0 &&
+		strcmp(rel_arr->rels[rel_arr->cache_name_rel + 1].relname, relname) == 0)
+	{
+		rel_arr->cache_name_rel++;
+		return &rel_arr->rels[rel_arr->cache_name_rel];
+	}
 
-	if (relnum + 1 < rel_arr->nrels &&
-		strcmp(rel_arr->rels[relnum + 1].nspname, nspname) == 0 &&
-		strcmp(rel_arr->rels[relnum + 1].relname, relname) == 0)
-		return &rel_arr->rels[relnum + 1];
-	
 	for (relnum = 0; relnum < rel_arr->nrels; relnum++)
 	{
 		if (strcmp(rel_arr->rels[relnum].nspname, nspname) == 0 &&
 			strcmp(rel_arr->rels[relnum].relname, relname) == 0)
+		{
+			rel_arr->cache_name_rel = relnum;
 			return &rel_arr->rels[relnum];
+		}
 	}
 	pg_log(PG_FATAL, "Could not find %s.%s in %s cluster\n",
 		   nspname, relname, CLUSTERNAME(whichCluster));
@@ -483,6 +483,7 @@ relarr_free(RelInfoArr *rel_arr)
 {
 	pg_free(rel_arr->rels);
 	rel_arr->nrels = 0;
+	rel_arr->cache_name_rel = 0;
 }
 
 
