@@ -197,7 +197,7 @@ typedef struct
 
 
 /*
- *	Log
+ *	LogOpts
 */
 typedef struct
 {
@@ -206,7 +206,7 @@ typedef struct
 	bool		debug;			/* TRUE -> log more information */
 	FILE	   *debug_fd;		/* debug-level log FILE */
 	bool		verbose;		/* TRUE -> be verbose in messages */
-} Log;
+} LogOpts;
 
 
 /*
@@ -241,7 +241,7 @@ typedef struct
 /*
  * Global variables
  */
-extern Log	log;
+extern LogOpts	log_opts;
 extern UserOpts user_opts;
 extern ClusterInfo old_cluster,
 			new_cluster;

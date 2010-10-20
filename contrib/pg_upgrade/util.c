@@ -12,7 +12,7 @@
 #include <signal.h>
 
 
-Log			log;
+LogOpts			log_opts;
 
 /*
  * report_status()
@@ -75,19 +75,19 @@ pg_log(eLogType type, char *fmt,...)
 	vsnprintf(message, sizeof(message), fmt, args);
 	va_end(args);
 
-	if (log.fd != NULL)
+	if (log_opts.fd != NULL)
 	{
-		fwrite(message, strlen(message), 1, log.fd);
+		fwrite(message, strlen(message), 1, log_opts.fd);
 		/* if we are using OVERWRITE_MESSAGE, add newline */
 		if (strchr(message, '\r') != NULL)
-			fwrite("\n", 1, 1, log.fd);
-		fflush(log.fd);
+			fwrite("\n", 1, 1, log_opts.fd);
+		fflush(log_opts.fd);
 	}
 
 	switch (type)
 	{
 		case PG_INFO:
-			if (log.verbose)
+			if (log_opts.verbose)
 				printf("%s", _(message));
 			break;
 
@@ -103,8 +103,8 @@ pg_log(eLogType type, char *fmt,...)
 			break;
 
 		case PG_DEBUG:
-			if (log.debug)
-				fprintf(log.debug_fd, "%s\n", _(message));
+			if (log_opts.debug)
+				fprintf(log_opts.debug_fd, "%s\n", _(message));
 			break;
 
 		default:
@@ -189,13 +189,13 @@ exit_nicely(bool need_cleanup)
 {
 	stop_postmaster(true, true);
 
-	pg_free(log.filename);
+	pg_free(log_opts.filename);
 
-	if (log.fd)
-		fclose(log.fd);
+	if (log_opts.fd)
+		fclose(log_opts.fd);
 
-	if (log.debug_fd)
-		fclose(log.debug_fd);
+	if (log_opts.debug_fd)
+		fclose(log_opts.debug_fd);
 
 	/* terminate any running instance of postmaster */
 	if (os_info.postmasterPID != 0)

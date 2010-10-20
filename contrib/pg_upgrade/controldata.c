@@ -126,8 +126,8 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 	/* we have the result of cmd in "output". so parse it line by line now */
 	while (fgets(bufin, sizeof(bufin), output))
 	{
-		if (log.debug)
-			fputs(bufin, log.debug_fd);
+		if (log_opts.debug)
+			fputs(bufin, log_opts.debug_fd);
 
 #ifdef WIN32
 

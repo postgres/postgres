@@ -162,7 +162,7 @@ prepare_new_cluster(void)
 	exec_prog(true,
 			  SYSTEMQUOTE "\"%s/vacuumdb\" --port %d --username \"%s\" "
 			  "--all --analyze >> %s 2>&1" SYSTEMQUOTE,
-		   new_cluster.bindir, new_cluster.port, os_info.user, log.filename);
+		   new_cluster.bindir, new_cluster.port, os_info.user, log_opts.filename);
 	check_ok();
 
 	/*
@@ -175,7 +175,7 @@ prepare_new_cluster(void)
 	exec_prog(true,
 			  SYSTEMQUOTE "\"%s/vacuumdb\" --port %d --username \"%s\" "
 			  "--all --freeze >> %s 2>&1" SYSTEMQUOTE,
-		   new_cluster.bindir, new_cluster.port, os_info.user, log.filename);
+		   new_cluster.bindir, new_cluster.port, os_info.user, log_opts.filename);
 	check_ok();
 
 	get_pg_database_relfilenode(CLUSTER_NEW);
@@ -207,7 +207,7 @@ prepare_new_databases(void)
 			  "--no-psqlrc --port %d --username \"%s\" "
 			  "-f \"%s/%s\" --dbname template1 >> \"%s\"" SYSTEMQUOTE,
 			  new_cluster.bindir, new_cluster.port, os_info.user, os_info.cwd,
-			  GLOBALS_DUMP_FILE, log.filename);
+			  GLOBALS_DUMP_FILE, log_opts.filename);
 	check_ok();
 
 	get_db_and_rel_infos(&new_cluster.dbarr, CLUSTER_NEW);
@@ -230,7 +230,7 @@ create_new_objects(void)
 			  "--no-psqlrc --port %d --username \"%s\" "
 			  "-f \"%s/%s\" --dbname template1 >> \"%s\"" SYSTEMQUOTE,
 			  new_cluster.bindir, new_cluster.port, os_info.user, os_info.cwd,
-			  DB_DUMP_FILE, log.filename);
+			  DB_DUMP_FILE, log_opts.filename);
 	check_ok();
 
 	/* regenerate now that we have db schemas */
@@ -282,7 +282,7 @@ copy_clog_xlog_xid(void)
 	exec_prog(true, SYSTEMQUOTE "\"%s/pg_resetxlog\" -l %u,%u,%u \"%s\" >> \"%s\" 2>&1" SYSTEMQUOTE,
 			  new_cluster.bindir, old_cluster.controldata.chkpnt_tli,
 			old_cluster.controldata.logid, old_cluster.controldata.nxtlogseg,
-			  new_cluster.pgdata, log.filename);
+			  new_cluster.pgdata, log_opts.filename);
 	check_ok();
 }
 
@@ -384,7 +384,7 @@ cleanup(void)
 
 	dbarr_free(&old_cluster.dbarr);
 	dbarr_free(&new_cluster.dbarr);
-	pg_free(log.filename);
+	pg_free(log_opts.filename);
 	pg_free(os_info.user);
 	pg_free(old_cluster.major_version_str);
 	pg_free(new_cluster.major_version_str);
@@ -397,14 +397,14 @@ cleanup(void)
 	pg_free(old_cluster.tablespace_suffix);
 	pg_free(new_cluster.tablespace_suffix);
 
-	if (log.fd != NULL)
+	if (log_opts.fd != NULL)
 	{
-		fclose(log.fd);
-		log.fd = NULL;
+		fclose(log_opts.fd);
+		log_opts.fd = NULL;
 	}
 
-	if (log.debug_fd)
-		fclose(log.debug_fd);
+	if (log_opts.debug_fd)
+		fclose(log_opts.debug_fd);
 
 	snprintf(filename, sizeof(filename), "%s/%s", os_info.cwd, ALL_DUMP_FILE);
 	unlink(filename);

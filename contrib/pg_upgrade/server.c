@@ -185,7 +185,7 @@ start_postmaster(Cluster whichCluster, bool quiet)
 			 "start >> \"%s\" 2>&1" SYSTEMQUOTE,
 			 bindir,
 #ifndef WIN32
-			 log.filename, datadir, port, log.filename);
+			 log_opts.filename, datadir, port, log_opts.filename);
 #else
 			 DEVNULL, datadir, port, DEVNULL);
 #endif
@@ -229,7 +229,7 @@ stop_postmaster(bool fast, bool quiet)
 			 "\"%s\" 2>&1" SYSTEMQUOTE,
 			 bindir,
 #ifndef WIN32
-			 log.filename, datadir, fast ? "-m fast" : "", log.filename);
+			 log_opts.filename, datadir, fast ? "-m fast" : "", log_opts.filename);
 #else
 			 DEVNULL, datadir, fast ? "-m fast" : "", DEVNULL);
 #endif

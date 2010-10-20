@@ -192,7 +192,7 @@ map_rel_by_id(Oid oldid, Oid newid,
 void
 print_maps(FileNameMap *maps, int n, const char *dbName)
 {
-	if (log.debug)
+	if (log_opts.debug)
 	{
 		int			mapnum;
 
@@ -277,7 +277,7 @@ get_db_and_rel_infos(DbInfoArr *db_arr, Cluster whichCluster)
 		get_rel_infos(&db_arr->dbs[dbnum],
 					  &db_arr->dbs[dbnum].rel_arr, whichCluster);
 
-	if (log.debug)
+	if (log_opts.debug)
 		dbarr_print(db_arr, whichCluster);
 }
 
