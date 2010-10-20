@@ -10,8 +10,15 @@
  <para>
   The <filename>isn</filename> module provides data types for the following
   international product numbering standards: EAN13, UPC, ISBN (books), ISMN
-  (music), and ISSN (serials).  Numbers are validated on input, and correctly
-  hyphenated on output.
+  (music), and ISSN (serials).  Numbers are validated on input according to a
+  hard-coded list of prefixes; this list of prefixes is also used to hyphenate
+  numbers on output.  Since new prefixes are assigned from time to time, the
+  list of prefixes may be out of date.  It is hoped that a future version of
+  this module will obtained the prefix list from one or more tables that
+  can be easily updated by users as needed; however, at present, the
+  list can only be updated by modifying the source code and recompiling.
+  Alternatively, prefix validation and hyphenation support may be
+  dropped from a future version of this module.
  </para>
 
  <sect2>
