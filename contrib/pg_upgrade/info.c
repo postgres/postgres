@@ -74,8 +74,8 @@ gen_db_file_maps(DbInfo *old_db, DbInfo *new_db,
 		num_maps++;
 
 		/*
-		 * so much for the mapping of this relation. Now we need a mapping for
-		 * its corresponding toast relation if any.
+		 * So much for mapping this relation;  now we need a mapping
+		 * for its corresponding toast relation, if any.
 		 */
 		if (oldrel->toastrelid > 0)
 		{
@@ -117,6 +117,7 @@ gen_db_file_maps(DbInfo *old_db, DbInfo *new_db,
 					 newrel->reloid);
 
 			/* look them up in their respective arrays */
+			/* we lose our cache location here */
 			old_toast = relarr_lookup_rel(&old_db->rel_arr,
 										  "pg_toast", old_name, CLUSTER_OLD);
 			new_toast = relarr_lookup_rel(&new_db->rel_arr,
@@ -385,7 +386,7 @@ get_rel_infos(const DbInfo *dbinfo, RelInfoArr *relarr, Cluster whichCluster)
 
 	relarr->rels = relinfos;
 	relarr->nrels = num_rels;
-	relarr->cache_name_rel = 0;
+	relarr->last_relname_lookup = 0;
 }
 
 
@@ -398,9 +399,6 @@ DbInfo *
 dbarr_lookup_db(DbInfoArr *db_arr, const char *db_name)
 {
 	int			dbnum;
-
-	if (!db_arr || !db_name)
-		return NULL;
 
 	for (dbnum = 0; dbnum < db_arr->ndbs; dbnum++)
 	{
@@ -424,16 +422,13 @@ relarr_lookup_rel(RelInfoArr *rel_arr, const char *nspname,
 {
 	int			relnum;
 
-	if (!rel_arr || !relname)
-		return NULL;
-
 	/* Test next lookup first, for speed */
-	if (rel_arr->cache_name_rel + 1 < rel_arr->nrels &&
-		strcmp(rel_arr->rels[rel_arr->cache_name_rel + 1].nspname, nspname) == 0 &&
-		strcmp(rel_arr->rels[rel_arr->cache_name_rel + 1].relname, relname) == 0)
+	if (rel_arr->last_relname_lookup + 1 < rel_arr->nrels &&
+		strcmp(rel_arr->rels[rel_arr->last_relname_lookup + 1].nspname, nspname) == 0 &&
+		strcmp(rel_arr->rels[rel_arr->last_relname_lookup + 1].relname, relname) == 0)
 	{
-		rel_arr->cache_name_rel++;
-		return &rel_arr->rels[rel_arr->cache_name_rel];
+		rel_arr->last_relname_lookup++;
+		return &rel_arr->rels[rel_arr->last_relname_lookup];
 	}
 
 	for (relnum = 0; relnum < rel_arr->nrels; relnum++)
@@ -441,7 +436,7 @@ relarr_lookup_rel(RelInfoArr *rel_arr, const char *nspname,
 		if (strcmp(rel_arr->rels[relnum].nspname, nspname) == 0 &&
 			strcmp(rel_arr->rels[relnum].relname, relname) == 0)
 		{
-			rel_arr->cache_name_rel = relnum;
+			rel_arr->last_relname_lookup = relnum;
 			return &rel_arr->rels[relnum];
 		}
 	}
@@ -464,9 +459,6 @@ relarr_lookup_reloid(RelInfoArr *rel_arr, Oid oid,
 {
 	int			relnum;
 
-	if (!rel_arr || !oid)
-		return NULL;
-
 	for (relnum = 0; relnum < rel_arr->nrels; relnum++)
 	{
 		if (rel_arr->rels[relnum].reloid == oid)
@@ -483,7 +475,7 @@ relarr_free(RelInfoArr *rel_arr)
 {
 	pg_free(rel_arr->rels);
 	rel_arr->nrels = 0;
-	rel_arr->cache_name_rel = 0;
+	rel_arr->last_relname_lookup = 0;
 }
 
 

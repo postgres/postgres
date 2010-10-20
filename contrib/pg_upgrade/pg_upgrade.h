@@ -78,7 +78,7 @@ typedef struct
 {
 	RelInfo    *rels;
 	int			nrels;
-	int			cache_name_rel;	/* cache of last lookup location */
+	int			last_relname_lookup;	/* cache of last lookup location */
 } RelInfoArr;
 
 /*
