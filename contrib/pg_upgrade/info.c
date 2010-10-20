@@ -429,7 +429,8 @@ relarr_lookup_rel(RelInfoArr *rel_arr,
 		return NULL;
 
 	/* Test most recent lookup first, for speed */
-	if (strcmp(rel_arr->rels[relnum].nspname, nspname) == 0 &&
+	if (relnum < rel_arr->nrels &&
+		strcmp(rel_arr->rels[relnum].nspname, nspname) == 0 &&
 		strcmp(rel_arr->rels[relnum].relname, relname) == 0)
 		return &rel_arr->rels[relnum];
 
