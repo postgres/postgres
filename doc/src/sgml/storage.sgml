@@ -174,8 +174,6 @@ adjusted using the configuration option <option>--with-segsize</option>
 when building <productname>PostgreSQL</>.)
 In principle, free space map and visibility map forks could require multiple
 segments as well, though this is unlikely to happen in practice.
-The contents of tables and indexes are discussed further in
-<xref linkend="storage-page-layout">.
 </para>
 
 <para>
@@ -188,14 +186,26 @@ See <xref linkend="storage-toast"> for more information.
 </para>
 
 <para>
+The contents of tables and indexes are discussed further in
+<xref linkend="storage-page-layout">.
+</para>
+
+<para>
 Tablespaces make the scenario more complicated.  Each user-defined tablespace
 has a symbolic link inside the <varname>PGDATA</><filename>/pg_tblspc</>
-directory, which points to the physical tablespace directory (as specified in
-its <command>CREATE TABLESPACE</> command).  The symbolic link is named after
+directory, which points to the physical tablespace directory (i.e., the
+location specified in the tablespace's <command>CREATE TABLESPACE</> command).
+This symbolic link is named after
 the tablespace's OID.  Inside the physical tablespace directory there is
+a subdirectory with a name that depends on the <productname>PostgreSQL</>
+server version, such as <literal>PG_9.0_201008051</>.  (The reason for using
+this subdirectory is so that successive versions of the database can use
+the same <command>CREATE TABLESPACE</> location value without conflicts.)
+Within the version-specific subdirectory, there is
 a subdirectory for each database that has elements in the tablespace, named
-after the database's OID.  Tables within that directory follow the filenode
-naming scheme.  The <literal>pg_default</> tablespace is not accessed through
+after the database's OID.  Tables and indexes are stored within that
+directory, using the filenode naming scheme.
+The <literal>pg_default</> tablespace is not accessed through
 <filename>pg_tblspc</>, but corresponds to
 <varname>PGDATA</><filename>/base</>.  Similarly, the <literal>pg_global</>
 tablespace is not accessed through <filename>pg_tblspc</>, but corresponds to
