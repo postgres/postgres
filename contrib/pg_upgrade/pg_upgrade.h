@@ -85,10 +85,10 @@ typedef struct
  */
 typedef struct
 {
+	char		old_dir[MAXPGPATH];
+	char		new_dir[MAXPGPATH];
 	Oid			old_relfilenode;	/* Relfilenode of the old relation */
 	Oid			new_relfilenode;	/* Relfilenode of the new relation */
-	char		old_file[MAXPGPATH];
-	char		new_file[MAXPGPATH];
 	char		old_nspname[NAMEDATALEN];		/* old name of the namespace */
 	char		old_relname[NAMEDATALEN];		/* old name of the relation */
 	char		new_nspname[NAMEDATALEN];		/* new name of the namespace */
@@ -255,10 +255,8 @@ void check_old_cluster(bool live_check,
 				  char **sequence_script_file_name);
 void		check_new_cluster(void);
 void		report_clusters_compatible(void);
-void issue_warnings(
-			   char *sequence_script_file_name);
-void output_completion_banner(
-						 char *deletion_script_file_name);
+void issue_warnings(char *sequence_script_file_name);
+void output_completion_banner(char *deletion_script_file_name);
 void		check_cluster_versions(void);
 void		check_cluster_compatibility(bool live_check);
 void		create_script_for_old_cluster_deletion(char **deletion_script_file_name);
@@ -319,14 +317,12 @@ typedef void *pageCnvCtx;
 #endif
 
 int			dir_matching_filenames(const struct dirent * scan_ent);
-int pg_scandir(const char *dirname,
-		   struct dirent *** namelist,
-		   int (*selector) (const struct dirent *));
-const char *copyAndUpdateFile(
-				  pageCnvCtx *pageConverter, const char *src,
+int pg_scandir(const char *dirname, struct dirent *** namelist,
+			   int (*selector) (const struct dirent *));
+const char *copyAndUpdateFile(pageCnvCtx *pageConverter, const char *src,
 				  const char *dst, bool force);
-const char *linkAndUpdateFile(
-				pageCnvCtx *pageConverter, const char *src, const char *dst);
+const char *linkAndUpdateFile(pageCnvCtx *pageConverter, const char *src,
+							  const char *dst);
 
 void		check_hard_link(void);
 
@@ -374,8 +370,7 @@ PGresult *executeQueryOrDie(PGconn *conn,
 
 void		start_postmaster(Cluster whichCluster, bool quiet);
 void		stop_postmaster(bool fast, bool quiet);
-uint32 get_major_server_version(char **verstr,
-						 Cluster whichCluster);
+uint32 get_major_server_version(char **verstr, Cluster whichCluster);
 void		check_for_libpq_envvars(void);
 
 

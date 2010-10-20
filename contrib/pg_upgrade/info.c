@@ -30,8 +30,8 @@ static void map_rel_by_id(Oid oldid, Oid newid,
 			  const char *old_tablespace, const DbInfo *old_db,
 			  const DbInfo *new_db, const char *olddata,
 			  const char *newdata, FileNameMap *map);
-static RelInfo *relarr_lookup_reloid(
-					 RelInfoArr *rel_arr, Oid oid, Cluster whichCluster);
+static RelInfo *relarr_lookup_reloid(RelInfoArr *rel_arr,
+				Oid oid, Cluster whichCluster);
 static RelInfo *relarr_lookup_rel(RelInfoArr *rel_arr,
 				  const char *nspname, const char *relname,
 				  Cluster whichCluster);
@@ -172,8 +172,8 @@ map_rel_by_id(Oid oldid, Oid newid,
 		 * relation belongs to the default tablespace, hence relfiles would
 		 * exist in the data directories.
 		 */
-		snprintf(map->old_file, sizeof(map->old_file), "%s/base/%u", olddata, old_db->db_oid);
-		snprintf(map->new_file, sizeof(map->new_file), "%s/base/%u", newdata, new_db->db_oid);
+		snprintf(map->old_dir, sizeof(map->old_dir), "%s/base/%u", olddata, old_db->db_oid);
+		snprintf(map->new_dir, sizeof(map->new_dir), "%s/base/%u", newdata, new_db->db_oid);
 	}
 	else
 	{
@@ -181,9 +181,9 @@ map_rel_by_id(Oid oldid, Oid newid,
 		 * relation belongs to some tablespace, hence copy its physical
 		 * location
 		 */
-		snprintf(map->old_file, sizeof(map->old_file), "%s%s/%u", old_tablespace,
+		snprintf(map->old_dir, sizeof(map->old_dir), "%s%s/%u", old_tablespace,
 				 old_cluster.tablespace_suffix, old_db->db_oid);
-		snprintf(map->new_file, sizeof(map->new_file), "%s%s/%u", old_tablespace,
+		snprintf(map->new_dir, sizeof(map->new_dir), "%s%s/%u", old_tablespace,
 				 new_cluster.tablespace_suffix, new_db->db_oid);
 	}
 }
@@ -318,6 +318,7 @@ get_rel_infos(const DbInfo *dbinfo,
 	 * pg_largeobject_loid_pn_index's relfilenode can change if the table was
 	 * reindexed so we get the relfilenode for each database and migrate it as
 	 * a normal user table.
+	 * Order by tablespace so we can cache the directory contents efficiently.
 	 */
 
 	snprintf(query, sizeof(query),
@@ -338,7 +339,7 @@ get_rel_infos(const DbInfo *dbinfo,
 			 "GROUP BY  c.oid, n.nspname, c.relname, c.relfilenode,"
 			 "			c.reltoastrelid, t.spclocation, "
 			 "			n.nspname "
-			 "ORDER BY n.nspname, c.relname;",
+			 "ORDER BY t.spclocation, n.nspname, c.relname;",
 			 FirstNormalObjectId,
 	/* see the comment at the top of old_8_3_create_sequence_script() */
 			 (GET_MAJOR_VERSION(old_cluster.major_version) <= 803) ?

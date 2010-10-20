@@ -110,20 +110,38 @@ static void
 transfer_single_new_db(pageCnvCtx *pageConverter,
 					   FileNameMap *maps, int size)
 {
+	char		old_dir[MAXPGPATH];
+	struct dirent **namelist = NULL;
+	int			numFiles = 0;
 	int			mapnum;
+	int			fileno;
+
+	old_dir[0] = '\0';
 
 	for (mapnum = 0; mapnum < size; mapnum++)
 	{
 		char		old_file[MAXPGPATH];
 		char		new_file[MAXPGPATH];
-		struct dirent **namelist = NULL;
-		int			numFiles;
+
+		/* Changed tablespaces?  Need a new directory scan? */
+		if (strcmp(maps[mapnum].old_dir, old_dir) != 0)
+		{
+			if (numFiles > 0)
+			{
+				for (fileno = 0; fileno < numFiles; fileno++)
+					pg_free(namelist[fileno]);
+				pg_free(namelist);
+			}
+
+			snprintf(old_dir, sizeof(old_dir), "%s", maps[mapnum].old_dir);
+			numFiles = pg_scandir(old_dir, &namelist, NULL);
+		}
 
 		/* Copying files might take some time, so give feedback. */
 
-		snprintf(old_file, sizeof(old_file), "%s/%u", maps[mapnum].old_file,
+		snprintf(old_file, sizeof(old_file), "%s/%u", maps[mapnum].old_dir,
 				 maps[mapnum].old_relfilenode);
-		snprintf(new_file, sizeof(new_file), "%s/%u", maps[mapnum].new_file,
+		snprintf(new_file, sizeof(new_file), "%s/%u", maps[mapnum].new_dir,
 				 maps[mapnum].new_relfilenode);
 		pg_log(PG_REPORT, OVERWRITE_MESSAGE, old_file);
 
@@ -139,28 +157,27 @@ transfer_single_new_db(pageCnvCtx *pageConverter,
 		if (GET_MAJOR_VERSION(old_cluster.major_version) >= 804)
 		{
 			/*
-			 * Now copy/link any fsm and vm files, if they exist
+			 * Copy/link any fsm and vm files, if they exist
 			 */
 			snprintf(scandir_file_pattern, sizeof(scandir_file_pattern), "%u_",
 					 maps[mapnum].old_relfilenode);
-			numFiles = pg_scandir(maps[mapnum].old_file, &namelist, dir_matching_filenames);
 
-			while (numFiles--)
+			for (fileno = 0; fileno < numFiles; fileno++)
 			{
-				snprintf(old_file, sizeof(old_file), "%s/%s", maps[mapnum].old_file,
-						 namelist[numFiles]->d_name);
-				snprintf(new_file, sizeof(new_file), "%s/%u%s", maps[mapnum].new_file,
-						 maps[mapnum].new_relfilenode, strchr(namelist[numFiles]->d_name, '_'));
-
-				unlink(new_file);
-				transfer_relfile(pageConverter, old_file, new_file,
-						  maps[mapnum].old_nspname, maps[mapnum].old_relname,
-						 maps[mapnum].new_nspname, maps[mapnum].new_relname);
-
-				pg_free(namelist[numFiles]);
+				if (strncmp(namelist[fileno]->d_name, scandir_file_pattern,
+					strlen(scandir_file_pattern)) == 0)
+				{
+					snprintf(old_file, sizeof(old_file), "%s/%s", maps[mapnum].old_dir,
+							 namelist[fileno]->d_name);
+					snprintf(new_file, sizeof(new_file), "%s/%u%s", maps[mapnum].new_dir,
+							 maps[mapnum].new_relfilenode, strchr(namelist[fileno]->d_name, '_'));
+	
+					unlink(new_file);
+					transfer_relfile(pageConverter, old_file, new_file,
+							  maps[mapnum].old_nspname, maps[mapnum].old_relname,
+							 maps[mapnum].new_nspname, maps[mapnum].new_relname);
+				}
 			}
-
-			pg_free(namelist);
 		}
 
 		/*
@@ -172,23 +189,30 @@ transfer_single_new_db(pageCnvCtx *pageConverter,
 		 */
 		snprintf(scandir_file_pattern, sizeof(scandir_file_pattern), "%u.",
 				 maps[mapnum].old_relfilenode);
-		numFiles = pg_scandir(maps[mapnum].old_file, &namelist, dir_matching_filenames);
 
-		while (numFiles--)
+		for (fileno = 0; fileno < numFiles; fileno++)
 		{
-			snprintf(old_file, sizeof(old_file), "%s/%s", maps[mapnum].old_file,
-					 namelist[numFiles]->d_name);
-			snprintf(new_file, sizeof(new_file), "%s/%u%s", maps[mapnum].new_file,
-					 maps[mapnum].new_relfilenode, strchr(namelist[numFiles]->d_name, '.'));
+			if (strncmp(namelist[fileno]->d_name, scandir_file_pattern,
+				strlen(scandir_file_pattern)) == 0)
+			{
+				snprintf(old_file, sizeof(old_file), "%s/%s", maps[mapnum].old_dir,
+						 namelist[fileno]->d_name);
+				snprintf(new_file, sizeof(new_file), "%s/%u%s", maps[mapnum].new_dir,
+						 maps[mapnum].new_relfilenode, strchr(namelist[fileno]->d_name, '.'));
 
-			unlink(new_file);
-			transfer_relfile(pageConverter, old_file, new_file,
-						  maps[mapnum].old_nspname, maps[mapnum].old_relname,
-						 maps[mapnum].new_nspname, maps[mapnum].new_relname);
-
-			pg_free(namelist[numFiles]);
+				unlink(new_file);
+				transfer_relfile(pageConverter, old_file, new_file,
+							  maps[mapnum].old_nspname, maps[mapnum].old_relname,
+							 maps[mapnum].new_nspname, maps[mapnum].new_relname);
+			}
 		}
+	}
 
+
+	if (numFiles > 0)
+	{
+		for (fileno = 0; fileno < numFiles; fileno++)
+			pg_free(namelist[fileno]);
 		pg_free(namelist);
 	}
 }
