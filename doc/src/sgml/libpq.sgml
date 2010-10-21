@@ -6331,6 +6331,8 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
    or the default socket directory) connections coming from the local
    machine. In a standby server, a database name of <literal>replication</>
    matches streaming replication connections made to the master server.
+   The <literal>database</> field is of limited usefulness because
+   users have the same password for all databases in the same cluster.
   </para>
 
   <para>
