@@ -117,6 +117,7 @@ extern void get_type_category_preferred(Oid typid,
 extern Oid	get_typ_typrelid(Oid typid);
 extern Oid	get_element_type(Oid typid);
 extern Oid	get_array_type(Oid typid);
+extern Oid	get_base_element_type(Oid typid);
 extern void getTypeInputInfo(Oid type, Oid *typInput, Oid *typIOParam);
 extern void getTypeOutputInfo(Oid type, Oid *typOutput, bool *typIsVarlena);
 extern void getTypeBinaryInputInfo(Oid type, Oid *typReceive, Oid *typIOParam);
@@ -138,6 +139,8 @@ extern void free_attstatsslot(Oid atttype,
 extern char *get_namespace_name(Oid nspid);
 
 #define type_is_array(typid)  (get_element_type(typid) != InvalidOid)
+/* type_is_array_domain accepts both plain arrays and domains over arrays */
+#define type_is_array_domain(typid)  (get_base_element_type(typid) != InvalidOid)
 
 #define TypeIsToastable(typid)	(get_typstorage(typid) != 'p')
 

@@ -209,7 +209,7 @@ get_sort_group_operators(Oid argtype,
 		eq_opr == ARRAY_EQ_OP ||
 		gt_opr == ARRAY_GT_OP)
 	{
-		Oid			elem_type = get_element_type(argtype);
+		Oid			elem_type = get_base_element_type(argtype);
 
 		if (OidIsValid(elem_type))
 		{
@@ -906,7 +906,7 @@ make_scalar_array_op(ParseState *pstate, List *opname,
 		rtypeId = UNKNOWNOID;
 	else
 	{
-		rtypeId = get_element_type(atypeId);
+		rtypeId = get_base_element_type(atypeId);
 		if (!OidIsValid(rtypeId))
 			ereport(ERROR,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),

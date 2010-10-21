@@ -496,3 +496,102 @@ drop table ddtest2;
 drop type ddtest1;
 drop domain posint cascade;
 NOTICE:  drop cascades to type posint2
+--
+-- Check enforcement of domain-related typmod in plpgsql (bug #5717)
+--
+create or replace function array_elem_check(numeric) returns numeric as $$
+declare
+  x numeric(4,2)[1];
+begin
+  x[1] := $1;
+  return x[1];
+end$$ language plpgsql;
+select array_elem_check(121.00);
+ERROR:  numeric field overflow
+DETAIL:  A field with precision 4, scale 2 must round to an absolute value less than 10^2.
+CONTEXT:  PL/pgSQL function "array_elem_check" line 5 at assignment
+select array_elem_check(1.23456);
+ array_elem_check 
+------------------
+             1.23
+(1 row)
+
+create domain mynums as numeric(4,2)[1];
+create or replace function array_elem_check(numeric) returns numeric as $$
+declare
+  x mynums;
+begin
+  x[1] := $1;
+  return x[1];
+end$$ language plpgsql;
+select array_elem_check(121.00);
+ERROR:  numeric field overflow
+DETAIL:  A field with precision 4, scale 2 must round to an absolute value less than 10^2.
+CONTEXT:  PL/pgSQL function "array_elem_check" line 5 at assignment
+select array_elem_check(1.23456);
+ array_elem_check 
+------------------
+             1.23
+(1 row)
+
+create domain mynums2 as mynums;
+create or replace function array_elem_check(numeric) returns numeric as $$
+declare
+  x mynums2;
+begin
+  x[1] := $1;
+  return x[1];
+end$$ language plpgsql;
+select array_elem_check(121.00);
+ERROR:  numeric field overflow
+DETAIL:  A field with precision 4, scale 2 must round to an absolute value less than 10^2.
+CONTEXT:  PL/pgSQL function "array_elem_check" line 5 at assignment
+select array_elem_check(1.23456);
+ array_elem_check 
+------------------
+             1.23
+(1 row)
+
+drop function array_elem_check(numeric);
+--
+-- Check enforcement of array-level domain constraints
+--
+create domain orderedpair as int[2] check (value[1] < value[2]);
+select array[1,2]::orderedpair;
+ array 
+-------
+ {1,2}
+(1 row)
+
+select array[2,1]::orderedpair;  -- fail
+ERROR:  value for domain orderedpair violates check constraint "orderedpair_check"
+create temp table op (f1 orderedpair);
+insert into op values (array[1,2]);
+insert into op values (array[2,1]);  -- fail
+ERROR:  value for domain orderedpair violates check constraint "orderedpair_check"
+update op set f1[2] = 3;
+update op set f1[2] = 0;  -- fail
+ERROR:  value for domain orderedpair violates check constraint "orderedpair_check"
+select * from op;
+  f1   
+-------
+ {1,3}
+(1 row)
+
+create or replace function array_elem_check(int) returns int as $$
+declare
+  x orderedpair := '{1,2}';
+begin
+  x[2] := $1;
+  return x[2];
+end$$ language plpgsql;
+select array_elem_check(3);
+ array_elem_check 
+------------------
+                3
+(1 row)
+
+select array_elem_check(-1);
+ERROR:  value for domain orderedpair violates check constraint "orderedpair_check"
+CONTEXT:  PL/pgSQL function "array_elem_check" line 5 at assignment
+drop function array_elem_check(int);

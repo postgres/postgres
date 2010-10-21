@@ -25,6 +25,7 @@
 #include "parser/parse_relation.h"
 #include "utils/builtins.h"
 #include "utils/int8.h"
+#include "utils/lsyscache.h"
 #include "utils/syscache.h"
 #include "utils/varbit.h"
 
@@ -198,19 +199,35 @@ make_var(ParseState *pstate, RangeTblEntry *rte, int attrno, int location)
 
 /*
  * transformArrayType()
- *		Get the element type of an array type in preparation for subscripting
+ *		Identify the types involved in a subscripting operation
+ *
+ * On entry, arrayType/arrayTypmod identify the type of the input value
+ * to be subscripted (which could be a domain type).  These are modified
+ * if necessary to identify the actual array type and typmod, and the
+ * array's element type is returned.  An error is thrown if the input isn't
+ * an array type.
  */
 Oid
-transformArrayType(Oid arrayType)
+transformArrayType(Oid *arrayType, int32 *arrayTypmod)
 {
+	Oid			origArrayType = *arrayType;
 	Oid			elementType;
 	HeapTuple	type_tuple_array;
 	Form_pg_type type_struct_array;
 
+	/*
+	 * If the input is a domain, smash to base type, and extract the actual
+	 * typmod to be applied to the base type.  Subscripting a domain is an
+	 * operation that necessarily works on the base array type, not the domain
+	 * itself.  (Note that we provide no method whereby the creator of a
+	 * domain over an array type could hide its ability to be subscripted.)
+	 */
+	*arrayType = getBaseTypeAndTypmod(*arrayType, arrayTypmod);
+
 	/* Get the type tuple for the array */
-	type_tuple_array = SearchSysCache1(TYPEOID, ObjectIdGetDatum(arrayType));
+	type_tuple_array = SearchSysCache1(TYPEOID, ObjectIdGetDatum(*arrayType));
 	if (!HeapTupleIsValid(type_tuple_array))
-		elog(ERROR, "cache lookup failed for type %u", arrayType);
+		elog(ERROR, "cache lookup failed for type %u", *arrayType);
 	type_struct_array = (Form_pg_type) GETSTRUCT(type_tuple_array);
 
 	/* needn't check typisdefined since this will fail anyway */
@@ -220,7 +237,7 @@ transformArrayType(Oid arrayType)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
 				 errmsg("cannot subscript type %s because it is not an array",
-						format_type_be(arrayType))));
+						format_type_be(origArrayType))));
 
 	ReleaseSysCache(type_tuple_array);
 
@@ -241,13 +258,17 @@ transformArrayType(Oid arrayType)
  * that array.	We produce an expression that represents the new array value
  * with the source data inserted into the right part of the array.
  *
+ * For both cases, if the source array is of a domain-over-array type,
+ * the result is of the base array type or its element type; essentially,
+ * we must fold a domain to its base type before applying subscripting.
+ *
  * pstate		Parse state
  * arrayBase	Already-transformed expression for the array as a whole
- * arrayType	OID of array's datatype (should match type of arrayBase)
+ * arrayType	OID of array's datatype (should match type of arrayBase,
+ *				or be the base type of arrayBase's domain type)
  * elementType	OID of array's element type (fetch with transformArrayType,
  *				or pass InvalidOid to do it here)
- * elementTypMod typmod to be applied to array elements (if storing) or of
- *				the source array (if fetching)
+ * arrayTypMod	typmod for the array (which is also typmod for the elements)
  * indirection	Untransformed list of subscripts (must not be NIL)
  * assignFrom	NULL for array fetch, else transformed expression for source.
  */
@@ -256,7 +277,7 @@ transformArraySubscripts(ParseState *pstate,
 						 Node *arrayBase,
 						 Oid arrayType,
 						 Oid elementType,
-						 int32 elementTypMod,
+						 int32 arrayTypMod,
 						 List *indirection,
 						 Node *assignFrom)
 {
@@ -266,9 +287,13 @@ transformArraySubscripts(ParseState *pstate,
 	ListCell   *idx;
 	ArrayRef   *aref;
 
-	/* Caller may or may not have bothered to determine elementType */
+	/*
+	 * Caller may or may not have bothered to determine elementType.  Note
+	 * that if the caller did do so, arrayType/arrayTypMod must be as
+	 * modified by transformArrayType, ie, smash domain to base type.
+	 */
 	if (!OidIsValid(elementType))
-		elementType = transformArrayType(arrayType);
+		elementType = transformArrayType(&arrayType, &arrayTypMod);
 
 	/*
 	 * A list containing only single subscripts refers to a single array
@@ -356,7 +381,7 @@ transformArraySubscripts(ParseState *pstate,
 
 		newFrom = coerce_to_target_type(pstate,
 										assignFrom, typesource,
-										typeneeded, elementTypMod,
+										typeneeded, arrayTypMod,
 										COERCION_ASSIGNMENT,
 										COERCE_IMPLICIT_CAST,
 										-1);
@@ -378,7 +403,7 @@ transformArraySubscripts(ParseState *pstate,
 	aref = makeNode(ArrayRef);
 	aref->refarraytype = arrayType;
 	aref->refelemtype = elementType;
-	aref->reftypmod = elementTypMod;
+	aref->reftypmod = arrayTypMod;
 	aref->refupperindexpr = upperIndexpr;
 	aref->reflowerindexpr = lowerIndexpr;
 	aref->refexpr = (Expr *) arrayBase;

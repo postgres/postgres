@@ -1657,6 +1657,23 @@ CreateCast(CreateCastStmt *stmt)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
 					 errmsg("array data types are not binary-compatible")));
+
+		/*
+		 * We also disallow creating binary-compatibility casts involving
+		 * domains.  Casting from a domain to its base type is already
+		 * allowed, and casting the other way ought to go through domain
+		 * coercion to permit constraint checking.  Again, if you're intent on
+		 * having your own semantics for that, create a no-op cast function.
+		 *
+		 * NOTE: if we were to relax this, the above checks for composites
+		 * etc. would have to be modified to look through domains to their
+		 * base types.
+		 */
+		if (sourcetyptype == TYPTYPE_DOMAIN ||
+			targettyptype == TYPTYPE_DOMAIN)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+					 errmsg("domain data types must not be marked binary-compatible")));
 	}
 
 	/*

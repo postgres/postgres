@@ -161,19 +161,17 @@ transformExpr(ParseState *pstate, Node *expr)
 
 					targetType = typenameTypeId(pstate, tc->typeName,
 												&targetTypmod);
+					/*
+					 * If target is a domain over array, work with the base
+					 * array type here.  transformTypeCast below will cast the
+					 * array type to the domain.  In the usual case that the
+					 * target is not a domain, transformTypeCast is a no-op.
+					 */
+					targetType = getBaseTypeAndTypmod(targetType,
+													  &targetTypmod);
 					elementType = get_element_type(targetType);
 					if (OidIsValid(elementType))
 					{
-						/*
-						 * tranformArrayExpr doesn't know how to check domain
-						 * constraints, so ask it to return the base type
-						 * instead. transformTypeCast below will cast it to
-						 * the domain. In the usual case that the target is
-						 * not a domain, transformTypeCast is a no-op.
-						 */
-						targetType = getBaseTypeAndTypmod(targetType,
-														  &targetTypmod);
-
 						tc = copyObject(tc);
 						tc->arg = transformArrayExpr(pstate,
 													 (A_ArrayExpr *) tc->arg,

@@ -189,8 +189,7 @@ CATALOG(pg_type,1247) BKI_BOOTSTRAP BKI_ROWTYPE_OID(71) BKI_SCHEMA_MACRO
 
 	/*
 	 * typndims is the declared number of dimensions for an array domain type
-	 * (i.e., typbasetype is an array type; the domain's typelem will match
-	 * the base type's typelem).  Otherwise zero.
+	 * (i.e., typbasetype is an array type).  Otherwise zero.
 	 */
 	int4		typndims;
 

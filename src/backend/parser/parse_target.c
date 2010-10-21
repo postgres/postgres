@@ -43,6 +43,16 @@ static Node *transformAssignmentIndirection(ParseState *pstate,
 							   ListCell *indirection,
 							   Node *rhs,
 							   int location);
+static Node *transformAssignmentSubscripts(ParseState *pstate,
+							  Node *basenode,
+							  const char *targetName,
+							  Oid targetTypeId,
+							  int32 targetTypMod,
+							  List *subscripts,
+							  bool isSlice,
+							  ListCell *next_indirection,
+							  Node *rhs,
+							  int location);
 static List *ExpandColumnRefStar(ParseState *pstate, ColumnRef *cref,
 					bool targetlist);
 static List *ExpandAllTables(ParseState *pstate, int location);
@@ -613,27 +623,17 @@ transformAssignmentIndirection(ParseState *pstate,
 			/* process subscripts before this field selection */
 			if (subscripts)
 			{
-				Oid			elementTypeId = transformArrayType(targetTypeId);
-				Oid			typeNeeded = isSlice ? targetTypeId : elementTypeId;
-
-				/* recurse to create appropriate RHS for array assign */
-				rhs = transformAssignmentIndirection(pstate,
-													 NULL,
+				/* recurse, and then return because we're done */
+				return transformAssignmentSubscripts(pstate,
+													 basenode,
 													 targetName,
-													 true,
-													 typeNeeded,
+													 targetTypeId,
 													 targetTypMod,
+													 subscripts,
+													 isSlice,
 													 i,
 													 rhs,
 													 location);
-				/* process subscripts */
-				return (Node *) transformArraySubscripts(pstate,
-														 basenode,
-														 targetTypeId,
-														 elementTypeId,
-														 targetTypMod,
-														 subscripts,
-														 rhs);
 			}
 
 			/* No subscripts, so can process field selection here */
@@ -690,27 +690,17 @@ transformAssignmentIndirection(ParseState *pstate,
 	/* process trailing subscripts, if any */
 	if (subscripts)
 	{
-		Oid			elementTypeId = transformArrayType(targetTypeId);
-		Oid			typeNeeded = isSlice ? targetTypeId : elementTypeId;
-
-		/* recurse to create appropriate RHS for array assign */
-		rhs = transformAssignmentIndirection(pstate,
-											 NULL,
+		/* recurse, and then return because we're done */
+		return transformAssignmentSubscripts(pstate,
+											 basenode,
 											 targetName,
-											 true,
-											 typeNeeded,
+											 targetTypeId,
 											 targetTypMod,
+											 subscripts,
+											 isSlice,
 											 NULL,
 											 rhs,
 											 location);
-		/* process subscripts */
-		return (Node *) transformArraySubscripts(pstate,
-												 basenode,
-												 targetTypeId,
-												 elementTypeId,
-												 targetTypMod,
-												 subscripts,
-												 rhs);
 	}
 
 	/* base case: just coerce RHS to match target type ID */
@@ -742,6 +732,79 @@ transformAssignmentIndirection(ParseState *pstate,
 							format_type_be(targetTypeId),
 							format_type_be(exprType(rhs))),
 				 errhint("You will need to rewrite or cast the expression."),
+					 parser_errposition(pstate, location)));
+	}
+
+	return result;
+}
+
+/*
+ * helper for transformAssignmentIndirection: process array assignment
+ */
+static Node *
+transformAssignmentSubscripts(ParseState *pstate,
+							  Node *basenode,
+							  const char *targetName,
+							  Oid targetTypeId,
+							  int32 targetTypMod,
+							  List *subscripts,
+							  bool isSlice,
+							  ListCell *next_indirection,
+							  Node *rhs,
+							  int location)
+{
+	Node	   *result;
+	Oid			arrayType;
+	int32		arrayTypMod;
+	Oid			elementTypeId;
+	Oid			typeNeeded;
+
+	Assert(subscripts != NIL);
+
+	/* Identify the actual array type and element type involved */
+	arrayType = targetTypeId;
+	arrayTypMod = targetTypMod;
+	elementTypeId = transformArrayType(&arrayType, &arrayTypMod);
+
+	/* Identify type that RHS must provide */
+	typeNeeded = isSlice ? arrayType : elementTypeId;
+
+	/* recurse to create appropriate RHS for array assign */
+	rhs = transformAssignmentIndirection(pstate,
+										 NULL,
+										 targetName,
+										 true,
+										 typeNeeded,
+										 arrayTypMod,
+										 next_indirection,
+										 rhs,
+										 location);
+
+	/* process subscripts */
+	result = (Node *) transformArraySubscripts(pstate,
+											   basenode,
+											   arrayType,
+											   elementTypeId,
+											   arrayTypMod,
+											   subscripts,
+											   rhs);
+
+	/* If target was a domain over array, need to coerce up to the domain */
+	if (arrayType != targetTypeId)
+	{
+		result = coerce_to_target_type(pstate,
+									   result, exprType(result),
+									   targetTypeId, targetTypMod,
+									   COERCION_ASSIGNMENT,
+									   COERCE_IMPLICIT_CAST,
+									   -1);
+		/* probably shouldn't fail, but check */
+		if (result == NULL)
+			ereport(ERROR,
+					(errcode(ERRCODE_CANNOT_COERCE),
+					 errmsg("cannot cast type %s to %s",
+							format_type_be(exprType(result)),
+							format_type_be(targetTypeId)),
 					 parser_errposition(pstate, location)));
 	}
 

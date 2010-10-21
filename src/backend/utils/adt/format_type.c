@@ -134,18 +134,16 @@ format_type_internal(Oid type_oid, int32 typemod,
 	typeform = (Form_pg_type) GETSTRUCT(tuple);
 
 	/*
-	 * Check if it's an array (and not a domain --- we don't want to show the
-	 * substructure of a domain type).	Fixed-length array types such as
-	 * "name" shouldn't get deconstructed either.  As of Postgres 8.1, rather
-	 * than checking typlen we check the toast property, and don't deconstruct
-	 * "plain storage" array types --- this is because we don't want to show
-	 * oidvector as oid[].
+	 * Check if it's a regular (variable length) array type.  Fixed-length
+	 * array types such as "name" shouldn't get deconstructed.  As of Postgres
+	 * 8.1, rather than checking typlen we check the toast property, and don't
+	 * deconstruct "plain storage" array types --- this is because we don't
+	 * want to show oidvector as oid[].
 	 */
 	array_base_type = typeform->typelem;
 
 	if (array_base_type != InvalidOid &&
-		typeform->typstorage != 'p' &&
-		typeform->typtype != TYPTYPE_DOMAIN)
+		typeform->typstorage != 'p')
 	{
 		/* Switch our attention to the array element type */
 		ReleaseSysCache(tuple);

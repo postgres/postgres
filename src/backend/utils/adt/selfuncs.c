@@ -1704,7 +1704,7 @@ scalararraysel(PlannerInfo *root,
 	rightop = (Node *) lsecond(clause->args);
 
 	/* get nominal (after relabeling) element type of rightop */
-	nominal_element_type = get_element_type(exprType(rightop));
+	nominal_element_type = get_base_element_type(exprType(rightop));
 	if (!OidIsValid(nominal_element_type))
 		return (Selectivity) 0.5;		/* probably shouldn't happen */
 

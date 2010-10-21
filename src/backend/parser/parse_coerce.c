@@ -1908,6 +1908,9 @@ find_coercion_pathway(Oid targetTypeId, Oid sourceTypeId,
 		 * array types.  If so, and if the element types have a suitable cast,
 		 * report that we can coerce with an ArrayCoerceExpr.
 		 *
+		 * Note that the source type can be a domain over array, but not the
+		 * target, because ArrayCoerceExpr won't check domain constraints.
+		 *
 		 * Hack: disallow coercions to oidvector and int2vector, which
 		 * otherwise tend to capture coercions that should go to "real" array
 		 * types.  We want those types to be considered "real" arrays for many
@@ -1921,7 +1924,7 @@ find_coercion_pathway(Oid targetTypeId, Oid sourceTypeId,
 			Oid			sourceElem;
 
 			if ((targetElem = get_element_type(targetTypeId)) != InvalidOid &&
-				(sourceElem = get_element_type(sourceTypeId)) != InvalidOid)
+				(sourceElem = get_base_element_type(sourceTypeId)) != InvalidOid)
 			{
 				CoercionPathType elempathtype;
 				Oid			elemfuncid;
@@ -2001,10 +2004,8 @@ find_typmod_coercion_function(Oid typeId,
 	targetType = typeidType(typeId);
 	typeForm = (Form_pg_type) GETSTRUCT(targetType);
 
-	/* Check for a varlena array type (and not a domain) */
-	if (typeForm->typelem != InvalidOid &&
-		typeForm->typlen == -1 &&
-		typeForm->typtype != TYPTYPE_DOMAIN)
+	/* Check for a varlena array type */
+	if (typeForm->typelem != InvalidOid && typeForm->typlen == -1)
 	{
 		/* Yes, switch our attention to the element type */
 		typeId = typeForm->typelem;

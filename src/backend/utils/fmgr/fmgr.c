@@ -2326,10 +2326,10 @@ get_call_expr_argtype(Node *expr, int argnum)
 	 */
 	if (IsA(expr, ScalarArrayOpExpr) &&
 		argnum == 1)
-		argtype = get_element_type(argtype);
+		argtype = get_base_element_type(argtype);
 	else if (IsA(expr, ArrayCoerceExpr) &&
 			 argnum == 0)
-		argtype = get_element_type(argtype);
+		argtype = get_base_element_type(argtype);
 
 	return argtype;
 }

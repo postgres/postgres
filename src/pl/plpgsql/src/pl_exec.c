@@ -154,6 +154,7 @@ static void exec_assign_value(PLpgSQL_execstate *estate,
 static void exec_eval_datum(PLpgSQL_execstate *estate,
 				PLpgSQL_datum *datum,
 				Oid *typeid,
+				int32 *typetypmod,
 				Datum *value,
 				bool *isnull);
 static int exec_eval_integer(PLpgSQL_execstate *estate,
@@ -3736,6 +3737,7 @@ exec_assign_value(PLpgSQL_execstate *estate,
 				bool		oldarrayisnull;
 				Oid			arraytypeid,
 							arrayelemtypeid;
+				int32		arraytypmod;
 				int16		arraytyplen,
 							elemtyplen;
 				bool		elemtypbyval;
@@ -3780,8 +3782,13 @@ exec_assign_value(PLpgSQL_execstate *estate,
 
 				/* Fetch current value of array datum */
 				exec_eval_datum(estate, target,
-							  &arraytypeid, &oldarraydatum, &oldarrayisnull);
+								&arraytypeid, &arraytypmod,
+								&oldarraydatum, &oldarrayisnull);
 
+				/* If target is domain over array, reduce to base type */
+				arraytypeid = getBaseTypeAndTypmod(arraytypeid, &arraytypmod);
+
+				/* ... and identify the element type */
 				arrayelemtypeid = get_element_type(arraytypeid);
 				if (!OidIsValid(arrayelemtypeid))
 					ereport(ERROR,
@@ -3831,7 +3838,7 @@ exec_assign_value(PLpgSQL_execstate *estate,
 				coerced_value = exec_simple_cast_value(value,
 													   valtype,
 													   arrayelemtypeid,
-													   -1,
+													   arraytypmod,
 													   *isNull);
 
 				/*
@@ -3875,7 +3882,9 @@ exec_assign_value(PLpgSQL_execstate *estate,
 
 				/*
 				 * Assign the new array to the base variable.  It's never NULL
-				 * at this point.
+				 * at this point.  Note that if the target is a domain,
+				 * coercing the base array type back up to the domain will
+				 * happen within exec_assign_value.
 				 */
 				*isNull = false;
 				exec_assign_value(estate, target,
@@ -3897,7 +3906,7 @@ exec_assign_value(PLpgSQL_execstate *estate,
 /*
  * exec_eval_datum				Get current value of a PLpgSQL_datum
  *
- * The type oid, value in Datum format, and null flag are returned.
+ * The type oid, typmod, value in Datum format, and null flag are returned.
  *
  * At present this doesn't handle PLpgSQL_expr or PLpgSQL_arrayelem datums.
  *
@@ -3910,6 +3919,7 @@ static void
 exec_eval_datum(PLpgSQL_execstate *estate,
 				PLpgSQL_datum *datum,
 				Oid *typeid,
+				int32 *typetypmod,
 				Datum *value,
 				bool *isnull)
 {
@@ -3922,6 +3932,7 @@ exec_eval_datum(PLpgSQL_execstate *estate,
 				PLpgSQL_var *var = (PLpgSQL_var *) datum;
 
 				*typeid = var->datatype->typoid;
+				*typetypmod = var->datatype->atttypmod;
 				*value = var->value;
 				*isnull = var->isnull;
 				break;
@@ -3942,6 +3953,7 @@ exec_eval_datum(PLpgSQL_execstate *estate,
 					elog(ERROR, "row not compatible with its own tupdesc");
 				MemoryContextSwitchTo(oldcontext);
 				*typeid = row->rowtupdesc->tdtypeid;
+				*typetypmod = row->rowtupdesc->tdtypmod;
 				*value = HeapTupleGetDatum(tup);
 				*isnull = false;
 				break;
@@ -3974,6 +3986,7 @@ exec_eval_datum(PLpgSQL_execstate *estate,
 				HeapTupleHeaderSetTypMod(worktup.t_data, rec->tupdesc->tdtypmod);
 				MemoryContextSwitchTo(oldcontext);
 				*typeid = rec->tupdesc->tdtypeid;
+				*typetypmod = rec->tupdesc->tdtypmod;
 				*value = HeapTupleGetDatum(&worktup);
 				*isnull = false;
 				break;
@@ -3999,6 +4012,11 @@ exec_eval_datum(PLpgSQL_execstate *estate,
 							 errmsg("record \"%s\" has no field \"%s\"",
 									rec->refname, recfield->fieldname)));
 				*typeid = SPI_gettypeid(rec->tupdesc, fno);
+				/* XXX there's no SPI_gettypmod, for some reason */
+				if (fno > 0)
+					*typetypmod = rec->tupdesc->attrs[fno - 1]->atttypmod;
+				else
+					*typetypmod = -1;
 				*value = SPI_getbinval(rec->tup, rec->tupdesc, fno, isnull);
 				break;
 			}
@@ -4671,6 +4689,7 @@ plpgsql_param_fetch(ParamListInfo params, int paramid)
 	PLpgSQL_expr *expr;
 	PLpgSQL_datum *datum;
 	ParamExternData *prm;
+	int32		prmtypmod;
 
 	/* paramid's are 1-based, but dnos are 0-based */
 	dno = paramid - 1;
@@ -4693,7 +4712,8 @@ plpgsql_param_fetch(ParamListInfo params, int paramid)
 	datum = estate->datums[dno];
 	prm = &params->params[dno];
 	exec_eval_datum(estate, datum,
-					&prm->ptype, &prm->value, &prm->isnull);
+					&prm->ptype, &prmtypmod,
+					&prm->value, &prm->isnull);
 }
 
 
@@ -4870,6 +4890,7 @@ make_tuple_from_row(PLpgSQL_execstate *estate,
 	for (i = 0; i < natts; i++)
 	{
 		Oid			fieldtypeid;
+		int32		fieldtypmod;
 
 		if (tupdesc->attrs[i]->attisdropped)
 		{
@@ -4880,9 +4901,11 @@ make_tuple_from_row(PLpgSQL_execstate *estate,
 			elog(ERROR, "dropped rowtype entry for non-dropped column");
 
 		exec_eval_datum(estate, estate->datums[row->varnos[i]],
-						&fieldtypeid, &dvalues[i], &nulls[i]);
+						&fieldtypeid, &fieldtypmod,
+						&dvalues[i], &nulls[i]);
 		if (fieldtypeid != tupdesc->attrs[i]->atttypid)
 			return NULL;
+		/* XXX should we insist on typmod match, too? */
 	}
 
 	tuple = heap_form_tuple(tupdesc, dvalues, nulls);

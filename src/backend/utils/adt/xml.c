@@ -1615,7 +1615,7 @@ map_xml_name_to_sql_identifier(char *name)
 char *
 map_sql_value_to_xml_value(Datum value, Oid type, bool xml_escape_strings)
 {
-	if (type_is_array(type))
+	if (type_is_array_domain(type))
 	{
 		ArrayType  *array;
 		Oid			elmtype;

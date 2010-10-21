@@ -139,12 +139,12 @@ extern void cancel_parser_errposition_callback(ParseCallbackState *pcbstate);
 
 extern Var *make_var(ParseState *pstate, RangeTblEntry *rte, int attrno,
 		 int location);
-extern Oid	transformArrayType(Oid arrayType);
+extern Oid	transformArrayType(Oid *arrayType, int32 *arrayTypmod);
 extern ArrayRef *transformArraySubscripts(ParseState *pstate,
 						 Node *arrayBase,
 						 Oid arrayType,
 						 Oid elementType,
-						 int32 elementTypMod,
+						 int32 arrayTypMod,
 						 List *indirection,
 						 Node *assignFrom);
 extern Const *make_const(ParseState *pstate, Value *value, int location);

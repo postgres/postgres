@@ -525,14 +525,12 @@ DefineType(List *names, List *parameters)
 
 	/*
 	 * now have TypeCreate do all the real work.
+	 *
+	 * Note: the pg_type.oid is stored in user tables as array elements (base
+	 * types) in ArrayType and in composite types in DatumTupleFields.  This
+	 * oid must be preserved by binary upgrades.
 	 */
 	typoid =
-
-	/*
-	 * The pg_type.oid is stored in user tables as array elements (base types)
-	 * in ArrayType and in composite types in DatumTupleFields.  This oid must
-	 * be preserved by binary upgrades.
-	 */
 		TypeCreate(InvalidOid,	/* no predetermined type OID */
 				   typeName,	/* type name */
 				   typeNamespace,		/* namespace */
@@ -746,7 +744,6 @@ DefineDomain(CreateDomainStmt *stmt)
 	Oid			sendProcedure;
 	Oid			analyzeProcedure;
 	bool		byValue;
-	Oid			typelem;
 	char		category;
 	char		delimiter;
 	char		alignment;
@@ -830,9 +827,6 @@ DefineDomain(CreateDomainStmt *stmt)
 
 	/* Type Category */
 	category = baseType->typcategory;
-
-	/* Array element type (in case base type is an array) */
-	typelem = baseType->typelem;
 
 	/* Array element Delimiter */
 	delimiter = baseType->typdelim;
@@ -1033,7 +1027,7 @@ DefineDomain(CreateDomainStmt *stmt)
 				   InvalidOid,	/* typmodin procedure - none */
 				   InvalidOid,	/* typmodout procedure - none */
 				   analyzeProcedure,	/* analyze procedure */
-				   typelem,		/* element type ID */
+				   InvalidOid,	/* no array element type */
 				   false,		/* this isn't an array */
 				   InvalidOid,	/* no arrays for domains (yet) */
 				   basetypeoid, /* base type ID */
@@ -1670,7 +1664,7 @@ AlterDomainDefault(List *names, Node *defaultRaw)
 							 typTup->typmodin,
 							 typTup->typmodout,
 							 typTup->typanalyze,
-							 typTup->typelem,
+							 InvalidOid,
 							 false,		/* a domain isn't an implicit array */
 							 typTup->typbasetype,
 							 defaultExpr,

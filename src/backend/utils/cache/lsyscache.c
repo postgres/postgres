@@ -2213,6 +2213,52 @@ get_array_type(Oid typid)
 }
 
 /*
+ * get_base_element_type
+ *		Given the type OID, get the typelem, looking "through" any domain
+ *		to its underlying array type.
+ *
+ * This is equivalent to get_element_type(getBaseType(typid)), but avoids
+ * an extra cache lookup.  Note that it fails to provide any information
+ * about the typmod of the array.
+ */
+Oid
+get_base_element_type(Oid typid)
+{
+	/*
+	 * We loop to find the bottom base type in a stack of domains.
+	 */
+	for (;;)
+	{
+		HeapTuple	tup;
+		Form_pg_type typTup;
+
+		tup = SearchSysCache1(TYPEOID, ObjectIdGetDatum(typid));
+		if (!HeapTupleIsValid(tup))
+			break;
+		typTup = (Form_pg_type) GETSTRUCT(tup);
+		if (typTup->typtype != TYPTYPE_DOMAIN)
+		{
+			/* Not a domain, so stop descending */
+			Oid			result;
+
+			/* This test must match get_element_type */
+			if (typTup->typlen == -1)
+				result = typTup->typelem;
+			else
+				result = InvalidOid;
+			ReleaseSysCache(tup);
+			return result;
+		}
+
+		typid = typTup->typbasetype;
+		ReleaseSysCache(tup);
+	}
+
+	/* Like get_element_type, silently return InvalidOid for bogus input */
+	return InvalidOid;
+}
+
+/*
  * getTypeInputInfo
  *
  *		Get info needed for converting values of a type to internal form

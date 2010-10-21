@@ -5698,9 +5698,8 @@
       <entry></entry>
       <entry><para>
        <structfield>typndims</structfield> is the number of array dimensions
-       for a domain that is an array (that is, <structfield>typbasetype</> is
-       an array type; the domain's <structfield>typelem</> will match the base
-       type's <structfield>typelem</structfield>).
+       for a domain over an array (that is, <structfield>typbasetype</> is
+       an array type).
        Zero for types other than domains over array types.
        </para></entry>
      </row>
