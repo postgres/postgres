@@ -1347,7 +1347,7 @@ opt_boolean_or_string:
 			 * by the ColId rule below. The action for booleans and strings
 			 * is the same, so we don't need to distinguish them here.
 			 */
-			| ColId_or_Sconst						{ $$ = $1 }
+			| ColId_or_Sconst						{ $$ = $1; }
 		;
 
 /* Timezone values can be:
