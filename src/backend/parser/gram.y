@@ -401,7 +401,7 @@ static TypeName *TableFuncTypeName(List *columns);
 
 %type <ival>	Iconst SignedIconst
 %type <str>		Sconst comment_text notify_payload
-%type <str>		RoleId opt_granted_by opt_boolean ColId_or_Sconst
+%type <str>		RoleId opt_granted_by opt_boolean_or_string ColId_or_Sconst
 %type <list>	var_list
 %type <str>		ColId ColLabel var_name type_function_name param_name
 %type <node>	var_value zone_value
@@ -1320,9 +1320,7 @@ var_list:	var_value								{ $$ = list_make1($1); }
 			| var_list ',' var_value				{ $$ = lappend($1, $3); }
 		;
 
-var_value:	opt_boolean
-				{ $$ = makeStringConst($1, @1); }
-			| ColId_or_Sconst
+var_value:	opt_boolean_or_string
 				{ $$ = makeStringConst($1, @1); }
 			| NumericOnly
 				{ $$ = makeAConst($1, @1); }
@@ -1334,11 +1332,16 @@ iso_level:	READ UNCOMMITTED						{ $$ = "read uncommitted"; }
 			| SERIALIZABLE							{ $$ = "serializable"; }
 		;
 
-opt_boolean:
+opt_boolean_or_string:
 			TRUE_P									{ $$ = "true"; }
 			| FALSE_P								{ $$ = "false"; }
 			| ON									{ $$ = "on"; }
-			| OFF									{ $$ = "off"; }
+			/*
+			 * OFF is also accepted as a boolean value, but is handled
+			 * by the ColId rule below. The action for booleans and strings
+			 * is the same, so we don't need to distinguish them here.
+			 */
+			| ColId_or_Sconst						{ $$ = $1 }
 		;
 
 /* Timezone values can be:
@@ -2167,8 +2170,7 @@ copy_generic_opt_elem:
 		;
 
 copy_generic_opt_arg:
-			opt_boolean						{ $$ = (Node *) makeString($1); }
-			| ColId_or_Sconst				{ $$ = (Node *) makeString($1); }
+			opt_boolean_or_string			{ $$ = (Node *) makeString($1); }
 			| NumericOnly					{ $$ = (Node *) $1; }
 			| '*'							{ $$ = (Node *) makeNode(A_Star); }
 			| '(' copy_generic_opt_arg_list ')'		{ $$ = (Node *) $2; }
@@ -2188,8 +2190,7 @@ copy_generic_opt_arg_list:
 
 /* beware of emitting non-string list elements here; see commands/define.c */
 copy_generic_opt_arg_list_item:
-			opt_boolean				{ $$ = (Node *) makeString($1); }
-			| ColId_or_Sconst		{ $$ = (Node *) makeString($1); }
+			opt_boolean_or_string	{ $$ = (Node *) makeString($1); }
 		;
 
 
@@ -6983,8 +6984,7 @@ explain_option_name:
 		;
 
 explain_option_arg:
-			opt_boolean				{ $$ = (Node *) makeString($1); }
-			| ColId_or_Sconst		{ $$ = (Node *) makeString($1); }
+			opt_boolean_or_string	{ $$ = (Node *) makeString($1); }
 			| NumericOnly			{ $$ = (Node *) $1; }
 			| /* EMPTY */			{ $$ = NULL; }
 		;
@@ -10958,6 +10958,7 @@ unreserved_keyword:
 			| NULLS_P
 			| OBJECT_P
 			| OF
+			| OFF
 			| OIDS
 			| OPERATOR
 			| OPTION
@@ -11214,7 +11215,6 @@ reserved_keyword:
 			| LOCALTIMESTAMP
 			| NOT
 			| NULL_P
-			| OFF
 			| OFFSET
 			| ON
 			| ONLY
