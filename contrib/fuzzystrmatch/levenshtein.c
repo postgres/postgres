@@ -5,7 +5,6 @@
  *
  * Joe Conway <mail@joeconway.com>
  *
- * contrib/fuzzystrmatch/fuzzystrmatch.c
  * Copyright (c) 2001-2010, PostgreSQL Global Development Group
  * ALL RIGHTS RESERVED;
  *
@@ -378,7 +377,7 @@ levenshtein_internal(text *s, text *t,
 				prev[start_column] = max_d + 1;
 				curr[start_column] = max_d + 1;
 				if (start_column != 0)
-					s_data += n != t_bytes + 1 ? pg_mblen(s_data) : 1;
+					s_data += s_char_len != NULL ? s_char_len[i - 1] : 1;
 				start_column++;
 			}
 
