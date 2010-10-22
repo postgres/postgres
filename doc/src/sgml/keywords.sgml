@@ -3553,7 +3553,7 @@
    </row>
    <row>
     <entry><token>OFF</token></entry>
-    <entry>reserved</entry>
+    <entry>non-reserved</entry>
     <entry>non-reserved</entry>
     <entry>non-reserved</entry>
     <entry>reserved</entry>
