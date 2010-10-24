@@ -283,6 +283,14 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
       </para>
 
       <para>
+       A host name specification that starts with a dot
+       (<literal>.</literal>) matches a suffix of the actual host
+       name.  So <literal>.example.com</literal> would match
+       <literal>foo.example.com</literal> (but not just
+       <literal>example.com</literal>).
+      </para>
+
+      <para>
        When host names are specified
        in <filename>pg_hba.conf</filename>, you should make sure that
        name resolution is reasonably fast.  It can be of advantage to
@@ -308,6 +316,12 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
         That would already be slow by itself.  And if there is a
         resolver problem with one of the host names, it becomes
         everyone's problem.
+       </para>
+
+       <para>
+        Also, a reverse lookup is necessary to implement the suffix
+        matching feature, because the actual client host name needs to
+        be known in order to match it against the pattern.
        </para>
 
        <para>
@@ -604,6 +618,12 @@ host    postgres        all             192.168.93.0/24         ident
 #
 # TYPE  DATABASE        USER            ADDRESS                 METHOD
 host    postgres        all             192.168.12.10/32        md5
+
+# Allow any user from hosts in the example.com domain to connect to
+# any database if the user's password is correctly supplied.
+#
+# TYPE  DATABASE        USER            ADDRESS                 METHOD
+host    all             all             .example.com            md5
 
 # In the absence of preceding "host" lines, these two lines will
 # reject all connections from 192.168.54.1 (since that entry will be

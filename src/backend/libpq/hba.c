@@ -565,6 +565,26 @@ ipv6eq(struct sockaddr_in6 *a, struct sockaddr_in6 *b)
 #endif /* HAVE_IPV6 */
 
 /*
+ * Check whether host name matches pattern.
+ */
+static bool
+hostname_match(const char *pattern, const char *actual_hostname)
+{
+	if (pattern[0] == '.')		/* suffix match */
+	{
+		size_t plen = strlen(pattern);
+		size_t hlen = strlen(actual_hostname);
+
+		if (hlen < plen)
+			return false;
+
+		return (pg_strcasecmp(pattern, actual_hostname + (hlen - plen)) == 0);
+	}
+	else
+		return (pg_strcasecmp(pattern, actual_hostname) == 0);
+}
+
+/*
  * Check to see if a connecting IP matches a given host name.
  */
 static bool
@@ -588,7 +608,7 @@ check_hostname(hbaPort *port, const char *hostname)
 		port->remote_hostname = pstrdup(remote_hostname);
 	}
 
-	if (pg_strcasecmp(port->remote_hostname, hostname) != 0)
+	if (!hostname_match(hostname, port->remote_hostname))
 		return false;
 
 	/* Lookup IP from host name and check against original IP */

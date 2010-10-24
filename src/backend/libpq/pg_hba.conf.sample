@@ -32,7 +32,8 @@
 # ADDRESS specifies the set of hosts the record matches.  It can be a
 # host name, or it is made up of an IP address and a CIDR mask that is
 # an integer (between 0 and 32 (IPv4) or 128 (IPv6) inclusive) that
-# specifies the number of significant bits in the mask.
+# specifies the number of significant bits in the mask.  A host name
+# that starts with a dot (.) matches a suffix of the actual host name.
 # Alternatively, you can write an IP address and netmask in separate
 # columns to specify the set of hosts.  Instead of a CIDR-address, you
 # can write "samehost" to match any of the server's own IP addresses,
