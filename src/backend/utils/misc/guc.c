@@ -5621,7 +5621,7 @@ flatten_set_variable_args(const char *name, List *args)
 					Datum		interval;
 					char	   *intervalout;
 
-					typoid = typenameTypeId(NULL, typeName, &typmod);
+					typenameTypeIdAndMod(NULL, typeName, &typoid, &typmod);
 					Assert(typoid == INTERVALOID);
 
 					interval =

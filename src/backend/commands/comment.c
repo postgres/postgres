@@ -607,8 +607,8 @@ CheckCastComment(List *qualname, List *arguments)
 	targettype = (TypeName *) linitial(arguments);
 	Assert(IsA(targettype, TypeName));
 
-	sourcetypeid = typenameTypeId(NULL, sourcetype, NULL);
-	targettypeid = typenameTypeId(NULL, targettype, NULL);
+	sourcetypeid = typenameTypeId(NULL, sourcetype);
+	targettypeid = typenameTypeId(NULL, targettype);
 
 	/* Permission check */
 	if (!pg_type_ownercheck(sourcetypeid, GetUserId())

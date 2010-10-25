@@ -159,8 +159,8 @@ transformExpr(ParseState *pstate, Node *expr)
 					Oid			elementType;
 					int32		targetTypmod;
 
-					targetType = typenameTypeId(pstate, tc->typeName,
-												&targetTypmod);
+					typenameTypeIdAndMod(pstate, tc->typeName,
+										 &targetType, &targetTypmod);
 					/*
 					 * If target is a domain over array, work with the base
 					 * array type here.  transformTypeCast below will cast the
@@ -1031,7 +1031,7 @@ transformAExprOf(ParseState *pstate, A_Expr *a)
 	ltype = exprType(lexpr);
 	foreach(telem, (List *) a->rexpr)
 	{
-		rtype = typenameTypeId(pstate, lfirst(telem), NULL);
+		rtype = typenameTypeId(pstate, lfirst(telem));
 		matched = (rtype == ltype);
 		if (matched)
 			break;
@@ -1889,7 +1889,7 @@ transformXmlSerialize(ParseState *pstate, XmlSerialize *xs)
 													 XMLOID,
 													 "XMLSERIALIZE"));
 
-	targetType = typenameTypeId(pstate, xs->typeName, &targetTypmod);
+	typenameTypeIdAndMod(pstate, xs->typeName, &targetType, &targetTypmod);
 
 	xexpr->xmloption = xs->xmloption;
 	xexpr->location = xs->location;
@@ -2052,7 +2052,7 @@ transformTypeCast(ParseState *pstate, TypeCast *tc)
 	int32		targetTypmod;
 	int			location;
 
-	targetType = typenameTypeId(pstate, tc->typeName, &targetTypmod);
+	typenameTypeIdAndMod(pstate, tc->typeName, &targetType, &targetTypmod);
 
 	if (inputType == InvalidOid)
 		return expr;			/* do nothing if NULL input */

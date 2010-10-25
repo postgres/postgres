@@ -23,8 +23,9 @@ extern Type LookupTypeName(ParseState *pstate, const TypeName *typeName,
 			   int32 *typmod_p);
 extern Type typenameType(ParseState *pstate, const TypeName *typeName,
 			 int32 *typmod_p);
-extern Oid typenameTypeId(ParseState *pstate, const TypeName *typeName,
-			   int32 *typmod_p);
+extern Oid typenameTypeId(ParseState *pstate, const TypeName *typeName);
+extern void typenameTypeIdAndMod(ParseState *pstate, const TypeName *typeName,
+								 Oid *typeid_p, int32 *typmod_p);
 
 extern char *TypeNameToString(const TypeName *typeName);
 extern char *TypeNameListToString(List *typenames);
@@ -40,7 +41,7 @@ extern Datum stringTypeDatum(Type tp, char *string, int32 atttypmod);
 
 extern Oid	typeidTypeRelid(Oid type_id);
 
-extern void parseTypeString(const char *str, Oid *type_id, int32 *typmod_p);
+extern void parseTypeString(const char *str, Oid *typeid_p, int32 *typmod_p);
 
 #define ISCOMPLEX(typeid) (typeidTypeRelid(typeid) != InvalidOid)
 

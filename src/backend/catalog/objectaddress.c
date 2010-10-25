@@ -137,7 +137,7 @@ get_object_address(ObjectType objtype, List *objname, List *objargs,
 		case OBJECT_TYPE:
 			address.classId = TypeRelationId;
 			address.objectId =
-				typenameTypeId(NULL, makeTypeNameFromNameList(objname), NULL);
+				typenameTypeId(NULL, makeTypeNameFromNameList(objname));
 			address.objectSubId = 0;
 			break;
 		case OBJECT_AGGREGATE:
@@ -184,8 +184,8 @@ get_object_address(ObjectType objtype, List *objname, List *objargs,
 			{
 				TypeName *sourcetype = (TypeName *) linitial(objname);
 				TypeName *targettype = (TypeName *) linitial(objargs);
-				Oid sourcetypeid = typenameTypeId(NULL, sourcetype, NULL);
-				Oid targettypeid = typenameTypeId(NULL, targettype, NULL);
+				Oid sourcetypeid = typenameTypeId(NULL, sourcetype);
+				Oid targettypeid = typenameTypeId(NULL, targettype);
 
 				address.classId = CastRelationId;
 				address.objectId =

@@ -167,9 +167,9 @@ DefineOperator(List *names, List *parameters)
 
 	/* Transform type names to type OIDs */
 	if (typeName1)
-		typeId1 = typenameTypeId(NULL, typeName1, NULL);
+		typeId1 = typenameTypeId(NULL, typeName1);
 	if (typeName2)
-		typeId2 = typenameTypeId(NULL, typeName2, NULL);
+		typeId2 = typenameTypeId(NULL, typeName2);
 
 	if (!OidIsValid(typeId1) && !OidIsValid(typeId2))
 		ereport(ERROR,

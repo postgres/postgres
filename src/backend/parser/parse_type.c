@@ -206,22 +206,39 @@ typenameType(ParseState *pstate, const TypeName *typeName, int32 *typmod_p)
 }
 
 /*
- * typenameTypeId - given a TypeName, return the type's OID and typmod
+ * typenameTypeId - given a TypeName, return the type's OID
  *
- * This is equivalent to typenameType, but we only hand back the type OID
+ * This is similar to typenameType, but we only hand back the type OID
  * not the syscache entry.
  */
 Oid
-typenameTypeId(ParseState *pstate, const TypeName *typeName, int32 *typmod_p)
+typenameTypeId(ParseState *pstate, const TypeName *typeName)
 {
 	Oid			typoid;
 	Type		tup;
 
-	tup = typenameType(pstate, typeName, typmod_p);
+	tup = typenameType(pstate, typeName, NULL);
 	typoid = HeapTupleGetOid(tup);
 	ReleaseSysCache(tup);
 
 	return typoid;
+}
+
+/*
+ * typenameTypeIdAndMod - given a TypeName, return the type's OID and typmod
+ *
+ * This is equivalent to typenameType, but we only hand back the type OID
+ * and typmod, not the syscache entry.
+ */
+void
+typenameTypeIdAndMod(ParseState *pstate, const TypeName *typeName,
+					 Oid *typeid_p, int32 *typmod_p)
+{
+	Type		tup;
+
+	tup = typenameType(pstate, typeName, typmod_p);
+	*typeid_p = HeapTupleGetOid(tup);
+	ReleaseSysCache(tup);
 }
 
 /*
@@ -561,7 +578,7 @@ pts_error_callback(void *arg)
  * the string and convert it to a type OID and type modifier.
  */
 void
-parseTypeString(const char *str, Oid *type_id, int32 *typmod_p)
+parseTypeString(const char *str, Oid *typeid_p, int32 *typmod_p)
 {
 	StringInfoData buf;
 	List	   *raw_parsetree_list;
@@ -635,7 +652,7 @@ parseTypeString(const char *str, Oid *type_id, int32 *typmod_p)
 	if (typeName->setof)
 		goto fail;
 
-	*type_id = typenameTypeId(NULL, typeName, typmod_p);
+	typenameTypeIdAndMod(NULL, typeName, typeid_p, typmod_p);
 
 	pfree(buf.data);
 

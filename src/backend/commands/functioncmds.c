@@ -1496,8 +1496,8 @@ CreateCast(CreateCastStmt *stmt)
 	ObjectAddress myself,
 				referenced;
 
-	sourcetypeid = typenameTypeId(NULL, stmt->sourcetype, NULL);
-	targettypeid = typenameTypeId(NULL, stmt->targettype, NULL);
+	sourcetypeid = typenameTypeId(NULL, stmt->sourcetype);
+	targettypeid = typenameTypeId(NULL, stmt->targettype);
 	sourcetyptype = get_typtype(sourcetypeid);
 	targettyptype = get_typtype(targettypeid);
 
@@ -1779,8 +1779,8 @@ DropCast(DropCastStmt *stmt)
 	ObjectAddress object;
 
 	/* when dropping a cast, the types must exist even if you use IF EXISTS */
-	sourcetypeid = typenameTypeId(NULL, stmt->sourcetype, NULL);
-	targettypeid = typenameTypeId(NULL, stmt->targettype, NULL);
+	sourcetypeid = typenameTypeId(NULL, stmt->sourcetype);
+	targettypeid = typenameTypeId(NULL, stmt->targettype);
 
 	object.classId = CastRelationId;
 	object.objectId = get_cast_oid(sourcetypeid, targettypeid,

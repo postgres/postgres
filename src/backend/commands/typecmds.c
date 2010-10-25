@@ -333,7 +333,7 @@ DefineType(List *names, List *parameters)
 	}
 	if (elemTypeEl)
 	{
-		elemType = typenameTypeId(NULL, defGetTypeName(elemTypeEl), NULL);
+		elemType = typenameTypeId(NULL, defGetTypeName(elemTypeEl));
 		/* disallow arrays of pseudotypes */
 		if (get_typtype(elemType) == TYPTYPE_PSEUDO)
 			ereport(ERROR,
@@ -1205,7 +1205,7 @@ AlterEnum(AlterEnumStmt *stmt)
 
 	/* Make a TypeName so we can use standard type lookup machinery */
 	typename = makeTypeNameFromNameList(stmt->typeName);
-	enum_type_oid = typenameTypeId(NULL, typename, NULL);
+	enum_type_oid = typenameTypeId(NULL, typename);
 
 	tup = SearchSysCache1(TYPEOID, ObjectIdGetDatum(enum_type_oid));
 	if (!HeapTupleIsValid(tup))
@@ -1620,7 +1620,7 @@ AlterDomainDefault(List *names, Node *defaultRaw)
 
 	/* Make a TypeName so we can use standard type lookup machinery */
 	typename = makeTypeNameFromNameList(names);
-	domainoid = typenameTypeId(NULL, typename, NULL);
+	domainoid = typenameTypeId(NULL, typename);
 
 	/* Look up the domain in the type table */
 	rel = heap_open(TypeRelationId, RowExclusiveLock);
@@ -1746,7 +1746,7 @@ AlterDomainNotNull(List *names, bool notNull)
 
 	/* Make a TypeName so we can use standard type lookup machinery */
 	typename = makeTypeNameFromNameList(names);
-	domainoid = typenameTypeId(NULL, typename, NULL);
+	domainoid = typenameTypeId(NULL, typename);
 
 	/* Look up the domain in the type table */
 	typrel = heap_open(TypeRelationId, RowExclusiveLock);
@@ -1846,7 +1846,7 @@ AlterDomainDropConstraint(List *names, const char *constrName,
 
 	/* Make a TypeName so we can use standard type lookup machinery */
 	typename = makeTypeNameFromNameList(names);
-	domainoid = typenameTypeId(NULL, typename, NULL);
+	domainoid = typenameTypeId(NULL, typename);
 
 	/* Look up the domain in the type table */
 	rel = heap_open(TypeRelationId, RowExclusiveLock);
@@ -1919,7 +1919,7 @@ AlterDomainAddConstraint(List *names, Node *newConstraint)
 
 	/* Make a TypeName so we can use standard type lookup machinery */
 	typename = makeTypeNameFromNameList(names);
-	domainoid = typenameTypeId(NULL, typename, NULL);
+	domainoid = typenameTypeId(NULL, typename);
 
 	/* Look up the domain in the type table */
 	typrel = heap_open(TypeRelationId, RowExclusiveLock);
@@ -2540,7 +2540,7 @@ RenameType(List *names, const char *newTypeName)
 
 	/* Make a TypeName so we can use standard type lookup machinery */
 	typename = makeTypeNameFromNameList(names);
-	typeOid = typenameTypeId(NULL, typename, NULL);
+	typeOid = typenameTypeId(NULL, typename);
 
 	/* Look up the type in the type table */
 	rel = heap_open(TypeRelationId, RowExclusiveLock);
@@ -2769,7 +2769,7 @@ AlterTypeNamespace(List *names, const char *newschema)
 
 	/* Make a TypeName so we can use standard type lookup machinery */
 	typename = makeTypeNameFromNameList(names);
-	typeOid = typenameTypeId(NULL, typename, NULL);
+	typeOid = typenameTypeId(NULL, typename);
 
 	/* check permissions on type */
 	if (!pg_type_ownercheck(typeOid, GetUserId()))

@@ -464,7 +464,7 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId)
 	(void) heap_reloptions(relkind, reloptions, true);
 
 	if (stmt->ofTypename)
-		ofTypeId = typenameTypeId(NULL, stmt->ofTypename, NULL);
+		ofTypeId = typenameTypeId(NULL, stmt->ofTypename);
 	else
 		ofTypeId = InvalidOid;
 
@@ -1399,7 +1399,7 @@ MergeAttributes(List *schema, List *supers, bool istemp,
 						(errmsg("merging multiple inherited definitions of column \"%s\"",
 								attributeName)));
 				def = (ColumnDef *) list_nth(inhSchema, exist_attno - 1);
-				defTypeId = typenameTypeId(NULL, def->typeName, &deftypmod);
+				typenameTypeIdAndMod(NULL, def->typeName, &defTypeId, &deftypmod);
 				if (defTypeId != attribute->atttypid ||
 					deftypmod != attribute->atttypmod)
 					ereport(ERROR,
@@ -1571,8 +1571,8 @@ MergeAttributes(List *schema, List *supers, bool istemp,
 				   (errmsg("merging column \"%s\" with inherited definition",
 						   attributeName)));
 				def = (ColumnDef *) list_nth(inhSchema, exist_attno - 1);
-				defTypeId = typenameTypeId(NULL, def->typeName, &deftypmod);
-				newTypeId = typenameTypeId(NULL, newdef->typeName, &newtypmod);
+				typenameTypeIdAndMod(NULL, def->typeName, &defTypeId, &deftypmod);
+				typenameTypeIdAndMod(NULL, newdef->typeName, &newTypeId, &newtypmod);
 				if (defTypeId != newTypeId || deftypmod != newtypmod)
 					ereport(ERROR,
 							(errcode(ERRCODE_DATATYPE_MISMATCH),
@@ -3910,7 +3910,7 @@ ATExecAddColumn(AlteredTableInfo *tab, Relation rel,
 			int32		ctypmod;
 
 			/* Child column must match by type */
-			ctypeId = typenameTypeId(NULL, colDef->typeName, &ctypmod);
+			typenameTypeIdAndMod(NULL, colDef->typeName, &ctypeId, &ctypmod);
 			if (ctypeId != childatt->atttypid ||
 				ctypmod != childatt->atttypmod)
 				ereport(ERROR,
@@ -6100,7 +6100,7 @@ ATPrepAlterColumnType(List **wqueue,
 						colName)));
 
 	/* Look up the target type */
-	targettype = typenameTypeId(NULL, typeName, &targettypmod);
+	typenameTypeIdAndMod(NULL, typeName, &targettype, &targettypmod);
 
 	/* make sure datatype is legal for a column */
 	CheckAttributeType(colName, targettype, false);

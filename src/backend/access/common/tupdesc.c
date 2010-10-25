@@ -536,7 +536,7 @@ BuildDescForRelation(List *schema)
 		attnum++;
 
 		attname = entry->colname;
-		atttypid = typenameTypeId(NULL, entry->typeName, &atttypmod);
+		typenameTypeIdAndMod(NULL, entry->typeName, &atttypid, &atttypmod);
 		attdim = list_length(entry->typeName->arrayBounds);
 
 		if (entry->typeName->setof)
