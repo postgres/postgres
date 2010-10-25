@@ -4368,6 +4368,7 @@ print_parameter_expr(Node *expr, ListCell *ancestor_cell,
 {
 	deparse_namespace save_dpns;
 	bool		save_varprefix;
+	bool		need_paren;
 
 	/* Switch attention to the ancestor plan node */
 	push_ancestor_plan(dpns, ancestor_cell, &save_dpns);
@@ -4380,12 +4381,20 @@ print_parameter_expr(Node *expr, ListCell *ancestor_cell,
 	context->varprefix = true;
 
 	/*
-	 * We don't need to add parentheses because a Param's expansion is
-	 * (currently) always a Var or Aggref.
+	 * A Param's expansion is typically a Var, Aggref, or upper-level Param,
+	 * which wouldn't need extra parentheses.  Otherwise, insert parens to
+	 * ensure the expression looks atomic.
 	 */
-	Assert(IsA(expr, Var) || IsA(expr, Aggref));
+	need_paren = !(IsA(expr, Var) ||
+				   IsA(expr, Aggref) ||
+				   IsA(expr, Param));
+	if (need_paren)
+		appendStringInfoChar(context->buf, '(');
 
 	get_rule_expr(expr, context, false);
+
+	if (need_paren)
+		appendStringInfoChar(context->buf, ')');
 
 	context->varprefix = save_varprefix;
 
