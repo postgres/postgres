@@ -26,7 +26,7 @@ buildtree=`cd ${2:-'.'} && pwd`
 # If we did, it would interfere with installation of prebuilt docs from
 # the source tree, if a VPATH build is done from a distribution tarball.
 # See bug #5595.
-for item in `find "$sourcetree" -type d \( \( -name CVS -prune \) -o \( -name .git -prune \) -o \( -path "$sourcetree/doc/src/sgml/*" -prune \) -o -print \)`; do
+for item in `find "$sourcetree" -type d \( \( -name CVS -prune \) -o \( -name .git -prune \) -o -print \) | grep -v "$sourcetree/doc/src/sgml/\+"`; do
     subdir=`expr "$item" : "$sourcetree\(.*\)"`
     if test ! -d "$buildtree/$subdir"; then
         mkdir -p "$buildtree/$subdir" || exit 1
