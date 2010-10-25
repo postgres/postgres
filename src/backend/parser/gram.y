@@ -182,8 +182,8 @@ static RangeVar *makeRangeVarFromAnyName(List *names, int position, core_yyscan_
 }
 
 %type <node>	stmt schema_stmt
-		AlterDatabaseStmt AlterDatabaseSetStmt AlterDomainStmt AlterFdwStmt
-		AlterForeignServerStmt AlterGroupStmt
+		AlterDatabaseStmt AlterDatabaseSetStmt AlterDomainStmt AlterEnumStmt
+		AlterFdwStmt AlterForeignServerStmt AlterGroupStmt
 		AlterObjectSchemaStmt AlterOwnerStmt AlterSeqStmt AlterTableStmt
 		AlterCompositeTypeStmt AlterUserStmt AlterUserMappingStmt AlterUserSetStmt
 		AlterRoleStmt AlterRoleSetStmt
@@ -652,6 +652,7 @@ stmt :
 			| AlterDatabaseSetStmt
 			| AlterDefaultPrivilegesStmt
 			| AlterDomainStmt
+			| AlterEnumStmt
 			| AlterFdwStmt
 			| AlterForeignServerStmt
 			| AlterFunctionStmt
@@ -3862,6 +3863,42 @@ enum_val_list:	Sconst
 			| enum_val_list ',' Sconst
 				{ $$ = lappend($1, makeString($3)); }
 		;
+
+/*****************************************************************************
+ *
+ *	ALTER TYPE enumtype ADD ...
+ *
+ *****************************************************************************/
+
+AlterEnumStmt:
+         ALTER TYPE_P any_name ADD_P Sconst
+			 {
+				 AlterEnumStmt *n = makeNode(AlterEnumStmt);
+				 n->typeName = $3;
+				 n->newVal = $5;
+				 n->newValNeighbor = NULL;
+				 n->newValIsAfter = true;
+				 $$ = (Node *) n;
+			 }
+		 | ALTER TYPE_P any_name ADD_P Sconst BEFORE Sconst
+			 {
+				 AlterEnumStmt *n = makeNode(AlterEnumStmt);
+				 n->typeName = $3;
+				 n->newVal = $5;
+				 n->newValNeighbor = $7;
+				 n->newValIsAfter = false;
+				 $$ = (Node *) n;
+			 }
+		 | ALTER TYPE_P any_name ADD_P Sconst AFTER Sconst
+			 {
+				 AlterEnumStmt *n = makeNode(AlterEnumStmt);
+				 n->typeName = $3;
+				 n->newVal = $5;
+				 n->newValNeighbor = $7;
+				 n->newValIsAfter = true;
+				 $$ = (Node *) n;
+			 }
+		 ;
 
 
 /*****************************************************************************

@@ -20,6 +20,9 @@
 #include "fmgr.h"
 
 
+/* TypeCacheEnumData is an opaque struct known only within typcache.c */
+struct TypeCacheEnumData;
+
 typedef struct TypeCacheEntry
 {
 	/* typeId is the hash lookup key and MUST BE FIRST */
@@ -63,6 +66,12 @@ typedef struct TypeCacheEntry
 	 * reference-counted tupledesc.)
 	 */
 	TupleDesc	tupDesc;
+
+	/*
+	 * Private information about an enum type.  NULL if not enum or
+	 * information hasn't been requested.
+	 */
+	struct TypeCacheEnumData *enumData;
 } TypeCacheEntry;
 
 /* Bit flags to indicate which fields a given caller needs to have set */
@@ -85,5 +94,7 @@ extern TupleDesc lookup_rowtype_tupdesc_noerror(Oid type_id, int32 typmod,
 extern TupleDesc lookup_rowtype_tupdesc_copy(Oid type_id, int32 typmod);
 
 extern void assign_record_type_typmod(TupleDesc tupDesc);
+
+extern int	compare_values_of_enum(TypeCacheEntry *tcache, Oid arg1, Oid arg2);
 
 #endif   /* TYPCACHE_H */

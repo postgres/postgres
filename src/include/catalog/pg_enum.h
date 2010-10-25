@@ -34,6 +34,7 @@
 CATALOG(pg_enum,3501)
 {
 	Oid			enumtypid;		/* OID of owning enum type */
+	float4		enumsortorder;	/* sort position of this enum value */
 	NameData	enumlabel;		/* text representation of enum value */
 } FormData_pg_enum;
 
@@ -48,9 +49,10 @@ typedef FormData_pg_enum *Form_pg_enum;
  *		compiler constants for pg_enum
  * ----------------
  */
-#define Natts_pg_enum					2
+#define Natts_pg_enum					3
 #define Anum_pg_enum_enumtypid			1
-#define Anum_pg_enum_enumlabel			2
+#define Anum_pg_enum_enumsortorder		2
+#define Anum_pg_enum_enumlabel			3
 
 /* ----------------
  *		pg_enum has no initial contents
@@ -60,8 +62,9 @@ typedef FormData_pg_enum *Form_pg_enum;
 /*
  * prototypes for functions in pg_enum.c
  */
-extern void EnumValuesCreate(Oid enumTypeOid, List *vals,
-				 Oid binary_upgrade_next_pg_enum_oid);
+extern void EnumValuesCreate(Oid enumTypeOid, List *vals);
 extern void EnumValuesDelete(Oid enumTypeOid);
+extern void AddEnumLabel(Oid enumTypeOid, const char *newVal,
+						 const char *neighbor, bool newValIsAfter);
 
 #endif   /* PG_ENUM_H */

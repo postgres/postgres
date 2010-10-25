@@ -1393,6 +1393,17 @@ _equalCreateEnumStmt(CreateEnumStmt *a, CreateEnumStmt *b)
 }
 
 static bool
+_equalAlterEnumStmt(AlterEnumStmt *a, AlterEnumStmt *b)
+{
+	COMPARE_NODE_FIELD(typeName);
+	COMPARE_STRING_FIELD(newVal);
+	COMPARE_STRING_FIELD(newValNeighbor);
+	COMPARE_SCALAR_FIELD(newValIsAfter);
+
+	return true;
+}
+
+static bool
 _equalViewStmt(ViewStmt *a, ViewStmt *b)
 {
 	COMPARE_NODE_FIELD(view);
@@ -2699,6 +2710,9 @@ equal(void *a, void *b)
 			break;
 		case T_CreateEnumStmt:
 			retval = _equalCreateEnumStmt(a, b);
+			break;
+		case T_AlterEnumStmt:
+			retval = _equalAlterEnumStmt(a, b);
 			break;
 		case T_ViewStmt:
 			retval = _equalViewStmt(a, b);

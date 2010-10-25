@@ -2193,6 +2193,18 @@ typedef struct CreateEnumStmt
 	List	   *vals;			/* enum values (list of Value strings) */
 } CreateEnumStmt;
 
+/* ----------------------
+ *		Alter Type Statement, enum types
+ * ----------------------
+ */
+typedef struct AlterEnumStmt
+{
+	NodeTag		type;
+	List	   *typeName;		/* qualified name (list of Value strings) */
+	char	   *newVal;			/* new enum value's name */
+	char	   *newValNeighbor;	/* neighboring enum value, if specified */
+	bool	    newValIsAfter;	/* place new enum value after neighbor? */
+} AlterEnumStmt;
 
 /* ----------------------
  *		Create View Statement

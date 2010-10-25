@@ -190,6 +190,7 @@ check_xact_readonly(Node *parsetree)
 		case T_CreateTrigStmt:
 		case T_CompositeTypeStmt:
 		case T_CreateEnumStmt:
+		case T_AlterEnumStmt:
 		case T_ViewStmt:
 		case T_DropCastStmt:
 		case T_DropStmt:
@@ -858,6 +859,16 @@ standard_ProcessUtility(Node *parsetree,
 
 		case T_CreateEnumStmt:	/* CREATE TYPE (enum) */
 			DefineEnum((CreateEnumStmt *) parsetree);
+			break;
+
+		case T_AlterEnumStmt:	/* ALTER TYPE (enum) */
+			/*
+			 * We disallow this in transaction blocks, because we can't cope
+			 * with enum OID values getting into indexes and then having their
+			 * defining pg_enum entries go away.
+			 */
+			PreventTransactionChain(isTopLevel, "ALTER TYPE ... ADD");
+			AlterEnum((AlterEnumStmt *) parsetree);
 			break;
 
 		case T_ViewStmt:		/* CREATE VIEW */
@@ -1868,6 +1879,10 @@ CreateCommandTag(Node *parsetree)
 			tag = "CREATE TYPE";
 			break;
 
+		case T_AlterEnumStmt:
+			tag = "ALTER TYPE";
+			break;
+
 		case T_ViewStmt:
 			tag = "CREATE VIEW";
 			break;
@@ -2407,6 +2422,10 @@ GetCommandLogLevel(Node *parsetree)
 			break;
 
 		case T_CreateEnumStmt:
+			lev = LOGSTMT_DDL;
+			break;
+
+		case T_AlterEnumStmt:
 			lev = LOGSTMT_DDL;
 			break;
 

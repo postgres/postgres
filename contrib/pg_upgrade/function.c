@@ -79,7 +79,7 @@ install_support_functions(void)
 								  "LANGUAGE C STRICT;"));
 		PQclear(executeQueryOrDie(conn,
 								  "CREATE OR REPLACE FUNCTION "
-			 "		binary_upgrade.add_pg_enum_label(OID, OID, NAME) "
+			 "		binary_upgrade.set_next_pg_enum_oid(OID) "
 								  "RETURNS VOID "
 								  "AS '$libdir/pg_upgrade_support' "
 								  "LANGUAGE C STRICT;"));

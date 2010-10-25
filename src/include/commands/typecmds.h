@@ -24,6 +24,7 @@ extern void RemoveTypes(DropStmt *drop);
 extern void RemoveTypeById(Oid typeOid);
 extern void DefineDomain(CreateDomainStmt *stmt);
 extern void DefineEnum(CreateEnumStmt *stmt);
+extern void AlterEnum(AlterEnumStmt *stmt);
 extern Oid	DefineCompositeType(const RangeVar *typevar, List *coldeflist);
 extern Oid	AssignTypeArrayOid(void);
 

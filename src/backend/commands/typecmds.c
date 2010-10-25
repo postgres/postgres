@@ -84,7 +84,8 @@ static Oid	findTypeTypmodinFunction(List *procname);
 static Oid	findTypeTypmodoutFunction(List *procname);
 static Oid	findTypeAnalyzeFunction(List *procname, Oid typeOid);
 static List *get_rels_with_domain(Oid domainOid, LOCKMODE lockmode);
-static void checkDomainOwner(HeapTuple tup, TypeName *typename);
+static void checkDomainOwner(HeapTuple tup);
+static void checkEnumOwner(HeapTuple tup);
 static char *domainAddConstraint(Oid domainOid, Oid domainNamespace,
 					Oid baseTypeOid,
 					int typMod, Constraint *constr,
@@ -1150,7 +1151,7 @@ DefineEnum(CreateEnumStmt *stmt)
 				   false);		/* Type NOT NULL */
 
 	/* Enter the enum's values into pg_enum */
-	EnumValuesCreate(enumTypeOid, stmt->vals, InvalidOid);
+	EnumValuesCreate(enumTypeOid, stmt->vals);
 
 	/*
 	 * Create the array type that goes with it.
@@ -1189,6 +1190,60 @@ DefineEnum(CreateEnumStmt *stmt)
 			   false);			/* Type NOT NULL */
 
 	pfree(enumArrayName);
+}
+
+/*
+ * AlterEnum
+ *		Adds a new label to an existing enum.
+ */
+void
+AlterEnum(AlterEnumStmt *stmt)
+{
+	Oid			enum_type_oid;
+	TypeName   *typename;
+	HeapTuple	tup;
+
+	/* Make a TypeName so we can use standard type lookup machinery */
+	typename = makeTypeNameFromNameList(stmt->typeName);
+	enum_type_oid = typenameTypeId(NULL, typename, NULL);
+
+	tup = SearchSysCache1(TYPEOID, ObjectIdGetDatum(enum_type_oid));
+	if (!HeapTupleIsValid(tup))
+		elog(ERROR, "cache lookup failed for type %u", enum_type_oid);
+
+	/* Check it's an enum and check user has permission to ALTER the enum */
+	checkEnumOwner(tup);
+
+	/* Add the new label */
+	AddEnumLabel(enum_type_oid, stmt->newVal,
+				 stmt->newValNeighbor, stmt->newValIsAfter);
+
+	ReleaseSysCache(tup);
+}
+
+
+/*
+ * checkEnumOwner
+ *
+ * Check that the type is actually an enum and that the current user
+ * has permission to do ALTER TYPE on it.  Throw an error if not.
+ */
+static void
+checkEnumOwner(HeapTuple tup)
+{
+	Form_pg_type typTup = (Form_pg_type) GETSTRUCT(tup);
+
+	/* Check that this is actually an enum */
+	if (typTup->typtype != TYPTYPE_ENUM)
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("%s is not an enum",
+						format_type_be(HeapTupleGetOid(tup)))));
+
+	/* Permission check: must own type */
+	if (!pg_type_ownercheck(HeapTupleGetOid(tup), GetUserId()))
+		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_TYPE,
+					   format_type_be(HeapTupleGetOid(tup)));
 }
 
 
@@ -1576,7 +1631,7 @@ AlterDomainDefault(List *names, Node *defaultRaw)
 	typTup = (Form_pg_type) GETSTRUCT(tup);
 
 	/* Check it's a domain and check user has permission for ALTER DOMAIN */
-	checkDomainOwner(tup, typename);
+	checkDomainOwner(tup);
 
 	/* Setup new tuple */
 	MemSet(new_record, (Datum) 0, sizeof(new_record));
@@ -1702,7 +1757,7 @@ AlterDomainNotNull(List *names, bool notNull)
 	typTup = (Form_pg_type) GETSTRUCT(tup);
 
 	/* Check it's a domain and check user has permission for ALTER DOMAIN */
-	checkDomainOwner(tup, typename);
+	checkDomainOwner(tup);
 
 	/* Is the domain already set to the desired constraint? */
 	if (typTup->typnotnull == notNull)
@@ -1801,7 +1856,7 @@ AlterDomainDropConstraint(List *names, const char *constrName,
 		elog(ERROR, "cache lookup failed for type %u", domainoid);
 
 	/* Check it's a domain and check user has permission for ALTER DOMAIN */
-	checkDomainOwner(tup, typename);
+	checkDomainOwner(tup);
 
 	/* Grab an appropriate lock on the pg_constraint relation */
 	conrel = heap_open(ConstraintRelationId, RowExclusiveLock);
@@ -1875,7 +1930,7 @@ AlterDomainAddConstraint(List *names, Node *newConstraint)
 	typTup = (Form_pg_type) GETSTRUCT(tup);
 
 	/* Check it's a domain and check user has permission for ALTER DOMAIN */
-	checkDomainOwner(tup, typename);
+	checkDomainOwner(tup);
 
 	if (!IsA(newConstraint, Constraint))
 		elog(ERROR, "unrecognized node type: %d",
@@ -2187,7 +2242,7 @@ get_rels_with_domain(Oid domainOid, LOCKMODE lockmode)
  * has permission to do ALTER DOMAIN on it.  Throw an error if not.
  */
 static void
-checkDomainOwner(HeapTuple tup, TypeName *typename)
+checkDomainOwner(HeapTuple tup)
 {
 	Form_pg_type typTup = (Form_pg_type) GETSTRUCT(tup);
 
@@ -2195,8 +2250,8 @@ checkDomainOwner(HeapTuple tup, TypeName *typename)
 	if (typTup->typtype != TYPTYPE_DOMAIN)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				 errmsg("\"%s\" is not a domain",
-						TypeNameToString(typename))));
+				 errmsg("%s is not a domain",
+						format_type_be(HeapTupleGetOid(tup)))));
 
 	/* Permission check: must own type */
 	if (!pg_type_ownercheck(HeapTupleGetOid(tup), GetUserId()))

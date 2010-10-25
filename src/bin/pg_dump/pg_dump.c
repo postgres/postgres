@@ -6657,14 +6657,21 @@ dumpEnumType(Archive *fout, TypeInfo *tyinfo)
 	Oid			enum_oid;
 	char	   *label;
 
-	/* Set proper schema search path so regproc references list correctly */
-	selectSourceSchema(tyinfo->dobj.namespace->dobj.name);
+	/* Set proper schema search path */
+	selectSourceSchema("pg_catalog");
 
-	appendPQExpBuffer(query, "SELECT oid, enumlabel "
-					  "FROM pg_catalog.pg_enum "
-					  "WHERE enumtypid = '%u'"
-					  "ORDER BY oid",
-					  tyinfo->dobj.catId.oid);
+	if (fout->remoteVersion >= 90100)
+		appendPQExpBuffer(query, "SELECT oid, enumlabel "
+						  "FROM pg_catalog.pg_enum "
+						  "WHERE enumtypid = '%u'"
+						  "ORDER BY enumsortorder",
+						  tyinfo->dobj.catId.oid);
+	else
+		appendPQExpBuffer(query, "SELECT oid, enumlabel "
+						  "FROM pg_catalog.pg_enum "
+						  "WHERE enumtypid = '%u'"
+						  "ORDER BY oid",
+						  tyinfo->dobj.catId.oid);
 
 	res = PQexec(g_conn, query->data);
 	check_sql_result(res, g_conn, query->data, PGRES_TUPLES_OK);
@@ -6713,13 +6720,15 @@ dumpEnumType(Archive *fout, TypeInfo *tyinfo)
 			if (i == 0)
 				appendPQExpBuffer(q, "\n-- For binary upgrade, must preserve pg_enum oids\n");
 			appendPQExpBuffer(q,
-			 "SELECT binary_upgrade.add_pg_enum_label('%u'::pg_catalog.oid, "
-							  "'%u'::pg_catalog.oid, ",
-							  enum_oid, tyinfo->dobj.catId.oid);
+							  "SELECT binary_upgrade.set_next_pg_enum_oid('%u'::pg_catalog.oid);\n",
+							  enum_oid);
+			appendPQExpBuffer(q, "ALTER TYPE %s.",
+							  fmtId(tyinfo->dobj.namespace->dobj.name));
+			appendPQExpBuffer(q, "%s ADD ",
+							  fmtId(tyinfo->dobj.name));
 			appendStringLiteralAH(q, label, fout);
-			appendPQExpBuffer(q, ");\n");
+			appendPQExpBuffer(q, ";\n\n");
 		}
-		appendPQExpBuffer(q, "\n");
 	}
 
 	ArchiveEntry(fout, tyinfo->dobj.catId, tyinfo->dobj.dumpId,

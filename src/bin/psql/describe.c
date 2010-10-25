@@ -473,17 +473,27 @@ describeTypes(const char *pattern, bool verbose, bool showSystem)
 						  gettext_noop("Internal name"),
 						  gettext_noop("Size"));
 	if (verbose && pset.sversion >= 80300)
+	{
 		appendPQExpBuffer(&buf,
 						  "  pg_catalog.array_to_string(\n"
 						  "      ARRAY(\n"
 						  "		     SELECT e.enumlabel\n"
 						  "          FROM pg_catalog.pg_enum e\n"
-						  "          WHERE e.enumtypid = t.oid\n"
-						  "          ORDER BY e.oid\n"
+						  "          WHERE e.enumtypid = t.oid\n");
+
+		if (pset.sversion >= 90100)
+			appendPQExpBuffer(&buf,
+							  "          ORDER BY e.enumsortorder\n");
+		else
+			appendPQExpBuffer(&buf,
+							  "          ORDER BY e.oid\n");
+
+		appendPQExpBuffer(&buf,
 						  "      ),\n"
 						  "      E'\\n'\n"
 						  "  ) AS \"%s\",\n",
 						  gettext_noop("Elements"));
+	}
 
 	appendPQExpBuffer(&buf,
 				"  pg_catalog.obj_description(t.oid, 'pg_type') as \"%s\"\n",

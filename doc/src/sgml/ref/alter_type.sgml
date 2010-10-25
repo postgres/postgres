@@ -24,10 +24,11 @@ PostgreSQL documentation
  <refsynopsisdiv>
 <synopsis>
 ALTER TYPE <replaceable class="PARAMETER">name</replaceable> <replaceable class="PARAMETER">action</replaceable> [, ... ]
-ALTER TYPE <replaceable class="PARAMETER">name</replaceable> OWNER TO <replaceable class="PARAMETER">new_owner</replaceable> 
+ALTER TYPE <replaceable class="PARAMETER">name</replaceable> OWNER TO <replaceable class="PARAMETER">new_owner</replaceable>
 ALTER TYPE <replaceable class="PARAMETER">name</replaceable> RENAME ATTRIBUTE <replaceable class="PARAMETER">attribute_name</replaceable> TO <replaceable class="PARAMETER">new_attribute_name</replaceable>
 ALTER TYPE <replaceable class="PARAMETER">name</replaceable> RENAME TO <replaceable class="PARAMETER">new_name</replaceable>
 ALTER TYPE <replaceable class="PARAMETER">name</replaceable> SET SCHEMA <replaceable class="PARAMETER">new_schema</replaceable>
+ALTER TYPE <replaceable class="PARAMETER">name</replaceable> ADD <replaceable class="PARAMETER">new_enum_value</replaceable> [ { BEFORE | AFTER } <replaceable class="PARAMETER">existing_enum_value</replaceable> ]
 
 <phrase>where <replaceable class="PARAMETER">action</replaceable> is one of:</phrase>
 
@@ -100,6 +101,18 @@ ALTER TYPE <replaceable class="PARAMETER">name</replaceable> SET SCHEMA <replace
     <listitem>
      <para>
       This form moves the type into another schema.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>ADD [ BEFORE | AFTER ]</literal></term>
+    <listitem>
+     <para>
+      This form adds a new value to an enum type. If the new value's place in
+      the enum's ordering is not specified using <literal>BEFORE</literal> or
+      <literal>AFTER</literal>, then the new item is placed at the end of the
+      list of values.
      </para>
     </listitem>
    </varlistentry>
@@ -181,7 +194,7 @@ ALTER TYPE <replaceable class="PARAMETER">name</replaceable> SET SCHEMA <replace
       <term><replaceable class="PARAMETER">new_attribute_name</replaceable></term>
       <listitem>
        <para>
-        The new name of the attribute begin renamed.
+        The new name of the attribute to be renamed.
        </para>
       </listitem>
      </varlistentry>
@@ -196,9 +209,52 @@ ALTER TYPE <replaceable class="PARAMETER">name</replaceable> SET SCHEMA <replace
       </listitem>
      </varlistentry>
 
+     <varlistentry>
+      <term><replaceable class="PARAMETER">new_enum_value</replaceable></term>
+      <listitem>
+       <para>
+        The new value to be added to an enum type's list of values.
+        Like all enum literals, it needs to be quoted.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><replaceable class="PARAMETER">existing_enum_value</replaceable></term>
+      <listitem>
+       <para>
+        The existing enum value that the new value should be added immediately
+        before or after in the enum type's sort ordering.
+        Like all enum literals, it needs to be quoted.
+       </para>
+      </listitem>
+     </varlistentry>
+
     </variablelist>
    </para>
   </refsect1>
+
+ <refsect1>
+  <title>Notes</title>
+
+  <para>
+   <command>ALTER TYPE ... ADD</> (the form that adds a new value to an
+   enum type) cannot be executed inside a transaction block.
+  </para>
+
+  <para>
+   Comparisons involving an added enum value will sometimes be slower than
+   comparisons involving only original members of the enum type.  This will
+   usually only occur if <literal>BEFORE</literal> or <literal>AFTER</literal>
+   is used to set the new value's sort position somewhere other than at the
+   end of the list.  However, sometimes it will happen even though the new
+   value is added at the end (this occurs if the OID counter <quote>wrapped
+   around</> since the original creation of the enum type).  The slowdown is
+   usually insignificant; but if it matters, optimal performance can be
+   regained by dropping and recreating the enum type, or by dumping and
+   reloading the database.
+  </para>
+ </refsect1>
 
  <refsect1>
   <title>Examples</title>
@@ -230,6 +286,13 @@ ALTER TYPE email SET SCHEMA customers;
    To add a new attribute to a type:
 <programlisting>
 ALTER TYPE compfoo ADD ATTRIBUTE f3 int;
+</programlisting>
+  </para>
+
+  <para>
+   To add a new value to an enum type in a particular sort position:
+<programlisting>
+ALTER TYPE colors ADD 'orange' AFTER 'red';
 </programlisting>
   </para>
  </refsect1>
