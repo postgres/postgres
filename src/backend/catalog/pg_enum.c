@@ -287,6 +287,16 @@ restart:
 			other_nbr_en = (Form_pg_enum) GETSTRUCT(existing[other_nbr_index]);
 			newelemorder = (nbr_en->enumsortorder +
 							other_nbr_en->enumsortorder) / 2;
+
+			/*
+			 * On some machines, newelemorder may be in a register that's
+			 * wider than float4.  We need to force it to be rounded to
+			 * float4 precision before making the following comparisons,
+			 * or we'll get wrong results.  (Such behavior violates the C
+			 * standard, but fixing the compilers is out of our reach.)
+			 */
+			newelemorder = DatumGetFloat4(Float4GetDatum(newelemorder));
+
 			if (newelemorder == nbr_en->enumsortorder ||
 				newelemorder == other_nbr_en->enumsortorder)
 			{
