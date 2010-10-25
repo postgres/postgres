@@ -2018,11 +2018,16 @@ rowtype_field_matches(Oid rowtypeid, int fieldnum,
  * will not be pre-evaluated here, although we will reduce their
  * arguments as far as possible.
  *
+ * Whenever a function is eliminated from the expression by means of
+ * constant-expression evaluation or inlining, we add the function to
+ * root->glob->invalItems.  This ensures the plan is known to depend on
+ * such functions, even though they aren't referenced anymore.
+ *
  * We assume that the tree has already been type-checked and contains
  * only operators and functions that are reasonable to try to execute.
  *
  * NOTE: "root" can be passed as NULL if the caller never wants to do any
- * Param substitutions.
+ * Param substitutions nor receive info about inlined functions.
  *
  * NOTE: the planner assumes that this will always flatten nested AND and
  * OR clauses into N-argument form.  See comments in prepqual.c.
@@ -4107,6 +4112,7 @@ inline_set_returning_function(PlannerInfo *root, RangeTblEntry *rte)
 	bool		modifyTargetList;
 	MemoryContext oldcxt;
 	MemoryContext mycxt;
+	List	   *saveInvalItems;
 	inline_error_callback_arg callback_arg;
 	ErrorContextCallback sqlerrcontext;
 	List	   *raw_parsetree_list;
@@ -4192,6 +4198,16 @@ inline_set_returning_function(PlannerInfo *root, RangeTblEntry *rte)
 								  ALLOCSET_DEFAULT_INITSIZE,
 								  ALLOCSET_DEFAULT_MAXSIZE);
 	oldcxt = MemoryContextSwitchTo(mycxt);
+
+	/*
+	 * When we call eval_const_expressions below, it might try to add items
+	 * to root->glob->invalItems.  Since it is running in the temp context,
+	 * those items will be in that context, and will need to be copied out
+	 * if we're successful.  Temporarily reset the list so that we can keep
+	 * those items separate from the pre-existing list contents.
+	 */
+	saveInvalItems = root->glob->invalItems;
+	root->glob->invalItems = NIL;
 
 	/* Fetch the function body */
 	tmp = SysCacheGetAttr(PROCOID,
@@ -4319,6 +4335,10 @@ inline_set_returning_function(PlannerInfo *root, RangeTblEntry *rte)
 
 	querytree = copyObject(querytree);
 
+	/* copy up any new invalItems, too */
+	root->glob->invalItems = list_concat(saveInvalItems,
+										 copyObject(root->glob->invalItems));
+
 	MemoryContextDelete(mycxt);
 	error_context_stack = sqlerrcontext.previous;
 	ReleaseSysCache(func_tuple);
@@ -4334,6 +4354,7 @@ inline_set_returning_function(PlannerInfo *root, RangeTblEntry *rte)
 	/* Here if func is not inlinable: release temp memory and return NULL */
 fail:
 	MemoryContextSwitchTo(oldcxt);
+	root->glob->invalItems = saveInvalItems;
 	MemoryContextDelete(mycxt);
 	error_context_stack = sqlerrcontext.previous;
 	ReleaseSysCache(func_tuple);
