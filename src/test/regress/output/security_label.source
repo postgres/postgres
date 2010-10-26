@@ -22,13 +22,13 @@ RESET client_min_messages;
 -- Test of SECURITY LABEL statement without a plugin
 --
 SECURITY LABEL ON TABLE seclabel_tbl1 IS 'classified';			-- fail
-ERROR:  security label providers have been loaded
+ERROR:  no security label providers have been loaded
 SECURITY LABEL FOR 'dummy' ON TABLE seclabel_tbl1 IS 'classified';		-- fail
 ERROR:  security label provider "dummy" is not loaded
 SECURITY LABEL ON TABLE seclabel_tbl1 IS '...invalid label...';		-- fail
-ERROR:  security label providers have been loaded
+ERROR:  no security label providers have been loaded
 SECURITY LABEL ON TABLE seclabel_tbl3 IS 'unclassified';			-- fail
-ERROR:  security label providers have been loaded
+ERROR:  no security label providers have been loaded
 -- Load dummy external security provider
 LOAD '@abs_builddir@/dummy_seclabel@DLSUFFIX@';
 --
