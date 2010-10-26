@@ -4780,14 +4780,29 @@ StartupXLOG(void)
 		record = ReadCheckpointRecord(checkPointLoc, 0);
 		if (record != NULL)
 		{
+			memcpy(&checkPoint, XLogRecGetData(record), sizeof(CheckPoint));
 			ereport(LOG,
 					(errmsg("checkpoint record is at %X/%X",
 							checkPointLoc.xlogid, checkPointLoc.xrecoff)));
 			InRecovery = true;	/* force recovery even if SHUTDOWNED */
+
+			/*
+			 * Make sure that REDO location exists. This may not be
+			 * the case if there was a crash during an online backup,
+			 * which left a backup_label around that references a WAL
+			 * segment that's already been archived.
+			 */
+			if (XLByteLT(checkPoint.redo, checkPointLoc))
+			{
+				if (!ReadRecord(&(checkPoint.redo), LOG))
+					ereport(FATAL,
+							(errmsg("could not find redo location referenced by checkpoint record"),
+							 errhint("If you are not restoring from a backup, try removing the file \"%s/backup_label\".", DataDir)));
+			}
 		}
 		else
 		{
-			ereport(PANIC,
+			ereport(FATAL,
 					(errmsg("could not locate required checkpoint record"),
 					 errhint("If you are not restoring from a backup, try removing the file \"%s/backup_label\".", DataDir)));
 		}
@@ -4823,10 +4838,10 @@ StartupXLOG(void)
 				ereport(PANIC,
 					 (errmsg("could not locate a valid checkpoint record")));
 		}
+		memcpy(&checkPoint, XLogRecGetData(record), sizeof(CheckPoint));
 	}
 
 	LastRec = RecPtr = checkPointLoc;
-	memcpy(&checkPoint, XLogRecGetData(record), sizeof(CheckPoint));
 	wasShutdown = (record->xl_info == XLOG_CHECKPOINT_SHUTDOWN);
 
 	ereport(LOG,
