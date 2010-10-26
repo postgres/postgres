@@ -1987,7 +1987,10 @@ process_file(char *filename, bool single_txn)
 		if ((res = PSQLexec("BEGIN", false)) == NULL)
 		{
 			if (pset.on_error_stop)
-				return EXIT_USER;
+			{
+				result = EXIT_USER;
+				goto error;
+			}
 		}
 		else
 			PQclear(res);
@@ -2000,13 +2003,19 @@ process_file(char *filename, bool single_txn)
 		if ((res = PSQLexec("COMMIT", false)) == NULL)
 		{
 			if (pset.on_error_stop)
-				return EXIT_USER;
+			{
+				result = EXIT_USER;
+				goto error;
+			}
 		}
 		else
 			PQclear(res);
 	}
 
-	fclose(fd);
+error:
+	if (fd != stdin)
+		fclose(fd);
+
 	pset.inputfile = oldfilename;
 	return result;
 }
