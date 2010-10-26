@@ -187,14 +187,15 @@ CREATE INDEX <replaceable>name</replaceable> ON <replaceable>table</replaceable>
 </synopsis>
   </para>
 
-  <note>
+  <caution>
    <para>
     Hash index operations are not presently WAL-logged,
     so hash indexes might need to be rebuilt with <command>REINDEX</>
-    after a database crash.
-    For this reason, hash index use is presently discouraged.
+    after a database crash. They are also not replicated over streaming or
+    file-based replication.
+    For these reasons, hash index use is presently discouraged.
    </para>
-  </note>
+  </caution>
 
   <para>
    <indexterm>

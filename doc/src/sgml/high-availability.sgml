@@ -1845,8 +1845,7 @@ LOG:  database system is ready to accept read only connections
    <listitem>
     <para>
      Operations on hash indexes are not presently WAL-logged, so
-     replay will not update these indexes.  Hash indexes will not be
-     used for query plans during recovery.
+     replay will not update these indexes.
     </para>
    </listitem>
    <listitem>
