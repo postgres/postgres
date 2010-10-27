@@ -1354,7 +1354,8 @@ SET ENABLE_SEQSCAN TO OFF;
          simultaneously.  Raising this value will increase the number of I/O
          operations that any individual <productname>PostgreSQL</> session
          attempts to initiate in parallel.  The allowed range is 1 to 1000,
-         or zero to disable issuance of asynchronous I/O requests.
+         or zero to disable issuance of asynchronous I/O requests. Currently,
+         this setting only affects bitmap heap scans.
         </para>
 
         <para>
