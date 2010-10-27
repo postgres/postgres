@@ -216,6 +216,12 @@ static int	CheckRADIUSAuth(Port *port);
  *----------------------------------------------------------------
  */
 
+/*
+ * This hook allows plugins to get control following client authentication,
+ * but before the user has been informed about the results.  It could be used
+ * to record login events, insert a delay after failed authentication, etc.
+ */
+ClientAuthentication_hook_type ClientAuthentication_hook = NULL;
 
 /*
  * Tell the user the authentication failed, but not (much about) why.
@@ -576,6 +582,9 @@ ClientAuthentication(Port *port)
 			status = STATUS_OK;
 			break;
 	}
+
+	if (ClientAuthentication_hook)
+		(*ClientAuthentication_hook)(port, status);
 
 	if (status == STATUS_OK)
 		sendAuthRequest(port, AUTH_REQ_OK);
