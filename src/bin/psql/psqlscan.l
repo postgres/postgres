@@ -120,7 +120,6 @@ static bool var_is_current_source(PsqlScanState state, const char *varname);
 static YY_BUFFER_STATE prepare_buffer(const char *txt, int len,
 									  char **txtcopy);
 static void emit(const char *txt, int len);
-static bool is_utf16_surrogate_first(uint32 c);
 static void escape_variable(bool as_ident);
 
 #define ECHO emit(yytext, yyleng)
@@ -163,7 +162,11 @@ static void escape_variable(bool as_ident);
  *  <xdolq> $foo$ quoted strings
  *  <xui> quoted identifier with Unicode escapes
  *  <xus> quoted string with Unicode escapes
- *  <xeu> Unicode surrogate pair in extended quoted string
+ *
+ * Note: we intentionally don't mimic the backend's <xeu> state; we have
+ * no need to distinguish it from <xe> state, and no good way to get out
+ * of it in error cases.  The backend just throws yyerror() in those
+ * cases, but that's not an option here.
  */
 
 %x xb
@@ -175,7 +178,6 @@ static void escape_variable(bool as_ident);
 %x xdolq
 %x xui
 %x xus
-%x xeu
 /* Additional exclusive states for psql only: lex backslash commands */
 %x xslashcmd
 %x xslasharg
@@ -529,19 +531,9 @@ other			.
 					ECHO;
 				}
 <xe>{xeunicode} {
-					uint32 c = strtoul(yytext+2, NULL, 16);
-
-					if (is_utf16_surrogate_first(c))
-						BEGIN(xeu);
 					ECHO;
 				}
-<xeu>{xeunicode} {
-					BEGIN(xe);
-					ECHO;
-				}
-<xeu>.			{ ECHO; }
-<xeu>\n			{ ECHO; }
-<xe,xeu>{xeunicodefail}	{
+<xe>{xeunicodefail}	{
 					ECHO;
 				}
 <xe>{xeescape}  {
@@ -1242,6 +1234,7 @@ psql_scan(PsqlScanState state,
 		case LEXRES_EOL:		/* end of input */
 			switch (state->start_state)
 			{
+				/* This switch must cover all non-slash-command states. */
 				case INITIAL:
 					if (state->paren_depth > 0)
 					{
@@ -1276,17 +1269,25 @@ psql_scan(PsqlScanState state,
 					result = PSCAN_INCOMPLETE;
 					*prompt = PROMPT_SINGLEQUOTE;
 					break;
-				case xq:
+				case xe:
 					result = PSCAN_INCOMPLETE;
 					*prompt = PROMPT_SINGLEQUOTE;
 					break;
-				case xe:
+				case xq:
 					result = PSCAN_INCOMPLETE;
 					*prompt = PROMPT_SINGLEQUOTE;
 					break;
 				case xdolq:
 					result = PSCAN_INCOMPLETE;
 					*prompt = PROMPT_DOLLARQUOTE;
+					break;
+				case xui:
+					result = PSCAN_INCOMPLETE;
+					*prompt = PROMPT_DOUBLEQUOTE;
+					break;
+				case xus:
+					result = PSCAN_INCOMPLETE;
+					*prompt = PROMPT_SINGLEQUOTE;
 					break;
 				default:
 					/* can't get here */
@@ -1812,12 +1813,6 @@ emit(const char *txt, int len)
 			appendPQExpBufferChar(output_buf, ch);
 		}
 	}
-}
-
-static bool
-is_utf16_surrogate_first(uint32 c)
-{
-	return (c >= 0xD800 && c <= 0xDBFF);
 }
 
 static void
