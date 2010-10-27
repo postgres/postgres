@@ -1956,6 +1956,8 @@ canAcceptConnections(void)
 
 /*
  * ConnCreate -- create a local connection data structure
+ *
+ * Returns NULL on failure, other than out-of-memory which is fatal.
  */
 static Port *
 ConnCreate(int serverFd)
@@ -1977,17 +1979,15 @@ ConnCreate(int serverFd)
 		ConnFree(port);
 		return NULL;
 	}
-	else
-	{
-		/*
-		 * Precompute password salt values to use for this connection. It's
-		 * slightly annoying to do this long in advance of knowing whether
-		 * we'll need 'em or not, but we must do the random() calls before we
-		 * fork, not after.  Else the postmaster's random sequence won't get
-		 * advanced, and all backends would end up using the same salt...
-		 */
-		RandomSalt(port->md5Salt);
-	}
+
+	/*
+	 * Precompute password salt values to use for this connection. It's
+	 * slightly annoying to do this long in advance of knowing whether
+	 * we'll need 'em or not, but we must do the random() calls before we
+	 * fork, not after.  Else the postmaster's random sequence won't get
+	 * advanced, and all backends would end up using the same salt...
+	 */
+	RandomSalt(port->md5Salt);
 
 	/*
 	 * Allocate GSSAPI specific state struct
