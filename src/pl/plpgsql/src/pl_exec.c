@@ -4577,10 +4577,11 @@ exec_eval_simple_expr(PLpgSQL_execstate *estate,
 	 */
 	if (expr->expr_simple_lxid != curlxid)
 	{
-		expr->expr_simple_state = ExecPrepareExpr(expr->expr_simple_expr,
-												  simple_eval_estate);
+		oldcontext = MemoryContextSwitchTo(simple_eval_estate->es_query_cxt);
+		expr->expr_simple_state = ExecInitExpr(expr->expr_simple_expr, NULL);
 		expr->expr_simple_in_use = false;
 		expr->expr_simple_lxid = curlxid;
+		MemoryContextSwitchTo(oldcontext);
 	}
 
 	/*
