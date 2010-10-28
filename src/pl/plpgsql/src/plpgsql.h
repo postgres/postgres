@@ -183,10 +183,11 @@ typedef struct PLpgSQL_expr
 
 	/*
 	 * if expr is simple AND prepared in current eval_estate,
-	 * expr_simple_state is valid.	Test validity by seeing if expr_simple_id
-	 * matches eval_estate_simple_id.
+	 * expr_simple_state and expr_simple_in_use are valid. Test validity by
+	 * seeing if expr_simple_id matches eval_estate_simple_id.
 	 */
-	ExprState  *expr_simple_state;
+	ExprState  *expr_simple_state;		/* eval tree for expr_simple_expr */
+	bool		expr_simple_in_use;		/* true if eval tree is active */
 	long int	expr_simple_id;
 
 	/* params to pass to expr */
