@@ -3190,6 +3190,48 @@ SELECT nonsimple_expr_test();
 
 DROP FUNCTION nonsimple_expr_test();
 
+--
+-- Test cases involving recursion and error recovery in simple expressions
+-- (bugs in all versions before October 2010).  The problems are most
+-- easily exposed by mutual recursion between plpgsql and sql functions.
+--
+
+create function recurse(float8) returns float8 as
+$$
+begin
+  if ($1 < 10) then
+    return sql_recurse($1 + 1);
+  else
+    return $1;
+  end if;
+end;
+$$ language plpgsql;
+
+-- "limit" is to prevent this from being inlined
+create function sql_recurse(float8) returns float8 as
+$$ select recurse($1) limit 1; $$ language sql;
+
+select recurse(0);
+
+create function error1(text) returns text language sql as
+$$ SELECT relname::text FROM pg_class c WHERE c.oid = $1::regclass $$;
+
+create function error2(p_name_table text) returns text language plpgsql as $$
+begin
+  return error1(p_name_table);
+end$$;
+
+BEGIN;
+create table public.stuffs (stuff text);
+SAVEPOINT a;
+select error2('nonexistent.stuffs');
+ROLLBACK TO a;
+select error2('public.stuffs');
+rollback;
+
+drop function error2(p_name_table text);
+drop function error1(text);
+
 -- Test handling of string literals.
 
 set standard_conforming_strings = off;

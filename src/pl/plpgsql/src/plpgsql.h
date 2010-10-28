@@ -214,10 +214,12 @@ typedef struct PLpgSQL_expr
 
 	/*
 	 * if expr is simple AND prepared in current transaction,
-	 * expr_simple_state is valid. Test validity by seeing if expr_simple_lxid
-	 * matches current LXID.
+	 * expr_simple_state and expr_simple_in_use are valid. Test validity by
+	 * seeing if expr_simple_lxid matches current LXID.  (If not,
+	 * expr_simple_state probably points at garbage!)
 	 */
-	ExprState  *expr_simple_state;
+	ExprState  *expr_simple_state;		/* eval tree for expr_simple_expr */
+	bool		expr_simple_in_use;		/* true if eval tree is active */
 	LocalTransactionId expr_simple_lxid;
 } PLpgSQL_expr;
 
