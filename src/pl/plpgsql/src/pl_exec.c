@@ -3731,7 +3731,14 @@ exec_eval_expr(PLpgSQL_execstate *estate,
 	 * directly
 	 */
 	if (expr->expr_simple_expr != NULL)
-		return exec_eval_simple_expr(estate, expr, isNull, rettype);
+	{
+		/*
+		 * If expression is in use in current xact, don't touch it.
+		 */
+		if (!(expr->expr_simple_in_use &&
+			  expr->expr_simple_xid == GetTopTransactionId()))
+			return exec_eval_simple_expr(estate, expr, isNull, rettype);
+	}
 
 	rc = exec_run_select(estate, expr, 2, NULL);
 	if (rc != SPI_OK_SELECT)
@@ -3883,6 +3890,7 @@ exec_eval_simple_expr(PLpgSQL_execstate *estate,
 	{
 		expr->expr_simple_state = ExecPrepareExpr(expr->expr_simple_expr,
 												  simple_eval_estate);
+		expr->expr_simple_in_use = false;
 		expr->expr_simple_xid = curxid;
 	}
 
@@ -3939,17 +3947,26 @@ exec_eval_simple_expr(PLpgSQL_execstate *estate,
 		}
 
 		/*
+		 * Mark expression as busy for the duration of the ExecEvalExpr call.
+		 */
+		expr->expr_simple_in_use = true;
+
+		/*
 		 * Finally we can call the executor to evaluate the expression
 		 */
 		retval = ExecEvalExpr(expr->expr_simple_state,
 							  econtext,
 							  isNull,
 							  NULL);
+
+		/* Assorted cleanup */
+		expr->expr_simple_in_use = false;
 		MemoryContextSwitchTo(oldcontext);
 	}
 	PG_CATCH();
 	{
 		/* Restore global vars and propagate error */
+		/* note we intentionally don't reset expr_simple_in_use here */
 		ActiveSnapshot = saveActiveSnapshot;
 		PG_RE_THROW();
 	}
@@ -4545,6 +4562,7 @@ exec_simple_check_plan(PLpgSQL_expr *expr)
 	 */
 	expr->expr_simple_expr = tle->expr;
 	expr->expr_simple_state = NULL;
+	expr->expr_simple_in_use = false;
 	expr->expr_simple_xid = InvalidTransactionId;
 	/* Also stash away the expression result type */
 	expr->expr_simple_type = exprType((Node *) tle->expr);

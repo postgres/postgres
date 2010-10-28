@@ -201,10 +201,12 @@ typedef struct PLpgSQL_expr
 	Expr	   *expr_simple_expr;		/* NULL means not a simple expr */
 	Oid			expr_simple_type;
 	/*
-	 * if expr is simple AND in use in current xact, expr_simple_state is
-	 * valid.  Test validity by seeing if expr_simple_xid matches current XID.
+	 * if expr is simple AND in use in current xact, expr_simple_state and
+	 * expr_simple_in_use are valid.  Test validity by seeing if
+	 * expr_simple_xid matches current XID.
 	 */
-	ExprState  *expr_simple_state;
+	ExprState  *expr_simple_state;		/* eval tree for expr_simple_expr */
+	bool		expr_simple_in_use;		/* true if eval tree is active */
 	TransactionId expr_simple_xid;
 	/* params to pass to expr */
 	int			nparams;
