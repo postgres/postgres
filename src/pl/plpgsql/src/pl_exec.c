@@ -4463,7 +4463,18 @@ loop_exit:
  *								a Datum by directly calling ExecEvalExpr().
  *
  * If successful, store results into *result, *isNull, *rettype and return
- * TRUE.  If the expression is not simple (any more), return FALSE.
+ * TRUE.  If the expression cannot be handled by simple evaluation,
+ * return FALSE.
+ *
+ * Because we only store one execution tree for a simple expression, we
+ * can't handle recursion cases.  So, if we see the tree is already busy
+ * with an evaluation in the current xact, we just return FALSE and let the
+ * caller run the expression the hard way.  (Other alternatives such as
+ * creating a new tree for a recursive call either introduce memory leaks,
+ * or add enough bookkeeping to be doubtful wins anyway.)  Another case that
+ * is covered by the expr_simple_in_use test is where a previous execution
+ * of the tree was aborted by an error: the tree may contain bogus state
+ * so we dare not re-use it.
  *
  * It is possible though unlikely for a simple expression to become non-simple
  * (consider for example redefining a trivial view).  We must handle that for
@@ -4497,6 +4508,12 @@ exec_eval_simple_expr(PLpgSQL_execstate *estate,
 	 * Forget it if expression wasn't simple before.
 	 */
 	if (expr->expr_simple_expr == NULL)
+		return false;
+
+	/*
+	 * If expression is in use in current xact, don't touch it.
+	 */
+	if (expr->expr_simple_in_use && expr->expr_simple_lxid == curlxid)
 		return false;
 
 	/*
@@ -4534,6 +4551,7 @@ exec_eval_simple_expr(PLpgSQL_execstate *estate,
 	{
 		expr->expr_simple_state = ExecPrepareExpr(expr->expr_simple_expr,
 												  simple_eval_estate);
+		expr->expr_simple_in_use = false;
 		expr->expr_simple_lxid = curlxid;
 	}
 
@@ -4569,6 +4587,11 @@ exec_eval_simple_expr(PLpgSQL_execstate *estate,
 	econtext->ecxt_param_list_info = paramLI;
 
 	/*
+	 * Mark expression as busy for the duration of the ExecEvalExpr call.
+	 */
+	expr->expr_simple_in_use = true;
+
+	/*
 	 * Finally we can call the executor to evaluate the expression
 	 */
 	*result = ExecEvalExpr(expr->expr_simple_state,
@@ -4577,6 +4600,8 @@ exec_eval_simple_expr(PLpgSQL_execstate *estate,
 						   NULL);
 
 	/* Assorted cleanup */
+	expr->expr_simple_in_use = false;
+
 	estate->cur_expr = save_cur_expr;
 
 	if (!estate->readonly_func)
@@ -5308,6 +5333,7 @@ exec_simple_check_plan(PLpgSQL_expr *expr)
 	 */
 	expr->expr_simple_expr = tle->expr;
 	expr->expr_simple_state = NULL;
+	expr->expr_simple_in_use = false;
 	expr->expr_simple_lxid = InvalidLocalTransactionId;
 	/* Also stash away the expression result type */
 	expr->expr_simple_type = exprType((Node *) tle->expr);
