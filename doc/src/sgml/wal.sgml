@@ -69,26 +69,57 @@
   </para>
 
   <para>
-   To check write caching on <productname>Linux</> use
-   <command>hdparm -I</>;  it is enabled if there is a <literal>*</> next
-   to <literal>Write cache</>; <command>hdparm -W</> to turn off
-   write caching.  On <productname>FreeBSD</> use
-   <application>atacontrol</>.  (For SCSI disks use <ulink
-   url="http://sg.danny.cz/sg/sdparm.html"><application>sdparm</></ulink>
-   to turn off <literal>WCE</>.)  On <productname>Solaris</> the disk
-   write cache is controlled by <ulink
-   url="http://www.sun.com/bigadmin/content/submitted/format_utility.jsp"><literal>format
-   -e</></ulink>. (The Solaris <acronym>ZFS</> file system is safe with
-   disk write-cache enabled because it issues its own disk cache flush
-   commands.)  On <productname>Windows</> if <varname>wal_sync_method</>
-   is <literal>open_datasync</> (the default), write caching is disabled
-   by unchecking <literal>My Computer\Open\{select disk
-   drive}\Properties\Hardware\Properties\Policies\Enable write caching on
-   the disk</>.  Also on Windows, <literal>fsync</> and
-   <literal>fsync_writethrough</> never do write caching.  The
-   <literal>fsync_writethrough</> option can also be used to disable
-   write caching on <productname>MacOS X</>.
+   These caches can typically be disabled; however, the method for doing
+   this varies by operating system and drive type:
   </para>
+
+  <itemizedlist>
+    <listitem>
+      <para>
+        On <productname>Linux</>, IDE drives can be queried using
+        <command>hdparm -I</command>; write caching is enabled if there is
+        a <literal>*</> next to <literal>Write cache</>.  <command>hdparm -W</>
+        can be used to turn off write caching.  SCSI drives can be queried
+        using <ulink url="http://sg.danny.cz/sg/sdparm.html"><application>sdparm</></ulink>.
+	    for SCSI drives.  Use <command>sdparm --get=WCE</command> to check
+        whether the write cache is enabled and <command>sdparm --clear=WCE</>
+        to disable it.
+      </para>
+    </listitem>
+
+    <listitem>
+      <para>
+        On <productname>FreeBSD</>, IDE drives can be queried using
+        <command>atacontrol</command>, and SCSI drives using
+        <command>sdparm</command>.
+      </para>
+    </listitem>
+
+    <listitem>
+	  <para>
+        On <productname>Solaris</>, the disk write cache is controlled by
+        <ulink url="http://www.sun.com/bigadmin/content/submitted/format_utility.jsp"><literal>format -e</></ulink>.
+        (The Solaris <acronym>ZFS</> file system is safe with disk write-cache
+        enabled because it issues its own disk cache flush commands.)
+      </para>
+    </listitem>
+
+    <listitem>
+      <para>
+        On <productname>Windows</>, if <varname>wal_sync_method</> is
+        <literal>open_datasync</> (the default), write caching is disabled
+        by unchecking <literal>My Computer\Open\{select disk drive}\Properties\Hardware\Properties\Policies\Enable write caching on the disk</>.
+        Alternatively, set <varname>wal_sync_method</varname> to <literal>fsync</> or <literal>fsync_writethrough</>, which never do write caching.
+      </para>
+    </listitem>
+
+    <listitem>
+      <para>
+        On <productname>MacOS X</productname>, write caching can be disabled by
+        setting <varname>wal_sync_method</> to <literal>fsync_writethrough</>.
+      </para>
+    </listitem>
+  </itemizedlist>
 
   <para>
    Many file systems that use write barriers (e.g.  <acronym>ZFS</>,
