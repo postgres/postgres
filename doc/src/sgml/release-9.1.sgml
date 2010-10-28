@@ -1,6 +1,6 @@
 <!-- doc/src/sgml/release-9.1.sgml -->
 
-<!-- This is up-to-date with commits through 2010-09-01 -->
+<!-- This is up-to-date with commits through 2010-10-26 -->
 
 <sect1 id="release-9-1-alpha">
   <title>Release 9.1alpha1</title>
@@ -72,8 +72,49 @@
 
        <listitem>
         <para>
-         <emphasis>Recognize functional dependency on primary
-         keys</emphasis>
+         <emphasis>Add ALTER TYPE ... ADD/DROP/ALTER/RENAME ATTRIBUTE</emphasis>
+        </para>
+       </listitem>
+
+       <listitem>
+        <para>
+         <emphasis>Support triggers on views</emphasis>
+        </para>
+
+        <para>
+         This adds the SQL-standard concept of an INSTEAD OF trigger,
+         which is fired instead of performing a physical
+         insert/update/delete.  The trigger function is passed the
+         entire old and/or new rows of the view, and must figure out
+         what to do to the underlying tables to implement the update.
+         So this feature can be used to implement updatable views
+         using trigger programming style rather than rule hacking.
+         </para>
+       </listitem>
+
+       <listitem>
+        <para>
+         <emphasis>Allow WITH clauses to be attached to INSERT, UPDATE, DELETE
+         statements</emphasis>
+        </para>
+
+        <para>
+         This is not the hoped-for facility of using
+         INSERT/UPDATE/DELETE inside a WITH, but rather the other way
+         around.
+        </para>
+       </listitem>
+
+       <listitem>
+        <para>
+         <emphasis>Allow new values to be added to an existing enum type</emphasis>
+        </para>
+       </listitem>
+
+       <listitem>
+        <para>
+         Recognize functional dependency on primary
+         keys
         </para>
         <para>
          This allows a table's other columns to be referenced without listing
@@ -84,7 +125,7 @@
 
        <listitem>
         <para>
-         <emphasis>Add CREATE TABLE IF NOT EXISTS</emphasis>
+         Add CREATE TABLE IF NOT EXISTS
         </para>
        </listitem>
 
@@ -96,22 +137,61 @@
 
        <listitem>
         <para>
-         <emphasis>Reduce lock levels of CREATE TRIGGER and some ALTER
-         TABLE, CREATE RULE actions</emphasis>
+         <emphasis>Support MergeAppend plans, to allow sorted output
+         from append relations</emphasis>
+        </para>
+
+        <para>
+         This eliminates the former need to sort the output of an
+         Append scan when an ordered scan of an inheritance tree is
+         wanted.  This should be particularly useful for fast-start
+         cases such as queries with LIMIT.
         </para>
        </listitem>
 
        <listitem>
         <para>
-         <emphasis>Add some knowledge about prefix matches to
-         tsmatchsel()</emphasis>
+         <emphasis>Reduce the memory requirement for large ispell dictionaries</emphasis>
         </para>
        </listitem>
 
        <listitem>
         <para>
-         <emphasis>Replace the naive HYPOT() macro with a
-         standards-conformant hypotenuse function</emphasis>
+         <emphasis>Teach CLUSTER to use seqscan-and-sort when it's faster than
+         indexscan</emphasis>
+        </para>
+       </listitem>
+
+       <listitem>
+        <para>
+         <emphasis>Improve GIN indexscan cost estimation</emphasis>
+        </para>
+       </listitem>
+
+       <listitem>
+        <para>
+         <emphasis>Performance improvements in pg_upgrade for uses with many tables</emphasis>
+        </para>
+       </listitem>
+
+       <listitem>
+        <para>
+         Reduce lock levels of CREATE TRIGGER and some ALTER
+         TABLE, CREATE RULE actions
+        </para>
+       </listitem>
+
+       <listitem>
+        <para>
+         Add some knowledge about prefix matches to
+         tsmatchsel()
+        </para>
+       </listitem>
+
+       <listitem>
+        <para>
+         Replace the naive HYPOT() macro with a
+         standards-conformant hypotenuse function
         </para>
        </listitem>
 
@@ -123,9 +203,9 @@
 
        <listitem>
         <para>
-         <emphasis>Change the default value of
+         Change the default value of
          <literal>standard_conforming_strings</> to
-         <literal>on</></emphasis>
+         <literal>on</>
         </para>
         <warning>
          <para>
@@ -137,7 +217,7 @@
 
        <listitem>
         <para>
-         <emphasis>Add <literal>log_file_mode</> parameter</emphasis>
+         Add <literal>log_file_mode</> parameter
         </para>
         <para>
          This allows control of the file permissions set on log files created
@@ -147,7 +227,7 @@
 
        <listitem>
         <para>
-         <emphasis>Add <literal>restart_after_crash</> parameter</emphasis>
+         Add <literal>restart_after_crash</> parameter
         </para>
         <para>
          Normally, we automatically restart after a backend crash, but in
@@ -165,29 +245,44 @@
 
        <listitem>
         <para>
-         <emphasis>Make EXPLAIN show the function call expression of a
-         FunctionScan plan node, but only in VERBOSE mode</emphasis>
+         <emphasis>Allow pg_ctl to register the service in either AUTO or DEMAND start
+         type</emphasis>
         </para>
        </listitem>
 
        <listitem>
         <para>
-         <emphasis>Make EXPLAIN print PARAM_EXEC Params as
-         the referenced expressions, rather than just $N</emphasis>
+         <emphasis>Support host names and host key
+         word <literal>all</literal>
+         in <filename>pg_hba.conf</filename></emphasis>
         </para>
        </listitem>
 
        <listitem>
         <para>
-         <emphasis>Add vacuum and analyze counters to pg_stat_*_tables
-         views</emphasis>
+         Make EXPLAIN show the function call expression of a
+         FunctionScan plan node, but only in VERBOSE mode
         </para>
        </listitem>
 
        <listitem>
         <para>
-         <emphasis>Add stats functions and views to provide access to a
-         transaction's own statistics counts</emphasis>
+         Make EXPLAIN print PARAM_EXEC Params as
+         the referenced expressions, rather than just $N
+        </para>
+       </listitem>
+
+       <listitem>
+        <para>
+         Add vacuum and analyze counters to pg_stat_*_tables
+         views
+        </para>
+       </listitem>
+
+       <listitem>
+        <para>
+         Add stats functions and views to provide access to a
+         transaction's own statistics counts
         </para>
        </listitem>
 
@@ -199,8 +294,19 @@
 
        <listitem>
         <para>
-         <emphasis>Add server authentication over Unix-domain
-         sockets</emphasis>
+         <emphasis>Add SECURITY LABEL command</emphasis>
+        </para>
+        <para>
+         This is intended as infrastructure to support integration
+         with label-based mandatory access control systems such as
+         SE-Linux.
+        </para>
+       </listitem>
+
+       <listitem>
+        <para>
+         Add server authentication over Unix-domain
+         sockets
         </para>
         <para>
          This adds a libpq connection parameter <literal>requirepeer</> that
@@ -217,27 +323,36 @@
 
        <listitem>
         <para>
-         <emphasis>Add string functions: concat(), concat_ws(), left(),
-         right(), and reverse()</emphasis>
+         <emphasis>Accept <literal>public</literal> as a pseudo-role
+         name in <literal>has_table_privilege()</literal> and friends
+         to see if a particular privilege has been granted to
+         <literal>PUBLIC</literal></emphasis>
         </para>
        </listitem>
 
        <listitem>
         <para>
-         <emphasis>Add three-parameter forms of array_to_string and
-         string_to_array</emphasis>
+         Add string functions: concat(), concat_ws(), left(),
+         right(), and reverse()
         </para>
        </listitem>
 
        <listitem>
         <para>
-         <emphasis>Add XMLEXISTS function</emphasis>
+         Add three-parameter forms of array_to_string and
+         string_to_array
         </para>
        </listitem>
 
        <listitem>
         <para>
-         <emphasis>Add xpath_exists() function</emphasis>
+         Add XMLEXISTS function
+        </para>
+       </listitem>
+
+       <listitem>
+        <para>
+         Add xpath_exists() function
         </para>
         <para>
          This is equivalent to XMLEXISTS except that it offers support for
@@ -247,9 +362,9 @@
 
        <listitem>
         <para>
-         <emphasis>Add xml_is_well_formed, xml_is_well_formed_document,
+         Add xml_is_well_formed, xml_is_well_formed_document,
          xml_is_well_formed_content functions to the core XML
-         code</emphasis>
+         code
         </para>
         <para>
          These supersede a version previously offered by contrib/xml2.
@@ -264,15 +379,15 @@
 
        <listitem>
         <para>
-         <emphasis>Allow numeric to use a more compact, 2-byte header in
-         many cases</emphasis>
+         Allow numeric to use a more compact, 2-byte header in
+         many cases
         </para>
        </listitem>
 
        <listitem>
         <para>
-         <emphasis>Add support for dividing money by money (yielding a
-         float8 result) and for casting between money and numeric</emphasis>
+         Add support for dividing money by money (yielding a
+         float8 result) and for casting between money and numeric
         </para>
        </listitem>
 
@@ -284,8 +399,8 @@
 
        <listitem>
         <para>
-         <emphasis>Add options to force quoting of all
-         identifiers</emphasis>
+         Add options to force quoting of all
+         identifiers
         </para>
         <para>
          This includes a quote_all_identifiers parameter which affects the
@@ -303,16 +418,16 @@
 
        <listitem>
         <para>
-         <emphasis>Add \conninfo command to psql, to show current connection
-         info</emphasis>
+         Add \conninfo command to psql, to show current connection
+         info
         </para>
        </listitem>
 
        <listitem>
         <para>
-         <emphasis>Extend psql's \e and \ef commands so that a line number
+         Extend psql's \e and \ef commands so that a line number
          can be specified, and the editor's cursor will be initially placed
-         on that line</emphasis>
+         on that line
         </para>
         <para>
          To avoid assumptions about what switch the user's editor takes for
@@ -323,16 +438,16 @@
 
        <listitem>
         <para>
-         <emphasis>Add a \sf (show function) command to psql, for those
+         Add a \sf (show function) command to psql, for those
          times when you need to look at a function but don't wish to fire up
-         an editor</emphasis>
+         an editor
         </para>
        </listitem>
 
        <listitem>
         <para>
-         <emphasis>Make psql distinguish between unique indices and unique
-         constraints in \d printout</emphasis>
+         Make psql distinguish between unique indices and unique
+         constraints in \d printout
         </para>
        </listitem>
 
@@ -346,9 +461,9 @@
 
        <listitem>
         <para>
-         <emphasis>Modify the handling of RAISE without parameters so that
+         Modify the handling of RAISE without parameters so that
          the error it throws can be caught in the same places that could
-         catch an ordinary RAISE ERROR in the same location</emphasis>
+         catch an ordinary RAISE ERROR in the same location
         </para>
         <para>
          The previous coding insisted on throwing the error from the block
@@ -359,7 +474,7 @@
 
        <listitem>
         <para>
-         <emphasis>Remove ancient PL/pgSQL line numbering hack</emphasis>
+         Remove ancient PL/pgSQL line numbering hack
         </para>
         <para>
          PL/pgSQL used to count the second line of the function body as
@@ -381,37 +496,43 @@
 
        <listitem>
         <para>
-         <emphasis>Add the ability to compute per-statement latencies (ie,
-         average execution times) to pgbench</emphasis>
+         <emphasis>Updates to contrib/isn ISBN tables</emphasis>
         </para>
        </listitem>
 
        <listitem>
         <para>
-         <emphasis>Teach levenshtein() about multi-byte
-         characters</emphasis>
+         Add the ability to compute per-statement latencies (ie,
+         average execution times) to pgbench
         </para>
        </listitem>
 
        <listitem>
         <para>
-         <emphasis>Add btree_gist support for searching on <quote>not
-         equals</quote></emphasis>
+         Teach levenshtein() about multi-byte
+         characters
         </para>
        </listitem>
 
        <listitem>
         <para>
-         <emphasis>Add ssl_cipher() and ssl_version() functions to
-         contrib/sslinfo</emphasis>
+         Add btree_gist support for searching on <quote>not
+         equals</quote>
         </para>
        </listitem>
 
        <listitem>
         <para>
-         <emphasis>Remove the arbitrary (and undocumented) limit on the
+         Add ssl_cipher() and ssl_version() functions to
+         contrib/sslinfo
+        </para>
+       </listitem>
+
+       <listitem>
+        <para>
+         Remove the arbitrary (and undocumented) limit on the
          number of parameter=value pairs that can be handled by
-         xslt_process()</emphasis>
+         xslt_process()
         </para>
        </listitem>
 
@@ -423,8 +544,8 @@
 
        <listitem>
         <para>
-         <emphasis>Include the backend ID in the relpath of temporary
-         relations</emphasis>
+         Include the backend ID in the relpath of temporary
+         relations
         </para>
         <para>
          This allows us to reliably remove all leftover temporary relation
@@ -436,45 +557,45 @@
 
        <listitem>
         <para>
-         <emphasis>Rewrite COMMENT ON <replaceable>object</> code for better
-         modularity, and add necessary locking</emphasis>
+         Rewrite COMMENT ON <replaceable>object</> code for better
+         modularity, and add necessary locking
         </para>
        </listitem>
 
        <listitem>
         <para>
-         <emphasis>Add a hook in ExecCheckRTPerms() for eventual use by
-         external security-checking modules</emphasis>
+         Add a hook in ExecCheckRTPerms() for eventual use by
+         external security-checking modules
         </para>
        </listitem>
 
        <listitem>
         <para>
-         <emphasis>Standardize names and calling conventions of
-         get_whatever_oid functions</emphasis>
+         Standardize names and calling conventions of
+         get_whatever_oid functions
         </para>
        </listitem>
 
        <listitem>
         <para>
-         <emphasis>Make NestLoop plan nodes pass outer-relation variables
+         Make NestLoop plan nodes pass outer-relation variables
          into their inner relation using the general PARAM_EXEC executor
          parameter mechanism, rather than the ad-hoc kluge of passing the
-         outer tuple down through ExecReScan</emphasis>
+         outer tuple down through ExecReScan
         </para>
        </listitem>
 
        <listitem>
         <para>
-         <emphasis>Make details of the Numeric representation private to
-         numeric.c</emphasis>
+         Make details of the Numeric representation private to
+         numeric.c
         </para>
        </listitem>
 
        <listitem>
         <para>
-         <emphasis>Suppress some compiler warnings from
-         <literal>clang</></emphasis>
+         Suppress some compiler warnings from
+         <literal>clang</>
         </para>
        </listitem>
 
