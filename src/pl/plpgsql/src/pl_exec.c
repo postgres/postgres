@@ -2889,6 +2889,17 @@ exec_stmt_execsql(PLpgSQL_execstate *estate,
 			exec_set_found(estate, false);
 			break;
 
+			/* Some SPI errors deserve specific error messages */
+		case SPI_ERROR_COPY:
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("cannot COPY to/from client in PL/pgSQL")));
+		case SPI_ERROR_TRANSACTION:
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("cannot begin/end transactions in PL/pgSQL"),
+			errhint("Use a BEGIN block with an EXCEPTION clause instead.")));
+
 		default:
 			elog(ERROR, "SPI_execute_plan_with_paramlist failed executing query \"%s\": %s",
 				 expr->query, SPI_result_code_string(rc));
