@@ -78,6 +78,10 @@ static bool reconsider_full_join_clause(PlannerInfo *root,
  * join.  (This is the reason why we need a failure return.  It's more
  * convenient to check this case here than at the call sites...)
  *
+ * On success return, we have also initialized the clause's left_ec/right_ec
+ * fields to point to the EquivalenceClass representing it.  This saves lookup
+ * effort later.
+ *
  * Note: constructing merged EquivalenceClasses is a standard UNION-FIND
  * problem, for which there exist better data structures than simple lists.
  * If this code ever proves to be a bottleneck then it could be sped up ---
@@ -105,6 +109,10 @@ process_equivalence(PlannerInfo *root, RestrictInfo *restrictinfo,
 	EquivalenceMember *em1,
 			   *em2;
 	ListCell   *lc1;
+
+	/* Should not already be marked as having generated an eclass */
+	Assert(restrictinfo->left_ec == NULL);
+	Assert(restrictinfo->right_ec == NULL);
 
 	/* Extract info from given clause */
 	Assert(is_opclause(clause));
@@ -236,8 +244,10 @@ process_equivalence(PlannerInfo *root, RestrictInfo *restrictinfo,
 		{
 			ec1->ec_sources = lappend(ec1->ec_sources, restrictinfo);
 			ec1->ec_below_outer_join |= below_outer_join;
+			/* mark the RI as associated with this eclass */
+			restrictinfo->left_ec = ec1;
+			restrictinfo->right_ec = ec1;
 			/* mark the RI as usable with this pair of EMs */
-			/* NB: can't set left_ec/right_ec until merging is finished */
 			restrictinfo->left_em = em1;
 			restrictinfo->right_em = em2;
 			return true;
@@ -266,6 +276,9 @@ process_equivalence(PlannerInfo *root, RestrictInfo *restrictinfo,
 		ec2->ec_relids = NULL;
 		ec1->ec_sources = lappend(ec1->ec_sources, restrictinfo);
 		ec1->ec_below_outer_join |= below_outer_join;
+		/* mark the RI as associated with this eclass */
+		restrictinfo->left_ec = ec1;
+		restrictinfo->right_ec = ec1;
 		/* mark the RI as usable with this pair of EMs */
 		restrictinfo->left_em = em1;
 		restrictinfo->right_em = em2;
@@ -276,6 +289,9 @@ process_equivalence(PlannerInfo *root, RestrictInfo *restrictinfo,
 		em2 = add_eq_member(ec1, item2, item2_relids, false, item2_type);
 		ec1->ec_sources = lappend(ec1->ec_sources, restrictinfo);
 		ec1->ec_below_outer_join |= below_outer_join;
+		/* mark the RI as associated with this eclass */
+		restrictinfo->left_ec = ec1;
+		restrictinfo->right_ec = ec1;
 		/* mark the RI as usable with this pair of EMs */
 		restrictinfo->left_em = em1;
 		restrictinfo->right_em = em2;
@@ -286,6 +302,9 @@ process_equivalence(PlannerInfo *root, RestrictInfo *restrictinfo,
 		em1 = add_eq_member(ec2, item1, item1_relids, false, item1_type);
 		ec2->ec_sources = lappend(ec2->ec_sources, restrictinfo);
 		ec2->ec_below_outer_join |= below_outer_join;
+		/* mark the RI as associated with this eclass */
+		restrictinfo->left_ec = ec2;
+		restrictinfo->right_ec = ec2;
 		/* mark the RI as usable with this pair of EMs */
 		restrictinfo->left_em = em1;
 		restrictinfo->right_em = em2;
@@ -311,6 +330,9 @@ process_equivalence(PlannerInfo *root, RestrictInfo *restrictinfo,
 
 		root->eq_classes = lappend(root->eq_classes, ec);
 
+		/* mark the RI as associated with this eclass */
+		restrictinfo->left_ec = ec;
+		restrictinfo->right_ec = ec;
 		/* mark the RI as usable with this pair of EMs */
 		restrictinfo->left_em = em1;
 		restrictinfo->right_em = em2;
@@ -362,15 +384,19 @@ add_eq_member(EquivalenceClass *ec, Expr *expr, Relids relids,
 /*
  * get_eclass_for_sort_expr
  *	  Given an expression and opfamily info, find an existing equivalence
- *	  class it is a member of; if none, build a new single-member
+ *	  class it is a member of; if none, optionally build a new single-member
  *	  EquivalenceClass for it.
  *
  * sortref is the SortGroupRef of the originating SortGroupClause, if any,
  * or zero if not.	(It should never be zero if the expression is volatile!)
  *
+ * If create_it is TRUE, we'll build a new EquivalenceClass when there is no
+ * match.  If create_it is FALSE, we just return NULL when no match.
+ *
  * This can be used safely both before and after EquivalenceClass merging;
  * since it never causes merging it does not invalidate any existing ECs
- * or PathKeys.
+ * or PathKeys.  However, ECs added after path generation has begun are
+ * of limited usefulness, so usually it's best to create them beforehand.
  *
  * Note: opfamilies must be chosen consistently with the way
  * process_equivalence() would do; that is, generated from a mergejoinable
@@ -382,7 +408,8 @@ get_eclass_for_sort_expr(PlannerInfo *root,
 						 Expr *expr,
 						 Oid expr_datatype,
 						 List *opfamilies,
-						 Index sortref)
+						 Index sortref,
+						 bool create_it)
 {
 	EquivalenceClass *newec;
 	EquivalenceMember *newem;
@@ -426,8 +453,12 @@ get_eclass_for_sort_expr(PlannerInfo *root,
 		}
 	}
 
+	/* No match; does caller want a NULL result? */
+	if (!create_it)
+		return NULL;
+
 	/*
-	 * No match, so build a new single-member EC
+	 * OK, build a new single-member EC
 	 *
 	 * Here, we must be sure that we construct the EC in the right context. We
 	 * can assume, however, that the passed expr is long-lived.
@@ -1094,8 +1125,8 @@ create_join_clause(PlannerInfo *root,
 	rinfo->parent_ec = parent_ec;
 
 	/*
-	 * We can set these now, rather than letting them be looked up later,
-	 * since this is only used after EC merging is complete.
+	 * We know the correct values for left_ec/right_ec, ie this particular EC,
+	 * so we can just set them directly instead of forcing another lookup.
 	 */
 	rinfo->left_ec = ec;
 	rinfo->right_ec = ec;

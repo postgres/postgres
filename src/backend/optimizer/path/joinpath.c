@@ -1041,7 +1041,7 @@ select_mergejoin_clauses(PlannerInfo *root,
 		 * mergejoin is not really all that big a deal, and so it's not clear
 		 * that improving this is important.
 		 */
-		cache_mergeclause_eclasses(root, restrictinfo);
+		update_mergeclause_eclasses(root, restrictinfo);
 
 		if (EC_MUST_BE_REDUNDANT(restrictinfo->left_ec) ||
 			EC_MUST_BE_REDUNDANT(restrictinfo->right_ec))

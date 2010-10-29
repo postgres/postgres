@@ -116,7 +116,8 @@ extern EquivalenceClass *get_eclass_for_sort_expr(PlannerInfo *root,
 						 Expr *expr,
 						 Oid expr_datatype,
 						 List *opfamilies,
-						 Index sortref);
+						 Index sortref,
+						 bool create_it);
 extern void generate_base_implied_equalities(PlannerInfo *root);
 extern List *generate_join_implied_equalities(PlannerInfo *root,
 								 RelOptInfo *joinrel,
@@ -172,7 +173,9 @@ extern List *make_pathkeys_for_sortclauses(PlannerInfo *root,
 							  List *sortclauses,
 							  List *tlist,
 							  bool canonicalize);
-extern void cache_mergeclause_eclasses(PlannerInfo *root,
+extern void initialize_mergeclause_eclasses(PlannerInfo *root,
+											RestrictInfo *restrictinfo);
+extern void update_mergeclause_eclasses(PlannerInfo *root,
 						   RestrictInfo *restrictinfo);
 extern List *find_mergeclauses_for_pathkeys(PlannerInfo *root,
 							   List *pathkeys,

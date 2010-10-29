@@ -40,6 +40,7 @@ static PathKey *make_pathkey_from_sortinfo(PlannerInfo *root,
 						   Expr *expr, Oid ordering_op,
 						   bool nulls_first,
 						   Index sortref,
+						   bool create_it,
 						   bool canonicalize);
 static Var *find_indexkey_var(PlannerInfo *root, RelOptInfo *rel,
 				  AttrNumber varattno);
@@ -230,6 +231,10 @@ canonicalize_pathkeys(PlannerInfo *root, List *pathkeys)
  * If the PathKey is being generated from a SortGroupClause, sortref should be
  * the SortGroupClause's SortGroupRef; otherwise zero.
  *
+ * create_it is TRUE if we should create any missing EquivalenceClass
+ * needed to represent the sort key.  If it's FALSE, we return NULL if the
+ * sort key isn't already present in any EquivalenceClass.
+ *
  * canonicalize should always be TRUE after EquivalenceClass merging has
  * been performed, but FALSE if we haven't done EquivalenceClass merging yet.
  */
@@ -238,6 +243,7 @@ make_pathkey_from_sortinfo(PlannerInfo *root,
 						   Expr *expr, Oid ordering_op,
 						   bool nulls_first,
 						   Index sortref,
+						   bool create_it,
 						   bool canonicalize)
 {
 	Oid			opfamily,
@@ -300,9 +306,13 @@ make_pathkey_from_sortinfo(PlannerInfo *root,
 											COERCE_DONTCARE);
 	}
 
-	/* Now find or create a matching EquivalenceClass */
+	/* Now find or (optionally) create a matching EquivalenceClass */
 	eclass = get_eclass_for_sort_expr(root, expr, opcintype, opfamilies,
-									  sortref);
+									  sortref, create_it);
+
+	/* Fail if no EC and !create_it */
+	if (!eclass)
+		return NULL;
 
 	/* And finally we can find or create a PathKey node */
 	if (canonicalize)
@@ -478,8 +488,11 @@ get_cheapest_fractional_path_for_pathkeys(List *paths,
  * The result is canonical, meaning that redundant pathkeys are removed;
  * it may therefore have fewer entries than there are index columns.
  *
- * We generate the full pathkeys list whether or not all are useful for the
- * current query.  Caller should do truncate_useless_pathkeys().
+ * Another reason for stopping early is that we may be able to tell that
+ * an index column's sort order is uninteresting for this query.  However,
+ * that test is just based on the existence of an EquivalenceClass and not
+ * on position in pathkey lists, so it's not complete.  Caller should call
+ * truncate_useless_pathkeys() to possibly remove more pathkeys.
  */
 List *
 build_index_pathkeys(PlannerInfo *root,
@@ -527,13 +540,22 @@ build_index_pathkeys(PlannerInfo *root,
 			indexprs_item = lnext(indexprs_item);
 		}
 
-		/* OK, make a canonical pathkey for this sort key */
+		/* OK, try to make a canonical pathkey for this sort key */
 		cpathkey = make_pathkey_from_sortinfo(root,
 											  indexkey,
 											  sortop,
 											  nulls_first,
 											  0,
+											  false,
 											  true);
+
+		/*
+		 * If the sort key isn't already present in any EquivalenceClass,
+		 * then it's not an interesting sort order for this query.  So
+		 * we can stop now --- lower-order sort keys aren't useful either.
+		 */
+		if (!cpathkey)
+			break;
 
 		/* Add to list unless redundant */
 		if (!pathkey_is_redundant(cpathkey, retval))
@@ -644,13 +666,20 @@ convert_subquery_pathkeys(PlannerInfo *root, RelOptInfo *rel,
 											 outer_expr,
 											 sub_member->em_datatype,
 											 sub_eclass->ec_opfamilies,
-											 0);
-				best_pathkey =
-					make_canonical_pathkey(root,
-										   outer_ec,
-										   sub_pathkey->pk_opfamily,
-										   sub_pathkey->pk_strategy,
-										   sub_pathkey->pk_nulls_first);
+											 0,
+											 false);
+
+				/*
+				 * If we don't find a matching EC, sub-pathkey isn't
+				 * interesting to the outer query
+				 */
+				if (outer_ec)
+					best_pathkey =
+						make_canonical_pathkey(root,
+											   outer_ec,
+											   sub_pathkey->pk_opfamily,
+											   sub_pathkey->pk_strategy,
+											   sub_pathkey->pk_nulls_first);
 			}
 		}
 		else
@@ -738,7 +767,16 @@ convert_subquery_pathkeys(PlannerInfo *root, RelOptInfo *rel,
 														outer_expr,
 													 sub_member->em_datatype,
 												   sub_eclass->ec_opfamilies,
-														0);
+														0,
+														false);
+
+					/*
+					 * If we don't find a matching EC, this sub-pathkey isn't
+					 * interesting to the outer query
+					 */
+					if (!outer_ec)
+						continue;
+
 					outer_pk = make_canonical_pathkey(root,
 													  outer_ec,
 													sub_pathkey->pk_opfamily,
@@ -859,6 +897,7 @@ make_pathkeys_for_sortclauses(PlannerInfo *root,
 											 sortcl->sortop,
 											 sortcl->nulls_first,
 											 sortcl->tleSortGroupRef,
+											 true,
 											 canonicalize);
 
 		/* Canonical form eliminates redundant ordering keys */
@@ -878,46 +917,81 @@ make_pathkeys_for_sortclauses(PlannerInfo *root,
  ****************************************************************************/
 
 /*
- * cache_mergeclause_eclasses
- *		Make the cached EquivalenceClass links valid in a mergeclause
- *		restrictinfo.
+ * initialize_mergeclause_eclasses
+ *		Set the EquivalenceClass links in a mergeclause restrictinfo.
  *
  * RestrictInfo contains fields in which we may cache pointers to
  * EquivalenceClasses for the left and right inputs of the mergeclause.
  * (If the mergeclause is a true equivalence clause these will be the
- * same EquivalenceClass, otherwise not.)
+ * same EquivalenceClass, otherwise not.)  If the mergeclause is either
+ * used to generate an EquivalenceClass, or derived from an EquivalenceClass,
+ * then it's easy to set up the left_ec and right_ec members --- otherwise,
+ * this function should be called to set them up.  We will generate new
+ * EquivalenceClauses if necessary to represent the mergeclause's left and
+ * right sides.
+ *
+ * Note this is called before EC merging is complete, so the links won't
+ * necessarily point to canonical ECs.  Before they are actually used for
+ * anything, update_mergeclause_eclasses must be called to ensure that
+ * they've been updated to point to canonical ECs.
  */
 void
-cache_mergeclause_eclasses(PlannerInfo *root, RestrictInfo *restrictinfo)
+initialize_mergeclause_eclasses(PlannerInfo *root, RestrictInfo *restrictinfo)
 {
+	Expr	   *clause = restrictinfo->clause;
+	Oid			lefttype,
+				righttype;
+
+	/* Should be a mergeclause ... */
 	Assert(restrictinfo->mergeopfamilies != NIL);
+	/* ... with links not yet set */
+	Assert(restrictinfo->left_ec == NULL);
+	Assert(restrictinfo->right_ec == NULL);
 
-	/* the cached values should be either both set or both not */
-	if (restrictinfo->left_ec == NULL)
-	{
-		Expr	   *clause = restrictinfo->clause;
-		Oid			lefttype,
-					righttype;
+	/* Need the declared input types of the operator */
+	op_input_types(((OpExpr *) clause)->opno, &lefttype, &righttype);
 
-		/* Need the declared input types of the operator */
-		op_input_types(((OpExpr *) clause)->opno, &lefttype, &righttype);
+	/* Find or create a matching EquivalenceClass for each side */
+	restrictinfo->left_ec =
+		get_eclass_for_sort_expr(root,
+								 (Expr *) get_leftop(clause),
+								 lefttype,
+								 restrictinfo->mergeopfamilies,
+								 0,
+								 true);
+	restrictinfo->right_ec =
+		get_eclass_for_sort_expr(root,
+								 (Expr *) get_rightop(clause),
+								 righttype,
+								 restrictinfo->mergeopfamilies,
+								 0,
+								 true);
+}
 
-		/* Find or create a matching EquivalenceClass for each side */
-		restrictinfo->left_ec =
-			get_eclass_for_sort_expr(root,
-									 (Expr *) get_leftop(clause),
-									 lefttype,
-									 restrictinfo->mergeopfamilies,
-									 0);
-		restrictinfo->right_ec =
-			get_eclass_for_sort_expr(root,
-									 (Expr *) get_rightop(clause),
-									 righttype,
-									 restrictinfo->mergeopfamilies,
-									 0);
-	}
-	else
-		Assert(restrictinfo->right_ec != NULL);
+/*
+ * update_mergeclause_eclasses
+ *		Make the cached EquivalenceClass links valid in a mergeclause
+ *		restrictinfo.
+ *
+ * These pointers should have been set by process_equivalence or
+ * initialize_mergeclause_eclasses, but they might have been set to
+ * non-canonical ECs that got merged later.  Chase up to the canonical
+ * merged parent if so.
+ */
+void
+update_mergeclause_eclasses(PlannerInfo *root, RestrictInfo *restrictinfo)
+{
+	/* Should be a merge clause ... */
+	Assert(restrictinfo->mergeopfamilies != NIL);
+	/* ... with pointers already set */
+	Assert(restrictinfo->left_ec != NULL);
+	Assert(restrictinfo->right_ec != NULL);
+
+	/* Chase up to the top as needed */
+	while (restrictinfo->left_ec->ec_merged)
+		restrictinfo->left_ec = restrictinfo->left_ec->ec_merged;
+	while (restrictinfo->right_ec->ec_merged)
+		restrictinfo->right_ec = restrictinfo->right_ec->ec_merged;
 }
 
 /*
@@ -953,7 +1027,7 @@ find_mergeclauses_for_pathkeys(PlannerInfo *root,
 	{
 		RestrictInfo *rinfo = (RestrictInfo *) lfirst(i);
 
-		cache_mergeclause_eclasses(root, rinfo);
+		update_mergeclause_eclasses(root, rinfo);
 	}
 
 	foreach(i, pathkeys)
@@ -1089,7 +1163,7 @@ select_outer_pathkeys_for_merge(PlannerInfo *root,
 		ListCell   *lc2;
 
 		/* get the outer eclass */
-		cache_mergeclause_eclasses(root, rinfo);
+		update_mergeclause_eclasses(root, rinfo);
 
 		if (rinfo->outer_is_left)
 			oeclass = rinfo->left_ec;
@@ -1250,7 +1324,7 @@ make_inner_pathkeys_for_merge(PlannerInfo *root,
 		EquivalenceClass *ieclass;
 		PathKey    *pathkey;
 
-		cache_mergeclause_eclasses(root, rinfo);
+		update_mergeclause_eclasses(root, rinfo);
 
 		if (rinfo->outer_is_left)
 		{
@@ -1366,7 +1440,7 @@ pathkeys_useful_for_merging(PlannerInfo *root, RelOptInfo *rel, List *pathkeys)
 
 				if (restrictinfo->mergeopfamilies == NIL)
 					continue;
-				cache_mergeclause_eclasses(root, restrictinfo);
+				update_mergeclause_eclasses(root, restrictinfo);
 
 				if (pathkey->pk_eclass == restrictinfo->left_ec ||
 					pathkey->pk_eclass == restrictinfo->right_ec)

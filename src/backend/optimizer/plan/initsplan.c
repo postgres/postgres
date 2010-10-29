@@ -1066,6 +1066,12 @@ distribute_qual_to_rels(PlannerInfo *root, Node *clause,
 	 *
 	 * If none of the above hold, pass it off to
 	 * distribute_restrictinfo_to_rels().
+	 *
+	 * In all cases, it's important to initialize the left_ec and right_ec
+	 * fields of a mergejoinable clause, so that all possibly mergejoinable
+	 * expressions have representations in EquivalenceClasses.  If
+	 * process_equivalence is successful, it will take care of that;
+	 * otherwise, we have to call initialize_mergeclause_eclasses to do it.
 	 */
 	if (restrictinfo->mergeopfamilies)
 	{
@@ -1073,10 +1079,15 @@ distribute_qual_to_rels(PlannerInfo *root, Node *clause,
 		{
 			if (process_equivalence(root, restrictinfo, below_outer_join))
 				return;
-			/* EC rejected it, so pass to distribute_restrictinfo_to_rels */
+			/* EC rejected it, so set left_ec/right_ec the hard way ... */
+			initialize_mergeclause_eclasses(root, restrictinfo);
+			/* ... and fall through to distribute_restrictinfo_to_rels */
 		}
 		else if (maybe_outer_join && restrictinfo->can_join)
 		{
+			/* we need to set up left_ec/right_ec the hard way */
+			initialize_mergeclause_eclasses(root, restrictinfo);
+			/* now see if it should go to any outer-join lists */
 			if (bms_is_subset(restrictinfo->left_relids,
 							  outerjoin_nonnullable) &&
 				!bms_overlap(restrictinfo->right_relids,
@@ -1104,6 +1115,12 @@ distribute_qual_to_rels(PlannerInfo *root, Node *clause,
 												  restrictinfo);
 				return;
 			}
+			/* nope, so fall through to distribute_restrictinfo_to_rels */
+		}
+		else
+		{
+			/* we still need to set up left_ec/right_ec */
+			initialize_mergeclause_eclasses(root, restrictinfo);
 		}
 	}
 
@@ -1404,6 +1421,9 @@ process_implied_equality(PlannerInfo *root,
  *
  * This overlaps the functionality of process_implied_equality(), but we
  * must return the RestrictInfo, not push it into the joininfo tree.
+ *
+ * Note: we do not do initialize_mergeclause_eclasses() here.  It is
+ * caller's responsibility that left_ec/right_ec be set as necessary.
  */
 RestrictInfo *
 build_implied_join_equality(Oid opno,

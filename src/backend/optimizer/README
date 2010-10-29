@@ -632,9 +632,39 @@ sort ordering was important; and so using the same PathKey for both sort
 orderings doesn't create any real problem.
 
 
+Order of processing for EquivalenceClasses and PathKeys
+-------------------------------------------------------
 
-Though Bob Devine <bob.devine@worldnet.att.net> was not involved in the 
-coding of our optimizer, he is available to field questions about
-optimizer topics.
+As alluded to above, there is a specific sequence of phases in the
+processing of EquivalenceClasses and PathKeys during planning.  During the
+initial scanning of the query's quals (deconstruct_jointree followed by
+reconsider_outer_join_clauses), we construct EquivalenceClasses based on
+mergejoinable clauses found in the quals.  At the end of this process,
+we know all we can know about equivalence of different variables, so
+subsequently there will be no further merging of EquivalenceClasses.
+At that point it is possible to consider the EquivalenceClasses as
+"canonical" and build canonical PathKeys that reference them.  Before
+we reach that point (actually, before entering query_planner at all)
+we also ensure that we have constructed EquivalenceClasses for all the
+expressions used in the query's ORDER BY and related clauses.  These
+classes might or might not get merged together, depending on what we
+find in the quals.
+
+Because all the EquivalenceClasses are known before we begin path
+generation, we can use them as a guide to which indexes are of interest:
+if an index's column is not mentioned in any EquivalenceClass then that
+index's sort order cannot possibly be helpful for the query.  This allows
+short-circuiting of much of the processing of create_index_paths() for
+irrelevant indexes.
+
+There are some cases where planner.c constructs additional
+EquivalenceClasses and PathKeys after query_planner has completed.
+In these cases, the extra ECs/PKs are needed to represent sort orders
+that were not considered during query_planner.  Such situations should be
+minimized since it is impossible for query_planner to return a plan
+producing such a sort order, meaning a explicit sort will always be needed.
+Currently this happens only for queries involving multiple window functions
+with different orderings, for which extra sorts are needed anyway.
+
 
 -- bjm & tgl
