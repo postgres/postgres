@@ -616,7 +616,7 @@ find_in_dynamic_libpath(const char *basename)
 					(errcode(ERRCODE_INVALID_NAME),
 					 errmsg("zero-length component in parameter \"dynamic_library_path\"")));
 
-		if (piece == 0)
+		if (piece == NULL)
 			len = strlen(p);
 		else
 			len = piece - p;

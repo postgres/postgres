@@ -576,7 +576,7 @@ tarWrite(const void *buf, size_t len, TAR_MEMBER *th)
 {
 	size_t		res;
 
-	if (th->zFH != 0)
+	if (th->zFH != NULL)
 		res = GZWRITE((void *) buf, 1, len, th->zFH);
 	else
 		res = fwrite(buf, 1, len, th->nFH);

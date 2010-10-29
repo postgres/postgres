@@ -846,7 +846,7 @@ lexescape(struct vars * v)
 			if (ISERR())
 				FAILW(REG_EESCAPE);
 			/* ugly heuristic (first test is "exactly 1 digit?") */
-			if (v->now - save == 0 || ((int) c > 0 && (int) c <= v->nsubexp))
+			if (v->now == save || ((int) c > 0 && (int) c <= v->nsubexp))
 			{
 				NOTE(REG_UBACKREF);
 				RETV(BACKREF, (chr) c);

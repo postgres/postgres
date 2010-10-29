@@ -395,7 +395,7 @@ getWeights(ArrayType *win)
 	int			i;
 	float4	   *arrdata;
 
-	if (win == 0)
+	if (win == NULL)
 		return weights;
 
 	if (ARR_NDIM(win) != 1)

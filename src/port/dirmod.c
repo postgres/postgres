@@ -246,7 +246,7 @@ pgsymlink(const char *oldpath, const char *newpath)
 	else
 		strcpy(nativeTarget, oldpath);
 
-	while ((p = strchr(p, '/')) != 0)
+	while ((p = strchr(p, '/')) != NULL)
 		*p++ = '\\';
 
 	len = strlen(nativeTarget) * sizeof(WCHAR);
