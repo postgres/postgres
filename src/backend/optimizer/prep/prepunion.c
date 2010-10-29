@@ -1682,13 +1682,13 @@ adjust_appendrel_attrs_mutator(Node *node, AppendRelInfo *context)
 
 		/*
 		 * Reset cached derivative fields, since these might need to have
-		 * different values when considering the child relation.
+		 * different values when considering the child relation.  Note we
+		 * don't reset left_ec/right_ec: each child variable is implicitly
+		 * equivalent to its parent, so still a member of the same EC if any.
 		 */
 		newinfo->eval_cost.startup = -1;
 		newinfo->norm_selec = -1;
 		newinfo->outer_selec = -1;
-		newinfo->left_ec = NULL;
-		newinfo->right_ec = NULL;
 		newinfo->left_em = NULL;
 		newinfo->right_em = NULL;
 		newinfo->scansel_cache = NIL;
