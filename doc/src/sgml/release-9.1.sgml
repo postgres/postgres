@@ -1,6 +1,6 @@
 <!-- doc/src/sgml/release-9.1.sgml -->
 
-<!-- This is up-to-date with commits through 2010-10-26 -->
+<!-- This is up-to-date with commits through 2010-10-29 -->
 
 <sect1 id="release-9-1-alpha">
   <title>Release 9.1alpha1</title>
@@ -488,6 +488,18 @@
        </listitem>
 
       </itemizedlist>
+      </sect4>
+
+      <sect4>
+       <title>PL/Perl</title>
+
+       <itemizedlist>
+        <listitem>
+         <para>
+          <emphasis>Allow generic record arguments to PL/Perl functions</emphasis>
+         </para>
+        </listitem>
+       </itemizedlist>
       </sect4>
     </sect3>
     <sect3>
