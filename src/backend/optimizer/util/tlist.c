@@ -18,7 +18,6 @@
 #include "nodes/nodeFuncs.h"
 #include "optimizer/tlist.h"
 #include "optimizer/var.h"
-#include "utils/lsyscache.h"
 
 
 /*****************************************************************************
@@ -348,10 +347,7 @@ grouping_is_sortable(List *groupClause)
 /*
  * grouping_is_hashable - is it possible to implement grouping list by hashing?
  *
- * We assume hashing is OK if the equality operators are marked oprcanhash.
- * (If there isn't actually a supporting hash function, the executor will
- * complain at runtime; but this is a misdeclaration of the operator, not
- * a system bug.)
+ * We rely on the parser to have set the hashable flag correctly.
  */
 bool
 grouping_is_hashable(List *groupClause)
@@ -362,7 +358,7 @@ grouping_is_hashable(List *groupClause)
 	{
 		SortGroupClause *groupcl = (SortGroupClause *) lfirst(glitem);
 
-		if (!op_hashjoinable(groupcl->eqop))
+		if (!groupcl->hashable)
 			return false;
 	}
 	return true;

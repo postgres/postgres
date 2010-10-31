@@ -18,6 +18,7 @@
 
 #include "catalog/pg_operator.h"
 #include "miscadmin.h"
+#include "nodes/nodeFuncs.h"
 #include "optimizer/clauses.h"
 #include "optimizer/cost.h"
 #include "optimizer/pathnode.h"
@@ -878,6 +879,7 @@ create_unique_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath,
 		Relids		left_varnos;
 		Relids		right_varnos;
 		Relids		all_varnos;
+		Oid			opinputtype;
 
 		/* Is it a binary opclause? */
 		if (!IsA(op, OpExpr) ||
@@ -908,6 +910,7 @@ create_unique_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath,
 		left_varnos = pull_varnos(left_expr);
 		right_varnos = pull_varnos(right_expr);
 		all_varnos = bms_union(left_varnos, right_varnos);
+		opinputtype = exprType(left_expr);
 
 		/* Does it reference both sides? */
 		if (!bms_overlap(all_varnos, sjinfo->syn_righthand) ||
@@ -946,14 +949,14 @@ create_unique_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath,
 		if (all_btree)
 		{
 			/* oprcanmerge is considered a hint... */
-			if (!op_mergejoinable(opno) ||
+			if (!op_mergejoinable(opno, opinputtype) ||
 				get_mergejoin_opfamilies(opno) == NIL)
 				all_btree = false;
 		}
 		if (all_hash)
 		{
 			/* ... but oprcanhash had better be correct */
-			if (!op_hashjoinable(opno))
+			if (!op_hashjoinable(opno, opinputtype))
 				all_hash = false;
 		}
 		if (!(all_btree || all_hash))

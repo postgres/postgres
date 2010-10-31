@@ -171,6 +171,9 @@ LookupOperNameTypeNames(ParseState *pstate, List *opername,
  * If an operator is missing and the corresponding needXX flag is true,
  * throw a standard error message, else return InvalidOid.
  *
+ * In addition to the operator OIDs themselves, this function can identify
+ * whether the "=" operator is hashable.
+ *
  * Callers can pass NULL pointers for any results they don't care to get.
  *
  * Note: the results are guaranteed to be exact or binary-compatible matches,
@@ -180,30 +183,40 @@ LookupOperNameTypeNames(ParseState *pstate, List *opername,
 void
 get_sort_group_operators(Oid argtype,
 						 bool needLT, bool needEQ, bool needGT,
-						 Oid *ltOpr, Oid *eqOpr, Oid *gtOpr)
+						 Oid *ltOpr, Oid *eqOpr, Oid *gtOpr,
+						 bool *isHashable)
 {
 	TypeCacheEntry *typentry;
+	int			cache_flags;
 	Oid			lt_opr;
 	Oid			eq_opr;
 	Oid			gt_opr;
+	bool		hashable;
 
 	/*
 	 * Look up the operators using the type cache.
 	 *
 	 * Note: the search algorithm used by typcache.c ensures that the results
-	 * are consistent, ie all from the same opclass.
+	 * are consistent, ie all from matching opclasses.
 	 */
-	typentry = lookup_type_cache(argtype,
-					 TYPECACHE_LT_OPR | TYPECACHE_EQ_OPR | TYPECACHE_GT_OPR);
+	if (isHashable != NULL)
+		cache_flags = TYPECACHE_LT_OPR | TYPECACHE_EQ_OPR | TYPECACHE_GT_OPR |
+			TYPECACHE_HASH_PROC;
+	else
+		cache_flags = TYPECACHE_LT_OPR | TYPECACHE_EQ_OPR | TYPECACHE_GT_OPR;
+
+	typentry = lookup_type_cache(argtype, cache_flags);
 	lt_opr = typentry->lt_opr;
 	eq_opr = typentry->eq_opr;
 	gt_opr = typentry->gt_opr;
+	hashable = OidIsValid(typentry->hash_proc);
 
 	/*
 	 * If the datatype is an array, then we can use array_lt and friends ...
-	 * but only if there are suitable operators for the element type.  (This
-	 * check is not in the raw typcache.c code ... should it be?)  Testing all
-	 * three operator IDs here should be redundant, but let's do it anyway.
+	 * but only if there are suitable operators for the element type.
+	 * Likewise, array types are only hashable if the element type is.
+	 * Testing all three operator IDs here should be redundant, but let's do
+	 * it anyway.
 	 */
 	if (lt_opr == ARRAY_LT_OP ||
 		eq_opr == ARRAY_EQ_OP ||
@@ -213,10 +226,7 @@ get_sort_group_operators(Oid argtype,
 
 		if (OidIsValid(elem_type))
 		{
-			typentry = lookup_type_cache(elem_type,
-					 TYPECACHE_LT_OPR | TYPECACHE_EQ_OPR | TYPECACHE_GT_OPR);
-#ifdef NOT_USED
-			/* We should do this ... */
+			typentry = lookup_type_cache(elem_type, cache_flags);
 			if (!OidIsValid(typentry->eq_opr))
 			{
 				/* element type is neither sortable nor hashable */
@@ -228,22 +238,13 @@ get_sort_group_operators(Oid argtype,
 				/* element type is hashable but not sortable */
 				lt_opr = gt_opr = InvalidOid;
 			}
-#else
-
-			/*
-			 * ... but for the moment we have to do this.  This is because
-			 * anyarray has sorting but not hashing support.  So, if the
-			 * element type is only hashable, there is nothing we can do with
-			 * the array type.
-			 */
-			if (!OidIsValid(typentry->lt_opr) ||
-				!OidIsValid(typentry->eq_opr) ||
-				!OidIsValid(typentry->gt_opr))
-				lt_opr = eq_opr = gt_opr = InvalidOid;	/* not sortable */
-#endif
+			hashable = OidIsValid(typentry->hash_proc);
 		}
 		else
+		{
 			lt_opr = eq_opr = gt_opr = InvalidOid;		/* bogus array type? */
+			hashable = false;
+		}
 	}
 
 	/* Report errors if needed */
@@ -267,6 +268,8 @@ get_sort_group_operators(Oid argtype,
 		*eqOpr = eq_opr;
 	if (gtOpr)
 		*gtOpr = gt_opr;
+	if (isHashable)
+		*isHashable = hashable;
 }
 
 

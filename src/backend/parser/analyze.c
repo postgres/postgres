@@ -1659,6 +1659,7 @@ transformSetOperationTree(ParseState *pstate, SelectStmt *stmt,
 				SortGroupClause *grpcl = makeNode(SortGroupClause);
 				Oid			sortop;
 				Oid			eqop;
+				bool		hashable;
 				ParseCallbackState pcbstate;
 
 				setup_parser_errposition_callback(&pcbstate, pstate,
@@ -1667,7 +1668,8 @@ transformSetOperationTree(ParseState *pstate, SelectStmt *stmt,
 				/* determine the eqop and optional sortop */
 				get_sort_group_operators(rescoltype,
 										 false, true, false,
-										 &sortop, &eqop, NULL);
+										 &sortop, &eqop, NULL,
+										 &hashable);
 
 				cancel_parser_errposition_callback(&pcbstate);
 
@@ -1676,6 +1678,7 @@ transformSetOperationTree(ParseState *pstate, SelectStmt *stmt,
 				grpcl->eqop = eqop;
 				grpcl->sortop = sortop;
 				grpcl->nulls_first = false;		/* OK with or without sortop */
+				grpcl->hashable = hashable;
 
 				op->groupClauses = lappend(op->groupClauses, grpcl);
 			}

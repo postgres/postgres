@@ -16,6 +16,7 @@
 
 #include "catalog/pg_operator.h"
 #include "catalog/pg_type.h"
+#include "nodes/nodeFuncs.h"
 #include "optimizer/clauses.h"
 #include "optimizer/cost.h"
 #include "optimizer/joininfo.h"
@@ -1486,6 +1487,7 @@ check_mergejoinable(RestrictInfo *restrictinfo)
 {
 	Expr	   *clause = restrictinfo->clause;
 	Oid			opno;
+	Node	   *leftarg;
 
 	if (restrictinfo->pseudoconstant)
 		return;
@@ -1495,8 +1497,9 @@ check_mergejoinable(RestrictInfo *restrictinfo)
 		return;
 
 	opno = ((OpExpr *) clause)->opno;
+	leftarg = linitial(((OpExpr *) clause)->args);
 
-	if (op_mergejoinable(opno) &&
+	if (op_mergejoinable(opno, exprType(leftarg)) &&
 		!contain_volatile_functions((Node *) clause))
 		restrictinfo->mergeopfamilies = get_mergejoin_opfamilies(opno);
 
@@ -1521,6 +1524,7 @@ check_hashjoinable(RestrictInfo *restrictinfo)
 {
 	Expr	   *clause = restrictinfo->clause;
 	Oid			opno;
+	Node	   *leftarg;
 
 	if (restrictinfo->pseudoconstant)
 		return;
@@ -1530,8 +1534,9 @@ check_hashjoinable(RestrictInfo *restrictinfo)
 		return;
 
 	opno = ((OpExpr *) clause)->opno;
+	leftarg = linitial(((OpExpr *) clause)->args);
 
-	if (op_hashjoinable(opno) &&
+	if (op_hashjoinable(opno, exprType(leftarg)) &&
 		!contain_volatile_functions((Node *) clause))
 		restrictinfo->hashjoinoperator = opno;
 }

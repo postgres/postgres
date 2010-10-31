@@ -3449,6 +3449,117 @@ array_cmp(FunctionCallInfo fcinfo)
 
 
 /*-----------------------------------------------------------------------------
+ * array hashing
+ *		Hash the elements and combine the results.
+ *----------------------------------------------------------------------------
+ */
+
+Datum
+hash_array(PG_FUNCTION_ARGS)
+{
+	ArrayType  *array = PG_GETARG_ARRAYTYPE_P(0);
+	int			ndims = ARR_NDIM(array);
+	int		   *dims = ARR_DIMS(array);
+	Oid			element_type = ARR_ELEMTYPE(array);
+	uint32		result = 0;
+	int			nitems;
+	TypeCacheEntry *typentry;
+	int			typlen;
+	bool		typbyval;
+	char		typalign;
+	char	   *ptr;
+	bits8	   *bitmap;
+	int			bitmask;
+	int			i;
+	FunctionCallInfoData locfcinfo;
+
+	/*
+	 * We arrange to look up the hash function only once per series of calls,
+	 * assuming the element type doesn't change underneath us.  The typcache
+	 * is used so that we have no memory leakage when being used as an index
+	 * support function.
+	 */
+	typentry = (TypeCacheEntry *) fcinfo->flinfo->fn_extra;
+	if (typentry == NULL ||
+		typentry->type_id != element_type)
+	{
+		typentry = lookup_type_cache(element_type,
+									 TYPECACHE_HASH_PROC_FINFO);
+		if (!OidIsValid(typentry->hash_proc_finfo.fn_oid))
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_FUNCTION),
+					 errmsg("could not identify a hash function for type %s",
+							format_type_be(element_type))));
+		fcinfo->flinfo->fn_extra = (void *) typentry;
+	}
+	typlen = typentry->typlen;
+	typbyval = typentry->typbyval;
+	typalign = typentry->typalign;
+
+	/*
+	 * apply the hash function to each array element.
+	 */
+	InitFunctionCallInfoData(locfcinfo, &typentry->hash_proc_finfo, 1,
+							 NULL, NULL);
+
+	/* Loop over source data */
+	nitems = ArrayGetNItems(ndims, dims);
+	ptr = ARR_DATA_PTR(array);
+	bitmap = ARR_NULLBITMAP(array);
+	bitmask = 1;
+
+	for (i = 0; i < nitems; i++)
+	{
+		uint32		elthash;
+
+		/* Get element, checking for NULL */
+		if (bitmap && (*bitmap & bitmask) == 0)
+		{
+			/* Treat nulls as having hashvalue 0 */
+			elthash = 0;
+		}
+		else
+		{
+			Datum		elt;
+
+			elt = fetch_att(ptr, typbyval, typlen);
+			ptr = att_addlength_pointer(ptr, typlen, ptr);
+			ptr = (char *) att_align_nominal(ptr, typalign);
+
+			/* Apply the hash function */
+			locfcinfo.arg[0] = elt;
+			locfcinfo.argnull[0] = false;
+			locfcinfo.isnull = false;
+			elthash = DatumGetUInt32(FunctionCallInvoke(&locfcinfo));
+		}
+
+		/* advance bitmap pointer if any */
+		if (bitmap)
+		{
+			bitmask <<= 1;
+			if (bitmask == 0x100)
+			{
+				bitmap++;
+				bitmask = 1;
+			}
+		}
+
+		/*
+		 * Combine hash values of successive elements by rotating the previous
+		 * value left 1 bit, then XOR'ing in the new element's hash value.
+		 */
+		result = (result << 1) | (result >> 31);
+		result ^= elthash;
+	}
+
+	/* Avoid leaking memory when handed toasted input. */
+	PG_FREE_IF_COPY(array, 0);
+
+	PG_RETURN_UINT32(result);
+}
+
+
+/*-----------------------------------------------------------------------------
  * array overlap/containment comparisons
  *		These use the same methods of comparing array elements as array_eq.
  *		We consider only the elements of the arrays, ignoring dimensionality.

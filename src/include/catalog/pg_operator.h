@@ -439,7 +439,7 @@ DATA(insert OID = 1060 ( ">"	   PGNSP PGUID b f f 1042 1042	 16 1058 1059 bpchar
 DATA(insert OID = 1061 ( ">="	   PGNSP PGUID b f f 1042 1042	 16 1059 1058 bpcharge scalargtsel scalargtjoinsel ));
 
 /* generic array comparison operators */
-DATA(insert OID = 1070 (  "="	   PGNSP PGUID b t f 2277 2277 16 1070 1071 array_eq eqsel eqjoinsel ));
+DATA(insert OID = 1070 (  "="	   PGNSP PGUID b t t 2277 2277 16 1070 1071 array_eq eqsel eqjoinsel ));
 #define ARRAY_EQ_OP 1070
 DATA(insert OID = 1071 (  "<>"	   PGNSP PGUID b f f 2277 2277 16 1071 1070 array_ne neqsel neqjoinsel ));
 DATA(insert OID = 1072 (  "<"	   PGNSP PGUID b f f 2277 2277 16 1073 1075 array_lt scalarltsel scalarltjoinsel ));

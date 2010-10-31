@@ -2073,6 +2073,7 @@ _outSortGroupClause(StringInfo str, SortGroupClause *node)
 	WRITE_OID_FIELD(eqop);
 	WRITE_OID_FIELD(sortop);
 	WRITE_BOOL_FIELD(nulls_first);
+	WRITE_BOOL_FIELD(hashable);
 }
 
 static void

@@ -757,6 +757,8 @@ typedef struct RangeTblEntry
  *		or InvalidOid if not available.
  * nulls_first means about what you'd expect.  If sortop is InvalidOid
  *		then nulls_first is meaningless and should be set to false.
+ * hashable is TRUE if eqop is hashable (note this condition also depends
+ *		on the datatype of the input expression).
  *
  * In an ORDER BY item, all fields must be valid.  (The eqop isn't essential
  * here, but it's cheap to get it along with the sortop, and requiring it
@@ -772,6 +774,11 @@ typedef struct RangeTblEntry
  * we will set eqop to the hash equality operator, sortop to InvalidOid,
  * and nulls_first to false.  A grouping item of this kind can only be
  * implemented by hashing, and of course it'll never match an ORDER BY item.
+ *
+ * The hashable flag is provided since we generally have the requisite
+ * information readily available when the SortGroupClause is constructed,
+ * and it's relatively expensive to get it again later.  Note there is no
+ * need for a "sortable" flag since OidIsValid(sortop) serves the purpose.
  *
  * A query might have both ORDER BY and DISTINCT (or DISTINCT ON) clauses.
  * In SELECT DISTINCT, the distinctClause list is as long or longer than the
@@ -789,6 +796,7 @@ typedef struct SortGroupClause
 	Oid			eqop;			/* the equality operator ('=' op) */
 	Oid			sortop;			/* the ordering operator ('<' op), or 0 */
 	bool		nulls_first;	/* do NULLs come before normal values? */
+	bool		hashable;		/* can eqop be implemented by hashing? */
 } SortGroupClause;
 
 /*

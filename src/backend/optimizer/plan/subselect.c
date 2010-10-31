@@ -861,28 +861,45 @@ testexpr_is_hashable(Node *testexpr)
 	return false;
 }
 
+/*
+ * Check expression is hashable + strict
+ *
+ * We could use op_hashjoinable() and op_strict(), but do it like this to
+ * avoid a redundant cache lookup.
+ */
 static bool
 hash_ok_operator(OpExpr *expr)
 {
 	Oid			opid = expr->opno;
-	HeapTuple	tup;
-	Form_pg_operator optup;
 
 	/* quick out if not a binary operator */
 	if (list_length(expr->args) != 2)
 		return false;
-	/* else must look up the operator properties */
-	tup = SearchSysCache1(OPEROID, ObjectIdGetDatum(opid));
-	if (!HeapTupleIsValid(tup))
-		elog(ERROR, "cache lookup failed for operator %u", opid);
-	optup = (Form_pg_operator) GETSTRUCT(tup);
-	if (!optup->oprcanhash || !func_strict(optup->oprcode))
+	if (opid == ARRAY_EQ_OP)
 	{
-		ReleaseSysCache(tup);
-		return false;
+		/* array_eq is strict, but must check input type to ensure hashable */
+		Node	   *leftarg = linitial(expr->args);
+
+		return op_hashjoinable(opid, exprType(leftarg));
 	}
-	ReleaseSysCache(tup);
-	return true;
+	else
+	{
+		/* else must look up the operator properties */
+		HeapTuple	tup;
+		Form_pg_operator optup;
+
+		tup = SearchSysCache1(OPEROID, ObjectIdGetDatum(opid));
+		if (!HeapTupleIsValid(tup))
+			elog(ERROR, "cache lookup failed for operator %u", opid);
+		optup = (Form_pg_operator) GETSTRUCT(tup);
+		if (!optup->oprcanhash || !func_strict(optup->oprcode))
+		{
+			ReleaseSysCache(tup);
+			return false;
+		}
+		ReleaseSysCache(tup);
+		return true;
+	}
 }
 
 

@@ -907,6 +907,9 @@ DESCR("convert float8 to int8");
 
 /* OIDS 600 - 699 */
 
+DATA(insert OID = 626 (  hash_array		   PGNSP PGUID 12 1 0 0 f f f t f i 1 0 23 "2277" _null_ _null_ _null_ _null_ hash_array _null_ _null_ _null_ ));
+DESCR("hash");
+
 DATA(insert OID = 652 (  float4			   PGNSP PGUID 12 1 0 0 f f f t f i 1 0 700 "20" _null_ _null_ _null_ _null_ i8tof _null_ _null_ _null_ ));
 DESCR("convert int8 to float4");
 DATA(insert OID = 653 (  int8			   PGNSP PGUID 12 1 0 0 f f f t f i 1 0 20 "700" _null_ _null_ _null_ _null_	ftoi8 _null_ _null_ _null_ ));

@@ -1794,7 +1794,8 @@ std_typanalyze(VacAttrStats *stats)
 	/* Look for default "<" and "=" operators for column's type */
 	get_sort_group_operators(stats->attrtypid,
 							 false, false, false,
-							 &ltopr, &eqopr, NULL);
+							 &ltopr, &eqopr, NULL,
+							 NULL);
 
 	/* If column has no "=" operator, we can't do much of anything */
 	if (!OidIsValid(eqopr))

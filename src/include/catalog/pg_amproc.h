@@ -130,6 +130,7 @@ DATA(insert (	3522   3500 3500 1 3514 ));
 DATA(insert (	427   1042 1042 1 1080 ));
 DATA(insert (	431   18 18 1 454 ));
 DATA(insert (	435   1082 1082 1 450 ));
+DATA(insert (	627   2277 2277 1 626 ));
 DATA(insert (	1971   700 700 1 451 ));
 DATA(insert (	1971   701 701 1 452 ));
 DATA(insert (	1975   869 869 1 422 ));

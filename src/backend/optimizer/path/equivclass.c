@@ -925,7 +925,9 @@ generate_join_implied_equalities_normal(PlannerInfo *root,
 					(IsA(inner_em->em_expr, RelabelType) &&
 					 IsA(((RelabelType *) inner_em->em_expr)->arg, Var)))
 					score++;
-				if (!enable_hashjoin || op_hashjoinable(eq_op))
+				if (!enable_hashjoin ||
+					op_hashjoinable(eq_op,
+									exprType((Node *) outer_em->em_expr)))
 					score++;
 				if (score > best_score)
 				{

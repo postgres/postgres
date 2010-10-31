@@ -264,6 +264,7 @@ _readSortGroupClause(void)
 	READ_OID_FIELD(eqop);
 	READ_OID_FIELD(sortop);
 	READ_BOOL_FIELD(nulls_first);
+	READ_BOOL_FIELD(hashable);
 
 	READ_DONE();
 }

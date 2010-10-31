@@ -518,6 +518,7 @@ make_agg_subplan(PlannerInfo *root, MinMaxAggInfo *info)
 			 info->aggsortop);
 	sortcl->sortop = info->aggsortop;
 	sortcl->nulls_first = info->nulls_first;
+	sortcl->hashable = false;			/* no need to make this accurate */
 	subparse->sortClause = list_make1(sortcl);
 
 	/* set up LIMIT 1 */

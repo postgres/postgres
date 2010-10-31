@@ -34,6 +34,7 @@
 #include "utils/datum.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
+#include "utils/typcache.h"
 
 /* Hook for plugins to get control in get_attavgwidth() */
 get_attavgwidth_hook_type get_attavgwidth_hook = NULL;
@@ -1054,20 +1055,47 @@ op_input_types(Oid opno, Oid *lefttype, Oid *righttype)
  * will fail to find any mergejoin plans unless there are suitable btree
  * opfamily entries for this operator and associated sortops.  The pg_operator
  * flag is just a hint to tell the planner whether to bother looking.)
+ *
+ * In some cases (currently only array_eq), mergejoinability depends on the
+ * specific input data type the operator is invoked for, so that must be
+ * passed as well.  We currently assume that only one input's type is needed
+ * to check this --- by convention, pass the left input's data type.
  */
 bool
-op_mergejoinable(Oid opno)
+op_mergejoinable(Oid opno, Oid inputtype)
 {
 	HeapTuple	tp;
 	bool		result = false;
 
-	tp = SearchSysCache1(OPEROID, ObjectIdGetDatum(opno));
-	if (HeapTupleIsValid(tp))
+	if (opno == ARRAY_EQ_OP)
 	{
-		Form_pg_operator optup = (Form_pg_operator) GETSTRUCT(tp);
+		/*
+		 * For array_eq, can sort if element type has a default btree opclass.
+		 * We could use GetDefaultOpClass, but that's fairly expensive and not
+		 * cached, so let's use the typcache instead.
+		 */
+		Oid			elem_type = get_base_element_type(inputtype);
 
-		result = optup->oprcanmerge;
-		ReleaseSysCache(tp);
+		if (OidIsValid(elem_type))
+		{
+			TypeCacheEntry *typentry;
+
+			typentry = lookup_type_cache(elem_type, TYPECACHE_BTREE_OPFAMILY);
+			if (OidIsValid(typentry->btree_opf))
+				result = true;
+		}
+	}
+	else
+	{
+		/* For all other operators, rely on pg_operator.oprcanmerge */
+		tp = SearchSysCache1(OPEROID, ObjectIdGetDatum(opno));
+		if (HeapTupleIsValid(tp))
+		{
+			Form_pg_operator optup = (Form_pg_operator) GETSTRUCT(tp);
+
+			result = optup->oprcanmerge;
+			ReleaseSysCache(tp);
+		}
 	}
 	return result;
 }
@@ -1077,20 +1105,43 @@ op_mergejoinable(Oid opno)
  *
  * Returns true if the operator is hashjoinable.  (There must be a suitable
  * hash opfamily entry for this operator if it is so marked.)
+ *
+ * In some cases (currently only array_eq), hashjoinability depends on the
+ * specific input data type the operator is invoked for, so that must be
+ * passed as well.  We currently assume that only one input's type is needed
+ * to check this --- by convention, pass the left input's data type.
  */
 bool
-op_hashjoinable(Oid opno)
+op_hashjoinable(Oid opno, Oid inputtype)
 {
 	HeapTuple	tp;
 	bool		result = false;
 
-	tp = SearchSysCache1(OPEROID, ObjectIdGetDatum(opno));
-	if (HeapTupleIsValid(tp))
+	if (opno == ARRAY_EQ_OP)
 	{
-		Form_pg_operator optup = (Form_pg_operator) GETSTRUCT(tp);
+		/* For array_eq, can hash if element type has a default hash opclass */
+		Oid			elem_type = get_base_element_type(inputtype);
 
-		result = optup->oprcanhash;
-		ReleaseSysCache(tp);
+		if (OidIsValid(elem_type))
+		{
+			TypeCacheEntry *typentry;
+
+			typentry = lookup_type_cache(elem_type, TYPECACHE_HASH_OPFAMILY);
+			if (OidIsValid(typentry->hash_opf))
+				result = true;
+		}
+	}
+	else
+	{
+		/* For all other operators, rely on pg_operator.oprcanhash */
+		tp = SearchSysCache1(OPEROID, ObjectIdGetDatum(opno));
+		if (HeapTupleIsValid(tp))
+		{
+			Form_pg_operator optup = (Form_pg_operator) GETSTRUCT(tp);
+
+			result = optup->oprcanhash;
+			ReleaseSysCache(tp);
+		}
 	}
 	return result;
 }

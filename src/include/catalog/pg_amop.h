@@ -561,6 +561,8 @@ DATA(insert (	2235   1033 1033 1	974 405 ));
 DATA(insert (	2969   2950 2950 1 2972 405 ));
 /* numeric_ops */
 DATA(insert (	1998   1700 1700 1 1752 405 ));
+/* array_ops */
+DATA(insert (	627    2277 2277 1 1070	405 ));
 
 
 /*

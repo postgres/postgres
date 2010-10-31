@@ -10,10 +10,10 @@
  * be used for grouping and sorting the type (GROUP BY, ORDER BY ASC/DESC).
  *
  * Several seemingly-odd choices have been made to support use of the type
- * cache by the generic array comparison routines array_eq() and array_cmp().
- * Because those routines are used as index support operations, they cannot
- * leak memory.  To allow them to execute efficiently, all information that
- * either of them would like to re-use across calls is made available in the
+ * cache by the generic array handling routines array_eq(), array_cmp(),
+ * and hash_array().  Because those routines are used as index support
+ * operations, they cannot leak memory.  To allow them to execute efficiently,
+ * all information that they would like to re-use across calls is kept in the
  * type cache.
  *
  * Once created, a type cache entry lives as long as the backend does, so
@@ -193,7 +193,9 @@ lookup_type_cache(Oid type_id, int flags)
 		ReleaseSysCache(tp);
 	}
 
-	/* If we haven't already found the opclass, try to do so */
+	/*
+	 * If we haven't already found the opclasses, try to do so
+	 */
 	if ((flags & (TYPECACHE_EQ_OPR | TYPECACHE_LT_OPR | TYPECACHE_GT_OPR |
 				  TYPECACHE_CMP_PROC |
 				  TYPECACHE_EQ_OPR_FINFO | TYPECACHE_CMP_PROC_FINFO |
@@ -208,7 +210,7 @@ lookup_type_cache(Oid type_id, int flags)
 			typentry->btree_opf = get_opclass_family(opclass);
 			typentry->btree_opintype = get_opclass_input_type(opclass);
 		}
-		/* Only care about hash opclass if no btree opclass... */
+		/* If no btree opclass, we force lookup of the hash opclass */
 		if (typentry->btree_opf == InvalidOid)
 		{
 			if (typentry->hash_opf == InvalidOid)
@@ -224,12 +226,30 @@ lookup_type_cache(Oid type_id, int flags)
 		else
 		{
 			/*
-			 * If we find a btree opclass where previously we only found a
-			 * hash opclass, forget the hash equality operator so we can use
-			 * the btree operator instead.
+			 * In case we find a btree opclass where previously we only found
+			 * a hash opclass, reset eq_opr and derived information so that
+			 * we can fetch the btree equality operator instead of the hash
+			 * equality operator.  (They're probably the same operator, but
+			 * we don't assume that here.)
 			 */
 			typentry->eq_opr = InvalidOid;
 			typentry->eq_opr_finfo.fn_oid = InvalidOid;
+			typentry->hash_proc = InvalidOid;
+			typentry->hash_proc_finfo.fn_oid = InvalidOid;
+		}
+	}
+
+	if ((flags & (TYPECACHE_HASH_PROC | TYPECACHE_HASH_PROC_FINFO |
+				  TYPECACHE_HASH_OPFAMILY)) &&
+		typentry->hash_opf == InvalidOid)
+	{
+		Oid			opclass;
+
+		opclass = GetDefaultOpClass(type_id, HASH_AM_OID);
+		if (OidIsValid(opclass))
+		{
+			typentry->hash_opf = get_opclass_family(opclass);
+			typentry->hash_opintype = get_opclass_input_type(opclass);
 		}
 	}
 
@@ -248,6 +268,14 @@ lookup_type_cache(Oid type_id, int flags)
 												   typentry->hash_opintype,
 												   typentry->hash_opintype,
 												   HTEqualStrategyNumber);
+
+		/*
+		 * Reset info about hash function whenever we pick up new info about
+		 * equality operator.  This is so we can ensure that the hash function
+		 * matches the operator.
+		 */
+		typentry->hash_proc = InvalidOid;
+		typentry->hash_proc_finfo.fn_oid = InvalidOid;
 	}
 	if ((flags & TYPECACHE_LT_OPR) && typentry->lt_opr == InvalidOid)
 	{
@@ -274,6 +302,24 @@ lookup_type_cache(Oid type_id, int flags)
 												   typentry->btree_opintype,
 												   BTORDER_PROC);
 	}
+	if ((flags & (TYPECACHE_HASH_PROC | TYPECACHE_HASH_PROC_FINFO)) &&
+		typentry->hash_proc == InvalidOid)
+	{
+		/*
+		 * We insist that the eq_opr, if one has been determined, match the
+		 * hash opclass; else report there is no hash function.
+		 */
+		if (typentry->hash_opf != InvalidOid &&
+			(!OidIsValid(typentry->eq_opr) ||
+			 typentry->eq_opr == get_opfamily_member(typentry->hash_opf,
+													 typentry->hash_opintype,
+													 typentry->hash_opintype,
+													 HTEqualStrategyNumber)))
+			typentry->hash_proc = get_opfamily_proc(typentry->hash_opf,
+													typentry->hash_opintype,
+													typentry->hash_opintype,
+													HASHPROC);
+	}
 
 	/*
 	 * Set up fmgr lookup info as requested
@@ -298,6 +344,13 @@ lookup_type_cache(Oid type_id, int flags)
 		typentry->cmp_proc != InvalidOid)
 	{
 		fmgr_info_cxt(typentry->cmp_proc, &typentry->cmp_proc_finfo,
+					  CacheMemoryContext);
+	}
+	if ((flags & TYPECACHE_HASH_PROC_FINFO) &&
+		typentry->hash_proc_finfo.fn_oid == InvalidOid &&
+		typentry->hash_proc != InvalidOid)
+	{
+		fmgr_info_cxt(typentry->hash_proc, &typentry->hash_proc_finfo,
 					  CacheMemoryContext);
 	}
 

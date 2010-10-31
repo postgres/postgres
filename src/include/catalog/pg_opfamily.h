@@ -60,6 +60,7 @@ typedef FormData_pg_opfamily *Form_pg_opfamily;
 
 DATA(insert OID =  421 (	403		abstime_ops		PGNSP PGUID ));
 DATA(insert OID =  397 (	403		array_ops		PGNSP PGUID ));
+DATA(insert OID =  627 (	405		array_ops		PGNSP PGUID ));
 DATA(insert OID =  423 (	403		bit_ops			PGNSP PGUID ));
 DATA(insert OID =  424 (	403		bool_ops		PGNSP PGUID ));
 #define BOOL_BTREE_FAM_OID 424

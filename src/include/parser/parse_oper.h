@@ -48,7 +48,8 @@ extern Operator compatible_oper(ParseState *pstate, List *op,
 /* Routines for identifying "<", "=", ">" operators for a type */
 extern void get_sort_group_operators(Oid argtype,
 						 bool needLT, bool needEQ, bool needGT,
-						 Oid *ltOpr, Oid *eqOpr, Oid *gtOpr);
+						 Oid *ltOpr, Oid *eqOpr, Oid *gtOpr,
+						 bool *isHashable);
 
 /* Convenience routines for common calls on the above */
 extern Oid	compatible_oper_opid(List *op, Oid arg1, Oid arg2, bool noError);
