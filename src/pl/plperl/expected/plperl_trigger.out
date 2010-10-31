@@ -266,3 +266,9 @@ SELECT * FROM trigger_test;
  4 | immortal
 (1 row)
 
+CREATE FUNCTION direct_trigger() RETURNS trigger AS $$
+    return;
+$$ LANGUAGE plperl;
+SELECT direct_trigger();
+ERROR:  trigger functions can only be called as triggers
+CONTEXT:  compilation of PL/Perl function "direct_trigger"

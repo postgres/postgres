@@ -113,7 +113,7 @@ typedef struct plperl_proc_desc
 
 /**********************************************************************
  * For speedy lookup, we maintain a hash table mapping from
- * function OID + user OID to plperl_proc_desc pointers.
+ * function OID + trigger flag + user OID to plperl_proc_desc pointers.
  * The reason the plperl_proc_desc struct isn't directly part of the hash
  * entry is to simplify recovery from errors during compile_plperl_function.
  *
@@ -127,6 +127,11 @@ typedef struct plperl_proc_desc
 typedef struct plperl_proc_key
 {
 	Oid			proc_id;				/* Function OID */
+	/*
+	 * is_trigger is really a bool, but declare as Oid to ensure this struct
+	 * contains no padding
+	 */
+	Oid			is_trigger;				/* is it a trigger function? */
 	Oid			user_id;				/* User calling the function, or 0 */
 } plperl_proc_key;
 
@@ -1955,6 +1960,7 @@ compile_plperl_function(Oid fn_oid, bool is_trigger)
 
 	/* Try to find function in plperl_proc_hash */
 	proc_key.proc_id = fn_oid;
+	proc_key.is_trigger = is_trigger;
 	proc_key.user_id = GetUserId();
 
 	proc_ptr = hash_search(plperl_proc_hash, &proc_key,

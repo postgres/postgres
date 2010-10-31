@@ -128,5 +128,10 @@ FOR EACH ROW EXECUTE PROCEDURE immortal('immortal');
 
 DELETE FROM trigger_test;
 
-
 SELECT * FROM trigger_test;
+
+CREATE FUNCTION direct_trigger() RETURNS trigger AS $$
+    return;
+$$ LANGUAGE plperl;
+
+SELECT direct_trigger();
