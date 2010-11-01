@@ -623,13 +623,11 @@ typedef struct FuncExprState
 										 * NULL */
 
 	/*
-	 * We need to store argument values across calls when evaluating a SRF
-	 * that uses value-per-call mode.
-	 *
-	 * setArgsValid is true when we are evaluating a set-valued function and
-	 * we are in the middle of a call series; we want to pass the same
-	 * argument values to the function again (and again, until it returns
-	 * ExprEndResult).
+	 * setArgsValid is true when we are evaluating a set-returning function
+	 * that uses value-per-call mode and we are in the middle of a call
+	 * series; we want to pass the same argument values to the function again
+	 * (and again, until it returns ExprEndResult).  This indicates that
+	 * fcinfo_data already contains valid argument data.
 	 */
 	bool		setArgsValid;
 
@@ -649,10 +647,11 @@ typedef struct FuncExprState
 	bool		shutdown_reg;	/* a shutdown callback is registered */
 
 	/*
-	 * Current argument data for a set-valued function; contains valid data
-	 * only if setArgsValid is true.
+	 * Call parameter structure for the function.  This has been initialized
+	 * (by InitFunctionCallInfoData) if func.fn_oid is valid.  It also saves
+	 * argument values between calls, when setArgsValid is true.
 	 */
-	FunctionCallInfoData setArgs;
+	FunctionCallInfoData fcinfo_data;
 } FuncExprState;
 
 /* ----------------
