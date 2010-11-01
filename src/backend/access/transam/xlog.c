@@ -363,7 +363,7 @@ typedef struct XLogCtlData
 	uint32		ckptXidEpoch;	/* nextXID & epoch of latest checkpoint */
 	TransactionId ckptXid;
 	XLogRecPtr	asyncXactLSN; /* LSN of newest async commit/abort */
-	uint32		lastRemovedLog; /* latest removed/recycled XLOG segment */
+	uint32		lastRemovedLog; /* latest removed/recycled XLOG segment + 1 */
 	uint32		lastRemovedSeg;
 
 	/* Protected by WALWriteLock: */
@@ -3210,8 +3210,10 @@ PreallocXlogFiles(XLogRecPtr endptr)
 }
 
 /*
- * Get the log/seg of the latest removed or recycled WAL segment.
- * Returns 0 if no WAL segments have been removed since startup.
+ * Get the log/seg of the first WAL segment that has not been removed or
+ * recycled. In other words, the log/seg of the last removed/recycled WAL
+ * segment + 1.
+ * Returns 0/0 if no WAL segments have been removed since startup.
  */
 void
 XLogGetLastRemoved(uint32 *log, uint32 *seg)
@@ -3239,6 +3241,7 @@ UpdateLastRemovedPtr(char *filename)
 				seg;
 
 	XLogFromFileName(filename, &tli, &log, &seg);
+	NextLogSeg(log, seg);
 
 	SpinLockAcquire(&xlogctl->info_lck);
 	if (log > xlogctl->lastRemovedLog ||
