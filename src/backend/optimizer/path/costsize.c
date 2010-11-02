@@ -2897,12 +2897,20 @@ adjust_semi_join(PlannerInfo *root, JoinPath *path, SpecialJoinInfo *sjinfo,
 	 */
 	if (indexed_join_quals)
 	{
-		List	   *nrclauses;
+		if (path->joinrestrictinfo != NIL)
+		{
+			List	   *nrclauses;
 
-		nrclauses = select_nonredundant_join_clauses(root,
-													 path->joinrestrictinfo,
-													 path->innerjoinpath);
-		*indexed_join_quals = (nrclauses == NIL);
+			nrclauses = select_nonredundant_join_clauses(root,
+														 path->joinrestrictinfo,
+														 path->innerjoinpath);
+			*indexed_join_quals = (nrclauses == NIL);
+		}
+		else
+		{
+			/* a clauseless join does NOT qualify */
+			*indexed_join_quals = false;
+		}
 	}
 
 	return true;
