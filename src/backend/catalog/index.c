@@ -50,7 +50,6 @@
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
 #include "optimizer/clauses.h"
-#include "optimizer/var.h"
 #include "parser/parser.h"
 #include "storage/bufmgr.h"
 #include "storage/lmgr.h"
@@ -858,16 +857,12 @@ index_create(Oid heapRelationId,
 			}
 
 			/*
-			 * It's possible for an index to not depend on any columns of the
-			 * table at all, in which case we need to give it a dependency on
-			 * the table as a whole; else it won't get dropped when the table
-			 * is dropped.	This edge case is not totally useless; for
-			 * example, a unique index on a constant expression can serve to
-			 * prevent a table from containing more than one row.
+			 * If there are no simply-referenced columns, give the index an
+			 * auto dependency on the whole table.  In most cases, this will
+			 * be redundant, but it might not be if the index expressions and
+			 * predicate contain no Vars or only whole-row Vars.
 			 */
-			if (!have_simple_col &&
-			 !contain_vars_of_level((Node *) indexInfo->ii_Expressions, 0) &&
-				!contain_vars_of_level((Node *) indexInfo->ii_Predicate, 0))
+			if (!have_simple_col)
 			{
 				referenced.classId = RelationRelationId;
 				referenced.objectId = heapRelationId;
