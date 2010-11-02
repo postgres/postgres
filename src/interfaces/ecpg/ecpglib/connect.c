@@ -214,9 +214,9 @@ ECPGnoticeReceiver(void *arg, const PGresult *result)
 	char	   *sqlstate = PQresultErrorField(result, PG_DIAG_SQLSTATE);
 	char	   *message = PQresultErrorField(result, PG_DIAG_MESSAGE_PRIMARY);
 	struct sqlca_t *sqlca = ECPGget_sqlca();
-
 	int			sqlcode;
 
+	(void) arg; /* keep the compiler quiet */
 	if (sqlstate == NULL)
 		sqlstate = ECPG_SQLSTATE_ECPG_INTERNAL_ERROR;
 

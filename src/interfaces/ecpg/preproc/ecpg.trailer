@@ -270,7 +270,7 @@ prepared_name: name             {
                                                 $$ = $1;
                                         else /* not quoted => convert to lowercase */
                                         {
-                                                int i;
+                                                size_t i;
 
                                                 for (i = 0; i< strlen($1); i++)
                                                         $1[i] = tolower((unsigned char) $1[i]);

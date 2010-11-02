@@ -178,8 +178,8 @@ deccopy(decimal *src, decimal *target)
 static char *
 ecpg_strndup(const char *str, size_t len)
 {
-	int			real_len = strlen(str);
-	int			use_len = (real_len > len) ? (int) len : real_len;
+	size_t		real_len = strlen(str);
+	int		use_len = (int) ((real_len > len) ? len : real_len);
 
 	char	   *new = malloc(use_len + 1);
 
@@ -983,24 +983,33 @@ ldchar(char *src, int len, char *dest)
 int
 rgetmsg(int msgnum, char *s, int maxsize)
 {
+	(void) msgnum; /* keep the compiler quiet */
+	(void) s; /* keep the compiler quiet */
+	(void) maxsize; /* keep the compiler quiet */
 	return 0;
 }
 
 int
 rtypalign(int offset, int type)
 {
+	(void) offset; /* keep the compiler quiet */
+	(void) type; /* keep the compiler quiet */
 	return 0;
 }
 
 int
 rtypmsize(int type, int len)
 {
+	(void) type; /* keep the compiler quiet */
+	(void) len; /* keep the compiler quiet */
 	return 0;
 }
 
 int
 rtypwidth(int sqltype, int sqllen)
 {
+	(void) sqltype; /* keep the compiler quiet */
+	(void) sqllen; /* keep the compiler quiet */
 	return 0;
 }
 

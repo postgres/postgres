@@ -18,17 +18,17 @@
 
 /* variables */
 
-extern int	braces_open,
-			autocommit,
+extern bool		autocommit,
 			auto_create_c,
 			system_includes,
 			force_indicator,
 			questionmarks,
-			ret_value,
-			struct_level,
-			ecpg_internal_var,
 			regression_mode,
 			auto_prepare;
+extern int		braces_open,
+			ret_value,
+			struct_level,
+			ecpg_internal_var;
 extern char *current_function;
 extern char *descriptor_index;
 extern char *descriptor_name;

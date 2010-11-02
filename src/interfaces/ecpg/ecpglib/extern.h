@@ -76,7 +76,7 @@ struct connection
 {
 	char	   *name;
 	PGconn	   *connection;
-	int			autocommit;
+	bool		autocommit;
 	struct ECPGtype_information_cache *cache_head;
 	struct prepared_statement *prep_stmts;
 	struct connection *next;
