@@ -1028,6 +1028,12 @@ recordDependencyOnExpr(const ObjectAddress *depender,
  * range table.  An additional frammish is that dependencies on that
  * relation (or its component columns) will be marked with 'self_behavior',
  * whereas 'behavior' is used for everything else.
+ *
+ * NOTE: the caller should ensure that a whole-table dependency on the
+ * specified relation is created separately, if one is needed.  In particular,
+ * a whole-row Var "relation.*" will not cause this routine to emit any
+ * dependency item.  This is appropriate behavior for subexpressions of an
+ * ordinary query, so other cases need to cope as necessary.
  */
 void
 recordDependencyOnSingleRelExpr(const ObjectAddress *depender,
@@ -1143,7 +1149,14 @@ find_expr_references_walker(Node *node,
 
 		/*
 		 * A whole-row Var references no specific columns, so adds no new
-		 * dependency.
+		 * dependency.  (We assume that there is a whole-table dependency
+		 * arising from each underlying rangetable entry.  While we could
+		 * record such a dependency when finding a whole-row Var that
+		 * references a relation directly, it's quite unclear how to extend
+		 * that to whole-row Vars for JOINs, so it seems better to leave the
+		 * responsibility with the range table.  Note that this poses some
+		 * risks for identifying dependencies of stand-alone expressions:
+		 * whole-table references may need to be created separately.)
 		 */
 		if (var->varattno == InvalidAttrNumber)
 			return false;
