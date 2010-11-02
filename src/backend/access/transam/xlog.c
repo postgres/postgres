@@ -364,7 +364,7 @@ typedef struct XLogCtlData
 	uint32		ckptXidEpoch;	/* nextXID & epoch of latest checkpoint */
 	TransactionId ckptXid;
 	XLogRecPtr	asyncXactLSN; /* LSN of newest async commit/abort */
-	uint32		lastRemovedLog; /* latest removed/recycled XLOG segment + 1 */
+	uint32		lastRemovedLog; /* latest removed/recycled XLOG segment */
 	uint32		lastRemovedSeg;
 
 	/* Protected by WALWriteLock: */
@@ -3218,9 +3218,7 @@ PreallocXlogFiles(XLogRecPtr endptr)
 }
 
 /*
- * Get the log/seg of the first WAL segment that has not been removed or
- * recycled. In other words, the log/seg of the last removed/recycled WAL
- * segment + 1.
+ * Get the log/seg of the latest removed or recycled WAL segment.
  * Returns 0/0 if no WAL segments have been removed since startup.
  */
 void
@@ -3249,7 +3247,6 @@ UpdateLastRemovedPtr(char *filename)
 				seg;
 
 	XLogFromFileName(filename, &tli, &log, &seg);
-	NextLogSeg(log, seg);
 
 	SpinLockAcquire(&xlogctl->info_lck);
 	if (log > xlogctl->lastRemovedLog ||
@@ -4903,9 +4900,15 @@ BootStrapXLOG(void)
 	page = (XLogPageHeader) TYPEALIGN(ALIGNOF_XLOG_BUFFER, buffer);
 	memset(page, 0, XLOG_BLCKSZ);
 
-	/* Set up information for the initial checkpoint record */
+	/*
+	 * Set up information for the initial checkpoint record
+	 *
+	 * The initial checkpoint record is written to the beginning of the
+	 * WAL segment with logid=0 logseg=1. The very first WAL segment, 0/0, is
+	 * not used, so that we can use 0/0 to mean "before any valid WAL segment".
+	 */
 	checkPoint.redo.xlogid = 0;
-	checkPoint.redo.xrecoff = SizeOfXLogLongPHD;
+	checkPoint.redo.xrecoff = XLogSegSize + SizeOfXLogLongPHD;
 	checkPoint.ThisTimeLineID = ThisTimeLineID;
 	checkPoint.nextXidEpoch = 0;
 	checkPoint.nextXid = FirstNormalTransactionId;
@@ -4928,7 +4931,7 @@ BootStrapXLOG(void)
 	page->xlp_info = XLP_LONG_HEADER;
 	page->xlp_tli = ThisTimeLineID;
 	page->xlp_pageaddr.xlogid = 0;
-	page->xlp_pageaddr.xrecoff = 0;
+	page->xlp_pageaddr.xrecoff = XLogSegSize;
 	longpage = (XLogLongPageHeader) page;
 	longpage->xlp_sysid = sysidentifier;
 	longpage->xlp_seg_size = XLogSegSize;
@@ -4954,7 +4957,7 @@ BootStrapXLOG(void)
 
 	/* Create first XLOG segment file */
 	use_existent = false;
-	openLogFile = XLogFileInit(0, 0, &use_existent, false);
+	openLogFile = XLogFileInit(0, 1, &use_existent, false);
 
 	/* Write the first page with the initial record */
 	errno = 0;

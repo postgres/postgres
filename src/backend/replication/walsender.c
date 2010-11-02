@@ -654,7 +654,7 @@ XLogRead(char *buf, XLogRecPtr recptr, Size nbytes)
 	XLogGetLastRemoved(&lastRemovedLog, &lastRemovedSeg);
 	XLByteToSeg(startRecPtr, log, seg);
 	if (log < lastRemovedLog ||
-		(log == lastRemovedLog && seg < lastRemovedSeg))
+		(log == lastRemovedLog && seg <= lastRemovedSeg))
 	{
 		char		filename[MAXFNAMELEN];
 
