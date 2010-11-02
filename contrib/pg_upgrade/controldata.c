@@ -545,7 +545,7 @@ putenv2(const char *var, const char *val)
 	{
 #ifndef WIN32
 		char	   *envstr = (char *) pg_malloc(strlen(var) +
-												strlen(val) + 1);
+												strlen(val) + 2);
 
 		sprintf(envstr, "%s=%s", var, val);
 		putenv(envstr);
