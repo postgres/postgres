@@ -3055,8 +3055,8 @@ DROP FUNCTION nonsimple_expr_test();
 create function recurse(float8) returns float8 as
 $$
 begin
-  if ($1 < 10) then
-    return sql_recurse($1 + 1);
+  if ($1 > 0) then
+    return sql_recurse($1 - 1);
   else
     return $1;
   end if;
@@ -3067,7 +3067,7 @@ $$ language plpgsql;
 create function sql_recurse(float8) returns float8 as
 $$ select recurse($1) limit 1; $$ language sql;
 
-select recurse(0);
+select recurse(5);
 
 create function error1(text) returns text language sql as
 $$ SELECT relname::text FROM pg_class c WHERE c.oid = $1::regclass $$;
