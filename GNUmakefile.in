@@ -144,3 +144,11 @@ distcheck: dist
 	@echo "Distribution integrity checks out."
 
 .PHONY: dist distdir distcheck docs install-docs
+
+
+# Temporary measure to explore whether we can start requiring GNU make
+# 3.80.  That version also happens to be the version where the
+# .VARIABLES variable was introduced, so this is a simple check.
+ifndef .VARIABLES
+$(warning warning: GNU make 3.80 or newer might become required soon. You are using version $(MAKE_VERSION).)
+endif
