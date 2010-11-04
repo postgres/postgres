@@ -211,7 +211,9 @@ CREATE TABLE mytab (
   <para>
    To use, create a <literal>BEFORE UPDATE</>
    trigger using this function.  Specify a single trigger
-   argument: the name of the <type>timestamp</> column to be modified.
+   argument: the name of the column to be modified.
+   The column must be of type <type>timestamp</> or <type>timestamp with
+   time zone</>.
   </para>
 
   <para>

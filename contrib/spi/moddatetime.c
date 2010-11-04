@@ -32,6 +32,7 @@ moddatetime(PG_FUNCTION_ARGS)
 	Trigger    *trigger;		/* to get trigger name */
 	int			nargs;			/* # of arguments */
 	int			attnum;			/* positional number of field to change */
+	Oid			atttypid;		/* type OID of field to change */
 	Datum		newdt;			/* The current datetime. */
 	char	  **args;			/* arguments */
 	char	   *relname;		/* triggered relation name */
@@ -75,12 +76,6 @@ moddatetime(PG_FUNCTION_ARGS)
 	/* must be the field layout? */
 	tupdesc = rel->rd_att;
 
-	/* Get the current datetime. */
-	newdt = DirectFunctionCall3(timestamp_in,
-								CStringGetDatum("now"),
-								ObjectIdGetDatum(InvalidOid),
-								Int32GetDatum(-1));
-
 	/*
 	 * This gets the position in the tuple of the field we want. args[0] being
 	 * the name of the field to update, as passed in from the trigger.
@@ -88,8 +83,8 @@ moddatetime(PG_FUNCTION_ARGS)
 	attnum = SPI_fnumber(tupdesc, args[0]);
 
 	/*
-	 * This is were we check to see if the field we are supposed to update
-	 * even exits.	The above function must return -1 if name not found?
+	 * This is where we check to see if the field we are supposed to update
+	 * even exists.	The above function must return -1 if name not found?
 	 */
 	if (attnum < 0)
 		ereport(ERROR,
@@ -98,20 +93,33 @@ moddatetime(PG_FUNCTION_ARGS)
 						relname, args[0])));
 
 	/*
-	 * OK, this is where we make sure the timestamp field that we are
-	 * modifying is really a timestamp field. Hay, error checking, what a
-	 * novel idea !-)
+	 * Check the target field has an allowed type, and get the current
+	 * datetime as a value of that type.
 	 */
-	if (SPI_gettypeid(tupdesc, attnum) != TIMESTAMPOID)
+	atttypid = SPI_gettypeid(tupdesc, attnum);
+	if (atttypid == TIMESTAMPOID)
+		newdt = DirectFunctionCall3(timestamp_in,
+									CStringGetDatum("now"),
+									ObjectIdGetDatum(InvalidOid),
+									Int32GetDatum(-1));
+	else if (atttypid == TIMESTAMPTZOID)
+		newdt = DirectFunctionCall3(timestamptz_in,
+									CStringGetDatum("now"),
+									ObjectIdGetDatum(InvalidOid),
+									Int32GetDatum(-1));
+	else
+	{
 		ereport(ERROR,
 				(errcode(ERRCODE_TRIGGERED_ACTION_EXCEPTION),
-				 errmsg("attribute \"%s\" of \"%s\" must be type TIMESTAMP",
+				 errmsg("attribute \"%s\" of \"%s\" must be type TIMESTAMP or TIMESTAMPTZ",
 						args[0], relname)));
+		newdt = (Datum) 0;		/* keep compiler quiet */
+	}
 
 /* 1 is the number of items in the arrays attnum and newdt.
 	attnum is the positional number of the field to be updated.
 	newdt is the new datetime stamp.
-	NOTE that attnum and newdt are not arrays, but then a 1 ellement array
+	NOTE that attnum and newdt are not arrays, but then a 1 element array
 	is not an array any more then they are.  Thus, they can be considered a
 	one element array.
 */
